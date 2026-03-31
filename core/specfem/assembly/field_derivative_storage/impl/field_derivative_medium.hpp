@@ -64,11 +64,11 @@ template <specfem::element::dimension_tag DimTag,
 struct field_derivative_medium
     : specfem::data_access::Container<
           specfem::data_access::ContainerType::domain,
-          specfem::data_access::DataClassType::strain, DimTag> {
+          specfem::data_access::DataClassType::field_derivatives, DimTag> {
 
   using base_type = specfem::data_access::Container<
       specfem::data_access::ContainerType::domain,
-      specfem::data_access::DataClassType::strain, DimTag>;
+      specfem::data_access::DataClassType::field_derivatives, DimTag>;
 
   constexpr static auto dimension_tag = DimTag;
   constexpr static auto medium_tag = MediumTag;

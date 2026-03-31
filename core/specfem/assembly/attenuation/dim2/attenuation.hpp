@@ -107,9 +107,10 @@ struct Attenuation<specfem::element::dimension_tag::dim2,
   Attenuation() = default;
 
   Attenuation(
-      const type_real reference_frequency, const type_real min_frequency,
-      const type_real max_frequency, const bool auto_compute_attenuation_band,
-      const type_real deltat,
+      const specfem::units::Hertz reference_frequency,
+      const specfem::units::Hertz min_frequency,
+      const specfem::units::Hertz max_frequency,
+      const bool auto_compute_attenuation_band, const type_real deltat,
       const specfem::assembly::mesh<specfem::element::dimension_tag::dim2>
           &mesh,
       const specfem::assembly::element_types<
@@ -127,7 +128,7 @@ struct Attenuation<specfem::element::dimension_tag::dim2,
       const specfem::mesh::materials<specfem::element::dimension_tag::dim2>
           &materials,
       const type_real fc, const type_real f0,
-      const specfem::utilities::FrequencyBand &band,
+      const specfem::utilities::Band<specfem::units::Hertz> &band,
       const Kokkos::View<type_real[N_SLS], Kokkos::DefaultHostExecutionSpace>
           &tau_sigma);
 
@@ -150,7 +151,7 @@ struct Attenuation<specfem::element::dimension_tag::dim2,
                           }
                         })
     Kokkos::abort("Invalid medium type detected in attenuation");
-    SUPPRESS_TEMPORARY_REF(return {};)
+    SUPPRESS_UNREACHABLE(return {};)
   }
 
   /**

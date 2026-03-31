@@ -39,7 +39,8 @@ struct value_containers<specfem::element::dimension_tag::dim3,
   }
 
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
-                       PROPERTY_TAG(ISOTROPIC), ATTENUATION_TAG(NONE)),
+                       PROPERTY_TAG(ISOTROPIC),
+                       ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
                       DECLARE(((containers_type, (_DIMENSION_TAG_, _MEDIUM_TAG_,
                                                   _PROPERTY_TAG_)),
                                value)))
@@ -66,7 +67,8 @@ struct value_containers<specfem::element::dimension_tag::dim3,
       get_container() const {
 
     FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
-                         PROPERTY_TAG(ISOTROPIC), ATTENUATION_TAG(NONE)),
+                         PROPERTY_TAG(ISOTROPIC),
+                         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
                         CAPTURE(value) {
                           if constexpr (_medium_tag_ == MediumTag &&
                                         _property_tag_ == PropertyTag) {
@@ -91,14 +93,16 @@ struct value_containers<specfem::element::dimension_tag::dim3,
   void copy_to_host() {
     Kokkos::deep_copy(h_property_index_mapping, property_index_mapping);
     FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
-                         PROPERTY_TAG(ISOTROPIC), ATTENUATION_TAG(NONE)),
+                         PROPERTY_TAG(ISOTROPIC),
+                         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
                         CAPTURE(value) { _value_.copy_to_host(); })
   }
 
   void copy_to_device() {
     Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
     FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
-                         PROPERTY_TAG(ISOTROPIC), ATTENUATION_TAG(NONE)),
+                         PROPERTY_TAG(ISOTROPIC),
+                         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
                         CAPTURE(value) { _value_.copy_to_device(); })
   }
 };

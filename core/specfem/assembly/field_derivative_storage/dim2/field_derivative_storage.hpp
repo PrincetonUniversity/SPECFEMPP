@@ -28,12 +28,12 @@ template <>
 struct FieldDerivativeStorage<specfem::element::dimension_tag::dim2>
     : specfem::data_access::Container<
           specfem::data_access::ContainerType::domain,
-          specfem::data_access::DataClassType::strain,
+          specfem::data_access::DataClassType::field_derivatives,
           specfem::element::dimension_tag::dim2> {
 
   using base_type = specfem::data_access::Container<
       specfem::data_access::ContainerType::domain,
-      specfem::data_access::DataClassType::strain,
+      specfem::data_access::DataClassType::field_derivatives,
       specfem::element::dimension_tag::dim2>;
 
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim2;
@@ -41,11 +41,9 @@ struct FieldDerivativeStorage<specfem::element::dimension_tag::dim2>
   // One field_derivative_medium per (medium, property, attenuation)
   // combination. Attenuation_none → empty struct. Constant_isotropic → compact
   // storage.
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
-                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                  POROELASTIC, ELASTIC_PSV_T),
-                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-                       ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV),
+                       PROPERTY_TAG(ISOTROPIC),
+                       ATTENUATION_TAG(CONSTANT_ISOTROPIC)),
                       DECLARE(((specfem::assembly::field_derivative_storage::
                                     impl::field_derivative_medium,
                                 (_DIMENSION_TAG_, _MEDIUM_TAG_, _PROPERTY_TAG_,
@@ -81,22 +79,19 @@ struct FieldDerivativeStorage<specfem::element::dimension_tag::dim2>
                                     MediumTag, PropertyTag,
                                     AttenuationTag> const &
       get_medium() const {
-    FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2),
-         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                    ELASTIC_PSV_T),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
-        CAPTURE(fd_medium) {
-          if constexpr (_medium_tag_ == MediumTag &&
-                        _property_tag_ == PropertyTag &&
-                        _attenuation_tag_ == AttenuationTag) {
-            return _fd_medium_;
-          }
-        })
+    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV),
+                         PROPERTY_TAG(ISOTROPIC),
+                         ATTENUATION_TAG(CONSTANT_ISOTROPIC)),
+                        CAPTURE(fd_medium) {
+                          if constexpr (_medium_tag_ == MediumTag &&
+                                        _property_tag_ == PropertyTag &&
+                                        _attenuation_tag_ == AttenuationTag) {
+                            return _fd_medium_;
+                          }
+                        })
     Kokkos::abort(
         "Invalid tag combination in FieldDerivativeStorage::get_medium");
-    SUPPRESS_TEMPORARY_REF(return {};)
+    SUPPRESS_UNREACHABLE(return {};)
   }
 
   /**
@@ -121,7 +116,7 @@ struct FieldDerivativeStorage<specfem::element::dimension_tag::dim2>
                         })
     Kokkos::abort(
         "Invalid tag combination in FieldDerivativeStorage::get_medium");
-    SUPPRESS_TEMPORARY_REF(return {};)
+    SUPPRESS_UNREACHABLE(return {};)
   }
 
   void copy_to_host() {

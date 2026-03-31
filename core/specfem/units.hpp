@@ -2,8 +2,6 @@
 #include "units/conversions.hpp"
 #include "units/quantity.hpp"
 
-#include <Kokkos_Core.hpp>
-
 /**
  * @namespace specfem::units
  * @brief Type-safe physical units and conversions.
@@ -31,15 +29,15 @@ namespace specfem::units::unit_symbols {
 
 /// Tag for constructing Meters
 struct meter_tag {};
-KOKKOS_FORCEINLINE_FUNCTION constexpr meter_tag m{};
+constexpr meter_tag m{};
 
 /// Tag for constructing Kilometers
 struct kilometer_tag {};
-KOKKOS_FORCEINLINE_FUNCTION constexpr kilometer_tag km{};
+constexpr kilometer_tag km{};
 
 /// Tag for constructing Seconds
 struct second_tag {};
-KOKKOS_FORCEINLINE_FUNCTION constexpr second_tag s{};
+constexpr second_tag s{};
 
 template <typename N> constexpr Meters operator*(N v, meter_tag) {
   return Meters(type_real(v));
@@ -62,11 +60,11 @@ template <typename N> constexpr Seconds operator*(second_tag, N v) {
 
 /// Tag for constructing MetersPerSecond
 struct m_per_s_tag {};
-KOKKOS_FORCEINLINE_FUNCTION constexpr m_per_s_tag mps{};
+constexpr m_per_s_tag mps{};
 
 /// Tag for constructing KilometersPerSecond
 struct km_per_s_tag {};
-KOKKOS_FORCEINLINE_FUNCTION constexpr km_per_s_tag kmps{};
+constexpr km_per_s_tag kmps{};
 
 template <typename N> constexpr MetersPerSecond operator*(N v, m_per_s_tag) {
   return MetersPerSecond(type_real(v));

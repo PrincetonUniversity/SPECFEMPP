@@ -11,6 +11,7 @@
 #include "specfem/macros.hpp"
 #include "specfem/mesh/dim3/materials/materials.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/units.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly {
@@ -70,7 +71,7 @@ struct Attenuation<specfem::element::dimension_tag::dim3,
   int nspec; ///< Total number of spectral elements
 
   // Attenuation parameters
-  type_real f0;                       ///< Reference frequency
+  specfem::units::Hertz f0;           ///< Reference frequency
   bool auto_compute_attenuation_band; ///< Whether to auto-compute the
                                       ///< attenuation band
 
@@ -108,9 +109,10 @@ struct Attenuation<specfem::element::dimension_tag::dim3,
   Attenuation() = default;
 
   Attenuation(
-      const type_real reference_frequency, const type_real min_frequency,
-      const type_real max_frequency, const bool auto_compute_attenuation_band,
-      const type_real deltat,
+      const specfem::units::Hertz reference_frequency,
+      const specfem::units::Hertz min_frequency,
+      const specfem::units::Hertz max_frequency,
+      const bool auto_compute_attenuation_band, const type_real deltat,
       const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
           &mesh,
       const specfem::assembly::element_types<
@@ -128,7 +130,7 @@ struct Attenuation<specfem::element::dimension_tag::dim3,
       const specfem::mesh::materials<specfem::element::dimension_tag::dim3>
           &materials,
       const type_real fc, const type_real f0,
-      const specfem::utilities::FrequencyBand &band,
+      const specfem::utilities::Band<specfem::units::Hertz> &band,
       const Kokkos::View<type_real[N_SLS], Kokkos::DefaultHostExecutionSpace>
           &tau_sigma);
 
@@ -151,7 +153,7 @@ struct Attenuation<specfem::element::dimension_tag::dim3,
                           }
                         })
     Kokkos::abort("Invalid medium type detected in attenuation");
-    SUPPRESS_TEMPORARY_REF(return {};)
+    SUPPRESS_UNREACHABLE(return {};)
   }
 
   /**

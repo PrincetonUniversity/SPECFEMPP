@@ -34,17 +34,14 @@ namespace specfem::assembly::impl {
  * - **DimensionTag**: Spatial dimension (dim2/dim3)
  * - **MediumTag**: Physical medium (acoustic, elastic, poroelastic)
  * - **PropertyTag**: Material symmetry (isotropic, anisotropic)
- * - **AttenuationTag**: Attenuation model (none, constant isotropic)
  *
  * @tparam DimensionTag Spatial dimension
  * @tparam MediumTag Physical medium type
  * @tparam PropertyTag Material property type
- * @tparam AttenuationTag Attenuation model type
  */
 template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag,
-          specfem::element::attenuation_tag AttenuationTag>
+          specfem::element::property_tag PropertyTag>
 struct domain_properties;
 
 /**
@@ -56,19 +53,17 @@ struct domain_properties;
  *
  * @tparam MediumTag Physical medium (acoustic, elastic, poroelastic)
  * @tparam PropertyTag Material symmetry (isotropic, anisotropic, cosserat)
- * @tparam AttenuationTag Attenuation model (none, constant isotropic)
  */
 template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag,
-          specfem::element::attenuation_tag AttenuationTag>
+          specfem::element::property_tag PropertyTag>
 struct domain_properties<specfem::element::dimension_tag::dim2, MediumTag,
-                         PropertyTag, AttenuationTag>
+                         PropertyTag>
     : public specfem::medium_container::properties::data_container<
           specfem::element::dimension_tag::dim2, MediumTag, PropertyTag>,
       public DomainAccessor<
           specfem::element::dimension_tag::dim2,
           domain_properties<specfem::element::dimension_tag::dim2, MediumTag,
-                            PropertyTag, AttenuationTag> > {
+                            PropertyTag> > {
 
   /// Base data container type for property storage
   using base_type = specfem::medium_container::properties::data_container<
@@ -81,8 +76,6 @@ struct domain_properties<specfem::element::dimension_tag::dim2, MediumTag,
       base_type::medium_tag; ///< Physical medium type
   constexpr static auto property_tag =
       base_type::property_tag; ///< Material property type
-  constexpr static auto attenuation_tag =
-      base_type::attenuation_tag; ///< Attenuation type
 
   /// Default constructor for empty container
   domain_properties() = default;
@@ -101,6 +94,7 @@ struct domain_properties<specfem::element::dimension_tag::dim2, MediumTag,
    * @param has_gll_model Skip material assignment for GLL models
    * @param property_index_mapping Element to property mapping
    */
+  template <specfem::element::attenuation_tag AttenuationTag>
   domain_properties(
       const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
       const specfem::assembly::mesh<dimension_tag> &mesh, const int ngllz,
@@ -108,7 +102,9 @@ struct domain_properties<specfem::element::dimension_tag::dim2, MediumTag,
       const bool has_gll_model,
       const Kokkos::View<int *, Kokkos::LayoutRight,
                          Kokkos::DefaultHostExecutionSpace>
-          property_index_mapping);
+          property_index_mapping,
+      std::integral_constant<specfem::element::attenuation_tag,
+                             AttenuationTag>);
 
   /// Device value access disabled for this container type
   template <typename PointValues, typename IndexType>
@@ -130,25 +126,21 @@ struct domain_properties<specfem::element::dimension_tag::dim2, MediumTag,
  *
  * @tparam MediumTag Physical medium (acoustic, elastic)
  * @tparam PropertyTag Material symmetry (isotropic, anisotropic)
- * @tparam AttenuationTag Attenuation type (none, isotropic_constant)
  */
 template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag,
-          specfem::element::attenuation_tag AttenuationTag>
+          specfem::element::property_tag PropertyTag>
 struct domain_properties<specfem::element::dimension_tag::dim3, MediumTag,
-                         PropertyTag, AttenuationTag>
+                         PropertyTag>
     : public specfem::medium_container::properties::data_container<
-          specfem::element::dimension_tag::dim3, MediumTag, PropertyTag,
-          AttenuationTag>,
+          specfem::element::dimension_tag::dim3, MediumTag, PropertyTag>,
       public DomainAccessor<
           specfem::element::dimension_tag::dim3,
           domain_properties<specfem::element::dimension_tag::dim3, MediumTag,
-                            PropertyTag, AttenuationTag> > {
+                            PropertyTag> > {
 
   /// Base data container type for property storage
   using base_type = specfem::medium_container::properties::data_container<
-      specfem::element::dimension_tag::dim3, MediumTag, PropertyTag,
-      AttenuationTag>;
+      specfem::element::dimension_tag::dim3, MediumTag, PropertyTag>;
   using base_type::base_type;
 
   constexpr static auto dimension_tag =
@@ -157,8 +149,6 @@ struct domain_properties<specfem::element::dimension_tag::dim3, MediumTag,
       base_type::medium_tag; ///< Physical medium type
   constexpr static auto property_tag =
       base_type::property_tag; ///< Material property type
-  constexpr static auto attenuation_tag =
-      base_type::attenuation_tag; ///< Attenuation type
 
   /// Default constructor for empty container
   domain_properties() = default;
@@ -177,13 +167,16 @@ struct domain_properties<specfem::element::dimension_tag::dim3, MediumTag,
    * @param materials Material database indexed by element
    * @param property_index_mapping Element to property mapping
    */
+  template <specfem::element::attenuation_tag AttenuationTag>
   domain_properties(
       const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
       const int nspec, const int ngllz, const int nglly, const int ngllx,
       const specfem::mesh::materials<dimension_tag> &materials,
       const Kokkos::View<int *, Kokkos::LayoutRight,
                          Kokkos::DefaultHostExecutionSpace>
-          property_index_mapping);
+          property_index_mapping,
+      std::integral_constant<specfem::element::attenuation_tag,
+                             AttenuationTag>);
 
   /// Device value access disabled for this container type
   template <typename PointValues, typename IndexType>

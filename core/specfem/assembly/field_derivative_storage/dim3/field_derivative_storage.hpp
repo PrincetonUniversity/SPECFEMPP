@@ -14,8 +14,8 @@
 namespace specfem::assembly {
 
 /**
- * @brief 3D per-GLL-point field derivative storage for attenuation strain
- * bookkeeping.
+ * @brief 3D per-GLL-point field derivative storage for attenuation field
+ * derivatives bookkeeping.
  *
  * Follows the same pattern as the 2D specialization. For attenuation_none
  * combinations the sub-struct is empty (zero overhead).
@@ -24,12 +24,12 @@ template <>
 struct FieldDerivativeStorage<specfem::element::dimension_tag::dim3>
     : specfem::data_access::Container<
           specfem::data_access::ContainerType::domain,
-          specfem::data_access::DataClassType::strain,
+          specfem::data_access::DataClassType::field_derivatives,
           specfem::element::dimension_tag::dim3> {
 
   using base_type = specfem::data_access::Container<
       specfem::data_access::ContainerType::domain,
-      specfem::data_access::DataClassType::strain,
+      specfem::data_access::DataClassType::field_derivatives,
       specfem::element::dimension_tag::dim3>;
 
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
@@ -71,7 +71,7 @@ struct FieldDerivativeStorage<specfem::element::dimension_tag::dim3>
                         })
     Kokkos::abort(
         "Invalid tag combination in FieldDerivativeStorage::get_medium");
-    SUPPRESS_TEMPORARY_REF(return {};)
+    SUPPRESS_UNREACHABLE(return {};)
   }
 
   template <specfem::element::medium_tag MediumTag,
@@ -93,7 +93,7 @@ struct FieldDerivativeStorage<specfem::element::dimension_tag::dim3>
                         })
     Kokkos::abort(
         "Invalid tag combination in FieldDerivativeStorage::get_medium");
-    SUPPRESS_TEMPORARY_REF(return {};)
+    SUPPRESS_UNREACHABLE(return {};)
   }
 
   void copy_to_host() {

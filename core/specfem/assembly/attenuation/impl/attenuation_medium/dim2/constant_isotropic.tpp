@@ -19,7 +19,11 @@ template <specfem::element::property_tag PropertyTag>
 struct attenuation_medium<specfem::element::dimension_tag::dim2,
                           specfem::element::medium_tag::elastic_psv,
                           PropertyTag,
-                          specfem::element::attenuation_tag::constant_isotropic> {
+                          specfem::element::attenuation_tag::constant_isotropic> :
+                          specfem::data_access::Container<
+                              specfem::data_access::ContainerType::domain,
+                              specfem::data_access::DataClassType::attenuation,
+                              specfem::element::dimension_tag::dim2> {
 
   using base_type = specfem::data_access::Container<
       specfem::data_access::ContainerType::domain,
@@ -63,7 +67,7 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
       const specfem::mesh::materials<specfem::element::dimension_tag::dim2>
           &materials,
       const int ngllz, const int ngllx, const type_real fc, const type_real f0,
-      const specfem::utilities::FrequencyBand &band,
+      const specfem::utilities::Band<specfem::units::Hertz> &band,
       const Kokkos::View<type_real [N_SLS], Kokkos::DefaultHostExecutionSpace> &tau_sigma) {
 
     const int nspec_attn = elements.extent(0);
@@ -76,25 +80,25 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
         Kokkos::View<type_real *, Kokkos::DefaultHostExecutionSpace>(
             "mu_scale", nspec_attn);
     kappa_relaxation_rate =
-        view_type("kappa_rr", nspec_attn, ngllz, ngllx, N_SLS);
+        view_type("kappa_relaxation_rate", nspec_attn, ngllz, ngllx, N_SLS);
     h_kappa_relaxation_rate =
-        specfem::kokkos::create_mirror_view(kappa_relaxation_rate);
+        specfem::datatype::create_mirror_view(kappa_relaxation_rate);
     mu_relaxation_rate =
-        view_type("mu_rr", nspec_attn, ngllz, ngllx, N_SLS);
+        view_type("mu_relaxation_rate", nspec_attn, ngllz, ngllx, N_SLS);
     h_mu_relaxation_rate =
-        specfem::kokkos::create_mirror_view(mu_relaxation_rate);
+        specfem::datatype::create_mirror_view(mu_relaxation_rate);
     memory_variable_kappa =
         view_type("mem_kappa", nspec_attn, ngllz, ngllx, N_SLS);
     h_memory_variable_kappa =
-        specfem::kokkos::create_mirror_view(memory_variable_kappa);
+        specfem::datatype::create_mirror_view(memory_variable_kappa);
     memory_variable_Rxx =
         view_type("mem_Rxx", nspec_attn, ngllz, ngllx, N_SLS);
     h_memory_variable_Rxx =
-        specfem::kokkos::create_mirror_view(memory_variable_Rxx);
+        specfem::datatype::create_mirror_view(memory_variable_Rxx);
     memory_variable_Rxz =
         view_type("mem_Rxz", nspec_attn, ngllz, ngllx, N_SLS);
     h_memory_variable_Rxz =
-        specfem::kokkos::create_mirror_view(memory_variable_Rxz);
+        specfem::datatype::create_mirror_view(memory_variable_Rxz);
 
     // Allocate and populate the inverse index mapping (global ispec -> compact index)
     h_attenuation_index_mapping =
@@ -129,9 +133,9 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
       const type_real Qmu = material.Qmu;
 
       auto tau_eps_kappa = specfem::attenuation::compute_tau_eps<N_SLS>(
-          Qkappa, tau_sigma, band.min_frequency(), band.max_frequency());
+          Qkappa, tau_sigma, band.min.raw(), band.max.raw());
       auto tau_eps_mu = specfem::attenuation::compute_tau_eps<N_SLS>(
-          Qmu, tau_sigma, band.min_frequency(), band.max_frequency());
+          Qmu, tau_sigma, band.min.raw(), band.max.raw());
 
       auto prop_kappa =
           specfem::attenuation::get_attenuation_property_values<N_SLS>(

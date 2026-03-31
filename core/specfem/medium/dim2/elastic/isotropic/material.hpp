@@ -5,6 +5,8 @@
 #include "specfem/element.hpp"
 #include "specfem/setup.hpp"
 #include "specfem/tags.hpp"
+#include "specfem/units.hpp"
+#include <Kokkos_Core.hpp>
 #include <exception>
 #include <iostream>
 #include <ostream>
@@ -42,6 +44,7 @@ private:
   bool compute_properties_called =
       false; ///< Flag to check if properties have been computed
 
+public:
   AttenuationValues() = default;
 
   AttenuationValues(const type_real &Qkappa, const type_real &Qmu)
@@ -58,21 +61,22 @@ private:
             std::abs(this->Qmu - other.Qmu) < 1e-6);
   }
 
-  void compute_attenuation_properties(const type_real &f0, const type_real &fc,
-                                      const specfem::band &band,
-                                      const type_real &tau_sigma) {
+  void compute_attenuation_properties(
+      const type_real &f0, const type_real &fc,
+      const specfem::utilities::Band<specfem::units::Hertz> &band,
+      const view_type &tau_sigma) {
+
     if (this->compute_properties_called) {
       return; // Avoid recomputation if already computed
     }
 
     this->tau_epsilon_kappa =
         specfem::attenuation::compute_tau_eps<specfem::constants::N_SLS>(
-            this->Qkappa, tau_sigma, band.min_frequency(),
-            band.max_frequency());
+            this->Qkappa, tau_sigma, band.min.raw(), band.max.raw());
 
     this->tau_epsilon_mu =
         specfem::attenuation::compute_tau_eps<specfem::constants::N_SLS>(
-            this->Qmu, tau_sigma, band.min_frequency(), band.max_frequency());
+            this->Qmu, tau_sigma, band.min.raw(), band.max.raw());
 
     this->kappa_attenuation_properties =
         specfem::attenuation::get_attenuation_property_values<
@@ -121,14 +125,14 @@ public:
     throw std::runtime_error("Attenuation properties not computed");
   }
 
-  AttenuationPropertyValues<specfem::constants::N_SLS>
+  specfem::attenuation::AttenuationPropertyValues<specfem::constants::N_SLS>
   get_kappa_attenuation_properties() const {
     if (this->compute_properties_called) {
       return this->kappa_attenuation_properties;
     }
     throw std::runtime_error("Attenuation properties not computed");
   }
-  AttenuationPropertyValues<specfem::constants::N_SLS>
+  specfem::attenuation::AttenuationPropertyValues<specfem::constants::N_SLS>
   get_mu_attenuation_properties() const {
     if (this->compute_properties_called) {
       return this->mu_attenuation_properties;
@@ -275,16 +279,30 @@ public:
    *
    * @return specfem::point::properties Material properties
    */
+  template <
+      specfem::element::attenuation_tag T = AttenuationTag,
+      std::enable_if_t<T == specfem::element::attenuation_tag::none, int> = 0>
   inline specfem::point::properties<
       specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false> >
   get_properties() const {
-    if (attenuation_tag == specfem::element::attenuation_tag::none) {
-      return { this->kappa, this->mu, this->density };
-    } else if (attenuation_tag ==
-               specfem::element::attenuation_tag::constant_isotropic) {
-      return { this->kappa, this->mu, this->density,
-               attenuation::get_kappa_scale(), attenuation::get_mu_scale() };
-    }
+    return { this->kappa, this->mu, this->density };
+  }
+
+  /**
+   * @brief Get the material properties with attenuation scaling
+   *
+   * @return specfem::point::properties Material properties with attenuation
+   * scaling
+   */
+  template <
+      specfem::element::attenuation_tag T = AttenuationTag,
+      std::enable_if_t<
+          T == specfem::element::attenuation_tag::constant_isotropic, int> = 0>
+  inline specfem::point::properties<
+      specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false> >
+  get_properties() const {
+    return { this->kappa * attenuation::get_kappa_scale(),
+             this->mu * attenuation::get_mu_scale(), this->density };
   }
 
   /**

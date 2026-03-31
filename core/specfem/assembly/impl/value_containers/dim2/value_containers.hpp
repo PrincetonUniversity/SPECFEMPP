@@ -42,7 +42,7 @@ struct value_containers<specfem::element::dimension_tag::dim2,
                        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                   POROELASTIC, ELASTIC_PSV_T),
                        PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-                       ATTENUATION_TAG(NONE)),
+                       ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
                       DECLARE(((containers_type, (_DIMENSION_TAG_, _MEDIUM_TAG_,
                                                   _PROPERTY_TAG_)),
                                value)))
@@ -73,7 +73,7 @@ struct value_containers<specfem::element::dimension_tag::dim2,
          MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                     ELASTIC_PSV_T),
          PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-         ATTENUATION_TAG(NONE)),
+         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
         CAPTURE(value) {
           if constexpr (_medium_tag_ == MediumTag &&
                         _property_tag_ == PropertyTag) {
@@ -99,7 +99,7 @@ struct value_containers<specfem::element::dimension_tag::dim2,
          MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                     ELASTIC_PSV_T),
          PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-         ATTENUATION_TAG(NONE)),
+         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
         CAPTURE(value) { _value_.copy_to_host(); })
   }
 
@@ -110,7 +110,7 @@ struct value_containers<specfem::element::dimension_tag::dim2,
          MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                     ELASTIC_PSV_T),
          PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-         ATTENUATION_TAG(NONE)),
+         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
         CAPTURE(value) { _value_.copy_to_device(); })
   }
 };

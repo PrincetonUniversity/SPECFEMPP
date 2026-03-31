@@ -3,8 +3,6 @@
 #include <ratio>
 #include <type_traits>
 
-#include <Kokkos_Core.hpp>
-
 namespace specfem::units {
 
 /**
@@ -68,7 +66,7 @@ using ratio_gcd =
  * @return constexpr type_real Ratio as a floating-point value
  */
 template <typename R>
-KOKKOS_FORCEINLINE_FUNCTION constexpr type_real ratio_value =
+constexpr type_real ratio_value =
     static_cast<type_real>(R::num) / static_cast<type_real>(R::den);
 
 /**
@@ -157,6 +155,14 @@ template <typename... Args>
 constexpr Quantity<Args...> operator*(type_real s,
                                       Quantity<Args...> q) noexcept {
   return q * s;
+}
+
+/// Scalar division from left: s / Quantity<Dim<M,L,T,A>,S> ->
+/// Quantity<Dim<-M,-L,-T,-A>,S>
+template <int M, int L, int T, int A, typename S>
+constexpr auto operator/(type_real s, Quantity<Dim<M, L, T, A>, S> q)
+    -> Quantity<Dim<-M, -L, -T, -A>, S> {
+  return Quantity<Dim<-M, -L, -T, -A>, S>(s / q.raw());
 }
 
 /**

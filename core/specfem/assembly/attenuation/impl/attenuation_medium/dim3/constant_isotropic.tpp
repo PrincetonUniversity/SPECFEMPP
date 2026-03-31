@@ -18,7 +18,11 @@ template <specfem::element::property_tag PropertyTag>
 struct attenuation_medium<specfem::element::dimension_tag::dim3,
                           specfem::element::medium_tag::elastic,
                           PropertyTag,
-                          specfem::element::attenuation_tag::constant_isotropic> {
+                          specfem::element::attenuation_tag::constant_isotropic> :
+                          specfem::data_access::Container<
+                              specfem::data_access::ContainerType::domain,
+                              specfem::data_access::DataClassType::attenuation,
+                              specfem::element::dimension_tag::dim3> {
 
   using base_type = specfem::data_access::Container<
       specfem::data_access::ContainerType::domain,
@@ -70,7 +74,7 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
           &materials,
       const int ngllz, const int nglly, const int ngllx,
       const type_real fc, const type_real f0,
-      const specfem::utilities::FrequencyBand &band,
+      const specfem::utilities::Band<specfem::units::Hertz> &band,
       const Kokkos::View<type_real [N_SLS], Kokkos::DefaultHostExecutionSpace> &tau_sigma) {
 
     const int nspec_attn = elements.extent(0);
@@ -83,11 +87,11 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
         Kokkos::View<type_real *, Kokkos::DefaultHostExecutionSpace>(
             "mu_scale", nspec_attn);
     kappa_relaxation_rate =
-        view_type("kappa_rr", nspec_attn, ngllz, nglly, ngllx, N_SLS);
+        view_type("kappa_relaxation_rate", nspec_attn, ngllz, nglly, ngllx, N_SLS);
     h_kappa_relaxation_rate =
         Kokkos::create_mirror_view(kappa_relaxation_rate);
     mu_relaxation_rate =
-        view_type("mu_rr", nspec_attn, ngllz, nglly, ngllx, N_SLS);
+        view_type("mu_relaxation_rate", nspec_attn, ngllz, nglly, ngllx, N_SLS);
     h_mu_relaxation_rate =
         Kokkos::create_mirror_view(mu_relaxation_rate);
     memory_variable_kappa =
@@ -147,7 +151,7 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
           specfem::element::medium_tag::elastic, PropertyTag,
           specfem::element::attenuation_tag::constant_isotropic>(ispec);
 
-      material.compute_attenuation_attenuation_properties(fc, f0, band, tau_sigma);
+      material.compute_attenuation_properties(fc, f0, band, tau_sigma);
 
       // Per-GLL fill
       for (int iz = 0; iz < ngllz; ++iz) {

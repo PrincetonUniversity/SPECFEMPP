@@ -3,10 +3,10 @@
 #include "domain_properties.hpp"
 
 template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag
-          specfem::element::attenuation_tag AttenuationTag>
+          specfem::element::property_tag PropertyTag>
+template <specfem::element::attenuation_tag AttenuationTag>
 specfem::assembly::impl::domain_properties<specfem::element::dimension_tag::dim2, MediumTag,
-                                      PropertyTag, AttenuationTag>::
+                                      PropertyTag>::
     domain_properties(
         const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
         const specfem::assembly::mesh<dimension_tag> &mesh, const int ngllz,
@@ -15,7 +15,8 @@ specfem::assembly::impl::domain_properties<specfem::element::dimension_tag::dim2
         const bool has_gll_model,
         const Kokkos::View<int *, Kokkos::LayoutRight,
                            Kokkos::DefaultHostExecutionSpace>
-            property_index_mapping)
+            property_index_mapping,
+        std::integral_constant<specfem::element::attenuation_tag, AttenuationTag>)
     : base_type(elements.extent(0), ngllz, ngllx) {
 
   const int nelement = elements.extent(0);
@@ -30,7 +31,7 @@ specfem::assembly::impl::domain_properties<specfem::element::dimension_tag::dim2
           // Get the material at index from mesh::materials
           auto material = materials.template get_material<
               medium_tag, property_tag,
-              attenuation_tag>(mesh_ispec);
+              AttenuationTag>(mesh_ispec);
 
           // Assign the material property to the property container
           auto point_property = material.get_properties();
@@ -51,17 +52,18 @@ specfem::assembly::impl::domain_properties<specfem::element::dimension_tag::dim2
 }
 
 template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag,
-          specfem::element::attenuation_tag AttenuationTag>
+          specfem::element::property_tag PropertyTag>
+template <specfem::element::attenuation_tag AttenuationTag>
 specfem::assembly::impl::domain_properties<specfem::element::dimension_tag::dim3, MediumTag,
-                                      PropertyTag, AttenuationTag>::
+                                      PropertyTag>::
     domain_properties(
         const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
         const int nspec, const int ngllz, const int nglly, const int ngllx,
         const specfem::mesh::materials<dimension_tag> &materials,
         const Kokkos::View<int *, Kokkos::LayoutRight,
                            Kokkos::DefaultHostExecutionSpace>
-            property_index_mapping)
+            property_index_mapping,
+        std::integral_constant<specfem::element::attenuation_tag, AttenuationTag>)
     : base_type(elements.extent(0), ngllz, nglly, ngllx) {
 
   const int nelement = elements.extent(0);
@@ -79,7 +81,7 @@ specfem::assembly::impl::domain_properties<specfem::element::dimension_tag::dim3
           // Handle the specific case
           const auto point_property = materials.template get_properties<
               medium_tag, property_tag,
-              attenuation_tag>(ispec);
+              AttenuationTag>(ispec);
 
           this->store_host_values(
               specfem::point::index<dimension_tag, false>(count, iz, iy, ix),
