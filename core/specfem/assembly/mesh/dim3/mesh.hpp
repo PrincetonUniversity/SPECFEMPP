@@ -1,6 +1,8 @@
 #pragma once
 
+#include "impl/adjacency_graph.hpp"
 #include "impl/control_nodes.hpp"
+#include "impl/mesh_to_compute_mapping.hpp"
 #include "impl/points.hpp"
 #include "impl/shape_functions.hpp"
 
@@ -30,13 +32,17 @@ namespace specfem::assembly {
  */
 template <>
 struct mesh<specfem::element::dimension_tag::dim3>
-    : public specfem::assembly::mesh_impl::points<
+    : public specfem::assembly::mesh_impl::mesh_to_compute_mapping<
+          specfem::element::dimension_tag::dim3>,
+      public specfem::assembly::mesh_impl::points<
           specfem::element::dimension_tag::dim3>,
       public specfem::assembly::mesh_impl::quadrature<
           specfem::element::dimension_tag::dim3>,
       public specfem::assembly::mesh_impl::control_nodes<
           specfem::element::dimension_tag::dim3>,
       public specfem::assembly::mesh_impl::shape_functions<
+          specfem::element::dimension_tag::dim3>,
+      public specfem::assembly::mesh_impl::adjacency_graph<
           specfem::element::dimension_tag::dim3> {
 
 public:
@@ -69,7 +75,7 @@ public:
    * @param quadrature GLL quadrature information
    */
   mesh(const int nspec, const int ngnod, const int ngllz, const int nglly,
-       const int ngllx,
+       const int ngllx, const specfem::mesh::tags<dimension_tag> &tags,
        const specfem::mesh::adjacency_graph<dimension_tag> &adjacency_graph,
        const specfem::mesh::control_nodes<dimension_tag> &control_nodes,
        const specfem::quadrature::quadratures &quadrature);

@@ -91,6 +91,16 @@ struct TagMember<specfem::simulation::field_type, WavefieldTag> {
 };
 
 /**
+ * @brief Attenuation tag specialization for attenuation model types
+ * (none, constant_isotropic, etc.).
+ */
+template <specfem::element::attenuation_tag AttenuationTag>
+struct TagMember<specfem::element::attenuation_tag, AttenuationTag> {
+  static constexpr specfem::element::attenuation_tag attenuation_tag =
+      AttenuationTag;
+};
+
+/**
  * @brief SIMD tag specialization for point field types (enabled, disabled).
  */
 template <bool UseSIMD> struct TagMember<bool, UseSIMD> {

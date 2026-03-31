@@ -64,6 +64,9 @@ constexpr static auto interface_tag =
     specfem::element_coupling::interface_tag::acoustic_elastic;
 /** Boundary type (dummy for testing) */
 constexpr static auto boundary_tag = specfem::element::boundary_tag::none;
+/** Flux scheme tag (dummy for testing) */
+constexpr static auto flux_scheme_tag =
+    specfem::element_coupling::flux_scheme_tag::natural;
 
 template <typename T, typename = void>
 struct is_analytical2d : std::false_type {};
@@ -193,8 +196,8 @@ void execute(const TransferFunction2D &transfer_function,
       dimension_tag, 1, TransferFunction2D::nquad_intersection,
       TransferFunction2D::nquad_edge,
       specfem::data_access::DataClassType::transfer_function_self,
-      interface_tag, boundary_tag, typename TransferFunction2D::memory_space,
-      Kokkos::MemoryTraits<> >;
+      interface_tag, boundary_tag, flux_scheme_tag,
+      typename TransferFunction2D::memory_space, Kokkos::MemoryTraits<> >;
   using FunctionType = specfem::datatype::VectorChunkEdgeViewType<
       type_real, dimension_tag, 1, TransferFunction2D::nquad_edge,
       EdgeFunction2D::num_components, false,

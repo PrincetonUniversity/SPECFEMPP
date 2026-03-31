@@ -35,7 +35,8 @@ specfem::assembly::element_intersections<
       (DIMENSION_TAG(DIM3), CONNECTION_TAG(WEAKLY_CONFORMING, NONCONFORMING),
        INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
        BOUNDARY_TAG(NONE, STACEY, ACOUSTIC_FREE_SURFACE,
-                    COMPOSITE_STACEY_DIRICHLET)),
+                    COMPOSITE_STACEY_DIRICHLET),
+       FLUX_SCHEME_TAG(NATURAL)),
       CAPTURE(h_self_faces, h_coupled_faces, self_faces, coupled_faces) {
         int count = 0;
         int face_index = 0;
@@ -119,16 +120,19 @@ specfem::assembly::element_intersections<
     get_intersections_on_host(
         const specfem::element_connections::type connection,
         const specfem::element_coupling::interface_tag face,
-        const specfem::element::boundary_tag boundary) const {
+        const specfem::element::boundary_tag boundary,
+        const specfem::element_coupling::flux_scheme_tag flux_scheme) const {
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM3), CONNECTION_TAG(WEAKLY_CONFORMING, NONCONFORMING),
        INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
        BOUNDARY_TAG(NONE, STACEY, ACOUSTIC_FREE_SURFACE,
-                    COMPOSITE_STACEY_DIRICHLET)),
+                    COMPOSITE_STACEY_DIRICHLET),
+       FLUX_SCHEME_TAG(NATURAL)),
       CAPTURE(h_self_faces, h_coupled_faces) {
         if (_connection_tag_ == connection && _interface_tag_ == face &&
-            _boundary_tag_ == boundary) {
+                _boundary_tag_ == boundary,
+            _flux_scheme_tag_ == flux_scheme) {
           return std::make_tuple(_h_self_faces_, _h_coupled_faces_);
         }
       })
@@ -142,16 +146,18 @@ std::tuple<FaceViewType, FaceViewType> specfem::assembly::element_intersections<
     get_intersections_on_device(
         const specfem::element_connections::type connection,
         const specfem::element_coupling::interface_tag face,
-        const specfem::element::boundary_tag boundary) const {
+        const specfem::element::boundary_tag boundary,
+        const specfem::element_coupling::flux_scheme_tag flux_scheme) const {
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM3), CONNECTION_TAG(WEAKLY_CONFORMING, NONCONFORMING),
        INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
        BOUNDARY_TAG(NONE, STACEY, ACOUSTIC_FREE_SURFACE,
-                    COMPOSITE_STACEY_DIRICHLET)),
+                    COMPOSITE_STACEY_DIRICHLET),
+       FLUX_SCHEME_TAG(NATURAL)),
       CAPTURE(self_faces, coupled_faces) {
         if (_connection_tag_ == connection && _interface_tag_ == face &&
-            _boundary_tag_ == boundary) {
+            _boundary_tag_ == boundary && _flux_scheme_tag_ == flux_scheme) {
           return std::make_tuple(_self_faces_, _coupled_faces_);
         }
       })
