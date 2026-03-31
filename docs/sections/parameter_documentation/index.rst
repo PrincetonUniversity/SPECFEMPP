@@ -985,9 +985,11 @@ Parameter definitions
             :caption: Example attenuation section
 
             attenuation:
-              enabled: true
-              min_attenuation_frequency: 0.1
-              max_attenuation_frequency: 20.0
+                enabled: false
+                reference-frequency: 1.0 Hz
+                attenuation-frequency-band:
+                    - 0.1 Hz
+                    - 10.0 Hz
 
         .. note::
 
@@ -1020,32 +1022,20 @@ Parameter definitions
             .. code-block:: yaml
                 :caption: Example
 
-                reference_frequency: 1.0
+                reference_frequency: 1.0 Hz
 
-        .. dropdown:: ``min_attenuation_frequency``
+        .. dropdown:: ``attenuation-frequency-band``
 
-            Minimum frequency for attenuation in Hz. This parameter is used to
-            calculate the absorption band for the simulation.
+            Frequency band for attenuation in Hz. This parameter is used to
+            calculate the unrelaxed moduli for the simulation.
 
             :default value: None
 
-            :possible values: [float, double]
+            :possible values: [YAML list]
 
             .. code-block:: yaml
                 :caption: Example
 
-                min_attenuation_frequency: 0.1
-
-        .. dropdown:: ``max_attenuation_frequency``
-
-            Maximum frequency for attenuation in Hz. This parameter is used to
-            calculate the absorption band for the simulation.
-
-            :default value: None
-
-            :possible values: [float, double]
-
-            .. code-block:: yaml
-                :caption: Example
-
-                max_attenuation_frequency: 20.0
+                attenuation-frequency-band:
+                    - 0.1 Hz
+                    - 10.0 Hz
