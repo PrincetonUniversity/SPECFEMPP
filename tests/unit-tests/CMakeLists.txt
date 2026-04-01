@@ -753,6 +753,7 @@ add_executable(
   medium/mass_matrix/dim2/poroelastic.cpp
   # 3D mass matrix tests
   medium/mass_matrix/dim3/elastic_isotropic.cpp
+  medium/mass_matrix/dim3/elastic_isotropic_cosserat.cpp
   medium/mass_matrix/dim3/acoustic.cpp
 )
 
@@ -773,6 +774,7 @@ add_executable(
   medium/stress/dim2/poroelastic_isotropic.cpp
   # 3D stress tests
   medium/stress/dim3/elastic_isotropic.cpp
+  medium/stress/dim3/elastic_isotropic_cosserat.cpp
   medium/stress/dim3/acoustic.cpp
 )
 
@@ -823,6 +825,7 @@ add_executable(
   medium/source/dim2/poroelastic.cpp
   # 3D source tests
   medium/source/dim3/elastic_isotropic.cpp
+  medium/source/dim3/elastic_isotropic_cosserat.cpp
   medium/source/dim3/acoustic.cpp
 )
 
