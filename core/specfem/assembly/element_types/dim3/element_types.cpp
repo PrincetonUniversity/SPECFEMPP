@@ -21,7 +21,7 @@ specfem::assembly::element_types<specfem::element::dimension_tag::dim3>::
   }
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN)),
       CAPTURE(elements, h_elements) {
         int count = 0;
         int index = 0;
@@ -43,7 +43,7 @@ specfem::assembly::element_types<specfem::element::dimension_tag::dim3>::
       })
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN),
        PROPERTY_TAG(ISOTROPIC), ATTENUATION_TAG(NONE)),
       CAPTURE(material_elements, h_material_elements) {
         int count = 0;
@@ -74,7 +74,7 @@ specfem::assembly::element_types<specfem::element::dimension_tag::dim3>::
       })
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN),
        PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
       CAPTURE(elements, h_elements) {
         int count = 0;
@@ -108,12 +108,13 @@ specfem::assembly::element_types<specfem::element::dimension_tag::dim3>::
 Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
 specfem::assembly::element_types<specfem::element::dimension_tag::dim3>::
     get_elements_on_host(const specfem::element::medium_tag medium_tag) const {
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
-                      CAPTURE(h_elements) {
-                        if (_medium_tag_ == medium_tag) {
-                          return _h_elements_;
-                        }
-                      })
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN)),
+      CAPTURE(h_elements) {
+        if (_medium_tag_ == medium_tag) {
+          return _h_elements_;
+        }
+      })
 
   throw std::runtime_error("Medium tag not found");
 }
@@ -122,12 +123,13 @@ Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
 specfem::assembly::element_types<specfem::element::dimension_tag::dim3>::
     get_elements_on_device(
         const specfem::element::medium_tag medium_tag) const {
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
-                      CAPTURE(elements) {
-                        if (_medium_tag_ == medium_tag) {
-                          return _elements_;
-                        }
-                      })
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN)),
+      CAPTURE(elements) {
+        if (_medium_tag_ == medium_tag) {
+          return _elements_;
+        }
+      })
 
   throw std::runtime_error("Medium tag not found");
 }
@@ -138,15 +140,15 @@ Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> specfem::assembly::
         const specfem::element::property_tag property_tag,
         const specfem::element::attenuation_tag attenuation_tag) const {
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
-                       PROPERTY_TAG(ISOTROPIC), ATTENUATION_TAG(NONE)),
-                      CAPTURE(h_material_elements) {
-                        if (_medium_tag_ == medium_tag &&
-                            _property_tag_ == property_tag &&
-                            _attenuation_tag_ == attenuation_tag) {
-                          return _h_material_elements_;
-                        }
-                      })
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN),
+       PROPERTY_TAG(ISOTROPIC, ISOTROPIC_COSSERAT), ATTENUATION_TAG(NONE)),
+      CAPTURE(h_material_elements) {
+        if (_medium_tag_ == medium_tag && _property_tag_ == property_tag &&
+            _attenuation_tag_ == attenuation_tag) {
+          return _h_material_elements_;
+        }
+      })
 
   throw std::runtime_error("Medium tag or property tag not found");
 }
@@ -158,15 +160,15 @@ specfem::assembly::element_types<specfem::element::dimension_tag::dim3>::
         const specfem::element::property_tag property_tag,
         const specfem::element::attenuation_tag attenuation_tag) const {
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
-                       PROPERTY_TAG(ISOTROPIC), ATTENUATION_TAG(NONE)),
-                      CAPTURE(material_elements) {
-                        if (_medium_tag_ == medium_tag &&
-                            _property_tag_ == property_tag &&
-                            _attenuation_tag_ == attenuation_tag) {
-                          return _material_elements_;
-                        }
-                      })
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN),
+       PROPERTY_TAG(ISOTROPIC, ISOTROPIC_COSSERAT), ATTENUATION_TAG(NONE)),
+      CAPTURE(material_elements) {
+        if (_medium_tag_ == medium_tag && _property_tag_ == property_tag &&
+            _attenuation_tag_ == attenuation_tag) {
+          return _material_elements_;
+        }
+      })
 
   throw std::runtime_error("Medium tag or property tag not found");
 }
@@ -176,15 +178,15 @@ Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> specfem::assembly::
         const specfem::element::medium_tag medium_tag,
         const specfem::element::property_tag property_tag,
         const specfem::element::boundary_tag boundary_tag) const {
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
-                       PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
-                      CAPTURE(h_elements) {
-                        if (_medium_tag_ == medium_tag &&
-                            _property_tag_ == property_tag &&
-                            _boundary_tag_ == boundary_tag) {
-                          return _h_elements_;
-                        }
-                      })
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN),
+       PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
+      CAPTURE(h_elements) {
+        if (_medium_tag_ == medium_tag && _property_tag_ == property_tag &&
+            _boundary_tag_ == boundary_tag) {
+          return _h_elements_;
+        }
+      })
 
   throw std::runtime_error(
       "Medium tag, property tag or boundary tag not found");
@@ -197,15 +199,15 @@ specfem::assembly::element_types<specfem::element::dimension_tag::dim3>::
         const specfem::element::property_tag property_tag,
         const specfem::element::boundary_tag boundary_tag) const {
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
-                       PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
-                      CAPTURE(elements) {
-                        if (_medium_tag_ == medium_tag &&
-                            _property_tag_ == property_tag &&
-                            _boundary_tag_ == boundary_tag) {
-                          return _elements_;
-                        }
-                      })
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN),
+       PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
+      CAPTURE(elements) {
+        if (_medium_tag_ == medium_tag && _property_tag_ == property_tag &&
+            _boundary_tag_ == boundary_tag) {
+          return _elements_;
+        }
+      })
 
   throw std::runtime_error(
       "Medium tag, property tag or boundary tag not found");

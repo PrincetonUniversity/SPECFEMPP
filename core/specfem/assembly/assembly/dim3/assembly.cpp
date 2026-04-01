@@ -92,20 +92,22 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::print()
 
   int total_elements = 0;
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)), {
-    // Getting the number of elements per medium
-    int n_elements = this->element_types.get_number_of_elements(_medium_tag_);
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN)), {
+        // Getting the number of elements per medium
+        int n_elements =
+            this->element_types.get_number_of_elements(_medium_tag_);
 
-    // Printing the number of elements if more than 0
-    if (n_elements > 0) {
-      // Adding the number of elements to the total
-      total_elements += n_elements;
+        // Printing the number of elements if more than 0
+        if (n_elements > 0) {
+          // Adding the number of elements to the total
+          total_elements += n_elements;
 
-      message << "   Total number of elements of type "
-              << specfem::element::to_string(_medium_tag_) << " : "
-              << n_elements << "\n";
-    };
-  })
+          message << "   Total number of elements of type "
+                  << specfem::element::to_string(_medium_tag_) << " : "
+                  << n_elements << "\n";
+        };
+      })
 
   if (total_elements == mesh.nspec) {
     message << "  All elements accounted for.\n";

@@ -109,8 +109,8 @@ specfem::assembly::sources<specfem::element::dimension_tag::dim3>::sources(
   }
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
-       PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN),
+       PROPERTY_TAG(ISOTROPIC, ISOTROPIC_COSSERAT), BOUNDARY_TAG(NONE)),
       CAPTURE(element_indices_forward, element_indices_backward,
               element_indices_adjoint, source_indices_forward,
               source_indices_backward, source_indices_adjoint,
@@ -247,8 +247,8 @@ specfem::assembly::sources<specfem::element::dimension_tag::dim3>::
                         const specfem::element::boundary_tag boundary,
                         const specfem::simulation::field_type wavefield) const {
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
-       PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN),
+       PROPERTY_TAG(ISOTROPIC, ISOTROPIC_COSSERAT), BOUNDARY_TAG(NONE)),
       CAPTURE(h_element_indices_forward, h_element_indices_backward,
               h_element_indices_adjoint, h_source_indices_forward,
               h_source_indices_backward, h_source_indices_adjoint) {
@@ -289,8 +289,8 @@ specfem::assembly::sources<specfem::element::dimension_tag::dim3>::
         const specfem::element::boundary_tag boundary,
         const specfem::simulation::field_type wavefield) const {
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
-       PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN),
+       PROPERTY_TAG(ISOTROPIC, ISOTROPIC_COSSERAT), BOUNDARY_TAG(NONE)),
       CAPTURE(element_indices_forward, element_indices_backward,
               element_indices_adjoint, source_indices_forward,
               source_indices_backward, source_indices_adjoint) {
