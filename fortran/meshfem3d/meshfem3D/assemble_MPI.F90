@@ -1470,11 +1470,6 @@ subroutine match_interface_elements(dir, nsend, nrecv, ncorners, &
       stop 'MPI adjacency error: unmatched interface element'
     endif
   end do
-  if (.not. found) then
-    write(*,*) 'Error: No matching element found for local element ', &
-      send_iface(isend, 1), ' in direction ', dir
-    stop 'MPI adjacency error: unmatched interface element'
-  endif
 
   deallocate(send_coords, recv_coords, send_iface, recv_iface)
 

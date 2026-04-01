@@ -50,10 +50,21 @@ public:
 
   const auto &graph() const { return base_type::local_connections(); }
 
-  auto &local_connections() = delete;
-  const auto &local_connections() const = delete;
-  auto &mpi_connections() = delete;
-  const auto &mpi_connections() const = delete;
+private:
+  using base_local_connections_type =
+      decltype(std::declval<base_type &>().local_connections());
+  using base_local_connections_const_type =
+      decltype(std::declval<const base_type &>().local_connections());
+  using base_mpi_connections_type =
+      decltype(std::declval<base_type &>().mpi_connections());
+  using base_mpi_connections_const_type =
+      decltype(std::declval<const base_type &>().mpi_connections());
+
+public:
+  base_local_connections_type &local_connections() = delete;
+  base_local_connections_const_type &local_connections() const = delete;
+  base_mpi_connections_type &mpi_connections() = delete;
+  base_mpi_connections_const_type &mpi_connections() const = delete;
 };
 
 } // namespace specfem::assembly::mesh_impl
