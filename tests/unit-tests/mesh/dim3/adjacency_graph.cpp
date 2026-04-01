@@ -175,7 +175,7 @@ struct MPIConnection {
   bool expect_in(const std::vector<specfem::mesh::adjacency_graph<
                      dimension>::MPIEdgeProperties> &mpi_connections) const {
 
-    const auto my_rank = specfem::MPI::get_rank();
+    const auto my_rank = static_cast<size_t>(specfem::MPI::get_rank());
     if (my_rank != edge1.rank && my_rank != edge2.rank) {
       return false; // This connection was not expected on this rank
     }
@@ -231,9 +231,11 @@ struct ExpectedMPIAdjacency3D {
     const auto &mpi_conns = adjacency_graph.mpi_connections();
     for (const auto &expected_mpi_conn : mpi_connections) {
       auto local_found = expected_mpi_conn.expect_in(mpi_conns);
-      bool found = local_found;
-      SPECFEM_MPI_SAFECALL(MPI_Reduce(&local_found, &found, 1, MPI_CXX_BOOL,
+      int local_found_int = local_found ? 1 : 0;
+      int found_int = 0;
+      SPECFEM_MPI_SAFECALL(MPI_Reduce(&local_found_int, &found_int, 1, MPI_INT,
                                       MPI_LOR, 0, MPI_COMM_WORLD));
+      bool found = (found_int != 0);
 
       if (!found) {
         SPECFEM_MPI_ON_ROOT({
@@ -321,21 +323,23 @@ static const std::unordered_map<std::string, ExpectedMPIAdjacency3D>
 TEST_P(Mesh3DTest, MPIAdjacencyGraph) {
   const auto &param_name = GetParam();
 
-  if (specfem::MPI::get_size() < 4) {
-    FAIL() << "Test requires at least 4 MPI ranks. Current size: "
-           << specfem::MPI::get_size() << std::endl;
+  // Skip cleanly if there is no MPI ground truth for this parameter.
+  const auto it = expected_mpi_adjacency_map.find(param_name);
+  if (it == expected_mpi_adjacency_map.end()) {
+    GTEST_SKIP() << "No MPI adjacency ground truth defined for test case: "
+                 << param_name << std::endl;
     return;
   }
 
-  if (expected_mpi_adjacency_map.find(param_name) ==
-      expected_mpi_adjacency_map.end()) {
-    GTEST_SKIP() << "No ground truth defined for test case: " << param_name
-                 << std::endl;
+  // Treat MPI size requirement as an environmental constraint.
+  if (specfem::MPI::get_size() < 4) {
+    GTEST_SKIP() << "Test requires at least 4 MPI ranks. Current size: "
+                 << specfem::MPI::get_size() << std::endl;
     return;
   }
 
   const auto &mesh = getMesh();
   const auto &adjacency_graph = mesh.adjacency_graph;
-  const auto &expected = expected_mpi_adjacency_map.at(param_name);
+  const auto &expected = it->second;
   expected.check(adjacency_graph);
 }

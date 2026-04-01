@@ -15,28 +15,30 @@ specfem::io::mesh::impl::fortran::dim3::read_adjacency_graph(
    * (face/edge type) are stored in EdgeProperties. Database uses 1-based
    * indexing; converted to 0-based for internal representation.
    *
-   * Phase 2: MPI adjacencies with anchor points
+   * Phase 2: MPI adjacencies with anchor points (7-field format)
    * Reads inter-partition adjacencies enriched with anchor point constraints.
-   * For each MPI connection, reads:
-   * - Local and remote element indices
-   * - Connection type and orientation
-   * - Neighbor MPI rank and remote element's local index
-   * - Local anchor corner ID (element-absolute, 1-based Fortran 19-26,
-   *   converted to 0-based C++ 18-25)
-   * - Remote anchor corner ID (element-absolute, 1-based Fortran 19-26,
-   *   converted to 0-based C++ 18-25)
+   * For each MPI connection, reads 7 fields:
+   * - Local element index
+   * - Neighbor MPI rank
+   * - Neighbor element index
+   * - Local connection ID (interface/edge type)
+   * - Neighbor connection ID (interface/edge type)
+   * - Local anchor corner ID (element-absolute, Fortran 1-based 19-26)
+   * - Neighbor anchor corner ID (element-absolute, Fortran 1-based 19-26)
    *
-   * Anchor points are element-absolute corner IDs that match between local
+   * Anchor points are element-absolute corner IDs (typed as
+   * specfem::mesh_entity::dim3::type, range 19-26) that match between local
    * and remote elements via coordinate equivalence. They establish a canonical
    * orientation by identifying specific corners on the hexahedron geometry,
    * removing the possibility of rotational sliding across MPI boundaries by
    * creating an additional constraint beyond corner coordinate matching.
    *
-   * Corner ID mapping (element-absolute, 0-based C++ notation):
-   *   18: bottom_front_left      19: bottom_front_right
-   *   20: bottom_back_left       21: bottom_back_right
-   *   22: top_front_left         23: top_front_right
-   *   24: top_back_left          25: top_back_right
+   * Corner ID mapping (element-absolute, Fortran 1-based, matching
+   * specfem::mesh_entity::dim3::type convention):
+   *   19: bottom_front_left      20: bottom_front_right
+   *   21: bottom_back_left       22: bottom_back_right
+   *   23: top_front_left         24: top_front_right
+   *   25: top_back_left          26: top_back_right
    */
 
   specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim3> graph(

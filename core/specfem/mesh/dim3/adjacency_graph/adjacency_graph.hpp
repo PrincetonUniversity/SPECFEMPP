@@ -145,15 +145,15 @@ public:
    * orientation information and eliminate rotational ambiguity on shared MPI
    * surfaces.
    *
-   * The anchor points are element-absolute corner IDs (18-25 in 0-based C++
-   * representation, 19-26 in 1-based Fortran) that form a canonical reference
-   * frame for the shared interface. Unlike interface-relative corner indices,
-   * element-absolute IDs provide global position information within the
-   * hexahedron geometry:
-   *   - 18: bottom_front_left      19: bottom_front_right
-   *   - 20: bottom_back_left       21: bottom_back_right
-   *   - 22: top_front_left         23: top_front_right
-   *   - 24: top_back_left          25: top_back_right
+   * The anchor points are element-absolute corner IDs (19-26 in 1-based Fortran
+   * representation, matching specfem::mesh_entity::dim3::type convention) that
+   * form a canonical reference frame for the shared interface. Unlike
+   * interface-relative corner indices, element-absolute IDs provide global
+   * position information within the hexahedron geometry:
+   *   - 19: bottom_front_left      20: bottom_front_right
+   *   - 21: bottom_back_left       22: bottom_back_right
+   *   - 23: top_front_left         24: top_front_right
+   *   - 25: top_back_left          26: top_back_right
    *
    * For a face interface (ncorners=4) or edge interface (ncorners=2), anchor
    * points identify which local and remote corners match by coordinate,
@@ -178,13 +178,13 @@ public:
                         ///< associated with this edge
     specfem::mesh_entity::dim3::type local_anchor_point; ///< Element-absolute
                                                          ///< corner ID (range
-                                                         ///< 18-25) of the
+                                                         ///< 19-26) of the
                                                          ///< anchor point on
                                                          ///< the local element.
     specfem::mesh_entity::dim3::type
         neighbor_anchor_point; ///< Element-absolute
                                ///< corner ID (range
-                               ///< 18-25) of the
+                               ///< 19-26) of the
                                ///< anchor point on
                                ///< the neighboring
                                ///< element.
@@ -206,9 +206,9 @@ public:
      * @param local_idx Local element index in the current partition
      * @param neighbor_local_idx Local element index in the neighboring
      * partition
-     * @param local_anchor_idx Element-absolute corner ID (18-25) of the local
+     * @param local_anchor_idx Element-absolute corner ID (19-26) of the local
      * anchor point
-     * @param neighbor_anchor_idx Element-absolute corner ID (18-25) of the
+     * @param neighbor_anchor_idx Element-absolute corner ID (19-26) of the
      * neighboring anchor point
      *
      * @code
