@@ -22,20 +22,17 @@ void abort(const std::string &message, int error_code, const int line,
            const char *file);
 } // namespace program
 
-namespace MPI {
-
 #ifndef SPECFEM_ENABLE_MPI
 enum MPI_Comm { WORLD_COMM = 0, NULL_COMM = -1 };
 #endif
-} // namespace MPI
 } // namespace specfem
 
 #ifndef SPECFEM_ENABLE_MPI
-#define MPI_COMM_WORLD specfem::MPI::WORLD_COMM
-#define MPI_COMM_NULL specfem::MPI::NULL_COMM
+#define MPI_COMM_WORLD specfem::MPI_Comm::WORLD_COMM
+#define MPI_COMM_NULL specfem::MPI_Comm::NULL_COMM
 #endif
 
-namespace specfem::MPI {
+namespace specfem {
 
 /**
  * @class MPI
@@ -218,7 +215,7 @@ private:
                                       const char *);
 };
 
-} // namespace specfem::MPI
+} // namespace specfem
 
 #ifndef SPECFEM_ENABLE_MPI
 #define SPECFEM_MPI_SAFECALL(call) ((void)0)
