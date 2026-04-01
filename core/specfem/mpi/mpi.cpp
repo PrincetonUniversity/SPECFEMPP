@@ -5,6 +5,7 @@ namespace specfem {
 // Static storage for MPI rank and size (-1 indicates uninitialized)
 int MPI::rank_ = -1;
 int MPI::size_ = -1;
+MPI_Comm MPI::comm_ = MPI_COMM_WORLD;
 
 void MPI::initialize(int *argc, char ***argv) {
 #ifdef SPECFEM_ENABLE_MPI
@@ -44,9 +45,13 @@ void MPI::initialize(int *argc, char ***argv, int nnodes) {
       MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
+    // Get rank from world communicator before using in split
+    int world_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+
     // Only use the first nnodes ranks in the new communicator
-    int color = (rank_ < nnodes) ? 1 : MPI_UNDEFINED;
-    MPI_Comm_split(MPI_COMM_WORLD, color, rank_, &comm_);
+    int color = (world_rank < nnodes) ? 1 : MPI_UNDEFINED;
+    MPI_Comm_split(MPI_COMM_WORLD, color, world_rank, &comm_);
   }
 
   MPI_Comm_size(comm_, &size_);
