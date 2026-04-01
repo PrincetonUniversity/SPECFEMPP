@@ -61,7 +61,7 @@ specfem::io::mesh::impl::fortran::dim3::read_materials(
             throw std::runtime_error(error_message.str());
           }
 
-          if (!attenuation_enabled && (std::abs(Qkappa - 9999.0) < 1e-6)) {
+          if (!attenuation_enabled || (std::abs(Qkappa - 9999.0) < 1e-6)) {
 
             specfem::medium_container::material<
                 specfem::element::dimension_tag::dim3,
