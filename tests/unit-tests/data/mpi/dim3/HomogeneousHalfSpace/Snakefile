@@ -56,25 +56,6 @@ rule clean_artifacts:
         touch {output}
         """
 
-# ## clean Output files folder after everything is done
-# ## This rule should always run after generate_database, even if the previous rule fails, to avoid leaving intermediate files around
-# onsuccess:
-#     shell(
-#         """
-#         # Clean up intermediate files
-#         rm -rf OUTPUT_FILES
-#         rm -f executable_checked.txt
-#         """
-#     )
-
-# onerror:
-#     shell(
-#         """
-#         # Clean up intermediate files
-#         rm -rf OUTPUT_FILES
-#         rm -f executable_checked.txt
-#         """
-#     )
 
 rule clean:
     shell:
