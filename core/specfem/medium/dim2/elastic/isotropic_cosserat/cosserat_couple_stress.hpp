@@ -22,7 +22,7 @@ namespace medium_physics {
  * stress tensor asymmetry due to couple stress effects.
  *
  * **Moment equilibrium equation:**
- * \f$ j\ddot{\phi}_y = (\sigma_{xz} - \sigma_{zx}) \f$
+ * \f$ j\ddot{\phi}_y = -(\sigma_{xz} - \sigma_{zx}) \f$
  *
  * **Coordinate transformation:**
  * \f$ \mathbf{J}^{-1} = \frac{1}{\det(\mathbf{J})} \begin{bmatrix} \gamma_z & -\xi_z \\ -\gamma_x & \xi_x \end{bmatrix} \f$
