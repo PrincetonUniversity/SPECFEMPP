@@ -134,4 +134,7 @@ INSTANTIATE_TEST_SUITE_P(
                            single_moment_tensor_3d },
         SourceTestParam3D{ "3D Multiple Sources",
                            "io/sources/data/dim3/multiple_sources.yaml",
-                           multiple_sources_3d }));
+                           multiple_sources_3d },
+        SourceTestParam3D{ "3D Single Cosserat Force",
+                           "io/sources/data/dim3/single_cosserat_force.yaml",
+                           single_cosserat_force_3d }));
