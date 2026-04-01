@@ -15,12 +15,47 @@ void MPI::initialize(int *argc, char ***argv) {
     MPI_Init(argc, argv);
   }
 
-  MPI_Comm_size(MPI_COMM_WORLD, &size_);
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank_);
+  comm_ = MPI_COMM_WORLD;
+
+  MPI_Comm_size(comm_, &size_);
+  MPI_Comm_rank(comm_, &rank_);
 #else
   // Non-MPI build: single process
   rank_ = 0;
   size_ = 1;
+  comm_ = MPI_COMM_WORLD; // Dummy value for non-MPI build
+#endif
+}
+
+void MPI::initialize(int *argc, char ***argv, int nnodes) {
+#ifdef SPECFEM_ENABLE_MPI
+  int initialized;
+  MPI_Initialized(&initialized);
+
+  if (!initialized) {
+    MPI_Init(argc, argv);
+    // Check that requested nnodes does not exceed world size
+    int world_size;
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    if (nnodes > world_size) {
+      std::cerr << "Error: Requested nnodes (" << nnodes
+                << ") exceeds available world size (" << world_size << ")."
+                << std::endl;
+      MPI_Abort(MPI_COMM_WORLD, 1);
+    }
+
+    // Only use the first nnodes ranks in the new communicator
+    int color = (rank_ < nnodes) ? 1 : MPI_UNDEFINED;
+    MPI_Comm_split(MPI_COMM_WORLD, color, rank_, &comm_);
+  }
+
+  MPI_Comm_size(comm_, &size_);
+  MPI_Comm_rank(comm_, &rank_);
+#else
+  // Non-MPI build: single process
+  rank_ = 0;
+  size_ = 1;
+  comm_ = MPI_COMM_WORLD; // Dummy value for non-MPI build
 #endif
 }
 
@@ -31,6 +66,10 @@ void MPI::finalize() {
 
   // Only finalize if not already finalized externally
   if (!finalized) {
+    // Free custom communicator if it was created
+    if (comm_ != MPI_COMM_WORLD) {
+      MPI_Comm_free(&comm_);
+    }
     MPI_Finalize();
   }
 #endif

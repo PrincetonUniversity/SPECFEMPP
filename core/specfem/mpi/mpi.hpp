@@ -22,6 +22,21 @@ void abort(const std::string &message, int error_code, const int line,
            const char *file);
 } // namespace program
 
+namespace MPI {
+
+#ifndef SPECFEM_ENABLE_MPI
+enum MPI_Comm { WORLD_COMM = 0, NULL_COMM = -1 };
+#endif
+} // namespace MPI
+} // namespace specfem
+
+#ifndef SPECFEM_ENABLE_MPI
+#define MPI_COMM_WORLD specfem::MPI::WORLD_COMM
+#define MPI_COMM_NULL specfem::MPI::NULL_COMM
+#endif
+
+namespace specfem::MPI {
+
 /**
  * @class MPI
  * @brief Static MPI wrapper for SPECFEM++
@@ -51,6 +66,7 @@ class MPI {
 private:
   static int rank_; ///< Current MPI rank (-1 if not initialized)
   static int size_; ///< Total number of MPI processes (-1 if not initialized)
+  static MPI_Comm comm_; ///< MPI communicator (MPI_COMM_WORLD or user-defined)
 
 public:
   /**
@@ -61,7 +77,7 @@ public:
   static void sync() {
     check_context();
 #ifdef SPECFEM_ENABLE_MPI
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(comm_);
 #endif
   }
 
@@ -92,6 +108,11 @@ public:
   static int get_size() {
     check_context();
     return size_;
+  }
+
+  static MPI_Comm world_communicator() {
+    check_context();
+    return comm_;
   }
 
   /**
@@ -174,6 +195,17 @@ private:
   static void initialize(int *argc, char ***argv);
 
   /**
+   * @brief Initialize MPI with user-defined nodes within world communicator
+   *
+   * @param argc Pointer to argument count
+   * @param argv Pointer to argument vector
+   * @param nnodes Number of nodes to include in the new communicator (must be
+   * <= world size)
+   * @throws Exits with error code 1 if nnodes > world size
+   */
+  static void initialize(int *argc, char ***argv, int nnodes);
+
+  /**
    * @brief Finalize MPI and reset rank/size to -1
    *
    * Called by Context destructor. Only calls MPI_Finalize if MPI
@@ -186,7 +218,7 @@ private:
                                       const char *);
 };
 
-} // namespace specfem
+} // namespace specfem::MPI
 
 #ifndef SPECFEM_ENABLE_MPI
 #define SPECFEM_MPI_SAFECALL(call) ((void)0)
