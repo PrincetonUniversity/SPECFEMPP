@@ -305,7 +305,8 @@ private:
 
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3),
                        MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN),
-                       PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
+                       PROPERTY_TAG(ISOTROPIC, ISOTROPIC_COSSERAT),
+                       BOUNDARY_TAG(NONE)),
                       DECLARE((IndexViewType, elements),
                               (IndexViewType::HostMirror, h_elements)))
 };
