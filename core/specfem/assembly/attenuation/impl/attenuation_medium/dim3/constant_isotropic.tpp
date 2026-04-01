@@ -73,7 +73,7 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
       const specfem::mesh::materials<specfem::element::dimension_tag::dim3>
           &materials,
       const int ngllz, const int nglly, const int ngllx,
-      const type_real fc, const type_real f0,
+      const specfem::units::Hertz fc, const specfem::units::Hertz f0,
       const specfem::utilities::Band<specfem::units::Hertz> &band,
       const Kokkos::View<type_real [N_SLS], Kokkos::DefaultHostExecutionSpace> &tau_sigma) {
 
@@ -143,6 +143,12 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
       return;
     }
 
+    // Sanity check input frequencies before looping over elements
+    if (fc.raw() <= 0 || f0.raw() <= 0) {
+      throw std::runtime_error(
+          "Center frequency fc and reference frequency f0 must be positive.");
+    }
+
     // 3. Loop over elements
     for (int i = 0; i < nspec_attn; ++i) {
       const int ispec = elements(i);
@@ -151,7 +157,7 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
           specfem::element::medium_tag::elastic, PropertyTag,
           specfem::element::attenuation_tag::constant_isotropic>(ispec);
 
-      material.compute_attenuation_properties(fc, f0, band, tau_sigma);
+      material.compute_attenuation_properties(fc.raw(), f0.raw(), band, tau_sigma);
 
       // Per-GLL fill
       for (int iz = 0; iz < ngllz; ++iz) {

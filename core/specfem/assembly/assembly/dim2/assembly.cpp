@@ -29,6 +29,9 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
                                   this->mesh.element_grid.ngllz, this->mesh,
                                   this->element_types, flux_scheme_config };
   this->jacobian_matrix = { this->mesh };
+
+  // this->attenuation = { reference};
+
   this->properties = { this->mesh.nspec,
                        this->mesh.element_grid.ngllz,
                        this->mesh.element_grid.ngllx,

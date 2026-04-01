@@ -11,6 +11,7 @@
 #include "specfem/mesh/dim2/materials/materials.hpp"
 #include "specfem/setup.hpp"
 #include "specfem/utilities/logarithmic_center.hpp"
+#include "specfem/units.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly::impl {
@@ -66,7 +67,7 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
           &mesh,
       const specfem::mesh::materials<specfem::element::dimension_tag::dim2>
           &materials,
-      const int ngllz, const int ngllx, const type_real fc, const type_real f0,
+      const int ngllz, const int ngllx, const specfem::units::Hertz fc, const specfem::units::Hertz f0,
       const specfem::utilities::Band<specfem::units::Hertz> &band,
       const Kokkos::View<type_real [N_SLS], Kokkos::DefaultHostExecutionSpace> &tau_sigma) {
 
@@ -120,6 +121,12 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
       return;
     }
 
+    // Sanity check input frequencies before looping over elements
+    if (fc.raw() <= 0 || f0.raw() <= 0) {
+      throw std::runtime_error(
+          "Center frequency fc and reference frequency f0 must be positive.");
+    }
+
     // 3. Loop over elements
     for (int i = 0; i < nspec_attn; ++i) {
       const int ispec = elements(i);
@@ -129,42 +136,24 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
           specfem::element::medium_tag::elastic_psv, PropertyTag,
           specfem::element::attenuation_tag::constant_isotropic>(mesh_ispec);
 
-      const type_real Qkappa = material.Qkappa;
-      const type_real Qmu = material.Qmu;
-
-      auto tau_eps_kappa = specfem::attenuation::compute_tau_eps<N_SLS>(
-          Qkappa, tau_sigma, band.min.raw(), band.max.raw());
-      auto tau_eps_mu = specfem::attenuation::compute_tau_eps<N_SLS>(
-          Qmu, tau_sigma, band.min.raw(), band.max.raw());
-
-      auto prop_kappa =
-          specfem::attenuation::get_attenuation_property_values<N_SLS>(
-              tau_sigma, tau_eps_kappa);
-      auto prop_mu =
-          specfem::attenuation::get_attenuation_property_values<N_SLS>(
-              tau_sigma, tau_eps_mu);
-
-      const type_real scale_kappa =
-          specfem::attenuation::get_attenuation_scale_factor<N_SLS>(
-              fc, tau_eps_kappa, tau_sigma, Qkappa, f0);
-      const type_real scale_mu =
-          specfem::attenuation::get_attenuation_scale_factor<N_SLS>(
-              fc, tau_eps_mu, tau_sigma, Qmu, f0);
-
-      h_kappa_scale(i) = scale_kappa;
-      h_mu_scale(i) = scale_mu;
+      material.compute_attenuation_properties(fc.raw(), f0.raw(), band, tau_sigma);
 
       // Per-GLL fill
       for (int iz = 0; iz < ngllz; ++iz) {
         for (int ix = 0; ix < ngllx; ++ix) {
           for (int j = 0; j < N_SLS; ++j) {
             const type_real tauinv_j = 1.0 / tau_sigma(j);
+
+            auto kappa_props = material.get_kappa_attenuation_properties();
+
             h_kappa_relaxation_rate(i, iz, ix, j) =
-                prop_kappa.beta(j)
-                * tauinv_j / prop_kappa.one_minus_sum_beta;
+                kappa_props.beta(j)
+                * tauinv_j / kappa_props.one_minus_sum_beta;
+
+            auto mu_props = material.get_mu_attenuation_properties();
             h_mu_relaxation_rate(i, iz, ix, j) =
-                2.0 * prop_mu.beta(j)
-                * tauinv_j / prop_mu.one_minus_sum_beta;
+                2.0 * mu_props.beta(j)
+                * tauinv_j / mu_props.one_minus_sum_beta;
           }
         }
       }

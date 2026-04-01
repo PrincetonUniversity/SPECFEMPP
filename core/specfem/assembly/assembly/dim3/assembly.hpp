@@ -72,6 +72,11 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
   specfem::assembly::jacobian_matrix<dimension_tag> jacobian_matrix;
 
   /**
+   * @brief Attenuation properties for the mesh at every quadrature point
+   */
+  //   specfem::assembly::attenuation<dimension_tag> attenuation;
+
+  /**
    * @brief Material properties for the mesh at every quadrature point
    *
    */

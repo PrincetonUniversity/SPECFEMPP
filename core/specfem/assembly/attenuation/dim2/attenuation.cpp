@@ -13,7 +13,7 @@ void specfem::assembly::Attenuation<specfem::element::dimension_tag::dim2>::
             &mesh,
         const specfem::mesh::materials<specfem::element::dimension_tag::dim2>
             &materials,
-        const type_real fc, const type_real f0,
+        const specfem::units::Hertz fc, const specfem::units::Hertz f0,
         const specfem::utilities::Band<specfem::units::Hertz> &band,
         const Kokkos::View<type_real[N_SLS], Kokkos::DefaultHostExecutionSpace>
             &tau_sigma){
@@ -33,8 +33,7 @@ void specfem::assembly::Attenuation<specfem::element::dimension_tag::dim2>::
 specfem::assembly::Attenuation<specfem::element::dimension_tag::dim2>::
     Attenuation(
         const specfem::units::Hertz reference_frequency,
-        const specfem::units::Hertz min_frequency,
-        const specfem::units::Hertz max_frequency,
+        const specfem::utilities::Band<specfem::units::Hertz> band_in,
         const bool auto_compute_attenuation_band, const type_real deltat,
         const specfem::assembly::mesh<specfem::element::dimension_tag::dim2>
             &mesh,
@@ -52,13 +51,15 @@ specfem::assembly::Attenuation<specfem::element::dimension_tag::dim2>::
       auto_compute_attenuation_band
           ? attenuation::compute_band<N_SLS>(
                 specfem::units::Seconds(info.largest_minimum_period))
-          : specfem::utilities::Band<specfem::units::Hertz>(min_frequency,
-                                                            max_frequency);
+          : band_in;
+
+  using specfem::units::unit_symbols::Hz;
 
   // Compute the band center frequency for attenuation scaling (logarithmic
   // center)
-  type_real fc =
-      specfem::utilities::logarithmic_center(band.min.raw(), band.max.raw());
+  auto fc =
+      specfem::utilities::logarithmic_center(band.min.raw(), band.max.raw()) *
+      Hz;
 
   // Compute tau_sigma once (shared across all elements)
   auto tau_sigma = specfem::attenuation::compute_tau_sigma<N_SLS>(

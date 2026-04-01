@@ -63,7 +63,7 @@ struct Attenuation<specfem::element::dimension_tag::dim2>
   int nspec; ///< Total number of spectral elements
 
   // Attenuation parameters
-  type_real f0;                       ///< Reference frequency
+  specfem::units::Hertz f0;           ///< Reference frequency
   bool auto_compute_attenuation_band; ///< Whether to auto-compute the
                                       ///< attenuation band
 
@@ -102,8 +102,7 @@ struct Attenuation<specfem::element::dimension_tag::dim2>
 
   Attenuation(
       const specfem::units::Hertz reference_frequency,
-      const specfem::units::Hertz min_frequency,
-      const specfem::units::Hertz max_frequency,
+      const specfem::utilities::Band<specfem::units::Hertz> band_in,
       const bool auto_compute_attenuation_band, const type_real deltat,
       const specfem::assembly::mesh<specfem::element::dimension_tag::dim2>
           &mesh,
@@ -121,7 +120,7 @@ struct Attenuation<specfem::element::dimension_tag::dim2>
           &mesh,
       const specfem::mesh::materials<specfem::element::dimension_tag::dim2>
           &materials,
-      const type_real fc, const type_real f0,
+      const specfem::units::Hertz fc, const specfem::units::Hertz f0,
       const specfem::utilities::Band<specfem::units::Hertz> &band,
       const Kokkos::View<type_real[N_SLS], Kokkos::DefaultHostExecutionSpace>
           &tau_sigma);
