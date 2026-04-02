@@ -77,9 +77,16 @@ using ElementTagTuple =
 
 constexpr bool is_valid_medium_combo(MediumTagTuple t) {
   using D = specfem::element::dimension_tag;
+  using M = specfem::element::medium_tag;
   auto d = t.get<0>();
-  // dim2: all media defined; dim3: none yet
-  return d == D::dim2;
+  auto m = t.get<1>();
+  if (d == D::dim2)
+    return m == M::elastic_psv || m == M::elastic_sh || m == M::elastic_psv_t ||
+           m == M::acoustic || m == M::poroelastic ||
+           m == M::electromagnetic_te;
+  if (d == D::dim3)
+    return m == M::elastic || m == M::acoustic || m == M::elastic_spin;
+  return false;
 }
 
 constexpr bool is_valid_material_combo(MaterialTagTuple t) {
@@ -103,15 +110,16 @@ constexpr bool is_valid_material_combo(MaterialTagTuple t) {
     if (p == P::anisotropic)
       return a == A::none;
     return false;
+  case M::elastic: // dim3 elastic: isotropic only (no anisotropic in dim3)
+    return p == P::isotropic;
   case M::elastic_psv_t:
+  case M::elastic_spin: // dim3 Cosserat elastic: isotropic_cosserat × none
     return p == P::isotropic_cosserat && a == A::none;
   case M::acoustic:
     return p == P::isotropic; // {none, ci} both allowed
   case M::poroelastic:
   case M::electromagnetic_te:
     return p == P::isotropic && a == A::none;
-  case M::elastic:
-  case M::elastic_spin:
   case M::electromagnetic:
     return false; // not a material-level medium
   }
@@ -119,6 +127,7 @@ constexpr bool is_valid_material_combo(MaterialTagTuple t) {
 }
 
 constexpr bool is_valid_full_combo(ElementTagTuple t) {
+  using D = specfem::element::dimension_tag;
   using M = specfem::element::medium_tag;
   using B = specfem::element::boundary_tag;
   auto d = t.get<0>();
@@ -129,6 +138,10 @@ constexpr bool is_valid_full_combo(ElementTagTuple t) {
 
   if (!is_valid_material_combo({ d, m, p, a }))
     return false;
+
+  // dim3: all element types have no boundary condition
+  if (d == D::dim3)
+    return b == B::none;
 
   switch (m) {
   case M::acoustic:
