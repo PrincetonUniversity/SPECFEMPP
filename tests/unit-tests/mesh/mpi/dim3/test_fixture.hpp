@@ -1,0 +1,51 @@
+#pragma once
+
+#include "SPECFEM_Environment.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/io.hpp"
+#include "specfem/mesh.hpp"
+#include <gtest/gtest.h>
+#include <string>
+
+namespace specfem::test_configuration {
+struct ActualMesh3D {
+  constexpr static specfem::element::dimension_tag dimension =
+      specfem::element::dimension_tag::dim3;
+  specfem::mesh::mesh<dimension> mesh;
+
+  ActualMesh3D() = default;
+
+  ActualMesh3D(const std::string &database) {
+    mesh = specfem::io::read_3d_mesh(database);
+  }
+};
+} // namespace specfem::test_configuration
+
+// Setup a fixture for parameterized tests
+class MPIMesh3DTest : public ::testing::TestWithParam<std::string> {
+protected:
+  constexpr static specfem::element::dimension_tag dimension =
+      specfem::element::dimension_tag::dim3;
+
+  specfem::test_configuration::ActualMesh3D mesh;
+
+  MPIMesh3DTest() = default;
+
+  void SetUp() override {
+    // Check if MPI size requirement was met during environment setup
+    if (!SPECFEMEnvironment::IsMPISizeValid()) {
+      GTEST_SKIP() << SPECFEMEnvironment::GetMPISizeError();
+    }
+    const auto &folder = GetParam();
+    const std::string database = "data/mpi/dim3/" + folder + "/Database";
+    mesh = specfem::test_configuration::ActualMesh3D(database);
+  }
+  void TearDown() override {
+    // Any cleanup needed for each test
+  }
+
+  ~MPIMesh3DTest() override = default;
+
+  // Accessor for the mesh
+  const auto &getMesh() const { return mesh.mesh; }
+};

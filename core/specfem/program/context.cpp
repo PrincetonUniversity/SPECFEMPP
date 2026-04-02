@@ -15,6 +15,14 @@ Context::Context(int argc, char *argv[])
   specfem::Logger::initialize(this);
 }
 
+Context::Context(int argc, char *argv[], int nnodes)
+    : kokkos_guard_(std::make_unique<Kokkos::ScopeGuard>(argc, argv)) {
+  // Initialize static MPI wrapper with user-defined nodes
+  specfem::MPI::initialize(&argc, &argv, nnodes);
+  // Initialize Logger
+  specfem::Logger::initialize(this);
+}
+
 Context::Context(const std::vector<std::string> &args) {
   int argc;
   char **argv;

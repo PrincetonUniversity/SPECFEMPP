@@ -366,6 +366,25 @@ target_link_libraries(
   -lpthread -lm
 )
 
+if(SPECFEM_ENABLE_MPI)
+  add_executable(
+    mesh_mpi_dim3_tests
+    mesh/mpi/dim3/adjacency_graph.cpp
+    mesh/mpi/dim3/runner.cpp
+  )
+
+  target_link_libraries(
+    mesh_mpi_dim3_tests
+    specfem::mesh
+    specfem_environment
+    specfem::io
+    specfem::utilities
+    MPI::MPI_CXX
+
+    -lpthread -lm
+  )
+endif()
+
 add_executable(
   nonconforming_tests
   nonconforming/reparameterizations/compute_intersection_test.cpp
@@ -1077,6 +1096,33 @@ if(NOT SPECFEM_ENABLE_MPI)
 
   # gtest_discover_tests(seismogram_elastic_tests)
   # gtest_discover_tests(seismogram_acoustic_tests)
+else()
+  # MPI-enabled build - add MPI-specific tests
+  include(GoogleTest)
+  set(TEST_TARGETS
+    mesh_mpi_dim3_tests
+  )
+  foreach(test_target IN LISTS TEST_TARGETS)
+      gtest_discover_tests(${test_target}
+        DISCOVERY_MODE POST_BUILD
+        DISCOVERY_TIMEOUT 300
+      )
+  endforeach()
+
+  # For tests that require data files from the tests directory,
+  # create symbolic links to the test data directory so that
+  # the tests can access them from the build folder.
+  set(LINK_DIRS
+    data
+    mesh
+  )
+
+  foreach(dir_name IN LISTS LINK_DIRS)
+      file(CREATE_LINK
+          ${CMAKE_CURRENT_SOURCE_DIR}/${dir_name}
+          ${CMAKE_CURRENT_BINARY_DIR}/${dir_name}
+          SYMBOLIC)
+  endforeach()
 endif()
 
 

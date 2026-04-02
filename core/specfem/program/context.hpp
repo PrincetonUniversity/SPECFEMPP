@@ -36,6 +36,8 @@ public:
    */
   Context(int argc, char *argv[]);
 
+  Context(int argc, char *argv[], int nnodes);
+
   /**
    * @brief Initialize context from argument vector
    * @param args Vector of arguments
