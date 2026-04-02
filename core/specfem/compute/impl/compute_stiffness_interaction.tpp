@@ -29,7 +29,7 @@ int compute_stiffness_interaction_core(
   constexpr auto medium_tag = Tags::medium_tag;
   constexpr auto property_tag = Tags::property_tag;
   constexpr auto boundary_tag = Tags::boundary_tag;
-  constexpr auto attenuation_tag = specfem::element::attenuation_tag::none;
+  constexpr auto attenuation_tag = Tags::attenuation_tag;
   constexpr auto dimension_tag = Tags::dimension_tag;
   constexpr int ngll = NGLL;
 
@@ -271,34 +271,14 @@ int compute_stiffness_interaction(
   specfem::tag_dispatch::for_each(
       specfem::tag_dispatch::dimension_set<DimensionTag>{} *
       specfem::tag_dispatch::medium_set<MediumTag>{} *
-      PROPERTY_T(isotropic, anisotropic, isotropic_cosserat) *
-      ATTENUATION_T(none) *
-      BOUNDARY_T(none, stacey, acoustic_free_surface,
-                 composite_stacey_dirichlet), [&]<typename InnerTags>() {
+      PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
+      ATTENUATION_SET(none) *
+      BOUNDARY_SET(none, stacey, acoustic_free_surface,
+                   composite_stacey_dirichlet), [&]<typename ElementTags>() {
     elements_updated +=
-        compute_stiffness_interaction_core<NGLL, WavefieldType, InnerTags>(
+        compute_stiffness_interaction_core<NGLL, WavefieldType, ElementTags>(
             assembly, istep);
   });
-
-  //   FOR_EACH_IN_PRODUCT(
-  //       (DIMENSION_TAG(DIM2, DIM3),
-  //        MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-  //                   ELASTIC_PSV_T),
-  //        PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-  //        BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-  //                     COMPOSITE_STACEY_DIRICHLET)),
-  //       {
-  //         if constexpr (DimensionTag == _dimension_tag_ &&
-  //                       MediumTag == _medium_tag_) {
-  //           elements_updated += compute_stiffness_interaction_core<
-  //               NGLL,
-  //               specfem::tags::Tags<DimensionTag, WavefieldType,
-  //               _medium_tag_,
-  //                                   _property_tag_, _boundary_tag_>
-  //                                   >(assembly,
-  //                                                                     istep);
-  //         }
-  //       })
 
   return elements_updated;
 }

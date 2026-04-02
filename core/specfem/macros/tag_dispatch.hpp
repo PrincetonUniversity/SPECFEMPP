@@ -25,11 +25,11 @@
 
 // ── Per-tag namespace-prefix helpers (SEQ_TRANSFORM callbacks) ───────────────
 
-#define SPECFEM_PP_DIM_VAL(s, _, v) specfem::element::dimension_tag::v
-#define SPECFEM_PP_MED_VAL(s, _, v) specfem::element::medium_tag::v
-#define SPECFEM_PP_PROP_VAL(s, _, v) specfem::element::property_tag::v
-#define SPECFEM_PP_ATT_VAL(s, _, v) specfem::element::attenuation_tag::v
-#define SPECFEM_PP_BND_VAL(s, _, v) specfem::element::boundary_tag::v
+#define _SPECFEM_DIM_VAL(s, _, v) specfem::element::dimension_tag::v
+#define _SPECFEM_MED_VAL(s, _, v) specfem::element::medium_tag::v
+#define _SPECFEM_PROP_VAL(s, _, v) specfem::element::property_tag::v
+#define _SPECFEM_ATT_VAL(s, _, v) specfem::element::attenuation_tag::v
+#define _SPECFEM_BND_VAL(s, _, v) specfem::element::boundary_tag::v
 
 // Internal: map op over __VA_ARGS__ and produce a comma-separated list
 #define _SPECFEM_TAG_ENUM(op, ...)                                             \
@@ -39,18 +39,18 @@
 // ── Public macros
 // ─────────────────────────────────────────────────────────────
 
-#define DIMENSION_T(...)                                                       \
-  specfem::tag_dispatch::dimension_set<_SPECFEM_TAG_ENUM(SPECFEM_PP_DIM_VAL,   \
+#define DIMENSION_SET(...)                                                     \
+  specfem::tag_dispatch::dimension_set<_SPECFEM_TAG_ENUM(_SPECFEM_DIM_VAL,     \
                                                          __VA_ARGS__)> {}
-#define MEDIUM_T(...)                                                          \
-  specfem::tag_dispatch::medium_set<_SPECFEM_TAG_ENUM(SPECFEM_PP_MED_VAL,      \
+#define MEDIUM_SET(...)                                                        \
+  specfem::tag_dispatch::medium_set<_SPECFEM_TAG_ENUM(_SPECFEM_MED_VAL,        \
                                                       __VA_ARGS__)> {}
-#define PROPERTY_T(...)                                                        \
-  specfem::tag_dispatch::property_set<_SPECFEM_TAG_ENUM(SPECFEM_PP_PROP_VAL,   \
+#define PROPERTY_SET(...)                                                      \
+  specfem::tag_dispatch::property_set<_SPECFEM_TAG_ENUM(_SPECFEM_PROP_VAL,     \
                                                         __VA_ARGS__)> {}
-#define ATTENUATION_T(...)                                                     \
-  specfem::tag_dispatch::attenuation_set<_SPECFEM_TAG_ENUM(SPECFEM_PP_ATT_VAL, \
+#define ATTENUATION_SET(...)                                                   \
+  specfem::tag_dispatch::attenuation_set<_SPECFEM_TAG_ENUM(_SPECFEM_ATT_VAL,   \
                                                            __VA_ARGS__)> {}
-#define BOUNDARY_T(...)                                                        \
-  specfem::tag_dispatch::boundary_set<_SPECFEM_TAG_ENUM(SPECFEM_PP_BND_VAL,    \
+#define BOUNDARY_SET(...)                                                      \
+  specfem::tag_dispatch::boundary_set<_SPECFEM_TAG_ENUM(_SPECFEM_BND_VAL,      \
                                                         __VA_ARGS__)> {}
