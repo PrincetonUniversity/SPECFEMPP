@@ -3,6 +3,7 @@
 #include "quantity.hpp"
 
 #include <functional>
+#include <regex>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -146,7 +147,12 @@ inline bool strip_si_prefix(std::string_view unit, type_real &factor,
  *   parse("20.0Hz")     // Hertz(20.0)  — no whitespace is fine
  * @endcode
  *
- * Supported unit symbols (case-sensitive):
+ * Supported scaling symbols are SI prefixes: k (×1e3), M (×1e6), m (×1e-3),
+ * u/mu/µ (×1e-6). The table below shows a non-exhaustive list of supported
+ * unit symbols; any symbol not in the table may still be parsed if the SI
+ * prefix and base unit are both supported.
+ *
+ * (Some) supported unit symbols (case-sensitive):
  * | Category      | Symbols                                  |
  * |---------------|------------------------------------------|
  * | Dimensionless | 1                                        |
@@ -169,52 +175,18 @@ inline bool strip_si_prefix(std::string_view unit, type_real &factor,
  *
  */
 inline AnyQuantity parse(std::string_view s) {
+
   // ── Tokenise: numeric prefix + unit suffix ────────────────────────────────
-  std::size_t pos = 0;
-
-  // Skip leading whitespace
-  while (pos < s.size() && (s[pos] == ' ' || s[pos] == '\t'))
-    ++pos;
-
-  const std::size_t num_start = pos;
-
-  // Optional leading sign
-  if (pos < s.size() && (s[pos] == '+' || s[pos] == '-'))
-    ++pos;
-
-  // Integer digits
-  while (pos < s.size() && s[pos] >= '0' && s[pos] <= '9')
-    ++pos;
-
-  // Optional decimal part
-  if (pos < s.size() && s[pos] == '.') {
-    ++pos;
-    while (pos < s.size() && s[pos] >= '0' && s[pos] <= '9')
-      ++pos;
-  }
-
-  // Optional exponent
-  if (pos < s.size() && (s[pos] == 'e' || s[pos] == 'E')) {
-    ++pos;
-    if (pos < s.size() && (s[pos] == '+' || s[pos] == '-'))
-      ++pos;
-    while (pos < s.size() && s[pos] >= '0' && s[pos] <= '9')
-      ++pos;
-  }
-
-  if (pos == num_start) {
+  const std::string str(s);
+  static const std::regex num_unit_re(
+      R"(^\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s*(.*?)\s*$)");
+  std::smatch m;
+  if (!std::regex_match(str, m, num_unit_re) || m[1].length() == 0) {
     throw std::invalid_argument(
-        "specfem::units::parse: no numeric value found in \"" + std::string(s) +
-        "\"");
+        "specfem::units::parse: no numeric value found in \"" + str + "\"");
   }
-
-  const std::string num_str(s.substr(num_start, pos - num_start));
-
-  // Skip whitespace between number and unit
-  while (pos < s.size() && (s[pos] == ' ' || s[pos] == '\t'))
-    ++pos;
-
-  const std::string unit(s.substr(pos));
+  const std::string num_str = m[1].str();
+  const std::string unit = m[2].str();
 
   // ── Parse number ─────────────────────────────────────────────────────────
   type_real value;

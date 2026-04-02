@@ -4,21 +4,7 @@
 #include <ostream>
 
 specfem::runtime_configuration::Attenuation::Attenuation(
-    const YAML::Node &attenuation_node)
-    : attenuation_enabled(false),
-      reference_frequency(specfem::units::Hertz(-1.0)),
-      attenuation_frequency_band(specfem::units::Hertz(-1.0),
-                                 specfem::units::Hertz(-1.0)) {
-
-  try {
-    this->attenuation_enabled = attenuation_node["enabled"].as<bool>();
-
-  } catch (YAML::ParserException &e) {
-    std::ostringstream message;
-    message << "Error reading attenuation configuration value: enabled. \n"
-            << e.what();
-    throw std::runtime_error(message.str());
-  }
+    const YAML::Node &attenuation_node) {
 
   try {
     this->reference_frequency =
