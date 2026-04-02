@@ -49,8 +49,8 @@ KOKKOS_FORCEINLINE_FUNCTION void store_on_device(
   constexpr auto PropertyTag = PointAttenuationType::property_tag;
 
   // Store memory variables back to device views
-  attenuation.template get_medium<MediumTag, PropertyTag>().store_device_values(
-      index, point);
+  attenuation.template get_container<MediumTag, PropertyTag>()
+      .store_device_values(index, point);
 }
 
 } // namespace specfem::assembly

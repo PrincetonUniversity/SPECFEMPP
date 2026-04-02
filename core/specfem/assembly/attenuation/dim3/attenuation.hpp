@@ -135,7 +135,7 @@ struct Attenuation<specfem::element::dimension_tag::dim3>
   KOKKOS_INLINE_FUNCTION constexpr specfem::assembly::impl::attenuation_medium<
       specfem::element::dimension_tag::dim3, MediumTag, PropertyTag,
       specfem::element::attenuation_tag::constant_isotropic> const &
-  get_medium() const {
+  get_container() const {
     FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC),
                          PROPERTY_TAG(ISOTROPIC),
                          ATTENUATION_TAG(CONSTANT_ISOTROPIC)),

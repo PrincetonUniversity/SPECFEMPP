@@ -55,8 +55,8 @@ KOKKOS_FORCEINLINE_FUNCTION void load_on_device(
   constexpr int N_SLS = PointAttenuationType::N_SLS;
 
   // Load per-element data: relaxation rates and memory variables
-  attenuation.template get_medium<MediumTag, PropertyTag>().load_device_values(
-      lcoord, point);
+  attenuation.template get_container<MediumTag, PropertyTag>()
+      .load_device_values(lcoord, point);
 
   // Broadcast global RK coefficients (identical for every element in a run)
   for (int j = 0; j < N_SLS; ++j) {

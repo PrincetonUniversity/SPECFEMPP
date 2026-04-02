@@ -20,11 +20,10 @@ void specfem::assembly::Attenuation<specfem::element::dimension_tag::dim3>::
           (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC),
            ATTENUATION_TAG(CONSTANT_ISOTROPIC)),
           CAPTURE(attn_medium) {
-            using medium_t = std::remove_reference_t<decltype(_attn_medium_)>;
             auto elements = element_types.get_elements_on_host(
                 _medium_tag_, _property_tag_, _attenuation_tag_);
-            _attn_medium_ = medium_t(elements, mesh, materials, ngllz, nglly,
-                                     ngllx, fc, f0, band, tau_sigma);
+            _attn_medium_ = { elements, mesh, materials, ngllz, nglly,
+                              ngllx,    fc,   f0,        band,  tau_sigma };
           })
     }
 
