@@ -11,8 +11,8 @@
  *
  * Calls lambda() with each valid Tags<v0, v1, ...> as a template argument.
  * et_value is any element_combinations<...> instance, e.g.:
- *   specfem::tag_dispatch::for_each(DIMENSION_T(dim2) * MEDIUM_T(elastic_psv),
- * func);
+ *   specfem::tag_dispatch::for_each(DIMENSION_SET(dim2) *
+ * MEDIUM_SET(elastic_psv), func);
  */
 
 namespace specfem::tag_dispatch {

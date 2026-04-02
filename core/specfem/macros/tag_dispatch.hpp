@@ -2,19 +2,19 @@
 
 // tag_macros.hpp — type-form shorthand macros for tag-set types
 //
-//   DIMENSION_T(dim2)
+//   DIMENSION_SET(dim2)
 //     =>
 //     specfem::tag_dispatch::dimension_set<specfem::element::dimension_tag::dim2>
 //
-//   MEDIUM_T(acoustic, elastic_psv)
+//   MEDIUM_SET(acoustic, elastic_psv)
 //     =>
 //     specfem::tag_dispatch::medium_set<specfem::element::medium_tag::acoustic,
 //                                           specfem::element::medium_tag::elastic_psv>
 //
-// Usage: for_each_in_product<DIMENSION_T(dim2), MEDIUM_T(...)>(lambda);
+// Usage: for_each_in_product<DIMENSION_SET(dim2), MEDIUM_SET(...)>(lambda);
 //        using ET =
-//        specfem::tag_dispatch::element_combinations<DIMENSION_T(dim2),
-//        MEDIUM_T(...)>;
+//        specfem::tag_dispatch::element_combinations<DIMENSION_SET(dim2),
+//        MEDIUM_SET(...)>;
 //
 // BOOST_PP provides the variadic-argument map needed to prefix each element
 // with its fully-qualified enum namespace.

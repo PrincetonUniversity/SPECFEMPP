@@ -124,8 +124,8 @@ public:
 };
 
 // ── operator* for building element_combinations from tag sets
-// ───────────────── Enables: constexpr auto ET = DIMENSION_T(dim2){} *
-// MEDIUM_T(...){} * ...;
+// ───────────────── Enables: constexpr auto ET = DIMENSION_SET(dim2){} *
+// MEDIUM_SET(...){} * ...;
 
 // Base: two tag sets → element_combinations<A, B>
 template <typename A, typename B>
