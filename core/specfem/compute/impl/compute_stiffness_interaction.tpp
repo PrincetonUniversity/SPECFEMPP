@@ -269,17 +269,17 @@ int compute_stiffness_interaction(
 
   int elements_updated = 0;
 
-  specfem::tag_dispatch::for_each_in_product<
-      DIMENSION_T(dim2, dim3),
-      MEDIUM_T(elastic, elastic_psv, elastic_sh, elastic_psv_t, acoustic, poroelastic),
-      PROPERTY_T(isotropic, anisotropic, isotropic_cosserat),
-      BOUNDARY_T(none, stacey, acoustic_free_surface, composite_stacey_dirichlet)>([&]<typename Tags>() {
+    specfem::tag_dispatch::for_each_in_product<
+        specfem::tag_dispatch::dimension_set<DimensionTag>,
+        specfem::tag_dispatch::medium_set<MediumTag>,
+        PROPERTY_T(isotropic, anisotropic, isotropic_cosserat),
+        BOUNDARY_T(none, stacey, acoustic_free_surface, composite_stacey_dirichlet)>([&]<typename Tags>() {
         if constexpr (DimensionTag == Tags::dimension_tag &&
-                      MediumTag == Tags::medium_tag) {
-          elements_updated += compute_stiffness_interaction_core<
-              NGLL, Tags>(assembly, istep);
+                        MediumTag == Tags::medium_tag) {
+            elements_updated += compute_stiffness_interaction_core<
+                NGLL, Tags>(assembly, istep);
         }
-      });
+    });
 
 //   FOR_EACH_IN_PRODUCT(
 //       (DIMENSION_TAG(DIM2, DIM3),
