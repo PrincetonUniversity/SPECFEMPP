@@ -41,16 +41,16 @@
 
 #define DIMENSION_T(...)                                                       \
   specfem::tag_dispatch::dimension_set<_SPECFEM_TAG_ENUM(SPECFEM_PP_DIM_VAL,   \
-                                                         __VA_ARGS__)>
+                                                         __VA_ARGS__)> {}
 #define MEDIUM_T(...)                                                          \
   specfem::tag_dispatch::medium_set<_SPECFEM_TAG_ENUM(SPECFEM_PP_MED_VAL,      \
-                                                      __VA_ARGS__)>
+                                                      __VA_ARGS__)> {}
 #define PROPERTY_T(...)                                                        \
   specfem::tag_dispatch::property_set<_SPECFEM_TAG_ENUM(SPECFEM_PP_PROP_VAL,   \
-                                                        __VA_ARGS__)>
+                                                        __VA_ARGS__)> {}
 #define ATTENUATION_T(...)                                                     \
   specfem::tag_dispatch::attenuation_set<_SPECFEM_TAG_ENUM(SPECFEM_PP_ATT_VAL, \
-                                                           __VA_ARGS__)>
+                                                           __VA_ARGS__)> {}
 #define BOUNDARY_T(...)                                                        \
   specfem::tag_dispatch::boundary_set<_SPECFEM_TAG_ENUM(SPECFEM_PP_BND_VAL,    \
-                                                        __VA_ARGS__)>
+                                                        __VA_ARGS__)> {}

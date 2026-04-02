@@ -123,4 +123,22 @@ public:
       impl::fill_combos<combo_type, size>(s_arrays);
 };
 
+// ── operator* for building element_combinations from tag sets
+// ───────────────── Enables: constexpr auto ET = DIMENSION_T(dim2){} *
+// MEDIUM_T(...){} * ...;
+
+// Base: two tag sets → element_combinations<A, B>
+template <typename A, typename B>
+constexpr auto operator*(A, B) -> element_combinations<A, B> {
+  return {};
+}
+
+// Extension: element_combinations<...> * new tag set → larger
+// element_combinations
+template <typename... Existing, typename NewSet>
+constexpr auto operator*(element_combinations<Existing...>, NewSet)
+    -> element_combinations<Existing..., NewSet> {
+  return {};
+}
+
 } // namespace specfem::tag_dispatch

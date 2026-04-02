@@ -6,14 +6,16 @@
 
 #include <cstddef>
 
-namespace specfem::tag_dispatch {
-
 /**
- * for_each_in_product<ET>(lambda)
- * for_each_in_product<DimSet, MedSet, ...>(lambda)
+ * specfem::tag_dispatch::for_each(et_value, lambda)
  *
  * Calls lambda() with each valid Tags<v0, v1, ...> as a template argument.
+ * et_value is any element_combinations<...> instance, e.g.:
+ *   specfem::tag_dispatch::for_each(DIMENSION_T(dim2) * MEDIUM_T(elastic_psv),
+ * func);
  */
+
+namespace specfem::tag_dispatch {
 
 namespace impl {
 
@@ -38,19 +40,9 @@ void for_each_impl(Func &f, std::index_sequence<Is...>) {
 
 } // namespace impl
 
-// Explicit-type overload: for_each_in_product<ET>(func)
-template <typename ET, typename Func> void for_each_in_product(Func &&f) {
-  impl::for_each_impl<ET>(f, std::make_index_sequence<ET::size>{});
-}
-
-// Multi-tagset explicit-type overload: for_each_in_product<DimSet, MedSet,
-// ...>(func) Requires >=2 tag-set types to avoid ambiguity with the single-ET
-// overload above.
-template <typename TagSet0, typename TagSet1, typename... TagSets,
-          typename Func>
-void for_each_in_product(Func &&f) {
-  using ET =
-      specfem::tag_dispatch::element_combinations<TagSet0, TagSet1, TagSets...>;
+template <typename... Sets, typename Func>
+void for_each(element_combinations<Sets...>, Func &&f) {
+  using ET = element_combinations<Sets...>;
   impl::for_each_impl<ET>(f, std::make_index_sequence<ET::size>{});
 }
 

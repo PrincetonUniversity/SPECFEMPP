@@ -268,13 +268,13 @@ int compute_stiffness_interaction(
 
   int elements_updated = 0;
 
-  specfem::tag_dispatch::for_each_in_product<
-      specfem::tag_dispatch::dimension_set<DimensionTag>,
-      specfem::tag_dispatch::medium_set<MediumTag>,
-      PROPERTY_T(isotropic, anisotropic, isotropic_cosserat),
-      ATTENUATION_T(none),
+  specfem::tag_dispatch::for_each(
+      specfem::tag_dispatch::dimension_set<DimensionTag>{} *
+      specfem::tag_dispatch::medium_set<MediumTag>{} *
+      PROPERTY_T(isotropic, anisotropic, isotropic_cosserat) *
+      ATTENUATION_T(none) *
       BOUNDARY_T(none, stacey, acoustic_free_surface,
-                 composite_stacey_dirichlet)>([&]<typename InnerTags>() {
+                 composite_stacey_dirichlet), [&]<typename InnerTags>() {
     elements_updated +=
         compute_stiffness_interaction_core<NGLL, WavefieldType, InnerTags>(
             assembly, istep);
