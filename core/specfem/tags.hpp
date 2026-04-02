@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/element/tags.hpp"
+#include "specfem/element/to_string.hpp"
 #include "specfem/element_connections/tags.hpp"
 #include "specfem/element_coupling/tags.hpp"
 #include "specfem/simulation.hpp"
@@ -126,6 +127,15 @@ template <bool UseSIMD> struct TagMember<bool, UseSIMD> {
  * @endcode
  */
 template <auto... TagMembers>
-struct Tags : TagMember<decltype(TagMembers), TagMembers>... {};
+struct Tags : TagMember<decltype(TagMembers), TagMembers>... {
+  static std::string name() {
+    std::string s;
+    bool first = true;
+    ((s += (first ? (first = false, std::string{}) : std::string{ "_" }) +
+           specfem::element::to_string(TagMembers)),
+     ...);
+    return s;
+  }
+};
 
 } // namespace specfem::tags

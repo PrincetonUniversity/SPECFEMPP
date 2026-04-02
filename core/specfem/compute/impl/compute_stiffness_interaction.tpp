@@ -13,6 +13,7 @@
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/chunk_element.hpp"
 #include "specfem/point.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include "compute_stiffness_interaction.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/tags.hpp"
@@ -268,23 +269,35 @@ int compute_stiffness_interaction(
 
   int elements_updated = 0;
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2, DIM3),
-       MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                    COMPOSITE_STACEY_DIRICHLET)),
-      {
-        if constexpr (DimensionTag == _dimension_tag_ &&
-                      MediumTag == _medium_tag_) {
+  specfem::tag_dispatch::for_each_in_product<
+      DIMENSION_T(dim2, dim3),
+      MEDIUM_T(elastic, elastic_psv, elastic_sh, elastic_psv_t, acoustic, poroelastic),
+      PROPERTY_T(isotropic, anisotropic, isotropic_cosserat),
+      BOUNDARY_T(none, stacey, acoustic_free_surface, composite_stacey_dirichlet)>([&]<typename Tags>() {
+        if constexpr (DimensionTag == Tags::dimension_tag &&
+                      MediumTag == Tags::medium_tag) {
           elements_updated += compute_stiffness_interaction_core<
-              NGLL,
-              specfem::tags::Tags<DimensionTag, WavefieldType, _medium_tag_,
-                                  _property_tag_, _boundary_tag_> >(assembly,
-                                                                    istep);
+              NGLL, Tags>(assembly, istep);
         }
-      })
+      });
+
+//   FOR_EACH_IN_PRODUCT(
+//       (DIMENSION_TAG(DIM2, DIM3),
+//        MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+//                   ELASTIC_PSV_T),
+//        PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+//        BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
+//                     COMPOSITE_STACEY_DIRICHLET)),
+//       {
+//         if constexpr (DimensionTag == _dimension_tag_ &&
+//                       MediumTag == _medium_tag_) {
+//           elements_updated += compute_stiffness_interaction_core<
+//               NGLL,
+//               specfem::tags::Tags<DimensionTag, WavefieldType, _medium_tag_,
+//                                   _property_tag_, _boundary_tag_> >(assembly,
+//                                                                     istep);
+//         }
+//       })
 
   return elements_updated;
 }

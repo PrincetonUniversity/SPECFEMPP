@@ -7,3 +7,4 @@
 #include "macros/material_iterators.hpp"
 #include "macros/point_container.hpp"
 #include "macros/suppress_warnings.hpp"
+#include "macros/tag_dispatch.hpp"
