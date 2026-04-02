@@ -42,11 +42,11 @@ public:
   int ngnod; ///< Number of control nodes per element
 
   ControlNodeCoordinatesView control_node_coordinates; ///< Device coordinates
-  ControlNodeCoordinatesView::HostMirror
+  ControlNodeCoordinatesView::host_mirror_type
       h_control_node_coordinates; ///< Host coordinates
 
-  ControlNodeIndexView control_node_index;               ///< Device indices
-  ControlNodeIndexView::HostMirror h_control_node_index; ///< Host indices
+  ControlNodeIndexView control_node_index; ///< Device indices
+  ControlNodeIndexView::host_mirror_type h_control_node_index; ///< Host indices
 
   /**
    * @brief Default constructor.

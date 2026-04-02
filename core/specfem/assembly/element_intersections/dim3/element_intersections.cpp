@@ -114,7 +114,7 @@ specfem::assembly::element_intersections<
   return;
 }
 
-std::tuple<FaceViewType::HostMirror, FaceViewType::HostMirror>
+std::tuple<FaceViewType::host_mirror_type, FaceViewType::host_mirror_type>
 specfem::assembly::element_intersections<
     specfem::element::dimension_tag::dim3>::
     get_intersections_on_host(
@@ -167,7 +167,7 @@ std::tuple<FaceViewType, FaceViewType> specfem::assembly::element_intersections<
 }
 
 specfem::assembly::element_intersections<
-    specfem::element::dimension_tag::dim3>::FaceViewType::HostMirror
+    specfem::element::dimension_tag::dim3>::FaceViewType::host_mirror_type
 specfem::assembly::face_view_from_collected_faces(
     const std::string &label,
     const std::vector<
@@ -179,7 +179,7 @@ specfem::assembly::face_view_from_collected_faces(
   const int count = collected_faces.size();
 
   specfem::assembly::element_intersections<
-      specfem::element::dimension_tag::dim3>::FaceViewType::HostMirror
+      specfem::element::dimension_tag::dim3>::FaceViewType::host_mirror_type
       face_view(label, count, ngll);
 
   for (int iface = 0; iface < count; iface++) {

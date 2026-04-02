@@ -254,15 +254,16 @@ public:
   int ngllx;                   ///< Number of quadrature points in x direction
   IndexViewType index_mapping; ///< Device 3D index mapping from
                                ///< (ispec,iz,iy,ix) to linear index
-  IndexViewType::HostMirror h_index_mapping; ///< Host mirror of 3D index
-                                             ///< mapping for CPU operations
+  IndexViewType::host_mirror_type h_index_mapping; ///< Host mirror of 3D index
+                                                   ///< mapping for CPU
+                                                   ///< operations
 
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
                       DECLARE(((specfem::assembly::fields_impl::field_impl,
                                 (_DIMENSION_TAG_, _MEDIUM_TAG_)),
                                field),
                               (AssemblyIndexViewType, assembly_index_mapping),
-                              (AssemblyIndexViewType::HostMirror,
+                              (AssemblyIndexViewType::host_mirror_type,
                                h_assembly_index_mapping)))
 
   /**

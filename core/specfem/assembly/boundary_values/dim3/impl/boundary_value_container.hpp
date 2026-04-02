@@ -26,7 +26,7 @@ public:
   constexpr static auto boundary_tag = BoundaryTag;
 
   IndexViewType property_index_mapping;
-  IndexViewType::HostMirror h_property_index_mapping;
+  IndexViewType::host_mirror_type h_property_index_mapping;
 
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
                       DECLARE(((_boundary_medium_container,

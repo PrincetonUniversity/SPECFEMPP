@@ -292,18 +292,19 @@ public:
 private:
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
                       DECLARE((IndexViewType, elements),
-                              (IndexViewType::HostMirror, h_elements)))
+                              (IndexViewType::host_mirror_type, h_elements)))
 
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
                        PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
                        ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
                       DECLARE((IndexViewType, material_elements),
-                              (IndexViewType::HostMirror, h_material_elements)))
+                              (IndexViewType::host_mirror_type,
+                               h_material_elements)))
 
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
                        PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
                       DECLARE((IndexViewType, elements),
-                              (IndexViewType::HostMirror, h_elements)))
+                              (IndexViewType::host_mirror_type, h_elements)))
 };
 
 } // namespace specfem::assembly

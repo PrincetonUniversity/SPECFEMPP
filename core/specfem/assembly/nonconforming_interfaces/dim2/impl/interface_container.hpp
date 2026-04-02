@@ -76,13 +76,13 @@ public:
   TransferFunctionView transfer_function_other;
 
   /** @brief Host mirror for edge scaling factors */
-  EdgeFactorView::HostMirror h_intersection_factor;
+  EdgeFactorView::host_mirror_type h_intersection_factor;
   /** @brief Host mirror for edge normal vectors */
-  EdgeNormalView::HostMirror h_intersection_normal;
+  EdgeNormalView::host_mirror_type h_intersection_normal;
   /** @brief Device view for transfer function on self */
-  TransferFunctionView::HostMirror h_transfer_function;
+  TransferFunctionView::host_mirror_type h_transfer_function;
   /** @brief Device view for transfer function on coupled side */
-  TransferFunctionView::HostMirror h_transfer_function_other;
+  TransferFunctionView::host_mirror_type h_transfer_function_other;
 
 public:
   /**

@@ -321,7 +321,7 @@ private:
    * Host-accessible copy of `source_domain_index_mapping` for initialization
    * and debugging operations in 3D.
    */
-  IndexViewType::HostMirror h_source_domain_index_mapping;
+  IndexViewType::host_mirror_type h_source_domain_index_mapping;
 
   /**
    * @brief Device view mapping sources to element indices within 3D source
@@ -337,7 +337,7 @@ private:
    *
    * Host-accessible copy of `element_indices` for setup and validation.
    */
-  IndexViewType::HostMirror h_element_indices;
+  IndexViewType::host_mirror_type h_element_indices;
 
   /**
    * @brief Device view mapping sources to local 3D source medium indices
@@ -352,7 +352,7 @@ private:
    *
    * Host-accessible copy of `source_indices` for configuration management.
    */
-  IndexViewType::HostMirror h_source_indices;
+  IndexViewType::host_mirror_type h_source_indices;
 
   /**
    * @brief Device view storing medium types for each 3D spectral element
@@ -367,7 +367,7 @@ private:
    *
    * Host-accessible copy of `medium_types` for initialization and analysis.
    */
-  MediumTagViewType::HostMirror h_medium_types;
+  MediumTagViewType::host_mirror_type h_medium_types;
 
   /**
    * @brief Device view storing wavefield types for 3D source applications
@@ -382,7 +382,7 @@ private:
    *
    * Host-accessible copy of `wavefield_types` for setup operations.
    */
-  WavefieldTagViewType::HostMirror h_wavefield_types;
+  WavefieldTagViewType::host_mirror_type h_wavefield_types;
 
   /**
    * @brief Device view storing boundary condition types for 3D spectral
@@ -398,7 +398,7 @@ private:
    *
    * Host-accessible copy of `boundary_types` for configuration management.
    */
-  BoundaryTagViewType::HostMirror h_boundary_types;
+  BoundaryTagViewType::host_mirror_type h_boundary_types;
 
   /**
    * @brief Device view storing material property types for 3D spectral elements
@@ -413,7 +413,7 @@ private:
    *
    * Host-accessible copy of `property_types` for setup and validation.
    */
-  PropertyTagViewType::HostMirror h_property_types;
+  PropertyTagViewType::host_mirror_type h_property_types;
 
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
                       DECLARE(((specfem::assembly::sources_impl::source_medium,
@@ -432,17 +432,17 @@ private:
       (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
        PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
       DECLARE((IndexViewType, element_indices_forward),
-              (IndexViewType::HostMirror, h_element_indices_forward),
+              (IndexViewType::host_mirror_type, h_element_indices_forward),
               (IndexViewType, element_indices_backward),
-              (IndexViewType::HostMirror, h_element_indices_backward),
+              (IndexViewType::host_mirror_type, h_element_indices_backward),
               (IndexViewType, element_indices_adjoint),
-              (IndexViewType::HostMirror, h_element_indices_adjoint),
+              (IndexViewType::host_mirror_type, h_element_indices_adjoint),
               (IndexViewType, source_indices_forward),
-              (IndexViewType::HostMirror, h_source_indices_forward),
+              (IndexViewType::host_mirror_type, h_source_indices_forward),
               (IndexViewType, source_indices_backward),
-              (IndexViewType::HostMirror, h_source_indices_backward),
+              (IndexViewType::host_mirror_type, h_source_indices_backward),
               (IndexViewType, source_indices_adjoint),
-              (IndexViewType::HostMirror, h_source_indices_adjoint)))
+              (IndexViewType::host_mirror_type, h_source_indices_adjoint)))
 
   template <typename IndexType, typename PointSourceType>
   friend KOKKOS_INLINE_FUNCTION void load_on_device(

@@ -487,7 +487,7 @@ TEST_F(AssemblyFaceTest, AllFaceTypes) {
   }
 }
 
-class AssemblyFaceViewHostMirrorTest : public ::testing::Test {
+class AssemblyFaceViewhost_mirror_typeTest : public ::testing::Test {
 protected:
   using FaceView = specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace>;
 
@@ -495,11 +495,11 @@ protected:
   static constexpr int num_points = 4;
 };
 
-TEST_F(AssemblyFaceViewHostMirrorTest, HostMirrorType) {
-  // Verify HostMirror type is correctly defined
-  using HostMirror = typename FaceView::HostMirror;
+TEST_F(AssemblyFaceViewhost_mirror_typeTest, host_mirror_typeType) {
+  // Verify host_mirror_type type is correctly defined
+  using host_mirror_type = typename FaceView::host_mirror_type;
 
-  HostMirror host_view("host_faces", num_faces, num_points);
+  host_mirror_type host_view("host_faces", num_faces, num_points);
 
   EXPECT_EQ(host_view.N, num_faces);
   EXPECT_EQ(host_view.n_points, num_points);

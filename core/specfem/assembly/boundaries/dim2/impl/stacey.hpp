@@ -125,7 +125,7 @@ public:
    * Host mirror of quadrature_point_boundary_tag for CPU access during
    * initialization, debugging, and host-side computations.
    */
-  BoundaryTagView::HostMirror h_quadrature_point_boundary_tag;
+  BoundaryTagView::host_mirror_type h_quadrature_point_boundary_tag;
 
   /**
    * @brief Device-accessible edge normal vectors for boundary quadrature points
@@ -160,14 +160,14 @@ public:
    *
    * Host mirror of edge_normal for CPU access and initialization.
    */
-  EdgeNormalView::HostMirror h_edge_normal;
+  EdgeNormalView::host_mirror_type h_edge_normal;
 
   /**
    * @brief Host-accessible mirror of edge integration weights
    *
    * Host mirror of edge_weight for CPU access and initialization.
    */
-  EdgeWeightView::HostMirror h_edge_weight;
+  EdgeWeightView::host_mirror_type h_edge_weight;
   ///@}
 
   /**
@@ -336,16 +336,14 @@ public:
       }
     }
 
-    Kokkos::Experimental::where(mask, boundary.edge_normal(0))
-        .copy_from(&edge_normal(index.ispec, index.iz, index.ix, 0),
-                   tag_type());
+    boundary.edge_normal(0) = Kokkos::Experimental::simd_partial_load(
+        &edge_normal(index.ispec, index.iz, index.ix, 0), mask, tag_type());
 
-    Kokkos::Experimental::where(mask, boundary.edge_normal(1))
-        .copy_from(&edge_normal(index.ispec, index.iz, index.ix, 1),
-                   tag_type());
+    boundary.edge_normal(1) = Kokkos::Experimental::simd_partial_load(
+        &edge_normal(index.ispec, index.iz, index.ix, 1), mask, tag_type());
 
-    Kokkos::Experimental::where(mask, boundary.edge_weight)
-        .copy_from(&edge_weight(index.ispec, index.iz, index.ix), tag_type());
+    boundary.edge_weight = Kokkos::Experimental::simd_partial_load(
+        &edge_weight(index.ispec, index.iz, index.ix), mask, tag_type());
   }
 
   /**
@@ -384,16 +382,14 @@ public:
       }
     }
 
-    Kokkos::Experimental::where(mask, boundary.edge_normal(0))
-        .copy_from(&edge_normal(index.ispec, index.iz, index.ix, 0),
-                   tag_type());
+    boundary.edge_normal(0) = Kokkos::Experimental::simd_partial_load(
+        &edge_normal(index.ispec, index.iz, index.ix, 0), mask, tag_type());
 
-    Kokkos::Experimental::where(mask, boundary.edge_normal(1))
-        .copy_from(&edge_normal(index.ispec, index.iz, index.ix, 1),
-                   tag_type());
+    boundary.edge_normal(1) = Kokkos::Experimental::simd_partial_load(
+        &edge_normal(index.ispec, index.iz, index.ix, 1), mask, tag_type());
 
-    Kokkos::Experimental::where(mask, boundary.edge_weight)
-        .copy_from(&edge_weight(index.ispec, index.iz, index.ix), tag_type());
+    boundary.edge_weight = Kokkos::Experimental::simd_partial_load(
+        &edge_weight(index.ispec, index.iz, index.ix), mask, tag_type());
   }
   ///@}
 
@@ -505,16 +501,14 @@ public:
       }
     }
 
-    Kokkos::Experimental::where(mask, boundary.edge_normal(0))
-        .copy_from(&h_edge_normal(index.ispec, index.iz, index.ix, 0),
-                   tag_type());
+    boundary.edge_normal(0) = Kokkos::Experimental::simd_partial_load(
+        &h_edge_normal(index.ispec, index.iz, index.ix, 0), mask, tag_type());
 
-    Kokkos::Experimental::where(mask, boundary.edge_normal(1))
-        .copy_from(&h_edge_normal(index.ispec, index.iz, index.ix, 1),
-                   tag_type());
+    boundary.edge_normal(1) = Kokkos::Experimental::simd_partial_load(
+        &h_edge_normal(index.ispec, index.iz, index.ix, 1), mask, tag_type());
 
-    Kokkos::Experimental::where(mask, boundary.edge_weight)
-        .copy_from(&h_edge_weight(index.ispec, index.iz, index.ix), tag_type());
+    boundary.edge_weight = Kokkos::Experimental::simd_partial_load(
+        &h_edge_weight(index.ispec, index.iz, index.ix), mask, tag_type());
 
     return;
   }
@@ -555,16 +549,14 @@ public:
       }
     }
 
-    Kokkos::Experimental::where(mask, boundary.edge_normal(0))
-        .copy_from(&h_edge_normal(index.ispec, index.iz, index.ix, 0),
-                   tag_type());
+    boundary.edge_normal(0) = Kokkos::Experimental::simd_partial_load(
+        &h_edge_normal(index.ispec, index.iz, index.ix, 0), mask, tag_type());
 
-    Kokkos::Experimental::where(mask, boundary.edge_normal(1))
-        .copy_from(&h_edge_normal(index.ispec, index.iz, index.ix, 1),
-                   tag_type());
+    boundary.edge_normal(1) = Kokkos::Experimental::simd_partial_load(
+        &h_edge_normal(index.ispec, index.iz, index.ix, 1), mask, tag_type());
 
-    Kokkos::Experimental::where(mask, boundary.edge_weight)
-        .copy_from(&h_edge_weight(index.ispec, index.iz, index.ix), tag_type());
+    boundary.edge_weight = Kokkos::Experimental::simd_partial_load(
+        &h_edge_weight(index.ispec, index.iz, index.ix), mask, tag_type());
 
     return;
   }

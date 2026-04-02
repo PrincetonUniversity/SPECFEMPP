@@ -73,7 +73,7 @@ typename Kokkos::View<
     type_real *[TransferFunction2D::nquad_intersection]
                    [ncomp_self_from_interface_tag<interface_tag>],
     typename TransferFunction2D::memory_space,
-    Kokkos::MemoryTraits<> >::HostMirror
+    Kokkos::MemoryTraits<> >::host_mirror_type
 execute_impl_compute_coupling(const TransferFunction2D &transfer_function,
                               const IntersectionNormal2D &intersection_normal,
                               const EdgeFunction2D &edge_function) {

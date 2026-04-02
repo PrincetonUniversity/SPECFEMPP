@@ -245,7 +245,7 @@ public:
    * Host-accessible copy of `source_index_mapping` for initialization and
    * debugging.
    */
-  IndexView::HostMirror h_source_index_mapping;
+  IndexView::host_mirror_type h_source_index_mapping;
 
   /**
    * @brief Device view storing time-dependent source functions
@@ -261,7 +261,7 @@ public:
    *
    * Host-accessible copy of `source_time_function` for setup and analysis.
    */
-  SourceTimeFunctionView::HostMirror h_source_time_function;
+  SourceTimeFunctionView::host_mirror_type h_source_time_function;
 
   /**
    * @brief Device view storing Lagrange interpolation weights
@@ -278,7 +278,7 @@ public:
    *
    * Host-accessible copy of `source_array` for initialization and validation.
    */
-  typename SourceArrayView::HostMirror h_source_array;
+  typename SourceArrayView::host_mirror_type h_source_array;
   ///@}
 
   /**

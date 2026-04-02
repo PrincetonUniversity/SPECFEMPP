@@ -254,17 +254,19 @@ public:
   int ngllx;     ///< Number of quadrature points in x-direction
   IndexViewType index_mapping; ///< Device index mapping from (ispec,iz,ix) to
                                ///< linear index
-  IndexViewType::HostMirror h_index_mapping; ///< Host mirror of index mapping
-                                             ///< for CPU operations
+  IndexViewType::host_mirror_type h_index_mapping; ///< Host mirror of index
+                                                   ///< mapping for CPU
+                                                   ///< operations
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                       POROELASTIC, ELASTIC_PSV_T)),
-      DECLARE(((specfem::assembly::fields_impl::field_impl,
-                (_DIMENSION_TAG_, _MEDIUM_TAG_)),
-               field),
-              (AssemblyIndexViewType, assembly_index_mapping),
-              (AssemblyIndexViewType::HostMirror, h_assembly_index_mapping)))
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                  POROELASTIC, ELASTIC_PSV_T)),
+                      DECLARE(((specfem::assembly::fields_impl::field_impl,
+                                (_DIMENSION_TAG_, _MEDIUM_TAG_)),
+                               field),
+                              (AssemblyIndexViewType, assembly_index_mapping),
+                              (AssemblyIndexViewType::host_mirror_type,
+                               h_assembly_index_mapping)))
 
   /**
    * @brief Get total degrees of freedom across all medium types.

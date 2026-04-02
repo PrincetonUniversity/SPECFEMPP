@@ -120,7 +120,7 @@ specfem::assembly::element_intersections<
   return;
 }
 
-std::tuple<EdgeViewType::HostMirror, EdgeViewType::HostMirror>
+std::tuple<EdgeViewType::host_mirror_type, EdgeViewType::host_mirror_type>
 specfem::assembly::element_intersections<
     specfem::element::dimension_tag::dim2>::
     get_intersections_on_host(
@@ -172,7 +172,7 @@ std::tuple<EdgeViewType, EdgeViewType> specfem::assembly::element_intersections<
 }
 
 specfem::assembly::element_intersections<
-    specfem::element::dimension_tag::dim2>::EdgeViewType::HostMirror
+    specfem::element::dimension_tag::dim2>::EdgeViewType::host_mirror_type
 specfem::assembly::edge_view_from_collected_edges(
     const std::string &label,
     const std::vector<
@@ -184,7 +184,7 @@ specfem::assembly::edge_view_from_collected_edges(
   const int &count = self_collect.size();
 
   specfem::assembly::element_intersections<
-      specfem::element::dimension_tag::dim2>::EdgeViewType::HostMirror
+      specfem::element::dimension_tag::dim2>::EdgeViewType::host_mirror_type
       self_edges(label, count, ngll);
   for (int iedge = 0; iedge < count; iedge++) {
     self_edges.element_index(iedge) = self_collect[iedge].ispec;

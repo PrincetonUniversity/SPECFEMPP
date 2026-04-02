@@ -87,7 +87,7 @@ struct EdgeView {
   using EdgeTypeView = ///< View type for 2D edge classifications
       Kokkos::View<specfem::mesh_entity::dim2::type *, ExecutionSpace>;
 
-  using HostMirror =
+  using host_mirror_type =
       std::conditional_t<std::is_same<typename ExecutionSpace::memory_space,
                                       Kokkos::HostSpace>::value,
                          EdgeView,
@@ -213,12 +213,13 @@ public:
   using EdgeViewType = EdgeView<Kokkos::DefaultExecutionSpace>;
 
 private:
-  static EdgeViewType::HostMirror create_mirror_view(const EdgeViewType &view) {
+  static EdgeViewType::host_mirror_type
+  create_mirror_view(const EdgeViewType &view) {
     const auto label = view.element_index.label();
     // remove element_index suffix
     const auto base_label = label.substr(0, label.size() - 14);
-    return EdgeViewType::HostMirror(base_label + "_host_mirror", view.N,
-                                    view.n_points);
+    return EdgeViewType::host_mirror_type(base_label + "_host_mirror", view.N,
+                                          view.n_points);
   }
 
   template <typename SrcView, typename DestView>
@@ -239,8 +240,8 @@ public:
    * @param boundary Boundary condition type
    * @return Tuple of (self_edges, coupled_edges) for host processing
    */
-  std::tuple<typename EdgeViewType::HostMirror,
-             typename EdgeViewType::HostMirror>
+  std::tuple<typename EdgeViewType::host_mirror_type,
+             typename EdgeViewType::host_mirror_type>
   get_intersections_on_host(
       const specfem::element_connections::type connection,
       const specfem::element_coupling::interface_tag edge,
@@ -285,20 +286,20 @@ public:
   element_intersections() = default;
 
 private:
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
-                       CONNECTION_TAG(WEAKLY_CONFORMING, NONCONFORMING),
-                       INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
-                       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                                    COMPOSITE_STACEY_DIRICHLET),
-                       FLUX_SCHEME_TAG(NATURAL, SYMMETRIC_INTERIOR_PENALTY)),
-                      DECLARE((EdgeViewType, self_edges),
-                              (EdgeViewType::HostMirror, h_self_edges),
-                              (EdgeViewType, coupled_edges),
-                              (EdgeViewType::HostMirror, h_coupled_edges)))
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2), CONNECTION_TAG(WEAKLY_CONFORMING, NONCONFORMING),
+       INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
+       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
+                    COMPOSITE_STACEY_DIRICHLET),
+       FLUX_SCHEME_TAG(NATURAL, SYMMETRIC_INTERIOR_PENALTY)),
+      DECLARE((EdgeViewType, self_edges),
+              (EdgeViewType::host_mirror_type, h_self_edges),
+              (EdgeViewType, coupled_edges),
+              (EdgeViewType::host_mirror_type, h_coupled_edges)))
 };
 
 specfem::assembly::element_intersections<
-    specfem::element::dimension_tag::dim2>::EdgeViewType::HostMirror
+    specfem::element::dimension_tag::dim2>::EdgeViewType::host_mirror_type
 edge_view_from_collected_edges(
     const std::string &label,
     const std::vector<

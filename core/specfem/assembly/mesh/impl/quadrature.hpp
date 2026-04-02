@@ -19,13 +19,13 @@ template <specfem::element::dimension_tag DimensionTag> struct GLLQuadrature {
   using DViewType = Kokkos::View<type_real **, Kokkos::LayoutRight,
                                  Kokkos::DefaultExecutionSpace>;
 
-  int N;                          ///< Number of GLL points
-  ViewType xi;                    ///< Device GLL points on [-1,1]
-  ViewType weights;               ///< Device integration weights
-  DViewType hprime;               ///< Device Lagrange derivative matrix
-  DViewType::HostMirror h_hprime; ///< Host Lagrange derivative matrix
-  ViewType::HostMirror h_xi;      ///< Host GLL points
-  ViewType::HostMirror h_weights; ///< Host weights
+  int N;                                ///< Number of GLL points
+  ViewType xi;                          ///< Device GLL points on [-1,1]
+  ViewType weights;                     ///< Device integration weights
+  DViewType hprime;                     ///< Device Lagrange derivative matrix
+  DViewType::host_mirror_type h_hprime; ///< Host Lagrange derivative matrix
+  ViewType::host_mirror_type h_xi;      ///< Host GLL points
+  ViewType::host_mirror_type h_weights; ///< Host weights
 
   GLLQuadrature() = default;
 

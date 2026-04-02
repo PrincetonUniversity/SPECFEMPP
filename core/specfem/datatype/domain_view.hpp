@@ -194,7 +194,7 @@ public:
   KOKKOS_INLINE_FUNCTION
   View() = default;
 
-  using HostMirror =
+  using host_mirror_type =
       View<T, Extents, Layout, typename Kokkos::HostSpace::memory_space>;
 
 public:

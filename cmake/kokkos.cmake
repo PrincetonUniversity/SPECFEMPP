@@ -39,7 +39,7 @@ if (DEFINED KOKKOS_PATH)
     # Pop the indentation for Kokkos messages
 else()
 
-    set(KOKKOS_VERSION "4.7.00")
+    set(KOKKOS_VERSION "5.1.0")
 
     # Set common FetchContent parameters
     set(KOKKOS_URL "https://github.com/kokkos/kokkos/archive/refs/tags/${KOKKOS_VERSION}.zip")

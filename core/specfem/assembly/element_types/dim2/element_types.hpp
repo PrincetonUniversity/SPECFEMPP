@@ -294,7 +294,7 @@ private:
                        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                   POROELASTIC, ELASTIC_PSV_T)),
                       DECLARE((IndexViewType, elements),
-                              (IndexViewType::HostMirror, h_elements)))
+                              (IndexViewType::host_mirror_type, h_elements)))
 
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
                        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
@@ -302,7 +302,7 @@ private:
                        PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
                        ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
                       DECLARE((IndexViewType, material_elements),
-                              (IndexViewType::HostMirror,
+                              (IndexViewType::host_mirror_type,
                                h_material_elements))) /// This is a temporary
                                                       /// fix since none
                                                       /// attenuation tag
@@ -316,7 +316,7 @@ private:
                        BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
                                     COMPOSITE_STACEY_DIRICHLET)),
                       DECLARE((IndexViewType, elements),
-                              (IndexViewType::HostMirror, h_elements)))
+                              (IndexViewType::host_mirror_type, h_elements)))
 };
 
 } // namespace specfem::assembly

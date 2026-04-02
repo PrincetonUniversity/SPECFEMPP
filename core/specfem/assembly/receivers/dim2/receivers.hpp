@@ -141,12 +141,12 @@ private:
   int nspec;              ///< Total number of spectral elements
   IndexViewType elements; ///< View to store the elements associated with the
                           ///< receivers
-  IndexViewType::HostMirror h_elements; ///< Host view to store the
-                                        ///< elements associated with the
-                                        ///< receivers
+  IndexViewType::host_mirror_type h_elements; ///< Host view to store the
+                                              ///< elements associated with the
+                                              ///< receivers
   LagrangeInterpolantType lagrange_interpolant; ///< Lagrange interpolant for
                                                 ///< every receiver
-  LagrangeInterpolantType::HostMirror
+  LagrangeInterpolantType::host_mirror_type
       h_lagrange_interpolant; ///< Lagrange interpolant for every receiver
                               ///< stored on the host
   specfem::assembly::element_types<dimension_tag> element_types; ///< Element
@@ -158,9 +158,10 @@ private:
                        PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
                        ATTENUATION_TAG(NONE)),
                       DECLARE((IndexViewType, receiver_indices),
-                              (IndexViewType::HostMirror, h_receiver_indices),
+                              (IndexViewType::host_mirror_type,
+                               h_receiver_indices),
                               (IndexViewType, elements),
-                              (IndexViewType::HostMirror, h_elements)))
+                              (IndexViewType::host_mirror_type, h_elements)))
 
   template <typename ChunkIndexType, typename ViewType>
   friend KOKKOS_FUNCTION void load_on_device(const ChunkIndexType &chunk_index,

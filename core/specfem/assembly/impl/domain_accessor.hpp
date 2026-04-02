@@ -57,8 +57,8 @@ private:
     const auto mask = index.template get_mask<simd>();
     static_cast<const DataContainer *>(this)->for_each_on_device(
         index, [&](const type_real &value, const std::size_t i) mutable {
-          Kokkos::Experimental::where(mask, values[i])
-              .copy_from(&value, tag_type());
+          values[i] =
+              Kokkos::Experimental::simd_partial_load(&value, mask, tag_type());
         });
   }
 
@@ -73,8 +73,8 @@ private:
     const auto mask = index.template get_mask<simd>();
     static_cast<const DataContainer *>(this)->for_each_on_host(
         index, [&](const type_real &value, const std::size_t i) mutable {
-          Kokkos::Experimental::where(mask, values[i])
-              .copy_from(&value, tag_type());
+          values[i] =
+              Kokkos::Experimental::simd_partial_load(&value, mask, tag_type());
         });
   }
 
@@ -107,8 +107,8 @@ private:
     const auto mask = index.template get_mask<simd>();
     static_cast<const DataContainer *>(this)->for_each_on_device(
         index, [&](type_real &value, const std::size_t i) {
-          Kokkos::Experimental::where(mask, values[i])
-              .copy_to(&value, tag_type());
+          Kokkos::Experimental::simd_partial_store(values[i], &value, mask,
+                                                   tag_type());
         });
   }
 
@@ -123,8 +123,8 @@ private:
     const auto mask = index.template get_mask<simd>();
     static_cast<const DataContainer *>(this)->for_each_on_host(
         index, [&](type_real &value, const std::size_t i) {
-          Kokkos::Experimental::where(mask, values[i])
-              .copy_to(&value, tag_type());
+          Kokkos::Experimental::simd_partial_store(values[i], &value, mask,
+                                                   tag_type());
         });
   }
 
@@ -157,10 +157,11 @@ private:
     mask_type mask([&, this](std::size_t lane) { return index.mask(lane); });
     static_cast<const DataContainer *>(this)->for_each_on_device(
         index, [&](type_real &value, const std::size_t i) {
-          typename PointValues::value_type temp;
-          Kokkos::Experimental::where(mask, temp).copy_from(&value, tag_type());
+          typename PointValues::value_type temp =
+              Kokkos::Experimental::simd_partial_load(&value, mask, tag_type());
           temp += values[i];
-          Kokkos::Experimental::where(mask, temp).copy_to(&value, tag_type());
+          Kokkos::Experimental::simd_partial_store(temp, &value, mask,
+                                                   tag_type());
         });
   }
 
@@ -175,10 +176,11 @@ private:
     mask_type mask([&, this](std::size_t lane) { return index.mask(lane); });
     static_cast<const DataContainer *>(this)->for_each_on_host(
         index, [&](type_real &value, const std::size_t i) {
-          typename PointValues::value_type temp;
-          Kokkos::Experimental::where(mask, temp).copy_from(&value, tag_type());
+          typename PointValues::value_type temp =
+              Kokkos::Experimental::simd_partial_load(&value, mask, tag_type());
           temp += values[i];
-          Kokkos::Experimental::where(mask, temp).copy_to(&value, tag_type());
+          Kokkos::Experimental::simd_partial_store(temp, &value, mask,
+                                                   tag_type());
         });
   }
 

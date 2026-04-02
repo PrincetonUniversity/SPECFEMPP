@@ -159,7 +159,7 @@ protected:
                Kokkos::DefaultExecutionSpace>
       seismogram_components;
   Kokkos::View<type_real ***[2], Kokkos::LayoutLeft,
-               Kokkos::DefaultExecutionSpace>::HostMirror
+               Kokkos::DefaultExecutionSpace>::host_mirror_type
       h_seismogram_components;
 
   std::unordered_map<std::string, std::unordered_map<std::string, int> >

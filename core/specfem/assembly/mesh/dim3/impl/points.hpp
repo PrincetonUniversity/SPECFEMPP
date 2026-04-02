@@ -45,11 +45,12 @@ private:
       specfem::element::dimension_tag::dim3>::dim; ///< Number of dimensions
 
 public:
-  IndexMappingViewType index_mapping;               ///< Device index mapping
-  IndexMappingViewType::HostMirror h_index_mapping; ///< Host index mapping
+  IndexMappingViewType index_mapping; ///< Device index mapping
+  IndexMappingViewType::host_mirror_type h_index_mapping; ///< Host index
+                                                          ///< mapping
 
-  CoordViewType coord;               ///< Device coordinates
-  CoordViewType::HostMirror h_coord; ///< Host coordinates
+  CoordViewType coord;                     ///< Device coordinates
+  CoordViewType::host_mirror_type h_coord; ///< Host coordinates
 
   int nspec; ///< Number of spectral elements
   int ngllz; ///< Number of GLL points in z dimension

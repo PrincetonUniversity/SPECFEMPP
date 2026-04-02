@@ -22,14 +22,14 @@ struct value_containers<specfem::element::dimension_tag::dim3,
 
   IndexViewType property_index_mapping; ///< View to store property index
                                         ///< mapping
-  IndexViewType::HostMirror h_property_index_mapping; ///< Host mirror of
-                                                      ///< property index
-                                                      ///< mapping
+  IndexViewType::host_mirror_type h_property_index_mapping; ///< Host mirror of
+                                                            ///< property index
+                                                            ///< mapping
 
   template <bool on_device>
   KOKKOS_INLINE_FUNCTION constexpr
       typename std::conditional<on_device, IndexViewType,
-                                IndexViewType::HostMirror>::type
+                                IndexViewType::host_mirror_type>::type
       get_property_index_mapping() const {
     if constexpr (on_device) {
       return property_index_mapping;

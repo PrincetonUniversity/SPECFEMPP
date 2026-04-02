@@ -43,10 +43,9 @@ using isotropic_cosserat_type =
     std::integral_constant<specfem::element::property_tag,
                            specfem::element::property_tag::isotropic_cosserat>;
 
-template <
-    typename PointBoundaryType, typename PointPropertyType,
-    typename PointVelocityType, typename ViewType,
-    typename std::enable_if_t<!PointBoundaryType::simd::using_simd, int>>
+template <typename PointBoundaryType, typename PointPropertyType,
+          typename PointVelocityType, typename ViewType,
+          typename std::enable_if_t<!PointBoundaryType::simd::using_simd, int> >
 KOKKOS_FUNCTION void impl_base_elastic_psv_traction(
     const PointBoundaryType &boundary, const PointPropertyType &property,
     const PointVelocityType &velocity, ViewType &traction) {
@@ -79,10 +78,9 @@ KOKKOS_FUNCTION void impl_base_elastic_psv_traction(
   return;
 }
 
-template <
-    typename PointBoundaryType, typename PointPropertyType,
-    typename PointVelocityType, typename ViewType,
-    typename std::enable_if_t<PointBoundaryType::simd::using_simd, int>>
+template <typename PointBoundaryType, typename PointPropertyType,
+          typename PointVelocityType, typename ViewType,
+          typename std::enable_if_t<PointBoundaryType::simd::using_simd, int> >
 KOKKOS_FUNCTION void impl_base_elastic_psv_traction(
     const PointBoundaryType &boundary, const PointPropertyType &property,
     const PointVelocityType &velocity, ViewType &traction) {
@@ -112,21 +110,24 @@ KOKKOS_FUNCTION void impl_base_elastic_psv_traction(
                     velocity(icomp) * property.rho_vs();
   }
 
-  Kokkos::Experimental::where(mask, traction(0)) =
-      traction(0) + static_cast<type_real>(-1.0) * factor[0] * jacobian1d *
-                        boundary.edge_weight;
+  traction(0) =
+      Kokkos::where(mask,
+                    traction(0) + static_cast<type_real>(-1.0) * factor[0] *
+                                      jacobian1d * boundary.edge_weight,
+                    traction(0));
 
-  Kokkos::Experimental::where(mask, traction(1)) =
-      traction(1) + static_cast<type_real>(-1.0) * factor[1] * jacobian1d *
-                        boundary.edge_weight;
+  traction(1) =
+      Kokkos::where(mask,
+                    traction(1) + static_cast<type_real>(-1.0) * factor[1] *
+                                      jacobian1d * boundary.edge_weight,
+                    traction(1));
 
   return;
 }
 
-template <
-    typename PointBoundaryType, typename PointPropertyType,
-    typename PointVelocityType, typename ViewType,
-    typename std::enable_if_t<!PointBoundaryType::simd::using_simd, int>>
+template <typename PointBoundaryType, typename PointPropertyType,
+          typename PointVelocityType, typename ViewType,
+          typename std::enable_if_t<!PointBoundaryType::simd::using_simd, int> >
 KOKKOS_FUNCTION void impl_base_elastic_sh_traction(
     const PointBoundaryType &boundary, const PointPropertyType &property,
     const PointVelocityType &velocity, ViewType &traction) {
@@ -145,10 +146,9 @@ KOKKOS_FUNCTION void impl_base_elastic_sh_traction(
   return;
 }
 
-template <
-    typename PointBoundaryType, typename PointPropertyType,
-    typename PointVelocityType, typename ViewType,
-    typename std::enable_if_t<PointBoundaryType::simd::using_simd, int>>
+template <typename PointBoundaryType, typename PointPropertyType,
+          typename PointVelocityType, typename ViewType,
+          typename std::enable_if_t<PointBoundaryType::simd::using_simd, int> >
 KOKKOS_FUNCTION void impl_base_elastic_sh_traction(
     const PointBoundaryType &boundary, const PointPropertyType &property,
     const PointVelocityType &velocity, ViewType &traction) {
@@ -166,23 +166,23 @@ KOKKOS_FUNCTION void impl_base_elastic_sh_traction(
   const auto factor = boundary.edge_weight * boundary.edge_normal.l2_norm();
 
   // Apply Stacey boundary condition
-  Kokkos::Experimental::where(mask, traction(0)) =
-      traction(0) +
-      static_cast<type_real>(-1.0) * factor * property.rho_vs() * velocity(0);
+  traction(0) =
+      Kokkos::where(mask,
+                    traction(0) + static_cast<type_real>(-1.0) * factor *
+                                      property.rho_vs() * velocity(0),
+                    traction(0));
 
   return;
 }
 
 // Elastic PSV (Cosserat) Boundary Conditions not using SIMD types
 
-template <
-    typename PointBoundaryType, typename PointPropertyType,
-    typename PointVelocityType, typename ViewType,
-    typename std::enable_if_t<!PointBoundaryType::simd::using_simd, int>>
-KOKKOS_FUNCTION void
-impl_base_elastic_psv_t_traction(const PointBoundaryType &boundary,
-                              const PointPropertyType &property,
-                              const PointVelocityType &velocity, ViewType &traction) {
+template <typename PointBoundaryType, typename PointPropertyType,
+          typename PointVelocityType, typename ViewType,
+          typename std::enable_if_t<!PointBoundaryType::simd::using_simd, int> >
+KOKKOS_FUNCTION void impl_base_elastic_psv_t_traction(
+    const PointBoundaryType &boundary, const PointPropertyType &property,
+    const PointVelocityType &velocity, ViewType &traction) {
 
   constexpr static auto tag = PointBoundaryType::boundary_tag;
 
@@ -190,21 +190,22 @@ impl_base_elastic_psv_t_traction(const PointBoundaryType &boundary,
     return;
   // can't use specfem::algorithms::dot here because
   // velocity is a 3-component vector, and edge_normal is a 2-component
-  const auto vn =
-      velocity(0) * boundary.edge_normal(0) +
-      velocity(1) * boundary.edge_normal(1);
+  const auto vn = velocity(0) * boundary.edge_normal(0) +
+                  velocity(1) * boundary.edge_normal(1);
   const auto &dn = boundary.edge_normal;
 
   const auto jacobian1d = dn.l2_norm();
-    // these are the high frequency limit group velocities for \beta_\pm
-    // because of the mode switching phenomenon, they are correct at high
-    // frequencies (though it's not guaranteed which branch corresponds to
-    // displacement and which to rotation), but they don't necessarily
-    // work well at low frequency
-  const auto rho_vs = property.rho() * Kokkos::sqrt((property.mu() +
-                        property.nu()) / property.rho());
-  const auto j_vt = property.j() * Kokkos::sqrt((property.mu_c() +
-                        property.nu_c()) / property.j());
+  // these are the high frequency limit group velocities for \beta_\pm
+  // because of the mode switching phenomenon, they are correct at high
+  // frequencies (though it's not guaranteed which branch corresponds to
+  // displacement and which to rotation), but they don't necessarily
+  // work well at low frequency
+  const auto rho_vs =
+      property.rho() *
+      Kokkos::sqrt((property.mu() + property.nu()) / property.rho());
+  const auto j_vt =
+      property.j() *
+      Kokkos::sqrt((property.mu_c() + property.nu_c()) / property.j());
   using datatype = std::remove_const_t<decltype(jacobian1d)>;
 
   datatype factor[2];
@@ -219,20 +220,18 @@ impl_base_elastic_psv_t_traction(const PointBoundaryType &boundary,
                  boundary.edge_weight;
   traction(1) += static_cast<type_real>(-1.0) * factor[1] * jacobian1d *
                  boundary.edge_weight;
-  traction(2) += static_cast<type_real>(-1.0) * j_vt *
-                 velocity(2) * jacobian1d * boundary.edge_weight;
+  traction(2) += static_cast<type_real>(-1.0) * j_vt * velocity(2) *
+                 jacobian1d * boundary.edge_weight;
 
   return;
 }
 
-template <
-    typename PointBoundaryType, typename PointPropertyType,
-    typename PointVelocityType, typename ViewType,
-    typename std::enable_if_t<PointBoundaryType::simd::using_simd, int>>
-KOKKOS_FUNCTION void
-impl_base_elastic_psv_t_traction(const PointBoundaryType &boundary,
-                              const PointPropertyType &property,
-                              const PointVelocityType &velocity, ViewType &traction) {
+template <typename PointBoundaryType, typename PointPropertyType,
+          typename PointVelocityType, typename ViewType,
+          typename std::enable_if_t<PointBoundaryType::simd::using_simd, int> >
+KOKKOS_FUNCTION void impl_base_elastic_psv_t_traction(
+    const PointBoundaryType &boundary, const PointPropertyType &property,
+    const PointVelocityType &velocity, ViewType &traction) {
 
   constexpr int components = PointVelocityType::components;
   constexpr auto tag = PointBoundaryType::boundary_tag;
@@ -245,22 +244,23 @@ impl_base_elastic_psv_t_traction(const PointBoundaryType &boundary,
     return;
   // can't use specfem::algorithms::dot here because
   // velocity is a 3-component vector, and edge_normal is a 2-component
-  const auto vn =
-        velocity(0) * boundary.edge_normal(0) +
-        velocity(1) * boundary.edge_normal(1);
+  const auto vn = velocity(0) * boundary.edge_normal(0) +
+                  velocity(1) * boundary.edge_normal(1);
   const auto &dn = boundary.edge_normal;
 
   const auto jacobian1d = dn.l2_norm();
 
-    // these are the high frequency limit group velocities for \beta_\pm
-    // because of the mode switching phenomenon, they are correct at high
-    // frequencies (though it's not guaranteed which branch corresponds to
-    // displacement and which to rotation), but they don't necessarily
-    // work well at low frequency
-  const auto rho_vs = property.rho() * Kokkos::sqrt((property.mu() +
-                            property.nu()) / property.rho());
-  const auto j_vt = property.j() * Kokkos::sqrt((property.mu_c() +
-                            property.nu_c()) / property.j());
+  // these are the high frequency limit group velocities for \beta_\pm
+  // because of the mode switching phenomenon, they are correct at high
+  // frequencies (though it's not guaranteed which branch corresponds to
+  // displacement and which to rotation), but they don't necessarily
+  // work well at low frequency
+  const auto rho_vs =
+      property.rho() *
+      Kokkos::sqrt((property.mu() + property.nu()) / property.rho());
+  const auto j_vt =
+      property.j() *
+      Kokkos::sqrt((property.mu_c() + property.nu_c()) / property.j());
 
   using datatype = std::remove_const_t<decltype(jacobian1d)>;
 
@@ -272,26 +272,31 @@ impl_base_elastic_psv_t_traction(const PointBoundaryType &boundary,
                     velocity(icomp) * rho_vs;
   }
 
-  Kokkos::Experimental::where(mask, traction(0)) =
-      traction(0) + static_cast<type_real>(-1.0) * factor[0] * jacobian1d *
-                        boundary.edge_weight;
+  traction(0) =
+      Kokkos::where(mask,
+                    traction(0) + static_cast<type_real>(-1.0) * factor[0] *
+                                      jacobian1d * boundary.edge_weight,
+                    traction(0));
 
-  Kokkos::Experimental::where(mask, traction(1)) =
-      traction(1) + static_cast<type_real>(-1.0) * factor[1] * jacobian1d *
-                        boundary.edge_weight;
+  traction(1) =
+      Kokkos::where(mask,
+                    traction(1) + static_cast<type_real>(-1.0) * factor[1] *
+                                      jacobian1d * boundary.edge_weight,
+                    traction(1));
 
-  Kokkos::Experimental::where(mask, traction(2)) =
-      traction(2) + static_cast<type_real>(-1.0) * j_vt *
-                    velocity(2) * jacobian1d * boundary.edge_weight;
+  traction(2) = Kokkos::where(
+      mask,
+      traction(2) + static_cast<type_real>(-1.0) * j_vt * velocity(2) *
+                        jacobian1d * boundary.edge_weight,
+      traction(2));
 
   return;
 }
 
 // Acoustic Isotropic Stacey Boundary Conditions not using SIMD types
-template <
-    typename PointBoundaryType, typename PointPropertyType,
-    typename PointVelocityType, typename ViewType,
-    typename std::enable_if_t<!PointBoundaryType::simd::using_simd, int>>
+template <typename PointBoundaryType, typename PointPropertyType,
+          typename PointVelocityType, typename ViewType,
+          typename std::enable_if_t<!PointBoundaryType::simd::using_simd, int> >
 KOKKOS_FUNCTION void
 impl_enforce_traction(const acoustic_type &, const isotropic_type &,
                       const PointBoundaryType &boundary,
@@ -326,10 +331,9 @@ impl_enforce_traction(const acoustic_type &, const isotropic_type &,
 }
 
 // Acoustic Isotropic Stacey Boundary Conditions using SIMD types
-template <
-    typename PointBoundaryType, typename PointPropertyType,
-    typename PointVelocityType, typename ViewType,
-    typename std::enable_if_t<PointBoundaryType::simd::using_simd, int>>
+template <typename PointBoundaryType, typename PointPropertyType,
+          typename PointVelocityType, typename ViewType,
+          typename std::enable_if_t<PointBoundaryType::simd::using_simd, int> >
 KOKKOS_FUNCTION void
 impl_enforce_traction(const acoustic_type &, const isotropic_type &,
                       const PointBoundaryType &boundary,
@@ -361,9 +365,11 @@ impl_enforce_traction(const acoustic_type &, const isotropic_type &,
   const auto factor = boundary.edge_weight * boundary.edge_normal.l2_norm();
 
   // Apply Stacey boundary condition
-  Kokkos::Experimental::where(mask, traction(0)) =
-      traction(0) + static_cast<type_real>(-1.0) * factor *
-                        property.rho_vpinverse() * velocity(0);
+  traction(0) =
+      Kokkos::where(mask,
+                    traction(0) + static_cast<type_real>(-1.0) * factor *
+                                      property.rho_vpinverse() * velocity(0),
+                    traction(0));
 
   return;
 }
@@ -497,21 +503,29 @@ impl_enforce_traction(const poroelastic_type &, const isotropic_type &,
       rho_vs * (velocity(3) - vn * dn(1)); /// Fluid traction Z component
 
   // Apply Stacey boundary condition
-  Kokkos::Experimental::where(mask, traction(0)) =
-      traction(0) +
-      static_cast<type_real>(-1.0) * tsx * jacobian1d * boundary.edge_weight;
+  traction(0) =
+      Kokkos::where(mask,
+                    traction(0) + static_cast<type_real>(-1.0) * tsx *
+                                      jacobian1d * boundary.edge_weight,
+                    traction(0));
 
-  Kokkos::Experimental::where(mask, traction(1)) =
-      traction(1) +
-      static_cast<type_real>(-1.0) * tsz * jacobian1d * boundary.edge_weight;
+  traction(1) =
+      Kokkos::where(mask,
+                    traction(1) + static_cast<type_real>(-1.0) * tsz *
+                                      jacobian1d * boundary.edge_weight,
+                    traction(1));
 
-  Kokkos::Experimental::where(mask, traction(2)) =
-      traction(2) +
-      static_cast<type_real>(-1.0) * tfx * jacobian1d * boundary.edge_weight;
+  traction(2) =
+      Kokkos::where(mask,
+                    traction(2) + static_cast<type_real>(-1.0) * tfx *
+                                      jacobian1d * boundary.edge_weight,
+                    traction(2));
 
-  Kokkos::Experimental::where(mask, traction(3)) =
-      traction(3) +
-      static_cast<type_real>(-1.0) * tfz * jacobian1d * boundary.edge_weight;
+  traction(3) =
+      Kokkos::where(mask,
+                    traction(3) + static_cast<type_real>(-1.0) * tfz *
+                                      jacobian1d * boundary.edge_weight,
+                    traction(3));
 
   return;
 }
@@ -741,11 +755,12 @@ template <
     typename PointBoundaryType, typename PointPropertyType,
     typename PointFieldType, typename ViewType,
     typename std::enable_if_t<!PointBoundaryType::simd::using_simd, int> = 0>
-KOKKOS_FUNCTION void
-impl_enforce_traction(const elastic_psv_t_type &, const isotropic_cosserat_type &,
-                      const PointBoundaryType &boundary,
-                      const PointPropertyType &property,
-                      const PointFieldType &field, ViewType &traction) {
+KOKKOS_FUNCTION void impl_enforce_traction(const elastic_psv_t_type &,
+                                           const isotropic_cosserat_type &,
+                                           const PointBoundaryType &boundary,
+                                           const PointPropertyType &property,
+                                           const PointFieldType &field,
+                                           ViewType &traction) {
 
   static_assert(PointBoundaryType::boundary_tag ==
                     specfem::element::boundary_tag::stacey,
@@ -769,11 +784,12 @@ template <
     typename PointBoundaryType, typename PointPropertyType,
     typename PointFieldType, typename ViewType,
     typename std::enable_if_t<PointBoundaryType::simd::using_simd, int> = 0>
-KOKKOS_FUNCTION void
-impl_enforce_traction(const elastic_psv_t_type &, const isotropic_cosserat_type &,
-                      const PointBoundaryType &boundary,
-                      const PointPropertyType &property,
-                      const PointFieldType &field, ViewType &traction) {
+KOKKOS_FUNCTION void impl_enforce_traction(const elastic_psv_t_type &,
+                                           const isotropic_cosserat_type &,
+                                           const PointBoundaryType &boundary,
+                                           const PointPropertyType &property,
+                                           const PointFieldType &field,
+                                           ViewType &traction) {
 
   static_assert(PointBoundaryType::boundary_tag ==
                     specfem::element::boundary_tag::stacey,
@@ -829,13 +845,12 @@ specfem::boundary_conditions::impl_compute_mass_matrix_terms(
   constexpr static auto PropertyTag = PointPropertyType::property_tag;
   constexpr static bool using_simd = PointPropertyType::simd::using_simd;
 
-  using PointVelocityType =
-      specfem::point::velocity<specfem::tags::Tags<specfem::element::dimension_tag::dim2, MediumTag,
-                                                    using_simd>>;
+  using PointVelocityType = specfem::point::velocity<specfem::tags::Tags<
+      specfem::element::dimension_tag::dim2, MediumTag, using_simd> >;
 
   using PointAccelerationType =
-      specfem::point::acceleration<specfem::tags::Tags<specfem::element::dimension_tag::dim2, MediumTag,
-                                                        using_simd>>;
+      specfem::point::acceleration<specfem::tags::Tags<
+          specfem::element::dimension_tag::dim2, MediumTag, using_simd> >;
   using ViewType = typename PointVelocityType::value_type;
 
   using datatype = typename ViewType::value_type;

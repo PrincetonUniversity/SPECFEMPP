@@ -97,8 +97,8 @@ private:
   /// components)
   using ViewType = Kokkos::View<type_real **, Kokkos::LayoutLeft,
                                 Kokkos::DefaultExecutionSpace>;
-  ViewType data;               ///< Device memory view for field data
-  ViewType::HostMirror h_data; ///< Host mirror view for CPU operations
+  ViewType data;                     ///< Device memory view for field data
+  ViewType::host_mirror_type h_data; ///< Host mirror view for CPU operations
 
 protected:
   /**
@@ -115,7 +115,7 @@ protected:
    */
   template <bool on_device>
   KOKKOS_FORCEINLINE_FUNCTION
-      std::conditional_t<on_device, ViewType, ViewType::HostMirror>
+      std::conditional_t<on_device, ViewType, ViewType::host_mirror_type>
       get_base_field_view() const {
     if constexpr (on_device) {
       return data;

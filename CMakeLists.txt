@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.17.5)
 
 project(SPECFEMPP VERSION 0.1.0 LANGUAGES CXX Fortran)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 # SPECFEM options
 option(SPECFEM_ENABLE_ADIOS2 "Enable ADIOS2 I/O in SPECFEM++" OFF)
@@ -133,6 +133,16 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 else(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     set(__GNUC__ FALSE)
     message(STATUS "GNU compiler not detected -- setting __GNUC__ FALSE")
+endif()
+
+# Check Apple Clang compiler version
+if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 15)
+        message(FATAL_ERROR "Apple Clang compiler version must be >= 14. "
+                "Current version: ${CMAKE_CXX_COMPILER_VERSION}. "
+                "Please update to a newer version of Xcode.")
+    endif()
+    message(STATUS "Apple Clang ${CMAKE_CXX_COMPILER_VERSION} detected -- version check passed")
 endif()
 
 # Install Kokkos as a dependency

@@ -97,7 +97,7 @@ struct FaceView {
   using FaceTypeView = ///< View type for 3D face classifications
       Kokkos::View<specfem::mesh_entity::dim3::type *, ExecutionSpace>;
 
-  using HostMirror =
+  using host_mirror_type =
       std::conditional_t<std::is_same<typename ExecutionSpace::memory_space,
                                       Kokkos::HostSpace>::value,
                          FaceView,
@@ -229,12 +229,13 @@ public:
   using FaceViewType = FaceView<Kokkos::DefaultExecutionSpace>;
 
 private:
-  static FaceViewType::HostMirror create_mirror_view(const FaceViewType &view) {
+  static FaceViewType::host_mirror_type
+  create_mirror_view(const FaceViewType &view) {
     const auto label = view.element_index.label();
     // remove element_index suffix
     const auto base_label = label.substr(0, label.size() - 14);
-    return FaceViewType::HostMirror(base_label + "_host_mirror", view.N,
-                                    view.n_points);
+    return FaceViewType::host_mirror_type(base_label + "_host_mirror", view.N,
+                                          view.n_points);
   }
 
   template <typename SrcView, typename DestView>
@@ -256,8 +257,8 @@ public:
    * @param boundary Boundary condition type
    * @return Tuple of (self_faces, coupled_faces) for host processing
    */
-  std::tuple<typename FaceViewType::HostMirror,
-             typename FaceViewType::HostMirror>
+  std::tuple<typename FaceViewType::host_mirror_type,
+             typename FaceViewType::host_mirror_type>
   get_intersections_on_host(
       const specfem::element_connections::type connection,
       const specfem::element_coupling::interface_tag face,
@@ -298,16 +299,16 @@ public:
   element_intersections() = default;
 
 private:
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3),
-                       CONNECTION_TAG(WEAKLY_CONFORMING, NONCONFORMING),
-                       INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
-                       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                                    COMPOSITE_STACEY_DIRICHLET),
-                       FLUX_SCHEME_TAG(NATURAL)),
-                      DECLARE((FaceViewType, self_faces),
-                              (FaceViewType::HostMirror, h_self_faces),
-                              (FaceViewType, coupled_faces),
-                              (FaceViewType::HostMirror, h_coupled_faces)))
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM3), CONNECTION_TAG(WEAKLY_CONFORMING, NONCONFORMING),
+       INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
+       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
+                    COMPOSITE_STACEY_DIRICHLET),
+       FLUX_SCHEME_TAG(NATURAL)),
+      DECLARE((FaceViewType, self_faces),
+              (FaceViewType::host_mirror_type, h_self_faces),
+              (FaceViewType, coupled_faces),
+              (FaceViewType::host_mirror_type, h_coupled_faces)))
 };
 
 /**
@@ -323,7 +324,7 @@ private:
  * @return Populated host-mirror FaceView
  */
 specfem::assembly::element_intersections<
-    specfem::element::dimension_tag::dim3>::FaceViewType::HostMirror
+    specfem::element::dimension_tag::dim3>::FaceViewType::host_mirror_type
 face_view_from_collected_faces(
     const std::string &label,
     const std::vector<
