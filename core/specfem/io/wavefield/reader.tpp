@@ -18,7 +18,7 @@ void specfem::io::wavefield_reader<IOLibrary>::initialize(
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_PSV_T, ELASTIC_SH,
-                                       ACOUSTIC, ELASTIC_SPIN, POROELASTIC)),
+                                       ACOUSTIC, POROELASTIC)),
       {
         if (buffer.get_nglob<_medium_tag_>() > 0) {
           ngroups++;

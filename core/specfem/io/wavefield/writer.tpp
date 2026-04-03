@@ -32,7 +32,7 @@ void specfem::io::wavefield_writer<OutputLibrary>::initialize(
   int ngroups = 0;
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_PSV_T, ELASTIC_SH,
-                                       ACOUSTIC, ELASTIC_SPIN, POROELASTIC)),
+                                       ACOUSTIC, POROELASTIC)),
       {
         if (forward.get_nglob<_medium_tag_>() > 0) {
           ngroups++;
@@ -48,7 +48,7 @@ void specfem::io::wavefield_writer<OutputLibrary>::initialize(
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_PSV_T, ELASTIC_SH,
-                                       ACOUSTIC, ELASTIC_SPIN, POROELASTIC)),
+                                       ACOUSTIC , POROELASTIC)),
       {
         // Get the number of GLL points in the medium
         int nglob_medium = forward.get_nglob<_medium_tag_>();
@@ -124,7 +124,7 @@ void specfem::io::wavefield_writer<OutputLibrary>::run(
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                       POROELASTIC, ELASTIC_PSV_T, ELASTIC_SPIN)),
+                                       POROELASTIC, ELASTIC_PSV_T)),
       {
         // Get the number of GLL points in the medium
         int nglob_medium = forward.get_nglob<_medium_tag_>();

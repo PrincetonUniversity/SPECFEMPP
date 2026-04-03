@@ -22,7 +22,7 @@ void specfem::io::property_reader<InputLibrary>::read(
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T, ELASTIC_SPIN),
+                  ELASTIC_PSV_T),
        PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
       {
         const std::string name =
