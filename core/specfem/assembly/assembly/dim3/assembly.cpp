@@ -41,6 +41,11 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
 
   this->jacobian_matrix = { this->mesh };
 
+  this->field_derivative_storage = { this->element_types, this->mesh.nspec,
+                                     this->mesh.element_grid.ngllz,
+                                     this->mesh.element_grid.nglly,
+                                     this->mesh.element_grid.ngllx };
+
   this->properties = { nspec, ngllz,          nglly,
                        ngllx, mesh.materials, this->element_types };
 

@@ -34,13 +34,10 @@ struct FieldDerivativeStorage<specfem::element::dimension_tag::dim3>
 
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC),
-                       PROPERTY_TAG(ISOTROPIC),
-                       ATTENUATION_TAG(CONSTANT_ISOTROPIC)),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
                       DECLARE(((specfem::assembly::field_derivative_storage::
                                     impl::field_derivative_medium,
-                                (_DIMENSION_TAG_, _MEDIUM_TAG_, _PROPERTY_TAG_,
-                                 _ATTENUATION_TAG_)),
+                                (_DIMENSION_TAG_, _MEDIUM_TAG_)),
                                fd_medium)))
 
   FieldDerivativeStorage() = default;
@@ -51,62 +48,31 @@ struct FieldDerivativeStorage<specfem::element::dimension_tag::dim3>
       const int nspec_global, const int ngllz, const int nglly,
       const int ngllx);
 
-  template <specfem::element::medium_tag MediumTag,
-            specfem::element::property_tag PropertyTag,
-            specfem::element::attenuation_tag AttenuationTag>
+  template <specfem::element::medium_tag MediumTag>
   KOKKOS_INLINE_FUNCTION constexpr specfem::assembly::field_derivative_storage::
       impl::field_derivative_medium<specfem::element::dimension_tag::dim3,
-                                    MediumTag, PropertyTag,
-                                    AttenuationTag> const &
-      get_medium() const {
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC),
-                         PROPERTY_TAG(ISOTROPIC),
-                         ATTENUATION_TAG(CONSTANT_ISOTROPIC)),
-                        CAPTURE(fd_medium) {
-                          if constexpr (_medium_tag_ == MediumTag &&
-                                        _property_tag_ == PropertyTag &&
-                                        _attenuation_tag_ == AttenuationTag) {
-                            return _fd_medium_;
-                          }
-                        })
-    Kokkos::abort(
-        "Invalid tag combination in FieldDerivativeStorage::get_medium");
-    SUPPRESS_UNREACHABLE(return {};)
-  }
+                                    MediumTag> const &
+      get_container() const {
 
-  template <specfem::element::medium_tag MediumTag,
-            specfem::element::property_tag PropertyTag,
-            specfem::element::attenuation_tag AttenuationTag>
-  KOKKOS_INLINE_FUNCTION constexpr specfem::assembly::field_derivative_storage::
-      impl::field_derivative_medium<specfem::element::dimension_tag::dim3,
-                                    MediumTag, PropertyTag, AttenuationTag> &
-      get_medium() {
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC),
-                         PROPERTY_TAG(ISOTROPIC),
-                         ATTENUATION_TAG(CONSTANT_ISOTROPIC)),
+    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
                         CAPTURE(fd_medium) {
-                          if constexpr (_medium_tag_ == MediumTag &&
-                                        _property_tag_ == PropertyTag &&
-                                        _attenuation_tag_ == AttenuationTag) {
+                          if constexpr (_medium_tag_ == MediumTag) {
                             return _fd_medium_;
                           }
                         })
     Kokkos::abort(
-        "Invalid tag combination in FieldDerivativeStorage::get_medium");
+        "Invalid tag combination in FieldDerivativeStorage::get_container");
+
     SUPPRESS_UNREACHABLE(return {};)
   }
 
   void copy_to_host() {
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC),
-                         PROPERTY_TAG(ISOTROPIC),
-                         ATTENUATION_TAG(CONSTANT_ISOTROPIC)),
+    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
                         CAPTURE(fd_medium) { _fd_medium_.copy_to_host(); })
   }
 
   void copy_to_device() {
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC),
-                         PROPERTY_TAG(ISOTROPIC),
-                         ATTENUATION_TAG(CONSTANT_ISOTROPIC)),
+    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
                         CAPTURE(fd_medium) { _fd_medium_.copy_to_device(); })
   }
 };

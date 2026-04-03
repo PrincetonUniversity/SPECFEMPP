@@ -89,7 +89,12 @@ using field_derivatives =
 /**
  * @brief Sentinel type returned by FieldDerivativesPack::get_dv() when
  * there is no velocity gradient (attenuation_tag::none).
+ *
+ * Carries a compile-time flag so that load/store helpers can detect it via
+ * trait without a cross-include dependency.
  */
-struct null_field_derivatives {};
+struct null_field_derivatives {
+  static constexpr bool is_null_field_derivatives_v = true;
+};
 
 } // namespace specfem::point

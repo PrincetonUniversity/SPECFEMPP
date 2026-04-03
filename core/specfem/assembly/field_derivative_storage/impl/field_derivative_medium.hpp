@@ -5,43 +5,15 @@
 #include "specfem/enums.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
+#include <type_traits>
 
 namespace specfem::assembly::field_derivative_storage::impl {
-/**
- * @brief Template metaprogramming utility for multi-dimensional array type
- * generation
- *
- * Recursively builds pointer types for multi-dimensional arrays used in source
- * data storage. This helper enables compile-time generation of appropriate
- * Kokkos view types for different dimensional problems.
- *
- * @tparam T Base data type (typically `type_real`)
- * @tparam Rank Number of array dimensions to generate
- */
-template <typename T, int Rank> struct ExtentImpl {
-  /**
-   * @brief Recursive type definition for multi-dimensional pointer
-   */
-  using type = typename ExtentImpl<T, Rank - 1>::type *;
-};
-
-/**
- * @brief Base case specialization for rank-0 arrays
- *
- * @tparam T Base data type
- */
-template <typename T> struct ExtentImpl<T, 0> {
-  /**
-   * @brief Base type for rank-0 case
-   */
-  using type = T;
-};
 
 /**
  * @brief Primary template for field derivative storage at a set of GLL points.
  *
  * Stores the du (strain) tensor per GLL point for elements belonging to a given
- * (DimTag, MediumTag, PropertyTag, AttenuationTag) combination. Used to record
+ * DimensionTag, MediumTag combination. Used to record
  * the field derivatives from the previous time step for attenuation strain
  * calculations.
  *
@@ -52,37 +24,32 @@ template <typename T> struct ExtentImpl<T, 0> {
  * attenuation_none. For attenuation_none, an empty specialization below
  * provides zero overhead.
  *
- * @tparam DimTag       Dimension of the elements
+ * @tparam DimensionTag       Dimension of the elements
  * @tparam MediumTag    Medium of the elements
- * @tparam PropertyTag  Property of the elements
- * @tparam AttenuationTag Attenuation type (must not be attenuation_none)
  */
-template <specfem::element::dimension_tag DimTag,
-          specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag,
-          specfem::element::attenuation_tag AttenuationTag>
+template <specfem::element::dimension_tag DimensionTag,
+          specfem::element::medium_tag MediumTag>
 struct field_derivative_medium
     : specfem::data_access::Container<
           specfem::data_access::ContainerType::domain,
-          specfem::data_access::DataClassType::field_derivatives, DimTag> {
+          specfem::data_access::DataClassType::field_derivatives,
+          DimensionTag> {
 
   using base_type = specfem::data_access::Container<
       specfem::data_access::ContainerType::domain,
-      specfem::data_access::DataClassType::field_derivatives, DimTag>;
+      specfem::data_access::DataClassType::field_derivatives, DimensionTag>;
 
-  constexpr static auto dimension_tag = DimTag;
+  constexpr static auto dimension_tag = DimensionTag;
   constexpr static auto medium_tag = MediumTag;
-  constexpr static auto property_tag = PropertyTag;
-  constexpr static auto attenuation_tag = AttenuationTag;
 
   /**
    * @name Compile-time constants
    */
   ///@{
   static constexpr int components =
-      specfem::element::attributes<DimTag, MediumTag>::components;
+      specfem::element::attributes<DimensionTag, MediumTag>::components;
   static constexpr int num_dimensions =
-      specfem::element::attributes<DimTag, MediumTag>::dimension;
+      specfem::element::attributes<DimensionTag, MediumTag>::dimension;
   ///@}
 
   using view_type = typename base_type::template tensor_type<
@@ -93,8 +60,8 @@ struct field_derivative_medium
 
   /// Compact storage: shape
   /// [nspec_attn][ngllz][...][components][num_dimensions]
-  view_type du_storage;
-  typename view_type::HostMirror h_du_storage;
+  view_type du;
+  typename view_type::HostMirror h_du;
 
   /// Maps global ispec → compact index (or -1 for non-matching elements)
   index_view_type ispec_to_compact;
@@ -106,14 +73,14 @@ struct field_derivative_medium
    * @brief Construct storage for the given element list.
    *
    * @param elements     Host view of global ispec indices belonging to this
-   *                     (medium, property, attenuation) combination.
+   *                     medium
    * @param nspec_global Total number of spectral elements in the mesh (for
    *                     the inverse mapping view).
    * @param ngllz        Number of GLL points in z-direction.
    * @param ngllx        Number of GLL points in x-direction.
    */
   template <
-      specfem::element::dimension_tag D = DimTag,
+      specfem::element::dimension_tag D = DimensionTag,
       std::enable_if_t<D == specfem::element::dimension_tag::dim2, int> = 0>
   field_derivative_medium(
       const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> &elements,
@@ -121,12 +88,12 @@ struct field_derivative_medium
 
     const int nspec_attn = static_cast<int>(elements.extent(0));
 
-    du_storage = view_type("field_derivative_storage", nspec_attn, ngllz, ngllx,
-                           components, num_dimensions);
-    h_du_storage = typename view_type::HostMirror("h_field_derivative_storage",
-                                                  nspec_attn, ngllz, ngllx,
-                                                  components, num_dimensions);
-    Kokkos::deep_copy(du_storage, static_cast<type_real>(0));
+    du = view_type("field_derivative_storage", nspec_attn, ngllz, ngllx,
+                   components, num_dimensions);
+    h_du = typename view_type::HostMirror("h_field_derivative_storage",
+                                          nspec_attn, ngllz, ngllx, components,
+                                          num_dimensions);
+    Kokkos::deep_copy(du, static_cast<type_real>(0));
 
     // Build ispec → compact-index inverse mapping (initialized to -1)
     ispec_to_compact =
@@ -138,7 +105,7 @@ struct field_derivative_medium
       h_ispec_to_compact(elements(i)) = i;
     }
 
-    copy_to_host();   // sync h_du_storage from zeroed device view
+    copy_to_host();   // sync h_du from zeroed device view
     copy_to_device(); // push inverse mapping to device
   }
 
@@ -146,7 +113,7 @@ struct field_derivative_medium
    * @brief Construct storage for the given element list.
    *
    * @param elements     Host view of global ispec indices belonging to this
-   *                     (medium, property, attenuation) combination.
+   *                     medium.
    * @param nspec_global Total number of spectral elements in the mesh (for
    *                     the inverse mapping view).
    * @param ngllz        Number of GLL points in z-direction.
@@ -154,7 +121,7 @@ struct field_derivative_medium
    * @param ngllx        Number of GLL points in x-direction.
    */
   template <
-      specfem::element::dimension_tag D = DimTag,
+      specfem::element::dimension_tag D = DimensionTag,
       std::enable_if_t<D == specfem::element::dimension_tag::dim3, int> = 0>
   field_derivative_medium(
       const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> &elements,
@@ -163,13 +130,13 @@ struct field_derivative_medium
 
     const int nspec_attn = static_cast<int>(elements.extent(0));
 
-    du_storage = view_type("field_derivative_storage", nspec_attn, ngllz, nglly,
-                           ngllx, components, num_dimensions);
-    h_du_storage = typename view_type::HostMirror(
-        "h_field_derivative_storage", nspec_attn, ngllz, nglly, ngllx,
-        components, num_dimensions);
+    du = view_type("field_derivative_storage", nspec_attn, ngllz, nglly, ngllx,
+                   components, num_dimensions);
+    h_du = typename view_type::HostMirror("h_field_derivative_storage",
+                                          nspec_attn, ngllz, nglly, ngllx,
+                                          components, num_dimensions);
 
-    Kokkos::deep_copy(du_storage, static_cast<type_real>(0));
+    Kokkos::deep_copy(du, static_cast<type_real>(0));
 
     // Build ispec → compact-index inverse mapping (initialized to -1)
     ispec_to_compact =
@@ -180,35 +147,126 @@ struct field_derivative_medium
       h_ispec_to_compact(elements(i)) = i;
     }
 
-    copy_to_host();   // sync h_du_storage from zeroed device view
+    copy_to_host();   // sync h_du from zeroed device view
     copy_to_device(); // push inverse mapping to device
   }
 
   void copy_to_host() {
-    Kokkos::deep_copy(h_du_storage, du_storage);
+    Kokkos::deep_copy(h_du, du);
     Kokkos::deep_copy(h_ispec_to_compact, ispec_to_compact);
   }
 
   void copy_to_device() {
-    Kokkos::deep_copy(du_storage, h_du_storage);
+    Kokkos::deep_copy(du, h_du);
     Kokkos::deep_copy(ispec_to_compact, h_ispec_to_compact);
   }
-};
 
-/**
- * @brief Empty specialization for attenuation_none — zero overhead.
- *
- * No views are allocated. All operations are no-ops. The compiler can
- * eliminate load/store calls to this type entirely.
- */
-template <specfem::element::dimension_tag DimTag,
-          specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag>
-struct field_derivative_medium<DimTag, MediumTag, PropertyTag,
-                               specfem::element::attenuation_tag::none> {
-  field_derivative_medium() = default;
-  void copy_to_host() {}
-  void copy_to_device() {}
+  /**
+   * @brief Load field derivatives for a non-SIMD GLL point from compact
+   * storage.
+   */
+  template <typename PointFDType, typename IndexType,
+            std::enable_if_t<!IndexType::using_simd, int> = 0>
+  KOKKOS_FORCEINLINE_FUNCTION void
+  load_device_values(const IndexType &index, PointFDType &point_fd) const {
+    const int i = ispec_to_compact(index.ispec);
+    for (int ic = 0; ic < PointFDType::components; ++ic) {
+      for (int id = 0; id < PointFDType::num_dimensions; ++id) {
+        if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
+          point_fd.du[ic][id] = du(i, index.iz, index.ix, ic, id);
+        } else {
+          point_fd.du[ic][id] = du(i, index.iz, index.iy, index.ix, ic, id);
+        }
+      }
+    }
+  }
+
+  /**
+   * @brief Load field derivatives for a SIMD GLL point from compact storage.
+   *
+   * Uses copy_from to load SIMD_WIDTH consecutive compact-index values
+   * starting at the compact index of the first lane, matching the
+   * jacobian_matrix SIMD pattern.
+   */
+  template <typename PointFDType, typename IndexType,
+            std::enable_if_t<IndexType::using_simd, int> = 0>
+  KOKKOS_FORCEINLINE_FUNCTION void
+  load_device_values(const IndexType &index, PointFDType &point_fd) const {
+    using simd_type = typename PointFDType::simd;
+    using mask_type = typename simd_type::mask_type;
+    using tag_type = typename simd_type::tag_type;
+
+    const int i = ispec_to_compact(index.ispec);
+    const auto mask = index.template get_mask<simd_type>();
+
+    for (int ic = 0; ic < PointFDType::components; ++ic) {
+      for (int id = 0; id < PointFDType::num_dimensions; ++id) {
+        if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
+          Kokkos::Experimental::where(mask, point_fd.du[ic][id])
+              .copy_from(&du(i, index.iz, index.ix, ic, id), tag_type());
+        } else {
+          Kokkos::Experimental::where(mask, point_fd.du[ic][id])
+              .copy_from(&du(i, index.iz, index.iy, index.ix, ic, id),
+                         tag_type());
+        }
+      }
+    }
+  }
+
+  /**
+   * @brief Store field derivatives for a non-SIMD GLL point into compact
+   * storage.
+   */
+  template <typename PointFDType, typename IndexType,
+            std::enable_if_t<!IndexType::using_simd, int> = 0>
+  KOKKOS_FORCEINLINE_FUNCTION void
+  store_device_values(const IndexType &index, const PointFDType &point_fd) {
+    const int i = ispec_to_compact(index.ispec);
+    for (int ic = 0; ic < PointFDType::components; ++ic) {
+      for (int id = 0; id < PointFDType::num_dimensions; ++id) {
+        if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
+          du(i, index.iz, index.ix, ic, id) = point_fd.du[ic][id];
+        } else {
+          du(i, index.iz, index.iy, index.ix, ic, id) = point_fd.du[ic][id];
+        }
+      }
+    }
+  }
+
+  /**
+   * @brief Store field derivatives for a SIMD GLL point into compact storage.
+   *
+   * Uses copy_to to scatter SIMD_WIDTH consecutive compact-index values
+   * starting at the compact index of the first lane, matching the
+   * jacobian_matrix SIMD pattern.
+   */
+  template <typename PointFDType, typename IndexType,
+            std::enable_if_t<(IndexType::using_simd &&
+                              IndexType::dimension_tag ==
+                                  specfem::element::dimension_tag::dim2),
+                             int> = 0>
+  KOKKOS_FORCEINLINE_FUNCTION void
+  store_device_values(const IndexType &index, const PointFDType &point_fd) {
+    using simd_type = typename PointFDType::simd;
+    using mask_type = typename simd_type::mask_type;
+    using tag_type = typename simd_type::tag_type;
+
+    const int i = ispec_to_compact(index.ispec);
+    const auto mask = index.template get_mask<simd_type>();
+
+    for (int ic = 0; ic < PointFDType::components; ++ic) {
+      for (int id = 0; id < PointFDType::num_dimensions; ++id) {
+        if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
+          Kokkos::Experimental::where(mask, point_fd.du[ic][id])
+              .copy_to(&du(i, index.iz, index.ix, ic, id), tag_type());
+        } else {
+          Kokkos::Experimental::where(mask, point_fd.du[ic][id])
+              .copy_to(&du(i, index.iz, index.iy, index.ix, ic, id),
+                       tag_type());
+        }
+      }
+    }
+  }
 };
 
 } // namespace specfem::assembly::field_derivative_storage::impl

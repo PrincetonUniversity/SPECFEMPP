@@ -242,7 +242,7 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
       using simd = typename PointType::simd;
       using mask_type = typename simd::mask_type;
       using tag_type = typename simd::tag_type;
-      mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+      const auto mask = index.template get_mask<simd>();
       for (int j = 0; j < N_SLS; ++j) {
         Kokkos::Experimental::where(mask, point.kappa_relaxation_rate(j))
             .copy_from(
@@ -307,7 +307,7 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
       using simd = typename PointType::simd;
       using mask_type = typename simd::mask_type;
       using tag_type = typename simd::tag_type;
-      mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+      const auto mask = index.template get_mask<simd>();
       for (int j = 0; j < N_SLS; ++j) {
         Kokkos::Experimental::where(mask, point.Rxx(j))
             .copy_to(&memory_variable_Rxx(i, index.iz, index.iy, index.ix, j),

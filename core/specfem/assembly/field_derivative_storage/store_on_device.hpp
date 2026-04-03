@@ -1,102 +1,74 @@
 #pragma once
 
+#include "specfem/assembly/field_derivative_storage.hpp"
 #include "specfem/assembly/field_derivative_storage/impl/field_derivative_medium.hpp"
+#include "specfem/data_access/check_compatibility.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
-#include <type_traits>
 
 namespace specfem::assembly {
 
 /**
- * @defgroup FieldDerivativeStorageDataAccess Field Derivative Storage Data
- * Access Functions
+ * @brief Store field derivatives for a GLL point into the assembly
+ *        FieldDerivativeStorage container (device kernel).
  *
- */
-
-// ---------------------------------------------------------------------------
-// Non-empty (non-none attenuation), non-SIMD index
-// ---------------------------------------------------------------------------
-
-/**
- * @brief Store field derivatives into compact storage at a non-SIMD GLL point.
+ * Dispatches to the matching field_derivative_medium via get_container<M,P,A>()
+ * and delegates to its store_device_values() method.
+ *
+ * If @p point_fd is specfem::point::null_field_derivatives this function
+ * returns immediately — no storage exists for this element combination.
  *
  * @ingroup FieldDerivativeStorageDataAccess
  *
- * @tparam PointFDType      Point field-derivatives type
- * @tparam IndexType        Index type (non-SIMD, has ispec/iz/ix)
- * @tparam D,M,P,A          Tag template parameters of the storage medium
+ * @tparam IndexType                      Index type
+ * (specfem::point::index<...>)
+ * @tparam FieldDerivativesContainerType  Assembly FieldDerivativeStorage
+ * @tparam PointFieldDerivativesType      specfem::point::field_derivatives<...>
+ *                                        or
+ * specfem::point::null_field_derivatives
  *
- * @param index    GLL point index
- * @param medium   Compact field-derivative storage for this tag combination
- * @param point_fd Point field derivatives to store
+ * @param index     GLL point index (global ispec, iz, [iy,] ix).
+ * @param container Assembly field-derivative storage container
+ *                  (device-accessible).
+ * @param point_fd  Input: point field-derivatives struct with values to store,
+ *                  or null_field_derivatives for a no-op.
  */
-template <typename PointFDType, typename IndexType,
-          specfem::element::dimension_tag D, specfem::element::medium_tag M,
-          specfem::element::property_tag P, specfem::element::attenuation_tag A,
-          std::enable_if_t<!IndexType::using_simd, int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void store_on_device(
-    const IndexType &index,
-    specfem::assembly::impl::field_derivative_medium<D, M, P, A> &medium,
-    const PointFDType &point_fd) {
-  const int i = medium.ispec_to_compact(index.ispec);
-  for (int ic = 0; ic < PointFDType::components; ++ic) {
-    for (int id = 0; id < PointFDType::num_dimensions; ++id) {
-      medium.du_storage(i, index.iz, index.ix, ic, id) = point_fd.du[ic][id];
-    }
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Non-empty, SIMD index — scatter across lanes
-// ---------------------------------------------------------------------------
-
-/**
- * @brief Store field derivatives into compact storage at a SIMD GLL point
- *        (scatter across SIMD lanes).
- *
- * @ingroup FieldDerivativeStorageDataAccess
- */
-template <typename PointFDType, typename IndexType,
-          specfem::element::dimension_tag D, specfem::element::medium_tag M,
-          specfem::element::property_tag P, specfem::element::attenuation_tag A,
-          std::enable_if_t<IndexType::using_simd, int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void store_on_device(
-    const IndexType &index,
-    specfem::assembly::impl::field_derivative_medium<D, M, P, A> &medium,
-    const PointFDType &point_fd) {
-  using simd_type = typename PointFDType::simd;
-  constexpr int simd_size = simd_type::size();
-  for (int lane = 0; lane < simd_size; ++lane) {
-    const int i = medium.ispec_to_compact(index.ispec + lane);
-    for (int ic = 0; ic < PointFDType::components; ++ic) {
-      for (int id = 0; id < PointFDType::num_dimensions; ++id) {
-        medium.du_storage(i, index.iz, index.ix, ic, id) =
-            point_fd.du[ic][id][lane];
-      }
-    }
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Empty specialization (attenuation_none) — compile-time no-op
-// ---------------------------------------------------------------------------
-
-/**
- * @brief No-op store for attenuation_none — zero overhead at compile time.
- *
- * @ingroup FieldDerivativeStorageDataAccess
- */
-template <typename PointFDType, typename IndexType,
-          specfem::element::dimension_tag D, specfem::element::medium_tag M,
-          specfem::element::property_tag P>
+template <typename IndexType, typename FieldDerivativesContainerType,
+          typename PointFieldDerivativesType,
+          typename std::enable_if_t<
+              specfem::data_access::is_index_type<IndexType>::value &&
+                  specfem::data_access::is_field_derivatives<
+                      FieldDerivativesContainerType>::value &&
+                  specfem::data_access::is_field_derivatives<
+                      PointFieldDerivativesType>::value,
+              int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
-store_on_device(const IndexType &,
-                specfem::assembly::impl::field_derivative_medium<
-                    D, M, P, specfem::element::attenuation_tag::none> &,
-                const PointFDType &) {
-  // intentionally empty
+store_on_device(const IndexType &index,
+                const FieldDerivativesContainerType &container,
+                const PointFieldDerivativesType &point_fd) {
+
+  auto compatibility = specfem::data_access::check_compatibility<
+      IndexType, FieldDerivativesContainerType, PointFieldDerivativesType>();
+  // Incompatible types; this likely indicates a programming error in the
+  // caller. Trigger a compile-time error with a helpful message.
+  static_assert(compatibility::value,
+                "Incompatible types for field derivative storing.");
+
+  constexpr auto medium_tag =
+      PointFieldDerivativesType::field_derivatives_medium_type::medium_tag;
+
+  container.template get_container<MediumTag>().store_device_values(index,
+                                                                    point_fd);
+}
+
+template <typename IndexType, typename FieldDerivativesContainerType>
+KOKKOS_FORCEINLINE_FUNCTION void
+store_on_device(const IndexType &index,
+                const FieldDerivativesContainerType &container,
+                specfem::point::null_field_derivatives_type point_fd) {
+  // No-op for null_field_derivatives (no storage allocated)
 }
 
 } // namespace specfem::assembly

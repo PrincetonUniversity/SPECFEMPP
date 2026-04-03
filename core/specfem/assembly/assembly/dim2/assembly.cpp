@@ -30,6 +30,10 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
                                   this->element_types, flux_scheme_config };
   this->jacobian_matrix = { this->mesh };
 
+  this->field_derivative_storage = { this->element_types, this->mesh.nspec,
+                                     this->mesh.element_grid.ngllz,
+                                     this->mesh.element_grid.ngllx };
+
   // this->attenuation = { reference};
 
   this->properties = { this->mesh.nspec,
