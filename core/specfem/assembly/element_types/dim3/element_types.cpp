@@ -180,7 +180,7 @@ Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> specfem::assembly::
         const specfem::element::boundary_tag boundary_tag) const {
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN),
-       PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
+       PROPERTY_TAG(ISOTROPIC, ISOTROPIC_COSSERAT), BOUNDARY_TAG(NONE)),
       CAPTURE(h_elements) {
         if (_medium_tag_ == medium_tag && _property_tag_ == property_tag &&
             _boundary_tag_ == boundary_tag) {
@@ -201,7 +201,7 @@ specfem::assembly::element_types<specfem::element::dimension_tag::dim3>::
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN),
-       PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
+       PROPERTY_TAG(ISOTROPIC, ISOTROPIC_COSSERAT), BOUNDARY_TAG(NONE)),
       CAPTURE(elements) {
         if (_medium_tag_ == medium_tag && _property_tag_ == property_tag &&
             _boundary_tag_ == boundary_tag) {

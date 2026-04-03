@@ -76,5 +76,18 @@ const SourceVector3DType multiple_sources_3d = {
       2000.0, 3000.0, 2000.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
       std::make_unique<specfem::source_time_functions::Ricker>(
           nsteps, dt, 1.0, 30.0, 1.0e10, false),
+      wavefield_type),
+  std::make_shared<
+      specfem::sources::cosserat_force<specfem::element::dimension_tag::dim3> >(
+      2500.0, 2500.0, 2500.0, 1.0, 0.0, 2.0, 4.0, 1.0, 2.0,
+      std::make_unique<specfem::source_time_functions::Ricker>(
+          nsteps, dt, 10.0, 0.0, 1e10, false),
       wavefield_type)
 };
+
+const SourceVector3DType single_cosserat_force_3d = { std::make_shared<
+    specfem::sources::cosserat_force<specfem::element::dimension_tag::dim3> >(
+    2500.0, 2500.0, 2500.0, 1.0, 0.0, 2.0, 4.0, 1.0, 2.0,
+    std::make_unique<specfem::source_time_functions::Ricker>(nsteps, dt, 10.0,
+                                                             0.0, 1e10, false),
+    wavefield_type) };

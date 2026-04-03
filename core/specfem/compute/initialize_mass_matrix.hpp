@@ -30,7 +30,7 @@ void initialize_mass_matrix(
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2, DIM3),
        MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T),
+                  ELASTIC_PSV_T, ELASTIC_SPIN),
        PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
        BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
                     COMPOSITE_STACEY_DIRICHLET)),
@@ -47,7 +47,7 @@ void initialize_mass_matrix(
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2, DIM3),
        MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T)),
+                  ELASTIC_PSV_T, ELASTIC_SPIN)),
       {
         if constexpr (DimensionTag == _dimension_tag_) {
           specfem::compute::impl::invert_mass_matrix<

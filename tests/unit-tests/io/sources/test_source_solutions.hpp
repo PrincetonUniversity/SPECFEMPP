@@ -23,3 +23,4 @@ extern const SourceVector2DType multiple_sources_2d;
 extern const SourceVector3DType single_force_3d;
 extern const SourceVector3DType single_moment_tensor_3d;
 extern const SourceVector3DType multiple_sources_3d;
+extern const SourceVector3DType single_cosserat_force_3d;

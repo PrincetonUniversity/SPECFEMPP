@@ -16,6 +16,7 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
   constexpr auto elastic_psv = specfem::element::medium_tag::elastic_psv;
   constexpr auto elastic_sh = specfem::element::medium_tag::elastic_sh;
   constexpr auto poroelastic = specfem::element::medium_tag::poroelastic;
+  constexpr auto elastic_spin = specfem::element::medium_tag::elastic_spin;
   constexpr auto elastic_psv_t = specfem::element::medium_tag::elastic_psv_t;
   constexpr auto forward = specfem::simulation::field_type::forward;
 
@@ -48,6 +49,8 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
     dofs_updated += this->time_scheme->apply_predictor_phase_forward(poroelastic);
     dofs_updated +=
         this->time_scheme->apply_predictor_phase_forward(elastic_psv_t);
+    dofs_updated +=
+        this->time_scheme->apply_predictor_phase_forward(elastic_spin);
     // Update acoustic wavefield:
     // coupling, source interaction, stiffness, divide by mass matrix
     elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, forward, acoustic>>(assembly, istep);
@@ -61,6 +64,7 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
     elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, forward, elastic_psv>>(assembly, istep);
     elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, forward, elastic_sh>>(assembly, istep);
     elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, forward, elastic_psv_t>>(assembly, istep);
+    elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, forward, elastic_spin>>(assembly, istep);
     // Corrector phase forward for elastic
     dofs_updated +=
         this->time_scheme->apply_corrector_phase_forward(elastic);
@@ -70,6 +74,8 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
         this->time_scheme->apply_corrector_phase_forward(elastic_sh);
     dofs_updated +=
         this->time_scheme->apply_corrector_phase_forward(elastic_psv_t);
+    dofs_updated +=
+        this->time_scheme->apply_corrector_phase_forward(elastic_spin);
 
     // Update wavefields for poroelastic wavefields:
     // coupling, source, stiffness, divide by mass matrix

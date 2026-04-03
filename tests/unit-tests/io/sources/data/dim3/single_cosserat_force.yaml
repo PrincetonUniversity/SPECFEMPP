@@ -1,0 +1,17 @@
+number-of-sources: 1
+sources:
+  - cosserat-force:
+      x : 2500.0
+      y : 2500.0
+      z : 2500.0
+      source_surf: false
+      fx : 1.0
+      fy : 0.0
+      fz : 2.0
+      fc_x : 4.0
+      fc_y : 1.0
+      fc_z : 2.0
+      Ricker:
+        factor: 1e10
+        tshift: 0.0
+        f0: 10.0
