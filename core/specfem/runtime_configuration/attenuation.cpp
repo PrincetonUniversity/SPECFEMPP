@@ -35,6 +35,12 @@ specfem::runtime_configuration::Attenuation::Attenuation(
         specfem::units::quantity_cast<specfem::units::Hertz>(
             band[1].as<std::string>());
 
+    if (minimum_frequency >= maximum_frequency) {
+      throw std::runtime_error(
+          "attenuation-frequency-band: first frequency must be less than the "
+          "second frequency.");
+    }
+
     this->attenuation_frequency_band =
         specfem::utilities::Band<specfem::units::Hertz>(minimum_frequency,
                                                         maximum_frequency);
