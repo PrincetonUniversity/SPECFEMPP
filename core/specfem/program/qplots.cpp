@@ -1,7 +1,9 @@
 #include "specfem/attenuation.hpp"
 #include "specfem/program.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/units.hpp"
 #include "specfem/utilities.hpp"
+#include "specfem/utilities/band.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -48,15 +50,18 @@ bool specfem::program::qplots(const type_real Q, const type_real minfreq,
     specfem::Logger::info("Directory already exists: " + qplot_dir.string());
   }
 
+  using namespace specfem::units::unit_symbols;
+  const specfem::utilities::Band<specfem::units::Hertz> band(minfreq * Hz,
+                                                             maxfreq * Hz);
+
   // Get tau_sigma
   const auto tau_sigma =
-      specfem::attenuation::compute_tau_sigma<specfem::constants::N_SLS>(
-          minfreq, maxfreq);
+      specfem::attenuation::compute_tau_sigma<specfem::constants::N_SLS>(band);
 
   // Compute tau_eps for the given Q
   const auto tau_eps =
       specfem::attenuation::compute_tau_eps<specfem::constants::N_SLS>(
-          Q, tau_sigma, minfreq, maxfreq);
+          Q, tau_sigma, band);
 
   // Print tau_sigma and tau_eps for debugging
   specfem::Logger::info("Computed tau_sigma:");

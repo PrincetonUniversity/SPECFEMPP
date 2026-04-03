@@ -61,8 +61,7 @@ specfem::assembly::Attenuation<specfem::element::dimension_tag::dim2>::
       Hz;
 
   // Compute tau_sigma once (shared across all elements)
-  auto tau_sigma = specfem::attenuation::compute_tau_sigma<N_SLS>(
-      band.min.raw(), band.max.raw());
+  auto tau_sigma = specfem::attenuation::compute_tau_sigma<N_SLS>(band);
 
   // Compute Runge-Kutta memory-variable update coefficients
   auto rk = specfem::attenuation::compute_integration_factors<N_SLS>(tau_sigma,

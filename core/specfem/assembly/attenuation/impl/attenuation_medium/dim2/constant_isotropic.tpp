@@ -136,28 +136,29 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
           specfem::element::medium_tag::elastic_psv, PropertyTag,
           specfem::element::attenuation_tag::constant_isotropic>(mesh_ispec);
 
-      material.compute_attenuation_properties(fc.raw(), f0.raw(), band, tau_sigma);
+      auto computed_values = material.compute_attenuation_properties(fc.raw(), f0.raw(), band, tau_sigma);
+
+      auto kappa_props = computed_values.kappa_attenuation_properties;
+      auto mu_props = computed_values.mu_attenuation_properties;
 
       // Per-GLL fill
-      for (int iz = 0; iz < ngllz; ++iz) {
-        for (int ix = 0; ix < ngllx; ++ix) {
-          for (int j = 0; j < N_SLS; ++j) {
-            const type_real tauinv_j = 1.0 / tau_sigma(j);
+      for (int j = 0; j < N_SLS; ++j) {
 
-            auto kappa_props = material.get_kappa_attenuation_properties();
+        // Compute per element relaxation rates
+        const type_real tauinv_j = 1.0 / tau_sigma(j);
+        auto kappa_rr_j = kappa_props.beta(j) * tauinv_j / kappa_props.one_minus_sum_beta;
+        auto mu_rr_j = 2.0 * mu_props.beta(j) * tauinv_j / mu_props.one_minus_sum_beta;
 
-            h_kappa_relaxation_rate(i, iz, ix, j) =
-                kappa_props.beta(j)
-                * tauinv_j / kappa_props.one_minus_sum_beta;
-
-            auto mu_props = material.get_mu_attenuation_properties();
-            h_mu_relaxation_rate(i, iz, ix, j) =
-                2.0 * mu_props.beta(j)
-                * tauinv_j / mu_props.one_minus_sum_beta;
+        // Assigning relaxation rates to all GLL points
+        for (int iz = 0; iz < ngllz; ++iz) {
+          for (int ix = 0; ix < ngllx; ++ix) {
+              h_kappa_relaxation_rate(i, iz, ix, j) = kappa_rr_j;
+              h_mu_relaxation_rate(i, iz, ix, j) = mu_rr_j;
           }
         }
       }
     }
+
 
     // 4. Push all host data (kappa/mu_cf filled; memory variables zero) to device
     copy_to_device();
