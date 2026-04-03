@@ -383,6 +383,23 @@ if(SPECFEM_ENABLE_MPI)
 
     -lpthread -lm
   )
+
+  add_executable(
+    io_mesh_mpi_tests
+    io/mesh/read_mesh.cpp
+    io/mesh/runner.cpp
+  )
+
+  target_link_libraries(
+    io_mesh_mpi_tests
+    specfem::io
+    specfem::mesh
+    specfem_environment
+    specfem::utilities
+    MPI::MPI_CXX
+
+    -lpthread -lm
+  )
 endif()
 
 add_executable(
@@ -1101,6 +1118,7 @@ else()
   include(GoogleTest)
   set(TEST_TARGETS
     mesh_mpi_dim3_tests
+    io_mesh_mpi_tests
   )
   foreach(test_target IN LISTS TEST_TARGETS)
       gtest_discover_tests(${test_target}

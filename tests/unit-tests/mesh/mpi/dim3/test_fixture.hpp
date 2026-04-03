@@ -4,6 +4,7 @@
 #include "specfem/enums.hpp"
 #include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
+#include "specfem/mpi.hpp"
 #include <gtest/gtest.h>
 #include <string>
 
@@ -36,9 +37,17 @@ protected:
     if (!SPECFEMEnvironment::IsMPISizeValid()) {
       GTEST_SKIP() << SPECFEMEnvironment::GetMPISizeError();
     }
+
+    // Check if the current rank is within the participating range for this test
+    if (specfem::MPI::world_communicator() == MPI_COMM_NULL) {
+      GTEST_SKIP() << "Test designed for 4 processes. Rank "
+                   << specfem::MPI::get_rank()
+                   << " is outside the participating range [0-3].";
+    }
     const auto &folder = GetParam();
-    const std::string database = "data/mpi/dim3/" + folder + "/Database";
-    mesh = specfem::test_configuration::ActualMesh3D(database);
+    const std::string database = "data/mpi/dim3/" + folder + "/Database.bin";
+    const auto mpi_database = specfem::MPI::format_proc_filename(database);
+    mesh = specfem::test_configuration::ActualMesh3D(mpi_database);
   }
   void TearDown() override {
     // Any cleanup needed for each test

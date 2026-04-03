@@ -72,7 +72,7 @@ struct MPIConnection {
           found = true;
           break;
         }
-      } else {
+      } else if (my_rank == edge2.rank) {
         // We are edge2, look for matching edge1
         if (mpi_edge.neighbor_partition == edge1.rank &&
             mpi_edge.orientation == edge2.connection_id &&
@@ -155,14 +155,14 @@ static const std::unordered_map<std::string, ExpectedMPIAdjacency3D>
                       0, 1, specfem::mesh_entity::dim3::type::right,
                       specfem::mesh_entity::dim3::type::bottom_front_right),
                   std::make_tuple(
-                      1, 2, specfem::mesh_entity::dim3::type::left,
+                      1, 0, specfem::mesh_entity::dim3::type::left,
                       specfem::mesh_entity::dim3::type::bottom_front_left)),
               MPIConnection(
                   std::make_tuple(
                       2, 1, specfem::mesh_entity::dim3::type::right,
                       specfem::mesh_entity::dim3::type::bottom_front_right),
                   std::make_tuple(
-                      3, 2, specfem::mesh_entity::dim3::type::left,
+                      3, 0, specfem::mesh_entity::dim3::type::left,
                       specfem::mesh_entity::dim3::type::bottom_front_left)),
               // Front - Back connections
               MPIConnection(
@@ -175,10 +175,10 @@ static const std::unordered_map<std::string, ExpectedMPIAdjacency3D>
               MPIConnection(
                   std::make_tuple(
                       1, 3, specfem::mesh_entity::dim3::type::back,
-                      specfem::mesh_entity::dim3::type::bottom_back_right),
+                      specfem::mesh_entity::dim3::type::bottom_back_left),
                   std::make_tuple(
                       3, 1, specfem::mesh_entity::dim3::type::front,
-                      specfem::mesh_entity::dim3::type::bottom_front_right)),
+                      specfem::mesh_entity::dim3::type::bottom_front_left)),
               // Diagonal Edge connections
               MPIConnection(
                   std::make_tuple(
