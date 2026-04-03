@@ -320,8 +320,7 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict) {
             attenuation_node);
   } else {
     // Default is attenuation disabled
-    this->attenuation =
-        std::make_unique<specfem::runtime_configuration::Attenuation>();
+    this->attenuation = nullptr;
   }
 };
 

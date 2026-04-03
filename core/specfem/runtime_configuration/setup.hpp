@@ -215,8 +215,43 @@ public:
    * @brief Whether attenuation is enabled in the simulation
    */
   bool is_attenuation_enabled() const {
-    return this->attenuation && this->attenuation->is_attenuation_enabled();
+    if (this->attenuation) {
+      return true;
+    } else {
+      return false;
+    }
   }
+
+  /**
+   * @brief Get the reference frequency for attenuation
+   *
+   * @return type_real reference frequency for attenuation
+   */
+  std::shared_ptr<specfem::units::Hertz>
+  get_attenuation_reference_frequency() const {
+    if (this->attenuation) {
+      return std::make_shared<specfem::units::Hertz>(
+          this->attenuation->get_reference_frequency());
+    } else {
+      return nullptr;
+    }
+  };
+
+  /**
+   * @brief Get the attenuation frequency band
+   *
+   * @return specfem::utilities::Band<specfem::units::Hertz> Attenuation
+   * frequency band
+   */
+  std::shared_ptr<specfem::utilities::Band<specfem::units::Hertz> >
+  get_attenuation_band() const {
+    if (this->attenuation) {
+      return std::make_shared<specfem::utilities::Band<specfem::units::Hertz> >(
+          this->attenuation->get_attenuation_frequency_band());
+    } else {
+      return nullptr; // Return null if attenuation is disabled
+    }
+  };
 
   /**
    * @brief Create wavefield writer for periodic output.
