@@ -402,7 +402,9 @@ public:
   }
 
   auto get_flux_scheme_configuration() const {
-    return this->flux_schemes->get_flux_scheme();
+    // provide element ngll to help decide interfacial order (if latter not
+    // given)
+    return this->flux_schemes->get_flux_scheme(this->quadrature->get_ngll());
   }
 
   /**
