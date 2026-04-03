@@ -33,6 +33,14 @@ const std::string to_string(const medium_tag &medium,
                             const attenuation_tag &attenuation_tag);
 
 /**
+ * @brief Convert dimension tag to string.
+ *
+ * @param dimension Dimension type
+ * @return String representation
+ */
+const std::string to_string(const dimension_tag &dimension);
+
+/**
  * @brief Convert medium tag to string.
  *
  * @param medium Medium type

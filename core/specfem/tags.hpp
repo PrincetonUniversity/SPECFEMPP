@@ -136,6 +136,19 @@ struct Tags : TagMember<decltype(TagMembers), TagMembers>... {
      ...);
     return s;
   }
+
+  template <typename TagType> static constexpr bool has(TagType val) {
+    return (... || _tag_has<TagMembers>(val));
+  }
+
+private:
+  template <auto M, typename TagType>
+  static constexpr bool _tag_has(TagType val) {
+    if constexpr (std::is_same_v<decltype(M), TagType>)
+      return M == val;
+    else
+      return false;
+  }
 };
 
 } // namespace specfem::tags

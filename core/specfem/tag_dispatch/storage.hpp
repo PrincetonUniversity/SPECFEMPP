@@ -21,6 +21,19 @@ struct to_tuple<specfem::tags::Tags<TagValues...> > {
       TagValueTuple<decltype(TagValues)...>{ TagValues... };
 };
 
+// ── combo_to_tags: TagValueTuple NTTP → Tags<...> instance ──────────────────
+// Usage: combo_to_tags<element_combinations[I]>()
+
+template <auto Combo, std::size_t... Is>
+constexpr auto combo_to_tags_impl(std::index_sequence<Is...>) {
+  return specfem::tags::Tags<Combo.template get<Is>()...>{};
+}
+
+template <auto Combo> constexpr auto combo_to_tags() {
+  return combo_to_tags_impl<Combo>(
+      std::make_index_sequence<std::decay_t<decltype(Combo)>::arity>{});
+}
+
 // ── Type trait: has_host_mirror
 // ─────────────────────────────────────────────── Detects if T has a nested
 // typedef HostMirror (e.g., Kokkos::View)
@@ -65,10 +78,15 @@ private:
 public:
   Storage() = default;
 
-  template <typename Func> Storage(Func &&initializer) : data_() {
-    for (std::size_t i = 0; i < size; ++i) {
-      data_[i] = type(initializer(element_combinations[i]));
-    }
+  template <typename Func>
+  Storage(const std::string &prefix, Func &&initializer) : data_() {
+    [&]<std::size_t... Is>(std::index_sequence<Is...>) {
+      ((([&] {
+         auto tag = combo_to_tags<element_combinations[Is]>();
+         data_[Is] = type(prefix + tag.name(), initializer(tag));
+       })()),
+       ...);
+    }(std::make_index_sequence<size>{});
   }
 
   template <typename TagsType,

@@ -40,15 +40,6 @@ struct TagValueTupleBase<std::index_sequence<Is...>, TagTypes...>
             (static_cast<const TagValueHolder<Is, TagTypes> &>(*this).v ==
              static_cast<const TagValueHolder<Is, TagTypes> &>(o).v));
   }
-
-  std::string name() const {
-    std::string s;
-    bool first = true;
-    ((s += (first ? (first = false, std::string{}) : std::string{ "_" }) +
-           specfem::element::to_string(get<Is>())),
-     ...);
-    return s;
-  }
 };
 
 template <typename... TagTypes>

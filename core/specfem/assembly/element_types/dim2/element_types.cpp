@@ -21,6 +21,28 @@ specfem::assembly::element_types<specfem::element::dimension_tag::dim2>::
     boundary_tags(ispec) = tags.tags_container(ispec_mesh).boundary_tag;
   }
 
+  h_elements =
+      decltype(h_elements){ "h_elements", [&](auto &tag) {
+                             int count = 0;
+                             for (int ispec = 0; ispec < nspec; ispec++) {
+                               if (tag.has(medium_tags(ispec)) &&
+                                   tag.has(property_tags(ispec)) &&
+                                   tag.has(attenuation_tags(ispec)) &&
+                                   tag.has(boundary_tags(ispec))) {
+                                 count++;
+                               }
+                             }
+                             return count;
+                           } };
+
+  // elements = decltype(elements){
+  //   [&](auto &tag) {
+  //     return typename IndexViewType::HostMirror("elements" + tag.name(),
+  //       this.get_number_of_elements(tag::medium_tag, tag::property_tag,
+  //       tag::attenuation_tag, tag::boundary_tag));
+  //   }
+  // };
+
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                        POROELASTIC, ELASTIC_PSV_T)),
