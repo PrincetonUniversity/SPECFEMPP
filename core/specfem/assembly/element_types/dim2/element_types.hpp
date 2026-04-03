@@ -5,6 +5,7 @@
 #include "specfem/macros.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/point.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly {
@@ -46,46 +47,8 @@ namespace specfem::assembly {
  */
 template <> struct element_types<specfem::element::dimension_tag::dim2> {
 protected:
-  /**
-   * @brief Kokkos view type for storing medium tags in host memory.
-   *
-   * Stores the medium type (elastic_psv, elastic_sh, acoustic, poroelastic,
-   * etc.) for each spectral element. Host execution space enables CPU-side
-   * operations for initialization and debugging.
-   */
-  using MediumTagViewType = Kokkos::View<specfem::element::medium_tag *,
-                                         Kokkos::DefaultHostExecutionSpace>;
-
-  /**
-   * @brief Kokkos view type for storing property tags in host memory.
-   *
-   * Stores the material property type (isotropic, anisotropic,
-   * isotropic_cosserat) for each spectral element. Host execution space allows
-   * for efficient host-side filtering and element classification operations.
-   */
-  using PropertyTagViewType = Kokkos::View<specfem::element::property_tag *,
-                                           Kokkos::DefaultHostExecutionSpace>;
-
-  /**
-   * @brief Kokkos view type for storing boundary condition tags in host memory.
-   *
-   * Stores the boundary condition type (none, acoustic_free_surface, stacey,
-   * composite_stacey_dirichlet) for each spectral element. Host storage enables
-   * efficient boundary condition setup and validation.
-   */
-  using BoundaryViewType = Kokkos::View<specfem::element::boundary_tag *,
-                                        Kokkos::DefaultHostExecutionSpace>;
-
-  /**
-   * @brief Kokkos view type for storing attenuation tags in host memory.
-   *
-   * Stores the attenuation type (none, constant_isotropic, etc.) for each
-   * spectral element. Host storage enables efficient attenuation property setup
-   * and validation.
-   */
-  using AttenuationTagViewType =
-      Kokkos::View<specfem::element::attenuation_tag *,
-                   Kokkos::DefaultHostExecutionSpace>;
+  template <typename T>
+  using TagViewType = Kokkos::View<T *, Kokkos::DefaultHostExecutionSpace>;
 
   /**
    * @brief Kokkos view type for storing element indices in device memory.
@@ -96,6 +59,51 @@ protected:
    */
   using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
 
+  static constexpr auto dimension_set = DIMENSION_SET(dim2);
+
+  /// @brief Set of all medium types supported in 2D simulations.
+  static constexpr auto medium_set =
+      MEDIUM_SET(elastic_psv, elastic_sh, elastic_psv_t, acoustic, poroelastic,
+                 electromagnetic_te);
+
+  /// @brief Set of all material property types supported in 2D simulations.
+  static constexpr auto property_set =
+      PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat);
+
+  /// @brief Set of all boundary condition types supported in 2D simulations.
+  static constexpr auto boundary_set = BOUNDARY_SET(
+      none, stacey, acoustic_free_surface, composite_stacey_dirichlet);
+
+  /// @brief Set of all attenuation types supported in 2D simulations.
+  static constexpr auto attenuation_set =
+      ATTENUATION_SET(none, constant_isotropic);
+
+  /// @brief Alias for indexed storage of element sets keyed by tag
+  /// combinations.
+  template <typename Sets>
+  using IndexStorage = specfem::tag_dispatch::Storage<IndexViewType, Sets>;
+
+  /// @brief Element indices grouped by (dimension, medium).
+  IndexStorage<decltype(dimension_set *medium_set)> elements_by_medium;
+  decltype(elements_by_medium)::HostMirror h_elements_by_medium;
+
+  // clang-format off
+  /// @brief Element indices grouped by (dimension, medium, property, attenuation).
+  IndexStorage<decltype(dimension_set * medium_set * property_set * attenuation_set)>
+      elements_by_material;
+  decltype(elements_by_material)::HostMirror h_elements_by_material;
+
+  /// @brief Element indices grouped by (dimension, medium, property, boundary).
+  IndexStorage<decltype(dimension_set * medium_set * property_set * boundary_set)>
+      elements_by_boundary;
+  decltype(elements_by_boundary)::HostMirror h_elements_by_boundary;
+
+  /// @brief Element indices grouped by all five tags (dimension, medium, property, attenuation, boundary).
+  IndexStorage<decltype(dimension_set * medium_set * property_set * attenuation_set * boundary_set)>
+      elements;
+  decltype(elements)::HostMirror h_elements;
+  // clang-format on
+
 public:
   int nspec; ///< total number of spectral elements
   int ngllz; ///< number of quadrature points in z dimension
@@ -104,10 +112,41 @@ public:
   constexpr static auto dimension_tag =
       specfem::element::dimension_tag::dim2; ///< Dimension tag
 
-  MediumTagViewType medium_tags;           ///< View to store medium tags
-  PropertyTagViewType property_tags;       ///< View to store property tags
-  BoundaryViewType boundary_tags;          ///< View to store boundary tags
-  AttenuationTagViewType attenuation_tags; ///< View to store attenuation tags
+  /**
+   * @brief Kokkos view type for storing medium tags in host memory.
+   *
+   * Stores the medium type (elastic_psv, elastic_sh, acoustic, poroelastic,
+   * etc.) for each spectral element. Host execution space enables CPU-side
+   * operations for initialization and debugging.
+   */
+  TagViewType<specfem::element::medium_tag> medium_tags;
+
+  /**
+   * @brief Kokkos view type for storing property tags in host memory.
+   *
+   * Stores the material property type (isotropic, anisotropic,
+   * isotropic_cosserat) for each spectral element. Host execution space allows
+   * for efficient host-side filtering and element classification operations.
+   */
+  TagViewType<specfem::element::property_tag> property_tags;
+
+  /**
+   * @brief Kokkos view type for storing boundary condition tags in host memory.
+   *
+   * Stores the boundary condition type (none, acoustic_free_surface, stacey,
+   * composite_stacey_dirichlet) for each spectral element. Host storage enables
+   * efficient boundary condition setup and validation.
+   */
+  TagViewType<specfem::element::boundary_tag> boundary_tags;
+
+  /**
+   * @brief Kokkos view type for storing attenuation tags in host memory.
+   *
+   * Stores the attenuation type (none, constant_isotropic, etc.) for each
+   * spectral element. Host storage enables efficient attenuation property setup
+   * and validation.
+   */
+  TagViewType<specfem::element::attenuation_tag> attenuation_tags;
 
   /**
    * @brief Default constructor.
@@ -285,6 +324,12 @@ public:
     return boundary_tags(ispec);
   }
 
+  /**
+   * @brief Get attenuation type for a specific spectral element.
+   *
+   * @param ispec Spectral element index
+   * @return Attenuation type (none, constant_isotropic)
+   */
   specfem::element::attenuation_tag get_attenuation_tag(const int ispec) const {
     return attenuation_tags(ispec);
   }

@@ -61,10 +61,17 @@ using TagValueTuple =
 
 using MediumTagTuple = TagValueTuple<specfem::element::dimension_tag,
                                      specfem::element::medium_tag>;
+using PropertyComboTuple =
+    TagValueTuple<specfem::element::dimension_tag, specfem::element::medium_tag,
+                  specfem::element::property_tag>;
 using MaterialTagTuple =
     TagValueTuple<specfem::element::dimension_tag, specfem::element::medium_tag,
                   specfem::element::property_tag,
                   specfem::element::attenuation_tag>;
+using BoundaryComboTuple =
+    TagValueTuple<specfem::element::dimension_tag, specfem::element::medium_tag,
+                  specfem::element::property_tag,
+                  specfem::element::boundary_tag>;
 using ElementTagTuple =
     TagValueTuple<specfem::element::dimension_tag, specfem::element::medium_tag,
                   specfem::element::property_tag,
@@ -89,14 +96,12 @@ constexpr bool is_valid_medium_combo(MediumTagTuple t) {
   return false;
 }
 
-constexpr bool is_valid_material_combo(MaterialTagTuple t) {
+constexpr bool is_valid_property_combo(PropertyComboTuple t) {
   using M = specfem::element::medium_tag;
   using P = specfem::element::property_tag;
-  using A = specfem::element::attenuation_tag;
   auto d = t.get<0>();
   auto m = t.get<1>();
   auto p = t.get<2>();
-  auto a = t.get<3>();
 
   if (!is_valid_medium_combo({ d, m }))
     return false;
@@ -104,42 +109,56 @@ constexpr bool is_valid_material_combo(MaterialTagTuple t) {
   switch (m) {
   case M::elastic_psv:
   case M::elastic_sh:
-    // isotropic × {none, ci}  or  anisotropic × {none}
-    if (p == P::isotropic)
-      return true;
-    if (p == P::anisotropic)
-      return a == A::none;
-    return false;
-  case M::elastic: // dim3 elastic: isotropic only (no anisotropic in dim3)
+    return p == P::isotropic || p == P::anisotropic;
+  case M::elastic: // dim3 elastic: isotropic only
     return p == P::isotropic;
   case M::elastic_psv_t:
-  case M::elastic_spin: // dim3 Cosserat elastic: isotropic_cosserat × none
-    return p == P::isotropic_cosserat && a == A::none;
+  case M::elastic_spin: // Cosserat elastic: isotropic_cosserat
+    return p == P::isotropic_cosserat;
   case M::acoustic:
-    return p == P::isotropic; // {none, ci} both allowed
   case M::poroelastic:
   case M::electromagnetic_te:
-    return p == P::isotropic && a == A::none;
+    return p == P::isotropic;
   case M::electromagnetic:
     return false; // not a material-level medium
   }
   return false;
 }
 
-constexpr bool is_valid_full_combo(ElementTagTuple t) {
+constexpr bool is_valid_material_combo(MaterialTagTuple t) {
+  using M = specfem::element::medium_tag;
+  using A = specfem::element::attenuation_tag;
+  auto d = t.get<0>();
+  auto m = t.get<1>();
+  auto p = t.get<2>();
+  auto a = t.get<3>();
+
+  if (!is_valid_property_combo({ d, m, p }))
+    return false;
+
+  switch (m) {
+  case M::elastic_psv_t:
+  case M::elastic_spin:       // Cosserat elastic: isotropic_cosserat × none
+  case M::electromagnetic_te: // isotropic × none
+    return a == A::none;
+  default:
+    return true; // none or constant_isotropic both valid
+  }
+}
+
+constexpr bool is_valid_boundary_combo(BoundaryComboTuple t) {
   using D = specfem::element::dimension_tag;
   using M = specfem::element::medium_tag;
   using B = specfem::element::boundary_tag;
   auto d = t.get<0>();
   auto m = t.get<1>();
   auto p = t.get<2>();
-  auto a = t.get<3>();
-  auto b = t.get<4>();
+  auto b = t.get<3>();
 
-  if (!is_valid_material_combo({ d, m, p, a }))
+  if (!is_valid_property_combo({ d, m, p }))
     return false;
 
-  // dim3: all element types have no boundary condition
+  // dim3: boundary must be none
   if (d == D::dim3)
     return b == B::none;
 
@@ -151,6 +170,17 @@ constexpr bool is_valid_full_combo(ElementTagTuple t) {
   default:
     return b == B::none || b == B::stacey;
   }
+}
+
+constexpr bool is_valid_full_combo(ElementTagTuple t) {
+  auto d = t.get<0>();
+  auto m = t.get<1>();
+  auto p = t.get<2>();
+  auto a = t.get<3>();
+  auto b = t.get<4>();
+
+  return is_valid_material_combo({ d, m, p, a }) &&
+         is_valid_boundary_combo({ d, m, p, b });
 }
 
 } // namespace specfem::tag_dispatch::impl
