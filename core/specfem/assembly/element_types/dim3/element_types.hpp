@@ -5,6 +5,7 @@
 #include "specfem/macros.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/point.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly {
@@ -51,55 +52,65 @@ namespace specfem::assembly {
  */
 template <> struct element_types<specfem::element::dimension_tag::dim3> {
 protected:
-  /**
-   * @brief Kokkos view type for storing 3D medium tags in host memory.
-   *
-   * Stores the medium type (primarily elastic for 3D applications) for each
-   * 3D spectral element. Host execution space enables CPU-side operations
-   * for 3D mesh initialization and debugging.
-   */
-  using MediumTagViewType = Kokkos::View<specfem::element::medium_tag *,
-                                         Kokkos::DefaultHostExecutionSpace>;
+  template <typename T>
+  using TagViewType = Kokkos::View<T *, Kokkos::DefaultHostExecutionSpace>;
 
   /**
-   * @brief Kokkos view type for storing 3D property tags in host memory.
+   * @brief Kokkos view type for storing element indices in device memory.
    *
-   * Stores the material property type (isotropic, anisotropic,
-   * isotropic_cosserat) for each 3D spectral element. Host execution space
-   * allows for efficient host-side filtering and 3D element classification
-   * operations.
-   */
-  using PropertyTagViewType = Kokkos::View<specfem::element::property_tag *,
-                                           Kokkos::DefaultHostExecutionSpace>;
-
-  /**
-   * @brief Kokkos view type for storing 3D boundary condition tags in host
-   * memory.
-   *
-   * Stores the boundary condition type for each 3D spectral element. Host
-   * storage enables efficient 3D boundary condition setup and validation
-   * for complex 3D geometries.
-   */
-  using BoundaryViewType = Kokkos::View<specfem::element::boundary_tag *,
-                                        Kokkos::DefaultHostExecutionSpace>;
-
-  /** * @brief Kokkos view type for storing 3D attenuation tags in host memory.
-   *
-   * Stores the attenuation type (none, constant_isotropic, etc.) for each
-   * 3D spectral element. Host storage enables efficient attenuation property
-   * setup and validation.
-   */
-  using AttenuationTagViewType =
-      Kokkos::View<specfem::element::attenuation_tag *,
-                   Kokkos::DefaultHostExecutionSpace>;
-  /**
-   * @brief Kokkos view type for storing 3D element indices in device memory.
-   *
-   * Stores integer indices of 3D spectral elements for device-side
-   * computations. Default execution space enables optimal performance for 3D
-   * GPU kernels and parallel 3D element processing operations.
+   * Stores integer indices of spectral elements for device-side computations.
+   * Default execution space enables optimal performance for GPU kernels and
+   * parallel element processing operations.
    */
   using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
+
+  static constexpr auto dimension_set = DIMENSION_SET(dim3);
+
+  /// @brief Set of all medium types supported in 3D simulations.
+  static constexpr auto medium_set = MEDIUM_SET(elastic, acoustic);
+
+  /// @brief Set of all material property types supported in 3D simulations.
+  static constexpr auto property_set =
+      PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat);
+
+  /// @brief Set of all boundary condition types supported in 3D simulations.
+  static constexpr auto boundary_set = BOUNDARY_SET(none);
+
+  /// @brief Set of all attenuation types supported in 3D simulations.
+  static constexpr auto attenuation_set =
+      ATTENUATION_SET(none, constant_isotropic);
+
+  /// @brief All (dimension, medium) tag combinations for medium-only dispatch.
+  static constexpr auto combinations_by_medium = dimension_set * medium_set;
+
+  /// @brief All (dimension, medium, property, attenuation) tag combinations
+  ///        for material-level dispatch.
+  static constexpr auto combinations_by_material =
+      combinations_by_medium * property_set * attenuation_set;
+
+  /// @brief All (dimension, medium, property, boundary) tag combinations
+  ///        for boundary-condition dispatch.
+  static constexpr auto combinations_by_boundary =
+      combinations_by_medium * property_set * boundary_set;
+
+  /// @brief Alias for indexed storage of element sets keyed by tag
+  /// combinations.
+  template <typename Sets>
+  using IndexStorage = specfem::tag_dispatch::Storage<IndexViewType, Sets>;
+
+  /// @brief Element indices grouped by (dimension, medium).
+  IndexStorage<decltype(combinations_by_medium)> elements_by_medium;
+  decltype(elements_by_medium)::HostMirror h_elements_by_medium;
+
+  // clang-format off
+  /// @brief Element indices grouped by (dimension, medium, property, attenuation).
+  IndexStorage<decltype(combinations_by_material)> elements_by_material;
+  decltype(elements_by_material)::HostMirror h_elements_by_material;
+
+  /// @brief Element indices grouped by (dimension, medium, property, boundary).
+  IndexStorage<decltype(combinations_by_boundary)> elements_by_boundary;
+  decltype(elements_by_boundary)::HostMirror h_elements_by_boundary;
+  // clang-format on
 
 public:
   int nspec; ///< total number of spectral elements
@@ -110,10 +121,17 @@ public:
   constexpr static auto dimension_tag =
       specfem::element::dimension_tag::dim3; ///< Dimension tag
 
-  MediumTagViewType medium_tags;           ///< View to store medium tags
-  PropertyTagViewType property_tags;       ///< View to store property tags
-  BoundaryViewType boundary_tags;          ///< View to store boundary tags
-  AttenuationTagViewType attenuation_tags; ///< View to store attenuation tags
+  TagViewType<specfem::element::medium_tag> medium_tags;     ///< View to store
+                                                             ///< medium tags
+  TagViewType<specfem::element::property_tag> property_tags; ///< View to store
+                                                             ///< property tags
+  TagViewType<specfem::element::boundary_tag> boundary_tags; ///< View to store
+                                                             ///< boundary tags
+  TagViewType<specfem::element::attenuation_tag>
+      attenuation_tags; ///< View to
+                        ///< store
+                        ///< attenuation
+                        ///< tags
 
   /**
    * @brief Default constructor.
@@ -288,22 +306,6 @@ public:
   specfem::element::attenuation_tag get_attenuation_tag(const int ispec) const {
     return attenuation_tags(ispec);
   }
-
-private:
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
-                      DECLARE((IndexViewType, elements),
-                              (IndexViewType::HostMirror, h_elements)))
-
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
-                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-                       ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
-                      DECLARE((IndexViewType, material_elements),
-                              (IndexViewType::HostMirror, h_material_elements)))
-
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
-                       PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
-                      DECLARE((IndexViewType, elements),
-                              (IndexViewType::HostMirror, h_elements)))
 };
 
 } // namespace specfem::assembly
