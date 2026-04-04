@@ -8,27 +8,6 @@
 namespace specfem::assembly::element_types_impl {
 
 // ---------------------------------------------------------------------------
-// Generic helper: dispatch over a Storage, find the entry whose tags match
-// the runtime predicate Pred, and return it.
-// ---------------------------------------------------------------------------
-template <typename ViewType, typename Storage, typename Combinations,
-          typename Pred>
-ViewType dispatch_get(const Storage &storage, Combinations combos, Pred &&pred,
-                      const char *error_msg) {
-  ViewType result;
-  bool found = false;
-  specfem::tag_dispatch::for_each(combos, [&]<typename TagsType>() {
-    if (!found && pred.template operator()<TagsType>()) {
-      result = storage.template get<TagsType>();
-      found = true;
-    }
-  });
-  if (!found)
-    throw std::runtime_error(error_msg);
-  return result;
-}
-
-// ---------------------------------------------------------------------------
 // Helper: allocate a device view + host mirror, fill indices where pred
 // holds, then deep-copy to device.
 // ---------------------------------------------------------------------------

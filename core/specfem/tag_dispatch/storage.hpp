@@ -2,10 +2,12 @@
 
 #include "element_combinations.hpp"
 #include "find_in.hpp"
+#include "for_each.hpp"
 #include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
 #include <array>
 #include <cstddef>
+#include <stdexcept>
 #include <type_traits>
 
 namespace specfem::tag_dispatch {
@@ -78,12 +80,11 @@ private:
 public:
   Storage() = default;
 
-  template <typename Func>
-  Storage(const std::string &prefix, Func &&initializer) : data_() {
+  template <typename Func> Storage(Func &&initializer) : data_() {
     [&]<std::size_t... Is>(std::index_sequence<Is...>) {
       ((([&] {
-         auto tag = combo_to_tags<element_combinations[Is]>();
-         data_[Is] = type(prefix + tag.name(), initializer(tag));
+         auto tags = combo_to_tags<element_combinations[Is]>();
+         data_[Is] = type(initializer(tags));
        })()),
        ...);
     }(std::make_index_sequence<size>{});
@@ -99,6 +100,20 @@ public:
             std::size_t Idx = find_in_v<ET::combos, to_tuple<TagsType>::value> >
   constexpr const type &get() const {
     return data_[Idx];
+  }
+
+  template <typename Pred>
+  const type &
+  get(Pred &&pred,
+      const char *error_msg = "no matching element combination") const {
+    const type *result = nullptr;
+    specfem::tag_dispatch::for_each(ET{}, [&]<typename TagsType>() {
+      if (!result && pred.template operator()<TagsType>())
+        result = &this->template get<TagsType>();
+    });
+    if (!result)
+      throw std::runtime_error(error_msg);
+    return *result;
   }
 
   template <typename C, typename D, typename S>

@@ -1,8 +1,6 @@
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/element_types/impl.hpp"
 
-using namespace specfem::assembly::element_types_impl;
-
 // ---------------------------------------------------------------------------
 // Constructor
 // ---------------------------------------------------------------------------
@@ -27,45 +25,41 @@ specfem::assembly::element_types<specfem::element::dimension_tag::dim3>::
     boundary_tags(ispec) = tags.tags_container(ispec_mesh).boundary_tag;
   }
 
-  auto fill_views = [&](auto &dev_view, auto &host_view,
-                        const std::string &label, auto &&pred) {
-    fill_index_views(dev_view, host_view, label, nspec,
-                     std::forward<decltype(pred)>(pred));
-  };
-
   // 1. Index elements by medium.
   specfem::tag_dispatch::for_each(
       combinations_by_medium, [&]<typename TagsType>() {
-        fill_views(elements_by_medium.template get<TagsType>(),
-                   h_elements_by_medium.template get<TagsType>(),
-                   "element_by_medium_" + TagsType::name(), [&](int ispec) {
-                     return medium_tags(ispec) == TagsType::medium_tag;
-                   });
+        specfem::assembly::element_types_impl::fill_index_views(
+            elements_by_medium.template get<TagsType>(),
+            h_elements_by_medium.template get<TagsType>(),
+            "element_by_medium_" + TagsType::name(), nspec, [&](int ispec) {
+              return medium_tags(ispec) == TagsType::medium_tag;
+            });
       });
 
   // 2. Index elements by material (medium + property + attenuation).
   specfem::tag_dispatch::for_each(
       combinations_by_material, [&]<typename TagsType>() {
-        fill_views(elements_by_material.template get<TagsType>(),
-                   h_elements_by_material.template get<TagsType>(),
-                   "element_by_material_" + TagsType::name(), [&](int ispec) {
-                     return medium_tags(ispec) == TagsType::medium_tag &&
-                            property_tags(ispec) == TagsType::property_tag &&
-                            attenuation_tags(ispec) ==
-                                TagsType::attenuation_tag;
-                   });
+        specfem::assembly::element_types_impl::fill_index_views(
+            elements_by_material.template get<TagsType>(),
+            h_elements_by_material.template get<TagsType>(),
+            "element_by_material_" + TagsType::name(), nspec, [&](int ispec) {
+              return medium_tags(ispec) == TagsType::medium_tag &&
+                     property_tags(ispec) == TagsType::property_tag &&
+                     attenuation_tags(ispec) == TagsType::attenuation_tag;
+            });
       });
 
   // 3. Index elements by boundary (medium + property + boundary).
   specfem::tag_dispatch::for_each(
       combinations_by_boundary, [&]<typename TagsType>() {
-        fill_views(elements_by_boundary.template get<TagsType>(),
-                   h_elements_by_boundary.template get<TagsType>(),
-                   "element_by_boundary_" + TagsType::name(), [&](int ispec) {
-                     return medium_tags(ispec) == TagsType::medium_tag &&
-                            property_tags(ispec) == TagsType::property_tag &&
-                            boundary_tags(ispec) == TagsType::boundary_tag;
-                   });
+        specfem::assembly::element_types_impl::fill_index_views(
+            elements_by_boundary.template get<TagsType>(),
+            h_elements_by_boundary.template get<TagsType>(),
+            "element_by_boundary_" + TagsType::name(), nspec, [&](int ispec) {
+              return medium_tags(ispec) == TagsType::medium_tag &&
+                     property_tags(ispec) == TagsType::property_tag &&
+                     boundary_tags(ispec) == TagsType::boundary_tag;
+            });
       });
 }
 
@@ -75,11 +69,8 @@ specfem::assembly::element_types<specfem::element::dimension_tag::dim3>::
 Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
 specfem::assembly::element_types<specfem::element::dimension_tag::dim3>::
     get_elements_on_host(const specfem::element::medium_tag medium_tag) const {
-  return dispatch_get<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >(
-      h_elements_by_medium, combinations_by_medium,
-      [medium_tag]<typename TagsType>() {
-        return TagsType::medium_tag == medium_tag;
-      },
+  return h_elements_by_medium.get(
+      [&]<typename TagsType>() { return TagsType::medium_tag == medium_tag; },
       "Medium tag not found");
 }
 
@@ -87,11 +78,8 @@ Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
 specfem::assembly::element_types<specfem::element::dimension_tag::dim3>::
     get_elements_on_device(
         const specfem::element::medium_tag medium_tag) const {
-  return dispatch_get<Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >(
-      elements_by_medium, combinations_by_medium,
-      [medium_tag]<typename TagsType>() {
-        return TagsType::medium_tag == medium_tag;
-      },
+  return elements_by_medium.get(
+      [&]<typename TagsType>() { return TagsType::medium_tag == medium_tag; },
       "Medium tag not found");
 }
 
@@ -103,9 +91,8 @@ Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> specfem::assembly::
         const specfem::element::medium_tag medium_tag,
         const specfem::element::property_tag property_tag,
         const specfem::element::attenuation_tag attenuation_tag) const {
-  return dispatch_get<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >(
-      h_elements_by_material, combinations_by_material,
-      [medium_tag, property_tag, attenuation_tag]<typename TagsType>() {
+  return h_elements_by_material.get(
+      [&]<typename TagsType>() {
         return TagsType::medium_tag == medium_tag &&
                TagsType::property_tag == property_tag &&
                TagsType::attenuation_tag == attenuation_tag;
@@ -119,9 +106,8 @@ specfem::assembly::element_types<specfem::element::dimension_tag::dim3>::
         const specfem::element::medium_tag medium_tag,
         const specfem::element::property_tag property_tag,
         const specfem::element::attenuation_tag attenuation_tag) const {
-  return dispatch_get<Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >(
-      elements_by_material, combinations_by_material,
-      [medium_tag, property_tag, attenuation_tag]<typename TagsType>() {
+  return elements_by_material.get(
+      [&]<typename TagsType>() {
         return TagsType::medium_tag == medium_tag &&
                TagsType::property_tag == property_tag &&
                TagsType::attenuation_tag == attenuation_tag;
@@ -137,9 +123,8 @@ Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> specfem::assembly::
         const specfem::element::medium_tag medium_tag,
         const specfem::element::property_tag property_tag,
         const specfem::element::boundary_tag boundary_tag) const {
-  return dispatch_get<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >(
-      h_elements_by_boundary, combinations_by_boundary,
-      [medium_tag, property_tag, boundary_tag]<typename TagsType>() {
+  return h_elements_by_boundary.get(
+      [&]<typename TagsType>() {
         return TagsType::medium_tag == medium_tag &&
                TagsType::property_tag == property_tag &&
                TagsType::boundary_tag == boundary_tag;
@@ -153,9 +138,8 @@ specfem::assembly::element_types<specfem::element::dimension_tag::dim3>::
         const specfem::element::medium_tag medium_tag,
         const specfem::element::property_tag property_tag,
         const specfem::element::boundary_tag boundary_tag) const {
-  return dispatch_get<Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >(
-      elements_by_boundary, combinations_by_boundary,
-      [medium_tag, property_tag, boundary_tag]<typename TagsType>() {
+  return elements_by_boundary.get(
+      [&]<typename TagsType>() {
         return TagsType::medium_tag == medium_tag &&
                TagsType::property_tag == property_tag &&
                TagsType::boundary_tag == boundary_tag;
