@@ -1,29 +1,7 @@
 #include "specfem/assembly/element_types.hpp"
+#include "specfem/assembly/element_types/impl.hpp"
 
-namespace {
-
-// ---------------------------------------------------------------------------
-// Generic helper: dispatch over a Storage, find the entry whose tags match
-// the runtime predicate Pred, and return it.
-// ---------------------------------------------------------------------------
-template <typename ViewType, typename Storage, typename Combinations,
-          typename Pred>
-ViewType dispatch_get(const Storage &storage, Combinations combos, Pred &&pred,
-                      const char *error_msg) {
-  ViewType result;
-  bool found = false;
-  specfem::tag_dispatch::for_each(combos, [&]<typename TagsType>() {
-    if (!found && pred.template operator()<TagsType>()) {
-      result = storage.template get<TagsType>();
-      found = true;
-    }
-  });
-  if (!found)
-    throw std::runtime_error(error_msg);
-  return result;
-}
-
-} // namespace
+using namespace specfem::assembly::element_types_impl;
 
 // ---------------------------------------------------------------------------
 // Constructor
@@ -49,23 +27,10 @@ specfem::assembly::element_types<specfem::element::dimension_tag::dim3>::
     boundary_tags(ispec) = tags.tags_container(ispec_mesh).boundary_tag;
   }
 
-  // Helper: allocate a device view + host mirror, fill from a predicate, sync.
-  auto fill_views = [&](auto &dev_view, auto &host_view, const auto &label,
-                        auto &&pred) {
-    int count = 0;
-    for (int ispec = 0; ispec < nspec; ispec++)
-      if (pred(ispec))
-        count++;
-
-    dev_view = IndexViewType(label, count);
-    host_view = Kokkos::create_mirror_view(dev_view);
-
-    int index = 0;
-    for (int ispec = 0; ispec < nspec; ispec++)
-      if (pred(ispec))
-        host_view(index++) = ispec;
-
-    Kokkos::deep_copy(dev_view, host_view);
+  auto fill_views = [&](auto &dev_view, auto &host_view,
+                        const std::string &label, auto &&pred) {
+    fill_index_views(dev_view, host_view, label, nspec,
+                     std::forward<decltype(pred)>(pred));
   };
 
   // 1. Index elements by medium.
