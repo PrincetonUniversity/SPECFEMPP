@@ -440,16 +440,6 @@ subroutine save_databases(nspec,nglob, &
     enddo
   endif
 
-  ! MPI Interfaces (Legacy - now handled by adjacency graph)
-  !
-  ! This section is maintained for database format compatibility but no longer
-  ! writes actual interface data. All MPI connectivity information is encoded
-  ! in the adjacency graph section (local and MPI adjacencies).
-  nb_interfaces = 0
-  nspec_interfaces_max = 0
-  ! format: #number_of_MPI_interfaces  #maximum_number_of_elements_on_each_interface
-  write(IIN_database) nb_interfaces,nspec_interfaces_max
-
   total_nadj_element = 0
   nadj_element(:) = 0
   ! Write the adjacency list for the mesh
