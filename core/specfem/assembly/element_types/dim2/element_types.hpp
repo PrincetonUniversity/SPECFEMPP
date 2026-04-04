@@ -78,30 +78,42 @@ protected:
   static constexpr auto attenuation_set =
       ATTENUATION_SET(none, constant_isotropic);
 
+  /// @brief All (dimension, medium) tag combinations for medium-only dispatch.
+  static constexpr auto combinations_by_medium = dimension_set * medium_set;
+
+  /// @brief All (dimension, medium, property, attenuation) tag combinations
+  ///        for material-level dispatch.
+  static constexpr auto combinations_by_material =
+      combinations_by_medium * property_set * attenuation_set;
+
+  /// @brief All (dimension, medium, property, boundary) tag combinations
+  ///        for boundary-condition dispatch.
+  static constexpr auto combinations_by_boundary =
+      combinations_by_medium * property_set * boundary_set;
+
   /// @brief Alias for indexed storage of element sets keyed by tag
   /// combinations.
   template <typename Sets>
   using IndexStorage = specfem::tag_dispatch::Storage<IndexViewType, Sets>;
 
   /// @brief Element indices grouped by (dimension, medium).
-  IndexStorage<decltype(dimension_set *medium_set)> elements_by_medium;
+  IndexStorage<decltype(combinations_by_medium)> elements_by_medium;
   decltype(elements_by_medium)::HostMirror h_elements_by_medium;
 
   // clang-format off
   /// @brief Element indices grouped by (dimension, medium, property, attenuation).
-  IndexStorage<decltype(dimension_set * medium_set * property_set * attenuation_set)>
-      elements_by_material;
+  IndexStorage<decltype(combinations_by_material)> elements_by_material;
   decltype(elements_by_material)::HostMirror h_elements_by_material;
 
   /// @brief Element indices grouped by (dimension, medium, property, boundary).
-  IndexStorage<decltype(dimension_set * medium_set * property_set * boundary_set)>
+  IndexStorage<decltype(combinations_by_boundary)>
       elements_by_boundary;
   decltype(elements_by_boundary)::HostMirror h_elements_by_boundary;
 
-  /// @brief Element indices grouped by all five tags (dimension, medium, property, attenuation, boundary).
-  IndexStorage<decltype(dimension_set * medium_set * property_set * attenuation_set * boundary_set)>
-      elements;
-  decltype(elements)::HostMirror h_elements;
+  // /// @brief Element indices grouped by all five tags (dimension, medium, property, attenuation, boundary).
+  // IndexStorage<decltype(dimension_set * medium_set * property_set * attenuation_set * boundary_set)>
+  //     elements;
+  // decltype(elements)::HostMirror h_elements;
   // clang-format on
 
 public:
@@ -333,35 +345,6 @@ public:
   specfem::element::attenuation_tag get_attenuation_tag(const int ispec) const {
     return attenuation_tags(ispec);
   }
-
-private:
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
-                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                  POROELASTIC, ELASTIC_PSV_T)),
-                      DECLARE((IndexViewType, elements),
-                              (IndexViewType::HostMirror, h_elements)))
-
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
-                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                  POROELASTIC, ELASTIC_PSV_T),
-                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-                       ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
-                      DECLARE((IndexViewType, material_elements),
-                              (IndexViewType::HostMirror,
-                               h_material_elements))) /// This is a temporary
-                                                      /// fix since none
-                                                      /// attenuation tag
-                                                      /// conflicts with none
-                                                      /// boundary tag
-
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
-                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                  POROELASTIC, ELASTIC_PSV_T),
-                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-                       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                                    COMPOSITE_STACEY_DIRICHLET)),
-                      DECLARE((IndexViewType, elements),
-                              (IndexViewType::HostMirror, h_elements)))
 };
 
 } // namespace specfem::assembly
