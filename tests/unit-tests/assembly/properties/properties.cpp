@@ -28,9 +28,9 @@ set_property_value(
 
   const auto &properties = assembly.properties;
 
-  using PointPropertiesType = specfem::point::properties<
-      specfem::tags::Tags<specfem::element::dimension_tag::dim2, MediumTag,
-                          PropertyTag, using_simd> >;
+  using PointPropertiesType = specfem::point::properties<specfem::tags::Tags<
+      specfem::element::dimension_tag::dim2, MediumTag, PropertyTag,
+      specfem::element::attenuation_tag::none, using_simd> >;
   using PointType = typename PointPropertiesType::value_type;
 
   specfem::execution::ChunkedDomainIterator policy(
@@ -62,9 +62,9 @@ check_property_value(
 
   constexpr auto dimension = specfem::element::dimension_tag::dim2;
   const auto &properties = assembly.properties;
-  using PointType = specfem::point::properties<
-      specfem::tags::Tags<specfem::element::dimension_tag::dim2, MediumTag,
-                          PropertyTag, using_simd> >;
+  using PointType = specfem::point::properties<specfem::tags::Tags<
+      specfem::element::dimension_tag::dim2, MediumTag, PropertyTag,
+      specfem::element::attenuation_tag::none, using_simd> >;
 
   specfem::execution::ChunkedDomainIterator policy(
       ParallelConfig<using_simd, Kokkos::DefaultHostExecutionSpace>(), elements,
@@ -129,9 +129,9 @@ check_property_value(
   const int ngll = assembly.mesh.element_grid.ngllx;
   const auto &properties = assembly.properties;
 
-  using PointType = specfem::point::properties<
-      specfem::tags::Tags<specfem::element::dimension_tag::dim2, MediumTag,
-                          PropertyTag, using_simd> >;
+  using PointType = specfem::point::properties<specfem::tags::Tags<
+      specfem::element::dimension_tag::dim2, MediumTag, PropertyTag,
+      specfem::element::attenuation_tag::none, using_simd> >;
 
   Kokkos::View<PointType ***, Kokkos::DefaultExecutionSpace> point_view(
       "point_view", nspec, ngll, ngll);
@@ -211,7 +211,8 @@ void check_compute_to_mesh(
       MediumTag, PropertyTag, specfem::element::attenuation_tag::none);
 
   using PointType = specfem::point::properties<specfem::tags::Tags<
-      specfem::element::dimension_tag::dim2, MediumTag, PropertyTag, false> >;
+      specfem::element::dimension_tag::dim2, MediumTag, PropertyTag,
+      specfem::element::attenuation_tag::none, false> >;
 
   specfem::execution::ChunkedDomainIterator policy(
       ParallelConfig<false, Kokkos::DefaultHostExecutionSpace>(), elements,

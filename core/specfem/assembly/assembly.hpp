@@ -16,7 +16,7 @@
  * specfem::assembly::mesh, @ref specfem::assembly::jacobian_matrix, etc) that
  * store data computed at all GLL points
  * - Data access functions : Each container provides functions to load/store
- * data on device/host (e.g., @c lod_on_device , @c store_on_device )
+ * data on device/host (e.g., @c load_on_device , @c store_on_device )
  *
  */
 namespace specfem::assembly {

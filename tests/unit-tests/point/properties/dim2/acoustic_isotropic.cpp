@@ -73,7 +73,8 @@ TYPED_TEST(PointPropertiesTest, AcousticIsotropic2D) {
   using PointPropertiesType = specfem::point::properties<specfem::tags::Tags<
       specfem::element::dimension_tag::dim2,
       specfem::element::medium_tag::acoustic,
-      specfem::element::property_tag::isotropic, using_simd> >;
+      specfem::element::property_tag::isotropic,
+      specfem::element::attenuation_tag::none, using_simd> >;
   PointPropertiesType props(rho_inv, kappa);
 
   EXPECT_TRUE(specfem::utilities::is_close(props.rho_inverse(), rho_inv))

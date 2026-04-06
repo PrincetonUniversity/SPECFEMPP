@@ -21,11 +21,13 @@ namespace properties {
  * @tparam Dimension The dimension of the medium
  * @tparam MediumTag The type of the medium
  * @tparam PropertyTag The type of the properties
+ * @tparam AttenuationTag The type of the attenuation
  * @tparam UseSIMD Boolean indicating whether to use SIMD intrinsics
  */
 template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag, bool UseSIMD>
+          specfem::element::property_tag PropertyTag,
+          specfem::element::attenuation_tag AttenuationTag, bool UseSIMD>
 struct PropertyAccessor : public specfem::data_access::Accessor<
                               specfem::datatype::AccessorType::point,
                               specfem::data_access::DataClassType::properties,
@@ -48,6 +50,8 @@ public:
 
   constexpr static auto medium_tag = MediumTag;     ///< type of the medium
   constexpr static auto property_tag = PropertyTag; ///< type of the properties
+  constexpr static auto attenuation_tag =
+      AttenuationTag; ///< type of attenuation
 };
 
 /**
@@ -56,12 +60,14 @@ public:
  * @tparam DimensionTag The dimension of the medium
  * @tparam MediumTag The type of the medium
  * @tparam PropertyTag The type of the properties
+ * @tparam AttenuationTag The type of the attenuation
  * @tparam UseSIMD Boolean indicating whether to use SIMD intrinsics
  * @tparam Enable SFINAE enable parameter
  */
 template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag, bool UseSIMD,
+          specfem::element::property_tag PropertyTag,
+          specfem::element::attenuation_tag AttenuationTag, bool UseSIMD,
           typename Enable = void>
 struct point_container;
 } // namespace properties

@@ -64,8 +64,9 @@ KOKKOS_FORCEINLINE_FUNCTION void load_on_device(
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
   constexpr auto PropertyTag = PointPropertiesType::property_tag;
   constexpr auto DimensionTag = PointPropertiesType::dimension_tag;
+  constexpr auto AttenuationTag = PointPropertiesType::attenuation_tag;
 
-  properties.template get_container<MediumTag, PropertyTag>()
+  properties.template get_container<MediumTag, PropertyTag, AttenuationTag>()
       .load_device_values(l_index, point_properties);
 }
 

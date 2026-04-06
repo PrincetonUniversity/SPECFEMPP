@@ -10,7 +10,8 @@ namespace specfem::assembly::impl {
 template <
     specfem::element::dimension_tag,
     template <specfem::element::dimension_tag, specfem::element::medium_tag,
-              specfem::element::property_tag> class containers_type>
+              specfem::element::property_tag,
+              specfem::element::attenuation_tag> class containers_type>
 struct value_containers;
 
 } // namespace specfem::assembly::impl

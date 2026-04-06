@@ -131,7 +131,8 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic3D) {
   using PointPropertiesType = specfem::point::properties<specfem::tags::Tags<
       specfem::element::dimension_tag::dim3,
       specfem::element::medium_tag::elastic,
-      specfem::element::property_tag::isotropic, using_simd> >;
+      specfem::element::property_tag::isotropic,
+      specfem::element::attenuation_tag::none, using_simd> >;
   PointPropertiesType props(kappa, mu, rho);
 
   EXPECT_TRUE(specfem::utilities::is_close(props.kappa(), kappa))

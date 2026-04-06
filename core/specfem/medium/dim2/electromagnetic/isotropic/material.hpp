@@ -120,8 +120,8 @@ public:
    *
    * @return specfem::point::properties Material properties
    */
-  inline specfem::point::properties<
-      specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false> >
+  inline specfem::point::properties<specfem::tags::Tags<
+      dimension_tag, medium_tag, property_tag, attenuation_tag, false> >
   get_properties() const {
     return { static_cast<type_real>(1.0) / this->mu0, this->e0 * this->e11_e0,
              this->e0 * this->e33_e0, this->sig11, this->sig33 };

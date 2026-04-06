@@ -89,7 +89,9 @@ int compute_stiffness_interaction_core(
       ngll, Tags::dimension_tag, Kokkos::DefaultExecutionSpace::scratch_memory_space,
       Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 
-  using PointTags = specfem::tags::Tags<Tags::dimension_tag, Tags::medium_tag, Tags::property_tag, using_simd>;
+  using PointTags = specfem::tags::Tags<Tags::dimension_tag, Tags::medium_tag,
+                                        Tags::property_tag, attenuation_tag,
+                                        using_simd>;
 
   using PointBoundaryType =
       specfem::point::boundary<Tags::boundary_tag, Tags::dimension_tag, using_simd>;

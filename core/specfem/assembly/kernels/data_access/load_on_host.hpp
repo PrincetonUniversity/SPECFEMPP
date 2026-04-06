@@ -50,8 +50,10 @@ void load_on_host(const IndexType &index,
   IndexType l_index = index;
   l_index.ispec = ispec;
 
-  kernels.template get_container<MediumTag, PropertyTag>().load_host_values(
-      l_index, point_kernels);
+  kernels
+      .template get_container<MediumTag, PropertyTag,
+                              specfem::element::attenuation_tag::none>()
+      .load_host_values(l_index, point_kernels);
 
   return;
 }

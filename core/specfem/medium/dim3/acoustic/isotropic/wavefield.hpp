@@ -36,7 +36,8 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
   using Tags =
       specfem::tags::Tags<specfem::element::dimension_tag::dim3,
                           specfem::element::medium_tag::acoustic,
-                          specfem::element::property_tag::isotropic, false>;
+                          specfem::element::property_tag::isotropic,
+                          specfem::element::attenuation_tag::none, false>;
 
   using FieldDerivativesType = specfem::point::field_derivatives<Tags>;
   using PointPropertyType = specfem::point::properties<Tags>;

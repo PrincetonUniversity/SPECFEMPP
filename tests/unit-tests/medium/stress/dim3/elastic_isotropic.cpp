@@ -12,7 +12,9 @@ TEST(Stress, ElasticIsotropic3D_Basic) {
       specfem::element::property_tag::isotropic;
   static constexpr auto elasticTag = specfem::element::medium_tag::elastic;
 
-  using Tags = specfem::tags::Tags<dimension, elasticTag, property_tag, false>;
+  using Tags =
+      specfem::tags::Tags<dimension, elasticTag, property_tag,
+                          specfem::element::attenuation_tag::none, false>;
   using PropertiesType = specfem::point::properties<Tags>;
   using FieldDerivativesType = specfem::point::field_derivatives<Tags>;
   using StressType = specfem::point::stress<Tags>;
@@ -67,7 +69,9 @@ TEST(Stress, ElasticIsotropic3D_ZeroDerivatives) {
       specfem::element::property_tag::isotropic;
   static constexpr auto elasticTag = specfem::element::medium_tag::elastic;
 
-  using Tags = specfem::tags::Tags<dimension, elasticTag, property_tag, false>;
+  using Tags =
+      specfem::tags::Tags<dimension, elasticTag, property_tag,
+                          specfem::element::attenuation_tag::none, false>;
   using PropertiesType = specfem::point::properties<Tags>;
   using FieldDerivativesType = specfem::point::field_derivatives<Tags>;
   using StressType = specfem::point::stress<Tags>;

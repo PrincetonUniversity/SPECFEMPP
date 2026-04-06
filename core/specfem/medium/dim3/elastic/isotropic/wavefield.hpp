@@ -37,7 +37,8 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
   using PointPropertyType = specfem::point::properties<
       specfem::tags::Tags<specfem::element::dimension_tag::dim3,
                           specfem::element::medium_tag::elastic,
-                          specfem::element::property_tag::isotropic, false> >;
+                          specfem::element::property_tag::isotropic,
+                          specfem::element::attenuation_tag::none, false> >;
 
   const auto &properties = assembly.properties;
 

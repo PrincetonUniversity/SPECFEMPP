@@ -89,24 +89,26 @@ namespace specfem::medium_container::properties {
  * - Get the S-wave velocity @f$ v_s @f$
  *   @code KOKKOS_INLINE_FUNCTION const value_type vs() const @endcode
  */
-template <bool UseSIMD>
+template <specfem::element::attenuation_tag AttenuationTag, bool UseSIMD>
 struct point_container<specfem::element::dimension_tag::dim2,
                        specfem::element::medium_tag::poroelastic,
-                       specfem::element::property_tag::isotropic, UseSIMD>
+                       specfem::element::property_tag::isotropic,
+                       AttenuationTag, UseSIMD>
     /// @cond
     : public PropertyAccessor<specfem::element::dimension_tag::dim2,
                               specfem::element::medium_tag::poroelastic,
                               specfem::element::property_tag::isotropic,
-                              UseSIMD>
+                              AttenuationTag, UseSIMD>
 /// @endcond
 {
 
 private:
-  using base_type = PropertyAccessor<specfem::element::dimension_tag::dim2,
-                                     specfem::element::medium_tag::poroelastic,
-                                     specfem::element::property_tag::isotropic,
-                                     UseSIMD>; ///< Base type of the
-                                               ///< point properties
+  using base_type =
+      PropertyAccessor<specfem::element::dimension_tag::dim2,
+                       specfem::element::medium_tag::poroelastic,
+                       specfem::element::property_tag::isotropic,
+                       AttenuationTag, UseSIMD>; ///< Base type of the
+                                                 ///< point properties
 
 public:
   using value_type = typename base_type::value_type; ///< Type of the properties

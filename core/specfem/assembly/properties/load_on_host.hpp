@@ -59,9 +59,10 @@ void load_on_host(
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
   constexpr auto PropertyTag = PointPropertiesType::property_tag;
   constexpr auto DimensionTag = PointPropertiesType::dimension_tag;
+  constexpr auto AttenuationTag = PointPropertiesType::attenuation_tag;
 
-  properties.template get_container<MediumTag, PropertyTag>().load_host_values(
-      l_index, point_properties);
+  properties.template get_container<MediumTag, PropertyTag, AttenuationTag>()
+      .load_host_values(l_index, point_properties);
 }
 
 } // namespace specfem::assembly

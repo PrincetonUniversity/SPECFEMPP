@@ -39,7 +39,8 @@ namespace specfem::assembly {
  *     nspec, ngllz, nglly, ngllx, materials, element_types);
  *
  * // Access 3D material properties at quadrature points
- * auto container = props.get_container<medium_tag, property_tag>();
+ * auto container = props.get_container<medium_tag, property_tag,
+ * attenuation_tag>();
  * @endcode
  */
 template <>

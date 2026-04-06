@@ -10,7 +10,9 @@ TEST(MassMatrix, PoroelasticIsotropic2DZeroPorosity) {
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
 
-  using Tags = specfem::tags::Tags<dimension, medium_tag, property_tag, false>;
+  using Tags =
+      specfem::tags::Tags<dimension, medium_tag, property_tag,
+                          specfem::element::attenuation_tag::none, false>;
   using PointJacobianMatrixType =
       specfem::point::jacobian_matrix<dimension, true, false>;
   using PointPropertiesType = specfem::point::properties<Tags>;
@@ -47,7 +49,9 @@ TEST(MassMatrix, PoroelasticIsotropic2D) {
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
 
-  using Tags = specfem::tags::Tags<dimension, medium_tag, property_tag, false>;
+  using Tags =
+      specfem::tags::Tags<dimension, medium_tag, property_tag,
+                          specfem::element::attenuation_tag::none, false>;
   using PointJacobianMatrixType =
       specfem::point::jacobian_matrix<dimension, true, false>;
   using PointPropertiesType = specfem::point::properties<Tags>;

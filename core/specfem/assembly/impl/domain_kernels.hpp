@@ -25,7 +25,9 @@ namespace specfem::assembly::impl {
  */
 template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag>
+          specfem::element::property_tag PropertyTag,
+          specfem::element::attenuation_tag AttenuationTag =
+              specfem::element::attenuation_tag::none>
 struct domain_kernels;
 
 /**
@@ -44,15 +46,16 @@ struct domain_kernels;
  * @tparam PropertyTag Material symmetry (isotropic, anisotropic, cosserat)
  */
 template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag>
+          specfem::element::property_tag PropertyTag,
+          specfem::element::attenuation_tag AttenuationTag>
 struct domain_kernels<specfem::element::dimension_tag::dim2, MediumTag,
-                      PropertyTag>
+                      PropertyTag, AttenuationTag>
     : public specfem::medium_container::kernels::data_container<
           specfem::element::dimension_tag::dim2, MediumTag, PropertyTag>,
       public DomainAccessor<
           specfem::element::dimension_tag::dim2,
           domain_kernels<specfem::element::dimension_tag::dim2, MediumTag,
-                         PropertyTag> > {
+                         PropertyTag, AttenuationTag> > {
 
   /// Base kernels data container type
   using base_type = specfem::medium_container::kernels::data_container<
@@ -114,15 +117,16 @@ struct domain_kernels<specfem::element::dimension_tag::dim2, MediumTag,
  * @tparam PropertyTag Material symmetry (isotropic, anisotropic)
  */
 template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag>
+          specfem::element::property_tag PropertyTag,
+          specfem::element::attenuation_tag AttenuationTag>
 struct domain_kernels<specfem::element::dimension_tag::dim3, MediumTag,
-                      PropertyTag>
+                      PropertyTag, AttenuationTag>
     : public specfem::medium_container::kernels::data_container<
           specfem::element::dimension_tag::dim3, MediumTag, PropertyTag>,
       public DomainAccessor<
           specfem::element::dimension_tag::dim3,
           domain_kernels<specfem::element::dimension_tag::dim3, MediumTag,
-                         PropertyTag> > {
+                         PropertyTag, AttenuationTag> > {
 
   /// Base kernels data container type
   using base_type = specfem::medium_container::kernels::data_container<

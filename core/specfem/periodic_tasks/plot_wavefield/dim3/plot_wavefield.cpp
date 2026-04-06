@@ -466,7 +466,8 @@ void specfem::periodic_tasks::
     const auto &elastic_properties =
         this->assembly.properties
             .get_container<specfem::element::medium_tag::elastic,
-                           specfem::element::property_tag::isotropic>();
+                           specfem::element::property_tag::isotropic,
+                           specfem::element::attenuation_tag::none>();
 
     // Access the properties through the assembly
     // We need to loop through each point and get the properties

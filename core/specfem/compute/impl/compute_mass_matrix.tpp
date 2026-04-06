@@ -61,7 +61,9 @@ void specfem::compute::impl::compute_mass_matrix(
   using parallel_config = specfem::parallel_configuration::default_chunk_config<
       dimension_tag, simd, Kokkos::DefaultExecutionSpace>;
 
-  using PointTags = specfem::tags::Tags<dimension_tag, medium_tag, property_tag, using_simd>;
+  using PointTags = specfem::tags::Tags<dimension_tag, medium_tag, property_tag,
+                                        specfem::element::attenuation_tag::none,
+                                        using_simd>;
 
   using PointMassType =
       specfem::point::mass_inverse<PointTags>;

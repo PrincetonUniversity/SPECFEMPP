@@ -53,8 +53,10 @@ load_on_device(const IndexType &index,
   IndexType l_index = index;
   l_index.ispec = ispec;
 
-  kernels.template get_container<MediumTag, PropertyTag>().load_device_values(
-      l_index, point_kernels);
+  kernels
+      .template get_container<MediumTag, PropertyTag,
+                              specfem::element::attenuation_tag::none>()
+      .load_device_values(l_index, point_kernels);
 
   return;
 }

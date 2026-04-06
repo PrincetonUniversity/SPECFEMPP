@@ -34,15 +34,16 @@ namespace specfem::medium_container::properties {
  * - Get conductivity tensor component @f$ \sigma_{33} @f$
  *   @code KOKKOS_INLINE_FUNCTION const value_type sig33() const @endcode
  */
-template <specfem::element::medium_tag MediumTag, bool UseSIMD>
+template <specfem::element::medium_tag MediumTag,
+          specfem::element::attenuation_tag AttenuationTag, bool UseSIMD>
 struct point_container<
     specfem::element::dimension_tag::dim2, MediumTag,
-    specfem::element::property_tag::isotropic, UseSIMD,
+    specfem::element::property_tag::isotropic, AttenuationTag, UseSIMD,
     std::enable_if_t<specfem::element::is_electromagnetic<MediumTag>::value> >
     /// @cond
     : public PropertyAccessor<specfem::element::dimension_tag::dim2, MediumTag,
                               specfem::element::property_tag::isotropic,
-                              UseSIMD>
+                              AttenuationTag, UseSIMD>
 /// @endcond
 {
 
@@ -50,8 +51,8 @@ private:
   using base_type =
       PropertyAccessor<specfem::element::dimension_tag::dim2, MediumTag,
                        specfem::element::property_tag::isotropic,
-                       UseSIMD>; ///< Base type of the
-                                 ///< point properties
+                       AttenuationTag, UseSIMD>; ///< Base type of the
+                                                 ///< point properties
 
 public:
   using value_type = typename base_type::value_type; ///< Type of the properties

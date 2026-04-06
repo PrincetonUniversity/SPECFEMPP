@@ -50,8 +50,10 @@ void store_on_host(const IndexType &index, const PointKernelType &point_kernels,
   IndexType l_index = index;
   l_index.ispec = ispec;
 
-  kernels.template get_container<MediumTag, PropertyTag>().store_host_values(
-      l_index, point_kernels);
+  kernels
+      .template get_container<MediumTag, PropertyTag,
+                              specfem::element::attenuation_tag::none>()
+      .store_host_values(l_index, point_kernels);
 
   return;
 }

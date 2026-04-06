@@ -208,7 +208,8 @@ struct ExpectedProperties3D {
               // Load computed property from assembly structure
               const auto computed_property = [&]() {
                 specfem::point::properties<specfem::tags::Tags<
-                    _dimension_tag_, _medium_tag_, _property_tag_, false> >
+                    _dimension_tag_, _medium_tag_, _property_tag_,
+                    specfem::element::attenuation_tag::none, false> >
                     prop_accessor;
                 specfem::assembly::load_on_host(index, properties,
                                                 prop_accessor);
@@ -218,7 +219,8 @@ struct ExpectedProperties3D {
               // Extract expected property from type-erased storage
               const auto expected_property =
                   std::any_cast<specfem::point::properties<specfem::tags::Tags<
-                      _dimension_tag_, _medium_tag_, _property_tag_, false> > >(
+                      _dimension_tag_, _medium_tag_, _property_tag_,
+                      specfem::element::attenuation_tag::none, false> > >(
                       expected.property);
 
               // Compare properties with detailed error reporting
@@ -271,7 +273,8 @@ std::unordered_map<std::string, ExpectedProperties3D>
                     specfem::point::properties<specfem::tags::Tags<
                         specfem::element::dimension_tag::dim3,
                         specfem::element::medium_tag::elastic,
-                        specfem::element::property_tag::isotropic, false> >(
+                        specfem::element::property_tag::isotropic,
+                        specfem::element::attenuation_tag::none, false> >(
                         11.132e9, 5.175e9, 2300)) // κ, μ, ρ
                                                   // Add more GLL points as
                                                   // needed

@@ -132,7 +132,8 @@ public:
         Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 
     using PointPropertyType = specfem::point::properties<
-        specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false> >;
+        specfem::tags::Tags<dimension_tag, medium_tag, property_tag,
+                            specfem::element::attenuation_tag::none, false> >;
 
     using PointFieldDerivativesType = specfem::point::field_derivatives<
         specfem::tags::Tags<dimension_tag, medium_tag, false> >;

@@ -131,6 +131,7 @@ void max(
 
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
   constexpr auto PropertyTag = PointPropertiesType::property_tag;
+  constexpr auto AttenuationTag = PointPropertiesType::attenuation_tag;
 
   constexpr bool on_device =
       std::is_same<typename IndexViewType::execution_space,
@@ -156,8 +157,8 @@ void max(
   Kokkos::fence(); // Ensure the above parallel for is complete before
                    // proceeding
 
-  properties.get_container<MediumTag, PropertyTag>().max(local_ispecs,
-                                                         point_properties);
+  properties.get_container<MediumTag, PropertyTag, AttenuationTag>().max(
+      local_ispecs, point_properties);
 
   // Note: The above call to max will perform the reduction on the device
 
