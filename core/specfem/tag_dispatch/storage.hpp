@@ -57,8 +57,9 @@ public:
   template <typename Func> Storage(Func &&initializer) : data_() {
     [&]<std::size_t... Is>(std::index_sequence<Is...>) {
       ((([&] {
-         auto tags = combo_to_tags<element_combinations[Is]>();
-         data_[Is] = initializer(tags);
+         using TagsType =
+             std::decay_t<decltype(combo_to_tags<element_combinations[Is]>())>;
+         data_[Is] = initializer.template operator()<TagsType>();
        })()),
        ...);
     }(std::make_index_sequence<size>{});

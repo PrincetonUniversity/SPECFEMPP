@@ -24,9 +24,7 @@ specfem::assembly::element_types<specfem::element::dimension_tag::dim3>::
     boundary_tags(ispec) = tags.tags_container(ispec_mesh).boundary_tag;
   }
 
-  auto make_host_index_view = [&](auto tags) {
-    using TagsType = std::decay_t<decltype(tags)>;
-
+  auto make_host_index_view = [&]<typename TagsType>() {
     constexpr bool has_medium = requires { TagsType::medium_tag; };
     constexpr bool has_property = requires { TagsType::property_tag; };
     constexpr bool has_attenuation = requires { TagsType::attenuation_tag; };
@@ -77,8 +75,7 @@ specfem::assembly::element_types<specfem::element::dimension_tag::dim3>::
   // 1. Index elements by medium.
   h_elements_by_medium = { make_host_index_view };
 
-  elements_by_medium = { [&](auto tags) {
-    using TagsType = std::decay_t<decltype(tags)>;
+  elements_by_medium = { [&]<typename TagsType>() {
     const auto host_view = h_elements_by_medium.template get<TagsType>();
     IndexViewType device_view("element_by_medium_" + TagsType::name(),
                               host_view.extent(0));
@@ -89,8 +86,7 @@ specfem::assembly::element_types<specfem::element::dimension_tag::dim3>::
   // 2. Index elements by material (medium + property + attenuation).
   h_elements_by_material = { make_host_index_view };
 
-  elements_by_material = { [&](auto tags) {
-    using TagsType = std::decay_t<decltype(tags)>;
+  elements_by_material = { [&]<typename TagsType>() {
     const auto host_view = h_elements_by_material.template get<TagsType>();
     IndexViewType device_view("element_by_material_" + TagsType::name(),
                               host_view.extent(0));
@@ -101,8 +97,7 @@ specfem::assembly::element_types<specfem::element::dimension_tag::dim3>::
   // 3. Index elements by boundary (medium + property + boundary).
   h_elements_by_boundary = { make_host_index_view };
 
-  elements_by_boundary = { [&](auto tags) {
-    using TagsType = std::decay_t<decltype(tags)>;
+  elements_by_boundary = { [&]<typename TagsType>() {
     const auto host_view = h_elements_by_boundary.template get<TagsType>();
     IndexViewType device_view("element_by_boundary_" + TagsType::name(),
                               host_view.extent(0));
