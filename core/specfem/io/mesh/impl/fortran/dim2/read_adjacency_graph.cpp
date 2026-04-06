@@ -21,11 +21,9 @@ specfem::io::mesh::impl::fortran::dim2::read_adjacency_graph(
   auto &g = graph.local_connections();
 
   int total_local_adjacencies;
-  specfem::io::fortran_read_line(stream, &total_adjacencies);
+  specfem::io::fortran_read_line(stream, &total_local_adjacencies);
 
-  const auto my_id = specfem::MPI::get_rank();
-
-  for (int edge_index = 0; edge_index < total_adjacencies; edge_index++) {
+  for (int edge_index = 0; edge_index < total_local_adjacencies; edge_index++) {
     int current_element, neighbor_element;
     int connection_int, orientation_int;
     specfem::io::fortran_read_line(stream, &current_element, &neighbor_element,
@@ -49,17 +47,17 @@ specfem::io::mesh::impl::fortran::dim2::read_adjacency_graph(
   // Check that the graph is symmetric
   graph.assert_symmetry();
 
-  const auto &mpi_connections = graph.mpi_connections();
+  auto &mpi_connections = graph.mpi_connections();
 
-  int total_mpi_adjacencies = mpi_connections.size();
-  specfem::io::fortran_write_line(stream, total_mpi_adjacencies);
+  int total_mpi_adjacencies;
+  specfem::io::fortran_read_line(stream, &total_mpi_adjacencies);
 
   mpi_connections.resize(total_mpi_adjacencies);
 
   for (int i = 0; i < total_mpi_adjacencies; i++) {
     int ispec_local, ispec_neighbor, neighbor_partition;
     int connection_int, connection_orientation, neighbor_orientation;
-    size_t local_anchor, neighbor_anchor;
+    int local_anchor, neighbor_anchor;
 
     specfem::io::fortran_read_line(
         stream, &ispec_local, &ispec_neighbor, &neighbor_partition,
@@ -75,7 +73,8 @@ specfem::io::mesh::impl::fortran::dim2::read_adjacency_graph(
       const auto edge_orientation =
           static_cast<specfem::mesh_entity::dim2::type>(connection_orientation);
 
-      mpi_connections[i] = MPIEdgeProperties{
+      mpi_connections[i] = specfem::mesh::adjacency_graph<
+          specfem::element::dimension_tag::dim2>::MPIEdgeProperties{
         connection_type,
         edge_orientation,
         ispec_local,

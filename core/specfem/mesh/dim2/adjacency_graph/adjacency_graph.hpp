@@ -93,7 +93,7 @@ public:
           neighbor_partition(neighbor_part),
           neighbor_orientation(neighbor_orient), local_anchor(local_anchor_idx),
           neighbor_anchor(neighbor_anchor_idx) {}
-  }
+  };
 };
 
 private:

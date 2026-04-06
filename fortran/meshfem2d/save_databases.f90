@@ -953,6 +953,24 @@ subroutine save_databases_local_adjacency_graph()
 
 end subroutine save_databases_local_adjacency_graph
 
+function get_neighbor_edge_id(neighbor_elem, current_elem) result(edge_id)
+   use part_unstruct_par, only: num_adjacent, adjacent_elements, adjacency_id
+   implicit none
+   integer, intent(in) :: neighbor_elem, current_elem
+   integer :: edge_id, k
+
+   edge_id = -1
+   do k = 0, num_adjacent(neighbor_elem)-1
+      if (adjacent_elements(neighbor_elem, k) == current_elem) then
+         edge_id = adjacency_id(neighbor_elem, k)
+         return
+      endif
+   enddo
+
+   !! Should not happen if the mesh is consistent, STOP with error if not found
+   call stop_the_code('Error: Neighbor element not found in its adjacency list')
+end function get_neighbor_edge_id
+
 subroutine save_databases_mpi_adjacency_graph()
 
    use constants, only: IOUT
@@ -962,7 +980,7 @@ subroutine save_databases_mpi_adjacency_graph()
 
    implicit none
 
-   integer :: i, j, total_mpi_adjacencies, index, neighbor, neighbor_partition
+   integer :: i, j, total_mpi_adjacencies, index, neighbor, neighbor_partition, neighbor_edge_id
 
    ! Count the total number of MPI adjacencies (edges) for this partition
    total_mpi_adjacencies = 0
@@ -979,7 +997,8 @@ subroutine save_databases_mpi_adjacency_graph()
 
    ! Write MPI adjacency graph
    ! Format: (local_elem_in_current_partition, local_elem_in_neighbor_partition,
-   ! neighbor_partition, adjacency_type, adjacency_id, anchor_local, anchor_neighbor)
+   ! neighbor_partition, adjacency_type, adjacency_id_local, adjacency_id_neighbor,
+   ! anchor_local, anchor_neighbor)
    index = 0
    do i = 0, nelmnts-1
       if (part(i) == iproc .and. num_adjacent(i) > 0) then
@@ -987,8 +1006,9 @@ subroutine save_databases_mpi_adjacency_graph()
             neighbor = adjacent_elements(i,j)
             neighbor_partition = part(neighbor)
             if (neighbor_partition /= iproc) then
+               neighbor_edge_id = get_neighbor_edge_id(neighbor, i)
                write(IOUT) glob2loc_elmnts(i) + 1, glob2loc_elmnts(neighbor) + 1, neighbor_partition, &
-                  adjacency_type(i,j), adjacency_id(i,j), adjacency_id(j, i), &
+                  adjacency_type(i,j), adjacency_id(i,j), neighbor_edge_id, &
                   anchor_local(i,j), anchor_neighbor(i,j)
                index = index + 1
             endif
