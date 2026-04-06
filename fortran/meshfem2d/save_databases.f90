@@ -908,7 +908,7 @@ subroutine save_databases_local_adjacency_graph()
    use constants, only: IOUT
    use shared_parameters, only: nelmnts
    use part_unstruct_par, only: num_adjacent, adjacency_type, adjacency_id, adjacent_elements, &
-      anchor_local, anchor_neighbor, part, glob2loc_elmnts, iproc
+      part, glob2loc_elmnts, iproc
 
    implicit none
 
@@ -928,9 +928,9 @@ subroutine save_databases_local_adjacency_graph()
    write(IOUT) total_adjacencies
 
    ! Write partition-local adjacency graph
-   ! Format: (local_elem1, local_elem2, adjacency_type, adjacency_id, anchor_local, anchor_neighbor)
+   ! Format: (local_elem1, local_elem2, adjacency_type, adjacency_id)
    !   local_elem1: 1-based local index in current partition
-   !   local_elem2: 1-based local index in current partition
+   !   local_elem2: 1-based local index in neighbor_partition (or current partition if intra-partition)
    index = 0
    do i = 0, nelmnts-1
       if (part(i) == iproc .and. num_adjacent(i) > 0) then
@@ -938,10 +938,9 @@ subroutine save_databases_local_adjacency_graph()
             neighbor = adjacent_elements(i,j)
             if (part(neighbor) == iproc) then
                ! intra-partition adjacency: both local indices in current partition
-               write(IOUT) glob2loc_elmnts(i) + 1, glob2loc_elmnts(neighbor) + 1, &
-                  adjacency_type(i,j), adjacency_id(i,j), &
-                  anchor_local(i,j), anchor_neighbor(i,j)
-               index = index + 1
+            write(IOUT) glob2loc_elmnts(i) + 1, glob2loc_elmnts(neighbor) + 1, &
+               adjacency_type(i,j), adjacency_id(i,j)
+            index = index + 1
             endif
          enddo
       endif
