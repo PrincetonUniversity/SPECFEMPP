@@ -45,6 +45,26 @@ public:
                   const mesh_to_compute_mapping<dimension_tag> &mapping,
                   const specfem::mesh::adjacency_graph<dimension_tag>
                       &mesh_adjacency_graph);
+
+  auto &graph() { return base_type::local_connections(); }
+
+  const auto &graph() const { return base_type::local_connections(); }
+
+private:
+  using base_local_connections_type =
+      decltype(std::declval<base_type &>().local_connections());
+  using base_local_connections_const_type =
+      decltype(std::declval<const base_type &>().local_connections());
+  using base_mpi_connections_type =
+      decltype(std::declval<base_type &>().mpi_connections());
+  using base_mpi_connections_const_type =
+      decltype(std::declval<const base_type &>().mpi_connections());
+
+public:
+  base_local_connections_type &local_connections() = delete;
+  base_local_connections_const_type &local_connections() const = delete;
+  base_mpi_connections_type &mpi_connections() = delete;
+  base_mpi_connections_const_type &mpi_connections() const = delete;
 };
 
 } // namespace specfem::assembly::mesh_impl

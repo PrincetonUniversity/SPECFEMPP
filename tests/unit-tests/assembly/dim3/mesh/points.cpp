@@ -83,7 +83,7 @@ struct ExpectedMapping {
         << "Coordinate view extent 4 mismatch.";
 
     const auto &adjacency_graph = expected_mesh.adjacency_graph;
-    const auto &graph = adjacency_graph.graph();
+    const auto &graph = adjacency_graph.local_connections();
 
     // Filter out strongly conforming connections
     auto filter = [&graph](const auto &edge) {

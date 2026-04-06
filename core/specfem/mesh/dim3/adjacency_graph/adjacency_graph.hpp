@@ -145,15 +145,15 @@ public:
    * orientation information and eliminate rotational ambiguity on shared MPI
    * surfaces.
    *
-   * The anchor points are element-absolute corner IDs (18-25 in 0-based C++
-   * representation, 19-26 in 1-based Fortran) that form a canonical reference
-   * frame for the shared interface. Unlike interface-relative corner indices,
-   * element-absolute IDs provide global position information within the
-   * hexahedron geometry:
-   *   - 18: bottom_front_left      19: bottom_front_right
-   *   - 20: bottom_back_left       21: bottom_back_right
-   *   - 22: top_front_left         23: top_front_right
-   *   - 24: top_back_left          25: top_back_right
+   * The anchor points are element-absolute corner IDs (19-26 in 1-based Fortran
+   * representation, matching specfem::mesh_entity::dim3::type convention) that
+   * form a canonical reference frame for the shared interface. Unlike
+   * interface-relative corner indices, element-absolute IDs provide global
+   * position information within the hexahedron geometry:
+   *   - 19: bottom_front_left      20: bottom_front_right
+   *   - 21: bottom_back_left       22: bottom_back_right
+   *   - 23: top_front_left         24: top_front_right
+   *   - 25: top_back_left          26: top_back_right
    *
    * For a face interface (ncorners=4) or edge interface (ncorners=2), anchor
    * points identify which local and remote corners match by coordinate,
@@ -165,45 +165,71 @@ public:
    * @see adjacency_graph.f90 (Fortran) for corner ID definitions
    */
   struct MPIEdgeProperties : public EdgeProperties {
-    size_t neighbor_partition;   ///< MPI rank of the neighboring partition for
-                                 ///< this edge
+    size_t neighbor_partition; ///< MPI rank of the neighboring partition for
+                               ///< this edge
+    specfem::mesh_entity::dim3::type neighbor_orientation; ///< Geometric
+                                                           ///< orientation of
+                                                           ///< the neighboring
+                                                           ///< element's
+                                                           ///< interface
     size_t neighbor_local_index; ///< Local index of the neighboring element in
                                  ///< the adjacent partition
     size_t local_index; ///< Local index of the element in the current partition
                         ///< associated with this edge
-    size_t local_anchor_point; ///< Element-absolute corner ID (range 18-25) of
-                               ///< the anchor point on the local element.
-    size_t neighbor_anchor_point; ///< Element-absolute corner ID (range 18-25)
-                                  ///< of the anchor point on the neighboring
-                                  ///< element.
+    specfem::mesh_entity::dim3::type local_anchor_point; ///< Element-absolute
+                                                         ///< corner ID (range
+                                                         ///< 19-26) of the
+                                                         ///< anchor point on
+                                                         ///< the local element.
+    specfem::mesh_entity::dim3::type
+        neighbor_anchor_point; ///< Element-absolute
+                               ///< corner ID (range
+                               ///< 19-26) of the
+                               ///< anchor point on
+                               ///< the neighboring
+                               ///< element.
 
     MPIEdgeProperties() = default;
 
     /**
-     * @brief Constructor for MPI edge properties with anchor points
+     * @brief Constructor with full MPI edge properties specification
      *
-     * Creates edge properties for an inter-partition adjacency, including
-     * element-absolute corner IDs to constrain the relative orientation.
+     * Creates an MPI edge property instance with all relevant information for
+     * characterizing an inter-partition adjacency, including connection type,
+     * geometric orientation, partition information, and anchor point IDs.
      *
-     * @param conn Type of connection (conforming/non-conforming)
-     * @param orient Geometric orientation of the shared interface
-     * @param neighbor_rank MPI rank of the adjacent partition
-     * @param neighbor_local_idx Local element index in the adjacent partition
+     * @param conn Connection type (conforming/non-conforming)
+     * @param orient Geometric orientation of the local interface
+     * @param neighbor_rank MPI rank of the neighboring partition
+     * @param neighbor_orientation Geometric orientation of the neighboring
+     * interface
      * @param local_idx Local element index in the current partition
-     * @param local_anchor_idx Element-absolute corner ID (0-based, range
-     *                         18-25; converted from 1-based 19-26 Fortran)
-     *                         on local element
-     * @param neighbor_anchor_idx Element-absolute corner ID (0-based, range
-     *                            18-25; converted from 1-based 19-26 Fortran)
-     *                            on remote element
+     * @param neighbor_local_idx Local element index in the neighboring
+     * partition
+     * @param local_anchor_idx Element-absolute corner ID (19-26) of the local
+     * anchor point
+     * @param neighbor_anchor_idx Element-absolute corner ID (19-26) of the
+     * neighboring anchor point
+     *
+     * @code
+     * // Example: Creating MPI edge properties for a cross-partition face
+     * interface MPIEdgeProperties mpi_props(
+     *     specfem::element_connections::type::strongly_conforming,
+     *     specfem::mesh_entity::dim3::type::right,
+     *     neighbor_rank, neighbor_orient, local_idx, neighbor_local_idx,
+     *     local_anchor_idx, neighbor_anchor_idx);
+     * @endcode
      */
-    MPIEdgeProperties(const specfem::element_connections::type conn,
-                      const specfem::mesh_entity::dim3::type orient,
-                      const size_t neighbor_rank,
-                      const size_t neighbor_local_idx, const size_t local_idx,
-                      const size_t local_anchor_idx,
-                      const size_t neighbor_anchor_idx)
+    MPIEdgeProperties(
+        const specfem::element_connections::type conn,
+        const specfem::mesh_entity::dim3::type orient,
+        const size_t neighbor_rank,
+        const specfem::mesh_entity::dim3::type neighbor_orientation,
+        const size_t local_idx, const size_t neighbor_local_idx,
+        const specfem::mesh_entity::dim3::type local_anchor_idx,
+        const specfem::mesh_entity::dim3::type neighbor_anchor_idx)
         : EdgeProperties(conn, orient), neighbor_partition(neighbor_rank),
+          neighbor_orientation(neighbor_orientation),
           neighbor_local_index(neighbor_local_idx), local_index(local_idx),
           local_anchor_point(local_anchor_idx),
           neighbor_anchor_point(neighbor_anchor_idx) {}

@@ -1470,14 +1470,8 @@ subroutine match_interface_elements(dir, nsend, nrecv, ncorners, &
       stop 'MPI adjacency error: unmatched interface element'
     endif
   end do
-  if (.not. found) then
-    write(*,*) 'Error: No matching element found for local element ', &
-      send_iface(isend, 1), ' in direction ', dir
-    stop 'MPI adjacency error: unmatched interface element'
-  endif
-end do
 
-deallocate(send_coords, recv_coords, send_iface, recv_iface)
+  deallocate(send_coords, recv_coords, send_iface, recv_iface)
 
 end subroutine match_interface_elements
 
@@ -1536,6 +1530,12 @@ subroutine compute_anchor_points_for_match(coords_local, coords_remote, ncorners
   double precision :: tol
   logical :: matched_remote(4)
   logical :: found
+
+  interface
+    integer function get_element_corner_id(conn_id, interface_corner_idx, ncorners)
+      integer, intent(in) :: conn_id, interface_corner_idx, ncorners
+    end function get_element_corner_id
+  end interface
 
   matched_remote(:) = .false.
 
@@ -1613,17 +1613,17 @@ integer function get_element_corner_id(conn_id, interface_corner_idx, ncorners)
 
   ! Edges (7-18): 2 corners each
   integer, parameter :: edge_7_map(2) = [19, 21]   ! bottom_left
-  integer, parameter :: edge_8_map(2) = [23, 25]   ! top_left
-  integer, parameter :: edge_9_map(2) = [19, 20]   ! front_bottom
-  integer, parameter :: edge_10_map(2) = [20, 22]  ! bottom_right
-  integer, parameter :: edge_11_map(2) = [24, 26]  ! top_right
-  integer, parameter :: edge_12_map(2) = [21, 22]  ! back_bottom
+  integer, parameter :: edge_8_map(2) = [20, 22]   ! bottom_right
+  integer, parameter :: edge_9_map(2) = [24, 26]   ! top_right
+  integer, parameter :: edge_10_map(2) = [23, 25]  ! top_left
+  integer, parameter :: edge_11_map(2) = [19, 20]  ! front_bottom
+  integer, parameter :: edge_12_map(2) = [23, 24]  ! front_top
   integer, parameter :: edge_13_map(2) = [19, 23]  ! front_left
   integer, parameter :: edge_14_map(2) = [20, 24]  ! front_right
-  integer, parameter :: edge_15_map(2) = [25, 21]  ! back_left
-  integer, parameter :: edge_16_map(2) = [26, 22]  ! back_right
-  integer, parameter :: edge_17_map(2) = [23, 24]  ! front_top
-  integer, parameter :: edge_18_map(2) = [25, 26]  ! back_top
+  integer, parameter :: edge_15_map(2) = [21, 22]  ! back_bottom
+  integer, parameter :: edge_16_map(2) = [25, 26]  ! back_top
+  integer, parameter :: edge_17_map(2) = [21, 25]  ! back_left
+  integer, parameter :: edge_18_map(2) = [22, 26]  ! back_right
 
   ! Validate input
   if (interface_corner_idx < 1 .or. interface_corner_idx > ncorners) then

@@ -176,9 +176,11 @@ endif()
 if (SPECFEM_ENABLE_DOUBLE_PRECISION)
     message(STATUS "Enabling double precision")
     set(TYPE_REAL "double")
+    set(MPI_TYPE_REAL "MPI_DOUBLE")
 else(SPECFEM_ENABLE_DOUBLE_PRECISION)
     message(STATUS "Enabling single precision")
     set(TYPE_REAL "float")
+    set(MPI_TYPE_REAL "MPI_FLOAT")
 endif(SPECFEM_ENABLE_DOUBLE_PRECISION)
 
 # Add the include directories so that the generated files can be found
