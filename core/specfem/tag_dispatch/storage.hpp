@@ -58,7 +58,7 @@ public:
     [&]<std::size_t... Is>(std::index_sequence<Is...>) {
       ((([&] {
          auto tags = combo_to_tags<element_combinations[Is]>();
-         data_[Is] = type(initializer(tags));
+         data_[Is] = initializer(tags);
        })()),
        ...);
     }(std::make_index_sequence<size>{});
