@@ -67,7 +67,7 @@ struct version {
       h << "  [dev] " << commits_since_tag
         << " commit(s) ahead of v" << string() << "\n";
       if constexpr (is_dirty) {
-        h << "      -> Working tree has uncommitted changes. "\n";
+        h << "      -> Working tree has uncommitted changes. \n";
       }
     }
 
