@@ -1,0 +1,24 @@
+#pragma once
+#include <string>
+
+namespace specfem {
+
+struct version {
+  static constexpr int major = @PROJECT_VERSION_MAJOR@;
+  static constexpr int minor = @PROJECT_VERSION_MINOR@;
+  static constexpr int patch = @PROJECT_VERSION_PATCH@;
+
+  static std::string string() {
+    return std::string("@PROJECT_VERSION@");
+  }
+
+  static std::string git_hash() {
+    return std::string("@SPECFEMPP_GIT_HASH@");
+  }
+
+  static std::string git_describe() {
+    return std::string("@SPECFEMPP_GIT_DESCRIBE@");
+  }
+};
+
+} // namespace specfem

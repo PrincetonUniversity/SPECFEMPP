@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.17.5)
 
-project(SPECFEMPP VERSION 0.1.0 LANGUAGES CXX Fortran)
+project(SPECFEMPP VERSION 0.5.0 LANGUAGES CXX Fortran)
+
+# Extract Git version metadata
+include("${CMAKE_SOURCE_DIR}/cmake/version.cmake")
 
 set(CMAKE_CXX_STANDARD 17)
 

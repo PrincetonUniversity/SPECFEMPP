@@ -1,0 +1,29 @@
+find_package(Git QUIET)
+
+if(GIT_FOUND)
+  execute_process(
+    COMMAND ${GIT_EXECUTABLE} describe --tags --long --dirty
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE SPECFEMPP_GIT_DESCRIBE
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+  )
+  execute_process(
+    COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE SPECFEMPP_GIT_HASH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+  )
+endif()
+
+if(NOT SPECFEMPP_GIT_DESCRIBE)
+  set(SPECFEMPP_GIT_DESCRIBE "unknown")
+endif()
+if(NOT SPECFEMPP_GIT_HASH)
+  set(SPECFEMPP_GIT_HASH "unknown")
+endif()
+
+message(STATUS "SPECFEM++ version:      ${PROJECT_VERSION}")
+message(STATUS "SPECFEM++ git describe: ${SPECFEMPP_GIT_DESCRIBE}")
+message(STATUS "SPECFEM++ git hash:     ${SPECFEMPP_GIT_HASH}")

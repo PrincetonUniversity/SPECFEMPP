@@ -7,6 +7,15 @@ set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
     ${CMAKE_BINARY_DIR}/include/specfem/setup.hpp
 )
 
+# Configure the version header
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.hpp.in
+               ${CMAKE_BINARY_DIR}/include/specfem/version.hpp @ONLY)
+
+# Add the configure files to the clean target
+set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
+    ${CMAKE_BINARY_DIR}/include/specfem/version.hpp
+)
+
 # Add existing subdirectories
 add_subdirectory(algorithms)
 add_subdirectory(assembly)
