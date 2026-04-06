@@ -92,14 +92,7 @@ public:
       attenuation_tags(ispec) = tags.tags_container(ispec_mesh).attenuation_tag;
       boundary_tags(ispec) = tags.tags_container(ispec_mesh).boundary_tag;
     }
-    build_index_stores();
-  }
 
-  // ── Index-store builder ──────────────────────────────────────────────────
-  //
-  // Call after the per-element tag views have been populated.
-
-  void build_index_stores() {
     auto make_host_index_view = [&]<typename TagsType>() -> HostIndexViewType {
       constexpr bool has_attenuation = requires { TagsType::attenuation_tag; };
       constexpr bool has_boundary = requires { TagsType::boundary_tag; };
@@ -144,35 +137,26 @@ public:
       return host_view;
     };
 
+    auto make_device_storage = [&](auto &h_storage) {
+      return [&h_storage]<typename TagsType>() -> IndexViewType {
+        const auto host_view = h_storage.template get<TagsType>();
+        IndexViewType device_view(host_view.label(), host_view.extent(0));
+        Kokkos::deep_copy(device_view, host_view);
+        return device_view;
+      };
+    };
+
     // 1. Index by medium.
     h_elements_by_medium = { make_host_index_view };
-    elements_by_medium = { [&]<typename TagsType>() {
-      const auto host_view = h_elements_by_medium.template get<TagsType>();
-      IndexViewType device_view("element_by_medium_" + TagsType::name(),
-                                host_view.extent(0));
-      Kokkos::deep_copy(device_view, host_view);
-      return device_view;
-    } };
+    elements_by_medium = { make_device_storage(h_elements_by_medium) };
 
     // 2. Index by material (medium + property + attenuation).
     h_elements_by_material = { make_host_index_view };
-    elements_by_material = { [&]<typename TagsType>() {
-      const auto host_view = h_elements_by_material.template get<TagsType>();
-      IndexViewType device_view("element_by_material_" + TagsType::name(),
-                                host_view.extent(0));
-      Kokkos::deep_copy(device_view, host_view);
-      return device_view;
-    } };
+    elements_by_material = { make_device_storage(h_elements_by_material) };
 
     // 3. Index by boundary (medium + property + boundary).
     h_elements_by_boundary = { make_host_index_view };
-    elements_by_boundary = { [&]<typename TagsType>() {
-      const auto host_view = h_elements_by_boundary.template get<TagsType>();
-      IndexViewType device_view("element_by_boundary_" + TagsType::name(),
-                                host_view.extent(0));
-      Kokkos::deep_copy(device_view, host_view);
-      return device_view;
-    } };
+    elements_by_boundary = { make_device_storage(h_elements_by_boundary) };
   }
 
   // ── Accessors by medium ──────────────────────────────────────────────────

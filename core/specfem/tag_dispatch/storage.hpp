@@ -67,12 +67,6 @@ public:
 
   template <typename TagsType,
             std::size_t Idx = find_in_v<ET::combos, to_tuple<TagsType>::value> >
-  constexpr type &get() {
-    return data_[Idx];
-  }
-
-  template <typename TagsType,
-            std::size_t Idx = find_in_v<ET::combos, to_tuple<TagsType>::value> >
   constexpr const type &get() const {
     return data_[Idx];
   }
