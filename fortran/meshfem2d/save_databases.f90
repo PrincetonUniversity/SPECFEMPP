@@ -988,7 +988,7 @@ subroutine save_databases_mpi_adjacency_graph()
             neighbor_partition = part(neighbor)
             if (neighbor_partition /= iproc) then
                write(IOUT) glob2loc_elmnts(i) + 1, glob2loc_elmnts(neighbor) + 1, neighbor_partition, &
-                  adjacency_type(i,j), adjacency_id(i,j), &
+                  adjacency_type(i,j), adjacency_id(i,j), adjacency_id(j, i), &
                   anchor_local(i,j), anchor_neighbor(i,j)
                index = index + 1
             endif
