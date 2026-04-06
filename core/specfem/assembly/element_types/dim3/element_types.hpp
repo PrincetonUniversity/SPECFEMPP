@@ -4,6 +4,7 @@
 #include "specfem/element.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/mesh.hpp"
+#include "specfem/mesh_entity.hpp"
 #include "specfem/point.hpp"
 #include "specfem/tag_dispatch.hpp"
 #include <Kokkos_Core.hpp>
@@ -120,9 +121,8 @@ protected:
 
 public:
   int nspec; ///< total number of spectral elements
-  int ngllz; ///< number of quadrature points in z dimension
-  int nglly; ///< number of quadrature points in y dimension
-  int ngllx; ///< number of quadrature points in x dimension
+  specfem::mesh_entity::element_grid<specfem::element::dimension_tag::dim3>
+      element_grid; ///< GLL grid configuration
 
   constexpr static auto dimension_tag =
       specfem::element::dimension_tag::dim3; ///< Dimension tag
@@ -154,18 +154,17 @@ public:
    * operations.
    *
    * @param nspec Total number of spectral elements in the mesh
-   * @param ngllz Number of Gauss-Lobatto-Legendre points in the z-direction
-   * @param nglly Number of Gauss-Lobatto-Legendre points in the y-direction
-   * @param ngllx Number of Gauss-Lobatto-Legendre points in the x-direction
+   * @param element_grid GLL grid configuration (ngllz, nglly, ngllx)
    * @param mesh Reference to the 3D assembly mesh containing geometric and
    * topological information
    * @param tags Reference to the mesh tags containing element type
    * classifications and material properties
    */
-  element_types(const int nspec, const int ngllz, const int nglly,
-                const int ngllx,
-                const specfem::assembly::mesh<dimension_tag> &mesh,
-                const specfem::mesh::tags<dimension_tag> &tags);
+  element_types(
+      const int nspec,
+      const specfem::mesh_entity::element_grid<dimension_tag> &element_grid,
+      const specfem::assembly::mesh<dimension_tag> &mesh,
+      const specfem::mesh::tags<dimension_tag> &tags);
 
   /**
    * @brief Get 3D elements with specified medium type in host memory.

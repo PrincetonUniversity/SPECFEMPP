@@ -22,8 +22,7 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
         &flux_scheme_config) {
   this->mesh = { mesh.tags, mesh.control_nodes, quadratures,
                  mesh.adjacency_graph };
-  this->element_types = { this->mesh.nspec, this->mesh.element_grid.ngllz,
-                          this->mesh.element_grid.ngllx, this->mesh,
+  this->element_types = { this->mesh.nspec, this->mesh.element_grid, this->mesh,
                           mesh.tags };
   this->element_intersections = { this->mesh.element_grid.ngllx,
                                   this->mesh.element_grid.ngllz, this->mesh,

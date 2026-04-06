@@ -4,6 +4,7 @@
 #include "specfem/element.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/mesh.hpp"
+#include "specfem/mesh_entity.hpp"
 #include "specfem/point.hpp"
 #include "specfem/tag_dispatch.hpp"
 #include <Kokkos_Core.hpp>
@@ -124,8 +125,8 @@ protected:
 
 public:
   int nspec; ///< total number of spectral elements
-  int ngllz; ///< number of quadrature points in z dimension
-  int ngllx; ///< number of quadrature points in x dimension
+  specfem::mesh_entity::element_grid<specfem::element::dimension_tag::dim2>
+      element_grid; ///< GLL grid configuration
 
   constexpr static auto dimension_tag =
       specfem::element::dimension_tag::dim2; ///< Dimension tag
@@ -182,20 +183,21 @@ public:
    * for each combination of element characteristics.
    *
    * @param nspec Number of spectral elements in the 2D mesh
-   * @param ngllz Number of quadrature points in z-direction (vertical)
-   * @param ngllx Number of quadrature points in x-direction (horizontal)
+   * @param element_grid GLL grid configuration (ngllz, ngllx)
    * @param mesh 2D assembly mesh containing geometry and connectivity
    * @param tags Element classification data containing medium, property, and
    * boundary tags
    *
    * @code
    * specfem::assembly::element_types<specfem::element::dimension_tag::dim2>
-   * etypes( 1000, 5, 5, assembly_mesh, mesh_tags);
+   * etypes( 1000, element_grid, assembly_mesh, mesh_tags);
    * @endcode
    */
-  element_types(const int nspec, const int ngllz, const int ngllx,
-                const specfem::assembly::mesh<dimension_tag> &mesh,
-                const specfem::mesh::tags<dimension_tag> &tags);
+  element_types(
+      const int nspec,
+      const specfem::mesh_entity::element_grid<dimension_tag> &element_grid,
+      const specfem::assembly::mesh<dimension_tag> &mesh,
+      const specfem::mesh::tags<dimension_tag> &tags);
 
   /**
    * @brief Get elements with specified medium type in host memory.

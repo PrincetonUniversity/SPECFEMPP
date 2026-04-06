@@ -5,11 +5,13 @@
 // ---------------------------------------------------------------------------
 specfem::assembly::element_types<specfem::element::dimension_tag::dim3>::
     element_types(
-        const int nspec, const int ngllz, const int nglly, const int ngllx,
+        const int nspec,
+        const specfem::mesh_entity::element_grid<
+            specfem::element::dimension_tag::dim3> &element_grid,
         const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
             &mesh,
         const specfem::mesh::tags<specfem::element::dimension_tag::dim3> &tags)
-    : nspec(nspec),
+    : nspec(nspec), element_grid(element_grid),
       medium_tags("specfem::assembly::element_types::medium_tags", nspec),
       property_tags("specfem::assembly::element_types::property_tags", nspec),
       attenuation_tags("specfem::assembly::element_types::attenuation_tags",
