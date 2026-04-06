@@ -1,23 +1,82 @@
 #pragma once
 #include <string>
+#include <iomanip>
+#include <sstream>
 
 namespace specfem {
 
 struct version {
-  static constexpr int major = @PROJECT_VERSION_MAJOR@;
-  static constexpr int minor = @PROJECT_VERSION_MINOR@;
-  static constexpr int patch = @PROJECT_VERSION_PATCH@;
+  // Semver components - sourced from the Git tag, falling back to project()
+  static constexpr int major = @SPECFEMPP_VERSION_MAJOR@;
+  static constexpr int minor = @SPECFEMPP_VERSION_MINOR@;
+  static constexpr int patch = @SPECFEMPP_VERSION_PATCH@;
 
+  // true  : HEAD is exactly on a clean release tag
+  // false : dev build (commits ahead of tag, or dirty working tree)
+  static constexpr bool is_release = static_cast<bool>(@SPECFEMPP_IS_RELEASE@);
+
+  // true  : working tree has uncommitted changes
+  static constexpr bool is_dirty = static_cast<bool>(@SPECFEMPP_IS_DIRTY@);
+
+  // true  : Git metadata was available at configure time
+  static constexpr bool has_git_info = static_cast<bool>(@SPECFEMPP_HAS_GIT_INFO@);
+
+  // number of commits since the nearest tag (0 on a clean release)
+  static constexpr int commits_since_tag = @SPECFEMPP_COMMITS_SINCE_TAG@;
+
+  // "MAJOR.MINOR.PATCH"
   static std::string string() {
-    return std::string("@PROJECT_VERSION@");
+    return std::to_string(major) + "." +
+           std::to_string(minor) + "." +
+           std::to_string(patch);
   }
 
+  // Short Git hash of HEAD
   static std::string git_hash() {
     return std::string("@SPECFEMPP_GIT_HASH@");
   }
 
-  static std::string git_describe() {
-    return std::string("@SPECFEMPP_GIT_DESCRIBE@");
+  // Full decorated version string:
+  //   release : "1.2.3 (abcdef1)"
+  //   dev     : "1.2.3-dev+5.abcdef1"
+  //   dirty   : "1.2.3+dirty.abcdef1"
+  static std::string full_string() {
+    if constexpr (is_release) {
+      return string() + " (" + git_hash() + ")";
+    } else if constexpr (is_dirty) {
+      return string() + "+dirty." + git_hash();
+    } else {
+      return string() + "-dev+" +
+             std::to_string(commits_since_tag) + "." + git_hash();
+    }
+  }
+
+  static std::string header() {
+    std::ostringstream ver;
+    ver << std::left << std::setw(8) << string();
+
+    std::ostringstream h;
+    h << "==========================================================\n"
+      << "  S P E C F E M + +   |   Spectral Element Method Solver  \n"
+      << "==========================================================\n"
+      << "  Version " << ver.str()
+      << "                      License: GPL 3.0  \n";
+
+    if constexpr (has_git_info && !is_release) {
+      h << "                     - - - - - - -                        \n";
+      h << "  [dev] " << commits_since_tag
+        << " commit(s) ahead of v" << string() << "\n";
+      if constexpr (is_dirty) {
+        h << "      -> Working tree has uncommitted changes. "\n";
+      }
+    }
+
+    if constexpr (has_git_info) {
+      h << "  Git hash: " << git_hash() << "\n";
+    }
+
+    h << "==========================================================\n";
+    return h.str();
   }
 };
 

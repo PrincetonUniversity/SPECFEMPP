@@ -157,23 +157,7 @@ int run_qplots(int argc, char **argv, const Qoptions &opts) {
 
 int main(int argc, char **argv) {
 
-  std::string header_str =
-      "==========================================================\n"
-      "  S P E C F E M + +   |   Spectral Element Method Solver  \n"
-      "==========================================================\n"
-      "  Version " +
-      specfem::version::string() +
-      "                         License: GPL 3.0  \n"
-      "                     - - - - - - -                        \n"
-      "  Git describe: " +
-      specfem::version::git_describe() +
-      "\n"
-      "  Git hash: " +
-      specfem::version::git_hash() +
-      "\n"
-      "==========================================================\n";
-
-  CLI::App app{ header_str };
+  CLI::App app{ specfem::version::header() };
   app.require_subcommand(1);
 
   // -- 2d subcommand --
