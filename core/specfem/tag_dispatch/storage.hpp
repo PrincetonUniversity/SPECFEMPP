@@ -102,17 +102,18 @@ public:
     return data_[Idx];
   }
 
-  template <typename Pred>
-  const type &
-  get(Pred &&pred,
-      const char *error_msg = "no matching element combination") const {
+  template <typename... QueryTagTypes>
+  requires((sizeof...(QueryTagTypes) > 0) &&
+           ((std::is_enum_v<std::remove_cvref_t<QueryTagTypes> > ||
+             std::is_same_v<std::remove_cvref_t<QueryTagTypes>, bool>) &&
+            ...)) const type &get(QueryTagTypes &&...query_tags) const {
     const type *result = nullptr;
     specfem::tag_dispatch::for_each(ET{}, [&]<typename TagsType>() {
-      if (!result && pred.template operator()<TagsType>())
+      if (!result && TagsType{}.has(query_tags...))
         result = &this->template get<TagsType>();
     });
     if (!result)
-      throw std::runtime_error(error_msg);
+      throw std::runtime_error("no matching element combination");
     return *result;
   }
 

@@ -6,6 +6,8 @@
 #include "specfem/element_coupling/tags.hpp"
 #include "specfem/simulation.hpp"
 
+#include <type_traits>
+
 namespace specfem::tags {
 /**
  * @brief Template specialization for storing compile-time tag values.
@@ -108,6 +110,14 @@ template <bool UseSIMD> struct TagMember<bool, UseSIMD> {
   static constexpr bool using_simd = UseSIMD;
 };
 
+template <typename A, typename B> struct tag_equals {
+  static constexpr bool eval(const A &, const B &) { return false; }
+};
+
+template <typename A> struct tag_equals<A, A> {
+  static constexpr bool eval(const A &lhs, const A &rhs) { return lhs == rhs; }
+};
+
 /**
  * @brief Variadic template for combining multiple compile-time tags.
  *
@@ -128,6 +138,31 @@ template <bool UseSIMD> struct TagMember<bool, UseSIMD> {
  */
 template <auto... TagMembers>
 struct Tags : TagMember<decltype(TagMembers), TagMembers>... {
+  /**
+   * @brief Runtime check for a single tag value.
+   *
+   * Returns true if this `Tags` type contains the provided runtime tag value
+   * (same tag type and same value), otherwise false.
+   */
+  template <typename QueryTagType>
+  static constexpr bool has(const QueryTagType query_tag) {
+    return (
+        specfem::tags::tag_equals<
+            decltype(TagMembers),
+            std::remove_cvref_t<QueryTagType> >::eval(TagMembers, query_tag) ||
+        ...);
+  }
+
+  /**
+   * @brief Runtime subset check for one or more tag values.
+   *
+   * Returns true if every provided runtime tag exists in this `Tags` type.
+   */
+  template <typename... QueryTagTypes>
+  constexpr bool has(const QueryTagTypes... query_tags) const {
+    return (Tags::has(query_tags) && ...);
+  }
+
   static std::string name() {
     std::string s;
     bool first = true;
