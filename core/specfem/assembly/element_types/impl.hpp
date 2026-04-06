@@ -16,9 +16,8 @@ namespace specfem::assembly::element_types_impl {
 //    specialisation only needs to pass the set types as template
 //    arguments.
 
-template <specfem::element::dimension_tag DimensionTag, auto DimensionSet,
-          auto MediumSet, auto PropertySet, auto BoundarySet,
-          auto AttenuationSet>
+template <specfem::element::dimension_tag DimensionTag, auto MediumSet,
+          auto PropertySet, auto BoundarySet, auto AttenuationSet>
 struct element_types_base {
 protected:
   template <typename T>
@@ -40,7 +39,8 @@ public:
 
   // ── Tag-combination sets ─────────────────────────────────────────────────
 
-  static constexpr auto combinations_by_medium = DimensionSet * MediumSet;
+  static constexpr auto combinations_by_medium =
+      specfem::tag_dispatch::dimension_set<DimensionTag>{} * MediumSet;
   static constexpr auto combinations_by_material =
       combinations_by_medium * PropertySet * AttenuationSet;
   static constexpr auto combinations_by_boundary =

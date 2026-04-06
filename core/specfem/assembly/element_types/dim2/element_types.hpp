@@ -7,6 +7,17 @@
 
 namespace specfem::assembly {
 
+namespace element_types_impl {
+using element_types_dim2_base =
+    element_types_base<specfem::element::dimension_tag::dim2,
+                       MEDIUM_SET(elastic_psv, elastic_sh, elastic_psv_t,
+                                  acoustic, poroelastic, electromagnetic_te),
+                       PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
+                       BOUNDARY_SET(none, stacey, acoustic_free_surface,
+                                    composite_stacey_dirichlet),
+                       ATTENUATION_SET(none, constant_isotropic)>;
+} // namespace element_types_impl
+
 /**
  * @brief 2D spectral element type classification and indexing container
  *
@@ -25,41 +36,12 @@ namespace specfem::assembly {
  */
 template <>
 struct element_types<specfem::element::dimension_tag::dim2>
-    : public element_types_impl::element_types_base<
-          specfem::element::dimension_tag::dim2, DIMENSION_SET(dim2),
-          MEDIUM_SET(elastic_psv, elastic_sh, elastic_psv_t, acoustic,
-                     poroelastic, electromagnetic_te),
-          PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
-          BOUNDARY_SET(none, stacey, acoustic_free_surface,
-                       composite_stacey_dirichlet),
-          ATTENUATION_SET(none, constant_isotropic)> {
+    : public element_types_impl::element_types_dim2_base {
 
-  using base_type = element_types_impl::element_types_base<
-      specfem::element::dimension_tag::dim2, DIMENSION_SET(dim2),
-      MEDIUM_SET(elastic_psv, elastic_sh, elastic_psv_t, acoustic, poroelastic,
-                 electromagnetic_te),
-      PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
-      BOUNDARY_SET(none, stacey, acoustic_free_surface,
-                   composite_stacey_dirichlet),
-      ATTENUATION_SET(none, constant_isotropic)>;
+  using base_type = element_types_impl::element_types_dim2_base;
 
 public:
-  element_types() = default;
-
-  /**
-   * @brief Construct 2D element types container from mesh and tag data.
-   *
-   * @param nspec Number of spectral elements in the 2D mesh
-   * @param element_grid GLL grid configuration (ngllz, ngllx)
-   * @param mesh 2D assembly mesh containing geometry and connectivity
-   * @param tags Element classification data (medium, property, boundary tags)
-   */
-  element_types(
-      const int nspec,
-      const specfem::mesh_entity::element_grid<dimension_tag> &element_grid,
-      const specfem::assembly::mesh<dimension_tag> &mesh,
-      const specfem::mesh::tags<dimension_tag> &tags)
-      : base_type(nspec, element_grid, mesh, tags) {}
+  using base_type::base_type;
 };
 
 } // namespace specfem::assembly
