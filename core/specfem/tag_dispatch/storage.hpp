@@ -4,7 +4,6 @@
 #include "find_in.hpp"
 #include "for_each.hpp"
 #include "specfem/tags.hpp"
-#include <Kokkos_Core.hpp>
 #include <array>
 #include <cstddef>
 #include <stdexcept>
@@ -49,8 +48,6 @@ public:
 private:
   std::array<type, size> data_;
 
-  const type &operator()(std::size_t i) const { return data_[i]; }
-
 public:
   Storage() = default;
 
@@ -85,22 +82,7 @@ public:
       throw std::runtime_error("no matching element combination");
     return *result;
   }
-
-  template <typename C, typename D, typename S>
-  friend void deep_copy(Storage<D, C> &dest, const Storage<S, C> &src);
 };
-
-template <typename C, typename D, typename S>
-void deep_copy(Storage<D, C> &dest, const Storage<S, C> &src) {
-  for (std::size_t i = 0; i < C::size; ++i) {
-    Kokkos::deep_copy(dest(i), src(i));
-  }
-}
-
-// ── CTAD guide: deduce Storage<T,
-// specfem::tag_dispatch::element_combinations<NamedSets...>> ───────── Usage:
-// Storage s(value, dimensions<dim2>{}, media<elastic_psv>{},
-// ...);
 
 template <typename T, typename... NamedSets>
 Storage(T, NamedSets...)
