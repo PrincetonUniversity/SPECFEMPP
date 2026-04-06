@@ -154,12 +154,14 @@ struct Tags : TagMember<decltype(TagMembers), TagMembers>... {
   }
 
   /**
-   * @brief Runtime subset check for one or more tag values.
+   * @brief Runtime subset check for two or more tag values.
    *
    * Returns true if every provided runtime tag exists in this `Tags` type.
+   * For a single tag, use the static `has(query_tag)` overload directly.
    */
   template <typename... QueryTagTypes>
-  constexpr bool has(const QueryTagTypes... query_tags) const {
+  requires(sizeof...(QueryTagTypes) >= 2) constexpr
+      bool has(const QueryTagTypes... query_tags) const {
     return (Tags::has(query_tags) && ...);
   }
 
