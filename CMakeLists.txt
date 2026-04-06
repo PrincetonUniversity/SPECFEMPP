@@ -24,6 +24,7 @@ option(SPECFEM_BUILD_BENCHMARKS "Benchmarks included" ON)
 option(SPECFEM_NIGHTLY_BENCHMARKS "Include nightly benchmarks" OFF)
 option(SPECFEM_ENABLE_UNITY_BUILD "Enable unity build to speed up compilation" ON)
 option(SPECFEMPP_CONFIGURE_TESTS "Configure test files used to generate data for unit tesats" OFF)
+option(WITH_SCOTCH "Build with SCOTCH graph partitioner for mesh partitioning" OFF)
 set(SPECFEMPP_UNITY_BUILD_BATCH_SIZE 8 CACHE STRING "Set the batch size for unity builds (only used if SPECFEM_ENABLE_UNITY_BUILD is ON)")
 
 if (SPECFEM_ENABLE_MPI)
@@ -198,6 +199,9 @@ if (CMAKE_BUILD_TYPE MATCHES Release)
 else()
   set(SUBDIR_LOG_LEVEL STATUS)
 endif()
+
+# Build Scotch if requested (must be before meshfem2d/meshfem3d)
+include("${CMAKE_SOURCE_DIR}/cmake/scotch.cmake")
 
 # ========== MESHFEM2D ==============
 message(STATUS "Configuring meshfem2D")

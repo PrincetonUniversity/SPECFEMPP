@@ -221,6 +221,12 @@ target_link_libraries(meshfem2D_mesh_mpi
   meshfem2D::mesh
 )
 
+if (WITH_SCOTCH)
+  target_compile_definitions(meshfem2D_mesh_mpi PRIVATE USE_SCOTCH)
+  target_link_libraries(meshfem2D_mesh_mpi PRIVATE SCOTCH::scotch SCOTCH::scotcherrexit)
+  target_include_directories(meshfem2D_mesh_mpi PRIVATE $<TARGET_PROPERTY:scotch,INTERFACE_INCLUDE_DIRECTORIES>)
+endif()
+
 if (SPECFEM_ENABLE_MPI)
   target_link_libraries(meshfem2D_mesh_mpi PRIVATE MPI::MPI_Fortran)
 endif()
