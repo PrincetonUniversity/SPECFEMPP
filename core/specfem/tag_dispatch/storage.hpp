@@ -36,35 +36,10 @@ template <auto Combo> constexpr auto combo_to_tags() {
       std::make_index_sequence<std::decay_t<decltype(Combo)>::arity>{});
 }
 
-// ── Type trait: has_host_mirror
-// ─────────────────────────────────────────────── Detects if T has a nested
-// typedef HostMirror (e.g., Kokkos::View)
-
-template <typename T, typename = void>
-struct has_host_mirror : std::false_type {};
-
-template <typename T>
-struct has_host_mirror<T, std::void_t<typename T::HostMirror> >
-    : std::true_type {};
-
-// Forward declaration of Storage
-template <typename T, typename ET> class Storage;
-
-// ── Base class that conditionally provides HostMirror typedef
-// ─────────────────
-
-template <typename T, typename ET, bool = has_host_mirror<T>::value>
-struct StorageHostMirrorBase {};
-
-template <typename T, typename ET> struct StorageHostMirrorBase<T, ET, true> {
-  using HostMirror = Storage<typename T::HostMirror, ET>;
-};
-
 // ── Storage
 // ───────────────────────────────────────────────────────────────────
 
-template <typename T, typename ET>
-class Storage : public StorageHostMirrorBase<T, ET> {
+template <typename T, typename ET> class Storage {
 
 public:
   using type = T;
@@ -72,8 +47,7 @@ public:
   static constexpr auto element_combinations = ET::combos;
 
 private:
-  using UnderlyingArray = std::array<type, size>;
-  UnderlyingArray data_;
+  std::array<type, size> data_;
 
   const type &operator()(std::size_t i) const { return data_[i]; }
 

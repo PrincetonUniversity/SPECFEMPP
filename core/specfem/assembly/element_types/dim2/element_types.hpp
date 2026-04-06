@@ -59,6 +59,9 @@ protected:
    */
   using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
 
+  using HostIndexViewType =
+      Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>;
+
   static constexpr auto dimension_set = DIMENSION_SET(dim2);
 
   /// @brief Set of all medium types supported in 2D simulations.
@@ -96,25 +99,28 @@ protected:
   template <typename Sets>
   using IndexStorage = specfem::tag_dispatch::Storage<IndexViewType, Sets>;
 
+  template <typename Sets>
+  using HostIndexStorage =
+      specfem::tag_dispatch::Storage<HostIndexViewType, Sets>;
+
   /// @brief Element indices grouped by (dimension, medium).
   IndexStorage<decltype(combinations_by_medium)> elements_by_medium;
-  decltype(elements_by_medium)::HostMirror h_elements_by_medium;
+  HostIndexStorage<decltype(combinations_by_medium)> h_elements_by_medium;
 
-  // clang-format off
-  /// @brief Element indices grouped by (dimension, medium, property, attenuation).
+  /// @brief Element indices grouped by (dimension, medium, property,
+  /// attenuation).
   IndexStorage<decltype(combinations_by_material)> elements_by_material;
-  decltype(elements_by_material)::HostMirror h_elements_by_material;
+  HostIndexStorage<decltype(combinations_by_material)> h_elements_by_material;
 
   /// @brief Element indices grouped by (dimension, medium, property, boundary).
-  IndexStorage<decltype(combinations_by_boundary)>
-      elements_by_boundary;
-  decltype(elements_by_boundary)::HostMirror h_elements_by_boundary;
+  IndexStorage<decltype(combinations_by_boundary)> elements_by_boundary;
+  HostIndexStorage<decltype(combinations_by_boundary)> h_elements_by_boundary;
 
-  // /// @brief Element indices grouped by all five tags (dimension, medium, property, attenuation, boundary).
-  // IndexStorage<decltype(dimension_set * medium_set * property_set * attenuation_set * boundary_set)>
+  // /// @brief Element indices grouped by all five tags (dimension, medium,
+  // property, attenuation, boundary). IndexStorage<decltype(dimension_set *
+  // medium_set * property_set * attenuation_set * boundary_set)>
   //     elements;
   // decltype(elements)::HostMirror h_elements;
-  // clang-format on
 
 public:
   int nspec; ///< total number of spectral elements
@@ -197,8 +203,10 @@ public:
    * @param tag Medium type (elastic_psv, elastic_sh, acoustic, etc.)
    * @return Kokkos view containing element indices for host access
    */
-  Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
-  get_elements_on_host(const specfem::element::medium_tag tag) const;
+  HostIndexViewType
+  get_elements_on_host(const specfem::element::medium_tag tag) const {
+    return h_elements_by_medium.get(tag);
+  }
 
   /**
    * @brief Get count of elements with specified medium type.
@@ -216,8 +224,10 @@ public:
    * @param tag Medium type (elastic_psv, elastic_sh, acoustic, etc.)
    * @return Kokkos view containing element indices for device access
    */
-  Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
-  get_elements_on_device(const specfem::element::medium_tag tag) const;
+  IndexViewType
+  get_elements_on_device(const specfem::element::medium_tag tag) const {
+    return elements_by_medium.get(tag);
+  }
 
   /**
    * @brief Get elements with specified medium and property types in host
@@ -227,10 +237,12 @@ public:
    * @param property Property type (isotropic, anisotropic, isotropic_cosserat)
    * @return Kokkos view containing element indices for host access
    */
-  Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> get_elements_on_host(
+  HostIndexViewType get_elements_on_host(
       const specfem::element::medium_tag tag,
       const specfem::element::property_tag property,
-      const specfem::element::attenuation_tag attenuation) const;
+      const specfem::element::attenuation_tag attenuation) const {
+    return h_elements_by_material.get(tag, property, attenuation);
+  }
 
   /**
    * @brief Get count of elements with specified medium and property types.
@@ -254,10 +266,12 @@ public:
    * @param property Property type (isotropic, anisotropic, isotropic_cosserat)
    * @return Kokkos view containing element indices for device access
    */
-  Kokkos::View<int *, Kokkos::DefaultExecutionSpace> get_elements_on_device(
+  IndexViewType get_elements_on_device(
       const specfem::element::medium_tag tag,
       const specfem::element::property_tag property,
-      const specfem::element::attenuation_tag attenuation) const;
+      const specfem::element::attenuation_tag attenuation) const {
+    return elements_by_material.get(tag, property, attenuation);
+  }
 
   /**
    * @brief Get elements with specified medium, property, and boundary types in
@@ -269,10 +283,12 @@ public:
    * stacey, etc.)
    * @return Kokkos view containing element indices for host access
    */
-  Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
+  HostIndexViewType
   get_elements_on_host(const specfem::element::medium_tag tag,
                        const specfem::element::property_tag property,
-                       const specfem::element::boundary_tag boundary) const;
+                       const specfem::element::boundary_tag boundary) const {
+    return h_elements_by_boundary.get(tag, property, boundary);
+  }
 
   /**
    * @brief Get count of elements with specified medium, property, and boundary
@@ -300,10 +316,12 @@ public:
    * stacey, etc.)
    * @return Kokkos view containing element indices for device access
    */
-  Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
+  IndexViewType
   get_elements_on_device(const specfem::element::medium_tag tag,
                          const specfem::element::property_tag property,
-                         const specfem::element::boundary_tag boundary) const;
+                         const specfem::element::boundary_tag boundary) const {
+    return elements_by_boundary.get(tag, property, boundary);
+  }
 
   /**
    * @brief Get medium type for a specific spectral element.
