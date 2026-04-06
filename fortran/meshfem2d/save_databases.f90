@@ -953,11 +953,11 @@ subroutine save_databases_local_adjacency_graph()
 
 end subroutine save_databases_local_adjacency_graph
 
-function get_neighbor_edge_id(neighbor_elem, current_elem) result(edge_id)
+integer function get_neighbor_edge_id(neighbor_elem, current_elem) result(edge_id)
    use part_unstruct_par, only: num_adjacent, adjacent_elements, adjacency_id
    implicit none
    integer, intent(in) :: neighbor_elem, current_elem
-   integer :: edge_id, k
+   integer :: k
 
    edge_id = -1
    do k = 0, num_adjacent(neighbor_elem)-1
@@ -979,6 +979,12 @@ subroutine save_databases_mpi_adjacency_graph()
       anchor_local, anchor_neighbor, part, glob2loc_elmnts, iproc
 
    implicit none
+
+   interface
+      integer function get_neighbor_edge_id(neighbor_elem, current_elem) result(edge_id)
+         integer, intent(in) :: neighbor_elem, current_elem
+      end function get_neighbor_edge_id
+   end interface
 
    integer :: i, j, total_mpi_adjacencies, index, neighbor, neighbor_partition, neighbor_edge_id
 

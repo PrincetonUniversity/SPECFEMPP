@@ -94,93 +94,93 @@ public:
           neighbor_orientation(neighbor_orient), local_anchor(local_anchor_idx),
           neighbor_anchor(neighbor_anchor_idx) {}
   };
-};
 
 private:
-/**
- * @brief Boost graph type definition
- *
- * Defines a directed adjacency list using:
- * - Vector storage for vertices (vecS)
- * - Vector storage for edges (vecS)
- * - Directed graph structure (directedS)
- * - No vertex properties
- * - EdgeProperties for edge data
- */
-using Graph = boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS,
-                                    boost::no_property, EdgeProperties>;
+  /**
+   * @brief Boost graph type definition
+   *
+   * Defines a directed adjacency list using:
+   * - Vector storage for vertices (vecS)
+   * - Vector storage for edges (vecS)
+   * - Directed graph structure (directedS)
+   * - No vertex properties
+   * - EdgeProperties for edge data
+   */
+  using Graph =
+      boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS,
+                            boost::no_property, EdgeProperties>;
 
-/** @brief The underlying Boost graph storing adjacency relationships */
-std::shared_ptr<Graph> p_graph_;
-/** @brief Cross-partition edges stored outside the Boost graph */
-std::vector<MPIEdgeProperties> mpi_edge_properties_;
+  /** @brief The underlying Boost graph storing adjacency relationships */
+  std::shared_ptr<Graph> p_graph_;
+  /** @brief Cross-partition edges stored outside the Boost graph */
+  std::vector<MPIEdgeProperties> mpi_edge_properties_;
 
 public:
-/**
- * @brief Default constructor
- *
- * Creates an empty adjacency graph with no vertices or edges.
- */
-adjacency_graph() : p_graph_(std::make_shared<Graph>(0)) {}
+  /**
+   * @brief Default constructor
+   *
+   * Creates an empty adjacency graph with no vertices or edges.
+   */
+  adjacency_graph() : p_graph_(std::make_shared<Graph>(0)) {}
 
-/**
- * @brief Constructor with specified number of spectral elements
- *
- * Creates an adjacency graph with the specified number of vertices
- * (spectral elements) but no edges initially.
- *
- * @param nspec Number of spectral elements in the mesh
- */
-adjacency_graph(const int nspec) : p_graph_(std::make_shared<Graph>(nspec)) {}
+  /**
+   * @brief Constructor with specified number of spectral elements
+   *
+   * Creates an adjacency graph with the specified number of vertices
+   * (spectral elements) but no edges initially.
+   *
+   * @param nspec Number of spectral elements in the mesh
+   */
+  adjacency_graph(const int nspec) : p_graph_(std::make_shared<Graph>(nspec)) {}
 
-/**
- * @brief Get mutable reference to the local (intra-partition) graph
- *
- * Provides direct access to the Boost graph containing only edges
- * where both source and target elements belong to this partition.
- *
- * @return Mutable reference to the Boost adjacency_list graph
- */
-Graph &local_connections() { return *p_graph_; }
+  /**
+   * @brief Get mutable reference to the local (intra-partition) graph
+   *
+   * Provides direct access to the Boost graph containing only edges
+   * where both source and target elements belong to this partition.
+   *
+   * @return Mutable reference to the Boost adjacency_list graph
+   */
+  Graph &local_connections() { return *p_graph_; }
 
-/**
- * @brief Get const reference to the local (intra-partition) graph
- *
- * Provides read-only access to the Boost graph containing only edges
- * where both source and target elements belong to this partition.
- *
- * @return Const reference to the Boost adjacency_list graph
- */
-const Graph &local_connections() const { return *p_graph_; }
+  /**
+   * @brief Get const reference to the local (intra-partition) graph
+   *
+   * Provides read-only access to the Boost graph containing only edges
+   * where both source and target elements belong to this partition.
+   *
+   * @return Const reference to the Boost adjacency_list graph
+   */
+  const Graph &local_connections() const { return *p_graph_; }
 
-/**
- * @brief Get mutable reference to cross-partition (MPI) edge list
- *
- * Returns the vector of MPIEdgeProperties describing edges that cross
- * partition boundaries. These edges are not stored in the Boost graph.
- *
- * @return Mutable reference to the MPI edge properties vector
- */
-auto &mpi_connections() { return mpi_edge_properties_; }
+  /**
+   * @brief Get mutable reference to cross-partition (MPI) edge list
+   *
+   * Returns the vector of MPIEdgeProperties describing edges that cross
+   * partition boundaries. These edges are not stored in the Boost graph.
+   *
+   * @return Mutable reference to the MPI edge properties vector
+   */
+  auto &mpi_connections() { return mpi_edge_properties_; }
 
-/**
- * @brief Get const reference to cross-partition (MPI) edge list
- *
- * @return Const reference to the MPI edge properties vector
- */
-const auto &mpi_connections() const { return mpi_edge_properties_; }
+  /**
+   * @brief Get const reference to cross-partition (MPI) edge list
+   *
+   * @return Const reference to the MPI edge properties vector
+   */
+  const auto &mpi_connections() const { return mpi_edge_properties_; }
 
-/**
- * @brief Assert that the adjacency graph is symmetric
- *
- * Verifies that for every intra-partition directed edge from vertex A
- * to vertex B, there exists a corresponding edge from vertex B to
- * vertex A. Cross-partition edges are skipped because their reverse
- * edge resides in the remote partition's graph.
- *
- * @throws std::runtime_error if a local edge has no symmetric reverse
- */
-void assert_symmetry() const;
+  /**
+   * @brief Assert that the adjacency graph is symmetric
+   *
+   * Verifies that for every intra-partition directed edge from vertex A
+   * to vertex B, there exists a corresponding edge from vertex B to
+   * vertex A. Cross-partition edges are skipped because their reverse
+   * edge resides in the remote partition's graph.
+   *
+   * @throws std::runtime_error if a local edge has no symmetric reverse
+   */
+  void assert_symmetry() const;
 };
 
 } // namespace specfem::mesh

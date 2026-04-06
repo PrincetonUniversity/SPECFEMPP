@@ -57,8 +57,8 @@ target_link_libraries(
 
 add_executable(
   io_mesh_mpi_tests
-  io/mesh/read_mesh.cpp
-  io/mesh/runner.cpp
+  io/mesh/dim3/read_mesh.cpp
+  io/mesh/dim3/runner.cpp
 )
 
 target_link_libraries(
@@ -71,10 +71,27 @@ target_link_libraries(
   -lpthread -lm
 )
 
+add_executable(
+  io_mesh_mpi_dim2_tests
+  io/mesh/dim2/read_mesh.cpp
+  io/mesh/dim2/runner.cpp
+)
+
+target_link_libraries(
+  io_mesh_mpi_dim2_tests
+  specfem::io
+  specfem::mesh
+  specfem_environment
+  specfem::utilities
+  MPI::MPI_CXX
+  -lpthread -lm
+)
+
 # MPI test targets
 set(MPI_TEST_TARGETS
   mesh_mpi_dim3_tests
   io_mesh_mpi_tests
+  io_mesh_mpi_dim2_tests
 )
 
 # Register MPI tests using helper function
