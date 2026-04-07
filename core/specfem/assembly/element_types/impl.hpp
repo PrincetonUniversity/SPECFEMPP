@@ -25,9 +25,7 @@ namespace specfem::assembly::element_types_impl {
  * @tparam BoundarySet   Set of valid boundary tags.
  * @tparam AttenuationSet Set of valid attenuation tags.
  */
-template <specfem::element::dimension_tag DimensionTag, auto MediumSet,
-          auto PropertySet, auto BoundarySet, auto AttenuationSet>
-struct element_types_base {
+template <typename ElementSets> struct element_types_base {
 protected:
   template <typename T>
   using TagViewType = Kokkos::View<T *, Kokkos::DefaultHostExecutionSpace>;
@@ -45,26 +43,29 @@ protected:
 
 public:
   /** Dimension tag for this specialization (dim2 or dim3). */
-  static constexpr auto dimension_tag = DimensionTag;
+  static constexpr auto dimension_tag = ElementSets::dimension_tag;
 
   // ── Tag-combination sets ─────────────────────────────────────────────────
 
   /** All valid (dimension, medium) combinations for this specialization. */
   static constexpr auto combinations_by_medium =
-      specfem::tag_dispatch::dimension_set<DimensionTag>{} * MediumSet;
+      specfem::tag_dispatch::dimension_set<ElementSets::dimension_tag>{} *
+      ElementSets::medium_set;
   /** All valid (dimension, medium, property, attenuation) combinations. */
-  static constexpr auto combinations_by_material =
-      combinations_by_medium * PropertySet * AttenuationSet;
+  static constexpr auto combinations_by_material = combinations_by_medium *
+                                                   ElementSets::property_set *
+                                                   ElementSets::attenuation_set;
   /** All valid (dimension, medium, property, boundary) combinations. */
-  static constexpr auto combinations_by_boundary =
-      combinations_by_medium * PropertySet * BoundarySet;
+  static constexpr auto combinations_by_boundary = combinations_by_medium *
+                                                   ElementSets::property_set *
+                                                   ElementSets::boundary_set;
 
   // ── Per-element tag views (host) ─────────────────────────────────────────
 
   /** Number of spectral elements in the compute domain. */
   int nspec{};
   /** GLL grid layout for this dimension (ngllx, ngllz, etc.). */
-  specfem::mesh_entity::element_grid<DimensionTag> element_grid{};
+  specfem::mesh_entity::element_grid<ElementSets::dimension_tag> element_grid{};
 
   /** Host view of per-element medium tags (size: nspec). */
   TagViewType<specfem::element::medium_tag> medium_tags;
@@ -110,9 +111,9 @@ public:
    */
   element_types_base(
       int nspec,
-      const specfem::mesh_entity::element_grid<DimensionTag> &element_grid,
-      const specfem::assembly::mesh<DimensionTag> &mesh,
-      const specfem::mesh::tags<DimensionTag> &tags)
+      const specfem::mesh_entity::element_grid<dimension_tag> &element_grid,
+      const specfem::assembly::mesh<dimension_tag> &mesh,
+      const specfem::mesh::tags<dimension_tag> &tags)
       : nspec(nspec), element_grid(element_grid),
         medium_tags("specfem::assembly::element_types::medium_tags", nspec),
         property_tags("specfem::assembly::element_types::property_tags", nspec),
