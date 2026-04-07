@@ -120,18 +120,11 @@ public:
         attenuation_tags("specfem::assembly::element_types::attenuation_tags",
                          nspec) {
     // ── Step 1: populate per-element tag views ──────────────────────────────
-    // Translate each compute-domain index to its mesh-domain counterpart (the
-    // mapping differs between dim2 and dim3), then copy the four tag values
-    // from the mesh tag container into the corresponding host views.
+    // Translate each compute-domain index to its mesh-domain counterpart, then
+    // copy the four tag values from the mesh tag container into the
+    // corresponding host views.
     for (int ispec = 0; ispec < nspec; ispec++) {
-      // dim2 exposes compute_to_mesh on the device; dim3 provides the host
-      // version h_compute_to_mesh because it is called from host code.
-      int ispec_mesh;
-      if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
-        ispec_mesh = mesh.compute_to_mesh(ispec);
-      } else {
-        ispec_mesh = mesh.h_compute_to_mesh(ispec);
-      }
+      const int ispec_mesh = mesh.h_compute_to_mesh(ispec);
       medium_tags(ispec) = tags.tags_container(ispec_mesh).medium_tag;
       property_tags(ispec) = tags.tags_container(ispec_mesh).property_tag;
       attenuation_tags(ispec) = tags.tags_container(ispec_mesh).attenuation_tag;
