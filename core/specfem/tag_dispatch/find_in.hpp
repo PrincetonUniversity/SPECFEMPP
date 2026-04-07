@@ -6,6 +6,8 @@
 #include <tuple>
 #include <type_traits>
 
+namespace specfem::tag_dispatch {
+
 namespace impl {
 
 template <auto ValidCombinations, auto SearchCombination, std::size_t I>
@@ -46,3 +48,5 @@ using find_in_t =
 template <auto ValidCombinations, auto SearchCombination>
 constexpr std::size_t find_in_v =
     find_in_t<ValidCombinations, SearchCombination>::value;
+
+} // namespace specfem::tag_dispatch
