@@ -30,8 +30,11 @@ print_header(const specfem::runtime_configuration::setup &setup,
     throw std::runtime_error("Unsupported dimension for header print.");
   }
 
-  auto center = [](const std::string& text, int width) {
-    int padding = (width - text.length()) / 2;
+  auto center = [](const std::string &text, std::size_t width) {
+    if (text.length() >= width) {
+      return text;
+    }
+    const std::size_t padding = (width - text.length()) / 2;
     return std::string(padding, ' ') + text;
   };
 

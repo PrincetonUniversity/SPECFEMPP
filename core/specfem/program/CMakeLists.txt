@@ -25,3 +25,6 @@ target_link_libraries(specfem_program
         # Add MPI dependency when available
         $<TARGET_NAME_IF_EXISTS:MPI::MPI_CXX>
 )
+
+# Ensure version.hpp is generated before anything that links specfem::core
+add_dependencies(specfem_program specfem_version_header)

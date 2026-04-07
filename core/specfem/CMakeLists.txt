@@ -90,6 +90,3 @@ target_include_directories(specfem_core_interface
     INTERFACE
         ${CMAKE_SOURCE_DIR}/core
 )
-
-# Ensure version.hpp is generated before anything that links specfem::core
-add_dependencies(specfem_core_interface specfem_version_header)
