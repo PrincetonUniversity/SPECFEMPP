@@ -1,3 +1,9 @@
+message(STATUS "Configuring Version & Git Info...")
+
+# Prepend the CMAKE_MESSAGE_INDENT variable to ensure proper indentation in messages
+list(APPEND CMAKE_MESSAGE_INDENT "  Version Info: ")
+
+
 find_package(Git QUIET)
 
 # Semver fallback — overridden from git tag by extract_git_version.cmake
@@ -17,12 +23,12 @@ if(NOT _cmake_version VERSION_EQUAL _git_version AND NOT SPECFEMPP_GIT_HASH STRE
     "The Git tag version will be used in the build.")
 endif()
 
-message(STATUS "SPECFEM++ version:            ${_git_version}")
-message(STATUS "SPECFEM++ git hash:           ${SPECFEMPP_GIT_HASH}")
-message(STATUS "SPECFEM++ git describe:       ${SPECFEMPP_GIT_DESCRIBE}")
-message(STATUS "SPECFEM++ commits since tag:  ${SPECFEMPP_COMMITS_SINCE_TAG}")
-message(STATUS "SPECFEM++ is release:         ${SPECFEMPP_IS_RELEASE}")
-message(STATUS "SPECFEM++ is dirty:           ${SPECFEMPP_IS_DIRTY}")
+message(STATUS "Version:            ${_git_version}")
+message(STATUS "Git hash:           ${SPECFEMPP_GIT_HASH}")
+message(STATUS "Git describe:       ${SPECFEMPP_GIT_DESCRIBE}")
+message(STATUS "Commits since tag:  ${SPECFEMPP_COMMITS_SINCE_TAG}")
+message(STATUS "From release tag:   ${SPECFEMPP_IS_RELEASE}")
+message(STATUS "Is dirty:           ${SPECFEMPP_IS_DIRTY}")
 
 # Render the build-time version script (paths and semver baked in at configure
 # time; git hash / dirty / commits-since-tag are re-queried on every build).
@@ -31,3 +37,7 @@ configure_file(
   ${CMAKE_BINARY_DIR}/cmake/version_header.cmake
   @ONLY
 )
+
+
+# Pop the indentation for Kokkos messages
+list(POP_BACK CMAKE_MESSAGE_INDENT)
