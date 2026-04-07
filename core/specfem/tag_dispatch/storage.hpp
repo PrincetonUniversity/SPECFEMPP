@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <stdexcept>
 #include <type_traits>
+#include <utility>
 
 namespace specfem::tag_dispatch {
 
