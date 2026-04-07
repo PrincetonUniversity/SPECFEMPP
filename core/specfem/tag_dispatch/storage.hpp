@@ -38,6 +38,8 @@ template <auto Combo> constexpr auto combo_to_tags() {
 // ── Storage
 // ───────────────────────────────────────────────────────────────────
 
+} // namespace impl
+
 template <typename T, typename ET> class Storage {
 
 public:
@@ -54,16 +56,17 @@ public:
   template <typename Func> Storage(Func &&initializer) : data_() {
     [&]<std::size_t... Is>(std::index_sequence<Is...>) {
       ((([&] {
-         using TagsType =
-             std::decay_t<decltype(combo_to_tags<element_combinations[Is]>())>;
+         using TagsType = std::decay_t<decltype(
+             impl::combo_to_tags<element_combinations[Is]>())>;
          data_[Is] = initializer.template operator()<TagsType>();
        })()),
        ...);
     }(std::make_index_sequence<size>{});
   }
 
-  template <typename TagsType,
-            std::size_t Idx = find_in_v<ET::combos, to_tuple<TagsType>::value> >
+  template <
+      typename TagsType,
+      std::size_t Idx = find_in_v<ET::combos, impl::to_tuple<TagsType>::value> >
   constexpr const type &get() const {
     return data_[Idx];
   }
@@ -83,13 +86,5 @@ public:
     return *result;
   }
 };
-
-template <typename T, typename... NamedSets>
-Storage(T, NamedSets...)
-    -> Storage<T, specfem::tag_dispatch::element_combinations<NamedSets...> >;
-
-} // namespace impl
-
-template <typename T, typename ET> using Storage = impl::Storage<T, ET>;
 
 } // namespace specfem::tag_dispatch
