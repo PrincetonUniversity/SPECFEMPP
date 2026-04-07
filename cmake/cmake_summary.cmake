@@ -16,7 +16,7 @@ function(specfem_print_configuration_summary)
   # Version & Git Info
   # ============================================================================
   string(APPEND SUMMARY_STRING "VERSION & GIT INFO\n")
-  string(APPEND SUMMARY_STRING "--------------------\n")
+  string(APPEND SUMMARY_STRING "------------------\n")
   string(APPEND SUMMARY_STRING "  SPECFEM++ Version                        | ${SPECFEM_VERSION}\n")
 
   if (SPECFEM_HAS_GIT_INFO)
