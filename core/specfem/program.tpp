@@ -45,7 +45,6 @@ print_header(const specfem::runtime_configuration::setup &setup,
           << std::string(58, '-') << "\n";
 
   return message.str();
-
 }
 
 } // namespace specfem::program
