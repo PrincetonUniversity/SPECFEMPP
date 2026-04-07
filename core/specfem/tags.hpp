@@ -138,14 +138,9 @@ template <typename A> struct tag_equals<A, A> {
  */
 template <auto... TagMembers>
 struct Tags : TagMember<decltype(TagMembers), TagMembers>... {
-  /**
-   * @brief Runtime check for a single tag value.
-   *
-   * Returns true if this `Tags` type contains the provided runtime tag value
-   * (same tag type and same value), otherwise false.
-   */
+private:
   template <typename QueryTagType>
-  static constexpr bool has(const QueryTagType query_tag) {
+  static constexpr bool has_tag(const QueryTagType query_tag) {
     return (
         specfem::tags::tag_equals<
             decltype(TagMembers),
@@ -153,16 +148,15 @@ struct Tags : TagMember<decltype(TagMembers), TagMembers>... {
         ...);
   }
 
+public:
   /**
-   * @brief Runtime subset check for two or more tag values.
+   * @brief Runtime subset check for one or more tag values.
    *
    * Returns true if every provided runtime tag exists in this `Tags` type.
-   * For a single tag, use the static `has(query_tag)` overload directly.
    */
   template <typename... QueryTagTypes>
-  requires(sizeof...(QueryTagTypes) >= 2) constexpr
-      bool has(const QueryTagTypes... query_tags) const {
-    return (Tags::has(query_tags) && ...);
+  constexpr bool has(const QueryTagTypes... query_tags) const {
+    return (Tags::has_tag(query_tags) && ...);
   }
 
   static std::string name() {
