@@ -82,8 +82,30 @@ public:
       if (!result && TagsType{}.has(query_tags...))
         result = &this->template get<TagsType>();
     });
-    if (!result)
-      throw std::runtime_error("no matching element combination");
+    if (!result) {
+      auto tag_to_str = [](const auto &t) -> std::string {
+        using TagType = std::decay_t<decltype(t)>;
+        if constexpr (std::is_same_v<TagType, bool>) {
+          return t ? "true" : "false";
+        } else {
+          using specfem::element::to_string;
+          if constexpr (requires { to_string(t); }) {
+            return to_string(t);
+          } else {
+            return std::to_string(
+                static_cast<std::underlying_type_t<TagType>>(t));
+          }
+        }
+      };
+      std::string msg =
+          "no matching element combination for queried tags: [";
+      bool first = true;
+      ((msg += (first ? (first = false, std::string{}) : std::string{ ", " }) +
+               tag_to_str(query_tags)),
+       ...);
+      msg += "]";
+      throw std::runtime_error(msg);
+    }
     return *result;
   }
 };
