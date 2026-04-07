@@ -20,10 +20,10 @@ specfem::io::mesh::impl::fortran::dim2::read_adjacency_graph(
 
   auto &g = graph.local_connections();
 
-  int total_local_adjacencies;
-  specfem::io::fortran_read_line(stream, &total_local_adjacencies);
+  int n_local_adjacencies;
+  specfem::io::fortran_read_line(stream, &n_local_adjacencies);
 
-  for (int edge_index = 0; edge_index < total_local_adjacencies; edge_index++) {
+  for (int edge_index = 0; edge_index < n_local_adjacencies; edge_index++) {
     int current_element, neighbor_element;
     int connection_int, orientation_int;
     specfem::io::fortran_read_line(stream, &current_element, &neighbor_element,
@@ -49,12 +49,12 @@ specfem::io::mesh::impl::fortran::dim2::read_adjacency_graph(
 
   auto &mpi_connections = graph.mpi_connections();
 
-  int total_mpi_adjacencies;
-  specfem::io::fortran_read_line(stream, &total_mpi_adjacencies);
+  int n_mpi_adjacencies;
+  specfem::io::fortran_read_line(stream, &n_mpi_adjacencies);
 
-  mpi_connections.resize(total_mpi_adjacencies);
+  mpi_connections.resize(n_mpi_adjacencies);
 
-  for (int i = 0; i < total_mpi_adjacencies; i++) {
+  for (int i = 0; i < n_mpi_adjacencies; i++) {
     int ispec_local, ispec_neighbor, neighbor_partition;
     int connection_int, connection_orientation, neighbor_orientation;
     int local_anchor, neighbor_anchor;
