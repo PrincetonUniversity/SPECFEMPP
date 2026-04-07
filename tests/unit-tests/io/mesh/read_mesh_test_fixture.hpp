@@ -9,28 +9,28 @@
 #include <string>
 
 namespace specfem::test_configuration {
-struct ActualMesh3D {
+struct Read3DMesh {
   constexpr static specfem::element::dimension_tag dimension =
       specfem::element::dimension_tag::dim3;
   specfem::mesh::mesh<dimension> mesh;
 
-  ActualMesh3D() = default;
+  Read3DMesh() = default;
 
-  ActualMesh3D(const std::string &database) {
+  Read3DMesh(const std::string &database) {
     mesh = specfem::io::read_3d_mesh(database);
   }
 };
 } // namespace specfem::test_configuration
 
 // Setup a fixture for parameterized tests
-class MPIMesh3DTest : public ::testing::TestWithParam<std::string> {
+class Read3DMeshMPITest : public ::testing::TestWithParam<std::string> {
 protected:
   constexpr static specfem::element::dimension_tag dimension =
       specfem::element::dimension_tag::dim3;
 
-  specfem::test_configuration::ActualMesh3D mesh;
+  specfem::test_configuration::Read3DMesh mesh;
 
-  MPIMesh3DTest() = default;
+  Read3DMeshMPITest() = default;
 
   void SetUp() override {
     // Check if MPI size requirement was met during environment setup
@@ -38,22 +38,24 @@ protected:
       GTEST_SKIP() << SPECFEMEnvironment::GetMPISizeError();
     }
 
-    // Check if the current rank is within the participating range for this test
+    // Check if the current
     if (specfem::MPI::world_communicator() == MPI_COMM_NULL) {
       GTEST_SKIP() << "Test designed for 4 processes. Rank "
                    << specfem::MPI::get_rank()
                    << " is outside the participating range [0-3].";
     }
+
     const auto &folder = GetParam();
     const std::string database = "data/mpi/dim3/" + folder + "/Database.bin";
     const auto mpi_database = specfem::MPI::format_proc_filename(database);
-    mesh = specfem::test_configuration::ActualMesh3D(mpi_database);
+    mesh = specfem::test_configuration::Read3DMesh(mpi_database);
   }
+
   void TearDown() override {
     // Any cleanup needed for each test
   }
 
-  ~MPIMesh3DTest() override = default;
+  ~Read3DMeshMPITest() override = default;
 
   // Accessor for the mesh
   const auto &getMesh() const { return mesh.mesh; }

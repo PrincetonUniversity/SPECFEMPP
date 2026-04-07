@@ -97,6 +97,20 @@ pipeline {
                                     echo ' Build completed '
                                 }
                             }
+                            stage (' Test '){
+                                steps {
+                                    echo ' Running MPI tests with ctest '
+                                    sh """
+                                        module load cmake/3.30.8
+                                        module load boost/1.85.0
+                                        module load ${GNU_COMPILER_MODULE}
+                                        module load ${MPI_MODULE}
+                                        cd build_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
+                                        ctest -VV
+                                    """
+                                    echo ' Testing completed '
+                                }
+                            }
                         }
                         post {
                             always {
