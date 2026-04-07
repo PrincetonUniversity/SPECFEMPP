@@ -18,8 +18,15 @@ include("@CMAKE_SOURCE_DIR@/cmake/extract_git_version.cmake")
 
 # Generate header to a temp file, copy only if changed
 # (prevents unnecessary rebuilds of targets that depend on version.hpp)
+#
+# We use file(READ) + string(CONFIGURE) + file(WRITE) instead of
+# configure_file() so that no cmake state files are written and the build
+# system regeneration rules are never triggered by this script.
+file(READ "${VERSION_HPP_IN}" _version_hpp_content)
+string(CONFIGURE "${_version_hpp_content}" _version_hpp_content @ONLY)
+
 set(_tmp "${VERSION_HPP_OUT}.tmp")
-configure_file("${VERSION_HPP_IN}" "${_tmp}" @ONLY)
+file(WRITE "${_tmp}" "${_version_hpp_content}")
 
 execute_process(
   COMMAND "${CMAKE_COMMAND}" -E compare_files "${_tmp}" "${VERSION_HPP_OUT}"
