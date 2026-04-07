@@ -1,7 +1,6 @@
 #pragma once
 
 #include "specfem/assembly/assembly.hpp"
-#include "specfem/assembly/assembly/impl/helper.hpp"
 #include "specfem/chunk_element.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
@@ -44,14 +43,12 @@ template <typename T> struct ExtentImpl<T, 0> {
   using type = T;
 };
 
-template <specfem::element::dimension_tag DimensionTag,
-          specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag, int NGLL>
-class helper {
+template <typename Tags, int NGLL> class ComputeWavefieldHelper {
 public:
-  constexpr static auto dimension_tag = DimensionTag;
-  constexpr static auto medium_tag = MediumTag;
-  constexpr static auto property_tag = PropertyTag;
+  constexpr static auto dimension_tag = Tags::dimension_tag;
+  constexpr static auto medium_tag = Tags::medium_tag;
+  constexpr static auto property_tag = Tags::property_tag;
+  constexpr static auto attenuation_tag = Tags::attenuation_tag;
   constexpr static auto ngll = NGLL;
   constexpr static bool using_simd = false;
 
@@ -75,8 +72,8 @@ public:
                    Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>;
 
   // Constructor
-  helper(specfem::assembly::assembly<dimension_tag> assembly,
-         WavefieldOnEntireGridViewType wavefield_on_entire_grid)
+  ComputeWavefieldHelper(specfem::assembly::assembly<dimension_tag> assembly,
+                         WavefieldOnEntireGridViewType wavefield_on_entire_grid)
       : assembly(assembly), wavefield_on_entire_grid(wavefield_on_entire_grid) {
     const auto &element_grid = assembly.mesh.element_grid;
     if (element_grid != ngll) {
@@ -91,7 +88,7 @@ public:
     const auto &element_grid = assembly.mesh.element_grid;
 
     const auto elements = assembly.element_types.get_elements_on_device(
-        medium_tag, property_tag, specfem::element::attenuation_tag::none);
+        medium_tag, property_tag, attenuation_tag);
 
     const int nelements = elements.extent(0);
 
@@ -133,9 +130,8 @@ public:
         Kokkos::DefaultExecutionSpace::scratch_memory_space,
         Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 
-    using PointPropertyType = specfem::point::properties<
-        specfem::tags::Tags<dimension_tag, medium_tag, property_tag,
-                            specfem::element::attenuation_tag::none, false> >;
+    using PointPropertyType = specfem::point::properties<specfem::tags::Tags<
+        dimension_tag, medium_tag, property_tag, attenuation_tag, false> >;
 
     using PointFieldDerivativesType = specfem::point::field_derivatives<
         specfem::tags::Tags<dimension_tag, medium_tag, false> >;
@@ -182,9 +178,8 @@ public:
 
           // Call the compute_wavefield function
           using PointTags =
-              specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag,
-                                  specfem::element::attenuation_tag::none,
-                                  using_simd>;
+              specfem::tags::Tags<dimension_tag, medium_tag, property_tag,
+                                  attenuation_tag, using_simd>;
           specfem::medium_physics::compute_wavefield<PointTags>(
               chunk_index, assembly, lagrange_derivative, displacement,
               velocity, acceleration, wavefield_type, wavefield);
