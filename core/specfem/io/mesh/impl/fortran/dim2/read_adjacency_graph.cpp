@@ -77,8 +77,8 @@ specfem::io::mesh::impl::fortran::dim2::read_adjacency_graph(
           specfem::element::dimension_tag::dim2>::MPIEdgeProperties{
         connection_type,
         edge_orientation,
-        ispec_local,
-        ispec_neighbor,
+        static_cast<size_t>(ispec_local),
+        static_cast<size_t>(ispec_neighbor),
         neighbor_partition,
         static_cast<specfem::mesh_entity::dim2::type>(neighbor_orientation),
         static_cast<specfem::mesh_entity::dim2::type>(local_anchor),
