@@ -56,6 +56,22 @@ target_link_libraries(
 )
 
 add_executable(
+  mesh_mpi_dim2_tests
+  mesh/mpi/dim2/adjacency_graph.cpp
+  mesh/mpi/dim2/runner.cpp
+)
+
+target_link_libraries(
+  mesh_mpi_dim2_tests
+  specfem::mesh
+  specfem_environment
+  specfem::io
+  specfem::utilities
+  MPI::MPI_CXX
+  -lpthread -lm
+)
+
+add_executable(
   io_mesh_mpi_tests
   io/mesh/dim3/read_mesh.cpp
   io/mesh/dim3/runner.cpp
@@ -90,6 +106,7 @@ target_link_libraries(
 # MPI test targets
 set(MPI_TEST_TARGETS
   mesh_mpi_dim3_tests
+  mesh_mpi_dim2_tests
   io_mesh_mpi_tests
   io_mesh_mpi_dim2_tests
 )
