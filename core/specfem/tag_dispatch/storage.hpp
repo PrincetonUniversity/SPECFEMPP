@@ -97,14 +97,16 @@ public:
           }
         }
       };
-      std::string msg =
-          "no matching element combination for queried tags: [";
-      bool first = true;
-      ((msg += (first ? (first = false, std::string{}) : std::string{ ", " }) +
-               tag_to_str(query_tags)),
-       ...);
-      msg += "]";
-      throw std::runtime_error(msg);
+      std::string tags_str;
+      auto append_tag = [&](const auto &tag) {
+        if (!tags_str.empty())
+          tags_str += ", ";
+        tags_str += tag_to_str(tag);
+      };
+      (append_tag(query_tags), ...);
+      throw std::runtime_error(
+          "no matching element combination for queried tags: [" + tags_str +
+          "]");
     }
     return *result;
   }
