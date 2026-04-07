@@ -19,6 +19,8 @@ namespace specfem::utilities {
 template <typename T> struct Band {
   T min, max;
 
+  Band() = default;
+
   /// Same-unit construction (identity).
   constexpr Band(T lo, T hi) noexcept : min(lo), max(hi) {}
 
