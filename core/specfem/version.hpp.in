@@ -1,7 +1,6 @@
 #pragma once
 #include <string>
-#include <iomanip>
-#include <sstream>
+#include <string_view>
 
 namespace specfem {
 
@@ -13,70 +12,63 @@ struct version {
 
   // true  : HEAD is exactly on a clean release tag
   // false : dev build (commits ahead of tag, or dirty working tree)
-  static constexpr bool is_release = static_cast<bool>(@SPECFEM_IS_RELEASE@);
+  const static constexpr bool is_release = static_cast<bool>(@SPECFEM_IS_RELEASE@);
 
   // true  : working tree has uncommitted changes
-  static constexpr bool is_dirty = static_cast<bool>(@SPECFEM_IS_DIRTY@);
+  const static constexpr bool is_dirty = static_cast<bool>(@SPECFEM_IS_DIRTY@);
 
   // true  : Git metadata was available at configure time
-  static constexpr bool has_git_info = static_cast<bool>(@SPECFEM_HAS_GIT_INFO@);
+  const static constexpr bool has_git_info = static_cast<bool>(@SPECFEM_HAS_GIT_INFO@);
 
   // number of commits since the nearest tag (0 on a clean release)
-  static constexpr int commits_since_tag = @SPECFEM_COMMITS_SINCE_TAG@;
+  const static constexpr int commits_since_tag = @SPECFEM_COMMITS_SINCE_TAG@;
 
   // "MAJOR.MINOR.PATCH"
-  static std::string string() {
-    return std::to_string(major) + "." +
-           std::to_string(minor) + "." +
-           std::to_string(patch);
+  const static constexpr std::string_view string() {
+    return "@SPECFEM_VERSION_MAJOR@.@SPECFEM_VERSION_MINOR@.@SPECFEM_VERSION_PATCH@";
   }
 
   // Short Git hash of HEAD
-  static std::string git_hash() {
-    return std::string("@SPECFEM_GIT_HASH@");
+  const static constexpr std::string_view git_hash() {
+    return "@SPECFEM_GIT_HASH@";
   }
 
-  // Full decorated version string:
-  //   release : "1.2.3 (abcdef1)"
-  //   dev     : "1.2.3-dev+5.abcdef1"
-  //   dirty   : "1.2.3+dirty.abcdef1"
-  static std::string full_string() {
-    if constexpr (is_release) {
-      return string() + " (" + git_hash() + ")";
-    } else if constexpr (is_dirty) {
-      return string() + "+dirty." + git_hash();
-    } else {
-      return string() + "-dev+" +
-             std::to_string(commits_since_tag) + "." + git_hash();
-    }
+  // Commits since tag as a string literal (used in constexpr header())
+  const static constexpr std::string_view commits_since_tag_str() {
+    return "@SPECFEM_COMMITS_SINCE_TAG@";
   }
 
   static std::string header() {
-    std::ostringstream ver;
-    ver << std::left << std::setw(8) << string();
+    auto ver = std::string(string());
+    ver.resize(8, ' ');
 
-    std::ostringstream h;
-    h << "==========================================================\n"
-      << "  S P E C F E M + +   |   Spectral Element Method Solver  \n"
-      << "==========================================================\n"
-      << "  Version " << ver.str()
-      << "                      License: GPL 3.0  \n";
+    auto h = std::string(
+      "==========================================================\n"
+      "  S P E C F E M + +   |   Spectral Element Method Solver  \n"
+      "==========================================================\n"
+      "  Version ") + ver +
+      "                      License: GPL 3.0  \n";
 
     if constexpr (has_git_info && !is_release) {
-      h << "                     - - - - - - -                        \n";
-      h << "  [dev] " << commits_since_tag
-        << " commit(s) ahead of v" << string() << "\n";
+      h += "                     - - - - - - -                        \n";
+      h += "  [dev] ";
+      h += commits_since_tag_str();
+      h += " commit(s) ahead of v";
+      h += string();
+      h += "\n";
       if constexpr (is_dirty) {
-        h << "        -> Working tree has uncommitted changes. \n";
+        h += "        -> Working tree has uncommitted changes. \n";
       }
     }
 
     if constexpr (has_git_info) {
-      h << "  Git hash: " << git_hash() << "\n";
+      h += "  Git hash: ";
+      h += git_hash();
+      h += "\n";
     }
 
-    h << "==========================================================\n";
-    return h.str();
+    h += "==========================================================\n";
+    return h;
   }
 };
 
