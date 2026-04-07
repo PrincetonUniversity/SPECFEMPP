@@ -7,11 +7,17 @@ set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
     ${CMAKE_BINARY_DIR}/include/specfem/setup.hpp
 )
 
-# Configure the version header
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.hpp.in
-               ${CMAKE_BINARY_DIR}/include/specfem/version.hpp @ONLY)
+# Generate version.hpp at build time so the git hash stays in sync after commits
+# without requiring a full CMake reconfigure.
+# The script (version_header.cmake) was rendered by cmake/version.cmake with
+# all paths and the semver baked in; only the git-dynamic fields are re-queried.
+add_custom_target(specfem_version_header ALL
+    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_BINARY_DIR}/cmake/version_header.cmake
+    BYPRODUCTS ${CMAKE_BINARY_DIR}/include/specfem/version.hpp
+    COMMENT "Updating version.hpp from git"
+)
 
-# Add the configure files to the clean target
+# Add the generated file to the clean target
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
     ${CMAKE_BINARY_DIR}/include/specfem/version.hpp
 )
@@ -84,3 +90,6 @@ target_include_directories(specfem_core_interface
     INTERFACE
         ${CMAKE_SOURCE_DIR}/core
 )
+
+# Ensure version.hpp is generated before anything that links specfem::core
+add_dependencies(specfem_core_interface specfem_version_header)
