@@ -39,7 +39,7 @@ void program_2d(
 
   const auto mesh = specfem::io::read_2d_mesh(
       database_filename, setup.get_elastic_wave_type(),
-      setup.get_electromagnetic_wave_type());
+      setup.get_electromagnetic_wave_type(), setup.is_attenuation_enabled());
 
   specfem::Logger::info("Mesh Information:");
   specfem::Logger::info("-------------------------------");

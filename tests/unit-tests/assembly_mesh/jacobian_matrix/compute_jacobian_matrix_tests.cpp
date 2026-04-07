@@ -72,7 +72,7 @@ TEST(ASSEMBLY_MESH, compute_jacobian_matrix) {
 
   specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
       test_config.database_filename, specfem::enums::elastic_wave::psv,
-      specfem::enums::electromagnetic_wave::te);
+      specfem::enums::electromagnetic_wave::te, /*attenuation=*/false);
 
   specfem::assembly::mesh<specfem::element::dimension_tag::dim2> compute_mesh(
       mesh.tags, mesh.control_nodes, quadratures, mesh.adjacency_graph);

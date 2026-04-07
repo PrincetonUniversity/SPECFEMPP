@@ -54,6 +54,7 @@ public:
 
 private:
   std::string output_folder; ///< Path to output folder
+  std::string file_path; ///< Rank-specific path to the wavefield file/folder
   typename OutputLibrary::File file;
   bool save_boundary_values;
 };

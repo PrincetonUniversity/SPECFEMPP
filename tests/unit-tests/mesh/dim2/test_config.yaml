@@ -53,6 +53,7 @@ Tests:
     config:
       nproc : 1
       elastic_wave: "P_SV"
+      attenuation_enabled: true
     databases:
       mesh : "data/dim2/fluid_solid_mesh_flat_ocean_bottom_attenuation/database.bin"
       sources : "data/dim2/fluid_solid_mesh_flat_ocean_bottom_attenuation/sources.yaml"
@@ -125,10 +126,12 @@ Tests:
     config:
       nproc: 1
       elastic_wave: "P_SV"
+      attenuation_enabled: true
     databases:
       mesh: "data/dim2/homogeneous_poroelastic_isotropic_w_attenuation/database.bin"
       sources: "data/dim2/homogeneous_poroelastic_isotropic_w_attenuation/sources.yaml"
       stations: "data/dim2/homogeneous_poroelastic_isotropic_w_attenuation/DATA/STATIONS"
+
 
   # Elastic Spin mesh
   - name: "Elastic Isotropic Cosserat Medium - Homogeneous"

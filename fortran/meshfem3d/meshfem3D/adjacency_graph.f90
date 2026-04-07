@@ -6,7 +6,7 @@ contains
 
    subroutine compute_adjacency_graph(nglob)
       use constants_meshfem, only: NCORNERS, NGLLX_M, NGLLY_M, NGLLZ_M
-      use meshfem_par, only: ibool, adjacency_matrix, nspec, NPROC
+      use meshfem_par, only: ibool, adjacency_matrix, nspec
 
       implicit none
 
@@ -14,11 +14,6 @@ contains
       integer, allocatable :: elmnts_bis(:)
       integer :: ispec
       integer :: nglob
-
-      if (NPROC > 1) then
-         write(*,*) 'Adjacency graph computation is only implemented for NPROC = 1'
-         stop "Adjacency graph computation error"
-      end if
 
       allocate(elmnts_bis(0:NCORNERS*nspec-1), stat=ier)
       if (ier /= 0) stop 'Error allocating elmnts_bis array'

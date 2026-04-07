@@ -5,6 +5,7 @@
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/receivers.hpp"
 #include "specfem/element.hpp"
+#include "specfem/mpi.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -73,7 +74,22 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim2>::receivers(
     const auto gcoord = specfem::point::global_coordinates<
         specfem::element::dimension_tag::dim2>{ receiver->get_x(),
                                                 receiver->get_z() };
-    const auto lcoord = specfem::algorithms::locate_point(gcoord, mesh);
+
+    // TODO: In MPI runs each partition holds only a subset of the mesh.
+    // Receivers outside this partition's subdomain will fail to locate.
+    // TODO: Implement proper cross-partition receiver location so that the
+    // owning rank can compute and broadcast the local coordinates.
+    specfem::point::local_coordinates<specfem::element::dimension_tag::dim2>
+        lcoord;
+    try {
+      lcoord = specfem::algorithms::locate_point(gcoord, mesh);
+    } catch (const std::exception &) {
+      if (specfem::MPI::get_size() > 1) {
+        h_elements(ireceiver) = -1;
+        continue;
+      }
+      throw;
+    }
 
     h_elements(ireceiver) = lcoord.ispec;
 
@@ -116,6 +132,11 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim2>::receivers(
 
         for (int ireceiver = 0; ireceiver < h_elements.extent(0); ++ireceiver) {
           int ispec = h_elements(ireceiver);
+          // TODO: ispec == -1 is a sentinel meaning this receiver was not
+          // located in the current partition (MPI run). Skip it here.
+          // TODO: Remove once cross-partition receiver location is implemented.
+          if (ispec < 0)
+            continue; // not located in this partition (MPI)
           if (element_types.get_medium_tag(ispec) == _medium_tag_ &&
               element_types.get_property_tag(ispec) == _property_tag_ &&
               element_types.get_attenuation_tag(ispec) == _attenuation_tag_) {
@@ -132,6 +153,11 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim2>::receivers(
 
         for (int ireceiver = 0; ireceiver < h_elements.extent(0); ++ireceiver) {
           int ispec = h_elements(ireceiver);
+          // TODO: ispec == -1 is a sentinel meaning this receiver was not
+          // located in the current partition (MPI run). Skip it here.
+          // TODO: Remove once cross-partition receiver location is implemented.
+          if (ispec < 0)
+            continue; // not located in this partition (MPI)
           if (element_types.get_medium_tag(ispec) == _medium_tag_ &&
               element_types.get_property_tag(ispec) == _property_tag_ &&
               element_types.get_attenuation_tag(ispec) == _attenuation_tag_) {

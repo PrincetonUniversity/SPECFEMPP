@@ -141,6 +141,9 @@ include("${CMAKE_SOURCE_DIR}/cmake/kokkos.cmake")
 # Configure SPECFEM++ build variables based on Kokkos settings
 include("${CMAKE_SOURCE_DIR}/cmake/variables.cmake")
 
+# Load CMake configuration summary function
+include("${CMAKE_SOURCE_DIR}/cmake/cmake_summary.cmake")
+
 # Install yaml-cpp as a dependency
 include("${CMAKE_SOURCE_DIR}/cmake/yaml.cmake")
 
@@ -314,3 +317,6 @@ if (SPECFEM_INSTALL AND NOT SPECFEM_USE_SKBUILD)
     )
 
 endif(SPECFEM_INSTALL AND NOT SPECFEM_USE_SKBUILD)
+
+# Print configuration summary
+specfem_print_configuration_summary()

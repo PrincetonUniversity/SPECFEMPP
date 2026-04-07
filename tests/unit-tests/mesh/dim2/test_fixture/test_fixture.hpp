@@ -39,11 +39,19 @@ public:
     nproc = Node["nproc"].as<int>();
     elastic_wave = Node["elastic_wave"].as<std::string>();
 
-    if (Node["electromagnetic_wave"].IsDefined())
+    if (Node["electromagnetic_wave"].IsDefined()) {
       electromagnetic_wave = Node["electromagnetic_wave"].as<std::string>();
-    else
+    } else {
       // Default to TE if not defined
       electromagnetic_wave = "TE";
+    }
+
+    if (Node["attenuation_enabled"].IsDefined()) {
+      attenuation_enabled = Node["attenuation_enabled"].as<bool>();
+    } else {
+      // Default to false if not defined
+      attenuation_enabled = false;
+    }
   }
 
   int get_nproc() { return nproc; }
@@ -55,6 +63,8 @@ public:
     else
       throw std::runtime_error("Elastic wave type not supported");
   }
+
+  bool is_attenuation_enabled() const { return attenuation_enabled; }
 
   specfem::enums::electromagnetic_wave get_electromagnetic_wave() {
     if (specfem::utilities::is_te_string(electromagnetic_wave))
@@ -69,6 +79,7 @@ private:
   int nproc;
   std::string elastic_wave;
   std::string electromagnetic_wave;
+  bool attenuation_enabled;
 };
 
 struct Test {
@@ -99,6 +110,10 @@ public:
   }
 
   int get_nproc() { return config.get_nproc(); }
+
+  bool is_attenuation_enabled() const {
+    return config.is_attenuation_enabled();
+  }
 
   specfem::enums::elastic_wave get_elastic_wave() {
     return config.get_elastic_wave();

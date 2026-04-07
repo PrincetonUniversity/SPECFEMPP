@@ -10,7 +10,7 @@ pipeline{
                 axes {
                     axis{
                         name 'GNUCompiler'
-                        values 'GCC8;gcc/11', 'GCC13;gcc-toolset/14'
+                        values 'GCC8;gcc/11', 'GCC14;gcc-toolset/14'
                     }
                     axis{
                         name 'SIMD'
@@ -82,7 +82,10 @@ pipeline{
                                         module load ${GNU_COMPILER_MODULE}
                                         cd build_cpu_${GNU_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}/tests/unit-tests
                                         export BUILD_DIR=build_cpu_${GNU_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
-                                        srun -N 1 -t 00:30:00 --account rse ${HOST_RUN_FLAGS} --constraint="intel|cascade" bash -c 'export OMP_PROC_BIND=spread; export OMP_THREADS=places; ctest -j --output-on-failure;'
+                                        srun -N 1 -t 00:30:00 --account rse ${HOST_RUN_FLAGS} \
+                                            --constraint="intel|cascade" \
+                                            bash -c 'export OMP_PROC_BIND=spread; \
+                                            export OMP_THREADS=places; ctest -j --output-on-failure;'
                                     """
                                     echo ' Testing completed '
                                 }

@@ -131,8 +131,7 @@ specfem::assembly::element_intersections<
        FLUX_SCHEME_TAG(NATURAL)),
       CAPTURE(h_self_faces, h_coupled_faces) {
         if (_connection_tag_ == connection && _interface_tag_ == face &&
-                _boundary_tag_ == boundary,
-            _flux_scheme_tag_ == flux_scheme) {
+            _boundary_tag_ == boundary && _flux_scheme_tag_ == flux_scheme) {
           return std::make_tuple(_h_self_faces_, _h_coupled_faces_);
         }
       })

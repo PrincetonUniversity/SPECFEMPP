@@ -1,5 +1,6 @@
 #pragma once
 #include "units/conversions.hpp"
+#include "units/parse.hpp"
 #include "units/quantity.hpp"
 
 /**

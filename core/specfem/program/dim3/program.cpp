@@ -39,7 +39,8 @@ void program_3d(
   specfem::Logger::info("Reading the mesh...");
   specfem::Logger::info("===================");
   auto mesh_start_time = std::chrono::system_clock::now();
-  const auto mesh = specfem::io::read_3d_mesh(database_filename);
+  const auto mesh = specfem::io::read_3d_mesh(database_filename,
+                                              setup.is_attenuation_enabled());
   auto mesh_read_time = std::chrono::system_clock::now() - mesh_start_time;
   specfem::Logger::info("Time to read mesh: " +
                         std::to_string(mesh_read_time.count()) + " seconds");

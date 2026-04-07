@@ -4,7 +4,9 @@
 #include "specfem/element.hpp"
 #include "specfem/io/property/reader.hpp"
 
+#include "specfem/mpi.hpp"
 #include "specfem/point.hpp"
+#include <boost/filesystem.hpp>
 #include <Kokkos_Core.hpp>
 
 template <typename InputLibrary>
@@ -17,7 +19,16 @@ void specfem::io::property_reader<InputLibrary>::read(
     specfem::assembly::assembly<specfem::element::dimension_tag::dim2> &assembly) {
   auto &properties = assembly.properties;
 
-  typename InputLibrary::File file(input_folder + "/Properties");
+  // Build rank-specific input path following the same convention as mesh files:
+  //   serial:   {input_folder}/Properties/
+  //   parallel: {input_folder}/Properties/proc_N/
+  const std::string formatted =
+      specfem::MPI::format_proc_filename(input_folder + "/Properties");
+  const boost::filesystem::path formatted_path(formatted);
+  const std::string base_folder = formatted_path.parent_path().string();
+  const std::string ns = formatted_path.stem().string();
+
+  typename InputLibrary::File file(base_folder + "/" + ns);
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
@@ -40,7 +51,7 @@ void specfem::io::property_reader<InputLibrary>::read(
             });
       })
 
-  std::cout << "Properties read from " << input_folder << "/Properties"
+  std::cout << "Properties read from " << base_folder << "/" << ns
             << std::endl;
 
   properties.copy_to_device();
