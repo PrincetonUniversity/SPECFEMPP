@@ -95,4 +95,59 @@ public:
   }
 };
 
+/**
+ * @brief Mirror a @ref Storage into a destination memory space, analogous to
+ *        ``Kokkos::create_mirror_view``.
+ *
+ * If the memory space of @p Space is identical to the memory space of
+ * @p SrcView (i.e.\ `std::is_same_v<typename Space::memory_space,
+ * typename SrcView::memory_space>` is @c true), @p src_view is returned
+ * unchanged — no allocation or copy is performed.
+ *
+ * Otherwise, for each tag combination in the element-type set @p ET, a new
+ * view is allocated in @p Space with the same data type, layout, and extents
+ * as the corresponding source entry, and the data is deep-copied via
+ * ``Kokkos::deep_copy``.  The typical usage is to mirror a host-space index
+ * storage onto the device after it has been populated on the host:
+ *
+ * @code{.cpp}
+ * HostStorage h_store{ initializer };
+ * auto d_store = specfem::tag_dispatch::mirror_and_copy_storage<
+ *     Kokkos::DefaultExecutionSpace>(h_store);
+ * @endcode
+ *
+ * @tparam Space    Destination execution-space type.  Must expose a
+ *                  ``memory_space`` typedef (satisfied by any Kokkos
+ *                  execution space or device type).
+ * @tparam SrcView  Kokkos::View type of the source storage.  Deduced from
+ *                  @p src_view.
+ * @tparam ET       Element-type set that parameterises the storage.
+ *                  Deduced from @p src_view.
+ *
+ * @param src_view  Source storage to mirror.
+ * @return          If the memory spaces match, returns @p src_view as-is
+ *                  (type `Storage<SrcView, ET>`).  Otherwise returns a new
+ *                  `Storage` whose view type has the same data type and
+ *                  layout as @p SrcView but lives in @p Space, populated by
+ *                  deep-copying each entry from @p src_view.
+ */
+template <typename Space, typename SrcView, typename ET>
+auto mirror_and_copy_storage(const Storage<SrcView, ET> &src_view) {
+  if constexpr (std::is_same_v<typename Space::memory_space,
+                               typename SrcView::memory_space>) {
+    return src_view;
+  } else {
+    using DstView = Kokkos::View<typename SrcView::data_type,
+                                 typename SrcView::array_layout, Space>;
+    return Storage<DstView, ET>{ [&]<typename TagsType>() -> DstView {
+      const auto &src = src_view.template get<TagsType>();
+      DstView dst = [&]<std::size_t... Is>(std::index_sequence<Is...>) {
+        return DstView(src.label(), src.extent(Is)...);
+      }(std::make_index_sequence<std::decay_t<decltype(src)>::rank>{});
+      Kokkos::deep_copy(dst, src);
+      return dst;
+    } };
+  }
+}
+
 } // namespace specfem::tag_dispatch
