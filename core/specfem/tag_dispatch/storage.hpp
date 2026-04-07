@@ -83,27 +83,10 @@ public:
         result = &this->template get<TagsType>();
     });
     if (!result) {
-      auto tag_to_str = [](const auto &t) -> std::string {
-        using TagType = std::decay_t<decltype(t)>;
-        if constexpr (std::is_same_v<TagType, bool>) {
-          return t ? "true" : "false";
-        } else {
-          using specfem::element::to_string;
-          if constexpr (requires { to_string(t); }) {
-            return to_string(t);
-          } else {
-            return std::to_string(
-                static_cast<std::underlying_type_t<TagType>>(t));
-          }
-        }
-      };
       std::string tags_str;
-      auto append_tag = [&](const auto &tag) {
-        if (!tags_str.empty())
-          tags_str += ", ";
-        tags_str += tag_to_str(tag);
-      };
-      (append_tag(query_tags), ...);
+      ((tags_str += (tags_str.empty() ? "" : ", ") +
+                    specfem::element::to_string(query_tags)),
+       ...);
       throw std::runtime_error(
           "no matching element combination for queried tags: [" + tags_str +
           "]");
