@@ -12,6 +12,13 @@
 #include <mpi.h>
 #endif
 
+// Non-MPI shims: define MPI_Comm as a simple type at global scope
+#ifndef SPECFEM_ENABLE_MPI
+using MPI_Comm = int;
+constexpr MPI_Comm MPI_COMM_WORLD = 0;
+constexpr MPI_Comm MPI_COMM_NULL = -1;
+#endif
+
 namespace specfem {
 
 // Forward declaration
@@ -21,18 +28,6 @@ class Context;
 void abort(const std::string &message, int error_code, const int line,
            const char *file);
 } // namespace program
-
-#ifndef SPECFEM_ENABLE_MPI
-enum MPI_Comm { WORLD_COMM = 0, NULL_COMM = -1 };
-#endif
-} // namespace specfem
-
-#ifndef SPECFEM_ENABLE_MPI
-#define MPI_COMM_WORLD specfem::MPI_Comm::WORLD_COMM
-#define MPI_COMM_NULL specfem::MPI_Comm::NULL_COMM
-#endif
-
-namespace specfem {
 
 /**
  * @class MPI
@@ -107,7 +102,17 @@ public:
     return size_;
   }
 
-  static MPI_Comm world_communicator() {
+  /**
+   * @brief Get active communicator for simulations
+   *
+   * Returns the active communicator, which may be a subset communicator
+   * (if initialized with nprocs) or MPI_COMM_WORLD (default initialization).
+   * For excluded ranks in subset initialization, returns MPI_COMM_NULL.
+   *
+   * @return MPI_Comm The active communicator for simulations
+   * @throws Exits with error code 1 if called outside Context scope
+   */
+  static MPI_Comm communicator() {
     check_context();
     return comm_;
   }
@@ -192,15 +197,19 @@ private:
   static void initialize(int *argc, char ***argv);
 
   /**
-   * @brief Initialize MPI with user-defined nodes within world communicator
+   * @brief Initialize MPI with user-defined processes within world communicator
+   *
+   * Creates a subset MPI communicator containing only the first nprocs ranks.
+   * Ranks >= nprocs receive MPI_COMM_NULL and are excluded from simulation.
    *
    * @param argc Pointer to argument count
    * @param argv Pointer to argument vector
-   * @param nnodes Number of nodes to include in the new communicator (must be
+   * @param nprocs Number of processes to include in the new communicator (must
+   * be
    * <= world size)
-   * @throws Exits with error code 1 if nnodes > world size
+   * @throws Exits with error code 1 if nprocs > world size
    */
-  static void initialize(int *argc, char ***argv, int nnodes);
+  static void initialize(int *argc, char ***argv, int nprocs);
 
   /**
    * @brief Finalize MPI and reset rank/size to -1

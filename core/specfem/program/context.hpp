@@ -36,7 +36,13 @@ public:
    */
   Context(int argc, char *argv[]);
 
-  Context(int argc, char *argv[], int nnodes);
+  /**
+   * @brief Initialize context with subset of MPI processes
+   * @param argc Argument count
+   * @param argv Argument vector
+   * @param nprocs Number of processes to use (creates subset communicator)
+   */
+  Context(int argc, char *argv[], int nprocs);
 
   /**
    * @brief Initialize context from argument vector

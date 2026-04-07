@@ -78,15 +78,15 @@ specfem::io::read_2d_mesh(
   int nspec_all = mesh.parameters.nspec;
   SPECFEM_MPI_SAFECALL(MPI_Reduce(&mesh.parameters.nspec, &nspec_all, 1,
                                   MPI_INT, MPI_SUM, 0,
-                                  specfem::MPI::world_communicator()));
+                                  specfem::MPI::communicator()));
   int nelem_acforcing_all = mesh.parameters.nelem_acforcing;
   SPECFEM_MPI_SAFECALL(MPI_Reduce(&mesh.parameters.nelem_acforcing,
                                   &nelem_acforcing_all, 1, MPI_INT, MPI_SUM, 0,
-                                  specfem::MPI::world_communicator()));
+                                  specfem::MPI::communicator()));
   int nelem_acoustic_surface_all = mesh.parameters.nelem_acoustic_surface;
-  SPECFEM_MPI_SAFECALL(MPI_Reduce(
-      &mesh.parameters.nelem_acoustic_surface, &nelem_acoustic_surface_all, 1,
-      MPI_INT, MPI_SUM, 0, specfem::MPI::world_communicator()));
+  SPECFEM_MPI_SAFECALL(MPI_Reduce(&mesh.parameters.nelem_acoustic_surface,
+                                  &nelem_acoustic_surface_all, 1, MPI_INT,
+                                  MPI_SUM, 0, specfem::MPI::communicator()));
 
   try {
     auto [n_sls, attenuation_f0_reference, read_velocities_at_f0] =

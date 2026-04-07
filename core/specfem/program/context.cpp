@@ -15,10 +15,10 @@ Context::Context(int argc, char *argv[])
   specfem::Logger::initialize(this);
 }
 
-Context::Context(int argc, char *argv[], int nnodes)
+Context::Context(int argc, char *argv[], int nprocs)
     : kokkos_guard_(std::make_unique<Kokkos::ScopeGuard>(argc, argv)) {
-  // Initialize static MPI wrapper with user-defined nodes
-  specfem::MPI::initialize(&argc, &argv, nnodes);
+  // Initialize static MPI wrapper with user-defined processes
+  specfem::MPI::initialize(&argc, &argv, nprocs);
   // Initialize Logger
   specfem::Logger::initialize(this);
 }

@@ -61,11 +61,11 @@ int run_simulation(const std::string &dimension, int argc, char **argv,
   try {
     specfem::program::Context context(argc, argv);
 
-    // Only run simulation if current node is part of the world communicator
-    // (i.e. not excluded by user-defined nnodes)
+    // Only run simulation if current rank is part of the subset communicator
+    // (i.e. not excluded by user-defined nprocs)
     // For simulations that use the entire world communicator, this check will
     // pass for all ranks.
-    if (specfem::MPI::world_communicator() != MPI_COMM_NULL) {
+    if (specfem::MPI::communicator() != MPI_COMM_NULL) {
 
       const YAML::Node parameter_dict = YAML::LoadFile(opts.parameters_file);
 
@@ -109,8 +109,10 @@ int run_simulation(const std::string &dimension, int argc, char **argv,
     SPECFEM_MPI_SAFECALL(MPI_Barrier(MPI_COMM_WORLD));
 
     // Ensure all ranks have reached this point, reduce the result across ranks
-    SPECFEM_MPI_SAFECALL(MPI_Reduce(MPI_IN_PLACE, &result, 1, MPI_INT, MPI_MAX,
-                                    0, MPI_COMM_WORLD));
+    int result_reduced = result;
+    SPECFEM_MPI_SAFECALL(MPI_Allreduce(&result, &result_reduced, 1, MPI_INT,
+                                       MPI_MAX, MPI_COMM_WORLD));
+    result = result_reduced;
 
   } catch (const std::exception &e) {
     std::cerr << "Error during execution: " << e.what() << std::endl;
@@ -152,11 +154,11 @@ int run_qplots(int argc, char **argv, const Qoptions &opts) {
   try {
     specfem::program::Context context(argc, argv);
 
-    // Only run Q plot generation if current node is part of the world
-    // communicator (i.e. not excluded by user-defined nnodes) For simulations
+    // Only run Q plot generation if current rank is part of the subset
+    // communicator (i.e. not excluded by user-defined nprocs). For simulations
     // that use the entire world communicator, this check will pass for all
     // ranks.
-    if (specfem::MPI::world_communicator() != MPI_COMM_NULL) {
+    if (specfem::MPI::communicator() != MPI_COMM_NULL) {
 
       const auto success = specfem::program::qplots(
           opts.Q, opts.minfreq, opts.maxfreq, opts.min_plot_freq,
@@ -173,8 +175,10 @@ int run_qplots(int argc, char **argv, const Qoptions &opts) {
     SPECFEM_MPI_SAFECALL(MPI_Barrier(MPI_COMM_WORLD));
 
     // Ensure all ranks have reached this point, reduce the result across ranks
-    SPECFEM_MPI_SAFECALL(MPI_Reduce(MPI_IN_PLACE, &result, 1, MPI_INT, MPI_MAX,
-                                    0, MPI_COMM_WORLD));
+    int result_reduced = result;
+    SPECFEM_MPI_SAFECALL(MPI_Allreduce(&result, &result_reduced, 1, MPI_INT,
+                                       MPI_MAX, MPI_COMM_WORLD));
+    result = result_reduced;
 
   } catch (const std::exception &e) {
     std::cerr << "Error during Q plot generation: " << e.what() << std::endl;

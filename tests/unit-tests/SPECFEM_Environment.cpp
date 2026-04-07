@@ -10,8 +10,8 @@ size_t SPECFEMEnvironment::required_mpi_size_ = 1;
 bool SPECFEMEnvironment::mpi_size_valid_ = true;
 std::string SPECFEMEnvironment::mpi_size_error_ = "";
 
-SPECFEMEnvironment::SPECFEMEnvironment(const size_t nnodes) {
-  required_mpi_size_ = nnodes;
+SPECFEMEnvironment::SPECFEMEnvironment(const size_t nprocs) {
+  required_mpi_size_ = nprocs;
 }
 
 void SPECFEMEnvironment::SetUp() {

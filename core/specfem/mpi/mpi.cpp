@@ -28,18 +28,18 @@ void MPI::initialize(int *argc, char ***argv) {
 #endif
 }
 
-void MPI::initialize(int *argc, char ***argv, int nnodes) {
+void MPI::initialize(int *argc, char ***argv, int nprocs) {
 #ifdef SPECFEM_ENABLE_MPI
   int initialized;
   MPI_Initialized(&initialized);
 
   if (!initialized) {
     MPI_Init(argc, argv);
-    // Check that requested nnodes does not exceed world size
+    // Check that requested nprocs does not exceed world size
     int world_size;
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-    if (nnodes > world_size) {
-      std::cerr << "Error: Requested nnodes (" << nnodes
+    if (nprocs > world_size) {
+      std::cerr << "Error: Requested nprocs (" << nprocs
                 << ") exceeds available world size (" << world_size << ")."
                 << std::endl;
       MPI_Abort(MPI_COMM_WORLD, 1);
@@ -49,9 +49,17 @@ void MPI::initialize(int *argc, char ***argv, int nnodes) {
     int world_rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
-    // Only use the first nnodes ranks in the new communicator
-    int color = (world_rank < nnodes) ? 1 : MPI_UNDEFINED;
+    // Only use the first nprocs ranks in the new communicator
+    int color = (world_rank < nprocs) ? 1 : MPI_UNDEFINED;
     MPI_Comm_split(MPI_COMM_WORLD, color, world_rank, &comm_);
+  }
+
+  // Handle ranks excluded by subset communicator
+  if (comm_ == MPI_COMM_NULL) {
+    // Rank is not part of the subset communicator
+    rank_ = -1;
+    size_ = -1;
+    return;
   }
 
   MPI_Comm_size(comm_, &size_);
@@ -71,9 +79,10 @@ void MPI::finalize() {
 
   // Only finalize if not already finalized externally
   if (!finalized) {
-    // Free custom communicator if it was created
-    if (comm_ != MPI_COMM_WORLD) {
+    // Free custom communicator if it was created and is valid
+    if (comm_ != MPI_COMM_WORLD && comm_ != MPI_COMM_NULL) {
       MPI_Comm_free(&comm_);
+      comm_ = MPI_COMM_NULL;
     }
     MPI_Finalize();
   }

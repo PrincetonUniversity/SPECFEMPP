@@ -10,7 +10,7 @@ public:
   SPECFEMEnvironment() = default;
   ~SPECFEMEnvironment() override = default;
 
-  SPECFEMEnvironment(const size_t nnodes);
+  SPECFEMEnvironment(const size_t nprocs);
 
   void SetUp() override;
   void TearDown() override;
