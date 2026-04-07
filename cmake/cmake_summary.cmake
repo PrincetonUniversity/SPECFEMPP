@@ -13,6 +13,28 @@ function(specfem_print_configuration_summary)
   string(APPEND SUMMARY_STRING "\n")
 
   # ============================================================================
+  # Version & Git Info
+  # ============================================================================
+  string(APPEND SUMMARY_STRING "VERSION & GIT INFO\n")
+  string(APPEND SUMMARY_STRING "--------------------\n")
+  string(APPEND SUMMARY_STRING "  SPECFEM++ Version                        | ${SPECFEM_VERSION}\n")
+
+  if (SPECFEM_HAS_GIT_INFO)
+    set(GIT_INFO_STATUS "Available")
+    if (SPECFEM_IS_RELEASE)
+      set(RELEASE_STATUS "Yes")
+    else()
+      set(RELEASE_STATUS "No")
+    endif()
+    string(APPEND SUMMARY_STRING "  Built from Release Tag                   | ${RELEASE_STATUS}\n")
+    string(APPEND SUMMARY_STRING "  Git Hash                                 | ${SPECFEM_GIT_HASH}\n")
+  else()
+    set(GIT_INFO_STATUS "Unavailable")
+    string(APPEND SUMMARY_STRING "\n  Git information is unavailable (not a git repository or git not found).\n")
+  endif()
+  string(APPEND SUMMARY_STRING "\n")
+
+  # ============================================================================
   # I/O OPTIONS
   # ============================================================================
   string(APPEND SUMMARY_STRING "I/O OPTIONS\n")
@@ -91,8 +113,8 @@ function(specfem_print_configuration_summary)
     set(UNITY_BUILD_STATUS "ON")
   endif()
 
-  string(APPEND SUMMARY_STRING "  SPECFEM_BUILD_TESTS                     | ${TESTS_STATUS}\n")
-  string(APPEND SUMMARY_STRING "  SPECFEM_BUILD_BENCHMARKS                | ${BENCHMARKS_STATUS}\n")
+  string(APPEND SUMMARY_STRING "  SPECFEM_BUILD_TESTS                      | ${TESTS_STATUS}\n")
+  string(APPEND SUMMARY_STRING "  SPECFEM_BUILD_BENCHMARKS                 | ${BENCHMARKS_STATUS}\n")
   string(APPEND SUMMARY_STRING "  SPECFEM_ENABLE_UNITY_BUILD               | ${UNITY_BUILD_STATUS}\n")
   string(APPEND SUMMARY_STRING "\n")
 

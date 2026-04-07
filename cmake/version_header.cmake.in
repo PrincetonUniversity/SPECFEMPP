@@ -9,9 +9,9 @@ set(VERSION_HPP_IN   "@CMAKE_SOURCE_DIR@/core/specfem/version.hpp.in")
 set(VERSION_HPP_OUT  "@CMAKE_BINARY_DIR@/include/specfem/version.hpp")
 
 # Semver baked in at configure time from the git tag — stable between commits
-set(SPECFEMPP_VERSION_MAJOR "@SPECFEMPP_VERSION_MAJOR@")
-set(SPECFEMPP_VERSION_MINOR "@SPECFEMPP_VERSION_MINOR@")
-set(SPECFEMPP_VERSION_PATCH "@SPECFEMPP_VERSION_PATCH@")
+set(SPECFEM_VERSION_MAJOR "@SPECFEM_VERSION_MAJOR@")
+set(SPECFEM_VERSION_MINOR "@SPECFEM_VERSION_MINOR@")
+set(SPECFEM_VERSION_PATCH "@SPECFEM_VERSION_PATCH@")
 
 # Re-run git queries (hash, dirty, commits-since-tag) at build time
 include("@CMAKE_SOURCE_DIR@/cmake/extract_git_version.cmake")
@@ -38,7 +38,7 @@ if(_files_differ)
   execute_process(
     COMMAND "${CMAKE_COMMAND}" -E copy "${_tmp}" "${VERSION_HPP_OUT}"
   )
-  message(STATUS "version.hpp updated (git hash: ${SPECFEMPP_GIT_HASH})")
+  message(STATUS "version.hpp updated (git hash: ${SPECFEM_GIT_HASH})")
 endif()
 
 execute_process(

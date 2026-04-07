@@ -7,22 +7,22 @@ namespace specfem {
 
 struct version {
   // Semver components - sourced from the Git tag, falling back to project()
-  static constexpr int major = @SPECFEMPP_VERSION_MAJOR@;
-  static constexpr int minor = @SPECFEMPP_VERSION_MINOR@;
-  static constexpr int patch = @SPECFEMPP_VERSION_PATCH@;
+  static constexpr int major = @SPECFEM_VERSION_MAJOR@;
+  static constexpr int minor = @SPECFEM_VERSION_MINOR@;
+  static constexpr int patch = @SPECFEM_VERSION_PATCH@;
 
   // true  : HEAD is exactly on a clean release tag
   // false : dev build (commits ahead of tag, or dirty working tree)
-  static constexpr bool is_release = static_cast<bool>(@SPECFEMPP_IS_RELEASE@);
+  static constexpr bool is_release = static_cast<bool>(@SPECFEM_IS_RELEASE@);
 
   // true  : working tree has uncommitted changes
-  static constexpr bool is_dirty = static_cast<bool>(@SPECFEMPP_IS_DIRTY@);
+  static constexpr bool is_dirty = static_cast<bool>(@SPECFEM_IS_DIRTY@);
 
   // true  : Git metadata was available at configure time
-  static constexpr bool has_git_info = static_cast<bool>(@SPECFEMPP_HAS_GIT_INFO@);
+  static constexpr bool has_git_info = static_cast<bool>(@SPECFEM_HAS_GIT_INFO@);
 
   // number of commits since the nearest tag (0 on a clean release)
-  static constexpr int commits_since_tag = @SPECFEMPP_COMMITS_SINCE_TAG@;
+  static constexpr int commits_since_tag = @SPECFEM_COMMITS_SINCE_TAG@;
 
   // "MAJOR.MINOR.PATCH"
   static std::string string() {
@@ -33,7 +33,7 @@ struct version {
 
   // Short Git hash of HEAD
   static std::string git_hash() {
-    return std::string("@SPECFEMPP_GIT_HASH@");
+    return std::string("@SPECFEM_GIT_HASH@");
   }
 
   // Full decorated version string:
