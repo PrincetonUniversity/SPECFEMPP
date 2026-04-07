@@ -21,10 +21,11 @@ template <int NGLL, typename Tags>
 void compute_source_interaction_core(
     specfem::assembly::assembly<Tags::dimension_tag> &assembly, const int &timestep) {
 
+  constexpr auto dimension_tag = Tags::dimension_tag;
   constexpr auto medium_tag = Tags::medium_tag;
   constexpr auto property_tag = Tags::property_tag;
+  constexpr auto attenuation_tag = Tags::attenuation_tag;
   constexpr auto boundary_tag = Tags::boundary_tag;
-  constexpr auto dimension_tag = Tags::dimension_tag;
   constexpr auto wavefield = Tags::wavefield_tag;
 
   const auto [element_indices, source_indices] =
@@ -59,7 +60,7 @@ void compute_source_interaction_core(
   using PointPropertiesType =
       specfem::point::properties<specfem::tags::Tags<dimension_tag, medium_tag,
                                                      property_tag,
-                                                     specfem::element::attenuation_tag::none,
+                                                     attenuation_tag,
                                                      false>>;
   using PointBoundaryType =
       specfem::point::boundary<boundary_tag, dimension_tag, false>;
@@ -120,6 +121,7 @@ void compute_source_interaction(
        MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                   ELASTIC_PSV_T),
        PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+       ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC),
        BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
                     COMPOSITE_STACEY_DIRICHLET)),
       {
