@@ -12,6 +12,8 @@
 
 namespace specfem::assembly::assembly_impl {
 
+// TODO (Lucas : CPP20): Replace ExtentImpl with concept/require
+
 /**
  * @brief Template metaprogramming utility for multi-dimensional array type
  * generation
@@ -179,8 +181,11 @@ public:
           }();
 
           // Call the compute_wavefield function
-          specfem::medium_physics::compute_wavefield<dimension_tag, MediumTag,
-                                                     PropertyTag>(
+          using PointTags =
+              specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag,
+                                  specfem::element::attenuation_tag::none,
+                                  using_simd>;
+          specfem::medium_physics::compute_wavefield<PointTags>(
               chunk_index, assembly, lagrange_derivative, displacement,
               velocity, acceleration, wavefield_type, wavefield);
         });
