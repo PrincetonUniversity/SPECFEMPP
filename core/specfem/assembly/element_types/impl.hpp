@@ -10,12 +10,21 @@
 
 namespace specfem::assembly::element_types_impl {
 
-// ── Base: parameterised by the dimension and all five tag-set types.
-//    Combinations, storage members, accessor methods, and the
-//    index-store builder all live here so each dim-specific
-//    specialisation only needs to pass the set types as template
-//    arguments.
-
+/**
+ * @brief Base class for element-type classification and index storage.
+ *
+ * Parameterised by the dimension tag and the sets of valid medium, property,
+ * boundary, and attenuation tags. Holds compile-time tag-combination sets,
+ * per-element tag views, index stores, and all accessor methods. Each
+ * dimension-specific specialisation supplies the tag-set values as template
+ * arguments and inherits the full API via ``using base_type::base_type``.
+ *
+ * @tparam DimensionTag  Dimension of the simulation (dim2 or dim3).
+ * @tparam MediumSet     Set of valid medium tags for this dimension.
+ * @tparam PropertySet   Set of valid property tags.
+ * @tparam BoundarySet   Set of valid boundary tags.
+ * @tparam AttenuationSet Set of valid attenuation tags.
+ */
 template <specfem::element::dimension_tag DimensionTag, auto MediumSet,
           auto PropertySet, auto BoundarySet, auto AttenuationSet>
 struct element_types_base {
@@ -35,40 +44,70 @@ protected:
       specfem::tag_dispatch::Storage<HostIndexViewType, Sets>;
 
 public:
+  /** Dimension tag for this specialization (dim2 or dim3). */
   static constexpr auto dimension_tag = DimensionTag;
 
   // ── Tag-combination sets ─────────────────────────────────────────────────
 
+  /** All valid (dimension, medium) combinations for this specialization. */
   static constexpr auto combinations_by_medium =
       specfem::tag_dispatch::dimension_set<DimensionTag>{} * MediumSet;
+  /** All valid (dimension, medium, property, attenuation) combinations. */
   static constexpr auto combinations_by_material =
       combinations_by_medium * PropertySet * AttenuationSet;
+  /** All valid (dimension, medium, property, boundary) combinations. */
   static constexpr auto combinations_by_boundary =
       combinations_by_medium * PropertySet * BoundarySet;
 
   // ── Per-element tag views (host) ─────────────────────────────────────────
 
+  /** Number of spectral elements in the compute domain. */
   int nspec{};
+  /** GLL grid layout for this dimension (ngllx, ngllz, etc.). */
   specfem::mesh_entity::element_grid<DimensionTag> element_grid{};
 
+  /** Host view of per-element medium tags (size: nspec). */
   TagViewType<specfem::element::medium_tag> medium_tags;
+  /** Host view of per-element property tags (size: nspec). */
   TagViewType<specfem::element::property_tag> property_tags;
+  /** Host view of per-element boundary tags (size: nspec). */
   TagViewType<specfem::element::boundary_tag> boundary_tags;
+  /** Host view of per-element attenuation tags (size: nspec). */
   TagViewType<specfem::element::attenuation_tag> attenuation_tags;
 
 protected:
   // ── Index stores ─────────────────────────────────────────────────────────
 
+  /** Device index store keyed by (dimension, medium). */
   IndexStorage<decltype(combinations_by_medium)> elements_by_medium;
+  /** Host mirror of elements_by_medium. */
   HostIndexStorage<decltype(combinations_by_medium)> h_elements_by_medium;
+  /** Device index store keyed by (dimension, medium, property, attenuation). */
   IndexStorage<decltype(combinations_by_material)> elements_by_material;
+  /** Host mirror of elements_by_material. */
   HostIndexStorage<decltype(combinations_by_material)> h_elements_by_material;
+  /** Device index store keyed by (dimension, medium, property, boundary). */
   IndexStorage<decltype(combinations_by_boundary)> elements_by_boundary;
+  /** Host mirror of elements_by_boundary. */
   HostIndexStorage<decltype(combinations_by_boundary)> h_elements_by_boundary;
 
 public:
+  /** @brief Default constructor; leaves all views and stores empty. */
   element_types_base() = default;
 
+  /**
+   * @brief Construct and populate all per-element tag views and index stores.
+   *
+   * Maps compute-domain element indices to mesh-domain indices using
+   * @p mesh, reads medium/property/boundary/attenuation tags from @p tags,
+   * then builds and deep-copies all six index stores (host + device for each
+   * of medium, material, and boundary granularities).
+   *
+   * @param nspec        Number of spectral elements in the compute domain.
+   * @param element_grid GLL grid layout (ngllx, ngllz, etc.).
+   * @param mesh         Compute-to-mesh index mapping.
+   * @param tags         Per-element tag data from the mesh.
+   */
   element_types_base(
       int nspec,
       const specfem::mesh_entity::element_grid<DimensionTag> &element_grid,
@@ -80,7 +119,13 @@ public:
         boundary_tags("specfem::assembly::element_types::boundary_tags", nspec),
         attenuation_tags("specfem::assembly::element_types::attenuation_tags",
                          nspec) {
+    // ── Step 1: populate per-element tag views ──────────────────────────────
+    // Translate each compute-domain index to its mesh-domain counterpart (the
+    // mapping differs between dim2 and dim3), then copy the four tag values
+    // from the mesh tag container into the corresponding host views.
     for (int ispec = 0; ispec < nspec; ispec++) {
+      // dim2 exposes compute_to_mesh on the device; dim3 provides the host
+      // version h_compute_to_mesh because it is called from host code.
       int ispec_mesh;
       if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
         ispec_mesh = mesh.compute_to_mesh(ispec);
@@ -93,6 +138,12 @@ public:
       boundary_tags(ispec) = tags.tags_container(ispec_mesh).boundary_tag;
     }
 
+    // ── Step 2: define index-building helpers ───────────────────────────────
+    // make_host_index_view<TagsType>() scans all nspec elements and gathers
+    // those whose runtime tags match the compile-time values encoded in
+    // TagsType. The presence of attenuation_tag or boundary_tag in TagsType
+    // controls which per-element views are checked (medium-only, material, or
+    // boundary granularity). The returned view is labeled for Kokkos profiling.
     auto make_host_index_view = [&]<typename TagsType>() -> HostIndexViewType {
       constexpr bool has_attenuation = requires { TagsType::attenuation_tag; };
       constexpr bool has_boundary = requires { TagsType::boundary_tag; };
@@ -137,6 +188,9 @@ public:
       return host_view;
     };
 
+    // make_device_storage(h_storage) returns a functor that, for each
+    // TagsType, allocates a device view with the same label and extent as the
+    // corresponding host view in h_storage and deep-copies the data to device.
     auto make_device_storage = [&](auto &h_storage) {
       return [&h_storage]<typename TagsType>() -> IndexViewType {
         const auto host_view = h_storage.template get<TagsType>();
@@ -146,31 +200,50 @@ public:
       };
     };
 
-    // 1. Index by medium.
+    // ── Step 3: build all six index stores ──────────────────────────────────
+    // Each Storage is constructed by passing the functor as an initializer;
+    // the Storage constructor calls it once per valid TagsType combination.
+    // Host stores are built first so make_device_storage can reference them.
+
+    // 1. Index by (dimension, medium) only.
     h_elements_by_medium = { make_host_index_view };
     elements_by_medium = { make_device_storage(h_elements_by_medium) };
 
-    // 2. Index by material (medium + property + attenuation).
+    // 2. Index by (dimension, medium, property, attenuation).
     h_elements_by_material = { make_host_index_view };
     elements_by_material = { make_device_storage(h_elements_by_material) };
 
-    // 3. Index by boundary (medium + property + boundary).
+    // 3. Index by (dimension, medium, property, boundary).
     h_elements_by_boundary = { make_host_index_view };
     elements_by_boundary = { make_device_storage(h_elements_by_boundary) };
   }
 
   // ── Accessors by medium ──────────────────────────────────────────────────
 
+  /**
+   * @brief Host view of element indices matching the given medium.
+   * @param medium_tag Medium to query.
+   * @return Host-accessible 1-D view of spectral-element indices.
+   */
   HostIndexViewType
   get_elements_on_host(const specfem::element::medium_tag medium_tag) const {
     return h_elements_by_medium.get(medium_tag);
   }
 
+  /**
+   * @brief Number of elements with the given medium.
+   * @param medium_tag Medium to query.
+   */
   int get_number_of_elements(
       const specfem::element::medium_tag medium_tag) const {
     return get_elements_on_host(medium_tag).extent(0);
   }
 
+  /**
+   * @brief Device view of element indices matching the given medium.
+   * @param medium_tag Medium to query.
+   * @return Device-accessible 1-D view of spectral-element indices.
+   */
   IndexViewType
   get_elements_on_device(const specfem::element::medium_tag medium_tag) const {
     return elements_by_medium.get(medium_tag);
@@ -178,6 +251,13 @@ public:
 
   // ── Accessors by material (medium + property + attenuation) ─────────────
 
+  /**
+   * @brief Host view of element indices matching the given material.
+   * @param medium_tag      Medium to query.
+   * @param property_tag    Material property to query.
+   * @param attenuation_tag Attenuation model to query.
+   * @return Host-accessible 1-D view of spectral-element indices.
+   */
   HostIndexViewType get_elements_on_host(
       const specfem::element::medium_tag medium_tag,
       const specfem::element::property_tag property_tag,
@@ -186,6 +266,12 @@ public:
                                       attenuation_tag);
   }
 
+  /**
+   * @brief Number of elements with the given material.
+   * @param medium_tag      Medium to query.
+   * @param property_tag    Material property to query.
+   * @param attenuation_tag Attenuation model to query.
+   */
   int get_number_of_elements(
       const specfem::element::medium_tag medium_tag,
       const specfem::element::property_tag property_tag,
@@ -194,6 +280,13 @@ public:
         .extent(0);
   }
 
+  /**
+   * @brief Device view of element indices matching the given material.
+   * @param medium_tag      Medium to query.
+   * @param property_tag    Material property to query.
+   * @param attenuation_tag Attenuation model to query.
+   * @return Device-accessible 1-D view of spectral-element indices.
+   */
   IndexViewType get_elements_on_device(
       const specfem::element::medium_tag medium_tag,
       const specfem::element::property_tag property_tag,
@@ -203,6 +296,13 @@ public:
 
   // ── Accessors by boundary (medium + property + boundary) ────────────────
 
+  /**
+   * @brief Host view of element indices matching the given boundary condition.
+   * @param medium_tag   Medium to query.
+   * @param property_tag Material property to query.
+   * @param boundary_tag Boundary condition to query.
+   * @return Host-accessible 1-D view of spectral-element indices.
+   */
   HostIndexViewType get_elements_on_host(
       const specfem::element::medium_tag medium_tag,
       const specfem::element::property_tag property_tag,
@@ -210,6 +310,12 @@ public:
     return h_elements_by_boundary.get(medium_tag, property_tag, boundary_tag);
   }
 
+  /**
+   * @brief Number of elements with the given boundary condition.
+   * @param medium_tag   Medium to query.
+   * @param property_tag Material property to query.
+   * @param boundary_tag Boundary condition to query.
+   */
   int get_number_of_elements(
       const specfem::element::medium_tag medium_tag,
       const specfem::element::property_tag property_tag,
@@ -218,6 +324,14 @@ public:
         .extent(0);
   }
 
+  /**
+   * @brief Device view of element indices matching the given boundary
+   * condition.
+   * @param medium_tag   Medium to query.
+   * @param property_tag Material property to query.
+   * @param boundary_tag Boundary condition to query.
+   * @return Device-accessible 1-D view of spectral-element indices.
+   */
   IndexViewType get_elements_on_device(
       const specfem::element::medium_tag medium_tag,
       const specfem::element::property_tag property_tag,
@@ -227,18 +341,34 @@ public:
 
   // ── Per-element tag accessors ────────────────────────────────────────────
 
+  /**
+   * @brief Medium tag of element @p ispec in the compute domain.
+   * @param ispec Compute-domain element index.
+   */
   specfem::element::medium_tag get_medium_tag(const int ispec) const {
     return medium_tags(ispec);
   }
 
+  /**
+   * @brief Property tag of element @p ispec in the compute domain.
+   * @param ispec Compute-domain element index.
+   */
   specfem::element::property_tag get_property_tag(const int ispec) const {
     return property_tags(ispec);
   }
 
+  /**
+   * @brief Boundary tag of element @p ispec in the compute domain.
+   * @param ispec Compute-domain element index.
+   */
   specfem::element::boundary_tag get_boundary_tag(const int ispec) const {
     return boundary_tags(ispec);
   }
 
+  /**
+   * @brief Attenuation tag of element @p ispec in the compute domain.
+   * @param ispec Compute-domain element index.
+   */
   specfem::element::attenuation_tag get_attenuation_tag(const int ispec) const {
     return attenuation_tags(ispec);
   }
