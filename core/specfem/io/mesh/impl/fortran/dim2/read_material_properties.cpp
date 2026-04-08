@@ -35,11 +35,12 @@ struct input_holder {
 
 std::vector<specfem::mesh::materials<
     specfem::element::dimension_tag::dim2>::material_specification>
-read_materials(std::ifstream &stream, const int numat,
-               const specfem::enums::elastic_wave elastic_wave,
-               const specfem::enums::electromagnetic_wave electromagnetic_wave,
-               specfem::mesh::materials<specfem::element::dimension_tag::dim2>
-                   &materials) {
+read_materials(
+    std::ifstream &stream, const int numat,
+    const specfem::enums::elastic_wave elastic_wave,
+    const specfem::enums::electromagnetic_wave electromagnetic_wave,
+    specfem::mesh::materials<specfem::element::dimension_tag::dim2> &materials,
+    const bool attenuation_enabled) {
 
   // Define the elastic medium tag based on input elastic wave type
   const specfem::element::medium_tag elastic = [elastic_wave]() {
@@ -127,7 +128,7 @@ read_materials(std::ifstream &stream, const int numat,
           throw std::runtime_error(msg.str());
         }
 
-        if (std::abs(Qkappa - 9999.0) < 1e-6) {
+        if (!attenuation_enabled || (std::abs(Qkappa) < 1e-6)) {
           auto index = materials.add_material(
               specfem::medium_container::material<
                   specfem::element::dimension_tag::dim2, acoustic, isotropic,
@@ -160,7 +161,8 @@ read_materials(std::ifstream &stream, const int numat,
         const type_real Qkappa = static_cast<type_real>(read_values.val5);
         const type_real Qmu = static_cast<type_real>(read_values.val6);
 
-        if (std::abs(Qmu - 9999.0) < 1e-6 && std::abs(Qkappa - 9999.0) < 1e-6) {
+        if (!attenuation_enabled || (std::abs(Qmu - 9999.0) < 1e-6 &&
+                                     std::abs(Qkappa - 9999.0) < 1e-6)) {
 
           if (elastic_wave == specfem::enums::elastic_wave::psv) {
             auto index =
@@ -228,7 +230,8 @@ read_materials(std::ifstream &stream, const int numat,
       const type_real Qkappa = static_cast<type_real>(read_values.val11);
       const type_real Qmu = static_cast<type_real>(read_values.val12);
 
-      if (std::abs(Qmu - 9999.0) < 1e-6 && std::abs(Qkappa - 9999.0) < 1e-6) {
+      if (!attenuation_enabled ||
+          (std::abs(Qmu - 9999.0) < 1e-6 && std::abs(Qkappa - 9999.0) < 1e-6)) {
         if (elastic_wave == specfem::enums::elastic_wave::psv) {
           auto index =
               materials.add_material(specfem::medium_container::material<
@@ -294,7 +297,7 @@ read_materials(std::ifstream &stream, const int numat,
       const type_real mufr = static_cast<type_real>(read_values.val11);
       const type_real Qmu = static_cast<type_real>(read_values.val12);
 
-      if (std::abs(Qmu - 9999.0) < 1e-6) {
+      if (!attenuation_enabled || (std::abs(Qmu - 9999.0) < 1e-6)) {
         auto index =
             materials.add_material(specfem::medium_container::material<
                                    specfem::element::dimension_tag::dim2,
@@ -456,15 +459,17 @@ specfem::io::mesh::impl::fortran::dim2::read_material_properties(
     const specfem::enums::electromagnetic_wave electromagnetic_wave,
     const Kokkos::View<int **, Kokkos::LayoutRight,
                        Kokkos::DefaultHostExecutionSpace>
-        knods) {
+        knods,
+    const bool attenuation_enabled) {
 
   // Create materials instances
   specfem::mesh::materials<specfem::element::dimension_tag::dim2> materials(
       nspec);
 
   // Read material properties
-  auto index_mapping = read_materials(stream, numat, elastic_wave,
-                                      electromagnetic_wave, materials);
+  auto index_mapping =
+      read_materials(stream, numat, elastic_wave, electromagnetic_wave,
+                     materials, attenuation_enabled);
 
   // Read material indices
   read_material_indices(stream, nspec, numat, index_mapping,

@@ -35,6 +35,7 @@ namespace specfem::io::mesh::impl::fortran::dim3 {
 std::tuple<int, int, int, int,
            Kokkos::View<int **, Kokkos::LayoutLeft, Kokkos::HostSpace>,
            specfem::mesh::materials<specfem::element::dimension_tag::dim3> >
-read_materials(std::ifstream &stream, const int ngnod);
+read_materials(std::ifstream &stream, const int ngnod,
+               const bool attenuation_enabled);
 
 } // namespace specfem::io::mesh::impl::fortran::dim3

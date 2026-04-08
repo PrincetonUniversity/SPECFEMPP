@@ -28,7 +28,8 @@ specfem::mesh::mesh<specfem::element::dimension_tag::dim2>
 specfem::io::read_2d_mesh(
     const std::string &filename,
     const specfem::enums::elastic_wave elastic_wave,
-    const specfem::enums::electromagnetic_wave electromagnetic_wave) {
+    const specfem::enums::electromagnetic_wave electromagnetic_wave,
+    const bool attenuation_enabled) {
 
   // Declaring empty mesh objects
   specfem::mesh::mesh<specfem::element::dimension_tag::dim2> mesh;
@@ -99,7 +100,8 @@ specfem::io::read_2d_mesh(
     mesh.materials =
         specfem::io::mesh::impl::fortran::dim2::read_material_properties(
             stream, mesh.parameters.numat, mesh.nspec, elastic_wave,
-            electromagnetic_wave, mesh.control_nodes.knods);
+            electromagnetic_wave, mesh.control_nodes.knods,
+            attenuation_enabled);
   } catch (std::runtime_error &e) {
     throw;
   }
