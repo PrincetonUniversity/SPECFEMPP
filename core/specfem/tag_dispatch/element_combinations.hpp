@@ -48,28 +48,68 @@ template <specfem::element::boundary_tag... Vs> struct boundary_set {
       values{ { Vs... } };
 };
 
+template <specfem::element_connections::type... Vs> struct connection_set {
+  using tag_enum = specfem::element_connections::type;
+  static constexpr std::array<specfem::element_connections::type, sizeof...(Vs)>
+      values{ { Vs... } };
+};
+
+template <specfem::element_coupling::interface_tag... Vs> struct interface_set {
+  using tag_enum = specfem::element_coupling::interface_tag;
+  static constexpr
+      std::array<specfem::element_coupling::interface_tag, sizeof...(Vs)>
+          values{ { Vs... } };
+};
+
+template <specfem::element_coupling::flux_scheme_tag... Vs>
+struct flux_scheme_set {
+  using tag_enum = specfem::element_coupling::flux_scheme_tag;
+  static constexpr
+      std::array<specfem::element_coupling::flux_scheme_tag, sizeof...(Vs)>
+          values{ { Vs... } };
+};
+
 // ── Helpers
 // ───────────────────────────────────────────────────────────────────
 
 namespace impl {
 
 // Map TagValueTuple arity → the right validity predicate.
+// Dispatch first on the type of the second tag (T1), then on arity.
+// This avoids calling is_valid_medium_combo on non-medium 2-element tuples
+// such as <dimension_tag, connection_type> that arise from intermediate
+// dimension_set * connection_set products.
 template <typename Tuple> constexpr bool is_valid(const Tuple &t) {
-  if constexpr (Tuple::arity == 2)
-    return is_valid_medium_combo(t);
-  else if constexpr (Tuple::arity == 3)
-    return is_valid_property_combo(t);
-  else if constexpr (Tuple::arity == 4) {
-    using T3 = decltype(t.template get<3>());
-    if constexpr (std::is_same_v<T3, specfem::element::boundary_tag>)
-      return is_valid_boundary_combo(t);
-    else if constexpr (std::is_same_v<T3, specfem::element::attenuation_tag>)
-      return is_valid_material_combo(t);
+  using T1 = decltype(t.template get<1>());
+  if constexpr (std::is_same_v<T1, specfem::element::medium_tag>) {
+    // Medium-based element combinations
+    if constexpr (Tuple::arity == 2)
+      return is_valid_medium_combo(t);
+    else if constexpr (Tuple::arity == 3)
+      return is_valid_property_combo(t);
+    else if constexpr (Tuple::arity == 4) {
+      using T3 = decltype(t.template get<3>());
+      if constexpr (std::is_same_v<T3, specfem::element::boundary_tag>)
+        return is_valid_boundary_combo(t);
+      else if constexpr (std::is_same_v<T3, specfem::element::attenuation_tag>)
+        return is_valid_material_combo(t);
+      else
+        return false;
+    } else if constexpr (Tuple::arity == 5)
+      return is_valid_full_combo(t);
     else
       return false;
-  } else if constexpr (Tuple::arity == 5)
-    return is_valid_full_combo(t);
-  else
+  } else if constexpr (std::is_same_v<T1, specfem::element_connections::type>) {
+    // Interface / coupling combinations
+    if constexpr (Tuple::arity == 3)
+      return is_valid_interface_system(t);
+    else if constexpr (Tuple::arity == 4)
+      return is_valid_edge(t);
+    else if constexpr (Tuple::arity == 5)
+      return is_valid_edge_and_flux_scheme(t);
+    else
+      return false;
+  } else
     return false;
 }
 

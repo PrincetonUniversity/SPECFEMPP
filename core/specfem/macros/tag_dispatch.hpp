@@ -54,3 +54,17 @@
 #define BOUNDARY_SET(...)                                                      \
   specfem::tag_dispatch::boundary_set<_SPECFEM_TAG_ENUM(_SPECFEM_BND_VAL,      \
                                                         __VA_ARGS__)> {}
+
+#define _SPECFEM_CONN_VAL(s, _, v) specfem::element_connections::type::v
+#define _SPECFEM_IFACE_VAL(s, _, v) specfem::element_coupling::interface_tag::v
+#define _SPECFEM_FLUX_VAL(s, _, v) specfem::element_coupling::flux_scheme_tag::v
+
+#define CONNECTION_SET(...)                                                    \
+  specfem::tag_dispatch::connection_set<_SPECFEM_TAG_ENUM(_SPECFEM_CONN_VAL,   \
+                                                          __VA_ARGS__)> {}
+#define INTERFACE_SET(...)                                                     \
+  specfem::tag_dispatch::interface_set<_SPECFEM_TAG_ENUM(_SPECFEM_IFACE_VAL,   \
+                                                         __VA_ARGS__)> {}
+#define FLUX_SCHEME_SET(...)                                                   \
+  specfem::tag_dispatch::flux_scheme_set<_SPECFEM_TAG_ENUM(_SPECFEM_FLUX_VAL,  \
+                                                           __VA_ARGS__)> {}
