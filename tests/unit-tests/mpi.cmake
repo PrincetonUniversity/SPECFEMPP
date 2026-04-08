@@ -13,8 +13,6 @@ include(GoogleTest)
 # Uses gtest_add_tests to scan source files at configure time (no binary execution),
 # avoiding duplicate test registration from multiple MPI ranks.
 function(add_mpi_test TARGET NUM_PROCESSES)
-    message(STATUS "Registering MPI test: ${TARGET} with ${NUM_PROCESSES} processes")
-
     # CROSSCOMPILING_EMULATOR prefixes test execution with the MPI launcher.
     # gtest_add_tests scans sources at configure time so this is only used at run time.
     set_target_properties(${TARGET} PROPERTIES
@@ -103,16 +101,86 @@ target_link_libraries(
   -lpthread -lm
 )
 
-# MPI test targets
-set(MPI_TEST_TARGETS
+# specfem::MPI class tests
+
+add_executable(
+  mpi_standard_tests
+  mpi/mpi_standard_tests.cpp
+)
+
+target_link_libraries(
+  mpi_standard_tests
+  specfem::program
+  specfem::mpi
+  specfem_environment
+  MPI::MPI_CXX
+  gtest_main
+  Kokkos::kokkos
+  -lpthread -lm
+)
+
+add_executable(
+  mpi_subset_2of4_tests
+  mpi/mpi_subset_2of4_tests.cpp
+)
+
+target_link_libraries(
+  mpi_subset_2of4_tests
+  specfem::program
+  specfem::mpi
+  specfem_environment
+  MPI::MPI_CXX
+  gtest_main
+  Kokkos::kokkos
+  -lpthread -lm
+)
+
+add_executable(
+  mpi_subset_1of4_tests
+  mpi/mpi_subset_1of4_tests.cpp
+)
+
+target_link_libraries(
+  mpi_subset_1of4_tests
+  specfem::program
+  specfem::mpi
+  specfem_environment
+  MPI::MPI_CXX
+  gtest_main
+  Kokkos::kokkos
+  -lpthread -lm
+)
+
+add_executable(
+  mpi_subset_all_tests
+  mpi/mpi_subset_all_tests.cpp
+)
+
+target_link_libraries(
+  mpi_subset_all_tests
+  specfem::program
+  specfem::mpi
+  specfem_environment
+  MPI::MPI_CXX
+  gtest_main
+  Kokkos::kokkos
+  -lpthread -lm
+)
+
+# MPI test targets (4 processes)
+set(MPI_TEST_TARGETS_4PROCS
   mesh_mpi_dim3_tests
   mesh_mpi_dim2_tests
   io_mesh_mpi_tests
   io_mesh_mpi_dim2_tests
+  mpi_standard_tests
+  mpi_subset_2of4_tests
+  mpi_subset_1of4_tests
+  mpi_subset_all_tests
 )
 
-# Register MPI tests using helper function
-foreach(test_target IN LISTS MPI_TEST_TARGETS)
+# Register MPI tests using helper function (4 processes)
+foreach(test_target IN LISTS MPI_TEST_TARGETS_4PROCS)
   add_mpi_test(${test_target} 4)
 endforeach()
 

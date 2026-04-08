@@ -65,7 +65,7 @@ int run_simulation(const std::string &dimension, int argc, char **argv,
     // (i.e. not excluded by user-defined nprocs)
     // For simulations that use the entire world communicator, this check will
     // pass for all ranks.
-    if (specfem::MPI::communicator() != MPI_COMM_NULL) {
+    if (specfem::MPI::is_active()) {
 
       const YAML::Node parameter_dict = YAML::LoadFile(opts.parameters_file);
 
@@ -158,7 +158,7 @@ int run_qplots(int argc, char **argv, const Qoptions &opts) {
     // communicator (i.e. not excluded by user-defined nprocs). For simulations
     // that use the entire world communicator, this check will pass for all
     // ranks.
-    if (specfem::MPI::communicator() != MPI_COMM_NULL) {
+    if (specfem::MPI::is_active()) {
 
       const auto success = specfem::program::qplots(
           opts.Q, opts.minfreq, opts.maxfreq, opts.min_plot_freq,
