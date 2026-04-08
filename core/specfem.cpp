@@ -99,7 +99,7 @@ int run_simulation(const std::string &dimension, int argc, char **argv,
       const auto success = specfem::program::execute(dimension, parameter_dict);
 
       if (!success) {
-        std::cerr << "Execution failed" << std::endl;
+        std::cerr << "Execution failed. See logs for details." << std::endl;
         result = 1;
       }
     } else {
@@ -165,7 +165,8 @@ int run_qplots(int argc, char **argv, const Qoptions &opts) {
           opts.max_plot_freq, opts.output_dir);
 
       if (!success) {
-        std::cerr << "Q plot generation failed" << std::endl;
+        std::cerr << "Q plot generation failed. See logs for details."
+                  << std::endl;
         result = 1;
       }
     } else {

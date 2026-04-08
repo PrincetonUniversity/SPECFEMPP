@@ -129,7 +129,9 @@ protected:
 // 2D config specialization
 template <> struct config<specfem::element::dimension_tag::dim2> {
 public:
-  config() : nproc(1), elastic_wave("P_SV"), electromagnetic_wave("TE") {};
+  config()
+      : nproc(1), elastic_wave("P_SV"), electromagnetic_wave("TE"),
+        attenuation_enabled(false) {};
   config(const YAML::Node &Node) {
     nproc = Node["nproc"].as<int>();
     if (Node["elastic_wave"].IsDefined())
@@ -138,14 +140,24 @@ public:
       // Default to P_SV if not defined
       elastic_wave = "P_SV";
 
-    if (Node["electromagnetic_wave"].IsDefined())
+    if (Node["electromagnetic_wave"].IsDefined()) {
       electromagnetic_wave = Node["electromagnetic_wave"].as<std::string>();
-    else
+    } else {
       // Default to TE if not defined
       electromagnetic_wave = "TE";
+    }
+
+    if (Node["attenuation_enabled"].IsDefined()) {
+      attenuation_enabled = Node["attenuation_enabled"].as<bool>();
+    } else {
+      // Default to false if not defined
+      attenuation_enabled = false;
+    }
   }
 
   int get_nproc() { return nproc; }
+
+  bool is_attenuation_enabled() const { return attenuation_enabled; }
 
   specfem::enums::elastic_wave get_elastic_wave() {
     if (specfem::utilities::is_psv_string(elastic_wave))
@@ -169,18 +181,31 @@ private:
   int nproc;
   std::string elastic_wave;
   std::string electromagnetic_wave;
+  bool attenuation_enabled;
 };
 
 // 3D config specialization
 template <> struct config<specfem::element::dimension_tag::dim3> {
 public:
-  config() : nproc(1) {};
-  config(const YAML::Node &Node) { nproc = Node["nproc"].as<int>(); }
+  config() : nproc(1), attenuation_enabled(false) {};
+  config(const YAML::Node &Node) {
+    nproc = Node["nproc"].as<int>();
+
+    if (Node["attenuation_enabled"].IsDefined()) {
+      attenuation_enabled = Node["attenuation_enabled"].as<bool>();
+    } else {
+      // Default to false if not defined
+      attenuation_enabled = false;
+    }
+  };
 
   int get_nproc() { return nproc; }
 
+  bool is_attenuation_enabled() const { return attenuation_enabled; }
+
 private:
   int nproc;
+  bool attenuation_enabled;
 };
 
 template <specfem::element::dimension_tag DimensionType> struct Test {
@@ -220,6 +245,10 @@ public:
   }
 
   int get_nproc() { return config.get_nproc(); }
+
+  bool is_attenuation_enabled() const {
+    return config.is_attenuation_enabled();
+  }
 
   std::string get_suffix() { return suffix; }
 
@@ -273,6 +302,10 @@ public:
   }
 
   int get_nproc() { return config.get_nproc(); }
+
+  bool is_attenuation_enabled() const {
+    return config.is_attenuation_enabled();
+  }
 
   specfem::enums::elastic_wave get_elastic_wave() {
     return config.get_elastic_wave();
