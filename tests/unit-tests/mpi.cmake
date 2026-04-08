@@ -1,27 +1,38 @@
+# MPI-specific test definitions and setup
+# This file contains MPI-only test executables and their discovery registration.
+
+# Include GoogleTest module for gtest_add_tests
+include(GoogleTest)
+
 # ==============================================================================
 # Helper function to register an MPI test with configurable processor count
 # and test properties
 # ==============================================================================
-# Usage: add_mpi_test(TEST_NAME NUM_PROCESSES)
+# Usage: add_mpi_test(TARGET NUM_PROCESSES)
 # Example: add_mpi_test(mesh_mpi_dim3_tests 4)
-function(add_mpi_test TEST_NAME NUM_PROCESSES)
-    message(STATUS "Registering MPI test: ${TEST_NAME} with ${NUM_PROCESSES} processes")
+# Uses gtest_add_tests to scan source files at configure time (no binary execution),
+# avoiding duplicate test registration from multiple MPI ranks.
+function(add_mpi_test TARGET NUM_PROCESSES)
+    message(STATUS "Registering MPI test: ${TARGET} with ${NUM_PROCESSES} processes")
 
-    # Create test command with MPI launcher
-    add_test(
-        NAME ${TEST_NAME}
-        COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${NUM_PROCESSES}
-            ${CMAKE_BINARY_DIR}/tests/unit-tests/${TEST_NAME}
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/tests/unit-tests
+    # CROSSCOMPILING_EMULATOR prefixes test execution with the MPI launcher.
+    # gtest_add_tests scans sources at configure time so this is only used at run time.
+    set_target_properties(${TARGET} PROPERTIES
+        CROSSCOMPILING_EMULATOR "${MPIEXEC_EXECUTABLE};${MPIEXEC_NUMPROC_FLAG};${NUM_PROCESSES}"
     )
 
-    # Set test properties for resource management and parallelization
-    set_tests_properties(${TEST_NAME} PROPERTIES
-        # Number of processors reserved for this test
+    # Scan source files to find Google Test cases and register them individually.
+    # Unlike gtest_discover_tests, this never executes the binary for discovery.
+    gtest_add_tests(
+        TARGET ${TARGET}
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/tests/unit-tests
+        TEST_LIST DISCOVERED_TESTS
+    )
+
+    # Set properties on all discovered tests
+    set_tests_properties(${DISCOVERED_TESTS} PROPERTIES
         PROCESSORS ${NUM_PROCESSES}
-        # Timeout (in seconds) - adjust as needed
         TIMEOUT 300
-        # Run serially if multiple processes to avoid compute conflicts
         RUN_SERIAL ON
     )
 endfunction()
@@ -45,9 +56,25 @@ target_link_libraries(
 )
 
 add_executable(
+  mesh_mpi_dim2_tests
+  mesh/mpi/dim2/adjacency_graph.cpp
+  mesh/mpi/dim2/runner.cpp
+)
+
+target_link_libraries(
+  mesh_mpi_dim2_tests
+  specfem::mesh
+  specfem_environment
+  specfem::io
+  specfem::utilities
+  MPI::MPI_CXX
+  -lpthread -lm
+)
+
+add_executable(
   io_mesh_mpi_tests
-  io/mesh/read_mesh.cpp
-  io/mesh/runner.cpp
+  io/mesh/dim3/read_mesh.cpp
+  io/mesh/dim3/runner.cpp
 )
 
 target_link_libraries(
@@ -60,12 +87,34 @@ target_link_libraries(
   -lpthread -lm
 )
 
-# Register MPI tests using helper function
-# Format: add_mpi_test(test_name num_processes)
-enable_testing()
+add_executable(
+  io_mesh_mpi_dim2_tests
+  io/mesh/dim2/read_mesh.cpp
+  io/mesh/dim2/runner.cpp
+)
 
-add_mpi_test(mesh_mpi_dim3_tests 4)
-add_mpi_test(io_mesh_mpi_tests 4)
+target_link_libraries(
+  io_mesh_mpi_dim2_tests
+  specfem::io
+  specfem::mesh
+  specfem_environment
+  specfem::utilities
+  MPI::MPI_CXX
+  -lpthread -lm
+)
+
+# MPI test targets
+set(MPI_TEST_TARGETS
+  mesh_mpi_dim3_tests
+  mesh_mpi_dim2_tests
+  io_mesh_mpi_tests
+  io_mesh_mpi_dim2_tests
+)
+
+# Register MPI tests using helper function
+foreach(test_target IN LISTS MPI_TEST_TARGETS)
+  add_mpi_test(${test_target} 4)
+endforeach()
 
 # Link test data directories for MPI tests
 set(MPI_LINK_DIRS

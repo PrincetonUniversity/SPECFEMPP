@@ -92,7 +92,7 @@ rule specfempp_mesher:
         cwd=rules.specfempp_setup.output.cwd,
         mesh_par_file=rules.specfempp_setup.output.mesh_par_file,
     output:
-        database="<cwd>/specfem3d_workdir/specfempp/OUTPUT_FILES/proc000000_Database.bin",
+        database="<cwd>/specfem3d_workdir/specfempp/OUTPUT_FILES/Database.bin",
     shell:
         """
             cd {input.cwd}
