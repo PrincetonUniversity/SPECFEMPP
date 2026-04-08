@@ -77,12 +77,20 @@ public:
            ((std::is_enum_v<std::remove_cvref_t<QueryTagTypes> > ||
              std::is_same_v<std::remove_cvref_t<QueryTagTypes>, bool>) &&
             ...)) const type &get(QueryTagTypes &&...query_tags) const {
-    const type *result = nullptr;
-    specfem::tag_dispatch::for_each(ET{}, [&]<typename TagsType>() {
-      if (!result && TagsType{}.has(query_tags...))
-        result = &this->template get<TagsType>();
-    });
-    if (!result) {
+    std::size_t idx = size;
+    [&]<std::size_t... Is>(std::index_sequence<Is...>) {
+      (
+          [&] {
+            if (idx == size) {
+              using TagsType = std::decay_t<decltype(
+                  impl::combo_to_tags<element_combinations[Is]>())>;
+              if (TagsType{}.has(query_tags...))
+                idx = Is;
+            }
+          }(),
+          ...);
+    }(std::make_index_sequence<size>{});
+    if (idx == size) {
       std::string tags_str;
       ((tags_str += (tags_str.empty() ? "" : ", ") +
                     specfem::element::to_string(query_tags)),
@@ -91,7 +99,7 @@ public:
           "no matching element combination for queried tags: [" + tags_str +
           "]");
     }
-    return *result;
+    return data_[idx];
   }
 };
 
