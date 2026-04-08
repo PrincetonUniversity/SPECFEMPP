@@ -12,6 +12,13 @@
 #include <mpi.h>
 #endif
 
+// Non-MPI shims: define MPI_Comm as a simple type at global scope
+#ifndef SPECFEM_ENABLE_MPI
+using MPI_Comm = int;
+constexpr MPI_Comm MPI_COMM_WORLD = 0;
+constexpr MPI_Comm MPI_COMM_NULL = -1;
+#endif
+
 namespace specfem {
 
 // Forward declaration
@@ -51,6 +58,7 @@ class MPI {
 private:
   static int rank_; ///< Current MPI rank (-1 if not initialized)
   static int size_; ///< Total number of MPI processes (-1 if not initialized)
+  static MPI_Comm comm_; ///< MPI communicator (MPI_COMM_WORLD or user-defined)
 
 public:
   /**
@@ -61,7 +69,7 @@ public:
   static void sync() {
     check_context();
 #ifdef SPECFEM_ENABLE_MPI
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(comm_);
 #endif
   }
 
@@ -92,6 +100,21 @@ public:
   static int get_size() {
     check_context();
     return size_;
+  }
+
+  /**
+   * @brief Get active communicator for simulations
+   *
+   * Returns the active communicator, which may be a subset communicator
+   * (if initialized with nprocs) or MPI_COMM_WORLD (default initialization).
+   * For excluded ranks in subset initialization, returns MPI_COMM_NULL.
+   *
+   * @return MPI_Comm The active communicator for simulations
+   * @throws Exits with error code 1 if called outside Context scope
+   */
+  static MPI_Comm communicator() {
+    check_context();
+    return comm_;
   }
 
   /**
@@ -172,6 +195,21 @@ private:
    * @param argv Pointer to argument vector
    */
   static void initialize(int *argc, char ***argv);
+
+  /**
+   * @brief Initialize MPI with user-defined processes within world communicator
+   *
+   * Creates a subset MPI communicator containing only the first nprocs ranks.
+   * Ranks >= nprocs receive MPI_COMM_NULL and are excluded from simulation.
+   *
+   * @param argc Pointer to argument count
+   * @param argv Pointer to argument vector
+   * @param nprocs Number of processes to include in the new communicator (must
+   * be
+   * <= world size)
+   * @throws Exits with error code 1 if nprocs > world size
+   */
+  static void initialize(int *argc, char ***argv, int nprocs);
 
   /**
    * @brief Finalize MPI and reset rank/size to -1
