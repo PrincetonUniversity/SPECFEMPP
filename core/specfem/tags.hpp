@@ -2,13 +2,17 @@
 
 #include "specfem/element/tags.hpp"
 #include "specfem/element/to_string.hpp"
+#include "specfem/element_connections.hpp"
 #include "specfem/element_connections/tags.hpp"
 #include "specfem/element_coupling/tags.hpp"
+#include "specfem/element_coupling/to_string.hpp"
 #include "specfem/simulation.hpp"
 
+#include <string>
 #include <type_traits>
 
 namespace specfem::tags {
+
 /**
  * @brief Template specialization for storing compile-time tag values.
  *
@@ -163,7 +167,7 @@ public:
     std::string s;
     bool first = true;
     ((s += (first ? (first = false, std::string{}) : std::string{ "_" }) +
-           specfem::element::to_string(TagMembers)),
+           to_string(TagMembers)),
      ...);
     return s;
   }
