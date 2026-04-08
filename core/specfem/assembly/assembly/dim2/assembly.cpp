@@ -3,6 +3,7 @@
 #include "specfem/enums.hpp"
 #include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
+#include "specfem/tag_dispatch.hpp"
 
 specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
     const specfem::mesh::mesh<dimension_tag> &mesh,
@@ -114,13 +115,13 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::print()
   bool is_sh = false;
   bool is_psv = false;
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                       POROELASTIC, ELASTIC_PSV_T)),
-      {
+  specfem::tag_dispatch::for_each(
+      DIMENSION_SET(dim2) * MEDIUM_SET(elastic_psv, elastic_sh, acoustic,
+                                       poroelastic, elastic_psv_t),
+      [&]<typename ElementTags>() {
         // Getting the number of elements per medium
         int n_elements =
-            this->element_types.get_number_of_elements(_medium_tag_);
+            this->element_types.get_number_of_elements(ElementTags::medium_tag);
 
         // Printing the number of elements if more than 0
         if (n_elements > 0) {
@@ -128,16 +129,17 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::print()
           total_elements += n_elements;
 
           message << "   Total number of elements of type "
-                  << specfem::element::to_string(_medium_tag_) << " : "
-                  << n_elements << "\n";
-          if (_medium_tag_ == specfem::element::medium_tag::elastic_sh) {
+                  << specfem::element::to_string(ElementTags::medium_tag)
+                  << " : " << n_elements << "\n";
+          if (ElementTags::medium_tag ==
+              specfem::element::medium_tag::elastic_sh) {
             is_sh = true;
-          } else if (_medium_tag_ ==
+          } else if (ElementTags::medium_tag ==
                      specfem::element::medium_tag::elastic_psv) {
             is_psv = true;
           }
         };
-      })
+      });
 
   if (is_sh && is_psv) {
     message << "   WARNING: This should not appear something's off in the "

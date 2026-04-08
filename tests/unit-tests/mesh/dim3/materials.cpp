@@ -5,10 +5,10 @@
 #include <vector>
 
 #include "specfem/enums.hpp"
-#include "specfem/macros.hpp"
 #include "specfem/medium_container.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include "test_fixture.hpp"
 
 namespace specfem::test_configuration {
@@ -95,16 +95,19 @@ struct ExpectedMaterials3D {
       }
 
       // Retrieve the material and verify it matches expected
-      // Note: Update this macro when adding new material types
-      FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC)), {
-            if (medium_tag == _medium_tag_ && property_tag == _property_tag_) {
-              const auto computed_material =
-                  materials.get_material<_medium_tag_, _property_tag_>(
-                      expected.element_id);
+      // Note: Update this section when adding new material types
+      specfem::tag_dispatch::for_each(
+          DIMENSION_SET(dim3) * MEDIUM_SET(elastic) * PROPERTY_SET(isotropic),
+          [&]<typename ElementTags>() {
+            if (medium_tag == ElementTags::medium_tag &&
+                property_tag == ElementTags::property_tag) {
+              const auto computed_material = materials.get_material<
+                  ElementTags::medium_tag, ElementTags::property_tag,
+                  specfem::element::attenuation_tag::none>(expected.element_id);
               const auto expected_material =
                   std::any_cast<specfem::medium_container::material<
-                      _dimension_tag_, _medium_tag_, _property_tag_,
+                      ElementTags::dimension_tag, ElementTags::medium_tag,
+                      ElementTags::property_tag,
                       specfem::element::attenuation_tag::none> >(
                       expected.material);
               if (computed_material != expected_material) {
@@ -113,7 +116,6 @@ struct ExpectedMaterials3D {
                        << "Expected: " << expected_material.print() << ", "
                        << "Got: " << computed_material.print() << std::endl;
               }
-              break;
             }
           });
     }
