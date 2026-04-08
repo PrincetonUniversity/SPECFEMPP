@@ -265,7 +265,7 @@ private:
    * connections. Each entry includes:
    * - Connection type and orientation from EdgeProperties
    * - Partition information (neighbor rank and local indices)
-   * - Anchor point IDs: element-absolute corner indices (0-based range 18-25)
+   * - Anchor point IDs: element-absolute corner indices (range 19-26)
    *
    * Anchor points provide an additional constraint beyond coordinate matching.
    * They are element-absolute corner IDs (not interface-relative indices) that
@@ -275,12 +275,12 @@ private:
    * orientation constraint propagation across MPI boundaries.
    *
    * Anchor point mapping:
-   *   - 18: bottom_front_left     19: bottom_front_right
-   *   - 20: bottom_back_left      21: bottom_back_right
-   *   - 22: top_front_left        23: top_front_right
-   *   - 24: top_back_left         25: top_back_right
+   *   - 19: bottom_front_left     20: bottom_front_right
+   *   - 21: bottom_back_left      22: bottom_back_right
+   *   - 23: top_front_left        24: top_front_right
+   *   - 25: top_back_left         26: top_back_right
    *
-   * For all adjacencies (faces and edges), anchor values are in range 18-25,
+   * For all adjacencies (faces and edges), anchor values are in range 19-26,
    * selected based on face/edge ID using mapping tables from
    * adjacency_graph.f90.
    *
@@ -389,8 +389,8 @@ public:
    * for (const auto &mpi_edge : mpi_conns) {
    *     int neighbor_rank = mpi_edge.neighbor_partition;
    *     int neighbor_elem = mpi_edge.neighbor_local_index;
-   *     int local_anchor = mpi_edge.local_anchor_point;    // 18-25
-   *     int remote_anchor = mpi_edge.neighbor_anchor_point; // 18-25
+   *     int local_anchor = mpi_edge.local_anchor_point;    // 19-26
+   *     int remote_anchor = mpi_edge.neighbor_anchor_point; // 19-26
    *     // Use anchor points to establish orientation constraint
    *     // Anchor IDs map to hexahedron corners via adjacency_graph.f90
    * }

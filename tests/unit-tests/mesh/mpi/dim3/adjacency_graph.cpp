@@ -110,9 +110,10 @@ struct ExpectedMPIAdjacency3D {
       int local_found_int = local_found ? 1 : 0;
       int found_int = 0;
       SPECFEM_MPI_SAFECALL(MPI_Reduce(&local_found_int, &found_int, 1, MPI_INT,
-                                      MPI_LOR, 0,
+                                      MPI_SUM, 0,
                                       specfem::MPI::communicator()));
-      bool found = (found_int != 0);
+      // Each MPI connection should be found on exactly 2 ranks (symmetric)
+      bool found = (found_int == 2);
 
       if (!found) {
         SPECFEM_MPI_ON_ROOT({

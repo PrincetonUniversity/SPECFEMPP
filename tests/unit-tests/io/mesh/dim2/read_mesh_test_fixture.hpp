@@ -17,9 +17,9 @@ struct Read2DMesh {
   Read2DMesh() = default;
 
   Read2DMesh(const std::string &database) {
-    mesh =
-        specfem::io::read_2d_mesh(database, specfem::enums::elastic_wave::psv,
-                                  specfem::enums::electromagnetic_wave::te);
+    mesh = specfem::io::read_2d_mesh(
+        database, specfem::enums::elastic_wave::psv,
+        specfem::enums::electromagnetic_wave::te, false);
   }
 };
 } // namespace specfem::test_configuration

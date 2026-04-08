@@ -61,6 +61,11 @@ private:
       decltype(std::declval<const base_type &>().mpi_connections());
 
 public:
+  // local_connections() and mpi_connections() are deleted to force callers
+  // to use graph() instead, which returns the compute-optimized ordering.
+  // Note: because these are non-virtual, callers holding a base_type&
+  // reference can still invoke the base versions; this delete only applies
+  // when called through the derived type directly.
   base_local_connections_type &local_connections() = delete;
   base_local_connections_const_type &local_connections() const = delete;
   base_mpi_connections_type &mpi_connections() = delete;

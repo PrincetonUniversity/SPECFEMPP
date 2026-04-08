@@ -93,6 +93,10 @@ specfem::io::mesh::impl::fortran::dim3::read_adjacency_graph(
     neighbor_elem -= 1;
 
     MPIEdgeProperties mpi_edge_props(
+        // The 3D Fortran database format (7 fields per MPI row) does not
+        // include an explicit connection type — unlike the 2D format which
+        // writes adjacency_type as field 4.  All 3D MPI interfaces are
+        // assumed strongly conforming by the mesher (assemble_MPI.F90).
         specfem::element_connections::type::strongly_conforming,
         static_cast<specfem::mesh_entity::dim3::type>(local_conn_id),
         neighbor_rank,

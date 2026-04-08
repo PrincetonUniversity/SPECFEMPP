@@ -1487,14 +1487,13 @@ subroutine compute_anchor_points_for_match(coords_local, coords_remote, ncorners
   !! not interface-relative indices.
   !!
   !! Algorithm:
-  !!   1. For each corner in the LOCAL element (unsorted), find the
-  !!      closest matching corner in the REMOTE element by coordinate.
-  !!   2. Return the lexicographically smallest local corner index
-  !!      and its matched remote counterpart as the anchor pair.
+  !!   1. For each corner in the LOCAL element (in buffer order), find
+  !!      the first matching corner in the REMOTE element by coordinate.
+  !!   2. Return the first matched pair as the anchor pair.
   !!   3. Map interface corner indices (1-4 or 1-2) to element-absolute
   !!      corner IDs (19-26) using the face/edge ID mappings.
-  !!   4. This ensures reproducible, deterministic anchor selection
-  !!      independent of corner ordering.
+  !!   4. This produces a deterministic anchor pair because both sides
+  !!      share the same matched physical point.
   !!
   !! Arguments:
   !!   coords_local(4, 3)     — unsorted corner coordinates of local
@@ -1511,8 +1510,8 @@ subroutine compute_anchor_points_for_match(coords_local, coords_remote, ncorners
   !! For a face (ncorners=4), interface corners are ordered as:
   !!   1 = bottom_left, 2 = bottom_right, 3 = top_right, 4 = top_left
   !!
-  !! Returns the first (lexicographically smallest by coordinate)
-  !! unmatched pair, mapped to element-absolute corner IDs.
+  !! Returns the first matching pair in buffer iteration order,
+  !! mapped to element-absolute corner IDs.
 
   use constants, only: NDIM, myrank
 
@@ -1539,8 +1538,7 @@ subroutine compute_anchor_points_for_match(coords_local, coords_remote, ncorners
 
   matched_remote(:) = .false.
 
-  ! Find the lexicographically smallest unmatched local corner
-  ! and its matching remote corner
+  ! Find the first matching local corner and its matching remote corner
   do ic = 1, ncorners
     found = .false.
     do ic_remote = 1, ncorners

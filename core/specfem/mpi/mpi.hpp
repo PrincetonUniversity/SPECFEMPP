@@ -67,7 +67,8 @@ public:
    * @throws Exits with error code 1 if called outside Context scope
    */
   static void sync() {
-    check_context();
+    if (!check_context())
+      return;
 #ifdef SPECFEM_ENABLE_MPI
     MPI_Barrier(comm_);
 #endif
@@ -144,7 +145,23 @@ public:
    * @return std::string Formatted filename with processor number
    * @throws Exits with error code 1 if called outside Context scope
    */
+  /**
+   * @brief Check if this rank is part of the active communicator
+   *
+   * Returns false for ranks excluded by subset initialization
+   * (i.e., ranks >= nprocs when initialized with nprocs).
+   * Safe to call on any rank without triggering exit.
+   *
+   * @return bool True if this rank holds a valid communicator
+   */
+  static bool is_active() { return comm_ != MPI_COMM_NULL; }
+
   static bool check_context() {
+    // Excluded ranks (subset initialization) have comm_ == MPI_COMM_NULL
+    // but are validly initialized — return false instead of aborting.
+    if (comm_ == MPI_COMM_NULL) {
+      return false;
+    }
     if (rank_ == -1 || size_ == -1) {
       std::cerr << "ERROR: MPI used outside Context scope" << std::endl;
       std::exit(1);

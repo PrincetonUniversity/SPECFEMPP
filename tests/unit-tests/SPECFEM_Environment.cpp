@@ -20,6 +20,14 @@ void SPECFEMEnvironment::SetUp() {
   context_ = std::make_shared<specfem::program::Context>(argc, argv,
                                                          required_mpi_size_);
 
+  // Excluded ranks (those beyond the requested nprocs) must skip
+  // all further MPI calls to avoid triggering check_context() exit.
+  if (!specfem::MPI::is_active()) {
+    mpi_size_valid_ = false;
+    mpi_size_error_ = "This rank is excluded from the active communicator";
+    return;
+  }
+
   // Check if actual MPI size meets the required size
   const int actual_mpi_size = specfem::MPI::get_size();
   if (actual_mpi_size < static_cast<int>(required_mpi_size_)) {
