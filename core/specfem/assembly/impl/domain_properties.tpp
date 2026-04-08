@@ -21,7 +21,7 @@ specfem::assembly::impl::domain_properties<specfem::element::dimension_tag::dim2
   int count = 0;
   for (int i = 0; i < nelement; ++i) {
     const int ispec = elements(i);
-    const int mesh_ispec = mesh.compute_to_mesh(ispec);
+    const int mesh_ispec = mesh.h_compute_to_mesh(ispec);
     property_index_mapping(ispec) = count;
     if (!has_gll_model) {
       for (int iz = 0; iz < ngllz; ++iz) {

@@ -11,7 +11,8 @@ specfem::assembly::mesh_impl::mesh_to_compute_mapping<
         const specfem::mesh::tags<specfem::element::dimension_tag::dim2> &tags)
     : compute_to_mesh("specfem::assembly::mesh_to_compute_mapping", tags.nspec),
       mesh_to_compute("specfem::assembly::mesh_to_compute_mapping",
-                      tags.nspec) {
+                      tags.nspec),
+      h_compute_to_mesh(compute_to_mesh), h_mesh_to_compute(mesh_to_compute) {
 
   const int nspec = tags.nspec;
 
@@ -40,8 +41,8 @@ specfem::assembly::mesh_impl::mesh_to_compute_mapping<
 
   for (const auto &element_ispec : element_type_ispec) {
     for (const auto &ispecs : element_ispec) {
-      compute_to_mesh(ispec) = ispecs;
-      mesh_to_compute(ispecs) = ispec;
+      h_compute_to_mesh(ispec) = ispecs;
+      h_mesh_to_compute(ispecs) = ispec;
       ispec++;
     }
   }

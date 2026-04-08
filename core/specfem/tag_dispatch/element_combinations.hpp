@@ -57,9 +57,17 @@ namespace impl {
 template <typename Tuple> constexpr bool is_valid(const Tuple &t) {
   if constexpr (Tuple::arity == 2)
     return is_valid_medium_combo(t);
-  else if constexpr (Tuple::arity == 4)
-    return is_valid_material_combo(t);
-  else if constexpr (Tuple::arity == 5)
+  else if constexpr (Tuple::arity == 3)
+    return is_valid_property_combo(t);
+  else if constexpr (Tuple::arity == 4) {
+    using T3 = decltype(t.template get<3>());
+    if constexpr (std::is_same_v<T3, specfem::element::boundary_tag>)
+      return is_valid_boundary_combo(t);
+    else if constexpr (std::is_same_v<T3, specfem::element::attenuation_tag>)
+      return is_valid_material_combo(t);
+    else
+      return false;
+  } else if constexpr (Tuple::arity == 5)
     return is_valid_full_combo(t);
   else
     return false;
