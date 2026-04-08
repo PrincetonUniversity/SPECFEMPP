@@ -22,7 +22,7 @@ TEST_P(Read3DMeshMPITest, SuccessfulExecution) {
   const auto expected_num_elements = expected_nelements.at(param_name);
 
   // Synchronize all ranks after mesh loading
-  SPECFEM_MPI_SAFECALL(MPI_Barrier(specfem::MPI::world_communicator()));
+  SPECFEM_MPI_SAFECALL(MPI_Barrier(specfem::MPI::communicator()));
 
   // Get local element count and perform MPI reduction to sum across all ranks
   const auto local_num_elements = mesh.nspec; // Each rank's local element count
@@ -30,7 +30,7 @@ TEST_P(Read3DMeshMPITest, SuccessfulExecution) {
 
   SPECFEM_MPI_SAFECALL(MPI_Reduce(&local_num_elements, &global_num_elements, 1,
                                   MPI_INT, MPI_SUM, 0,
-                                  specfem::MPI::world_communicator()));
+                                  specfem::MPI::communicator()));
 
   // On rank 0, verify the mesh was loaded successfully
   SPECFEM_MPI_ON_ROOT({
@@ -47,5 +47,5 @@ TEST_P(Read3DMeshMPITest, SuccessfulExecution) {
   });
 
   // Final barrier to ensure all ranks complete the test
-  SPECFEM_MPI_SAFECALL(MPI_Barrier(specfem::MPI::world_communicator()));
+  SPECFEM_MPI_SAFECALL(MPI_Barrier(specfem::MPI::communicator()));
 }

@@ -110,7 +110,7 @@ struct ExpectedMPIAdjacency2D {
       int found_int = 0;
       SPECFEM_MPI_SAFECALL(MPI_Reduce(&local_found_int, &found_int, 1, MPI_INT,
                                       MPI_LOR, 0,
-                                      specfem::MPI::world_communicator()));
+                                      specfem::MPI::communicator()));
       bool found = (found_int != 0);
 
       if (!found) {
@@ -131,7 +131,7 @@ struct ExpectedMPIAdjacency2D {
         });
       }
 
-      SPECFEM_MPI_SAFECALL(MPI_Barrier(specfem::MPI::world_communicator()));
+      SPECFEM_MPI_SAFECALL(MPI_Barrier(specfem::MPI::communicator()));
     }
     SPECFEM_MPI_ON_ROOT({
       SUCCEED() << "All expected MPI connections are present and correct."

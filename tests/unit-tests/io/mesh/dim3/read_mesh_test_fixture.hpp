@@ -39,7 +39,7 @@ protected:
     }
 
     // Check if the current
-    if (specfem::MPI::world_communicator() == MPI_COMM_NULL) {
+    if (specfem::MPI::communicator() == MPI_COMM_NULL) {
       GTEST_SKIP() << "Test designed for 4 processes. Rank "
                    << specfem::MPI::get_rank()
                    << " is outside the participating range [0-3].";
