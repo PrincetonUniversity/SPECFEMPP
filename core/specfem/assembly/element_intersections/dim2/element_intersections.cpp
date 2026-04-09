@@ -32,20 +32,18 @@ specfem::assembly::element_intersections<
 
   const auto flux_scheme_tag = flux_scheme_config.get_flux_scheme_tag();
 
-  // Count the number of interfaces for each combination of connection
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), CONNECTION_TAG(WEAKLY_CONFORMING, NONCONFORMING),
-       INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
-       BOUNDARY_TAG(NONE, STACEY, ACOUSTIC_FREE_SURFACE,
-                    COMPOSITE_STACEY_DIRICHLET),
-       FLUX_SCHEME_TAG(NATURAL, SYMMETRIC_INTERIOR_PENALTY)),
-      CAPTURE(h_self_edges, h_coupled_edges, self_edges, coupled_edges) {
-        int count = 0;
-        int edge_index = 0;
+  // Collect self/coupled edge vectors for each tag combination
+  struct CollectedEdges {
+    std::vector<specfem::mesh_entity::edge<dimension_tag> > self_collect;
+    std::vector<specfem::mesh_entity::edge<dimension_tag> > coupled_collect;
+  };
+
+  specfem::tag_dispatch::Storage<CollectedEdges, IntersectionCombinations>
+      collected{ [&]<typename TagsType>() -> CollectedEdges {
         constexpr auto self_medium = specfem::element_coupling::attributes<
-            _dimension_tag_, _interface_tag_>::self_medium();
+            TagsType::dimension_tag, TagsType::interface_tag>::self_medium();
         constexpr auto coupled_medium = specfem::element_coupling::attributes<
-            _dimension_tag_, _interface_tag_>::coupled_medium();
+            TagsType::dimension_tag, TagsType::interface_tag>::coupled_medium();
 
         std::vector<specfem::mesh_entity::edge<dimension_tag> > self_collect;
         std::vector<specfem::mesh_entity::edge<dimension_tag> > coupled_collect;
@@ -54,11 +52,12 @@ specfem::assembly::element_intersections<
 
         // Filter edges by connection type
         auto filter = [&graph](const auto &edge) {
-          return graph[edge].connection == _connection_tag_;
+          return graph[edge].connection == TagsType::connection_tag;
         };
 
         // Create a filtered graph view
         const auto &nc_graph = boost::make_filtered_graph(graph, filter);
+        int edge_index = 0;
         for (const auto &edge :
              boost::make_iterator_range(boost::edges(nc_graph))) {
           const int ispec1 = boost::source(edge, nc_graph);
@@ -67,9 +66,10 @@ specfem::assembly::element_intersections<
           const auto medium1 = element_types.get_medium_tag(ispec1);
           const auto medium2 = element_types.get_medium_tag(ispec2);
 
-          if (boundary_tag == _boundary_tag_ && medium1 == self_medium &&
-              medium2 == coupled_medium && medium1 != medium2 &&
-              flux_scheme_tag == _flux_scheme_tag_) {
+          if (boundary_tag == TagsType::boundary_tag &&
+              medium1 == self_medium && medium2 == coupled_medium &&
+              medium1 != medium2 &&
+              flux_scheme_tag == TagsType::flux_scheme_tag) {
             const specfem::mesh_entity::dim2::type self_orientation =
                 nc_graph[edge].orientation;
             const auto [edge_inv, exists] =
@@ -80,7 +80,7 @@ specfem::assembly::element_intersections<
             }
             const specfem::mesh_entity::dim2::type coupled_orientation =
                 nc_graph[edge_inv].orientation;
-            if (_connection_tag_ ==
+            if (TagsType::connection_tag ==
                     specfem::element_connections::type::weakly_conforming &&
                 (specfem::mesh_entity::contains(
                      specfem::mesh_entity::dim2::corners, self_orientation) ||
@@ -90,7 +90,6 @@ specfem::assembly::element_intersections<
               // skip corner connections
               continue;
             }
-            count++;
             // we do not need orientation flipping -- that's handled by
             // the transfer function
             self_collect.push_back(
@@ -100,22 +99,41 @@ specfem::assembly::element_intersections<
             edge_index++;
           }
         }
+        return { std::move(self_collect), std::move(coupled_collect) };
+      } };
 
-        _self_edges_ = EdgeViewType(
-            "specfem::assembly::interface_types::self_edges", count, ngll);
-        _coupled_edges_ = EdgeViewType(
-            "specfem::assembly::interface_types::coupled_edges", count, ngll);
+  // Build host edge views from collected edges
+  h_self_edges = decltype(
+      h_self_edges){ [&]<typename TagsType>() -> EdgeViewType::HostMirror {
+    return edge_view_from_collected_edges(
+        "specfem::assembly::interface_types::self_edges_host_mirror",
+        collected.template get<TagsType>().self_collect, element);
+  } };
 
-        _h_self_edges_ = edge_view_from_collected_edges(
-            "specfem::assembly::interface_types::self_edges_host_mirror",
-            self_collect, element);
-        _h_coupled_edges_ = edge_view_from_collected_edges(
-            "specfem::assembly::interface_types::coupled_edges_host_mirror",
-            coupled_collect, element);
+  h_coupled_edges = decltype(
+      h_coupled_edges){ [&]<typename TagsType>() -> EdgeViewType::HostMirror {
+    return edge_view_from_collected_edges(
+        "specfem::assembly::interface_types::coupled_edges_host_mirror",
+        collected.template get<TagsType>().coupled_collect, element);
+  } };
 
-        element_intersections::deep_copy(_self_edges_, _h_self_edges_);
-        element_intersections::deep_copy(_coupled_edges_, _h_coupled_edges_);
-      })
+  // Allocate device views and deep-copy from host
+  self_edges = decltype(self_edges){ [&]<typename TagsType>() -> EdgeViewType {
+    const auto &h = h_self_edges.template get<TagsType>();
+    EdgeViewType d("specfem::assembly::interface_types::self_edges", h.N,
+                   h.n_points);
+    element_intersections::deep_copy(d, h);
+    return d;
+  } };
+
+  coupled_edges =
+      decltype(coupled_edges){ [&]<typename TagsType>() -> EdgeViewType {
+        const auto &h = h_coupled_edges.template get<TagsType>();
+        EdgeViewType d("specfem::assembly::interface_types::coupled_edges", h.N,
+                       h.n_points);
+        element_intersections::deep_copy(d, h);
+        return d;
+      } };
 
   return;
 }
@@ -128,22 +146,9 @@ specfem::assembly::element_intersections<
         const specfem::element_coupling::interface_tag edge,
         const specfem::element::boundary_tag boundary,
         const specfem::element_coupling::flux_scheme_tag flux_scheme) const {
-
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), CONNECTION_TAG(WEAKLY_CONFORMING, NONCONFORMING),
-       INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
-       BOUNDARY_TAG(NONE, STACEY, ACOUSTIC_FREE_SURFACE,
-                    COMPOSITE_STACEY_DIRICHLET),
-       FLUX_SCHEME_TAG(NATURAL, SYMMETRIC_INTERIOR_PENALTY)),
-      CAPTURE(h_self_edges, h_coupled_edges) {
-        if (_connection_tag_ == connection && _interface_tag_ == edge &&
-            _boundary_tag_ == boundary && _flux_scheme_tag_ == flux_scheme) {
-          return std::make_tuple(_h_self_edges_, _h_coupled_edges_);
-        }
-      })
-
-  throw std::runtime_error(
-      "Connection type, interface type or boundary type not found");
+  return std::make_tuple(
+      h_self_edges.get(connection, edge, boundary, flux_scheme),
+      h_coupled_edges.get(connection, edge, boundary, flux_scheme));
 }
 
 std::tuple<EdgeViewType, EdgeViewType> specfem::assembly::element_intersections<
@@ -153,22 +158,9 @@ std::tuple<EdgeViewType, EdgeViewType> specfem::assembly::element_intersections<
         const specfem::element_coupling::interface_tag edge,
         const specfem::element::boundary_tag boundary,
         const specfem::element_coupling::flux_scheme_tag flux_scheme) const {
-
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), CONNECTION_TAG(WEAKLY_CONFORMING, NONCONFORMING),
-       INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
-       BOUNDARY_TAG(NONE, STACEY, ACOUSTIC_FREE_SURFACE,
-                    COMPOSITE_STACEY_DIRICHLET),
-       FLUX_SCHEME_TAG(NATURAL, SYMMETRIC_INTERIOR_PENALTY)),
-      CAPTURE(self_edges, coupled_edges) {
-        if (_connection_tag_ == connection && _interface_tag_ == edge &&
-            _boundary_tag_ == boundary && _flux_scheme_tag_ == flux_scheme) {
-          return std::make_tuple(_self_edges_, _coupled_edges_);
-        }
-      })
-
-  throw std::runtime_error(
-      "Connection type, interface type or boundary type not found");
+  return std::make_tuple(
+      self_edges.get(connection, edge, boundary, flux_scheme),
+      coupled_edges.get(connection, edge, boundary, flux_scheme));
 }
 
 specfem::assembly::element_intersections<

@@ -4,8 +4,8 @@
 #include "specfem/element.hpp"
 #include "specfem/element_connections.hpp"
 #include "specfem/element_coupling.hpp"
-#include "specfem/macros.hpp"
 #include "specfem/mesh.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly {
@@ -298,16 +298,26 @@ public:
   element_intersections() = default;
 
 private:
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3),
-                       CONNECTION_TAG(WEAKLY_CONFORMING, NONCONFORMING),
-                       INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
-                       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                                    COMPOSITE_STACEY_DIRICHLET),
-                       FLUX_SCHEME_TAG(NATURAL)),
-                      DECLARE((FaceViewType, self_faces),
-                              (FaceViewType::HostMirror, h_self_faces),
-                              (FaceViewType, coupled_faces),
-                              (FaceViewType::HostMirror, h_coupled_faces)))
+  // clang-format off
+  using IntersectionCombinations = decltype(
+           DIMENSION_SET(dim3) *
+           CONNECTION_SET(weakly_conforming, nonconforming) *
+           INTERFACE_SET(elastic_acoustic, acoustic_elastic) *
+           BOUNDARY_SET(none, acoustic_free_surface, stacey,
+                        composite_stacey_dirichlet) *
+           FLUX_SCHEME_SET(natural));
+  // clang-format on
+
+  specfem::tag_dispatch::Storage<FaceViewType, IntersectionCombinations>
+      self_faces;
+  specfem::tag_dispatch::Storage<FaceViewType::HostMirror,
+                                 IntersectionCombinations>
+      h_self_faces;
+  specfem::tag_dispatch::Storage<FaceViewType, IntersectionCombinations>
+      coupled_faces;
+  specfem::tag_dispatch::Storage<FaceViewType::HostMirror,
+                                 IntersectionCombinations>
+      h_coupled_faces;
 };
 
 /**
