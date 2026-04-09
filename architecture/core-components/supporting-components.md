@@ -24,7 +24,8 @@ Building on the static MPI wrapper, `mpi<DimensionTag>` manages **face-level com
 - **Groups connections by rank**: Analyzes the mesh adjacency graph to identify which element faces are shared across an MPI partition boundary
 - **Filters face-only interactions**: Keeps only face adjacencies; excludes edges and corners
 - **Computes face rotation**: Uses anchor points (face corners) to determine the discrete rotation index (0–3) between communicating elements
-- **Stores compact metadata**: Face normals and rotation indices are stored as `Kokkos::View`s for efficient GPU access
+- **Stores compact metadata**: Face orientations (mesh entity types) and rotation indices are stored as `Kokkos::View`s for efficient GPU access
+- **Retrieves rank internally**: Calls `specfem::MPI::get_rank()` at construction time to determine the current process rank
 
 The rotation index (`theta`) is stored as `unsigned char` rather than a floating-point angle, reducing per-face memory from 8 bytes to 1 byte while keeping semantics clear: `actual_angle = theta * π/2`.
 

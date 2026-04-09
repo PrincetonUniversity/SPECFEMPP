@@ -44,15 +44,17 @@ public:
   using ThetaViewType =
       Kokkos::View<unsigned char *, Kokkos::DefaultExecutionSpace>;
 
-  FaceNormalViewType my_normal; ///< Normal orientation of each face in the
-                                ///< local element (nfaces)
-  FaceNormalViewType neighbor_normal; ///< Normal orientation of each face in
-                                      ///< the neighboring element (nfaces)
-  FaceNormalViewType::HostMirror h_my_normal; ///< Host mirror for my_normal
-  FaceNormalViewType::HostMirror h_neighbor_normal; ///< Host mirror for
-                                                    ///< neighbor_normal
-  ThetaViewType theta; ///< Rotation index r in [0,3] for face-to-face
-                       ///< connections (nfaces)
+  FaceNormalViewType my_orientation; ///< Mesh entity type of each face in the
+                                     ///< local element (nfaces)
+  FaceNormalViewType neighbor_orientation; ///< Mesh entity type of each face in
+                                           ///< the neighboring element (nfaces)
+  FaceNormalViewType::HostMirror h_my_orientation; ///< Host mirror for
+                                                   ///< my_orientation
+  FaceNormalViewType::HostMirror
+      h_neighbor_orientation; ///< Host mirror for
+                              ///< neighbor_orientation
+  ThetaViewType theta;        ///< Rotation index r in [0,3] for face-to-face
+                              ///< connections (nfaces)
   ThetaViewType::HostMirror h_theta; ///< Host mirror for theta
 
   communication_group() = default;
@@ -133,6 +135,8 @@ public:
   ///                         (via \c mpi_connections() method)
   /// \param ngllz, nglly, ngllx  GLL points per element dimension
   ///
+  /// \note The current MPI rank is retrieved internally via
+  ///       `specfem::MPI::get_rank()` at construction time.
   /// \note The element is constructed internally from GLL parameters only to
   ///       extract mesh connectivity; it is not stored.
   mpi(const specfem::mesh::adjacency_graph<dimension_tag> &adjacency_graph,

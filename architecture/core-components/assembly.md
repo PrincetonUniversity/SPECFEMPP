@@ -37,11 +37,12 @@ All heavy arrays (`Kokkos::View`) are managed here. The assembly struct is passe
 - Groups MPI connections by neighboring rank
 - Extracts face-only interactions (excludes edge/corner adjacencies)
 - Computes anchor-point-based rotation indices for face-to-face coordinate alignment
-- Stores face normals and discrete rotation indices as compact `Kokkos::View`s
+- Stores face orientations (mesh entity types) and discrete rotation indices as compact `Kokkos::View`s
+- Retrieves the current MPI rank internally via `specfem::MPI::get_rank()` at construction time
 
 Each `communication_group` (one per neighboring MPI process) contains:
-- `my_normal[nfaces]` — Face orientation in local element
-- `neighbor_normal[nfaces]` — Face orientation in neighboring element
+- `my_orientation[nfaces]` — Mesh entity type of each face in the local element
+- `neighbor_orientation[nfaces]` — Mesh entity type of each face in the neighboring element
 - `theta[nfaces]` — Rotation index r ∈ [0,3] for face alignment (stored as `unsigned char` to reduce memory to 1 byte per face)
 - `ngll` — GLL points per direction
 

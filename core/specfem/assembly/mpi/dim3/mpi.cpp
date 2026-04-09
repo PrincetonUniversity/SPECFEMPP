@@ -30,9 +30,10 @@ int find_anchor_position(
 //
 // Algorithm:
 // 1. Construct element from GLL parameters (for corner lookup only)
-// 2. Allocate device and host views for face normals and rotation indices
+// 2. Allocate device and host views for face orientations and rotation indices
 // 3. For each face adjacency:
-//    - Record face orientation in local and neighbor elements
+//    - Record face orientation (mesh entity type) in local and neighbor
+//    elements
 //    - Find anchor point positions among face corners in both elements
 //    - Compute rotation index: r = (neigh_anchor_pos + my_anchor_pos) % 4
 //    - Store r directly (reduces memory vs. storing angle)
@@ -50,23 +51,24 @@ specfem::assembly::mpi_impl::communication_group::communication_group(
   ngll = element.ngll;
 
   // Allocate device views for face metadata
-  my_normal = FaceNormalViewType("communication_group::my_normal", nfaces);
-  neighbor_normal =
-      FaceNormalViewType("communication_group::neighbor_normal", nfaces);
+  my_orientation =
+      FaceNormalViewType("communication_group::my_orientation", nfaces);
+  neighbor_orientation =
+      FaceNormalViewType("communication_group::neighbor_orientation", nfaces);
   theta = ThetaViewType("communication_group::theta", nfaces);
 
   // Create host mirrors for initialization
-  h_my_normal = Kokkos::create_mirror_view(my_normal);
-  h_neighbor_normal = Kokkos::create_mirror_view(neighbor_normal);
+  h_my_orientation = Kokkos::create_mirror_view(my_orientation);
+  h_neighbor_orientation = Kokkos::create_mirror_view(neighbor_orientation);
   h_theta = Kokkos::create_mirror_view(theta);
 
   // Populate host mirrors with connectivity data
   for (unsigned int iface = 0; iface < nfaces; iface++) {
     const auto &edge = edges[iface];
 
-    // --- Face normals ---
-    h_my_normal(iface) = edge.orientation;
-    h_neighbor_normal(iface) = edge.neighbor_orientation;
+    // --- Face orientations (mesh entity types) ---
+    h_my_orientation(iface) = edge.orientation;
+    h_neighbor_orientation(iface) = edge.neighbor_orientation;
 
     // --- Anchor-based rotation ---
     const auto my_corners =
@@ -89,8 +91,8 @@ specfem::assembly::mpi_impl::communication_group::communication_group(
   }
 
   // Deep copy host → device
-  Kokkos::deep_copy(my_normal, h_my_normal);
-  Kokkos::deep_copy(neighbor_normal, h_neighbor_normal);
+  Kokkos::deep_copy(my_orientation, h_my_orientation);
+  Kokkos::deep_copy(neighbor_orientation, h_neighbor_orientation);
   Kokkos::deep_copy(theta, h_theta);
 }
 
@@ -103,10 +105,11 @@ specfem::assembly::mpi_impl::communication_group::communication_group(
 //
 // Algorithm:
 // 1. Extract all MPI connections from adjacency_graph.mpi_connections()
-// 2. Iterate and group connections by neighbor partition (MPI rank)
-// 3. For each group, filter to keep only face connections
+// 2. Retrieve the current MPI rank via specfem::MPI::get_rank()
+// 3. Iterate and group connections by neighbor partition (MPI rank)
+// 4. For each group, filter to keep only face connections
 //    (skip connections involving edges or corners)
-// 4. Create one communication_group per unique neighbor
+// 5. Create one communication_group per unique neighbor
 //
 // Result: communication_groups vector is indexed by neighbor rank, enabling
 // efficient kernel dispatch for data exchange.
