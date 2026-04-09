@@ -2,8 +2,8 @@
 
 #include "specfem/element/tags.hpp"
 #include "specfem/element/to_string.hpp"
-#include "specfem/element_connections.hpp"
 #include "specfem/element_connections/tags.hpp"
+#include "specfem/element_connections/to_string.hpp"
 #include "specfem/element_coupling/tags.hpp"
 #include "specfem/element_coupling/to_string.hpp"
 #include "specfem/simulation.hpp"
