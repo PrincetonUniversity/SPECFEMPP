@@ -105,8 +105,9 @@ pipeline {
                                         module load boost/1.85.0
                                         module load ${GNU_COMPILER_MODULE}
                                         module load ${MPI_MODULE}
-                                        cd build_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
-                                        ctest -VV
+                                        cd build_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}/tests/unit-tests
+                                        export BUILD_DIR=build_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
+                                        srun -N 1 --ntasks 4 -t 00:30:00 --account rse ctest --output-on-failure -j 4
                                     """
                                     echo ' Testing completed '
                                 }
