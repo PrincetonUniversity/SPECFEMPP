@@ -2,6 +2,7 @@
 #include "specfem/enums.hpp"
 #include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
+#include "specfem/mpi/mpi.hpp"
 
 specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
     const specfem::mesh::mesh<dimension_tag> &mesh,
@@ -35,6 +36,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
                  quadratures };
 
   this->element_types = { nspec, ngllz, nglly, ngllx, this->mesh, mesh.tags };
+
+  this->mpi_interfaces = { mesh.adjacency_graph, ngllz, nglly, ngllx };
 
   this->element_intersections = { ngllz, nglly, ngllx, this->mesh,
                                   this->element_types };

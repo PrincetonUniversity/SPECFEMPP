@@ -15,6 +15,19 @@ specfem::MPI::reduce(value, specfem::sum);
 
 MPI is initialized and finalized exclusively by `program::Context`, which prevents accidental double-init. When compiled without `SPECFEM_ENABLE_MPI`, all methods become no-ops.
 
+### Face Communication Patterns
+
+**Files:** `core/specfem/assembly/mpi/dim3/`
+
+Building on the static MPI wrapper, `mpi<DimensionTag>` manages **face-level communication for distributed simulations**. This class:
+
+- **Groups connections by rank**: Analyzes the mesh adjacency graph to identify which element faces are shared across an MPI partition boundary
+- **Filters face-only interactions**: Keeps only face adjacencies; excludes edges and corners
+- **Computes face rotation**: Uses anchor points (face corners) to determine the discrete rotation index (0–3) between communicating elements
+- **Stores compact metadata**: Face normals and rotation indices are stored as `Kokkos::View`s for efficient GPU access
+
+The rotation index (`theta`) is stored as `unsigned char` rather than a floating-point angle, reducing per-face memory from 8 bytes to 1 byte while keeping semantics clear: `actual_angle = theta * π/2`.
+
 ---
 
 ## Boundary Conditions (`specfem::boundary_conditions`)
