@@ -1,4 +1,5 @@
 #include "to_string.hpp"
+#include <stdexcept>
 
 const std::string specfem::element_connections::to_string(
     const specfem::element_connections::type &conn) {
