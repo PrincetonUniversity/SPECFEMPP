@@ -1,65 +1,103 @@
 #pragma once
 
 #include "is_valid.hpp"
-
 #include <array>
 #include <cstddef>
 #include <tuple>
 
-// ── Named tag-set types
-// ─────────────────────────────────────────────────────── Each type is
-// constrained to its own enum and exposes tag_enum + values. Usage (with using
-// namespace tags):
-//   specfem::tag_dispatch::element_combinations<dimensions<dim2>,
-//                        media<elastic_psv, acoustic>,
-//                        properties<isotropic>,
-//                        attenuation<no_attenuation>,
-//                        boundary<no_boundary, stacey>>
-
 namespace specfem::tag_dispatch {
 
+/**
+ * @brief Tag-set type for dimension values.
+ *
+ * Wraps a variadic list of `specfem::element::dimension_tag` values into a
+ * named struct that can be composed with other tag-set types via `operator*`
+ * to form an `element_combinations` type.
+ *
+ * @tparam Vs  One or more `dimension_tag` enumerators to include.
+ *
+ * @code
+ * using DimSet = specfem::tag_dispatch::dimension_set<
+ *     specfem::element::dimension_tag::dim2>;
+ * @endcode
+ */
 template <specfem::element::dimension_tag... Vs> struct dimension_set {
   using tag_enum = specfem::element::dimension_tag;
   static constexpr std::array<specfem::element::dimension_tag, sizeof...(Vs)>
       values{ { Vs... } };
 };
 
+/**
+ * @brief Tag-set type for medium (wave-physics) values.
+ *
+ * @tparam Vs  One or more `medium_tag` enumerators to include.
+ */
 template <specfem::element::medium_tag... Vs> struct medium_set {
   using tag_enum = specfem::element::medium_tag;
   static constexpr std::array<specfem::element::medium_tag, sizeof...(Vs)>
       values{ { Vs... } };
 };
 
+/**
+ * @brief Tag-set type for material property values.
+ *
+ * @tparam Vs  One or more `property_tag` enumerators to include.
+ */
 template <specfem::element::property_tag... Vs> struct property_set {
   using tag_enum = specfem::element::property_tag;
   static constexpr std::array<specfem::element::property_tag, sizeof...(Vs)>
       values{ { Vs... } };
 };
 
+/**
+ * @brief Tag-set type for attenuation model values.
+ *
+ * @tparam Vs  One or more `attenuation_tag` enumerators to include.
+ */
 template <specfem::element::attenuation_tag... Vs> struct attenuation_set {
   using tag_enum = specfem::element::attenuation_tag;
   static constexpr std::array<specfem::element::attenuation_tag, sizeof...(Vs)>
       values{ { Vs... } };
 };
 
+/**
+ * @brief Tag-set type for boundary-condition values.
+ *
+ * @tparam Vs  One or more `boundary_tag` enumerators to include.
+ */
 template <specfem::element::boundary_tag... Vs> struct boundary_set {
   using tag_enum = specfem::element::boundary_tag;
   static constexpr std::array<specfem::element::boundary_tag, sizeof...(Vs)>
       values{ { Vs... } };
 };
 
+/**
+ * @brief Tag-set type for simulation wavefield field types.
+ *
+ * @tparam Vs  One or more `simulation::field_type` enumerators to include.
+ */
 template <specfem::simulation::field_type... Vs> struct wavefield_set {
   using tag_enum = specfem::simulation::field_type;
   static constexpr std::array<specfem::simulation::field_type, sizeof...(Vs)>
       values{ { Vs... } };
 };
 
-// ── Helpers
-// ───────────────────────────────────────────────────────────────────
-
 namespace impl {
 
-// Map TagValueTuple arity → the right validity predicate.
+/**
+ * @brief Dispatch a `TagValueTuple` of any arity to the appropriate validity
+ *        predicate.
+ *
+ * Selects among `is_valid_medium_combo` (arity 2), `is_valid_property_combo`
+ * (arity 3), `is_valid_material_combo` / `is_valid_boundary_combo` (arity 4,
+ * distinguished by the type of the 4th slot), `is_valid_full_combo` (arity 5),
+ * and an extended 5-slot check for arity-6 tuples where the 6th slot
+ * (wavefield) never invalidates a combination.
+ *
+ * @tparam Tuple  A `TagValueTuple` specialisation.
+ * @param  t      The tuple to validate.
+ * @return `true` if the combination is physically meaningful.
+ */
 template <typename Tuple> constexpr bool is_valid(const Tuple &t) {
   if constexpr (Tuple::arity == 2)
     return is_valid_medium_combo(t);
@@ -76,8 +114,8 @@ template <typename Tuple> constexpr bool is_valid(const Tuple &t) {
   } else if constexpr (Tuple::arity == 5)
     return is_valid_full_combo(t);
   else if constexpr (Tuple::arity == 6) {
-    // Arity-6: (dim, medium, property, attenuation, boundary, wavefield)
-    // Check the first 5 elements; wavefield (position 5) never invalidates
+    // Arity-6: (dim, medium, property, attenuation, boundary, wavefield).
+    // Only the first 5 slots determine validity; wavefield never invalidates.
     return is_valid_full_combo(
         specfem::tag_dispatch::impl::TagValueTuple<
             decltype(t.template get<0>()), decltype(t.template get<1>()),
@@ -88,10 +126,6 @@ template <typename Tuple> constexpr bool is_valid(const Tuple &t) {
   } else
     return false;
 }
-
-// ── Generic recursive count / fill ───────────────────────────────────────────
-// Iterates over a std::tuple of arrays, recursing one array at a time,
-// accumulating chosen values until the leaf where validity is checked.
 
 template <typename Combo, std::size_t I = 0, typename ArrayTuple,
           typename... Chosen>
@@ -106,6 +140,25 @@ constexpr std::size_t count_combos(const ArrayTuple &arrs, Chosen... chosen) {
   }
 }
 
+/**
+ * @brief Fill `out` with valid combos by recursively iterating tag-value
+ * arrays.
+ *
+ * Mirrors `count_combos` but writes each valid leaf combo into `out[idx++]`
+ * instead of counting it.
+ *
+ * @tparam Combo       The `TagValueTuple` type stored in `out`.
+ * @tparam N           Capacity of `out` (must equal the result of
+ * `count_combos`).
+ * @tparam I           Current recursion depth; defaults to 0.
+ * @tparam ArrayTuple  `std::tuple` of `constexpr` tag-value arrays.
+ * @tparam Chosen      Values chosen so far.
+ * @param  out         Output array to fill.
+ * @param  idx         Write cursor into `out`; incremented for each valid
+ * combo.
+ * @param  arrs        Tuple of arrays to iterate over.
+ * @param  chosen      Tag values chosen in outer recursion levels.
+ */
 template <typename Combo, std::size_t N, std::size_t I = 0, typename ArrayTuple,
           typename... Chosen>
 constexpr void fill_combos_helper(std::array<Combo, N> &out, std::size_t &idx,
@@ -119,6 +172,19 @@ constexpr void fill_combos_helper(std::array<Combo, N> &out, std::size_t &idx,
   }
 }
 
+/**
+ * @brief Build and return the full array of valid combos.
+ *
+ * Constructs a default-initialised `std::array<Combo, N>`, then calls
+ * `fill_combos_helper` to populate it.
+ *
+ * @tparam Combo       The `TagValueTuple` type for each combo.
+ * @tparam N           Number of valid combos (must match `count_combos`
+ * result).
+ * @tparam ArrayTuple  `std::tuple` of `constexpr` tag-value arrays.
+ * @param  arrs        Tuple of arrays to iterate over.
+ * @return Fully populated array of valid combos.
+ */
 template <typename Combo, std::size_t N, typename ArrayTuple>
 constexpr std::array<Combo, N> fill_combos(const ArrayTuple &arrs) {
   std::array<Combo, N> out{};
@@ -129,11 +195,46 @@ constexpr std::array<Combo, N> fill_combos(const ArrayTuple &arrs) {
 
 } // namespace impl
 
-// ── element_combinations
-// ────────────────────────────────────────────────────── Single generic struct:
-// accepts any number of named tag-set types (dimensions<>, media<>,
-// properties<>, attenuation<>, boundary<>).
-
+/**
+ * @brief Enumerates all **valid** element tag combinations from a set of named
+ *        tag-set types.
+ *
+ * At compile time, `element_combinations` forms the Cartesian product of the
+ * provided tag-set value arrays, filters it through the `is_valid_*_combo`
+ * predicates, and stores only the valid tuples in `combos`.
+ *
+ * @tparam NamedSets  A pack of tag-set types (`dimension_set`, `medium_set`,
+ *                    `property_set`, `attenuation_set`, `boundary_set`, or
+ *                    `wavefield_set`), each contributing one slot to the combo.
+ *
+ * ### Members
+ * - `combo_type`  The `TagValueTuple` type for a single combo (one slot per
+ *                 `NamedSet`).
+ * - `size`        Number of valid combos.
+ * - `combos`      `constexpr std::array<combo_type, size>` of valid combos.
+ *
+ * @code
+ * using ET = decltype(
+ *     specfem::tag_dispatch::dimension_set<
+ *         specfem::element::dimension_tag::dim2>{} *
+ *     specfem::tag_dispatch::medium_set<
+ *         specfem::element::medium_tag::elastic_psv,
+ *         specfem::element::medium_tag::elastic_sh,
+ *         specfem::element::medium_tag::acoustic>{} *
+ *     specfem::tag_dispatch::property_set<
+ *         specfem::element::property_tag::isotropic>{} *
+ *     specfem::tag_dispatch::attenuation_set<
+ *         specfem::element::attenuation_tag::none>{} *
+ *     specfem::tag_dispatch::boundary_set<
+ *         specfem::element::boundary_tag::none,
+ *         specfem::element::boundary_tag::stacey>{});
+ *
+ * static_assert(ET::size > 0);
+ * // ET::combos[0] = (dim2, elastic_psv, isotropic, none, none)
+ * // ET::combos[1] = (dim2, elastic_psv, isotropic, none, stacey)
+ * // ...
+ * @endcode
+ */
 template <typename... NamedSets> struct element_combinations {
   using combo_type = impl::TagValueTuple<typename NamedSets::tag_enum...>;
 
@@ -147,18 +248,29 @@ public:
       impl::fill_combos<combo_type, size>(s_arrays);
 };
 
-// ── operator* for building element_combinations from tag sets
-// ───────────────── Enables: constexpr auto ET = DIMENSION_SET(dim2){} *
-// MEDIUM_SET(...){} * ...;
-
-// Base: two tag sets → element_combinations<A, B>
+/**
+ * @brief Compose two tag-set types into an `element_combinations<A, B>`.
+ *
+ * @code
+ * auto et = specfem::tag_dispatch::dimension_set<dim2>{} *
+ *           specfem::tag_dispatch::medium_set<elastic_psv>{};
+ * @endcode
+ */
 template <typename A, typename B>
 constexpr auto operator*(A, B) -> element_combinations<A, B> {
   return {};
 }
 
-// Extension: element_combinations<...> * new tag set → larger
-// element_combinations
+/**
+ * @brief Extend an existing `element_combinations` with one more tag-set type.
+ *
+ * Allows chaining multiple `operator*` calls to grow the combo type
+ * incrementally:
+ * @code
+ * // Each * appends one more named set
+ * auto et = dim_set{} * med_set{} * prop_set{} * att_set{} * bnd_set{};
+ * @endcode
+ */
 template <typename... Existing, typename NewSet>
 constexpr auto operator*(element_combinations<Existing...>, NewSet)
     -> element_combinations<Existing..., NewSet> {
