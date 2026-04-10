@@ -115,9 +115,9 @@ specfem::assembly::element_intersections<
         collected.template get<TagsType>().coupled_collect, element);
   } };
   // Allocate device views and deep-copy from host
-  self_edges = specfem::tag_dispatch::mirror_and_copy(
+  self_edges = specfem::tag_dispatch::create_mirror_storage_and_copy(
       Kokkos::DefaultExecutionSpace{}, h_self_edges);
-  coupled_edges = specfem::tag_dispatch::mirror_and_copy(
+  coupled_edges = specfem::tag_dispatch::create_mirror_storage_and_copy(
       Kokkos::DefaultExecutionSpace{}, h_coupled_edges);
 
   return;

@@ -109,7 +109,8 @@ public:
 };
 
 /**
- * @brief Deep-copy customization point for use by @ref mirror_and_copy.
+ * @brief Deep-copy customization point for use by @ref
+ * create_mirror_storage_and_copy.
  *
  * The default implementation forwards to ``Kokkos::deep_copy``.  Custom view
  * types (e.g.\ multi-view structs) should provide an overload in their own
@@ -121,7 +122,7 @@ template <typename Dst, typename Src> void deep_copy(Dst &&dst, Src &&src) {
 
 /**
  * @brief Mirror-view creation customization point for use by
- *        @ref mirror_and_copy.
+ *        @ref create_mirror_storage_and_copy.
  *
  * The default implementation handles plain ``Kokkos::View`` types: it
  * allocates a new view in @p Space with the same data type, layout, and
@@ -150,7 +151,7 @@ auto create_mirror(Space, const SrcView &src) {
  *
  * @code{.cpp}
  * HostStorage h_store{ initializer };
- * auto d_store = specfem::tag_dispatch::mirror_and_copy(
+ * auto d_store = specfem::tag_dispatch::create_mirror_storage_and_copy(
  *     Kokkos::DefaultExecutionSpace{}, h_store);
  * @endcode
  *
@@ -171,7 +172,8 @@ auto create_mirror(Space, const SrcView &src) {
  *                    tag combination.
  */
 template <typename Space, typename SrcView, typename ET>
-auto mirror_and_copy(Space, const Storage<SrcView, ET> &src_storage) {
+auto create_mirror_storage_and_copy(Space,
+                                    const Storage<SrcView, ET> &src_storage) {
   if constexpr (std::is_same_v<typename Space::memory_space,
                                typename SrcView::memory_space>) {
     return src_storage;

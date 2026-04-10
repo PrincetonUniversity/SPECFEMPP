@@ -107,9 +107,9 @@ specfem::assembly::element_intersections<
   } };
 
   // Allocate device views and deep-copy from host
-  self_faces = specfem::tag_dispatch::mirror_and_copy(
+  self_faces = specfem::tag_dispatch::create_mirror_storage_and_copy(
       Kokkos::DefaultExecutionSpace{}, h_self_faces);
-  coupled_faces = specfem::tag_dispatch::mirror_and_copy(
+  coupled_faces = specfem::tag_dispatch::create_mirror_storage_and_copy(
       Kokkos::DefaultExecutionSpace{}, h_coupled_faces);
 
   return;
