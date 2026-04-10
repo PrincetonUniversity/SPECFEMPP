@@ -11,7 +11,7 @@
 #include "specfem/execution.hpp"
 #include "specfem/point.hpp"
 #include "compute_source_interaction.hpp"
-#include "specfem/macros.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -110,25 +110,21 @@ void compute_source_interaction(
     const int istep) {
 
   constexpr auto WavefieldType = Tags::wavefield_tag;
-  constexpr auto DimensionTag = Tags::dimension_tag;
-  constexpr auto MediumTag = Tags::medium_tag;
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2, DIM3),
-       MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                    COMPOSITE_STACEY_DIRICHLET)),
-      {
-        if constexpr (DimensionTag == _dimension_tag_ &&
-                      MediumTag == _medium_tag_) {
-          compute_source_interaction_core<
-              NGLL,
-              specfem::tags::Tags<DimensionTag, WavefieldType, _medium_tag_,
-                                  _property_tag_, _boundary_tag_> >(assembly,
-                                                                    istep);
-        }
-      })
+  specfem::tag_dispatch::for_each(
+      specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
+      specfem::tag_dispatch::medium_set<Tags::medium_tag>{} *
+      PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
+      BOUNDARY_SET(none, acoustic_free_surface, stacey,
+                   composite_stacey_dirichlet),
+      [&]<typename ElementTags>() {
+        compute_source_interaction_core<
+            NGLL,
+            specfem::tags::Tags<Tags::dimension_tag, WavefieldType,
+                                ElementTags::medium_tag,
+                                ElementTags::property_tag,
+                                ElementTags::boundary_tag> >(assembly,
+                                                             istep);
+      });
 }
 } // namespace specfem::compute::impl

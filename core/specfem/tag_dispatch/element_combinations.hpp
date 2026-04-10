@@ -71,6 +71,27 @@ template <specfem::element::boundary_tag... Vs> struct boundary_set {
       values{ { Vs... } };
 };
 
+template <specfem::element_connections::type... Vs> struct connection_set {
+  using tag_enum = specfem::element_connections::type;
+  static constexpr std::array<specfem::element_connections::type, sizeof...(Vs)>
+      values{ { Vs... } };
+};
+
+template <specfem::element_coupling::interface_tag... Vs> struct interface_set {
+  using tag_enum = specfem::element_coupling::interface_tag;
+  static constexpr
+      std::array<specfem::element_coupling::interface_tag, sizeof...(Vs)>
+          values{ { Vs... } };
+};
+
+template <specfem::element_coupling::flux_scheme_tag... Vs>
+struct flux_scheme_set {
+  using tag_enum = specfem::element_coupling::flux_scheme_tag;
+  static constexpr
+      std::array<specfem::element_coupling::flux_scheme_tag, sizeof...(Vs)>
+          values{ { Vs... } };
+};
+
 /**
  * @brief Tag-set type for simulation wavefield field types.
  *
@@ -99,30 +120,46 @@ namespace impl {
  * @return `true` if the combination is physically meaningful.
  */
 template <typename Tuple> constexpr bool is_valid(const Tuple &t) {
-  if constexpr (Tuple::arity == 2)
-    return is_valid_medium_combo(t);
-  else if constexpr (Tuple::arity == 3)
-    return is_valid_property_combo(t);
-  else if constexpr (Tuple::arity == 4) {
-    using T3 = decltype(t.template get<3>());
-    if constexpr (std::is_same_v<T3, specfem::element::boundary_tag>)
-      return is_valid_boundary_combo(t);
-    else if constexpr (std::is_same_v<T3, specfem::element::attenuation_tag>)
-      return is_valid_material_combo(t);
+  using T1 = decltype(t.template get<1>());
+  if constexpr (std::is_same_v<T1, specfem::element::medium_tag>) {
+    // Medium-based element combinations
+    if constexpr (Tuple::arity == 2)
+      return is_valid_medium_combo(t);
+    else if constexpr (Tuple::arity == 3)
+      return is_valid_property_combo(t);
+    else if constexpr (Tuple::arity == 4) {
+      using T3 = decltype(t.template get<3>());
+      if constexpr (std::is_same_v<T3, specfem::element::boundary_tag>)
+        return is_valid_boundary_combo(t);
+      else if constexpr (std::is_same_v<T3, specfem::element::attenuation_tag>)
+        return is_valid_material_combo(t);
+      else
+        return false;
+    } else if constexpr (Tuple::arity == 5)
+      return is_valid_full_combo(t);
+    else if constexpr (Tuple::arity == 6) {
+      // Arity-6: (dim, medium, property, attenuation, boundary, wavefield).
+      // Only the first 5 slots determine validity; wavefield never invalidates.
+      return is_valid_full_combo(
+          specfem::tag_dispatch::impl::TagValueTuple<
+              decltype(t.template get<0>()), decltype(t.template get<1>()),
+              decltype(t.template get<2>()), decltype(t.template get<3>()),
+              decltype(t.template get<4>())>{
+              t.template get<0>(), t.template get<1>(), t.template get<2>(),
+              t.template get<3>(), t.template get<4>() });
+    } else
+      return false;
+
+  } else if constexpr (std::is_same_v<T1, specfem::element_connections::type>) {
+    // Interface / coupling combinations
+    if constexpr (Tuple::arity == 3)
+      return is_valid_interface_system(t);
+    else if constexpr (Tuple::arity == 4)
+      return is_valid_edge(t);
+    else if constexpr (Tuple::arity == 5)
+      return is_valid_edge_and_flux_scheme(t);
     else
       return false;
-  } else if constexpr (Tuple::arity == 5)
-    return is_valid_full_combo(t);
-  else if constexpr (Tuple::arity == 6) {
-    // Arity-6: (dim, medium, property, attenuation, boundary, wavefield).
-    // Only the first 5 slots determine validity; wavefield never invalidates.
-    return is_valid_full_combo(
-        specfem::tag_dispatch::impl::TagValueTuple<
-            decltype(t.template get<0>()), decltype(t.template get<1>()),
-            decltype(t.template get<2>()), decltype(t.template get<3>()),
-            decltype(t.template get<4>())>{
-            t.template get<0>(), t.template get<1>(), t.template get<2>(),
-            t.template get<3>(), t.template get<4>() });
   } else
     return false;
 }

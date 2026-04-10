@@ -1,10 +1,9 @@
-.. _specfem_api_tag_dispatch_index:
+.. _specfem_api_tag_dispatch:
 
 ``specfem::tag_dispatch``
 =========================
 
 .. doxygengroup:: tag_dispatch_group
-
 
 **Core Functionality**:
 

@@ -166,16 +166,9 @@ specfem::assembly::sources<specfem::element::dimension_tag::dim2>::sources(
         return { h_elem, h_src };
       });
 
-  source_index_by_combination = decltype(source_index_by_combination)(
-      [&]<typename TagsType>() -> IndexPairType {
-        const auto &[h_elem, h_src] =
-            h_source_index_by_combination.template get<TagsType>();
-        IndexViewType d_elem(h_elem.label(), h_elem.extent(0));
-        IndexViewType d_src(h_src.label(), h_src.extent(0));
-        Kokkos::deep_copy(d_elem, h_elem);
-        Kokkos::deep_copy(d_src, h_src);
-        return { d_elem, d_src };
-      });
+  source_index_by_combination =
+      specfem::tag_dispatch::create_mirror_storage_and_copy(
+          Kokkos::DefaultExecutionSpace{}, h_source_index_by_combination);
 
   Kokkos::deep_copy(medium_types, h_medium_types);
   Kokkos::deep_copy(wavefield_types, h_wavefield_types);

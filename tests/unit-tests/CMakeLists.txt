@@ -130,6 +130,7 @@ add_executable(
   units_tests
   units/quantity_tests.cpp
   units/unit_cast_tests.cpp
+  units/parse_tests.cpp
 )
 
 target_link_libraries(

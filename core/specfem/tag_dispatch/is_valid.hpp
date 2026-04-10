@@ -268,4 +268,72 @@ constexpr bool is_valid_full_combo(ElementTagTuple t) {
          is_valid_boundary_combo({ d, m, p, b });
 }
 
+// ── Interface / coupling combinations ────────────────────────────────────────
+
+using InterfaceSystemTuple =
+    TagValueTuple<specfem::element::dimension_tag,
+                  specfem::element_connections::type,
+                  specfem::element_coupling::interface_tag>;
+
+using EdgeTuple = TagValueTuple<
+    specfem::element::dimension_tag, specfem::element_connections::type,
+    specfem::element_coupling::interface_tag, specfem::element::boundary_tag>;
+
+using EdgeFluxSchemeTuple = TagValueTuple<
+    specfem::element::dimension_tag, specfem::element_connections::type,
+    specfem::element_coupling::interface_tag, specfem::element::boundary_tag,
+    specfem::element_coupling::flux_scheme_tag>;
+
+/// Valid interface systems: weakly_conforming, elastic↔acoustic, dim2 or dim3.
+constexpr bool is_valid_interface_system(InterfaceSystemTuple t) {
+  using C = specfem::element_connections::type;
+  using I = specfem::element_coupling::interface_tag;
+  auto c = t.get<1>();
+  auto i = t.get<2>();
+  if (c != C::weakly_conforming)
+    return false;
+  return i == I::elastic_acoustic || i == I::acoustic_elastic;
+}
+
+/// Valid edge combinations (dim + connection + interface + boundary).
+constexpr bool is_valid_edge(EdgeTuple t) {
+  using D = specfem::element::dimension_tag;
+  using C = specfem::element_connections::type;
+  using I = specfem::element_coupling::interface_tag;
+  using B = specfem::element::boundary_tag;
+  auto d = t.get<0>();
+  auto c = t.get<1>();
+  auto i = t.get<2>();
+  auto b = t.get<3>();
+
+  if (c != C::weakly_conforming && c != C::nonconforming)
+    return false;
+  if (i != I::elastic_acoustic && i != I::acoustic_elastic)
+    return false;
+
+  // dim3: only weakly_conforming + none
+  if (d == D::dim3)
+    return c == C::weakly_conforming && b == B::none;
+
+  // dim2: boundary rules depend on interface direction
+  if (i == I::elastic_acoustic)
+    return b == B::none || b == B::stacey;
+  else // acoustic_elastic
+    return b == B::none || b == B::stacey || b == B::acoustic_free_surface ||
+           b == B::composite_stacey_dirichlet;
+}
+
+/// Valid edge + flux scheme combinations.
+constexpr bool is_valid_edge_and_flux_scheme(EdgeFluxSchemeTuple t) {
+  using F = specfem::element_coupling::flux_scheme_tag;
+  auto d = t.get<0>();
+  auto c = t.get<1>();
+  auto i = t.get<2>();
+  auto b = t.get<3>();
+  auto f = t.get<4>();
+  if (f != F::natural)
+    return false;
+  return is_valid_edge({ d, c, i, b });
+}
+
 } // namespace specfem::tag_dispatch::impl

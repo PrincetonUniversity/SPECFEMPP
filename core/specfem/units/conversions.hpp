@@ -20,13 +20,20 @@ constexpr type_real two_pi =
 /**
  * @brief Implementation dispatcher for unit conversions.
  *
- * Primary template is undefined; specializations handle specific conversions.
- * Unsupported conversions produce compile-time errors.
+ * The primary template has no @c call member; specializations add @c call for
+ * supported conversions.  Attempting @c unit_cast for an unsupported pair
+ * produces a compile-time error (no member @c call).  The empty primary body
+ * also allows @c has_unit_cast<To,From> (in parse.hpp) to detect unsupported
+ * pairs via SFINAE without triggering an incomplete-type hard error.
  *
  * @tparam To Target quantity type
  * @tparam From Source quantity type
  */
-template <typename To, typename From, typename = void> struct unit_cast_impl;
+template <typename To, typename From, typename = void> struct unit_cast_impl {
+  // Intentionally empty: no call() member.
+  // Unsupported conversions are caught at compile time by unit_cast(), or at
+  // runtime by quantity_cast() via has_unit_cast<> detection in parse.hpp.
+};
 
 /// Identity conversion (no-op)
 template <typename T> struct unit_cast_impl<T, T, void> {

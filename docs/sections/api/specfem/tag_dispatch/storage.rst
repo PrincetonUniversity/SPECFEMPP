@@ -1,7 +1,6 @@
-.. _specfem_api_tag_dispatch_storage:
 
-``tag_dispatch/storage.hpp``
-=============================
+``specfem::tag_dispatch::Storage``
+=================================-
 
 .. doxygentypedef:: specfem::tag_dispatch::Storage
 

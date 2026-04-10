@@ -32,7 +32,8 @@ read_material_properties(
     const specfem::enums::electromagnetic_wave electromagnetic_wave,
     const Kokkos::View<int **, Kokkos::LayoutRight,
                        Kokkos::DefaultHostExecutionSpace>
-        knods);
+        knods,
+    const bool attenuation_enabled);
 
 } // namespace dim2
 } // namespace fortran

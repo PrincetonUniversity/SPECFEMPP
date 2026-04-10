@@ -12,3 +12,4 @@
     quantity
     conversions
     unit_symbols
+    parse
