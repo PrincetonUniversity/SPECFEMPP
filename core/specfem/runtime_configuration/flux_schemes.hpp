@@ -4,10 +4,10 @@
 #include "specfem/element_coupling.hpp"
 #include "specfem/element_coupling/flux_scheme_configuration.hpp"
 
+#include "specfem/runtime_configuration/quadrature.hpp"
 #include "yaml-cpp/yaml.h"
-#include <map>
-#include <string>
-#include <utility>
+
+#include <memory>
 
 namespace specfem {
 namespace runtime_configuration {
@@ -20,19 +20,26 @@ class flux_schemes {
 public:
   flux_schemes(const YAML::Node &Node);
   flux_schemes()
-      : flux_scheme_tag(specfem::element_coupling::flux_scheme_tag::natural) {};
+      : flux_scheme_tag(specfem::element_coupling::flux_scheme_tag::natural),
+        interfacial_quadrature(nullptr) {};
 
 private:
   specfem::element_coupling::flux_scheme_tag flux_scheme_tag;
+  std::unique_ptr<specfem::runtime_configuration::quadrature>
+      interfacial_quadrature;
 
 public:
-  specfem::element_coupling::flux_scheme_configuration get_flux_scheme() const {
-    specfem::element_coupling::flux_scheme_configuration config;
-
-    config.flux_scheme_tag = flux_scheme_tag;
-
-    return config;
-  }
+  /**
+   * @brief Generates a flux_scheme_configuration object from the given runtime
+   * configuration.
+   *
+   * @param ngll number of element quadrature points of the simulation. This is
+   * used for setting the default value of the interfacial quadrature rule.
+   * @return specfem::element_coupling::flux_scheme_configuration the generated
+   * configuration to be given to assembly.
+   */
+  specfem::element_coupling::flux_scheme_configuration
+  get_flux_scheme(const int &ngll) const;
 
   YAML::Node flux_schemes_node;
 };
