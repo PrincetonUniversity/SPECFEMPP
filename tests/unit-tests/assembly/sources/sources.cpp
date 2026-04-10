@@ -5,6 +5,7 @@
 #include "specfem/element.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/point.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include "gtest/gtest.h"
 #include <Kokkos_Core.hpp>
 
@@ -293,29 +294,35 @@ void test_assembly_source_construction(
         &sources,
     specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
         &assembly) {
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                       POROELASTIC, ELASTIC_PSV_T)),
-      {
-        check_assembly_source_construction<_dimension_tag_, _medium_tag_>(
-            sources, assembly);
-      })
+  specfem::tag_dispatch::for_each(
+      DIMENSION_SET(dim2) * MEDIUM_SET(elastic_psv, elastic_sh, acoustic,
+                                       poroelastic, elastic_psv_t),
+      [&]<typename ElementTags>() {
+        check_assembly_source_construction<ElementTags::dimension_tag,
+                                           ElementTags::medium_tag>(sources,
+                                                                    assembly);
+      });
 }
 
 void test_sources(
     specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
-        &assembly){ FOR_EACH_IN_PRODUCT(
-    (DIMENSION_TAG(DIM2),
-     MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC, ELASTIC_PSV_T),
-     PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-     BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                  COMPOSITE_STACEY_DIRICHLET)),
-    {
-      check_store<_dimension_tag_, _medium_tag_, _property_tag_, _boundary_tag_,
-                  specfem::simulation::field_type::forward>(assembly);
-      check_load<_dimension_tag_, _medium_tag_, _property_tag_, _boundary_tag_,
-                 specfem::simulation::field_type::forward>(assembly);
-    }) }
+        &assembly) {
+  specfem::tag_dispatch::for_each(
+      DIMENSION_SET(dim2) *
+          MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
+                     elastic_psv_t) *
+          PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
+          BOUNDARY_SET(none, acoustic_free_surface, stacey,
+                       composite_stacey_dirichlet),
+      [&]<typename ElementTags>() {
+        check_store<ElementTags::dimension_tag, ElementTags::medium_tag,
+                    ElementTags::property_tag, ElementTags::boundary_tag,
+                    specfem::simulation::field_type::forward>(assembly);
+        check_load<ElementTags::dimension_tag, ElementTags::medium_tag,
+                   ElementTags::property_tag, ElementTags::boundary_tag,
+                   specfem::simulation::field_type::forward>(assembly);
+      });
+}
 
 TEST_F(Assembly2D, sources) {
   for (auto parameters : *this) {
