@@ -9,7 +9,7 @@ Storage
 .. doxygenclass:: specfem::tag_dispatch::Storage
     :members:
 
-``mirror_and_copy_storage``
----------------------------
+``create_mirror_storage_and_copy``
+----------------------------------
 
-.. doxygenfunction:: specfem::tag_dispatch::mirror_and_copy_storage
+.. doxygenfunction:: specfem::tag_dispatch::create_mirror_storage_and_copy

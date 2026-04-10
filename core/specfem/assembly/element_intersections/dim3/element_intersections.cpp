@@ -30,20 +30,18 @@ specfem::assembly::element_intersections<
 
   const int ngll = ngllx; // ngllx == nglly == ngllz
 
-  // Count the number of interfaces for each combination of connection
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), CONNECTION_TAG(WEAKLY_CONFORMING, NONCONFORMING),
-       INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
-       BOUNDARY_TAG(NONE, STACEY, ACOUSTIC_FREE_SURFACE,
-                    COMPOSITE_STACEY_DIRICHLET),
-       FLUX_SCHEME_TAG(NATURAL)),
-      CAPTURE(h_self_faces, h_coupled_faces, self_faces, coupled_faces) {
-        int count = 0;
-        int face_index = 0;
+  // Collect self/coupled face vectors for each tag combination
+  struct CollectedFaces {
+    std::vector<specfem::mesh_entity::face<dimension_tag> > self_collect;
+    std::vector<specfem::mesh_entity::face<dimension_tag> > coupled_collect;
+  };
+
+  specfem::tag_dispatch::Storage<CollectedFaces, IntersectionCombinations>
+      collected{ [&]<typename TagsType>() -> CollectedFaces {
         constexpr auto self_medium = specfem::element_coupling::attributes<
-            _dimension_tag_, _interface_tag_>::self_medium();
+            TagsType::dimension_tag, TagsType::interface_tag>::self_medium();
         constexpr auto coupled_medium = specfem::element_coupling::attributes<
-            _dimension_tag_, _interface_tag_>::coupled_medium();
+            TagsType::dimension_tag, TagsType::interface_tag>::coupled_medium();
 
         std::vector<specfem::mesh_entity::face<dimension_tag> > self_collect;
         std::vector<specfem::mesh_entity::face<dimension_tag> > coupled_collect;
@@ -52,11 +50,12 @@ specfem::assembly::element_intersections<
 
         // Filter out corresponding connections
         auto filter = [&graph](const auto &edge) {
-          return graph[edge].connection == _connection_tag_;
+          return graph[edge].connection == TagsType::connection_tag;
         };
 
         // Create a filtered graph view
         const auto &nc_graph = boost::make_filtered_graph(graph, filter);
+        int face_index = 0;
         for (const auto &edge :
              boost::make_iterator_range(boost::edges(nc_graph))) {
           const int ispec1 = boost::source(edge, nc_graph);
@@ -64,8 +63,9 @@ specfem::assembly::element_intersections<
           const auto boundary_tag = element_types.get_boundary_tag(ispec1);
           const auto medium1 = element_types.get_medium_tag(ispec1);
           const auto medium2 = element_types.get_medium_tag(ispec2);
-          if (boundary_tag == _boundary_tag_ && medium1 == self_medium &&
-              medium2 == coupled_medium && medium1 != medium2) {
+          if (boundary_tag == TagsType::boundary_tag &&
+              medium1 == self_medium && medium2 == coupled_medium &&
+              medium1 != medium2) {
             const specfem::mesh_entity::dim3::type self_orientation =
                 nc_graph[edge].orientation;
             // Only process face connections (skip edge and corner connections)
@@ -81,7 +81,6 @@ specfem::assembly::element_intersections<
             }
             const specfem::mesh_entity::dim3::type coupled_orientation =
                 nc_graph[edge_inv].orientation;
-            count++;
             // we do not need orientation flipping -- that's handled by
             // the transfer function
             self_collect.push_back(
@@ -91,25 +90,27 @@ specfem::assembly::element_intersections<
             face_index++;
           }
         }
+        return { std::move(self_collect), std::move(coupled_collect) };
+      } };
 
-        _self_faces_ =
-            FaceViewType("specfem::assembly::element_intersections::self_faces",
-                         count, ngll);
-        _coupled_faces_ = FaceViewType(
-            "specfem::assembly::element_intersections::coupled_faces", count,
-            ngll);
+  // Build host face views from collected faces
+  h_self_faces = { [&]<typename TagsType>() -> FaceViewType::HostMirror {
+    return face_view_from_collected_faces(
+        "specfem::assembly::element_intersections::self_faces",
+        collected.template get<TagsType>().self_collect, element);
+  } };
 
-        _h_self_faces_ = face_view_from_collected_faces(
-            "specfem::assembly::element_intersections::self_faces_host_mirror",
-            self_collect, element);
-        _h_coupled_faces_ = face_view_from_collected_faces(
-            "specfem::assembly::element_intersections::coupled_faces_host_"
-            "mirror",
-            coupled_collect, element);
+  h_coupled_faces = { [&]<typename TagsType>() -> FaceViewType::HostMirror {
+    return face_view_from_collected_faces(
+        "specfem::assembly::element_intersections::coupled_faces",
+        collected.template get<TagsType>().coupled_collect, element);
+  } };
 
-        element_intersections::deep_copy(_self_faces_, _h_self_faces_);
-        element_intersections::deep_copy(_coupled_faces_, _h_coupled_faces_);
-      })
+  // Allocate device views and deep-copy from host
+  self_faces = specfem::tag_dispatch::create_mirror_storage_and_copy(
+      Kokkos::DefaultExecutionSpace{}, h_self_faces);
+  coupled_faces = specfem::tag_dispatch::create_mirror_storage_and_copy(
+      Kokkos::DefaultExecutionSpace{}, h_coupled_faces);
 
   return;
 }
@@ -122,22 +123,9 @@ specfem::assembly::element_intersections<
         const specfem::element_coupling::interface_tag face,
         const specfem::element::boundary_tag boundary,
         const specfem::element_coupling::flux_scheme_tag flux_scheme) const {
-
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), CONNECTION_TAG(WEAKLY_CONFORMING, NONCONFORMING),
-       INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
-       BOUNDARY_TAG(NONE, STACEY, ACOUSTIC_FREE_SURFACE,
-                    COMPOSITE_STACEY_DIRICHLET),
-       FLUX_SCHEME_TAG(NATURAL)),
-      CAPTURE(h_self_faces, h_coupled_faces) {
-        if (_connection_tag_ == connection && _interface_tag_ == face &&
-            _boundary_tag_ == boundary && _flux_scheme_tag_ == flux_scheme) {
-          return std::make_tuple(_h_self_faces_, _h_coupled_faces_);
-        }
-      })
-
-  throw std::runtime_error(
-      "Connection type, interface type or boundary type not found");
+  return std::make_tuple(
+      h_self_faces.get(connection, face, boundary, flux_scheme),
+      h_coupled_faces.get(connection, face, boundary, flux_scheme));
 }
 
 std::tuple<FaceViewType, FaceViewType> specfem::assembly::element_intersections<
@@ -147,22 +135,9 @@ std::tuple<FaceViewType, FaceViewType> specfem::assembly::element_intersections<
         const specfem::element_coupling::interface_tag face,
         const specfem::element::boundary_tag boundary,
         const specfem::element_coupling::flux_scheme_tag flux_scheme) const {
-
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), CONNECTION_TAG(WEAKLY_CONFORMING, NONCONFORMING),
-       INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
-       BOUNDARY_TAG(NONE, STACEY, ACOUSTIC_FREE_SURFACE,
-                    COMPOSITE_STACEY_DIRICHLET),
-       FLUX_SCHEME_TAG(NATURAL)),
-      CAPTURE(self_faces, coupled_faces) {
-        if (_connection_tag_ == connection && _interface_tag_ == face &&
-            _boundary_tag_ == boundary && _flux_scheme_tag_ == flux_scheme) {
-          return std::make_tuple(_self_faces_, _coupled_faces_);
-        }
-      })
-
-  throw std::runtime_error(
-      "Connection type, interface type or boundary type not found");
+  return std::make_tuple(
+      self_faces.get(connection, face, boundary, flux_scheme),
+      coupled_faces.get(connection, face, boundary, flux_scheme));
 }
 
 specfem::assembly::element_intersections<

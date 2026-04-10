@@ -11,6 +11,7 @@ target_link_libraries(
         PRIVATE
         specfem::algorithms
         specfem::element
+        specfem::element_coupling
         specfem::quadrature
         specfem::mesh
         source_class

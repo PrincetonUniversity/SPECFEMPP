@@ -92,8 +92,13 @@ public:
     }(std::make_index_sequence<size>{});
     if (idx == size) {
       std::string tags_str;
-      ((tags_str += (tags_str.empty() ? "" : ", ") +
-                    specfem::element::to_string(query_tags)),
+      auto tag_to_str = [](auto tag) -> std::string {
+        using specfem::element::to_string;
+        using specfem::element_connections::to_string;
+        using specfem::element_coupling::to_string;
+        return to_string(tag);
+      };
+      ((tags_str += (tags_str.empty() ? "" : ", ") + tag_to_str(query_tags)),
        ...);
       throw std::runtime_error(
           "no matching element combination for queried tags: [" + tags_str +
@@ -104,55 +109,81 @@ public:
 };
 
 /**
+ * @brief Deep-copy customization point for use by @ref
+ * create_mirror_storage_and_copy.
+ *
+ * The default implementation forwards to ``Kokkos::deep_copy``.  Custom view
+ * types (e.g.\ multi-view structs) should provide an overload in their own
+ * header *before* the point of instantiation to override this behaviour.
+ */
+template <typename Dst, typename Src> void deep_copy(Dst &&dst, Src &&src) {
+  Kokkos::deep_copy(std::forward<Dst>(dst), std::forward<Src>(src));
+}
+
+/**
+ * @brief Mirror-view creation customization point for use by
+ *        @ref create_mirror_storage_and_copy.
+ *
+ * The default implementation handles plain ``Kokkos::View`` types: it
+ * allocates a new view in @p Space with the same data type, layout, and
+ * extents as @p src.  Custom view types should provide an overload in their
+ * own header *before* the point of instantiation.
+ */
+template <typename Space, typename SrcView>
+auto create_mirror(Space, const SrcView &src) {
+  return Kokkos::create_mirror_view(typename Space::memory_space{}, src);
+}
+
+/**
  * @brief Mirror a @ref Storage into a destination memory space, analogous to
  *        ``Kokkos::create_mirror_view``.
  *
  * If the memory space of @p Space is identical to the memory space of
  * @p SrcView (i.e.\ `std::is_same_v<typename Space::memory_space,
- * typename SrcView::memory_space>` is @c true), @p src_view is returned
+ * typename SrcView::memory_space>` is @c true), @p src_storage is returned
  * unchanged — no allocation or copy is performed.
  *
  * Otherwise, for each tag combination in the element-type set @p ET, a new
- * view is allocated in @p Space with the same data type, layout, and extents
- * as the corresponding source entry, and the data is deep-copied via
- * ``Kokkos::deep_copy``.  The typical usage is to mirror a host-space index
- * storage onto the device after it has been populated on the host:
+ * view is created via @ref create_mirror and the data is copied via
+ * @ref deep_copy.  Both functions are customization points: custom view types
+ * may provide overloads in their own headers.  The typical usage is to mirror
+ * a host-space storage onto the device after it has been populated on the host:
  *
  * @code{.cpp}
  * HostStorage h_store{ initializer };
- * auto d_store = specfem::tag_dispatch::mirror_and_copy_storage<
- *     Kokkos::DefaultExecutionSpace>(h_store);
+ * auto d_store = specfem::tag_dispatch::create_mirror_storage_and_copy(
+ *     Kokkos::DefaultExecutionSpace{}, h_store);
  * @endcode
  *
- * @tparam Space    Destination execution-space type.  Must expose a
- *                  ``memory_space`` typedef (satisfied by any Kokkos
- *                  execution space or device type).
- * @tparam SrcView  Kokkos::View type of the source storage.  Deduced from
- *                  @p src_view.
- * @tparam ET       Element-type set that parameterises the storage.
- *                  Deduced from @p src_view.
+ * @tparam Space      Destination execution-space type.  Must expose a
+ *                    ``memory_space`` typedef (satisfied by any Kokkos
+ *                    execution space or device type).
+ * @tparam SrcView    View type of the source storage.  Must expose a
+ *                    ``memory_space`` typedef.  Deduced from @p src_storage.
+ * @tparam ET         Element-type set that parameterises the storage.
+ *                    Deduced from @p src_storage.
  *
- * @param src_view  Source storage to mirror.
- * @return          If the memory spaces match, returns @p src_view as-is
- *                  (type `Storage<SrcView, ET>`).  Otherwise returns a new
- *                  `Storage` whose view type has the same data type and
- *                  layout as @p SrcView but lives in @p Space, populated by
- *                  deep-copying each entry from @p src_view.
+ * @param src_storage Source storage to mirror.
+ * @return            If the memory spaces match, returns @p src_storage as-is.
+ *                    Otherwise returns a new @ref Storage whose view type is
+ *                    the return type of
+ *                    ``create_mirror<Space>(src_entry)``, populated by
+ *                    calling ``deep_copy(dst_entry, src_entry)`` for each
+ *                    tag combination.
  */
 template <typename Space, typename SrcView, typename ET>
-auto mirror_and_copy_storage(const Storage<SrcView, ET> &src_view) {
+auto create_mirror_storage_and_copy(Space,
+                                    const Storage<SrcView, ET> &src_storage) {
   if constexpr (std::is_same_v<typename Space::memory_space,
                                typename SrcView::memory_space>) {
-    return src_view;
+    return src_storage;
   } else {
-    using DstView = Kokkos::View<typename SrcView::data_type,
-                                 typename SrcView::array_layout, Space>;
+    using DstView = decltype(
+        create_mirror(std::declval<Space>(), std::declval<const SrcView &>()));
     return Storage<DstView, ET>{ [&]<typename TagsType>() -> DstView {
-      const auto &src = src_view.template get<TagsType>();
-      DstView dst = [&]<std::size_t... Is>(std::index_sequence<Is...>) {
-        return DstView(src.label(), src.extent(Is)...);
-      }(std::make_index_sequence<std::decay_t<decltype(src)>::rank>{});
-      Kokkos::deep_copy(dst, src);
+      const auto &src = src_storage.template get<TagsType>();
+      auto dst = create_mirror(Space{}, src);
+      deep_copy(dst, src);
       return dst;
     } };
   }

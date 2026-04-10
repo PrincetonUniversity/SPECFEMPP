@@ -135,8 +135,8 @@ public:
     // ── Step 2: build all six index stores ──────────────────────────────────
     // Each Storage is constructed by passing a TagsType-templated functor;
     // the Storage constructor calls it once per valid TagsType combination.
-    // Host stores are built first so mirror_and_copy_storage can reference
-    // them.
+    // Host stores are built first so create_mirror_storage_and_copy can
+    // reference them.
 
     // 1. Index by (dimension, medium) only.
     h_elements_by_medium = { [&]<typename TagsType>() -> HostIndexViewType {
@@ -152,8 +152,8 @@ public:
           host_view(index++) = ispec;
       return host_view;
     } };
-    elements_by_medium = specfem::tag_dispatch::mirror_and_copy_storage<
-        Kokkos::DefaultExecutionSpace>(h_elements_by_medium);
+    elements_by_medium = specfem::tag_dispatch::create_mirror_storage_and_copy(
+        Kokkos::DefaultExecutionSpace{}, h_elements_by_medium);
 
     // 2. Index by (dimension, medium, property, attenuation).
     h_elements_by_material = { [&]<typename TagsType>() -> HostIndexViewType {
@@ -173,8 +173,9 @@ public:
           host_view(index++) = ispec;
       return host_view;
     } };
-    elements_by_material = specfem::tag_dispatch::mirror_and_copy_storage<
-        Kokkos::DefaultExecutionSpace>(h_elements_by_material);
+    elements_by_material =
+        specfem::tag_dispatch::create_mirror_storage_and_copy(
+            Kokkos::DefaultExecutionSpace{}, h_elements_by_material);
 
     // 3. Index by (dimension, medium, property, boundary).
     h_elements_by_boundary = { [&]<typename TagsType>() -> HostIndexViewType {
@@ -194,8 +195,9 @@ public:
           host_view(index++) = ispec;
       return host_view;
     } };
-    elements_by_boundary = specfem::tag_dispatch::mirror_and_copy_storage<
-        Kokkos::DefaultExecutionSpace>(h_elements_by_boundary);
+    elements_by_boundary =
+        specfem::tag_dispatch::create_mirror_storage_and_copy(
+            Kokkos::DefaultExecutionSpace{}, h_elements_by_boundary);
   }
 
   // ── Accessors by medium ──────────────────────────────────────────────────
