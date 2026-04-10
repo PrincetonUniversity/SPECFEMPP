@@ -294,25 +294,6 @@ template <typename Dst, typename Src> void deep_copy(Dst &&dst, Src &&src) {
 }
 
 /**
- * @brief `deep_copy` overload for pairs of Kokkos views.
- */
-template <typename D1, typename D2, typename S1, typename S2>
-void deep_copy(std::pair<D1, D2> &dst, const std::pair<S1, S2> &src) {
-  Kokkos::deep_copy(dst.first, src.first);
-  Kokkos::deep_copy(dst.second, src.second);
-}
-
-/**
- * @brief `create_mirror` overload for pairs of Kokkos views.
- */
-template <typename Space, typename V1, typename V2>
-auto create_mirror(Space, const std::pair<V1, V2> &src) {
-  return std::make_pair(
-      Kokkos::create_mirror_view(typename Space::memory_space{}, src.first),
-      Kokkos::create_mirror_view(typename Space::memory_space{}, src.second));
-}
-
-/**
  * @brief Mirror-view creation customization point for use by
  *        @ref create_mirror_storage_and_copy.
  *
@@ -366,11 +347,12 @@ auto create_mirror(Space, const SrcView &src) {
 template <typename Space, typename SrcView, typename ET>
 auto create_mirror_storage_and_copy(Space,
                                     const Storage<SrcView, ET> &src_storage) {
-  using DstView = decltype(
-      create_mirror(std::declval<Space>(), std::declval<const SrcView &>()));
-  if constexpr (std::is_same_v<DstView, SrcView>) {
+  if constexpr (std::is_same_v<typename Space::memory_space,
+                               typename SrcView::memory_space>) {
     return src_storage;
   } else {
+    using DstView = decltype(
+        create_mirror(std::declval<Space>(), std::declval<const SrcView &>()));
     return Storage<DstView, ET>{ [&]<typename TagsType>() -> DstView {
       const auto &src = src_storage.template get<TagsType>();
       auto dst = create_mirror(Space{}, src);
