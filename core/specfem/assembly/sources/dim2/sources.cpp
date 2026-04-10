@@ -57,6 +57,8 @@ specfem::assembly::sources<specfem::element::dimension_tag::dim2>::sources(
       h_medium_types(Kokkos::create_mirror_view(medium_types)),
       property_types("specfem::sources::property_types", sources.size()),
       h_property_types(Kokkos::create_mirror_view(property_types)),
+      attenuation_types("specfem::sources::attenuation_types", sources.size()),
+      h_attenuation_types(Kokkos::create_mirror_view(attenuation_types)),
       boundary_types("specfem::sources::boundary_types", sources.size()),
       h_boundary_types(Kokkos::create_mirror_view(boundary_types)),
       wavefield_types("specfem::sources::wavefield_types", sources.size()),
@@ -74,45 +76,44 @@ specfem::assembly::sources<specfem::element::dimension_tag::dim2>::sources(
   // global element index, and medium that the source is located in
   specfem::assembly::sources_impl::locate_sources(element_types, mesh, sources);
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                       POROELASTIC, ELASTIC_PSV_T)),
-      CAPTURE(source) {
-        auto [sorted_sources, source_indices] =
-            specfem::assembly::sources_impl::sort_sources_per_medium<
-                _dimension_tag_, _medium_tag_>(sources, element_types, mesh);
+  // Initialize source_by_medium using TypedStorage initializer
+  source_by_medium = decltype(
+      source_by_medium)([&]<typename TagsType>() -> SourceMediumFor<TagsType> {
+    constexpr auto dim_tag = TagsType::dimension_tag;
+    constexpr auto med_tag = TagsType::medium_tag;
+    auto [sorted_sources, source_indices] =
+        specfem::assembly::sources_impl::sort_sources_per_medium<dim_tag,
+                                                                 med_tag>(
+            sources, element_types, mesh);
 
-        /** For a sanity check we count the number of sources and source indices
-         * for each medium and dimension
-         */
-        nsources += sorted_sources.size();
-        nsource_indices += source_indices.size();
+    /** For a sanity check we count the number of sources and source indices
+     * for each medium and dimension
+     */
+    nsources += sorted_sources.size();
+    nsource_indices += source_indices.size();
 
-        /* Loops over the current source*/
-        for (int isource = 0; isource < sorted_sources.size(); isource++) {
-          const auto &source = sorted_sources[isource];
-          const auto lcoord = source->get_local_coordinates();
+    /* Loops over the current source*/
+    for (int isource = 0; isource < sorted_sources.size(); isource++) {
+      const auto &source = sorted_sources[isource];
+      const auto lcoord = source->get_local_coordinates();
 
-          int ispec = lcoord.ispec;
-          const int global_isource = source_indices[isource];
+      int ispec = lcoord.ispec;
+      const int global_isource = source_indices[isource];
 
-          /* setting local source to global element mapping */
-          h_element_indices(global_isource) = ispec;
-          assert(element_types.get_medium_tag(ispec) == _medium_tag_);
-          h_medium_types(global_isource) = _medium_tag_;
-          h_property_types(global_isource) =
-              element_types.get_property_tag(ispec);
-          h_boundary_types(global_isource) =
-              element_types.get_boundary_tag(ispec);
-          h_wavefield_types(global_isource) = source->get_wavefield_type();
-        }
+      /* setting local source to global element mapping */
+      h_element_indices(global_isource) = ispec;
+      assert(element_types.get_medium_tag(ispec) == med_tag);
+      h_medium_types(global_isource) = med_tag;
+      h_property_types(global_isource) = element_types.get_property_tag(ispec);
+      h_attenuation_types(global_isource) =
+          element_types.get_attenuation_tag(ispec);
+      h_boundary_types(global_isource) = element_types.get_boundary_tag(ispec);
+      h_wavefield_types(global_isource) = source->get_wavefield_type();
+    }
 
-        _source_ =
-            specfem::assembly::sources_impl::source_medium<_dimension_tag_,
-                                                           _medium_tag_>(
-                sorted_sources, mesh, jacobian_matrix, element_types, t0, dt,
-                nsteps);
-      })
+    return SourceMediumFor<TagsType>(sorted_sources, mesh, jacobian_matrix,
+                                     element_types, t0, dt, nsteps);
+  });
 
   // if the number of sources is not equal to the number of sources
   if (nsources != sources.size()) {
@@ -122,138 +123,64 @@ specfem::assembly::sources<specfem::element::dimension_tag::dim2>::sources(
         "Not all sources were assigned or sources are assigned multiple times");
   }
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                    COMPOSITE_STACEY_DIRICHLET)),
-      CAPTURE(element_indices_forward, element_indices_backward,
-              element_indices_adjoint, source_indices_forward,
-              source_indices_backward, source_indices_adjoint,
-              h_element_indices_forward, h_element_indices_backward,
-              h_element_indices_adjoint, h_source_indices_forward,
-              h_source_indices_backward, h_source_indices_adjoint) {
-        int count_forward = 0;
-        int count_backward = 0;
-        int count_adjoint = 0;
+  // Initialize h_source_index_by_combination and source_index_by_combination
+  // using Storage initializer, keyed by (dim, medium, property, attenuation,
+  // boundary, wavefield)
+  h_source_index_by_combination = decltype(h_source_index_by_combination)(
+      [&]<typename TagsType>() -> HostIndexPairType {
+        constexpr auto med_tag = TagsType::medium_tag;
+        constexpr auto prop_tag = TagsType::property_tag;
+        constexpr auto atten_tag = TagsType::attenuation_tag;
+        constexpr auto bnd_tag = TagsType::boundary_tag;
+        constexpr auto wf_tag = TagsType::wavefield_tag;
 
-        /* Loop over the sources */
+        int count = 0;
         for (int isource = 0; isource < sources.size(); isource++) {
-          if ((h_medium_types(isource) == _medium_tag_) &&
-              (h_property_types(isource) == _property_tag_) &&
-              (h_boundary_types(isource) == _boundary_tag_)) {
-            /* Count the number of sources for each wavefield type */
-            if (h_wavefield_types(isource) ==
-                specfem::simulation::field_type::forward) {
-              count_forward++;
-            } else if (h_wavefield_types(isource) ==
-                       specfem::simulation::field_type::backward) {
-              count_backward++;
-            } else if (h_wavefield_types(isource) ==
-                       specfem::simulation::field_type::adjoint) {
-              count_adjoint++;
-            }
+          if (h_medium_types(isource) == med_tag &&
+              h_property_types(isource) == prop_tag &&
+              h_attenuation_types(isource) == atten_tag &&
+              h_boundary_types(isource) == bnd_tag &&
+              h_wavefield_types(isource) == wf_tag) {
+            ++count;
           }
         }
 
-        /* ==================================== */
-        /* Allocating the element specific element_indices array */
-        _element_indices_forward_ =
-            IndexViewType("specfem::assembly::sources::element_indices_forward",
-                          count_forward);
-        _element_indices_backward_ = IndexViewType(
-            "specfem::assembly::sources::element_indices_backward",
-            count_backward);
-        _element_indices_adjoint_ =
-            IndexViewType("specfem::assembly::sources::element_indices_adjoint",
-                          count_adjoint);
+        IndexViewType::HostMirror h_elem(
+            "specfem::assembly::sources::element_indices", count);
+        IndexViewType::HostMirror h_src(
+            "specfem::assembly::sources::source_indices", count);
 
-        _h_element_indices_forward_ =
-            Kokkos::create_mirror_view(_element_indices_forward_);
-        _h_element_indices_backward_ =
-            Kokkos::create_mirror_view(_element_indices_backward_);
-        _h_element_indices_adjoint_ =
-            Kokkos::create_mirror_view(_element_indices_adjoint_);
-
-        /* ==================================== */
-        /* Allocation the element specific source_indices arrays. */
-        /* We do not need a separate counter for this as it is the same */
-        /* as the count for the element_indices */
-        _source_indices_forward_ =
-            IndexViewType("specfem::assembly::sources::source_indices_forward",
-                          count_forward);
-        _source_indices_backward_ =
-            IndexViewType("specfem::assembly::sources::source_indices_backward",
-                          count_backward);
-        _source_indices_adjoint_ =
-            IndexViewType("specfem::assembly::sources::source_indices_adjoint",
-                          count_adjoint);
-
-        _h_source_indices_forward_ =
-            Kokkos::create_mirror_view(_source_indices_forward_);
-        _h_source_indices_backward_ =
-            Kokkos::create_mirror_view(_source_indices_backward_);
-        _h_source_indices_adjoint_ =
-            Kokkos::create_mirror_view(_source_indices_adjoint_);
-
-        /* Initialize the index variables */
-        int index_forward = 0;
-        int index_backward = 0;
-        int index_adjoint = 0;
-        /* Loop over all sources */
+        int idx = 0;
         for (int isource = 0; isource < sources.size(); isource++) {
-          int ispec = h_element_indices(isource);
-          if ((h_medium_types(isource) == _medium_tag_) &&
-              (h_property_types(isource) == _property_tag_) &&
-              (h_boundary_types(isource) == _boundary_tag_)) {
-            if (h_wavefield_types(isource) ==
-                specfem::simulation::field_type::forward) {
-              /* Assign global ispec to local forward element index array */
-              /* h_element_indices_forward_<dim>_<medium>_<property> = ispec*/
-              _h_element_indices_forward_(index_forward) = ispec;
-              /* Assign global forward source index to local source index */
-              /* h_source_indices_forward_<dim>_<medium>_<property> = isource */
-              _h_source_indices_forward_(index_forward) = isource;
-              /* Increase forward counter index*/
-              index_forward++;
-            } else if (h_wavefield_types(isource) ==
-                       specfem::simulation::field_type::backward) {
-              /* Assign global ispec to local backward element index array */
-              /* h_element_indices_backward_<dim>_<medium>_<property> = ispec */
-              _h_element_indices_backward_(index_backward) = ispec;
-              /* Assign global backward source index to local source index */
-              /* h_source_indices_backward_<dim>_<medium>_<property> = isource
-               */
-              _h_source_indices_backward_(index_backward) = isource;
-              index_backward++;
-            } else if (h_wavefield_types(isource) ==
-                       specfem::simulation::field_type::adjoint) {
-              /* Assign global ispec to local adjoint element index array */
-              /* h_element_indices_adjoint_<dim>_<medium>_<property> = ispec */
-              _h_element_indices_adjoint_(index_adjoint) = ispec;
-              _h_source_indices_adjoint_(index_adjoint) = isource;
-              index_adjoint++;
-            }
+          if (h_medium_types(isource) == med_tag &&
+              h_property_types(isource) == prop_tag &&
+              h_attenuation_types(isource) == atten_tag &&
+              h_boundary_types(isource) == bnd_tag &&
+              h_wavefield_types(isource) == wf_tag) {
+            h_elem(idx) = h_element_indices(isource);
+            h_src(idx) = isource;
+            ++idx;
           }
         }
 
-        Kokkos::deep_copy(_element_indices_forward_,
-                          _h_element_indices_forward_);
-        Kokkos::deep_copy(_element_indices_backward_,
-                          _h_element_indices_backward_);
-        Kokkos::deep_copy(_element_indices_adjoint_,
-                          _h_element_indices_adjoint_);
-        Kokkos::deep_copy(_source_indices_forward_, _h_source_indices_forward_);
-        Kokkos::deep_copy(_source_indices_backward_,
-                          _h_source_indices_backward_);
-        Kokkos::deep_copy(_source_indices_adjoint_, _h_source_indices_adjoint_);
-      })
+        return { h_elem, h_src };
+      });
+
+  source_index_by_combination = decltype(source_index_by_combination)(
+      [&]<typename TagsType>() -> IndexPairType {
+        const auto &[h_elem, h_src] =
+            h_source_index_by_combination.template get<TagsType>();
+        IndexViewType d_elem(h_elem.label(), h_elem.extent(0));
+        IndexViewType d_src(h_src.label(), h_src.extent(0));
+        Kokkos::deep_copy(d_elem, h_elem);
+        Kokkos::deep_copy(d_src, h_src);
+        return { d_elem, d_src };
+      });
 
   Kokkos::deep_copy(medium_types, h_medium_types);
   Kokkos::deep_copy(wavefield_types, h_wavefield_types);
   Kokkos::deep_copy(property_types, h_property_types);
+  Kokkos::deep_copy(attenuation_types, h_attenuation_types);
   Kokkos::deep_copy(boundary_types, h_boundary_types);
 }
 
@@ -262,41 +189,12 @@ std::tuple<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>,
 specfem::assembly::sources<specfem::element::dimension_tag::dim2>::
     get_sources_on_host(const specfem::element::medium_tag medium,
                         const specfem::element::property_tag property,
+                        const specfem::element::attenuation_tag attenuation,
                         const specfem::element::boundary_tag boundary,
                         const specfem::simulation::field_type wavefield) const {
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                    COMPOSITE_STACEY_DIRICHLET)),
-      CAPTURE(h_element_indices_forward, h_element_indices_backward,
-              h_element_indices_adjoint, h_source_indices_forward,
-              h_source_indices_backward, h_source_indices_adjoint) {
-        if ((wavefield == specfem::simulation::field_type::forward) &&
-            (medium == _medium_tag_) && (property == _property_tag_) &&
-            (boundary == _boundary_tag_)) {
-          return std::make_tuple(_h_element_indices_forward_,
-                                 _h_source_indices_forward_);
-        } else if ((wavefield == specfem::simulation::field_type::backward) &&
-                   (medium == _medium_tag_) && (property == _property_tag_) &&
-                   (boundary == _boundary_tag_)) {
-          return std::make_tuple(_h_element_indices_backward_,
-                                 _h_source_indices_backward_);
-        } else if ((wavefield == specfem::simulation::field_type::adjoint) &&
-                   (medium == _medium_tag_) && (property == _property_tag_) &&
-                   (boundary == _boundary_tag_)) {
-          return std::make_tuple(_h_element_indices_adjoint_,
-                                 _h_source_indices_adjoint_);
-        }
-      })
-
-  Kokkos::abort("No sources found for the given parameters. Please check the "
-                "input parameters and try again.");
-  return std::make_tuple(
-      Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>(),
-      Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>());
+  const auto &[h_elem, h_src] = h_source_index_by_combination.get(
+      medium, property, attenuation, boundary, wavefield);
+  return std::make_tuple(h_elem, h_src);
 }
 
 // This function is crucial for the computing the source contribution
@@ -308,38 +206,10 @@ specfem::assembly::sources<specfem::element::dimension_tag::dim2>::
     get_sources_on_device(
         const specfem::element::medium_tag medium,
         const specfem::element::property_tag property,
+        const specfem::element::attenuation_tag attenuation,
         const specfem::element::boundary_tag boundary,
         const specfem::simulation::field_type wavefield) const {
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                    COMPOSITE_STACEY_DIRICHLET)),
-      CAPTURE(element_indices_forward, element_indices_backward,
-              element_indices_adjoint, source_indices_forward,
-              source_indices_backward, source_indices_adjoint) {
-        if ((wavefield == specfem::simulation::field_type::forward) &&
-            (medium == _medium_tag_) && (property == _property_tag_) &&
-            (boundary == _boundary_tag_)) {
-          return std::make_tuple(_element_indices_forward_,
-                                 _source_indices_forward_);
-        } else if ((wavefield == specfem::simulation::field_type::backward) &&
-                   (medium == _medium_tag_) && (property == _property_tag_) &&
-                   (boundary == _boundary_tag_)) {
-          return std::make_tuple(_element_indices_backward_,
-                                 _source_indices_backward_);
-        } else if ((wavefield == specfem::simulation::field_type::adjoint) &&
-                   (medium == _medium_tag_) && (property == _property_tag_) &&
-                   (boundary == _boundary_tag_)) {
-          return std::make_tuple(_element_indices_adjoint_,
-                                 _source_indices_adjoint_);
-        }
-      })
-
-  Kokkos::abort("No sources found for the given parameters. Please check the "
-                "input parameters and try again.");
-  return std::make_tuple(Kokkos::View<int *, Kokkos::DefaultExecutionSpace>(),
-                         Kokkos::View<int *, Kokkos::DefaultExecutionSpace>());
+  const auto &[d_elem, d_src] = source_index_by_combination.get(
+      medium, property, attenuation, boundary, wavefield);
+  return std::make_tuple(d_elem, d_src);
 }

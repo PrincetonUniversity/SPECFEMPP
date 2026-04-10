@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/simulation.hpp"
 #include "specfem/utilities/errors.hpp"
 #include "tags.hpp"
 #include <array>
@@ -71,6 +72,14 @@ const std::string to_string(const boundary_tag &boundary);
  * @return String representation
  */
 const std::string to_string(const attenuation_tag &attenuation);
+
+/**
+ * @brief Convert field/wavefield type to string.
+ *
+ * @param wavefield Wavefield type (forward, backward, adjoint)
+ * @return String representation
+ */
+const std::string to_string(const specfem::simulation::field_type &wavefield);
 
 /**
  * @brief Parse medium tag from string representation.

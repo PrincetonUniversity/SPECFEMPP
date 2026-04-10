@@ -227,6 +227,7 @@ public:
              Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >
   get_sources_on_host(const specfem::element::medium_tag medium,
                       const specfem::element::property_tag property,
+                      const specfem::element::attenuation_tag attenuation,
                       const specfem::element::boundary_tag boundary,
                       const specfem::simulation::field_type wavefield) const;
 
@@ -261,6 +262,7 @@ public:
              Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >
   get_sources_on_device(const specfem::element::medium_tag medium,
                         const specfem::element::property_tag property,
+                        const specfem::element::attenuation_tag attenuation,
                         const specfem::element::boundary_tag boundary,
                         const specfem::simulation::field_type wavefield) const;
   ///@}
@@ -415,10 +417,37 @@ private:
    */
   PropertyTagViewType::HostMirror h_property_types;
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
-                      DECLARE(((specfem::assembly::sources_impl::source_medium,
-                                (_DIMENSION_TAG_, _MEDIUM_TAG_)),
-                               source)))
+  /**
+   * @brief Device view storing attenuation types for each 3D source
+   *
+   * Classifies the attenuation model for each source in 3D,
+   * enabling appropriate material loss handling.
+   */
+  using AttenuationTagViewType =
+      Kokkos::View<specfem::element::attenuation_tag *,
+                   Kokkos::DefaultExecutionSpace>;
+  AttenuationTagViewType attenuation_types;
+
+  /**
+   * @brief Host mirror of attenuation types for 3D sources
+   *
+   * Host-accessible copy of `attenuation_types` for initialization.
+   */
+  AttenuationTagViewType::HostMirror h_attenuation_types;
+
+  // ── Storage for 3D sources by medium ───────────────────────────────────
+  // Replaces: FOR_EACH_IN_PRODUCT((DIM3, MEDIUM_TAG(...)), source)
+  static constexpr auto combinations_by_medium =
+      specfem::tag_dispatch::dimension_set<dimension_tag>{} *
+      sources_impl::SourceSets<dimension_tag>::medium_set;
+
+  template <typename TagsType>
+  using SourceMediumFor =
+      specfem::assembly::sources_impl::source_medium<TagsType::dimension_tag,
+                                                     TagsType::medium_tag>;
+  specfem::tag_dispatch::TypedStorage<SourceMediumFor,
+                                      decltype(combinations_by_medium)>
+      source_by_medium;
 
   /**
    * @brief Current simulation time step for 3D source evaluation
@@ -428,21 +457,26 @@ private:
    */
   int timestep;
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
-       PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
-      DECLARE((IndexViewType, element_indices_forward),
-              (IndexViewType::HostMirror, h_element_indices_forward),
-              (IndexViewType, element_indices_backward),
-              (IndexViewType::HostMirror, h_element_indices_backward),
-              (IndexViewType, element_indices_adjoint),
-              (IndexViewType::HostMirror, h_element_indices_adjoint),
-              (IndexViewType, source_indices_forward),
-              (IndexViewType::HostMirror, h_source_indices_forward),
-              (IndexViewType, source_indices_backward),
-              (IndexViewType::HostMirror, h_source_indices_backward),
-              (IndexViewType, source_indices_adjoint),
-              (IndexViewType::HostMirror, h_source_indices_adjoint)))
+  // ── Storage for 3D source indices by combination ────────────────────────
+  // Replaces: FOR_EACH_IN_PRODUCT((DIM3, MEDIUM, PROPERTY, BOUNDARY), ...)
+  // Keyed by (dim, medium, property, attenuation, boundary, wavefield)
+  static constexpr auto combinations_by_source =
+      combinations_by_medium *
+      sources_impl::SourceSets<dimension_tag>::property_set *
+      sources_impl::SourceSets<dimension_tag>::attenuation_set *
+      sources_impl::SourceSets<dimension_tag>::boundary_set *
+      sources_impl::SourceSets<dimension_tag>::wavefield_set;
+
+  using IndexPairType = std::pair<IndexViewType, IndexViewType>;
+  using HostIndexPairType =
+      std::pair<IndexViewType::HostMirror, IndexViewType::HostMirror>;
+
+  specfem::tag_dispatch::Storage<IndexPairType,
+                                 decltype(combinations_by_source)>
+      source_index_by_combination;
+  specfem::tag_dispatch::Storage<HostIndexPairType,
+                                 decltype(combinations_by_source)>
+      h_source_index_by_combination;
 
   template <typename IndexType, typename PointSourceType>
   friend KOKKOS_INLINE_FUNCTION void load_on_device(
@@ -543,16 +577,13 @@ KOKKOS_INLINE_FUNCTION void load_on_device(
   }
 #endif
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
-      CAPTURE((source, sources.source)) {
-        if constexpr (_dimension_tag_ ==
-                      specfem::element::dimension_tag::dim3) {
-          if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
-            _source_.load_on_device(sources.timestep, index, point_source);
-          }
-        }
-      })
+  // Build the compile-time key from PointSourceType's tags
+  using MediumTags = specfem::tags::Tags<PointSourceType::dimension_tag,
+                                         PointSourceType::medium_tag>;
+
+  // Direct O(1) compile-time lookup — no loop, no branching, GPU-safe
+  sources.source_by_medium.template get<MediumTags>().load_on_device(
+      sources.timestep, index, point_source);
 
   return;
 }
@@ -625,16 +656,13 @@ void load_on_host(
   }
 #endif
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
-      CAPTURE((source, sources.source)) {
-        if constexpr (_dimension_tag_ ==
-                      specfem::element::dimension_tag::dim3) {
-          if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
-            _source_.load_on_host(sources.timestep, index, point_source);
-          }
-        }
-      })
+  // Build the compile-time key from PointSourceType's tags
+  using MediumTags = specfem::tags::Tags<PointSourceType::dimension_tag,
+                                         PointSourceType::medium_tag>;
+
+  // Direct O(1) compile-time lookup
+  sources.source_by_medium.template get<MediumTags>().load_on_host(
+      sources.timestep, index, point_source);
 
   return;
 }
@@ -703,16 +731,13 @@ KOKKOS_INLINE_FUNCTION void store_on_device(
   }
 #endif
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
-      CAPTURE((source, sources.source)) {
-        if constexpr (_dimension_tag_ ==
-                      specfem::element::dimension_tag::dim3) {
-          if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
-            _source_.store_on_device(sources.timestep, index, point_source);
-          }
-        }
-      })
+  // Build the compile-time key from PointSourceType's tags
+  using MediumTags = specfem::tags::Tags<PointSourceType::dimension_tag,
+                                         PointSourceType::medium_tag>;
+
+  // Direct O(1) compile-time lookup
+  sources.source_by_medium.template get<MediumTags>().store_on_device(
+      sources.timestep, index, point_source);
 
   return;
 }
@@ -781,16 +806,13 @@ void store_on_host(
   }
 #endif
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
-      CAPTURE((source, sources.source)) {
-        if constexpr (_dimension_tag_ ==
-                      specfem::element::dimension_tag::dim3) {
-          if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
-            _source_.store_on_host(sources.timestep, index, point_source);
-          }
-        }
-      })
+  // Build the compile-time key from PointSourceType's tags
+  using MediumTags = specfem::tags::Tags<PointSourceType::dimension_tag,
+                                         PointSourceType::medium_tag>;
+
+  // Direct O(1) compile-time lookup
+  sources.source_by_medium.template get<MediumTags>().store_on_host(
+      sources.timestep, index, point_source);
 
   return;
 }

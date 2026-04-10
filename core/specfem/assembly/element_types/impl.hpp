@@ -200,16 +200,21 @@ public:
     // Host stores are built first so make_device_storage can reference them.
 
     // 1. Index by (dimension, medium) only.
-    h_elements_by_medium = { make_host_index_view };
-    elements_by_medium = { make_device_storage(h_elements_by_medium) };
+    h_elements_by_medium = decltype(h_elements_by_medium)(make_host_index_view);
+    elements_by_medium =
+        decltype(elements_by_medium)(make_device_storage(h_elements_by_medium));
 
     // 2. Index by (dimension, medium, property, attenuation).
-    h_elements_by_material = { make_host_index_view };
-    elements_by_material = { make_device_storage(h_elements_by_material) };
+    h_elements_by_material =
+        decltype(h_elements_by_material)(make_host_index_view);
+    elements_by_material = decltype(elements_by_material)(
+        make_device_storage(h_elements_by_material));
 
     // 3. Index by (dimension, medium, property, boundary).
-    h_elements_by_boundary = { make_host_index_view };
-    elements_by_boundary = { make_device_storage(h_elements_by_boundary) };
+    h_elements_by_boundary =
+        decltype(h_elements_by_boundary)(make_host_index_view);
+    elements_by_boundary = decltype(elements_by_boundary)(
+        make_device_storage(h_elements_by_boundary));
   }
 
   // ── Accessors by medium ──────────────────────────────────────────────────

@@ -48,6 +48,12 @@ template <specfem::element::boundary_tag... Vs> struct boundary_set {
       values{ { Vs... } };
 };
 
+template <specfem::simulation::field_type... Vs> struct wavefield_set {
+  using tag_enum = specfem::simulation::field_type;
+  static constexpr std::array<specfem::simulation::field_type, sizeof...(Vs)>
+      values{ { Vs... } };
+};
+
 // ── Helpers
 // ───────────────────────────────────────────────────────────────────
 
@@ -69,7 +75,17 @@ template <typename Tuple> constexpr bool is_valid(const Tuple &t) {
       return false;
   } else if constexpr (Tuple::arity == 5)
     return is_valid_full_combo(t);
-  else
+  else if constexpr (Tuple::arity == 6) {
+    // Arity-6: (dim, medium, property, attenuation, boundary, wavefield)
+    // Check the first 5 elements; wavefield (position 5) never invalidates
+    return is_valid_full_combo(
+        specfem::tag_dispatch::impl::TagValueTuple<
+            decltype(t.template get<0>()), decltype(t.template get<1>()),
+            decltype(t.template get<2>()), decltype(t.template get<3>()),
+            decltype(t.template get<4>())>{
+            t.template get<0>(), t.template get<1>(), t.template get<2>(),
+            t.template get<3>(), t.template get<4>() });
+  } else
     return false;
 }
 

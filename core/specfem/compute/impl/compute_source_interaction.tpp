@@ -23,13 +23,14 @@ void compute_source_interaction_core(
 
   constexpr auto medium_tag = Tags::medium_tag;
   constexpr auto property_tag = Tags::property_tag;
+  constexpr auto attenuation_tag = specfem::element::attenuation_tag::none; // Sources do not depend on attenuation
   constexpr auto boundary_tag = Tags::boundary_tag;
   constexpr auto dimension_tag = Tags::dimension_tag;
   constexpr auto wavefield = Tags::wavefield_tag;
 
   const auto [element_indices, source_indices] =
       assembly.sources.get_sources_on_device(medium_tag, property_tag,
-                                             boundary_tag, wavefield);
+                                             attenuation_tag, boundary_tag, wavefield);
 
   // Get the element grid (ngllx, ngllz)
   const auto &element_grid = assembly.mesh.element_grid;
