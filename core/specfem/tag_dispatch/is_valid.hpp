@@ -325,15 +325,18 @@ constexpr bool is_valid_edge(EdgeTuple t) {
 
 /// Valid edge + flux scheme combinations.
 constexpr bool is_valid_edge_and_flux_scheme(EdgeFluxSchemeTuple t) {
+  using D = specfem::element::dimension_tag;
   using F = specfem::element_coupling::flux_scheme_tag;
   auto d = t.get<0>();
   auto c = t.get<1>();
   auto i = t.get<2>();
   auto b = t.get<3>();
   auto f = t.get<4>();
-  if (f != F::natural)
-    return false;
-  return is_valid_edge({ d, c, i, b });
+  if (f == F::natural)
+    return is_valid_edge({ d, c, i, b });
+  if (f == F::symmetric_interior_penalty)
+    return d == D::dim2 && is_valid_edge({ d, c, i, b });
+  return false;
 }
 
 } // namespace specfem::tag_dispatch::impl

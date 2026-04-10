@@ -16,3 +16,8 @@
 
 .. doxygenstruct:: specfem::tag_dispatch::impl::TemplatePolicy
     :members:
+
+``create_mirror_storage_and_copy``
+----------------------------------
+
+.. doxygenfunction:: specfem::tag_dispatch::create_mirror_storage_and_copy

@@ -203,8 +203,13 @@ public:
     });
     if (!result) {
       std::string tags_str;
-      ((tags_str += (tags_str.empty() ? "" : ", ") +
-                    specfem::element::to_string(query_tags)),
+      auto tag_to_str = [](auto tag) -> std::string {
+        using specfem::element::to_string;
+        using specfem::element_connections::to_string;
+        using specfem::element_coupling::to_string;
+        return to_string(tag);
+      };
+      ((tags_str += (tags_str.empty() ? "" : ", ") + tag_to_str(query_tags)),
        ...);
       throw std::runtime_error(
           "no matching element combination for queried tags: [" + tags_str +
