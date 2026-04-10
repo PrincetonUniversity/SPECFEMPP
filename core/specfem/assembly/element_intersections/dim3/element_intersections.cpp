@@ -94,38 +94,23 @@ specfem::assembly::element_intersections<
       } };
 
   // Build host face views from collected faces
-  h_self_faces = decltype(
-      h_self_faces){ [&]<typename TagsType>() -> FaceViewType::HostMirror {
+  h_self_faces = { [&]<typename TagsType>() -> FaceViewType::HostMirror {
     return face_view_from_collected_faces(
-        "specfem::assembly::element_intersections::self_faces_host_mirror",
+        "specfem::assembly::element_intersections::self_faces",
         collected.template get<TagsType>().self_collect, element);
   } };
 
-  h_coupled_faces = decltype(
-      h_coupled_faces){ [&]<typename TagsType>() -> FaceViewType::HostMirror {
+  h_coupled_faces = { [&]<typename TagsType>() -> FaceViewType::HostMirror {
     return face_view_from_collected_faces(
-        "specfem::assembly::element_intersections::coupled_faces_host_"
-        "mirror",
+        "specfem::assembly::element_intersections::coupled_faces",
         collected.template get<TagsType>().coupled_collect, element);
   } };
 
   // Allocate device views and deep-copy from host
-  self_faces = decltype(self_faces){ [&]<typename TagsType>() -> FaceViewType {
-    const auto &h = h_self_faces.template get<TagsType>();
-    FaceViewType d("specfem::assembly::element_intersections::self_faces", h.N,
-                   h.n_points);
-    element_intersections::deep_copy(d, h);
-    return d;
-  } };
-
-  coupled_faces = decltype(
-      coupled_faces){ [&]<typename TagsType>() -> FaceViewType {
-    const auto &h = h_coupled_faces.template get<TagsType>();
-    FaceViewType d("specfem::assembly::element_intersections::coupled_faces",
-                   h.N, h.n_points);
-    element_intersections::deep_copy(d, h);
-    return d;
-  } };
+  self_faces = specfem::tag_dispatch::mirror_and_copy(
+      Kokkos::DefaultExecutionSpace{}, h_self_faces);
+  coupled_faces = specfem::tag_dispatch::mirror_and_copy(
+      Kokkos::DefaultExecutionSpace{}, h_coupled_faces);
 
   return;
 }

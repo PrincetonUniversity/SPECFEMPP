@@ -87,6 +87,8 @@ struct EdgeView {
   using EdgeTypeView = ///< View type for 2D edge classifications
       Kokkos::View<specfem::mesh_entity::dim2::type *, ExecutionSpace>;
 
+  using memory_space = typename ExecutionSpace::memory_space;
+
   using HostMirror =
       std::conditional_t<std::is_same<typename ExecutionSpace::memory_space,
                                       Kokkos::HostSpace>::value,
@@ -176,6 +178,11 @@ struct EdgeView {
    */
   KOKKOS_FORCEINLINE_FUNCTION
   int get_total_points() const { return N * n_points; }
+
+  std::string label() const {
+    const auto &raw = element_index.label();
+    return raw.substr(0, raw.rfind("_element_index"));
+  }
 };
 
 /**
@@ -212,25 +219,6 @@ public:
    */
   using EdgeViewType = EdgeView<Kokkos::DefaultExecutionSpace>;
 
-private:
-  static EdgeViewType::HostMirror create_mirror_view(const EdgeViewType &view) {
-    const auto label = view.element_index.label();
-    // remove element_index suffix
-    const auto base_label = label.substr(0, label.size() - 14);
-    return EdgeViewType::HostMirror(base_label + "_host_mirror", view.N,
-                                    view.n_points);
-  }
-
-  template <typename SrcView, typename DestView>
-  static void deep_copy(const DestView &dest, const SrcView &src) {
-    Kokkos::deep_copy(dest.element_index, src.element_index);
-    Kokkos::deep_copy(dest.edge_index, src.edge_index);
-    Kokkos::deep_copy(dest.edge_types, src.edge_types);
-    Kokkos::deep_copy(dest.iz, src.iz);
-    Kokkos::deep_copy(dest.ix, src.ix);
-  }
-
-public:
   /**
    * @brief Get edge pairs for coupling computations in host memory.
    *
@@ -318,3 +306,24 @@ edge_view_from_collected_edges(
         &element);
 
 } // namespace specfem::assembly
+
+namespace specfem::tag_dispatch {
+
+template <typename Space, typename ExecSpace, typename Layout>
+auto create_mirror(Space,
+                   const specfem::assembly::EdgeView<ExecSpace, Layout> &src) {
+  using DstEdgeView = specfem::assembly::EdgeView<Space, Layout>;
+  return DstEdgeView(src.label(), src.N, src.n_points);
+}
+
+template <typename DestExecSpace, typename SrcExecSpace, typename Layout>
+void deep_copy(specfem::assembly::EdgeView<DestExecSpace, Layout> &dst,
+               const specfem::assembly::EdgeView<SrcExecSpace, Layout> &src) {
+  Kokkos::deep_copy(dst.element_index, src.element_index);
+  Kokkos::deep_copy(dst.edge_index, src.edge_index);
+  Kokkos::deep_copy(dst.edge_types, src.edge_types);
+  Kokkos::deep_copy(dst.iz, src.iz);
+  Kokkos::deep_copy(dst.ix, src.ix);
+}
+
+} // namespace specfem::tag_dispatch

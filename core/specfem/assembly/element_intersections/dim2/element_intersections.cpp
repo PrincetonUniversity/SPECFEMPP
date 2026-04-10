@@ -103,37 +103,22 @@ specfem::assembly::element_intersections<
       } };
 
   // Build host edge views from collected edges
-  h_self_edges = decltype(
-      h_self_edges){ [&]<typename TagsType>() -> EdgeViewType::HostMirror {
+  h_self_edges = { [&]<typename TagsType>() -> EdgeViewType::HostMirror {
     return edge_view_from_collected_edges(
-        "specfem::assembly::interface_types::self_edges_host_mirror",
+        "specfem::assembly::interface_types::self_edges",
         collected.template get<TagsType>().self_collect, element);
   } };
 
-  h_coupled_edges = decltype(
-      h_coupled_edges){ [&]<typename TagsType>() -> EdgeViewType::HostMirror {
+  h_coupled_edges = { [&]<typename TagsType>() -> EdgeViewType::HostMirror {
     return edge_view_from_collected_edges(
-        "specfem::assembly::interface_types::coupled_edges_host_mirror",
+        "specfem::assembly::interface_types::coupled_edges",
         collected.template get<TagsType>().coupled_collect, element);
   } };
-
   // Allocate device views and deep-copy from host
-  self_edges = decltype(self_edges){ [&]<typename TagsType>() -> EdgeViewType {
-    const auto &h = h_self_edges.template get<TagsType>();
-    EdgeViewType d("specfem::assembly::interface_types::self_edges", h.N,
-                   h.n_points);
-    element_intersections::deep_copy(d, h);
-    return d;
-  } };
-
-  coupled_edges =
-      decltype(coupled_edges){ [&]<typename TagsType>() -> EdgeViewType {
-        const auto &h = h_coupled_edges.template get<TagsType>();
-        EdgeViewType d("specfem::assembly::interface_types::coupled_edges", h.N,
-                       h.n_points);
-        element_intersections::deep_copy(d, h);
-        return d;
-      } };
+  self_edges = specfem::tag_dispatch::mirror_and_copy(
+      Kokkos::DefaultExecutionSpace{}, h_self_edges);
+  coupled_edges = specfem::tag_dispatch::mirror_and_copy(
+      Kokkos::DefaultExecutionSpace{}, h_coupled_edges);
 
   return;
 }
