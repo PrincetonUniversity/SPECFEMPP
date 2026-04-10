@@ -90,7 +90,7 @@ pipeline {
                                           -DCMAKE_BUILD_TYPE=Release \
                                           -D CMAKE_INSTALL_PREFIX=install_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}/bin \
                                           ${CMAKE_HOST_FLAGS} ${SIMD_FLAGS} ${MPI_FLAGS} \
-                                          -D SPECFEM_BUILD_TESTS=OFF \
+                                          -D SPECFEM_BUILD_TESTS=ON \
                                           -D SPECFEM_BUILD_BENCHMARKS=OFF
                                         cmake3 --build build_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
                                     """
