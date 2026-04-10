@@ -1,5 +1,6 @@
 #include "specfem/assembly/mpi/dim3/mpi.hpp"
 #include "specfem/mesh_entity.hpp"
+#include "specfem/mpi.hpp"
 #include "specfem/setup.hpp"
 #include <array>
 #include <cmath>

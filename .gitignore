@@ -40,3 +40,4 @@ bin
 
 **/__pycache__
 .github/prompts/ConciseDocument.prompt.md
+.github/prompts/ReviewPR.prompt.md

@@ -2,7 +2,7 @@
 #include "specfem/enums.hpp"
 #include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
-#include "specfem/mpi/mpi.hpp"
+#include "specfem/mpi.hpp"
 
 specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
     const specfem::mesh::mesh<dimension_tag> &mesh,

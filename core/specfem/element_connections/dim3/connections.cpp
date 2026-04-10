@@ -173,6 +173,8 @@ affine_transform(const std::array<int, 4> &permutation, const type_real j,
   return { j_prime, i_prime };
 }
 
+namespace {
+
 /**
  * @brief Face axis information for coordinate mapping
  *
@@ -210,6 +212,8 @@ face_axes_info get_face_axes(const specfem::mesh_entity::dim3::type &face) {
     throw std::runtime_error("Invalid face type for get_face_axes.");
   }
 }
+
+} // anonymous namespace
 
 extern int edge_transform(const std::array<int, 2> &from_nodes,
                           const std::array<int, 2> &to_nodes, const int index,
