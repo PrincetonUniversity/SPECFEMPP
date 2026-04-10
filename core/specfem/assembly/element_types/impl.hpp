@@ -120,6 +120,7 @@ public:
         boundary_tags("specfem::assembly::element_types::boundary_tags", nspec),
         attenuation_tags("specfem::assembly::element_types::attenuation_tags",
                          nspec) {
+
     // ── Step 1: populate per-element tag views ──────────────────────────────
     // Translate each compute-domain index to its mesh-domain counterpart, then
     // copy the four tag values from the mesh tag container into the
@@ -133,88 +134,64 @@ public:
     }
 
     // ── Step 2: define index-building helpers ───────────────────────────────
-    // make_host_index_view<TagsType>() scans all nspec elements and gathers
-    // those whose runtime tags match the compile-time values encoded in
-    // TagsType. The presence of attenuation_tag or boundary_tag in TagsType
-    // controls which per-element views are checked (medium-only, material, or
-    // boundary granularity). The returned view is labeled for Kokkos profiling.
-    auto make_host_index_view = [&]<typename TagsType>() -> HostIndexViewType {
-      constexpr bool has_attenuation = requires { TagsType::attenuation_tag; };
-      constexpr bool has_boundary = requires { TagsType::boundary_tag; };
-
-      std::string prefix;
-      if constexpr (has_attenuation && !has_boundary) {
-        prefix = "element_by_material_";
-      } else if constexpr (!has_attenuation && has_boundary) {
-        prefix = "element_by_boundary_";
-      } else if constexpr (!has_attenuation && !has_boundary) {
-        prefix = "element_by_medium_";
-      } else {
-        static_assert(!has_attenuation || !has_boundary,
-                      "Unsupported tag combination for element index view");
-      }
-
-      auto matches = [&](const int ispec) {
-        bool match = medium_tags(ispec) == TagsType::medium_tag;
-        if constexpr (has_attenuation) {
-          match = match && (property_tags(ispec) == TagsType::property_tag) &&
-                  (attenuation_tags(ispec) == TagsType::attenuation_tag);
-        }
-        if constexpr (has_boundary) {
-          match = match && (property_tags(ispec) == TagsType::property_tag) &&
-                  (boundary_tags(ispec) == TagsType::boundary_tag);
-        }
-        return match;
-      };
-
-      int count = 0;
-      for (int ispec = 0; ispec < nspec; ++ispec)
-        if (matches(ispec))
-          ++count;
-
-      HostIndexViewType host_view(prefix + TagsType::name(), count);
-
-      int index = 0;
-      for (int ispec = 0; ispec < nspec; ++ispec)
-        if (matches(ispec))
-          host_view(index++) = ispec;
-
-      return host_view;
-    };
-
-    // make_device_storage(h_storage) returns a functor that, for each
-    // TagsType, allocates a device view with the same label and extent as the
-    // corresponding host view in h_storage and deep-copies the data to device.
-    auto make_device_storage = [&](auto &h_storage) {
-      return [&h_storage]<typename TagsType>() -> IndexViewType {
-        const auto host_view = h_storage.template get<TagsType>();
-        IndexViewType device_view(host_view.label(), host_view.extent(0));
-        Kokkos::deep_copy(device_view, host_view);
-        return device_view;
+    // make_index_views(matches) returns a functor that, for each TagsType,
+    // loops over all nspec elements and gathers the indices of those matching
+    // the criteria defined by the callable matches (e.g., matching medium,
+    // property, boundary, and/or attenuation tags depending on the TagsType).
+    // The callable needs to return a boolean and can capture the tag views by
+    // reference to implement the matching logic.
+    const make_index_views = [&](callable matches) {
+      return [&]<typename TagsType>() {
+        // 1. Index by medium.
+        int count = 0;
+        for (int ispec = 0; ispec < nspec; ++ispec)
+          if (matches(ispec))
+            ++count;
+        HostIndexViewType host_view("element_by_medium_" + TagsType::name(),
+                                    count);
+        int index = 0;
+        for (int ispec = 0; ispec < nspec; ++ispec)
+          if (matches(ispec))
+            host_view(index++) = ispec;
+        return host_view;
       };
     };
 
-    // ── Step 3: build all six index stores ──────────────────────────────────
-    // Each Storage is constructed by passing the functor as an initializer;
-    // the Storage constructor calls it once per valid TagsType combination.
-    // Host stores are built first so make_device_storage can reference them.
+    // 2.1.1 Index by (dimension, medium) only.
+    h_elements_by_medium = { make_index_views([&](int ispec) {
+      return TagsType::medium_tag == medium_tags(ispec);
+    } // matches function for (dimension, medium) indexing
+                                              ) };
 
-    // 1. Index by (dimension, medium) only.
-    h_elements_by_medium = decltype(h_elements_by_medium)(make_host_index_view);
-    elements_by_medium =
-        decltype(elements_by_medium)(make_device_storage(h_elements_by_medium));
+    // 2.1.2 Create device storage functor that mirrors and copies the
+    //     corresponding host view for each TagsType combination.
+    elements_by_medium = specfem::tag_dispatch::mirror_and_copy_storage<
+        Kokkos::DefaultExecutionSpace>(h_elements_by_medium);
 
-    // 2. Index by (dimension, medium, property, attenuation).
-    h_elements_by_material =
-        decltype(h_elements_by_material)(make_host_index_view);
-    elements_by_material = decltype(elements_by_material)(
-        make_device_storage(h_elements_by_material));
+    // 2.2.1 Index by (dimension, medium, property, attenuation).
+    h_elements_by_material = { make_index_views([&](int ispec) {
+      return TagsType::medium_tag == medium_tags(ispec) &&
+             TagsType::property_tag == property_tags(ispec) &&
+             TagsType::attenuation_tag == attenuation_tags(ispec);
+    } // matches function for (dimension, medium, property, attenuation)
+      // indexing
+                                                ) };
 
-    // 3. Index by (dimension, medium, property, boundary).
-    h_elements_by_boundary =
-        decltype(h_elements_by_boundary)(make_host_index_view);
-    elements_by_boundary = decltype(elements_by_boundary)(
-        make_device_storage(h_elements_by_boundary));
+    elements_by_material = specfem::tag_dispatch::mirror_and_copy_storage<
+        Kokkos::DefaultExecutionSpace>(h_elements_by_material);
+
+    // 2.3.1 Index by (dimension, medium, property, boundary).
+    h_elements_by_boundary = { make_index_views([&](int ispec) {
+      return TagsType::medium_tag == medium_tags(ispec) &&
+             TagsType::property_tag == property_tags(ispec) &&
+             TagsType::boundary_tag == boundary_tags(ispec);
+    } // matches function for (dimension, medium, property, boundary) indexing
+                                                ) };
+
+    // 2.3.2 Create device storage functor that mirrors and copies the
+    //       corresponding host view for each TagsType combination.
+    elements_by_boundary = specfem::tag_dispatch::mirror_and_copy_storage<
+        Kokkos::DefaultExecutionSpace>(h_elements_by_boundary);
   }
 
   // ── Accessors by medium ──────────────────────────────────────────────────
