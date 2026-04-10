@@ -85,7 +85,7 @@ pipeline{
                                         srun -N 1 -t 00:30:00 --account rse ${HOST_RUN_FLAGS} \
                                             --constraint="intel|cascade" \
                                             bash -c 'export OMP_PROC_BIND=spread; \
-                                            export OMP_THREADS=places; ctest -j --output-on-failure;'
+                                            export OMP_THREADS=places; ctest -j --output-on-failure --no-tests=error;'
                                     """
                                     echo ' Testing completed '
                                 }
