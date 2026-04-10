@@ -138,63 +138,42 @@ public:
     // Host stores are built first so create_mirror_storage_and_copy can
     // reference them.
 
+    // Generic factory: returns a Storage initializer lambda that selects
+    // elements whose run-time tags (one tag_view per axis) all match the
+    // compile-time tags encoded in TagsType.  Uses TagsType{}.has(...) so
+    // the caller never has to spell out individual member comparisons.
+    auto make_initializer = [&](std::string label_prefix, auto... tag_views) {
+      return [&, label_prefix,
+              tag_views...]<typename TagsType>() -> HostIndexViewType {
+        int count = 0;
+        for (int ispec = 0; ispec < nspec; ++ispec)
+          if (TagsType{}.has(tag_views(ispec)...))
+            ++count;
+        HostIndexViewType host_view(label_prefix + TagsType::name(), count);
+        int index = 0;
+        for (int ispec = 0; ispec < nspec; ++ispec)
+          if (TagsType{}.has(tag_views(ispec)...))
+            host_view(index++) = ispec;
+        return host_view;
+      };
+    };
+
     // 1. Index by (dimension, medium) only.
-    h_elements_by_medium = { [&]<typename TagsType>() -> HostIndexViewType {
-      int count = 0;
-      for (int ispec = 0; ispec < nspec; ++ispec)
-        if (TagsType::medium_tag == medium_tags(ispec))
-          ++count;
-      HostIndexViewType host_view("element_by_medium_" + TagsType::name(),
-                                  count);
-      int index = 0;
-      for (int ispec = 0; ispec < nspec; ++ispec)
-        if (TagsType::medium_tag == medium_tags(ispec))
-          host_view(index++) = ispec;
-      return host_view;
-    } };
+    h_elements_by_medium = { make_initializer("element_by_medium_",
+                                              medium_tags) };
     elements_by_medium = specfem::tag_dispatch::create_mirror_storage_and_copy(
         Kokkos::DefaultExecutionSpace{}, h_elements_by_medium);
 
     // 2. Index by (dimension, medium, property, attenuation).
-    h_elements_by_material = { [&]<typename TagsType>() -> HostIndexViewType {
-      int count = 0;
-      for (int ispec = 0; ispec < nspec; ++ispec)
-        if (TagsType::medium_tag == medium_tags(ispec) &&
-            TagsType::property_tag == property_tags(ispec) &&
-            TagsType::attenuation_tag == attenuation_tags(ispec))
-          ++count;
-      HostIndexViewType host_view("element_by_material_" + TagsType::name(),
-                                  count);
-      int index = 0;
-      for (int ispec = 0; ispec < nspec; ++ispec)
-        if (TagsType::medium_tag == medium_tags(ispec) &&
-            TagsType::property_tag == property_tags(ispec) &&
-            TagsType::attenuation_tag == attenuation_tags(ispec))
-          host_view(index++) = ispec;
-      return host_view;
-    } };
+    h_elements_by_material = { make_initializer(
+        "element_by_material_", medium_tags, property_tags, attenuation_tags) };
     elements_by_material =
         specfem::tag_dispatch::create_mirror_storage_and_copy(
             Kokkos::DefaultExecutionSpace{}, h_elements_by_material);
 
     // 3. Index by (dimension, medium, property, boundary).
-    h_elements_by_boundary = { [&]<typename TagsType>() -> HostIndexViewType {
-      int count = 0;
-      for (int ispec = 0; ispec < nspec; ++ispec)
-        if (TagsType::medium_tag == medium_tags(ispec) &&
-            TagsType::property_tag == property_tags(ispec) &&
-            TagsType::boundary_tag == boundary_tags(ispec))
-          ++count;
-      HostIndexViewType host_view("element_by_boundary_" + TagsType::name(),
-                                  count);
-      int index = 0;
-      for (int ispec = 0; ispec < nspec; ++ispec)
-        if (TagsType::medium_tag == medium_tags(ispec) &&
-            TagsType::property_tag == property_tags(ispec) &&
-            TagsType::boundary_tag == boundary_tags(ispec))
-          host_view(index++) = ispec;
-      return host_view;
-    } };
+    h_elements_by_boundary = { make_initializer(
+        "element_by_boundary_", medium_tags, property_tags, boundary_tags) };
     elements_by_boundary =
         specfem::tag_dispatch::create_mirror_storage_and_copy(
             Kokkos::DefaultExecutionSpace{}, h_elements_by_boundary);
