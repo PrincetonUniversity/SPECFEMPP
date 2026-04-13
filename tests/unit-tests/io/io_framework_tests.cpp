@@ -461,7 +461,7 @@ TYPED_TEST(IOFrameworkTest, ComplexWorkflow) {
     }
     std::cout << "WRITE: Populated int/double view." << std::endl;
 
-    for (volatile size_t i = 0; i < small_data_size; ++i) {
+    for (size_t i = 0; i < small_data_size; ++i) {
       bool_view(i) = bool_data[i];
     }
     std::cout << "WRITE: Populated bool view." << std::endl;
@@ -531,7 +531,7 @@ TYPED_TEST(IOFrameworkTest, ComplexWorkflow) {
 
       std::cout << "READ: Populated int/double view." << std::endl;
 
-      for (volatile size_t i = 0; i < small_data_size; ++i) {
+      for (size_t i = 0; i < small_data_size; ++i) {
         bool_view(i) = bool_data[i];
       }
 

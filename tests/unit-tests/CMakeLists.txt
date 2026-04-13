@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.17.5)
 
 # GoogleTest requires at least C++17
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 # Include the GoogleTest framework
 include("${CMAKE_SOURCE_DIR}/cmake/googletest.cmake")
