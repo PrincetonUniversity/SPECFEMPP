@@ -24,8 +24,9 @@ int find_anchor_position(
 /**
  * @brief Compute MPI message tag base from rank pair.
  *
- * Ensures global uniqueness by encoding both ranks into a 32-bit tag.
- * Format: (my_rank << 16) | neighbor_rank
+ * Uses modular arithmetic to stay within the MPI standard minimum tag
+ * upper bound (MPI_TAG_UB >= 32767). Reserves 4 tag slots per rank-pair
+ * for message-specific offsets (+0..+3).
  *
  * @param my_rank Current MPI rank
  * @param neighbor_rank Target MPI rank
@@ -33,7 +34,12 @@ int find_anchor_position(
  * later)
  */
 int compute_message_tag_base(unsigned int my_rank, unsigned int neighbor_rank) {
-  return (my_rank << 16) | neighbor_rank;
+  // Combine ranks using modular arithmetic to stay within the MPI standard
+  // minimum tag upper bound (MPI_TAG_UB >= 32767). Reserve 4 tag slots
+  // per rank-pair for message-specific offsets (+0..+3).
+  return static_cast<int>(
+      (static_cast<unsigned long>(my_rank) * 1000003UL + neighbor_rank) %
+      32764);
 }
 
 /**
@@ -220,7 +226,8 @@ specfem::assembly::mpi_impl::packer::packer(
   this->nglob = unique_iglobs.size();
 
   this->send_unpacking_indices(face_index_mapping, comm_group.h_theta,
-                               comm_group.h_neighbor_element);
+                               comm_group.h_neighbor_element,
+                               comm_group.h_neighbor_orientation);
 
   // Allocate views sized to the number of unique points
   const unsigned int n_unique = unique_iglobs.size();
@@ -297,8 +304,8 @@ void specfem::assembly::mpi_impl::packer::send_unpacking_indices(
       compute_message_tag_base(this->my_rank, this->neighbor_rank);
 
   // Message 1: Send metadata (nfaces, ngll, nglob)
-  unsigned int metadata[2] = { this->nfaces, this->ngll, this->nglob };
-  SPECFEM_MPI_SAFECALL(MPI_Send(metadata, 2, MPI_UNSIGNED, this->neighbor_rank,
+  unsigned int metadata[3] = { this->nfaces, this->ngll, this->nglob };
+  SPECFEM_MPI_SAFECALL(MPI_Send(metadata, 3, MPI_UNSIGNED, this->neighbor_rank,
                                 base_tag + 0, comm));
 
   // Message 2: Send rotated face indices [nfaces][ngll][ngll]
@@ -338,7 +345,7 @@ void specfem::assembly::mpi_impl::packer::send_unpacking_indices(
 specfem::assembly::mpi_impl::unpacker::unpacker(
     const specfem::assembly::mpi_impl::communication_group &comm_group,
     const specfem::mesh_entity::element<dimension_tag> &element,
-    const specfem::assembly::mesh_impl::points<dimension_tag> &points) {
+    const specfem::assembly::mesh<dimension_tag> &mesh) {
 
   this->my_rank = comm_group.my_rank;
   this->neighbor_rank = comm_group.neighbor_rank;
@@ -493,7 +500,11 @@ void specfem::assembly::mpi_impl::unpacker::assemble_unpacking_mapping(
   // indices for the GLL points on the MPI interface, which can be used to
   // construct the unpacking mapping.
 
-  for (unsigned int i = 0; i < unique_iglobs.size(); i++) {
+  const unsigned int n_unique = unique_iglobs.size();
+  mapping = IndexMappingView("unpacker::mapping", n_unique);
+  h_mapping = Kokkos::create_mirror_view(mapping);
+
+  for (unsigned int i = 0; i < n_unique; i++) {
     h_mapping(i) = unique_iglobs[i];
   }
 
@@ -551,16 +562,21 @@ specfem::assembly::mpi<specfem::element::dimension_tag::dim3>::mpi(
                                       nglly, ngllx);
   }
 
+  // Construct element from GLL parameters for coordinate mapping
+  const specfem::mesh_entity::element<dimension_tag> element(ngllz, nglly,
+                                                             ngllx);
+
   for (const auto &comm_group : communication_groups) {
     // Create unpacker first to post receives before sends (avoid
     // deadlock)
-    mpi_impl::unpacker unpacker(comm_group, element, mesh.points());
-    const auto [requests, metadata_buf, recv_indices, element_indices] =
-        unpacker.receive_unpacking_buffers();
+    mpi_impl::unpacker unpacker(comm_group, element, mesh);
+    const auto [requests, metadata_buf, recv_indices, element_indices,
+                neighbor_orientations] = unpacker.receive_unpacking_buffers();
     // Post the send after posting receives to avoid deadlock
     mpi_impl::packer packer(comm_group, element, mesh);
     unpacker.assemble_unpacking_mapping(requests, metadata_buf, recv_indices,
-                                        element_indices);
+                                        element_indices, neighbor_orientations,
+                                        element, mesh);
 
     unpackers.emplace_back(std::move(unpacker));
     packers.emplace_back(std::move(packer));

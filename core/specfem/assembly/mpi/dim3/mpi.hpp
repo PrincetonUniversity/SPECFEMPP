@@ -4,8 +4,10 @@
 #include "specfem/element.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/mesh_entity.hpp"
+#include "specfem/mpi.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
+#include <tuple>
 #include <vector>
 
 namespace specfem::assembly {
@@ -163,7 +165,7 @@ public:
    */
   packer(const communication_group &comm_group,
          const specfem::mesh_entity::element<dimension_tag> &element,
-         const specfem::assembly::mesh_impl::points<dimension_tag> &points);
+         const specfem::assembly::mesh<dimension_tag> &mesh);
 
   /**
    * @brief Sends rotated face GLL indices and element indices to the
@@ -193,7 +195,9 @@ public:
   void send_unpacking_indices(
       Kokkos::View<int ***, Kokkos::HostSpace> face_index_mapping,
       Kokkos::View<unsigned char *, Kokkos::HostSpace> theta,
-      Kokkos::View<int *, Kokkos::HostSpace> neighbor_element);
+      Kokkos::View<int *, Kokkos::HostSpace> neighbor_element,
+      Kokkos::View<specfem::mesh_entity::dim3::type *, Kokkos::HostSpace>
+          neighbor_orientation);
 };
 
 struct unpacker {
@@ -240,49 +244,53 @@ public:
    */
   unpacker(const communication_group &comm_group,
            const specfem::mesh_entity::element<dimension_tag> &element,
-           const specfem::assembly::mesh_impl::points<dimension_tag> &points);
+           const specfem::assembly::mesh<dimension_tag> &mesh);
 
   /**
    * @brief Receives MPI buffers for rotated indices and element indices.
    *
-   * Posts all three MPI_Irecv calls upfront (before any MPI_Wait) to avoid
-   * deadlock with blocking MPI_Send on the sender side. Calls MPI_Waitall to
-   * block until all receives complete.
+   * Posts all four MPI_Irecv calls upfront (before any MPI_Wait) to avoid
+   * deadlock with blocking MPI_Send on the sender side.
    *
-   * @param metadata_buf Output: metadata[2] = {nfaces, ngll}
-   * @param recv_indices Output: [nfaces][ngll][ngll] rotated face indices
-   * @param element_indices Output: [nfaces] neighbor element indices
+   * @return Tuple of (requests, metadata_buf, recv_indices, element_indices,
+   *         neighbor_orientations) for deferred MPI_Waitall in
+   *         assemble_unpacking_mapping.
    *
    * @throws std::runtime_error if metadata validation fails
    */
-  void receive_unpacking_buffers(
-      unsigned int metadata_buf[2],
-      Kokkos::View<int ***, Kokkos::HostSpace> recv_indices,
-      Kokkos::View<int *, Kokkos::HostSpace> element_indices);
+  std::tuple<Kokkos::View<MPI_Request[4], Kokkos::HostSpace>,
+             Kokkos::View<unsigned int[3], Kokkos::HostSpace>,
+             Kokkos::View<int ***, Kokkos::HostSpace>,
+             Kokkos::View<int *, Kokkos::HostSpace>,
+             Kokkos::View<int *, Kokkos::HostSpace> >
+  receive_unpacking_buffers();
 
   /**
    * @brief Assembles the mapping from received buffers.
    *
-   * Builds a compact mapping from unique GLL points by traversing received
-   * element indices and deduplicating with local iglob lookup. Uses an
-   * element-to-orientation lookup map to handle potential face ordering
-   * differences between communicating ranks.
+   * Waits for all MPI receives to complete, validates metadata, then builds
+   * a compact mapping from unique GLL points by traversing received element
+   * indices and deduplicating with local iglob lookup.
    *
+   * @param requests        [4] MPI_Request handles from
+   * receive_unpacking_buffers
+   * @param metadata_buf    [3] received metadata {nfaces, ngll, nglob}
+   * @param recv_indices    [nfaces][ngll][ngll] received rotated face indices
    * @param element_indices [nfaces] received neighbor element indices
-   * @param my_orientation [nfaces] local face orientation types
-   * @param my_element [nfaces] local spectral element indices
-   * @param element Element object for map_coordinates
-   * @param points Points object for iglob lookup
+   * @param neighbor_orientations [nfaces] received neighbor face orientations
+   * @param element         Element object for map_coordinates
+   * @param mesh            Mesh object for iglob lookup
    *
-   * @throws std::runtime_error if neighbor element is not found in lookup map
+   * @throws std::runtime_error if metadata or iglob count validation fails
    */
   void assemble_unpacking_mapping(
+      const Kokkos::View<MPI_Request[4], Kokkos::HostSpace> &requests,
+      const Kokkos::View<unsigned int[3], Kokkos::HostSpace> metadata_buf,
+      const Kokkos::View<int ***, Kokkos::HostSpace> recv_indices,
       const Kokkos::View<int *, Kokkos::HostSpace> element_indices,
-      Kokkos::View<specfem::mesh_entity::dim3::type *, Kokkos::HostSpace>
-          my_orientation,
-      Kokkos::View<int *, Kokkos::HostSpace> my_element,
+      const Kokkos::View<int *, Kokkos::HostSpace> neighbor_orientations,
       const specfem::mesh_entity::element<dimension_tag> &element,
-      const specfem::assembly::mesh_impl::points<dimension_tag> &points);
+      const specfem::assembly::mesh<dimension_tag> &mesh);
 };
 
 } // namespace mpi_impl
