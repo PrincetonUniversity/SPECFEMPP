@@ -37,7 +37,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
 
   this->element_types = { nspec, ngllz, nglly, ngllx, this->mesh, mesh.tags };
 
-  this->mpi_interfaces = { mesh.adjacency_graph, ngllz, nglly, ngllx };
+  this->mpi_interfaces = { mesh.adjacency_graph, this->mesh, ngllz, nglly,
+                           ngllx };
 
   this->element_intersections = { ngllz, nglly, ngllx, this->mesh,
                                   this->element_types };

@@ -6,6 +6,7 @@
 #include <cmath>
 #include <stdexcept>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace {
 
@@ -18,6 +19,52 @@ int find_anchor_position(
       return i;
   }
   throw std::runtime_error("Anchor point not found among face corners");
+}
+
+/**
+ * @brief Compute MPI message tag base from rank pair.
+ *
+ * Ensures global uniqueness by encoding both ranks into a 32-bit tag.
+ * Format: (my_rank << 16) | neighbor_rank
+ *
+ * @param my_rank Current MPI rank
+ * @param neighbor_rank Target MPI rank
+ * @return Base tag for message discrimination (message-specific offsets added
+ * later)
+ */
+int compute_message_tag_base(unsigned int my_rank, unsigned int neighbor_rank) {
+  return (my_rank << 16) | neighbor_rank;
+}
+
+/**
+ * @brief Apply rotation permutation to a 2D GLL grid based on theta value.
+ *
+ * Theta encodes discrete 90° rotations as [0,3]:
+ *   theta=0: identity [i][j] → [i][j]
+ *   theta=1: 90° CW [i][j] → [ngll-1-j][i]
+ *   theta=2: 180° [i][j] → [ngll-1-i][ngll-1-j]
+ *   theta=3: 270° CW [i][j] → [j][ngll-1-i]
+ *
+ * @param theta Rotation index [0,3]
+ * @param ngll Grid dimension (ngll × ngll)
+ * @return Pair of rotated (i, j) indices
+ */
+std::pair<unsigned int, unsigned int> apply_rotation(unsigned char theta,
+                                                     unsigned int i,
+                                                     unsigned int j,
+                                                     unsigned int ngll) {
+  switch (theta) {
+  case 0: // Identity
+    return { i, j };
+  case 1: // 90° CW
+    return { ngll - 1 - j, i };
+  case 2: // 180°
+    return { ngll - 1 - i, ngll - 1 - j };
+  case 3: // 270° CW
+    return { j, ngll - 1 - i };
+  default: // Should not reach here; silently use identity
+    return { i, j };
+  }
 }
 
 } // anonymous namespace
@@ -57,11 +104,16 @@ specfem::assembly::mpi_impl::communication_group::communication_group(
   neighbor_orientation =
       FaceNormalViewType("communication_group::neighbor_orientation", nfaces);
   theta = ThetaViewType("communication_group::theta", nfaces);
+  my_element = ElementIndexViewType("communication_group::my_element", nfaces);
+  neighbor_element =
+      ElementIndexViewType("communication_group::neighbor_element", nfaces);
 
   // Create host mirrors for initialization
   h_my_orientation = Kokkos::create_mirror_view(my_orientation);
   h_neighbor_orientation = Kokkos::create_mirror_view(neighbor_orientation);
   h_theta = Kokkos::create_mirror_view(theta);
+  h_my_element = Kokkos::create_mirror_view(my_element);
+  h_neighbor_element = Kokkos::create_mirror_view(neighbor_element);
 
   // Populate host mirrors with connectivity data
   for (unsigned int iface = 0; iface < nfaces; iface++) {
@@ -70,6 +122,10 @@ specfem::assembly::mpi_impl::communication_group::communication_group(
     // --- Face orientations (mesh entity types) ---
     h_my_orientation(iface) = edge.orientation;
     h_neighbor_orientation(iface) = edge.neighbor_orientation;
+
+    // --- Spectral element indices ---
+    h_my_element(iface) = static_cast<int>(edge.local_index);
+    h_neighbor_element(iface) = static_cast<int>(edge.neighbor_local_index);
 
     // --- Anchor-based rotation ---
     const auto my_corners =
@@ -95,14 +151,361 @@ specfem::assembly::mpi_impl::communication_group::communication_group(
   Kokkos::deep_copy(my_orientation, h_my_orientation);
   Kokkos::deep_copy(neighbor_orientation, h_neighbor_orientation);
   Kokkos::deep_copy(theta, h_theta);
+  Kokkos::deep_copy(my_element, h_my_element);
+  Kokkos::deep_copy(neighbor_element, h_neighbor_element);
+}
+
+// ---------------------------------------------------------------------------
+// packer constructor
+//
+// Computes a compact mapping from unique local MPI-surface GLL point indices
+// to partition-global assembled indices (iglob). GLL points shared between
+// adjacent faces (at edges or corners of the MPI interface) are stored only
+// once, so the mapping size equals the number of unique assembled points on
+// the interface rather than nfaces * ngll².
+//
+// Algorithm:
+// 1. Traverse all faces and their GLL points, collecting unique global
+//    indices using an unordered_set for O(1) duplicate detection
+// 2. Allocate Kokkos views sized to the unique point count
+// 3. Populate host view and deep copy to device
+// ---------------------------------------------------------------------------
+specfem::assembly::mpi_impl::packer::packer(
+    const specfem::assembly::mpi_impl::communication_group &comm_group,
+    const specfem::mesh_entity::element<dimension_tag> &element,
+    const specfem::assembly::mesh<dimension_tag> &mesh) {
+
+  this->my_rank = comm_group.my_rank;
+  this->neighbor_rank = comm_group.neighbor_rank;
+  this->nfaces = comm_group.nfaces;
+  this->ngll = comm_group.ngll;
+
+  Kokkos::View<int ***, Kokkos::HostSpace> face_index_mapping(
+      "packer::face_index_mapping", this->nfaces, this->ngll, this->ngll);
+
+  // First pass: collect unique global indices across all face GLL points.
+  // Points shared between adjacent faces (at shared edges/corners) are
+  // inserted only once; insertion order is preserved via the vector.
+  std::vector<int> unique_iglobs;
+  std::unordered_set<int> seen;
+  unique_iglobs.reserve(this->nfaces * this->ngll * this->ngll); // upper-bound
+                                                                 // reserve
+
+  for (unsigned int iface = 0; iface < this->nfaces; iface++) {
+    const int ielem = comm_group.h_my_element(iface);
+    const auto face_type = comm_group.h_my_orientation(iface);
+
+    for (unsigned int ipoint_j = 0; ipoint_j < this->ngll; ipoint_j++) {
+      for (unsigned int ipoint_i = 0; ipoint_i < this->ngll; ipoint_i++) {
+        const int point_linear = ipoint_j * this->ngll + ipoint_i;
+
+        // Map face 2D coordinates to element 3D coordinates
+        const auto [iz, iy, ix] =
+            element.map_coordinates(face_type, point_linear);
+
+        // Look up global assembled index
+        const int iglob = mesh.h_index_mapping(ielem, iz, iy, ix);
+
+        // Insert only if not already seen
+        if (seen.insert(iglob).second) {
+          unique_iglobs.push_back(iglob);
+        }
+
+        face_index_mapping(iface, ipoint_j, ipoint_i) =
+            iglob; // Store for unpacking
+      }
+    }
+  }
+
+  this->nglob = unique_iglobs.size();
+
+  this->send_unpacking_indices(face_index_mapping, comm_group.h_theta,
+                               comm_group.h_neighbor_element);
+
+  // Allocate views sized to the number of unique points
+  const unsigned int n_unique = unique_iglobs.size();
+  mapping = IndexMappingView("packer::mapping", n_unique);
+  h_mapping = Kokkos::create_mirror_view(mapping);
+
+  // Populate host mirror from collected unique global indices
+  for (unsigned int i = 0; i < n_unique; i++) {
+    h_mapping(i) = unique_iglobs[i];
+  }
+
+  // Deep copy host → device
+  Kokkos::deep_copy(mapping, h_mapping);
+}
+
+// ---------------------------------------------------------------------------
+// send_unpacking_indices implementation
+//
+// Applies rotation transformations to face GLL indices and sends them to the
+// neighboring MPI process using three separate blocking MPI messages
+// (Option A):
+//   1. Metadata: nfaces and ngll (for receiver buffer allocation)
+//   2. Rotated face indices: [nfaces][ngll][ngll] with theta-based rotation
+//   3. Neighbor element indices: [nfaces] (for receiver face-to-element
+//   mapping)
+//
+// Rotation is applied per face using the apply_rotation helper function,
+// which maps discrete theta values [0,3] to 90° rotation increments.
+//
+// Uses blocking MPI_Send (wrapped in SPECFEM_MPI_SAFECALL) to ensure data
+// is transmitted before local buffers are deallocated. All calls protected
+// for non-MPI builds via macro.
+// ---------------------------------------------------------------------------
+void specfem::assembly::mpi_impl::packer::send_unpacking_indices(
+    Kokkos::View<int ***, Kokkos::HostSpace> face_index_mapping,
+    Kokkos::View<unsigned char *, Kokkos::HostSpace> theta,
+    Kokkos::View<int *, Kokkos::HostSpace> neighbor_element,
+    Kokkos::View<specfem::mesh_entity::dim3::type *, Kokkos::HostSpace>
+        neighbor_orientation) {
+
+  // -----------------------------------------------------------------------
+  // Step 1: Allocate host-space buffer for rotated indices
+  // -----------------------------------------------------------------------
+  Kokkos::View<int ***, Kokkos::HostSpace> rotated_indices(
+      "packer::send::rotated_indices", this->nfaces, this->ngll, this->ngll);
+
+  // -----------------------------------------------------------------------
+  // Step 2: Apply rotation permutation per face
+  // -----------------------------------------------------------------------
+  for (unsigned int iface = 0; iface < this->nfaces; iface++) {
+    const unsigned char theta_val = theta(iface);
+
+    // Apply rotation permutation based on theta value
+    for (unsigned int i = 0; i < this->ngll; i++) {
+      for (unsigned int j = 0; j < this->ngll; j++) {
+        const auto [rotated_i, rotated_j] =
+            apply_rotation(theta_val, i, j, this->ngll);
+
+        // Copy from original position to rotated position
+        rotated_indices(iface, rotated_j, rotated_i) =
+            face_index_mapping(iface, j, i);
+      }
+    }
+  }
+
+  // -----------------------------------------------------------------------
+  // Step 3: Send three MPI messages (Option A: Separate sends)
+  // -----------------------------------------------------------------------
+  MPI_Comm comm = specfem::MPI::communicator();
+
+  // Derive message tag base from (my_rank, neighbor_rank) pair to ensure
+  // global uniqueness (shared with unpacker)
+  const int base_tag =
+      compute_message_tag_base(this->my_rank, this->neighbor_rank);
+
+  // Message 1: Send metadata (nfaces, ngll, nglob)
+  unsigned int metadata[2] = { this->nfaces, this->ngll, this->nglob };
+  SPECFEM_MPI_SAFECALL(MPI_Send(metadata, 2, MPI_UNSIGNED, this->neighbor_rank,
+                                base_tag + 0, comm));
+
+  // Message 2: Send rotated face indices [nfaces][ngll][ngll]
+  SPECFEM_MPI_SAFECALL(
+      MPI_Send(rotated_indices.data(),
+               static_cast<int>(this->nfaces * this->ngll * this->ngll),
+               MPI_INT, this->neighbor_rank, base_tag + 1, comm));
+
+  // Message 3: Send neighbor element indices [nfaces]
+  SPECFEM_MPI_SAFECALL(MPI_Send(neighbor_element.data(),
+                                static_cast<int>(this->nfaces), MPI_INT,
+                                this->neighbor_rank, base_tag + 2, comm));
+
+  // Message 4: Send neighbor face orientation [nfaces]
+  SPECFEM_MPI_SAFECALL(MPI_Send(neighbor_orientation.data(),
+                                static_cast<int>(this->nfaces), MPI_INT,
+                                this->neighbor_rank, base_tag + 3, comm));
+}
+
+// ---------------------------------------------------------------------------
+// unpacker constructor
+//
+// Receives metadata, rotated face indices, and element indices from the
+// neighboring MPI process using non-blocking MPI_Irecv calls (all posted
+// upfront before any MPI_Wait), then deduplicates received GLL points to build
+// a compact mapping.
+//
+// Algorithm:
+// 1. Store my_rank, neighbor_rank, nfaces, ngll from communication_group
+// 2. Allocate host-space receive buffers
+// 3. Call receive_unpacking_buffers to receive MPI messages
+// 4. Call assemble_unpacking_mapping to build the mapping
+//
+// Non-blocking receives avoid deadlock with blocking MPI_Send on sender side
+// because all Irecv are posted before Waitall.
+// ---------------------------------------------------------------------------
+specfem::assembly::mpi_impl::unpacker::unpacker(
+    const specfem::assembly::mpi_impl::communication_group &comm_group,
+    const specfem::mesh_entity::element<dimension_tag> &element,
+    const specfem::assembly::mesh_impl::points<dimension_tag> &points) {
+
+  this->my_rank = comm_group.my_rank;
+  this->neighbor_rank = comm_group.neighbor_rank;
+  this->nfaces = comm_group.nfaces;
+  this->ngll = comm_group.ngll;
+}
+
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// receive_unpacking_buffers implementation (private helper)
+//
+// Posts three non-blocking MPI_Irecv calls (all before any MPI_Wait):
+// 1. Metadata: nfaces and ngll (for validation)
+// 2. Rotated face indices: [nfaces][ngll][ngll] (for validation or future use)
+// 3. Neighbor element indices: [nfaces] (for face-to-element mapping)
+//
+// Calls MPI_Waitall to block until all receives complete. Validates that
+// received metadata matches expected nfaces and ngll.
+// ---------------------------------------------------------------------------
+std::tuple<Kokkos::View<MPI_Request[4], Kokkos::HostSpace>,
+           Kokkos::View<unsigned int[3], Kokkos::HostSpace>,
+           Kokkos::View<int ***, Kokkos::HostSpace>,
+           Kokkos::View<int *, Kokkos::HostSpace>,
+           Kokkos::View<int *, Kokkos::HostSpace> >
+specfem::assembly::mpi_impl::unpacker::receive_unpacking_buffers() {
+
+  // -----------------------------------------------------------------------
+  // Step 1: Compute receive tag (reversed from sender's perspective)
+  // -----------------------------------------------------------------------
+  const int recv_tag =
+      compute_message_tag_base(this->neighbor_rank, this->my_rank);
+
+  Kokkos::View<unsigned int[3], Kokkos::HostSpace> metadata_buf(
+      Kokkos::WithoutInitializing, "unpacker::metadata_buf");
+  Kokkos::View<int ***, Kokkos::HostSpace> recv_indices(
+      Kokkos::WithoutInitializing, "unpacker::recv_indices", this->nfaces,
+      this->ngll, this->ngll);
+  Kokkos::View<int *, Kokkos::HostSpace> element_indices(
+      Kokkos::WithoutInitializing, "unpacker::element_indices", this->nfaces);
+  Kokkos::View<int *, Kokkos::HostSpace> neighbor_orientations(
+      Kokkos::WithoutInitializing, "unpacker::neighbor_orientations",
+      this->nfaces);
+
+  // -----------------------------------------------------------------------
+  // Step 2: Post all three MPI_Irecv before any MPI_Wait
+  // -----------------------------------------------------------------------
+  Kokkos::View<MPI_Request[4], Kokkos::HostSpace> requests(
+      Kokkos::WithoutInitializing,
+      "unpacker::requests"); // Store requests for Waitall
+  MPI_Comm comm = specfem::MPI::communicator();
+
+  // Message 1: Receive metadata (nfaces, ngll)
+  SPECFEM_MPI_SAFECALL(MPI_Irecv(metadata_buf.data(), 3, MPI_UNSIGNED,
+                                 this->neighbor_rank, recv_tag + 0, comm,
+                                 &requests[0]));
+
+  // Message 2: Receive rotated face indices [nfaces][ngll][ngll]
+  SPECFEM_MPI_SAFECALL(MPI_Irecv(
+      recv_indices.data(),
+      static_cast<int>(this->nfaces * this->ngll * this->ngll), MPI_INT,
+      this->neighbor_rank, recv_tag + 1, comm, &requests[1]));
+
+  // Message 3: Receive neighbor element indices [nfaces]
+  SPECFEM_MPI_SAFECALL(
+      MPI_Irecv(element_indices.data(), static_cast<int>(this->nfaces), MPI_INT,
+                this->neighbor_rank, recv_tag + 2, comm, &requests[2]));
+
+  // Message 4: Receive neighbor orientations [nfaces]
+  SPECFEM_MPI_SAFECALL(MPI_Irecv(
+      neighbor_orientations.data(), static_cast<int>(this->nfaces), MPI_INT,
+      this->neighbor_rank, recv_tag + 3, comm, &requests[3]));
+
+  return { requests, metadata_buf, recv_indices, element_indices,
+           neighbor_orientations };
+}
+
+// ---------------------------------------------------------------------------
+// assemble_unpacking_mapping implementation (private helper)
+//
+// Builds the mapping from unique GLL points received from the neighbor by
+// traversing received element indices and deduplicating with local iglob
+// lookup. Uses an element-to-orientation lookup map to handle potential
+// face ordering differences between communicating ranks.
+//
+// The deduplication strategy mirrors the packer: traverse faces in order,
+// GLL points are deduplicated via unordered_set, and the mapping size reflects
+// the actual number of unique points on the interface.
+// ---------------------------------------------------------------------------
+void specfem::assembly::mpi_impl::unpacker::assemble_unpacking_mapping(
+    const Kokkos::View<MPI_Request[4], Kokkos::HostSpace> &requests,
+    const Kokkos::View<unsigned int[3], Kokkos::HostSpace> metadata_buf,
+    const Kokkos::View<int ***, Kokkos::HostSpace> recv_indices,
+    const Kokkos::View<int *, Kokkos::HostSpace> element_indices,
+    const Kokkos::View<int *, Kokkos::HostSpace> neighbor_orientations,
+    const specfem::mesh_entity::element<dimension_tag> &element,
+    const specfem::assembly::mesh<dimension_tag> &mesh) {
+
+  // -----------------------------------------------------------------------
+  // Step 1: Wait for all receives to complete
+  // -----------------------------------------------------------------------
+  SPECFEM_MPI_SAFECALL(MPI_Waitall(4, requests.data(), MPI_STATUSES_IGNORE));
+
+  // -----------------------------------------------------------------------
+  // Step 2: Validate received metadata
+  // -----------------------------------------------------------------------
+  if (metadata_buf[0] != this->nfaces || metadata_buf[1] != this->ngll) {
+    throw std::runtime_error(
+        "unpacker::receive_unpacking_buffers: metadata mismatch with sender");
+  }
+  // -----------------------------------------------------------------------
+
+  // Step 3: Build mapping from received buffers
+  // Traverse received element indices and deduplicate GLL points using local
+  // iglob lookup. Use element-to-orientation map to handle face ordering
+  // differences. The mapping size equals the number of unique points on the
+  // interface.
+  std::vector<int> unique_iglobs;
+  std::unordered_set<int> seen;
+  unique_iglobs.reserve(this->nfaces * this->ngll * this->ngll); // upper-bound
+                                                                 // reserve
+
+  for (unsigned int iface = 0; iface < this->nfaces; iface++) {
+    const int ielem = element_indices(iface);
+    const auto face_type = static_cast<specfem::mesh_entity::dim3::type>(
+        neighbor_orientations(iface));
+
+    for (unsigned int ipoint_j = 0; ipoint_j < this->ngll; ipoint_j++) {
+      for (unsigned int ipoint_i = 0; ipoint_i < this->ngll; ipoint_i++) {
+        const int point_linear = ipoint_j * this->ngll + ipoint_i;
+
+        // Map face 2D coordinates to element 3D coordinates
+        const auto [iz, iy, ix] =
+            element.map_coordinates(face_type, point_linear);
+        // Look up global assembled index
+        const int iglob = mesh.h_index_mapping(ielem, iz, iy, ix);
+        // Insert only if not already seen
+        if (seen.insert(iglob).second) {
+          unique_iglobs.push_back(iglob);
+        }
+      }
+    }
+  }
+
+  // Check if the number of unique iglobs matches the nglob sent by the neighbor
+
+  if (unique_iglobs.size() != metadata_buf[2]) {
+    throw std::runtime_error("unpacker::assemble_unpacking_mapping: unique "
+                             "iglob count mismatch with sender metadata");
+  }
+
+  // At this point, unique_iglobs contains the deduplicated list of global
+  // indices for the GLL points on the MPI interface, which can be used to
+  // construct the unpacking mapping.
+
+  for (unsigned int i = 0; i < unique_iglobs.size(); i++) {
+    h_mapping(i) = unique_iglobs[i];
+  }
+
+  Kokkos::deep_copy(mapping, h_mapping);
 }
 
 // ---------------------------------------------------------------------------
 // mpi<dim3> constructor
 //
-// Analyzes the mesh adjacency graph to extract all face-level MPI interfaces
-// and groups them by neighboring process. This creates a communication schedule
-// that filters out edge and corner adjacencies.
+// Analyzes the mesh adjacency graph to extract all face-level MPI
+// interfaces and groups them by neighboring process. This creates a
+// communication schedule that filters out edge and corner adjacencies.
 //
 // Algorithm:
 // 1. Extract all MPI connections from adjacency_graph.mpi_connections()
@@ -112,12 +515,13 @@ specfem::assembly::mpi_impl::communication_group::communication_group(
 //    (skip connections involving edges or corners)
 // 5. Create one communication_group per unique neighbor
 //
-// Result: communication_groups vector is indexed by neighbor rank, enabling
-// efficient kernel dispatch for data exchange.
+// Result: communication_groups vector is indexed by neighbor rank,
+// enabling efficient kernel dispatch for data exchange.
 // ---------------------------------------------------------------------------
 specfem::assembly::mpi<specfem::element::dimension_tag::dim3>::mpi(
     const specfem::mesh::adjacency_graph<dimension_tag> &adjacency_graph,
-    const int ngllz, const int nglly, const int ngllx) {
+    const specfem::assembly::mesh<dimension_tag> &mesh, const int ngllz,
+    const int nglly, const int ngllx) {
 
   const unsigned int my_rank =
       static_cast<unsigned int>(specfem::MPI::get_rank());
@@ -145,5 +549,20 @@ specfem::assembly::mpi<specfem::element::dimension_tag::dim3>::mpi(
   for (auto &[neighbor_rank, edges] : grouped) {
     communication_groups.emplace_back(my_rank, neighbor_rank, edges, ngllz,
                                       nglly, ngllx);
+  }
+
+  for (const auto &comm_group : communication_groups) {
+    // Create unpacker first to post receives before sends (avoid
+    // deadlock)
+    mpi_impl::unpacker unpacker(comm_group, element, mesh.points());
+    const auto [requests, metadata_buf, recv_indices, element_indices] =
+        unpacker.receive_unpacking_buffers();
+    // Post the send after posting receives to avoid deadlock
+    mpi_impl::packer packer(comm_group, element, mesh);
+    unpacker.assemble_unpacking_mapping(requests, metadata_buf, recv_indices,
+                                        element_indices);
+
+    unpackers.emplace_back(std::move(unpacker));
+    packers.emplace_back(std::move(packer));
   }
 }
