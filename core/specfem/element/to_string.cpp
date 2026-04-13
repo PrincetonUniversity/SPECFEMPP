@@ -152,28 +152,6 @@ const std::string specfem::element::to_string(
   return attenuation_string;
 }
 
-const std::string
-specfem::element::to_string(const specfem::simulation::field_type &wavefield) {
-  std::string wavefield_string;
-
-  switch (wavefield) {
-  case specfem::simulation::field_type::forward:
-    wavefield_string = "forward";
-    break;
-  case specfem::simulation::field_type::backward:
-    wavefield_string = "backward";
-    break;
-  case specfem::simulation::field_type::adjoint:
-    wavefield_string = "adjoint";
-    break;
-  default:
-    wavefield_string = "unknown";
-    break;
-  }
-
-  return wavefield_string;
-}
-
 specfem::element::medium_tag
 specfem::element::from_string(const std::string &medium_tag) {
   if (medium_tag == "elastic_psv") {

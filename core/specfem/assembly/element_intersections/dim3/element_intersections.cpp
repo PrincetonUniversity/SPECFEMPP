@@ -94,17 +94,19 @@ specfem::assembly::element_intersections<
       } };
 
   // Build host face views from collected faces
-  h_self_faces = { [&]<typename TagsType>() -> FaceViewType::HostMirror {
-    return face_view_from_collected_faces(
-        "specfem::assembly::element_intersections::self_faces",
-        collected.template get<TagsType>().self_collect, element);
-  } };
+  h_self_faces = decltype(h_self_faces)(
+      [&]<typename TagsType>() -> FaceViewType::HostMirror {
+        return face_view_from_collected_faces(
+            "specfem::assembly::element_intersections::self_faces",
+            collected.template get<TagsType>().self_collect, element);
+      });
 
-  h_coupled_faces = { [&]<typename TagsType>() -> FaceViewType::HostMirror {
-    return face_view_from_collected_faces(
-        "specfem::assembly::element_intersections::coupled_faces",
-        collected.template get<TagsType>().coupled_collect, element);
-  } };
+  h_coupled_faces = decltype(h_coupled_faces)(
+      [&]<typename TagsType>() -> FaceViewType::HostMirror {
+        return face_view_from_collected_faces(
+            "specfem::assembly::element_intersections::coupled_faces",
+            collected.template get<TagsType>().coupled_collect, element);
+      });
 
   // Allocate device views and deep-copy from host
   self_faces = specfem::tag_dispatch::create_mirror_storage_and_copy(

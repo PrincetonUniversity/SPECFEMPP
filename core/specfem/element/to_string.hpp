@@ -74,14 +74,6 @@ const std::string to_string(const boundary_tag &boundary);
 const std::string to_string(const attenuation_tag &attenuation);
 
 /**
- * @brief Convert field/wavefield type to string.
- *
- * @param wavefield Wavefield type (forward, backward, adjoint)
- * @return String representation
- */
-const std::string to_string(const specfem::simulation::field_type &wavefield);
-
-/**
  * @brief Parse medium tag from string representation.
  *
  * @param medium_tag String representation of medium type

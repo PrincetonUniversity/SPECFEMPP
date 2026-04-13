@@ -2,6 +2,7 @@
 
 #include "element_combinations.hpp"
 #include "for_each.hpp"
+#include "specfem/simulation.hpp"
 #include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
 #include <cstddef>
@@ -207,6 +208,7 @@ public:
         using specfem::element::to_string;
         using specfem::element_connections::to_string;
         using specfem::element_coupling::to_string;
+        using specfem::simulation::to_string;
         return to_string(tag);
       };
       ((tags_str += (tags_str.empty() ? "" : ", ") + tag_to_str(query_tags)),
