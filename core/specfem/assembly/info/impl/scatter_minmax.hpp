@@ -141,6 +141,8 @@ template <typename T = type_real, size_t Extent = 0> struct ScatterMinMax {
         scatter_min(min_view), scatter_max(max_view), size_(size) {
     Kokkos::deep_copy(min_view, std::numeric_limits<T>::max());
     Kokkos::deep_copy(max_view, std::numeric_limits<T>::lowest());
+    scatter_min.reset();
+    scatter_max.reset();
   }
 
   KOKKOS_INLINE_FUNCTION
