@@ -86,60 +86,44 @@ protected:
     // ── host stores ────────────────────────────────────────────────────────
     // For each valid (dim, medium, property, attenuation) combination: count
     // matching receivers, allocate a view of that size, then fill it.
+    //
+    // Generic factory: returns a Storage initializer lambda that selects
+    // receivers whose host element has tags matching the compile-time TagsType.
+    // get_value(irec, ispec) supplies the integer stored for each match.
+    // tag_views are callables (int ispec) -> tag, matched via TagsType{}.has().
+    auto make_initializer = [&](std::string label_prefix, auto get_value,
+                                auto... tag_views) {
+      return [&, label_prefix, get_value,
+              tag_views...]<typename TagsType>() -> HostIndexViewType {
+        int count = 0;
+        for (int irec = 0; irec < (int)h_elements_all.extent(0); ++irec) {
+          const int ispec = h_elements_all(irec);
+          if (ispec < 0)
+            continue;
+          if (TagsType{}.has(tag_views(ispec)...))
+            ++count;
+        }
+        HostIndexViewType h_view(label_prefix + TagsType::name(), count);
+        int idx = 0;
+        for (int irec = 0; irec < (int)h_elements_all.extent(0); ++irec) {
+          const int ispec = h_elements_all(irec);
+          if (ispec < 0)
+            continue;
+          if (TagsType{}.has(tag_views(ispec)...))
+            h_view(idx++) = get_value(irec, ispec);
+        }
+        return h_view;
+      };
+    };
 
-    h_receiver_elements_ = { [&]<typename TagsType>() -> HostIndexViewType {
-      int count = 0;
-      for (int irec = 0; irec < (int)h_elements_all.extent(0); ++irec) {
-        const int ispec = h_elements_all(irec);
-        if (ispec < 0)
-          continue;
-        if (element_types.get_medium_tag(ispec) == TagsType::medium_tag &&
-            element_types.get_property_tag(ispec) == TagsType::property_tag &&
-            element_types.get_attenuation_tag(ispec) ==
-                TagsType::attenuation_tag)
-          ++count;
-      }
-      HostIndexViewType h_view("receiver_elements_" + TagsType::name(), count);
-      int idx = 0;
-      for (int irec = 0; irec < (int)h_elements_all.extent(0); ++irec) {
-        const int ispec = h_elements_all(irec);
-        if (ispec < 0)
-          continue;
-        if (element_types.get_medium_tag(ispec) == TagsType::medium_tag &&
-            element_types.get_property_tag(ispec) == TagsType::property_tag &&
-            element_types.get_attenuation_tag(ispec) ==
-                TagsType::attenuation_tag)
-          h_view(idx++) = ispec;
-      }
-      return h_view;
-    } };
-
-    h_receiver_indices_ = { [&]<typename TagsType>() -> HostIndexViewType {
-      int count = 0;
-      for (int irec = 0; irec < (int)h_elements_all.extent(0); ++irec) {
-        const int ispec = h_elements_all(irec);
-        if (ispec < 0)
-          continue;
-        if (element_types.get_medium_tag(ispec) == TagsType::medium_tag &&
-            element_types.get_property_tag(ispec) == TagsType::property_tag &&
-            element_types.get_attenuation_tag(ispec) ==
-                TagsType::attenuation_tag)
-          ++count;
-      }
-      HostIndexViewType h_view("receiver_indices_" + TagsType::name(), count);
-      int idx = 0;
-      for (int irec = 0; irec < (int)h_elements_all.extent(0); ++irec) {
-        const int ispec = h_elements_all(irec);
-        if (ispec < 0)
-          continue;
-        if (element_types.get_medium_tag(ispec) == TagsType::medium_tag &&
-            element_types.get_property_tag(ispec) == TagsType::property_tag &&
-            element_types.get_attenuation_tag(ispec) ==
-                TagsType::attenuation_tag)
-          h_view(idx++) = irec;
-      }
-      return h_view;
-    } };
+    h_receiver_elements_ = { make_initializer(
+        "receiver_elements_", [](int, int ispec) { return ispec; },
+        element_types.medium_tags, element_types.property_tags,
+        element_types.attenuation_tags) };
+    h_receiver_indices_ = { make_initializer(
+        "receiver_indices_", [](int irec, int) { return irec; },
+        element_types.medium_tags, element_types.property_tags,
+        element_types.attenuation_tags) };
 
     // ── mirror to device ──────────────────────────────────────────────────
     receiver_elements_ = specfem::tag_dispatch::create_mirror_storage_and_copy(
