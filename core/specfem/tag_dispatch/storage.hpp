@@ -82,22 +82,22 @@ template <template <typename> class Tmpl> struct TemplatePolicy {
 };
 
 /**
- * @brief A single inheritance slot for one combo in a `UnifiedStorage`.
+ * @brief A single inheritance slot for one combo in a `Storage`.
  *
  * Holds `value` of type `Policy::type<TagsType>`.  Accessed via a
- * `static_cast` inside `UnifiedStorage::get<TagsType>()`.
+ * `static_cast` inside `Storage::get<TagsType>()`.
  *
  * @tparam TagsType  The `specfem::tags::Tags<...>` type identifying this slot.
  * @tparam Policy    `TypePolicy<T>` or `TemplatePolicy<Tmpl>`.
  */
-template <typename TagsType, typename Policy> struct UnifiedSlot {
+template <typename TagsType, typename Policy> struct StorageSlot {
   typename Policy::template type<TagsType> value{};
 };
 
 /**
  * @brief Per-combo storage container implemented via multiple inheritance.
  *
- * `UnifiedStorage` privately inherits one `UnifiedSlot<TagsType, Policy>` per
+ * `Storage` privately inherits one `StorageSlot<TagsType, Policy>` per
  * valid combo in `ET`.  `get<TagsType>()` is a plain base-class upcast — zero
  * overhead and device-safe.
  *
@@ -110,11 +110,11 @@ template <typename TagsType, typename Policy> struct UnifiedSlot {
  */
 template <typename Policy, typename ET,
           typename = std::make_index_sequence<ET::size> >
-class UnifiedStorage;
+class Storage;
 
 template <typename Policy, typename ET, std::size_t... Is>
-class UnifiedStorage<Policy, ET, std::index_sequence<Is...> >
-    : private UnifiedSlot<combo_to_tags_t<ET, Is, ET::combo_type::arity>,
+class Storage<Policy, ET, std::index_sequence<Is...> >
+    : private StorageSlot<combo_to_tags_t<ET, Is, ET::combo_type::arity>,
                           Policy>... {
 
 public:
@@ -123,7 +123,7 @@ public:
 
   /** @brief Default-construct all slots using the default constructor of their
    * value type. */
-  UnifiedStorage() = default;
+  Storage() = default;
 
   /**
    * @brief Construct each slot by calling `initializer.operator()<TagsType>()`.
@@ -144,8 +144,8 @@ public:
    * @endcode
    */
   template <typename Func>
-  explicit UnifiedStorage(Func &&initializer)
-      : UnifiedSlot<combo_to_tags_t<ET, Is, ET::combo_type::arity>, Policy>{
+  Storage(Func &&initializer)
+      : StorageSlot<combo_to_tags_t<ET, Is, ET::combo_type::arity>, Policy>{
           initializer.template
           operator()<combo_to_tags_t<ET, Is, ET::combo_type::arity> >()
         }... {}
@@ -160,7 +160,7 @@ public:
    * @return  Reference to the stored value.
    */
   template <typename TagsType> KOKKOS_INLINE_FUNCTION auto &get() {
-    return UnifiedSlot<TagsType, Policy>::value;
+    return StorageSlot<TagsType, Policy>::value;
   }
 
   /**
@@ -170,7 +170,7 @@ public:
    * @return  Const reference to the stored value.
    */
   template <typename TagsType> KOKKOS_INLINE_FUNCTION const auto &get() const {
-    return UnifiedSlot<TagsType, Policy>::value;
+    return StorageSlot<TagsType, Policy>::value;
   }
 
   /**
@@ -221,39 +221,12 @@ public:
   }
 };
 
-/**
- * @brief Perform a `Kokkos::deep_copy` for every slot across two
- *        `UnifiedStorage` instances with potentially different policies.
- *
- * Useful for copying between host-mirror and device storage when the slot type
- * differs between policies (e.g. `Kokkos::View` vs its host mirror).
- *
- * @tparam Policy1  Destination storage policy.
- * @tparam Policy2  Source storage policy.
- * @tparam ET       Shared `element_combinations` type.
- * @param  dest     Destination storage.
- * @param  src      Source storage.
- */
-template <typename Policy1, typename Policy2, typename ET, std::size_t... Is>
-void deep_copy(
-    UnifiedStorage<Policy1, ET, std::index_sequence<Is...> > &dest,
-    const UnifiedStorage<Policy2, ET, std::index_sequence<Is...> > &src) {
-  (Kokkos::deep_copy(
-       static_cast<UnifiedSlot<combo_to_tags_t<ET, Is, ET::combo_type::arity>,
-                               Policy1> &>(dest)
-           .value,
-       static_cast<const UnifiedSlot<
-           combo_to_tags_t<ET, Is, ET::combo_type::arity>, Policy2> &>(src)
-           .value),
-   ...);
-}
-
 } // namespace impl
 
 /**
  * @brief Homogeneous per-combo storage: every combo slot holds a `T`.
  *
- * Alias for `impl::UnifiedStorage<impl::TypePolicy<T>, ET>`.
+ * Alias for `impl::Storage<impl::TypePolicy<T>, ET>`.
  *
  * @tparam T   The uniform value type stored for every valid combo.
  * @tparam ET  `element_combinations` type.
@@ -267,13 +240,13 @@ void deep_copy(
  * @endcode
  */
 template <typename T, typename ET>
-using Storage = impl::UnifiedStorage<impl::TypePolicy<T>, ET>;
+using Storage = impl::Storage<impl::TypePolicy<T>, ET>;
 
 /**
  * @brief Heterogeneous per-combo storage: combo `TagsType` holds
  * `Tmpl<TagsType>`.
  *
- * Alias for `impl::UnifiedStorage<impl::TemplatePolicy<Tmpl>, ET>`.
+ * Alias for `impl::Storage<impl::TemplatePolicy<Tmpl>, ET>`.
  *
  * @tparam Tmpl  Class template parameterised by a `Tags<...>` type.
  * @tparam ET    `element_combinations` type.
@@ -286,7 +259,7 @@ using Storage = impl::UnifiedStorage<impl::TypePolicy<T>, ET>;
  * @endcode
  */
 template <template <typename> class Tmpl, typename ET>
-using TypedStorage = impl::UnifiedStorage<impl::TemplatePolicy<Tmpl>, ET>;
+using TypedStorage = impl::Storage<impl::TemplatePolicy<Tmpl>, ET>;
 
 /**
  * @brief Deep-copy customization point for use by @ref

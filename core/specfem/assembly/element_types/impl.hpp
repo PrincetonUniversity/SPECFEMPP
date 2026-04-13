@@ -154,23 +154,22 @@ public:
     };
 
     // 2.1.1 Index by (dimension, medium) only.
-    h_elements_by_medium = HostIndexStorage<decltype(combinations_by_medium)>(
-        make_index_views([&]<typename TagsType>(int ispec) {
+    h_elements_by_medium = { make_index_views(
+        [&]<typename TagsType>(int ispec) {
           return TagsType::medium_tag == medium_tags(ispec);
-        }));
+        }) };
 
     // 2.1.2 Mirror host storage to device.
     elements_by_medium = specfem::tag_dispatch::create_mirror_storage_and_copy(
         Kokkos::DefaultExecutionSpace{}, h_elements_by_medium);
 
     // 2.2.1 Index by (dimension, medium, property, attenuation).
-    h_elements_by_material =
-        HostIndexStorage<decltype(combinations_by_material)>(
-            make_index_views([&]<typename TagsType>(int ispec) {
-              return TagsType::medium_tag == medium_tags(ispec) &&
-                     TagsType::property_tag == property_tags(ispec) &&
-                     TagsType::attenuation_tag == attenuation_tags(ispec);
-            }));
+    h_elements_by_material = { make_index_views(
+        [&]<typename TagsType>(int ispec) {
+          return TagsType::medium_tag == medium_tags(ispec) &&
+                 TagsType::property_tag == property_tags(ispec) &&
+                 TagsType::attenuation_tag == attenuation_tags(ispec);
+        }) };
 
     // 2.2.2 Mirror host storage to device.
     elements_by_material =
@@ -178,13 +177,12 @@ public:
             Kokkos::DefaultExecutionSpace{}, h_elements_by_material);
 
     // 2.3.1 Index by (dimension, medium, property, boundary).
-    h_elements_by_boundary =
-        HostIndexStorage<decltype(combinations_by_boundary)>(
-            make_index_views([&]<typename TagsType>(int ispec) {
-              return TagsType::medium_tag == medium_tags(ispec) &&
-                     TagsType::property_tag == property_tags(ispec) &&
-                     TagsType::boundary_tag == boundary_tags(ispec);
-            }));
+    h_elements_by_boundary = { make_index_views(
+        [&]<typename TagsType>(int ispec) {
+          return TagsType::medium_tag == medium_tags(ispec) &&
+                 TagsType::property_tag == property_tags(ispec) &&
+                 TagsType::boundary_tag == boundary_tags(ispec);
+        }) };
 
     // 2.3.2 Mirror host storage to device.
     elements_by_boundary =

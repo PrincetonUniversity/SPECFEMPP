@@ -421,10 +421,10 @@ private:
       sources_impl::SourceSets<dimension_tag>::medium_set;
 
   template <typename TagsType>
-  using SourceMediumFor =
+  using SourceMediumTemplateType =
       specfem::assembly::sources_impl::source_medium<TagsType::dimension_tag,
                                                      TagsType::medium_tag>;
-  specfem::tag_dispatch::TypedStorage<SourceMediumFor,
+  specfem::tag_dispatch::TypedStorage<SourceMediumTemplateType,
                                       decltype(combinations_by_medium)>
       source_by_medium;
 

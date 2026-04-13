@@ -75,41 +75,44 @@ specfem::assembly::sources<specfem::element::dimension_tag::dim2>::sources(
   specfem::assembly::sources_impl::locate_sources(element_types, mesh, sources);
 
   // Initialize source_by_medium using TypedStorage initializer
-  source_by_medium = decltype(
-      source_by_medium)([&]<typename TagsType>() -> SourceMediumFor<TagsType> {
-    constexpr auto dim_tag = TagsType::dimension_tag;
-    constexpr auto med_tag = TagsType::medium_tag;
-    auto [sorted_sources, source_indices] =
-        specfem::assembly::sources_impl::sort_sources_per_medium<dim_tag,
-                                                                 med_tag>(
-            sources, element_types, mesh);
+  source_by_medium = decltype(source_by_medium)(
+      [&]<typename TagsType>() -> SourceMediumTemplateType<TagsType> {
+        constexpr auto dim_tag = TagsType::dimension_tag;
+        constexpr auto med_tag = TagsType::medium_tag;
+        auto [sorted_sources, source_indices] =
+            specfem::assembly::sources_impl::sort_sources_per_medium<dim_tag,
+                                                                     med_tag>(
+                sources, element_types, mesh);
 
-    /** For a sanity check we count the number of sources and source indices
-     * for each medium and dimension
-     */
-    nsources += sorted_sources.size();
-    nsource_indices += source_indices.size();
+        /** For a sanity check we count the number of sources and source indices
+         * for each medium and dimension
+         */
+        nsources += sorted_sources.size();
+        nsource_indices += source_indices.size();
 
-    /* Loops over the current source*/
-    for (int isource = 0; isource < sorted_sources.size(); isource++) {
-      const auto &source = sorted_sources[isource];
-      const auto lcoord = source->get_local_coordinates();
+        /* Loops over the current source*/
+        for (int isource = 0; isource < sorted_sources.size(); isource++) {
+          const auto &source = sorted_sources[isource];
+          const auto lcoord = source->get_local_coordinates();
 
-      int ispec = lcoord.ispec;
-      const int global_isource = source_indices[isource];
+          int ispec = lcoord.ispec;
+          const int global_isource = source_indices[isource];
 
-      /* setting local source to global element mapping */
-      h_element_indices(global_isource) = ispec;
-      assert(element_types.get_medium_tag(ispec) == med_tag);
-      h_medium_types(global_isource) = med_tag;
-      h_property_types(global_isource) = element_types.get_property_tag(ispec);
-      h_boundary_types(global_isource) = element_types.get_boundary_tag(ispec);
-      h_wavefield_types(global_isource) = source->get_wavefield_type();
-    }
+          /* setting local source to global element mapping */
+          h_element_indices(global_isource) = ispec;
+          assert(element_types.get_medium_tag(ispec) == med_tag);
+          h_medium_types(global_isource) = med_tag;
+          h_property_types(global_isource) =
+              element_types.get_property_tag(ispec);
+          h_boundary_types(global_isource) =
+              element_types.get_boundary_tag(ispec);
+          h_wavefield_types(global_isource) = source->get_wavefield_type();
+        }
 
-    return SourceMediumFor<TagsType>(sorted_sources, mesh, jacobian_matrix,
-                                     element_types, t0, dt, nsteps);
-  });
+        return SourceMediumTemplateType<TagsType>(
+            sorted_sources, mesh, jacobian_matrix, element_types, t0, dt,
+            nsteps);
+      });
 
   // if the number of sources is not equal to the number of sources
   if (nsources != sources.size()) {
@@ -122,56 +125,56 @@ specfem::assembly::sources<specfem::element::dimension_tag::dim2>::sources(
   // Initialize h_source_index_by_combination and source_index_by_combination
   // using Storage initializer, keyed by (dim, medium, property, boundary,
   // wavefield)
-  h_source_index_by_combination = decltype(h_source_index_by_combination)(
-      [&]<typename TagsType>() -> HostIndexPairType {
-        constexpr auto med_tag = TagsType::medium_tag;
-        constexpr auto prop_tag = TagsType::property_tag;
-        constexpr auto atten_tag = TagsType::attenuation_tag;
-        constexpr auto bnd_tag = TagsType::boundary_tag;
-        constexpr auto wf_tag = TagsType::wavefield_tag;
+  h_source_index_by_combination = {
+    [&]<typename TagsType>() -> HostIndexPairType {
+      constexpr auto med_tag = TagsType::medium_tag;
+      constexpr auto prop_tag = TagsType::property_tag;
+      constexpr auto atten_tag = TagsType::attenuation_tag;
+      constexpr auto bnd_tag = TagsType::boundary_tag;
+      constexpr auto wf_tag = TagsType::wavefield_tag;
 
-        int count = 0;
-        for (int isource = 0; isource < sources.size(); isource++) {
-          if (h_medium_types(isource) == med_tag &&
-              h_property_types(isource) == prop_tag &&
-              h_boundary_types(isource) == bnd_tag &&
-              h_wavefield_types(isource) == wf_tag) {
-            // Note: dim2 does not have attenuation_types, only dim3
-            ++count;
-          }
+      int count = 0;
+      for (int isource = 0; isource < sources.size(); isource++) {
+        if (h_medium_types(isource) == med_tag &&
+            h_property_types(isource) == prop_tag &&
+            h_boundary_types(isource) == bnd_tag &&
+            h_wavefield_types(isource) == wf_tag) {
+          // Note: dim2 does not have attenuation_types, only dim3
+          ++count;
         }
+      }
 
-        IndexViewType::HostMirror h_elem(
-            "specfem::assembly::sources::element_indices", count);
-        IndexViewType::HostMirror h_src(
-            "specfem::assembly::sources::source_indices", count);
+      IndexViewType::HostMirror h_elem(
+          "specfem::assembly::sources::element_indices", count);
+      IndexViewType::HostMirror h_src(
+          "specfem::assembly::sources::source_indices", count);
 
-        int idx = 0;
-        for (int isource = 0; isource < sources.size(); isource++) {
-          if (h_medium_types(isource) == med_tag &&
-              h_property_types(isource) == prop_tag &&
-              h_boundary_types(isource) == bnd_tag &&
-              h_wavefield_types(isource) == wf_tag) {
-            // Note: dim2 does not have attenuation_types, only dim3
-            h_elem(idx) = h_element_indices(isource);
-            h_src(idx) = isource;
-            ++idx;
-          }
+      int idx = 0;
+      for (int isource = 0; isource < sources.size(); isource++) {
+        if (h_medium_types(isource) == med_tag &&
+            h_property_types(isource) == prop_tag &&
+            h_boundary_types(isource) == bnd_tag &&
+            h_wavefield_types(isource) == wf_tag) {
+          // Note: dim2 does not have attenuation_types, only dim3
+          h_elem(idx) = h_element_indices(isource);
+          h_src(idx) = isource;
+          ++idx;
         }
+      }
 
-        return { h_elem, h_src };
-      });
+      return { h_elem, h_src };
+    }
+  };
 
-  source_index_by_combination = decltype(source_index_by_combination)(
-      [&]<typename TagsType>() -> IndexPairType {
-        const auto &[h_elem, h_src] =
-            h_source_index_by_combination.template get<TagsType>();
-        IndexViewType d_elem(h_elem.label(), h_elem.extent(0));
-        IndexViewType d_src(h_src.label(), h_src.extent(0));
-        Kokkos::deep_copy(d_elem, h_elem);
-        Kokkos::deep_copy(d_src, h_src);
-        return { d_elem, d_src };
-      });
+  source_index_by_combination = { [&]<typename TagsType>() -> IndexPairType {
+    const auto &[h_elem, h_src] =
+        h_source_index_by_combination.template get<TagsType>();
+    IndexViewType d_elem(h_elem.label(), h_elem.extent(0));
+    IndexViewType d_src(h_src.label(), h_src.extent(0));
+    Kokkos::deep_copy(d_elem, h_elem);
+    Kokkos::deep_copy(d_src, h_src);
+    return { d_elem, d_src };
+  } };
 
   Kokkos::deep_copy(medium_types, h_medium_types);
   Kokkos::deep_copy(wavefield_types, h_wavefield_types);
