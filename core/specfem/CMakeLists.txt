@@ -22,6 +22,12 @@ set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
     ${CMAKE_BINARY_DIR}/include/specfem/version.hpp
 )
 
+add_library(specfem_version
+    INTERFACE ${CMAKE_BINARY_DIR}/include/specfem/version.hpp)
+add_library(specfem::version ALIAS specfem_version)
+target_include_directories(specfem_version INTERFACE ${CMAKE_BINARY_DIR}/include)
+add_dependencies(specfem_version specfem_version_header)
+
 # Add existing subdirectories
 add_subdirectory(algorithms)
 add_subdirectory(assembly)
@@ -84,6 +90,7 @@ target_link_libraries(specfem_core_interface
         specfem::source_time_functions
         specfem::timescheme
         specfem::utilities
+        specfem::version
 )
 
 target_include_directories(specfem_core_interface
