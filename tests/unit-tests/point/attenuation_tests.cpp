@@ -119,13 +119,10 @@ TYPED_TEST(PointAttenuationTest, ValueConstructor2D) {
   typename att_type::value_type rxx_val(1.0), rxz_val(2.0), rk_val(3.0);
 
   // Create zero du tensor
-  typename att_type::template tensor_type<typename att_type::value_type,
-                                          att_type::components,
-                                          att_type::num_dimensions>
-      du;
+  typename att_type::tensor_type du;
   for (int ic = 0; ic < att_type::components; ++ic)
     for (int id = 0; id < att_type::num_dimensions; ++id)
-      du[ic][id] = typename att_type::value_type(0.0);
+      du(ic, id) = 0.0;
 
   att_type att(kappa_val, mu_val, alpha_val, beta_val, gamma_val, rxx_val,
                rxz_val, rk_val, du);
@@ -175,13 +172,10 @@ TYPED_TEST(PointAttenuationTest, ValueConstructor3D) {
       ryz(5.0), rk(6.0);
 
   // Create zero du tensor
-  typename att_type::template tensor_type<typename att_type::value_type,
-                                          att_type::components,
-                                          att_type::num_dimensions>
-      du;
+  typename att_type::tensor_type du;
   for (int ic = 0; ic < att_type::components; ++ic)
     for (int id = 0; id < att_type::num_dimensions; ++id)
-      du[ic][id] = typename att_type::value_type(0.0);
+      du(ic, id) = 0.0;
 
   att_type att(kappa_val, mu_val, alpha_val, beta_val, gamma_val, rxx, ryy, rxy,
                rxz, ryz, rk, du);
@@ -223,13 +217,10 @@ TYPED_TEST(PointAttenuationTest, InitMethod2D) {
   typename att_type::value_type rk_val(0.5);
 
   // Create zero du tensor
-  typename att_type::template tensor_type<typename att_type::value_type,
-                                          att_type::components,
-                                          att_type::num_dimensions>
-      du;
+  typename att_type::tensor_type du;
   for (int ic = 0; ic < att_type::components; ++ic)
     for (int id = 0; id < att_type::num_dimensions; ++id)
-      du[ic][id] = typename att_type::value_type(0.0);
+      du(ic, id) = 0.0;
 
   att_type att(kappa_val, mu_val, rk_val, rk_val, rk_val, const_val, const_val,
                const_val, du);
@@ -258,13 +249,10 @@ TYPED_TEST(PointAttenuationTest, InitMethod3D) {
   typename att_type::value_type rk_val(0.5);
 
   // Create zero du tensor
-  typename att_type::template tensor_type<typename att_type::value_type,
-                                          att_type::components,
-                                          att_type::num_dimensions>
-      du;
+  typename att_type::tensor_type du;
   for (int ic = 0; ic < att_type::components; ++ic)
     for (int id = 0; id < att_type::num_dimensions; ++id)
-      du[ic][id] = typename att_type::value_type(0.0);
+      du(ic, id) = 0.0;
 
   att_type att(kappa_val, mu_val, rk_val, rk_val, rk_val, const_val, const_val,
                const_val, const_val, const_val, const_val, du);
@@ -300,13 +288,10 @@ TYPED_TEST(PointAttenuationTest, Addition2D) {
   typename att_type::value_type alpha_rk(0.5), beta_rk(0.3), gamma_rk(0.1);
 
   // Create zero du tensor
-  typename att_type::template tensor_type<typename att_type::value_type,
-                                          att_type::components,
-                                          att_type::num_dimensions>
-      du;
+  typename att_type::tensor_type du;
   for (int ic = 0; ic < att_type::components; ++ic)
     for (int id = 0; id < att_type::num_dimensions; ++id)
-      du[ic][id] = typename att_type::value_type(0.0);
+      du(ic, id) = 0.0;
 
   att_type a(kf, mf, alpha_rk, beta_rk, gamma_rk, a_rxx, a_rxz, a_rk, du);
   att_type b(kf, mf, alpha_rk, beta_rk, gamma_rk, b_rxx, b_rxz, b_rk, du);
@@ -339,13 +324,10 @@ TYPED_TEST(PointAttenuationTest, AdditionAssignment2D) {
   typename att_type::value_type alpha_rk(0.5), beta_rk(0.3), gamma_rk(0.1);
 
   // Create zero du tensor
-  typename att_type::template tensor_type<typename att_type::value_type,
-                                          att_type::components,
-                                          att_type::num_dimensions>
-      du;
+  typename att_type::tensor_type du;
   for (int ic = 0; ic < att_type::components; ++ic)
     for (int id = 0; id < att_type::num_dimensions; ++id)
-      du[ic][id] = typename att_type::value_type(0.0);
+      du(ic, id) = 0.0;
 
   att_type a(kf, mf, alpha_rk, beta_rk, gamma_rk, a_rxx, a_rxz, a_rk, du);
   att_type b(kf, mf, alpha_rk, beta_rk, gamma_rk, b_rxx, b_rxz, b_rk, du);
@@ -381,7 +363,7 @@ TYPED_TEST(PointAttenuationTest, ScalarMultiplication2D) {
     typename att_type::tensor_type du;
     for (int ic = 0; ic < att_type::components; ++ic)
       for (int id = 0; id < att_type::num_dimensions; ++id)
-        du[ic][id] = typename att_type::value_type(0.0);
+        du(ic, id) = 0.0;
 
     att_type att(kf, mf, alpha_rk, beta_rk, gamma_rk, rxx_val, rxz_val, rk_val,
                  du);
@@ -420,13 +402,10 @@ TYPED_TEST(PointAttenuationTest, Addition3D) {
   typename att_type::value_type alpha_rk(0.5), beta_rk(0.3), gamma_rk(0.1);
 
   // Create zero du tensor
-  typename att_type::template tensor_type<typename att_type::value_type,
-                                          att_type::components,
-                                          att_type::num_dimensions>
-      du;
+  typename att_type::tensor_type du;
   for (int ic = 0; ic < att_type::components; ++ic)
     for (int id = 0; id < att_type::num_dimensions; ++id)
-      du[ic][id] = typename att_type::value_type(0.0);
+      du(ic, id) = 0.0;
 
   att_type a(kf, mf, alpha_rk, beta_rk, gamma_rk, a_rxx, a_ryy, a_rxy, a_rxz,
              a_ryz, a_rk, du);
@@ -466,13 +445,10 @@ TYPED_TEST(PointAttenuationTest, AdditionAssignment3D) {
   typename att_type::value_type alpha_rk(0.5), beta_rk(0.3), gamma_rk(0.1);
 
   // Create zero du tensor
-  typename att_type::template tensor_type<typename att_type::value_type,
-                                          att_type::components,
-                                          att_type::num_dimensions>
-      du;
+  typename att_type::tensor_type du;
   for (int ic = 0; ic < att_type::components; ++ic)
     for (int id = 0; id < att_type::num_dimensions; ++id)
-      du[ic][id] = typename att_type::value_type(0.0);
+      du(ic, id) = 0.0;
 
   att_type a(kf, mf, alpha_rk, beta_rk, gamma_rk, a_rxx, a_ryy, a_rxy, a_rxz,
              a_ryz, a_rk, du);
@@ -510,8 +486,14 @@ TYPED_TEST(PointAttenuationTest, ScalarMultiplication3D) {
     typename att_type::value_type alpha_rk(0.5), beta_rk(0.3), gamma_rk(0.1);
     type_real scalar = 2.5;
 
+    // Create zero du tensor
+    typename att_type::tensor_type du;
+    for (int ic = 0; ic < att_type::components; ++ic)
+      for (int id = 0; id < att_type::num_dimensions; ++id)
+        du(ic, id) = 0.0;
+
     att_type att(kf, mf, alpha_rk, beta_rk, gamma_rk, rxx, ryy, rxy, rxz, ryz,
-                 rk);
+                 rk, du);
     att_type result = att * scalar;
 
     for (int i = 0; i < N; ++i) {
@@ -545,13 +527,11 @@ TYPED_TEST(PointAttenuationTest, EqualityOperator2D) {
   typename att_type::value_type alpha_alt(0.6);
 
   // Create zero du tensor
-  typename att_type::template tensor_type<typename att_type::value_type,
-                                          att_type::components,
-                                          att_type::num_dimensions>
-      du;
+  typename att_type::tensor_type du;
+
   for (int ic = 0; ic < att_type::components; ++ic)
     for (int id = 0; id < att_type::num_dimensions; ++id)
-      du[ic][id] = typename att_type::value_type(0.0);
+      du(ic, id) = 0.0;
 
   att_type att1(kappa_val, mu_val, alpha, beta, gamma, rxx, rxz, rk, du);
   att_type att2(kappa_val, mu_val, alpha, beta, gamma, rxx, rxz, rk, du);
@@ -584,13 +564,10 @@ TYPED_TEST(PointAttenuationTest, EqualityOperator3D) {
   typename att_type::value_type ryy_alt(9.0);
 
   // Create zero du tensor
-  typename att_type::template tensor_type<typename att_type::value_type,
-                                          att_type::components,
-                                          att_type::num_dimensions>
-      du;
+  typename att_type::tensor_type du;
   for (int ic = 0; ic < att_type::components; ++ic)
     for (int id = 0; id < att_type::num_dimensions; ++id)
-      du[ic][id] = typename att_type::value_type(0.0);
+      du(ic, id) = 0.0;
 
   att_type att1(kappa_val, mu_val, alpha, beta, gamma, rxx, ryy, rxy, rxz, ryz,
                 rk, du);
@@ -624,7 +601,7 @@ TYPED_TEST(PointAttenuationTest, PrintMethod2D) {
     typename att_type::tensor_type du;
     for (int ic = 0; ic < att_type::components; ++ic)
       for (int id = 0; id < att_type::num_dimensions; ++id)
-        du[ic][id] = typename att_type::value_type(0.0);
+        du(ic, id) = 0.0;
 
     att_type att(kappa_val, mu_val, alpha, beta, gamma, rxx, rxz, rk, du);
     std::string s = att.print();

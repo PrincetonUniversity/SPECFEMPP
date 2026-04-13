@@ -156,9 +156,10 @@ public:
   // Data members — du_att tensor (Taylor step: grad(u + dt*v))
   // -----------------------------------------------------------------------
   /// du_att = grad(u + dt*v) from previous time step (Sn for SLS update)
-  typename base_type::template tensor_type<type_real, components,
-                                           num_dimensions>
-      du;
+  using tensor_type =
+      typename base_type::template tensor_type<type_real, components,
+                                               num_dimensions>;
+  tensor_type du;
 
   // -----------------------------------------------------------------------
   // Constructors
@@ -188,9 +189,7 @@ public:
               const value_type &mu_relaxation_rate, const value_type &alpha_rk,
               const value_type &beta_rk, const value_type &gamma_rk,
               const value_type &Rxx, const value_type &Rxz,
-              const value_type &Rkappa,
-              const typename base_type::template tensor_type<
-                  type_real, components, num_dimensions> &du)
+              const value_type &Rkappa, const tensor_type &du)
       : kappa_relaxation_rate(kappa_relaxation_rate),
         mu_relaxation_rate(mu_relaxation_rate), alpha_rk(alpha_rk),
         beta_rk(beta_rk), gamma_rk(gamma_rk), Rxx(Rxx), Rxz(Rxz),
@@ -208,7 +207,7 @@ public:
     this->Rkappa = value_type(typename value_type::value_type(0));
     for (int ic = 0; ic < components; ++ic)
       for (int id = 0; id < num_dimensions; ++id)
-        this->du[ic][id] = typename simd::datatype(0);
+        this->du(ic, id) = typename simd::datatype(0);
   }
 
   /** @brief Component-wise addition on R fields and du; RK/common factors
@@ -228,7 +227,7 @@ public:
     }
     for (int ic = 0; ic < components; ++ic)
       for (int id = 0; id < num_dimensions; ++id)
-        result.du[ic][id] = this->du[ic][id] + rhs.du[ic][id];
+        result.du(ic, id) = this->du(ic, id) + rhs.du(ic, id);
     return result;
   }
 
@@ -242,7 +241,7 @@ public:
     }
     for (int ic = 0; ic < components; ++ic)
       for (int id = 0; id < num_dimensions; ++id)
-        this->du[ic][id] += rhs.du[ic][id];
+        this->du(ic, id) += rhs.du(ic, id);
     return *this;
   }
 
@@ -263,7 +262,7 @@ public:
     }
     for (int ic = 0; ic < components; ++ic)
       for (int id = 0; id < num_dimensions; ++id)
-        result.du[ic][id] = this->du[ic][id] * rhs;
+        result.du(ic, id) = this->du(ic, id) * rhs;
     return result;
   }
 
@@ -291,7 +290,7 @@ public:
     }
     for (int ic = 0; ic < components; ++ic)
       for (int id = 0; id < num_dimensions; ++id)
-        if (!specfem::utilities::is_close(du[ic][id], other.du[ic][id]))
+        if (!specfem::utilities::is_close(du(ic, id), other.du(ic, id)))
           return false;
     return true;
   }
@@ -322,7 +321,7 @@ public:
     oss << "Taylor Step du (dim2):\n";
     for (int ic = 0; ic < components; ++ic)
       for (int id = 0; id < num_dimensions; ++id)
-        oss << "  du[" << ic << "][" << id << "] = " << du[ic][id] << "\n";
+        oss << "  du[" << ic << "][" << id << "] = " << du(ic, id) << "\n";
     return oss.str();
   }
 };
@@ -411,9 +410,10 @@ public:
   // Data members — du_att tensor (Taylor step: grad(u + dt*v))
   // -----------------------------------------------------------------------
   /// du_att = grad(u + dt*v) from previous time step (Sn for SLS update)
-  typename base_type::template tensor_type<type_real, components,
-                                           num_dimensions>
-      du;
+  using tensor_type =
+      typename base_type::template tensor_type<type_real, components,
+                                               num_dimensions>;
+  tensor_type du;
 
   // -----------------------------------------------------------------------
   // Constructors
@@ -448,8 +448,7 @@ public:
               const value_type &Rxx, const value_type &Ryy,
               const value_type &Rxy, const value_type &Rxz,
               const value_type &Ryz, const value_type &Rkappa,
-              const typename base_type::template tensor_type<
-                  type_real, components, num_dimensions> &du)
+              const tensor_type &du)
       : kappa_relaxation_rate(kappa_relaxation_rate),
         mu_relaxation_rate(mu_relaxation_rate), alpha_rk(alpha_rk),
         beta_rk(beta_rk), gamma_rk(gamma_rk), Rxx(Rxx), Ryy(Ryy), Rxy(Rxy),
@@ -470,7 +469,7 @@ public:
     this->Rkappa = value_type(typename value_type::value_type(0));
     for (int ic = 0; ic < components; ++ic)
       for (int id = 0; id < num_dimensions; ++id)
-        this->du[ic][id] = typename simd::datatype(0);
+        this->du(ic, id) = typename simd::datatype(0);
   }
 
   /** @brief Component-wise addition on R fields and du; RK/common factors
@@ -493,7 +492,7 @@ public:
     }
     for (int ic = 0; ic < components; ++ic)
       for (int id = 0; id < num_dimensions; ++id)
-        result.du[ic][id] = this->du[ic][id] + rhs.du[ic][id];
+        result.du(ic, id) = this->du(ic, id) + rhs.du(ic, id);
     return result;
   }
 
@@ -510,7 +509,7 @@ public:
     }
     for (int ic = 0; ic < components; ++ic)
       for (int id = 0; id < num_dimensions; ++id)
-        this->du[ic][id] += rhs.du[ic][id];
+        this->du(ic, id) += rhs.du(ic, id);
     return *this;
   }
 
@@ -534,7 +533,7 @@ public:
     }
     for (int ic = 0; ic < components; ++ic)
       for (int id = 0; id < num_dimensions; ++id)
-        result.du[ic][id] = this->du[ic][id] * rhs;
+        result.du(ic, id) = this->du(ic, id) * rhs;
     return result;
   }
 
@@ -568,7 +567,7 @@ public:
     }
     for (int ic = 0; ic < components; ++ic)
       for (int id = 0; id < num_dimensions; ++id)
-        if (!specfem::utilities::is_close(du[ic][id], other.du[ic][id]))
+        if (!specfem::utilities::is_close(du(ic, id), other.du(ic, id)))
           return false;
     return true;
   }
@@ -605,7 +604,7 @@ public:
     oss << "Taylor Step du (dim3):\n";
     for (int ic = 0; ic < components; ++ic)
       for (int id = 0; id < num_dimensions; ++id)
-        oss << "  du[" << ic << "][" << id << "] = " << du[ic][id] << "\n";
+        oss << "  du[" << ic << "][" << id << "] = " << du(ic, id) << "\n";
     return oss.str();
   }
 };
