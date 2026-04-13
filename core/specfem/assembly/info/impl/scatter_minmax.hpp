@@ -14,8 +14,7 @@ namespace specfem::assembly::info::impl {
 /**
  * @brief Lightweight struct for element-local min/max tracking inside lambdas
  */
-template <typename T = type_real>
-struct LocalMinMax {
+template <typename T = type_real> struct LocalMinMax {
   T min_val;
   T max_val;
 
@@ -31,14 +30,10 @@ struct LocalMinMax {
   }
 
   KOKKOS_INLINE_FUNCTION
-  void update_min(T value) {
-    min_val = Kokkos::fmin(min_val, value);
-  }
+  void update_min(T value) { min_val = Kokkos::fmin(min_val, value); }
 
   KOKKOS_INLINE_FUNCTION
-  void update_max(T value) {
-    max_val = Kokkos::fmax(max_val, value);
-  }
+  void update_max(T value) { max_val = Kokkos::fmax(max_val, value); }
 };
 
 /**
@@ -50,16 +45,17 @@ struct LocalMinMax {
  * @tparam T Value type for min/max tracking
  * @tparam Extent Compile-time extent (0 = dynamic, use runtime size)
  */
-template <typename T = type_real, size_t Extent = 0>
-struct ScatterMinMax {
+template <typename T = type_real, size_t Extent = 0> struct ScatterMinMax {
   using layout_type = Kokkos::DefaultExecutionSpace::array_layout;
-  using view_type = Kokkos::View<T*, layout_type>;
-  using scatter_min_type = Kokkos::Experimental::ScatterView<
-      T*, layout_type, Kokkos::DefaultExecutionSpace,
-      Kokkos::Experimental::ScatterMin>;
-  using scatter_max_type = Kokkos::Experimental::ScatterView<
-      T*, layout_type, Kokkos::DefaultExecutionSpace,
-      Kokkos::Experimental::ScatterMax>;
+  using view_type = Kokkos::View<T *, layout_type>;
+  using scatter_min_type =
+      Kokkos::Experimental::ScatterView<T *, layout_type,
+                                        Kokkos::DefaultExecutionSpace,
+                                        Kokkos::Experimental::ScatterMin>;
+  using scatter_max_type =
+      Kokkos::Experimental::ScatterView<T *, layout_type,
+                                        Kokkos::DefaultExecutionSpace,
+                                        Kokkos::Experimental::ScatterMax>;
 
   view_type min_view;
   view_type max_view;
@@ -88,14 +84,10 @@ struct ScatterMinMax {
     }
 
     KOKKOS_INLINE_FUNCTION
-    void update_min(T value) const {
-      min_access(0).update(value);
-    }
+    void update_min(T value) const { min_access(0).update(value); }
 
     KOKKOS_INLINE_FUNCTION
-    void update_max(T value) const {
-      max_access(0).update(value);
-    }
+    void update_max(T value) const { max_access(0).update(value); }
 
     // Indexed interface for multi-value tracking
     KOKKOS_INLINE_FUNCTION
@@ -105,22 +97,16 @@ struct ScatterMinMax {
     }
 
     KOKKOS_INLINE_FUNCTION
-    void update_min(size_t i, T value) const {
-      min_access(i).update(value);
-    }
+    void update_min(size_t i, T value) const { min_access(i).update(value); }
 
     KOKKOS_INLINE_FUNCTION
-    void update_max(size_t i, T value) const {
-      max_access(i).update(value);
-    }
+    void update_max(size_t i, T value) const { max_access(i).update(value); }
 
     // Array interface - updates each element against corresponding index
     // Requires compile-time Extent > 0 and ArrayType::size() == Extent
-    template <typename ArrayType,
-              size_t E = Extent,
+    template <typename ArrayType, size_t E = Extent,
               std::enable_if_t<(E > 0), int> = 0>
-    KOKKOS_INLINE_FUNCTION
-    void update(const ArrayType& values) const {
+    KOKKOS_INLINE_FUNCTION void update(const ArrayType &values) const {
       static_assert(ArrayType::size() == Extent,
                     "ArrayType extent must match ScatterMinMax Extent");
       for (size_t i = 0; i < Extent; ++i) {
@@ -129,11 +115,9 @@ struct ScatterMinMax {
       }
     }
 
-    template <typename ArrayType,
-              size_t E = Extent,
+    template <typename ArrayType, size_t E = Extent,
               std::enable_if_t<(E > 0), int> = 0>
-    KOKKOS_INLINE_FUNCTION
-    void update_min(const ArrayType& values) const {
+    KOKKOS_INLINE_FUNCTION void update_min(const ArrayType &values) const {
       static_assert(ArrayType::size() == Extent,
                     "ArrayType extent must match ScatterMinMax Extent");
       for (size_t i = 0; i < Extent; ++i) {
@@ -141,11 +125,9 @@ struct ScatterMinMax {
       }
     }
 
-    template <typename ArrayType,
-              size_t E = Extent,
+    template <typename ArrayType, size_t E = Extent,
               std::enable_if_t<(E > 0), int> = 0>
-    KOKKOS_INLINE_FUNCTION
-    void update_max(const ArrayType& values) const {
+    KOKKOS_INLINE_FUNCTION void update_max(const ArrayType &values) const {
       static_assert(ArrayType::size() == Extent,
                     "ArrayType extent must match ScatterMinMax Extent");
       for (size_t i = 0; i < Extent; ++i) {
@@ -161,6 +143,7 @@ struct ScatterMinMax {
     Kokkos::deep_copy(max_view, std::numeric_limits<T>::lowest());
   }
 
+  KOKKOS_INLINE_FUNCTION
   Accessor access() const {
     return Accessor{ scatter_min.access(), scatter_max.access() };
   }
