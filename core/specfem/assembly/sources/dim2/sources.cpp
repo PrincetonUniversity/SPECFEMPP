@@ -57,6 +57,8 @@ specfem::assembly::sources<specfem::element::dimension_tag::dim2>::sources(
       h_medium_types(Kokkos::create_mirror_view(medium_types)),
       property_types("specfem::sources::property_types", sources.size()),
       h_property_types(Kokkos::create_mirror_view(property_types)),
+      attenuation_types("specfem::sources::attenuation_types", sources.size()),
+      h_attenuation_types(Kokkos::create_mirror_view(attenuation_types)),
       boundary_types("specfem::sources::boundary_types", sources.size()),
       h_boundary_types(Kokkos::create_mirror_view(boundary_types)),
       wavefield_types("specfem::sources::wavefield_types", sources.size()),
@@ -104,6 +106,8 @@ specfem::assembly::sources<specfem::element::dimension_tag::dim2>::sources(
           h_medium_types(global_isource) = med_tag;
           h_property_types(global_isource) =
               element_types.get_property_tag(ispec);
+          h_attenuation_types(global_isource) =
+              element_types.get_attenuation_tag(ispec);
           h_boundary_types(global_isource) =
               element_types.get_boundary_tag(ispec);
           h_wavefield_types(global_isource) = source->get_wavefield_type();
@@ -122,63 +126,50 @@ specfem::assembly::sources<specfem::element::dimension_tag::dim2>::sources(
         "Not all sources were assigned or sources are assigned multiple times");
   }
 
-  // Initialize h_source_index_by_combination and source_index_by_combination
-  // using Storage initializer, keyed by (dim, medium, property, boundary,
-  // wavefield)
-  h_source_index_by_combination = {
-    [&]<typename TagsType>() -> HostIndexPairType {
-      constexpr auto med_tag = TagsType::medium_tag;
-      constexpr auto prop_tag = TagsType::property_tag;
-      constexpr auto atten_tag = TagsType::attenuation_tag;
-      constexpr auto bnd_tag = TagsType::boundary_tag;
-      constexpr auto wf_tag = TagsType::wavefield_tag;
+  // Initialize h_source_element_by_combination and
+  // h_source_source_by_combination using Storage initializer factory pattern,
+  // keyed by (dim, medium, property, attenuation, boundary, wavefield)
+  int nsources_total = (int)sources.size();
 
-      int count = 0;
-      for (int isource = 0; isource < sources.size(); isource++) {
-        if (h_medium_types(isource) == med_tag &&
-            h_property_types(isource) == prop_tag &&
-            h_boundary_types(isource) == bnd_tag &&
-            h_wavefield_types(isource) == wf_tag) {
-          // Note: dim2 does not have attenuation_types, only dim3
-          ++count;
-        }
-      }
-
-      IndexViewType::HostMirror h_elem(
-          "specfem::assembly::sources::element_indices", count);
-      IndexViewType::HostMirror h_src(
-          "specfem::assembly::sources::source_indices", count);
-
-      int idx = 0;
-      for (int isource = 0; isource < sources.size(); isource++) {
-        if (h_medium_types(isource) == med_tag &&
-            h_property_types(isource) == prop_tag &&
-            h_boundary_types(isource) == bnd_tag &&
-            h_wavefield_types(isource) == wf_tag) {
-          // Note: dim2 does not have attenuation_types, only dim3
-          h_elem(idx) = h_element_indices(isource);
-          h_src(idx) = isource;
-          ++idx;
-        }
-      }
-
-      return { h_elem, h_src };
-    }
+  auto make_source_initializer = [&](std::string label_prefix,
+                                     auto index_selector, auto... tag_views) {
+    return [&, label_prefix, index_selector,
+            tag_views...]<typename TagsType>() -> HostIndexViewType {
+      std::vector<int> matching_indices;
+      matching_indices.reserve(nsources_total);
+      for (int isource = 0; isource < nsources_total; ++isource)
+        if (TagsType{}.has(tag_views(isource)...))
+          matching_indices.emplace_back(index_selector(isource));
+      HostIndexViewType host_view(label_prefix + TagsType::name(),
+                                  matching_indices.size());
+      for (int i = 0; i < (int)matching_indices.size(); ++i)
+        host_view(i) = matching_indices[i];
+      return host_view;
+    };
   };
 
-  source_index_by_combination = { [&]<typename TagsType>() -> IndexPairType {
-    const auto &[h_elem, h_src] =
-        h_source_index_by_combination.template get<TagsType>();
-    IndexViewType d_elem(h_elem.label(), h_elem.extent(0));
-    IndexViewType d_src(h_src.label(), h_src.extent(0));
-    Kokkos::deep_copy(d_elem, h_elem);
-    Kokkos::deep_copy(d_src, h_src);
-    return { d_elem, d_src };
-  } };
+  h_source_element_by_combination = { make_source_initializer(
+      "source_element_by_combination_",
+      [&](int isource) { return h_element_indices(isource); }, h_medium_types,
+      h_property_types, h_attenuation_types, h_boundary_types,
+      h_wavefield_types) };
+
+  h_source_source_by_combination = { make_source_initializer(
+      "source_source_by_combination_", [&](int isource) { return isource; },
+      h_medium_types, h_property_types, h_attenuation_types, h_boundary_types,
+      h_wavefield_types) };
+
+  source_element_by_combination =
+      specfem::tag_dispatch::create_mirror_storage_and_copy(
+          Kokkos::DefaultExecutionSpace{}, h_source_element_by_combination);
+  source_source_by_combination =
+      specfem::tag_dispatch::create_mirror_storage_and_copy(
+          Kokkos::DefaultExecutionSpace{}, h_source_source_by_combination);
 
   Kokkos::deep_copy(medium_types, h_medium_types);
   Kokkos::deep_copy(wavefield_types, h_wavefield_types);
   Kokkos::deep_copy(property_types, h_property_types);
+  Kokkos::deep_copy(attenuation_types, h_attenuation_types);
   Kokkos::deep_copy(boundary_types, h_boundary_types);
 }
 
@@ -190,9 +181,11 @@ specfem::assembly::sources<specfem::element::dimension_tag::dim2>::
                         const specfem::element::attenuation_tag attenuation,
                         const specfem::element::boundary_tag boundary,
                         const specfem::simulation::field_type wavefield) const {
-  const auto &[h_elem, h_src] = h_source_index_by_combination.get(
-      medium, property, attenuation, boundary, wavefield);
-  return std::make_tuple(h_elem, h_src);
+  return std::make_tuple(
+      h_source_element_by_combination.get(medium, property, attenuation,
+                                          boundary, wavefield),
+      h_source_source_by_combination.get(medium, property, attenuation,
+                                         boundary, wavefield));
 }
 
 // This function is crucial for the computing the source contribution
@@ -207,7 +200,9 @@ specfem::assembly::sources<specfem::element::dimension_tag::dim2>::
         const specfem::element::attenuation_tag attenuation,
         const specfem::element::boundary_tag boundary,
         const specfem::simulation::field_type wavefield) const {
-  const auto &[d_elem, d_src] = source_index_by_combination.get(
-      medium, property, attenuation, boundary, wavefield);
-  return std::make_tuple(d_elem, d_src);
+  return std::make_tuple(
+      source_element_by_combination.get(medium, property, attenuation, boundary,
+                                        wavefield),
+      source_source_by_combination.get(medium, property, attenuation, boundary,
+                                       wavefield));
 }

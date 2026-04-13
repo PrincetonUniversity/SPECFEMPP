@@ -444,16 +444,22 @@ private:
       sources_impl::SourceSets<dimension_tag>::boundary_set *
       sources_impl::SourceSets<dimension_tag>::wavefield_set;
 
-  using IndexPairType = std::pair<IndexViewType, IndexViewType>;
-  using HostIndexPairType =
-      std::pair<IndexViewType::HostMirror, IndexViewType::HostMirror>;
+  using HostIndexViewType =
+      Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>;
 
-  specfem::tag_dispatch::Storage<IndexPairType,
+  specfem::tag_dispatch::Storage<IndexViewType,
                                  decltype(combinations_by_source)>
-      source_index_by_combination;
-  specfem::tag_dispatch::Storage<HostIndexPairType,
+      source_element_by_combination;
+  specfem::tag_dispatch::Storage<HostIndexViewType,
                                  decltype(combinations_by_source)>
-      h_source_index_by_combination;
+      h_source_element_by_combination;
+
+  specfem::tag_dispatch::Storage<IndexViewType,
+                                 decltype(combinations_by_source)>
+      source_source_by_combination;
+  specfem::tag_dispatch::Storage<HostIndexViewType,
+                                 decltype(combinations_by_source)>
+      h_source_source_by_combination;
 
   template <typename IndexType, typename PointSourceType>
   friend KOKKOS_INLINE_FUNCTION void load_on_device(
