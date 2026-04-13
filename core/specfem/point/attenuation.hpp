@@ -3,6 +3,7 @@
 #include "specfem/constants.hpp"
 #include "specfem/data_access/accessor.hpp"
 #include "specfem/element.hpp"
+#include "specfem/element/attributes.hpp"
 #include "specfem/utilities/is_close.hpp"
 #include <sstream>
 
@@ -142,6 +143,24 @@ public:
   value_type Rkappa;
 
   // -----------------------------------------------------------------------
+  // Compile-time constants for du tensor
+  // -----------------------------------------------------------------------
+  static constexpr int components = specfem::element::attributes<
+      specfem::element::dimension_tag::dim2,
+      specfem::element::medium_tag::elastic_psv>::components;
+  static constexpr int num_dimensions = specfem::element::attributes<
+      specfem::element::dimension_tag::dim2,
+      specfem::element::medium_tag::elastic_psv>::dimension;
+
+  // -----------------------------------------------------------------------
+  // Data members — du_att tensor (Taylor step: grad(u + dt*v))
+  // -----------------------------------------------------------------------
+  /// du_att = grad(u + dt*v) from previous time step (Sn for SLS update)
+  typename base_type::template tensor_type<type_real, components,
+                                           num_dimensions>
+      du;
+
+  // -----------------------------------------------------------------------
   // Constructors
   // -----------------------------------------------------------------------
 
@@ -162,31 +181,38 @@ public:
    * @param Rxx                 Memory variable R_xx
    * @param Rxz                 Memory variable R_xz
    * @param Rkappa              Memory variable R_kappa
+   * @param du                  Gradient of Taylor-predicted displacement
    */
   KOKKOS_FUNCTION
   attenuation(const value_type &kappa_relaxation_rate,
               const value_type &mu_relaxation_rate, const value_type &alpha_rk,
               const value_type &beta_rk, const value_type &gamma_rk,
               const value_type &Rxx, const value_type &Rxz,
-              const value_type &Rkappa)
+              const value_type &Rkappa,
+              const typename base_type::template tensor_type<
+                  type_real, components, num_dimensions> &du)
       : kappa_relaxation_rate(kappa_relaxation_rate),
         mu_relaxation_rate(mu_relaxation_rate), alpha_rk(alpha_rk),
         beta_rk(beta_rk), gamma_rk(gamma_rk), Rxx(Rxx), Rxz(Rxz),
-        Rkappa(Rkappa) {}
+        Rkappa(Rkappa), du(du) {}
 
   // -----------------------------------------------------------------------
   // Methods
   // -----------------------------------------------------------------------
 
-  /** @brief Zero all memory variable (R) fields. */
+  /** @brief Zero all memory variable (R) fields and du. */
   KOKKOS_FUNCTION
   void init() {
     this->Rxx = value_type(typename value_type::value_type(0));
     this->Rxz = value_type(typename value_type::value_type(0));
     this->Rkappa = value_type(typename value_type::value_type(0));
+    for (int ic = 0; ic < components; ++ic)
+      for (int id = 0; id < num_dimensions; ++id)
+        this->du[ic][id] = typename simd::datatype(0);
   }
 
-  /** @brief Component-wise addition on R fields; RK/common factors copied. */
+  /** @brief Component-wise addition on R fields and du; RK/common factors
+   * copied. */
   KOKKOS_FUNCTION attenuation operator+(const attenuation &rhs) const {
     attenuation result;
     result.kappa_relaxation_rate = this->kappa_relaxation_rate;
@@ -200,10 +226,13 @@ public:
       result.Rxz(i) = this->Rxz(i) + rhs.Rxz(i);
       result.Rkappa(i) = this->Rkappa(i) + rhs.Rkappa(i);
     }
+    for (int ic = 0; ic < components; ++ic)
+      for (int id = 0; id < num_dimensions; ++id)
+        result.du[ic][id] = this->du[ic][id] + rhs.du[ic][id];
     return result;
   }
 
-  /** @brief In-place addition on R fields. */
+  /** @brief In-place addition on R fields and du. */
   KOKKOS_FUNCTION attenuation &operator+=(const attenuation &rhs) {
     constexpr int N = specfem::constants::N_SLS;
     for (int i = 0; i < N; ++i) {
@@ -211,10 +240,14 @@ public:
       this->Rxz(i) += rhs.Rxz(i);
       this->Rkappa(i) += rhs.Rkappa(i);
     }
+    for (int ic = 0; ic < components; ++ic)
+      for (int id = 0; id < num_dimensions; ++id)
+        this->du[ic][id] += rhs.du[ic][id];
     return *this;
   }
 
-  /** @brief Scalar multiplication on R fields; RK/common factors copied. */
+  /** @brief Scalar multiplication on R fields and du; RK/common factors copied.
+   */
   KOKKOS_FUNCTION attenuation operator*(const type_real &rhs) const {
     attenuation result;
     result.kappa_relaxation_rate = this->kappa_relaxation_rate;
@@ -228,10 +261,13 @@ public:
       result.Rxz(i) = this->Rxz(i) * rhs;
       result.Rkappa(i) = this->Rkappa(i) * rhs;
     }
+    for (int ic = 0; ic < components; ++ic)
+      for (int id = 0; id < num_dimensions; ++id)
+        result.du[ic][id] = this->du[ic][id] * rhs;
     return result;
   }
 
-  /** @brief Equality — compares all fields (factors and R). */
+  /** @brief Equality — compares all fields (factors, R, and du). */
   KOKKOS_INLINE_FUNCTION
   bool operator==(const attenuation &other) const {
     constexpr int N = specfem::constants::N_SLS;
@@ -253,6 +289,10 @@ public:
       if (!specfem::utilities::is_close(Rkappa(i), other.Rkappa(i)))
         return false;
     }
+    for (int ic = 0; ic < components; ++ic)
+      for (int id = 0; id < num_dimensions; ++id)
+        if (!specfem::utilities::is_close(du[ic][id], other.du[ic][id]))
+          return false;
     return true;
   }
 
@@ -279,6 +319,10 @@ public:
       oss << "  Rxz(" << i << ") = " << Rxz(i) << "\n";
     for (int i = 0; i < N_SLS; ++i)
       oss << "  Rkappa(" << i << ") = " << Rkappa(i) << "\n";
+    oss << "Taylor Step du (dim2):\n";
+    for (int ic = 0; ic < components; ++ic)
+      for (int id = 0; id < num_dimensions; ++id)
+        oss << "  du[" << ic << "][" << id << "] = " << du[ic][id] << "\n";
     return oss.str();
   }
 };
@@ -354,6 +398,24 @@ public:
   value_type Rkappa;
 
   // -----------------------------------------------------------------------
+  // Compile-time constants for du tensor
+  // -----------------------------------------------------------------------
+  static constexpr int components = specfem::element::attributes<
+      specfem::element::dimension_tag::dim3,
+      specfem::element::medium_tag::elastic>::components;
+  static constexpr int num_dimensions = specfem::element::attributes<
+      specfem::element::dimension_tag::dim3,
+      specfem::element::medium_tag::elastic>::dimension;
+
+  // -----------------------------------------------------------------------
+  // Data members — du_att tensor (Taylor step: grad(u + dt*v))
+  // -----------------------------------------------------------------------
+  /// du_att = grad(u + dt*v) from previous time step (Sn for SLS update)
+  typename base_type::template tensor_type<type_real, components,
+                                           num_dimensions>
+      du;
+
+  // -----------------------------------------------------------------------
   // Constructors
   // -----------------------------------------------------------------------
 
@@ -377,6 +439,7 @@ public:
    * @param Rxz                 Memory variable R_xz
    * @param Ryz                 Memory variable R_yz
    * @param Rkappa              Memory variable R_kappa
+   * @param du                  Gradient of Taylor-predicted displacement
    */
   KOKKOS_FUNCTION
   attenuation(const value_type &kappa_relaxation_rate,
@@ -384,17 +447,19 @@ public:
               const value_type &beta_rk, const value_type &gamma_rk,
               const value_type &Rxx, const value_type &Ryy,
               const value_type &Rxy, const value_type &Rxz,
-              const value_type &Ryz, const value_type &Rkappa)
+              const value_type &Ryz, const value_type &Rkappa,
+              const typename base_type::template tensor_type<
+                  type_real, components, num_dimensions> &du)
       : kappa_relaxation_rate(kappa_relaxation_rate),
         mu_relaxation_rate(mu_relaxation_rate), alpha_rk(alpha_rk),
         beta_rk(beta_rk), gamma_rk(gamma_rk), Rxx(Rxx), Ryy(Ryy), Rxy(Rxy),
-        Rxz(Rxz), Ryz(Ryz), Rkappa(Rkappa) {}
+        Rxz(Rxz), Ryz(Ryz), Rkappa(Rkappa), du(du) {}
 
   // -----------------------------------------------------------------------
   // Methods
   // -----------------------------------------------------------------------
 
-  /** @brief Zero all memory variable (R) fields. */
+  /** @brief Zero all memory variable (R) fields and du. */
   KOKKOS_FUNCTION
   void init() {
     this->Rxx = value_type(typename value_type::value_type(0));
@@ -403,9 +468,13 @@ public:
     this->Rxz = value_type(typename value_type::value_type(0));
     this->Ryz = value_type(typename value_type::value_type(0));
     this->Rkappa = value_type(typename value_type::value_type(0));
+    for (int ic = 0; ic < components; ++ic)
+      for (int id = 0; id < num_dimensions; ++id)
+        this->du[ic][id] = typename simd::datatype(0);
   }
 
-  /** @brief Component-wise addition on R fields; RK/common factors copied. */
+  /** @brief Component-wise addition on R fields and du; RK/common factors
+   * copied. */
   KOKKOS_FUNCTION attenuation operator+(const attenuation &rhs) const {
     attenuation result;
     result.kappa_relaxation_rate = this->kappa_relaxation_rate;
@@ -422,10 +491,13 @@ public:
       result.Ryz(i) = this->Ryz(i) + rhs.Ryz(i);
       result.Rkappa(i) = this->Rkappa(i) + rhs.Rkappa(i);
     }
+    for (int ic = 0; ic < components; ++ic)
+      for (int id = 0; id < num_dimensions; ++id)
+        result.du[ic][id] = this->du[ic][id] + rhs.du[ic][id];
     return result;
   }
 
-  /** @brief In-place addition on R fields. */
+  /** @brief In-place addition on R fields and du. */
   KOKKOS_FUNCTION attenuation &operator+=(const attenuation &rhs) {
     constexpr int N = specfem::constants::N_SLS;
     for (int i = 0; i < N; ++i) {
@@ -436,10 +508,14 @@ public:
       this->Ryz(i) += rhs.Ryz(i);
       this->Rkappa(i) += rhs.Rkappa(i);
     }
+    for (int ic = 0; ic < components; ++ic)
+      for (int id = 0; id < num_dimensions; ++id)
+        this->du[ic][id] += rhs.du[ic][id];
     return *this;
   }
 
-  /** @brief Scalar multiplication on R fields; RK/common factors copied. */
+  /** @brief Scalar multiplication on R fields and du; RK/common factors copied.
+   */
   KOKKOS_FUNCTION attenuation operator*(const type_real &rhs) const {
     attenuation result;
     result.kappa_relaxation_rate = this->kappa_relaxation_rate;
@@ -456,10 +532,13 @@ public:
       result.Ryz(i) = this->Ryz(i) * rhs;
       result.Rkappa(i) = this->Rkappa(i) * rhs;
     }
+    for (int ic = 0; ic < components; ++ic)
+      for (int id = 0; id < num_dimensions; ++id)
+        result.du[ic][id] = this->du[ic][id] * rhs;
     return result;
   }
 
-  /** @brief Equality — compares all fields (factors and R). */
+  /** @brief Equality — compares all fields (factors, R, and du). */
   KOKKOS_INLINE_FUNCTION
   bool operator==(const attenuation &other) const {
     constexpr int N = specfem::constants::N_SLS;
@@ -487,6 +566,10 @@ public:
       if (!specfem::utilities::is_close(Rkappa(i), other.Rkappa(i)))
         return false;
     }
+    for (int ic = 0; ic < components; ++ic)
+      for (int id = 0; id < num_dimensions; ++id)
+        if (!specfem::utilities::is_close(du[ic][id], other.du[ic][id]))
+          return false;
     return true;
   }
 
@@ -519,6 +602,10 @@ public:
       oss << "  Ryz(" << i << ") = " << Ryz(i) << "\n";
     for (int i = 0; i < N_SLS; ++i)
       oss << "  Rkappa(" << i << ") = " << Rkappa(i) << "\n";
+    oss << "Taylor Step du (dim3):\n";
+    for (int ic = 0; ic < components; ++ic)
+      for (int id = 0; id < num_dimensions; ++id)
+        oss << "  du[" << ic << "][" << id << "] = " << du[ic][id] << "\n";
     return oss.str();
   }
 };

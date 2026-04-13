@@ -34,6 +34,16 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
 
   constexpr static int N_SLS = specfem::constants::N_SLS;
 
+  static constexpr int components =
+      specfem::element::attributes<specfem::element::dimension_tag::dim3,
+                                   specfem::element::medium_tag::elastic>::components;
+  static constexpr int num_dimensions =
+      specfem::element::attributes<specfem::element::dimension_tag::dim3,
+                                   specfem::element::medium_tag::elastic>::dimension;
+
+  using tensor_view_type = typename base_type::template tensor_type<
+      type_real, Kokkos::DefaultExecutionSpace::memory_space>;
+
   // Host-only per-element scale factors
   Kokkos::View<type_real *, Kokkos::DefaultHostExecutionSpace> h_kappa_scale;
   Kokkos::View<type_real *, Kokkos::DefaultHostExecutionSpace> h_mu_scale;
@@ -57,6 +67,9 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
   view_type::HostMirror h_memory_variable_Rxz;
   view_type memory_variable_Ryz;
   view_type::HostMirror h_memory_variable_Ryz;
+
+  tensor_view_type du_att;
+  typename tensor_view_type::HostMirror h_du_att;
 
   // Index mapping: global ispec -> compact attenuation index (-1 if not attenuating)
   Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
@@ -122,6 +135,10 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
         view_type("mem_Ryz", nspec_attn, ngllz, nglly, ngllx, N_SLS);
     h_memory_variable_Ryz =
         Kokkos::create_mirror_view(memory_variable_Ryz);
+
+    du_att = tensor_view_type("du_att", nspec_attn, ngllz, nglly, ngllx, components, num_dimensions);
+    h_du_att = Kokkos::create_mirror_view(du_att);
+    Kokkos::deep_copy(du_att, static_cast<type_real>(0));
 
     // Allocate and populate the inverse index mapping (global ispec -> compact index)
     h_attenuation_index_mapping =
@@ -195,6 +212,7 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
     Kokkos::deep_copy(h_memory_variable_Rxy, memory_variable_Rxy);
     Kokkos::deep_copy(h_memory_variable_Rxz, memory_variable_Rxz);
     Kokkos::deep_copy(h_memory_variable_Ryz, memory_variable_Ryz);
+    Kokkos::deep_copy(h_du_att, du_att);
   }
 
   void copy_to_device() {
@@ -207,6 +225,7 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
     Kokkos::deep_copy(memory_variable_Rxy, h_memory_variable_Rxy);
     Kokkos::deep_copy(memory_variable_Rxz, h_memory_variable_Rxz);
     Kokkos::deep_copy(memory_variable_Ryz, h_memory_variable_Ryz);
+    Kokkos::deep_copy(du_att, h_du_att);
   }
 
   /**
@@ -234,6 +253,11 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
         point.Ryz(j) = memory_variable_Ryz(i, index.iz, index.iy, index.ix, j);
         point.Rkappa(j) =
             memory_variable_kappa(i, index.iz, index.iy, index.ix, j);
+      }
+      for (int ic = 0; ic < components; ++ic) {
+        for (int id = 0; id < num_dimensions; ++id) {
+          point.du[ic][id] = du_att(i, index.iz, index.iy, index.ix, ic, id);
+        }
       }
     } else {
       using simd = typename PointType::simd;
@@ -274,6 +298,12 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
                 &memory_variable_kappa(i, index.iz, index.iy, index.ix, j),
                 tag_type());
       }
+      for (int ic = 0; ic < components; ++ic) {
+        for (int id = 0; id < num_dimensions; ++id) {
+          Kokkos::Experimental::where(mask, point.du[ic][id])
+              .copy_from(&du_att(i, index.iz, index.iy, index.ix, ic, id), tag_type());
+        }
+      }
     }
   }
 
@@ -281,7 +311,7 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
    * @brief Store evolved SLS memory variables from a point-local struct back
    *        to the device views.
    *
-   * Only the memory variables are written; relaxation rates are
+   * Only the memory variables and du field are written; relaxation rates are
    * simulation-lifetime constants and are not written back.
    * Note: memory_variable_Rzz = -(Rxx + Ryy) and is not stored in the point
    * type; callers must update it separately if needed.
@@ -299,6 +329,11 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
         memory_variable_Ryz(i, index.iz, index.iy, index.ix, j) = point.Ryz(j);
         memory_variable_kappa(i, index.iz, index.iy, index.ix, j) =
             point.Rkappa(j);
+      }
+      for (int ic = 0; ic < components; ++ic) {
+        for (int id = 0; id < num_dimensions; ++id) {
+          du_att(i, index.iz, index.iy, index.ix, ic, id) = point.du[ic][id];
+        }
       }
     } else {
       using simd = typename PointType::simd;
@@ -325,6 +360,12 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
             .copy_to(
                 &memory_variable_kappa(i, index.iz, index.iy, index.ix, j),
                 tag_type());
+      }
+      for (int ic = 0; ic < components; ++ic) {
+        for (int id = 0; id < num_dimensions; ++id) {
+          Kokkos::Experimental::where(mask, point.du[ic][id])
+              .copy_to(&du_att(i, index.iz, index.iy, index.ix, ic, id), tag_type());
+        }
       }
     }
   }

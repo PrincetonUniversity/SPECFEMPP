@@ -43,7 +43,8 @@ specfem::assembly::Attenuation<specfem::element::dimension_tag::dim3>::
     : ngllz(mesh.element_grid.ngllz), nglly(mesh.element_grid.nglly),
       ngllx(mesh.element_grid.ngllx), nspec(mesh.nspec),
       f0(reference_frequency),
-      auto_compute_attenuation_band(auto_compute_attenuation_band) {
+      auto_compute_attenuation_band(auto_compute_attenuation_band),
+      deltat(deltat) {
 
   specfem::utilities::Band<specfem::units::Hertz> band =
       auto_compute_attenuation_band

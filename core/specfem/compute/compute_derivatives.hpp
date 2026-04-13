@@ -26,12 +26,13 @@ void compute_derivatives(
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC), ATTENUATION_TAG(NONE)),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
       {
         if constexpr (DimensionTag == _dimension_tag_) {
           impl::compute_material_derivatives<
               NGLL,
-              specfem::tags::Tags<DimensionTag, _medium_tag_, _property_tag_> >(
+              specfem::tags::Tags<DimensionTag, _medium_tag_, _property_tag_,
+                                  specfem::element::attenuation_tag::none> >(
               assembly, dt);
         }
       })

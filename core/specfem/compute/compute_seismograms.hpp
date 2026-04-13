@@ -35,8 +35,9 @@ void compute_seismograms(
       {
         if constexpr (DimensionTag == _dimension_tag_) {
           impl::compute_seismograms<
-              NGLL, specfem::tags::Tags<DimensionTag, WavefieldType,
-                                        _medium_tag_, _property_tag_> >(
+              NGLL,
+              specfem::tags::Tags<DimensionTag, WavefieldType, _medium_tag_,
+                                  _property_tag_, _attenuation_tag_> >(
               assembly, isig_step);
         }
       })

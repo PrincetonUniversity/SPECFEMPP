@@ -39,8 +39,9 @@ void initialize_mass_matrix(
           specfem::compute::impl::compute_mass_matrix<
               NGLL,
               specfem::tags::Tags<DimensionTag, WavefieldType, _medium_tag_,
-                                  _property_tag_, _boundary_tag_> >(dt,
-                                                                    assembly);
+                                  _property_tag_, _boundary_tag_,
+                                  specfem::element::attenuation_tag::none> >(
+              dt, assembly);
         }
       })
 

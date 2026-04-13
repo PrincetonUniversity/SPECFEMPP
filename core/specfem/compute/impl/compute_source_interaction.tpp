@@ -121,7 +121,6 @@ void compute_source_interaction(
        MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                   ELASTIC_PSV_T),
        PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-       ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC),
        BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
                     COMPOSITE_STACEY_DIRICHLET)),
       {
@@ -130,8 +129,8 @@ void compute_source_interaction(
           compute_source_interaction_core<
               NGLL,
               specfem::tags::Tags<DimensionTag, WavefieldType, _medium_tag_,
-                                  _property_tag_, _boundary_tag_> >(assembly,
-                                                                    istep);
+                                  _property_tag_, specfem::element::attenuation_tag::none,
+                                  _boundary_tag_> >(assembly, istep);
         }
       })
 }
