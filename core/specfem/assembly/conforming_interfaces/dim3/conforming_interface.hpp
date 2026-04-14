@@ -7,7 +7,8 @@
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
 #include "specfem/enums.hpp"
-#include "specfem/macros.hpp"
+#include "specfem/macros/tag_dispatch.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
@@ -58,14 +59,20 @@ private:
       specfem::assembly::conforming_interfaces_impl::interface_container<
           dimension_tag, InterfaceTag, BoundaryTag, ConnectionTag>;
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), CONNECTION_TAG(WEAKLY_CONFORMING),
-                       INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
-                       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                                    COMPOSITE_STACEY_DIRICHLET)),
-                      DECLARE(((InterfaceContainerType,
-                                (_INTERFACE_TAG_, _BOUNDARY_TAG_,
-                                 _CONNECTION_TAG_)),
-                               interface_container)))
+  template <typename TagsType>
+  using InterfaceContainerTemplateType =
+      InterfaceContainerType<TagsType::interface_tag, TagsType::boundary_tag,
+                             TagsType::connection_tag>;
+
+  static constexpr auto combinations =
+      DIMENSION_SET(dim3) * CONNECTION_SET(weakly_conforming) *
+      INTERFACE_SET(elastic_acoustic, acoustic_elastic) *
+      BOUNDARY_SET(none, acoustic_free_surface, stacey,
+                   composite_stacey_dirichlet);
+
+  specfem::tag_dispatch::TypedStorage<InterfaceContainerTemplateType,
+                                      decltype(combinations)>
+      interface_container;
 
 public:
   /**
@@ -131,29 +138,10 @@ public:
   KOKKOS_INLINE_FUNCTION const
       InterfaceContainerType<InterfaceTag, BoundaryTag, ConnectionTag> &
       get_interface_container() const {
-    // Compile-time dispatch using FOR_EACH_IN_PRODUCT macro
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), CONNECTION_TAG(WEAKLY_CONFORMING),
-                         INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
-                         BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                                      COMPOSITE_STACEY_DIRICHLET)),
-                        CAPTURE((interface_container, interface_container)) {
-                          if constexpr (InterfaceTag == _interface_tag_ &&
-                                        BoundaryTag == _boundary_tag_ &&
-                                        ConnectionTag == _connection_tag_) {
-                            return _interface_container_;
-                          }
-                        })
-
-#ifndef NDEBUG
-    // Debug check: abort if no matching specialization found
-    KOKKOS_ABORT_WITH_LOCATION("specfem::assembly::conforming_interfaces::get_"
-                               "interface_container(): No "
-                               "matching specialization found.");
-#endif
-
-    // Unreachable code - satisfy compiler return requirements
-
-    SUPPRESS_UNREACHABLE(return {};)
+    using TagsType =
+        specfem::tags::Tags<specfem::element::dimension_tag::dim3,
+                            ConnectionTag, InterfaceTag, BoundaryTag>;
+    return interface_container.template get<TagsType>();
   }
 };
 
