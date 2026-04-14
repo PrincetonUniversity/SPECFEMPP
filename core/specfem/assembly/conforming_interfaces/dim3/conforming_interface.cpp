@@ -5,8 +5,6 @@
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/enums.hpp"
-#include "specfem/macros/tag_dispatch.hpp"
-#include "specfem/tag_dispatch.hpp"
 
 specfem::assembly::conforming_interfaces<
     specfem::element::dimension_tag::dim3>::

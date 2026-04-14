@@ -4,8 +4,6 @@
 #include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/enums.hpp"
-#include "specfem/macros/tag_dispatch.hpp"
-#include "specfem/tag_dispatch.hpp"
 
 specfem::assembly::nonconforming_interfaces<
     specfem::element::dimension_tag::dim2>::
