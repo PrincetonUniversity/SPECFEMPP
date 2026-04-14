@@ -240,6 +240,7 @@ target_link_libraries(
     meshfem2D::shared_mpi
     meshfem2D::mesh_utilities
     meshfem2D::cc_objects
+    specfem::version
 )
 
 if (SPECFEM_ENABLE_MPI)
