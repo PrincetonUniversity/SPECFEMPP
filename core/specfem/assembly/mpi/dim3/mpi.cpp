@@ -1,4 +1,6 @@
 #include "specfem/assembly/mpi/dim3/mpi.hpp"
+#include "specfem/assembly/mesh.hpp"
+#include "specfem/logger.hpp"
 #include "specfem/mesh_entity.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/setup.hpp"
@@ -18,7 +20,8 @@ int find_anchor_position(
     if (corners[i] == anchor)
       return i;
   }
-  throw std::runtime_error("Anchor point not found among face corners");
+  specfem::Logger::error("Anchor point not found among face corners");
+  return -1;
 }
 
 /**
@@ -69,6 +72,8 @@ std::pair<unsigned int, unsigned int> apply_rotation(unsigned char theta,
   case 3: // 270° CW
     return { j, ngll - 1 - i };
   default: // Should not reach here; silently use identity
+    specfem::Logger::error("Invalid rotation index theta: " +
+                           std::to_string(theta));
     return { i, j };
   }
 }
@@ -103,6 +108,10 @@ specfem::assembly::mpi_impl::communication_group::communication_group(
   const specfem::mesh_entity::element<specfem::element::dimension_tag::dim3>
       element(ngllz, nglly, ngllx);
   ngll = element.ngll;
+
+  // Early exit if no faces in this communication group
+  if (nfaces == 0)
+    return;
 
   // Allocate device views for face metadata
   my_orientation =
@@ -186,6 +195,10 @@ specfem::assembly::mpi_impl::packer::packer(
   this->nfaces = comm_group.nfaces;
   this->ngll = comm_group.ngll;
 
+  // Early exit if no faces in this communication group
+  if (this->nfaces == 0)
+    return;
+
   Kokkos::View<int ***, Kokkos::HostSpace> face_index_mapping(
       "packer::face_index_mapping", this->nfaces, this->ngll, this->ngll);
 
@@ -193,7 +206,7 @@ specfem::assembly::mpi_impl::packer::packer(
   // Points shared between adjacent faces (at shared edges/corners) are
   // inserted only once; insertion order is preserved via the vector.
   std::vector<int> unique_iglobs;
-  std::unordered_set<int> seen;
+  std::unordered_map<int, int> seen; // Maps global iglob to local mapping index
   unique_iglobs.reserve(this->nfaces * this->ngll * this->ngll); // upper-bound
                                                                  // reserve
 
@@ -213,12 +226,12 @@ specfem::assembly::mpi_impl::packer::packer(
         const int iglob = mesh.h_index_mapping(ielem, iz, iy, ix);
 
         // Insert only if not already seen
-        if (seen.insert(iglob).second) {
+        if (seen.find(iglob) == seen.end()) {
+          seen[iglob] = unique_iglobs.size(); // local mapping index
           unique_iglobs.push_back(iglob);
         }
 
-        face_index_mapping(iface, ipoint_j, ipoint_i) =
-            iglob; // Store for unpacking
+        face_index_mapping(iface, ipoint_j, ipoint_i) = seen[iglob];
       }
     }
   }
@@ -267,6 +280,10 @@ void specfem::assembly::mpi_impl::packer::send_unpacking_indices(
     Kokkos::View<int *, Kokkos::HostSpace> neighbor_element,
     Kokkos::View<specfem::mesh_entity::dim3::type *, Kokkos::HostSpace>
         neighbor_orientation) {
+
+  // Early exit if no faces to send
+  if (this->nfaces == 0)
+    return;
 
   // -----------------------------------------------------------------------
   // Step 1: Allocate host-space buffer for rotated indices
@@ -351,6 +368,10 @@ specfem::assembly::mpi_impl::unpacker::unpacker(
   this->neighbor_rank = comm_group.neighbor_rank;
   this->nfaces = comm_group.nfaces;
   this->ngll = comm_group.ngll;
+
+  // Early exit if no faces in this communication group
+  if (this->nfaces == 0)
+    return;
 }
 
 // ---------------------------------------------------------------------------
@@ -372,6 +393,22 @@ std::tuple<Kokkos::View<MPI_Request[4], Kokkos::HostSpace>,
            Kokkos::View<int *, Kokkos::HostSpace> >
 specfem::assembly::mpi_impl::unpacker::receive_unpacking_buffers() {
 
+  // Early exit if no faces to receive
+  if (this->nfaces == 0) {
+    // Return empty views and uninitialized requests (safe since
+    // assemble_unpacking_mapping will also early-exit on nfaces==0)
+    return { Kokkos::View<MPI_Request[4], Kokkos::HostSpace>(Kokkos::view_alloc(
+                 Kokkos::WithoutInitializing, "unpacker::empty_requests")),
+             Kokkos::View<unsigned int[3], Kokkos::HostSpace>(
+                 "unpacker::empty_metadata"),
+             Kokkos::View<int ***, Kokkos::HostSpace>("unpacker::empty_indices",
+                                                      0, 0, 0),
+             Kokkos::View<int *, Kokkos::HostSpace>(
+                 "unpacker::empty_element_indices", 0),
+             Kokkos::View<int *, Kokkos::HostSpace>(
+                 "unpacker::empty_orientations", 0) };
+  }
+
   // -----------------------------------------------------------------------
   // Step 1: Compute receive tag (reversed from sender's perspective)
   // -----------------------------------------------------------------------
@@ -379,22 +416,24 @@ specfem::assembly::mpi_impl::unpacker::receive_unpacking_buffers() {
       compute_message_tag_base(this->neighbor_rank, this->my_rank);
 
   Kokkos::View<unsigned int[3], Kokkos::HostSpace> metadata_buf(
-      Kokkos::WithoutInitializing, "unpacker::metadata_buf");
+      "unpacker::metadata_buf");
   Kokkos::View<int ***, Kokkos::HostSpace> recv_indices(
-      Kokkos::WithoutInitializing, "unpacker::recv_indices", this->nfaces,
-      this->ngll, this->ngll);
+      Kokkos::view_alloc(Kokkos::WithoutInitializing, "unpacker::recv_indices"),
+      this->nfaces, this->ngll, this->ngll);
   Kokkos::View<int *, Kokkos::HostSpace> element_indices(
-      Kokkos::WithoutInitializing, "unpacker::element_indices", this->nfaces);
+      Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                         "unpacker::element_indices"),
+      this->nfaces);
   Kokkos::View<int *, Kokkos::HostSpace> neighbor_orientations(
-      Kokkos::WithoutInitializing, "unpacker::neighbor_orientations",
+      Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                         "unpacker::neighbor_orientations"),
       this->nfaces);
 
   // -----------------------------------------------------------------------
   // Step 2: Post all three MPI_Irecv before any MPI_Wait
   // -----------------------------------------------------------------------
   Kokkos::View<MPI_Request[4], Kokkos::HostSpace> requests(
-      Kokkos::WithoutInitializing,
-      "unpacker::requests"); // Store requests for Waitall
+      Kokkos::view_alloc(Kokkos::WithoutInitializing, "unpacker::requests"));
   MPI_Comm comm = specfem::MPI::communicator();
 
   // Message 1: Receive metadata (nfaces, ngll)
@@ -443,6 +482,10 @@ void specfem::assembly::mpi_impl::unpacker::assemble_unpacking_mapping(
     const specfem::mesh_entity::element<dimension_tag> &element,
     const specfem::assembly::mesh<dimension_tag> &mesh) {
 
+  // Early exit if no faces to assemble
+  if (this->nfaces == 0)
+    return;
+
   // -----------------------------------------------------------------------
   // Step 1: Wait for all receives to complete
   // -----------------------------------------------------------------------
@@ -452,20 +495,18 @@ void specfem::assembly::mpi_impl::unpacker::assemble_unpacking_mapping(
   // Step 2: Validate received metadata
   // -----------------------------------------------------------------------
   if (metadata_buf[0] != this->nfaces || metadata_buf[1] != this->ngll) {
-    throw std::runtime_error(
+    specfem::Logger::error(
         "unpacker::receive_unpacking_buffers: metadata mismatch with sender");
   }
   // -----------------------------------------------------------------------
 
   // Step 3: Build mapping from received buffers
-  // Traverse received element indices and deduplicate GLL points using local
-  // iglob lookup. Use element-to-orientation map to handle face ordering
-  // differences. The mapping size equals the number of unique points on the
-  // interface.
-  std::vector<int> unique_iglobs;
-  std::unordered_set<int> seen;
-  unique_iglobs.reserve(this->nfaces * this->ngll * this->ngll); // upper-bound
-                                                                 // reserve
+  const int nglob = metadata_buf[2];
+
+  mapping = IndexMappingView("unpacker::mapping", nglob);
+  h_mapping = Kokkos::create_mirror_view(mapping);
+
+  std::unordered_map<int, int> seen; // Maps global iglob to local mapping index
 
   for (unsigned int iface = 0; iface < this->nfaces; iface++) {
     const int ielem = element_indices(iface);
@@ -474,38 +515,43 @@ void specfem::assembly::mpi_impl::unpacker::assemble_unpacking_mapping(
 
     for (unsigned int ipoint_j = 0; ipoint_j < this->ngll; ipoint_j++) {
       for (unsigned int ipoint_i = 0; ipoint_i < this->ngll; ipoint_i++) {
+        // Get the rotated face indices from the received buffer
         const int point_linear = ipoint_j * this->ngll + ipoint_i;
+        const int face_iglob = recv_indices(iface, ipoint_j, ipoint_i);
 
         // Map face 2D coordinates to element 3D coordinates
         const auto [iz, iy, ix] =
             element.map_coordinates(face_type, point_linear);
-        // Look up global assembled index
+
+        // Look up global assembled index using local element and face point
         const int iglob = mesh.h_index_mapping(ielem, iz, iy, ix);
-        // Insert only if not already seen
-        if (seen.insert(iglob).second) {
-          unique_iglobs.push_back(iglob);
+
+        if (seen.find(iglob) == seen.end()) {
+          seen[iglob] = face_iglob; // Store the mapping from local iglob to
+                                    // received face iglob
+        } else {
+          // Validate that the same iglob maps to the same face_iglob
+          //  if seen again
+          if (seen[iglob] != face_iglob) {
+            specfem::Logger::error("Inconsistent mapping for iglob " +
+                                   std::to_string(iglob));
+          }
         }
+
+        if (face_iglob < 0 || face_iglob >= nglob) {
+          specfem::Logger::error("Received face iglob out of bounds: " +
+                                 std::to_string(face_iglob));
+        }
+
+        h_mapping(face_iglob) =
+            iglob; // Store the mapping from received face iglob to local iglob
       }
     }
   }
 
-  // Check if the number of unique iglobs matches the nglob sent by the neighbor
-
-  if (unique_iglobs.size() != metadata_buf[2]) {
-    throw std::runtime_error("unpacker::assemble_unpacking_mapping: unique "
-                             "iglob count mismatch with sender metadata");
-  }
-
-  // At this point, unique_iglobs contains the deduplicated list of global
-  // indices for the GLL points on the MPI interface, which can be used to
-  // construct the unpacking mapping.
-
-  const unsigned int n_unique = unique_iglobs.size();
-  mapping = IndexMappingView("unpacker::mapping", n_unique);
-  h_mapping = Kokkos::create_mirror_view(mapping);
-
-  for (unsigned int i = 0; i < n_unique; i++) {
-    h_mapping(i) = unique_iglobs[i];
+  // Check if all received face iglobs have been mapped
+  if (seen.size() != static_cast<size_t>(nglob)) {
+    specfem::Logger::error("Not all received face iglobs were mapped");
   }
 
   Kokkos::deep_copy(mapping, h_mapping);
@@ -567,6 +613,7 @@ specfem::assembly::mpi<specfem::element::dimension_tag::dim3>::mpi(
                                                              ngllx);
 
   for (const auto &comm_group : communication_groups) {
+
     // Create unpacker first to post receives before sends (avoid
     // deadlock)
     mpi_impl::unpacker unpacker(comm_group, element, mesh);

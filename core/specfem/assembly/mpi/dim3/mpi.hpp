@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "specfem/assembly/mesh.hpp"
 #include "specfem/element.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/mesh_entity.hpp"
