@@ -829,13 +829,6 @@ set(SERIAL_TEST_TARGETS
   units_tests
 )
 
-foreach(test_target IN LISTS SERIAL_TEST_TARGETS)
-    gtest_discover_tests(${test_target}
-      DISCOVERY_MODE POST_BUILD
-      DISCOVERY_TIMEOUT 300
-    )
-endforeach()
-
 # Link test data directories for serial tests
 set(SERIAL_LINK_DIRS
   algorithms
@@ -850,9 +843,13 @@ set(SERIAL_LINK_DIRS
   policies
 )
 
-foreach(dir_name IN LISTS SERIAL_LINK_DIRS)
-    file(CREATE_LINK
-        ${CMAKE_CURRENT_SOURCE_DIR}/${dir_name}
-        ${CMAKE_CURRENT_BINARY_DIR}/${dir_name}
-        SYMBOLIC)
+# Setup test script writer (called once for all targets)
+specfem_write_copy_test_cmake_script()
+
+# Register each test target for discovery with optional path-fix
+foreach(test_target IN LISTS SERIAL_TEST_TARGETS)
+    specfem_register_test_target(${test_target})
 endforeach()
+
+# Finalize test setup: generate CTestTestfile.cmake and setup data directories
+specfem_finalize_test_targets(SERIAL_TEST_TARGETS SERIAL_LINK_DIRS)

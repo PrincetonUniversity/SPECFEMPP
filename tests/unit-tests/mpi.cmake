@@ -15,6 +15,15 @@ include(GoogleTest)
 function(add_mpi_test TARGET NUM_PROCESSES)
     message(STATUS "Registering MPI test: ${TARGET} with ${NUM_PROCESSES} processes")
 
+    # Copy test binary to TEST_OUTPUT_DIR after build
+    add_custom_command(TARGET ${TARGET} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${TEST_OUTPUT_DIR}
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:${TARGET}>
+            ${TEST_OUTPUT_DIR}/$<TARGET_FILE_NAME:${TARGET}>
+        COMMENT "Moving ${TARGET} to ${TEST_OUTPUT_DIR}"
+    )
+
     # CROSSCOMPILING_EMULATOR prefixes test execution with the MPI launcher.
     # gtest_add_tests scans sources at configure time so this is only used at run time.
     set_target_properties(${TARGET} PROPERTIES
@@ -25,7 +34,7 @@ function(add_mpi_test TARGET NUM_PROCESSES)
     # Unlike gtest_discover_tests, this never executes the binary for discovery.
     gtest_add_tests(
         TARGET ${TARGET}
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/tests/unit-tests
+        WORKING_DIRECTORY ${TEST_OUTPUT_DIR}
         TEST_LIST DISCOVERED_TESTS
     )
 
@@ -116,15 +125,6 @@ foreach(test_target IN LISTS MPI_TEST_TARGETS)
   add_mpi_test(${test_target} 4)
 endforeach()
 
-# Link test data directories for MPI tests
-set(MPI_LINK_DIRS
-  data
-  mesh
-)
-
-foreach(dir_name IN LISTS MPI_LINK_DIRS)
-    file(CREATE_LINK
-        ${CMAKE_CURRENT_SOURCE_DIR}/${dir_name}
-        ${CMAKE_CURRENT_BINARY_DIR}/${dir_name}
-        SYMBOLIC)
-endforeach()
+# Note: data directories (data, mesh) are handled by serial.cmake via
+# specfem_finalize_test_targets, which covers both in-tree (symlinks) and
+# external TEST_OUTPUT_DIR (install) cases.
