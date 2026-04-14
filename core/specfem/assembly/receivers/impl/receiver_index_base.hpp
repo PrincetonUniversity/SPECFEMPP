@@ -37,16 +37,17 @@ namespace specfem::assembly::receivers_impl {
 template <typename ElementSets> struct ReceiverIndexBase {
   static constexpr auto dimension_tag = ElementSets::dimension_tag;
 
+protected:
+  using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
+  using HostIndexViewType =
+      Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>;
+
   /// All valid (dimension, medium, property, attenuation) combinations for
   /// this dimension.
   static constexpr auto combinations_by_material =
       specfem::tag_dispatch::dimension_set<dimension_tag>{} *
       ElementSets::medium_set * ElementSets::property_set *
       ElementSets::attenuation_set;
-
-  using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
-  using HostIndexViewType =
-      Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>;
 
 private:
   using MaterialCombos = decltype(combinations_by_material);
@@ -133,6 +134,22 @@ protected:
   }
 
 public:
+  /**
+   * @brief Construct and populate all per-material receiver index stores.
+   *
+   * @param h_elements_all  Host view, size @p nrec, mapping receiver index →
+   *                        spectral-element index.  A value of -1 means the
+   *                        receiver was not located in the current MPI
+   *                        partition; such entries are skipped.
+   * @param element_types   Element-type classifier for the current mesh
+   *                        partition.
+   */
+  ReceiverIndexBase(
+      const HostIndexViewType &h_elements_all,
+      const specfem::assembly::element_types<dimension_tag> &element_types) {
+    build_index_stores(h_elements_all, element_types);
+  }
+
   /**
    * @brief Device-side (element, receiver) index views for a material.
    *
