@@ -103,19 +103,18 @@ specfem::assembly::element_intersections<
       } };
 
   // Build host edge views from collected edges
-  h_self_edges = decltype(h_self_edges)(
-      [&]<typename TagsType>() -> EdgeViewType::HostMirror {
-        return edge_view_from_collected_edges(
-            "specfem::assembly::interface_types::self_edges",
-            collected.template get<TagsType>().self_collect, element);
-      });
+  h_self_edges = { [&]<typename TagsType>() -> EdgeViewType::HostMirror {
+    return edge_view_from_collected_edges(
+        "specfem::assembly::interface_types::self_edges",
+        collected.template get<TagsType>().self_collect, element);
+  } };
 
-  h_coupled_edges = decltype(h_coupled_edges)(
-      [&]<typename TagsType>() -> EdgeViewType::HostMirror {
-        return edge_view_from_collected_edges(
-            "specfem::assembly::interface_types::coupled_edges",
-            collected.template get<TagsType>().coupled_collect, element);
-      });
+  h_coupled_edges = { [&]<typename TagsType>() -> EdgeViewType::HostMirror {
+    return edge_view_from_collected_edges(
+        "specfem::assembly::interface_types::coupled_edges",
+        collected.template get<TagsType>().coupled_collect, element);
+  } };
+
   // Allocate device views and deep-copy from host
   self_edges = specfem::tag_dispatch::create_mirror_storage_and_copy(
       Kokkos::DefaultExecutionSpace{}, h_self_edges);

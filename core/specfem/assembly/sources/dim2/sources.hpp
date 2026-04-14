@@ -414,7 +414,6 @@ private:
   ///@}
 
   // ── Storage for sources by medium ──────────────────────────────────────
-  // Replaces: FOR_EACH_IN_PRODUCT((DIM2, MEDIUM_TAG(...)), source)
   // TypedStorage stores source_medium<DimTag, MedTag> by value for each combo
   static constexpr auto combinations_by_medium =
       specfem::tag_dispatch::dimension_set<dimension_tag>{} *
@@ -435,7 +434,6 @@ private:
   int timestep;
 
   // ── Storage for source indices by combination ──────────────────────────
-  // Replaces: FOR_EACH_IN_PRODUCT((DIM2, MEDIUM, PROPERTY, BOUNDARY), ...)
   // Keyed by (dim, medium, property, attenuation, boundary, wavefield)
   static constexpr auto combinations_by_source =
       combinations_by_medium *

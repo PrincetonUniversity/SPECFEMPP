@@ -436,7 +436,6 @@ private:
   AttenuationTagViewType::HostMirror h_attenuation_types;
 
   // ── Storage for 3D sources by medium ───────────────────────────────────
-  // Replaces: FOR_EACH_IN_PRODUCT((DIM3, MEDIUM_TAG(...)), source)
   static constexpr auto combinations_by_medium =
       specfem::tag_dispatch::dimension_set<dimension_tag>{} *
       sources_impl::SourceSets<dimension_tag>::medium_set;
@@ -458,7 +457,6 @@ private:
   int timestep;
 
   // ── Storage for 3D source indices by combination ────────────────────────
-  // Replaces: FOR_EACH_IN_PRODUCT((DIM3, MEDIUM, PROPERTY, BOUNDARY), ...)
   // Keyed by (dim, medium, property, attenuation, boundary, wavefield)
   static constexpr auto combinations_by_source =
       combinations_by_medium *
