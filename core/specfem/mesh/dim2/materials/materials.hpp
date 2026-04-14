@@ -3,7 +3,6 @@
 #include "specfem/element.hpp"
 #include "specfem/medium_container.hpp"
 #include "specfem/mesh/mesh_base.hpp"
-#include "specfem/tag_dispatch/for_each.hpp"
 #include "specfem/tag_dispatch/storage.hpp"
 #include "specfem/tags.hpp"
 
@@ -144,12 +143,33 @@ public:
   specfem::medium_container::material<dimension_tag, MediumTag, PropertyTag,
                                       AttenuationTag>
   get_material(const int index) const {
+#ifndef NDEBUG
+    if (index < 0 ||
+        index >= static_cast<int>(this->material_index_mapping.extent(0))) {
+      KOKKOS_ABORT_WITH_LOCATION("Element index out of range in get_material");
+    }
+#endif
     const auto &material_specification = this->material_index_mapping(index);
+
+#ifndef NDEBUG
+    if (material_specification.type != MediumTag ||
+        material_specification.property != PropertyTag ||
+        material_specification.attenuation != AttenuationTag) {
+      KOKKOS_ABORT_WITH_LOCATION("Material type mismatch in get_material");
+    }
+#endif
 
     using Key = specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag,
                                     AttenuationTag>;
-    return material_containers.template get<Key>()
-        .element_materials[material_specification.index];
+    const auto &container = material_containers.template get<Key>();
+#ifndef NDEBUG
+    if (material_specification.index < 0 ||
+        material_specification.index >=
+            static_cast<int>(container.element_materials.size())) {
+      KOKKOS_ABORT_WITH_LOCATION("Material index out of range in get_material");
+    }
+#endif
+    return container.element_materials[material_specification.index];
   }
 
   /**

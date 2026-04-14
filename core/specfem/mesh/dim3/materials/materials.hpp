@@ -173,8 +173,7 @@ private:
           specfem::element::medium_tag::acoustic,
           specfem::element::medium_tag::elastic>{} *
       specfem::tag_dispatch::property_set<
-          specfem::element::property_tag::isotropic,
-          specfem::element::property_tag::anisotropic>{} *
+          specfem::element::property_tag::isotropic>{} *
       specfem::tag_dispatch::attenuation_set<
           specfem::element::attenuation_tag::none,
           specfem::element::attenuation_tag::constant_isotropic>{};
