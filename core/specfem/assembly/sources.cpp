@@ -1,9 +1,6 @@
 #include "specfem/assembly/sources.hpp"
-#include "specfem/assembly/sources/impl/dim2/source_medium.tpp"
-#include "specfem/assembly/sources/impl/dim3/source_medium.tpp"
 #include "specfem/assembly/sources/impl/locate_sources.hpp"
 #include "specfem/assembly/sources/impl/locate_sources.tpp"
-#include "specfem/assembly/sources/impl/source_medium.hpp"
 
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly/mesh.hpp"
@@ -14,26 +11,6 @@
 #include <Kokkos_Core.hpp>
 #include <memory>
 #include <vector>
-
-// ── Explicit instantiations: locate_sources ─────────────────────────────────
-// Required because locate_sources.hpp declares `extern template` for both dims,
-// suppressing implicit instantiation everywhere the header is included.
-
-template void specfem::assembly::sources_impl::locate_sources<
-    specfem::element::dimension_tag::dim2>(
-    const specfem::assembly::element_types<
-        specfem::element::dimension_tag::dim2> &,
-    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &,
-    std::vector<std::shared_ptr<
-        specfem::sources::source<specfem::element::dimension_tag::dim2> > > &);
-
-template void specfem::assembly::sources_impl::locate_sources<
-    specfem::element::dimension_tag::dim3>(
-    const specfem::assembly::element_types<
-        specfem::element::dimension_tag::dim3> &,
-    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &,
-    std::vector<std::shared_ptr<
-        specfem::sources::source<specfem::element::dimension_tag::dim3> > > &);
 
 // ── Constructor template definition ─────────────────────────────────────────
 

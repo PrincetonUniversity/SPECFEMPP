@@ -1,10 +1,5 @@
 #pragma once
 
-// Pull in both dim-specific data-access implementations (each guarded by
-// enable_if on the dimension tag, so including both is safe)
-#include "specfem/assembly/sources/impl/dim2/source_medium_data_access.tpp"
-#include "specfem/assembly/sources/impl/dim3/source_medium_data_access.tpp"
-
 namespace specfem::assembly {
 
 /**
