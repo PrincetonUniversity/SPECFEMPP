@@ -114,5 +114,6 @@ endif(ADIOS)
 if (SPECFEM_INSTALL)
   install(TARGETS xmeshfem3D
     RUNTIME DESTINATION .
+    COMPONENT executables
   )
 endif()

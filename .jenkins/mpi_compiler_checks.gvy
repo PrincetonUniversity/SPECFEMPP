@@ -100,7 +100,7 @@ pipeline {
                         }
                         post {
                             always {
-                                echo ' Cleaning '
+                                echo 'Build or Test stage failed, executing cleanup'
                                 sh "rm -rf build_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
                                 sh "rm -rf install_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
                             }
