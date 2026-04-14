@@ -1,9 +1,11 @@
 #pragma once
 
 #include "specfem/element.hpp"
-#include "specfem/macros.hpp"
 #include "specfem/medium_container.hpp"
 #include "specfem/mesh/mesh_base.hpp"
+#include "specfem/tag_dispatch/for_each.hpp"
+#include "specfem/tag_dispatch/storage.hpp"
+#include "specfem/tags.hpp"
 
 #include "specfem/setup.hpp"
 #include <variant>
@@ -70,15 +72,31 @@ template <> struct materials<specfem::element::dimension_tag::dim2> {
       material_index_mapping; ///< Mapping of spectral element to material
                               ///< properties
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC, ELASTIC_PSV_T,
-                  ELECTROMAGNETIC_TE),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-       ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
-      DECLARE(((specfem::mesh::materials, (_DIMENSION_TAG_), ::material,
-                (_MEDIUM_TAG_, _PROPERTY_TAG_, _ATTENUATION_TAG_)),
-               material)))
+  static constexpr auto combinations =
+      specfem::tag_dispatch::dimension_set<dimension_tag>{} *
+      specfem::tag_dispatch::medium_set<
+          specfem::element::medium_tag::elastic_psv,
+          specfem::element::medium_tag::elastic_sh,
+          specfem::element::medium_tag::acoustic,
+          specfem::element::medium_tag::poroelastic,
+          specfem::element::medium_tag::elastic_psv_t,
+          specfem::element::medium_tag::electromagnetic_te>{} *
+      specfem::tag_dispatch::property_set<
+          specfem::element::property_tag::isotropic,
+          specfem::element::property_tag::anisotropic,
+          specfem::element::property_tag::isotropic_cosserat>{} *
+      specfem::tag_dispatch::attenuation_set<
+          specfem::element::attenuation_tag::none,
+          specfem::element::attenuation_tag::constant_isotropic>{};
+
+  template <typename TagsType>
+  using MaterialContainerTemplate =
+      material<TagsType::medium_tag, TagsType::property_tag,
+               TagsType::attenuation_tag>;
+
+  specfem::tag_dispatch::TypedStorage<MaterialContainerTemplate,
+                                      decltype(combinations)>
+      material_containers;
 
   /**
    * @name Constructors
@@ -128,21 +146,10 @@ public:
   get_material(const int index) const {
     const auto &material_specification = this->material_index_mapping(index);
 
-    FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2),
-         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                    ELASTIC_PSV_T, ELECTROMAGNETIC_TE),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
-        CAPTURE(material) {
-          if constexpr (MediumTag == _medium_tag_ &&
-                        PropertyTag == _property_tag_ &&
-                        AttenuationTag == _attenuation_tag_) {
-            return _material_.element_materials[material_specification.index];
-          }
-        })
-
-    Kokkos::abort("Invalid material type detected in material specification");
+    using Key = specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag,
+                                    AttenuationTag>;
+    return material_containers.template get<Key>()
+        .element_materials[material_specification.index];
   }
 
   /**
@@ -159,21 +166,9 @@ public:
                                                     AttenuationTag> &
   get_container() {
 
-    FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2),
-         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                    ELASTIC_PSV_T, ELECTROMAGNETIC_TE),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
-        CAPTURE(material) {
-          if constexpr (_medium_tag_ == MediumTag &&
-                        _property_tag_ == PropertyTag &&
-                        _attenuation_tag_ == AttenuationTag) {
-            return _material_;
-          }
-        })
-
-    Kokkos::abort("Invalid material type detected in material specification");
+    using Key = specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag,
+                                    AttenuationTag>;
+    return material_containers.template get<Key>();
   }
 
   template <specfem::element::medium_tag MediumTag,
@@ -183,21 +178,9 @@ public:
       MediumTag, PropertyTag, AttenuationTag> &
   get_container() const {
 
-    FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2),
-         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                    ELASTIC_PSV_T, ELECTROMAGNETIC_TE),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
-        CAPTURE(material) {
-          if constexpr (_medium_tag_ == MediumTag &&
-                        _property_tag_ == PropertyTag &&
-                        _attenuation_tag_ == AttenuationTag) {
-            return _material_;
-          }
-        })
-
-    Kokkos::abort("Invalid material type detected in material specification");
+    using Key = specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag,
+                                    AttenuationTag>;
+    return material_containers.template get<Key>();
   }
 
   /**

@@ -1,8 +1,9 @@
 #pragma once
 
 #include "specfem/enums.hpp"
-#include "specfem/macros.hpp"
 #include "specfem/medium_container.hpp"
+#include "specfem/tag_dispatch/storage.hpp"
+#include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
 #include <vector>
 
@@ -25,7 +26,6 @@ template <specfem::element::dimension_tag Dimension> struct materials;
  * and enabling compile-time optimizations in the spectral element framework.
  *
  * @see specfem::medium_container::material
- * @see FOR_EACH_IN_PRODUCT
  *
  * @code
  * // Create materials database for 1000 elements with 5 unique materials
@@ -167,35 +167,26 @@ private:
   /** @name Auto-Generated Material Containers */
   /** @{ */
 
-  /**
-   * @brief Template metaprogramming expansion for material containers
-   *
-   * The FOR_EACH_IN_PRODUCT macro automatically generates material containers
-   * for all valid combinations of dimension, medium, and property types.
-   *
-   * For 3D MESHFEM3D, this expands to create containers for:
-   * - material<acoustic, isotropic>: Acoustic isotropic materials
-   * - material<acoustic, anisotropic>: Acoustic anisotropic materials
-   * - material<elastic, isotropic>: Elastic isotropic materials
-   * - material<elastic, anisotropic>: Elastic anisotropic materials
-   *
-   * The DECLARE macro generates member variable declarations with names
-   * derived from the template parameters, enabling compile-time dispatch
-   * in the get_material() and get_container() methods.
-   *
-   * This approach ensures:
-   * - Complete coverage of all material type combinations
-   * - Type safety at compile time
-   * - Efficient storage organization by material type
-   * - Integration with SPECFEM++ template metaprogramming patterns
-   */
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ACOUSTIC, ELASTIC),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
-       ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
-      DECLARE(((specfem::mesh::materials, (_DIMENSION_TAG_), ::material,
-                (_MEDIUM_TAG_, _PROPERTY_TAG_, _ATTENUATION_TAG_)),
-               material)))
+  static constexpr auto combinations =
+      specfem::tag_dispatch::dimension_set<dimension_tag>{} *
+      specfem::tag_dispatch::medium_set<
+          specfem::element::medium_tag::acoustic,
+          specfem::element::medium_tag::elastic>{} *
+      specfem::tag_dispatch::property_set<
+          specfem::element::property_tag::isotropic,
+          specfem::element::property_tag::anisotropic>{} *
+      specfem::tag_dispatch::attenuation_set<
+          specfem::element::attenuation_tag::none,
+          specfem::element::attenuation_tag::constant_isotropic>{};
+
+  template <typename TagsType>
+  using MaterialContainerTemplate =
+      material<TagsType::medium_tag, TagsType::property_tag,
+               TagsType::attenuation_tag>;
+
+  specfem::tag_dispatch::TypedStorage<MaterialContainerTemplate,
+                                      decltype(combinations)>
+      material_containers;
 
   /** @} */
 public:
@@ -264,21 +255,10 @@ public:
     }
 #endif
 
-    FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ACOUSTIC, ELASTIC),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
-         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
-        CAPTURE(material) {
-          if constexpr (MediumTag == _medium_tag_ &&
-                        PropertyTag == _property_tag_ &&
-                        AttenuationTag == _attenuation_tag_) {
-            return _material_.element_materials[material_specification.index];
-          }
-        })
-
-    Kokkos::abort("Invalid material type detected in material specification");
-
-    return {};
+    using Key = specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag,
+                                    AttenuationTag>;
+    return material_containers.template get<Key>()
+        .element_materials[material_specification.index];
   }
 
   template <specfem::element::medium_tag MediumTag,
@@ -325,18 +305,9 @@ public:
                                                     AttenuationTag> &
   get_container() {
 
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ACOUSTIC, ELASTIC),
-                         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
-                         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
-                        CAPTURE(material) {
-                          if constexpr (_medium_tag_ == MediumTag &&
-                                        _property_tag_ == PropertyTag &&
-                                        _attenuation_tag_ == AttenuationTag) {
-                            return _material_;
-                          }
-                        })
-
-    Kokkos::abort("Invalid material type detected in material specification");
+    using Key = specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag,
+                                    AttenuationTag>;
+    return material_containers.template get<Key>();
   }
 
   /**
