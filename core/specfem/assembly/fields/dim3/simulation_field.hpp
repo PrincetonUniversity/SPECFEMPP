@@ -2,7 +2,9 @@
 
 #include "specfem/assembly/fields/impl/field_impl.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/macros/tag_dispatch.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly {
@@ -49,6 +51,14 @@ public:
       specfem::element::dimension_tag::dim3; ///< Dimension tag
   constexpr static auto simulation_wavefield =
       SimulationWavefieldType; ///< Simulation wavefield type
+
+  static constexpr auto combinations =
+      DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic);
+
+  template <typename TagsType>
+  using FieldImplTemplateType =
+      specfem::assembly::fields_impl::field_impl<TagsType::dimension_tag,
+                                                 TagsType::medium_tag>;
 
   /**
    * @brief Default constructor.
@@ -113,16 +123,13 @@ public:
     this->ngllz = rhs.ngllz;
     this->nglly = rhs.nglly;
     this->ngllx = rhs.ngllx;
-    FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
-        CAPTURE(field, (rhs_field, rhs.field), assembly_index_mapping,
-                (rhs_assembly_index_mapping, rhs.assembly_index_mapping),
-                h_assembly_index_mapping,
-                (rhs_h_assembly_index_mapping, rhs.h_assembly_index_mapping)) {
-          _field_ = _rhs_field_;
-          _assembly_index_mapping_ = _rhs_assembly_index_mapping_;
-          _h_assembly_index_mapping_ = _rhs_h_assembly_index_mapping_;
-        })
+    specfem::tag_dispatch::for_each(combinations, [&]<typename TagsType>() {
+      field.template get<TagsType>() = rhs.field.template get<TagsType>();
+      assembly_index_mapping.template get<TagsType>() =
+          rhs.assembly_index_mapping.template get<TagsType>();
+      h_assembly_index_mapping.template get<TagsType>() =
+          rhs.h_assembly_index_mapping.template get<TagsType>();
+    });
   }
 
   /**
@@ -141,15 +148,13 @@ public:
    */
   template <specfem::element::medium_tag MediumTag>
   KOKKOS_FORCEINLINE_FUNCTION int get_nglob() const {
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
-                        CAPTURE(field) {
-                          if constexpr (MediumTag == _medium_tag_) {
-                            return _field_.nglob;
-                          }
-                        })
-
-    Kokkos::abort("Medium type not supported");
-    return 0;
+    int result = 0;
+    specfem::tag_dispatch::for_each(combinations, [&]<typename TagsType>() {
+      if constexpr (MediumTag == TagsType::medium_tag) {
+        result = field.template get<TagsType>().nglob;
+      }
+    });
+    return result;
   }
 
   /**
@@ -173,50 +178,35 @@ public:
       constexpr specfem::assembly::fields_impl::field_impl<dimension_tag,
                                                            MediumTag> const &
       get_field() const {
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
-                        CAPTURE(field) {
-                          if constexpr (MediumTag == _medium_tag_) {
-                            return _field_;
-                          }
-                        })
-
-    Kokkos::abort("Medium type not supported");
-    /// Code path should never be reached
-
-    auto return_value =
-        new specfem::assembly::fields_impl::field_impl<dimension_tag,
-                                                       MediumTag>();
-
-    return *return_value;
+    using TagsType =
+        specfem::tags::Tags<specfem::element::dimension_tag::dim3, MediumTag>;
+    return field.template get<TagsType>();
   }
 
   template <bool on_device>
   KOKKOS_INLINE_FUNCTION constexpr int
   get_iglob(const int &ispec, const int &iz, const int &iy, const int &ix,
             const specfem::element::medium_tag MediumTag) const {
+    int result = -1;
     if constexpr (on_device) {
-      FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
-                          CAPTURE(assembly_index_mapping) {
-                            if (MediumTag == _medium_tag_) {
-                              return _assembly_index_mapping_(
-                                  index_mapping(ispec, iz, iy, ix));
-                            }
-                          })
-
+      specfem::tag_dispatch::for_each(combinations, [&]<typename TagsType>() {
+        if (MediumTag == TagsType::medium_tag) {
+          result = assembly_index_mapping.template get<TagsType>()(
+              index_mapping(ispec, iz, iy, ix));
+        }
+      });
     } else {
-      FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
-                          CAPTURE(h_assembly_index_mapping) {
-                            if (MediumTag == _medium_tag_) {
-                              return _h_assembly_index_mapping_(
-                                  h_index_mapping(ispec, iz, iy, ix));
-                            }
-                          })
+      specfem::tag_dispatch::for_each(combinations, [&]<typename TagsType>() {
+        if (MediumTag == TagsType::medium_tag) {
+          result = h_assembly_index_mapping.template get<TagsType>()(
+              h_index_mapping(ispec, iz, iy, ix));
+        }
+      });
     }
-
-    // If we reach here, it means the medium type is not defined in the macro
-    Kokkos::abort("Medium type not defined in the macro");
-
-    return -1;
+    if (result == -1) {
+      Kokkos::abort("Medium type not defined in the macro");
+    }
+    return result;
   }
 
   template <
@@ -257,13 +247,16 @@ public:
   IndexViewType::HostMirror h_index_mapping; ///< Host mirror of 3D index
                                              ///< mapping for CPU operations
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
-                      DECLARE(((specfem::assembly::fields_impl::field_impl,
-                                (_DIMENSION_TAG_, _MEDIUM_TAG_)),
-                               field),
-                              (AssemblyIndexViewType, assembly_index_mapping),
-                              (AssemblyIndexViewType::HostMirror,
-                               h_assembly_index_mapping)))
+  specfem::tag_dispatch::TypedStorage<FieldImplTemplateType,
+                                      decltype(combinations)>
+      field;
+
+  specfem::tag_dispatch::Storage<AssemblyIndexViewType, decltype(combinations)>
+      assembly_index_mapping;
+
+  specfem::tag_dispatch::Storage<AssemblyIndexViewType::HostMirror,
+                                 decltype(combinations)>
+      h_assembly_index_mapping;
 
   /**
    * @brief Get total degrees of freedom in the 3D elastic system.
@@ -308,19 +301,17 @@ inline void deep_copy(SimulationWavefieldType1 &dst,
                       const SimulationWavefieldType2 &src) {
   dst.nglob = src.nglob;
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
-      CAPTURE((src_assembly_index_mapping, src.assembly_index_mapping),
-              (dst_assembly_index_mapping, dst.assembly_index_mapping),
-              (src_h_assembly_index_mapping, src.h_assembly_index_mapping),
-              (dst_h_assembly_index_mapping, dst.h_assembly_index_mapping),
-              (src_field, src.field), (dst_field, dst.field)) {
-        Kokkos::deep_copy(_dst_assembly_index_mapping_,
-                          _src_assembly_index_mapping_);
-        Kokkos::deep_copy(_dst_h_assembly_index_mapping_,
-                          _src_h_assembly_index_mapping_);
-        specfem::assembly::fields_impl::deep_copy(_dst_field_, _src_field_);
-      })
+  specfem::tag_dispatch::for_each(
+      SimulationWavefieldType1::combinations, [&]<typename TagsType>() {
+        Kokkos::deep_copy(dst.assembly_index_mapping.template get<TagsType>(),
+                          src.assembly_index_mapping.template get<TagsType>());
+        Kokkos::deep_copy(
+            dst.h_assembly_index_mapping.template get<TagsType>(),
+            src.h_assembly_index_mapping.template get<TagsType>());
+        specfem::assembly::fields_impl::deep_copy(
+            dst.field.template get<TagsType>(),
+            src.field.template get<TagsType>());
+      });
 }
 
 } // namespace specfem::assembly
