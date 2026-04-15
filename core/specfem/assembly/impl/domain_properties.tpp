@@ -14,7 +14,7 @@ specfem::assembly::impl::domain_properties<specfem::element::dimension_tag::dim2
         const Kokkos::View<int *, Kokkos::LayoutRight,
                            Kokkos::DefaultHostExecutionSpace>
             property_index_mapping)
-    : base_type(elements.extent(0), mesh.element_grid.ngllz, mesh.element_grid.ngllx) {
+    : base_type(elements.extent(0), mesh.element_grid) {
 
   const int nelement = elements.extent(0);
   int count = 0;
@@ -60,7 +60,7 @@ specfem::assembly::impl::domain_properties<specfem::element::dimension_tag::dim3
         const Kokkos::View<int *, Kokkos::LayoutRight,
                            Kokkos::DefaultHostExecutionSpace>
             property_index_mapping)
-    : base_type(elements.extent(0), mesh.element_grid.ngllz, mesh.element_grid.nglly, mesh.element_grid.ngllx) {
+    : base_type(elements.extent(0), mesh.element_grid) {
 
   const int nelement = elements.extent(0);
   int count = 0;
