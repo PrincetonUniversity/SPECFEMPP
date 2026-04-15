@@ -88,27 +88,28 @@ template <typename IndexType, typename AccelerationType,
                (BoundaryValueContainerType::boundary_tag ==
                 specfem::element::boundary_tag::composite_stacey_dirichlet)),
               int> = 0>
-KOKKOS_FUNCTION void store_on_device(const int istep, const IndexType index,
-                                     const AccelerationType &acceleration,
-                                     const BoundaryValueContainerType &bvc) {
+KOKKOS_FUNCTION void
+store_on_device(const int istep, const IndexType index,
+                const AccelerationType &acceleration,
+                const BoundaryValueContainerType &boundary_value_container) {
 
-  if (bvc.property_index_mapping.size() == 0)
+  if (boundary_value_container.property_index_mapping.size() == 0)
     return;
 
-  constexpr static auto MediumTag = AccelerationType::medium_tag;
-  constexpr static auto DimTag = AccelerationType::dimension_tag;
+  constexpr static auto medium_tag = AccelerationType::medium_tag;
+  constexpr static auto dimension_tag = AccelerationType::dimension_tag;
 
   static_assert((BoundaryValueContainerType::dimension_tag ==
                  AccelerationType::dimension_tag),
                 "DimensionTag must match AccelerationType::dimension_type");
 
-  using TagsType = specfem::tags::Tags<DimTag, MediumTag>;
+  using TagsType = specfem::tags::Tags<dimension_tag, medium_tag>;
 
   IndexType l_index = index;
-  l_index.ispec = bvc.property_index_mapping(index.ispec);
+  l_index.ispec = boundary_value_container.property_index_mapping(index.ispec);
 
-  bvc.container.template get<TagsType>().store_on_device(istep, l_index,
-                                                         acceleration);
+  boundary_value_container.container.template get<TagsType>().store_on_device(
+      istep, l_index, acceleration);
 
   return;
 }
@@ -121,15 +122,16 @@ template <typename IndexType, typename AccelerationType,
                (BoundaryValueContainerType::boundary_tag ==
                 specfem::element::boundary_tag::composite_stacey_dirichlet)),
               int> = 0>
-KOKKOS_FUNCTION void load_on_device(const int istep, const IndexType index,
-                                    const BoundaryValueContainerType &bvc,
-                                    AccelerationType &acceleration) {
+KOKKOS_FUNCTION void
+load_on_device(const int istep, const IndexType index,
+               const BoundaryValueContainerType &boundary_value_container,
+               AccelerationType &acceleration) {
 
-  if (bvc.property_index_mapping.size() == 0)
+  if (boundary_value_container.property_index_mapping.size() == 0)
     return;
 
-  constexpr static auto MediumTag = AccelerationType::medium_tag;
-  constexpr static auto DimTag = AccelerationType::dimension_tag;
+  constexpr static auto medium_tag = AccelerationType::medium_tag;
+  constexpr static auto dimension_tag = AccelerationType::dimension_tag;
 
   IndexType l_index = index;
 
@@ -137,12 +139,12 @@ KOKKOS_FUNCTION void load_on_device(const int istep, const IndexType index,
                  AccelerationType::dimension_tag),
                 "Number of dimensions must match");
 
-  using TagsType = specfem::tags::Tags<DimTag, MediumTag>;
+  using TagsType = specfem::tags::Tags<dimension_tag, medium_tag>;
 
-  l_index.ispec = bvc.property_index_mapping(index.ispec);
+  l_index.ispec = boundary_value_container.property_index_mapping(index.ispec);
 
-  bvc.container.template get<TagsType>().load_on_device(istep, l_index,
-                                                        acceleration);
+  boundary_value_container.container.template get<TagsType>().load_on_device(
+      istep, l_index, acceleration);
 
   return;
 }
