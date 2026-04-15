@@ -17,7 +17,7 @@ namespace specfem::assembly {
 /**
  * @brief Define the tag sets for source combinations in each dimension
  *
- * Specifies which medium, property, attenuation, boundary, and wavefield
+ * Specifies which medium, property, boundary, and wavefield
  * combinations are valid for sources in 2D and 3D simulations.
  */
 namespace sources_impl {
@@ -29,8 +29,6 @@ template <> struct SourceSets<specfem::element::dimension_tag::dim2> {
       MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic, elastic_psv_t);
   constexpr static auto property_set =
       PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat);
-  constexpr static auto attenuation_set =
-      ATTENUATION_SET(none, constant_isotropic);
   constexpr static auto boundary_set = BOUNDARY_SET(
       none, acoustic_free_surface, stacey, composite_stacey_dirichlet);
   constexpr static auto wavefield_set =
@@ -41,8 +39,6 @@ template <> struct SourceSets<specfem::element::dimension_tag::dim3> {
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
   constexpr static auto medium_set = MEDIUM_SET(elastic, acoustic);
   constexpr static auto property_set = PROPERTY_SET(isotropic);
-  constexpr static auto attenuation_set =
-      ATTENUATION_SET(none, constant_isotropic);
   constexpr static auto boundary_set = BOUNDARY_SET(none);
   constexpr static auto wavefield_set =
       WAVEFIELD_SET(forward, backward, adjoint);
@@ -92,9 +88,6 @@ private:
                                            Kokkos::DefaultExecutionSpace>;
   using PropertyTagViewType = Kokkos::View<specfem::element::property_tag *,
                                            Kokkos::DefaultExecutionSpace>;
-  using AttenuationTagViewType =
-      Kokkos::View<specfem::element::attenuation_tag *,
-                   Kokkos::DefaultExecutionSpace>;
 
   ///@}
 
@@ -134,7 +127,6 @@ public:
    *
    * @param medium Physical medium type
    * @param property Material property classification
-   * @param attenuation Attenuation model type
    * @param boundary Boundary condition type
    * @param wavefield Simulation type (forward, adjoint, backward)
    * @return Tuple of (element indices, source indices) host views
@@ -143,7 +135,6 @@ public:
              Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >
   get_sources_on_host(const specfem::element::medium_tag medium,
                       const specfem::element::property_tag property,
-                      const specfem::element::attenuation_tag attenuation,
                       const specfem::element::boundary_tag boundary,
                       const specfem::simulation::field_type wavefield) const;
 
@@ -152,7 +143,6 @@ public:
    *
    * @param medium Physical medium type
    * @param property Material property classification
-   * @param attenuation Attenuation model type
    * @param boundary Boundary condition type
    * @param wavefield Simulation type (forward, adjoint, backward)
    * @return Tuple of (element indices, source indices) device views
@@ -161,7 +151,6 @@ public:
              Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >
   get_sources_on_device(const specfem::element::medium_tag medium,
                         const specfem::element::property_tag property,
-                        const specfem::element::attenuation_tag attenuation,
                         const specfem::element::boundary_tag boundary,
                         const specfem::simulation::field_type wavefield) const;
 
@@ -199,9 +188,6 @@ private:
   PropertyTagViewType property_types;
   PropertyTagViewType::HostMirror h_property_types;
 
-  AttenuationTagViewType attenuation_types;
-  AttenuationTagViewType::HostMirror h_attenuation_types;
-
   // ── Storage for sources by medium ──────────────────────────────────────
   static constexpr auto combinations_by_medium =
       specfem::tag_dispatch::dimension_set<DimensionTag>{} *
@@ -218,11 +204,10 @@ private:
   int timestep;
 
   // ── Storage for source indices by combination ──────────────────────────
-  // Keyed by (dim, medium, property, attenuation, boundary, wavefield)
+  // Keyed by (dim, medium, property, boundary, wavefield)
   static constexpr auto combinations_by_source =
       combinations_by_medium *
       sources_impl::SourceSets<DimensionTag>::property_set *
-      sources_impl::SourceSets<DimensionTag>::attenuation_set *
       sources_impl::SourceSets<DimensionTag>::boundary_set *
       sources_impl::SourceSets<DimensionTag>::wavefield_set;
 
