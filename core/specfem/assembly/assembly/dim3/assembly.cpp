@@ -1,8 +1,9 @@
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/io.hpp"
+#include "specfem/macros/tag_dispatch.hpp"
 #include "specfem/mesh.hpp"
-#include "specfem/tag_dispatch.hpp"
+#include "specfem/tag_dispatch/for_each.hpp"
 
 specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
     const specfem::mesh::mesh<dimension_tag> &mesh,
