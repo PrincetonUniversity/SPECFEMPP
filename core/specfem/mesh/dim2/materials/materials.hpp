@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/element.hpp"
+#include "specfem/macros/tag_dispatch.hpp"
 #include "specfem/medium_container.hpp"
 #include "specfem/mesh/mesh_base.hpp"
 #include "specfem/tag_dispatch/storage.hpp"
@@ -73,20 +74,10 @@ template <> struct materials<specfem::element::dimension_tag::dim2> {
 
   static constexpr auto combinations =
       specfem::tag_dispatch::dimension_set<dimension_tag>{} *
-      specfem::tag_dispatch::medium_set<
-          specfem::element::medium_tag::elastic_psv,
-          specfem::element::medium_tag::elastic_sh,
-          specfem::element::medium_tag::acoustic,
-          specfem::element::medium_tag::poroelastic,
-          specfem::element::medium_tag::elastic_psv_t,
-          specfem::element::medium_tag::electromagnetic_te>{} *
-      specfem::tag_dispatch::property_set<
-          specfem::element::property_tag::isotropic,
-          specfem::element::property_tag::anisotropic,
-          specfem::element::property_tag::isotropic_cosserat>{} *
-      specfem::tag_dispatch::attenuation_set<
-          specfem::element::attenuation_tag::none,
-          specfem::element::attenuation_tag::constant_isotropic>{};
+      MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic, elastic_psv_t,
+                 electromagnetic_te) *
+      PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
+      ATTENUATION_SET(none, constant_isotropic);
 
   template <typename TagsType>
   using MaterialContainerTemplate =

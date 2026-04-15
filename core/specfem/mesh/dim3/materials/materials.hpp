@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/enums.hpp"
+#include "specfem/macros/tag_dispatch.hpp"
 #include "specfem/medium_container.hpp"
 #include "specfem/tag_dispatch/storage.hpp"
 #include "specfem/tags.hpp"
@@ -169,15 +170,8 @@ private:
 
   static constexpr auto combinations =
       specfem::tag_dispatch::dimension_set<dimension_tag>{} *
-      specfem::tag_dispatch::medium_set<
-          specfem::element::medium_tag::acoustic,
-          specfem::element::medium_tag::elastic>{} *
-      specfem::tag_dispatch::property_set<
-          specfem::element::property_tag::isotropic>{} *
-      specfem::tag_dispatch::attenuation_set<
-          specfem::element::attenuation_tag::none,
-          specfem::element::attenuation_tag::constant_isotropic>{};
-
+      MEDIUM_SET(acoustic, elastic) * PROPERTY_SET(isotropic) *
+      ATTENUATION_SET(none, constant_isotropic);
   template <typename TagsType>
   using MaterialContainerTemplate =
       material<TagsType::medium_tag, TagsType::property_tag,
