@@ -146,14 +146,12 @@ public:
    * field.get_nglob<specfem::element::medium_tag::elastic>();
    * @endcode
    */
-  template <specfem::element::medium_tag MediumTag> int get_nglob() const {
-    int result = 0;
-    specfem::tag_dispatch::for_each(combinations, [&]<typename TagsType>() {
-      if constexpr (MediumTag == TagsType::medium_tag) {
-        result = field.template get<TagsType>().nglob;
-      }
-    });
-    return result;
+  template <specfem::element::medium_tag MediumTag>
+  KOKKOS_INLINE_FUNCTION int get_nglob() const {
+    return field
+        .template get<specfem::tags::Tags<specfem::element::dimension_tag::dim3,
+                                          MediumTag> >()
+        .nglob;
   }
 
   /**
@@ -182,58 +180,46 @@ public:
     return field.template get<TagsType>();
   }
 
-  template <bool on_device>
-  KOKKOS_INLINE_FUNCTION constexpr int
-  get_iglob(const int &ispec, const int &iz, const int &iy, const int &ix,
-            const specfem::element::medium_tag MediumTag) const {
-    int result = -1;
+  template <bool on_device, specfem::element::medium_tag MediumTag>
+  KOKKOS_INLINE_FUNCTION constexpr int get_iglob(const int &ispec,
+                                                 const int &iz, const int &iy,
+                                                 const int &ix) const {
     if constexpr (on_device) {
-      specfem::tag_dispatch::for_each(combinations, [&]<typename TagsType>() {
-        if (MediumTag == TagsType::medium_tag) {
-          result = assembly_index_mapping.template get<TagsType>()(
-              index_mapping(ispec, iz, iy, ix));
-        }
-      });
+      return assembly_index_mapping.template get<specfem::tags::Tags<
+          specfem::element::dimension_tag::dim3, MediumTag> >()(
+          index_mapping(ispec, iz, iy, ix));
     } else {
-      specfem::tag_dispatch::for_each(combinations, [&]<typename TagsType>() {
-        if (MediumTag == TagsType::medium_tag) {
-          result = h_assembly_index_mapping.template get<TagsType>()(
-              h_index_mapping(ispec, iz, iy, ix));
-        }
-      });
+      return h_assembly_index_mapping.template get<specfem::tags::Tags<
+          specfem::element::dimension_tag::dim3, MediumTag> >()(
+          h_index_mapping(ispec, iz, iy, ix));
     }
-    if (result == -1) {
-      Kokkos::abort("Medium type not defined in the macro");
-    }
-    return result;
   }
 
   template <
-      bool on_device, typename IndexType,
+      bool on_device, specfem::element::medium_tag MediumTag,
+      typename IndexType,
       typename std::enable_if_t<
           specfem::data_access::is_index_type<IndexType>::value &&
               IndexType::using_simd == false &&
               IndexType::dimension_tag == specfem::element::dimension_tag::dim3,
           int> = 0>
-  KOKKOS_INLINE_FUNCTION constexpr int
-  get_iglob(const IndexType &index,
-            const specfem::element::medium_tag MediumTag) const {
-    return get_iglob<on_device>(index.ispec, index.iz, index.iy, index.ix,
-                                MediumTag);
+  KOKKOS_INLINE_FUNCTION constexpr int get_iglob(const IndexType &index) const {
+    return get_iglob<on_device, MediumTag>(index.ispec, index.iz, index.iy,
+                                           index.ix);
   }
 
   template <
-      bool on_device, typename IndexType,
+      bool on_device, specfem::element::medium_tag MediumTag,
+      typename IndexType,
       typename std::enable_if_t<
           specfem::data_access::is_index_type<IndexType>::value &&
               IndexType::using_simd == true &&
               IndexType::dimension_tag == specfem::element::dimension_tag::dim3,
           int> = 0>
-  KOKKOS_INLINE_FUNCTION constexpr int
-  get_iglob(const IndexType &index, const int &lane,
-            const specfem::element::medium_tag MediumTag) const {
-    return get_iglob<on_device>(index.ispec + lane, index.iz, index.iy,
-                                index.ix, MediumTag);
+  KOKKOS_INLINE_FUNCTION constexpr int get_iglob(const IndexType &index,
+                                                 const int &lane) const {
+    return get_iglob<on_device, MediumTag>(index.ispec + lane, index.iz,
+                                           index.iy, index.ix);
   }
 
   int nglob = 0;               ///< Number of global degrees of freedom
