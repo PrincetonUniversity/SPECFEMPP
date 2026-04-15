@@ -146,8 +146,7 @@ public:
    * field.get_nglob<specfem::element::medium_tag::elastic>();
    * @endcode
    */
-  template <specfem::element::medium_tag MediumTag>
-  KOKKOS_FORCEINLINE_FUNCTION int get_nglob() const {
+  template <specfem::element::medium_tag MediumTag> int get_nglob() const {
     int result = 0;
     specfem::tag_dispatch::for_each(combinations, [&]<typename TagsType>() {
       if constexpr (MediumTag == TagsType::medium_tag) {
