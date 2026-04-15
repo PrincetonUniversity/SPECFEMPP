@@ -2,6 +2,7 @@
 
 #include "domain_accessor.hpp"
 #include "specfem/medium_container.hpp"
+#include "specfem/mesh_entity.hpp"
 
 namespace specfem::assembly::impl {
 
@@ -84,11 +85,11 @@ struct domain_kernels<specfem::element::dimension_tag::dim2, MediumTag,
    */
   domain_kernels(
       const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
-      const int ngllz, const int ngllx,
+      const specfem::mesh_entity::element_grid<dimension_tag> &grid,
       const Kokkos::View<int *, Kokkos::LayoutRight,
                          Kokkos::DefaultHostExecutionSpace>
           property_index_mapping)
-      : base_type(elements.extent(0), ngllz, ngllx) {
+      : base_type(elements.extent(0), grid.ngllz, grid.ngllx) {
     const int nelement = elements.extent(0);
     int count = 0;
     for (int i = 0; i < nelement; ++i) {
@@ -155,11 +156,11 @@ struct domain_kernels<specfem::element::dimension_tag::dim3, MediumTag,
    */
   domain_kernels(
       const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
-      const int ngllz, const int nglly, const int ngllx,
+      const specfem::mesh_entity::element_grid<dimension_tag> &grid,
       const Kokkos::View<int *, Kokkos::LayoutRight,
                          Kokkos::DefaultHostExecutionSpace>
           property_index_mapping)
-      : base_type(elements.extent(0), ngllz, nglly, ngllx) {
+      : base_type(elements.extent(0), grid.ngllz, grid.nglly, grid.ngllx) {
     const int nelement = elements.extent(0);
     int count = 0;
     for (int i = 0; i < nelement; ++i) {
