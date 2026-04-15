@@ -1,7 +1,7 @@
 # MPI-specific test definitions and setup
 # This file contains MPI-only test executables and their discovery registration.
 
-# Include GoogleTest module for gtest_add_tests
+# Include GoogleTest module for test discovery
 include(GoogleTest)
 
 # ==============================================================================
@@ -10,29 +10,47 @@ include(GoogleTest)
 # ==============================================================================
 # Usage: add_mpi_test(TARGET NUM_PROCESSES)
 # Example: add_mpi_test(mesh_mpi_dim3_tests 4)
-# Uses gtest_add_tests to scan source files at configure time (no binary execution),
-# avoiding duplicate test registration from multiple MPI ranks.
+# Uses gtest_discover_tests with POST_BUILD discovery mode and
+# CROSSCOMPILING_EMULATOR to run the binary via the MPI launcher.
 function(add_mpi_test TARGET NUM_PROCESSES)
+    # Copy test binary to TEST_OUTPUT_DIR after build
+    add_custom_command(TARGET ${TARGET} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${TEST_OUTPUT_DIR}
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:${TARGET}>
+            ${TEST_OUTPUT_DIR}/$<TARGET_FILE_NAME:${TARGET}>
+        COMMENT "Moving ${TARGET} to ${TEST_OUTPUT_DIR}"
+    )
+
     # CROSSCOMPILING_EMULATOR prefixes test execution with the MPI launcher.
-    # gtest_add_tests scans sources at configure time so this is only used at run time.
     set_target_properties(${TARGET} PROPERTIES
         CROSSCOMPILING_EMULATOR "${MPIEXEC_EXECUTABLE};${MPIEXEC_NUMPROC_FLAG};${NUM_PROCESSES}"
     )
 
-    # Scan source files to find Google Test cases and register them individually.
-    # Unlike gtest_discover_tests, this never executes the binary for discovery.
-    gtest_add_tests(
-        TARGET ${TARGET}
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/tests/unit-tests
-        TEST_LIST DISCOVERED_TESTS
+    # Discover tests from TEST_OUTPUT_DIR using POST_BUILD mode.
+    # CROSSCOMPILING_EMULATOR is used to run the binary with the MPI launcher.
+    gtest_discover_tests(${TARGET}
+        DISCOVERY_MODE POST_BUILD
+        DISCOVERY_TIMEOUT 300
+        WORKING_DIRECTORY ${TEST_OUTPUT_DIR}
+        PROPERTIES
+            PROCESSORS ${NUM_PROCESSES}
+            TIMEOUT 300
+            RUN_SERIAL ON
     )
 
-    # Set properties on all discovered tests
-    set_tests_properties(${DISCOVERED_TESTS} PROPERTIES
-        PROCESSORS ${NUM_PROCESSES}
-        TIMEOUT 300
-        RUN_SERIAL ON
-    )
+    # When TEST_OUTPUT_DIR is external, copy and fix the discovery .cmake files
+    if(NOT SPECFEM_TESTDIR_DEFAULT)
+        add_custom_command(TARGET ${TARGET} POST_BUILD
+            COMMAND ${CMAKE_COMMAND}
+                -DINPUT_FILE=${CMAKE_CURRENT_BINARY_DIR}/${TARGET}[1]_tests.cmake
+                -DOUTPUT_FILE=${TEST_OUTPUT_DIR}/${TARGET}_tests.cmake
+                -DOLD_PATH=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+                -DNEW_PATH=${TEST_OUTPUT_DIR}
+                -P ${CMAKE_CURRENT_BINARY_DIR}/copy_test_cmake.cmake
+            COMMENT "Copying ${TARGET} test discovery files to ${TEST_OUTPUT_DIR}"
+        )
+    endif()
 endfunction()
 
 # MPI-only test executables
@@ -179,20 +197,14 @@ set(MPI_TEST_TARGETS_4PROCS
   mpi_subset_all_tests
 )
 
-# Register MPI tests using helper function (4 processes)
-foreach(test_target IN LISTS MPI_TEST_TARGETS_4PROCS)
+# Setup test script writer (needed for external TEST_OUTPUT_DIR path-fix)
+specfem_write_copy_test_cmake_script()
+
+# Register MPI tests using helper function
+foreach(test_target IN LISTS MPI_TEST_TARGETS)
   add_mpi_test(${test_target} 4)
 endforeach()
 
-# Link test data directories for MPI tests
-set(MPI_LINK_DIRS
-  data
-  mesh
-)
-
-foreach(dir_name IN LISTS MPI_LINK_DIRS)
-    file(CREATE_LINK
-        ${CMAKE_CURRENT_SOURCE_DIR}/${dir_name}
-        ${CMAKE_CURRENT_BINARY_DIR}/${dir_name}
-        SYMBOLIC)
-endforeach()
+# Note: CTestTestfile.cmake generation and data directories (data, mesh) are
+# finalized by serial.cmake via specfem_finalize_test_targets, which covers
+# both in-tree (symlinks) and external TEST_OUTPUT_DIR (install) cases.

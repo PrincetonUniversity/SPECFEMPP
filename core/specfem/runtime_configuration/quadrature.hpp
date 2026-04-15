@@ -46,6 +46,13 @@ public:
    */
   specfem::quadrature::quadratures instantiate();
 
+  /**
+   * @brief Returns the number of quadrature points.
+   *
+   * @return int number of quadrature points.
+   */
+  int get_ngll() const { return ngll; }
+
 private:
   type_real alpha; ///< alpha value used to instantiate a
                    ///< specfem::quadrature::quadrature class
