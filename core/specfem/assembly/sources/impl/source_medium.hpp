@@ -8,6 +8,10 @@
 #include "specfem/setup.hpp"
 #include "specfem/source.hpp"
 #include <Kokkos_Core.hpp>
+#include <memory>
+#include <tuple>
+#include <type_traits>
+#include <vector>
 
 // Forward declarations
 namespace specfem {

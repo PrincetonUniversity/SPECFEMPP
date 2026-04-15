@@ -11,6 +11,9 @@
 #include "specfem/tag_dispatch/element_combinations.hpp"
 
 #include <Kokkos_Core.hpp>
+#include <memory>
+#include <tuple>
+#include <vector>
 
 namespace specfem::assembly {
 
