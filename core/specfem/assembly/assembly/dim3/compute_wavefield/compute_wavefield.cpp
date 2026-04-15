@@ -2,7 +2,7 @@
 #include "specfem/assembly/assembly/impl/helper.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros/tag_dispatch.hpp"
-#include "specfem/tag_dispatch.hpp"
+#include "specfem/tag_dispatch/for_each.hpp"
 #include <Kokkos_Core.hpp>
 #include <stdexcept>
 #include <type_traits>

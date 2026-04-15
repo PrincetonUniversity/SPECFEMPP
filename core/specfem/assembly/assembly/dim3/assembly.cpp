@@ -2,7 +2,8 @@
 #include "specfem/enums.hpp"
 #include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
-#include "specfem/tag_dispatch.hpp"
+#include "specfem/macros/tag_dispatch.hpp"
+#include "specfem/tag_dispatch/for_each.hpp"
 
 specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
     const specfem::mesh::mesh<dimension_tag> &mesh,
@@ -112,7 +113,7 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::print()
           message << "   Total number of elements of type "
                   << specfem::element::to_string(medium) << " : " << n_elements
                   << "\n";
-        };
+        }
       });
 
   if (total_elements == mesh.nspec) {
