@@ -100,9 +100,9 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::print()
   specfem::tag_dispatch::for_each(
       DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic),
       [&]<typename TagsType>() {
-        constexpr auto medium = TagsType::medium_tag;
+        constexpr auto medium_tag = TagsType::medium_tag;
         // Getting the number of elements per medium
-        int n_elements = this->element_types.get_number_of_elements(medium);
+        int n_elements = this->element_types.get_number_of_elements(medium_tag);
 
         // Printing the number of elements if more than 0
         if (n_elements > 0) {
@@ -110,8 +110,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::print()
           total_elements += n_elements;
 
           message << "   Total number of elements of type "
-                  << specfem::element::to_string(medium) << " : " << n_elements
-                  << "\n";
+                  << specfem::element::to_string(medium_tag) << " : "
+                  << n_elements << "\n";
         };
       });
 
