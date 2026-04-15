@@ -14,13 +14,8 @@ specfem::assembly::conforming_interfaces<
             specfem::element::dimension_tag::dim3> &element_intersections,
         const specfem::assembly::jacobian_matrix<dimension_tag>
             &jacobian_matrix,
-        const specfem::assembly::mesh<dimension_tag> &mesh) {
-
-  specfem::tag_dispatch::for_each(combinations, [&]<typename TagsType>() {
-    interface_container.template get<TagsType>() =
-        InterfaceContainerTemplateType<TagsType>(
+        const specfem::assembly::mesh<dimension_tag> &mesh)
+    : interface_container([&]<typename TagsType>() {
+        return InterfaceContainerTemplateType<TagsType>(
             ngllz, nglly, ngllx, element_intersections, jacobian_matrix, mesh);
-  });
-
-  return;
-}
+      }){};
