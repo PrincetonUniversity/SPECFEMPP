@@ -90,8 +90,9 @@ pipeline {
                                           -DCMAKE_BUILD_TYPE=Release \
                                           -D CMAKE_INSTALL_PREFIX=install_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}/bin \
                                           ${CMAKE_HOST_FLAGS} ${SIMD_FLAGS} ${MPI_FLAGS} \
-                                          -D SPECFEM_BUILD_TESTS=OFF \
-                                          -D SPECFEM_BUILD_BENCHMARKS=OFF
+                                          -D SPECFEM_BUILD_TESTS=ON \
+                                          -D SPECFEM_BUILD_BENCHMARKS=OFF \
+                                          -D SPECFEMPP_TEST_DIR=/scratch/gpfs/TROMP/specfempp/jenkins/test_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
                                         cmake3 --build build_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
                                     """
                                     echo ' Build completed '
@@ -105,8 +106,8 @@ pipeline {
                                         module load boost/1.85.0
                                         module load ${GNU_COMPILER_MODULE}
                                         module load ${MPI_MODULE}
-                                        cd build_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
-                                        ctest -VV
+                                        cd /scratch/gpfs/TROMP/specfempp/jenkins/test_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
+                                        salloc -N 1 --ntasks-per-node=4 -t 00:30:00 --account rse ctest --output-on-failure -j 4 --no-tests=error
                                     """
                                     echo ' Testing completed '
                                 }
@@ -114,9 +115,10 @@ pipeline {
                         }
                         post {
                             always {
-                                echo ' Cleaning '
+                                echo 'Build or Test stage failed, executing cleanup'
                                 sh "rm -rf build_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
                                 sh "rm -rf install_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
+                                sh "rm -rf /scratch/gpfs/TROMP/specfempp/jenkins/test_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
                             }
                         }
                     }
