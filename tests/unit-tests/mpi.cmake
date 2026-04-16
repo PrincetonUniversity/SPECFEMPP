@@ -13,8 +13,6 @@ include(GoogleTest)
 # Uses gtest_discover_tests with POST_BUILD discovery mode and
 # CROSSCOMPILING_EMULATOR to run the binary via the MPI launcher.
 function(add_mpi_test TARGET NUM_PROCESSES)
-    message(STATUS "Registering MPI test: ${TARGET} with ${NUM_PROCESSES} processes")
-
     # Copy test binary to TEST_OUTPUT_DIR after build
     add_custom_command(TARGET ${TARGET} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory ${TEST_OUTPUT_DIR}
@@ -121,12 +119,82 @@ target_link_libraries(
   -lpthread -lm
 )
 
-# MPI test targets
-set(MPI_TEST_TARGETS
+# specfem::MPI class tests
+
+add_executable(
+  mpi_standard_tests
+  mpi/mpi_standard_tests.cpp
+)
+
+target_link_libraries(
+  mpi_standard_tests
+  specfem::program
+  specfem::mpi
+  specfem_environment
+  MPI::MPI_CXX
+  gtest_main
+  Kokkos::kokkos
+  -lpthread -lm
+)
+
+add_executable(
+  mpi_subset_2of4_tests
+  mpi/mpi_subset_2of4_tests.cpp
+)
+
+target_link_libraries(
+  mpi_subset_2of4_tests
+  specfem::program
+  specfem::mpi
+  specfem_environment
+  MPI::MPI_CXX
+  gtest_main
+  Kokkos::kokkos
+  -lpthread -lm
+)
+
+add_executable(
+  mpi_subset_1of4_tests
+  mpi/mpi_subset_1of4_tests.cpp
+)
+
+target_link_libraries(
+  mpi_subset_1of4_tests
+  specfem::program
+  specfem::mpi
+  specfem_environment
+  MPI::MPI_CXX
+  gtest_main
+  Kokkos::kokkos
+  -lpthread -lm
+)
+
+add_executable(
+  mpi_subset_all_tests
+  mpi/mpi_subset_all_tests.cpp
+)
+
+target_link_libraries(
+  mpi_subset_all_tests
+  specfem::program
+  specfem::mpi
+  specfem_environment
+  MPI::MPI_CXX
+  gtest_main
+  Kokkos::kokkos
+  -lpthread -lm
+)
+
+# MPI test targets (4 processes)
+set(MPI_TEST_TARGETS_4PROCS
   mesh_mpi_dim3_tests
   mesh_mpi_dim2_tests
   io_mesh_mpi_tests
   io_mesh_mpi_dim2_tests
+  mpi_standard_tests
+  mpi_subset_2of4_tests
+  mpi_subset_1of4_tests
+  mpi_subset_all_tests
 )
 
 # Setup test script writer (needed for external TEST_OUTPUT_DIR path-fix)

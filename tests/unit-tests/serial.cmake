@@ -67,6 +67,19 @@ target_link_libraries(
 )
 
 add_executable(
+  serial_mpi_tests
+  mpi/serial_mpi_tests.cpp
+)
+
+target_link_libraries(
+  serial_mpi_tests
+  specfem::program
+  specfem::mpi
+  gtest_main
+  Kokkos::kokkos
+)
+
+add_executable(
   is_close_tests
   utilities/is_close_tests.cpp
 )
@@ -803,6 +816,7 @@ add_custom_command(TARGET displacement_newmark_3d_tests POST_BUILD
 # Register serial tests for discovery
 set(SERIAL_TEST_TARGETS
   abort_tests
+  serial_mpi_tests
   assembly_receivers_tests
   assembly_tests
   attenuation_tests

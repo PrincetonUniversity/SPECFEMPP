@@ -64,11 +64,12 @@ public:
   /**
    * @brief Synchronize all MPI processes (MPI_Barrier)
    *
-   * @throws Exits with error code 1 if called outside Context scope
+   * @throws Calls MPI_Abort if called by an excluded rank
    */
   static void sync() {
-    if (!check_context())
-      return;
+    if (!check_context()) {
+      abort_excluded_rank("sync() called on excluded rank");
+    }
 #ifdef SPECFEM_ENABLE_MPI
     MPI_Barrier(comm_);
 #endif
@@ -88,7 +89,9 @@ public:
    * @throws Exits with error code 1 if called outside Context scope
    */
   static int get_rank() {
-    check_context();
+    if (!check_context()) {
+      abort_excluded_rank("get_rank() called on excluded rank");
+    }
     return rank_;
   }
 
@@ -99,7 +102,9 @@ public:
    * @throws Exits with error code 1 if called outside Context scope
    */
   static int get_size() {
-    check_context();
+    if (!check_context()) {
+      abort_excluded_rank("get_size() called on excluded rank");
+    }
     return size_;
   }
 
@@ -114,7 +119,9 @@ public:
    * @throws Exits with error code 1 if called outside Context scope
    */
   static MPI_Comm communicator() {
-    check_context();
+    if (!check_context()) {
+      abort_excluded_rank("communicator() called on excluded rank");
+    }
     return comm_;
   }
 
@@ -125,7 +132,9 @@ public:
    * @throws Exits with error code 1 if called outside Context scope
    */
   static bool main_proc() {
-    check_context();
+    if (!check_context()) {
+      abort_excluded_rank("main_proc() called on excluded rank");
+    }
     return rank_ == 0;
   }
 
@@ -170,7 +179,9 @@ public:
   }
 
   static std::string format_proc_filename(const std::string &filename) {
-    check_context();
+    if (!check_context()) {
+      abort_excluded_rank("format_proc_filename() called on excluded rank");
+    }
 
     // For single process, return filename unchanged
     if (size_ <= 1) {
@@ -235,6 +246,18 @@ private:
    * was initialized by this wrapper (not externally).
    */
   static void finalize();
+
+  [[noreturn]] static void abort_excluded_rank(const std::string &message) {
+#ifdef SPECFEM_ENABLE_MPI
+    int rank = -1;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    std::cerr << "ERROR on rank " << rank << ": " << message << std::endl;
+    MPI_Abort(MPI_COMM_WORLD, 1);
+#else
+    std::cerr << "ERROR: " << message << std::endl;
+    std::exit(1);
+#endif
+  }
 
   friend class specfem::program::Context;
   friend void specfem::program::abort(const std::string &, int, const int,
