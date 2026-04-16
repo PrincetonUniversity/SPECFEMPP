@@ -386,7 +386,7 @@ specfem::assembly::mpi_impl::unpacker::unpacker(
 // Calls MPI_Waitall to block until all receives complete. Validates that
 // received metadata matches expected nfaces and ngll.
 // ---------------------------------------------------------------------------
-std::tuple<Kokkos::View<MPI_Request[4], Kokkos::HostSpace>,
+std::tuple<std::array<MPI_Request, 4>,
            Kokkos::View<unsigned int[3], Kokkos::HostSpace>,
            Kokkos::View<int ***, Kokkos::HostSpace>,
            Kokkos::View<int *, Kokkos::HostSpace>,
@@ -397,8 +397,7 @@ specfem::assembly::mpi_impl::unpacker::receive_unpacking_buffers() {
   if (this->nfaces == 0) {
     // Return empty views and uninitialized requests (safe since
     // assemble_unpacking_mapping will also early-exit on nfaces==0)
-    return { Kokkos::View<MPI_Request[4], Kokkos::HostSpace>(Kokkos::view_alloc(
-                 Kokkos::WithoutInitializing, "unpacker::empty_requests")),
+    return { std::array<MPI_Request, 4>{},
              Kokkos::View<unsigned int[3], Kokkos::HostSpace>(
                  "unpacker::empty_metadata"),
              Kokkos::View<int ***, Kokkos::HostSpace>("unpacker::empty_indices",
@@ -432,8 +431,7 @@ specfem::assembly::mpi_impl::unpacker::receive_unpacking_buffers() {
   // -----------------------------------------------------------------------
   // Step 2: Post all three MPI_Irecv before any MPI_Wait
   // -----------------------------------------------------------------------
-  Kokkos::View<MPI_Request[4], Kokkos::HostSpace> requests(
-      Kokkos::view_alloc(Kokkos::WithoutInitializing, "unpacker::requests"));
+  std::array<MPI_Request, 4> requests{};
   MPI_Comm comm = specfem::MPI::communicator();
 
   // Message 1: Receive metadata (nfaces, ngll)
@@ -474,7 +472,7 @@ specfem::assembly::mpi_impl::unpacker::receive_unpacking_buffers() {
 // the actual number of unique points on the interface.
 // ---------------------------------------------------------------------------
 void specfem::assembly::mpi_impl::unpacker::assemble_unpacking_mapping(
-    const Kokkos::View<MPI_Request[4], Kokkos::HostSpace> &requests,
+    const std::array<MPI_Request, 4> &requests,
     const Kokkos::View<unsigned int[3], Kokkos::HostSpace> metadata_buf,
     const Kokkos::View<int ***, Kokkos::HostSpace> recv_indices,
     const Kokkos::View<int *, Kokkos::HostSpace> element_indices,
@@ -489,7 +487,8 @@ void specfem::assembly::mpi_impl::unpacker::assemble_unpacking_mapping(
   // -----------------------------------------------------------------------
   // Step 1: Wait for all receives to complete
   // -----------------------------------------------------------------------
-  SPECFEM_MPI_SAFECALL(MPI_Waitall(4, requests.data(), MPI_STATUSES_IGNORE));
+  SPECFEM_MPI_SAFECALL(MPI_Waitall(
+      4, const_cast<MPI_Request *>(requests.data()), MPI_STATUSES_IGNORE));
 
   // -----------------------------------------------------------------------
   // Step 2: Validate received metadata
