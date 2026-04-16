@@ -12,11 +12,48 @@
 #include <mpi.h>
 #endif
 
-// Non-MPI shims: define MPI_Comm as a simple type at global scope
+// Non-MPI shims: provide MPI type aliases and sentinel constants so that
+// headers declaring MPI-typed members/parameters compile without <mpi.h>.
 #ifndef SPECFEM_ENABLE_MPI
+
+// --- Handle types (all opaque handles are integers in MPICH convention) ---
 using MPI_Comm = int;
+using MPI_Request = int;
+using MPI_Datatype = int;
+using MPI_Op = int;
+using MPI_Info = int;
+using MPI_Group = int;
+using MPI_Win = int;
+using MPI_Errhandler = int;
+using MPI_File = int;
+using MPI_Message = int;
+
+// --- MPI_Status (struct — user code accesses .MPI_SOURCE, .MPI_TAG, etc.) ---
+struct MPI_Status {
+  int MPI_SOURCE;
+  int MPI_TAG;
+  int MPI_ERROR;
+};
+
+// --- Null sentinel constants for handle types ---
 constexpr MPI_Comm MPI_COMM_WORLD = 0;
 constexpr MPI_Comm MPI_COMM_NULL = -1;
+constexpr MPI_Comm MPI_COMM_SELF = 1;
+constexpr MPI_Request MPI_REQUEST_NULL = -1;
+constexpr MPI_Datatype MPI_DATATYPE_NULL = -1;
+constexpr MPI_Op MPI_OP_NULL = -1;
+constexpr MPI_Info MPI_INFO_NULL = -1;
+constexpr MPI_Group MPI_GROUP_NULL = -1;
+constexpr MPI_Group MPI_GROUP_EMPTY = -2;
+constexpr MPI_Win MPI_WIN_NULL = -1;
+constexpr MPI_Errhandler MPI_ERRHANDLER_NULL = -1;
+constexpr MPI_File MPI_FILE_NULL = -1;
+constexpr MPI_Message MPI_MESSAGE_NULL = -1;
+
+// --- Status pointer sentinels ---
+#define MPI_STATUS_IGNORE (static_cast<MPI_Status *>(nullptr))
+#define MPI_STATUSES_IGNORE (static_cast<MPI_Status *>(nullptr))
+
 #endif
 
 namespace specfem {
