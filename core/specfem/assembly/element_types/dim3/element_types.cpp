@@ -44,7 +44,7 @@ specfem::assembly::element_types<specfem::element::dimension_tag::dim3>::
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN),
-       PROPERTY_TAG(ISOTROPIC), ATTENUATION_TAG(NONE)),
+       PROPERTY_TAG(ISOTROPIC, ISOTROPIC_COSSERAT), ATTENUATION_TAG(NONE)),
       CAPTURE(material_elements, h_material_elements) {
         int count = 0;
         int index = 0;
@@ -75,7 +75,7 @@ specfem::assembly::element_types<specfem::element::dimension_tag::dim3>::
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN),
-       PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
+       PROPERTY_TAG(ISOTROPIC, ISOTROPIC_COSSERAT), BOUNDARY_TAG(NONE)),
       CAPTURE(elements, h_elements) {
         int count = 0;
         int index = 0;
