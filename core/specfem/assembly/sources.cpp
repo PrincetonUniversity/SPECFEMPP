@@ -1,8 +1,6 @@
 #include "specfem/assembly/sources.hpp"
-#include "../impl/dim3/source_medium.tpp"
-#include "../impl/locate_sources.hpp"
-#include "../impl/locate_sources.tpp"
-#include "../impl/source_medium.hpp"
+#include "specfem/assembly/sources/impl/locate_sources.hpp"
+#include "specfem/assembly/sources/impl/locate_sources.tpp"
 
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly/mesh.hpp"
@@ -14,27 +12,15 @@
 #include <memory>
 #include <vector>
 
-template void specfem::assembly::sources_impl::locate_sources<
-    specfem::element::dimension_tag::dim3>(
-    const specfem::assembly::element_types<
-        specfem::element::dimension_tag::dim3> &,
-    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &,
-    std::vector<std::shared_ptr<
-        specfem::sources::source<specfem::element::dimension_tag::dim3> > > &);
+// ── Constructor template definition ─────────────────────────────────────────
 
-template class specfem::assembly::sources_impl::source_medium<
-    specfem::element::dimension_tag::dim3,
-    specfem::element::medium_tag::elastic>;
-
-specfem::assembly::sources<specfem::element::dimension_tag::dim3>::sources(
-    std::vector<std::shared_ptr<
-        specfem::sources::source<specfem::element::dimension_tag::dim3> > >
+template <specfem::element::dimension_tag DimensionTag>
+specfem::assembly::sources<DimensionTag>::sources(
+    std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
         &sources,
-    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
-    const specfem::assembly::jacobian_matrix<
-        specfem::element::dimension_tag::dim3> &jacobian_matrix,
-    const specfem::assembly::element_types<
-        specfem::element::dimension_tag::dim3> &element_types,
+    const specfem::assembly::mesh<DimensionTag> &mesh,
+    const specfem::assembly::jacobian_matrix<DimensionTag> &jacobian_matrix,
+    const specfem::assembly::element_types<DimensionTag> &element_types,
     const type_real t0, const type_real dt, const int nsteps)
     : timestep(0), nspec(mesh.nspec),
       element_indices("specfem::sources::elements", sources.size()),
@@ -52,11 +38,6 @@ specfem::assembly::sources<specfem::element::dimension_tag::dim3>::sources(
       wavefield_types("specfem::sources::wavefield_types", sources.size()),
       h_wavefield_types(Kokkos::create_mirror_view(wavefield_types)) {
 
-  // Here we sort the sources by the different media and create
-  // a vector of sources for each medium named source_<dim>_<medium>
-  // and a vector of indices of the sources in the original sources vector
-  // named source_indices_<dim>_<medium>
-
   int nsources = 0;
   int nsource_indices = 0;
 
@@ -65,55 +46,49 @@ specfem::assembly::sources<specfem::element::dimension_tag::dim3>::sources(
   specfem::assembly::sources_impl::locate_sources(element_types, mesh, sources);
 
   // Initialize source_by_medium using TypedStorage initializer
-  source_by_medium = { [&]<typename TagsType>()
-                           -> SourceMediumTemplateType<TagsType> {
-    constexpr auto dim_tag = TagsType::dimension_tag;
-    constexpr auto med_tag = TagsType::medium_tag;
-    auto [sorted_sources, source_indices] =
-        specfem::assembly::sources_impl::sort_sources_per_medium<dim_tag,
-                                                                 med_tag>(
-            sources, element_types, mesh);
+  source_by_medium = decltype(source_by_medium)(
+      [&]<typename TagsType>() -> SourceMediumTemplateType<TagsType> {
+        constexpr auto dim_tag = TagsType::dimension_tag;
+        constexpr auto med_tag = TagsType::medium_tag;
+        auto [sorted_sources, source_indices] =
+            specfem::assembly::sources_impl::sort_sources_per_medium<dim_tag,
+                                                                     med_tag>(
+                sources, element_types, mesh);
 
-    /** For a sanity check we count the number of sources and source indices
-     * for each medium and dimension
-     */
-    nsources += sorted_sources.size();
-    nsource_indices += source_indices.size();
+        nsources += sorted_sources.size();
+        nsource_indices += source_indices.size();
 
-    /* Loops over the current source*/
-    for (int isource = 0; isource < sorted_sources.size(); isource++) {
-      const auto &source = sorted_sources[isource];
-      const auto lcoord = source->get_local_coordinates();
+        for (int isource = 0; isource < (int)sorted_sources.size(); isource++) {
+          const auto &source = sorted_sources[isource];
+          const auto lcoord = source->get_local_coordinates();
 
-      int ispec = lcoord.ispec;
-      const int global_isource = source_indices[isource];
+          int ispec = lcoord.ispec;
+          const int global_isource = source_indices[isource];
 
-      /* setting local source to global element mapping */
-      h_element_indices(global_isource) = ispec;
-      assert(element_types.get_medium_tag(ispec) == med_tag);
-      h_medium_types(global_isource) = med_tag;
-      h_property_types(global_isource) = element_types.get_property_tag(ispec);
-      h_attenuation_types(global_isource) =
-          element_types.get_attenuation_tag(ispec);
-      h_boundary_types(global_isource) = element_types.get_boundary_tag(ispec);
-      h_wavefield_types(global_isource) = source->get_wavefield_type();
-    }
+          h_element_indices(global_isource) = ispec;
+          assert(element_types.get_medium_tag(ispec) == med_tag);
+          h_medium_types(global_isource) = med_tag;
+          h_property_types(global_isource) =
+              element_types.get_property_tag(ispec);
+          h_attenuation_types(global_isource) =
+              element_types.get_attenuation_tag(ispec);
+          h_boundary_types(global_isource) =
+              element_types.get_boundary_tag(ispec);
+          h_wavefield_types(global_isource) = source->get_wavefield_type();
+        }
 
-    return SourceMediumTemplateType<TagsType>(
-        sorted_sources, mesh, jacobian_matrix, element_types, t0, dt, nsteps);
-  } };
+        return SourceMediumTemplateType<TagsType>(
+            sorted_sources, mesh, jacobian_matrix, element_types, t0, dt,
+            nsteps);
+      });
 
-  // if the number of sources is not equal to the number of sources
-  if (nsources != sources.size()) {
+  if (nsources != (int)sources.size()) {
     std::cout << "nsources: " << nsources << std::endl;
     std::cout << "sources.size(): " << sources.size() << std::endl;
     throw std::runtime_error(
         "Not all sources were assigned or sources are assigned multiple times");
   }
 
-  // Initialize h_source_element_by_combination and
-  // h_source_source_by_combination using Storage initializer factory pattern,
-  // keyed by (dim, medium, property, attenuation, boundary, wavefield)
   int nsources_total = (int)sources.size();
 
   auto make_source_initializer = [&](std::string label_prefix,
@@ -158,14 +133,17 @@ specfem::assembly::sources<specfem::element::dimension_tag::dim3>::sources(
   Kokkos::deep_copy(boundary_types, h_boundary_types);
 }
 
+// ── get_sources_on_host / get_sources_on_device template definitions ─────────
+
+template <specfem::element::dimension_tag DimensionTag>
 std::tuple<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>,
            Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >
-specfem::assembly::sources<specfem::element::dimension_tag::dim3>::
-    get_sources_on_host(const specfem::element::medium_tag medium,
-                        const specfem::element::property_tag property,
-                        const specfem::element::attenuation_tag attenuation,
-                        const specfem::element::boundary_tag boundary,
-                        const specfem::simulation::field_type wavefield) const {
+specfem::assembly::sources<DimensionTag>::get_sources_on_host(
+    const specfem::element::medium_tag medium,
+    const specfem::element::property_tag property,
+    const specfem::element::attenuation_tag attenuation,
+    const specfem::element::boundary_tag boundary,
+    const specfem::simulation::field_type wavefield) const {
   return std::make_tuple(
       h_source_element_by_combination.get(medium, property, attenuation,
                                           boundary, wavefield),
@@ -173,21 +151,26 @@ specfem::assembly::sources<specfem::element::dimension_tag::dim3>::
                                          boundary, wavefield));
 }
 
-// This function is crucial for the computing the source contribution
-// to the wavefield. It returns the global indices of the relevant elements
-// and the source indices for the wavefield type.
+template <specfem::element::dimension_tag DimensionTag>
 std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
            Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >
-specfem::assembly::sources<specfem::element::dimension_tag::dim3>::
-    get_sources_on_device(
-        const specfem::element::medium_tag medium,
-        const specfem::element::property_tag property,
-        const specfem::element::attenuation_tag attenuation,
-        const specfem::element::boundary_tag boundary,
-        const specfem::simulation::field_type wavefield) const {
+specfem::assembly::sources<DimensionTag>::get_sources_on_device(
+    const specfem::element::medium_tag medium,
+    const specfem::element::property_tag property,
+    const specfem::element::attenuation_tag attenuation,
+    const specfem::element::boundary_tag boundary,
+    const specfem::simulation::field_type wavefield) const {
   return std::make_tuple(
       source_element_by_combination.get(medium, property, attenuation, boundary,
                                         wavefield),
       source_source_by_combination.get(medium, property, attenuation, boundary,
                                        wavefield));
 }
+
+// ── Explicit class instantiations ────────────────────────────────────────────
+
+template class specfem::assembly::sources<
+    specfem::element::dimension_tag::dim2>;
+
+template class specfem::assembly::sources<
+    specfem::element::dimension_tag::dim3>;
