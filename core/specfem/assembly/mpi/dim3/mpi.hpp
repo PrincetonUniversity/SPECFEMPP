@@ -259,7 +259,7 @@ public:
    *
    * @throws std::runtime_error if metadata validation fails
    */
-  std::tuple<Kokkos::View<MPI_Request[4], Kokkos::HostSpace>,
+  std::tuple<std::array<MPI_Request, 4>,
              Kokkos::View<unsigned int[3], Kokkos::HostSpace>,
              Kokkos::View<int ***, Kokkos::HostSpace>,
              Kokkos::View<int *, Kokkos::HostSpace>,
@@ -285,7 +285,7 @@ public:
    * @throws std::runtime_error if metadata or iglob count validation fails
    */
   void assemble_unpacking_mapping(
-      const Kokkos::View<MPI_Request[4], Kokkos::HostSpace> &requests,
+      const std::array<MPI_Request, 4> &requests,
       const Kokkos::View<unsigned int[3], Kokkos::HostSpace> metadata_buf,
       const Kokkos::View<int ***, Kokkos::HostSpace> recv_indices,
       const Kokkos::View<int *, Kokkos::HostSpace> element_indices,
