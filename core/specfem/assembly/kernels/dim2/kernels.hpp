@@ -29,8 +29,7 @@ namespace specfem::assembly {
  * // Access elastic kernels for a specific point
  * auto elastic_kernels = kernels.template get_container<
  *     specfem::element::medium_tag::elastic_psv,
- *     specfem::element::property_tag::isotropic,
- *     specfem::element::attenuation_tag::none>();
+ *     specfem::element::property_tag::isotropic>();
  *
  * // Accumulate kernel values during adjoint simulation
  * add_on_device(index, point_kernels, kernels);

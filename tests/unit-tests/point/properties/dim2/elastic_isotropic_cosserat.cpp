@@ -175,8 +175,7 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropicCosserat2D) {
   using PointPropertiesType = specfem::point::properties<specfem::tags::Tags<
       specfem::element::dimension_tag::dim2,
       specfem::element::medium_tag::elastic_spin,
-      specfem::element::property_tag::isotropic_cosserat,
-      specfem::element::attenuation_tag::none, using_simd> >;
+      specfem::element::property_tag::isotropic_cosserat, using_simd> >;
   PointPropertiesType props(rho, kappa, mu, nu, j, lambda_c, mu_c, nu_c);
 
   EXPECT_TRUE(specfem::utilities::is_close(props.rho(), rho))

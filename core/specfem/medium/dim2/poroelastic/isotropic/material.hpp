@@ -145,8 +145,8 @@ public:
    *
    * @return specfem::point::properties Material properties
    */
-  inline specfem::point::properties<specfem::tags::Tags<
-      dimension_tag, medium_tag, property_tag, attenuation_tag, false> >
+  inline specfem::point::properties<
+      specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false> >
   get_properties() const {
 
     const type_real phi = this->phi;

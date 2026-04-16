@@ -58,10 +58,7 @@ void compute_source_interaction_core(
   using PointSourceType =
       specfem::point::source<dimension_tag, medium_tag, wavefield>;
   using PointPropertiesType =
-      specfem::point::properties<specfem::tags::Tags<dimension_tag, medium_tag,
-                                                     property_tag,
-                                                     attenuation_tag,
-                                                     false>>;
+      specfem::point::properties<specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false>>;
   using PointBoundaryType =
       specfem::point::boundary<boundary_tag, dimension_tag, false>;
   using PointIndexType = specfem::point::mapped_index<dimension_tag, false>;

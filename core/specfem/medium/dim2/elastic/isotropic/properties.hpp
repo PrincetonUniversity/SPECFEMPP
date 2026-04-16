@@ -48,24 +48,21 @@ namespace specfem::medium_container::properties {
  *   @code KOKKOS_INLINE_FUNCTION const value_type lambda() const @endcode
  */
 template <specfem::element::dimension_tag DimensionTag,
-          specfem::element::medium_tag MediumTag,
-          specfem::element::attenuation_tag AttenuationTag, bool UseSIMD>
+          specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct point_container<
-    DimensionTag, MediumTag, specfem::element::property_tag::isotropic,
-    AttenuationTag, UseSIMD,
+    DimensionTag, MediumTag, specfem::element::property_tag::isotropic, UseSIMD,
     std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
     /// @cond
     : public PropertyAccessor<DimensionTag, MediumTag,
                               specfem::element::property_tag::isotropic,
-                              AttenuationTag, UseSIMD>
+                              UseSIMD>
 /// @endcond
 {
 private:
-  using base_type =
-      PropertyAccessor<DimensionTag, MediumTag,
-                       specfem::element::property_tag::isotropic,
-                       AttenuationTag, UseSIMD>; ///< Base type of the
-                                                 ///< point properties
+  using base_type = PropertyAccessor<DimensionTag, MediumTag,
+                                     specfem::element::property_tag::isotropic,
+                                     UseSIMD>; ///< Base type of the
+                                               ///< point properties
 public:
   using value_type = typename base_type::value_type; ///< Type of the properties
 

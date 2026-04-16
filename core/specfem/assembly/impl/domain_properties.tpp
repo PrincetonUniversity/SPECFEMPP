@@ -3,10 +3,10 @@
 #include "domain_properties.hpp"
 
 template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag,
-          specfem::element::attenuation_tag AttenuationTag>
+          specfem::element::property_tag PropertyTag>
+template <specfem::element::attenuation_tag AttenuationTag>
 specfem::assembly::impl::domain_properties<specfem::element::dimension_tag::dim2, MediumTag,
-                                      PropertyTag, AttenuationTag>::
+                                      PropertyTag>::
     domain_properties(
         const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
         const specfem::assembly::mesh<dimension_tag> &mesh, const int ngllz,
@@ -15,7 +15,8 @@ specfem::assembly::impl::domain_properties<specfem::element::dimension_tag::dim2
         const bool has_gll_model,
         const Kokkos::View<int *, Kokkos::LayoutRight,
                            Kokkos::DefaultHostExecutionSpace>
-            property_index_mapping)
+            property_index_mapping,
+        std::integral_constant<specfem::element::attenuation_tag, AttenuationTag>)
     : base_type(elements.extent(0), ngllz, ngllx) {
 
   const int nelement = elements.extent(0);
@@ -51,17 +52,18 @@ specfem::assembly::impl::domain_properties<specfem::element::dimension_tag::dim2
 }
 
 template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag,
-          specfem::element::attenuation_tag AttenuationTag>
+          specfem::element::property_tag PropertyTag>
+template <specfem::element::attenuation_tag AttenuationTag>
 specfem::assembly::impl::domain_properties<specfem::element::dimension_tag::dim3, MediumTag,
-                                      PropertyTag, AttenuationTag>::
+                                      PropertyTag>::
     domain_properties(
         const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
         const int nspec, const int ngllz, const int nglly, const int ngllx,
         const specfem::mesh::materials<dimension_tag> &materials,
         const Kokkos::View<int *, Kokkos::LayoutRight,
                            Kokkos::DefaultHostExecutionSpace>
-            property_index_mapping)
+            property_index_mapping,
+        std::integral_constant<specfem::element::attenuation_tag, AttenuationTag>)
     : base_type(elements.extent(0), ngllz, nglly, ngllx) {
 
   const int nelement = elements.extent(0);

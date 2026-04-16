@@ -51,10 +51,8 @@ store_on_device(const IndexType &index, const PointKernelType &point_kernels,
   IndexType l_index = index;
   l_index.ispec = ispec;
 
-  kernels
-      .template get_container<MediumTag, PropertyTag,
-                              specfem::element::attenuation_tag::none>()
-      .store_device_values(l_index, point_kernels);
+  kernels.template get_container<MediumTag, PropertyTag>().store_device_values(
+      l_index, point_kernels);
 
   return;
 }

@@ -60,16 +60,15 @@ namespace specfem::medium_container::properties {
  *   @code KOKKOS_INLINE_FUNCTION const value_type rho_vs() const @endcode
  *
  */
-template <specfem::element::medium_tag MediumTag,
-          specfem::element::attenuation_tag AttenuationTag, bool UseSIMD>
+template <specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct point_container<
     specfem::element::dimension_tag::dim2, MediumTag,
-    specfem::element::property_tag::anisotropic, AttenuationTag, UseSIMD,
+    specfem::element::property_tag::anisotropic, UseSIMD,
     std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
     /// @cond
     : public PropertyAccessor<specfem::element::dimension_tag::dim2, MediumTag,
                               specfem::element::property_tag::anisotropic,
-                              AttenuationTag, UseSIMD>
+                              UseSIMD>
 /// @endcond
 {
 
@@ -77,8 +76,8 @@ private:
   using base_type =
       PropertyAccessor<specfem::element::dimension_tag::dim2, MediumTag,
                        specfem::element::property_tag::anisotropic,
-                       AttenuationTag, UseSIMD>; ///< Base type of the
-                                                 ///< point properties
+                       UseSIMD>; ///< Base type of the
+                                 ///< point properties
 
 public:
   using value_type = typename base_type::value_type; ///< Type of the properties

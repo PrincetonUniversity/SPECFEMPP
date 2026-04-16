@@ -130,8 +130,8 @@ public:
         Kokkos::DefaultExecutionSpace::scratch_memory_space,
         Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 
-    using PointPropertyType = specfem::point::properties<specfem::tags::Tags<
-        dimension_tag, medium_tag, property_tag, attenuation_tag, false> >;
+    using PointPropertyType = specfem::point::properties<
+        specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false> >;
 
     using PointFieldDerivativesType = specfem::point::field_derivatives<
         specfem::tags::Tags<dimension_tag, medium_tag, false> >;

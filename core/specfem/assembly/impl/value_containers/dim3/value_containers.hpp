@@ -7,8 +7,7 @@ namespace specfem::assembly::impl {
 
 template <
     template <specfem::element::dimension_tag, specfem::element::medium_tag,
-              specfem::element::property_tag,
-              specfem::element::attenuation_tag> class containers_type>
+              specfem::element::property_tag> class containers_type>
 struct value_containers<specfem::element::dimension_tag::dim3,
                         containers_type> {
 
@@ -39,12 +38,12 @@ struct value_containers<specfem::element::dimension_tag::dim3,
     }
   }
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
-       PROPERTY_TAG(ISOTROPIC), ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
-      DECLARE(((containers_type, (_DIMENSION_TAG_, _MEDIUM_TAG_, _PROPERTY_TAG_,
-                                  _ATTENUATION_TAG_)),
-               value)))
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
+                       PROPERTY_TAG(ISOTROPIC),
+                       ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
+                      DECLARE(((containers_type, (_DIMENSION_TAG_, _MEDIUM_TAG_,
+                                                  _PROPERTY_TAG_)),
+                               value)))
 
   /**
    * @name Constructors
@@ -62,11 +61,9 @@ struct value_containers<specfem::element::dimension_tag::dim3,
    *
    */
   template <specfem::element::medium_tag MediumTag,
-            specfem::element::property_tag PropertyTag,
-            specfem::element::attenuation_tag AttenuationTag>
+            specfem::element::property_tag PropertyTag>
   KOKKOS_INLINE_FUNCTION
-      constexpr containers_type<dimension_tag, MediumTag, PropertyTag,
-                                AttenuationTag> const &
+      constexpr containers_type<dimension_tag, MediumTag, PropertyTag> const &
       get_container() const {
 
     FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
@@ -74,8 +71,7 @@ struct value_containers<specfem::element::dimension_tag::dim3,
                          ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
                         CAPTURE(value) {
                           if constexpr (_medium_tag_ == MediumTag &&
-                                        _property_tag_ == PropertyTag &&
-                                        _attenuation_tag_ == AttenuationTag) {
+                                        _property_tag_ == PropertyTag) {
                             return _value_;
                           }
                         })
@@ -84,8 +80,8 @@ struct value_containers<specfem::element::dimension_tag::dim3,
 
     /// code path should never be reached
 
-    auto return_value = new containers_type<dimension_tag, MediumTag,
-                                            PropertyTag, AttenuationTag>();
+    auto return_value =
+        new containers_type<dimension_tag, MediumTag, PropertyTag>();
 
     return *return_value;
   }

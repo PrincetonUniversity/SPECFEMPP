@@ -37,11 +37,13 @@ specfem::assembly::properties<specfem::element::dimension_tag::dim2>::
        ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
       CAPTURE(value) {
         _value_ = specfem::assembly::impl::domain_properties<
-            _dimension_tag_, _medium_tag_, _property_tag_, _attenuation_tag_>(
+            _dimension_tag_, _medium_tag_, _property_tag_>(
             element_types.get_elements_on_host(_medium_tag_, _property_tag_,
                                                _attenuation_tag_),
             mesh, ngllz, ngllx, materials, has_gll_model,
-            h_property_index_mapping);
+            h_property_index_mapping,
+            std::integral_constant<specfem::element::attenuation_tag,
+                                   _attenuation_tag_>{});
       })
 
   Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);

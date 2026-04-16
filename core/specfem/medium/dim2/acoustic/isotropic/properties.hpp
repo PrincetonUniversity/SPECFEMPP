@@ -39,15 +39,12 @@ namespace specfem::medium_container::properties {
  *   @endcode
  *
  */
-template <specfem::element::dimension_tag DimensionTag,
-          specfem::element::attenuation_tag AttenuationTag, bool UseSIMD>
+template <specfem::element::dimension_tag DimensionTag, bool UseSIMD>
 struct point_container<DimensionTag, specfem::element::medium_tag::acoustic,
-                       specfem::element::property_tag::isotropic,
-                       AttenuationTag, UseSIMD>
+                       specfem::element::property_tag::isotropic, UseSIMD>
     /// @cond
     : PropertyAccessor<DimensionTag, specfem::element::medium_tag::acoustic,
-                       specfem::element::property_tag::isotropic,
-                       AttenuationTag, UseSIMD>
+                       specfem::element::property_tag::isotropic, UseSIMD>
 /// @endcond
 {
 
@@ -55,8 +52,8 @@ private:
   using base_type =
       PropertyAccessor<DimensionTag, specfem::element::medium_tag::acoustic,
                        specfem::element::property_tag::isotropic,
-                       AttenuationTag, UseSIMD>; ///< Base type of the
-                                                 ///< point properties
+                       UseSIMD>; ///< Base type of the
+                                 ///< point properties
 public:
   using value_type = typename base_type::value_type; ///< Type of the properties
   using simd = typename base_type::simd;

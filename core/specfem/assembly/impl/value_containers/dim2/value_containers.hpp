@@ -8,8 +8,7 @@ namespace specfem::assembly::impl {
 
 template <
     template <specfem::element::dimension_tag, specfem::element::medium_tag,
-              specfem::element::property_tag,
-              specfem::element::attenuation_tag> class containers_type>
+              specfem::element::property_tag> class containers_type>
 struct value_containers<specfem::element::dimension_tag::dim2,
                         containers_type> {
 
@@ -44,9 +43,8 @@ struct value_containers<specfem::element::dimension_tag::dim2,
                                   POROELASTIC, ELASTIC_PSV_T),
                        PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
                        ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
-                      DECLARE(((containers_type,
-                                (_DIMENSION_TAG_, _MEDIUM_TAG_, _PROPERTY_TAG_,
-                                 _ATTENUATION_TAG_)),
+                      DECLARE(((containers_type, (_DIMENSION_TAG_, _MEDIUM_TAG_,
+                                                  _PROPERTY_TAG_)),
                                value)))
 
   /**
@@ -61,15 +59,13 @@ struct value_containers<specfem::element::dimension_tag::dim2,
   value_containers() = default;
 
   /**
-   * @brief Returns the container for a given medium, property and attenuation
+   * @brief Returns the material_kernel for a given medium and property
    *
    */
   template <specfem::element::medium_tag MediumTag,
-            specfem::element::property_tag PropertyTag,
-            specfem::element::attenuation_tag AttenuationTag>
+            specfem::element::property_tag PropertyTag>
   KOKKOS_INLINE_FUNCTION
-      constexpr containers_type<dimension_tag, MediumTag, PropertyTag,
-                                AttenuationTag> const &
+      constexpr containers_type<dimension_tag, MediumTag, PropertyTag> const &
       get_container() const {
 
     FOR_EACH_IN_PRODUCT(
@@ -80,8 +76,7 @@ struct value_containers<specfem::element::dimension_tag::dim2,
          ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
         CAPTURE(value) {
           if constexpr (_medium_tag_ == MediumTag &&
-                        _property_tag_ == PropertyTag &&
-                        _attenuation_tag_ == AttenuationTag) {
+                        _property_tag_ == PropertyTag) {
             return _value_;
           }
         })

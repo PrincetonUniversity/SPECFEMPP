@@ -31,7 +31,6 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     WavefieldViewType wavefield) {
 
   using FieldDerivativesType = specfem::point::field_derivatives<Tags>;
-
   using PointPropertyType = specfem::point::properties<Tags>;
 
   const auto &properties = assembly.properties;

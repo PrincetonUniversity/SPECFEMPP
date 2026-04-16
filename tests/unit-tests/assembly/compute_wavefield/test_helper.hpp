@@ -92,8 +92,7 @@ public:
     using PointProperties = specfem::point::properties<
         specfem::tags::Tags<specfem::element::dimension_tag::dim2,
                             specfem::element::medium_tag::elastic_psv,
-                            specfem::element::property_tag::isotropic,
-                            specfem::element::attenuation_tag::none, false> >;
+                            specfem::element::property_tag::isotropic, false> >;
 
     for (int iz = 0; iz < ngllz; iz++) {
       for (int ix = 0; ix < ngllx; ix++) {
@@ -160,8 +159,7 @@ public:
     using PointProperties = specfem::point::properties<
         specfem::tags::Tags<specfem::element::dimension_tag::dim2,
                             specfem::element::medium_tag::acoustic,
-                            specfem::element::property_tag::isotropic,
-                            specfem::element::attenuation_tag::none, false> >;
+                            specfem::element::property_tag::isotropic, false> >;
 
     for (int iz = 0; iz < ngllz; iz++) {
       for (int ix = 0; ix < ngllx; ix++) {
@@ -227,8 +225,7 @@ public:
     using PointProperties = specfem::point::properties<
         specfem::tags::Tags<specfem::element::dimension_tag::dim2,
                             specfem::element::medium_tag::acoustic,
-                            specfem::element::property_tag::isotropic,
-                            specfem::element::attenuation_tag::none, false> >;
+                            specfem::element::property_tag::isotropic, false> >;
 
     for (int iz = 0; iz < ngllz; iz++) {
       for (int ix = 0; ix < ngllx; ix++) {

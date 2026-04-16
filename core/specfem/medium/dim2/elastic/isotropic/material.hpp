@@ -297,8 +297,8 @@ public:
   template <
       specfem::element::attenuation_tag T = AttenuationTag,
       std::enable_if_t<T == specfem::element::attenuation_tag::none, int> = 0>
-  inline specfem::point::properties<specfem::tags::Tags<
-      dimension_tag, medium_tag, property_tag, attenuation_tag, false> >
+  inline specfem::point::properties<
+      specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false> >
   get_properties() const {
     return { this->kappa, this->mu, this->density };
   }
@@ -313,8 +313,8 @@ public:
       specfem::element::attenuation_tag T = AttenuationTag,
       std::enable_if_t<
           T == specfem::element::attenuation_tag::constant_isotropic, int> = 0>
-  inline specfem::point::properties<specfem::tags::Tags<
-      dimension_tag, medium_tag, property_tag, attenuation_tag, false> >
+  inline specfem::point::properties<
+      specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false> >
   get_properties() const {
     return { this->kappa * attenuation::get_computed_values().kappa_scale,
              this->mu * attenuation::get_computed_values().mu_scale,

@@ -11,14 +11,12 @@ namespace impl {
 /// @private Implementation detail
 template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag,
-          specfem::element::attenuation_tag AttenuationTag, bool UseSIMD>
-struct properties
-    : specfem::medium_container::properties::point_container<
-          DimensionTag, MediumTag, PropertyTag, AttenuationTag, UseSIMD> {
+          specfem::element::property_tag PropertyTag, bool UseSIMD>
+struct properties : specfem::medium_container::properties::point_container<
+                        DimensionTag, MediumTag, PropertyTag, UseSIMD> {
 
   using base_type = specfem::medium_container::properties::point_container<
-      DimensionTag, MediumTag, PropertyTag, AttenuationTag, UseSIMD>;
+      DimensionTag, MediumTag, PropertyTag, UseSIMD>;
 
   using value_type = typename base_type::value_type;
   using simd = typename base_type::simd;
@@ -78,7 +76,6 @@ struct properties
  * - specfem::compute::mass_matrix
  */
 template <typename Tags>
-using properties =
-    impl::properties<Tags::dimension_tag, Tags::medium_tag, Tags::property_tag,
-                     Tags::attenuation_tag, Tags::using_simd>;
+using properties = impl::properties<Tags::dimension_tag, Tags::medium_tag,
+                                    Tags::property_tag, Tags::using_simd>;
 } // namespace specfem::point

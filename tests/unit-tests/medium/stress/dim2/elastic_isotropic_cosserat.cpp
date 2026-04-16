@@ -13,9 +13,7 @@ TEST(Stress, ElasticIsotropicCosserat2D_Basic) {
   static constexpr auto CosseratTag =
       specfem::element::medium_tag::elastic_psv_t;
 
-  using Tags =
-      specfem::tags::Tags<dimension, CosseratTag, property_tag,
-                          specfem::element::attenuation_tag::none, false>;
+  using Tags = specfem::tags::Tags<dimension, CosseratTag, property_tag, false>;
 
   using CosseratPropertiesType = specfem::point::properties<Tags>;
   using CosseratFieldDerivativesType = specfem::point::field_derivatives<Tags>;
@@ -81,9 +79,7 @@ TEST(Stress, ElasticIsotropicCosserat2D_ZeroDerivatives) {
   static constexpr auto CosseratTag =
       specfem::element::medium_tag::elastic_psv_t;
 
-  using Tags =
-      specfem::tags::Tags<dimension, CosseratTag, property_tag,
-                          specfem::element::attenuation_tag::none, false>;
+  using Tags = specfem::tags::Tags<dimension, CosseratTag, property_tag, false>;
 
   using CosseratPropertiesType = specfem::point::properties<Tags>;
   using CosseratFieldDerivativesType = specfem::point::field_derivatives<Tags>;
@@ -132,9 +128,7 @@ TEST(Stress, ElasticIsotropicCosserat2D_SymmetricWhenNuZero) {
   static constexpr auto CosseratTag =
       specfem::element::medium_tag::elastic_psv_t;
 
-  using Tags =
-      specfem::tags::Tags<dimension, CosseratTag, property_tag,
-                          specfem::element::attenuation_tag::none, false>;
+  using Tags = specfem::tags::Tags<dimension, CosseratTag, property_tag, false>;
 
   using CosseratPropertiesType = specfem::point::properties<Tags>;
   using CosseratFieldDerivativesType = specfem::point::field_derivatives<Tags>;

@@ -9,9 +9,7 @@ TEST(MassMatrix, AcousticIsotropic3D) {
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
 
-  using Tags =
-      specfem::tags::Tags<dimension, medium_tag, property_tag,
-                          specfem::element::attenuation_tag::none, false>;
+  using Tags = specfem::tags::Tags<dimension, medium_tag, property_tag, false>;
 
   using PointJacobianMatrixType =
       specfem::point::jacobian_matrix<dimension, true, false>;
