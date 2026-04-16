@@ -141,6 +141,9 @@ include("${CMAKE_SOURCE_DIR}/cmake/kokkos.cmake")
 # Configure SPECFEM++ build variables based on Kokkos settings
 include("${CMAKE_SOURCE_DIR}/cmake/variables.cmake")
 
+# Load CMake configuration summary function
+include("${CMAKE_SOURCE_DIR}/cmake/cmake_summary.cmake")
+
 # Install yaml-cpp as a dependency
 include("${CMAKE_SOURCE_DIR}/cmake/yaml.cmake")
 
@@ -176,9 +179,11 @@ endif()
 if (SPECFEM_ENABLE_DOUBLE_PRECISION)
     message(STATUS "Enabling double precision")
     set(TYPE_REAL "double")
+    set(MPI_TYPE_REAL "MPI_DOUBLE")
 else(SPECFEM_ENABLE_DOUBLE_PRECISION)
     message(STATUS "Enabling single precision")
     set(TYPE_REAL "float")
+    set(MPI_TYPE_REAL "MPI_FLOAT")
 endif(SPECFEM_ENABLE_DOUBLE_PRECISION)
 
 # Add the include directories so that the generated files can be found
@@ -295,11 +300,12 @@ if (SPECFEM_INSTALL AND NOT SPECFEM_USE_SKBUILD)
     install(
         TARGETS specfem
         RUNTIME DESTINATION .
+        COMPONENT executables
     )
 
     # Create a custom target that will run after your main build
     add_custom_target(organize_output ALL
-        COMMAND ${CMAKE_COMMAND} --install . --prefix ${CMAKE_INSTALL_PREFIX}
+        COMMAND ${CMAKE_COMMAND} --install . --prefix ${CMAKE_INSTALL_PREFIX} --component executables
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Organizing specfem++ executables into: ${CMAKE_INSTALL_PREFIX}"
         # Make this run after your main targets
@@ -312,3 +318,6 @@ if (SPECFEM_INSTALL AND NOT SPECFEM_USE_SKBUILD)
     )
 
 endif(SPECFEM_INSTALL AND NOT SPECFEM_USE_SKBUILD)
+
+# Print configuration summary
+specfem_print_configuration_summary()

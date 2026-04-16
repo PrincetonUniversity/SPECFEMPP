@@ -7,17 +7,26 @@ set(CMAKE_CXX_STANDARD 17)
 include("${CMAKE_SOURCE_DIR}/cmake/googletest.cmake")
 
 # Explicitly set binary output directory for tests
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests/unit-tests)
 
 include_directories(.)
 
 set(TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests/unit-tests)
 # Some of the writing test need to write somewhere and we don't want that
 # to be in the source directory
-set(TEST_OUTPUT_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+if (DEFINED SPECFEMPP_TEST_DIR)
+  set(TEST_OUTPUT_DIR ${SPECFEMPP_TEST_DIR})
+  set(SPECFEM_TESTDIR_DEFAULT FALSE CACHE BOOL "SPECFEM++ Test directory default flag" FORCE)
+else()
+  set(TEST_OUTPUT_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+  set(SPECFEM_TESTDIR_DEFAULT TRUE CACHE BOOL "SPECFEM++ Test directory default flag" FORCE)
+endif()
 
 enable_testing()
+
+# Add test output directory to clean target
+set_directory_properties(PROPERTIES ADDITIONAL_CLEAN_FILES "${TEST_OUTPUT_DIR}")
 
 add_library(
   specfem_environment
@@ -115,6 +124,8 @@ target_link_libraries(
 add_executable(
   logspace_tests
   utilities/logspace_tests.cpp
+  utilities/logarithmic_center_tests.cpp
+  utilities/band_tests.cpp
 )
 
 target_link_libraries(
@@ -124,14 +135,29 @@ target_link_libraries(
   gtest_main
   Kokkos::kokkos
 )
+add_executable(
+  units_tests
+  units/quantity_tests.cpp
+  units/unit_cast_tests.cpp
+  units/parse_tests.cpp
+)
+
+target_link_libraries(
+  units_tests
+  specfem::utilities
+  gtest_main
+  Kokkos::kokkos
+)
 
 add_executable(
   attenuation_tests
   attenuation/runner.cpp
+  attenuation/compute_band_tests.cpp
   attenuation/compute_tau_sigma_tests.cpp
   attenuation/maxwell_tests.cpp
   attenuation/compute_tau_eps_tests.cpp
   attenuation/compute_factors_tests.cpp
+  attenuation/compute_integration_factors_tests.cpp
 )
 
 target_link_libraries(
@@ -893,6 +919,13 @@ target_link_libraries(
   -lpthread -lm
 )
 
+add_custom_command(TARGET displacement_newmark_2d_tests POST_BUILD
+     COMMAND ${CMAKE_COMMAND} -E make_directory ${TEST_OUTPUT_DIR}/displacement_tests/Newmark/dim2
+     COMMAND ${CMAKE_COMMAND} -E copy_if_different
+          ${CMAKE_CURRENT_SOURCE_DIR}/displacement_tests/Newmark/dim2/tests.yaml
+          ${TEST_OUTPUT_DIR}/displacement_tests/Newmark/dim2/tests.yaml
+     COMMENT "Moving displacement_newmark_2d_tests data files to ${TEST_OUTPUT_DIR}/displacement_tests/Newmark/dim2"
+)
 
 add_executable(
   displacement_newmark_3d_tests
@@ -915,6 +948,14 @@ target_link_libraries(
   specfem::periodic_tasks
   ${BOOST_LIBS}
   -lpthread -lm
+)
+
+add_custom_command(TARGET displacement_newmark_3d_tests POST_BUILD
+     COMMAND ${CMAKE_COMMAND} -E make_directory ${TEST_OUTPUT_DIR}/displacement_tests/Newmark/dim3
+     COMMAND ${CMAKE_COMMAND} -E copy_if_different
+          ${CMAKE_CURRENT_SOURCE_DIR}/displacement_tests/Newmark/dim3/tests.yaml
+          ${TEST_OUTPUT_DIR}/displacement_tests/Newmark/dim3/tests.yaml
+     COMMENT "Moving displacement_newmark_3d_tests data files to ${TEST_OUTPUT_DIR}/displacement_tests/Newmark/dim3"
 )
 
 # add_executable(
@@ -1028,13 +1069,63 @@ if(NOT SPECFEM_ENABLE_MPI)
     stress_tests
     test_mesh_utilities_mapping_2d
     test_mesh_utilities_mapping_3d
+    units_tests
   )
+  # Helper script to copy test cmake files and fix hardcoded paths
+  # so tests can run from TEST_OUTPUT_DIR without access to the build tree
+  if(NOT SPECFEM_TESTDIR_DEFAULT)
+    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/copy_test_cmake.cmake [=[
+file(READ "${INPUT_FILE}" content)
+string(REPLACE "${OLD_PATH}" "${NEW_PATH}" content "${content}")
+file(WRITE "${OUTPUT_FILE}" "${content}")
+]=])
+  endif()
+
   foreach(test_target IN LISTS TEST_TARGETS)
+      # Move test executable to install directory after build
+      add_custom_command(TARGET ${test_target} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${TEST_OUTPUT_DIR}
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+          $<TARGET_FILE:${test_target}>
+          ${TEST_OUTPUT_DIR}/$<TARGET_FILE_NAME:${test_target}>
+        COMMENT "Moving ${test_target} to ${TEST_OUTPUT_DIR}"
+      )
+      # Discover tests from the install directory
       gtest_discover_tests(${test_target}
         DISCOVERY_MODE POST_BUILD
         DISCOVERY_TIMEOUT 300
+        WORKING_DIRECTORY ${TEST_OUTPUT_DIR}
       )
+      # Copy and fix test discovery files so ctest can run from TEST_OUTPUT_DIR
+      # without access to the build directory
+      if(NOT SPECFEM_TESTDIR_DEFAULT)
+        add_custom_command(TARGET ${test_target} POST_BUILD
+          COMMAND ${CMAKE_COMMAND}
+            -DINPUT_FILE=${CMAKE_CURRENT_BINARY_DIR}/${test_target}[1]_tests.cmake
+            -DOUTPUT_FILE=${TEST_OUTPUT_DIR}/${test_target}_tests.cmake
+            -DOLD_PATH=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+            -DNEW_PATH=${TEST_OUTPUT_DIR}
+            -P ${CMAKE_CURRENT_BINARY_DIR}/copy_test_cmake.cmake
+          COMMENT "Copying ${test_target} test discovery files to ${TEST_OUTPUT_DIR}"
+        )
+      endif()
   endforeach()
+
+  # Generate portable CTestTestfile.cmake and include stubs in TEST_OUTPUT_DIR
+  if(NOT SPECFEM_TESTDIR_DEFAULT)
+    set(_ctest_content "")
+    foreach(test_target IN LISTS TEST_TARGETS)
+      file(WRITE ${TEST_OUTPUT_DIR}/${test_target}_include.cmake
+        "if(EXISTS \"${TEST_OUTPUT_DIR}/${test_target}_tests.cmake\")\n"
+        "  include(\"${TEST_OUTPUT_DIR}/${test_target}_tests.cmake\")\n"
+        "else()\n"
+        "  add_test(${test_target}_NOT_BUILT ${test_target}_NOT_BUILT)\n"
+        "endif()\n"
+      )
+      string(APPEND _ctest_content "include(\"${TEST_OUTPUT_DIR}/${test_target}_include.cmake\")\n")
+    endforeach()
+    file(WRITE ${TEST_OUTPUT_DIR}/CTestTestfile.cmake "${_ctest_content}")
+  endif()
 
   # For tests that require data files from the tests directory,
   # create symbolic links to the test data directory so that
@@ -1046,20 +1137,30 @@ if(NOT SPECFEM_ENABLE_MPI)
     assembly_mesh
     data
     displacement_tests
-    domain
     fortran_io
     io
     mesh
     policies
   )
 
-  foreach(dir_name IN LISTS LINK_DIRS)
-      file(CREATE_LINK
-          ${CMAKE_CURRENT_SOURCE_DIR}/${dir_name}
-          ${CMAKE_CURRENT_BINARY_DIR}/${dir_name}
-          SYMBOLIC)
-  endforeach()
+    foreach(dir_name IN LISTS LINK_DIRS)
+        if(SPECFEM_TESTDIR_DEFAULT)
+          file(CREATE_LINK
+              ${CMAKE_CURRENT_SOURCE_DIR}/${dir_name}
+              ${CMAKE_CURRENT_BINARY_DIR}/${dir_name}
+              SYMBOLIC)
+        else()
+          install(DIRECTORY ${dir_name} DESTINATION ${TEST_OUTPUT_DIR} COMPONENT tests)
+        endif()
+    endforeach()
 
+    if (NOT SPECFEM_TESTDIR_DEFAULT)
+      add_custom_target(install_test_data ALL
+        COMMAND ${CMAKE_COMMAND} --install . --prefix ${TEST_OUTPUT_DIR} --component tests
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/tests/unit-tests
+        COMMENT "Installing test data to ${TEST_OUTPUT_DIR}"
+      )
+    endif()
 
   # gtest_discover_tests(seismogram_elastic_tests)
   # gtest_discover_tests(seismogram_acoustic_tests)

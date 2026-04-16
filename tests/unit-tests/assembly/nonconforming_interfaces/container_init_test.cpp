@@ -170,13 +170,15 @@ void test_nonconforming_container_transfers(
       assembly.nonconforming_interfaces.get_interface_container<
           specfem::element_coupling::interface_tag::acoustic_elastic,
           specfem::element::boundary_tag::none,
-          specfem::element_connections::type::nonconforming>();
+          specfem::element_connections::type::nonconforming,
+          specfem::element_coupling::flux_scheme_tag::natural>();
 
   const auto &nc_interface_elastic_acoustic =
       assembly.nonconforming_interfaces.get_interface_container<
           specfem::element_coupling::interface_tag::elastic_acoustic,
           specfem::element::boundary_tag::none,
-          specfem::element_connections::type::nonconforming>();
+          specfem::element_connections::type::nonconforming,
+          specfem::element_coupling::flux_scheme_tag::natural>();
 
   const auto [acoustic_edges, elastic_edges] =
       assembly.element_intersections.get_intersections_on_host(
@@ -351,7 +353,8 @@ TEST(NonconformingInterfaces, ContainerInitialization) {
 
   const auto mesh = specfem::io::read_2d_mesh(
       database_file, specfem::enums::elastic_wave::psv,
-      specfem::enums::electromagnetic_wave::te);
+      specfem::enums::electromagnetic_wave::te,
+      /*attenuation=*/false);
 
   const auto quadrature = []() {
     specfem::quadrature::gll::gll gll{};

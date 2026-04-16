@@ -2,12 +2,28 @@
 
 #include "specfem/io/wavefield/reader.hpp"
 #include "specfem/utilities.hpp"
+#include "specfem/mpi.hpp"
+#include <boost/filesystem.hpp>
 
 template <typename IOLibrary>
 specfem::io::wavefield_reader<IOLibrary>::wavefield_reader(
     const std::string &output_folder)
     : output_folder(output_folder),
-      file(typename IOLibrary::File(output_folder + "/ForwardWavefield")) {}
+      // Build rank-specific path:
+      //   serial:   {output_folder}/ForwardWavefield
+      //   parallel: {output_folder}/ForwardWavefield/proc_N
+      // file_path is declared before file in the header, so it is initialized
+      // first and can safely be passed to the File constructor.
+      file_path([&output_folder]() {
+        const std::string formatted = specfem::MPI::format_proc_filename(
+            output_folder + "/ForwardWavefield");
+        const boost::filesystem::path p(formatted);
+        if (specfem::MPI::get_size() > 1) {
+          return (p.parent_path() / p.stem()).string();
+        }
+        return p.string();
+      }()),
+      file(typename IOLibrary::File(file_path)) {}
 
 template <typename IOLibrary>
 void specfem::io::wavefield_reader<IOLibrary>::initialize(

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "attenuation.hpp"
 #include "database_configuration.hpp"
 #include "elastic_wave.hpp"
 #include "electromagnetic_wave.hpp"
@@ -211,6 +212,48 @@ public:
   }
 
   /**
+   * @brief Whether attenuation is enabled in the simulation
+   */
+  bool is_attenuation_enabled() const {
+    if (this->attenuation) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  /**
+   * @brief Get the reference frequency for attenuation
+   *
+   * @return type_real reference frequency for attenuation
+   */
+  std::shared_ptr<specfem::units::Hertz>
+  get_attenuation_reference_frequency() const {
+    if (this->attenuation) {
+      return std::make_shared<specfem::units::Hertz>(
+          this->attenuation->get_reference_frequency());
+    } else {
+      return nullptr;
+    }
+  };
+
+  /**
+   * @brief Get the attenuation frequency band
+   *
+   * @return specfem::utilities::Band<specfem::units::Hertz> Attenuation
+   * frequency band
+   */
+  std::shared_ptr<specfem::utilities::Band<specfem::units::Hertz> >
+  get_attenuation_band() const {
+    if (this->attenuation) {
+      return std::make_shared<specfem::utilities::Band<specfem::units::Hertz> >(
+          this->attenuation->get_attenuation_frequency_band());
+    } else {
+      return nullptr; // Return null if attenuation is disabled
+    }
+  };
+
+  /**
    * @brief Create wavefield writer for periodic output.
    *
    * @tparam DimensionTag Spatial dimension (2D/3D)
@@ -358,13 +401,10 @@ public:
                                                          time_scheme, tasks);
   }
 
-  specfem::element_coupling::flux_scheme_configuration
-  instantiate_flux_scheme_configuration() {
-    if (this->flux_schemes) {
-      return this->flux_schemes->generate_configuration();
-    } else {
-      return specfem::element_coupling::flux_scheme_configuration();
-    }
+  auto get_flux_scheme_configuration() const {
+    // provide element ngll to help decide interfacial order (if latter not
+    // given)
+    return this->flux_schemes->get_flux_scheme(this->quadrature->get_ngll());
   }
 
   /**
@@ -400,6 +440,8 @@ public:
 private:
   std::unique_ptr<specfem::runtime_configuration::header>
       header; ///< Simulation header configuration
+  std::unique_ptr<specfem::runtime_configuration::Attenuation>
+      attenuation; ///< Attenuation configuration
   std::unique_ptr<specfem::runtime_configuration::elastic_wave>
       elastic_wave; ///< Elastic wave type configuration
   std::unique_ptr<specfem::runtime_configuration::electromagnetic_wave>

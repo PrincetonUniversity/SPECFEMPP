@@ -1,22 +1,60 @@
 #pragma once
 
+#include "specfem/assembly/element_types.hpp"
+#include "specfem/assembly/mesh.hpp"
 #include "specfem/datatype.hpp"
 #include "specfem/element.hpp"
 #include "specfem/io/impl/medium_writer.hpp"
-#include "specfem/assembly/mesh.hpp"
-#include "specfem/assembly/element_types.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/macros.hpp"
 #include <Kokkos_Core.hpp>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 #include <string>
+
+template <typename GroupType, typename ElementIndicesType,
+          typename DataContainerType>
+int specfem::io::impl::write_medium_group(
+    GroupType &group,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
+    const ElementIndicesType &element_indices,
+    const DataContainerType &data_container) {
+
+  const int ngllz = mesh.element_grid.ngllz;
+  const int ngllx = mesh.element_grid.ngllx;
+
+  using DomainView =
+      specfem::datatype::DomainView2d<type_real, 3, Kokkos::HostSpace>;
+
+  const int n_elements = element_indices.size();
+  DomainView x("xcoordinates", n_elements, ngllz, ngllx);
+  DomainView z("zcoordinates", n_elements, ngllz, ngllx);
+  for (int i = 0; i < n_elements; i++) {
+    const int ispec = element_indices(i);
+    for (int iz = 0; iz < ngllz; iz++) {
+      for (int ix = 0; ix < ngllx; ix++) {
+        x(i, iz, ix) = mesh.h_coord(0, ispec, iz, ix);
+        z(i, iz, ix) = mesh.h_coord(1, ispec, iz, ix);
+      }
+    }
+  }
+  group.createDataset("X", x).write();
+  group.createDataset("Z", z).write();
+
+  data_container.for_each_host_view(
+      [&](const auto view, const std::string name) mutable {
+        group.createDataset(name, view).write();
+      });
+
+  return n_elements;
+}
+
 template <typename OutputLibrary, typename ContainerType>
 void specfem::io::impl::write_container(
     const std::string &output_folder, const std::string &output_namespace,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
-    const specfem::assembly::element_types<specfem::element::dimension_tag::dim2>
-        &element_types,
+    const specfem::assembly::element_types<
+        specfem::element::dimension_tag::dim2> &element_types,
     ContainerType &container) {
   using DomainView =
       specfem::datatype::DomainView2d<type_real, 3, Kokkos::HostSpace>;
@@ -26,8 +64,6 @@ void specfem::io::impl::write_container(
   typename OutputLibrary::File file(output_folder + "/" + output_namespace);
 
   const int nspec = mesh.nspec;
-  const int ngllz = mesh.element_grid.ngllz;
-  const int ngllx = mesh.element_grid.ngllx;
 
   int n_written = 0;
 
@@ -45,28 +81,10 @@ void specfem::io::impl::write_container(
         typename OutputLibrary::Group group = file.createGroup(name);
         const auto element_indices = element_types.get_elements_on_host(
             _medium_tag_, _property_tag_, _attenuation_tag_);
-        const int n_elements = element_indices.size();
-        n_written += n_elements;
-        DomainView x("xcoordinates", n_elements, ngllz, ngllx);
-        DomainView z("zcoordinates", n_elements, ngllz, ngllx);
-        for (int i = 0; i < n_elements; i++) {
-          const int ispec = element_indices(i);
-          for (int iz = 0; iz < ngllz; iz++) {
-            for (int ix = 0; ix < ngllx; ix++) {
-              x(i, iz, ix) = mesh.h_coord(0, ispec, iz, ix);
-              z(i, iz, ix) = mesh.h_coord(1, ispec, iz, ix);
-            }
-          }
-        }
-        group.createDataset("X", x).write();
-        group.createDataset("Z", z).write();
         auto data_container =
             container.template get_container<_medium_tag_, _property_tag_>();
-
-        data_container.for_each_host_view(
-            [&](const auto view, const std::string name) mutable {
-              group.createDataset(name, view).write();
-            });
+        n_written +=
+            write_medium_group(group, mesh, element_indices, data_container);
       })
 
   if (n_written != nspec) {

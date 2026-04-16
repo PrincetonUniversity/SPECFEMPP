@@ -10,64 +10,50 @@ specfem::runtime_configuration::flux_schemes::flux_schemes(
 
   // multi-rules in commit 4a27c96cde7e8548556da6caf628eda034fd35b3
 
-  if (const YAML::Node &flux_scheme_type_node = flux_schemes_node["type"]) {
-    specfem::element_coupling::flux_scheme_tag flux_scheme_tag;
-    std::string flux_scheme_str;
+  if (const YAML::Node flux_scheme_node = Node["type"]) {
     try {
-      flux_scheme_str = flux_scheme_type_node.as<std::string>();
-    } catch (YAML::InvalidNode &e) {
-      throw std::runtime_error(
-          "Flux-scheme entry has \"type\" node, but it is not a string!");
+      std::string flux_scheme_str = flux_scheme_node.as<std::string>();
+      if (flux_scheme_str == "natural") {
+        flux_scheme_tag = specfem::element_coupling::flux_scheme_tag::natural;
+      } else {
+        throw std::runtime_error("Unsupported flux scheme type: " +
+                                 flux_scheme_str);
+      }
+    } catch (const YAML::Exception &e) {
+      throw std::runtime_error("Error parsing flux scheme configuration: " +
+                               std::string(e.what()));
     }
+  }
 
-    // === parse flux scheme string to tag and verify necessary parameters ===
+  if (const YAML::Node quadrature_node = Node["quadrature"]) {
 
-    // TODO flux_scheme_tag from_string() function?
-    if (flux_scheme_str == std::string("natural")) {
-      flux_scheme_tag = specfem::element_coupling::flux_scheme_tag::natural;
-    } else if (flux_scheme_str == std::string("symmetric_interior_penalty")) {
-      flux_scheme_tag = specfem::element_coupling::flux_scheme_tag::
-          symmetric_interior_penalty;
-      throw std::runtime_error(
-          "symmetric_interior_penalty not yet supported. Do not set this "
-          "scheme in your specfem configuration.");
-    } else {
-      throw std::runtime_error(std::string("Unrecognized flux scheme: \"") +
-                               flux_scheme_str + "\"");
+    try { // generate interfacial_quadrature by
+          // runtime_configuration::quadrature
+      interfacial_quadrature =
+          std::make_unique<specfem::runtime_configuration::quadrature>(
+              quadrature_node);
+    } catch (const YAML::Exception &e) {
+      throw std::runtime_error("Error parsing coupling quadrature rule: " +
+                               std::string(e.what()));
     }
-
-    // === set config ===
-    per_interface_configs
-        [specfem::element_coupling::interface_tag::acoustic_elastic] =
-            std::make_pair(flux_scheme_tag, flux_schemes_node);
-
-  } else {
-    throw std::runtime_error(
-        "Flux-scheme entry must have a \"type\" string specified.");
   }
 }
 
 specfem::element_coupling::flux_scheme_configuration
-specfem::runtime_configuration::flux_schemes::generate_configuration() {
+specfem::runtime_configuration::flux_schemes::get_flux_scheme(
+    const int &ngll) const {
   specfem::element_coupling::flux_scheme_configuration config;
 
-  // for now, we will only assume this is a singleton with "interface"
-  // identifier and not "material<1/2>". runtime_configuration::flux_schemes
-  // should work with multiple, but element_coupling::flux_scheme_configuration
-  // has not been implemented, so catch multiple-case here here.
+  config.flux_scheme_tag = flux_scheme_tag;
 
-  if (per_material_configs.size() > 0) {
-    throw std::runtime_error(
-        "Per-material flux-scheme configuration not implemented.");
-  }
-  if (per_interface_configs.size() > 1) {
-    throw std::runtime_error(
-        "Per-interface flux-scheme configuration only supports 1 type.");
+  if (interfacial_quadrature != nullptr) {
+    config.interfacial_quadrature = interfacial_quadrature->instantiate().gll;
+  } else {
+    // default interfacial quadrature rule (GLL-N)
+    // TODO: replace with GL-(N-1)
+    config.interfacial_quadrature =
+        specfem::quadrature::gll::gll(0.0, 0.0, ngll);
   }
 
-  if (per_interface_configs.size() == 1) {
-    const auto config_entry = per_interface_configs.begin()->second;
-    config.flux_scheme_tag = config_entry.first;
-  }
   return config;
 }

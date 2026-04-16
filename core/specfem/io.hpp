@@ -49,11 +49,21 @@ namespace io {
  * @param filename Fortran binary database filename
  * @return specfem::mesh::mesh Specfem mesh object for dimension type dim2
  *
+ * @code
+ * // Read 2D mesh from Fortran binary database file
+ * auto mesh = specfem::io::read_2d_mesh(
+ *      "DATABASES_MPI",
+ *      specfem::enums::elastic_wave::psv,
+ *      specfem::enums::electromagnetic_wave::te,
+ *      false); // attenuation disabled
+ * @endcode
+ *
  */
 specfem::mesh::mesh<specfem::element::dimension_tag::dim2>
 read_2d_mesh(const std::string &filename,
              const specfem::enums::elastic_wave wave,
-             const specfem::enums::electromagnetic_wave electromagnetic_wave);
+             const specfem::enums::electromagnetic_wave electromagnetic_wave,
+             const bool attenuation_enabled);
 
 /**
  * @brief Construct a 3D mesh object from MESHFEM3D Fortran binary database file
@@ -64,11 +74,13 @@ read_2d_mesh(const std::string &filename,
  *
  * @code
  * // Read 3D mesh from MESHFEM3D database file
- * auto mesh = specfem::io::read_3d_mesh("DATABASES_MPI");
+ * auto mesh = specfem::io::read_3d_mesh(
+ *      "DATABASES_MPI",
+ *      false); // attenuation disabled
  * @endcode
  */
 specfem::mesh::mesh<specfem::element::dimension_tag::dim3>
-read_3d_mesh(const std::string &database_file);
+read_3d_mesh(const std::string &database_file, const bool attenuation_enabled);
 
 /**
  * @brief Read station file

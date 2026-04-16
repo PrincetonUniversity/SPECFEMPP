@@ -16,7 +16,7 @@ void add_bidirectional_edge(
     int source, int target, specfem::element_connections::type conn_type,
     specfem::mesh_entity::dim2::type orientation1,
     specfem::mesh_entity::dim2::type orientation2) {
-  auto &g = graph.graph();
+  auto &g = graph.local_connections();
   boost::add_edge(
       source, target,
       specfem::mesh::adjacency_graph<
@@ -39,7 +39,7 @@ void add_unidirectional_edge(
         &graph,
     int source, int target, specfem::element_connections::type conn_type,
     specfem::mesh_entity::dim2::type orientation) {
-  auto &g = graph.graph();
+  auto &g = graph.local_connections();
   boost::add_edge(
       source, target,
       specfem::mesh::adjacency_graph<
@@ -57,7 +57,7 @@ void add_unidirectional_edge(
 TEST(AdjacencyGraphTest, DefaultConstructor) {
   specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim2> graph;
 
-  EXPECT_EQ(boost::num_vertices(graph.graph()), 0);
+  EXPECT_EQ(boost::num_vertices(graph.local_connections()), 0);
 }
 
 /**
@@ -68,8 +68,8 @@ TEST(AdjacencyGraphTest, ConstructorWithElements) {
   specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim2> graph(
       nspec);
 
-  EXPECT_EQ(boost::num_vertices(graph.graph()), nspec);
-  EXPECT_EQ(boost::num_edges(graph.graph()), 0);
+  EXPECT_EQ(boost::num_vertices(graph.local_connections()), nspec);
+  EXPECT_EQ(boost::num_edges(graph.local_connections()), 0);
 }
 
 /**
@@ -79,8 +79,8 @@ TEST(AdjacencyGraphTest, ConstructorWithZeroElements) {
   specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim2> graph(
       0);
 
-  EXPECT_EQ(boost::num_vertices(graph.graph()), 0);
-  EXPECT_EQ(boost::num_edges(graph.graph()), 0);
+  EXPECT_EQ(boost::num_vertices(graph.local_connections()), 0);
+  EXPECT_EQ(boost::num_edges(graph.local_connections()), 0);
 }
 
 // ===== Graph Access Tests =====
@@ -92,7 +92,7 @@ TEST(AdjacencyGraphTest, MutableGraphAccess) {
   specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim2> graph(
       3);
 
-  auto &g = graph.graph();
+  auto &g = graph.local_connections();
   EXPECT_EQ(boost::num_vertices(g), 3);
 
   // Add an edge using mutable reference
@@ -119,7 +119,7 @@ TEST(AdjacencyGraphTest, ConstGraphAccess) {
       specfem::mesh_entity::dim2::type::left);
 
   const auto &const_graph = graph;
-  const auto &g = const_graph.graph();
+  const auto &g = const_graph.local_connections();
 
   EXPECT_EQ(boost::num_vertices(g), 3);
   EXPECT_EQ(boost::num_edges(g), 2);
@@ -319,8 +319,8 @@ TEST(AdjacencyGraphTest, ComplexSymmetricGraph) {
       specfem::mesh_entity::dim2::type::bottom,
       specfem::mesh_entity::dim2::type::top);
 
-  EXPECT_EQ(boost::num_vertices(graph.graph()), 6);
-  EXPECT_EQ(boost::num_edges(graph.graph()),
+  EXPECT_EQ(boost::num_vertices(graph.local_connections()), 6);
+  EXPECT_EQ(boost::num_edges(graph.local_connections()),
             12); // 6 bidirectional edges = 12 directed edges
   LOCAL_EXPECT_NO_THROW(graph.assert_symmetry());
 }
@@ -337,7 +337,7 @@ TEST(AdjacencyGraphTest, EdgeIteration) {
       specfem::mesh_entity::dim2::type::right,
       specfem::mesh_entity::dim2::type::left);
 
-  const auto &g = graph.graph();
+  const auto &g = graph.local_connections();
   int edge_count = 0;
 
   for (auto edge_it = boost::edges(g); edge_it.first != edge_it.second;
@@ -380,7 +380,7 @@ TEST(AdjacencyGraphTest, VertexDegreeChecking) {
       specfem::mesh_entity::dim2::type::bottom,
       specfem::mesh_entity::dim2::type::top);
 
-  const auto &g = graph.graph();
+  const auto &g = graph.local_connections();
 
   // Check out-degrees
   EXPECT_EQ(boost::out_degree(0, g), 2); // Connected to 1 and 2
@@ -399,7 +399,7 @@ TEST(AdjacencyGraphTest, LargeGraph) {
   specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim2> graph(
       large_size);
 
-  EXPECT_EQ(boost::num_vertices(graph.graph()), large_size);
+  EXPECT_EQ(boost::num_vertices(graph.local_connections()), large_size);
 
   // Add a few edges to test functionality with large graphs
   add_bidirectional_edge(

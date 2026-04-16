@@ -46,6 +46,8 @@
     nspec_CPML,is_CPML,CPML_to_spec,CPML_regions, &
     SAVE_MESH_AS_CUBIT, MESH_A_CHUNK_OF_THE_EARTH,adjacency_matrix
 
+  use assemble_MPI_par, only: mpi_adjacency, num_mpi_adjacencies
+
   !! setting up wavefield discontinuity interface
   use shared_parameters, only: IS_WAVEFIELD_DISCONTINUITY
 
@@ -626,9 +628,11 @@
     enddo
   enddo
 
+  ! Total adjacency count = local + MPI
   write(IIN_database) total_nadj_element
   index = 0
 
+  ! Write local adjacencies
   do ispec = 1, nspec
     do i = 0, nadj_element(ispec)-1
       write(IIN_database) ispec, adj_element(ispec,i), 1, adj_type(ispec,i)
@@ -636,10 +640,27 @@
     enddo
   enddo
 
-
   if (index /= total_nadj_element) then
     print *,'Error: index ',index,' /= total_nadj_element ',total_nadj_element
-    stop 'Error in writing adjacency list'
+    stop 'Error in writing local adjacency list'
+  endif
+
+  write(IIN_database) num_mpi_adjacencies
+  index = 0
+
+  ! Write MPI adjacencies
+  ! Format: myindex, neighbor_iproc, neighbor_index, my_connection_id, neighbor_connection_id
+  write(IIN_database) num_mpi_adjacencies
+  do i = 1, num_mpi_adjacencies
+    write(IIN_database) mpi_adjacency(i, 1), mpi_adjacency(i, 2), &
+                        mpi_adjacency(i, 3), mpi_adjacency(i, 4), &
+                        mpi_adjacency(i, 5)
+    index = index + 1
+  enddo
+
+  if (index /= num_mpi_adjacencies) then
+    print *,'Error: index ',index,' /= num_mpi_adjacencies ',num_mpi_adjacencies
+    stop 'Error in writing MPI adjacency list'
   endif
 
   close(IIN_database)

@@ -84,6 +84,7 @@ pipeline{
                                           ${CMAKE_DEVICE_FLAGS} \
                                           ${SIMD_FLAGS} \
                                           -D SPECFEM_BUILD_TESTS=ON \
+                                          -D SPECFEMPP_TEST_DIR=/scratch/gpfs/TROMP/specfempp/jenkins/test_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.BUILD_TAG} \
                                           -D SPECFEM_BUILD_BENCHMARKS=OFF
                                         cmake3 --build build_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
                                     """
@@ -97,19 +98,19 @@ pipeline{
                                         module load cmake/3.30.8
                                         module load boost/1.85.0
                                         module load ${CUDA_MODULE}
-                                        cd build_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.BUILD_TAG}/tests/unit-tests
-                                        export BUILD_DIR=build_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
-                                        srun -N 1 -t 00:30:00 --account rse ${HOST_RUN_FLAGS} ${DEVICE_RUN_FLAGS} bash -c 'export OMP_PROC_BIND=spread; export OMP_THREADS=places; ctest -j 10 --output-on-failure;'
+                                        cd /scratch/gpfs/TROMP/specfempp/jenkins/test_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.BUILD_TAG} && \
+                                        srun -N 1 -t 00:30:00 --account rse ${HOST_RUN_FLAGS} ${DEVICE_RUN_FLAGS} bash -c 'export OMP_PROC_BIND=spread; export OMP_THREADS=places; ctest -j 10 --output-on-failure --no-tests=error;'
                                     """
                                     echo ' Testing completed '
                                 }
                             }
                         }
                         post {
-                            always {
-                                echo ' Cleaning '
+                            failure {
+                                echo 'Build or Test stage failed, executing cleanup'
                                 sh "rm -rf build_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
                                 sh "rm -rf install_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
+                                sh "rm -rf /scratch/gpfs/TROMP/specfempp/jenkins/test_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
                             }
                         }
                     }

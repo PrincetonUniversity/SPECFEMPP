@@ -93,7 +93,7 @@ int run_simulation(const std::string &dimension, int argc, char **argv,
     const auto success = specfem::program::execute(dimension, parameter_dict);
 
     if (!success) {
-      std::cerr << "Execution failed" << std::endl;
+      std::cerr << "Execution failed. See log file for details." << std::endl;
       result = 1;
     }
 

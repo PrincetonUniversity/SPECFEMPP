@@ -32,7 +32,7 @@ specfem::assembly::conforming_interfaces_impl::interface_container<
   const auto [self_faces, coupled_faces] =
       element_intersections.get_intersections_on_host(
           specfem::element_connections::type::weakly_conforming, InterfaceTag,
-          BoundaryTag);
+          BoundaryTag, specfem::element_coupling::flux_scheme_tag::natural);
 
   const int N = self_faces.N;
   const int npoints = self_faces.n_points;
