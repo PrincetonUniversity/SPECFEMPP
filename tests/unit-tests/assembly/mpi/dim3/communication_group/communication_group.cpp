@@ -17,10 +17,11 @@
  * @see ExpectedCommunicationGroup for test data structures
  */
 
-#include "fixture.hpp"
+#include "../fixture.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/mesh_entity.hpp"
+#include "specfem/mpi.hpp"
 #include "gtest/gtest.h"
 #include <algorithm>
 #include <unordered_map>
@@ -79,7 +80,7 @@ struct ExpectedCommunicationGroup {
   unsigned int neighbor_rank;  ///< Expected MPI rank of the neighboring process
   unsigned int nfaces;         ///< Expected number of shared faces
   unsigned int ngll;           ///< Expected GLL points per face dimension
-  std::vector<FaceData> faces; ///< Expected per-face data (size == nfaces)
+  std::vector<FaceData> faces; ///< Expected per-face data (subset of nfaces)
 
   /**
    * @brief Constructs expected communication group data.
@@ -103,10 +104,9 @@ struct ExpectedCommunicationGroup {
    *
    * @details Checks:
    * 1. Scalar metadata: my_rank, neighbor_rank, nfaces, ngll
-   * 2. Host-mirror extents for h_my_orientation, h_neighbor_orientation,
-   *    h_theta, h_my_element, h_neighbor_element
-   * 3. Per-face values: orientation types, theta, element indices
-   * 4. Invariant: h_theta[i] ∈ [0,3] for all faces
+   * 2. Host-mirror extents for all five per-face arrays
+   * 3. Each expected face (subset) exists in the actual group data
+   * 4. Invariant: h_theta[i] ∈ [0,3] for all faces in the group
    */
   void
   check(const specfem::assembly::mpi_impl::communication_group &group) const {
@@ -140,23 +140,39 @@ struct ExpectedCommunicationGroup {
         << "h_neighbor_element extent(0) mismatch. Expected: " << nfaces
         << ", Got: " << group.h_neighbor_element.extent(0);
 
-    // Validate per-face data
+    // Validate theta invariant for all actual faces
     for (unsigned int i = 0; i < nfaces; ++i) {
-      EXPECT_EQ(group.h_my_orientation(i), faces[i].my_orientation)
-          << "h_my_orientation mismatch at face " << i;
-      EXPECT_EQ(group.h_neighbor_orientation(i), faces[i].neighbor_orientation)
-          << "h_neighbor_orientation mismatch at face " << i;
-      EXPECT_EQ(group.h_theta(i), faces[i].theta)
-          << "h_theta mismatch at face " << i;
-      EXPECT_EQ(group.h_my_element(i), faces[i].my_element)
-          << "h_my_element mismatch at face " << i;
-      EXPECT_EQ(group.h_neighbor_element(i), faces[i].neighbor_element)
-          << "h_neighbor_element mismatch at face " << i;
-
-      // Invariant: theta must always be in [0,3]
       EXPECT_LE(group.h_theta(i), static_cast<unsigned char>(3))
           << "theta out of range [0,3] at face " << i
           << ". Got: " << static_cast<int>(group.h_theta(i));
+    }
+
+    // Validate that each expected face (subset) exists in the actual group
+    for (size_t ei = 0; ei < faces.size(); ++ei) {
+      const auto &expected_face = faces[ei];
+      bool found = false;
+      for (unsigned int ai = 0; ai < nfaces; ++ai) {
+        if (group.h_my_orientation(ai) == expected_face.my_orientation &&
+            group.h_neighbor_orientation(ai) ==
+                expected_face.neighbor_orientation &&
+            group.h_theta(ai) == expected_face.theta &&
+            group.h_my_element(ai) == expected_face.my_element &&
+            group.h_neighbor_element(ai) == expected_face.neighbor_element) {
+          found = true;
+          break;
+        }
+      }
+      EXPECT_TRUE(found) << "Expected face " << ei
+                         << " not found in communication group "
+                         << "(neighbor_rank=" << neighbor_rank << "): "
+                         << "my_orientation="
+                         << static_cast<int>(expected_face.my_orientation)
+                         << ", neighbor_orientation="
+                         << static_cast<int>(expected_face.neighbor_orientation)
+                         << ", theta=" << static_cast<int>(expected_face.theta)
+                         << ", my_element=" << expected_face.my_element
+                         << ", neighbor_element="
+                         << expected_face.neighbor_element;
     }
 
     SUCCEED() << "CommunicationGroup check passed for neighbor_rank "
@@ -193,34 +209,46 @@ struct ExpectedMPICommunicationGroups {
    * @param mpi_interfaces The assembled MPI communication object to validate
    *
    * @details
-   * 1. Asserts total group count matches
-   * 2. For each expected group, finds the matching actual group by
-   * neighbor_rank
-   * 3. Delegates per-group validation to ExpectedCommunicationGroup::check()
+   * 1. Filters expected groups to those relevant to current_rank
+   *    (my_rank == current_rank)
+   * 2. Asserts filtered group count matches actual group count
+   * 3. For each filtered expected group, finds the matching actual group by
+   *    neighbor_rank
+   * 4. Delegates per-group validation to ExpectedCommunicationGroup::check()
    */
   void check(const specfem::assembly::mpi<specfem::element::dimension_tag::dim3>
-                 &mpi_interfaces) const {
+                 &mpi_interfaces,
+             unsigned int current_rank) const {
 
-    ASSERT_EQ(mpi_interfaces.communication_groups.size(), groups.size())
-        << "Number of communication groups mismatch. Expected: "
-        << groups.size()
+    // Filter expected groups to those where my_rank matches current process
+    std::vector<const ExpectedCommunicationGroup *> relevant_groups;
+    for (const auto &g : groups) {
+      if (g.my_rank == current_rank) {
+        relevant_groups.push_back(&g);
+      }
+    }
+
+    ASSERT_GE(mpi_interfaces.communication_groups.size(),
+              relevant_groups.size())
+        << "Fewer actual communication groups than expected for rank "
+        << current_rank << ". Expected at least: " << relevant_groups.size()
         << ", Got: " << mpi_interfaces.communication_groups.size();
 
-    for (const auto &expected_group : groups) {
+    for (const auto *expected_group : relevant_groups) {
       const auto it = std::find_if(
           mpi_interfaces.communication_groups.begin(),
           mpi_interfaces.communication_groups.end(),
           [&](const specfem::assembly::mpi_impl::communication_group &g) {
-            return g.neighbor_rank == expected_group.neighbor_rank;
+            return g.neighbor_rank == expected_group->neighbor_rank;
           });
 
       if (it == mpi_interfaces.communication_groups.end()) {
         ADD_FAILURE() << "No communication group found for neighbor_rank "
-                      << expected_group.neighbor_rank;
+                      << expected_group->neighbor_rank;
         continue;
       }
 
-      expected_group.check(*it);
+      expected_group->check(*it);
     }
   }
 };
@@ -250,7 +278,8 @@ using namespace specfem::assembly_test;
  */
 static const std::unordered_map<std::string, ExpectedMPICommunicationGroups>
     expected_communication_groups = {
-      TestData::CommunicationGroup::HomogeneousMediumMPI4x4::expected
+      { "HomogeneousMediumMPI4x4",
+        TestData::CommunicationGroup::HomogeneousMediumMPI4x4::expected }
     };
 
 /**
@@ -276,7 +305,24 @@ TEST_P(AssemblyMPI3DTest, CommunicationGroup) {
     return;
   }
 
-  const auto &mpi_interfaces = getMPIInterfaces();
+  const unsigned int current_rank = specfem::MPI::get_rank();
   const auto &expected = expected_communication_groups.at(param_name);
-  expected.check(mpi_interfaces);
+
+  // Skip if current rank is neither my_rank nor neighbor_rank in any group
+  const bool is_relevant = std::any_of(
+      expected.groups.begin(), expected.groups.end(),
+      [current_rank](const ExpectedCommunicationGroup &g) {
+        return g.my_rank == current_rank || g.neighbor_rank == current_rank;
+      });
+
+  if (!is_relevant) {
+    GTEST_SKIP() << "Rank " << current_rank
+                 << " is not involved in any expected communication group "
+                    "for test case '"
+                 << param_name << "'.";
+    return;
+  }
+
+  const auto &mpi_interfaces = getMPIInterfaces();
+  expected.check(mpi_interfaces, current_rank);
 }

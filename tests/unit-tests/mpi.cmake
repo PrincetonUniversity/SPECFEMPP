@@ -188,7 +188,7 @@ target_link_libraries(
 add_executable(
   assembly_mpi_dim3_tests
   assembly/mpi/dim3/fixture.cpp
-  assembly/mpi/dim3/communication_group.cpp
+  assembly/mpi/dim3/communication_group/communication_group.cpp
   assembly/mpi/dim3/runner.cpp
 )
 
