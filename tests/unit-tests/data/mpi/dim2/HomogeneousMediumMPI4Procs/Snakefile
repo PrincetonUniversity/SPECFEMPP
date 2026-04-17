@@ -1,0 +1,57 @@
+
+
+rule all:
+    input:
+        database = expand("Database/proc_{rank}.bin", rank=range(4)),
+        clean_done = "clean_done.txt",
+    localrule: True
+    shell:
+        """
+        echo "All tasks completed successfully."
+        """
+
+rule check_executable:
+    output:
+        executable_checked = "executable_checked.txt",
+    shell:
+        """
+        # Check if the xmeshfem2D executable exists in path
+        if ! command -v xmeshfem2D &> /dev/null; then
+            echo "Error: xmeshfem2D executable not found in PATH."
+            exit 1
+        fi
+        touch {output}
+        """
+
+rule generate_database:
+    input:
+        executable_checked = "executable_checked.txt",
+        par_file = "provenance/Par_file",
+        artifacts = expand("provenance/{file}", file=["topography.dat"]),
+    output:
+        database = expand("Database/proc_{rank}.bin", rank=range(4)),
+    localrule: True
+    shell:
+        """
+        # Run the meshfem2D command to generate the database
+        mkdir -p OUTPUT_FILES
+        mkdir -p OUTPUT_FILES/Database
+        xmeshfem2D -p {input.par_file}
+        # Move the generated database files to the expected location
+        mkdir -p Database
+        mv OUTPUT_FILES/Database/proc_*.bin Database/
+        """
+
+rule clean_artifacts:
+    input:
+        database = expand("Database/proc_{rank}.bin", rank=range(4)),
+    output:
+        clean_done = "clean_done.txt",
+    localrule: True
+    shell:
+        """
+        # Clean up intermediate files
+        rm -rf OUTPUT_FILES
+        rm -f executable_checked.txt
+        touch {output}
+        """

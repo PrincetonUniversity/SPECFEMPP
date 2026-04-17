@@ -2,7 +2,7 @@
 
 void specfem::mesh::mesh<
     specfem::element::dimension_tag::dim3>::setup_coupled_interfaces() {
-  auto &graph = this->adjacency_graph.graph();
+  auto &graph = this->adjacency_graph.local_connections();
   auto &materials = this->materials;
 
   for (const auto v : boost::make_iterator_range(boost::vertices(graph))) {
