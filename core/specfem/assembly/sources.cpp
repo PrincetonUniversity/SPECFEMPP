@@ -44,39 +44,36 @@ specfem::assembly::sources<DimensionTag>::sources(
   specfem::assembly::sources_impl::locate_sources(element_types, mesh, sources);
 
   // Initialize source_by_medium using TypedStorage initializer
-  source_by_medium = decltype(source_by_medium)(
-      [&]<typename TagsType>() -> SourceMediumTemplateType<TagsType> {
-        constexpr auto dim_tag = TagsType::dimension_tag;
-        constexpr auto med_tag = TagsType::medium_tag;
-        auto [sorted_sources, source_indices] =
-            specfem::assembly::sources_impl::sort_sources_per_medium<dim_tag,
-                                                                     med_tag>(
-                sources, element_types, mesh);
+  source_by_medium = { [&]<typename TagsType>()
+                           -> SourceMediumTemplateType<TagsType> {
+    constexpr auto dimension_tag = TagsType::dimension_tag;
+    constexpr auto medium_tag = TagsType::medium_tag;
+    auto [sorted_sources, source_indices] =
+        specfem::assembly::sources_impl::sort_sources_per_medium<dimension_tag,
+                                                                 medium_tag>(
+            sources, element_types, mesh);
 
-        nsources += sorted_sources.size();
-        nsource_indices += source_indices.size();
+    nsources += sorted_sources.size();
+    nsource_indices += source_indices.size();
 
-        for (int isource = 0; isource < (int)sorted_sources.size(); isource++) {
-          const auto &source = sorted_sources[isource];
-          const auto lcoord = source->get_local_coordinates();
+    for (int isource = 0; isource < (int)sorted_sources.size(); isource++) {
+      const auto &source = sorted_sources[isource];
+      const auto lcoord = source->get_local_coordinates();
 
-          int ispec = lcoord.ispec;
-          const int global_isource = source_indices[isource];
+      int ispec = lcoord.ispec;
+      const int global_isource = source_indices[isource];
 
-          h_element_indices(global_isource) = ispec;
-          assert(element_types.get_medium_tag(ispec) == med_tag);
-          h_medium_types(global_isource) = med_tag;
-          h_property_types(global_isource) =
-              element_types.get_property_tag(ispec);
-          h_boundary_types(global_isource) =
-              element_types.get_boundary_tag(ispec);
-          h_wavefield_types(global_isource) = source->get_wavefield_type();
-        }
+      h_element_indices(global_isource) = ispec;
+      assert(element_types.get_medium_tag(ispec) == medium_tag);
+      h_medium_types(global_isource) = medium_tag;
+      h_property_types(global_isource) = element_types.get_property_tag(ispec);
+      h_boundary_types(global_isource) = element_types.get_boundary_tag(ispec);
+      h_wavefield_types(global_isource) = source->get_wavefield_type();
+    }
 
-        return SourceMediumTemplateType<TagsType>(
-            sorted_sources, mesh, jacobian_matrix, element_types, t0, dt,
-            nsteps);
-      });
+    return SourceMediumTemplateType<TagsType>(
+        sorted_sources, mesh, jacobian_matrix, element_types, t0, dt, nsteps);
+  } };
 
   if (nsources != (int)sources.size()) {
     std::cout << "nsources: " << nsources << std::endl;

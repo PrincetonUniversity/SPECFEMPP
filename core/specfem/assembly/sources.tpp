@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Kokkos_Core.hpp>
+
 namespace specfem::assembly {
 
 /**

@@ -24,8 +24,19 @@ namespace specfem::assembly {
  * combinations are valid for sources in 2D and 3D simulations.
  */
 namespace sources_impl {
+
+/**
+ * @brief Source tag set definitions for dimension-specific simulations
+ * @tparam DimensionTag Spatial dimension
+ */
 template <specfem::element::dimension_tag DimensionTag> struct SourceSets;
 
+/**
+ * @brief 2D source tag sets
+ *
+ * Defines valid combinations of medium, property, boundary, and wavefield
+ * types for 2D simulations.
+ */
 template <> struct SourceSets<specfem::element::dimension_tag::dim2> {
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim2;
   constexpr static auto medium_set =
@@ -38,6 +49,12 @@ template <> struct SourceSets<specfem::element::dimension_tag::dim2> {
       WAVEFIELD_SET(forward, backward, adjoint);
 };
 
+/**
+ * @brief 3D source tag sets
+ *
+ * Defines valid combinations of medium, property, boundary, and wavefield
+ * types for 3D simulations.
+ */
 template <> struct SourceSets<specfem::element::dimension_tag::dim3> {
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
   constexpr static auto medium_set = MEDIUM_SET(elastic, acoustic);
@@ -168,46 +185,69 @@ public:
   void update_timestep(const int timestep) { this->timestep = timestep; }
 
 private:
-  int nspec;
+  /**
+   * @name Private Data Members
+   */
+  ///@{
 
-  IndexViewType source_domain_index_mapping;
-  IndexViewType::HostMirror h_source_domain_index_mapping;
+  int nspec; ///< Number of spectral elements in mesh
 
-  IndexViewType element_indices;
-  IndexViewType::HostMirror h_element_indices;
+  IndexViewType source_domain_index_mapping; ///< Source-to-domain mapping (device)
+  IndexViewType::HostMirror h_source_domain_index_mapping; ///< Source-to-domain mapping (host)
 
-  IndexViewType source_indices;
-  IndexViewType::HostMirror h_source_indices;
+  IndexViewType element_indices; ///< Element index for each source (device)
+  IndexViewType::HostMirror h_element_indices; ///< Element index for each source (host)
 
-  MediumTagViewType medium_types;
-  MediumTagViewType::HostMirror h_medium_types;
+  IndexViewType source_indices; ///< Source indices (device)
+  IndexViewType::HostMirror h_source_indices; ///< Source indices (host)
 
-  WavefieldTagViewType wavefield_types;
-  WavefieldTagViewType::HostMirror h_wavefield_types;
+  MediumTagViewType medium_types; ///< Medium tag for each source (device)
+  MediumTagViewType::HostMirror h_medium_types; ///< Medium tag for each source (host)
 
-  BoundaryTagViewType boundary_types;
-  BoundaryTagViewType::HostMirror h_boundary_types;
+  WavefieldTagViewType wavefield_types; ///< Wavefield type for each source (device)
+  WavefieldTagViewType::HostMirror h_wavefield_types; ///< Wavefield type for each source (host)
 
-  PropertyTagViewType property_types;
-  PropertyTagViewType::HostMirror h_property_types;
+  BoundaryTagViewType boundary_types; ///< Boundary tag for each source (device)
+  BoundaryTagViewType::HostMirror h_boundary_types; ///< Boundary tag for each source (host)
 
-  // ── Storage for sources by medium ──────────────────────────────────────
+  PropertyTagViewType property_types; ///< Property tag for each source (device)
+  PropertyTagViewType::HostMirror h_property_types; ///< Property tag for each source (host)
+
+  ///@}
+
+  /**
+   * @name Medium-Specific Storage
+   */
+  ///@{
+
+  /// Tag combinations for medium-specific source data
   static constexpr auto combinations_by_medium =
       specfem::tag_dispatch::dimension_set<DimensionTag>{} *
       sources_impl::SourceSets<DimensionTag>::medium_set;
 
+  /// Template alias for medium-specific source data structures
   template <typename TagsType>
   using SourceMediumTemplateType =
       specfem::assembly::sources_impl::source_medium<TagsType::dimension_tag,
                                                      TagsType::medium_tag>;
+
+  /// Storage container for sources organized by medium type
   specfem::tag_dispatch::TypedStorage<SourceMediumTemplateType,
                                       decltype(combinations_by_medium)>
       source_by_medium;
 
-  int timestep;
+  int timestep; ///< Current simulation timestep
 
-  // ── Storage for source indices by combination ──────────────────────────
-  // Keyed by (dim, medium, property, boundary, wavefield)
+  ///@}
+
+  /**
+   * @name Index Storage by Tag Combination
+   *
+   * Keyed by (dimension, medium, property, boundary, wavefield)
+   */
+  ///@{
+
+  /// Tag combinations for accessing sources by all attributes
   static constexpr auto combinations_by_source =
       combinations_by_medium *
       sources_impl::SourceSets<DimensionTag>::property_set *
@@ -217,19 +257,27 @@ private:
   using HostIndexViewType =
       Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>;
 
+  /// Element indices organized by tag combination (device)
   specfem::tag_dispatch::Storage<IndexViewType,
                                  decltype(combinations_by_source)>
       source_element_by_combination;
+
+  /// Element indices organized by tag combination (host)
   specfem::tag_dispatch::Storage<HostIndexViewType,
                                  decltype(combinations_by_source)>
       h_source_element_by_combination;
 
+  /// Source indices organized by tag combination (device)
   specfem::tag_dispatch::Storage<IndexViewType,
                                  decltype(combinations_by_source)>
       source_source_by_combination;
+
+  /// Source indices organized by tag combination (host)
   specfem::tag_dispatch::Storage<HostIndexViewType,
                                  decltype(combinations_by_source)>
       h_source_source_by_combination;
+
+  ///@}
 
   template <typename IndexType, typename PointSourceType,
             specfem::element::dimension_tag D>
