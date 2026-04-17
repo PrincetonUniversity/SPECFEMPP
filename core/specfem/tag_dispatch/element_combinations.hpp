@@ -136,7 +136,20 @@ template <typename Tuple> constexpr bool is_valid(const Tuple &t) {
       else
         return false;
     } else if constexpr (Tuple::arity == 5)
-      return is_valid_full_combo(t);
+
+      // Wavefield slot does not affect validity, so ignore it if present
+      if constexpr (std::is_same_v<decltype(t.template get<4>()),
+                                   specfem::simulation::field_type>) {
+        return is_valid_boundary_combo(
+            specfem::tag_dispatch::impl::TagValueTuple<
+                decltype(t.template get<0>()), decltype(t.template get<1>()),
+                decltype(t.template get<2>()), decltype(t.template get<3>())>{
+                t.template get<0>(), t.template get<1>(), t.template get<2>(),
+                t.template get<3>() });
+      } else {
+        return is_valid_full_combo(t);
+      }
+
     else if constexpr (Tuple::arity == 6) {
       // Arity-6: (dim, medium, property, attenuation, boundary, wavefield).
       // Only the first 5 slots determine validity; wavefield never invalidates.

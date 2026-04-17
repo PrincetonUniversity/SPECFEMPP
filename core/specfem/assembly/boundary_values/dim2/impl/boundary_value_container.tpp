@@ -20,27 +20,13 @@ specfem::assembly::boundary_values_impl::boundary_value_container<
     h_property_index_mapping(ispec) = -1;
   }
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                       POROELASTIC, ELASTIC_PSV_T)),
-      CAPTURE(container) {
-        _container_ = _boundary_medium_container<_dimension_tag_, _medium_tag_>(
-            nstep, mesh, element_types, boundaries, h_property_index_mapping);
+  specfem::tag_dispatch::for_each(
+      combinations_by_medium, [&]<typename TagsType>() {
+        container.template get<TagsType>() =
+            BoundaryMediumTemplateType<TagsType>(nstep, mesh, element_types,
+                                                 boundaries,
+                                                 h_property_index_mapping);
       });
-
-  //   acoustic = specfem::assembly::impl::boundary_medium_container<
-  //       DimensionTag, specfem::element::medium_tag::acoustic, BoundaryTag>(
-  //       nstep, mesh, element_types, boundaries, h_property_index_mapping);
-
-  //   elastic = specfem::assembly::impl::boundary_medium_container<
-  //       DimensionTag, specfem::element::medium_tag::elastic_psv,
-  //       BoundaryTag>( nstep, mesh, element_types, boundaries,
-  //       h_property_index_mapping);
-
-  //   poroelastic = specfem::assembly::impl::boundary_medium_container<
-  //       DimensionTag, specfem::element::medium_tag::poroelastic,
-  //       BoundaryTag>( nstep, mesh, element_types, boundaries,
-  //       h_property_index_mapping);
 
   Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
 }
