@@ -31,8 +31,6 @@ specfem::assembly::sources<DimensionTag>::sources(
       h_medium_types(Kokkos::create_mirror_view(medium_types)),
       property_types("specfem::sources::property_types", sources.size()),
       h_property_types(Kokkos::create_mirror_view(property_types)),
-      attenuation_types("specfem::sources::attenuation_types", sources.size()),
-      h_attenuation_types(Kokkos::create_mirror_view(attenuation_types)),
       boundary_types("specfem::sources::boundary_types", sources.size()),
       h_boundary_types(Kokkos::create_mirror_view(boundary_types)),
       wavefield_types("specfem::sources::wavefield_types", sources.size()),
@@ -70,8 +68,6 @@ specfem::assembly::sources<DimensionTag>::sources(
           h_medium_types(global_isource) = med_tag;
           h_property_types(global_isource) =
               element_types.get_property_tag(ispec);
-          h_attenuation_types(global_isource) =
-              element_types.get_attenuation_tag(ispec);
           h_boundary_types(global_isource) =
               element_types.get_boundary_tag(ispec);
           h_wavefield_types(global_isource) = source->get_wavefield_type();
@@ -111,13 +107,11 @@ specfem::assembly::sources<DimensionTag>::sources(
   h_source_element_by_combination = { make_source_initializer(
       "source_element_by_combination_",
       [&](int isource) { return h_element_indices(isource); }, h_medium_types,
-      h_property_types, h_attenuation_types, h_boundary_types,
-      h_wavefield_types) };
+      h_property_types, h_boundary_types, h_wavefield_types) };
 
   h_source_source_by_combination = { make_source_initializer(
       "source_source_by_combination_", [&](int isource) { return isource; },
-      h_medium_types, h_property_types, h_attenuation_types, h_boundary_types,
-      h_wavefield_types) };
+      h_medium_types, h_property_types, h_boundary_types, h_wavefield_types) };
 
   source_element_by_combination =
       specfem::tag_dispatch::create_mirror_storage_and_copy(
@@ -129,7 +123,6 @@ specfem::assembly::sources<DimensionTag>::sources(
   Kokkos::deep_copy(medium_types, h_medium_types);
   Kokkos::deep_copy(wavefield_types, h_wavefield_types);
   Kokkos::deep_copy(property_types, h_property_types);
-  Kokkos::deep_copy(attenuation_types, h_attenuation_types);
   Kokkos::deep_copy(boundary_types, h_boundary_types);
 }
 
@@ -141,14 +134,12 @@ std::tuple<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>,
 specfem::assembly::sources<DimensionTag>::get_sources_on_host(
     const specfem::element::medium_tag medium,
     const specfem::element::property_tag property,
-    const specfem::element::attenuation_tag attenuation,
     const specfem::element::boundary_tag boundary,
     const specfem::simulation::field_type wavefield) const {
-  return std::make_tuple(
-      h_source_element_by_combination.get(medium, property, attenuation,
-                                          boundary, wavefield),
-      h_source_source_by_combination.get(medium, property, attenuation,
-                                         boundary, wavefield));
+  return std::make_tuple(h_source_element_by_combination.get(
+                             medium, property, boundary, wavefield),
+                         h_source_source_by_combination.get(
+                             medium, property, boundary, wavefield));
 }
 
 template <specfem::element::dimension_tag DimensionTag>
@@ -157,14 +148,11 @@ std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
 specfem::assembly::sources<DimensionTag>::get_sources_on_device(
     const specfem::element::medium_tag medium,
     const specfem::element::property_tag property,
-    const specfem::element::attenuation_tag attenuation,
     const specfem::element::boundary_tag boundary,
     const specfem::simulation::field_type wavefield) const {
   return std::make_tuple(
-      source_element_by_combination.get(medium, property, attenuation, boundary,
-                                        wavefield),
-      source_source_by_combination.get(medium, property, attenuation, boundary,
-                                       wavefield));
+      source_element_by_combination.get(medium, property, boundary, wavefield),
+      source_source_by_combination.get(medium, property, boundary, wavefield));
 }
 
 // ── Explicit class instantiations ────────────────────────────────────────────
