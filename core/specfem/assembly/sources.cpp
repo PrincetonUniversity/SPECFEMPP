@@ -14,29 +14,48 @@
 
 // ── Constructor template definition ─────────────────────────────────────────
 
+template <specfem::element::dimension_tag DimensionTag, typename TagsType>
+using SourceMediumTemplateType = typename specfem::assembly::sources<
+    DimensionTag>::template SourceMediumTemplateType<TagsType>;
+
 template <specfem::element::dimension_tag DimensionTag>
-specfem::assembly::sources<DimensionTag>::sources(
+using IndexViewType =
+    typename specfem::assembly::sources<DimensionTag>::IndexViewType;
+
+template <specfem::element::dimension_tag DimensionTag>
+using MediumTagViewType =
+    typename specfem::assembly::sources<DimensionTag>::MediumTagViewType;
+
+template <specfem::element::dimension_tag DimensionTag>
+using WavefieldTagViewType =
+    typename specfem::assembly::sources<DimensionTag>::WavefieldTagViewType;
+
+template <specfem::element::dimension_tag DimensionTag>
+using BoundaryTagViewType =
+    typename specfem::assembly::sources<DimensionTag>::BoundaryTagViewType;
+
+template <specfem::element::dimension_tag DimensionTag>
+using PropertyTagViewType =
+    typename specfem::assembly::sources<DimensionTag>::PropertyTagViewType;
+
+template <specfem::element::dimension_tag DimensionTag>
+using AttenuationTagViewType =
+    typename specfem::assembly::sources<DimensionTag>::AttenuationTagViewType;
+
+template <specfem::element::dimension_tag DimensionTag, typename TagsType>
+SourceMediumTemplateType<DimensionTag, TagsType> assemble_source_medium(
     std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
         &sources,
     const specfem::assembly::mesh<DimensionTag> &mesh,
-    const specfem::assembly::jacobian_matrix<DimensionTag> &jacobian_matrix,
     const specfem::assembly::element_types<DimensionTag> &element_types,
-    const type_real t0, const type_real dt, const int nsteps)
-    : timestep(0), nspec(mesh.nspec),
-      element_indices("specfem::sources::elements", sources.size()),
-      h_element_indices(Kokkos::create_mirror_view(element_indices)),
-      source_indices("specfem::sources::indices", sources.size()),
-      h_source_indices(Kokkos::create_mirror_view(source_indices)),
-      medium_types("specfem::sources::medium_types", sources.size()),
-      h_medium_types(Kokkos::create_mirror_view(medium_types)),
-      property_types("specfem::sources::property_types", sources.size()),
-      h_property_types(Kokkos::create_mirror_view(property_types)),
-      attenuation_types("specfem::sources::attenuation_types", sources.size()),
-      h_attenuation_types(Kokkos::create_mirror_view(attenuation_types)),
-      boundary_types("specfem::sources::boundary_types", sources.size()),
-      h_boundary_types(Kokkos::create_mirror_view(boundary_types)),
-      wavefield_types("specfem::sources::wavefield_types", sources.size()),
-      h_wavefield_types(Kokkos::create_mirror_view(wavefield_types)) {
+    const specfem::assembly::jacobian_matrix<DimensionTag> &jacobian_matrix,
+    const IndexViewType<DimensionTag>::HostMirror &h_element_indices,
+    const MediumTagViewType<DimensionTag>::HostMirror &h_medium_types,
+    const PropertyTagViewType<DimensionTag>::HostMirror &h_property_types,
+    const AttenuationTagViewType<DimensionTag>::HostMirror &h_attenuation_types,
+    const BoundaryTagViewType<DimensionTag>::HostMirror &h_boundary_types,
+    const WavefieldTagViewType<DimensionTag>::HostMirror &h_wavefield_types,
+    const Kokkos const type_real t0, const type_real dt, const int nsteps) {
 
   int nsources = 0;
   int nsource_indices = 0;
@@ -45,8 +64,7 @@ specfem::assembly::sources<DimensionTag>::sources(
   // global element index, and medium that the source is located in
   specfem::assembly::sources_impl::locate_sources(element_types, mesh, sources);
 
-  // Initialize source_by_medium using TypedStorage initializer
-  source_by_medium = decltype(source_by_medium)(
+  SourceMediumTemplateType<DimensionTag, TagsType> source_medium(
       [&]<typename TagsType>() -> SourceMediumTemplateType<TagsType> {
         constexpr auto dim_tag = TagsType::dimension_tag;
         constexpr auto med_tag = TagsType::medium_tag;
@@ -89,42 +107,72 @@ specfem::assembly::sources<DimensionTag>::sources(
         "Not all sources were assigned or sources are assigned multiple times");
   }
 
-  int nsources_total = (int)sources.size();
+  return source_medium;
+};
 
-  auto make_source_initializer = [&](std::string label_prefix,
-                                     auto index_selector, auto... tag_views) {
-    return [&, label_prefix, index_selector,
-            tag_views...]<typename TagsType>() -> HostIndexViewType {
-      std::vector<int> matching_indices;
-      matching_indices.reserve(nsources_total);
-      for (int isource = 0; isource < nsources_total; ++isource)
-        if (TagsType{}.has(tag_views(isource)...))
-          matching_indices.emplace_back(index_selector(isource));
-      HostIndexViewType host_view(label_prefix + TagsType::name(),
-                                  matching_indices.size());
-      for (int i = 0; i < (int)matching_indices.size(); ++i)
-        host_view(i) = matching_indices[i];
-      return host_view;
-    };
+auto make_source_initializer = [&](std::string label_prefix,
+                                   auto index_selector, auto... tag_views) {
+  return [&, label_prefix, index_selector,
+          tag_views...]<typename TagsType>() -> HostIndexViewType {
+    std::vector<int> matching_indices;
+    matching_indices.reserve(nsources_total);
+    for (int isource = 0; isource < nsources_total; ++isource)
+      if (TagsType{}.has(tag_views(isource)...))
+        matching_indices.emplace_back(index_selector(isource));
+    HostIndexViewType host_view(label_prefix + TagsType::name(),
+                                matching_indices.size());
+    for (int i = 0; i < (int)matching_indices.size(); ++i)
+      host_view(i) = matching_indices[i];
+    return host_view;
   };
+};
 
-  h_source_element_by_combination = { make_source_initializer(
-      "source_element_by_combination_",
-      [&](int isource) { return h_element_indices(isource); }, h_medium_types,
-      h_property_types, h_attenuation_types, h_boundary_types,
-      h_wavefield_types) };
-
-  h_source_source_by_combination = { make_source_initializer(
-      "source_source_by_combination_", [&](int isource) { return isource; },
-      h_medium_types, h_property_types, h_attenuation_types, h_boundary_types,
-      h_wavefield_types) };
-
-  source_element_by_combination =
-      specfem::tag_dispatch::create_mirror_storage_and_copy(
-          Kokkos::DefaultExecutionSpace{}, h_source_element_by_combination);
-  source_source_by_combination =
-      specfem::tag_dispatch::create_mirror_storage_and_copy(
-          Kokkos::DefaultExecutionSpace{}, h_source_source_by_combination);
+template <specfem::element::dimension_tag DimensionTag>
+specfem::assembly::sources<DimensionTag>::sources(
+    std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
+        &sources,
+    const specfem::assembly::mesh<DimensionTag> &mesh,
+    const specfem::assembly::jacobian_matrix<DimensionTag> &jacobian_matrix,
+    const specfem::assembly::element_types<DimensionTag> &element_types,
+    const type_real t0, const type_real dt, const int nsteps)
+    : timestep(0), nspec(mesh.nspec),
+      element_indices("specfem::sources::elements", sources.size()),
+      h_element_indices(Kokkos::create_mirror_view(element_indices)),
+      source_indices("specfem::sources::indices", sources.size()),
+      h_source_indices(Kokkos::create_mirror_view(source_indices)),
+      medium_types("specfem::sources::medium_types", sources.size()),
+      h_medium_types(Kokkos::create_mirror_view(medium_types)),
+      property_types("specfem::sources::property_types", sources.size()),
+      h_property_types(Kokkos::create_mirror_view(property_types)),
+      attenuation_types("specfem::sources::attenuation_types", sources.size()),
+      h_attenuation_types(Kokkos::create_mirror_view(attenuation_types)),
+      boundary_types("specfem::sources::boundary_types", sources.size()),
+      h_boundary_types(Kokkos::create_mirror_view(boundary_types)),
+      wavefield_types("specfem::sources::wavefield_types", sources.size()),
+      h_wavefield_types(Kokkos::create_mirror_view(wavefield_types)),
+      source_by_medium(
+          assemble_source_medium<DimensionTag,
+                                 specfem::tag_dispatch::tags<DimensionTag> >(
+              sources, mesh, element_types, jacobian_matrix, h_element_indices,
+              h_medium_types, h_property_types, h_attenuation_types,
+              h_boundary_types, h_wavefield_types, t0, dt, nsteps)),
+      h_source_element_by_combination(
+          "source_element_by_combination",
+          [&](int isource) { return h_element_indices(isource); },
+          h_medium_types, h_property_types, h_attenuation_types,
+          h_boundary_types, h_wavefield_types),
+      h_source_source_by_combination(
+          "source_source_by_combination", [&](int isource) { return isource; },
+          h_medium_types, h_property_types, h_attenuation_types,
+          h_boundary_types, h_wavefield_types),
+      source_element_by_combination(
+          specfem::tag_dispatch::create_mirror_storage_and_copy(
+              Kokkos::DefaultExecutionSpace{},
+              h_source_element_by_combination)),
+      source_source_by_combination(
+          specfem::tag_dispatch::create_mirror_storage_and_copy(
+              Kokkos::DefaultExecutionSpace{},
+              h_source_source_by_combination)) {
 
   Kokkos::deep_copy(medium_types, h_medium_types);
   Kokkos::deep_copy(wavefield_types, h_wavefield_types);
