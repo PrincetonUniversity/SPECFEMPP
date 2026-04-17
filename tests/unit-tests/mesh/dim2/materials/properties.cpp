@@ -177,7 +177,7 @@ void check_property(
          MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                     ELASTIC_PSV_T, ELECTROMAGNETIC_TE),
          PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-         ATTENUATION_TAG(NONE)),
+         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
         {
           if ((medium_tag == _medium_tag_) &&
               (property_tag == _property_tag_) &&

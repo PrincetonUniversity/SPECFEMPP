@@ -50,7 +50,7 @@ namespace specfem::assembly {
  * @endcode
  */
 template <> struct element_types<specfem::element::dimension_tag::dim3> {
-protected:
+public:
   /**
    * @brief Kokkos view type for storing 3D medium tags in host memory.
    *
@@ -92,6 +92,8 @@ protected:
   using AttenuationTagViewType =
       Kokkos::View<specfem::element::attenuation_tag *,
                    Kokkos::DefaultHostExecutionSpace>;
+
+protected:
   /**
    * @brief Kokkos view type for storing 3D element indices in device memory.
    *
@@ -121,6 +123,28 @@ public:
    * Initializes an empty 3D element types container with no allocated storage.
    */
   element_types() = default;
+
+  /**
+   * @brief Construct 3D element types from pre-built tag views.
+   *
+   * Initializes the element type classification system using pre-constructed
+   * tag views. This constructor builds all indexed element lists from the
+   * provided tags and is useful for testing without requiring a full mesh.
+   *
+   * @param nspec Total number of spectral elements in the mesh
+   * @param ngllz Number of Gauss-Lobatto-Legendre points in the z-direction
+   * @param nglly Number of Gauss-Lobatto-Legendre points in the y-direction
+   * @param ngllx Number of Gauss-Lobatto-Legendre points in the x-direction
+   * @param medium_tags View containing medium type for each element
+   * @param property_tags View containing property type for each element
+   * @param attenuation_tags View containing attenuation type for each element
+   * @param boundary_tags View containing boundary type for each element
+   */
+  element_types(const int nspec, const int ngllz, const int nglly,
+                const int ngllx, MediumTagViewType medium_tags,
+                PropertyTagViewType property_tags,
+                AttenuationTagViewType attenuation_tags,
+                BoundaryViewType boundary_tags);
 
   /**
    * @brief Constructor for element_types class in 3D assembly
@@ -170,6 +194,47 @@ public:
    */
   Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
   get_elements_on_device(const specfem::element::medium_tag tag) const;
+
+  /**
+   * @brief Get number of elements with specified medium and property types in
+   * 3D mesh.
+   *
+   * @param tag Medium type to count in 3D mesh
+   * @param property Property type to count in 3D mesh
+   * @return Number of 3D elements matching both medium and property types
+   */
+  int get_number_of_elements(
+      const specfem::element::medium_tag tag,
+      const specfem::element::property_tag property) const {
+    return get_elements_on_host(tag, property).extent(0);
+  }
+
+  /**
+   * @brief Get 3D elements with specified medium and property types in host
+   * memory, combining across all attenuation types.
+   *
+   * @param tag Medium type (primarily elastic for 3D applications)
+   * @param property Property type (isotropic, anisotropic, isotropic_cosserat
+   * for elastic media)
+   * @return Kokkos view containing all matching 3D element indices for host
+   * access
+   */
+  Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
+  get_elements_on_host(const specfem::element::medium_tag tag,
+                       const specfem::element::property_tag property) const;
+
+  /**
+   * @brief Get 3D elements with specified medium and property on device memory.
+   *
+   * @param tag Medium type (primarily elastic for 3D applications)
+   * @param property Property type (isotropic, anisotropic, isotropic_cosserat
+   *
+   * @return Kokkos view containing all matching 3D element indices for device
+   * access
+   */
+  Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
+  get_elements_on_device(const specfem::element::medium_tag tag,
+                         const specfem::element::property_tag property) const;
 
   /**
    * @brief Get 3D elements with specified medium and property types in host
@@ -290,6 +355,10 @@ public:
   }
 
 private:
+  /// Initialize all indexed element lists from the tag views.
+  /// Called by both constructors after member initialization.
+  void build_index_lists();
+
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
                       DECLARE((IndexViewType, elements),
                               (IndexViewType::HostMirror, h_elements)))
@@ -299,6 +368,12 @@ private:
                        ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
                       DECLARE((IndexViewType, material_elements),
                               (IndexViewType::HostMirror, h_material_elements)))
+
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
+                       PROPERTY_TAG(ISOTROPIC)),
+                      DECLARE((IndexViewType, medium_property_elements),
+                              (IndexViewType::HostMirror,
+                               h_medium_property_elements)))
 
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
                        PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),

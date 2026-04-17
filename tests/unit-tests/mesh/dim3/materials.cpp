@@ -97,16 +97,18 @@ struct ExpectedMaterials3D {
       // Retrieve the material and verify it matches expected
       // Note: Update this macro when adding new material types
       FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC)), {
+          (DIMENSION_TAG(DIM3), MEDIUM_TAG(ACOUSTIC, ELASTIC),
+           PROPERTY_TAG(ISOTROPIC), ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
+          {
             if (medium_tag == _medium_tag_ && property_tag == _property_tag_) {
               const auto computed_material =
-                  materials.get_material<_medium_tag_, _property_tag_>(
+                  materials.get_material<_medium_tag_, _property_tag_,
+                                         _attenuation_tag_>(
                       expected.element_id);
               const auto expected_material =
                   std::any_cast<specfem::medium_container::material<
                       _dimension_tag_, _medium_tag_, _property_tag_,
-                      specfem::element::attenuation_tag::none> >(
-                      expected.material);
+                      _attenuation_tag_> >(expected.material);
               if (computed_material != expected_material) {
                 FAIL() << "Material mismatch for element "
                        << expected.element_id << ". "

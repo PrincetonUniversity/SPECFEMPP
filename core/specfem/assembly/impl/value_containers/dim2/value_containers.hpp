@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/element.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 #include <Kokkos_Core.hpp>
@@ -41,8 +42,8 @@ struct value_containers<specfem::element::dimension_tag::dim2,
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
                        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                   POROELASTIC, ELASTIC_PSV_T),
-                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-                       ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
+                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC,
+                                    ISOTROPIC_COSSERAT)),
                       DECLARE(((containers_type, (_DIMENSION_TAG_, _MEDIUM_TAG_,
                                                   _PROPERTY_TAG_)),
                                value)))
@@ -72,8 +73,7 @@ struct value_containers<specfem::element::dimension_tag::dim2,
         (DIMENSION_TAG(DIM2),
          MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                     ELASTIC_PSV_T),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
         CAPTURE(value) {
           if constexpr (_medium_tag_ == MediumTag &&
                         _property_tag_ == PropertyTag) {
@@ -81,7 +81,7 @@ struct value_containers<specfem::element::dimension_tag::dim2,
           }
         })
 
-    Kokkos::abort("Invalid material type detected in value containers");
+    Kokkos::abort("Invalid material type detected in 2D value containers");
 
     /// code path should never be reached
 
@@ -98,8 +98,7 @@ struct value_containers<specfem::element::dimension_tag::dim2,
         (DIMENSION_TAG(DIM2),
          MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                     ELASTIC_PSV_T),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
         CAPTURE(value) { _value_.copy_to_host(); })
   }
 
@@ -109,8 +108,7 @@ struct value_containers<specfem::element::dimension_tag::dim2,
         (DIMENSION_TAG(DIM2),
          MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                     ELASTIC_PSV_T),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
         CAPTURE(value) { _value_.copy_to_device(); })
   }
 };

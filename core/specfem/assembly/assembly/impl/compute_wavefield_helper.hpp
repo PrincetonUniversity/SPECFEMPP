@@ -48,7 +48,6 @@ public:
   constexpr static auto dimension_tag = Tags::dimension_tag;
   constexpr static auto medium_tag = Tags::medium_tag;
   constexpr static auto property_tag = Tags::property_tag;
-  constexpr static auto attenuation_tag = Tags::attenuation_tag;
   constexpr static auto ngll = NGLL;
   constexpr static bool using_simd = false;
 
@@ -87,8 +86,8 @@ public:
     // Get the element grid (ngllx, nglly, ngllz)
     const auto &element_grid = assembly.mesh.element_grid;
 
-    const auto elements = assembly.element_types.get_elements_on_device(
-        medium_tag, property_tag, attenuation_tag);
+    const auto elements =
+        assembly.element_types.get_elements_on_device(medium_tag, property_tag);
 
     const int nelements = elements.extent(0);
 
@@ -177,9 +176,8 @@ public:
           }();
 
           // Call the compute_wavefield function
-          using PointTags =
-              specfem::tags::Tags<dimension_tag, medium_tag, property_tag,
-                                  attenuation_tag, using_simd>;
+          using PointTags = specfem::tags::Tags<dimension_tag, medium_tag,
+                                                property_tag, using_simd>;
           specfem::medium_physics::compute_wavefield<PointTags>(
               chunk_index, assembly, lagrange_derivative, displacement,
               velocity, acceleration, wavefield_type, wavefield);

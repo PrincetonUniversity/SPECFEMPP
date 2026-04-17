@@ -546,6 +546,26 @@ target_link_libraries(
 )
 
 add_executable(
+  element_types_tests
+  assembly/element_types/runner.cpp
+  assembly/element_types/dim2/element_types_tests.cpp
+  assembly/element_types/dim3/element_types_tests.cpp
+)
+
+set_target_properties(element_types_tests PROPERTIES UNITY_BUILD OFF)
+
+target_link_libraries(
+  element_types_tests
+  specfem::assembly
+  specfem::element
+  specfem_environment
+  Kokkos::kokkos
+  gtest_main
+  ${BOOST_LIBS}
+  -lpthread -lm
+)
+
+add_executable(
   assembly_receivers_tests
   assembly/receivers/receivers_tests.cpp
   assembly/receivers/dim2/receivers_tests.cpp
@@ -1000,6 +1020,7 @@ if(NOT SPECFEM_ENABLE_MPI)
     abort_tests
     assembly_receivers_tests
     assembly_tests
+    element_types_tests
     attenuation_tests
     chunked_edge_tests
     chunked_face_tests

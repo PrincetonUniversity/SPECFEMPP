@@ -91,13 +91,12 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
-       PROPERTY_TAG(ISOTROPIC), ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
+       PROPERTY_TAG(ISOTROPIC)),
       {
         // Create tags for the current combination
         using PointTags =
             specfem::tags::Tags<specfem::element::dimension_tag::dim3,
-                                _medium_tag_, _property_tag_,
-                                _attenuation_tag_>;
+                                _medium_tag_, _property_tag_>;
 
         get_wavefield_on_entire_grid<PointTags>(component, *this,
                                                 wavefield_on_entire_grid);

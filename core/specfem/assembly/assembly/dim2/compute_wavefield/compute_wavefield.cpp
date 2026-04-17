@@ -92,14 +92,12 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::
       (DIMENSION_TAG(DIM2),
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                   ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-       ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
       {
         // Create tags for the current combination
         using PointTags =
             specfem::tags::Tags<specfem::element::dimension_tag::dim2,
-                                _medium_tag_, _property_tag_,
-                                _attenuation_tag_>;
+                                _medium_tag_, _property_tag_>;
 
         get_wavefield_on_entire_grid<PointTags>(component, *this,
                                                 wavefield_on_entire_grid);

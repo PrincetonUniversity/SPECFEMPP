@@ -62,8 +62,7 @@ struct InfoScatters {
 /// @tparam PropertyTag The property type (isotropic, anisotropic, etc.)
 template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag,
-          specfem::element::attenuation_tag AttenuationTag>
+          specfem::element::property_tag PropertyTag>
 void process_medium_elements(
     const specfem::assembly::mesh<DimensionTag> &mesh,
     const specfem::assembly::properties<DimensionTag> &properties,
@@ -73,9 +72,8 @@ void process_medium_elements(
   constexpr specfem::element::dimension_tag dimension_tag = DimensionTag;
   constexpr specfem::element::medium_tag medium_tag = MediumTag;
   constexpr specfem::element::property_tag property_tag = PropertyTag;
-  constexpr specfem::element::attenuation_tag attenuation_tag = AttenuationTag;
   auto elements =
-      element_types.get_elements_on_device(medium_tag, property_tag, attenuation_tag);
+      element_types.get_elements_on_device(medium_tag, property_tag);
 
   constexpr bool using_simd = false;
   using simd = specfem::datatype::simd<type_real, using_simd>;
@@ -215,22 +213,20 @@ specfem::assembly::Info<DimensionTag>::Info(
         (DIMENSION_TAG(DIM2),
          MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                     ELASTIC_PSV_T),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-        ATTENUATION_TAG(NONE)),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
         {
           info::impl::process_medium_elements<_dimension_tag_, _medium_tag_,
-                                              _property_tag_, _attenuation_tag_>(
+                                              _property_tag_>(
               mesh, properties, element_types, scatters);
         };);
   } else {
     FOR_EACH_IN_PRODUCT(
         (DIMENSION_TAG(DIM3),
          MEDIUM_TAG(ELASTIC, ACOUSTIC),
-         PROPERTY_TAG(ISOTROPIC),
-         ATTENUATION_TAG(NONE)),
+         PROPERTY_TAG(ISOTROPIC)),
         {
           info::impl::process_medium_elements<_dimension_tag_, _medium_tag_,
-                                              _property_tag_, _attenuation_tag_>(
+                                              _property_tag_>(
               mesh, properties, element_types, scatters);
         };);
   };

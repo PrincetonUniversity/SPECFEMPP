@@ -292,6 +292,38 @@ public:
     return material.get_properties();
   }
 
+  template <specfem::element::medium_tag MediumTag,
+            specfem::element::property_tag PropertyTag>
+  specfem::point::properties<
+      specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag, false> >
+  get_properties(const int index,
+                 specfem::element::attenuation_tag attenuation) const {
+    const auto &material_specification = this->material_index_mapping[index];
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ACOUSTIC, ELASTIC),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
+        CAPTURE(material) {
+          if constexpr (MediumTag == _medium_tag_ &&
+                        PropertyTag == _property_tag_) {
+            if (_attenuation_tag_ == attenuation) {
+              return _material_.element_materials[material_specification.index]
+                  .get_properties();
+            }
+          }
+        })
+    Kokkos::abort("Unknown attenuation_tag in get_properties");
+  }
+
+  template <specfem::element::medium_tag MediumTag,
+            specfem::element::property_tag PropertyTag>
+  specfem::point::properties<
+      specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag, false> >
+  get_properties(const int index) const {
+    return get_properties<MediumTag, PropertyTag>(
+        index, this->material_index_mapping[index].attenuation);
+  }
+
   /**
    * @brief Get reference to material container for specific medium and property
    * types
