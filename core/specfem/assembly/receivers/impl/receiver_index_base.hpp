@@ -134,6 +134,8 @@ protected:
   }
 
 public:
+  ReceiverIndexBase() = default;
+
   /**
    * @brief Construct and populate all per-material receiver index stores.
    *
