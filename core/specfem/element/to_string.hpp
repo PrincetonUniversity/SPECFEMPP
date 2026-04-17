@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/simulation.hpp"
 #include "specfem/utilities/errors.hpp"
 #include "tags.hpp"
 #include <array>

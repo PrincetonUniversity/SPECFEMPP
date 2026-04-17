@@ -198,7 +198,7 @@ std::tuple<int, int, int> specfem::element_connections::
     // cordinate permutation
 
     // Get the (j, i) coordinates on the 'from' face
-    const auto [j, i] = [=]() {
+    const auto [j, i] = [=, this]() {
       switch (from) {
       case specfem::mesh_entity::dim3::type::left:
         return std::make_pair(static_cast<type_real>(iy) / (nglly - 1),
@@ -225,7 +225,7 @@ std::tuple<int, int, int> specfem::element_connections::
 
     const auto [j_prime, i_prime] = affine_transform(perm, j, i);
     // Map (j', i') to (iz, iy, ix) on the 'to' face
-    return [=](const type_real j_prime, const type_real i_prime) {
+    return [=, this](const type_real j_prime, const type_real i_prime) {
       switch (to) {
       case specfem::mesh_entity::dim3::type::left:
         return std::make_tuple(static_cast<int>(i_prime * (ngllz - 1)),
@@ -264,7 +264,7 @@ std::tuple<int, int, int> specfem::element_connections::
     auto edge1_nodes = get_edge_nodes(from, element1);
     auto edge2_nodes = get_edge_nodes(to, element2);
 
-    const auto [i, n] = [=]() {
+    const auto [i, n] = [=, this]() {
       switch (from) {
       case specfem::mesh_entity::dim3::type::front_bottom:
       case specfem::mesh_entity::dim3::type::front_top:
@@ -288,7 +288,7 @@ std::tuple<int, int, int> specfem::element_connections::
 
     const int i_prime = edge_transform(edge1_nodes, edge2_nodes, i, n);
 
-    return [=](const int i_prime) {
+    return [=, this](const int i_prime) {
       switch (to) {
       case specfem::mesh_entity::dim3::type::front_bottom:
         return std::make_tuple(0, 0, i_prime);

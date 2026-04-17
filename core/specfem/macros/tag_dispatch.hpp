@@ -30,6 +30,7 @@
 #define _SPECFEM_PROP_VAL(s, _, v) specfem::element::property_tag::v
 #define _SPECFEM_ATT_VAL(s, _, v) specfem::element::attenuation_tag::v
 #define _SPECFEM_BND_VAL(s, _, v) specfem::element::boundary_tag::v
+#define _SPECFEM_WF_VAL(s, _, v) specfem::simulation::field_type::v
 
 // Internal: map op over __VA_ARGS__ and produce a comma-separated list
 #define _SPECFEM_TAG_ENUM(op, ...)                                             \
@@ -54,6 +55,9 @@
 #define BOUNDARY_SET(...)                                                      \
   specfem::tag_dispatch::boundary_set<_SPECFEM_TAG_ENUM(_SPECFEM_BND_VAL,      \
                                                         __VA_ARGS__)> {}
+#define WAVEFIELD_SET(...)                                                     \
+  specfem::tag_dispatch::wavefield_set<_SPECFEM_TAG_ENUM(_SPECFEM_WF_VAL,      \
+                                                         __VA_ARGS__)> {}
 
 #define _SPECFEM_CONN_VAL(s, _, v) specfem::element_connections::type::v
 #define _SPECFEM_IFACE_VAL(s, _, v) specfem::element_coupling::interface_tag::v

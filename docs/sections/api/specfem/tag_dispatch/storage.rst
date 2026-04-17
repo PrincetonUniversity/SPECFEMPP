@@ -1,12 +1,20 @@
-.. _specfem_tag_dispatch_storage:
 
-Storage
-=======
+``specfem::tag_dispatch::Storage``
+=================================-
 
-``Storage``
------------
+.. doxygentypedef:: specfem::tag_dispatch::Storage
 
-.. doxygenclass:: specfem::tag_dispatch::Storage
+.. doxygentypedef:: specfem::tag_dispatch::TypedStorage
+
+.. doxygenfunction:: specfem::tag_dispatch::impl::deep_copy
+
+.. doxygenstruct:: specfem::tag_dispatch::impl::UnifiedSlot
+    :members:
+
+.. doxygenstruct:: specfem::tag_dispatch::impl::TypePolicy
+    :members:
+
+.. doxygenstruct:: specfem::tag_dispatch::impl::TemplatePolicy
     :members:
 
 ``create_mirror_storage_and_copy``

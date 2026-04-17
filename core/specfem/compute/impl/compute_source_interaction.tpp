@@ -28,8 +28,7 @@ void compute_source_interaction_core(
   constexpr auto wavefield = Tags::wavefield_tag;
 
   const auto [element_indices, source_indices] =
-      assembly.sources.get_sources_on_device(medium_tag, property_tag,
-                                             boundary_tag, wavefield);
+      assembly.sources.get_sources_on_device(medium_tag, property_tag, boundary_tag, wavefield);
 
   // Get the element grid (ngllx, ngllz)
   const auto &element_grid = assembly.mesh.element_grid;
