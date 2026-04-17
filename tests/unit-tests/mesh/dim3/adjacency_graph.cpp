@@ -6,6 +6,7 @@
 
 #include "specfem/enums.hpp"
 #include "specfem/mesh.hpp"
+#include "specfem/mpi.hpp"
 #include "specfem/setup.hpp"
 #include "test_fixture.hpp"
 
@@ -29,7 +30,7 @@ struct Connection {
 
   void expect_in(
       const specfem::mesh::adjacency_graph<dimension> &adjacency_graph) const {
-    const auto &g = adjacency_graph.graph();
+    const auto &g = adjacency_graph.local_connections();
 
     const auto [edge_, exists] = boost::edge(ispec, jspec, g);
     if (!exists) {

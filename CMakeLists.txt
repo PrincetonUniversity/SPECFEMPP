@@ -303,11 +303,12 @@ if (SPECFEM_INSTALL AND NOT SPECFEM_USE_SKBUILD)
     install(
         TARGETS specfem
         RUNTIME DESTINATION .
+        COMPONENT executables
     )
 
     # Create a custom target that will run after your main build
     add_custom_target(organize_output ALL
-        COMMAND ${CMAKE_COMMAND} --install . --prefix ${CMAKE_INSTALL_PREFIX}
+        COMMAND ${CMAKE_COMMAND} --install . --prefix ${CMAKE_INSTALL_PREFIX} --component executables
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Organizing specfem++ executables into: ${CMAKE_INSTALL_PREFIX}"
         # Make this run after your main targets

@@ -254,5 +254,6 @@ add_executable(xadj_seismogram adj_seismogram.f90)
 if (SPECFEM_INSTALL)
   install(TARGETS xadj_seismogram xmeshfem2D
     RUNTIME DESTINATION .
+    COMPONENT executables
   )
 endif()

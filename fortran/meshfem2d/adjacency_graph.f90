@@ -9,7 +9,8 @@ contains
 
       use constants, only: MAX_NEIGHBORS, NCORNERS
       use shared_parameters, only: NGNOD, nelmnts
-      use part_unstruct_par, only: elmnts, num_adjacent, adjacency_type, adjacency_id, adjacent_elements
+      use part_unstruct_par, only: elmnts, num_adjacent, adjacency_type, adjacency_id, adjacent_elements, &
+         anchor_local, anchor_neighbor
 
       implicit none
 
@@ -21,9 +22,13 @@ contains
       allocate(adjacency_type(0:nelmnts-1, 0:MAX_NEIGHBORS),stat=ier)
       allocate(adjacency_id(0:nelmnts-1, 0:MAX_NEIGHBORS),stat=ier)
       allocate(adjacent_elements(0:nelmnts-1, 0:MAX_NEIGHBORS),stat=ier)
+      allocate(anchor_local(0:nelmnts-1, 0:MAX_NEIGHBORS),stat=ier)
+      allocate(anchor_neighbor(0:nelmnts-1, 0:MAX_NEIGHBORS),stat=ier)
       num_adjacent(:) = 0
       adjacency_type(:,:) = -1
       adjacency_id(:,:) = -1
+      anchor_local(:,:) = -1
+      anchor_neighbor(:,:) = -1
 
       if (NGNOD == 9) then
          do i = 0, nelmnts-1
@@ -41,7 +46,8 @@ contains
 
    subroutine get_adjacencies(elmnts_bis)
       use constants, only: MAX_NEIGHBORS, MAX_NSIZE_SHARED, NCORNERS, ISTRONGLY_CONFORMING
-      use part_unstruct_par, only: adjacency_type, adjacency_id, adjacent_elements, num_adjacent, nnodes
+      use part_unstruct_par, only: adjacency_type, adjacency_id, adjacent_elements, num_adjacent, nnodes, &
+         anchor_local, anchor_neighbor
       use shared_parameters, only: nelmnts
 
       implicit none
@@ -49,6 +55,7 @@ contains
       integer :: current_elem, neighbor_elem
       integer :: edge_id1, edge_id2
       integer :: corner_id1, corner_id2
+      integer :: anchor_corner_local, anchor_corner_neighbor
       integer, allocatable :: nnodes_elmnts(:)
       integer, allocatable :: nodes_elmnts(:,:)
 
@@ -87,17 +94,25 @@ contains
 
                   ! count only if edge is not accounted yet
                   if (edge_id1 > 0) then
+                     call get_corner_id(elmnts_bis, current_elem, current_node, anchor_corner_local)
+                     call get_corner_id(elmnts_bis, neighbor_elem, current_node, anchor_corner_neighbor)
                      adjacent_elements(current_elem, num_adjacent(current_elem)) = neighbor_elem
                      adjacency_type(current_elem, num_adjacent(current_elem)) = ISTRONGLY_CONFORMING
                      adjacency_id(current_elem, num_adjacent(current_elem)) = edge_id1
+                     anchor_local(current_elem, num_adjacent(current_elem)) = anchor_corner_local
+                     anchor_neighbor(current_elem, num_adjacent(current_elem)) = anchor_corner_neighbor
                      num_adjacent(current_elem) = num_adjacent(current_elem) + 1
                   endif
 
                   ! count the neighbor's adjacency only if not accounted yet
                   if (edge_id2 > 0) then
+                     call get_corner_id(elmnts_bis, neighbor_elem, current_node, anchor_corner_local)
+                     call get_corner_id(elmnts_bis, current_elem, current_node, anchor_corner_neighbor)
                      adjacent_elements(neighbor_elem, num_adjacent(neighbor_elem)) = current_elem
                      adjacency_type(neighbor_elem, num_adjacent(neighbor_elem)) = ISTRONGLY_CONFORMING
                      adjacency_id(neighbor_elem, num_adjacent(neighbor_elem)) = edge_id2
+                     anchor_local(neighbor_elem, num_adjacent(neighbor_elem)) = anchor_corner_local
+                     anchor_neighbor(neighbor_elem, num_adjacent(neighbor_elem)) = anchor_corner_neighbor
                      num_adjacent(neighbor_elem) = num_adjacent(neighbor_elem) + 1
                   endif
                else ! Assign this a corner node
@@ -107,11 +122,15 @@ contains
                   adjacent_elements(current_elem, num_adjacent(current_elem)) = neighbor_elem
                   adjacency_type(current_elem, num_adjacent(current_elem)) = ISTRONGLY_CONFORMING
                   adjacency_id(current_elem, num_adjacent(current_elem)) = corner_id1
+                  anchor_local(current_elem, num_adjacent(current_elem)) = corner_id1
+                  anchor_neighbor(current_elem, num_adjacent(current_elem)) = corner_id2
                   num_adjacent(current_elem) = num_adjacent(current_elem) + 1
 
                   adjacent_elements(neighbor_elem, num_adjacent(neighbor_elem)) = current_elem
                   adjacency_type(neighbor_elem, num_adjacent(neighbor_elem)) = ISTRONGLY_CONFORMING
                   adjacency_id(neighbor_elem, num_adjacent(neighbor_elem)) = corner_id2
+                  anchor_local(neighbor_elem, num_adjacent(neighbor_elem)) = corner_id2
+                  anchor_neighbor(neighbor_elem, num_adjacent(neighbor_elem)) = corner_id1
                   num_adjacent(neighbor_elem) = num_adjacent(neighbor_elem) + 1
                endif
 

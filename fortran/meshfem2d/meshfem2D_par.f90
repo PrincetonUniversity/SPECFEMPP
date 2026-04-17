@@ -151,5 +151,7 @@
   integer, dimension(:,:), allocatable :: adjacency_type ! For every adjacent element, store the type of adjacency (edge or corner)
   integer, dimension(:,:), allocatable :: adjacency_id ! For every adjacent element, store the edge or corner id
   integer, dimension(:), allocatable :: num_adjacent ! number of adjacent elements for every element
+  integer, dimension(:,:), allocatable :: anchor_local ! For every adjacent element, store the anchor point corner id on the local element
+  integer, dimension(:,:), allocatable :: anchor_neighbor ! For every adjacent element, store the anchor point corner id on the neighbor element
 
   end module part_unstruct_par
