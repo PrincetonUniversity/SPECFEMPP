@@ -154,11 +154,12 @@ specfem::assembly::mpi_impl::communication_group::communication_group(
         find_anchor_position(neigh_corners, edge.neighbor_anchor_point);
 
     // Theta stores the discrete rotation index r in [0,3]
-    // r = (neigh_anchor_pos + my_anchor_pos) mod 4
+    // r = (neigh_anchor_pos - my_anchor_pos) mod 4
     // Actual rotation angle (if needed) = r * π/2
     // Storing as unsigned char saves memory compared to type_real (1 vs 8
     // bytes)
-    const unsigned char r = (neigh_anchor_pos + my_anchor_pos) % 4;
+    const unsigned char r =
+        static_cast<unsigned char>((neigh_anchor_pos - my_anchor_pos + 4) % 4);
     h_theta(iface) = r;
   }
 
@@ -476,7 +477,8 @@ void specfem::assembly::mpi_impl::unpacker::assemble_unpacking_mapping(
     const Kokkos::View<unsigned int[3], Kokkos::HostSpace> metadata_buf,
     const Kokkos::View<int ***, Kokkos::HostSpace> recv_indices,
     const Kokkos::View<int *, Kokkos::HostSpace> element_indices,
-    const Kokkos::View<int *, Kokkos::HostSpace> neighbor_orientations,
+    const Kokkos::View<specfem::mesh_entity::dim3::type *, Kokkos::HostSpace>
+        my_orientations,
     const specfem::mesh_entity::element<dimension_tag> &element,
     const specfem::assembly::mesh<dimension_tag> &mesh) {
 
@@ -509,9 +511,7 @@ void specfem::assembly::mpi_impl::unpacker::assemble_unpacking_mapping(
 
   for (unsigned int iface = 0; iface < this->nfaces; iface++) {
     const int ielem = element_indices(iface);
-    const auto face_type = static_cast<specfem::mesh_entity::dim3::type>(
-        neighbor_orientations(iface));
-
+    const auto face_type = my_orientations(iface);
     for (unsigned int ipoint_j = 0; ipoint_j < this->ngll; ipoint_j++) {
       for (unsigned int ipoint_i = 0; ipoint_i < this->ngll; ipoint_i++) {
         // Get the rotated face indices from the received buffer
@@ -554,6 +554,26 @@ void specfem::assembly::mpi_impl::unpacker::assemble_unpacking_mapping(
   }
 
   Kokkos::deep_copy(mapping, h_mapping);
+}
+
+specfem::assembly::mpi_impl::communication_pattern::communication_pattern(
+    const communication_group &comm_group,
+    const specfem::mesh_entity::element<dimension_tag> &element,
+    const specfem::assembly::mesh<dimension_tag> &mesh)
+    : my_rank(comm_group.my_rank), neighbor_rank(comm_group.neighbor_rank) {
+
+  // Issue non-blocking receives for unpacking buffers (metadata, indices, etc.)
+  unpack = { comm_group, element, mesh };
+  const auto [requests, metadata_buf, recv_indices, element_indices,
+              neighbor_orientations] = unpack.receive_unpacking_buffers();
+  // Create packer and send unpacking indices to neighbor
+  pack = { comm_group, element, mesh };
+
+  // Finalize unpacker by assembling the unpacking mapping after receives
+  // complete
+  unpack.assemble_unpacking_mapping(requests, metadata_buf, recv_indices,
+                                    element_indices,
+                                    comm_group.h_my_orientation, element, mesh);
 }
 
 // ---------------------------------------------------------------------------
@@ -613,18 +633,6 @@ specfem::assembly::mpi<specfem::element::dimension_tag::dim3>::mpi(
 
   for (const auto &comm_group : communication_groups) {
 
-    // Create unpacker first to post receives before sends (avoid
-    // deadlock)
-    mpi_impl::unpacker unpacker(comm_group, element, mesh);
-    const auto [requests, metadata_buf, recv_indices, element_indices,
-                neighbor_orientations] = unpacker.receive_unpacking_buffers();
-    // Post the send after posting receives to avoid deadlock
-    mpi_impl::packer packer(comm_group, element, mesh);
-    unpacker.assemble_unpacking_mapping(requests, metadata_buf, recv_indices,
-                                        element_indices, neighbor_orientations,
-                                        element, mesh);
-
-    unpackers.emplace_back(std::move(unpacker));
-    packers.emplace_back(std::move(packer));
+    communication_patterns.emplace_back(comm_group, element, mesh);
   }
 }

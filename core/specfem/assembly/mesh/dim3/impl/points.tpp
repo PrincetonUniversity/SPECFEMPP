@@ -1,4 +1,6 @@
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/mpi/mpi.hpp"
+#include <limits>
 
 template <typename CoordinateView, typename ShapeFunctionView,
           typename ControlNodeCoordinates>
@@ -300,6 +302,69 @@ specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::
                          control_nodes.control_node_coordinates);
 
   Kokkos::deep_copy(this->h_coord, this->coord);
+
+  const auto coord = this->coord;
+
+  Kokkos::MinMaxScalar<type_real> x_result, y_result, z_result;
+
+  Kokkos::parallel_reduce(
+      "specfem::assembly::mesh::points::compute_x_bounds",
+      Kokkos::MDRangePolicy<Kokkos::Rank<4> >({ 0, 0, 0, 0 },
+                                              { nspec, ngllz, nglly, ngllx }),
+      KOKKOS_LAMBDA(const int ispec, const int iz, const int iy, const int ix,
+                    Kokkos::MinMaxScalar<type_real> &result) {
+        result.min_val = Kokkos::min(result.min_val, coord(ispec, iz, iy, ix, 0));
+        result.max_val = Kokkos::max(result.max_val, coord(ispec, iz, iy, ix, 0));
+      },
+      Kokkos::MinMax<type_real>(x_result));
+
+  Kokkos::parallel_reduce(
+      "specfem::assembly::mesh::points::compute_y_bounds",
+      Kokkos::MDRangePolicy<Kokkos::Rank<4> >({ 0, 0, 0, 0 },
+                                              { nspec, ngllz, nglly, ngllx }),
+      KOKKOS_LAMBDA(const int ispec, const int iz, const int iy, const int ix,
+                    Kokkos::MinMaxScalar<type_real> &result) {
+        result.min_val = Kokkos::min(result.min_val, coord(ispec, iz, iy, ix, 1));
+        result.max_val = Kokkos::max(result.max_val, coord(ispec, iz, iy, ix, 1));
+      },
+      Kokkos::MinMax<type_real>(y_result));
+
+  Kokkos::parallel_reduce(
+      "specfem::assembly::mesh::points::compute_z_bounds",
+      Kokkos::MDRangePolicy<Kokkos::Rank<4> >({ 0, 0, 0, 0 },
+                                              { nspec, ngllz, nglly, ngllx }),
+      KOKKOS_LAMBDA(const int ispec, const int iz, const int iy, const int ix,
+                    Kokkos::MinMaxScalar<type_real> &result) {
+        result.min_val = Kokkos::min(result.min_val, coord(ispec, iz, iy, ix, 2));
+        result.max_val = Kokkos::max(result.max_val, coord(ispec, iz, iy, ix, 2));
+      },
+      Kokkos::MinMax<type_real>(z_result));
+
+  this->xmin = x_result.min_val;
+  this->xmax = x_result.max_val;
+  this->ymin = y_result.min_val;
+  this->ymax = y_result.max_val;
+  this->zmin = z_result.min_val;
+  this->zmax = z_result.max_val;
+
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->xmin, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MIN,
+                                     MPI_COMM_WORLD));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->xmax, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MAX,
+                                     MPI_COMM_WORLD));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->ymin, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MIN,
+                                     MPI_COMM_WORLD));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->ymax, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MAX,
+                                     MPI_COMM_WORLD));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->zmin, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MIN,
+                                     MPI_COMM_WORLD));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->zmax, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MAX,
+                                     MPI_COMM_WORLD));
 
   return;
 }

@@ -289,7 +289,25 @@ public:
       const Kokkos::View<unsigned int[3], Kokkos::HostSpace> metadata_buf,
       const Kokkos::View<int ***, Kokkos::HostSpace> recv_indices,
       const Kokkos::View<int *, Kokkos::HostSpace> element_indices,
-      const Kokkos::View<int *, Kokkos::HostSpace> neighbor_orientations,
+      const Kokkos::View<specfem::mesh_entity::dim3::type *, Kokkos::HostSpace>
+          my_orientations,
+      const specfem::mesh_entity::element<dimension_tag> &element,
+      const specfem::assembly::mesh<dimension_tag> &mesh);
+};
+
+struct communication_pattern {
+public:
+  constexpr static auto dimension_tag =
+      specfem::element::dimension_tag::dim3; ///< Dimension tag
+  unsigned int my_rank;       /**< MPI rank of the current process */
+  unsigned int neighbor_rank; /**< MPI rank of the neighboring process */
+  unpacker unpack; /**< Unpacker for receiving data from the neighbor */
+  packer pack;     /**< Packer for sending data to the neighbor */
+
+  communication_pattern() = default;
+
+  communication_pattern(
+      const communication_group &comm_group,
       const specfem::mesh_entity::element<dimension_tag> &element,
       const specfem::assembly::mesh<dimension_tag> &mesh);
 };
@@ -325,8 +343,7 @@ public:
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
 
   std::vector<mpi_impl::communication_group> communication_groups;
-  std::vector<mpi_impl::packer> packers;
-  std::vector<mpi_impl::unpacker> unpackers;
+  std::vector<mpi_impl::communication_pattern> communication_patterns;
 
   mpi() = default;
 
