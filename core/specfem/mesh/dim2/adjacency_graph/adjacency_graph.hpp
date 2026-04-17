@@ -5,8 +5,8 @@
 #include "specfem/mesh_entity.hpp"
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/filtered_graph.hpp>
-#include <memory>
 #include <cstddef>
+#include <memory>
 #include <vector>
 
 namespace specfem::mesh {
@@ -65,19 +65,34 @@ public:
    * neighbor element belongs to a different partition.
    */
   struct MPIEdgeProperties : public EdgeProperties {
-    int neighbor_partition;      ///< MPI rank of the neighboring partition
+    int neighbor_partition; ///< MPI rank of the neighboring partition
+    specfem::mesh_entity::dim2::type neighbor_orientation; ///< Orientation of
+                                                           ///< the shared
+                                                           ///< entity in the
+                                                           ///< neighboring
+                                                           ///< partition
     size_t neighbor_local_index; ///< Local index of the neighboring element in
                                  ///< its partition
     size_t local_index; ///< Local index of the element in this partition
+    specfem::mesh_entity::dim2::type local_anchor;    ///< Anchor point on the
+                                                      ///< local element
+    specfem::mesh_entity::dim2::type neighbor_anchor; ///< Anchor point on the
+                                                      ///< neighboring element
 
     MPIEdgeProperties() = default;
 
-    MPIEdgeProperties(const specfem::element_connections::type conn,
-                      const specfem::mesh_entity::dim2::type orient,
-                      const size_t local_idx, const int neighbor_part,
-                      const size_t neighbor_index)
-        : EdgeProperties(conn, orient), neighbor_partition(neighbor_part),
-          neighbor_local_index(neighbor_index), local_index(local_idx) {}
+    MPIEdgeProperties(
+        const specfem::element_connections::type conn,
+        const specfem::mesh_entity::dim2::type orient, const size_t local_idx,
+        const size_t neighbor_index, const int neighbor_part,
+        const specfem::mesh_entity::dim2::type neighbor_orient,
+        const specfem::mesh_entity::dim2::type local_anchor_idx,
+        const specfem::mesh_entity::dim2::type neighbor_anchor_idx)
+        : EdgeProperties(conn, orient), local_index(local_idx),
+          neighbor_local_index(neighbor_index),
+          neighbor_partition(neighbor_part),
+          neighbor_orientation(neighbor_orient), local_anchor(local_anchor_idx),
+          neighbor_anchor(neighbor_anchor_idx) {}
   };
 
 private:
