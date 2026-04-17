@@ -25,7 +25,8 @@ void check_store(
   // the structured binding ([element_indices, source_indices]) is not
   // supported by the intel compiler
   const auto elements_and_sources = sources.get_sources_on_device(
-      MediumTag, PropertyTag, BoundaryTag, WavefieldType);
+      MediumTag, PropertyTag, specfem::element::attenuation_tag::none,
+      BoundaryTag, WavefieldType);
   const Kokkos::View<int *, Kokkos::DefaultExecutionSpace> &element_indices =
       std::get<0>(elements_and_sources);
   const Kokkos::View<int *, Kokkos::DefaultExecutionSpace> &source_indices =
@@ -98,7 +99,8 @@ void check_load(
   const int ngllx = assembly.mesh.element_grid.ngllx;
 
   const auto elements_and_sources = sources.get_sources_on_device(
-      MediumTag, PropertyTag, BoundaryTag, WavefieldType);
+      MediumTag, PropertyTag, specfem::element::attenuation_tag::none,
+      BoundaryTag, WavefieldType);
   const Kokkos::View<int *, Kokkos::DefaultExecutionSpace> &element_indices =
       std::get<0>(elements_and_sources);
   const Kokkos::View<int *, Kokkos::DefaultExecutionSpace> &source_indices =

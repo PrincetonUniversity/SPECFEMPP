@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.17.5)
 
 # GoogleTest requires at least C++17
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 # Include the GoogleTest framework
 include("${CMAKE_SOURCE_DIR}/cmake/googletest.cmake")
@@ -136,6 +136,24 @@ add_executable(
 target_link_libraries(
   units_tests
   specfem::utilities
+  gtest_main
+  Kokkos::kokkos
+)
+
+add_executable(
+  tag_dispatch_tests
+  tag_dispatch/runner.cpp
+  tag_dispatch/is_valid_tests.cpp
+  tag_dispatch/element_combinations_tests.cpp
+  tag_dispatch/find_in_tests.cpp
+  tag_dispatch/for_each_tests.cpp
+  tag_dispatch/storage_tests.cpp
+)
+
+target_link_libraries(
+  tag_dispatch_tests
+  specfem::element
+  specfem_environment
   gtest_main
   Kokkos::kokkos
 )
@@ -1042,6 +1060,7 @@ if(NOT SPECFEM_ENABLE_MPI)
     stress_tests
     test_mesh_utilities_mapping_2d
     test_mesh_utilities_mapping_3d
+    tag_dispatch_tests
     units_tests
   )
   foreach(test_target IN LISTS TEST_TARGETS)

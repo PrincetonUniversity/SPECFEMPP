@@ -39,7 +39,7 @@ std::tuple<int, int> specfem::element_connections::
   const auto edge1_nodes = get_edge_nodes(from, element1);
   const auto edge2_nodes = get_edge_nodes(to, element2);
 
-  const auto [i, n] = [=]() {
+  const auto [i, n] = [=, this]() {
     switch (from) {
     case specfem::mesh_entity::dim2::type::bottom:
     case specfem::mesh_entity::dim2::type::top:
@@ -54,7 +54,7 @@ std::tuple<int, int> specfem::element_connections::
 
   const int i_prime = edge_transform(edge1_nodes, edge2_nodes, i, n);
 
-  return [=](const int i_prime) {
+  return [=, this](const int i_prime) {
     switch (to) {
     case specfem::mesh_entity::dim2::type::bottom:
       return std::make_tuple(0, i_prime);

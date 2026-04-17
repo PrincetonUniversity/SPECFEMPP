@@ -69,7 +69,7 @@ specfem::assembly::impl::domain_properties<specfem::element::dimension_tag::dim3
       Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace,
                             Kokkos::Rank<4> >(
           { 0, 0, 0, 0 }, { nelement, ngllz, nglly, ngllx }),
-      [=](const int i, const int iz, const int iy, const int ix) {
+      [=, this](const int i, const int iz, const int iy, const int ix) {
         const int ispec = elements(i);
         property_index_mapping(ispec) = count;
         if (medium_tag == specfem::element::medium_tag::elastic &&

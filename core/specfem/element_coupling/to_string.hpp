@@ -1,5 +1,6 @@
 #pragma once
 #include "tags.hpp"
+#include <ostream>
 #include <string>
 
 namespace specfem::element_coupling {
