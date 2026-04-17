@@ -25,6 +25,7 @@
 #include "gtest/gtest.h"
 #include <algorithm>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace specfem::assembly_test {
@@ -324,5 +325,24 @@ TEST_P(AssemblyMPI3DTest, CommunicationGroup) {
   }
 
   const auto &mpi_interfaces = getMPIInterfaces();
+
+  // Programmatic group count check: compute expected number of neighbor ranks
+  // from the mesh adjacency graph (face connections only) and verify it matches
+  // the actual number of communication groups.
+  {
+    const auto &mesh = getMesh();
+    std::unordered_set<size_t> neighbor_ranks;
+    for (const auto &conn : mesh.adjacency_graph.mpi_connections()) {
+      if (specfem::mesh_entity::contains(specfem::mesh_entity::dim3::faces,
+                                         conn.orientation)) {
+        neighbor_ranks.insert(conn.neighbor_partition);
+      }
+    }
+    ASSERT_EQ(mpi_interfaces.communication_groups.size(), neighbor_ranks.size())
+        << "Communication group count mismatch for rank " << current_rank
+        << ". Expected (from adjacency graph): " << neighbor_ranks.size()
+        << ", Got: " << mpi_interfaces.communication_groups.size();
+  }
+
   expected.check(mpi_interfaces, current_rank);
 }

@@ -228,8 +228,7 @@ set(MPI_TEST_TARGETS_4PROCS
 specfem_write_copy_test_cmake_script()
 
 # Register MPI tests using helper function
-list(APPEND MPI_TEST_TARGETS assembly_mpi_dim3_tests)
-foreach(test_target IN LISTS MPI_TEST_TARGETS)
+foreach(test_target IN LISTS MPI_TEST_TARGETS_4PROCS)
   add_mpi_test(${test_target} 4)
 endforeach()
 
