@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/medium/dim2/elastic/isotropic/attenuation.hpp"
+#include "specfem/medium/dim3/elastic/isotropic/attenuation.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

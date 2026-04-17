@@ -275,6 +275,7 @@ add_executable(
   point/source_tests.cpp
   point/stress_integrand_tests.cpp
   point/stress_tests.cpp
+  point/field_derivatives_tests.cpp
   # Kernels
   # Dim 2
   point/kernels/dim2/acoustic_isotropic.cpp
@@ -833,6 +834,19 @@ target_link_libraries(
 )
 
 add_executable(
+  medium_attenuation_tests
+  medium/attenuation/main.cpp
+  medium/attenuation/dim2/elastic_isotropic.cpp
+  medium/attenuation/dim3/elastic_isotropic.cpp
+)
+
+target_link_libraries(
+  medium_attenuation_tests
+  point
+  gtest_main
+)
+
+add_executable(
   compute_coupling_tests
   compute_coupling/acoustic_elastic.cpp
   compute_coupling/elastic_acoustic.cpp
@@ -1059,6 +1073,7 @@ if(NOT SPECFEM_ENABLE_MPI)
     source_class_tests
     source_tests
     source_time_function_tests
+    medium_attenuation_tests
     strain_tests
     stress_tests
     test_mesh_utilities_mapping_2d

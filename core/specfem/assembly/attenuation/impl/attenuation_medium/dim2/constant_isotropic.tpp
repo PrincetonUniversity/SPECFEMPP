@@ -36,14 +36,8 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
 
   constexpr static int N_SLS = specfem::constants::N_SLS;
 
-  static constexpr int components =
-      specfem::element::attributes<specfem::element::dimension_tag::dim2,
-                                   specfem::element::medium_tag::elastic_psv>::components;
-  static constexpr int num_dimensions =
-      specfem::element::attributes<specfem::element::dimension_tag::dim2,
-                                   specfem::element::medium_tag::elastic_psv>::dimension;
-
-  using tensor_view_type = typename base_type::template tensor_type<
+  // Scalar-per-GLL view: shape [nspec_attn][ngllz][ngllx]
+  using scalar_view_type = typename base_type::template scalar_type<
       type_real, Kokkos::DefaultExecutionSpace::memory_space>;
 
   // Host-only per-element scale factors
@@ -62,8 +56,13 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
   view_type memory_variable_Rxz;
   view_type::HostMirror h_memory_variable_Rxz;
 
-  tensor_view_type du_att;
-  typename tensor_view_type::HostMirror h_du_att;
+  // Symmetrised strain components from previous Taylor step: shape [nspec_attn][ngllz][ngllx]
+  scalar_view_type epsilon_xx_att;
+  scalar_view_type::HostMirror h_epsilon_xx_att;
+  scalar_view_type epsilon_zz_att;
+  scalar_view_type::HostMirror h_epsilon_zz_att;
+  scalar_view_type epsilon_xz_att;
+  scalar_view_type::HostMirror h_epsilon_xz_att;
 
   // Index mapping: global ispec -> compact attenuation index (-1 if not attenuating)
   Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
@@ -113,9 +112,15 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
     h_memory_variable_Rxz =
         specfem::datatype::create_mirror_view(memory_variable_Rxz);
 
-    du_att = tensor_view_type("du_att", nspec_attn, ngllz, ngllx, components, num_dimensions);
-    h_du_att = specfem::datatype::create_mirror_view(du_att);
-    Kokkos::deep_copy(du_att, static_cast<type_real>(0));
+    epsilon_xx_att = scalar_view_type("epsilon_xx_att", nspec_attn, ngllz, ngllx);
+    h_epsilon_xx_att = specfem::datatype::create_mirror_view(epsilon_xx_att);
+    Kokkos::deep_copy(epsilon_xx_att, static_cast<type_real>(0));
+    epsilon_zz_att = scalar_view_type("epsilon_zz_att", nspec_attn, ngllz, ngllx);
+    h_epsilon_zz_att = specfem::datatype::create_mirror_view(epsilon_zz_att);
+    Kokkos::deep_copy(epsilon_zz_att, static_cast<type_real>(0));
+    epsilon_xz_att = scalar_view_type("epsilon_xz_att", nspec_attn, ngllz, ngllx);
+    h_epsilon_xz_att = specfem::datatype::create_mirror_view(epsilon_xz_att);
+    Kokkos::deep_copy(epsilon_xz_att, static_cast<type_real>(0));
 
     // Allocate and populate the inverse index mapping (global ispec -> compact index)
     h_attenuation_index_mapping =
@@ -186,7 +191,9 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
     Kokkos::deep_copy(h_memory_variable_kappa, memory_variable_kappa);
     Kokkos::deep_copy(h_memory_variable_Rxx, memory_variable_Rxx);
     Kokkos::deep_copy(h_memory_variable_Rxz, memory_variable_Rxz);
-    Kokkos::deep_copy(h_du_att, du_att);
+    Kokkos::deep_copy(h_epsilon_xx_att, epsilon_xx_att);
+    Kokkos::deep_copy(h_epsilon_zz_att, epsilon_zz_att);
+    Kokkos::deep_copy(h_epsilon_xz_att, epsilon_xz_att);
   }
 
   void copy_to_device() {
@@ -195,7 +202,9 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
     Kokkos::deep_copy(memory_variable_kappa, h_memory_variable_kappa);
     Kokkos::deep_copy(memory_variable_Rxx, h_memory_variable_Rxx);
     Kokkos::deep_copy(memory_variable_Rxz, h_memory_variable_Rxz);
-    Kokkos::deep_copy(du_att, h_du_att);
+    Kokkos::deep_copy(epsilon_xx_att, h_epsilon_xx_att);
+    Kokkos::deep_copy(epsilon_zz_att, h_epsilon_zz_att);
+    Kokkos::deep_copy(epsilon_xz_att, h_epsilon_xz_att);
   }
 
   /**
@@ -220,11 +229,9 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
         point.Rxz(j) = memory_variable_Rxz(i, index.iz, index.ix, j);
         point.Rkappa(j) = memory_variable_kappa(i, index.iz, index.ix, j);
       }
-      for (int ic = 0; ic < components; ++ic) {
-        for (int id = 0; id < num_dimensions; ++id) {
-          point.du[ic][id] = du_att(i, index.iz, index.ix, ic, id);
-        }
-      }
+      point.epsilon_xx = epsilon_xx_att(i, index.iz, index.ix);
+      point.epsilon_zz = epsilon_zz_att(i, index.iz, index.ix);
+      point.epsilon_xz = epsilon_xz_att(i, index.iz, index.ix);
     } else {
       using simd = typename PointType::simd;
       using mask_type = typename simd::mask_type;
@@ -247,12 +254,12 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
             .copy_from(&memory_variable_kappa(i, index.iz, index.ix, j),
                        tag_type());
       }
-      for (int ic = 0; ic < components; ++ic) {
-        for (int id = 0; id < num_dimensions; ++id) {
-          Kokkos::Experimental::where(mask, point.du[ic][id])
-              .copy_from(&du_att(i, index.iz, index.ix, ic, id), tag_type());
-        }
-      }
+      Kokkos::Experimental::where(mask, point.epsilon_xx)
+          .copy_from(&epsilon_xx_att(i, index.iz, index.ix), tag_type());
+      Kokkos::Experimental::where(mask, point.epsilon_zz)
+          .copy_from(&epsilon_zz_att(i, index.iz, index.ix), tag_type());
+      Kokkos::Experimental::where(mask, point.epsilon_xz)
+          .copy_from(&epsilon_xz_att(i, index.iz, index.ix), tag_type());
     }
   }
 
@@ -273,11 +280,9 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
         memory_variable_Rxz(i, index.iz, index.ix, j) = point.Rxz(j);
         memory_variable_kappa(i, index.iz, index.ix, j) = point.Rkappa(j);
       }
-      for (int ic = 0; ic < components; ++ic) {
-        for (int id = 0; id < num_dimensions; ++id) {
-          du_att(i, index.iz, index.ix, ic, id) = point.du[ic][id];
-        }
-      }
+      epsilon_xx_att(i, index.iz, index.ix) = point.epsilon_xx;
+      epsilon_zz_att(i, index.iz, index.ix) = point.epsilon_zz;
+      epsilon_xz_att(i, index.iz, index.ix) = point.epsilon_xz;
     } else {
       using simd = typename PointType::simd;
       using mask_type = typename simd::mask_type;
@@ -294,12 +299,12 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
             .copy_to(&memory_variable_kappa(i, index.iz, index.ix, j),
                      tag_type());
       }
-      for (int ic = 0; ic < components; ++ic) {
-        for (int id = 0; id < num_dimensions; ++id) {
-          Kokkos::Experimental::where(mask, point.du[ic][id])
-              .copy_to(&du_att(i, index.iz, index.ix, ic, id), tag_type());
-        }
-      }
+      Kokkos::Experimental::where(mask, point.epsilon_xx)
+          .copy_to(&epsilon_xx_att(i, index.iz, index.ix), tag_type());
+      Kokkos::Experimental::where(mask, point.epsilon_zz)
+          .copy_to(&epsilon_zz_att(i, index.iz, index.ix), tag_type());
+      Kokkos::Experimental::where(mask, point.epsilon_xz)
+          .copy_to(&epsilon_xz_att(i, index.iz, index.ix), tag_type());
     }
   }
 };
