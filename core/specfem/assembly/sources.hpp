@@ -1,8 +1,19 @@
 #pragma once
 
+#include "sources/impl/source_medium.hpp"
+#include "specfem/assembly/element_types.hpp"
+#include "specfem/assembly/jacobian_matrix.hpp"
+#include "specfem/assembly/mesh.hpp"
+#include "specfem/data_access.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros/tag_dispatch.hpp"
+#include "specfem/source.hpp"
 #include "specfem/tag_dispatch/element_combinations.hpp"
+
+#include <Kokkos_Core.hpp>
+#include <memory>
+#include <tuple>
+#include <vector>
 
 namespace specfem::assembly {
 
@@ -51,11 +62,219 @@ template <> struct SourceSets<specfem::element::dimension_tag::dim3> {
  *
  * @tparam DimensionTag The spatial dimension (dim2 or dim3)
  */
+// clang-format off
 template <specfem::element::dimension_tag DimensionTag>
-struct sources; ///< Forward declaration of sources class
+struct sources {
+
+public:
+  /**
+   * @name Public Constants
+   */
+  ///@{
+  /**
+   * @brief Dimension tag for this source assembly
+   */
+  constexpr static auto dimension_tag = DimensionTag;
+  ///@}
+
+private:
+  /**
+   * @name Private Type Definitions
+   *
+   * Kokkos view types used for efficient memory management and data access
+   * patterns in source computations.
+   */
+  ///@{
+
+  using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
+  using MediumTagViewType = Kokkos::View<specfem::element::medium_tag *,
+                                         Kokkos::DefaultExecutionSpace>;
+  using WavefieldTagViewType = Kokkos::View<specfem::simulation::field_type *,
+                                            Kokkos::DefaultExecutionSpace>;
+  using BoundaryTagViewType = Kokkos::View<specfem::element::boundary_tag *,
+                                           Kokkos::DefaultExecutionSpace>;
+  using PropertyTagViewType = Kokkos::View<specfem::element::property_tag *,
+                                           Kokkos::DefaultExecutionSpace>;
+  using AttenuationTagViewType =
+      Kokkos::View<specfem::element::attenuation_tag *,
+                   Kokkos::DefaultExecutionSpace>;
+
+  ///@}
+
+public:
+  /**
+   * @name Constructors and Destructors
+   */
+  ///@{
+
+  /**
+   * @brief Default constructor
+   */
+  sources() = default;
+
+  /**
+   * @brief Construct source assembly from mesh and source configuration
+   *
+   * @param sources Vector of source objects
+   * @param mesh Finite element mesh
+   * @param jacobian_matrix Jacobian transformation matrices
+   * @param element_types Element classification by medium and property
+   * @param t0 Initial simulation time
+   * @param dt Time step size
+   * @param nsteps Total number of time steps
+   */
+  sources(
+      std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
+          &sources,
+      const specfem::assembly::mesh<DimensionTag> &mesh,
+      const specfem::assembly::jacobian_matrix<DimensionTag> &jacobian_matrix,
+      const specfem::assembly::element_types<DimensionTag> &element_types,
+      const type_real t0, const type_real dt, const int nsteps);
+  ///@}
+
+  /**
+   * @brief Retrieve source indices for specified criteria on host memory
+   *
+   * @param medium Physical medium type
+   * @param property Material property classification
+   * @param attenuation Attenuation model type
+   * @param boundary Boundary condition type
+   * @param wavefield Simulation type (forward, adjoint, backward)
+   * @return Tuple of (element indices, source indices) host views
+   */
+  std::tuple<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>,
+             Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >
+  get_sources_on_host(const specfem::element::medium_tag medium,
+                      const specfem::element::property_tag property,
+                      const specfem::element::attenuation_tag attenuation,
+                      const specfem::element::boundary_tag boundary,
+                      const specfem::simulation::field_type wavefield) const;
+
+  /**
+   * @brief Retrieve source indices for specified criteria on device memory
+   *
+   * @param medium Physical medium type
+   * @param property Material property classification
+   * @param attenuation Attenuation model type
+   * @param boundary Boundary condition type
+   * @param wavefield Simulation type (forward, adjoint, backward)
+   * @return Tuple of (element indices, source indices) device views
+   */
+  std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
+             Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >
+  get_sources_on_device(const specfem::element::medium_tag medium,
+                        const specfem::element::property_tag property,
+                        const specfem::element::attenuation_tag attenuation,
+                        const specfem::element::boundary_tag boundary,
+                        const specfem::simulation::field_type wavefield) const;
+
+  /**
+   * @brief Update the current simulation time step
+   *
+   * Must be called before each time step to ensure source time functions are
+   * evaluated at the correct temporal point.
+   *
+   * @param timestep Current time step index (0-based)
+   */
+  void update_timestep(const int timestep) { this->timestep = timestep; }
+
+private:
+  int nspec;
+
+  IndexViewType source_domain_index_mapping;
+  IndexViewType::HostMirror h_source_domain_index_mapping;
+
+  IndexViewType element_indices;
+  IndexViewType::HostMirror h_element_indices;
+
+  IndexViewType source_indices;
+  IndexViewType::HostMirror h_source_indices;
+
+  MediumTagViewType medium_types;
+  MediumTagViewType::HostMirror h_medium_types;
+
+  WavefieldTagViewType wavefield_types;
+  WavefieldTagViewType::HostMirror h_wavefield_types;
+
+  BoundaryTagViewType boundary_types;
+  BoundaryTagViewType::HostMirror h_boundary_types;
+
+  PropertyTagViewType property_types;
+  PropertyTagViewType::HostMirror h_property_types;
+
+  AttenuationTagViewType attenuation_types;
+  AttenuationTagViewType::HostMirror h_attenuation_types;
+
+  // ── Storage for sources by medium ──────────────────────────────────────
+  static constexpr auto combinations_by_medium =
+      specfem::tag_dispatch::dimension_set<DimensionTag>{} *
+      sources_impl::SourceSets<DimensionTag>::medium_set;
+
+  template <typename TagsType>
+  using SourceMediumTemplateType =
+      specfem::assembly::sources_impl::source_medium<TagsType::dimension_tag,
+                                                     TagsType::medium_tag>;
+  specfem::tag_dispatch::TypedStorage<SourceMediumTemplateType,
+                                      decltype(combinations_by_medium)>
+      source_by_medium;
+
+  int timestep;
+
+  // ── Storage for source indices by combination ──────────────────────────
+  // Keyed by (dim, medium, property, attenuation, boundary, wavefield)
+  static constexpr auto combinations_by_source =
+      combinations_by_medium *
+      sources_impl::SourceSets<DimensionTag>::property_set *
+      sources_impl::SourceSets<DimensionTag>::attenuation_set *
+      sources_impl::SourceSets<DimensionTag>::boundary_set *
+      sources_impl::SourceSets<DimensionTag>::wavefield_set;
+
+  using HostIndexViewType =
+      Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>;
+
+  specfem::tag_dispatch::Storage<IndexViewType,
+                                 decltype(combinations_by_source)>
+      source_element_by_combination;
+  specfem::tag_dispatch::Storage<HostIndexViewType,
+                                 decltype(combinations_by_source)>
+      h_source_element_by_combination;
+
+  specfem::tag_dispatch::Storage<IndexViewType,
+                                 decltype(combinations_by_source)>
+      source_source_by_combination;
+  specfem::tag_dispatch::Storage<HostIndexViewType,
+                                 decltype(combinations_by_source)>
+      h_source_source_by_combination;
+
+  template <typename IndexType, typename PointSourceType,
+            specfem::element::dimension_tag D>
+  friend KOKKOS_INLINE_FUNCTION void load_on_device(
+      const IndexType index,
+      const specfem::assembly::sources<D> &sources,
+      PointSourceType &point_source);
+
+  template <typename IndexType, typename PointSourceType,
+            specfem::element::dimension_tag D>
+  friend void load_on_host(
+      const IndexType index,
+      const specfem::assembly::sources<D> &sources,
+      PointSourceType &point_source);
+
+  template <typename IndexType, typename PointSourceType,
+            specfem::element::dimension_tag D>
+  friend KOKKOS_INLINE_FUNCTION void store_on_device(
+      const IndexType index, const PointSourceType &point_source,
+      const specfem::assembly::sources<D> &sources);
+
+  template <typename IndexType, typename PointSourceType,
+            specfem::element::dimension_tag D>
+  friend void store_on_host(
+      const IndexType index, const PointSourceType &point_source,
+      const specfem::assembly::sources<D> &sources);
+};
+// clang-format on
 
 } // namespace specfem::assembly
 
-// Include template specializations
-#include "sources/dim2/sources.hpp"
-#include "sources/dim3/sources.hpp"
+// Include free-function templates (load/store on device/host)
+#include "sources.tpp"
