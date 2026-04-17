@@ -26,6 +26,10 @@ namespace specfem::assembly::element_types_impl {
  * @tparam AttenuationSet Set of valid attenuation tags.
  */
 template <typename ElementSets> struct element_types_base {
+public:
+  /** Dimension tag for this specialization (dim2 or dim3). */
+  static constexpr auto dimension_tag = ElementSets::dimension_tag;
+
 protected:
   template <typename T>
   using TagViewType = Kokkos::View<T *, Kokkos::DefaultHostExecutionSpace>;
@@ -40,10 +44,6 @@ protected:
   template <typename Sets>
   using HostIndexStorage =
       specfem::tag_dispatch::Storage<HostIndexViewType, Sets>;
-
-public:
-  /** Dimension tag for this specialization (dim2 or dim3). */
-  static constexpr auto dimension_tag = ElementSets::dimension_tag;
 
   // ── Tag-combination sets ─────────────────────────────────────────────────
 
@@ -60,6 +60,7 @@ public:
                                                    ElementSets::property_set *
                                                    ElementSets::boundary_set;
 
+public:
   // ── Per-element tag views (host) ─────────────────────────────────────────
 
   /** Number of spectral elements in the compute domain. */
