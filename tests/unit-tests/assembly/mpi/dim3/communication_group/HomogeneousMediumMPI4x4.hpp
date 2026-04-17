@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/mesh_entity.hpp"
+#include "expected_groups.hpp"
 
 namespace TestData::CommunicationGroup::HomogeneousMediumMPI4x4 {
 
@@ -8,8 +8,6 @@ constexpr static int ngll = 5;
 
 using namespace specfem::assembly_test;
 
-// Expected communication group for process 0
-// -- (neighbor_rank=1) --
 const static ExpectedCommunicationGroup expected_group_0_1 = {
   0,    // my_rank
   1,    // neighbor_rank
@@ -48,7 +46,6 @@ const static ExpectedCommunicationGroup expected_group_0_2 = {
   }
 };
 
-// -- (neighbor_rank=3) --
 const static ExpectedCommunicationGroup expected_group_1_0 = {
   1,    // my_rank
   3,    // neighbor_rank
