@@ -17,7 +17,7 @@ specfem::assembly::mesh_impl::
             &mesh_adjacency_graph) {
 
   auto &g = this->graph();
-  const auto &mesh_g = mesh_adjacency_graph.graph();
+  const auto &mesh_g = mesh_adjacency_graph.local_connections();
 
   for (int ispec = 0; ispec < nspec; ispec++) {
     // Get mesh index

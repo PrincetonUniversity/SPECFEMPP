@@ -5,7 +5,6 @@
 #include "specfem/io/mesh/impl/fortran/dim3/read_boundaries.hpp"
 #include "specfem/io/mesh/impl/fortran/dim3/read_control_nodes.hpp"
 #include "specfem/io/mesh/impl/fortran/dim3/read_materials.hpp"
-#include "specfem/io/mesh/impl/fortran/dim3/read_mpi_interfaces.hpp"
 #include "specfem/io/mesh/impl/fortran/dim3/read_pml_boundaries.hpp"
 #include <fstream>
 #include <stdexcept>
@@ -53,10 +52,6 @@ specfem::io::read_3d_mesh(const std::string &database_file,
   // CPML boundaries are not supported yet
   // TODO (Rohit: PML_BOUNDARIES): Add support for PML boundaries
   specfem::io::mesh::impl::fortran::dim3::read_pml_boundaries(param_stream);
-
-  // MPI interfaces are not supported yet
-  // TODO (Rohit: MPI_INTERFACES): Add support for MPI interfaces
-  specfem::io::mesh::impl::fortran::dim3::read_mpi_interfaces(param_stream);
 
   // Read adjacency information
   mesh.adjacency_graph =
