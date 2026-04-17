@@ -68,7 +68,7 @@ using ratio_gcd =
  * @return constexpr type_real Ratio as a floating-point value
  */
 template <typename R>
-KOKKOS_FORCEINLINE_FUNCTION constexpr type_real ratio_value =
+constexpr type_real ratio_value =
     static_cast<type_real>(R::num) / static_cast<type_real>(R::den);
 
 /**

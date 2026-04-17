@@ -120,6 +120,7 @@ public:
         boundary_tags("specfem::assembly::element_types::boundary_tags", nspec),
         attenuation_tags("specfem::assembly::element_types::attenuation_tags",
                          nspec) {
+
     // ── Step 1: populate per-element tag views ──────────────────────────────
     // Translate each compute-domain index to its mesh-domain counterpart, then
     // copy the four tag values from the mesh tag container into the
