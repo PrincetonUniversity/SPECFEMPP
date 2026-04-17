@@ -6,8 +6,8 @@
 #include "specfem/data_access.hpp"
 #include "specfem/element_coupling/tags.hpp"
 #include "specfem/enums.hpp"
-#include "specfem/macros.hpp"
-#include "specfem/macros/interface_iterators.hpp"
+#include "specfem/macros/tag_dispatch.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
@@ -32,15 +32,22 @@ protected:
           dimension_tag, InterfaceTag, BoundaryTag, ConnectionTag,
           FluxSchemeTag>;
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), CONNECTION_TAG(NONCONFORMING),
-                       INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
-                       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                                    COMPOSITE_STACEY_DIRICHLET),
-                       FLUX_SCHEME_TAG(NATURAL)),
-                      DECLARE(((InterfaceContainerType,
-                                (_INTERFACE_TAG_, _BOUNDARY_TAG_,
-                                 _CONNECTION_TAG_, _FLUX_SCHEME_TAG_)),
-                               interface_container)))
+  template <typename TagsType>
+  using InterfaceContainerTemplateType =
+      InterfaceContainerType<TagsType::interface_tag, TagsType::boundary_tag,
+                             TagsType::connection_tag,
+                             TagsType::flux_scheme_tag>;
+
+  static constexpr auto combinations =
+      DIMENSION_SET(dim2) * CONNECTION_SET(nonconforming) *
+      INTERFACE_SET(elastic_acoustic, acoustic_elastic) *
+      BOUNDARY_SET(none, acoustic_free_surface, stacey,
+                   composite_stacey_dirichlet) *
+      FLUX_SCHEME_SET(natural);
+
+  specfem::tag_dispatch::TypedStorage<InterfaceContainerTemplateType,
+                                      decltype(combinations)>
+      interface_container;
 
 public:
   nonconforming_interfaces(
@@ -59,31 +66,10 @@ public:
       InterfaceContainerType<InterfaceTag, BoundaryTag, ConnectionTag,
                              FluxSchemeTag> &
       get_interface_container() const {
-    // Compile-time dispatch using FOR_EACH_IN_PRODUCT macro
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), CONNECTION_TAG(NONCONFORMING),
-                         INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
-                         BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                                      COMPOSITE_STACEY_DIRICHLET),
-                         FLUX_SCHEME_TAG(NATURAL)),
-                        CAPTURE((interface_container, interface_container)) {
-                          if constexpr (InterfaceTag == _interface_tag_ &&
-                                        BoundaryTag == _boundary_tag_ &&
-                                        ConnectionTag == _connection_tag_ &&
-                                        FluxSchemeTag == _flux_scheme_tag_) {
-                            return _interface_container_;
-                          }
-                        })
-
-#ifndef NDEBUG
-    // Debug check: abort if no matching specialization found
-    KOKKOS_ABORT_WITH_LOCATION("specfem::assembly::nonconforming_interfaces::"
-                               "get_interface_container(): No "
-                               "matching specialization found.");
-#endif
-
-    // Unreachable code - satisfy compiler return requirements
-
-    SUPPRESS_UNREACHABLE(return {};)
+    using TagsType = specfem::tags::Tags<specfem::element::dimension_tag::dim2,
+                                         ConnectionTag, InterfaceTag,
+                                         BoundaryTag, FluxSchemeTag>;
+    return interface_container.template get<TagsType>();
   }
 };
 
