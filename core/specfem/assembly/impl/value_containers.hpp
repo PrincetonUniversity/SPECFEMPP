@@ -91,6 +91,38 @@ struct value_containers_base {
   value_containers_base() = default;
 
   /**
+   * @brief Construct and fully initialise a value_containers_base.
+   *
+   * Allocates @c property_index_mapping and its host mirror (filled with -1),
+   * constructs every slot of @c value via the supplied initializer factory,
+   * and deep-copies the index mapping to device.
+   *
+   * @tparam InitializerFactory  Callable `(HostMirrorView) -> PerTagFunctor`.
+   *   The returned @c PerTagFunctor must be invocable as
+   *   `functor.template operator()<TagsType>()` returning the slot value.
+   * @param  nspec_           Number of spectral elements.
+   * @param  grid             GLL grid layout.
+   * @param  label            Kokkos label for the property index mapping view.
+   * @param  make_initializer Factory called once with @c
+   * h_property_index_mapping to produce the per-tag slot initializer.
+   */
+  template <typename InitializerFactory>
+  value_containers_base(int nspec_,
+                        specfem::mesh_entity::element_grid<DimensionTag> grid,
+                        const std::string &label,
+                        InitializerFactory &&make_initializer)
+      : nspec(nspec_), element_grid(grid),
+        property_index_mapping(label, nspec_),
+        h_property_index_mapping([](const auto &pm) {
+          auto h = Kokkos::create_mirror_view(pm);
+          Kokkos::deep_copy(h, -1);
+          return h;
+        }(property_index_mapping)),
+        value(make_initializer(h_property_index_mapping)) {
+    Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
+  }
+
+  /**
    * @brief Returns the container for a given medium and property
    */
   template <specfem::element::medium_tag MediumTag,
