@@ -240,8 +240,7 @@ specfem::assembly::mpi_impl::packer::packer(
   this->nglob = unique_iglobs.size();
 
   this->send_unpacking_indices(face_index_mapping, comm_group.h_theta,
-                               comm_group.h_neighbor_element,
-                               comm_group.h_neighbor_orientation);
+                               comm_group.h_neighbor_element);
 
   // Allocate views sized to the number of unique points
   const unsigned int n_unique = unique_iglobs.size();
@@ -278,9 +277,7 @@ specfem::assembly::mpi_impl::packer::packer(
 void specfem::assembly::mpi_impl::packer::send_unpacking_indices(
     Kokkos::View<int ***, Kokkos::HostSpace> face_index_mapping,
     Kokkos::View<unsigned char *, Kokkos::HostSpace> theta,
-    Kokkos::View<int *, Kokkos::HostSpace> neighbor_element,
-    Kokkos::View<specfem::mesh_entity::dim3::type *, Kokkos::HostSpace>
-        neighbor_orientation) {
+    Kokkos::View<int *, Kokkos::HostSpace> neighbor_element) {
 
   // Early exit if no faces to send
   if (this->nfaces == 0)
@@ -336,11 +333,6 @@ void specfem::assembly::mpi_impl::packer::send_unpacking_indices(
   SPECFEM_MPI_SAFECALL(MPI_Send(neighbor_element.data(),
                                 static_cast<int>(this->nfaces), MPI_INT,
                                 this->neighbor_rank, base_tag + 2, comm));
-
-  // Message 4: Send neighbor face orientation [nfaces]
-  SPECFEM_MPI_SAFECALL(MPI_Send(neighbor_orientation.data(),
-                                static_cast<int>(this->nfaces), MPI_INT,
-                                this->neighbor_rank, base_tag + 3, comm));
 }
 
 // ---------------------------------------------------------------------------
@@ -387,10 +379,9 @@ specfem::assembly::mpi_impl::unpacker::unpacker(
 // Calls MPI_Waitall to block until all receives complete. Validates that
 // received metadata matches expected nfaces and ngll.
 // ---------------------------------------------------------------------------
-std::tuple<std::array<MPI_Request, 4>,
+std::tuple<std::array<MPI_Request, 3>,
            Kokkos::View<unsigned int[3], Kokkos::HostSpace>,
            Kokkos::View<int ***, Kokkos::HostSpace>,
-           Kokkos::View<int *, Kokkos::HostSpace>,
            Kokkos::View<int *, Kokkos::HostSpace> >
 specfem::assembly::mpi_impl::unpacker::receive_unpacking_buffers() {
 
@@ -398,15 +389,13 @@ specfem::assembly::mpi_impl::unpacker::receive_unpacking_buffers() {
   if (this->nfaces == 0) {
     // Return empty views and uninitialized requests (safe since
     // assemble_unpacking_mapping will also early-exit on nfaces==0)
-    return { std::array<MPI_Request, 4>{},
+    return { std::array<MPI_Request, 3>{},
              Kokkos::View<unsigned int[3], Kokkos::HostSpace>(
                  "unpacker::empty_metadata"),
              Kokkos::View<int ***, Kokkos::HostSpace>("unpacker::empty_indices",
                                                       0, 0, 0),
              Kokkos::View<int *, Kokkos::HostSpace>(
-                 "unpacker::empty_element_indices", 0),
-             Kokkos::View<int *, Kokkos::HostSpace>(
-                 "unpacker::empty_orientations", 0) };
+                 "unpacker::empty_element_indices", 0) };
   }
 
   // -----------------------------------------------------------------------
@@ -424,15 +413,11 @@ specfem::assembly::mpi_impl::unpacker::receive_unpacking_buffers() {
       Kokkos::view_alloc(Kokkos::WithoutInitializing,
                          "unpacker::element_indices"),
       this->nfaces);
-  Kokkos::View<int *, Kokkos::HostSpace> neighbor_orientations(
-      Kokkos::view_alloc(Kokkos::WithoutInitializing,
-                         "unpacker::neighbor_orientations"),
-      this->nfaces);
 
   // -----------------------------------------------------------------------
   // Step 2: Post all three MPI_Irecv before any MPI_Wait
   // -----------------------------------------------------------------------
-  std::array<MPI_Request, 4> requests{};
+  std::array<MPI_Request, 3> requests{};
   MPI_Comm comm = specfem::MPI::communicator();
 
   // Message 1: Receive metadata (nfaces, ngll)
@@ -451,13 +436,7 @@ specfem::assembly::mpi_impl::unpacker::receive_unpacking_buffers() {
       MPI_Irecv(element_indices.data(), static_cast<int>(this->nfaces), MPI_INT,
                 this->neighbor_rank, recv_tag + 2, comm, &requests[2]));
 
-  // Message 4: Receive neighbor orientations [nfaces]
-  SPECFEM_MPI_SAFECALL(MPI_Irecv(
-      neighbor_orientations.data(), static_cast<int>(this->nfaces), MPI_INT,
-      this->neighbor_rank, recv_tag + 3, comm, &requests[3]));
-
-  return { requests, metadata_buf, recv_indices, element_indices,
-           neighbor_orientations };
+  return { requests, metadata_buf, recv_indices, element_indices };
 }
 
 // ---------------------------------------------------------------------------
@@ -473,7 +452,7 @@ specfem::assembly::mpi_impl::unpacker::receive_unpacking_buffers() {
 // the actual number of unique points on the interface.
 // ---------------------------------------------------------------------------
 void specfem::assembly::mpi_impl::unpacker::assemble_unpacking_mapping(
-    const std::array<MPI_Request, 4> &requests,
+    const std::array<MPI_Request, 3> &requests,
     const Kokkos::View<unsigned int[3], Kokkos::HostSpace> metadata_buf,
     const Kokkos::View<int ***, Kokkos::HostSpace> recv_indices,
     const Kokkos::View<int *, Kokkos::HostSpace> element_indices,
@@ -490,7 +469,7 @@ void specfem::assembly::mpi_impl::unpacker::assemble_unpacking_mapping(
   // Step 1: Wait for all receives to complete
   // -----------------------------------------------------------------------
   SPECFEM_MPI_SAFECALL(MPI_Waitall(
-      4, const_cast<MPI_Request *>(requests.data()), MPI_STATUSES_IGNORE));
+      3, const_cast<MPI_Request *>(requests.data()), MPI_STATUSES_IGNORE));
 
   // -----------------------------------------------------------------------
   // Step 2: Validate received metadata
@@ -564,8 +543,8 @@ specfem::assembly::mpi_impl::communication_pattern::communication_pattern(
 
   // Issue non-blocking receives for unpacking buffers (metadata, indices, etc.)
   unpack = { comm_group, element, mesh };
-  const auto [requests, metadata_buf, recv_indices, element_indices,
-              neighbor_orientations] = unpack.receive_unpacking_buffers();
+  const auto [requests, metadata_buf, recv_indices, element_indices] =
+      unpack.receive_unpacking_buffers();
   // Create packer and send unpacking indices to neighbor
   pack = { comm_group, element, mesh };
 

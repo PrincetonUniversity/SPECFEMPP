@@ -196,9 +196,7 @@ public:
   void send_unpacking_indices(
       Kokkos::View<int ***, Kokkos::HostSpace> face_index_mapping,
       Kokkos::View<unsigned char *, Kokkos::HostSpace> theta,
-      Kokkos::View<int *, Kokkos::HostSpace> neighbor_element,
-      Kokkos::View<specfem::mesh_entity::dim3::type *, Kokkos::HostSpace>
-          neighbor_orientation);
+      Kokkos::View<int *, Kokkos::HostSpace> neighbor_element);
 };
 
 struct unpacker {
@@ -250,19 +248,17 @@ public:
   /**
    * @brief Receives MPI buffers for rotated indices and element indices.
    *
-   * Posts all four MPI_Irecv calls upfront (before any MPI_Wait) to avoid
+   * Posts all three MPI_Irecv calls upfront (before any MPI_Wait) to avoid
    * deadlock with blocking MPI_Send on the sender side.
    *
-   * @return Tuple of (requests, metadata_buf, recv_indices, element_indices,
-   *         neighbor_orientations) for deferred MPI_Waitall in
-   *         assemble_unpacking_mapping.
+   * @return Tuple of (requests, metadata_buf, recv_indices, element_indices)
+   *         for deferred MPI_Waitall in assemble_unpacking_mapping.
    *
    * @throws std::runtime_error if metadata validation fails
    */
-  std::tuple<std::array<MPI_Request, 4>,
+  std::tuple<std::array<MPI_Request, 3>,
              Kokkos::View<unsigned int[3], Kokkos::HostSpace>,
              Kokkos::View<int ***, Kokkos::HostSpace>,
-             Kokkos::View<int *, Kokkos::HostSpace>,
              Kokkos::View<int *, Kokkos::HostSpace> >
   receive_unpacking_buffers();
 
@@ -273,19 +269,19 @@ public:
    * a compact mapping from unique GLL points by traversing received element
    * indices and deduplicating with local iglob lookup.
    *
-   * @param requests        [4] MPI_Request handles from
+   * @param requests        [3] MPI_Request handles from
    * receive_unpacking_buffers
    * @param metadata_buf    [3] received metadata {nfaces, ngll, nglob}
    * @param recv_indices    [nfaces][ngll][ngll] received rotated face indices
    * @param element_indices [nfaces] received neighbor element indices
-   * @param neighbor_orientations [nfaces] received neighbor face orientations
+   * @param my_orientations [nfaces] local face orientations
    * @param element         Element object for map_coordinates
    * @param mesh            Mesh object for iglob lookup
    *
    * @throws std::runtime_error if metadata or iglob count validation fails
    */
   void assemble_unpacking_mapping(
-      const std::array<MPI_Request, 4> &requests,
+      const std::array<MPI_Request, 3> &requests,
       const Kokkos::View<unsigned int[3], Kokkos::HostSpace> metadata_buf,
       const Kokkos::View<int ***, Kokkos::HostSpace> recv_indices,
       const Kokkos::View<int *, Kokkos::HostSpace> element_indices,

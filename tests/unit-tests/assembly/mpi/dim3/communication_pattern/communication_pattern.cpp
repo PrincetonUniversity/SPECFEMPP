@@ -12,7 +12,7 @@
  * 1. Collects physical coordinates for all unique packed GLL points (packer)
  * 2. Exchanges them with the neighbor rank via MPI
  * 3. Compares the received packer coordinates against the local unpacker
- *    coordinates (sorted to handle potential deduplication order differences)
+ *    coordinates
  *
  * @see specfem::assembly::mpi_impl::communication_pattern
  */
@@ -21,7 +21,6 @@
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/mpi.hpp"
-#include <algorithm>
 #include <array>
 #include <unordered_map>
 #include <vector>
@@ -40,10 +39,6 @@ std::vector<CoordTriple> coords_for_mapping(
     coords[i] = iglob_to_coord.at(h_mapping(i));
   }
   return coords;
-}
-
-void sort_coords(std::vector<CoordTriple> &coords) {
-  std::sort(coords.begin(), coords.end());
 }
 
 } // namespace
@@ -163,9 +158,6 @@ TEST_P(AssemblyMPI3DTest, CommunicationPattern) {
                              recv_coord_bufs[p][3 * i + 2] };
     }
 
-    // sort_coords(unpacker_coords);
-    // sort_coords(received_coords);
-
     const double tol = 1e-6; // Tolerance for coordinate comparison
     const auto &xsize = assembly_mesh.xmax - assembly_mesh.xmin;
     const auto &ysize = assembly_mesh.ymax - assembly_mesh.ymin;
@@ -175,16 +167,13 @@ TEST_P(AssemblyMPI3DTest, CommunicationPattern) {
 
     for (int i = 0; i < nglob; i++) {
       EXPECT_NEAR(received_coords[i][0], unpacker_coords[i][0], scaled_tol)
-          << "x mismatch at sorted point " << i
-          << " for pattern my_rank=" << my_rank
+          << "x mismatch at point " << i << " for pattern my_rank=" << my_rank
           << " & neighbor_rank=" << pattern.neighbor_rank;
       EXPECT_NEAR(received_coords[i][1], unpacker_coords[i][1], scaled_tol)
-          << "y mismatch at sorted point " << i
-          << " for pattern my_rank=" << my_rank
+          << "y mismatch at point " << i << " for pattern my_rank=" << my_rank
           << " & neighbor_rank=" << pattern.neighbor_rank;
       EXPECT_NEAR(received_coords[i][2], unpacker_coords[i][2], scaled_tol)
-          << "z mismatch at sorted point " << i
-          << " for pattern my_rank=" << my_rank
+          << "z mismatch at point " << i << " for pattern my_rank=" << my_rank
           << " & neighbor_rank=" << pattern.neighbor_rank;
     }
   }
