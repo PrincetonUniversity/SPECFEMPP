@@ -37,25 +37,26 @@ template <> struct ContainerSets<specfem::element::dimension_tag::dim3> {
 /**
  * @brief Values for every quadrature point in the finite element mesh
  *
- * @tparam ContainerSetsType  A ContainerSets<DimensionTag> specialisation
- * providing
- *                            @c dimension_tag and @c combinations.
+ * @tparam DimensionTag       Dimension tag selecting the ContainerSets
+ *                            specialisation.
  * @tparam containers_type    3-parameter class template
  *                            (dimension_tag, medium_tag, property_tag).
  */
 template <
-    typename ContainerSetsType,
+    specfem::element::dimension_tag DimensionTag,
     template <specfem::element::dimension_tag, specfem::element::medium_tag,
               specfem::element::property_tag> class containers_type>
 struct value_containers_base {
 
+  using ContainerSetsType = ContainerSets<DimensionTag>;
+
   using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
 
   int nspec; ///< Total number of spectral elements
-  specfem::mesh_entity::element_grid<ContainerSetsType::dimension_tag>
-      element_grid; ///< GLL grid layout
+  specfem::mesh_entity::element_grid<DimensionTag> element_grid; ///< GLL grid
+                                                                 ///< layout
 
-  constexpr static auto dimension_tag = ContainerSetsType::dimension_tag;
+  constexpr static auto dimension_tag = DimensionTag;
   constexpr static auto combinations = ContainerSetsType::combinations;
 
   IndexViewType property_index_mapping; ///< View to store property index
@@ -128,7 +129,6 @@ template <
     specfem::element::dimension_tag DimensionTag,
     template <specfem::element::dimension_tag, specfem::element::medium_tag,
               specfem::element::property_tag> class containers_type>
-using value_containers =
-    value_containers_base<ContainerSets<DimensionTag>, containers_type>;
+using value_containers = value_containers_base<DimensionTag, containers_type>;
 
 } // namespace specfem::assembly::impl
