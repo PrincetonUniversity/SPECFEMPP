@@ -44,12 +44,10 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
 
   this->jacobian_matrix = { this->mesh };
 
-  this->properties = { nspec, ngllz,          nglly,
-                       ngllx, mesh.materials, this->element_types };
+  this->properties = { this->element_types, this->mesh, mesh.materials,
+                       property_reader != nullptr };
 
-  this->kernels = { this->mesh.nspec, this->mesh.element_grid.ngllz,
-                    this->mesh.element_grid.nglly,
-                    this->mesh.element_grid.ngllx, this->element_types };
+  this->kernels = { this->element_types };
 
   this->sources = {
     sources, this->mesh, this->jacobian_matrix, this->element_types,

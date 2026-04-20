@@ -39,9 +39,8 @@ struct Assembly3D {
     assembly.element_types = { nspec, assembly.mesh.element_grid, assembly.mesh,
                                mesh.tags };
     assembly.jacobian_matrix = { assembly.mesh };
-    assembly.properties = {
-      nspec, 5, 5, 5, mesh.materials, assembly.element_types
-    };
+    assembly.properties = { assembly.element_types, assembly.mesh,
+                            mesh.materials, false };
   }
 };
 } // namespace specfem::test_configuration

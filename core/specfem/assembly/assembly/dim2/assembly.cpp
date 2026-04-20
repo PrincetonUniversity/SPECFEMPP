@@ -29,15 +29,9 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
                                   this->mesh.element_grid.ngllz, this->mesh,
                                   this->element_types, flux_scheme_config };
   this->jacobian_matrix = { this->mesh };
-  this->properties = { this->mesh.nspec,
-                       this->mesh.element_grid.ngllz,
-                       this->mesh.element_grid.ngllx,
-                       this->element_types,
-                       this->mesh,
-                       mesh.materials,
+  this->properties = { this->element_types, this->mesh, mesh.materials,
                        property_reader != nullptr };
-  this->kernels = { this->mesh.nspec, this->mesh.element_grid.ngllz,
-                    this->mesh.element_grid.ngllx, this->element_types };
+  this->kernels = { this->element_types };
   this->sources = {
     sources, this->mesh, this->jacobian_matrix, this->element_types,
     t0,      dt,         max_timesteps
