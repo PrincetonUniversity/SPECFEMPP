@@ -109,7 +109,7 @@ void specfem::io::wavefield_writer<OutputLibrary>::initialize(
                 // This is the local medium iglob
                 // see: ``count`` in specfem::assembly::simulation_field<dim2,
                 // medium>
-                const int iglob = forward.template get_iglob<false, _medium_tag_>(
+                const int iglob = forward.template get_iglob<false, medium_tag>(
                     ispec, iz, ix);
 
                 // Set the mapping for the medium element
