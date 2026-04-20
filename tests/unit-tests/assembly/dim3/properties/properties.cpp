@@ -159,13 +159,14 @@ struct ExpectedProperties3D {
     }
 
     // Validate GLL grid configuration
-    if (properties.ngllz != gll_grid.ngllz ||
-        properties.nglly != gll_grid.nglly ||
-        properties.ngllx != gll_grid.ngllx) {
+    if (properties.element_grid.ngllz != gll_grid.ngllz ||
+        properties.element_grid.nglly != gll_grid.nglly ||
+        properties.element_grid.ngllx != gll_grid.ngllx) {
       FAIL() << "GLL grid dimensions mismatch. Expected: (" << gll_grid.ngllz
              << ", " << gll_grid.nglly << ", " << gll_grid.ngllx << "), Got: ("
-             << properties.ngllz << ", " << properties.nglly << ", "
-             << properties.ngllx << ")" << std::endl;
+             << properties.element_grid.ngllz << ", "
+             << properties.element_grid.nglly << ", "
+             << properties.element_grid.ngllx << ")" << std::endl;
     }
 
     // Validate individual property specifications
@@ -176,17 +177,17 @@ struct ExpectedProperties3D {
                << std::endl;
       }
 
-      if (expected.iz < 0 || expected.iz >= properties.ngllz) {
+      if (expected.iz < 0 || expected.iz >= properties.element_grid.ngllz) {
         FAIL() << "GLL index iz " << expected.iz << " is out of range."
                << std::endl;
       }
 
-      if (expected.iy < 0 || expected.iy >= properties.nglly) {
+      if (expected.iy < 0 || expected.iy >= properties.element_grid.nglly) {
         FAIL() << "GLL index iy " << expected.iy << " is out of range."
                << std::endl;
       }
 
-      if (expected.ix < 0 || expected.ix >= properties.ngllx) {
+      if (expected.ix < 0 || expected.ix >= properties.element_grid.ngllx) {
         FAIL() << "GLL index ix " << expected.ix << " is out of range."
                << std::endl;
       }
