@@ -100,6 +100,7 @@ target_link_libraries(xmeshfem3D PRIVATE
     meshfem3D::adios_methods_stubs
     meshfem3D::param_reader
     meshfem3D::version
+    specfem::version
 )
 
 if (SPECFEM_ENABLE_MPI)
@@ -114,5 +115,6 @@ endif(ADIOS)
 if (SPECFEM_INSTALL)
   install(TARGETS xmeshfem3D
     RUNTIME DESTINATION .
+    COMPONENT executables
   )
 endif()

@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.17.5)
 
-project(SPECFEMPP VERSION 0.1.0 LANGUAGES CXX Fortran)
+project(SPECFEMPP VERSION 0.5.0 LANGUAGES CXX Fortran)
+
+# Extract Git version metadata
+include("${CMAKE_SOURCE_DIR}/cmake/version.cmake")
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -300,11 +303,12 @@ if (SPECFEM_INSTALL AND NOT SPECFEM_USE_SKBUILD)
     install(
         TARGETS specfem
         RUNTIME DESTINATION .
+        COMPONENT executables
     )
 
     # Create a custom target that will run after your main build
     add_custom_target(organize_output ALL
-        COMMAND ${CMAKE_COMMAND} --install . --prefix ${CMAKE_INSTALL_PREFIX}
+        COMMAND ${CMAKE_COMMAND} --install . --prefix ${CMAKE_INSTALL_PREFIX} --component executables
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Organizing specfem++ executables into: ${CMAKE_INSTALL_PREFIX}"
         # Make this run after your main targets

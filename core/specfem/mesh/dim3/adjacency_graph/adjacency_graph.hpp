@@ -137,6 +137,104 @@ public:
         : connection(conn), orientation(orient) {}
   };
 
+  /**
+   * @brief Properties of inter-partition adjacencies with anchor points
+   *
+   * Extends EdgeProperties with MPI-specific information for cross-partition
+   * element adjacencies. Includes anchor point indices to provide deterministic
+   * orientation information and eliminate rotational ambiguity on shared MPI
+   * surfaces.
+   *
+   * The anchor points are element-absolute corner IDs (19-26 in 1-based Fortran
+   * representation, matching specfem::mesh_entity::dim3::type convention) that
+   * form a canonical reference frame for the shared interface. Unlike
+   * interface-relative corner indices, element-absolute IDs provide global
+   * position information within the hexahedron geometry:
+   *   - 19: bottom_front_left      20: bottom_front_right
+   *   - 21: bottom_back_left       22: bottom_back_right
+   *   - 23: top_front_left         24: top_front_right
+   *   - 25: top_back_left          26: top_back_right
+   *
+   * For a face interface (ncorners=4) or edge interface (ncorners=2), anchor
+   * points identify which local and remote corners match by coordinate,
+   * removing ambiguity when corner sets are equivalent but rotationally
+   * distinct. This is essential for correct orientation-preserving assembly
+   * and orientation constraint propagation across processor boundaries.
+   *
+   * @see EdgeProperties for connection type and orientation information
+   * @see adjacency_graph.f90 (Fortran) for corner ID definitions
+   */
+  struct MPIEdgeProperties : public EdgeProperties {
+    size_t neighbor_partition; ///< MPI rank of the neighboring partition for
+                               ///< this edge
+    specfem::mesh_entity::dim3::type neighbor_orientation; ///< Geometric
+                                                           ///< orientation of
+                                                           ///< the neighboring
+                                                           ///< element's
+                                                           ///< interface
+    size_t neighbor_local_index; ///< Local index of the neighboring element in
+                                 ///< the adjacent partition
+    size_t local_index; ///< Local index of the element in the current partition
+                        ///< associated with this edge
+    specfem::mesh_entity::dim3::type local_anchor_point; ///< Element-absolute
+                                                         ///< corner ID (range
+                                                         ///< 19-26) of the
+                                                         ///< anchor point on
+                                                         ///< the local element.
+    specfem::mesh_entity::dim3::type
+        neighbor_anchor_point; ///< Element-absolute
+                               ///< corner ID (range
+                               ///< 19-26) of the
+                               ///< anchor point on
+                               ///< the neighboring
+                               ///< element.
+
+    MPIEdgeProperties() = default;
+
+    /**
+     * @brief Constructor with full MPI edge properties specification
+     *
+     * Creates an MPI edge property instance with all relevant information for
+     * characterizing an inter-partition adjacency, including connection type,
+     * geometric orientation, partition information, and anchor point IDs.
+     *
+     * @param conn Connection type (conforming/non-conforming)
+     * @param orient Geometric orientation of the local interface
+     * @param neighbor_rank MPI rank of the neighboring partition
+     * @param neighbor_orientation Geometric orientation of the neighboring
+     * interface
+     * @param local_idx Local element index in the current partition
+     * @param neighbor_local_idx Local element index in the neighboring
+     * partition
+     * @param local_anchor_idx Element-absolute corner ID (19-26) of the local
+     * anchor point
+     * @param neighbor_anchor_idx Element-absolute corner ID (19-26) of the
+     * neighboring anchor point
+     *
+     * @code
+     * // Example: Creating MPI edge properties for a cross-partition face
+     * interface MPIEdgeProperties mpi_props(
+     *     specfem::element_connections::type::strongly_conforming,
+     *     specfem::mesh_entity::dim3::type::right,
+     *     neighbor_rank, neighbor_orient, local_idx, neighbor_local_idx,
+     *     local_anchor_idx, neighbor_anchor_idx);
+     * @endcode
+     */
+    MPIEdgeProperties(
+        const specfem::element_connections::type conn,
+        const specfem::mesh_entity::dim3::type orient,
+        const size_t neighbor_rank,
+        const specfem::mesh_entity::dim3::type neighbor_orientation,
+        const size_t local_idx, const size_t neighbor_local_idx,
+        const specfem::mesh_entity::dim3::type local_anchor_idx,
+        const specfem::mesh_entity::dim3::type neighbor_anchor_idx)
+        : EdgeProperties(conn, orient), neighbor_partition(neighbor_rank),
+          neighbor_orientation(neighbor_orientation),
+          neighbor_local_index(neighbor_local_idx), local_index(local_idx),
+          local_anchor_point(local_anchor_idx),
+          neighbor_anchor_point(neighbor_anchor_idx) {}
+  };
+
 private:
   /**
    * @brief Boost Graph Library adjacency list type definition
@@ -159,6 +257,37 @@ private:
    * elements and edges representing interfaces with their properties.
    */
   std::shared_ptr<Graph> graph_;
+
+  /**
+   * @brief List of inter-partition edge properties with anchor constraints
+   *
+   * Stores MPI-specific adjacency information for all cross-partition element
+   * connections. Each entry includes:
+   * - Connection type and orientation from EdgeProperties
+   * - Partition information (neighbor rank and local indices)
+   * - Anchor point IDs: element-absolute corner indices (range 19-26)
+   *
+   * Anchor points provide an additional constraint beyond coordinate matching.
+   * They are element-absolute corner IDs (not interface-relative indices) that
+   * identify specific hexahedron corners on local and remote elements,
+   * disambiguating rotational variations among elements with equivalent corner
+   * coordinate sets. This enables orientation-preserving assembly and
+   * orientation constraint propagation across MPI boundaries.
+   *
+   * Anchor point mapping:
+   *   - 19: bottom_front_left     20: bottom_front_right
+   *   - 21: bottom_back_left      22: bottom_back_right
+   *   - 23: top_front_left        24: top_front_right
+   *   - 25: top_back_left         26: top_back_right
+   *
+   * For all adjacencies (faces and edges), anchor values are in range 19-26,
+   * selected based on face/edge ID using mapping tables from
+   * adjacency_graph.f90.
+   *
+   * @see MPIEdgeProperties
+   * @see adjacency_graph.f90 (Fortran) for corner ID and mapping definitions
+   */
+  std::vector<MPIEdgeProperties> mpi_connections_;
 
 public:
   int nspec; ///< Number of spectral elements in the mesh
@@ -206,7 +335,7 @@ public:
    * @return Graph& Reference to the internal boost::adjacency_list
    *
    * @code
-   * auto& graph = adj_graph.graph();
+   * auto& graph = adj_graph.local_connections();
    *
    * // Add edge with properties
    * boost::add_edge(0, 1, EdgeProperties(
@@ -217,7 +346,7 @@ public:
    * auto [adj_iter, adj_end] = boost::adjacent_vertices(0, graph);
    * @endcode
    */
-  Graph &graph() { return *graph_; }
+  Graph &local_connections() { return *graph_; }
 
   /**
    * @brief Immutable access to the underlying Boost Graph
@@ -228,7 +357,7 @@ public:
    * @return const Graph& Const reference to the internal boost::adjacency_list
    *
    * @code
-   * const auto& graph = adj_graph.graph();
+   * const auto& graph = adj_graph.local_connections();
    *
    * // Query graph properties
    * size_t num_elements = boost::num_vertices(graph);
@@ -242,7 +371,56 @@ public:
    * }
    * @endcode
    */
-  const Graph &graph() const { return *graph_; }
+  const Graph &local_connections() const { return *graph_; }
+
+  /**
+   * @brief Mutable access to MPI inter-partition adjacencies with anchor
+   * points
+   *
+   * Provides access to the list of cross-partition element adjacencies
+   * including anchor point information. Used during mesh construction to
+   * populate MPI adjacency data.
+   *
+   * @return std::vector<MPIEdgeProperties>& Reference to MPI connection
+   *         properties list
+   *
+   * @code
+   * auto &mpi_conns = adj_graph.mpi_connections();
+   * for (const auto &mpi_edge : mpi_conns) {
+   *     int neighbor_rank = mpi_edge.neighbor_partition;
+   *     int neighbor_elem = mpi_edge.neighbor_local_index;
+   *     int local_anchor = mpi_edge.local_anchor_point;    // 19-26
+   *     int remote_anchor = mpi_edge.neighbor_anchor_point; // 19-26
+   *     // Use anchor points to establish orientation constraint
+   *     // Anchor IDs map to hexahedron corners via adjacency_graph.f90
+   * }
+   * @endcode
+   */
+  auto &mpi_connections() { return mpi_connections_; }
+
+  /**
+   * @brief Immutable access to MPI inter-partition adjacencies with anchor
+   * points
+   *
+   * Provides read-only access to the list of cross-partition element
+   * adjacencies including anchor point information. Used during simulation
+   * to query MPI connectivity and orientation constraints.
+   *
+   * @return const std::vector<MPIEdgeProperties>& Const reference to MPI
+   *         connection properties list
+   *
+   * @code
+   * const auto &mpi_conns = adj_graph.mpi_connections();
+   * size_t num_mpi_adjacencies = mpi_conns.size();
+   * for (const auto &mpi_edge : mpi_conns) {
+   *     // Query inter-partition adjacency data
+   *     // Anchor points remove rotational ambiguity
+   * }
+   * @endcode
+   *
+   * @see MPIEdgeProperties
+   */
+  const auto &mpi_connections() const { return mpi_connections_; }
 
   /**
    * @brief Verify graph symmetry for undirected adjacency relationships
