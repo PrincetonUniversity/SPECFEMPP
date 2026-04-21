@@ -202,6 +202,32 @@ struct FaceView {
   }
 };
 
+} // namespace specfem::assembly
+
+namespace specfem::tag_dispatch {
+
+template <typename DstSpace, typename SrcSpace, typename Layout>
+auto create_mirror(DstSpace,
+                   const specfem::assembly::FaceView<SrcSpace, Layout> &src) {
+  return specfem::assembly::FaceView<DstSpace, Layout>(src.label(), src.N,
+                                                       src.n_points);
+}
+
+template <typename DstSpace, typename SrcSpace, typename Layout>
+void deep_copy(specfem::assembly::FaceView<DstSpace, Layout> &dst,
+               const specfem::assembly::FaceView<SrcSpace, Layout> &src) {
+  Kokkos::deep_copy(dst.element_index, src.element_index);
+  Kokkos::deep_copy(dst.face_index, src.face_index);
+  Kokkos::deep_copy(dst.face_types, src.face_types);
+  Kokkos::deep_copy(dst.iz, src.iz);
+  Kokkos::deep_copy(dst.iy, src.iy);
+  Kokkos::deep_copy(dst.ix, src.ix);
+}
+
+} // namespace specfem::tag_dispatch
+
+namespace specfem::assembly {
+
 /**
  * @brief 3D spectral element face classification and coupling management
  *
@@ -329,20 +355,14 @@ face_view_from_collected_faces(
     const specfem::mesh_entity::element<specfem::element::dimension_tag::dim3>
         &element);
 
-} // namespace specfem::assembly
-
-namespace specfem::tag_dispatch {
-
 template <typename Space, typename ExecSpace, typename Layout>
-auto create_mirror(Space,
-                   const specfem::assembly::FaceView<ExecSpace, Layout> &src) {
-  using DstFaceView = specfem::assembly::FaceView<Space, Layout>;
-  return DstFaceView(src.label(), src.N, src.n_points);
+auto create_mirror(Space, const FaceView<ExecSpace, Layout> &src) {
+  return FaceView<Space, Layout>(src.label(), src.N, src.n_points);
 }
 
 template <typename DestExecSpace, typename SrcExecSpace, typename Layout>
-void deep_copy(specfem::assembly::FaceView<DestExecSpace, Layout> &dst,
-               const specfem::assembly::FaceView<SrcExecSpace, Layout> &src) {
+void deep_copy(FaceView<DestExecSpace, Layout> &dst,
+               const FaceView<SrcExecSpace, Layout> &src) {
   Kokkos::deep_copy(dst.element_index, src.element_index);
   Kokkos::deep_copy(dst.face_index, src.face_index);
   Kokkos::deep_copy(dst.face_types, src.face_types);
@@ -351,4 +371,4 @@ void deep_copy(specfem::assembly::FaceView<DestExecSpace, Layout> &dst,
   Kokkos::deep_copy(dst.ix, src.ix);
 }
 
-} // namespace specfem::tag_dispatch
+} // namespace specfem::assembly

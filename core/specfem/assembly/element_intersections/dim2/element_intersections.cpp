@@ -115,11 +115,24 @@ specfem::assembly::element_intersections<
         collected.template get<TagsType>().coupled_collect, element);
   } };
 
+  auto copy_edge_view =
+      [](const EdgeViewType::HostMirror &src) -> EdgeViewType {
+    EdgeViewType dst(src.label(), src.N, src.n_points);
+    Kokkos::deep_copy(dst.element_index, src.element_index);
+    Kokkos::deep_copy(dst.edge_index, src.edge_index);
+    Kokkos::deep_copy(dst.edge_types, src.edge_types);
+    Kokkos::deep_copy(dst.iz, src.iz);
+    Kokkos::deep_copy(dst.ix, src.ix);
+    return dst;
+  };
+
   // Allocate device views and deep-copy from host
-  self_edges = specfem::tag_dispatch::create_mirror_storage_and_copy(
-      Kokkos::DefaultExecutionSpace{}, h_self_edges);
-  coupled_edges = specfem::tag_dispatch::create_mirror_storage_and_copy(
-      Kokkos::DefaultExecutionSpace{}, h_coupled_edges);
+  self_edges = { [&]<typename TagsType>() -> EdgeViewType {
+    return copy_edge_view(h_self_edges.template get<TagsType>());
+  } };
+  coupled_edges = { [&]<typename TagsType>() -> EdgeViewType {
+    return copy_edge_view(h_coupled_edges.template get<TagsType>());
+  } };
 
   return;
 }

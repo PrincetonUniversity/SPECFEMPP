@@ -283,8 +283,13 @@ template <typename Dst, typename Src> void deep_copy(Dst &&dst, Src &&src) {
  * own header *before* the point of instantiation.
  */
 template <typename Space, typename SrcView>
-auto create_mirror(Space, const SrcView &src) {
-  return Kokkos::create_mirror_view(typename Space::memory_space{}, src);
+requires(Kokkos::is_view_v<SrcView>) auto create_mirror(Space,
+                                                        const SrcView &src) {
+  using DstView = Kokkos::View<typename SrcView::non_const_data_type, Space>;
+  return [&]<std::size_t... Ds>(std::index_sequence<Ds...>) {
+    return DstView(Kokkos::view_alloc(Kokkos::WithoutInitializing, src.label()),
+                   src.extent(Ds)...);
+  }(std::make_index_sequence<SrcView::rank>{});
 }
 
 /**
@@ -324,22 +329,20 @@ auto create_mirror(Space, const SrcView &src) {
  *                    calling ``deep_copy(dst_entry, src_entry)`` for each
  *                    tag combination.
  */
-template <typename Space, typename SrcView, typename ET>
-auto create_mirror_storage_and_copy(Space,
-                                    const Storage<SrcView, ET> &src_storage) {
-  if constexpr (std::is_same_v<typename Space::memory_space,
-                               typename SrcView::memory_space>) {
-    return src_storage;
-  } else {
-    using DstView = decltype(
-        create_mirror(std::declval<Space>(), std::declval<const SrcView &>()));
-    return Storage<DstView, ET>{ [&]<typename TagsType>() -> DstView {
-      const auto &src = src_storage.template get<TagsType>();
-      auto dst = create_mirror(Space{}, src);
-      deep_copy(dst, src);
-      return dst;
-    } };
-  }
+template <typename Space, typename Policy, typename ET, typename Seq>
+auto create_mirror_storage_and_copy(
+    Space, const impl::Storage<Policy, ET, Seq> &src_storage) {
+  using SrcView = typename Policy::template type<
+      impl::combo_to_tags_t<ET, 0, ET::combo_type::arity> >;
+  using DstView = decltype(specfem::tag_dispatch::create_mirror(
+      std::declval<Space>(), std::declval<const SrcView &>()));
+  using DstStorage = impl::Storage<impl::TypePolicy<DstView>, ET>;
+  return DstStorage{ [&]<typename TagsType>() -> DstView {
+    const auto &src = src_storage.template get<TagsType>();
+    auto dst = specfem::tag_dispatch::create_mirror(Space{}, src);
+    specfem::tag_dispatch::deep_copy(dst, src);
+    return dst;
+  } };
 }
 
 } // namespace specfem::tag_dispatch

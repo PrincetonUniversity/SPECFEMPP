@@ -106,11 +106,25 @@ specfem::assembly::element_intersections<
         collected.template get<TagsType>().coupled_collect, element);
   } };
 
+  auto copy_face_view =
+      [](const FaceViewType::HostMirror &src) -> FaceViewType {
+    FaceViewType dst(src.label(), src.N, src.n_points);
+    Kokkos::deep_copy(dst.element_index, src.element_index);
+    Kokkos::deep_copy(dst.face_index, src.face_index);
+    Kokkos::deep_copy(dst.face_types, src.face_types);
+    Kokkos::deep_copy(dst.iz, src.iz);
+    Kokkos::deep_copy(dst.iy, src.iy);
+    Kokkos::deep_copy(dst.ix, src.ix);
+    return dst;
+  };
+
   // Allocate device views and deep-copy from host
-  self_faces = specfem::tag_dispatch::create_mirror_storage_and_copy(
-      Kokkos::DefaultExecutionSpace{}, h_self_faces);
-  coupled_faces = specfem::tag_dispatch::create_mirror_storage_and_copy(
-      Kokkos::DefaultExecutionSpace{}, h_coupled_faces);
+  self_faces = { [&]<typename TagsType>() -> FaceViewType {
+    return copy_face_view(h_self_faces.template get<TagsType>());
+  } };
+  coupled_faces = { [&]<typename TagsType>() -> FaceViewType {
+    return copy_face_view(h_coupled_faces.template get<TagsType>());
+  } };
 
   return;
 }

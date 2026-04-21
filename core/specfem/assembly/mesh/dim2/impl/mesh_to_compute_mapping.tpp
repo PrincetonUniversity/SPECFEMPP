@@ -9,10 +9,11 @@ specfem::assembly::mesh_impl::mesh_to_compute_mapping<
     specfem::element::dimension_tag::dim2>::
     mesh_to_compute_mapping(
         const specfem::mesh::tags<specfem::element::dimension_tag::dim2> &tags)
-    : compute_to_mesh("specfem::assembly::mesh_to_compute_mapping", tags.nspec),
+    : compute_to_mesh("specfem::assembly::compute_to_mesh_mapping", tags.nspec),
       mesh_to_compute("specfem::assembly::mesh_to_compute_mapping",
                       tags.nspec),
-      h_compute_to_mesh(compute_to_mesh), h_mesh_to_compute(mesh_to_compute) {
+      h_compute_to_mesh(Kokkos::create_mirror_view(compute_to_mesh)),
+      h_mesh_to_compute(Kokkos::create_mirror_view(mesh_to_compute)) {
 
   const int nspec = tags.nspec;
 
@@ -48,4 +49,7 @@ specfem::assembly::mesh_impl::mesh_to_compute_mapping<
   }
 
   assert(ispec == nspec);
+
+  Kokkos::deep_copy(compute_to_mesh, h_compute_to_mesh);
+  Kokkos::deep_copy(mesh_to_compute, h_mesh_to_compute);
 }
