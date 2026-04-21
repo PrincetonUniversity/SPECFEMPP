@@ -28,8 +28,6 @@ specfem::assembly::element_intersections<
   const auto element =
       specfem::mesh_entity::element<dimension_tag>(ngllz, nglly, ngllx);
 
-  const int ngll = ngllx; // ngllx == nglly == ngllz
-
   // Collect self/coupled face vectors for each tag combination
   struct CollectedFaces {
     std::vector<specfem::mesh_entity::face<dimension_tag> > self_collect;

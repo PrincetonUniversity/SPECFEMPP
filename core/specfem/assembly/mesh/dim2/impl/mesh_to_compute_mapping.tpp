@@ -1,15 +1,16 @@
 #pragma once
-#include "specfem/enums.hpp"
-#include "specfem/mesh.hpp"
 #include "mesh_to_compute_mapping.hpp"
-#include "specfem/element/tag_arrays.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/macros/tag_dispatch.hpp"
+#include "specfem/mesh.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include <vector>
 
 specfem::assembly::mesh_impl::mesh_to_compute_mapping<
     specfem::element::dimension_tag::dim2>::
     mesh_to_compute_mapping(
         const specfem::mesh::tags<specfem::element::dimension_tag::dim2> &tags)
-    : compute_to_mesh("specfem::assembly::compute_to_mesh_mapping", tags.nspec),
+    : compute_to_mesh("specfem::assembly::mesh_to_compute_mapping", tags.nspec),
       mesh_to_compute("specfem::assembly::mesh_to_compute_mapping",
                       tags.nspec),
       h_compute_to_mesh(Kokkos::create_mirror_view(compute_to_mesh)),
@@ -17,15 +18,24 @@ specfem::assembly::mesh_impl::mesh_to_compute_mapping<
 
   const int nspec = tags.nspec;
 
-  constexpr auto element_types = specfem::element::element_types<dimension_tag>();
-  constexpr int total_element_types = element_types.size();
+  // Here we need to put ALL element combinations!
+  using ET = decltype(
+      DIMENSION_SET(dim2) *
+      MEDIUM_SET(elastic_psv, elastic_sh, elastic_psv_t, acoustic, poroelastic,
+                 electromagnetic_te) *
+      PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
+      BOUNDARY_SET(none, acoustic_free_surface, stacey,
+                   composite_stacey_dirichlet));
+  constexpr auto element_types = ET::combos;
+  constexpr int total_element_types = ET::size;
 
   std::array<std::vector<int>, total_element_types> element_type_ispec;
   int total_counted = 0;
 
   for (int i = 0; i < total_element_types; i++) {
-    const auto [dimension_tag, medium_tag, property_tag, boundary_tag] =
-        element_types[i];
+    const auto medium_tag   = element_types[i].template get<1>();
+    const auto property_tag = element_types[i].template get<2>();
+    const auto boundary_tag = element_types[i].template get<3>();
     for (int ispec = 0; ispec < nspec; ispec++) {
       const auto tag = tags.tags_container(ispec);
       if (tag.medium_tag == medium_tag && tag.property_tag == property_tag &&

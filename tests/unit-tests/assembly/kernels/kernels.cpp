@@ -23,8 +23,6 @@ set_kernel_value(
         &assembly,
     const type_real offset) {
 
-  constexpr auto dimension = specfem::element::dimension_tag::dim2;
-
   const auto &kernels = assembly.kernels;
 
   using PointType =
@@ -57,8 +55,6 @@ check_kernel_value(
     specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
         &assembly,
     const type_real offset) {
-
-  constexpr auto dimension = specfem::element::dimension_tag::dim2;
 
   const auto &kernels = assembly.kernels;
   using PointType =
@@ -117,8 +113,6 @@ add_value(const ViewType elements,
               &assembly,
           const type_real offset) {
 
-  constexpr auto dimension = specfem::element::dimension_tag::dim2;
-
   const auto &kernels = assembly.kernels;
 
   using PointType =
@@ -153,8 +147,6 @@ set_kernel_value(
     specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
         &assembly,
     const type_real offset) {
-
-  constexpr auto dimension = specfem::element::dimension_tag::dim2;
 
   const auto &kernels = assembly.kernels;
 
@@ -283,8 +275,6 @@ add_value(const ViewType elements,
           specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
               &assembly,
           const type_real offset) {
-
-  constexpr auto dimension = specfem::element::dimension_tag::dim2;
 
   const auto &kernels = assembly.kernels;
 

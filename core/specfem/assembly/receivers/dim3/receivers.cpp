@@ -120,7 +120,6 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
   }
 
   // Build per-material receiver index stores using tag_dispatch::Storage.
-  // Replaces the former FOR_EACH_IN_PRODUCT...CAPTURE block.
   this->build_index_stores(h_elements, element_types);
 
   Kokkos::deep_copy(lagrange_interpolant, h_lagrange_interpolant);

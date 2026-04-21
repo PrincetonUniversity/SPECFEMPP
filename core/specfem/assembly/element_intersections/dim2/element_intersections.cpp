@@ -28,8 +28,6 @@ specfem::assembly::element_intersections<
 
   const auto element = specfem::mesh_entity::element(ngllz, ngllx);
 
-  const int ngll = ngllx; // ngllx == ngllz in 2D
-
   const auto flux_scheme_tag = flux_scheme_config.get_flux_scheme_tag();
 
   // Collect self/coupled edge vectors for each tag combination

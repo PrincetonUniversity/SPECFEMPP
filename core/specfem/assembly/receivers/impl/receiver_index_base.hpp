@@ -11,9 +11,7 @@ namespace specfem::assembly::receivers_impl {
 /**
  * @brief Base class for per-material receiver index stores.
  *
- * Replaces the @c FOR_EACH_IN_PRODUCT ... @c DECLARE / @c CAPTURE patterns
- * that previously generated per-combination index-view members at
- * compile-time.  Instead, a @ref specfem::tag_dispatch::Storage is used to
+ * A @ref specfem::tag_dispatch::Storage is used to
  * keep one index view per valid (dimension, medium, property, attenuation)
  * combination, mirroring the approach taken by
  * @ref specfem::assembly::element_types_impl::element_types_base.

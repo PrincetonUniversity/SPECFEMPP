@@ -24,10 +24,6 @@ void generate_data(
   const auto elements = assembly.element_types.get_elements_on_host(
       medium, property, specfem::element::attenuation_tag::none);
 
-  constexpr int num_components =
-      specfem::element::attributes<specfem::element::dimension_tag::dim2,
-                                   medium>::components;
-
   using PointDisplacementType =
       specfem::point::displacement<specfem::tags::Tags<
           specfem::element::dimension_tag::dim2, medium, false> >;

@@ -5,6 +5,7 @@
 #include "specfem/io.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include <gtest/gtest.h>
 
 template <bool using_simd, typename ExecutionSpace>
@@ -23,8 +24,6 @@ set_property_value(
     specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
         &assembly,
     const type_real offset) {
-
-  constexpr auto dimension = specfem::element::dimension_tag::dim2;
 
   const auto &properties = assembly.properties;
 
@@ -60,7 +59,6 @@ check_property_value(
         &assembly,
     const type_real offset) {
 
-  constexpr auto dimension = specfem::element::dimension_tag::dim2;
   const auto &properties = assembly.properties;
   using PointType = specfem::point::properties<
       specfem::tags::Tags<specfem::element::dimension_tag::dim2, MediumTag,
@@ -122,8 +120,6 @@ check_property_value(
     specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
         &assembly,
     const type_real offset) {
-
-  constexpr auto dimension = specfem::element::dimension_tag::dim2;
 
   const int nspec = assembly.mesh.nspec;
   const int ngll = assembly.mesh.element_grid.ngllx;
@@ -199,16 +195,14 @@ void check_compute_to_mesh(
         &assembly,
     const specfem::mesh::mesh<specfem::element::dimension_tag::dim2> &mesh) {
 
-  constexpr auto dimension = specfem::element::dimension_tag::dim2;
-
   const auto &properties = assembly.properties;
   const auto &element_types = assembly.element_types;
   const auto &mesh_assembly = assembly.mesh;
   const auto &materials = mesh.materials;
 
   // Get all elements of the given type
-  const auto elements = element_types.get_elements_on_host(
-      MediumTag, PropertyTag, specfem::element::attenuation_tag::none);
+  const auto elements =
+      element_types.get_elements_on_host(MediumTag, PropertyTag);
 
   using PointType = specfem::point::properties<specfem::tags::Tags<
       specfem::element::dimension_tag::dim2, MediumTag, PropertyTag, false> >;
@@ -224,9 +218,12 @@ void check_compute_to_mesh(
         const int ispec = index.ispec;
 
         // Get the properties stored within the mesh
-        const int ispec_mesh = mesh_assembly.compute_to_mesh(ispec);
+        const int ispec_mesh = mesh_assembly.h_compute_to_mesh(ispec);
         const auto expected =
-            materials.get_material<MediumTag, PropertyTag>(ispec_mesh)
+            materials
+                .get_material<MediumTag, PropertyTag,
+                              specfem::element::attenuation_tag::none>(
+                    ispec_mesh)
                 .get_properties();
 
         // Get the properties stored within the compute object
@@ -259,55 +256,59 @@ TEST_F(Assembly2D, properties_access_functions) {
 
     try {
       type_real offset = 10.1; // Random offset to store in the properties
-      FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM2),
-           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                      ELASTIC_PSV_T),
-           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
-          {
+      specfem::tag_dispatch::for_each(
+          DIMENSION_SET(dim2) *
+              MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
+                         elastic_psv_t) *
+              PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
+          [&]<typename ElementTags>() {
             const auto elements = assembly.element_types.get_elements_on_host(
-                _medium_tag_, _property_tag_);
-            set_property_value<_medium_tag_, _property_tag_, false>(
+                ElementTags::medium_tag, ElementTags::property_tag);
+            set_property_value<ElementTags::medium_tag,
+                               ElementTags::property_tag, false>(
                 elements, assembly, offset);
-          })
+          });
 
       // Check that we are able to access the values stored in the properties
-      FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM2),
-           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                      ELASTIC_PSV_T),
-           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
-          {
+      specfem::tag_dispatch::for_each(
+          DIMENSION_SET(dim2) *
+              MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
+                         elastic_psv_t) *
+              PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
+          [&]<typename ElementTags>() {
             const auto elements = assembly.element_types.get_elements_on_host(
-                _medium_tag_, _property_tag_);
-            check_property_value<_medium_tag_, _property_tag_, false>(
+                ElementTags::medium_tag, ElementTags::property_tag);
+            check_property_value<ElementTags::medium_tag,
+                                 ElementTags::property_tag, false>(
                 elements, assembly, offset);
           });
 
       // SIMD access functions
 
-      FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM2),
-           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                      ELASTIC_PSV_T),
-           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
-          {
+      specfem::tag_dispatch::for_each(
+          DIMENSION_SET(dim2) *
+              MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
+                         elastic_psv_t) *
+              PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
+          [&]<typename ElementTags>() {
             const auto elements = assembly.element_types.get_elements_on_host(
-                _medium_tag_, _property_tag_);
-            set_property_value<_medium_tag_, _property_tag_, true>(
+                ElementTags::medium_tag, ElementTags::property_tag);
+            set_property_value<ElementTags::medium_tag,
+                               ElementTags::property_tag, true>(
                 elements, assembly, offset);
-          })
+          });
 
       // Check that we are able to access the values stored in the properties
-      FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM2),
-           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                      ELASTIC_PSV_T),
-           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
-          {
+      specfem::tag_dispatch::for_each(
+          DIMENSION_SET(dim2) *
+              MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
+                         elastic_psv_t) *
+              PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
+          [&]<typename ElementTags>() {
             const auto elements = assembly.element_types.get_elements_on_host(
-                _medium_tag_, _property_tag_);
-            check_property_value<_medium_tag_, _property_tag_, true>(
+                ElementTags::medium_tag, ElementTags::property_tag);
+            check_property_value<ElementTags::medium_tag,
+                                 ElementTags::property_tag, true>(
                 elements, assembly, offset);
           });
 
@@ -336,14 +337,15 @@ TEST_F(Assembly2D, properties_construction) {
     auto assembly = std::get<5>(parameters);
 
     try {
-      FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM2),
-           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                      ELASTIC_PSV_T),
-           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
-          {
-            check_compute_to_mesh<_medium_tag_, _property_tag_>(assembly, mesh);
-          })
+      specfem::tag_dispatch::for_each(
+          DIMENSION_SET(dim2) *
+              MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
+                         elastic_psv_t) *
+              PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
+          [&]<typename ElementTags>() {
+            check_compute_to_mesh<ElementTags::medium_tag,
+                                  ElementTags::property_tag>(assembly, mesh);
+          });
 
       std::cout << "-------------------------------------------------------\n"
                 << "\033[0;32m[PASSED]\033[0m " << Test.name << "\n"
@@ -381,15 +383,16 @@ TEST_F(Assembly2D, properties_io_routines) {
     try {
       // Set all properties to a random value
       const type_real random_value = 10.1;
-      FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM2),
-           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                      ELASTIC_PSV_T),
-           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
-          {
+      specfem::tag_dispatch::for_each(
+          DIMENSION_SET(dim2) *
+              MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
+                         elastic_psv_t) *
+              PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
+          [&]<typename ElementTags>() {
             const auto elements = assembly.element_types.get_elements_on_host(
-                _medium_tag_, _property_tag_);
-            set_property_value<_medium_tag_, _property_tag_, false>(
+                ElementTags::medium_tag, ElementTags::property_tag);
+            set_property_value<ElementTags::medium_tag,
+                               ElementTags::property_tag, false>(
                 elements, assembly, random_value);
           });
 
@@ -408,15 +411,16 @@ TEST_F(Assembly2D, properties_io_routines) {
       reader.read(assembly);
 
       // Check that the properties are the same
-      FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM2),
-           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                      ELASTIC_PSV_T),
-           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
-          {
+      specfem::tag_dispatch::for_each(
+          DIMENSION_SET(dim2) *
+              MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
+                         elastic_psv_t) *
+              PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
+          [&]<typename ElementTags>() {
             const auto elements = assembly.element_types.get_elements_on_host(
-                _medium_tag_, _property_tag_);
-            check_property_value<_medium_tag_, _property_tag_, false>(
+                ElementTags::medium_tag, ElementTags::property_tag);
+            check_property_value<ElementTags::medium_tag,
+                                 ElementTags::property_tag, false>(
                 elements, assembly, random_value);
           });
 

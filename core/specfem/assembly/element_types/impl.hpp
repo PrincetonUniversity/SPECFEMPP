@@ -51,6 +51,9 @@ protected:
   static constexpr auto combinations_by_medium =
       specfem::tag_dispatch::dimension_set<ElementSets::dimension_tag>{} *
       ElementSets::medium_set;
+  /** All valid (dimension, medium, property) combinations. */
+  static constexpr auto combinations_by_medium_property =
+      combinations_by_medium * ElementSets::property_set;
   /** All valid (dimension, medium, property, attenuation) combinations. */
   static constexpr auto combinations_by_material = combinations_by_medium *
                                                    ElementSets::property_set *
@@ -84,6 +87,12 @@ protected:
   IndexStorage<decltype(combinations_by_medium)> elements_by_medium;
   /** Host mirror of elements_by_medium. */
   HostIndexStorage<decltype(combinations_by_medium)> h_elements_by_medium;
+  /** Device index store keyed by (dimension, medium, property). */
+  IndexStorage<decltype(combinations_by_medium_property)>
+      elements_by_medium_property;
+  /** Host mirror of elements_by_medium_property. */
+  HostIndexStorage<decltype(combinations_by_medium_property)>
+      h_elements_by_medium_property;
   /** Device index store keyed by (dimension, medium, property, attenuation). */
   IndexStorage<decltype(combinations_by_material)> elements_by_material;
   /** Host mirror of elements_by_material. */
@@ -166,14 +175,21 @@ public:
     elements_by_medium = specfem::tag_dispatch::create_mirror_storage_and_copy(
         Kokkos::DefaultExecutionSpace{}, h_elements_by_medium);
 
-    // 2. Index by (dimension, medium, property, attenuation).
+    // 2. Index by (dimension, medium, property).
+    h_elements_by_medium_property = { make_initializer(
+        "element_by_medium_property_", medium_tags, property_tags) };
+    elements_by_medium_property =
+        specfem::tag_dispatch::create_mirror_storage_and_copy(
+            Kokkos::DefaultExecutionSpace{}, h_elements_by_medium_property);
+
+    // 4. Index by (dimension, medium, property, attenuation).
     h_elements_by_material = { make_initializer(
         "element_by_material_", medium_tags, property_tags, attenuation_tags) };
     elements_by_material =
         specfem::tag_dispatch::create_mirror_storage_and_copy(
             Kokkos::DefaultExecutionSpace{}, h_elements_by_material);
 
-    // 3. Index by (dimension, medium, property, boundary).
+    // 5. Index by (dimension, medium, property, boundary).
     h_elements_by_boundary = { make_initializer(
         "element_by_boundary_", medium_tags, property_tags, boundary_tags) };
     elements_by_boundary =
@@ -210,6 +226,44 @@ public:
   IndexViewType
   get_elements_on_device(const specfem::element::medium_tag medium_tag) const {
     return elements_by_medium.get(medium_tag);
+  }
+
+  // ── Accessors by medium + property ──────────────────────────────────────
+
+  /**
+   * @brief Host view of element indices matching the given medium and property.
+   * @param medium_tag   Medium to query.
+   * @param property_tag Material property to query.
+   * @return Host-accessible 1-D view of spectral-element indices.
+   */
+  HostIndexViewType get_elements_on_host(
+      const specfem::element::medium_tag medium_tag,
+      const specfem::element::property_tag property_tag) const {
+    return h_elements_by_medium_property.get(medium_tag, property_tag);
+  }
+
+  /**
+   * @brief Number of elements with the given medium and property.
+   * @param medium_tag   Medium to query.
+   * @param property_tag Material property to query.
+   */
+  int get_number_of_elements(
+      const specfem::element::medium_tag medium_tag,
+      const specfem::element::property_tag property_tag) const {
+    return get_elements_on_host(medium_tag, property_tag).extent(0);
+  }
+
+  /**
+   * @brief Device view of element indices matching the given medium and
+   * property.
+   * @param medium_tag   Medium to query.
+   * @param property_tag Material property to query.
+   * @return Device-accessible 1-D view of spectral-element indices.
+   */
+  IndexViewType get_elements_on_device(
+      const specfem::element::medium_tag medium_tag,
+      const specfem::element::property_tag property_tag) const {
+    return elements_by_medium_property.get(medium_tag, property_tag);
   }
 
   // ── Accessors by material (medium + property + attenuation) ─────────────

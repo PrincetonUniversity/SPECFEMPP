@@ -116,7 +116,9 @@ void specfem::io::wavefield_reader<IOLibrary>::run(
     specfem::assembly::assembly<specfem::element::dimension_tag::dim2> &assembly,
     const int istep) {
   auto &buffer = assembly.fields.buffer;
-  auto &boundary_values = assembly.boundary_values;
+
+  // Note: boundary values not read/needed?
+  // auto &boundary_values = assembly.boundary_values;
 
   typename IOLibrary::Group base_group = file.openGroup(
       std::string("/Step") + specfem::utilities::to_zero_lead(istep, 6));
