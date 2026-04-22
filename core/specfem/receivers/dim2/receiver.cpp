@@ -11,8 +11,8 @@ specfem::receivers::receiver<specfem::element::dimension_tag::dim2>::print()
           << "      Station Name = " << this->station_name << "\n"
           << "      Network Name = " << this->network_name << "\n"
           << "      Receiver Location: \n"
-          << "        x = " << type_real(this->x) << "\n"
-          << "        z = " << type_real(this->z) << "\n";
+          << "        x = " << type_real(this->global_coordinates.x) << "\n"
+          << "        z = " << type_real(this->global_coordinates.z) << "\n";
 
   return message.str();
 }
@@ -21,7 +21,9 @@ bool specfem::receivers::receiver<specfem::element::dimension_tag::dim2>::
 operator==(const receiver &other) const {
   return (this->network_name == other.network_name) &&
          (this->station_name == other.station_name) &&
-         specfem::utilities::is_close(this->x, other.x) &&
-         specfem::utilities::is_close(this->z, other.z) &&
+         specfem::utilities::is_close(this->global_coordinates.x,
+                                      other.global_coordinates.x) &&
+         specfem::utilities::is_close(this->global_coordinates.z,
+                                      other.global_coordinates.z) &&
          specfem::utilities::is_close(this->angle, other.angle);
 }

@@ -3,6 +3,7 @@
 #include "specfem/constants.hpp"
 
 #include "specfem/enums.hpp"
+#include "specfem/point.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/setup.hpp"
 #include <cmath>
@@ -31,8 +32,8 @@ public:
    */
   receiver(const std::string &network_name, const std::string &station_name,
            const type_real x, const type_real y, const type_real z)
-      : network_name(network_name), station_name(station_name), x(x), y(y),
-        z(z) {};
+      : network_name(network_name), station_name(station_name),
+        global_coordinates(x, y, z) {};
 
   /**
    * @brief Get the name of network where this station lies
@@ -53,9 +54,26 @@ public:
    */
   std::string print() const;
 
-  type_real get_x() const { return this->x; }
-  type_real get_y() const { return this->y; }
-  type_real get_z() const { return this->z; }
+  /**
+   * @brief Get the global coordinates of the receiver
+   *
+   * @return specfem::point::global_coordinates<dimension_tag>
+   */
+  specfem::point::global_coordinates<dimension_tag>
+  get_global_coordinates() const {
+    return global_coordinates;
+  }
+
+  /**
+   * @brief Set the global coordinates of the receiver
+   *
+   * @param global_coordinates global coordinates
+   */
+  void
+  set_global_coordinates(const specfem::point::global_coordinates<dimension_tag>
+                             &global_coordinates) {
+    this->global_coordinates = global_coordinates;
+  }
 
   /**
    * @brief Equality operator
@@ -66,9 +84,8 @@ public:
   bool operator==(const receiver &other) const;
 
 private:
-  type_real x;              ///< x coordinate of station
-  type_real y;              ///< y coordinate of station
-  type_real z;              ///< z coordinate of station
+  specfem::point::global_coordinates<dimension_tag>
+      global_coordinates;   ///< Global coordinates of the receiver
   std::string network_name; ///< Name of the network where this station lies
   std::string station_name; ///< Name of the station
 };

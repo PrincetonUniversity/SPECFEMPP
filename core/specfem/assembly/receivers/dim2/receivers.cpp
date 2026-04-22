@@ -73,8 +73,7 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim2>::receivers(
       gcoords;
   gcoords.reserve(nreceivers);
   for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver)
-    gcoords.push_back(
-        { receivers[ireceiver]->get_x(), receivers[ireceiver]->get_z() });
+    gcoords.push_back(receivers[ireceiver]->get_global_coordinates());
 
   auto [local_coords, islice_selected] =
       specfem::algorithms::locate_point(gcoords, mesh);
