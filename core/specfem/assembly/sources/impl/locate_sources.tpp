@@ -29,7 +29,7 @@ void specfem::assembly::sources_impl::locate_sources(
   // The function prefers elements where xi/eta/gamma ∈ [-1,1] and falls back
   // to minimum Cartesian distance when no rank owns an inside element.
   auto [lcoords, islice_selected] =
-      specfem::algorithms::locate_point_mpi_slice(coords, mesh);
+      specfem::algorithms::locate_point(coords, mesh);
 
   // Assign local coordinates and medium tags to each source.
   // Only the owning rank sets valid coordinates; all others receive ispec = -1

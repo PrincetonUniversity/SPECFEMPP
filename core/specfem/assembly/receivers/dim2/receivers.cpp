@@ -64,7 +64,7 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim2>::receivers(
 
   // MPI-aware receiver location with inside-preference: prefer elements where
   // xi/gamma ∈ [-1,1]; fall back to minimum distance if no rank has an inside
-  // element. Uses locate_point_mpi_slice for unified MPI communication.
+  // element. Uses locate_point for unified MPI communication.
   const int nreceivers = static_cast<int>(receivers.size());
   const int myrank = specfem::MPI::get_rank();
 
@@ -77,7 +77,7 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim2>::receivers(
         { receivers[ireceiver]->get_x(), receivers[ireceiver]->get_z() });
 
   auto [local_coords, islice_selected] =
-      specfem::algorithms::locate_point_mpi_slice(gcoords, mesh);
+      specfem::algorithms::locate_point(gcoords, mesh);
 
   for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
     const auto receiver = receivers[ireceiver];
