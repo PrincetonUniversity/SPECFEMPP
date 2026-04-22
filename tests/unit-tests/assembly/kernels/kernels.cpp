@@ -183,8 +183,6 @@ check_kernel_value(
         &assembly,
     const type_real offset) {
 
-  constexpr auto dimension = specfem::element::dimension_tag::dim2;
-
   const int nspec = assembly.mesh.nspec;
   const int ngll = assembly.mesh.element_grid.ngllx;
   const auto &kernels = assembly.kernels;

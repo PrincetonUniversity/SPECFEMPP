@@ -77,15 +77,21 @@ specfem::io::read_2d_mesh(
                                           Kokkos::DefaultHostExecutionSpace>(
       "specfem::mesh::knods", mesh.parameters.ngnod, mesh.nspec);
 
+#if defined(SPECFEM_ENABLE_MPI)
   int nspec_all = mesh.parameters.nspec;
+#endif
   SPECFEM_MPI_SAFECALL(MPI_Reduce(&mesh.parameters.nspec, &nspec_all, 1,
                                   MPI_INT, MPI_SUM, 0,
                                   specfem::MPI::communicator()));
+#if defined(SPECFEM_ENABLE_MPI)
   int nelem_acforcing_all = mesh.parameters.nelem_acforcing;
+#endif
   SPECFEM_MPI_SAFECALL(MPI_Reduce(&mesh.parameters.nelem_acforcing,
                                   &nelem_acforcing_all, 1, MPI_INT, MPI_SUM, 0,
                                   specfem::MPI::communicator()));
+#if defined(SPECFEM_ENABLE_MPI)
   int nelem_acoustic_surface_all = mesh.parameters.nelem_acoustic_surface;
+#endif
   SPECFEM_MPI_SAFECALL(MPI_Reduce(&mesh.parameters.nelem_acoustic_surface,
                                   &nelem_acoustic_surface_all, 1, MPI_INT,
                                   MPI_SUM, 0, specfem::MPI::communicator()));

@@ -14,7 +14,7 @@ pipeline{
                     }
                     axis{
                         name 'SIMD'
-                        values 'SIMD_NONE;-DSPECFEM_ENABLE_SIMD=OFF', 'SIMD_NATIVE;-DSPECFEM_ENABLE_SIMD=ON -DKokkos_ARCH_NATIVE=ON -DKokkos_ENABLE_AGGRESSIVE_VECTORIZATION=ON'
+                        values 'SIMD_NONE;-DSPECFEM_ENABLE_SIMD=OFF', 'SIMD_NATIVE;-DSPECFEM_ENABLE_SIMD=ON -DKokkos_ARCH_SKX=ON -DKokkos_ENABLE_AGGRESSIVE_VECTORIZATION=ON'
                     }
                     axis{
                         name 'HostSpace'
@@ -83,7 +83,7 @@ pipeline{
                                         module load ${GNU_COMPILER_MODULE}
                                         cd /scratch/gpfs/TROMP/specfempp/jenkins/test_cpu_${GNU_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG} && \
                                         srun -N 1 -t 00:30:00 --account rse ${HOST_RUN_FLAGS} \
-                                            --constraint="intel|cascade" \
+                                            --constraint="intel" \
                                             bash -c 'export OMP_PROC_BIND=spread; \
                                             export OMP_THREADS=places; ctest -j --output-on-failure --no-tests=error;'
                                     """
