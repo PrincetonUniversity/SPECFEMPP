@@ -290,6 +290,7 @@ private:
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     std::cerr << "ERROR on rank " << rank << ": " << message << std::endl;
     MPI_Abort(MPI_COMM_WORLD, 1);
+    std::abort();
 #else
     std::cerr << "ERROR: " << message << std::endl;
     std::exit(1);
