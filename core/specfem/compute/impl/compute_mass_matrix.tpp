@@ -23,6 +23,7 @@ void specfem::compute::impl::compute_mass_matrix(
   constexpr auto wavefield = Tags::wavefield_tag;
   constexpr auto medium_tag = Tags::medium_tag;
   constexpr auto property_tag = Tags::property_tag;
+  constexpr auto attenuation_tag = Tags::attenuation_tag;
   constexpr auto boundary_tag = Tags::boundary_tag;
 
   // Get the number of components for the element

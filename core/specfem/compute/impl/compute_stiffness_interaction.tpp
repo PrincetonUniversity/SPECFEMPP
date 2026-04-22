@@ -29,7 +29,7 @@ int compute_stiffness_interaction_core(
   constexpr auto medium_tag = Tags::medium_tag;
   constexpr auto property_tag = Tags::property_tag;
   constexpr auto boundary_tag = Tags::boundary_tag;
-  constexpr auto attenuation_tag = specfem::element::attenuation_tag::none;
+  constexpr auto attenuation_tag = Tags::attenuation_tag;
   constexpr auto wavefield = Tags::wavefield_tag;
   constexpr auto dimension_tag = Tags::dimension_tag;
   constexpr int ngll = NGLL;
@@ -281,8 +281,9 @@ int compute_stiffness_interaction(
           elements_updated += compute_stiffness_interaction_core<
               NGLL,
               specfem::tags::Tags<DimensionTag, WavefieldType, _medium_tag_,
-                                  _property_tag_, _boundary_tag_> >(assembly,
-                                                                    istep);
+                                  _property_tag_,
+                                  specfem::element::attenuation_tag::none,
+                                  _boundary_tag_> >(assembly, istep);
         }
       })
 

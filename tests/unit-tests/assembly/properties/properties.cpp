@@ -193,7 +193,8 @@ check_property_value(
 #endif
 
 template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag>
+          specfem::element::property_tag PropertyTag,
+          specfem::element::attenuation_tag AttenuationTag>
 void check_compute_to_mesh(
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
         &assembly,
@@ -208,7 +209,7 @@ void check_compute_to_mesh(
 
   // Get all elements of the given type
   const auto elements = element_types.get_elements_on_host(
-      MediumTag, PropertyTag, specfem::element::attenuation_tag::none);
+      MediumTag, PropertyTag, AttenuationTag);
 
   using PointType = specfem::point::properties<specfem::tags::Tags<
       specfem::element::dimension_tag::dim2, MediumTag, PropertyTag, false> >;
@@ -226,7 +227,9 @@ void check_compute_to_mesh(
         // Get the properties stored within the mesh
         const int ispec_mesh = mesh_assembly.compute_to_mesh(ispec);
         const auto expected =
-            materials.get_material<MediumTag, PropertyTag>(ispec_mesh)
+            materials
+                .get_material<MediumTag, PropertyTag, AttenuationTag>(
+                    ispec_mesh)
                 .get_properties();
 
         // Get the properties stored within the compute object
@@ -263,7 +266,8 @@ TEST_F(Assembly2D, properties_access_functions) {
           (DIMENSION_TAG(DIM2),
            MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                       ELASTIC_PSV_T),
-           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+           ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
           {
             const auto elements = assembly.element_types.get_elements_on_host(
                 _medium_tag_, _property_tag_);
@@ -340,9 +344,11 @@ TEST_F(Assembly2D, properties_construction) {
           (DIMENSION_TAG(DIM2),
            MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                       ELASTIC_PSV_T),
-           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+           ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
           {
-            check_compute_to_mesh<_medium_tag_, _property_tag_>(assembly, mesh);
+            check_compute_to_mesh<_medium_tag_, _property_tag_,
+                                  _attenuation_tag_>(assembly, mesh);
           })
 
       std::cout << "-------------------------------------------------------\n"

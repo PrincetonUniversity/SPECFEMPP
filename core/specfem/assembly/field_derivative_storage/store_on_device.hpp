@@ -59,8 +59,8 @@ store_on_device(const IndexType &index,
   constexpr auto medium_tag =
       PointFieldDerivativesType::field_derivatives_medium_type::medium_tag;
 
-  container.template get_container<MediumTag>().store_device_values(index,
-                                                                    point_fd);
+  container.template get_container<medium_tag>().store_device_values(index,
+                                                                     point_fd);
 }
 
 template <typename IndexType, typename FieldDerivativesContainerType>

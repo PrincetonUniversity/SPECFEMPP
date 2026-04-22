@@ -66,6 +66,7 @@ struct Attenuation<specfem::element::dimension_tag::dim2>
   specfem::units::Hertz f0;           ///< Reference frequency
   bool auto_compute_attenuation_band; ///< Whether to auto-compute the
                                       ///< attenuation band
+  type_real deltat;                   ///< Time step size
 
   // Runge-Kutta attenuation factors (one coefficient per SLS mechanism)
   Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight,

@@ -69,7 +69,42 @@ public:
    */
   KOKKOS_FUNCTION field_derivatives(const value_type &du) : du(du) {}
   ///@}
+
+  /**
+   * @name Arithmetic operators
+   */
+  ///@{
+
+  /// Element-wise addition: (a + b).du(i,k) = a.du(i,k) + b.du(i,k)
+  KOKKOS_INLINE_FUNCTION field_derivatives
+  operator+(const field_derivatives &rhs) const {
+    field_derivatives result;
+    for (int i = 0; i < components; ++i)
+      for (int k = 0; k < num_dimensions; ++k)
+        result.du(i, k) = du(i, k) + rhs.du(i, k);
+    return result;
+  }
+
+  /// Scalar multiplication (right): (a * s).du(i,k) = a.du(i,k) * s
+  KOKKOS_INLINE_FUNCTION field_derivatives
+  operator*(const type_real &rhs) const {
+    field_derivatives result;
+    for (int i = 0; i < components; ++i)
+      for (int k = 0; k < num_dimensions; ++k)
+        result.du(i, k) = du(i, k) * rhs;
+    return result;
+  }
+  ///@}
 };
+
+/// Scalar multiplication (left): (s * a).du(i,k) = s * a.du(i,k)
+template <specfem::element::dimension_tag DimensionTag,
+          specfem::element::medium_tag MediumTag, bool UseSIMD>
+KOKKOS_INLINE_FUNCTION field_derivatives<DimensionTag, MediumTag, UseSIMD>
+operator*(const type_real &lhs,
+          const field_derivatives<DimensionTag, MediumTag, UseSIMD> &rhs) {
+  return rhs * lhs;
+}
 
 } // namespace impl
 

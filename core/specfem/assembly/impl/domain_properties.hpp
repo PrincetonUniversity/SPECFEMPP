@@ -94,7 +94,6 @@ struct domain_properties<specfem::element::dimension_tag::dim2, MediumTag,
    * @param has_gll_model Skip material assignment for GLL models
    * @param property_index_mapping Element to property mapping
    */
-  template <specfem::element::attenuation_tag AttenuationTag>
   domain_properties(
       const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
       const specfem::assembly::mesh<dimension_tag> &mesh, const int ngllz,
@@ -102,9 +101,7 @@ struct domain_properties<specfem::element::dimension_tag::dim2, MediumTag,
       const bool has_gll_model,
       const Kokkos::View<int *, Kokkos::LayoutRight,
                          Kokkos::DefaultHostExecutionSpace>
-          property_index_mapping,
-      std::integral_constant<specfem::element::attenuation_tag,
-                             AttenuationTag>);
+          property_index_mapping);
 
   /// Device value access disabled for this container type
   template <typename PointValues, typename IndexType>
@@ -167,16 +164,13 @@ struct domain_properties<specfem::element::dimension_tag::dim3, MediumTag,
    * @param materials Material database indexed by element
    * @param property_index_mapping Element to property mapping
    */
-  template <specfem::element::attenuation_tag AttenuationTag>
   domain_properties(
       const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
       const int nspec, const int ngllz, const int nglly, const int ngllx,
       const specfem::mesh::materials<dimension_tag> &materials,
       const Kokkos::View<int *, Kokkos::LayoutRight,
                          Kokkos::DefaultHostExecutionSpace>
-          property_index_mapping,
-      std::integral_constant<specfem::element::attenuation_tag,
-                             AttenuationTag>);
+          property_index_mapping);
 
   /// Device value access disabled for this container type
   template <typename PointValues, typename IndexType>

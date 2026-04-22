@@ -44,7 +44,8 @@ specfem::assembly::Attenuation<specfem::element::dimension_tag::dim2>::
             &materials)
     : ngllz(mesh.element_grid.ngllz), ngllx(mesh.element_grid.ngllx),
       nspec(mesh.nspec), f0(reference_frequency),
-      auto_compute_attenuation_band(auto_compute_attenuation_band) {
+      auto_compute_attenuation_band(auto_compute_attenuation_band),
+      deltat(deltat) {
 
   specfem::utilities::Band<specfem::units::Hertz> band =
       auto_compute_attenuation_band

@@ -146,6 +146,50 @@ public:
   }
 
   /**
+   * @brief Get point properties for the material at element index, dispatching
+   * on a runtime attenuation_tag value.
+   *
+   * @tparam MediumTag   Medium type
+   * @tparam PropertyTag Property symmetry
+   * @param index        Spectral element index
+   * @param attenuation  Runtime attenuation tag
+   * @return Point properties (attenuation-independent)
+   */
+  template <specfem::element::medium_tag MediumTag,
+            specfem::element::property_tag PropertyTag>
+  specfem::point::properties<
+      specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag, false> >
+  get_properties(const int index,
+                 specfem::element::attenuation_tag attenuation) const {
+    const auto &material_specification = this->material_index_mapping(index);
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM2),
+         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                    ELASTIC_PSV_T, ELECTROMAGNETIC_TE),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
+        CAPTURE(material) {
+          if constexpr (MediumTag == _medium_tag_ &&
+                        PropertyTag == _property_tag_) {
+            if (_attenuation_tag_ == attenuation) {
+              return _material_.element_materials[material_specification.index]
+                  .get_properties();
+            }
+          }
+        })
+    Kokkos::abort("Unknown attenuation_tag in get_properties");
+  }
+
+  template <specfem::element::medium_tag MediumTag,
+            specfem::element::property_tag PropertyTag>
+  specfem::point::properties<
+      specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag, false> >
+  get_properties(const int index) const {
+    return get_properties<MediumTag, PropertyTag>(
+        index, this->material_index_mapping(index).attenuation);
+  }
+
+  /**
    * @brief Get the container object containing properties for a material type
    *
    * @tparam MediumTag Medium tag for the material

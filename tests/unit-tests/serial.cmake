@@ -251,6 +251,7 @@ add_executable(
   point/boundary_tests.cpp
   point/jacobian_matrix_tests.cpp
   point/attenuation_tests.cpp
+  point/field_derivatives_tests.cpp
   point/source_tests.cpp
   point/stress_integrand_tests.cpp
   point/stress_tests.cpp
@@ -450,6 +451,24 @@ target_link_libraries(
   ${BOOST_LIBS}
   gtest
   gtest_main
+  -lpthread -lm
+)
+
+add_executable(
+  element_types_tests
+  assembly/element_types/runner.cpp
+  assembly/element_types/dim2/element_types_tests.cpp
+  assembly/element_types/dim3/element_types_tests.cpp
+)
+
+target_link_libraries(
+  element_types_tests
+  specfem::assembly
+  specfem::element
+  specfem_environment
+  Kokkos::kokkos
+  gtest_main
+  ${BOOST_LIBS}
   -lpthread -lm
 )
 
@@ -691,6 +710,19 @@ target_link_libraries(
 )
 
 add_executable(
+  medium_attenuation_tests
+  medium/attenuation/main.cpp
+  medium/attenuation/dim2/elastic_isotropic.cpp
+  medium/attenuation/dim3/elastic_isotropic.cpp
+)
+
+target_link_libraries(
+  medium_attenuation_tests
+  point
+  gtest_main
+)
+
+add_executable(
   compute_coupling_tests
   compute_coupling/acoustic_elastic.cpp
   compute_coupling/elastic_acoustic.cpp
@@ -826,6 +858,7 @@ set(SERIAL_TEST_TARGETS
   compute_coupling_tests
   displacement_newmark_2d_tests
   displacement_newmark_3d_tests
+  element_types_tests
   fortranio_test
   enumerations_tests
   gll_tests
@@ -841,6 +874,7 @@ set(SERIAL_TEST_TARGETS
   gradient_tests
   transfer_tests
   mass_matrix_tests
+  medium_attenuation_tests
   mesh_dim2_tests
   mesh_dim3_tests
   nonconforming_tests

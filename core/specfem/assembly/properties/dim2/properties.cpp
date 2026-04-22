@@ -33,17 +33,13 @@ specfem::assembly::properties<specfem::element::dimension_tag::dim2>::
       (DIMENSION_TAG(DIM2),
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                   ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-       ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
       CAPTURE(value) {
         _value_ = specfem::assembly::impl::domain_properties<
             _dimension_tag_, _medium_tag_, _property_tag_>(
-            element_types.get_elements_on_host(_medium_tag_, _property_tag_,
-                                               _attenuation_tag_),
+            element_types.get_elements_on_host(_medium_tag_, _property_tag_),
             mesh, ngllz, ngllx, materials, has_gll_model,
-            h_property_index_mapping,
-            std::integral_constant<specfem::element::attenuation_tag,
-                                   _attenuation_tag_>{});
+            h_property_index_mapping);
       })
 
   Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);

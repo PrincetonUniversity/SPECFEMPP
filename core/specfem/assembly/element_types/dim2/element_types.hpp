@@ -45,7 +45,7 @@ namespace specfem::assembly {
  * @endcode
  */
 template <> struct element_types<specfem::element::dimension_tag::dim2> {
-protected:
+public:
   /**
    * @brief Kokkos view type for storing medium tags in host memory.
    *
@@ -87,6 +87,7 @@ protected:
       Kokkos::View<specfem::element::attenuation_tag *,
                    Kokkos::DefaultHostExecutionSpace>;
 
+protected:
   /**
    * @brief Kokkos view type for storing element indices in device memory.
    *
@@ -115,6 +116,27 @@ public:
    * Initializes an empty 2D element types container with no allocated storage.
    */
   element_types() = default;
+
+  /**
+   * @brief Construct 2D element types from pre-built tag views.
+   *
+   * Initializes the element type classification system using pre-constructed
+   * tag views. This constructor builds all indexed element lists from the
+   * provided tags and is useful for testing without requiring a full mesh.
+   *
+   * @param nspec Number of spectral elements in the 2D mesh
+   * @param ngllz Number of quadrature points in z-direction (vertical)
+   * @param ngllx Number of quadrature points in x-direction (horizontal)
+   * @param medium_tags View containing medium type for each element
+   * @param property_tags View containing property type for each element
+   * @param attenuation_tags View containing attenuation type for each element
+   * @param boundary_tags View containing boundary type for each element
+   */
+  element_types(const int nspec, const int ngllz, const int ngllx,
+                MediumTagViewType medium_tags,
+                PropertyTagViewType property_tags,
+                AttenuationTagViewType attenuation_tags,
+                BoundaryViewType boundary_tags);
 
   /**
    * @brief Construct 2D element types container from mesh and tag data.
@@ -169,24 +191,65 @@ public:
   get_elements_on_device(const specfem::element::medium_tag tag) const;
 
   /**
-   * @brief Get elements with specified medium and property types in host
-   * memory.
+   * @brief Get count of elements with specified medium and property types,
+   * combining across all attenuation types.
+   *
+   * @param medium_tag Medium type to count
+   * @param property_tag Property type to count
+   * @return Number of elements matching both medium and property types
+   */
+  int get_number_of_elements(
+      const specfem::element::medium_tag medium_tag,
+      const specfem::element::property_tag property_tag) const {
+    return get_elements_on_host(medium_tag, property_tag).extent(0);
+  }
+
+  /**
+   * @brief Get all elements with specified medium and property types in host
+   * memory, combining across all attenuation types.
    *
    * @param tag Medium type (elastic_psv, elastic_sh, acoustic, etc.)
    * @param property Property type (isotropic, anisotropic, isotropic_cosserat)
+   * @return Kokkos view containing all matching element indices
+   */
+  Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
+  get_elements_on_host(const specfem::element::medium_tag medium_tag,
+                       const specfem::element::property_tag property_tag) const;
+
+  /**
+   * @brief Get all elements with specified medium and property types in device
+   * memory, combining across all attenuation types.
+   *
+   * @param tag Medium type (elastic_psv, elastic_sh, acoustic, etc.)
+   * @param property Property type (isotropic, anisotropic, isotropic_cosserat)
+   * @return Kokkos view containing all matching element indices
+   */
+  Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
+  get_elements_on_device(const specfem::element::medium_tag tag,
+                         const specfem::element::property_tag property) const;
+
+  /**
+   * @brief Get elements with specified medium, property, and attenuation types
+   * in host memory.
+   *
+   * @param tag Medium type (elastic_psv, elastic_sh, acoustic, etc.)
+   * @param property Property type (isotropic, anisotropic, isotropic_cosserat)
+   * @param attenuation Attenuation type (none, constant_isotropic)
    * @return Kokkos view containing element indices for host access
    */
   Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> get_elements_on_host(
-      const specfem::element::medium_tag tag,
-      const specfem::element::property_tag property,
-      const specfem::element::attenuation_tag attenuation) const;
+      const specfem::element::medium_tag medium_tag,
+      const specfem::element::property_tag property_tag,
+      const specfem::element::attenuation_tag attenuation_tag) const;
 
   /**
-   * @brief Get count of elements with specified medium and property types.
+   * @brief Get count of elements with specified medium, property, and
+   * attenuation types.
    *
    * @param tag Medium type to count
    * @param property Property type to count
-   * @return Number of elements matching both medium and property types
+   * @param attenuation Attenuation type to count
+   * @return Number of elements matching all three classification criteria
    */
   int get_number_of_elements(
       const specfem::element::medium_tag tag,
@@ -290,11 +353,22 @@ public:
   }
 
 private:
+  /// Initialize all indexed element lists from the tag views.
+  /// Called by both constructors after member initialization.
+  void build_index_lists();
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
                        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                   POROELASTIC, ELASTIC_PSV_T)),
                       DECLARE((IndexViewType, elements),
                               (IndexViewType::HostMirror, h_elements)))
+
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                  ELASTIC_PSV_T),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+      DECLARE((IndexViewType, medium_property_elements),
+              (IndexViewType::HostMirror, h_medium_property_elements)))
 
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
                        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
