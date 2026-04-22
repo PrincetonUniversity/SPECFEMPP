@@ -14,7 +14,7 @@
 namespace specfem {
 namespace algorithms {
 
-namespace detail {
+namespace impl {
 
 // Returns true when all local coordinates lie within the reference element
 // [-1, 1]^d, i.e. the point is inside (or on the boundary of) the element.
@@ -31,7 +31,7 @@ inline bool coords_inside(const specfem::point::local_coordinates<
          std::abs(lcoord.gamma) <= type_real(1);
 }
 
-} // namespace detail
+} // namespace impl
 
 /**
  * @brief Locate a batch of points across MPI partitions with inside-preference.
@@ -99,7 +99,7 @@ locate_point(
 
       local_lcoords[i] = lcoord;
       local_priority[i] =
-          detail::coords_inside(lcoord) ? dist : (OUTSIDE_PENALTY + dist);
+          impl::coords_inside(lcoord) ? dist : (OUTSIDE_PENALTY + dist);
     } catch (const std::exception &) {
       // Point not in this rank's partition – leave as invalid / max priority.
     }
