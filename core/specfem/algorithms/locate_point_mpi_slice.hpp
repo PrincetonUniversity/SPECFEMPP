@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/algorithms/locate_point.hpp"
+#include "specfem/algorithms/locate_point/locate_point_impl.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/point.hpp"
@@ -91,8 +91,10 @@ locate_point_mpi_slice(
 
   for (int i = 0; i < npoints; ++i) {
     try {
-      const auto lcoord = specfem::algorithms::locate_point(coords[i], mesh);
-      const auto found_global = specfem::algorithms::locate_point(lcoord, mesh);
+      const auto lcoord =
+          specfem::algorithms::locate_point_impl::locate_point(coords[i], mesh);
+      const auto found_global =
+          specfem::algorithms::locate_point_impl::locate_point(lcoord, mesh);
       const type_real dist = specfem::point::distance(coords[i], found_global);
 
       local_lcoords[i] = lcoord;
