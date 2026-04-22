@@ -4,6 +4,7 @@
 #include "specfem/enums.hpp"
 #include "specfem/setup.hpp"
 #include <string>
+#include <type_traits>
 
 namespace specfem {
 namespace utilities {
@@ -34,6 +35,12 @@ KOKKOS_INLINE_FUNCTION bool is_close(const T &a, const T &b,
   return specfem::datatype::all_of(
       Kokkos::abs(a - b) <=
       (abs_tol + rel_tol * Kokkos::max(Kokkos::abs(a), Kokkos::abs(b))));
+}
+
+template <typename T, typename U,
+          typename = std::enable_if_t<!std::is_same<T, U>::value> >
+KOKKOS_INLINE_FUNCTION bool is_close(const T &a, const U &b) {
+  return is_close(static_cast<type_real>(a), static_cast<type_real>(b));
 }
 
 } // namespace utilities

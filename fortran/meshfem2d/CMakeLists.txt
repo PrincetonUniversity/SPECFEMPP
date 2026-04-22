@@ -240,6 +240,7 @@ target_link_libraries(
     meshfem2D::shared_mpi
     meshfem2D::mesh_utilities
     meshfem2D::cc_objects
+    specfem::version
 )
 
 if (SPECFEM_ENABLE_MPI)
@@ -253,5 +254,6 @@ add_executable(xadj_seismogram adj_seismogram.f90)
 if (SPECFEM_INSTALL)
   install(TARGETS xadj_seismogram xmeshfem2D
     RUNTIME DESTINATION .
+    COMPONENT executables
   )
 endif()

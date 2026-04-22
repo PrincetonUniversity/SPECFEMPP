@@ -6,7 +6,7 @@
 
 void specfem::mesh::adjacency_graph<
     specfem::element::dimension_tag::dim3>::assert_symmetry() const {
-  const auto &g = this->graph();
+  const auto &g = this->local_connections();
 
   for (const auto &edge : boost::make_iterator_range(boost::edges(g))) {
     const auto source = boost::source(edge, g);

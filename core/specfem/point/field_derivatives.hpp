@@ -85,4 +85,11 @@ template <typename Tags>
 using field_derivatives =
     impl::field_derivatives<Tags::dimension_tag, Tags::medium_tag,
                             Tags::using_simd>;
+
+/**
+ * @brief Sentinel type returned by FieldDerivativesPack::get_dv() when
+ * there is no velocity gradient (attenuation_tag::none).
+ */
+struct null_field_derivatives {};
+
 } // namespace specfem::point

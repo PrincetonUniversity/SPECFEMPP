@@ -28,7 +28,8 @@ specfem::mesh::mesh<specfem::element::dimension_tag::dim2>
 specfem::io::read_2d_mesh(
     const std::string &filename,
     const specfem::enums::elastic_wave elastic_wave,
-    const specfem::enums::electromagnetic_wave electromagnetic_wave) {
+    const specfem::enums::electromagnetic_wave electromagnetic_wave,
+    const bool attenuation_enabled) {
 
   // Declaring empty mesh objects
   specfem::mesh::mesh<specfem::element::dimension_tag::dim2> mesh;
@@ -77,15 +78,16 @@ specfem::io::read_2d_mesh(
 
   int nspec_all = mesh.parameters.nspec;
   SPECFEM_MPI_SAFECALL(MPI_Reduce(&mesh.parameters.nspec, &nspec_all, 1,
-                                  MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD));
+                                  MPI_INT, MPI_SUM, 0,
+                                  specfem::MPI::communicator()));
   int nelem_acforcing_all = mesh.parameters.nelem_acforcing;
   SPECFEM_MPI_SAFECALL(MPI_Reduce(&mesh.parameters.nelem_acforcing,
                                   &nelem_acforcing_all, 1, MPI_INT, MPI_SUM, 0,
-                                  MPI_COMM_WORLD));
+                                  specfem::MPI::communicator()));
   int nelem_acoustic_surface_all = mesh.parameters.nelem_acoustic_surface;
   SPECFEM_MPI_SAFECALL(MPI_Reduce(&mesh.parameters.nelem_acoustic_surface,
                                   &nelem_acoustic_surface_all, 1, MPI_INT,
-                                  MPI_SUM, 0, MPI_COMM_WORLD));
+                                  MPI_SUM, 0, specfem::MPI::communicator()));
 
   try {
     auto [n_sls, attenuation_f0_reference, read_velocities_at_f0] =
@@ -99,7 +101,8 @@ specfem::io::read_2d_mesh(
     mesh.materials =
         specfem::io::mesh::impl::fortran::dim2::read_material_properties(
             stream, mesh.parameters.numat, mesh.nspec, elastic_wave,
-            electromagnetic_wave, mesh.control_nodes.knods);
+            electromagnetic_wave, mesh.control_nodes.knods,
+            attenuation_enabled);
   } catch (std::runtime_error &e) {
     throw;
   }

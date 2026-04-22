@@ -13,6 +13,7 @@ target_link_libraries(
         specfem::element
         specfem::quadrature
         specfem::mesh
+        specfem::mpi
         source_class
         jacobian
         point

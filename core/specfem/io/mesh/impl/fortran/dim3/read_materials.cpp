@@ -10,8 +10,8 @@
 std::tuple<int, int, int, int,
            Kokkos::View<int **, Kokkos::LayoutLeft, Kokkos::HostSpace>,
            specfem::mesh::materials<specfem::element::dimension_tag::dim3> >
-specfem::io::mesh::impl::fortran::dim3::read_materials(std::ifstream &stream,
-                                                       const int ngnod) {
+specfem::io::mesh::impl::fortran::dim3::read_materials(
+    std::ifstream &stream, const int ngnod, const bool attenuation_enabled) {
 
   using MaterialsType =
       specfem::mesh::materials<specfem::element::dimension_tag::dim3>;
@@ -61,7 +61,7 @@ specfem::io::mesh::impl::fortran::dim3::read_materials(std::ifstream &stream,
             throw std::runtime_error(error_message.str());
           }
 
-          if ((std::abs(Qkappa - 9999.0) < 1e-6) || (std::abs(Qkappa) < 1e-6)) {
+          if (!attenuation_enabled || (std::abs(Qkappa - 9999.0) < 1e-6)) {
 
             specfem::medium_container::material<
                 specfem::element::dimension_tag::dim3,
@@ -96,9 +96,8 @@ specfem::io::mesh::impl::fortran::dim3::read_materials(std::ifstream &stream,
                 "materials.");
           }
 
-          if ((std::abs(Qmu - 9999.0) < 1e-6 &&
-               std::abs(Qkappa - 9999.0) < 1e-6) ||
-              (std::abs(Qmu) < 1e-6 && std::abs(Qkappa) < 1e-6)) {
+          if (!attenuation_enabled || (std::abs(Qkappa - 9999.0) < 1e-6 &&
+                                       std::abs(Qmu - 9999.0) < 1e-6)) {
             specfem::medium_container::material<
                 specfem::element::dimension_tag::dim3,
                 specfem::element::medium_tag::elastic,

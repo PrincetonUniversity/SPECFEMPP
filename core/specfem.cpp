@@ -2,6 +2,7 @@
 #include "specfem/logger.hpp"
 #include "specfem/program.hpp"
 #include "specfem/program/context.hpp"
+#include "specfem/version.hpp"
 #include <CLI/CLI.hpp>
 #include <iostream>
 #include <optional>
@@ -61,41 +62,58 @@ int run_simulation(const std::string &dimension, int argc, char **argv,
   try {
     specfem::program::Context context(argc, argv);
 
-    const YAML::Node parameter_dict = YAML::LoadFile(opts.parameters_file);
+    // Only run simulation if current rank is part of the subset communicator
+    // (i.e. not excluded by user-defined nprocs)
+    // For simulations that use the entire world communicator, this check will
+    // pass for all ranks.
+    if (specfem::MPI::is_active()) {
 
-    // Build LoggerOptions from CLI values
-    std::optional<std::string> log_file_opt;
-    std::optional<bool> per_rank_opt;
-    std::optional<bool> auto_flush_opt;
-    std::optional<std::string> log_level_opt;
+      const YAML::Node parameter_dict = YAML::LoadFile(opts.parameters_file);
 
-    if (flags.log_file_set)
-      log_file_opt = opts.log_file;
-    if (flags.per_rank_set)
-      per_rank_opt = opts.log_per_rank;
-    if (flags.auto_flush_set)
-      auto_flush_opt = opts.log_auto_flush;
-    if (flags.log_level_set)
-      log_level_opt = opts.log_level;
+      // Build LoggerOptions from CLI values
+      std::optional<std::string> log_file_opt;
+      std::optional<bool> per_rank_opt;
+      std::optional<bool> auto_flush_opt;
+      std::optional<std::string> log_level_opt;
 
-    auto logger_options = specfem::logger::LoggerOptions::from_values(
-        std::move(log_file_opt), per_rank_opt, auto_flush_opt,
-        std::move(log_level_opt));
-    specfem::Logger::apply_options(logger_options);
+      if (flags.log_file_set)
+        log_file_opt = opts.log_file;
+      if (flags.per_rank_set)
+        per_rank_opt = opts.log_per_rank;
+      if (flags.auto_flush_set)
+        auto_flush_opt = opts.log_auto_flush;
+      if (flags.log_level_set)
+        log_level_opt = opts.log_level;
 
-    // Set log file if specified in parameters and not already set by CLI
-    if (parameter_dict["parameters"]["log-file"]) {
-      const std::string log_file =
-          parameter_dict["parameters"]["log-file"].as<std::string>();
-      specfem::Logger::set_log_file(log_file);
+      auto logger_options = specfem::logger::LoggerOptions::from_values(
+          std::move(log_file_opt), per_rank_opt, auto_flush_opt,
+          std::move(log_level_opt));
+      specfem::Logger::apply_options(logger_options);
+
+      // Set log file if specified in parameters and not already set by CLI
+      if (parameter_dict["parameters"]["log-file"]) {
+        const std::string log_file =
+            parameter_dict["parameters"]["log-file"].as<std::string>();
+        specfem::Logger::set_log_file(log_file);
+      }
+
+      const auto success = specfem::program::execute(dimension, parameter_dict);
+
+      if (!success) {
+        std::cerr << "Execution failed. See logs for details." << std::endl;
+        result = 1;
+      }
+    } else {
+      result = 0;
     }
 
-    const auto success = specfem::program::execute(dimension, parameter_dict);
+    SPECFEM_MPI_SAFECALL(MPI_Barrier(MPI_COMM_WORLD));
 
-    if (!success) {
-      std::cerr << "Execution failed" << std::endl;
-      result = 1;
-    }
+    // Ensure all ranks have reached this point, reduce the result across ranks
+    int result_reduced = result;
+    SPECFEM_MPI_SAFECALL(MPI_Allreduce(&result, &result_reduced, 1, MPI_INT,
+                                       MPI_MAX, MPI_COMM_WORLD));
+    result = result_reduced;
 
   } catch (const std::exception &e) {
     std::cerr << "Error during execution: " << e.what() << std::endl;
@@ -137,14 +155,32 @@ int run_qplots(int argc, char **argv, const Qoptions &opts) {
   try {
     specfem::program::Context context(argc, argv);
 
-    const auto success = specfem::program::qplots(
-        opts.Q, opts.minfreq, opts.maxfreq, opts.min_plot_freq,
-        opts.max_plot_freq, opts.output_dir);
+    // Only run Q plot generation if current rank is part of the subset
+    // communicator (i.e. not excluded by user-defined nprocs). For simulations
+    // that use the entire world communicator, this check will pass for all
+    // ranks.
+    if (specfem::MPI::is_active()) {
 
-    if (!success) {
-      std::cerr << "Q plot generation failed" << std::endl;
-      result = 1;
+      const auto success = specfem::program::qplots(
+          opts.Q, opts.minfreq, opts.maxfreq, opts.min_plot_freq,
+          opts.max_plot_freq, opts.output_dir);
+
+      if (!success) {
+        std::cerr << "Q plot generation failed. See logs for details."
+                  << std::endl;
+        result = 1;
+      }
+    } else {
+      result = 0;
     }
+
+    SPECFEM_MPI_SAFECALL(MPI_Barrier(MPI_COMM_WORLD));
+
+    // Ensure all ranks have reached this point, reduce the result across ranks
+    int result_reduced = result;
+    SPECFEM_MPI_SAFECALL(MPI_Allreduce(&result, &result_reduced, 1, MPI_INT,
+                                       MPI_MAX, MPI_COMM_WORLD));
+    result = result_reduced;
 
   } catch (const std::exception &e) {
     std::cerr << "Error during Q plot generation: " << e.what() << std::endl;
@@ -156,9 +192,7 @@ int run_qplots(int argc, char **argv, const Qoptions &opts) {
 
 int main(int argc, char **argv) {
 
-  CLI::App app{ "======================================\n"
-                "--------------- SPECFEM++ ------------\n"
-                "======================================" };
+  CLI::App app{ specfem::version::header() };
   app.require_subcommand(1);
 
   // -- 2d subcommand --

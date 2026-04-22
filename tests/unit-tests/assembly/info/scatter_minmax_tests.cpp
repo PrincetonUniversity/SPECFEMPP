@@ -11,8 +11,7 @@ using namespace specfem::assembly::info::impl;
 // ============================================================================
 
 // Initialize view with values: offset, offset+1, ..., offset+N-1
-template <typename ViewType>
-struct InitializeSequential {
+template <typename ViewType> struct InitializeSequential {
   ViewType data;
   type_real offset;
 
@@ -26,8 +25,7 @@ struct InitializeSequential {
 };
 
 // Initialize 2D view with values: bucket*100 + item
-template <typename ViewType>
-struct InitializeMulti {
+template <typename ViewType> struct InitializeMulti {
   ViewType data;
 
   InitializeMulti(ViewType data_) : data(data_) {}
@@ -39,8 +37,7 @@ struct InitializeMulti {
 };
 
 // Initialize with special pattern for large dataset test
-template <typename ViewType>
-struct InitializeLargePattern {
+template <typename ViewType> struct InitializeLargePattern {
   ViewType data;
 
   InitializeLargePattern(ViewType data_) : data(data_) {}
@@ -58,8 +55,7 @@ struct InitializeLargePattern {
 };
 
 // Initialize two views: min_data with i, max_data with 1000+i
-template <typename ViewType>
-struct InitializeTwoViews {
+template <typename ViewType> struct InitializeTwoViews {
   ViewType min_data;
   ViewType max_data;
 
@@ -74,8 +70,7 @@ struct InitializeTwoViews {
 };
 
 // Reduce to find min/max using LocalMinMax
-template <typename ViewType>
-struct FindMinMaxReduce {
+template <typename ViewType> struct FindMinMaxReduce {
   ViewType data;
 
   FindMinMaxReduce(ViewType data_) : data(data_) {}
@@ -90,8 +85,7 @@ struct FindMinMaxReduce {
 };
 
 // Reduce using separate update_min/update_max
-template <typename ViewType>
-struct FindMinMaxSeparateReduce {
+template <typename ViewType> struct FindMinMaxSeparateReduce {
   ViewType data;
 
   FindMinMaxSeparateReduce(ViewType data_) : data(data_) {}
@@ -107,8 +101,7 @@ struct FindMinMaxSeparateReduce {
 };
 
 // Update ScatterMinMax with data values
-template <typename ViewType>
-struct ScatterUpdate {
+template <typename ViewType> struct ScatterUpdate {
   ViewType data;
   ScatterMinMax<type_real> scatter;
 
@@ -123,8 +116,7 @@ struct ScatterUpdate {
 };
 
 // Update ScatterMinMax with separate min/max from two views
-template <typename ViewType>
-struct ScatterUpdateSeparate {
+template <typename ViewType> struct ScatterUpdateSeparate {
   ViewType min_data;
   ViewType max_data;
   ScatterMinMax<type_real> scatter;
@@ -142,18 +134,28 @@ struct ScatterUpdateSeparate {
 };
 
 // Update ScatterMinMax with 2D data (bucket, item)
-template <typename ViewType>
-struct ScatterUpdateMulti {
+// Iterates over buckets in parallel; accumulates items into a local min/max
+// first so that the scatter write (to a shared address) happens only once per
+// bucket, avoiding the SIMD read-modify-write issue where Intel's aggressive
+// vectorizer stores the last SIMD lane instead of the true minimum.
+template <typename ViewType> struct ScatterUpdateMulti {
   ViewType data;
   ScatterMinMax<type_real> scatter;
+  int items_per_bucket;
 
-  ScatterUpdateMulti(ViewType data_, ScatterMinMax<type_real> scatter_)
-      : data(data_), scatter(scatter_) {}
+  ScatterUpdateMulti(ViewType data_, ScatterMinMax<type_real> scatter_,
+                     int items_per_bucket_)
+      : data(data_), scatter(scatter_), items_per_bucket(items_per_bucket_) {}
 
   KOKKOS_INLINE_FUNCTION
-  void operator()(const int bucket, const int item) const {
+  void operator()(const int bucket) const {
+    LocalMinMax<type_real> local;
+    for (size_t item = 0; item < items_per_bucket; ++item) {
+      local.update(data(bucket, item));
+    }
     auto accessor = scatter.access();
-    accessor.update(bucket, data(bucket, item));
+    accessor.update_min(bucket, local.min_val);
+    accessor.update_max(bucket, local.max_val);
   }
 };
 
@@ -199,10 +201,9 @@ TEST_F(ScatterMinMaxTests, LocalMinMaxBasic) {
   // Create a view with known values: 0, 1, 2, ..., N-1
   Kokkos::View<type_real *, Kokkos::DefaultExecutionSpace> data("data", N);
 
-  Kokkos::parallel_for(
-      "initialize_data",
-      Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, N),
-      InitializeSequential<decltype(data)>(data, 0));
+  Kokkos::parallel_for("initialize_data",
+                       Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, N),
+                       InitializeSequential<decltype(data)>(data, 0));
   Kokkos::fence();
 
   // Use LocalMinMax in a parallel_for with a parallel_reduce pattern
@@ -210,8 +211,8 @@ TEST_F(ScatterMinMaxTests, LocalMinMaxBasic) {
 
   Kokkos::parallel_reduce(
       "find_minmax", Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, N),
-      FindMinMaxReduce<decltype(data)>(data), Kokkos::Min<type_real>(global_min),
-      Kokkos::Max<type_real>(global_max));
+      FindMinMaxReduce<decltype(data)>(data),
+      Kokkos::Min<type_real>(global_min), Kokkos::Max<type_real>(global_max));
 
   Kokkos::fence();
 
@@ -226,10 +227,9 @@ TEST_F(ScatterMinMaxTests, LocalMinMaxSeparateUpdates) {
   Kokkos::View<type_real *, Kokkos::DefaultExecutionSpace> data("data", N);
 
   // Initialize with values: 100, 101, ..., 100+N-1
-  Kokkos::parallel_for(
-      "initialize_data",
-      Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, N),
-      InitializeSequential<decltype(data)>(data, 100));
+  Kokkos::parallel_for("initialize_data",
+                       Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, N),
+                       InitializeSequential<decltype(data)>(data, 100));
   Kokkos::fence();
 
   type_real global_min, global_max;
@@ -253,19 +253,17 @@ TEST_F(ScatterMinMaxTests, ScatterMinMaxBasic) {
   // Create data with known min/max: values from -50 to N-51
   Kokkos::View<type_real *, Kokkos::DefaultExecutionSpace> data("data", N);
 
-  Kokkos::parallel_for(
-      "initialize_data",
-      Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, N),
-      InitializeSequential<decltype(data)>(data, -50));
+  Kokkos::parallel_for("initialize_data",
+                       Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, N),
+                       InitializeSequential<decltype(data)>(data, -50));
   Kokkos::fence();
 
   // Use ScatterMinMax
   ScatterMinMax<type_real> scatter("test");
 
-  Kokkos::parallel_for(
-      "scatter_minmax",
-      Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, N),
-      ScatterUpdate<decltype(data)>(data, scatter));
+  Kokkos::parallel_for("scatter_minmax",
+                       Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, N),
+                       ScatterUpdate<decltype(data)>(data, scatter));
   Kokkos::fence();
 
   scatter.contribute();
@@ -317,18 +315,16 @@ TEST_F(ScatterMinMaxTests, ScatterMinMaxNegativeValues) {
   Kokkos::View<type_real *, Kokkos::DefaultExecutionSpace> data("data", N);
 
   // Values from -N/2 to N/2-1
-  Kokkos::parallel_for(
-      "initialize_data",
-      Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, N),
-      InitializeSequential<decltype(data)>(data, -N / 2));
+  Kokkos::parallel_for("initialize_data",
+                       Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, N),
+                       InitializeSequential<decltype(data)>(data, -N / 2));
   Kokkos::fence();
 
   ScatterMinMax<type_real> scatter("test_negative");
 
-  Kokkos::parallel_for(
-      "scatter_negative",
-      Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, N),
-      ScatterUpdate<decltype(data)>(data, scatter));
+  Kokkos::parallel_for("scatter_negative",
+                       Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, N),
+                       ScatterUpdate<decltype(data)>(data, scatter));
   Kokkos::fence();
 
   scatter.contribute();
@@ -349,18 +345,16 @@ TEST_F(ScatterMinMaxTests, BoundsHelperMethods) {
   Kokkos::View<type_real *, Kokkos::DefaultExecutionSpace> data("data", N);
 
   // Values from 10 to 10+N-1
-  Kokkos::parallel_for(
-      "initialize_data",
-      Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, N),
-      InitializeSequential<decltype(data)>(data, 10));
+  Kokkos::parallel_for("initialize_data",
+                       Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, N),
+                       InitializeSequential<decltype(data)>(data, 10));
   Kokkos::fence();
 
   ScatterMinMax<type_real> scatter("test_bounds");
 
-  Kokkos::parallel_for(
-      "scatter_bounds",
-      Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, N),
-      ScatterUpdate<decltype(data)>(data, scatter));
+  Kokkos::parallel_for("scatter_bounds",
+                       Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, N),
+                       ScatterUpdate<decltype(data)>(data, scatter));
   Kokkos::fence();
 
   scatter.contribute();
@@ -427,7 +421,7 @@ TEST_F(ScatterMinMaxTests, ScatterMinMaxMultiValue) {
   Kokkos::parallel_for(
       "initialize_multi",
       Kokkos::MDRangePolicy<Kokkos::Rank<2>, Kokkos::DefaultExecutionSpace>(
-          {0, 0}, {NUM_BUCKETS, ITEMS_PER_BUCKET}),
+          { 0, 0 }, { NUM_BUCKETS, ITEMS_PER_BUCKET }),
       InitializeMulti<decltype(data)>(data));
   Kokkos::fence();
 
@@ -438,9 +432,8 @@ TEST_F(ScatterMinMaxTests, ScatterMinMaxMultiValue) {
 
   Kokkos::parallel_for(
       "scatter_multi",
-      Kokkos::MDRangePolicy<Kokkos::Rank<2>, Kokkos::DefaultExecutionSpace>(
-          {0, 0}, {NUM_BUCKETS, ITEMS_PER_BUCKET}),
-      ScatterUpdateMulti<decltype(data)>(data, scatter));
+      Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, NUM_BUCKETS),
+      ScatterUpdateMulti<decltype(data)>(data, scatter, ITEMS_PER_BUCKET));
   Kokkos::fence();
 
   scatter.contribute();
@@ -453,9 +446,11 @@ TEST_F(ScatterMinMaxTests, ScatterMinMaxMultiValue) {
         static_cast<type_real>(bucket * 100 + ITEMS_PER_BUCKET - 1);
 
     EXPECT_TRUE(specfem::utilities::is_close(bounds.min, expected_min))
-        << "Bucket " << bucket << ": " << expected_got(expected_min, bounds.min);
+        << "Bucket " << bucket << ": "
+        << expected_got(expected_min, bounds.min);
     EXPECT_TRUE(specfem::utilities::is_close(bounds.max, expected_max))
-        << "Bucket " << bucket << ": " << expected_got(expected_max, bounds.max);
+        << "Bucket " << bucket << ": "
+        << expected_got(expected_max, bounds.max);
   }
 }
 
