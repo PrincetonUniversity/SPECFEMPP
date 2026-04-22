@@ -33,12 +33,6 @@ public:
   static constexpr auto value =
       specfem::element::dimension_tag::dim2; ///< Dimension type tag
   static constexpr int dim = 2;              ///< Spatial dimension count
-
-  /**
-   * @brief Get dimension as string.
-   * @return "2D" string representation
-   */
-  static std::string to_string() { return "2D"; }
 };
 
 /**
@@ -51,12 +45,6 @@ public:
   static constexpr auto value =
       specfem::element::dimension_tag::dim3; ///< Dimension type tag
   static constexpr int dim = 3;              ///< Spatial dimension count
-
-  /**
-   * @brief Get dimension as string.
-   * @return "3D" string representation
-   */
-  static std::string to_string() { return "3D"; }
 };
 
 } // namespace element

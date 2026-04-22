@@ -183,7 +183,6 @@ void specfem::periodic_tasks::plot_wavefield<
   const auto &coordinates = assembly.mesh.h_coord;
 
   // Each spectral element becomes one Lagrange hexahedron
-  const int ncells = nspec;
   const int points_per_element = ngllx * nglly * ngllz;
 
   auto points = vtkSmartPointer<vtkPoints>::New();

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "specfem/mesh_entity.hpp"
+
 #define _CREATE_NAMED_VARIABLE(prefix, postfix)                                \
   BOOST_PP_CAT(prefix, BOOST_PP_CAT(_, postfix))
 
@@ -114,11 +116,12 @@
 
 #define _INSTANCE_DEVICE_VIEW2D(r, data, elem)                                 \
   BOOST_PP_SEQ_ELEM(0, elem)                                                   \
-  (BOOST_PP_STRINGIZE(BOOST_PP_SEQ_ELEM(0, elem)), nspec, ngllz, ngllx)
+  (BOOST_PP_STRINGIZE(BOOST_PP_SEQ_ELEM(0, elem)), nspec, grid.ngllz, grid.ngllx)
 
 #define _INSTANCE_DEVICE_VIEW3D(r, data, elem)                                 \
   BOOST_PP_SEQ_ELEM(0, elem)                                                   \
-  (BOOST_PP_STRINGIZE(BOOST_PP_SEQ_ELEM(0, elem)), nspec, ngllz, nglly, ngllx)
+  (BOOST_PP_STRINGIZE(BOOST_PP_SEQ_ELEM(0, elem)), nspec, grid.ngllz,           \
+                      grid.nglly, grid.ngllx)
 
 #define _INSTANCE_HOST_VIEW(r, data, elem)                                     \
   BOOST_PP_CAT(h_, BOOST_PP_SEQ_ELEM(0, elem))                                 \
@@ -131,7 +134,8 @@
   template <                                                                   \
       specfem::element::dimension_tag U = dimension_tag,                       \
       std::enable_if_t<U == specfem::element::dimension_tag::dim2, int> = 0>   \
-  data_container(const int nspec, const int ngllz, const int ngllx)            \
+  data_container(const int nspec,                                              \
+                 const specfem::mesh_entity::element_grid<U> &grid)            \
       : BOOST_PP_SEQ_ENUM(                                                     \
             BOOST_PP_SEQ_TRANSFORM(_INSTANCE_DEVICE_VIEW2D, _, seq)),          \
         BOOST_PP_SEQ_ENUM(                                                     \
@@ -139,8 +143,8 @@
   template <                                                                   \
       specfem::element::dimension_tag U = dimension_tag,                       \
       std::enable_if_t<U == specfem::element::dimension_tag::dim3, int> = 0>   \
-  data_container(const int nspec, const int ngllz, const int nglly,            \
-                 const int ngllx)                                              \
+  data_container(const int nspec,                                              \
+                 const specfem::mesh_entity::element_grid<U> &grid)            \
       : BOOST_PP_SEQ_ENUM(                                                     \
             BOOST_PP_SEQ_TRANSFORM(_INSTANCE_DEVICE_VIEW3D, _, seq)),          \
         BOOST_PP_SEQ_ENUM(                                                     \
@@ -223,21 +227,15 @@
  * typename decltype(rho)::HostMirror h_rho;
  * typename decltype(kappa)::HostMirror h_kappa;
  * data_container() = default;
- * data_container(const int nspec, const int ngllz, const int ngllx)
- *     : rho("rho", nspec, ngllz, ngllx),
- *       kappa("kappa", nspec, ngllz, ngllx),
+ * data_container(const int nspec, const specfem::mesh_entity::element_grid<U>&
+ * grid) : rho("rho", nspec, grid.ngllz, grid.ngllx), kappa("kappa", nspec,
+ * grid.ngllz, grid.ngllx), h_rho(specfem::datatype::create_mirror_view(rho)),
+ *       h_kappa(specfem::datatype::create_mirror_view(kappa)) {}
+ * data_container(const int nspec, const specfem::mesh_entity::element_grid<U>&
+ * grid) : rho("rho", nspec, grid.ngllz, grid.nglly, grid.ngllx), kappa("kappa",
+ * nspec, grid.ngllz, grid.nglly, grid.ngllx),
  *       h_rho(specfem::datatype::create_mirror_view(rho)),
- *       h_kappa(specfem::datatype::create_mirror_view(kappa)) {
- *  static_assert(dimension_tag == specfem::element::dimension_tag::dim2,
- *                "Calling 2D constructor from non-2D container");
- * }
- * data_container(const int nspec, const int ngllz, const int nglly, const int
- * ngllx) : rho("rho", nspec, ngllz, ngllx), kappa("kappa", nspec, ngllz,
- * ngllx), h_rho(specfem::datatype::create_mirror_view(rho)),
- *       h_kappa(specfem::datatype::create_mirror_view(kappa)) {
- *  static_assert(dimension_tag == specfem::element::dimension_tag::dim3,
- *                "Calling 3D constructor from non-3D container");
- * }
+ *       h_kappa(specfem::datatype::create_mirror_view(kappa)) {}
  * template <typename FunctorType, typename IndexType>
  * KOKKOS_INLINE_FUNCTION
  * void for_each_on_device(const IndexType &index, FunctorType f) const {

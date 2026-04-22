@@ -105,7 +105,7 @@ TEST(ASSEMBLY_MESH, compute_jacobian_matrix) {
                                           point_jacobian_matrix);
           return point_jacobian_matrix;
         }();
-        const int ispec_mesh = compute_mesh.compute_to_mesh(ispec);
+        const int ispec_mesh = compute_mesh.h_compute_to_mesh(ispec);
 
         EXPECT_NEAR(point_jacobian_matrix.xix, xix_ref.data(ispec_mesh, iz, ix),
                     xix_ref.tol);
@@ -139,7 +139,7 @@ TEST(ASSEMBLY_MESH, compute_jacobian_matrix) {
         }();
 
         for (int i = 0; i < num_elements; ++i) {
-          const int ispec_mesh = compute_mesh.compute_to_mesh(ispec + i);
+          const int ispec_mesh = compute_mesh.h_compute_to_mesh(ispec + i);
           EXPECT_NEAR(point_jacobian_matrix.xix[i],
                       xix_ref.data(ispec_mesh, iz, ix), xix_ref.tol);
           EXPECT_NEAR(point_jacobian_matrix.gammax[i],

@@ -6,7 +6,8 @@
 #include "specfem/element.hpp"
 #include "specfem/io/impl/medium_writer.hpp"
 #include "specfem/logger.hpp"
-#include "specfem/macros.hpp"
+#include "specfem/macros/tag_dispatch.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include <Kokkos_Core.hpp>
 #include <sstream>
 #include <stdexcept>
@@ -67,25 +68,28 @@ void specfem::io::impl::write_container(
 
   int n_written = 0;
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-       ATTENUATION_TAG(NONE)),
-      {
+  specfem::tag_dispatch::for_each(
+      DIMENSION_SET(dim2) *
+          MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
+                     elastic_psv_t) *
+          PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
+          ATTENUATION_SET(none),
+      [&]<typename TagsType>() {
+        constexpr auto medium_tag = TagsType::medium_tag;
+        constexpr auto property_tag = TagsType::property_tag;
+        constexpr auto attenuation_tag = TagsType::attenuation_tag;
+
         const std::string name =
-            std::string("/") + specfem::element::to_string(_medium_tag_,
-                                                           _property_tag_,
-                                                           _attenuation_tag_);
+            std::string("/") +
+            specfem::element::to_string(medium_tag, property_tag, attenuation_tag);
         typename OutputLibrary::Group group = file.createGroup(name);
-        const auto element_indices = element_types.get_elements_on_host(
-            _medium_tag_, _property_tag_, _attenuation_tag_);
+        const auto element_indices =
+            element_types.get_elements_on_host(medium_tag, property_tag, attenuation_tag);
         auto data_container =
-            container.template get_container<_medium_tag_, _property_tag_>();
+            container.template get_container<medium_tag, property_tag>();
         n_written +=
             write_medium_group(group, mesh, element_indices, data_container);
-      })
+      });
 
   if (n_written != nspec) {
     std::ostringstream message;

@@ -52,7 +52,8 @@ TEST(ALGORITHMS, locate_point) {
   lcoord_ref(4) = { 700, -0.2744E+00, 0.3945E+00 };
 
   for (int i = 0; i < 5; ++i) {
-    lcoord_ref(i).ispec = assembly.mapping.mesh_to_compute(lcoord_ref(i).ispec);
+    lcoord_ref(i).ispec =
+        assembly.mapping.h_mesh_to_compute(lcoord_ref(i).ispec);
   }
 
   // Test Serial implementations

@@ -44,7 +44,7 @@ specfem::assembly::boundaries_impl::stacey<specfem::element::dimension_tag::dim2
 
   for (int i = 0; i < nelements; ++i) {
     const int ispec_mesh = stacey.index_mapping(i);
-    const int ispec_compute = mesh.mesh_to_compute(ispec_mesh);
+    const int ispec_compute = mesh.h_mesh_to_compute(ispec_mesh);
     if (ispec_to_stacey.find(ispec_compute) == ispec_to_stacey.end()) {
       ispec_to_stacey[ispec_compute] = { i };
     } else {

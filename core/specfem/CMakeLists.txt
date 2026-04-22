@@ -30,6 +30,7 @@ add_dependencies(specfem_version specfem_version_header)
 
 # Add existing subdirectories
 add_subdirectory(algorithms)
+add_subdirectory(element_coupling)
 add_subdirectory(assembly)
 add_subdirectory(compute)
 add_subdirectory(attenuation)
@@ -71,6 +72,7 @@ target_link_libraries(specfem_core_interface
         specfem::jacobian
         specfem::element
         specfem::element_connections
+        specfem::element_coupling
         specfem::enums
         specfem::io
         specfem::logger

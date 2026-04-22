@@ -2,8 +2,8 @@
 #include "specfem/datatype.hpp"
 #include "specfem/element.hpp"
 #include "specfem/execution.hpp"
-#include "specfem/macros.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include <gtest/gtest.h>
 
 template <bool using_simd, typename ExecutionSpace>
@@ -22,8 +22,6 @@ set_kernel_value(
     specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
         &assembly,
     const type_real offset) {
-
-  constexpr auto dimension = specfem::element::dimension_tag::dim2;
 
   const auto &kernels = assembly.kernels;
 
@@ -57,8 +55,6 @@ check_kernel_value(
     specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
         &assembly,
     const type_real offset) {
-
-  constexpr auto dimension = specfem::element::dimension_tag::dim2;
 
   const auto &kernels = assembly.kernels;
   using PointType =
@@ -117,8 +113,6 @@ add_value(const ViewType elements,
               &assembly,
           const type_real offset) {
 
-  constexpr auto dimension = specfem::element::dimension_tag::dim2;
-
   const auto &kernels = assembly.kernels;
 
   using PointType =
@@ -153,8 +147,6 @@ set_kernel_value(
     specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
         &assembly,
     const type_real offset) {
-
-  constexpr auto dimension = specfem::element::dimension_tag::dim2;
 
   const auto &kernels = assembly.kernels;
 
@@ -284,8 +276,6 @@ add_value(const ViewType elements,
               &assembly,
           const type_real offset) {
 
-  constexpr auto dimension = specfem::element::dimension_tag::dim2;
-
   const auto &kernels = assembly.kernels;
 
   using PointType =
@@ -318,99 +308,111 @@ TEST_F(Assembly2D, kernels_access_functions) {
 
     try {
       const type_real offset = 10.1; // Random offset to store in the properties
-      FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM2),
-           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
-          {
+      specfem::tag_dispatch::for_each(
+          DIMENSION_SET(dim2) *
+              MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic) *
+              PROPERTY_SET(isotropic, anisotropic),
+          [&]<typename ElementTags>() {
             const auto elements = assembly.element_types.get_elements_on_host(
-                _medium_tag_, _property_tag_);
-            set_kernel_value<_medium_tag_, _property_tag_, false>(
-                elements, assembly, offset);
-          })
+                ElementTags::medium_tag, ElementTags::property_tag,
+                specfem::element::attenuation_tag::none);
+            set_kernel_value<ElementTags::medium_tag, ElementTags::property_tag,
+                             false>(elements, assembly, offset);
+          });
 
       // Check that we are able to access the values stored in the properties
-      FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM2),
-           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
-          {
+      specfem::tag_dispatch::for_each(
+          DIMENSION_SET(dim2) *
+              MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic) *
+              PROPERTY_SET(isotropic, anisotropic),
+          [&]<typename ElementTags>() {
             const auto elements = assembly.element_types.get_elements_on_host(
-                _medium_tag_, _property_tag_);
-            check_kernel_value<_medium_tag_, _property_tag_, false>(
+                ElementTags::medium_tag, ElementTags::property_tag,
+                specfem::element::attenuation_tag::none);
+            check_kernel_value<ElementTags::medium_tag,
+                               ElementTags::property_tag, false>(
                 elements, assembly, offset);
-          })
+          });
 
       // Check that we are able to add the values stored in the properties
-      FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM2),
-           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
-          {
+      specfem::tag_dispatch::for_each(
+          DIMENSION_SET(dim2) *
+              MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic) *
+              PROPERTY_SET(isotropic, anisotropic),
+          [&]<typename ElementTags>() {
             const auto elements = assembly.element_types.get_elements_on_host(
-                _medium_tag_, _property_tag_);
-            add_value<_medium_tag_, _property_tag_, false>(elements, assembly,
-                                                           offset);
-          })
+                ElementTags::medium_tag, ElementTags::property_tag,
+                specfem::element::attenuation_tag::none);
+            add_value<ElementTags::medium_tag, ElementTags::property_tag,
+                      false>(elements, assembly, offset);
+          });
 
       // Check that we are able to access the values stored in the properties
-      FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM2),
-           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
-          {
+      specfem::tag_dispatch::for_each(
+          DIMENSION_SET(dim2) *
+              MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic) *
+              PROPERTY_SET(isotropic, anisotropic),
+          [&]<typename ElementTags>() {
             const auto elements = assembly.element_types.get_elements_on_host(
-                _medium_tag_, _property_tag_);
-            check_kernel_value<_medium_tag_, _property_tag_, false>(
+                ElementTags::medium_tag, ElementTags::property_tag,
+                specfem::element::attenuation_tag::none);
+            check_kernel_value<ElementTags::medium_tag,
+                               ElementTags::property_tag, false>(
                 elements, assembly, 2 * offset);
           });
 
       // SIMD access functions
 
-      FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM2),
-           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
-          {
+      specfem::tag_dispatch::for_each(
+          DIMENSION_SET(dim2) *
+              MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic) *
+              PROPERTY_SET(isotropic, anisotropic),
+          [&]<typename ElementTags>() {
             const auto elements = assembly.element_types.get_elements_on_host(
-                _medium_tag_, _property_tag_);
-            set_kernel_value<_medium_tag_, _property_tag_, false>(
-                elements, assembly, offset);
-          })
+                ElementTags::medium_tag, ElementTags::property_tag,
+                specfem::element::attenuation_tag::none);
+            set_kernel_value<ElementTags::medium_tag, ElementTags::property_tag,
+                             false>(elements, assembly, offset);
+          });
 
       // Check that we are able to access the values stored in the properties
-      FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM2),
-           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
-          {
+      specfem::tag_dispatch::for_each(
+          DIMENSION_SET(dim2) *
+              MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic) *
+              PROPERTY_SET(isotropic, anisotropic),
+          [&]<typename ElementTags>() {
             const auto elements = assembly.element_types.get_elements_on_host(
-                _medium_tag_, _property_tag_);
-            check_kernel_value<_medium_tag_, _property_tag_, false>(
+                ElementTags::medium_tag, ElementTags::property_tag,
+                specfem::element::attenuation_tag::none);
+            check_kernel_value<ElementTags::medium_tag,
+                               ElementTags::property_tag, false>(
                 elements, assembly, offset);
-          })
+          });
 
       // Check that we are able to add the values stored in the properties
-      FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM2),
-           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
-          {
+      specfem::tag_dispatch::for_each(
+          DIMENSION_SET(dim2) *
+              MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic) *
+              PROPERTY_SET(isotropic, anisotropic),
+          [&]<typename ElementTags>() {
             const auto elements = assembly.element_types.get_elements_on_host(
-                _medium_tag_, _property_tag_);
-            add_value<_medium_tag_, _property_tag_, false>(elements, assembly,
-                                                           offset);
-          })
+                ElementTags::medium_tag, ElementTags::property_tag,
+                specfem::element::attenuation_tag::none);
+            add_value<ElementTags::medium_tag, ElementTags::property_tag,
+                      false>(elements, assembly, offset);
+          });
 
       // Check that we are able to access the values stored in the properties
-      FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM2),
-           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
-          {
+      specfem::tag_dispatch::for_each(
+          DIMENSION_SET(dim2) *
+              MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic) *
+              PROPERTY_SET(isotropic, anisotropic),
+          [&]<typename ElementTags>() {
             const auto elements = assembly.element_types.get_elements_on_host(
-                _medium_tag_, _property_tag_);
-            check_kernel_value<_medium_tag_, _property_tag_, false>(
+                ElementTags::medium_tag, ElementTags::property_tag,
+                specfem::element::attenuation_tag::none);
+            check_kernel_value<ElementTags::medium_tag,
+                               ElementTags::property_tag, false>(
                 elements, assembly, 2 * offset);
           });
 

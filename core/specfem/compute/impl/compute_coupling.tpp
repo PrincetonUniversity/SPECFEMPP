@@ -8,11 +8,11 @@
 #include "specfem/element_connections.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
-#include "specfem/macros.hpp"
 #include "specfem/medium_physics.hpp"
 #include "specfem/parallel_configuration.hpp"
 #include "specfem/point.hpp"
 #include "specfem/point/interface_index.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
@@ -257,30 +257,30 @@ void compute_coupling(
     const specfem::assembly::assembly<Tags::dimension_tag> &assembly) {
 
   constexpr auto WavefieldType = Tags::wavefield_tag;
-  constexpr auto DimensionTag = Tags::dimension_tag;
-  constexpr auto MediumTag = Tags::medium_tag;
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2, DIM3),
-       CONNECTION_TAG(WEAKLY_CONFORMING, NONCONFORMING),
-       INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
-       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                    COMPOSITE_STACEY_DIRICHLET),
-       FLUX_SCHEME_TAG(NATURAL)),
-      {
+  specfem::tag_dispatch::for_each(
+      specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
+      CONNECTION_SET(weakly_conforming, nonconforming) *
+      INTERFACE_SET(elastic_acoustic, acoustic_elastic) *
+      BOUNDARY_SET(none, acoustic_free_surface, stacey,
+                   composite_stacey_dirichlet) *
+      FLUX_SCHEME_SET(natural),
+      [&]<typename ElementTags>() {
         constexpr auto self_medium = specfem::element_coupling::attributes<
-            _dimension_tag_, _interface_tag_>::self_medium();
-        if constexpr (DimensionTag == _dimension_tag_ &&
-                      self_medium == MediumTag) {
+            ElementTags::dimension_tag,
+            ElementTags::interface_tag>::self_medium();
+        if constexpr (self_medium == Tags::medium_tag) {
           compute_coupling_core<
               NGLL, NGLL,
-              specfem::tags::Tags<_dimension_tag_, _connection_tag_,
-                                  WavefieldType, _interface_tag_,
-                                  _boundary_tag_, _flux_scheme_tag_> >(
+              specfem::tags::Tags<ElementTags::dimension_tag,
+                                  ElementTags::connection_tag,
+                                  WavefieldType,
+                                  ElementTags::interface_tag,
+                                  ElementTags::boundary_tag,
+                                  ElementTags::flux_scheme_tag> >(
               assembly);
-          // second ngll is the number of quadrature points on the mortar.
         }
-      })
+      });
 }
 
 } // namespace specfem::compute::impl

@@ -27,7 +27,7 @@ specfem::assembly::mesh_impl::shape_functions<specfem::element::dimension_tag::d
       Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace,
                             Kokkos::Rank<3> >({ 0, 0, 0 },
                                               { ngllz, nglly, ngllx }),
-      [=](const int iz, const int iy, const int ix) {
+      [=, this](const int iz, const int iy, const int ix) {
         type_real xil = xi(ix);
         type_real etal = xi(iy);
         type_real zetal = xi(iz);
