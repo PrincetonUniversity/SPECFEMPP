@@ -22,7 +22,7 @@ specfem::assembly::mesh_impl::shape_functions<specfem::element::dimension_tag::d
       "shape_functions",
       Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace,
                             Kokkos::Rank<2> >({ 0, 0 }, { ngllz, ngllx }),
-      [=](const int iz, const int ix) {
+      [=, this](const int iz, const int ix) {
         type_real xil = xi(ix);
         type_real gammal = gamma(iz);
 

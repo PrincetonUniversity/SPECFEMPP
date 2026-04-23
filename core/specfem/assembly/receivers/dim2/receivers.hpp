@@ -1,6 +1,8 @@
 #pragma once
 
+#include "../impl/receiver_index_base.hpp"
 #include "../impl/receiver_iterator.hpp"
+#include "specfem/assembly/element_types.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/receivers.hpp"
 
@@ -29,7 +31,10 @@ template <>
 struct receivers<specfem::element::dimension_tag::dim2>
     : public receivers_impl::StationIterator,
       public receivers_impl::SeismogramIterator<
-          specfem::element::dimension_tag::dim2> {
+          specfem::element::dimension_tag::dim2>,
+      public receivers_impl::ReceiverIndexBase<
+          specfem::assembly::element_types_impl::ElementSets<
+              specfem::element::dimension_tag::dim2> > {
 
 public:
   constexpr static specfem::element::dimension_tag dimension_tag =
@@ -84,42 +89,6 @@ public:
       const specfem::assembly::element_types<dimension_tag> &element_types);
 
   /**
-   * @brief Get the spectral element indices in which the receivers are located
-   * on the device
-   *
-   * Returns only the indices of the elements that are associated with a
-   * specific medium and property tag
-   * @param medium Medium tag
-   * @property property Property tag
-   * @return Kokkos::View<int *, Kokkos::DefaultExecutionSpace> View of the
-   * elements indices associated with the receivers
-   */
-  std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
-             Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >
-  get_indices_on_device(
-      const specfem::element::medium_tag medium,
-      const specfem::element::property_tag property,
-      const specfem::element::attenuation_tag attenuation) const;
-
-  /**
-   * @brief Get the spectral element indices in which the receivers are located
-   * on the host
-   *
-   * Returns only the indices of the elements that are associated with a
-   * specific medium and property tag
-   * @param medium Medium tag
-   * @property property Property tag
-   * @return Kokkos::View<int *, Kokkos::DefaultExecutionSpace> View of the
-   * elements indices associated with the receivers
-   */
-  std::tuple<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>,
-             Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >
-  get_indices_on_host(
-      const specfem::element::medium_tag medium,
-      const specfem::element::property_tag property,
-      const specfem::element::attenuation_tag attenuation) const;
-
-  /**
    * @brief Get the seismogram types
    *
    * @return std::vector<specfem::enums::wavefield> Vector of seismogram types
@@ -149,18 +118,6 @@ private:
   LagrangeInterpolantType::HostMirror
       h_lagrange_interpolant; ///< Lagrange interpolant for every receiver
                               ///< stored on the host
-  specfem::assembly::element_types<dimension_tag> element_types; ///< Element
-                                                                 ///< types
-
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
-                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                  POROELASTIC, ELASTIC_PSV_T),
-                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-                       ATTENUATION_TAG(NONE)),
-                      DECLARE((IndexViewType, receiver_indices),
-                              (IndexViewType::HostMirror, h_receiver_indices),
-                              (IndexViewType, elements),
-                              (IndexViewType::HostMirror, h_elements)))
 
   template <typename ChunkIndexType, typename ViewType>
   friend KOKKOS_FUNCTION void load_on_device(const ChunkIndexType &chunk_index,

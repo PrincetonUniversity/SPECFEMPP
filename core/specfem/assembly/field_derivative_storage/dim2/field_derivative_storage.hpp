@@ -6,8 +6,10 @@
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access/container.hpp"
 #include "specfem/enums.hpp"
-#include "specfem/macros.hpp"
+#include "specfem/macros/tag_dispatch.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/tag_dispatch.hpp"
+#include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
@@ -37,14 +39,20 @@ struct FieldDerivativeStorage<specfem::element::dimension_tag::dim2>
 
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim2;
 
-  // One field_derivative_medium per medium, but only some have storage
-  // depending on the attenuation tag. For combination. Attenuation_none → empty
-  // struct. Constant_isotropic → compact storage.
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV)),
-                      DECLARE(((specfem::assembly::field_derivative_storage::
-                                    impl::field_derivative_medium,
-                                (_DIMENSION_TAG_, _MEDIUM_TAG_)),
-                               fd_medium)))
+  static constexpr auto field_derivative_medium_combinations =
+      specfem::tag_dispatch::dimension_set<dimension_tag>{} *
+      MEDIUM_SET(elastic_psv);
+
+  template <typename TagsType>
+  using FieldDerivativeMediumTemplateType =
+      specfem::assembly::field_derivative_storage::impl::
+          field_derivative_medium<TagsType::dimension_tag,
+                                  TagsType::medium_tag>;
+
+  specfem::tag_dispatch::TypedStorage<FieldDerivativeMediumTemplateType,
+                                      decltype(
+                                          field_derivative_medium_combinations)>
+      field_derivative_storage;
 
   FieldDerivativeStorage() = default;
 
@@ -68,29 +76,25 @@ struct FieldDerivativeStorage<specfem::element::dimension_tag::dim2>
    * @brief Access the field_derivative_medium for a given tag combination.
    */
   template <specfem::element::medium_tag MediumTag>
-  KOKKOS_INLINE_FUNCTION constexpr specfem::assembly::field_derivative_storage::
-      impl::field_derivative_medium<specfem::element::dimension_tag::dim2,
-                                    MediumTag> const &
+  KOKKOS_INLINE_FUNCTION const specfem::assembly::field_derivative_storage::
+      impl::field_derivative_medium<dimension_tag, MediumTag> &
       get_container() const {
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV)),
-                        CAPTURE(fd_medium) {
-                          if constexpr (_medium_tag_ == MediumTag) {
-                            return _fd_medium_;
-                          }
-                        })
-    Kokkos::abort(
-        "Invalid tag combination in FieldDerivativeStorage::get_medium");
-    SUPPRESS_UNREACHABLE(return {};)
+    using Key = specfem::tags::Tags<dimension_tag, MediumTag>;
+    return field_derivative_storage.template get<Key>();
   }
 
   void copy_to_host() {
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV)),
-                        CAPTURE(fd_medium) { _fd_medium_.copy_to_host(); })
+    specfem::tag_dispatch::for_each(
+        field_derivative_medium_combinations, [&]<typename TagsType>() {
+          field_derivative_storage.template get<TagsType>().copy_to_host();
+        });
   }
 
   void copy_to_device() {
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV)),
-                        CAPTURE(fd_medium) { _fd_medium_.copy_to_device(); })
+    specfem::tag_dispatch::for_each(
+        field_derivative_medium_combinations, [&]<typename TagsType>() {
+          field_derivative_storage.template get<TagsType>().copy_to_device();
+        });
   }
 };
 

@@ -43,18 +43,3 @@ void locate_sources(
         &sources);
 
 } // namespace specfem::assembly::sources_impl
-
-extern template void specfem::assembly::sources_impl::locate_sources<
-    specfem::element::dimension_tag::dim2>(
-    const specfem::assembly::element_types<
-        specfem::element::dimension_tag::dim2> &,
-    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &,
-    std::vector<std::shared_ptr<
-        specfem::sources::source<specfem::element::dimension_tag::dim2> > > &);
-extern template void specfem::assembly::sources_impl::locate_sources<
-    specfem::element::dimension_tag::dim3>(
-    const specfem::assembly::element_types<
-        specfem::element::dimension_tag::dim3> &,
-    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &,
-    std::vector<std::shared_ptr<
-        specfem::sources::source<specfem::element::dimension_tag::dim3> > > &);

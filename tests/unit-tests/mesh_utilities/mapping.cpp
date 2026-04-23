@@ -366,7 +366,12 @@ create_coordinate_arrays(const std::vector<point_3d> &reordered_points,
   }
 
   int ngllxyz = ngll * ngll * ngll;
-  assert(nglob != (nspec * ngllxyz));
+  // nodes. nspec = 1 means no sharing, so nglob should equal nspec*ngllxyz
+  if (nspec > 1) {
+    assert(nglob < (nspec * ngllxyz));
+  } else {
+    assert(nglob == (nspec * ngllxyz));
+  }
   assert(inum == nglob);
 
   return std::make_tuple(index_mapping, coord, inum);

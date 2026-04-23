@@ -1,6 +1,5 @@
 #include "specfem/assembly/field_derivative_storage/dim3/field_derivative_storage.hpp"
 #include "specfem/assembly/element_types.hpp"
-#include "specfem/macros.hpp"
 #include <type_traits>
 
 specfem::assembly::FieldDerivativeStorage<
@@ -11,24 +10,21 @@ specfem::assembly::FieldDerivativeStorage<
         const int nspec_global, const int ngllz, const int nglly,
         const int ngllx) {
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)), CAPTURE(fd_medium) {
-        // Select elements in this medium that require field derivative storage
-        // (i.e. are attenuating).
+  specfem::tag_dispatch::for_each(
+      field_derivative_medium_combinations, [&]<typename TagsType>() {
         std::vector<int> element_indices;
 
-        auto elements = element_types.get_elements_on_host(_medium_tag_);
+        auto elements =
+            element_types.get_elements_on_host(TagsType::medium_tag);
 
         for (int element_index = 0; element_index < elements.extent(0);
              ++element_index) {
 
           const int ispec = elements(element_index);
 
-          // This expresion could be
           bool requires_storage = (element_types.attenuation_tags(ispec) !=
                                    specfem::element::attenuation_tag::none);
 
-          // Store the global
           if (requires_storage) {
             element_indices.push_back(ispec);
           }
@@ -40,6 +36,8 @@ specfem::assembly::FieldDerivativeStorage<
         for (size_t i = 0; i < count; ++i)
           subset_elements(i) = element_indices[i];
 
-        _fd_medium_ = { subset_elements, nspec_global, ngllz, nglly, ngllx };
-      })
+        field_derivative_storage.template get<TagsType>() = {
+          subset_elements, nspec_global, ngllz, nglly, ngllx
+        };
+      });
 }

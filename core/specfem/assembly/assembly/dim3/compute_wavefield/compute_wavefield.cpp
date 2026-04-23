@@ -1,7 +1,8 @@
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/assembly/assembly/impl/compute_wavefield_helper.hpp"
 #include "specfem/enums.hpp"
-#include "specfem/macros.hpp"
+#include "specfem/macros/tag_dispatch.hpp"
+#include "specfem/tag_dispatch/for_each.hpp"
 #include <Kokkos_Core.hpp>
 #include <stdexcept>
 #include <type_traits>
@@ -89,18 +90,13 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::
   const auto h_wavefield_on_entire_grid =
       Kokkos::create_mirror_view(wavefield_on_entire_grid);
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
-       PROPERTY_TAG(ISOTROPIC)),
-      {
-        // Create tags for the current combination
-        using PointTags =
-            specfem::tags::Tags<specfem::element::dimension_tag::dim3,
-                                _medium_tag_, _property_tag_>;
-
-        get_wavefield_on_entire_grid<PointTags>(component, *this,
-                                                wavefield_on_entire_grid);
-      })
+  specfem::tag_dispatch::for_each(
+      DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic) *
+          PROPERTY_SET(isotropic),
+      [&]<typename TagsType>() {
+        get_wavefield_on_entire_grid<TagsType>(component, *this,
+                                               wavefield_on_entire_grid);
+      });
 
   // Copy the wavefield on the entire grid to the host
   Kokkos::deep_copy(h_wavefield_on_entire_grid, wavefield_on_entire_grid);

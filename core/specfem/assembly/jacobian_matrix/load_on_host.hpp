@@ -57,9 +57,8 @@ template <
             specfem::data_access::is_jacobian_matrix<ContainerType>::value &&
             specfem::data_access::is_jacobian_matrix<PointType>::value,
         int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void load_on_host(const IndexType &index,
-                                              const ContainerType &container,
-                                              PointType &point) {
+void load_on_host(const IndexType &index, const ContainerType &container,
+                  PointType &point) {
 
   using compatibility =
       specfem::data_access::CheckCompatibility<IndexType, ContainerType,

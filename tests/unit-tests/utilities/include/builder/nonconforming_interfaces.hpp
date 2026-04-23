@@ -34,24 +34,13 @@ public:
             specfem::element_connections::type ConnectionTag,
             specfem::element_coupling::flux_scheme_tag FluxSchemeTag>
   void reinit_container(const int &num_edges) {
-
-    FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2), CONNECTION_TAG(NONCONFORMING),
-         INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
-         BOUNDARY_TAG(NONE, STACEY, ACOUSTIC_FREE_SURFACE,
-                      COMPOSITE_STACEY_DIRICHLET),
-         FLUX_SCHEME_TAG(NATURAL)),
-        CAPTURE(interface_container) {
-          if constexpr (_interface_tag_ == InterfaceTag &&
-                        _boundary_tag_ == BoundaryTag &&
-                        _connection_tag_ == ConnectionTag &&
-                        _flux_scheme_tag_ == FluxSchemeTag) {
-            _interface_container_ =
-                InterfaceContainerType<_interface_tag_, _boundary_tag_,
-                                       _connection_tag_, _flux_scheme_tag_>(
-                    ngllz, ngllx, nquad_intersection, num_edges);
-          }
-        })
+    using TagsType = specfem::tags::Tags<specfem::element::dimension_tag::dim2,
+                                         ConnectionTag, InterfaceTag,
+                                         BoundaryTag, FluxSchemeTag>;
+    interface_container.template get<TagsType>() =
+        InterfaceContainerType<InterfaceTag, BoundaryTag, ConnectionTag,
+                               FluxSchemeTag>(ngllz, ngllx, nquad_intersection,
+                                              num_edges);
   }
 };
 } // namespace specfem::test_builder

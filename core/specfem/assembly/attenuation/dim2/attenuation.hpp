@@ -8,9 +8,11 @@
 #include "specfem/constants.hpp"
 #include "specfem/data_access/container.hpp"
 #include "specfem/enums.hpp"
-#include "specfem/macros.hpp"
+#include "specfem/macros/tag_dispatch.hpp"
 #include "specfem/mesh/dim2/materials/materials.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/tag_dispatch.hpp"
+#include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly {
@@ -90,14 +92,21 @@ struct Attenuation<specfem::element::dimension_tag::dim2>
                Kokkos::DefaultExecutionSpace>
       d_gamma_rk;
 
-  // One attenuation_medium member per (medium, property) combination
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV),
-                       PROPERTY_TAG(ISOTROPIC),
-                       ATTENUATION_TAG(CONSTANT_ISOTROPIC)),
-                      DECLARE(((specfem::assembly::impl::attenuation_medium,
-                                (_DIMENSION_TAG_, _MEDIUM_TAG_, _PROPERTY_TAG_,
-                                 _ATTENUATION_TAG_)),
-                               attn_medium)))
+  static constexpr auto attenuation_medium_combinations =
+      specfem::tag_dispatch::dimension_set<dimension_tag>{} *
+      MEDIUM_SET(elastic_psv) * PROPERTY_SET(isotropic) *
+      ATTENUATION_SET(constant_isotropic);
+
+  template <typename TagsType>
+  using AttenuationMediumTemplateType =
+      specfem::assembly::impl::attenuation_medium<
+          TagsType::dimension_tag, TagsType::medium_tag, TagsType::property_tag,
+          TagsType::attenuation_tag>;
+
+  specfem::tag_dispatch::TypedStorage<AttenuationMediumTemplateType,
+                                      decltype(attenuation_medium_combinations)>
+      attenuation_storage; ///< Storage for attenuation medium containers keyed
+                           ///< by (medium, property, attenuation) combination
 
   Attenuation() = default;
 
@@ -131,41 +140,34 @@ struct Attenuation<specfem::element::dimension_tag::dim2>
    */
   template <specfem::element::medium_tag MediumTag,
             specfem::element::property_tag PropertyTag>
-  KOKKOS_INLINE_FUNCTION constexpr specfem::assembly::impl::attenuation_medium<
-      specfem::element::dimension_tag::dim2, MediumTag, PropertyTag,
-      specfem::element::attenuation_tag::constant_isotropic> const &
+  KOKKOS_INLINE_FUNCTION const specfem::assembly::impl::attenuation_medium<
+      dimension_tag, MediumTag, PropertyTag,
+      specfem::element::attenuation_tag::constant_isotropic> &
   get_container() const {
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV),
-                         PROPERTY_TAG(ISOTROPIC),
-                         ATTENUATION_TAG(CONSTANT_ISOTROPIC)),
-                        CAPTURE(attn_medium) {
-                          if constexpr (_medium_tag_ == MediumTag &&
-                                        _property_tag_ == PropertyTag) {
-                            return _attn_medium_;
-                          }
-                        })
-    Kokkos::abort("Invalid medium type detected in attenuation");
-    SUPPRESS_UNREACHABLE(return {};)
+    using Key = specfem::tags::Tags<
+        dimension_tag, MediumTag, PropertyTag,
+        specfem::element::attenuation_tag::constant_isotropic>;
+    return attenuation_storage.template get<Key>();
   }
 
   /**
    * @brief Copy attenuation data to host mirrors.
    */
   void copy_to_host() {
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV),
-                         PROPERTY_TAG(ISOTROPIC),
-                         ATTENUATION_TAG(CONSTANT_ISOTROPIC)),
-                        CAPTURE(attn_medium) { _attn_medium_.copy_to_host(); })
+    specfem::tag_dispatch::for_each(
+        attenuation_medium_combinations, [&]<typename TagsType>() {
+          attenuation_storage.template get<TagsType>().copy_to_host();
+        });
   }
 
   /**
    * @brief Copy attenuation data to device views.
    */
   void copy_to_device() {
-    FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV), PROPERTY_TAG(ISOTROPIC),
-         ATTENUATION_TAG(CONSTANT_ISOTROPIC)),
-        CAPTURE(attn_medium) { _attn_medium_.copy_to_device(); })
+    specfem::tag_dispatch::for_each(
+        attenuation_medium_combinations, [&]<typename TagsType>() {
+          attenuation_storage.template get<TagsType>().copy_to_device();
+        });
   }
 };
 

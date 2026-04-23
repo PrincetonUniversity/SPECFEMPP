@@ -5,10 +5,10 @@
 #include <vector>
 
 #include "specfem/enums.hpp"
-#include "specfem/macros.hpp"
 #include "specfem/medium_container.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include "test_fixture.hpp"
 
 namespace specfem::test_configuration {
@@ -95,27 +95,30 @@ struct ExpectedMaterials3D {
       }
 
       // Retrieve the material and verify it matches expected
-      // Note: Update this macro when adding new material types
-      FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM3), MEDIUM_TAG(ACOUSTIC, ELASTIC),
-           PROPERTY_TAG(ISOTROPIC), ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
-          {
-            if (medium_tag == _medium_tag_ && property_tag == _property_tag_) {
+      // Note: Update this section when adding new material types
+      specfem::tag_dispatch::for_each(
+          DIMENSION_SET(dim3) * MEDIUM_SET(elastic) * PROPERTY_SET(isotropic) *
+              ATTENUATION_SET(none, constant_isotropic),
+          [&]<typename ElementTags>() {
+            if (medium_tag == ElementTags::medium_tag &&
+                property_tag == ElementTags::property_tag &&
+                attenuation_tag == ElementTags::attenuation_tag) {
               const auto computed_material =
-                  materials.get_material<_medium_tag_, _property_tag_,
-                                         _attenuation_tag_>(
+                  materials.get_material<ElementTags::medium_tag,
+                                         ElementTags::property_tag,
+                                         ElementTags::attenuation_tag>(
                       expected.element_id);
               const auto expected_material =
                   std::any_cast<specfem::medium_container::material<
-                      _dimension_tag_, _medium_tag_, _property_tag_,
-                      _attenuation_tag_> >(expected.material);
+                      ElementTags::dimension_tag, ElementTags::medium_tag,
+                      ElementTags::property_tag,
+                      ElementTags::attenuation_tag> >(expected.material);
               if (computed_material != expected_material) {
                 FAIL() << "Material mismatch for element "
                        << expected.element_id << ". "
                        << "Expected: " << expected_material.print() << ", "
                        << "Got: " << computed_material.print() << std::endl;
               }
-              break;
             }
           });
     }

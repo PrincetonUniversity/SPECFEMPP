@@ -1,11 +1,14 @@
 #pragma once
 
 #include "specfem/element.hpp"
-#include "specfem/macros.hpp"
+#include "specfem/macros/tag_dispatch.hpp"
 #include "specfem/medium_container.hpp"
 #include "specfem/mesh/mesh_base.hpp"
+#include "specfem/tag_dispatch.hpp"
+#include "specfem/tags.hpp"
 
 #include "specfem/setup.hpp"
+#include <optional>
 #include <variant>
 
 namespace specfem {
@@ -70,15 +73,21 @@ template <> struct materials<specfem::element::dimension_tag::dim2> {
       material_index_mapping; ///< Mapping of spectral element to material
                               ///< properties
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC, ELASTIC_PSV_T,
-                  ELECTROMAGNETIC_TE),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-       ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
-      DECLARE(((specfem::mesh::materials, (_DIMENSION_TAG_), ::material,
-                (_MEDIUM_TAG_, _PROPERTY_TAG_, _ATTENUATION_TAG_)),
-               material)))
+  static constexpr auto combinations =
+      specfem::tag_dispatch::dimension_set<dimension_tag>{} *
+      MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic, elastic_psv_t,
+                 electromagnetic_te) *
+      PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
+      ATTENUATION_SET(none, constant_isotropic);
+
+  template <typename TagsType>
+  using MaterialContainerTemplate =
+      material<TagsType::medium_tag, TagsType::property_tag,
+               TagsType::attenuation_tag>;
+
+  specfem::tag_dispatch::TypedStorage<MaterialContainerTemplate,
+                                      decltype(combinations)>
+      material_containers;
 
   /**
    * @name Constructors
@@ -126,23 +135,33 @@ public:
   specfem::medium_container::material<dimension_tag, MediumTag, PropertyTag,
                                       AttenuationTag>
   get_material(const int index) const {
+#ifndef NDEBUG
+    if (index < 0 ||
+        index >= static_cast<int>(this->material_index_mapping.extent(0))) {
+      KOKKOS_ABORT_WITH_LOCATION("Element index out of range in get_material");
+    }
+#endif
     const auto &material_specification = this->material_index_mapping(index);
 
-    FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2),
-         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                    ELASTIC_PSV_T, ELECTROMAGNETIC_TE),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
-        CAPTURE(material) {
-          if constexpr (MediumTag == _medium_tag_ &&
-                        PropertyTag == _property_tag_ &&
-                        AttenuationTag == _attenuation_tag_) {
-            return _material_.element_materials[material_specification.index];
-          }
-        })
+#ifndef NDEBUG
+    if (material_specification.type != MediumTag ||
+        material_specification.property != PropertyTag ||
+        material_specification.attenuation != AttenuationTag) {
+      KOKKOS_ABORT_WITH_LOCATION("Material type mismatch in get_material");
+    }
+#endif
 
-    Kokkos::abort("Invalid material type detected in material specification");
+    using Key = specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag,
+                                    AttenuationTag>;
+    const auto &container = material_containers.template get<Key>();
+#ifndef NDEBUG
+    if (material_specification.index < 0 ||
+        material_specification.index >=
+            static_cast<int>(container.element_materials.size())) {
+      KOKKOS_ABORT_WITH_LOCATION("Material index out of range in get_material");
+    }
+#endif
+    return container.element_materials[material_specification.index];
   }
 
   /**
@@ -156,28 +175,13 @@ public:
    * @return Point properties (attenuation-independent)
    */
   template <specfem::element::medium_tag MediumTag,
-            specfem::element::property_tag PropertyTag>
+            specfem::element::property_tag PropertyTag,
+            specfem::element::attenuation_tag AttenuationTag>
   specfem::point::properties<
       specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag, false> >
-  get_properties(const int index,
-                 specfem::element::attenuation_tag attenuation) const {
-    const auto &material_specification = this->material_index_mapping(index);
-    FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2),
-         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                    ELASTIC_PSV_T, ELECTROMAGNETIC_TE),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
-        CAPTURE(material) {
-          if constexpr (MediumTag == _medium_tag_ &&
-                        PropertyTag == _property_tag_) {
-            if (_attenuation_tag_ == attenuation) {
-              return _material_.element_materials[material_specification.index]
-                  .get_properties();
-            }
-          }
-        })
-    Kokkos::abort("Unknown attenuation_tag in get_properties");
+  get_properties(const int index) const {
+    return get_material<MediumTag, PropertyTag, AttenuationTag>(index)
+        .get_properties();
   }
 
   template <specfem::element::medium_tag MediumTag,
@@ -185,8 +189,26 @@ public:
   specfem::point::properties<
       specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag, false> >
   get_properties(const int index) const {
-    return get_properties<MediumTag, PropertyTag>(
-        index, this->material_index_mapping(index).attenuation);
+    using Result = specfem::point::properties<
+        specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag, false> >;
+    using att = specfem::element::attenuation_tag;
+    constexpr auto att_combos =
+        specfem::tag_dispatch::dimension_set<dimension_tag>{} *
+        specfem::tag_dispatch::medium_set<MediumTag>{} *
+        specfem::tag_dispatch::property_set<PropertyTag>{} *
+        ATTENUATION_SET(none, constant_isotropic);
+    const att runtime_att = this->material_index_mapping(index).attenuation;
+    std::optional<Result> result;
+    specfem::tag_dispatch::for_each(att_combos, [&]<typename TagsType>() {
+      if (TagsType::attenuation_tag == runtime_att)
+        result =
+            get_properties<MediumTag, PropertyTag, TagsType::attenuation_tag>(
+                index);
+    });
+    if (!result)
+      KOKKOS_ABORT_WITH_LOCATION(
+          "Invalid attenuation tag for material combination");
+    return *result;
   }
 
   /**
@@ -203,21 +225,9 @@ public:
                                                     AttenuationTag> &
   get_container() {
 
-    FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2),
-         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                    ELASTIC_PSV_T, ELECTROMAGNETIC_TE),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
-        CAPTURE(material) {
-          if constexpr (_medium_tag_ == MediumTag &&
-                        _property_tag_ == PropertyTag &&
-                        _attenuation_tag_ == AttenuationTag) {
-            return _material_;
-          }
-        })
-
-    Kokkos::abort("Invalid material type detected in material specification");
+    using Key = specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag,
+                                    AttenuationTag>;
+    return material_containers.template get<Key>();
   }
 
   template <specfem::element::medium_tag MediumTag,
@@ -227,21 +237,9 @@ public:
       MediumTag, PropertyTag, AttenuationTag> &
   get_container() const {
 
-    FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2),
-         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                    ELASTIC_PSV_T, ELECTROMAGNETIC_TE),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
-        CAPTURE(material) {
-          if constexpr (_medium_tag_ == MediumTag &&
-                        _property_tag_ == PropertyTag &&
-                        _attenuation_tag_ == AttenuationTag) {
-            return _material_;
-          }
-        })
-
-    Kokkos::abort("Invalid material type detected in material specification");
+    using Key = specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag,
+                                    AttenuationTag>;
+    return material_containers.template get<Key>();
   }
 
   /**

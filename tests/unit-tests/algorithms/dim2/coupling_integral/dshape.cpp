@@ -175,9 +175,6 @@ void execute_simple_dshape_test() {
       type_real, dimension_tag, chunk_size, nquad_intersection, ncomp_self,
       false, memory_space, Kokkos::MemoryTraits<> >;
 
-  const int num_chunks =
-      num_edges / chunk_size + ((num_edges % chunk_size != 0) ? 1 : 0);
-
   Kokkos::View<type_real *[ngllz][ngllx], memory_space, Kokkos::MemoryTraits<> >
       computed_integrals("dshape::computed_integrals", num_edges);
 

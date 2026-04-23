@@ -85,14 +85,14 @@ build_assembly_adjacency_graph(
 
   for (int ispec = 0; ispec < nspec; ispec++) {
     // Get mesh index
-    const int ispec_mesh = mapping.compute_to_mesh(ispec);
+        const int ispec_mesh = mapping.h_compute_to_mesh(ispec);
     // Iterate over all outgoing edges
     for (auto iedge :
          boost::make_iterator_range(boost::out_edges(ispec_mesh, mesh_g))) {
       // Get the target mesh index
       const int target_ispec_mesh = boost::target(iedge, mesh_g);
       // Get the target specfem index
-      const int target_ispec = mapping.mesh_to_compute(target_ispec_mesh);
+    const int target_ispec = mapping.h_mesh_to_compute(target_ispec_mesh);
       // Get edge property
       const auto edge_property = mesh_g[iedge];
       // Add the edge to the adjacency graph

@@ -58,7 +58,7 @@ specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::
       Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace,
                             Kokkos::Rank<4> >({ 0, 0, 0, 0 },
                                               { nspec, ngllz, nglly, ngllx }),
-      [=](const int ispec, const int iz, const int iy, const int ix) {
+      [=, this](const int ispec, const int iz, const int iy, const int ix) {
         this->h_index_mapping(ispec, iz, iy, ix) = -1;
       });
 
@@ -70,7 +70,7 @@ specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::
       Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace,
                             Kokkos::Rank<4> >(
           { 0, 1, 1, 1 }, { nchunks, ngllz - 1, nglly - 1, ngllx - 1 }),
-      [=](const int ichunk, const int iz, const int iy, const int ix) {
+      [=, this](const int ichunk, const int iz, const int iy, const int ix) {
         for (int ielement = 0; ielement < chunk_size; ielement++) {
           int ispec = ichunk * chunk_size + ielement;
           if (ispec >= nspec)
@@ -276,7 +276,7 @@ specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::
       Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace,
                             Kokkos::Rank<4> >({ 0, 0, 0, 0 },
                                               { nspec, ngllz, nglly, ngllx }),
-      [=](const int ispec, const int iz, const int iy, const int ix) {
+      [=, this](const int ispec, const int iz, const int iy, const int ix) {
         if (this->h_index_mapping(ispec, iz, iy, ix) == -1) {
           std::stringstream ss;
           ss << "Point not assigned for element " << ispec << " at (" << iz

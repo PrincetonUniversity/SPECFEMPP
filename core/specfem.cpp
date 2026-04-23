@@ -2,6 +2,7 @@
 #include "specfem/logger.hpp"
 #include "specfem/program.hpp"
 #include "specfem/program/context.hpp"
+#include "specfem/version.hpp"
 #include <CLI/CLI.hpp>
 #include <iostream>
 #include <optional>
@@ -191,9 +192,7 @@ int run_qplots(int argc, char **argv, const Qoptions &opts) {
 
 int main(int argc, char **argv) {
 
-  CLI::App app{ "======================================\n"
-                "--------------- SPECFEM++ ------------\n"
-                "======================================" };
+  CLI::App app{ specfem::version::header() };
   app.require_subcommand(1);
 
   // -- 2d subcommand --

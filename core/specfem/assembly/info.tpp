@@ -9,6 +9,7 @@
 #include "specfem/assembly/info/impl/bounding_box.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/parallel_configuration.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include <Kokkos_Core.hpp>
 
 #include <limits>
@@ -209,26 +210,30 @@ specfem::assembly::Info<DimensionTag>::Info(
 
   // Process each medium/property combination
   if constexpr (specfem::element::dimension_tag::dim2 == dimension_tag) {
-    FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2),
-         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                    ELASTIC_PSV_T),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
-        {
-          info::impl::process_medium_elements<_dimension_tag_, _medium_tag_,
-                                              _property_tag_>(
+    specfem::tag_dispatch::for_each(
+        DIMENSION_SET(dim2) *
+        MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
+                   elastic_psv_t) *
+        PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
+        ATTENUATION_SET(none),
+        [&]<typename ElementTags>() {
+          info::impl::process_medium_elements<ElementTags::dimension_tag,
+                                              ElementTags::medium_tag,
+                                              ElementTags::property_tag>(
               mesh, properties, element_types, scatters);
-        };);
+        });
   } else {
-    FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM3),
-         MEDIUM_TAG(ELASTIC, ACOUSTIC),
-         PROPERTY_TAG(ISOTROPIC)),
-        {
-          info::impl::process_medium_elements<_dimension_tag_, _medium_tag_,
-                                              _property_tag_>(
+    specfem::tag_dispatch::for_each(
+        DIMENSION_SET(dim3) *
+        MEDIUM_SET(elastic, acoustic) *
+        PROPERTY_SET(isotropic) *
+        ATTENUATION_SET(none),
+        [&]<typename ElementTags>() {
+          info::impl::process_medium_elements<ElementTags::dimension_tag,
+                                              ElementTags::medium_tag,
+                                              ElementTags::property_tag>(
               mesh, properties, element_types, scatters);
-        };);
+        });
   };
 
   // Compute derived quantities (minimum period, dt) from per-element data

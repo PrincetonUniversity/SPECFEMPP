@@ -159,13 +159,14 @@ struct ExpectedProperties3D {
     }
 
     // Validate GLL grid configuration
-    if (properties.ngllz != gll_grid.ngllz ||
-        properties.nglly != gll_grid.nglly ||
-        properties.ngllx != gll_grid.ngllx) {
+    if (properties.element_grid.ngllz != gll_grid.ngllz ||
+        properties.element_grid.nglly != gll_grid.nglly ||
+        properties.element_grid.ngllx != gll_grid.ngllx) {
       FAIL() << "GLL grid dimensions mismatch. Expected: (" << gll_grid.ngllz
              << ", " << gll_grid.nglly << ", " << gll_grid.ngllx << "), Got: ("
-             << properties.ngllz << ", " << properties.nglly << ", "
-             << properties.ngllx << ")" << std::endl;
+             << properties.element_grid.ngllz << ", "
+             << properties.element_grid.nglly << ", "
+             << properties.element_grid.ngllx << ")" << std::endl;
     }
 
     // Validate individual property specifications
@@ -176,39 +177,42 @@ struct ExpectedProperties3D {
                << std::endl;
       }
 
-      if (expected.iz < 0 || expected.iz >= properties.ngllz) {
+      if (expected.iz < 0 || expected.iz >= properties.element_grid.ngllz) {
         FAIL() << "GLL index iz " << expected.iz << " is out of range."
                << std::endl;
       }
 
-      if (expected.iy < 0 || expected.iy >= properties.nglly) {
+      if (expected.iy < 0 || expected.iy >= properties.element_grid.nglly) {
         FAIL() << "GLL index iy " << expected.iy << " is out of range."
                << std::endl;
       }
 
-      if (expected.ix < 0 || expected.ix >= properties.ngllx) {
+      if (expected.ix < 0 || expected.ix >= properties.element_grid.ngllx) {
         FAIL() << "GLL index ix " << expected.ix << " is out of range."
                << std::endl;
       }
 
       // Type-safe property validation using template metaprogramming
-      FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC)), {
-            if (_medium_tag_ == expected.medium_tag &&
-                _property_tag_ == expected.property_tag) {
+      specfem::tag_dispatch::for_each(
+          DIMENSION_SET(dim3) * MEDIUM_SET(elastic) * PROPERTY_SET(isotropic),
+          [&]<typename ElementTags>() {
+            if (ElementTags::medium_tag == expected.medium_tag &&
+                ElementTags::property_tag == expected.property_tag) {
               const int ispec = expected.ispec;
               const int iz = expected.iz;
               const int iy = expected.iy;
               const int ix = expected.ix;
 
               // Create point index for property access
-              const auto index = specfem::point::index<_dimension_tag_, false>(
-                  ispec, iz, iy, ix);
+              const auto index =
+                  specfem::point::index<ElementTags::dimension_tag, false>(
+                      ispec, iz, iy, ix);
 
               // Load computed property from assembly structure
               const auto computed_property = [&]() {
                 specfem::point::properties<specfem::tags::Tags<
-                    _dimension_tag_, _medium_tag_, _property_tag_, false> >
+                    ElementTags::dimension_tag, ElementTags::medium_tag,
+                    ElementTags::property_tag, false> >
                     prop_accessor;
                 specfem::assembly::load_on_host(index, properties,
                                                 prop_accessor);
@@ -218,8 +222,8 @@ struct ExpectedProperties3D {
               // Extract expected property from type-erased storage
               const auto expected_property =
                   std::any_cast<specfem::point::properties<specfem::tags::Tags<
-                      _dimension_tag_, _medium_tag_, _property_tag_, false> > >(
-                      expected.property);
+                      ElementTags::dimension_tag, ElementTags::medium_tag,
+                      ElementTags::property_tag, false> > >(expected.property);
 
               // Compare properties with detailed error reporting
               if (computed_property != expected_property) {

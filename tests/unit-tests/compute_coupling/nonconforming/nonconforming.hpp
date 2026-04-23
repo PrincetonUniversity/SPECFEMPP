@@ -122,7 +122,6 @@ execute_impl_compute_coupling(const TransferFunction2D &transfer_function,
       KOKKOS_LAMBDA(const Kokkos::TeamPolicy<>::member_type &team_member) {
         const int iedge_start = team_member.league_rank();
         const int iedge_end = team_member.league_rank() + 1;
-        const int virtual_chunk_size = iedge_end - iedge_start;
         const auto view_slice = Kokkos::make_pair(iedge_start, iedge_end);
         const TransferFunctionType TF(Kokkos::subview(
             transfer_function_view, view_slice, Kokkos::ALL(), Kokkos::ALL()));

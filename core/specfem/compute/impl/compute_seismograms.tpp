@@ -22,12 +22,11 @@ void specfem::compute::impl::compute_seismograms(
   constexpr auto dimension_tag = Tags::dimension_tag;
   constexpr auto medium_tag = Tags::medium_tag;
   constexpr auto property_tag = Tags::property_tag;
-  constexpr auto attenuation_tag = Tags::attenuation_tag;
   constexpr auto wavefield_simulation_field = Tags::wavefield_tag;
   constexpr int ngll = NGLL;
 
   const auto [elements, receiver_indices] =
-      assembly.receivers.get_indices_on_device(medium_tag, property_tag, attenuation_tag);
+      assembly.receivers.get_indices_on_device(medium_tag, property_tag);
 
   // Get the element grid (ngllx, ngllz)
   const auto &element_grid = assembly.mesh.element_grid;
@@ -146,7 +145,6 @@ void specfem::compute::impl::compute_seismograms(
 
           using PointTags =
               specfem::tags::Tags<dimension_tag, medium_tag, property_tag,
-                                  attenuation_tag,
                                   using_simd>;
           specfem::medium_physics::compute_wavefield<PointTags>(
               chunk_index, assembly, lagrange_derivative, displacement, velocity,

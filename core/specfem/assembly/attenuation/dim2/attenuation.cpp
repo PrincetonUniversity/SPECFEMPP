@@ -16,18 +16,18 @@ void specfem::assembly::Attenuation<specfem::element::dimension_tag::dim2>::
         const specfem::units::Hertz fc, const specfem::units::Hertz f0,
         const specfem::utilities::Band<specfem::units::Hertz> &band,
         const Kokkos::View<type_real[N_SLS], Kokkos::DefaultHostExecutionSpace>
-            &tau_sigma){
+            &tau_sigma) {
 
-      FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV),
-           PROPERTY_TAG(ISOTROPIC), ATTENUATION_TAG(CONSTANT_ISOTROPIC)),
-          CAPTURE(attn_medium) {
-            auto elements = element_types.get_elements_on_host(
-                _medium_tag_, _property_tag_, _attenuation_tag_);
-            _attn_medium_ = { elements, mesh, materials, ngllz,    ngllx,
-                              fc,       f0,   band,      tau_sigma };
-          })
-    }
+  specfem::tag_dispatch::for_each(
+      attenuation_medium_combinations, [&]<typename TagsType>() {
+        auto elements = element_types.get_elements_on_host(
+            TagsType::medium_tag, TagsType::property_tag,
+            TagsType::attenuation_tag);
+        attenuation_storage.template get<TagsType>() = {
+          elements, mesh, materials, ngllz, ngllx, fc, f0, band, tau_sigma
+        };
+      });
+}
 
 specfem::assembly::Attenuation<specfem::element::dimension_tag::dim2>::
     Attenuation(
