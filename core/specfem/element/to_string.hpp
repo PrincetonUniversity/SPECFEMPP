@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/simulation.hpp"
 #include "specfem/utilities/errors.hpp"
 #include "tags.hpp"
 #include <array>
@@ -31,6 +32,14 @@ const std::string to_string(const medium_tag &medium,
 const std::string to_string(const medium_tag &medium,
                             const property_tag &property_tag,
                             const attenuation_tag &attenuation_tag);
+
+/**
+ * @brief Convert dimension tag to string.
+ *
+ * @param dimension Dimension type
+ * @return String representation
+ */
+const std::string to_string(const dimension_tag &dimension);
 
 /**
  * @brief Convert medium tag to string.

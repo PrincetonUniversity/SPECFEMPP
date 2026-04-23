@@ -3,8 +3,8 @@
 #include "impl/compute_material_derivatives.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/element.hpp"
-#include "specfem/macros.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include "specfem/tags.hpp"
 
 namespace specfem {
@@ -22,19 +22,16 @@ template <int NGLL, typename Tags>
 void compute_derivatives(
     const specfem::assembly::assembly<Tags::dimension_tag> &assembly,
     const type_real &dt) {
-  constexpr auto DimensionTag = Tags::dimension_tag;
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC), ATTENUATION_TAG(NONE)),
-      {
-        if constexpr (DimensionTag == _dimension_tag_) {
-          impl::compute_material_derivatives<
-              NGLL,
-              specfem::tags::Tags<DimensionTag, _medium_tag_, _property_tag_> >(
-              assembly, dt);
-        }
-      })
+  specfem::tag_dispatch::for_each(
+      specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
+          MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic) *
+          PROPERTY_SET(isotropic, anisotropic) * ATTENUATION_SET(none),
+      [&]<typename ElementTags>() {
+        impl::compute_material_derivatives<
+            NGLL,
+            specfem::tags::Tags<Tags::dimension_tag, ElementTags::medium_tag,
+                                ElementTags::property_tag> >(assembly, dt);
+      });
 }
 
 } // namespace compute

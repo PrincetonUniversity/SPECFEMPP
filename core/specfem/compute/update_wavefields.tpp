@@ -31,10 +31,23 @@ int update_wavefields(
     const int istep) {
   impl::compute_coupling<NGLL, Tags>(assembly);
   impl::compute_source_interaction<NGLL, Tags>(assembly, istep);
-  const int n =
-      impl::compute_stiffness_interaction<NGLL, Tags>(assembly, istep);
+
+  int elements_updated = 0;
+
+  specfem::tag_dispatch::for_each(
+      specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
+      specfem::tag_dispatch::medium_set<Tags::medium_tag>{} *
+      PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
+      ATTENUATION_SET(none) *
+      BOUNDARY_SET(none, stacey, acoustic_free_surface,
+                   composite_stacey_dirichlet), [&]<typename ElementTags>() {
+    elements_updated +=
+        impl::compute_stiffness_interaction<NGLL, Tags::wavefield_tag, ElementTags>(
+            assembly, istep);
+  });
+
   impl::divide_mass_matrix<NGLL, Tags>(assembly);
-  return n;
+  return elements_updated;
 }
 
 } // namespace specfem::compute

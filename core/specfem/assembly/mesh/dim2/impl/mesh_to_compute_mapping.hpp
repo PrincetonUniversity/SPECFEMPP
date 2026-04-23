@@ -17,8 +17,8 @@ namespace specfem::assembly::mesh_impl {
  * @code{.cpp}
  * // Mapping from compute ordering to mesh ordering
  * const int compute_index = ...;
- * int mesh_index = mapping.compute_to_mesh(compute_index);
- * assert(mapping.mesh_to_compute(mesh_index) == compute_index);
+ * int mesh_index = mapping.h_compute_to_mesh(compute_index);
+ * assert(mapping.h_mesh_to_compute(mesh_index) == compute_index);
  * @endcode
  *
  */
@@ -28,14 +28,16 @@ struct mesh_to_compute_mapping<specfem::element::dimension_tag::dim2> {
       specfem::element::dimension_tag::dim2; ///< Dimension
   int nspec;                                 ///< Number of spectral elements
 
-  using ViewType = Kokkos::View<int *, Kokkos::LayoutLeft,
-                                Kokkos::DefaultHostExecutionSpace>;
-  ViewType compute_to_mesh; ///< Mapping from compute
-                            ///< ordering to mesh
-                            ///< ordering
-  ViewType mesh_to_compute; ///< Mapping from mesh
-                            ///< ordering to compute
-                            ///< ordering
+  using ViewType =
+      Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>;
+  ViewType compute_to_mesh;               ///< Mapping from compute
+                                          ///< ordering to mesh
+                                          ///< ordering
+  ViewType mesh_to_compute;               ///< Mapping from mesh
+                                          ///< ordering to compute
+                                          ///< ordering
+  ViewType::HostMirror h_compute_to_mesh; ///< Host access for compute_to_mesh
+  ViewType::HostMirror h_mesh_to_compute; ///< Host access for mesh_to_compute
 
   /**
    * @brief Construct a new mesh to compute mapping object

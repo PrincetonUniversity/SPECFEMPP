@@ -100,6 +100,27 @@ inline std::string to_string(specfem::simulation::model mdl) {
 }
 
 /**
+ * @brief Convert field type to string.
+ *
+ * @param field Field type
+ * @return String representation
+ */
+inline std::string to_string(specfem::simulation::field_type field) {
+  switch (field) {
+  case specfem::simulation::field_type::forward:
+    return "forward";
+  case specfem::simulation::field_type::adjoint:
+    return "adjoint";
+  case specfem::simulation::field_type::backward:
+    return "backward";
+  case specfem::simulation::field_type::buffer:
+    return "buffer";
+  default:
+    return "unknown";
+  }
+}
+
+/**
  * @brief Simulation type traits template.
  * @tparam SimulationType Simulation type (forward or combined)
  */
@@ -111,12 +132,6 @@ template <specfem::simulation::type SimulationType> class simulation;
 template <> class simulation<specfem::simulation::type::forward> {
 public:
   static constexpr auto simulation_type = specfem::simulation::type::forward;
-
-  /**
-   * @brief Get simulation type name.
-   * @return String representation of simulation type
-   */
-  static std::string to_string() { return "Forward"; }
 };
 
 /**
@@ -125,12 +140,6 @@ public:
 template <> class simulation<specfem::simulation::type::combined> {
 public:
   static constexpr auto simulation_type = specfem::simulation::type::combined;
-
-  /**
-   * @brief Get simulation type name.
-   * @return String representation of simulation type
-   */
-  static std::string to_string() { return "Adjoint & Forward combined"; }
 };
 
 } // namespace simulation

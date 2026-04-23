@@ -84,7 +84,6 @@ specfem::mesh_entity::dim3::type find_face_from_nodes(
         &control_nodes,
     const int element_index, const std::vector<int> &face_nodes) {
 
-  const int nodes_per_element = control_nodes.ngnod;
   const auto &coordinates = control_nodes.coordinates;
   const auto &control_node_index = control_nodes.control_node_index;
 

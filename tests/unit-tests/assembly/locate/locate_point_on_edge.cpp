@@ -15,13 +15,6 @@ void test_locate_point_on_edge(
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
         &assembly) {
 
-  constexpr auto dim = specfem::element::dimension_tag::dim2;
-
-  const type_real xmin = assembly.mesh.xmin;
-  const type_real xmax = assembly.mesh.xmax;
-  const type_real zmin = assembly.mesh.zmin;
-  const type_real zmax = assembly.mesh.zmax;
-
   /* =============================
    * - test_locate_point_on_edge -
    * =============================

@@ -1,6 +1,7 @@
 
 #include "../test_fixture/test_fixture.hpp"
 #include "specfem/mesh.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include <cmath>
 #include <unordered_map>
 #include <variant>
@@ -176,23 +177,26 @@ void check_material(
     const int index = material_specification.index;
     const int imaterial = material_specification.database_index;
 
-    FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2),
-         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                    ELASTIC_PSV_T, ELECTROMAGNETIC_TE),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
-        {
-          if ((medium_tag == _medium_tag_) &&
-              (property_tag == _property_tag_) &&
-              (attenuation_tag == _attenuation_tag_)) {
+    bool found = false;
+    specfem::tag_dispatch::for_each(
+        DIMENSION_SET(dim2) *
+            MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
+                       elastic_psv_t, electromagnetic_te) *
+            PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
+            ATTENUATION_SET(none, constant_isotropic),
+        [&]<typename ElementTags>() {
+          if ((medium_tag == ElementTags::medium_tag) &&
+              (property_tag == ElementTags::property_tag) &&
+              (attenuation_tag == ElementTags::attenuation_tag)) {
             const auto icomputed =
-                computed.get_material<_medium_tag_, _property_tag_,
-                                      _attenuation_tag_>(ispec);
+                computed.get_material<ElementTags::medium_tag,
+                                      ElementTags::property_tag,
+                                      ElementTags::attenuation_tag>(ispec);
             const auto iexpected =
                 std::any_cast<specfem::medium_container::material<
-                    _dimension_tag_, _medium_tag_, _property_tag_,
-                    _attenuation_tag_> >(expected[imaterial]);
+                    ElementTags::dimension_tag, ElementTags::medium_tag,
+                    ElementTags::property_tag, ElementTags::attenuation_tag> >(
+                    expected[imaterial]);
             if (icomputed != iexpected) {
               std::ostringstream error_message;
               error_message << "Material " << index << " is not the same ["
@@ -206,18 +210,20 @@ void check_material(
                             << iexpected.print() << "\n";
               throw std::runtime_error(error_message.str());
             }
-            return;
+            found = true;
           }
-        })
+        });
 
-    // If we reach here, the material type is not supported
-    std::ostringstream error_message;
-    error_message << "Material type not supported [" << __FILE__ << ":"
-                  << __LINE__ << "]\n"
-                  << "  imaterial: " << imaterial << "\n"
-                  << "  index:     " << index << "\n"
-                  << "  ispec:     " << ispec << "\n";
-    throw std::runtime_error(error_message.str());
+    if (!found) {
+      // If we reach here, the material type is not supported
+      std::ostringstream error_message;
+      error_message << "Material type not supported [" << __FILE__ << ":"
+                    << __LINE__ << "]\n"
+                    << "  imaterial: " << imaterial << "\n"
+                    << "  index:     " << index << "\n"
+                    << "  ispec:     " << ispec << "\n";
+      throw std::runtime_error(error_message.str());
+    }
   }
 
   return;
