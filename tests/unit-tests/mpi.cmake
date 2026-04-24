@@ -185,6 +185,42 @@ target_link_libraries(
   -lpthread -lm
 )
 
+add_executable(
+  algorithms_locate_point_mpi_dim2_tests
+  algorithms/mpi/dim2/locate_point_test.cpp
+)
+
+target_link_libraries(
+  algorithms_locate_point_mpi_dim2_tests
+  specfem::algorithms
+  specfem::assembly
+  specfem::io
+  specfem::mesh
+  specfem_environment
+  specfem::utilities
+  MPI::MPI_CXX
+  Kokkos::kokkos
+  -lpthread -lm
+)
+
+add_executable(
+  algorithms_locate_point_mpi_dim3_tests
+  algorithms/mpi/dim3/locate_point_test.cpp
+)
+
+target_link_libraries(
+  algorithms_locate_point_mpi_dim3_tests
+  specfem::algorithms
+  specfem::assembly
+  specfem::io
+  specfem::mesh
+  specfem_environment
+  specfem::utilities
+  MPI::MPI_CXX
+  Kokkos::kokkos
+  -lpthread -lm
+)
+
 # MPI test targets (4 processes)
 set(MPI_TEST_TARGETS_4PROCS
   mesh_mpi_dim3_tests
@@ -195,7 +231,13 @@ set(MPI_TEST_TARGETS_4PROCS
   mpi_subset_2of4_tests
   mpi_subset_1of4_tests
   mpi_subset_all_tests
+  algorithms_locate_point_mpi_dim2_tests
+  algorithms_locate_point_mpi_dim3_tests
 )
+
+# Expose MPI test targets for use in CMakeLists.txt (ALL_TEST_TARGETS) and
+# the registration loop below.
+set(MPI_TEST_TARGETS ${MPI_TEST_TARGETS_4PROCS})
 
 # Setup test script writer (needed for external TEST_OUTPUT_DIR path-fix)
 specfem_write_copy_test_cmake_script()
