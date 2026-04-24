@@ -18,10 +18,9 @@ namespace medium_physics {
 // ---------------------------------------------------------------------------
 
 template <typename Tags>
-using enable_if_dim2_psv_iso_att = std::enable_if_t<
+using enable_if_dim2_psv_att = std::enable_if_t<
     Tags::dimension_tag == specfem::element::dimension_tag::dim2 &&
         Tags::medium_tag == specfem::element::medium_tag::elastic_psv &&
-        Tags::property_tag == specfem::element::property_tag::isotropic &&
         Tags::attenuation_tag ==
             specfem::element::attenuation_tag::constant_isotropic,
     int>;
@@ -43,7 +42,7 @@ using enable_if_dim2_psv_iso_att = std::enable_if_t<
  * @param point_attenuation Per-point attenuation state (memory variables)
  * @param point_stress      Stress tensor to be modified in-place
  */
-template <typename Tags, enable_if_dim2_psv_iso_att<Tags> = 0>
+template <typename Tags, enable_if_dim2_psv_att<Tags> = 0>
 KOKKOS_INLINE_FUNCTION void impl_add_relaxation_to_stress(
     const specfem::point::attenuation<
         specfem::element::dimension_tag::dim2,
@@ -98,7 +97,7 @@ KOKKOS_INLINE_FUNCTION void impl_add_relaxation_to_stress(
  * @param dv   Velocity gradient (current step, from gradient pack)
  * @param deltat Time step size
  */
-template <typename Tags, enable_if_dim2_psv_iso_att<Tags> = 0>
+template <typename Tags, enable_if_dim2_psv_att<Tags> = 0>
 KOKKOS_INLINE_FUNCTION void impl_integrate_memory_variables(
     specfem::point::attenuation<
         specfem::element::dimension_tag::dim2,
@@ -186,7 +185,7 @@ KOKKOS_INLINE_FUNCTION void impl_integrate_memory_variables(
  * @param attenuation            Assembly attenuation container
  */
 template <typename Tags, typename IndexType, typename GradientPackType,
-          typename AttenuationContainer, enable_if_dim2_psv_iso_att<Tags> = 0>
+          typename AttenuationContainer, enable_if_dim2_psv_att<Tags> = 0>
 KOKKOS_INLINE_FUNCTION void
 impl_compute_attenuation(const IndexType &index,
                          specfem::point::stress<Tags> &point_stress,
