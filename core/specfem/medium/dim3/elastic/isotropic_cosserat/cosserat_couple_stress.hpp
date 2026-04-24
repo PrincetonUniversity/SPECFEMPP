@@ -88,7 +88,7 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
                    xiz * (etax * gammay - etay * gammax);
   const auto invD = static_cast<T>(1.0) / det;
 
-  // Standard 2x2 matrix inverse:
+  // Standard 3x3 matrix inverse:
   //   J = [xix     xiy     xiz    ]
   //       [etax    etay    etaz   ]
   //       [gammax  gammay  gammaz ]
@@ -100,15 +100,15 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
   //     (1/ det) * [-(ηx*γz-ηz*γx)   (ξx*γz-ξz*γx)  -(ξx*ηz-ξz*ηx) ]
   //                [ ηx*γy-ηy*γx    -(ξx*γy-ξy*γx)   ξx*ηy-ξy*ηx   ]
 
-  const auto xxi = (etay * gammaz - etaz * gammay) * invD;    // ∂x/∂ξ
-  const auto xeta = -(etax * gammaz - etaz * gammax) * invD;  // ∂x/∂η
-  const auto xgamma = (etax * gammay - etay * gammax) * invD; // ∂x/∂γ
-  const auto yxi = -(xiy * gammaz - xiz * gammay) * invD;     // ∂y/∂ξ
-  const auto yeta = (xix * gammaz - xiz * gammax) * invD;     // ∂y/∂η
-  const auto ygamma = -(xix * gammay - xiy * gammax) * invD;  // ∂y/∂γ
-  const auto zxi = (etax * gammay - etay * gammax) * invD;    // ∂z/∂ξ
-  const auto zeta = -(xix * gammay - xiy * gammax) * invD;    // ∂z/∂η
-  const auto zgamma = (xix * etay - xiy * etax) * invD;       // ∂z/∂γ
+  const auto xxi = (etay * gammaz - etaz * gammay) * invD;  // ∂x/∂ξ
+  const auto xeta = -(xiy * gammaz - xiz * gammay) * invD;  // ∂x/∂η
+  const auto xgamma = (xiy * etaz - xiz * etay) * invD;     // ∂x/∂γ
+  const auto yxi = -(etax * gammaz - etaz * gammax) * invD; // ∂y/∂ξ
+  const auto yeta = (xix * gammaz - xiz * gammax) * invD;   // ∂y/∂η
+  const auto ygamma = -(xix * etaz - xiz * etax) * invD;    // ∂y/∂γ
+  const auto zxi = (etax * gammay - etay * gammax) * invD;  // ∂z/∂ξ
+  const auto zeta = -(xix * gammay - xiy * gammax) * invD;  // ∂z/∂η
+  const auto zgamma = (xix * etay - xiy * etax) * invD;     // ∂z/∂γ
 
   // Transform Stress integrand F to stress tensor T
   // const auto t_00 = (F(0, 0) * xxi + F(0, 1) * xgamma); // σ_xx

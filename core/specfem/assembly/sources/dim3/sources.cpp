@@ -63,7 +63,8 @@ specfem::assembly::sources<specfem::element::dimension_tag::dim3>::sources(
   specfem::assembly::sources_impl::locate_sources(element_types, mesh, sources);
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)), CAPTURE(source) {
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN)),
+      CAPTURE(source) {
         auto [sorted_sources, source_indices] =
             specfem::assembly::sources_impl::sort_sources_per_medium<
                 _dimension_tag_, _medium_tag_>(sources, element_types, mesh);

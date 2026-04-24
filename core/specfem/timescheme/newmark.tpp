@@ -139,7 +139,7 @@ int specfem::time_scheme::newmark<AssemblyFields,
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2, DIM3), MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                       POROELASTIC, ELASTIC_PSV_T)),
+                                       POROELASTIC, ELASTIC_SPIN, ELASTIC_PSV_T)),
       {
         if constexpr (dimension_tag == _dimension_tag_) {
           if (tag == _medium_tag_) {
@@ -161,7 +161,7 @@ int specfem::time_scheme::newmark<AssemblyFields,
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2, DIM3), MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                       POROELASTIC, ELASTIC_PSV_T)),
+                                       POROELASTIC, ELASTIC_SPIN, ELASTIC_PSV_T)),
       {
         if constexpr (dimension_tag == _dimension_tag_) {
           if (tag == _medium_tag_) {

@@ -81,7 +81,7 @@ void divide_mass_matrix(
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2, DIM3),
        MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T)),
+                  ELASTIC_PSV_T, ELASTIC_SPIN)),
       {
         if constexpr (DimensionTag == _dimension_tag_ &&
                       MediumTag == _medium_tag_) {
