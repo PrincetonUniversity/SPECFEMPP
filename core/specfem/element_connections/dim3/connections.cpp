@@ -173,6 +173,48 @@ affine_transform(const std::array<int, 4> &permutation, const type_real j,
   return { j_prime, i_prime };
 }
 
+namespace {
+
+/**
+ * @brief Face axis information for coordinate mapping
+ *
+ * Encodes the normal axis and tangent axes for each face type.
+ * Axis indices: 0=z, 1=y, 2=x (corresponding to {iz, iy, ix})
+ */
+struct face_axes_info {
+  int normal_axis; ///< Index of the normal axis (0=z, 1=y, 2=x)
+  bool normal_max; ///< If true, normal coord = ngll-1; if false, = 0
+  int u_axis;      ///< Index of first tangent axis
+  int v_axis;      ///< Index of second tangent axis
+};
+
+/**
+ * @brief Get axis information for a face type
+ *
+ * @param face Face type (left, right, front, back, bottom, top)
+ * @return face_axes_info Axis metadata for the face
+ */
+face_axes_info get_face_axes(const specfem::mesh_entity::dim3::type &face) {
+  switch (face) {
+  case specfem::mesh_entity::dim3::type::bottom:
+    return { 0, false, 1, 2 }; // normal=z(0), u=y(1), v=x(2)
+  case specfem::mesh_entity::dim3::type::top:
+    return { 0, true, 2, 1 }; // normal=z(0), u=x(2), v=y(1)
+  case specfem::mesh_entity::dim3::type::front:
+    return { 1, false, 2, 0 }; // normal=y(1), u=x(2), v=z(0)
+  case specfem::mesh_entity::dim3::type::back:
+    return { 1, true, 0, 2 }; // normal=y(1), u=z(0), v=x(2)
+  case specfem::mesh_entity::dim3::type::left:
+    return { 2, false, 0, 1 }; // normal=x(2), u=z(0), v=y(1)
+  case specfem::mesh_entity::dim3::type::right:
+    return { 2, true, 1, 0 }; // normal=x(2), u=y(1), v=z(0)
+  default:
+    throw std::runtime_error("Invalid face type for get_face_axes.");
+  }
+}
+
+} // anonymous namespace
+
 extern int edge_transform(const std::array<int, 2> &from_nodes,
                           const std::array<int, 2> &to_nodes, const int index,
                           const int ngll);
@@ -186,76 +228,37 @@ std::tuple<int, int, int> specfem::element_connections::
   // Face to face mapping
   if (specfem::mesh_entity::contains(specfem::mesh_entity::dim3::faces, from) &&
       specfem::mesh_entity::contains(specfem::mesh_entity::dim3::faces, to)) {
-    // Implement face-to-face mapping logic here
-    // This is a placeholder implementation and should be replaced with actual
-    // logic
     auto face1_nodes = get_face_nodes(from, element1);
     auto face2_nodes = get_face_nodes(to, element2);
 
     // Compute the permutation to align face1 with face2
     auto perm = compute_face_permutation(face1_nodes, face2_nodes);
 
-    // cordinate permutation
+    // Get face axis information
+    const auto from_axes = get_face_axes(from);
+    const auto to_axes = get_face_axes(to);
 
-    // Get the (j, i) coordinates on the 'from' face
-    const auto [j, i] = [=]() {
-      switch (from) {
-      case specfem::mesh_entity::dim3::type::left:
-        return std::make_pair(static_cast<type_real>(iy) / (nglly - 1),
-                              static_cast<type_real>(iz) / (ngllz - 1));
-      case specfem::mesh_entity::dim3::type::right:
-        return std::make_pair(static_cast<type_real>(iz) / (ngllz - 1),
-                              static_cast<type_real>(iy) / (nglly - 1));
-      case specfem::mesh_entity::dim3::type::front:
-        return std::make_pair(static_cast<type_real>(iz) / (ngllz - 1),
-                              static_cast<type_real>(ix) / (ngllx - 1));
-      case specfem::mesh_entity::dim3::type::back:
-        return std::make_pair(static_cast<type_real>(ix) / (ngllx - 1),
-                              static_cast<type_real>(iz) / (ngllz - 1));
-      case specfem::mesh_entity::dim3::type::bottom:
-        return std::make_pair(static_cast<type_real>(ix) / (ngllx - 1),
-                              static_cast<type_real>(iy) / (nglly - 1));
-      case specfem::mesh_entity::dim3::type::top:
-        return std::make_pair(static_cast<type_real>(iy) / (nglly - 1),
-                              static_cast<type_real>(ix) / (ngllx - 1));
-      default:
-        throw std::runtime_error("Invalid face orientation.");
-      }
-    }();
+    // Extract normalized coordinates on the 'from' face using axis metadata
+    const int coords[3] = { iz, iy, ix };
+    const int ngll[3] = { ngllz, nglly, ngllx };
+    const type_real u = static_cast<type_real>(coords[from_axes.u_axis]) /
+                        (ngll[from_axes.u_axis] - 1);
+    const type_real v = static_cast<type_real>(coords[from_axes.v_axis]) /
+                        (ngll[from_axes.v_axis] - 1);
 
-    const auto [j_prime, i_prime] = affine_transform(perm, j, i);
-    // Map (j', i') to (iz, iy, ix) on the 'to' face
-    return [=](const type_real j_prime, const type_real i_prime) {
-      switch (to) {
-      case specfem::mesh_entity::dim3::type::left:
-        return std::make_tuple(static_cast<int>(i_prime * (ngllz - 1)),
-                               static_cast<int>(j_prime * (nglly - 1)), 0);
-      case specfem::mesh_entity::dim3::type::right:
-        // X-axis faces
-        return std::make_tuple(static_cast<int>(j_prime * (ngllz - 1)),
-                               static_cast<int>(i_prime * (nglly - 1)),
-                               ngllx - 1);
-      case specfem::mesh_entity::dim3::type::front:
-        return std::make_tuple(static_cast<int>(j_prime * (ngllz - 1)), 0,
-                               static_cast<int>(i_prime * (ngllx - 1)));
-      case specfem::mesh_entity::dim3::type::back:
-        // Y-axis faces
-        return std::make_tuple(static_cast<int>(i_prime * (ngllz - 1)),
-                               nglly - 1,
-                               static_cast<int>(j_prime * (ngllx - 1)));
-      case specfem::mesh_entity::dim3::type::top:
-        // Z-axis faces
-        return std::make_tuple(ngllz - 1,
-                               static_cast<int>(j_prime * (nglly - 1)),
-                               static_cast<int>(i_prime * (ngllx - 1)));
-      case specfem::mesh_entity::dim3::type::bottom:
-        // Z-axis faces
-        return std::make_tuple(0, static_cast<int>(i_prime * (nglly - 1)),
-                               static_cast<int>(j_prime * (ngllx - 1)));
-      default:
-        throw std::runtime_error("Invalid face orientation.");
-      }
-    }(j_prime, i_prime);
+    // Apply affine transformation
+    const auto [j_prime, i_prime] = affine_transform(perm, v, u);
+
+    // Reconstruct coordinates on the 'to' face using axis metadata
+    int result[3] = { 0, 0, 0 };
+    result[to_axes.normal_axis] =
+        to_axes.normal_max ? (ngll[to_axes.normal_axis] - 1) : 0;
+    result[to_axes.u_axis] =
+        static_cast<int>(i_prime * (ngll[to_axes.u_axis] - 1));
+    result[to_axes.v_axis] =
+        static_cast<int>(j_prime * (ngll[to_axes.v_axis] - 1));
+
+    return std::make_tuple(result[0], result[1], result[2]);
   }
 
   if (specfem::mesh_entity::contains(specfem::mesh_entity::dim3::edges, from) &&
@@ -264,7 +267,7 @@ std::tuple<int, int, int> specfem::element_connections::
     auto edge1_nodes = get_edge_nodes(from, element1);
     auto edge2_nodes = get_edge_nodes(to, element2);
 
-    const auto [i, n] = [=]() {
+    const auto [i, n] = [=, this]() {
       switch (from) {
       case specfem::mesh_entity::dim3::type::front_bottom:
       case specfem::mesh_entity::dim3::type::front_top:
@@ -288,7 +291,7 @@ std::tuple<int, int, int> specfem::element_connections::
 
     const int i_prime = edge_transform(edge1_nodes, edge2_nodes, i, n);
 
-    return [=](const int i_prime) {
+    return [=, this](const int i_prime) {
       switch (to) {
       case specfem::mesh_entity::dim3::type::front_bottom:
         return std::make_tuple(0, 0, i_prime);

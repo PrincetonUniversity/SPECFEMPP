@@ -180,7 +180,6 @@ specfem::assembly::jacobian_matrix<specfem::element::dimension_tag::dim3>::
   ngllx = assembly_mesh.element_grid.ngllx;
   nglly = assembly_mesh.element_grid.nglly;
   ngllz = assembly_mesh.element_grid.ngllz;
-  const int ngnod = assembly_mesh.ngnod;
 
   const auto &shape_derivatives = assembly_mesh.dshape3D;
   const auto &coordinates = assembly_mesh.control_node_coordinates;

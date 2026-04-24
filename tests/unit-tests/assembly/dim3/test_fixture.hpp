@@ -17,7 +17,7 @@ struct Assembly3D {
   Assembly3D() = default;
 
   Assembly3D(const std::string &database_file) {
-    const auto mesh = specfem::io::read_3d_mesh(database_file);
+    const auto mesh = specfem::io::read_3d_mesh(database_file, false);
 
     const int nspec = mesh.nspec;
     const int ngnod = mesh.control_nodes.ngnod;
@@ -27,15 +27,20 @@ struct Assembly3D {
       return specfem::quadrature::quadratures(gll);
     }();
 
-    assembly.mesh = {
-      nspec,     ngnod, 5, 5, 5, mesh.adjacency_graph, mesh.control_nodes,
-      quadrature
-    };
-    assembly.element_types = { nspec, 5, 5, 5, assembly.mesh, mesh.tags };
+    assembly.mesh = { nspec,
+                      ngnod,
+                      5,
+                      5,
+                      5,
+                      mesh.tags,
+                      mesh.adjacency_graph,
+                      mesh.control_nodes,
+                      quadrature };
+    assembly.element_types = { nspec, assembly.mesh.element_grid, assembly.mesh,
+                               mesh.tags };
     assembly.jacobian_matrix = { assembly.mesh };
-    assembly.properties = {
-      nspec, 5, 5, 5, mesh.materials, assembly.element_types
-    };
+    assembly.properties = { assembly.element_types, assembly.mesh,
+                            mesh.materials, false };
   }
 };
 } // namespace specfem::test_configuration

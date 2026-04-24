@@ -1,0 +1,75 @@
+#pragma once
+#include <string>
+#include <string_view>
+
+namespace specfem {
+
+struct version {
+  // Semver components - sourced from the Git tag, falling back to project()
+  static constexpr int major = @SPECFEM_VERSION_MAJOR@;
+  static constexpr int minor = @SPECFEM_VERSION_MINOR@;
+  static constexpr int patch = @SPECFEM_VERSION_PATCH@;
+
+  // true  : HEAD is exactly on a clean release tag
+  // false : dev build (commits ahead of tag, or dirty working tree)
+  const static constexpr bool is_release = static_cast<bool>(@SPECFEM_IS_RELEASE@);
+
+  // true  : working tree has uncommitted changes
+  const static constexpr bool is_dirty = static_cast<bool>(@SPECFEM_IS_DIRTY@);
+
+  // true  : Git metadata was available at configure time
+  const static constexpr bool has_git_info = static_cast<bool>(@SPECFEM_HAS_GIT_INFO@);
+
+  // number of commits since the nearest tag (0 on a clean release)
+  const static constexpr int commits_since_tag = @SPECFEM_COMMITS_SINCE_TAG@;
+
+  // "MAJOR.MINOR.PATCH"
+  const static constexpr std::string_view string() {
+    return "@SPECFEM_VERSION_MAJOR@.@SPECFEM_VERSION_MINOR@.@SPECFEM_VERSION_PATCH@";
+  }
+
+  // Short Git hash of HEAD
+  const static constexpr std::string_view git_hash() {
+    return "@SPECFEM_GIT_HASH@";
+  }
+
+  // Commits since tag as a string literal (used in constexpr header())
+  const static constexpr std::string_view commits_since_tag_str() {
+    return "@SPECFEM_COMMITS_SINCE_TAG@";
+  }
+
+  static std::string header() {
+    auto ver = std::string(string());
+    ver.resize(8, ' ');
+
+    auto h = std::string(
+      "==========================================================\n"
+      "  S P E C F E M + +   |   Spectral Element Method Solver  \n"
+      "==========================================================\n"
+      "  Version ") + ver +
+      "                      License: GPL 3.0  \n";
+
+    if constexpr (has_git_info && !is_release) {
+      h += "                     - - - - - - -                        \n";
+      h += "  [dev] ";
+      h += commits_since_tag_str();
+      h += " commit(s) ahead of v";
+      h += string();
+      h += "\n";
+      if constexpr (is_dirty) {
+        h += "        -> Working tree has uncommitted changes. \n";
+      }
+    }
+
+    if constexpr (has_git_info) {
+      h += "  Git hash: ";
+      h += git_hash();
+      h += "\n";
+    }
+
+    h += "==========================================================\n";
+    return h;
+  }
+};
+
+} // namespace specfem

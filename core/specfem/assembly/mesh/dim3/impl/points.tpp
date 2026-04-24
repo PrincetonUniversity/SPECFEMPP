@@ -29,14 +29,15 @@ void initialize_coordinates(
   Kokkos::fence();
 }
 
-specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::points(
-    const int &nspec, const int &ngllz, const int &nglly, const int &ngllx,
-    const specfem::mesh::adjacency_graph<dimension_tag>
-        &adjacency_graph,
-    const specfem::assembly::mesh_impl::control_nodes<dimension_tag>
-        &control_nodes,
-    const specfem::assembly::mesh_impl::shape_functions<dimension_tag>
-        &shape_functions)
+specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::
+    points(const int &nspec, const int &ngllz, const int &nglly,
+           const int &ngllx,
+           const specfem::assembly::mesh_impl::adjacency_graph<dimension_tag>
+               &adjacency_graph,
+           const specfem::assembly::mesh_impl::control_nodes<dimension_tag>
+               &control_nodes,
+           const specfem::assembly::mesh_impl::shape_functions<dimension_tag>
+               &shape_functions)
     : nspec(nspec), ngllz(ngllz), nglly(nglly), ngllx(ngllx),
       index_mapping("specfem::assembly::mesh::points::index_mapping", nspec,
                     ngllz, nglly, ngllx),
@@ -57,7 +58,7 @@ specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::poi
       Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace,
                             Kokkos::Rank<4> >({ 0, 0, 0, 0 },
                                               { nspec, ngllz, nglly, ngllx }),
-      [=](const int ispec, const int iz, const int iy, const int ix) {
+      [=, this](const int ispec, const int iz, const int iy, const int ix) {
         this->h_index_mapping(ispec, iz, iy, ix) = -1;
       });
 
@@ -69,7 +70,7 @@ specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::poi
       Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace,
                             Kokkos::Rank<4> >(
           { 0, 1, 1, 1 }, { nchunks, ngllz - 1, nglly - 1, ngllx - 1 }),
-      [=](const int ichunk, const int iz, const int iy, const int ix) {
+      [=, this](const int ichunk, const int iz, const int iy, const int ix) {
         for (int ielement = 0; ielement < chunk_size; ielement++) {
           int ispec = ichunk * chunk_size + ielement;
           if (ispec >= nspec)
@@ -123,12 +124,13 @@ specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::poi
               const auto other_face = boost::edge(jspec, ispec, graph).first;
               const auto jface = fg[other_face].orientation;
 
-              const auto connections = specfem::element_connections::connection_mapping(
-                  ngllz, nglly, ngllx,
-                  Kokkos::subview(control_nodes.h_control_node_index, ispec,
-                                  Kokkos::ALL),
-                  Kokkos::subview(control_nodes.h_control_node_index, jspec,
-                                  Kokkos::ALL));
+              const auto connections =
+                  specfem::element_connections::connection_mapping(
+                      ngllz, nglly, ngllx,
+                      Kokkos::subview(control_nodes.h_control_node_index, ispec,
+                                      Kokkos::ALL),
+                      Kokkos::subview(control_nodes.h_control_node_index, jspec,
+                                      Kokkos::ALL));
 
               const auto [mapped_iz, mapped_iy, mapped_ix] =
                   connections.map_coordinates(iface, jface, iz, iy, ix);
@@ -175,12 +177,13 @@ specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::poi
               const int jspec = boost::target(edge, fg);
               const auto other_face = boost::edge(jspec, ispec, graph).first;
               const auto jorientation = fg[other_face].orientation;
-              const auto connections = specfem::element_connections::connection_mapping(
-                  ngllz, nglly, ngllx,
-                  Kokkos::subview(control_nodes.h_control_node_index, ispec,
-                                  Kokkos::ALL),
-                  Kokkos::subview(control_nodes.h_control_node_index, jspec,
-                                  Kokkos::ALL));
+              const auto connections =
+                  specfem::element_connections::connection_mapping(
+                      ngllz, nglly, ngllx,
+                      Kokkos::subview(control_nodes.h_control_node_index, ispec,
+                                      Kokkos::ALL),
+                      Kokkos::subview(control_nodes.h_control_node_index, jspec,
+                                      Kokkos::ALL));
 
               const auto [mapped_iz, mapped_iy, mapped_ix] =
                   connections.map_coordinates(fg[edge].orientation,
@@ -228,12 +231,13 @@ specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::poi
             const int jspec = boost::target(corner, fg);
             const auto other_face = boost::edge(jspec, ispec, graph).first;
             const auto jorientation = fg[other_face].orientation;
-            const auto connections = specfem::element_connections::connection_mapping(
-                ngllz, nglly, ngllx,
-                Kokkos::subview(control_nodes.h_control_node_index, ispec,
-                                Kokkos::ALL),
-                Kokkos::subview(control_nodes.h_control_node_index, jspec,
-                                Kokkos::ALL));
+            const auto connections =
+                specfem::element_connections::connection_mapping(
+                    ngllz, nglly, ngllx,
+                    Kokkos::subview(control_nodes.h_control_node_index, ispec,
+                                    Kokkos::ALL),
+                    Kokkos::subview(control_nodes.h_control_node_index, jspec,
+                                    Kokkos::ALL));
 
             int mapped_iz, mapped_iy, mapped_ix;
             if (specfem::mesh_entity::contains(
@@ -272,7 +276,7 @@ specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::poi
       Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace,
                             Kokkos::Rank<4> >({ 0, 0, 0, 0 },
                                               { nspec, ngllz, nglly, ngllx }),
-      [=](const int ispec, const int iz, const int iy, const int ix) {
+      [=, this](const int ispec, const int iz, const int iy, const int ix) {
         if (this->h_index_mapping(ispec, iz, iy, ix) == -1) {
           std::stringstream ss;
           ss << "Point not assigned for element " << ispec << " at (" << iz

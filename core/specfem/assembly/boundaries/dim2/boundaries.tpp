@@ -41,7 +41,7 @@ specfem::assembly::boundaries<specfem::element::dimension_tag::dim2>::boundaries
 
   // Check if mesh and compute boundary tags match
   for (int ispec = 0; ispec < nspec; ++ispec) {
-    const int ispec_compute = mesh_assembly.mesh_to_compute(ispec);
+    const int ispec_compute = mesh_assembly.h_mesh_to_compute(ispec);
     const auto m_boundary_tag = mesh.tags.tags_container(ispec).boundary_tag;
     const auto c_boundary_tag = this->h_boundary_tags(ispec_compute);
     if (m_boundary_tag != c_boundary_tag) {

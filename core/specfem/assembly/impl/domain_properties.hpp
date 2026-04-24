@@ -88,16 +88,14 @@ struct domain_properties<specfem::element::dimension_tag::dim2, MediumTag,
    *
    * @param elements Element indices to initialize
    * @param mesh 2D mesh geometry and connectivity
-   * @param ngllz Number of vertical quadrature points
-   * @param ngllx Number of horizontal quadrature points
    * @param materials Material database indexed by element
    * @param has_gll_model Skip material assignment for GLL models
    * @param property_index_mapping Element to property mapping
    */
   domain_properties(
       const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
-      const specfem::assembly::mesh<dimension_tag> &mesh, const int ngllz,
-      const int ngllx, const specfem::mesh::materials<dimension_tag> &materials,
+      const specfem::assembly::mesh<dimension_tag> &mesh,
+      const specfem::mesh::materials<dimension_tag> &materials,
       const bool has_gll_model,
       const Kokkos::View<int *, Kokkos::LayoutRight,
                          Kokkos::DefaultHostExecutionSpace>
@@ -157,17 +155,15 @@ struct domain_properties<specfem::element::dimension_tag::dim3, MediumTag,
    * at all quadrature points for the specified spectral elements.
    *
    * @param elements Element indices to initialize
-   * @param nspec Total number of spectral elements
-   * @param ngllz Number of z-direction quadrature points
-   * @param nglly Number of y-direction quadrature points
-   * @param ngllx Number of x-direction quadrature points
+   * @param mesh 3D mesh geometry and connectivity
    * @param materials Material database indexed by element
    * @param property_index_mapping Element to property mapping
    */
   domain_properties(
       const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
-      const int nspec, const int ngllz, const int nglly, const int ngllx,
+      const specfem::assembly::mesh<dimension_tag> &mesh,
       const specfem::mesh::materials<dimension_tag> &materials,
+      const bool has_gll_model,
       const Kokkos::View<int *, Kokkos::LayoutRight,
                          Kokkos::DefaultHostExecutionSpace>
           property_index_mapping);

@@ -3,7 +3,7 @@
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/element_coupling/flux_scheme_configuration.hpp"
 #include "specfem/enums.hpp"
-#include "specfem/macros.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly {
@@ -86,6 +86,8 @@ struct EdgeView {
                                                     ///< arrays
   using EdgeTypeView = ///< View type for 2D edge classifications
       Kokkos::View<specfem::mesh_entity::dim2::type *, ExecutionSpace>;
+
+  using memory_space = typename ExecutionSpace::memory_space;
 
   using HostMirror =
       std::conditional_t<std::is_same<typename ExecutionSpace::memory_space,
@@ -176,7 +178,37 @@ struct EdgeView {
    */
   KOKKOS_FORCEINLINE_FUNCTION
   int get_total_points() const { return N * n_points; }
+
+  std::string label() const {
+    const auto &raw = element_index.label();
+    return raw.substr(0, raw.rfind("_element_index"));
+  }
 };
+
+} // namespace specfem::assembly
+
+namespace specfem::tag_dispatch {
+
+template <typename DstSpace, typename SrcSpace, typename Layout>
+auto create_mirror(DstSpace,
+                   const specfem::assembly::EdgeView<SrcSpace, Layout> &src) {
+  return specfem::assembly::EdgeView<DstSpace, Layout>(src.label(), src.N,
+                                                       src.n_points);
+}
+
+template <typename DstSpace, typename SrcSpace, typename Layout>
+void deep_copy(specfem::assembly::EdgeView<DstSpace, Layout> &dst,
+               const specfem::assembly::EdgeView<SrcSpace, Layout> &src) {
+  Kokkos::deep_copy(dst.element_index, src.element_index);
+  Kokkos::deep_copy(dst.edge_index, src.edge_index);
+  Kokkos::deep_copy(dst.edge_types, src.edge_types);
+  Kokkos::deep_copy(dst.iz, src.iz);
+  Kokkos::deep_copy(dst.ix, src.ix);
+}
+
+} // namespace specfem::tag_dispatch
+
+namespace specfem::assembly {
 
 /**
  * @brief 2D spectral element edge classification and coupling management
@@ -212,25 +244,6 @@ public:
    */
   using EdgeViewType = EdgeView<Kokkos::DefaultExecutionSpace>;
 
-private:
-  static EdgeViewType::HostMirror create_mirror_view(const EdgeViewType &view) {
-    const auto label = view.element_index.label();
-    // remove element_index suffix
-    const auto base_label = label.substr(0, label.size() - 14);
-    return EdgeViewType::HostMirror(base_label + "_host_mirror", view.N,
-                                    view.n_points);
-  }
-
-  template <typename SrcView, typename DestView>
-  static void deep_copy(const DestView &dest, const SrcView &src) {
-    Kokkos::deep_copy(dest.element_index, src.element_index);
-    Kokkos::deep_copy(dest.edge_index, src.edge_index);
-    Kokkos::deep_copy(dest.edge_types, src.edge_types);
-    Kokkos::deep_copy(dest.iz, src.iz);
-    Kokkos::deep_copy(dest.ix, src.ix);
-  }
-
-public:
   /**
    * @brief Get edge pairs for coupling computations in host memory.
    *
@@ -270,8 +283,6 @@ public:
    * @param element_types Element classification for coupling detection
    * @param flux_scheme_config Flux-scheme classification for proper
    * flux-tagging
-   * @param materials Container for ispec->material_index mapping for
-   * material-based flux-tagging
    */
   element_intersections(
       const int ngllx, const int ngllz,
@@ -287,16 +298,26 @@ public:
   element_intersections() = default;
 
 private:
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
-                       CONNECTION_TAG(WEAKLY_CONFORMING, NONCONFORMING),
-                       INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
-                       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                                    COMPOSITE_STACEY_DIRICHLET),
-                       FLUX_SCHEME_TAG(NATURAL, SYMMETRIC_INTERIOR_PENALTY)),
-                      DECLARE((EdgeViewType, self_edges),
-                              (EdgeViewType::HostMirror, h_self_edges),
-                              (EdgeViewType, coupled_edges),
-                              (EdgeViewType::HostMirror, h_coupled_edges)))
+  // clang-format off
+  using IntersectionCombinations = decltype(
+           DIMENSION_SET(dim2) *
+           CONNECTION_SET(weakly_conforming, nonconforming) *
+           INTERFACE_SET(elastic_acoustic, acoustic_elastic) *
+           BOUNDARY_SET(none, acoustic_free_surface, stacey,
+                        composite_stacey_dirichlet) *
+           FLUX_SCHEME_SET(natural, symmetric_interior_penalty));
+  // clang-format on
+
+  specfem::tag_dispatch::Storage<EdgeViewType, IntersectionCombinations>
+      self_edges;
+  specfem::tag_dispatch::Storage<EdgeViewType::HostMirror,
+                                 IntersectionCombinations>
+      h_self_edges;
+  specfem::tag_dispatch::Storage<EdgeViewType, IntersectionCombinations>
+      coupled_edges;
+  specfem::tag_dispatch::Storage<EdgeViewType::HostMirror,
+                                 IntersectionCombinations>
+      h_coupled_edges;
 };
 
 specfem::assembly::element_intersections<
@@ -308,5 +329,20 @@ edge_view_from_collected_edges(
         &collected_edges,
     const specfem::mesh_entity::element<specfem::element::dimension_tag::dim2>
         &element);
+
+template <typename Space, typename ExecSpace, typename Layout>
+auto create_mirror(Space, const EdgeView<ExecSpace, Layout> &src) {
+  return EdgeView<Space, Layout>(src.label(), src.N, src.n_points);
+}
+
+template <typename DestExecSpace, typename SrcExecSpace, typename Layout>
+void deep_copy(EdgeView<DestExecSpace, Layout> &dst,
+               const EdgeView<SrcExecSpace, Layout> &src) {
+  Kokkos::deep_copy(dst.element_index, src.element_index);
+  Kokkos::deep_copy(dst.edge_index, src.edge_index);
+  Kokkos::deep_copy(dst.edge_types, src.edge_types);
+  Kokkos::deep_copy(dst.iz, src.iz);
+  Kokkos::deep_copy(dst.ix, src.ix);
+}
 
 } // namespace specfem::assembly

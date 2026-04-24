@@ -119,8 +119,9 @@ subroutine save_databases()
       ! material properties
       call save_databases_materials()
 
-      ! saves mpi/partition interface
-      call save_databases_interfaces()
+      !! MPI interfaces are now saved using adjacency graph (see save_databases_adjacency_graph), so we do not need to save them separately anymore
+      ! ! saves mpi/partition interface
+      ! call save_databases_interfaces()
 
       ! absorbing boundary
       call save_databases_absorbing()
@@ -488,8 +489,8 @@ end subroutine save_databases_attenuation
 subroutine save_databases_materials()
 
    use constants, only: IOUT,ISOTROPIC_MATERIAL,ANISOTROPIC_MATERIAL, &
-                        POROELASTIC_MATERIAL,ELECTROMAGNETIC_MATERIAL, &
-                        ISOTROPIC_COSSERAT_MATERIAL
+      POROELASTIC_MATERIAL,ELECTROMAGNETIC_MATERIAL, &
+      ISOTROPIC_COSSERAT_MATERIAL
    use part_unstruct_par
    use shared_parameters
 
@@ -897,35 +898,133 @@ end subroutine save_databases_VTK_files
 
 subroutine save_databases_adjacency_graph()
 
+   call save_databases_local_adjacency_graph()
+   call save_databases_mpi_adjacency_graph()
+
+end subroutine save_databases_adjacency_graph
+
+subroutine save_databases_local_adjacency_graph()
+
    use constants, only: IOUT
    use shared_parameters, only: nelmnts
-   use part_unstruct_par, only: num_adjacent, adjacency_type, adjacency_id, adjacent_elements
+   use part_unstruct_par, only: num_adjacent, adjacency_type, adjacency_id, adjacent_elements, &
+      part, glob2loc_elmnts, iproc
 
    implicit none
 
-   integer :: i,j, total_adjacencies
+   integer :: i, j, total_adjacencies, index, neighbor, neighbor_partition
 
-   ! Find total number of adjacent elements
-
+   ! Count the total number of local adjacencies (edges) for this partition
    total_adjacencies = 0
    do i = 0, nelmnts-1
-      total_adjacencies = total_adjacencies + num_adjacent(i)
+      do j = 0, num_adjacent(i)-1
+         neighbor = adjacent_elements(i,j)
+         if (part(i) == iproc .and. part(neighbor) == iproc) then
+            total_adjacencies = total_adjacencies + 1
+         endif
+      enddo
    enddo
 
    write(IOUT) total_adjacencies
 
-   ! local parameters
+   ! Write partition-local adjacency graph
+   ! Format: (local_elem1, local_elem2, adjacency_type, adjacency_id)
+   !   local_elem1: 1-based local index in current partition
+   !   local_elem2: 1-based local index in neighbor_partition (or current partition if intra-partition)
+   index = 0
    do i = 0, nelmnts-1
-      if (num_adjacent(i) > 0) then
+      if (part(i) == iproc .and. num_adjacent(i) > 0) then
          do j = 0, num_adjacent(i)-1
-            !! Write out adjacency graph
-            ! i = current element
-            ! adjacent_elements(i,j) = adjacent element number
-            ! adjacency_type(i,j) = type of adjacency (1 = STRONGLY_CONFORMING)
-            ! adjacency_id(i,j) = defines which edge/vertex is connected from i to adjacent_elements(i,j)
-            write(IOUT) i + 1, adjacent_elements(i,j) + 1, adjacency_type(i,j), adjacency_id(i,j)
+            neighbor = adjacent_elements(i,j)
+            if (part(neighbor) == iproc) then
+               ! intra-partition adjacency: both local indices in current partition
+            write(IOUT) glob2loc_elmnts(i) + 1, glob2loc_elmnts(neighbor) + 1, &
+               adjacency_type(i,j), adjacency_id(i,j)
+            index = index + 1
+            endif
          enddo
       endif
    enddo
 
-end subroutine save_databases_adjacency_graph
+   if (index /= total_adjacencies) then
+      print *,'Error: adjacency graph write count mismatch: ', index, ' /= ', total_adjacencies
+      call stop_the_code('Error in writing adjacency graph')
+   endif
+
+end subroutine save_databases_local_adjacency_graph
+
+integer function get_neighbor_edge_id(neighbor_elem, current_elem) result(edge_id)
+   use part_unstruct_par, only: num_adjacent, adjacent_elements, adjacency_id
+   implicit none
+   integer, intent(in) :: neighbor_elem, current_elem
+   integer :: k
+
+   edge_id = -1
+   do k = 0, num_adjacent(neighbor_elem)-1
+      if (adjacent_elements(neighbor_elem, k) == current_elem) then
+         edge_id = adjacency_id(neighbor_elem, k)
+         return
+      endif
+   enddo
+
+   !! Should not happen if the mesh is consistent, STOP with error if not found
+   call stop_the_code('Error: Neighbor element not found in its adjacency list')
+end function get_neighbor_edge_id
+
+subroutine save_databases_mpi_adjacency_graph()
+
+   use constants, only: IOUT
+   use shared_parameters, only: nelmnts
+   use part_unstruct_par, only: num_adjacent, adjacency_type, adjacency_id, adjacent_elements, &
+      anchor_local, anchor_neighbor, part, glob2loc_elmnts, iproc
+
+   implicit none
+
+   interface
+      integer function get_neighbor_edge_id(neighbor_elem, current_elem) result(edge_id)
+         integer, intent(in) :: neighbor_elem, current_elem
+      end function get_neighbor_edge_id
+   end interface
+
+   integer :: i, j, total_mpi_adjacencies, index, neighbor, neighbor_partition, neighbor_edge_id
+
+   ! Count the total number of MPI adjacencies (edges) for this partition
+   total_mpi_adjacencies = 0
+   do i = 0, nelmnts-1
+      do j = 0, num_adjacent(i)-1
+         neighbor = adjacent_elements(i,j)
+         if (part(i) == iproc .and. part(neighbor) /= iproc) then
+            total_mpi_adjacencies = total_mpi_adjacencies + 1
+         endif
+      enddo
+   enddo
+
+   write(IOUT) total_mpi_adjacencies
+
+   ! Write MPI adjacency graph
+   ! Format: (local_elem_in_current_partition, local_elem_in_neighbor_partition,
+   ! neighbor_partition, adjacency_type, adjacency_id_local, adjacency_id_neighbor,
+   ! anchor_local, anchor_neighbor)
+   index = 0
+   do i = 0, nelmnts-1
+      if (part(i) == iproc .and. num_adjacent(i) > 0) then
+         do j = 0, num_adjacent(i)-1
+            neighbor = adjacent_elements(i,j)
+            neighbor_partition = part(neighbor)
+            if (neighbor_partition /= iproc) then
+               neighbor_edge_id = get_neighbor_edge_id(neighbor, i)
+               write(IOUT) glob2loc_elmnts(i) + 1, glob2loc_elmnts(neighbor) + 1, neighbor_partition, &
+                  adjacency_type(i,j), adjacency_id(i,j), neighbor_edge_id, &
+                  anchor_local(i,j), anchor_neighbor(i,j)
+               index = index + 1
+            endif
+         enddo
+      endif
+   enddo
+
+   if (index /= total_mpi_adjacencies) then
+      print *,'Error: MPI adjacency graph write count mismatch: ', index, ' /= ', total_mpi_adjacencies
+      call stop_the_code('Error in writing MPI adjacency graph')
+   endif
+
+end subroutine save_databases_mpi_adjacency_graph

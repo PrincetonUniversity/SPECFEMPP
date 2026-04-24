@@ -10,7 +10,7 @@ specfem::runtime_configuration::property::property(const YAML::Node &Node,
     if (Node["format"]) {
       return Node["format"].as<std::string>();
     } else {
-      return "ASCII";
+      return "NPY";
     }
   }();
 

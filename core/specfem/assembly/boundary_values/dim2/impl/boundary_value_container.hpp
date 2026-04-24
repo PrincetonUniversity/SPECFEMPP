@@ -5,7 +5,9 @@
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/properties.hpp"
 #include "specfem/enums.hpp"
-#include "specfem/macros.hpp"
+#include "specfem/macros/tag_dispatch.hpp"
+#include "specfem/tag_dispatch.hpp"
+#include "specfem/tags.hpp"
 
 namespace specfem::assembly::boundary_values_impl {
 
@@ -14,10 +16,10 @@ class boundary_value_container<specfem::element::dimension_tag::dim2,
                                BoundaryTag> {
 
 private:
-  template <specfem::element::dimension_tag _DimensionTag,
-            specfem::element::medium_tag _MediumTag>
-  using _boundary_medium_container =
-      boundary_medium_container<_DimensionTag, _MediumTag, BoundaryTag>;
+  template <typename TagsType>
+  using BoundaryMediumTemplateType =
+      boundary_medium_container<TagsType::dimension_tag, TagsType::medium_tag,
+                                BoundaryTag>;
 
   using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
 
@@ -25,25 +27,16 @@ public:
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim2;
   constexpr static auto boundary_tag = BoundaryTag;
 
+  static constexpr auto combinations_by_medium =
+      DIMENSION_SET(dim2) *
+      MEDIUM_SET(elastic_psv, elastic_psv_t, elastic_sh, acoustic, poroelastic);
+
   IndexViewType property_index_mapping;
   IndexViewType::HostMirror h_property_index_mapping;
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                       POROELASTIC, ELASTIC_PSV_T)),
-      DECLARE(((_boundary_medium_container, (_DIMENSION_TAG_, _MEDIUM_TAG_)),
-               container)))
-
-  // boundary_medium_container<DimensionTag,
-  //                           specfem::element::medium_tag::acoustic,
-  //                           BoundaryTag>
-  //     acoustic;
-  // boundary_medium_container<
-  //     DimensionTag, specfem::element::medium_tag::elastic_psv, BoundaryTag>
-  //     elastic;
-  // boundary_medium_container<
-  //     DimensionTag, specfem::element::medium_tag::poroelastic, BoundaryTag>
-  //     poroelastic;
+  specfem::tag_dispatch::TypedStorage<BoundaryMediumTemplateType,
+                                      decltype(combinations_by_medium)>
+      container;
 
   boundary_value_container() = default;
 
@@ -54,18 +47,18 @@ public:
 
   void sync_to_host() {
     Kokkos::deep_copy(h_property_index_mapping, property_index_mapping);
-    FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                         POROELASTIC, ELASTIC_PSV_T)),
-        CAPTURE(container) { _container_.sync_to_host(); });
+    specfem::tag_dispatch::for_each(
+        combinations_by_medium, [&]<typename TagsType>() {
+          container.template get<TagsType>().sync_to_host();
+        });
   }
 
   void sync_to_device() {
     Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
-    FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                         POROELASTIC, ELASTIC_PSV_T)),
-        CAPTURE(container) { _container_.sync_to_device(); });
+    specfem::tag_dispatch::for_each(
+        combinations_by_medium, [&]<typename TagsType>() {
+          container.template get<TagsType>().sync_to_device();
+        });
   }
 };
 } // namespace specfem::assembly::boundary_values_impl
@@ -103,23 +96,20 @@ store_on_device(const int istep, const IndexType index,
   if (boundary_value_container.property_index_mapping.size() == 0)
     return;
 
-  constexpr static auto MediumTag = AccelerationType::medium_tag;
+  constexpr static auto medium_tag = AccelerationType::medium_tag;
+  constexpr static auto dimension_tag = AccelerationType::dimension_tag;
 
   static_assert((BoundaryValueContainerType::dimension_tag ==
                  AccelerationType::dimension_tag),
                 "DimensionTag must match AccelerationType::dimension_type");
 
+  using TagsType = specfem::tags::Tags<dimension_tag, medium_tag>;
+
   IndexType l_index = index;
   l_index.ispec = boundary_value_container.property_index_mapping(index.ispec);
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                       POROELASTIC, ELASTIC_PSV_T)),
-      CAPTURE((container, boundary_value_container.container)) {
-        if constexpr (MediumTag == _medium_tag_) {
-          _container_.store_on_device(istep, l_index, acceleration);
-        }
-      });
+  boundary_value_container.container.template get<TagsType>().store_on_device(
+      istep, l_index, acceleration);
 
   return;
 }
@@ -140,7 +130,8 @@ load_on_device(const int istep, const IndexType index,
   if (boundary_value_container.property_index_mapping.size() == 0)
     return;
 
-  constexpr static auto MediumTag = AccelerationType::medium_tag;
+  constexpr static auto medium_tag = AccelerationType::medium_tag;
+  constexpr static auto dimension_tag = AccelerationType::dimension_tag;
 
   IndexType l_index = index;
 
@@ -148,16 +139,12 @@ load_on_device(const int istep, const IndexType index,
                  AccelerationType::dimension_tag),
                 "Number of dimensions must match");
 
+  using TagsType = specfem::tags::Tags<dimension_tag, medium_tag>;
+
   l_index.ispec = boundary_value_container.property_index_mapping(index.ispec);
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                       POROELASTIC, ELASTIC_PSV_T)),
-      CAPTURE((container, boundary_value_container.container)) {
-        if constexpr (MediumTag == _medium_tag_) {
-          _container_.load_on_device(istep, l_index, acceleration);
-        }
-      });
+  boundary_value_container.container.template get<TagsType>().load_on_device(
+      istep, l_index, acceleration);
 
   return;
 }

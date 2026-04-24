@@ -26,6 +26,26 @@ specfem::element::to_string(const specfem::element::medium_tag &medium,
 }
 
 const std::string
+specfem::element::to_string(const specfem::element::dimension_tag &dimension) {
+
+  std::string dimension_string;
+
+  switch (dimension) {
+  case specfem::element::dimension_tag::dim2:
+    dimension_string = "dim2";
+    break;
+  case specfem::element::dimension_tag::dim3:
+    dimension_string = "dim3";
+    break;
+  default:
+    dimension_string = "unknown";
+    break;
+  }
+
+  return dimension_string;
+}
+
+const std::string
 specfem::element::to_string(const specfem::element::medium_tag &medium) {
 
   std::string medium_string;

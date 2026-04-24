@@ -5,14 +5,14 @@
 #include "specfem/io/mesh/impl/fortran/dim3/read_boundaries.hpp"
 #include "specfem/io/mesh/impl/fortran/dim3/read_control_nodes.hpp"
 #include "specfem/io/mesh/impl/fortran/dim3/read_materials.hpp"
-#include "specfem/io/mesh/impl/fortran/dim3/read_mpi_interfaces.hpp"
 #include "specfem/io/mesh/impl/fortran/dim3/read_pml_boundaries.hpp"
 #include <fstream>
 #include <stdexcept>
 #include <string>
 
 specfem::mesh::mesh<specfem::element::dimension_tag::dim3>
-specfem::io::read_3d_mesh(const std::string &database_file) {
+specfem::io::read_3d_mesh(const std::string &database_file,
+                          const bool attenuation_enabled) {
   // Read mesh parameters
   std::ifstream param_stream(database_file, std::ios::in | std::ios::binary);
   if (!param_stream.is_open()) {
@@ -35,7 +35,7 @@ specfem::io::read_3d_mesh(const std::string &database_file) {
       specfem::io::mesh::impl::fortran::dim3::read_control_nodes(param_stream);
   const auto [nspec, ngllz, nglly, ngllx, control_node_index, materials] =
       specfem::io::mesh::impl::fortran::dim3::read_materials(
-          param_stream, mesh.control_nodes.ngnod);
+          param_stream, mesh.control_nodes.ngnod, attenuation_enabled);
   mesh.nspec = nspec;
   mesh.element_grid.ngllz = ngllz;
   mesh.element_grid.nglly = nglly;
@@ -52,10 +52,6 @@ specfem::io::read_3d_mesh(const std::string &database_file) {
   // CPML boundaries are not supported yet
   // TODO (Rohit: PML_BOUNDARIES): Add support for PML boundaries
   specfem::io::mesh::impl::fortran::dim3::read_pml_boundaries(param_stream);
-
-  // MPI interfaces are not supported yet
-  // TODO (Rohit: MPI_INTERFACES): Add support for MPI interfaces
-  specfem::io::mesh::impl::fortran::dim3::read_mpi_interfaces(param_stream);
 
   // Read adjacency information
   mesh.adjacency_graph =

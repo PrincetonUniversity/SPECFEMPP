@@ -4,10 +4,10 @@
 #include "specfem/element_coupling.hpp"
 #include "specfem/element_coupling/flux_scheme_configuration.hpp"
 
+#include "specfem/runtime_configuration/quadrature.hpp"
 #include "yaml-cpp/yaml.h"
-#include <map>
-#include <string>
-#include <utility>
+
+#include <memory>
 
 namespace specfem {
 namespace runtime_configuration {
@@ -19,21 +19,29 @@ namespace runtime_configuration {
 class flux_schemes {
 public:
   flux_schemes(const YAML::Node &Node);
+  flux_schemes()
+      : flux_scheme_tag(specfem::element_coupling::flux_scheme_tag::natural),
+        interfacial_quadrature(nullptr) {};
 
 private:
-  bool config_provided;
-  YAML::Node flux_schemes_node; /// Node that contains flux scheme information
-
-  std::map<specfem::element_coupling::interface_tag,
-           std::pair<specfem::element_coupling::flux_scheme_tag, YAML::Node> >
-      per_interface_configs;
-
-  std::map<std::pair<int, int>,
-           std::pair<specfem::element_coupling::flux_scheme_tag, YAML::Node> >
-      per_material_configs;
+  specfem::element_coupling::flux_scheme_tag flux_scheme_tag;
+  std::unique_ptr<specfem::runtime_configuration::quadrature>
+      interfacial_quadrature;
 
 public:
-  specfem::element_coupling::flux_scheme_configuration generate_configuration();
+  /**
+   * @brief Generates a flux_scheme_configuration object from the given runtime
+   * configuration.
+   *
+   * @param ngll number of element quadrature points of the simulation. This is
+   * used for setting the default value of the interfacial quadrature rule.
+   * @return specfem::element_coupling::flux_scheme_configuration the generated
+   * configuration to be given to assembly.
+   */
+  specfem::element_coupling::flux_scheme_configuration
+  get_flux_scheme(const int &ngll) const;
+
+  YAML::Node flux_schemes_node;
 };
 } // namespace runtime_configuration
 } // namespace specfem

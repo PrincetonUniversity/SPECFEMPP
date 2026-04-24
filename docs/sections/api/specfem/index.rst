@@ -16,6 +16,10 @@
     compute/index
     datatype/index
     data_access/index
+    element/index
+    element_coupling/index
+    element_connections/index
+    enums/index
     execution/index
     io/index
     jacobian/index
@@ -23,6 +27,7 @@
     medium_containers/index
     medium_physics/index
     mesh/index
+    mesh_entity/index
     mpi/index
     optimization/index
     parallel_configuration/index
@@ -32,14 +37,12 @@
     quadrature/index
     receivers/index
     runtime_configuration/index
+    simulation/index
     solver/index
     source_time_functions/index
     sources/index
     shape_function/index
+    tag_dispatch/index
     timescheme/index
-    mesh_entity/index
-    element/index
-    element_coupling/index
-    element_connections/index
-    enums/index
-    simulation/index
+    units/index
+    utilities/index

@@ -40,7 +40,7 @@ specfem::assembly::boundaries_impl::acoustic_free_surface<specfem::element::dime
 
   for (int i = 0; i < nelements; ++i) {
     const int ispec_mesh = acoustic_free_surface.index_mapping(i);
-    const int ispec_compute = mesh.mesh_to_compute(ispec_mesh);
+    const int ispec_compute = mesh.h_mesh_to_compute(ispec_mesh);
     if (ispec_to_acoustic_surface.find(ispec_compute) ==
         ispec_to_acoustic_surface.end()) {
       ispec_to_acoustic_surface[ispec_compute] = { i };

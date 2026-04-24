@@ -5,6 +5,7 @@
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/receivers.hpp"
 #include "specfem/element.hpp"
+#include "specfem/mpi.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -28,7 +29,6 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim2>::receivers(
       h_lagrange_interpolant(Kokkos::create_mirror_view(lagrange_interpolant)),
       elements("specfem::assembly::receivers::elements", receivers.size()),
       h_elements(Kokkos::create_mirror_view(elements)),
-      element_types(element_types),
       specfem::assembly::receivers_impl::StationIterator(receivers.size(),
                                                          stypes),
       specfem::assembly::receivers_impl::SeismogramIterator<
@@ -73,7 +73,22 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim2>::receivers(
     const auto gcoord = specfem::point::global_coordinates<
         specfem::element::dimension_tag::dim2>{ receiver->get_x(),
                                                 receiver->get_z() };
-    const auto lcoord = specfem::algorithms::locate_point(gcoord, mesh);
+
+    // TODO: In MPI runs each partition holds only a subset of the mesh.
+    // Receivers outside this partition's subdomain will fail to locate.
+    // TODO: Implement proper cross-partition receiver location so that the
+    // owning rank can compute and broadcast the local coordinates.
+    specfem::point::local_coordinates<specfem::element::dimension_tag::dim2>
+        lcoord;
+    try {
+      lcoord = specfem::algorithms::locate_point(gcoord, mesh);
+    } catch (const std::exception &) {
+      if (specfem::MPI::get_size() > 1) {
+        h_elements(ireceiver) = -1;
+        continue;
+      }
+      throw;
+    }
 
     h_elements(ireceiver) = lcoord.ispec;
 
@@ -104,104 +119,11 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim2>::receivers(
     }
   }
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-       ATTENUATION_TAG(NONE)),
-      CAPTURE(elements, h_elements, receiver_indices, h_receiver_indices) {
-        int count = 0;
-        int index = 0;
-
-        for (int ireceiver = 0; ireceiver < h_elements.extent(0); ++ireceiver) {
-          int ispec = h_elements(ireceiver);
-          if (element_types.get_medium_tag(ispec) == _medium_tag_ &&
-              element_types.get_property_tag(ispec) == _property_tag_ &&
-              element_types.get_attenuation_tag(ispec) == _attenuation_tag_) {
-            count++;
-          }
-        }
-
-        _elements_ =
-            IndexViewType("specfem::assembly::receivers::elements", count);
-        _h_elements_ = Kokkos::create_mirror_view(_elements_);
-        _receiver_indices_ =
-            IndexViewType("specfem::assembly::receivers::elements", count);
-        _h_receiver_indices_ = Kokkos::create_mirror_view(_receiver_indices_);
-
-        for (int ireceiver = 0; ireceiver < h_elements.extent(0); ++ireceiver) {
-          int ispec = h_elements(ireceiver);
-          if (element_types.get_medium_tag(ispec) == _medium_tag_ &&
-              element_types.get_property_tag(ispec) == _property_tag_ &&
-              element_types.get_attenuation_tag(ispec) == _attenuation_tag_) {
-            _h_elements_(index) = ispec;
-            _h_receiver_indices_(index) = ireceiver;
-            index++;
-          }
-        }
-
-        Kokkos::deep_copy(_elements_, _h_elements_);
-        Kokkos::deep_copy(_receiver_indices_, _h_receiver_indices_);
-      })
+  // Build per-material receiver index stores using tag_dispatch::Storage.
+  this->build_index_stores(h_elements, element_types);
 
   Kokkos::deep_copy(lagrange_interpolant, h_lagrange_interpolant);
   Kokkos::deep_copy(elements, h_elements);
 
   return;
-}
-
-std::tuple<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>,
-           Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >
-specfem::assembly::receivers<specfem::element::dimension_tag::dim2>::
-    get_indices_on_host(
-        const specfem::element::medium_tag medium_tag,
-        const specfem::element::property_tag property_tag,
-        const specfem::element::attenuation_tag attenuation_tag) const {
-
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-       ATTENUATION_TAG(NONE)),
-      CAPTURE(h_elements, h_receiver_indices) {
-        if (medium_tag == _medium_tag_ && property_tag == _property_tag_ &&
-            attenuation_tag == _attenuation_tag_) {
-          return std::make_tuple(_h_elements_, _h_receiver_indices_);
-        }
-      })
-
-  Kokkos::abort("Invalid medium or property tag. Please check the input "
-                "parameters and try again.");
-  return std::make_tuple(
-      Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>(),
-      Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>());
-}
-
-std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
-           Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >
-specfem::assembly::receivers<specfem::element::dimension_tag::dim2>::
-    get_indices_on_device(
-        const specfem::element::medium_tag medium_tag,
-        const specfem::element::property_tag property_tag,
-        const specfem::element::attenuation_tag attenuation_tag) const {
-
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-       ATTENUATION_TAG(NONE)),
-      CAPTURE(elements, receiver_indices) {
-        if (medium_tag == _medium_tag_ && property_tag == _property_tag_ &&
-            attenuation_tag == _attenuation_tag_) {
-          return std::make_tuple(_elements_, _receiver_indices_);
-        }
-      })
-
-  Kokkos::abort("Invalid medium or property tag. Please check the input "
-                "parameters and try again.");
-  return std::make_tuple(Kokkos::View<int *, Kokkos::DefaultExecutionSpace>(),
-                         Kokkos::View<int *, Kokkos::DefaultExecutionSpace>());
 }

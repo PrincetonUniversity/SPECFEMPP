@@ -5,7 +5,6 @@
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/enums.hpp"
-#include "specfem/macros.hpp"
 
 specfem::assembly::conforming_interfaces<
     specfem::element::dimension_tag::dim2>::
@@ -15,19 +14,8 @@ specfem::assembly::conforming_interfaces<
             specfem::element::dimension_tag::dim2> &element_intersections,
         const specfem::assembly::jacobian_matrix<dimension_tag>
             &jacobian_matrix,
-        const specfem::assembly::mesh<dimension_tag> &mesh) {
-
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), CONNECTION_TAG(WEAKLY_CONFORMING),
-       INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
-       BOUNDARY_TAG(NONE, STACEY, ACOUSTIC_FREE_SURFACE,
-                    COMPOSITE_STACEY_DIRICHLET)),
-      CAPTURE(interface_container) {
-        _interface_container_ =
-            InterfaceContainerType<_interface_tag_, _boundary_tag_,
-                                   _connection_tag_>(
-                ngllz, ngllx, element_intersections, jacobian_matrix, mesh);
-      })
-
-  return;
-}
+        const specfem::assembly::mesh<dimension_tag> &mesh)
+    : interface_container([&]<typename TagsType>() {
+        return InterfaceContainerTemplateType<TagsType>(
+            ngllz, ngllx, element_intersections, jacobian_matrix, mesh);
+      }){};

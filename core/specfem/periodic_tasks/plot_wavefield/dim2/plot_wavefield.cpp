@@ -219,9 +219,6 @@ vtkSmartPointer<vtkDataSetMapper> specfem::periodic_tasks::plot_wavefield<
   int light_gray = 200;
   int gray = 130;
   int dark_gray = 80;
-  int very_dark_gray = 50;
-  int black = 0;
-
   const std::unordered_map<specfem::element::medium_tag, std::array<int, 3> >
       material_colors = {
         { specfem::element::medium_tag::acoustic, // white color
@@ -421,7 +418,6 @@ void specfem::periodic_tasks::plot_wavefield<
   const auto &coordinates = assembly.mesh.h_coord;
 
   // Each spectral element becomes one Lagrange quadrilateral
-  const int ncells = nspec;
   const int points_per_element = ngllx * ngllz;
 
   auto points = vtkSmartPointer<vtkPoints>::New();
@@ -503,10 +499,6 @@ void specfem::periodic_tasks::plot_wavefield<
 void specfem::periodic_tasks::plot_wavefield<
     specfem::element::dimension_tag::dim2>::create_quad_grid() {
   const auto &coordinates = assembly.mesh.h_coord;
-
-  // For ngll = 5, each spectral element has 16 cells
-  const int n_cells_per_spec = (ngllx - 1) * (ngllz - 1);
-  const int ncells = nspec * n_cells_per_spec;
 
   const int n_cell_points = 4;
 
@@ -621,8 +613,6 @@ specfem::periodic_tasks::plot_wavefield<specfem::element::dimension_tag::dim2>::
   }
   // For Lagrange quadrilateral grid
   else if (unstructured_grid->GetCellType(0) == VTK_LAGRANGE_QUADRILATERAL) {
-    const int points_per_element = ngllx * ngllz;
-
     // For Lagrange quadrilaterals, we have all GLL points
     for (int ispec = 0; ispec < nspec; ++ispec) {
       for (int iz = 0; iz < ngllz; ++iz) {

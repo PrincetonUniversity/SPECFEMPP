@@ -3,14 +3,34 @@
 #include "specfem/enums.hpp"
 #include "specfem/io/wavefield/writer.hpp"
 #include "specfem/assembly/assembly.hpp"
+#include "specfem/macros/tag_dispatch.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include "specfem/utilities.hpp"
 #include "specfem/logger.hpp"
+#include "specfem/mpi.hpp"
+#include <boost/filesystem.hpp>
 
 template <typename OutputLibrary>
 specfem::io::wavefield_writer<OutputLibrary>::wavefield_writer(
     const std::string &output_folder, const bool save_boundary_values)
-    : output_folder(output_folder), save_boundary_values(save_boundary_values),
-      file(typename OutputLibrary::File(output_folder + "/ForwardWavefield")) {}
+    : output_folder(output_folder),
+      save_boundary_values(save_boundary_values),
+      // Build rank-specific path:
+      //   serial:   {output_folder}/ForwardWavefield
+      //   parallel: {output_folder}/ForwardWavefield/proc_N
+      // file_path is declared before file in the header, so it is initialized
+      // first and can safely be passed to the File constructor.
+      file_path([&output_folder]() {
+        const std::string formatted = specfem::MPI::format_proc_filename(
+            output_folder + "/ForwardWavefield");
+        const boost::filesystem::path p(formatted);
+        if (specfem::MPI::get_size() > 1) {
+          boost::filesystem::create_directories(p.parent_path());
+          return (p.parent_path() / p.stem()).string();
+        }
+        return p.string();
+      }()),
+      file(typename OutputLibrary::File(file_path)) {}
 
 template <typename OutputLibrary>
 void specfem::io::wavefield_writer<OutputLibrary>::initialize(
@@ -27,14 +47,14 @@ void specfem::io::wavefield_writer<OutputLibrary>::initialize(
 
   const int ngllz = mesh.element_grid.ngllz;
   const int ngllx = mesh.element_grid.ngllx;
-  // const int nspec = mesh.points.nspec;
 
   int ngroups = 0;
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_PSV_T, ELASTIC_SH,
-                                       ACOUSTIC, POROELASTIC)),
-      {
-        if (forward.get_nglob<_medium_tag_>() > 0) {
+  specfem::tag_dispatch::for_each(
+      DIMENSION_SET(dim2) *
+          MEDIUM_SET(elastic_psv, elastic_psv_t, elastic_sh, acoustic,
+                     poroelastic),
+      [&]<typename TagsType>() {
+        if (forward.get_nglob<TagsType::medium_tag>() > 0) {
           ngroups++;
         }
       });
@@ -46,25 +66,28 @@ void specfem::io::wavefield_writer<OutputLibrary>::initialize(
 
   int igroup = 0;
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_PSV_T, ELASTIC_SH,
-                                       ACOUSTIC , POROELASTIC)),
-      {
+  specfem::tag_dispatch::for_each(
+      DIMENSION_SET(dim2) *
+          MEDIUM_SET(elastic_psv, elastic_psv_t, elastic_sh, acoustic,
+                     poroelastic, elastic_spin),
+      [&]<typename TagsType>() {
+        constexpr auto medium_tag = TagsType::medium_tag;
+
         // Get the number of GLL points in the medium
-        int nglob_medium = forward.get_nglob<_medium_tag_>();
+        int nglob_medium = forward.get_nglob<medium_tag>();
 
         if (nglob_medium > 0) {
-          medium_tags(igroup) = specfem::element::to_string(_medium_tag_);
+          medium_tags(igroup) = specfem::element::to_string(medium_tag);
           igroup++;
 
-          const auto &field = forward.get_field<_medium_tag_>();
+          const auto &field = forward.get_field<medium_tag>();
 
           typename OutputLibrary::Group group =
-              base_group.createGroup(specfem::element::to_string(_medium_tag_));
+              base_group.createGroup(specfem::element::to_string(medium_tag));
 
           // Get the elements of the medium and their total
           const auto element_indices =
-              element_types.get_elements_on_host(_medium_tag_);
+              element_types.get_elements_on_host(medium_tag);
           const int n_elements = element_indices.size();
 
           // Initialize the views
@@ -86,8 +109,8 @@ void specfem::io::wavefield_writer<OutputLibrary>::initialize(
                 // This is the local medium iglob
                 // see: ``count`` in specfem::assembly::simulation_field<dim2,
                 // medium>
-                const int iglob = forward.template get_iglob<false>(
-                    ispec, iz, ix, _medium_tag_);
+                const int iglob = forward.template get_iglob<false, medium_tag>(
+                    ispec, iz, ix);
 
                 // Set the mapping for the medium element
                 mapping(iel, iz, ix) = iglob;
@@ -103,12 +126,13 @@ void specfem::io::wavefield_writer<OutputLibrary>::initialize(
           group.createDataset("Z", z).write();
           group.createDataset("mapping", mapping).write();
         }
-      });
+      }
+    );
 
   file.createDataset("medium_tags", medium_tags).write();
   file.flush();
 
-  specfem::Logger::info("Coordinates written to " + output_folder + "/ForwardWavefield");
+  specfem::Logger::info("Coordinates written to " + file_path);
 }
 
 template <typename OutputLibrary>
@@ -122,20 +146,23 @@ void specfem::io::wavefield_writer<OutputLibrary>::run(
   typename OutputLibrary::Group base_group = file.createGroup(
       std::string("/Step") + specfem::utilities::to_zero_lead(istep, 6));
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                       POROELASTIC, ELASTIC_PSV_T)),
-      {
+  specfem::tag_dispatch::for_each(
+      DIMENSION_SET(dim2) *
+          MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
+                     elastic_psv_t),
+      [&]<typename TagsType>() {
+        constexpr auto medium_tag = TagsType::medium_tag;
+
         // Get the number of GLL points in the medium
-        int nglob_medium = forward.get_nglob<_medium_tag_>();
+        int nglob_medium = forward.get_nglob<medium_tag>();
 
         if (nglob_medium > 0) {
-          const auto &field = forward.get_field<_medium_tag_>();
+          const auto &field = forward.get_field<medium_tag>();
 
           typename OutputLibrary::Group group =
-              base_group.createGroup(specfem::element::to_string(_medium_tag_));
+              base_group.createGroup(specfem::element::to_string(medium_tag));
 
-          if (_medium_tag_ == specfem::element::medium_tag::acoustic) {
+          if constexpr (medium_tag == specfem::element::medium_tag::acoustic) {
             group.createDataset("Potential", field.get_host_field()).write();
             group.createDataset("PotentialDot", field.get_host_field_dot())
                 .write();
@@ -181,20 +208,22 @@ void specfem::io::wavefield_writer<OutputLibrary>::finalize(
                        boundary_values.stacey.h_property_index_mapping)
         .write();
 
-    FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                         POROELASTIC, ELASTIC_PSV_T, ELASTIC_SPIN)),
-        CAPTURE((container, boundary_values.stacey.container)) {
-
-        // Get the number of GLL points in the medium
-        if (_container_.h_values.size() > 0) {
-          const std::string dataset_name =
-              specfem::element::to_string(_medium_tag_) + "Acceleration";
-          stacey.createDataset(dataset_name, _container_.h_values).write();
-        }
-      });
+    specfem::tag_dispatch::for_each(
+        DIMENSION_SET(dim2) *
+            MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
+                       elastic_psv_t, elastic_spin),
+        [&]<typename TagsType>() {
+          constexpr auto medium_tag = TagsType::medium_tag;
+          auto &ctr =
+              boundary_values.stacey.container.template get<TagsType>();
+          if (ctr.h_values.size() > 0) {
+            const std::string dataset_name =
+                specfem::element::to_string(medium_tag) + "Acceleration";
+            stacey.createDataset(dataset_name, ctr.h_values).write();
+          }
+        });
     file.flush();
   }
 
-  specfem::Logger::info("Wavefield written to " + output_folder + "/ForwardWavefield");
+  specfem::Logger::info("Wavefield written to " + file_path);
 }

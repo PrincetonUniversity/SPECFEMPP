@@ -33,6 +33,8 @@ rule specfem2d_move_traces:
         for trace_file in os.listdir(solver_outdir):
             trace_file_split = trace_file.split(".")
             if len(trace_file_split) == 4 and trace_file_split[-1].startswith("sem"):
+                if trace_file_split[2] != "PRE":
+                    trace_file_split[2] = "B" + trace_file_split[2][1:]
                 trace_file_out = ".".join([trace_file_split[0], trace_file_split[1], "S2", trace_file_split[2], trace_file_split[3]])
                 trace_list.append(trace_file_out + "\n")
                 infile = os.path.join(solver_outdir, trace_file)

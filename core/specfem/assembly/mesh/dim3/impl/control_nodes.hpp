@@ -61,6 +61,8 @@ public:
    * @param control_nodes Source mesh control nodes
    */
   control_nodes(
+      const specfem::assembly::mesh_impl::mesh_to_compute_mapping<dimension_tag>
+          &mapping,
       const specfem::mesh::control_nodes<dimension_tag> &control_nodes);
 };
 

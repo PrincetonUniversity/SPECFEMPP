@@ -2,6 +2,7 @@
 
 #include "specfem/element.hpp"
 #include "specfem/runtime_configuration.hpp"
+#include "specfem/version.hpp"
 #include <sstream>
 #include <string>
 #include <chrono>
@@ -29,15 +30,25 @@ print_header(const specfem::runtime_configuration::setup &setup,
     throw std::runtime_error("Unsupported dimension for header print.");
   }
 
-  message << "================================================\n"
-          << "            SPECFEM++ " << dim << " SIMULATION\n"
-          << "================================================\n\n"
+  auto center = [](const std::string &text, std::size_t width) {
+    if (text.length() >= width) {
+      return text;
+    }
+    const std::size_t padding = (width - text.length()) / 2;
+    return std::string(padding, ' ') + text;
+  };
+
+  message << specfem::version::header() << "\n"
+          << center(dim + " SIMULATION", 58) << "\n"
+          << "\n"
+          << std::string(58, '-') << "\n"
           << "Title : " << setup.get_header().get_title() << "\n"
-          << "Discription: " << setup.get_header().get_description() << "\n"
+          << "Description: " << setup.get_header().get_description() << "\n"
           << "Simulation start time: " << ctime(&c_now)
-          << "------------------------------------------------\n";
+          << std::string(58, '-') << "\n";
 
   return message.str();
+
 }
 
 } // namespace specfem::program

@@ -5,7 +5,7 @@
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/point.hpp"
 #include "divide_mass_matrix.hpp"
-#include "specfem/macros.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -73,22 +73,12 @@ void divide_mass_matrix_core(
 template <int NGLL, typename Tags>
 void divide_mass_matrix(
     const specfem::assembly::assembly<Tags::dimension_tag> &assembly) {
-
-  constexpr auto WavefieldType = Tags::wavefield_tag;
-  constexpr auto DimensionTag = Tags::dimension_tag;
-  constexpr auto MediumTag = Tags::medium_tag;
-
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2, DIM3),
-       MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T, ELASTIC_SPIN)),
-      {
-        if constexpr (DimensionTag == _dimension_tag_ &&
-                      MediumTag == _medium_tag_) {
-          divide_mass_matrix_core<
-              specfem::tags::Tags<DimensionTag, WavefieldType, _medium_tag_> >(
-              assembly);
-        }
-      })
+  // Call divide_mass_matrix_core only if Tags represent a valid combination of dimension and medium tags
+  specfem::tag_dispatch::for_each(
+      specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
+      specfem::tag_dispatch::medium_set<Tags::medium_tag>{},
+      [&]<typename ElementTags>() {
+        divide_mass_matrix_core<Tags>(assembly);
+      });
 }
 } // namespace specfem::compute::impl

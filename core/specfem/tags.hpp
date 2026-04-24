@@ -1,11 +1,18 @@
 #pragma once
 
 #include "specfem/element/tags.hpp"
+#include "specfem/element/to_string.hpp"
 #include "specfem/element_connections/tags.hpp"
+#include "specfem/element_connections/to_string.hpp"
 #include "specfem/element_coupling/tags.hpp"
+#include "specfem/element_coupling/to_string.hpp"
 #include "specfem/simulation.hpp"
 
+#include <string>
+#include <type_traits>
+
 namespace specfem::tags {
+
 /**
  * @brief Template specialization for storing compile-time tag values.
  *
@@ -91,10 +98,28 @@ struct TagMember<specfem::simulation::field_type, WavefieldTag> {
 };
 
 /**
+ * @brief Attenuation tag specialization for attenuation model types
+ * (none, constant_isotropic, etc.).
+ */
+template <specfem::element::attenuation_tag AttenuationTag>
+struct TagMember<specfem::element::attenuation_tag, AttenuationTag> {
+  static constexpr specfem::element::attenuation_tag attenuation_tag =
+      AttenuationTag;
+};
+
+/**
  * @brief SIMD tag specialization for point field types (enabled, disabled).
  */
 template <bool UseSIMD> struct TagMember<bool, UseSIMD> {
   static constexpr bool using_simd = UseSIMD;
+};
+
+template <typename A, typename B> struct tag_equals {
+  static constexpr bool eval(const A &, const B &) { return false; }
+};
+
+template <typename A> struct tag_equals<A, A> {
+  static constexpr bool eval(const A &lhs, const A &rhs) { return lhs == rhs; }
 };
 
 /**
@@ -116,6 +141,36 @@ template <bool UseSIMD> struct TagMember<bool, UseSIMD> {
  * @endcode
  */
 template <auto... TagMembers>
-struct Tags : TagMember<decltype(TagMembers), TagMembers>... {};
+struct Tags : TagMember<decltype(TagMembers), TagMembers>... {
+private:
+  template <typename QueryTagType>
+  static constexpr bool has_tag(const QueryTagType query_tag) {
+    return (
+        specfem::tags::tag_equals<
+            decltype(TagMembers),
+            std::remove_cvref_t<QueryTagType> >::eval(TagMembers, query_tag) ||
+        ...);
+  }
+
+public:
+  /**
+   * @brief Runtime subset check for one or more tag values.
+   *
+   * Returns true if every provided runtime tag exists in this `Tags` type.
+   */
+  template <typename... QueryTagTypes>
+  constexpr bool has(const QueryTagTypes... query_tags) const {
+    return (Tags::has_tag(query_tags) && ...);
+  }
+
+  static std::string name() {
+    std::string s;
+    bool first = true;
+    ((s += (first ? (first = false, std::string{}) : std::string{ "_" }) +
+           to_string(TagMembers)),
+     ...);
+    return s;
+  }
+};
 
 } // namespace specfem::tags

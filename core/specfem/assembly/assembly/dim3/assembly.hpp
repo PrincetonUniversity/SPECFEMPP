@@ -9,6 +9,7 @@
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/kernels.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/assembly/mpi/dim3/mpi.hpp"
 #include "specfem/assembly/properties.hpp"
 #include "specfem/assembly/receivers.hpp"
 #include "specfem/assembly/sources.hpp"
@@ -107,11 +108,9 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
 
   specfem::assembly::boundaries<dimension_tag> boundaries; ///< Boundary
                                                            ///< conditions
-  // specfem::assembly::coupled_interfaces<dimension_tag>
-  // coupled_interfaces;                          ///< Coupled
-  //                                         ///< interfaces
-  //                                         ///< between 2
-  //                                         ///< media
+  specfem::assembly::conforming_interfaces<dimension_tag>
+      conforming_interfaces; ///< Conforming interfaces between different media
+                             ///< (e.g., fluid-solid interface)
 
   specfem::assembly::boundary_values<dimension_tag>
       boundary_values; ///< Field
@@ -121,6 +120,11 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
 
   specfem::assembly::Info<dimension_tag> info; ///< Information about the mesh
                                                ///< and simulation
+
+  specfem::assembly::mpi<dimension_tag> mpi_interfaces; ///< MPI communication
+                                                        ///< groups for face
+                                                        ///< data exchange
+                                                        ///< between partitions
 
   ///@}
 

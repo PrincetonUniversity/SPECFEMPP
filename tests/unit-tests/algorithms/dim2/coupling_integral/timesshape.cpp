@@ -19,6 +19,8 @@ void execute_simple_timesshape_test() {
   constexpr auto interface_tag =
       specfem::element_coupling::interface_tag::acoustic_elastic;
   constexpr auto boundary_tag = specfem::element::boundary_tag::none;
+  constexpr auto flux_scheme_tag =
+      specfem::element_coupling::flux_scheme_tag::natural;
   using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
 
   // ==========================================================
@@ -60,7 +62,8 @@ void execute_simple_timesshape_test() {
   // we will probably fixturize this at some point to make it not so bloated
   using IntersectionFactor =
       specfem::test_fixture::impl::NonconformingIntersectionFactorPatch<
-          interface_tag, boundary_tag, num_edges, QuadIntersection::nquad>;
+          interface_tag, boundary_tag, flux_scheme_tag, num_edges,
+          QuadIntersection::nquad>;
   auto intersection_factor = IntersectionFactor("dshape::intersection_factor");
 
   {
@@ -109,12 +112,13 @@ void execute_simple_timesshape_test() {
       nonconforming_interfaces(ngllz, ngllx, nquad_intersection);
   nonconforming_interfaces.template reinit_container<
       interface_tag, boundary_tag,
-      specfem::element_connections::type::nonconforming>(num_edges);
+      specfem::element_connections::type::nonconforming, flux_scheme_tag>(
+      num_edges);
 
   const auto &interface_container =
       nonconforming_interfaces.template get_interface_container<
           interface_tag, boundary_tag,
-          specfem::element_connections::type::nonconforming>();
+          specfem::element_connections::type::nonconforming, flux_scheme_tag>();
 
   // =================================================================
   // populate this nonconforming interface container and
@@ -152,9 +156,6 @@ void execute_simple_timesshape_test() {
   using FunctionType = specfem::datatype::VectorChunkEdgeViewType<
       type_real, dimension_tag, chunk_size, nquad_intersection, ncomp_self,
       false, memory_space, Kokkos::MemoryTraits<> >;
-
-  const int num_chunks =
-      num_edges / chunk_size + ((num_edges % chunk_size != 0) ? 1 : 0);
 
   Kokkos::View<type_real *[ngllz][ngllx], memory_space, Kokkos::MemoryTraits<> >
       computed_integrals("dshape::computed_integrals", num_edges);

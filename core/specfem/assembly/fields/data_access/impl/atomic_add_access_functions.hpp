@@ -33,7 +33,7 @@ atomic_add_after_simd_dispatch(const std::false_type, const IndexType &index,
 
   const auto &current_field = field.template get_field<MediumTag>();
 
-  const int iglob = field.template get_iglob<on_device>(index, MediumTag);
+  const int iglob = field.template get_iglob<on_device, MediumTag>(index);
 
   constexpr static int ncomponents = specfem::element::attributes<
       std::tuple_element_t<0, std::tuple<AccessorTypes...> >::dimension_tag,
@@ -78,7 +78,7 @@ atomic_add_after_simd_dispatch(const std::true_type, const IndexType &index,
   for (int lane = 0; lane < simd_size; ++lane) {
     iglob[lane] =
         index.mask(lane)
-            ? field.template get_iglob<on_device>(index, lane, MediumTag)
+            ? field.template get_iglob<on_device, MediumTag>(index, lane)
             : field.nglob + 1;
   }
 

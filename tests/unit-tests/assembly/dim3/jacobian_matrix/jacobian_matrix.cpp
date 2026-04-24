@@ -324,9 +324,6 @@ struct ExpectedJacobian3D {
                 expected_coord, element.control_nodes_per_element, xil, etal,
                 zetal);
 
-            // Set numerical tolerance for floating-point comparison
-            const type_real tol = 1e-6;
-
             // Extract computed Jacobian data from assembly structure
             const auto point_jacobian = [&]()
                 -> specfem::point::jacobian_matrix<dimension, true, false> {
