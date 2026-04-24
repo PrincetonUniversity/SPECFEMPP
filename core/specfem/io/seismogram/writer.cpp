@@ -1,8 +1,8 @@
 #include "specfem/io/seismogram/writer.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/io/seismogram/impl/ascii.hpp"
 #include "specfem/utilities.hpp"
-#include <fstream>
 
 void specfem::io::seismogram_writer::write(
     specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
@@ -119,23 +119,10 @@ void specfem::io::seismogram_writer::write(
         throw std::runtime_error(message.str());
       }
 
-      const int ncomponents = filenames.size();
-      std::vector<std::ofstream> seismo_file(ncomponents);
-      for (int icomp = 0; icomp < ncomponents; icomp++) {
-        seismo_file[icomp].open(filenames[icomp]);
-      }
-
-      for (auto [time, value] : receivers.get_seismogram(
-               station_name, network_name, seismogram_type)) {
-        for (int icomp = 0; icomp < ncomponents; icomp++) {
-          seismo_file[icomp] << std::scientific << time << " "
-                             << std::scientific << value[icomp] << "\n";
-        }
-      }
-
-      for (int icomp = 0; icomp < ncomponents; icomp++) {
-        seismo_file[icomp].close();
-      }
+      specfem::io::impl::write_seismogram<
+          specfem::enums::seismogram_format::ascii>(
+          filenames, receivers.get_seismogram(station_name, network_name,
+                                              seismogram_type));
     }
   }
 }
@@ -166,23 +153,10 @@ void specfem::io::seismogram_writer::write(
       std::vector<std::string> filenames = this->get_station_filenames(
           network_name, station_name, "S3", seismogram_type);
 
-      const int ncomponents = filenames.size();
-      std::vector<std::ofstream> seismo_file(ncomponents);
-      for (int icomp = 0; icomp < ncomponents; icomp++) {
-        seismo_file[icomp].open(filenames[icomp]);
-      }
-
-      for (auto [time, value] : receivers.get_seismogram(
-               station_name, network_name, seismogram_type)) {
-        for (int icomp = 0; icomp < ncomponents; icomp++) {
-          seismo_file[icomp] << std::scientific << time << " "
-                             << std::scientific << value[icomp] << "\n";
-        }
-      }
-
-      for (int icomp = 0; icomp < ncomponents; icomp++) {
-        seismo_file[icomp].close();
-      }
+      specfem::io::impl::write_seismogram<
+          specfem::enums::seismogram_format::ascii>(
+          filenames, receivers.get_seismogram(station_name, network_name,
+                                              seismogram_type));
     }
   }
 }
