@@ -14,17 +14,7 @@ target_link_libraries(
         specfem::utilities
         ${BOOST_LIBS}
         Kokkos::kokkos
-        $<$<BOOL:${SPECFEM_ENABLE_NPZ}>:zlib>
-        $<$<BOOL:${SPECFEM_ENABLE_HDF5}>:hdf5>
-        $<$<BOOL:${SPECFEM_ENABLE_ADIOS2}>:adios2>
-)
-
-target_compile_definitions(
-        specfem_io
-        PUBLIC
-        $<$<NOT:$<BOOL:${SPECFEM_ENABLE_NPZ}>>:-DNO_NPZ>
-        $<$<NOT:$<BOOL:${SPECFEM_ENABLE_HDF5}>>:-DNO_HDF5>
-        $<$<NOT:$<BOOL:${SPECFEM_ENABLE_ADIOS2}>>:-DNO_ADIOS2>
+        specfem::io_backends
 )
 
 set_target_properties(specfem_io PROPERTIES

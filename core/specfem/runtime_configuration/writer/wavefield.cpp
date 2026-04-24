@@ -94,27 +94,27 @@ specfem::runtime_configuration::wavefield::instantiate_wavefield_writer()
     if (this->simulation_type == specfem::simulation::type::forward) {
       if (specfem::utilities::is_hdf5_string(this->output_format)) {
         return std::make_shared<specfem::periodic_tasks::wavefield_writer<
-            DimensionTag, specfem::io::HDF5> >(
+            DimensionTag, specfem::io_backends::HDF5> >(
             this->output_folder, this->time_interval, this->include_last_step,
             this->for_adjoint_simulations);
       } else if (specfem::utilities::is_adios2_string(this->output_format)) {
         return std::make_shared<specfem::periodic_tasks::wavefield_writer<
-            DimensionTag, specfem::io::ADIOS2> >(
+            DimensionTag, specfem::io_backends::ADIOS2> >(
             this->output_folder, this->time_interval, this->include_last_step,
             this->for_adjoint_simulations);
       } else if (specfem::utilities::is_ascii_string(this->output_format)) {
         return std::make_shared<specfem::periodic_tasks::wavefield_writer<
-            DimensionTag, specfem::io::ASCII> >(
+            DimensionTag, specfem::io_backends::ASCII> >(
             this->output_folder, this->time_interval, this->include_last_step,
             this->for_adjoint_simulations);
       } else if (specfem::utilities::is_npy_string(this->output_format)) {
         return std::make_shared<specfem::periodic_tasks::wavefield_writer<
-            DimensionTag, specfem::io::NPY> >(
+            DimensionTag, specfem::io_backends::NPY> >(
             this->output_folder, this->time_interval, this->include_last_step,
             this->for_adjoint_simulations);
       } else if (specfem::utilities::is_npz_string(this->output_format)) {
         return std::make_shared<specfem::periodic_tasks::wavefield_writer<
-            DimensionTag, specfem::io::NPZ> >(
+            DimensionTag, specfem::io_backends::NPZ> >(
             this->output_folder, this->time_interval, this->include_last_step,
             this->for_adjoint_simulations);
       } else {
@@ -140,23 +140,23 @@ specfem::runtime_configuration::wavefield::instantiate_wavefield_reader()
     if (this->simulation_type == specfem::simulation::type::combined) {
       if (specfem::utilities::is_hdf5_string(this->output_format)) {
         return std::make_shared<specfem::periodic_tasks::wavefield_reader<
-            DimensionTag, specfem::io::HDF5> >(
+            DimensionTag, specfem::io_backends::HDF5> >(
             this->output_folder, this->time_interval, this->include_last_step);
       } else if (specfem::utilities::is_adios2_string(this->output_format)) {
         return std::make_shared<specfem::periodic_tasks::wavefield_reader<
-            DimensionTag, specfem::io::ADIOS2> >(
+            DimensionTag, specfem::io_backends::ADIOS2> >(
             this->output_folder, this->time_interval, this->include_last_step);
       } else if (specfem::utilities::is_ascii_string(this->output_format)) {
         return std::make_shared<specfem::periodic_tasks::wavefield_reader<
-            DimensionTag, specfem::io::ASCII> >(
+            DimensionTag, specfem::io_backends::ASCII> >(
             this->output_folder, this->time_interval, this->include_last_step);
       } else if (specfem::utilities::is_npy_string(this->output_format)) {
         return std::make_shared<specfem::periodic_tasks::wavefield_reader<
-            DimensionTag, specfem::io::NPY> >(
+            DimensionTag, specfem::io_backends::NPY> >(
             this->output_folder, this->time_interval, this->include_last_step);
       } else if (specfem::utilities::is_npz_string(this->output_format)) {
         return std::make_shared<specfem::periodic_tasks::wavefield_reader<
-            DimensionTag, specfem::io::NPZ> >(
+            DimensionTag, specfem::io_backends::NPZ> >(
             this->output_folder, this->time_interval, this->include_last_step);
       } else {
         throw std::runtime_error("Unknown wavefield format");
