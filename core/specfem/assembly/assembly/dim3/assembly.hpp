@@ -84,7 +84,7 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
   /**
    * @brief Attenuation properties for the mesh at every quadrature point
    */
-  //   specfem::assembly::attenuation<dimension_tag> attenuation;
+  specfem::assembly::Attenuation<dimension_tag> attenuation;
 
   /**
    * @brief Material properties for the mesh at every quadrature point
@@ -174,7 +174,9 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
       const int nsteps_between_samples,
       const specfem::simulation::type simulation,
       const bool allocate_boundary_values,
-      const std::shared_ptr<specfem::io::reader> &property_reader);
+      const std::shared_ptr<specfem::io::reader> &property_reader,
+      const specfem::units::Hertz &attenuation_reference_frequency,
+      const specfem::utilities::Band<specfem::units::Hertz> &attenuation_band);
 
   assembly() = default;
 

@@ -62,7 +62,9 @@ template <> Assembly<specfem::element::dimension_tag::dim2>::Assembly() {
     this->assemblies.push_back(
         specfem::assembly::assembly<specfem::element::dimension_tag::dim2>(
             mesh, quadrature, sources, receivers, seismogram_types, 1.0, 0.0, 1,
-            1, 1, specfem::simulation::type::forward, false, nullptr));
+            1, 1, specfem::simulation::type::forward, false, nullptr,
+            specfem::units::Hertz(0.0),
+            specfem::utilities::Band<specfem::units::Hertz>{}));
   }
 }
 
@@ -115,7 +117,9 @@ template <> Assembly<specfem::element::dimension_tag::dim3>::Assembly() {
     this->assemblies.push_back(
         specfem::assembly::assembly<specfem::element::dimension_tag::dim3>(
             mesh, quadrature, sources, receivers, seismogram_types, 1.0, 0.0, 1,
-            1, 1, specfem::simulation::type::forward, false, nullptr));
+            1, 1, specfem::simulation::type::forward, false, nullptr,
+            specfem::units::Hertz(0.0),
+            specfem::utilities::Band<specfem::units::Hertz>{}));
 
     std::cout << "Created assembly for " << Test.name << std::endl;
   }
