@@ -46,7 +46,7 @@ void initialize_mass_matrix(
   specfem::tag_dispatch::for_each(
       specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
           MEDIUM_SET(elastic, elastic_psv, elastic_sh, acoustic, poroelastic,
-                     elastic_psv_t),
+                     elastic_psv_t, elastic_spin),
       [&]<typename ElementTags>() {
         specfem::compute::impl::invert_mass_matrix<specfem::tags::Tags<
             Tags::dimension_tag, WavefieldType, ElementTags::medium_tag> >(
