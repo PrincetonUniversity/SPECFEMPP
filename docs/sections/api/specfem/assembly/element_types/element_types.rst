@@ -3,6 +3,9 @@
 ``specfem::assembly::element_types``
 ====================================
 
+.. doxygenstruct:: specfem::assembly::element_types_impl::element_types_base
+    :members:
+
 .. doxygenstruct:: specfem::assembly::element_types
     :members:
 

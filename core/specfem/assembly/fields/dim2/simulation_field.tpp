@@ -19,27 +19,28 @@ specfem::assembly::simulation_field<specfem::element::dimension_tag::dim2,
   this->index_mapping = mesh.index_mapping;
   this->h_index_mapping = mesh.h_index_mapping;
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                       POROELASTIC, ELASTIC_PSV_T)),
-      CAPTURE(assembly_index_mapping, h_assembly_index_mapping, field) {
-        _assembly_index_mapping_ =
-            Kokkos::View<int *, Kokkos::LayoutLeft,
-                         Kokkos::DefaultExecutionSpace::memory_space>(
-                "specfem::assembly::simulation_field::index_mapping", nglob);
-        _h_assembly_index_mapping_ =
-            Kokkos::create_mirror_view(_assembly_index_mapping_);
+  specfem::tag_dispatch::for_each(combinations, [&]<typename TagsType>() {
+    constexpr auto medium = TagsType::medium_tag;
+    assembly_index_mapping.template get<TagsType>() =
+        Kokkos::View<int *, Kokkos::LayoutLeft,
+                     Kokkos::DefaultExecutionSpace::memory_space>(
+            "specfem::assembly::simulation_field::index_mapping", nglob);
+    h_assembly_index_mapping.template get<TagsType>() =
+        Kokkos::create_mirror_view(
+            assembly_index_mapping.template get<TagsType>());
 
-        for (int iglob = 0; iglob < nglob; iglob++) {
-          _h_assembly_index_mapping_(iglob) = -1;
-        }
+    for (int iglob = 0; iglob < nglob; iglob++) {
+      h_assembly_index_mapping.template get<TagsType>()(iglob) = -1;
+    }
 
-        _field_ = specfem::assembly::fields_impl::field_impl<_dimension_tag_,
-                                                             _medium_tag_>(
-            mesh, element_types, _h_assembly_index_mapping_);
+    field.template get<TagsType>() =
+        specfem::assembly::fields_impl::field_impl<dimension_tag, medium>(
+            mesh, element_types,
+            h_assembly_index_mapping.template get<TagsType>());
 
-        Kokkos::deep_copy(_assembly_index_mapping_, _h_assembly_index_mapping_);
-      })
+    Kokkos::deep_copy(assembly_index_mapping.template get<TagsType>(),
+                      h_assembly_index_mapping.template get<TagsType>());
+  });
 
   return;
 }
@@ -52,15 +53,12 @@ int specfem::assembly::simulation_field<
     return total_degrees_of_freedom;
   }
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                       POROELASTIC, ELASTIC_PSV_T)),
-      CAPTURE(field) {
-        total_degrees_of_freedom +=
-            this->get_nglob<_medium_tag_>() *
-            specfem::element::attributes<_dimension_tag_,
-                                         _medium_tag_>::components;
-      })
+  specfem::tag_dispatch::for_each(combinations, [&]<typename TagsType>() {
+    constexpr auto medium = TagsType::medium_tag;
+    total_degrees_of_freedom +=
+        this->get_nglob<medium>() *
+        specfem::element::attributes<dimension_tag, medium>::components;
+  });
 
   return total_degrees_of_freedom;
 }
@@ -68,17 +66,15 @@ int specfem::assembly::simulation_field<
 template <specfem::simulation::field_type WavefieldType>
 void specfem::assembly::simulation_field<specfem::element::dimension_tag::dim2,
                                          WavefieldType>::copy_to_host() {
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                       POROELASTIC, ELASTIC_PSV_T)),
-      CAPTURE(field) { _field_.copy_to_host(); })
+  specfem::tag_dispatch::for_each(combinations, [&]<typename TagsType>() {
+    field.template get<TagsType>().copy_to_host();
+  });
 }
 
 template <specfem::simulation::field_type WavefieldType>
 void specfem::assembly::simulation_field<specfem::element::dimension_tag::dim2,
                                          WavefieldType>::copy_to_device() {
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                       POROELASTIC, ELASTIC_PSV_T)),
-      CAPTURE(field) { _field_.copy_to_device(); })
+  specfem::tag_dispatch::for_each(combinations, [&]<typename TagsType>() {
+    field.template get<TagsType>().copy_to_device();
+  });
 }

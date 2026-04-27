@@ -52,22 +52,22 @@ type_real estimate_intersection_length(
   type_real intersect_hi = std::max(intersection_localcoords[0].first,
                                     intersection_localcoords[1].first);
 
-  type_real xi, gamma;
-  auto &edgecoord = [&xi, &gamma, &iedge]() -> type_real & {
-    if (iedge == specfem::mesh_entity::dim2::type::bottom) {
-      gamma = -1;
-      return xi;
-    } else if (iedge == specfem::mesh_entity::dim2::type::right) {
-      xi = 1;
-      return gamma;
-    } else if (iedge == specfem::mesh_entity::dim2::type::top) {
-      gamma = 1;
-      return xi;
-    } else {
-      xi = -1;
-      return gamma;
-    }
-  }();
+  type_real xi = 0, gamma = 0;
+  type_real *edgecoord_p;
+  if (iedge == specfem::mesh_entity::dim2::type::bottom) {
+    gamma = -1;
+    edgecoord_p = &xi;
+  } else if (iedge == specfem::mesh_entity::dim2::type::right) {
+    xi = 1;
+    edgecoord_p = &gamma;
+  } else if (iedge == specfem::mesh_entity::dim2::type::top) {
+    gamma = 1;
+    edgecoord_p = &xi;
+  } else {
+    xi = -1;
+    edgecoord_p = &gamma;
+  }
+  type_real &edgecoord = *edgecoord_p;
   type_real total_length = 0;
   for (int iseg = 0; iseg < num_segments; iseg++) {
     edgecoord =
@@ -92,7 +92,6 @@ void estimate_verify_normal(
     const int &ispec, const specfem::mesh_entity::dim2::type &iedge,
     const type_real &edgecoord, const type_real &normal_x,
     const type_real &normal_z) {
-  const type_real h = 1e-3;
   const type_real eps = 1e-2;
   const int ngnod = coorg.extent(0);
 
@@ -161,9 +160,7 @@ void estimate_verify_normal(
 void test_nonconforming_container_transfers(
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
         &assembly) {
-  const type_real length_verify_epsilon = 1e-2;
 
-  const int ngllx = assembly.mesh.element_grid.ngllx;
   const int ngllz = assembly.mesh.element_grid.ngllz;
 
   const auto &nc_interface_acoustic_elastic =

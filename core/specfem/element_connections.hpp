@@ -8,6 +8,7 @@
 
 #include "specfem/element.hpp"
 #include "specfem/element_connections/tags.hpp"
+#include "specfem/element_connections/to_string.hpp"
 #include <string>
 
 /**

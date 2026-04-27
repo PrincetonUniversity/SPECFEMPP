@@ -25,10 +25,6 @@ void specfem::compute::impl::compute_mass_matrix(
   constexpr auto property_tag = Tags::property_tag;
   constexpr auto boundary_tag = Tags::boundary_tag;
 
-  // Get the number of components for the element
-  constexpr int components =
-      specfem::element::attributes<dimension_tag, medium_tag>::components;
-
   const auto elements = assembly.element_types.get_elements_on_device(
       medium_tag, property_tag, boundary_tag);
 

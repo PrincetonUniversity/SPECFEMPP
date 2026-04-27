@@ -5,6 +5,7 @@
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include "specfem/tags.hpp"
 
 namespace specfem::compute {
@@ -24,37 +25,33 @@ template <int NGLL, typename Tags>
 void initialize_mass_matrix(
     specfem::assembly::assembly<Tags::dimension_tag> &assembly,
     const type_real &dt) {
-  constexpr auto DimensionTag = Tags::dimension_tag;
   constexpr auto WavefieldType = Tags::wavefield_tag;
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2, DIM3),
-       MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                    COMPOSITE_STACEY_DIRICHLET)),
-      {
-        if constexpr (DimensionTag == _dimension_tag_) {
-          specfem::compute::impl::compute_mass_matrix<
-              NGLL,
-              specfem::tags::Tags<DimensionTag, WavefieldType, _medium_tag_,
-                                  _property_tag_, _boundary_tag_> >(dt,
-                                                                    assembly);
-        }
-      })
+  specfem::tag_dispatch::for_each(
+      specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
+          MEDIUM_SET(elastic, elastic_psv, elastic_sh, acoustic, poroelastic,
+                     elastic_psv_t) *
+          PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
+          BOUNDARY_SET(none, acoustic_free_surface, stacey,
+                       composite_stacey_dirichlet),
+      [&]<typename ElementTags>() {
+        specfem::compute::impl::compute_mass_matrix<
+            NGLL,
+            specfem::tags::Tags<
+                Tags::dimension_tag, WavefieldType, ElementTags::medium_tag,
+                ElementTags::property_tag, ElementTags::boundary_tag> >(
+            dt, assembly);
+      });
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2, DIM3),
-       MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T)),
-      {
-        if constexpr (DimensionTag == _dimension_tag_) {
-          specfem::compute::impl::invert_mass_matrix<
-              specfem::tags::Tags<DimensionTag, WavefieldType, _medium_tag_> >(
-              assembly);
-        }
-      })
+  specfem::tag_dispatch::for_each(
+      specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
+          MEDIUM_SET(elastic, elastic_psv, elastic_sh, acoustic, poroelastic,
+                     elastic_psv_t),
+      [&]<typename ElementTags>() {
+        specfem::compute::impl::invert_mass_matrix<specfem::tags::Tags<
+            Tags::dimension_tag, WavefieldType, ElementTags::medium_tag> >(
+            assembly);
+      });
 
   return;
 }

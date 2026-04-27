@@ -1,4 +1,7 @@
-#include "specfem/element_coupling.hpp"
+#pragma once
+#include "tags.hpp"
+#include <ostream>
+#include <string>
 
 namespace specfem::element_coupling {
 

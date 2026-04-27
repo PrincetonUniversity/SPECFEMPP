@@ -3,7 +3,7 @@
 #include "impl/compute_seismograms.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/enums.hpp"
-#include "specfem/macros.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include "specfem/tags.hpp"
 
 namespace specfem::compute {
@@ -26,19 +26,18 @@ void compute_seismograms(
   constexpr auto DimensionTag = Tags::dimension_tag;
   constexpr auto WavefieldType = Tags::wavefield_tag;
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2, DIM3),
-       MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-       ATTENUATION_TAG(NONE)),
-      {
-        if constexpr (DimensionTag == _dimension_tag_) {
-          impl::compute_seismograms<
-              NGLL, specfem::tags::Tags<DimensionTag, WavefieldType,
-                                        _medium_tag_, _property_tag_> >(
-              assembly, isig_step);
-        }
-      })
+  specfem::tag_dispatch::for_each(
+      specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
+          MEDIUM_SET(elastic, elastic_psv, elastic_sh, acoustic, poroelastic,
+                     elastic_psv_t) *
+          PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
+          ATTENUATION_SET(none),
+      [&]<typename ElementTags>() {
+        impl::compute_seismograms<
+            NGLL, specfem::tags::Tags<Tags::dimension_tag, WavefieldType,
+                                      ElementTags::medium_tag,
+                                      ElementTags::property_tag> >(assembly,
+                                                                   isig_step);
+      });
 }
 } // namespace specfem::compute

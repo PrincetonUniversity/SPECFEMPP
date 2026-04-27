@@ -17,17 +17,20 @@ public:
   type_real max; ///< Maximum value
 
   /** @brief Default constructor initializes to zero bounds. */
-  Bounds() : min(0), max(0) {}
+  KOKKOS_INLINE_FUNCTION Bounds() : min(0), max(0) {}
 
   /**
    * @brief Construct bounds from explicit min/max values.
    * @param min_in Minimum value
    * @param max_in Maximum value
    */
-  Bounds(type_real min_in, type_real max_in) : min(min_in), max(max_in) {}
+  KOKKOS_INLINE_FUNCTION Bounds(type_real min_in, type_real max_in)
+      : min(min_in), max(max_in) {}
 
   /** @brief Compute the range (max - min). */
-  type_real length() const { return this->max - this->min; }
+  KOKKOS_INLINE_FUNCTION type_real length() const {
+    return this->max - this->min;
+  }
 
   /**
    * @brief Compute the ratio (max / min).
@@ -42,13 +45,15 @@ public:
   }
 
   /** @brief Compute the midpoint of the range. */
-  type_real center() const { return 0.5 * (this->max + this->min); }
+  KOKKOS_INLINE_FUNCTION type_real center() const {
+    return 0.5 * (this->max + this->min);
+  }
 
   /**
    * @brief Set both min and max to the same value.
    * @param value Value to assign to both bounds
    */
-  Bounds &operator=(const type_real value) {
+  KOKKOS_INLINE_FUNCTION Bounds &operator=(const type_real value) {
     this->min = value;
     this->max = value;
     return *this;

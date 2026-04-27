@@ -131,11 +131,10 @@ TEST(AdjacencyGraphTest, ConstGraphAccess) {
  * @brief Test EdgeProperties default constructor
  */
 TEST(AdjacencyGraphTest, EdgePropertiesDefaultConstructor) {
-  specfem::mesh::adjacency_graph<
-      specfem::element::dimension_tag::dim2>::EdgeProperties props;
-
   // Default values should be initialized (exact values depend on enum defaults)
   // We mainly test that the constructor doesn't crash
+  (void)specfem::mesh::adjacency_graph<
+      specfem::element::dimension_tag::dim2>::EdgeProperties{};
   SUCCEED();
 }
 

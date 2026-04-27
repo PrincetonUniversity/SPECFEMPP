@@ -224,7 +224,7 @@ public:
    *
    * @return Number of elements
    */
-  const int n_elements() const { return static_cast<int>(_jacobian.size()); }
+  int n_elements() const { return static_cast<int>(_jacobian.size()); }
 
   /**
    * @brief Convert to specfem::assembly::jacobian_matrix format.
