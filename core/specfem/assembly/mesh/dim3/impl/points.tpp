@@ -31,6 +31,29 @@ void initialize_coordinates(
   Kokkos::fence();
 }
 
+namespace {
+
+template <typename CoordViewType>
+Kokkos::MinMaxScalar<type_real>
+compute_bounds(const char *label, const int nspec, const int ngllz,
+               const int nglly, const int ngllx, const CoordViewType &coord,
+               const int dim) {
+  Kokkos::MinMaxScalar<type_real> result;
+  Kokkos::parallel_reduce(
+      label,
+      Kokkos::MDRangePolicy<Kokkos::Rank<4> >({ 0, 0, 0, 0 },
+                                              { nspec, ngllz, nglly, ngllx }),
+      KOKKOS_LAMBDA(const int ispec, const int iz, const int iy, const int ix,
+                    Kokkos::MinMaxScalar<type_real> &r) {
+        r.min_val = Kokkos::min(r.min_val, coord(ispec, iz, iy, ix, dim));
+        r.max_val = Kokkos::max(r.max_val, coord(ispec, iz, iy, ix, dim));
+      },
+      Kokkos::MinMax<type_real>(result));
+  return result;
+}
+
+} // namespace
+
 specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::
     points(const int &nspec, const int &ngllz, const int &nglly,
            const int &ngllx,
@@ -305,40 +328,15 @@ specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::
 
   const auto coord = this->coord;
 
-  Kokkos::MinMaxScalar<type_real> x_result, y_result, z_result;
-
-  Kokkos::parallel_reduce(
-      "specfem::assembly::mesh::points::compute_x_bounds",
-      Kokkos::MDRangePolicy<Kokkos::Rank<4> >({ 0, 0, 0, 0 },
-                                              { nspec, ngllz, nglly, ngllx }),
-      KOKKOS_LAMBDA(const int ispec, const int iz, const int iy, const int ix,
-                    Kokkos::MinMaxScalar<type_real> &result) {
-        result.min_val = Kokkos::min(result.min_val, coord(ispec, iz, iy, ix, 0));
-        result.max_val = Kokkos::max(result.max_val, coord(ispec, iz, iy, ix, 0));
-      },
-      Kokkos::MinMax<type_real>(x_result));
-
-  Kokkos::parallel_reduce(
-      "specfem::assembly::mesh::points::compute_y_bounds",
-      Kokkos::MDRangePolicy<Kokkos::Rank<4> >({ 0, 0, 0, 0 },
-                                              { nspec, ngllz, nglly, ngllx }),
-      KOKKOS_LAMBDA(const int ispec, const int iz, const int iy, const int ix,
-                    Kokkos::MinMaxScalar<type_real> &result) {
-        result.min_val = Kokkos::min(result.min_val, coord(ispec, iz, iy, ix, 1));
-        result.max_val = Kokkos::max(result.max_val, coord(ispec, iz, iy, ix, 1));
-      },
-      Kokkos::MinMax<type_real>(y_result));
-
-  Kokkos::parallel_reduce(
-      "specfem::assembly::mesh::points::compute_z_bounds",
-      Kokkos::MDRangePolicy<Kokkos::Rank<4> >({ 0, 0, 0, 0 },
-                                              { nspec, ngllz, nglly, ngllx }),
-      KOKKOS_LAMBDA(const int ispec, const int iz, const int iy, const int ix,
-                    Kokkos::MinMaxScalar<type_real> &result) {
-        result.min_val = Kokkos::min(result.min_val, coord(ispec, iz, iy, ix, 2));
-        result.max_val = Kokkos::max(result.max_val, coord(ispec, iz, iy, ix, 2));
-      },
-      Kokkos::MinMax<type_real>(z_result));
+  const auto x_result = compute_bounds(
+      "specfem::assembly::mesh::points::compute_x_bounds", nspec, ngllz, nglly,
+      ngllx, coord, 0);
+  const auto y_result = compute_bounds(
+      "specfem::assembly::mesh::points::compute_y_bounds", nspec, ngllz, nglly,
+      ngllx, coord, 1);
+  const auto z_result = compute_bounds(
+      "specfem::assembly::mesh::points::compute_z_bounds", nspec, ngllz, nglly,
+      ngllx, coord, 2);
 
   this->xmin = x_result.min_val;
   this->xmax = x_result.max_val;
