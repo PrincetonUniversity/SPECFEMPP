@@ -117,7 +117,7 @@ locate_point(
   // (matching legacy SPECFEM behaviour).
   std::vector<int> islice_selected(npoints, -1);
   for (int i = 0; i < npoints; ++i) {
-    if (local_priority[i] <= global_priority[i])
+    if (local_priority[i] == global_priority[i])
       islice_selected[i] = myrank;
   }
   SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, islice_selected.data(),
