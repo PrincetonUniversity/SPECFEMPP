@@ -221,6 +221,32 @@ target_link_libraries(
   -lpthread -lm
 )
 
+add_executable(
+  assembly_mpi_dim3_tests
+  assembly/mpi/dim3/fixture.cpp
+  assembly/mpi/dim3/communication_group/communication_group.cpp
+  assembly/mpi/dim3/runner.cpp
+)
+
+target_compile_definitions(assembly_mpi_dim3_tests PRIVATE TEST_OUTPUT_DIR=${TEST_OUTPUT_DIR})
+set_target_properties(assembly_mpi_dim3_tests PROPERTIES UNITY_BUILD OFF)
+
+target_link_libraries(
+  assembly_mpi_dim3_tests
+  specfem::mesh
+  specfem::assembly
+  specfem::quadrature
+  specfem_environment
+  specfem::io
+  specfem::utilities
+  specfem::enums
+  specfem::element
+  MPI::MPI_CXX
+  Kokkos::kokkos
+  gtest_main
+  -lpthread -lm
+)
+
 # MPI test targets (4 processes)
 set(MPI_TEST_TARGETS_4PROCS
   mesh_mpi_dim3_tests
@@ -233,6 +259,7 @@ set(MPI_TEST_TARGETS_4PROCS
   mpi_subset_all_tests
   algorithms_locate_point_mpi_dim2_tests
   algorithms_locate_point_mpi_dim3_tests
+  assembly_mpi_dim3_tests
 )
 
 # Expose MPI test targets for use in CMakeLists.txt (ALL_TEST_TARGETS) and
@@ -243,7 +270,7 @@ set(MPI_TEST_TARGETS ${MPI_TEST_TARGETS_4PROCS})
 specfem_write_copy_test_cmake_script()
 
 # Register MPI tests using helper function
-foreach(test_target IN LISTS MPI_TEST_TARGETS)
+foreach(test_target IN LISTS MPI_TEST_TARGETS_4PROCS)
   add_mpi_test(${test_target} 4)
 endforeach()
 
