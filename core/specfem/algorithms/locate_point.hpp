@@ -5,6 +5,7 @@
 #include "specfem/mpi.hpp"
 #include "specfem/point.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/utilities/is_close.hpp"
 #include <cmath>
 #include <limits>
 #include <stdexcept>
@@ -115,9 +116,18 @@ locate_point(
   // Step 2: each rank claims points whose local priority matches the global
   // minimum; allreduce(max) resolves ties by assigning to the highest rank
   // (matching legacy SPECFEM behaviour).
+  //
+  // MPI_MIN is a comparison-selection that returns one contributed value
+  // bit-for-bit on homogeneous clusters (MPI Standard §6.9.2), so exact
+  // equality is correct in the common case.  However, on heterogeneous
+  // clusters MPI may perform FP format conversion during the reduction
+  // (§4.1), which can alter the low-order bits.  A relative tolerance of one
+  // machine-epsilon guards against this for future heterogeneous deployments.
   std::vector<int> islice_selected(npoints, -1);
   for (int i = 0; i < npoints; ++i) {
-    if (local_priority[i] == global_priority[i])
+    if (specfem::utilities::is_close(local_priority[i], global_priority[i],
+                                     std::numeric_limits<type_real>::epsilon(),
+                                     type_real(0)))
       islice_selected[i] = myrank;
   }
   SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, islice_selected.data(),
