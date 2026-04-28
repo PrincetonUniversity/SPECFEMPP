@@ -36,8 +36,6 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
                                      this->mesh.element_grid.ngllz,
                                      this->mesh.element_grid.ngllx };
 
-  this->properties = { this->element_types, this->mesh, mesh.materials,
-                       property_reader != nullptr };
   this->kernels = { this->element_types };
   this->sources = {
     sources, this->mesh, this->jacobian_matrix, this->element_types,
@@ -70,8 +68,12 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
                                      this->element_intersections, this->mesh };
   this->fields = { this->mesh, this->element_types, simulation };
 
-  this->info = { this->mesh, this->properties, this->element_types };
-
+  // attenuation must be constructed before properties: the attenuation
+  // constructor calls compute_attenuation_properties() on each material, which
+  // must happen before properties calls get_computed_values().
+  // attenuation only reads info.largest_minimum_period when
+  // auto_compute_attenuation_band=true (passed as false here), so passing the
+  // default-constructed this->info is safe.
   this->attenuation = { attenuation_reference_frequency,
                         attenuation_band,
                         false,
@@ -80,6 +82,11 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
                         this->element_types,
                         this->info,
                         mesh.materials };
+
+  this->properties = { this->element_types, this->mesh, mesh.materials,
+                       property_reader != nullptr };
+
+  this->info = { this->mesh, this->properties, this->element_types };
 
   if (allocate_boundary_values)
     this->boundary_values = { max_timesteps, this->mesh, this->element_types,

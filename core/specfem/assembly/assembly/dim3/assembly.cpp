@@ -52,9 +52,6 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
                                      this->mesh.element_grid.nglly,
                                      this->mesh.element_grid.ngllx };
 
-  this->properties = { this->element_types, this->mesh, mesh.materials,
-                       property_reader != nullptr };
-
   this->kernels = { this->element_types };
 
   this->sources = {
@@ -85,8 +82,12 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
   // Currently done in the mesher!
   this->check_jacobian_matrix();
 
-  this->info = { this->mesh, this->properties, this->element_types };
-
+  // attenuation must be constructed before properties: the attenuation
+  // constructor calls compute_attenuation_properties() on each material, which
+  // must happen before properties calls get_computed_values().
+  // attenuation only reads info.largest_minimum_period when
+  // auto_compute_attenuation_band=true (passed as false here), so passing the
+  // default-constructed this->info is safe.
   this->attenuation = { attenuation_reference_frequency,
                         attenuation_band,
                         false,
@@ -95,6 +96,11 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
                         this->element_types,
                         this->info,
                         mesh.materials };
+
+  this->properties = { this->element_types, this->mesh, mesh.materials,
+                       property_reader != nullptr };
+
+  this->info = { this->mesh, this->properties, this->element_types };
 
   return;
 }
