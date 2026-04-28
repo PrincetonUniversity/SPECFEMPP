@@ -23,6 +23,7 @@
 #include "specfem/mpi.hpp"
 #include <array>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace {
@@ -56,9 +57,17 @@ TEST_P(AssemblyMPI3DTest, CommunicationPattern) {
   const auto &mpi_interfaces = getMPIInterfaces();
   const auto &assembly_mesh = getAssemblyMesh();
 
+  // Count unique neighbors across all connection types
+  std::unordered_set<unsigned int> expected_neighbors;
+  for (const auto &g : mpi_interfaces.face_groups)
+    expected_neighbors.insert(g.neighbor_rank);
+  for (const auto &g : mpi_interfaces.edge_groups)
+    expected_neighbors.insert(g.neighbor_rank);
+  for (const auto &g : mpi_interfaces.corner_groups)
+    expected_neighbors.insert(g.neighbor_rank);
   ASSERT_EQ(mpi_interfaces.communication_patterns.size(),
-            mpi_interfaces.communication_groups.size())
-      << "communication_patterns count must match communication_groups count";
+            expected_neighbors.size())
+      << "communication_patterns count must match unique neighbor count";
 
   // Build iglob → (x,y,z) map by scanning all elements on this rank
   std::unordered_map<int, CoordTriple> iglob_to_coord;
