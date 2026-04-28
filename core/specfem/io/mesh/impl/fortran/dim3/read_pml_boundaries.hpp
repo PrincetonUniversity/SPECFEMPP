@@ -26,7 +26,7 @@ namespace specfem::io::mesh::impl::fortran::dim3 {
  *
  * @code
  * // Example usage in MESHFEM3D database reading
- * std::ifstream database_stream("proc000000_mesh.bin", std::ios::binary);
+ * std::ifstream database_stream("mesh.bin", std::ios::binary);
  *
  * // Read other mesh components first...
  *
