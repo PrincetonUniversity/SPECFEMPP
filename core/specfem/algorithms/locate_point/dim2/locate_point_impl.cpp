@@ -362,7 +362,9 @@ locate_point_core(
   int ix_guess, iz_guess, ispec_guess;
 
   std::tie(ix_guess, iz_guess, ispec_guess) =
-      rough_location(coordinates, global_coordinates);
+// TODO ( Any : Add KDTree ) This is right where a KDTree would slot in.
+std::tie(ix_guess, iz_guess, ispec_guess) =
+rough_location(coordinates, global_coordinates);
 
   const auto best_candidates = get_best_candidates(ispec_guess, index_mapping);
 
