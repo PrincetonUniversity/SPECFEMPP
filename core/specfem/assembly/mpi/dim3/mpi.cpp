@@ -28,8 +28,15 @@ int find_anchor_position(
  * @brief Compute MPI message tag base from rank pair.
  *
  * Uses modular arithmetic to stay within the MPI standard minimum tag
- * upper bound (MPI_TAG_UB >= 32767). Reserves 4 tag slots per rank-pair
- * for message-specific offsets (+0..+3).
+ * upper bound (MPI_TAG_UB >= 32767). Reserves 7 tag slots per rank-pair
+ * for message-specific offsets (+0..+6):
+ *   +0  metadata (nfaces, nedges, ncorners, ngll, nglob)
+ *   +1  rotated face indices [nfaces][ngll][ngll]
+ *   +2  face neighbor element indices [nfaces]
+ *   +3  reflected edge indices [nedges][ngll]
+ *   +4  edge neighbor element indices [nedges]
+ *   +5  corner neighbor element indices [ncorners]
+ *   +6  corner nglob indices [ncorners]
  *
  * @param my_rank Current MPI rank
  * @param neighbor_rank Target MPI rank
@@ -38,8 +45,8 @@ int find_anchor_position(
  */
 int compute_message_tag_base(unsigned int my_rank, unsigned int neighbor_rank) {
   // Combine ranks using modular arithmetic to stay within the MPI standard
-  // minimum tag upper bound (MPI_TAG_UB >= 32767). Reserve 4 tag slots
-  // per rank-pair for message-specific offsets (+0..+3).
+  // minimum tag upper bound (MPI_TAG_UB >= 32767). Reserve 7 tag slots
+  // per rank-pair for message-specific offsets (+0..+6).
   return static_cast<int>(
       (static_cast<unsigned long>(my_rank) * 1000003UL + neighbor_rank) %
       32761);
@@ -423,16 +430,15 @@ specfem::assembly::mpi_impl::packer::packer(
 // ---------------------------------------------------------------------------
 // send_unpacking_indices implementation
 //
-// Applies rotation transformations to face GLL indices and sends them to the
-// neighboring MPI process using three separate blocking MPI messages
-// (Option A):
-//   1. Metadata: nfaces and ngll (for receiver buffer allocation)
-//   2. Rotated face indices: [nfaces][ngll][ngll] with theta-based rotation
-//   3. Neighbor element indices: [nfaces] (for receiver face-to-element
-//   mapping)
-//
-// Rotation is applied per face using the apply_rotation helper function,
-// which maps discrete theta values [0,3] to 90° rotation increments.
+// Applies rotation/reflection transformations to GLL indices and sends them
+// to the neighboring MPI process using 7 separate blocking MPI messages:
+//   +0  Metadata: {nfaces, nedges, ncorners, ngll, nglob}
+//   +1  Rotated face indices [nfaces][ngll][ngll] (theta-based rotation)
+//   +2  Face neighbor element indices [nfaces]
+//   +3  Reflected edge indices [nedges][ngll] (reflect flag applied)
+//   +4  Edge neighbor element indices [nedges]
+//   +5  Corner neighbor element indices [ncorners]
+//   +6  Corner nglob indices [ncorners]
 //
 // Uses blocking MPI_Send (wrapped in SPECFEM_MPI_SAFECALL) to ensure data
 // is transmitted before local buffers are deallocated. All calls protected
@@ -489,7 +495,7 @@ void specfem::assembly::mpi_impl::packer::send_unpacking_indices(
     }
   }
   // -----------------------------------------------------------------------
-  // Step 3: Send three MPI messages (Option A: Separate sends)
+  // Step 3: Send 7 MPI messages (base_tag + offset, see tag layout above)
   // -----------------------------------------------------------------------
   MPI_Comm comm = specfem::MPI::communicator();
 
@@ -515,28 +521,25 @@ void specfem::assembly::mpi_impl::packer::send_unpacking_indices(
                                 static_cast<int>(this->nfaces), MPI_INT,
                                 this->neighbor_rank, base_tag + 2, comm));
 
-  const int reflect_base_tag = base_tag + 3; // Reserve next tag for edge data
   // Message 4: Send reflected edge indices [nedges][ngll]
   SPECFEM_MPI_SAFECALL(MPI_Send(
       reflect_indices.data(), static_cast<int>(this->nedges * this->ngll),
-      MPI_INT, this->neighbor_rank, reflect_base_tag, comm));
+      MPI_INT, this->neighbor_rank, base_tag + 3, comm));
 
   // Message 5: Send edge neighbor element indices [nedges]
-  SPECFEM_MPI_SAFECALL(
-      MPI_Send(edge_neighbor_element.data(), static_cast<int>(this->nedges),
-               MPI_INT, this->neighbor_rank, reflect_base_tag + 1, comm));
+  SPECFEM_MPI_SAFECALL(MPI_Send(edge_neighbor_element.data(),
+                                static_cast<int>(this->nedges), MPI_INT,
+                                this->neighbor_rank, base_tag + 4, comm));
 
   // Message 6: Send corner neighbor element indices [ncorners]
-  SPECFEM_MPI_SAFECALL(
-      MPI_Send(corner_neighbor_element.data(), static_cast<int>(this->ncorners),
-               MPI_INT, this->neighbor_rank, reflect_base_tag + 2, comm));
-
-  const int corner_base_tag = reflect_base_tag + 3;
+  SPECFEM_MPI_SAFECALL(MPI_Send(corner_neighbor_element.data(),
+                                static_cast<int>(this->ncorners), MPI_INT,
+                                this->neighbor_rank, base_tag + 5, comm));
 
   // Message 7: Send corner nglob indices [ncorners]
   SPECFEM_MPI_SAFECALL(MPI_Send(corner_index_mapping.data(),
                                 static_cast<int>(this->ncorners), MPI_INT,
-                                this->neighbor_rank, corner_base_tag, comm));
+                                this->neighbor_rank, base_tag + 6, comm));
 }
 
 // ---------------------------------------------------------------------------
@@ -621,6 +624,27 @@ std::tuple<std::array<MPI_Request, 7>,
            Kokkos::View<int *, Kokkos::HostSpace>,
            Kokkos::View<int *, Kokkos::HostSpace> >
 specfem::assembly::mpi_impl::unpacker::receive_unpacking_buffers() {
+
+  // Early exit: if there are no interfaces of any type, return zero-sized
+  // views and null requests so that no MPI_Irecv calls are posted and
+  // assemble_unpacking_mapping can skip MPI_Waitall safely.
+  if (this->nfaces == 0 && this->nedges == 0 && this->ncorners == 0) {
+    std::array<MPI_Request, 7> null_requests{};
+    null_requests.fill(MPI_REQUEST_NULL);
+    return {
+      null_requests,
+      Kokkos::View<unsigned int[5], Kokkos::HostSpace>(
+          "unpacker::metadata_buf"),
+      Kokkos::View<int ***, Kokkos::HostSpace>("unpacker::recv_face_indices", 0,
+                                               0, 0),
+      Kokkos::View<int *, Kokkos::HostSpace>("unpacker::face_elements", 0),
+      Kokkos::View<int **, Kokkos::HostSpace>("unpacker::recv_edge_indices", 0,
+                                              0),
+      Kokkos::View<int *, Kokkos::HostSpace>("unpacker::edge_elements", 0),
+      Kokkos::View<int *, Kokkos::HostSpace>("unpacker::corner_nglob_idx", 0),
+      Kokkos::View<int *, Kokkos::HostSpace>("unpacker::corner_elements", 0)
+    };
+  }
 
   // Compute recv tag: sender calls compute_message_tag_base(sender, receiver)
   // so receiver must call it the same way (neighbor is sender here)
@@ -735,7 +759,7 @@ void specfem::assembly::mpi_impl::unpacker::assemble_unpacking_mapping(
     const specfem::assembly::mesh<dimension_tag> &mesh) {
 
   if (this->nfaces == 0 && this->nedges == 0 && this->ncorners == 0)
-    return;
+    return; // No Irecv calls were posted; nothing to wait on.
 
   // Wait for all 7 receives to complete
   SPECFEM_MPI_SAFECALL(MPI_Waitall(

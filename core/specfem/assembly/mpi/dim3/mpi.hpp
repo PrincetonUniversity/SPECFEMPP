@@ -262,29 +262,25 @@ public:
 
 private:
   /**
-   * @brief Sends rotated face GLL indices and element indices to the
+   * @brief Sends transformed GLL indices for all interface types to the
    * neighboring MPI process.
    *
-   * Applies rotation transformations (via theta value) to each face's GLL
-   * grid and sends three distinct MPI messages (Option A):
-   * 1. Metadata: nfaces and ngll (for receiver to allocate buffers)
-   * 2. Rotated face indices: [nfaces][ngll][ngll] with rotation permutation
-   *    applied per face
-   * 3. Neighbor element indices: [nfaces] (for receiver to map faces to
-   *    correct elements, accounting for potential face reordering)
+   * Applies rotation/reflection transformations and sends 7 blocking MPI
+   * messages (base_tag + offset, offset 0..6):
+   *   +0  Metadata: {nfaces, nedges, ncorners, ngll, nglob}
+   *   +1  Rotated face indices [nfaces][ngll][ngll] (theta permutation applied)
+   *   +2  Face neighbor element indices [nfaces]
+   *   +3  Reflected edge indices [nedges][ngll] (reflect flag applied)
+   *   +4  Edge neighbor element indices [nedges]
+   *   +5  Corner neighbor element indices [ncorners]
+   *   +6  Corner nglob indices [ncorners]
    *
    * Uses blocking MPI_Send calls wrapped in SPECFEM_MPI_SAFECALL for
    * portability and error handling.
    *
-   * @param face_index_mapping [nfaces][ngll][ngll] global indices for each
-   * GLL point on each face
-   * @param theta [nfaces] rotation index per face, theta ∈ [0,3]
-   * @param neighbor_element [nfaces] neighbor element index for each face
-   *
-   * @note Uses member variables: nfaces, ngll for buffer dimensions
-   * @note Rotation index theta ∈ [0,3] represents discrete rotations:
-   *       theta=0: 0°, theta=1: 90° CW, theta=2: 180°, theta=3: 270° CW
-   * @note Message tags: (my_rank << 16) | neighbor_rank + offset
+   * @note Message tag base is computed via compute_message_tag_base(my_rank,
+   *       neighbor_rank), reserving 7 consecutive tag slots per rank-pair.
+   * @note Rotation index theta ∈ [0,3]: 0°, 90° CW, 180°, 270° CW
    */
   void send_unpacking_indices(
       Kokkos::View<int ***, Kokkos::HostSpace> face_index_mapping,
