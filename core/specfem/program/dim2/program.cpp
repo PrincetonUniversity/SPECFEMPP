@@ -91,6 +91,7 @@ void program_2d(
       setup.get_t0(), dt, nsteps, max_seismogram_time_step,
       nstep_between_samples, setup.get_simulation_type(),
       setup.allocate_boundary_values(), setup.instantiate_property_reader(),
+      setup.get_attenuation_reference_frequency(), setup.get_attenuation_band(),
       setup.get_flux_scheme_configuration());
 
   specfem::Logger::info(assembly.print());
