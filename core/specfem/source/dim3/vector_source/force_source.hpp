@@ -92,7 +92,8 @@ public:
    * @brief User output
    *
    */
-  std::string print() const override;
+  constexpr std::string source_name() const override { return "3-D force"; }
+  std::string print_details() const override;
 
   specfem::simulation::field_type get_wavefield_type() const override {
     return wavefield_type;
@@ -146,8 +147,6 @@ public:
   get_supported_media() const override;
 
 public:
-  static constexpr const char *name = "3-D force";
-
 private:
   type_real fx;                                   ///< Force in x-direction
   type_real fy;                                   ///< Force in y-direction

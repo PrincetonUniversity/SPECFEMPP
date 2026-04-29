@@ -62,7 +62,9 @@ public:
     return wavefield_type;
   }
 
-  std::string print() const override;
+  constexpr std::string source_name() const override {
+    return "2-D external source";
+  }
 
   /**
    * @brief Get the force vector
@@ -99,8 +101,6 @@ public:
   get_supported_media() const override;
 
 public:
-  static constexpr const char *name = "2-D external source";
-
 private:
   specfem::simulation::field_type wavefield_type;
   const static std::vector<specfem::element::medium_tag> supported_media;

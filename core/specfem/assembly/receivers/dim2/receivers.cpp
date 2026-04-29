@@ -127,6 +127,9 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim2>::receivers(
 
   receiver_islice_.assign(islice_selected.begin(), islice_selected.end());
 
+  for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver)
+    receivers[ireceiver]->set_islice(islice_selected[ireceiver]);
+
   Kokkos::deep_copy(lagrange_interpolant, h_lagrange_interpolant);
   Kokkos::deep_copy(elements, h_elements);
 

@@ -120,7 +120,10 @@ public:
    * @brief User output
    *
    */
-  std::string print() const override;
+  constexpr std::string source_name() const override {
+    return "2-D moment tensor";
+  }
+  std::string print_details() const override;
 
   specfem::simulation::field_type get_wavefield_type() const override {
     return wavefield_type;
@@ -211,8 +214,6 @@ private:
                                                   ///< acts
 
 public:
-  static constexpr const char *name = "2-D moment tensor";
-
 protected:
 };
 } // namespace sources

@@ -14,6 +14,10 @@ specfem::receivers::receiver<specfem::element::dimension_tag::dim3>::print()
           << "        x = " << type_real(this->global_coordinates.x) << "\n"
           << "        y = " << type_real(this->global_coordinates.y) << "\n"
           << "        z = " << type_real(this->global_coordinates.z) << "\n";
+#ifdef SPECFEM_ENABLE_MPI
+  if (this->islice_ >= 0)
+    message << "      MPI Rank: " << this->islice_ << "\n";
+#endif
 
   return message.str();
 }

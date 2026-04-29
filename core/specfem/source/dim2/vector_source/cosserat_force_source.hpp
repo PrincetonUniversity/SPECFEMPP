@@ -101,7 +101,10 @@ public:
    * @brief User output
    *
    */
-  std::string print() const override;
+  constexpr std::string source_name() const override {
+    return "2-D Cosserat force";
+  }
+  std::string print_details() const override;
 
   specfem::simulation::field_type get_wavefield_type() const override {
     return wavefield_type;
@@ -152,8 +155,6 @@ public:
   get_supported_media() const override;
 
 public:
-  static constexpr const char *name = "2-D Cosserat force";
-
 private:
   type_real angle; ///< Angle of the elastic force source
   type_real f;     ///< Factor to scale the elastic force

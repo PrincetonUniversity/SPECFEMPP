@@ -11,6 +11,7 @@
 #include "specfem/utilities.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
+#include <sstream>
 
 namespace specfem::sources {
 
@@ -160,10 +161,44 @@ public:
     source_time_function->update_tshift(tshift);
   };
   /**
-   * @brief User output
-   *
+   * @brief User output — assembles source name, location, type-specific
+   * details, source time function, and (when MPI-enabled) the owning rank.
    */
-  virtual std::string print() const { return ""; };
+  std::string print() const {
+    std::ostringstream os;
+    const auto gcoord = get_global_coordinates();
+    os << "- " << source_name() << " \n"
+       << "    Source Location: \n";
+    if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
+      os << "      x = " << type_real(gcoord.x) << "\n"
+         << "      z = " << type_real(gcoord.z) << "\n";
+    } else {
+      os << "      x = " << type_real(gcoord.x) << "\n"
+         << "      y = " << type_real(gcoord.y) << "\n"
+         << "      z = " << type_real(gcoord.z) << "\n";
+    }
+    os << print_details();
+    os << "    Source Time Function: \n"
+       << source_time_function->print() << "\n";
+#ifdef SPECFEM_ENABLE_MPI
+    if (islice_ >= 0)
+      os << "    MPI Rank: " << islice_ << "\n";
+#endif
+    return os.str();
+  }
+
+  /**
+   * @brief Returns the human-readable source type name.
+   * Derived classes should override this to return their static @c name.
+   */
+  virtual constexpr std::string source_name() const = 0;
+
+  /**
+   * @brief Type-specific output (parameters unique to this source type).
+   * The default implementation returns an empty string for sources that have
+   * no additional parameters beyond location and source time function.
+   */
+  virtual std::string print_details() const { return ""; }
 
   virtual ~source() = default;
 
@@ -293,11 +328,6 @@ public:
   void set_islice(int rank) { islice_ = rank; }
 
 protected:
-  // Read-only member variables
-  static constexpr const char *name =
-      "!!! base_source, if this was printed, you are not using the "
-      "correct source class !!!";
-
   std::unique_ptr<specfem::source_time_functions::stf>
       source_time_function; ///< pointer to source time function
 
