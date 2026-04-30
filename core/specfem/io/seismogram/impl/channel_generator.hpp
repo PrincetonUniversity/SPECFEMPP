@@ -1,7 +1,9 @@
 #pragma once
 
+#include "specfem/element/tags.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/utilities/errors.hpp"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -56,13 +58,11 @@ public:
    * conventions and ranges from 'L' (long period, ~1 Hz) to 'F' (very high
    * frequency, ≥1000 Hz).
    *
-   * @param output_folder Directory path for seismogram output files
    * @param timestep Simulation time step (dt) in seconds, used to determine
    * band code
    */
-  ChannelGenerator(const std::string output_folder, const type_real timestep)
-      : output_folder(output_folder), band_code(compute_band_code(timestep)),
-        timestep(timestep) {}
+  ChannelGenerator(const type_real timestep)
+      : band_code(compute_band_code(timestep)), timestep(timestep) {}
 
   // clang-format off
   /**
@@ -107,6 +107,38 @@ public:
                         const std::string &station_name,
                         const std::string &location_code,
                         specfem::enums::wavefield seismogram_type);
+
+  /**
+   * @brief Generate output filenames for one station/seismogram-type pair.
+   *
+   * Overload that accepts a StationInfo object directly and derives the
+   * SEED location code from the simulation dimension ("S3" for 3D, "S2" for
+   * 2D).
+   *
+   * @tparam DimensionTag Simulation dimension (dim2 or dim3).
+   * @tparam StationInfo  Type with public network_name and station_name
+   * members.
+   * @param station_info  Station descriptor from StationIterator.
+   * @param seismogram_type Wavefield type to write.
+   */
+  template <specfem::element::dimension_tag DimensionTag, typename StationInfo>
+  std::vector<std::string>
+  get_station_filenames(const StationInfo &station_info,
+                        specfem::enums::wavefield seismogram_type) {
+    std::string location_code;
+    if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
+      location_code = "S2";
+    } else if constexpr (DimensionTag ==
+                         specfem::element::dimension_tag::dim3) {
+      location_code = "S3";
+    } else {
+      static_assert(specfem::utilities::always_false<DimensionTag>,
+                    "Unsupported dimension tag for seismogram location code.");
+    }
+    return get_station_filenames(station_info.network_name,
+                                 station_info.station_name, location_code,
+                                 seismogram_type);
+  }
 
   /**
    * @brief Returns the SEED band code for this generator.
@@ -175,7 +207,6 @@ public:
   std::string get_file_extension(specfem::enums::wavefield seismogram_type);
 
 private:
-  std::string output_folder;   ///< Directory path for seismogram output files
   const std::string band_code; ///< SEED band code (L, M, B, H, C, or F)
                                ///< determined from timestep
   type_real timestep;          ///< Simulation time step in seconds

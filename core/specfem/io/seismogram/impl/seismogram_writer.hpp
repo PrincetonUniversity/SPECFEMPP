@@ -1,8 +1,8 @@
 #pragma once
 
+#include "channel_generator.hpp"
 #include "specfem/enums.hpp"
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace specfem {
@@ -20,23 +20,24 @@ template <specfem::enums::seismogram_format Format>
 struct SeismogramFormatWriter;
 
 /**
- * @brief Write seismogram time series in the given format.
+ * @brief Write seismograms for all stations in the given format.
  *
- * Dispatches to SeismogramFormatWriter<Format>::write(). To support a new
- * format, add a specialization of SeismogramFormatWriter in a dedicated header
- * and include it before calling this function.
+ * Delegates entirely to SeismogramFormatWriter<Format>::write(), which is
+ * responsible for iterating over stations and writing each one. This allows
+ * format implementations to decide how to group or batch station output
+ * (e.g. one file per station for ASCII, or a single container for HDF5).
  *
- * @tparam Format         Output format (e.g.
+ * @tparam Format    Output format (e.g.
  * specfem::enums::seismogram_format::ascii).
- * @tparam SeismogramView Iterable of (time, value[]) pairs.
- * @param filenames       One output filename per component.
- * @param seismogram_view Range returned by receivers.get_seismogram().
+ * @tparam Receivers Type exposing stations(), get_seismogram(), and
+ * dimension_tag.
+ * @param receivers  Receivers object after sync_seismograms() has been called.
+ * @param gen        ChannelGenerator used to build output filenames.
  */
-template <specfem::enums::seismogram_format Format, typename SeismogramView>
-void write_seismogram(const std::vector<std::string> &filenames,
-                      SeismogramView &&seismogram_view) {
-  SeismogramFormatWriter<Format>::write(
-      filenames, std::forward<SeismogramView>(seismogram_view));
+template <specfem::enums::seismogram_format Format, typename Receivers>
+void write_seismogram(Receivers &receivers, ChannelGenerator &gen,
+                      const std::string &output_folder) {
+  SeismogramFormatWriter<Format>::write(receivers, gen, output_folder);
 }
 
 } // namespace impl

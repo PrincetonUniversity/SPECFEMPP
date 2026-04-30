@@ -78,9 +78,8 @@ specfem::io::impl::ChannelGenerator::get_station_filenames(
 
       // TODO (Lucas : CPP20 std::format would be perfect here)
       // Get the filename for the current component
-      filenames.push_back(output_folder + "/" + network_name + "." +
-                          station_name + "." + location_code_with_dot +
-                          channel_code + "." +
+      filenames.push_back(network_name + "." + station_name + "." +
+                          location_code_with_dot + channel_code + "." +
                           this->get_file_extension(seismogram_type));
     }
     break;
@@ -94,9 +93,8 @@ specfem::io::impl::ChannelGenerator::get_station_filenames(
 
       // TODO (Lucas : CPP20 std::format would be perfect here)
       // Get the filename for the current component
-      filenames.push_back(output_folder + "/" + network_name + "." +
-                          station_name + "." + location_code_with_dot +
-                          channel_code + "." +
+      filenames.push_back(network_name + "." + station_name + "." +
+                          location_code_with_dot + channel_code + "." +
                           this->get_file_extension(seismogram_type));
     }
     break;
@@ -109,9 +107,8 @@ specfem::io::impl::ChannelGenerator::get_station_filenames(
       channel_code = this->get_channel_code(component_letter);
 
       // Get the filename for the current component
-      filenames.push_back(output_folder + "/" + network_name + "." +
-                          station_name + "." + location_code_with_dot +
-                          channel_code + "." +
+      filenames.push_back(network_name + "." + station_name + "." +
+                          location_code_with_dot + channel_code + "." +
                           this->get_file_extension(seismogram_type));
     }
     break;
@@ -119,8 +116,8 @@ specfem::io::impl::ChannelGenerator::get_station_filenames(
   case specfem::enums::wavefield::pressure:
 
     channel_code = this->get_channel_code('P');
-    filenames = { output_folder + "/" + network_name + "." + station_name +
-                  "." + location_code_with_dot + channel_code + "." +
+    filenames = { network_name + "." + station_name + "." +
+                  location_code_with_dot + channel_code + "." +
                   this->get_file_extension(seismogram_type) };
     break;
   default:
