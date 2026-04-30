@@ -23,9 +23,6 @@ template <int NGLL, typename Tags>
 void compute_seismograms(
     specfem::assembly::assembly<Tags::dimension_tag> &assembly,
     const int &isig_step) {
-  constexpr auto DimensionTag = Tags::dimension_tag;
-  constexpr auto WavefieldType = Tags::wavefield_tag;
-
   specfem::tag_dispatch::for_each(
       specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
           MEDIUM_SET(elastic, elastic_psv, elastic_sh, acoustic, poroelastic,
@@ -34,10 +31,8 @@ void compute_seismograms(
           ATTENUATION_SET(none),
       [&]<typename ElementTags>() {
         impl::compute_seismograms<
-            NGLL, specfem::tags::Tags<Tags::dimension_tag, WavefieldType,
-                                      ElementTags::medium_tag,
-                                      ElementTags::property_tag> >(assembly,
-                                                                   isig_step);
+            NGLL, specfem::tags::expand<ElementTags, Tags::wavefield_tag> >(
+            assembly, isig_step);
       });
 }
 } // namespace specfem::compute
