@@ -2,11 +2,13 @@
 
 #include "impl/ascii.hpp"
 #include "impl/channel_generator.hpp"
+#include "impl/sac.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/constants.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/io/writer.hpp"
 #include "specfem/setup.hpp"
+#include <stdexcept>
 #include <vector>
 
 namespace specfem {
@@ -57,9 +59,21 @@ private:
   void write_impl(specfem::assembly::assembly<DimensionTag> &assembly) {
     auto &receivers = assembly.receivers;
     receivers.sync_seismograms();
-    specfem::io::impl::write_seismogram<
-        specfem::enums::seismogram_format::ascii>(receivers, *this,
+    switch (type) {
+    case specfem::enums::seismogram_format::ascii:
+      specfem::io::impl::write_seismogram<
+          specfem::enums::seismogram_format::ascii>(receivers, *this,
+                                                    output_folder);
+      break;
+    case specfem::enums::seismogram_format::sac:
+      specfem::io::impl::write_seismogram<
+          specfem::enums::seismogram_format::sac>(receivers, *this,
                                                   output_folder);
+      break;
+    default:
+      throw std::runtime_error(
+          "Unsupported seismogram output format requested.");
+    }
   }
 
   specfem::enums::seismogram_format type; ///< Output format of the seismogram
