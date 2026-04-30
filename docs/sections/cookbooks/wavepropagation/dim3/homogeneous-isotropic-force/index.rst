@@ -180,9 +180,9 @@ Check the mesher generated files in the ``OUTPUT_FILES/DATABASES`` directory:
 
 You should see files including:
 
-- ``proc000000_Database.bin`` - the mesh database
-- ``proc000000_mesh.vtk`` - mesh visualization file
-- ``proc000000_skewness.vtk`` - mesh quality visualization file
+- ``Database.bin`` - the mesh database
+- ``mesh.vtk`` - mesh visualization file
+- ``skewness.vtk`` - mesh quality visualization file
 
 Defining receivers (stations)
 -----------------------------
