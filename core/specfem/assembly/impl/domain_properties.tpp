@@ -4,8 +4,8 @@
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-specfem::assembly::impl::domain_properties<specfem::element::dimension_tag::dim2, MediumTag,
-                                      PropertyTag>::
+specfem::assembly::impl::domain_properties<
+    specfem::element::dimension_tag::dim2, MediumTag, PropertyTag>::
     domain_properties(
         const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
         const specfem::assembly::mesh<dimension_tag> &mesh,
@@ -50,8 +50,8 @@ specfem::assembly::impl::domain_properties<specfem::element::dimension_tag::dim2
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-specfem::assembly::impl::domain_properties<specfem::element::dimension_tag::dim3, MediumTag,
-                                      PropertyTag>::
+specfem::assembly::impl::domain_properties<
+    specfem::element::dimension_tag::dim3, MediumTag, PropertyTag>::
     domain_properties(
         const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
         const specfem::assembly::mesh<dimension_tag> &mesh,
@@ -68,21 +68,19 @@ specfem::assembly::impl::domain_properties<specfem::element::dimension_tag::dim3
       "specfem::assembly::impl::domain_properties::dim3::init_host_values",
       Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace,
                             Kokkos::Rank<4> >(
-          { 0, 0, 0, 0 }, { nelement, mesh.element_grid.ngllz, mesh.element_grid.nglly, mesh.element_grid.ngllx }),
+          { 0, 0, 0, 0 }, { nelement, mesh.element_grid.ngllz,
+                            mesh.element_grid.nglly, mesh.element_grid.ngllx }),
       [=, this](const int i, const int iz, const int iy, const int ix) {
         const int ispec = elements(i);
         property_index_mapping(ispec) = count;
         if (!has_gll_model) {
-          if (medium_tag == specfem::element::medium_tag::elastic &&
-              property_tag == specfem::element::property_tag::isotropic) {
-            // Handle the specific case
-            const auto point_property = materials.template get_properties<
-                medium_tag, property_tag,
-                specfem::element::attenuation_tag::none>(ispec);
-            this->store_host_values(
-                specfem::point::index<dimension_tag, false>(count, iz, iy, ix),
-                point_property);
-          }
+          // Handle the specific case
+          const auto point_property = materials.template get_properties<
+              medium_tag, property_tag,
+              specfem::element::attenuation_tag::none>(ispec);
+          this->store_host_values(
+              specfem::point::index<dimension_tag, false>(count, iz, iy, ix),
+              point_property);
         }
       });
 
