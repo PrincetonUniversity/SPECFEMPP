@@ -18,9 +18,9 @@ rule generate_mesh:
     input:
         "@CURRENT_BENCHMARK_BUILD_DIR@/DATA/meshfem3D_files/Mesh_Par_file",
     output:
-        database="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES/proc000000_Database.bin",
-        mesh_vtk="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES/proc000000_mesh.vtk",
-        skewness_vtk="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES/proc000000_skewness.vtk",
+        database="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES/Database.bin",
+        mesh_vtk="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES/mesh.vtk",
+        skewness_vtk="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES/skewness.vtk",
         output_meshfem3D="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/output_meshfem3D.txt",
     localrule: True
     shell:

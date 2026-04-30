@@ -52,7 +52,7 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "OUTPUT_FILES/DATABASES/proc000000_Database.bin"
+    mesh-database: "OUTPUT_FILES/DATABASES/Database.bin"
 
   ## sources
   sources: "force.yaml"

@@ -18,21 +18,28 @@ template <specfem::element::dimension_tag DimensionTag> class mpi;
 namespace mpi_impl {
 
 /**
- * @brief Stores face communication metadata between two neighboring MPI
- * processes.
+ * @brief Base class storing common interface metadata shared by all MPI
+ * communication group types (face, edge, corner).
  *
- * This class manages the interface between two neighboring subdomains (MPI
- * processes) by tracking:
- * - Which faces belong to this inter-process boundary
- * - The orientation of each face in both local and neighbor elements
- * - The discrete rotation index required to align face coordinates across the
- *   MPI boundary (computed from anchor points to avoid ambiguity)
+ * Captures per-connection data that is independent of the connection geometry:
+ * - The mesh entity type (orientation) of each shared interface in both the
+ *   local and neighboring element
+ * - The spectral element indices for the local and neighboring elements
  *
- * Memory is organized as 1D `Kokkos::View` arrays indexed by face ID within
- * this communication group, enabling efficient GPU-accelerated synchronization
- * kernels.
+ * Subclasses extend this with geometry-specific transformation metadata:
+ * - `face_communication_group`: adds `theta` (discrete 2D rotation index)
+ * - `edge_communication_group`: adds `reflect` (1D direction flag)
+ * - `corner_communication_group`: no additional data (single GLL point)
  *
- * @see mpi – Collects one communication_group per neighbor MPI rank
+ * Memory is organized as 1D `Kokkos::View` arrays indexed by interface ID
+ * within the group, enabling efficient GPU-accelerated synchronization kernels.
+ *
+ * @note `nfaces` counts shared interfaces regardless of geometry type (face,
+ *       edge, or corner); the name is kept from the original face-only design.
+ *
+ * @see face_communication_group, edge_communication_group,
+ *      corner_communication_group
+ * @see mpi – Collects one group per connection type per neighbor MPI rank
  */
 class communication_group {
 public:
@@ -41,14 +48,13 @@ public:
 
   unsigned int my_rank;       /**< MPI rank of the current process */
   unsigned int neighbor_rank; /**< MPI rank of the neighboring process */
-  unsigned int nfaces; /**< Number of faces within this MPI communication group
-                        */
-  unsigned int ngll;   /**< Number of GLL points per face dimension */
+  unsigned int n; /**< Number of shared interfaces in this communication group
+                    (faces, edges, or corners) */
+  unsigned int ngll; /**< Number of GLL points per face dimension */
 
   using FaceNormalViewType = Kokkos::View<specfem::mesh_entity::dim3::type *,
                                           Kokkos::DefaultExecutionSpace>;
-  using ThetaViewType =
-      Kokkos::View<unsigned char *, Kokkos::DefaultExecutionSpace>;
+
   using ElementIndexViewType =
       Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
 
@@ -60,11 +66,8 @@ public:
                                                          my_orientation */
   FaceNormalViewType::HostMirror h_neighbor_orientation; /**< Host mirror for
                                                          neighbor_orientation */
-  ThetaViewType theta; /**< Rotation index r in [0,3] for face-to-face
-                       connections (nfaces) */
-  ThetaViewType::HostMirror h_theta; /**< Host mirror for theta */
-  ElementIndexViewType my_element;   /**< Spectral element index of the local
-                                     element for each face (nfaces) */
+  ElementIndexViewType my_element; /**< Spectral element index of the local
+                                   element for each face (nfaces) */
   ElementIndexViewType neighbor_element; /**< Spectral element index of the
                                          neighboring element for each face
                                          (nfaces) */
@@ -73,35 +76,120 @@ public:
   ElementIndexViewType::HostMirror h_neighbor_element; /**< Host mirror for
                                                        neighbor_element */
 
-  communication_group() = default;
+  communication_group() : n(0), ngll(0) {}
 
   /**
-   * @brief Constructs a communication group for face exchange with a neighbor.
+   * @brief Constructs the common interface metadata for a neighbor pair.
    *
-   * Extracts interface metadata from the mesh adjacency graph and organizes it
-   * into GPU-friendly Kokkos views. For each face in the interface:
-   * - Records the face orientation in both local and neighboring elements
-   * - Stores the spectral element indices for both local and neighbor elements
-   * - Computes the discrete rotation index (0–3) using anchor points to
-   *   uniquely determine the face-to-face coordinate alignment
+   * Populates the orientation and element index arrays from the provided
+   * connectivity data. Does **not** compute any transformation metadata
+   * (theta or reflect); that is delegated to the derived-class constructors.
    *
    * @param my_rank          MPI rank of the current subdomain
    * @param neighbor_rank    MPI rank of the neighboring subdomain
-   * @param edges            Face connectivity data from
-   *                         adjacency_graph.mpi_connections()
-   *                         (already filtered to contain only face
-   *                         adjacencies)
+   * @param edges            Interface connectivity data from
+   *                         adjacency_graph.mpi_connections(), already
+   *                         filtered to a single connection type (face, edge,
+   *                         or corner) for one neighbor rank
    * @param ngllz, nglly, ngllx  GLL points per element dimension; used to
-   *                         construct the element for extracting face corner
-   *                         information
-   *
-   * @throws std::runtime_error if an anchor point is not found among face
-   *         corners
-   *
-   * @note The element is constructed internally from GLL parameters to extract
-   *       corner information; it is local to this constructor.
+   *                         determine `ngll` via the element helper
    */
   communication_group(
+      const unsigned int my_rank, const unsigned int neighbor_rank,
+      const std::vector<specfem::mesh::adjacency_graph<
+          specfem::element::dimension_tag::dim3>::MPIEdgeProperties> &edges,
+      const int ngllz, const int nglly, const int ngllx);
+};
+
+/**
+ * @brief Communication group for corner-shared MPI interfaces.
+ *
+ * A corner interface consists of a single shared GLL point. No transformation
+ * metadata is required because a point has no orientation; GLL point identity
+ * is fully determined by the common corner location alone.
+ *
+ * Inherits all common interface metadata from `communication_group`.
+ *
+ * @see communication_group
+ */
+class corner_communication_group : public communication_group {
+public:
+  corner_communication_group() = default;
+  corner_communication_group(
+      const unsigned int my_rank, const unsigned int neighbor_rank,
+      const std::vector<specfem::mesh::adjacency_graph<
+          specfem::element::dimension_tag::dim3>::MPIEdgeProperties> &edges,
+      const int ngllz, const int nglly, const int ngllx);
+};
+
+/**
+ * @brief Communication group for edge-shared MPI interfaces.
+ *
+ * An edge interface is a 1D line of GLL points. Because both partitions
+ * traverse the edge from a local coordinate origin, their traversal directions
+ * may be identical or reversed. The `reflect` flag encodes this: `false` means
+ * same direction, `true` means reversed.
+ *
+ * The flag is computed from anchor points: each edge has two endpoint corners;
+ * the anchor identifies which endpoint is the "start" in each partition. If
+ * both partitions share the same start endpoint, directions agree
+ * (reflect=false); if they disagree, the 1D sequence must be reversed
+ * (reflect=true).
+ *
+ * Inherits all common interface metadata from `communication_group`.
+ *
+ * @see communication_group, corners_of_edge
+ */
+class edge_communication_group : public communication_group {
+public:
+  using ReflectViewType = Kokkos::View<bool *, Kokkos::DefaultExecutionSpace>;
+  ReflectViewType reflect; /**< Per-edge reflection flag: true → reversed
+                              traversal direction relative to neighbor (nfaces)
+                            */
+  ReflectViewType::HostMirror h_reflect; /**< Host mirror for reflect */
+
+  edge_communication_group() = default;
+  edge_communication_group(
+      const unsigned int my_rank, const unsigned int neighbor_rank,
+      const std::vector<specfem::mesh::adjacency_graph<
+          specfem::element::dimension_tag::dim3>::MPIEdgeProperties> &edges,
+      const int ngllz, const int nglly, const int ngllx);
+};
+
+/**
+ * @brief Communication group for face-shared MPI interfaces.
+ *
+ * A face interface is a 2D ngll × ngll grid of GLL points. Because both
+ * partitions define local (i, j) coordinates from a local corner, the two
+ * grids may be rotated relative to each other by a multiple of 90°. The
+ * `theta` index encodes this discrete rotation:
+ *   - theta=0: identity (0°)
+ *   - theta=1: 90° clockwise
+ *   - theta=2: 180°
+ *   - theta=3: 270° clockwise
+ *
+ * Theta is computed from anchor points using:
+ *   theta = (neigh_anchor_pos − my_anchor_pos + 4) mod 4
+ * where anchor positions are indices into the canonical corner order of each
+ * face returned by `corners_of_face`.
+ *
+ * Stored as `unsigned char` (1 byte) instead of a floating-point angle to
+ * minimize memory footprint in large-scale simulations.
+ *
+ * Inherits all common interface metadata from `communication_group`.
+ *
+ * @see communication_group, corners_of_face, find_anchor_position
+ */
+class face_communication_group : public communication_group {
+public:
+  using ThetaViewType =
+      Kokkos::View<unsigned char *, Kokkos::DefaultExecutionSpace>;
+  ThetaViewType theta; /**< Discrete rotation index ∈ [0,3] aligning face
+                          coordinate systems across the MPI boundary (nfaces) */
+  ThetaViewType::HostMirror h_theta; /**< Host mirror for theta */
+
+  face_communication_group() = default;
+  face_communication_group(
       const unsigned int my_rank, const unsigned int neighbor_rank,
       const std::vector<specfem::mesh::adjacency_graph<
           specfem::element::dimension_tag::dim3>::MPIEdgeProperties> &edges,
@@ -114,6 +202,8 @@ public:
       specfem::element::dimension_tag::dim3; ///< Dimension tag
   unsigned int my_rank;       /**< MPI rank of the current process */
   unsigned int neighbor_rank; /**< MPI rank of the neighboring process */
+  unsigned int ncorners;      /**< Number of corners in communication group */
+  unsigned int nedges;        /**< Number of edges in communication group */
   unsigned int nfaces;        /**< Number of faces in communication group */
   unsigned int ngll;          /**< GLL points per face dimension */
 
@@ -131,7 +221,7 @@ public:
                                for packing/unpacking */
   IndexMappingView::HostMirror h_mapping; /**< Host mirror for mapping */
 
-  packer() : nfaces(0), ngll(0) {}
+  packer() : nfaces(0), nedges(0), ncorners(0), ngll(0), nglob(0) {}
 
   /**
    * @brief Constructs a packer that maps unique local MPI-surface GLL point
@@ -164,39 +254,43 @@ public:
    * @param points Points object containing the element-to-global index mapping
    *               (via h_index_mapping)
    */
-  packer(const communication_group &comm_group,
+  packer(const corner_communication_group &corner_group,
+         const edge_communication_group &edge_group,
+         const face_communication_group &face_group,
          const specfem::mesh_entity::element<dimension_tag> &element,
          const specfem::assembly::mesh<dimension_tag> &mesh);
 
+private:
   /**
-   * @brief Sends rotated face GLL indices and element indices to the
+   * @brief Sends transformed GLL indices for all interface types to the
    * neighboring MPI process.
    *
-   * Applies rotation transformations (via theta value) to each face's GLL
-   * grid and sends three distinct MPI messages (Option A):
-   * 1. Metadata: nfaces and ngll (for receiver to allocate buffers)
-   * 2. Rotated face indices: [nfaces][ngll][ngll] with rotation permutation
-   *    applied per face
-   * 3. Neighbor element indices: [nfaces] (for receiver to map faces to
-   *    correct elements, accounting for potential face reordering)
+   * Applies rotation/reflection transformations and sends 7 blocking MPI
+   * messages (base_tag + offset, offset 0..6):
+   *   +0  Metadata: {nfaces, nedges, ncorners, ngll, nglob}
+   *   +1  Rotated face indices [nfaces][ngll][ngll] (theta permutation applied)
+   *   +2  Face neighbor element indices [nfaces]
+   *   +3  Reflected edge indices [nedges][ngll] (reflect flag applied)
+   *   +4  Edge neighbor element indices [nedges]
+   *   +5  Corner neighbor element indices [ncorners]
+   *   +6  Corner nglob indices [ncorners]
    *
    * Uses blocking MPI_Send calls wrapped in SPECFEM_MPI_SAFECALL for
    * portability and error handling.
    *
-   * @param face_index_mapping [nfaces][ngll][ngll] global indices for each
-   * GLL point on each face
-   * @param theta [nfaces] rotation index per face, theta ∈ [0,3]
-   * @param neighbor_element [nfaces] neighbor element index for each face
-   *
-   * @note Uses member variables: nfaces, ngll for buffer dimensions
-   * @note Rotation index theta ∈ [0,3] represents discrete rotations:
-   *       theta=0: 0°, theta=1: 90° CW, theta=2: 180°, theta=3: 270° CW
-   * @note Message tags: (my_rank << 16) | neighbor_rank + offset
+   * @note Message tag base is computed via compute_message_tag_base(my_rank,
+   *       neighbor_rank), reserving 7 consecutive tag slots per rank-pair.
+   * @note Rotation index theta ∈ [0,3]: 0°, 90° CW, 180°, 270° CW
    */
   void send_unpacking_indices(
       Kokkos::View<int ***, Kokkos::HostSpace> face_index_mapping,
       Kokkos::View<unsigned char *, Kokkos::HostSpace> theta,
-      Kokkos::View<int *, Kokkos::HostSpace> neighbor_element);
+      Kokkos::View<int *, Kokkos::HostSpace> neighbor_element,
+      Kokkos::View<int **, Kokkos::HostSpace> edge_index_mapping,
+      Kokkos::View<bool *, Kokkos::HostSpace> edge_reflect,
+      Kokkos::View<int *, Kokkos::HostSpace> edge_neighbor_element,
+      Kokkos::View<int *, Kokkos::HostSpace> corner_neighbor_element,
+      Kokkos::View<int *, Kokkos::HostSpace> corner_index_mapping);
 };
 
 struct unpacker {
@@ -207,86 +301,60 @@ public:
   unsigned int my_rank;       /**< MPI rank of the current process */
   unsigned int neighbor_rank; /**< MPI rank of the neighboring process */
   unsigned int nfaces;        /**< Number of faces in communication group */
+  unsigned int nedges;        /**< Number of edges in communication group */
+  unsigned int ncorners;      /**< Number of corners in communication group */
   unsigned int ngll;          /**< GLL points per face dimension */
 
-  /**
-   * @brief Maps the unique received GLL point indices from the neighbor
-   * partition to the unique global mapping index for each unique GLL point
-   *
-   */
   using IndexMappingView = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
 
-  IndexMappingView mapping; /**< Maps neighbor GLL point indices to global
-                               indices for packing/unpacking */
-  IndexMappingView::HostMirror h_mapping; /**< Host mirror for mapping */
+  IndexMappingView mapping; /**< Maps neighbor nglob indices to local iglobs */
+  IndexMappingView::HostMirror h_mapping;
 
   unpacker() = default;
 
-  /**
-   * @brief Constructs an unpacker that receives and deduplicates GLL point
-   * indices from a neighboring MPI process.
-   *
-   * Posts non-blocking MPI_Irecv calls for three messages (metadata, rotated
-   * face indices, element indices), waits for their completion, and builds a
-   * compact mapping from unique received GLL points to global indices.
-   *
-   * Uses the same deduplication strategy as packer: faces are traversed in
-   * order, GLL points are deduplicated via an unordered_set, and the mapping
-   * size reflects the actual number of unique points on the interface.
-   *
-   * @param comm_group Communication group providing face metadata, GLL count,
-   *                   and rank information
-   * @param element    Element object for mapping face coordinates to element
-   *                   3D coordinates
-   * @param points     Points object containing the element-to-global index
-   *                   mapping
-   */
-  unpacker(const communication_group &comm_group,
+  unpacker(const corner_communication_group &corner_group,
+           const edge_communication_group &edge_group,
+           const face_communication_group &face_group,
            const specfem::mesh_entity::element<dimension_tag> &element,
            const specfem::assembly::mesh<dimension_tag> &mesh);
 
   /**
-   * @brief Receives MPI buffers for rotated indices and element indices.
+   * @brief Posts all 7 non-blocking MPI_Irecv calls and returns the buffers.
    *
-   * Posts all three MPI_Irecv calls upfront (before any MPI_Wait) to avoid
-   * deadlock with blocking MPI_Send on the sender side.
+   * All receives are posted before any MPI_Wait to avoid deadlock with the
+   * sender's blocking MPI_Send calls.
    *
-   * @return Tuple of (requests, metadata_buf, recv_indices, element_indices)
-   *         for deferred MPI_Waitall in assemble_unpacking_mapping.
-   *
-   * @throws std::runtime_error if metadata validation fails
+   * @return Tuple of (requests[7], metadata[5], face_indices, face_elements,
+   *         edge_indices, edge_elements, corner_nglob_idx, corner_elements)
    */
-  std::tuple<std::array<MPI_Request, 3>,
-             Kokkos::View<unsigned int[3], Kokkos::HostSpace>,
+  std::tuple<std::array<MPI_Request, 7>,
+             Kokkos::View<unsigned int[5], Kokkos::HostSpace>,
              Kokkos::View<int ***, Kokkos::HostSpace>,
+             Kokkos::View<int *, Kokkos::HostSpace>,
+             Kokkos::View<int **, Kokkos::HostSpace>,
+             Kokkos::View<int *, Kokkos::HostSpace>,
+             Kokkos::View<int *, Kokkos::HostSpace>,
              Kokkos::View<int *, Kokkos::HostSpace> >
   receive_unpacking_buffers();
 
   /**
-   * @brief Assembles the mapping from received buffers.
-   *
-   * Waits for all MPI receives to complete, validates metadata, then builds
-   * a compact mapping from unique GLL points by traversing received element
-   * indices and deduplicating with local iglob lookup.
-   *
-   * @param requests        [3] MPI_Request handles from
-   * receive_unpacking_buffers
-   * @param metadata_buf    [3] received metadata {nfaces, ngll, nglob}
-   * @param recv_indices    [nfaces][ngll][ngll] received rotated face indices
-   * @param element_indices [nfaces] received neighbor element indices
-   * @param my_orientations [nfaces] local face orientations
-   * @param element         Element object for map_coordinates
-   * @param mesh            Mesh object for iglob lookup
-   *
-   * @throws std::runtime_error if metadata or iglob count validation fails
+   * @brief Waits for all receives, validates metadata, and builds h_mapping.
    */
   void assemble_unpacking_mapping(
-      const std::array<MPI_Request, 3> &requests,
-      const Kokkos::View<unsigned int[3], Kokkos::HostSpace> metadata_buf,
-      const Kokkos::View<int ***, Kokkos::HostSpace> recv_indices,
-      const Kokkos::View<int *, Kokkos::HostSpace> element_indices,
+      const std::array<MPI_Request, 7> &requests,
+      const Kokkos::View<unsigned int[5], Kokkos::HostSpace> metadata_buf,
+      const Kokkos::View<int ***, Kokkos::HostSpace> recv_face_indices,
+      const Kokkos::View<int *, Kokkos::HostSpace> face_elements,
+      const Kokkos::View<int **, Kokkos::HostSpace> recv_edge_indices,
+      const Kokkos::View<int *, Kokkos::HostSpace> edge_elements,
+      const Kokkos::View<int *, Kokkos::HostSpace> corner_nglob_idx,
+      const Kokkos::View<int *, Kokkos::HostSpace> corner_elements,
       const Kokkos::View<specfem::mesh_entity::dim3::type *, Kokkos::HostSpace>
-          my_orientations,
+          my_face_orientations,
+      const Kokkos::View<specfem::mesh_entity::dim3::type *, Kokkos::HostSpace>
+          my_edge_orientations,
+      const Kokkos::View<specfem::mesh_entity::dim3::type *, Kokkos::HostSpace>
+          my_corner_orientations,
       const specfem::mesh_entity::element<dimension_tag> &element,
       const specfem::assembly::mesh<dimension_tag> &mesh);
 };
@@ -303,7 +371,9 @@ public:
   communication_pattern() = default;
 
   communication_pattern(
-      const communication_group &comm_group,
+      const corner_communication_group &corner_group,
+      const edge_communication_group &edge_group,
+      const face_communication_group &face_group,
       const specfem::mesh_entity::element<dimension_tag> &element,
       const specfem::assembly::mesh<dimension_tag> &mesh);
 };
@@ -311,55 +381,67 @@ public:
 } // namespace mpi_impl
 
 /**
- * @brief Manages MPI face communication patterns for 3D distributed
+ * @brief Manages MPI communication groups and patterns for 3D distributed
  * simulations.
  *
- * This class analyzes the mesh adjacency graph to extract and organize all
- * face-level inter-process interfaces. It builds one `communication_group` per
- * neighboring MPI rank, each containing GPU-friendly arrays for:
- * - Face orientations in local and neighbor elements
- * - Discrete rotation indices for coordinate alignment
- * - GLL metadata for synchronization kernel dispatch
+ * Analyzes the mesh adjacency graph to classify all inter-process interfaces by
+ * geometry and organize them into typed communication groups:
  *
- * Construction filters out edge and corner adjacencies, keeping only faces
- * needed for GLL point data exchange.
+ * | Member          | Type                        | Geometry             |
+ * |-----------------|-----------------------------|----------------------|
+ * | `face_groups`   | `face_communication_group`  | 2D ngll×ngll grid    |
+ * | `edge_groups`   | `edge_communication_group`  | 1D ngll line         |
+ * | `corner_groups` | `corner_communication_group`| single GLL point     |
  *
- * The design prioritizes:
- * - **Compact storage**: Rotation indices as `unsigned char` (1 byte) instead
- *   of floating-point angles (8 bytes)
- * - **GPU efficiency**: Data organized in `Kokkos::View` arrays for direct
- *   kernel access
- * - **Clear semantics**: Discrete rotation values (0–3) are explicit; actual
- *   angle = rotation_index × π/2
+ * One group is created per unique neighbor rank for each geometry type. Groups
+ * hold GPU-friendly `Kokkos::View` arrays of per-interface metadata:
+ * - Mesh entity orientations in local and neighbor elements
+ * - Spectral element indices for both partitions
+ * - Geometry-specific transformation data (theta for faces, reflect for edges)
  *
- * @see communication_group – Individual interface between two ranks
+ * `communication_patterns` (packer/unpacker pairs) are currently built only
+ * for face interfaces; edge and corner patterns are deferred.
+ *
+ * @see face_communication_group, edge_communication_group,
+ *      corner_communication_group
  */
 template <> class mpi<specfem::element::dimension_tag::dim3> {
 public:
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
 
-  std::vector<mpi_impl::communication_group> communication_groups;
+  std::vector<mpi_impl::corner_communication_group> corner_groups; /**< MPI
+                                                   groups for corner connections
+                                                 */
+  std::vector<mpi_impl::edge_communication_group> edge_groups; /**< MPI groups
+                                                                  for edge
+                                                                  connections */
+  std::vector<mpi_impl::face_communication_group> face_groups; /**< MPI groups
+                                                                  for face
+                                                                  connections */
   std::vector<mpi_impl::communication_pattern> communication_patterns;
 
   mpi() = default;
 
   /**
-   * @brief Constructs the complete MPI face communication schedule.
+   * @brief Constructs all MPI communication groups and face communication
+   * patterns.
    *
-   * Performs the following steps:
+   * Steps:
    * 1. Extracts all MPI connections from the adjacency graph
-   * 2. Filters to keep only face-level interactions (excludes edges/corners)
-   * 3. Groups connections by neighboring MPI rank
-   * 4. Creates one `communication_group` per unique neighbor
+   * 2. Classifies each connection as face, edge, or corner by checking against
+   *    `dim3::faces`, `dim3::edges`, and `dim3::corners` entity sets
+   * 3. Buckets connections by neighbor rank within each geometry class
+   * 4. Constructs one typed group per unique (neighbor_rank, geometry) pair
+   * 5. Constructs `communication_pattern` objects for face groups only
+   *    (edge and corner patterns are deferred)
    *
    * @param adjacency_graph  Mesh adjacency graph containing MPI connection
    *                         metadata (via mpi_connections() method)
+   * @param mesh             Assembly mesh providing the global index mapping
    * @param ngllz, nglly, ngllx  GLL points per element dimension
    *
    * @note The current MPI rank is retrieved internally via
    *       `specfem::MPI::get_rank()` at construction time.
-   * @note The element is constructed internally from GLL parameters only to
-   *       extract mesh connectivity; it is not stored.
    */
   mpi(const specfem::mesh::adjacency_graph<dimension_tag> &adjacency_graph,
       const specfem::assembly::mesh<dimension_tag> &mesh, const int ngllz,

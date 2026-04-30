@@ -46,7 +46,7 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "displacement_tests/Newmark/serial/dim3/HomogeneousHalfspaceSmallNoABCForceSource/DATABASES_MPI/proc000000_external_mesh.bin"
+    mesh-database: "displacement_tests/Newmark/serial/dim3/HomogeneousHalfspaceSmallNoABCForceSource/DATABASES_MPI/external_mesh.bin"
     mesh-parameters: "displacement_tests/Newmark/serial/dim3/HomogeneousHalfspaceSmallNoABCForceSource/DATABASES_MPI/mesh_parameters.bin"
 
   sources: "displacement_tests/Newmark/serial/dim3/HomogeneousHalfspaceSmallNoABCForceSource/force.yaml"
