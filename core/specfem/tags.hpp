@@ -154,6 +154,20 @@ private:
 
 public:
   /**
+   * @brief Compile-time tag expansion: appends a single tag value to this Tags
+   * type.
+   *
+   * @tparam NewTag The compile-time tag value to append.
+   *
+   * Example:
+   * @code
+   * using Combined = ElementTags::expand<wavefield_tag_value>;
+   * // Combined has all members of ElementTags plus wavefield_tag
+   * @endcode
+   */
+  template <auto NewTag> using expand = Tags<TagMembers..., NewTag>;
+
+  /**
    * @brief Runtime subset check for one or more tag values.
    *
    * Returns true if every provided runtime tag exists in this `Tags` type.
@@ -172,5 +186,24 @@ public:
     return s;
   }
 };
+
+/**
+ * @brief Free alias template for appending a tag to an existing Tags type.
+ *
+ * Avoids the `typename T::template expand<V>` dependent-name syntax at call
+ * sites; use `specfem::tags::expand<TagsType, NewTag>` instead.
+ *
+ * @tparam TagsType An existing Tags specialization.
+ * @tparam NewTag   Compile-time tag value to append.
+ */
+template <typename TagsType, auto NewTag> struct expand_impl;
+
+template <auto... TagMembers, auto NewTag>
+struct expand_impl<Tags<TagMembers...>, NewTag> {
+  using type = Tags<TagMembers..., NewTag>;
+};
+
+template <typename TagsType, auto NewTag>
+using expand = typename expand_impl<TagsType, NewTag>::type;
 
 } // namespace specfem::tags

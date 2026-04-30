@@ -127,6 +127,43 @@ specfem::mesh_entity::dim3::corners_of_face(
   }
 }
 
+std::array<specfem::mesh_entity::dim3::type, 2>
+specfem::mesh_entity::dim3::corners_of_edge(
+    const specfem::mesh_entity::dim3::type &edge) {
+  using T = specfem::mesh_entity::dim3::type;
+  // corner[0] is where point=0 lands; corner[1] is where point=ngll-1 lands.
+  // Ordering matches get_edge_coordinates: the free coordinate runs from 0 to
+  // ngll-1.
+  switch (edge) {
+  case T::front_bottom:
+    return { T::bottom_front_left, T::bottom_front_right };
+  case T::back_bottom:
+    return { T::bottom_back_left, T::bottom_back_right };
+  case T::front_top:
+    return { T::top_front_left, T::top_front_right };
+  case T::back_top:
+    return { T::top_back_left, T::top_back_right };
+  case T::bottom_left:
+    return { T::bottom_front_left, T::bottom_back_left };
+  case T::bottom_right:
+    return { T::bottom_front_right, T::bottom_back_right };
+  case T::top_left:
+    return { T::top_front_left, T::top_back_left };
+  case T::top_right:
+    return { T::top_front_right, T::top_back_right };
+  case T::front_left:
+    return { T::bottom_front_left, T::top_front_left };
+  case T::front_right:
+    return { T::bottom_front_right, T::top_front_right };
+  case T::back_left:
+    return { T::bottom_back_left, T::top_back_left };
+  case T::back_right:
+    return { T::bottom_back_right, T::top_back_right };
+  default:
+    throw std::runtime_error("corners_of_edge: invalid edge type");
+  }
+}
+
 const std::string specfem::mesh_entity::dim3::to_string(
     const specfem::mesh_entity::dim3::type &entity) {
   switch (entity) {

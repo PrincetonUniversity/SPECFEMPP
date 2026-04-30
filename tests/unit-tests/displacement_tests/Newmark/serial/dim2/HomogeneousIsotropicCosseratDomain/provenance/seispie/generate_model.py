@@ -37,7 +37,7 @@ for i in range(nx):
 npt = np.array([n], dtype="int32")
 
 for m in model:
-    with open(f"./model/proc000000_{m}.bin", "w") as f:
+    with open(f"./model/{m}.bin", "w") as f:
         f.seek(0)
         npt.tofile(f)
         f.seek(4)

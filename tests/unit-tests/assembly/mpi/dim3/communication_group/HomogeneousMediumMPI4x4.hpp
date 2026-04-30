@@ -8,7 +8,7 @@ constexpr static int ngll = 5;
 
 using namespace specfem::assembly_test;
 
-const static ExpectedCommunicationGroup expected_group_0_1 = {
+const static ExpectedFaceCommunicationGroup expected_group_0_1 = {
   0,    // my_rank
   1,    // neighbor_rank
   2,    // nfaces
@@ -27,7 +27,7 @@ const static ExpectedCommunicationGroup expected_group_0_1 = {
   }
 };
 
-const static ExpectedCommunicationGroup expected_group_0_2 = {
+const static ExpectedFaceCommunicationGroup expected_group_0_2 = {
   0,    // my_rank
   2,    // neighbor_rank
   2,    // nfaces
@@ -46,7 +46,7 @@ const static ExpectedCommunicationGroup expected_group_0_2 = {
   }
 };
 
-const static ExpectedCommunicationGroup expected_group_1_0 = {
+const static ExpectedFaceCommunicationGroup expected_group_1_0 = {
   1,    // my_rank
   3,    // neighbor_rank
   2,    // nfaces
@@ -65,8 +65,30 @@ const static ExpectedCommunicationGroup expected_group_1_0 = {
   }
 };
 
-const static auto expected =
-    ExpectedMPICommunicationGroups{ expected_group_0_1, expected_group_0_2,
-                                    expected_group_1_0 };
+const static ExpectedEdgeCommunicationGroup expected_edge_group_0_3 = {
+  0,    // my_rank
+  3,    // neighbor_rank
+  1,    // nedges
+  ngll, // ngll
+  {
+      // Per-edge data for (Include some or all edges in the group)
+      // Edge 0
+      {
+          specfem::mesh_entity::dim3::type::back_right, // my_orientation
+          specfem::mesh_entity::dim3::type::front_left, // neighbor_orientation
+          0,                                            // reflect
+          3,                                            // my_element
+          0                                             // neighbor_element
+      }
+      // Add more edges as needed
+  }
+};
+
+const static auto expected = std::make_tuple(
+    ExpectedMPIFaceCommunicationGroups{ expected_group_0_1, expected_group_0_2,
+                                        expected_group_1_0 },
+    ExpectedMPIEdgeCommunicationGroups{ expected_edge_group_0_3 },
+    ExpectedMPICornerCommunicationGroups{} // No corner groups in this test case
+);
 
 } // namespace TestData::CommunicationGroup::HomogeneousMediumMPI4x4
