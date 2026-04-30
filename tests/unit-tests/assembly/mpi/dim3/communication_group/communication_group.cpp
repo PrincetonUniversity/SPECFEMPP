@@ -46,7 +46,10 @@ using namespace specfem::assembly_test;
  *       actual MPI ranks that share faces with the current rank in the mesh
  *       partition described by the test data folder.
  */
-static const std::unordered_map<std::string, ExpectedMPICommunicationGroups>
+static const std::unordered_map<
+    std::string, std::tuple<ExpectedMPIFaceCommunicationGroups,
+                            ExpectedMPIEdgeCommunicationGroups,
+                            ExpectedMPICornerCommunicationGroups> >
     expected_communication_groups = {
       { "HomogeneousMediumMPI4x4",
         TestData::CommunicationGroup::HomogeneousMediumMPI4x4::expected }
@@ -76,14 +79,26 @@ TEST_P(AssemblyMPI3DTest, CommunicationGroup) {
   }
 
   const unsigned int current_rank = specfem::MPI::get_rank();
-  const auto &expected = expected_communication_groups.at(param_name);
+  const auto &[face_groups, edge_groups, corner_groups] =
+      expected_communication_groups.at(param_name);
 
   // Skip if current rank is neither my_rank nor neighbor_rank in any group
-  const bool is_relevant = std::any_of(
-      expected.groups.begin(), expected.groups.end(),
-      [current_rank](const ExpectedCommunicationGroup &g) {
-        return g.my_rank == current_rank || g.neighbor_rank == current_rank;
-      });
+  const bool is_relevant =
+      std::any_of(face_groups.groups.begin(), face_groups.groups.end(),
+                  [current_rank](const ExpectedFaceCommunicationGroup &g) {
+                    return g.my_rank == current_rank ||
+                           g.neighbor_rank == current_rank;
+                  }) ||
+      std::any_of(edge_groups.groups.begin(), edge_groups.groups.end(),
+                  [current_rank](const ExpectedEdgeCommunicationGroup &g) {
+                    return g.my_rank == current_rank ||
+                           g.neighbor_rank == current_rank;
+                  }) ||
+      std::any_of(corner_groups.groups.begin(), corner_groups.groups.end(),
+                  [current_rank](const ExpectedCornerCommunicationGroup &g) {
+                    return g.my_rank == current_rank ||
+                           g.neighbor_rank == current_rank;
+                  });
 
   if (!is_relevant) {
     GTEST_SKIP() << "Rank " << current_rank
@@ -95,23 +110,38 @@ TEST_P(AssemblyMPI3DTest, CommunicationGroup) {
 
   const auto &mpi_interfaces = getMPIInterfaces();
 
-  // Programmatic group count check: compute expected number of neighbor ranks
-  // from the mesh adjacency graph (face connections only) and verify it matches
-  // the actual number of communication groups.
+  // Programmatic group count check: single pass over MPI connections to count
+  // unique neighbor ranks per connection type, then assert each group vector
+  // size matches.
   {
     const auto &mesh = getMesh();
-    std::unordered_set<size_t> neighbor_ranks;
+    std::unordered_set<size_t> face_neighbors, edge_neighbors, corner_neighbors;
     for (const auto &conn : mesh.adjacency_graph.mpi_connections()) {
       if (specfem::mesh_entity::contains(specfem::mesh_entity::dim3::faces,
                                          conn.orientation)) {
-        neighbor_ranks.insert(conn.neighbor_partition);
+        face_neighbors.insert(conn.neighbor_partition);
+      } else if (specfem::mesh_entity::contains(
+                     specfem::mesh_entity::dim3::edges, conn.orientation)) {
+        edge_neighbors.insert(conn.neighbor_partition);
+      } else {
+        corner_neighbors.insert(conn.neighbor_partition);
       }
     }
-    ASSERT_EQ(mpi_interfaces.communication_groups.size(), neighbor_ranks.size())
-        << "Communication group count mismatch for rank " << current_rank
-        << ". Expected (from adjacency graph): " << neighbor_ranks.size()
-        << ", Got: " << mpi_interfaces.communication_groups.size();
+    ASSERT_EQ(mpi_interfaces.face_groups.size(), face_neighbors.size())
+        << "face_groups count mismatch for rank " << current_rank
+        << ". Expected (from adjacency graph): " << face_neighbors.size()
+        << ", Got: " << mpi_interfaces.face_groups.size();
+    ASSERT_EQ(mpi_interfaces.edge_groups.size(), edge_neighbors.size())
+        << "edge_groups count mismatch for rank " << current_rank
+        << ". Expected (from adjacency graph): " << edge_neighbors.size()
+        << ", Got: " << mpi_interfaces.edge_groups.size();
+    ASSERT_EQ(mpi_interfaces.corner_groups.size(), corner_neighbors.size())
+        << "corner_groups count mismatch for rank " << current_rank
+        << ". Expected (from adjacency graph): " << corner_neighbors.size()
+        << ", Got: " << mpi_interfaces.corner_groups.size();
   }
 
-  expected.check(mpi_interfaces, current_rank);
+  face_groups.check(mpi_interfaces, current_rank);
+  edge_groups.check(mpi_interfaces, current_rank);
+  corner_groups.check(mpi_interfaces, current_rank);
 }
