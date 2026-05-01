@@ -19,6 +19,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
     const specfem::simulation::type simulation,
     const bool allocate_boundary_values,
     const std::shared_ptr<specfem::io::reader> &property_reader,
+    const specfem::units::Hertz &attenuation_reference_frequency,
+    const specfem::utilities::Band<specfem::units::Hertz> &attenuation_band,
     const specfem::element_coupling::flux_scheme_configuration
         &flux_scheme_config) {
   this->mesh = { mesh.tags, mesh.control_nodes, quadratures,
@@ -69,6 +71,15 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
   this->fields = { this->mesh, this->element_types, simulation };
 
   this->info = { this->mesh, this->properties, this->element_types };
+
+  this->attenuation = { attenuation_reference_frequency,
+                        attenuation_band,
+                        false,
+                        dt,
+                        this->mesh,
+                        this->element_types,
+                        this->info,
+                        mesh.materials };
 
   if (allocate_boundary_values)
     this->boundary_values = { max_timesteps, this->mesh, this->element_types,

@@ -62,6 +62,10 @@ protected:
   static constexpr auto combinations_by_boundary = combinations_by_medium *
                                                    ElementSets::property_set *
                                                    ElementSets::boundary_set;
+  /** All valid (dimension, medium, property, attenuation, boundary) combos. */
+  static constexpr auto combinations_by_element =
+      combinations_by_medium * ElementSets::property_set *
+      ElementSets::attenuation_set * ElementSets::boundary_set;
 
 public:
   // ── Per-element tag views (host) ─────────────────────────────────────────
@@ -101,6 +105,11 @@ protected:
   IndexStorage<decltype(combinations_by_boundary)> elements_by_boundary;
   /** Host mirror of elements_by_boundary. */
   HostIndexStorage<decltype(combinations_by_boundary)> h_elements_by_boundary;
+  /** Device index store keyed by (dimension, medium, property, attenuation,
+   * boundary). */
+  IndexStorage<decltype(combinations_by_element)> elements_by_element;
+  /** Host mirror of elements_by_element. */
+  HostIndexStorage<decltype(combinations_by_element)> h_elements_by_element;
 
 public:
   /** @brief Default constructor; leaves all views and stores empty. */
@@ -250,6 +259,12 @@ private:
     elements_by_boundary =
         specfem::tag_dispatch::create_mirror_storage_and_copy(
             Kokkos::DefaultExecutionSpace{}, h_elements_by_boundary);
+
+    h_elements_by_element = { make_initializer(
+        "element_by_element_", medium_tags, property_tags, attenuation_tags,
+        boundary_tags) };
+    elements_by_element = specfem::tag_dispatch::create_mirror_storage_and_copy(
+        Kokkos::DefaultExecutionSpace{}, h_elements_by_element);
   }
 
 public:
@@ -410,6 +425,36 @@ public:
       const specfem::element::property_tag property_tag,
       const specfem::element::boundary_tag boundary_tag) const {
     return elements_by_boundary.get(medium_tag, property_tag, boundary_tag);
+  }
+
+  // ── Accessors by element (medium + property + attenuation + boundary) ──────
+
+  HostIndexViewType get_elements_on_host(
+      const specfem::element::medium_tag medium_tag,
+      const specfem::element::property_tag property_tag,
+      const specfem::element::attenuation_tag attenuation_tag,
+      const specfem::element::boundary_tag boundary_tag) const {
+    return h_elements_by_element.get(medium_tag, property_tag, attenuation_tag,
+                                     boundary_tag);
+  }
+
+  int get_number_of_elements(
+      const specfem::element::medium_tag medium_tag,
+      const specfem::element::property_tag property_tag,
+      const specfem::element::attenuation_tag attenuation_tag,
+      const specfem::element::boundary_tag boundary_tag) const {
+    return get_elements_on_host(medium_tag, property_tag, attenuation_tag,
+                                boundary_tag)
+        .extent(0);
+  }
+
+  IndexViewType get_elements_on_device(
+      const specfem::element::medium_tag medium_tag,
+      const specfem::element::property_tag property_tag,
+      const specfem::element::attenuation_tag attenuation_tag,
+      const specfem::element::boundary_tag boundary_tag) const {
+    return elements_by_element.get(medium_tag, property_tag, attenuation_tag,
+                                   boundary_tag);
   }
 
   // ── Per-element tag accessors ────────────────────────────────────────────

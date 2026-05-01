@@ -366,7 +366,9 @@ TEST(NonconformingInterfaces, ContainerInitialization) {
       receivers;
   specfem::assembly::assembly<specfem::element::dimension_tag::dim2> assembly(
       mesh, quadrature, sources, receivers, {}, 1.0, 0.0, 1, 1, 1,
-      specfem::simulation::type::forward, false, nullptr);
+      specfem::simulation::type::forward, false, nullptr,
+      specfem::units::Hertz(0.0),
+      specfem::utilities::Band<specfem::units::Hertz>{});
 
   // consider adding more assemblies to this test
   test_nonconforming_container_transfers(assembly);

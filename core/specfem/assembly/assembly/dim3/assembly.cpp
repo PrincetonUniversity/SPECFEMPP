@@ -19,7 +19,9 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
     const int nsteps_between_samples,
     const specfem::simulation::type simulation,
     const bool allocate_boundary_values,
-    const std::shared_ptr<specfem::io::reader> &property_reader) {
+    const std::shared_ptr<specfem::io::reader> &property_reader,
+    const specfem::units::Hertz &attenuation_reference_frequency,
+    const specfem::utilities::Band<specfem::units::Hertz> &attenuation_band) {
 
   const int nspec = mesh.nspec;
   const int ngllz = mesh.element_grid.ngllz;
@@ -84,6 +86,15 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
   this->check_jacobian_matrix();
 
   this->info = { this->mesh, this->properties, this->element_types };
+
+  this->attenuation = { attenuation_reference_frequency,
+                        attenuation_band,
+                        false,
+                        dt,
+                        this->mesh,
+                        this->element_types,
+                        this->info,
+                        mesh.materials };
 
   return;
 }

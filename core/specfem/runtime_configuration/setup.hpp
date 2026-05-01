@@ -225,32 +225,25 @@ public:
   /**
    * @brief Get the reference frequency for attenuation
    *
-   * @return type_real reference frequency for attenuation
+   * @return specfem::units::Hertz reference frequency for attenuation (0 Hz if
+   * attenuation is disabled)
    */
-  std::shared_ptr<specfem::units::Hertz>
-  get_attenuation_reference_frequency() const {
-    if (this->attenuation) {
-      return std::make_shared<specfem::units::Hertz>(
-          this->attenuation->get_reference_frequency());
-    } else {
-      return nullptr;
-    }
+  specfem::units::Hertz get_attenuation_reference_frequency() const {
+    if (this->attenuation)
+      return this->attenuation->get_reference_frequency();
+    return specfem::units::Hertz(0.0);
   };
 
   /**
    * @brief Get the attenuation frequency band
    *
    * @return specfem::utilities::Band<specfem::units::Hertz> Attenuation
-   * frequency band
+   * frequency band (default-constructed if attenuation is disabled)
    */
-  std::shared_ptr<specfem::utilities::Band<specfem::units::Hertz> >
-  get_attenuation_band() const {
-    if (this->attenuation) {
-      return std::make_shared<specfem::utilities::Band<specfem::units::Hertz> >(
-          this->attenuation->get_attenuation_frequency_band());
-    } else {
-      return nullptr; // Return null if attenuation is disabled
-    }
+  specfem::utilities::Band<specfem::units::Hertz> get_attenuation_band() const {
+    if (this->attenuation)
+      return this->attenuation->get_attenuation_frequency_band();
+    return {};
   };
 
   /**
