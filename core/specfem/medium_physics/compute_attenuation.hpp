@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/element/attributes.hpp"
 #include "specfem/medium/dim2/elastic/isotropic/attenuation.hpp"
 #include "specfem/medium/dim3/elastic/isotropic/attenuation.hpp"
 #include <Kokkos_Core.hpp>
@@ -8,10 +9,7 @@ namespace specfem {
 namespace medium_physics {
 
 /**
- * @brief No-op attenuation update for elements with attenuation_tag::none.
- *
- * Compiles to nothing when attenuation is disabled, so the gradient callback
- * can call compute_attenuation unconditionally.
+ * @brief No-op: attenuation_tag::none, non-elastic, or non-isotropic.
  */
 template <typename Tags, typename IndexType, typename GradientPackType,
           typename AttenuationContainer,
@@ -19,32 +17,21 @@ template <typename Tags, typename IndexType, typename GradientPackType,
                                specfem::element::attenuation_tag::none,
                            int> = 0>
 KOKKOS_INLINE_FUNCTION void
-compute_attenuation(const IndexType &, specfem::point::stress<Tags> &,
-                    const GradientPackType &, const AttenuationContainer &) {}
+compute_attenuation(const IndexType &index,
+                    specfem::point::stress<Tags> &point_stress,
+                    const GradientPackType &grad_pack,
+                    const AttenuationContainer &attenuation) {}
 
 /**
- * @brief Dispatch attenuation update for constant_isotropic attenuation.
+ * @brief Active attenuation update: elastic + isotropic + any attenuation.
  *
- * Calls the medium-specific impl_compute_attenuation which loads state,
- * modifies the stress tensor, advances memory variables, and writes back.
- *
- * @tparam Tags                       Element tags (must include
- * attenuation_tag)
- * @tparam IndexType                  GLL point index type
- * @tparam GradientPackType stiffness_gradient_pack<constant_isotropic,...>
- * @tparam AttenuationContainer       Assembly attenuation container
- *
- * @param index                   GLL point index
- * @param point_stress            Elastic stress tensor (modified in-place)
- * @param grad_pack               Gradient pack (contains du and dv)
- * @param attenuation             Assembly attenuation container
+ * Delegates to the medium-specific impl_compute_attenuation.
  */
-template <
-    typename Tags, typename IndexType, typename GradientPackType,
-    typename AttenuationContainer,
-    std::enable_if_t<Tags::attenuation_tag ==
-                         specfem::element::attenuation_tag::constant_isotropic,
-                     int> = 0>
+template <typename Tags, typename IndexType, typename GradientPackType,
+          typename AttenuationContainer,
+          std::enable_if_t<Tags::attenuation_tag !=
+                               specfem::element::attenuation_tag::none,
+                           int> = 0>
 KOKKOS_INLINE_FUNCTION void
 compute_attenuation(const IndexType &index,
                     specfem::point::stress<Tags> &point_stress,

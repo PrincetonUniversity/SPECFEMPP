@@ -6,6 +6,7 @@
 #include "specfem/tag_dispatch/storage.hpp"
 #include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
+#include <optional>
 #include <vector>
 
 namespace specfem::mesh {
@@ -270,16 +271,26 @@ public:
   specfem::point::properties<
       specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag, false> > const
   get_properties(const int index) const {
-    using AttTagType = specfem::element::attenuation_tag;
-    switch (this->material_index_mapping[index].attenuation) {
-    case AttTagType::none:
-      return get_properties<MediumTag, PropertyTag, AttTagType::none>(index);
-    case AttTagType::constant_isotropic:
-      return get_properties<MediumTag, PropertyTag,
-                            AttTagType::constant_isotropic>(index);
-    }
-    KOKKOS_ABORT_WITH_LOCATION(
-        "Invalid attenuation tag for material combination");
+    using Result = specfem::point::properties<
+        specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag, false> >;
+    constexpr auto att_combos =
+        specfem::tag_dispatch::dimension_set<dimension_tag>{} *
+        specfem::tag_dispatch::medium_set<MediumTag>{} *
+        specfem::tag_dispatch::property_set<PropertyTag>{} *
+        ATTENUATION_SET(none, constant_isotropic);
+    const specfem::element::attenuation_tag runtime_att =
+        this->material_index_mapping[index].attenuation;
+    std::optional<Result> result;
+    specfem::tag_dispatch::for_each(att_combos, [&]<typename TagsType>() {
+      if (TagsType::attenuation_tag == runtime_att)
+        result =
+            get_properties<MediumTag, PropertyTag, TagsType::attenuation_tag>(
+                index);
+    });
+    if (!result)
+      KOKKOS_ABORT_WITH_LOCATION(
+          "Invalid attenuation tag for material combination");
+    return *result;
   }
 
   /**
