@@ -402,13 +402,15 @@ TEST_F(Assembly2D, properties_io_routines) {
       assembly.properties.copy_to_device();
 
       // Create a property writer
-      specfem::io::property_writer<specfem::io::ASCII<specfem::io::write> >
+      specfem::io::property_writer<
+          specfem::io_backends::ASCII<specfem::io::write> >
           writer(temp_io_directory);
 
       writer.write(assembly);
 
       // Create a property reader
-      specfem::io::property_reader<specfem::io::ASCII<specfem::io::read> >
+      specfem::io::property_reader<
+          specfem::io_backends::ASCII<specfem::io::read> >
           reader(temp_io_directory);
       reader.read(assembly);
 

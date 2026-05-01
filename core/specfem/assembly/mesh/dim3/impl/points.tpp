@@ -1,4 +1,6 @@
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/mpi/mpi.hpp"
+#include <limits>
 
 template <typename CoordinateView, typename ShapeFunctionView,
           typename ControlNodeCoordinates>
@@ -28,6 +30,29 @@ void initialize_coordinates(
 
   Kokkos::fence();
 }
+
+namespace {
+
+template <typename CoordViewType>
+Kokkos::MinMaxScalar<type_real>
+compute_bounds(const char *label, const int nspec, const int ngllz,
+               const int nglly, const int ngllx, const CoordViewType &coord,
+               const int dim) {
+  Kokkos::MinMaxScalar<type_real> result;
+  Kokkos::parallel_reduce(
+      label,
+      Kokkos::MDRangePolicy<Kokkos::Rank<4> >({ 0, 0, 0, 0 },
+                                              { nspec, ngllz, nglly, ngllx }),
+      KOKKOS_LAMBDA(const int ispec, const int iz, const int iy, const int ix,
+                    Kokkos::MinMaxScalar<type_real> &r) {
+        r.min_val = Kokkos::min(r.min_val, coord(ispec, iz, iy, ix, dim));
+        r.max_val = Kokkos::max(r.max_val, coord(ispec, iz, iy, ix, dim));
+      },
+      Kokkos::MinMax<type_real>(result));
+  return result;
+}
+
+} // namespace
 
 specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::
     points(const int &nspec, const int &ngllz, const int &nglly,
@@ -300,6 +325,44 @@ specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::
                          control_nodes.control_node_coordinates);
 
   Kokkos::deep_copy(this->h_coord, this->coord);
+
+  const auto coord = this->coord;
+
+  const auto x_result = compute_bounds(
+      "specfem::assembly::mesh::points::compute_x_bounds", nspec, ngllz, nglly,
+      ngllx, coord, 0);
+  const auto y_result = compute_bounds(
+      "specfem::assembly::mesh::points::compute_y_bounds", nspec, ngllz, nglly,
+      ngllx, coord, 1);
+  const auto z_result = compute_bounds(
+      "specfem::assembly::mesh::points::compute_z_bounds", nspec, ngllz, nglly,
+      ngllx, coord, 2);
+
+  this->xmin = x_result.min_val;
+  this->xmax = x_result.max_val;
+  this->ymin = y_result.min_val;
+  this->ymax = y_result.max_val;
+  this->zmin = z_result.min_val;
+  this->zmax = z_result.max_val;
+
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->xmin, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MIN,
+                                     MPI_COMM_WORLD));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->xmax, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MAX,
+                                     MPI_COMM_WORLD));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->ymin, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MIN,
+                                     MPI_COMM_WORLD));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->ymax, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MAX,
+                                     MPI_COMM_WORLD));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->zmin, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MIN,
+                                     MPI_COMM_WORLD));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->zmax, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MAX,
+                                     MPI_COMM_WORLD));
 
   return;
 }
