@@ -203,17 +203,6 @@ impl_compute_attenuation(const IndexType &index,
   PointAttenuationType point_attenuation;
   specfem::assembly::load_on_device(index, attenuation, point_attenuation);
 
-  if (index.ispec == 2400 && index.iz == 0 && index.ix == 0) {
-    std::cout << "before adding to stress/before integrating memory variables"
-              << "\n"
-              << ", sigma_xx = " << point_stress.T(0, 0) << "\n"
-              << ", sigma_zz = " << point_stress.T(1, 1) << "\n"
-              << ", sigma_xz = " << point_stress.T(0, 1) << std::endl;
-    std::cout << ", Rxx[0] = " << point_attenuation.Rxx(0) << "\n"
-              << ", Rxz[0] = " << point_attenuation.Rxz(0) << "\n"
-              << ", Rkappa[0] = " << point_attenuation.Rkappa(0) << std::endl;
-  }
-
   // 1. Add memory variable contributions to stress
   impl_add_relaxation_to_stress<Tags>(point_attenuation, point_stress);
 
@@ -221,16 +210,6 @@ impl_compute_attenuation(const IndexType &index,
   //    writes Snp1 back)
   impl_integrate_memory_variables<Tags>(point_attenuation, du, dv,
                                         attenuation.deltat);
-
-  if (index.ispec == 2400 && index.iz == 0 && index.ix == 0) {
-    std::cout << "After integrating memory variables" << "\n"
-              << ", sigma_xx = " << point_stress.T(0, 0) << "\n"
-              << ", sigma_zz = " << point_stress.T(1, 1) << "\n"
-              << ", sigma_xz = " << point_stress.T(0, 1) << std::endl;
-    std::cout << ", Rxx[0] = " << point_attenuation.Rxx(0) << "\n"
-              << ", Rxz[0] = " << point_attenuation.Rxz(0) << "\n"
-              << ", Rkappa[0] = " << point_attenuation.Rkappa(0) << std::endl;
-  }
 
   // 3. Write back updated memory variables and strain
   specfem::assembly::store_on_device(index, attenuation, point_attenuation);
