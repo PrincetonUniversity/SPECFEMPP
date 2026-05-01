@@ -3,7 +3,6 @@
 #include "specfem/assembly/attenuation.hpp"
 #include "specfem/assembly/attenuation/impl/attenuation_medium.hpp"
 #include "specfem/assembly/element_types.hpp"
-#include "specfem/assembly/info.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/constants.hpp"
 #include "specfem/data_access/container.hpp"
@@ -115,8 +114,6 @@ struct Attenuation<specfem::element::dimension_tag::dim2>
           &mesh,
       const specfem::assembly::element_types<
           specfem::element::dimension_tag::dim2> &element_types,
-      const specfem::assembly::Info<specfem::element::dimension_tag::dim2>
-          &info,
       const specfem::mesh::materials<specfem::element::dimension_tag::dim2>
           &materials);
 

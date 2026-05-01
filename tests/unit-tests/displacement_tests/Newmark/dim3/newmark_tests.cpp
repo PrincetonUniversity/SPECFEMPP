@@ -116,10 +116,8 @@ TEST_P(Newmark, 3D) {
   const auto quadratures = setup.instantiate_quadrature();
 
   // Read mesh generated MESHFEM
-  auto mesh = specfem::io::read_3d_mesh(
-      database_filename, setup.is_attenuation_enabled(),
-      setup.get_attenuation_reference_frequency(),
-      setup.get_attenuation_band());
+  auto mesh = specfem::io::read_3d_mesh(database_filename,
+                                        setup.get_attenuation_setup());
   const type_real dt = setup.get_dt();
   const int nsteps = setup.get_nsteps();
 

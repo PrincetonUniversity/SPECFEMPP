@@ -11,6 +11,7 @@
 #include "run_setup.hpp"
 #include "solver.hpp"
 #include "sources.hpp"
+#include "specfem/attenuation.hpp"
 #include "specfem/io.hpp"
 #include "specfem/setup.hpp"
 #include "time_scheme.hpp"
@@ -253,6 +254,17 @@ public:
     if (this->attenuation)
       return this->attenuation->get_attenuation_frequency_band();
     return {};
+  };
+
+  /**
+   * @brief Get a self-contained attenuation setup struct for passing to
+   * read_mesh functions.
+   *
+   * @return specfem::attenuation::Setup
+   */
+  specfem::attenuation::Setup get_attenuation_setup() const {
+    return { is_attenuation_enabled(), get_attenuation_reference_frequency(),
+             get_attenuation_band() };
   };
 
   /**

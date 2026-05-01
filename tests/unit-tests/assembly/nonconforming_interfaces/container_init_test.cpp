@@ -350,8 +350,7 @@ TEST(NonconformingInterfaces, ContainerInitialization) {
 
   const auto mesh = specfem::io::read_2d_mesh(
       database_file, specfem::enums::elastic_wave::psv,
-      specfem::enums::electromagnetic_wave::te,
-      /*attenuation=*/false, std::nullopt, {});
+      specfem::enums::electromagnetic_wave::te, specfem::attenuation::Setup{});
 
   const auto quadrature = []() {
     specfem::quadrature::gll::gll gll{};

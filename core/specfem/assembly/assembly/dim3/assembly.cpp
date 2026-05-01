@@ -80,8 +80,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
   // Currently done in the mesher!
   this->check_jacobian_matrix();
 
-  this->attenuation = { mesh.attenuation,    dt,         this->mesh,
-                        this->element_types, this->info, mesh.materials };
+  this->attenuation = { mesh.attenuation, dt, this->mesh, this->element_types,
+                        mesh.materials };
 
   this->properties = { this->element_types, this->mesh, mesh.materials,
                        property_reader != nullptr };

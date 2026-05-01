@@ -35,8 +35,6 @@ specfem::assembly::Attenuation<specfem::element::dimension_tag::dim3>::
             &mesh,
         const specfem::assembly::element_types<
             specfem::element::dimension_tag::dim3> &element_types,
-        const specfem::assembly::Info<specfem::element::dimension_tag::dim3>
-            &info,
         const specfem::mesh::materials<specfem::element::dimension_tag::dim3>
             &materials)
     : ngllz(mesh.element_grid.ngllz), nglly(mesh.element_grid.nglly),

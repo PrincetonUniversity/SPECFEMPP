@@ -117,9 +117,7 @@ TEST_P(Newmark, 2D) {
   specfem::mesh::mesh<specfem::element::dimension_tag::dim2> mesh =
       specfem::io::read_2d_mesh(database_file, elastic_wave,
                                 electromagnetic_wave,
-                                setup.is_attenuation_enabled(),
-                                setup.get_attenuation_reference_frequency(),
-                                setup.get_attenuation_band());
+                                setup.get_attenuation_setup());
   const type_real dt = setup.get_dt();
   const int nsteps = setup.get_nsteps();
 

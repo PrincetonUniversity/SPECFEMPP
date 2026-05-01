@@ -16,9 +16,12 @@
 
 specfem::mesh::mesh<specfem::element::dimension_tag::dim3>
 specfem::io::read_3d_mesh(
-    const std::string &database_file, const bool attenuation_enabled,
-    const std::optional<specfem::units::Hertz> &f0,
-    const specfem::utilities::Band<specfem::units::Hertz> &band) {
+    const std::string &database_file,
+    const specfem::attenuation::Setup &attenuation_setup) {
+
+  const bool attenuation_enabled = attenuation_setup.enabled;
+  const auto &f0 = attenuation_setup.f0;
+  const auto &band = attenuation_setup.band;
   // Read mesh parameters
   std::ifstream param_stream(database_file, std::ios::in | std::ios::binary);
   if (!param_stream.is_open()) {

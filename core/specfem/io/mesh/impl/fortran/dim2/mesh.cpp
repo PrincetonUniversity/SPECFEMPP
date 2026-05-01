@@ -35,9 +35,11 @@ specfem::io::read_2d_mesh(
     const std::string &filename,
     const specfem::enums::elastic_wave elastic_wave,
     const specfem::enums::electromagnetic_wave electromagnetic_wave,
-    const bool attenuation_enabled,
-    const std::optional<specfem::units::Hertz> &f0,
-    const specfem::utilities::Band<specfem::units::Hertz> &band) {
+    const specfem::attenuation::Setup &attenuation_setup) {
+
+  const bool attenuation_enabled = attenuation_setup.enabled;
+  const auto &f0 = attenuation_setup.f0;
+  const auto &band = attenuation_setup.band;
 
   // Declaring empty mesh objects
   specfem::mesh::mesh<specfem::element::dimension_tag::dim2> mesh;
@@ -106,7 +108,7 @@ specfem::io::read_2d_mesh(
   type_real attenuation_f0_reference = 0.0;
   try {
     int n_sls;
-    bool read_velocities_at_f0;
+    [[maybe_unused]] bool read_velocities_at_f0;
     std::tie(n_sls, attenuation_f0_reference, read_velocities_at_f0) =
         specfem::io::mesh::impl::fortran::dim2::read_mesh_database_attenuation(
             stream);

@@ -17,7 +17,7 @@ struct ActualMesh3D {
   ActualMesh3D() = default;
 
   ActualMesh3D(const std::string &database) {
-    mesh = specfem::io::read_3d_mesh(database, false, std::nullopt, {});
+    mesh = specfem::io::read_3d_mesh(database, specfem::attenuation::Setup{});
   }
 };
 } // namespace specfem::test_configuration
