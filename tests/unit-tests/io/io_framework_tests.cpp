@@ -16,20 +16,23 @@ namespace fs = boost::filesystem;
 // Helper to get write type from read type
 template <typename ReadType> struct GetWriteType;
 
-template <> struct GetWriteType<specfem::io::ASCII<specfem::io::read> > {
-  using type = specfem::io::ASCII<specfem::io::write>;
+template <>
+struct GetWriteType<specfem::io_backends::ASCII<specfem::io::read> > {
+  using type = specfem::io_backends::ASCII<specfem::io::write>;
 };
-template <> struct GetWriteType<specfem::io::HDF5<specfem::io::read> > {
-  using type = specfem::io::HDF5<specfem::io::write>;
+template <>
+struct GetWriteType<specfem::io_backends::HDF5<specfem::io::read> > {
+  using type = specfem::io_backends::HDF5<specfem::io::write>;
 };
-template <> struct GetWriteType<specfem::io::ADIOS2<specfem::io::read> > {
-  using type = specfem::io::ADIOS2<specfem::io::write>;
+template <>
+struct GetWriteType<specfem::io_backends::ADIOS2<specfem::io::read> > {
+  using type = specfem::io_backends::ADIOS2<specfem::io::write>;
 };
-template <> struct GetWriteType<specfem::io::NPY<specfem::io::read> > {
-  using type = specfem::io::NPY<specfem::io::write>;
+template <> struct GetWriteType<specfem::io_backends::NPY<specfem::io::read> > {
+  using type = specfem::io_backends::NPY<specfem::io::write>;
 };
-template <> struct GetWriteType<specfem::io::NPZ<specfem::io::read> > {
-  using type = specfem::io::NPZ<specfem::io::write>;
+template <> struct GetWriteType<specfem::io_backends::NPZ<specfem::io::read> > {
+  using type = specfem::io_backends::NPZ<specfem::io::write>;
 };
 
 // Base test class
@@ -40,35 +43,35 @@ protected:
   template <typename IOType>
   std::string getTestFileName(const std::string &test_name) {
     std::string base_name;
-    if constexpr (std::is_same_v<IOType,
-                                 specfem::io::ASCII<specfem::io::write> >) {
+    if constexpr (std::is_same_v<IOType, specfem::io_backends::ASCII<
+                                             specfem::io::write> >) {
       base_name = "test_ascii_write";
-    } else if constexpr (std::is_same_v<
-                             IOType, specfem::io::ASCII<specfem::io::read> >) {
+    } else if constexpr (std::is_same_v<IOType, specfem::io_backends::ASCII<
+                                                    specfem::io::read> >) {
       base_name = "test_ascii_read";
-    } else if constexpr (std::is_same_v<
-                             IOType, specfem::io::HDF5<specfem::io::write> >) {
+    } else if constexpr (std::is_same_v<IOType, specfem::io_backends::HDF5<
+                                                    specfem::io::write> >) {
       base_name = "test_hdf5_write";
-    } else if constexpr (std::is_same_v<
-                             IOType, specfem::io::HDF5<specfem::io::read> >) {
+    } else if constexpr (std::is_same_v<IOType, specfem::io_backends::HDF5<
+                                                    specfem::io::read> >) {
       base_name = "test_hdf5_read";
-    } else if constexpr (std::is_same_v<IOType, specfem::io::ADIOS2<
+    } else if constexpr (std::is_same_v<IOType, specfem::io_backends::ADIOS2<
                                                     specfem::io::write> >) {
       base_name = "test_adios2_write";
-    } else if constexpr (std::is_same_v<
-                             IOType, specfem::io::ADIOS2<specfem::io::read> >) {
+    } else if constexpr (std::is_same_v<IOType, specfem::io_backends::ADIOS2<
+                                                    specfem::io::read> >) {
       base_name = "test_adios2_read";
-    } else if constexpr (std::is_same_v<
-                             IOType, specfem::io::NPY<specfem::io::write> >) {
+    } else if constexpr (std::is_same_v<IOType, specfem::io_backends::NPY<
+                                                    specfem::io::write> >) {
       base_name = "test_npy_write";
-    } else if constexpr (std::is_same_v<IOType,
-                                        specfem::io::NPY<specfem::io::read> >) {
+    } else if constexpr (std::is_same_v<IOType, specfem::io_backends::NPY<
+                                                    specfem::io::read> >) {
       base_name = "test_npy_read";
-    } else if constexpr (std::is_same_v<
-                             IOType, specfem::io::NPZ<specfem::io::write> >) {
+    } else if constexpr (std::is_same_v<IOType, specfem::io_backends::NPZ<
+                                                    specfem::io::write> >) {
       base_name = "test_npz_write";
-    } else if constexpr (std::is_same_v<IOType,
-                                        specfem::io::NPZ<specfem::io::read> >) {
+    } else if constexpr (std::is_same_v<IOType, specfem::io_backends::NPZ<
+                                                    specfem::io::read> >) {
       base_name = "test_npz_read";
     } else {
       base_name = "test_unknown";
@@ -167,24 +170,27 @@ private:
 
 // Type list for all I/O frameworks - conditionally include based on available
 // packages
-using IOTypes = ::testing::Types<
-    specfem::io::ASCII<specfem::io::write>,
-    specfem::io::ASCII<specfem::io::read>, specfem::io::NPY<specfem::io::write>,
-    specfem::io::NPY<specfem::io::read>
+using IOTypes =
+    ::testing::Types<specfem::io_backends::ASCII<specfem::io::write>,
+                     specfem::io_backends::ASCII<specfem::io::read>,
+                     specfem::io_backends::NPY<specfem::io::write>,
+                     specfem::io_backends::NPY<specfem::io::read>
 #ifndef NO_NPZ
-    ,
-    specfem::io::NPZ<specfem::io::write>, specfem::io::NPZ<specfem::io::read>
+                     ,
+                     specfem::io_backends::NPZ<specfem::io::write>,
+                     specfem::io_backends::NPZ<specfem::io::read>
 #endif
 #ifndef NO_HDF5
-    ,
-    specfem::io::HDF5<specfem::io::write>, specfem::io::HDF5<specfem::io::read>
+                     ,
+                     specfem::io_backends::HDF5<specfem::io::write>,
+                     specfem::io_backends::HDF5<specfem::io::read>
 #endif
 #ifndef NO_ADIOS2
-    ,
-    specfem::io::ADIOS2<specfem::io::write>,
-    specfem::io::ADIOS2<specfem::io::read>
+                     ,
+                     specfem::io_backends::ADIOS2<specfem::io::write>,
+                     specfem::io_backends::ADIOS2<specfem::io::read>
 #endif
-    >;
+                     >;
 
 TYPED_TEST_SUITE(IOFrameworkTest, IOTypes);
 
@@ -200,14 +206,14 @@ TYPED_TEST(IOFrameworkTest, BasicFileOperations) {
 
     // Verify file/directory was created
     std::string expected_name = this->getTestFile();
-    if constexpr (std::is_same_v<IOType,
-                                 specfem::io::HDF5<specfem::io::write> >) {
+    if constexpr (std::is_same_v<IOType, specfem::io_backends::HDF5<
+                                             specfem::io::write> >) {
       expected_name += ".h5";
-    } else if constexpr (std::is_same_v<IOType, specfem::io::ADIOS2<
+    } else if constexpr (std::is_same_v<IOType, specfem::io_backends::ADIOS2<
                                                     specfem::io::write> >) {
       expected_name += ".bp";
-    } else if constexpr (std::is_same_v<
-                             IOType, specfem::io::NPZ<specfem::io::write> >) {
+    } else if constexpr (std::is_same_v<IOType, specfem::io_backends::NPZ<
+                                                    specfem::io::write> >) {
       expected_name += ".npz";
     }
 

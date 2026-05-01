@@ -107,8 +107,6 @@ void compute_source_interaction(
     specfem::assembly::assembly<Tags::dimension_tag> &assembly,
     const int istep) {
 
-  constexpr auto WavefieldType = Tags::wavefield_tag;
-
   specfem::tag_dispatch::for_each(
       specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
       specfem::tag_dispatch::medium_set<Tags::medium_tag>{} *
@@ -118,11 +116,8 @@ void compute_source_interaction(
       [&]<typename ElementTags>() {
         compute_source_interaction_core<
             NGLL,
-            specfem::tags::Tags<Tags::dimension_tag, WavefieldType,
-                                ElementTags::medium_tag,
-                                ElementTags::property_tag,
-                                ElementTags::boundary_tag> >(assembly,
-                                                             istep);
+            specfem::tags::expand<ElementTags, Tags::wavefield_tag>>(
+            assembly, istep);
       });
 }
 } // namespace specfem::compute::impl
