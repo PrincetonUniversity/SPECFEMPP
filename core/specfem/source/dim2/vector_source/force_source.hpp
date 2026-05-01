@@ -93,7 +93,7 @@ public:
    * @brief User output
    *
    */
-  constexpr std::string source_name() const override { return "2-D force"; }
+  std::string source_name() const override { return "2-D force"; }
 
   /**
    * @brief Get the angle of the force source

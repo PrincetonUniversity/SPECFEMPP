@@ -68,9 +68,7 @@ public:
     return specfem::simulation::field_type::adjoint;
   }
 
-  constexpr std::string source_name() const override {
-    return "2-D adjoint source";
-  }
+  std::string source_name() const override { return "2-D adjoint source"; }
 
   /**
    * @brief Get the force vector

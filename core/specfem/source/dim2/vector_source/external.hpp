@@ -62,9 +62,7 @@ public:
     return wavefield_type;
   }
 
-  constexpr std::string source_name() const override {
-    return "2-D external source";
-  }
+  std::string source_name() const override { return "2-D external source"; }
 
   /**
    * @brief Get the force vector

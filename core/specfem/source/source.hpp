@@ -191,7 +191,7 @@ public:
    * @brief Returns the human-readable source type name.
    * Derived classes should override this to return their static @c name.
    */
-  virtual constexpr std::string source_name() const = 0;
+  virtual std::string source_name() const = 0;
 
   /**
    * @brief Type-specific output (parameters unique to this source type).
