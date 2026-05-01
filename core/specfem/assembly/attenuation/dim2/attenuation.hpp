@@ -9,6 +9,7 @@
 #include "specfem/data_access/container.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros/tag_dispatch.hpp"
+#include "specfem/mesh/attenuation_config.hpp"
 #include "specfem/mesh/dim2/materials/materials.hpp"
 #include "specfem/setup.hpp"
 #include "specfem/tag_dispatch.hpp"
@@ -65,10 +66,8 @@ struct Attenuation<specfem::element::dimension_tag::dim2>
   int nspec; ///< Total number of spectral elements
 
   // Attenuation parameters
-  specfem::units::Hertz f0;           ///< Reference frequency
-  bool auto_compute_attenuation_band; ///< Whether to auto-compute the
-                                      ///< attenuation band
-  type_real deltat;                   ///< Time step size
+  specfem::units::Hertz f0; ///< Reference frequency
+  type_real deltat;         ///< Time step size
 
   // Runge-Kutta attenuation factors (one coefficient per SLS mechanism)
   Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight,
@@ -111,9 +110,7 @@ struct Attenuation<specfem::element::dimension_tag::dim2>
   Attenuation() = default;
 
   Attenuation(
-      const specfem::units::Hertz reference_frequency,
-      const specfem::utilities::Band<specfem::units::Hertz> band_in,
-      const bool auto_compute_attenuation_band, const type_real deltat,
+      const specfem::mesh::attenuation_config &config, const type_real deltat,
       const specfem::assembly::mesh<specfem::element::dimension_tag::dim2>
           &mesh,
       const specfem::assembly::element_types<

@@ -1,5 +1,6 @@
 #include "../../../SPECFEM_Environment.hpp"
 #include "specfem/assembly/assembly.hpp"
+#include "specfem/attenuation.hpp"
 #include "specfem/constants.hpp"
 #include "specfem/io.hpp"
 #include "specfem/logger.hpp"
@@ -115,9 +116,20 @@ TEST_P(Newmark, 2D) {
   const auto quadratures = setup.instantiate_quadrature();
 
   // Read mesh generated MESHFEM
-  specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
-      database_file, elastic_wave, electromagnetic_wave,
-      setup.is_attenuation_enabled());
+  specfem::mesh::mesh<specfem::element::dimension_tag::dim2> mesh =
+      specfem::io::read_2d_mesh(database_file, elastic_wave,
+                                electromagnetic_wave,
+                                setup.is_attenuation_enabled());
+
+  if (setup.is_attenuation_enabled()) {
+    auto f0 = setup.get_attenuation_reference_frequency();
+    auto band = setup.get_attenuation_band();
+    mesh.attenuation = {
+      true, f0, band,
+      specfem::attenuation::compute_tau_sigma<specfem::constants::N_SLS>(band)
+    };
+    mesh.materials.apply_attenuation(mesh.attenuation);
+  }
   const type_real dt = setup.get_dt();
   const int nsteps = setup.get_nsteps();
 
@@ -162,9 +174,7 @@ TEST_P(Newmark, 2D) {
   specfem::assembly::assembly<specfem::element::dimension_tag::dim2> assembly(
       mesh, quadratures, sources, receivers, seismogram_types, t0,
       setup.get_dt(), nsteps, max_sig_step, nstep_between_samples,
-      setup.get_simulation_type(), false, nullptr,
-      setup.get_attenuation_reference_frequency(),
-      setup.get_attenuation_band());
+      setup.get_simulation_type(), false, nullptr);
 
   // Instantiate the solver and timescheme
   auto time_scheme = setup.instantiate_timescheme(assembly.fields);

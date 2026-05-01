@@ -30,9 +30,7 @@ void specfem::assembly::Attenuation<specfem::element::dimension_tag::dim3>::
 
 specfem::assembly::Attenuation<specfem::element::dimension_tag::dim3>::
     Attenuation(
-        const specfem::units::Hertz reference_frequency,
-        const specfem::utilities::Band<specfem::units::Hertz> band_in,
-        const bool auto_compute_attenuation_band, const type_real deltat,
+        const specfem::mesh::attenuation_config &config, const type_real deltat,
         const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
             &mesh,
         const specfem::assembly::element_types<
@@ -42,31 +40,25 @@ specfem::assembly::Attenuation<specfem::element::dimension_tag::dim3>::
         const specfem::mesh::materials<specfem::element::dimension_tag::dim3>
             &materials)
     : ngllz(mesh.element_grid.ngllz), nglly(mesh.element_grid.nglly),
-      ngllx(mesh.element_grid.ngllx), nspec(mesh.nspec),
-      f0(reference_frequency),
-      auto_compute_attenuation_band(auto_compute_attenuation_band),
+      ngllx(mesh.element_grid.ngllx), nspec(mesh.nspec), f0(config.f0),
       deltat(deltat) {
 
-  specfem::utilities::Band<specfem::units::Hertz> band =
-      auto_compute_attenuation_band
-          ? attenuation::compute_band<N_SLS>(
-                specfem::units::Seconds(info.largest_minimum_period))
-          : band_in;
+  if (!config.enabled)
+    return;
 
   using specfem::units::unit_symbols::Hz;
 
   // Compute the band center frequency for attenuation scaling (logarithmic
   // center)
-  auto fc =
-      specfem::utilities::logarithmic_center(band.min.raw(), band.max.raw()) *
-      Hz;
+  auto fc = specfem::utilities::logarithmic_center(config.band.min.raw(),
+                                                   config.band.max.raw()) *
+            Hz;
 
-  // Compute tau_sigma once (shared across all elements)
-  auto tau_sigma = specfem::attenuation::compute_tau_sigma<N_SLS>(band);
+  // Compute Runge-Kutta memory-variable update coefficients from the
+  // precomputed tau_sigma stored in the mesh attenuation_config.
+  auto rk = specfem::attenuation::compute_integration_factors<N_SLS>(
+      config.tau_sigma, deltat);
 
-  // Compute Runge-Kutta memory-variable update coefficients
-  auto rk = specfem::attenuation::compute_integration_factors<N_SLS>(tau_sigma,
-                                                                     deltat);
   this->alpha_rk = rk.alpha;
   this->beta_rk = rk.beta;
   this->gamma_rk = rk.gamma;
@@ -82,6 +74,6 @@ specfem::assembly::Attenuation<specfem::element::dimension_tag::dim3>::
                                   Kokkos::DefaultExecutionSpace>("d_gamma_rk");
   Kokkos::deep_copy(this->d_gamma_rk, this->gamma_rk);
 
-  init_memory_variables(element_types, mesh, materials, fc, f0, band,
-                        tau_sigma);
+  init_memory_variables(element_types, mesh, materials, fc, config.f0,
+                        config.band, config.tau_sigma);
 }

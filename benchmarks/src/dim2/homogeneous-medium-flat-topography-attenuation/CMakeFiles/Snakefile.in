@@ -1,0 +1,135 @@
+SPECFEM_BIN = "@CMAKE_BINARY_DIR@/bin/specfem 2d"
+MESHFEM_BIN = "@CMAKE_BINARY_DIR@/bin/xmeshfem2D"
+
+VARIANTS = ["attenuation_off", "attenuation_on"]
+
+rule all:
+    input:
+        traces_X="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/traces_X.png",
+        traces_Z="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/traces_Z.png",
+    localrule: True
+
+
+rule generate_mesh:
+    input:
+        par_file="@CURRENT_BENCHMARK_BUILD_DIR@/Par_File_{variant}",
+    output:
+        database="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/{variant}/database.bin",
+        stations="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/{variant}/STATIONS",
+    wildcard_constraints:
+        variant="attenuation_off|attenuation_on",
+    localrule: True
+    shell:
+        """
+            mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/{wildcards.variant}
+            {MESHFEM_BIN} -p {input.par_file}
+        """
+
+
+rule run_solver:
+    input:
+        database="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/{variant}/database.bin",
+        stations="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/{variant}/STATIONS",
+        source="@CURRENT_BENCHMARK_BUILD_DIR@/source.yaml",
+        config="@CURRENT_BENCHMARK_BUILD_DIR@/specfem_config_{variant}.yaml",
+    output:
+        seismograms=expand(
+            "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/{{variant}}/results/{network_name}.{station_name}.S2.{component}.semv",
+            station_name=["S0001", "S0002", "S0003", "S0004", "S0005", "S0006"],
+            network_name=["AA"],
+            component=["BXX", "BXZ"],
+        ),
+        log="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/{variant}/output.log",
+    wildcard_constraints:
+        variant="attenuation_off|attenuation_on",
+    resources:
+        nodes=1,
+        tasks=1,
+        cpus_per_task=1,
+        runtime=10,
+    shell:
+        """
+            # module purge
+            # module load boost/1.73.0
+            mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/{wildcards.variant}/results
+            {SPECFEM_BIN} -p {input.config}
+        """
+
+
+rule plot_seismogram:
+    input:
+        trace_files=expand(
+            "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/{variant}/results/{network_name}.{station_name}.S2.{component}.semv",
+            variant=VARIANTS,
+            station_name=["S0001", "S0002", "S0003", "S0004", "S0005", "S0006"],
+            network_name=["AA"],
+            component=["BXX", "BXZ"],
+        ),
+    output:
+        traces_X="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/traces_X.png",
+        traces_Z="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/traces_Z.png",
+    localrule: True
+    run:
+        import glob
+        import os
+        import numpy as np
+        import obspy
+
+        # Set matplotlib gui off
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+
+        def get_traces(directory):
+            traces = []
+            files = glob.glob(directory + "/*.sem*")
+            for filename in files:
+                station_name = os.path.splitext(filename)[0]
+                network, station, location, channel = station_name.split("/")[-1].split(".")
+                trace = np.loadtxt(filename, delimiter=" ")
+                starttime = trace[0, 0]
+                dt = trace[1, 0] - trace[0, 0]
+                traces.append(
+                    obspy.Trace(
+                        trace[:, 1],
+                        {"network": network,
+                         "station": station,
+                         "location": location,
+                         "channel": channel, "starttime": starttime, "delta": dt},
+                    )
+                )
+            return obspy.Stream(traces)
+
+        def plot_comparison(stream, stream_att, component, outfile):
+            sel = stream.select(component=component)
+            sel_att = stream_att.select(component=component)
+            stations = sorted(set(tr.stats.station for tr in sel))
+            fig, axes = plt.subplots(len(stations), 1, figsize=(10, 2 * len(stations)), sharex=True)
+            if len(stations) == 1:
+                axes = [axes]
+            for ax, station in zip(axes, stations):
+                tr = sel.select(station=station)[0]
+                tr_att = sel_att.select(station=station)[0]
+                ax.plot(tr.times(), tr.data, label="attenuation off", color="black")
+                ax.plot(tr_att.times(), tr_att.data, label="attenuation on", color="red", linestyle="--")
+                ax.set_ylabel(station)
+                ax.legend(loc="upper right", fontsize=6)
+            axes[-1].set_xlabel("Time (s)")
+            fig.suptitle(f"Component {component}: attenuation on vs. off")
+            fig.tight_layout()
+            fig.savefig(outfile, dpi=150)
+            plt.close(fig)
+
+        stream     = get_traces("@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/attenuation_off/results")
+        stream_att = get_traces("@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/attenuation_on/results")
+        os.makedirs("@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results", exist_ok=True)
+        plot_comparison(stream, stream_att, 'X', output.traces_X)
+        plot_comparison(stream, stream_att, 'Z', output.traces_Z)
+
+
+rule clean:
+    localrule: True
+    shell:
+        """
+            rm -rf @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES
+        """

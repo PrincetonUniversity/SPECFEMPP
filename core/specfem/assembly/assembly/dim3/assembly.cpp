@@ -19,9 +19,7 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
     const int nsteps_between_samples,
     const specfem::simulation::type simulation,
     const bool allocate_boundary_values,
-    const std::shared_ptr<specfem::io::reader> &property_reader,
-    const specfem::units::Hertz &attenuation_reference_frequency,
-    const specfem::utilities::Band<specfem::units::Hertz> &attenuation_band) {
+    const std::shared_ptr<specfem::io::reader> &property_reader) {
 
   const int nspec = mesh.nspec;
   const int ngllz = mesh.element_grid.ngllz;
@@ -82,20 +80,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
   // Currently done in the mesher!
   this->check_jacobian_matrix();
 
-  // attenuation must be constructed before properties: the attenuation
-  // constructor calls compute_attenuation_properties() on each material, which
-  // must happen before properties calls get_computed_values().
-  // attenuation only reads info.largest_minimum_period when
-  // auto_compute_attenuation_band=true (passed as false here), so passing the
-  // default-constructed this->info is safe.
-  this->attenuation = { attenuation_reference_frequency,
-                        attenuation_band,
-                        false,
-                        dt,
-                        this->mesh,
-                        this->element_types,
-                        this->info,
-                        mesh.materials };
+  this->attenuation = { mesh.attenuation,    dt,         this->mesh,
+                        this->element_types, this->info, mesh.materials };
 
   this->properties = { this->element_types, this->mesh, mesh.materials,
                        property_reader != nullptr };

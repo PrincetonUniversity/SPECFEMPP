@@ -30,7 +30,7 @@ parameters:
           wavefield:
             directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES"
             format: npy
-            for_adjoint_simulations: true
+            for-adjoint-simulations: true
 
     solver:
       time-marching:

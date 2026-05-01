@@ -1,5 +1,7 @@
 #include "program.hpp"
 #include "specfem/assembly/assembly.hpp"
+#include "specfem/attenuation.hpp"
+#include "specfem/constants.hpp"
 #include "specfem/element.hpp"
 #include "specfem/io.hpp"
 #include "specfem/logger.hpp"
@@ -39,9 +41,19 @@ void program_3d(
   specfem::Logger::info("Reading the mesh...");
   specfem::Logger::info("===================");
   auto mesh_start_time = std::chrono::system_clock::now();
-  const auto mesh = specfem::io::read_3d_mesh(database_filename,
-                                              setup.is_attenuation_enabled());
+  auto mesh = specfem::io::read_3d_mesh(database_filename,
+                                        setup.is_attenuation_enabled());
   auto mesh_read_time = std::chrono::system_clock::now() - mesh_start_time;
+
+  if (setup.is_attenuation_enabled()) {
+    auto f0 = setup.get_attenuation_reference_frequency();
+    auto band = setup.get_attenuation_band();
+    mesh.attenuation = {
+      true, f0, band,
+      specfem::attenuation::compute_tau_sigma<specfem::constants::N_SLS>(band)
+    };
+    mesh.materials.apply_attenuation(mesh.attenuation);
+  }
   specfem::Logger::info("Time to read mesh: " +
                         std::to_string(mesh_read_time.count()) + " seconds");
   // --------------------------------------------------------------
@@ -98,9 +110,7 @@ void program_3d(
       mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
       setup.get_t0(), dt, nsteps, max_seismogram_time_step,
       nstep_between_samples, setup.get_simulation_type(),
-      setup.allocate_boundary_values(), setup.instantiate_property_reader(),
-      setup.get_attenuation_reference_frequency(),
-      setup.get_attenuation_band());
+      setup.allocate_boundary_values(), setup.instantiate_property_reader());
 
   specfem::Logger::info(assembly.print());
 

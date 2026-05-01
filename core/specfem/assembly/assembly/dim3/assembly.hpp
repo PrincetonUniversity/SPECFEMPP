@@ -174,9 +174,7 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
       const int nsteps_between_samples,
       const specfem::simulation::type simulation,
       const bool allocate_boundary_values,
-      const std::shared_ptr<specfem::io::reader> &property_reader,
-      const specfem::units::Hertz &attenuation_reference_frequency,
-      const specfem::utilities::Band<specfem::units::Hertz> &attenuation_band);
+      const std::shared_ptr<specfem::io::reader> &property_reader);
 
   assembly() = default;
 
