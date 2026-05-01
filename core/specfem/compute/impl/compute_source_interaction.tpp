@@ -95,10 +95,6 @@ void compute_source_interaction_core(
         auto acceleration = specfem::medium_physics::compute_source_contribution(
             point_source, point_property);
 
-        if (boundary_tag == none) {
-          specfem::boundary::apply_boundary_conditions(point_boundary, acceleration);
-        }
-
         specfem::assembly::atomic_add_on_device(mapped_index, field, acceleration);
       });
 

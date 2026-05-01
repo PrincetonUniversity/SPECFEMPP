@@ -223,15 +223,24 @@ public:
   }
 
   /**
-   * @brief Get the reference frequency for attenuation
-   *
-   * @return specfem::units::Hertz reference frequency for attenuation (0 Hz if
-   * attenuation is disabled)
+   * @brief Whether reference frequency was explicitly set in the attenuation
+   * configuration (vs. being read from the mesh database)
    */
-  specfem::units::Hertz get_attenuation_reference_frequency() const {
-    if (this->attenuation)
+  bool has_attenuation_reference_frequency() const {
+    return this->attenuation && this->attenuation->has_reference_frequency();
+  }
+
+  /**
+   * @brief Get the reference frequency for attenuation, if set in the config.
+   *
+   * @return std::optional<specfem::units::Hertz> reference frequency, or
+   * std::nullopt if attenuation is disabled or f0 was not set in the YAML
+   */
+  std::optional<specfem::units::Hertz>
+  get_attenuation_reference_frequency() const {
+    if (this->attenuation && this->attenuation->has_reference_frequency())
       return this->attenuation->get_reference_frequency();
-    return specfem::units::Hertz(0.0);
+    return std::nullopt;
   };
 
   /**

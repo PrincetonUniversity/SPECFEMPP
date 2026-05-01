@@ -37,9 +37,9 @@ template <> Assembly<specfem::element::dimension_tag::dim2>::Assembly() {
 
     const auto elastic_wave = Test.get_elastic_wave();
     const auto electromagnetic_wave = Test.get_electromagnetic_wave();
-    auto mesh = specfem::io::read_2d_mesh(database_file, elastic_wave,
-                                          electromagnetic_wave,
-                                          Test.is_attenuation_enabled());
+    auto mesh = specfem::io::read_2d_mesh(
+        database_file, elastic_wave, electromagnetic_wave,
+        Test.is_attenuation_enabled(), std::nullopt, {});
 
     this->Meshes.push_back(mesh);
     this->suffixes.push_back(Test.suffix);
@@ -83,8 +83,8 @@ template <> Assembly<specfem::element::dimension_tag::dim3>::Assembly() {
         Test.get_databases();
 
     // For 3D, we need different mesh and source reading functions
-    auto mesh = specfem::io::read_3d_mesh(mesh_database_file,
-                                          Test.is_attenuation_enabled());
+    auto mesh = specfem::io::read_3d_mesh(
+        mesh_database_file, Test.is_attenuation_enabled(), std::nullopt, {});
 
     this->Meshes.push_back(mesh);
     this->suffixes.push_back(Test.suffix);

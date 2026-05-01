@@ -1,7 +1,5 @@
 #include "../../../SPECFEM_Environment.hpp"
 #include "specfem/assembly/assembly.hpp"
-#include "specfem/attenuation.hpp"
-#include "specfem/constants.hpp"
 #include "specfem/io.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/mesh.hpp"
@@ -118,18 +116,10 @@ TEST_P(Newmark, 3D) {
   const auto quadratures = setup.instantiate_quadrature();
 
   // Read mesh generated MESHFEM
-  auto mesh = specfem::io::read_3d_mesh(database_filename,
-                                        setup.is_attenuation_enabled());
-
-  if (setup.is_attenuation_enabled()) {
-    auto f0 = setup.get_attenuation_reference_frequency();
-    auto band = setup.get_attenuation_band();
-    mesh.attenuation = {
-      true, f0, band,
-      specfem::attenuation::compute_tau_sigma<specfem::constants::N_SLS>(band)
-    };
-    mesh.materials.apply_attenuation(mesh.attenuation);
-  }
+  auto mesh = specfem::io::read_3d_mesh(
+      database_filename, setup.is_attenuation_enabled(),
+      setup.get_attenuation_reference_frequency(),
+      setup.get_attenuation_band());
   const type_real dt = setup.get_dt();
   const int nsteps = setup.get_nsteps();
 

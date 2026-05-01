@@ -28,7 +28,8 @@ MESH::MESH() {
     const auto electromagnetic_wave = Test.get_electromagnetic_wave();
     specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
         database_file, elastic_wave, electromagnetic_wave,
-        Test.is_attenuation_enabled());
+        Test.is_attenuation_enabled(), Test.get_attenuation_f0(),
+        Test.get_attenuation_band());
 
     meshes.push_back(mesh);
   }

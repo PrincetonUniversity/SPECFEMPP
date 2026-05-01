@@ -39,7 +39,7 @@ TEST(AdjacencyGraphRegularMesh, CheckConnections) {
   auto mesh =
       specfem::io::read_2d_mesh(mesh_file, specfem::enums::elastic_wave::psv,
                                 specfem::enums::electromagnetic_wave::te,
-                                /*attenuation=*/false);
+                                /*attenuation=*/false, std::nullopt, {});
 
   const auto &adjacency_graph = mesh.adjacency_graph;
   const auto g = adjacency_graph.local_connections();

@@ -6,6 +6,9 @@
 #include "specfem/source.hpp"
 
 #include "specfem/setup.hpp"
+#include "specfem/units.hpp"
+#include "specfem/utilities/band.hpp"
+#include <optional>
 #include <yaml-cpp/yaml.h>
 
 // IO Modules
@@ -63,7 +66,9 @@ specfem::mesh::mesh<specfem::element::dimension_tag::dim2>
 read_2d_mesh(const std::string &filename,
              const specfem::enums::elastic_wave wave,
              const specfem::enums::electromagnetic_wave electromagnetic_wave,
-             const bool attenuation_enabled);
+             const bool attenuation_enabled,
+             const std::optional<specfem::units::Hertz> &f0,
+             const specfem::utilities::Band<specfem::units::Hertz> &band);
 
 /**
  * @brief Construct a 3D mesh object from MESHFEM3D Fortran binary database file
@@ -76,11 +81,14 @@ read_2d_mesh(const std::string &filename,
  * // Read 3D mesh from MESHFEM3D database file
  * auto mesh = specfem::io::read_3d_mesh(
  *      "DATABASES_MPI",
- *      false); // attenuation disabled
+ *      false,
+ *      std::nullopt, {}); // attenuation disabled
  * @endcode
  */
 specfem::mesh::mesh<specfem::element::dimension_tag::dim3>
-read_3d_mesh(const std::string &database_file, const bool attenuation_enabled);
+read_3d_mesh(const std::string &database_file, const bool attenuation_enabled,
+             const std::optional<specfem::units::Hertz> &f0,
+             const specfem::utilities::Band<specfem::units::Hertz> &band);
 
 /**
  * @brief Read station file
