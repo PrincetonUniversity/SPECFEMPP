@@ -111,6 +111,20 @@ edges_of_corner(const specfem::mesh_entity::dim3::type &corner);
 const std::list<specfem::mesh_entity::dim3::type>
 corners_of_face(const specfem::mesh_entity::dim3::type &face);
 
+/**
+ * @brief Get the two endpoint corners of an edge.
+ *
+ * Returns the two corners at each end of the edge, ordered consistently so
+ * that index 0 is the "start" and index 1 is the "end". This ordering is used
+ * to compute the reflection flag for edge MPI connections.
+ *
+ * @param edge Edge entity type
+ * @return Array of two corner types [start, end]
+ * @throws std::runtime_error if invalid edge type
+ */
+std::array<specfem::mesh_entity::dim3::type, 2>
+corners_of_edge(const specfem::mesh_entity::dim3::type &edge);
+
 } // namespace dim3
 
 /**

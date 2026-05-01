@@ -51,6 +51,13 @@ public:
   CoordViewType coord;               ///< Device coordinates
   CoordViewType::HostMirror h_coord; ///< Host coordinates
 
+  type_real xmin; ///< Minimum x coordinate (for tolerance calculations)
+  type_real xmax; ///< Maximum x coordinate (for tolerance calculations)
+  type_real ymin; ///< Minimum y coordinate (for tolerance calculations)
+  type_real ymax; ///< Maximum y coordinate (for tolerance calculations)
+  type_real zmin; ///< Minimum z coordinate (for tolerance calculations)
+  type_real zmax; ///< Maximum z coordinate (for tolerance calculations)
+
   int nspec; ///< Number of spectral elements
   int ngllz; ///< Number of GLL points in z dimension
   int nglly; ///< Number of GLL points in y dimension

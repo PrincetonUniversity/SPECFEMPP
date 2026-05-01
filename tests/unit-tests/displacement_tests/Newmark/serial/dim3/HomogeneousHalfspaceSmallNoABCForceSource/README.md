@@ -57,10 +57,10 @@ mkdir -p OUTPUT_FILES/DATABASES_MPI
 xmeshfem3D -p DATA/meshfem3D_files/Mesh_Par_file
 ```
 
-Which should create `OUTPUT_FILES/DATABASES_MPI/proc000000_Database`.
+Which should create `OUTPUT_FILES/DATABASES_MPI/Database`.
 
-Finally, move `proc000000_Database` to the test directory.
+Finally, move `Database` to the test directory.
 
 ```bash
-cp OUTPUT_FILES/DATABASES_MPI/proc000000_Database ../../mesh_database.bin
+cp OUTPUT_FILES/DATABASES_MPI/Database ../../mesh_database.bin
 ```
