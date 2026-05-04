@@ -4,14 +4,34 @@
 #include "specfem/element_coupling.hpp"
 #include "specfem/quadrature/quadrature.hpp"
 
+#include <vector>
+
 namespace specfem::element_coupling {
 
+/**
+ * @brief Defines the (codimension-1) mesh of the interface for integration.
+ *
+ * The interfacial integrals are computed through composite quadrature. The
+ * composite components are specified by a mesh, constructed according to one of
+ * these rules.
+ */
+enum class interfacial_meshing_type {
+  intersections, ///< integrals defined on intersections.
+  acoustic_host, ///< integrals defined by element faces on acoustic side.
+  elastic_host,  ///< integrals defined by element faces on elastic side.
+  self_host      ///< integrals defined by element faces on self side.
+};
 struct flux_scheme_configuration {
+private:
+  // ====== acoustic-elastic ======
   specfem::element_coupling::flux_scheme_tag flux_scheme_tag;
+  specfem::element_coupling::interfacial_meshing_type interfacial_meshing_type;
+  specfem::quadrature::quadrature interfacial_quadrature;
+  // ==== end acoustic-elastic ====
+
   std::vector<type_real> scheme_parameters;
 
-  specfem::quadrature::quadrature interfacial_quadrature;
-
+public:
   flux_scheme_configuration()
       : flux_scheme_tag(specfem::element_coupling::flux_scheme_tag::natural) {}
 
@@ -28,6 +48,14 @@ struct flux_scheme_configuration {
   }
 
   /**
+   * @brief Sets the flux scheme tag for the acoustic-elastic interface.
+   */
+  void set_flux_scheme_tag(
+      specfem::element_coupling::flux_scheme_tag flux_scheme_tag) {
+    this->flux_scheme_tag = flux_scheme_tag;
+  }
+
+  /**
    * @brief Get the quadrature object corresponding to interfacial integration.
    *
    * @return specfem::quadrature::quadrature the quadrature object for the
@@ -35,6 +63,35 @@ struct flux_scheme_configuration {
    */
   specfem::quadrature::quadrature get_interfacial_quadrature() const {
     return interfacial_quadrature;
+  }
+  /**
+   * @brief Sets the quadrature object corresponding to interfacial integration.
+   *
+   */
+  void set_interfacial_quadrature(
+      specfem::quadrature::quadrature interfacial_quadrature) {
+    this->interfacial_quadrature = interfacial_quadrature;
+  }
+
+  /**
+   * @brief Get the interfacial meshing type for the acoustic-elastic interface.
+   *
+   * @return specfem::element_coupling::interfacial_meshing_type the meshing
+   * type
+   */
+  specfem::element_coupling::interfacial_meshing_type
+  get_interfacial_meshing_type() const {
+    return interfacial_meshing_type;
+  }
+  /**
+   * @brief Set the interfacial meshing type for the acoustic-elastic interface
+   *
+   * @param interfacial_meshing_type the value to set to
+   */
+  void set_interfacial_meshing_type(
+      specfem::element_coupling::interfacial_meshing_type
+          interfacial_meshing_type) {
+    this->interfacial_meshing_type = interfacial_meshing_type;
   }
 };
 } // namespace specfem::element_coupling
