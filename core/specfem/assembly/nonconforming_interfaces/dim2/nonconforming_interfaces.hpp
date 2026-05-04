@@ -4,6 +4,7 @@
 #include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/element_coupling/flux_scheme_configuration.hpp"
 #include "specfem/element_coupling/tags.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros/tag_dispatch.hpp"
@@ -54,7 +55,9 @@ public:
       const int ngllz, const int ngllx,
       const specfem::assembly::element_intersections<dimension_tag>
           &element_intersections,
-      const specfem::assembly::mesh<dimension_tag> &mesh);
+      const specfem::assembly::mesh<dimension_tag> &mesh,
+      const specfem::element_coupling::flux_scheme_configuration
+          &flux_scheme_config = {});
 
   nonconforming_interfaces() = default;
 

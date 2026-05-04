@@ -21,24 +21,22 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
         const int ngllz, const int ngllx,
         const specfem::assembly::element_intersections<
             specfem::element::dimension_tag::dim2> &element_intersections,
-        const specfem::assembly::mesh<dimension_tag> &mesh) {
+        const specfem::assembly::mesh<dimension_tag> &mesh,
+        const specfem::element_coupling::flux_scheme_configuration
+            &flux_scheme_config) {
+  const auto &interfacial_quadrature_rule =
+      flux_scheme_config.get_interfacial_quadrature();
+  const auto &interface_knots = interfacial_quadrature_rule.get_hxi();
+  const auto &interface_weights = interfacial_quadrature_rule.get_hw();
+  const auto &interface_deriv = interfacial_quadrature_rule.get_hhprime();
 
-  // TODO: make this a parameter for now, use same gll quadrature
-  Kokkos::View<type_real *, Kokkos::HostSpace> interface_quadrature(
-      "interface_quadrature", ngllx);
-  Kokkos::View<type_real *, Kokkos::HostSpace> interface_weights(
-      "interface_weights", ngllx);
-  Kokkos::View<type_real **, Kokkos::HostSpace> interface_deriv(
-      "interface_deriv", ngllx, ngllx);
-  for (int i = 0; i < mesh.h_xi.extent(0); i++) {
-    interface_quadrature(i) = mesh.h_xi(i);
-    interface_weights(i) = mesh.h_weights(i);
-    for (int j = 0; j < mesh.h_xi.extent(0); j++) {
-      interface_deriv(i, j) = mesh.h_hprime(i, j);
-    }
-  }
-
-  const int nquad_intersection = interface_quadrature.extent(0);
+  // TODO(nquad_intersection::runtime_vs_template): I forsee a bug where this
+  // value, below, is set to something smaller than the kernel template
+  // parameter NQuadIntersection, and the values in the chunk_edge data
+  // container are not zero-padded. intersection/transfer View extents are set
+  // by the runtime value. Keep this in mind! (This TODO message is copy-pasted
+  // in other places -- remove all instances by TOOD(...) header when resolved)
+  const int nquad_intersection = interface_knots.extent(0);
 
   if (ngllz <= 0 || ngllx <= 0) {
     KOKKOS_ABORT_WITH_LOCATION("Invalid GLL grid size");
@@ -110,7 +108,7 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
     auto transfer_subview_other =
         Kokkos::subview(h_transfer_function_other, i, Kokkos::ALL, Kokkos::ALL);
     specfem::assembly::nonconforming_interfaces_impl::set_transfer_functions(
-        icoorg, jcoorg, iedge_type, jedge_type, interface_quadrature, mesh.h_xi,
+        icoorg, jcoorg, iedge_type, jedge_type, interface_knots, mesh.h_xi,
         transfer_subview, transfer_subview_other);
     // compute normal on edge
     const int npoints = element.number_of_points_on_orientation(iedge_type);
