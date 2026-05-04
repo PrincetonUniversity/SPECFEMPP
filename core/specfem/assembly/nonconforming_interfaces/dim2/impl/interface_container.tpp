@@ -24,11 +24,34 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
         const specfem::assembly::mesh<dimension_tag> &mesh,
         const specfem::element_coupling::flux_scheme_configuration
             &flux_scheme_config) {
-  const auto &interfacial_quadrature_rule =
-      flux_scheme_config.get_interfacial_quadrature();
-  const auto &interface_knots = interfacial_quadrature_rule.get_hxi();
-  const auto &interface_weights = interfacial_quadrature_rule.get_hw();
-  const auto &interface_deriv = interfacial_quadrature_rule.get_hhprime();
+
+  Kokkos::View<type_real *, Kokkos::HostSpace> interface_knots;
+  Kokkos::View<type_real *, Kokkos::HostSpace> interface_weights;
+  Kokkos::View<type_real **, Kokkos::HostSpace> interface_deriv;
+
+  if (flux_scheme_config.was_interfacial_quadrature_set()) {
+    const auto &interfacial_quadrature_rule =
+        flux_scheme_config.get_interfacial_quadrature();
+    interface_knots = interfacial_quadrature_rule.get_hxi();
+    interface_weights = interfacial_quadrature_rule.get_hw();
+    interface_deriv = interfacial_quadrature_rule.get_hhprime();
+  } else {
+    // if flux_scheme_config does not give a quadrature rule (e.g. default arg),
+    // copy mesh quadrature
+    interface_knots =
+        Kokkos::View<type_real *, Kokkos::HostSpace>("interface_knots", ngllx);
+    interface_weights = Kokkos::View<type_real *, Kokkos::HostSpace>(
+        "interface_weights", ngllx);
+    interface_deriv = Kokkos::View<type_real **, Kokkos::HostSpace>(
+        "interface_deriv", ngllx, ngllx);
+    for (int i = 0; i < mesh.h_xi.extent(0); i++) {
+      interface_knots(i) = mesh.h_xi(i);
+      interface_weights(i) = mesh.h_weights(i);
+      for (int j = 0; j < mesh.h_xi.extent(0); j++) {
+        interface_deriv(i, j) = mesh.h_hprime(i, j);
+      }
+    }
+  }
 
   // TODO(nquad_intersection::runtime_vs_template): I forsee a bug where this
   // value, below, is set to something smaller than the kernel template

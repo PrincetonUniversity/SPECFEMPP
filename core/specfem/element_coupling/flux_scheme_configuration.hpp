@@ -27,13 +27,20 @@ private:
   specfem::element_coupling::flux_scheme_tag flux_scheme_tag;
   specfem::element_coupling::interfacial_meshing_type interfacial_meshing_type;
   specfem::quadrature::quadrature interfacial_quadrature;
+  bool was_quadrature_set;
   // ==== end acoustic-elastic ====
 
   std::vector<type_real> scheme_parameters;
 
 public:
   flux_scheme_configuration()
-      : flux_scheme_tag(specfem::element_coupling::flux_scheme_tag::natural) {}
+      : flux_scheme_tag(specfem::element_coupling::flux_scheme_tag::natural),
+        was_quadrature_set(false),
+        interfacial_meshing_type(
+            specfem::
+                element_coupling:: // this may differ from defaults in
+                                   // core/specfem/runtime_configuration/flux_schemes.hpp
+            interfacial_meshing_type::intersections) {}
 
   /**
    * @brief Get the flux scheme tag for a given intersection. At the moment, the
@@ -64,6 +71,13 @@ public:
   specfem::quadrature::quadrature get_interfacial_quadrature() const {
     return interfacial_quadrature;
   }
+
+  /**
+   * @brief Returns whether or not the interfacial_quadrature object was set. If
+   * False, quadrature Views may not be initialized.
+   */
+  bool was_interfacial_quadrature_set() const { return was_quadrature_set; }
+
   /**
    * @brief Sets the quadrature object corresponding to interfacial integration.
    *
@@ -71,6 +85,7 @@ public:
   void set_interfacial_quadrature(
       specfem::quadrature::quadrature interfacial_quadrature) {
     this->interfacial_quadrature = interfacial_quadrature;
+    was_quadrature_set = true;
   }
 
   /**
