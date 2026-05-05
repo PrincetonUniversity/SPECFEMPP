@@ -4,7 +4,9 @@
 #include "specfem/enums.hpp"
 #include "specfem/setup.hpp"
 #include "specfem/utilities/errors.hpp"
+#include <array>
 #include <iostream>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -87,8 +89,8 @@ public:
                         const std::string &station_name,
                         const std::string &location_code,
                         specfem::enums::wavefield seismogram_type,
-                        const std::vector<char> &elastic_components = {
-                            'X', 'Y', 'Z' });
+                        std::span<const char> elastic_components = {
+                            kDefaultElasticComponents });
 
   /**
    * @brief Generate output filenames for one station/seismogram-type pair.
@@ -107,22 +109,21 @@ public:
   std::vector<std::string>
   get_station_filenames(const StationInfo &station_info,
                         specfem::enums::wavefield seismogram_type) {
-    std::string location_code;
-    std::vector<char> component_letters;
     if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
-      location_code = "S2";
-      component_letters = { 'X', 'Z' };
+      static constexpr std::array<char, 2> kLetters = { 'X', 'Z' };
+      return get_station_filenames(station_info.network_name,
+                                   station_info.station_name, "S2",
+                                   seismogram_type,
+                                   std::span<const char>{ kLetters });
     } else if constexpr (DimensionTag ==
                          specfem::element::dimension_tag::dim3) {
-      location_code = "S3";
-      component_letters = { 'X', 'Y', 'Z' };
+      return get_station_filenames(station_info.network_name,
+                                   station_info.station_name, "S3",
+                                   seismogram_type);
     } else {
       static_assert(specfem::utilities::always_false<DimensionTag>,
                     "Unsupported dimension tag for seismogram location code.");
     }
-    return get_station_filenames(station_info.network_name,
-                                 station_info.station_name, location_code,
-                                 seismogram_type, component_letters);
   }
 
   /**
@@ -192,6 +193,10 @@ public:
   std::string get_file_extension(specfem::enums::wavefield seismogram_type);
 
 private:
+  /// Default 3-D elastic component letters.
+  static constexpr std::array<char, 3> kDefaultElasticComponents = { 'X', 'Y',
+                                                                      'Z' };
+
   const std::string band_code; ///< SEED band code (L, M, B, H, C, or F)
                                ///< determined from timestep
   type_real timestep;          ///< Simulation time step in seconds

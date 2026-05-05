@@ -1,6 +1,7 @@
 #include "specfem/io/seismogram/impl/channel_generator.hpp"
 #include "specfem/enums.hpp"
 #include <iostream>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -53,7 +54,7 @@ specfem::io::impl::ChannelGenerator::get_station_filenames(
     const std::string &network_name, const std::string &station_name,
     const std::string &location_code,
     const specfem::enums::wavefield seismogram_type,
-    const std::vector<char> &elastic_components) {
+    std::span<const char> elastic_components) {
 
   std::string channel_code;
   std::vector<std::string> filenames;

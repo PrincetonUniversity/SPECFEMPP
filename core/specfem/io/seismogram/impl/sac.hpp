@@ -66,7 +66,8 @@ inline int32_t get_idep_for_wavefield(specfem::enums::wavefield type) {
 // network.station.location.channel.extension (returns empty string on parse
 // failure).
 // ---------------------------------------------------------------------------
-inline std::string extract_channel_from_filename(const std::string &filename) {
+inline std::string
+extract_channel_code_from_filename(const std::string &filename) {
   const auto ext_dot = filename.rfind('.');
   if (ext_dot == std::string::npos || ext_dot == 0)
     return "";
@@ -282,7 +283,7 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
           // Extract channel code and orientation directly from the filename
           // to avoid hard-coded letter indices (correct for both 2-D and 3-D).
           const std::string channel_code =
-              extract_channel_from_filename(base);
+              extract_channel_code_from_filename(base);
           const Orientation orientation = orientation_for_channel(channel_code);
 
           write_sac_binary(sac_path, station_info.station_name,
