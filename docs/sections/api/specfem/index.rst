@@ -42,6 +42,7 @@
     source_time_functions/index
     sources/index
     shape_function/index
+    tag_dispatch/index
     timescheme/index
     units/index
     utilities/index

@@ -1,7 +1,10 @@
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/io.hpp"
+#include "specfem/macros/tag_dispatch.hpp"
 #include "specfem/mesh.hpp"
+#include "specfem/mpi.hpp"
+#include "specfem/tag_dispatch/for_each.hpp"
 
 specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
     const specfem::mesh::mesh<dimension_tag> &mesh,
@@ -34,19 +37,18 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
                  mesh.control_nodes,
                  quadratures };
 
-  this->element_types = { nspec, ngllz, nglly, ngllx, this->mesh, mesh.tags };
+  this->element_types = { nspec, this->mesh.element_grid, this->mesh,
+                          mesh.tags };
 
   this->element_intersections = { ngllz, nglly, ngllx, this->mesh,
                                   this->element_types };
 
   this->jacobian_matrix = { this->mesh };
 
-  this->properties = { nspec, ngllz,          nglly,
-                       ngllx, mesh.materials, this->element_types };
+  this->properties = { this->element_types, this->mesh, mesh.materials,
+                       property_reader != nullptr };
 
-  this->kernels = { this->mesh.nspec, this->mesh.element_grid.ngllz,
-                    this->mesh.element_grid.nglly,
-                    this->mesh.element_grid.ngllx, this->element_types };
+  this->kernels = { this->element_types };
 
   this->sources = {
     sources, this->mesh, this->jacobian_matrix, this->element_types,
@@ -95,11 +97,12 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::print()
 
   int total_elements = 0;
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN)), {
+  specfem::tag_dispatch::for_each(
+      DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic, elastic_spin),
+      [&]<typename TagsType>() {
+        constexpr auto medium_tag = TagsType::medium_tag;
         // Getting the number of elements per medium
-        int n_elements =
-            this->element_types.get_number_of_elements(_medium_tag_);
+        int n_elements = this->element_types.get_number_of_elements(medium_tag);
 
         // Printing the number of elements if more than 0
         if (n_elements > 0) {
@@ -107,10 +110,10 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::print()
           total_elements += n_elements;
 
           message << "   Total number of elements of type "
-                  << specfem::element::to_string(_medium_tag_) << " : "
+                  << specfem::element::to_string(medium_tag) << " : "
                   << n_elements << "\n";
         };
-      })
+      });
 
   if (total_elements == mesh.nspec) {
     message << "  All elements accounted for.\n";

@@ -3,6 +3,8 @@
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/element.hpp"
 #include "specfem/io/property/reader.hpp"
+#include "specfem/macros/tag_dispatch.hpp"
+#include "specfem/tag_dispatch.hpp"
 
 #include "specfem/mpi.hpp"
 #include "specfem/point.hpp"
@@ -30,23 +32,29 @@ void specfem::io::property_reader<InputLibrary>::read(
 
   typename InputLibrary::File file(base_folder + "/" + ns);
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
-      {
+  specfem::tag_dispatch::for_each(
+      DIMENSION_SET(dim2) *
+          MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
+                     elastic_psv_t) *
+          PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
+          ATTENUATION_SET(none),
+      [&]<typename TagsType>() {
+        constexpr auto medium_tag = TagsType::medium_tag;
+        constexpr auto property_tag = TagsType::property_tag;
+        constexpr auto attenuation_tag = TagsType::attenuation_tag;
+
         const std::string name =
             std::string("/") +
-            specfem::element::to_string(_medium_tag_, _property_tag_);
+            specfem::element::to_string(medium_tag, property_tag, attenuation_tag);
         typename InputLibrary::Group group = file.openGroup(name);
+        // TODO ( Lucas : Attenuation update.) : need to update get_container
         const auto container =
-            properties.get_container<_medium_tag_, _property_tag_>();
+            properties.get_container<medium_tag, property_tag>();
         container.for_each_host_view(
-            [&](const auto view, const std::string name) {
-              group.openDataset(name, view).read();
+            [&](const auto view, const std::string view_name) {
+              group.openDataset(view_name, view).read();
             });
-      })
+      });
 
   std::cout << "Properties read from " << base_folder << "/" << ns
             << std::endl;

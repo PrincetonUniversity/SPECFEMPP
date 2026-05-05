@@ -170,8 +170,6 @@ KOKKOS_FORCEINLINE_FUNCTION auto element_gradient(
  *
  * @tparam ChunkIndexType  Chunk index type
  * @tparam VectorFieldType Field view type (Chunk view)
- * @tparam DimTag          Dimension tag (dim2 or dim3), deduced from
- *                         the jacobian_matrix argument
  * @tparam QuadratureType  Quadrature view type
  * @tparam CallbackFunctor Callback functor type
  * @param chunk_index      Chunk index specifying the elements within this chunk
@@ -244,8 +242,6 @@ gradient(const ChunkIndexType &chunk_index,
  *
  * @tparam ChunkIndexType  Chunk index type
  * @tparam VectorFieldType Field view type (Chunk view)
- * @tparam DimTag          Dimension tag (dim2 or dim3), deduced from
- *                         the jacobian_matrix argument
  * @tparam QuadratureType  Quadrature view type
  * @tparam CallbackFunctor Callback functor type
  * @param chunk_index      Chunk index specifying the elements within this chunk
@@ -328,8 +324,6 @@ gradient(const ChunkIndexType &chunk_index,
  *
  * @tparam ChunkIndexType  Chunk index type
  * @tparam VectorFieldType   Chunk element field type held as .f
- * @tparam DimTag          Dimension tag (dim2 or dim3), deduced from
- *                         the jacobian_matrix argument
  * @tparam QuadratureType  Quadrature view type
  * @tparam CallbackFunctor Callback functor receiving
  *         (iterator_index, GradientPack<TF>)
@@ -394,8 +388,6 @@ gradient(const ChunkIndexType &chunk_index,
  * @tparam ChunkIndexType   Chunk index type
  * @tparam VectorFieldTypeF Chunk element field type held as .f
  * @tparam VectorFieldTypeG Chunk element field type held as .g
- * @tparam DimTag           Dimension tag (dim2 or dim3), deduced from
- *                          the jacobian_matrix argument
  * @tparam QuadratureType   Quadrature view type
  * @tparam CallbackFunctor  Callback functor receiving
  *         (iterator_index, GradientPack<TF, TG>)

@@ -291,7 +291,7 @@ public:
     os << "{";
     for (std::size_t i = 0; i < components; ++i) {
       os << this->m_data(i);
-      if (i < components - 1) {
+      if (i + 1 < components) {
         os << ",\n";
       }
     }

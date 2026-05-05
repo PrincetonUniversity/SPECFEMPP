@@ -1,0 +1,46 @@
+# This script is configured at CMake configure time (paths and semver baked in)
+# and executed at build time via `cmake -P` to keep version.hpp in sync with
+# the current git HEAD without requiring a full reconfigure.
+
+set(GIT_EXECUTABLE   "@GIT_EXECUTABLE@")
+set(CMAKE_SOURCE_DIR "@CMAKE_SOURCE_DIR@")
+set(CMAKE_BINARY_DIR "@CMAKE_BINARY_DIR@")
+set(VERSION_HPP_IN   "@CMAKE_SOURCE_DIR@/core/specfem/version.hpp.in")
+set(VERSION_HPP_OUT  "@CMAKE_BINARY_DIR@/include/specfem/version.hpp")
+
+# Semver baked in at configure time from the git tag — stable between commits
+set(SPECFEM_VERSION_MAJOR "@SPECFEM_VERSION_MAJOR@")
+set(SPECFEM_VERSION_MINOR "@SPECFEM_VERSION_MINOR@")
+set(SPECFEM_VERSION_PATCH "@SPECFEM_VERSION_PATCH@")
+
+# Re-run git queries (hash, dirty, commits-since-tag) at build time
+include("@CMAKE_SOURCE_DIR@/cmake/extract_git_version.cmake")
+
+# Generate header to a temp file, copy only if changed
+# (prevents unnecessary rebuilds of targets that depend on version.hpp)
+#
+# We use file(READ) + string(CONFIGURE) + file(WRITE) instead of
+# configure_file() so that no cmake state files are written and the build
+# system regeneration rules are never triggered by this script.
+file(READ "${VERSION_HPP_IN}" _version_hpp_content)
+string(CONFIGURE "${_version_hpp_content}" _version_hpp_content @ONLY)
+
+set(_tmp "${VERSION_HPP_OUT}.tmp")
+file(WRITE "${_tmp}" "${_version_hpp_content}")
+
+execute_process(
+  COMMAND "${CMAKE_COMMAND}" -E compare_files "${_tmp}" "${VERSION_HPP_OUT}"
+  RESULT_VARIABLE _files_differ
+  ERROR_QUIET
+)
+
+if(_files_differ)
+  execute_process(
+    COMMAND "${CMAKE_COMMAND}" -E copy "${_tmp}" "${VERSION_HPP_OUT}"
+  )
+  message(STATUS "version.hpp updated (git hash: ${SPECFEM_GIT_HASH})")
+endif()
+
+execute_process(
+  COMMAND "${CMAKE_COMMAND}" -E remove "${_tmp}"
+)
