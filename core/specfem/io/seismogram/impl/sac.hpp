@@ -45,10 +45,55 @@ constexpr Orientation kOrientationUndef = { UNDEF_F, UNDEF_F };
 // ---------------------------------------------------------------------------
 // SAC IDEP code per wavefield type.
 // (6 = displacement/nm, 7 = velocity/nm·s⁻¹, 8 = acceleration/nm·s⁻²)
-// Defined as an array so helper can be constexpr without naming the enum type.
+// Using a function rather than an array to remain correct if the enum order
+// ever changes.
 // ---------------------------------------------------------------------------
-constexpr std::array<int32_t, 4> kIdepByWavefield = { 6, 7, 8, UNDEF_I };
-// displacement=0, velocity=1, acceleration=2, pressure=3 (matches enums order)
+inline int32_t get_idep_for_wavefield(specfem::enums::wavefield type) {
+  switch (type) {
+  case specfem::enums::wavefield::displacement:
+    return 6;
+  case specfem::enums::wavefield::velocity:
+    return 7;
+  case specfem::enums::wavefield::acceleration:
+    return 8;
+  default:
+    return UNDEF_I;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Extract the SEED channel code from a base filename of the form
+// network.station.location.channel.extension (returns empty string on parse
+// failure).
+// ---------------------------------------------------------------------------
+inline std::string extract_channel_from_filename(const std::string &filename) {
+  const auto ext_dot = filename.rfind('.');
+  if (ext_dot == std::string::npos || ext_dot == 0)
+    return "";
+  const auto chan_dot = filename.rfind('.', ext_dot - 1);
+  if (chan_dot == std::string::npos)
+    return "";
+  return filename.substr(chan_dot + 1, ext_dot - chan_dot - 1);
+}
+
+// ---------------------------------------------------------------------------
+// Map the orientation letter (last character of the channel code) to a SAC
+// (CMPAZ, CMPINC) orientation.
+// ---------------------------------------------------------------------------
+inline Orientation orientation_for_channel(const std::string &channel_code) {
+  if (channel_code.empty())
+    return kOrientationUndef;
+  switch (channel_code.back()) {
+  case 'X':
+    return kComponentOrientations[0];
+  case 'Y':
+    return kComponentOrientations[1];
+  case 'Z':
+    return kComponentOrientations[2];
+  default:
+    return kOrientationUndef;
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Write a left-justified, space-padded string into a fixed-width SAC text slot.
@@ -191,14 +236,16 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
                 station_info, seismogram_type);
 
         // SAC IDEP: 6=displacement, 7=velocity, 8=acceleration, −12345=other
-        const int32_t idep =
-            kIdepByWavefield[std::min(static_cast<int>(seismogram_type), 3)];
-        const bool is_pressure =
-            (seismogram_type == specfem::enums::wavefield::pressure);
-        // ncomp is clamped to value.size() to stay in-bounds for 2-D receivers
-        // when the channel generator produces 3 filenames for elastic types.
+        const int32_t idep = get_idep_for_wavefield(seismogram_type);
+
+        // The channel generator is now dimension-aware and returns the same
+        // number of filenames as value.size() for elastic types (2 for dim2,
+        // 3 for dim3) and 1 for pressure.
         int ncomp = -1;
-        float b = UNDEF_F, delta = UNDEF_F;
+        float b = UNDEF_F;
+        // Pre-seed delta from the configured timestep so that single-sample
+        // seismograms still get a valid DELTA header value.
+        float delta = static_cast<float>(gen.get_timestep());
         std::vector<std::vector<float> > samples;
 
         for (auto [time, value] : receivers.get_seismogram(
@@ -208,12 +255,11 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
 
           if (ncomp < 0) {
             // First sample: fix component count and begin time.
-            ncomp = std::min(static_cast<int>(base_filenames.size()),
-                             static_cast<int>(value.size()));
+            ncomp = static_cast<int>(base_filenames.size());
             samples.resize(ncomp);
             b = t;
           } else if (samples[0].size() == 1) {
-            // Second sample: derive the effective sample interval.
+            // Second sample: derive the effective sample interval from data.
             delta = t - b;
           }
 
@@ -225,8 +271,6 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
           continue;
 
         // ── Write one SAC file per component ────────────────────────────────
-        constexpr std::array<char, 3> kLetters = { 'X', 'Y', 'Z' };
-
         for (int icomp = 0; icomp < ncomp; ++icomp) {
           // Replace the last extension in the base filename with ".sac".
           const auto &base = base_filenames[icomp];
@@ -235,13 +279,11 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
               (dot == std::string::npos) ? base : base.substr(0, dot);
           const std::string sac_path = output_folder + "/" + stem + ".sac";
 
+          // Extract channel code and orientation directly from the filename
+          // to avoid hard-coded letter indices (correct for both 2-D and 3-D).
           const std::string channel_code =
-              is_pressure ? gen.get_channel_code('P')
-                          : gen.get_channel_code(kLetters[icomp % 3]);
-
-          const Orientation orientation =
-              is_pressure ? kOrientationUndef
-                          : kComponentOrientations[icomp % 3];
+              extract_channel_from_filename(base);
+          const Orientation orientation = orientation_for_channel(channel_code);
 
           write_sac_binary(sac_path, station_info.station_name,
                            station_info.network_name, location_code,

@@ -64,56 +64,38 @@ public:
   ChannelGenerator(const type_real timestep)
       : band_code(compute_band_code(timestep)), timestep(timestep) {}
 
-  // clang-format off
+  /**
+   * @brief Returns the simulation timestep (dt) in seconds.
+   * @return type_real Simulation time step used to construct this generator.
+   */
+  type_real get_timestep() const { return this->timestep; }
+
   /**
    * @brief Generates SEED-compliant seismogram filenames for a given station.
    *
-   * Creates standardized output filenames following the SEED naming convention:
-   * `<network>.<station>.<channel>.<extension>` where the channel code is
-   * automatically determined based on the simulation timestep and component orientation.
-   *
-   * For elastic media (displacement, velocity, acceleration):
-   * - Generates three-component seismograms with X, Y, Z components
-   * - TODO: Future support for other coordinate systems (NEZ, RTZ)
-   *
-   * For acoustic media (pressure):
-   * - Generates single-component seismogram with P component
-   *
-   * @param network_name SEED network code (e.g., "II", "IU", "SY")
-   * @param station_name SEED station code (e.g., "ANMO", "STA01")
-   * @param seismogram_type Wavefield type to output (displacement, velocity, acceleration, or pressure)
-   * @return std::vector<std::string> Vector containing 3 filenames for elastic media or 1 for acoustic media
-   *
-   * @throws std::runtime_error If seismogram_type is not supported
-   *
-   * @code
-   * // Example 1: Generate velocity seismogram filenames (100 Hz, band H)
-   * specfem::io::ChannelGenerator gen("OUTPUT_FILES", 0.01);
-   * auto files = gen.get_station_filenames("SY", "STA01", specfem::enums::wavefield::velocity);
-   * // Returns: ["OUTPUT_FILES/SY.STA01.HXX.semv",
-   * //           "OUTPUT_FILES/SY.STA01.HXY.semv",
-   * //           "OUTPUT_FILES/SY.STA01.HXZ.semv"]
-   *
-   * // Example 2: Generate pressure seismogram filename (acoustic)
-   * auto press_files = gen.get_station_filenames("AC", "HYD01", specfem::enums::wavefield::pressure);
-   * // Returns: ["OUTPUT_FILES/AC.HYD01.HXP.semp"]
-   * @endcode
-   *
-   * @see https://ds.iris.edu/ds/nodes/dmc/data/formats/seed-channel-naming/
+   * @param network_name    SEED network code.
+   * @param station_name    SEED station code.
+   * @param location_code   SEED location ID (e.g. "S2", "S3").
+   * @param seismogram_type Wavefield type to output.
+   * @param elastic_components Component letters for elastic seismograms.
+   *        Defaults to {'X','Y','Z'} for 3-D. Pass {'X','Z'} for 2-D.
+   *        Ignored for pressure seismograms (always single 'P' component).
+   * @return std::vector<std::string> Filenames, one per component.
    */
-  // clang-format on
   std::vector<std::string>
   get_station_filenames(const std::string &network_name,
                         const std::string &station_name,
                         const std::string &location_code,
-                        specfem::enums::wavefield seismogram_type);
+                        specfem::enums::wavefield seismogram_type,
+                        const std::vector<char> &elastic_components = {
+                            'X', 'Y', 'Z' });
 
   /**
    * @brief Generate output filenames for one station/seismogram-type pair.
    *
    * Overload that accepts a StationInfo object directly and derives the
-   * SEED location code from the simulation dimension ("S3" for 3D, "S2" for
-   * 2D).
+   * SEED location code and component letters from the simulation dimension
+   * ("S3"/{X,Y,Z} for 3-D, "S2"/{X,Z} for 2-D).
    *
    * @tparam DimensionTag Simulation dimension (dim2 or dim3).
    * @tparam StationInfo  Type with public network_name and station_name
@@ -126,18 +108,21 @@ public:
   get_station_filenames(const StationInfo &station_info,
                         specfem::enums::wavefield seismogram_type) {
     std::string location_code;
+    std::vector<char> component_letters;
     if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
       location_code = "S2";
+      component_letters = { 'X', 'Z' };
     } else if constexpr (DimensionTag ==
                          specfem::element::dimension_tag::dim3) {
       location_code = "S3";
+      component_letters = { 'X', 'Y', 'Z' };
     } else {
       static_assert(specfem::utilities::always_false<DimensionTag>,
                     "Unsupported dimension tag for seismogram location code.");
     }
     return get_station_filenames(station_info.network_name,
                                  station_info.station_name, location_code,
-                                 seismogram_type);
+                                 seismogram_type, component_letters);
   }
 
   /**
