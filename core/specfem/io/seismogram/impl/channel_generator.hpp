@@ -24,24 +24,25 @@ namespace specfem::io::impl {
  *
  * The class is used by the seismogram writer to ensure consistent naming across different
  * wavefield types (displacement, velocity, acceleration, pressure) and component orientations.
+ * Note: @c get_station_filenames() returns relative filenames; the caller is responsible for
+ * prepending the output directory when opening files.
  *
  * @see specfem::io::seismogram_writer
  * @see specfem::enums::wavefield
  *
  * @code
  * // Example: Create a channel generator for a 50 Hz simulation
- * std::string output_dir = "OUTPUT_FILES";
  * type_real dt = 0.02;  // 50 Hz sampling rate
- * specfem::io::ChannelGenerator generator(output_dir, dt);
+ * specfem::io::ChannelGenerator generator(dt);
  *
  * // Generate displacement seismogram filenames for a station
  * auto filenames = generator.get_station_filenames(
- *     "II", "ANMO", specfem::enums::wavefield::displacement);
+ *     "SY", "ANMO", "S3", specfem::enums::wavefield::displacement);
  *
- * // Result: filenames contains:
- * // "OUTPUT_FILES/II.ANMO.BXX.semd"
- * // "OUTPUT_FILES/II.ANMO.BXY.semd"
- * // "OUTPUT_FILES/II.ANMO.BXZ.semd"
+ * // Result: filenames contains relative names (caller prepends output directory):
+ * // "SY.ANMO.S3.BXX.semd"
+ * // "SY.ANMO.S3.BXY.semd"
+ * // "SY.ANMO.S3.BXZ.semd"
  *
  * // Get the band code
  * std::string band = generator.get_band_code();  // Returns "B" for dt=0.02s
@@ -52,8 +53,7 @@ class ChannelGenerator {
 
 public:
   /**
-   * @brief Constructs a ChannelGenerator with output directory and simulation
-   * timestep.
+   * @brief Constructs a ChannelGenerator for the given simulation timestep.
    *
    * Initializes the generator and automatically computes the SEED band code
    * based on the simulation sampling rate. The band code follows FDSN
@@ -166,7 +166,7 @@ public:
    * @return std::string Three-character SEED channel code (e.g., "BXZ", "HXN", "LXP")
    *
    * @code
-   * specfem::io::ChannelGenerator gen("OUTPUT_FILES", 0.05);  // dt=0.05s → Band B
+   * specfem::io::ChannelGenerator gen(0.05);  // dt=0.05s → Band B
    * std::string channel_z = gen.get_channel_code('Z');  // Returns "BXZ"
    * std::string channel_n = gen.get_channel_code('N');  // Returns "BXN"
    * @endcode
