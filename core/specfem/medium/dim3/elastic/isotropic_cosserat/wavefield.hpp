@@ -155,7 +155,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
           // rotation field and the curl of the displacement field.
           wavefield(ielement, index.iz, index.iy, index.ix, 0) =
               active_field(ielement, index.iz, index.iy, index.ix, 3) -
-              static_cast<type_real>(0.5) * du(2, 1) - du(1, 2);
+              static_cast<type_real>(0.5) * (du(2, 1) - du(1, 2));
           wavefield(ielement, index.iz, index.iy, index.ix, 1) =
               active_field(ielement, index.iz, index.iy, index.ix, 4) -
               static_cast<type_real>(0.5) * (du(0, 2) - du(2, 0));
