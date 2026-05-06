@@ -107,7 +107,7 @@ pipeline {
                                         module load ${GNU_COMPILER_MODULE}
                                         module load ${MPI_MODULE}
                                         cd /scratch/gpfs/TROMP/specfempp/jenkins/test_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
-                                        salloc -N 1 --ntasks-per-node=4 -t 00:30:00 --account rse ctest --output-on-failure -j 4 --no-tests=error
+                                        salloc -N 1 --ntasks-per-node=4 -t 00:30:00 --account rse ctest --output-on-failure --no-tests=error
                                     """
                                     echo ' Testing completed '
                                 }
