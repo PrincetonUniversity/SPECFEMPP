@@ -1,5 +1,3 @@
-#pragma once
-
 #include "message_tag.hpp"
 #include "specfem/logger.hpp"
 
@@ -8,7 +6,7 @@ namespace specfem {
 message_tag::message_tag(int max_messages)
     : connections_per_process(0), messages_per_connection(0),
       max_messages(max_messages), sender_rank(-1), receiver_rank(-1),
-      number_of_messages(0), initialized(false), is_pair_set(false) {}
+      initialized(false), is_pair_set(false) {}
 
 message_tag::message_tag(int max_messages, unsigned int nprocesses,
                          unsigned int connections_per_process,
@@ -17,9 +15,13 @@ message_tag::message_tag(int max_messages, unsigned int nprocesses,
       messages_per_connection(messages_per_connection),
       max_messages(max_messages), initialized(true), is_pair_set(false),
       sender_rank(-1), receiver_rank(-1) {
-  if (connections_per_process * messages_per_connection > max_messages) {
-    specfem::Logger::error(
-        "message_tag: Total number of messages per pair exceed max_messages");
+  if (nprocesses * connections_per_process * messages_per_connection >
+      static_cast<unsigned int>(max_messages)) {
+    specfem::Logger::error("message_tag: Total messages (" +
+                           std::to_string(nprocesses * connections_per_process *
+                                          messages_per_connection) +
+                           ") exceed max_messages (" +
+                           std::to_string(max_messages) + ")");
   }
 }
 

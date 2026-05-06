@@ -66,7 +66,7 @@ filter_indices_by_medium_tag(
 //
 // Uses modular arithmetic to stay within the MPI standard minimum tag
 // upper bound (MPI_TAG_UB >= 32767). Reserves 8 tag slots per rank-pair
-// for message-specific offsets (+0..+7):
+// for the handshake protocol (+0..+7):
 //   +0  metadata (nfaces, nedges, ncorners, ngll, nglob)
 //   +1  rotated face indices [nfaces][ngll][ngll]
 //   +2  face neighbor element indices [nfaces]
@@ -74,7 +74,11 @@ filter_indices_by_medium_tag(
 //   +4  edge neighbor element indices [nedges]
 //   +5  corner neighbor element indices [ncorners]
 //   +6  corner nglob indices [ncorners]
-//   +7  field data (pack/unpack send/receive)
+//   +7  (reserved, used only in mpi_buffer field-data exchange below)
+//
+// Field-data messages use a separate message_tag_generator instance initialized
+// with messages_per_connection=1 (only slot +0 used for field data
+// pack/unpack).
 // ---------------------------------------------------------------------------
 int specfem::assembly::mpi_impl::compute_message_tag_base(
     unsigned int sender_rank, unsigned int receiver_rank) {
@@ -1093,11 +1097,16 @@ specfem::assembly::mpi<specfem::element::dimension_tag::dim3>::mpi(
 
   specfem::tag_dispatch::for_each(
       medium_combinations, [&]<typename TagsType>() {
-        // Build helper: for a given field type, populate the corresponding map.
-        // Uses three separate passes over all neighbors so that ALL MPI_Irecv
-        // calls are posted before ANY MPI_Send, preventing deadlock under
-        // circular connectivity.
         auto build_map = [&]<specfem::simulation::field_type FT>(auto &map) {
+          // Build communication patterns using three-phase approach:
+          // Phase 1 (per neighbor): Construct unpacker and post all MPI_Irecv
+          // calls Phase 2 (per neighbor): Construct packer and send blocking
+          // MPI_Send messages Phase 3 (per neighbor): Wait for receives and
+          // assemble unpacking mapping
+          //
+          // This ordering prevents deadlock under circular connectivity: all
+          // Irecv calls are posted globally before any MPI_Send, ensuring
+          // receiver buffers exist before sender data arrives.
           using PatternType =
               mpi_impl::communication_pattern<FT, dimension_tag,
                                               TagsType::medium_tag>;

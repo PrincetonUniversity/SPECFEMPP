@@ -6,7 +6,6 @@ class message_tag {
 private:
   unsigned int connections_per_process;
   unsigned int messages_per_connection;
-  unsigned int number_of_messages;
   int max_messages;
 
   unsigned int my_message_start;
