@@ -473,6 +473,19 @@ target_link_libraries(
 )
 
 add_executable(
+  seismogram_writer_tests
+  io/seismogram/seismogram_writer_tests.cpp
+)
+
+target_link_libraries(
+  seismogram_writer_tests
+  specfem::io
+  specfem::enums
+  specfem::element
+  gtest_main
+)
+
+add_executable(
   interpolate_function
   algorithms/interpolate_function/dim2/interpolate_function.cpp
   algorithms/interpolate_function/dim3/interpolate_function.cpp
@@ -832,6 +845,7 @@ set(SERIAL_TEST_TARGETS
   interpolate_function
   io_framework_tests
   io_tests
+  seismogram_writer_tests
   is_close_tests
   logspace_tests
   jacobian_tests
