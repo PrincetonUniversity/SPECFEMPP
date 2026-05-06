@@ -212,8 +212,6 @@ template <> struct assembly<specfem::element::dimension_tag::dim2> {
       const specfem::simulation::type simulation,
       const bool allocate_boundary_values,
       const std::shared_ptr<specfem::io::reader> &property_reader,
-      const specfem::units::Hertz &attenuation_reference_frequency,
-      const specfem::utilities::Band<specfem::units::Hertz> &attenuation_band,
       const specfem::element_coupling::flux_scheme_configuration
           &flux_scheme_config =
               specfem::element_coupling::flux_scheme_configuration());

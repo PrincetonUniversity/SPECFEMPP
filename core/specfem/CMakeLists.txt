@@ -39,6 +39,7 @@ add_subdirectory(element_connections)
 add_subdirectory(enums)
 add_subdirectory(jacobian)
 add_subdirectory(io)
+add_subdirectory(io_backends)
 add_subdirectory(logger)
 add_subdirectory(macros)
 add_subdirectory(mesh)
@@ -75,6 +76,7 @@ target_link_libraries(specfem_core_interface
         specfem::element_coupling
         specfem::enums
         specfem::io
+        specfem::io_backends
         specfem::logger
         specfem::macros
         specfem::mesh

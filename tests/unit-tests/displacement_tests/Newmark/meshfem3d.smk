@@ -38,7 +38,7 @@ rule specfem3d_mesher:
         source="<cwd>/provenance/fortran/DATA/FORCESOLUTION",
         stations="<cwd>/provenance/fortran/DATA/STATIONS",
     output:
-        database="<cwd>/specfem3d_workdir/fortran/DATABASES_MPI/proc000000_Database",
+        database="<cwd>/specfem3d_workdir/fortran/DATABASES_MPI/Database",
         mesher="<cwd>/specfem3d_workdir/fortran/OUTPUT_FILES/output_meshfem3D.txt",
         stations="<cwd>/specfem3d_workdir/fortran/DATA/STATIONS",
     localrule: True,
@@ -59,7 +59,7 @@ rule specfem3d_generate_database:
         cwd=rules.specfem3d_setup.output.cwd,
         mesh_database=rules.specfem3d_mesher.output.database,
     output:
-        databases=[f"<cwd>/specfem3d_workdir/fortran/DATABASES_MPI/proc000000_{parameter}.bin" for parameter in ["external_mesh", "ibool", "qkappa", "qmu", "rho", "vp", "vs", "x", "y", "z"]],
+        databases=[f"<cwd>/specfem3d_workdir/fortran/DATABASES_MPI/{parameter}.bin" for parameter in ["external_mesh", "ibool", "qkappa", "qmu", "rho", "vp", "vs", "x", "y", "z"]],
     shell:
         """
             cd {input.cwd}

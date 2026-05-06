@@ -23,6 +23,14 @@ endif()
 # Set Kokkos options before fetching
 set(KOKKOS_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
 
+# On macOS, dlopen is part of libSystem and does not require a separate libdl.
+# Leaving LIBDL enabled causes Kokkos to locate dlfcn.h inside the Xcode SDK
+# and add that SDK's usr/include as an explicit -I path, which puts the SDK
+# math.h before Homebrew LLVM's libc++ math.h and breaks the <cmath> header.
+if(APPLE)
+  set(Kokkos_ENABLE_LIBDL OFF CACHE BOOL "" FORCE)
+endif()
+
 # Set the policy for CMake versions > 3.30
 if (CMAKE_VERSION VERSION_GREATER "3.30.0")
     # For CMake versions > 3.30, we need to use Set the policy)

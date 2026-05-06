@@ -162,13 +162,20 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
       auto kappa_props = computed_values.kappa_attenuation_properties;
       auto mu_props = computed_values.mu_attenuation_properties;
 
+      // Scaled moduli: matches SPECFEM3D's kappastore/mustore after
+      // prepare_attenuation.f90 applies scale_factor in-place.
+      const auto scaled_props = material.get_properties();
+      const type_real kappa_sc = scaled_props.kappa();
+      const type_real mu_sc = scaled_props.mu();
+
       // Per-GLL fill
       for (int j = 0; j < N_SLS; ++j) {
 
-        // Compute per element relaxation rates
+        // Compute per element relaxation rates (modulus included, matching
+        // SPECFEM3D's factor_loc = modulus * factor_common)
         const type_real tauinv_j = 1.0 / tau_sigma(j);
-        auto kappa_rr_j = kappa_props.beta(j) * tauinv_j / kappa_props.one_minus_sum_beta;
-        auto mu_rr_j = 2.0 * mu_props.beta(j) * tauinv_j / mu_props.one_minus_sum_beta;
+        auto kappa_rr_j = kappa_sc * kappa_props.beta(j) * tauinv_j / kappa_props.one_minus_sum_beta;
+        auto mu_rr_j = mu_sc * 2.0 * mu_props.beta(j) * tauinv_j / mu_props.one_minus_sum_beta;
 
         // Assigning relaxation rates to all GLL points
         for (int iz = 0; iz < ngllz; ++iz) {

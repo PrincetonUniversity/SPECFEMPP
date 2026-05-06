@@ -1,6 +1,5 @@
 #include "../../../SPECFEM_Environment.hpp"
 #include "specfem/assembly/assembly.hpp"
-#include "specfem/constants.hpp"
 #include "specfem/io.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/mesh.hpp"
@@ -118,7 +117,7 @@ TEST_P(Newmark, 3D) {
 
   // Read mesh generated MESHFEM
   auto mesh = specfem::io::read_3d_mesh(database_filename,
-                                        setup.is_attenuation_enabled());
+                                        setup.get_attenuation_setup());
   const type_real dt = setup.get_dt();
   const int nsteps = setup.get_nsteps();
 
@@ -174,9 +173,7 @@ TEST_P(Newmark, 3D) {
       mesh, quadratures, sources, receivers, setup.get_seismogram_types(),
       setup.get_t0(), dt, nsteps, max_sig_step, nstep_between_samples,
       setup.get_simulation_type(), setup.allocate_boundary_values(),
-      setup.instantiate_property_reader(),
-      setup.get_attenuation_reference_frequency(),
-      setup.get_attenuation_band());
+      setup.instantiate_property_reader());
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;
 

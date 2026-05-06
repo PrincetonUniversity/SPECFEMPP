@@ -71,9 +71,10 @@ Example parameter file
 
           ## attenuation
           attenuation:
-            enabled: true
-            min_attenuation_frequency: 0.1
-            max_attenuation_frequency: 20.0
+            reference-frequency: 1.0 Hz
+            attenuation-frequency-band:
+                - 0.01 Hz
+                - 10.0 Hz
 
 
 

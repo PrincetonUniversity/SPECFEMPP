@@ -32,8 +32,8 @@ public:
           source_time_function) override;
 
   type_real get_tshift() const override {
-    throw std::runtime_error(
-        "Time shift not defined for external source time function");
+    // No time shift for external source time functions
+    return 0.0;
   }
 
   /**

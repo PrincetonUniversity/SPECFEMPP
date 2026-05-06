@@ -6,6 +6,7 @@
 #include "attenuation/compute_tau_eps.hpp"
 #include "attenuation/compute_tau_sigma.hpp"
 #include "attenuation/maxwell.hpp"
+#include "attenuation/setup.hpp"
 
 /**
  * @brief Basic functions for the computation of attenuation related parameters.

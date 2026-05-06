@@ -42,7 +42,7 @@ int update_wavefields(
       BOUNDARY_SET(none, stacey, acoustic_free_surface,
                    composite_stacey_dirichlet), [&]<typename ElementTags>() {
     elements_updated +=
-        impl::compute_stiffness_interaction<NGLL, Tags::wavefield_tag, ElementTags>(
+        impl::compute_stiffness_interaction<NGLL, specfem::tags::expand<ElementTags, Tags::wavefield_tag>>(
             assembly, istep);
   });
 
