@@ -14,7 +14,7 @@ pipeline{
                     }
                     axis{
                         name 'HostSpace'
-                        values 'SERIAL;-DKokkos_ENABLE_SERIAL=ON -DKokkos_ENABLE_ATOMICS_BYPASS=ON;-n 1 -c 20', 'OPENMP;-DKokkos_ENABLE_OPENMP=ON;-n 1 -c 20'
+                        values 'SERIAL;-DKokkos_ENABLE_SERIAL=ON -DKokkos_ENABLE_ATOMICS_BYPASS=ON;-n 1 -c 20;-j', 'OPENMP;-DKokkos_ENABLE_OPENMP=ON;-n 1 -c 20;'
                     }
                     axis{
                         name 'SIMD'
@@ -52,6 +52,10 @@ pipeline{
                                                     returnStdout: true,
                                                     script: 'cut -d";" -f2 <<<"${SIMD}"'
                                                 ).trim()}"""
+                            CTEST_FLAGS = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f4 <<<"${HostSpace}"'
+                                                ).trim()}"""
                         }
                         stages {
                             stage (' Build '){
@@ -85,7 +89,7 @@ pipeline{
                                         module load ${INTEL_MODULE}
 
                                         cd /scratch/gpfs/TROMP/specfempp/jenkins/test_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG} && \
-                                        srun -N 1 -t 00:30:00 --account rse ${HOST_RUN_FLAGS} --constraint="intel" bash -c 'export OMP_PROC_BIND=spread; export OMP_THREADS=places; hostname; ctest ${CMAKE_HOST_NAME == "SERIAL" ? "-j" : ""} --output-on-failure --no-tests=error;'
+                                        srun -N 1 -t 00:30:00 --account rse ${HOST_RUN_FLAGS} --constraint="intel" bash -c 'export OMP_PROC_BIND=spread; export OMP_THREADS=places; hostname; ctest ${CTEST_FLAGS} --output-on-failure --no-tests=error;'
                                     """
                                     echo ' Testing completed '
                                 }
