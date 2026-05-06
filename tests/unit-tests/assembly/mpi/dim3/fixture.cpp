@@ -8,35 +8,26 @@ namespace specfem::test_configuration {
 
 AssemblyMPI3D::AssemblyMPI3D(
     const specfem::mesh::mesh<specfem::element::dimension_tag::dim3> &mesh)
-    : mpi_interfaces([&mesh]() {
-        const int nspec = mesh.nspec;
-        const int ngnod = mesh.control_nodes.ngnod;
-        const int ngllz = mesh.element_grid.ngllz;
-        const int nglly = mesh.element_grid.nglly;
-        const int ngllx = mesh.element_grid.ngllx;
+    : assembly_mesh([&mesh]() {
         const auto quadratures = []() {
           specfem::quadrature::gll::gll gll{};
           return specfem::quadrature::quadratures(gll);
         }();
-
-        const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
-            assembly_mesh{ nspec,
-                           ngnod,
-                           ngllz,
-                           nglly,
-                           ngllx,
-                           mesh.tags,
-                           mesh.adjacency_graph,
-                           mesh.control_nodes,
-                           quadratures };
-
-        specfem::assembly::mpi<specfem::element::dimension_tag::dim3>
-            mpi_interfaces(mesh.adjacency_graph, assembly_mesh,
-                           mesh.element_grid.ngllz, mesh.element_grid.nglly,
-                           mesh.element_grid.ngllx);
-
-        return mpi_interfaces;
-      }()) {}
+        return specfem::assembly::mesh<specfem::element::dimension_tag::dim3>{
+          mesh.nspec,
+          mesh.control_nodes.ngnod,
+          mesh.element_grid.ngllz,
+          mesh.element_grid.nglly,
+          mesh.element_grid.ngllx,
+          mesh.tags,
+          mesh.adjacency_graph,
+          mesh.control_nodes,
+          quadratures
+        };
+      }()),
+      mpi_interfaces(mesh.adjacency_graph, assembly_mesh,
+                     mesh.element_grid.ngllz, mesh.element_grid.nglly,
+                     mesh.element_grid.ngllx) {}
 } // namespace specfem::test_configuration
 
 void AssemblyMPI3DTest::SetUp() {

@@ -31,10 +31,7 @@ public:
       Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
           source_time_function) override;
 
-  type_real get_tshift() const override {
-    throw std::runtime_error(
-        "Time shift not defined for external source time function");
-  }
+  type_real get_tshift() const override { return 0.0; }
 
   /**
    * @brief Throw error as time shift update is not supported
