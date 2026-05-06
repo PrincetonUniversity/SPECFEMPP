@@ -140,13 +140,14 @@ void specfem::assembly::mpi_buffer<FieldType, DimensionTag, MediumTag>::wait() {
       MPI_Waitall(requests.size(), requests.data(), statuses.data()));
 
 #ifndef NDEBUG
-  // In debug mode, check the statuses for errors
-  for (size_t i = 0; i < requests.size(); ++i) {
-    if (statuses[i].MPI_ERROR != MPI_SUCCESS) {
-      fprintf(stderr, "MPI error in request %zu: %d\n", i,
-              statuses[i].MPI_ERROR);
-    }
-  }
+  SPECFEM_MPI_SAFECALL(
+      // In debug mode, check the statuses for errors
+      for (size_t i = 0; i < requests.size(); ++i) {
+        if (statuses[i].MPI_ERROR != MPI_SUCCESS) {
+          fprintf(stderr, "MPI error in request %zu: %d\n", i,
+                  statuses[i].MPI_ERROR);
+        }
+      });
 #endif
 
   auto &tag_generator = specfem::MPI::message_tag_generator;
