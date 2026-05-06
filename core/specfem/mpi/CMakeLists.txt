@@ -1,6 +1,6 @@
 # Static MPI wrapper library for SPECFEM++
 # Provides context-managed MPI initialization and static access to rank/size
-add_library(specfem_mpi STATIC mpi.cpp)
+add_library(specfem_mpi STATIC mpi.cpp message_tag.cpp)
 add_library(specfem::mpi ALIAS specfem_mpi)
 
 target_include_directories(specfem_mpi
