@@ -68,14 +68,12 @@ template <specfem::simulation::field_type FieldType,
           specfem::element::medium_tag MediumTag>
 void specfem::assembly::mpi_impl::mpi_buffer<FieldType, DimensionTag,
                                              MediumTag>::send() {
-  const auto &tag_generator = specfem::MPI::message_tag_generator;
 
-  // message_tag_base is precomputed at construction; +7 is the field-data slot
   SPECFEM_MPI_SAFECALL(
       MPI_Isend(this->send_buffer.data(), send_buffer.extent(0) * components,
                 SPECFEM_MPI_TYPE_REAL, this->neighbor_rank,
-                tag_generator(this->my_rank, this->neighbor_rank, 0),
-                specfem::MPI::communicator(), &this->send_request));
+                100 * static_cast<int>(MediumTag), specfem::MPI::communicator(),
+                &this->send_request));
 
   return;
 }
@@ -86,12 +84,11 @@ template <specfem::simulation::field_type FieldType,
 void specfem::assembly::mpi_impl::mpi_buffer<FieldType, DimensionTag,
                                              MediumTag>::receive() {
   // Receiver uses the sender's tag base (neighbor is sender for recv)
-  const auto &tag_generator = specfem::MPI::message_tag_generator;
   SPECFEM_MPI_SAFECALL(
       MPI_Irecv(this->recv_buffer.data(), recv_buffer.extent(0) * components,
                 SPECFEM_MPI_TYPE_REAL, this->neighbor_rank,
-                tag_generator(this->neighbor_rank, this->my_rank, 0),
-                specfem::MPI::communicator(), &this->recv_request));
+                100 * static_cast<int>(MediumTag), specfem::MPI::communicator(),
+                &this->recv_request));
 
   return;
 }
@@ -149,9 +146,6 @@ void specfem::assembly::mpi_buffer<FieldType, DimensionTag, MediumTag>::wait() {
         }
       });
 #endif
-
-  auto &tag_generator = specfem::MPI::message_tag_generator;
-  tag_generator.reset();
 
   return;
 }

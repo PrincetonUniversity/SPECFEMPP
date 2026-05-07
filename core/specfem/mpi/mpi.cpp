@@ -6,7 +6,6 @@ namespace specfem {
 int MPI::rank_ = -1;
 int MPI::size_ = -1;
 MPI_Comm MPI::comm_ = MPI_COMM_WORLD;
-specfem::message_tag MPI::message_tag_generator = specfem::message_tag(32768);
 
 void MPI::initialize(int *argc, char ***argv) {
 #ifdef SPECFEM_ENABLE_MPI

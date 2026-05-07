@@ -74,11 +74,7 @@ filter_indices_by_medium_tag(
 //   +4  edge neighbor element indices [nedges]
 //   +5  corner neighbor element indices [ncorners]
 //   +6  corner nglob indices [ncorners]
-//   +7  (reserved, used only in mpi_buffer field-data exchange below)
-//
-// Field-data messages use a separate message_tag_generator instance initialized
-// with messages_per_connection=1 (only slot +0 used for field data
-// pack/unpack).
+//   +7  (reserved for field-data exchange in mpi_buffer)
 // ---------------------------------------------------------------------------
 int specfem::assembly::mpi_impl::compute_message_tag_base(
     unsigned int sender_rank, unsigned int receiver_rank) {
@@ -389,6 +385,11 @@ specfem::assembly::mpi_impl::packer<FieldType, DimensionTag, MediumTag>::packer(
   const auto &simulation_field =
       fields.template get_simulation_field<FieldType>();
 
+  Kokkos::View<unsigned char *, Kokkos::HostSpace> filtered_theta(
+      "packer::face_theta", this->nfaces);
+  Kokkos::View<int *, Kokkos::HostSpace> filtered_face_neighbors(
+      "packer::face_neighbors", this->nfaces);
+
   // First pass: collect unique global indices across all face GLL points.
   // Points shared between adjacent faces (at shared edges/corners) are
   // inserted only once; insertion order is preserved via the vector.
@@ -404,6 +405,9 @@ specfem::assembly::mpi_impl::packer<FieldType, DimensionTag, MediumTag>::packer(
   for (unsigned int iface = 0; iface < this->nfaces; iface++) {
     const int ielem = face_group.h_my_element(face_indices[iface]);
     const auto face_type = face_group.h_my_orientation(face_indices[iface]);
+    filtered_theta(iface) = face_group.h_theta(face_indices[iface]);
+    filtered_face_neighbors(iface) =
+        face_group.h_neighbor_element(face_indices[iface]);
 
     for (unsigned int ipoint_j = 0; ipoint_j < this->ngll; ipoint_j++) {
       for (unsigned int ipoint_i = 0; ipoint_i < this->ngll; ipoint_i++) {
@@ -430,10 +434,17 @@ specfem::assembly::mpi_impl::packer<FieldType, DimensionTag, MediumTag>::packer(
 
   Kokkos::View<int **, Kokkos::HostSpace> edge_index_mapping(
       "packer::edge_index_mapping", this->nedges, this->ngll);
+  Kokkos::View<bool *, Kokkos::HostSpace> filtered_reflect(
+      "packer::edge_reflect", this->nedges);
+  Kokkos::View<int *, Kokkos::HostSpace> filtered_edge_neighbors(
+      "packer::edge_neighbors", this->nedges);
 
   for (unsigned int iedge = 0; iedge < this->nedges; iedge++) {
     const int ielem = edge_group.h_my_element(edge_indices[iedge]);
     const auto edge_type = edge_group.h_my_orientation(edge_indices[iedge]);
+    filtered_reflect(iedge) = edge_group.h_reflect(edge_indices[iedge]);
+    filtered_edge_neighbors(iedge) =
+        edge_group.h_neighbor_element(edge_indices[iedge]);
 
     for (unsigned int ipoint = 0; ipoint < this->ngll; ipoint++) {
       // Map edge 1D coordinate to element 3D coordinates
@@ -455,11 +466,15 @@ specfem::assembly::mpi_impl::packer<FieldType, DimensionTag, MediumTag>::packer(
 
   Kokkos::View<int *, Kokkos::HostSpace> corner_index_mapping(
       "packer::corner_index_mapping", this->ncorners);
+  Kokkos::View<int *, Kokkos::HostSpace> filtered_corner_neighbors(
+      "packer::corner_neighbors", this->ncorners);
 
   for (unsigned int icorner = 0; icorner < this->ncorners; icorner++) {
     const int ielem = corner_group.h_my_element(corner_indices[icorner]);
     const auto corner_type =
         corner_group.h_my_orientation(corner_indices[icorner]);
+    filtered_corner_neighbors(icorner) =
+        corner_group.h_neighbor_element(corner_indices[icorner]);
 
     // Map corner coordinate to element 3D coordinates
     const auto [iz, iy, ix] = element.map_coordinates(corner_type);
@@ -476,10 +491,10 @@ specfem::assembly::mpi_impl::packer<FieldType, DimensionTag, MediumTag>::packer(
 
   this->nglob = unique_iglobs.size();
 
-  this->send_unpacking_indices(
-      face_index_mapping, face_group.h_theta, face_group.h_neighbor_element,
-      edge_index_mapping, edge_group.h_reflect, edge_group.h_neighbor_element,
-      corner_group.h_neighbor_element, corner_index_mapping);
+  this->send_unpacking_indices(face_index_mapping, filtered_theta,
+                               filtered_face_neighbors, edge_index_mapping,
+                               filtered_reflect, filtered_edge_neighbors,
+                               filtered_corner_neighbors, corner_index_mapping);
 
   // Allocate views sized to the number of unique points
   const unsigned int n_unique = unique_iglobs.size();
@@ -571,47 +586,42 @@ void specfem::assembly::mpi_impl::packer<FieldType, DimensionTag, MediumTag>::
   // -----------------------------------------------------------------------
   MPI_Comm comm = specfem::MPI::communicator();
 
-  auto &tag_generator = specfem::MPI::message_tag_generator;
-  tag_generator.set_pair(this->my_rank, this->neighbor_rank);
-
   // Message 1: Send metadata (nfaces, ngll, nglob)
   unsigned int metadata[5] = { this->nfaces, this->nedges, this->ncorners,
                                this->ngll, this->nglob };
-  SPECFEM_MPI_SAFECALL(MPI_Send(metadata, 5, MPI_UNSIGNED, this->neighbor_rank,
-                                tag_generator(0), comm));
+  SPECFEM_MPI_SAFECALL(
+      MPI_Send(metadata, 5, MPI_UNSIGNED, this->neighbor_rank, 101, comm));
 
   // Message 2: Send rotated face indices [nfaces][ngll][ngll]
   SPECFEM_MPI_SAFECALL(
       MPI_Send(rotated_indices.data(),
                static_cast<int>(this->nfaces * this->ngll * this->ngll),
-               MPI_INT, this->neighbor_rank, tag_generator(1), comm));
+               MPI_INT, this->neighbor_rank, 102, comm));
 
   // Message 3: Send neighbor element indices [nfaces]
   SPECFEM_MPI_SAFECALL(MPI_Send(neighbor_element.data(),
                                 static_cast<int>(this->nfaces), MPI_INT,
-                                this->neighbor_rank, tag_generator(2), comm));
+                                this->neighbor_rank, 103, comm));
 
   // Message 4: Send reflected edge indices [nedges][ngll]
-  SPECFEM_MPI_SAFECALL(MPI_Send(
-      reflect_indices.data(), static_cast<int>(this->nedges * this->ngll),
-      MPI_INT, this->neighbor_rank, tag_generator(3), comm));
+  SPECFEM_MPI_SAFECALL(MPI_Send(reflect_indices.data(),
+                                static_cast<int>(this->nedges * this->ngll),
+                                MPI_INT, this->neighbor_rank, 104, comm));
 
   // Message 5: Send edge neighbor element indices [nedges]
   SPECFEM_MPI_SAFECALL(MPI_Send(edge_neighbor_element.data(),
                                 static_cast<int>(this->nedges), MPI_INT,
-                                this->neighbor_rank, tag_generator(4), comm));
+                                this->neighbor_rank, 105, comm));
 
   // Message 6: Send corner neighbor element indices [ncorners]
   SPECFEM_MPI_SAFECALL(MPI_Send(corner_neighbor_element.data(),
                                 static_cast<int>(this->ncorners), MPI_INT,
-                                this->neighbor_rank, tag_generator(5), comm));
+                                this->neighbor_rank, 106, comm));
 
   // Message 7: Send corner nglob indices [ncorners]
   SPECFEM_MPI_SAFECALL(MPI_Send(corner_index_mapping.data(),
                                 static_cast<int>(this->ncorners), MPI_INT,
-                                this->neighbor_rank, tag_generator(6), comm));
-
-  tag_generator.clear_pair();
+                                this->neighbor_rank, 107, comm));
 }
 
 // ---------------------------------------------------------------------------
@@ -783,45 +793,39 @@ specfem::assembly::mpi_impl::unpacker<FieldType, DimensionTag,
   std::array<MPI_Request, 7> requests{};
   MPI_Comm comm = specfem::MPI::communicator();
 
-  auto &tag_generator = specfem::MPI::message_tag_generator;
-  tag_generator.set_pair(this->neighbor_rank, this->my_rank);
-
   // Message 1: metadata {nfaces, nedges, ncorners, ngll, nglob}
   SPECFEM_MPI_SAFECALL(MPI_Irecv(metadata_buf.data(), 5, MPI_UNSIGNED,
-                                 this->neighbor_rank, tag_generator(0), comm,
-                                 &requests[0]));
+                                 this->neighbor_rank, 101, comm, &requests[0]));
 
   // Message 2: rotated face indices [nfaces][ngll][ngll]
-  SPECFEM_MPI_SAFECALL(MPI_Irecv(
-      recv_face_indices.data(),
-      static_cast<int>(this->nfaces * this->ngll * this->ngll), MPI_INT,
-      this->neighbor_rank, tag_generator(1), comm, &requests[1]));
+  SPECFEM_MPI_SAFECALL(
+      MPI_Irecv(recv_face_indices.data(),
+                static_cast<int>(this->nfaces * this->ngll * this->ngll),
+                MPI_INT, this->neighbor_rank, 102, comm, &requests[1]));
 
   // Message 3: face neighbor element indices [nfaces]
-  SPECFEM_MPI_SAFECALL(
-      MPI_Irecv(face_elements.data(), static_cast<int>(this->nfaces), MPI_INT,
-                this->neighbor_rank, tag_generator(2), comm, &requests[2]));
+  SPECFEM_MPI_SAFECALL(MPI_Irecv(face_elements.data(),
+                                 static_cast<int>(this->nfaces), MPI_INT,
+                                 this->neighbor_rank, 103, comm, &requests[2]));
 
   // Message 4: reflected edge indices [nedges][ngll]
   SPECFEM_MPI_SAFECALL(MPI_Irecv(
       recv_edge_indices.data(), static_cast<int>(this->nedges * this->ngll),
-      MPI_INT, this->neighbor_rank, tag_generator(3), comm, &requests[3]));
+      MPI_INT, this->neighbor_rank, 104, comm, &requests[3]));
 
   // Message 5: edge neighbor element indices [nedges]
-  SPECFEM_MPI_SAFECALL(
-      MPI_Irecv(edge_elements.data(), static_cast<int>(this->nedges), MPI_INT,
-                this->neighbor_rank, tag_generator(4), comm, &requests[4]));
+  SPECFEM_MPI_SAFECALL(MPI_Irecv(edge_elements.data(),
+                                 static_cast<int>(this->nedges), MPI_INT,
+                                 this->neighbor_rank, 105, comm, &requests[4]));
 
   // Message 6: corner neighbor element indices [ncorners]
-  SPECFEM_MPI_SAFECALL(MPI_Irecv(
-      corner_elements.data(), static_cast<int>(this->ncorners), MPI_INT,
-      this->neighbor_rank, tag_generator(5), comm, &requests[5]));
+  SPECFEM_MPI_SAFECALL(MPI_Irecv(corner_elements.data(),
+                                 static_cast<int>(this->ncorners), MPI_INT,
+                                 this->neighbor_rank, 106, comm, &requests[5]));
   // Message 7: corner nglob indices [ncorners]
-  SPECFEM_MPI_SAFECALL(MPI_Irecv(
-      corner_nglob_idx.data(), static_cast<int>(this->ncorners), MPI_INT,
-      this->neighbor_rank, tag_generator(6), comm, &requests[6]));
-
-  tag_generator.clear_pair();
+  SPECFEM_MPI_SAFECALL(MPI_Irecv(corner_nglob_idx.data(),
+                                 static_cast<int>(this->ncorners), MPI_INT,
+                                 this->neighbor_rank, 107, comm, &requests[6]));
 
   return {
     requests,          metadata_buf,  recv_face_indices, face_elements,
@@ -1091,10 +1095,6 @@ specfem::assembly::mpi<specfem::element::dimension_tag::dim3>::mpi(
   static const mpi_impl::edge_communication_group empty_edge{};
   static const mpi_impl::corner_communication_group empty_corner{};
 
-  auto &tag_generator = specfem::MPI::message_tag_generator;
-  tag_generator.initialize(specfem::MPI::get_size(), all_neighbors.size(),
-                           7); // 7 setup messages per neighbor pair
-
   specfem::tag_dispatch::for_each(
       medium_combinations, [&]<typename TagsType>() {
         auto build_map = [&]<specfem::simulation::field_type FT>(auto &map) {
@@ -1158,6 +1158,4 @@ specfem::assembly::mpi<specfem::element::dimension_tag::dim3>::mpi(
                   adjoint_communication_patterns.template get<TagsType>());
         }
       });
-
-  tag_generator.reset();
 }

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "message_tag.hpp"
 #include <cmath>
 #include <cstdlib>
 #include <filesystem>
@@ -244,9 +243,6 @@ public:
         parent / stem / ("proc_" + proc_str.str() + ext.string());
     return result.string();
   }
-
-  static specfem::message_tag message_tag_generator; // Global message tag
-                                                     // generator
 
 private:
   MPI() = default;

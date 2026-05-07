@@ -499,7 +499,7 @@ public:
   MappingViewType pack_mapping;   /**< Pack iglob mapping (from packer) */
   MappingViewType unpack_mapping; /**< Unpack iglob mapping (from unpacker) */
 
-#ifdef SPECFEM_CUDA_AWARE_MPI
+#ifndef SPECFEM_CUDA_AWARE_MPI
   BufferViewType::HostMirror h_send_buffer;
   BufferViewType::HostMirror h_recv_buffer;
 #endif
@@ -518,7 +518,7 @@ public:
         BufferViewType("mpi_buffer::send_buffer", comm_pattern.pack.nglob);
     recv_buffer =
         BufferViewType("mpi_buffer::recv_buffer", comm_pattern.unpack.nglob);
-#ifdef SPECFEM_CUDA_AWARE_MPI
+#ifndef SPECFEM_CUDA_AWARE_MPI
     h_send_buffer = Kokkos::create_mirror_view(send_buffer);
     h_recv_buffer = Kokkos::create_mirror_view(recv_buffer);
 #endif
@@ -616,12 +616,6 @@ public:
   }
 
   void wait();
-
-  void initialize() const {
-    auto &tag_generator = specfem::MPI::message_tag_generator;
-    tag_generator.initialize(specfem::MPI::get_size(),
-                             this->max_connections_per_process, 1);
-  }
 };
 
 } // namespace specfem::assembly
