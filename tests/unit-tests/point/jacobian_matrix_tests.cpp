@@ -419,7 +419,7 @@ TYPED_TEST(PointJacobianMatrixTest, JacobianMatrix2D_WithJacobian_Inverse) {
   typename specfem::datatype::simd<type_real, using_simd>::datatype
       a_gammaz_val{ 4.0 };
   typename specfem::datatype::simd<type_real, using_simd>::datatype
-      a_jacobian_val{ -2.0 };
+      a_jacobian_val{ -1.0 / 2.0 };
   using PD = point::jacobian_matrix<specfem::element::dimension_tag::dim2, true,
                                     using_simd>;
   PD a(a_xix_val, a_gammax_val, a_xiz_val, a_gammaz_val, a_jacobian_val);
@@ -429,7 +429,7 @@ TYPED_TEST(PointJacobianMatrixTest, JacobianMatrix2D_WithJacobian_Inverse) {
   // Inverse of this matrix is
   // [-2    1 ]
   // [3/2 -1/2]
-  // with determinant -1/2
+  // with determinant -1/2 (but jacobian is 1 / det, so jacobian is -2.0)
   EXPECT_TRUE(specfem::utilities::is_close(
       a_inv.xix, static_cast<typename PD::value_type>(-2.0)))
       << ExpectedGot(-2.0, a_inv.xix);
@@ -443,8 +443,8 @@ TYPED_TEST(PointJacobianMatrixTest, JacobianMatrix2D_WithJacobian_Inverse) {
       a_inv.gammaz, static_cast<typename PD::value_type>(-0.5)))
       << ExpectedGot(-0.5, a_inv.gammaz);
   EXPECT_TRUE(specfem::utilities::is_close(
-      a_inv.jacobian, static_cast<typename PD::value_type>(-0.5)))
-      << ExpectedGot(-0.5, a_inv.jacobian);
+      a_inv.jacobian, static_cast<typename PD::value_type>(-2.0)))
+      << ExpectedGot(-2.0, a_inv.jacobian);
 }
 
 // ===============================
@@ -632,7 +632,7 @@ TYPED_TEST(PointJacobianMatrixTest, JacobianMatrix3D_WithJacobian_Inverse) {
       a_gammaz_val{ 10.0 };
 
   typename specfem::datatype::simd<type_real, using_simd>::datatype
-      a_jacobian_val{ -3.0 };
+      a_jacobian_val{ -1.0 / 3.0 };
 
   using PD = point::jacobian_matrix<specfem::element::dimension_tag::dim3, true,
                                     using_simd>;
@@ -644,7 +644,7 @@ TYPED_TEST(PointJacobianMatrixTest, JacobianMatrix3D_WithJacobian_Inverse) {
   // [-2/3 -4/3  1]
   // [-2/3 11/3 -2]
   // [1    -2    1]
-  // with determinant -1 / 3
+  // with determinant -1 / 3 (but jacobian is 1 / det, so jacobian is -3.0)
   EXPECT_TRUE(specfem::utilities::is_close(
       a_inv.xix, static_cast<typename PD::value_type>(-2.0 / 3.0)))
       << ExpectedGot(static_cast<typename PD::value_type>(-2.0 / 3.0),
@@ -677,8 +677,8 @@ TYPED_TEST(PointJacobianMatrixTest, JacobianMatrix3D_WithJacobian_Inverse) {
       a_inv.gammaz, static_cast<typename PD::value_type>(1.0)))
       << ExpectedGot(static_cast<typename PD::value_type>(1.0), a_inv.gammaz);
   EXPECT_TRUE(specfem::utilities::is_close(
-      a_inv.jacobian, static_cast<typename PD::value_type>(-1.0 / 3.0)))
-      << ExpectedGot(static_cast<typename PD::value_type>(-1.0 / 3.0),
+      a_inv.jacobian, static_cast<typename PD::value_type>(-3.0)))
+      << ExpectedGot(static_cast<typename PD::value_type>(-3.0),
                      a_inv.jacobian);
 }
 

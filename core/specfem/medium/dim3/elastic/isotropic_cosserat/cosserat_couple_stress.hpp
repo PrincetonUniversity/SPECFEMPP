@@ -70,7 +70,6 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
     const PointPropertiesType &point_properties, const T factor,
     const PointStressIntegrandViewType &F,
     PointAccelerationType &acceleration) {
-  const auto det = point_jacobian_matrix.jacobian;
   const auto jacobian_inv = point_jacobian_matrix.inverse();
 
   using stress_type = specfem::point::stress<
@@ -90,9 +89,9 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
   const auto sigma_zy = t(1, 2);
 
   // Add to acceleration
-  acceleration(3) -= (sigma_zy - sigma_yz) * factor / det;
-  acceleration(4) -= (sigma_xz - sigma_zx) * factor / det;
-  acceleration(5) -= (sigma_yx - sigma_xy) * factor / det;
+  acceleration(3) -= (sigma_zy - sigma_yz) * factor;
+  acceleration(4) -= (sigma_xz - sigma_zx) * factor;
+  acceleration(5) -= (sigma_yx - sigma_xy) * factor;
 };
 
 } // namespace medium_physics
