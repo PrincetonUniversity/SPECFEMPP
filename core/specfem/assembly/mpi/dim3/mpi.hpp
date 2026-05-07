@@ -512,6 +512,9 @@ public:
     h_send_buffer = Kokkos::create_mirror_view(send_buffer);
     h_recv_buffer = Kokkos::create_mirror_view(recv_buffer);
 #endif
+    // Initialize MPI request handles to prevent undefined behavior
+    send_request = MPI_REQUEST_NULL;
+    recv_request = MPI_REQUEST_NULL;
   }
 
   void pack(const specfem::assembly::simulation_field<dimension_tag, field_type>
