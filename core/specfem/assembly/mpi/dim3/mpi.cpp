@@ -61,29 +61,6 @@ filter_indices_by_medium_tag(
 
 } // anonymous namespace
 
-// ---------------------------------------------------------------------------
-// compute_message_tag_base
-//
-// Uses modular arithmetic to stay within the MPI standard minimum tag
-// upper bound (MPI_TAG_UB >= 32767). Reserves 8 tag slots per rank-pair
-// for the handshake protocol (+0..+7):
-//   +0  metadata (nfaces, nedges, ncorners, ngll, nglob)
-//   +1  rotated face indices [nfaces][ngll][ngll]
-//   +2  face neighbor element indices [nfaces]
-//   +3  reflected edge indices [nedges][ngll]
-//   +4  edge neighbor element indices [nedges]
-//   +5  corner neighbor element indices [ncorners]
-//   +6  corner nglob indices [ncorners]
-//   +7  (reserved for field-data exchange in mpi_buffer)
-// ---------------------------------------------------------------------------
-int specfem::assembly::mpi_impl::compute_message_tag_base(
-    unsigned int sender_rank, unsigned int receiver_rank) {
-  // Modulo chosen so that 8 * modulo < 2^18 and modulo < 32767/8
-  return static_cast<int>(
-      (static_cast<unsigned long>(sender_rank) * 1000003UL + receiver_rank) %
-      4093); // 4093 * 8 = 32744 < 32767 (MPI_TAG_UB minimum)
-}
-
 namespace {
 
 /**

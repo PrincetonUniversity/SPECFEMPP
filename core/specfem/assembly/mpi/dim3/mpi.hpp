@@ -26,16 +26,6 @@ class mpi_buffer;
 namespace mpi_impl {
 
 /**
- * @brief Compute MPI message tag base from a (sender_rank, receiver_rank) pair.
- *
- * Reserves 8 consecutive tag slots per rank pair (+0..+7):
- *   +0..+6  setup messages (metadata, index arrays)
- *   +7      field-data send/receive
- */
-int compute_message_tag_base(unsigned int sender_rank,
-                             unsigned int receiver_rank);
-
-/**
  * @brief Base class storing common interface metadata shared by all MPI
  * communication group types (face, edge, corner).
  *
