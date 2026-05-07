@@ -111,7 +111,7 @@ locate_point(
   std::vector<type_real> global_priority = local_priority;
   SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, global_priority.data(),
                                      npoints, SPECFEM_MPI_TYPE_REAL, MPI_MIN,
-                                     MPI_COMM_WORLD));
+                                     specfem::MPI::communicator()));
 
   // Step 2: each rank claims points whose local priority matches the global
   // minimum; allreduce(max) resolves ties by assigning to the highest rank
@@ -132,7 +132,7 @@ locate_point(
   }
   SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, islice_selected.data(),
                                      npoints, MPI_INT, MPI_MAX,
-                                     MPI_COMM_WORLD));
+                                     specfem::MPI::communicator()));
 
   // Sanity check: every point must have been claimed by at least one rank.
   // -----

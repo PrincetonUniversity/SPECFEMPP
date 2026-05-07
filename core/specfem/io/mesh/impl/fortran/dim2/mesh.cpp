@@ -77,14 +77,15 @@ specfem::io::read_2d_mesh(
                                           Kokkos::DefaultHostExecutionSpace>(
       "specfem::mesh::knods", mesh.parameters.ngnod, mesh.nspec);
 
-  auto reduce = [&](int *buf) {
-    SPECFEM_MPI_SAFECALL(
-        MPI_Reduce(specfem::MPI::get_rank() == 0 ? MPI_IN_PLACE : buf, buf, 1,
-                   MPI_INT, MPI_SUM, 0, specfem::MPI::communicator()));
-  };
-  reduce(&mesh.parameters.nspec);
-  reduce(&mesh.parameters.nelem_acforcing);
-  reduce(&mesh.parameters.nelem_acoustic_surface);
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &mesh.parameters.nspec, 1,
+                                     MPI_INT, MPI_SUM,
+                                     specfem::MPI::communicator()));
+  SPECFEM_MPI_SAFECALL(
+      MPI_Allreduce(MPI_IN_PLACE, &mesh.parameters.nelem_acforcing, 1, MPI_INT,
+                    MPI_SUM, specfem::MPI::communicator()));
+  SPECFEM_MPI_SAFECALL(
+      MPI_Allreduce(MPI_IN_PLACE, &mesh.parameters.nelem_acoustic_surface, 1,
+                    MPI_INT, MPI_SUM, specfem::MPI::communicator()));
 
   try {
     auto [n_sls, attenuation_f0_reference, read_velocities_at_f0] =
