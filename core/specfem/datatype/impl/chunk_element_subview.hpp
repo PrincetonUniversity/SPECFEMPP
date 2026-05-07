@@ -282,6 +282,57 @@ template <typename ViewType> struct TensorChunkElementSubview {
     }
     return *this;
   }
+
+  /**
+   * @brief Multiplication by jacobian matrix transformation
+   *
+   * Applies jacobian transformation and returns the transformed tensor.
+   *
+   * @param jacobian_matrix Jacobian matrix for transformation
+   * @return Transformed tensor (wrappable by stress_type)
+   */
+  template <typename JacobianMatrixType>
+  KOKKOS_INLINE_FUNCTION auto
+  operator*(const JacobianMatrixType &jacobian_matrix) const {
+    point_view_type temp;
+    point_view_type transformed;
+
+    for (int icomp = 0; icomp < point_view_type::components; ++icomp) {
+      for (int idim = 0; idim < point_view_type::dimensions; ++idim) {
+        temp(icomp, idim) = (*this)(icomp, idim);
+      }
+    }
+
+    if constexpr (index_type::dimension_tag ==
+                  specfem::element::dimension_tag::dim2) {
+      for (int icomp = 0; icomp < point_view_type::components; ++icomp) {
+        transformed(icomp, 0) =
+            jacobian_matrix.jacobian * (temp(icomp, 0) * jacobian_matrix.xix +
+                                        temp(icomp, 1) * jacobian_matrix.xiz);
+        transformed(icomp, 1) = jacobian_matrix.jacobian *
+                                (temp(icomp, 0) * jacobian_matrix.gammax +
+                                 temp(icomp, 1) * jacobian_matrix.gammaz);
+      }
+    } else if constexpr (index_type::dimension_tag ==
+                         specfem::element::dimension_tag::dim3) {
+      for (int icomp = 0; icomp < point_view_type::components; ++icomp) {
+        transformed(icomp, 0) =
+            jacobian_matrix.jacobian * (temp(icomp, 0) * jacobian_matrix.xix +
+                                        temp(icomp, 1) * jacobian_matrix.xiy +
+                                        temp(icomp, 2) * jacobian_matrix.xiz);
+        transformed(icomp, 1) =
+            jacobian_matrix.jacobian * (temp(icomp, 0) * jacobian_matrix.etax +
+                                        temp(icomp, 1) * jacobian_matrix.etay +
+                                        temp(icomp, 2) * jacobian_matrix.etaz);
+        transformed(icomp, 2) = jacobian_matrix.jacobian *
+                                (temp(icomp, 0) * jacobian_matrix.gammax +
+                                 temp(icomp, 1) * jacobian_matrix.gammay +
+                                 temp(icomp, 2) * jacobian_matrix.gammaz);
+      }
+    }
+
+    return transformed;
+  }
 };
 
 } // namespace specfem::datatype::impl

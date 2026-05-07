@@ -102,6 +102,25 @@ public:
     return;
   }
 
+  // inverse matrix
+  // standard 2x2 determinant formula
+  // J = [ xix gammax ]
+  //     [ xiz gammaz ]
+  //
+  // J^-1 = [ xxi  xgamma ]
+  //        [ zxi  zgamma ]
+  // = (1/det) * [ gammaz -gammax ]
+  //             [ -xiz    xix    ]
+  KOKKOS_FUNCTION jacobian_matrix inverse() const {
+    const auto det = xix * gammaz - xiz * gammax;
+    const auto inv_det = static_cast<value_type>(1.0) / det;
+    const auto xxi = gammaz * inv_det;
+    const auto xgamma = -gammax * inv_det;
+    const auto zxi = -xiz * inv_det;
+    const auto zgamma = xix * inv_det;
+    return { xxi, xgamma, zxi, zgamma };
+  }
+
   // operator+
   KOKKOS_FUNCTION jacobian_matrix operator+(const jacobian_matrix &rhs) const {
     return { xix + rhs.xix, gammax + rhs.gammax, xiz + rhs.xiz,
@@ -248,6 +267,37 @@ public:
     return;
   }
 
+  // inverse matrix
+  // standard 3x3 determinant formula
+  // J = [ xix  etax  gammax ]
+  //     [ xiy  etay  gammay ]
+  //     [ xiz  etaz  gammaz ]
+  //
+  // J^-1 = [ xxi  xeta  xgamma ]
+  //        [ yxi  yeta  ygamma ]
+  //        [ zxi  zeta  zgamma ]
+  // = (1/det) * [ etay*gammaz - etaz*gammay  -(etax*gammaz - etaz*gammax)
+  // etax*gammay - etay*gammax   ]
+  //             [ -(xiy*gammaz - xiz*gammay)   xix*gammaz - xiz*gammax
+  //             -(xix*gammay - xiy*gammax)  ] [ xiy*etaz - xiz*etay -(xix*etaz
+  //             - xiz*etax)        xix*etay - xiy*etax         ]
+  KOKKOS_FUNCTION jacobian_matrix inverse() const {
+    const auto det = xix * (etay * gammaz - etaz * gammay) -
+                     xiy * (etax * gammaz - etaz * gammax) +
+                     xiz * (etax * gammay - etay * gammax);
+    const auto inv_det = static_cast<value_type>(1.0) / det;
+    const auto xxi = (etay * gammaz - etaz * gammay) * inv_det;
+    const auto xeta = -(etax * gammaz - etaz * gammax) * inv_det;
+    const auto xgamma = (etax * gammay - etay * gammax) * inv_det;
+    const auto yxi = -(xiy * gammaz - xiz * gammay) * inv_det;
+    const auto yeta = (xix * gammaz - xiz * gammax) * inv_det;
+    const auto ygamma = -(xix * gammay - xiy * gammax) * inv_det;
+    const auto zxi = (xiy * etaz - xiz * etay) * inv_det;
+    const auto zeta = -(xix * etaz - xiz * etax) * inv_det;
+    const auto zgamma = (xix * etay - xiy * etax) * inv_det;
+    return { xxi, xeta, xgamma, yxi, yeta, ygamma, zxi, zeta, zgamma };
+  }
+
   // operator+
   KOKKOS_FUNCTION jacobian_matrix operator+(const jacobian_matrix &rhs) const {
     return { xix + rhs.xix, etax + rhs.etax, gammax + rhs.gammax,
@@ -387,6 +437,26 @@ public:
     this->gammaz = 0.0;
     this->jacobian = 0.0;
     return;
+  }
+
+  // inverse matrix
+  // standard 2x2 determinant formula
+  // J = [ xix gammax ]
+  //     [ xiz gammaz ]
+  //
+  // J^-1 = [ xxi  xgamma ]
+  //        [ zxi  zgamma ]
+  // = (1/det) * [ gammaz -gammax ]
+  //             [ -xiz    xix    ]
+  KOKKOS_FUNCTION jacobian_matrix inverse() const {
+    const auto det = this->xix * this->gammaz - this->xiz * this->gammax;
+    const auto inv_det = static_cast<value_type>(1.0) / det;
+    const auto xxi = this->gammaz * inv_det;
+    const auto xgamma = -this->gammax * inv_det;
+    const auto zxi = -this->xiz * inv_det;
+    const auto zgamma = this->xix * inv_det;
+    return jacobian_matrix(xxi, xgamma, zxi, zgamma,
+                           static_cast<value_type>(1.0) / this->jacobian);
   }
 
   // operator+
@@ -545,6 +615,49 @@ public:
     this->gammaz = 0.0;
     this->jacobian = 0.0;
     return;
+  }
+
+  // inverse matrix
+  // standard 3x3 determinant formula
+  // J = [ xix  etax  gammax ]
+  //     [ xiy  etay  gammay ]
+  //     [ xiz  etaz  gammaz ]
+  //
+  // J^-1 = [ xxi  xeta  xgamma ]
+  //        [ yxi  yeta  ygamma ]
+  //        [ zxi  zeta  zgamma ]
+  // = (1/det) * [ etay*gammaz - etaz*gammay  -(etax*gammaz - etaz*gammax)
+  // etax*gammay - etay*gammax   ]
+  //             [ -(xiy*gammaz - xiz*gammay)   xix*gammaz - xiz*gammax
+  //             -(xix*gammay - xiy*gammax)  ] [ xiy*etaz - xiz*etay -(xix*etaz
+  //             - xiz*etax)        xix*etay - xiy*etax         ]
+  KOKKOS_FUNCTION jacobian_matrix inverse() const {
+    const auto det =
+        this->xix * (this->etay * this->gammaz - this->etaz * this->gammay) -
+        this->xiy * (this->etax * this->gammaz - this->etaz * this->gammax) +
+        this->xiz * (this->etax * this->gammay - this->etay * this->gammax);
+    const auto inv_det = static_cast<value_type>(1.0) / det;
+    const auto xxi =
+        (this->etay * this->gammaz - this->etaz * this->gammay) * inv_det;
+    const auto xeta =
+        -(this->etax * this->gammaz - this->etaz * this->gammax) * inv_det;
+    const auto xgamma =
+        (this->etax * this->gammay - this->etay * this->gammax) * inv_det;
+    const auto yxi =
+        -(this->xiy * this->gammaz - this->xiz * this->gammay) * inv_det;
+    const auto yeta =
+        (this->xix * this->gammaz - this->xiz * this->gammax) * inv_det;
+    const auto ygamma =
+        -(this->xix * this->gammay - this->xiy * this->gammax) * inv_det;
+    const auto zxi =
+        (this->xiy * this->etaz - this->xiz * this->etay) * inv_det;
+    const auto zeta =
+        -(this->xix * this->etaz - this->xiz * this->etax) * inv_det;
+    const auto zgamma =
+        (this->xix * this->etay - this->xiy * this->etax) * inv_det;
+    return jacobian_matrix(xxi, xeta, xgamma, yxi, yeta, ygamma, zxi, zeta,
+                           zgamma,
+                           static_cast<value_type>(1.0) / this->jacobian);
   }
 
   // operator+

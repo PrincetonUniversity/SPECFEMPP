@@ -428,6 +428,12 @@ TEST(Stress, ElasticIsotropicCosserat3D_CoupleStressAcceleration) {
     }
 
     type_real operator()(const int i, const int j) const { return F(i, j); }
+
+    StressType::value_type
+    operator*(const JacobianMatrixType &jacobian_matrix) const {
+      // Delegate to stress operator* by wrapping F
+      return StressType(F) * jacobian_matrix;
+    }
   };
 
   const StressIntegrandAdapter stress_integrand{ stress * jacobian_matrix };
