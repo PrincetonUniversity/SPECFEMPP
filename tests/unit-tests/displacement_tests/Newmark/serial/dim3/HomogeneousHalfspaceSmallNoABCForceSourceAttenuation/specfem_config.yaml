@@ -30,8 +30,7 @@ parameters:
         writer:
           seismogram:
             format: ascii
-            # directory: "./"
-            directory: "displacement_tests/Newmark/serial/dim3/HomogeneousHalfspaceSmallNoABCForceSourceAttenuation/pp_traces/"
+            directory: "./"
 
           # display:
           #   format: VTKHDF
