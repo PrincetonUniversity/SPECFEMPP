@@ -24,6 +24,7 @@
 #include <fstream>
 #include <gtest/gtest.h>
 #include <map>
+#include <span>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -318,6 +319,28 @@ TEST_F(ChannelGeneratorTest, FilenamesAcceleration) {
   EXPECT_EQ(files[0], "SY.STA01.S3.BXX.sema");
 }
 
+TEST_F(ChannelGeneratorTest, FilenamesDim2ElasticXZOnly) {
+  // Passing a 2-element span {'X','Z'} mirrors what the dim2 template overload
+  // does.
+  Gen gen(0.05);
+  constexpr std::array<char, 2> kDim2 = { 'X', 'Z' };
+  const auto files = gen.get_station_filenames(
+      "SY", "STA01", "S2", specfem::enums::wavefield::displacement,
+      std::span<const char>(kDim2));
+
+  ASSERT_EQ(files.size(), 2u);
+  EXPECT_EQ(files[0], "SY.STA01.S2.BXX.semd");
+  EXPECT_EQ(files[1], "SY.STA01.S2.BXZ.semd");
+}
+
+TEST_F(ChannelGeneratorTest, GetTimestep) {
+  Gen gen(0.05);
+  EXPECT_FLOAT_EQ(gen.get_timestep(), 0.05f);
+
+  Gen gen2(1.0);
+  EXPECT_FLOAT_EQ(gen2.get_timestep(), 1.0f);
+}
+
 TEST_F(ChannelGeneratorTest, FilenamePressure1Component) {
   Gen gen(0.05);
   const auto files = gen.get_station_filenames(
@@ -588,7 +611,7 @@ protected:
 };
 
 TEST_F(ASCIISeismogramWriterTest, FilesCreatedForElasticDisplacement) {
-  // 2D receiver, displacement → 3 component files (X, Y, Z)
+  // 2D receiver, displacement → 2 component files (X, Z)
   MockReceivers<specfem::element::dimension_tag::dim2> receivers;
   receivers.add_station("SY", "STA01",
                         { specfem::enums::wavefield::displacement });
@@ -596,16 +619,18 @@ TEST_F(ASCIISeismogramWriterTest, FilesCreatedForElasticDisplacement) {
   const int npts = 10;
   receivers.add_seismogram("SY", "STA01",
                            specfem::enums::wavefield::displacement,
-                           make_sinusoidal_seismogram(npts, 0.05, 1.0, 3));
+                           make_sinusoidal_seismogram(npts, 0.05, 1.0, 2));
 
   specfem::io::impl::ChannelGenerator gen(0.05); // Band B
 
   specfem::io::impl::SeismogramFormatWriter<
       specfem::enums::seismogram_format::ascii>::write(receivers, gen, kOutDir);
 
+  constexpr std::array<char, 2> kDim2 = { 'X', 'Z' };
   const auto files = gen.get_station_filenames(
-      "SY", "STA01", "S2", specfem::enums::wavefield::displacement);
-  ASSERT_EQ(files.size(), 3u);
+      "SY", "STA01", "S2", specfem::enums::wavefield::displacement,
+      std::span<const char>(kDim2));
+  ASSERT_EQ(files.size(), 2u);
 
   for (const auto &fname : files) {
     const std::string path = kOutDir + "/" + fname;
@@ -622,14 +647,16 @@ TEST_F(ASCIISeismogramWriterTest, LineCountMatchesNPTS) {
 
   const int npts = 25;
   receivers.add_seismogram("SY", "STA01", specfem::enums::wavefield::velocity,
-                           make_sinusoidal_seismogram(npts, 0.01, 2.0, 3));
+                           make_sinusoidal_seismogram(npts, 0.01, 2.0, 2));
 
   specfem::io::impl::ChannelGenerator gen(0.01);
   specfem::io::impl::SeismogramFormatWriter<
       specfem::enums::seismogram_format::ascii>::write(receivers, gen, kOutDir);
 
+  constexpr std::array<char, 2> kDim2 = { 'X', 'Z' };
   const auto files = gen.get_station_filenames(
-      "SY", "STA01", "S2", specfem::enums::wavefield::velocity);
+      "SY", "STA01", "S2", specfem::enums::wavefield::velocity,
+      std::span<const char>(kDim2));
   for (const auto &fname : files) {
     const std::string path = kOutDir + "/" + fname;
     track(path);
@@ -712,16 +739,18 @@ TEST_F(ASCIISeismogramWriterTest, MultipleStationsWriteSeparateFiles) {
   const int npts = 5;
   for (const auto &sta : { std::string("STA01"), std::string("STA02") }) {
     receivers.add_seismogram("SY", sta, specfem::enums::wavefield::displacement,
-                             make_sinusoidal_seismogram(npts, 0.05, 1.0, 3));
+                             make_sinusoidal_seismogram(npts, 0.05, 1.0, 2));
   }
 
   specfem::io::impl::ChannelGenerator gen(0.05);
   specfem::io::impl::SeismogramFormatWriter<
       specfem::enums::seismogram_format::ascii>::write(receivers, gen, kOutDir);
 
+  constexpr std::array<char, 2> kDim2 = { 'X', 'Z' };
   for (const auto &sta : { std::string("STA01"), std::string("STA02") }) {
     const auto files = gen.get_station_filenames(
-        "SY", sta, "S2", specfem::enums::wavefield::displacement);
+        "SY", sta, "S2", specfem::enums::wavefield::displacement,
+        std::span<const char>(kDim2));
     for (const auto &fname : files) {
       const std::string path = kOutDir + "/" + fname;
       track(path);
@@ -738,6 +767,9 @@ TEST_F(ASCIISeismogramWriterTest, MultipleStationsWriteSeparateFiles) {
  *   network=SY, station=STA01, dt=0.05 (band B), omega=1.0, npts=5, dim2
  *   value[c][i] = sin((c+1) * 1.0 * i * 0.05)
  * and written with std::scientific (default precision = 6 decimal digits).
+ *
+ * dim2 produces X- and Z-components only (2 files).
+ * BXX → value[0] = sin(1*omega*t), BXZ → value[1] = sin(2*omega*t).
  */
 TEST_F(ASCIISeismogramWriterTest, OutputMatchesReferenceFiles) {
   const int npts = 5;
@@ -748,25 +780,27 @@ TEST_F(ASCIISeismogramWriterTest, OutputMatchesReferenceFiles) {
                         { specfem::enums::wavefield::displacement });
   receivers.add_seismogram("SY", "STA01",
                            specfem::enums::wavefield::displacement,
-                           make_sinusoidal_seismogram(npts, dt, 1.0, 3));
+                           make_sinusoidal_seismogram(npts, dt, 1.0, 2));
 
   specfem::io::impl::ChannelGenerator gen(dt); // dt=0.05 → band B
 
   specfem::io::impl::SeismogramFormatWriter<
       specfem::enums::seismogram_format::ascii>::write(receivers, gen, kOutDir);
 
+  constexpr std::array<char, 2> kDim2 = { 'X', 'Z' };
   const auto files = gen.get_station_filenames(
-      "SY", "STA01", "S2", specfem::enums::wavefield::displacement);
-  ASSERT_EQ(files.size(), 3u);
+      "SY", "STA01", "S2", specfem::enums::wavefield::displacement,
+      std::span<const char>(kDim2));
+  ASSERT_EQ(files.size(), 2u);
 
-  // Reference files live in io/seismogram/data/ relative to the working dir
+  // Reference files live in io/seismogram/data/ relative to the working dir.
+  // BXZ now contains sin(2*omega*t) (same data as old BXY).
   const std::vector<std::string> ref_files = {
     "io/seismogram/data/SY.STA01.S2.BXX.semd",
-    "io/seismogram/data/SY.STA01.S2.BXY.semd",
     "io/seismogram/data/SY.STA01.S2.BXZ.semd"
   };
 
-  for (int comp = 0; comp < 3; ++comp) {
+  for (int comp = 0; comp < 2; ++comp) {
     const std::string written = kOutDir + "/" + files[comp];
     track(written);
 
@@ -969,8 +1003,10 @@ TEST_F(SACSeismogramWriterTest, StationNameStoredInHeader) {
 
   const auto base_files = gen.get_station_filenames(
       "SY", "MYSTA", "S3", specfem::enums::wavefield::displacement);
+  for (const auto &fname : base_files) {
+    track(kOutDir + "/" + ascii_to_sac(fname));
+  }
   const std::string path = kOutDir + "/" + ascii_to_sac(base_files[0]);
-  track(path);
 
   EXPECT_EQ(read_sac_text(path, 0), "MYSTA"); // KSTNM
 }
@@ -990,8 +1026,10 @@ TEST_F(SACSeismogramWriterTest, NetworkNameStoredInHeader) {
 
   const auto base_files = gen.get_station_filenames(
       "MYNET", "STA01", "S3", specfem::enums::wavefield::displacement);
+  for (const auto &fname : base_files) {
+    track(kOutDir + "/" + ascii_to_sac(fname));
+  }
   const std::string path = kOutDir + "/" + ascii_to_sac(base_files[0]);
-  track(path);
 
   EXPECT_EQ(read_sac_text(path, 168), "MYNET"); // KNETWK
 }
@@ -1055,4 +1093,91 @@ TEST_F(SACSeismogramWriterTest, EmptySeismogramProducesNoFile) {
     EXPECT_FALSE(std::ifstream(path, std::ios::binary).good())
         << "Should not have created file for empty seismogram: " << path;
   }
+}
+
+TEST_F(SACSeismogramWriterTest, SingleSampleDeltaFromGeneratorTimestep) {
+  // When only one sample is written, delta cannot be derived from the data.
+  // The writer pre-seeds delta from gen.get_timestep() so the SAC DELTA
+  // header is still valid rather than UNDEF (-12345).
+  const double dt = 0.05;
+  MockReceivers<specfem::element::dimension_tag::dim3> receivers;
+  receivers.add_station("SY", "STA01",
+                        { specfem::enums::wavefield::displacement });
+  receivers.add_seismogram("SY", "STA01",
+                           specfem::enums::wavefield::displacement,
+                           make_sinusoidal_seismogram(1, dt, 1.0, 3));
+
+  specfem::io::impl::ChannelGenerator gen(dt);
+  specfem::io::impl::SeismogramFormatWriter<
+      specfem::enums::seismogram_format::sac>::write(receivers, gen, kOutDir);
+
+  const auto base_files = gen.get_station_filenames(
+      "SY", "STA01", "S3", specfem::enums::wavefield::displacement);
+  for (const auto &fname : base_files) {
+    const std::string path = kOutDir + "/" + ascii_to_sac(fname);
+    track(path);
+    EXPECT_NEAR(read_sac_float(path, 0), static_cast<float>(dt), 1e-5f)
+        << "DELTA should be pre-seeded from generator timestep: " << path;
+  }
+}
+
+// ===========================================================================
+// 5. SAC helper function tests
+// ===========================================================================
+
+TEST(SACHelpers, ExtractChannelCodeNormal) {
+  EXPECT_EQ(specfem::io::impl::extract_channel_code_from_filename(
+                "SY.ANMO.S3.BXZ.semd"),
+            "BXZ");
+  EXPECT_EQ(specfem::io::impl::extract_channel_code_from_filename(
+                "SY.STA01.S2.HXX.semv"),
+            "HXX");
+  EXPECT_EQ(specfem::io::impl::extract_channel_code_from_filename(
+                "AC.HYD01.S2.BXP.semp"),
+            "BXP");
+}
+
+TEST(SACHelpers, ExtractChannelCodeEdgeCases) {
+  // No extension dot → empty string
+  EXPECT_EQ(
+      specfem::io::impl::extract_channel_code_from_filename("noextension"), "");
+  // Only one dot → empty string
+  EXPECT_EQ(specfem::io::impl::extract_channel_code_from_filename("a.b"), "");
+}
+
+TEST(SACHelpers, OrientationForChannelKnownComponents) {
+  // X component
+  auto ox = specfem::io::impl::orientation_for_channel("BXX");
+  EXPECT_FLOAT_EQ(ox.cmpaz, specfem::io::impl::kComponentOrientations[0].cmpaz);
+  EXPECT_FLOAT_EQ(ox.cmpinc,
+                  specfem::io::impl::kComponentOrientations[0].cmpinc);
+
+  // Y component
+  auto oy = specfem::io::impl::orientation_for_channel("BXY");
+  EXPECT_FLOAT_EQ(oy.cmpaz, specfem::io::impl::kComponentOrientations[1].cmpaz);
+
+  // Z component
+  auto oz = specfem::io::impl::orientation_for_channel("BXZ");
+  EXPECT_FLOAT_EQ(oz.cmpaz, specfem::io::impl::kComponentOrientations[2].cmpaz);
+}
+
+TEST(SACHelpers, OrientationForChannelUnknown) {
+  // Pressure (P) and empty string → undefined orientation
+  auto op = specfem::io::impl::orientation_for_channel("BXP");
+  EXPECT_FLOAT_EQ(op.cmpaz, specfem::io::impl::kOrientationUndef.cmpaz);
+  EXPECT_FLOAT_EQ(op.cmpinc, specfem::io::impl::kOrientationUndef.cmpinc);
+
+  auto oe = specfem::io::impl::orientation_for_channel("");
+  EXPECT_FLOAT_EQ(oe.cmpaz, specfem::io::impl::kOrientationUndef.cmpaz);
+}
+
+TEST(SACHelpers, GetIdepForWavefield) {
+  using wf = specfem::enums::wavefield;
+  EXPECT_EQ(specfem::io::impl::get_idep_for_wavefield(wf::displacement),
+            6); // IDISP
+  EXPECT_EQ(specfem::io::impl::get_idep_for_wavefield(wf::velocity), 7); // IVEL
+  EXPECT_EQ(specfem::io::impl::get_idep_for_wavefield(wf::acceleration),
+            8); // IACC
+  EXPECT_EQ(specfem::io::impl::get_idep_for_wavefield(wf::pressure),
+            5); // IUNKN
 }

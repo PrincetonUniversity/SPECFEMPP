@@ -44,18 +44,21 @@ constexpr Orientation kOrientationUndef = { UNDEF_F, UNDEF_F };
 
 // ---------------------------------------------------------------------------
 // SAC IDEP code per wavefield type.
-// (6 = displacement/nm, 7 = velocity/nm·s⁻¹, 8 = acceleration/nm·s⁻²)
+// (6 = displacement/nm, 7 = velocity/nm·s⁻¹, 8 = acceleration/nm·s⁻²,
+//  5 = IUNKN for pressure which has no standard SAC amplitude type)
 // Using a function rather than an array to remain correct if the enum order
 // ever changes.
 // ---------------------------------------------------------------------------
 inline int32_t get_idep_for_wavefield(specfem::enums::wavefield type) {
   switch (type) {
   case specfem::enums::wavefield::displacement:
-    return 6;
+    return 6; // IDISP
   case specfem::enums::wavefield::velocity:
-    return 7;
+    return 7; // IVEL
   case specfem::enums::wavefield::acceleration:
-    return 8;
+    return 8; // IACC
+  case specfem::enums::wavefield::pressure:
+    return 5; // IUNKN – pressure has no standard SAC amplitude type
   default:
     return UNDEF_I;
   }
