@@ -380,7 +380,7 @@ public:
                       specfem::element::property_tag::isotropic,
                       specfem::element::attenuation_tag::constant_isotropic>();
     for (auto &material : container.element_materials) {
-      material.compute_attenuation_properties(fc.raw(), config.f0.raw(),
+      material.compute_attenuation_properties(config.f0.raw(), fc.raw(),
                                               config.band, config.tau_sigma);
     }
   }

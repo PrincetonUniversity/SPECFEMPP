@@ -52,13 +52,11 @@ template <int N_SLS> struct AttenuationObjective {
     auto maxwell_factors = maxwell<specfem::constants::NF_ATTENUATION, N_SLS>(
         f, tau_sigma, tau_eps);
 
-    // Compute sum of absolute relative errors (L1 norm, normalized by 1/Q)
-    // Matches Fortran: xi = sqrt( (tan_delta - 1/Q)^2 / (1/Q)^2 )
-    //                     = |tan_delta - 1/Q| * Q
+    // tan_delta = loss / storage = imag / real (physically correct definition)
+    // Fitted against iQ = 1/Q over the frequency band.
     type_real misfit = 0.0;
     const type_real iQ2 = iQ * iQ;
     for (int i = 0; i < specfem::constants::NF_ATTENUATION; ++i) {
-      // tan_delta = B / A ≈ 1/Q
       type_real tan_delta = maxwell_factors.imag(i) / maxwell_factors.real(i);
       type_real diff = tan_delta - iQ;
       misfit += std::sqrt(diff * diff / iQ2);

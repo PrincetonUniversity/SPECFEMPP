@@ -1,3 +1,4 @@
 tests3d:
   - "HomogeneousHalfspaceSmallNoABCForceSource"
   - "HomogeneousHalfspaceSmallNoABCForceSourceLong"
+  - "HomogeneousHalfspaceSmallNoABCForceSourceAttenuation"

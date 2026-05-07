@@ -7,23 +7,25 @@
 std::string
 specfem::io::impl::ChannelGenerator::compute_band_code(const type_real dt) {
 
-  std::string instrument_code = "";
+  // Round to nearest Hz to avoid float boundary issues
+  // (e.g. dt=0.1f → 9.9999998 Hz without rounding, which would fall in M).
+  // FDSN band boundaries are exact integers (1, 10, 80, 250, 1000 Hz).
+  const double fs = std::round(1.0 / static_cast<double>(dt));
 
   // see header for lengthy discourse on band codes and reference
-  if (dt >= 1.0) {
-    instrument_code = "L";
-  } else if (dt >= 0.1) {
-    instrument_code = "M";
-  } else if (dt > 0.0125) {
-    instrument_code = "B";
-  } else if (dt > 0.004) {
-    instrument_code = "H";
-  } else if (dt > 0.001) {
-    instrument_code = "C";
+  if (fs < 1.0) {
+    return "L"; // ~1 Hz (long period)
+  } else if (fs < 10.0) {
+    return "M"; // > 1 to < 10 Hz
+  } else if (fs < 80.0) {
+    return "B"; // >= 10 to < 80 Hz
+  } else if (fs < 250.0) {
+    return "H"; // >= 80 to < 250 Hz
+  } else if (fs < 1000.0) {
+    return "C"; // >= 250 to < 1000 Hz
   } else {
-    instrument_code = "F";
+    return "F"; // >= 1000 Hz
   }
-  return instrument_code;
 }
 
 std::string specfem::io::impl::ChannelGenerator::get_channel_code(
