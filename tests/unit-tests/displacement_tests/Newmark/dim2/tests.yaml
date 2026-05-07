@@ -18,3 +18,4 @@ tests2d:
   - "HomogeneousIsotropicCosseratDomainHighFrequency"
   - "HomogeneousIsotropicCosseratDomain"
   - "HomogeneousElasticDomainWAdjacencyMap"
+  # - "HomogeneousElasticDomainAttenuation"

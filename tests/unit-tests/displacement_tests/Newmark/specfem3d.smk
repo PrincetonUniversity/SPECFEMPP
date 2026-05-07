@@ -43,7 +43,7 @@ rule specfem3d_move_traces:
         with open(output.trace_list, "w") as f:
             f.writelines(trace_list)
 
-        os.remove(os.path.join(solver_outdir, "output_solver.txt"))
+        os.path.join(solver_outdir, "output_solver.txt")
 
 
 rule clean:
