@@ -3,6 +3,7 @@
 #include "specfem/data_access.hpp"
 #include "specfem/datatype.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/point/jacobian_matrix.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

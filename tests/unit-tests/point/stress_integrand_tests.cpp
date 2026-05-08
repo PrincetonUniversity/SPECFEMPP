@@ -1,6 +1,8 @@
 #include "specfem/enums.hpp"
+#include "specfem/point/stress.hpp"
 #include "specfem/point/stress_integrand.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/tags.hpp"
 #include "specfem/utilities.hpp"
 #include "test_helper.hpp"
 #include "test_macros.hpp"
