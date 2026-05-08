@@ -1,0 +1,10 @@
+id : "HomogeneousElasticDomainAttenuation"
+name : "Homogeneous elastic domain with attenuation"
+description: >
+  Testing newmark time-marching solver on a homogeneous elastic domain with attenuation and no interfaces. Test is run on a single MPI process.
+config:
+  nproc : 1
+  tolerance : 1e-1 # this is lower because the 2D code uses a different attenuation implementation.
+databases:
+  specfem_config: "specfem_config.yaml"
+  traces: "traces"
