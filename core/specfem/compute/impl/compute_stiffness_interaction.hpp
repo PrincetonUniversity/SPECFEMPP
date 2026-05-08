@@ -21,7 +21,7 @@
 
 namespace specfem::compute::impl {
 
-template <int NGLL, specfem::simulation::field_type WaveType, typename Tags>
+template <int NGLL, typename Tags>
 int compute_stiffness_interaction(
     const specfem::assembly::assembly<Tags::dimension_tag> &assembly,
     const int &istep) {
@@ -60,7 +60,8 @@ int compute_stiffness_interaction(
   const auto &boundaries = assembly.boundaries;
 
   // Get the simulation field and boundary values
-  const auto field = assembly.fields.template get_simulation_field<WaveType>();
+  const auto field =
+      assembly.fields.template get_simulation_field<Tags::wavefield_tag>();
   const auto boundary_values =
       assembly.boundary_values.template get_container<boundary_tag>();
 
@@ -121,7 +122,8 @@ int compute_stiffness_interaction(
   Kokkos::Profiling::pushRegion("Compute Stiffness Interaction");
 
   if constexpr (Tags::boundary_tag == specfem::element::boundary_tag::stacey &&
-                WaveType == specfem::simulation::field_type::backward) {
+                Tags::wavefield_tag ==
+                    specfem::simulation::field_type::backward) {
 
     specfem::execution::for_all(
         "specfem::compute::compute_stiffness_interaction", chunk,
@@ -241,7 +243,8 @@ int compute_stiffness_interaction(
                 // Store forward boundary values for reconstruction during
                 // adjoint simulations. The function does nothing if the
                 // boundary tag is not stacey
-                if (WaveType == specfem::simulation::field_type::forward) {
+                if (Tags::wavefield_tag ==
+                    specfem::simulation::field_type::forward) {
                   specfem::assembly::store_on_device(istep, index, acceleration,
                                                      boundary_values);
                 }

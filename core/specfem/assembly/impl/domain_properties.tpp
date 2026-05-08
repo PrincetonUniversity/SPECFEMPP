@@ -4,8 +4,8 @@
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-specfem::assembly::impl::domain_properties<specfem::element::dimension_tag::dim2, MediumTag,
-                                      PropertyTag>::
+specfem::assembly::impl::domain_properties<
+    specfem::element::dimension_tag::dim2, MediumTag, PropertyTag>::
     domain_properties(
         const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
         const specfem::assembly::mesh<dimension_tag> &mesh,
@@ -50,8 +50,8 @@ specfem::assembly::impl::domain_properties<specfem::element::dimension_tag::dim2
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-specfem::assembly::impl::domain_properties<specfem::element::dimension_tag::dim3, MediumTag,
-                                      PropertyTag>::
+specfem::assembly::impl::domain_properties<
+    specfem::element::dimension_tag::dim3, MediumTag, PropertyTag>::
     domain_properties(
         const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
         const specfem::assembly::mesh<dimension_tag> &mesh,
@@ -67,7 +67,8 @@ specfem::assembly::impl::domain_properties<specfem::element::dimension_tag::dim3
       "specfem::assembly::impl::domain_properties::dim3::init_host_values",
       Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace,
                             Kokkos::Rank<4> >(
-          { 0, 0, 0, 0 }, { nelement, mesh.element_grid.ngllz, mesh.element_grid.nglly, mesh.element_grid.ngllx }),
+          { 0, 0, 0, 0 }, { nelement, mesh.element_grid.ngllz,
+                            mesh.element_grid.nglly, mesh.element_grid.ngllx }),
       [=, this](const int i, const int iz, const int iy, const int ix) {
         const int ispec = elements(i);
         property_index_mapping(ispec) = i;

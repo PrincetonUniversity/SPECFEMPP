@@ -43,20 +43,23 @@ specfem::runtime_configuration::kernel::instantiate_kernel_writer() const {
     if (this->simulation_type == specfem::simulation::type::combined) {
       if (specfem::utilities::is_hdf5_string(this->output_format)) {
         return std::make_shared<specfem::io::kernel_writer<
-            specfem::io::HDF5<specfem::io::write> > >(this->output_folder);
+            specfem::io_backends::HDF5<specfem::io::write> > >(
+            this->output_folder);
       } else if (specfem::utilities::is_adios2_string(this->output_format)) {
         return std::make_shared<specfem::io::kernel_writer<
-            specfem::io::ADIOS2<specfem::io::write> > >(this->output_folder);
+            specfem::io_backends::ADIOS2<specfem::io::write> > >(
+            this->output_folder);
       } else if (specfem::utilities::is_ascii_string(this->output_format)) {
         return std::make_shared<specfem::io::kernel_writer<
-            specfem::io::ASCII<specfem::io::write> > >(this->output_folder);
+            specfem::io_backends::ASCII<specfem::io::write> > >(
+            this->output_folder);
       } else if (specfem::utilities::is_npy_string(this->output_format)) {
-        return std::make_shared<
-            specfem::io::kernel_writer<specfem::io::NPY<specfem::io::write> > >(
+        return std::make_shared<specfem::io::kernel_writer<
+            specfem::io_backends::NPY<specfem::io::write> > >(
             this->output_folder);
       } else if (specfem::utilities::is_npz_string(this->output_format)) {
-        return std::make_shared<
-            specfem::io::kernel_writer<specfem::io::NPZ<specfem::io::write> > >(
+        return std::make_shared<specfem::io::kernel_writer<
+            specfem::io_backends::NPZ<specfem::io::write> > >(
             this->output_folder);
       } else {
         throw std::runtime_error("Unknown wavefield format");
