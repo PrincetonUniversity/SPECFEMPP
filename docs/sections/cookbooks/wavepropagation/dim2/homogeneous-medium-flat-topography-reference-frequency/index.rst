@@ -1,7 +1,7 @@
 .. _reference_frequency_example:
 
 Effect of the reference frequency on viscoelastic attenuation
-==============================================================
+=============================================================
 
 In this example (see :repo-file:`benchmarks/src/dim2/homogeneous-medium-flat-topography-reference-frequency`)
 we use the same homogeneous attenuating medium as in :ref:`attenuation_example`
@@ -23,7 +23,7 @@ apparent velocity and amplitude of the wavefield through velocity dispersion.
         :text: Reference-frequency cookbook
 
 Setting up your workspace
---------------------------
+-------------------------
 
 .. code-block:: bash
 
@@ -55,13 +55,13 @@ Create the output directories:
     touch specfem_config.yaml.in
 
 Generating the mesh
---------------------
+-------------------
 
 All nine simulations share the same geometry and material properties, so the
 mesh is generated only once.
 
 Parameter File
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. literalinclude:: parameter_files/Par_File
     :caption: Par_File
@@ -72,14 +72,14 @@ The single material layer uses ``QKappa=100 Qmu=50`` (line 90), enabling
 viscoelastic attenuation for all runs.
 
 Topography file
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 .. literalinclude:: parameter_files/topography.dat
     :caption: topography.dat
     :language: bash
 
 Running ``xmeshfem2D``
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: bash
 
@@ -89,7 +89,7 @@ This writes ``OUTPUT_FILES/mesh/database.bin`` and
 ``OUTPUT_FILES/mesh/STATIONS``, which are shared by all nine solver runs.
 
 Defining the source
---------------------
+-------------------
 
 .. literalinclude:: parameter_files/source.yaml
     :caption: source.yaml
@@ -99,7 +99,7 @@ A single point force at the domain center, excited with a Ricker wavelet at
 12.5 Hz.
 
 Configuring the solver
------------------------
+----------------------
 
 Instead of writing nine separate YAML files by hand, we use a single template
 and a short Python script to stamp it out. The template uses Python-style
@@ -121,7 +121,7 @@ The highlighted lines are the only values that change across runs:
   ``{freq_tag}``.
 
 Running the solver
--------------------
+------------------
 
 First generate the nine config files from the template:
 
@@ -154,7 +154,7 @@ Then run the solver for each variant:
         ls OUTPUT_FILES/freq_*/specfem_config.yaml | xargs -P 4 -I{} specfem 2d -p {}
 
 Visualizing seismograms
-------------------------
+-----------------------
 
 The following script reads all nine sets of seismograms and produces
 comparison plots for the X and Z components.
@@ -197,7 +197,7 @@ In both figures you should observe:
   "correct" reference for a 12.5 Hz Ricker source and serves as the baseline.
 
 About the reference frequency
--------------------------------
+-----------------------------
 
 SPECFEM++ models viscoelastic attenuation using the standard linear solid
 (SLS) mechanism. The ``reference-frequency`` is the frequency at which the

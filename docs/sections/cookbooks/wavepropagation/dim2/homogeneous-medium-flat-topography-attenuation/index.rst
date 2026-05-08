@@ -1,7 +1,7 @@
 .. _attenuation_example:
 
-Elastic wave propagation with and without attenuation
-======================================================
+Elastic & viscoelastic wave propagation comparison
+==================================================
 
 In this example (see :repo-file:`benchmarks/src/dim2/homogeneous-medium-flat-topography-attenuation`)
 we simulate wave propagation through the same 2-dimensional homogeneous elastic medium as in
@@ -19,7 +19,7 @@ decay and velocity dispersion introduced by attenuation.
         :text: Attenuation cookbook
 
 Setting up your workspace
---------------------------
+-------------------------
 
 Let's start by creating a workspace from where we can run this example.
 
@@ -64,7 +64,7 @@ Now let's create the necessary directories for both simulation variants.
     touch topography.dat
 
 Generating the mesh
---------------------
+-------------------
 
 Both simulation variants use the same homogeneous medium and identical mesh, so the
 mesh generation steps are the same except for the output directory. We run ``xmeshfem2D``
@@ -72,7 +72,7 @@ separately for each variant so that the STATIONS file and database are written t
 correct subdirectory.
 
 Parameter File (without attenuation)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. literalinclude:: parameter_files/Par_File_attenuation_off
     :caption: Par_File_attenuation_off
@@ -84,7 +84,7 @@ both quality factors to 9999 tells the solver to treat the medium as purely elas
 attenuation).
 
 Parameter File (with attenuation)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. literalinclude:: parameter_files/Par_File_attenuation_on
     :caption: Par_File_attenuation_on
@@ -101,7 +101,7 @@ the effect clearly visible in the seismograms.
     ``doc/Qkappa_Qmu_versus_Qp_Qs_relationship_in_2D_plane_strain.pdf`` for the conversion.
 
 Topography file
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 .. literalinclude:: parameter_files/topography.dat
     :caption: topography.dat
@@ -111,7 +111,7 @@ The topography file defines the mesh interfaces. The model has a single layer sp
 a 4000 m × 3000 m domain, discretized into 80 × 60 spectral elements.
 
 Running ``xmeshfem2D``
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 Generate the mesh database for each variant:
 
@@ -124,7 +124,7 @@ Each directory should now contain ``database.bin`` and ``STATIONS`` files, along
 files for visualization.
 
 Defining sources
------------------
+----------------
 
 Both runs share the same source, defined in a single YAML file. For a full description
 of source parameters refer to :ref:`source_description`.
@@ -138,10 +138,10 @@ A single point force source is placed at the center of the domain (2500 m, 2500 
 excited with a Ricker wavelet at a peak frequency of 12.5 Hz.
 
 Configuring the solver
------------------------
+----------------------
 
 Without attenuation
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 .. literalinclude:: parameter_files/specfem_config_attenuation_off.yaml
     :caption: specfem_config_attenuation_off.yaml
@@ -152,7 +152,7 @@ This configuration uses the Newmark time scheme with ``dt=1.1e-3`` s for 1600 st
 treats the medium as purely elastic.
 
 With attenuation
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 .. literalinclude:: parameter_files/specfem_config_attenuation_on.yaml
     :caption: specfem_config_attenuation_on.yaml
@@ -170,7 +170,7 @@ The attenuation-enabled configuration adds the ``attenuation`` section (lines 33
   frequencies of your source.
 
 Running the solver
--------------------
+------------------
 
 Run both variants back-to-back (or in parallel if resources allow):
 
@@ -188,7 +188,7 @@ Each run writes seismograms to its respective ``OUTPUT_FILES/<variant>/results/`
 directory.
 
 Visualizing the geometry
--------------------------
+------------------------
 
 The following script plots the model domain, source location, and receiver positions
 to verify the setup before running the solver.
@@ -211,7 +211,7 @@ Expected geometry:
    gray), the source (red star), and receiver locations (blue triangles).
 
 Visualizing seismograms
-------------------------
+-----------------------
 
 The following Python script reads both sets of seismograms with ``obspy`` and produces
 comparison plots for the X and Z components.
@@ -255,7 +255,7 @@ In both figures you should observe:
   the waveform to appear smoother in the attenuating run.
 
 About attenuation in SPECFEM++
----------------------------------
+------------------------------
 
 SPECFEM++ models viscoelastic attenuation using the standard linear solid (SLS)
 mechanism, implemented via memory variables (also called internal variables). The
