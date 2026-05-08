@@ -45,10 +45,11 @@ void program_2d(
       database_filename, setup.get_elastic_wave_type(),
       setup.get_electromagnetic_wave_type(), setup.is_attenuation_enabled());
 
+  const auto mesh_info = mesh.print();
   specfem::Logger::info([&](std::ostringstream &oss) {
     oss << "Mesh Information:\n"
         << "-------------------------------\n"
-        << mesh.print();
+        << mesh_info;
   });
 
   // --------------------------------------------------------------
@@ -99,8 +100,7 @@ void program_2d(
       setup.allocate_boundary_values(), setup.instantiate_property_reader(),
       setup.get_flux_scheme_configuration());
 
-  specfem::Logger::info(
-      [&](std::ostringstream &oss) { oss << assembly.print(); });
+  specfem::Logger::info(assembly.print());
 
   // --------------------------------------------------------------
 
