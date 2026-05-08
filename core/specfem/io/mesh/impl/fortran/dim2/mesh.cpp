@@ -77,16 +77,6 @@ specfem::io::read_2d_mesh(
                                           Kokkos::DefaultHostExecutionSpace>(
       "specfem::mesh::knods", mesh.parameters.ngnod, mesh.nspec);
 
-  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &mesh.parameters.nspec, 1,
-                                     MPI_INT, MPI_SUM,
-                                     specfem::MPI::communicator()));
-  SPECFEM_MPI_SAFECALL(
-      MPI_Allreduce(MPI_IN_PLACE, &mesh.parameters.nelem_acforcing, 1, MPI_INT,
-                    MPI_SUM, specfem::MPI::communicator()));
-  SPECFEM_MPI_SAFECALL(
-      MPI_Allreduce(MPI_IN_PLACE, &mesh.parameters.nelem_acoustic_surface, 1,
-                    MPI_INT, MPI_SUM, specfem::MPI::communicator()));
-
   try {
     auto [n_sls, attenuation_f0_reference, read_velocities_at_f0] =
         specfem::io::mesh::impl::fortran::dim2::read_mesh_database_attenuation(
