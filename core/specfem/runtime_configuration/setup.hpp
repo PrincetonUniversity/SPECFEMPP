@@ -11,6 +11,7 @@
 #include "run_setup.hpp"
 #include "solver.hpp"
 #include "sources.hpp"
+#include "specfem/attenuation.hpp"
 #include "specfem/io.hpp"
 #include "specfem/setup.hpp"
 #include "time_scheme.hpp"
@@ -223,15 +224,24 @@ public:
   }
 
   /**
-   * @brief Get the reference frequency for attenuation
-   *
-   * @return specfem::units::Hertz reference frequency for attenuation (0 Hz if
-   * attenuation is disabled)
+   * @brief Whether reference frequency was explicitly set in the attenuation
+   * configuration (vs. being read from the mesh database)
    */
-  specfem::units::Hertz get_attenuation_reference_frequency() const {
-    if (this->attenuation)
+  bool has_attenuation_reference_frequency() const {
+    return this->attenuation && this->attenuation->has_reference_frequency();
+  }
+
+  /**
+   * @brief Get the reference frequency for attenuation, if set in the config.
+   *
+   * @return std::optional<specfem::units::Hertz> reference frequency, or
+   * std::nullopt if attenuation is disabled or f0 was not set in the YAML
+   */
+  std::optional<specfem::units::Hertz>
+  get_attenuation_reference_frequency() const {
+    if (this->attenuation && this->attenuation->has_reference_frequency())
       return this->attenuation->get_reference_frequency();
-    return specfem::units::Hertz(0.0);
+    return std::nullopt;
   };
 
   /**
@@ -244,6 +254,17 @@ public:
     if (this->attenuation)
       return this->attenuation->get_attenuation_frequency_band();
     return {};
+  };
+
+  /**
+   * @brief Get a self-contained attenuation setup struct for passing to
+   * read_mesh functions.
+   *
+   * @return specfem::attenuation::Setup
+   */
+  specfem::attenuation::Setup get_attenuation_setup() const {
+    return { is_attenuation_enabled(), get_attenuation_reference_frequency(),
+             get_attenuation_band() };
   };
 
   /**

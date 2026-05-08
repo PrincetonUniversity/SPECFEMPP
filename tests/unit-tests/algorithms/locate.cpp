@@ -13,7 +13,7 @@ TEST(ALGORITHMS, locate_point) {
   // Read Mesh database
   specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
       database_file, specfem::enums::elastic_wave::psv,
-      specfem::enums::electromagnetic_wave::te, /*attenuation=*/false);
+      specfem::enums::electromagnetic_wave::te, specfem::attenuation::Setup{});
 
   // Quadratures
   specfem::quadrature::gll::gll gll(0.0, 0.0, 5);

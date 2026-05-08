@@ -39,7 +39,7 @@ void program_2d(
 
   const auto mesh = specfem::io::read_2d_mesh(
       database_filename, setup.get_elastic_wave_type(),
-      setup.get_electromagnetic_wave_type(), setup.is_attenuation_enabled());
+      setup.get_electromagnetic_wave_type(), setup.get_attenuation_setup());
 
   specfem::Logger::info("Mesh Information:");
   specfem::Logger::info("-------------------------------");
@@ -91,7 +91,6 @@ void program_2d(
       setup.get_t0(), dt, nsteps, max_seismogram_time_step,
       nstep_between_samples, setup.get_simulation_type(),
       setup.allocate_boundary_values(), setup.instantiate_property_reader(),
-      setup.get_attenuation_reference_frequency(), setup.get_attenuation_band(),
       setup.get_flux_scheme_configuration());
 
   specfem::Logger::info(assembly.print());

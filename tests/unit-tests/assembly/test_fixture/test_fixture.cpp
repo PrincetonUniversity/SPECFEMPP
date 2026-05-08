@@ -37,9 +37,9 @@ template <> Assembly<specfem::element::dimension_tag::dim2>::Assembly() {
 
     const auto elastic_wave = Test.get_elastic_wave();
     const auto electromagnetic_wave = Test.get_electromagnetic_wave();
-    const auto mesh = specfem::io::read_2d_mesh(database_file, elastic_wave,
-                                                electromagnetic_wave,
-                                                Test.is_attenuation_enabled());
+    auto mesh = specfem::io::read_2d_mesh(
+        database_file, elastic_wave, electromagnetic_wave,
+        specfem::attenuation::Setup{ Test.is_attenuation_enabled() });
 
     this->Meshes.push_back(mesh);
     this->suffixes.push_back(Test.suffix);
@@ -62,9 +62,7 @@ template <> Assembly<specfem::element::dimension_tag::dim2>::Assembly() {
     this->assemblies.push_back(
         specfem::assembly::assembly<specfem::element::dimension_tag::dim2>(
             mesh, quadrature, sources, receivers, seismogram_types, 1.0, 0.0, 1,
-            1, 1, specfem::simulation::type::forward, false, nullptr,
-            specfem::units::Hertz(0.0),
-            specfem::utilities::Band<specfem::units::Hertz>{}));
+            1, 1, specfem::simulation::type::forward, false, nullptr));
   }
 }
 
@@ -85,8 +83,9 @@ template <> Assembly<specfem::element::dimension_tag::dim3>::Assembly() {
         Test.get_databases();
 
     // For 3D, we need different mesh and source reading functions
-    const auto mesh = specfem::io::read_3d_mesh(mesh_database_file,
-                                                Test.is_attenuation_enabled());
+    auto mesh = specfem::io::read_3d_mesh(
+        mesh_database_file,
+        specfem::attenuation::Setup{ Test.is_attenuation_enabled() });
 
     this->Meshes.push_back(mesh);
     this->suffixes.push_back(Test.suffix);
@@ -117,9 +116,7 @@ template <> Assembly<specfem::element::dimension_tag::dim3>::Assembly() {
     this->assemblies.push_back(
         specfem::assembly::assembly<specfem::element::dimension_tag::dim3>(
             mesh, quadrature, sources, receivers, seismogram_types, 1.0, 0.0, 1,
-            1, 1, specfem::simulation::type::forward, false, nullptr,
-            specfem::units::Hertz(0.0),
-            specfem::utilities::Band<specfem::units::Hertz>{}));
+            1, 1, specfem::simulation::type::forward, false, nullptr));
 
     std::cout << "Created assembly for " << Test.name << std::endl;
   }
