@@ -1,36 +1,15 @@
 include: "../../../specfem3d.smk"
 
-networks = [
-    "X", "X", "X", "X", "X", "X", "X", "X", "X", "X",
-    "X", "X", "X", "X", "X", "X", "X", "X", "X", "X",
-    "Y", "Y", "Y", "Y", "Y", "Y", "Y", "Y", "Y", "Y",
-    "Y", "Y", "Y", "Y", "Y", "Y", "Y", "Y", "Y", "Y",
-    "Z", "Z", "Z", "Z", "Z", "Z", "Z", "Z", "Z", "Z",
-    "Z", "Z", "Z", "Z", "Z", "Z", "Z", "Z",
-    "XY", "XY", "XY", "XY", "XY", "XY", "XY", "XY", "XY", "XY",
-    "XY", "XY", "XY", "XY", "XY", "XY", "XY", "XY", "XY", "XY",
-    "XYZ", "XYZ", "XYZ", "XYZ", "XYZ", "XYZ", "XYZ", "XYZ", "XYZ", "XYZ",
-    "XYZ", "XYZ", "XYZ", "XYZ", "XYZ", "XYZ", "XYZ", "XYZ", "XYZ", "XYZ",
-]
-stations = [
-    "S0000", "S0002", "S0004", "S0006", "S0008", "S0010", "S0012", "S0014", "S0016", "S0018",
-    "S0022", "S0024", "S0026", "S0028", "S0030", "S0032", "S0034", "S0036", "S0038", "S0040",
-    "S0000", "S0002", "S0004", "S0006", "S0008", "S0010", "S0012", "S0014", "S0016", "S0018",
-    "S0022", "S0024", "S0026", "S0028", "S0030", "S0032", "S0034", "S0036", "S0038", "S0040",
-    "S0002", "S0004", "S0006", "S0008", "S0010", "S0012", "S0014", "S0016", "S0018", "S0020",
-    "S0024", "S0026", "S0028", "S0030", "S0032", "S0034", "S0036", "S0038",
-    "S0000", "S0002", "S0004", "S0006", "S0008", "S0010", "S0012", "S0014", "S0016", "S0018",
-    "S0022", "S0024", "S0026", "S0028", "S0030", "S0032", "S0034", "S0036", "S0038", "S0040",
-    "S0000", "S0002", "S0004", "S0006", "S0008", "S0010", "S0012", "S0014", "S0016", "S0018",
-    "S0022", "S0024", "S0026", "S0028", "S0030", "S0032", "S0034", "S0036", "S0038", "S0040",
-]
+networks = ["X", "Y", "Z", "XYZ"]
+stations = ["S0000", "S0001", "S0002", "S0003"]
 locations = ["S3"]
 channels = ["BXX","BXY","BXZ"]
 extensions = ["semd", "semv", "sema"]
 
 traces = [
     f"traces/{network}.{station}.{location}.{channel}.{extension}"
-    for network, station in zip(networks, stations)
+    for network in networks
+    for station in stations
     for location in locations
     for channel in channels
     for extension in extensions
