@@ -32,10 +32,10 @@ parameters:
 
   attenuation:
     enabled: true
-    reference-frequency: 1.0 Hz
+    reference-frequency: 30.0 Hz
     attenuation-frequency-band:
-      - 0.01 Hz
-      - 10.0 Hz
+      - 3.0 Hz
+      - 300.0 Hz
 
   receivers:
     stations: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/attenuation_on/STATIONS"

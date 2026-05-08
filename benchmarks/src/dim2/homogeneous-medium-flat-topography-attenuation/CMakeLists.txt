@@ -17,13 +17,13 @@ configure_file(CMakeFiles/Par_File_attenuation_on.in ${CURRENT_BENCHMARK_BUILD_D
 configure_file(CMakeFiles/specfem_config_attenuation_off.yaml.in ${CURRENT_BENCHMARK_BUILD_DIR}/specfem_config_attenuation_off.yaml)
 configure_file(CMakeFiles/specfem_config_attenuation_on.yaml.in ${CURRENT_BENCHMARK_BUILD_DIR}/specfem_config_attenuation_on.yaml)
 configure_file(CMakeFiles/Snakefile.in ${CURRENT_BENCHMARK_BUILD_DIR}/Snakefile)
+configure_file(CMakeFiles/plot_geometry.py.in ${CURRENT_BENCHMARK_BUILD_DIR}/plot_geometry.py)
 
 # Copy static files into the benchmarks.
 file(
   COPY
     ${CMAKE_CURRENT_SOURCE_DIR}/source.yaml
     ${CMAKE_CURRENT_SOURCE_DIR}/README.md
-    ${CMAKE_CURRENT_SOURCE_DIR}/STATIONS
     ${CMAKE_CURRENT_SOURCE_DIR}/topography.dat
   DESTINATION ${CURRENT_BENCHMARK_BUILD_DIR}
 )

@@ -133,10 +133,10 @@ nx                              = 80             # number of elements along X
 STACEY_ABSORBING_CONDITIONS     = .false.
 
 # absorbing boundary parameters (see absorbing_conditions above)
-absorbbottom                    = .false.
-absorbright                     = .false.
-absorbtop                       = .false.
-absorbleft                      = .false.
+absorbbottom                    = .true.
+absorbright                     = .true.
+absorbtop                       = .true.
+absorbleft                      = .true.
 
 # define the different regions of the model in the (nx,nz) spectral-element mesh
 nbregions                       = 1              # then set below the different regions and model number for each region
