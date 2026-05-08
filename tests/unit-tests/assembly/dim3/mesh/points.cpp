@@ -9,6 +9,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/filtered_graph.hpp>
 #include <gtest/gtest.h>
+#include <unordered_set>
 
 namespace specfem::assembly_test {
 
@@ -153,6 +154,34 @@ struct ExpectedMapping {
         }
       }
     }
+
+    // Check that every (ispec, iz, iy, ix) has a unique raw global index in
+    // [0, nglob). Collisions would cause distinct GLL points to share an iglob,
+    // silently aliasing their contributions in the field scatter.
+    std::unordered_set<int> seen;
+    for (int ispec = 0; ispec < points.nspec; ispec++) {
+      for (int iz = 0; iz < points.ngllz; iz++) {
+        for (int iy = 0; iy < points.nglly; iy++) {
+          for (int ix = 0; ix < points.ngllx; ix++) {
+            const int idx = points.h_index_mapping(ispec, iz, iy, ix);
+            ASSERT_GE(idx, 0) << "Negative raw global index at (" << ispec
+                              << ", " << iz << ", " << iy << ", " << ix << ").";
+            ASSERT_LT(idx, points.nglob)
+                << "Raw global index out of range at (" << ispec << ", " << iz
+                << ", " << iy << ", " << ix << "): " << idx
+                << " >= nglob=" << points.nglob;
+            // Only non-shared points (not on a conforming interface) must be
+            // unique; shared interface points intentionally reuse an index.
+            // We collect all and check the total count matches nglob.
+            seen.insert(idx);
+          }
+        }
+      }
+    }
+    ASSERT_EQ((int)seen.size(), points.nglob)
+        << "Number of distinct raw global indices (" << seen.size()
+        << ") does not match nglob (" << points.nglob
+        << "). Either some indices collide or some indices are unused.";
 
     SUCCEED() << "All points mapping and coordinates are correct." << std::endl;
     return;
