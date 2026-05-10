@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/algorithms/locate_point.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 #include <tuple>
@@ -34,6 +35,20 @@ std::pair<type_real, bool> get_local_edge_coordinate(
                            specfem::element::dimension_tag::dim2> *,
                        Kokkos::HostSpace> &coorg,
     const specfem::mesh_entity::dim2::type &mesh_entity, type_real coord);
+
+std::pair<specfem::algorithms::facial_coordinate_type<
+              specfem::element::dimension_tag::dim3>,
+          bool>
+get_local_face_coordinate(
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim3> &global,
+    const Kokkos::View<specfem::point::global_coordinates<
+                           specfem::element::dimension_tag::dim3> *,
+                       Kokkos::HostSpace> &coorg,
+    const specfem::mesh_entity::dim3::type &mesh_entity,
+    specfem::algorithms::facial_coordinate_type<
+        specfem::element::dimension_tag::dim3>
+        coord);
 
 // Core locate_point logic that can be tested with raw data arrays
 specfem::point::local_coordinates<specfem::element::dimension_tag::dim2>

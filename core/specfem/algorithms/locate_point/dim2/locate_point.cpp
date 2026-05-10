@@ -146,3 +146,31 @@ specfem::algorithms::locate_point_on_edge(
 
   return jacobian::compute_locations(coorg, ngnod, xi, gamma);
 }
+
+// 2D locate_point_on_face should just be locate_point_on_edge
+
+std::pair<specfem::algorithms::facial_coordinate_type<
+              specfem::element::dimension_tag::dim2>,
+          bool>
+locate_point_on_face(
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim2> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
+    const int &ispec,
+    const specfem::mesh_entity::type<specfem::element::dimension_tag::dim2>
+        &constraint) {
+  return specfem::algorithms::locate_point_on_edge(coordinates, mesh, ispec,
+                                                   constraint);
+}
+
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
+locate_point_on_face(
+    const specfem::algorithms::facial_coordinate_type<
+        specfem::element::dimension_tag::dim2> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
+    const int &ispec,
+    const specfem::mesh_entity::type<specfem::element::dimension_tag::dim2>
+        &constraint) {
+  return specfem::algorithms::locate_point_on_edge(coordinates, mesh, ispec,
+                                                   constraint);
+}

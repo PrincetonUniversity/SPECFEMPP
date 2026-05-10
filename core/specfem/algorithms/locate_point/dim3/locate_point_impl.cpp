@@ -1,4 +1,5 @@
 #include "specfem/algorithms/locate_point/locate_point_impl.hpp"
+#include "specfem/algorithms/locate_point.hpp"
 #include "specfem/jacobian.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
@@ -347,6 +348,162 @@ locate_point_core(
   }
 
   return { ispec_selected_point, xi_selected, eta_selected, gamma_selected };
+}
+
+std::pair<specfem::algorithms::facial_coordinate_type<
+              specfem::element::dimension_tag::dim3>,
+          bool>
+get_local_face_coordinate(
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim3> &global,
+    const Kokkos::View<specfem::point::global_coordinates<
+                           specfem::element::dimension_tag::dim3> *,
+                       Kokkos::HostSpace> &coorg,
+    const specfem::mesh_entity::dim3::type &mesh_entity,
+    specfem::algorithms::facial_coordinate_type<
+        specfem::element::dimension_tag::dim3>
+        coord) {
+  constexpr type_real local_deriv_eps = 1e-12;
+  constexpr type_real global_coord_eps = 5e-2;
+  const int ngnod = coorg.extent(0);
+
+  // full local coords
+  type_real xi, gamma, eta;
+  specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim3, true,
+                                  false>
+      jacobian;
+
+  /* coordinate of edge, references either xi or gamma. Other coord is
+   * edge-constrained.
+   *
+   * Additionally, we can reference the coordinate of the jacobian matrix.
+   */
+  auto [facecoord1, facecoord2, jacobian_facecoord1x, jacobian_facecoord1y,
+        jacobian_facecoord1z, jacobian_facecoord2x, jacobian_facecoord2y,
+        jacobian_facecoord2z] = [&xi, &gamma, &eta, &mesh_entity, &jacobian]()
+      -> std::tuple<type_real &, type_real &, type_real &, type_real &,
+                    type_real &, type_real &, type_real &, type_real &> {
+    if (mesh_entity == specfem::mesh_entity::dim3::type::bottom) {
+      eta = -1;
+      return {
+        xi,           gamma,           jacobian.xix,    jacobian.xiy,
+        jacobian.xiz, jacobian.gammax, jacobian.gammay, jacobian.gammaz
+      };
+    } else if (mesh_entity == specfem::mesh_entity::dim3::type::top) {
+      eta = 1;
+      return {
+        xi,           gamma,           jacobian.xix,    jacobian.xiy,
+        jacobian.xiz, jacobian.gammax, jacobian.gammay, jacobian.gammaz
+      };
+    } else if (mesh_entity == specfem::mesh_entity::dim3::type::left) {
+      xi = -1;
+      return { gamma,           eta,           jacobian.gammax, jacobian.gammay,
+               jacobian.gammaz, jacobian.etax, jacobian.etay,   jacobian.etaz };
+    } else if (mesh_entity == specfem::mesh_entity::dim3::type::right) {
+      xi = 1;
+      return { gamma,           eta,           jacobian.gammax, jacobian.gammay,
+               jacobian.gammaz, jacobian.etax, jacobian.etay,   jacobian.etaz };
+    } else if (mesh_entity == specfem::mesh_entity::dim3::type::front) {
+      gamma = -1;
+      return { xi,           eta,           jacobian.xix,  jacobian.xiy,
+               jacobian.xiz, jacobian.etax, jacobian.etay, jacobian.etaz };
+    } else { // back
+      gamma = -1;
+      return { xi,           eta,           jacobian.xix,  jacobian.xiy,
+               jacobian.xiz, jacobian.etax, jacobian.etay, jacobian.etaz };
+    }
+  }();
+  facecoord1 = coord.first;
+  facecoord2 = coord.second;
+
+  for (int iter_loop = 0; iter_loop < 100; iter_loop++) {
+    // we may want a dim1 type? for now, just constrain on dim2. update location
+    // and jacobian matrix
+    auto loc =
+        specfem::jacobian::compute_locations(coorg, ngnod, xi, gamma, eta);
+    jacobian =
+        specfem::jacobian::compute_jacobian(coorg, ngnod, xi, gamma, eta);
+
+    type_real dx = -(loc.x - global.x);
+    type_real dy = -(loc.y - global.y);
+    type_real dz = -(loc.z - global.z);
+
+    // step direction:
+    type_real dfacecoord1 = jacobian_facecoord1x * dx +
+                            jacobian_facecoord1y * dy +
+                            jacobian_facecoord1z * dz;
+    type_real dfacecoord2 = jacobian_facecoord2x * dx +
+                            jacobian_facecoord2y * dy +
+                            jacobian_facecoord2z * dz;
+
+    // are we on the edge and pointing outside?
+    bool facecoord1_on_edge =
+        (facecoord1 == -1 && dfacecoord1 < -local_deriv_eps) ||
+        (facecoord1 == 1 && dfacecoord1 > local_deriv_eps);
+    bool facecoord2_on_edge =
+        (facecoord2 == -1 && dfacecoord2 < -local_deriv_eps) ||
+        (facecoord2 == 1 && dfacecoord2 > local_deriv_eps);
+
+    // out of bounds check: if (we are on edge and minimized along tangential
+    // coordinate) or (we are on corner)?
+    if ((facecoord1_on_edge &&
+         (facecoord2_on_edge || std::fabs(dfacecoord2) < local_deriv_eps)) ||
+        (facecoord2_on_edge && std::fabs(dfacecoord1) < local_deriv_eps)) {
+      return { { facecoord1, facecoord2 }, false };
+    }
+
+    // no out-of-bounds. keep going
+    facecoord1 += dfacecoord1;
+    facecoord2 += dfacecoord2;
+
+    // clamp exactly to bounds
+    if (facecoord1 > 1) {
+      facecoord1 = 1;
+    } else if (facecoord1 < -1) {
+      facecoord1 = -1;
+    }
+    if (facecoord2 > 1) {
+      facecoord2 = 1;
+    } else if (facecoord2 < -1) {
+      facecoord2 = -1;
+    }
+
+    // Check for convergence
+    if (dfacecoord1 * dfacecoord1 + dfacecoord2 * dfacecoord2 <
+        local_deriv_eps * local_deriv_eps)
+      break;
+  }
+
+  // verify point proximity: first get the distance
+  auto loc = specfem::jacobian::compute_locations(coorg, ngnod, xi, gamma, eta);
+  const type_real distance = specfem::point::distance(global, loc);
+
+  // find some characteristic length. We can use the max diagonal.
+  // corner control nodes are always [0,4)
+  // [!!!!!] TODO: we need to get 3d characteristic length. I need to find the
+  // 3d control nodes.
+  const type_real mesh_charlen =
+      std::max(specfem::point::distance(coorg(0), coorg(2)),
+               specfem::point::distance(coorg(1), coorg(3)));
+
+  if (distance > mesh_charlen * global_coord_eps) {
+    std::ostringstream oss;
+    oss << "\nFailed to locate point along face:\n"
+        << "  (xi, gamma, eta)   = (" << xi << ", " << gamma << ", " << eta
+        << ")\n"
+        << "  (target_x, target_y, target_z) = (" << global.x << ", "
+        << global.y << ", " << global.z << ")\n"
+        << "   (found_x, found_y,  found_z) = (" << loc.x << ", " << loc.y
+        << ", " << loc.z << ")\n"
+        << "            final_dist = " << distance << "\n"
+        << "                             (" << std::scientific
+        << distance / mesh_charlen << std::fixed << " x mesh length scale)\n"
+        << "This may have been caused by improper meshing along a "
+           "nonconforming interface.\n";
+    throw std::runtime_error(oss.str());
+  }
+
+  return { { facecoord1, facecoord2 }, true };
 }
 
 } // namespace locate_point_impl
