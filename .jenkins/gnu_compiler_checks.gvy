@@ -1,4 +1,7 @@
 pipeline{
+    options {
+        disableConcurrentBuilds(abortPrevious: true)
+    }
     agent {
         node {
             label 'della-rse_specfempp'
@@ -18,7 +21,7 @@ pipeline{
                     }
                     axis{
                         name 'HostSpace'
-                        values 'SERIAL;-DKokkos_ENABLE_SERIAL=ON -DKokkos_ENABLE_ATOMICS_BYPASS=ON;-n 1 -c 20', 'OPENMP;-DKokkos_ENABLE_OPENMP=ON;-n 1 -c 20'
+                        values 'SERIAL;-DKokkos_ENABLE_SERIAL=ON -DKokkos_ENABLE_ATOMICS_BYPASS=ON;-n 1 -c 20;-j', 'OPENMP;-DKokkos_ENABLE_OPENMP=ON;-n 1 -c 20;-j 1'
                     }
                 }
                 stages {
@@ -40,6 +43,10 @@ pipeline{
                             CMAKE_HOST_FLAGS = """${sh(
                                                     returnStdout: true,
                                                     script: 'cut -d";" -f2 <<<"${HostSpace}"'
+                                                ).trim()}"""
+                            CTEST_FLAGS = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f4 <<<"${HostSpace}"'
                                                 ).trim()}"""
                             HOST_RUN_FLAGS = """${sh(
                                                     returnStdout: true,
@@ -85,7 +92,10 @@ pipeline{
                                         srun -N 1 -t 00:30:00 --account rse ${HOST_RUN_FLAGS} \
                                             --constraint="intel" \
                                             bash -c 'export OMP_PROC_BIND=spread; \
-                                            export OMP_THREADS=places; ctest -j --output-on-failure --no-tests=error;'
+                                            export OMP_PLACES=threads; \
+                                            export OMP_NUM_THREADS=20; \
+                                            hostname; \
+                                            ctest ${CTEST_FLAGS} --output-on-failure --no-tests=error;'
                                     """
                                     echo ' Testing completed '
                                 }

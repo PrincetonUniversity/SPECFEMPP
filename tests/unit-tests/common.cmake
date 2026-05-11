@@ -81,12 +81,32 @@ macro(specfem_register_test_target TARGET)
         COMMENT "Moving ${TARGET} to ${TEST_OUTPUT_DIR}"
     )
 
+    # When MPI is enabled, run serial tests under mpirun -n 1 so MPI initializes correctly
+    if(SPECFEM_ENABLE_MPI)
+        set_target_properties(${TARGET} PROPERTIES
+            CROSSCOMPILING_EMULATOR "${MPIEXEC_EXECUTABLE};${MPIEXEC_NUMPROC_FLAG};1"
+        )
+    endif()
+
+    # Discover tests with MPI-specific configuration
+    # Note: PROCESSORS property is set to 1 (runs via mpirun -n 1 via CROSSCOMPILING_EMULATOR)
+    # Unlike mpi.cmake, RUN_SERIAL is not used here because these are serial tests running under MPI initialization
     # Discover tests from TEST_OUTPUT_DIR
-    gtest_discover_tests(${TARGET}
-        DISCOVERY_MODE POST_BUILD
-        DISCOVERY_TIMEOUT 300
-        WORKING_DIRECTORY ${TEST_OUTPUT_DIR}
-    )
+    if(SPECFEM_ENABLE_MPI)
+        gtest_discover_tests(${TARGET}
+            DISCOVERY_MODE POST_BUILD
+            DISCOVERY_TIMEOUT 300
+            WORKING_DIRECTORY ${TEST_OUTPUT_DIR}
+            PROPERTIES
+                PROCESSORS 1
+        )
+    else()
+        gtest_discover_tests(${TARGET}
+            DISCOVERY_MODE POST_BUILD
+            DISCOVERY_TIMEOUT 300
+            WORKING_DIRECTORY ${TEST_OUTPUT_DIR}
+        )
+    endif()
 
     # When TEST_OUTPUT_DIR is external, copy and fix the discovery .cmake files
     if(NOT SPECFEM_TESTDIR_DEFAULT)
