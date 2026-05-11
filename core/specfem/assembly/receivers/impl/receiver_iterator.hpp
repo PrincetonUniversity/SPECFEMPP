@@ -84,6 +84,7 @@ public:
       : seismogram_types_(seismo_types) {
     station_names_.reserve(nreceivers);
     network_names_.reserve(nreceivers);
+    receiver_islice_.reserve(nreceivers);
   }
 
   Iterator begin() const { return Iterator(this, 0); }
@@ -91,9 +92,12 @@ public:
 
   size_t size() const { return station_names_.size(); }
 
+  int get_receiver_islice(size_t i) const { return receiver_islice_[i]; }
+
 protected:
   std::vector<std::string> station_names_;
   std::vector<std::string> network_names_;
+  std::vector<int> receiver_islice_;
   std::vector<specfem::enums::wavefield> seismogram_types_;
 };
 

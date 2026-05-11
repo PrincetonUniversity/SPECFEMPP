@@ -73,22 +73,6 @@ specfem::sources::force<
   return force_vector;
 }
 
-std::string
-specfem::sources::force<specfem::element::dimension_tag::dim2>::print() const {
-
-  const auto gcoord = this->get_global_coordinates();
-
-  std::ostringstream message;
-  message << "- Force Source: \n"
-          << "    Source Location: \n"
-          << "      x = " << type_real(gcoord.x) << "\n"
-          << "      z = " << type_real(gcoord.z) << "\n"
-          << "    Source Time Function: \n"
-          << this->source_time_function->print() << "\n";
-
-  return message.str();
-}
-
 bool specfem::sources::force<specfem::element::dimension_tag::dim2>::operator==(
     const specfem::sources::source<specfem::element::dimension_tag::dim2>
         &other) const {
