@@ -1,11 +1,14 @@
 #pragma once
 
+#include "impl/ascii.hpp"
 #include "impl/channel_generator.hpp"
+#include "impl/sac.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/constants.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/io/writer.hpp"
 #include "specfem/setup.hpp"
+#include <stdexcept>
 #include <vector>
 
 namespace specfem {
@@ -36,30 +39,43 @@ public:
       const specfem::enums::electromagnetic_wave electromagnetic_wave,
       const std::string output_folder, const type_real dt, const type_real t0,
       const int nstep_between_samples)
-      : impl::ChannelGenerator(output_folder, dt), type(type),
-        elastic_wave(elastic_wave), electromagnetic_wave(electromagnetic_wave),
+      : impl::ChannelGenerator(dt), type(type), elastic_wave(elastic_wave),
+        electromagnetic_wave(electromagnetic_wave),
         output_folder(output_folder), dt(dt), t0(t0),
         nstep_between_samples(nstep_between_samples) {};
 
-  /**
-   * @brief Write seismograms
-   *
-   * @param assembly 2D Assembly object
-   *
-   */
   void write(specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
-                 &assembly) override;
+                 &assembly) override {
+    write_impl(assembly);
+  }
 
-  /**
-   * @brief Write seismograms
-   *
-   * @param assembly Assembly object
-   *
-   */
   void write(specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
-                 &assembly) override;
+                 &assembly) override {
+    write_impl(assembly);
+  }
 
 private:
+  template <specfem::element::dimension_tag DimensionTag>
+  void write_impl(specfem::assembly::assembly<DimensionTag> &assembly) {
+    auto &receivers = assembly.receivers;
+    receivers.sync_seismograms();
+    switch (type) {
+    case specfem::enums::seismogram_format::ascii:
+      specfem::io::impl::write_seismogram<
+          specfem::enums::seismogram_format::ascii>(receivers, *this,
+                                                    output_folder);
+      break;
+    case specfem::enums::seismogram_format::sac:
+      specfem::io::impl::write_seismogram<
+          specfem::enums::seismogram_format::sac>(receivers, *this,
+                                                  output_folder);
+      break;
+    default:
+      throw std::runtime_error(
+          "Unsupported seismogram output format requested.");
+    }
+  }
+
   specfem::enums::seismogram_format type; ///< Output format of the seismogram
                                           ///< file
   std::string output_folder; ///< Path to output folder where results will be
