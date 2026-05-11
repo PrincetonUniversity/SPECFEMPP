@@ -90,6 +90,14 @@ specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::
   Kokkos::fence();
 
   // Set up internal points
+  // iz, iy, ix iterate over the (ngllz-2)*(nglly-2)*(ngllx-2) strictly
+  // interior GLL indices {1,..,ngllz-2} x {1,..,nglly-2} x {1,..,ngllx-2}.
+  // The formula maps them to a flat 0-based index by shifting each by -1,
+  // so the interior block for chunk ichunk occupies the contiguous range
+  // [ichunk*chunk_size*(ngllz-2)*(nglly-2)*(ngllx-2),
+  //  (ichunk+1)*chunk_size*(ngllz-2)*(nglly-2)*(ngllx-2) - 1].
+  // Boundary points (faces, edges, corners) are assigned separately starting
+  // at ig = nspec*(ngllz-2)*(nglly-2)*(ngllx-2) below.
   Kokkos::parallel_for(
       "specfem::assembly::mesh::points::initialize_internal_indices",
       Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace,
@@ -101,8 +109,9 @@ specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::
           if (ispec >= nspec)
             break;
           this->h_index_mapping(ispec, iz, iy, ix) =
-              ielement + iz * chunk_size + iy * chunk_size * (ngllz - 2) +
-              ix * chunk_size * (ngllz - 2) * (nglly - 2) +
+              ielement + (iz - 1) * chunk_size +
+              (iy - 1) * chunk_size * (ngllz - 2) +
+              (ix - 1) * chunk_size * (ngllz - 2) * (nglly - 2) +
               ichunk * chunk_size * (ngllz - 2) * (nglly - 2) * (ngllx - 2);
         }
       });
