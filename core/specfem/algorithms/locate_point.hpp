@@ -154,16 +154,19 @@ using facial_coordinate_type =
  * @param coordinates - global coordinates to match to
  * @param mesh - assembly::mesh struct
  * @param ispec - element index whose local coordinates to find
- * @param constraint - edge to compute for
+ * @param constraint - face to compute for
  * @return std::pair<facial_coordinate_type,bool> - the face local coordinate
  * and whether or not the minimum found is a critical point (false is returned
  * if the best fit coordinate is out of bounds).
  */
-template <specfem::element::dimension_tag dimension_tag>
-std::pair<facial_coordinate_type<dimension_tag>, bool> locate_point_on_face(
-    const specfem::point::global_coordinates<dimension_tag> &coordinates,
-    const specfem::assembly::mesh<dimension_tag> &mesh, const int &ispec,
-    const specfem::mesh_entity::type<dimension_tag> &constraint);
+std::pair<facial_coordinate_type<specfem::element::dimension_tag::dim3>, bool>
+locate_point_on_face(
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim3> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
+    const int &ispec,
+    const specfem::mesh_entity::type<specfem::element::dimension_tag::dim3>
+        &constraint);
 
 /**
  * @brief Convert face coordinate to global coordinates
@@ -171,17 +174,56 @@ std::pair<facial_coordinate_type<dimension_tag>, bool> locate_point_on_face(
  * Given a face (ispec, constraint) and the coordinates along it, finds
  * the global coordinates.
  *
- * @param coordinates Local coordinate along edge
+ * @param coordinates Local coordinate along face
  * @param mesh 2D spectral element mesh
  * @param ispec Element index whose local coordinates to find
  * @param constraint Edge to compute for
  * @return Global coordinates of the point
  */
-template <specfem::element::dimension_tag dimension_tag>
-specfem::point::global_coordinates<dimension_tag> locate_point_on_face(
-    const facial_coordinate_type<dimension_tag> &coordinates,
-    const specfem::assembly::mesh<dimension_tag> &mesh, const int &ispec,
-    const specfem::mesh_entity::type<dimension_tag> &constraint);
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
+locate_point_on_face(
+    const facial_coordinate_type<specfem::element::dimension_tag::dim3>
+        &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
+    const int &ispec,
+    const specfem::mesh_entity::type<specfem::element::dimension_tag::dim3>
+        &constraint);
+
+std::pair<facial_coordinate_type<specfem::element::dimension_tag::dim2>, bool>
+locate_point_on_entity(
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim2> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
+    const int &ispec,
+    const specfem::mesh_entity::type<specfem::element::dimension_tag::dim2>
+        &constraint);
+
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
+locate_point_on_entity(
+    const facial_coordinate_type<specfem::element::dimension_tag::dim2>
+        &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
+    const int &ispec,
+    const specfem::mesh_entity::type<specfem::element::dimension_tag::dim2>
+        &constraint);
+
+std::pair<facial_coordinate_type<specfem::element::dimension_tag::dim3>, bool>
+locate_point_on_entity(
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim3> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
+    const int &ispec,
+    const specfem::mesh_entity::type<specfem::element::dimension_tag::dim3>
+        &constraint);
+
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
+locate_point_on_entity(
+    const facial_coordinate_type<specfem::element::dimension_tag::dim3>
+        &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
+    const int &ispec,
+    const specfem::mesh_entity::type<specfem::element::dimension_tag::dim3>
+        &constraint);
 
 } // namespace algorithms
 } // namespace specfem

@@ -384,33 +384,37 @@ get_local_face_coordinate(
       -> std::tuple<type_real &, type_real &, type_real &, type_real &,
                     type_real &, type_real &, type_real &, type_real &> {
     if (mesh_entity == specfem::mesh_entity::dim3::type::bottom) {
+      gamma = -1;
+      return { xi,           eta,           jacobian.xix,  jacobian.xiy,
+               jacobian.xiz, jacobian.etax, jacobian.etay, jacobian.etaz };
+    } else if (mesh_entity == specfem::mesh_entity::dim3::type::top) {
+      gamma = 1;
+      return { xi,           eta,           jacobian.xix,  jacobian.xiy,
+               jacobian.xiz, jacobian.etax, jacobian.etay, jacobian.etaz };
+    } else if (mesh_entity == specfem::mesh_entity::dim3::type::left) {
+      xi = -1;
+      return {
+        eta,           gamma,           jacobian.etax,   jacobian.etay,
+        jacobian.etaz, jacobian.gammax, jacobian.gammay, jacobian.gammaz
+      };
+    } else if (mesh_entity == specfem::mesh_entity::dim3::type::right) {
+      xi = 1;
+      return {
+        eta,           gamma,           jacobian.etax,   jacobian.etay,
+        jacobian.etaz, jacobian.gammax, jacobian.gammay, jacobian.gammaz
+      };
+    } else if (mesh_entity == specfem::mesh_entity::dim3::type::front) {
       eta = -1;
       return {
         xi,           gamma,           jacobian.xix,    jacobian.xiy,
         jacobian.xiz, jacobian.gammax, jacobian.gammay, jacobian.gammaz
       };
-    } else if (mesh_entity == specfem::mesh_entity::dim3::type::top) {
+    } else { // back
       eta = 1;
       return {
         xi,           gamma,           jacobian.xix,    jacobian.xiy,
         jacobian.xiz, jacobian.gammax, jacobian.gammay, jacobian.gammaz
       };
-    } else if (mesh_entity == specfem::mesh_entity::dim3::type::left) {
-      xi = -1;
-      return { gamma,           eta,           jacobian.gammax, jacobian.gammay,
-               jacobian.gammaz, jacobian.etax, jacobian.etay,   jacobian.etaz };
-    } else if (mesh_entity == specfem::mesh_entity::dim3::type::right) {
-      xi = 1;
-      return { gamma,           eta,           jacobian.gammax, jacobian.gammay,
-               jacobian.gammaz, jacobian.etax, jacobian.etay,   jacobian.etaz };
-    } else if (mesh_entity == specfem::mesh_entity::dim3::type::front) {
-      gamma = -1;
-      return { xi,           eta,           jacobian.xix,  jacobian.xiy,
-               jacobian.xiz, jacobian.etax, jacobian.etay, jacobian.etaz };
-    } else { // back
-      gamma = -1;
-      return { xi,           eta,           jacobian.xix,  jacobian.xiy,
-               jacobian.xiz, jacobian.etax, jacobian.etay, jacobian.etaz };
     }
   }();
   facecoord1 = coord.first;
@@ -420,9 +424,9 @@ get_local_face_coordinate(
     // we may want a dim1 type? for now, just constrain on dim2. update location
     // and jacobian matrix
     auto loc =
-        specfem::jacobian::compute_locations(coorg, ngnod, xi, gamma, eta);
+        specfem::jacobian::compute_locations(coorg, ngnod, xi, eta, gamma);
     jacobian =
-        specfem::jacobian::compute_jacobian(coorg, ngnod, xi, gamma, eta);
+        specfem::jacobian::compute_jacobian(coorg, ngnod, xi, eta, gamma);
 
     type_real dx = -(loc.x - global.x);
     type_real dy = -(loc.y - global.y);
@@ -475,21 +479,19 @@ get_local_face_coordinate(
   }
 
   // verify point proximity: first get the distance
-  auto loc = specfem::jacobian::compute_locations(coorg, ngnod, xi, gamma, eta);
+  auto loc = specfem::jacobian::compute_locations(coorg, ngnod, xi, eta, gamma);
   const type_real distance = specfem::point::distance(global, loc);
 
-  // find some characteristic length. We can use the max diagonal.
-  // corner control nodes are always [0,4)
-  // [!!!!!] TODO: we need to get 3d characteristic length. I need to find the
-  // 3d control nodes.
-  const type_real mesh_charlen =
-      std::max(specfem::point::distance(coorg(0), coorg(2)),
-               specfem::point::distance(coorg(1), coorg(3)));
+  const type_real mesh_charlen = std::max(
+      specfem::point::distance(coorg(2), coorg(4)),
+      std::max(specfem::point::distance(coorg(0), coorg(6)),
+               std::max(specfem::point::distance(coorg(1), coorg(7)),
+                        specfem::point::distance(coorg(3), coorg(5)))));
 
   if (distance > mesh_charlen * global_coord_eps) {
     std::ostringstream oss;
     oss << "\nFailed to locate point along face:\n"
-        << "  (xi, gamma, eta)   = (" << xi << ", " << gamma << ", " << eta
+        << "  (xi, eta, gamma)   = (" << xi << ", " << eta << ", " << gamma
         << ")\n"
         << "  (target_x, target_y, target_z) = (" << global.x << ", "
         << global.y << ", " << global.z << ")\n"

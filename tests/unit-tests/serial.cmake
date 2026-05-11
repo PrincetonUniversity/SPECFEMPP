@@ -510,6 +510,7 @@ target_link_libraries(
 add_executable(
   locate_point_fixture_3d
   algorithms/dim3/locate_point_fixture.cpp
+  algorithms/dim3/locate_point_on_face_test.cpp
 )
 
 target_link_libraries(

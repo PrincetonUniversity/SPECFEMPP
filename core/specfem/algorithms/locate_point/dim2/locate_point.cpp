@@ -152,7 +152,7 @@ specfem::algorithms::locate_point_on_edge(
 std::pair<specfem::algorithms::facial_coordinate_type<
               specfem::element::dimension_tag::dim2>,
           bool>
-locate_point_on_face(
+specfem::algorithms::locate_point_on_entity(
     const specfem::point::global_coordinates<
         specfem::element::dimension_tag::dim2> &coordinates,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
@@ -164,7 +164,7 @@ locate_point_on_face(
 }
 
 specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
-locate_point_on_face(
+specfem::algorithms::locate_point_on_entity(
     const specfem::algorithms::facial_coordinate_type<
         specfem::element::dimension_tag::dim2> &coordinates,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,

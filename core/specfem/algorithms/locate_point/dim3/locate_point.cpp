@@ -83,7 +83,7 @@ specfem::algorithms::locate_point(
 std::pair<specfem::algorithms::facial_coordinate_type<
               specfem::element::dimension_tag::dim3>,
           bool>
-locate_point_on_face(
+specfem::algorithms::locate_point_on_face(
     const specfem::point::global_coordinates<
         specfem::element::dimension_tag::dim3> &coordinates,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
@@ -113,7 +113,7 @@ locate_point_on_face(
 }
 
 specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
-locate_point_on_face(
+specfem::algorithms::locate_point_on_face(
     const specfem::algorithms::facial_coordinate_type<
         specfem::element::dimension_tag::dim3> &coordinates,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
@@ -160,4 +160,30 @@ locate_point_on_face(
   }
 
   return specfem::jacobian::compute_locations(coorg, ngnod, xi, gamma, eta);
+}
+
+std::pair<specfem::algorithms::facial_coordinate_type<
+              specfem::element::dimension_tag::dim3>,
+          bool>
+specfem::algorithms::locate_point_on_entity(
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim3> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
+    const int &ispec,
+    const specfem::mesh_entity::type<specfem::element::dimension_tag::dim3>
+        &constraint) {
+  return specfem::algorithms::locate_point_on_face(coordinates, mesh, ispec,
+                                                   constraint);
+}
+
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
+specfem::algorithms::locate_point_on_entity(
+    const specfem::algorithms::facial_coordinate_type<
+        specfem::element::dimension_tag::dim3> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
+    const int &ispec,
+    const specfem::mesh_entity::type<specfem::element::dimension_tag::dim3>
+        &constraint) {
+  return specfem::algorithms::locate_point_on_face(coordinates, mesh, ispec,
+                                                   constraint);
 }
