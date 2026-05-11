@@ -56,10 +56,6 @@ pipeline{
                                                     returnStdout: true,
                                                     script: 'cut -d";" -f2 <<<"${SIMD}"'
                                                 ).trim()}"""
-                            CTEST_FLAGS = """${sh(
-                                                    returnStdout: true,
-                                                    script: 'cut -d";" -f4 <<<"${HostSpace}"'
-                                                ).trim()}"""
                         }
                         stages {
                             stage (' Build '){
