@@ -1,7 +1,4 @@
 pipeline{
-    options {
-        disableConcurrentBuilds(abortPrevious: true)
-    }
     agent {
         node {
             label 'della-rse_specfempp'
