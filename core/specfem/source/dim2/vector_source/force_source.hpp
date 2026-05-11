@@ -93,7 +93,7 @@ public:
    * @brief User output
    *
    */
-  std::string print() const override;
+  std::string source_name() const override { return "2-D force"; }
 
   /**
    * @brief Get the angle of the force source
@@ -153,8 +153,6 @@ public:
   get_supported_media() const override;
 
 public:
-  static constexpr const char *name = "2-D force";
-
 private:
   type_real angle;                                ///< Angle of force source
   specfem::simulation::field_type wavefield_type; ///< Type of wavefield on

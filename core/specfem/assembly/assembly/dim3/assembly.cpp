@@ -125,5 +125,6 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::print()
             << "\n";
     throw std::runtime_error(message.str());
   }
+
   return message.str();
 }
