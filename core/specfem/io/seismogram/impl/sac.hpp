@@ -140,15 +140,34 @@ inline void write_sac_binary(const std::string &filepath,
                              const std::vector<float> &samples) {
   const int32_t npts = static_cast<int32_t>(samples.size());
 
+  // ── Compute statistics ───────────────────────────────────────────────────
+  float depmin = samples.empty() ? UNDEF_F : samples[0];
+  float depmax = samples.empty() ? UNDEF_F : samples[0];
+  double sum = 0.0;
+  for (float v : samples) {
+    if (v < depmin)
+      depmin = v;
+    if (v > depmax)
+      depmax = v;
+    sum += v;
+  }
+  float depmen = samples.empty() ? UNDEF_F : static_cast<float>(sum / npts);
+  float e = b + (npts > 0 ? (npts - 1) * delta : 0.0f);
+
   // ── Float header (indices 0-69) ──────────────────────────────────────────
-  //   0 DELTA   5 B   6 E(SAC)  7 O   57 CMPAZ   58 CMPINC
+  //   0 DELTA   1 DEPMIN  2 DEPMAX  5 B   6 E(SAC)  7 O
+  //  56 DEPMEN 57 CMPAZ   58 CMPINC
   //  31 STLA   32 STLO  33 STEL  34 STDP  (left UNDEF – Cartesian coords)
   //  35 EVLA   36 EVLO  37 EVEL  38 EVDP  39 MAG   (left UNDEF)
   float fhdr[70];
   std::fill_n(fhdr, 70, UNDEF_F);
   fhdr[0] = delta; // DELTA [REQUIRED]
-  fhdr[5] = b;     // B     [REQUIRED]
-  fhdr[7] = 0.0f;  // O – event origin at reference time
+  fhdr[1] = depmin;
+  fhdr[2] = depmax;
+  fhdr[5] = b;       // B     [REQUIRED]
+  fhdr[6] = e;       // E
+  fhdr[7] = UNDEF_F; // O – event origin at reference time (Obspy leaves UNDEF)
+  fhdr[56] = depmen;
   fhdr[57] = orientation.cmpaz;
   fhdr[58] = orientation.cmpinc;
 
@@ -170,7 +189,7 @@ inline void write_sac_binary(const std::string &filepath,
   ihdr[16] = idep; // IDEP
   ihdr[17] = 11;   // IZTYPE = IORIGINT (origin time as reference)
   ihdr[35] = 1;    // LEVEN  (evenly-spaced) [REQUIRED]
-  ihdr[36] = 1;    // LPSPOL (positive polarity)
+  ihdr[36] = 0;    // LPSPOL (Obspy sets to 0)
   ihdr[37] = 1;    // LOVROK (overwrite OK)
   ihdr[38] = 1;    // LCALDA (auto-compute DIST/AZ/BAZ/GCARC)
 
