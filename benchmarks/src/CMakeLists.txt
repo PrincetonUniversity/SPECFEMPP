@@ -23,3 +23,4 @@ add_subdirectory(dim2/marmousi)
 
 # 3D
 add_subdirectory(dim3/homogeneous_halfspace)
+add_subdirectory(dim3/acoustic_elastic_interface)

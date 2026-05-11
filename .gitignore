@@ -42,3 +42,7 @@ bin
 .github/prompts/ConciseDocument.prompt.md
 .github/prompts/ReviewPR.prompt.md
 test_dir/*
+
+*compare_traces.py
+*plot_mesh.py
+*compare_sections.py
