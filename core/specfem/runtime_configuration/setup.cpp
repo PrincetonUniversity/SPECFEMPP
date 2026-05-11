@@ -55,7 +55,8 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict) {
   }
 
   // Get flux scheme info (optional)
-  if (const YAML::Node &flux_schemes_node = simulation_setup["flux-scheme"]) {
+  if (const YAML::Node &flux_schemes_node =
+          simulation_setup["nonconforming-coupling"]) {
     this->flux_schemes =
         std::make_unique<specfem::runtime_configuration::flux_schemes>(
             flux_schemes_node);
