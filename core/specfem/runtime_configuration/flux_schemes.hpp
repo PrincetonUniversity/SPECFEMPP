@@ -19,14 +19,24 @@ namespace runtime_configuration {
 class flux_schemes {
 public:
   flux_schemes(const YAML::Node &Node);
-  flux_schemes()
+  flux_schemes() // default values here; noded constructor delegates to this
+                 // one:
+                 //
+                 // (TODO: remember to re-examine interfacial_meshing_type
+                 // after self-host study)
       : flux_scheme_tag(specfem::element_coupling::flux_scheme_tag::natural),
-        interfacial_quadrature(nullptr) {};
+        interfacial_quadrature(nullptr),
+        interfacial_meshing_type(specfem::element_coupling::
+                                     interfacial_meshing_type::intersections) {
+        };
 
 private:
+  // ====== acoustic-elastic ======
   specfem::element_coupling::flux_scheme_tag flux_scheme_tag;
+  specfem::element_coupling::interfacial_meshing_type interfacial_meshing_type;
   std::unique_ptr<specfem::runtime_configuration::quadrature>
       interfacial_quadrature;
+  // ==== end acoustic-elastic ====
 
 public:
   /**

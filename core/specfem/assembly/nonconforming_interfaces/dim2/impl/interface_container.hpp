@@ -4,6 +4,7 @@
 #include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/element_coupling/flux_scheme_configuration.hpp"
 #include "specfem/element_coupling/tags.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
@@ -97,7 +98,9 @@ public:
       const int ngllz, const int ngllx,
       const specfem::assembly::element_intersections<
           specfem::element::dimension_tag::dim2> &element_intersections,
-      const specfem::assembly::mesh<dimension_tag> &mesh);
+      const specfem::assembly::mesh<dimension_tag> &mesh,
+      const specfem::element_coupling::flux_scheme_configuration
+          &flux_scheme_config = {});
 
   /** @brief Default constructor */
   interface_container() = default;
@@ -251,6 +254,14 @@ private:
                         edge_t>::value ||
                     specfem::data_access::is_transfer_function_coupled<
                         edge_t>::value) {
+        // TODO(nquad_intersection::runtime_vs_template): I forsee a bug
+        // where the runtime-nquad_intersection value (set by runtime
+        // config) is set to something smaller than the kernel template
+        // parameter NQuadIntersection, and the values in the chunk_edge
+        // data container are not zero-padded. intersection/transfer View
+        // extents are set by the runtime value. Keep this in mind! (This TODO
+        // message is copy-pasted in other places -- remove all instances by
+        // TOOD(...) header when resolved)
         for (int iquad = 0; iquad < nquad_intersection; iquad++) {
           edge(local_index.iedge, local_index.ipoint, iquad) =
               this->get_value<on_device>(
@@ -263,6 +274,14 @@ private:
 
     specfem::execution::for_each_level(
         specfem::execution::TeamThreadMDRangeIterator(
+            // TODO(nquad_intersection::runtime_vs_template): I forsee a bug
+            // where the runtime-nquad_intersection value (set by runtime
+            // config) is set to something smaller than the kernel template
+            // parameter NQuadIntersection, and the values in the chunk_edge
+            // data container are not zero-padded. intersection/transfer View
+            // extents are set by the runtime value. Keep this in mind! (This
+            // TODO message is copy-pasted in other places -- remove all
+            // instances by TOOD(...) header when resolved)
             index.get_policy_index(), index.nedges(), nquad_intersection),
         [&](const auto index) {
           (factor_call(edges, index), ...);
