@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../../SPECFEM_Environment.hpp"
 #include "../../mesh_utilities/mapping.hpp"
 #include "../../test_macros.hpp"
