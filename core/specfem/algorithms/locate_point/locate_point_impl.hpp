@@ -1,13 +1,25 @@
 #pragma once
 
-#include "specfem/algorithms/locate_point.hpp"
+#include "specfem/assembly/mesh.hpp"
+#include "specfem/mesh_entity.hpp"
 #include "specfem/point.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <tuple>
 #include <vector>
 
 // Implementation details exposed for testing
 namespace specfem::algorithms::locate_point_impl {
+
+/**
+ * @brief A type for the local coordinates along a given face (codimension 1)
+ *
+ * @tparam dimension_tag the dimension of the element.
+ */
+template <specfem::element::dimension_tag dimension_tag>
+using facial_coordinate_type =
+    std::conditional_t<dimension_tag == specfem::element::dimension_tag::dim2,
+                       type_real, std::pair<type_real, type_real> >;
 
 std::tuple<int, int, int> rough_location(
     const specfem::point::global_coordinates<
@@ -36,7 +48,7 @@ std::pair<type_real, bool> get_local_edge_coordinate(
                        Kokkos::HostSpace> &coorg,
     const specfem::mesh_entity::dim2::type &mesh_entity, type_real coord);
 
-std::pair<specfem::algorithms::facial_coordinate_type<
+std::pair<specfem::algorithms::locate_point_impl::facial_coordinate_type<
               specfem::element::dimension_tag::dim3>,
           bool>
 get_local_face_coordinate(
@@ -46,7 +58,7 @@ get_local_face_coordinate(
                            specfem::element::dimension_tag::dim3> *,
                        Kokkos::HostSpace> &coorg,
     const specfem::mesh_entity::dim3::type &mesh_entity,
-    specfem::algorithms::facial_coordinate_type<
+    specfem::algorithms::locate_point_impl::facial_coordinate_type<
         specfem::element::dimension_tag::dim3>
         coord);
 
@@ -118,5 +130,59 @@ locate_point_core(
     const Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
         &control_node_coordinates,
     const int ngnod, const int ngllx);
+
+// Public API (previously in specfem::algorithms)
+
+specfem::point::local_coordinates<specfem::element::dimension_tag::dim2>
+locate_point(
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim2> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh);
+
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
+locate_point(
+    const specfem::point::local_coordinates<
+        specfem::element::dimension_tag::dim2> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh);
+
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
+locate_point(
+    const Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace>::member_type
+        &team_member,
+    const specfem::point::local_coordinates<
+        specfem::element::dimension_tag::dim2> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh);
+
+specfem::point::local_coordinates<specfem::element::dimension_tag::dim3>
+locate_point(
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim3> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh);
+
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
+locate_point(
+    const specfem::point::local_coordinates<
+        specfem::element::dimension_tag::dim3> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh);
+
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
+locate_point(
+    const Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace>::member_type
+        &team_member,
+    const specfem::point::local_coordinates<
+        specfem::element::dimension_tag::dim3> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh);
+
+std::pair<type_real, bool> locate_point_on_edge(
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim2> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
+    const int &ispec, const specfem::mesh_entity::dim2::type &constraint);
+
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
+locate_point_on_edge(
+    const type_real &coordinate,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
+    const int &ispec, const specfem::mesh_entity::dim2::type &constraint);
 
 } // namespace specfem::algorithms::locate_point_impl

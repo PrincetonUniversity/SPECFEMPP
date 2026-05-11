@@ -1,149 +1,161 @@
 #pragma once
 
+#include "locate_point/locate_point_impl.hpp"
 #include "specfem/assembly/mesh.hpp"
-#include "specfem/element/tags.hpp"
-#include "specfem/mesh_entity.hpp"
+#include "specfem/mpi.hpp"
 #include "specfem/point.hpp"
-#include "specfem/point/global_coordinates.hpp"
-#include "specfem/point/local_coordinates.hpp"
 #include "specfem/setup.hpp"
-#include <type_traits>
+#include "specfem/utilities/is_close.hpp"
+#include <cmath>
+#include <limits>
+#include <stdexcept>
+#include <utility>
+#include <vector>
 
 namespace specfem {
 namespace algorithms {
 
+namespace impl {
+
+// Returns true when all local coordinates lie within the reference element
+// [-1, 1]^d, i.e. the point is inside (or on the boundary of) the element.
+inline bool coords_inside(const specfem::point::local_coordinates<
+                          specfem::element::dimension_tag::dim2> &lcoord) {
+  return lcoord.ispec >= 0 && std::abs(lcoord.xi) <= type_real(1) &&
+         std::abs(lcoord.gamma) <= type_real(1);
+}
+
+inline bool coords_inside(const specfem::point::local_coordinates<
+                          specfem::element::dimension_tag::dim3> &lcoord) {
+  return lcoord.ispec >= 0 && std::abs(lcoord.xi) <= type_real(1) &&
+         std::abs(lcoord.eta) <= type_real(1) &&
+         std::abs(lcoord.gamma) <= type_real(1);
+}
+
+} // namespace impl
+
 /**
- * @brief Convert global coordinates to local coordinates in a 2D mesh
+ * @brief Locate a batch of points across MPI partitions with inside-preference.
  *
- * @param coordinates Global coordinates to convert
- * @param mesh 2D spectral element mesh
- * @return Local coordinates within the containing element
+ * Each rank tries to locate every point in its local mesh partition.  The
+ * best owning rank for each point is selected according to two-tier priority
+ * (matching the reference Fortran SPECFEM3D-Globe strategy):
+ *
+ *   1. Prefer elements where the recovered local coordinates are all within
+ *      [-1, 1]  (the point is inside the element). Among tied ranks that
+ *      satisfy this condition, the one with the smallest Cartesian back-
+ *      projection distance is chosen.
+ *   2. Fall back to minimum Cartesian distance when no rank owns an inside
+ *      element for a given point.
+ *
+ * The selection is performed with exactly two MPI_Allreduce calls regardless
+ * of the number of points, preserving the O(1)-communication efficiency of
+ * the original batch approach.
+ *
+ * @param coords  Global coordinates of the points to locate.
+ * @param mesh    This rank's local mesh partition.
+ * @return { local_coords, owning_ranks }
+ *         local_coords[i] is valid (ispec >= 0) only when owning_ranks[i]
+ *         equals this rank's MPI rank; all other entries have ispec = -1.
+ * @throws std::runtime_error if any point cannot be located on any rank.
  */
-specfem::point::local_coordinates<specfem::element::dimension_tag::dim2>
+template <specfem::element::dimension_tag DimensionTag>
+std::pair<std::vector<specfem::point::local_coordinates<DimensionTag> >,
+          std::vector<int> >
 locate_point(
-    const specfem::point::global_coordinates<
-        specfem::element::dimension_tag::dim2> &coordinates,
-    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh);
+    const std::vector<specfem::point::global_coordinates<DimensionTag> >
+        &coords,
+    const specfem::assembly::mesh<DimensionTag> &mesh) {
 
-/**
- * @brief Convert local coordinates to global coordinates in a 2D mesh
- *
- * @param coordinates Local coordinates to convert
- * @param mesh 2D spectral element mesh
- * @return Global coordinates in physical space
- */
-specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
-locate_point(
-    const specfem::point::local_coordinates<
-        specfem::element::dimension_tag::dim2> &coordinates,
-    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh);
+  const int npoints = static_cast<int>(coords.size());
+  const int myrank = specfem::MPI::get_rank();
 
-/**
- * @brief Convert local coordinates to global coordinates in a 2D mesh using
- * team parallelism
- *
- * @param team_member Kokkos team member for parallel execution
- * @param coordinates Local coordinates to convert
- * @param mesh 2D spectral element mesh
- * @return Global coordinates in physical space
- */
-specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
-locate_point(
-    const Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace>::member_type
-        &team_member,
-    const specfem::point::local_coordinates<
-        specfem::element::dimension_tag::dim2> &coordinates,
-    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh);
+  // OUTSIDE_PENALTY ensures that any inside element (priority = dist) beats
+  // any outside element (priority = OUTSIDE_PENALTY + dist) when taking the
+  // global MPI_MIN.  It is large enough to dominate realistic Cartesian
+  // distances while leaving headroom to add a finite dist without overflow.
+  constexpr type_real OUTSIDE_PENALTY =
+      std::numeric_limits<type_real>::max() / 4;
 
-/**
- * @brief Convert global coordinates to local coordinates in a 3D mesh
- *
- * @param coordinates Global coordinates to convert
- * @param mesh 3D spectral element mesh
- * @return Local coordinates within the containing element
- */
-specfem::point::local_coordinates<specfem::element::dimension_tag::dim3>
-locate_point(
-    const specfem::point::global_coordinates<
-        specfem::element::dimension_tag::dim3> &coordinates,
-    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh);
+  // Per-point local state -------------------------------------------------
+  std::vector<specfem::point::local_coordinates<DimensionTag> > local_lcoords(
+      npoints);
+  for (auto &lc : local_lcoords)
+    lc.ispec = -1;
 
-/**
- * @brief Convert local coordinates to global coordinates in a 3D mesh
- *
- * @param coordinates Local coordinates to convert
- * @param mesh 3D spectral element mesh
- * @return Global coordinates in physical space
- */
-specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
-locate_point(
-    const specfem::point::local_coordinates<
-        specfem::element::dimension_tag::dim3> &coordinates,
-    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh);
+  // priority[i] encoding:
+  //   dist                  – point inside element  (smallest wins globally)
+  //   OUTSIDE_PENALTY + dist – point outside element (fallback to min dist)
+  //   max()                  – point not found on this rank
+  std::vector<type_real> local_priority(npoints,
+                                        std::numeric_limits<type_real>::max());
 
-/**
- * @brief Convert local coordinates to global coordinates in a 3D mesh using
- * team parallelism
- *
- * @param team_member Kokkos team member for parallel execution
- * @param coordinates Local coordinates to convert
- * @param mesh 3D spectral element mesh
- * @return Global coordinates in physical space
- */
-specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
-locate_point(
-    const Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace>::member_type
-        &team_member,
-    const specfem::point::local_coordinates<
-        specfem::element::dimension_tag::dim3> &coordinates,
-    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh);
+  for (int i = 0; i < npoints; ++i) {
+    try {
+      const auto lcoord =
+          specfem::algorithms::locate_point_impl::locate_point(coords[i], mesh);
+      const auto found_global =
+          specfem::algorithms::locate_point_impl::locate_point(lcoord, mesh);
+      const type_real dist = specfem::point::distance(coords[i], found_global);
 
-/**
- * @brief Given an edge (ispec, constraint), finds the best fit local coordinate
- * on that edge to the given global coordinates. Coordinates will be clamped to
- * [-1,1], even if a point outside that range is a better fit. In such a case,
- * the second return value will be false.
- *
- * @param coordinates - global coordinates to match to
- * @param mesh - assembly::mesh struct
- * @param ispec - element index whose local coordinates to find
- * @param constraint - edge to compute for
- * @return std::pair<type_real,bool> - the edge local coordinate and whether or
- * not the minimum found is a critical point (false is returned if the best fit
- * coordinate is out of bounds).
- */
-std::pair<type_real, bool> locate_point_on_edge(
-    const specfem::point::global_coordinates<
-        specfem::element::dimension_tag::dim2> &coordinates,
-    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
-    const int &ispec, const specfem::mesh_entity::dim2::type &constraint);
-/**
- * @brief Convert edge coordinate to global coordinates
- *
- * Given an edge (ispec, constraint) and the coordinate along it, finds
- * the global coordinates.
- *
- * @param coordinate Local coordinate along edge
- * @param mesh 2D spectral element mesh
- * @param ispec Element index whose local coordinates to find
- * @param constraint Edge to compute for
- * @return Global coordinates of the point
- */
-specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
-locate_point_on_edge(
-    const type_real &coordinate,
-    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
-    const int &ispec, const specfem::mesh_entity::dim2::type &constraint);
+      local_lcoords[i] = lcoord;
+      local_priority[i] =
+          impl::coords_inside(lcoord) ? dist : (OUTSIDE_PENALTY + dist);
+    } catch (const std::exception &) {
+      // Point not in this rank's partition – leave as invalid / max priority.
+    }
+  }
 
-/**
- * @brief A type for the local coordinates along a given face (codimension 1)
- *
- * @tparam dimension_tag the dimension of the element.
- */
-template <specfem::element::dimension_tag dimension_tag>
-using facial_coordinate_type =
-    std::conditional_t<dimension_tag == specfem::element::dimension_tag::dim2,
-                       type_real, std::pair<type_real, type_real> >;
+  // Step 1: allreduce(min) to obtain the global best priority per point.
+  // -------
+  std::vector<type_real> global_priority = local_priority;
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, global_priority.data(),
+                                     npoints, SPECFEM_MPI_TYPE_REAL, MPI_MIN,
+                                     MPI_COMM_WORLD));
+
+  // Step 2: each rank claims points whose local priority matches the global
+  // minimum; allreduce(max) resolves ties by assigning to the highest rank
+  // (matching legacy SPECFEM behaviour).
+  //
+  // MPI_MIN is a comparison-selection that returns one contributed value
+  // bit-for-bit on homogeneous clusters (MPI Standard §6.9.2), so exact
+  // equality is correct in the common case.  However, on heterogeneous
+  // clusters MPI may perform FP format conversion during the reduction
+  // (§4.1), which can alter the low-order bits.  A relative tolerance of one
+  // machine-epsilon guards against this for future heterogeneous deployments.
+  std::vector<int> islice_selected(npoints, -1);
+  for (int i = 0; i < npoints; ++i) {
+    if (specfem::utilities::is_close(local_priority[i], global_priority[i],
+                                     std::numeric_limits<type_real>::epsilon(),
+                                     type_real(0)))
+      islice_selected[i] = myrank;
+  }
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, islice_selected.data(),
+                                     npoints, MPI_INT, MPI_MAX,
+                                     MPI_COMM_WORLD));
+
+  // Sanity check: every point must have been claimed by at least one rank.
+  // -----
+  for (int i = 0; i < npoints; ++i) {
+    if (islice_selected[i] < 0) {
+      throw std::runtime_error("Point " + std::to_string(i) +
+                               " could not be located in any MPI partition");
+    }
+  }
+
+  // Build output: non-owning ranks get ispec = -1. ----------------------------
+  std::vector<specfem::point::local_coordinates<DimensionTag> > result_coords(
+      npoints);
+  for (int i = 0; i < npoints; ++i) {
+    if (islice_selected[i] == myrank) {
+      result_coords[i] = local_lcoords[i];
+    } else {
+      result_coords[i].ispec = -1;
+    }
+  }
+
+  return { result_coords, islice_selected };
+}
 
 /**
  * @brief Given a face (ispec, constraint), finds the best fit local coordinate
@@ -159,7 +171,9 @@ using facial_coordinate_type =
  * and whether or not the minimum found is a critical point (false is returned
  * if the best fit coordinate is out of bounds).
  */
-std::pair<facial_coordinate_type<specfem::element::dimension_tag::dim3>, bool>
+std::pair<specfem::algorithms::locate_point_impl::facial_coordinate_type<
+              specfem::element::dimension_tag::dim3>,
+          bool>
 locate_point_on_face(
     const specfem::point::global_coordinates<
         specfem::element::dimension_tag::dim3> &coordinates,
@@ -182,14 +196,16 @@ locate_point_on_face(
  */
 specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
 locate_point_on_face(
-    const facial_coordinate_type<specfem::element::dimension_tag::dim3>
-        &coordinates,
+    const specfem::algorithms::locate_point_impl::facial_coordinate_type<
+        specfem::element::dimension_tag::dim3> &coordinates,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
     const int &ispec,
     const specfem::mesh_entity::type<specfem::element::dimension_tag::dim3>
         &constraint);
 
-std::pair<facial_coordinate_type<specfem::element::dimension_tag::dim2>, bool>
+std::pair<specfem::algorithms::locate_point_impl::facial_coordinate_type<
+              specfem::element::dimension_tag::dim2>,
+          bool>
 locate_point_on_entity(
     const specfem::point::global_coordinates<
         specfem::element::dimension_tag::dim2> &coordinates,
@@ -200,14 +216,16 @@ locate_point_on_entity(
 
 specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
 locate_point_on_entity(
-    const facial_coordinate_type<specfem::element::dimension_tag::dim2>
-        &coordinates,
+    const specfem::algorithms::locate_point_impl::facial_coordinate_type<
+        specfem::element::dimension_tag::dim2> &coordinates,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
     const int &ispec,
     const specfem::mesh_entity::type<specfem::element::dimension_tag::dim2>
         &constraint);
 
-std::pair<facial_coordinate_type<specfem::element::dimension_tag::dim3>, bool>
+std::pair<specfem::algorithms::locate_point_impl::facial_coordinate_type<
+              specfem::element::dimension_tag::dim3>,
+          bool>
 locate_point_on_entity(
     const specfem::point::global_coordinates<
         specfem::element::dimension_tag::dim3> &coordinates,
@@ -218,8 +236,8 @@ locate_point_on_entity(
 
 specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
 locate_point_on_entity(
-    const facial_coordinate_type<specfem::element::dimension_tag::dim3>
-        &coordinates,
+    const specfem::algorithms::locate_point_impl::facial_coordinate_type<
+        specfem::element::dimension_tag::dim3> &coordinates,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
     const int &ispec,
     const specfem::mesh_entity::type<specfem::element::dimension_tag::dim3>
@@ -227,8 +245,3 @@ locate_point_on_entity(
 
 } // namespace algorithms
 } // namespace specfem
-
-/**
- * @defgroup AlgorithmsLocatePoint Point Location Algorithms
- * @ingroup Algorithms
- */

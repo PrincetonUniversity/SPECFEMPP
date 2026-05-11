@@ -816,7 +816,6 @@ add_custom_command(TARGET displacement_newmark_3d_tests POST_BUILD
 
 # Register serial tests for discovery
 set(SERIAL_TEST_TARGETS
-  abort_tests
   serial_mpi_tests
   assembly_receivers_tests
   assembly_tests
@@ -859,6 +858,10 @@ set(SERIAL_TEST_TARGETS
   test_mesh_utilities_mapping_3d
   units_tests
 )
+
+if (NOT SPECFEM_ENABLE_MPI)
+    list(APPEND SERIAL_TEST_TARGETS abort_tests)
+endif()
 
 # Link test data directories for serial tests
 set(SERIAL_LINK_DIRS
