@@ -61,7 +61,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
                                   this->jacobian_matrix, this->mesh };
   this->nonconforming_interfaces = { this->mesh.element_grid.ngllz,
                                      this->mesh.element_grid.ngllx,
-                                     this->element_intersections, this->mesh };
+                                     this->element_intersections, this->mesh,
+                                     flux_scheme_config };
   this->fields = { this->mesh, this->element_types, simulation };
 
   this->info = { this->mesh, this->properties, this->element_types };
