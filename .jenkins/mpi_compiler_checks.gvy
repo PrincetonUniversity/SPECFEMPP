@@ -114,18 +114,10 @@ pipeline {
                                     echo ' Testing completed '
                                 }
                             }
-                            stage (' Clean '){
-                                steps {
-                                    echo ' Cleaning build and test directories '
-                                    sh "rm -rf build_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
-                                    sh "rm -rf install_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
-                                    sh "rm -rf /scratch/gpfs/TROMP/specfempp/jenkins/test_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
-                                }
-                            }
                         }
                         post {
                             always {
-                                echo 'Build or Test stage failed, executing cleanup'
+                                echo 'Executing cleanup of build and test artifacts'
                                 sh "rm -rf build_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
                                 sh "rm -rf install_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
                                 sh "rm -rf /scratch/gpfs/TROMP/specfempp/jenkins/test_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"

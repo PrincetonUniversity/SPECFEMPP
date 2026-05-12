@@ -114,18 +114,10 @@ pipeline{
                                     echo ' Testing completed '
                                 }
                             }
-                            stage (' Clean '){
-                                steps {
-                                    echo ' Cleaning build and test directories '
-                                    sh "rm -rf build_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
-                                    sh "rm -rf install_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
-                                    sh "rm -rf /scratch/gpfs/TROMP/specfempp/jenkins/test_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
-                                }
-                            }
                         }
                         post {
-                            failure {
-                                echo 'Build or Test stage failed, executing cleanup'
+                            always {
+                                echo 'Executing cleanup of build and test artifacts'
                                 sh "rm -rf build_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
                                 sh "rm -rf install_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
                                 sh "rm -rf /scratch/gpfs/TROMP/specfempp/jenkins/test_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
