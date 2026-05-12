@@ -239,10 +239,10 @@ TEST_F(MESH, derived_properties) {
       // Check if Test.name is in properties_ground_truth
       if (properties_ground_truth.find(Test.name) ==
           properties_ground_truth.end()) {
-        std::ostringstream message;
-        message << "No ground truth available for properties of test '"
-                << Test.name << "' [" << __FILE__ << ":" << __LINE__ << "]\n";
-        specfem::Logger::info(message.str());
+        specfem::Logger::info([&](std::ostringstream &oss) {
+          oss << "No ground truth available for properties of test '"
+              << Test.name << "' [" << __FILE__ << ":" << __LINE__ << "]\n";
+        });
         continue;
       }
 

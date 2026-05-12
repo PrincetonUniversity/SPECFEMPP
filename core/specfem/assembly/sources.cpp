@@ -43,6 +43,11 @@ specfem::assembly::sources<DimensionTag>::sources(
   // global element index, and medium that the source is located in
   specfem::assembly::sources_impl::locate_sources(element_types, mesh, sources);
 
+  // Create vector of MPI slice indices for each source (host memory)
+  source_islice_.resize(sources.size());
+  for (int i = 0; i < static_cast<int>(sources.size()); ++i)
+    source_islice_[i] = sources[i]->get_islice();
+
   // Initialize source_by_medium using TypedStorage initializer
   source_by_medium = { [&]<typename TagsType>()
                            -> SourceMediumTemplateType<TagsType> {
@@ -75,22 +80,30 @@ specfem::assembly::sources<DimensionTag>::sources(
         sorted_sources, mesh, jacobian_matrix, element_types, t0, dt, nsteps);
   } };
 
-  if (nsources != (int)sources.size()) {
-    std::cout << "nsources: " << nsources << std::endl;
-    std::cout << "sources.size(): " << sources.size() << std::endl;
-    throw std::runtime_error(
-        "Not all sources were assigned or sources are assigned multiple times");
+  // Count sources owned by this rank (ispec >= 0 after locate_sources).
+  // In MPI builds each rank owns a subset of the global source list; in
+  // serial builds every source is local, so this equals sources.size().
+  int local_source_count = 0;
+  for (const auto &src : sources) {
+    if (src->get_local_coordinates().ispec >= 0) {
+      local_source_count++;
+    }
   }
 
-  int nsources_total = (int)sources.size();
+  if (nsources != local_source_count) {
+    std::cout << "nsources: " << nsources << std::endl;
+    std::cout << "local_source_count: " << local_source_count << std::endl;
+    throw std::runtime_error("Not all local sources were assigned or sources "
+                             "are assigned multiple times");
+  }
 
   auto make_source_initializer = [&](std::string label_prefix,
                                      auto index_selector, auto... tag_views) {
     return [&, label_prefix, index_selector,
             tag_views...]<typename TagsType>() -> HostIndexViewType {
       std::vector<int> matching_indices;
-      matching_indices.reserve(nsources_total);
-      for (int isource = 0; isource < nsources_total; ++isource)
+      matching_indices.reserve(nsources);
+      for (int isource = 0; isource < nsources; ++isource)
         if (TagsType{}.has(tag_views(isource)...))
           matching_indices.emplace_back(index_selector(isource));
       HostIndexViewType host_view(label_prefix + TagsType::name(),

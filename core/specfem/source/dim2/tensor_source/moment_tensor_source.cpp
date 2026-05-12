@@ -76,23 +76,12 @@ specfem::sources::moment_tensor<
   return source_tensor;
 }
 
-std::string
-specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2>::print()
-    const {
-
-  const auto gcoord = this->get_global_coordinates();
-
+std::string specfem::sources::moment_tensor<
+    specfem::element::dimension_tag::dim2>::print_details() const {
   std::ostringstream message;
-  message << "- Moment Tensor Source: \n"
-          << "    Source Location: \n"
-          << "      x = " << gcoord.x << "\n"
-          << "      z = " << gcoord.z << "\n"
-          << "    Moment Tensor: \n"
+  message << "    Moment Tensor: \n"
           << "      Mxx, Mzz, Mxz = " << this->Mxx << ", " << this->Mzz << ", "
-          << this->Mxz << "\n"
-          << "    Source Time Function: \n"
-          << this->source_time_function->print() << "\n";
-
+          << this->Mxz << "\n";
   return message.str();
 }
 
