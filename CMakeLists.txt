@@ -221,6 +221,14 @@ add_subdirectory(fortran/meshfem3d)
 set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
 # =================================
 
+# ========== DECOMPOSE_MESH =========
+message(STATUS "Configuring decompose_mesh")
+set(_saved_CMAKE_MESSAGE_LOG_LEVEL ${CMAKE_MESSAGE_LOG_LEVEL})
+set(CMAKE_MESSAGE_LOG_LEVEL ${SUBDIR_LOG_LEVEL})
+add_subdirectory(fortran/decompose_mesh)
+set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
+# ===================================
+
 # Add module subdirectories
 add_subdirectory(core)
 
@@ -312,7 +320,7 @@ if (SPECFEM_INSTALL AND NOT SPECFEM_USE_SKBUILD)
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Organizing specfem++ executables into: ${CMAKE_INSTALL_PREFIX}"
         # Make this run after your main targets
-        DEPENDS specfem specfem2d specfem3d xmeshfem2D xmeshfem3D xadj_seismogram # list all your targets here
+        DEPENDS specfem specfem2d specfem3d xmeshfem2D xmeshfem3D xadj_seismogram xdecompose_mesh # list all your targets here
     )
 
     # Add the prefix directory to the clean target
