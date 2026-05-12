@@ -1,0 +1,17 @@
+number-of-sources: 1
+sources:
+  - moment-tensor:
+      x : 0.0
+      y : 0.0
+      z : -70000.0
+      source_surf: false
+      Mxx : 1e20
+      Mxy : 0.0
+      Mxz : 0.0
+      Myy : 1e20
+      Myz : 0.0
+      Mzz : 1e20
+      Ricker:
+        factor: 1.0
+        tshift: 0.0
+        f0: 0.1

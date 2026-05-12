@@ -1,11 +1,15 @@
+source_file = "CMTSOLUTION"
+
 include: "../../../specfem3d.smk"
 
 networks = ["TEST"]
 # stations = ["CBB","CBC","CBT","CCB","CCT","CFB","CFC","CFT","LBB","LBC","LBT","LCB","LCC","LCT","LFB","LFC","LFT","RBB","RBC","RBT","RCB","RCC","RCT","RFB","RFC","RFT"]
-stations = ["CCB", "CBB", "PCB", "PBB"]
+stations = "ABCDE"
 locations = ["S3"]
-channels = ["BXP"]
-extensions = ["semp"]
+channels = ["MXX", "MXY", "MXZ"]
+extensions = ["semd"]
+
+
 
 traces = [
     f"traces/{network}.{station}.{location}.{channel}.{extension}"
@@ -21,7 +25,7 @@ rule all:
     input:
         traces=traces,
         trace_list="<cwd>/traces/trace_list.txt",
-        # database="<cwd>/database.bin",
+        database="<cwd>/database.bin",
     localrule: True
 
 

@@ -4,11 +4,14 @@
 #
 #-----------------------------------------------------------
 
+MESH_A_CHUNK_OF_THE_EARTH        = .false.
+CHUNK_MESH_PAR_FILE              = dummy.txt
+
 # coordinates of mesh block in latitude/longitude and depth in km
-LATITUDE_MIN                    = -100000.0
-LATITUDE_MAX                    = 100000.0
-LONGITUDE_MIN                   = -150000.0
-LONGITUDE_MAX                   = 150000.0
+LATITUDE_MIN                    = -100000.d0
+LATITUDE_MAX                    = 100000.d0
+LONGITUDE_MIN                   = -150000.0d0
+LONGITUDE_MAX                   = 150000.0d0
 DEPTH_BLOCK_KM                  = 120.0d0
 UTM_PROJECTION_ZONE             = 11
 SUPPRESS_UTM_PROJECTION         = .true.
@@ -18,6 +21,11 @@ INTERFACES_FILE                 = interfaces.txt
 
 # file that contains the cavity
 CAVITY_FILE                     = no_cavity.dat
+
+# Number of nodes for 2D and 3D shape functions for hexahedra.
+# We use either 8-node mesh elements (bricks) or 27-node elements.
+# If you use our internal mesher, the only option is 8-node bricks (27-node elements are not supported).
+NGNOD                           = 8
 
 # number of elements at the surface along edges of the mesh at the surface
 # (must be 8 * multiple of NPROC below if mesh is not regular and contains mesh doublings)
@@ -59,7 +67,7 @@ CREATE_VTK_FILES                = .false.
 SAVE_MESH_AS_CUBIT              = .false.
 
 # path to store the databases files
-LOCAL_PATH                      = ./DATABASES_MPI/
+LOCAL_PATH                      = ./OUTPUT_FILES/
 
 #-----------------------------------------------------------
 #
@@ -71,10 +79,6 @@ LOCAL_PATH                      = ./DATABASES_MPI/
 THICKNESS_OF_X_PML              = 12.3d0
 THICKNESS_OF_Y_PML              = 12.3d0
 THICKNESS_OF_Z_PML              = 12.3d0
-
-# add PML layers as extra outer mesh layers
-ADD_PML_AS_EXTRA_MESH_LAYERS    = .false.
-NUMBER_OF_PML_LAYERS_TO_ADD     = 3
 
 #-----------------------------------------------------------
 #

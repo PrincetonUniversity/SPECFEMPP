@@ -1,0 +1,15 @@
+TEST.E.S3.MXZ.semd
+TEST.A.S3.MXX.semd
+TEST.C.S3.MXX.semd
+TEST.A.S3.MXY.semd
+TEST.E.S3.MXX.semd
+TEST.D.S3.MXX.semd
+TEST.D.S3.MXY.semd
+TEST.B.S3.MXX.semd
+TEST.A.S3.MXZ.semd
+TEST.C.S3.MXZ.semd
+TEST.E.S3.MXY.semd
+TEST.B.S3.MXZ.semd
+TEST.D.S3.MXZ.semd
+TEST.B.S3.MXY.semd
+TEST.C.S3.MXY.semd

@@ -39,17 +39,16 @@ rule specfem3d_mesher:
         setup=rules.specfem3d_setup.output,
         cwd=rules.specfem3d_setup.output.cwd,
         mesh_par_file=rules.specfem3d_setup.output.mesh_par_file,
-        source="<cwd>/provenance/fortran/DATA/FORCESOLUTION",
-        stations="<cwd>/provenance/fortran/DATA/STATIONS",
+        source=ancient("<cwd>/provenance/fortran/DATA/" + source_file),
+        stations=ancient("<cwd>/provenance/fortran/DATA/STATIONS"),
     output:
         database="<cwd>/specfem3d_workdir/fortran/DATABASES_MPI/proc000000_Database",
         mesher="<cwd>/specfem3d_workdir/fortran/OUTPUT_FILES/output_meshfem3D.txt",
-        stations="<cwd>/specfem3d_workdir/fortran/DATA/STATIONS",
     localrule: True,
     shell:
         """
-            cp {input.source} {input.cwd}/DATA/FORCESOLUTION
-            cp {input.stations} {output.stations}
+            cp -f {input.source} {input.cwd}/DATA/$(basename {input.source})
+            cp -f {input.stations} {input.cwd}/DATA/STATIONS
             cd {input.cwd}
             echo "Running xmeshfem3D"
             mkdir -p OUTPUT_FILES
@@ -63,7 +62,7 @@ rule specfem3d_generate_database:
         cwd=rules.specfem3d_setup.output.cwd,
         mesh_database=rules.specfem3d_mesher.output.database,
     output:
-        databases=[f"<cwd>/specfem3d_workdir/fortran/DATABASES_MPI/proc000000_{parameter}.bin" for parameter in ["external_mesh", "ibool", "qkappa", "qmu", "rho", "vp", "vs", "x", "y", "z"]],
+        databases=[f"<cwd>/specfem3d_workdir/fortran/DATABASES_MPI/proc000000_{parameter}.bin" for parameter in ["external_mesh"]] #, "ibool", "qkappa", "qmu", "rho", "vp", "vs", "x", "y", "z"]],
     shell:
         """
             cd {input.cwd}
