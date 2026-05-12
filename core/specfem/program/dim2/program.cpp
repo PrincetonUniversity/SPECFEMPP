@@ -45,6 +45,8 @@ void program_2d(
       database_filename, setup.get_elastic_wave_type(),
       setup.get_electromagnetic_wave_type(), setup.is_attenuation_enabled());
 
+  // mesh.print() always called (not wrapped in lambda function) because it
+  // requires collective communication
   const auto mesh_info = mesh.print();
   specfem::Logger::info([&](std::ostringstream &oss) {
     oss << "Mesh Information:\n"
@@ -89,9 +91,7 @@ void program_2d(
     for (auto &source : sources) {
       oss << source->print();
     }
-  });
 
-  specfem::Logger::info([&](std::ostringstream &oss) {
     oss << "Receiver Information:\n"
         << "-------------------------------\n"
         << "Number of receivers : " << receivers.size() << "\n";
@@ -100,6 +100,8 @@ void program_2d(
     }
   });
 
+  // assembly.print() always called (not wrapped in lambda function)
+  // because it requires collective communication
   specfem::Logger::info(assembly.print());
 
   // --------------------------------------------------------------
