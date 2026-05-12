@@ -33,7 +33,7 @@ parameters:
             directory: "./"
 
   receivers:
-    stations: "displacement_tests/Newmark/serial/dim3/AcousticElasticForceSource/STATIONS"
+    stations: "displacement_tests/Newmark/serial/dim3/AcousticElasticExplosiveMomentTensor/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
@@ -46,6 +46,6 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "displacement_tests/Newmark/serial/dim3/AcousticElasticForceSource/database.bin"
+    mesh-database: "displacement_tests/Newmark/serial/dim3/AcousticElasticExplosiveMomentTensor/database.bin"
 
-  sources: "displacement_tests/Newmark/serial/dim3/AcousticElasticForceSource/source.yaml"
+  sources: "displacement_tests/Newmark/serial/dim3/AcousticElasticExplosiveMomentTensor/source.yaml"
