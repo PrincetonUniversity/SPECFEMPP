@@ -5,6 +5,7 @@
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/receivers.hpp"
 #include "specfem/element.hpp"
+#include "specfem/mpi.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -64,7 +65,23 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
     seismogram_type_map[seis_type] = isies;
   }
 
-  for (int ireceiver = 0; ireceiver < receivers.size(); ++ireceiver) {
+  // MPI-aware receiver location with inside-preference: prefer elements where
+  // xi/eta/gamma ∈ [-1,1]; fall back to minimum distance if no rank has an
+  // inside element. Uses locate_point for unified MPI communication.
+  const int nreceivers = static_cast<int>(receivers.size());
+  const int myrank = specfem::MPI::get_rank();
+
+  std::vector<specfem::point::global_coordinates<
+      specfem::element::dimension_tag::dim3> >
+      gcoords;
+  gcoords.reserve(nreceivers);
+  for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver)
+    gcoords.push_back(receivers[ireceiver]->get_global_coordinates());
+
+  auto [local_coords, islice_selected] =
+      specfem::algorithms::locate_point(gcoords, mesh);
+
+  for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
     const auto receiver = receivers[ireceiver];
     std::string station_name = receiver->get_station_name();
     std::string network_name = receiver->get_network_name();
@@ -73,12 +90,12 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
     network_names_.push_back(network_name);
     station_network_map[station_name][network_name] = ireceiver;
 
-    const auto gcoord = specfem::point::global_coordinates<
-        specfem::element::dimension_tag::dim3>{ receiver->get_x(),
-                                                receiver->get_y(),
-                                                receiver->get_z() };
-    const auto lcoord = specfem::algorithms::locate_point(gcoord, mesh);
+    if (islice_selected[ireceiver] != myrank) {
+      h_elements(ireceiver) = -1;
+      continue;
+    }
 
+    const auto &lcoord = local_coords[ireceiver];
     h_elements(ireceiver) = lcoord.ispec;
 
     const auto xi = mesh.h_xi;
@@ -121,6 +138,11 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
 
   // Build per-material receiver index stores using tag_dispatch::Storage.
   this->build_index_stores(h_elements, element_types);
+
+  receiver_islice_.assign(islice_selected.begin(), islice_selected.end());
+
+  for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver)
+    receivers[ireceiver]->set_islice(islice_selected[ireceiver]);
 
   Kokkos::deep_copy(lagrange_interpolant, h_lagrange_interpolant);
   Kokkos::deep_copy(elements, h_elements);
