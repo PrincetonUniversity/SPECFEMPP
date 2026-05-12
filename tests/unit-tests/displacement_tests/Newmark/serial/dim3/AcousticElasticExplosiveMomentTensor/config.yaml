@@ -1,0 +1,10 @@
+id : "AcousticElasticExplosiveMomentTensor"
+name : "Acoustic Elastic Interface - Explosive Moment Tensor"
+description: >
+  Testing newmark time-marching solver on a acoustic-elastic interface. Test is run on a single MPI process.
+config:
+  nproc : 1
+  tolerance : 1e-3
+databases:
+  specfem_config: "specfem_config.yaml"
+  traces: "traces"
