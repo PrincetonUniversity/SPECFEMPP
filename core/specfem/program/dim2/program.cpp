@@ -45,6 +45,8 @@ void program_2d(
       database_filename, setup.get_elastic_wave_type(),
       setup.get_electromagnetic_wave_type(), setup.is_attenuation_enabled());
 
+  // mesh.print() always called (not wrapped in lambda function) because it
+  // requires collective communication
   const auto mesh_info = mesh.print();
   specfem::Logger::info([&](std::ostringstream &oss) {
     oss << "Mesh Information:\n"
@@ -67,24 +69,6 @@ void program_2d(
   const auto stations_node = setup.get_stations();
   const auto angle = setup.get_receiver_angle();
   auto receivers = specfem::io::read_2d_receivers(stations_node, angle);
-
-  specfem::Logger::info([&](std::ostringstream &oss) {
-    oss << "Source Information:\n"
-        << "-------------------------------\n"
-        << "Number of sources : " << sources.size() << "\n";
-    for (auto &source : sources) {
-      oss << source->print();
-    }
-  });
-
-  specfem::Logger::info([&](std::ostringstream &oss) {
-    oss << "Receiver Information:\n"
-        << "-------------------------------\n"
-        << "Number of receivers : " << receivers.size() << "\n";
-    for (auto &receiver : receivers) {
-      oss << receiver->print();
-    }
-  });
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
@@ -100,6 +84,24 @@ void program_2d(
       setup.allocate_boundary_values(), setup.instantiate_property_reader(),
       setup.get_flux_scheme_configuration());
 
+  specfem::Logger::info([&](std::ostringstream &oss) {
+    oss << "Source Information:\n"
+        << "-------------------------------\n"
+        << "Number of sources : " << sources.size() << "\n";
+    for (auto &source : sources) {
+      oss << source->print();
+    }
+
+    oss << "Receiver Information:\n"
+        << "-------------------------------\n"
+        << "Number of receivers : " << receivers.size() << "\n";
+    for (auto &receiver : receivers) {
+      oss << receiver->print();
+    }
+  });
+
+  // assembly.print() always called (not wrapped in lambda function)
+  // because it requires collective communication
   specfem::Logger::info(assembly.print());
 
   // --------------------------------------------------------------

@@ -68,7 +68,7 @@ public:
     return specfem::simulation::field_type::adjoint;
   }
 
-  std::string print() const override;
+  std::string source_name() const override { return "2-D adjoint source"; }
 
   /**
    * @brief Get the force vector
@@ -103,8 +103,6 @@ public:
    */
   std::vector<specfem::element::medium_tag>
   get_supported_media() const override;
-
-  static constexpr const char *name = "2-D adjoint source";
 
 private:
   std::string station_name;

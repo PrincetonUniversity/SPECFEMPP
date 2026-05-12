@@ -42,23 +42,12 @@ specfem::sources::cosserat_force<
   return force_vector;
 }
 
-std::string
-specfem::sources::cosserat_force<specfem::element::dimension_tag::dim2>::print()
-    const {
-
-  const auto gcoord = this->get_global_coordinates();
-
+std::string specfem::sources::cosserat_force<
+    specfem::element::dimension_tag::dim2>::print_details() const {
   std::ostringstream message;
-  message << "- Cosserat Force Source: \n"
-          << "    Source Location: \n"
-          << "      x = " << gcoord.x << "\n"
-          << "      z = " << gcoord.z << "\n"
-          << "    Source Angle: " << type_real(this->angle) << "\n"
+  message << "    Source Angle: " << type_real(this->angle) << "\n"
           << "    Source f: " << type_real(this->f) << "\n"
-          << "    Source fc: " << type_real(this->fc) << "\n"
-          << "    Source Time Function: \n"
-          << this->source_time_function->print() << "\n";
-
+          << "    Source fc: " << type_real(this->fc) << "\n";
   return message.str();
 }
 

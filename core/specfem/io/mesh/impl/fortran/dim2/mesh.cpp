@@ -77,24 +77,14 @@ specfem::io::read_2d_mesh(
                                           Kokkos::DefaultHostExecutionSpace>(
       "specfem::mesh::knods", mesh.parameters.ngnod, mesh.nspec);
 
-#if defined(SPECFEM_ENABLE_MPI)
-  int nspec_all = mesh.parameters.nspec;
-#endif
-  SPECFEM_MPI_SAFECALL(MPI_Reduce(&mesh.parameters.nspec, &nspec_all, 1,
-                                  MPI_INT, MPI_SUM, 0,
-                                  specfem::MPI::communicator()));
-#if defined(SPECFEM_ENABLE_MPI)
-  int nelem_acforcing_all = mesh.parameters.nelem_acforcing;
-#endif
-  SPECFEM_MPI_SAFECALL(MPI_Reduce(&mesh.parameters.nelem_acforcing,
-                                  &nelem_acforcing_all, 1, MPI_INT, MPI_SUM, 0,
-                                  specfem::MPI::communicator()));
-#if defined(SPECFEM_ENABLE_MPI)
-  int nelem_acoustic_surface_all = mesh.parameters.nelem_acoustic_surface;
-#endif
-  SPECFEM_MPI_SAFECALL(MPI_Reduce(&mesh.parameters.nelem_acoustic_surface,
-                                  &nelem_acoustic_surface_all, 1, MPI_INT,
-                                  MPI_SUM, 0, specfem::MPI::communicator()));
+  auto reduce = [&](int *buf) {
+    SPECFEM_MPI_SAFECALL(
+        MPI_Reduce(specfem::MPI::get_rank() == 0 ? MPI_IN_PLACE : buf, buf, 1,
+                   MPI_INT, MPI_SUM, 0, specfem::MPI::communicator()));
+  };
+  reduce(&mesh.parameters.nspec);
+  reduce(&mesh.parameters.nelem_acforcing);
+  reduce(&mesh.parameters.nelem_acoustic_surface);
 
   try {
     auto [n_sls, attenuation_f0_reference, read_velocities_at_f0] =

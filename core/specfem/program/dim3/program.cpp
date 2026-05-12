@@ -67,29 +67,11 @@ void program_3d(
                                    setup.get_dt(), simulation_type);
   setup.update_t0(t0); // Update t0 in case it was changed
 
-  specfem::Logger::info([&](std::ostringstream &oss) {
-    oss << "Source Information:\n"
-        << "---------------------\n"
-        << "Number of sources : " << sources.size() << "\n";
-    for (auto &source : sources) {
-      oss << source->print();
-    }
-  });
-
   // --------------------------------------------------------------
   //                   Get receivers
   // --------------------------------------------------------------
   // create single receiver receivers vector for now
   auto receivers = specfem::io::read_3d_receivers(setup.get_stations());
-
-  specfem::Logger::info([&](std::ostringstream &oss) {
-    oss << "Receiver Information:\n"
-        << "---------------------\n"
-        << "Number of receivers : " << receivers.size() << "\n";
-    for (auto &receiver : receivers) {
-      oss << receiver->print();
-    }
-  });
 
   // --------------------------------------------------------------
   //                   Generate Assembly
@@ -104,6 +86,24 @@ void program_3d(
       nstep_between_samples, setup.get_simulation_type(),
       setup.allocate_boundary_values(), setup.instantiate_property_reader());
 
+  specfem::Logger::info([&](std::ostringstream &oss) {
+    oss << "Source Information:\n"
+        << "---------------------\n"
+        << "Number of sources : " << sources.size() << "\n";
+    for (auto &source : sources) {
+      oss << source->print();
+    }
+
+    oss << "Receiver Information:\n"
+        << "---------------------\n"
+        << "Number of receivers : " << receivers.size() << "\n";
+    for (auto &receiver : receivers) {
+      oss << receiver->print();
+    }
+  });
+
+  // assembly.print() always called (not wrapped in lambda function)
+  // because it requires collective communication
   specfem::Logger::info(assembly.print());
 
   // --------------------------------------------------------------
