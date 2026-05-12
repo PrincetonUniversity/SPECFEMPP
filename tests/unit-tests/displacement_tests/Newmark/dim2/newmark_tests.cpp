@@ -128,7 +128,8 @@ TEST_P(Newmark, 2D) {
       source_node, nsteps, setup.get_t0(), dt, setup.get_simulation_type());
 
   for (auto &source : sources) {
-    specfem::Logger::info(source->print());
+    specfem::Logger::info(
+        [&](std::ostringstream &oss) { oss << source->print(); });
   }
 
   setup.update_t0(t0);
@@ -141,7 +142,8 @@ TEST_P(Newmark, 2D) {
   std::cout << "  Receiver information\n";
   std::cout << "------------------------------" << std::endl;
   for (auto &receiver : receivers) {
-    specfem::Logger::info(receiver->print());
+    specfem::Logger::info(
+        [&](std::ostringstream &oss) { oss << receiver->print(); });
   }
 
   const auto seismogram_types = setup.get_seismogram_types();
@@ -168,7 +170,8 @@ TEST_P(Newmark, 2D) {
   auto time_scheme = setup.instantiate_timescheme(assembly.fields);
 
   // User output
-  specfem::Logger::info(time_scheme->to_string());
+  specfem::Logger::info(
+      [&](std::ostringstream &oss) { oss << time_scheme->to_string(); });
 
   std::shared_ptr<specfem::solver::solver> solver =
       setup.instantiate_solver<5>(setup.get_dt(), assembly, time_scheme, {});

@@ -668,8 +668,10 @@ void specfem::periodic_tasks::
   H5Gclose(vtkhdf_group);
   H5Fclose(hdf5_file_id);
 
-  specfem::Logger::info("Initialized VTK HDF5 file for 3D wavefield output: " +
-                        this->hdf5_filename + " (extensible datasets)");
+  specfem::Logger::info([&](std::ostringstream &oss) {
+    oss << "Initialized VTK HDF5 file for 3D wavefield output: "
+        << this->hdf5_filename << " (extensible datasets)";
+  });
 
 #else
   throw std::runtime_error(
@@ -993,9 +995,10 @@ void specfem::periodic_tasks::
 
   this->current_timestep++;
 
-  specfem::Logger::info("Wrote 3D wavefield data for timestep " +
-                        std::to_string(istep) + " to HDF5 file (step " +
-                        std::to_string(this->current_timestep) + ")");
+  specfem::Logger::info([&](std::ostringstream &oss) {
+    oss << "Wrote 3D wavefield data for timestep " << istep
+        << " to HDF5 file (step " << this->current_timestep << ")";
+  });
 
 #else
   throw std::runtime_error(
