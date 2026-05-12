@@ -104,8 +104,7 @@ void program_3d(
       nstep_between_samples, setup.get_simulation_type(),
       setup.allocate_boundary_values(), setup.instantiate_property_reader());
 
-  specfem::Logger::info(
-      [&](std::ostringstream &oss) { oss << assembly.print(); });
+  specfem::Logger::info(assembly.print());
 
   // --------------------------------------------------------------
 

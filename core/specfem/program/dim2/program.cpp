@@ -45,10 +45,11 @@ void program_2d(
       database_filename, setup.get_elastic_wave_type(),
       setup.get_electromagnetic_wave_type(), setup.is_attenuation_enabled());
 
+  const auto mesh_info = mesh.print();
   specfem::Logger::info([&](std::ostringstream &oss) {
     oss << "Mesh Information:\n"
         << "-------------------------------\n"
-        << mesh.print();
+        << mesh_info;
   });
 
   // --------------------------------------------------------------
@@ -66,6 +67,20 @@ void program_2d(
   const auto stations_node = setup.get_stations();
   const auto angle = setup.get_receiver_angle();
   auto receivers = specfem::io::read_2d_receivers(stations_node, angle);
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
+  //                   Generate Assembly
+  // --------------------------------------------------------------
+  const type_real dt = setup.get_dt();
+  const int max_seismogram_time_step = setup.get_max_seismogram_step();
+  const int nstep_between_samples = setup.get_nstep_between_samples();
+  specfem::assembly::assembly<specfem::element::dimension_tag::dim2> assembly(
+      mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
+      setup.get_t0(), dt, nsteps, max_seismogram_time_step,
+      nstep_between_samples, setup.get_simulation_type(),
+      setup.allocate_boundary_values(), setup.instantiate_property_reader(),
+      setup.get_flux_scheme_configuration());
 
   specfem::Logger::info([&](std::ostringstream &oss) {
     oss << "Source Information:\n"
@@ -84,23 +99,8 @@ void program_2d(
       oss << receiver->print();
     }
   });
-  // --------------------------------------------------------------
 
-  // --------------------------------------------------------------
-  //                   Generate Assembly
-  // --------------------------------------------------------------
-  const type_real dt = setup.get_dt();
-  const int max_seismogram_time_step = setup.get_max_seismogram_step();
-  const int nstep_between_samples = setup.get_nstep_between_samples();
-  specfem::assembly::assembly<specfem::element::dimension_tag::dim2> assembly(
-      mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
-      setup.get_t0(), dt, nsteps, max_seismogram_time_step,
-      nstep_between_samples, setup.get_simulation_type(),
-      setup.allocate_boundary_values(), setup.instantiate_property_reader(),
-      setup.get_flux_scheme_configuration());
-
-  specfem::Logger::info(
-      [&](std::ostringstream &oss) { oss << assembly.print(); });
+  specfem::Logger::info(assembly.print());
 
   // --------------------------------------------------------------
 
