@@ -18,11 +18,11 @@ pipeline {
                     }
                     axis{
                         name 'HostSpace'
-                        values 'SERIAL;-DKokkos_ENABLE_SERIAL=ON -DKokkos_ENABLE_ATOMICS_BYPASS=ON;-n 1 -c 20', 'OPENMP;-DKokkos_ENABLE_OPENMP=ON;-n 1 -c 20'
+                        values 'SERIAL;-DKokkos_ENABLE_SERIAL=ON -DKokkos_ENABLE_ATOMICS_BYPASS=ON'
                     }
                     axis{
                         name 'MPIEnabled'
-                        values 'MPI_GCC416;-DSPECFEM_ENABLE_MPI=ON;openmpi/gcc/4.1.6;-N 2 -c 20'
+                        values 'MPI_GCC416;-DSPECFEM_ENABLE_MPI=ON;openmpi/gcc/4.1.6;-N 1 --ntasks-per-node=4'
                     }
                 }
                 stages {
@@ -44,10 +44,6 @@ pipeline {
                             CMAKE_HOST_FLAGS = """${sh(
                                                     returnStdout: true,
                                                     script: 'cut -d";" -f2 <<<"${HostSpace}"'
-                                                ).trim()}"""
-                            HOST_RUN_FLAGS = """${sh(
-                                                    returnStdout: true,
-                                                    script: 'cut -d";" -f3 <<<"${HostSpace}"'
                                                 ).trim()}"""
                             SIMD_NAME = """${sh(
                                                     returnStdout: true,
@@ -107,7 +103,13 @@ pipeline {
                                         module load ${GNU_COMPILER_MODULE}
                                         module load ${MPI_MODULE}
                                         cd /scratch/gpfs/TROMP/specfempp/jenkins/test_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
-                                        salloc -N 1 --ntasks-per-node=4 -t 00:30:00 --account rse ctest --output-on-failure -j 4 --no-tests=error
+                                        srun ${MPI_RUN_FLAGS} -t 00:30:00 --account rse \
+                                            --constraint="intel" \
+                                            bash -c 'export OMP_PROC_BIND=spread; \
+                                            export OMP_PLACES=threads; \
+                                            export OMP_NUM_THREADS=20; \
+                                            hostname; \
+                                            ctest -R MPI --output-on-failure --no-tests=error;'
                                     """
                                     echo ' Testing completed '
                                 }

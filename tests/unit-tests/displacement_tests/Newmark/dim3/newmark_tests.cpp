@@ -128,7 +128,8 @@ TEST_P(Newmark, 3D) {
       source_node, nsteps, setup.get_t0(), dt, setup.get_simulation_type());
 
   for (auto &source : sources) {
-    specfem::Logger::info(source->print());
+    specfem::Logger::info(
+        [&](std::ostringstream &oss) { oss << source->print(); });
   }
 
   setup.update_t0(t0);
@@ -177,14 +178,16 @@ TEST_P(Newmark, 3D) {
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;
 
-  specfem::Logger::info("Assembly created in " +
-                        std::to_string(elapsed.count()) + " seconds.");
+  specfem::Logger::info([&](std::ostringstream &oss) {
+    oss << "Assembly created in " << elapsed.count() << " seconds.";
+  });
 
   // Instantiate the solver and timescheme
   auto it = setup.instantiate_timescheme(assembly.fields);
 
   // User output
-  specfem::Logger::info(it->to_string());
+  specfem::Logger::info(
+      [&](std::ostringstream &oss) { oss << it->to_string(); });
 
   std::shared_ptr<specfem::solver::solver> solver =
       setup.instantiate_solver<5>(setup.get_dt(), assembly, it, {});

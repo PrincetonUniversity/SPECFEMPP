@@ -71,18 +71,15 @@ read_materials(
 
   input_holder read_values;
 
-  std::ostringstream message;
-
   std::vector<specfem::mesh::materials<
       specfem::element::dimension_tag::dim2>::material_specification>
       index_mapping(numat);
 
-  message << "Material systems:\n"
-          << "------------------------------";
-
-  specfem::Logger::debug(message.str());
-  specfem::Logger::debug(
-      "Number of material systems = " + std::to_string(numat) + "\n\n");
+  specfem::Logger::debug([&](std::ostringstream &oss) {
+    oss << "Material systems:\n"
+        << "------------------------------\n"
+        << "Number of material systems = " << numat << "\n\n";
+  });
 
   using MaterialsType =
       specfem::mesh::materials<specfem::element::dimension_tag::dim2>;
