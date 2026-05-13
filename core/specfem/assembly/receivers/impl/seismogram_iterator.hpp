@@ -133,10 +133,14 @@ public:
     return *this;
   }
 
+  int get_nsteps() const { return max_sig_step; }
+
   void set_seismogram_step(const int isig_step) { this->seis_step = isig_step; }
   void set_seismogram_type(const int iseis) { this->iseis = iseis; }
 
   type_real get_timestep() const { return dt; }
+  type_real get_sample_interval() const { return dt * nstep_between_samples; }
+  type_real get_t0() const { return t0; }
 
   KOKKOS_FUNCTION int get_seismogram_step() const { return seis_step; }
   KOKKOS_FUNCTION int get_seis_type() const { return iseis; }

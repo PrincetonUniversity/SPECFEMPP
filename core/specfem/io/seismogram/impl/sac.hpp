@@ -272,37 +272,25 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
         // SAC IDEP: 6=displacement, 7=velocity, 8=acceleration, −12345=other
         const int32_t idep = get_idep_for_wavefield(seismogram_type);
 
-        // The channel generator is now dimension-aware and returns the same
-        // number of filenames as value.size() for elastic types (2 for dim2,
-        // 3 for dim3) and 1 for pressure.
-        int ncomp = -1;
-        float b = UNDEF_F;
-        // Pre-seed delta from the configured timestep so that single-sample
-        // seismograms still get a valid DELTA header value.
-        float delta = static_cast<float>(gen.get_timestep());
-        std::vector<std::vector<float> > samples;
+        const int ncomp = static_cast<int>(base_filenames.size());
+        const int nsteps = receivers.get_nsteps();
+
+        if (ncomp == 0 || nsteps == 0)
+          continue;
+
+        const float b = static_cast<float>(receivers.get_t0());
+        const float delta = static_cast<float>(receivers.get_sample_interval());
+
+        std::vector<std::vector<float> > samples(ncomp);
+        for (auto &s : samples)
+          s.reserve(nsteps);
 
         for (auto [time, value] : receivers.get_seismogram(
                  station_info.station_name, station_info.network_name,
                  seismogram_type)) {
-          const float t = static_cast<float>(time);
-
-          if (ncomp < 0) {
-            // First sample: fix component count and begin time.
-            ncomp = static_cast<int>(base_filenames.size());
-            samples.resize(ncomp);
-            b = t;
-          } else if (samples[0].size() == 1) {
-            // Second sample: derive the effective sample interval from data.
-            delta = t - b;
-          }
-
           for (int i = 0; i < ncomp; ++i)
             samples[i].push_back(static_cast<float>(value[i]));
         }
-
-        if (ncomp <= 0 || samples.empty() || samples[0].empty())
-          continue;
 
         // ── Write one SAC file per component ────────────────────────────────
         for (int icomp = 0; icomp < ncomp; ++icomp) {
