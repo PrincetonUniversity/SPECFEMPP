@@ -7,7 +7,7 @@ parameters:
     description: |
       Material systems : Elastic & Acoustic domain (2)
       Interfaces : None
-      Sources : Explosive moment tensor source (1)
+      Sources : Vertical up force (1)
       Boundary conditions : None
       Debugging comment : This test tests acoustic elastic interface implementation
 
@@ -33,7 +33,7 @@ parameters:
             directory: "./"
 
   receivers:
-    stations: "displacement_tests/Newmark/serial/dim3/AcousticElasticExplosiveMomentTensor/STATIONS"
+    stations: "displacement_tests/Newmark/serial/dim3/AcousticElasticForce/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
@@ -49,6 +49,6 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "displacement_tests/Newmark/serial/dim3/AcousticElasticExplosiveMomentTensor/database.bin"
+    mesh-database: "displacement_tests/Newmark/serial/dim3/AcousticElasticForce/database.bin"
 
-  sources: "displacement_tests/Newmark/serial/dim3/AcousticElasticExplosiveMomentTensor/source.yaml"
+  sources: "displacement_tests/Newmark/serial/dim3/AcousticElasticForce/source.yaml"
