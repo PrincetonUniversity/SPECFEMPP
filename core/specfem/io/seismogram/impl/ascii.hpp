@@ -27,6 +27,12 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::ascii> {
     const bool from_main = write_from_main.value_or(false);
 
     for (auto station_info : receivers.stations()) {
+#ifdef SPECFEM_ENABLE_MPI
+      if (station_info.islice != specfem::MPI::get_rank() &&
+          !(from_main && specfem::MPI::main_proc())) {
+        continue; // Skip stations not assigned to this rank
+      }
+#endif
       for (auto seismogram_type : station_info.get_seismogram_types()) {
         const std::vector<std::string> filenames =
             gen.get_station_filenames<Receivers::dimension_tag>(
