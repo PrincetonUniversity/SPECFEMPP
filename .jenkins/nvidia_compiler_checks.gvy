@@ -15,7 +15,7 @@ pipeline{
                     // HostSpace parallelism strategy: SERIAL uses -j (unrestricted), OPENMP uses -j 1 to avoid oversubscription
                     axis{
                         name 'HostSpace'
-                        values 'SERIAL;-DKokkos_ENABLE_SERIAL=ON;-n 1 -c 20;-j', 'OPENMP;-DKokkos_ENABLE_OPENMP=ON; -n 1 -c 20;-j 1'
+                        values 'SERIAL;-DKokkos_ENABLE_SERIAL=ON;-n 1 -c 20;-j 4', 'OPENMP;-DKokkos_ENABLE_OPENMP=ON; -n 1 -c 20;-j 1'
                     }
                     axis{
                         name 'DeviceSpace'
@@ -116,8 +116,8 @@ pipeline{
                             }
                         }
                         post {
-                            failure {
-                                echo 'Build or Test stage failed, executing cleanup'
+                            always {
+                                echo 'Executing cleanup of build and test artifacts'
                                 sh "rm -rf build_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
                                 sh "rm -rf install_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
                                 sh "rm -rf /scratch/gpfs/TROMP/specfempp/jenkins/test_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"

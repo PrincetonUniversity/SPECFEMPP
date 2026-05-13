@@ -101,8 +101,8 @@ pipeline{
                             }
                         }
                         post {
-                            failure {
-                                echo 'Build or Test stage failed, executing cleanup'
+                            always {
+                                echo 'Executing cleanup of build and test artifacts'
                                 sh "rm -rf build_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
                                 sh "rm -rf install_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
                                 sh "rm -rf /scratch/gpfs/TROMP/specfempp/jenkins/test_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
