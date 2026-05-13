@@ -2,6 +2,7 @@
 
 #include "channel_generator.hpp"
 #include "specfem/enums.hpp"
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -33,11 +34,15 @@ struct SeismogramFormatWriter;
  * dimension_tag.
  * @param receivers  Receivers object after sync_seismograms() has been called.
  * @param gen        ChannelGenerator used to build output filenames.
+ * @param write_from_main Only write from rank 0 when set to true.
  */
 template <specfem::enums::seismogram_format Format, typename Receivers>
-void write_seismogram(Receivers &receivers, ChannelGenerator &gen,
-                      const std::string &output_folder) {
-  SeismogramFormatWriter<Format>::write(receivers, gen, output_folder);
+void write_seismogram(
+    Receivers &receivers, ChannelGenerator &gen,
+    const std::string &output_folder,
+    const std::optional<bool> write_from_main = std::nullopt) {
+  SeismogramFormatWriter<Format>::write(receivers, gen, output_folder,
+                                        write_from_main);
 }
 
 } // namespace impl

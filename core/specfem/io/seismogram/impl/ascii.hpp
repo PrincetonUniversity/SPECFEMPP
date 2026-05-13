@@ -1,7 +1,9 @@
 #pragma once
 
 #include "seismogram_writer.hpp"
+#include "specfem/mpi.hpp"
 #include <fstream>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -20,7 +22,10 @@ template <>
 struct SeismogramFormatWriter<specfem::enums::seismogram_format::ascii> {
   template <typename Receivers>
   static void write(Receivers &receivers, ChannelGenerator &gen,
-                    const std::string &output_folder) {
+                    const std::string &output_folder,
+                    const std::optional<bool> write_from_main = std::nullopt) {
+    const bool from_main = write_from_main.value_or(false);
+
     for (auto station_info : receivers.stations()) {
       for (auto seismogram_type : station_info.get_seismogram_types()) {
         const std::vector<std::string> filenames =

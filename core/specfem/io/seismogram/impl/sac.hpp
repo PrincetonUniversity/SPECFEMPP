@@ -4,11 +4,13 @@
 #include "specfem/element/tags.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/enums/wavefield.hpp"
+#include "specfem/mpi.hpp"
 #include "specfem/setup.hpp"
 #include <algorithm>
 #include <array>
 #include <cstring>
 #include <fstream>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -244,7 +246,10 @@ template <>
 struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
   template <typename Receivers>
   static void write(Receivers &receivers, ChannelGenerator &gen,
-                    const std::string &output_folder) {
+                    const std::string &output_folder,
+                    const std::optional<bool> write_from_main = std::nullopt) {
+    const bool from_main = write_from_main.value_or(false);
+
     // SEED location code encodes simulation dimensionality.
     constexpr std::string_view location_code =
         (Receivers::dimension_tag == specfem::element::dimension_tag::dim2)
@@ -252,6 +257,9 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
             : "S3";
 
     for (auto station_info : receivers.stations()) {
+      if (station_info.islice != specfem::MPI::rank() && !from_main) {
+        continue; // Skip stations not assigned to this rank
+      }
       for (auto seismogram_type : station_info.get_seismogram_types()) {
 
         const auto base_filenames =

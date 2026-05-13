@@ -24,6 +24,14 @@ specfem::runtime_configuration::seismogram::seismogram(
     }
   }();
 
+  const std::optional<bool> write_from_main = [&]() -> std::optional<bool> {
+    if (seismogram["write_from_main"]) {
+      return seismogram["write_from_main"].as<bool>();
+    } else {
+      return std::nullopt;
+    }
+  }();
+
   if (!boost::filesystem::is_directory(
           boost::filesystem::path(output_folder))) {
     std::ostringstream message;
@@ -31,8 +39,8 @@ specfem::runtime_configuration::seismogram::seismogram(
     throw std::runtime_error(message.str());
   }
 
-  *this =
-      specfem::runtime_configuration::seismogram(output_format, output_folder);
+  *this = specfem::runtime_configuration::seismogram(
+      output_format, output_folder, write_from_main);
 
   return;
 }
@@ -60,7 +68,7 @@ specfem::runtime_configuration::seismogram::instantiate_seismogram_writer(
   std::shared_ptr<specfem::io::writer> writer =
       std::make_shared<specfem::io::seismogram_writer>(
           type, elastic_wave, electromagnetic_wave, this->output_folder, dt, t0,
-          nstep_between_samples);
+          nstep_between_samples, this->write_from_main);
 
   return writer;
 }

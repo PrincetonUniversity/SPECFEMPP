@@ -8,6 +8,7 @@
 #include "specfem/enums.hpp"
 #include "specfem/io/writer.hpp"
 #include "specfem/setup.hpp"
+#include <optional>
 #include <stdexcept>
 #include <vector>
 
@@ -38,11 +39,13 @@ public:
       const specfem::enums::elastic_wave elastic_wave,
       const specfem::enums::electromagnetic_wave electromagnetic_wave,
       const std::string output_folder, const type_real dt, const type_real t0,
-      const int nstep_between_samples)
+      const int nstep_between_samples,
+      const std::optional<bool> write_from_main = std::nullopt)
       : impl::ChannelGenerator(dt), type(type), elastic_wave(elastic_wave),
         electromagnetic_wave(electromagnetic_wave),
         output_folder(output_folder), dt(dt), t0(t0),
-        nstep_between_samples(nstep_between_samples) {};
+        nstep_between_samples(nstep_between_samples),
+        write_from_main(write_from_main) {};
 
   void write(specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
                  &assembly) override {
@@ -62,13 +65,13 @@ private:
     switch (type) {
     case specfem::enums::seismogram_format::ascii:
       specfem::io::impl::write_seismogram<
-          specfem::enums::seismogram_format::ascii>(receivers, *this,
-                                                    output_folder);
+          specfem::enums::seismogram_format::ascii>(
+          receivers, *this, output_folder, write_from_main);
       break;
     case specfem::enums::seismogram_format::sac:
       specfem::io::impl::write_seismogram<
-          specfem::enums::seismogram_format::sac>(receivers, *this,
-                                                  output_folder);
+          specfem::enums::seismogram_format::sac>(
+          receivers, *this, output_folder, write_from_main);
       break;
     default:
       throw std::runtime_error(
@@ -91,6 +94,8 @@ private:
                              ///< wavefield
   int nstep_between_samples; ///< number of timesteps between seismogram
                              ///< sampling (seismogram sampling frequency)
+  std::optional<bool> write_from_main; ///< Gather all data to rank 0 and write
+                                       ///< from main proc
 };
 
 } // namespace io

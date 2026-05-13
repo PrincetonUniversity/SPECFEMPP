@@ -4,6 +4,7 @@
 #include "specfem/setup.hpp"
 #include "yaml-cpp/yaml.h"
 #include <memory>
+#include <optional>
 #include <tuple>
 
 namespace specfem {
@@ -22,9 +23,13 @@ public:
    * @param output_format Outpul seismogram file format
    * @param output_folder Path to folder location where seismogram will be
    * stored
+   * @param write_from_main Gather all seismogram data to rank 0 and write only
+   * from the main process
    */
-  seismogram(const std::string &output_format, const std::string &output_folder)
-      : output_format(output_format), output_folder(output_folder) {};
+  seismogram(const std::string &output_format, const std::string &output_folder,
+             const std::optional<bool> write_from_main)
+      : output_format(output_format), output_folder(output_folder),
+        write_from_main(write_from_main) {};
   /**
    * @brief Construct a new seismogram object
    *
@@ -50,9 +55,17 @@ public:
       const type_real dt, const type_real t0,
       const int nsteps_between_samples) const;
 
+  /**
+   * @brief Whether to gather all seismogram data to rank 0 and write only from
+   * the main process
+   */
+  std::optional<bool> get_write_from_main() const { return write_from_main; }
+
 private:
   std::string output_format; ///< format of output file
   std::string output_folder; ///< Path to output folder
+  std::optional<bool> write_from_main =
+      std::nullopt; ///< Gather to rank 0 and write from main proc
 };
 
 } // namespace runtime_configuration

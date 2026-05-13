@@ -29,11 +29,12 @@ private:
 struct StationInfo {
   std::string network_name;
   std::string station_name;
+  int islice;
 
-  StationInfo(std::string network, std::string station,
+  StationInfo(std::string network, std::string station, int islice,
               const std::vector<specfem::enums::wavefield> &types)
       : network_name(std::move(network)), station_name(std::move(station)),
-        seismo_types_(types) {}
+        islice(islice), seismo_types_(types) {}
 
   // Method to get seismogram types associated with this station
   SeismogramTypeIterator get_seismogram_types() const {
@@ -55,6 +56,7 @@ private:
     StationInfo operator*() const {
       return StationInfo(container_->network_names_[index_],
                          container_->station_names_[index_],
+                         container_->receiver_islice_[index_],
                          container_->seismogram_types_);
     }
 
@@ -91,8 +93,6 @@ public:
   Iterator end() const { return Iterator(this, station_names_.size()); }
 
   size_t size() const { return station_names_.size(); }
-
-  int get_receiver_islice(size_t i) const { return receiver_islice_[i]; }
 
 protected:
   std::vector<std::string> station_names_;
