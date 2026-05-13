@@ -52,7 +52,7 @@ TEST(StationInfoTests, Constructor) {
     specfem::enums::wavefield::displacement
   };
 
-  StationInfo station("NET", "STA01", types);
+  StationInfo station("NET", "STA01", 0, types);
   EXPECT_EQ(station.network_name, "NET");
   EXPECT_EQ(station.station_name, "STA01");
 }
@@ -62,7 +62,7 @@ TEST(StationInfoTests, GetSeismogramTypes) {
     specfem::enums::wavefield::displacement, specfem::enums::wavefield::velocity
   };
 
-  StationInfo station("NET", "STA01", types);
+  StationInfo station("NET", "STA01", 0, types);
   auto seismo_iterator = station.get_seismogram_types();
 
   EXPECT_EQ(seismo_iterator.size(), 2);
@@ -70,7 +70,7 @@ TEST(StationInfoTests, GetSeismogramTypes) {
 
 TEST(StationInfoTests, EmptyTypes) {
   std::vector<specfem::enums::wavefield> empty_types;
-  StationInfo station("NET", "STA01", empty_types);
+  StationInfo station("NET", "STA01", 0, empty_types);
 
   auto seismo_iterator = station.get_seismogram_types();
   EXPECT_EQ(seismo_iterator.size(), 0);

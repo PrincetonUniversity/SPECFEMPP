@@ -27,6 +27,7 @@ struct MockSeismogramEntry {
 struct MockStationInfo {
   std::string network_name;
   std::string station_name;
+  int islice;
   std::vector<specfem::enums::wavefield> types;
 
   const std::vector<specfem::enums::wavefield> &get_seismogram_types() const {
@@ -85,7 +86,7 @@ template <specfem::element::dimension_tag DimTag> struct MockReceivers {
 
   void add_station(const std::string &net, const std::string &sta,
                    const std::vector<specfem::enums::wavefield> &types) {
-    station_list.push_back({ net, sta, types });
+    station_list.push_back({ net, sta, 0, types });
   }
 
   void add_seismogram(const std::string &net, const std::string &sta,

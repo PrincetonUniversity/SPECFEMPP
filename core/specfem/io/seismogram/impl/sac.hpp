@@ -257,9 +257,12 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
             : "S3";
 
     for (auto station_info : receivers.stations()) {
-      if (station_info.islice != specfem::MPI::rank() && !from_main) {
+#ifdef SPECFEM_ENABLE_MPI
+      if (station_info.islice != specfem::MPI::get_rank() &&
+          !(from_main && specfem::MPI::main_proc())) {
         continue; // Skip stations not assigned to this rank
       }
+#endif
       for (auto seismogram_type : station_info.get_seismogram_types()) {
 
         const auto base_filenames =
