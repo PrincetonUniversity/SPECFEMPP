@@ -65,7 +65,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
                 &iterator_index,
             const FieldDerivativesType::value_type &du) {
           const auto index = iterator_index.get_index();
-          const int ielement = iterator_index.get_policy_index();
+          const int ielement = iterator_index.get_local_index().ispec;
           PointPropertyType point_property;
 
           specfem::assembly::load_on_device(index, properties, point_property);

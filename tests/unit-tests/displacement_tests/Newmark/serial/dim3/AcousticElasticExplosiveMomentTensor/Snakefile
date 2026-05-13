@@ -1,4 +1,4 @@
-source_file = "CMTSOLUTION"
+source_file = "FORCESOLUTION"
 
 include: "../../../specfem3d.smk"
 
