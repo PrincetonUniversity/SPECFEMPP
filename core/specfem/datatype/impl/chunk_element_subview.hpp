@@ -284,16 +284,18 @@ template <typename ViewType> struct TensorChunkElementSubview {
   }
 
   /**
-   * @brief Multiplication by jacobian matrix transformation
+   * @brief Tensor contraction operator
    *
-   * Applies jacobian transformation and returns the transformed tensor.
+   * Multiplies this tensor subview by another tensor, performing a contraction
+   * over the appropriate indices. The resulting view is transformed according
+   * to the rules of tensor algebra.
    *
-   * @param jacobian_matrix Jacobian matrix for transformation
-   * @return Transformed tensor (wrappable by stress_type)
+   * @tparam T Type of the tensor to multiply with
+   * @param tensor The tensor to contract with
+   * @return A new view representing the result of the contraction
    */
-  template <typename JacobianMatrixType>
-  KOKKOS_INLINE_FUNCTION auto
-  operator*(const JacobianMatrixType &jacobian_matrix) const {
+  template <typename T>
+  KOKKOS_INLINE_FUNCTION auto operator*(const T &tensor) const {
     point_view_type temp;
     point_view_type transformed;
 
@@ -303,33 +305,8 @@ template <typename ViewType> struct TensorChunkElementSubview {
       }
     }
 
-    if constexpr (index_type::dimension_tag ==
-                  specfem::element::dimension_tag::dim2) {
-      for (int icomp = 0; icomp < point_view_type::components; ++icomp) {
-        transformed(icomp, 0) =
-            jacobian_matrix.jacobian * (temp(icomp, 0) * jacobian_matrix.xix +
-                                        temp(icomp, 1) * jacobian_matrix.xiz);
-        transformed(icomp, 1) = jacobian_matrix.jacobian *
-                                (temp(icomp, 0) * jacobian_matrix.gammax +
-                                 temp(icomp, 1) * jacobian_matrix.gammaz);
-      }
-    } else if constexpr (index_type::dimension_tag ==
-                         specfem::element::dimension_tag::dim3) {
-      for (int icomp = 0; icomp < point_view_type::components; ++icomp) {
-        transformed(icomp, 0) =
-            jacobian_matrix.jacobian * (temp(icomp, 0) * jacobian_matrix.xix +
-                                        temp(icomp, 1) * jacobian_matrix.xiy +
-                                        temp(icomp, 2) * jacobian_matrix.xiz);
-        transformed(icomp, 1) =
-            jacobian_matrix.jacobian * (temp(icomp, 0) * jacobian_matrix.etax +
-                                        temp(icomp, 1) * jacobian_matrix.etay +
-                                        temp(icomp, 2) * jacobian_matrix.etaz);
-        transformed(icomp, 2) = jacobian_matrix.jacobian *
-                                (temp(icomp, 0) * jacobian_matrix.gammax +
-                                 temp(icomp, 1) * jacobian_matrix.gammay +
-                                 temp(icomp, 2) * jacobian_matrix.gammaz);
-      }
-    }
+    // Delegate to point view operator* for transformation
+    transformed = temp * tensor;
 
     return transformed;
   }

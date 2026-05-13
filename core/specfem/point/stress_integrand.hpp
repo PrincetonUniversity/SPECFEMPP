@@ -27,6 +27,74 @@ namespace point {
  * located
  * @tparam UseSIMD Use SIMD instructions
  */
+/**
+ * @class stress_integrand
+ * @brief Stress tensor integrated with Jacobian in reference element
+ * coordinates
+ *
+ * Represents the stress tensor integrated with respect to the reference element
+ * Jacobian determinant. This class manages stress components in the reference
+ * (ξ, η, γ) coordinate system and provides transformation to physical (x, y, z)
+ * coordinates.
+ *
+ * **Stress Transformation Mathematics:**
+ *
+ * The stress tensor transformation relates stress in physical coordinates T(σ)
+ * to stress in reference coordinates F through the Jacobian matrix J.
+ *
+ * **2D Transformation (ξ, γ) ↔ (x, z):**
+ *
+ * Forward (reference → physical):
+ * \f$ F(i,0) = |J| \cdot (T(i,0) \cdot \frac{\partial\xi}{\partial x} +
+ *                           T(i,1) \cdot \frac{\partial\gamma}{\partial x}) \f$
+ * \f$ F(i,1) = |J| \cdot (T(i,0) \cdot \frac{\partial\xi}{\partial z} +
+ *                           T(i,1) \cdot \frac{\partial\gamma}{\partial z}) \f$
+ *
+ * Inverse (physical → reference):
+ * \f$ T(i,0) = |J^{-1}| \cdot (F(i,0) \cdot \frac{\partial x}{\partial\xi} +
+ *                                 F(i,1) \cdot \frac{\partial
+ * x}{\partial\gamma}) \f$
+ * \f$ T(i,1) = |J^{-1}| \cdot (F(i,0) \cdot \frac{\partial z}{\partial\xi} +
+ *                                 F(i,1) \cdot \frac{\partial
+ * z}{\partial\gamma}) \f$
+ *
+ * **3D Transformation (ξ, η, γ) ↔ (x, y, z):**
+ *
+ * Forward transformation:
+ * \f$ F(i,0) = |J| \cdot (T(i,0) \cdot \frac{\partial\xi}{\partial x} +
+ *                           T(i,1) \cdot \frac{\partial\eta}{\partial x} +
+ *                           T(i,2) \cdot \frac{\partial\gamma}{\partial x}) \f$
+ * \f$ F(i,1) = |J| \cdot (T(i,0) \cdot \frac{\partial\xi}{\partial y} +
+ *                           T(i,1) \cdot \frac{\partial\eta}{\partial y} +
+ *                           T(i,2) \cdot \frac{\partial\gamma}{\partial y}) \f$
+ * \f$ F(i,2) = |J| \cdot (T(i,0) \cdot \frac{\partial\xi}{\partial z} +
+ *                           T(i,1) \cdot \frac{\partial\eta}{\partial z} +
+ *                           T(i,2) \cdot \frac{\partial\gamma}{\partial z}) \f$
+ *
+ * Inverse transformation:
+ * \f$ T(i,0) = |J^{-1}| \cdot (F(i,0) \cdot \frac{\partial x}{\partial\xi} +
+ *                                 F(i,1) \cdot \frac{\partial x}{\partial\eta}
+ * + F(i,2) \cdot \frac{\partial x}{\partial\gamma}) \f$
+ * \f$ T(i,1) = |J^{-1}| \cdot (F(i,0) \cdot \frac{\partial y}{\partial\xi} +
+ *                                 F(i,1) \cdot \frac{\partial y}{\partial\eta}
+ * + F(i,2) \cdot \frac{\partial y}{\partial\gamma}) \f$
+ * \f$ T(i,2) = |J^{-1}| \cdot (F(i,0) \cdot \frac{\partial z}{\partial\xi} +
+ *                                 F(i,1) \cdot \frac{\partial z}{\partial\eta}
+ * + F(i,2) \cdot \frac{\partial z}{\partial\gamma}) \f$
+ *
+ * where |J| is the Jacobian determinant and |J^{-1}| is its inverse.
+ *
+ * **Implementation Note:**
+ * Coordinate transformations are now handled through generic matrix operations
+ * (`operator*` in TensorPointViewType) and the `specfem::algorithms::inverse()`
+ * function for matrix inversion. This provides a cleaner separation of concerns
+ * between stress representation and coordinate transformation.
+ *
+ * @tparam T Scalar floating-point type
+ * @tparam Dimension Spatial dimension (2 or 3)
+ * @tparam UseSIMD Boolean flag for SIMD vectorization
+ */
+
 template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct stress_integrand
@@ -86,117 +154,6 @@ public:
    * @param F Stress integrands
    */
   KOKKOS_FUNCTION stress_integrand(const value_type &F) : F(F) {}
-  ///@}
-
-  /**
-   * @name Operators
-   */
-  ///@{
-  /**
-   * @brief Transform stress tensor using jacobian matrix.
-   *
-   * Applies the coordinate transformation from reference element to physical
-   * element using the jacobian matrix. This operation transforms stress
-   * components from the reference (ξ, ζ) coordinate system to the physical (x,
-   * z) coordinate system.
-   *
-   * The transformation formula for 2D is:
-   * \f$ F(i,0) = J \cdot (T(i,0) \cdot \frac{\partial\xi}{\partial x} + T(i,1)
-   * \cdot \frac{\partial\zeta}{\partial x}) \f$
-   * \f$ F(i,1) = J \cdot (T(i,0) \cdot \frac{\partial\xi}{\partial z} + T(i,1)
-   * \cdot \frac{\partial\zeta}{\partial z}) \f$
-   *
-   * where \f$ J \f$ is the jacobian determinant and the partial derivatives are
-   * the inverse jacobian matrix elements.
-   *
-   * @param jacobian_matrix Jacobian matrix containing transformation
-   * derivatives
-   * @return Transformed stress tensor in physical coordinates
-   *
-   * @code
-   * stress_integrand_type stress_integrand(transformed_stress_tensor);
-   * auto jacobian = compute_jacobian_matrix(quadrature_point);
-   * auto stress_tensor = stress_integrand * jacobian;
-   * @endcode
-   */
-  KOKKOS_INLINE_FUNCTION
-  value_type operator*(const specfem::point::jacobian_matrix<
-                       specfem::element::dimension_tag::dim2, true, UseSIMD>
-                           &jacobian_matrix) const {
-    value_type T;
-    // The Jacobian entries are named xix for \partial\xi / \partial x,
-    // but in practice we always call jacobian.inverse(), so xix is actually
-    // xxi, xiz is zxi, etc.
-    for (int icomponent = 0; icomponent < components; ++icomponent) {
-      T(icomponent, 0) =
-          jacobian_matrix.jacobian * (F(icomponent, 0) * jacobian_matrix.xix +
-                                      F(icomponent, 1) * jacobian_matrix.xiz);
-      T(icomponent, 1) = jacobian_matrix.jacobian *
-                         (F(icomponent, 0) * jacobian_matrix.gammax +
-                          F(icomponent, 1) * jacobian_matrix.gammaz);
-    }
-
-    return T;
-  }
-
-  /**
-   * @brief Transform stress integrand using 3D jacobian matrix.
-   *
-   * Applies the coordinate transformation from reference element to physical
-   * element using the jacobian matrix. This operation transforms stress
-   * components from the physical (x, y, z) coordinate system to the reference
-   * (ξ, η, γ) coordinate system.
-   *
-   * The transformation formula for 3D is:
-   * \f$ T(i,0) = J \cdot (F(i,0) \cdot \frac{\partial x}{\partial\xi} +
-   *                       F(i,1) \cdot \frac{\partial x}{\partial\eta} +
-   *                       F(i,2) \cdot \frac{\partial x}{\partial\gamma}) \f$
-   * \f$ T(i,1) = J \cdot (F(i,0) \cdot \frac{\partial y}{\partial\xi} +
-   *                       F(i,1) \cdot \frac{\partial y}{\partial\eta} +
-   *                       F(i,2) \cdot \frac{\partial y}{\partial\gamma}) \f$
-   * \f$ T(i,2) = J \cdot (F(i,0) \cdot \frac{\partial z}{\partial\xi} +
-   *                       F(i,1) \cdot \frac{\partial z}{\partial\eta} +
-   *                       F(i,2) \cdot \frac{\partial z}{\partial\gamma}) \f$
-   *
-   * where \f$ J \f$ is the inverse jacobian determinant and the partial
-   * derivatives are the jacobian matrix elements.
-   *
-   * @param jacobian_matrix 3D Jacobian matrix containing transformation
-   * derivatives
-   * @return Untransformed stress tensor
-   *
-   * @code
-   * stress_integrand_type stress_integrand(transformed_stress_tensor);
-   * auto jacobian = compute_jacobian_matrix_3d(quadrature_point);
-   * auto stress = stress_integrand * jacobian.inverse();
-   * @endcode
-   */
-  KOKKOS_INLINE_FUNCTION
-  value_type operator*(const specfem::point::jacobian_matrix<
-                       specfem::element::dimension_tag::dim3, true, UseSIMD>
-                           &jacobian_matrix) const {
-    value_type T;
-
-    // The Jacobian entries are named xix for \partial\xi / \partial x,
-    // but in practice we always call jacobian.inverse(), so xix is actually
-    // xxi, xiy is yxi, etc.
-    for (int icomponent = 0; icomponent < components; ++icomponent) {
-      T(icomponent, 0) =
-          jacobian_matrix.jacobian * (F(icomponent, 0) * jacobian_matrix.xix +
-                                      F(icomponent, 1) * jacobian_matrix.xiy +
-                                      F(icomponent, 2) * jacobian_matrix.xiz);
-      T(icomponent, 1) =
-          jacobian_matrix.jacobian * (F(icomponent, 0) * jacobian_matrix.etax +
-                                      F(icomponent, 1) * jacobian_matrix.etay +
-                                      F(icomponent, 2) * jacobian_matrix.etaz);
-      T(icomponent, 2) = jacobian_matrix.jacobian *
-                         (F(icomponent, 0) * jacobian_matrix.gammax +
-                          F(icomponent, 1) * jacobian_matrix.gammay +
-                          F(icomponent, 2) * jacobian_matrix.gammaz);
-    }
-
-    return T;
-  }
   ///@}
 };
 

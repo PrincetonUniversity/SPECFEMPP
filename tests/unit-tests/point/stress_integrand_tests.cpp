@@ -1,3 +1,4 @@
+#include "specfem/algorithms.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/point/stress.hpp"
 #include "specfem/point/stress_integrand.hpp"
@@ -89,9 +90,12 @@ TYPED_TEST(PointStressIntegrandTest, StressIntegrand2DAcoustic) {
   typename stress_type::value_type T(val1, val2);
   stress_type stress(T);
   jacobian_matrix_type jacobian_matrix(1.0, 2.0, 3.0, 4.0, -0.5);
-  stress_integrand_type transformed_stress_integrand(stress * jacobian_matrix);
-  stress_type reconstructed_stress(transformed_stress_integrand *
-                                   jacobian_matrix.inverse());
+  stress_integrand_type transformed_stress_integrand(
+      stress.T * jacobian_matrix.tensor() * jacobian_matrix.jacobian);
+  stress_type reconstructed_stress(
+      ((transformed_stress_integrand.F *
+        specfem::algorithms::inverse(jacobian_matrix.tensor())) /
+       jacobian_matrix.jacobian));
   for (int i = 0; i < 2; ++i) {
     EXPECT_TRUE(specfem::utilities::is_close(stress.T(0, i),
                                              reconstructed_stress.T(0, i)))
@@ -165,9 +169,12 @@ TYPED_TEST(PointStressIntegrandTest, StressIntegrand2DElastic) {
   typename stress_type::value_type T(val11, val21, val12, val22);
   stress_type stress(T);
   jacobian_matrix_type jacobian_matrix(1.0, 2.0, 3.0, 4.0, -0.5);
-  stress_integrand_type transformed_stress_integrand(stress * jacobian_matrix);
-  stress_type reconstructed_stress(transformed_stress_integrand *
-                                   jacobian_matrix.inverse());
+  stress_integrand_type transformed_stress_integrand(
+      stress.T * jacobian_matrix.tensor() * jacobian_matrix.jacobian);
+  stress_type reconstructed_stress(
+      ((transformed_stress_integrand.F *
+        specfem::algorithms::inverse(jacobian_matrix.tensor())) /
+       jacobian_matrix.jacobian));
   for (int i = 0; i < 2; ++i) {
     for (int j = 0; j < 2; ++j) {
       EXPECT_TRUE(specfem::utilities::is_close(stress.T(i, j),
@@ -242,9 +249,12 @@ TYPED_TEST(PointStressIntegrandTest, StressIntegrand2DPoroelastic) {
                                      F(0, 1), F(1, 1), F(2, 1), F(3, 1));
   stress_type stress(T);
   jacobian_matrix_type jacobian_matrix(1.0, 2.0, 3.0, 4.0, -0.5);
-  stress_integrand_type transformed_stress_integrand(stress * jacobian_matrix);
-  stress_type reconstructed_stress(transformed_stress_integrand *
-                                   jacobian_matrix.inverse());
+  stress_integrand_type transformed_stress_integrand(
+      stress.T * jacobian_matrix.tensor() * jacobian_matrix.jacobian);
+  stress_type reconstructed_stress(
+      ((transformed_stress_integrand.F *
+        specfem::algorithms::inverse(jacobian_matrix.tensor())) /
+       jacobian_matrix.jacobian));
   for (int i = 0; i < 4; ++i) {
     for (int j = 0; j < 2; ++j) {
       EXPECT_TRUE(specfem::utilities::is_close(stress.T(i, j),
@@ -309,9 +319,12 @@ TYPED_TEST(PointStressIntegrandTest, StressIntegrand3DAcoustic) {
   stress_type stress(T);
   jacobian_matrix_type jacobian_matrix(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0,
                                        10.0, -1.0 / 3.0);
-  stress_integrand_type transformed_stress_integrand(stress * jacobian_matrix);
-  stress_type reconstructed_stress(transformed_stress_integrand *
-                                   jacobian_matrix.inverse());
+  stress_integrand_type transformed_stress_integrand(
+      stress.T * jacobian_matrix.tensor() * jacobian_matrix.jacobian);
+  stress_type reconstructed_stress(
+      ((transformed_stress_integrand.F *
+        specfem::algorithms::inverse(jacobian_matrix.tensor())) /
+       jacobian_matrix.jacobian));
   typename stress_type::value_type::value_type reltol =
       1e-5; // need a slightly lower tolerance than 1e-6
   for (int i = 0; i < 3; ++i) {
@@ -389,9 +402,12 @@ TYPED_TEST(PointStressIntegrandTest, StressIntegrand3DElastic) {
   stress_type stress(T);
   jacobian_matrix_type jacobian_matrix(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0,
                                        10.0, -1.0 / 3.0);
-  stress_integrand_type transformed_stress_integrand(stress * jacobian_matrix);
-  stress_type reconstructed_stress(transformed_stress_integrand *
-                                   jacobian_matrix.inverse());
+  stress_integrand_type transformed_stress_integrand(
+      stress.T * jacobian_matrix.tensor() * jacobian_matrix.jacobian);
+  stress_type reconstructed_stress(
+      ((transformed_stress_integrand.F *
+        specfem::algorithms::inverse(jacobian_matrix.tensor())) /
+       jacobian_matrix.jacobian));
   typename stress_type::value_type::value_type reltol =
       1e-5; // need a slightly lower tolerance than 1e-6
   for (int i = 0; i < 3; ++i) {
@@ -475,9 +491,12 @@ TYPED_TEST(PointStressIntegrandTest, StressIntegrand3DElasticCosserat) {
   stress_type stress(T);
   jacobian_matrix_type jacobian_matrix(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0,
                                        10.0, -1.0 / 3.0);
-  stress_integrand_type transformed_stress_integrand(stress * jacobian_matrix);
-  stress_type reconstructed_stress(transformed_stress_integrand *
-                                   jacobian_matrix.inverse());
+  stress_integrand_type transformed_stress_integrand(
+      stress.T * jacobian_matrix.tensor() * jacobian_matrix.jacobian);
+  stress_type reconstructed_stress(
+      ((transformed_stress_integrand.F *
+        specfem::algorithms::inverse(jacobian_matrix.tensor())) /
+       jacobian_matrix.jacobian));
   typename stress_type::value_type::value_type reltol =
       1e-5; // need a slightly lower tolerance than 1e-6
   for (int i = 0; i < 6; ++i) {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/algorithms.hpp"
 #include "specfem/element.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
@@ -70,23 +71,17 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
     const PointPropertiesType &point_properties, const T factor,
     const PointStressIntegrandViewType &F,
     PointAccelerationType &acceleration) {
-  const auto jacobian_inv = point_jacobian_matrix.inverse();
-
-  using stress_type = specfem::point::stress<
-      specfem::tags::Tags<specfem::element::dimension_tag::dim3,
-                          specfem::element::medium_tag::elastic_spin,
-                          specfem::element::property_tag::isotropic_cosserat,
-                          PointJacobianMatrixType::using_simd> >;
-  const auto t = stress_type(F * jacobian_inv).T; // Transform stress integrand
-                                                  // F to stress tensor t
+  const auto jacobian_inv =
+      specfem::algorithms::inverse(point_jacobian_matrix.tensor());
+  const auto stress = F * jacobian_inv / point_jacobian_matrix.jacobian;
 
   // Reassign stress components due to transpose in its original definition
-  const auto sigma_xy = t(1, 0);
-  const auto sigma_yx = t(0, 1);
-  const auto sigma_xz = t(2, 0);
-  const auto sigma_zx = t(0, 2);
-  const auto sigma_yz = t(2, 1);
-  const auto sigma_zy = t(1, 2);
+  const auto sigma_xy = stress(1, 0);
+  const auto sigma_yx = stress(0, 1);
+  const auto sigma_xz = stress(2, 0);
+  const auto sigma_zx = stress(0, 2);
+  const auto sigma_yz = stress(2, 1);
+  const auto sigma_zy = stress(1, 2);
 
   // Add to acceleration
   acceleration(3) -= (sigma_zy - sigma_yz) * factor;
