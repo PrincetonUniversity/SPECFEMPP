@@ -6,20 +6,11 @@
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 // Implementation details exposed for testing
 namespace specfem::algorithms::locate_point_impl {
-
-/**
- * @brief A type for the local coordinates along a given face (codimension 1)
- *
- * @tparam dimension_tag the dimension of the element.
- */
-template <specfem::element::dimension_tag dimension_tag>
-using facial_coordinate_type =
-    std::conditional_t<dimension_tag == specfem::element::dimension_tag::dim2,
-                       type_real, std::pair<type_real, type_real> >;
 
 std::tuple<int, int, int> rough_location(
     const specfem::point::global_coordinates<
@@ -48,19 +39,14 @@ std::pair<type_real, bool> get_local_edge_coordinate(
                        Kokkos::HostSpace> &coorg,
     const specfem::mesh_entity::dim2::type &mesh_entity, type_real coord);
 
-std::pair<specfem::algorithms::locate_point_impl::facial_coordinate_type<
-              specfem::element::dimension_tag::dim3>,
-          bool>
-get_local_face_coordinate(
+std::pair<std::pair<type_real, type_real>, bool> get_local_face_coordinate(
     const specfem::point::global_coordinates<
         specfem::element::dimension_tag::dim3> &global,
     const Kokkos::View<specfem::point::global_coordinates<
                            specfem::element::dimension_tag::dim3> *,
                        Kokkos::HostSpace> &coorg,
     const specfem::mesh_entity::dim3::type &mesh_entity,
-    specfem::algorithms::locate_point_impl::facial_coordinate_type<
-        specfem::element::dimension_tag::dim3>
-        coord);
+    std::pair<type_real, type_real> coord);
 
 // Core locate_point logic that can be tested with raw data arrays
 specfem::point::local_coordinates<specfem::element::dimension_tag::dim2>
@@ -173,16 +159,79 @@ locate_point(
         specfem::element::dimension_tag::dim3> &coordinates,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh);
 
-std::pair<type_real, bool> locate_point_on_edge(
+// locate on edge (2D) global -> local
+std::pair<type_real, bool> locate_point(
     const specfem::point::global_coordinates<
         specfem::element::dimension_tag::dim2> &coordinates,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
     const int &ispec, const specfem::mesh_entity::dim2::type &constraint);
 
+// locate on edge (2D) local -> global (edge coordinate)
 specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
-locate_point_on_edge(
+locate_point(
     const type_real &coordinate,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
     const int &ispec, const specfem::mesh_entity::dim2::type &constraint);
 
+// locate on edge (2D) local -> global (element coordinates + is on edge check)
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
+locate_point(
+    const specfem::point::local_coordinates<
+        specfem::element::dimension_tag::dim2> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
+    const specfem::mesh_entity::dim2::type &constraint);
+
+// locate on face (3D) global -> local
+
+/**
+ * @brief Given a face (ispec, constraint), finds the best fit local coordinate
+ * on that face to the given global coordinates. Coordinates will be clamped to
+ * [-1,1], even if a point outside that range is a better fit. In such a case,
+ * the second return value will be false.
+ *
+ * @param coordinates - global coordinates to match to
+ * @param mesh - assembly::mesh struct
+ * @param ispec - element index whose local coordinates to find
+ * @param constraint - face to compute for
+ * @return std::pair<facial_coordinate_type,bool> - the face local coordinate
+ * and whether or not the minimum found is a critical point (false is returned
+ * if the best fit coordinate is out of bounds).
+ */
+std::pair<std::pair<type_real, type_real>, bool> locate_point(
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim3> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
+    const int &ispec,
+    const specfem::mesh_entity::type<specfem::element::dimension_tag::dim3>
+        &constraint);
+
+// locate on face (3D) local -> global
+
+/**
+ * @brief Convert face coordinate to global coordinates
+ *
+ * Given a face (ispec, constraint) and the coordinates along it, finds
+ * the global coordinates.
+ *
+ * @param coordinates Local coordinate along face
+ * @param mesh 2D spectral element mesh
+ * @param ispec Element index whose local coordinates to find
+ * @param constraint Edge to compute for
+ * @return Global coordinates of the point
+ */
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
+locate_point(
+    const std::pair<type_real, type_real> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
+    const int &ispec,
+    const specfem::mesh_entity::type<specfem::element::dimension_tag::dim3>
+        &constraint);
+
+// locate on face (3D) local -> global (element coordinates + is on face check)
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
+locate_point(
+    const specfem::point::local_coordinates<
+        specfem::element::dimension_tag::dim3> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
+    const specfem::mesh_entity::dim3::type &constraint);
 } // namespace specfem::algorithms::locate_point_impl

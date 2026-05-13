@@ -419,19 +419,14 @@ locate_point(
   return jacobian::compute_locations(coorg, ngnod, xi, eta, gamma);
 }
 
-std::pair<specfem::algorithms::locate_point_impl::facial_coordinate_type<
-              specfem::element::dimension_tag::dim3>,
-          bool>
-get_local_face_coordinate(
+std::pair<std::pair<type_real, type_real>, bool> get_local_face_coordinate(
     const specfem::point::global_coordinates<
         specfem::element::dimension_tag::dim3> &global,
     const Kokkos::View<specfem::point::global_coordinates<
                            specfem::element::dimension_tag::dim3> *,
                        Kokkos::HostSpace> &coorg,
     const specfem::mesh_entity::dim3::type &mesh_entity,
-    specfem::algorithms::locate_point_impl::facial_coordinate_type<
-        specfem::element::dimension_tag::dim3>
-        coord) {
+    std::pair<type_real, type_real> coord) {
   constexpr type_real local_deriv_eps = 1e-12;
   constexpr type_real global_coord_eps = 5e-2;
   const int ngnod = coorg.extent(0);
@@ -577,10 +572,7 @@ get_local_face_coordinate(
   return { { facecoord1, facecoord2 }, true };
 }
 
-std::pair<specfem::algorithms::locate_point_impl::facial_coordinate_type<
-              specfem::element::dimension_tag::dim3>,
-          bool>
-locate_point_on_face(
+std::pair<std::pair<type_real, type_real>, bool> locate_point(
     const specfem::point::global_coordinates<
         specfem::element::dimension_tag::dim3> &coordinates,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
@@ -610,9 +602,8 @@ locate_point_on_face(
 }
 
 specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
-locate_point_on_face(
-    const specfem::algorithms::locate_point_impl::facial_coordinate_type<
-        specfem::element::dimension_tag::dim3> &coordinates,
+locate_point(
+    const std::pair<type_real, type_real> &coordinates,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
     const int &ispec,
     const specfem::mesh_entity::type<specfem::element::dimension_tag::dim3>
@@ -642,45 +633,68 @@ locate_point_on_face(
 
   // interpolating the entire element is not the most efficient way to do this.
   // consider a codimension 1 interpolation in the future.
-
-  const int ngnod = mesh.ngnod;
-
-  const Kokkos::View<specfem::point::global_coordinates<
-                         specfem::element::dimension_tag::dim3> *,
-                     Kokkos::HostSpace>
-      coorg("coorg", ngnod);
-
-  for (int i = 0; i < ngnod; i++) {
-    coorg(i).x = mesh.h_control_node_coordinates(0, ispec, i);
-    coorg(i).y = mesh.h_control_node_coordinates(1, ispec, i);
-    coorg(i).z = mesh.h_control_node_coordinates(2, ispec, i);
-  }
-
-  return specfem::jacobian::compute_locations(coorg, ngnod, xi, gamma, eta);
-}
-
-std::pair<specfem::algorithms::locate_point_impl::facial_coordinate_type<
-              specfem::element::dimension_tag::dim3>,
-          bool>
-locate_point_on_entity(
-    const specfem::point::global_coordinates<
-        specfem::element::dimension_tag::dim3> &coordinates,
-    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
-    const int &ispec,
-    const specfem::mesh_entity::type<specfem::element::dimension_tag::dim3>
-        &constraint) {
-  return locate_point_on_face(coordinates, mesh, ispec, constraint);
+  return locate_point(
+      specfem::point::local_coordinates<specfem::element::dimension_tag::dim3>(
+          ispec, xi, eta, gamma),
+      mesh);
 }
 
 specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
-locate_point_on_entity(
-    const specfem::algorithms::locate_point_impl::facial_coordinate_type<
+locate_point(
+    const specfem::point::local_coordinates<
         specfem::element::dimension_tag::dim3> &coordinates,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
-    const int &ispec,
-    const specfem::mesh_entity::type<specfem::element::dimension_tag::dim3>
-        &constraint) {
-  return locate_point_on_face(coordinates, mesh, ispec, constraint);
+    const specfem::mesh_entity::dim3::type &constraint) {
+  constexpr type_real eps = 1e-5;
+  switch (constraint) {
+  case mesh_entity::dim3::type::bottom:
+    if (std::abs(coordinates.gamma + 1) > eps) {
+      throw std::runtime_error(
+          "locate_point constraint and element-local "
+          "coordinates provided, but disagree. (bottom, but gamma != -1");
+    }
+    break;
+  case mesh_entity::dim3::type::right:
+    if (std::abs(coordinates.xi - 1) > eps) {
+      throw std::runtime_error(
+          "locate_point constraint and element-local "
+          "coordinates provided, but disagree. (right, but xi != 1");
+    }
+    break;
+  case mesh_entity::dim3::type::top:
+    if (std::abs(coordinates.gamma - 1) > eps) {
+      throw std::runtime_error(
+          "locate_point constraint and element-local "
+          "coordinates provided, but disagree. (top, but gamma != 1");
+    }
+    break;
+  case mesh_entity::dim3::type::left:
+    if (std::abs(coordinates.xi + 1) > eps) {
+      throw std::runtime_error(
+          "locate_point constraint and element-local "
+          "coordinates provided, but disagree. (left, but xi != -1");
+    }
+    break;
+  case mesh_entity::dim3::type::front:
+    if (std::abs(coordinates.eta + 1) > eps) {
+      throw std::runtime_error(
+          "locate_point constraint and element-local "
+          "coordinates provided, but disagree. (front, but eta != -1");
+    }
+    break;
+  case mesh_entity::dim3::type::back:
+    if (std::abs(coordinates.eta - 1) > eps) {
+      throw std::runtime_error(
+          "locate_point constraint and element-local "
+          "coordinates provided, but disagree. (back, but eta != 1");
+    }
+    break;
+  default:
+    throw std::runtime_error("locate_point_on_face constraint must be a face "
+                             "(edges are currently unsupported).");
+    break;
+  }
+  return locate_point(coordinates, mesh);
 }
 
 } // namespace locate_point_impl
