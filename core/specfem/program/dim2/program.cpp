@@ -24,8 +24,10 @@ void program_2d(
   specfem::runtime_configuration::setup setup(parameter_dict);
   const auto database_filename = setup.get_databases();
 
-  specfem::Logger::info(
-      print_header<specfem::element::dimension_tag::dim2>(setup, start_time));
+  specfem::Logger::info([&](std::ostringstream &oss) {
+    oss << print_header<specfem::element::dimension_tag::dim2>(setup,
+                                                               start_time);
+  });
 
   // --------------------------------------------------------------
 
@@ -33,17 +35,24 @@ void program_2d(
   //                   Read mesh and materials
   // --------------------------------------------------------------
   const auto quadrature = setup.instantiate_quadrature();
-  specfem::Logger::info("Quadrature:");
-  specfem::Logger::info("-------------------------------");
-  specfem::Logger::info(quadrature.to_string());
+  specfem::Logger::info([&](std::ostringstream &oss) {
+    oss << "Quadrature:\n"
+        << "-------------------------------\n"
+        << quadrature.to_string();
+  });
 
   const auto mesh = specfem::io::read_2d_mesh(
       database_filename, setup.get_elastic_wave_type(),
       setup.get_electromagnetic_wave_type(), setup.get_attenuation_setup());
 
-  specfem::Logger::info("Mesh Information:");
-  specfem::Logger::info("-------------------------------");
-  specfem::Logger::info(mesh.print());
+  // mesh.print() always called (not wrapped in lambda function) because it
+  // requires collective communication
+  const auto mesh_info = mesh.print();
+  specfem::Logger::info([&](std::ostringstream &oss) {
+    oss << "Mesh Information:\n"
+        << "-------------------------------\n"
+        << mesh_info;
+  });
 
   // --------------------------------------------------------------
 
@@ -60,24 +69,6 @@ void program_2d(
   const auto stations_node = setup.get_stations();
   const auto angle = setup.get_receiver_angle();
   auto receivers = specfem::io::read_2d_receivers(stations_node, angle);
-
-  specfem::Logger::info("Source Information:");
-  specfem::Logger::info("-------------------------------");
-  specfem::Logger::info(
-      "Number of sources : " + std::to_string(sources.size()) + "\n");
-
-  for (auto &source : sources) {
-    specfem::Logger::info(source->print());
-  }
-
-  specfem::Logger::info("Receiver Information:");
-  specfem::Logger::info("-------------------------------");
-  specfem::Logger::info(
-      "Number of receivers : " + std::to_string(receivers.size()) + "\n");
-
-  for (auto &receiver : receivers) {
-    specfem::Logger::info(receiver->print());
-  }
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
@@ -93,6 +84,24 @@ void program_2d(
       setup.allocate_boundary_values(), setup.instantiate_property_reader(),
       setup.get_flux_scheme_configuration());
 
+  specfem::Logger::info([&](std::ostringstream &oss) {
+    oss << "Source Information:\n"
+        << "-------------------------------\n"
+        << "Number of sources : " << sources.size() << "\n";
+    for (auto &source : sources) {
+      oss << source->print();
+    }
+
+    oss << "Receiver Information:\n"
+        << "-------------------------------\n"
+        << "Number of receivers : " << receivers.size() << "\n";
+    for (auto &receiver : receivers) {
+      oss << receiver->print();
+    }
+  });
+
+  // assembly.print() always called (not wrapped in lambda function)
+  // because it requires collective communication
   specfem::Logger::info(assembly.print());
 
   // --------------------------------------------------------------
@@ -101,7 +110,8 @@ void program_2d(
   //                   Instantiate Timescheme
   // --------------------------------------------------------------
   const auto time_scheme = setup.instantiate_timescheme(assembly.fields);
-  specfem::Logger::info(time_scheme->to_string());
+  specfem::Logger::info(
+      [&](std::ostringstream &oss) { oss << time_scheme->to_string(); });
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
@@ -109,8 +119,8 @@ void program_2d(
   // --------------------------------------------------------------
   const auto property_writer = setup.instantiate_property_writer();
   if (property_writer) {
-    specfem::Logger::info("Writing model files:");
-    specfem::Logger::info("-------------------------------");
+    specfem::Logger::info(
+        "Writing model files:\n-------------------------------");
 
     property_writer->write(assembly);
     return;
@@ -158,8 +168,8 @@ void program_2d(
   //                   Execute Solver
   // --------------------------------------------------------------
   // Time the solver
-  specfem::Logger::info("Executing time loop:");
-  specfem::Logger::info("-------------------------------");
+  specfem::Logger::info(
+      "Executing time loop:\n-------------------------------");
 
   const auto solver_start_time = std::chrono::system_clock::now();
   solver->run();
@@ -174,8 +184,8 @@ void program_2d(
   // --------------------------------------------------------------
   const auto seismogram_writer = setup.instantiate_seismogram_writer();
   if (seismogram_writer) {
-    specfem::Logger::info("Writing seismogram files:");
-    specfem::Logger::info("-------------------------------");
+    specfem::Logger::info(
+        "Writing seismogram files:\n-------------------------------");
 
     seismogram_writer->write(assembly);
   }
@@ -186,8 +196,8 @@ void program_2d(
   // --------------------------------------------------------------
   const auto kernel_writer = setup.instantiate_kernel_writer();
   if (kernel_writer) {
-    specfem::Logger::info("Writing kernel files:");
-    specfem::Logger::info("-------------------------------");
+    specfem::Logger::info(
+        "Writing kernel files:\n-------------------------------");
 
     kernel_writer->write(assembly);
   }
@@ -196,7 +206,9 @@ void program_2d(
   // --------------------------------------------------------------
   //                   Print End Message
   // --------------------------------------------------------------
-  specfem::Logger::info(print_end_message(start_time, solver_time));
+  specfem::Logger::info([&](std::ostringstream &oss) {
+    oss << print_end_message(start_time, solver_time);
+  });
   // --------------------------------------------------------------
 
   return;

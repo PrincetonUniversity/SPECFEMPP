@@ -159,21 +159,20 @@ specfem::periodic_tasks::plot_wavefield<specfem::element::dimension_tag::dim2>::
     this->nonnegative_field = false;
   }
 
-  std::ostringstream message;
-  message << "Initialized 2D wavefield plotter with setup:" << std::endl;
-  message << "--------------------------------------------" << std::endl;
-  message << "    Plotting wavefield of type: "
-          << specfem::enums::to_string(wavefield_type)
-          << " with component: " << specfem::enums::to_string(component)
-          << std::endl;
-  message << "    Non-negative field: "
-          << (this->nonnegative_field ? "true" : "false") << std::endl;
-  message << "    Output format: " << specfem::enums::to_string(output_format)
-          << std::endl;
-  message << "    Output folder: " << output_folder.string() << std::endl;
-  message << "    Time interval: " << time_interval << " steps" << std::endl;
-
-  specfem::Logger::info(message.str());
+  specfem::Logger::info([&](std::ostringstream &oss) {
+    oss << "Initialized 2D wavefield plotter with setup:" << std::endl;
+    oss << "--------------------------------------------" << std::endl;
+    oss << "    Plotting wavefield of type: "
+        << specfem::enums::to_string(wavefield_type)
+        << " with component: " << specfem::enums::to_string(component)
+        << std::endl;
+    oss << "    Non-negative field: "
+        << (this->nonnegative_field ? "true" : "false") << std::endl;
+    oss << "    Output format: " << specfem::enums::to_string(output_format)
+        << std::endl;
+    oss << "    Output folder: " << output_folder.string() << std::endl;
+    oss << "    Time interval: " << time_interval << " steps" << std::endl;
+  });
 };
 
 // Sigmoid function centered at 0.0
@@ -924,8 +923,10 @@ void specfem::periodic_tasks::
   H5Gclose(vtkhdf_group);
   H5Fclose(hdf5_file_id);
 
-  specfem::Logger::info("Initialized VTK HDF5 file for wavefield output: " +
-                        this->hdf5_filename + " (extensible datasets)");
+  specfem::Logger::info([&](std::ostringstream &oss) {
+    oss << "Initialized VTK HDF5 file for wavefield output: "
+        << this->hdf5_filename << " (extensible datasets)";
+  });
 
 #else
   throw std::runtime_error(
@@ -1488,9 +1489,10 @@ void specfem::periodic_tasks::
 
   this->current_timestep++;
 
-  specfem::Logger::info("Wrote wavefield data for timestep " +
-                        std::to_string(istep) + " to HDF5 file (step " +
-                        std::to_string(this->current_timestep) + ")");
+  specfem::Logger::info([&](std::ostringstream &oss) {
+    oss << "Wrote wavefield data for timestep " << istep
+        << " to HDF5 file (step " << this->current_timestep << ")";
+  });
 
 #else
   throw std::runtime_error(

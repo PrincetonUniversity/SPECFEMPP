@@ -20,10 +20,10 @@ void specfem::sources::source<specfem::element::dimension_tag::dim2>::
 
   std::ostringstream message;
 
-  message << "The element that a " << this->name
+  message << "The element that a " << this->source_name()
           << " is supposed to be placed in \n"
-          << "belongs to a medium that is not supported by the " << this->name
-          << ".\n"
+          << "belongs to a medium that is not supported by the "
+          << this->source_name() << ".\n"
           << "  Requested medium: " << specfem::element::to_string(medium_tag)
           << "\n"
           << "  Global:\n"

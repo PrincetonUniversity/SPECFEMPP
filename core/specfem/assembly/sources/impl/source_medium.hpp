@@ -4,6 +4,7 @@
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/mpi.hpp"
 #include "specfem/point.hpp"
 #include "specfem/setup.hpp"
 #include "specfem/source.hpp"
@@ -363,8 +364,15 @@ sort_sources_per_medium(
       sorted_sources;
   std::vector<int> source_indices;
 
+  const int myrank = specfem::MPI::get_rank();
   for (int isource = 0; isource < (int)sources.size(); isource++) {
     const auto &source = sources[isource];
+
+    // In MPI builds a source not owned by this rank has islice != myrank.
+    // Skip it here so it is never added to any medium's source list.
+    if (source->get_islice() != myrank) {
+      continue;
+    }
     if (source->get_medium_tag() == MediumTag) {
       sorted_sources.push_back(source);
       source_indices.push_back(isource);
