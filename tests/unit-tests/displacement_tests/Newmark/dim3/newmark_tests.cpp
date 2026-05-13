@@ -207,7 +207,7 @@ TEST_P(Newmark, 3D) {
 
   // An impl function for the seismogram writer used here for generation
   // of the filenames of files written by `xspecfem3D` in Fortran.
-  specfem::io::impl::ChannelGenerator channel_generator(Test.traces, dt);
+  specfem::io::impl::ChannelGenerator channel_generator(dt);
 
   for (auto station_info : seismograms.stations()) {
 
@@ -228,8 +228,9 @@ TEST_P(Newmark, 3D) {
       std::vector<std::string> filenames;
 
       // Depending on wavefield, and timestep, get the correct filenames
-      filenames = channel_generator.get_station_filenames(
-          network_name, station_name, "S3", seismogram_type);
+      for (auto &f : channel_generator.get_station_filenames(
+               network_name, station_name, "S3", seismogram_type))
+        filenames.push_back(Test.traces + "/" + f);
 
       // Get the number of components for this seismogram type
       const int ncomponents = filenames.size();
