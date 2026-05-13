@@ -183,6 +183,32 @@ const char *Logger::get_level_color(LogLevel level) {
   }
 }
 
+bool Logger::should_print(LogLevel level, bool root_only) {
+  if (level < config_.min_log_level) {
+    return false;
+  }
+
+  // Check if CLI per_rank option should override build-type behavior
+  bool allow_all_ranks_stdout = false;
+#ifndef NDEBUG
+  allow_all_ranks_stdout = true;
+#endif
+  // CLI option overrides build-type default
+  if (config_.cli_per_rank_set) {
+    allow_all_ranks_stdout = config_.cli_per_rank;
+  }
+  if (allow_all_ranks_stdout) {
+    if (root_only && MPI::get_rank() != 0) {
+      return false;
+    }
+  } else {
+    if (MPI::get_rank() != 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
 std::string Logger::format_message(LogLevel level, const std::string &message,
                                    bool use_color) {
   std::ostringstream result;
@@ -246,45 +272,24 @@ void Logger::log_internal(LogLevel level, const std::string &message,
                           bool root_only) {
   check_context();
 
-  if (level < config_.min_log_level) {
-    return;
-  }
-
-  std::string file_output = format_message(level, message, false);
-  std::string stdout_output = format_message(level, message, true);
-
   if (config_.logging_enabled) {
+    if (level < config_.min_log_level) {
+      return;
+    }
     if (config_.log_file.is_open()) {
-      config_.log_file << file_output << std::endl;
+      config_.log_file << format_message(level, message, false) << std::endl;
       if (config_.auto_flush) {
         config_.log_file.flush();
       }
     }
   } else {
-    // Check if CLI per_rank option should override build-type behavior
-    bool allow_all_ranks_stdout = false;
-#ifndef NDEBUG
-    allow_all_ranks_stdout = true;
-#endif
-    // CLI option overrides build-type default
-    if (config_.cli_per_rank_set) {
-      allow_all_ranks_stdout = config_.cli_per_rank;
+    if (!should_print(level, root_only)) {
+      return;
     }
-
-    if (allow_all_ranks_stdout) {
-      if (root_only && MPI::get_rank() != 0) {
-        return;
-      }
-    } else {
-      if (MPI::get_rank() != 0) {
-        return;
-      }
-    }
-
     if (level >= LogLevel::ERROR) {
-      std::cerr << stdout_output << std::endl;
+      std::cerr << format_message(level, message, true) << std::endl;
     } else {
-      std::cout << stdout_output << std::endl;
+      std::cout << format_message(level, message, true) << std::endl;
     }
   }
 }

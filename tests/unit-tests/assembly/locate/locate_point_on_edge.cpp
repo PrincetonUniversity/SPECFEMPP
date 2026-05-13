@@ -82,16 +82,17 @@ void test_locate_point_on_edge(
     }
 
     // target point on perimeter selected. Get global coordinates.
-    const auto global_coords = specfem::algorithms::locate_point(
-        specfem::point::local_coordinates<
-            specfem::element::dimension_tag::dim2>(ispec, xi_target,
-                                                   gamma_target),
-        assembly.mesh);
+    const auto global_coords =
+        specfem::algorithms::locate_point_impl::locate_point(
+            specfem::point::local_coordinates<
+                specfem::element::dimension_tag::dim2>(ispec, xi_target,
+                                                       gamma_target),
+            assembly.mesh);
 
     // attempt to recover local edge coordinate
     const auto [local_test, inside_domain] =
-        specfem::algorithms::locate_point_on_edge(global_coords, assembly.mesh,
-                                                  ispec, edge);
+        specfem::algorithms::locate_point_impl::locate_point_on_edge(
+            global_coords, assembly.mesh, ispec, edge);
 
     // Check if the local coordinates are within the domain
     if (std::abs(local_test) > 1.0 + eps_local) {
