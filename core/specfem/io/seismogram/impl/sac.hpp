@@ -258,10 +258,14 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
 
     for (auto station_info : receivers.stations()) {
 #ifdef SPECFEM_ENABLE_MPI
-      if (station_info.islice != specfem::MPI::get_rank() &&
-          !(from_main && specfem::MPI::main_proc())) {
-        continue; // Skip stations not assigned to this rank
-      }
+      const bool on_this_rank =
+          (station_info.islice == specfem::MPI::get_rank());
+      const bool is_main = specfem::MPI::main_proc();
+
+      // Skip entirely before any allocation: station is not on this rank
+      // and this process is not responsible for collecting it.
+      if (!on_this_rank && !(from_main && is_main))
+        continue;
 #endif
       for (auto seismogram_type : station_info.get_seismogram_types()) {
 
@@ -285,12 +289,36 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
         for (auto &s : samples)
           s.reserve(nsteps);
 
-        for (auto [time, value] : receivers.get_seismogram(
-                 station_info.station_name, station_info.network_name,
-                 seismogram_type)) {
-          for (int i = 0; i < ncomp; ++i)
-            samples[i].push_back(static_cast<float>(value[i]));
+#ifdef SPECFEM_ENABLE_MPI
+        if (!on_this_rank) {
+          // from_main && is_main is guaranteed by the station-level guard.
+          // Receive samples from the owning rank.
+          for (auto &s : samples)
+            s.resize(nsteps);
+          for (int icomp = 0; icomp < ncomp; ++icomp) {
+            MPI_Recv(samples[icomp].data(), nsteps, MPI_FLOAT,
+                     station_info.islice, icomp, specfem::MPI::communicator(),
+                     MPI_STATUS_IGNORE);
+          }
+        } else {
+#endif
+          for (auto [time, value] : receivers.get_seismogram(
+                   station_info.station_name, station_info.network_name,
+                   seismogram_type)) {
+            for (int i = 0; i < ncomp; ++i)
+              samples[i].push_back(static_cast<float>(value[i]));
+          }
+#ifdef SPECFEM_ENABLE_MPI
+          if (from_main && !is_main) {
+            // Send to rank 0 and skip writing on this rank.
+            for (int icomp = 0; icomp < ncomp; ++icomp) {
+              MPI_Send(samples[icomp].data(), nsteps, MPI_FLOAT, 0, icomp,
+                       specfem::MPI::communicator());
+            }
+            continue;
+          }
         }
+#endif
 
         // ── Write one SAC file per component ────────────────────────────────
         for (int icomp = 0; icomp < ncomp; ++icomp) {
