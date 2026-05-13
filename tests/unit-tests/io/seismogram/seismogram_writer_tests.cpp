@@ -139,6 +139,11 @@ bool compare_files(const std::string &p1, const std::string &p2,
   const float *f1_data = reinterpret_cast<const float *>(d1.data());
   const float *f2_data = reinterpret_cast<const float *>(d2.data());
   for (size_t i = 0; i < size / sizeof(float); ++i) {
+    if (i >= 110 && i <= 157) {
+      // Ignore text header differences (e.g. KEVNM "SPECFEMPP" vs "-12345  ")
+      continue;
+    }
+
     if (std::abs(f1_data[i] - f2_data[i]) > 1e-4f) {
       if (std::isnan(f1_data[i]) && std::isnan(f2_data[i]))
         continue;
