@@ -218,7 +218,8 @@ void check_assembly_source_construction(
     const auto &source = sources[isource];
     const auto coord = source->get_global_coordinates();
 
-    const auto lcoord = specfem::algorithms::locate_point(coord, assembly.mesh);
+    const auto lcoord = specfem::algorithms::locate_point_impl::locate_point(
+        coord, assembly.mesh);
 
     source->set_local_coordinates(lcoord);
     source->set_medium_tag(assembly.element_types.get_medium_tag(lcoord.ispec));

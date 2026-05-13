@@ -2,8 +2,7 @@
 # This file contains shared setup, libraries, and utilities used by both
 # serial (non-MPI) and MPI test builds.
 
-# GoogleTest requires at least C++17
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 # Include the GoogleTest framework
 include("${CMAKE_SOURCE_DIR}/cmake/googletest.cmake")
