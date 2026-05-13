@@ -86,24 +86,14 @@ specfem::io::read_2d_mesh(
                                           Kokkos::DefaultHostExecutionSpace>(
       "specfem::mesh::knods", mesh.parameters.ngnod, mesh.nspec);
 
-#if defined(SPECFEM_ENABLE_MPI)
-  int nspec_all = mesh.parameters.nspec;
-#endif
-  SPECFEM_MPI_SAFECALL(MPI_Reduce(&mesh.parameters.nspec, &nspec_all, 1,
-                                  MPI_INT, MPI_SUM, 0,
-                                  specfem::MPI::communicator()));
-#if defined(SPECFEM_ENABLE_MPI)
-  int nelem_acforcing_all = mesh.parameters.nelem_acforcing;
-#endif
-  SPECFEM_MPI_SAFECALL(MPI_Reduce(&mesh.parameters.nelem_acforcing,
-                                  &nelem_acforcing_all, 1, MPI_INT, MPI_SUM, 0,
-                                  specfem::MPI::communicator()));
-#if defined(SPECFEM_ENABLE_MPI)
-  int nelem_acoustic_surface_all = mesh.parameters.nelem_acoustic_surface;
-#endif
-  SPECFEM_MPI_SAFECALL(MPI_Reduce(&mesh.parameters.nelem_acoustic_surface,
-                                  &nelem_acoustic_surface_all, 1, MPI_INT,
-                                  MPI_SUM, 0, specfem::MPI::communicator()));
+  auto reduce = [&](int *buf) {
+    SPECFEM_MPI_SAFECALL(
+        MPI_Reduce(specfem::MPI::get_rank() == 0 ? MPI_IN_PLACE : buf, buf, 1,
+                   MPI_INT, MPI_SUM, 0, specfem::MPI::communicator()));
+  };
+  reduce(&mesh.parameters.nspec);
+  reduce(&mesh.parameters.nelem_acforcing);
+  reduce(&mesh.parameters.nelem_acoustic_surface);
 
   type_real attenuation_f0_reference = 0.0;
   try {
@@ -214,28 +204,28 @@ specfem::io::read_2d_mesh(
 
   // Print material properties
 
-  specfem::Logger::debug("Material systems:\n"
-                         "------------------------------");
-
-  specfem::Logger::debug("Number of material systems = " +
-                         std::to_string(mesh.materials.n_materials) + "\n\n");
-
-  specfem::tag_dispatch::for_each(
-      DIMENSION_SET(dim2) *
-          MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
-                     elastic_psv_t, electromagnetic_te) *
-          PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
-          ATTENUATION_SET(none),
-      [&]<typename TagsType>() {
-        for (const auto &material :
-             mesh.materials
-                 .template get_container<TagsType::medium_tag,
-                                         TagsType::property_tag,
-                                         TagsType::attenuation_tag>()
-                 .element_materials) {
-          specfem::Logger::debug(material.print());
-        }
-      });
+  specfem::Logger::debug([&](std::ostringstream &oss) {
+    oss << "Material systems:\n"
+        << "------------------------------\n"
+        << "Number of material systems = " << mesh.materials.n_materials
+        << "\n\n";
+    specfem::tag_dispatch::for_each(
+        DIMENSION_SET(dim2) *
+            MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
+                       elastic_psv_t, electromagnetic_te) *
+            PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
+            ATTENUATION_SET(none),
+        [&]<typename TagsType>() {
+          for (const auto &material :
+               mesh.materials
+                   .template get_container<TagsType::medium_tag,
+                                           TagsType::property_tag,
+                                           TagsType::attenuation_tag>()
+                   .element_materials) {
+            oss << material.print();
+          }
+        });
+  });
 
   int total_materials_read = 0;
 

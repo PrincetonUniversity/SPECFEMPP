@@ -175,6 +175,12 @@ public:
                         const specfem::simulation::field_type wavefield) const;
 
   /**
+   * @brief Get the MPI slice index for each source
+   * @return Vector of MPI slice indices corresponding to each source (host memory)
+   */
+  const std::vector<int> &get_islice() const { return source_islice_; }
+
+  /**
    * @brief Update the current simulation time step
    *
    * Must be called before each time step to ensure source time functions are
@@ -237,6 +243,7 @@ private:
       source_by_medium;
 
   int timestep; ///< Current simulation timestep
+  std::vector<int> source_islice_; ///< MPI slice index for each source (host)
 
   ///@}
 

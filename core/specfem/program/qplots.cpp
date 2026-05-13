@@ -35,19 +35,23 @@ bool specfem::program::qplots(const type_real Q, const type_real minfreq,
   }
 
   // Placeholder implementation for Q plot generation
-  std::ostringstream message;
-  message << "Generating Q plots with Q=" << Q << ", minfreq=" << minfreq
-          << ", maxfreq=" << maxfreq;
-  specfem::Logger::info(message.str());
+  specfem::Logger::info([&](std::ostringstream &oss) {
+    oss << "Generating Q plots with Q=" << Q << ", minfreq=" << minfreq
+        << ", maxfreq=" << maxfreq;
+  });
 
   // Create directory for Q plots
   std::filesystem::path qplot_dir = output_dir;
 
   if (!std::filesystem::exists(qplot_dir)) {
     std::filesystem::create_directory(qplot_dir);
-    specfem::Logger::info("Created directory: " + qplot_dir.string());
+    specfem::Logger::info([&](std::ostringstream &oss) {
+      oss << "Created directory: " << qplot_dir.string();
+    });
   } else {
-    specfem::Logger::info("Directory already exists: " + qplot_dir.string());
+    specfem::Logger::info([&](std::ostringstream &oss) {
+      oss << "Directory already exists: " << qplot_dir.string();
+    });
   }
 
   using namespace specfem::units::unit_symbols;
@@ -64,16 +68,16 @@ bool specfem::program::qplots(const type_real Q, const type_real minfreq,
           Q, tau_sigma, band);
 
   // Print tau_sigma and tau_eps for debugging
-  specfem::Logger::info("Computed tau_sigma:");
-  for (int j = 0; j < specfem::constants::N_SLS; ++j) {
-    specfem::Logger::info("tau_sigma[" + std::to_string(j) +
-                          "] = " + std::to_string(tau_sigma(j)));
-  }
-  specfem::Logger::info("Computed tau_eps:");
-  for (int j = 0; j < specfem::constants::N_SLS; ++j) {
-    specfem::Logger::info("tau_eps[" + std::to_string(j) +
-                          "] = " + std::to_string(tau_eps(j)));
-  }
+  specfem::Logger::info([&](std::ostringstream &oss) {
+    oss << "Computed tau_sigma:\n";
+    for (int j = 0; j < specfem::constants::N_SLS; ++j) {
+      oss << "tau_sigma[" << j << "] = " << tau_sigma(j) << "\n";
+    }
+    oss << "Computed tau_eps:\n";
+    for (int j = 0; j < specfem::constants::N_SLS; ++j) {
+      oss << "tau_eps[" << j << "] = " << tau_eps(j) << "\n";
+    }
+  });
 
   // Generate logspace frequencies for plotting
   const int NF = 1000;
@@ -146,13 +150,13 @@ bool specfem::program::qplots(const type_real Q, const type_real minfreq,
   }
   qplot_file.close();
 
-  specfem::Logger::info(
-      "Q plot values generated successfully: " +
-      (qplot_dir / ("Q_inverse_Q" + std::to_string(Q) + ".txt")).string());
-  specfem::Logger::info("You can use this data to create a plot of Q^-1 vs "
-                        "frequency using your preferred plotting tool.");
-
-  specfem::Logger::info("Q plot generation completed successfully");
+  specfem::Logger::info([&](std::ostringstream &oss) {
+    oss << "Q plot values generated successfully: "
+        << (qplot_dir / ("Q_inverse_Q" + std::to_string(Q) + ".txt")).string()
+        << "\nYou can use this data to create a plot of Q^-1 vs "
+           "frequency using your preferred plotting tool."
+        << "\nQ plot generation completed successfully";
+  });
 
   return true;
 }

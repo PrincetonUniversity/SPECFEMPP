@@ -14,8 +14,8 @@ TEST(ReceiversTests, DefaultConstructor2D) {
 
   EXPECT_EQ(receiver.get_network_name(), network_name);
   EXPECT_EQ(receiver.get_station_name(), station_name);
-  EXPECT_EQ(receiver.get_x(), x);
-  EXPECT_EQ(receiver.get_z(), z);
+  EXPECT_EQ(receiver.get_global_coordinates().x, x);
+  EXPECT_EQ(receiver.get_global_coordinates().z, z);
   EXPECT_EQ(receiver.get_angle(), angle);
 }
 
@@ -46,8 +46,8 @@ TEST(ReceiversTests, GetCoordinates2D) {
   specfem::receivers::receiver<specfem::element::dimension_tag::dim2> receiver(
       "NET", "STA", x, z, 0.0);
 
-  EXPECT_EQ(receiver.get_x(), x);
-  EXPECT_EQ(receiver.get_z(), z);
+  EXPECT_EQ(receiver.get_global_coordinates().x, x);
+  EXPECT_EQ(receiver.get_global_coordinates().z, z);
 }
 
 TEST(ReceiversTests, GetAngle2D) {
@@ -67,8 +67,8 @@ TEST(ReceiversTests, NegativeCoordinates2D) {
   specfem::receivers::receiver<specfem::element::dimension_tag::dim2> receiver(
       "NET", "STA", x, z, angle);
 
-  EXPECT_EQ(receiver.get_x(), x);
-  EXPECT_EQ(receiver.get_z(), z);
+  EXPECT_EQ(receiver.get_global_coordinates().x, x);
+  EXPECT_EQ(receiver.get_global_coordinates().z, z);
   EXPECT_EQ(receiver.get_angle(), angle);
 }
 
@@ -80,8 +80,8 @@ TEST(ReceiversTests, ZeroValues2D) {
   specfem::receivers::receiver<specfem::element::dimension_tag::dim2> receiver(
       "NET", "STA", x, z, angle);
 
-  EXPECT_EQ(receiver.get_x(), x);
-  EXPECT_EQ(receiver.get_z(), z);
+  EXPECT_EQ(receiver.get_global_coordinates().x, x);
+  EXPECT_EQ(receiver.get_global_coordinates().z, z);
   EXPECT_EQ(receiver.get_angle(), angle);
 }
 
@@ -111,7 +111,7 @@ TEST(ReceiversTests, LargeValues2D) {
   specfem::receivers::receiver<specfem::element::dimension_tag::dim2> receiver(
       "NET", "STA", x, z, angle);
 
-  EXPECT_EQ(receiver.get_x(), x);
-  EXPECT_EQ(receiver.get_z(), z);
+  EXPECT_EQ(receiver.get_global_coordinates().x, x);
+  EXPECT_EQ(receiver.get_global_coordinates().z, z);
   EXPECT_EQ(receiver.get_angle(), angle);
 }

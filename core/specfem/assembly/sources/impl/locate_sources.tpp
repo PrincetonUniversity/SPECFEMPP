@@ -6,46 +6,44 @@
 #include "specfem/mpi.hpp"
 #include "specfem/source.hpp"
 
-template<specfem::element::dimension_tag DimensionTag>
+#include <stdexcept>
+#include <vector>
+
+template <specfem::element::dimension_tag DimensionTag>
 void specfem::assembly::sources_impl::locate_sources(
-    const specfem::assembly::element_types<DimensionTag>
-        &element_types,
+    const specfem::assembly::element_types<DimensionTag> &element_types,
     const specfem::assembly::mesh<DimensionTag> &mesh,
-    std::vector<std::shared_ptr<
-        specfem::sources::source<DimensionTag> > > &sources) {
+    std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
+        &sources) {
 
-  // Loop over all sources
-  for (auto &source : sources) {
+  const int nsources = static_cast<int>(sources.size());
+  const int myrank = specfem::MPI::get_rank();
 
-    // Get the source coordinates
-    const auto &coord = source->get_global_coordinates();
+  // Collect global coordinates for all sources.
+  std::vector<specfem::point::global_coordinates<DimensionTag>> coords;
+  coords.reserve(nsources);
+  for (int isrc = 0; isrc < nsources; ++isrc)
+    coords.push_back(sources[isrc]->get_global_coordinates());
 
-    // TODO: In MPI runs each partition holds only a subset of the mesh.
-    // Sources outside this partition's subdomain will fail to locate here.
-    // TODO: Implement proper cross-partition source location so that the
-    // owning rank computes and broadcasts the local coordinates.
-    specfem::point::local_coordinates<DimensionTag> lcoord;
-    try {
-      lcoord = specfem::algorithms::locate_point(coord, mesh);
-    } catch (const std::exception &) {
-      if (specfem::MPI::get_size() > 1) {
-        continue;
-      }
-      throw;
+  // Locate all sources across MPI partitions with inside-preference.
+  // The function prefers elements where xi/eta/gamma ∈ [-1,1] and falls back
+  // to minimum Cartesian distance when no rank owns an inside element.
+  auto [lcoords, islice_selected] =
+      specfem::algorithms::locate_point(coords, mesh);
+
+  // Assign local coordinates and medium tags to each source.
+  // Only the owning rank sets valid coordinates; all others receive ispec = -1
+  // so that downstream filtering skips them.
+  for (int isrc = 0; isrc < nsources; ++isrc) {
+    sources[isrc]->set_islice(islice_selected[isrc]);
+    if (islice_selected[isrc] == myrank) {
+      const auto &lcoord = lcoords[isrc];
+      sources[isrc]->set_local_coordinates(lcoord);
+      sources[isrc]->set_medium_tag(element_types.get_medium_tag(lcoord.ispec));
+    } else {
+      specfem::point::local_coordinates<DimensionTag> invalid;
+      invalid.ispec = -1;
+      sources[isrc]->set_local_coordinates(invalid);
     }
-
-    // Set the local coordinates and global element index in the source
-    if (lcoord.ispec < 0) {
-      if (specfem::MPI::get_size() > 1) {
-        continue;
-      }
-      throw std::runtime_error("Source is outside of the domain");
-    }
-
-    // Giving the local coordinates and global element index to the source
-    source->set_local_coordinates(lcoord);
-
-    // Given the spectral element index provide the medium tag
-    source->set_medium_tag(element_types.get_medium_tag(lcoord.ispec));
   }
 }
