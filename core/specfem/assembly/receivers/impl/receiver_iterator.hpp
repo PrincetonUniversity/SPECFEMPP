@@ -101,12 +101,7 @@ protected:
   std::vector<specfem::enums::wavefield> seismogram_types_;
 };
 
-// Primary template declaration for SeismogramIterator
-template <specfem::element::dimension_tag DimensionTag>
-class SeismogramIterator;
-
 } // namespace specfem::assembly::receivers_impl
 
-// Include dimension-specific seismogram iterator implementations
-#include "../dim2/impl/seismogram_iterator.hpp"
-#include "../dim3/impl/seismogram_iterator.hpp"
+// Unified seismogram iterator for all dimensions
+#include "seismogram_iterator.hpp"

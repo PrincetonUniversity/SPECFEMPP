@@ -113,11 +113,15 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim2>::receivers(
         h_lagrange_interpolant(ireceiver, iz, ix, 0) = hlagrange;
         h_lagrange_interpolant(ireceiver, iz, ix, 1) = hlagrange;
 
-        h_sine_receiver_angle(ireceiver) = std::sin(
-            Kokkos::numbers::pi_v<type_real> / 180 * receiver->get_angle());
-
-        h_cosine_receiver_angle(ireceiver) = std::cos(
-            Kokkos::numbers::pi_v<type_real> / 180 * receiver->get_angle());
+        const type_real angle_rad =
+            Kokkos::numbers::pi_v<type_real> / 180 * receiver->get_angle();
+        const type_real cos_a = std::cos(angle_rad);
+        const type_real sin_a = std::sin(angle_rad);
+        // 2D rotation matrix: R = [[cos, -sin], [sin, cos]]
+        h_rotation_matrices(ireceiver, 0, 0) = cos_a;
+        h_rotation_matrices(ireceiver, 0, 1) = -sin_a;
+        h_rotation_matrices(ireceiver, 1, 0) = sin_a;
+        h_rotation_matrices(ireceiver, 1, 1) = cos_a;
       }
     }
   }
