@@ -23,6 +23,7 @@ option(SPECFEM_ENABLE_PROFILING "Enable profiling" OFF)
 option(SPECFEM_BINDING_PYTHON "Enable Python binding" OFF)
 option(SPECFEM_INSTALL "Creates clean executable directory. Location Controlled by CMAKE_INSTALL_PREFIX" ON)
 option(SPECFEM_ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
+option(SPECFEM_ENABLE_METIS "Enable METIS partitioning support in xdecompose_mesh" OFF)
 option(SPECFEM_BUILD_BENCHMARKS "Benchmarks included" ON)
 option(SPECFEM_NIGHTLY_BENCHMARKS "Include nightly benchmarks" OFF)
 option(SPECFEM_ENABLE_UNITY_BUILD "Enable unity build to speed up compilation" ON)
@@ -168,6 +169,9 @@ include("${CMAKE_SOURCE_DIR}/cmake/adios2.cmake")
 # Include VTK if available (MUST BE AFTER ADIOS2, VTK is smarter about finding
 # the pugixml dependency than ADIOS2)
 include("${CMAKE_SOURCE_DIR}/cmake/vtk.cmake")
+
+# Find or install METIS graph partitioner (used by xdecompose_mesh)
+include("${CMAKE_SOURCE_DIR}/cmake/metis.cmake")
 
 if (SPECFEM_ENABLE_SIMD)
     message(STATUS "Enabling SIMD")
