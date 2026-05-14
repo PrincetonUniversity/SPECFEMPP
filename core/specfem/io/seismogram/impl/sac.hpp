@@ -4,11 +4,13 @@
 #include "specfem/element/tags.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/enums/wavefield.hpp"
+#include "specfem/logger.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/setup.hpp"
 #include <algorithm>
 #include <array>
 #include <cstring>
+#include <format>
 #include <fstream>
 #include <optional>
 #include <stdexcept>
@@ -339,6 +341,12 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
                            station_info.network_name, location_code,
                            channel_code, delta, b, orientation, idep,
                            samples[icomp]);
+
+          specfem::Logger::debug(
+              std::format("SAC file for station {}.{} ({} component) written "
+                          "to: {} from rank {}",
+                          station_info.network_name, station_info.station_name,
+                          channel_code, sac_path, specfem::MPI::get_rank()));
         }
       }
     }

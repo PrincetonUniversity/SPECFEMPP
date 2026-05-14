@@ -96,6 +96,26 @@ template <specfem::element::dimension_tag DimTag> struct MockReceivers {
         net + "." + sta + "." + std::to_string(static_cast<int>(type));
     seismo_data[key] = std::move(entries);
   }
+
+  int get_nsteps() const {
+    if (!seismo_data.empty())
+      return static_cast<int>(seismo_data.begin()->second.size());
+    return 0;
+  }
+
+  double get_t0() const {
+    for (auto &[k, v] : seismo_data)
+      if (!v.empty())
+        return v.front().time;
+    return 0.0;
+  }
+
+  double get_sample_interval() const {
+    for (auto &[k, v] : seismo_data)
+      if (v.size() >= 2)
+        return v[1].time - v[0].time;
+    return 1.0;
+  }
 };
 
 std::vector<MockSeismogramEntry>
