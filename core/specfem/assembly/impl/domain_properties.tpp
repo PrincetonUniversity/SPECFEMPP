@@ -63,7 +63,6 @@ specfem::assembly::impl::domain_properties<
     : base_type(elements.extent(0), mesh.element_grid) {
 
   const int nelement = elements.extent(0);
-  int count = 0;
   Kokkos::parallel_for(
       "specfem::assembly::impl::domain_properties::dim3::init_host_values",
       Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace,
@@ -72,14 +71,14 @@ specfem::assembly::impl::domain_properties<
                             mesh.element_grid.nglly, mesh.element_grid.ngllx }),
       [=, this](const int i, const int iz, const int iy, const int ix) {
         const int ispec = elements(i);
-        property_index_mapping(ispec) = count;
+        property_index_mapping(ispec) = i;
         if (!has_gll_model) {
           // Handle the specific case
           const auto point_property = materials.template get_properties<
               medium_tag, property_tag,
               specfem::element::attenuation_tag::none>(ispec);
           this->store_host_values(
-              specfem::point::index<dimension_tag, false>(count, iz, iy, ix),
+              specfem::point::index<dimension_tag, false>(i, iz, iy, ix),
               point_property);
         }
       });

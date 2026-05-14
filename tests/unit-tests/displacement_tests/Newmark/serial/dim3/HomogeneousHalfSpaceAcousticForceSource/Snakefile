@@ -1,3 +1,5 @@
+source_file = "FORCESOLUTION"
+
 include: "../../../specfem3d.smk"
 
 networks = ["TEST"]
