@@ -2,12 +2,12 @@
 #include "conversions.hpp"
 #include "quantity.hpp"
 
+#include <concepts>
 #include <functional>
 #include <regex>
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <type_traits>
 #include <unordered_map>
 #include <variant>
 
@@ -39,55 +39,22 @@ using AnyQuantity =
 
 namespace impl {
 
-// TODO (Lucas : CPP20) update units - fix replace void_t detection with a
-// requires clause:
-//   requires { unit_cast_impl<To, From>::call(std::declval<From>()); }
-
 /**
  * @brief Detects whether unit_cast_impl<To, From>::call is well-formed.
  *
  * The primary template of unit_cast_impl<> has an empty body (no call
- * member), so the SFINAE check below correctly returns false_type for any
- * unsupported conversion pair without triggering an incomplete-type hard
- * error.
+ * member), so unsupported conversion pairs cause the concept to evaluate
+ * to false without triggering an incomplete-type hard error.
  *
  * @tparam To Target quantity type
  * @tparam From Source quantity type
  */
-template <typename To, typename From, typename = void>
-struct has_unit_cast : std::false_type {};
-
 template <typename To, typename From>
-struct has_unit_cast<To, From,
-                     std::void_t<decltype(unit_cast_impl<To, From>::call(
-                         std::declval<From>()))> > : std::true_type {};
-
-// TODO (Lucas : CPP20) update units - fix replace this struct with a
-// generic auto-lambda passed directly to std::visit once C++20 templated
-// lambdas are available:
-//   std::visit([](auto q) -> To { ... }, v)
-
-/**
- * @brief std::visit visitor that converts an AnyQuantity to type @p To.
- *
- * For each alternative From in AnyQuantity:
- *   - if unit_cast_impl<To, From>::call is defined  → convert
- *   - otherwise                                     → throw at runtime
- */
-template <typename To> struct quantity_cast_visitor {
-  template <typename From> To operator()(From q) const {
-    if constexpr (has_unit_cast<To, From>::value) {
-      return unit_cast_impl<To, From>::call(q);
-    } else {
-      throw std::invalid_argument(
-          "specfem::units::quantity_cast: no conversion defined from the "
-          "parsed unit type to the requested target type");
-    }
-  }
+concept convertible_unit = requires(From f) {
+  {
+    unit_cast_impl<To, From>::call(f)
+  } -> std::convertible_to<To>;
 };
-
-// TODO (Lucas : CPP20) update units - fix prefix scan with
-// std::string_view::starts_with instead of std::string::compare.
 
 /**
  * @brief Strip a leading SI prefix from @p unit and return whether one was
@@ -112,26 +79,30 @@ inline bool strip_si_prefix(std::string_view unit, type_real &factor,
     { "k", type_real(1e3) },
     { "m", type_real(1e-3) },
   };
-  const std::string u(unit);
   for (const auto &[pfx, fac] : prefixes) {
-    if (u.size() > pfx.size() && u.compare(0, pfx.size(), pfx) == 0) {
+    if (unit.size() > pfx.size() && unit.starts_with(pfx)) {
       factor = fac;
-      base_unit = u.substr(pfx.size());
+      base_unit = std::string(unit.substr(pfx.size()));
       return true;
     }
   }
   return false;
 }
 
+/// Transparent hash for heterogeneous lookup in unordered_map (P0919R3).
+/// Avoids constructing a std::string when looking up by std::string_view.
+struct string_hash {
+  using is_transparent = void;
+  size_t operator()(std::string_view sv) const noexcept {
+    return std::hash<std::string_view>{}(sv);
+  }
+};
+
 } // namespace impl
 
 // ---------------------------------------------------------------------------
 // parse
 // ---------------------------------------------------------------------------
-
-// TODO (Lucas : CPP20) update units - fix use a std::string_view-keyed
-// unordered_map (heterogeneous lookup, P0919R3) to avoid constructing a
-// std::string from the unit string_view on each lookup call.
 
 /**
  * @brief Parse a string representation of a physical quantity.
@@ -204,9 +175,6 @@ inline AnyQuantity parse(std::string_view s) {
   // ── Unit lookup table ─────────────────────────────────────────────────────
   // µs key uses the UTF-8 encoding of µ (U+00B5): bytes 0xC2 0xB5.
   using Factory = std::function<AnyQuantity(type_real)>;
-  // TODO (Lucas : CPP20) update units - fix use std::string_view keys with
-  // transparent hash (P0919R3) to avoid constructing a std::string for each
-  // table lookup.
 
 #define SPECFEM_PARSE_ENTRY(str, Type)                                         \
   { str, [](type_real v) -> AnyQuantity { return Type(v); } }
@@ -214,51 +182,59 @@ inline AnyQuantity parse(std::string_view s) {
   { str,                                                                       \
     [](type_real v) -> AnyQuantity { return Type(v * type_real(factor)); } }
 
-  static const std::unordered_map<std::string, Factory> table = {
-    // ── Dimensionless ────────────────────────────────────────────────────
-    SPECFEM_PARSE_ENTRY("1", Dimensionless),
+  static const std::unordered_map<std::string, Factory, impl::string_hash,
+                                  std::equal_to<> >
+      table = {
+        // ── Dimensionless ────────────────────────────────────────────────────
+        SPECFEM_PARSE_ENTRY("1", Dimensionless),
 
-    // ── Time ─────────────────────────────────────────────────────────────
-    SPECFEM_PARSE_ENTRY("s", Seconds),
-    SPECFEM_PARSE_ENTRY_SCALED("ms", Seconds, 1e-3),
-    SPECFEM_PARSE_ENTRY_SCALED("us", Seconds, 1e-6),
-    SPECFEM_PARSE_ENTRY_SCALED("\xc2\xb5s", Seconds, 1e-6), // µs (UTF-8)
+        // ── Time ─────────────────────────────────────────────────────────────
+        SPECFEM_PARSE_ENTRY("s", Seconds),
+        SPECFEM_PARSE_ENTRY_SCALED("ms", Seconds, 1e-3),
+        SPECFEM_PARSE_ENTRY_SCALED("us", Seconds, 1e-6),
+        SPECFEM_PARSE_ENTRY_SCALED("\xc2\xb5s", Seconds, 1e-6), // µs (UTF-8)
 
-    // ── Frequency ────────────────────────────────────────────────────────
-    SPECFEM_PARSE_ENTRY("Hz", Hertz),
-    SPECFEM_PARSE_ENTRY_SCALED("kHz", Hertz, 1e3),
-    SPECFEM_PARSE_ENTRY_SCALED("MHz", Hertz, 1e6),
-    SPECFEM_PARSE_ENTRY_SCALED("mHz", Hertz, 1e-3),
+        // ── Frequency ────────────────────────────────────────────────────────
+        SPECFEM_PARSE_ENTRY("Hz", Hertz),
+        SPECFEM_PARSE_ENTRY_SCALED("kHz", Hertz, 1e3),
+        SPECFEM_PARSE_ENTRY_SCALED("MHz", Hertz, 1e6),
+        SPECFEM_PARSE_ENTRY_SCALED("mHz", Hertz, 1e-3),
 
-    // ── Angular frequency ─────────────────────────────────────────────────
-    SPECFEM_PARSE_ENTRY("rad/s", Omega),
+        // ── Angular frequency
+        // ─────────────────────────────────────────────────
+        SPECFEM_PARSE_ENTRY("rad/s", Omega),
 
-    // ── Angle ─────────────────────────────────────────────────────────────
-    SPECFEM_PARSE_ENTRY("rad", Radians),
+        // ── Angle
+        // ─────────────────────────────────────────────────────────────
+        SPECFEM_PARSE_ENTRY("rad", Radians),
 
-    // ── Length ────────────────────────────────────────────────────────────
-    SPECFEM_PARSE_ENTRY("m", Meters),
-    SPECFEM_PARSE_ENTRY("km", Kilometers),
+        // ── Length
+        // ────────────────────────────────────────────────────────────
+        SPECFEM_PARSE_ENTRY("m", Meters),
+        SPECFEM_PARSE_ENTRY("km", Kilometers),
 
-    // ── Velocity ──────────────────────────────────────────────────────────
-    SPECFEM_PARSE_ENTRY("m/s", MetersPerSecond),
-    SPECFEM_PARSE_ENTRY("km/s", KilometersPerSecond),
+        // ── Velocity
+        // ──────────────────────────────────────────────────────────
+        SPECFEM_PARSE_ENTRY("m/s", MetersPerSecond),
+        SPECFEM_PARSE_ENTRY("km/s", KilometersPerSecond),
 
-    // ── Mass ──────────────────────────────────────────────────────────────
-    SPECFEM_PARSE_ENTRY("g", Grams),
-    SPECFEM_PARSE_ENTRY("kg", Kilograms),
+        // ── Mass
+        // ──────────────────────────────────────────────────────────────
+        SPECFEM_PARSE_ENTRY("g", Grams),
+        SPECFEM_PARSE_ENTRY("kg", Kilograms),
 
-    // ── Density ───────────────────────────────────────────────────────────
-    SPECFEM_PARSE_ENTRY("g/m3", GramPerCubicMeter),
-    SPECFEM_PARSE_ENTRY("kg/m3", KilogramPerCubicMeter),
+        // ── Density
+        // ───────────────────────────────────────────────────────────
+        SPECFEM_PARSE_ENTRY("g/m3", GramPerCubicMeter),
+        SPECFEM_PARSE_ENTRY("kg/m3", KilogramPerCubicMeter),
 
-    // ── Pressure ─────────────────────────────────────────────────────────
-    SPECFEM_PARSE_ENTRY("Pa", Pascal),
-    SPECFEM_PARSE_ENTRY_SCALED("kPa", Pascal, 1e3),
-    SPECFEM_PARSE_ENTRY("MPa", Megapascal),
-    // GPa stored as Megapascal (raw x 1000 = MPa-equivalent raw value)
-    SPECFEM_PARSE_ENTRY_SCALED("GPa", Megapascal, 1e3),
-  };
+        // ── Pressure ─────────────────────────────────────────────────────────
+        SPECFEM_PARSE_ENTRY("Pa", Pascal),
+        SPECFEM_PARSE_ENTRY_SCALED("kPa", Pascal, 1e3),
+        SPECFEM_PARSE_ENTRY("MPa", Megapascal),
+        // GPa stored as Megapascal (raw x 1000 = MPa-equivalent raw value)
+        SPECFEM_PARSE_ENTRY_SCALED("GPa", Megapascal, 1e3),
+      };
 
 #undef SPECFEM_PARSE_ENTRY
 #undef SPECFEM_PARSE_ENTRY_SCALED
@@ -285,11 +261,6 @@ inline AnyQuantity parse(std::string_view s) {
 // quantity_cast
 // ---------------------------------------------------------------------------
 
-// TODO (Lucas : CPP20) update units - fix replace
-// impl::quantity_cast_visitor struct with a generic auto-lambda once C++20
-// templated lambdas are fully supported by all targeted compilers: return
-// std::visit([](auto q) -> To { ... }, v);
-
 /**
  * @brief Convert an AnyQuantity to a specific statically-typed Quantity.
  *
@@ -310,7 +281,17 @@ inline AnyQuantity parse(std::string_view s) {
  *
  */
 template <typename To> To quantity_cast(const AnyQuantity &v) {
-  return std::visit(impl::quantity_cast_visitor<To>{}, v);
+  return std::visit(
+      [](auto q) -> To {
+        if constexpr (impl::convertible_unit<To, decltype(q)>) {
+          return unit_cast_impl<To, decltype(q)>::call(q);
+        } else {
+          throw std::invalid_argument(
+              "specfem::units::quantity_cast: no conversion defined from the "
+              "parsed unit type to the requested target type");
+        }
+      },
+      v);
 }
 
 /**

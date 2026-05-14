@@ -1,5 +1,6 @@
 #pragma once
 #include "specfem/setup.hpp"
+#include <compare>
 #include <ratio>
 #include <type_traits>
 
@@ -131,24 +132,12 @@ public:
     return Quantity(value_ / s);
   }
 
-  // Comparisons (same scale)
+  // Comparisons (same scale) — C++20 synthesizes !=, <, <=, >, >= from these
+  constexpr auto operator<= > (Quantity o) const noexcept {
+    return value_ <= > o.value_;
+  }
   constexpr bool operator==(Quantity o) const noexcept {
     return value_ == o.value_;
-  }
-  constexpr bool operator!=(Quantity o) const noexcept {
-    return value_ != o.value_;
-  }
-  constexpr bool operator<(Quantity o) const noexcept {
-    return value_ < o.value_;
-  }
-  constexpr bool operator<=(Quantity o) const noexcept {
-    return value_ <= o.value_;
-  }
-  constexpr bool operator>(Quantity o) const noexcept {
-    return value_ > o.value_;
-  }
-  constexpr bool operator>=(Quantity o) const noexcept {
-    return value_ >= o.value_;
   }
 };
 
@@ -168,18 +157,18 @@ constexpr Quantity<Args...> operator*(type_real s,
  * @{
  */
 
-template <typename D, typename S1, typename S2,
-          typename = std::enable_if_t<!std::is_same<S1, S2>::value> >
-constexpr auto operator+(Quantity<D, S1> a, Quantity<D, S2> b)
+template <typename D, typename S1, typename S2>
+requires(!std::is_same_v<S1, S2>) constexpr auto operator+(Quantity<D, S1> a,
+                                                           Quantity<D, S2> b)
     -> Quantity<D, impl::ratio_gcd<S1, S2> > {
   using Rgcd = impl::ratio_gcd<S1, S2>;
   return Quantity<D, Rgcd>(a.raw() * ratio_value<std::ratio_divide<S1, Rgcd> > +
                            b.raw() * ratio_value<std::ratio_divide<S2, Rgcd> >);
 }
 
-template <typename D, typename S1, typename S2,
-          typename = std::enable_if_t<!std::is_same<S1, S2>::value> >
-constexpr auto operator-(Quantity<D, S1> a, Quantity<D, S2> b)
+template <typename D, typename S1, typename S2>
+requires(!std::is_same_v<S1, S2>) constexpr auto operator-(Quantity<D, S1> a,
+                                                           Quantity<D, S2> b)
     -> Quantity<D, impl::ratio_gcd<S1, S2> > {
   using Rgcd = impl::ratio_gcd<S1, S2>;
   return Quantity<D, Rgcd>(a.raw() * ratio_value<std::ratio_divide<S1, Rgcd> > -
@@ -192,47 +181,25 @@ constexpr auto operator-(Quantity<D, S1> a, Quantity<D, S2> b)
  * @name Mixed-scale comparisons
  * @brief Comparisons between quantities with different scales but same
  * dimension.
+ *
+ * C++20 synthesizes !=, <, <=, >, >= from <=> and ==.
  * @{
  */
 
-template <typename D, typename S1, typename S2,
-          typename = std::enable_if_t<!std::is_same<S1, S2>::value> >
-constexpr bool operator==(Quantity<D, S1> a, Quantity<D, S2> b) noexcept {
+template <typename D, typename S1, typename S2>
+    requires(!std::is_same_v<S1, S2>) constexpr auto operator<= >
+    (Quantity<D, S1> a, Quantity<D, S2> b)noexcept {
+  using Rgcd = impl::ratio_gcd<S1, S2>;
+  return a.raw() * ratio_value<std::ratio_divide<S1, Rgcd> > <= >
+         b.raw() * ratio_value<std::ratio_divide<S2, Rgcd> >;
+}
+
+template <typename D, typename S1, typename S2>
+requires(!std::is_same_v<S1, S2>) constexpr bool
+operator==(Quantity<D, S1> a, Quantity<D, S2> b) noexcept {
   using Rgcd = impl::ratio_gcd<S1, S2>;
   return a.raw() * ratio_value<std::ratio_divide<S1, Rgcd> > ==
          b.raw() * ratio_value<std::ratio_divide<S2, Rgcd> >;
-}
-
-template <typename D, typename S1, typename S2,
-          typename = std::enable_if_t<!std::is_same<S1, S2>::value> >
-constexpr bool operator!=(Quantity<D, S1> a, Quantity<D, S2> b) noexcept {
-  return !(a == b);
-}
-
-template <typename D, typename S1, typename S2,
-          typename = std::enable_if_t<!std::is_same<S1, S2>::value> >
-constexpr bool operator<(Quantity<D, S1> a, Quantity<D, S2> b) noexcept {
-  using Rgcd = impl::ratio_gcd<S1, S2>;
-  return a.raw() * ratio_value<std::ratio_divide<S1, Rgcd> > <
-         b.raw() * ratio_value<std::ratio_divide<S2, Rgcd> >;
-}
-
-template <typename D, typename S1, typename S2,
-          typename = std::enable_if_t<!std::is_same<S1, S2>::value> >
-constexpr bool operator<=(Quantity<D, S1> a, Quantity<D, S2> b) noexcept {
-  return !(b < a);
-}
-
-template <typename D, typename S1, typename S2,
-          typename = std::enable_if_t<!std::is_same<S1, S2>::value> >
-constexpr bool operator>(Quantity<D, S1> a, Quantity<D, S2> b) noexcept {
-  return b < a;
-}
-
-template <typename D, typename S1, typename S2,
-          typename = std::enable_if_t<!std::is_same<S1, S2>::value> >
-constexpr bool operator>=(Quantity<D, S1> a, Quantity<D, S2> b) noexcept {
-  return !(a < b);
 }
 
 /// @}

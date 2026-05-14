@@ -1,5 +1,6 @@
 #pragma once
 #include "quantity.hpp"
+#include <numbers>
 #include <type_traits>
 
 namespace specfem::units {
@@ -10,11 +11,9 @@ namespace specfem::units {
  * Provides compile-time π values to avoid runtime dependencies.
  */
 namespace impl {
-// TODO (Lucas : CPP20): Replace with std::numbers::pi when available
-constexpr type_real pi =
-    type_real(3.141592653589793238462643383279502884L); ///< π
+constexpr type_real pi = std::numbers::pi_v<type_real>; ///< π
 constexpr type_real two_pi =
-    type_real(6.283185307179586476925286766559005768L); ///< 2π
+    type_real(2) * std::numbers::pi_v<type_real>; ///< 2π
 } // namespace impl
 
 /**
@@ -23,27 +22,27 @@ constexpr type_real two_pi =
  * The primary template has no @c call member; specializations add @c call for
  * supported conversions.  Attempting @c unit_cast for an unsupported pair
  * produces a compile-time error (no member @c call).  The empty primary body
- * also allows @c has_unit_cast<To,From> (in parse.hpp) to detect unsupported
- * pairs via SFINAE without triggering an incomplete-type hard error.
+ * also allows the @c convertible_unit concept (in parse.hpp) to detect
+ * unsupported pairs without triggering an incomplete-type hard error.
  *
  * @tparam To Target quantity type
  * @tparam From Source quantity type
  */
-template <typename To, typename From, typename = void> struct unit_cast_impl {
+template <typename To, typename From> struct unit_cast_impl {
   // Intentionally empty: no call() member.
   // Unsupported conversions are caught at compile time by unit_cast(), or at
   // runtime by quantity_cast() via has_unit_cast<> detection in parse.hpp.
 };
 
 /// Identity conversion (no-op)
-template <typename T> struct unit_cast_impl<T, T, void> {
+template <typename T> struct unit_cast_impl<T, T> {
   static constexpr T call(T q) noexcept { return q; }
 };
 
 /// Scale conversion within same dimension (e.g., meters ↔ kilometers)
 template <typename D, typename S_to, typename S_from>
-struct unit_cast_impl<Quantity<D, S_to>, Quantity<D, S_from>,
-                      std::enable_if_t<!std::is_same<S_to, S_from>::value> > {
+requires(!std::is_same_v<S_to, S_from>) struct unit_cast_impl<
+    Quantity<D, S_to>, Quantity<D, S_from> > {
   static constexpr Quantity<D, S_to> call(Quantity<D, S_from> q) noexcept {
     constexpr type_real factor = ratio_value<std::ratio_divide<S_from, S_to> >;
     return Quantity<D, S_to>(q.raw() * factor);
@@ -62,42 +61,42 @@ struct unit_cast_impl<Quantity<D, S_to>, Quantity<D, S_from>,
  */
 
 /// Seconds → Hertz
-template <> struct unit_cast_impl<Hertz, Seconds, void> {
+template <> struct unit_cast_impl<Hertz, Seconds> {
   static constexpr Hertz call(Seconds s) noexcept {
     return Hertz(type_real(1) / s.raw());
   }
 };
 
 /// Hertz → Seconds
-template <> struct unit_cast_impl<Seconds, Hertz, void> {
+template <> struct unit_cast_impl<Seconds, Hertz> {
   static constexpr Seconds call(Hertz f) noexcept {
     return Seconds(type_real(1) / f.raw());
   }
 };
 
 /// Seconds → Omega
-template <> struct unit_cast_impl<Omega, Seconds, void> {
+template <> struct unit_cast_impl<Omega, Seconds> {
   static constexpr Omega call(Seconds s) noexcept {
     return Omega(impl::two_pi / s.raw());
   }
 };
 
 /// Omega → Seconds
-template <> struct unit_cast_impl<Seconds, Omega, void> {
+template <> struct unit_cast_impl<Seconds, Omega> {
   static constexpr Seconds call(Omega w) noexcept {
     return Seconds(impl::two_pi / w.raw());
   }
 };
 
 /// Hertz → Omega
-template <> struct unit_cast_impl<Omega, Hertz, void> {
+template <> struct unit_cast_impl<Omega, Hertz> {
   static constexpr Omega call(Hertz f) noexcept {
     return Omega(f.raw() * impl::two_pi);
   }
 };
 
 /// Omega → Hertz
-template <> struct unit_cast_impl<Hertz, Omega, void> {
+template <> struct unit_cast_impl<Hertz, Omega> {
   static constexpr Hertz call(Omega w) noexcept {
     return Hertz(w.raw() / impl::two_pi);
   }
