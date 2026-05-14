@@ -59,23 +59,13 @@ specfem::sources::force<
 }
 
 std::string
-specfem::sources::force<specfem::element::dimension_tag::dim3>::print() const {
-
-  const auto gcoord = this->get_global_coordinates();
-
+specfem::sources::force<specfem::element::dimension_tag::dim3>::print_details()
+    const {
   std::ostringstream message;
-  message << "- Force Source: \n"
-          << "    Source Location: \n"
-          << "      x = " << type_real(gcoord.x) << "\n"
-          << "      y = " << type_real(gcoord.y) << "\n"
-          << "      z = " << type_real(gcoord.z) << "\n"
-          << "    Force Vector: \n"
+  message << "    Force Vector: \n"
           << "      fx = " << type_real(this->fx) << "\n"
           << "      fy = " << type_real(this->fy) << "\n"
-          << "      fz = " << type_real(this->fz) << "\n"
-          << "    Source Time Function: \n"
-          << this->source_time_function->print() << "\n";
-
+          << "      fz = " << type_real(this->fz) << "\n";
   return message.str();
 }
 
