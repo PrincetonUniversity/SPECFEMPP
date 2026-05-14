@@ -27,7 +27,7 @@ parameters:
       forward:
         writer:
           seismogram:
-            format: "ascii"
+            format: "sac"
             directory: "OUTPUT_FILES/results"
 
 

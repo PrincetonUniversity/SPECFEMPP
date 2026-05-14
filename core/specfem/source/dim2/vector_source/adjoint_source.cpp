@@ -68,19 +68,3 @@ specfem::sources::adjoint_source<
 
   return force_vector;
 }
-
-std::string
-specfem::sources::adjoint_source<specfem::element::dimension_tag::dim2>::print()
-    const {
-
-  const auto gcoord = this->get_global_coordinates();
-
-  std::ostringstream message;
-  message << "- Adjoint Source: \n"
-          << "    Source Location: \n"
-          << "      x = " << gcoord.x << "\n"
-          << "      z = " << gcoord.z << "\n"
-          << "    Source Time Function: \n"
-          << this->source_time_function->print() << "\n";
-  return message.str();
-}

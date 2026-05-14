@@ -14,9 +14,9 @@ TEST(ReceiversTests, DefaultConstructor3D) {
 
   EXPECT_EQ(receiver.get_network_name(), network_name);
   EXPECT_EQ(receiver.get_station_name(), station_name);
-  EXPECT_EQ(receiver.get_x(), x);
-  EXPECT_EQ(receiver.get_y(), y);
-  EXPECT_EQ(receiver.get_z(), z);
+  EXPECT_EQ(receiver.get_global_coordinates().x, x);
+  EXPECT_EQ(receiver.get_global_coordinates().y, y);
+  EXPECT_EQ(receiver.get_global_coordinates().z, z);
 }
 
 TEST(ReceiversTests, GetNetworkName3D) {
@@ -47,9 +47,9 @@ TEST(ReceiversTests, GetCoordinates3D) {
   specfem::receivers::receiver<specfem::element::dimension_tag::dim3> receiver(
       "NET", "STA", x, y, z);
 
-  EXPECT_EQ(receiver.get_x(), x);
-  EXPECT_EQ(receiver.get_y(), y);
-  EXPECT_EQ(receiver.get_z(), z);
+  EXPECT_EQ(receiver.get_global_coordinates().x, x);
+  EXPECT_EQ(receiver.get_global_coordinates().y, y);
+  EXPECT_EQ(receiver.get_global_coordinates().z, z);
 }
 
 TEST(ReceiversTests, NegativeCoordinates3D) {
@@ -60,9 +60,9 @@ TEST(ReceiversTests, NegativeCoordinates3D) {
   specfem::receivers::receiver<specfem::element::dimension_tag::dim3> receiver(
       "NET", "STA", x, y, z);
 
-  EXPECT_EQ(receiver.get_x(), x);
-  EXPECT_EQ(receiver.get_y(), y);
-  EXPECT_EQ(receiver.get_z(), z);
+  EXPECT_EQ(receiver.get_global_coordinates().x, x);
+  EXPECT_EQ(receiver.get_global_coordinates().y, y);
+  EXPECT_EQ(receiver.get_global_coordinates().z, z);
 }
 
 TEST(ReceiversTests, ZeroValues3D) {
@@ -73,9 +73,9 @@ TEST(ReceiversTests, ZeroValues3D) {
   specfem::receivers::receiver<specfem::element::dimension_tag::dim3> receiver(
       "NET", "STA", x, y, z);
 
-  EXPECT_EQ(receiver.get_x(), x);
-  EXPECT_EQ(receiver.get_y(), y);
-  EXPECT_EQ(receiver.get_z(), z);
+  EXPECT_EQ(receiver.get_global_coordinates().x, x);
+  EXPECT_EQ(receiver.get_global_coordinates().y, y);
+  EXPECT_EQ(receiver.get_global_coordinates().z, z);
 }
 
 TEST(ReceiversTests, EmptyStrings3D) {
@@ -104,9 +104,9 @@ TEST(ReceiversTests, LargeValues3D) {
   specfem::receivers::receiver<specfem::element::dimension_tag::dim3> receiver(
       "NET", "STA", x, y, z);
 
-  EXPECT_EQ(receiver.get_x(), x);
-  EXPECT_EQ(receiver.get_y(), y);
-  EXPECT_EQ(receiver.get_z(), z);
+  EXPECT_EQ(receiver.get_global_coordinates().x, x);
+  EXPECT_EQ(receiver.get_global_coordinates().y, y);
+  EXPECT_EQ(receiver.get_global_coordinates().z, z);
 }
 
 TEST(ReceiversTests, PrintMethod3D) {
