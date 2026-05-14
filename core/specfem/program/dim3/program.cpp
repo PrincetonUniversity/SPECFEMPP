@@ -122,8 +122,7 @@ void program_3d(
   // --------------------------------------------------------------
   specfem::Logger::info("(If set) Instantiate wavefield "
                         "plotter\n-------------------------------");
-  const auto wavefield_plotter =
-      setup.instantiate_wavefield_plotter(assembly, dt);
+  const auto wavefield_plotter = setup.instantiate_wavefield_plotter(assembly);
   if (wavefield_plotter) {
     tasks.push_back(wavefield_plotter);
   }

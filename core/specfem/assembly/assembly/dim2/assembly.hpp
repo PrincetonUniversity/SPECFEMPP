@@ -163,6 +163,10 @@ template <> struct assembly<specfem::element::dimension_tag::dim2> {
    */
   specfem::assembly::Info<dimension_tag> info;
 
+  type_real t0; ///< Simulation start time
+
+  type_real dt; ///< Time step
+
   ///@}
 
   /**

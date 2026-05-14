@@ -126,6 +126,10 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
                                                         ///< data exchange
                                                         ///< between partitions
 
+  type_real t0; ///< Simulation start time
+
+  type_real dt; ///< Time step
+
   ///@}
 
   /**

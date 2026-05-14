@@ -22,6 +22,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
     const std::shared_ptr<specfem::io::reader> &property_reader,
     const specfem::element_coupling::flux_scheme_configuration
         &flux_scheme_config) {
+  this->t0 = t0;
+  this->dt = dt;
   this->mesh = { mesh.tags, mesh.control_nodes, quadratures,
                  mesh.adjacency_graph };
   this->element_types = { this->mesh.nspec, this->mesh.element_grid, this->mesh,
