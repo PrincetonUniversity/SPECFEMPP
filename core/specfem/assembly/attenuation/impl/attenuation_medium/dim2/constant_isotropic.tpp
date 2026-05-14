@@ -157,7 +157,7 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
           specfem::element::medium_tag::elastic_psv, PropertyTag,
           specfem::element::attenuation_tag::constant_isotropic>(mesh_ispec);
 
-      auto computed_values = material.compute_attenuation_properties(fc.raw(), f0.raw(), band, tau_sigma);
+      auto computed_values = material.compute_attenuation_properties(f0.raw(), fc.raw(), band, tau_sigma);
 
       auto kappa_props = computed_values.kappa_attenuation_properties;
       auto mu_props = computed_values.mu_attenuation_properties;

@@ -186,17 +186,15 @@ OptimizationResult<N> optimize(NelderMeadSimplex, Func &&objective,
     // Check convergence: function value spread
     type_real fval_spread = fvals(N) - fvals(0);
 
-    // Check convergence: simplex diameter (max distance from best point)
+    // Check convergence: simplex diameter (max coordinate-wise abs difference
+    // from best point, matching Fortran SPECFEM3D max_size_simplex)
     type_real max_dist = 0.0;
     for (int i = 1; i <= N; ++i) {
-      type_real dist = 0.0;
       for (int j = 0; j < N; ++j) {
-        type_real diff = simplex(i, j) - simplex(0, j);
-        dist += diff * diff;
-      }
-      dist = std::sqrt(dist);
-      if (dist > max_dist) {
-        max_dist = dist;
+        type_real diff = std::abs(simplex(i, j) - simplex(0, j));
+        if (diff > max_dist) {
+          max_dist = diff;
+        }
       }
     }
 
