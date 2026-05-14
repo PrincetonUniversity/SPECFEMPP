@@ -85,7 +85,7 @@ TEST_P(LocatePointMPI2DTest, EachPointOwnedByExactlyOneRank) {
   for (int i = 0; i < npts; ++i) {
     EXPECT_GE(owners[i], 0)
         << "Point " << i << " (" << TEST_POINTS[i].x << ", " << TEST_POINTS[i].z
-        << ") has no owner (islice = " << owners[i] << ")";
+        << ") has no owner (partition_index = " << owners[i] << ")";
     EXPECT_LT(owners[i], nproc) << "Point " << i << " owner rank " << owners[i]
                                 << " exceeds nproc-1 = " << nproc - 1;
   }

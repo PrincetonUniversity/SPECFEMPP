@@ -368,9 +368,9 @@ sort_sources_per_medium(
   for (int isource = 0; isource < (int)sources.size(); isource++) {
     const auto &source = sources[isource];
 
-    // In MPI builds a source not owned by this rank has islice != myrank.
-    // Skip it here so it is never added to any medium's source list.
-    if (source->get_islice() != myrank) {
+    // In MPI builds a source not owned by this rank has partition_index !=
+    // myrank. Skip it here so it is never added to any medium's source list.
+    if (source->get_partition_index() != myrank) {
       continue;
     }
     if (source->get_medium_tag() == MediumTag) {

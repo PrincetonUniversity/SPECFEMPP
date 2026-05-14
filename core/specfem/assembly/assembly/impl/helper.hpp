@@ -3,6 +3,7 @@
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/assembly/assembly/impl/helper.hpp"
 #include "specfem/chunk_element.hpp"
+#include "specfem/element/dimension.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/medium_physics.hpp"
@@ -56,8 +57,7 @@ public:
   /**
    * @brief Number of spatial dimensions (2 for 2D, 3 for 3D)
    */
-  constexpr static auto ndim =
-      (dimension_tag == specfem::element::dimension_tag::dim2) ? 2 : 3;
+  constexpr static auto ndim = specfem::element::dimension<DimensionTag>::dim;
 
   /**
    * @brief Rank of source array (4 for 2D: [sources][components][z][x],

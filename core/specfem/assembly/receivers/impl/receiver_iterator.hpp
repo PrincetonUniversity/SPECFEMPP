@@ -29,12 +29,12 @@ private:
 struct StationInfo {
   std::string network_name;
   std::string station_name;
-  int islice;
+  int partition_index;
 
-  StationInfo(std::string network, std::string station, int islice,
+  StationInfo(std::string network, std::string station, int partition_index,
               const std::vector<specfem::enums::wavefield> &types)
       : network_name(std::move(network)), station_name(std::move(station)),
-        islice(islice), seismo_types_(types) {}
+        partition_index(partition_index), seismo_types_(types) {}
 
   // Method to get seismogram types associated with this station
   SeismogramTypeIterator get_seismogram_types() const {
@@ -56,7 +56,7 @@ private:
     StationInfo operator*() const {
       return StationInfo(container_->network_names_[index_],
                          container_->station_names_[index_],
-                         container_->receiver_islice_[index_],
+                         container_->receiver_partition_index_[index_],
                          container_->seismogram_types_);
     }
 
@@ -86,7 +86,7 @@ public:
       : seismogram_types_(seismo_types) {
     station_names_.reserve(nreceivers);
     network_names_.reserve(nreceivers);
-    receiver_islice_.reserve(nreceivers);
+    receiver_partition_index_.reserve(nreceivers);
   }
 
   Iterator begin() const { return Iterator(this, 0); }
@@ -97,7 +97,7 @@ public:
 protected:
   std::vector<std::string> station_names_;
   std::vector<std::string> network_names_;
-  std::vector<int> receiver_islice_;
+  std::vector<int> receiver_partition_index_;
   std::vector<specfem::enums::wavefield> seismogram_types_;
 };
 

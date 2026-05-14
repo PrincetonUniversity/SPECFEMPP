@@ -178,7 +178,7 @@ public:
    * @brief Get the MPI slice index for each source
    * @return Vector of MPI slice indices corresponding to each source (host memory)
    */
-  const std::vector<int> &get_islice() const { return source_islice_; }
+  const std::vector<int> &get_partition_index() const { return source_partition_index_; }
 
   /**
    * @brief Update the current simulation time step
@@ -243,7 +243,7 @@ private:
       source_by_medium;
 
   int timestep; ///< Current simulation timestep
-  std::vector<int> source_islice_; ///< MPI slice index for each source (host)
+  std::vector<int> source_partition_index_; ///< MPI slice index for each source (host)
 
   ///@}
 

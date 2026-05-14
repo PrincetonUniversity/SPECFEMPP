@@ -261,7 +261,7 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
     for (auto station_info : receivers.stations()) {
 #ifdef SPECFEM_ENABLE_MPI
       const bool on_this_rank =
-          (station_info.islice == specfem::MPI::get_rank());
+          (station_info.partition_index == specfem::MPI::get_rank());
       const bool is_main = specfem::MPI::main_proc();
 
       // Skip entirely before any allocation: station is not on this rank
@@ -299,8 +299,8 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
             s.resize(nsteps);
           for (int icomp = 0; icomp < ncomp; ++icomp) {
             MPI_Recv(samples[icomp].data(), nsteps, MPI_FLOAT,
-                     station_info.islice, icomp, specfem::MPI::communicator(),
-                     MPI_STATUS_IGNORE);
+                     station_info.partition_index, icomp,
+                     specfem::MPI::communicator(), MPI_STATUS_IGNORE);
           }
         } else {
 #endif

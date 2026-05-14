@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/element/dimension.hpp"
 #include "specfem/element/tags.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/setup.hpp"
@@ -26,9 +27,7 @@ template <specfem::element::dimension_tag DimensionTag>
 class SeismogramIterator {
 private:
   static constexpr int ncomponents =
-      (DimensionTag == specfem::element::dimension_tag::dim2)
-          ? 2  // 2D: x, z
-          : 3; // 3D: x, y, z
+      specfem::element::dimension<DimensionTag>::dim;
 
   class Iterator {
   public:

@@ -27,7 +27,7 @@ struct MockSeismogramEntry {
 struct MockStationInfo {
   std::string network_name;
   std::string station_name;
-  int islice;
+  int partition_index;
   std::vector<specfem::enums::wavefield> types;
 
   const std::vector<specfem::enums::wavefield> &get_seismogram_types() const {

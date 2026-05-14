@@ -28,7 +28,7 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::ascii> {
 
     for (auto station_info : receivers.stations()) {
 #ifdef SPECFEM_ENABLE_MPI
-      if (station_info.islice != specfem::MPI::get_rank() &&
+      if (station_info.partition_index != specfem::MPI::get_rank() &&
           !(from_main && specfem::MPI::main_proc())) {
         continue; // Skip stations not assigned to this rank
       }
