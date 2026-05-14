@@ -19,7 +19,9 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
     const int nsteps_between_samples,
     const specfem::simulation::type simulation,
     const bool allocate_boundary_values,
-    const std::shared_ptr<specfem::io::reader> &property_reader) {
+    const std::shared_ptr<specfem::io::reader> &property_reader,
+    const specfem::element_coupling::flux_scheme_configuration
+        &flux_scheme_config) {
 
   const int nspec = mesh.nspec;
   const int ngllz = mesh.element_grid.ngllz;

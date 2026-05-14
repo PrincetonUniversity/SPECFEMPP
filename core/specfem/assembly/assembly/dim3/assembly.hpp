@@ -146,6 +146,7 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
    * @param write_wavefield Whether to write wavefield
    * @param property_reader Reader for GLL model (skip material property
    * assignment if exists)
+   * @param flux_scheme_config Flux scheme rules for nonconforming interfaces
    */
   assembly(
       const specfem::mesh::mesh<dimension_tag> &mesh,
@@ -160,7 +161,10 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
       const int nsteps_between_samples,
       const specfem::simulation::type simulation,
       const bool allocate_boundary_values,
-      const std::shared_ptr<specfem::io::reader> &property_reader);
+      const std::shared_ptr<specfem::io::reader> &property_reader,
+      const specfem::element_coupling::flux_scheme_configuration
+          &flux_scheme_config =
+              specfem::element_coupling::flux_scheme_configuration());
 
   assembly() = default;
 
