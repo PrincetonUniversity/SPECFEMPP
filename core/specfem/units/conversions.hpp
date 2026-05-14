@@ -8,12 +8,12 @@ namespace specfem::units {
 /**
  * @brief Internal constants for spectral conversions.
  *
- * Provides compile-time π values to avoid runtime dependencies.
+ * Provides compile-time @f$ \pi @f$ values to avoid runtime dependencies.
  */
 namespace impl {
-constexpr type_real pi = std::numbers::pi_v<type_real>; ///< π
+constexpr type_real pi = std::numbers::pi_v<type_real>; ///< @f$ \pi @f$
 constexpr type_real two_pi =
-    type_real(2) * std::numbers::pi_v<type_real>; ///< 2π
+    type_real(2) * std::numbers::pi_v<type_real>; ///< @f$ 2\pi @f$
 } // namespace impl
 
 /**
@@ -31,7 +31,7 @@ constexpr type_real two_pi =
 template <typename To, typename From> struct unit_cast_impl {
   // Intentionally empty: no call() member.
   // Unsupported conversions are caught at compile time by unit_cast(), or at
-  // runtime by quantity_cast() via has_unit_cast<> detection in parse.hpp.
+  // runtime by quantity_cast() via the convertible_unit concept in parse.hpp.
 };
 
 /// Identity conversion (no-op)
@@ -41,10 +41,10 @@ template <typename T> struct unit_cast_impl<T, T> {
 
 /// Scale conversion within same dimension (e.g., meters ↔ kilometers)
 template <typename D, typename S_to, typename S_from>
-requires(!std::is_same_v<S_to, S_from>) struct unit_cast_impl<
-    Quantity<D, S_to>, Quantity<D, S_from> > {
+  requires(!std::is_same_v<S_to, S_from>)
+struct unit_cast_impl<Quantity<D, S_to>, Quantity<D, S_from>> {
   static constexpr Quantity<D, S_to> call(Quantity<D, S_from> q) noexcept {
-    constexpr type_real factor = ratio_value<std::ratio_divide<S_from, S_to> >;
+    constexpr type_real factor = ratio_value<std::ratio_divide<S_from, S_to>>;
     return Quantity<D, S_to>(q.raw() * factor);
   }
 };
@@ -110,7 +110,7 @@ template <> struct unit_cast_impl<Hertz, Omega> {
  * Performs compile-time checked unit conversion. Supports:
  * - Identity conversions (no-op)
  * - Same-dimension scale changes (m → km)
- * - Cross-dimension spectral conversions (s → Hz → ω)
+ * - Cross-dimension spectral conversions (s → Hz → @f$ \omega @f$)
  *
  * Unsupported conversions produce a compile-time error.
  *

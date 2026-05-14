@@ -51,9 +51,7 @@ namespace impl {
  */
 template <typename To, typename From>
 concept convertible_unit = requires(From f) {
-  {
-    unit_cast_impl<To, From>::call(f)
-  } -> std::convertible_to<To>;
+  { unit_cast_impl<To, From>::call(f) } -> std::convertible_to<To>;
 };
 
 /**
@@ -65,7 +63,8 @@ concept convertible_unit = requires(From f) {
  * ambiguity (e.g. "mu" is matched before "m").  The ASCII spellings "u" and
  * "mu" are accepted as alternatives to "µ" (UTF-8 U+00B5 = 0xC2 0xB5).
  *
- * Supported prefixes: k (×1e3), M (×1e6), m (×1e-3), u/mu/µ (×1e-6).
+ * Supported prefixes: k (@f$ \times 10^3 @f$), M (@f$ \times 10^6 @f$),
+ * m (@f$ \times 10^{-3} @f$), u/mu/µ (@f$ \times 10^{-6} @f$).
  */
 inline bool strip_si_prefix(std::string_view unit, type_real &factor,
                             std::string &base_unit) {
@@ -118,10 +117,11 @@ struct string_hash {
  *   parse("20.0Hz")     // Hertz(20.0)  — no whitespace is fine
  * @endcode
  *
- * Supported scaling symbols are SI prefixes: k (×1e3), M (×1e6), m (×1e-3),
- * u/mu/µ (×1e-6). The table below shows a non-exhaustive list of supported
- * unit symbols; any symbol not in the table may still be parsed if the SI
- * prefix and base unit are both supported.
+ * Supported scaling symbols are SI prefixes: k (@f$ \times 10^3 @f$),
+ * M (@f$ \times 10^6 @f$), m (@f$ \times 10^{-3} @f$),
+ * u/mu/µ (@f$ \times 10^{-6} @f$). The table below shows a non-exhaustive list
+ * of supported unit symbols; any symbol not in the table may still be parsed if
+ * the SI prefix and base unit are both supported.
  *
  * (Some) supported unit symbols (case-sensitive):
  * | Category      | Symbols                                  |
@@ -183,7 +183,7 @@ inline AnyQuantity parse(std::string_view s) {
     [](type_real v) -> AnyQuantity { return Type(v * type_real(factor)); } }
 
   static const std::unordered_map<std::string, Factory, impl::string_hash,
-                                  std::equal_to<> >
+                                  std::equal_to<>>
       table = {
         // ── Dimensionless ────────────────────────────────────────────────────
         SPECFEM_PARSE_ENTRY("1", Dimensionless),
@@ -276,7 +276,8 @@ inline AnyQuantity parse(std::string_view s) {
  *
  * @code
  * auto any   = specfem::units::parse("20.0 Hz");
- * auto omega = specfem::units::quantity_cast<Omega>(any); // 2π·20 rad/s
+ * auto omega = specfem::units::quantity_cast<Omega>(any); // @f$ 2\pi \cdot 20
+ * @f$ rad/s
  * @endcode
  *
  */
@@ -301,7 +302,8 @@ template <typename To> To quantity_cast(const AnyQuantity &v) {
  *
  * @code
  * auto f = specfem::units::quantity_cast<Hertz>("20.0 Hz");
- * auto w = specfem::units::quantity_cast<Omega>("20.0 Hz"); // 2π·20 rad/s
+ * auto w = specfem::units::quantity_cast<Omega>("20.0 Hz"); // @f$ 2\pi \cdot
+ * 20 @f$ rad/s
  * @endcode
  *
  * @tparam To  Target Quantity type.
