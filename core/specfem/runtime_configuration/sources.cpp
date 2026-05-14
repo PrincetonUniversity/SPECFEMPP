@@ -20,8 +20,7 @@ parse_format_key(const std::string &key) {
 
 } // namespace
 
-specfem::runtime_configuration::sources::sources(const YAML::Node &Node)
-    : source_node(Node) {
+specfem::runtime_configuration::sources::sources(const YAML::Node &Node) {
 
   if (Node.IsScalar()) {
     // Old format: sources: "path/to/file.yaml"

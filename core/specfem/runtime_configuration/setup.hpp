@@ -145,13 +145,6 @@ public:
   std::string get_databases() const { return databases->get_databases(); }
 
   /**
-   * @brief Get the sources YAML object (backward compatibility).
-   *
-   * @return YAML::Node YAML node describing the sources
-   */
-  YAML::Node get_sources() const { return this->sources->get_sources(); }
-
-  /**
    * @brief Get the parsed source file entries for multi-format dispatch.
    *
    * @return const reference to vector of source_file_entry

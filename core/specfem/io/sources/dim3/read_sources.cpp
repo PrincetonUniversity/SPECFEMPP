@@ -28,53 +28,6 @@ wavefield_type_from_simulation(specfem::simulation::type simulation_type) {
 }
 } // namespace
 
-// read_sources(YAML::Node, ...) — try as file path, fall back to inline node
-template <>
-std::tuple<std::vector<std::shared_ptr<specfem::sources::source<
-               specfem::element::dimension_tag::dim3>>>,
-           type_real>
-specfem::io::read_sources<specfem::element::dimension_tag::dim3>(
-    const YAML::Node source_node, const int nsteps, const type_real user_t0,
-    const type_real dt, const specfem::simulation::type simulation_type) {
-
-  const auto source_wavefield_type =
-      wavefield_type_from_simulation(simulation_type);
-
-  // Try to load as file path, fall back to treating as YAML node
-  YAML::Node source_dict;
-  try {
-    source_dict = YAML::LoadFile(source_node.as<std::string>());
-  } catch (YAML::Exception &e) {
-    source_dict = source_node;
-  }
-
-  auto sources =
-      specfem::io::read_yaml_sources<specfem::element::dimension_tag::dim3>(
-          source_dict, nsteps, dt, source_wavefield_type);
-
-  specfem::io::validate_source_simulation_type<
-      specfem::element::dimension_tag::dim3>(sources, simulation_type);
-
-  type_real t0 =
-      specfem::io::adjust_source_timing<specfem::element::dimension_tag::dim3>(
-          sources, user_t0);
-
-  return std::make_tuple(sources, t0);
-}
-
-// read_sources(string, ...) — load file, delegate to YAML node overload
-template <>
-std::tuple<std::vector<std::shared_ptr<specfem::sources::source<
-               specfem::element::dimension_tag::dim3>>>,
-           type_real>
-specfem::io::read_sources<specfem::element::dimension_tag::dim3>(
-    const std::string &sources_file, const int nsteps, const type_real user_t0,
-    const type_real dt, const specfem::simulation::type simulation_type) {
-  YAML::Node source_node = YAML::LoadFile(sources_file);
-  return read_sources<specfem::element::dimension_tag::dim3>(
-      source_node, nsteps, user_t0, dt, simulation_type);
-}
-
 // read_sources(vector<source_file_entry>, ...) — multi-format dispatch
 template <>
 std::tuple<std::vector<std::shared_ptr<specfem::sources::source<

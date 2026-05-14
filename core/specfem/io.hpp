@@ -165,42 +165,6 @@ std::vector<std::shared_ptr<
 read_3d_receivers(const YAML::Node &stations);
 
 /**
- * @brief Read sources from a file path.
- *
- * @tparam DimensionTag Spatial dimension (dim2 or dim3)
- * @param sources_file Path to a source definition file
- * @param nsteps Number of time steps
- * @param user_t0 User defined t0
- * @param dt Time step
- * @param simulation_type Type of simulation
- * @return Tuple of (source objects, t0)
- */
-template <specfem::element::dimension_tag DimensionTag>
-std::tuple<std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>,
-           type_real>
-read_sources(const std::string &sources_file, const int nsteps,
-             const type_real user_t0, const type_real dt,
-             const specfem::simulation::type simulation_type);
-
-/**
- * @brief Read sources from a YAML node.
- *
- * @tparam DimensionTag Spatial dimension (dim2 or dim3)
- * @param yaml YAML node containing source information
- * @param nsteps Number of time steps
- * @param user_t0 User defined t0
- * @param dt Time step
- * @param simulation_type Type of simulation
- * @return Tuple of (source objects, t0)
- */
-template <specfem::element::dimension_tag DimensionTag>
-std::tuple<std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>,
-           type_real>
-read_sources(const YAML::Node yaml, const int nsteps, const type_real user_t0,
-             const type_real dt,
-             const specfem::simulation::type simulation_type);
-
-/**
  * @brief Read sources from parsed config entries (multi-format dispatch).
  *
  * @tparam DimensionTag Spatial dimension (dim2 or dim3)

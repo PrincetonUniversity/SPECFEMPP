@@ -47,13 +47,6 @@ public:
   sources(const YAML::Node &Node);
 
   /**
-   * @brief Get the raw YAML node (backward compatibility).
-   *
-   * @return YAML::Node describing the sources
-   */
-  YAML::Node get_sources() const { return source_node; }
-
-  /**
    * @brief Get the parsed source file entries.
    *
    * @return const reference to vector of source_file_entry
@@ -63,7 +56,6 @@ public:
   }
 
 protected:
-  YAML::Node source_node;
   std::vector<source_file_entry> entries;
 };
 

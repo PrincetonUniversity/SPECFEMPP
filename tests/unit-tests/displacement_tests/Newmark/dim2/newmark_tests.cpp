@@ -107,7 +107,7 @@ TEST_P(Newmark, 2D) {
   specfem::runtime_configuration::setup setup(parameter_file);
 
   const auto database_file = setup.get_databases();
-  const auto source_node = setup.get_sources();
+  const auto &source_entries = setup.get_source_entries();
   const auto elastic_wave = setup.get_elastic_wave_type();
   const auto electromagnetic_wave = setup.get_electromagnetic_wave_type();
 
@@ -126,7 +126,8 @@ TEST_P(Newmark, 2D) {
   //    source frequencies and time shift
   auto [sources, t0] =
       specfem::io::read_sources<specfem::element::dimension_tag::dim2>(
-          source_node, nsteps, setup.get_t0(), dt, setup.get_simulation_type());
+          source_entries, nsteps, setup.get_t0(), dt,
+          setup.get_simulation_type());
 
   for (auto &source : sources) {
     specfem::Logger::info(

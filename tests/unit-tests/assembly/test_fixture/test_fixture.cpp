@@ -1,6 +1,7 @@
 #include "test_fixture.hpp"
 #include "SPECFEM_Environment.hpp"
 #include "specfem/io.hpp"
+#include "specfem/runtime_configuration/sources.hpp"
 #include "test_fixture.tpp"
 // ------------------------------------------------------------------------
 // Reading test config
@@ -46,9 +47,13 @@ template <> Assembly<specfem::element::dimension_tag::dim2>::Assembly() {
 
     std::cout << sources_file << std::endl;
 
+    std::vector<specfem::runtime_configuration::source_file_entry> entries = {
+      { specfem::runtime_configuration::source_format::YAML, sources_file }
+    };
+
     auto [sources, t0] =
         specfem::io::read_sources<specfem::element::dimension_tag::dim2>(
-            sources_file, 1, 0, 0, specfem::simulation::type::forward);
+            entries, 1, 0, 0, specfem::simulation::type::forward);
 
     this->Sources.push_back(sources);
 
@@ -92,9 +97,13 @@ template <> Assembly<specfem::element::dimension_tag::dim3>::Assembly() {
 
     std::cout << sources_file << std::endl;
 
+    std::vector<specfem::runtime_configuration::source_file_entry> entries = {
+      { specfem::runtime_configuration::source_format::YAML, sources_file }
+    };
+
     auto [sources, t0] =
         specfem::io::read_sources<specfem::element::dimension_tag::dim3>(
-            sources_file, 1, 0, 0, specfem::simulation::type::forward);
+            entries, 1, 0, 0, specfem::simulation::type::forward);
 
     this->Sources.push_back(sources);
 

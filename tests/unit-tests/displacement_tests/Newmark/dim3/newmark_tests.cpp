@@ -110,7 +110,7 @@ TEST_P(Newmark, 3D) {
   specfem::runtime_configuration::setup setup(parameter_file);
 
   const auto database_filename = setup.get_databases();
-  const auto source_node = setup.get_sources();
+  const auto &source_entries = setup.get_source_entries();
   const auto stations_node = setup.get_stations();
 
   // Set up GLL quadrature points
@@ -127,7 +127,8 @@ TEST_P(Newmark, 3D) {
   //    source frequencies and time shift
   auto [sources, t0] =
       specfem::io::read_sources<specfem::element::dimension_tag::dim3>(
-          source_node, nsteps, setup.get_t0(), dt, setup.get_simulation_type());
+          source_entries, nsteps, setup.get_t0(), dt,
+          setup.get_simulation_type());
 
   for (auto &source : sources) {
     specfem::Logger::info(
