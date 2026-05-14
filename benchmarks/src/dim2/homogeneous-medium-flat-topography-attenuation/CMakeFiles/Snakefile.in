@@ -7,6 +7,7 @@ rule all:
     input:
         traces_X="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/traces_X.png",
         traces_Z="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/traces_Z.png",
+        geometry="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/geometry.png",
     localrule: True
 
 
@@ -125,6 +126,22 @@ rule plot_seismogram:
         os.makedirs("@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results", exist_ok=True)
         plot_comparison(stream, stream_att, 'X', output.traces_X)
         plot_comparison(stream, stream_att, 'Z', output.traces_Z)
+
+
+rule plot_geometry:
+    input:
+        stations="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/attenuation_on/STATIONS",
+        source="@CURRENT_BENCHMARK_BUILD_DIR@/source.yaml",
+        topography="@CURRENT_BENCHMARK_BUILD_DIR@/topography.dat",
+        par_file="@CURRENT_BENCHMARK_BUILD_DIR@/Par_File_attenuation_on",
+    output:
+        geometry="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/geometry.png",
+    localrule: True
+    shell:
+        """
+            mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results
+            python3 @CURRENT_BENCHMARK_BUILD_DIR@/plot_geometry.py
+        """
 
 
 rule clean:

@@ -28,7 +28,7 @@ parameters:
         writer:
           seismogram:
             format: "ascii"
-            directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/attenuation_on/results"
+            directory: "OUTPUT_FILES/attenuation_on/results"
 
   attenuation:
     enabled: true
@@ -38,7 +38,7 @@ parameters:
       - 300.0 Hz
 
   receivers:
-    stations: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/attenuation_on/STATIONS"
+    stations: "OUTPUT_FILES/attenuation_on/STATIONS"
     angle: 0.0
     seismogram-type:
       - velocity
@@ -51,10 +51,10 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/attenuation_on/database.bin"
+    mesh-database: "OUTPUT_FILES/attenuation_on/database.bin"
 
   ## sources
-  sources: "@CURRENT_BENCHMARK_BUILD_DIR@/source.yaml"
+  sources: "source.yaml"
 
   ## log-file configuration
-  log-file: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/attenuation_on/output"
+  log-file: "OUTPUT_FILES/attenuation_on/output"

@@ -87,7 +87,7 @@ nbmodels                        = 1
 #       Please also note that Qmu is always equal to Qs, but Qkappa is in general not equal to Qp.
 #       To convert one to the other see doc/Qkappa_Qmu_versus_Qp_Qs_relationship_in_2D_plane_strain.pdf and
 #       utils/attenuation/conversion_from_Qkappa_Qmu_to_Qp_Qs_from_Dahlen_Tromp_959_960.f90.
-1 1 2700.d0 3000.d0 1732.051d0 0 0 1000 100 0 0 0 0 0 0
+1 1 2700.d0 3000.d0 1732.051d0 0 0 100 50 0 0 0 0 0 0
 # 2 1 2500.d0 2700.d0 1443.375d0 0 0 9999 9999 0 0 0 0 0 0
 # 3 1 2200.d0 2500.d0 1443.375d0 0 0 9999 9999 0 0 0 0 0 0
 # 4 1 2200.d0 2200.d0 1343.375d0 0 0 9999 9999 0 0 0 0 0 0
@@ -133,10 +133,10 @@ nx                              = 80             # number of elements along X
 STACEY_ABSORBING_CONDITIONS     = .false.
 
 # absorbing boundary parameters (see absorbing_conditions above)
-absorbbottom                    = .false.
-absorbright                     = .false.
-absorbtop                       = .false.
-absorbleft                      = .false.
+absorbbottom                    = .true.
+absorbright                     = .true.
+absorbtop                       = .true.
+absorbleft                      = .true.
 
 # define the different regions of the model in the (nx,nz) spectral-element mesh
 nbregions                       = 1              # then set below the different regions and model number for each region

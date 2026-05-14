@@ -11,7 +11,7 @@ title                           = Elastic Simulation with point source
 NPROC                           = 1              # number of processes
 
 # Output folder to store mesh related files
-OUTPUT_FILES                   = @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/attenuation_off
+OUTPUT_FILES                   = OUTPUT_FILES/attenuation_off
 
 
 #-----------------------------------------------------------
@@ -27,7 +27,7 @@ PARTITIONING_TYPE               = 3              # SCOTCH = 3, ascending order (
 NGNOD                           = 9
 
 # location to store the mesh
-database_filename               = @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/attenuation_off/database.bin
+database_filename               = OUTPUT_FILES/attenuation_off/database.bin
 
 #-----------------------------------------------------------
 #
@@ -62,7 +62,7 @@ zfin                            = 1900.             # last receiver z in meters 
 record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface (z values are ignored if this is set to true, they are replaced with the topography height)
 
 # filename to store stations file
-stations_filename              = @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/attenuation_off/STATIONS
+stations_filename              = OUTPUT_FILES/attenuation_off/STATIONS
 
 #-----------------------------------------------------------
 #
@@ -88,9 +88,6 @@ nbmodels                        = 1
 #       To convert one to the other see doc/Qkappa_Qmu_versus_Qp_Qs_relationship_in_2D_plane_strain.pdf and
 #       utils/attenuation/conversion_from_Qkappa_Qmu_to_Qp_Qs_from_Dahlen_Tromp_959_960.f90.
 1 1 2700.d0 3000.d0 1732.051d0 0 0 9999 9999 0 0 0 0 0 0
-# 2 1 2500.d0 2700.d0 1443.375d0 0 0 9999 9999 0 0 0 0 0 0
-# 3 1 2200.d0 2500.d0 1443.375d0 0 0 9999 9999 0 0 0 0 0 0
-# 4 1 2200.d0 2200.d0 1343.375d0 0 0 9999 9999 0 0 0 0 0 0
 
 # external tomography file
 TOMOGRAPHY_FILE                 = ./DATA/tomo_file.xyz
@@ -123,7 +120,7 @@ tangential_detection_curve_file = ./DATA/courbe_eros_nodes  # file containing th
 #-----------------------------------------------------------
 
 # file containing interfaces for internal mesh
-interfacesfile                  = @CURRENT_BENCHMARK_BUILD_DIR@/topography.dat
+interfacesfile                  = topography.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model
