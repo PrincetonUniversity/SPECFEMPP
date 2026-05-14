@@ -130,6 +130,7 @@ set(DECOMPOSE_MESH_IMPL_SOURCES
     partition_metis.F90
     partition_patoh.F90
     partition_rows.F90
+    read_decompose_mesh_par.F90
     read_mesh_files.F90
     write_mesh_databases.F90
     write_mesh_databases_hdf5.F90
