@@ -125,8 +125,9 @@ TEST_P(Newmark, 3D) {
   // Read sources
   //    if start time is not explicitly specified then t0 is determined using
   //    source frequencies and time shift
-  auto [sources, t0] = specfem::io::read_3d_sources(
-      source_node, nsteps, setup.get_t0(), dt, setup.get_simulation_type());
+  auto [sources, t0] =
+      specfem::io::read_sources<specfem::element::dimension_tag::dim3>(
+          source_node, nsteps, setup.get_t0(), dt, setup.get_simulation_type());
 
   for (auto &source : sources) {
     specfem::Logger::info(

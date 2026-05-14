@@ -14,7 +14,7 @@ namespace specfem::program {
 void program_3d(
     const YAML::Node &parameter_dict,
     std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task<
-        specfem::element::dimension_tag::dim3> > >
+        specfem::element::dimension_tag::dim3>>>
         tasks) {
 
   // --------------------------------------------------------------
@@ -63,8 +63,9 @@ void program_3d(
   //                   Get Sources
   // --------------------------------------------------------------
   auto [sources, t0] =
-      specfem::io::read_3d_sources(setup.get_sources(), nsteps, setup.get_t0(),
-                                   setup.get_dt(), simulation_type);
+      specfem::io::read_sources<specfem::element::dimension_tag::dim3>(
+          setup.get_source_entries(), nsteps, setup.get_t0(), setup.get_dt(),
+          simulation_type);
   setup.update_t0(t0); // Update t0 in case it was changed
 
   // --------------------------------------------------------------

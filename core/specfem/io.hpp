@@ -3,6 +3,7 @@
 #include "specfem/enums.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/receivers.hpp"
+#include "specfem/runtime_configuration/sources.hpp"
 #include "specfem/source.hpp"
 
 #include "specfem/setup.hpp"
@@ -93,7 +94,7 @@ read_3d_mesh(const std::string &database_file, const bool attenuation_enabled);
  * @return vector of instantiated receiver objects
  */
 std::vector<std::shared_ptr<
-    specfem::receivers::receiver<specfem::element::dimension_tag::dim2> > >
+    specfem::receivers::receiver<specfem::element::dimension_tag::dim2>>>
 read_2d_receivers(const std::string &stations_file, const type_real angle);
 
 /**
@@ -120,7 +121,7 @@ read_2d_receivers(const std::string &stations_file, const type_real angle);
  * @return vector of instantiated receiver objects
  */
 std::vector<std::shared_ptr<
-    specfem::receivers::receiver<specfem::element::dimension_tag::dim2> > >
+    specfem::receivers::receiver<specfem::element::dimension_tag::dim2>>>
 read_2d_receivers(const YAML::Node &stations, const type_real angle);
 
 /**
@@ -133,7 +134,7 @@ read_2d_receivers(const YAML::Node &stations, const type_real angle);
  * @return vector of instantiated receiver objects
  */
 std::vector<std::shared_ptr<
-    specfem::receivers::receiver<specfem::element::dimension_tag::dim3> > >
+    specfem::receivers::receiver<specfem::element::dimension_tag::dim3>>>
 read_3d_receivers(const std::string &stations_file);
 
 /**
@@ -160,94 +161,64 @@ read_3d_receivers(const std::string &stations_file);
  * @return vector of instantiated receiver objects
  */
 std::vector<std::shared_ptr<
-    specfem::receivers::receiver<specfem::element::dimension_tag::dim3> > >
+    specfem::receivers::receiver<specfem::element::dimension_tag::dim3>>>
 read_3d_receivers(const YAML::Node &stations);
 
 /**
- * @brief Read sources file written in .yml format
+ * @brief Read sources from a file path.
  *
- * Parse source specification file written in yaml format and create a vector of
- * specfem::source::source * object
- *
- * @param sources_file Name of the yaml file
+ * @tparam DimensionTag Spatial dimension (dim2 or dim3)
+ * @param sources_file Path to a source definition file
  * @param nsteps Number of time steps
  * @param user_t0 User defined t0
  * @param dt Time step
  * @param simulation_type Type of simulation
- *
- * @return std::vector<specfem::sources::source *> vector of instantiated source
- * objects
+ * @return Tuple of (source objects, t0)
  */
-std::tuple<std::vector<std::shared_ptr<specfem::sources::source<
-               specfem::element::dimension_tag::dim2> > >,
+template <specfem::element::dimension_tag DimensionTag>
+std::tuple<std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>,
            type_real>
-read_2d_sources(const std::string &sources_file, const int nsteps,
-                const type_real user_t0, const type_real dt,
-                const specfem::simulation::type simulation_type);
+read_sources(const std::string &sources_file, const int nsteps,
+             const type_real user_t0, const type_real dt,
+             const specfem::simulation::type simulation_type);
 
 /**
- * @brief Read sources file written in .yml format
+ * @brief Read sources from a YAML node.
  *
- * Parse source specification file written in yaml format and create a vector of
- * specfem::source::source * object
- *
+ * @tparam DimensionTag Spatial dimension (dim2 or dim3)
  * @param yaml YAML node containing source information
  * @param nsteps Number of time steps
  * @param user_t0 User defined t0
  * @param dt Time step
  * @param simulation_type Type of simulation
- * @return std::vector<specfem::sources::source *> vector of instantiated source
- * objects
+ * @return Tuple of (source objects, t0)
  */
-std::tuple<std::vector<std::shared_ptr<specfem::sources::source<
-               specfem::element::dimension_tag::dim2> > >,
+template <specfem::element::dimension_tag DimensionTag>
+std::tuple<std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>,
            type_real>
-read_2d_sources(const YAML::Node yaml, const int nsteps,
-                const type_real user_t0, const type_real dt,
-                const specfem::simulation::type simulation_type);
+read_sources(const YAML::Node yaml, const int nsteps, const type_real user_t0,
+             const type_real dt,
+             const specfem::simulation::type simulation_type);
 
 /**
- * @brief Read sources file written in .yml format
+ * @brief Read sources from parsed config entries (multi-format dispatch).
  *
- * Parse source specification file written in yaml format and create a vector of
- * specfem::source::source * object
- *
- * @param sources_file Name of the yaml file
+ * @tparam DimensionTag Spatial dimension (dim2 or dim3)
+ * @param entries Source file entries with format and path
  * @param nsteps Number of time steps
  * @param user_t0 User defined t0
  * @param dt Time step
  * @param simulation_type Type of simulation
- *
- * @return std::vector<specfem::sources::source *> vector of instantiated source
- * objects
+ * @return Tuple of (source objects, t0)
  */
-std::tuple<std::vector<std::shared_ptr<specfem::sources::source<
-               specfem::element::dimension_tag::dim3> > >,
+template <specfem::element::dimension_tag DimensionTag>
+std::tuple<std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>,
            type_real>
-read_3d_sources(const std::string &sources_file, const int nsteps,
-                const type_real user_t0, const type_real dt,
-                const specfem::simulation::type simulation_type);
-
-/**
- * @brief Read sources file written in .yml format
- *
- * Parse source specification file written in yaml format and create a vector of
- * specfem::source::source * object
- *
- * @param yaml YAML node containing source information
- * @param nsteps Number of time steps
- * @param user_t0 User defined t0
- * @param dt Time step
- * @param simulation_type Type of simulation
- * @return std::vector<specfem::sources::source *> vector of instantiated source
- * objects
- */
-std::tuple<std::vector<std::shared_ptr<specfem::sources::source<
-               specfem::element::dimension_tag::dim3> > >,
-           type_real>
-read_3d_sources(const YAML::Node yaml, const int nsteps,
-                const type_real user_t0, const type_real dt,
-                const specfem::simulation::type simulation_type);
+read_sources(
+    const std::vector<specfem::runtime_configuration::source_file_entry>
+        &entries,
+    const int nsteps, const type_real user_t0, const type_real dt,
+    const specfem::simulation::type simulation_type);
 
 } // namespace io
 } // namespace specfem

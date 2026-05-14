@@ -25,7 +25,7 @@ template <specfem::element::dimension_tag DimensionTag>
 struct SourceYAMLTestParam {
   std::string testname;
   YAML::Node sources_node;
-  std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
+  std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>
       expected_sources;
 };
 
@@ -237,8 +237,9 @@ TEST_P(Read2DSourcesYAMLTest, ReadYAMLnode) {
   const auto &param = GetParam();
 
   auto [sources, _t0] =
-      specfem::io::read_2d_sources(param.sources_node, nsteps, user_t0, dt,
-                                   specfem::simulation::type::forward);
+      specfem::io::read_sources<specfem::element::dimension_tag::dim2>(
+          param.sources_node, nsteps, user_t0, dt,
+          specfem::simulation::type::forward);
 
   ASSERT_EQ(sources.size(), param.expected_sources.size());
 
@@ -279,8 +280,9 @@ TEST_P(Read3DSourcesYAMLTest, ReadYAMLnode) {
   const auto &param = GetParam();
 
   auto [sources, _t0] =
-      specfem::io::read_3d_sources(param.sources_node, nsteps, user_t0, dt,
-                                   specfem::simulation::type::forward);
+      specfem::io::read_sources<specfem::element::dimension_tag::dim3>(
+          param.sources_node, nsteps, user_t0, dt,
+          specfem::simulation::type::forward);
 
   ASSERT_EQ(sources.size(), param.expected_sources.size());
 

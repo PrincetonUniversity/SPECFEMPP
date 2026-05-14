@@ -145,11 +145,21 @@ public:
   std::string get_databases() const { return databases->get_databases(); }
 
   /**
-   * @brief Get the sources YAML object
+   * @brief Get the sources YAML object (backward compatibility).
    *
    * @return YAML::Node YAML node describing the sources
    */
   YAML::Node get_sources() const { return this->sources->get_sources(); }
+
+  /**
+   * @brief Get the parsed source file entries for multi-format dispatch.
+   *
+   * @return const reference to vector of source_file_entry
+   */
+  const std::vector<specfem::runtime_configuration::source_file_entry> &
+  get_source_entries() const {
+    return this->sources->get_source_entries();
+  }
 
   /**
    * @brief Get the path to stations file
@@ -243,10 +253,10 @@ public:
    * @return specfem::utilities::Band<specfem::units::Hertz> Attenuation
    * frequency band
    */
-  std::shared_ptr<specfem::utilities::Band<specfem::units::Hertz> >
+  std::shared_ptr<specfem::utilities::Band<specfem::units::Hertz>>
   get_attenuation_band() const {
     if (this->attenuation) {
-      return std::make_shared<specfem::utilities::Band<specfem::units::Hertz> >(
+      return std::make_shared<specfem::utilities::Band<specfem::units::Hertz>>(
           this->attenuation->get_attenuation_frequency_band());
     } else {
       return nullptr; // Return null if attenuation is disabled
@@ -261,7 +271,7 @@ public:
    * configured
    */
   template <specfem::element::dimension_tag DimensionTag>
-  std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag> >
+  std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag>>
   instantiate_wavefield_writer() const {
     if (this->wavefield) {
       return this->wavefield
@@ -279,7 +289,7 @@ public:
    * configured
    */
   template <specfem::element::dimension_tag DimensionTag>
-  std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag> >
+  std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag>>
   instantiate_wavefield_reader() const {
     if (this->wavefield) {
       return this->wavefield
@@ -298,7 +308,7 @@ public:
    * @return Shared pointer to 2D wavefield plotter or nullptr if not configured
    */
   std::shared_ptr<specfem::periodic_tasks::periodic_task<
-      specfem::element::dimension_tag::dim2> >
+      specfem::element::dimension_tag::dim2>>
   instantiate_wavefield_plotter(
       const specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
           &assembly,
@@ -318,7 +328,7 @@ public:
    * @return Shared pointer to 3D wavefield plotter or nullptr if not configured
    */
   std::shared_ptr<specfem::periodic_tasks::periodic_task<
-      specfem::element::dimension_tag::dim3> >
+      specfem::element::dimension_tag::dim3>>
   instantiate_wavefield_plotter(
       const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
           &assembly,
@@ -394,9 +404,9 @@ public:
       const type_real dt,
       const specfem::assembly::assembly<DimensionTag> &assembly,
       std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
-      const std::vector<std::shared_ptr<
-          specfem::periodic_tasks::periodic_task<DimensionTag> > > &tasks)
-      const {
+      const std::vector<
+          std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag>>>
+          &tasks) const {
     return this->solver->instantiate<NGLL, DimensionTag>(dt, assembly,
                                                          time_scheme, tasks);
   }

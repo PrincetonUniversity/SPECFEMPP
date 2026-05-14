@@ -14,7 +14,7 @@ namespace specfem::program {
 void program_2d(
     const YAML::Node &parameter_dict,
     std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task<
-        specfem::element::dimension_tag::dim2> > >
+        specfem::element::dimension_tag::dim2>>>
         tasks) {
 
   // --------------------------------------------------------------
@@ -62,8 +62,9 @@ void program_2d(
   const int nsteps = setup.get_nsteps();
   const specfem::simulation::type simulation_type = setup.get_simulation_type();
   auto [sources, t0] =
-      specfem::io::read_2d_sources(setup.get_sources(), nsteps, setup.get_t0(),
-                                   setup.get_dt(), simulation_type);
+      specfem::io::read_sources<specfem::element::dimension_tag::dim2>(
+          setup.get_source_entries(), nsteps, setup.get_t0(), setup.get_dt(),
+          simulation_type);
   setup.update_t0(t0); // Update t0 in case it was changed
 
   const auto stations_node = setup.get_stations();

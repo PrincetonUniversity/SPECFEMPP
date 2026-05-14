@@ -8,7 +8,7 @@
 template <specfem::element::dimension_tag DimensionType>
 void parse_test_config(
     const YAML::Node &yaml,
-    std::vector<test_configuration::Test<DimensionType> > &tests,
+    std::vector<test_configuration::Test<DimensionType>> &tests,
     const std::string &dimension) {
   YAML::Node all_tests = yaml["Tests"][dimension];
   assert(all_tests.IsSequence());
@@ -46,8 +46,9 @@ template <> Assembly<specfem::element::dimension_tag::dim2>::Assembly() {
 
     std::cout << sources_file << std::endl;
 
-    auto [sources, t0] = specfem::io::read_2d_sources(
-        sources_file, 1, 0, 0, specfem::simulation::type::forward);
+    auto [sources, t0] =
+        specfem::io::read_sources<specfem::element::dimension_tag::dim2>(
+            sources_file, 1, 0, 0, specfem::simulation::type::forward);
 
     this->Sources.push_back(sources);
 
@@ -91,8 +92,9 @@ template <> Assembly<specfem::element::dimension_tag::dim3>::Assembly() {
 
     std::cout << sources_file << std::endl;
 
-    auto [sources, t0] = specfem::io::read_3d_sources(
-        sources_file, 1, 0, 0, specfem::simulation::type::forward);
+    auto [sources, t0] =
+        specfem::io::read_sources<specfem::element::dimension_tag::dim3>(
+            sources_file, 1, 0, 0, specfem::simulation::type::forward);
 
     this->Sources.push_back(sources);
 
