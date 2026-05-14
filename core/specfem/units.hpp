@@ -30,58 +30,51 @@
  */
 namespace specfem::units::unit_symbols {
 
-/// Tag for constructing Meters
-struct meter_tag {};
-constexpr meter_tag m{};
+/// Generates a tag struct, constexpr instance, and operator* overloads for a
+/// quantity type, enabling `value * tag` and `tag * value` construction syntax.
+#define SPECFEM_UNIT_TAG(TagName, ShortName, QuantityType)                     \
+  struct TagName##_tag {};                                                     \
+  constexpr TagName##_tag ShortName{};                                         \
+  template <typename N> constexpr QuantityType operator*(N v, TagName##_tag) { \
+    return QuantityType(type_real(v));                                         \
+  }                                                                            \
+  template <typename N> constexpr QuantityType operator*(TagName##_tag, N v) { \
+    return QuantityType(type_real(v));                                         \
+  }
 
-/// Tag for constructing Kilometers
-struct kilometer_tag {};
-constexpr kilometer_tag km{};
+// Dimensionless
+SPECFEM_UNIT_TAG(dimensionless, one, Dimensionless)
 
-/// Tag for constructing Seconds
-struct second_tag {};
-constexpr second_tag s{};
+// Mass
+SPECFEM_UNIT_TAG(gram, g, Grams)
+SPECFEM_UNIT_TAG(kilogram, kg, Kilograms)
 
-template <typename N> constexpr Meters operator*(N v, meter_tag) {
-  return Meters(type_real(v));
-}
-template <typename N> constexpr Meters operator*(meter_tag, N v) {
-  return Meters(type_real(v));
-}
-template <typename N> constexpr Kilometers operator*(N v, kilometer_tag) {
-  return Kilometers(type_real(v));
-}
-template <typename N> constexpr Kilometers operator*(kilometer_tag, N v) {
-  return Kilometers(type_real(v));
-}
-template <typename N> constexpr Seconds operator*(N v, second_tag) {
-  return Seconds(type_real(v));
-}
-template <typename N> constexpr Seconds operator*(second_tag, N v) {
-  return Seconds(type_real(v));
-}
+// Time
+SPECFEM_UNIT_TAG(second, s, Seconds)
 
-/// Tag for constructing MetersPerSecond
-struct m_per_s_tag {};
-constexpr m_per_s_tag mps{};
+// Length
+SPECFEM_UNIT_TAG(meter, m, Meters)
+SPECFEM_UNIT_TAG(kilometer, km, Kilometers)
 
-/// Tag for constructing KilometersPerSecond
-struct km_per_s_tag {};
-constexpr km_per_s_tag kmps{};
+// Angle
+SPECFEM_UNIT_TAG(radian, rad, Radians)
 
-template <typename N> constexpr MetersPerSecond operator*(N v, m_per_s_tag) {
-  return MetersPerSecond(type_real(v));
-}
-template <typename N> constexpr MetersPerSecond operator*(m_per_s_tag, N v) {
-  return MetersPerSecond(type_real(v));
-}
-template <typename N>
-constexpr KilometersPerSecond operator*(N v, km_per_s_tag) {
-  return KilometersPerSecond(type_real(v));
-}
-template <typename N>
-constexpr KilometersPerSecond operator*(km_per_s_tag, N v) {
-  return KilometersPerSecond(type_real(v));
-}
+// Density
+SPECFEM_UNIT_TAG(g_per_m3, gpm3, GramPerCubicMeter)
+SPECFEM_UNIT_TAG(kg_per_m3, kgpm3, KilogramPerCubicMeter)
+
+// Velocity
+SPECFEM_UNIT_TAG(m_per_s, mps, MetersPerSecond)
+SPECFEM_UNIT_TAG(km_per_s, kmps, KilometersPerSecond)
+
+// Frequency
+SPECFEM_UNIT_TAG(hertz, Hz, Hertz)
+SPECFEM_UNIT_TAG(omega, w, Omega)
+
+// Pressure
+SPECFEM_UNIT_TAG(pascal_unit, Pa, Pascal)
+SPECFEM_UNIT_TAG(megapascal, MPa, Megapascal)
+
+#undef SPECFEM_UNIT_TAG
 
 } // namespace specfem::units::unit_symbols

@@ -207,65 +207,61 @@ inline AnyQuantity parse(std::string_view s) {
   // TODO (Lucas : CPP20) update units - fix use std::string_view keys with
   // transparent hash (P0919R3) to avoid constructing a std::string for each
   // table lookup.
+
+#define SPECFEM_PARSE_ENTRY(str, Type)                                         \
+  { str, [](type_real v) -> AnyQuantity { return Type(v); } }
+#define SPECFEM_PARSE_ENTRY_SCALED(str, Type, factor)                          \
+  { str,                                                                       \
+    [](type_real v) -> AnyQuantity { return Type(v * type_real(factor)); } }
+
   static const std::unordered_map<std::string, Factory> table = {
     // ── Dimensionless ────────────────────────────────────────────────────
-    { "1", [](type_real v) -> AnyQuantity { return Dimensionless(v); } },
+    SPECFEM_PARSE_ENTRY("1", Dimensionless),
 
     // ── Time ─────────────────────────────────────────────────────────────
-    { "s", [](type_real v) -> AnyQuantity { return Seconds(v); } },
-    { "ms",
-      [](type_real v) -> AnyQuantity { return Seconds(v * type_real(1e-3)); } },
-    { "us",
-      [](type_real v) -> AnyQuantity { return Seconds(v * type_real(1e-6)); } },
-    { "\xc2\xb5s",
-      [](type_real v) -> AnyQuantity { // µs (U+00B5, UTF-8)
-        return Seconds(v * type_real(1e-6));
-      } },
+    SPECFEM_PARSE_ENTRY("s", Seconds),
+    SPECFEM_PARSE_ENTRY_SCALED("ms", Seconds, 1e-3),
+    SPECFEM_PARSE_ENTRY_SCALED("us", Seconds, 1e-6),
+    SPECFEM_PARSE_ENTRY_SCALED("\xc2\xb5s", Seconds, 1e-6), // µs (UTF-8)
 
     // ── Frequency ────────────────────────────────────────────────────────
-    { "Hz", [](type_real v) -> AnyQuantity { return Hertz(v); } },
-    { "kHz",
-      [](type_real v) -> AnyQuantity { return Hertz(v * type_real(1e3)); } },
-    { "MHz",
-      [](type_real v) -> AnyQuantity { return Hertz(v * type_real(1e6)); } },
-    { "mHz",
-      [](type_real v) -> AnyQuantity { return Hertz(v * type_real(1e-3)); } },
+    SPECFEM_PARSE_ENTRY("Hz", Hertz),
+    SPECFEM_PARSE_ENTRY_SCALED("kHz", Hertz, 1e3),
+    SPECFEM_PARSE_ENTRY_SCALED("MHz", Hertz, 1e6),
+    SPECFEM_PARSE_ENTRY_SCALED("mHz", Hertz, 1e-3),
 
     // ── Angular frequency ─────────────────────────────────────────────────
-    { "rad/s", [](type_real v) -> AnyQuantity { return Omega(v); } },
+    SPECFEM_PARSE_ENTRY("rad/s", Omega),
 
     // ── Angle ─────────────────────────────────────────────────────────────
-    { "rad", [](type_real v) -> AnyQuantity { return Radians(v); } },
+    SPECFEM_PARSE_ENTRY("rad", Radians),
 
     // ── Length ────────────────────────────────────────────────────────────
-    { "m", [](type_real v) -> AnyQuantity { return Meters(v); } },
-    { "km", [](type_real v) -> AnyQuantity { return Kilometers(v); } },
+    SPECFEM_PARSE_ENTRY("m", Meters),
+    SPECFEM_PARSE_ENTRY("km", Kilometers),
 
     // ── Velocity ──────────────────────────────────────────────────────────
-    { "m/s", [](type_real v) -> AnyQuantity { return MetersPerSecond(v); } },
-    { "km/s",
-      [](type_real v) -> AnyQuantity { return KilometersPerSecond(v); } },
+    SPECFEM_PARSE_ENTRY("m/s", MetersPerSecond),
+    SPECFEM_PARSE_ENTRY("km/s", KilometersPerSecond),
 
     // ── Mass ──────────────────────────────────────────────────────────────
-    { "g", [](type_real v) -> AnyQuantity { return Grams(v); } },
-    { "kg", [](type_real v) -> AnyQuantity { return Kilograms(v); } },
+    SPECFEM_PARSE_ENTRY("g", Grams),
+    SPECFEM_PARSE_ENTRY("kg", Kilograms),
 
     // ── Density ───────────────────────────────────────────────────────────
-    { "g/m3", [](type_real v) -> AnyQuantity { return GramPerCubicMeter(v); } },
-    { "kg/m3",
-      [](type_real v) -> AnyQuantity { return KilogramPerCubicMeter(v); } },
+    SPECFEM_PARSE_ENTRY("g/m3", GramPerCubicMeter),
+    SPECFEM_PARSE_ENTRY("kg/m3", KilogramPerCubicMeter),
 
     // ── Pressure ─────────────────────────────────────────────────────────
-    { "Pa", [](type_real v) -> AnyQuantity { return Pascal(v); } },
-    { "kPa",
-      [](type_real v) -> AnyQuantity { return Pascal(v * type_real(1e3)); } },
-    { "MPa", [](type_real v) -> AnyQuantity { return Megapascal(v); } },
-    // GPa stored as Megapascal (raw × 1000 = MPa-equivalent raw value)
-    { "GPa",
-      [](type_real v) -> AnyQuantity {
-        return Megapascal(v * type_real(1e3));
-      } },
+    SPECFEM_PARSE_ENTRY("Pa", Pascal),
+    SPECFEM_PARSE_ENTRY_SCALED("kPa", Pascal, 1e3),
+    SPECFEM_PARSE_ENTRY("MPa", Megapascal),
+    // GPa stored as Megapascal (raw x 1000 = MPa-equivalent raw value)
+    SPECFEM_PARSE_ENTRY_SCALED("GPa", Megapascal, 1e3),
   };
+
+#undef SPECFEM_PARSE_ENTRY
+#undef SPECFEM_PARSE_ENTRY_SCALED
 
   // Exact match
   auto it = table.find(unit);

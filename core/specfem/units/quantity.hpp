@@ -292,6 +292,11 @@ using DimPressure = Dim<1, -1, -2>;           ///< Pressure (Pa)
  * @brief Convenient names for common physical quantities.
  *
  * Scale defaults to std::ratio<1,1> for SI base units.
+ *
+ * NOTE: When adding a new quantity type alias here, also update:
+ *   1. AnyQuantity variant in parse.hpp
+ *   2. Parse table in parse.hpp
+ *   3. Unit symbol tag in units.hpp (SPECFEM_UNIT_TAG invocation)
  * @{
  */
 
