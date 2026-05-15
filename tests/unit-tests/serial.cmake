@@ -458,6 +458,7 @@ add_executable(
   io_tests
   io/sources/test_read_sources_file.cpp
   io/sources/test_read_sources_yaml.cpp
+  io/sources/test_read_sources_datetime.cpp
   io/sources/test_source_solutions.cpp
   io/receivers/test_receiver_solutions.cpp
   io/receivers/test_read_stations_file.cpp
@@ -475,7 +476,7 @@ target_link_libraries(
 
 add_executable(
   timing_tests
-  io/sources/test_adjust_source_timing.cpp
+  io/sources/timing.cpp
 )
 
 target_link_libraries(

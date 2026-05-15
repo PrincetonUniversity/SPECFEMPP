@@ -1,6 +1,6 @@
+#include "specfem/io/sources/impl/timing.hpp"
 #include "../../SPECFEM_Environment.hpp"
 #include "specfem/datetime.hpp"
-#include "specfem/io/sources/impl/timing.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
 #include <gtest/gtest.h>
