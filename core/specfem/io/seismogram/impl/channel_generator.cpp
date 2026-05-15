@@ -1,6 +1,7 @@
 #include "specfem/io/seismogram/impl/channel_generator.hpp"
 #include "specfem/enums.hpp"
 #include <iostream>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -54,7 +55,8 @@ std::vector<std::string>
 specfem::io::impl::ChannelGenerator::get_station_filenames(
     const std::string &network_name, const std::string &station_name,
     const std::string &location_code,
-    const specfem::enums::wavefield seismogram_type) {
+    const specfem::enums::wavefield seismogram_type,
+    std::span<const char> elastic_components) {
 
   std::string channel_code;
   std::vector<std::string> filenames;
@@ -65,55 +67,22 @@ specfem::io::impl::ChannelGenerator::get_station_filenames(
     location_code_with_dot = location_code + ".";
   }
 
-  // Component letters for 3D seismograms
-  // TODO (Lucas : This will need to be modified once we allow different
-  //               coordinates systems, e.g., NEZ, RTZ, etc.)
-  std::array<char, 3> component_letters = { 'X', 'Y', 'Z' };
-
   // Create a filename vector depending on seismogram type
   switch (seismogram_type) {
   case specfem::enums::wavefield::displacement:
-    for (const auto &component_letter : component_letters) {
-
-      // Get the channel code based on component and timestep
-      channel_code = this->get_channel_code(component_letter);
-
-      // TODO (Lucas : CPP20 std::format would be perfect here)
-      // Get the filename for the current component
-      filenames.push_back(output_folder + "/" + network_name + "." +
-                          station_name + "." + location_code_with_dot +
-                          channel_code + "." +
-                          this->get_file_extension(seismogram_type));
-    }
-    break;
-
   case specfem::enums::wavefield::velocity:
-
-    for (const auto &component_letter : component_letters) {
+  case specfem::enums::wavefield::acceleration:
+    // TODO (Lucas : This will need to be modified once we allow different
+    //               coordinates systems, e.g., NEZ, RTZ, etc.)
+    for (const auto &component_letter : elastic_components) {
 
       // Get the channel code based on component and timestep
       channel_code = this->get_channel_code(component_letter);
 
       // TODO (Lucas : CPP20 std::format would be perfect here)
       // Get the filename for the current component
-      filenames.push_back(output_folder + "/" + network_name + "." +
-                          station_name + "." + location_code_with_dot +
-                          channel_code + "." +
-                          this->get_file_extension(seismogram_type));
-    }
-    break;
-
-  case specfem::enums::wavefield::acceleration:
-
-    for (const auto &component_letter : component_letters) {
-
-      // Get the channel code based on component and timestep
-      channel_code = this->get_channel_code(component_letter);
-
-      // Get the filename for the current component
-      filenames.push_back(output_folder + "/" + network_name + "." +
-                          station_name + "." + location_code_with_dot +
-                          channel_code + "." +
+      filenames.push_back(network_name + "." + station_name + "." +
+                          location_code_with_dot + channel_code + "." +
                           this->get_file_extension(seismogram_type));
     }
     break;
@@ -121,8 +90,8 @@ specfem::io::impl::ChannelGenerator::get_station_filenames(
   case specfem::enums::wavefield::pressure:
 
     channel_code = this->get_channel_code('P');
-    filenames = { output_folder + "/" + network_name + "." + station_name +
-                  "." + location_code_with_dot + channel_code + "." +
+    filenames = { network_name + "." + station_name + "." +
+                  location_code_with_dot + channel_code + "." +
                   this->get_file_extension(seismogram_type) };
     break;
   default:

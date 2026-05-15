@@ -1,0 +1,54 @@
+parameters:
+
+  header:
+    ## Header information is used for logging. It is good practice to give your simulations explicit names
+    title: Acoustic Elastic Simulation # name for your simulation
+    # A detailed description for your simulation
+    description: |
+      Material systems : Elastic & Acoustic domain (2)
+      Interfaces : None
+      Sources : Vertical up force (1)
+      Boundary conditions : None
+      Debugging comment : This test tests acoustic elastic interface implementation
+
+  simulation-setup:
+    ## quadrature setup
+    quadrature:
+      quadrature-type: GLL4
+
+    ## Solver setup
+    solver:
+      time-marching:
+        type-of-simulation: forward
+        time-scheme:
+          type: Newmark
+          dt: 0.19
+          nstep: 265
+
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:
+            format: ascii
+            directory: "./"
+
+  receivers:
+    stations: "displacement_tests/Newmark/serial/dim3/AcousticElasticForce/STATIONS"
+    angle: 0.0
+    seismogram-type:
+      - displacement
+      - velocity
+      - acceleration
+      - pressure
+    nstep_between_samples: 1
+
+  ## Runtime setup
+  run-setup:
+    number-of-processors: 1
+    number-of-runs: 1
+
+  ## databases
+  databases:
+    mesh-database: "displacement_tests/Newmark/serial/dim3/AcousticElasticForce/database.bin"
+
+  sources: "displacement_tests/Newmark/serial/dim3/AcousticElasticForce/source.yaml"

@@ -84,7 +84,8 @@ void program_3d(
       mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
       setup.get_t0(), dt, nsteps, max_seismogram_time_step,
       nstep_between_samples, setup.get_simulation_type(),
-      setup.allocate_boundary_values(), setup.instantiate_property_reader());
+      setup.allocate_boundary_values(), setup.instantiate_property_reader(),
+      setup.get_flux_scheme_configuration());
 
   specfem::Logger::info([&](std::ostringstream &oss) {
     oss << "Source Information:\n"

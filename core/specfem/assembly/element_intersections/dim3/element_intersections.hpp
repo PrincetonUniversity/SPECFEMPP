@@ -4,6 +4,7 @@
 #include "specfem/element.hpp"
 #include "specfem/element_connections.hpp"
 #include "specfem/element_coupling.hpp"
+#include "specfem/element_coupling/flux_scheme_configuration.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/tag_dispatch.hpp"
 #include <Kokkos_Core.hpp>
@@ -303,7 +304,10 @@ public:
   element_intersections(
       const int ngllx, const int nglly, const int ngllz,
       const specfem::assembly::mesh<dimension_tag> &mesh,
-      const specfem::assembly::element_types<dimension_tag> &element_types);
+      const specfem::assembly::element_types<dimension_tag> &element_types,
+      const specfem::element_coupling::flux_scheme_configuration
+          &flux_scheme_config =
+              specfem::element_coupling::flux_scheme_configuration());
 
   /**
    * @brief Default constructor.

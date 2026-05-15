@@ -39,6 +39,9 @@ bin
 
 
 **/__pycache__
-.github/prompts/ConciseDocument.prompt.md
-.github/prompts/ReviewPR.prompt.md
+.github/prompts/*.prompt.md
 test_dir/*
+
+*compare_traces.py
+*plot_mesh.py
+*compare_sections.py

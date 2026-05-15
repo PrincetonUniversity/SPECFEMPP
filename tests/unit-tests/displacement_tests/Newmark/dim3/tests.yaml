@@ -2,4 +2,4 @@ tests3d:
   - "HomogeneousHalfspaceSmallNoABCForceSource"
   - "HomogeneousHalfspaceSmallNoABCForceSourceLong"
   - "HomogeneousHalfspaceSmallNoABCForceSourceAttenuation"
-  # - "HomogeneousHalfSpaceAcousticForceSource"
+  - "AcousticElasticForce"

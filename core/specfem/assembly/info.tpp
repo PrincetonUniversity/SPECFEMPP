@@ -1,5 +1,6 @@
 #include "info.hpp"
 #include "specfem/assembly/info/impl/bounds.hpp"
+#include "specfem/mpi.hpp"
 #include "specfem/assembly/info/impl/compute.hpp"
 #include "specfem/assembly/info/impl/scatter_minmax.hpp"
 #include "specfem/assembly/info/impl/distances.hpp"
@@ -254,4 +255,47 @@ specfem::assembly::Info<DimensionTag>::Info(
 
   auto dt_bounds = scatters.dt.get_bounds();
   this->suggested_time_step = dt_bounds.min;
+
+  // Reduce bounds across MPI ranks
+  const auto comm = specfem::MPI::communicator();
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->vp.min, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MIN, comm));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->vp.max, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MAX, comm));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->vs.min, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MIN, comm));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->vs.max, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MAX, comm));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->v.min, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MIN, comm));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->v.max, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MAX, comm));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->rho.min, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MIN, comm));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->rho.max, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MAX, comm));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->element_size.min, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MIN, comm));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->element_size.max, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MAX, comm));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->gll_distance.min, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MIN, comm));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->gll_distance.max, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MAX, comm));
+  constexpr int ndim = info::impl::InfoScatters<dimension_tag>::ndim;
+  for (int i = 0; i < ndim; ++i) {
+    SPECFEM_MPI_SAFECALL(
+        MPI_Allreduce(MPI_IN_PLACE,
+                      &this->domain_bounds.bounds_array(i).min, 1,
+                      SPECFEM_MPI_TYPE_REAL, MPI_MIN, comm));
+    SPECFEM_MPI_SAFECALL(
+        MPI_Allreduce(MPI_IN_PLACE,
+                      &this->domain_bounds.bounds_array(i).max, 1,
+                      SPECFEM_MPI_TYPE_REAL, MPI_MAX, comm));
+  }
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE,
+                                     &this->largest_minimum_period, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MAX, comm));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->suggested_time_step,
+                                     1, SPECFEM_MPI_TYPE_REAL, MPI_MIN, comm));
 }

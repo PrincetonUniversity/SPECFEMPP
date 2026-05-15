@@ -2,6 +2,7 @@
 
 #include "specfem/enums.hpp"
 #include "specfem/medium_container.hpp"
+#include "specfem/mpi.hpp"
 
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -194,15 +195,27 @@ specfem::mesh::mesh<specfem::element::dimension_tag::dim2>::print() const {
 
   std::ostringstream message;
 
+  int nspec = this->nspec;
+  int npgeo = this->npgeo;
+
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &nspec, 1, MPI_INT, MPI_SUM,
+                                     specfem::MPI::communicator()));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &npgeo, 1, MPI_INT, MPI_SUM,
+                                     specfem::MPI::communicator()));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &n_elastic, 1, MPI_INT,
+                                     MPI_SUM, specfem::MPI::communicator()));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &n_acoustic, 1, MPI_INT,
+                                     MPI_SUM, specfem::MPI::communicator()));
+
   message
       << "Spectral element information:\n"
       << "------------------------------\n"
-      << "Total number of spectral elements : " << this->nspec << "\n"
+      << "Total number of spectral elements : " << nspec << "\n"
       << "Total number of spectral elements assigned to elastic material : "
       << n_elastic << "\n"
       << "Total number of spectral elements assigned to acoustic material : "
       << n_acoustic << "\n"
-      << "Total number of geometric points : " << this->npgeo << "\n";
+      << "Total number of geometric points : " << npgeo << "\n";
 
   return message.str();
 }
