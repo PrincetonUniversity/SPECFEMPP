@@ -66,11 +66,12 @@ specfem::assembly::impl::domain_properties<
                             mesh.element_grid.nglly, mesh.element_grid.ngllx }),
       [=, this](const int i, const int iz, const int iy, const int ix) {
         const int ispec = elements(i);
+        const int mesh_ispec = mesh.h_compute_to_mesh(ispec);
         property_index_mapping(ispec) = i;
         if (!has_gll_model) {
           // Handle the specific case
           const auto point_property = materials.template get_properties<
-              medium_tag, property_tag>(ispec);
+              medium_tag, property_tag>(mesh_ispec);
           this->store_host_values(
               specfem::point::index<dimension_tag, false>(i, iz, iy, ix),
               point_property);

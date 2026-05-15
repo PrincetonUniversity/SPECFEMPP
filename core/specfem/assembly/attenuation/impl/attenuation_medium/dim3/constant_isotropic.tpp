@@ -189,10 +189,11 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
     // 3. Loop over elements
     for (int i = 0; i < nspec_attn; ++i) {
       const int ispec = elements(i);
+      const int mesh_ispec = mesh.h_compute_to_mesh(ispec);
 
       auto material = materials.template get_material<
           specfem::element::medium_tag::elastic, PropertyTag,
-          specfem::element::attenuation_tag::constant_isotropic>(ispec);
+          specfem::element::attenuation_tag::constant_isotropic>(mesh_ispec);
 
       auto computed_values = material.compute_attenuation_properties(f0.raw(), fc.raw(), band, tau_sigma);
       auto kappa_props = computed_values.kappa_attenuation_properties;

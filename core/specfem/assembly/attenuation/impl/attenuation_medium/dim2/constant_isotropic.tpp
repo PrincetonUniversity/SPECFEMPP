@@ -151,7 +151,7 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
     // 3. Loop over elements
     for (int i = 0; i < nspec_attn; ++i) {
       const int ispec = elements(i);
-      const int mesh_ispec = mesh.compute_to_mesh(ispec);
+      const int mesh_ispec = mesh.h_compute_to_mesh(ispec);
 
       auto material = materials.template get_material<
           specfem::element::medium_tag::elastic_psv, PropertyTag,
