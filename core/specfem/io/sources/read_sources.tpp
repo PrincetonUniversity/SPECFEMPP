@@ -1,6 +1,7 @@
 #pragma once
 
 // Internal Includes
+#include "specfem/datetime.hpp"
 #include "specfem/io.hpp"
 #include "specfem/io/sources/impl/reader.hpp"
 #include "specfem/io/sources/impl/timing.hpp"
@@ -10,6 +11,7 @@
 
 // External Includes
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -35,7 +37,7 @@ wavefield_type_from_simulation(specfem::simulation::type simulation_type) {
 
 template <specfem::element::dimension_tag DimensionTag>
 std::tuple<std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>,
-           type_real>
+           type_real, std::optional<specfem::datetime::type>>
 read_sources(
     const std::vector<specfem::enums::source_file_entry> &entries,
     const int nsteps, const type_real user_t0, const type_real dt,
@@ -68,11 +70,11 @@ read_sources(
   specfem::io::sources_impl::validate_source_simulation_type<DimensionTag>(
       all_sources, simulation_type);
 
-  type_real t0 =
+  auto timing =
       specfem::io::sources_impl::adjust_source_timing<DimensionTag>(
           all_sources, user_t0);
 
-  return std::make_tuple(all_sources, t0);
+  return std::make_tuple(all_sources, timing.t0, timing.starttime);
 }
 
 } // namespace io

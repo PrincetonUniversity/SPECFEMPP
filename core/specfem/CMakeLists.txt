@@ -33,6 +33,7 @@ add_subdirectory(algorithms)
 add_subdirectory(element_coupling)
 add_subdirectory(assembly)
 add_subdirectory(compute)
+add_subdirectory(datetime)
 add_subdirectory(attenuation)
 add_subdirectory(element)
 add_subdirectory(element_connections)
@@ -69,6 +70,7 @@ target_link_libraries(specfem_core_interface
         specfem::algorithms
         specfem::attenuation
         specfem::compute
+        specfem::datetime
         specfem::assembly
         specfem::jacobian
         specfem::element

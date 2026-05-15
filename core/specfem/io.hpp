@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/datetime.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/receivers.hpp"
@@ -7,6 +8,7 @@
 #include "specfem/source.hpp"
 
 #include "specfem/setup.hpp"
+#include <optional>
 #include <yaml-cpp/yaml.h>
 
 // IO Modules
@@ -173,11 +175,11 @@ read_3d_receivers(const YAML::Node &stations);
  * @param user_t0 User defined t0
  * @param dt Time step
  * @param simulation_type Type of simulation
- * @return Tuple of (source objects, t0)
+ * @return Tuple of (source objects, t0, optional start datetime)
  */
 template <specfem::element::dimension_tag DimensionTag>
 std::tuple<std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>,
-           type_real>
+           type_real, std::optional<specfem::datetime::type>>
 read_sources(const std::vector<specfem::enums::source_file_entry> &entries,
              const int nsteps, const type_real user_t0, const type_real dt,
              const specfem::simulation::type simulation_type);

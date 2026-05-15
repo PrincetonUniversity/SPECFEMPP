@@ -54,7 +54,7 @@ TEST_P(Read2DSourcesTest, ReadSources) {
     { specfem::enums::source_format::YAML, param.sourcefilename }
   };
 
-  auto [sources, _t0] =
+  auto [sources, _t0, _starttime] =
       specfem::io::read_sources<specfem::element::dimension_tag::dim2>(
           entries, nsteps, user_t0, dt, specfem::simulation::type::forward);
 
@@ -106,7 +106,7 @@ TEST_P(Read3DSourcesTest, ReadSources) {
     { specfem::enums::source_format::YAML, param.sourcefilename }
   };
 
-  auto [sources, _t0] =
+  auto [sources, _t0, _starttime] =
       specfem::io::read_sources<specfem::element::dimension_tag::dim3>(
           entries, nsteps, user_t0, dt, specfem::simulation::type::forward);
 

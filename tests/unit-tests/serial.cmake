@@ -474,6 +474,19 @@ target_link_libraries(
 )
 
 add_executable(
+  timing_tests
+  io/sources/test_adjust_source_timing.cpp
+)
+
+target_link_libraries(
+  timing_tests
+  specfem::io
+  specfem_environment
+  specfem::enums
+  specfem::datetime
+)
+
+add_executable(
   seismogram_writer_tests
   io/seismogram/seismogram_writer_tests.cpp
 )
@@ -845,6 +858,7 @@ set(SERIAL_TEST_TARGETS
   interpolate_function
   io_framework_tests
   io_tests
+  timing_tests
   seismogram_writer_tests
   is_close_tests
   logspace_tests

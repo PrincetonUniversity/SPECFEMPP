@@ -1,7 +1,9 @@
 #pragma once
 
 #include "seismogram_writer.hpp"
+#include "specfem/datetime.hpp"
 #include <fstream>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -19,8 +21,10 @@ namespace impl {
 template <>
 struct SeismogramFormatWriter<specfem::enums::seismogram_format::ascii> {
   template <typename Receivers>
-  static void write(Receivers &receivers, ChannelGenerator &gen,
-                    const std::string &output_folder) {
+  static void
+  write(Receivers &receivers, ChannelGenerator &gen,
+        const std::string &output_folder,
+        std::optional<specfem::datetime::type> /*starttime*/ = std::nullopt) {
     for (auto station_info : receivers.stations()) {
       for (auto seismogram_type : station_info.get_seismogram_types()) {
         const std::vector<std::string> filenames =
