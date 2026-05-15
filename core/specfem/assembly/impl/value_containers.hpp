@@ -61,14 +61,14 @@ struct value_containers_base {
 
   IndexViewType property_index_mapping; ///< View to store property index
                                         ///< mapping
-  IndexViewType::HostMirror h_property_index_mapping; ///< Host mirror of
-                                                      ///< property index
-                                                      ///< mapping
+  IndexViewType::host_mirror_type h_property_index_mapping; ///< Host mirror of
+                                                            ///< property index
+                                                            ///< mapping
 
   template <bool on_device>
   KOKKOS_INLINE_FUNCTION constexpr
       typename std::conditional<on_device, IndexViewType,
-                                IndexViewType::HostMirror>::type
+                                IndexViewType::host_mirror_type>::type
       get_property_index_mapping() const {
     if constexpr (on_device) {
       return property_index_mapping;
@@ -97,8 +97,8 @@ struct value_containers_base {
    * constructs every slot of @c value via the supplied initializer factory,
    * and deep-copies the index mapping to device.
    *
-   * @tparam InitializerFactory  Callable `(HostMirrorView) -> PerTagFunctor`.
-   *   The returned @c PerTagFunctor must be invocable as
+   * @tparam InitializerFactory  Callable `(host_mirror_typeView) ->
+   * PerTagFunctor`. The returned @c PerTagFunctor must be invocable as
    *   `functor.template operator()<TagsType>()` returning the slot value.
    * @param  nspec_           Number of spectral elements.
    * @param  grid             GLL grid layout.

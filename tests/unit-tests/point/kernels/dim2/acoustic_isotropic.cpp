@@ -42,12 +42,14 @@ TYPED_TEST(PointKernelsTest, AcousticIsotropic2D) {
       expected_alpha_arr[i] =
           static_cast<type_real>(2.0) * static_cast<type_real>(kappa_arr[i]);
     }
-    rho.copy_from(rho_arr, Kokkos::Experimental::simd_flag_default);
-    kappa.copy_from(kappa_arr, Kokkos::Experimental::simd_flag_default);
-    expected_rhop.copy_from(expected_rhop_arr,
-                            Kokkos::Experimental::simd_flag_default);
-    expected_alpha.copy_from(expected_alpha_arr,
-                             Kokkos::Experimental::simd_flag_default);
+    rho = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        rho_arr, Kokkos::Experimental::simd_flag_default);
+    kappa = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        kappa_arr, Kokkos::Experimental::simd_flag_default);
+    expected_rhop = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        expected_rhop_arr, Kokkos::Experimental::simd_flag_default);
+    expected_alpha = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        expected_alpha_arr, Kokkos::Experimental::simd_flag_default);
   } else {
     // For scalar case, we need direct assignment
     rho = static_cast<type_real>(2.5);
