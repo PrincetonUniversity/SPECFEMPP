@@ -178,11 +178,9 @@ read_3d_receivers(const YAML::Node &stations);
 template <specfem::element::dimension_tag DimensionTag>
 std::tuple<std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>,
            type_real>
-read_sources(
-    const std::vector<specfem::runtime_configuration::source_file_entry>
-        &entries,
-    const int nsteps, const type_real user_t0, const type_real dt,
-    const specfem::simulation::type simulation_type);
+read_sources(const std::vector<specfem::enums::source_file_entry> &entries,
+             const int nsteps, const type_real user_t0, const type_real dt,
+             const specfem::simulation::type simulation_type);
 
 } // namespace io
 } // namespace specfem

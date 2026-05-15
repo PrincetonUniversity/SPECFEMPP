@@ -7,6 +7,7 @@
 
 namespace specfem {
 namespace io {
+namespace sources_impl {
 
 template <specfem::element::dimension_tag DimensionTag>
 type_real adjust_source_timing(
@@ -80,5 +81,6 @@ void validate_source_simulation_type(
   }
 }
 
+} // namespace sources_impl
 } // namespace io
 } // namespace specfem

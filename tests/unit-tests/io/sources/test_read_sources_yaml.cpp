@@ -1,6 +1,6 @@
 #include "../../SPECFEM_Environment.hpp"
 #include "specfem/enums.hpp"
-#include "specfem/io/sources/impl/yaml_reader.hpp"
+#include "specfem/io/sources/impl/reader.hpp"
 #include "specfem/setup.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
@@ -237,7 +237,8 @@ TEST_P(Read2DSourcesYAMLTest, ReadYAMLnode) {
   const auto &param = GetParam();
 
   auto sources =
-      specfem::io::read_yaml_sources<specfem::element::dimension_tag::dim2>(
+      specfem::io::sources_impl::read<specfem::element::dimension_tag::dim2,
+                                      specfem::enums::source_format::YAML>(
           param.sources_node, nsteps, dt,
           specfem::simulation::field_type::forward);
 
@@ -280,7 +281,8 @@ TEST_P(Read3DSourcesYAMLTest, ReadYAMLnode) {
   const auto &param = GetParam();
 
   auto sources =
-      specfem::io::read_yaml_sources<specfem::element::dimension_tag::dim3>(
+      specfem::io::sources_impl::read<specfem::element::dimension_tag::dim3,
+                                      specfem::enums::source_format::YAML>(
           param.sources_node, nsteps, dt,
           specfem::simulation::field_type::forward);
 

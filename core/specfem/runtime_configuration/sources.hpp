@@ -9,19 +9,6 @@ namespace specfem {
 namespace runtime_configuration {
 
 /**
- * @brief Supported source file formats.
- */
-enum class source_format { YAML, CMTSOLUTION, FORCESOLUTION };
-
-/**
- * @brief A single source file entry with its format and path.
- */
-struct source_file_entry {
-  source_format format;
-  std::string file_path;
-};
-
-/**
  * @brief Class to read and manage source configuration.
  *
  * Parses the "sources" node from specfem_config.yaml and produces a list of
@@ -51,12 +38,13 @@ public:
    *
    * @return const reference to vector of source_file_entry
    */
-  const std::vector<source_file_entry> &get_source_entries() const {
+  const std::vector<specfem::enums::source_file_entry> &
+  get_source_entries() const {
     return entries;
   }
 
 protected:
-  std::vector<source_file_entry> entries;
+  std::vector<specfem::enums::source_file_entry> entries;
 };
 
 } // namespace runtime_configuration

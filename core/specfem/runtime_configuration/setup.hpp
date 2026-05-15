@@ -149,7 +149,7 @@ public:
    *
    * @return const reference to vector of source_file_entry
    */
-  const std::vector<specfem::runtime_configuration::source_file_entry> &
+  const std::vector<specfem::enums::source_file_entry> &
   get_source_entries() const {
     return this->sources->get_source_entries();
   }

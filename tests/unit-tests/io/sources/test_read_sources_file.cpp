@@ -1,7 +1,6 @@
 #include "../../SPECFEM_Environment.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/io.hpp"
-#include "specfem/runtime_configuration/sources.hpp"
 #include "specfem/setup.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
@@ -51,9 +50,8 @@ class Read2DSourcesTest : public ::testing::TestWithParam<SourceTestParam2D> {};
 TEST_P(Read2DSourcesTest, ReadSources) {
   const auto &param = GetParam();
 
-  std::vector<specfem::runtime_configuration::source_file_entry> entries = {
-    { specfem::runtime_configuration::source_format::YAML,
-      param.sourcefilename }
+  std::vector<specfem::enums::source_file_entry> entries = {
+    { specfem::enums::source_format::YAML, param.sourcefilename }
   };
 
   auto [sources, _t0] =
@@ -104,9 +102,8 @@ class Read3DSourcesTest : public ::testing::TestWithParam<SourceTestParam3D> {};
 TEST_P(Read3DSourcesTest, ReadSources) {
   const auto &param = GetParam();
 
-  std::vector<specfem::runtime_configuration::source_file_entry> entries = {
-    { specfem::runtime_configuration::source_format::YAML,
-      param.sourcefilename }
+  std::vector<specfem::enums::source_file_entry> entries = {
+    { specfem::enums::source_format::YAML, param.sourcefilename }
   };
 
   auto [sources, _t0] =

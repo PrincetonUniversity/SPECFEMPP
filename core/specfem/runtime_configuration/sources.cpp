@@ -5,14 +5,13 @@
 
 namespace {
 
-specfem::runtime_configuration::source_format
-parse_format_key(const std::string &key) {
+specfem::enums::source_format parse_format_key(const std::string &key) {
   if (key == "YAML") {
-    return specfem::runtime_configuration::source_format::YAML;
+    return specfem::enums::source_format::YAML;
   } else if (key == "CMTSOLUTION") {
-    return specfem::runtime_configuration::source_format::CMTSOLUTION;
+    return specfem::enums::source_format::CMTSOLUTION;
   } else if (key == "FORCESOLUTION") {
-    return specfem::runtime_configuration::source_format::FORCESOLUTION;
+    return specfem::enums::source_format::FORCESOLUTION;
   } else {
     throw std::runtime_error("Unknown source format key: " + key);
   }
@@ -24,7 +23,8 @@ specfem::runtime_configuration::sources::sources(const YAML::Node &Node) {
 
   if (Node.IsScalar()) {
     // Old format: sources: "path/to/file.yaml"
-    entries.push_back({ source_format::YAML, Node.as<std::string>() });
+    entries.push_back(
+        { specfem::enums::source_format::YAML, Node.as<std::string>() });
   } else if (Node.IsMap()) {
     // New format: sources: { YAML: ..., CMTSOLUTION: ..., ... }
     for (auto it = Node.begin(); it != Node.end(); ++it) {

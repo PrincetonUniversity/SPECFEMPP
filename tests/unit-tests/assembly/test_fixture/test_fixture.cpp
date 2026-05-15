@@ -47,8 +47,8 @@ template <> Assembly<specfem::element::dimension_tag::dim2>::Assembly() {
 
     std::cout << sources_file << std::endl;
 
-    std::vector<specfem::runtime_configuration::source_file_entry> entries = {
-      { specfem::runtime_configuration::source_format::YAML, sources_file }
+    std::vector<specfem::enums::source_file_entry> entries = {
+      { specfem::enums::source_format::YAML, sources_file }
     };
 
     auto [sources, t0] =
@@ -97,8 +97,8 @@ template <> Assembly<specfem::element::dimension_tag::dim3>::Assembly() {
 
     std::cout << sources_file << std::endl;
 
-    std::vector<specfem::runtime_configuration::source_file_entry> entries = {
-      { specfem::runtime_configuration::source_format::YAML, sources_file }
+    std::vector<specfem::enums::source_file_entry> entries = {
+      { specfem::enums::source_format::YAML, sources_file }
     };
 
     auto [sources, t0] =

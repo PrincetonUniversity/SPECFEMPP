@@ -1,5 +1,5 @@
 #include "yaml-cpp/yaml.h"
-#include "specfem/io/sources/impl/yaml_reader.hpp"
+#include "specfem/io/sources/impl/reader.hpp"
 #include "specfem/source.hpp"
 
 #include <cassert>
@@ -12,7 +12,8 @@
 template <>
 std::vector<std::shared_ptr<
     specfem::sources::source<specfem::element::dimension_tag::dim2>>>
-specfem::io::read_yaml_sources<specfem::element::dimension_tag::dim2>(
+specfem::io::sources_impl::read<specfem::element::dimension_tag::dim2,
+                                specfem::enums::source_format::YAML>(
     const YAML::Node &source_dict, int nsteps, type_real dt,
     specfem::simulation::field_type wavefield_type) {
 
@@ -81,10 +82,12 @@ specfem::io::read_yaml_sources<specfem::element::dimension_tag::dim2>(
 template <>
 std::vector<std::shared_ptr<
     specfem::sources::source<specfem::element::dimension_tag::dim2>>>
-specfem::io::read_yaml_sources<specfem::element::dimension_tag::dim2>(
+specfem::io::sources_impl::read<specfem::element::dimension_tag::dim2,
+                                specfem::enums::source_format::YAML>(
     const std::string &file_path, int nsteps, type_real dt,
     specfem::simulation::field_type wavefield_type) {
   YAML::Node source_dict = YAML::LoadFile(file_path);
-  return read_yaml_sources<specfem::element::dimension_tag::dim2>(
-      source_dict, nsteps, dt, wavefield_type);
+  return read<specfem::element::dimension_tag::dim2,
+              specfem::enums::source_format::YAML>(source_dict, nsteps, dt,
+                                                   wavefield_type);
 }
