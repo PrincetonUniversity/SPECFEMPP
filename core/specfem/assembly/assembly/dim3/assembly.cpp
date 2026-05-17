@@ -47,8 +47,10 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
 
   this->jacobian_matrix = { this->mesh };
 
-  this->properties = { this->element_types, this->mesh, mesh.materials,
-                       property_reader != nullptr };
+  this->field_derivative_storage = { this->element_types, this->mesh.nspec,
+                                     this->mesh.element_grid.ngllz,
+                                     this->mesh.element_grid.nglly,
+                                     this->mesh.element_grid.ngllx };
 
   this->kernels = { this->element_types };
 
@@ -79,6 +81,12 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
 
   // Currently done in the mesher!
   this->check_jacobian_matrix();
+
+  this->attenuation = { mesh.attenuation, dt, this->mesh, this->element_types,
+                        mesh.materials };
+
+  this->properties = { this->element_types, this->mesh, mesh.materials,
+                       property_reader != nullptr };
 
   this->info = { this->mesh, this->properties, this->element_types };
 

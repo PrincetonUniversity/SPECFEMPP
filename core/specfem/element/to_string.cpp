@@ -4,6 +4,16 @@
 
 const std::string specfem::element::to_string(
     const specfem::element::medium_tag &medium,
+    const specfem::element::property_tag &property_tag) {
+
+  std::string medium_string = specfem::element::to_string(medium);
+  std::string property_string = specfem::element::to_string(property_tag);
+
+  return medium_string + "_" + property_string;
+}
+
+const std::string specfem::element::to_string(
+    const specfem::element::medium_tag &medium,
     const specfem::element::property_tag &property_tag,
     const specfem::element::attenuation_tag &attenuation_tag) {
 

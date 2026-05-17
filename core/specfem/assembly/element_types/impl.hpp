@@ -62,6 +62,10 @@ protected:
   static constexpr auto combinations_by_boundary = combinations_by_medium *
                                                    ElementSets::property_set *
                                                    ElementSets::boundary_set;
+  /** All valid (dimension, medium, property, attenuation, boundary) combos. */
+  static constexpr auto combinations_by_element =
+      combinations_by_medium * ElementSets::property_set *
+      ElementSets::attenuation_set * ElementSets::boundary_set;
 
 public:
   // ── Per-element tag views (host) ─────────────────────────────────────────
@@ -101,18 +105,93 @@ protected:
   IndexStorage<decltype(combinations_by_boundary)> elements_by_boundary;
   /** Host mirror of elements_by_boundary. */
   HostIndexStorage<decltype(combinations_by_boundary)> h_elements_by_boundary;
+  /** Device index store keyed by (dimension, medium, property, attenuation,
+   * boundary). */
+  IndexStorage<decltype(combinations_by_element)> elements_by_element;
+  /** Host mirror of elements_by_element. */
+  HostIndexStorage<decltype(combinations_by_element)> h_elements_by_element;
 
 public:
   /** @brief Default constructor; leaves all views and stores empty. */
   element_types_base() = default;
 
   /**
-   * @brief Construct and populate all per-element tag views and index stores.
+   * @brief Construct from raw per-element tag views (no mesh indirection).
    *
-   * Maps compute-domain element indices to mesh-domain indices using
+   * Copies tags directly from the supplied host views (identity mapping) and
+   * builds all index stores.
+   *
+   * @param nspec               Number of spectral elements.
+   * @param element_grid        GLL grid layout (ngllx, ngllz, etc.).
+   * @param medium_tags_in      Host view of per-element medium tags.
+   * @param property_tags_in    Host view of per-element property tags.
+   * @param attenuation_tags_in Host view of per-element attenuation tags.
+   * @param boundary_tags_in    Host view of per-element boundary tags.
+   */
+  element_types_base(
+      int nspec,
+      const specfem::mesh_entity::element_grid<dimension_tag> &element_grid,
+      const TagViewType<specfem::element::medium_tag> &medium_tags_in,
+      const TagViewType<specfem::element::property_tag> &property_tags_in,
+      const TagViewType<specfem::element::attenuation_tag> &attenuation_tags_in,
+      const TagViewType<specfem::element::boundary_tag> &boundary_tags_in)
+      : nspec(nspec), element_grid(element_grid),
+        medium_tags("specfem::assembly::element_types::medium_tags", nspec),
+        property_tags("specfem::assembly::element_types::property_tags", nspec),
+        boundary_tags("specfem::assembly::element_types::boundary_tags", nspec),
+        attenuation_tags("specfem::assembly::element_types::attenuation_tags",
+                         nspec) {
+    for (int ispec = 0; ispec < nspec; ispec++) {
+      medium_tags(ispec) = medium_tags_in(ispec);
+      property_tags(ispec) = property_tags_in(ispec);
+      attenuation_tags(ispec) = attenuation_tags_in(ispec);
+      boundary_tags(ispec) = boundary_tags_in(ispec);
+    }
+    build_index_stores();
+  }
+
+  /**
+   * @brief Convenience constructor for 2D: accepts GLL counts as integers.
+   *
+   * Builds an @c element_grid from @p ngllz and @p ngllx, then delegates to
+   * the tag-view constructor above.
+   */
+  element_types_base(
+      int nspec, int ngllz, int ngllx,
+      const TagViewType<specfem::element::medium_tag> &medium_tags_in,
+      const TagViewType<specfem::element::property_tag> &property_tags_in,
+      const TagViewType<specfem::element::attenuation_tag> &attenuation_tags_in,
+      const TagViewType<specfem::element::boundary_tag> &boundary_tags_in)
+      : element_types_base(
+            nspec,
+            specfem::mesh_entity::element_grid<dimension_tag>{ ngllz, ngllx },
+            medium_tags_in, property_tags_in, attenuation_tags_in,
+            boundary_tags_in) {}
+
+  /**
+   * @brief Convenience constructor for 3D: accepts GLL counts as integers.
+   *
+   * Builds an @c element_grid from @p ngllz, @p nglly, and @p ngllx, then
+   * delegates to the tag-view constructor above.
+   */
+  element_types_base(
+      int nspec, int ngllz, int nglly, int ngllx,
+      const TagViewType<specfem::element::medium_tag> &medium_tags_in,
+      const TagViewType<specfem::element::property_tag> &property_tags_in,
+      const TagViewType<specfem::element::attenuation_tag> &attenuation_tags_in,
+      const TagViewType<specfem::element::boundary_tag> &boundary_tags_in)
+      : element_types_base(nspec,
+                           specfem::mesh_entity::element_grid<dimension_tag>{
+                               ngllz, nglly, ngllx },
+                           medium_tags_in, property_tags_in,
+                           attenuation_tags_in, boundary_tags_in) {}
+
+  /**
+   * @brief Construct from mesh objects, mapping compute-to-mesh indices.
+   *
+   * Translates each compute-domain index to its mesh-domain counterpart via
    * @p mesh, reads medium/property/boundary/attenuation tags from @p tags,
-   * then builds and deep-copies all six index stores (host + device for each
-   * of medium, material, and boundary granularities).
+   * then builds all index stores.
    *
    * @param nspec        Number of spectral elements in the compute domain.
    * @param element_grid GLL grid layout (ngllx, ngllz, etc.).
@@ -130,11 +209,6 @@ public:
         boundary_tags("specfem::assembly::element_types::boundary_tags", nspec),
         attenuation_tags("specfem::assembly::element_types::attenuation_tags",
                          nspec) {
-
-    // ── Step 1: populate per-element tag views ──────────────────────────────
-    // Translate each compute-domain index to its mesh-domain counterpart, then
-    // copy the four tag values from the mesh tag container into the
-    // corresponding host views.
     for (int ispec = 0; ispec < nspec; ispec++) {
       const int ispec_mesh = mesh.h_compute_to_mesh(ispec);
       medium_tags(ispec) = tags.tags_container(ispec_mesh).medium_tag;
@@ -142,17 +216,11 @@ public:
       attenuation_tags(ispec) = tags.tags_container(ispec_mesh).attenuation_tag;
       boundary_tags(ispec) = tags.tags_container(ispec_mesh).boundary_tag;
     }
+    build_index_stores();
+  }
 
-    // ── Step 2: build all six index stores ──────────────────────────────────
-    // Each Storage is constructed by passing a TagsType-templated functor;
-    // the Storage constructor calls it once per valid TagsType combination.
-    // Host stores are built first so create_mirror_storage_and_copy can
-    // reference them.
-
-    // Generic factory: returns a Storage initializer lambda that selects
-    // elements whose run-time tags (one tag_view per axis) all match the
-    // compile-time tags encoded in TagsType.  Uses TagsType{}.has(...) so
-    // the caller never has to spell out individual member comparisons.
+private:
+  void build_index_stores() {
     auto make_initializer = [&](std::string label_prefix, auto... tag_views) {
       return [&, label_prefix,
               tag_views...]<typename TagsType>() -> HostIndexViewType {
@@ -169,34 +237,37 @@ public:
       };
     };
 
-    // 1. Index by (dimension, medium) only.
     h_elements_by_medium = { make_initializer("element_by_medium_",
                                               medium_tags) };
     elements_by_medium = specfem::tag_dispatch::create_mirror_storage_and_copy(
         Kokkos::DefaultExecutionSpace{}, h_elements_by_medium);
 
-    // 2. Index by (dimension, medium, property).
     h_elements_by_medium_property = { make_initializer(
         "element_by_medium_property_", medium_tags, property_tags) };
     elements_by_medium_property =
         specfem::tag_dispatch::create_mirror_storage_and_copy(
             Kokkos::DefaultExecutionSpace{}, h_elements_by_medium_property);
 
-    // 4. Index by (dimension, medium, property, attenuation).
     h_elements_by_material = { make_initializer(
         "element_by_material_", medium_tags, property_tags, attenuation_tags) };
     elements_by_material =
         specfem::tag_dispatch::create_mirror_storage_and_copy(
             Kokkos::DefaultExecutionSpace{}, h_elements_by_material);
 
-    // 5. Index by (dimension, medium, property, boundary).
     h_elements_by_boundary = { make_initializer(
         "element_by_boundary_", medium_tags, property_tags, boundary_tags) };
     elements_by_boundary =
         specfem::tag_dispatch::create_mirror_storage_and_copy(
             Kokkos::DefaultExecutionSpace{}, h_elements_by_boundary);
+
+    h_elements_by_element = { make_initializer(
+        "element_by_element_", medium_tags, property_tags, attenuation_tags,
+        boundary_tags) };
+    elements_by_element = specfem::tag_dispatch::create_mirror_storage_and_copy(
+        Kokkos::DefaultExecutionSpace{}, h_elements_by_element);
   }
 
+public:
   // ── Accessors by medium ──────────────────────────────────────────────────
 
   /**
@@ -354,6 +425,36 @@ public:
       const specfem::element::property_tag property_tag,
       const specfem::element::boundary_tag boundary_tag) const {
     return elements_by_boundary.get(medium_tag, property_tag, boundary_tag);
+  }
+
+  // ── Accessors by element (medium + property + attenuation + boundary) ──────
+
+  HostIndexViewType get_elements_on_host(
+      const specfem::element::medium_tag medium_tag,
+      const specfem::element::property_tag property_tag,
+      const specfem::element::attenuation_tag attenuation_tag,
+      const specfem::element::boundary_tag boundary_tag) const {
+    return h_elements_by_element.get(medium_tag, property_tag, attenuation_tag,
+                                     boundary_tag);
+  }
+
+  int get_number_of_elements(
+      const specfem::element::medium_tag medium_tag,
+      const specfem::element::property_tag property_tag,
+      const specfem::element::attenuation_tag attenuation_tag,
+      const specfem::element::boundary_tag boundary_tag) const {
+    return get_elements_on_host(medium_tag, property_tag, attenuation_tag,
+                                boundary_tag)
+        .extent(0);
+  }
+
+  IndexViewType get_elements_on_device(
+      const specfem::element::medium_tag medium_tag,
+      const specfem::element::property_tag property_tag,
+      const specfem::element::attenuation_tag attenuation_tag,
+      const specfem::element::boundary_tag boundary_tag) const {
+    return elements_by_element.get(medium_tag, property_tag, attenuation_tag,
+                                   boundary_tag);
   }
 
   // ── Per-element tag accessors ────────────────────────────────────────────

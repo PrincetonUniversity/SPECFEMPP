@@ -3,8 +3,6 @@
 #include "units/parse.hpp"
 #include "units/quantity.hpp"
 
-#include <Kokkos_Core.hpp>
-
 /**
  * @namespace specfem::units
  * @brief Type-safe physical units and conversions.
@@ -82,6 +80,17 @@ constexpr KilometersPerSecond operator*(N v, km_per_s_tag) {
 template <typename N>
 constexpr KilometersPerSecond operator*(km_per_s_tag, N v) {
   return KilometersPerSecond(type_real(v));
+}
+
+// Tag for constructing Hertz
+struct hertz_tag {};
+constexpr hertz_tag Hz{};
+
+template <typename N> constexpr Hertz operator*(N v, hertz_tag) {
+  return Hertz(type_real(v));
+}
+template <typename N> constexpr Hertz operator*(hertz_tag, N v) {
+  return Hertz(type_real(v));
 }
 
 } // namespace specfem::units::unit_symbols

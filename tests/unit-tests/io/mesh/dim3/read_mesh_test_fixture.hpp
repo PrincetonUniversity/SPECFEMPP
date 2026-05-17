@@ -17,7 +17,7 @@ struct Read3DMesh {
   Read3DMesh() = default;
 
   Read3DMesh(const std::string &database) {
-    mesh = specfem::io::read_3d_mesh(database, false);
+    mesh = specfem::io::read_3d_mesh(database, specfem::attenuation::Setup{});
   }
 };
 } // namespace specfem::test_configuration

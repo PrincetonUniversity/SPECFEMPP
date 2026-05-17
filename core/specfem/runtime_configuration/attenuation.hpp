@@ -5,6 +5,7 @@
 #include "specfem/units.hpp"
 #include "specfem/utilities/band.hpp"
 #include "yaml-cpp/yaml.h"
+#include <optional>
 
 namespace specfem::runtime_configuration {
 
@@ -34,7 +35,7 @@ public:
               const type_real reference_frequency,
               const type_real maximum_attenuation_frequency,
               const type_real minimum_attenuation_frequency)
-      : reference_frequency(reference_frequency),
+      : reference_frequency(specfem::units::Hertz(reference_frequency)),
         attenuation_frequency_band(
             specfem::units::Hertz(minimum_attenuation_frequency),
             specfem::units::Hertz(maximum_attenuation_frequency)) {};
@@ -47,11 +48,19 @@ public:
   Attenuation(const YAML::Node &Node);
 
   /**
-   * @brief return reference frequency for attenuation
-   * @return type_real reference frequency for attenuation
+   * @brief Whether reference frequency was explicitly set in the configuration
+   * @return true if reference-frequency was provided
+   */
+  bool has_reference_frequency() const {
+    return this->reference_frequency.has_value();
+  }
+
+  /**
+   * @brief Return reference frequency for attenuation.
+   * @throws std::bad_optional_access if reference-frequency was not set
    */
   specfem::units::Hertz get_reference_frequency() const {
-    return this->reference_frequency;
+    return this->reference_frequency.value();
   }
 
   specfem::utilities::Band<specfem::units::Hertz>
@@ -60,8 +69,9 @@ public:
   }
 
 private:
-  specfem::units::Hertz reference_frequency; ///< whether to include reference
-                                             ///< frequency in the simulation
+  std::optional<specfem::units::Hertz>
+      reference_frequency; ///< reference frequency for attenuation (optional —
+                           ///< may be read from mesh database instead)
   specfem::utilities::Band<specfem::units::Hertz>
       attenuation_frequency_band; ///< frequency band for attenuation in the
                                   ///< simulation

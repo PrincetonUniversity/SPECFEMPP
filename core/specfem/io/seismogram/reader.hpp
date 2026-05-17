@@ -1,7 +1,8 @@
 #pragma once
 
 #include "specfem/enums.hpp"
-#include "specfem/io/reader.hpp"
+#include "specfem/setup.hpp"
+#include <string>
 
 namespace specfem {
 namespace source_time_functions {

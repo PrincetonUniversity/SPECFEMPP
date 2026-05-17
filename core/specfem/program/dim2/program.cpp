@@ -43,7 +43,7 @@ void program_2d(
 
   const auto mesh = specfem::io::read_2d_mesh(
       database_filename, setup.get_elastic_wave_type(),
-      setup.get_electromagnetic_wave_type(), setup.is_attenuation_enabled());
+      setup.get_electromagnetic_wave_type(), setup.get_attenuation_setup());
 
   // mesh.print() always called (not wrapped in lambda function) because it
   // requires collective communication

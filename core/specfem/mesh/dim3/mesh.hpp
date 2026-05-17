@@ -5,6 +5,7 @@
 #include "control_nodes/control_nodes.hpp"
 #include "materials/materials.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/mesh/attenuation_config.hpp"
 #include "tags/tags.hpp"
 
 namespace specfem::mesh {
@@ -112,6 +113,8 @@ template <> struct mesh<specfem::element::dimension_tag::dim3> {
    * property type, and boundary conditions.
    */
   specfem::mesh::tags<dimension_tag> tags;
+
+  specfem::mesh::attenuation_config attenuation; ///< Attenuation configuration
 
   /**
    * @brief Setup coupled interfaces in the mesh
