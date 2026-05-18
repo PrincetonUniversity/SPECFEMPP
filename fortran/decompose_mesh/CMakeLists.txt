@@ -133,7 +133,6 @@ set(DECOMPOSE_MESH_IMPL_SOURCES
     read_decompose_mesh_par.F90
     read_mesh_files.F90
     write_mesh_databases.F90
-    write_mesh_databases_hdf5.F90
 )
 
 add_library(decompose_mesh_impl

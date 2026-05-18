@@ -112,12 +112,7 @@ program xdecompose_mesh
   ! partitions mesh (using scotch, metis, or patoh partitioners via constants.h)
   call decompose_mesh()
 
-  ! writes out database files
-  if (HDF5_ENABLED) then
-    call write_mesh_databases_hdf5()
-  else
-    call write_mesh_databases()
-  endif
+  call write_mesh_databases()
 
   ! user output
   print *
