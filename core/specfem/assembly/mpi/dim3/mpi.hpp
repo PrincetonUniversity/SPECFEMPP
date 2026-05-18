@@ -490,8 +490,8 @@ public:
   MappingViewType unpack_mapping; /**< Unpack iglob mapping (from unpacker) */
 
 #ifndef SPECFEM_CUDA_AWARE_MPI
-  BufferViewType::HostMirror h_send_buffer;
-  BufferViewType::HostMirror h_recv_buffer;
+  typename BufferViewType::HostMirror h_send_buffer;
+  typename BufferViewType::HostMirror h_recv_buffer;
 #endif
 
   mpi_buffer() = default;
