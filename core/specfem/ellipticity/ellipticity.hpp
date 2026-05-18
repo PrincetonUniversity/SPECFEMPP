@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/ellipticity/tags.hpp"
+#include "specfem/ellipticity/model.hpp"
 
 namespace specfem {
 namespace ellipticity {

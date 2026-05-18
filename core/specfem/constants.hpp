@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/ellipticity/tags.hpp"
+#include "specfem/ellipticity/model.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <numbers>
