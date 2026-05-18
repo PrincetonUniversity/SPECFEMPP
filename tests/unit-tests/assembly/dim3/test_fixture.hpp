@@ -17,7 +17,8 @@ struct Assembly3D {
   Assembly3D() = default;
 
   Assembly3D(const std::string &database_file) {
-    const auto mesh = specfem::io::read_3d_mesh(database_file, false);
+    const auto mesh =
+        specfem::io::read_3d_mesh(database_file, specfem::attenuation::Setup{});
 
     const int nspec = mesh.nspec;
     const int ngnod = mesh.control_nodes.ngnod;

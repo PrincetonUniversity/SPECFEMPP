@@ -21,8 +21,8 @@ void generate_data(
   const int ngllx = assembly.mesh.element_grid.ngllx;
   const int ngllz = assembly.mesh.element_grid.ngllz;
 
-  const auto elements = assembly.element_types.get_elements_on_host(
-      medium, property, specfem::element::attenuation_tag::none);
+  const auto elements =
+      assembly.element_types.get_elements_on_host(medium, property);
 
   using PointDisplacementType =
       specfem::point::displacement<specfem::tags::Tags<

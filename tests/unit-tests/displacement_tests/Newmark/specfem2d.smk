@@ -24,6 +24,7 @@ rule specfem2d_move_traces:
     localrule: True,
     run:
         import os
+        from pathlib import Path
         trace_dir = os.path.join(input.cwd, "../traces")
         solver_outdir = os.path.join(input.cwd, "OUTPUT_FILES")
         os.makedirs(trace_dir, exist_ok=True)
@@ -44,7 +45,8 @@ rule specfem2d_move_traces:
         with open(output.trace_list, "w") as f:
             f.writelines(trace_list)
 
-        os.remove(os.path.join(solver_outdir, "output_solver.txt"))
+        output_solver = Path(solver_outdir) / "output_solver.txt"
+        output_solver.rename(output_solver.parent / "output_solver_store.txt")
 
 
 rule clean:

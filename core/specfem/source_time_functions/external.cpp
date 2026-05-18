@@ -1,7 +1,7 @@
 #include "external.hpp"
 
 #include "specfem/enums.hpp"
-#include "specfem/io.hpp"
+#include "specfem/io/seismogram/reader.hpp"
 #include "specfem/utilities.hpp"
 #include <fstream>
 #include <tuple>

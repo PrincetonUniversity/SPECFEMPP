@@ -1,10 +1,9 @@
 #pragma once
 #include "specfem/setup.hpp"
+#include <Kokkos_Core.hpp>
 #include <compare>
 #include <ratio>
 #include <type_traits>
-
-#include <Kokkos_Core.hpp>
 
 namespace specfem::units {
 
@@ -98,7 +97,8 @@ public:
    *
    * @param v Value in the specified units (default: 0.0)
    */
-  constexpr explicit Quantity(type_real v = 0.0) noexcept : value_(v) {}
+  KOKKOS_FUNCTION constexpr explicit Quantity(type_real v = 0.0) noexcept
+      : value_(v) {}
 
   /**
    * @brief Extract the raw numeric value.
@@ -107,48 +107,63 @@ public:
    *
    * @return constexpr type_real Numeric value without units
    */
-  [[nodiscard]] constexpr type_real raw() const noexcept { return value_; }
+  [[nodiscard]] KOKKOS_FUNCTION constexpr type_real raw() const noexcept {
+    return value_;
+  }
 
   /**
    * @brief Explicit conversion to raw numeric value.
    *
    * @return constexpr type_real Numeric value without units
    */
-  explicit constexpr operator type_real() const noexcept { return value_; }
+  KOKKOS_FUNCTION explicit constexpr operator type_real() const noexcept {
+    return value_;
+  }
 
   /// Unary negation
-  constexpr Quantity operator-() const noexcept { return Quantity(-value_); }
+  KOKKOS_FUNCTION constexpr Quantity operator-() const noexcept {
+    return Quantity(-value_);
+  }
 
   // Arithmetic within the same dimension and scale
-  constexpr Quantity operator+(Quantity o) const noexcept {
+  KOKKOS_FUNCTION constexpr Quantity operator+(Quantity o) const noexcept {
     return Quantity(value_ + o.value_);
   }
-  constexpr Quantity operator-(Quantity o) const noexcept {
+  KOKKOS_FUNCTION constexpr Quantity operator-(Quantity o) const noexcept {
     return Quantity(value_ - o.value_);
   }
-  constexpr Quantity operator*(type_real s) const noexcept {
+  KOKKOS_FUNCTION constexpr Quantity operator*(type_real s) const noexcept {
     return Quantity(value_ * s);
   }
-  constexpr Quantity operator/(type_real s) const noexcept {
+  KOKKOS_FUNCTION constexpr Quantity operator/(type_real s) const noexcept {
     return Quantity(value_ / s);
   }
 
   // Comparisons (same scale) — C++20 synthesizes !=, <, <=, >, >= from these
   // clang-format off
-  constexpr auto operator<=>(Quantity o) const noexcept {
+  KOKKOS_FUNCTION constexpr auto operator<=>(Quantity o) const noexcept {
     return value_ <=> o.value_;
   }
   // clang-format on
-  constexpr bool operator==(Quantity o) const noexcept {
+  KOKKOS_FUNCTION constexpr bool operator==(Quantity o) const noexcept {
     return value_ == o.value_;
   }
 };
 
 /// Scalar multiplication from left
 template <typename... Args>
-constexpr Quantity<Args...> operator*(type_real s,
-                                      Quantity<Args...> q) noexcept {
+KOKKOS_FUNCTION constexpr Quantity<Args...>
+operator*(type_real s, Quantity<Args...> q) noexcept {
   return q * s;
+}
+
+/// Scalar division from left: s / Quantity<Dim<M,L,T,A>,S> ->
+/// Quantity<Dim<-M,-L,-T,-A>,S>
+template <int M, int L, int T, int A, typename S>
+KOKKOS_FUNCTION constexpr auto operator/(type_real s,
+                                         Quantity<Dim<M, L, T, A>, S> q)
+    -> Quantity<Dim<-M, -L, -T, -A>, S> {
+  return Quantity<Dim<-M, -L, -T, -A>, S>(s / q.raw());
 }
 
 /**
@@ -162,7 +177,7 @@ constexpr Quantity<Args...> operator*(type_real s,
 
 template <typename D, typename S1, typename S2>
   requires(!std::is_same_v<S1, S2>)
-constexpr auto operator+(Quantity<D, S1> a, Quantity<D, S2> b)
+KOKKOS_FUNCTION constexpr auto operator+(Quantity<D, S1> a, Quantity<D, S2> b)
     -> Quantity<D, impl::ratio_gcd<S1, S2>> {
   using Rgcd = impl::ratio_gcd<S1, S2>;
   return Quantity<D, Rgcd>(a.raw() * ratio_value<std::ratio_divide<S1, Rgcd>> +
@@ -171,7 +186,7 @@ constexpr auto operator+(Quantity<D, S1> a, Quantity<D, S2> b)
 
 template <typename D, typename S1, typename S2>
   requires(!std::is_same_v<S1, S2>)
-constexpr auto operator-(Quantity<D, S1> a, Quantity<D, S2> b)
+KOKKOS_FUNCTION constexpr auto operator-(Quantity<D, S1> a, Quantity<D, S2> b)
     -> Quantity<D, impl::ratio_gcd<S1, S2>> {
   using Rgcd = impl::ratio_gcd<S1, S2>;
   return Quantity<D, Rgcd>(a.raw() * ratio_value<std::ratio_divide<S1, Rgcd>> -
@@ -192,7 +207,7 @@ constexpr auto operator-(Quantity<D, S1> a, Quantity<D, S2> b)
 // clang-format off
 template <typename D, typename S1, typename S2>
   requires(!std::is_same_v<S1, S2>)
-constexpr auto operator<=>(Quantity<D, S1> a, Quantity<D, S2> b) noexcept {
+KOKKOS_FUNCTION constexpr auto operator<=>(Quantity<D, S1> a, Quantity<D, S2> b) noexcept {
   using Rgcd = impl::ratio_gcd<S1, S2>;
   return a.raw() * ratio_value<std::ratio_divide<S1, Rgcd> > <=>
          b.raw() * ratio_value<std::ratio_divide<S2, Rgcd> >;
@@ -201,7 +216,8 @@ constexpr auto operator<=>(Quantity<D, S1> a, Quantity<D, S2> b) noexcept {
 
 template <typename D, typename S1, typename S2>
   requires(!std::is_same_v<S1, S2>)
-constexpr bool operator==(Quantity<D, S1> a, Quantity<D, S2> b) noexcept {
+KOKKOS_FUNCTION constexpr bool operator==(Quantity<D, S1> a,
+                                          Quantity<D, S2> b) noexcept {
   using Rgcd = impl::ratio_gcd<S1, S2>;
   return a.raw() * ratio_value<std::ratio_divide<S1, Rgcd>> ==
          b.raw() * ratio_value<std::ratio_divide<S2, Rgcd>>;
@@ -220,8 +236,8 @@ constexpr bool operator==(Quantity<D, S1> a, Quantity<D, S2> b) noexcept {
 
 template <int M1, int L1, int T1, int A1, int M2, int L2, int T2, int A2,
           typename S1, typename S2>
-constexpr auto operator*(Quantity<Dim<M1, L1, T1, A1>, S1> a,
-                         Quantity<Dim<M2, L2, T2, A2>, S2> b)
+KOKKOS_FUNCTION constexpr auto operator*(Quantity<Dim<M1, L1, T1, A1>, S1> a,
+                                         Quantity<Dim<M2, L2, T2, A2>, S2> b)
     -> Quantity<Dim<M1 + M2, L1 + L2, T1 + T2, A1 + A2>,
                 std::ratio_multiply<S1, S2>> {
   return Quantity<Dim<M1 + M2, L1 + L2, T1 + T2, A1 + A2>,
@@ -230,8 +246,8 @@ constexpr auto operator*(Quantity<Dim<M1, L1, T1, A1>, S1> a,
 
 template <int M1, int L1, int T1, int A1, int M2, int L2, int T2, int A2,
           typename S1, typename S2>
-constexpr auto operator/(Quantity<Dim<M1, L1, T1, A1>, S1> a,
-                         Quantity<Dim<M2, L2, T2, A2>, S2> b)
+KOKKOS_FUNCTION constexpr auto operator/(Quantity<Dim<M1, L1, T1, A1>, S1> a,
+                                         Quantity<Dim<M2, L2, T2, A2>, S2> b)
     -> Quantity<Dim<M1 - M2, L1 - L2, T1 - T2, A1 - A2>,
                 std::ratio_divide<S1, S2>> {
   return Quantity<Dim<M1 - M2, L1 - L2, T1 - T2, A1 - A2>,

@@ -3,8 +3,6 @@
 #include "units/parse.hpp"
 #include "units/quantity.hpp"
 
-#include <Kokkos_Core.hpp>
-
 /**
  * @namespace specfem::units
  * @brief Type-safe physical units and conversions.

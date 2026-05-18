@@ -10,16 +10,16 @@
 namespace specfem {
 namespace medium_physics {
 
-template <typename ChunkIndexType, typename DisplacementFieldType,
-          typename VelocityFieldType, typename AccelerationFieldType,
-          typename QuadratureType, typename WavefieldViewType>
+template <
+    typename Tags, typename ChunkIndexType, typename DisplacementFieldType,
+    typename VelocityFieldType, typename AccelerationFieldType,
+    typename QuadratureType, typename WavefieldViewType,
+    std::enable_if_t<
+        Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
+            Tags::medium_tag == specfem::element::medium_tag::elastic &&
+            Tags::property_tag == specfem::element::property_tag::isotropic,
+        int> = 0>
 KOKKOS_FUNCTION void impl_compute_wavefield(
-    const std::integral_constant<specfem::element::dimension_tag,
-                                 specfem::element::dimension_tag::dim3>,
-    const std::integral_constant<specfem::element::medium_tag,
-                                 specfem::element::medium_tag::elastic>,
-    const std::integral_constant<specfem::element::property_tag,
-                                 specfem::element::property_tag::isotropic>,
     const ChunkIndexType &chunk_index,
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
         &assembly,
@@ -30,14 +30,8 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     const specfem::enums::wavefield wavefield_type,
     WavefieldViewType wavefield) {
 
-  using FieldDerivativesType = specfem::point::field_derivatives<
-      specfem::tags::Tags<specfem::element::dimension_tag::dim3,
-                          specfem::element::medium_tag::elastic, false> >;
-
-  using PointPropertyType = specfem::point::properties<
-      specfem::tags::Tags<specfem::element::dimension_tag::dim3,
-                          specfem::element::medium_tag::elastic,
-                          specfem::element::property_tag::isotropic, false> >;
+  using FieldDerivativesType = specfem::point::field_derivatives<Tags>;
+  using PointPropertyType = specfem::point::properties<Tags>;
 
   const auto &properties = assembly.properties;
 
@@ -63,31 +57,13 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
         active_field,
         [&](const typename ChunkIndexType::iterator_type::index_type
                 &iterator_index,
-            const FieldDerivativesType::value_type &du) {
+            const typename FieldDerivativesType::value_type &du) {
           const auto index = iterator_index.get_index();
           const int ielement = iterator_index.get_local_index().ispec;
           PointPropertyType point_property;
 
           specfem::assembly::load_on_device(index, properties, point_property);
 
-          // // sigma_xx
-          // const auto sigma_xx = point_property.lambdaplus2mu * du(0, 0) +
-          //                       point_property.lambda * du(1, 1);
-          //                       point_property.lambda * du(2, 2);
-
-          // // sigma_yy
-          // const auto sigma_yy = point_property.lambdaplus2mu * du(1, 1) +
-          //                       point_property.lambda * du(0, 0);
-          //                       point_property.lambda * du(2, 2);
-
-          // // sigma_zz
-          // const auto sigma_zz = point_property.lambdaplus2mu * du(2, 2) +
-          //                       point_property.lambda * du(0, 0);
-          //                       point_property.lambda * du(1, 1);
-
-          // wavefield(iterator_index.ielement, index.iz, index.iy, index.ix, 0)
-          // =
-          //     -1.0 * (sigma_xx + sigma_zz + sigma_yy) / 3.0;
           wavefield(ielement, index.iz, index.iy, index.ix, 0) =
               -1.0 *
               ((point_property.lambda() + (2.0 / 3.0) * point_property.mu()) *

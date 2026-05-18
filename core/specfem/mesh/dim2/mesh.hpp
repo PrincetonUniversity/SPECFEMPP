@@ -9,6 +9,7 @@
 #include "parameters/parameters.hpp"
 #include "specfem/element.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/mesh/attenuation_config.hpp"
 #include "specfem/mesh/mesh_base.hpp"
 
 #include "specfem/setup.hpp"
@@ -49,6 +50,8 @@ template <> struct mesh<specfem::element::dimension_tag::dim2> {
                                                  ///< properties
 
   specfem::mesh::adjacency_graph<dimension> adjacency_graph;
+
+  specfem::mesh::attenuation_config attenuation; ///< Attenuation configuration
 
   /**
    * @name Constructors
