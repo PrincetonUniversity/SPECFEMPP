@@ -12,7 +12,7 @@ namespace specfem::assembly::impl {
  * @brief Tag-set specifications for value_containers per dimension.
  *
  * Mirrors the ElementSets pattern from element_types.hpp, enumerating
- * only the valid (medium, property, attenuation) combinations for which
+ * only the valid (medium, property) combinations for which
  * value containers (kernels, properties) are instantiated.
  */
 template <specfem::element::dimension_tag DimensionTag> struct ContainerSets;
@@ -23,15 +23,14 @@ template <> struct ContainerSets<specfem::element::dimension_tag::dim2> {
       DIMENSION_SET(dim2) *
       MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
                  elastic_psv_t) *
-      PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
-      ATTENUATION_SET(none);
+      PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat);
 };
 
 template <> struct ContainerSets<specfem::element::dimension_tag::dim3> {
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
   constexpr static auto combinations =
       DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic, elastic_spin) *
-      PROPERTY_SET(isotropic, isotropic_cosserat) * ATTENUATION_SET(none);
+      PROPERTY_SET(isotropic, isotropic_cosserat);
 };
 
 /**
@@ -131,8 +130,7 @@ struct value_containers_base {
       constexpr containers_type<dimension_tag, MediumTag, PropertyTag> const &
       get_container() const {
     return value.template get<
-        specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag,
-                            specfem::element::attenuation_tag::none> >();
+        specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag> >();
   }
 
   /**

@@ -7,10 +7,14 @@ rule specfem3d_solver:
         mesher=rules.specfem3d_mesher.output,
         database=rules.specfem3d_generate_database.output.databases,
         cwd=rules.specfem3d_setup.output.cwd,
+        source="<cwd>/provenance/fortran/DATA/" + source_file,
+        stations="<cwd>/provenance/fortran/DATA/STATIONS",
     output:
         solver="<cwd>/specfem3d_workdir/fortran/OUTPUT_FILES/output_solver.txt",
     shell:
         """
+            cp -f {input.source} {input.cwd}/DATA/$(basename {input.source})
+            cp -f {input.stations} {input.cwd}/DATA/STATIONS
             cd {input.cwd}
             mpirun -n 1 $SPECFEM3D_BINDIR/xspecfem3D
         """
@@ -25,6 +29,7 @@ rule specfem3d_move_traces:
     localrule: True,
     run:
         import os
+        from pathlib import Path
         trace_dir = os.path.join(input.cwd, "../../traces")
         solver_outdir = os.path.join(input.cwd, "OUTPUT_FILES")
         os.makedirs(trace_dir, exist_ok=True)
@@ -45,7 +50,8 @@ rule specfem3d_move_traces:
         with open(output.trace_list, "w") as f:
             f.writelines(trace_list)
 
-        os.remove(os.path.join(solver_outdir, "output_solver.txt"))
+        output_solver = Path(solver_outdir) / "output_solver.txt"
+        output_solver.rename(output_solver.parent / "output_solver_store.txt")
 
 
 rule clean:

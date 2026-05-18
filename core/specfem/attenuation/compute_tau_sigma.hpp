@@ -2,6 +2,8 @@
 
 #include "specfem/constants.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/units.hpp"
+#include "specfem/utilities/band.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
 
@@ -32,14 +34,11 @@ namespace attenuation {
  * for (int i = 0; i < 4; ++i) std::cout << tau(i) << "\n";
  * @endcode
  */
-template <int N_SLS>
+template <int N_SLS, typename T>
 Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
-compute_tau_sigma(const type_real min_frequency, const type_real max_frequency);
+compute_tau_sigma(const specfem::utilities::Band<T> band);
 
 } // namespace attenuation
 } // namespace specfem
 
-extern template Kokkos::View<type_real[specfem::constants::N_SLS],
-                             Kokkos::LayoutRight, Kokkos::HostSpace>
-specfem::attenuation::compute_tau_sigma<specfem::constants::N_SLS>(
-    const type_real, const type_real);
+#include "compute_tau_sigma.tpp"

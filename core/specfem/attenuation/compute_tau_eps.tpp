@@ -1,10 +1,12 @@
 #pragma once
-#include "compute_tau_eps.hpp"
 #include "maxwell.hpp"
+#include "compute_tau_eps.hpp"
 #include "specfem/constants.hpp"
 #include "specfem/optimization.hpp"
 #include "specfem/utilities/logspace.hpp"
+#include "specfem/utilities/band.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/units.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
 
@@ -12,16 +14,22 @@ namespace specfem {
 namespace attenuation {
 
 
-template <int N_SLS>
+template <int N_SLS, typename T>
 Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
 compute_tau_eps(
     type_real Q,
     Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
         tau_sigma,
-    type_real min_frequency, type_real max_frequency) {
+    const specfem::utilities::Band<T> band) {
 
   static_assert(N_SLS > 1,
                 "N_SLS must be greater than 1 for tau_eps computation");
+
+  // Convert to frequency band
+  const specfem::utilities::Band<specfem::units::Hertz> frequency_band(band);
+
+  type_real min_frequency = frequency_band.min.raw();
+  type_real max_frequency = frequency_band.max.raw();
 
   // Set up evaluation frequencies equally spaced in log10
   const auto f = specfem::utilities::logspace<specfem::constants::NF_ATTENUATION>(min_frequency, max_frequency);

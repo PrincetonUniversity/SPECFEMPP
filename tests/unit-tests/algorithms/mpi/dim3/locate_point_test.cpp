@@ -62,7 +62,8 @@ protected:
         "data/mpi/dim3/" + GetParam() + "/Database.bin";
     const auto proc_db = specfem::MPI::format_proc_filename(database);
 
-    auto mesh_data = specfem::io::read_3d_mesh(proc_db, /*attenuation=*/false);
+    auto mesh_data =
+        specfem::io::read_3d_mesh(proc_db, specfem::attenuation::Setup{});
 
     specfem::quadrature::gll::gll gll(0.0, 0.0, 5);
     specfem::quadrature::quadratures quadratures(gll);
