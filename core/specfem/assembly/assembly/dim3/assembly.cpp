@@ -23,6 +23,9 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
     const specfem::element_coupling::flux_scheme_configuration
         &flux_scheme_config) {
 
+  this->t0 = t0;
+  this->dt = dt;
+
   const int nspec = mesh.nspec;
   const int ngllz = mesh.element_grid.ngllz;
   const int nglly = mesh.element_grid.nglly;

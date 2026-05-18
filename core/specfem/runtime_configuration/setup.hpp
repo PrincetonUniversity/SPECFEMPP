@@ -307,7 +307,6 @@ public:
    * @brief Create 2D wavefield plotter for visualization.
    *
    * @param assembly 2D assembly containing mesh and field information
-   * @param dt Time step size
 
    * @return Shared pointer to 2D wavefield plotter or nullptr if not configured
    */
@@ -315,10 +314,9 @@ public:
       specfem::element::dimension_tag::dim2> >
   instantiate_wavefield_plotter(
       const specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
-          &assembly,
-      const type_real &dt) const {
+          &assembly) const {
     if (this->plot_wavefield) {
-      return this->plot_wavefield->instantiate_wavefield_plotter(assembly, dt);
+      return this->plot_wavefield->instantiate_wavefield_plotter(assembly);
     } else {
       return nullptr;
     }
@@ -328,17 +326,15 @@ public:
    * @brief Create 3D wavefield plotter for visualization.
    *
    * @param assembly 3D assembly containing mesh and field information
-   * @param dt Time step size
    * @return Shared pointer to 3D wavefield plotter or nullptr if not configured
    */
   std::shared_ptr<specfem::periodic_tasks::periodic_task<
       specfem::element::dimension_tag::dim3> >
   instantiate_wavefield_plotter(
       const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
-          &assembly,
-      const type_real &dt) const {
+          &assembly) const {
     if (this->plot_wavefield) {
-      return this->plot_wavefield->instantiate_wavefield_plotter(assembly, dt);
+      return this->plot_wavefield->instantiate_wavefield_plotter(assembly);
     } else {
       return nullptr;
     }
