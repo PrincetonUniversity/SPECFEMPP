@@ -31,6 +31,7 @@ add_dependencies(specfem_version specfem_version_header)
 # Add existing subdirectories
 add_subdirectory(algorithms)
 add_subdirectory(element_coupling)
+add_subdirectory(ellipticity)
 add_subdirectory(assembly)
 add_subdirectory(compute)
 add_subdirectory(datetime)
@@ -58,6 +59,7 @@ add_subdirectory(source)
 add_subdirectory(source_time_functions)
 add_subdirectory(timescheme)
 add_subdirectory(utilities)
+add_subdirectory(coordinate_systems)
 
 
 
@@ -76,6 +78,7 @@ target_link_libraries(specfem_core_interface
         specfem::element
         specfem::element_connections
         specfem::element_coupling
+        specfem::ellipticity
         specfem::enums
         specfem::io
         specfem::io_backends
@@ -96,6 +99,7 @@ target_link_libraries(specfem_core_interface
         specfem::source_time_functions
         specfem::timescheme
         specfem::utilities
+        specfem::coordinate_systems
         specfem::version
 )
 

@@ -1,7 +1,9 @@
 #pragma once
 
+#include "specfem/ellipticity/tags.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
+#include <numbers>
 #include <string>
 
 namespace specfem::constants {
@@ -12,7 +14,7 @@ namespace specfem::constants {
  * This is the default path to the parameter file used by the code. It can be
  * overridden by providing a different path when running the executable.
  */
-const type_real pi = 3.14159265358979323846;
+constexpr type_real pi = std::numbers::pi_v<type_real>;
 
 /**
  * @brief Source decay rate to mimic a triangle source time function
@@ -60,5 +62,8 @@ constexpr int NF_ATTENUATION = 100;
  *
  */
 constexpr int N_SLS = 3;
+
+/// Default ellipsoid model for UTM and geodetic conversions.
+constexpr auto default_ellipsoid = specfem::ellipticity::model::wgs84;
 
 } // namespace specfem::constants
