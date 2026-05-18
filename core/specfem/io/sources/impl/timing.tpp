@@ -21,8 +21,8 @@ adjust_source_timing(
 
   // Helper to convert type_real seconds to chrono milliseconds
   auto to_ms = [](type_real seconds) {
-    return std::chrono::milliseconds(
-        static_cast<int64_t>(static_cast<double>(seconds) * 1000.0));
+    return std::chrono::round<std::chrono::milliseconds>(
+        std::chrono::duration<double>(static_cast<double>(seconds)));
   };
 
   const bool user_defined_start_time =
