@@ -2,12 +2,12 @@
 #include "conversions.hpp"
 #include "quantity.hpp"
 
+#include <concepts>
 #include <functional>
 #include <regex>
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <type_traits>
 #include <unordered_map>
 #include <variant>
 
@@ -39,55 +39,20 @@ using AnyQuantity =
 
 namespace impl {
 
-// TODO (Lucas : CPP20) update units - fix replace void_t detection with a
-// requires clause:
-//   requires { unit_cast_impl<To, From>::call(std::declval<From>()); }
-
 /**
  * @brief Detects whether unit_cast_impl<To, From>::call is well-formed.
  *
  * The primary template of unit_cast_impl<> has an empty body (no call
- * member), so the SFINAE check below correctly returns false_type for any
- * unsupported conversion pair without triggering an incomplete-type hard
- * error.
+ * member), so unsupported conversion pairs cause the concept to evaluate
+ * to false without triggering an incomplete-type hard error.
  *
  * @tparam To Target quantity type
  * @tparam From Source quantity type
  */
-template <typename To, typename From, typename = void>
-struct has_unit_cast : std::false_type {};
-
 template <typename To, typename From>
-struct has_unit_cast<To, From,
-                     std::void_t<decltype(unit_cast_impl<To, From>::call(
-                         std::declval<From>()))> > : std::true_type {};
-
-// TODO (Lucas : CPP20) update units - fix replace this struct with a
-// generic auto-lambda passed directly to std::visit once C++20 templated
-// lambdas are available:
-//   std::visit([](auto q) -> To { ... }, v)
-
-/**
- * @brief std::visit visitor that converts an AnyQuantity to type @p To.
- *
- * For each alternative From in AnyQuantity:
- *   - if unit_cast_impl<To, From>::call is defined  → convert
- *   - otherwise                                     → throw at runtime
- */
-template <typename To> struct quantity_cast_visitor {
-  template <typename From> To operator()(From q) const {
-    if constexpr (has_unit_cast<To, From>::value) {
-      return unit_cast_impl<To, From>::call(q);
-    } else {
-      throw std::invalid_argument(
-          "specfem::units::quantity_cast: no conversion defined from the "
-          "parsed unit type to the requested target type");
-    }
-  }
+concept convertible_unit = requires(From f) {
+  { unit_cast_impl<To, From>::call(f) } -> std::convertible_to<To>;
 };
-
-// TODO (Lucas : CPP20) update units - fix prefix scan with
-// std::string_view::starts_with instead of std::string::compare.
 
 /**
  * @brief Strip a leading SI prefix from @p unit and return whether one was
@@ -98,7 +63,8 @@ template <typename To> struct quantity_cast_visitor {
  * ambiguity (e.g. "mu" is matched before "m").  The ASCII spellings "u" and
  * "mu" are accepted as alternatives to "µ" (UTF-8 U+00B5 = 0xC2 0xB5).
  *
- * Supported prefixes: k (×1e3), M (×1e6), m (×1e-3), u/mu/µ (×1e-6).
+ * Supported prefixes: k (@f$ \times 10^3 @f$), M (@f$ \times 10^6 @f$),
+ * m (@f$ \times 10^{-3} @f$), u/mu/µ (@f$ \times 10^{-6} @f$).
  */
 inline bool strip_si_prefix(std::string_view unit, type_real &factor,
                             std::string &base_unit) {
@@ -112,26 +78,30 @@ inline bool strip_si_prefix(std::string_view unit, type_real &factor,
     { "k", type_real(1e3) },
     { "m", type_real(1e-3) },
   };
-  const std::string u(unit);
   for (const auto &[pfx, fac] : prefixes) {
-    if (u.size() > pfx.size() && u.compare(0, pfx.size(), pfx) == 0) {
+    if (unit.size() > pfx.size() && unit.starts_with(pfx)) {
       factor = fac;
-      base_unit = u.substr(pfx.size());
+      base_unit = std::string(unit.substr(pfx.size()));
       return true;
     }
   }
   return false;
 }
 
+/// Transparent hash for heterogeneous lookup in unordered_map (P0919R3).
+/// Avoids constructing a std::string when looking up by std::string_view.
+struct string_hash {
+  using is_transparent = void;
+  size_t operator()(std::string_view sv) const noexcept {
+    return std::hash<std::string_view>{}(sv);
+  }
+};
+
 } // namespace impl
 
 // ---------------------------------------------------------------------------
 // parse
 // ---------------------------------------------------------------------------
-
-// TODO (Lucas : CPP20) update units - fix use a std::string_view-keyed
-// unordered_map (heterogeneous lookup, P0919R3) to avoid constructing a
-// std::string from the unit string_view on each lookup call.
 
 /**
  * @brief Parse a string representation of a physical quantity.
@@ -147,10 +117,11 @@ inline bool strip_si_prefix(std::string_view unit, type_real &factor,
  *   parse("20.0Hz")     // Hertz(20.0)  — no whitespace is fine
  * @endcode
  *
- * Supported scaling symbols are SI prefixes: k (×1e3), M (×1e6), m (×1e-3),
- * u/mu/µ (×1e-6). The table below shows a non-exhaustive list of supported
- * unit symbols; any symbol not in the table may still be parsed if the SI
- * prefix and base unit are both supported.
+ * Supported scaling symbols are SI prefixes: k (@f$ \times 10^3 @f$),
+ * M (@f$ \times 10^6 @f$), m (@f$ \times 10^{-3} @f$),
+ * u/mu/µ (@f$ \times 10^{-6} @f$). The table below shows a non-exhaustive list
+ * of supported unit symbols; any symbol not in the table may still be parsed if
+ * the SI prefix and base unit are both supported.
  *
  * (Some) supported unit symbols (case-sensitive):
  * | Category      | Symbols                                  |
@@ -204,68 +175,69 @@ inline AnyQuantity parse(std::string_view s) {
   // ── Unit lookup table ─────────────────────────────────────────────────────
   // µs key uses the UTF-8 encoding of µ (U+00B5): bytes 0xC2 0xB5.
   using Factory = std::function<AnyQuantity(type_real)>;
-  // TODO (Lucas : CPP20) update units - fix use std::string_view keys with
-  // transparent hash (P0919R3) to avoid constructing a std::string for each
-  // table lookup.
-  static const std::unordered_map<std::string, Factory> table = {
-    // ── Dimensionless ────────────────────────────────────────────────────
-    { "1", [](type_real v) -> AnyQuantity { return Dimensionless(v); } },
 
-    // ── Time ─────────────────────────────────────────────────────────────
-    { "s", [](type_real v) -> AnyQuantity { return Seconds(v); } },
-    { "ms",
-      [](type_real v) -> AnyQuantity { return Seconds(v * type_real(1e-3)); } },
-    { "us",
-      [](type_real v) -> AnyQuantity { return Seconds(v * type_real(1e-6)); } },
-    { "\xc2\xb5s",
-      [](type_real v) -> AnyQuantity { // µs (U+00B5, UTF-8)
-        return Seconds(v * type_real(1e-6));
-      } },
+#define SPECFEM_PARSE_ENTRY(str, Type)                                         \
+  { str, [](type_real v) -> AnyQuantity { return Type(v); } }
+#define SPECFEM_PARSE_ENTRY_SCALED(str, Type, factor)                          \
+  { str,                                                                       \
+    [](type_real v) -> AnyQuantity { return Type(v * type_real(factor)); } }
 
-    // ── Frequency ────────────────────────────────────────────────────────
-    { "Hz", [](type_real v) -> AnyQuantity { return Hertz(v); } },
-    { "kHz",
-      [](type_real v) -> AnyQuantity { return Hertz(v * type_real(1e3)); } },
-    { "MHz",
-      [](type_real v) -> AnyQuantity { return Hertz(v * type_real(1e6)); } },
-    { "mHz",
-      [](type_real v) -> AnyQuantity { return Hertz(v * type_real(1e-3)); } },
+  static const std::unordered_map<std::string, Factory, impl::string_hash,
+                                  std::equal_to<>>
+      table = {
+        // ── Dimensionless ────────────────────────────────────────────────────
+        SPECFEM_PARSE_ENTRY("1", Dimensionless),
 
-    // ── Angular frequency ─────────────────────────────────────────────────
-    { "rad/s", [](type_real v) -> AnyQuantity { return Omega(v); } },
+        // ── Time ─────────────────────────────────────────────────────────────
+        SPECFEM_PARSE_ENTRY("s", Seconds),
+        SPECFEM_PARSE_ENTRY_SCALED("ms", Seconds, 1e-3),
+        SPECFEM_PARSE_ENTRY_SCALED("us", Seconds, 1e-6),
+        SPECFEM_PARSE_ENTRY_SCALED("\xc2\xb5s", Seconds, 1e-6), // µs (UTF-8)
 
-    // ── Angle ─────────────────────────────────────────────────────────────
-    { "rad", [](type_real v) -> AnyQuantity { return Radians(v); } },
+        // ── Frequency ────────────────────────────────────────────────────────
+        SPECFEM_PARSE_ENTRY("Hz", Hertz),
+        SPECFEM_PARSE_ENTRY_SCALED("kHz", Hertz, 1e3),
+        SPECFEM_PARSE_ENTRY_SCALED("MHz", Hertz, 1e6),
+        SPECFEM_PARSE_ENTRY_SCALED("mHz", Hertz, 1e-3),
 
-    // ── Length ────────────────────────────────────────────────────────────
-    { "m", [](type_real v) -> AnyQuantity { return Meters(v); } },
-    { "km", [](type_real v) -> AnyQuantity { return Kilometers(v); } },
+        // ── Angular frequency
+        // ─────────────────────────────────────────────────
+        SPECFEM_PARSE_ENTRY("rad/s", Omega),
 
-    // ── Velocity ──────────────────────────────────────────────────────────
-    { "m/s", [](type_real v) -> AnyQuantity { return MetersPerSecond(v); } },
-    { "km/s",
-      [](type_real v) -> AnyQuantity { return KilometersPerSecond(v); } },
+        // ── Angle
+        // ─────────────────────────────────────────────────────────────
+        SPECFEM_PARSE_ENTRY("rad", Radians),
 
-    // ── Mass ──────────────────────────────────────────────────────────────
-    { "g", [](type_real v) -> AnyQuantity { return Grams(v); } },
-    { "kg", [](type_real v) -> AnyQuantity { return Kilograms(v); } },
+        // ── Length
+        // ────────────────────────────────────────────────────────────
+        SPECFEM_PARSE_ENTRY("m", Meters),
+        SPECFEM_PARSE_ENTRY("km", Kilometers),
 
-    // ── Density ───────────────────────────────────────────────────────────
-    { "g/m3", [](type_real v) -> AnyQuantity { return GramPerCubicMeter(v); } },
-    { "kg/m3",
-      [](type_real v) -> AnyQuantity { return KilogramPerCubicMeter(v); } },
+        // ── Velocity
+        // ──────────────────────────────────────────────────────────
+        SPECFEM_PARSE_ENTRY("m/s", MetersPerSecond),
+        SPECFEM_PARSE_ENTRY("km/s", KilometersPerSecond),
 
-    // ── Pressure ─────────────────────────────────────────────────────────
-    { "Pa", [](type_real v) -> AnyQuantity { return Pascal(v); } },
-    { "kPa",
-      [](type_real v) -> AnyQuantity { return Pascal(v * type_real(1e3)); } },
-    { "MPa", [](type_real v) -> AnyQuantity { return Megapascal(v); } },
-    // GPa stored as Megapascal (raw × 1000 = MPa-equivalent raw value)
-    { "GPa",
-      [](type_real v) -> AnyQuantity {
-        return Megapascal(v * type_real(1e3));
-      } },
-  };
+        // ── Mass
+        // ──────────────────────────────────────────────────────────────
+        SPECFEM_PARSE_ENTRY("g", Grams),
+        SPECFEM_PARSE_ENTRY("kg", Kilograms),
+
+        // ── Density
+        // ───────────────────────────────────────────────────────────
+        SPECFEM_PARSE_ENTRY("g/m3", GramPerCubicMeter),
+        SPECFEM_PARSE_ENTRY("kg/m3", KilogramPerCubicMeter),
+
+        // ── Pressure ─────────────────────────────────────────────────────────
+        SPECFEM_PARSE_ENTRY("Pa", Pascal),
+        SPECFEM_PARSE_ENTRY_SCALED("kPa", Pascal, 1e3),
+        SPECFEM_PARSE_ENTRY("MPa", Megapascal),
+        // GPa stored as Megapascal (raw x 1000 = MPa-equivalent raw value)
+        SPECFEM_PARSE_ENTRY_SCALED("GPa", Megapascal, 1e3),
+      };
+
+#undef SPECFEM_PARSE_ENTRY
+#undef SPECFEM_PARSE_ENTRY_SCALED
 
   // Exact match
   auto it = table.find(unit);
@@ -289,11 +261,6 @@ inline AnyQuantity parse(std::string_view s) {
 // quantity_cast
 // ---------------------------------------------------------------------------
 
-// TODO (Lucas : CPP20) update units - fix replace
-// impl::quantity_cast_visitor struct with a generic auto-lambda once C++20
-// templated lambdas are fully supported by all targeted compilers: return
-// std::visit([](auto q) -> To { ... }, v);
-
 /**
  * @brief Convert an AnyQuantity to a specific statically-typed Quantity.
  *
@@ -309,12 +276,23 @@ inline AnyQuantity parse(std::string_view s) {
  *
  * @code
  * auto any   = specfem::units::parse("20.0 Hz");
- * auto omega = specfem::units::quantity_cast<Omega>(any); // 2π·20 rad/s
+ * auto omega = specfem::units::quantity_cast<Omega>(any); // @f$ 2\pi \cdot 20
+ * @f$ rad/s
  * @endcode
  *
  */
 template <typename To> To quantity_cast(const AnyQuantity &v) {
-  return std::visit(impl::quantity_cast_visitor<To>{}, v);
+  return std::visit(
+      [](auto q) -> To {
+        if constexpr (impl::convertible_unit<To, decltype(q)>) {
+          return unit_cast_impl<To, decltype(q)>::call(q);
+        } else {
+          throw std::invalid_argument(
+              "specfem::units::quantity_cast: no conversion defined from the "
+              "parsed unit type to the requested target type");
+        }
+      },
+      v);
 }
 
 /**
@@ -324,7 +302,8 @@ template <typename To> To quantity_cast(const AnyQuantity &v) {
  *
  * @code
  * auto f = specfem::units::quantity_cast<Hertz>("20.0 Hz");
- * auto w = specfem::units::quantity_cast<Omega>("20.0 Hz"); // 2π·20 rad/s
+ * auto w = specfem::units::quantity_cast<Omega>("20.0 Hz"); // @f$ 2\pi \cdot
+ * 20 @f$ rad/s
  * @endcode
  *
  * @tparam To  Target Quantity type.
