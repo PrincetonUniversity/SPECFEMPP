@@ -67,8 +67,11 @@ module meshfem_par
   ! for loop on all the slices
   integer, dimension(:,:), allocatable :: addressing
 
-  ! Adjacency matrix
-  integer, dimension(:,:), allocatable :: adjacency_matrix
+  ! Adjacency graph (CSR format)
+  integer, dimension(:), allocatable :: xadj_adj       ! (1:nspec+1) CSR row pointers
+  integer, dimension(:), allocatable :: adjncy_adj     ! (1:nb_adj_edges) neighbor element IDs
+  integer, dimension(:), allocatable :: adj_types_local ! (1:nb_adj_edges) type codes 1-26
+  integer :: nb_adj_edges
 
   ! addressing for all the slices
   integer, dimension(:), allocatable :: iproc_xi_slice,iproc_eta_slice
