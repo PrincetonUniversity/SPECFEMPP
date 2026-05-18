@@ -55,5 +55,3 @@ extern template struct specfem::assembly::kernels<
 #include "kernels/data_access/add_on_host.hpp" ///< Accumulate kernel data on CPU host
 #include "kernels/data_access/load_on_host.hpp" ///< Load kernel data on CPU host
 #include "kernels/data_access/store_on_host.hpp" ///< Store kernel data on CPU host
-
-/** @} */ // end of KernelsDataAccess group

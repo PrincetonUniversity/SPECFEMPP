@@ -79,17 +79,17 @@ template <specfem::element_connections::type... Vs> struct connection_set {
 
 template <specfem::element_coupling::interface_tag... Vs> struct interface_set {
   using tag_enum = specfem::element_coupling::interface_tag;
-  static constexpr
-      std::array<specfem::element_coupling::interface_tag, sizeof...(Vs)>
-          values{ { Vs... } };
+  static constexpr std::array<specfem::element_coupling::interface_tag,
+                              sizeof...(Vs)>
+      values{ { Vs... } };
 };
 
 template <specfem::element_coupling::flux_scheme_tag... Vs>
 struct flux_scheme_set {
   using tag_enum = specfem::element_coupling::flux_scheme_tag;
-  static constexpr
-      std::array<specfem::element_coupling::flux_scheme_tag, sizeof...(Vs)>
-          values{ { Vs... } };
+  static constexpr std::array<specfem::element_coupling::flux_scheme_tag,
+                              sizeof...(Vs)>
+      values{ { Vs... } };
 };
 
 /**
@@ -257,7 +257,7 @@ constexpr std::array<Combo, N> fill_combos(const ArrayTuple &arrs) {
  *                    `property_set`, `attenuation_set`, `boundary_set`, or
  *                    `wavefield_set`), each contributing one slot to the combo.
  *
- * ### Members
+ * **Members**
  * - `combo_type`  The `TagValueTuple` type for a single combo (one slot per
  *                 `NamedSet`).
  * - `size`        Number of valid combos.

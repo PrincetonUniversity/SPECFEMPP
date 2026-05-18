@@ -10,7 +10,7 @@
  * All computations use double precision. The depth/z component is always
  * passed through unchanged.
  *
- * @b Usage
+ * Example usage:
  * @code
  * #include "specfem/coordinate_systems.hpp"
  *

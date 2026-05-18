@@ -2,10 +2,7 @@
 
 /**
  * @defgroup tag_dispatch_group specfem::tag_dispatch
- * @{
- */
-
-/**
+ *
  * @brief Compile-time element-type dispatch infrastructure.
  *
  * `tag_dispatch` provides a composable, zero-overhead mechanism for
@@ -13,11 +10,8 @@
  * (dimension × medium × property × attenuation × boundary), iterating over
  * those combinations at compile time, and storing per-combination data in
  * type-safe containers.
- */
-namespace specfem::tag_dispatch {}
-
-/**
- * @section Motivation
+ *
+ * @section td_motivation Motivation
  *
  * SPECFEM++ supports many element flavours — `elastic_psv`, `elastic_sh`,
  * `acoustic`, etc. in 2-D; `elastic`, `acoustic` in 3-D — each with its own
@@ -27,7 +21,7 @@ namespace specfem::tag_dispatch {}
  * validity rules once (in `is_valid.hpp`) and propagates them automatically to
  * every higher-level facility.
  *
- * @section Step 1 — Declare an element set with `element_combinations`
+ * @section td_step1 Step 1 — Declare an element set with `element_combinations`
  *
  * Compose named tag-set types using `operator*` to describe which tag values
  * are in play.  The resulting type, `ET`, holds a `constexpr` array
@@ -62,7 +56,7 @@ namespace specfem::tag_dispatch {}
  * The combo at index `I` maps directly to a `specfem::tags::Tags<...>` type
  * via `combo_to_tags_t<ET, I, ET::combo_type::arity>`.
  *
- * @section Step 2 — Iterate with `for_each`
+ * @section td_step2 Step 2 — Iterate with `for_each`
  *
  * `for_each` calls a generic lambda once per valid combo, passing the
  * combo's `Tags<...>` type as a template argument.  This is the primary
@@ -78,7 +72,8 @@ namespace specfem::tag_dispatch {}
  * });
  * @endcode
  *
- * @section Step 3 — Store per-combo data with `Storage` or `TypedStorage`
+ * @section td_step3 Step 3 — Store per-combo data with `Storage` or
+ * `TypedStorage`
  *
  * **`Storage<T, ET>`** — every combo holds the same type `T`.  Suitable for
  * Kokkos views, counters, or any homogeneous per-combo resource:
@@ -121,7 +116,7 @@ namespace specfem::tag_dispatch {}
  * transfers (requires the same `ET` but allows different policies, e.g. device
  * view vs host-mirror view).
  *
- * @section Putting it all together
+ * @section td_altogether Putting it all together
  *
  * A typical assembly pattern declares the element set once, builds storage
  * from it, and then drives all per-combo work through `for_each`:
@@ -164,9 +159,9 @@ namespace specfem::tag_dispatch {}
  * `tag_dispatch/find_in.hpp`              | `find_in_t` / `find_in_v`
  * compile-time index lookup   | | `tag_dispatch/storage.hpp`              |
  * `Storage<T,ET>`, `TypedStorage<Tmpl,ET>`, `deep_copy` |
- *
- * @} end of tag_dispatch_group
  */
+
+namespace specfem::tag_dispatch {}
 
 #include "specfem/macros.hpp"
 #include "tag_dispatch/element_combinations.hpp"
