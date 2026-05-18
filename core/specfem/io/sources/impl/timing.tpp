@@ -13,7 +13,8 @@ namespace io {
 namespace sources_impl {
 
 template <specfem::element::dimension_tag DimensionTag>
-timing_result adjust_source_timing(
+std::tuple<type_real, std::optional<specfem::datetime::type>>
+adjust_source_timing(
     std::vector<
         std::shared_ptr<specfem::sources::source<DimensionTag> > > &sources,
     type_real user_t0) {
@@ -123,7 +124,7 @@ timing_result adjust_source_timing(
   }
   // else: no starttimes → starttime remains nullopt
 
-  return timing_result{t0, starttime};
+  return {t0, starttime};
 }
 
 template <specfem::element::dimension_tag DimensionTag>

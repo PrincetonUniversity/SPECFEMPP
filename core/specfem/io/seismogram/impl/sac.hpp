@@ -180,17 +180,19 @@ inline void write_sac_binary(
   int32_t ihdr[40];
   std::fill_n(ihdr, 40, UNDEF_I);
   if (reference_time) {
-    using namespace std::chrono;
-    auto dp = floor<days>(*reference_time); // Date part (00:00:00 of the day)
-    year_month_day ymd{ dp };
-    auto jan1 = sys_days{ ymd.year() / January / 1 };
+    auto dp = std::chrono::floor<std::chrono::days>(
+        *reference_time); // Date part (00:00:00 of the day)
+    std::chrono::year_month_day ymd{ dp };
+    auto jan1 = std::chrono::sys_days{ ymd.year() / std::chrono::January / 1 };
     int jday =
         static_cast<int>((dp - jan1).count()) + 1; // Julian day (1-based)
     auto time_of_day = *reference_time - dp;       // Time since 00:00:00
-    auto h = duration_cast<hours>(time_of_day);
-    auto m = duration_cast<minutes>(time_of_day - h);
-    auto s = duration_cast<seconds>(time_of_day - h - m);
-    auto ms = duration_cast<milliseconds>(time_of_day - h - m - s);
+    auto h = std::chrono::duration_cast<std::chrono::hours>(time_of_day);
+    auto m = std::chrono::duration_cast<std::chrono::minutes>(time_of_day - h);
+    auto s =
+        std::chrono::duration_cast<std::chrono::seconds>(time_of_day - h - m);
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        time_of_day - h - m - s);
     ihdr[0] = static_cast<int32_t>(static_cast<int>(ymd.year())); // NZYEAR
     ihdr[1] = static_cast<int32_t>(jday);                         // NZJDAY
     ihdr[2] = static_cast<int32_t>(h.count());                    // NZHOUR

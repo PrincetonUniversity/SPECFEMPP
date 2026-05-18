@@ -12,8 +12,6 @@ constexpr auto dim2 = specfem::element::dimension_tag::dim2;
 using Source2D = specfem::sources::source<dim2>;
 using SourcePtr2D = std::shared_ptr<Source2D>;
 using SourceVec2D = std::vector<SourcePtr2D>;
-using timing_result = specfem::io::sources_impl::timing_result;
-
 // Test constants
 static constexpr int kNsteps = 100;
 static constexpr type_real kDt = 0.01;
@@ -47,13 +45,14 @@ TEST(AdjustSourceTiming, SingleSourceNoStarttime) {
 
   SourceVec2D sources = { make_force_2d(f0, tshift) };
 
-  auto result = specfem::io::sources_impl::adjust_source_timing<dim2>(
-      sources, /*user_t0=*/0.0);
+  auto [t0, starttime] =
+      specfem::io::sources_impl::adjust_source_timing<dim2>(sources,
+                                                            /*user_t0=*/0.0);
 
   // Expected: t0 = ricker_t0, no starttime
   const type_real expected_t0 = ricker_t0(f0, tshift);
-  EXPECT_NEAR(result.t0, expected_t0, 1e-10);
-  EXPECT_FALSE(result.starttime.has_value());
+  EXPECT_NEAR(t0, expected_t0, 1e-10);
+  EXPECT_FALSE(starttime.has_value());
 }
 
 // ============================================================================
@@ -67,18 +66,19 @@ TEST(AdjustSourceTiming, MultipleSourcesNoStarttime) {
   const type_real t0_A = ricker_t0(10.0, 5.0); // 4.88
   const type_real t0_B = ricker_t0(1.0, 30.0); // 28.8
 
-  auto result = specfem::io::sources_impl::adjust_source_timing<dim2>(
-      sources, /*user_t0=*/0.0);
+  auto [t0, starttime] =
+      specfem::io::sources_impl::adjust_source_timing<dim2>(sources,
+                                                            /*user_t0=*/0.0);
 
   // min_t0 = 4.88, so t0 = 4.88
-  EXPECT_NEAR(result.t0, t0_A, 1e-10);
+  EXPECT_NEAR(t0, t0_A, 1e-10);
 
   // Source A tshift unchanged (cur_t0 - min_t0 = 4.88 - 4.88 = 0)
   EXPECT_NEAR(sources[0]->get_tshift(), 0.0, 1e-10);
   // Source B tshift adjusted: cur_t0 - min_t0 = 28.8 - 4.88 = 23.92
   EXPECT_NEAR(sources[1]->get_tshift(), t0_B - t0_A, 1e-10);
 
-  EXPECT_FALSE(result.starttime.has_value());
+  EXPECT_FALSE(starttime.has_value());
 }
 
 // ============================================================================
@@ -89,13 +89,13 @@ TEST(AdjustSourceTiming, UserDefinedT0) {
 
   // User t0 must be <= min_t0 - min_tshift = 4.88 - 5.0 = -0.12
   const type_real user_t0 = -1.0;
-  auto result =
+  auto [t0, starttime] =
       specfem::io::sources_impl::adjust_source_timing<dim2>(sources, user_t0);
 
-  EXPECT_NEAR(result.t0, user_t0, 1e-10);
+  EXPECT_NEAR(t0, user_t0, 1e-10);
   // tshift is NOT adjusted when user defines t0
   EXPECT_NEAR(sources[0]->get_tshift(), 5.0, 1e-10);
-  EXPECT_FALSE(result.starttime.has_value());
+  EXPECT_FALSE(starttime.has_value());
 }
 
 // ============================================================================
@@ -125,12 +125,13 @@ TEST(AdjustSourceTiming, SingleSourceWithStarttime) {
 
   SourceVec2D sources = { src };
 
-  auto result = specfem::io::sources_impl::adjust_source_timing<dim2>(
-      sources, /*user_t0=*/0.0);
+  auto [t0, starttime] =
+      specfem::io::sources_impl::adjust_source_timing<dim2>(sources,
+                                                            /*user_t0=*/0.0);
 
   const type_real expected_t0 = ricker_t0(f0, tshift);
-  EXPECT_NEAR(result.t0, expected_t0, 1e-10);
-  ASSERT_TRUE(result.starttime.has_value());
+  EXPECT_NEAR(t0, expected_t0, 1e-10);
+  ASSERT_TRUE(starttime.has_value());
 
   // UTC(t=t0) = origin_time - tshift + t0
   // After auto-adjust, single source: tshift becomes 0 (cur_t0 - min_t0 = 0)
@@ -139,8 +140,8 @@ TEST(AdjustSourceTiming, SingleSourceWithStarttime) {
       origin -
       std::chrono::milliseconds(
           static_cast<int64_t>(sources[0]->get_tshift() * 1000.0)) +
-      std::chrono::milliseconds(static_cast<int64_t>(result.t0 * 1000.0));
-  EXPECT_EQ(*result.starttime, expected_starttime);
+      std::chrono::milliseconds(static_cast<int64_t>(t0 * 1000.0));
+  EXPECT_EQ(*starttime, expected_starttime);
 }
 
 // ============================================================================
@@ -155,21 +156,22 @@ TEST(AdjustSourceTiming, OneOfManyHasStarttime) {
 
   SourceVec2D sources = { src_a, src_b };
 
-  auto result = specfem::io::sources_impl::adjust_source_timing<dim2>(
-      sources, /*user_t0=*/0.0);
+  auto [t0, starttime] =
+      specfem::io::sources_impl::adjust_source_timing<dim2>(sources,
+                                                            /*user_t0=*/0.0);
 
   const type_real t0_A = ricker_t0(10.0, 5.0);
 
-  EXPECT_NEAR(result.t0, t0_A, 1e-10);
-  ASSERT_TRUE(result.starttime.has_value());
+  EXPECT_NEAR(t0, t0_A, 1e-10);
+  ASSERT_TRUE(starttime.has_value());
 
   // Source A tshift adjusted to 0 (min_t0 source), source B adjusted normally
   auto expected_starttime =
       origin -
       std::chrono::milliseconds(
           static_cast<int64_t>(sources[0]->get_tshift() * 1000.0)) +
-      std::chrono::milliseconds(static_cast<int64_t>(result.t0 * 1000.0));
-  EXPECT_EQ(*result.starttime, expected_starttime);
+      std::chrono::milliseconds(static_cast<int64_t>(t0 * 1000.0));
+  EXPECT_EQ(*starttime, expected_starttime);
 }
 
 // ============================================================================
@@ -185,10 +187,11 @@ TEST(AdjustSourceTiming, AllSourcesSameStarttime) {
 
   SourceVec2D sources = { src_a, src_b };
 
-  auto result = specfem::io::sources_impl::adjust_source_timing<dim2>(
-      sources, /*user_t0=*/0.0);
+  auto [t0, starttime] =
+      specfem::io::sources_impl::adjust_source_timing<dim2>(sources,
+                                                            /*user_t0=*/0.0);
 
-  ASSERT_TRUE(result.starttime.has_value());
+  ASSERT_TRUE(starttime.has_value());
 
   // Both sources have same origin and same tshift, so tshifts should be
   // identical after adjustment.
@@ -213,10 +216,11 @@ TEST(AdjustSourceTiming, AllSourcesDifferentStarttimes) {
 
   SourceVec2D sources = { src_a, src_b };
 
-  auto result = specfem::io::sources_impl::adjust_source_timing<dim2>(
-      sources, /*user_t0=*/0.0);
+  auto [t0, starttime] =
+      specfem::io::sources_impl::adjust_source_timing<dim2>(sources,
+                                                            /*user_t0=*/0.0);
 
-  ASSERT_TRUE(result.starttime.has_value());
+  ASSERT_TRUE(starttime.has_value());
 
   // Both have tshift=0 initially.
   // earliest_t0_utc = min(origin_a - 0, origin_b - 0) = origin_a
@@ -227,9 +231,8 @@ TEST(AdjustSourceTiming, AllSourcesDifferentStarttimes) {
 
   // Simulation start: earliest_t0_utc + t0
   auto expected_starttime =
-      origin_a +
-      std::chrono::milliseconds(static_cast<int64_t>(result.t0 * 1000.0));
-  EXPECT_EQ(*result.starttime, expected_starttime);
+      origin_a + std::chrono::milliseconds(static_cast<int64_t>(t0 * 1000.0));
+  EXPECT_EQ(*starttime, expected_starttime);
 }
 
 // ============================================================================
@@ -248,10 +251,11 @@ TEST(AdjustSourceTiming, MultipleStarttimesWithTshifts) {
 
   SourceVec2D sources = { src_a, src_b };
 
-  auto result = specfem::io::sources_impl::adjust_source_timing<dim2>(
-      sources, /*user_t0=*/0.0);
+  auto [t0, starttime] =
+      specfem::io::sources_impl::adjust_source_timing<dim2>(sources,
+                                                            /*user_t0=*/0.0);
 
-  ASSERT_TRUE(result.starttime.has_value());
+  ASSERT_TRUE(starttime.has_value());
 
   // UTC(t=0) candidates:
   //   Source A: origin_a - tshift_a = 50.0 - 1.0 = 49.0s (in the second field)
@@ -268,9 +272,8 @@ TEST(AdjustSourceTiming, MultipleStarttimesWithTshifts) {
 
   // Simulation start
   auto expected_starttime =
-      earliest +
-      std::chrono::milliseconds(static_cast<int64_t>(result.t0 * 1000.0));
-  EXPECT_EQ(*result.starttime, expected_starttime);
+      earliest + std::chrono::milliseconds(static_cast<int64_t>(t0 * 1000.0));
+  EXPECT_EQ(*starttime, expected_starttime);
 }
 
 // ============================================================================
@@ -299,10 +302,11 @@ TEST(AdjustSourceTiming, InconsistentStarttimesThrows) {
 TEST(AdjustSourceTiming, NoStarttimesReturnsNullopt) {
   SourceVec2D sources = { make_force_2d(10.0, 5.0), make_force_2d(1.0, 30.0) };
 
-  auto result = specfem::io::sources_impl::adjust_source_timing<dim2>(
-      sources, /*user_t0=*/0.0);
+  auto [t0, starttime] =
+      specfem::io::sources_impl::adjust_source_timing<dim2>(sources,
+                                                            /*user_t0=*/0.0);
 
-  EXPECT_FALSE(result.starttime.has_value());
+  EXPECT_FALSE(starttime.has_value());
 }
 
 int main(int argc, char *argv[]) {

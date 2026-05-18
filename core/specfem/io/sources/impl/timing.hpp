@@ -6,20 +6,12 @@
 #include "specfem/source.hpp"
 #include <memory>
 #include <optional>
+#include <tuple>
 #include <vector>
 
 namespace specfem {
 namespace io {
 namespace sources_impl {
-
-/**
- * @brief Result of adjust_source_timing: simulation-relative t0 and an
- * optional absolute UTC start datetime for the simulation.
- */
-struct timing_result {
-  type_real t0;
-  std::optional<specfem::datetime::type> starttime;
-};
 
 /**
  * @brief Adjust t0 and tshift across all sources.
@@ -32,10 +24,11 @@ struct timing_result {
  * @tparam DimensionTag Spatial dimension (dim2 or dim3)
  * @param sources Vector of source objects (tshift may be modified in-place)
  * @param user_t0 User-defined start time (0 means auto-detect)
- * @return timing_result The computed t0 and optional start datetime
+ * @return tuple of (t0, optional start datetime)
  */
 template <specfem::element::dimension_tag DimensionTag>
-timing_result adjust_source_timing(
+std::tuple<type_real, std::optional<specfem::datetime::type>>
+adjust_source_timing(
     std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>
         &sources,
     type_real user_t0);

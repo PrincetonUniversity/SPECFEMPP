@@ -70,11 +70,11 @@ read_sources(
   specfem::io::sources_impl::validate_source_simulation_type<DimensionTag>(
       all_sources, simulation_type);
 
-  auto timing =
+  auto [t0, starttime] =
       specfem::io::sources_impl::adjust_source_timing<DimensionTag>(
           all_sources, user_t0);
 
-  return std::make_tuple(all_sources, timing.t0, timing.starttime);
+  return std::make_tuple(all_sources, t0, starttime);
 }
 
 } // namespace io
