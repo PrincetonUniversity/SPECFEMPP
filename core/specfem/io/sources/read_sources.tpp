@@ -59,9 +59,15 @@ read_sources(
           entry.file_path, nsteps, dt, source_wavefield_type);
       break;
     case specfem::enums::source_format::CMTSOLUTION:
-      throw std::runtime_error("CMTSOLUTION reader not yet implemented");
+      batch = specfem::io::sources_impl::read<
+          DimensionTag, specfem::enums::source_format::CMTSOLUTION>(
+          entry.file_path, nsteps, dt, source_wavefield_type);
+      break;
     case specfem::enums::source_format::FORCESOLUTION:
-      throw std::runtime_error("FORCESOLUTION reader not yet implemented");
+      batch = specfem::io::sources_impl::read<
+          DimensionTag, specfem::enums::source_format::FORCESOLUTION>(
+          entry.file_path, nsteps, dt, source_wavefield_type);
+      break;
     }
 
     all_sources.insert(all_sources.end(), batch.begin(), batch.end());

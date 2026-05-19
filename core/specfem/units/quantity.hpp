@@ -257,6 +257,8 @@ using DimAngularFrequency =
     Dim<0, 0, -1, 1>; ///< Angular frequency (@f$ \mathrm{rad/s} @f$)
 using DimDensity = Dim<1, -3, 0>;   ///< Density (@f$ \mathrm{kg/m^3} @f$)
 using DimPressure = Dim<1, -1, -2>; ///< Pressure (Pa)
+using DimTorque =
+    Dim<1, 2, -2>; ///< Torque / moment (@f$ \mathrm{M L^2 T^{-2}} @f$)
 
 } // namespace SI
 
@@ -312,6 +314,11 @@ using Omega = Quantity<SI::DimAngularFrequency>; ///< Angular frequency (rad/s)
 using Pascal = Quantity<SI::DimPressure>; ///< Pressure (Pa)
 using Megapascal =
     Quantity<SI::DimPressure, std::ratio<1000000, 1>>; ///< Pressure (MPa)
+
+// Torque / seismic moment
+using DyneCentimeter = Quantity<SI::DimTorque>; ///< Moment in dyne-cm (CGS)
+using NewtonMeter =
+    Quantity<SI::DimTorque, std::ratio<10000000, 1>>; ///< Moment in N-m (SI)
 
 /// @}
 

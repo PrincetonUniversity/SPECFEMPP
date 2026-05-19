@@ -75,6 +75,10 @@ SPECFEM_UNIT_TAG(omega, w, Omega)
 SPECFEM_UNIT_TAG(pascal_unit, Pa, Pascal)
 SPECFEM_UNIT_TAG(megapascal, MPa, Megapascal)
 
+// Torque / seismic moment
+SPECFEM_UNIT_TAG(dyne_centimeter, dyn_cm, DyneCentimeter)
+SPECFEM_UNIT_TAG(newton_meter, Nm, NewtonMeter)
+
 #undef SPECFEM_UNIT_TAG
 
 } // namespace specfem::units::unit_symbols

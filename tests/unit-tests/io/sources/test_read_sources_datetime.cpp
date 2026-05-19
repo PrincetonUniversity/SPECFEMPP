@@ -110,3 +110,29 @@ TEST(ReadSourcesDatetime3D, NoDatetime) {
   ASSERT_EQ(sources.size(), 1u);
   EXPECT_FALSE(sources[0]->get_starttime().has_value());
 }
+
+// ---------------------------------------------------------------------------
+// CMTSOLUTION / FORCESOLUTION datetime tests
+// ---------------------------------------------------------------------------
+
+TEST(ReadSourcesDatetime3D, CMTSOLUTIONDatetime) {
+  auto sources = specfem::io::sources_impl::read<
+      dim3, specfem::enums::source_format::CMTSOLUTION>(
+      std::string("io/sources/data/dim3/single_moment_tensor.CMTSOLUTION"),
+      nsteps, dt, specfem::simulation::field_type::forward);
+
+  ASSERT_EQ(sources.size(), 1u);
+  ASSERT_TRUE(sources[0]->get_starttime().has_value());
+  auto expected = specfem::datetime::make(2000, 1, 1, 0, 0, 0.0);
+  EXPECT_EQ(*sources[0]->get_starttime(), expected);
+}
+
+TEST(ReadSourcesDatetime3D, FORCESOLUTIONNoDatetime) {
+  auto sources = specfem::io::sources_impl::read<
+      dim3, specfem::enums::source_format::FORCESOLUTION>(
+      std::string("io/sources/data/dim3/single_force.FORCESOLUTION"), nsteps,
+      dt, specfem::simulation::field_type::forward);
+
+  ASSERT_EQ(sources.size(), 1u);
+  EXPECT_FALSE(sources[0]->get_starttime().has_value());
+}
