@@ -83,15 +83,6 @@ public:
   }
 
   /**
-   * @brief Get the station iterator
-   *
-   * @return const StationIterator& Iterator over stations
-   */
-  const receivers_impl::StationIterator &stations() const {
-    return static_cast<const receivers_impl::StationIterator &>(*this);
-  }
-
-  /**
    * @brief Set rotation matrix for a receiver
    * @param irec Receiver index
    * @param rotation_matrix 3x3 rotation matrix (nrec, 3, 3) layout

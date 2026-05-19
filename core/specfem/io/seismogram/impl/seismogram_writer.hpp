@@ -23,26 +23,22 @@ struct SeismogramFormatWriter;
 /**
  * @brief Write seismograms for all stations in the given format.
  *
- * Delegates entirely to SeismogramFormatWriter<Format>::write(), which is
- * responsible for iterating over stations and writing each one. This allows
- * format implementations to decide how to group or batch station output
- * (e.g. one file per station for ASCII, or a single container for HDF5).
+ * Delegates entirely to SeismogramFormatWriter<Format>::write().
  *
  * @tparam Format    Output format (e.g.
  * specfem::enums::seismogram_format::ascii).
- * @tparam Receivers Type exposing stations(), get_seismogram(), and
- * dimension_tag.
+ * @tparam Stations  Range of StationInfo (e.g. a StationView).
+ * @tparam Receivers Type exposing get_seismogram() and dimension_tag.
+ * @param stations   Filtered station range to write.
  * @param receivers  Receivers object after sync_seismograms() has been called.
  * @param gen        ChannelGenerator used to build output filenames.
- * @param write_from_main Only write from rank 0 when set to true.
  */
-template <specfem::enums::seismogram_format Format, typename Receivers>
-void write_seismogram(
-    Receivers &receivers, ChannelGenerator &gen,
-    const std::string &output_folder,
-    const std::optional<bool> write_from_main = std::nullopt) {
-  SeismogramFormatWriter<Format>::write(receivers, gen, output_folder,
-                                        write_from_main);
+template <specfem::enums::seismogram_format Format, typename Stations,
+          typename Receivers>
+void write_seismogram(Stations &&stations, Receivers &receivers,
+                      ChannelGenerator &gen, const std::string &output_folder) {
+  SeismogramFormatWriter<Format>::write(std::forward<Stations>(stations),
+                                        receivers, gen, output_folder);
 }
 
 } // namespace impl

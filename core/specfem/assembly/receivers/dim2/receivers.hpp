@@ -97,15 +97,6 @@ public:
     return seismogram_types_;
   }
 
-  /**
-   * @brief Get the station iterator
-   *
-   * @return const StationIterator& Iterator over stations
-   */
-  const receivers_impl::StationIterator &stations() const {
-    return static_cast<const receivers_impl::StationIterator &>(*this);
-  }
-
 private:
   int nspec;              ///< Total number of spectral elements
   IndexViewType elements; ///< View to store the elements associated with the

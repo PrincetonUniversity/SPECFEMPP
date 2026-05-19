@@ -107,8 +107,7 @@ TEST(StationIteratorTests, AddStations) {
         : StationIterator(nreceivers, types) {}
 
     void add_station(const std::string &network, const std::string &station) {
-      network_names_.push_back(network);
-      station_names_.push_back(station);
+      stations_.push_back({ network, station, 0, seismogram_types_ });
     }
   };
 
@@ -132,8 +131,7 @@ TEST(StationIteratorTests, IteratorDereference) {
         : StationIterator(nreceivers, types) {}
 
     void add_station(const std::string &network, const std::string &station) {
-      network_names_.push_back(network);
-      station_names_.push_back(station);
+      stations_.push_back({ network, station, 0, seismogram_types_ });
     }
   };
 
@@ -162,8 +160,7 @@ TEST(StationIteratorTests, IteratorIncrement) {
         : StationIterator(nreceivers, types) {}
 
     void add_station(const std::string &network, const std::string &station) {
-      network_names_.push_back(network);
-      station_names_.push_back(station);
+      stations_.push_back({ network, station, 0, seismogram_types_ });
     }
   };
 

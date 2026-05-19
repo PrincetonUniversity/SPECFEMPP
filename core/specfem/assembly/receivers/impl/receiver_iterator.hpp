@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/enums.hpp"
+#include <algorithm>
 #include <vector>
 
 namespace specfem::assembly::receivers_impl {
@@ -47,57 +48,34 @@ private:
 
 // Station iterator that outputs StationInfo objects
 class StationIterator {
-private:
-  class Iterator {
-  public:
-    Iterator(const StationIterator *container, size_t index)
-        : container_(container), index_(index) {}
-
-    StationInfo operator*() const {
-      return StationInfo(container_->network_names_[index_],
-                         container_->station_names_[index_],
-                         container_->receiver_partition_index_[index_],
-                         container_->seismogram_types_);
-    }
-
-    Iterator &operator++() {
-      ++index_;
-      return *this;
-    }
-
-    bool operator==(const Iterator &other) const {
-      return index_ == other.index_;
-    }
-
-    bool operator!=(const Iterator &other) const {
-      return index_ != other.index_;
-    }
-
-  private:
-    const StationIterator *container_;
-    size_t index_;
-  };
-
 public:
   StationIterator() = default;
 
   StationIterator(size_t nreceivers,
                   const std::vector<specfem::enums::wavefield> &seismo_types)
       : seismogram_types_(seismo_types) {
-    station_names_.reserve(nreceivers);
-    network_names_.reserve(nreceivers);
-    receiver_partition_index_.reserve(nreceivers);
+    stations_.reserve(nreceivers);
   }
 
-  Iterator begin() const { return Iterator(this, 0); }
-  Iterator end() const { return Iterator(this, station_names_.size()); }
+  auto begin() const { return stations_.begin(); }
+  auto end() const { return stations_.end(); }
 
-  size_t size() const { return station_names_.size(); }
+  size_t size() const { return stations_.size(); }
+
+  /// Return a const ref to all stations.
+  const std::vector<StationInfo> &stations() const { return stations_; }
+
+  /// Return a vector of stations matching the predicate.
+  template <typename Filter>
+  std::vector<StationInfo> stations(Filter filter) const {
+    std::vector<StationInfo> result;
+    std::copy_if(stations_.begin(), stations_.end(), std::back_inserter(result),
+                 filter);
+    return result;
+  }
 
 protected:
-  std::vector<std::string> station_names_;
-  std::vector<std::string> network_names_;
-  std::vector<int> receiver_partition_index_;
+  std::vector<StationInfo> stations_;
   std::vector<specfem::enums::wavefield> seismogram_types_;
 };
 

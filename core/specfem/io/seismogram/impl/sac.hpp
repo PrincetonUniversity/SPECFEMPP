@@ -1,6 +1,7 @@
 #pragma once
 
 #include "seismogram_writer.hpp"
+#include "specfem/assembly/receivers/impl/receiver_iterator.hpp"
 #include "specfem/element/tags.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/enums/wavefield.hpp"
@@ -246,29 +247,21 @@ inline void write_sac_binary(const std::string &filepath,
 // ---------------------------------------------------------------------------
 template <>
 struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
-  template <typename Receivers>
-  static void write(Receivers &receivers, ChannelGenerator &gen,
-                    const std::string &output_folder,
-                    const std::optional<bool> write_from_main = std::nullopt) {
-    const bool from_main = write_from_main.value_or(false);
-
+  template <typename Stations, typename Receivers>
+  static void write(Stations &&stations, Receivers &receivers,
+                    ChannelGenerator &gen, const std::string &output_folder) {
     // SEED location code encodes simulation dimensionality.
     constexpr std::string_view location_code =
         (Receivers::dimension_tag == specfem::element::dimension_tag::dim2)
             ? "S2"
             : "S3";
 
-    for (auto station_info : receivers.stations()) {
-#ifdef SPECFEM_ENABLE_MPI
-      const bool on_this_rank =
-          (station_info.partition_index == specfem::MPI::get_rank());
-      const bool is_main = specfem::MPI::main_proc();
+    const int my_rank = specfem::MPI::get_rank();
+    const bool is_main = specfem::MPI::main_proc();
 
-      // Skip entirely before any allocation: station is not on this rank
-      // and this process is not responsible for collecting it.
-      if (!on_this_rank && !(from_main && is_main))
-        continue;
-#endif
+    for (auto station_info : stations) {
+      const bool on_this_rank = (station_info.partition_index == my_rank);
+
       for (auto seismogram_type : station_info.get_seismogram_types()) {
 
         const auto base_filenames =
@@ -285,42 +278,41 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
           continue;
 
         const float b = static_cast<float>(receivers.get_t0());
-        const float delta = static_cast<float>(receivers.get_sample_interval());
+        const float delta = static_cast<float>(gen.get_sample_interval());
 
         std::vector<std::vector<float> > samples(ncomp);
         for (auto &s : samples)
           s.reserve(nsteps);
 
-#ifdef SPECFEM_ENABLE_MPI
         if (!on_this_rank) {
           // from_main && is_main is guaranteed by the station-level guard.
           // Receive samples from the owning rank.
           for (auto &s : samples)
             s.resize(nsteps);
           for (int icomp = 0; icomp < ncomp; ++icomp) {
-            MPI_Recv(samples[icomp].data(), nsteps, MPI_FLOAT,
-                     station_info.partition_index, icomp,
-                     specfem::MPI::communicator(), MPI_STATUS_IGNORE);
+            SPECFEM_MPI_SAFECALL(
+                MPI_Recv(samples[icomp].data(), nsteps, MPI_FLOAT,
+                         station_info.partition_index, icomp,
+                         specfem::MPI::communicator(), MPI_STATUS_IGNORE));
           }
         } else {
-#endif
           for (auto [time, value] : receivers.get_seismogram(
                    station_info.station_name, station_info.network_name,
                    seismogram_type)) {
             for (int i = 0; i < ncomp; ++i)
               samples[i].push_back(static_cast<float>(value[i]));
           }
-#ifdef SPECFEM_ENABLE_MPI
-          if (from_main && !is_main) {
-            // Send to rank 0 and skip writing on this rank.
+
+          if (!is_main) {
+            // Not rank 0: send our samples to rank 0 and skip writing.
             for (int icomp = 0; icomp < ncomp; ++icomp) {
-              MPI_Send(samples[icomp].data(), nsteps, MPI_FLOAT, 0, icomp,
-                       specfem::MPI::communicator());
+              SPECFEM_MPI_SAFECALL(MPI_Send(samples[icomp].data(), nsteps,
+                                            MPI_FLOAT, 0, icomp,
+                                            specfem::MPI::communicator()));
             }
             continue;
           }
         }
-#endif
 
         // ── Write one SAC file per component ────────────────────────────────
         for (int icomp = 0; icomp < ncomp; ++icomp) {

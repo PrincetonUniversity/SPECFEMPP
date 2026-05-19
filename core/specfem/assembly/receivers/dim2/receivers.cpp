@@ -83,8 +83,7 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim2>::receivers(
     std::string station_name = receiver->get_station_name();
     std::string network_name = receiver->get_network_name();
 
-    station_names_.push_back(station_name);
-    network_names_.push_back(network_name);
+    stations_.push_back({ network_name, station_name, 0, seismogram_types_ });
     station_network_map[station_name][network_name] = ireceiver;
 
     if (partition_index_selected[ireceiver] != myrank) {
@@ -129,8 +128,8 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim2>::receivers(
   // Build per-material receiver index stores using tag_dispatch::Storage.
   this->build_index_stores(h_elements, element_types);
 
-  receiver_partition_index_.assign(partition_index_selected.begin(),
-                                   partition_index_selected.end());
+  for (int i = 0; i < nreceivers; ++i)
+    stations_[i].partition_index = partition_index_selected[i];
 
   for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver)
     receivers[ireceiver]->set_partition_index(

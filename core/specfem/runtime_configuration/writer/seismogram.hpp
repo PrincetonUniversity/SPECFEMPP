@@ -52,8 +52,7 @@ public:
   std::shared_ptr<specfem::io::writer> instantiate_seismogram_writer(
       const specfem::enums::elastic_wave wave_type,
       const specfem::enums::electromagnetic_wave electromagnetic_wave,
-      const type_real dt, const type_real t0,
-      const int nsteps_between_samples) const;
+      const type_real dt, const int nsteps_between_samples) const;
 
   /**
    * @brief Whether to gather all seismogram data to rank 0 and write only from

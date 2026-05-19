@@ -38,12 +38,12 @@ public:
       const specfem::enums::seismogram_format type,
       const specfem::enums::elastic_wave elastic_wave,
       const specfem::enums::electromagnetic_wave electromagnetic_wave,
-      const std::string output_folder, const type_real dt, const type_real t0,
+      const std::string output_folder, const type_real dt,
       const int nstep_between_samples,
       const std::optional<bool> write_from_main = std::nullopt)
-      : impl::ChannelGenerator(dt), type(type), elastic_wave(elastic_wave),
-        electromagnetic_wave(electromagnetic_wave),
-        output_folder(output_folder), dt(dt), t0(t0),
+      : impl::ChannelGenerator(dt, nstep_between_samples), type(type),
+        elastic_wave(elastic_wave), electromagnetic_wave(electromagnetic_wave),
+        output_folder(output_folder), dt(dt),
         nstep_between_samples(nstep_between_samples),
         write_from_main(write_from_main) {};
 
@@ -62,16 +62,25 @@ private:
   void write_impl(specfem::assembly::assembly<DimensionTag> &assembly) {
     auto &receivers = assembly.receivers;
     receivers.sync_seismograms();
+
+    const int my_rank = specfem::MPI::get_rank();
+    const bool is_main = specfem::MPI::main_proc();
+    auto rank_filter =
+        [&](const specfem::assembly::receivers_impl::StationInfo &s) {
+          return s.partition_index == my_rank || is_main;
+        };
+    auto filtered_stations = receivers.stations(rank_filter);
+
     switch (type) {
     case specfem::enums::seismogram_format::ascii:
       specfem::io::impl::write_seismogram<
           specfem::enums::seismogram_format::ascii>(
-          receivers, *this, output_folder, write_from_main);
+          filtered_stations, receivers, *this, output_folder);
       break;
     case specfem::enums::seismogram_format::sac:
       specfem::io::impl::write_seismogram<
-          specfem::enums::seismogram_format::sac>(
-          receivers, *this, output_folder, write_from_main);
+          specfem::enums::seismogram_format::sac>(filtered_stations, receivers,
+                                                  *this, output_folder);
       break;
     default:
       throw std::runtime_error(
@@ -84,7 +93,6 @@ private:
   std::string output_folder; ///< Path to output folder where results will be
                              ///< stored
   type_real dt;              ///< Time interval between subsequent timesteps
-  type_real t0;              ///< Solver start time
   specfem::enums::elastic_wave elastic_wave; ///< Type of wavefield (Writes
                                              ///< .BXY for SH waves and .BXX,
                                              ///< .BXZ for P-SV waves)
