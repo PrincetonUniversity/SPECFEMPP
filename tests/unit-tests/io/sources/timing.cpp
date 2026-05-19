@@ -36,6 +36,13 @@ static type_real ricker_t0(type_real f0, type_real tshift,
   return -t0_factor / f0 + tshift;
 }
 
+/// Convert seconds to chrono milliseconds using the same rounding as the
+/// implementation (std::chrono::round), avoiding float truncation bugs.
+static auto to_ms(type_real seconds) {
+  return std::chrono::round<std::chrono::milliseconds>(
+      std::chrono::duration<double>(static_cast<double>(seconds)));
+}
+
 // ============================================================================
 // Test: No starttimes, single source, auto-detect t0
 // ============================================================================
@@ -137,10 +144,7 @@ TEST(AdjustSourceTiming, SingleSourceWithStarttime) {
   // After auto-adjust, single source: tshift becomes 0 (cur_t0 - min_t0 = 0)
   // So: starttime = origin - 0ms + t0_ms
   auto expected_starttime =
-      origin -
-      std::chrono::milliseconds(
-          static_cast<int64_t>(sources[0]->get_tshift() * 1000.0)) +
-      std::chrono::milliseconds(static_cast<int64_t>(t0 * 1000.0));
+      origin - to_ms(sources[0]->get_tshift()) + to_ms(t0);
   EXPECT_EQ(*starttime, expected_starttime);
 }
 
@@ -167,10 +171,7 @@ TEST(AdjustSourceTiming, OneOfManyHasStarttime) {
 
   // Source A tshift adjusted to 0 (min_t0 source), source B adjusted normally
   auto expected_starttime =
-      origin -
-      std::chrono::milliseconds(
-          static_cast<int64_t>(sources[0]->get_tshift() * 1000.0)) +
-      std::chrono::milliseconds(static_cast<int64_t>(t0 * 1000.0));
+      origin - to_ms(sources[0]->get_tshift()) + to_ms(t0);
   EXPECT_EQ(*starttime, expected_starttime);
 }
 
@@ -230,8 +231,7 @@ TEST(AdjustSourceTiming, AllSourcesDifferentStarttimes) {
   EXPECT_NEAR(sources[1]->get_tshift(), 2.0, 1e-10);
 
   // Simulation start: earliest_t0_utc + t0
-  auto expected_starttime =
-      origin_a + std::chrono::milliseconds(static_cast<int64_t>(t0 * 1000.0));
+  auto expected_starttime = origin_a + to_ms(t0);
   EXPECT_EQ(*starttime, expected_starttime);
 }
 
@@ -261,8 +261,7 @@ TEST(AdjustSourceTiming, MultipleStarttimesWithTshifts) {
   //   Source A: origin_a - tshift_a = 50.0 - 1.0 = 49.0s (in the second field)
   //   Source B: origin_b - tshift_b = 55.0 - 3.0 = 52.0s
   // earliest_t0_utc = 2003-12-26T01:56:49.000
-  auto earliest =
-      origin_a - std::chrono::milliseconds(static_cast<int64_t>(1.0 * 1000));
+  auto earliest = origin_a - to_ms(static_cast<type_real>(1.0));
 
   // New tshifts:
   //   Source A: origin_a - earliest = 50.0 - 49.0 = 1.0s
@@ -271,8 +270,7 @@ TEST(AdjustSourceTiming, MultipleStarttimesWithTshifts) {
   EXPECT_NEAR(sources[1]->get_tshift(), 6.0, 1e-6);
 
   // Simulation start
-  auto expected_starttime =
-      earliest + std::chrono::milliseconds(static_cast<int64_t>(t0 * 1000.0));
+  auto expected_starttime = earliest + to_ms(t0);
   EXPECT_EQ(*starttime, expected_starttime);
 }
 
