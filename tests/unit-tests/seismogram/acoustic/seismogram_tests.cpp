@@ -86,7 +86,9 @@ TEST(SEISMOGRAM_TESTS, acoustic_seismograms_test) {
   const auto quadratures = setup.instantiate_quadrature();
 
   // Read mesh generated MESHFEM
-  specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(database_file);
+  specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
+      database_file, setup.get_elastic_wave_type(),
+      setup.get_electromagnetic_wave_type(), setup.get_attenuation_setup());
 
   std::vector<std::shared_ptr<specfem::sources::source> > sources(0);
 

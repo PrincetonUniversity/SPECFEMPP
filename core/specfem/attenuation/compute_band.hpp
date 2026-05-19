@@ -32,10 +32,10 @@ namespace attenuation {
  *
  * @tparam N_SLS Number of standard linear solids (must be 2–5)
  * @param min_resolved_period Minimum period resolved by the mesh (s)
- * @return Band with @c min and @c max
+ * @return Band in Hertz with @c min and @c max
  */
 template <int N_SLS>
-specfem::utilities::Band<specfem::units::Omega>
+specfem::utilities::Band<specfem::units::Hertz>
 compute_band(specfem::units::Seconds min_resolved_period);
 
 } // namespace attenuation

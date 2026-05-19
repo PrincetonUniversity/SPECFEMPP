@@ -67,10 +67,9 @@ TEST_P(CheckConnections, Test) {
 
   const std::string mesh_file = mesh_files.at(mesh_name);
 
-  auto mesh =
-      specfem::io::read_2d_mesh(mesh_file, specfem::enums::elastic_wave::psv,
-                                specfem::enums::electromagnetic_wave::te,
-                                /*attenuation=*/false);
+  auto mesh = specfem::io::read_2d_mesh(
+      mesh_file, specfem::enums::elastic_wave::psv,
+      specfem::enums::electromagnetic_wave::te, specfem::attenuation::Setup{});
 
   const auto &adjacency_graph = mesh.adjacency_graph;
 

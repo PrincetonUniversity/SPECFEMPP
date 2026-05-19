@@ -1,7 +1,6 @@
 #pragma once
 
 #include "specfem/assembly/assembly.hpp"
-#include "specfem/assembly/assembly/impl/helper.hpp"
 #include "specfem/chunk_element.hpp"
 #include "specfem/element/dimension.hpp"
 #include "specfem/enums.hpp"
@@ -12,6 +11,8 @@
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly::assembly_impl {
+
+// TODO (Lucas : CPP20): Replace ExtentImpl with concept/require
 
 /**
  * @brief Template metaprogramming utility for multi-dimensional array type
@@ -43,14 +44,11 @@ template <typename T> struct ExtentImpl<T, 0> {
   using type = T;
 };
 
-template <specfem::element::dimension_tag DimensionTag,
-          specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag, int NGLL>
-class helper {
+template <typename Tags, int NGLL> class ComputeWavefieldHelper {
 public:
-  constexpr static auto dimension_tag = DimensionTag;
-  constexpr static auto medium_tag = MediumTag;
-  constexpr static auto property_tag = PropertyTag;
+  constexpr static auto dimension_tag = Tags::dimension_tag;
+  constexpr static auto medium_tag = Tags::medium_tag;
+  constexpr static auto property_tag = Tags::property_tag;
   constexpr static auto ngll = NGLL;
   constexpr static bool using_simd = false;
 
@@ -73,8 +71,8 @@ public:
                    Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>;
 
   // Constructor
-  helper(specfem::assembly::assembly<dimension_tag> assembly,
-         WavefieldOnEntireGridViewType wavefield_on_entire_grid)
+  ComputeWavefieldHelper(specfem::assembly::assembly<dimension_tag> assembly,
+                         WavefieldOnEntireGridViewType wavefield_on_entire_grid)
       : assembly(assembly), wavefield_on_entire_grid(wavefield_on_entire_grid) {
     const auto &element_grid = assembly.mesh.element_grid;
     if (element_grid != ngll) {
@@ -88,8 +86,8 @@ public:
     // Get the element grid (ngllx, nglly, ngllz)
     const auto &element_grid = assembly.mesh.element_grid;
 
-    const auto elements = assembly.element_types.get_elements_on_device(
-        medium_tag, property_tag, specfem::element::attenuation_tag::none);
+    const auto elements =
+        assembly.element_types.get_elements_on_device(medium_tag, property_tag);
 
     const int nelements = elements.extent(0);
 
@@ -178,8 +176,9 @@ public:
           }();
 
           // Call the compute_wavefield function
-          specfem::medium_physics::compute_wavefield<dimension_tag, MediumTag,
-                                                     PropertyTag>(
+          using PointTags = specfem::tags::Tags<dimension_tag, medium_tag,
+                                                property_tag, using_simd>;
+          specfem::medium_physics::compute_wavefield<PointTags>(
               chunk_index, assembly, lagrange_derivative, displacement,
               velocity, acceleration, wavefield_type, wavefield);
         });

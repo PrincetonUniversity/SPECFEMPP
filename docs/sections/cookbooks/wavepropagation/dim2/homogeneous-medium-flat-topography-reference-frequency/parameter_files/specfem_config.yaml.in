@@ -1,0 +1,49 @@
+parameters:
+
+  header:
+    title: Attenuation reference-frequency sensitivity
+    description: |
+      Reference frequency sweep: f_ref = {reference_frequency} Hz
+
+  simulation-setup:
+    quadrature:
+      quadrature-type: GLL4
+
+    solver:
+      time-marching:
+        time-scheme:
+          type: Newmark
+          dt: 1.1e-3
+          nstep: 1600
+
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:
+            format: "ascii"
+            directory: "OUTPUT_FILES/freq_{freq_tag}/results"
+
+  attenuation:
+    enabled: true
+    reference-frequency: {reference_frequency} Hz
+    attenuation-frequency-band:
+      - 3.0 Hz
+      - 300.0 Hz
+
+  receivers:
+    stations: "OUTPUT_FILES/mesh/STATIONS"
+    angle: 0.0
+    seismogram-type:
+      - velocity
+    nstep_between_samples: 1
+
+  run-setup:
+    number-of-processors: 1
+    number-of-runs: 1
+
+  databases:
+    mesh-database: "OUTPUT_FILES/mesh/database.bin"
+
+  sources: "source.yaml"
+
+  log-file: "OUTPUT_FILES/freq_{freq_tag}/output"

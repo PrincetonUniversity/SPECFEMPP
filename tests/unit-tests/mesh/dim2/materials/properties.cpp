@@ -179,7 +179,7 @@ void check_property(
             MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
                        elastic_psv_t, electromagnetic_te) *
             PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
-            ATTENUATION_SET(none),
+            ATTENUATION_SET(none, constant_isotropic),
         [&]<typename ElementTags>() {
           if ((medium_tag == ElementTags::medium_tag) &&
               (property_tag == ElementTags::property_tag) &&

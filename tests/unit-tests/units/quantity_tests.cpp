@@ -2,13 +2,19 @@
 #include "specfem/utilities/is_close.hpp"
 #include <gtest/gtest.h>
 
+using specfem::units::Dimensionless;
 using specfem::units::GramPerCubicMeter;
+using specfem::units::Grams;
 using specfem::units::Hertz;
+using specfem::units::KilogramPerCubicMeter;
+using specfem::units::Kilograms;
 using specfem::units::Kilometers;
 using specfem::units::KilometersPerSecond;
+using specfem::units::Megapascal;
 using specfem::units::Meters;
 using specfem::units::MetersPerSecond;
 using specfem::units::Omega;
+using specfem::units::Pascal;
 using specfem::units::Radians;
 using specfem::units::Seconds;
 using specfem::utilities::is_close;
@@ -204,4 +210,46 @@ TEST(Units_Quantity, UnitSymbolsTags) {
   // tag / tag cross-dim
   auto v3 = type_real(2.0) * km / (type_real(1.0) * s);
   EXPECT_TRUE(is_close(v3.raw(), type_real(2.0)));
+}
+
+// ---------------------------------------------------------------------------
+// unit_symbols tags for all quantity types
+// ---------------------------------------------------------------------------
+
+TEST(Units_Quantity, UnitSymbolsTags_Extended) {
+  using namespace specfem::units::unit_symbols;
+
+  auto d = type_real(1.0) * one;
+  EXPECT_TRUE(is_close(d.raw(), type_real(1.0)));
+
+  auto g_val = type_real(5.0) * g;
+  EXPECT_TRUE(is_close(g_val.raw(), type_real(5.0)));
+
+  auto kg_val = type_real(2.0) * kg;
+  EXPECT_TRUE(is_close(kg_val.raw(), type_real(2.0)));
+
+  auto rad_val = type_real(3.14) * rad;
+  EXPECT_TRUE(is_close(rad_val.raw(), type_real(3.14)));
+
+  auto gpm3_val = type_real(2700.0) * gpm3;
+  EXPECT_TRUE(is_close(gpm3_val.raw(), type_real(2700.0)));
+
+  auto kgpm3_val = type_real(2.7) * kgpm3;
+  EXPECT_TRUE(is_close(kgpm3_val.raw(), type_real(2.7)));
+
+  auto hz_val = type_real(20.0) * Hz;
+  EXPECT_TRUE(is_close(hz_val.raw(), type_real(20.0)));
+
+  auto w_val = type_real(6.28) * w;
+  EXPECT_TRUE(is_close(w_val.raw(), type_real(6.28)));
+
+  auto pa_val = type_real(101325.0) * Pa;
+  EXPECT_TRUE(is_close(pa_val.raw(), type_real(101325.0)));
+
+  auto mpa_val = type_real(1.0) * MPa;
+  EXPECT_TRUE(is_close(mpa_val.raw(), type_real(1.0)));
+
+  // commutative: tag * value
+  auto hz_rev = Hz * type_real(10.0);
+  EXPECT_TRUE(is_close(hz_rev.raw(), type_real(10.0)));
 }
