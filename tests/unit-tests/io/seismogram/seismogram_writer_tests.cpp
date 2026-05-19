@@ -6,6 +6,7 @@
 #include "specfem/io/seismogram/impl/channel_generator.hpp"
 #include "specfem/io/seismogram/impl/sac.hpp"
 #include "specfem/io/seismogram/impl/seismogram_writer.hpp"
+#include "specfem/program/context.hpp"
 #include "specfem/setup.hpp"
 #include <array>
 #include <cstring>
@@ -182,6 +183,14 @@ bool compare_files(const std::string &p1, const std::string &p2,
 } // namespace
 
 class SeismogramWriterReferenceTest : public ::testing::Test {
+public:
+  static void SetUpTestSuite() {
+    context_ =
+        std::make_unique<specfem::program::Context>(std::vector<std::string>{});
+  }
+
+  static void TearDownTestSuite() { context_.reset(); }
+
 protected:
   const std::string kOutDir = ".";
 
@@ -192,7 +201,11 @@ protected:
   void track(const std::string &path) { created_files_.push_back(path); }
 
   std::vector<std::string> created_files_;
+  static std::unique_ptr<specfem::program::Context> context_;
 };
+
+std::unique_ptr<specfem::program::Context>
+    SeismogramWriterReferenceTest::context_ = nullptr;
 
 TEST_F(SeismogramWriterReferenceTest, AsciiMatchesReference) {
   const int npts = 5;

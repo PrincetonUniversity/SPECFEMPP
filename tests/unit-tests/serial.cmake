@@ -482,6 +482,7 @@ target_link_libraries(
   specfem::io
   specfem::enums
   specfem::element
+  specfem::program
   gtest_main
 )
 
