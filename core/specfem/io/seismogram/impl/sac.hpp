@@ -259,7 +259,7 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
 
     const int my_rank = specfem::MPI::get_rank();
 
-    specfem::Logger::info(
+    specfem::Logger::debug(
         std::format("Writing SAC seismograms to {} from rank {} ({} stations)",
                     output_folder, my_rank, stations.size()));
 
