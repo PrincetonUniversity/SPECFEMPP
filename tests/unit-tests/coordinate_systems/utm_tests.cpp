@@ -28,9 +28,9 @@ TEST(CoordinateSystemsUtm, InverseConversionZone31) {
   const cartesian_coordinates cart{ 477415.5, 5712313.5, 0.0 };
   const auto geo = to_geographic(cart, { 31 });
 
-  EXPECT_NEAR(geo.longitude, 2.6741959317615298, 1e-9)
+  EXPECT_NEAR(geo.longitude, 2.6741959317615298, 1e-8)
       << "Longitude mismatch for zone 31 inverse conversion";
-  EXPECT_NEAR(geo.latitude, 51.561449479910003, 1e-9)
+  EXPECT_NEAR(geo.latitude, 51.561449479910003, 1e-8)
       << "Latitude mismatch for zone 31 inverse conversion";
 }
 

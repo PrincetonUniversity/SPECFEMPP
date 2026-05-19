@@ -162,6 +162,9 @@ include("${CMAKE_SOURCE_DIR}/cmake/hdf5.cmake")
 # Find or install NPZ library function
 include("${CMAKE_SOURCE_DIR}/cmake/npz.cmake")
 
+# Find PROJ library
+include("${CMAKE_SOURCE_DIR}/cmake/proj.cmake")
+
 # Find or install ADIOS2 library function
 include("${CMAKE_SOURCE_DIR}/cmake/adios2.cmake")
 
