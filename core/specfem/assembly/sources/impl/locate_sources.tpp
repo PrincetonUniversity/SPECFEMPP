@@ -3,6 +3,7 @@
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/assembly/resolve_coordinates.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/source.hpp"
 
@@ -18,6 +19,16 @@ void specfem::assembly::sources_impl::locate_sources(
 
   const int nsources = static_cast<int>(sources.size());
   const int myrank = specfem::MPI::get_rank();
+
+  // Resolve any generic coordinates to global coordinates using mesh context.
+  // Sources constructed with (x,y,z) directly have no coordinates_ set,
+  // so this is a no-op for them.
+  for (int isrc = 0; isrc < nsources; ++isrc) {
+    if (const auto *coords = sources[isrc]->get_coordinates()) {
+      auto gc = specfem::assembly::resolve_coordinates(*coords, mesh);
+      sources[isrc]->set_global_coordinates(gc);
+    }
+  }
 
   // Collect global coordinates for all sources.
   std::vector<specfem::point::global_coordinates<DimensionTag>> coords;

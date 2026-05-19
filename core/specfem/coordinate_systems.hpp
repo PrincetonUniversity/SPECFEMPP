@@ -11,3 +11,9 @@
 #include "coordinate_systems/geocentric.hpp"
 #include "coordinate_systems/geographic.hpp"
 #include "coordinate_systems/projections.hpp"
+
+#include "coordinate_systems/coordinates.hpp"
+#include "coordinate_systems/coordinates/cartesian_2d.hpp"
+#include "coordinate_systems/coordinates/cartesian_3d.hpp"
+#include "coordinate_systems/coordinates/cartesian_with_depth_3d.hpp"
+#include "coordinate_systems/coordinates/geographic_3d.hpp"

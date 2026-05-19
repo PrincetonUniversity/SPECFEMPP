@@ -4,6 +4,7 @@
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/receivers.hpp"
+#include "specfem/assembly/resolve_coordinates.hpp"
 #include "specfem/element.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/quadrature.hpp"
@@ -15,7 +16,7 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
     const int max_sig_step, const type_real dt, const type_real t0,
     const int nsteps_between_samples,
     const std::vector<std::shared_ptr<
-        specfem::receivers::receiver<specfem::element::dimension_tag::dim3> > >
+        specfem::receivers::receiver<specfem::element::dimension_tag::dim3>>>
         &receivers,
     const std::vector<specfem::enums::wavefield> &stypes,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
@@ -71,8 +72,16 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
   const int nreceivers = static_cast<int>(receivers.size());
   const int myrank = specfem::MPI::get_rank();
 
-  std::vector<specfem::point::global_coordinates<
-      specfem::element::dimension_tag::dim3> >
+  // Resolve any generic coordinates to global coordinates using mesh context.
+  for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
+    if (const auto *coords = receivers[ireceiver]->get_coordinates()) {
+      auto gc = specfem::assembly::resolve_coordinates(*coords, mesh);
+      receivers[ireceiver]->set_global_coordinates(gc);
+    }
+  }
+
+  std::vector<
+      specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>>
       gcoords;
   gcoords.reserve(nreceivers);
   for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver)

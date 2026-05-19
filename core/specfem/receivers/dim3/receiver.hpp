@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/constants.hpp"
+#include "specfem/coordinate_systems/coordinates.hpp"
 
 #include "specfem/enums.hpp"
 #include "specfem/point.hpp"
@@ -34,6 +35,20 @@ public:
            const type_real x, const type_real y, const type_real z)
       : network_name(network_name), station_name(station_name),
         global_coordinates(x, y, z) {};
+
+  /**
+   * @brief Construct a new receiver object from generic coordinates
+   *
+   * @param network_name Name of network where this station lies in
+   * @param station_name Name of station
+   * @param coordinates Generic coordinate object
+   */
+  receiver(
+      const std::string &network_name, const std::string &station_name,
+      std::unique_ptr<specfem::coordinate_systems::coordinates<dimension_tag>>
+          coordinates)
+      : network_name(network_name), station_name(station_name),
+        coordinates_(std::move(coordinates)) {};
 
   /**
    * @brief Get the name of network where this station lies
@@ -86,9 +101,28 @@ public:
   int get_islice() const { return islice_; }
   void set_islice(int rank) { islice_ = rank; }
 
+  /**
+   * @brief Set the generic coordinates for this receiver.
+   */
+  void set_coordinates(
+      std::unique_ptr<specfem::coordinate_systems::coordinates<dimension_tag>>
+          coordinates) {
+    coordinates_ = std::move(coordinates);
+  }
+
+  /**
+   * @brief Get the generic coordinates, or nullptr if not set.
+   */
+  const specfem::coordinate_systems::coordinates<dimension_tag> *
+  get_coordinates() const {
+    return coordinates_.get();
+  }
+
 private:
   specfem::point::global_coordinates<dimension_tag>
-      global_coordinates;   ///< Global coordinates of the receiver
+      global_coordinates; ///< Global coordinates of the receiver
+  std::unique_ptr<specfem::coordinate_systems::coordinates<dimension_tag>>
+      coordinates_;         ///< Generic coordinates (resolved at assembly time)
   std::string network_name; ///< Name of the network where this station lies
   std::string station_name; ///< Name of the station
   int islice_ = -1; ///< MPI rank that owns this receiver (-1 = not yet located)
