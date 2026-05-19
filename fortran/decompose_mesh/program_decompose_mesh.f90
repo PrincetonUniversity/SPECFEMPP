@@ -31,7 +31,7 @@ program xdecompose_mesh
 
   use decompose_mesh_par, only: nparts,outputpath_name,ADIOS_FOR_DATABASES
 
-  use shared_parameters, only: HDF5_ENABLED, LOCAL_PATH, NPROC
+  use shared_parameters, only: LOCAL_PATH, NPROC
 
   implicit none
 
