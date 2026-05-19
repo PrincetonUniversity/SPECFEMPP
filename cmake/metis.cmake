@@ -5,16 +5,18 @@ if(SPECFEM_ENABLE_METIS)
 
     list(APPEND CMAKE_MESSAGE_INDENT "  METIS: ")
 
+    if(NOT METIS_ROOT AND NOT DEFINED ENV{METIS_ROOT})
+        message(FATAL_ERROR
+            "METIS_ROOT must be set when SPECFEM_ENABLE_METIS is ON.\n"
+            "  Pass -DMETIS_ROOT=<path> to cmake or export METIS_ROOT=<path>.")
+    endif()
+
     find_path(METIS_INCLUDE_DIR
         NAMES metis.h
-        PATH_SUFFIXES metis include/metis
+        PATH_SUFFIXES metis include/metis include
         HINTS
             ${METIS_ROOT}
             ENV METIS_ROOT
-            /usr/local
-            /usr
-            /opt/local
-            /opt/homebrew
     )
 
     find_library(METIS_LIBRARY
@@ -23,18 +25,12 @@ if(SPECFEM_ENABLE_METIS)
         HINTS
             ${METIS_ROOT}
             ENV METIS_ROOT
-            /usr/local
-            /usr
-            /opt/local
-            /opt/homebrew
     )
 
     if(NOT METIS_INCLUDE_DIR OR NOT METIS_LIBRARY)
         message(FATAL_ERROR
-            "METIS not found. Please install METIS and retry.\n"
-            "  macOS:  brew install metis\n"
-            "  Debian: apt install libmetis-dev\n"
-            "  Or set METIS_ROOT to the METIS installation prefix.")
+            "METIS not found under METIS_ROOT=${METIS_ROOT}.\n"
+            "  Ensure METIS_ROOT points to a valid METIS installation prefix.")
     endif()
 
     message(STATUS "Using system-wide METIS")
