@@ -110,8 +110,6 @@ module decompose_mesh_par
   integer :: count_def_mat,count_undef_mat,imat
   character(len=MAX_STRING_LEN), dimension(:,:), allocatable :: undef_mat_prop
 
-  ! default mesh file directory
-  character(len=MAX_STRING_LEN) :: localpath_name
   character(len=MAX_STRING_LEN) :: outputpath_name
 
   integer, parameter :: IIN_database = IIN_DB
