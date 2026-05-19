@@ -25,8 +25,8 @@ specfem::runtime_configuration::seismogram::seismogram(
   }();
 
   const std::optional<bool> write_from_main = [&]() -> std::optional<bool> {
-    if (seismogram["write_from_main"]) {
-      return seismogram["write_from_main"].as<bool>();
+    if (seismogram["write-from-main"]) {
+      return seismogram["write-from-main"].as<bool>();
     } else {
       return std::nullopt;
     }

@@ -58,11 +58,7 @@ struct SeismogramRange {
   Iter end() const { return { &entries, entries.size() }; }
 };
 
-struct StationRange {
-  std::vector<MockStationInfo> stations_vec;
-  auto begin() const { return stations_vec.begin(); }
-  auto end() const { return stations_vec.end(); }
-};
+using StationRange = std::vector<MockStationInfo>;
 
 template <specfem::element::dimension_tag DimTag> struct MockReceivers {
   static constexpr specfem::element::dimension_tag dimension_tag = DimTag;
@@ -70,7 +66,7 @@ template <specfem::element::dimension_tag DimTag> struct MockReceivers {
   std::vector<MockStationInfo> station_list;
   std::map<std::string, std::vector<MockSeismogramEntry> > seismo_data;
 
-  StationRange stations() const { return { station_list }; }
+  StationRange stations() const { return station_list; }
 
   SeismogramRange get_seismogram(const std::string &station_name,
                                  const std::string &network_name,
@@ -221,7 +217,8 @@ TEST_F(SeismogramWriterReferenceTest, AsciiMatchesReference) {
   specfem::io::impl::ChannelGenerator gen(dt);
   specfem::io::impl::SeismogramFormatWriter<
       specfem::enums::seismogram_format::ascii>::write(receivers.stations(),
-                                                       receivers, gen, kOutDir);
+                                                       receivers, gen, kOutDir,
+                                                       false);
 
   constexpr std::array<char, 2> kDim2 = { 'X', 'Z' };
   const auto files = gen.get_station_filenames(
@@ -258,7 +255,8 @@ TEST_F(SeismogramWriterReferenceTest, SacMatchesReference) {
   specfem::io::impl::ChannelGenerator gen(dt);
   specfem::io::impl::SeismogramFormatWriter<
       specfem::enums::seismogram_format::sac>::write(receivers.stations(),
-                                                     receivers, gen, kOutDir);
+                                                     receivers, gen, kOutDir,
+                                                     false);
 
   constexpr std::array<char, 2> kDim2 = { 'X', 'Z' };
   const auto base_files = gen.get_station_filenames(

@@ -249,7 +249,8 @@ template <>
 struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
   template <typename Stations, typename Receivers>
   static void write(Stations &&stations, Receivers &receivers,
-                    ChannelGenerator &gen, const std::string &output_folder) {
+                    ChannelGenerator &gen, const std::string &output_folder,
+                    const bool send_to_main) {
     // SEED location code encodes simulation dimensionality.
     constexpr std::string_view location_code =
         (Receivers::dimension_tag == specfem::element::dimension_tag::dim2)
@@ -257,7 +258,10 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
             : "S3";
 
     const int my_rank = specfem::MPI::get_rank();
-    const bool is_main = specfem::MPI::main_proc();
+
+    specfem::Logger::info(
+        std::format("Writing SAC seismograms to {} from rank {} ({} stations)",
+                    output_folder, my_rank, stations.size()));
 
     for (auto station_info : stations) {
       const bool on_this_rank = (station_info.partition_index == my_rank);
@@ -285,7 +289,6 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
           s.reserve(nsteps);
 
         if (!on_this_rank) {
-          // from_main && is_main is guaranteed by the station-level guard.
           // Receive samples from the owning rank.
           for (auto &s : samples)
             s.resize(nsteps);
@@ -303,7 +306,7 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
               samples[i].push_back(static_cast<float>(value[i]));
           }
 
-          if (!is_main) {
+          if (send_to_main) {
             // Not rank 0: send our samples to rank 0 and skip writing.
             for (int icomp = 0; icomp < ncomp; ++icomp) {
               SPECFEM_MPI_SAFECALL(MPI_Send(samples[icomp].data(), nsteps,
@@ -338,7 +341,7 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
               std::format("SAC file for station {}.{} ({} component) written "
                           "to: {} from rank {}",
                           station_info.network_name, station_info.station_name,
-                          channel_code, sac_path, specfem::MPI::get_rank()));
+                          channel_code, sac_path, my_rank));
         }
       }
     }

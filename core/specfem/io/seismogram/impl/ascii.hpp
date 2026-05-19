@@ -23,13 +23,9 @@ template <>
 struct SeismogramFormatWriter<specfem::enums::seismogram_format::ascii> {
   template <typename Stations, typename Receivers>
   static void write(Stations &&stations, Receivers &receivers,
-                    ChannelGenerator &gen, const std::string &output_folder) {
+                    ChannelGenerator &gen, const std::string &output_folder,
+                    const bool send_to_main) {
     for (auto station_info : stations) {
-#ifdef SPECFEM_ENABLE_MPI
-      if (station_info.partition_index != specfem::MPI::get_rank() &&
-          !(from_main && specfem::MPI::main_proc()))
-        continue;
-#endif
       for (auto seismogram_type : station_info.get_seismogram_types()) {
         const std::vector<std::string> filenames =
             gen.get_station_filenames<Receivers::dimension_tag>(
