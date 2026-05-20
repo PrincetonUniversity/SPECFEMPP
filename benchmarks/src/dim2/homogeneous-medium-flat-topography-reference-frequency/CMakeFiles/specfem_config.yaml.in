@@ -1,0 +1,57 @@
+parameters:
+
+  header:
+    ## Header information is used for logging. It is good practice to give your simulations explicit names
+    title: Attenuation reference-frequency sensitivity # name for your simulation
+    # A detailed description for your simulation
+    description: |
+      Reference frequency sweep: f_ref = {reference_frequency} Hz
+
+  simulation-setup:
+    ## quadrature setup
+    quadrature:
+      quadrature-type: GLL4
+
+    ## Solver setup
+    solver:
+      time-marching:
+        time-scheme:
+          type: Newmark
+          dt: 1.1e-3
+          nstep: 1600
+
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:
+            format: "ascii"
+            directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/freq_{freq_tag}/results"
+
+  attenuation:
+    enabled: true
+    reference-frequency: {reference_frequency} Hz
+    attenuation-frequency-band:
+      - 3.0 Hz
+      - 300.0 Hz
+
+  receivers:
+    stations: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/mesh/STATIONS"
+    angle: 0.0
+    seismogram-type:
+      - velocity
+    nstep_between_samples: 1
+
+  ## Runtime setup
+  run-setup:
+    number-of-processors: 1
+    number-of-runs: 1
+
+  ## databases
+  databases:
+    mesh-database: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/mesh/database.bin"
+
+  ## sources
+  sources: "@CURRENT_BENCHMARK_BUILD_DIR@/source.yaml"
+
+  ## log-file configuration
+  log-file: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/freq_{freq_tag}/output"

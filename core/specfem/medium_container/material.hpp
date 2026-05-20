@@ -58,7 +58,6 @@ class material;
 #include "specfem/medium/dim2/elastic/isotropic_cosserat/material.hpp"
 #include "specfem/medium/dim2/electromagnetic/isotropic/material.hpp"
 #include "specfem/medium/dim2/poroelastic/isotropic/material.hpp"
-
 #include "specfem/medium/dim3/acoustic/isotropic/material.hpp"
 #include "specfem/medium/dim3/elastic/isotropic/material.hpp"
 #include "specfem/medium/dim3/elastic/isotropic_cosserat/material.hpp"

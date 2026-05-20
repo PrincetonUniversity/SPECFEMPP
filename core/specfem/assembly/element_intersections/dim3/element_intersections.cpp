@@ -14,7 +14,9 @@ specfem::assembly::element_intersections<
     element_intersections(
         const int ngllx, const int nglly, const int ngllz,
         const specfem::assembly::mesh<dimension_tag> &mesh,
-        const specfem::assembly::element_types<dimension_tag> &element_types) {
+        const specfem::assembly::element_types<dimension_tag> &element_types,
+        const specfem::element_coupling::flux_scheme_configuration
+            &flux_scheme_config) {
 
   if (ngllz <= 0 || nglly <= 0 || ngllx <= 0) {
     KOKKOS_ABORT_WITH_LOCATION("Invalid GLL grid size");
@@ -27,6 +29,8 @@ specfem::assembly::element_intersections<
 
   const auto element =
       specfem::mesh_entity::element<dimension_tag>(ngllz, nglly, ngllx);
+
+  const auto flux_scheme_tag = flux_scheme_config.get_flux_scheme_tag();
 
   // Collect self/coupled face vectors for each tag combination
   struct CollectedFaces {
@@ -63,7 +67,8 @@ specfem::assembly::element_intersections<
           const auto medium2 = element_types.get_medium_tag(ispec2);
           if (boundary_tag == TagsType::boundary_tag &&
               medium1 == self_medium && medium2 == coupled_medium &&
-              medium1 != medium2) {
+              medium1 != medium2 &&
+              flux_scheme_tag == TagsType::flux_scheme_tag) {
             const specfem::mesh_entity::dim3::type self_orientation =
                 nc_graph[edge].orientation;
             // Only process face connections (skip edge and corner connections)

@@ -3,6 +3,7 @@
 #include "specfem/enums.hpp"
 #include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
+#include "specfem/mpi.hpp"
 #include "specfem/tag_dispatch.hpp"
 
 specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
@@ -29,8 +30,11 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
                                   this->mesh.element_grid.ngllz, this->mesh,
                                   this->element_types, flux_scheme_config };
   this->jacobian_matrix = { this->mesh };
-  this->properties = { this->element_types, this->mesh, mesh.materials,
-                       property_reader != nullptr };
+
+  this->field_derivative_storage = { this->element_types, this->mesh.nspec,
+                                     this->mesh.element_grid.ngllz,
+                                     this->mesh.element_grid.ngllx };
+
   this->kernels = { this->element_types };
   this->sources = {
     sources, this->mesh, this->jacobian_matrix, this->element_types,
@@ -64,6 +68,12 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
                                      flux_scheme_config };
   this->fields = { this->mesh, this->element_types, simulation };
 
+  this->attenuation = { mesh.attenuation, dt, this->mesh, this->element_types,
+                        mesh.materials };
+
+  this->properties = { this->element_types, this->mesh, mesh.materials,
+                       property_reader != nullptr };
+
   this->info = { this->mesh, this->properties, this->element_types };
 
   if (allocate_boundary_values)
@@ -96,13 +106,21 @@ std::string
 specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::print()
     const {
   std::ostringstream message;
+  int nspec = this->mesh.nspec;
+  int nglob = this->mesh.nglob;
+
+  const auto comm = specfem::MPI::communicator();
+  SPECFEM_MPI_SAFECALL(
+      MPI_Allreduce(MPI_IN_PLACE, &nspec, 1, MPI_INT, MPI_SUM, comm));
+  SPECFEM_MPI_SAFECALL(
+      MPI_Allreduce(MPI_IN_PLACE, &nglob, 1, MPI_INT, MPI_SUM, comm));
+
   message << "Assembly information:\n"
           << "------------------------------\n"
-          << "Total number of spectral elements : " << this->mesh.nspec << "\n"
+          << "Total number of spectral elements : " << nspec << "\n"
           << "Total number of geometric points : "
           << this->mesh.element_grid.ngllz << "\n"
-          << "Total number of distinct quadrature points : " << this->mesh.nglob
-          << "\n"
+          << "Total number of distinct quadrature points : " << nglob << "\n"
           << this->info.string() << "\n";
 
   int total_elements = 0;
@@ -117,6 +135,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::print()
         // Getting the number of elements per medium
         int n_elements =
             this->element_types.get_number_of_elements(ElementTags::medium_tag);
+        SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &n_elements, 1,
+                                           MPI_INT, MPI_SUM, comm));
 
         // Printing the number of elements if more than 0
         if (n_elements > 0) {
@@ -143,6 +163,17 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::print()
     message << "   Elastic media will simulate SH polarized waves\n";
   } else if (is_psv) {
     message << "   Elastic media will simulate P-SV polarized waves\n";
+  }
+
+  if (total_elements == nspec) {
+    message << "  All elements accounted for.\n";
+  } else {
+    message << " NOT ALL ELEMENTS ACCOUNTED FOR\n";
+    message << "  Mesh elements:              " << nspec << "\n";
+    message << "  Assembly elements counted:  " << total_elements << "\n";
+    message << "  Total unaccounted elements: " << (nspec - total_elements)
+            << "\n";
+    throw std::runtime_error(message.str());
   }
 
   return message.str();

@@ -264,6 +264,7 @@ add_executable(
   point/boundary_tests.cpp
   point/jacobian_matrix_tests.cpp
   point/attenuation_tests.cpp
+  point/field_derivatives_tests.cpp
   point/source_tests.cpp
   point/stress_integrand_tests.cpp
   point/stress_tests.cpp
@@ -467,6 +468,24 @@ target_link_libraries(
 )
 
 add_executable(
+  element_types_tests
+  assembly/element_types/runner.cpp
+  assembly/element_types/dim2/element_types_tests.cpp
+  assembly/element_types/dim3/element_types_tests.cpp
+)
+
+target_link_libraries(
+  element_types_tests
+  specfem::assembly
+  specfem::element
+  specfem_environment
+  Kokkos::kokkos
+  gtest_main
+  ${BOOST_LIBS}
+  -lpthread -lm
+)
+
+add_executable(
   io_tests
   io/sources/test_read_sources_file.cpp
   io/sources/test_read_sources_yaml.cpp
@@ -483,6 +502,19 @@ target_link_libraries(
   yaml-cpp
   specfem::enums
   ${BOOST_LIBS}
+)
+
+add_executable(
+  seismogram_writer_tests
+  io/seismogram/seismogram_writer_tests.cpp
+)
+
+target_link_libraries(
+  seismogram_writer_tests
+  specfem::io
+  specfem::enums
+  specfem::element
+  gtest_main
 )
 
 add_executable(
@@ -706,6 +738,19 @@ target_link_libraries(
 )
 
 add_executable(
+  medium_attenuation_tests
+  medium/attenuation/main.cpp
+  medium/attenuation/dim2/elastic_isotropic.cpp
+  medium/attenuation/dim3/elastic_isotropic.cpp
+)
+
+target_link_libraries(
+  medium_attenuation_tests
+  point
+  gtest_main
+)
+
+add_executable(
   compute_coupling_tests
   compute_coupling/acoustic_elastic.cpp
   compute_coupling/elastic_acoustic.cpp
@@ -831,7 +876,6 @@ add_custom_command(TARGET displacement_newmark_3d_tests POST_BUILD
 
 # Register serial tests for discovery
 set(SERIAL_TEST_TARGETS
-  abort_tests
   serial_mpi_tests
   assembly_receivers_tests
   assembly_tests
@@ -842,12 +886,14 @@ set(SERIAL_TEST_TARGETS
   compute_coupling_tests
   displacement_newmark_2d_tests
   displacement_newmark_3d_tests
+  element_types_tests
   fortranio_test
   enumerations_tests
   gll_tests
   interpolate_function
   io_framework_tests
   io_tests
+  seismogram_writer_tests
   is_close_tests
   logspace_tests
   jacobian_tests
@@ -857,6 +903,7 @@ set(SERIAL_TEST_TARGETS
   gradient_tests
   transfer_tests
   mass_matrix_tests
+  medium_attenuation_tests
   mesh_dim2_tests
   mesh_dim3_tests
   nonconforming_tests
@@ -875,6 +922,10 @@ set(SERIAL_TEST_TARGETS
   test_mesh_utilities_mapping_3d
   units_tests
 )
+
+if (NOT SPECFEM_ENABLE_MPI)
+    list(APPEND SERIAL_TEST_TARGETS abort_tests)
+endif()
 
 # Link test data directories for serial tests
 set(SERIAL_LINK_DIRS

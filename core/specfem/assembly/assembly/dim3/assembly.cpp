@@ -19,7 +19,9 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
     const int nsteps_between_samples,
     const specfem::simulation::type simulation,
     const bool allocate_boundary_values,
-    const std::shared_ptr<specfem::io::reader> &property_reader) {
+    const std::shared_ptr<specfem::io::reader> &property_reader,
+    const specfem::element_coupling::flux_scheme_configuration
+        &flux_scheme_config) {
 
   const int nspec = mesh.nspec;
   const int ngllz = mesh.element_grid.ngllz;
@@ -45,8 +47,10 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
 
   this->jacobian_matrix = { this->mesh };
 
-  this->properties = { this->element_types, this->mesh, mesh.materials,
-                       property_reader != nullptr };
+  this->field_derivative_storage = { this->element_types, this->mesh.nspec,
+                                     this->mesh.element_grid.ngllz,
+                                     this->mesh.element_grid.nglly,
+                                     this->mesh.element_grid.ngllx };
 
   this->kernels = { this->element_types };
 
@@ -78,6 +82,12 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
   // Currently done in the mesher!
   this->check_jacobian_matrix();
 
+  this->attenuation = { mesh.attenuation, dt, this->mesh, this->element_types,
+                        mesh.materials };
+
+  this->properties = { this->element_types, this->mesh, mesh.materials,
+                       property_reader != nullptr };
+
   this->info = { this->mesh, this->properties, this->element_types };
 
   return;
@@ -87,10 +97,15 @@ std::string
 specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::print()
     const {
   std::ostringstream message;
+  int nspec = this->mesh.nspec;
+  const auto comm = specfem::MPI::communicator();
+  SPECFEM_MPI_SAFECALL(
+      MPI_Allreduce(MPI_IN_PLACE, &nspec, 1, MPI_INT, MPI_SUM, comm));
+
   message << "Assembly information:\n"
           << "------------------------------\n"
-          << "  Total number of spectral elements             : "
-          << this->mesh.nspec << "\n"
+          << "  Total number of spectral elements             : " << nspec
+          << "\n"
           << "  Total number of quadrature points per element : "
           << this->mesh.element_grid.ngllz << "\n"
           << this->info.string() << "\n";
@@ -103,6 +118,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::print()
         constexpr auto medium_tag = TagsType::medium_tag;
         // Getting the number of elements per medium
         int n_elements = this->element_types.get_number_of_elements(medium_tag);
+        SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &n_elements, 1,
+                                           MPI_INT, MPI_SUM, comm));
 
         // Printing the number of elements if more than 0
         if (n_elements > 0) {
@@ -115,15 +132,16 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::print()
         };
       });
 
-  if (total_elements == mesh.nspec) {
+  if (total_elements == nspec) {
     message << "  All elements accounted for.\n";
   } else {
     message << " NOT ALL ELEMENTS ACCOUNTED FOR\n";
-    message << "  Mesh elements:              " << mesh.nspec << "\n";
+    message << "  Mesh elements:              " << nspec << "\n";
     message << "  Assembly elements counted:  " << total_elements << "\n";
-    message << "  Total unaccounted elements: " << (mesh.nspec - total_elements)
+    message << "  Total unaccounted elements: " << (nspec - total_elements)
             << "\n";
     throw std::runtime_error(message.str());
   }
+
   return message.str();
 }

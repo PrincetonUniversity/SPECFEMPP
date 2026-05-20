@@ -25,13 +25,9 @@ specfem::assembly::impl::domain_properties<
     if (!has_gll_model) {
       for (int iz = 0; iz < mesh.element_grid.ngllz; ++iz) {
         for (int ix = 0; ix < mesh.element_grid.ngllx; ++ix) {
-          // Get the material at index from mesh::materials
-          auto material = materials.template get_material<
-              medium_tag, property_tag,
-              specfem::element::attenuation_tag::none>(mesh_ispec);
-
-          // Assign the material property to the property container
-          auto point_property = material.get_properties();
+          auto point_property =
+              materials.template get_properties<medium_tag, property_tag>(
+                  mesh_ispec);
           this->store_host_values(
               specfem::point::index<dimension_tag>(count, iz, ix),
               point_property);
@@ -71,14 +67,15 @@ specfem::assembly::impl::domain_properties<
                             mesh.element_grid.nglly, mesh.element_grid.ngllx }),
       [=, this](const int i, const int iz, const int iy, const int ix) {
         const int ispec = elements(i);
+        const int mesh_ispec = mesh.h_compute_to_mesh(ispec);
         property_index_mapping(ispec) = i;
         if (!has_gll_model) {
-          const auto point_property = materials.template get_properties<
-          medium_tag, property_tag,
-          specfem::element::attenuation_tag::none>(ispec);
-        this->store_host_values(
-          specfem::point::index<dimension_tag, false>(i, iz, iy, ix),
-          point_property);
+          const auto point_property =
+              materials.template get_properties<medium_tag, property_tag>(
+                  mesh_ispec);
+          this->store_host_values(
+              specfem::point::index<dimension_tag, false>(i, iz, iy, ix),
+              point_property);
         }
       });
 

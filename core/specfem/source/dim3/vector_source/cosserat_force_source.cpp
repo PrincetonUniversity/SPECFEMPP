@@ -40,9 +40,8 @@ specfem::sources::cosserat_force<
   return force_vector;
 }
 
-std::string
-specfem::sources::cosserat_force<specfem::element::dimension_tag::dim3>::print()
-    const {
+std::string specfem::sources::cosserat_force<
+    specfem::element::dimension_tag::dim3>::print_details() const {
 
   const auto gcoord = this->get_global_coordinates();
 

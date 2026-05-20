@@ -144,6 +144,7 @@ KOKKOS_FUNCTION
   const type_real gammax = (yxi * zeta - yeta * zxi) / jacobian;
   const type_real gammay = (xeta * zxi - xxi * zeta) / jacobian;
   const type_real gammaz = (xxi * yeta - xeta * yxi) / jacobian;
+
   return { xix, etax, gammax, xiy, etay, gammay, xiz, etaz, gammaz, jacobian };
 }
 

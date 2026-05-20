@@ -13,7 +13,7 @@ TEST(ALGORITHMS, locate_point) {
   // Read Mesh database
   specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
       database_file, specfem::enums::elastic_wave::psv,
-      specfem::enums::electromagnetic_wave::te, /*attenuation=*/false);
+      specfem::enums::electromagnetic_wave::te, specfem::attenuation::Setup{});
 
   // Quadratures
   specfem::quadrature::gll::gll gll(0.0, 0.0, 5);
@@ -59,8 +59,10 @@ TEST(ALGORITHMS, locate_point) {
   // Test Serial implementations
 
   for (int i = 0; i < 5; ++i) {
-    lcoord(i) = specfem::algorithms::locate_point(coordinates_ref(i), assembly);
-    gcoord(i) = specfem::algorithms::locate_point(lcoord_ref(i), assembly);
+    lcoord(i) = specfem::algorithms::locate_point_impl::locate_point(
+        coordinates_ref(i), assembly);
+    gcoord(i) = specfem::algorithms::locate_point_impl::locate_point(
+        lcoord_ref(i), assembly);
 
     EXPECT_EQ(lcoord(i).ispec, lcoord_ref(i).ispec);
     EXPECT_NEAR(lcoord(i).xi, lcoord_ref(i).xi, 1e-4);
@@ -81,8 +83,8 @@ TEST(ALGORITHMS, locate_point) {
           Kokkos::DefaultHostExecutionSpace>::member_type &team_member) {
         const int i = team_member.league_rank();
 
-        gcoord(i) = specfem::algorithms::locate_point(team_member,
-                                                      lcoord_ref(i), assembly);
+        gcoord(i) = specfem::algorithms::locate_point_impl::locate_point(
+            team_member, lcoord_ref(i), assembly);
 
         team_member.team_barrier();
         Kokkos::single(Kokkos::PerTeam(team_member), [&]() {

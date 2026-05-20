@@ -104,11 +104,14 @@ public:
       : fx(fx), fy(fy), fz(fz), fc_x(fc_x), fc_y(fc_y), fc_z(fc_z),
         wavefield_type(wavefield_type),
         vector_source(x, y, z, std::move(source_time_function)) {};
+
+  std::string source_name() const override { return "3-D Cosserat force"; }
+
   /**
    * @brief User output
    *
    */
-  std::string print() const override;
+  std::string print_details() const override;
 
   specfem::simulation::field_type get_wavefield_type() const override {
     return wavefield_type;

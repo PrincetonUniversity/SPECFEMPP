@@ -1,6 +1,5 @@
 #include "../../../SPECFEM_Environment.hpp"
 #include "specfem/assembly/assembly.hpp"
-#include "specfem/constants.hpp"
 #include "specfem/io.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/mesh.hpp"
@@ -118,7 +117,7 @@ TEST_P(Newmark, 3D) {
 
   // Read mesh generated MESHFEM
   auto mesh = specfem::io::read_3d_mesh(database_filename,
-                                        setup.is_attenuation_enabled());
+                                        setup.get_attenuation_setup());
   const type_real dt = setup.get_dt();
   const int nsteps = setup.get_nsteps();
 
@@ -129,7 +128,8 @@ TEST_P(Newmark, 3D) {
       source_node, nsteps, setup.get_t0(), dt, setup.get_simulation_type());
 
   for (auto &source : sources) {
-    specfem::Logger::info(source->print());
+    specfem::Logger::info(
+        [&](std::ostringstream &oss) { oss << source->print(); });
   }
 
   setup.update_t0(t0);
@@ -178,14 +178,16 @@ TEST_P(Newmark, 3D) {
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;
 
-  specfem::Logger::info("Assembly created in " +
-                        std::to_string(elapsed.count()) + " seconds.");
+  specfem::Logger::info([&](std::ostringstream &oss) {
+    oss << "Assembly created in " << elapsed.count() << " seconds.";
+  });
 
   // Instantiate the solver and timescheme
   auto it = setup.instantiate_timescheme(assembly.fields);
 
   // User output
-  specfem::Logger::info(it->to_string());
+  specfem::Logger::info(
+      [&](std::ostringstream &oss) { oss << it->to_string(); });
 
   std::shared_ptr<specfem::solver::solver> solver =
       setup.instantiate_solver<5>(setup.get_dt(), assembly, it, {});
@@ -204,7 +206,7 @@ TEST_P(Newmark, 3D) {
 
   // An impl function for the seismogram writer used here for generation
   // of the filenames of files written by `xspecfem3D` in Fortran.
-  specfem::io::impl::ChannelGenerator channel_generator(Test.traces, dt);
+  specfem::io::impl::ChannelGenerator channel_generator(dt);
 
   for (auto station_info : seismograms.stations()) {
 
@@ -225,8 +227,9 @@ TEST_P(Newmark, 3D) {
       std::vector<std::string> filenames;
 
       // Depending on wavefield, and timestep, get the correct filenames
-      filenames = channel_generator.get_station_filenames(
-          network_name, station_name, "S3", seismogram_type);
+      for (auto &f : channel_generator.get_station_filenames(
+               network_name, station_name, "S3", seismogram_type))
+        filenames.push_back(Test.traces + "/" + f);
 
       // Get the number of components for this seismogram type
       const int ncomponents = filenames.size();
