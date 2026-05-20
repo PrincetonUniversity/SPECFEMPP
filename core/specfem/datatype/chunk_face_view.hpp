@@ -1,6 +1,7 @@
 #pragma once
 
 #include "chunk_ndim_view.hpp"
+#include "specfem/datatype/accessor_type.hpp"
 #include <utility>
 
 namespace specfem {
@@ -13,6 +14,7 @@ template <typename T, specfem::element::dimension_tag DimensionTag,
 struct ScalarChunkFaceViewType
     : public ChunkNDimViewType<T, DimensionTag, NumberOfFaces,
                                NumberOfGLLPoints, 2, std::integer_sequence<int>,
+                               specfem::datatype::AccessorType::chunk_face,
                                UseSIMD, MemorySpace, MemoryTraits> {
   constexpr static auto accessor_type =
       specfem::datatype::AccessorType::chunk_face; ///< Accessor type for
@@ -28,8 +30,9 @@ template <
 struct VectorChunkFaceViewType
     : public ChunkNDimViewType<T, DimensionTag, NumberOfFaces,
                                NumberOfGLLPoints, 2,
-                               std::integer_sequence<int, Components>, UseSIMD,
-                               MemorySpace, MemoryTraits> {
+                               std::integer_sequence<int, Components>,
+                               specfem::datatype::AccessorType::chunk_face,
+                               UseSIMD, MemorySpace, MemoryTraits> {
   constexpr static auto accessor_type =
       specfem::datatype::AccessorType::chunk_face; ///< Accessor type for
                                                    ///< identifying the
@@ -46,8 +49,9 @@ template <typename T, specfem::element::dimension_tag DimensionTag,
 struct TensorChunkFaceViewType
     : public ChunkNDimViewType<
           T, DimensionTag, NumberOfFaces, NumberOfGLLPoints, 2,
-          std::integer_sequence<int, Components, NumberOfDimensions>, UseSIMD,
-          MemorySpace, MemoryTraits> {
+          std::integer_sequence<int, Components, NumberOfDimensions>,
+          specfem::datatype::AccessorType::chunk_face, UseSIMD, MemorySpace,
+          MemoryTraits> {
   constexpr static auto accessor_type =
       specfem::datatype::AccessorType::chunk_face; ///< Accessor type for
                                                    ///< identifying the

@@ -4,12 +4,15 @@
 #include "simd.hpp"
 #include "specfem/element/tags.hpp"
 #include <Kokkos_Core.hpp>
+#include <type_traits>
 #include <utility>
 
 // Forward declarations
 namespace specfem::point {
 template <specfem::element::dimension_tag DimensionTag, bool UseSIMD>
 struct index;
+template <specfem::element::dimension_tag DimensionTag> struct face_index;
+template <specfem::element::dimension_tag DimensionTag> struct edge_index;
 } // namespace specfem::point
 
 namespace specfem::datatype {
@@ -87,7 +90,8 @@ static_assert(
 
 template <typename T, specfem::element::dimension_tag DimensionTag,
           int ChunkSize, int NGLL, int ChunkSubspaceDimension,
-          typename PointwiseShapeIntegerSequence, bool UseSIMD = false,
+          typename PointwiseShapeIntegerSequence,
+          specfem::datatype::AccessorType AccessorType, bool UseSIMD = false,
           typename MemorySpace =
               Kokkos::DefaultExecutionSpace::scratch_memory_space,
           typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged>>
@@ -114,14 +118,19 @@ struct ChunkNDimViewType
   using value_type = typename type::value_type; ///< Value type used to store
                                                 ///< the elements of the array
   using base_type = T;                          ///< Base type of the array
-  constexpr static auto dimension_tag = DimensionTag; ///< Dimension tag
-  using index_type = specfem::point::index<dimension_tag,
-                                           UseSIMD>; ///< index type for
-                                                     ///< accessing at GLL level
-  constexpr static bool using_simd = UseSIMD; ///< Use SIMD datatypes for the
-                                              ///< array. If false,
-                                              ///< std::is_same<value_type,
-                                              ///< base_type>::value is true
+  using index_type = std::conditional_t<
+      AccessorType == specfem::datatype::AccessorType::chunk_element,
+      specfem::point::index<DimensionTag, UseSIMD>,
+      std::conditional_t<
+          AccessorType == specfem::datatype::AccessorType::chunk_face,
+          specfem::point::face_index<DimensionTag>,
+          std::conditional_t<
+              AccessorType == specfem::datatype::AccessorType::chunk_face,
+              specfem::point::edge_index<DimensionTag>, void>>>; ///< index type
+                                                                 ///< for
+                                                                 ///< accessing
+                                                                 ///< at GLL
+                                                                 ///< level
   ///@}
 
   /**
@@ -129,11 +138,19 @@ struct ChunkNDimViewType
    *
    */
   ///@{
+  constexpr static auto dimension_tag = DimensionTag; ///< Dimension tag
 
-  constexpr static int chunk_size = ChunkSize; ///< Number of elements in
-                                               ///< the chunk
-  constexpr static int ngll = NGLL;            ///< Number of GLL points in
-                                               ///< each element
+  constexpr static auto accessor_type = AccessorType; ///< Accessor type for
+                                                      ///< identifying the
+                                                      ///< class
+  constexpr static int chunk_size = ChunkSize;        ///< Number of elements in
+                                                      ///< the chunk
+  constexpr static int ngll = NGLL;           ///< Number of GLL points in
+                                              ///< each element
+  constexpr static bool using_simd = UseSIMD; ///< Use SIMD datatypes for the
+                                              ///< array. If false,
+                                              ///< std::is_same<value_type,
+                                              ///< base_type>::value is true
   ///@}
 
   /**
@@ -174,10 +191,20 @@ struct ChunkNDimViewType
   template <typename... ComponentTypes>
   KOKKOS_INLINE_FUNCTION constexpr value_type &
   operator()(index_type index, ComponentTypes... components) {
-    if constexpr (dimension_tag == element::dimension_tag::dim3) {
-      return (*this)(index.ispec, index.iz, index.iy, index.ix, components...);
-    } else {
-      return (*this)(index.ispec, index.iz, index.ix, components...);
+    if constexpr (accessor_type ==
+                  specfem::datatype::AccessorType::chunk_element) {
+      if constexpr (dimension_tag == element::dimension_tag::dim3) {
+        return (*this)(index.ispec, index.iz, index.iy, index.ix,
+                       components...);
+      } else {
+        return (*this)(index.ispec, index.iz, index.ix, components...);
+      }
+    } else if constexpr (accessor_type ==
+                         specfem::datatype::AccessorType::chunk_face) {
+      return (*this)(index.ispec, index.ipoint_i, index.ipoint_j);
+    } else if constexpr (accessor_type ==
+                         specfem::datatype::AccessorType::chunk_edge) {
+      return (*this)(index.ispec, index.ipoint);
     }
   }
 };
