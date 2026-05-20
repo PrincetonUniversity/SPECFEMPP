@@ -1,9 +1,6 @@
 # Serial (non-MPI) test definitions and setup
 # This file contains all non-MPI test executables and their test discovery registration.
 
-# Test framework setup for serial tests
-include(GoogleTest)
-
 # Non-MPI test executables
 
 add_executable(

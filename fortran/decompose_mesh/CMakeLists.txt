@@ -11,8 +11,8 @@ set(CMAKE_Fortran_STANDARD_REQUIRED ON)
 
 # Partitioner options (placeholders — all OFF by default; implementation deferred)
 option(WITH_SCOTCH "Build with SCOTCH support" OFF)
-option(WITH_METIS  "Build with METIS support"  OFF)
 option(WITH_PATOH  "Build with PaToH support"  OFF)
+# METIS is controlled by SPECFEM_ENABLE_METIS (set in top-level CMakeLists.txt)
 
 if (SPECFEM_ENABLE_MPI)
     add_compile_definitions(WITH_MPI)
@@ -112,6 +112,11 @@ target_link_libraries(decompose_mesh_c_wrappers
     meshfem3D::config
 )
 
+if(SPECFEM_ENABLE_METIS)
+    target_compile_definitions(decompose_mesh_c_wrappers PRIVATE USE_METIS)
+    target_link_libraries(decompose_mesh_c_wrappers PRIVATE METIS::metis)
+endif()
+
 # ======================================================================
 # Library 6: decompose_mesh_impl
 # Main decomposition logic, partitioner stubs, mesh I/O
@@ -125,6 +130,7 @@ set(DECOMPOSE_MESH_IMPL_SOURCES
     partition_metis.F90
     partition_patoh.F90
     partition_rows.F90
+    read_decompose_mesh_par.F90
     read_mesh_files.F90
     write_mesh_databases.F90
     write_mesh_databases_hdf5.F90

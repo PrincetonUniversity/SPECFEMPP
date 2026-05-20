@@ -32,13 +32,13 @@
 !
 ! note: this routine will be called by serial decompose mesher.
 
-  use constants, only: NDIM,IIN_DB
+  use constants, only: NDIM, IIN_DB, FNAME_WAVEFIELD_DISCONTINUITY_INTERFACE
 
   use decompose_mesh_par
 
-  ! use fault_scotch, only: ANY_FAULT,read_fault_files,save_nodes_coords,close_faults
+  use decompose_mesh_filenames
 
-  use constants, only: FNAME_WAVEFIELD_DISCONTINUITY_INTERFACE
+  ! use fault_scotch, only: ANY_FAULT,read_fault_files,save_nodes_coords,close_faults
 
   implicit none
 
@@ -53,10 +53,8 @@
 
   character(len=MAX_STRING_LEN) :: line
   logical :: use_poroelastic_file
-  logical :: file_found
 
   ! user output
-  print *, 'reading mesh files in: ',trim(localpath_name)
   print *
   print *, '  using NGNOD = ',NGNOD
   if (NGNOD == 8) then
@@ -67,11 +65,10 @@
   print *
 
   ! reads node coordinates
-  open(unit=IIN_DB, file=localpath_name(1:len_trim(localpath_name))//'/nodes_coords_file', &
-        status='old', form='formatted', iostat = ier)
+  open(unit=IIN_DB, file=trim(NODES_COORDS_FILE), status='old', form='formatted', iostat=ier)
   if (ier /= 0) then
-    print *,'could not open file:',localpath_name(1:len_trim(localpath_name))//'/nodes_coords_file'
-    stop 'Error opening file nodes_coords_file'
+    print *,'could not open file: ',trim(NODES_COORDS_FILE)
+    stop 'Error opening NODES_COORDS_FILE'
   endif
 
   read(IIN_DB,*) nnodes
@@ -95,9 +92,8 @@
   ! reads mesh elements indexing
   !(CUBIT calls this the connectivity, guess in the sense that it connects with the points index in
   ! the global coordinate file "nodes_coords_file"; it doesn't tell you which point is connected with others)
-  open(unit=IIN_DB, file=localpath_name(1:len_trim(localpath_name))//'/mesh_file', &
-        status='old', form='formatted',iostat=ier)
-  if (ier /= 0) stop 'Error opening mesh_file'
+  open(unit=IIN_DB, file=trim(MESH_FILE), status='old', form='formatted', iostat=ier)
+  if (ier /= 0) stop 'Error opening MESH_FILE'
 
   read(IIN_DB,*) nspec_long
 
@@ -194,9 +190,8 @@
   print *, '  nspec = ', nspec
 
   ! reads material associations
-  open(unit=IIN_DB, file=localpath_name(1:len_trim(localpath_name))//'/materials_file', &
-        status='old', form='formatted',iostat=ier)
-  if (ier /= 0) stop 'Error opening materials_file'
+  open(unit=IIN_DB, file=trim(MATERIALS_FILE), status='old', form='formatted', iostat=ier)
+  if (ier /= 0) stop 'Error opening MATERIALS_FILE'
 
   allocate(mat(2,nspec),stat=ier)
   if (ier /= 0) call exit_MPI_without_rank('error allocating array 87')
@@ -231,9 +226,8 @@
 ! cannot support more than 10 attributes
   count_def_mat = 0
   count_undef_mat = 0
-  open(unit=IIN_DB, file=localpath_name(1:len_trim(localpath_name))//'/nummaterial_velocity_file', &
-        status='old', form='formatted',iostat=ier)
-  if (ier /= 0) stop 'Error opening nummaterial_velocity_file'
+  open(unit=IIN_DB, file=trim(NUMMATERIAL_VELOCITY_FILE), status='old', form='formatted', iostat=ier)
+  if (ier /= 0) stop 'Error opening NUMMATERIAL_VELOCITY_FILE'
 
   ! counts materials (defined/undefined)
   print *,'materials:'
@@ -313,16 +307,18 @@
   !     kappas, kappaf, kappafr : solid, fluid and frame bulk moduli
   !     eta : fluid viscosity
   !     mufr : frame shear modulus
-  open(unit=97, file=localpath_name(1:len_trim(localpath_name))//'/nummaterial_poroelastic_file', &
-       status='old', form='formatted', iostat=ier)
-  ! checks if we can use file
-  if (ier /= 0) then
-    use_poroelastic_file = .false.
-    !stop 'Error opening nummaterial_poroelastic_file'
-    print *, '  no poroelastic material file found'
+  if (len_trim(NUMMATERIAL_POROELASTIC_FILE) > 0) then
+    open(unit=97, file=trim(NUMMATERIAL_POROELASTIC_FILE), status='old', form='formatted', iostat=ier)
+    if (ier /= 0) then
+      use_poroelastic_file = .false.
+      print *, '  no poroelastic material file found at: ',trim(NUMMATERIAL_POROELASTIC_FILE)
+    else
+      use_poroelastic_file = .true.
+      print *, '  poroelastic material file found'
+    endif
   else
-    use_poroelastic_file = .true.
-    print *, '  poroelastic material file found'
+    use_poroelastic_file = .false.
+    print *, '  no poroelastic material file found'
   endif
   ier = 0
 
@@ -570,8 +566,9 @@
 
   ! reads in wavefield discontinuity elements
   if (IS_WAVEFIELD_DISCONTINUITY) then
-    open(unit=IIN_DB, file=localpath_name(1:len_trim(localpath_name))//&
-         '/'//trim(FNAME_WAVEFIELD_DISCONTINUITY_INTERFACE), &
+    if (len_trim(WAVEFIELD_DISCONTINUITY_INTERFACE_FILE) == 0) &
+      stop 'Error: IS_WAVEFIELD_DISCONTINUITY is true but WAVEFIELD_DISCONTINUITY_INTERFACE_FILE is not set in Par_file'
+    open(unit=IIN_DB, file=trim(WAVEFIELD_DISCONTINUITY_INTERFACE_FILE), &
          status='old', form='formatted',iostat=ier)
     if (ier /= 0) then
       stop 'no wavefield discontinuity interface file'
@@ -585,8 +582,7 @@
     enddo
     close(IIN_DB)
     allocate(boundary_to_ispec_wd(nb_wd), side_wd(nb_wd))
-    open(unit=IIN_DB, file=localpath_name(1:len_trim(localpath_name))//&
-         '/'//trim(FNAME_WAVEFIELD_DISCONTINUITY_INTERFACE), &
+    open(unit=IIN_DB, file=trim(WAVEFIELD_DISCONTINUITY_INTERFACE_FILE), &
          status='old', form='formatted',iostat=ier)
     do ib = 1, nb_wd
       read(IIN_DB, *, iostat=ier) boundary_to_ispec_wd(ib), side_wd(ib)
@@ -595,15 +591,18 @@
   endif
 
   ! reads in absorbing boundary files
-  open(unit=IIN_DB, file=localpath_name(1:len_trim(localpath_name))//'/absorbing_surface_file_xmin', &
-        status='old', form='formatted',iostat=ier)
-  ! if the file does not exist then define the number of Stacey elements as zero for this face;
+  ! if the file path is empty or the file does not exist, define the number of Stacey elements as zero for this face;
   ! beware that these files can also be used to set Dirichlet boundary conditions on the outer edges of CPML
   ! absorbing layers for elastic elements, not only for Stacey; thus these files may exist and be non-empty
   ! even when STACEY_ABSORBING_CONDITIONS is false
+  if (len_trim(ABSORBING_SURFACE_FILE_XMIN) > 0) then
+    open(unit=IIN_DB, file=trim(ABSORBING_SURFACE_FILE_XMIN), status='old', form='formatted', iostat=ier)
+  else
+    ier = 1
+  endif
   if (ier /= 0) then
     nspec2D_xmin = 0
-    print *, '  no absorbing_surface_file_xmin file found'
+    print *, '  no ABSORBING_SURFACE_FILE_XMIN file found'
   else
     read(IIN_DB,*) nspec2D_xmin
   endif
@@ -642,11 +641,14 @@
   print *, '  nspec2D_xmin = ', nspec2D_xmin
 
   ! reads in absorbing boundary files
-  open(unit=IIN_DB, file=localpath_name(1:len_trim(localpath_name))//'/absorbing_surface_file_xmax', &
-        status='old', form='formatted',iostat=ier)
+  if (len_trim(ABSORBING_SURFACE_FILE_XMAX) > 0) then
+    open(unit=IIN_DB, file=trim(ABSORBING_SURFACE_FILE_XMAX), status='old', form='formatted', iostat=ier)
+  else
+    ier = 1
+  endif
   if (ier /= 0) then
     nspec2D_xmax = 0
-    print *, '  no absorbing_surface_file_xmax file found'
+    print *, '  no ABSORBING_SURFACE_FILE_XMAX file found'
   else
     read(IIN_DB,*) nspec2D_xmax
   endif
@@ -672,11 +674,14 @@
   print *, '  nspec2D_xmax = ', nspec2D_xmax
 
   ! reads in absorbing boundary files
-  open(unit=IIN_DB, file=localpath_name(1:len_trim(localpath_name))//'/absorbing_surface_file_ymin', &
-        status='old', form='formatted',iostat=ier)
+  if (len_trim(ABSORBING_SURFACE_FILE_YMIN) > 0) then
+    open(unit=IIN_DB, file=trim(ABSORBING_SURFACE_FILE_YMIN), status='old', form='formatted', iostat=ier)
+  else
+    ier = 1
+  endif
   if (ier /= 0) then
     nspec2D_ymin = 0
-    print *, '  no absorbing_surface_file_ymin file found'
+    print *, '  no ABSORBING_SURFACE_FILE_YMIN file found'
   else
     read(IIN_DB,*) nspec2D_ymin
   endif
@@ -702,11 +707,14 @@
   print *, '  nspec2D_ymin = ', nspec2D_ymin
 
   ! reads in absorbing boundary files
-  open(unit=IIN_DB, file=localpath_name(1:len_trim(localpath_name))//'/absorbing_surface_file_ymax', &
-        status='old', form='formatted',iostat=ier)
+  if (len_trim(ABSORBING_SURFACE_FILE_YMAX) > 0) then
+    open(unit=IIN_DB, file=trim(ABSORBING_SURFACE_FILE_YMAX), status='old', form='formatted', iostat=ier)
+  else
+    ier = 1
+  endif
   if (ier /= 0) then
     nspec2D_ymax = 0
-    print *, '  no absorbing_surface_file_ymax file found'
+    print *, '  no ABSORBING_SURFACE_FILE_YMAX file found'
   else
     read(IIN_DB,*) nspec2D_ymax
   endif
@@ -732,11 +740,14 @@
   print *, '  nspec2D_ymax = ', nspec2D_ymax
 
   ! reads in absorbing boundary files
-  open(unit=IIN_DB, file=localpath_name(1:len_trim(localpath_name))//'/absorbing_surface_file_bottom', &
-        status='old', form='formatted',iostat=ier)
+  if (len_trim(ABSORBING_SURFACE_FILE_BOTTOM) > 0) then
+    open(unit=IIN_DB, file=trim(ABSORBING_SURFACE_FILE_BOTTOM), status='old', form='formatted', iostat=ier)
+  else
+    ier = 1
+  endif
   if (ier /= 0) then
     nspec2D_bottom = 0
-    print *, '  no absorbing_surface_file_bottom file found'
+    print *, '  no ABSORBING_SURFACE_FILE_BOTTOM file found'
   else
     read(IIN_DB,*) nspec2D_bottom
   endif
@@ -763,40 +774,14 @@
 
   ! reads in free_surface boundary files
   ! checks old (now obsolete) naming formats to avoid mistakenly using obsolete files
-  open(unit=IIN_DB, file=localpath_name(1:len_trim(localpath_name))//'/free_surface_file', &
-      status='old', form='formatted',iostat=ier)
-  if (ier == 0) then
-    print *, '  "free_surface_file" file name is deprecated!'
-    print *, '  Please rename it to "free_or_absorbing_surface_file_zmax" and restart the run'
-    print *, '  or remove it if it is obsolete'
-    stop 'please rename or remove the input file with obsolete file name'
+  if (len_trim(FREE_OR_ABSORBING_SURFACE_FILE_ZMAX) > 0) then
+    open(unit=IIN_DB, file=trim(FREE_OR_ABSORBING_SURFACE_FILE_ZMAX), status='old', form='formatted', iostat=ier)
+  else
+    ier = 1
   endif
-
-  open(unit=IIN_DB, file=localpath_name(1:len_trim(localpath_name))//'/absorbing_surface_file_zmax', &
-      status='old', form='formatted',iostat=ier)
-  if (ier == 0) then
-    print *, '  "absorbing_surface_file_zmax" file name is deprecated!'
-    print *, '  Please rename it to "free_or_absorbing_surface_file_zmax" and restart the run'
-    print *, '  or remove it if it is obsolete'
-    stop 'please rename or remove the input file with obsolete file name'
-  endif
-
-  open(unit=IIN_DB, file=localpath_name(1:len_trim(localpath_name))//'/absorbing_surface_file_top', &
-      status='old', form='formatted',iostat=ier)
-  if (ier == 0) then
-    print *, '  "absorbing_surface_file_top" file name is deprecated!'
-    print *, '  Please rename it to "free_or_absorbing_surface_file_zmax" and restart the run'
-    print *, '  or remove it if it is obsolete'
-    stop 'please rename or remove the input file with obsolete file name'
-  endif
-
-  file_found = .false.
-  open(unit=IIN_DB, file=localpath_name(1:len_trim(localpath_name))//'/free_or_absorbing_surface_file_zmax', &
-        status='old', form='formatted',iostat=ier)
-  if (ier == 0) file_found = .true.
-  if (.not. file_found) then
+  if (ier /= 0) then
     nspec2D_top = 0
-    print *, '  no free_or_absorbing_surface_file_zmax file found'
+    print *, '  no FREE_OR_ABSORBING_SURFACE_FILE_ZMAX file found'
   else
     read(IIN_DB,*) nspec2D_top
   endif
@@ -828,18 +813,21 @@
 ! conditions for this mesh then the array is created nonetheless, but with a dummy size of 0
 
   ! reads in absorbing_cpml boundary file
-  open(unit=IIN_DB, file=localpath_name(1:len_trim(localpath_name))//'/absorbing_cpml_file', &
-       status='old', form='formatted',iostat=ier)
+  if (len_trim(ABSORBING_CPML_FILE) > 0) then
+    open(unit=IIN_DB, file=trim(ABSORBING_CPML_FILE), status='old', form='formatted', iostat=ier)
+  else
+    ier = 1
+  endif
   ! if the file does not exist but if there are PML_CONDITIONS then stop
   if (ier /= 0 .and. PML_CONDITIONS) &
-      stop 'Error: PML_CONDITIONS is set to true but file absorbing_cpml_file does not exist'
+      stop 'Error: PML_CONDITIONS is set to true but ABSORBING_CPML_FILE does not exist or is not set'
   ! if the file does not exist or if there are no PML_CONDITIONS then define the number of CPML elements as zero
   ! note: in case there is a cpml file, we will read it in and let the user decide when running an actual simulation
   !       if he wants to use cpml elements or not... otherwise he will need to re-run the whole meshing part when
   !       switching PML_CONDITIONS
   if (ier /= 0) then
     nspec_cpml = 0
-    print *, '  no absorbing_cpml_file file found'
+    print *, '  no ABSORBING_CPML_FILE file found'
   else
     read(IIN_DB,*) nspec_cpml
   endif
@@ -893,11 +881,14 @@
   enddo
 
   ! reads in moho_surface boundary files (optional)
-  open(unit=IIN_DB, file=localpath_name(1:len_trim(localpath_name))//'/moho_surface_file', &
-        status='old', form='formatted',iostat=ier)
+  if (len_trim(MOHO_SURFACE_FILE) > 0) then
+    open(unit=IIN_DB, file=trim(MOHO_SURFACE_FILE), status='old', form='formatted', iostat=ier)
+  else
+    ier = 1
+  endif
   if (ier /= 0) then
     nspec2D_moho = 0
-    print *, '  no moho_surface_file file found'
+    print *, '  no MOHO_SURFACE_FILE file found'
   else
     read(IIN_DB,*) nspec2D_moho
   endif
