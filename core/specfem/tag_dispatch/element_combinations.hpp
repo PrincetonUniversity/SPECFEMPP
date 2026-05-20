@@ -257,7 +257,7 @@ constexpr std::array<Combo, N> fill_combos(const ArrayTuple &arrs) {
  *                    `property_set`, `attenuation_set`, `boundary_set`, or
  *                    `wavefield_set`), each contributing one slot to the combo.
  *
- * **Members**
+ * @par Members
  * - `combo_type`  The `TagValueTuple` type for a single combo (one slot per
  *                 `NamedSet`).
  * - `size`        Number of valid combos.

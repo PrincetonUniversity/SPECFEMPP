@@ -27,19 +27,19 @@ load_after_simd_dispatch(const std::false_type, const IndexType &index,
                 "IndexType must not use SIMD in this overload");
 
   constexpr static auto MediumTag =
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag;
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::medium_tag;
 
   // Check that all accessors have the same medium tag
   specfem::assembly::fields_impl::check_accessor_compatibility<
       AccessorTypes...>();
 
-  const auto current_field = field.template get_field<MediumTag>();
+  const auto &current_field = field.template get_field<MediumTag>();
 
   const int iglob = field.template get_iglob<on_device, MediumTag>(index);
 
   constexpr static int ncomponents = specfem::element::attributes<
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::dimension_tag,
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag>::
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::dimension_tag,
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::medium_tag>::
       components;
 
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
@@ -68,14 +68,14 @@ load_after_simd_dispatch(const std::true_type, const IndexType &index,
                 "IndexType must use SIMD in this overload");
 
   constexpr static auto MediumTag =
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag;
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::medium_tag;
 
   // Check that all accessors have the same medium tag
   specfem::assembly::fields_impl::check_accessor_compatibility<
       AccessorTypes...>();
 
   constexpr static int simd_size =
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::simd::size();
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::simd::size();
 
   int iglob[simd_size];
   for (int lane = 0; lane < simd_size; ++lane) {
@@ -88,8 +88,8 @@ load_after_simd_dispatch(const std::true_type, const IndexType &index,
   const auto &current_field = field.template get_field<MediumTag>();
 
   constexpr static int ncomponents = specfem::element::attributes<
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::dimension_tag,
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag>::
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::dimension_tag,
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::medium_tag>::
       components;
 
   // Call load for each accessor
@@ -118,7 +118,7 @@ load_after_simd_dispatch(const std::false_type, const IndexType &index,
                 "IndexType must not use SIMD in this overload");
 
   constexpr static auto MediumTag =
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag;
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::medium_tag;
 
   // Check that all accessors have the same medium tag
   specfem::assembly::fields_impl::check_accessor_compatibility<
@@ -127,8 +127,8 @@ load_after_simd_dispatch(const std::false_type, const IndexType &index,
   const auto &current_field = field.template get_field<MediumTag>();
 
   constexpr static int ncomponents = specfem::element::attributes<
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::dimension_tag,
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag>::
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::dimension_tag,
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::medium_tag>::
       components;
 
   specfem::execution::for_each_level(
@@ -167,24 +167,24 @@ load_after_simd_dispatch(const std::true_type, const IndexType &index,
                 "IndexType must use SIMD in this overload");
 
   constexpr static auto MediumTag =
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag;
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::medium_tag;
 
   // Check that all accessors have the same medium tag
   specfem::assembly::fields_impl::check_accessor_compatibility<
       AccessorTypes...>();
 
   constexpr static int simd_size =
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::simd::size();
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::simd::size();
 
   const auto &current_field = field.template get_field<MediumTag>();
 
   constexpr static int ncomponents = specfem::element::attributes<
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::dimension_tag,
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag>::
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::dimension_tag,
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::medium_tag>::
       components;
 
   using simd_type = typename std::tuple_element_t<
-      0, std::tuple<AccessorTypes...> >::simd::datatype;
+      0, std::tuple<AccessorTypes...>>::simd::datatype;
 
   specfem::execution::for_each_level(
       index.get_iterator(),
@@ -227,15 +227,15 @@ load_after_simd_dispatch(const std::false_type, const IndexType &index,
   static_assert(!IndexType::using_simd,
                 "IndexType must not use SIMD in this overload");
   constexpr static auto MediumTag =
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag;
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::medium_tag;
   // Check that all accessors have the same medium tag
   specfem::assembly::fields_impl::check_accessor_compatibility<
       AccessorTypes...>();
-  const auto current_field = field.template get_field<MediumTag>();
+  const auto &current_field = field.template get_field<MediumTag>();
 
   constexpr static int ncomponents = specfem::element::attributes<
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::dimension_tag,
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag>::
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::dimension_tag,
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::medium_tag>::
       components;
 
   specfem::execution::for_each_level(

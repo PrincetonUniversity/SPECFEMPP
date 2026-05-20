@@ -1,5 +1,6 @@
 #pragma once
 #include "quantity.hpp"
+#include <Kokkos_Core.hpp>
 #include <numbers>
 #include <type_traits>
 
@@ -36,14 +37,15 @@ template <typename To, typename From> struct unit_cast_impl {
 
 /// Identity conversion (no-op)
 template <typename T> struct unit_cast_impl<T, T> {
-  static constexpr T call(T q) noexcept { return q; }
+  KOKKOS_FUNCTION static constexpr T call(T q) noexcept { return q; }
 };
 
 /// Scale conversion within same dimension (e.g., meters ↔ kilometers)
 template <typename D, typename S_to, typename S_from>
   requires(!std::is_same_v<S_to, S_from>)
 struct unit_cast_impl<Quantity<D, S_to>, Quantity<D, S_from>> {
-  static constexpr Quantity<D, S_to> call(Quantity<D, S_from> q) noexcept {
+  KOKKOS_FUNCTION static constexpr Quantity<D, S_to>
+  call(Quantity<D, S_from> q) noexcept {
     constexpr type_real factor = ratio_value<std::ratio_divide<S_from, S_to>>;
     return Quantity<D, S_to>(q.raw() * factor);
   }
@@ -62,42 +64,42 @@ struct unit_cast_impl<Quantity<D, S_to>, Quantity<D, S_from>> {
 
 /// Seconds → Hertz
 template <> struct unit_cast_impl<Hertz, Seconds> {
-  static constexpr Hertz call(Seconds s) noexcept {
+  KOKKOS_FUNCTION static constexpr Hertz call(Seconds s) noexcept {
     return Hertz(type_real(1) / s.raw());
   }
 };
 
 /// Hertz → Seconds
 template <> struct unit_cast_impl<Seconds, Hertz> {
-  static constexpr Seconds call(Hertz f) noexcept {
+  KOKKOS_FUNCTION static constexpr Seconds call(Hertz f) noexcept {
     return Seconds(type_real(1) / f.raw());
   }
 };
 
 /// Seconds → Omega
 template <> struct unit_cast_impl<Omega, Seconds> {
-  static constexpr Omega call(Seconds s) noexcept {
+  KOKKOS_FUNCTION static constexpr Omega call(Seconds s) noexcept {
     return Omega(impl::two_pi / s.raw());
   }
 };
 
 /// Omega → Seconds
 template <> struct unit_cast_impl<Seconds, Omega> {
-  static constexpr Seconds call(Omega w) noexcept {
+  KOKKOS_FUNCTION static constexpr Seconds call(Omega w) noexcept {
     return Seconds(impl::two_pi / w.raw());
   }
 };
 
 /// Hertz → Omega
 template <> struct unit_cast_impl<Omega, Hertz> {
-  static constexpr Omega call(Hertz f) noexcept {
+  KOKKOS_FUNCTION static constexpr Omega call(Hertz f) noexcept {
     return Omega(f.raw() * impl::two_pi);
   }
 };
 
 /// Omega → Hertz
 template <> struct unit_cast_impl<Hertz, Omega> {
-  static constexpr Hertz call(Omega w) noexcept {
+  KOKKOS_FUNCTION static constexpr Hertz call(Omega w) noexcept {
     return Hertz(w.raw() / impl::two_pi);
   }
 };
@@ -124,7 +126,8 @@ template <> struct unit_cast_impl<Hertz, Omega> {
  * auto freq = unit_cast<Hertz>(Seconds(0.5));       // 2.0 Hz
  * @endcode
  */
-template <typename To, typename From> constexpr To unit_cast(From q) {
+template <typename To, typename From>
+KOKKOS_FUNCTION constexpr To unit_cast(From q) {
   return unit_cast_impl<To, From>::call(q);
 }
 

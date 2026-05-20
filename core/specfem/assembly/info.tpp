@@ -64,8 +64,7 @@ struct InfoScatters {
 /// @tparam PropertyTag The property type (isotropic, anisotropic, etc.)
 template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag,
-          specfem::element::attenuation_tag AttenuationTag>
+          specfem::element::property_tag PropertyTag>
 void process_medium_elements(
     const specfem::assembly::mesh<DimensionTag> &mesh,
     const specfem::assembly::properties<DimensionTag> &properties,
@@ -75,9 +74,8 @@ void process_medium_elements(
   constexpr specfem::element::dimension_tag dimension_tag = DimensionTag;
   constexpr specfem::element::medium_tag medium_tag = MediumTag;
   constexpr specfem::element::property_tag property_tag = PropertyTag;
-  constexpr specfem::element::attenuation_tag attenuation_tag = AttenuationTag;
   auto elements =
-      element_types.get_elements_on_device(medium_tag, property_tag, attenuation_tag);
+      element_types.get_elements_on_device(medium_tag, property_tag);
 
   constexpr bool using_simd = false;
   using simd = specfem::datatype::simd<type_real, using_simd>;
@@ -222,8 +220,7 @@ specfem::assembly::Info<DimensionTag>::Info(
         [&]<typename ElementTags>() {
           info::impl::process_medium_elements<ElementTags::dimension_tag,
                                               ElementTags::medium_tag,
-                                              ElementTags::property_tag,
-                                              ElementTags::attenuation_tag>(
+                                              ElementTags::property_tag>(
               mesh, properties, element_types, scatters);
         });
   } else {
@@ -235,8 +232,7 @@ specfem::assembly::Info<DimensionTag>::Info(
         [&]<typename ElementTags>() {
           info::impl::process_medium_elements<ElementTags::dimension_tag,
                                               ElementTags::medium_tag,
-                                              ElementTags::property_tag,
-                                              ElementTags::attenuation_tag>(
+                                              ElementTags::property_tag>(
               mesh, properties, element_types, scatters);
         });
   };

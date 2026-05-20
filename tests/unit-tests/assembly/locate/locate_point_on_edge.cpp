@@ -91,7 +91,7 @@ void test_locate_point_on_edge(
 
     // attempt to recover local edge coordinate
     const auto [local_test, inside_domain] =
-        specfem::algorithms::locate_point_impl::locate_point_on_edge(
+        specfem::algorithms::locate_point_impl::locate_point(
             global_coords, assembly.mesh, ispec, edge);
 
     // Check if the local coordinates are within the domain

@@ -6,18 +6,21 @@
 specfem::runtime_configuration::Attenuation::Attenuation(
     const YAML::Node &attenuation_node) {
 
-  try {
-    this->reference_frequency =
-        specfem::units::quantity_cast<specfem::units::Hertz>(
-            attenuation_node["reference-frequency"].as<std::string>());
-
-  } catch (YAML::ParserException &e) {
-    std::ostringstream message;
-    message << "Error reading attenuation configuration value: "
-               "reference-frequency. \n"
-            << e.what();
-    throw std::runtime_error(message.str());
+  if (attenuation_node["reference-frequency"]) {
+    try {
+      this->reference_frequency =
+          specfem::units::quantity_cast<specfem::units::Hertz>(
+              attenuation_node["reference-frequency"].as<std::string>());
+    } catch (YAML::ParserException &e) {
+      std::ostringstream message;
+      message << "Error reading attenuation configuration value: "
+                 "reference-frequency. \n"
+              << e.what();
+      throw std::runtime_error(message.str());
+    }
   }
+  // else: reference_frequency remains std::nullopt; will be read from mesh
+  // database
 
   try {
     const YAML::Node band = attenuation_node["attenuation-frequency-band"];

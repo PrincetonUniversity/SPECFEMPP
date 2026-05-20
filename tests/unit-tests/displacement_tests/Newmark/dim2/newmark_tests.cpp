@@ -1,6 +1,5 @@
 #include "../../../SPECFEM_Environment.hpp"
 #include "specfem/assembly/assembly.hpp"
-#include "specfem/constants.hpp"
 #include "specfem/io.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/mesh.hpp"
@@ -115,9 +114,10 @@ TEST_P(Newmark, 2D) {
   const auto quadratures = setup.instantiate_quadrature();
 
   // Read mesh generated MESHFEM
-  specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
-      database_file, elastic_wave, electromagnetic_wave,
-      setup.is_attenuation_enabled());
+  specfem::mesh::mesh<specfem::element::dimension_tag::dim2> mesh =
+      specfem::io::read_2d_mesh(database_file, elastic_wave,
+                                electromagnetic_wave,
+                                setup.get_attenuation_setup());
   const type_real dt = setup.get_dt();
   const int nsteps = setup.get_nsteps();
 

@@ -6,6 +6,22 @@
 
 namespace specfem::data_access {
 
+namespace impl {
+
+/**
+ * @brief Helper for scalar_type dispatch: N=-1 gives a single SIMD scalar;
+ *        N>=1 gives a fixed-size array of N SIMD scalars.
+ */
+template <typename T, int N, bool UseSIMD> struct scalar_type_helper {
+  using type = specfem::datatype::VectorPointViewType<T, N, UseSIMD>;
+};
+
+template <typename T, bool UseSIMD> struct scalar_type_helper<T, -1, UseSIMD> {
+  using type = typename specfem::datatype::simd<T, UseSIMD>::datatype;
+};
+
+} // namespace impl
+
 /**
  * @brief Point-wise accessor for single quadrature point operations.
  *
@@ -38,11 +54,18 @@ struct Accessor<specfem::datatype::AccessorType::point, DataClass, DimensionTag,
   template <typename T> using simd = specfem::datatype::simd<T, UseSIMD>;
 
   /**
-   * @brief Scalar field storage for single point
+   * @brief Scalar field storage for single point.
+   *
+   * With the default N=-1 returns a single SIMD scalar (`simd<T>::datatype`).
+   * With an explicit N returns a fixed-size array of N SIMD scalars
+   * (`VectorPointViewType<T, N, UseSIMD>`), useful for per-SLS-mechanism
+   * arrays.
    *
    * @tparam T Base data type
+   * @tparam N Array size; -1 (default) means a single scalar
    */
-  template <typename T> using scalar_type = typename simd<T>::datatype;
+  template <typename T, int N = -1>
+  using scalar_type = typename impl::scalar_type_helper<T, N, UseSIMD>::type;
 
   /**
    * @brief Vector field storage for single point
