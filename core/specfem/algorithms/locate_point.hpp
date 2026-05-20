@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/algorithms/locate_point/locate_point_impl.hpp"
+#include "locate_point/locate_point_impl.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/point.hpp"

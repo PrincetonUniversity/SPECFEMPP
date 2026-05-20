@@ -3,9 +3,13 @@
 #include "specfem/enums.hpp"
 #include "specfem/macros/tag_dispatch.hpp"
 #include "specfem/medium_container.hpp"
+#include "specfem/mesh/attenuation_config.hpp"
 #include "specfem/tag_dispatch/storage.hpp"
 #include "specfem/tags.hpp"
+#include "specfem/units.hpp"
+#include "specfem/utilities/logarithmic_center.hpp"
 #include <Kokkos_Core.hpp>
+#include <optional>
 #include <vector>
 
 namespace specfem::mesh {
@@ -265,6 +269,33 @@ public:
     return material.get_properties();
   }
 
+  template <specfem::element::medium_tag MediumTag,
+            specfem::element::property_tag PropertyTag>
+  specfem::point::properties<
+      specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag, false> > const
+  get_properties(const int index) const {
+    using Result = specfem::point::properties<
+        specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag, false> >;
+    constexpr auto att_combos =
+        specfem::tag_dispatch::dimension_set<dimension_tag>{} *
+        specfem::tag_dispatch::medium_set<MediumTag>{} *
+        specfem::tag_dispatch::property_set<PropertyTag>{} *
+        ATTENUATION_SET(none, constant_isotropic);
+    const specfem::element::attenuation_tag runtime_att =
+        this->material_index_mapping[index].attenuation;
+    std::optional<Result> result;
+    specfem::tag_dispatch::for_each(att_combos, [&]<typename TagsType>() {
+      if (TagsType::attenuation_tag == runtime_att)
+        result =
+            get_properties<MediumTag, PropertyTag, TagsType::attenuation_tag>(
+                index);
+    });
+    if (!result)
+      KOKKOS_ABORT_WITH_LOCATION(
+          "Invalid attenuation tag for material combination");
+    return *result;
+  }
+
   /**
    * @brief Get reference to material container for specific medium and property
    * types
@@ -335,6 +366,23 @@ public:
     material_container.n_materials += 1;
 
     return material_container.n_materials - 1;
+  }
+
+  void apply_attenuation(const specfem::mesh::attenuation_config &config) {
+    if (!config.enabled)
+      return;
+    using specfem::units::unit_symbols::Hz;
+    const auto fc = specfem::utilities::logarithmic_center(
+                        config.band.min.raw(), config.band.max.raw()) *
+                    Hz;
+    auto &container =
+        get_container<specfem::element::medium_tag::elastic,
+                      specfem::element::property_tag::isotropic,
+                      specfem::element::attenuation_tag::constant_isotropic>();
+    for (auto &material : container.element_materials) {
+      material.compute_attenuation_properties(config.f0.raw(), fc.raw(),
+                                              config.band, config.tau_sigma);
+    }
   }
 
   /**

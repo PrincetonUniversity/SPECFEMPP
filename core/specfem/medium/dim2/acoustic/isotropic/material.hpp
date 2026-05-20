@@ -146,9 +146,20 @@ public:
    *
    * @return specfem::point::properties Material properties
    */
-  template <specfem::element::attenuation_tag T = AttenuationTag,
-            typename =
-                std::enable_if_t<T == specfem::element::attenuation_tag::none> >
+  template <
+      specfem::element::attenuation_tag T = AttenuationTag,
+      std::enable_if_t<T == specfem::element::attenuation_tag::none, int> = 0>
+  inline specfem::point::properties<
+      specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false> >
+  get_properties() const {
+    return { static_cast<type_real>(1.0) / static_cast<type_real>(density),
+             this->kappa };
+  }
+
+  template <
+      specfem::element::attenuation_tag T = AttenuationTag,
+      std::enable_if_t<
+          T == specfem::element::attenuation_tag::constant_isotropic, int> = 0>
   inline specfem::point::properties<
       specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false> >
   get_properties() const {

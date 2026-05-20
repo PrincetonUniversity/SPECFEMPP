@@ -2,6 +2,8 @@
 #include "specfem/attenuation/compute_tau_eps.tpp"
 #include "specfem/attenuation/compute_tau_sigma.tpp"
 #include "specfem/constants.hpp"
+#include "specfem/units.hpp"
+#include "specfem/utilities/band.hpp"
 #include <cmath>
 #include <gtest/gtest.h>
 
@@ -9,6 +11,7 @@ using specfem::attenuation::compute_tau_eps;
 using specfem::attenuation::compute_tau_sigma;
 using specfem::attenuation::maxwell;
 using specfem::constants::NF_ATTENUATION;
+using namespace specfem::units::unit_symbols;
 
 // Helper function to compute achieved Q from tau_eps and tau_sigma
 template <int N_SLS>
@@ -137,10 +140,11 @@ TEST(Attenuation_ComputeTauEps, Savage2010_NSLS3_1p7Decades) {
   // 1.7 decades: max_frequency=10 Hz, min_frequency=10/10^1.7
   const type_real max_frequency = 10.0;
   const type_real min_frequency = max_frequency / std::pow(10.0, 1.7);
+  specfem::utilities::Band<specfem::units::Hertz> band(min_frequency * Hz,
+                                                       max_frequency * Hz);
 
-  auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
-  auto tau_eps =
-      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency, max_frequency);
+  auto tau_sigma = compute_tau_sigma<N_SLS>(band);
+  auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, band);
 
   type_real lsq_error = compute_lsq_error<N_SLS>(tau_sigma, tau_eps, target_Q,
                                                  min_frequency, max_frequency);
@@ -168,10 +172,11 @@ TEST(Attenuation_ComputeTauEps, Savage2010_NSLS2_0p9Decades) {
   // 0.9 decades: max_frequency=10 Hz, min_frequency=10/10^0.9
   const type_real max_frequency = 10.0;
   const type_real min_frequency = max_frequency / std::pow(10.0, 0.9);
+  specfem::utilities::Band<specfem::units::Hertz> band(min_frequency * Hz,
+                                                       max_frequency * Hz);
 
-  auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
-  auto tau_eps =
-      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency, max_frequency);
+  auto tau_sigma = compute_tau_sigma<N_SLS>(band);
+  auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, band);
 
   type_real lsq_error = compute_lsq_error<N_SLS>(tau_sigma, tau_eps, target_Q,
                                                  min_frequency, max_frequency);
@@ -193,10 +198,11 @@ TEST(Attenuation_ComputeTauEps, Savage2010_NSLS4_2p5Decades) {
   // 2.5 decades: max_frequency=10 Hz, min_frequency=10/10^2.5
   const type_real max_frequency = 10.0;
   const type_real min_frequency = max_frequency / std::pow(10.0, 2.5);
+  specfem::utilities::Band<specfem::units::Hertz> band(min_frequency * Hz,
+                                                       max_frequency * Hz);
 
-  auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
-  auto tau_eps =
-      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency, max_frequency);
+  auto tau_sigma = compute_tau_sigma<N_SLS>(band);
+  auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, band);
 
   type_real lsq_error = compute_lsq_error<N_SLS>(tau_sigma, tau_eps, target_Q,
                                                  min_frequency, max_frequency);
@@ -218,10 +224,11 @@ TEST(Attenuation_ComputeTauEps, Savage2010_NSLS5_3p0Decades) {
   // 3.0 decades: max_frequency=10 Hz, min_frequency=10/10^3.0=0.01 Hz
   const type_real max_frequency = 10.0;
   const type_real min_frequency = max_frequency / std::pow(10.0, 3.0);
+  specfem::utilities::Band<specfem::units::Hertz> band(min_frequency * Hz,
+                                                       max_frequency * Hz);
 
-  auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
-  auto tau_eps =
-      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency, max_frequency);
+  auto tau_sigma = compute_tau_sigma<N_SLS>(band);
+  auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, band);
 
   type_real lsq_error = compute_lsq_error<N_SLS>(tau_sigma, tau_eps, target_Q,
                                                  min_frequency, max_frequency);
@@ -244,9 +251,12 @@ TEST(Attenuation_ComputeTauEps, Savage2010_ErrorIncreasesWithBandwidth) {
   // Compute error at 1.7 decades (optimal for N_SLS=3)
   type_real min_frequency_optimal = max_frequency / std::pow(10.0, 1.7);
   auto tau_sigma_opt =
-      compute_tau_sigma<N_SLS>(min_frequency_optimal, max_frequency);
+      compute_tau_sigma<N_SLS>(specfem::utilities::Band<specfem::units::Hertz>(
+          min_frequency_optimal * Hz, max_frequency * Hz));
   auto tau_eps_opt = compute_tau_eps<N_SLS>(
-      target_Q, tau_sigma_opt, min_frequency_optimal, max_frequency);
+      target_Q, tau_sigma_opt,
+      specfem::utilities::Band<specfem::units::Hertz>(
+          min_frequency_optimal * Hz, max_frequency * Hz));
   type_real error_optimal =
       compute_lsq_error<N_SLS>(tau_sigma_opt, tau_eps_opt, target_Q,
                                min_frequency_optimal, max_frequency);
@@ -254,9 +264,12 @@ TEST(Attenuation_ComputeTauEps, Savage2010_ErrorIncreasesWithBandwidth) {
   // Compute error at 3.0 decades (too wide for N_SLS=3)
   type_real min_frequency_wide = max_frequency / std::pow(10.0, 3.0);
   auto tau_sigma_wide =
-      compute_tau_sigma<N_SLS>(min_frequency_wide, max_frequency);
-  auto tau_eps_wide = compute_tau_eps<N_SLS>(target_Q, tau_sigma_wide,
-                                             min_frequency_wide, max_frequency);
+      compute_tau_sigma<N_SLS>(specfem::utilities::Band<specfem::units::Hertz>(
+          min_frequency_wide * Hz, max_frequency * Hz));
+  auto tau_eps_wide =
+      compute_tau_eps<N_SLS>(target_Q, tau_sigma_wide,
+                             specfem::utilities::Band<specfem::units::Hertz>(
+                                 min_frequency_wide * Hz, max_frequency * Hz));
   type_real error_wide =
       compute_lsq_error<N_SLS>(tau_sigma_wide, tau_eps_wide, target_Q,
                                min_frequency_wide, max_frequency);
@@ -276,21 +289,21 @@ TEST(Attenuation_ComputeTauEps, Savage2010_MoreSLSReducesError) {
   // 2 decades
   constexpr type_real max_frequency = 10.0;
   constexpr type_real min_frequency = 0.1; // 2 decades
+  specfem::utilities::Band<specfem::units::Hertz> band(min_frequency * Hz,
+                                                       max_frequency * Hz);
 
   // N_SLS = 2
   {
     constexpr int N_SLS = 2;
-    auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
-    auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency,
-                                          max_frequency);
+    auto tau_sigma = compute_tau_sigma<N_SLS>(band);
+    auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, band);
     type_real error_2 = compute_lsq_error<N_SLS>(tau_sigma, tau_eps, target_Q,
                                                  min_frequency, max_frequency);
 
     // N_SLS = 4
     constexpr int N_SLS_4 = 4;
-    auto tau_sigma_4 = compute_tau_sigma<N_SLS_4>(min_frequency, max_frequency);
-    auto tau_eps_4 = compute_tau_eps<N_SLS_4>(target_Q, tau_sigma_4,
-                                              min_frequency, max_frequency);
+    auto tau_sigma_4 = compute_tau_sigma<N_SLS_4>(band);
+    auto tau_eps_4 = compute_tau_eps<N_SLS_4>(target_Q, tau_sigma_4, band);
     type_real error_4 = compute_lsq_error<N_SLS_4>(
         tau_sigma_4, tau_eps_4, target_Q, min_frequency, max_frequency);
 
@@ -312,10 +325,11 @@ TEST(Attenuation_ComputeTauEps, AchievesTargetQ_Medium) {
   constexpr type_real target_Q = 200.0;
   constexpr type_real min_frequency = 0.1;
   constexpr type_real max_frequency = 100.0;
+  specfem::utilities::Band<specfem::units::Hertz> band(min_frequency * Hz,
+                                                       max_frequency * Hz);
 
-  auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
-  auto tau_eps =
-      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency, max_frequency);
+  auto tau_sigma = compute_tau_sigma<N_SLS>(band);
+  auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, band);
 
   type_real achieved_Q = compute_achieved_Q<N_SLS>(
       tau_sigma, tau_eps, min_frequency, max_frequency);
@@ -331,10 +345,11 @@ TEST(Attenuation_ComputeTauEps, AchievesTargetQ_Low) {
   constexpr type_real target_Q = 50.0;
   constexpr type_real min_frequency = 0.1;
   constexpr type_real max_frequency = 100.0;
+  specfem::utilities::Band<specfem::units::Hertz> band(min_frequency * Hz,
+                                                       max_frequency * Hz);
 
-  auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
-  auto tau_eps =
-      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency, max_frequency);
+  auto tau_sigma = compute_tau_sigma<N_SLS>(band);
+  auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, band);
 
   type_real achieved_Q = compute_achieved_Q<N_SLS>(
       tau_sigma, tau_eps, min_frequency, max_frequency);
@@ -349,10 +364,11 @@ TEST(Attenuation_ComputeTauEps, AchievesTargetQ_High) {
   constexpr type_real target_Q = 1000.0;
   constexpr type_real min_frequency = 0.1;
   constexpr type_real max_frequency = 100.0;
+  specfem::utilities::Band<specfem::units::Hertz> band(min_frequency * Hz,
+                                                       max_frequency * Hz);
 
-  auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
-  auto tau_eps =
-      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency, max_frequency);
+  auto tau_sigma = compute_tau_sigma<N_SLS>(band);
+  auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, band);
 
   type_real achieved_Q = compute_achieved_Q<N_SLS>(
       tau_sigma, tau_eps, min_frequency, max_frequency);
@@ -367,10 +383,11 @@ TEST(Attenuation_ComputeTauEps, TauEpsGreaterThanTauS) {
   constexpr type_real target_Q = 200.0;
   constexpr type_real min_frequency = 0.1;
   constexpr type_real max_frequency = 100.0;
+  specfem::utilities::Band<specfem::units::Hertz> band(min_frequency * Hz,
+                                                       max_frequency * Hz);
 
-  auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
-  auto tau_eps =
-      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency, max_frequency);
+  auto tau_sigma = compute_tau_sigma<N_SLS>(band);
+  auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, band);
 
   for (int j = 0; j < N_SLS; ++j) {
     EXPECT_GT(tau_eps(j), tau_sigma(j))
@@ -384,10 +401,11 @@ TEST(Attenuation_ComputeTauEps, ReturnsCorrectSize) {
   constexpr type_real target_Q = 200.0;
   constexpr type_real min_frequency = 0.1;
   constexpr type_real max_frequency = 100.0;
+  specfem::utilities::Band<specfem::units::Hertz> band(min_frequency * Hz,
+                                                       max_frequency * Hz);
 
-  auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
-  auto tau_eps =
-      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency, max_frequency);
+  auto tau_sigma = compute_tau_sigma<N_SLS>(band);
+  auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, band);
 
   EXPECT_EQ(tau_eps.extent(0), N_SLS);
 }
@@ -400,6 +418,8 @@ TEST(Attenuation_ComputeTauEps, DifferentNumberOfSLS) {
   // 3 decades: min_frequency=0.1, max_frequency=100.0
   constexpr type_real min_frequency = 0.1;
   constexpr type_real max_frequency = 100.0;
+  specfem::utilities::Band<specfem::units::Hertz> band(min_frequency * Hz,
+                                                       max_frequency * Hz);
 
   type_real bandwidth = bandwidth_decades(min_frequency, max_frequency);
   std::cout << "Testing N_SLS comparison at " << bandwidth << " decades"
@@ -410,9 +430,8 @@ TEST(Attenuation_ComputeTauEps, DifferentNumberOfSLS) {
   // At 3 decades, expect much higher error
   {
     constexpr int N_SLS = 2;
-    auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
-    auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency,
-                                          max_frequency);
+    auto tau_sigma = compute_tau_sigma<N_SLS>(band);
+    auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, band);
     type_real lsq_error = compute_lsq_error<N_SLS>(
         tau_sigma, tau_eps, target_Q, min_frequency, max_frequency);
     // At 3 decades, N_SLS=2 should have significant error (>10% per Savage
@@ -428,9 +447,8 @@ TEST(Attenuation_ComputeTauEps, DifferentNumberOfSLS) {
   // At 3 decades, expect slightly higher but still reasonable error
   {
     constexpr int N_SLS = 4;
-    auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
-    auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency,
-                                          max_frequency);
+    auto tau_sigma = compute_tau_sigma<N_SLS>(band);
+    auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, band);
     type_real lsq_error = compute_lsq_error<N_SLS>(
         tau_sigma, tau_eps, target_Q, min_frequency, max_frequency);
     EXPECT_LT(lsq_error * 100.0, 5.0)
@@ -443,9 +461,8 @@ TEST(Attenuation_ComputeTauEps, DifferentNumberOfSLS) {
   // Savage 2010: N_SLS=5 achieves ~1% error at ~3.0 decades
   {
     constexpr int N_SLS = 5;
-    auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
-    auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency,
-                                          max_frequency);
+    auto tau_sigma = compute_tau_sigma<N_SLS>(band);
+    auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, band);
     type_real lsq_error = compute_lsq_error<N_SLS>(
         tau_sigma, tau_eps, target_Q, min_frequency, max_frequency);
     EXPECT_LT(lsq_error * 100.0, 2.0)
@@ -467,9 +484,10 @@ TEST(Attenuation_ComputeTauEps, DifferentFrequencyRanges) {
   {
     constexpr type_real min_frequency = 0.1;
     constexpr type_real max_frequency = 1.0; // 1 decade
-    auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
-    auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency,
-                                          max_frequency);
+    specfem::utilities::Band<specfem::units::Hertz> band(min_frequency * Hz,
+                                                         max_frequency * Hz);
+    auto tau_sigma = compute_tau_sigma<N_SLS>(band);
+    auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, band);
     type_real lsq_error = compute_lsq_error<N_SLS>(
         tau_sigma, tau_eps, target_Q, min_frequency, max_frequency);
     // 1 decade is well below optimal 1.7 decades, should have very low error
@@ -483,9 +501,10 @@ TEST(Attenuation_ComputeTauEps, DifferentFrequencyRanges) {
   {
     constexpr type_real min_frequency = 1.0 / 5.01; // ~1.7 decades
     constexpr type_real max_frequency = 10.0;
-    auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
-    auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency,
-                                          max_frequency);
+    specfem::utilities::Band<specfem::units::Hertz> band(min_frequency * Hz,
+                                                         max_frequency * Hz);
+    auto tau_sigma = compute_tau_sigma<N_SLS>(band);
+    auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, band);
     type_real lsq_error = compute_lsq_error<N_SLS>(
         tau_sigma, tau_eps, target_Q, min_frequency, max_frequency);
     EXPECT_LT(lsq_error * 100.0, 2.0)
@@ -500,9 +519,10 @@ TEST(Attenuation_ComputeTauEps, DifferentFrequencyRanges) {
   {
     constexpr type_real min_frequency = 0.01;
     constexpr type_real max_frequency = 1000.0; // 5 decades
-    auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
-    auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency,
-                                          max_frequency);
+    specfem::utilities::Band<specfem::units::Hertz> band(min_frequency * Hz,
+                                                         max_frequency * Hz);
+    auto tau_sigma = compute_tau_sigma<N_SLS>(band);
+    auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, band);
     type_real lsq_error = compute_lsq_error<N_SLS>(
         tau_sigma, tau_eps, target_Q, min_frequency, max_frequency);
     // 5 decades far exceeds optimal, expect significant error
@@ -521,10 +541,11 @@ TEST(Attenuation_ComputeTauEps, QReconstructionOverFrequencies) {
   constexpr type_real target_Q = 200.0;
   constexpr type_real min_frequency = 0.1;
   constexpr type_real max_frequency = 100.0; // 3 decades
+  specfem::utilities::Band<specfem::units::Hertz> band(min_frequency * Hz,
+                                                       max_frequency * Hz);
 
-  auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
-  auto tau_eps =
-      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency, max_frequency);
+  auto tau_sigma = compute_tau_sigma<N_SLS>(band);
+  auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, band);
 
   // Set up evaluation frequencies
   Kokkos::View<type_real[NF_ATTENUATION], Kokkos::LayoutRight,
@@ -580,10 +601,11 @@ TEST(Attenuation_ComputeTauEps, ValuesAreFiniteAndPositive) {
   constexpr type_real target_Q = 200.0;
   constexpr type_real min_frequency = 0.1;
   constexpr type_real max_frequency = 100.0;
+  specfem::utilities::Band<specfem::units::Hertz> band(min_frequency * Hz,
+                                                       max_frequency * Hz);
 
-  auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
-  auto tau_eps =
-      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency, max_frequency);
+  auto tau_sigma = compute_tau_sigma<N_SLS>(band);
+  auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, band);
 
   for (int j = 0; j < N_SLS; ++j) {
     EXPECT_TRUE(std::isfinite(tau_eps(j)))

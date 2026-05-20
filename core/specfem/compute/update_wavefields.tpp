@@ -38,7 +38,7 @@ int update_wavefields(
       specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
       specfem::tag_dispatch::medium_set<Tags::medium_tag>{} *
       PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
-      ATTENUATION_SET(none) *
+      ATTENUATION_SET(none, constant_isotropic) *
       BOUNDARY_SET(none, stacey, acoustic_free_surface,
                    composite_stacey_dirichlet), [&]<typename ElementTags>() {
     elements_updated +=
