@@ -30,7 +30,8 @@
 
 ! divides model into partitions using scotch library functions
 
-  use constants, only: SCOTCH,METIS,PATOH,ROWS_PART,MAX_STRING_LEN
+  use adjacency_graph_shared, only: build_adjacency_graph_csr
+  use constants, only: SCOTCH,METIS,PATOH,ROWS_PART,MAX_STRING_LEN,NGNOD_EIGHT_CORNERS
 
   use decompose_mesh_par
 
@@ -39,6 +40,7 @@
   implicit none
   ! local parameters
   integer, dimension(:), allocatable  :: num_material
+  integer, dimension(:), allocatable  :: elmnts_flat
   integer :: ispec,iproc,inum,ier
   integer :: max_neighbor   ! real maximum number of neighbors per element
 
@@ -61,6 +63,20 @@
   else
     if (num_p_level /= 1) stop 'Error decompose_mesh: no-LTS mode has invalid p-levels'
   endif
+
+  ! Compute typed adjacency graph (face/edge/corner classification) for database writing.
+  ! Must be done before elmnts is shifted to 0-based indexing below.
+  ! Uses the first NGNOD_EIGHT_CORNERS corners of each element (1-based node IDs).
+  ! sup_neighbor (from check_valence) bounds both node valence and element neighbors.
+  allocate(elmnts_flat(0:NGNOD_EIGHT_CORNERS*nspec-1), stat=ier)
+  if (ier /= 0) stop 'Error allocating elmnts_flat for adjacency graph'
+  do ispec = 1, nspec
+    elmnts_flat((ispec-1)*NGNOD_EIGHT_CORNERS : ispec*NGNOD_EIGHT_CORNERS-1) = &
+      elmnts(1:NGNOD_EIGHT_CORNERS, ispec)
+  end do
+  call build_adjacency_graph_csr(elmnts_flat, nspec, nnodes, sup_neighbor, &
+                                  xadj_typed, adjncy_typed, adj_types_global, nb_adj_edges_typed)
+  deallocate(elmnts_flat)
 
   ! assumes indexing starts from 0 for partitioners
   elmnts(:,:) = elmnts(:,:) - 1

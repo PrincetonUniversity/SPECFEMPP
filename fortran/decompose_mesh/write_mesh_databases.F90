@@ -157,6 +157,9 @@
                                      glob2loc_nodes_parts, glob2loc_nodes, part, &
                                      nspec2D_moho, ibelm_moho, nodes_ibelm_moho, NGNOD2D)
 
+    ! writes out element adjacency with face/edge/corner type codes
+    call write_adjacency_database(IIN_database, ipart)
+
     close(IIN_database)
   enddo
 
@@ -222,3 +225,54 @@
   print *
 
   end subroutine write_mesh_databases
+
+
+  subroutine write_adjacency_database(IIN_database, ipart)
+
+  ! Writes local (intra-partition) element adjacency in the same binary format as
+  ! meshfem3d save_databases.F90: total count, then tuples (ispec_local, ineigh_local, 1, adj_type).
+  ! Cross-partition neighbors are skipped; MPI adjacency with types is a follow-on task.
+
+  use decompose_mesh_par, only: nspec, xadj_typed, adjncy_typed, adj_types_global, &
+                                 nb_adj_edges_typed, glob2loc_elmnts, part
+
+  implicit none
+
+  integer, intent(in) :: IIN_database, ipart
+
+  integer :: ispec, k, jspec, ispec_local, jspec_local
+  integer :: total_nadj_element, index
+  integer :: num_mpi_adjacencies
+
+  total_nadj_element = 0
+  do ispec = 1, nspec
+    if (part(ispec) /= ipart) cycle
+    do k = xadj_typed(ispec), xadj_typed(ispec+1)-1
+      if (part(adjncy_typed(k)) == ipart) total_nadj_element = total_nadj_element + 1
+    end do
+  end do
+
+  write(IIN_database) total_nadj_element
+  index = 0
+
+  do ispec = 1, nspec
+    if (part(ispec) /= ipart) cycle
+    ispec_local = glob2loc_elmnts(ispec-1) + 1
+    do k = xadj_typed(ispec), xadj_typed(ispec+1)-1
+      jspec = adjncy_typed(k)
+      if (part(jspec) /= ipart) cycle
+      jspec_local = glob2loc_elmnts(jspec-1) + 1
+      write(IIN_database) ispec_local, jspec_local, 1, adj_types_global(k)
+      index = index + 1
+    end do
+  end do
+
+  if (index /= total_nadj_element) then
+    print *,'Error: index ',index,' /= total_nadj_element ',total_nadj_element,' in partition ',ipart
+    stop 'Error in write_adjacency_database'
+  endif
+
+  num_mpi_adjacencies = 0
+  write(IIN_database) num_mpi_adjacencies
+
+  end subroutine write_adjacency_database

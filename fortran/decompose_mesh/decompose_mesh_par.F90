@@ -69,6 +69,12 @@ module decompose_mesh_par
   integer, dimension(:), allocatable  :: nodes_elmnts
   integer, dimension(:), allocatable  :: elmnts_load
 
+  ! Typed adjacency (CSR) used for database writing — separate from partitioner CSR above
+  integer, dimension(:), allocatable :: xadj_typed       ! (1:nspec+1) row pointers
+  integer, dimension(:), allocatable :: adjncy_typed     ! (1:nb_adj_edges_typed) neighbor IDs
+  integer, dimension(:), allocatable :: adj_types_global ! (1:nb_adj_edges_typed) type codes 1-26
+  integer :: nb_adj_edges_typed
+
   integer, dimension(:), pointer  :: glob2loc_elmnts
   integer, dimension(:), pointer  :: glob2loc_nodes_nparts
   integer, dimension(:), pointer  :: glob2loc_nodes_parts
