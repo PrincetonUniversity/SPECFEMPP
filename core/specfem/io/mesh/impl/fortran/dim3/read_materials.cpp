@@ -115,7 +115,7 @@ specfem::io::mesh::impl::fortran::dim3::read_materials(
                 specfem::element::medium_tag::elastic,
                 specfem::element::property_tag::isotropic,
                 specfem::element::attenuation_tag::constant_isotropic>
-                material(rho, vs, vp, Qmu, Qkappa, static_cast<type_real>(0.0));
+                material(rho, vs, vp, Qkappa, Qmu, static_cast<type_real>(0.0));
             const int index = materials.add_material(material);
             mapping.push_back(
                 { specfem::element::medium_tag::elastic,

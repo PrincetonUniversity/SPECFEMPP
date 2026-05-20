@@ -1,5 +1,5 @@
 #include "specfem/assembly/assembly.hpp"
-#include "specfem/assembly/assembly/impl/helper.hpp"
+#include "specfem/assembly/assembly/impl/compute_wavefield_helper.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros/tag_dispatch.hpp"
 #include "specfem/tag_dispatch/for_each.hpp"
@@ -9,8 +9,7 @@
 
 namespace {
 
-template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag>
+template <typename Tags>
 void get_wavefield_on_entire_grid(
     const specfem::enums::wavefield component,
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
@@ -19,17 +18,18 @@ void get_wavefield_on_entire_grid(
                  Kokkos::DefaultExecutionSpace>
         wavefield_on_entire_grid) {
 
+  static_assert(Tags::dimension_tag == specfem::element::dimension_tag::dim2,
+                "Dimension tag must be dim2");
+
   const auto &element_grid = assembly.mesh.element_grid;
 
   if (element_grid == 5) {
-    specfem::assembly::assembly_impl::helper<
-        specfem::element::dimension_tag::dim2, MediumTag, PropertyTag, 5>
-        helper(assembly, wavefield_on_entire_grid);
+    specfem::assembly::assembly_impl::ComputeWavefieldHelper<Tags, 5> helper(
+        assembly, wavefield_on_entire_grid);
     helper(component);
   } else if (element_grid == 8) {
-    specfem::assembly::assembly_impl::helper<
-        specfem::element::dimension_tag::dim2, MediumTag, PropertyTag, 8>
-        helper(assembly, wavefield_on_entire_grid);
+    specfem::assembly::assembly_impl::ComputeWavefieldHelper<Tags, 8> helper(
+        assembly, wavefield_on_entire_grid);
     helper(component);
   } else {
     throw std::runtime_error("Number of quadrature points not supported");
@@ -93,12 +93,10 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::
       DIMENSION_SET(dim2) *
           MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
                      elastic_psv_t) *
-          PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
-          ATTENUATION_SET(none),
+          PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
       [&]<typename TagsType>() {
-        get_wavefield_on_entire_grid<TagsType::medium_tag,
-                                     TagsType::property_tag>(
-            component, *this, wavefield_on_entire_grid);
+        get_wavefield_on_entire_grid<TagsType>(component, *this,
+                                               wavefield_on_entire_grid);
       });
 
   // Copy the wavefield on the entire grid to the host
