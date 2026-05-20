@@ -31,7 +31,7 @@ program xdecompose_mesh
 
   use decompose_mesh_par, only: nparts,outputpath_name,ADIOS_FOR_DATABASES
 
-  use shared_parameters, only: HDF5_ENABLED, LOCAL_PATH, NPROC
+  use shared_parameters, only: LOCAL_PATH, NPROC
 
   implicit none
 
@@ -112,12 +112,7 @@ program xdecompose_mesh
   ! partitions mesh (using scotch, metis, or patoh partitioners via constants.h)
   call decompose_mesh()
 
-  ! writes out database files
-  if (HDF5_ENABLED) then
-    call write_mesh_databases_hdf5()
-  else
-    call write_mesh_databases()
-  endif
+  call write_mesh_databases()
 
   ! user output
   print *

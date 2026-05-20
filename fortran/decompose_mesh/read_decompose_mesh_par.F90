@@ -78,7 +78,7 @@
 
   use shared_parameters, only: &
     NGNOD, NGNOD2D, NPROC, PARTITIONING_TYPE, LTS_MODE, ATTENUATION, &
-    PML_CONDITIONS, SAVE_MESH_FILES, HDF5_ENABLED, ADIOS_FOR_DATABASES, &
+    PML_CONDITIONS, SAVE_MESH_FILES, ADIOS_FOR_DATABASES, &
     COUPLE_WITH_INJECTION_TECHNIQUE, IS_WAVEFIELD_DISCONTINUITY, LOCAL_PATH
 
   use decompose_mesh_filenames
@@ -138,7 +138,6 @@
   if (ier /= 0) stop 'Error reading LOCAL_PATH from Par_file'
 
   ! optional flags — silently default to .false. if absent from Par_file
-  call read_value_logical(HDF5_ENABLED,              'HDF5_ENABLED',              ier); ier = 0
   call read_value_logical(IS_WAVEFIELD_DISCONTINUITY,'IS_WAVEFIELD_DISCONTINUITY',ier); ier = 0
 
   ! input mesh file paths (required)

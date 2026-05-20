@@ -52,23 +52,6 @@ target_link_libraries(decompose_mesh_part_module
 )
 
 # ======================================================================
-# Library 2: decompose_mesh_hdf5_module (conditional on SPECFEM_ENABLE_HDF5)
-# Provides: part_decompose_mesh_hdf5 module
-# ======================================================================
-if (SPECFEM_ENABLE_HDF5)
-    add_library(decompose_mesh_hdf5_module
-        part_decompose_mesh_hdf5.F90
-    )
-    add_library(decompose_mesh::hdf5_module ALIAS decompose_mesh_hdf5_module)
-    target_compile_definitions(decompose_mesh_hdf5_module PRIVATE USE_HDF5)
-    target_link_libraries(decompose_mesh_hdf5_module
-        PRIVATE
-        decompose_mesh::part_module
-        meshfem3D::shared_hdf5_module
-    )
-endif()
-
-# ======================================================================
 # Library 3: decompose_mesh_par_module
 # Provides: decompose_mesh_par module
 # ======================================================================
@@ -133,7 +116,6 @@ set(DECOMPOSE_MESH_IMPL_SOURCES
     read_decompose_mesh_par.F90
     read_mesh_files.F90
     write_mesh_databases.F90
-    write_mesh_databases_hdf5.F90
 )
 
 add_library(decompose_mesh_impl
@@ -147,14 +129,6 @@ target_link_libraries(decompose_mesh_impl
     meshfem3D::shared
 )
 
-if (SPECFEM_ENABLE_HDF5)
-    target_compile_definitions(decompose_mesh_impl PRIVATE USE_HDF5)
-    target_link_libraries(decompose_mesh_impl
-        PRIVATE
-        decompose_mesh::hdf5_module
-        meshfem3D::shared_hdf5_module
-    )
-endif()
 
 # ======================================================================
 # Library 7: decompose_mesh_mpi_modules (only when SPECFEM_ENABLE_MPI)
@@ -195,13 +169,6 @@ target_link_libraries(xdecompose_mesh
     specfem::version
 )
 
-if (SPECFEM_ENABLE_HDF5)
-    target_link_libraries(xdecompose_mesh
-        PRIVATE
-        decompose_mesh::hdf5_module
-        meshfem3D::shared_hdf5_module
-    )
-endif()
 
 if (SPECFEM_ENABLE_MPI)
     target_link_libraries(xdecompose_mesh PRIVATE MPI::MPI_Fortran)
