@@ -31,6 +31,9 @@ specfem::io::read_3d_mesh(const std::string &database_file,
 
   specfem::mesh::mesh<specfem::element::dimension_tag::dim3> mesh;
 
+  specfem::io::fortran_read_line(param_stream, &mesh.utm_projection_zone);
+  specfem::io::fortran_read_line(param_stream, &mesh.suppress_utm_projection);
+
   mesh.control_nodes =
       specfem::io::mesh::impl::fortran::dim3::read_control_nodes(param_stream);
   const auto [nspec, ngllz, nglly, ngllx, control_node_index, materials] =
