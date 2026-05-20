@@ -10,17 +10,17 @@
 namespace specfem {
 namespace medium_physics {
 
-template <typename ChunkIndexType, typename DisplacementFieldType,
-          typename VelocityFieldType, typename AccelerationFieldType,
-          typename QuadratureType, typename WavefieldViewType>
+template <
+    typename Tags, typename ChunkIndexType, typename DisplacementFieldType,
+    typename VelocityFieldType, typename AccelerationFieldType,
+    typename QuadratureType, typename WavefieldViewType,
+    std::enable_if_t<
+        Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
+            Tags::medium_tag == specfem::element::medium_tag::elastic_spin &&
+            Tags::property_tag ==
+                specfem::element::property_tag::isotropic_cosserat,
+        int> = 0>
 KOKKOS_FUNCTION void impl_compute_wavefield(
-    const std::integral_constant<specfem::element::dimension_tag,
-                                 specfem::element::dimension_tag::dim3>,
-    const std::integral_constant<specfem::element::medium_tag,
-                                 specfem::element::medium_tag::elastic_spin>,
-    const std::integral_constant<
-        specfem::element::property_tag,
-        specfem::element::property_tag::isotropic_cosserat>,
     const ChunkIndexType &chunk_index,
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
         &assembly,
