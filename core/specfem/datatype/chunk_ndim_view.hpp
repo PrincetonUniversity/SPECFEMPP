@@ -27,30 +27,27 @@ template <typename T, int... DataArrayShape> struct arrayify_datatype_expand;
  * @tparam ElementSubspaceShapeIntegerSequence point index shape
  * @tparam PointwiseShapeIntegerSequence tensor shape at each point
  */
-template <typename T, typename ElementSubspaceShapeIntegerSequence,
+template <typename T, int chunk_size,
+          typename ElementSubspaceShapeIntegerSequence,
           typename PointwiseShapeIntegerSequence>
 struct arrayify_datatype {
-public:
-  using type = decltype(type_expand(ElementSubspaceShapeIntegerSequence(),
-                                    PointwiseShapeIntegerSequence()))::type;
-
 private:
-  template <int... DataArrayShape>
-  static arrayify_datatype_expand<T, DataArrayShape...>
-  type_expand(std::integer_sequence<int, DataArrayShape...> integer_sequence) {
-    return {};
-  }
   template <int... SubspaceShape, int... PointwiseShape>
-  static arrayify_datatype_expand<T, SubspaceShape..., PointwiseShape...>
+  static arrayify_datatype_expand<T, chunk_size, SubspaceShape...,
+                                  PointwiseShape...>
   type_expand(std::integer_sequence<int, SubspaceShape...> integer_sequence1,
               std::integer_sequence<int, PointwiseShape...> integer_sequence2) {
     return {};
   }
+
+public:
+  using type = decltype(type_expand(ElementSubspaceShapeIntegerSequence(),
+                                    PointwiseShapeIntegerSequence()))::type;
 };
 
 template <typename T, int NextInt, int... DataArrayShape>
 struct arrayify_datatype_expand<T, NextInt, DataArrayShape...> {
-  using type = arrayify_datatype_expand<T[NextInt], DataArrayShape...>::type;
+  using type = arrayify_datatype_expand<T, DataArrayShape...>::type[NextInt];
 };
 template <typename T> struct arrayify_datatype_expand<T> {
   using type = T;
@@ -64,19 +61,25 @@ template <typename T> struct arrayify_datatype_expand<T> {
  * ElementSubspaceShapeIntegerSequence
  */
 template <int SubspaceDimension, int NGLL> struct subspace_shape {
-  using type =
-      decltype(type_expand(subspace_shape<SubspaceDimension - 1, NGLL>()));
-
 private:
   template <int... Vals>
-  std::integer_sequence<int, Vals..., NGLL>
-  type_expand(std::integer_sequence<int, Vals...> integer_sequence) {
+  static std::integer_sequence<int, Vals..., NGLL>
+  type_expand(std::integer_sequence<int, Vals...> integer_sequence) {};
 
-  };
+public:
+  using type = decltype(type_expand(
+      typename subspace_shape<SubspaceDimension - 1, NGLL>::type()));
 };
 template <int NGLL> struct subspace_shape<0, NGLL> {
   using type = std::integer_sequence<int>;
 };
+
+// mini-test: 8-7 tensor on NGLL=5 2D element (chunk size = 1)
+static_assert(
+    std::is_same<arrayify_datatype<type_real, 1,
+                                   typename impl::subspace_shape<2, 5>::type,
+                                   std::integer_sequence<int, 8, 7>>::type,
+                 type_real[1][5][5][8][7]>());
 
 } // namespace impl
 
@@ -91,8 +94,8 @@ template <typename T, specfem::element::dimension_tag DimensionTag,
 struct ChunkNDimViewType
     : public Kokkos::View<
           typename impl::arrayify_datatype<
-              typename specfem::datatype::simd<T, UseSIMD>::datatype,
-              impl::subspace_shape<ChunkSubspaceDimension, NGLL>,
+              typename specfem::datatype::simd<T, UseSIMD>::datatype, ChunkSize,
+              typename impl::subspace_shape<ChunkSubspaceDimension, NGLL>::type,
               PointwiseShapeIntegerSequence>::type,
           MemorySpace, MemoryTraits> {
   /**
@@ -101,26 +104,24 @@ struct ChunkNDimViewType
    */
   ///@{
   using simd = specfem::datatype::simd<T, UseSIMD>; ///< SIMD data type
-  using type =
-      Kokkos::View<typename impl::arrayify_datatype<
-                       typename specfem::datatype::simd<T, UseSIMD>::datatype,
-                       impl::subspace_shape<ChunkSubspaceDimension, NGLL>,
-                       PointwiseShapeIntegerSequence>::type,
-                   MemorySpace, MemoryTraits>; ///< Underlying data type used to
-                                               ///< store values
+  using type = Kokkos::View<
+      typename impl::arrayify_datatype<
+          typename specfem::datatype::simd<T, UseSIMD>::datatype, ChunkSize,
+          typename impl::subspace_shape<ChunkSubspaceDimension, NGLL>::type,
+          PointwiseShapeIntegerSequence>::type,
+      MemorySpace, MemoryTraits>; ///< Underlying data type used to
+                                  ///< store values
   using value_type = typename type::value_type; ///< Value type used to store
                                                 ///< the elements of the array
   using base_type = T;                          ///< Base type of the array
-  constexpr static auto dimension_tag =
-      specfem::element::dimension_tag::dim3; ///< Dimension tag
-  using index_type =
-      typename specfem::point::index<dimension_tag,
-                                     UseSIMD>; ///< index type for accessing at
-                                               ///< GLL level
-  constexpr static bool using_simd = UseSIMD;  ///< Use SIMD datatypes for the
-                                               ///< array. If false,
-                                               ///< std::is_same<value_type,
-                                               ///< base_type>::value is true
+  constexpr static auto dimension_tag = DimensionTag; ///< Dimension tag
+  using index_type = specfem::point::index<dimension_tag,
+                                           UseSIMD>; ///< index type for
+                                                     ///< accessing at GLL level
+  constexpr static bool using_simd = UseSIMD; ///< Use SIMD datatypes for the
+                                              ///< array. If false,
+                                              ///< std::is_same<value_type,
+                                              ///< base_type>::value is true
   ///@}
 
   /**
@@ -128,10 +129,6 @@ struct ChunkNDimViewType
    *
    */
   ///@{
-  constexpr static auto accessor_type =
-      specfem::datatype::AccessorType::chunk_element; ///< Accessor type for
-                                                      ///< identifying the
-                                                      ///< class
 
   constexpr static int chunk_size = ChunkSize; ///< Number of elements in
                                                ///< the chunk
@@ -162,11 +159,7 @@ struct ChunkNDimViewType
   template <typename ScratchMemorySpace>
   KOKKOS_FUNCTION
   ChunkNDimViewType(const ScratchMemorySpace &scratch_memory_space)
-      : Kokkos::View<typename impl::arrayify_datatype<
-                         typename specfem::datatype::simd<T, UseSIMD>::datatype,
-                         impl::subspace_shape<ChunkSubspaceDimension, NGLL>,
-                         PointwiseShapeIntegerSequence>::type,
-                     MemorySpace, MemoryTraits>(scratch_memory_space) {}
+      : type(scratch_memory_space) {}
   ///@}
 
   using type::operator();

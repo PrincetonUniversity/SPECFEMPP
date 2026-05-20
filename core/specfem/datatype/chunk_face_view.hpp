@@ -11,8 +11,14 @@ template <typename T, specfem::element::dimension_tag DimensionTag,
               Kokkos::DefaultExecutionSpace::scratch_memory_space,
           typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged>>
 struct ScalarChunkFaceViewType
-    : ChunkNDimViewType<T, DimensionTag, NumberOfFaces, NumberOfGLLPoints, 2,
-                        std::integer_sequence<int>> {};
+    : public ChunkNDimViewType<T, DimensionTag, NumberOfFaces,
+                               NumberOfGLLPoints, 2, std::integer_sequence<int>,
+                               UseSIMD, MemorySpace, MemoryTraits> {
+  constexpr static auto accessor_type =
+      specfem::datatype::AccessorType::chunk_face; ///< Accessor type for
+                                                   ///< identifying the
+                                                   ///< class
+};
 
 template <
     typename T, specfem::element::dimension_tag DimensionTag, int NumberOfFaces,
@@ -20,8 +26,14 @@ template <
     typename MemorySpace = Kokkos::DefaultExecutionSpace::scratch_memory_space,
     typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged>>
 struct VectorChunkFaceViewType
-    : ChunkNDimViewType<T, DimensionTag, NumberOfFaces, NumberOfGLLPoints, 2,
-                        std::integer_sequence<int, Components>> {
+    : public ChunkNDimViewType<T, DimensionTag, NumberOfFaces,
+                               NumberOfGLLPoints, 2,
+                               std::integer_sequence<int, Components>, UseSIMD,
+                               MemorySpace, MemoryTraits> {
+  constexpr static auto accessor_type =
+      specfem::datatype::AccessorType::chunk_face; ///< Accessor type for
+                                                   ///< identifying the
+                                                   ///< class
   constexpr static int components = Components;
 };
 
@@ -32,9 +44,14 @@ template <typename T, specfem::element::dimension_tag DimensionTag,
               Kokkos::DefaultExecutionSpace::scratch_memory_space,
           typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged>>
 struct TensorChunkFaceViewType
-    : ChunkNDimViewType<
+    : public ChunkNDimViewType<
           T, DimensionTag, NumberOfFaces, NumberOfGLLPoints, 2,
-          std::integer_sequence<int, Components, NumberOfDimensions>> {
+          std::integer_sequence<int, Components, NumberOfDimensions>, UseSIMD,
+          MemorySpace, MemoryTraits> {
+  constexpr static auto accessor_type =
+      specfem::datatype::AccessorType::chunk_face; ///< Accessor type for
+                                                   ///< identifying the
+                                                   ///< class
   constexpr static int components = Components;
   constexpr static int dimensions = NumberOfDimensions;
 };
