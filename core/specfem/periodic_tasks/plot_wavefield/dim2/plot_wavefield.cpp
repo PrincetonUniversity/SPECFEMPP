@@ -65,7 +65,7 @@ specfem::periodic_tasks::plot_wavefield<specfem::element::dimension_tag::dim2>::
         const specfem::enums::display_format &output_format,
         const specfem::enums::wavefield &wavefield_type,
         const specfem::simulation::field_type &simulation_wavefield_type,
-        const specfem::enums::display_component &component, const type_real &dt,
+        const specfem::enums::display_component &component,
         const int &time_interval, const boost::filesystem::path &output_folder,
         const specfem::enums::elastic_wave elastic_wave,
         const specfem::enums::electromagnetic_wave electromagnetic_wave)
@@ -73,7 +73,7 @@ specfem::periodic_tasks::plot_wavefield<specfem::element::dimension_tag::dim2>::
       wavefield_type(wavefield_type),
       plotter<specfem::element::dimension_tag::dim2>(time_interval),
       output_format(output_format), output_folder(output_folder),
-      component(component), nspec(assembly.mesh.nspec), dt(dt),
+      component(component), nspec(assembly.mesh.nspec),
       elastic_wave(elastic_wave), electromagnetic_wave(electromagnetic_wave),
       ngllx(assembly.mesh.element_grid.ngllx),
       ngllz(assembly.mesh.element_grid.ngllz) {
@@ -132,7 +132,7 @@ specfem::periodic_tasks::plot_wavefield<specfem::element::dimension_tag::dim2>::
         const specfem::enums::display_format &output_format,
         const specfem::enums::wavefield &wavefield_type,
         const specfem::simulation::field_type &simulation_wavefield_type,
-        const specfem::enums::display_component &component, const type_real &dt,
+        const specfem::enums::display_component &component,
         const int &time_interval, const boost::filesystem::path &output_folder,
         const specfem::enums::elastic_wave elastic_wave,
         const specfem::enums::electromagnetic_wave electromagnetic_wave)
@@ -140,7 +140,7 @@ specfem::periodic_tasks::plot_wavefield<specfem::element::dimension_tag::dim2>::
       wavefield_type(wavefield_type),
       plotter<specfem::element::dimension_tag::dim2>(time_interval),
       output_format(output_format), output_folder(output_folder),
-      component(component), nspec(assembly.mesh.nspec), dt(dt),
+      component(component), nspec(assembly.mesh.nspec),
       elastic_wave(elastic_wave), electromagnetic_wave(electromagnetic_wave),
       ngllx(assembly.mesh.element_grid.ngllx),
       ngllz(assembly.mesh.element_grid.ngllz) {
@@ -159,21 +159,20 @@ specfem::periodic_tasks::plot_wavefield<specfem::element::dimension_tag::dim2>::
     this->nonnegative_field = false;
   }
 
-  std::ostringstream message;
-  message << "Initialized 2D wavefield plotter with setup:" << std::endl;
-  message << "--------------------------------------------" << std::endl;
-  message << "    Plotting wavefield of type: "
-          << specfem::enums::to_string(wavefield_type)
-          << " with component: " << specfem::enums::to_string(component)
-          << std::endl;
-  message << "    Non-negative field: "
-          << (this->nonnegative_field ? "true" : "false") << std::endl;
-  message << "    Output format: " << specfem::enums::to_string(output_format)
-          << std::endl;
-  message << "    Output folder: " << output_folder.string() << std::endl;
-  message << "    Time interval: " << time_interval << " steps" << std::endl;
-
-  specfem::Logger::info(message.str());
+  specfem::Logger::info([&](std::ostringstream &oss) {
+    oss << "Initialized 2D wavefield plotter with setup:" << std::endl;
+    oss << "--------------------------------------------" << std::endl;
+    oss << "    Plotting wavefield of type: "
+        << specfem::enums::to_string(wavefield_type)
+        << " with component: " << specfem::enums::to_string(component)
+        << std::endl;
+    oss << "    Non-negative field: "
+        << (this->nonnegative_field ? "true" : "false") << std::endl;
+    oss << "    Output format: " << specfem::enums::to_string(output_format)
+        << std::endl;
+    oss << "    Output folder: " << output_folder.string() << std::endl;
+    oss << "    Time interval: " << time_interval << " steps" << std::endl;
+  });
 };
 
 // Sigmoid function centered at 0.0
@@ -924,8 +923,10 @@ void specfem::periodic_tasks::
   H5Gclose(vtkhdf_group);
   H5Fclose(hdf5_file_id);
 
-  specfem::Logger::info("Initialized VTK HDF5 file for wavefield output: " +
-                        this->hdf5_filename + " (extensible datasets)");
+  specfem::Logger::info([&](std::ostringstream &oss) {
+    oss << "Initialized VTK HDF5 file for wavefield output: "
+        << this->hdf5_filename << " (extensible datasets)";
+  });
 
 #else
   throw std::runtime_error(
@@ -1372,7 +1373,9 @@ void specfem::periodic_tasks::
   hid_t steps_group = H5Gopen(vtkhdf_group, "Steps", H5P_DEFAULT);
 
   // Extend and write time value for this timestep
-  double time_value = static_cast<double>(istep) * this->dt;
+  double time_value =
+      static_cast<double>(this->assembly.t0) +
+      static_cast<double>(istep) * static_cast<double>(this->assembly.dt);
   hid_t values_dataset = H5Dopen(steps_group, "Values", H5P_DEFAULT);
   H5Dset_extent(values_dataset, new_timestep_count);
   hid_t values_filespace = H5Dget_space(values_dataset);
@@ -1488,9 +1491,10 @@ void specfem::periodic_tasks::
 
   this->current_timestep++;
 
-  specfem::Logger::info("Wrote wavefield data for timestep " +
-                        std::to_string(istep) + " to HDF5 file (step " +
-                        std::to_string(this->current_timestep) + ")");
+  specfem::Logger::info([&](std::ostringstream &oss) {
+    oss << "Wrote wavefield data for timestep " << istep
+        << " to HDF5 file (step " << this->current_timestep << ")";
+  });
 
 #else
   throw std::runtime_error(

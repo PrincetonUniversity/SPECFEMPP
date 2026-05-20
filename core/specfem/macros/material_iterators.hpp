@@ -226,6 +226,33 @@
 #define MATERIAL_SYSTEMS MATERIAL_SYSTEMS_DIM2 MATERIAL_SYSTEMS_DIM3
 
 /**
+ * @brief Macro to generate a list of medium-property systems (unique
+ * combinations of dimension, medium, and property tags, without attenuation).
+ * Derived from MATERIAL_SYSTEMS by removing the attenuation tag and
+ * deduplicating.
+ */
+#define MEDIUM_PROPERTY_SYSTEMS_DIM2                                           \
+  ((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV, PROPERTY_TAG_ISOTROPIC))(      \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV, PROPERTY_TAG_ANISOTROPIC))( \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH, PROPERTY_TAG_ISOTROPIC))(    \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH, PROPERTY_TAG_ANISOTROPIC))(  \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV_T,                           \
+       PROPERTY_TAG_ISOTROPIC_COSSERAT))(                                      \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC))(      \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_POROELASTIC, PROPERTY_TAG_ISOTROPIC))(   \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_TE,                      \
+       PROPERTY_TAG_ISOTROPIC))
+
+#define MEDIUM_PROPERTY_SYSTEMS_DIM3                                           \
+  ((DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC, PROPERTY_TAG_ISOTROPIC))(          \
+      (DIMENSION_TAG_DIM3, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC))(      \
+      (DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC_SPIN,                            \
+       PROPERTY_TAG_ISOTROPIC_COSSERAT))
+
+#define MEDIUM_PROPERTY_SYSTEMS                                                \
+  MEDIUM_PROPERTY_SYSTEMS_DIM2 MEDIUM_PROPERTY_SYSTEMS_DIM3
+
+/**
  * @brief Macro to generate a list of element types
  *
  */

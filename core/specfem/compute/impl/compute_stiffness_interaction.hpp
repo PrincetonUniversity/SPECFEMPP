@@ -34,7 +34,7 @@ int compute_stiffness_interaction(
   constexpr int ngll = NGLL;
 
   const auto elements = assembly.element_types.get_elements_on_device(
-      medium_tag, property_tag, boundary_tag);
+      medium_tag, property_tag, attenuation_tag, boundary_tag);
 
   // Get the number of elements that match the specified tags
   const int nelements = elements.extent(0);
@@ -58,11 +58,12 @@ int compute_stiffness_interaction(
   const auto &jacobian_matrix = assembly.jacobian_matrix;
   const auto &properties = assembly.properties;
   const auto &boundaries = assembly.boundaries;
+  const auto &attenuation = assembly.attenuation;
 
   // Get the simulation field and boundary values
-  const auto field =
+  const auto &field =
       assembly.fields.template get_simulation_field<Tags::wavefield_tag>();
-  const auto boundary_values =
+  const auto &boundary_values =
       assembly.boundary_values.template get_container<boundary_tag>();
 
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
@@ -90,10 +91,11 @@ int compute_stiffness_interaction(
   using ElementQuadratureType = specfem::quadrature::lagrange_derivative<
       ngll, Tags::dimension_tag,
       Kokkos::DefaultExecutionSpace::scratch_memory_space,
-      Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+      Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
   using PointTags = specfem::tags::Tags<Tags::dimension_tag, Tags::medium_tag,
-                                        Tags::property_tag, using_simd>;
+                                        Tags::property_tag,
+                                        Tags::attenuation_tag, using_simd>;
 
   using PointBoundaryType =
       specfem::point::boundary<Tags::boundary_tag, Tags::dimension_tag,
@@ -181,6 +183,9 @@ int compute_stiffness_interaction(
                 auto point_stress =
                     specfem::medium_physics::compute_stress<PointTags>(
                         point_property, field_derivatives);
+
+                specfem::medium_physics::compute_attenuation<PointTags>(
+                    index, point_stress, grad_pack, attenuation);
 
                 specfem::medium_physics::compute_cosserat_stress(
                     point_property, point_displacement, point_stress);

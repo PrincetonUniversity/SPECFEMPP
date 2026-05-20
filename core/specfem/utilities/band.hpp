@@ -1,6 +1,6 @@
 #pragma once
 #include "specfem/units/conversions.hpp"
-#include <type_traits>
+#include <type_traits> // std::is_same_v
 
 namespace specfem::utilities {
 
@@ -27,8 +27,8 @@ template <typename T> struct Band {
   /// Converting constructor: accepts two bounds in a different unit @p U and
   /// converts to @p T.  Bounds are swapped when the conversion is
   /// monotone-decreasing (e.g. period→omega) so the result satisfies min ≤ max.
-  template <typename U,
-            typename = std::enable_if_t<!std::is_same<T, U>::value> >
+  template <typename U>
+    requires(!std::is_same_v<T, U>)
   constexpr Band(U lo, U hi) {
     auto clo = specfem::units::unit_cast<T>(lo);
     auto chi = specfem::units::unit_cast<T>(hi);

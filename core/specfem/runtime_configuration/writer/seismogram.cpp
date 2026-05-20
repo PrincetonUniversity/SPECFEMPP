@@ -48,6 +48,8 @@ specfem::runtime_configuration::seismogram::instantiate_seismogram_writer(
     if (specfem::utilities::is_su_string(this->output_format)) {
       throw std::runtime_error("Seismic Unix format not implemented yet");
       return specfem::enums::seismogram_format::seismic_unix;
+    } else if (specfem::utilities::is_sac_string(this->output_format)) {
+      return specfem::enums::seismogram_format::sac;
     } else if (specfem::utilities::is_ascii_string(this->output_format)) {
       return specfem::enums::seismogram_format::ascii;
     } else {
