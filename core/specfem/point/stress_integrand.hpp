@@ -8,25 +8,6 @@
 
 namespace specfem {
 namespace point {
-
-/**
- * @brief Store stress integrands for a quadrature point
- *
- * For elastic domains the stress integrand is given by:
- * \f$ F_{ik} = \sum_{j=1}^{n} T_{ij} \partial_j \xi_{k} \f$ where \f$ T \f$ is
- * the stress tensor. Equation (35) & (36) from Komatitsch and Tromp 2002 I. -
- * Validation
- *
- * For acoustic domains the stress integrand is given by:
- * \f$ F_{ik} = \rho^{-1} \partial_i \xi_{k} \partial_k \chi_{k} \f$. Equation
- * (44) & (45) from Komatitsch and Tromp 2002 I. - Validation
- *
- * @tparam DimensionTag The dimension of the element where the quadrature point
- * is located
- * @tparam MediumTag The medium of the element where the quadrature point is
- * located
- * @tparam UseSIMD Use SIMD instructions
- */
 /**
  * @class stress_integrand
  * @brief Stress tensor integrated with Jacobian in reference element
