@@ -1,6 +1,6 @@
 /// @brief UTM forward/inverse projection (Snyder PP 1395, eqs. 8-9..8-18).
 
-#include "specfem/coordinate_systems/projections/utm.hpp"
+#include "specfem/coordinate_systems/utm.hpp"
 #include "specfem/ellipticity/ellipticity.hpp"
 #include <algorithm>
 #include <cmath>

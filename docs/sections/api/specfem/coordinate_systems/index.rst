@@ -20,7 +20,7 @@ Coordinate types
 Projections
 -----------
 
-*  :doc:`projections/index`: Map projections (UTM, etc.) for converting between geographic and cartesian.
+*  :doc:`utm`: UTM (Universal Transverse Mercator) forward and inverse projection.
 
 .. toctree::
     :maxdepth: 1
@@ -28,4 +28,4 @@ Projections
     geographic
     cartesian
     geocentric
-    projections/index
+    utm
