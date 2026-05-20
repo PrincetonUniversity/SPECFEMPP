@@ -13,16 +13,16 @@
 
 namespace specfem::medium_physics {
 
-template <typename ChunkIndexType, typename DisplacementFieldType,
-          typename VelocityFieldType, typename AccelerationFieldType,
-          typename QuadratureType, typename WavefieldViewType>
+template <
+    typename Tags, typename ChunkIndexType, typename DisplacementFieldType,
+    typename VelocityFieldType, typename AccelerationFieldType,
+    typename QuadratureType, typename WavefieldViewType,
+    std::enable_if_t<
+        Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
+            Tags::medium_tag == specfem::element::medium_tag::acoustic &&
+            Tags::property_tag == specfem::element::property_tag::isotropic,
+        int> = 0>
 KOKKOS_FUNCTION void impl_compute_wavefield(
-    const std::integral_constant<specfem::element::dimension_tag,
-                                 specfem::element::dimension_tag::dim3>,
-    const std::integral_constant<specfem::element::medium_tag,
-                                 specfem::element::medium_tag::acoustic>,
-    const std::integral_constant<specfem::element::property_tag,
-                                 specfem::element::property_tag::isotropic>,
     const ChunkIndexType &chunk_index,
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
         &assembly,
@@ -32,11 +32,6 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     const AccelerationFieldType &acceleration,
     const specfem::enums::wavefield wavefield_type,
     WavefieldViewType wavefield) {
-
-  using Tags =
-      specfem::tags::Tags<specfem::element::dimension_tag::dim3,
-                          specfem::element::medium_tag::acoustic,
-                          specfem::element::property_tag::isotropic, false>;
 
   using FieldDerivativesType = specfem::point::field_derivatives<Tags>;
   using PointPropertyType = specfem::point::properties<Tags>;
@@ -53,7 +48,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
       return acceleration.get_data();
     } else {
       KOKKOS_ABORT_WITH_LOCATION(
-          "Unsupported wavefield component for 2D acoustic isotropic media.");
+          "Unsupported wavefield component for 3D acoustic isotropic media.");
     }
   }();
 
@@ -75,7 +70,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
       chunk_index, assembly.jacobian_matrix, lagrange_derivative, active_field,
       [&](const typename ChunkIndexType::iterator_type::index_type
               &iterator_index,
-          const FieldDerivativesType::value_type &du) {
+          const typename FieldDerivativesType::value_type &du) {
         const auto index = iterator_index.get_index();
         const int ielement = iterator_index.get_local_index().ispec;
         PointPropertyType point_property;

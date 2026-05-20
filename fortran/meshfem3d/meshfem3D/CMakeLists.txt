@@ -71,6 +71,9 @@ target_link_libraries(meshfem3D_mesh_MPI_module PRIVATE
   meshfem3D::shared_module
   meshfem3D::mesh_module
 )
+if (SPECFEM_ENABLE_MPI)
+  target_link_libraries(meshfem3D_mesh_MPI_module PRIVATE MPI::MPI_Fortran)
+endif()
 
 add_library(meshfem3D_mesh
   ${MESHFEM3D_MESH_MODULE}

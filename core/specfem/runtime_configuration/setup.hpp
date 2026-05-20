@@ -11,6 +11,7 @@
 #include "run_setup.hpp"
 #include "solver.hpp"
 #include "sources.hpp"
+#include "specfem/attenuation.hpp"
 #include "specfem/datetime.hpp"
 #include "specfem/io.hpp"
 #include "specfem/setup.hpp"
@@ -242,34 +243,47 @@ public:
   }
 
   /**
-   * @brief Get the reference frequency for attenuation
-   *
-   * @return type_real reference frequency for attenuation
+   * @brief Whether reference frequency was explicitly set in the attenuation
+   * configuration (vs. being read from the mesh database)
    */
-  std::shared_ptr<specfem::units::Hertz>
+  bool has_attenuation_reference_frequency() const {
+    return this->attenuation && this->attenuation->has_reference_frequency();
+  }
+
+  /**
+   * @brief Get the reference frequency for attenuation, if set in the config.
+   *
+   * @return std::optional<specfem::units::Hertz> reference frequency, or
+   * std::nullopt if attenuation is disabled or f0 was not set in the YAML
+   */
+  std::optional<specfem::units::Hertz>
   get_attenuation_reference_frequency() const {
-    if (this->attenuation) {
-      return std::make_shared<specfem::units::Hertz>(
-          this->attenuation->get_reference_frequency());
-    } else {
-      return nullptr;
-    }
+    if (this->attenuation && this->attenuation->has_reference_frequency())
+      return this->attenuation->get_reference_frequency();
+    return std::nullopt;
   };
 
   /**
    * @brief Get the attenuation frequency band
    *
    * @return specfem::utilities::Band<specfem::units::Hertz> Attenuation
-   * frequency band
+   * frequency band (default-constructed if attenuation is disabled)
    */
-  std::shared_ptr<specfem::utilities::Band<specfem::units::Hertz>>
-  get_attenuation_band() const {
-    if (this->attenuation) {
-      return std::make_shared<specfem::utilities::Band<specfem::units::Hertz>>(
-          this->attenuation->get_attenuation_frequency_band());
-    } else {
-      return nullptr; // Return null if attenuation is disabled
-    }
+  specfem::utilities::Band<specfem::units::Hertz> get_attenuation_band() const {
+    if (this->attenuation)
+      return this->attenuation->get_attenuation_frequency_band();
+    return {};
+  };
+
+  /**
+   * @brief Get a self-contained attenuation setup struct for passing to
+   * read_mesh functions.
+   *
+   * @return specfem::attenuation::Setup
+   */
+  specfem::attenuation::Setup get_attenuation_setup() const {
+    return { is_attenuation_enabled(), get_attenuation_reference_frequency(),
+             get_attenuation_band() };
   };
 
   /**
@@ -312,7 +326,6 @@ public:
    * @brief Create 2D wavefield plotter for visualization.
    *
    * @param assembly 2D assembly containing mesh and field information
-   * @param dt Time step size
 
    * @return Shared pointer to 2D wavefield plotter or nullptr if not configured
    */
@@ -320,10 +333,9 @@ public:
       specfem::element::dimension_tag::dim2>>
   instantiate_wavefield_plotter(
       const specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
-          &assembly,
-      const type_real &dt) const {
+          &assembly) const {
     if (this->plot_wavefield) {
-      return this->plot_wavefield->instantiate_wavefield_plotter(assembly, dt);
+      return this->plot_wavefield->instantiate_wavefield_plotter(assembly);
     } else {
       return nullptr;
     }
@@ -333,17 +345,15 @@ public:
    * @brief Create 3D wavefield plotter for visualization.
    *
    * @param assembly 3D assembly containing mesh and field information
-   * @param dt Time step size
    * @return Shared pointer to 3D wavefield plotter or nullptr if not configured
    */
   std::shared_ptr<specfem::periodic_tasks::periodic_task<
       specfem::element::dimension_tag::dim3>>
   instantiate_wavefield_plotter(
       const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
-          &assembly,
-      const type_real &dt) const {
+          &assembly) const {
     if (this->plot_wavefield) {
-      return this->plot_wavefield->instantiate_wavefield_plotter(assembly, dt);
+      return this->plot_wavefield->instantiate_wavefield_plotter(assembly);
     } else {
       return nullptr;
     }

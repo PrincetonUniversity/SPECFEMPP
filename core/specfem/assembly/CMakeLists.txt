@@ -11,6 +11,7 @@ target_link_libraries(
         PRIVATE
         specfem::algorithms
         specfem::coordinate_systems
+        specfem::attenuation
         specfem::element
         specfem::element_coupling
         specfem::quadrature

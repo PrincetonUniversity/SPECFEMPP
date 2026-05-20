@@ -22,6 +22,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
     const std::shared_ptr<specfem::io::reader> &property_reader,
     const specfem::element_coupling::flux_scheme_configuration
         &flux_scheme_config) {
+  this->t0 = t0;
+  this->dt = dt;
   this->mesh = { mesh.tags, mesh.control_nodes, quadratures,
                  mesh.adjacency_graph };
   this->element_types = { this->mesh.nspec, this->mesh.element_grid, this->mesh,
@@ -30,8 +32,11 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
                                   this->mesh.element_grid.ngllz, this->mesh,
                                   this->element_types, flux_scheme_config };
   this->jacobian_matrix = { this->mesh };
-  this->properties = { this->element_types, this->mesh, mesh.materials,
-                       property_reader != nullptr };
+
+  this->field_derivative_storage = { this->element_types, this->mesh.nspec,
+                                     this->mesh.element_grid.ngllz,
+                                     this->mesh.element_grid.ngllx };
+
   this->kernels = { this->element_types };
   this->sources = {
     sources, this->mesh, this->jacobian_matrix, this->element_types,
@@ -64,6 +69,12 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
                                      this->element_intersections, this->mesh,
                                      flux_scheme_config };
   this->fields = { this->mesh, this->element_types, simulation };
+
+  this->attenuation = { mesh.attenuation, dt, this->mesh, this->element_types,
+                        mesh.materials };
+
+  this->properties = { this->element_types, this->mesh, mesh.materials,
+                       property_reader != nullptr };
 
   this->info = { this->mesh, this->properties, this->element_types };
 

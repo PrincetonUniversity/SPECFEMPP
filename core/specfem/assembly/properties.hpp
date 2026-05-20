@@ -41,9 +41,8 @@ struct properties
                 return specfem::assembly::impl::domain_properties<
                     TagsType::dimension_tag, TagsType::medium_tag,
                     TagsType::property_tag>(
-                    element_types.get_elements_on_host(
-                        TagsType::medium_tag, TagsType::property_tag,
-                        TagsType::attenuation_tag),
+                    element_types.get_elements_on_host(TagsType::medium_tag,
+                                                       TagsType::property_tag),
                     mesh, materials, has_gll_model, h_prop);
               };
             }) {}
