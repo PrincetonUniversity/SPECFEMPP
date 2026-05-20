@@ -1,10 +1,10 @@
 #pragma once
 
-#include "compute_tau_sigma.hpp"
 #include "maxwell.hpp"
 #include "specfem/constants.hpp"
 #include "specfem/optimization.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/utilities/band.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
 
@@ -52,13 +52,11 @@ template <int N_SLS> struct AttenuationObjective {
     auto maxwell_factors = maxwell<specfem::constants::NF_ATTENUATION, N_SLS>(
         f, tau_sigma, tau_eps);
 
-    // Compute sum of absolute relative errors (L1 norm, normalized by 1/Q)
-    // Matches Fortran: xi = sqrt( (tan_delta - 1/Q)^2 / (1/Q)^2 )
-    //                     = |tan_delta - 1/Q| * Q
+    // tan_delta = loss / storage = imag / real (physically correct definition)
+    // Fitted against iQ = 1/Q over the frequency band.
     type_real misfit = 0.0;
     const type_real iQ2 = iQ * iQ;
     for (int i = 0; i < specfem::constants::NF_ATTENUATION; ++i) {
-      // tan_delta = B / A ≈ 1/Q
       type_real tan_delta = maxwell_factors.imag(i) / maxwell_factors.real(i);
       type_real diff = tan_delta - iQ;
       misfit += std::sqrt(diff * diff / iQ2);
@@ -108,26 +106,20 @@ template <int N_SLS> struct AttenuationObjective {
  * type_real Q = 200.0;
  * type_real min_period = 0.01;
  * type_real max_period = 10.0;
- * auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
- * auto tau_eps = compute_tau_eps<N_SLS>(Q, tau_sigma, min_frequency,
- * max_frequency);
+ * specfem::utilities::Band<specfem::units::s> period_band(min_period,
+ * max_period); auto tau_sigma = compute_tau_sigma<N_SLS>(period_band); auto
+ * tau_eps = compute_tau_eps<N_SLS>(Q, tau_sigma, period_band);
  * @endcode
  */
-template <int N_SLS>
+template <int N_SLS, typename T>
 Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
 compute_tau_eps(
     type_real Q,
     Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
         tau_sigma,
-    type_real min_frequency, type_real max_frequency);
+    const specfem::utilities::Band<T> band);
 
 } // namespace attenuation
 } // namespace specfem
 
-extern template Kokkos::View<type_real[specfem::constants::N_SLS],
-                             Kokkos::LayoutRight, Kokkos::HostSpace>
-    specfem::attenuation::compute_tau_eps<specfem::constants::N_SLS>(
-        type_real,
-        Kokkos::View<type_real[specfem::constants::N_SLS], Kokkos::LayoutRight,
-                     Kokkos::HostSpace>,
-        type_real, type_real);
+#include "compute_tau_eps.tpp"

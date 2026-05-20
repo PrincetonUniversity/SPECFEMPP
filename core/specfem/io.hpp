@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/attenuation.hpp"
 #include "specfem/datetime.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/mesh.hpp"
@@ -8,6 +9,8 @@
 #include "specfem/source.hpp"
 
 #include "specfem/setup.hpp"
+#include "specfem/units.hpp"
+#include "specfem/utilities/band.hpp"
 #include <optional>
 #include <yaml-cpp/yaml.h>
 
@@ -58,7 +61,7 @@ namespace io {
  *      "DATABASES_MPI",
  *      specfem::enums::elastic_wave::psv,
  *      specfem::enums::electromagnetic_wave::te,
- *      false); // attenuation disabled
+ *      specfem::attenuation::Setup{}); // attenuation disabled
  * @endcode
  *
  */
@@ -66,7 +69,7 @@ specfem::mesh::mesh<specfem::element::dimension_tag::dim2>
 read_2d_mesh(const std::string &filename,
              const specfem::enums::elastic_wave wave,
              const specfem::enums::electromagnetic_wave electromagnetic_wave,
-             const bool attenuation_enabled);
+             const specfem::attenuation::Setup &attenuation_setup);
 
 /**
  * @brief Construct a 3D mesh object from MESHFEM3D Fortran binary database file
@@ -79,11 +82,12 @@ read_2d_mesh(const std::string &filename,
  * // Read 3D mesh from MESHFEM3D database file
  * auto mesh = specfem::io::read_3d_mesh(
  *      "DATABASES_MPI",
- *      false); // attenuation disabled
+ *      specfem::attenuation::Setup{}); // attenuation disabled
  * @endcode
  */
 specfem::mesh::mesh<specfem::element::dimension_tag::dim3>
-read_3d_mesh(const std::string &database_file, const bool attenuation_enabled);
+read_3d_mesh(const std::string &database_file,
+             const specfem::attenuation::Setup &attenuation_setup);
 
 /**
  * @brief Read station file

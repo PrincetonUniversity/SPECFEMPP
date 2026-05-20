@@ -16,6 +16,16 @@ struct AssemblyMPI3D {
   specfem::assembly::mesh<dimension> assembly_mesh; ///< Assembly mesh with GLL
                                                     ///< point coordinates and
                                                     ///< index mapping
+  specfem::assembly::element_types<dimension> element_types; ///< Element type
+                                                             ///< classification
+                                                             ///< for each
+                                                             ///< spectral
+                                                             ///< element in the
+                                                             ///< mesh
+  specfem::assembly::fields<dimension> fields;      ///< Simulation fields for
+                                                    ///< the mesh
+                                                    ///< (field-type-independent
+                                                    ///< iglob mapping)
   specfem::assembly::mpi<dimension> mpi_interfaces; ///< MPI communication
                                                     ///< groups for face data
                                                     ///< exchange between
@@ -47,4 +57,6 @@ protected:
   const auto &getMPIInterfaces() const { return assembly.mpi_interfaces; }
   const auto &getMesh() const { return mesh; }
   const auto &getAssemblyMesh() const { return assembly.assembly_mesh; }
+  const auto &getFields() const { return assembly.fields; }
+  const auto &getElementTypes() const { return assembly.element_types; }
 };

@@ -65,7 +65,7 @@ specfem::periodic_tasks::plot_wavefield<specfem::element::dimension_tag::dim2>::
         const specfem::enums::display_format &output_format,
         const specfem::enums::wavefield &wavefield_type,
         const specfem::simulation::field_type &simulation_wavefield_type,
-        const specfem::enums::display_component &component, const type_real &dt,
+        const specfem::enums::display_component &component,
         const int &time_interval, const boost::filesystem::path &output_folder,
         const specfem::enums::elastic_wave elastic_wave,
         const specfem::enums::electromagnetic_wave electromagnetic_wave)
@@ -73,7 +73,7 @@ specfem::periodic_tasks::plot_wavefield<specfem::element::dimension_tag::dim2>::
       wavefield_type(wavefield_type),
       plotter<specfem::element::dimension_tag::dim2>(time_interval),
       output_format(output_format), output_folder(output_folder),
-      component(component), nspec(assembly.mesh.nspec), dt(dt),
+      component(component), nspec(assembly.mesh.nspec),
       elastic_wave(elastic_wave), electromagnetic_wave(electromagnetic_wave),
       ngllx(assembly.mesh.element_grid.ngllx),
       ngllz(assembly.mesh.element_grid.ngllz) {
@@ -132,7 +132,7 @@ specfem::periodic_tasks::plot_wavefield<specfem::element::dimension_tag::dim2>::
         const specfem::enums::display_format &output_format,
         const specfem::enums::wavefield &wavefield_type,
         const specfem::simulation::field_type &simulation_wavefield_type,
-        const specfem::enums::display_component &component, const type_real &dt,
+        const specfem::enums::display_component &component,
         const int &time_interval, const boost::filesystem::path &output_folder,
         const specfem::enums::elastic_wave elastic_wave,
         const specfem::enums::electromagnetic_wave electromagnetic_wave)
@@ -140,7 +140,7 @@ specfem::periodic_tasks::plot_wavefield<specfem::element::dimension_tag::dim2>::
       wavefield_type(wavefield_type),
       plotter<specfem::element::dimension_tag::dim2>(time_interval),
       output_format(output_format), output_folder(output_folder),
-      component(component), nspec(assembly.mesh.nspec), dt(dt),
+      component(component), nspec(assembly.mesh.nspec),
       elastic_wave(elastic_wave), electromagnetic_wave(electromagnetic_wave),
       ngllx(assembly.mesh.element_grid.ngllx),
       ngllz(assembly.mesh.element_grid.ngllz) {
@@ -1373,7 +1373,9 @@ void specfem::periodic_tasks::
   hid_t steps_group = H5Gopen(vtkhdf_group, "Steps", H5P_DEFAULT);
 
   // Extend and write time value for this timestep
-  double time_value = static_cast<double>(istep) * this->dt;
+  double time_value =
+      static_cast<double>(this->assembly.t0) +
+      static_cast<double>(istep) * static_cast<double>(this->assembly.dt);
   hid_t values_dataset = H5Dopen(steps_group, "Values", H5P_DEFAULT);
   H5Dset_extent(values_dataset, new_timestep_count);
   hid_t values_filespace = H5Dget_space(values_dataset);

@@ -4,6 +4,7 @@
 #include "specfem/jacobian.hpp"
 #include "specfem/mesh_entity.hpp"
 #include "specfem/point.hpp"
+#include "specfem/point/local_coordinates.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <sstream>
@@ -362,9 +363,8 @@ locate_point_core(
   int ix_guess, iz_guess, ispec_guess;
 
   std::tie(ix_guess, iz_guess, ispec_guess) =
-// TODO ( Any : Add KDTree ) This is right where a KDTree would slot in.
-std::tie(ix_guess, iz_guess, ispec_guess) =
-rough_location(coordinates, global_coordinates);
+      // TODO ( Any : Add KDTree ) This is right where a KDTree would slot in.
+      rough_location(coordinates, global_coordinates);
 
   const auto best_candidates = get_best_candidates(ispec_guess, index_mapping);
 
@@ -436,7 +436,7 @@ locate_point(
   return jacobian::compute_locations(coorg, ngnod, xi, gamma);
 }
 
-std::pair<type_real, bool> locate_point_on_edge(
+std::pair<type_real, bool> locate_point(
     const specfem::point::global_coordinates<
         specfem::element::dimension_tag::dim2> &coordinates,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
@@ -459,7 +459,7 @@ std::pair<type_real, bool> locate_point_on_edge(
 }
 
 specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
-locate_point_on_edge(
+locate_point(
     const type_real &coordinate,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
     const int &ispec, const specfem::mesh_entity::dim2::type &mesh_entity) {
@@ -481,19 +481,57 @@ locate_point_on_edge(
     }
   }();
 
-  const int ngnod = mesh.ngnod;
+  // interpolating the entire element is not the most efficient way to do this.
+  // consider a codimension 1 interpolation in the future.
 
-  const Kokkos::View<
-      point::global_coordinates<specfem::element::dimension_tag::dim2> *,
-      Kokkos::HostSpace>
-      coorg("coorg", ngnod);
+  return locate_point(
+      specfem::point::local_coordinates<specfem::element::dimension_tag::dim2>(
+          ispec, xi, gamma),
+      mesh);
+}
 
-  for (int i = 0; i < ngnod; i++) {
-    coorg(i).x = mesh.h_control_node_coord(0, ispec, i);
-    coorg(i).z = mesh.h_control_node_coord(1, ispec, i);
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
+locate_point(
+    const specfem::point::local_coordinates<
+        specfem::element::dimension_tag::dim2> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
+    const specfem::mesh_entity::dim2::type &constraint) {
+  constexpr type_real eps = 1e-5;
+  switch (constraint) {
+  case mesh_entity::dim2::type::bottom:
+    if (std::abs(coordinates.gamma + 1) > eps) {
+      throw std::runtime_error(
+          "locate_point constraint and element-local "
+          "coordinates provided, but disagree. (bottom, but gamma != -1");
+    }
+    break;
+  case mesh_entity::dim2::type::right:
+    if (std::abs(coordinates.xi - 1) > eps) {
+      throw std::runtime_error(
+          "locate_point constraint and element-local "
+          "coordinates provided, but disagree. (right, but xi != 1");
+    }
+    break;
+  case mesh_entity::dim2::type::top:
+    if (std::abs(coordinates.gamma - 1) > eps) {
+      throw std::runtime_error(
+          "locate_point constraint and element-local "
+          "coordinates provided, but disagree. (top, but gamma != 1");
+    }
+    break;
+  case mesh_entity::dim2::type::left:
+    if (std::abs(coordinates.xi + 1) > eps) {
+      throw std::runtime_error(
+          "locate_point constraint and element-local "
+          "coordinates provided, but disagree. (left, but xi != -1");
+    }
+    break;
+  default:
+    throw std::runtime_error("locate_point_on_edge constraint must be an edge "
+                             "(corners are currently unsupported).");
+    break;
   }
-
-  return jacobian::compute_locations(coorg, ngnod, xi, gamma);
+  return locate_point(coordinates, mesh);
 }
 
 } // namespace locate_point_impl

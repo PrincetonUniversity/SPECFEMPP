@@ -57,7 +57,7 @@ public:
       const specfem::enums::display_format &output_format,
       const specfem::enums::wavefield &wavefield_type,
       const specfem::simulation::field_type &simulation_wavefield_type,
-      const specfem::enums::display_component &component, const type_real &dt,
+      const specfem::enums::display_component &component,
       const int &time_interval, const boost::filesystem::path &output_folder,
       const specfem::enums::elastic_wave elastic_wave,
       const specfem::enums::electromagnetic_wave electromagnetic_wave);
@@ -111,8 +111,6 @@ public:
   int nspec; ///< Number of elements
   int ngllx; ///< Number of GLL points in x direction per element
   int ngllz; ///< Number of GLL points in z direction per element
-
-  type_real dt; ///< Time step
 
 private:
 #ifndef NO_VTK

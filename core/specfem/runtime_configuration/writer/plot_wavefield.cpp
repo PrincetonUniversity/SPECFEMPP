@@ -78,8 +78,7 @@ specfem::runtime_configuration::plot_wavefield::plot_wavefield(
 template <specfem::element::dimension_tag DimensionTag>
 std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag> >
 specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
-    const specfem::assembly::assembly<DimensionTag> &assembly,
-    const type_real &dt) const {
+    const specfem::assembly::assembly<DimensionTag> &assembly) const {
 
   const auto output_format = [&]() {
     if (specfem::utilities::is_png_string(this->output_format)) {
@@ -172,13 +171,13 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
     return std::make_shared<
         specfem::periodic_tasks::plot_wavefield<DimensionTag> >(
         assembly, output_format, field_type, simulation_wavefield_type,
-        component, dt, time_interval, this->output_folder, this->elastic_wave,
+        component, time_interval, this->output_folder, this->elastic_wave,
         this->electromagnetic_wave);
   } else if constexpr (DimensionTag == specfem::element::dimension_tag::dim3) {
     return std::make_shared<
         specfem::periodic_tasks::plot_wavefield<DimensionTag> >(
         assembly, output_format, field_type, simulation_wavefield_type,
-        component, dt, time_interval, this->output_folder);
+        component, time_interval, this->output_folder);
   }
 
   throw std::runtime_error("Unsupported dimension for wavefield plotter");
@@ -190,13 +189,11 @@ template std::shared_ptr<specfem::periodic_tasks::periodic_task<
 specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter<
     specfem::element::dimension_tag::dim2>(
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
-        &assembly,
-    const type_real &dt) const;
+        &assembly) const;
 
 template std::shared_ptr<specfem::periodic_tasks::periodic_task<
     specfem::element::dimension_tag::dim3> >
 specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter<
     specfem::element::dimension_tag::dim3>(
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
-        &assembly,
-    const type_real &dt) const;
+        &assembly) const;
