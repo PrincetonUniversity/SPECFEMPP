@@ -72,19 +72,17 @@ void specfem::io::impl::write_container(
       DIMENSION_SET(dim2) *
           MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
                      elastic_psv_t) *
-          PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
-          ATTENUATION_SET(none),
+          PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
       [&]<typename TagsType>() {
         constexpr auto medium_tag = TagsType::medium_tag;
         constexpr auto property_tag = TagsType::property_tag;
-        constexpr auto attenuation_tag = TagsType::attenuation_tag;
 
         const std::string name =
-            std::string("/") +
-            specfem::element::to_string(medium_tag, property_tag, attenuation_tag);
+            std::string("/") + specfem::element::to_string(medium_tag,
+                                                           property_tag);
         typename OutputLibrary::Group group = file.createGroup(name);
         const auto element_indices =
-            element_types.get_elements_on_host(medium_tag, property_tag, attenuation_tag);
+            element_types.get_elements_on_host(medium_tag, property_tag);
         auto data_container =
             container.template get_container<medium_tag, property_tag>();
         n_written +=

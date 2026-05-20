@@ -54,6 +54,10 @@ Tests:
       nproc : 1
       elastic_wave: "P_SV"
       attenuation_enabled: true
+      attenuation_f0: "5.196152422706633 Hz"
+      attenuation_band:
+        - "3.162 Hz"
+        - "31.62 Hz"
     databases:
       mesh : "data/dim2/fluid_solid_mesh_flat_ocean_bottom_attenuation/database.bin"
       sources : "data/dim2/fluid_solid_mesh_flat_ocean_bottom_attenuation/sources.yaml"
@@ -127,6 +131,10 @@ Tests:
       nproc: 1
       elastic_wave: "P_SV"
       attenuation_enabled: true
+      attenuation_f0: "5.196152422706633 Hz"
+      attenuation_band:
+        - "3.162 Hz"
+        - "31.62 Hz"
     databases:
       mesh: "data/dim2/homogeneous_poroelastic_isotropic_w_attenuation/database.bin"
       sources: "data/dim2/homogeneous_poroelastic_isotropic_w_attenuation/sources.yaml"

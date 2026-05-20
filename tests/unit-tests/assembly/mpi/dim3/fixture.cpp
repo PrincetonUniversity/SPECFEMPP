@@ -1,5 +1,6 @@
 #include "fixture.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/attenuation.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/quadrature.hpp"
@@ -25,7 +26,11 @@ AssemblyMPI3D::AssemblyMPI3D(
           quadratures
         };
       }()),
-      mpi_interfaces(mesh.adjacency_graph, assembly_mesh,
+      element_types(mesh.nspec, assembly_mesh.element_grid, assembly_mesh,
+                    mesh.tags),
+      fields(assembly_mesh, element_types, specfem::simulation::type::forward),
+      mpi_interfaces(mesh.adjacency_graph, element_types,
+                     specfem::simulation::type::forward, fields,
                      mesh.element_grid.ngllz, mesh.element_grid.nglly,
                      mesh.element_grid.ngllx) {}
 } // namespace specfem::test_configuration
@@ -46,8 +51,7 @@ void AssemblyMPI3DTest::SetUp() {
   const auto &folder = GetParam();
   const std::string database = "data/mpi/dim3/" + folder + "/Database.bin";
   const auto mpi_database = specfem::MPI::format_proc_filename(database);
-  mesh =
-      specfem::io::read_3d_mesh(mpi_database, false /*attenuation disabled*/);
+  mesh = specfem::io::read_3d_mesh(mpi_database, specfem::attenuation::Setup{});
 
   assembly = specfem::test_configuration::AssemblyMPI3D(mesh);
 }

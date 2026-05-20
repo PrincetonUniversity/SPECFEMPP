@@ -16,6 +16,7 @@
  */
 namespace specfem::medium_physics {}
 
+#include "medium_physics/compute_attenuation.hpp"
 #include "medium_physics/compute_cosserat_couple_stress.hpp"
 #include "medium_physics/compute_cosserat_stress.hpp"
 #include "medium_physics/compute_coupling.hpp"

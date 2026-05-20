@@ -27,8 +27,7 @@ void compute_seismograms(
       specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
           MEDIUM_SET(elastic, elastic_psv, elastic_sh, acoustic, poroelastic,
                      elastic_psv_t) *
-          PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
-          ATTENUATION_SET(none),
+          PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
       [&]<typename ElementTags>() {
         impl::compute_seismograms<
             NGLL, specfem::tags::expand<ElementTags, Tags::wavefield_tag> >(

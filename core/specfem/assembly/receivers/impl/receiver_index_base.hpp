@@ -12,7 +12,7 @@ namespace specfem::assembly::receivers_impl {
  * @brief Base class for per-material receiver index stores.
  *
  * A @ref specfem::tag_dispatch::Storage is used to
- * keep one index view per valid (dimension, medium, property, attenuation)
+ * keep one index view per valid (dimension, medium, property)
  * combination, mirroring the approach taken by
  * @ref specfem::assembly::element_types_impl::element_types_base.
  *
@@ -29,8 +29,7 @@ namespace specfem::assembly::receivers_impl {
  *
  * @tparam ElementSets  Tag-set descriptor type, e.g.
  *         @c specfem::assembly::element_types_impl::ElementSets<DimTag>.
- *         Must expose @c dimension_tag, @c medium_set, @c property_set, and
- *         @c attenuation_set.
+ *         Must expose @c dimension_tag, @c medium_set, and @c property_set.
  */
 template <typename ElementSets> struct ReceiverIndexBase {
   static constexpr auto dimension_tag = ElementSets::dimension_tag;
@@ -40,12 +39,11 @@ protected:
   using HostIndexViewType =
       Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>;
 
-  /// All valid (dimension, medium, property, attenuation) combinations for
+  /// All valid (dimension, medium, property) combinations for
   /// this dimension.
   static constexpr auto combinations_by_material =
       specfem::tag_dispatch::dimension_set<dimension_tag>{} *
-      ElementSets::medium_set * ElementSets::property_set *
-      ElementSets::attenuation_set;
+      ElementSets::medium_set * ElementSets::property_set;
 
 private:
   using MaterialCombos = decltype(combinations_by_material);
@@ -83,7 +81,7 @@ protected:
       const specfem::assembly::element_types<dimension_tag> &element_types) {
 
     // ── host stores ────────────────────────────────────────────────────────
-    // For each valid (dim, medium, property, attenuation) combination: count
+    // For each valid (dim, medium, property) combination: count
     // matching receivers, allocate a view of that size, then fill it.
     //
     // Generic factory: returns a Storage initializer lambda that selects
@@ -117,12 +115,10 @@ protected:
 
     h_receiver_elements_ = { make_initializer(
         "receiver_elements_", [](int, int ispec) { return ispec; },
-        element_types.medium_tags, element_types.property_tags,
-        element_types.attenuation_tags) };
+        element_types.medium_tags, element_types.property_tags) };
     h_receiver_indices_ = { make_initializer(
         "receiver_indices_", [](int irec, int) { return irec; },
-        element_types.medium_tags, element_types.property_tags,
-        element_types.attenuation_tags) };
+        element_types.medium_tags, element_types.property_tags) };
 
     // ── mirror to device ──────────────────────────────────────────────────
     receiver_elements_ = specfem::tag_dispatch::create_mirror_storage_and_copy(
@@ -155,17 +151,14 @@ public:
    *
    * @param medium      Medium tag.
    * @param property    Property tag.
-   * @param attenuation Attenuation tag.
    * @return Tuple of (receiver_elements, receiver_indices), both as
    *         device-accessible views.
    */
-  std::tuple<IndexViewType, IndexViewType> get_indices_on_device(
-      const specfem::element::medium_tag medium,
-      const specfem::element::property_tag property,
-      const specfem::element::attenuation_tag attenuation) const {
-    return std::make_tuple(
-        receiver_elements_.get(medium, property, attenuation),
-        receiver_indices_.get(medium, property, attenuation));
+  std::tuple<IndexViewType, IndexViewType>
+  get_indices_on_device(const specfem::element::medium_tag medium,
+                        const specfem::element::property_tag property) const {
+    return std::make_tuple(receiver_elements_.get(medium, property),
+                           receiver_indices_.get(medium, property));
   }
 
   /**
@@ -173,17 +166,14 @@ public:
    *
    * @param medium      Medium tag.
    * @param property    Property tag.
-   * @param attenuation Attenuation tag.
    * @return Tuple of (receiver_elements, receiver_indices), both as
    *         host-accessible views.
    */
-  std::tuple<HostIndexViewType, HostIndexViewType> get_indices_on_host(
-      const specfem::element::medium_tag medium,
-      const specfem::element::property_tag property,
-      const specfem::element::attenuation_tag attenuation) const {
-    return std::make_tuple(
-        h_receiver_elements_.get(medium, property, attenuation),
-        h_receiver_indices_.get(medium, property, attenuation));
+  std::tuple<HostIndexViewType, HostIndexViewType>
+  get_indices_on_host(const specfem::element::medium_tag medium,
+                      const specfem::element::property_tag property) const {
+    return std::make_tuple(h_receiver_elements_.get(medium, property),
+                           h_receiver_indices_.get(medium, property));
   }
 };
 

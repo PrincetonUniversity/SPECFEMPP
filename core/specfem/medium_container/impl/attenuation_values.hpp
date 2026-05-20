@@ -21,4 +21,11 @@ public:
 
   std::string print() const { return ""; }
 };
+
+template <specfem::element::dimension_tag DimensionTag,
+          specfem::element::medium_tag MediumTag,
+          specfem::element::attenuation_tag AttenuationTag,
+          typename Enable = void>
+class ComputedAttenuationValues;
+
 } // namespace specfem::medium_container::impl

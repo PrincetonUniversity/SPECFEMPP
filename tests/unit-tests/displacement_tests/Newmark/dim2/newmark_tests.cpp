@@ -1,6 +1,5 @@
 #include "../../../SPECFEM_Environment.hpp"
 #include "specfem/assembly/assembly.hpp"
-#include "specfem/constants.hpp"
 #include "specfem/io.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/mesh.hpp"
@@ -115,9 +114,10 @@ TEST_P(Newmark, 2D) {
   const auto quadratures = setup.instantiate_quadrature();
 
   // Read mesh generated MESHFEM
-  specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
-      database_file, elastic_wave, electromagnetic_wave,
-      setup.is_attenuation_enabled());
+  specfem::mesh::mesh<specfem::element::dimension_tag::dim2> mesh =
+      specfem::io::read_2d_mesh(database_file, elastic_wave,
+                                electromagnetic_wave,
+                                setup.get_attenuation_setup());
   const type_real dt = setup.get_dt();
   const int nsteps = setup.get_nsteps();
 
@@ -128,7 +128,8 @@ TEST_P(Newmark, 2D) {
       source_node, nsteps, setup.get_t0(), dt, setup.get_simulation_type());
 
   for (auto &source : sources) {
-    specfem::Logger::info(source->print());
+    specfem::Logger::info(
+        [&](std::ostringstream &oss) { oss << source->print(); });
   }
 
   setup.update_t0(t0);
@@ -141,7 +142,8 @@ TEST_P(Newmark, 2D) {
   std::cout << "  Receiver information\n";
   std::cout << "------------------------------" << std::endl;
   for (auto &receiver : receivers) {
-    specfem::Logger::info(receiver->print());
+    specfem::Logger::info(
+        [&](std::ostringstream &oss) { oss << receiver->print(); });
   }
 
   const auto seismogram_types = setup.get_seismogram_types();
@@ -168,7 +170,8 @@ TEST_P(Newmark, 2D) {
   auto time_scheme = setup.instantiate_timescheme(assembly.fields);
 
   // User output
-  specfem::Logger::info(time_scheme->to_string());
+  specfem::Logger::info(
+      [&](std::ostringstream &oss) { oss << time_scheme->to_string(); });
 
   std::shared_ptr<specfem::solver::solver> solver =
       setup.instantiate_solver<5>(setup.get_dt(), assembly, time_scheme, {});
