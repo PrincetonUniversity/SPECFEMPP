@@ -253,16 +253,6 @@ public:
    * @return specfem::utilities::Band<specfem::units::Hertz> Attenuation
    * frequency band (default-constructed if attenuation is disabled)
    */
-<<<<<<< issue-1362
-  std::shared_ptr<specfem::utilities::Band<specfem::units::Hertz>>
-  get_attenuation_band() const {
-    if (this->attenuation) {
-      return std::make_shared<specfem::utilities::Band<specfem::units::Hertz>>(
-          this->attenuation->get_attenuation_frequency_band());
-    } else {
-      return nullptr; // Return null if attenuation is disabled
-    }
-=======
   specfem::utilities::Band<specfem::units::Hertz> get_attenuation_band() const {
     if (this->attenuation)
       return this->attenuation->get_attenuation_frequency_band();
@@ -278,7 +268,6 @@ public:
   specfem::attenuation::Setup get_attenuation_setup() const {
     return { is_attenuation_enabled(), get_attenuation_reference_frequency(),
              get_attenuation_band() };
->>>>>>> devel
   };
 
   /**
