@@ -84,10 +84,9 @@ int compute_stiffness_interaction(
       attenuation_tag, ParallelConfig::chunk_size, ngll, dimension_tag,
       medium_tag, using_simd>;
 
-  using ChunkStressIntegrandType = specfem::chunk_element::stress_integrand<
-      ParallelConfig::chunk_size, ngll, Tags::dimension_tag, Tags::medium_tag,
-      Kokkos::DefaultExecutionSpace::scratch_memory_space,
-      Kokkos::MemoryTraits<Kokkos::Unmanaged>, using_simd>;
+  using ChunkAccelerationType = specfem::chunk_element::acceleration<
+      ParallelConfig::chunk_size, ngll, dimension_tag, medium_tag, using_simd>;
+
   using ElementQuadratureType = specfem::quadrature::lagrange_derivative<
       ngll, Tags::dimension_tag,
       Kokkos::DefaultExecutionSpace::scratch_memory_space,
@@ -114,8 +113,11 @@ int compute_stiffness_interaction(
 
   using PointWeightsType = specfem::point::weights<Tags::dimension_tag>;
 
+  constexpr int ncomp =
+      specfem::element::attributes<dimension_tag, medium_tag>::components;
+
   int scratch_size = ChunkFieldPackType::shmem_size() +
-                     ChunkStressIntegrandType::shmem_size() +
+                     ChunkAccelerationType::shmem_size() +
                      ElementQuadratureType::shmem_size();
 
   specfem::execution::ChunkedDomainIterator chunk(ParallelConfig(), elements,
@@ -147,9 +149,19 @@ int compute_stiffness_interaction(
             const typename decltype(chunk)::index_type &chunk_iterator_index) {
           const auto &chunk_index = chunk_iterator_index.get_index();
           const auto team = chunk_index.get_policy_index();
+
           ChunkFieldPackType field_pack(team.team_scratch(0));
           ElementQuadratureType lagrange_derivative(team);
-          ChunkStressIntegrandType stress_integrand(team);
+          ChunkAccelerationType scratch_acc(team.team_scratch(0));
+
+          // Kokkos scratch is NOT zero-initialized — explicit init pass
+          specfem::execution::for_each_level(
+              chunk_index.get_iterator(), [&](const auto &iterator_index) {
+                const auto &local_index = iterator_index.get_local_index();
+                for (int icomp = 0; icomp < ncomp; ++icomp)
+                  scratch_acc(local_index, icomp) = static_cast<type_real>(0);
+              });
+
           specfem::assembly::load_on_device(team, mesh, lagrange_derivative);
           specfem::assembly::load_on_device(chunk_index, field, field_pack);
 
@@ -161,6 +173,7 @@ int compute_stiffness_interaction(
                   const GradientPackType &grad_pack) {
                 const auto &index = iterator_index.get_index();
                 const auto &local_index = iterator_index.get_local_index();
+
                 PointJacobianMatrixType point_jacobian_matrix;
                 specfem::assembly::load_on_device(index, jacobian_matrix,
                                                   point_jacobian_matrix);
@@ -190,22 +203,54 @@ int compute_stiffness_interaction(
                 specfem::medium_physics::compute_cosserat_stress(
                     point_property, point_displacement, point_stress);
 
-                stress_integrand.F(local_index) =
-                    point_stress * point_jacobian_matrix;
+                // Stress integrand F = stress × jacobian; discarded after
+                // scatter
+                const auto F = point_stress * point_jacobian_matrix;
+
+                // Scatter F contributions into shared acceleration scratch
+                specfem::algorithms::impl::scattered_divergence(
+                    F, local_index, mesh.weights, lagrange_derivative,
+                    scratch_acc);
+
+                // Cosserat couple stress: local-point scatter to spin
+                // component. Guarded by has_cosserat_couple_stress — zero
+                // overhead (no atomics, no loads) for non-Cosserat media.
+                constexpr bool has_cosserat_couple_stress =
+                    specfem::element::attributes<
+                        dimension_tag, medium_tag>::has_cosserat_couple_stress;
+
+                if constexpr (has_cosserat_couple_stress) {
+                  PointWeightsType point_weights;
+                  specfem::assembly::load_on_device(index, mesh.weights,
+                                                    point_weights);
+
+                  PointAccelerationType cosserat_delta;
+                  for (int icomp = 0; icomp < ncomp; ++icomp)
+                    cosserat_delta(icomp) = static_cast<type_real>(0);
+
+                  specfem::medium_physics::compute_cosserat_couple_stress(
+                      point_property,
+                      point_weights.product() * point_jacobian_matrix.jacobian,
+                      point_stress, cosserat_delta);
+
+                  for (int icomp = 0; icomp < ncomp; ++icomp)
+                    Kokkos::atomic_add(&scratch_acc(local_index, icomp),
+                                       cosserat_delta(icomp));
+                }
               });
 
           team.team_barrier();
 
-          specfem::algorithms::divergence(
-              chunk_index, mesh.weights, lagrange_derivative,
-              stress_integrand.F,
-              [&](const auto &iterator_index,
-                  const typename PointAccelerationType::value_type &result) {
+          // Epilogue: apply damping / BC, write to global acceleration field
+          specfem::execution::for_each_level(
+              chunk_index.get_iterator(), [&](const auto &iterator_index) {
                 const auto &index = iterator_index.get_index();
                 const auto &local_index = iterator_index.get_local_index();
-                PointAccelerationType acceleration(result);
 
-                acceleration *= static_cast<type_real>(-1.0);
+                // Negate: scatter accumulates +div(F); physical accel = -div(F)
+                PointAccelerationType acceleration;
+                for (int icomp = 0; icomp < ncomp; ++icomp)
+                  acceleration(icomp) = -scratch_acc(local_index, icomp);
 
                 PointPropertyType point_property;
                 specfem::assembly::load_on_device(index, properties,
@@ -236,11 +281,6 @@ int compute_stiffness_interaction(
                                                                PointTags>(
                     factor, point_property, velocity, acceleration);
 
-                // Compute the couple stress from the stress integrand
-                specfem::medium_physics::compute_cosserat_couple_stress(
-                    point_jacobian_matrix, point_property, factor,
-                    stress_integrand.F(local_index), acceleration);
-
                 // Apply boundary conditions
                 specfem::boundary_conditions::apply_boundary_conditions(
                     point_boundary, point_property, velocity, acceleration);
@@ -248,8 +288,8 @@ int compute_stiffness_interaction(
                 // Store forward boundary values for reconstruction during
                 // adjoint simulations. The function does nothing if the
                 // boundary tag is not stacey
-                if (Tags::wavefield_tag ==
-                    specfem::simulation::field_type::forward) {
+                if constexpr (Tags::wavefield_tag ==
+                              specfem::simulation::field_type::forward) {
                   specfem::assembly::store_on_device(istep, index, acceleration,
                                                      boundary_values);
                 }
