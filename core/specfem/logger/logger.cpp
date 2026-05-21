@@ -118,12 +118,6 @@ void Logger::apply_options(const logger::LoggerOptions &options) {
     config_.cli_log_level = options.log_level.value();
     config_.cli_log_level_set = true;
     config_.min_log_level = config_.cli_log_level;
-  } else {
-#ifndef NDEBUG
-    config_.min_log_level = LogLevel::DEBUG;
-#else
-    config_.min_log_level = LogLevel::INFO;
-#endif
   }
 
   // Store CLI-provided log file settings

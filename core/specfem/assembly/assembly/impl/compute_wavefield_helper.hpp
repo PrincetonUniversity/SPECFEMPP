@@ -55,7 +55,7 @@ public:
   /**
    * @brief Number of spatial dimensions (2 for 2D, 3 for 3D)
    */
-  constexpr static auto ndim = specfem::element::dimension<DimensionTag>::dim;
+  constexpr static auto ndim = specfem::element::dimension<dimension_tag>::dim;
 
   /**
    * @brief Rank of source array (4 for 2D: [sources][components][z][x],
@@ -127,13 +127,13 @@ public:
     using QuadratureType = specfem::quadrature::lagrange_derivative<
         ngll, dimension_tag,
         Kokkos::DefaultExecutionSpace::scratch_memory_space,
-        Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+        Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
     using PointPropertyType = specfem::point::properties<
-        specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false> >;
+        specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false>>;
 
     using PointFieldDerivativesType = specfem::point::field_derivatives<
-        specfem::tags::Tags<dimension_tag, medium_tag, false> >;
+        specfem::tags::Tags<dimension_tag, medium_tag, false>>;
 
     int scratch_size =
         ChunkDisplacementType::shmem_size() + ChunkVelocityType::shmem_size() +
