@@ -24,7 +24,7 @@ struct ScalarChunkFaceViewType
 
 template <
     typename T, specfem::element::dimension_tag DimensionTag, int NumberOfFaces,
-    int Components, int NumberOfGLLPoints, bool UseSIMD = false,
+    int NumberOfGLLPoints, int Components, bool UseSIMD = false,
     typename MemorySpace = Kokkos::DefaultExecutionSpace::scratch_memory_space,
     typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged>>
 struct VectorChunkFaceViewType
@@ -41,8 +41,8 @@ struct VectorChunkFaceViewType
 };
 
 template <typename T, specfem::element::dimension_tag DimensionTag,
-          int NumberOfFaces, int Components, int NumberOfDimensions,
-          int NumberOfGLLPoints, bool UseSIMD = false,
+          int NumberOfFaces, int NumberOfGLLPoints, int Components,
+          int NumberOfDimensions, bool UseSIMD = false,
           typename MemorySpace =
               Kokkos::DefaultExecutionSpace::scratch_memory_space,
           typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged>>
