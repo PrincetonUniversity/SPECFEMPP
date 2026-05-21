@@ -5,6 +5,7 @@
 #include "specfem/datatype.hpp"
 #include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
+#include <type_traits>
 
 namespace specfem::point {
 namespace impl {

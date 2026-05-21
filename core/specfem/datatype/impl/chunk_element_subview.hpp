@@ -292,7 +292,7 @@ template <typename ViewType> struct TensorChunkElementSubview {
    *
    * @tparam T Type of the tensor to multiply with
    * @param tensor The tensor to contract with
-   * @return A new view representing the result of the contraction
+   * @return The result of the contraction
    */
   template <typename T>
   KOKKOS_INLINE_FUNCTION auto operator*(const T &tensor) const {

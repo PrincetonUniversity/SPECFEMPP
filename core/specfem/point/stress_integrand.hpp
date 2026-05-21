@@ -25,13 +25,13 @@ namespace point {
  *
  * **2D Transformation (ξ, γ) ↔ (x, z):**
  *
- * Forward (reference → physical):
+ * Forward (physical → reference):
  * \f$ F(i,0) = |J| \cdot (T(i,0) \cdot \frac{\partial\xi}{\partial x} +
  *                           T(i,1) \cdot \frac{\partial\gamma}{\partial x}) \f$
  * \f$ F(i,1) = |J| \cdot (T(i,0) \cdot \frac{\partial\xi}{\partial z} +
  *                           T(i,1) \cdot \frac{\partial\gamma}{\partial z}) \f$
  *
- * Inverse (physical → reference):
+ * Inverse (reference → physical):
  * \f$ T(i,0) = |J^{-1}| \cdot (F(i,0) \cdot \frac{\partial x}{\partial\xi} +
  *                                 F(i,1) \cdot \frac{\partial
  * x}{\partial\gamma}) \f$
