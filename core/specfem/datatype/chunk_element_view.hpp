@@ -100,6 +100,7 @@ struct VectorChunkElementViewType
   ///@}
 
   using chunk_ndim_view_type::operator();
+  using chunk_ndim_view_type::chunk_ndim_view_type;
 
   /**
    * @brief Get vector subview by a point index.
@@ -158,6 +159,7 @@ struct TensorChunkElementViewType
                                                         ///< component access
 
   using chunk_ndim_view_type::operator();
+  using chunk_ndim_view_type::chunk_ndim_view_type;
   /**
    * @brief Get tensor subview by a point index.
    *
