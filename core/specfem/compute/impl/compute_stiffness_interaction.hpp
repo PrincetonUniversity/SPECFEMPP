@@ -61,9 +61,9 @@ int compute_stiffness_interaction(
   const auto &attenuation = assembly.attenuation;
 
   // Get the simulation field and boundary values
-  const auto field =
+  const auto &field =
       assembly.fields.template get_simulation_field<Tags::wavefield_tag>();
-  const auto boundary_values =
+  const auto &boundary_values =
       assembly.boundary_values.template get_container<boundary_tag>();
 
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
@@ -91,7 +91,7 @@ int compute_stiffness_interaction(
   using ElementQuadratureType = specfem::quadrature::lagrange_derivative<
       ngll, Tags::dimension_tag,
       Kokkos::DefaultExecutionSpace::scratch_memory_space,
-      Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+      Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
   using PointTags = specfem::tags::Tags<Tags::dimension_tag, Tags::medium_tag,
                                         Tags::property_tag,
