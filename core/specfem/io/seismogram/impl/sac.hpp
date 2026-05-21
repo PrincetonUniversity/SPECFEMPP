@@ -263,7 +263,7 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
         std::format("Writing SAC seismograms to {} from rank {} ({} stations)",
                     output_folder, my_rank, stations.size()));
 
-    for (auto station_info : stations) {
+    for (const auto &station_info : stations) {
       const bool on_this_rank = (station_info.partition_index == my_rank);
 
       for (auto seismogram_type : station_info.get_seismogram_types()) {
