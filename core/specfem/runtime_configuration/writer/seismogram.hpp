@@ -40,12 +40,13 @@ public:
   /**
    * @brief Instantiate a seismogram writer object
    *
-   * @param wave_type Type of wavefield (Writes .BXY for SH waves and .BXX, .BXZ
-   * for P-SV waves)
+   * @param wave_type Type of wavefield (Writes .BXY for SH waves and .BXX,
+   * .BXZ for P-SV waves)
+   * @param electromagnetic_wave Type of electromagnetic wavefield
    * @param dt Time interval between subsequent timesteps
-   * @param t0 Solver start time
-   * @param nsteps_between_samples number of timesteps between seismogram
-   * sampling (seismogram sampling frequency)
+   * @param nsteps_between_samples Number of timesteps between seismogram
+   * samples (seismogram sampling frequency). The solver start time (t0) is
+   * obtained at write time from the receivers iterator.
    * @return std::shared_ptr<specfem::io::writer> Pointer to an instantiated
    * writer object
    */

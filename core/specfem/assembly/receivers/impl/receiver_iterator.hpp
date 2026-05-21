@@ -2,6 +2,7 @@
 
 #include "specfem/enums.hpp"
 #include <algorithm>
+#include <iterator>
 #include <vector>
 
 namespace specfem::assembly::receivers_impl {

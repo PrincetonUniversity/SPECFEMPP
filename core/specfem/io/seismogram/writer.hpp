@@ -7,6 +7,7 @@
 #include "specfem/constants.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/io/writer.hpp"
+#include "specfem/mpi.hpp"
 #include "specfem/setup.hpp"
 #include <optional>
 #include <stdexcept>

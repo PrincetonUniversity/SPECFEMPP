@@ -4,6 +4,7 @@
 #include "specfem/assembly/receivers/impl/receiver_iterator.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/mpi.hpp"
+#include <format>
 #include <fstream>
 #include <optional>
 #include <stdexcept>
@@ -48,7 +49,7 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::ascii> {
           continue;
 
         std::vector<type_real> times(nsteps);
-        std::vector<std::vector<type_real> > values(
+        std::vector<std::vector<type_real>> values(
             ncomponents, std::vector<type_real>(nsteps));
 
         if (!on_this_rank) {

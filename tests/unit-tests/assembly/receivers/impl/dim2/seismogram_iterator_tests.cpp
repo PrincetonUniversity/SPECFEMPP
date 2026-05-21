@@ -5,6 +5,24 @@
 
 using namespace specfem::assembly::receivers_impl;
 
+// ---------------------------------------------------------------------------
+// Test helper: exposes protected h_seismogram_components so tests can inject
+// known raw component values without going through the Kokkos device path.
+// ---------------------------------------------------------------------------
+class TestSeismogramIterator2D
+    : public SeismogramIterator<specfem::element::dimension_tag::dim2> {
+public:
+  using Base = SeismogramIterator<specfem::element::dimension_tag::dim2>;
+  using Base::Base;
+
+  /// Write a single raw seismogram sample directly into the host mirror.
+  /// Call after sync_seismograms() so the deep_copy does not overwrite it.
+  void set_raw_component(int seis_step, int iseis, int irec, int comp,
+                         type_real value) {
+    h_seismogram_components(seis_step, iseis, irec, comp) = value;
+  }
+};
+
 class SeismogramIterator2DTest : public ::testing::Test {
 protected:
   void SetUp() override {
@@ -197,32 +215,39 @@ TEST_F(SeismogramIterator2DTest, IdentityRotationProducesZeroForZeroData) {
 }
 
 TEST_F(SeismogramIterator2DTest, RotationMatrixAppliedCorrectly) {
-  // Build a 90-degree rotation: R = [[0, -1], [1, 0]]
-  // so that output[0] = -raw[1], output[1] = raw[0]
-  SeismogramIterator<specfem::element::dimension_tag::dim2> iterator(
-      nreceivers, nseismograms, max_sig_step, dt, t0, nstep_between_samples);
+  // 90-degree rotation: R = [[0, -1], [1, 0]]
+  // Expected: output[0] = -raw[1], output[1] = raw[0]
+  TestSeismogramIterator2D iterator(nreceivers, nseismograms, max_sig_step, dt,
+                                    t0, nstep_between_samples);
+
+  // sync_seismograms() copies device (all zeros) -> host mirror.
+  // Raw values are set afterward so they are not overwritten.
+  iterator.sync_seismograms();
+
+  // Inject raw[0] = 1, raw[1] = 2 for receiver 0, step 0, seismogram type 0.
+  iterator.set_raw_component(/*seis_step=*/0, /*iseis=*/0, /*irec=*/0,
+                             /*comp=*/0, 1.0);
+  iterator.set_raw_component(/*seis_step=*/0, /*iseis=*/0, /*irec=*/0,
+                             /*comp=*/1, 2.0);
 
   const type_real angle = Kokkos::numbers::pi_v<type_real> / 2.0; // 90 deg
-  const type_real cos_a = std::cos(angle);                        // ~0
-  const type_real sin_a = std::sin(angle);                        // ~1
+  const type_real cos_a = std::cos(angle);                        // ≈ 0
+  const type_real sin_a = std::sin(angle);                        // ≈ 1
   std::array<std::array<type_real, 2>, 2> R = { { { { cos_a, -sin_a } },
                                                   { { sin_a, cos_a } } } };
   iterator.set_rotation_matrix(0, R);
 
-  // Manually set raw seismogram components for receiver 0, step 0, seis 0
-  // Access via protected h_seismogram_components through a derived helper
-  // We cannot directly write to it here, so just verify identity fallback
-  // (data is zero, so rotated output is still zero regardless of rotation)
   iterator.set_seismogram_step(0);
   iterator.set_seismogram_type(0);
-  iterator.sync_seismograms();
 
   auto iter = iterator.begin();
   auto [time, seismograms] = *iter;
 
   EXPECT_EQ(seismograms.size(), 2);
-  for (const auto &c : seismograms)
-    EXPECT_DOUBLE_EQ(c, 0.0); // zero input -> zero output regardless of R
+  // output[0] = cos_a*1 + (-sin_a)*2 = 0*1 + (-1)*2 = -2
+  EXPECT_NEAR(seismograms[0], -2.0, 1e-5);
+  // output[1] = sin_a*1 + cos_a*2   = 1*1 +   0*2  =  1
+  EXPECT_NEAR(seismograms[1], 1.0, 1e-5);
 }
 
 TEST_F(SeismogramIterator2DTest, GetSeismogramMethod) {
