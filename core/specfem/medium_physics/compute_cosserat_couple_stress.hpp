@@ -66,7 +66,7 @@ template <typename T, typename PointPropertiesType, typename PointStressType,
 KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
     const std::false_type, const DimensionTagType dimension_tag,
     const MediumTagType medium_tag, const PropertyTagType property_tag,
-    const PointPropertiesType &point_properties, const T w_product,
+    const PointPropertiesType &point_properties, const T factor,
     const PointStressType &point_stress,
     PointAccelerationType &acceleration) {};
 
@@ -76,7 +76,7 @@ template <typename T, typename PointPropertiesType, typename PointStressType,
 KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
     const std::true_type, const DimensionTagType dimension_tag,
     const MediumTagType medium_tag, const PropertyTagType property_tag,
-    const PointPropertiesType &point_properties, const T w_product,
+    const PointPropertiesType &point_properties, const T factor,
     const PointStressType &point_stress, PointAccelerationType &acceleration) {
 
   using ActualDimensionTag = typename DimensionTagType::type;
@@ -113,14 +113,14 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
  * @tparam PointStressType        Point-wise physical stress tensor
  * @tparam PointAccelerationType  Point-wise acceleration field
  * @param point_properties  Cosserat material properties
- * @param w_product         Quadrature weight product w(iz)*w(ix)
+ * @param factor             Integration factor w(iz)*w(ix)*J for this GLL point
  * @param point_stress      Physical stress tensor at this GLL point
  * @param acceleration[in,out]  Acceleration delta (spin component modified)
  */
 template <typename T, typename PointPropertiesType, typename PointStressType,
           typename PointAccelerationType>
 KOKKOS_INLINE_FUNCTION void compute_cosserat_couple_stress(
-    const PointPropertiesType &point_properties, const T w_product,
+    const PointPropertiesType &point_properties, const T factor,
     const PointStressType &point_stress, PointAccelerationType &acceleration) {
 
   constexpr auto DimensionTag = PointPropertiesType::dimension_tag;
@@ -146,7 +146,7 @@ KOKKOS_INLINE_FUNCTION void compute_cosserat_couple_stress(
   impl_compute_cosserat_couple_stress(cosserat_couple_stress_dispatch(),
                                       dimension_dispatch(), medium_dispatch(),
                                       property_dispatch(), point_properties,
-                                      w_product, point_stress, acceleration);
+                                      factor, point_stress, acceleration);
 }
 
 } // namespace medium_physics

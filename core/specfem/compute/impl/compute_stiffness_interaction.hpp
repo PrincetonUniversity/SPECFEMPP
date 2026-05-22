@@ -288,8 +288,8 @@ int compute_stiffness_interaction(
                 // Store forward boundary values for reconstruction during
                 // adjoint simulations. The function does nothing if the
                 // boundary tag is not stacey
-                if constexpr (Tags::wavefield_tag ==
-                              specfem::simulation::field_type::forward) {
+                if (Tags::wavefield_tag ==
+                    specfem::simulation::field_type::forward) {
                   specfem::assembly::store_on_device(istep, index, acceleration,
                                                      boundary_values);
                 }
