@@ -47,5 +47,17 @@ protected:
   std::vector<specfem::enums::source_file_entry> entries;
 };
 
+namespace sources_impl {
+
+/**
+ * @brief Parse a source format string key into the corresponding enum.
+ *
+ * @param key Format key string (e.g., "YAML", "CMTSOLUTION", "FORCESOLUTION")
+ * @return Corresponding source_format enum value
+ */
+specfem::enums::source_format parse_format_key(const std::string &key);
+
+} // namespace sources_impl
+
 } // namespace runtime_configuration
 } // namespace specfem
