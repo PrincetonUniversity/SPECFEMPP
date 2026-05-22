@@ -69,8 +69,7 @@ public:
   template <specfem::element::dimension_tag DimensionTag>
   std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag> >
   instantiate_wavefield_plotter(
-      const specfem::assembly::assembly<DimensionTag> &assembly,
-      const type_real &dt) const;
+      const specfem::assembly::assembly<DimensionTag> &assembly) const;
 
 private:
   std::string output_format; ///< format of output file
@@ -81,7 +80,6 @@ private:
                                          ///< plot ( forward, adjoint)
   std::string component;                 ///< Component of the wavefield to plot
                                          ///< (x,y,z,magnitude)
-  type_real dt;                          ///< Time step
   int time_interval;                     ///< Time interval for plotting
   specfem::enums::elastic_wave elastic_wave; ///< Type of elastic wave
                                              ///< simulation

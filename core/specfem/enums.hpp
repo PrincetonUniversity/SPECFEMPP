@@ -34,7 +34,7 @@ enum class elastic_spin_wave { psv_t, sh_vl };
  * @brief Output format of seismogram enumeration
  *
  */
-enum class seismogram_format { seismic_unix, ascii };
+enum class seismogram_format { seismic_unix, sac, ascii };
 
 } // namespace enums
 } // namespace specfem

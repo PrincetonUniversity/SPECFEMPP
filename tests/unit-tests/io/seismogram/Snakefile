@@ -1,0 +1,59 @@
+import glob
+import os
+import numpy as np
+from obspy import Trace, Stream
+
+SEMD_FILES = glob.glob("data/*.semd")
+SAC_FILES = [f.replace(".semd", ".sac") for f in SEMD_FILES]
+
+rule all:
+    input:
+        SAC_FILES
+
+rule convert_semd_to_sac:
+    input:
+        "{prefix}.semd"
+    output:
+        "{prefix}.sac"
+    run:
+        data = np.loadtxt(input[0])
+        if data.ndim == 1:
+            data = data.reshape(1, -1)
+
+        time = data[:, 0]
+        amp = data[:, 1]
+
+        dt = time[1] - time[0] if len(time) > 1 else 0.05
+
+        basename = os.path.basename(input[0])
+        parts = basename.split(".")
+        network  = parts[0] if len(parts) > 0 else ""
+        station  = parts[1] if len(parts) > 1 else ""
+        location = parts[2] if len(parts) > 2 else ""
+        channel  = parts[3] if len(parts) > 3 else ""
+
+        tr = Trace(data=amp.astype(np.float32))
+        tr.stats.network  = network
+        tr.stats.station  = station
+        tr.stats.location = location
+        tr.stats.channel  = channel
+        tr.stats.delta    = dt
+
+        tr.stats.sac = dict()
+        tr.stats.sac["b"]     = time[0]
+        tr.stats.sac["nvhdr"] = 6
+        tr.stats.sac["iftype"] = 1  # ITIME
+        tr.stats.sac["idep"]  = 6   # IDISP
+        tr.stats.sac["leven"] = 1
+
+        if channel and channel[-1] == "X":
+            tr.stats.sac["cmpaz"]  = 90.0
+            tr.stats.sac["cmpinc"] = 90.0
+        elif channel and channel[-1] == "Y":
+            tr.stats.sac["cmpaz"]  = 0.0
+            tr.stats.sac["cmpinc"] = 90.0
+        elif channel and channel[-1] == "Z":
+            tr.stats.sac["cmpaz"]  = 0.0
+            tr.stats.sac["cmpinc"] = 0.0
+
+        Stream([tr]).write(output[0], format="SAC")

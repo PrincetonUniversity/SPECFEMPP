@@ -356,22 +356,22 @@ specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::
 
   SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->xmin, 1,
                                      SPECFEM_MPI_TYPE_REAL, MPI_MIN,
-                                     MPI_COMM_WORLD));
+                                     specfem::MPI::communicator()));
   SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->xmax, 1,
                                      SPECFEM_MPI_TYPE_REAL, MPI_MAX,
-                                     MPI_COMM_WORLD));
+                                     specfem::MPI::communicator()));
   SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->ymin, 1,
                                      SPECFEM_MPI_TYPE_REAL, MPI_MIN,
-                                     MPI_COMM_WORLD));
+                                     specfem::MPI::communicator()));
   SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->ymax, 1,
                                      SPECFEM_MPI_TYPE_REAL, MPI_MAX,
-                                     MPI_COMM_WORLD));
+                                     specfem::MPI::communicator()));
   SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->zmin, 1,
                                      SPECFEM_MPI_TYPE_REAL, MPI_MIN,
-                                     MPI_COMM_WORLD));
+                                     specfem::MPI::communicator()));
   SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->zmax, 1,
                                      SPECFEM_MPI_TYPE_REAL, MPI_MAX,
-                                     MPI_COMM_WORLD));
+                                     specfem::MPI::communicator()));
 
   return;
 }

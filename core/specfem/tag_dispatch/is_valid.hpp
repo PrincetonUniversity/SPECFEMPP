@@ -200,12 +200,17 @@ constexpr bool is_valid_material_combo(MaterialTagTuple t) {
     return false;
 
   switch (m) {
+  case M::elastic_psv: // dim2: isotropic and anisotropic
+    return a == A::none || a == A::constant_isotropic;
+  case M::elastic: // dim3: isotropic only
+    return a == A::none || (a == A::constant_isotropic &&
+                            p == specfem::element::property_tag::isotropic);
   case M::elastic_psv_t:
   case M::elastic_spin:       // Cosserat elastic: isotropic_cosserat × none
   case M::electromagnetic_te: // isotropic × none
     return a == A::none;
   default:
-    return true; // none or constant_isotropic both valid
+    return true; // none or constant_isotropic both valid for material storage
   }
 }
 
@@ -257,6 +262,31 @@ constexpr bool is_valid_boundary_combo(BoundaryComboTuple t) {
  * @param t  An `ElementTagTuple` holding all five tag values.
  * @return   `true` if the combination is physically valid.
  */
+/**
+ * @brief Check whether a (dimension, medium, property, attenuation) quad is
+ * valid for element *computation* (stricter than material storage).
+ *
+ * constant_isotropic attenuation is only valid for mediums that have a
+ * compute impl: elastic_psv (dim2) and elastic (dim3).
+ */
+constexpr bool is_valid_element_attenuation_combo(MaterialTagTuple t) {
+  using M = specfem::element::medium_tag;
+  using A = specfem::element::attenuation_tag;
+  auto d = t.get<0>();
+  auto m = t.get<1>();
+  auto p = t.get<2>();
+  auto a = t.get<3>();
+
+  if (!is_valid_property_combo({ d, m, p }))
+    return false;
+
+  if (a == A::none)
+    return true;
+
+  // constant_isotropic only valid for mediums with an attenuation impl
+  return (m == M::elastic_psv) || (m == M::elastic);
+}
+
 constexpr bool is_valid_full_combo(ElementTagTuple t) {
   auto d = t.get<0>();
   auto m = t.get<1>();
@@ -264,7 +294,7 @@ constexpr bool is_valid_full_combo(ElementTagTuple t) {
   auto a = t.get<3>();
   auto b = t.get<4>();
 
-  return is_valid_material_combo({ d, m, p, a }) &&
+  return is_valid_element_attenuation_combo({ d, m, p, a }) &&
          is_valid_boundary_combo({ d, m, p, b });
 }
 

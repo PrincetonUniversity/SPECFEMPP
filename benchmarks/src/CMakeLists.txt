@@ -13,6 +13,8 @@ set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
 # 2D
 add_subdirectory(dim2/anisotropic-crystal)
 add_subdirectory(dim2/homogeneous-medium-flat-topography)
+add_subdirectory(dim2/homogeneous-medium-flat-topography-attenuation)
+add_subdirectory(dim2/homogeneous-medium-flat-topography-reference-frequency)
 add_subdirectory(dim2/fluid-solid-interface)
 add_subdirectory(dim2/fluid-solid-bathymetry)
 add_subdirectory(dim2/solid-solid-interface)
@@ -23,3 +25,4 @@ add_subdirectory(dim2/marmousi)
 
 # 3D
 add_subdirectory(dim3/homogeneous_halfspace)
+# add_subdirectory(dim3/acoustic_elastic_interface)

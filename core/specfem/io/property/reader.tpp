@@ -36,16 +36,14 @@ void specfem::io::property_reader<InputLibrary>::read(
       DIMENSION_SET(dim2) *
           MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
                      elastic_psv_t) *
-          PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
-          ATTENUATION_SET(none),
+          PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
       [&]<typename TagsType>() {
         constexpr auto medium_tag = TagsType::medium_tag;
         constexpr auto property_tag = TagsType::property_tag;
-        constexpr auto attenuation_tag = TagsType::attenuation_tag;
 
         const std::string name =
             std::string("/") +
-            specfem::element::to_string(medium_tag, property_tag, attenuation_tag);
+            specfem::element::to_string(medium_tag, property_tag);
         typename InputLibrary::Group group = file.openGroup(name);
         // TODO ( Lucas : Attenuation update.) : need to update get_container
         const auto container =

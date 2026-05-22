@@ -1,5 +1,6 @@
 #pragma once
 #include "specfem/element.hpp"
+#include <type_traits>
 
 /**
  * @brief Mesh entity definitions for spectral element connectivity.
@@ -51,4 +52,11 @@ element(const int, const int) -> element<specfem::element::dimension_tag::dim2>;
 element(const int, const int, const int)
     -> element<specfem::element::dimension_tag::dim3>;
 ///@}
+
+template <specfem::element::dimension_tag dimension_tag>
+using type =
+    std::conditional_t<dimension_tag == specfem::element::dimension_tag::dim2,
+                       specfem::mesh_entity::dim2::type,
+                       specfem::mesh_entity::dim3::type>;
+
 } // namespace specfem::mesh_entity

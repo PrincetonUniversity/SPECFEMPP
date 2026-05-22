@@ -1,0 +1,69 @@
+parameters:
+
+  header:
+    ## Header information is used for logging. It is good practice to give your simulations explicit names
+    title: Isotropic Elastic simulation with attenuation # name for your simulation
+    # A detailed description for your simulation
+    description: |
+      Material systems : Viscoelastic domain (1)
+      Interfaces : None
+      Sources : Force source (1)
+      Boundary conditions : Neumann BCs on all edges
+      Debugging comment : This test tests elastic compute_forces routine with attenuation
+
+  simulation-setup:
+    ## quadrature setup
+    quadrature:
+      quadrature-type: GLL4
+
+    ## Solver setup
+    solver:
+      time-marching:
+        type-of-simulation: forward
+        time-scheme:
+          type: Newmark
+          dt: 0.1
+          nstep: 1100
+
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:
+            format: ascii
+            directory: "./"
+
+          # display:
+          #   format: VTKHDF
+          #   directory: "displacement_tests/Newmark/serial/dim3/HomogeneousHalfspaceSmallNoABCForceSourceAttenuation/"
+          #   field: displacement
+          #   component: x
+          #   simulation-field: forward
+          #   time-interval: 1.0
+
+  receivers:
+    stations: "displacement_tests/Newmark/serial/dim3/HomogeneousHalfspaceSmallNoABCForceSourceAttenuation/STATIONS"
+    angle: 0.0
+    seismogram-type:
+      - displacement
+      - velocity
+      - acceleration
+    nstep_between_samples: 1
+
+  ## Runtime setup
+  run-setup:
+    number-of-processors: 1
+    number-of-runs: 1
+
+  ## databases
+  databases:
+    mesh-database: "displacement_tests/Newmark/serial/dim3/HomogeneousHalfspaceSmallNoABCForceSourceAttenuation/database.bin"
+
+  sources: "displacement_tests/Newmark/serial/dim3/HomogeneousHalfspaceSmallNoABCForceSourceAttenuation/force.yaml"
+
+  ## attenuation setup
+  attenuation:
+    enabled: true
+    reference-frequency: 1.0 Hz
+    attenuation-frequency-band:
+      - 0.03 Hz
+      - 3.0 Hz

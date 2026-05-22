@@ -1,5 +1,6 @@
 #include "info.hpp"
 #include "specfem/assembly/info/impl/bounds.hpp"
+#include "specfem/mpi.hpp"
 #include "specfem/assembly/info/impl/compute.hpp"
 #include "specfem/assembly/info/impl/scatter_minmax.hpp"
 #include "specfem/assembly/info/impl/distances.hpp"
@@ -63,8 +64,7 @@ struct InfoScatters {
 /// @tparam PropertyTag The property type (isotropic, anisotropic, etc.)
 template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag,
-          specfem::element::attenuation_tag AttenuationTag>
+          specfem::element::property_tag PropertyTag>
 void process_medium_elements(
     const specfem::assembly::mesh<DimensionTag> &mesh,
     const specfem::assembly::properties<DimensionTag> &properties,
@@ -74,9 +74,8 @@ void process_medium_elements(
   constexpr specfem::element::dimension_tag dimension_tag = DimensionTag;
   constexpr specfem::element::medium_tag medium_tag = MediumTag;
   constexpr specfem::element::property_tag property_tag = PropertyTag;
-  constexpr specfem::element::attenuation_tag attenuation_tag = AttenuationTag;
   auto elements =
-      element_types.get_elements_on_device(medium_tag, property_tag, attenuation_tag);
+      element_types.get_elements_on_device(medium_tag, property_tag);
 
   constexpr bool using_simd = false;
   using simd = specfem::datatype::simd<type_real, using_simd>;
@@ -221,8 +220,7 @@ specfem::assembly::Info<DimensionTag>::Info(
         [&]<typename ElementTags>() {
           info::impl::process_medium_elements<ElementTags::dimension_tag,
                                               ElementTags::medium_tag,
-                                              ElementTags::property_tag,
-                                              ElementTags::attenuation_tag>(
+                                              ElementTags::property_tag>(
               mesh, properties, element_types, scatters);
         });
   } else {
@@ -234,8 +232,7 @@ specfem::assembly::Info<DimensionTag>::Info(
         [&]<typename ElementTags>() {
           info::impl::process_medium_elements<ElementTags::dimension_tag,
                                               ElementTags::medium_tag,
-                                              ElementTags::property_tag,
-                                              ElementTags::attenuation_tag>(
+                                              ElementTags::property_tag>(
               mesh, properties, element_types, scatters);
         });
   };
@@ -258,4 +255,47 @@ specfem::assembly::Info<DimensionTag>::Info(
 
   auto dt_bounds = scatters.dt.get_bounds();
   this->suggested_time_step = dt_bounds.min;
+
+  // Reduce bounds across MPI ranks
+  const auto comm = specfem::MPI::communicator();
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->vp.min, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MIN, comm));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->vp.max, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MAX, comm));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->vs.min, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MIN, comm));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->vs.max, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MAX, comm));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->v.min, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MIN, comm));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->v.max, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MAX, comm));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->rho.min, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MIN, comm));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->rho.max, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MAX, comm));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->element_size.min, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MIN, comm));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->element_size.max, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MAX, comm));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->gll_distance.min, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MIN, comm));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->gll_distance.max, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MAX, comm));
+  constexpr int ndim = info::impl::InfoScatters<dimension_tag>::ndim;
+  for (int i = 0; i < ndim; ++i) {
+    SPECFEM_MPI_SAFECALL(
+        MPI_Allreduce(MPI_IN_PLACE,
+                      &this->domain_bounds.bounds_array(i).min, 1,
+                      SPECFEM_MPI_TYPE_REAL, MPI_MIN, comm));
+    SPECFEM_MPI_SAFECALL(
+        MPI_Allreduce(MPI_IN_PLACE,
+                      &this->domain_bounds.bounds_array(i).max, 1,
+                      SPECFEM_MPI_TYPE_REAL, MPI_MAX, comm));
+  }
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE,
+                                     &this->largest_minimum_period, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MAX, comm));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->suggested_time_step,
+                                     1, SPECFEM_MPI_TYPE_REAL, MPI_MIN, comm));
 }

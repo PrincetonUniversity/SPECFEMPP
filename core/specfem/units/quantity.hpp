@@ -1,9 +1,9 @@
 #pragma once
 #include "specfem/setup.hpp"
+#include <Kokkos_Core.hpp>
+#include <compare>
 #include <ratio>
 #include <type_traits>
-
-#include <Kokkos_Core.hpp>
 
 namespace specfem::units {
 
@@ -20,7 +20,8 @@ namespace specfem::units {
  */
 
 // Compile-time dimension: [mass, length, time, angle]
-// angle distinguishes e.g. Hertz (A=0) from Omega/rad·s⁻¹ (A=1)
+// angle distinguishes e.g. Hertz (A=0) from Omega/@f$ \mathrm{rad} \cdot
+// \mathrm{s}^{-1} @f$ (A=1)
 template <int M, int L, int T, int A = 0> struct Dim {
   static constexpr int mass = M;   ///< Mass dimension exponent
   static constexpr int length = L; ///< Length dimension exponent
@@ -87,7 +88,7 @@ constexpr type_real ratio_value =
  * Velocity speed = distance / time;  // Returns Velocity(10.0)
  * @endcode
  */
-template <typename D, typename Scale = std::ratio<1, 1> > class Quantity {
+template <typename D, typename Scale = std::ratio<1, 1>> class Quantity {
   type_real value_;
 
 public:
@@ -96,7 +97,8 @@ public:
    *
    * @param v Value in the specified units (default: 0.0)
    */
-  constexpr explicit Quantity(type_real v = 0.0) noexcept : value_(v) {}
+  KOKKOS_FUNCTION constexpr explicit Quantity(type_real v = 0.0) noexcept
+      : value_(v) {}
 
   /**
    * @brief Extract the raw numeric value.
@@ -105,58 +107,63 @@ public:
    *
    * @return constexpr type_real Numeric value without units
    */
-  [[nodiscard]] constexpr type_real raw() const noexcept { return value_; }
+  [[nodiscard]] KOKKOS_FUNCTION constexpr type_real raw() const noexcept {
+    return value_;
+  }
 
   /**
    * @brief Explicit conversion to raw numeric value.
    *
    * @return constexpr type_real Numeric value without units
    */
-  explicit constexpr operator type_real() const noexcept { return value_; }
+  KOKKOS_FUNCTION explicit constexpr operator type_real() const noexcept {
+    return value_;
+  }
 
   /// Unary negation
-  constexpr Quantity operator-() const noexcept { return Quantity(-value_); }
+  KOKKOS_FUNCTION constexpr Quantity operator-() const noexcept {
+    return Quantity(-value_);
+  }
 
   // Arithmetic within the same dimension and scale
-  constexpr Quantity operator+(Quantity o) const noexcept {
+  KOKKOS_FUNCTION constexpr Quantity operator+(Quantity o) const noexcept {
     return Quantity(value_ + o.value_);
   }
-  constexpr Quantity operator-(Quantity o) const noexcept {
+  KOKKOS_FUNCTION constexpr Quantity operator-(Quantity o) const noexcept {
     return Quantity(value_ - o.value_);
   }
-  constexpr Quantity operator*(type_real s) const noexcept {
+  KOKKOS_FUNCTION constexpr Quantity operator*(type_real s) const noexcept {
     return Quantity(value_ * s);
   }
-  constexpr Quantity operator/(type_real s) const noexcept {
+  KOKKOS_FUNCTION constexpr Quantity operator/(type_real s) const noexcept {
     return Quantity(value_ / s);
   }
 
-  // Comparisons (same scale)
-  constexpr bool operator==(Quantity o) const noexcept {
+  // Comparisons (same scale) — C++20 synthesizes !=, <, <=, >, >= from these
+  // clang-format off
+  KOKKOS_FUNCTION constexpr auto operator<=>(Quantity o) const noexcept {
+    return value_ <=> o.value_;
+  }
+  // clang-format on
+  KOKKOS_FUNCTION constexpr bool operator==(Quantity o) const noexcept {
     return value_ == o.value_;
-  }
-  constexpr bool operator!=(Quantity o) const noexcept {
-    return value_ != o.value_;
-  }
-  constexpr bool operator<(Quantity o) const noexcept {
-    return value_ < o.value_;
-  }
-  constexpr bool operator<=(Quantity o) const noexcept {
-    return value_ <= o.value_;
-  }
-  constexpr bool operator>(Quantity o) const noexcept {
-    return value_ > o.value_;
-  }
-  constexpr bool operator>=(Quantity o) const noexcept {
-    return value_ >= o.value_;
   }
 };
 
 /// Scalar multiplication from left
 template <typename... Args>
-constexpr Quantity<Args...> operator*(type_real s,
-                                      Quantity<Args...> q) noexcept {
+KOKKOS_FUNCTION constexpr Quantity<Args...>
+operator*(type_real s, Quantity<Args...> q) noexcept {
   return q * s;
+}
+
+/// Scalar division from left: s / Quantity<Dim<M,L,T,A>,S> ->
+/// Quantity<Dim<-M,-L,-T,-A>,S>
+template <int M, int L, int T, int A, typename S>
+KOKKOS_FUNCTION constexpr auto operator/(type_real s,
+                                         Quantity<Dim<M, L, T, A>, S> q)
+    -> Quantity<Dim<-M, -L, -T, -A>, S> {
+  return Quantity<Dim<-M, -L, -T, -A>, S>(s / q.raw());
 }
 
 /**
@@ -168,22 +175,22 @@ constexpr Quantity<Args...> operator*(type_real s,
  * @{
  */
 
-template <typename D, typename S1, typename S2,
-          typename = std::enable_if_t<!std::is_same<S1, S2>::value> >
-constexpr auto operator+(Quantity<D, S1> a, Quantity<D, S2> b)
-    -> Quantity<D, impl::ratio_gcd<S1, S2> > {
+template <typename D, typename S1, typename S2>
+  requires(!std::is_same_v<S1, S2>)
+KOKKOS_FUNCTION constexpr auto operator+(Quantity<D, S1> a, Quantity<D, S2> b)
+    -> Quantity<D, impl::ratio_gcd<S1, S2>> {
   using Rgcd = impl::ratio_gcd<S1, S2>;
-  return Quantity<D, Rgcd>(a.raw() * ratio_value<std::ratio_divide<S1, Rgcd> > +
-                           b.raw() * ratio_value<std::ratio_divide<S2, Rgcd> >);
+  return Quantity<D, Rgcd>(a.raw() * ratio_value<std::ratio_divide<S1, Rgcd>> +
+                           b.raw() * ratio_value<std::ratio_divide<S2, Rgcd>>);
 }
 
-template <typename D, typename S1, typename S2,
-          typename = std::enable_if_t<!std::is_same<S1, S2>::value> >
-constexpr auto operator-(Quantity<D, S1> a, Quantity<D, S2> b)
-    -> Quantity<D, impl::ratio_gcd<S1, S2> > {
+template <typename D, typename S1, typename S2>
+  requires(!std::is_same_v<S1, S2>)
+KOKKOS_FUNCTION constexpr auto operator-(Quantity<D, S1> a, Quantity<D, S2> b)
+    -> Quantity<D, impl::ratio_gcd<S1, S2>> {
   using Rgcd = impl::ratio_gcd<S1, S2>;
-  return Quantity<D, Rgcd>(a.raw() * ratio_value<std::ratio_divide<S1, Rgcd> > -
-                           b.raw() * ratio_value<std::ratio_divide<S2, Rgcd> >);
+  return Quantity<D, Rgcd>(a.raw() * ratio_value<std::ratio_divide<S1, Rgcd>> -
+                           b.raw() * ratio_value<std::ratio_divide<S2, Rgcd>>);
 }
 
 /// @}
@@ -192,47 +199,28 @@ constexpr auto operator-(Quantity<D, S1> a, Quantity<D, S2> b)
  * @name Mixed-scale comparisons
  * @brief Comparisons between quantities with different scales but same
  * dimension.
+ *
+ * C++20 synthesizes !=, <, <=, >, >= from <=> and ==.
  * @{
  */
 
-template <typename D, typename S1, typename S2,
-          typename = std::enable_if_t<!std::is_same<S1, S2>::value> >
-constexpr bool operator==(Quantity<D, S1> a, Quantity<D, S2> b) noexcept {
+// clang-format off
+template <typename D, typename S1, typename S2>
+  requires(!std::is_same_v<S1, S2>)
+KOKKOS_FUNCTION constexpr auto operator<=>(Quantity<D, S1> a, Quantity<D, S2> b) noexcept {
   using Rgcd = impl::ratio_gcd<S1, S2>;
-  return a.raw() * ratio_value<std::ratio_divide<S1, Rgcd> > ==
+  return a.raw() * ratio_value<std::ratio_divide<S1, Rgcd> > <=>
          b.raw() * ratio_value<std::ratio_divide<S2, Rgcd> >;
 }
+// clang-format on
 
-template <typename D, typename S1, typename S2,
-          typename = std::enable_if_t<!std::is_same<S1, S2>::value> >
-constexpr bool operator!=(Quantity<D, S1> a, Quantity<D, S2> b) noexcept {
-  return !(a == b);
-}
-
-template <typename D, typename S1, typename S2,
-          typename = std::enable_if_t<!std::is_same<S1, S2>::value> >
-constexpr bool operator<(Quantity<D, S1> a, Quantity<D, S2> b) noexcept {
+template <typename D, typename S1, typename S2>
+  requires(!std::is_same_v<S1, S2>)
+KOKKOS_FUNCTION constexpr bool operator==(Quantity<D, S1> a,
+                                          Quantity<D, S2> b) noexcept {
   using Rgcd = impl::ratio_gcd<S1, S2>;
-  return a.raw() * ratio_value<std::ratio_divide<S1, Rgcd> > <
-         b.raw() * ratio_value<std::ratio_divide<S2, Rgcd> >;
-}
-
-template <typename D, typename S1, typename S2,
-          typename = std::enable_if_t<!std::is_same<S1, S2>::value> >
-constexpr bool operator<=(Quantity<D, S1> a, Quantity<D, S2> b) noexcept {
-  return !(b < a);
-}
-
-template <typename D, typename S1, typename S2,
-          typename = std::enable_if_t<!std::is_same<S1, S2>::value> >
-constexpr bool operator>(Quantity<D, S1> a, Quantity<D, S2> b) noexcept {
-  return b < a;
-}
-
-template <typename D, typename S1, typename S2,
-          typename = std::enable_if_t<!std::is_same<S1, S2>::value> >
-constexpr bool operator>=(Quantity<D, S1> a, Quantity<D, S2> b) noexcept {
-  return !(a < b);
+  return a.raw() * ratio_value<std::ratio_divide<S1, Rgcd>> ==
+         b.raw() * ratio_value<std::ratio_divide<S2, Rgcd>>;
 }
 
 /// @}
@@ -248,22 +236,22 @@ constexpr bool operator>=(Quantity<D, S1> a, Quantity<D, S2> b) noexcept {
 
 template <int M1, int L1, int T1, int A1, int M2, int L2, int T2, int A2,
           typename S1, typename S2>
-constexpr auto operator*(Quantity<Dim<M1, L1, T1, A1>, S1> a,
-                         Quantity<Dim<M2, L2, T2, A2>, S2> b)
+KOKKOS_FUNCTION constexpr auto operator*(Quantity<Dim<M1, L1, T1, A1>, S1> a,
+                                         Quantity<Dim<M2, L2, T2, A2>, S2> b)
     -> Quantity<Dim<M1 + M2, L1 + L2, T1 + T2, A1 + A2>,
-                std::ratio_multiply<S1, S2> > {
+                std::ratio_multiply<S1, S2>> {
   return Quantity<Dim<M1 + M2, L1 + L2, T1 + T2, A1 + A2>,
-                  std::ratio_multiply<S1, S2> >(a.raw() * b.raw());
+                  std::ratio_multiply<S1, S2>>(a.raw() * b.raw());
 }
 
 template <int M1, int L1, int T1, int A1, int M2, int L2, int T2, int A2,
           typename S1, typename S2>
-constexpr auto operator/(Quantity<Dim<M1, L1, T1, A1>, S1> a,
-                         Quantity<Dim<M2, L2, T2, A2>, S2> b)
+KOKKOS_FUNCTION constexpr auto operator/(Quantity<Dim<M1, L1, T1, A1>, S1> a,
+                                         Quantity<Dim<M2, L2, T2, A2>, S2> b)
     -> Quantity<Dim<M1 - M2, L1 - L2, T1 - T2, A1 - A2>,
-                std::ratio_divide<S1, S2> > {
+                std::ratio_divide<S1, S2>> {
   return Quantity<Dim<M1 - M2, L1 - L2, T1 - T2, A1 - A2>,
-                  std::ratio_divide<S1, S2> >(a.raw() / b.raw());
+                  std::ratio_divide<S1, S2>>(a.raw() / b.raw());
 }
 
 /// @}
@@ -280,10 +268,11 @@ using DimTime = Dim<0, 0, 1>;          ///< Time (s)
 using DimAngle = Dim<0, 0, 0, 1>;      ///< Angle (rad)
 using DimVelocity = Dim<0, 1, -1>;     ///< Velocity (m/s)
 
-using DimFrequency = Dim<0, 0, -1>;           ///< Frequency (s⁻¹)
-using DimAngularFrequency = Dim<0, 0, -1, 1>; ///< Angular frequency (rad/s)
-using DimDensity = Dim<1, -3, 0>;             ///< Density (kg/m³)
-using DimPressure = Dim<1, -1, -2>;           ///< Pressure (Pa)
+using DimFrequency = Dim<0, 0, -1>; ///< Frequency (@f$ \mathrm{s}^{-1} @f$)
+using DimAngularFrequency =
+    Dim<0, 0, -1, 1>; ///< Angular frequency (@f$ \mathrm{rad/s} @f$)
+using DimDensity = Dim<1, -3, 0>;   ///< Density (@f$ \mathrm{kg/m^3} @f$)
+using DimPressure = Dim<1, -1, -2>; ///< Pressure (Pa)
 
 } // namespace SI
 
@@ -292,6 +281,11 @@ using DimPressure = Dim<1, -1, -2>;           ///< Pressure (Pa)
  * @brief Convenient names for common physical quantities.
  *
  * Scale defaults to std::ratio<1,1> for SI base units.
+ *
+ * NOTE: When adding a new quantity type alias here, also update:
+ *   1. AnyQuantity variant in parse.hpp
+ *   2. Parse table in parse.hpp
+ *   3. Unit symbol tag in units.hpp (SPECFEM_UNIT_TAG invocation)
  * @{
  */
 
@@ -301,7 +295,7 @@ using Dimensionless = Quantity<SI::DimDimensionless>; ///< Unit-less ratios
 // Mass
 using Grams = Quantity<SI::DimMass>; ///< Mass in grams
 using Kilograms =
-    Quantity<SI::DimMass, std::ratio<1000, 1> >; ///< Mass in kilograms
+    Quantity<SI::DimMass, std::ratio<1000, 1>>; ///< Mass in kilograms
 
 // Time
 using Seconds = Quantity<SI::DimTime>; ///< Time in seconds
@@ -309,20 +303,22 @@ using Seconds = Quantity<SI::DimTime>; ///< Time in seconds
 // Length
 using Meters = Quantity<SI::DimLength>; ///< Length in meters
 using Kilometers =
-    Quantity<SI::DimLength, std::ratio<1000, 1> >; ///< Length in kilometers
+    Quantity<SI::DimLength, std::ratio<1000, 1>>; ///< Length in kilometers
 
 // Angle
 using Radians = Quantity<SI::DimAngle>; ///< Angle in radians
 
 // Density
-using GramPerCubicMeter = Quantity<SI::DimDensity>; ///< Density (g/m³)
+using GramPerCubicMeter =
+    Quantity<SI::DimDensity>; ///< Density (@f$ \mathrm{g/m^3} @f$)
 using KilogramPerCubicMeter =
-    Quantity<SI::DimDensity, std::ratio<1000, 1> >; ///< Density (kg/m³)
+    Quantity<SI::DimDensity, std::ratio<1000, 1>>; ///< Density (@f$
+                                                   ///< \mathrm{kg/m^3} @f$)
 
 // Velocity
 using MetersPerSecond = Quantity<SI::DimVelocity>; ///< Velocity (m/s)
 using KilometersPerSecond =
-    Quantity<SI::DimVelocity, std::ratio<1000, 1> >; ///< Velocity (km/s)
+    Quantity<SI::DimVelocity, std::ratio<1000, 1>>; ///< Velocity (km/s)
 
 // Frequency
 using Hertz = Quantity<SI::DimFrequency>; ///< Frequency in Hertz (cycles/s)
@@ -331,7 +327,7 @@ using Omega = Quantity<SI::DimAngularFrequency>; ///< Angular frequency (rad/s)
 // Pressure
 using Pascal = Quantity<SI::DimPressure>; ///< Pressure (Pa)
 using Megapascal =
-    Quantity<SI::DimPressure, std::ratio<1000000, 1> >; ///< Pressure (MPa)
+    Quantity<SI::DimPressure, std::ratio<1000000, 1>>; ///< Pressure (MPa)
 
 /// @}
 
