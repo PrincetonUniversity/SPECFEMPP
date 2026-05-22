@@ -216,8 +216,12 @@ void execute(const TransferCoordinates &transfer_coordinates,
   ResultViewType result_view("result_view");
 
   Kokkos::parallel_for(
-      "transfer_interpolate_test", Kokkos::TeamPolicy<>(league_size, 1, 1),
-      KOKKOS_LAMBDA(const Kokkos::TeamPolicy<>::member_type &team_member) {
+      "transfer_interpolate_test",
+      Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>(league_size,
+                                                        Kokkos::AUTO, 1),
+      KOKKOS_LAMBDA(
+          const Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>::member_type
+              &team_member) {
         const int iedge = team_member.league_rank();
         const int this_chunk_start = iedge * chunk_size;
         const int this_chunk_size =
@@ -454,6 +458,24 @@ TEST(TransferInterpolateTests, SimpleTransferInterpolate) {
       "Sample 4-point uniform on upper-left corner of GLL2-point-defined "
       "field: x^2 * y (in local coordinates)");
 }
+
+TEST(TransferInterpolateTests, SimpleTransferStack) {
+  specfem::algorithms_test::transfer_interpolate::execute(
+      NoisyFaceQuadraturePoints3D<2, 4>(-1, 0, 0, 1, 0),
+      specfem::test_fixture::FaceFunction3D<
+          specfem::test_fixture::FaceFunctionInitializer3D::Stack<
+              specfem::test_fixture::FaceFunctionInitializer3D::
+                  FromAnalyticalFunction<
+                      specfem::test_fixture::AnalyticalFunctionType::Power2D<1,
+                                                                             0>,
+                      specfem::test_fixture::QuadraturePoints::GLL2>,
+              specfem::test_fixture::FaceFunctionInitializer3D::
+                  FromAnalyticalFunction<
+                      specfem::test_fixture::AnalyticalFunctionType::Power2D<0,
+                                                                             1>,
+                      specfem::test_fixture::QuadraturePoints::GLL2>>>({}));
+}
+
 TEST(TransferInterpolateTests, StackedGrid) {
   constexpr int maxpow = 6;
   constexpr int sample_ngll = 5;
