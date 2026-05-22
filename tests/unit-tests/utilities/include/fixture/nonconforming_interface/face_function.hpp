@@ -181,6 +181,9 @@ private:
   using FieldView = Kokkos::View<
       type_real[stack_size][nquad_element][nquad_element][num_components],
       memory_space>;
+  using ResizedFieldView =
+      Kokkos::View<type_real *[nquad_element][nquad_element][num_components],
+                   memory_space>;
 
 public:
   /**
@@ -200,6 +203,31 @@ public:
     auto host_view =
         Kokkos::create_mirror_view(view); // Create host mirror to copy data
     for (size_t i = 0; i < stack_size; ++i) {
+      for (size_t j = 0; j < nquad_element; ++j) {
+        for (size_t ell = 0; ell < nquad_element; ++ell) {
+          for (size_t k = 0; k < num_components; ++k) {
+            host_view(i, j, ell, k) = (*this)(i, j, ell, k);
+          }
+        }
+      }
+    }
+    Kokkos::deep_copy(view, host_view);
+    return view;
+  }
+
+  /**
+   * @brief Get Kokkos view of field data, set to different size.
+   *
+   * This is used to pad the View so that each chunk can get a full-sized
+   * subview to mock the scratch view.
+   *
+   * @return Kokkos view for device access
+   */
+  ResizedFieldView get_resized_view(const int &stack_size) const {
+    ResizedFieldView view("field_view", stack_size);
+    auto host_view =
+        Kokkos::create_mirror_view(view); // Create host mirror to copy data
+    for (size_t i = 0; i < std::min(stack_size, this->stack_size); ++i) {
       for (size_t j = 0; j < nquad_element; ++j) {
         for (size_t ell = 0; ell < nquad_element; ++ell) {
           for (size_t k = 0; k < num_components; ++k) {

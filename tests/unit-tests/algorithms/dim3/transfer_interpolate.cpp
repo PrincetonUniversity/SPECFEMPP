@@ -209,8 +209,10 @@ void execute(const TransferCoordinates &transfer_coordinates,
   specfem::algorithms::KnotInterpolator interpolator(gll_struct.get_xi());
 
   // ======= Run Kernel
-  const auto function_view = face_function.get_view();
-  const auto transfer_coord_view = transfer_coordinates.get_view();
+  const auto function_view =
+      face_function.get_resized_view(chunk_size * league_size);
+  const auto transfer_coord_view =
+      transfer_coordinates.get_resized_view(chunk_size * league_size);
   ResultViewType result_view("result_view");
 
   Kokkos::parallel_for(
@@ -218,18 +220,18 @@ void execute(const TransferCoordinates &transfer_coordinates,
       KOKKOS_LAMBDA(const Kokkos::TeamPolicy<>::member_type &team_member) {
         const int iedge = team_member.league_rank();
         const int this_chunk_start = iedge * chunk_size;
-        const int this_chunk_end =
-            std::min((iedge + 1) * chunk_size, stack_size);
-        const ContainerTransferCoordinates TF(
-            Kokkos::subview(transfer_coord_view,
-                            Kokkos::make_pair(this_chunk_start, this_chunk_end),
-                            Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL()));
+        const int this_chunk_size =
+            std::min(chunk_size, stack_size - this_chunk_start);
+        const ContainerTransferCoordinates TF(Kokkos::subview(
+            transfer_coord_view,
+            Kokkos::make_pair(this_chunk_start, this_chunk_start + chunk_size),
+            Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL()));
         const ContainerFunctionCoupled F(Kokkos::subview(
-            function_view, Kokkos::make_pair(this_chunk_start, this_chunk_end),
+            function_view,
+            Kokkos::make_pair(this_chunk_start, this_chunk_start + chunk_size),
             Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL()));
         specfem::algorithms::transfer_interpolate(
-            ChunkFaceIndex(this_chunk_end - this_chunk_start, team_member), TF,
-            F,
+            ChunkFaceIndex(this_chunk_size, team_member), TF, F,
             [&](const auto &index, const auto &point) {
               for (int icomp = 0; icomp < FaceFunction::num_components;
                    ++icomp) {
@@ -327,6 +329,9 @@ private:
   using FieldView = Kokkos::View<
       type_real[stack_size][nquad_element][nquad_element][num_components],
       memory_space>;
+  using ResizedFieldView =
+      Kokkos::View<type_real *[nquad_element][nquad_element][num_components],
+                   memory_space>;
   ArrayType _field;
 
 public:
@@ -375,6 +380,27 @@ public:
     auto host_view =
         Kokkos::create_mirror_view(view); // Create host mirror to copy data
     for (size_t i = 0; i < stack_size; ++i) {
+      for (size_t j = 0; j < nquad_element; ++j) {
+        for (size_t ell = 0; ell < nquad_element; ++ell) {
+          for (size_t k = 0; k < num_components; ++k) {
+            host_view(i, j, ell, k) = (*this)(i, j, ell, k);
+          }
+        }
+      }
+    }
+    Kokkos::deep_copy(view, host_view);
+    return view;
+  }
+
+  /**
+   * @brief Get Kokkos view of field data, set to different size.
+   * @return Kokkos view for device access
+   */
+  ResizedFieldView get_resized_view(const int &stack_size) const {
+    ResizedFieldView view("field_view", stack_size);
+    auto host_view =
+        Kokkos::create_mirror_view(view); // Create host mirror to copy data
+    for (size_t i = 0; i < std::min(stack_size, this->stack_size); ++i) {
       for (size_t j = 0; j < nquad_element; ++j) {
         for (size_t ell = 0; ell < nquad_element; ++ell) {
           for (size_t k = 0; k < num_components; ++k) {
