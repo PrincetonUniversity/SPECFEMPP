@@ -31,6 +31,7 @@
 ! writes out new Databases files for each partition
 
   use decompose_mesh_par
+  use constants, only: NGLLX, NGLLY, NGLLZ
 
   ! use fault_scotch, only: ANY_FAULT,write_fault_database,nodes_coords_open
 
@@ -38,30 +39,13 @@
 
   ! local parameters
   integer :: ier
-  integer :: my_ninterface,max_interface_size
-
-  ! initializes
-  my_ninterface = 0
-  max_interface_size = 0
-
-  ! allocates MPI interfaces
-  if (ninterfaces > 0) then
-    allocate(my_interfaces(0:ninterfaces-1),stat=ier)
-    if (ier /= 0) call exit_MPI_without_rank('error allocating array 115')
-    if (ier /= 0) stop 'Error allocating array my_interfaces'
-    allocate(my_nb_interfaces(0:ninterfaces-1),stat=ier)
-    if (ier /= 0) call exit_MPI_without_rank('error allocating array 116')
-    if (ier /= 0) stop 'Error allocating array my_nb_interfaces'
-  else
-    ! dummy allocation
-    allocate(my_interfaces(1),my_nb_interfaces(1))
-  endif
-  my_interfaces(:) = 0; my_nb_interfaces(:) = 0
+  character(len=MAX_STRING_LEN) :: database_file
+  character(len=32) :: proc_str_db, format_str_db
+  integer :: ndigits_db
 
   ! user output
   print *, 'partitions: '
-  print *, '  num         = ',nparts
-  print *, '  ninterfaces = ',ninterfaces
+  print *, '  num = ',nparts
   print *
 
   if (COUPLE_WITH_INJECTION_TECHNIQUE .or. MESH_A_CHUNK_OF_THE_EARTH) open(124,file='Numglob2loc_elmn.txt')
@@ -69,17 +53,30 @@
   ! writes out Database file for each partition
   do ipart = 0, nparts-1
 
-    ! opens output file
-    write(prname, "(i6.6,'_Database')") ipart
+    ! opens output file — naming matches meshfem3d save_databases.F90 convention
+    if (nparts <= 1) then
+      database_file = trim(outputpath_name) // '/Database.bin'
+    else
+      ndigits_db = int(log10(real(nparts-1))) + 1
+      write(format_str_db,'(a,i0,a,i0,a)') '(i', ndigits_db, '.', ndigits_db, ')'
+      write(proc_str_db, format_str_db) ipart
+      if (ipart == 0) &
+        call execute_command_line('mkdir -p ' // trim(outputpath_name) // '/Database', wait=.true.)
+      database_file = trim(outputpath_name) // '/Database/proc_' // trim(adjustl(proc_str_db)) // '.bin'
+    endif
 
-    open(unit=IIN_database,file=outputpath_name(1:len_trim(outputpath_name))//'/proc'//prname, &
-         status='unknown', action='write', form='unformatted', iostat = ier)
+    open(unit=IIN_database, file=trim(database_file), &
+         status='unknown', action='write', form='unformatted', iostat=ier)
     if (ier /= 0) then
-      print *,'Error file open:',outputpath_name(1:len_trim(outputpath_name))//'/proc'//prname
+      print *,'Error file open: ',trim(database_file)
       print *
-      print *,'check if path exists:',outputpath_name(1:len_trim(outputpath_name))
+      print *,'check if path exists: ',trim(outputpath_name)
       stop 'Error file open Database'
     endif
+
+    ! file header — matches meshfem3d save_databases.F90 binary format
+    write(IIN_database) MESH_A_CHUNK_OF_THE_EARTH
+    write(IIN_database) NGNOD
 
     ! gets number of local nodes nnodes_loc in this partition
     call write_glob2loc_nodes_database(IIN_database, ipart, nnodes_loc, nodes_coords, &
@@ -107,7 +104,7 @@
 
     ! writes out spectral element indices
     write(IIN_database) nspec_local
-
+    write(IIN_database) NGLLZ, NGLLY, NGLLX
 
     call write_partition_database(IIN_database, ipart, nspec_local, nspec, elmnts, &
                                   glob2loc_elmnts, glob2loc_nodes_nparts, &
@@ -128,34 +125,13 @@
     call write_cpml_database(IIN_database, ipart, nspec, nspec_cpml, CPML_to_spec, &
                              CPML_regions, is_CPML, glob2loc_elmnts, part)
 
-    ! gets number of MPI interfaces
-    call write_interfaces_database(IIN_database, tab_interfaces, tab_size_interfaces, ipart, ninterfaces, &
-                                   my_ninterface, my_interfaces, my_nb_interfaces, &
-                                   glob2loc_elmnts, glob2loc_nodes_nparts, glob2loc_nodes_parts, &
-                                   glob2loc_nodes, 1, nparts)
+    ! Note: MPI interface and moho surface database writing has been moved to
+    ! the adjacency_database format (Issue #1802). Cross-partition connectivity
+    ! is now computed from the 7-column MPI adjacency format read by
+    ! read_adjacency_graph.cpp. Legacy interface database code removed.
 
-    ! writes out MPI interfaces elements
-    if (my_ninterface == 0) then
-      max_interface_size = 0
-    else
-      max_interface_size = maxval(my_nb_interfaces)
-    endif
-    ! user output
-    print *,'  partition ',ipart,'has number of MPI interfaces: ',my_ninterface,'maximum size',max_interface_size
-
-    ! format: #number_of_MPI_interfaces  #maximum_number_of_elements_on_each_interface
-    write(IIN_database) my_ninterface, max_interface_size
-
-    call write_interfaces_database(IIN_database, tab_interfaces, tab_size_interfaces, ipart, ninterfaces, &
-                                   my_ninterface, my_interfaces, my_nb_interfaces, &
-                                   glob2loc_elmnts, glob2loc_nodes_nparts, glob2loc_nodes_parts, &
-                                   glob2loc_nodes, 2, nparts)
-
-    ! writes out moho surface (optional)
-    call write_moho_surface_database(IIN_database, ipart, nspec, &
-                                     glob2loc_elmnts, glob2loc_nodes_nparts, &
-                                     glob2loc_nodes_parts, glob2loc_nodes, part, &
-                                     nspec2D_moho, ibelm_moho, nodes_ibelm_moho, NGNOD2D)
+    ! writes out element adjacency with face/edge/corner type codes
+    call write_adjacency_database(IIN_database, ipart)
 
     close(IIN_database)
   enddo
@@ -222,3 +198,160 @@
   print *
 
   end subroutine write_mesh_databases
+
+
+  subroutine write_adjacency_database(IIN_database, ipart)
+
+  ! Writes element adjacency matching the meshfem3d save_databases.F90 binary format:
+  !   local (intra-partition) edges: total count, then (ispec_local, jspec_local, 1, adj_type)
+  !   MPI (cross-partition) edges:   total count, then 7-column tuples matching the MPI
+  !     adjacency format read by read_adjacency_graph.cpp
+
+  use decompose_mesh_par, only: nspec, xadj_typed, adjncy_typed, adj_types_global, &
+                                 glob2loc_elmnts, part, elmnts, NGNOD
+
+  implicit none
+
+  integer, intent(in) :: IIN_database, ipart
+
+  integer :: ispec, k, m_edge, jspec, ispec_local, jspec_local
+  integer :: total_nadj_element, index
+  integer :: num_mpi_adjacencies
+  integer :: ia, ib, node_ia, node_ib
+  integer :: my_conn_id, neighbor_conn_id, anchor_local, anchor_remote
+  integer :: neighbor_proc
+  logical :: reverse_found
+
+  ! Count and write local adjacencies
+  total_nadj_element = 0
+  do ispec = 1, nspec
+    if (part(ispec) /= ipart) cycle
+    do k = xadj_typed(ispec), xadj_typed(ispec+1)-1
+      if (part(adjncy_typed(k)) == ipart) total_nadj_element = total_nadj_element + 1
+    end do
+  end do
+
+  write(IIN_database) total_nadj_element
+  index = 0
+
+  do ispec = 1, nspec
+    if (part(ispec) /= ipart) cycle
+    ispec_local = glob2loc_elmnts(ispec-1) + 1
+    do k = xadj_typed(ispec), xadj_typed(ispec+1)-1
+      jspec = adjncy_typed(k)
+      if (part(jspec) /= ipart) cycle
+      jspec_local = glob2loc_elmnts(jspec-1) + 1
+      write(IIN_database) ispec_local, jspec_local, 1, adj_types_global(k)
+      index = index + 1
+    end do
+  end do
+
+  if (index /= total_nadj_element) then
+    print *,'Error: index ',index,' /= total_nadj_element ',total_nadj_element,' in partition ',ipart
+    stop 'Error in write_adjacency_database (local)'
+  endif
+
+  ! Count MPI (cross-partition) adjacencies
+  num_mpi_adjacencies = 0
+  do ispec = 1, nspec
+    if (part(ispec) /= ipart) cycle
+    do k = xadj_typed(ispec), xadj_typed(ispec+1)-1
+      if (part(adjncy_typed(k)) /= ipart) num_mpi_adjacencies = num_mpi_adjacencies + 1
+    end do
+  end do
+
+  write(IIN_database) num_mpi_adjacencies
+
+  ! Debug check: ensure adjacency graph is symmetric (optional, disabled by default)
+  ! Each edge should have a corresponding reverse edge. This check is O(E²) where E is
+  ! the number of edges, so only enable for small test cases or when debugging.
+  ! To enable, set DEBUG_ADJACENCY_GRAPH = .true.
+  do ispec = 1, nspec
+    if (part(ispec) /= ipart) cycle
+    do k = xadj_typed(ispec), xadj_typed(ispec+1)-1
+      jspec = adjncy_typed(k)
+      reverse_found = .false.
+      do m_edge = xadj_typed(jspec), xadj_typed(jspec+1)-1
+        if (adjncy_typed(m_edge) == ispec) then
+          reverse_found = .true.
+          exit
+        endif
+      end do
+      if (.not. reverse_found) then
+        print *,'Warning: asymmetric edge from ispec ',ispec,' to jspec ',jspec, &
+                ' in partition ',ipart
+      endif
+    end do
+  end do
+
+
+  ! Write MPI adjacencies
+  ! Format per row (7 columns), matching meshfem3d save_databases.F90:
+  !   col 1: ispec_local      — local element index (1-based)
+  !   col 2: neighbor_proc    — MPI rank of the neighbor partition
+  !   col 3: jspec_local      — element index on neighbor partition (1-based)
+  !   col 4: my_conn_id       — face/edge/corner connection ID on local element
+  !   col 5: neighbor_conn_id — face/edge/corner connection ID on remote element
+  !   col 6: anchor_local     — corner index (1-based) on local element for orientation
+  !   col 7: anchor_remote    — matching corner index (1-based) on remote element
+  do ispec = 1, nspec
+    if (part(ispec) /= ipart) cycle
+    ispec_local = glob2loc_elmnts(ispec-1) + 1
+    do k = xadj_typed(ispec), xadj_typed(ispec+1)-1
+      jspec = adjncy_typed(k)
+      if (part(jspec) == ipart) cycle
+
+      neighbor_proc = part(jspec)
+      jspec_local   = glob2loc_elmnts(jspec-1) + 1
+      my_conn_id    = adj_types_global(k)
+
+      ! Find reverse edge jspec -> ispec to get neighbor_conn_id
+      neighbor_conn_id = 0
+      reverse_found = .false.
+      do m_edge = xadj_typed(jspec), xadj_typed(jspec+1)-1
+        if (adjncy_typed(m_edge) == ispec) then
+          neighbor_conn_id = adj_types_global(m_edge)
+          reverse_found = .true.
+          exit
+        endif
+      end do
+
+      ! Validate reverse edge was found (graph should be symmetric)
+      if (.not. reverse_found) then
+        print *,'ERROR: No reverse edge found from jspec ',jspec,' back to ispec ',ispec
+        print *,'       in partition ',ipart
+        stop 'Error in write_adjacency_database: asymmetric adjacency graph'
+      endif
+
+      ! Find anchor: first shared corner node between ispec and jspec.
+      ! elmnts(ia, ispec) is a 0-indexed global node ID; equality means same node.
+      anchor_local  = 0
+      anchor_remote = 0
+      outer: do ia = 1, NGNOD
+        node_ia = elmnts(ia, ispec)
+        do ib = 1, NGNOD
+          node_ib = elmnts(ib, jspec)
+          if (node_ia == node_ib) then
+            anchor_local  = ia
+            anchor_remote = ib
+            exit outer
+          endif
+        end do
+      end do outer
+
+      ! Validate anchors were found (elements must share at least one corner)
+      if (anchor_local == 0 .or. anchor_remote == 0) then
+        print *,'ERROR: No shared corner found between ispec ',ispec,' and jspec ',jspec
+        print *,'       in partition ',ipart
+        print *,'       ispec element nodes: ', elmnts(1:NGNOD, ispec)
+        print *,'       jspec element nodes: ', elmnts(1:NGNOD, jspec)
+        stop 'Error in write_adjacency_database: missing anchor node'
+      endif
+
+      write(IIN_database) ispec_local, neighbor_proc, jspec_local, &
+                          my_conn_id, neighbor_conn_id, &
+                          anchor_local, anchor_remote
+    end do
+  end do
+
+  end subroutine write_adjacency_database

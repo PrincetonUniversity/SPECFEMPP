@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 # Include the GoogleTest framework
 include("${CMAKE_SOURCE_DIR}/cmake/googletest.cmake")
+include(GoogleTest)
 
 # Explicitly set binary output directory for tests
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests/unit-tests)

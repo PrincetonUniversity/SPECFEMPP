@@ -29,16 +29,15 @@ program xdecompose_mesh
 
   use constants, only: MAX_STRING_LEN
 
-  use decompose_mesh_par, only: nparts,localpath_name,outputpath_name,ADIOS_FOR_DATABASES
+  use decompose_mesh_par, only: nparts,outputpath_name,ADIOS_FOR_DATABASES
 
-  ! HDF5 file I/O
-  use shared_parameters, only: HDF5_ENABLED
+  use shared_parameters, only: LOCAL_PATH, NPROC
 
   implicit none
 
-  integer :: i,myrank
-  logical :: BROADCAST_AFTER_READ
-  character(len=MAX_STRING_LEN) :: arg(3)
+  integer :: i, n_args
+  character(len=MAX_STRING_LEN) :: arg
+  character(len=MAX_STRING_LEN) :: par_file_path
 
   ! user output
   print *
@@ -47,29 +46,50 @@ program xdecompose_mesh
   print *,'**********************'
   print *
 
-  ! check usage
-  do i = 1,3
-    call get_command_argument(i,arg(i))
-    if (i <= 3 .and. trim(arg(i)) == '') then
-      print *, 'Usage: ./xdecompose_mesh  nparts  input_directory output_directory'
-      print *
-      print *, '  where'
-      print *, '      nparts = number of partitions'
-      print *, '      input_directory = directory containing mesh files mesh_file,nodes_coords_file,..'
-      print *, '      output_directory = directory for output files proc***_Databases'
-      print *
-      stop ' Reenter command line options'
-    endif
+  par_file_path = ''
+  n_args = command_argument_count()
+
+  if (n_args == 0) then
+    call print_usage()
+    stop ' Reenter command line options'
+  endif
+
+  i = 1
+  do while (i <= n_args)
+    call get_command_argument(i, arg)
+    select case (trim(arg))
+      case ('-h', '--help')
+        call print_usage()
+        stop
+      case ('-p', '--Par_File')
+        if (i == n_args) then
+          print *, 'Error: missing argument for option '//trim(arg)
+          stop ' Reenter command line options'
+        endif
+        i = i + 1
+        call get_command_argument(i, par_file_path)
+      case default
+        print *, 'Error: unknown option '//trim(arg)
+        call print_usage()
+        stop ' Reenter command line options'
+    end select
+    i = i + 1
   enddo
 
-  read(arg(1),*) nparts
-  localpath_name = arg(2)
-  outputpath_name = arg(3)
+  if (len_trim(par_file_path) == 0) then
+    print *, 'Error: -p Par_file is required'
+    call print_usage()
+    stop ' Reenter command line options'
+  endif
 
-  ! needs local_path for mesh files
-  myrank = 0
-  BROADCAST_AFTER_READ = .false.
-  call read_parameter_file(BROADCAST_AFTER_READ)
+  ! reads the subset of Par_file parameters needed by xdecompose_mesh
+  call read_decompose_mesh_parameters(par_file_path)
+
+  ! number of partitions comes from NPROC in Par_file
+  nparts = NPROC
+
+  ! output path comes from LOCAL_PATH in the Par_file
+  outputpath_name = LOCAL_PATH
 
   ! checks adios parameters
   if (ADIOS_FOR_DATABASES) then
@@ -92,16 +112,36 @@ program xdecompose_mesh
   ! partitions mesh (using scotch, metis, or patoh partitioners via constants.h)
   call decompose_mesh()
 
-  ! writes out database files
-  if (HDF5_ENABLED) then
-    call write_mesh_databases_hdf5()
-  else
-    call write_mesh_databases()
-  endif
+  call write_mesh_databases()
 
   ! user output
   print *
   print *,'finished successfully'
   print *
+
+contains
+
+  subroutine print_usage()
+    print *
+    print *, 'Usage: ./xdecompose_mesh -p Par_file'
+    print *
+    print *, '  Options:'
+    print *, '    -p, --Par_File  path to Par_file (required)'
+    print *, '    -h, --help      print this message and exit'
+    print *
+    print *, '  The Par_file must contain:'
+    print *, '    NPROC                     = number of partitions'
+    print *, '    LOCAL_PATH                = output directory for database files'
+    print *, '    NODES_COORDS_FILE         = path to node coordinate file'
+    print *, '    MESH_FILE                 = path to mesh connectivity file'
+    print *, '    MATERIALS_FILE            = path to materials file'
+    print *, '    NUMMATERIAL_VELOCITY_FILE = path to material velocity file'
+    print *
+    print *, '  Optional Par_file entries (skipped when absent):'
+    print *, '    NUMMATERIAL_POROELASTIC_FILE, ABSORBING_SURFACE_FILE_XMIN/XMAX/YMIN/YMAX/BOTTOM,'
+    print *, '    FREE_OR_ABSORBING_SURFACE_FILE_ZMAX, ABSORBING_CPML_FILE,'
+    print *, '    MOHO_SURFACE_FILE, WAVEFIELD_DISCONTINUITY_INTERFACE_FILE'
+    print *
+  end subroutine print_usage
 
 end program xdecompose_mesh
