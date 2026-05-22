@@ -10,4 +10,5 @@
 #include "coordinate_systems/cartesian.hpp"
 #include "coordinate_systems/geocentric.hpp"
 #include "coordinate_systems/geographic.hpp"
+#include "coordinate_systems/transform.hpp"
 #include "coordinate_systems/utm.hpp"

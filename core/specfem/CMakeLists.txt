@@ -28,6 +28,20 @@ add_library(specfem::version ALIAS specfem_version)
 target_include_directories(specfem_version INTERFACE ${CMAKE_BINARY_DIR}/include)
 add_dependencies(specfem_version specfem_version_header)
 
+# Header-only constants library (constants.hpp needs setup.hpp + Kokkos + ellipticity)
+add_library(specfem_constants INTERFACE)
+add_library(specfem::constants ALIAS specfem_constants)
+target_include_directories(specfem_constants
+    INTERFACE
+        ${CMAKE_SOURCE_DIR}/core
+        ${CMAKE_BINARY_DIR}/include
+)
+target_link_libraries(specfem_constants
+    INTERFACE
+        Kokkos::kokkos
+        specfem::ellipticity
+)
+
 # Add existing subdirectories
 add_subdirectory(algorithms)
 add_subdirectory(element_coupling)
@@ -72,6 +86,7 @@ target_link_libraries(specfem_core_interface
         specfem::algorithms
         specfem::attenuation
         specfem::compute
+        specfem::constants
         specfem::datetime
         specfem::assembly
         specfem::jacobian

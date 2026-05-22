@@ -17,6 +17,12 @@ Coordinate types
 *  :doc:`cartesian_coordinates <cartesian>`: x/y/z in meters (easting/northing/depth for UTM).
 *  :doc:`geocentric_coordinates <geocentric>`: Spherical :math:`(r, \theta, \phi)` coordinates.
 
+Transforms
+----------
+
+*  :doc:`transform`: Generic ``transform<Target>(source, config)`` interface for
+   converting between coordinate systems.
+
 Projections
 -----------
 
@@ -28,4 +34,5 @@ Projections
     geographic
     cartesian
     geocentric
+    transform
     utm
