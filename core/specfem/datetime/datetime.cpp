@@ -7,11 +7,9 @@
 #include <sstream>
 #include <stdexcept>
 
-namespace specfem {
-namespace datetime {
-
-type make(int year, int month, int day, int hour, int minute, double second) {
-  using namespace std::chrono;
+specfem::datetime::type specfem::datetime::make(int year, int month, int day,
+                                                int hour, int minute,
+                                                double second) {
 
   auto ymd = std::chrono::year{ year } /
              std::chrono::month{ static_cast<unsigned>(month) } /
@@ -22,19 +20,19 @@ type make(int year, int month, int day, int hour, int minute, double second) {
                              std::to_string(month) + "-" + std::to_string(day));
   }
 
-  auto dp = sys_days{ ymd };
+  auto dp = std::chrono::sys_days{ ymd };
 
   // Split second into integer and fractional parts
   int sec_int = static_cast<int>(second);
   int ms = static_cast<int>(std::round((second - sec_int) * 1000.0));
 
-  auto tp = dp + hours{ hour } + minutes{ minute } + seconds{ sec_int } +
-            milliseconds{ ms };
+  auto tp = dp + std::chrono::hours{ hour } + std::chrono::minutes{ minute } +
+            std::chrono::seconds{ sec_int } + std::chrono::milliseconds{ ms };
 
-  return time_point_cast<milliseconds>(tp);
+  return std::chrono::time_point_cast<std::chrono::milliseconds>(tp);
 }
 
-type parse_iso(const std::string &str) {
+specfem::datetime::type specfem::datetime::parse_iso(const std::string &str) {
   // Accepts "YYYY-MM-DDTHH:MM:SS.ss" or "YYYY-MM-DD HH:MM:SS.ss"
   // Fractional seconds are optional.
   if (str.size() < 19) {
@@ -73,20 +71,21 @@ type parse_iso(const std::string &str) {
     }
   }
 
-  return make(year, month, day, hour, minute, second);
+  return specfem::datetime::make(year, month, day, hour, minute, second);
 }
 
-std::string to_string(const type &t) {
-  using namespace std::chrono;
+std::string specfem::datetime::to_string(const specfem::datetime::type &t) {
 
-  auto dp = floor<days>(t);
-  year_month_day ymd{ dp };
+  auto dp = std::chrono::floor<std::chrono::days>(t);
+  std::chrono::year_month_day ymd{ dp };
   auto time_of_day = t - dp;
 
-  auto h = duration_cast<hours>(time_of_day);
-  auto m = duration_cast<minutes>(time_of_day - h);
-  auto s = duration_cast<seconds>(time_of_day - h - m);
-  auto ms = duration_cast<milliseconds>(time_of_day - h - m - s);
+  auto h = std::chrono::duration_cast<std::chrono::hours>(time_of_day);
+  auto m = std::chrono::duration_cast<std::chrono::minutes>(time_of_day - h);
+  auto s =
+      std::chrono::duration_cast<std::chrono::seconds>(time_of_day - h - m);
+  auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(time_of_day -
+                                                                  h - m - s);
 
   std::ostringstream os;
   os << std::setfill('0') << std::setw(4) << static_cast<int>(ymd.year()) << '-'
@@ -97,6 +96,3 @@ std::string to_string(const type &t) {
 
   return os.str();
 }
-
-} // namespace datetime
-} // namespace specfem

@@ -3,9 +3,9 @@
 #include <stdexcept>
 #include <string>
 
-namespace {
-
-specfem::enums::source_format parse_format_key(const std::string &key) {
+specfem::enums::source_format
+specfem::runtime_configuration::sources_impl::parse_format_key(
+    const std::string &key) {
   if (key == "YAML") {
     return specfem::enums::source_format::YAML;
   } else if (key == "CMTSOLUTION") {
@@ -17,8 +17,6 @@ specfem::enums::source_format parse_format_key(const std::string &key) {
   }
 }
 
-} // namespace
-
 specfem::runtime_configuration::sources::sources(const YAML::Node &Node) {
 
   if (Node.IsScalar()) {
@@ -29,7 +27,8 @@ specfem::runtime_configuration::sources::sources(const YAML::Node &Node) {
     // New format: sources: { YAML: ..., CMTSOLUTION: ..., ... }
     for (auto it = Node.begin(); it != Node.end(); ++it) {
       const std::string key = it->first.as<std::string>();
-      const auto format = parse_format_key(key);
+      const auto format =
+          specfem::runtime_configuration::sources_impl::parse_format_key(key);
       const YAML::Node &value = it->second;
 
       if (value.IsScalar()) {

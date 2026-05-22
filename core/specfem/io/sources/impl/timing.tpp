@@ -8,13 +8,9 @@
 #include <stdexcept>
 #include <string>
 
-namespace specfem {
-namespace io {
-namespace sources_impl {
-
 template <specfem::element::dimension_tag DimensionTag>
 std::tuple<type_real, std::optional<specfem::datetime::type>>
-adjust_source_timing(
+specfem::io::sources_impl::adjust_source_timing(
     std::vector<
         std::shared_ptr<specfem::sources::source<DimensionTag> > > &sources,
     type_real user_t0) {
@@ -128,7 +124,7 @@ adjust_source_timing(
 }
 
 template <specfem::element::dimension_tag DimensionTag>
-void validate_source_simulation_type(
+void specfem::io::sources_impl::validate_source_simulation_type(
     const std::vector<
         std::shared_ptr<specfem::sources::source<DimensionTag> > > &sources,
     specfem::simulation::type simulation_type) {
@@ -156,7 +152,3 @@ void validate_source_simulation_type(
                              "forward simulation");
   }
 }
-
-} // namespace sources_impl
-} // namespace io
-} // namespace specfem
