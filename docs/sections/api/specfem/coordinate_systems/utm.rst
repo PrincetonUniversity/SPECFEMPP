@@ -7,12 +7,9 @@ UTM projection
 .. doxygenstruct:: specfem::coordinate_systems::utm_projection_config
     :members:
 
-``to_cartesian``
-++++++++++++++++
+``transform`` (UTM specializations)
++++++++++++++++++++++++++++++++++++
 
-.. doxygenfunction:: specfem::coordinate_systems::to_cartesian
+.. doxygenfunction:: specfem::coordinate_systems::transform< specfem::coordinate_systems::cartesian_coordinates, specfem::coordinate_systems::geographic_coordinates, specfem::coordinate_systems::utm_projection_config >
 
-``to_geographic``
-+++++++++++++++++
-
-.. doxygenfunction:: specfem::coordinate_systems::to_geographic
+.. doxygenfunction:: specfem::coordinate_systems::transform< specfem::coordinate_systems::geographic_coordinates, specfem::coordinate_systems::cartesian_coordinates, specfem::coordinate_systems::utm_projection_config >

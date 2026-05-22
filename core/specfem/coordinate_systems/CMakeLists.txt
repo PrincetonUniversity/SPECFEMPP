@@ -5,5 +5,6 @@ add_library(specfem::coordinate_systems ALIAS specfem_coordinate_systems)
 
 target_link_libraries(
     specfem_coordinate_systems
+    specfem::constants
     specfem::ellipticity
 )

@@ -5,6 +5,9 @@ namespace coordinate_systems {
 
 /**
  * @brief Geographic coordinates (decimal degrees + meters).
+ *
+ * Double precision required — single precision introduces ~1 m round-trip
+ * error in UTM conversions.
  */
 struct geographic_coordinates {
   double longitude; ///< degrees (negative for West)
