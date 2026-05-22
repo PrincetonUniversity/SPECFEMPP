@@ -16,11 +16,23 @@ namespace coordinate_systems {
  *
  * @tparam DimensionTag The dimension specification (dim2 or dim3)
  */
-template <specfem::element::dimension_tag DimensionTag> class coordinates {
+template <specfem::element::dimension_tag DimensionTag>
+class input_coordinates {
 public:
   static constexpr auto dimension_tag = DimensionTag;
 
-  virtual ~coordinates() = default;
+  virtual ~input_coordinates() = default;
+
+  /**
+   * @brief Equality comparison using is_close on all members.
+   *
+   * Returns false if the concrete types differ.
+   */
+  virtual bool operator==(const input_coordinates &other) const = 0;
+
+  bool operator!=(const input_coordinates &other) const {
+    return !(*this == other);
+  }
 
   /**
    * @brief Human-readable description of the coordinate type and values.

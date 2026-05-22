@@ -1,6 +1,3 @@
-
-#include "specfem/coordinate_systems/coordinates/cartesian_3d.hpp"
-#include "specfem/coordinate_systems/coordinates/cartesian_with_depth_3d.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/setup.hpp"
@@ -9,31 +6,6 @@
 #include "specfem/utilities.hpp"
 #include "yaml-cpp/yaml.h"
 #include <cmath>
-#include <tuple>
-
-namespace {
-// Extract (x,y,z) from a 3D source for comparison purposes.
-// If the source has stored coordinates_, extract from them;
-// otherwise use global_coordinates.
-std::tuple<type_real, type_real, type_real> extract_xyz(
-    const specfem::sources::source<specfem::element::dimension_tag::dim3>
-        &src) {
-  if (const auto *coords = src.get_coordinates()) {
-    using namespace specfem::coordinate_systems;
-    if (const auto *c = dynamic_cast<const cartesian_3d *>(coords)) {
-      return { static_cast<type_real>(c->data.x),
-               static_cast<type_real>(c->data.y),
-               static_cast<type_real>(c->data.z) };
-    }
-    if (const auto *c = dynamic_cast<const cartesian_with_depth_3d *>(coords)) {
-      return { static_cast<type_real>(c->x), static_cast<type_real>(c->y),
-               static_cast<type_real>(-c->depth) };
-    }
-  }
-  const auto gc = src.get_global_coordinates();
-  return { gc.x, gc.y, gc.z };
-}
-} // namespace
 
 std::vector<specfem::element::medium_tag> specfem::sources::force<
     specfem::element::dimension_tag::dim3>::get_supported_media() const {
@@ -98,12 +70,12 @@ bool specfem::sources::force<specfem::element::dimension_tag::dim3>::operator==(
     return false;
   }
 
-  const auto [x1, y1, z1] = extract_xyz(*this);
-  const auto [x2, y2, z2] = extract_xyz(*other_source);
+  // Compare input coordinates (identity depends solely on input, not mesh)
+  const auto *c1 = this->get_input_coordinates();
+  const auto *c2 = other_source->get_input_coordinates();
+  bool coords_equal = (c1 && c2) ? (*c1 == *c2) : (!c1 && !c2);
 
-  return specfem::utilities::is_close(x1, x2) &&
-         specfem::utilities::is_close(y1, y2) &&
-         specfem::utilities::is_close(z1, z2) &&
+  return coords_equal &&
          specfem::utilities::is_close(this->fx, other_source->fx) &&
          specfem::utilities::is_close(this->fy, other_source->fy) &&
          specfem::utilities::is_close(this->fz, other_source->fz) &&

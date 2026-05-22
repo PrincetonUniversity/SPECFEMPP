@@ -1,7 +1,7 @@
 #pragma once
 
 #include "specfem/constants.hpp"
-#include "specfem/coordinate_systems/coordinates.hpp"
+#include "specfem/coordinate_systems/input_coordinates.hpp"
 
 #include "specfem/enums.hpp"
 #include "specfem/point.hpp"
@@ -43,12 +43,12 @@ public:
    * @param station_name Name of station
    * @param coordinates Generic coordinate object
    */
-  receiver(
-      const std::string &network_name, const std::string &station_name,
-      std::unique_ptr<specfem::coordinate_systems::coordinates<dimension_tag>>
-          coordinates)
+  receiver(const std::string &network_name, const std::string &station_name,
+           std::unique_ptr<
+               specfem::coordinate_systems::input_coordinates<dimension_tag>>
+               coordinates)
       : network_name(network_name), station_name(station_name),
-        coordinates_(std::move(coordinates)) {};
+        input_coordinates_(std::move(coordinates)) {};
 
   /**
    * @brief Get the name of network where this station lies
@@ -104,25 +104,26 @@ public:
   /**
    * @brief Set the generic coordinates for this receiver.
    */
-  void set_coordinates(
-      std::unique_ptr<specfem::coordinate_systems::coordinates<dimension_tag>>
+  void set_input_coordinates(
+      std::unique_ptr<
+          specfem::coordinate_systems::input_coordinates<dimension_tag>>
           coordinates) {
-    coordinates_ = std::move(coordinates);
+    input_coordinates_ = std::move(coordinates);
   }
 
   /**
    * @brief Get the generic coordinates, or nullptr if not set.
    */
-  const specfem::coordinate_systems::coordinates<dimension_tag> *
-  get_coordinates() const {
-    return coordinates_.get();
+  const specfem::coordinate_systems::input_coordinates<dimension_tag> *
+  get_input_coordinates() const {
+    return input_coordinates_.get();
   }
 
 private:
   specfem::point::global_coordinates<dimension_tag>
       global_coordinates; ///< Global coordinates of the receiver
-  std::unique_ptr<specfem::coordinate_systems::coordinates<dimension_tag>>
-      coordinates_;         ///< Generic coordinates (resolved at assembly time)
+  std::unique_ptr<specfem::coordinate_systems::input_coordinates<dimension_tag>>
+      input_coordinates_;   ///< Generic coordinates (resolved at assembly time)
   std::string network_name; ///< Name of the network where this station lies
   std::string station_name; ///< Name of the station
   int islice_ = -1; ///< MPI rank that owns this receiver (-1 = not yet located)

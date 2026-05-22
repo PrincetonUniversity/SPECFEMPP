@@ -66,13 +66,13 @@ operator==(const specfem::sources::source<specfem::element::dimension_tag::dim2>
     return false;
   }
 
-  const auto gcoord = this->get_global_coordinates();
-  const auto other_gcoord = other_source->get_global_coordinates();
+  // Compare input coordinates (identity depends solely on input, not mesh)
+  const auto *c1 = this->get_input_coordinates();
+  const auto *c2 = other_source->get_input_coordinates();
+  bool coords_equal = (c1 && c2) ? (*c1 == *c2) : (!c1 && !c2);
 
   bool internal =
-      specfem::utilities::is_close(this->f, other_source->f) &&
-      specfem::utilities::is_close(gcoord.x, other_gcoord.x) &&
-      specfem::utilities::is_close(gcoord.z, other_gcoord.z) &&
+      coords_equal && specfem::utilities::is_close(this->f, other_source->f) &&
       specfem::utilities::is_close(this->angle, other_source->angle);
 
   if (!internal) {

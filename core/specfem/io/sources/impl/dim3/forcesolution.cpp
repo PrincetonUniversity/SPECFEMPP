@@ -1,5 +1,5 @@
-#include "specfem/coordinate_systems/coordinates/cartesian_3d.hpp"
-#include "specfem/coordinate_systems/coordinates/cartesian_with_depth_3d.hpp"
+#include "specfem/coordinate_systems/input_coordinates/input_cartesian_3d.hpp"
+#include "specfem/coordinate_systems/input_coordinates/input_cartesian_with_depth_3d.hpp"
 #include "specfem/io/sources/impl/reader.hpp"
 #include "specfem/io/sources/impl/solution_format_helpers.hpp"
 #include "specfem/source.hpp"
@@ -54,14 +54,16 @@ specfem::io::sources_impl::read<specfem::element::dimension_tag::dim3,
 
     // Build generic coordinates — resolution to global (x,y,z) is deferred
     // to assembly time when topography/ellipticity are available.
-    std::unique_ptr<specfem::coordinate_systems::coordinates<dim3>> coords;
+    std::unique_ptr<specfem::coordinate_systems::input_coordinates<dim3>>
+        coords;
     if (fields.contains("z")) {
-      coords = std::make_unique<specfem::coordinate_systems::cartesian_3d>(
-          x, y, specfem::io::sources_impl::get_real(fields, "z"));
+      coords =
+          std::make_unique<specfem::coordinate_systems::input_cartesian_3d>(
+              x, y, specfem::io::sources_impl::get_real(fields, "z"));
     } else {
       // FORCESOLUTION depth is in km — convert to meters
       coords = std::make_unique<
-          specfem::coordinate_systems::cartesian_with_depth_3d>(
+          specfem::coordinate_systems::input_cartesian_with_depth_3d>(
           x, y, specfem::io::sources_impl::get_real(fields, "depth") * 1000.0);
     }
 

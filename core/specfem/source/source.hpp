@@ -1,7 +1,7 @@
 #pragma once
 
 #include "specfem/constants.hpp"
-#include "specfem/coordinate_systems/coordinates.hpp"
+#include "specfem/coordinate_systems/input_coordinates.hpp"
 #include "specfem/datetime.hpp"
 
 #include "specfem/enums.hpp"
@@ -162,10 +162,11 @@ public:
    * @param source_time_function pointer to source time function
    */
   source(
-      std::unique_ptr<specfem::coordinate_systems::coordinates<dimension_tag>>
+      std::unique_ptr<
+          specfem::coordinate_systems::input_coordinates<dimension_tag>>
           coordinates,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function)
-      : coordinates_(std::move(coordinates)),
+      : input_coordinates_(std::move(coordinates)),
         source_time_function(std::move(source_time_function)) {};
 
   /** @} */
@@ -207,18 +208,23 @@ public:
   std::string print() const {
     std::ostringstream os;
     os << "- " << source_name() << " \n";
-    if (coordinates_) {
-      os << "    Input Coordinates: " << coordinates_->print() << "\n";
+    if (input_coordinates_) {
+      os << "    Input Coordinates: " << input_coordinates_->print() << "\n";
     }
-    const auto gcoord = get_global_coordinates();
-    os << "    Source Location: \n";
-    if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
-      os << "      x = " << type_real(gcoord.x) << "\n"
-         << "      z = " << type_real(gcoord.z) << "\n";
-    } else {
-      os << "      x = " << type_real(gcoord.x) << "\n"
-         << "      y = " << type_real(gcoord.y) << "\n"
-         << "      z = " << type_real(gcoord.z) << "\n";
+    // Only print resolved global coordinates when they have been set:
+    // either directly (no input_coordinates_) or after assembly-time
+    // resolution.
+    if (!input_coordinates_ || islice_ >= 0) {
+      const auto gcoord = get_global_coordinates();
+      os << "    Source Location: \n";
+      if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
+        os << "      x = " << type_real(gcoord.x) << "\n"
+           << "      z = " << type_real(gcoord.z) << "\n";
+      } else {
+        os << "      x = " << type_real(gcoord.x) << "\n"
+           << "      y = " << type_real(gcoord.y) << "\n"
+           << "      z = " << type_real(gcoord.z) << "\n";
+      }
     }
     os << print_details();
     os << "    Source Time Function: \n"
@@ -375,18 +381,19 @@ public:
    *
    * @param coordinates Generic coordinate object (ownership transferred)
    */
-  void set_coordinates(
-      std::unique_ptr<specfem::coordinate_systems::coordinates<dimension_tag>>
+  void set_input_coordinates(
+      std::unique_ptr<
+          specfem::coordinate_systems::input_coordinates<dimension_tag>>
           coordinates) {
-    coordinates_ = std::move(coordinates);
+    input_coordinates_ = std::move(coordinates);
   }
 
   /**
    * @brief Get the generic coordinates, or nullptr if not set.
    */
-  const specfem::coordinate_systems::coordinates<dimension_tag> *
-  get_coordinates() const {
-    return coordinates_.get();
+  const specfem::coordinate_systems::input_coordinates<dimension_tag> *
+  get_input_coordinates() const {
+    return input_coordinates_.get();
   }
 
 protected:
@@ -399,8 +406,8 @@ protected:
   specfem::point::global_coordinates<dimension_tag>
       global_coordinates; ///< Global coordinates of the source in the global
                           ///< coordinate system
-  std::unique_ptr<specfem::coordinate_systems::coordinates<dimension_tag>>
-      coordinates_; ///< Generic coordinates (resolved at assembly time)
+  std::unique_ptr<specfem::coordinate_systems::input_coordinates<dimension_tag>>
+      input_coordinates_; ///< Generic coordinates (resolved at assembly time)
   specfem::element::medium_tag medium_tag;
   std::optional<specfem::datetime::type> starttime_; ///< Optional UTC origin
                                                      ///< time

@@ -159,7 +159,7 @@ public:
    * @param wavefield_type type of wavefield
    */
   moment_tensor(
-      std::unique_ptr<specfem::coordinate_systems::coordinates<
+      std::unique_ptr<specfem::coordinate_systems::input_coordinates<
           specfem::element::dimension_tag::dim3>>
           coordinates,
       type_real Mxx, type_real Myy, type_real Mzz, type_real Mxy, type_real Mxz,

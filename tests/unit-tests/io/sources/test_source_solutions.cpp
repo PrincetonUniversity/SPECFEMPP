@@ -1,4 +1,5 @@
 #include "test_source_solutions.hpp"
+#include "specfem/coordinate_systems/input_coordinates/input_cartesian_3d.hpp"
 #include "specfem/datetime.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/io/sources/impl/timing.hpp"
@@ -88,7 +89,9 @@ const SourceVector3DType multiple_sources_3d = {
 const SourceVector3DType single_moment_tensor_cmt_3d = []() {
   constexpr auto dim3 = specfem::element::dimension_tag::dim3;
   auto src = std::make_shared<specfem::sources::moment_tensor<dim3>>(
-      2000.0, 3000.0, 2000.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
+      std::make_unique<specfem::coordinate_systems::input_cartesian_3d>(
+          2000.0, 3000.0, 2000.0),
+      1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
       std::make_unique<specfem::source_time_functions::GaussianHdur>(
           nsteps, dt, 1.0, 30.0, 1.0, false),
       wavefield_type);
@@ -100,7 +103,9 @@ const SourceVector3DType single_moment_tensor_cmt_3d = []() {
 const SourceVector3DType spherical_moment_tensor_cmt_3d = []() {
   constexpr auto dim3 = specfem::element::dimension_tag::dim3;
   auto src = std::make_shared<specfem::sources::moment_tensor<dim3>>(
-      2000.0, 3000.0, 2000.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
+      std::make_unique<specfem::coordinate_systems::input_cartesian_3d>(
+          2000.0, 3000.0, 2000.0),
+      1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
       std::make_unique<specfem::source_time_functions::GaussianHdur>(
           nsteps, dt, 1.0, 30.0, 1.0, false),
       wavefield_type);
@@ -112,7 +117,9 @@ const SourceVector3DType spherical_moment_tensor_cmt_3d = []() {
 // Test data: factor=0, comp_X=1, comp_Y=0, comp_Z=0 -> fx=0, fy=0, fz=0
 const SourceVector3DType single_force_forcesolution_3d = { std::make_shared<
     specfem::sources::force<specfem::element::dimension_tag::dim3>>(
-    2500.0, 2500.0, 2500.0, 0.0, 0.0, 0.0,
+    std::make_unique<specfem::coordinate_systems::input_cartesian_3d>(
+        2500.0, 2500.0, 2500.0),
+    0.0, 0.0, 0.0,
     std::make_unique<specfem::source_time_functions::Ricker>(nsteps, dt, 10.0,
                                                              5.0, 1.0, false),
     wavefield_type) };
@@ -125,14 +132,18 @@ const SourceVector3DType single_force_forcesolution_3d = { std::make_shared<
 const SourceVector3DType multiple_sources_cmt_3d = []() {
   constexpr auto dim3 = specfem::element::dimension_tag::dim3;
   auto src1 = std::make_shared<specfem::sources::moment_tensor<dim3>>(
-      2000.0, 3000.0, 2000.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
+      std::make_unique<specfem::coordinate_systems::input_cartesian_3d>(
+          2000.0, 3000.0, 2000.0),
+      1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
       std::make_unique<specfem::source_time_functions::GaussianHdur>(
           nsteps, dt, 1.0, 30.0, 1.0, false),
       wavefield_type);
   src1->set_starttime(specfem::datetime::make(2000, 1, 1, 0, 0, 0.0));
 
   auto src2 = std::make_shared<specfem::sources::moment_tensor<dim3>>(
-      5000.0, 6000.0, 1000.0, 2.0, 2.0, 0.0, 2.0, 0.0, 0.0,
+      std::make_unique<specfem::coordinate_systems::input_cartesian_3d>(
+          5000.0, 6000.0, 1000.0),
+      2.0, 2.0, 0.0, 2.0, 0.0, 0.0,
       std::make_unique<specfem::source_time_functions::GaussianHdur>(
           nsteps, dt, 2.0, 10.0, 1.0, false),
       wavefield_type);
@@ -149,13 +160,17 @@ const SourceVector3DType multiple_sources_cmt_3d = []() {
 const SourceVector3DType multiple_forces_forcesolution_3d = {
   std::make_shared<
       specfem::sources::force<specfem::element::dimension_tag::dim3>>(
-      2500.0, 2500.0, 2500.0, 0.0, 0.0, 0.0,
+      std::make_unique<specfem::coordinate_systems::input_cartesian_3d>(
+          2500.0, 2500.0, 2500.0),
+      0.0, 0.0, 0.0,
       std::make_unique<specfem::source_time_functions::Ricker>(nsteps, dt, 10.0,
                                                                5.0, 1.0, false),
       wavefield_type),
   std::make_shared<
       specfem::sources::force<specfem::element::dimension_tag::dim3>>(
-      4000.0, 5000.0, 3000.0, 0.0, 1.0e10, 0.0,
+      std::make_unique<specfem::coordinate_systems::input_cartesian_3d>(
+          4000.0, 5000.0, 3000.0),
+      0.0, 1.0e10, 0.0,
       std::make_unique<specfem::source_time_functions::GaussianHdur>(
           nsteps, dt, 5.0, 2.0, 1.0, false),
       wavefield_type)

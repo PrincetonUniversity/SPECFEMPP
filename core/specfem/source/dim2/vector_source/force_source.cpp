@@ -87,11 +87,12 @@ bool specfem::sources::force<specfem::element::dimension_tag::dim2>::operator==(
     std::cout << "Other source is not a force object" << std::endl;
     return false;
   }
-  const auto gcoord = this->get_global_coordinates();
-  const auto other_gcoord = other_source->get_global_coordinates();
+  // Compare input coordinates (identity depends solely on input, not mesh)
+  const auto *c1 = this->get_input_coordinates();
+  const auto *c2 = other_source->get_input_coordinates();
+  bool coords_equal = (c1 && c2) ? (*c1 == *c2) : (!c1 && !c2);
 
-  return specfem::utilities::is_close(gcoord.x, other_gcoord.x) &&
-         specfem::utilities::is_close(gcoord.z, other_gcoord.z) &&
+  return coords_equal &&
          specfem::utilities::is_close(this->angle, other_source->angle) &&
          *(this->source_time_function) == *(other_source->source_time_function);
 }

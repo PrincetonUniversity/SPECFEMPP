@@ -1,7 +1,7 @@
 #pragma once
 
 #include "specfem/assembly/mesh.hpp"
-#include "specfem/coordinate_systems/coordinates.hpp"
+#include "specfem/coordinate_systems/input_coordinates.hpp"
 #include "specfem/point.hpp"
 
 namespace specfem {
@@ -25,7 +25,7 @@ namespace assembly {
  */
 template <specfem::element::dimension_tag DimensionTag>
 specfem::point::global_coordinates<DimensionTag> resolve_coordinates(
-    const specfem::coordinate_systems::coordinates<DimensionTag> &coords,
+    const specfem::coordinate_systems::input_coordinates<DimensionTag> &coords,
     const specfem::assembly::mesh<DimensionTag> &mesh);
 
 } // namespace assembly

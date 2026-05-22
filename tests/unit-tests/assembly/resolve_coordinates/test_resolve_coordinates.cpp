@@ -1,9 +1,9 @@
 #include "specfem/assembly/resolve_coordinates.hpp"
 
-#include "specfem/coordinate_systems/coordinates/cartesian_2d.hpp"
-#include "specfem/coordinate_systems/coordinates/cartesian_3d.hpp"
-#include "specfem/coordinate_systems/coordinates/cartesian_with_depth_3d.hpp"
-#include "specfem/coordinate_systems/coordinates/geographic_3d.hpp"
+#include "specfem/coordinate_systems/input_coordinates/input_cartesian_2d.hpp"
+#include "specfem/coordinate_systems/input_coordinates/input_cartesian_3d.hpp"
+#include "specfem/coordinate_systems/input_coordinates/input_cartesian_with_depth_3d.hpp"
+#include "specfem/coordinate_systems/input_coordinates/input_geographic_3d.hpp"
 
 #include <gtest/gtest.h>
 #include <stdexcept>
@@ -21,7 +21,7 @@ const specfem::assembly::mesh<dim3> mesh3d{};
 } // namespace
 
 TEST(ResolveCoordinates2D, Cartesian2D) {
-  specfem::coordinate_systems::cartesian_2d coords(100.0, 200.0);
+  specfem::coordinate_systems::input_cartesian_2d coords(100.0, 200.0);
 
   auto gc = specfem::assembly::resolve_coordinates(coords, mesh2d);
 
@@ -30,7 +30,7 @@ TEST(ResolveCoordinates2D, Cartesian2D) {
 }
 
 TEST(ResolveCoordinates3D, Cartesian3D) {
-  specfem::coordinate_systems::cartesian_3d coords(1.0, 2.0, 3.0);
+  specfem::coordinate_systems::input_cartesian_3d coords(1.0, 2.0, 3.0);
 
   auto gc = specfem::assembly::resolve_coordinates(coords, mesh3d);
 
@@ -40,7 +40,8 @@ TEST(ResolveCoordinates3D, Cartesian3D) {
 }
 
 TEST(ResolveCoordinates3D, CartesianWithDepth3D) {
-  specfem::coordinate_systems::cartesian_with_depth_3d coords(10.0, 20.0, 5.0);
+  specfem::coordinate_systems::input_cartesian_with_depth_3d coords(10.0, 20.0,
+                                                                    5.0);
 
   auto gc = specfem::assembly::resolve_coordinates(coords, mesh3d);
 
@@ -50,7 +51,7 @@ TEST(ResolveCoordinates3D, CartesianWithDepth3D) {
 }
 
 TEST(ResolveCoordinates3D, Geographic3DThrows) {
-  specfem::coordinate_systems::geographic_3d coords(0.0, 0.0, 0.0);
+  specfem::coordinate_systems::input_geographic_3d coords(0.0, 0.0, 0.0);
 
   EXPECT_THROW(specfem::assembly::resolve_coordinates(coords, mesh3d),
                std::runtime_error);
