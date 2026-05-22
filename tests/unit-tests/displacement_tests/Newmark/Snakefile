@@ -31,7 +31,6 @@ for test_name in tests3d:
     module:
         name: test_name
         snakefile: f"serial/dim3/{test_name}/Snakefile"
-        config: {"_cwd": f"serial/dim3/{test_name}"}
         pathvars:
             cwd=f"serial/dim3/{test_name}"
 
