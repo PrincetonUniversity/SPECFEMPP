@@ -189,7 +189,8 @@ check_property_value(
 #endif
 
 template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag>
+          specfem::element::property_tag PropertyTag,
+          specfem::element::attenuation_tag AttenuationTag>
 void check_compute_to_mesh(
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
         &assembly,
@@ -201,8 +202,8 @@ void check_compute_to_mesh(
   const auto &materials = mesh.materials;
 
   // Get all elements of the given type
-  const auto elements =
-      element_types.get_elements_on_host(MediumTag, PropertyTag);
+  const auto elements = element_types.get_elements_on_host(
+      MediumTag, PropertyTag, AttenuationTag);
 
   using PointType = specfem::point::properties<specfem::tags::Tags<
       specfem::element::dimension_tag::dim2, MediumTag, PropertyTag, false> >;
@@ -221,8 +222,7 @@ void check_compute_to_mesh(
         const int ispec_mesh = mesh_assembly.h_compute_to_mesh(ispec);
         const auto expected =
             materials
-                .get_material<MediumTag, PropertyTag,
-                              specfem::element::attenuation_tag::none>(
+                .get_material<MediumTag, PropertyTag, AttenuationTag>(
                     ispec_mesh)
                 .get_properties();
 
@@ -341,10 +341,12 @@ TEST_F(Assembly2D, properties_construction) {
           DIMENSION_SET(dim2) *
               MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
                          elastic_psv_t) *
-              PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
+              PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
+              ATTENUATION_SET(none, constant_isotropic),
           [&]<typename ElementTags>() {
             check_compute_to_mesh<ElementTags::medium_tag,
-                                  ElementTags::property_tag>(assembly, mesh);
+                                  ElementTags::property_tag,
+                                  ElementTags::attenuation_tag>(assembly, mesh);
           });
 
       std::cout << "-------------------------------------------------------\n"

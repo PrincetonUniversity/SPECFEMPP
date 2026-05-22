@@ -14,7 +14,7 @@ namespace specfem::program {
 void program_3d(
     const YAML::Node &parameter_dict,
     std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task<
-        specfem::element::dimension_tag::dim3> > >
+        specfem::element::dimension_tag::dim3>>>
         tasks) {
 
   // --------------------------------------------------------------
@@ -41,8 +41,9 @@ void program_3d(
   specfem::Logger::info("Reading the mesh...\n===================");
   auto mesh_start_time = std::chrono::system_clock::now();
   const auto mesh = specfem::io::read_3d_mesh(database_filename,
-                                              setup.is_attenuation_enabled());
-  auto mesh_read_time = std::chrono::system_clock::now() - mesh_start_time;
+                                              setup.get_attenuation_setup());
+  const std::chrono::duration<double> mesh_read_time =
+      std::chrono::system_clock::now() - mesh_start_time;
   specfem::Logger::info([&](std::ostringstream &oss) {
     oss << "Time to read mesh: " << mesh_read_time.count() << " seconds";
   });
@@ -122,8 +123,7 @@ void program_3d(
   // --------------------------------------------------------------
   specfem::Logger::info("(If set) Instantiate wavefield "
                         "plotter\n-------------------------------");
-  const auto wavefield_plotter =
-      setup.instantiate_wavefield_plotter(assembly, dt);
+  const auto wavefield_plotter = setup.instantiate_wavefield_plotter(assembly);
   if (wavefield_plotter) {
     tasks.push_back(wavefield_plotter);
   }

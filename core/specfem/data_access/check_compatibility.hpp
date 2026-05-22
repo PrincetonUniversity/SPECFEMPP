@@ -59,6 +59,20 @@ struct is_field_derivatives<
                      specfem::data_access::DataClassType::field_derivatives> >
     : std::true_type {};
 
+/// @brief Detects the null/sentinel field-derivatives type
+/// (specfem::point::null_field_derivatives).
+template <typename T, typename = void>
+struct is_null_field_derivatives : std::false_type {};
+
+template <typename T>
+struct is_null_field_derivatives<
+    T, std::enable_if_t<T::is_null_field_derivatives_v> > : std::true_type {};
+
+template <typename T>
+struct is_field_derivatives<T,
+                            std::enable_if_t<T::is_null_field_derivatives_v> >
+    : std::true_type {};
+
 /// @brief Detects source term types
 template <typename T, typename = void> struct is_source : std::false_type {};
 

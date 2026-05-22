@@ -5,6 +5,8 @@
     :maxdepth: 1
 
     homogeneous-medium/index.rst
+    homogeneous-medium-flat-topography-attenuation/index.rst
+    homogeneous-medium-flat-topography-reference-frequency/index.rst
     solid-solid-interface/index.rst
     fluid-solid-interface/index.rst
     fluid-solid-bathymetry/index.rst

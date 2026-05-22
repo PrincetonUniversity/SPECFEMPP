@@ -39,7 +39,8 @@
 #define _OP_OR(s, state, elem) BOOST_PP_OR(state, elem)
 
 #define _ALL_SEQS                                                              \
-  (MEDIUM_TAGS)(ELEMENT_TYPES)(MATERIAL_SYSTEMS)(EDGES)(EDGES_AND_FLUX_SCHEME)
+  (MEDIUM_TAGS)(MEDIUM_PROPERTY_SYSTEMS)(                                      \
+      ELEMENT_TYPES)(MATERIAL_SYSTEMS)(EDGES)(EDGES_AND_FLUX_SCHEME)
 
 #define _IS_VALID_SEQ(r, size, seq)                                            \
   BOOST_PP_IF(                                                                 \

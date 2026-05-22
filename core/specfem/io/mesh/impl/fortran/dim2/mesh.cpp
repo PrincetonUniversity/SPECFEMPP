@@ -2,6 +2,7 @@
 #include "specfem/mesh.hpp"
 #include "specfem/mpi.hpp"
 
+#include "specfem/attenuation.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/io.hpp"
 #include "specfem/io/fortranio/interface.hpp"
@@ -15,6 +16,10 @@
 #include "specfem/medium_container.hpp"
 #include "specfem/setup.hpp"
 #include "specfem/tag_dispatch.hpp"
+#include "specfem/units.hpp"
+#include "specfem/utilities/band.hpp"
+#include "specfem/utilities/is_close.hpp"
+#include <optional>
 
 // External/Standard Libraries
 #include <Kokkos_Core.hpp>
@@ -30,7 +35,11 @@ specfem::io::read_2d_mesh(
     const std::string &filename,
     const specfem::enums::elastic_wave elastic_wave,
     const specfem::enums::electromagnetic_wave electromagnetic_wave,
-    const bool attenuation_enabled) {
+    const specfem::attenuation::Setup &attenuation_setup) {
+
+  const bool attenuation_enabled = attenuation_setup.enabled;
+  const auto &f0 = attenuation_setup.f0;
+  const auto &band = attenuation_setup.band;
 
   // Declaring empty mesh objects
   specfem::mesh::mesh<specfem::element::dimension_tag::dim2> mesh;
@@ -86,8 +95,11 @@ specfem::io::read_2d_mesh(
   reduce(&mesh.parameters.nelem_acforcing);
   reduce(&mesh.parameters.nelem_acoustic_surface);
 
+  type_real attenuation_f0_reference = 0.0;
   try {
-    auto [n_sls, attenuation_f0_reference, read_velocities_at_f0] =
+    int n_sls;
+    [[maybe_unused]] bool read_velocities_at_f0;
+    std::tie(n_sls, attenuation_f0_reference, read_velocities_at_f0) =
         specfem::io::mesh::impl::fortran::dim2::read_mesh_database_attenuation(
             stream);
   } catch (std::runtime_error &e) {
@@ -102,6 +114,30 @@ specfem::io::read_2d_mesh(
             attenuation_enabled);
   } catch (std::runtime_error &e) {
     throw;
+  }
+
+  if (attenuation_enabled) {
+    using specfem::units::unit_symbols::Hz;
+
+    // Default to database f0; override with YAML f0 (and warn if they differ)
+    specfem::units::Hertz effective_f0 = attenuation_f0_reference * Hz;
+    if (f0.has_value()) {
+      if (!specfem::utilities::is_close(f0->raw(), attenuation_f0_reference)) {
+        specfem::Logger::warning(
+            "Attenuation reference frequency in database (" +
+            std::to_string(attenuation_f0_reference) +
+            " Hz) differs from specfem_config.yaml (" +
+            std::to_string(f0->raw()) +
+            " Hz). Using value from specfem_config.yaml.");
+      }
+      effective_f0 = f0.value();
+    }
+
+    mesh.attenuation = {
+      true, effective_f0, band,
+      specfem::attenuation::compute_tau_sigma<specfem::constants::N_SLS>(band)
+    };
+    mesh.materials.apply_attenuation(mesh.attenuation);
   }
 
   try {

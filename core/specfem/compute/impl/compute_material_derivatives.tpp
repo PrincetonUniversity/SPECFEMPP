@@ -18,6 +18,7 @@ void specfem::compute::impl::compute_material_derivatives(
   constexpr auto dimension_tag = Tags::dimension_tag;
   constexpr auto medium_tag = Tags::medium_tag;
   constexpr auto property_tag = Tags::property_tag;
+  constexpr auto attenuation_tag = Tags::attenuation_tag;
 
   auto &properties = assembly.properties;
   auto &kernels = assembly.kernels;
@@ -27,7 +28,7 @@ void specfem::compute::impl::compute_material_derivatives(
   auto &jacobian_matrix = assembly.jacobian_matrix;
 
   const auto elements =
-      assembly.element_types.get_elements_on_device(medium_tag, property_tag, specfem::element::attenuation_tag::none);
+      assembly.element_types.get_elements_on_device(medium_tag, property_tag, attenuation_tag);
 
   const int nelements = elements.extent(0);
 

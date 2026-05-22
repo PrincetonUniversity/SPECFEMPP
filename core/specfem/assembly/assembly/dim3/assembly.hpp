@@ -1,9 +1,11 @@
 #pragma once
 
+#include "specfem/assembly/attenuation.hpp"
 #include "specfem/assembly/boundaries.hpp"
 #include "specfem/assembly/boundary_values.hpp"
 #include "specfem/assembly/conforming_interfaces.hpp"
 #include "specfem/assembly/element_intersections.hpp"
+#include "specfem/assembly/field_derivative_storage.hpp"
 #include "specfem/assembly/fields.hpp"
 #include "specfem/assembly/info.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
@@ -73,6 +75,18 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
   specfem::assembly::jacobian_matrix<dimension_tag> jacobian_matrix;
 
   /**
+   * @brief Storage for field derivatives at every quadrature point for elements
+   * that require it (e.g., attenuating elements).
+   */
+  specfem::assembly::FieldDerivativeStorage<dimension_tag>
+      field_derivative_storage;
+
+  /**
+   * @brief Attenuation properties for the mesh at every quadrature point
+   */
+  specfem::assembly::Attenuation<dimension_tag> attenuation;
+
+  /**
    * @brief Material properties for the mesh at every quadrature point
    *
    */
@@ -125,6 +139,10 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
                                                         ///< groups for face
                                                         ///< data exchange
                                                         ///< between partitions
+
+  type_real t0; ///< Simulation start time
+
+  type_real dt; ///< Time step
 
   ///@}
 

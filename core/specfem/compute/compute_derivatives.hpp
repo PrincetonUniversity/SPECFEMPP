@@ -30,7 +30,9 @@ void compute_derivatives(
         impl::compute_material_derivatives<
             NGLL,
             specfem::tags::Tags<Tags::dimension_tag, ElementTags::medium_tag,
-                                ElementTags::property_tag> >(assembly, dt);
+                                ElementTags::property_tag,
+                                specfem::element::attenuation_tag::none> >(
+            assembly, dt);
       });
 }
 
