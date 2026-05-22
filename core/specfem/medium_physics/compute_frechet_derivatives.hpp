@@ -45,20 +45,8 @@ KOKKOS_INLINE_FUNCTION auto compute_frechet_derivatives(
     const specfem::point::field_derivatives<Tags> &backward_derivatives,
     const type_real &dt) {
 
-  using dimension_dispatch =
-      std::integral_constant<specfem::element::dimension_tag,
-                             Tags::dimension_tag>;
-
-  using medium_dispatch =
-      std::integral_constant<specfem::element::medium_tag, Tags::medium_tag>;
-
-  using property_dispatch =
-      std::integral_constant<specfem::element::property_tag,
-                             Tags::property_tag>;
-
-  return specfem::medium_physics::impl_compute_frechet_derivatives(
-      dimension_dispatch(), medium_dispatch(), property_dispatch(), properties,
-      adjoint_velocity, adjoint_acceleration, backward_displacement,
+  return specfem::medium_physics::impl_compute_frechet_derivatives<Tags>(
+      properties, adjoint_velocity, adjoint_acceleration, backward_displacement,
       adjoint_derivatives, backward_derivatives, dt);
 }
 
