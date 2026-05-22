@@ -47,10 +47,13 @@ if (DEFINED KOKKOS_PATH)
     # Pop the indentation for Kokkos messages
 else()
 
-    set(KOKKOS_VERSION "5.1.1")
+    ## TODO (Rohit: Relase0.6.0): Move to 5.2.0 when it is released
+    set(KOKKOS_VERSION "dda3bac859e5fd03d6519027e70a6f7fa7b940e7")
 
     # Set common FetchContent parameters
-    set(KOKKOS_URL "https://github.com/kokkos/kokkos/archive/refs/tags/${KOKKOS_VERSION}.zip")
+    # set(KOKKOS_URL "https://github.com/kokkos/kokkos/archive/refs/tags/${KOKKOS_VERSION}.zip")
+    set(KOKKOS_URL "https://github.com/kokkos/kokkos/archive/${KOKKOS_VERSION}.zip")
+
 
     # For CMake versions < 3.28, EXCLUDE_FROM_ALL is not supported in FetchContent_Declare
     if (CMAKE_VERSION VERSION_LESS "3.28.0")
