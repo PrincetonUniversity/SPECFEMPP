@@ -1,5 +1,4 @@
 #include "specfem/algorithms/transfer_interpolate.hpp"
-#include "decl/Kokkos_Declare_SERIAL.hpp"
 #include "specfem/chunk_face/nonconforming_interface.hpp"
 
 #include "specfem/datatype/accessor_type.hpp"
@@ -159,7 +158,7 @@ expected_solution(const TransferCoordinates &transfer_coordinates,
 template <typename TransferCoordinates, typename FaceFunction>
 void execute(const TransferCoordinates &transfer_coordinates,
              const FaceFunction &face_function,
-             const std::string &execution_description = "") {
+             const std::string &execution_description = {}) {
   auto expected = expected_solution(transfer_coordinates, face_function);
 
   // ======= dummy declarations

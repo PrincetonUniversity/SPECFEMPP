@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Kokkos_Macros.hpp"
 #include "specfem/data_access.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/execution.hpp"

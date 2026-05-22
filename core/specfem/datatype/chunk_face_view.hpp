@@ -16,10 +16,15 @@ struct ScalarChunkFaceViewType
                                NumberOfGLLPoints, 2, std::integer_sequence<int>,
                                specfem::datatype::AccessorType::chunk_face,
                                UseSIMD, MemorySpace, MemoryTraits> {
-  constexpr static auto accessor_type =
-      specfem::datatype::AccessorType::chunk_face; ///< Accessor type for
-                                                   ///< identifying the
-                                                   ///< class
+  using chunk_ndim_view_type =
+      ChunkNDimViewType<T, DimensionTag, NumberOfFaces, NumberOfGLLPoints, 2,
+                        std::integer_sequence<int>,
+                        specfem::datatype::AccessorType::chunk_face, UseSIMD,
+                        MemorySpace, MemoryTraits>;
+
+  // explicit constructor pass-through because nvcc hates you and will do
+  // anything in its power to keep you from ever seeing world peace
+  using chunk_ndim_view_type::chunk_ndim_view_type;
 };
 
 template <
@@ -33,11 +38,17 @@ struct VectorChunkFaceViewType
                                std::integer_sequence<int, Components>,
                                specfem::datatype::AccessorType::chunk_face,
                                UseSIMD, MemorySpace, MemoryTraits> {
-  constexpr static auto accessor_type =
-      specfem::datatype::AccessorType::chunk_face; ///< Accessor type for
-                                                   ///< identifying the
-                                                   ///< class
+  using chunk_ndim_view_type =
+      ChunkNDimViewType<T, DimensionTag, NumberOfFaces, NumberOfGLLPoints, 2,
+                        std::integer_sequence<int, Components>,
+                        specfem::datatype::AccessorType::chunk_face, UseSIMD,
+                        MemorySpace, MemoryTraits>;
+
   constexpr static int components = Components;
+
+  // explicit constructor pass-through because nvcc hates you and will do
+  // anything in its power to keep you from ever seeing world peace
+  using chunk_ndim_view_type::chunk_ndim_view_type;
 };
 
 template <typename T, specfem::element::dimension_tag DimensionTag,
@@ -52,12 +63,19 @@ struct TensorChunkFaceViewType
           std::integer_sequence<int, Components, NumberOfDimensions>,
           specfem::datatype::AccessorType::chunk_face, UseSIMD, MemorySpace,
           MemoryTraits> {
-  constexpr static auto accessor_type =
-      specfem::datatype::AccessorType::chunk_face; ///< Accessor type for
-                                                   ///< identifying the
-                                                   ///< class
+
+  using chunk_ndim_view_type = ChunkNDimViewType<
+      T, DimensionTag, NumberOfFaces, NumberOfGLLPoints, 2,
+      std::integer_sequence<int, Components, NumberOfDimensions>,
+      specfem::datatype::AccessorType::chunk_face, UseSIMD, MemorySpace,
+      MemoryTraits>;
+
   constexpr static int components = Components;
   constexpr static int dimensions = NumberOfDimensions;
+
+  // explicit constructor pass-through because nvcc hates you and will do
+  // anything in its power to keep you from ever seeing world peace
+  using chunk_ndim_view_type::chunk_ndim_view_type;
 };
 } // namespace datatype
 } // namespace specfem
