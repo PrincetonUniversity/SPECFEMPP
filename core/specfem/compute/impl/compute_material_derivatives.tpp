@@ -68,6 +68,8 @@ void specfem::compute::impl::compute_material_derivatives(
       Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
   using PointTags = specfem::tags::Tags<dimension_tag, medium_tag, using_simd>;
+  using PointTagsFull =
+      specfem::tags::Tags<dimension_tag, medium_tag, property_tag, using_simd>;
 
   using PointDisplacementType =
       specfem::point::displacement<PointTags>;
@@ -80,7 +82,7 @@ void specfem::compute::impl::compute_material_derivatives(
       specfem::point::field_derivatives<PointTags>;
 
   using PointPropertiesType =
-      specfem::point::properties<specfem::tags::Tags<dimension_tag, medium_tag, property_tag, using_simd>>;
+      specfem::point::properties<PointTagsFull>;
 
   int scratch_size = 2 * ChunkElementFieldType::shmem_size() +
                      ElementQuadratureType::shmem_size();
@@ -145,7 +147,8 @@ void specfem::compute::impl::compute_material_derivatives(
 
               // Compute the kernel for the point
               const auto point_kernel =
-                  specfem::medium_physics::compute_frechet_derivatives(
+                  specfem::medium_physics::compute_frechet_derivatives<
+                      PointTagsFull>(
                       point_properties, adjoint_velocity, adjoint_acceleration,
                       backward_displacement, adjoint_point_derivatives,
                       backward_point_derivatives, dt);
