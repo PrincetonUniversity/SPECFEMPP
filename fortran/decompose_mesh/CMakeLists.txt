@@ -128,6 +128,10 @@ target_link_libraries(decompose_mesh_impl
 add_executable(xdecompose_mesh
     program_decompose_mesh.f90
 )
+# Force Fortran as the linker language: the main entry point is a Fortran
+# `program`, but CMake otherwise picks CXX because of wrap_patoh.cpp pulled in
+# via decompose_mesh::c_wrappers, leaving `main` undefined at link time.
+set_target_properties(xdecompose_mesh PROPERTIES LINKER_LANGUAGE Fortran)
 target_link_libraries(xdecompose_mesh
     PRIVATE
     decompose_mesh::impl
