@@ -56,17 +56,34 @@ namespace mesh {
 } // namespace specfem
 ```
 
-## Fully-qualified names
+## Definitions in implementation files (`.cpp`, `.tpp`)
 
-Implementation files (`.cpp`, `.tpp`) should use fully-qualified names rather than
-wrapping code in deeply-nested namespace blocks:
+In implementation files (`.cpp` and `.tpp`), **always** use fully-qualified names for
+function definitions. Do NOT wrap definitions in namespace blocks:
 
 ```cpp
-// PREFERRED in implementation files:
-void specfem::mesh::reader::load(...) { ... }
+// CORRECT in .cpp and .tpp files:
+void specfem::io::sources_impl::parse_format_key(...) { ... }
 
-// ACCEPTABLE for short files:
-namespace specfem::mesh {
-void reader::load(...) { ... }
-} // namespace specfem::mesh
+// WRONG in .cpp and .tpp files:
+namespace specfem::io::sources_impl {
+void parse_format_key(...) { ... }
+} // namespace sources_impl
+```
+
+## Declarations in header files (`.hpp`)
+
+In header files (`.hpp`), use namespace blocks for declarations:
+
+```cpp
+// CORRECT in .hpp files:
+namespace specfem {
+namespace mesh {
+
+class reader {
+  void load(...);
+};
+
+} // namespace mesh
+} // namespace specfem
 ```
