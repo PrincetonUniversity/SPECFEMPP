@@ -23,6 +23,15 @@ namespace sources_impl {
  * @param wavefield_type Source wavefield type (forward/backward)
  * @return Vector of constructed source objects
  */
+/**
+ * @brief Convert simulation type to source wavefield type.
+ *
+ * @param simulation_type The simulation type (forward or combined)
+ * @return Corresponding field type for the source wavefield
+ */
+specfem::simulation::field_type
+wavefield_type_from_simulation(specfem::simulation::type simulation_type);
+
 template <specfem::element::dimension_tag DimensionTag,
           specfem::enums::source_format Format>
 std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>

@@ -14,25 +14,39 @@
  * @code
  * #include "specfem/coordinate_systems.hpp"
  *
- * using namespace specfem::coordinate_systems;
+ * specfem::coordinate_systems::geographic_coordinates geo{ 2.674, 51.561,
+ *                                                          0.0 };
+ * specfem::coordinate_systems::utm_projection_config cfg{ 31 };
  *
- * // Forward: lon/lat -> UTM easting/northing (zone 31, northern hemisphere)
- * geographic_coordinates geo{ 2.674, 51.561, 0.0 };
- * auto cart = to_cartesian(geo, { 31 });
+ * // Forward: lon/lat -> UTM easting/northing
+ * auto cart =
+ *     specfem::coordinate_systems::transform<
+ *         specfem::coordinate_systems::cartesian_coordinates>(geo, cfg);
  *
  * // Inverse: UTM -> lon/lat
- * auto recovered = to_geographic(cart, { 31 });
+ * auto recovered =
+ *     specfem::coordinate_systems::transform<
+ *         specfem::coordinate_systems::geographic_coordinates>(cart, cfg);
  *
  * // Southern hemisphere: use negative zone
- * auto cart_south = to_cartesian({ 151.209, -33.869, 0.0 }, { -56 });
+ * auto cart_south =
+ *     specfem::coordinate_systems::transform<
+ *         specfem::coordinate_systems::cartesian_coordinates>(
+ *         specfem::coordinate_systems::geographic_coordinates{
+ *             151.209, -33.869, 0.0 },
+ *         specfem::coordinate_systems::utm_projection_config{ -56 });
  *
  * // Suppress projection (pass-through: x=lon, y=lat, z=depth)
- * auto passthrough = to_cartesian(geo, { 31, true });
+ * auto passthrough =
+ *     specfem::coordinate_systems::transform<
+ *         specfem::coordinate_systems::cartesian_coordinates>(
+ *         geo, specfem::coordinate_systems::utm_projection_config{ 31, true });
  * @endcode
  */
 
 #include "specfem/coordinate_systems/cartesian.hpp"
 #include "specfem/coordinate_systems/geographic.hpp"
+#include "specfem/coordinate_systems/transform.hpp"
 
 namespace specfem {
 namespace coordinate_systems {
@@ -49,6 +63,9 @@ struct utm_projection_config {
   bool suppress = false; ///< If true, coordinates pass through unchanged
 };
 
+} // namespace coordinate_systems
+} // namespace specfem
+
 /**
  * @brief Geographic to cartesian via UTM forward projection.
  *
@@ -56,8 +73,14 @@ struct utm_projection_config {
  * @param config Projection configuration (zone, suppress flag).
  * @return Cartesian coordinates (x=easting, y=northing, z=depth) in meters.
  */
-cartesian_coordinates to_cartesian(const geographic_coordinates &geo,
-                                   const utm_projection_config &config);
+template <>
+specfem::coordinate_systems::cartesian_coordinates
+specfem::coordinate_systems::transform<
+    specfem::coordinate_systems::cartesian_coordinates,
+    specfem::coordinate_systems::geographic_coordinates,
+    specfem::coordinate_systems::utm_projection_config>(
+    const specfem::coordinate_systems::geographic_coordinates &geo,
+    const specfem::coordinate_systems::utm_projection_config &config);
 
 /**
  * @brief Cartesian to geographic via UTM inverse projection.
@@ -66,8 +89,11 @@ cartesian_coordinates to_cartesian(const geographic_coordinates &geo,
  * @param config Projection configuration (zone, suppress flag).
  * @return Geographic coordinates (lon/lat in degrees, depth in meters).
  */
-geographic_coordinates to_geographic(const cartesian_coordinates &cart,
-                                     const utm_projection_config &config);
-
-} // namespace coordinate_systems
-} // namespace specfem
+template <>
+specfem::coordinate_systems::geographic_coordinates
+specfem::coordinate_systems::transform<
+    specfem::coordinate_systems::geographic_coordinates,
+    specfem::coordinate_systems::cartesian_coordinates,
+    specfem::coordinate_systems::utm_projection_config>(
+    const specfem::coordinate_systems::cartesian_coordinates &cart,
+    const specfem::coordinate_systems::utm_projection_config &config);
