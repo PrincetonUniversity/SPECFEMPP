@@ -1,7 +1,6 @@
 #pragma once
 
 #include "specfem/data_access/accessor.hpp"
-#include "specfem/datatype.hpp"
 #include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -21,9 +20,8 @@ struct Accessor<specfem::datatype::AccessorType::element, DataClass,
 template <typename T, typename = void> struct is_element : std::false_type {};
 
 template <typename T>
-struct is_element<T,
-                  std::enable_if_t<T::accessor_type ==
-                                   specfem::datatype::AccessorType::element> >
+struct is_element<T, std::enable_if_t<T::accessor_type ==
+                                      specfem::datatype::AccessorType::element>>
     : std::true_type {};
 
 } // namespace specfem::data_access
