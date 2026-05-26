@@ -68,6 +68,7 @@ public:
    * @name Constructors
    *
    */
+  ///@{
 
   /**
    * @brief Construct a new HDF5 Group object within an HDF5 file with the given

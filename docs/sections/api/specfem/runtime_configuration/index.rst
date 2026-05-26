@@ -17,7 +17,6 @@
     database_configuration
     seismogram
     wavefield_writer
-    display
     setup
     property
     kernel

@@ -874,6 +874,17 @@ add_custom_command(TARGET displacement_newmark_3d_tests POST_BUILD
      COMMENT "Moving displacement_newmark_3d_tests data files to ${TEST_OUTPUT_DIR}/displacement_tests/Newmark/dim3"
 )
 
+add_executable(
+  coordinate_systems_tests
+  coordinate_systems/utm_tests.cpp
+)
+
+target_link_libraries(
+  coordinate_systems_tests
+  specfem::coordinate_systems
+  gtest_main
+)
+
 # Register serial tests for discovery
 set(SERIAL_TEST_TARGETS
   serial_mpi_tests
@@ -921,6 +932,7 @@ set(SERIAL_TEST_TARGETS
   test_mesh_utilities_mapping_2d
   test_mesh_utilities_mapping_3d
   units_tests
+  coordinate_systems_tests
 )
 
 if (NOT SPECFEM_ENABLE_MPI)
