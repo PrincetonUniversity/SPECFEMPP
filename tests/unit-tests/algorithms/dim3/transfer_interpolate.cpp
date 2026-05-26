@@ -493,6 +493,21 @@ TEST(TransferInterpolateTests, StackedGrid) {
       specfem::test_fixture::FaceFunction3D<polygrid>({}), oss.str());
 }
 
+TEST(TransferInterpolateTests, StackedConforming3Point) {
+  constexpr int maxpow = 2;
+  constexpr int sample_ngll = 3;
+  using polygrid = PowerGridStack<specfem::test_fixture::QuadraturePoints::GLL2,
+                                  maxpow + 1, maxpow + 1>::type;
+  using multi_polygrid =
+      specfem::test_fixture::FaceFunctionInitializer3D::Stack<
+          polygrid, polygrid, polygrid, polygrid, polygrid>;
+  specfem::algorithms_test::transfer_interpolate::execute(
+      NoisyFaceQuadraturePoints3D<multi_polygrid::stack_size, sample_ngll>(
+          -1, 1, -1, 1, 0),
+      specfem::test_fixture::FaceFunction3D<multi_polygrid>({}),
+      "3-point quadrature, repeated to ensure league > 1");
+}
+
 TEST(TransferInterpolateTests, OffsetElement) {
   specfem::algorithms_test::transfer_interpolate::execute(
       NoisyFaceQuadraturePoints3D<1, 6>(0, 2, 0, 2),
