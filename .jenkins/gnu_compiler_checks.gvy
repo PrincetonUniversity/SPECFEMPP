@@ -10,7 +10,7 @@ pipeline{
                 axes {
                     axis{
                         name 'GNUCompiler'
-                        values 'GCC8;gcc/11', 'GCC14;gcc-toolset/14'
+                        values 'GCC14;gcc-toolset/14'
                     }
                     axis{
                         name 'SIMD'
