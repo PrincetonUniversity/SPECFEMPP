@@ -14,14 +14,6 @@ option(WITH_SCOTCH "Build with SCOTCH support" OFF)
 option(WITH_PATOH  "Build with PaToH support"  OFF)
 # METIS is controlled by SPECFEM_ENABLE_METIS (set in top-level CMakeLists.txt)
 
-if (SPECFEM_ENABLE_MPI)
-    add_compile_definitions(WITH_MPI)
-    message(STATUS "-- Building decompose_mesh with MPI support")
-    if (NOT TARGET MPI::MPI_Fortran)
-        find_package(MPI REQUIRED COMPONENTS Fortran)
-    endif()
-endif()
-
 # Output directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/modules)
@@ -131,32 +123,15 @@ target_link_libraries(decompose_mesh_impl
 
 
 # ======================================================================
-# Library 7: decompose_mesh_mpi_modules (only when SPECFEM_ENABLE_MPI)
-# Provides: module_qsort, module_database, module_mesh, module_partition
-# ======================================================================
-if (SPECFEM_ENABLE_MPI)
-    add_library(decompose_mesh_mpi_modules
-        module_qsort.f90
-        module_database.f90
-        module_mesh.f90
-        module_partition.f90
-    )
-    add_library(decompose_mesh::mpi_modules ALIAS decompose_mesh_mpi_modules)
-    target_link_libraries(decompose_mesh_mpi_modules
-        PRIVATE
-        decompose_mesh::par_module
-        decompose_mesh::fault_module
-        meshfem3D::shared_module
-        MPI::MPI_Fortran
-    )
-endif()
-
-# ======================================================================
 # Executable: xdecompose_mesh (serial)
 # ======================================================================
 add_executable(xdecompose_mesh
     program_decompose_mesh.f90
 )
+# Force Fortran as the linker language: the main entry point is a Fortran
+# `program`, but CMake otherwise picks CXX because of wrap_patoh.cpp pulled in
+# via decompose_mesh::c_wrappers, leaving `main` undefined at link time.
+set_target_properties(xdecompose_mesh PROPERTIES LINKER_LANGUAGE Fortran)
 target_link_libraries(xdecompose_mesh
     PRIVATE
     decompose_mesh::impl
@@ -170,35 +145,8 @@ target_link_libraries(xdecompose_mesh
 )
 
 
-if (SPECFEM_ENABLE_MPI)
-    target_link_libraries(xdecompose_mesh PRIVATE MPI::MPI_Fortran)
-endif()
-
 if (APPLE)
     target_link_options(xdecompose_mesh PRIVATE "LINKER:-no_compact_unwind")
-endif()
-
-# ======================================================================
-# Executable: xdecompose_mesh_mpi (parallel — MPI only)
-# ======================================================================
-if (SPECFEM_ENABLE_MPI)
-    add_executable(xdecompose_mesh_mpi
-        program_decompose_mesh_mpi.f90
-    )
-    target_link_libraries(xdecompose_mesh_mpi
-        PRIVATE
-        decompose_mesh::mpi_modules
-        decompose_mesh::par_module
-        decompose_mesh::fault_module
-        meshfem3D::shared
-        meshfem3D::shared_module
-        meshfem3D::param_reader
-        MPI::MPI_Fortran
-        specfem::version
-    )
-    if (APPLE)
-        target_link_options(xdecompose_mesh_mpi PRIVATE "LINKER:-no_compact_unwind")
-    endif()
 endif()
 
 # ======================================================================
@@ -209,10 +157,4 @@ if (SPECFEM_INSTALL)
         RUNTIME DESTINATION .
         COMPONENT executables
     )
-    if (SPECFEM_ENABLE_MPI)
-        install(TARGETS xdecompose_mesh_mpi
-            RUNTIME DESTINATION .
-            COMPONENT executables
-        )
-    endif()
 endif()
