@@ -1,5 +1,6 @@
 // core/specfem/point/test_jacobian_matrix.hpp
 
+#include "specfem/algorithms.hpp"
 #include "specfem/datatype.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/point/jacobian_matrix.hpp"
@@ -198,6 +199,26 @@ TYPED_TEST(PointJacobianMatrixTest, JacobianMatrix2D_Arithmetic) {
                                     false, using_simd>;
   PD a(a_xix_val, a_gammax_val, a_xiz_val, a_gammaz_val);
   PD b(b_xix_val, b_gammax_val, b_xiz_val, b_gammaz_val);
+
+  // Inversion
+  PD a_inv = PD{ specfem::algorithms::inverse(
+      static_cast<const typename PD::tensor_type &>(a)) };
+  // Inverse of this matrix is
+  // [-2    1 ]
+  // [3/2 -1/2]
+  // with determinant -1/2
+  EXPECT_TRUE(specfem::utilities::is_close(
+      a_inv.xix, static_cast<typename PD::value_type>(-2.0)))
+      << ExpectedGot(-2.0, a_inv.xix);
+  EXPECT_TRUE(specfem::utilities::is_close(
+      a_inv.gammax, static_cast<typename PD::value_type>(1.0)))
+      << ExpectedGot(1.0, a_inv.gammax);
+  EXPECT_TRUE(specfem::utilities::is_close(
+      a_inv.xiz, static_cast<typename PD::value_type>(1.5)))
+      << ExpectedGot(1.5, a_inv.xiz);
+  EXPECT_TRUE(specfem::utilities::is_close(
+      a_inv.gammaz, static_cast<typename PD::value_type>(-0.5)))
+      << ExpectedGot(-0.5, a_inv.gammaz);
 
   // Addition
   PD c = a + b;

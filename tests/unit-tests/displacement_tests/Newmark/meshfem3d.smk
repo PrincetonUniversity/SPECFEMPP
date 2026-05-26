@@ -42,7 +42,7 @@ rule specfem3d_mesher:
         source=ancient("<cwd>/provenance/fortran/DATA/" + source_file),
         stations=ancient("<cwd>/provenance/fortran/DATA/STATIONS"),
     output:
-        database="<cwd>/specfem3d_workdir/fortran/DATABASES_MPI/proc000000_Database",
+        database="<cwd>/specfem3d_workdir/fortran/DATABASES_MPI/Database",
         mesher="<cwd>/specfem3d_workdir/fortran/OUTPUT_FILES/output_meshfem3D.txt",
     localrule: True,
     shell:

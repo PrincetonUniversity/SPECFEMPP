@@ -151,6 +151,75 @@ struct TensorPointViewType
 
   /// Inherit all base class constructors
   using base_type::base_type;
+
+  /**
+   * @brief Matrix multiplication: (M×N) * (N×K) → M×K
+   *
+   * Computes result(i, k) = Σ_j (*this)(i, j) * other(j, k),
+   * where *this is M×N (Components×Dimensions) and other is N×K.
+   *
+   * @tparam K Number of columns in the right-hand matrix
+   * @param other Right-hand side N×K tensor
+   * @return M×K matrix product
+   */
+  template <int K>
+  KOKKOS_INLINE_FUNCTION TensorPointViewType<T, Components, K, UseSIMD>
+  operator*(const TensorPointViewType<T, Dimensions, K, UseSIMD> &other) const {
+    TensorPointViewType<T, Components, K, UseSIMD> result;
+
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#pragma unroll
+#endif
+    for (int i = 0; i < Components; ++i) {
+      for (int k = 0; k < K; ++k) {
+        value_type sum{ 0.0 };
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#pragma unroll
+#endif
+        for (int j = 0; j < Dimensions; ++j) {
+          sum += (*this)(i, j) * other(j, k);
+        }
+        result(i, k) = sum;
+      }
+    }
+    return result;
+  }
+
+  KOKKOS_FORCEINLINE_FUNCTION constexpr auto &
+  operator*=(const value_type &scalar) {
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#pragma unroll
+#endif
+    for (int i = 0; i < Components; ++i)
+      for (int j = 0; j < Dimensions; ++j)
+        (*this)(i, j) *= scalar;
+    return *this;
+  }
+
+  KOKKOS_INLINE_FUNCTION TensorPointViewType
+  operator*(const value_type &scalar) const {
+    TensorPointViewType result(*this);
+    result *= scalar;
+    return result;
+  }
+
+  KOKKOS_FORCEINLINE_FUNCTION constexpr auto &
+  operator/=(const value_type &scalar) {
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#pragma unroll
+#endif
+    for (int i = 0; i < Components; ++i)
+      for (int j = 0; j < Dimensions; ++j)
+        (*this)(i, j) /= scalar;
+    return *this;
+  }
+
+  KOKKOS_INLINE_FUNCTION TensorPointViewType
+  operator/(const value_type &scalar) const {
+    TensorPointViewType result(*this);
+    result /= scalar;
+    return result;
+  }
 };
 
 } // namespace datatype

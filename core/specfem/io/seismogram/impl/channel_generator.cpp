@@ -95,45 +95,42 @@ specfem::io::impl::ChannelGenerator::get_station_filenames(
 
   case specfem::enums::wavefield::rotation:
 
-    for (const auto &component_letter : component_letters) {
+    for (const auto &component_letter : elastic_components) {
 
       // Get the channel code based on component and timestep
       channel_code = this->get_channel_code(component_letter);
 
       // Get the filename for the current component
-      filenames.push_back(output_folder + "/" + network_name + "." +
-                          station_name + "." + location_code_with_dot +
-                          channel_code + "." +
+      filenames.push_back(network_name + "." + station_name + "." +
+                          location_code_with_dot + channel_code + "." +
                           this->get_file_extension(seismogram_type));
     }
     break;
 
   case specfem::enums::wavefield::intrinsic_rotation:
 
-    for (const auto &component_letter : component_letters) {
+    for (const auto &component_letter : elastic_components) {
 
       // Get the channel code based on component and timestep
       channel_code = this->get_channel_code(component_letter);
 
       // Get the filename for the current component
-      filenames.push_back(output_folder + "/" + network_name + "." +
-                          station_name + "." + location_code_with_dot +
-                          channel_code + "." +
+      filenames.push_back(network_name + "." + station_name + "." +
+                          location_code_with_dot + channel_code + "." +
                           this->get_file_extension(seismogram_type));
     }
     break;
 
   case specfem::enums::wavefield::curl:
 
-    for (const auto &component_letter : component_letters) {
+    for (const auto &component_letter : elastic_components) {
 
       // Get the channel code based on component and timestep
       channel_code = this->get_channel_code(component_letter);
 
       // Get the filename for the current component
-      filenames.push_back(output_folder + "/" + network_name + "." +
-                          station_name + "." + location_code_with_dot +
-                          channel_code + "." +
+      filenames.push_back(network_name + "." + station_name + "." +
+                          location_code_with_dot + channel_code + "." +
                           this->get_file_extension(seismogram_type));
     }
     break;

@@ -232,6 +232,19 @@ target_link_libraries(
 )
 
 add_executable(
+  datatype_operators_tests
+  datatype/tensor_point_view_operators_tests.cpp
+)
+
+target_link_libraries(
+  datatype_operators_tests
+  gtest_main
+  gmock_main
+  Kokkos::kokkos
+  -lpthread -lm
+)
+
+add_executable(
   fortranio_test
   fortran_io/fortranio_tests.cpp
 )
@@ -899,6 +912,7 @@ set(SERIAL_TEST_TARGETS
   optimization_tests
   receivers_tests
   simd_tests
+  datatype_operators_tests
   source_class_tests
   source_tests
   source_time_function_tests

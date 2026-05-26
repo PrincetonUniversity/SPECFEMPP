@@ -1,6 +1,9 @@
+#include "specfem/algorithms.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/point/stress.hpp"
 #include "specfem/point/stress_integrand.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/tags.hpp"
 #include "specfem/utilities.hpp"
 #include "test_helper.hpp"
 #include "test_macros.hpp"
@@ -76,6 +79,29 @@ TYPED_TEST(PointStressIntegrandTest, StressIntegrand2DAcoustic) {
       << ExpectedGot(val1, si.F(0, 0));
   EXPECT_TRUE(specfem::utilities::is_close(si.F(0, 1), val2))
       << ExpectedGot(val2, si.F(0, 1));
+
+  // Check round trip stress -> stress integrand -> stress conversion
+  using stress_type = specfem::point::stress<
+      specfem::tags::Tags<specfem::element::dimension_tag::dim2,
+                          specfem::element::medium_tag::acoustic, using_simd> >;
+  using jacobian_matrix_type =
+      specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2,
+                                      true, using_simd>;
+  typename stress_type::value_type T(val1, val2);
+  stress_type stress(T);
+  jacobian_matrix_type jacobian_matrix(1.0, 2.0, 3.0, 4.0, -0.5);
+  stress_integrand_type transformed_stress_integrand(
+      stress.T * jacobian_matrix.tensor() * jacobian_matrix.jacobian);
+  stress_type reconstructed_stress(
+      ((transformed_stress_integrand.F *
+        specfem::algorithms::inverse(jacobian_matrix.tensor())) /
+       jacobian_matrix.jacobian));
+  for (int i = 0; i < 2; ++i) {
+    EXPECT_TRUE(specfem::utilities::is_close(stress.T(0, i),
+                                             reconstructed_stress.T(0, i)))
+        << ExpectedGot(stress.T(0, i), reconstructed_stress.T(0, i))
+        << " at index (0," << i << ")";
+  }
 }
 
 // Test stress_integrand for 2D elastic medium
@@ -132,6 +158,31 @@ TYPED_TEST(PointStressIntegrandTest, StressIntegrand2DElastic) {
       << ExpectedGot(val12, si.F(0, 1));
   EXPECT_TRUE(specfem::utilities::is_close(si.F(1, 1), val22))
       << ExpectedGot(val22, si.F(1, 1));
+
+  // Check round trip stress -> stress integrand -> stress conversion
+  using stress_type = specfem::point::stress<specfem::tags::Tags<
+      specfem::element::dimension_tag::dim2,
+      specfem::element::medium_tag::elastic_psv, using_simd> >;
+  using jacobian_matrix_type =
+      specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2,
+                                      true, using_simd>;
+  typename stress_type::value_type T(val11, val21, val12, val22);
+  stress_type stress(T);
+  jacobian_matrix_type jacobian_matrix(1.0, 2.0, 3.0, 4.0, -0.5);
+  stress_integrand_type transformed_stress_integrand(
+      stress.T * jacobian_matrix.tensor() * jacobian_matrix.jacobian);
+  stress_type reconstructed_stress(
+      ((transformed_stress_integrand.F *
+        specfem::algorithms::inverse(jacobian_matrix.tensor())) /
+       jacobian_matrix.jacobian));
+  for (int i = 0; i < 2; ++i) {
+    for (int j = 0; j < 2; ++j) {
+      EXPECT_TRUE(specfem::utilities::is_close(stress.T(i, j),
+                                               reconstructed_stress.T(i, j)))
+          << ExpectedGot(stress.T(i, j), reconstructed_stress.T(i, j))
+          << " at index (" << i << "," << j << ")";
+    }
+  }
 }
 
 // Test stress_integrand for 2D poroelastic medium
@@ -186,6 +237,32 @@ TYPED_TEST(PointStressIntegrandTest, StressIntegrand2DPoroelastic) {
           << j << ")";
     }
   }
+
+  // Check round trip stress -> stress integrand -> stress conversion
+  using stress_type = specfem::point::stress<specfem::tags::Tags<
+      specfem::element::dimension_tag::dim2,
+      specfem::element::medium_tag::poroelastic, using_simd> >;
+  using jacobian_matrix_type =
+      specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2,
+                                      true, using_simd>;
+  typename stress_type::value_type T(F(0, 0), F(1, 0), F(2, 0), F(3, 0),
+                                     F(0, 1), F(1, 1), F(2, 1), F(3, 1));
+  stress_type stress(T);
+  jacobian_matrix_type jacobian_matrix(1.0, 2.0, 3.0, 4.0, -0.5);
+  stress_integrand_type transformed_stress_integrand(
+      stress.T * jacobian_matrix.tensor() * jacobian_matrix.jacobian);
+  stress_type reconstructed_stress(
+      ((transformed_stress_integrand.F *
+        specfem::algorithms::inverse(jacobian_matrix.tensor())) /
+       jacobian_matrix.jacobian));
+  for (int i = 0; i < 4; ++i) {
+    for (int j = 0; j < 2; ++j) {
+      EXPECT_TRUE(specfem::utilities::is_close(stress.T(i, j),
+                                               reconstructed_stress.T(i, j)))
+          << ExpectedGot(stress.T(i, j), reconstructed_stress.T(i, j))
+          << " at index (" << i << "," << j << ")";
+    }
+  }
 }
 
 // Test stress_integrand for 3D acoustic medium
@@ -230,6 +307,32 @@ TYPED_TEST(PointStressIntegrandTest, StressIntegrand3DAcoustic) {
       << ExpectedGot(val2, si.F(0, 1));
   EXPECT_TRUE(specfem::utilities::is_close(si.F(0, 2), val3))
       << ExpectedGot(val3, si.F(0, 2));
+
+  // Check round trip stress -> stress integrand -> stress conversion
+  using stress_type = specfem::point::stress<
+      specfem::tags::Tags<specfem::element::dimension_tag::dim3,
+                          specfem::element::medium_tag::acoustic, using_simd> >;
+  using jacobian_matrix_type =
+      specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim3,
+                                      true, using_simd>;
+  typename stress_type::value_type T(val1, val2, val3);
+  stress_type stress(T);
+  jacobian_matrix_type jacobian_matrix(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0,
+                                       10.0, -1.0 / 3.0);
+  stress_integrand_type transformed_stress_integrand(
+      stress.T * jacobian_matrix.tensor() * jacobian_matrix.jacobian);
+  stress_type reconstructed_stress(
+      ((transformed_stress_integrand.F *
+        specfem::algorithms::inverse(jacobian_matrix.tensor())) /
+       jacobian_matrix.jacobian));
+  typename stress_type::value_type::value_type reltol =
+      1e-5; // need a slightly lower tolerance than 1e-6
+  for (int i = 0; i < 3; ++i) {
+    EXPECT_TRUE(specfem::utilities::is_close(
+        stress.T(0, i), reconstructed_stress.T(0, i), reltol))
+        << ExpectedGot(stress.T(0, i), reconstructed_stress.T(0, i))
+        << " at index (" << i << ",0)";
+  }
 }
 
 // Test stress_integrand for 3D elastic medium
@@ -283,6 +386,125 @@ TYPED_TEST(PointStressIntegrandTest, StressIntegrand3DElastic) {
       EXPECT_TRUE(specfem::utilities::is_close(si.F(i, j), vals[idx]))
           << ExpectedGot(vals[idx], si.F(i, j)) << " at index (" << i << ","
           << j << ")";
+    }
+  }
+
+  // Check round trip stress -> stress integrand -> stress conversion
+  using stress_type = specfem::point::stress<
+      specfem::tags::Tags<specfem::element::dimension_tag::dim3,
+                          specfem::element::medium_tag::elastic, using_simd> >;
+  using jacobian_matrix_type =
+      specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim3,
+                                      true, using_simd>;
+  typename stress_type::value_type T(F(0, 0), F(0, 1), F(0, 2), F(1, 0),
+                                     F(1, 1), F(1, 2), F(2, 0), F(2, 1),
+                                     F(2, 2));
+  stress_type stress(T);
+  jacobian_matrix_type jacobian_matrix(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0,
+                                       10.0, -1.0 / 3.0);
+  stress_integrand_type transformed_stress_integrand(
+      stress.T * jacobian_matrix.tensor() * jacobian_matrix.jacobian);
+  stress_type reconstructed_stress(
+      ((transformed_stress_integrand.F *
+        specfem::algorithms::inverse(jacobian_matrix.tensor())) /
+       jacobian_matrix.jacobian));
+  typename stress_type::value_type::value_type reltol =
+      1e-5; // need a slightly lower tolerance than 1e-6
+  for (int i = 0; i < 3; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      EXPECT_TRUE(specfem::utilities::is_close(
+          stress.T(i, j), reconstructed_stress.T(i, j), reltol))
+          << ExpectedGot(stress.T(i, j), reconstructed_stress.T(i, j))
+          << " at index (" << i << "," << j << ")";
+    }
+  }
+}
+
+// Test stress_integrand for 3D Elastic Isotropic Cosserat medium
+TYPED_TEST(PointStressIntegrandTest, StressIntegrand3DElasticCosserat) {
+  constexpr bool using_simd = TypeParam::value;
+  constexpr int simd_size =
+      specfem::datatype::simd<type_real, using_simd>::size();
+
+  // Define the stress_integrand type for 3D elastic isotropic cosserat medium
+  using stress_integrand_type =
+      point::stress_integrand<specfem::element::dimension_tag::dim3,
+                              element::medium_tag::elastic_spin, using_simd>;
+
+  // Verify static properties
+  constexpr int expected_dimension =
+      element::attributes<specfem::element::dimension_tag::dim3,
+                          element::medium_tag::elastic_spin>::dimension;
+  constexpr int expected_components =
+      element::attributes<specfem::element::dimension_tag::dim3,
+                          element::medium_tag::elastic_spin>::components;
+
+  EXPECT_EQ(stress_integrand_type::dimension, expected_dimension);
+  EXPECT_EQ(stress_integrand_type::components, expected_components);
+  EXPECT_EQ(stress_integrand_type::dimension, 3);
+  EXPECT_EQ(stress_integrand_type::components, 6);
+
+  // Create test values for 6×3 tensor
+  typename specfem::datatype::simd<type_real, using_simd>::datatype vals[18];
+
+  // Initialize values
+  for (int j = 0; j < 18; ++j) {
+    vals[j] = { static_cast<type_real>(1.0) +
+                (j % 3) * static_cast<type_real>(0.1) +
+                (j / 6) * static_cast<type_real>(0.1) };
+  }
+
+  // Create tensor for elastic medium in 3D (3×3)
+  typename stress_integrand_type::value_type F(
+      vals[0], vals[1], vals[2],    // first component
+      vals[3], vals[4], vals[5],    // second component
+      vals[6], vals[7], vals[8],    // third component
+      vals[9], vals[10], vals[11],  // first component of rotation
+      vals[12], vals[13], vals[14], // second component of rotation
+      vals[15], vals[16], vals[17]  // third component of rotation
+  );
+
+  // Construct stress_integrand object
+  stress_integrand_type si(F);
+
+  // Verify values
+  for (int i = 0; i < 6; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      int idx = i + j * 6;
+      EXPECT_TRUE(specfem::utilities::is_close(si.F(i, j), vals[idx]))
+          << ExpectedGot(vals[idx], si.F(i, j)) << " at index (" << i << ","
+          << j << ")";
+    }
+  }
+
+  // Check round trip stress -> stress integrand -> stress conversion
+  using stress_type = specfem::point::stress<specfem::tags::Tags<
+      specfem::element::dimension_tag::dim3,
+      specfem::element::medium_tag::elastic_spin, using_simd> >;
+  using jacobian_matrix_type =
+      specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim3,
+                                      true, using_simd>;
+  typename stress_type::value_type T(
+      F(0, 0), F(0, 1), F(0, 2), F(1, 0), F(1, 1), F(1, 2), F(2, 0), F(2, 1),
+      F(2, 2), F(3, 0), F(3, 1), F(3, 2), F(4, 0), F(4, 1), F(4, 2), F(5, 0),
+      F(5, 1), F(5, 2));
+  stress_type stress(T);
+  jacobian_matrix_type jacobian_matrix(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0,
+                                       10.0, -1.0 / 3.0);
+  stress_integrand_type transformed_stress_integrand(
+      stress.T * jacobian_matrix.tensor() * jacobian_matrix.jacobian);
+  stress_type reconstructed_stress(
+      ((transformed_stress_integrand.F *
+        specfem::algorithms::inverse(jacobian_matrix.tensor())) /
+       jacobian_matrix.jacobian));
+  typename stress_type::value_type::value_type reltol =
+      1e-5; // need a slightly lower tolerance than 1e-6
+  for (int i = 0; i < 6; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      EXPECT_TRUE(specfem::utilities::is_close(
+          stress.T(i, j), reconstructed_stress.T(i, j), reltol))
+          << ExpectedGot(stress.T(i, j), reconstructed_stress.T(i, j))
+          << " at index (" << i << "," << j << ")";
     }
   }
 }

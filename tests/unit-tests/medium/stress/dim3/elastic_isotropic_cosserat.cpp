@@ -428,9 +428,16 @@ TEST(Stress, ElasticIsotropicCosserat3D_CoupleStressAcceleration) {
     }
 
     type_real operator()(const int i, const int j) const { return F(i, j); }
+
+    StressType::value_type
+    operator*(const JacobianMatrixType::tensor_type &tensor) const {
+      return F * tensor;
+    }
   };
 
-  const StressIntegrandAdapter stress_integrand{ stress * jacobian_matrix };
+  const StressIntegrandAdapter stress_integrand{
+    stress.T * jacobian_matrix.tensor() * jacobian_matrix.jacobian
+  };
   specfem::medium_physics::compute_cosserat_couple_stress(
       jacobian_matrix, properties, factor, stress_integrand, acceleration);
 

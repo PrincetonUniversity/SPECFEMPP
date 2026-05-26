@@ -48,13 +48,20 @@ public:
   ///@{
   using simd = typename base_type::template simd<type_real>; ///< SIMD data type
   using value_type = typename base_type::template scalar_type<type_real>;
+  using tensor_type = typename base_type::template tensor_type<type_real, 2, 2>;
   constexpr static bool store_jacobian = false;
   ///@}
 
-  value_type xix;    ///< @f$ \partial \xi / \partial x @f$
-  value_type gammax; ///< @f$ \partial \gamma / \partial x @f$
-  value_type xiz;    ///< @f$ \partial \xi / \partial z @f$
-  value_type gammaz; ///< @f$ \partial \gamma / \partial z @f$
+private:
+  tensor_type _data; ///< Underlying 2x2 tensor storage
+
+public:
+  // J = [ xix  gammax ]   (row = spatial coord x/z, col = reference coord ξ/γ)
+  //     [ xiz  gammaz ]
+  value_type &xix;    ///< @f$ \partial \xi / \partial x @f$
+  value_type &gammax; ///< @f$ \partial \gamma / \partial x @f$
+  value_type &xiz;    ///< @f$ \partial \xi / \partial z @f$
+  value_type &gammaz; ///< @f$ \partial \gamma / \partial z @f$
 
   /**
    * @name Constructors
@@ -66,8 +73,9 @@ public:
    *
    */
   KOKKOS_FUNCTION
-  jacobian_matrix() {
-    this->init();
+  jacobian_matrix()
+      : _data(), xix(_data(0, 0)), gammax(_data(0, 1)), xiz(_data(1, 0)),
+        gammaz(_data(1, 1)) {
     return;
   }
 
@@ -82,7 +90,13 @@ public:
   KOKKOS_FUNCTION
   jacobian_matrix(const value_type &xix, const value_type &gammax,
                   const value_type &xiz, const value_type &gammaz)
-      : xix(xix), gammax(gammax), xiz(xiz), gammaz(gammaz) {}
+      : _data(), xix(_data(0, 0)), gammax(_data(0, 1)), xiz(_data(1, 0)),
+        gammaz(_data(1, 1)) {
+    this->xix = xix;
+    this->gammax = gammax;
+    this->xiz = xiz;
+    this->gammaz = gammaz;
+  }
 
   /**
    * @brief Constructor with constant value
@@ -91,7 +105,37 @@ public:
    */
   KOKKOS_FUNCTION
   jacobian_matrix(const value_type constant)
-      : xix(constant), gammax(constant), xiz(constant), gammaz(constant) {}
+      : _data(constant), xix(_data(0, 0)), gammax(_data(0, 1)),
+        xiz(_data(1, 0)), gammaz(_data(1, 1)) {}
+
+  /**
+   * @brief Construct from a 2x2 tensor
+   *
+   * @param t Tensor to copy into the matrix
+   */
+  KOKKOS_FUNCTION
+  jacobian_matrix(const tensor_type &t)
+      : _data(t), xix(_data(0, 0)), gammax(_data(0, 1)), xiz(_data(1, 0)),
+        gammaz(_data(1, 1)) {}
+
+  /**
+   * @brief Copy constructor — rebinds references to this object's tensor
+   */
+  KOKKOS_FUNCTION
+  jacobian_matrix(const jacobian_matrix &other)
+      : _data(other._data), xix(_data(0, 0)), gammax(_data(0, 1)),
+        xiz(_data(1, 0)), gammaz(_data(1, 1)) {}
+
+  /**
+   * @brief Copy assignment — copies tensor data; references remain bound to
+   * this object's tensor
+   */
+  KOKKOS_FUNCTION
+  jacobian_matrix &operator=(const jacobian_matrix &other) {
+    _data = other._data;
+    return *this;
+  }
+  ///@}
 
   KOKKOS_FUNCTION
   void init() {
@@ -101,6 +145,16 @@ public:
     this->gammaz = 0.0;
     return;
   }
+
+  /**
+   * @brief Access the underlying 2x2 transformation tensor
+   */
+  ///@{
+  KOKKOS_FUNCTION tensor_type &tensor() { return _data; }
+  KOKKOS_FUNCTION const tensor_type &tensor() const { return _data; }
+  KOKKOS_FUNCTION operator tensor_type &() { return _data; }
+  KOKKOS_FUNCTION operator const tensor_type &() const { return _data; }
+  ///@}
 
   // operator+
   KOKKOS_FUNCTION jacobian_matrix operator+(const jacobian_matrix &rhs) const {
@@ -173,18 +227,27 @@ public:
   ///@{
   using simd = typename base_type::template simd<type_real>; ///< SIMD data type
   using value_type = typename base_type::template scalar_type<type_real>;
+  using tensor_type = typename base_type::template tensor_type<type_real, 3, 3>;
   constexpr static bool store_jacobian = false;
   ///@}
 
-  value_type xix;    ///< @f$ \partial \xi / \partial x @f$
-  value_type etax;   ///< @f$ \partial \eta / \partial x @f$
-  value_type gammax; ///< @f$ \partial \gamma / \partial x @f$
-  value_type xiy;    ///< @f$ \partial \xi / \partial y @f$
-  value_type etay;   ///< @f$ \partial \eta / \partial y @f$
-  value_type gammay; ///< @f$ \partial \gamma / \partial y @f$
-  value_type xiz;    ///< @f$ \partial \xi / \partial z @f$
-  value_type etaz;   ///< @f$ \partial \eta / \partial z @f$
-  value_type gammaz; ///< @f$ \partial \gamma / \partial z @f$
+private:
+  tensor_type _data; ///< Underlying 3x3 tensor storage
+
+public:
+  // J = [ xix  etax  gammax ]   (row = spatial coord x/y/z, col = ref coord
+  // ξ/η/γ)
+  //     [ xiy  etay  gammay ]
+  //     [ xiz  etaz  gammaz ]
+  value_type &xix;    ///< @f$ \partial \xi / \partial x @f$
+  value_type &etax;   ///< @f$ \partial \eta / \partial x @f$
+  value_type &gammax; ///< @f$ \partial \gamma / \partial x @f$
+  value_type &xiy;    ///< @f$ \partial \xi / \partial y @f$
+  value_type &etay;   ///< @f$ \partial \eta / \partial y @f$
+  value_type &gammay; ///< @f$ \partial \gamma / \partial y @f$
+  value_type &xiz;    ///< @f$ \partial \xi / \partial z @f$
+  value_type &etaz;   ///< @f$ \partial \eta / \partial z @f$
+  value_type &gammaz; ///< @f$ \partial \gamma / \partial z @f$
 
   /**
    * @name Constructors
@@ -196,8 +259,10 @@ public:
    *
    */
   KOKKOS_FUNCTION
-  jacobian_matrix() {
-    this->init();
+  jacobian_matrix()
+      : _data(), xix(_data(0, 0)), etax(_data(0, 1)), gammax(_data(0, 2)),
+        xiy(_data(1, 0)), etay(_data(1, 1)), gammay(_data(1, 2)),
+        xiz(_data(2, 0)), etaz(_data(2, 1)), gammaz(_data(2, 2)) {
     return;
   }
 
@@ -220,8 +285,19 @@ public:
                   const value_type &etay, const value_type &gammay,
                   const value_type &xiz, const value_type &etaz,
                   const value_type &gammaz)
-      : xix(xix), etax(etax), gammax(gammax), xiy(xiy), etay(etay),
-        gammay(gammay), xiz(xiz), etaz(etaz), gammaz(gammaz) {}
+      : _data(), xix(_data(0, 0)), etax(_data(0, 1)), gammax(_data(0, 2)),
+        xiy(_data(1, 0)), etay(_data(1, 1)), gammay(_data(1, 2)),
+        xiz(_data(2, 0)), etaz(_data(2, 1)), gammaz(_data(2, 2)) {
+    this->xix = xix;
+    this->etax = etax;
+    this->gammax = gammax;
+    this->xiy = xiy;
+    this->etay = etay;
+    this->gammay = gammay;
+    this->xiz = xiz;
+    this->etaz = etaz;
+    this->gammaz = gammaz;
+  }
 
   /**
    * @brief Constructor with constant value
@@ -230,9 +306,42 @@ public:
    */
   KOKKOS_FUNCTION
   jacobian_matrix(const value_type constant)
-      : xix(constant), etax(constant), gammax(constant), xiy(constant),
-        etay(constant), gammay(constant), xiz(constant), etaz(constant),
-        gammaz(constant) {}
+      : _data(constant), xix(_data(0, 0)), etax(_data(0, 1)),
+        gammax(_data(0, 2)), xiy(_data(1, 0)), etay(_data(1, 1)),
+        gammay(_data(1, 2)), xiz(_data(2, 0)), etaz(_data(2, 1)),
+        gammaz(_data(2, 2)) {}
+
+  /**
+   * @brief Construct from a 3x3 tensor
+   *
+   * @param t Tensor to copy into the matrix
+   */
+  KOKKOS_FUNCTION
+  jacobian_matrix(const tensor_type &t)
+      : _data(t), xix(_data(0, 0)), etax(_data(0, 1)), gammax(_data(0, 2)),
+        xiy(_data(1, 0)), etay(_data(1, 1)), gammay(_data(1, 2)),
+        xiz(_data(2, 0)), etaz(_data(2, 1)), gammaz(_data(2, 2)) {}
+
+  /**
+   * @brief Copy constructor — rebinds references to this object's tensor
+   */
+  KOKKOS_FUNCTION
+  jacobian_matrix(const jacobian_matrix &other)
+      : _data(other._data), xix(_data(0, 0)), etax(_data(0, 1)),
+        gammax(_data(0, 2)), xiy(_data(1, 0)), etay(_data(1, 1)),
+        gammay(_data(1, 2)), xiz(_data(2, 0)), etaz(_data(2, 1)),
+        gammaz(_data(2, 2)) {}
+
+  /**
+   * @brief Copy assignment — copies tensor data; references remain bound to
+   * this object's tensor
+   */
+  KOKKOS_FUNCTION
+  jacobian_matrix &operator=(const jacobian_matrix &other) {
+    _data = other._data;
+    return *this;
+  }
+  ///@}
 
   KOKKOS_FUNCTION
   void init() {
@@ -247,6 +356,16 @@ public:
     this->gammaz = 0.0;
     return;
   }
+
+  /**
+   * @brief Access the underlying 3x3 transformation tensor
+   */
+  ///@{
+  KOKKOS_FUNCTION tensor_type &tensor() { return _data; }
+  KOKKOS_FUNCTION const tensor_type &tensor() const { return _data; }
+  KOKKOS_FUNCTION operator tensor_type &() { return _data; }
+  KOKKOS_FUNCTION operator const tensor_type &() const { return _data; }
+  ///@}
 
   // operator+
   KOKKOS_FUNCTION jacobian_matrix operator+(const jacobian_matrix &rhs) const {
@@ -329,6 +448,7 @@ public:
   ///@{
   using simd = typename base_type::simd; ///< SIMD data type
   using value_type = typename base_type::value_type;
+  using tensor_type = typename base_type::tensor_type;
   constexpr static bool store_jacobian = true;
   ///@}
 
@@ -345,10 +465,7 @@ public:
    *
    */
   KOKKOS_FUNCTION
-  jacobian_matrix() {
-    this->init();
-    return;
-  }
+  jacobian_matrix() : base_type(), jacobian(0.0) { return; }
 
   /**
    * @brief Constructor with values
@@ -377,6 +494,18 @@ public:
       : jacobian_matrix<specfem::element::dimension_tag::dim2, false, UseSIMD>(
             constant),
         jacobian(constant) {}
+
+  /**
+   * @brief Construct from a 2x2 tensor and Jacobian determinant
+   *
+   * @param t Tensor to copy into the matrix
+   * @param jacobian Jacobian determinant @f$ J @f$
+   */
+  KOKKOS_FUNCTION
+  jacobian_matrix(const tensor_type &t, const value_type &jacobian)
+      : jacobian_matrix<specfem::element::dimension_tag::dim2, false, UseSIMD>(
+            t),
+        jacobian(jacobian) {}
   ///@}
 
   KOKKOS_FUNCTION
@@ -475,6 +604,7 @@ public:
   ///@{
   using simd = typename base_type::simd; ///< SIMD data type
   using value_type = typename base_type::value_type;
+  using tensor_type = typename base_type::tensor_type;
   constexpr static bool store_jacobian = true;
   ///@}
 
@@ -491,10 +621,7 @@ public:
    *
    */
   KOKKOS_FUNCTION
-  jacobian_matrix() {
-    this->init();
-    return;
-  }
+  jacobian_matrix() : base_type(), jacobian(0.0) { return; }
 
   /**
    * @brief Constructor with values
@@ -530,6 +657,18 @@ public:
       : jacobian_matrix<specfem::element::dimension_tag::dim3, false, UseSIMD>(
             constant),
         jacobian(constant) {}
+
+  /**
+   * @brief Construct from a 3x3 tensor and Jacobian determinant
+   *
+   * @param t Tensor to copy into the matrix
+   * @param jacobian Jacobian determinant @f$ J @f$
+   */
+  KOKKOS_FUNCTION
+  jacobian_matrix(const tensor_type &t, const value_type &jacobian)
+      : jacobian_matrix<specfem::element::dimension_tag::dim3, false, UseSIMD>(
+            t),
+        jacobian(jacobian) {}
   ///@}
 
   KOKKOS_FUNCTION

@@ -191,7 +191,8 @@ int compute_stiffness_interaction(
                     point_property, point_displacement, point_stress);
 
                 stress_integrand.F(local_index) =
-                    point_stress * point_jacobian_matrix;
+                    point_stress.T * point_jacobian_matrix.tensor() *
+                    point_jacobian_matrix.jacobian;
               });
 
           team.team_barrier();

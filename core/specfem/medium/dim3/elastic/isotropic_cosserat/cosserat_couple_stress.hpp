@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/algorithms.hpp"
 #include "specfem/element.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
@@ -70,71 +71,22 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
     const PointPropertiesType &point_properties, const T factor,
     const PointStressIntegrandViewType &F,
     PointAccelerationType &acceleration) {
-
-  const auto &xix = point_jacobian_matrix.xix;
-  const auto &xiy = point_jacobian_matrix.xiy;
-  const auto &xiz = point_jacobian_matrix.xiz;
-  const auto &etax = point_jacobian_matrix.etax;
-  const auto &etay = point_jacobian_matrix.etay;
-  const auto &etaz = point_jacobian_matrix.etaz;
-  const auto &gammax = point_jacobian_matrix.gammax;
-  const auto &gammay = point_jacobian_matrix.gammay;
-  const auto &gammaz = point_jacobian_matrix.gammaz;
-  const auto &jacobian = point_jacobian_matrix.jacobian;
-
-  // Compute inverse Jacobian elements (standard 2x2 matrix inversion)
-  const auto det = xix * (etay * gammaz - etaz * gammay) -
-                   xiy * (etax * gammaz - etaz * gammax) +
-                   xiz * (etax * gammay - etay * gammax);
-  const auto invD = static_cast<T>(1.0) / det;
-
-  // Standard 3x3 matrix inverse:
-  //   J = [xix     xiy     xiz    ]
-  //       [etax    etay    etaz   ]
-  //       [gammax  gammay  gammaz ]
-  // Then the inverse Jacobian matrix is:
-  //   J^-1 = [∂x/∂ξ ∂x/∂η ∂x/∂γ]
-  //          [∂y/∂ξ ∂y/∂η ∂y/∂γ]
-  //          [∂z/∂ξ ∂z/∂η ∂z/∂γ]
-  //   =            [ ηy*γz-ηz*γy    -(ξy*γz-ξz*γy)   ξy*ηz-ξz*ηy   ]
-  //     (1/ det) * [-(ηx*γz-ηz*γx)   (ξx*γz-ξz*γx)  -(ξx*ηz-ξz*ηx) ]
-  //                [ ηx*γy-ηy*γx    -(ξx*γy-ξy*γx)   ξx*ηy-ξy*ηx   ]
-
-  const auto xxi = (etay * gammaz - etaz * gammay) * invD;  // ∂x/∂ξ
-  const auto xeta = -(xiy * gammaz - xiz * gammay) * invD;  // ∂x/∂η
-  const auto xgamma = (xiy * etaz - xiz * etay) * invD;     // ∂x/∂γ
-  const auto yxi = -(etax * gammaz - etaz * gammax) * invD; // ∂y/∂ξ
-  const auto yeta = (xix * gammaz - xiz * gammax) * invD;   // ∂y/∂η
-  const auto ygamma = -(xix * etaz - xiz * etax) * invD;    // ∂y/∂γ
-  const auto zxi = (etax * gammay - etay * gammax) * invD;  // ∂z/∂ξ
-  const auto zeta = -(xix * gammay - xiy * gammax) * invD;  // ∂z/∂η
-  const auto zgamma = (xix * etay - xiy * etax) * invD;     // ∂z/∂γ
-
-  // Transform Stress integrand F to stress tensor T
-  // const auto t_00 = (F(0, 0) * xxi + F(0, 1) * xgamma); // σ_xx
-  const auto t_10 = F(1, 0) * xxi + F(1, 1) * xeta + F(1, 2) * xgamma; // σ_xy
-  const auto t_20 = F(2, 0) * xxi + F(2, 1) * xeta + F(2, 2) * xgamma; // σ_xz
-  const auto t_01 = F(0, 0) * yxi + F(0, 1) * yeta + F(0, 2) * ygamma; // σ_yx
-  // const auto t_11 = (F(1, 0) * yxi + F(1, 1) * yeta + F(1, 2) * ygamma); //
-  // σ_yy
-  const auto t_21 = F(2, 0) * yxi + F(2, 1) * yeta + F(2, 2) * ygamma; // σ_yz
-  const auto t_02 = F(0, 0) * zxi + F(0, 1) * zeta + F(0, 2) * zgamma; // σ_zx
-  const auto t_12 = F(1, 0) * zxi + F(1, 1) * zeta + F(1, 2) * zgamma; // σ_zy
-  // const auto t_22 = (F(2, 0) * zxi + F(2, 1) * zeta + F(2, 2) * zgamma); //
-  // σ_zz
+  const auto jacobian_inv =
+      specfem::algorithms::inverse(point_jacobian_matrix.tensor());
+  const auto stress = F * jacobian_inv / point_jacobian_matrix.jacobian;
 
   // Reassign stress components due to transpose in its original definition
-  const auto sigma_xy = t_10;
-  const auto sigma_yx = t_01;
-  const auto sigma_xz = t_20;
-  const auto sigma_zx = t_02;
-  const auto sigma_yz = t_21;
-  const auto sigma_zy = t_12;
+  const auto sigma_xy = stress(1, 0);
+  const auto sigma_yx = stress(0, 1);
+  const auto sigma_xz = stress(2, 0);
+  const auto sigma_zx = stress(0, 2);
+  const auto sigma_yz = stress(2, 1);
+  const auto sigma_zy = stress(1, 2);
 
   // Add to acceleration
-  acceleration(3) -= (sigma_zy - sigma_yz) * factor / jacobian;
-  acceleration(4) -= (sigma_xz - sigma_zx) * factor / jacobian;
-  acceleration(5) -= (sigma_yx - sigma_xy) * factor / jacobian;
+  acceleration(3) -= (sigma_zy - sigma_yz) * factor;
+  acceleration(4) -= (sigma_xz - sigma_zx) * factor;
+  acceleration(5) -= (sigma_yx - sigma_xy) * factor;
 };
 
 } // namespace medium_physics
