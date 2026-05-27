@@ -26,6 +26,36 @@
 
 #ifndef NO_HDF5
 #include <hdf5.h>
+
+namespace specfem::periodic_tasks::plot_wavefield_impl {
+/// @brief Check HDF5 return codes and abort on failure
+inline void h5_check(herr_t err, const char *call, int line, const char *file) {
+  if (err < 0) {
+    std::ostringstream oss;
+    oss << "HDF5 error in " << call << " at " << file << ":" << line;
+    specfem::program::abort(oss.str(), 30, line, file);
+  }
+}
+
+/// @brief Check HDF5 identifier return values and abort on failure
+inline hid_t h5_check_id(hid_t id, const char *call, int line,
+                         const char *file) {
+  if (id < 0) {
+    std::ostringstream oss;
+    oss << "HDF5 error in " << call << " at " << file << ":" << line;
+    specfem::program::abort(oss.str(), 30, line, file);
+  }
+  return id;
+}
+} // namespace specfem::periodic_tasks::plot_wavefield_impl
+
+#define SPECFEM_H5_CHECK(call)                                                 \
+  specfem::periodic_tasks::plot_wavefield_impl::h5_check((call), #call,        \
+                                                         __LINE__, __FILE__)
+#define SPECFEM_H5_CHECK_ID(call)                                              \
+  specfem::periodic_tasks::plot_wavefield_impl::h5_check_id(                   \
+      (call), #call, __LINE__, __FILE__)
+
 #endif // NO_HDF5
 
 #endif // NO_VTK
@@ -279,34 +309,34 @@ void specfem::periodic_tasks::
 
   // Create HDF5 file
   this->hdf5_filename = (this->output_folder / "wavefield.vtkhdf").string();
-  hid_t hdf5_file_id = H5Fcreate(this->hdf5_filename.c_str(), H5F_ACC_TRUNC,
-                                 H5P_DEFAULT, H5P_DEFAULT);
-  hid_t vtkhdf_group =
-      H5Gcreate(hdf5_file_id, "/VTKHDF", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  hid_t hdf5_file_id = SPECFEM_H5_CHECK_ID(H5Fcreate(
+      this->hdf5_filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT));
+  hid_t vtkhdf_group = SPECFEM_H5_CHECK_ID(H5Gcreate(
+      hdf5_file_id, "/VTKHDF", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT));
 
   // Set VTKHDF attributes
   {
-    hid_t attr_space, attr;
     int version[2] = { 2, 0 };
     hsize_t dims[1] = { 2 };
-    attr_space = H5Screate_simple(1, dims, NULL);
-    attr = H5Acreate(vtkhdf_group, "Version", H5T_NATIVE_INT, attr_space,
-                     H5P_DEFAULT, H5P_DEFAULT);
-    H5Awrite(attr, H5T_NATIVE_INT, version);
-    H5Aclose(attr);
-    H5Sclose(attr_space);
+    hid_t attr_space = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, dims, NULL));
+    hid_t attr =
+        SPECFEM_H5_CHECK_ID(H5Acreate(vtkhdf_group, "Version", H5T_NATIVE_INT,
+                                      attr_space, H5P_DEFAULT, H5P_DEFAULT));
+    SPECFEM_H5_CHECK(H5Awrite(attr, H5T_NATIVE_INT, version));
+    SPECFEM_H5_CHECK(H5Aclose(attr));
+    SPECFEM_H5_CHECK(H5Sclose(attr_space));
 
     // Set Type attribute
-    hid_t str_type = H5Tcopy(H5T_C_S1);
-    H5Tset_size(str_type, 16);
-    attr_space = H5Screate(H5S_SCALAR);
-    attr = H5Acreate(vtkhdf_group, "Type", str_type, attr_space, H5P_DEFAULT,
-                     H5P_DEFAULT);
+    hid_t str_type = SPECFEM_H5_CHECK_ID(H5Tcopy(H5T_C_S1));
+    SPECFEM_H5_CHECK(H5Tset_size(str_type, 16));
+    attr_space = SPECFEM_H5_CHECK_ID(H5Screate(H5S_SCALAR));
+    attr = SPECFEM_H5_CHECK_ID(H5Acreate(vtkhdf_group, "Type", str_type,
+                                         attr_space, H5P_DEFAULT, H5P_DEFAULT));
     const char *type_str = "UnstructuredGrid";
-    H5Awrite(attr, str_type, type_str);
-    H5Aclose(attr);
-    H5Sclose(attr_space);
-    H5Tclose(str_type);
+    SPECFEM_H5_CHECK(H5Awrite(attr, str_type, type_str));
+    SPECFEM_H5_CHECK(H5Aclose(attr));
+    SPECFEM_H5_CHECK(H5Sclose(attr_space));
+    SPECFEM_H5_CHECK(H5Tclose(str_type));
   }
 
   // Write static geometry to HDF5 file
@@ -346,44 +376,48 @@ void specfem::periodic_tasks::
 
   // Write Points (static geometry) - 2D array (numPoints, 3)
   hsize_t point_dims[2] = { (hsize_t)this->numPoints, 3 };
-  hid_t dataspace = H5Screate_simple(2, point_dims, NULL);
-  hid_t dataset = H5Dcreate(vtkhdf_group, "Points", H5T_NATIVE_DOUBLE,
-                            dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  H5Dwrite(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-           pointCoords.data());
-  H5Dclose(dataset);
-  H5Sclose(dataspace);
+  hid_t dataspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(2, point_dims, NULL));
+  hid_t dataset = SPECFEM_H5_CHECK_ID(
+      H5Dcreate(vtkhdf_group, "Points", H5T_NATIVE_DOUBLE, dataspace,
+                H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL,
+                            H5P_DEFAULT, pointCoords.data()));
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(dataspace));
 
   // Write Connectivity (static)
   hsize_t dims[1];
   dims[0] = connectivity.size();
-  dataspace = H5Screate_simple(1, dims, NULL);
-  dataset = H5Dcreate(vtkhdf_group, "Connectivity", H5T_NATIVE_LLONG, dataspace,
-                      H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  H5Dwrite(dataset, H5T_NATIVE_LLONG, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-           connectivity.data());
-  H5Dclose(dataset);
-  H5Sclose(dataspace);
+  dataspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, dims, NULL));
+  dataset = SPECFEM_H5_CHECK_ID(
+      H5Dcreate(vtkhdf_group, "Connectivity", H5T_NATIVE_LLONG, dataspace,
+                H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_LLONG, H5S_ALL, H5S_ALL,
+                            H5P_DEFAULT, connectivity.data()));
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(dataspace));
 
   // Write Offsets (static)
   dims[0] = offsets.size();
-  dataspace = H5Screate_simple(1, dims, NULL);
-  dataset = H5Dcreate(vtkhdf_group, "Offsets", H5T_NATIVE_LLONG, dataspace,
-                      H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  H5Dwrite(dataset, H5T_NATIVE_LLONG, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-           offsets.data());
-  H5Dclose(dataset);
-  H5Sclose(dataspace);
+  dataspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, dims, NULL));
+  dataset = SPECFEM_H5_CHECK_ID(
+      H5Dcreate(vtkhdf_group, "Offsets", H5T_NATIVE_LLONG, dataspace,
+                H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_LLONG, H5S_ALL, H5S_ALL,
+                            H5P_DEFAULT, offsets.data()));
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(dataspace));
 
   // Write Types (static)
   dims[0] = types.size();
-  dataspace = H5Screate_simple(1, dims, NULL);
-  dataset = H5Dcreate(vtkhdf_group, "Types", H5T_NATIVE_UCHAR, dataspace,
-                      H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  H5Dwrite(dataset, H5T_NATIVE_UCHAR, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-           types.data());
-  H5Dclose(dataset);
-  H5Sclose(dataspace);
+  dataspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, dims, NULL));
+  dataset = SPECFEM_H5_CHECK_ID(
+      H5Dcreate(vtkhdf_group, "Types", H5T_NATIVE_UCHAR, dataspace, H5P_DEFAULT,
+                H5P_DEFAULT, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_UCHAR, H5S_ALL, H5S_ALL,
+                            H5P_DEFAULT, types.data()));
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(dataspace));
 
   // Extract and write material IDs as CellData
   const auto &element_types = this->assembly.element_types;
@@ -398,21 +432,22 @@ void specfem::periodic_tasks::
   }
 
   // Create CellData group and write material IDs
-  hid_t cd_group = H5Gcreate(vtkhdf_group, "CellData", H5P_DEFAULT, H5P_DEFAULT,
-                             H5P_DEFAULT);
+  hid_t cd_group = SPECFEM_H5_CHECK_ID(H5Gcreate(
+      vtkhdf_group, "CellData", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT));
   dims[0] = material_ids.size();
-  dataspace = H5Screate_simple(1, dims, NULL);
-  dataset = H5Dcreate(cd_group, "MaterialID", H5T_NATIVE_INT, dataspace,
-                      H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  H5Dwrite(dataset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-           material_ids.data());
-  H5Dclose(dataset);
-  H5Sclose(dataspace);
-  H5Gclose(cd_group);
+  dataspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, dims, NULL));
+  dataset = SPECFEM_H5_CHECK_ID(
+      H5Dcreate(cd_group, "MaterialID", H5T_NATIVE_INT, dataspace, H5P_DEFAULT,
+                H5P_DEFAULT, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL,
+                            H5P_DEFAULT, material_ids.data()));
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(dataspace));
+  SPECFEM_H5_CHECK(H5Gclose(cd_group));
 
   // Create PointData group
-  hid_t pd_group = H5Gcreate(vtkhdf_group, "PointData", H5P_DEFAULT,
-                             H5P_DEFAULT, H5P_DEFAULT);
+  hid_t pd_group = SPECFEM_H5_CHECK_ID(H5Gcreate(
+      vtkhdf_group, "PointData", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT));
 
   // Write static point data: Jacobian
   {
@@ -444,13 +479,14 @@ void specfem::periodic_tasks::
     }
 
     dims[0] = jacobian_data.size();
-    dataspace = H5Screate_simple(1, dims, NULL);
-    dataset = H5Dcreate(pd_group, "Jacobian", H5T_NATIVE_FLOAT, dataspace,
-                        H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-             jacobian_data.data());
-    H5Dclose(dataset);
-    H5Sclose(dataspace);
+    dataspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, dims, NULL));
+    dataset = SPECFEM_H5_CHECK_ID(
+        H5Dcreate(pd_group, "Jacobian", H5T_NATIVE_FLOAT, dataspace,
+                  H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT));
+    SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL,
+                              H5P_DEFAULT, jacobian_data.data()));
+    SPECFEM_H5_CHECK(H5Dclose(dataset));
+    SPECFEM_H5_CHECK(H5Sclose(dataspace));
   }
 
   // Write static point data: Material properties (kappa, mu, rho)
@@ -510,55 +546,59 @@ void specfem::periodic_tasks::
 
     // Write kappa
     dims[0] = kappa_data.size();
-    dataspace = H5Screate_simple(1, dims, NULL);
-    dataset = H5Dcreate(pd_group, "Kappa", H5T_NATIVE_FLOAT, dataspace,
-                        H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-             kappa_data.data());
-    H5Dclose(dataset);
-    H5Sclose(dataspace);
+    dataspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, dims, NULL));
+    dataset = SPECFEM_H5_CHECK_ID(H5Dcreate(pd_group, "Kappa", H5T_NATIVE_FLOAT,
+                                            dataspace, H5P_DEFAULT, H5P_DEFAULT,
+                                            H5P_DEFAULT));
+    SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL,
+                              H5P_DEFAULT, kappa_data.data()));
+    SPECFEM_H5_CHECK(H5Dclose(dataset));
+    SPECFEM_H5_CHECK(H5Sclose(dataspace));
 
     // Write mu
     dims[0] = mu_data.size();
-    dataspace = H5Screate_simple(1, dims, NULL);
-    dataset = H5Dcreate(pd_group, "Mu", H5T_NATIVE_FLOAT, dataspace,
-                        H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-             mu_data.data());
-    H5Dclose(dataset);
-    H5Sclose(dataspace);
+    dataspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, dims, NULL));
+    dataset = SPECFEM_H5_CHECK_ID(H5Dcreate(pd_group, "Mu", H5T_NATIVE_FLOAT,
+                                            dataspace, H5P_DEFAULT, H5P_DEFAULT,
+                                            H5P_DEFAULT));
+    SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL,
+                              H5P_DEFAULT, mu_data.data()));
+    SPECFEM_H5_CHECK(H5Dclose(dataset));
+    SPECFEM_H5_CHECK(H5Sclose(dataspace));
 
     // Write rho
     dims[0] = rho_data.size();
-    dataspace = H5Screate_simple(1, dims, NULL);
-    dataset = H5Dcreate(pd_group, "Rho", H5T_NATIVE_FLOAT, dataspace,
-                        H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-             rho_data.data());
-    H5Dclose(dataset);
-    H5Sclose(dataspace);
+    dataspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, dims, NULL));
+    dataset = SPECFEM_H5_CHECK_ID(H5Dcreate(pd_group, "Rho", H5T_NATIVE_FLOAT,
+                                            dataspace, H5P_DEFAULT, H5P_DEFAULT,
+                                            H5P_DEFAULT));
+    SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL,
+                              H5P_DEFAULT, rho_data.data()));
+    SPECFEM_H5_CHECK(H5Dclose(dataset));
+    SPECFEM_H5_CHECK(H5Sclose(dataspace));
   }
 
   // Create extensible dataset for wavefield scalars
   // Initial size: 0 (will grow as needed)
   hsize_t pd_initial_dims[1] = { 0 };
   hsize_t pd_max_dims[1] = { H5S_UNLIMITED };
-  hid_t pd_dataspace = H5Screate_simple(1, pd_initial_dims, pd_max_dims);
+  hid_t pd_dataspace =
+      SPECFEM_H5_CHECK_ID(H5Screate_simple(1, pd_initial_dims, pd_max_dims));
 
   // Create dataset creation property list and set chunking
-  hid_t pd_plist = H5Pcreate(H5P_DATASET_CREATE);
+  hid_t pd_plist = SPECFEM_H5_CHECK_ID(H5Pcreate(H5P_DATASET_CREATE));
   hsize_t pd_chunk_dims[1] = {
     (hsize_t)this->numPoints
   }; // Chunk size = one timestep worth of data
-  H5Pset_chunk(pd_plist, 1, pd_chunk_dims);
+  SPECFEM_H5_CHECK(H5Pset_chunk(pd_plist, 1, pd_chunk_dims));
 
-  hid_t pd_dataset =
+  hid_t pd_dataset = SPECFEM_H5_CHECK_ID(
       H5Dcreate(pd_group, "Wavefield", H5T_NATIVE_FLOAT, pd_dataspace,
-                H5P_DEFAULT, pd_plist, H5P_DEFAULT);
-  H5Dclose(pd_dataset);
-  H5Pclose(pd_plist);
-  H5Sclose(pd_dataspace);
-  H5Gclose(pd_group);
+                H5P_DEFAULT, pd_plist, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dclose(pd_dataset));
+  SPECFEM_H5_CHECK(H5Pclose(pd_plist));
+  SPECFEM_H5_CHECK(H5Sclose(pd_dataspace));
+  SPECFEM_H5_CHECK(H5Gclose(pd_group));
 
   // Create extensible temporal metadata arrays instead of pre-allocated ones
   hsize_t temp_initial_dims[1] = { 0 };
@@ -566,107 +606,127 @@ void specfem::periodic_tasks::
   hsize_t temp_chunk_dims[1] = { 1 }; // Chunk size = 1 timestep
 
   // Create dataset creation property list for chunking
-  hid_t temp_plist = H5Pcreate(H5P_DATASET_CREATE);
-  H5Pset_chunk(temp_plist, 1, temp_chunk_dims);
+  hid_t temp_plist = SPECFEM_H5_CHECK_ID(H5Pcreate(H5P_DATASET_CREATE));
+  SPECFEM_H5_CHECK(H5Pset_chunk(temp_plist, 1, temp_chunk_dims));
 
-  hid_t temp_dataspace = H5Screate_simple(1, temp_initial_dims, temp_max_dims);
-  dataset = H5Dcreate(vtkhdf_group, "NumberOfPoints", H5T_NATIVE_LLONG,
-                      temp_dataspace, H5P_DEFAULT, temp_plist, H5P_DEFAULT);
-  H5Dclose(dataset);
-  H5Sclose(temp_dataspace);
+  hid_t temp_dataspace = SPECFEM_H5_CHECK_ID(
+      H5Screate_simple(1, temp_initial_dims, temp_max_dims));
+  dataset = SPECFEM_H5_CHECK_ID(
+      H5Dcreate(vtkhdf_group, "NumberOfPoints", H5T_NATIVE_LLONG,
+                temp_dataspace, H5P_DEFAULT, temp_plist, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(temp_dataspace));
 
-  temp_dataspace = H5Screate_simple(1, temp_initial_dims, temp_max_dims);
-  dataset = H5Dcreate(vtkhdf_group, "NumberOfCells", H5T_NATIVE_LLONG,
-                      temp_dataspace, H5P_DEFAULT, temp_plist, H5P_DEFAULT);
-  H5Dclose(dataset);
-  H5Sclose(temp_dataspace);
+  temp_dataspace = SPECFEM_H5_CHECK_ID(
+      H5Screate_simple(1, temp_initial_dims, temp_max_dims));
+  dataset = SPECFEM_H5_CHECK_ID(
+      H5Dcreate(vtkhdf_group, "NumberOfCells", H5T_NATIVE_LLONG, temp_dataspace,
+                H5P_DEFAULT, temp_plist, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(temp_dataspace));
 
-  temp_dataspace = H5Screate_simple(1, temp_initial_dims, temp_max_dims);
-  dataset = H5Dcreate(vtkhdf_group, "NumberOfConnectivityIds", H5T_NATIVE_LLONG,
-                      temp_dataspace, H5P_DEFAULT, temp_plist, H5P_DEFAULT);
-  H5Dclose(dataset);
-  H5Sclose(temp_dataspace);
+  temp_dataspace = SPECFEM_H5_CHECK_ID(
+      H5Screate_simple(1, temp_initial_dims, temp_max_dims));
+  dataset = SPECFEM_H5_CHECK_ID(
+      H5Dcreate(vtkhdf_group, "NumberOfConnectivityIds", H5T_NATIVE_LLONG,
+                temp_dataspace, H5P_DEFAULT, temp_plist, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(temp_dataspace));
 
-  H5Pclose(temp_plist);
+  SPECFEM_H5_CHECK(H5Pclose(temp_plist));
 
   // Create Steps group and extensible metadata
-  hid_t steps_group =
-      H5Gcreate(vtkhdf_group, "Steps", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  hid_t steps_group = SPECFEM_H5_CHECK_ID(
+      H5Gcreate(vtkhdf_group, "Steps", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT));
 
   // Create extensible datasets for time steps metadata
   // NSteps attribute - will be updated during run
-  hid_t attr_space = H5Screate(H5S_SCALAR);
+  hid_t attr_space = SPECFEM_H5_CHECK_ID(H5Screate(H5S_SCALAR));
   int initial_nsteps = 0;
-  hid_t attr = H5Acreate(steps_group, "NSteps", H5T_NATIVE_INT, attr_space,
-                         H5P_DEFAULT, H5P_DEFAULT);
-  H5Awrite(attr, H5T_NATIVE_INT, &initial_nsteps);
-  H5Aclose(attr);
-  H5Sclose(attr_space);
+  hid_t attr =
+      SPECFEM_H5_CHECK_ID(H5Acreate(steps_group, "NSteps", H5T_NATIVE_INT,
+                                    attr_space, H5P_DEFAULT, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Awrite(attr, H5T_NATIVE_INT, &initial_nsteps));
+  SPECFEM_H5_CHECK(H5Aclose(attr));
+  SPECFEM_H5_CHECK(H5Sclose(attr_space));
 
   // Create extensible dataset for time values
   hsize_t steps_initial_dims[1] = { 0 };
   hsize_t steps_max_dims[1] = { H5S_UNLIMITED };
   hsize_t steps_chunk_dims[1] = { 1 };
 
-  hid_t steps_plist = H5Pcreate(H5P_DATASET_CREATE);
-  H5Pset_chunk(steps_plist, 1, steps_chunk_dims);
+  hid_t steps_plist = SPECFEM_H5_CHECK_ID(H5Pcreate(H5P_DATASET_CREATE));
+  SPECFEM_H5_CHECK(H5Pset_chunk(steps_plist, 1, steps_chunk_dims));
 
-  hid_t steps_dataspace =
-      H5Screate_simple(1, steps_initial_dims, steps_max_dims);
-  dataset = H5Dcreate(steps_group, "Values", H5T_NATIVE_DOUBLE, steps_dataspace,
-                      H5P_DEFAULT, steps_plist, H5P_DEFAULT);
-  H5Dclose(dataset);
-  H5Sclose(steps_dataspace);
+  hid_t steps_dataspace = SPECFEM_H5_CHECK_ID(
+      H5Screate_simple(1, steps_initial_dims, steps_max_dims));
+  dataset = SPECFEM_H5_CHECK_ID(
+      H5Dcreate(steps_group, "Values", H5T_NATIVE_DOUBLE, steps_dataspace,
+                H5P_DEFAULT, steps_plist, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(steps_dataspace));
 
   // Create extensible datasets for NumberOfParts and offset arrays
-  steps_dataspace = H5Screate_simple(1, steps_initial_dims, steps_max_dims);
-  dataset = H5Dcreate(steps_group, "NumberOfParts", H5T_NATIVE_LLONG,
-                      steps_dataspace, H5P_DEFAULT, steps_plist, H5P_DEFAULT);
-  H5Dclose(dataset);
-  H5Sclose(steps_dataspace);
+  steps_dataspace = SPECFEM_H5_CHECK_ID(
+      H5Screate_simple(1, steps_initial_dims, steps_max_dims));
+  dataset = SPECFEM_H5_CHECK_ID(
+      H5Dcreate(steps_group, "NumberOfParts", H5T_NATIVE_LLONG, steps_dataspace,
+                H5P_DEFAULT, steps_plist, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(steps_dataspace));
 
-  steps_dataspace = H5Screate_simple(1, steps_initial_dims, steps_max_dims);
-  dataset = H5Dcreate(steps_group, "PartOffsets", H5T_NATIVE_LLONG,
-                      steps_dataspace, H5P_DEFAULT, steps_plist, H5P_DEFAULT);
-  H5Dclose(dataset);
-  H5Sclose(steps_dataspace);
+  steps_dataspace = SPECFEM_H5_CHECK_ID(
+      H5Screate_simple(1, steps_initial_dims, steps_max_dims));
+  dataset = SPECFEM_H5_CHECK_ID(
+      H5Dcreate(steps_group, "PartOffsets", H5T_NATIVE_LLONG, steps_dataspace,
+                H5P_DEFAULT, steps_plist, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(steps_dataspace));
 
-  steps_dataspace = H5Screate_simple(1, steps_initial_dims, steps_max_dims);
-  dataset = H5Dcreate(steps_group, "PointOffsets", H5T_NATIVE_LLONG,
-                      steps_dataspace, H5P_DEFAULT, steps_plist, H5P_DEFAULT);
-  H5Dclose(dataset);
-  H5Sclose(steps_dataspace);
+  steps_dataspace = SPECFEM_H5_CHECK_ID(
+      H5Screate_simple(1, steps_initial_dims, steps_max_dims));
+  dataset = SPECFEM_H5_CHECK_ID(
+      H5Dcreate(steps_group, "PointOffsets", H5T_NATIVE_LLONG, steps_dataspace,
+                H5P_DEFAULT, steps_plist, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(steps_dataspace));
 
-  steps_dataspace = H5Screate_simple(1, steps_initial_dims, steps_max_dims);
-  dataset = H5Dcreate(steps_group, "CellOffsets", H5T_NATIVE_LLONG,
-                      steps_dataspace, H5P_DEFAULT, steps_plist, H5P_DEFAULT);
-  H5Dclose(dataset);
-  H5Sclose(steps_dataspace);
+  steps_dataspace = SPECFEM_H5_CHECK_ID(
+      H5Screate_simple(1, steps_initial_dims, steps_max_dims));
+  dataset = SPECFEM_H5_CHECK_ID(
+      H5Dcreate(steps_group, "CellOffsets", H5T_NATIVE_LLONG, steps_dataspace,
+                H5P_DEFAULT, steps_plist, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(steps_dataspace));
 
-  steps_dataspace = H5Screate_simple(1, steps_initial_dims, steps_max_dims);
-  dataset = H5Dcreate(steps_group, "ConnectivityIdOffsets", H5T_NATIVE_LLONG,
-                      steps_dataspace, H5P_DEFAULT, steps_plist, H5P_DEFAULT);
-  H5Dclose(dataset);
-  H5Sclose(steps_dataspace);
+  steps_dataspace = SPECFEM_H5_CHECK_ID(
+      H5Screate_simple(1, steps_initial_dims, steps_max_dims));
+  dataset = SPECFEM_H5_CHECK_ID(
+      H5Dcreate(steps_group, "ConnectivityIdOffsets", H5T_NATIVE_LLONG,
+                steps_dataspace, H5P_DEFAULT, steps_plist, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(steps_dataspace));
 
   // Create PointDataOffsets subgroup with extensible datasets
-  hid_t pd_offsets_group = H5Gcreate(steps_group, "PointDataOffsets",
-                                     H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  hid_t pd_offsets_group = SPECFEM_H5_CHECK_ID(H5Gcreate(
+      steps_group, "PointDataOffsets", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT));
 
   // Wavefield offsets (extensible)
-  steps_dataspace = H5Screate_simple(1, steps_initial_dims, steps_max_dims);
-  dataset = H5Dcreate(pd_offsets_group, "Wavefield", H5T_NATIVE_LLONG,
-                      steps_dataspace, H5P_DEFAULT, steps_plist, H5P_DEFAULT);
-  H5Dclose(dataset);
-  H5Sclose(steps_dataspace);
-  H5Gclose(pd_offsets_group);
+  steps_dataspace = SPECFEM_H5_CHECK_ID(
+      H5Screate_simple(1, steps_initial_dims, steps_max_dims));
+  dataset = SPECFEM_H5_CHECK_ID(
+      H5Dcreate(pd_offsets_group, "Wavefield", H5T_NATIVE_LLONG,
+                steps_dataspace, H5P_DEFAULT, steps_plist, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(steps_dataspace));
+  SPECFEM_H5_CHECK(H5Gclose(pd_offsets_group));
 
-  H5Pclose(steps_plist);
-  H5Gclose(steps_group);
+  SPECFEM_H5_CHECK(H5Pclose(steps_plist));
+  SPECFEM_H5_CHECK(H5Gclose(steps_group));
 
   // Close HDF5 file - will reopen for each timestep write
-  H5Gclose(vtkhdf_group);
-  H5Fclose(hdf5_file_id);
+  SPECFEM_H5_CHECK(H5Gclose(vtkhdf_group));
+  SPECFEM_H5_CHECK(H5Fclose(hdf5_file_id));
 
   specfem::Logger::info([&](std::ostringstream &oss) {
     oss << "Initialized VTK HDF5 file for 3D wavefield output: "
@@ -780,6 +840,31 @@ void specfem::periodic_tasks::
       "JPG output not supported for 3D. Use VTK HDF5 output.");
 }
 
+// Helper: extend a 1D dataset, select hyperslab at write_offset, write one
+// scalar value, then close the dataset.
+void specfem::periodic_tasks::plot_wavefield<
+    specfem::element::dimension_tag::dim3>::
+    extend_and_write_scalar(hid_t parent, const char *dataset_name,
+                            hsize_t new_extent, hsize_t write_offset,
+                            hid_t mem_type, const void *data) {
+#ifndef NO_HDF5
+  hid_t ds = SPECFEM_H5_CHECK_ID(H5Dopen(parent, dataset_name, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dset_extent(ds, &new_extent));
+
+  hid_t filespace = SPECFEM_H5_CHECK_ID(H5Dget_space(ds));
+  hsize_t count = 1;
+  SPECFEM_H5_CHECK(H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &write_offset,
+                                       NULL, &count, NULL));
+  hid_t memspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, &count, NULL));
+  SPECFEM_H5_CHECK(
+      H5Dwrite(ds, mem_type, memspace, filespace, H5P_DEFAULT, data));
+
+  SPECFEM_H5_CHECK(H5Sclose(memspace));
+  SPECFEM_H5_CHECK(H5Sclose(filespace));
+  SPECFEM_H5_CHECK(H5Dclose(ds));
+#endif
+}
+
 template <>
 void specfem::periodic_tasks::
     plot_wavefield<specfem::element::dimension_tag::dim3>::run<
@@ -788,22 +873,25 @@ void specfem::periodic_tasks::
 
 #ifndef NO_HDF5
   // Open HDF5 file for extending datasets
-  hid_t hdf5_file_id =
-      H5Fopen(this->hdf5_filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
-  hid_t vtkhdf_group = H5Gopen(hdf5_file_id, "/VTKHDF", H5P_DEFAULT);
+  hid_t hdf5_file_id = SPECFEM_H5_CHECK_ID(
+      H5Fopen(this->hdf5_filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT));
+  hid_t vtkhdf_group =
+      SPECFEM_H5_CHECK_ID(H5Gopen(hdf5_file_id, "/VTKHDF", H5P_DEFAULT));
 
   // Extend and write wavefield data
-  hid_t pd_group = H5Gopen(vtkhdf_group, "PointData", H5P_DEFAULT);
-  hid_t pd_dataset = H5Dopen(pd_group, "Wavefield", H5P_DEFAULT);
+  hid_t pd_group =
+      SPECFEM_H5_CHECK_ID(H5Gopen(vtkhdf_group, "PointData", H5P_DEFAULT));
+  hid_t pd_dataset =
+      SPECFEM_H5_CHECK_ID(H5Dopen(pd_group, "Wavefield", H5P_DEFAULT));
 
   // Extend the wavefield dataset to accommodate new timestep
   hsize_t new_size[1] = { (hsize_t)((this->current_timestep + 1) *
                                     this->numPoints) };
-  H5Dset_extent(pd_dataset, new_size);
+  SPECFEM_H5_CHECK(H5Dset_extent(pd_dataset, new_size));
 
   // Write wavefield data for this timestep
   std::vector<float> scalar_data(this->numPoints);
-  for (int i = 0; i < this->numPoints; i++) {
+  for (long long i = 0; i < this->numPoints; i++) {
     scalar_data[i] = scalars->GetValue(i);
   }
 
@@ -812,188 +900,79 @@ void specfem::periodic_tasks::
   hsize_t count = this->numPoints;
 
   // Select hyperslab in the file dataset
-  hid_t filespace = H5Dget_space(pd_dataset);
-  H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &offset, NULL, &count, NULL);
+  hid_t filespace = SPECFEM_H5_CHECK_ID(H5Dget_space(pd_dataset));
+  SPECFEM_H5_CHECK(H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &offset, NULL,
+                                       &count, NULL));
 
-  // Create memory dataspace
-  hid_t memspace = H5Screate_simple(1, &count, NULL);
+  // Create memory dataspace and write
+  hid_t memspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, &count, NULL));
+  SPECFEM_H5_CHECK(H5Dwrite(pd_dataset, H5T_NATIVE_FLOAT, memspace, filespace,
+                            H5P_DEFAULT, scalar_data.data()));
 
-  // Write data to dataset
-  H5Dwrite(pd_dataset, H5T_NATIVE_FLOAT, memspace, filespace, H5P_DEFAULT,
-           scalar_data.data());
+  SPECFEM_H5_CHECK(H5Sclose(memspace));
+  SPECFEM_H5_CHECK(H5Sclose(filespace));
+  SPECFEM_H5_CHECK(H5Dclose(pd_dataset));
+  SPECFEM_H5_CHECK(H5Gclose(pd_group));
 
-  H5Sclose(memspace);
-  H5Sclose(filespace);
-  H5Dclose(pd_dataset);
-  H5Gclose(pd_group);
-
-  // Update temporal metadata arrays - extend all arrays
-  hsize_t new_timestep_count[1] = { (hsize_t)(this->current_timestep + 1) };
-
-  // Extend and update NumberOfPoints array
-  hid_t np_dataset = H5Dopen(vtkhdf_group, "NumberOfPoints", H5P_DEFAULT);
-  H5Dset_extent(np_dataset, new_timestep_count);
+  // Update temporal metadata arrays
+  hsize_t new_ts_count = (hsize_t)(this->current_timestep + 1);
   hsize_t ts_offset = this->current_timestep;
-  hsize_t ts_count = 1;
-  hid_t np_filespace = H5Dget_space(np_dataset);
-  H5Sselect_hyperslab(np_filespace, H5S_SELECT_SET, &ts_offset, NULL, &ts_count,
-                      NULL);
-  hid_t np_memspace = H5Screate_simple(1, &ts_count, NULL);
-  long long numPoints = this->numPoints;
-  H5Dwrite(np_dataset, H5T_NATIVE_LLONG, np_memspace, np_filespace, H5P_DEFAULT,
-           &numPoints);
-  H5Sclose(np_memspace);
-  H5Sclose(np_filespace);
-  H5Dclose(np_dataset);
 
-  // Extend and update NumberOfCells array
-  hid_t nc_dataset = H5Dopen(vtkhdf_group, "NumberOfCells", H5P_DEFAULT);
-  H5Dset_extent(nc_dataset, new_timestep_count);
-  hid_t nc_filespace = H5Dget_space(nc_dataset);
-  H5Sselect_hyperslab(nc_filespace, H5S_SELECT_SET, &ts_offset, NULL, &ts_count,
-                      NULL);
-  hid_t nc_memspace = H5Screate_simple(1, &ts_count, NULL);
-  long long numCells = this->numCells;
-  H5Dwrite(nc_dataset, H5T_NATIVE_LLONG, nc_memspace, nc_filespace, H5P_DEFAULT,
-           &numCells);
-  H5Sclose(nc_memspace);
-  H5Sclose(nc_filespace);
-  H5Dclose(nc_dataset);
+  long long num_points_val = this->numPoints;
+  long long num_cells_val = this->numCells;
+  long long num_conn_ids_val = this->numConnectivityIds;
 
-  // Extend and update NumberOfConnectivityIds array
-  hid_t nci_dataset =
-      H5Dopen(vtkhdf_group, "NumberOfConnectivityIds", H5P_DEFAULT);
-  H5Dset_extent(nci_dataset, new_timestep_count);
-  hid_t nci_filespace = H5Dget_space(nci_dataset);
-  H5Sselect_hyperslab(nci_filespace, H5S_SELECT_SET, &ts_offset, NULL,
-                      &ts_count, NULL);
-  hid_t nci_memspace = H5Screate_simple(1, &ts_count, NULL);
-  long long numConnIds = this->numConnectivityIds;
-  H5Dwrite(nci_dataset, H5T_NATIVE_LLONG, nci_memspace, nci_filespace,
-           H5P_DEFAULT, &numConnIds);
-  H5Sclose(nci_memspace);
-  H5Sclose(nci_filespace);
-  H5Dclose(nci_dataset);
+  extend_and_write_scalar(vtkhdf_group, "NumberOfPoints", new_ts_count,
+                          ts_offset, H5T_NATIVE_LLONG, &num_points_val);
+  extend_and_write_scalar(vtkhdf_group, "NumberOfCells", new_ts_count,
+                          ts_offset, H5T_NATIVE_LLONG, &num_cells_val);
+  extend_and_write_scalar(vtkhdf_group, "NumberOfConnectivityIds", new_ts_count,
+                          ts_offset, H5T_NATIVE_LLONG, &num_conn_ids_val);
 
   // Update Steps metadata
-  hid_t steps_group = H5Gopen(vtkhdf_group, "Steps", H5P_DEFAULT);
+  hid_t steps_group =
+      SPECFEM_H5_CHECK_ID(H5Gopen(vtkhdf_group, "Steps", H5P_DEFAULT));
 
-  // Extend and write time value for this timestep
   double time_value =
       static_cast<double>(this->assembly.t0) +
       static_cast<double>(istep) * static_cast<double>(this->assembly.dt);
-  hid_t values_dataset = H5Dopen(steps_group, "Values", H5P_DEFAULT);
-  H5Dset_extent(values_dataset, new_timestep_count);
-  hid_t values_filespace = H5Dget_space(values_dataset);
-  H5Sselect_hyperslab(values_filespace, H5S_SELECT_SET, &ts_offset, NULL,
-                      &ts_count, NULL);
-  hid_t values_memspace = H5Screate_simple(1, &ts_count, NULL);
-  H5Dwrite(values_dataset, H5T_NATIVE_DOUBLE, values_memspace, values_filespace,
-           H5P_DEFAULT, &time_value);
-  H5Sclose(values_memspace);
-  H5Sclose(values_filespace);
-  H5Dclose(values_dataset);
+  extend_and_write_scalar(steps_group, "Values", new_ts_count, ts_offset,
+                          H5T_NATIVE_DOUBLE, &time_value);
 
-  // Extend and update NumberOfParts (always 1)
-  hid_t nparts_dataset = H5Dopen(steps_group, "NumberOfParts", H5P_DEFAULT);
-  H5Dset_extent(nparts_dataset, new_timestep_count);
-  hid_t nparts_filespace = H5Dget_space(nparts_dataset);
-  H5Sselect_hyperslab(nparts_filespace, H5S_SELECT_SET, &ts_offset, NULL,
-                      &ts_count, NULL);
-  hid_t nparts_memspace = H5Screate_simple(1, &ts_count, NULL);
-  long long numParts = 1;
-  H5Dwrite(nparts_dataset, H5T_NATIVE_LLONG, nparts_memspace, nparts_filespace,
-           H5P_DEFAULT, &numParts);
-  H5Sclose(nparts_memspace);
-  H5Sclose(nparts_filespace);
-  H5Dclose(nparts_dataset);
+  long long num_parts = 1;
+  extend_and_write_scalar(steps_group, "NumberOfParts", new_ts_count, ts_offset,
+                          H5T_NATIVE_LLONG, &num_parts);
 
-  // Extend and update offset arrays (all zeros for static geometry/single part)
-  long long zeroOffset = 0;
-
-  // PartOffsets
-  hid_t part_offsets_dataset = H5Dopen(steps_group, "PartOffsets", H5P_DEFAULT);
-  H5Dset_extent(part_offsets_dataset, new_timestep_count);
-  hid_t part_offsets_filespace = H5Dget_space(part_offsets_dataset);
-  H5Sselect_hyperslab(part_offsets_filespace, H5S_SELECT_SET, &ts_offset, NULL,
-                      &ts_count, NULL);
-  hid_t part_offsets_memspace = H5Screate_simple(1, &ts_count, NULL);
-  H5Dwrite(part_offsets_dataset, H5T_NATIVE_LLONG, part_offsets_memspace,
-           part_offsets_filespace, H5P_DEFAULT, &zeroOffset);
-  H5Sclose(part_offsets_memspace);
-  H5Sclose(part_offsets_filespace);
-  H5Dclose(part_offsets_dataset);
-
-  // PointOffsets
-  hid_t point_offsets_dataset =
-      H5Dopen(steps_group, "PointOffsets", H5P_DEFAULT);
-  H5Dset_extent(point_offsets_dataset, new_timestep_count);
-  hid_t point_offsets_filespace = H5Dget_space(point_offsets_dataset);
-  H5Sselect_hyperslab(point_offsets_filespace, H5S_SELECT_SET, &ts_offset, NULL,
-                      &ts_count, NULL);
-  hid_t point_offsets_memspace = H5Screate_simple(1, &ts_count, NULL);
-  H5Dwrite(point_offsets_dataset, H5T_NATIVE_LLONG, point_offsets_memspace,
-           point_offsets_filespace, H5P_DEFAULT, &zeroOffset);
-  H5Sclose(point_offsets_memspace);
-  H5Sclose(point_offsets_filespace);
-  H5Dclose(point_offsets_dataset);
-
-  // CellOffsets
-  hid_t cell_offsets_dataset = H5Dopen(steps_group, "CellOffsets", H5P_DEFAULT);
-  H5Dset_extent(cell_offsets_dataset, new_timestep_count);
-  hid_t cell_offsets_filespace = H5Dget_space(cell_offsets_dataset);
-  H5Sselect_hyperslab(cell_offsets_filespace, H5S_SELECT_SET, &ts_offset, NULL,
-                      &ts_count, NULL);
-  hid_t cell_offsets_memspace = H5Screate_simple(1, &ts_count, NULL);
-  H5Dwrite(cell_offsets_dataset, H5T_NATIVE_LLONG, cell_offsets_memspace,
-           cell_offsets_filespace, H5P_DEFAULT, &zeroOffset);
-  H5Sclose(cell_offsets_memspace);
-  H5Sclose(cell_offsets_filespace);
-  H5Dclose(cell_offsets_dataset);
-
-  // ConnectivityIdOffsets
-  hid_t conn_offsets_dataset =
-      H5Dopen(steps_group, "ConnectivityIdOffsets", H5P_DEFAULT);
-  H5Dset_extent(conn_offsets_dataset, new_timestep_count);
-  hid_t conn_offsets_filespace = H5Dget_space(conn_offsets_dataset);
-  H5Sselect_hyperslab(conn_offsets_filespace, H5S_SELECT_SET, &ts_offset, NULL,
-                      &ts_count, NULL);
-  hid_t conn_offsets_memspace = H5Screate_simple(1, &ts_count, NULL);
-  H5Dwrite(conn_offsets_dataset, H5T_NATIVE_LLONG, conn_offsets_memspace,
-           conn_offsets_filespace, H5P_DEFAULT, &zeroOffset);
-  H5Sclose(conn_offsets_memspace);
-  H5Sclose(conn_offsets_filespace);
-  H5Dclose(conn_offsets_dataset);
+  // Offset arrays (all zeros for static geometry / single part)
+  long long zero_offset = 0;
+  extend_and_write_scalar(steps_group, "PartOffsets", new_ts_count, ts_offset,
+                          H5T_NATIVE_LLONG, &zero_offset);
+  extend_and_write_scalar(steps_group, "PointOffsets", new_ts_count, ts_offset,
+                          H5T_NATIVE_LLONG, &zero_offset);
+  extend_and_write_scalar(steps_group, "CellOffsets", new_ts_count, ts_offset,
+                          H5T_NATIVE_LLONG, &zero_offset);
+  extend_and_write_scalar(steps_group, "ConnectivityIdOffsets", new_ts_count,
+                          ts_offset, H5T_NATIVE_LLONG, &zero_offset);
 
   // Update PointDataOffsets/Wavefield
-  hid_t pd_offsets_group =
-      H5Gopen(steps_group, "PointDataOffsets", H5P_DEFAULT);
-  hid_t wf_offsets_dataset =
-      H5Dopen(pd_offsets_group, "Wavefield", H5P_DEFAULT);
-  H5Dset_extent(wf_offsets_dataset, new_timestep_count);
-  hid_t wf_offsets_filespace = H5Dget_space(wf_offsets_dataset);
-  H5Sselect_hyperslab(wf_offsets_filespace, H5S_SELECT_SET, &ts_offset, NULL,
-                      &ts_count, NULL);
-  hid_t wf_offsets_memspace = H5Screate_simple(1, &ts_count, NULL);
-  long long wavefieldOffset = this->current_timestep * this->numPoints;
-  H5Dwrite(wf_offsets_dataset, H5T_NATIVE_LLONG, wf_offsets_memspace,
-           wf_offsets_filespace, H5P_DEFAULT, &wavefieldOffset);
-  H5Sclose(wf_offsets_memspace);
-  H5Sclose(wf_offsets_filespace);
-  H5Dclose(wf_offsets_dataset);
-  H5Gclose(pd_offsets_group);
+  hid_t pd_offsets_group = SPECFEM_H5_CHECK_ID(
+      H5Gopen(steps_group, "PointDataOffsets", H5P_DEFAULT));
+  long long wavefield_offset = this->current_timestep * this->numPoints;
+  extend_and_write_scalar(pd_offsets_group, "Wavefield", new_ts_count,
+                          ts_offset, H5T_NATIVE_LLONG, &wavefield_offset);
+  SPECFEM_H5_CHECK(H5Gclose(pd_offsets_group));
 
   // Update NSteps attribute
   int nsteps_written = this->current_timestep + 1;
-  hid_t attr = H5Aopen(steps_group, "NSteps", H5P_DEFAULT);
-  H5Awrite(attr, H5T_NATIVE_INT, &nsteps_written);
-  H5Aclose(attr);
+  hid_t attr = SPECFEM_H5_CHECK_ID(H5Aopen(steps_group, "NSteps", H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Awrite(attr, H5T_NATIVE_INT, &nsteps_written));
+  SPECFEM_H5_CHECK(H5Aclose(attr));
 
-  H5Gclose(steps_group);
+  SPECFEM_H5_CHECK(H5Gclose(steps_group));
 
   // Close HDF5 resources
-  H5Gclose(vtkhdf_group);
-  H5Fclose(hdf5_file_id);
+  SPECFEM_H5_CHECK(H5Gclose(vtkhdf_group));
+  SPECFEM_H5_CHECK(H5Fclose(hdf5_file_id));
 
   this->current_timestep++;
 

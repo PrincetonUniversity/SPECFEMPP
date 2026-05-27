@@ -88,7 +88,8 @@ public:
   const specfem::enums::display_component component; ///< Component of the
                                                      ///< wavefield to plot
   const boost::filesystem::path output_folder;       ///< Path to output folder
-  specfem::assembly::assembly<dimension_tag> assembly; ///< Assembly object
+  const specfem::assembly::assembly<dimension_tag> &assembly; ///< Assembly
+                                                              ///< object
 
   // Grid parameter members
   int nspec; ///< Number of elements
@@ -103,11 +104,11 @@ private:
 
 #ifndef NO_HDF5
   // VTK HDF5 file handling members
-  std::string hdf5_filename; // Store filename for reopening
-  int current_timestep;
-  int numPoints;          // Number of points in grid
-  int numCells;           // Number of cells in grid
-  int numConnectivityIds; // Number of connectivity IDs
+  std::string hdf5_filename;    ///< Store filename for reopening
+  int current_timestep;         ///< Current output timestep index
+  long long numPoints;          ///< Number of points in grid
+  long long numCells;           ///< Number of cells in grid
+  long long numConnectivityIds; ///< Number of connectivity IDs
 #endif
 
   // Grid creation and wavefield computation
@@ -127,6 +128,11 @@ private:
   void run(vtkSmartPointer<vtkFloatArray> &scalars, const int istep);
 
   void run_render(vtkSmartPointer<vtkFloatArray> &scalars);
+
+  // Helper to extend a 1D HDF5 dataset and write a single scalar value
+  static void extend_and_write_scalar(hid_t parent, const char *dataset_name,
+                                      hsize_t new_extent, hsize_t write_offset,
+                                      hid_t mem_type, const void *data);
 
   // Helper function to get scalar value at a given point
   static float get_scalar_value_at_point(
