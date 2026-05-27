@@ -29,22 +29,20 @@ namespace datatype {
  */
 template <typename T, specfem::element::dimension_tag DimensionTag,
           int NumberOfElements, int NumberOfGLLPoints, bool UseSIMD = false,
-          typename MemorySpace =
-              Kokkos::DefaultExecutionSpace::scratch_memory_space,
-          typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged>>
+          typename... ViewParameters>
 struct ScalarChunkElementViewType
     : public ChunkNDimViewType<T, DimensionTag, NumberOfElements,
                                NumberOfGLLPoints,
                                specfem::element::dimension<DimensionTag>::dim,
                                std::integer_sequence<int>,
                                specfem::datatype::AccessorType::chunk_element,
-                               UseSIMD, MemorySpace, MemoryTraits> {
+                               UseSIMD, ViewParameters...> {
   using chunk_ndim_view_type =
       ChunkNDimViewType<T, DimensionTag, NumberOfElements, NumberOfGLLPoints,
                         specfem::element::dimension<DimensionTag>::dim,
                         std::integer_sequence<int>,
                         specfem::datatype::AccessorType::chunk_element, UseSIMD,
-                        MemorySpace, MemoryTraits>;
+                        ViewParameters...>;
 
   constexpr static int nelements = NumberOfElements; ///< Number of elements in
                                                      ///< the chunk
@@ -66,23 +64,20 @@ struct ScalarChunkElementViewType
  */
 template <typename T, specfem::element::dimension_tag DimensionTag,
           int NumberOfElements, int NumberOfGLLPoints, int Components,
-          bool UseSIMD = false,
-          typename MemorySpace =
-              Kokkos::DefaultExecutionSpace::scratch_memory_space,
-          typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged>>
+          bool UseSIMD = false, typename... ViewParameters>
 struct VectorChunkElementViewType
     : public ChunkNDimViewType<T, DimensionTag, NumberOfElements,
                                NumberOfGLLPoints,
                                specfem::element::dimension<DimensionTag>::dim,
                                std::integer_sequence<int, Components>,
                                specfem::datatype::AccessorType::chunk_element,
-                               UseSIMD, MemorySpace, MemoryTraits> {
+                               UseSIMD, ViewParameters...> {
   using chunk_ndim_view_type =
       ChunkNDimViewType<T, DimensionTag, NumberOfElements, NumberOfGLLPoints,
                         specfem::element::dimension<DimensionTag>::dim,
                         std::integer_sequence<int, Components>,
                         specfem::datatype::AccessorType::chunk_element, UseSIMD,
-                        MemorySpace, MemoryTraits>;
+                        ViewParameters...>;
   using point_view_type =
       VectorPointViewType<T, Components, UseSIMD>; ///< Point view type for
                                                    ///< component access
@@ -132,23 +127,21 @@ struct VectorChunkElementViewType
 template <typename T, specfem::element::dimension_tag DimensionTag,
           int NumberOfElements, int NumberOfGLLPoints, int Components,
           int NumberOfDimensions, bool UseSIMD = false,
-          typename MemorySpace =
-              Kokkos::DefaultExecutionSpace::scratch_memory_space,
-          typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged>>
+          typename... ViewParameters>
 struct TensorChunkElementViewType
     : public ChunkNDimViewType<
           T, DimensionTag, NumberOfElements, NumberOfGLLPoints,
           specfem::element::dimension<DimensionTag>::dim,
           std::integer_sequence<int, Components, NumberOfDimensions>,
-          specfem::datatype::AccessorType::chunk_element, UseSIMD, MemorySpace,
-          MemoryTraits> {
+          specfem::datatype::AccessorType::chunk_element, UseSIMD,
+          ViewParameters...> {
 
   using chunk_ndim_view_type = ChunkNDimViewType<
       T, DimensionTag, NumberOfElements, NumberOfGLLPoints,
       specfem::element::dimension<DimensionTag>::dim,
       std::integer_sequence<int, Components, NumberOfDimensions>,
-      specfem::datatype::AccessorType::chunk_element, UseSIMD, MemorySpace,
-      MemoryTraits>;
+      specfem::datatype::AccessorType::chunk_element, UseSIMD,
+      ViewParameters...>;
 
   constexpr static int nelements = NumberOfElements; ///< Number of elements in
   ///< the chunk
