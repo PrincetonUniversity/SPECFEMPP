@@ -149,10 +149,16 @@ function(specfem_print_configuration_summary)
     set(PYTHON_BINDING_STATUS "ON")
   endif()
 
+  set(METIS_STATUS "OFF")
+  if(SPECFEM_ENABLE_METIS)
+    set(METIS_STATUS "ON")
+  endif()
+
   string(APPEND SUMMARY_STRING "  SPECFEM_ENABLE_SIMD                      | ${SIMD_STATUS}\n")
   string(APPEND SUMMARY_STRING "  SPECFEM_ENABLE_PROFILING                 | ${PROFILING_STATUS}\n")
   string(APPEND SUMMARY_STRING "  SPECFEM_ENABLE_DOUBLE_PRECISION          | ${DOUBLE_PRECISION_STATUS}\n")
   string(APPEND SUMMARY_STRING "  SPECFEM_ENABLE_MPI                       | ${MPI_STATUS}\n")
+  string(APPEND SUMMARY_STRING "  SPECFEM_ENABLE_METIS                     | ${METIS_STATUS}\n")
   string(APPEND SUMMARY_STRING "  SPECFEM_BINDING_PYTHON                   | ${PYTHON_BINDING_STATUS}\n")
   string(APPEND SUMMARY_STRING "\n")
 
