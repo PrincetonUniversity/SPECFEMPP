@@ -5,6 +5,7 @@
 #include "specfem/periodic_tasks/plot_wavefield.hpp"
 #include "specfem/periodic_tasks/plotter.hpp"
 #include <boost/filesystem.hpp>
+#include <vector>
 
 #ifdef NO_VTK
 #include <sstream>
@@ -106,9 +107,28 @@ private:
   // VTK HDF5 file handling members
   std::string hdf5_filename;    ///< Store filename for reopening
   int current_timestep;         ///< Current output timestep index
-  long long numPoints;          ///< Number of points in grid
-  long long numCells;           ///< Number of cells in grid
-  long long numConnectivityIds; ///< Number of connectivity IDs
+  long long numPoints;          ///< Number of local points in grid
+  long long numCells;           ///< Number of local cells in grid
+  long long numConnectivityIds; ///< Number of local connectivity IDs
+
+  // MPI partition info (all zero/local in serial builds)
+  long long global_point_offset = 0;        ///< This rank's offset into global
+                                            ///< Points array
+  long long global_cell_offset = 0;         ///< This rank's offset into global
+                                            ///< Cells array
+  long long global_connectivity_offset = 0; ///< This rank's offset into global
+                                            ///< Connectivity array
+  long long total_points = 0;       ///< Sum of numPoints across all ranks
+  long long total_cells = 0;        ///< Sum of numCells across all ranks
+  long long total_connectivity = 0; ///< Sum of numConnectivityIds across all
+                                    ///< ranks
+  int num_parts = 1;                ///< Number of MPI ranks (1 for serial)
+  bool use_parallel_hdf5 = false;   ///< True if using collective parallel I/O
+  std::vector<long long> all_point_offsets; ///< Per-rank point offsets (rank 0)
+  std::vector<long long> all_point_counts;  ///< Per-rank point counts (rank 0)
+  std::vector<long long> all_cell_counts;   ///< Per-rank cell counts (rank 0)
+  std::vector<long long> all_connectivity_counts; ///< Per-rank connectivity
+                                                  ///< counts (rank 0)
 #endif
 
   // Grid creation and wavefield computation
@@ -129,10 +149,28 @@ private:
 
   void run_render(vtkSmartPointer<vtkFloatArray> &scalars);
 
-  // Helper to extend a 1D HDF5 dataset and write a single scalar value
+  // Helper to extend a 1D HDF5 dataset and write a single scalar value.
+  // When do_write is false, extends the dataset but writes nothing (for
+  // collective H5Dset_extent on non-writing ranks in parallel HDF5).
   static void extend_and_write_scalar(hid_t parent, const char *dataset_name,
                                       hsize_t new_extent, hsize_t write_offset,
-                                      hid_t mem_type, const void *data);
+                                      hid_t mem_type, const void *data,
+                                      hid_t dxpl = H5P_DEFAULT,
+                                      bool do_write = true);
+
+  // Helper to extend a 1D HDF5 dataset and write an array of values.
+  // When do_write is false, extends the dataset but writes nothing.
+  static void extend_and_write_array(hid_t parent, const char *dataset_name,
+                                     hsize_t new_extent, hsize_t write_offset,
+                                     hsize_t count, hid_t mem_type,
+                                     const void *data, hid_t dxpl = H5P_DEFAULT,
+                                     bool do_write = true);
+
+  /// @brief Compute MPI offsets via prefix sum (no-op for serial)
+  void compute_mpi_offsets();
+
+  /// @brief Create HDF5 file access property list (parallel or serial)
+  hid_t create_file_access_plist() const;
 
   // Helper function to get scalar value at a given point
   static float get_scalar_value_at_point(

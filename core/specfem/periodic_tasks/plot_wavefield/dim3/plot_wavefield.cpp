@@ -2,6 +2,7 @@
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/logger.hpp"
+#include "specfem/mpi/mpi.hpp"
 #include "specfem/periodic_tasks/plotter.hpp"
 #include "specfem/program.hpp"
 #include "specfem/utilities.hpp"
@@ -307,10 +308,30 @@ void specfem::periodic_tasks::
   this->numPoints = 0;
   this->numCells = 0;
 
-  // Create HDF5 file
+  // Determine filename and parallel mode
+#ifdef SPECFEM_HDF5_IS_PARALLEL
+  this->use_parallel_hdf5 = true;
   this->hdf5_filename = (this->output_folder / "wavefield.vtkhdf").string();
-  hid_t hdf5_file_id = SPECFEM_H5_CHECK_ID(H5Fcreate(
-      this->hdf5_filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT));
+#elif defined(SPECFEM_ENABLE_MPI)
+  this->use_parallel_hdf5 = false;
+  this->hdf5_filename = specfem::MPI::format_proc_filename(
+      (this->output_folder / "wavefield.vtkhdf").string());
+  // Create the proc subdirectory on rank 0, then synchronize
+  if (specfem::MPI::main_proc()) {
+    boost::filesystem::create_directories(
+        boost::filesystem::path(this->hdf5_filename).parent_path());
+  }
+  specfem::MPI::sync();
+#else
+  this->use_parallel_hdf5 = false;
+  this->hdf5_filename = (this->output_folder / "wavefield.vtkhdf").string();
+#endif
+
+  // Create HDF5 file with appropriate access property list
+  hid_t fapl = this->create_file_access_plist();
+  hid_t hdf5_file_id = SPECFEM_H5_CHECK_ID(
+      H5Fcreate(this->hdf5_filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, fapl));
+  SPECFEM_H5_CHECK(H5Pclose(fapl));
   hid_t vtkhdf_group = SPECFEM_H5_CHECK_ID(H5Gcreate(
       hdf5_file_id, "/VTKHDF", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT));
 
@@ -364,6 +385,13 @@ void specfem::periodic_tasks::
   // Store connectivity size for later use
   this->numConnectivityIds = connectivity.size();
 
+  // Compute MPI offsets (no-op for serial builds)
+  this->compute_mpi_offsets();
+
+  // For multi-partition VTKHDF, connectivity uses LOCAL point indices
+  // (each partition's data is concatenated). Do NOT shift point indices.
+  // Offsets use LOCAL connectivity indices (restarting from 0 per partition).
+
   // Extract points as 2D array (numPoints, 3)
   std::vector<double> pointCoords(this->numPoints * 3);
   for (vtkIdType i = 0; i < this->numPoints; i++) {
@@ -374,48 +402,119 @@ void specfem::periodic_tasks::
     pointCoords[i * 3 + 2] = pt[2];
   }
 
-  // Write Points (static geometry) - 2D array (numPoints, 3)
-  hsize_t point_dims[2] = { (hsize_t)this->numPoints, 3 };
+  // Create transfer property list (collective for parallel HDF5)
+  hid_t dxpl = H5P_DEFAULT;
+#ifdef SPECFEM_HDF5_IS_PARALLEL
+  if (this->use_parallel_hdf5) {
+    dxpl = SPECFEM_H5_CHECK_ID(H5Pcreate(H5P_DATASET_XFER));
+    SPECFEM_H5_CHECK(H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT));
+  }
+#endif
+
+  // Write Points (static geometry) - 2D array
+  // For parallel: dataset sized to global totals, each rank writes at offset
+  hsize_t point_dims[2] = { (hsize_t)this->total_points, 3 };
   hid_t dataspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(2, point_dims, NULL));
   hid_t dataset = SPECFEM_H5_CHECK_ID(
       H5Dcreate(vtkhdf_group, "Points", H5T_NATIVE_DOUBLE, dataspace,
                 H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT));
-  SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL,
-                            H5P_DEFAULT, pointCoords.data()));
+
+  if (this->use_parallel_hdf5) {
+    // Each rank writes its local points at its global offset
+    hsize_t pt_offset[2] = { (hsize_t)this->global_point_offset, 0 };
+    hsize_t pt_count[2] = { (hsize_t)this->numPoints, 3 };
+    SPECFEM_H5_CHECK(H5Sselect_hyperslab(dataspace, H5S_SELECT_SET, pt_offset,
+                                         NULL, pt_count, NULL));
+    hid_t pt_memspace =
+        SPECFEM_H5_CHECK_ID(H5Screate_simple(2, pt_count, NULL));
+    SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_DOUBLE, pt_memspace,
+                              dataspace, dxpl, pointCoords.data()));
+    SPECFEM_H5_CHECK(H5Sclose(pt_memspace));
+  } else {
+    SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL,
+                              H5P_DEFAULT, pointCoords.data()));
+  }
   SPECFEM_H5_CHECK(H5Dclose(dataset));
   SPECFEM_H5_CHECK(H5Sclose(dataspace));
 
   // Write Connectivity (static)
   hsize_t dims[1];
-  dims[0] = connectivity.size();
+  dims[0] = (hsize_t)this->total_connectivity;
   dataspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, dims, NULL));
   dataset = SPECFEM_H5_CHECK_ID(
       H5Dcreate(vtkhdf_group, "Connectivity", H5T_NATIVE_LLONG, dataspace,
                 H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT));
-  SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_LLONG, H5S_ALL, H5S_ALL,
-                            H5P_DEFAULT, connectivity.data()));
+
+  if (this->use_parallel_hdf5) {
+    hsize_t conn_offset = (hsize_t)this->global_connectivity_offset;
+    hsize_t conn_count = (hsize_t)this->numConnectivityIds;
+    SPECFEM_H5_CHECK(H5Sselect_hyperslab(
+        dataspace, H5S_SELECT_SET, &conn_offset, NULL, &conn_count, NULL));
+    hid_t conn_memspace =
+        SPECFEM_H5_CHECK_ID(H5Screate_simple(1, &conn_count, NULL));
+    SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_LLONG, conn_memspace,
+                              dataspace, dxpl, connectivity.data()));
+    SPECFEM_H5_CHECK(H5Sclose(conn_memspace));
+  } else {
+    SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_LLONG, H5S_ALL, H5S_ALL,
+                              H5P_DEFAULT, connectivity.data()));
+  }
   SPECFEM_H5_CHECK(H5Dclose(dataset));
   SPECFEM_H5_CHECK(H5Sclose(dataspace));
 
   // Write Offsets (static)
-  dims[0] = offsets.size();
+  // For multi-partition: each partition contributes (numCells + 1) entries
+  // (including its own leading 0). Total size = total_cells + num_parts.
+  // Each partition's offsets are LOCAL (not shifted to global).
+  dims[0] = (hsize_t)(this->total_cells + this->num_parts);
   dataspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, dims, NULL));
   dataset = SPECFEM_H5_CHECK_ID(
       H5Dcreate(vtkhdf_group, "Offsets", H5T_NATIVE_LLONG, dataspace,
                 H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT));
-  SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_LLONG, H5S_ALL, H5S_ALL,
-                            H5P_DEFAULT, offsets.data()));
+
+  if (this->use_parallel_hdf5) {
+    // Each rank writes all (numCells + 1) local offset entries.
+    // Position in file: global_cell_offset + rank (each prior partition
+    // contributes numCells[p] + 1 entries).
+    int rank = specfem::MPI::get_rank();
+    hsize_t off_file_offset = (hsize_t)(this->global_cell_offset + rank);
+    hsize_t off_write_count = (hsize_t)(this->numCells + 1);
+    SPECFEM_H5_CHECK(H5Sselect_hyperslab(dataspace, H5S_SELECT_SET,
+                                         &off_file_offset, NULL,
+                                         &off_write_count, NULL));
+    hid_t off_memspace =
+        SPECFEM_H5_CHECK_ID(H5Screate_simple(1, &off_write_count, NULL));
+    SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_LLONG, off_memspace,
+                              dataspace, dxpl, offsets.data()));
+    SPECFEM_H5_CHECK(H5Sclose(off_memspace));
+  } else {
+    SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_LLONG, H5S_ALL, H5S_ALL,
+                              H5P_DEFAULT, offsets.data()));
+  }
   SPECFEM_H5_CHECK(H5Dclose(dataset));
   SPECFEM_H5_CHECK(H5Sclose(dataspace));
 
   // Write Types (static)
-  dims[0] = types.size();
+  dims[0] = (hsize_t)this->total_cells;
   dataspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, dims, NULL));
   dataset = SPECFEM_H5_CHECK_ID(
       H5Dcreate(vtkhdf_group, "Types", H5T_NATIVE_UCHAR, dataspace, H5P_DEFAULT,
                 H5P_DEFAULT, H5P_DEFAULT));
-  SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_UCHAR, H5S_ALL, H5S_ALL,
-                            H5P_DEFAULT, types.data()));
+
+  if (this->use_parallel_hdf5) {
+    hsize_t type_offset = (hsize_t)this->global_cell_offset;
+    hsize_t type_count = (hsize_t)this->numCells;
+    SPECFEM_H5_CHECK(H5Sselect_hyperslab(
+        dataspace, H5S_SELECT_SET, &type_offset, NULL, &type_count, NULL));
+    hid_t type_memspace =
+        SPECFEM_H5_CHECK_ID(H5Screate_simple(1, &type_count, NULL));
+    SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_UCHAR, type_memspace,
+                              dataspace, dxpl, types.data()));
+    SPECFEM_H5_CHECK(H5Sclose(type_memspace));
+  } else {
+    SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_UCHAR, H5S_ALL, H5S_ALL,
+                              H5P_DEFAULT, types.data()));
+  }
   SPECFEM_H5_CHECK(H5Dclose(dataset));
   SPECFEM_H5_CHECK(H5Sclose(dataspace));
 
@@ -434,13 +533,26 @@ void specfem::periodic_tasks::
   // Create CellData group and write material IDs
   hid_t cd_group = SPECFEM_H5_CHECK_ID(H5Gcreate(
       vtkhdf_group, "CellData", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT));
-  dims[0] = material_ids.size();
+  dims[0] = (hsize_t)this->total_cells;
   dataspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, dims, NULL));
   dataset = SPECFEM_H5_CHECK_ID(
       H5Dcreate(cd_group, "MaterialID", H5T_NATIVE_INT, dataspace, H5P_DEFAULT,
                 H5P_DEFAULT, H5P_DEFAULT));
-  SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL,
-                            H5P_DEFAULT, material_ids.data()));
+
+  if (this->use_parallel_hdf5) {
+    hsize_t mat_offset = (hsize_t)this->global_cell_offset;
+    hsize_t mat_count = (hsize_t)material_ids.size();
+    SPECFEM_H5_CHECK(H5Sselect_hyperslab(dataspace, H5S_SELECT_SET, &mat_offset,
+                                         NULL, &mat_count, NULL));
+    hid_t mat_memspace =
+        SPECFEM_H5_CHECK_ID(H5Screate_simple(1, &mat_count, NULL));
+    SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_INT, mat_memspace, dataspace,
+                              dxpl, material_ids.data()));
+    SPECFEM_H5_CHECK(H5Sclose(mat_memspace));
+  } else {
+    SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL,
+                              H5P_DEFAULT, material_ids.data()));
+  }
   SPECFEM_H5_CHECK(H5Dclose(dataset));
   SPECFEM_H5_CHECK(H5Sclose(dataspace));
   SPECFEM_H5_CHECK(H5Gclose(cd_group));
@@ -478,13 +590,26 @@ void specfem::periodic_tasks::
       }
     }
 
-    dims[0] = jacobian_data.size();
+    dims[0] = (hsize_t)this->total_points;
     dataspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, dims, NULL));
     dataset = SPECFEM_H5_CHECK_ID(
         H5Dcreate(pd_group, "Jacobian", H5T_NATIVE_FLOAT, dataspace,
                   H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT));
-    SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL,
-                              H5P_DEFAULT, jacobian_data.data()));
+
+    if (this->use_parallel_hdf5) {
+      hsize_t pd_offset = (hsize_t)this->global_point_offset;
+      hsize_t pd_count = (hsize_t)jacobian_data.size();
+      SPECFEM_H5_CHECK(H5Sselect_hyperslab(dataspace, H5S_SELECT_SET,
+                                           &pd_offset, NULL, &pd_count, NULL));
+      hid_t pd_memspace =
+          SPECFEM_H5_CHECK_ID(H5Screate_simple(1, &pd_count, NULL));
+      SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_FLOAT, pd_memspace,
+                                dataspace, dxpl, jacobian_data.data()));
+      SPECFEM_H5_CHECK(H5Sclose(pd_memspace));
+    } else {
+      SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL,
+                                H5P_DEFAULT, jacobian_data.data()));
+    }
     SPECFEM_H5_CHECK(H5Dclose(dataset));
     SPECFEM_H5_CHECK(H5Sclose(dataspace));
   }
@@ -545,35 +670,71 @@ void specfem::periodic_tasks::
     }
 
     // Write kappa
-    dims[0] = kappa_data.size();
+    dims[0] = (hsize_t)this->total_points;
     dataspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, dims, NULL));
     dataset = SPECFEM_H5_CHECK_ID(H5Dcreate(pd_group, "Kappa", H5T_NATIVE_FLOAT,
                                             dataspace, H5P_DEFAULT, H5P_DEFAULT,
                                             H5P_DEFAULT));
-    SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL,
-                              H5P_DEFAULT, kappa_data.data()));
+    if (this->use_parallel_hdf5) {
+      hsize_t pd_offset = (hsize_t)this->global_point_offset;
+      hsize_t pd_count = (hsize_t)kappa_data.size();
+      SPECFEM_H5_CHECK(H5Sselect_hyperslab(dataspace, H5S_SELECT_SET,
+                                           &pd_offset, NULL, &pd_count, NULL));
+      hid_t pd_memspace =
+          SPECFEM_H5_CHECK_ID(H5Screate_simple(1, &pd_count, NULL));
+      SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_FLOAT, pd_memspace,
+                                dataspace, dxpl, kappa_data.data()));
+      SPECFEM_H5_CHECK(H5Sclose(pd_memspace));
+    } else {
+      SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL,
+                                H5P_DEFAULT, kappa_data.data()));
+    }
     SPECFEM_H5_CHECK(H5Dclose(dataset));
     SPECFEM_H5_CHECK(H5Sclose(dataspace));
 
     // Write mu
-    dims[0] = mu_data.size();
+    dims[0] = (hsize_t)this->total_points;
     dataspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, dims, NULL));
     dataset = SPECFEM_H5_CHECK_ID(H5Dcreate(pd_group, "Mu", H5T_NATIVE_FLOAT,
                                             dataspace, H5P_DEFAULT, H5P_DEFAULT,
                                             H5P_DEFAULT));
-    SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL,
-                              H5P_DEFAULT, mu_data.data()));
+    if (this->use_parallel_hdf5) {
+      hsize_t pd_offset = (hsize_t)this->global_point_offset;
+      hsize_t pd_count = (hsize_t)mu_data.size();
+      SPECFEM_H5_CHECK(H5Sselect_hyperslab(dataspace, H5S_SELECT_SET,
+                                           &pd_offset, NULL, &pd_count, NULL));
+      hid_t pd_memspace =
+          SPECFEM_H5_CHECK_ID(H5Screate_simple(1, &pd_count, NULL));
+      SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_FLOAT, pd_memspace,
+                                dataspace, dxpl, mu_data.data()));
+      SPECFEM_H5_CHECK(H5Sclose(pd_memspace));
+    } else {
+      SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL,
+                                H5P_DEFAULT, mu_data.data()));
+    }
     SPECFEM_H5_CHECK(H5Dclose(dataset));
     SPECFEM_H5_CHECK(H5Sclose(dataspace));
 
     // Write rho
-    dims[0] = rho_data.size();
+    dims[0] = (hsize_t)this->total_points;
     dataspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, dims, NULL));
     dataset = SPECFEM_H5_CHECK_ID(H5Dcreate(pd_group, "Rho", H5T_NATIVE_FLOAT,
                                             dataspace, H5P_DEFAULT, H5P_DEFAULT,
                                             H5P_DEFAULT));
-    SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL,
-                              H5P_DEFAULT, rho_data.data()));
+    if (this->use_parallel_hdf5) {
+      hsize_t pd_offset = (hsize_t)this->global_point_offset;
+      hsize_t pd_count = (hsize_t)rho_data.size();
+      SPECFEM_H5_CHECK(H5Sselect_hyperslab(dataspace, H5S_SELECT_SET,
+                                           &pd_offset, NULL, &pd_count, NULL));
+      hid_t pd_memspace =
+          SPECFEM_H5_CHECK_ID(H5Screate_simple(1, &pd_count, NULL));
+      SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_FLOAT, pd_memspace,
+                                dataspace, dxpl, rho_data.data()));
+      SPECFEM_H5_CHECK(H5Sclose(pd_memspace));
+    } else {
+      SPECFEM_H5_CHECK(H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL,
+                                H5P_DEFAULT, rho_data.data()));
+    }
     SPECFEM_H5_CHECK(H5Dclose(dataset));
     SPECFEM_H5_CHECK(H5Sclose(dataspace));
   }
@@ -586,10 +747,9 @@ void specfem::periodic_tasks::
       SPECFEM_H5_CHECK_ID(H5Screate_simple(1, pd_initial_dims, pd_max_dims));
 
   // Create dataset creation property list and set chunking
+  // Chunk size = one full timestep worth of data (all ranks combined)
   hid_t pd_plist = SPECFEM_H5_CHECK_ID(H5Pcreate(H5P_DATASET_CREATE));
-  hsize_t pd_chunk_dims[1] = {
-    (hsize_t)this->numPoints
-  }; // Chunk size = one timestep worth of data
+  hsize_t pd_chunk_dims[1] = { (hsize_t)this->total_points };
   SPECFEM_H5_CHECK(H5Pset_chunk(pd_plist, 1, pd_chunk_dims));
 
   hid_t pd_dataset = SPECFEM_H5_CHECK_ID(
@@ -601,9 +761,10 @@ void specfem::periodic_tasks::
   SPECFEM_H5_CHECK(H5Gclose(pd_group));
 
   // Create extensible temporal metadata arrays instead of pre-allocated ones
+  // NumberOfPoints/Cells/ConnectivityIds: num_parts entries per timestep
   hsize_t temp_initial_dims[1] = { 0 };
   hsize_t temp_max_dims[1] = { H5S_UNLIMITED };
-  hsize_t temp_chunk_dims[1] = { 1 }; // Chunk size = 1 timestep
+  hsize_t temp_chunk_dims[1] = { (hsize_t)this->num_parts };
 
   // Create dataset creation property list for chunking
   hid_t temp_plist = SPECFEM_H5_CHECK_ID(H5Pcreate(H5P_DATASET_CREATE));
@@ -666,7 +827,7 @@ void specfem::periodic_tasks::
   SPECFEM_H5_CHECK(H5Dclose(dataset));
   SPECFEM_H5_CHECK(H5Sclose(steps_dataspace));
 
-  // Create extensible datasets for NumberOfParts and offset arrays
+  // NumberOfParts: 1 entry per timestep (like Values), uses steps_plist
   steps_dataspace = SPECFEM_H5_CHECK_ID(
       H5Screate_simple(1, steps_initial_dims, steps_max_dims));
   dataset = SPECFEM_H5_CHECK_ID(
@@ -675,11 +836,16 @@ void specfem::periodic_tasks::
   SPECFEM_H5_CHECK(H5Dclose(dataset));
   SPECFEM_H5_CHECK(H5Sclose(steps_dataspace));
 
+  // Offset arrays: 1 entry per timestep (these index into the geometry/data)
+  hid_t offsets_plist = SPECFEM_H5_CHECK_ID(H5Pcreate(H5P_DATASET_CREATE));
+  hsize_t offsets_chunk_dims[1] = { 1 };
+  SPECFEM_H5_CHECK(H5Pset_chunk(offsets_plist, 1, offsets_chunk_dims));
+
   steps_dataspace = SPECFEM_H5_CHECK_ID(
       H5Screate_simple(1, steps_initial_dims, steps_max_dims));
   dataset = SPECFEM_H5_CHECK_ID(
       H5Dcreate(steps_group, "PartOffsets", H5T_NATIVE_LLONG, steps_dataspace,
-                H5P_DEFAULT, steps_plist, H5P_DEFAULT));
+                H5P_DEFAULT, offsets_plist, H5P_DEFAULT));
   SPECFEM_H5_CHECK(H5Dclose(dataset));
   SPECFEM_H5_CHECK(H5Sclose(steps_dataspace));
 
@@ -687,7 +853,7 @@ void specfem::periodic_tasks::
       H5Screate_simple(1, steps_initial_dims, steps_max_dims));
   dataset = SPECFEM_H5_CHECK_ID(
       H5Dcreate(steps_group, "PointOffsets", H5T_NATIVE_LLONG, steps_dataspace,
-                H5P_DEFAULT, steps_plist, H5P_DEFAULT));
+                H5P_DEFAULT, offsets_plist, H5P_DEFAULT));
   SPECFEM_H5_CHECK(H5Dclose(dataset));
   SPECFEM_H5_CHECK(H5Sclose(steps_dataspace));
 
@@ -695,7 +861,7 @@ void specfem::periodic_tasks::
       H5Screate_simple(1, steps_initial_dims, steps_max_dims));
   dataset = SPECFEM_H5_CHECK_ID(
       H5Dcreate(steps_group, "CellOffsets", H5T_NATIVE_LLONG, steps_dataspace,
-                H5P_DEFAULT, steps_plist, H5P_DEFAULT));
+                H5P_DEFAULT, offsets_plist, H5P_DEFAULT));
   SPECFEM_H5_CHECK(H5Dclose(dataset));
   SPECFEM_H5_CHECK(H5Sclose(steps_dataspace));
 
@@ -703,7 +869,7 @@ void specfem::periodic_tasks::
       H5Screate_simple(1, steps_initial_dims, steps_max_dims));
   dataset = SPECFEM_H5_CHECK_ID(
       H5Dcreate(steps_group, "ConnectivityIdOffsets", H5T_NATIVE_LLONG,
-                steps_dataspace, H5P_DEFAULT, steps_plist, H5P_DEFAULT));
+                steps_dataspace, H5P_DEFAULT, offsets_plist, H5P_DEFAULT));
   SPECFEM_H5_CHECK(H5Dclose(dataset));
   SPECFEM_H5_CHECK(H5Sclose(steps_dataspace));
 
@@ -711,18 +877,26 @@ void specfem::periodic_tasks::
   hid_t pd_offsets_group = SPECFEM_H5_CHECK_ID(H5Gcreate(
       steps_group, "PointDataOffsets", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT));
 
-  // Wavefield offsets (extensible)
+  // Wavefield offsets: 1 entry per timestep
   steps_dataspace = SPECFEM_H5_CHECK_ID(
       H5Screate_simple(1, steps_initial_dims, steps_max_dims));
   dataset = SPECFEM_H5_CHECK_ID(
       H5Dcreate(pd_offsets_group, "Wavefield", H5T_NATIVE_LLONG,
-                steps_dataspace, H5P_DEFAULT, steps_plist, H5P_DEFAULT));
+                steps_dataspace, H5P_DEFAULT, offsets_plist, H5P_DEFAULT));
   SPECFEM_H5_CHECK(H5Dclose(dataset));
   SPECFEM_H5_CHECK(H5Sclose(steps_dataspace));
   SPECFEM_H5_CHECK(H5Gclose(pd_offsets_group));
 
+  SPECFEM_H5_CHECK(H5Pclose(offsets_plist));
   SPECFEM_H5_CHECK(H5Pclose(steps_plist));
   SPECFEM_H5_CHECK(H5Gclose(steps_group));
+
+  // Close transfer property list if created
+#ifdef SPECFEM_HDF5_IS_PARALLEL
+  if (this->use_parallel_hdf5) {
+    SPECFEM_H5_CHECK(H5Pclose(dxpl));
+  }
+#endif
 
   // Close HDF5 file - will reopen for each timestep write
   SPECFEM_H5_CHECK(H5Gclose(vtkhdf_group));
@@ -730,7 +904,8 @@ void specfem::periodic_tasks::
 
   specfem::Logger::info([&](std::ostringstream &oss) {
     oss << "Initialized VTK HDF5 file for 3D wavefield output: "
-        << this->hdf5_filename << " (extensible datasets)";
+        << this->hdf5_filename << " (" << this->num_parts << " part(s), "
+        << this->total_points << " total points)";
   });
 
 #else
@@ -842,27 +1017,145 @@ void specfem::periodic_tasks::
 
 // Helper: extend a 1D dataset, select hyperslab at write_offset, write one
 // scalar value, then close the dataset.
+// When do_write is false, the dataset is extended (collective in parallel HDF5)
+// but no data is written (for non-writing ranks).
 void specfem::periodic_tasks::plot_wavefield<
     specfem::element::dimension_tag::dim3>::
     extend_and_write_scalar(hid_t parent, const char *dataset_name,
                             hsize_t new_extent, hsize_t write_offset,
-                            hid_t mem_type, const void *data) {
+                            hid_t mem_type, const void *data, hid_t dxpl,
+                            bool do_write) {
 #ifndef NO_HDF5
   hid_t ds = SPECFEM_H5_CHECK_ID(H5Dopen(parent, dataset_name, H5P_DEFAULT));
   SPECFEM_H5_CHECK(H5Dset_extent(ds, &new_extent));
 
-  hid_t filespace = SPECFEM_H5_CHECK_ID(H5Dget_space(ds));
-  hsize_t count = 1;
-  SPECFEM_H5_CHECK(H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &write_offset,
-                                       NULL, &count, NULL));
-  hid_t memspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, &count, NULL));
-  SPECFEM_H5_CHECK(
-      H5Dwrite(ds, mem_type, memspace, filespace, H5P_DEFAULT, data));
+  if (do_write) {
+    hid_t filespace = SPECFEM_H5_CHECK_ID(H5Dget_space(ds));
+    hsize_t count = 1;
+    SPECFEM_H5_CHECK(H5Sselect_hyperslab(filespace, H5S_SELECT_SET,
+                                         &write_offset, NULL, &count, NULL));
+    hid_t memspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, &count, NULL));
+    SPECFEM_H5_CHECK(H5Dwrite(ds, mem_type, memspace, filespace, dxpl, data));
+    SPECFEM_H5_CHECK(H5Sclose(memspace));
+    SPECFEM_H5_CHECK(H5Sclose(filespace));
+  }
 
-  SPECFEM_H5_CHECK(H5Sclose(memspace));
-  SPECFEM_H5_CHECK(H5Sclose(filespace));
   SPECFEM_H5_CHECK(H5Dclose(ds));
 #endif
+}
+
+// Helper: extend a 1D dataset, select hyperslab at write_offset with the given
+// count, write an array of values, then close the dataset.
+// When do_write is false, the dataset is extended but no data is written.
+void specfem::periodic_tasks::plot_wavefield<
+    specfem::element::dimension_tag::dim3>::
+    extend_and_write_array(hid_t parent, const char *dataset_name,
+                           hsize_t new_extent, hsize_t write_offset,
+                           hsize_t count, hid_t mem_type, const void *data,
+                           hid_t dxpl, bool do_write) {
+#ifndef NO_HDF5
+  hid_t ds = SPECFEM_H5_CHECK_ID(H5Dopen(parent, dataset_name, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dset_extent(ds, &new_extent));
+
+  if (do_write) {
+    hid_t filespace = SPECFEM_H5_CHECK_ID(H5Dget_space(ds));
+    SPECFEM_H5_CHECK(H5Sselect_hyperslab(filespace, H5S_SELECT_SET,
+                                         &write_offset, NULL, &count, NULL));
+    hid_t memspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, &count, NULL));
+    SPECFEM_H5_CHECK(H5Dwrite(ds, mem_type, memspace, filespace, dxpl, data));
+    SPECFEM_H5_CHECK(H5Sclose(memspace));
+    SPECFEM_H5_CHECK(H5Sclose(filespace));
+  }
+
+  SPECFEM_H5_CHECK(H5Dclose(ds));
+#endif
+}
+
+void specfem::periodic_tasks::plot_wavefield<
+    specfem::element::dimension_tag::dim3>::compute_mpi_offsets() {
+#ifndef NO_HDF5
+#ifdef SPECFEM_ENABLE_MPI
+  if (specfem::MPI::get_size() > 1 && this->use_parallel_hdf5) {
+    MPI_Comm comm = specfem::MPI::communicator();
+
+    SPECFEM_MPI_SAFECALL(MPI_Exscan(&this->numPoints,
+                                    &this->global_point_offset, 1,
+                                    MPI_LONG_LONG, MPI_SUM, comm));
+    SPECFEM_MPI_SAFECALL(MPI_Exscan(&this->numCells, &this->global_cell_offset,
+                                    1, MPI_LONG_LONG, MPI_SUM, comm));
+    SPECFEM_MPI_SAFECALL(MPI_Exscan(&this->numConnectivityIds,
+                                    &this->global_connectivity_offset, 1,
+                                    MPI_LONG_LONG, MPI_SUM, comm));
+
+    // MPI_Exscan leaves rank 0 undefined — set to 0 explicitly
+    if (specfem::MPI::get_rank() == 0) {
+      this->global_point_offset = 0;
+      this->global_cell_offset = 0;
+      this->global_connectivity_offset = 0;
+    }
+
+    SPECFEM_MPI_SAFECALL(MPI_Allreduce(&this->numPoints, &this->total_points, 1,
+                                       MPI_LONG_LONG, MPI_SUM, comm));
+    SPECFEM_MPI_SAFECALL(MPI_Allreduce(&this->numCells, &this->total_cells, 1,
+                                       MPI_LONG_LONG, MPI_SUM, comm));
+    SPECFEM_MPI_SAFECALL(MPI_Allreduce(&this->numConnectivityIds,
+                                       &this->total_connectivity, 1,
+                                       MPI_LONG_LONG, MPI_SUM, comm));
+
+    this->num_parts = specfem::MPI::get_size();
+
+    // Rank 0 gathers all point offsets (needed for PointDataOffsets)
+    this->all_point_offsets.resize(this->num_parts);
+    SPECFEM_MPI_SAFECALL(
+        MPI_Gather(&this->global_point_offset, 1, MPI_LONG_LONG,
+                   this->all_point_offsets.data(), 1, MPI_LONG_LONG, 0, comm));
+
+    // Rank 0 gathers per-rank counts (needed for NumberOfPoints/Cells/Conn)
+    this->all_point_counts.resize(this->num_parts);
+    this->all_cell_counts.resize(this->num_parts);
+    this->all_connectivity_counts.resize(this->num_parts);
+    SPECFEM_MPI_SAFECALL(MPI_Gather(&this->numPoints, 1, MPI_LONG_LONG,
+                                    this->all_point_counts.data(), 1,
+                                    MPI_LONG_LONG, 0, comm));
+    SPECFEM_MPI_SAFECALL(MPI_Gather(&this->numCells, 1, MPI_LONG_LONG,
+                                    this->all_cell_counts.data(), 1,
+                                    MPI_LONG_LONG, 0, comm));
+    SPECFEM_MPI_SAFECALL(MPI_Gather(&this->numConnectivityIds, 1, MPI_LONG_LONG,
+                                    this->all_connectivity_counts.data(), 1,
+                                    MPI_LONG_LONG, 0, comm));
+    return;
+  }
+#endif // SPECFEM_ENABLE_MPI
+
+  // Serial path: global == local
+  this->global_point_offset = 0;
+  this->global_cell_offset = 0;
+  this->global_connectivity_offset = 0;
+  this->total_points = this->numPoints;
+  this->total_cells = this->numCells;
+  this->total_connectivity = this->numConnectivityIds;
+  this->num_parts = 1;
+  this->all_point_offsets = { 0 };
+  this->all_point_counts = { this->numPoints };
+  this->all_cell_counts = { this->numCells };
+  this->all_connectivity_counts = { this->numConnectivityIds };
+#endif // NO_HDF5
+}
+
+hid_t specfem::periodic_tasks::plot_wavefield<
+    specfem::element::dimension_tag::dim3>::create_file_access_plist() const {
+#ifndef NO_HDF5
+  hid_t fapl = SPECFEM_H5_CHECK_ID(H5Pcreate(H5P_FILE_ACCESS));
+#ifdef SPECFEM_HDF5_IS_PARALLEL
+  if (this->use_parallel_hdf5) {
+    SPECFEM_H5_CHECK(
+        H5Pset_fapl_mpio(fapl, specfem::MPI::communicator(), MPI_INFO_NULL));
+  }
+#endif // SPECFEM_HDF5_IS_PARALLEL
+  return fapl;
+#else
+  return 0;
+#endif // NO_HDF5
 }
 
 template <>
@@ -873,10 +1166,24 @@ void specfem::periodic_tasks::
 
 #ifndef NO_HDF5
   // Open HDF5 file for extending datasets
+  hid_t fapl = this->create_file_access_plist();
   hid_t hdf5_file_id = SPECFEM_H5_CHECK_ID(
-      H5Fopen(this->hdf5_filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT));
+      H5Fopen(this->hdf5_filename.c_str(), H5F_ACC_RDWR, fapl));
+  SPECFEM_H5_CHECK(H5Pclose(fapl));
   hid_t vtkhdf_group =
       SPECFEM_H5_CHECK_ID(H5Gopen(hdf5_file_id, "/VTKHDF", H5P_DEFAULT));
+
+  // Create transfer property list for parallel HDF5.
+  // Use independent I/O — each rank writes its own hyperslab independently.
+  // Collective I/O can be enabled later as an optimization once correctness
+  // is verified.
+  hid_t dxpl = H5P_DEFAULT;
+#ifdef SPECFEM_HDF5_IS_PARALLEL
+  if (this->use_parallel_hdf5) {
+    dxpl = SPECFEM_H5_CHECK_ID(H5Pcreate(H5P_DATASET_XFER));
+    SPECFEM_H5_CHECK(H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT));
+  }
+#endif
 
   // Extend and write wavefield data
   hid_t pd_group =
@@ -886,7 +1193,7 @@ void specfem::periodic_tasks::
 
   // Extend the wavefield dataset to accommodate new timestep
   hsize_t new_size[1] = { (hsize_t)((this->current_timestep + 1) *
-                                    this->numPoints) };
+                                    this->total_points) };
   SPECFEM_H5_CHECK(H5Dset_extent(pd_dataset, new_size));
 
   // Write wavefield data for this timestep
@@ -896,8 +1203,10 @@ void specfem::periodic_tasks::
   }
 
   // Calculate offset and count for this timestep
-  hsize_t offset = this->current_timestep * this->numPoints;
-  hsize_t count = this->numPoints;
+  // For parallel: each rank writes at its global offset within this timestep
+  hsize_t offset = (hsize_t)(this->current_timestep * this->total_points +
+                             this->global_point_offset);
+  hsize_t count = (hsize_t)this->numPoints;
 
   // Select hyperslab in the file dataset
   hid_t filespace = SPECFEM_H5_CHECK_ID(H5Dget_space(pd_dataset));
@@ -907,71 +1216,118 @@ void specfem::periodic_tasks::
   // Create memory dataspace and write
   hid_t memspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, &count, NULL));
   SPECFEM_H5_CHECK(H5Dwrite(pd_dataset, H5T_NATIVE_FLOAT, memspace, filespace,
-                            H5P_DEFAULT, scalar_data.data()));
+                            dxpl, scalar_data.data()));
 
   SPECFEM_H5_CHECK(H5Sclose(memspace));
   SPECFEM_H5_CHECK(H5Sclose(filespace));
   SPECFEM_H5_CHECK(H5Dclose(pd_dataset));
   SPECFEM_H5_CHECK(H5Gclose(pd_group));
 
-  // Update temporal metadata arrays
+  // Update temporal metadata arrays (use global totals).
+  // In parallel HDF5, H5Dset_extent is collective — ALL ranks must call it.
+  // Only rank 0 actually writes data; other ranks extend but select H5S_NONE.
+  bool is_metadata_writer =
+      !this->use_parallel_hdf5 || specfem::MPI::main_proc();
+
   hsize_t new_ts_count = (hsize_t)(this->current_timestep + 1);
-  hsize_t ts_offset = this->current_timestep;
+  hsize_t ts_offset = (hsize_t)this->current_timestep;
 
-  long long num_points_val = this->numPoints;
-  long long num_cells_val = this->numCells;
-  long long num_conn_ids_val = this->numConnectivityIds;
+  // NumberOfPoints/Cells/ConnectivityIds: num_parts entries total (static
+  // geometry — partition counts are written once and reused every timestep).
+  // PartOffsets[t] = 0 tells VTK to always read counts from index 0.
+  if (this->current_timestep == 0) {
+    hsize_t count_extent = (hsize_t)this->num_parts;
+    hsize_t count_offset = 0;
+    hsize_t count_count = (hsize_t)this->num_parts;
 
-  extend_and_write_scalar(vtkhdf_group, "NumberOfPoints", new_ts_count,
-                          ts_offset, H5T_NATIVE_LLONG, &num_points_val);
-  extend_and_write_scalar(vtkhdf_group, "NumberOfCells", new_ts_count,
-                          ts_offset, H5T_NATIVE_LLONG, &num_cells_val);
-  extend_and_write_scalar(vtkhdf_group, "NumberOfConnectivityIds", new_ts_count,
-                          ts_offset, H5T_NATIVE_LLONG, &num_conn_ids_val);
+    extend_and_write_array(vtkhdf_group, "NumberOfPoints", count_extent,
+                           count_offset, count_count, H5T_NATIVE_LLONG,
+                           this->all_point_counts.data(), dxpl,
+                           is_metadata_writer);
+    extend_and_write_array(vtkhdf_group, "NumberOfCells", count_extent,
+                           count_offset, count_count, H5T_NATIVE_LLONG,
+                           this->all_cell_counts.data(), dxpl,
+                           is_metadata_writer);
+    extend_and_write_array(
+        vtkhdf_group, "NumberOfConnectivityIds", count_extent, count_offset,
+        count_count, H5T_NATIVE_LLONG, this->all_connectivity_counts.data(),
+        dxpl, is_metadata_writer);
+  }
 
   // Update Steps metadata
   hid_t steps_group =
       SPECFEM_H5_CHECK_ID(H5Gopen(vtkhdf_group, "Steps", H5P_DEFAULT));
 
-  double time_value =
-      static_cast<double>(this->assembly.t0) +
-      static_cast<double>(istep) * static_cast<double>(this->assembly.dt);
-  extend_and_write_scalar(steps_group, "Values", new_ts_count, ts_offset,
-                          H5T_NATIVE_DOUBLE, &time_value);
+  {
+    double time_value =
+        static_cast<double>(this->assembly.t0) +
+        static_cast<double>(istep) * static_cast<double>(this->assembly.dt);
+    extend_and_write_scalar(steps_group, "Values", new_ts_count, ts_offset,
+                            H5T_NATIVE_DOUBLE, &time_value, dxpl,
+                            is_metadata_writer);
 
-  long long num_parts = 1;
-  extend_and_write_scalar(steps_group, "NumberOfParts", new_ts_count, ts_offset,
-                          H5T_NATIVE_LLONG, &num_parts);
+    long long num_parts_val = this->num_parts;
+    extend_and_write_scalar(steps_group, "NumberOfParts", new_ts_count,
+                            ts_offset, H5T_NATIVE_LLONG, &num_parts_val, dxpl,
+                            is_metadata_writer);
 
-  // Offset arrays (all zeros for static geometry / single part)
-  long long zero_offset = 0;
-  extend_and_write_scalar(steps_group, "PartOffsets", new_ts_count, ts_offset,
-                          H5T_NATIVE_LLONG, &zero_offset);
-  extend_and_write_scalar(steps_group, "PointOffsets", new_ts_count, ts_offset,
-                          H5T_NATIVE_LLONG, &zero_offset);
-  extend_and_write_scalar(steps_group, "CellOffsets", new_ts_count, ts_offset,
-                          H5T_NATIVE_LLONG, &zero_offset);
-  extend_and_write_scalar(steps_group, "ConnectivityIdOffsets", new_ts_count,
-                          ts_offset, H5T_NATIVE_LLONG, &zero_offset);
+    // Offset arrays: 1 entry per timestep.
+    // Static geometry: PartOffsets = 0 (always read counts from index 0
+    // in NumberOfCells/Points/ConnectivityIds). Geometry offsets = 0
+    // (Points/Cells/Connectivity don't change between timesteps).
+    long long zero = 0;
+    extend_and_write_scalar(steps_group, "PartOffsets", new_ts_count, ts_offset,
+                            H5T_NATIVE_LLONG, &zero, dxpl, is_metadata_writer);
 
-  // Update PointDataOffsets/Wavefield
-  hid_t pd_offsets_group = SPECFEM_H5_CHECK_ID(
-      H5Gopen(steps_group, "PointDataOffsets", H5P_DEFAULT));
-  long long wavefield_offset = this->current_timestep * this->numPoints;
-  extend_and_write_scalar(pd_offsets_group, "Wavefield", new_ts_count,
-                          ts_offset, H5T_NATIVE_LLONG, &wavefield_offset);
-  SPECFEM_H5_CHECK(H5Gclose(pd_offsets_group));
+    extend_and_write_scalar(steps_group, "PointOffsets", new_ts_count,
+                            ts_offset, H5T_NATIVE_LLONG, &zero, dxpl,
+                            is_metadata_writer);
+    extend_and_write_scalar(steps_group, "CellOffsets", new_ts_count, ts_offset,
+                            H5T_NATIVE_LLONG, &zero, dxpl, is_metadata_writer);
+    extend_and_write_scalar(steps_group, "ConnectivityIdOffsets", new_ts_count,
+                            ts_offset, H5T_NATIVE_LLONG, &zero, dxpl,
+                            is_metadata_writer);
 
-  // Update NSteps attribute
-  int nsteps_written = this->current_timestep + 1;
-  hid_t attr = SPECFEM_H5_CHECK_ID(H5Aopen(steps_group, "NSteps", H5P_DEFAULT));
-  SPECFEM_H5_CHECK(H5Awrite(attr, H5T_NATIVE_INT, &nsteps_written));
-  SPECFEM_H5_CHECK(H5Aclose(attr));
+    // PointDataOffsets/Wavefield: 1 entry per timestep
+    // Offset into the Wavefield dataset for this timestep's data
+    hid_t pd_offsets_group = SPECFEM_H5_CHECK_ID(
+        H5Gopen(steps_group, "PointDataOffsets", H5P_DEFAULT));
+
+    long long wf_offset_val =
+        (long long)(this->current_timestep * this->total_points);
+    extend_and_write_scalar(pd_offsets_group, "Wavefield", new_ts_count,
+                            ts_offset, H5T_NATIVE_LLONG, &wf_offset_val, dxpl,
+                            is_metadata_writer);
+    SPECFEM_H5_CHECK(H5Gclose(pd_offsets_group));
+
+    // Update NSteps attribute — all ranks write the same value.
+    // In parallel HDF5, attribute writes are not collective but modifying
+    // metadata from a single rank can cause synchronization issues at close.
+    {
+      int nsteps_written = this->current_timestep + 1;
+      hid_t attr =
+          SPECFEM_H5_CHECK_ID(H5Aopen(steps_group, "NSteps", H5P_DEFAULT));
+      SPECFEM_H5_CHECK(H5Awrite(attr, H5T_NATIVE_INT, &nsteps_written));
+      SPECFEM_H5_CHECK(H5Aclose(attr));
+    }
+  }
 
   SPECFEM_H5_CHECK(H5Gclose(steps_group));
 
+  // Close transfer property list if created
+#ifdef SPECFEM_HDF5_IS_PARALLEL
+  if (this->use_parallel_hdf5) {
+    SPECFEM_H5_CHECK(H5Pclose(dxpl));
+  }
+#endif
+
   // Close HDF5 resources
   SPECFEM_H5_CHECK(H5Gclose(vtkhdf_group));
+
+  // Flush all buffers before close — ensures metadata is synchronized
+  // across ranks, preventing H5Fclose deadlocks in parallel HDF5.
+  SPECFEM_H5_CHECK(H5Fflush(hdf5_file_id, H5F_SCOPE_GLOBAL));
+
   SPECFEM_H5_CHECK(H5Fclose(hdf5_file_id));
 
   this->current_timestep++;

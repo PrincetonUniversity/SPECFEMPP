@@ -47,6 +47,11 @@ if (SPECFEM_ENABLE_HDF5)
         set(HDF5_BUILD_TESTS OFF CACHE BOOL "Build HDF5 tests")
         set(HDF5_BUILD_TOOLS OFF CACHE BOOL "Build HDF5 tools")
 
+        # Enable parallel HDF5 when MPI is available
+        if(SPECFEM_ENABLE_MPI)
+            set(HDF5_ENABLE_PARALLEL ON CACHE BOOL "Build HDF5 with parallel MPI support")
+        endif()
+
         # Disable HDF5 installation
         set(HDF5_INSTALL OFF CACHE BOOL "Don't install HDF5" FORCE)
         set(SKIP_HDF5_FORTRAN_SHARED ON CACHE BOOL "Skip HDF5 Fortran shared install" FORCE)
@@ -89,6 +94,11 @@ if (SPECFEM_ENABLE_HDF5)
             add_library(hdf5 INTERFACE)
             target_link_libraries(hdf5 INTERFACE hdf5-static hdf5_cpp-static)
             target_include_directories(hdf5 INTERFACE ${HDF5_INCLUDE_DIRS})
+        endif()
+
+        # Mark parallel HDF5 for source builds with MPI
+        if(SPECFEM_ENABLE_MPI)
+            set(SPECFEM_HDF5_IS_PARALLEL TRUE)
         endif()
 
         message(STATUS "HDF5 configured from source")
@@ -141,7 +151,14 @@ if (SPECFEM_ENABLE_HDF5)
                 "-DSPECFEM_ENABLE_HDF5_FORCE_INSTALL=ON.")
         endif()
 
+        # Persist the parallel detection as a non-cache variable for use
+        # in compile definitions
+        set(SPECFEM_HDF5_IS_PARALLEL ${_HDF5_IS_PARALLEL})
         unset(_HDF5_IS_PARALLEL CACHE)
+    endif()
+
+    if(SPECFEM_HDF5_IS_PARALLEL)
+        message(STATUS "HDF5 parallel support detected — SPECFEM_HDF5_IS_PARALLEL is ON")
     endif()
 
     # Pop the indentation for HDF5 messages
