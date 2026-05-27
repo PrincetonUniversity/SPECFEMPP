@@ -11,7 +11,8 @@ template <typename T, specfem::element::dimension_tag DimensionTag,
           typename... ViewParameters>
 struct ScalarChunkFaceViewType
     : public ChunkNDimViewType<T, DimensionTag, NumberOfFaces,
-                               NumberOfGLLPoints, 2, std::integer_sequence<int>,
+                               NumberOfGLLPoints, 2 /*face: 2 coordinates */,
+                               std::integer_sequence<int>,
                                specfem::datatype::AccessorType::chunk_face,
                                UseSIMD, ViewParameters...> {
   using chunk_ndim_view_type =
@@ -30,7 +31,7 @@ template <typename T, specfem::element::dimension_tag DimensionTag,
           bool UseSIMD = false, typename... ViewParameters>
 struct VectorChunkFaceViewType
     : public ChunkNDimViewType<T, DimensionTag, NumberOfFaces,
-                               NumberOfGLLPoints, 2,
+                               NumberOfGLLPoints, 2 /*face: 2 coordinates */,
                                std::integer_sequence<int, Components>,
                                specfem::datatype::AccessorType::chunk_face,
                                UseSIMD, ViewParameters...> {
@@ -53,7 +54,8 @@ template <typename T, specfem::element::dimension_tag DimensionTag,
           typename... ViewParameters>
 struct TensorChunkFaceViewType
     : public ChunkNDimViewType<
-          T, DimensionTag, NumberOfFaces, NumberOfGLLPoints, 2,
+          T, DimensionTag, NumberOfFaces, NumberOfGLLPoints,
+          2 /*face: 2 coordinates */,
           std::integer_sequence<int, Components, NumberOfDimensions>,
           specfem::datatype::AccessorType::chunk_face, UseSIMD,
           ViewParameters...> {
