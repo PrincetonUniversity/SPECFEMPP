@@ -210,15 +210,19 @@ void execute(const TransferCoordinates &transfer_coordinates,
 
   // ======= Run Kernel
   const auto function_view =
-      face_function.get_resized_view(chunk_size * league_size);
+      face_function.template get_resized_view<chunk_size * league_size>();
   const auto transfer_coord_view =
-      transfer_coordinates.get_resized_view(chunk_size * league_size);
+      transfer_coordinates
+          .template get_resized_view<chunk_size * league_size>();
   ResultViewType result_view("result_view");
 
   Kokkos::parallel_for(
       "transfer_interpolate_test",
       Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>(league_size,
-                                                        Kokkos::AUTO, 1),
+                                                        Kokkos::AUTO, 1)
+          .set_scratch_size(
+              0, Kokkos::PerTeam(ContainerTransferCoordinates::shmem_size() +
+                                 ContainerFunctionCoupled::shmem_size())),
       KOKKOS_LAMBDA(
           const Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>::member_type
               &team_member) {
@@ -405,6 +409,30 @@ public:
     auto host_view =
         Kokkos::create_mirror_view(view); // Create host mirror to copy data
     for (size_t i = 0; i < std::min(stack_size, this->stack_size); ++i) {
+      for (size_t j = 0; j < nquad_element; ++j) {
+        for (size_t ell = 0; ell < nquad_element; ++ell) {
+          for (size_t k = 0; k < num_components; ++k) {
+            host_view(i, j, ell, k) = (*this)(i, j, ell, k);
+          }
+        }
+      }
+    }
+    Kokkos::deep_copy(view, host_view);
+    return view;
+  }
+
+  template <int new_stack_size>
+  Kokkos::View<
+      type_real[new_stack_size][nquad_element][nquad_element][num_components],
+      memory_space>
+  get_resized_view() const {
+    Kokkos::View<
+        type_real[new_stack_size][nquad_element][nquad_element][num_components],
+        memory_space>
+        view("field_view");
+    auto host_view =
+        Kokkos::create_mirror_view(view); // Create host mirror to copy data
+    for (size_t i = 0; i < std::min(new_stack_size, this->stack_size); ++i) {
       for (size_t j = 0; j < nquad_element; ++j) {
         for (size_t ell = 0; ell < nquad_element; ++ell) {
           for (size_t k = 0; k < num_components; ++k) {

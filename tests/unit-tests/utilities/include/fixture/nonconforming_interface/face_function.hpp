@@ -240,6 +240,30 @@ public:
     return view;
   }
 
+  template <int new_stack_size>
+  Kokkos::View<
+      type_real[new_stack_size][nquad_element][nquad_element][num_components],
+      memory_space>
+  get_resized_view() const {
+    Kokkos::View<
+        type_real[new_stack_size][nquad_element][nquad_element][num_components],
+        memory_space>
+        view("field_view");
+    auto host_view =
+        Kokkos::create_mirror_view(view); // Create host mirror to copy data
+    for (size_t i = 0; i < std::min(new_stack_size, this->stack_size); ++i) {
+      for (size_t j = 0; j < nquad_element; ++j) {
+        for (size_t ell = 0; ell < nquad_element; ++ell) {
+          for (size_t k = 0; k < num_components; ++k) {
+            host_view(i, j, ell, k) = (*this)(i, j, ell, k);
+          }
+        }
+      }
+    }
+    Kokkos::deep_copy(view, host_view);
+    return view;
+  }
+
   /**
    * @brief Access field values.
    * @param i Edge index
