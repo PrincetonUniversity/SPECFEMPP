@@ -20,15 +20,20 @@ namespace {
 inline int device_max_shared_memory_per_block() {
 #if defined(KOKKOS_ENABLE_CUDA)
   static int value = [] {
+    int device;
     int v;
-    cudaDeviceGetAttribute(&v, cudaDevAttrMaxSharedMemoryPerBlock, 0);
+    cudaGetDevice(&device);
+    cudaDeviceGetAttribute(&v, cudaDevAttrMaxSharedMemoryPerBlock, device);
     return v;
   }();
   return value;
 #elif defined(KOKKOS_ENABLE_HIP)
   static int value = [] {
+    int device;
     int v;
-    hipDeviceGetAttribute(&v, hipDeviceAttributeMaxSharedMemoryPerBlock, 0);
+    hipGetDevice(&device);
+    hipDeviceGetAttribute(&v, hipDeviceAttributeMaxSharedMemoryPerBlock,
+                          device);
     return v;
   }();
   return value;
