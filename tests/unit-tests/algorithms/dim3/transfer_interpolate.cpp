@@ -218,10 +218,7 @@ void execute(const TransferCoordinates &transfer_coordinates,
   Kokkos::parallel_for(
       "transfer_interpolate_test",
       Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>(league_size,
-                                                        Kokkos::AUTO, 1)
-          .set_scratch_size(
-              0, Kokkos::PerTeam(ContainerTransferCoordinates::shmem_size() +
-                                 ContainerFunctionCoupled::shmem_size())),
+                                                        Kokkos::AUTO, 1),
       KOKKOS_LAMBDA(
           const Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>::member_type
               &team_member) {
