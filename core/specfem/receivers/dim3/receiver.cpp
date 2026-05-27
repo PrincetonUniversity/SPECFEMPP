@@ -10,12 +10,12 @@ specfem::receivers::receiver<specfem::element::dimension_tag::dim3>::print()
   message << " - Receiver:\n"
           << "      Station Name = " << this->station_name << "\n"
           << "      Network Name = " << this->network_name << "\n";
-  if (this->input_coordinates_) {
-    message << "      Input Coordinates: " << this->input_coordinates_->print()
+  if (this->read_coordinates_) {
+    message << "      Input Coordinates: " << this->read_coordinates_->print()
             << "\n";
   }
   // Only print resolved global coordinates when they have been set
-  if (!this->input_coordinates_ || this->islice_ >= 0) {
+  if (!this->read_coordinates_ || this->islice_ >= 0) {
     message << "      Receiver Location: \n"
             << "        x = " << type_real(this->global_coordinates.x) << "\n"
             << "        y = " << type_real(this->global_coordinates.y) << "\n"
@@ -32,8 +32,8 @@ specfem::receivers::receiver<specfem::element::dimension_tag::dim3>::print()
 bool specfem::receivers::receiver<specfem::element::dimension_tag::dim3>::
 operator==(const receiver &other) const {
   // Compare input coordinates when available
-  const auto *c1 = this->get_input_coordinates();
-  const auto *c2 = other.get_input_coordinates();
+  const auto *c1 = this->get_read_coordinates();
+  const auto *c2 = other.get_read_coordinates();
   bool coords_equal = (c1 && c2) ? (*c1 == *c2) : (!c1 && !c2);
 
   return coords_equal && (this->network_name == other.network_name) &&

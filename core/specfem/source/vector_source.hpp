@@ -105,8 +105,7 @@ public:
    * @param source_time_function pointer to source time function
    */
   vector_source(
-      std::unique_ptr<
-          specfem::coordinate_systems::input_coordinates<DimensionTag>>
+      std::unique_ptr<specfem::coordinate_systems::coordinates<DimensionTag>>
           coordinates,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function)
       : source<DimensionTag>(std::move(coordinates),

@@ -1,9 +1,9 @@
 #include "specfem/assembly/resolve_coordinates.hpp"
 
-#include "specfem/coordinate_systems/input_coordinates/input_cartesian_2d.hpp"
-#include "specfem/coordinate_systems/input_coordinates/input_cartesian_3d.hpp"
-#include "specfem/coordinate_systems/input_coordinates/input_cartesian_with_depth_3d.hpp"
-#include "specfem/coordinate_systems/input_coordinates/input_geographic_3d.hpp"
+#include "specfem/coordinate_systems/cartesian.hpp"
+#include "specfem/coordinate_systems/geocentric.hpp"
+#include "specfem/coordinate_systems/geographic.hpp"
+#include "specfem/coordinate_systems/utm.hpp"
 #include "specfem/setup.hpp"
 
 #include <stdexcept>
@@ -13,15 +13,24 @@
 template <>
 specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
 specfem::assembly::resolve_coordinates<specfem::element::dimension_tag::dim2>(
-    const specfem::coordinate_systems::input_coordinates<
+    specfem::coordinate_systems::coordinates<
         specfem::element::dimension_tag::dim2> &coords,
-    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2>
-        &mesh) {
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
+    const std::optional<specfem::coordinate_systems::utm_projection_config>
+        &utm_config) {
 
-  using namespace specfem::coordinate_systems;
+  using dim2 = std::integral_constant<specfem::element::dimension_tag,
+                                      specfem::element::dimension_tag::dim2>;
 
-  if (const auto *c = dynamic_cast<const input_cartesian_2d *>(&coords)) {
-    return { static_cast<type_real>(c->x), static_cast<type_real>(c->z) };
+  if (auto *c = dynamic_cast<specfem::coordinate_systems::cartesian_coordinates<
+          specfem::element::dimension_tag::dim2> *>(&coords)) {
+    if (!c->origin.has_value()) {
+      // Flat topography fallback
+      c->origin = { 0.0, 0.0 };
+    }
+    const auto &o = *c->origin;
+    return { static_cast<type_real>(c->x + o[0]),
+             static_cast<type_real>(c->z + o[1]) };
   }
 
   throw std::runtime_error(
@@ -33,36 +42,53 @@ specfem::assembly::resolve_coordinates<specfem::element::dimension_tag::dim2>(
 template <>
 specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
 specfem::assembly::resolve_coordinates<specfem::element::dimension_tag::dim3>(
-    const specfem::coordinate_systems::input_coordinates<
+    specfem::coordinate_systems::coordinates<
         specfem::element::dimension_tag::dim3> &coords,
-    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
-        &mesh) {
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
+    const std::optional<specfem::coordinate_systems::utm_projection_config>
+        &utm_config) {
 
-  using namespace specfem::coordinate_systems;
-
-  if (const auto *c = dynamic_cast<const input_cartesian_3d *>(&coords)) {
-    return { static_cast<type_real>(c->data.x),
-             static_cast<type_real>(c->data.y),
-             static_cast<type_real>(c->data.z) };
+  // Cartesian coordinates (absolute xyz or depth-based with origin)
+  if (auto *c = dynamic_cast<specfem::coordinate_systems::cartesian_coordinates<
+          specfem::element::dimension_tag::dim3> *>(&coords)) {
+    if (!c->origin.has_value()) {
+      // Origin not set — depth-based coordinates.
+      // Future: query topography for surface elevation at (x, y).
+      // For now, flat topography fallback: origin = {0, 0, 0}.
+      c->origin = { 0.0, 0.0, 0.0 };
+    }
+    const auto &o = *c->origin;
+    return { static_cast<type_real>(c->x + o[0]),
+             static_cast<type_real>(c->y + o[1]),
+             static_cast<type_real>(c->z + o[2]) };
   }
 
-  if (const auto *c =
-          dynamic_cast<const input_cartesian_with_depth_3d *>(&coords)) {
-    // TODO(#1867): This is a placeholder. Depth is measured positive downward
-    // from the topographic surface. The correct conversion requires querying
-    // the mesh for surface elevation at (x, y):
-    //   z = topo_elevation_at(x, y, mesh) - depth
-    // For now, assumes flat topography at z=0.
-    return { static_cast<type_real>(c->x), static_cast<type_real>(c->y),
-             static_cast<type_real>(-c->depth) };
+  // Geographic coordinates — project via UTM, then resolve depth
+  if (auto *c =
+          dynamic_cast<specfem::coordinate_systems::geographic_coordinates *>(
+              &coords)) {
+    if (!utm_config.has_value()) {
+      throw std::runtime_error(
+          "resolve_coordinates<dim3>: geographic coordinates require "
+          "utm_config for UTM projection");
+    }
+
+    // Forward-project lon/lat to UTM easting/northing.
+    // The transform returns cartesian with origin=nullopt and z=-depth.
+    auto cart = specfem::coordinate_systems::transform<
+        specfem::coordinate_systems::cartesian_coordinates<
+            specfem::element::dimension_tag::dim3>>(*c, *utm_config);
+
+    // Resolve the projected cartesian coordinates (handles origin/depth)
+    return specfem::assembly::resolve_coordinates(cart, mesh, utm_config);
   }
 
-  if (const auto *c = dynamic_cast<const input_geographic_3d *>(&coords)) {
-    // Geographic coordinate resolution requires UTM projection config
-    // and topography — not yet implemented.
+  // Geocentric coordinates — not yet implemented (Globe3D future)
+  if (dynamic_cast<specfem::coordinate_systems::geocentric_coordinates *>(
+          &coords)) {
     throw std::runtime_error(
-        "resolve_coordinates<dim3>: geographic coordinate resolution "
-        "not yet implemented");
+        "resolve_coordinates<dim3>: geocentric coordinate resolution "
+        "not yet implemented (Globe3D)");
   }
 
   throw std::runtime_error(

@@ -15,17 +15,20 @@ void specfem::assembly::sources_impl::locate_sources(
     const specfem::assembly::element_types<DimensionTag> &element_types,
     const specfem::assembly::mesh<DimensionTag> &mesh,
     std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
-        &sources) {
+        &sources,
+    const std::optional<specfem::coordinate_systems::utm_projection_config>
+        &utm_config) {
 
   const int nsources = static_cast<int>(sources.size());
   const int myrank = specfem::MPI::get_rank();
 
   // Resolve any generic coordinates to global coordinates using mesh context.
-  // Sources constructed with (x,y,z) directly have no input_coordinates_ set,
+  // Sources constructed with (x,y,z) directly have no read_coordinates_ set,
   // so this is a no-op for them.
   for (int isrc = 0; isrc < nsources; ++isrc) {
-    if (const auto *coords = sources[isrc]->get_input_coordinates()) {
-      auto gc = specfem::assembly::resolve_coordinates(*coords, mesh);
+    if (auto *coords = sources[isrc]->get_read_coordinates()) {
+      auto gc =
+          specfem::assembly::resolve_coordinates(*coords, mesh, utm_config);
       sources[isrc]->set_global_coordinates(gc);
     }
   }

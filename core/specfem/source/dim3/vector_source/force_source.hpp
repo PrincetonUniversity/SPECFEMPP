@@ -99,7 +99,7 @@ public:
    * @param wavefield_type type of wavefield
    */
   force(
-      std::unique_ptr<specfem::coordinate_systems::input_coordinates<
+      std::unique_ptr<specfem::coordinate_systems::coordinates<
           specfem::element::dimension_tag::dim3>>
           coordinates,
       type_real fx, type_real fy, type_real fz,

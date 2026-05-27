@@ -88,8 +88,8 @@ bool specfem::sources::force<specfem::element::dimension_tag::dim2>::operator==(
     return false;
   }
   // Compare input coordinates (identity depends solely on input, not mesh)
-  const auto *c1 = this->get_input_coordinates();
-  const auto *c2 = other_source->get_input_coordinates();
+  const auto *c1 = this->get_read_coordinates();
+  const auto *c2 = other_source->get_read_coordinates();
   bool coords_equal = (c1 && c2) ? (*c1 == *c2) : (!c1 && !c2);
 
   return coords_equal &&

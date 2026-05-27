@@ -74,7 +74,7 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
 
   // Resolve any generic coordinates to global coordinates using mesh context.
   for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
-    if (const auto *coords = receivers[ireceiver]->get_input_coordinates()) {
+    if (auto *coords = receivers[ireceiver]->get_read_coordinates()) {
       auto gc = specfem::assembly::resolve_coordinates(*coords, mesh);
       receivers[ireceiver]->set_global_coordinates(gc);
     }

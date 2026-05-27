@@ -1,7 +1,7 @@
 #pragma once
 
 #include "specfem/constants.hpp"
-#include "specfem/coordinate_systems/input_coordinates.hpp"
+#include "specfem/coordinate_systems/coordinates.hpp"
 
 #include "specfem/enums.hpp"
 #include "specfem/point.hpp"
@@ -92,26 +92,33 @@ public:
   /**
    * @brief Set the generic coordinates for this receiver.
    */
-  void set_input_coordinates(
-      std::unique_ptr<
-          specfem::coordinate_systems::input_coordinates<dimension_tag>>
+  void set_read_coordinates(
+      std::unique_ptr<specfem::coordinate_systems::coordinates<dimension_tag>>
           coordinates) {
-    input_coordinates_ = std::move(coordinates);
+    read_coordinates_ = std::move(coordinates);
   }
 
   /**
-   * @brief Get the generic coordinates, or nullptr if not set.
+   * @brief Get the generic coordinates (const), or nullptr if not set.
    */
-  const specfem::coordinate_systems::input_coordinates<dimension_tag> *
-  get_input_coordinates() const {
-    return input_coordinates_.get();
+  const specfem::coordinate_systems::coordinates<dimension_tag> *
+  get_read_coordinates() const {
+    return read_coordinates_.get();
+  }
+
+  /**
+   * @brief Get the generic coordinates (mutable), or nullptr if not set.
+   */
+  specfem::coordinate_systems::coordinates<dimension_tag> *
+  get_read_coordinates() {
+    return read_coordinates_.get();
   }
 
 private:
   specfem::point::global_coordinates<dimension_tag>
       global_coordinates; ///< Global coordinates of the receiver
-  std::unique_ptr<specfem::coordinate_systems::input_coordinates<dimension_tag>>
-      input_coordinates_;   ///< Generic coordinates (resolved at assembly time)
+  std::unique_ptr<specfem::coordinate_systems::coordinates<dimension_tag>>
+      read_coordinates_;    ///< Generic coordinates (resolved at assembly time)
   type_real angle;          ///< Angle to rotate components at receivers
   std::string network_name; ///< Name of the network where this station lies
   std::string station_name; ///< Name of the station
