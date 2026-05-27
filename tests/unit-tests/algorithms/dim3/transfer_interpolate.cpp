@@ -1,4 +1,5 @@
 #include "specfem/algorithms/transfer_interpolate.hpp"
+#include "Kokkos_Core_fwd.hpp"
 #include "specfem/chunk_face/nonconforming_interface.hpp"
 
 #include "specfem/datatype/accessor_type.hpp"
@@ -17,6 +18,7 @@
 #include <gtest/gtest.h>
 #include <random>
 #include <sstream>
+#include <type_traits>
 #include <utility>
 
 namespace specfem::algorithms_test {
@@ -190,12 +192,15 @@ void execute(const TransferCoordinates &transfer_coordinates,
   using ContainerTransferCoordinates =
       specfem::chunk_face::transfer_coupled_coordinates<
           dimension_tag, chunk_size, ngll_sample_face, interface_tag,
-          boundary_tag, flux_scheme_tag, memory_space, Kokkos::MemoryTraits<>>;
+          boundary_tag, flux_scheme_tag,
+          Kokkos::DefaultExecutionSpace::scratch_memory_space,
+          Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
   using ContainerFunctionCoupled = specfem::datatype::VectorChunkFaceViewType<
       type_real, dimension_tag, chunk_size, ngll_coupled_face,
-      FaceFunction::num_components, false /*UseSIMD*/, memory_space,
-      Kokkos::MemoryTraits<>>;
+      FaceFunction::num_components, false /*UseSIMD*/,
+      Kokkos::DefaultExecutionSpace::scratch_memory_space,
+      Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
   using ResultViewType =
       Kokkos::View<type_real[stack_size][ngll_sample_face][ngll_sample_face]
@@ -217,21 +222,37 @@ void execute(const TransferCoordinates &transfer_coordinates,
 
   Kokkos::parallel_for(
       "transfer_interpolate_test",
-      Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>(league_size,
-                                                        Kokkos::AUTO, 1),
-      KOKKOS_LAMBDA(
-          const Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>::member_type
-              &team_member) {
-        const int iedge = team_member.league_rank();
-        const int this_chunk_start = iedge * chunk_size;
+      Kokkos::TeamPolicy<>(league_size, Kokkos::AUTO, 1)
+          .set_scratch_size(
+              0, Kokkos::PerTeam(ContainerTransferCoordinates::shmem_size() +
+                                 ContainerFunctionCoupled::shmem_size())),
+      KOKKOS_LAMBDA(const Kokkos::TeamPolicy<>::member_type &team_member) {
+        const int ichunk = team_member.league_rank();
+        const int this_chunk_start = ichunk * chunk_size;
         const int this_chunk_size =
             std::min(chunk_size, stack_size - this_chunk_start);
-        const ContainerTransferCoordinates TF(
-            Kokkos::subview(transfer_coord_view, iedge, Kokkos::ALL(),
-                            Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL()));
-        const ContainerFunctionCoupled F(
-            Kokkos::subview(function_view, iedge, Kokkos::ALL(), Kokkos::ALL(),
-                            Kokkos::ALL(), Kokkos::ALL()));
+        ContainerTransferCoordinates TF(team_member);
+        ContainerFunctionCoupled F(team_member.team_scratch(0));
+
+        // deep copy into scratch
+        specfem::execution::for_each_level(
+            specfem::execution::TeamThreadMDRangeIterator(
+                team_member, this_chunk_size, ngll_sample_face,
+                ngll_sample_face, 2),
+            [&](const auto &index) {
+              TF(index(0), index(1), index(2), index(3)) = transfer_coord_view(
+                  ichunk, index(0), index(1), index(2), index(3));
+            });
+        specfem::execution::for_each_level(
+            specfem::execution::TeamThreadMDRangeIterator(
+                team_member, this_chunk_size, ngll_coupled_face,
+                ngll_coupled_face, FaceFunction::num_components),
+            [&](const auto &index) {
+              F(index(0), index(1), index(2), index(3)) =
+                  function_view(ichunk, index(0), index(1), index(2), index(3));
+            });
+        team_member.team_barrier();
+
         specfem::algorithms::transfer_interpolate(
             ChunkFaceIndex(this_chunk_size, team_member), TF, F,
             [&](const auto &index, const auto &point) {
