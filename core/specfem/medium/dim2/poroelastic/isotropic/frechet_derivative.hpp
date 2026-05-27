@@ -57,7 +57,7 @@ template <
         int> = 0>
 KOKKOS_FUNCTION specfem::point::kernels<Tags::dimension_tag, Tags::medium_tag,
                                         Tags::property_tag, Tags::using_simd>
-impl_compute_frechet_derivatives(
+compute_frechet_derivatives(
     const specfem::point::properties<Tags> &properties,
     const specfem::point::velocity<Tags> &adjoint_velocity,
     const specfem::point::acceleration<Tags> &adjoint_acceleration,

@@ -65,7 +65,7 @@ template <
             Tags::property_tag ==
                 specfem::element::property_tag::isotropic_cosserat,
         int> = 0>
-KOKKOS_INLINE_FUNCTION specfem::point::stress<Tags> impl_compute_stress(
+KOKKOS_INLINE_FUNCTION specfem::point::stress<Tags> compute_stress(
     const specfem::point::properties<Tags> &properties,
     const specfem::point::field_derivatives<Tags> &field_derivatives) {
 

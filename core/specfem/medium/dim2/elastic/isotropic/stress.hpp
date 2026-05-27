@@ -42,7 +42,7 @@ template <
             Tags::medium_tag == specfem::element::medium_tag::elastic_psv &&
             Tags::property_tag == specfem::element::property_tag::isotropic,
         int> = 0>
-KOKKOS_INLINE_FUNCTION specfem::point::stress<Tags> impl_compute_stress(
+KOKKOS_INLINE_FUNCTION specfem::point::stress<Tags> compute_stress(
     const specfem::point::properties<Tags> &properties,
     const specfem::point::field_derivatives<Tags> &field_derivatives) {
 
@@ -99,7 +99,7 @@ template <
             Tags::medium_tag == specfem::element::medium_tag::elastic_sh &&
             Tags::property_tag == specfem::element::property_tag::isotropic,
         int> = 0>
-KOKKOS_INLINE_FUNCTION specfem::point::stress<Tags> impl_compute_stress(
+KOKKOS_INLINE_FUNCTION specfem::point::stress<Tags> compute_stress(
     const specfem::point::properties<Tags> &properties,
     const specfem::point::field_derivatives<Tags> &field_derivatives) {
 
