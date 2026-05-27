@@ -11,7 +11,6 @@
 #include <algorithm>
 #include <array>
 #include <cstring>
-#include <format>
 #include <fstream>
 #include <optional>
 #include <stdexcept>
@@ -259,9 +258,9 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
 
     const int my_rank = specfem::MPI::get_rank();
 
-    specfem::Logger::debug(
-        std::format("Writing SAC seismograms to {} from rank {} ({} stations)",
-                    output_folder, my_rank, stations.size()));
+    specfem::Logger::debug("Writing SAC seismograms to " + output_folder +
+                           " from rank " + std::to_string(my_rank) + " (" +
+                           std::to_string(stations.size()) + " stations)");
 
     for (const auto &station_info : stations) {
       const bool on_this_rank = (station_info.partition_index == my_rank);
@@ -284,7 +283,7 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
         const float b = static_cast<float>(receivers.get_t0());
         const float delta = static_cast<float>(gen.get_sample_interval());
 
-        std::vector<std::vector<float> > samples(ncomp);
+        std::vector<std::vector<float>> samples(ncomp);
         for (auto &s : samples)
           s.reserve(nsteps);
 
@@ -338,10 +337,10 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
                            samples[icomp]);
 
           specfem::Logger::debug(
-              std::format("SAC file for station {}.{} ({} component) written "
-                          "to: {} from rank {}",
-                          station_info.network_name, station_info.station_name,
-                          channel_code, sac_path, my_rank));
+              "SAC file for station " + station_info.network_name + "." +
+              station_info.station_name + " (" + channel_code +
+              " component) written to: " + sac_path + " from rank " +
+              std::to_string(my_rank));
         }
       }
     }

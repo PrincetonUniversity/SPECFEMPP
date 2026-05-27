@@ -4,7 +4,6 @@
 #include "specfem/assembly/receivers/impl/receiver_iterator.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/mpi.hpp"
-#include <format>
 #include <fstream>
 #include <optional>
 #include <stdexcept>
@@ -29,9 +28,9 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::ascii> {
                     const bool send_to_main) {
     const int my_rank = specfem::MPI::get_rank();
 
-    specfem::Logger::debug(std::format(
-        "Writing ASCII seismograms to {} from rank {} ({} stations)",
-        output_folder, my_rank, stations.size()));
+    specfem::Logger::debug("Writing ASCII seismograms to " + output_folder +
+                           " from rank " + std::to_string(my_rank) + " (" +
+                           std::to_string(stations.size()) + " stations)");
 
     const int nsteps = receivers.get_nsteps();
 
@@ -110,10 +109,9 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::ascii> {
           seismo_file[icomp].close();
 
           specfem::Logger::debug(
-              std::format("ASCII file for station {}.{} written "
-                          "to: {} from rank {}",
-                          station_info.network_name, station_info.station_name,
-                          filenames[icomp], my_rank));
+              "ASCII file for station " + station_info.network_name + "." +
+              station_info.station_name + " written to: " + filenames[icomp] +
+              " from rank " + std::to_string(my_rank));
         }
       }
     }
