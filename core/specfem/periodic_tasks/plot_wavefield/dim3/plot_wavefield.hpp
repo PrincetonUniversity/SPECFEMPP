@@ -136,18 +136,9 @@ private:
   vtkSmartPointer<vtkFloatArray> compute_wavefield_scalars(
       specfem::assembly::assembly<dimension_tag> &assembly);
 
-  // Get wavefield type from display type
-  specfem::enums::wavefield get_wavefield_type();
-
-  template <specfem::enums::display_format format>
-  void initialize(vtkSmartPointer<vtkFloatArray> &scalars);
-
-  void initialize_display(vtkSmartPointer<vtkFloatArray> &scalars);
-
-  template <specfem::enums::display_format format>
-  void run(vtkSmartPointer<vtkFloatArray> &scalars, const int istep);
-
-  void run_render(vtkSmartPointer<vtkFloatArray> &scalars);
+  // VTKHDF initialization and per-timestep write
+  void initialize_vtkhdf(vtkSmartPointer<vtkFloatArray> &scalars);
+  void run_vtkhdf(vtkSmartPointer<vtkFloatArray> &scalars, const int istep);
 
   // Helper to extend a 1D HDF5 dataset and write a single scalar value.
   // When do_write is false, extends the dataset but writes nothing (for
