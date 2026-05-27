@@ -37,20 +37,19 @@ public:
   /**
    * @brief Write the wavefield data to disk
    *
+   * @tparam DimensionTag Spatial dimension (dim2 or dim3)
    * @param assembly SPECFEM++ assembly
    *
    */
-  void
-  initialize(specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
-                 &assembly);
+  template <specfem::element::dimension_tag DimensionTag>
+  void initialize(specfem::assembly::assembly<DimensionTag> &assembly);
 
-  void run(specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
-               &assembly,
+  template <specfem::element::dimension_tag DimensionTag>
+  void run(specfem::assembly::assembly<DimensionTag> &assembly,
            const int istep);
 
-  void
-  finalize(specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
-               &assembly);
+  template <specfem::element::dimension_tag DimensionTag>
+  void finalize(specfem::assembly::assembly<DimensionTag> &assembly);
 
 private:
   std::string output_folder; ///< Path to output folder
@@ -60,3 +59,5 @@ private:
 };
 } // namespace io
 } // namespace specfem
+
+#include "specfem/io/wavefield/writer.tpp"

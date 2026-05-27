@@ -32,6 +32,10 @@ specfem::source_time_functions::external::external(const YAML::Node &external,
     } else if (stf["Y-component"]) {
       this->y_component_ = stf["Y-component"].as<std::string>();
       this->ncomponents_ = 1;
+    } else if (stf["P-component"]) {
+      // Single-component (scalar) source, e.g. acoustic pressure adjoint source
+      this->y_component_ = stf["P-component"].as<std::string>();
+      this->ncomponents_ = 1;
     } else {
       throw std::runtime_error("Error: External source time function requires "
                                "at least one component");
@@ -87,9 +91,13 @@ void specfem::source_time_functions::external::compute_source_time_function(
 
   const int ncomponents = source_time_function.extent(1);
 
-  if (ncomponents != 2) {
-    throw std::runtime_error("External source time function only supports 2 "
-                             "components");
+  if (ncomponents != this->ncomponents_) {
+    throw std::runtime_error(
+        "External source time function: number of components in the force "
+        "vector (" +
+        std::to_string(ncomponents) +
+        ") does not match the number of components in the STF files (" +
+        std::to_string(this->ncomponents_) + ")");
   }
 
   if (std::abs(t0 - this->t0_) > 1e-6) {

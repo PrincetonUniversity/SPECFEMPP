@@ -1,0 +1,25 @@
+number-of-sources: 2
+sources:
+  - force:
+      x: 67222.0
+      y: 67222.0
+      z: -30000.0
+      source_surf: false
+      fx: 1.0e10
+      fy: 0.0
+      fz: 0.0
+      Ricker:
+        factor: 1.0
+        tshift: 0.0
+        f0: 0.1
+  - adjoint-source:
+      x: 67000.0
+      y: 22732.14
+      z: -50.0
+      source_surf: false
+      station_name: X20
+      network_name: DB
+      External:
+        format: ascii
+        stf:
+          P-component: adjoint_sources/DB.X20.S3.MXP.adj

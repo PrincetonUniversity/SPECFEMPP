@@ -55,6 +55,14 @@ specfem::io::sources_impl::read<specfem::element::dimension_tag::dim3,
       sources.push_back(std::make_shared<specfem::sources::moment_tensor<
                             specfem::element::dimension_tag::dim3>>(
           moment_tensor_source, nsteps, dt, wavefield_type));
+    } else if (YAML::Node adjoint_node = N["adjoint-source"]) {
+      if (!adjoint_node["station_name"] || !adjoint_node["network_name"]) {
+        throw std::runtime_error(
+            "adjoint-source requires both station_name and network_name");
+      }
+      sources.push_back(std::make_shared<specfem::sources::adjoint_source<
+                            specfem::element::dimension_tag::dim3>>(
+          adjoint_node, nsteps, dt));
     } else {
       throw std::runtime_error("Unknown source type in YAML source file");
     }

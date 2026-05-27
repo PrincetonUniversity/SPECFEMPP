@@ -43,9 +43,7 @@ public:
    * @param assembly 3D Assembly object
    */
   void write(specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
-                 &assembly) override {
-    throw std::runtime_error("3D kernel output not implemented yet");
-  }
+                 &assembly) override;
 
 private:
   std::string output_folder; ///< Path to output folder

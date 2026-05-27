@@ -1,0 +1,52 @@
+parameters:
+
+  header:
+    title: Homogeneous Acoustic Kernel (3D)
+    description: |
+      Material systems : Acoustic domain (1)
+      Interfaces : None
+      Sources : Force source (1) - acoustic explosion
+      Boundary conditions : Dirichlet (free surface) on top
+      Receivers : Pressure seismograms
+      Output : Wavefield saved for adjoint simulation
+      Reference : Tromp, Tape & Liu (GJI 2005)
+
+  run-setup:
+    number-of-processors: 1
+    number-of-runs: 1
+
+  simulation-setup:
+    quadrature:
+      quadrature-type: GLL4
+
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:
+            format: ascii
+            directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results"
+          wavefield:
+            directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES"
+            format: npy
+            for-adjoint-simulations: true
+
+    solver:
+      time-marching:
+        time-scheme:
+          type: Newmark
+          dt: 0.2
+          nstep: 500
+
+  receivers:
+    stations: "@CURRENT_BENCHMARK_BUILD_DIR@/DATA/STATIONS"
+    angle: 0.0
+    seismogram-type:
+      - pressure
+    nstep_between_samples: 1
+
+  databases:
+    mesh-database: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES/Database.bin"
+
+  sources: "@CURRENT_BENCHMARK_BUILD_DIR@/forward_source.yaml"
+
+  log-file: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/output_forward"
