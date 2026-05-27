@@ -210,10 +210,9 @@ void execute(const TransferCoordinates &transfer_coordinates,
 
   // ======= Run Kernel
   const auto function_view =
-      face_function.template get_resized_view<chunk_size * league_size>();
+      face_function.template get_chunkwise_view<chunk_size>();
   const auto transfer_coord_view =
-      transfer_coordinates
-          .template get_resized_view<chunk_size * league_size>();
+      transfer_coordinates.template get_chunkwise_view<chunk_size>();
   ResultViewType result_view("result_view");
 
   Kokkos::parallel_for(
@@ -230,14 +229,12 @@ void execute(const TransferCoordinates &transfer_coordinates,
         const int this_chunk_start = iedge * chunk_size;
         const int this_chunk_size =
             std::min(chunk_size, stack_size - this_chunk_start);
-        const ContainerTransferCoordinates TF(Kokkos::subview(
-            transfer_coord_view,
-            Kokkos::make_pair(this_chunk_start, this_chunk_start + chunk_size),
-            Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL()));
-        const ContainerFunctionCoupled F(Kokkos::subview(
-            function_view,
-            Kokkos::make_pair(this_chunk_start, this_chunk_start + chunk_size),
-            Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL()));
+        const ContainerTransferCoordinates TF(
+            Kokkos::subview(transfer_coord_view, iedge, Kokkos::ALL(),
+                            Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL()));
+        const ContainerFunctionCoupled F(
+            Kokkos::subview(function_view, iedge, Kokkos::ALL(), Kokkos::ALL(),
+                            Kokkos::ALL(), Kokkos::ALL()));
         specfem::algorithms::transfer_interpolate(
             ChunkFaceIndex(this_chunk_size, team_member), TF, F,
             [&](const auto &index, const auto &point) {
@@ -421,22 +418,27 @@ public:
     return view;
   }
 
-  template <int new_stack_size>
+  template <int chunk_size>
   Kokkos::View<
-      type_real[new_stack_size][nquad_element][nquad_element][num_components],
+      type_real *[chunk_size][nquad_element][nquad_element][num_components],
       memory_space>
-  get_resized_view() const {
+  get_chunkwise_view(int stack_size = -1) const {
+    if (stack_size < 0) {
+      stack_size = this->stack_size;
+    }
+    const int num_stacks = (stack_size + chunk_size - 1) / chunk_size;
     Kokkos::View<
-        type_real[new_stack_size][nquad_element][nquad_element][num_components],
+        type_real *[chunk_size][nquad_element][nquad_element][num_components],
         memory_space>
-        view("field_view");
+        view("field_view", num_stacks);
     auto host_view =
         Kokkos::create_mirror_view(view); // Create host mirror to copy data
-    for (size_t i = 0; i < std::min(new_stack_size, this->stack_size); ++i) {
+    for (size_t i = 0; i < std::min(stack_size, this->stack_size); ++i) {
       for (size_t j = 0; j < nquad_element; ++j) {
         for (size_t ell = 0; ell < nquad_element; ++ell) {
           for (size_t k = 0; k < num_components; ++k) {
-            host_view(i, j, ell, k) = (*this)(i, j, ell, k);
+            host_view(i / chunk_size, i % chunk_size, j, ell, k) =
+                (*this)(i, j, ell, k);
           }
         }
       }
@@ -445,7 +447,9 @@ public:
     return view;
   }
 
-  static std::string description() { return "NoisyFaceQuadraturePoints3D"; }
+  static std::string description() {
+    return "NoisyFaceQuadraturePoints3D";
+  }
   static std::string initializer_name() { return "<runtime-initialized>"; }
 
   const type_real &operator()(const int i, const int j, const int ell,

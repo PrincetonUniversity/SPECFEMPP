@@ -240,22 +240,27 @@ public:
     return view;
   }
 
-  template <int new_stack_size>
+  template <int chunk_size>
   Kokkos::View<
-      type_real[new_stack_size][nquad_element][nquad_element][num_components],
+      type_real *[chunk_size][nquad_element][nquad_element][num_components],
       memory_space>
-  get_resized_view() const {
+  get_chunkwise_view(int stack_size = -1) const {
+    if (stack_size < 0) {
+      stack_size = this->stack_size;
+    }
+    const int num_stacks = (stack_size + chunk_size - 1) / chunk_size;
     Kokkos::View<
-        type_real[new_stack_size][nquad_element][nquad_element][num_components],
+        type_real *[chunk_size][nquad_element][nquad_element][num_components],
         memory_space>
-        view("field_view");
+        view("field_view", num_stacks);
     auto host_view =
         Kokkos::create_mirror_view(view); // Create host mirror to copy data
-    for (size_t i = 0; i < std::min(new_stack_size, this->stack_size); ++i) {
+    for (size_t i = 0; i < std::min(stack_size, this->stack_size); ++i) {
       for (size_t j = 0; j < nquad_element; ++j) {
         for (size_t ell = 0; ell < nquad_element; ++ell) {
           for (size_t k = 0; k < num_components; ++k) {
-            host_view(i, j, ell, k) = (*this)(i, j, ell, k);
+            host_view(i / chunk_size, i % chunk_size, j, ell, k) =
+                (*this)(i, j, ell, k);
           }
         }
       }
