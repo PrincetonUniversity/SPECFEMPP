@@ -120,7 +120,7 @@ struct ChunkNDimViewType
           AccessorType == specfem::datatype::AccessorType::chunk_face,
           specfem::point::face_index<DimensionTag>,
           std::conditional_t<
-              AccessorType == specfem::datatype::AccessorType::chunk_face,
+              AccessorType == specfem::datatype::AccessorType::chunk_edge,
               specfem::point::edge_index<DimensionTag>, void>>>; ///< index type
                                                                  ///< for
                                                                  ///< accessing
