@@ -39,19 +39,20 @@ int compute_stiffness_interaction(
   // Get the number of elements that match the specified tags
   const int nelements = elements.extent(0);
 
-  // Get the element grid information (ngll, ngllx, ngllz, order)
-  const auto &element_grid = assembly.mesh.element_grid;
-
   // Return if there are no elements matching the tag combination
   if (nelements == 0)
     return 0;
 
   // Check if the number of GLL points in the mesh elements matches the template
-  if (element_grid != NGLL) {
+  if (assembly.mesh.element_grid != NGLL) {
     throw std::runtime_error(
         "The number of GLL points in the mesh elements must match "
         "the template parameter NGLL.");
   }
+
+  specfem::mesh_entity::element_grid<dimension_tag,
+                                     specfem::mesh_entity::Grid<NGLL>>
+      element_grid{};
 
   // Alias some assembly members for easier acces
   const auto &mesh = assembly.mesh;
@@ -182,6 +183,10 @@ int compute_stiffness_interaction(
                 specfem::assembly::load_on_device(index, properties,
                                                   point_property);
 
+                PointWeightsType point_weights;
+                specfem::assembly::load_on_device(index, mesh.weights,
+                                                  point_weights);
+
                 const auto field_derivatives =
                     grad_pack.template get_du<PointTags>();
 
@@ -209,8 +214,8 @@ int compute_stiffness_interaction(
 
                 // Scatter F contributions into shared acceleration scratch
                 specfem::algorithms::impl::scattered_divergence(
-                    F, local_index, mesh.weights, lagrange_derivative,
-                    scratch_acc);
+                    F, local_index, point_weights.product(),
+                    lagrange_derivative, scratch_acc);
 
                 // Cosserat couple stress: local-point scatter to spin
                 // component. Guarded by has_cosserat_couple_stress — zero
@@ -220,9 +225,6 @@ int compute_stiffness_interaction(
                         dimension_tag, medium_tag>::has_cosserat_couple_stress;
 
                 if constexpr (has_cosserat_couple_stress) {
-                  PointWeightsType point_weights;
-                  specfem::assembly::load_on_device(index, mesh.weights,
-                                                    point_weights);
 
                   PointAccelerationType cosserat_delta;
                   for (int icomp = 0; icomp < ncomp; ++icomp)
