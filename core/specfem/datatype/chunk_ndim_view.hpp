@@ -63,26 +63,19 @@ template <typename T> struct arrayify_datatype_expand<T> {
  * of size Dim. This is the sequence that should be passed in as
  * ElementSubspaceShapeIntegerSequence
  */
-template <int SubspaceDimension, int NGLL> struct subspace_shape {
-private:
-  template <int... Vals>
-  static std::integer_sequence<int, Vals..., NGLL>
-  type_expand(std::integer_sequence<int, Vals...> integer_sequence) {};
+template <int NGLL, int... repeats>
+std::integer_sequence<int, (NGLL + repeats * 0 /*hack to fold NGLL*/)...>
+_subspace_shape(std::integer_sequence<int, repeats...>) {}
 
-public:
-  using type = decltype(type_expand(
-      typename subspace_shape<SubspaceDimension - 1, NGLL>::type()));
-};
-template <int NGLL> struct subspace_shape<0, NGLL> {
-  using type = std::integer_sequence<int>;
-};
+template <int SubspaceDimension, int NGLL>
+using subspace_shape = decltype(_subspace_shape<NGLL>(
+    std::make_integer_sequence<int, SubspaceDimension>()));
 
 // mini-test: 8-7 tensor on NGLL=5 2D element (chunk size = 1)
 static_assert(
-    std::is_same<arrayify_datatype<type_real, 1,
-                                   typename impl::subspace_shape<2, 5>::type,
-                                   std::integer_sequence<int, 8, 7>>::type,
-                 type_real[1][5][5][8][7]>());
+    std::is_same_v<arrayify_datatype<type_real, 1, impl::subspace_shape<2, 5>,
+                                     std::integer_sequence<int, 8, 7>>::type,
+                   type_real[1][5][5][8][7]>);
 
 } // namespace impl
 
@@ -99,7 +92,7 @@ struct ChunkNDimViewType
     : public Kokkos::View<
           typename impl::arrayify_datatype<
               typename specfem::datatype::simd<T, UseSIMD>::datatype, ChunkSize,
-              typename impl::subspace_shape<ChunkSubspaceDimension, NGLL>::type,
+              typename impl::subspace_shape<ChunkSubspaceDimension, NGLL>,
               PointwiseShapeIntegerSequence>::type,
           MemorySpace, MemoryTraits> {
   /**
@@ -111,7 +104,7 @@ struct ChunkNDimViewType
   using type = Kokkos::View<
       typename impl::arrayify_datatype<
           typename specfem::datatype::simd<T, UseSIMD>::datatype, ChunkSize,
-          typename impl::subspace_shape<ChunkSubspaceDimension, NGLL>::type,
+          typename impl::subspace_shape<ChunkSubspaceDimension, NGLL>,
           PointwiseShapeIntegerSequence>::type,
       MemorySpace, MemoryTraits>; ///< Underlying data type used to
                                   ///< store values
