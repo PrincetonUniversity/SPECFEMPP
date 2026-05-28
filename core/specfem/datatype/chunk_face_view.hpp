@@ -15,7 +15,7 @@ struct ScalarChunkFaceViewType
                                std::integer_sequence<int>,
                                specfem::datatype::AccessorType::chunk_face,
                                UseSIMD, ViewParameters...> {
-  using chunk_ndim_view_type =
+  using base_type =
       ChunkNDimViewType<T, DimensionTag, NumberOfFaces, NumberOfGLLPoints, 2,
                         std::integer_sequence<int>,
                         specfem::datatype::AccessorType::chunk_face, UseSIMD,
@@ -23,7 +23,7 @@ struct ScalarChunkFaceViewType
 
   // explicit constructor pass-through because nvcc hates you and will do
   // anything in its power to keep you from ever seeing world peace
-  using chunk_ndim_view_type::chunk_ndim_view_type;
+  using base_type::base_type;
 };
 
 template <typename T, specfem::element::dimension_tag DimensionTag,
@@ -35,7 +35,7 @@ struct VectorChunkFaceViewType
                                std::integer_sequence<int, Components>,
                                specfem::datatype::AccessorType::chunk_face,
                                UseSIMD, ViewParameters...> {
-  using chunk_ndim_view_type =
+  using base_type =
       ChunkNDimViewType<T, DimensionTag, NumberOfFaces, NumberOfGLLPoints, 2,
                         std::integer_sequence<int, Components>,
                         specfem::datatype::AccessorType::chunk_face, UseSIMD,
@@ -45,7 +45,7 @@ struct VectorChunkFaceViewType
 
   // explicit constructor pass-through because nvcc hates you and will do
   // anything in its power to keep you from ever seeing world peace
-  using chunk_ndim_view_type::chunk_ndim_view_type;
+  using base_type::base_type;
 };
 
 template <typename T, specfem::element::dimension_tag DimensionTag,
@@ -60,7 +60,7 @@ struct TensorChunkFaceViewType
           specfem::datatype::AccessorType::chunk_face, UseSIMD,
           ViewParameters...> {
 
-  using chunk_ndim_view_type = ChunkNDimViewType<
+  using base_type = ChunkNDimViewType<
       T, DimensionTag, NumberOfFaces, NumberOfGLLPoints, 2,
       std::integer_sequence<int, Components, NumberOfDimensions>,
       specfem::datatype::AccessorType::chunk_face, UseSIMD, ViewParameters...>;
@@ -70,7 +70,7 @@ struct TensorChunkFaceViewType
 
   // explicit constructor pass-through because nvcc hates you and will do
   // anything in its power to keep you from ever seeing world peace
-  using chunk_ndim_view_type::chunk_ndim_view_type;
+  using base_type::base_type;
 };
 } // namespace datatype
 } // namespace specfem

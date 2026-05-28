@@ -37,7 +37,7 @@ struct ScalarChunkElementViewType
                                std::integer_sequence<int>,
                                specfem::datatype::AccessorType::chunk_element,
                                UseSIMD, ViewParameters...> {
-  using chunk_ndim_view_type =
+  using base_type =
       ChunkNDimViewType<T, DimensionTag, NumberOfElements, NumberOfGLLPoints,
                         specfem::element::dimension<DimensionTag>::dim,
                         std::integer_sequence<int>,
@@ -72,7 +72,7 @@ struct VectorChunkElementViewType
                                std::integer_sequence<int, Components>,
                                specfem::datatype::AccessorType::chunk_element,
                                UseSIMD, ViewParameters...> {
-  using chunk_ndim_view_type =
+  using base_type =
       ChunkNDimViewType<T, DimensionTag, NumberOfElements, NumberOfGLLPoints,
                         specfem::element::dimension<DimensionTag>::dim,
                         std::integer_sequence<int, Components>,
@@ -94,8 +94,8 @@ struct VectorChunkElementViewType
                                                 ///< each GLL point
   ///@}
 
-  using chunk_ndim_view_type::operator();
-  using chunk_ndim_view_type::chunk_ndim_view_type;
+  using base_type::operator();
+  using base_type::base_type;
 
   /**
    * @brief Get vector subview by a point index.
@@ -104,7 +104,7 @@ struct VectorChunkElementViewType
    */
   KOKKOS_INLINE_FUNCTION
   impl::VectorChunkElementSubview<VectorChunkElementViewType>
-  operator()(const chunk_ndim_view_type::index_type &index) {
+  operator()(const base_type::index_type &index) {
     return { *this, index };
   }
 };
@@ -136,7 +136,7 @@ struct TensorChunkElementViewType
           specfem::datatype::AccessorType::chunk_element, UseSIMD,
           ViewParameters...> {
 
-  using chunk_ndim_view_type = ChunkNDimViewType<
+  using base_type = ChunkNDimViewType<
       T, DimensionTag, NumberOfElements, NumberOfGLLPoints,
       specfem::element::dimension<DimensionTag>::dim,
       std::integer_sequence<int, Components, NumberOfDimensions>,
@@ -151,8 +151,8 @@ struct TensorChunkElementViewType
                                               UseSIMD>; ///< Point view type for
                                                         ///< component access
 
-  using chunk_ndim_view_type::operator();
-  using chunk_ndim_view_type::chunk_ndim_view_type;
+  using base_type::operator();
+  using base_type::base_type;
   /**
    * @brief Get tensor subview by a point index.
    *
@@ -160,7 +160,7 @@ struct TensorChunkElementViewType
    */
   KOKKOS_INLINE_FUNCTION
   impl::TensorChunkElementSubview<TensorChunkElementViewType>
-  operator()(const chunk_ndim_view_type::index_type &index) {
+  operator()(const base_type::index_type &index) {
     return { *this, index };
   }
 };

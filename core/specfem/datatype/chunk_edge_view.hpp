@@ -20,7 +20,7 @@ struct ScalarChunkEdgeViewType
                                std::integer_sequence<int>,
                                specfem::datatype::AccessorType::chunk_edge,
                                UseSIMD, ViewParameters...> {
-  using chunk_ndim_view_type =
+  using base_type =
       ChunkNDimViewType<T, DimensionTag, NumberOfEdges, NumberOfGLLPoints, 1,
                         std::integer_sequence<int>,
                         specfem::datatype::AccessorType::chunk_edge, UseSIMD,
@@ -28,9 +28,9 @@ struct ScalarChunkEdgeViewType
 
   // explicit constructor pass-through because nvcc hates you and will do
   // anything in its power to keep you from ever seeing world peace
-  using chunk_ndim_view_type::chunk_ndim_view_type;
+  using base_type::base_type;
   constexpr static int nedges = NumberOfEdges;
-  using chunk_ndim_view_type::operator();
+  using base_type::operator();
 
   /**
    * @brief Get scalar value by a point index.
@@ -38,8 +38,7 @@ struct ScalarChunkEdgeViewType
    * @param index Point index
    */
   KOKKOS_INLINE_FUNCTION
-  constexpr chunk_ndim_view_type::value_type &
-  operator()(chunk_ndim_view_type::index_type index) {
+  constexpr base_type::value_type &operator()(base_type::index_type index) {
     return (*this)(index.ispec, index.ipoint);
   }
 };
@@ -53,7 +52,7 @@ struct VectorChunkEdgeViewType
                                std::integer_sequence<int, Components>,
                                specfem::datatype::AccessorType::chunk_edge,
                                UseSIMD, ViewParameters...> {
-  using chunk_ndim_view_type =
+  using base_type =
       ChunkNDimViewType<T, DimensionTag, NumberOfEdges, NumberOfGLLPoints, 1,
                         std::integer_sequence<int, Components>,
                         specfem::datatype::AccessorType::chunk_edge, UseSIMD,
@@ -63,9 +62,9 @@ struct VectorChunkEdgeViewType
 
   // explicit constructor pass-through because nvcc hates you and will do
   // anything in its power to keep you from ever seeing world peace
-  using chunk_ndim_view_type::chunk_ndim_view_type;
+  using base_type::base_type;
   constexpr static int nedges = NumberOfEdges;
-  using chunk_ndim_view_type::operator();
+  using base_type::operator();
 
   /**
    * @brief Get vector subview by a point index.
@@ -74,7 +73,7 @@ struct VectorChunkEdgeViewType
    */
   KOKKOS_INLINE_FUNCTION
   impl::VectorChunkEdgeSubview<VectorChunkEdgeViewType>
-  operator()(const chunk_ndim_view_type::index_type &index) {
+  operator()(const base_type::index_type &index) {
     return { *this, index };
   }
 };
@@ -91,7 +90,7 @@ struct TensorChunkEdgeViewType
           specfem::datatype::AccessorType::chunk_edge, UseSIMD,
           ViewParameters...> {
 
-  using chunk_ndim_view_type = ChunkNDimViewType<
+  using base_type = ChunkNDimViewType<
       T, DimensionTag, NumberOfEdges, NumberOfGLLPoints, 1,
       std::integer_sequence<int, Components, NumberOfDimensions>,
       specfem::datatype::AccessorType::chunk_edge, UseSIMD, ViewParameters...>;
@@ -101,10 +100,10 @@ struct TensorChunkEdgeViewType
 
   // explicit constructor pass-through because nvcc hates you and will do
   // anything in its power to keep you from ever seeing world peace
-  using chunk_ndim_view_type::chunk_ndim_view_type;
+  using base_type::base_type;
   constexpr static int nedges = NumberOfEdges;
 
-  using chunk_ndim_view_type::operator();
+  using base_type::operator();
   /**
    * @brief Get tensor subview by a point index.
    *
@@ -112,7 +111,7 @@ struct TensorChunkEdgeViewType
    */
   KOKKOS_INLINE_FUNCTION
   impl::TensorChunkEdgeSubview<TensorChunkEdgeViewType>
-  operator()(const chunk_ndim_view_type::index_type &index) {
+  operator()(const base_type::index_type &index) {
     return { *this, index };
   }
 };
