@@ -233,10 +233,11 @@ struct field_derivative_medium
   }
 
   /**
-   * @brief Store field derivatives for a SIMD GLL point into compact storage.
+   * @brief Store field derivatives for a SIMD GLL point into compact storage
+   * (dim2).
    *
-   * Uses copy_to to scatter SIMD_WIDTH consecutive compact-index values
-   * starting at the compact index of the first lane, matching the
+   * Uses simd_partial_store to scatter SIMD_WIDTH consecutive compact-index
+   * values starting at the compact index of the first lane, matching the
    * jacobian_matrix SIMD pattern.
    */
   template <typename PointFDType, typename IndexType,
@@ -255,15 +256,41 @@ struct field_derivative_medium
 
     for (int ic = 0; ic < PointFDType::components; ++ic) {
       for (int id = 0; id < PointFDType::num_dimensions; ++id) {
-        if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
-          Kokkos::Experimental::simd_partial_store(
-              point_fd.du[ic][id], &du(i, index.iz, index.ix, ic, id), mask,
-              tag_type());
-        } else {
-          Kokkos::Experimental::simd_partial_store(
-              point_fd.du[ic][id], &du(i, index.iz, index.iy, index.ix, ic, id),
-              mask, tag_type());
-        }
+        Kokkos::Experimental::simd_partial_store(
+            point_fd.du[ic][id], &du(i, index.iz, index.ix, ic, id), mask,
+            tag_type());
+      }
+    }
+  }
+
+  /**
+   * @brief Store field derivatives for a SIMD GLL point into compact storage
+   * (dim3).
+   *
+   * Uses simd_partial_store to scatter SIMD_WIDTH consecutive compact-index
+   * values starting at the compact index of the first lane. The du view uses
+   * Kokkos::LayoutLeft so consecutive compact indices for a fixed (iz,iy,ix)
+   * are contiguous in memory (stride-1 along the first axis).
+   */
+  template <typename PointFDType, typename IndexType,
+            std::enable_if_t<(IndexType::using_simd &&
+                              IndexType::dimension_tag ==
+                                  specfem::element::dimension_tag::dim3),
+                             int> = 0>
+  KOKKOS_FORCEINLINE_FUNCTION void
+  store_device_values(const IndexType &index, const PointFDType &point_fd) {
+    using simd_type = typename PointFDType::simd;
+    using mask_type = typename simd_type::mask_type;
+    using tag_type = typename simd_type::tag_type;
+
+    const int i = ispec_to_compact(index.ispec);
+    const auto mask = index.template get_mask<simd_type>();
+
+    for (int ic = 0; ic < PointFDType::components; ++ic) {
+      for (int id = 0; id < PointFDType::num_dimensions; ++id) {
+        Kokkos::Experimental::simd_partial_store(
+            point_fd.du[ic][id], &du(i, index.iz, index.iy, index.ix, ic, id),
+            mask, tag_type());
       }
     }
   }

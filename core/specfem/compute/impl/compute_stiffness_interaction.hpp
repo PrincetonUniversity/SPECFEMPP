@@ -69,10 +69,7 @@ int compute_stiffness_interaction(
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
   constexpr bool using_simd = false;
 #else
-  // TODO(Rohit : DIM3_SIMD) Enable simd execution for dim3 solver
-  constexpr bool using_simd =
-      (Tags::dimension_tag == specfem::element::dimension_tag::dim2) ? true
-                                                                     : false;
+  constexpr bool using_simd = true;
 #endif
 
   using simd = specfem::datatype::simd<type_real, using_simd>;
