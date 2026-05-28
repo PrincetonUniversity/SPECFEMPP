@@ -8,41 +8,38 @@ namespace specfem {
 namespace datatype {
 template <typename T, specfem::element::dimension_tag DimensionTag,
           int NumberOfFaces, int NumberOfGLLPoints, bool UseSIMD = false,
-          typename MemorySpace =
-              Kokkos::DefaultExecutionSpace::scratch_memory_space,
-          typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged>>
+          typename... ViewParameters>
 struct ScalarChunkFaceViewType
     : public ChunkNDimViewType<T, DimensionTag, NumberOfFaces,
-                               NumberOfGLLPoints, 2, std::integer_sequence<int>,
+                               NumberOfGLLPoints, 2 /*face: 2 coordinates */,
+                               std::integer_sequence<int>,
                                specfem::datatype::AccessorType::chunk_face,
-                               UseSIMD, MemorySpace, MemoryTraits> {
+                               UseSIMD, ViewParameters...> {
   using chunk_ndim_view_type =
       ChunkNDimViewType<T, DimensionTag, NumberOfFaces, NumberOfGLLPoints, 2,
                         std::integer_sequence<int>,
                         specfem::datatype::AccessorType::chunk_face, UseSIMD,
-                        MemorySpace, MemoryTraits>;
+                        ViewParameters...>;
 
   // explicit constructor pass-through because nvcc hates you and will do
   // anything in its power to keep you from ever seeing world peace
   using chunk_ndim_view_type::chunk_ndim_view_type;
 };
 
-template <
-    typename T, specfem::element::dimension_tag DimensionTag, int NumberOfFaces,
-    int NumberOfGLLPoints, int Components, bool UseSIMD = false,
-    typename MemorySpace = Kokkos::DefaultExecutionSpace::scratch_memory_space,
-    typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged>>
+template <typename T, specfem::element::dimension_tag DimensionTag,
+          int NumberOfFaces, int NumberOfGLLPoints, int Components,
+          bool UseSIMD = false, typename... ViewParameters>
 struct VectorChunkFaceViewType
     : public ChunkNDimViewType<T, DimensionTag, NumberOfFaces,
-                               NumberOfGLLPoints, 2,
+                               NumberOfGLLPoints, 2 /*face: 2 coordinates */,
                                std::integer_sequence<int, Components>,
                                specfem::datatype::AccessorType::chunk_face,
-                               UseSIMD, MemorySpace, MemoryTraits> {
+                               UseSIMD, ViewParameters...> {
   using chunk_ndim_view_type =
       ChunkNDimViewType<T, DimensionTag, NumberOfFaces, NumberOfGLLPoints, 2,
                         std::integer_sequence<int, Components>,
                         specfem::datatype::AccessorType::chunk_face, UseSIMD,
-                        MemorySpace, MemoryTraits>;
+                        ViewParameters...>;
 
   constexpr static int components = Components;
 
@@ -54,21 +51,19 @@ struct VectorChunkFaceViewType
 template <typename T, specfem::element::dimension_tag DimensionTag,
           int NumberOfFaces, int NumberOfGLLPoints, int Components,
           int NumberOfDimensions, bool UseSIMD = false,
-          typename MemorySpace =
-              Kokkos::DefaultExecutionSpace::scratch_memory_space,
-          typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged>>
+          typename... ViewParameters>
 struct TensorChunkFaceViewType
     : public ChunkNDimViewType<
-          T, DimensionTag, NumberOfFaces, NumberOfGLLPoints, 2,
+          T, DimensionTag, NumberOfFaces, NumberOfGLLPoints,
+          2 /*face: 2 coordinates */,
           std::integer_sequence<int, Components, NumberOfDimensions>,
-          specfem::datatype::AccessorType::chunk_face, UseSIMD, MemorySpace,
-          MemoryTraits> {
+          specfem::datatype::AccessorType::chunk_face, UseSIMD,
+          ViewParameters...> {
 
   using chunk_ndim_view_type = ChunkNDimViewType<
       T, DimensionTag, NumberOfFaces, NumberOfGLLPoints, 2,
       std::integer_sequence<int, Components, NumberOfDimensions>,
-      specfem::datatype::AccessorType::chunk_face, UseSIMD, MemorySpace,
-      MemoryTraits>;
+      specfem::datatype::AccessorType::chunk_face, UseSIMD, ViewParameters...>;
 
   constexpr static int components = Components;
   constexpr static int dimensions = NumberOfDimensions;
