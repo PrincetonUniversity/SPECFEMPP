@@ -429,7 +429,7 @@ public:
     const int num_stacks = (stack_size + chunk_size - 1) / chunk_size;
     Kokkos::View<
         type_real *[chunk_size][nquad_element][nquad_element][num_components],
-        memory_space>
+        Kokkos::LayoutRight, memory_space>
         view("field_view", num_stacks);
     auto host_view =
         Kokkos::create_mirror_view(view); // Create host mirror to copy data
