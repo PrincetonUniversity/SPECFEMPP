@@ -10,34 +10,6 @@
 #include <Kokkos_Core.hpp>
 #include <limits>
 
-// ---------------------------------------------------------------------------
-// Helper: query GPU max shared memory per block, cached per instantiation.
-// Returns std::numeric_limits<int>::max() on host builds so that the
-// gather kernel is always selected (host never has a shmem constraint).
-// ---------------------------------------------------------------------------
-
-namespace {
-inline int device_max_shared_memory_per_block() {
-#if defined(KOKKOS_ENABLE_CUDA)
-  static int value = [] {
-    int v;
-    cudaDeviceGetAttribute(&v, cudaDevAttrMaxSharedMemoryPerBlock, 0);
-    return v;
-  }();
-  return value;
-#elif defined(KOKKOS_ENABLE_HIP)
-  static int value = [] {
-    int v;
-    hipDeviceGetAttribute(&v, hipDeviceAttributeMaxSharedMemoryPerBlock, 0);
-    return v;
-  }();
-  return value;
-#else
-  return std::numeric_limits<int>::max();
-#endif
-}
-} // anonymous namespace
-
 namespace specfem::compute::impl {
 
 template <int NGLL, typename Tags>
@@ -103,10 +75,8 @@ int compute_stiffness_interaction(
 
     // Gather kernel uses more shared memory but avoids atomics (~7% faster).
     // Scatter kernel uses less shared memory via atomic accumulation.
-    // Select gather when it fits within the device limit; on host, the helper
-    // returns INT_MAX so gather is always chosen.
-    if (gather_kernel<NGLL, Tags>::shmem_size() <=
-        device_max_shared_memory_per_block()) {
+    // Select gather when it fits within the device limit;
+    if (gather_kernel<NGLL, Tags>::shmem_size() <= chunk.scratch_size_max(0)) {
       gather_kernel<NGLL, Tags>{ assembly, istep }(chunk);
     } else {
       scatter_kernel<NGLL, Tags>{ assembly, istep }(chunk);

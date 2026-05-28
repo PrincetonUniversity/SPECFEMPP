@@ -701,6 +701,20 @@ public:
     return *this; ///< Returns itself for method chaining
   }
 
+  /**
+   * @brief Get the maximum scratch size for the given level.
+   *
+   * This method returns the maximum scratch size for the given level by
+   * calling the base policy's scratch_size_max method.
+   *
+   * @param level The level for which to get the maximum scratch size.
+   * @return int The maximum scratch size for the given level.
+   */
+  static int scratch_size_max(int level) {
+    return base_policy_type::scratch_size_max(
+        level); ///< Returns the maximum scratch size for the given level
+  }
+
 protected:
   ViewType indices; ///< View of indices of elements within this iterator
   specfem::mesh_entity::element_grid<DimensionTag, G>
