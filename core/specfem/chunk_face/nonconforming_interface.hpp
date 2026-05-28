@@ -22,23 +22,22 @@ namespace specfem::chunk_face {
  * @tparam MemorySpace
  * @tparam MemoryTraits
  */
-template <
-    specfem::element::dimension_tag DimensionTag, int NumberElements,
-    int NQuadElement, specfem::element_coupling::interface_tag InterfaceTag,
-    specfem::element::boundary_tag BoundaryTag,
-    specfem::element_coupling::flux_scheme_tag FluxSchemeTag,
-    typename MemorySpace = Kokkos::DefaultExecutionSpace::scratch_memory_space,
-    typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged>>
+template <specfem::element::dimension_tag DimensionTag, int NumberElements,
+          int NQuadElement,
+          specfem::element_coupling::interface_tag InterfaceTag,
+          specfem::element::boundary_tag BoundaryTag,
+          specfem::element_coupling::flux_scheme_tag FluxSchemeTag,
+          typename... KokkosViewArguments>
 struct transfer_coupled_coordinates;
 
 template <int NumberElements, int NQuadElement,
           specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
           specfem::element_coupling::flux_scheme_tag FluxSchemeTag,
-          typename MemorySpace, typename MemoryTraits>
+          typename... KokkosViewArguments>
 struct transfer_coupled_coordinates<
     specfem::element::dimension_tag::dim3, NumberElements, NQuadElement,
-    InterfaceTag, BoundaryTag, FluxSchemeTag, MemorySpace, MemoryTraits>
+    InterfaceTag, BoundaryTag, FluxSchemeTag, KokkosViewArguments...>
     : public specfem::data_access::Accessor<
           specfem::datatype::AccessorType::chunk_edge,
           specfem::data_access::DataClassType::transfer_coupled_coordinates,
@@ -63,8 +62,7 @@ public:
   using ViewType = specfem::datatype::VectorChunkFaceViewType<
       type_real, specfem::element::dimension_tag::dim3, NumberElements,
       NQuadElement, specfem::element::dimension<dimension_tag>::dim - 1, false,
-      MemorySpace,
-      MemoryTraits>; ///< Underlying view storing node coordinates
+      KokkosViewArguments...>; ///< Underlying view storing node coordinates
 
 private:
   /// Underlying view storing node coordinates

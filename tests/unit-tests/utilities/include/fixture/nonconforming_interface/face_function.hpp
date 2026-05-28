@@ -243,7 +243,7 @@ public:
   template <int chunk_size>
   Kokkos::View<
       type_real *[chunk_size][nquad_element][nquad_element][num_components],
-      memory_space>
+      Kokkos::LayoutRight, memory_space>
   get_chunkwise_view(int stack_size = -1) const {
     if (stack_size < 0) {
       stack_size = this->stack_size;
