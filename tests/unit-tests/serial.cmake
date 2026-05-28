@@ -15,6 +15,7 @@ target_link_libraries(
   test_mesh_utilities_mapping_2d
   mesh_utilities_mapping
   specfem::utilities
+  specfem_environment
   gtest_main
 )
 
@@ -27,6 +28,7 @@ target_link_libraries(
   test_mesh_utilities_mapping_3d
   mesh_utilities_mapping
   specfem::utilities
+  specfem_environment
   gtest_main
 )
 
@@ -797,6 +799,7 @@ target_link_libraries(
   source_time_functions
   Kokkos::kokkos
   yaml-cpp
+  specfem_environment
   gtest_main
 )
 
