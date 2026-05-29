@@ -112,8 +112,7 @@ public:
     const int istep = istep_;
 
     specfem::execution::for_each_level(
-        "specfem::compute::compute_stiffness_interaction::gather",
-        chunk.set_scratch_size(0, Kokkos::PerTeam(shmem_size())),
+        "specfem::compute::compute_stiffness_interaction::gather", chunk,
         KOKKOS_LAMBDA(
             const typename ChunkType::index_type &chunk_iterator_index) {
           const auto &chunk_index = chunk_iterator_index.get_index();
@@ -347,8 +346,7 @@ public:
     const int istep = istep_;
 
     specfem::execution::for_each_level(
-        "specfem::compute::compute_stiffness_interaction::scatter",
-        chunk.set_scratch_size(0, Kokkos::PerTeam(shmem_size())),
+        "specfem::compute::compute_stiffness_interaction::scatter", chunk,
         KOKKOS_LAMBDA(
             const typename ChunkType::index_type &chunk_iterator_index) {
           const auto &chunk_index = chunk_iterator_index.get_index();

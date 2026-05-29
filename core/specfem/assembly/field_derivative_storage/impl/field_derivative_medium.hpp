@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/data_access/container.hpp"
+#include "specfem/datatype.hpp"
 #include "specfem/element.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/setup.hpp"
@@ -152,12 +153,12 @@ struct field_derivative_medium
   }
 
   void copy_to_host() {
-    Kokkos::deep_copy(h_du, du);
+    specfem::datatype::deep_copy(h_du, du);
     Kokkos::deep_copy(h_ispec_to_compact, ispec_to_compact);
   }
 
   void copy_to_device() {
-    Kokkos::deep_copy(du, h_du);
+    specfem::datatype::deep_copy(du, h_du);
     Kokkos::deep_copy(ispec_to_compact, h_ispec_to_compact);
   }
 

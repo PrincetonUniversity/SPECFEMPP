@@ -42,11 +42,11 @@ template <>
 struct ContainerValueType<specfem::data_access::ContainerType::domain,
                           specfem::element::dimension_tag::dim3> {
   template <typename T, typename MemorySpace>
-  using scalar_type = Kokkos::View<T ****, Kokkos::LayoutLeft, MemorySpace>;
+  using scalar_type = specfem::datatype::DomainView3d<T, 4, MemorySpace>;
   template <typename T, typename MemorySpace>
-  using vector_type = Kokkos::View<T *****, Kokkos::LayoutLeft, MemorySpace>;
+  using vector_type = specfem::datatype::DomainView3d<T, 5, MemorySpace>;
   template <typename T, typename MemorySpace>
-  using tensor_type = Kokkos::View<T ******, Kokkos::LayoutLeft, MemorySpace>;
+  using tensor_type = specfem::datatype::DomainView3d<T, 6, MemorySpace>;
 };
 
 template <>
@@ -146,7 +146,7 @@ struct Container {
 template <typename T, typename = void> struct is_container : std::false_type {};
 
 template <typename T>
-struct is_container<T, std::void_t<decltype(T::container_type)> >
+struct is_container<T, std::void_t<decltype(T::container_type)>>
     : std::true_type {};
 
 } // namespace specfem::data_access
