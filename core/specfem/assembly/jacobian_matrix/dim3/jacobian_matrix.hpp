@@ -91,36 +91,36 @@ struct jacobian_matrix<specfem::element::dimension_tag::dim3>
   int ngllz;
 
   view_type xix; // ∂ξ/∂x derivatives (device) [nspec][ngllz][nglly][ngllx]
-  view_type::HostMirror h_xix; // ∂ξ/∂x derivatives (host)
-                               // [nspec][ngllz][nglly][ngllx]
+  view_type::host_mirror_type h_xix; // ∂ξ/∂x derivatives (host)
+                                     // [nspec][ngllz][nglly][ngllx]
   view_type xiy; // ∂ξ/∂y derivatives (device) [nspec][ngllz][nglly][ngllx]
-  view_type::HostMirror h_xiy; // ∂ξ/∂y derivatives (host)
-                               // [nspec][ngllz][nglly][ngllx]
+  view_type::host_mirror_type h_xiy; // ∂ξ/∂y derivatives (host)
+                                     // [nspec][ngllz][nglly][ngllx]
   view_type xiz; // ∂ξ/∂z derivatives (device) [nspec][ngllz][nglly][ngllx]
-  view_type::HostMirror h_xiz; // ∂ξ/∂z derivatives (host)
-                               // [nspec][ngllz][nglly][ngllx]
+  view_type::host_mirror_type h_xiz; // ∂ξ/∂z derivatives (host)
+                                     // [nspec][ngllz][nglly][ngllx]
   view_type etax; // ∂η/∂x derivatives (device) [nspec][ngllz][nglly][ngllx]
-  view_type::HostMirror h_etax; // ∂η/∂x derivatives (host)
-                                // [nspec][ngllz][nglly][ngllx]
+  view_type::host_mirror_type h_etax; // ∂η/∂x derivatives (host)
+                                      // [nspec][ngllz][nglly][ngllx]
   view_type etay; // ∂η/∂y derivatives (device) [nspec][ngllz][nglly][ngllx]
-  view_type::HostMirror h_etay; // ∂η/∂y derivatives (host)
-                                // [nspec][ngllz][nglly][ngllx]
+  view_type::host_mirror_type h_etay; // ∂η/∂y derivatives (host)
+                                      // [nspec][ngllz][nglly][ngllx]
   view_type etaz; // ∂η/∂z derivatives (device) [nspec][ngllz][ngllly][ngllx]
-  view_type::HostMirror h_etaz; // ∂η/∂z derivatives (host)
-                                // [nspec][ngllz][nglly][ngllx]
+  view_type::host_mirror_type h_etaz; // ∂η/∂z derivatives (host)
+                                      // [nspec][ngllz][nglly][ngllx]
   view_type gammax; // ∂γ/∂x derivatives (device) [nspec][ngllz][ngllly][ngllx]
-  view_type::HostMirror h_gammax; // ∂γ/∂x derivatives (host)
-                                  // [nspec][ngllz][nglly][ngllx]
+  view_type::host_mirror_type h_gammax; // ∂γ/∂x derivatives (host)
+                                        // [nspec][ngllz][nglly][ngllx]
   view_type gammay; // ∂γ/∂y derivatives (device) [nspec][ngllz][ngllly][ngllx]
-  view_type::HostMirror h_gammay; // ∂γ/∂y derivatives (host)
-                                  // [nspec][ngllz][nglly][ngllx]
+  view_type::host_mirror_type h_gammay; // ∂γ/∂y derivatives (host)
+                                        // [nspec][ngllz][nglly][ngllx]
   view_type gammaz; // ∂γ/∂z derivatives (device) [nspec][ngllz][ngllly][ngllx]
-  view_type::HostMirror h_gammaz;   // ∂γ/∂z derivatives (host)
-                                    // [nspec][ngllz][nglly][ngllx]
-  view_type jacobian;               // Jacobian determinant (device)
-                                    // [nspec][ngllz][nglly][ngllx]
-  view_type::HostMirror h_jacobian; // Jacobian determinant (host)
-                                    // [nspec][ngllz][nglly][ngllx]
+  view_type::host_mirror_type h_gammaz;   // ∂γ/∂z derivatives (host)
+                                          // [nspec][ngllz][nglly][ngllx]
+  view_type jacobian;                     // Jacobian determinant (device)
+                                          // [nspec][ngllz][nglly][ngllx]
+  view_type::host_mirror_type h_jacobian; // Jacobian determinant (host)
+                                          // [nspec][ngllz][nglly][ngllx]
 
   /**
    * @name Constructors

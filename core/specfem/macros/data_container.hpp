@@ -111,8 +111,9 @@
       specfem::element::dimension<dimension_tag>::dim + 1,                     \
       Kokkos::DefaultExecutionSpace::memory_space>                             \
       BOOST_PP_SEQ_ELEM(0, elem);                                              \
-  typename decltype(BOOST_PP_SEQ_ELEM(0, elem))::HostMirror BOOST_PP_CAT(      \
-      h_, BOOST_PP_SEQ_ELEM(0, elem));
+  typename decltype(BOOST_PP_SEQ_ELEM(                                         \
+      0, elem))::host_mirror_type BOOST_PP_CAT(h_,                             \
+                                               BOOST_PP_SEQ_ELEM(0, elem));
 
 #define _INSTANCE_DEVICE_VIEW2D(r, data, elem)                                 \
   BOOST_PP_SEQ_ELEM(0, elem)                                                   \
@@ -224,8 +225,8 @@
  * @code
  * DomainView rho;
  * DomainView kappa;
- * typename decltype(rho)::HostMirror h_rho;
- * typename decltype(kappa)::HostMirror h_kappa;
+ * typename decltype(rho)::host_mirror_type h_rho;
+ * typename decltype(kappa)::host_mirror_type h_kappa;
  * data_container() = default;
  * data_container(const int nspec, const specfem::mesh_entity::element_grid<U>&
  * grid) : rho("rho", nspec, grid.ngllz, grid.ngllx), kappa("kappa", nspec,

@@ -146,11 +146,14 @@ public:
   std::string get_databases() const { return databases->get_databases(); }
 
   /**
-   * @brief Get the sources YAML object
+   * @brief Get the parsed source file entries for multi-format dispatch.
    *
-   * @return YAML::Node YAML node describing the sources
+   * @return const reference to vector of source_file_entry
    */
-  YAML::Node get_sources() const { return this->sources->get_sources(); }
+  const std::vector<specfem::enums::source_file_entry> &
+  get_source_entries() const {
+    return this->sources->get_source_entries();
+  }
 
   /**
    * @brief Get the path to stations file
@@ -275,7 +278,7 @@ public:
    * configured
    */
   template <specfem::element::dimension_tag DimensionTag>
-  std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag> >
+  std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag>>
   instantiate_wavefield_writer() const {
     if (this->wavefield) {
       return this->wavefield
@@ -293,7 +296,7 @@ public:
    * configured
    */
   template <specfem::element::dimension_tag DimensionTag>
-  std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag> >
+  std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag>>
   instantiate_wavefield_reader() const {
     if (this->wavefield) {
       return this->wavefield
@@ -311,7 +314,7 @@ public:
    * @return Shared pointer to 2D wavefield plotter or nullptr if not configured
    */
   std::shared_ptr<specfem::periodic_tasks::periodic_task<
-      specfem::element::dimension_tag::dim2> >
+      specfem::element::dimension_tag::dim2>>
   instantiate_wavefield_plotter(
       const specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
           &assembly) const {
@@ -329,7 +332,7 @@ public:
    * @return Shared pointer to 3D wavefield plotter or nullptr if not configured
    */
   std::shared_ptr<specfem::periodic_tasks::periodic_task<
-      specfem::element::dimension_tag::dim3> >
+      specfem::element::dimension_tag::dim3>>
   instantiate_wavefield_plotter(
       const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
           &assembly) const {
@@ -404,9 +407,9 @@ public:
       const type_real dt,
       const specfem::assembly::assembly<DimensionTag> &assembly,
       std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
-      const std::vector<std::shared_ptr<
-          specfem::periodic_tasks::periodic_task<DimensionTag> > > &tasks)
-      const {
+      const std::vector<
+          std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag>>>
+          &tasks) const {
     return this->solver->instantiate<NGLL, DimensionTag>(dt, assembly,
                                                          time_scheme, tasks);
   }

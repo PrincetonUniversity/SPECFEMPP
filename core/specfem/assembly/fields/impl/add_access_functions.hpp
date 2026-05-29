@@ -29,14 +29,14 @@ base_add_accessor(const int iglob, const int icomp, const MaskType &mask,
   using data_accessor =
       std::integral_constant<specfem::data_access::DataClassType, DataClass>;
 
-  T lhs;
-  Kokkos::Experimental::where(mask, lhs).copy_from(
+  T lhs = Kokkos::Experimental::simd_partial_load(
       &(field.template get_value<on_device>(data_accessor(), iglob, icomp)),
-      tag_type);
+      mask, tag_type);
   lhs = lhs + value;
-  Kokkos::Experimental::where(mask, lhs).copy_to(
+  Kokkos::Experimental::simd_partial_store(
+      lhs,
       &(field.template get_value<on_device>(data_accessor(), iglob, icomp)),
-      tag_type);
+      mask, tag_type);
 }
 
 template <
