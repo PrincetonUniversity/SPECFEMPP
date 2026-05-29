@@ -372,7 +372,7 @@ TEST_F(AssemblyEdgeTest, AllEdgeTypes) {
   }
 }
 
-class AssemblyEdgeViewHostMirrorTest : public ::testing::Test {
+class AssemblyEdgeViewMirrorTest : public ::testing::Test {
 protected:
   using EdgeView = specfem::assembly::EdgeView<Kokkos::DefaultExecutionSpace>;
 
@@ -380,11 +380,11 @@ protected:
   static constexpr int num_points = 4;
 };
 
-TEST_F(AssemblyEdgeViewHostMirrorTest, HostMirrorType) {
-  // Verify HostMirror type is correctly defined
-  using HostMirror = typename EdgeView::HostMirror;
+TEST_F(AssemblyEdgeViewMirrorTest, MirrorType) {
+  // Verify host_mirror_type type is correctly defined
+  using host_mirror_type = typename EdgeView::host_mirror_type;
 
-  HostMirror host_view("host_edges", num_edges, num_points);
+  host_mirror_type host_view("host_edges", num_edges, num_points);
 
   EXPECT_EQ(host_view.N, num_edges);
   EXPECT_EQ(host_view.n_points, num_points);

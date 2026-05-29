@@ -50,13 +50,20 @@ TYPED_TEST(PointPropertiesTest, AcousticIsotropic2D) {
       rho_vpinv_arr[i] = 1.0 / (static_cast<type_real>(rho_arr[i]) *
                                 static_cast<type_real>(vp_arr[i]));
     }
-    rho.copy_from(rho_arr, Kokkos::Experimental::simd_flag_default);
-    vp.copy_from(vp_arr, Kokkos::Experimental::simd_flag_default);
-    vs.copy_from(vs_arr, Kokkos::Experimental::simd_flag_default);
-    kappa.copy_from(kappa_arr, Kokkos::Experimental::simd_flag_default);
-    rho_inv.copy_from(rho_inv_arr, Kokkos::Experimental::simd_flag_default);
-    kappa_inv.copy_from(kappa_inv_arr, Kokkos::Experimental::simd_flag_default);
-    rho_vpinv.copy_from(rho_vpinv_arr, Kokkos::Experimental::simd_flag_default);
+    rho = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        rho_arr, Kokkos::Experimental::simd_flag_default);
+    vp = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        vp_arr, Kokkos::Experimental::simd_flag_default);
+    vs = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        vs_arr, Kokkos::Experimental::simd_flag_default);
+    kappa = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        kappa_arr, Kokkos::Experimental::simd_flag_default);
+    rho_inv = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        rho_inv_arr, Kokkos::Experimental::simd_flag_default);
+    kappa_inv = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        kappa_inv_arr, Kokkos::Experimental::simd_flag_default);
+    rho_vpinv = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        rho_vpinv_arr, Kokkos::Experimental::simd_flag_default);
   } else {
     // For scalar case, we need direct assignment
     // Water-like material

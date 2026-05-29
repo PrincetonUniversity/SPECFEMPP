@@ -65,9 +65,9 @@ private:
   FaceNormalView face_normal;
 
   /** @brief Host mirror for face scaling factors */
-  FaceFactorView::HostMirror h_face_factor;
+  FaceFactorView::host_mirror_type h_face_factor;
   /** @brief Host mirror for face normal vectors */
-  FaceNormalView::HostMirror h_face_normal;
+  FaceNormalView::host_mirror_type h_face_normal;
 
 public:
   /**

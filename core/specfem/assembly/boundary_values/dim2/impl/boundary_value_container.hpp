@@ -32,7 +32,7 @@ public:
       MEDIUM_SET(elastic_psv, elastic_psv_t, elastic_sh, acoustic, poroelastic);
 
   IndexViewType property_index_mapping;
-  IndexViewType::HostMirror h_property_index_mapping;
+  IndexViewType::host_mirror_type h_property_index_mapping;
 
   specfem::tag_dispatch::TypedStorage<BoundaryMediumTemplateType,
                                       decltype(combinations_by_medium)>

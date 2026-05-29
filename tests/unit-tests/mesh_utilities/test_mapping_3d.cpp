@@ -1,4 +1,5 @@
 #include "../test_macros.hpp"
+#include "SPECFEM_Environment.hpp"
 #include "mapping.hpp"
 #include "specfem/utilities.hpp"
 #include <gtest/gtest.h>
@@ -22,7 +23,7 @@ protected:
 
   // Helper to create 5D coordinate array for 3D elements
   HostView5d create_coordinates(
-      const std::vector<std::vector<std::tuple<double, double, double> > >
+      const std::vector<std::vector<std::tuple<double, double, double>>>
           &element_coords) {
     int nspec = element_coords.size();
     int ngll = std::cbrt(element_coords[0].size()); // cube root for 3D
@@ -52,11 +53,11 @@ protected:
 class TestMeshNumbering3DTests : public TestMeshUtilities3DTest {
 protected:
   // Helper to create unit cube coordinates
-  std::vector<std::vector<std::tuple<double, double, double> > >
+  std::vector<std::vector<std::tuple<double, double, double>>>
   create_unit_cube(int ngll, double xmin = -1.0, double xmax = 1.0,
                    double ymin = -1.0, double ymax = 1.0, double zmin = -1.0,
                    double zmax = 1.0) {
-    std::vector<std::tuple<double, double, double> > coords;
+    std::vector<std::tuple<double, double, double>> coords;
     for (int iy = 0; iy < ngll; iy++) {
       for (int iz = 0; iz < ngll; iz++) {
         for (int ix = 0; ix < ngll; ix++) {
@@ -71,9 +72,9 @@ protected:
   }
 
   // Helper to create 2x2x2 grid of elements
-  std::vector<std::vector<std::tuple<double, double, double> > >
+  std::vector<std::vector<std::tuple<double, double, double>>>
   create_2x2x2_grid(int ngll) {
-    std::vector<std::vector<std::tuple<double, double, double> > > grid;
+    std::vector<std::vector<std::tuple<double, double, double>>> grid;
 
     // Create 8 elements in a 2x2x2 configuration
     // Elements numbered as follows:
@@ -116,9 +117,9 @@ protected:
   }
 
   // Pre-built geometries for convenience
-  std::vector<std::vector<std::tuple<double, double, double> > > unit_cube_5x5 =
+  std::vector<std::vector<std::tuple<double, double, double>>> unit_cube_5x5 =
       create_unit_cube(5);
-  std::vector<std::vector<std::tuple<double, double, double> > >
+  std::vector<std::vector<std::tuple<double, double, double>>>
       grid_2x2x2_elements_5x5 = create_2x2x2_grid(5);
 };
 
@@ -346,7 +347,7 @@ TEST_F(TestMeshNumbering3DTests, EdgeCaseSinglePoint3D) {
 // Test create_coordinate_arrays with simple 3D single element
 TEST_F(TestMeshUtilities3DTest, CreateCoordinateArraysSingleElement3D) {
   // Create a single 3D element with 2x2x2 GLL points (unit cube)
-  std::vector<std::vector<std::tuple<double, double, double> > >
+  std::vector<std::vector<std::tuple<double, double, double>>>
       element_coords = { {
           { 0.0, 0.0, 0.0 },
           { 1.0, 0.0, 0.0 },
@@ -416,7 +417,7 @@ TEST_F(TestMeshUtilities3DTest, CreateCoordinateArraysSingleElement3D) {
 // Test create_coordinate_arrays with two adjacent 3D elements
 TEST_F(TestMeshUtilities3DTest, CreateCoordinateArraysTwoAdjacentElements3D) {
   // Create two adjacent 3D elements sharing a face
-  std::vector<std::vector<std::tuple<double, double, double> > >
+  std::vector<std::vector<std::tuple<double, double, double>>>
       element_coords = { { // Element 0: [0,0.5] x [0,0.5] x [0,0.5]
                            { 0.0, 0.0, 0.0 },
                            { 0.5, 0.0, 0.0 },
@@ -486,8 +487,8 @@ TEST_F(TestMeshUtilities3DTest, CreateCoordinateArraysTwoAdjacentElements3D) {
 // points)
 TEST_F(TestMeshUtilities3DTest, CreateCoordinateArraysHigherOrder3D) {
   // Create single element with 3x3x3 GLL points
-  std::vector<std::vector<std::tuple<double, double, double> > > element_coords;
-  std::vector<std::tuple<double, double, double> > elem_points;
+  std::vector<std::vector<std::tuple<double, double, double>>> element_coords;
+  std::vector<std::tuple<double, double, double>> elem_points;
 
   int ngll = 3;
   for (int iz = 0; iz < ngll; iz++) {
@@ -534,7 +535,7 @@ TEST_F(TestMeshUtilities3DTest, CreateCoordinateArraysHigherOrder3D) {
 
 // Test create_coordinate_arrays layout consistency for 3D
 TEST_F(TestMeshUtilities3DTest, CreateCoordinateArraysLayoutConsistency3D) {
-  std::vector<std::vector<std::tuple<double, double, double> > >
+  std::vector<std::vector<std::tuple<double, double, double>>>
       element_coords = { { { 0.0, 0.0, 0.0 },
                            { 1.0, 0.0, 0.0 },
                            { 0.0, 1.0, 0.0 },
@@ -582,13 +583,13 @@ TEST_F(TestMeshUtilities3DTest, CreateCoordinateArraysLayoutConsistency3D) {
 // Test create_coordinate_arrays with 2x2x2 grid of 3D elements
 TEST_F(TestMeshUtilities3DTest, CreateCoordinateArrays2x2x2Grid3D) {
   // Create 8 elements in a 2x2x2 grid, each with 2x2x2 GLL points
-  std::vector<std::vector<std::tuple<double, double, double> > > element_coords;
+  std::vector<std::vector<std::tuple<double, double, double>>> element_coords;
 
   int ngll = 2;
   for (int elem_z = 0; elem_z < 2; elem_z++) {
     for (int elem_y = 0; elem_y < 2; elem_y++) {
       for (int elem_x = 0; elem_x < 2; elem_x++) {
-        std::vector<std::tuple<double, double, double> > elem_points;
+        std::vector<std::tuple<double, double, double>> elem_points;
 
         for (int iz = 0; iz < ngll; iz++) {
           for (int iy = 0; iy < ngll; iy++) {
@@ -644,4 +645,10 @@ TEST_F(TestMeshUtilities3DTest, CreateCoordinateArrays2x2x2Grid3D) {
       EXPECT_EQ(index_mapping(0, 1, iy, ix), index_mapping(4, 0, iy, ix));
     }
   }
+}
+
+int main(int argc, char **argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+  ::testing::AddGlobalTestEnvironment(new SPECFEMEnvironment);
+  return RUN_ALL_TESTS();
 }

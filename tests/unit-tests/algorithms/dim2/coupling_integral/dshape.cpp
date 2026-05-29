@@ -136,7 +136,7 @@ void execute_simple_dshape_test() {
   // populate this nonconforming interface container and
   // transfer_function_self_derivative
   {
-    TransferFunctionDerivativeType::HostMirror h_tfsd =
+    TransferFunctionDerivativeType::host_mirror_type h_tfsd =
         Kokkos::create_mirror_view(transfer_function_self_derivative);
     for (int iedge = 0; iedge < num_edges; iedge++) {
       for (int iquad_edge = 0; iquad_edge < ngllx; iquad_edge++) {
