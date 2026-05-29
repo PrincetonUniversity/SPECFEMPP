@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh pr view *)",
+      "Bash(gh pr list *)",
+      "Bash(gh pr diff *)",
+      "Bash(gh api repos/*/pulls/*/comments)",
+      "Bash(gh api repos/*/pulls/*/reviews)",
+      "Bash(gh issue view *)",
+      "Bash(gh issue list *)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(git status *)",
+      "Bash(git branch *)",
+      "Bash(git show *)",
+      "Bash(ctest *)",
+      "Bash(uv run pre-commit *)",
+      "Bash(cmake --list-presets *)"
+    ]
+  }
+}
