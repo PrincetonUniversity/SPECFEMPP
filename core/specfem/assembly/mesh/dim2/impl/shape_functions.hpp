@@ -104,13 +104,13 @@ public:
   /**
    * @brief Host mirror view of shape function values.
    */
-  ShapeFunctionViewType::HostMirror h_shape2D; ///< Shape functions
+  ShapeFunctionViewType::host_mirror_type h_shape2D; ///< Shape functions
 
   /**
    * @brief Host mirror view of shape function derivatives.
    */
-  DShapeFunctionViewType::HostMirror h_dshape2D; ///< Shape function
-                                                 ///< derivatives
+  DShapeFunctionViewType::host_mirror_type h_dshape2D; ///< Shape function
+                                                       ///< derivatives
 
 private:
   /**

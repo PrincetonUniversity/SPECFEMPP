@@ -33,7 +33,7 @@ namespace {
 using CoordTriple = std::array<double, 3>;
 
 std::vector<CoordTriple> coords_for_mapping(
-    const Kokkos::View<int *, Kokkos::DefaultExecutionSpace>::HostMirror
+    const Kokkos::View<int *, Kokkos::DefaultExecutionSpace>::host_mirror_type
         &h_mapping,
     const std::unordered_map<int, CoordTriple> &iglob_to_coord) {
   const int n = static_cast<int>(h_mapping.extent(0));

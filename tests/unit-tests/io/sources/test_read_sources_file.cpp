@@ -23,7 +23,7 @@ extern type_real user_t0;
 template <specfem::element::dimension_tag DimensionTag> struct SourceTestParam {
   std::string testname;
   std::string sourcefilename;
-  std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
+  std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>
       expected_sources;
 };
 
@@ -50,9 +50,13 @@ class Read2DSourcesTest : public ::testing::TestWithParam<SourceTestParam2D> {};
 TEST_P(Read2DSourcesTest, ReadSources) {
   const auto &param = GetParam();
 
+  std::vector<specfem::enums::source_file_entry> entries = {
+    { specfem::enums::source_format::YAML, param.sourcefilename }
+  };
+
   auto [sources, _t0] =
-      specfem::io::read_2d_sources(param.sourcefilename, nsteps, user_t0, dt,
-                                   specfem::simulation::type::forward);
+      specfem::io::read_sources<specfem::element::dimension_tag::dim2>(
+          entries, nsteps, user_t0, dt, specfem::simulation::type::forward);
 
   ASSERT_EQ(sources.size(), param.expected_sources.size());
 
@@ -98,9 +102,13 @@ class Read3DSourcesTest : public ::testing::TestWithParam<SourceTestParam3D> {};
 TEST_P(Read3DSourcesTest, ReadSources) {
   const auto &param = GetParam();
 
+  std::vector<specfem::enums::source_file_entry> entries = {
+    { specfem::enums::source_format::YAML, param.sourcefilename }
+  };
+
   auto [sources, _t0] =
-      specfem::io::read_3d_sources(param.sourcefilename, nsteps, user_t0, dt,
-                                   specfem::simulation::type::forward);
+      specfem::io::read_sources<specfem::element::dimension_tag::dim3>(
+          entries, nsteps, user_t0, dt, specfem::simulation::type::forward);
 
   ASSERT_EQ(sources.size(), param.expected_sources.size());
 

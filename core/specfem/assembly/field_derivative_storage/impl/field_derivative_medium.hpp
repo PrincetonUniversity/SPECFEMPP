@@ -61,11 +61,11 @@ struct field_derivative_medium
   /// Compact storage: shape
   /// [nspec_attn][ngllz][...][components][num_dimensions]
   view_type du;
-  typename view_type::HostMirror h_du;
+  typename view_type::host_mirror_type h_du;
 
   /// Maps global ispec → compact index (or -1 for non-matching elements)
   index_view_type ispec_to_compact;
-  typename index_view_type::HostMirror h_ispec_to_compact;
+  typename index_view_type::host_mirror_type h_ispec_to_compact;
 
   field_derivative_medium() = default;
 
@@ -90,9 +90,9 @@ struct field_derivative_medium
 
     du = view_type("field_derivative_storage", nspec_attn, ngllz, ngllx,
                    components, num_dimensions);
-    h_du = typename view_type::HostMirror("h_field_derivative_storage",
-                                          nspec_attn, ngllz, ngllx, components,
-                                          num_dimensions);
+    h_du = typename view_type::host_mirror_type("h_field_derivative_storage",
+                                                nspec_attn, ngllz, ngllx,
+                                                components, num_dimensions);
     Kokkos::deep_copy(du, static_cast<type_real>(0));
 
     // Build ispec → compact-index inverse mapping (initialized to -1)
@@ -132,9 +132,9 @@ struct field_derivative_medium
 
     du = view_type("field_derivative_storage", nspec_attn, ngllz, nglly, ngllx,
                    components, num_dimensions);
-    h_du = typename view_type::HostMirror("h_field_derivative_storage",
-                                          nspec_attn, ngllz, nglly, ngllx,
-                                          components, num_dimensions);
+    h_du = typename view_type::host_mirror_type("h_field_derivative_storage",
+                                                nspec_attn, ngllz, nglly, ngllx,
+                                                components, num_dimensions);
 
     Kokkos::deep_copy(du, static_cast<type_real>(0));
 
@@ -202,12 +202,11 @@ struct field_derivative_medium
     for (int ic = 0; ic < PointFDType::components; ++ic) {
       for (int id = 0; id < PointFDType::num_dimensions; ++id) {
         if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
-          Kokkos::Experimental::where(mask, point_fd.du[ic][id])
-              .copy_from(&du(i, index.iz, index.ix, ic, id), tag_type());
+          point_fd.du[ic][id] = Kokkos::Experimental::simd_partial_load(
+              &du(i, index.iz, index.ix, ic, id), mask, tag_type());
         } else {
-          Kokkos::Experimental::where(mask, point_fd.du[ic][id])
-              .copy_from(&du(i, index.iz, index.iy, index.ix, ic, id),
-                         tag_type());
+          point_fd.du[ic][id] = Kokkos::Experimental::simd_partial_load(
+              &du(i, index.iz, index.iy, index.ix, ic, id), mask, tag_type());
         }
       }
     }
@@ -257,12 +256,13 @@ struct field_derivative_medium
     for (int ic = 0; ic < PointFDType::components; ++ic) {
       for (int id = 0; id < PointFDType::num_dimensions; ++id) {
         if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
-          Kokkos::Experimental::where(mask, point_fd.du[ic][id])
-              .copy_to(&du(i, index.iz, index.ix, ic, id), tag_type());
+          Kokkos::Experimental::simd_partial_store(
+              point_fd.du[ic][id], &du(i, index.iz, index.ix, ic, id), mask,
+              tag_type());
         } else {
-          Kokkos::Experimental::where(mask, point_fd.du[ic][id])
-              .copy_to(&du(i, index.iz, index.iy, index.ix, ic, id),
-                       tag_type());
+          Kokkos::Experimental::simd_partial_store(
+              point_fd.du[ic][id], &du(i, index.iz, index.iy, index.ix, ic, id),
+              mask, tag_type());
         }
       }
     }
