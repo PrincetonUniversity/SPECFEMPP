@@ -248,8 +248,7 @@ template <>
 struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
   template <typename Stations, typename Receivers>
   static void write(Stations &&stations, Receivers &receivers,
-                    ChannelGenerator &gen, const std::string &output_folder,
-                    const bool send_to_main) {
+                    ChannelGenerator &gen, const std::string &output_folder) {
     // SEED location code encodes simulation dimensionality.
     constexpr std::string_view location_code =
         (Receivers::dimension_tag == specfem::element::dimension_tag::dim2)
@@ -263,8 +262,6 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
                            std::to_string(stations.size()) + " stations)");
 
     for (const auto &station_info : stations) {
-      const bool on_this_rank = (station_info.partition_index == my_rank);
-
       for (auto seismogram_type : station_info.get_seismogram_types()) {
 
         const auto base_filenames =
@@ -287,33 +284,11 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
         for (auto &s : samples)
           s.reserve(nsteps);
 
-        if (!on_this_rank) {
-          // Receive samples from the owning rank.
-          for (auto &s : samples)
-            s.resize(nsteps);
-          for (int icomp = 0; icomp < ncomp; ++icomp) {
-            SPECFEM_MPI_SAFECALL(
-                MPI_Recv(samples[icomp].data(), nsteps, MPI_FLOAT,
-                         station_info.partition_index, icomp,
-                         specfem::MPI::communicator(), MPI_STATUS_IGNORE));
-          }
-        } else {
-          for (auto [time, value] : receivers.get_seismogram(
-                   station_info.station_name, station_info.network_name,
-                   seismogram_type)) {
-            for (int i = 0; i < ncomp; ++i)
-              samples[i].push_back(static_cast<float>(value[i]));
-          }
-
-          if (send_to_main) {
-            // Not rank 0: send our samples to rank 0 and skip writing.
-            for (int icomp = 0; icomp < ncomp; ++icomp) {
-              SPECFEM_MPI_SAFECALL(MPI_Send(samples[icomp].data(), nsteps,
-                                            MPI_FLOAT, 0, icomp,
-                                            specfem::MPI::communicator()));
-            }
-            continue;
-          }
+        for (auto [time, value] : receivers.get_seismogram(
+                 station_info.station_name, station_info.network_name,
+                 seismogram_type)) {
+          for (int i = 0; i < ncomp; ++i)
+            samples[i].push_back(static_cast<float>(value[i]));
         }
 
         // ── Write one SAC file per component ────────────────────────────────

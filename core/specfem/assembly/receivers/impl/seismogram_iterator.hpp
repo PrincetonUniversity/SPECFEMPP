@@ -3,6 +3,7 @@
 #include "specfem/element/dimension.hpp"
 #include "specfem/element/tags.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/mpi.hpp"
 #include "specfem/setup.hpp"
 #include <array>
 #include <string>
@@ -44,7 +45,7 @@ private:
           h_rotation_matrices(h_rotation_matrices),
           seismo_components(seismogram_components) {}
 
-    std::tuple<type_real, std::array<type_real, ncomponents> > operator*() {
+    std::tuple<type_real, std::array<type_real, ncomponents>> operator*() {
       type_real time = seis_step * dt * nstep_between_samples + t0;
 
       std::array<type_real, ncomponents> seismograms;
@@ -145,6 +146,21 @@ public:
     Kokkos::deep_copy(h_seismogram_components, seismogram_components);
   }
 
+  void gather_to_main() {
+#ifdef SPECFEM_ENABLE_MPI
+    const int count = static_cast<int>(h_seismogram_components.span());
+    if (specfem::MPI::main_proc()) {
+      SPECFEM_MPI_SAFECALL(MPI_Reduce(
+          MPI_IN_PLACE, h_seismogram_components.data(), count,
+          SPECFEM_MPI_TYPE_REAL, MPI_SUM, 0, specfem::MPI::communicator()));
+    } else {
+      SPECFEM_MPI_SAFECALL(MPI_Reduce(h_seismogram_components.data(), nullptr,
+                                      count, SPECFEM_MPI_TYPE_REAL, MPI_SUM, 0,
+                                      specfem::MPI::communicator()));
+    }
+#endif
+  }
+
   // Set rotation matrix for a receiver (ncomponents x ncomponents)
   void set_rotation_matrix(int irec_local,
                            const std::array<std::array<type_real, ncomponents>,
@@ -178,7 +194,7 @@ protected:
                Kokkos::DefaultExecutionSpace>::HostMirror
       h_seismogram_components;
 
-  std::unordered_map<std::string, std::unordered_map<std::string, int> >
+  std::unordered_map<std::string, std::unordered_map<std::string, int>>
       station_network_map;
   std::unordered_map<specfem::enums::wavefield, int> seismogram_type_map;
 };

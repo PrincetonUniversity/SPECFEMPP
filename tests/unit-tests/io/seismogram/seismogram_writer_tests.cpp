@@ -230,8 +230,7 @@ TEST_F(SeismogramWriterReferenceTest, AsciiMatchesReference) {
   specfem::io::impl::ChannelGenerator gen(dt);
   specfem::io::impl::SeismogramFormatWriter<
       specfem::enums::seismogram_format::ascii>::write(receivers.stations(),
-                                                       receivers, gen, kOutDir,
-                                                       false);
+                                                       receivers, gen, kOutDir);
 
   constexpr std::array<char, 2> kDim2 = { 'X', 'Z' };
   const auto files = gen.get_station_filenames(
@@ -268,8 +267,7 @@ TEST_F(SeismogramWriterReferenceTest, SacMatchesReference) {
   specfem::io::impl::ChannelGenerator gen(dt);
   specfem::io::impl::SeismogramFormatWriter<
       specfem::enums::seismogram_format::sac>::write(receivers.stations(),
-                                                     receivers, gen, kOutDir,
-                                                     false);
+                                                     receivers, gen, kOutDir);
 
   constexpr std::array<char, 2> kDim2 = { 'X', 'Z' };
   const auto base_files = gen.get_station_filenames(

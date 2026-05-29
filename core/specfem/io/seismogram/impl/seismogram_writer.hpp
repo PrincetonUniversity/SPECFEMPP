@@ -32,16 +32,13 @@ struct SeismogramFormatWriter;
  * @param stations   Filtered station range to write.
  * @param receivers  Receivers object after sync_seismograms() has been called.
  * @param gen        ChannelGenerator used to build output filenames.
- * @param send_to_main Whether to send seismograms to the main process.
  */
 template <specfem::enums::seismogram_format Format, typename Stations,
           typename Receivers>
 void write_seismogram(Stations &&stations, Receivers &receivers,
-                      ChannelGenerator &gen, const std::string &output_folder,
-                      const bool send_to_main) {
+                      ChannelGenerator &gen, const std::string &output_folder) {
   SeismogramFormatWriter<Format>::write(std::forward<Stations>(stations),
-                                        receivers, gen, output_folder,
-                                        send_to_main);
+                                        receivers, gen, output_folder);
 }
 
 } // namespace impl

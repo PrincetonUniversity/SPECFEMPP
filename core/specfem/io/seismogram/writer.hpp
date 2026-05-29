@@ -67,23 +67,24 @@ private:
     const int my_rank = specfem::MPI::get_rank();
     const bool is_main = specfem::MPI::main_proc();
     const bool from_main = write_from_main.value_or(false);
-    const bool send_to_main = from_main && !is_main;
-    auto rank_filter =
-        [&](const specfem::assembly::receivers_impl::StationInfo &s) {
-          return s.partition_index == my_rank || (from_main && is_main);
-        };
-    auto filtered_stations = receivers.stations(rank_filter);
+
+    if (from_main)
+      receivers.gather_to_main();
+
+    auto filtered_stations = receivers.stations([&](const auto &s) {
+      return from_main ? is_main : s.partition_index == my_rank;
+    });
 
     switch (type) {
     case specfem::enums::seismogram_format::ascii:
       specfem::io::impl::write_seismogram<
           specfem::enums::seismogram_format::ascii>(
-          filtered_stations, receivers, *this, output_folder, send_to_main);
+          filtered_stations, receivers, *this, output_folder);
       break;
     case specfem::enums::seismogram_format::sac:
       specfem::io::impl::write_seismogram<
-          specfem::enums::seismogram_format::sac>(
-          filtered_stations, receivers, *this, output_folder, send_to_main);
+          specfem::enums::seismogram_format::sac>(filtered_stations, receivers,
+                                                  *this, output_folder);
       break;
     default:
       throw std::runtime_error(
