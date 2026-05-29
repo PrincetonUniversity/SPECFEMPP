@@ -107,12 +107,12 @@ private:
   int nspec;              ///< Total number of spectral elements
   IndexViewType elements; ///< View to store the elements associated with the
                           ///< receivers
-  IndexViewType::HostMirror h_elements; ///< Host view to store the
-                                        ///< elements associated with the
-                                        ///< receivers
+  IndexViewType::host_mirror_type h_elements; ///< Host view to store the
+                                              ///< elements associated with the
+                                              ///< receivers
   LagrangeInterpolantType lagrange_interpolant; ///< Lagrange interpolant for
                                                 ///< every receiver
-  LagrangeInterpolantType::HostMirror
+  LagrangeInterpolantType::host_mirror_type
       h_lagrange_interpolant; ///< Lagrange interpolant for every receiver
                               ///< stored on the host
 

@@ -222,8 +222,9 @@ public:
   int ngllx;     ///< Number of quadrature points in x-direction
   IndexViewType index_mapping; ///< Device index mapping from (ispec,iz,ix) to
                                ///< linear index
-  IndexViewType::HostMirror h_index_mapping; ///< Host mirror of index mapping
-                                             ///< for CPU operations
+  IndexViewType::host_mirror_type h_index_mapping; ///< Host mirror of index
+                                                   ///< mapping for CPU
+                                                   ///< operations
 
   specfem::tag_dispatch::TypedStorage<FieldImplTemplateType,
                                       decltype(combinations)>
@@ -232,7 +233,7 @@ public:
   specfem::tag_dispatch::Storage<AssemblyIndexViewType, decltype(combinations)>
       assembly_index_mapping;
 
-  specfem::tag_dispatch::Storage<AssemblyIndexViewType::HostMirror,
+  specfem::tag_dispatch::Storage<AssemblyIndexViewType::host_mirror_type,
                                  decltype(combinations)>
       h_assembly_index_mapping;
 

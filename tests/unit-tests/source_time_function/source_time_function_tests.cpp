@@ -11,15 +11,8 @@
 // Test fixture for basic setup
 class SourceTimeFunctionSetup : public ::testing::Test {
 protected:
-  void SetUp() override {
-    if (!Kokkos::is_initialized()) {
-      Kokkos::initialize();
-    }
-  }
-
-  void TearDown() override {
-    // Note: Don't finalize Kokkos here as other tests may need it
-  }
+  void SetUp() override {}
+  void TearDown() override {}
 };
 
 // Helper to compute expected values based on mathematical formulas
@@ -763,4 +756,10 @@ TYPED_TEST(AnalyticSTFTest, ComputeSTFMatchesFormula) {
         << "compute_source_time_function doesn't match formula at step " << i
         << " (t=" << t << ")";
   }
+}
+
+int main(int argc, char *argv[]) {
+  ::testing::InitGoogleTest(&argc, argv);
+  ::testing::AddGlobalTestEnvironment(new SPECFEMEnvironment);
+  return RUN_ALL_TESTS();
 }

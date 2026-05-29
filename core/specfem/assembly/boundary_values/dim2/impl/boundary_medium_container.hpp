@@ -30,7 +30,7 @@ public:
   ///< store field values
 
   ValueViewType values;
-  typename ValueViewType::HostMirror h_values;
+  typename ValueViewType::host_mirror_type h_values;
 
   boundary_medium_container() = default;
 
@@ -119,8 +119,8 @@ public:
     const auto mask = index.template get_mask<simd>();
 
     for (int icomp = 0; icomp < components; ++icomp)
-      Kokkos::Experimental::where(mask, acceleration(icomp))
-          .copy_from(&values(ispec, iz, ix, istep, icomp), tag_type());
+      acceleration(icomp) = Kokkos::Experimental::simd_partial_load(
+          &values(ispec, iz, ix, istep, icomp), mask, tag_type());
 
     return;
   }
@@ -147,8 +147,9 @@ public:
     const auto mask = index.template get_mask<simd>();
 
     for (int icomp = 0; icomp < components; ++icomp)
-      Kokkos::Experimental::where(mask, acceleration(icomp))
-          .copy_to(&values(ispec, iz, ix, istep, icomp), tag_type());
+      Kokkos::Experimental::simd_partial_store(
+          acceleration(icomp), &values(ispec, iz, ix, istep, icomp), mask,
+          tag_type());
 
     return;
   }
