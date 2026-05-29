@@ -36,30 +36,30 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_load(const IndexType &index,
   const auto mask = index.template get_mask<simd>();
 
   if constexpr (on_device) {
-    Kokkos::Experimental::where(mask, point.xix)
-        .copy_from(&container.xix[_index], tag_type());
-    Kokkos::Experimental::where(mask, point.gammax)
-        .copy_from(&container.gammax[_index], tag_type());
-    Kokkos::Experimental::where(mask, point.xiz)
-        .copy_from(&container.xiz[_index], tag_type());
-    Kokkos::Experimental::where(mask, point.gammaz)
-        .copy_from(&container.gammaz[_index], tag_type());
+    point.xix = Kokkos::Experimental::simd_partial_load(&container.xix[_index],
+                                                        mask, tag_type());
+    point.gammax = Kokkos::Experimental::simd_partial_load(
+        &container.gammax[_index], mask, tag_type());
+    point.xiz = Kokkos::Experimental::simd_partial_load(&container.xiz[_index],
+                                                        mask, tag_type());
+    point.gammaz = Kokkos::Experimental::simd_partial_load(
+        &container.gammaz[_index], mask, tag_type());
     if constexpr (StoreJacobian) {
-      Kokkos::Experimental::where(mask, point.jacobian)
-          .copy_from(&container.jacobian[_index], tag_type());
+      point.jacobian = Kokkos::Experimental::simd_partial_load(
+          &container.jacobian[_index], mask, tag_type());
     }
   } else {
-    Kokkos::Experimental::where(mask, point.xix)
-        .copy_from(&container.h_xix[_index], tag_type());
-    Kokkos::Experimental::where(mask, point.gammax)
-        .copy_from(&container.h_gammax[_index], tag_type());
-    Kokkos::Experimental::where(mask, point.xiz)
-        .copy_from(&container.h_xiz[_index], tag_type());
-    Kokkos::Experimental::where(mask, point.gammaz)
-        .copy_from(&container.h_gammaz[_index], tag_type());
+    point.xix = Kokkos::Experimental::simd_partial_load(
+        &container.h_xix[_index], mask, tag_type());
+    point.gammax = Kokkos::Experimental::simd_partial_load(
+        &container.h_gammax[_index], mask, tag_type());
+    point.xiz = Kokkos::Experimental::simd_partial_load(
+        &container.h_xiz[_index], mask, tag_type());
+    point.gammaz = Kokkos::Experimental::simd_partial_load(
+        &container.h_gammaz[_index], mask, tag_type());
     if constexpr (StoreJacobian) {
-      Kokkos::Experimental::where(mask, point.jacobian)
-          .copy_from(&container.h_jacobian[_index], tag_type());
+      point.jacobian = Kokkos::Experimental::simd_partial_load(
+          &container.h_jacobian[_index], mask, tag_type());
     }
   }
 }

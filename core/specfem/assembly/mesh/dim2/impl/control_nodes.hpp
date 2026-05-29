@@ -67,13 +67,13 @@ public:
    * @brief Host mirror view of control node index mapping.
    *
    */
-  ControlNodeIndexView::HostMirror h_control_node_mapping;
+  ControlNodeIndexView::host_mirror_type h_control_node_mapping;
 
   /**
    * @brief Host mirror view of control node coordinates.
    *
    */
-  ControlNodeCoordinatesView::HostMirror h_control_node_coord;
+  ControlNodeCoordinatesView::host_mirror_type h_control_node_coord;
 
   /**
    * @brief Construct control nodes in from mesh control nodes.

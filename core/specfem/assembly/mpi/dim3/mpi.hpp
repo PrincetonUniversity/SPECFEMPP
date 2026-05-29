@@ -70,24 +70,25 @@ public:
                                      local element (nfaces) */
   FaceNormalViewType neighbor_orientation; /**< Mesh entity type of each face in
                                            the neighboring element (nfaces) */
-  FaceNormalViewType::HostMirror h_my_orientation;       /**< Host mirror for
-                                                         my_orientation */
-  FaceNormalViewType::HostMirror h_neighbor_orientation; /**< Host mirror for
+  FaceNormalViewType::host_mirror_type h_my_orientation; /**< Host mirror for
+                                                   my_orientation */
+  FaceNormalViewType::host_mirror_type h_neighbor_orientation; /**< Host mirror
+                                                         for
                                                          neighbor_orientation */
   ElementIndexViewType my_element; /**< Spectral element index of the local
                                    element for each face (nfaces) */
   ElementIndexViewType neighbor_element; /**< Spectral element index of the
                                          neighboring element for each face
                                          (nfaces) */
-  ElementIndexViewType::HostMirror h_my_element;       /**< Host mirror for
-                                                       my_element */
-  ElementIndexViewType::HostMirror h_neighbor_element; /**< Host mirror for
-                                                       neighbor_element */
+  ElementIndexViewType::host_mirror_type h_my_element; /**< Host mirror for
+                                                 my_element */
+  ElementIndexViewType::host_mirror_type h_neighbor_element; /**< Host mirror
+                                                       for neighbor_element */
 
   MediumTagViewType connection_medium_tag; /**< Medium tag of each face in the
                                               local element (nfaces) */
-  MediumTagViewType::HostMirror h_connection_medium_tag; /**< Host mirror for
-  connection_medium_tag */
+  MediumTagViewType::host_mirror_type h_connection_medium_tag; /**< Host mirror
+  for connection_medium_tag */
 
   communication_group() : n(0), ngll(0) {}
 
@@ -141,7 +142,7 @@ public:
   using ReflectViewType = Kokkos::View<bool *, Kokkos::DefaultExecutionSpace>;
   ReflectViewType reflect; /**< Per-edge reflection flag: true → reversed
                               traversal direction relative to neighbor */
-  ReflectViewType::HostMirror h_reflect; /**< Host mirror for reflect */
+  ReflectViewType::host_mirror_type h_reflect; /**< Host mirror for reflect */
 
   edge_communication_group() = default;
   edge_communication_group(
@@ -167,7 +168,7 @@ public:
       Kokkos::View<unsigned char *, Kokkos::DefaultExecutionSpace>;
   ThetaViewType theta; /**< Discrete rotation index ∈ [0,3] aligning face
                           coordinate systems across the MPI boundary */
-  ThetaViewType::HostMirror h_theta; /**< Host mirror for theta */
+  ThetaViewType::host_mirror_type h_theta; /**< Host mirror for theta */
 
   face_communication_group() = default;
   face_communication_group(
@@ -203,7 +204,7 @@ public:
   using IndexMappingView = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
 
   IndexMappingView mapping; /**< Maps local nglob index to global iglob */
-  IndexMappingView::HostMirror h_mapping; /**< Host mirror for mapping */
+  IndexMappingView::host_mirror_type h_mapping; /**< Host mirror for mapping */
 
   packer() : nfaces(0), nedges(0), ncorners(0), ngll(0), nglob(0) {}
 
@@ -268,7 +269,7 @@ public:
   using IndexMappingView = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
 
   IndexMappingView mapping; /**< Maps neighbor nglob index to local iglob */
-  IndexMappingView::HostMirror h_mapping;
+  IndexMappingView::host_mirror_type h_mapping;
 
   using OrientationHostView =
       Kokkos::View<specfem::mesh_entity::dim3::type *, Kokkos::HostSpace>;
@@ -490,8 +491,8 @@ public:
   MappingViewType unpack_mapping; /**< Unpack iglob mapping (from unpacker) */
 
 #ifndef SPECFEM_CUDA_AWARE_MPI
-  BufferViewType::HostMirror h_send_buffer;
-  BufferViewType::HostMirror h_recv_buffer;
+  BufferViewType::host_mirror_type h_send_buffer;
+  BufferViewType::host_mirror_type h_recv_buffer;
 #endif
 
   mpi_buffer() = default;

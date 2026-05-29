@@ -64,9 +64,9 @@ private:
   EdgeNormalView edge_normal;
 
   /** @brief Host mirror for edge scaling factors */
-  EdgeFactorView::HostMirror h_edge_factor;
+  EdgeFactorView::host_mirror_type h_edge_factor;
   /** @brief Host mirror for edge normal vectors */
-  EdgeNormalView::HostMirror h_edge_normal;
+  EdgeNormalView::host_mirror_type h_edge_normal;
 
 public:
   /**

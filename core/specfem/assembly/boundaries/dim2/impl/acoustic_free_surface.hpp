@@ -105,7 +105,7 @@ public:
    * access during initialization, debugging, and host-side computations. Data
    * is synchronized between host and device as needed.
    */
-  BoundaryTagView::HostMirror h_quadrature_point_boundary_tag;
+  BoundaryTagView::host_mirror_type h_quadrature_point_boundary_tag;
   ///@}
 
   /**

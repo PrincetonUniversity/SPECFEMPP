@@ -302,7 +302,7 @@ template <typename Initializer> struct Quadrature2D {
       : _quadrature(init_quadrature(initializer)) {}
 
   lagrange_derivative2D quadrature() const {
-    view_type::HostMirror quadrature_view("quadrature_view");
+    view_type::host_mirror_type quadrature_view("quadrature_view");
     for (int i = 0; i < 5; ++i) {
       for (int j = 0; j < 5; ++j) {
         quadrature_view(i, j) = _quadrature[i][j];
@@ -464,7 +464,7 @@ template <typename Initializer> struct Function2D {
    * @return Kokkos View containing field data in algorithm-compatible format
    */
   view_type view() const {
-    view_type::HostMirror f_view("f_view", _f.size());
+    view_type::host_mirror_type f_view("f_view", _f.size());
     for (int ielement = 0; ielement < static_cast<int>(_f.size()); ++ielement) {
       for (int iz = 0; iz < ngll; ++iz) {
         for (int ix = 0; ix < ngll; ++ix) {

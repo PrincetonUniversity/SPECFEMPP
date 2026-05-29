@@ -30,14 +30,16 @@ struct mesh_to_compute_mapping<specfem::element::dimension_tag::dim2> {
 
   using ViewType =
       Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>;
-  ViewType compute_to_mesh;               ///< Mapping from compute
-                                          ///< ordering to mesh
-                                          ///< ordering
-  ViewType mesh_to_compute;               ///< Mapping from mesh
-                                          ///< ordering to compute
-                                          ///< ordering
-  ViewType::HostMirror h_compute_to_mesh; ///< Host access for compute_to_mesh
-  ViewType::HostMirror h_mesh_to_compute; ///< Host access for mesh_to_compute
+  ViewType compute_to_mesh;                     ///< Mapping from compute
+                                                ///< ordering to mesh
+                                                ///< ordering
+  ViewType mesh_to_compute;                     ///< Mapping from mesh
+                                                ///< ordering to compute
+                                                ///< ordering
+  ViewType::host_mirror_type h_compute_to_mesh; ///< Host access for
+                                                ///< compute_to_mesh
+  ViewType::host_mirror_type h_mesh_to_compute; ///< Host access for
+                                                ///< mesh_to_compute
 
   /**
    * @brief Construct a new mesh to compute mapping object
