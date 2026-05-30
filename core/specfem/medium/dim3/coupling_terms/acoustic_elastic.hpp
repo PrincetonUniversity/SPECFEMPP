@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/algorithms/transfer_interpolate.hpp"
 #include "specfem/data_access.hpp"
 #include "specfem/element.hpp"
 #include "specfem/element_connections.hpp"
@@ -34,4 +35,46 @@ KOKKOS_INLINE_FUNCTION void compute_coupling(
                    interface_data.face_normal(1) * coupled_field(1) +
                    interface_data.face_normal(2) * coupled_field(2));
 }
+
+template <typename IndexType, typename CoupledInterfaceType,
+          typename SelfNormalType,
+          typename LagrangeInterpolatorType /*temporary*/,
+          typename CoupledFieldType, typename IntersectionFieldViewType>
+KOKKOS_INLINE_FUNCTION void compute_coupling(
+    const std::integral_constant<
+        specfem::element::dimension_tag,
+        specfem::element::dimension_tag::dim3> /*dimension_dispatch*/,
+    const std::integral_constant<specfem::element_connections::type,
+                                 specfem::element_connections::type::
+                                     nonconforming> /*connection_dispatch*/,
+    const std::integral_constant<specfem::element_coupling::interface_tag,
+                                 specfem::element_coupling::interface_tag::
+                                     acoustic_elastic> /*interface_dispatch*/,
+    const IndexType &point_index, const CoupledInterfaceType &interface_data,
+    const SelfNormalType &normal_data,
+    const LagrangeInterpolatorType &lagrange_interpolator,
+    const CoupledFieldType &coupled_field,
+    IntersectionFieldViewType &intersection_field) {
+
+  static_assert(specfem::data_access::is_displacement<CoupledFieldType>::value,
+                "CoupledFieldType must be a displacement type");
+
+  specfem::datatype::VectorPointViewType<
+      type_real, CoupledFieldType::components, CoupledFieldType::using_simd>
+      self_mapped_field;
+
+  specfem::algorithms::transfer_interpolate(point_index, interface_data,
+                                            coupled_field, self_mapped_field,
+                                            lagrange_interpolator);
+  intersection_field(0) = normal_data(point_index.iface, point_index.ipoint_i,
+                                      point_index.ipoint_j, 0) *
+                              self_mapped_field(0) +
+                          normal_data(point_index.iface, point_index.ipoint_i,
+                                      point_index.ipoint_j, 1) *
+                              self_mapped_field(1) +
+                          normal_data(point_index.iface, point_index.ipoint_i,
+                                      point_index.ipoint_j, 2) *
+                              self_mapped_field(2);
+}
+
 } // namespace specfem::medium_physics::impl

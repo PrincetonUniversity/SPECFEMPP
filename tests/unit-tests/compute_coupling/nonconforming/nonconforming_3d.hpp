@@ -1,16 +1,28 @@
+#pragma once
+
 #include "specfem/algorithms/transfer_interpolate.hpp"
-#include "specfem/chunk_face/nonconforming_interface.hpp"
+
+#include "specfem/data_access/accessor.hpp"
+#include "specfem/element/tags.hpp"
+#include "specfem/element_coupling/accessor.hpp"
+#include "specfem/medium_physics.hpp"
 
 #include "specfem/datatype/accessor_type.hpp"
 #include "specfem/datatype/chunk_face_view.hpp"
 #include "specfem/element/attributes.hpp"
+#include "specfem/element_coupling/accessor.hpp"
 #include "specfem/element_coupling/attributes.hpp"
+#include "specfem/element_coupling/tags.hpp"
+#include "specfem/point/acceleration.hpp"
+#include "specfem/point/face_index.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/tags.hpp"
 #include "utilities/include/fixture/nonconforming_interface.hpp"
 
 // for interpolator
 #include "specfem/quadrature/gll.hpp"
 
+#include "utilities/include/fixture/accessor.hpp"
 #include "utilities/include/fixture/nonconforming_interface/analytical_function.hpp"
 #include "utilities/include/fixture/nonconforming_interface/face_function.hpp"
 #include "utilities/include/fixture/nonconforming_interface/quadrature.hpp"
@@ -20,7 +32,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace specfem::algorithms_test {
+namespace specfem::compute_coupling_test {
 
 /**
  * @brief Test index type for chunk face operations.
@@ -54,7 +66,7 @@ private:
   KokkosIndexType kokkos_index; /**< Kokkos team member for this chunk */
 };
 
-namespace transfer_interpolate {
+namespace compute_coupling {
 
 template <typename T, typename = void>
 struct is_analytical : std::false_type {};
@@ -72,20 +84,36 @@ struct is_stack<
     T, std::enable_if_t<T::FunctionInitializer::is_stacked_initializer, void>>
     : std::true_type {};
 
+template <specfem::element::dimension_tag dimension_tag,
+          specfem::element_coupling::interface_tag interface_tag>
+constexpr int ncomp_self_from_interface_tag = specfem::element::attributes<
+    dimension_tag,
+    specfem::element_coupling::attributes<
+        dimension_tag, interface_tag>::self_medium()>::components;
+
 // analytically known function (just evaluate function at coords)
-template <typename TransferCoordinates, typename FaceFunction>
+template <specfem::element::dimension_tag dimension_tag,
+          specfem::element_coupling::interface_tag interface_tag,
+          typename TransferCoordinates, typename SelfNormalFunction,
+          typename FaceFunction>
 std::enable_if_t<
     is_analytical<FaceFunction>::value,
     std::vector<std::array<
-        std::array<std::array<type_real, FaceFunction::num_components>,
+        std::array<std::array<type_real, ncomp_self_from_interface_tag<
+                                             dimension_tag, interface_tag>>,
                    TransferCoordinates::nquad_element>,
         TransferCoordinates::nquad_element>>>
 expected_solution(const TransferCoordinates &transfer_coordinates,
+                  const SelfNormalFunction &self_normal,
                   const FaceFunction &face_function) {
-  std::vector<
-      std::array<std::array<std::array<type_real, FaceFunction::num_components>,
-                            TransferCoordinates::nquad_element>,
-                 TransferCoordinates::nquad_element>>
+
+  constexpr int ncomp_self =
+      ncomp_self_from_interface_tag<dimension_tag, interface_tag>;
+  std::vector<std::array<
+      std::array<std::array<type_real, ncomp_self_from_interface_tag<
+                                           dimension_tag, interface_tag>>,
+                 TransferCoordinates::nquad_element>,
+      TransferCoordinates::nquad_element>>
       result(FaceFunction::stack_size);
   for (int istack = 0; istack < FaceFunction::stack_size; ++istack) {
     for (int ipoint1 = 0; ipoint1 < TransferCoordinates::nquad_element;
@@ -95,14 +123,30 @@ expected_solution(const TransferCoordinates &transfer_coordinates,
         type_real coord1 = transfer_coordinates(istack, ipoint1, ipoint2, 0);
         type_real coord2 = transfer_coordinates(istack, ipoint1, ipoint2, 1);
         if (std::isnan(coord1)) {
-          for (int icomp = 0; icomp < FaceFunction::num_components; ++icomp) {
+          for (int icomp = 0; icomp < ncomp_self; ++icomp) {
             result[istack][ipoint1][ipoint2][icomp] = 0;
           }
         } else {
           const auto point_eval = FaceFunction::FunctionInitializer::
               AnalyticalFunctionType::evaluate(coord1, coord2);
-          for (int icomp = 0; icomp < FaceFunction::num_components; ++icomp) {
-            result[istack][ipoint1][ipoint2][icomp] = point_eval[icomp];
+
+          if constexpr (interface_tag == specfem::element_coupling::
+                                             interface_tag::acoustic_elastic) {
+
+            result[istack][ipoint1][ipoint2][0] = 0;
+
+            for (int icomp = 0; icomp < FaceFunction::num_components; ++icomp) {
+              result[istack][ipoint1][ipoint2][0] +=
+                  point_eval[icomp] *
+                  self_normal(istack, ipoint1, ipoint2, icomp);
+            }
+          } else if constexpr (interface_tag ==
+                               specfem::element_coupling::interface_tag::
+                                   elastic_acoustic) {
+            for (int icomp = 0; icomp < ncomp_self; ++icomp) {
+              result[istack][ipoint1][ipoint2][icomp] =
+                  point_eval[0] * self_normal(istack, ipoint1, ipoint2, icomp);
+            }
           }
         }
       }
@@ -112,30 +156,33 @@ expected_solution(const TransferCoordinates &transfer_coordinates,
 }
 
 // stacked functions -- split apart
-template <typename TransferCoordinates, typename... FaceFunctionsInStack>
+template <specfem::element::dimension_tag dimension_tag,
+          specfem::element_coupling::interface_tag interface_tag,
+          typename TransferCoordinates, typename SelfNormalFunction,
+          typename... FaceFunctionsInStack>
 std::vector<std::array<
-    std::array<
-        std::array<type_real,
-                   std::tuple_element_t<
-                       0, std::tuple<FaceFunctionsInStack...>>::num_components>,
-        TransferCoordinates::nquad_element>,
+    std::array<std::array<type_real, ncomp_self_from_interface_tag<
+                                         dimension_tag, interface_tag>>,
+               TransferCoordinates::nquad_element>,
     TransferCoordinates::nquad_element>>
 expected_solution(const TransferCoordinates &transfer_coordinates,
+                  const SelfNormalFunction &self_normal,
                   const specfem::test_fixture::FaceFunction3D<
                       specfem::test_fixture::FaceFunctionInitializer3D::Stack<
                           FaceFunctionsInStack...>> &face_function) {
   using FaceFunction = std::decay_t<decltype(face_function)>;
-  std::vector<
-      std::array<std::array<std::array<type_real, FaceFunction::num_components>,
-                            TransferCoordinates::nquad_element>,
-                 TransferCoordinates::nquad_element>>
+  std::vector<std::array<
+      std::array<std::array<type_real, ncomp_self_from_interface_tag<
+                                           dimension_tag, interface_tag>>,
+                 TransferCoordinates::nquad_element>,
+      TransferCoordinates::nquad_element>>
       result(FaceFunction::stack_size);
   auto it = result.begin();
   (
       [&]() {
         // override transfer_coordinates with FaceFunction stack offset
-        struct slice : TransferCoordinates {
-          slice(const TransferCoordinates &ref, const int &offset)
+        struct slice_coords : TransferCoordinates {
+          slice_coords(const TransferCoordinates &ref, const int &offset)
               : TransferCoordinates(ref), offset(offset) {}
           const int offset;
           const type_real &operator()(const int i, const int j, const int k,
@@ -144,9 +191,20 @@ expected_solution(const TransferCoordinates &transfer_coordinates,
                                                            ell);
           }
         };
+        struct slice_normals : SelfNormalFunction {
+          slice_normals(const SelfNormalFunction &ref, const int &offset)
+              : SelfNormalFunction(ref), offset(offset) {}
+          const int offset;
+          const type_real &operator()(const int i, const int j, const int k,
+                                      const int ell) const {
+            return (*this).SelfNormalFunction::operator()(i + offset, j, k,
+                                                          ell);
+          }
+        };
 
         const auto sub = expected_solution(
-            slice(transfer_coordinates, it - result.begin()),
+            slice_coords(transfer_coordinates, it - result.begin()),
+            slice_normals(self_normal, it - result.begin()),
             specfem::test_fixture::FaceFunction3D(FaceFunctionsInStack()));
         std::copy(sub.begin(), sub.end(), it);
         it += FaceFunctionsInStack::stack_size;
@@ -156,11 +214,12 @@ expected_solution(const TransferCoordinates &transfer_coordinates,
   return result;
 }
 
-template <typename TransferCoordinates, typename FaceFunction>
+template <typename TransferCoordinates, typename FaceFunction,
+          typename SelfNormalFunction>
 void execute(const TransferCoordinates &transfer_coordinates,
              const FaceFunction &face_function,
+             const SelfNormalFunction &self_normal_function,
              const std::string &execution_description = {}) {
-  auto expected = expected_solution(transfer_coordinates, face_function);
 
   // ======= dummy declarations
   using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
@@ -183,26 +242,57 @@ void execute(const TransferCoordinates &transfer_coordinates,
 
   // ======= consequential declarations
   constexpr int ngll_coupled_face = FaceFunction::nquad_element;
-  constexpr int ngll_sample_face = TransferCoordinates::nquad_element;
+  constexpr int ngll_self = TransferCoordinates::nquad_element;
   constexpr int stack_size = FaceFunction::stack_size;
   constexpr int league_size = (stack_size + chunk_size - 1) / chunk_size;
 
-  // ======= Declare Kernel Container Types
-  using ContainerTransferCoordinates =
-      specfem::chunk_face::transfer_coupled_coordinates<
-          dimension_tag, chunk_size, ngll_sample_face, interface_tag,
-          boundary_tag, flux_scheme_tag, Kokkos::DefaultExecutionSpace,
-          Kokkos::MemoryTraits<>, Kokkos::LayoutRight>;
+  using interface_attrib =
+      specfem::element_coupling::attributes<dimension_tag, interface_tag>;
+  constexpr auto self_medium = interface_attrib::self_medium();
+  constexpr auto coupled_medium = interface_attrib::coupled_medium();
+  constexpr int ncomp_self =
+      specfem::element::attributes<dimension_tag, self_medium>::components;
+  constexpr int ncomp_coupled =
+      specfem::element::attributes<dimension_tag, coupled_medium>::components;
 
-  using ContainerFunctionCoupled = specfem::datatype::VectorChunkFaceViewType<
-      type_real, dimension_tag, chunk_size, ngll_coupled_face,
-      FaceFunction::num_components, false /*UseSIMD*/,
-      Kokkos::DefaultExecutionSpace, Kokkos::MemoryTraits<>,
-      Kokkos::LayoutRight>;
+  static_assert(ncomp_coupled == FaceFunction::num_components,
+                "coupled FaceFunction does not have the correct number of "
+                "components for this interface tag!");
+
+  constexpr specfem::data_access::DataClassType coupled_field_dataclass =
+      (interface_tag ==
+       specfem::element_coupling::interface_tag::elastic_acoustic)
+          ? specfem::data_access::DataClassType::acceleration
+          : specfem::data_access::DataClassType::displacement;
+
+  // ======= Declare Kernel Container Types
+  // using ContainerTransferCoordinates = specfem::test_fixture::EndowAccessor<
+  //     specfem::element_coupling::accessor::coupling_terms_pack<
+  //         dimension_tag, interface_tag, boundary_tag, flux_scheme_tag,
+  //         chunk_size, ngll_self, ngll_self, Kokkos::DefaultExecutionSpace,
+  //         Kokkos::MemoryTraits<>, Kokkos::LayoutRight>,
+  //     specfem::tags::Tags<dimension_tag, interface_tag>>;
+
+  using ContainerFunctionCoupled = specfem::test_fixture::EndowAccessor<
+      specfem::test_fixture::EndowAccessor<
+          specfem::datatype::VectorChunkFaceViewType<
+              type_real, dimension_tag, chunk_size, ngll_coupled_face,
+              FaceFunction::num_components, false /*UseSIMD*/,
+              Kokkos::DefaultExecutionSpace, Kokkos::MemoryTraits<>,
+              Kokkos::LayoutRight>,
+          specfem::tags::Tags<dimension_tag, coupled_medium>>,
+      specfem::data_access::Accessor<
+          specfem::datatype::AccessorType::chunk_face, coupled_field_dataclass,
+          dimension_tag, false /*UseSIMD*/>>;
+
+  static_assert(ContainerFunctionCoupled::accessor_type ==
+                specfem::datatype::AccessorType::chunk_face);
+
+  using SelfFieldType = specfem::point::acceleration<
+      specfem::tags::Tags<dimension_tag, self_medium, false /*UseSIMD*/>>;
 
   using ResultViewType =
-      Kokkos::View<type_real[stack_size][ngll_sample_face][ngll_sample_face]
-                            [FaceFunction::num_components],
+      Kokkos::View<type_real[stack_size][ngll_self][ngll_self][ncomp_self],
                    memory_space, Kokkos::MemoryTraits<>>;
 
   // ======= Generate GLL knots for interpolator
@@ -211,9 +301,27 @@ void execute(const TransferCoordinates &transfer_coordinates,
       specfem::quadrature::gll::gll(0, 0, ngll_coupled_face);
   specfem::algorithms::KnotInterpolator interpolator(gll_struct.get_xi());
 
+  using ContainerTransferCoordinates = specfem::test_fixture::EndowAccessor<
+      specfem::chunk_face::NonconformingAccessorPack<
+          specfem::chunk_face::transfer_coupled_coordinates<
+              dimension_tag, chunk_size, ngll_self, interface_tag, boundary_tag,
+              flux_scheme_tag, Kokkos::DefaultExecutionSpace,
+              Kokkos::MemoryTraits<>, Kokkos::LayoutRight>,
+          specfem::chunk_face::intersection_normal<
+              dimension_tag, interface_tag, boundary_tag, flux_scheme_tag,
+              chunk_size, ngll_self, Kokkos::DefaultExecutionSpace,
+              Kokkos::MemoryTraits<>, Kokkos::LayoutRight>,
+          specfem::test_fixture::EndowAccessor<
+              decltype(interpolator),
+              specfem::tags::Tags<dimension_tag, interface_tag, boundary_tag,
+                                  flux_scheme_tag>>>,
+      specfem::tags::Tags<dimension_tag, interface_tag>>;
+
   // ======= Run Kernel
   const auto function_view =
       face_function.template get_chunkwise_view<chunk_size>();
+  const auto normal_view =
+      self_normal_function.template get_chunkwise_view<chunk_size>();
   const auto transfer_coord_view =
       transfer_coordinates.template get_chunkwise_view<chunk_size>();
   ResultViewType result_view("result_view");
@@ -229,28 +337,37 @@ void execute(const TransferCoordinates &transfer_coordinates,
 
         const ContainerTransferCoordinates TF(
             Kokkos::subview(transfer_coord_view, ichunk, Kokkos::ALL(),
-                            Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL()));
+                            Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL()),
+            Kokkos::subview(normal_view, ichunk, Kokkos::ALL(), Kokkos::ALL(),
+                            Kokkos::ALL(), Kokkos::ALL()),
+            interpolator.xi_view);
         const ContainerFunctionCoupled F(
             Kokkos::subview(function_view, ichunk, Kokkos::ALL(), Kokkos::ALL(),
                             Kokkos::ALL(), Kokkos::ALL()));
 
-        specfem::algorithms::transfer_interpolate(
-            ChunkFaceIndex(this_chunk_size, team_member), TF, F,
-            [&](const auto &index, const auto &point) {
-              for (int icomp = 0; icomp < FaceFunction::num_components;
-                   ++icomp) {
+        specfem::execution::for_each_level(
+            specfem::execution::TeamThreadMDRangeIterator(
+                team_member, this_chunk_size, ngll_self, ngll_self),
+            [&](const auto &index) {
+              specfem::point::face_index<dimension_tag> mocked_point_index(
+                  0, index(0), index(1), index(2), 0, 0, 0,
+                  specfem::mesh_entity::dim3::type::back);
+
+              SelfFieldType self_field;
+              specfem::medium_physics::compute_coupling(mocked_point_index, TF,
+                                                        F, self_field);
+
+              for (int icomp = 0; icomp < ncomp_self; ++icomp) {
                 result_view(this_chunk_start + index(0), index(1), index(2),
-                            icomp) = point(icomp);
-                // Kokkos::single(Kokkos::PerTeam(team_member), [&]() {
-                //   result_view(index(0), index(1), icomp) = point(icomp);
-                // });
+                            icomp) = self_field(icomp);
               }
-            },
-            interpolator);
+            });
       });
 
   Kokkos::fence();
 
+  auto expected = expected_solution<dimension_tag, interface_tag>(
+      transfer_coordinates, self_normal_function, face_function);
   auto result_host =
       Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), result_view);
 
@@ -261,11 +378,9 @@ void execute(const TransferCoordinates &transfer_coordinates,
     std::ostringstream index_fail_log;
     int num_fails_at_index = 0;
 
-    for (int ipoint_axis1 = 0; ipoint_axis1 < ngll_sample_face;
-         ipoint_axis1++) {
-      for (int ipoint_axis2 = 0; ipoint_axis2 < ngll_sample_face;
-           ipoint_axis2++) {
-        for (int icomp = 0; icomp < FaceFunction::num_components; icomp++) {
+    for (int ipoint_axis1 = 0; ipoint_axis1 < ngll_self; ipoint_axis1++) {
+      for (int ipoint_axis2 = 0; ipoint_axis2 < ngll_self; ipoint_axis2++) {
+        for (int icomp = 0; icomp < ncomp_self; icomp++) {
           if (!specfem::utilities::is_close(
                   result_host(istack, ipoint_axis1, ipoint_axis2, icomp),
                   expected[istack][ipoint_axis1][ipoint_axis2][icomp])) {
@@ -312,9 +427,9 @@ void execute(const TransferCoordinates &transfer_coordinates,
     ADD_FAILURE() << oss.str();
   }
 }
-} // namespace transfer_interpolate
+} // namespace compute_coupling
 
-} // namespace specfem::algorithms_test
+} // namespace specfem::compute_coupling_test
 
 // placeholder (?) struct for containing quadrature points for the test.
 template <int StackSize, int NGLL> struct NoisyFaceQuadraturePoints3D {
@@ -477,77 +592,3 @@ private:
 public:
   using type = decltype(PowerXStack(std::make_integer_sequence<int, powerX>()));
 };
-
-TEST(TransferInterpolateTests, SimpleTransferInterpolate) {
-  specfem::algorithms_test::transfer_interpolate::execute(
-      NoisyFaceQuadraturePoints3D<1, 4>(-1, 0, 0, 1),
-      specfem::test_fixture::FaceFunction3D<
-          specfem::test_fixture::FaceFunctionInitializer3D::
-              FromAnalyticalFunction<
-                  specfem::test_fixture::AnalyticalFunctionType::Power2D<2, 1>,
-                  specfem::test_fixture::QuadraturePoints::GLL2>>({}),
-      "Sample 4-point uniform on upper-left corner of GLL2-point-defined "
-      "field: x^2 * y (in local coordinates)");
-}
-
-TEST(TransferInterpolateTests, SimpleTransferStack) {
-  specfem::algorithms_test::transfer_interpolate::execute(
-      NoisyFaceQuadraturePoints3D<2, 4>(-1, 0, 0, 1, 0),
-      specfem::test_fixture::FaceFunction3D<
-          specfem::test_fixture::FaceFunctionInitializer3D::Stack<
-              specfem::test_fixture::FaceFunctionInitializer3D::
-                  FromAnalyticalFunction<
-                      specfem::test_fixture::AnalyticalFunctionType::Power2D<1,
-                                                                             0>,
-                      specfem::test_fixture::QuadraturePoints::GLL2>,
-              specfem::test_fixture::FaceFunctionInitializer3D::
-                  FromAnalyticalFunction<
-                      specfem::test_fixture::AnalyticalFunctionType::Power2D<0,
-                                                                             1>,
-                      specfem::test_fixture::QuadraturePoints::GLL2>>>({}));
-}
-
-TEST(TransferInterpolateTests, StackedGrid) {
-  constexpr int maxpow = 6;
-  constexpr int sample_ngll = 5;
-  using polygrid = PowerGridStack<specfem::test_fixture::QuadraturePoints::GLL6,
-                                  maxpow + 1, maxpow + 1>::type;
-  std::ostringstream oss;
-  oss << "Sample " << sample_ngll
-      << "-point uniform on small section for GLL6-defined element.\n"
-      << "Functions are of type x^i * y^j (in local coordinates), where 0 ≤ "
-         "i,j ≤ "
-      << maxpow;
-  specfem::algorithms_test::transfer_interpolate::execute(
-      NoisyFaceQuadraturePoints3D<polygrid::stack_size, sample_ngll>(-0.5, 0.3,
-                                                                     0.1, 0.6),
-      specfem::test_fixture::FaceFunction3D<polygrid>({}), oss.str());
-}
-
-TEST(TransferInterpolateTests, StackedConforming3Point) {
-  constexpr int maxpow = 2;
-  constexpr int sample_ngll = 3;
-  using polygrid = PowerGridStack<specfem::test_fixture::QuadraturePoints::GLL2,
-                                  maxpow + 1, maxpow + 1>::type;
-  using multi_polygrid =
-      specfem::test_fixture::FaceFunctionInitializer3D::Stack<
-          polygrid, polygrid, polygrid, polygrid, polygrid>;
-  specfem::algorithms_test::transfer_interpolate::execute(
-      NoisyFaceQuadraturePoints3D<multi_polygrid::stack_size, sample_ngll>(
-          -1, 1, -1, 1, 0),
-      specfem::test_fixture::FaceFunction3D<multi_polygrid>({}),
-      "3-point quadrature, repeated to ensure league > 1");
-}
-
-TEST(TransferInterpolateTests, OffsetElement) {
-  specfem::algorithms_test::transfer_interpolate::execute(
-      NoisyFaceQuadraturePoints3D<1, 6>(0, 2, 0, 2),
-      specfem::test_fixture::FaceFunction3D<
-          specfem::test_fixture::FaceFunctionInitializer3D::
-              FromAnalyticalFunction<
-                  specfem::test_fixture::AnalyticalFunctionType::Power2D<1, 2>,
-                  specfem::test_fixture::QuadraturePoints::GLL4>>({}),
-      "Sample 6-point uniform, off of upper-right corner of "
-      "GLL4-defined "
-      "field: x * y^2 (in local coordinates)");
-}
