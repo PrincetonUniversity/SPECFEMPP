@@ -37,7 +37,8 @@ TEST(NonconformingAcousticElastic, Asymm4to5_VectorizedPower) {
 
 TEST(NonconformingAcousticElastic, InitialSimple3D) {
   // TODO finalize namespace of this execute.
-  specfem::compute_coupling_test::compute_coupling::execute(
+  specfem::compute_coupling_test::compute_coupling::execute<
+      specfem::element_coupling::interface_tag::acoustic_elastic>(
       NoisyFaceQuadraturePoints3D<1, 4>(-1, 0, 0, 1),
       specfem::test_fixture::FaceFunction3D<
           specfem::test_fixture::FaceFunctionInitializer3D::

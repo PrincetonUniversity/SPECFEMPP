@@ -214,7 +214,8 @@ expected_solution(const TransferCoordinates &transfer_coordinates,
   return result;
 }
 
-template <typename TransferCoordinates, typename FaceFunction,
+template <specfem::element_coupling::interface_tag interface_tag,
+          typename TransferCoordinates, typename FaceFunction,
           typename SelfNormalFunction>
 void execute(const TransferCoordinates &transfer_coordinates,
              const FaceFunction &face_function,
@@ -231,9 +232,6 @@ void execute(const TransferCoordinates &transfer_coordinates,
 
   /** Test dimension (3D) */
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
-  /** Interface type (dummy for testing) */
-  constexpr static auto interface_tag =
-      specfem::element_coupling::interface_tag::acoustic_elastic;
   /** Boundary type (dummy for testing) */
   constexpr static auto boundary_tag = specfem::element::boundary_tag::none;
   /** Flux scheme tag (dummy for testing) */
