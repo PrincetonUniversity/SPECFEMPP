@@ -84,8 +84,8 @@ public:
   ElementIndexViewType::HostMirror h_neighbor_element; /**< Host mirror for
                                                        neighbor_element */
 
-  MediumTagViewType connection_medium_tag; /**< Medium tag of each face in the
-                                              local element (nfaces) */
+  MediumTagViewType connection_medium_tag; /**< Medium tag of the local element
+                                              for each interface (n) */
   MediumTagViewType::HostMirror h_connection_medium_tag; /**< Host mirror for
   connection_medium_tag */
 
@@ -198,7 +198,7 @@ public:
   unsigned int nfaces;        /**< Number of faces in communication group */
   unsigned int ngll;          /**< GLL points per face dimension */
 
-  unsigned int nglob; /**< Number of unique GLL points on the MPI surface */
+  unsigned int nglob = 0; /**< Number of unique GLL points on the MPI surface */
 
   using IndexMappingView = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
 
@@ -301,7 +301,7 @@ public:
              Kokkos::View<int **, Kokkos::HostSpace>,
              Kokkos::View<int *, Kokkos::HostSpace>,
              Kokkos::View<int *, Kokkos::HostSpace>,
-             Kokkos::View<int *, Kokkos::HostSpace> >
+             Kokkos::View<int *, Kokkos::HostSpace>>
   receive_unpacking_buffers();
 
   /**
@@ -351,7 +351,7 @@ public:
                  Kokkos::View<int **, Kokkos::HostSpace>,
                  Kokkos::View<int *, Kokkos::HostSpace>,
                  Kokkos::View<int *, Kokkos::HostSpace>,
-                 Kokkos::View<int *, Kokkos::HostSpace> >;
+                 Kokkos::View<int *, Kokkos::HostSpace>>;
 
   /**
    * @brief Phase 1: initialises ranks, constructs the unpacker, and posts all
@@ -403,21 +403,21 @@ public:
       std::unordered_map<unsigned int,
                          mpi_impl::communication_pattern<
                              specfem::simulation::field_type::forward,
-                             TagsType::dimension_tag, TagsType::medium_tag> >;
+                             TagsType::dimension_tag, TagsType::medium_tag>>;
 
   template <typename TagsType>
   using BackwardCommunicationPatternMap =
       std::unordered_map<unsigned int,
                          mpi_impl::communication_pattern<
                              specfem::simulation::field_type::backward,
-                             TagsType::dimension_tag, TagsType::medium_tag> >;
+                             TagsType::dimension_tag, TagsType::medium_tag>>;
 
   template <typename TagsType>
   using AdjointCommunicationPatternMap =
       std::unordered_map<unsigned int,
                          mpi_impl::communication_pattern<
                              specfem::simulation::field_type::adjoint,
-                             TagsType::dimension_tag, TagsType::medium_tag> >;
+                             TagsType::dimension_tag, TagsType::medium_tag>>;
 
   specfem::simulation::type simulation; ///< Simulation mode (forward, combined,
                                         ///< etc.)
@@ -517,12 +517,16 @@ public:
     recv_request = MPI_REQUEST_NULL;
   }
 
+  template <specfem::data_access::DataClassType DCT =
+                specfem::data_access::DataClassType::acceleration>
   void pack(const specfem::assembly::simulation_field<dimension_tag, field_type>
                 &field);
 
   void send();
   void receive();
 
+  template <specfem::data_access::DataClassType DCT =
+                specfem::data_access::DataClassType::acceleration>
   void
   unpack(specfem::assembly::simulation_field<dimension_tag, field_type> &field);
 };
@@ -545,7 +549,7 @@ public:
 
   using BufferMap = std::unordered_map<
       unsigned int,
-      mpi_impl::mpi_buffer<field_type, dimension_tag, medium_tag> >;
+      mpi_impl::mpi_buffer<field_type, dimension_tag, medium_tag>>;
 
   BufferMap buffers;
 
@@ -586,16 +590,20 @@ public:
                       MPI_INT, MPI_MAX, specfem::MPI::communicator()));
   }
 
+  template <specfem::data_access::DataClassType DCT =
+                specfem::data_access::DataClassType::acceleration>
   void pack(const specfem::assembly::simulation_field<dimension_tag, field_type>
                 &field) {
     for (auto &entry : buffers)
-      entry.second.pack(field);
+      entry.second.template pack<DCT>(field);
   }
 
+  template <specfem::data_access::DataClassType DCT =
+                specfem::data_access::DataClassType::acceleration>
   void unpack(
       specfem::assembly::simulation_field<dimension_tag, field_type> &field) {
     for (auto &entry : buffers)
-      entry.second.unpack(field);
+      entry.second.template unpack<DCT>(field);
   }
 
   void send() {
