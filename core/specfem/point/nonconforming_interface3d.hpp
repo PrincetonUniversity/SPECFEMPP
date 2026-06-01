@@ -52,21 +52,21 @@ public:
 private:
   static constexpr int ndim = specfem::element::dimension<dimension_tag>::dim;
   vector_type<type_real, ndim - 1> coupled_coordinates;
-  scalar_type<type_real> integration_factor;
-  vector_type<type_real, ndim> normal_vector;
+  scalar_type<type_real> face_factor;
+  vector_type<type_real, ndim> face_normal;
 
   // ========================= START TEMPORARY =========================
-  tensor_type<type_real, NGLL, ndim - 1> interpolants;
 
 public:
+  tensor_type<type_real, NGLL, ndim - 1> interpolants;
   template <typename LagrangeInterpolantType>
   KOKKOS_INLINE_FUNCTION nonconforming_interface(
       const vector_type<type_real, ndim - 1> &coupled_coordinates,
-      const scalar_type<type_real> &integration_factor,
-      const vector_type<type_real, ndim> &normal_vector,
+      const scalar_type<type_real> &face_factor,
+      const vector_type<type_real, ndim> &face_normal,
       const LagrangeInterpolantType &lagrange_interpolant)
-      : coupled_coordinates(coupled_coordinates),
-        integration_factor(integration_factor), normal_vector(normal_vector) {
+      : coupled_coordinates(coupled_coordinates), face_factor(face_factor),
+        face_normal(face_normal) {
     // populate interpolants array.
     for (int igll = 0; igll < NGLL; igll++) {
       for (int idim = 0; idim < ndim; idim++) {
@@ -82,10 +82,10 @@ private:
 public:
   KOKKOS_INLINE_FUNCTION nonconforming_interface(
       const vector_type<type_real, ndim - 1> &coupled_coordinates,
-      const scalar_type<type_real> &integration_factor,
-      const vector_type<type_real, ndim> &normal_vector)
-      : coupled_coordinates(coupled_coordinates),
-        integration_factor(integration_factor), normal_vector(normal_vector) {}
+      const scalar_type<type_real> &face_factor,
+      const vector_type<type_real, ndim> &face_normal)
+      : coupled_coordinates(coupled_coordinates), face_factor(face_factor),
+        face_normal(face_normal) {}
 
   /**
    * @brief Default constructor.
