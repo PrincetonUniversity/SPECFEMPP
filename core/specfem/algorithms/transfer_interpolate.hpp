@@ -97,13 +97,13 @@ KOKKOS_INLINE_FUNCTION void interpolate_point(
     type_real coeffs_axis2[FaceFunctionType::ngll];
     for (int ipoint_axis2 = 0; ipoint_axis2 < FaceFunctionType::ngll;
          ipoint_axis2++) {
-      coeffs_axis2[ipoint_axis2] = interpolants(ipoint_axis2, 2);
+      coeffs_axis2[ipoint_axis2] = interpolants(ipoint_axis2, 1);
     }
 
     // interpolate on tensor-product element
     for (int ipoint_axis1 = 0; ipoint_axis1 < FaceFunctionType::ngll;
          ipoint_axis1++) {
-      const type_real coeff_axis1 = interpolants(ipoint_axis1, 1);
+      const type_real coeff_axis1 = interpolants(ipoint_axis1, 0);
       for (int ipoint_axis2 = 0; ipoint_axis2 < FaceFunctionType::ngll;
            ipoint_axis2++) {
         const type_real transfer_coeff =

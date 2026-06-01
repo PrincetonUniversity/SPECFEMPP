@@ -66,7 +66,7 @@ public:
         face_normal(face_normal) {
     // populate interpolants array.
     for (int igll = 0; igll < NGLL; igll++) {
-      for (int idim = 0; idim < ndim; idim++) {
+      for (int idim = 0; idim < ndim - 1; idim++) {
         interpolants(igll, idim) =
             lagrange_interpolant(igll, coupled_coordinates(idim));
       }
