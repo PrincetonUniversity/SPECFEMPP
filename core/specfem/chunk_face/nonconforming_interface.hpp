@@ -28,19 +28,19 @@ template <specfem::element::dimension_tag DimensionTag, int NumberElements,
           specfem::element::boundary_tag BoundaryTag,
           specfem::element_coupling::flux_scheme_tag FluxSchemeTag,
           typename... KokkosViewArguments>
-struct transfer_coupled_coordinates;
+struct coupled_coordinates;
 
 template <int NumberElements, int NQuadElement,
           specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
           specfem::element_coupling::flux_scheme_tag FluxSchemeTag,
           typename... KokkosViewArguments>
-struct transfer_coupled_coordinates<
-    specfem::element::dimension_tag::dim3, NumberElements, NQuadElement,
-    InterfaceTag, BoundaryTag, FluxSchemeTag, KokkosViewArguments...>
+struct coupled_coordinates<specfem::element::dimension_tag::dim3,
+                           NumberElements, NQuadElement, InterfaceTag,
+                           BoundaryTag, FluxSchemeTag, KokkosViewArguments...>
     : public specfem::data_access::Accessor<
           specfem::datatype::AccessorType::chunk_edge,
-          specfem::data_access::DataClassType::transfer_coupled_coordinates,
+          specfem::data_access::DataClassType::coupled_coordinates,
           specfem::element::dimension_tag::dim3, false> {
 
 public:
@@ -73,18 +73,15 @@ public:
    * @brief Construct from compatible view type
    * @tparam U Compatible view type
    */
-  template <typename U = ViewType,
-            typename std::enable_if_t<std::is_convertible<ViewType, U>::value,
-                                      int> = 0>
-  KOKKOS_INLINE_FUNCTION
-  transfer_coupled_coordinates(const U &transfer_coupled_coordinates)
-      : data_(transfer_coupled_coordinates) {}
+  template <typename U = ViewType>
+  KOKKOS_INLINE_FUNCTION coupled_coordinates(const U &coupled_coordinates)
+      : data_(coupled_coordinates) {}
 
   /**
    * @brief Default constructor
    */
   KOKKOS_INLINE_FUNCTION
-  transfer_coupled_coordinates() = default;
+  coupled_coordinates() = default;
 
   /**
    * @brief Construct from team scratch memory
@@ -94,7 +91,7 @@ public:
   template <typename MemberType, typename U = ViewType,
             typename std::enable_if_t<U::memory_traits::is_unmanaged == true,
                                       int> = 0>
-  KOKKOS_INLINE_FUNCTION transfer_coupled_coordinates(const MemberType &team)
+  KOKKOS_INLINE_FUNCTION coupled_coordinates(const MemberType &team)
       : data_(team.team_scratch(0)) {}
 
   /**

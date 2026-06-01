@@ -188,11 +188,10 @@ void execute(const TransferCoordinates &transfer_coordinates,
   constexpr int league_size = (stack_size + chunk_size - 1) / chunk_size;
 
   // ======= Declare Kernel Container Types
-  using ContainerTransferCoordinates =
-      specfem::chunk_face::transfer_coupled_coordinates<
-          dimension_tag, chunk_size, ngll_sample_face, interface_tag,
-          boundary_tag, flux_scheme_tag, Kokkos::DefaultExecutionSpace,
-          Kokkos::MemoryTraits<>, Kokkos::LayoutRight>;
+  using ContainerTransferCoordinates = specfem::chunk_face::coupled_coordinates<
+      dimension_tag, chunk_size, ngll_sample_face, interface_tag, boundary_tag,
+      flux_scheme_tag, Kokkos::DefaultExecutionSpace, Kokkos::MemoryTraits<>,
+      Kokkos::LayoutRight>;
 
   using ContainerFunctionCoupled = specfem::datatype::VectorChunkFaceViewType<
       type_real, dimension_tag, chunk_size, ngll_coupled_face,
@@ -209,7 +208,7 @@ void execute(const TransferCoordinates &transfer_coordinates,
 
   const auto &gll_struct =
       specfem::quadrature::gll::gll(0, 0, ngll_coupled_face);
-  specfem::algorithms::KnotInterpolator interpolator(gll_struct.get_xi());
+  specfem::algorithms::LagrangeInterpolant interpolator(gll_struct.get_xi());
 
   // ======= Run Kernel
   const auto function_view =

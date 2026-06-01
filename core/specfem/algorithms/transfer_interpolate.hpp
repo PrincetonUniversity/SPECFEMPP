@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Kokkos_Macros.hpp"
 #include "specfem/data_access.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
@@ -9,12 +10,13 @@
 
 namespace specfem::algorithms {
 
-template <typename XiViewType> struct KnotInterpolator {
+template <typename XiViewType> struct LagrangeInterpolant {
 
   XiViewType xi_view; ///< View of knots (coordinates for each quadrature point)
   int ngll;
 
-  KnotInterpolator(XiViewType xi) : xi_view(xi), ngll(xi.extent(0)) {}
+  KOKKOS_FUNCTION LagrangeInterpolant(XiViewType xi)
+      : xi_view(xi), ngll(xi.extent(0)) {}
 
   KOKKOS_INLINE_FUNCTION
   type_real operator()(const int &lagrange_index,
