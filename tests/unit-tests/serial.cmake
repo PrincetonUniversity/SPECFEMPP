@@ -153,6 +153,7 @@ target_link_libraries(
 add_executable(
   gll_tests
   gll/gll_tests.cpp
+  gll/compiled_gll.cpp
 )
 
 target_link_libraries(
@@ -579,6 +580,7 @@ set_target_properties(gradient_tests PROPERTIES UNITY_BUILD OFF)
 add_executable(
   transfer_tests
   algorithms/dim2/transfer.cpp
+  algorithms/dim3/transfer_interpolate.cpp
 )
 
 target_link_libraries(
