@@ -7,6 +7,8 @@
 #include "specfem/element_coupling/accessor.hpp"
 #include "specfem/medium_physics.hpp"
 
+#include "specfem/point/nonconforming_interface3d.hpp"
+
 #include "specfem/datatype/accessor_type.hpp"
 #include "specfem/datatype/chunk_face_view.hpp"
 #include "specfem/element/attributes.hpp"
@@ -297,11 +299,11 @@ void execute(const TransferCoordinates &transfer_coordinates,
 
   const auto &gll_struct =
       specfem::quadrature::gll::gll(0, 0, ngll_coupled_face);
-  specfem::algorithms::KnotInterpolator interpolator(gll_struct.get_xi());
+  specfem::algorithms::LagrangeInterpolant interpolator(gll_struct.get_xi());
 
   using ContainerTransferCoordinates = specfem::test_fixture::EndowAccessor<
       specfem::chunk_face::NonconformingAccessorPack<
-          specfem::chunk_face::transfer_coupled_coordinates<
+          specfem::chunk_face::coupled_coordinates<
               dimension_tag, chunk_size, ngll_self, interface_tag, boundary_tag,
               flux_scheme_tag, Kokkos::DefaultExecutionSpace,
               Kokkos::MemoryTraits<>, Kokkos::LayoutRight>,
@@ -314,6 +316,10 @@ void execute(const TransferCoordinates &transfer_coordinates,
               specfem::tags::Tags<dimension_tag, interface_tag, boundary_tag,
                                   flux_scheme_tag>>>,
       specfem::tags::Tags<dimension_tag, interface_tag>>;
+  using NonconformingInterfaceType =
+      specfem::point::nonconforming_interface<dimension_tag, ngll_coupled_face,
+                                              interface_tag, boundary_tag,
+                                              flux_scheme_tag>;
 
   // ======= Run Kernel
   const auto function_view =
@@ -332,13 +338,6 @@ void execute(const TransferCoordinates &transfer_coordinates,
         const int this_chunk_start = ichunk * chunk_size;
         const int this_chunk_size =
             std::min(chunk_size, stack_size - this_chunk_start);
-
-        const ContainerTransferCoordinates TF(
-            Kokkos::subview(transfer_coord_view, ichunk, Kokkos::ALL(),
-                            Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL()),
-            Kokkos::subview(normal_view, ichunk, Kokkos::ALL(), Kokkos::ALL(),
-                            Kokkos::ALL(), Kokkos::ALL()),
-            interpolator.xi_view);
         const ContainerFunctionCoupled F(
             Kokkos::subview(function_view, ichunk, Kokkos::ALL(), Kokkos::ALL(),
                             Kokkos::ALL(), Kokkos::ALL()));
@@ -352,7 +351,19 @@ void execute(const TransferCoordinates &transfer_coordinates,
                   specfem::mesh_entity::dim3::type::back);
 
               SelfFieldType self_field;
-              specfem::medium_physics::compute_coupling(mocked_point_index, TF,
+
+              const NonconformingInterfaceType NCI(
+                  { transfer_coord_view(ichunk, index(0), index(1), index(2),
+                                        0),
+                    transfer_coord_view(ichunk, index(0), index(1), index(2),
+                                        1) },
+                  { 1.0 },
+                  { normal_view(ichunk, index(0), index(1), index(2), 0),
+                    normal_view(ichunk, index(0), index(1), index(2), 1),
+                    normal_view(ichunk, index(0), index(1), index(2), 2) },
+                  interpolator);
+
+              specfem::medium_physics::compute_coupling(mocked_point_index, NCI,
                                                         F, self_field);
 
               for (int icomp = 0; icomp < ncomp_self; ++icomp) {

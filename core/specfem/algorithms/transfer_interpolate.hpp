@@ -4,6 +4,9 @@
 #include "specfem/data_access.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
+
+#include "specfem/datatype.hpp"
+
 #include <Kokkos_Core.hpp>
 #include <cmath>
 #include <type_traits>
