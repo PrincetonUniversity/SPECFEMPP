@@ -74,13 +74,13 @@ template <typename... coeffs>
 constexpr double cauchy_bound(const std::tuple<coeffs...> &) {
   using leading_coeff =
       std::tuple_element_t<sizeof...(coeffs) - 1, std::tuple<coeffs...>>;
-  double leading_coeff_d =
+  constexpr double leading_coeff_d =
       ((double)leading_coeff::num) / ((double)leading_coeff::den);
   double v = 0;
   (
       [&]() {
-        double coeff = ((double)coeffs::num) / ((double)coeffs::den);
-        v = max(v, fabs(coeff / leading_coeff_d));
+        v = max(v, fabs((((double)coeffs::num) / ((double)coeffs::den)) /
+                        leading_coeff_d));
       }(),
       ...);
   return v + 1;
