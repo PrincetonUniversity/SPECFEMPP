@@ -49,15 +49,12 @@ public:
   static constexpr auto connection_tag =
       specfem::element_connections::type::nonconforming;
 
-private:
   static constexpr int ndim = specfem::element::dimension<dimension_tag>::dim;
   vector_type<type_real, ndim - 1> coupled_coordinates;
   scalar_type<type_real> face_factor;
   vector_type<type_real, ndim> face_normal;
 
   // ========================= START TEMPORARY =========================
-
-public:
   tensor_type<type_real, NGLL, ndim - 1> interpolants;
   template <typename LagrangeInterpolantType>
   KOKKOS_INLINE_FUNCTION nonconforming_interface(
@@ -76,10 +73,8 @@ public:
     }
   }
 
-private:
   // =========================  END TEMPORARY  =========================
 
-public:
   KOKKOS_INLINE_FUNCTION nonconforming_interface(
       const vector_type<type_real, ndim - 1> &coupled_coordinates,
       const scalar_type<type_real> &face_factor,
