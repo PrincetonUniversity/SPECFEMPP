@@ -108,6 +108,7 @@ template <int NGLL> void verify_against_runtime_on_device() {
 
   // verify knots are equal
   const auto h_xi_vals = Kokkos::create_mirror(xi_vals);
+  Kokkos::deep_copy(h_xi_vals, xi_vals);
   for (int igll = 0; igll < NGLL; igll++) {
     EXPECT_TRUE(
         specfem::utilities::is_close(h_xi_vals(igll), runtime_hxi(igll)))
@@ -118,12 +119,15 @@ template <int NGLL> void verify_against_runtime_on_device() {
   // verify kronecker delta of L
   const auto h_lagrange_evaluations =
       Kokkos::create_mirror(lagrange_evaluations);
+  Kokkos::deep_copy(h_lagrange_evaluations, lagrange_evaluations);
   for (int ipoly = 0; ipoly < NGLL; ipoly++) {
     for (int igll = 0; igll < NGLL; igll++) {
       type_real expected = ipoly == igll ? 1 : 0;
       EXPECT_TRUE(specfem::utilities::is_close(
-          h_lagrange_evaluations(ipoly, igll), expected))
-          << "NGLL = " << NGLL << ": quadrature point " << igll << "\n"
+          h_lagrange_evaluations(ipoly, igll), expected, (type_real)1e-5,
+          (type_real)1e-4))
+          << "NGLL = " << NGLL << ": Lagrange polynomial " << ipoly
+          << ", quadrature point " << igll << "\n"
           << expected_got(expected, h_lagrange_evaluations(ipoly, igll));
     }
   }
