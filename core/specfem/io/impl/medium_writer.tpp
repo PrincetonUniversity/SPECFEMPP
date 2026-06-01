@@ -2,6 +2,7 @@
 
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/data_access/container.hpp"
 #include "specfem/datatype.hpp"
 #include "specfem/element.hpp"
 #include "specfem/io/impl/medium_writer.hpp"
@@ -77,12 +78,14 @@ void specfem::io::impl::write_container(
         constexpr auto medium_tag = TagsType::medium_tag;
         constexpr auto property_tag = TagsType::property_tag;
 
+        const auto element_indices =
+            element_types.get_elements_on_host(medium_tag, property_tag);
+        if (element_indices.size() == 0)
+          return;
         const std::string name =
             std::string("/") + specfem::element::to_string(medium_tag,
                                                            property_tag);
         typename OutputLibrary::Group group = file.createGroup(name);
-        const auto element_indices =
-            element_types.get_elements_on_host(medium_tag, property_tag);
         auto data_container =
             container.template get_container<medium_tag, property_tag>();
         n_written +=
@@ -120,12 +123,14 @@ int specfem::io::impl::write_medium_group(
 
   const int n_elements = element_indices.size();
 
-  Kokkos::View<type_real ****, Kokkos::LayoutRight, Kokkos::HostSpace> x(
-      "xcoordinates", n_elements, ngllz, nglly, ngllx);
-  Kokkos::View<type_real ****, Kokkos::LayoutRight, Kokkos::HostSpace> y(
-      "ycoordinates", n_elements, ngllz, nglly, ngllx);
-  Kokkos::View<type_real ****, Kokkos::LayoutRight, Kokkos::HostSpace> z(
-      "zcoordinates", n_elements, ngllz, nglly, ngllx);
+    using DomainView3d =
+      typename specfem::data_access::impl::ContainerValueType<
+        specfem::data_access::ContainerType::domain,
+        specfem::element::dimension_tag::dim3>::template scalar_type<
+        type_real, Kokkos::HostSpace>;
+  DomainView3d x("xcoordinates", n_elements, ngllz, nglly, ngllx);
+  DomainView3d y("ycoordinates", n_elements, ngllz, nglly, ngllx);
+  DomainView3d z("zcoordinates", n_elements, ngllz, nglly, ngllx);
 
   for (int i = 0; i < n_elements; i++) {
     const int ispec = element_indices(i);
@@ -174,12 +179,14 @@ void specfem::io::impl::write_container(
         constexpr auto medium_tag = TagsType::medium_tag;
         constexpr auto property_tag = TagsType::property_tag;
 
+        const auto element_indices =
+            element_types.get_elements_on_host(medium_tag, property_tag);
+        if (element_indices.size() == 0)
+          return;
         const std::string name =
             std::string("/") + specfem::element::to_string(medium_tag,
                                                            property_tag);
         typename OutputLibrary::Group group = file.createGroup(name);
-        const auto element_indices =
-            element_types.get_elements_on_host(medium_tag, property_tag);
         auto data_container =
             container.template get_container<medium_tag, property_tag>();
         n_written +=

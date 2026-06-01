@@ -1,0 +1,56 @@
+#-----------------------------------------------------------
+#
+# Meshing input parameters
+#
+#-----------------------------------------------------------
+
+MESH_A_CHUNK_OF_THE_EARTH        = .false.
+CHUNK_MESH_PAR_FILE              = dummy.txt
+
+# coordinates of mesh block in latitude/longitude and depth in km
+LATITUDE_MIN                    = 0.0
+LATITUDE_MAX                    = 5000.0
+LONGITUDE_MIN                   = 0.0
+LONGITUDE_MAX                   = 200000.0
+DEPTH_BLOCK_KM                  = 80.d0
+UTM_PROJECTION_ZONE             = 11
+SUPPRESS_UTM_PROJECTION         = .true.
+
+# file that contains the interfaces of the model / mesh
+INTERFACES_FILE                 = @CURRENT_BENCHMARK_BUILD_DIR@/DATA/meshfem3D_files/interfaces.txt
+
+# file that contains the cavity
+CAVITY_FILE                     = no_cavity.dat
+
+NGNOD                           = 8
+
+NEX_XI                          = 80
+NEX_ETA                         = 1
+
+NPROC_XI                        = 1
+NPROC_ETA                       = 1
+
+USE_REGULAR_MESH                = .true.
+NDOUBLINGS                      = 0
+NZ_DOUBLING_1                   = 40
+NZ_DOUBLING_2                   = 48
+
+CREATE_ABAQUS_FILES             = .false.
+CREATE_DX_FILES                 = .false.
+CREATE_VTK_FILES                = .true.
+
+SAVE_MESH_AS_CUBIT              = .false.
+
+LOCAL_PATH                      = @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES
+
+THICKNESS_OF_X_PML              = 20.d0
+THICKNESS_OF_Y_PML              = 0.d0
+THICKNESS_OF_Z_PML              = 20.d0
+
+NMATERIALS                      = 1
+# #material_id  #rho  #vp  #vs  #Q_Kappa  #Q_mu  #anisotropy_flag  #domain_id
+1   2600.0   5800.0   3198.6   10  10  0  2
+
+NREGIONS                        = 1
+#NEX_XI_BEGIN  #NEX_XI_END  #NEX_ETA_BEGIN  #NEX_ETA_END  #NZ_BEGIN #NZ_END  #material_id
+1              80           1               1             1         32       1

@@ -4,9 +4,8 @@
 # Interface 1: flat free surface at z = 0
 # Format: .use_regular_grid  NXI  NETA  XI_MIN  ETA_MIN  DXI  DETA  path_to_z_file
 #
- .true. 2 2 0.0 0.0 134444.0 134444.0
+ .true. 2 2 0.0 0.0 200000.0 5000.0
  @CURRENT_BENCHMARK_BUILD_DIR@/DATA/meshfem3D_files/interface1.txt
 #
 # Number of spectral elements in the vertical direction for each layer (from top to bottom)
-# Layer 1 (only layer)
- 8
+ 32

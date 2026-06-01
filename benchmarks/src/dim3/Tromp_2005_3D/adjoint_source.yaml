@@ -1,0 +1,27 @@
+number-of-sources: 2
+sources:
+- force:
+    Ricker:
+      f0: 0.42
+      factor: 7500000000.0
+      tshift: 0.0
+    source_surf: false
+    fx: 0.0
+    fy: 0.0
+    fz: -1.0
+    x: 50000.0
+    y: 2500.0
+    z: 40000.0
+- adjoint-source:
+    External:
+      format: ASCII
+      stf:
+        X-component: adjoint_sources/AA.S0001.S3.BXX.adj
+        Y-component: adjoint_sources/AA.S0001.S3.BXY.adj
+        Z-component: adjoint_sources/AA.S0001.S3.BXZ.adj
+    network_name: AA
+    source_surf: false
+    station_name: S0001
+    x: 150000.0
+    y: 2500.0
+    z: 40000.0

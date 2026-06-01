@@ -1,15 +1,23 @@
 parameters:
 
   header:
-    title: Homogeneous Acoustic Kernel (3D) - Combined Simulation
     description: |
-      Material systems : Acoustic domain (1)
+      Material systems : Elastic domain (1)
       Interfaces : None
-      Sources : Force source (1) + Adjoint source at X20 (1)
-      Boundary conditions : Dirichlet (free surface) on top
-      Receivers : Pressure seismograms
-      Output : Sensitivity kernels (rho_kernel, alpha_kernel)
-      Reference : Tromp, Tape & Liu (GJI 2005)
+      Sources : Force source (1) + Adjoint source (2)
+      Boundary conditions : Free surface (1)
+      Mesh : 3D Cartesian extrusion of the Tromp_2005 2D benchmark
+      Receiver : Displacement seismogram (1)
+      Output : Sensitivity kernels (1)
+
+    title: Tromp-Tape-Liu (GJI 2005) - 3D combined simulation
+
+  receivers:
+    stations: "@CURRENT_BENCHMARK_BUILD_DIR@/DATA/STATIONS"
+    angle: 0.0
+    nstep_between_samples: 1
+    seismogram-type:
+    - displacement
 
   run-setup:
     number-of-processors: 1
@@ -39,15 +47,9 @@ parameters:
     solver:
       time-marching:
         time-scheme:
+          dt: 0.02
+          nstep: 2004
+          t0: 8.0
           type: Newmark
-          dt: 0.2
-          nstep: 500
-
-  receivers:
-    stations: "@CURRENT_BENCHMARK_BUILD_DIR@/DATA/STATIONS"
-    angle: 0.0
-    seismogram-type:
-      - pressure
-    nstep_between_samples: 1
 
   log-file: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/output_adjoint"
