@@ -2,6 +2,7 @@
 #pragma once
 
 #include "specfem/assembly/fields.hpp"
+#include "specfem/data_access/data_class.hpp"
 #include "specfem/element.hpp"
 #include "specfem/macros/tag_dispatch.hpp"
 #include "specfem/mesh.hpp"
@@ -20,7 +21,8 @@ namespace specfem::assembly {
 template <specfem::element::dimension_tag DimensionTag> class mpi;
 template <specfem::simulation::field_type FieldType,
           specfem::element::dimension_tag DimensionTag,
-          specfem::element::medium_tag MediumTag>
+          specfem::element::medium_tag MediumTag,
+          specfem::data_access::DataClassType DCT>
 class mpi_buffer;
 
 namespace mpi_impl {
@@ -456,19 +458,23 @@ public:
       const int nglly, const int ngllx);
 
   template <specfem::simulation::field_type FieldType,
-            specfem::element::medium_tag MediumTag>
-  mpi_buffer<FieldType, dimension_tag, MediumTag> create_mpi_buffer() const;
+            specfem::element::medium_tag MediumTag,
+            specfem::data_access::DataClassType DCT>
+  mpi_buffer<FieldType, dimension_tag, MediumTag, DCT>
+  create_mpi_buffer() const;
 };
 
 namespace mpi_impl {
 template <specfem::simulation::field_type FieldType,
           specfem::element::dimension_tag DimensionTag,
-          specfem::element::medium_tag MediumTag>
+          specfem::element::medium_tag MediumTag,
+          specfem::data_access::DataClassType DCT>
 struct mpi_buffer {
 public:
   constexpr static auto field_type = FieldType;       ///< Simulation field type
   constexpr static auto dimension_tag = DimensionTag; ///< Dimension tag
   constexpr static auto medium_tag = MediumTag;
+  constexpr static auto data_class_type = DCT; ///< Data class type
   constexpr static unsigned int components =
       specfem::element::attributes<DimensionTag, MediumTag>::components;
 
@@ -517,16 +523,12 @@ public:
     recv_request = MPI_REQUEST_NULL;
   }
 
-  template <specfem::data_access::DataClassType DCT =
-                specfem::data_access::DataClassType::acceleration>
   void pack(const specfem::assembly::simulation_field<dimension_tag, field_type>
                 &field);
 
   void send();
   void receive();
 
-  template <specfem::data_access::DataClassType DCT =
-                specfem::data_access::DataClassType::acceleration>
   void
   unpack(specfem::assembly::simulation_field<dimension_tag, field_type> &field);
 };
@@ -534,7 +536,8 @@ public:
 
 template <specfem::simulation::field_type FieldType,
           specfem::element::dimension_tag DimensionTag,
-          specfem::element::medium_tag MediumTag>
+          specfem::element::medium_tag MediumTag,
+          specfem::data_access::DataClassType DCT>
 class mpi_buffer {
 
 private:
@@ -546,10 +549,11 @@ public:
   constexpr static auto field_type = FieldType;
   constexpr static auto dimension_tag = DimensionTag;
   constexpr static auto medium_tag = MediumTag;
+  constexpr static auto data_class_type = DCT;
 
   using BufferMap = std::unordered_map<
       unsigned int,
-      mpi_impl::mpi_buffer<field_type, dimension_tag, medium_tag>>;
+      mpi_impl::mpi_buffer<field_type, dimension_tag, medium_tag, DCT>>;
 
   BufferMap buffers;
 
@@ -580,7 +584,7 @@ public:
     for (const auto &[neighbor_rank, comm_pattern] : patterns) {
       buffers.emplace(
           neighbor_rank,
-          mpi_impl::mpi_buffer<field_type, dimension_tag, medium_tag>(
+          mpi_impl::mpi_buffer<field_type, dimension_tag, medium_tag, DCT>(
               comm_pattern));
     }
 
@@ -590,20 +594,16 @@ public:
                       MPI_INT, MPI_MAX, specfem::MPI::communicator()));
   }
 
-  template <specfem::data_access::DataClassType DCT =
-                specfem::data_access::DataClassType::acceleration>
   void pack(const specfem::assembly::simulation_field<dimension_tag, field_type>
                 &field) {
     for (auto &entry : buffers)
-      entry.second.template pack<DCT>(field);
+      entry.second.pack(field);
   }
 
-  template <specfem::data_access::DataClassType DCT =
-                specfem::data_access::DataClassType::acceleration>
   void unpack(
       specfem::assembly::simulation_field<dimension_tag, field_type> &field) {
     for (auto &entry : buffers)
-      entry.second.template unpack<DCT>(field);
+      entry.second.unpack(field);
   }
 
   void send() {

@@ -58,7 +58,7 @@ void initialize_mass_matrix(
             MEDIUM_SET(elastic, acoustic),
         [&]<typename ElementTags>() {
           auto mpi_buf = assembly.mpi_interfaces.template create_mpi_buffer<
-              WavefieldType, ElementTags::medium_tag>();
+              WavefieldType, ElementTags::medium_tag, MassDataClassType>();
 
           auto &field = [&]() -> auto & {
             if constexpr (WavefieldType ==
@@ -71,11 +71,11 @@ void initialize_mass_matrix(
               return assembly.fields.backward;
           }();
 
-          mpi_buf.template pack<MassDataClassType>(field);
+          mpi_buf.pack(field);
           mpi_buf.receive();
           mpi_buf.send();
           mpi_buf.wait();
-          mpi_buf.template unpack<MassDataClassType>(field);
+          mpi_buf.unpack(field);
         });
     Kokkos::fence("initialize_mass_matrix::mpi_assembly");
   }
