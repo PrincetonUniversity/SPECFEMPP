@@ -120,25 +120,6 @@ KOKKOS_INLINE_FUNCTION void interpolate_point(
 }
 } // namespace transfer_interpolate_impl
 
-/**
- * @brief Takes a chunk_edge or chunk_face field and maps it by coordinates.
- *
- * @tparam IndexType chunk_edge or chunk_face index
- * @tparam TransferFunctionType transfer function container type
- (should be of DataClassType transfer_coordinates)
- * @tparam FaceFunctionType The chunk_edge or chunk_face field type
- * @tparam IntersectionReturnCallback the callback function that retrieves the
- pointwise value at each coordinate.
- * @ingroup AlgorithmsTransfer
- */
-template <typename IndexType, typename TransferFunctionType,
-          typename FaceFunctionType, typename IntersectionReturnCallback>
-KOKKOS_INLINE_FUNCTION void
-transfer_interpolate(const IndexType &chunk_face_index,
-                     const TransferFunctionType &transfer_function,
-                     const FaceFunctionType &edge_function,
-                     const IntersectionReturnCallback &callback);
-
 template <typename IndexType, typename TransferFunctionType,
           typename FaceFunctionType, typename IntersectionReturnCallback>
 KOKKOS_INLINE_FUNCTION
@@ -218,8 +199,7 @@ transfer_interpolate(const IndexType &chunk_face_index,
 }
 
 template <typename IndexType, typename TransferFunctionType,
-          typename FaceFunctionType, typename PointwiseReturnType,
-          typename LagrangeInterpolatorType>
+          typename FaceFunctionType, typename PointwiseReturnType>
 KOKKOS_INLINE_FUNCTION std::enable_if_t<
     specfem::data_access::is_chunk_face<FaceFunctionType>::value &&
         specfem::data_access::is_point<IndexType>::value,
@@ -230,14 +210,9 @@ transfer_interpolate(const IndexType &point_index,
                      PointwiseReturnType &self_mapped_field) {
 
   const int &ielem = point_index.iface;
-  const int &iquad1 = point_index.ipoint_i;
-  const int &iquad2 = point_index.ipoint_j;
-
-  const type_real &face_coord1 = transfer_function(ielem, iquad1, iquad2, 0);
-  const type_real &face_coord2 = transfer_function(ielem, iquad1, iquad2, 1);
 
   transfer_interpolate_impl::interpolate_point(
-      transfer_function.interpolants, ielem, face_function, self_mapped_field);
+      ielem, transfer_function.interpolants, face_function, self_mapped_field);
 }
 } // namespace specfem::algorithms
 

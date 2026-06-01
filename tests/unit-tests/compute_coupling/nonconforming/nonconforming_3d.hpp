@@ -300,22 +300,6 @@ void execute(const TransferCoordinates &transfer_coordinates,
   const auto &gll_struct =
       specfem::quadrature::gll::gll(0, 0, ngll_coupled_face);
   specfem::algorithms::LagrangeInterpolant interpolator(gll_struct.get_xi());
-
-  using ContainerTransferCoordinates = specfem::test_fixture::EndowAccessor<
-      specfem::chunk_face::NonconformingAccessorPack<
-          specfem::chunk_face::coupled_coordinates<
-              dimension_tag, chunk_size, ngll_self, interface_tag, boundary_tag,
-              flux_scheme_tag, Kokkos::DefaultExecutionSpace,
-              Kokkos::MemoryTraits<>, Kokkos::LayoutRight>,
-          specfem::chunk_face::intersection_normal<
-              dimension_tag, interface_tag, boundary_tag, flux_scheme_tag,
-              chunk_size, ngll_self, Kokkos::DefaultExecutionSpace,
-              Kokkos::MemoryTraits<>, Kokkos::LayoutRight>,
-          specfem::test_fixture::EndowAccessor<
-              decltype(interpolator),
-              specfem::tags::Tags<dimension_tag, interface_tag, boundary_tag,
-                                  flux_scheme_tag>>>,
-      specfem::tags::Tags<dimension_tag, interface_tag>>;
   using NonconformingInterfaceType =
       specfem::point::nonconforming_interface<dimension_tag, ngll_coupled_face,
                                               interface_tag, boundary_tag,

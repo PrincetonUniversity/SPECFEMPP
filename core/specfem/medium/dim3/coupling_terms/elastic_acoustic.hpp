@@ -64,20 +64,11 @@ KOKKOS_INLINE_FUNCTION void compute_coupling(
 
   specfem::algorithms::transfer_interpolate(point_index, interface_data,
                                             coupled_field, self_mapped_field);
-  intersection_field(0) =
-      interface_data.face_factor *
-      interface_data.face_normal(point_index.iface, point_index.ipoint_i,
-                                 point_index.ipoint_j, 0) *
-      self_mapped_field(0);
-  intersection_field(1) =
-      interface_data.face_factor *
-      interface_data.face_normal(point_index.iface, point_index.ipoint_i,
-                                 point_index.ipoint_j, 1) *
-      self_mapped_field(0);
-  intersection_field(2) =
-      interface_data.face_factor *
-      interface_data.face_normal(point_index.iface, point_index.ipoint_i,
-                                 point_index.ipoint_j, 2) *
-      self_mapped_field(0);
+  intersection_field(0) = interface_data.face_factor *
+                          interface_data.face_normal(0) * self_mapped_field(0);
+  intersection_field(1) = interface_data.face_factor *
+                          interface_data.face_normal(1) * self_mapped_field(0);
+  intersection_field(2) = interface_data.face_factor *
+                          interface_data.face_normal(2) * self_mapped_field(0);
 }
 } // namespace specfem::medium_physics::impl
