@@ -7,7 +7,7 @@
 
 namespace specfem::quadrature::compiletime::impl {
 
-consteval double fabs(const double &val) { return (val > 0) ? val : (-val); }
+constexpr double fabs(const double &val) { return (val > 0) ? val : (-val); }
 
 template <std::size_t size>
 struct root_array : public std::tuple<double[size]> {
