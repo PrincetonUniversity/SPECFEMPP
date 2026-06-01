@@ -74,6 +74,11 @@ template <typename T> consteval T max(const T &t1, const T &t2) {
   return t1 > t2 ? t1 : t2;
 }
 
+template <typename T, typename... Args>
+consteval T max(const T &t1, const T &t2, const Args &...t_remain) {
+  return max(max(t1, t2), t_remain...);
+}
+
 template <typename... poly1, typename... poly2>
 consteval std::enable_if_t<
     sizeof...(poly1) != sizeof...(poly2),

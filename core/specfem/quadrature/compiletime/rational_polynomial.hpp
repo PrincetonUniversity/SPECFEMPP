@@ -71,19 +71,13 @@ namespace impl {
  * the max.
  */
 template <typename... coeffs>
-constexpr double cauchy_bound(const std::tuple<coeffs...> &) {
+consteval double cauchy_bound(const std::tuple<coeffs...> &) {
   using leading_coeff =
       std::tuple_element_t<sizeof...(coeffs) - 1, std::tuple<coeffs...>>;
   constexpr double leading_coeff_d =
       ((double)leading_coeff::num) / ((double)leading_coeff::den);
-  double v = 0;
-  (
-      [&]() {
-        v = max(v, fabs((((double)coeffs::num) / ((double)coeffs::den)) /
-                        leading_coeff_d));
-      }(),
-      ...);
-  return v + 1;
+  return 1 + max(fabs((((double)coeffs::num) / ((double)coeffs::den)) /
+                      leading_coeff_d)...);
 }
 } // namespace impl
 
