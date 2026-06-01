@@ -62,7 +62,7 @@ struct coupling_terms_pack<
     NQuadIntersection, NQuadElement, std::tuple<KokkosViewArgs...>,
     std::enable_if_t<DimensionTag == specfem::element::dimension_tag::dim3>> {
   using type = specfem::chunk_face::NonconformingAccessorPack<
-      specfem::chunk_face::transfer_coupled_coordinates<
+      specfem::chunk_face::coupled_coordinates<
           DimensionTag, NumberElements, NQuadElement, InterfaceTag, BoundaryTag,
           FluxSchemeTag, KokkosViewArgs...>,
       specfem::chunk_face::intersection_normal<
