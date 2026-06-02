@@ -8,8 +8,8 @@
 #include <vector>
 
 // Convenience aliases
-constexpr auto dim2 = specfem::element::dimension_tag::dim2;
-using Source2D = specfem::sources::source<dim2>;
+using Source2D =
+    specfem::sources::source<specfem::element::dimension_tag::dim2>;
 using SourcePtr2D = std::shared_ptr<Source2D>;
 using SourceVec2D = std::vector<SourcePtr2D>;
 // Test constants
@@ -22,7 +22,8 @@ static const auto kWavefield = specfem::simulation::field_type::forward;
 /// Helper: create a 2D force source with a Ricker STF.
 /// Returns the source and the expected t0 value from the STF.
 static SourcePtr2D make_force_2d(type_real f0, type_real tshift) {
-  return std::make_shared<specfem::sources::force<dim2>>(
+  return std::make_shared<
+      specfem::sources::force<specfem::element::dimension_tag::dim2>>(
       0.0, 0.0, 0.0,
       std::make_unique<specfem::source_time_functions::Ricker>(
           kNsteps, kDt, f0, tshift, kFactor, kUseTrick),
@@ -52,9 +53,9 @@ TEST(AdjustSourceTiming, SingleSourceNoStarttime) {
 
   SourceVec2D sources = { make_force_2d(f0, tshift) };
 
-  auto [t0, starttime] =
-      specfem::io::sources_impl::adjust_source_timing<dim2>(sources,
-                                                            /*user_t0=*/0.0);
+  auto [t0, starttime] = specfem::io::sources_impl::adjust_source_timing<
+      specfem::element::dimension_tag::dim2>(sources,
+                                             /*user_t0=*/0.0);
 
   // Expected: t0 = ricker_t0, no starttime
   const type_real expected_t0 = ricker_t0(f0, tshift);
@@ -73,9 +74,9 @@ TEST(AdjustSourceTiming, MultipleSourcesNoStarttime) {
   const type_real t0_A = ricker_t0(10.0, 5.0); // 4.88
   const type_real t0_B = ricker_t0(1.0, 30.0); // 28.8
 
-  auto [t0, starttime] =
-      specfem::io::sources_impl::adjust_source_timing<dim2>(sources,
-                                                            /*user_t0=*/0.0);
+  auto [t0, starttime] = specfem::io::sources_impl::adjust_source_timing<
+      specfem::element::dimension_tag::dim2>(sources,
+                                             /*user_t0=*/0.0);
 
   // min_t0 = 4.88, so t0 = 4.88
   EXPECT_NEAR(t0, t0_A, 1e-10);
@@ -96,8 +97,8 @@ TEST(AdjustSourceTiming, UserDefinedT0) {
 
   // User t0 must be <= min_t0 - min_tshift = 4.88 - 5.0 = -0.12
   const type_real user_t0 = -1.0;
-  auto [t0, starttime] =
-      specfem::io::sources_impl::adjust_source_timing<dim2>(sources, user_t0);
+  auto [t0, starttime] = specfem::io::sources_impl::adjust_source_timing<
+      specfem::element::dimension_tag::dim2>(sources, user_t0);
 
   EXPECT_NEAR(t0, user_t0, 1e-10);
   // tshift is NOT adjusted when user defines t0
@@ -113,9 +114,9 @@ TEST(AdjustSourceTiming, UserDefinedT0TooLarge) {
 
   // min_t0 - min_tshift = 4.88 - 5.0 = -0.12
   // user_t0 = 1.0 > -0.12 -> should throw
-  EXPECT_THROW(
-      specfem::io::sources_impl::adjust_source_timing<dim2>(sources, 1.0),
-      std::runtime_error);
+  EXPECT_THROW(specfem::io::sources_impl::adjust_source_timing<
+                   specfem::element::dimension_tag::dim2>(sources, 1.0),
+               std::runtime_error);
 }
 
 // ============================================================================
@@ -132,9 +133,9 @@ TEST(AdjustSourceTiming, SingleSourceWithStarttime) {
 
   SourceVec2D sources = { src };
 
-  auto [t0, starttime] =
-      specfem::io::sources_impl::adjust_source_timing<dim2>(sources,
-                                                            /*user_t0=*/0.0);
+  auto [t0, starttime] = specfem::io::sources_impl::adjust_source_timing<
+      specfem::element::dimension_tag::dim2>(sources,
+                                             /*user_t0=*/0.0);
 
   const type_real expected_t0 = ricker_t0(f0, tshift);
   EXPECT_NEAR(t0, expected_t0, 1e-10);
@@ -160,9 +161,9 @@ TEST(AdjustSourceTiming, OneOfManyHasStarttime) {
 
   SourceVec2D sources = { src_a, src_b };
 
-  auto [t0, starttime] =
-      specfem::io::sources_impl::adjust_source_timing<dim2>(sources,
-                                                            /*user_t0=*/0.0);
+  auto [t0, starttime] = specfem::io::sources_impl::adjust_source_timing<
+      specfem::element::dimension_tag::dim2>(sources,
+                                             /*user_t0=*/0.0);
 
   const type_real t0_A = ricker_t0(10.0, 5.0);
 
@@ -188,9 +189,9 @@ TEST(AdjustSourceTiming, AllSourcesSameStarttime) {
 
   SourceVec2D sources = { src_a, src_b };
 
-  auto [t0, starttime] =
-      specfem::io::sources_impl::adjust_source_timing<dim2>(sources,
-                                                            /*user_t0=*/0.0);
+  auto [t0, starttime] = specfem::io::sources_impl::adjust_source_timing<
+      specfem::element::dimension_tag::dim2>(sources,
+                                             /*user_t0=*/0.0);
 
   ASSERT_TRUE(starttime.has_value());
 
@@ -217,9 +218,9 @@ TEST(AdjustSourceTiming, AllSourcesDifferentStarttimes) {
 
   SourceVec2D sources = { src_a, src_b };
 
-  auto [t0, starttime] =
-      specfem::io::sources_impl::adjust_source_timing<dim2>(sources,
-                                                            /*user_t0=*/0.0);
+  auto [t0, starttime] = specfem::io::sources_impl::adjust_source_timing<
+      specfem::element::dimension_tag::dim2>(sources,
+                                             /*user_t0=*/0.0);
 
   ASSERT_TRUE(starttime.has_value());
 
@@ -251,9 +252,9 @@ TEST(AdjustSourceTiming, MultipleStarttimesWithTshifts) {
 
   SourceVec2D sources = { src_a, src_b };
 
-  auto [t0, starttime] =
-      specfem::io::sources_impl::adjust_source_timing<dim2>(sources,
-                                                            /*user_t0=*/0.0);
+  auto [t0, starttime] = specfem::io::sources_impl::adjust_source_timing<
+      specfem::element::dimension_tag::dim2>(sources,
+                                             /*user_t0=*/0.0);
 
   ASSERT_TRUE(starttime.has_value());
 
@@ -289,9 +290,9 @@ TEST(AdjustSourceTiming, InconsistentStarttimesThrows) {
 
   SourceVec2D sources = { src_a, src_b, src_c };
 
-  EXPECT_THROW(
-      specfem::io::sources_impl::adjust_source_timing<dim2>(sources, 0.0),
-      std::runtime_error);
+  EXPECT_THROW(specfem::io::sources_impl::adjust_source_timing<
+                   specfem::element::dimension_tag::dim2>(sources, 0.0),
+               std::runtime_error);
 }
 
 // ============================================================================
@@ -300,9 +301,9 @@ TEST(AdjustSourceTiming, InconsistentStarttimesThrows) {
 TEST(AdjustSourceTiming, NoStarttimesReturnsNullopt) {
   SourceVec2D sources = { make_force_2d(10.0, 5.0), make_force_2d(1.0, 30.0) };
 
-  auto [t0, starttime] =
-      specfem::io::sources_impl::adjust_source_timing<dim2>(sources,
-                                                            /*user_t0=*/0.0);
+  auto [t0, starttime] = specfem::io::sources_impl::adjust_source_timing<
+      specfem::element::dimension_tag::dim2>(sources,
+                                             /*user_t0=*/0.0);
 
   EXPECT_FALSE(starttime.has_value());
 }

@@ -2,8 +2,6 @@
 #include <cmath>
 #include <gtest/gtest.h>
 
-constexpr auto dim3 = specfem::element::dimension_tag::dim3;
-
 using specfem::coordinate_systems::cartesian_coordinates;
 using specfem::coordinate_systems::geographic_coordinates;
 using specfem::coordinate_systems::transform;
@@ -18,7 +16,8 @@ TEST(CoordinateSystemsUtm, ForwardConversionZone31) {
   const geographic_coordinates geo{ 2.6741959317615298, 51.561449479910003,
                                     0.0 };
   const auto cart =
-      transform<cartesian_coordinates<dim3>>(geo, utm_projection_config{ 31 });
+      transform<cartesian_coordinates<specfem::element::dimension_tag::dim3>>(
+          geo, utm_projection_config{ 31 });
 
   EXPECT_NEAR(cart.x, 477415.5, 0.01)
       << "Easting mismatch for zone 31 forward conversion";
@@ -27,7 +26,9 @@ TEST(CoordinateSystemsUtm, ForwardConversionZone31) {
 }
 
 TEST(CoordinateSystemsUtm, InverseConversionZone31) {
-  const cartesian_coordinates<dim3> cart{ 477415.5, 5712313.5, 0.0 };
+  const cartesian_coordinates<specfem::element::dimension_tag::dim3> cart{
+    477415.5, 5712313.5, 0.0
+  };
   const auto geo =
       transform<geographic_coordinates>(cart, utm_projection_config{ 31 });
 
@@ -39,8 +40,9 @@ TEST(CoordinateSystemsUtm, InverseConversionZone31) {
 
 TEST(CoordinateSystemsUtm, RoundTripForwardInverse) {
   const geographic_coordinates original{ -73.9857, 40.7484, 0.0 };
-  const auto cart = transform<cartesian_coordinates<dim3>>(
-      original, utm_projection_config{ 18 });
+  const auto cart =
+      transform<cartesian_coordinates<specfem::element::dimension_tag::dim3>>(
+          original, utm_projection_config{ 18 });
   const auto recovered =
       transform<geographic_coordinates>(cart, utm_projection_config{ 18 });
 
@@ -51,11 +53,14 @@ TEST(CoordinateSystemsUtm, RoundTripForwardInverse) {
 }
 
 TEST(CoordinateSystemsUtm, RoundTripInverseForward) {
-  const cartesian_coordinates<dim3> original{ 500000.0, 4500000.0, 0.0 };
+  const cartesian_coordinates<specfem::element::dimension_tag::dim3> original{
+    500000.0, 4500000.0, 0.0
+  };
   const auto geo =
       transform<geographic_coordinates>(original, utm_projection_config{ 15 });
   const auto recovered =
-      transform<cartesian_coordinates<dim3>>(geo, utm_projection_config{ 15 });
+      transform<cartesian_coordinates<specfem::element::dimension_tag::dim3>>(
+          geo, utm_projection_config{ 15 });
 
   EXPECT_NEAR(recovered.x, original.x, 0.001)
       << "Round-trip easting error exceeds 1 mm";
@@ -66,7 +71,8 @@ TEST(CoordinateSystemsUtm, RoundTripInverseForward) {
 TEST(CoordinateSystemsUtm, NorthPole) {
   const geographic_coordinates geo{ 0.0, 90.0, 0.0 };
   const auto cart =
-      transform<cartesian_coordinates<dim3>>(geo, utm_projection_config{ 31 });
+      transform<cartesian_coordinates<specfem::element::dimension_tag::dim3>>(
+          geo, utm_projection_config{ 31 });
 
   EXPECT_NEAR(cart.x, 500000.0, 0.01)
       << "North pole easting should be false easting";
@@ -76,7 +82,8 @@ TEST(CoordinateSystemsUtm, NorthPole) {
 TEST(CoordinateSystemsUtm, SouthPole) {
   const geographic_coordinates geo{ 0.0, -90.0, 0.0 };
   const auto cart =
-      transform<cartesian_coordinates<dim3>>(geo, utm_projection_config{ 31 });
+      transform<cartesian_coordinates<specfem::element::dimension_tag::dim3>>(
+          geo, utm_projection_config{ 31 });
 
   EXPECT_NEAR(cart.x, 500000.0, 0.01)
       << "South pole easting should be false easting";
@@ -85,7 +92,8 @@ TEST(CoordinateSystemsUtm, SouthPole) {
 TEST(CoordinateSystemsUtm, SouthernHemisphere) {
   const geographic_coordinates geo{ 151.2093, -33.8688, 0.0 };
   const auto cart =
-      transform<cartesian_coordinates<dim3>>(geo, utm_projection_config{ -56 });
+      transform<cartesian_coordinates<specfem::element::dimension_tag::dim3>>(
+          geo, utm_projection_config{ -56 });
 
   EXPECT_GT(cart.y, 0.0)
       << "Southern hemisphere northing should be positive (with 10M offset)";
@@ -101,8 +109,9 @@ TEST(CoordinateSystemsUtm, SouthernHemisphere) {
 
 TEST(CoordinateSystemsUtm, SuppressProjectionForward) {
   const geographic_coordinates geo{ 12.34, 56.78, 100.0 };
-  const auto cart = transform<cartesian_coordinates<dim3>>(
-      geo, utm_projection_config{ 31, true });
+  const auto cart =
+      transform<cartesian_coordinates<specfem::element::dimension_tag::dim3>>(
+          geo, utm_projection_config{ 31, true });
 
   EXPECT_DOUBLE_EQ(cart.x, geo.longitude)
       << "Suppress projection should pass longitude through as x";
@@ -116,7 +125,9 @@ TEST(CoordinateSystemsUtm, SuppressProjectionForward) {
 }
 
 TEST(CoordinateSystemsUtm, SuppressProjectionInverse) {
-  const cartesian_coordinates<dim3> cart{ 12.34, 56.78, 200.0 };
+  const cartesian_coordinates<specfem::element::dimension_tag::dim3> cart{
+    12.34, 56.78, 200.0
+  };
   const auto geo = transform<geographic_coordinates>(
       cart, utm_projection_config{ 31, true });
 
@@ -131,7 +142,8 @@ TEST(CoordinateSystemsUtm, SuppressProjectionInverse) {
 TEST(CoordinateSystemsUtm, LongitudeWrapping) {
   const geographic_coordinates geo{ 179.5, 45.0, 0.0 };
   const auto cart =
-      transform<cartesian_coordinates<dim3>>(geo, utm_projection_config{ 60 });
+      transform<cartesian_coordinates<specfem::element::dimension_tag::dim3>>(
+          geo, utm_projection_config{ 60 });
   const auto recovered =
       transform<geographic_coordinates>(cart, utm_projection_config{ 60 });
 
@@ -143,7 +155,8 @@ TEST(CoordinateSystemsUtm, LongitudeWrapping) {
 TEST(CoordinateSystemsUtm, NegativeLongitudeWrapping) {
   const geographic_coordinates geo{ -179.5, 45.0, 0.0 };
   const auto cart =
-      transform<cartesian_coordinates<dim3>>(geo, utm_projection_config{ 1 });
+      transform<cartesian_coordinates<specfem::element::dimension_tag::dim3>>(
+          geo, utm_projection_config{ 1 });
   const auto recovered =
       transform<geographic_coordinates>(cart, utm_projection_config{ 1 });
 
@@ -155,7 +168,8 @@ TEST(CoordinateSystemsUtm, NegativeLongitudeWrapping) {
 TEST(CoordinateSystemsUtm, Equator) {
   const geographic_coordinates geo{ 3.0, 0.0, 0.0 };
   const auto cart =
-      transform<cartesian_coordinates<dim3>>(geo, utm_projection_config{ 31 });
+      transform<cartesian_coordinates<specfem::element::dimension_tag::dim3>>(
+          geo, utm_projection_config{ 31 });
 
   EXPECT_NEAR(cart.x, 500000.0, 0.01)
       << "Easting at central meridian should be ~500000";
@@ -177,8 +191,9 @@ TEST(CoordinateSystemsUtm, MultipleZonesRoundTrip) {
 
   for (const auto &tc : test_cases) {
     const geographic_coordinates geo{ tc.lon, tc.lat, 0.0 };
-    const auto cart = transform<cartesian_coordinates<dim3>>(
-        geo, utm_projection_config{ tc.zone });
+    const auto cart =
+        transform<cartesian_coordinates<specfem::element::dimension_tag::dim3>>(
+            geo, utm_projection_config{ tc.zone });
     const auto recovered = transform<geographic_coordinates>(
         cart, utm_projection_config{ tc.zone });
 
@@ -193,7 +208,8 @@ TEST(CoordinateSystemsUtm, DepthNegatedInForward) {
   const geographic_coordinates geo{ 2.6741959317615298, 51.561449479910003,
                                     1234.5 };
   const auto cart =
-      transform<cartesian_coordinates<dim3>>(geo, utm_projection_config{ 31 });
+      transform<cartesian_coordinates<specfem::element::dimension_tag::dim3>>(
+          geo, utm_projection_config{ 31 });
 
   // Forward transform negates depth to z: z = -depth
   EXPECT_DOUBLE_EQ(cart.z, -1234.5)
@@ -204,7 +220,9 @@ TEST(CoordinateSystemsUtm, DepthNegatedInForward) {
 }
 
 TEST(CoordinateSystemsUtm, DepthPassThroughInverse) {
-  const cartesian_coordinates<dim3> cart{ 477415.5, 5712313.5, -5678.9 };
+  const cartesian_coordinates<specfem::element::dimension_tag::dim3> cart{
+    477415.5, 5712313.5, -5678.9
+  };
   const auto geo =
       transform<geographic_coordinates>(cart, utm_projection_config{ 31 });
 

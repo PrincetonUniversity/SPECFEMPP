@@ -52,6 +52,9 @@ public:
   KOKKOS_INLINE_FUNCTION
   mapped_index(const base_type &index, const int &imap)
       : base_type(index), imap(imap) {}
+
+  KOKKOS_INLINE_FUNCTION
+  mapped_index() = default;
 };
 
 } // namespace point

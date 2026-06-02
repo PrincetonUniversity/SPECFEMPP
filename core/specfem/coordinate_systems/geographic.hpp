@@ -19,9 +19,9 @@ namespace coordinate_systems {
 class geographic_coordinates final
     : public coordinates<specfem::element::dimension_tag::dim3> {
 public:
-  double longitude = 0.0; ///< degrees (negative for West)
-  double latitude = 0.0;  ///< degrees
-  double depth = 0.0;     ///< meters (positive down)
+  double longitude; ///< degrees (negative for West)
+  double latitude;  ///< degrees
+  double depth;     ///< meters (positive down)
 
   /**
    * @brief Construct geographic coordinates.

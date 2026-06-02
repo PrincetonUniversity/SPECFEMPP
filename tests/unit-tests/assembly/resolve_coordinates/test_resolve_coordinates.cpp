@@ -10,13 +10,10 @@
 
 namespace {
 
-constexpr auto dim2 = specfem::element::dimension_tag::dim2;
-constexpr auto dim3 = specfem::element::dimension_tag::dim3;
-
 // Default-constructed mesh — resolve_coordinates doesn't use it for
 // the currently implemented coordinate types.
-const specfem::assembly::mesh<dim2> mesh2d{};
-const specfem::assembly::mesh<dim3> mesh3d{};
+const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> mesh2d{};
+const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> mesh3d{};
 
 } // namespace
 
@@ -24,8 +21,9 @@ const specfem::assembly::mesh<dim3> mesh3d{};
 
 TEST(ResolveCoordinates2D, CartesianAbsolute) {
   // Origin set to {0,0} → absolute coordinates
-  specfem::coordinate_systems::cartesian_coordinates<dim2> coords(
-      100.0, 200.0, std::array<double, 2>{ 0.0, 0.0 });
+  specfem::coordinate_systems::cartesian_coordinates<
+      specfem::element::dimension_tag::dim2>
+      coords(100.0, 200.0, std::array<double, 2>{ 0.0, 0.0 });
 
   auto gc = specfem::assembly::resolve_coordinates(coords, mesh2d);
 
@@ -35,8 +33,9 @@ TEST(ResolveCoordinates2D, CartesianAbsolute) {
 
 TEST(ResolveCoordinates2D, CartesianDepthFlatFallback) {
   // Origin nullopt → depth-based, flat fallback sets origin to {0,0}
-  specfem::coordinate_systems::cartesian_coordinates<dim2> coords(100.0, -50.0,
-                                                                  std::nullopt);
+  specfem::coordinate_systems::cartesian_coordinates<
+      specfem::element::dimension_tag::dim2>
+      coords(100.0, -50.0, std::nullopt);
 
   auto gc = specfem::assembly::resolve_coordinates(coords, mesh2d);
 
@@ -50,8 +49,9 @@ TEST(ResolveCoordinates2D, CartesianDepthFlatFallback) {
 
 TEST(ResolveCoordinates3D, CartesianAbsolute) {
   // z given directly → origin = {0,0,0}
-  specfem::coordinate_systems::cartesian_coordinates<dim3> coords(
-      1.0, 2.0, 3.0, std::array<double, 3>{ 0.0, 0.0, 0.0 });
+  specfem::coordinate_systems::cartesian_coordinates<
+      specfem::element::dimension_tag::dim3>
+      coords(1.0, 2.0, 3.0, std::array<double, 3>{ 0.0, 0.0, 0.0 });
 
   auto gc = specfem::assembly::resolve_coordinates(coords, mesh3d);
 
@@ -62,8 +62,9 @@ TEST(ResolveCoordinates3D, CartesianAbsolute) {
 
 TEST(ResolveCoordinates3D, CartesianDepthFlatFallback) {
   // depth = 5000 m → stored as z = -5000, origin nullopt
-  specfem::coordinate_systems::cartesian_coordinates<dim3> coords(
-      10.0, 20.0, -5000.0, std::nullopt);
+  specfem::coordinate_systems::cartesian_coordinates<
+      specfem::element::dimension_tag::dim3>
+      coords(10.0, 20.0, -5000.0, std::nullopt);
 
   auto gc = specfem::assembly::resolve_coordinates(coords, mesh3d);
 

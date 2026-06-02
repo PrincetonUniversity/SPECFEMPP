@@ -10,9 +10,9 @@ using DeviceView1d = Kokkos::View<type_real *, Kokkos::LayoutRight,
                                   Kokkos::DefaultExecutionSpace>;
 using DeviceView2d = Kokkos::View<type_real **, Kokkos::LayoutRight,
                                   Kokkos::DefaultExecutionSpace>;
-using HostMirror1d =
+using host_mirror_type1d =
     Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>;
-using HostMirror2d =
+using host_mirror_type2d =
     Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>;
 
 void specfem::quadrature::gll::gll::set_allocations() {

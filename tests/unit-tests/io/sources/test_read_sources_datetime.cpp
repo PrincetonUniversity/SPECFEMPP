@@ -8,16 +8,13 @@
 extern int nsteps;
 extern type_real dt;
 
-constexpr auto dim2 = specfem::element::dimension_tag::dim2;
-constexpr auto dim3 = specfem::element::dimension_tag::dim3;
-
 // ---------------------------------------------------------------------------
 // 2D tests
 // ---------------------------------------------------------------------------
 
 TEST(ReadSourcesDatetime2D, GlobalDatetime) {
   auto sources =
-      specfem::io::sources_impl::read<dim2,
+      specfem::io::sources_impl::read<specfem::element::dimension_tag::dim2,
                                       specfem::enums::source_format::YAML>(
           std::string("io/sources/data/dim2/sources_global_datetime.yaml"),
           nsteps, dt, specfem::simulation::field_type::forward);
@@ -34,7 +31,7 @@ TEST(ReadSourcesDatetime2D, GlobalDatetime) {
 
 TEST(ReadSourcesDatetime2D, PerSourceDatetime) {
   auto sources =
-      specfem::io::sources_impl::read<dim2,
+      specfem::io::sources_impl::read<specfem::element::dimension_tag::dim2,
                                       specfem::enums::source_format::YAML>(
           std::string("io/sources/data/dim2/sources_per_source_datetime.yaml"),
           nsteps, dt, specfem::simulation::field_type::forward);
@@ -52,7 +49,7 @@ TEST(ReadSourcesDatetime2D, PerSourceDatetime) {
 
 TEST(ReadSourcesDatetime2D, NoDatetime) {
   auto sources =
-      specfem::io::sources_impl::read<dim2,
+      specfem::io::sources_impl::read<specfem::element::dimension_tag::dim2,
                                       specfem::enums::source_format::YAML>(
           std::string("io/sources/data/dim2/single_force.yaml"), nsteps, dt,
           specfem::simulation::field_type::forward);
@@ -67,7 +64,7 @@ TEST(ReadSourcesDatetime2D, NoDatetime) {
 
 TEST(ReadSourcesDatetime3D, GlobalDatetime) {
   auto sources =
-      specfem::io::sources_impl::read<dim3,
+      specfem::io::sources_impl::read<specfem::element::dimension_tag::dim3,
                                       specfem::enums::source_format::YAML>(
           std::string("io/sources/data/dim3/sources_global_datetime.yaml"),
           nsteps, dt, specfem::simulation::field_type::forward);
@@ -84,7 +81,7 @@ TEST(ReadSourcesDatetime3D, GlobalDatetime) {
 
 TEST(ReadSourcesDatetime3D, PerSourceDatetime) {
   auto sources =
-      specfem::io::sources_impl::read<dim3,
+      specfem::io::sources_impl::read<specfem::element::dimension_tag::dim3,
                                       specfem::enums::source_format::YAML>(
           std::string("io/sources/data/dim3/sources_per_source_datetime.yaml"),
           nsteps, dt, specfem::simulation::field_type::forward);
@@ -102,7 +99,7 @@ TEST(ReadSourcesDatetime3D, PerSourceDatetime) {
 
 TEST(ReadSourcesDatetime3D, NoDatetime) {
   auto sources =
-      specfem::io::sources_impl::read<dim3,
+      specfem::io::sources_impl::read<specfem::element::dimension_tag::dim3,
                                       specfem::enums::source_format::YAML>(
           std::string("io/sources/data/dim3/single_force.yaml"), nsteps, dt,
           specfem::simulation::field_type::forward);
@@ -117,7 +114,8 @@ TEST(ReadSourcesDatetime3D, NoDatetime) {
 
 TEST(ReadSourcesDatetime3D, CMTSOLUTIONDatetime) {
   auto sources = specfem::io::sources_impl::read<
-      dim3, specfem::enums::source_format::CMTSOLUTION>(
+      specfem::element::dimension_tag::dim3,
+      specfem::enums::source_format::CMTSOLUTION>(
       std::string("io/sources/data/dim3/single_moment_tensor.CMTSOLUTION"),
       nsteps, dt, specfem::simulation::field_type::forward);
 
@@ -129,7 +127,8 @@ TEST(ReadSourcesDatetime3D, CMTSOLUTIONDatetime) {
 
 TEST(ReadSourcesDatetime3D, FORCESOLUTIONNoDatetime) {
   auto sources = specfem::io::sources_impl::read<
-      dim3, specfem::enums::source_format::FORCESOLUTION>(
+      specfem::element::dimension_tag::dim3,
+      specfem::enums::source_format::FORCESOLUTION>(
       std::string("io/sources/data/dim3/single_force.FORCESOLUTION"), nsteps,
       dt, specfem::simulation::field_type::forward);
 

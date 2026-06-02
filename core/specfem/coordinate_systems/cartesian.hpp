@@ -33,8 +33,8 @@ template <>
 class cartesian_coordinates<specfem::element::dimension_tag::dim2> final
     : public coordinates<specfem::element::dimension_tag::dim2> {
 public:
-  double x = 0.0; ///< meters
-  double z = 0.0; ///< meters (absolute z, or -depth if origin not set)
+  double x; ///< meters
+  double z; ///< meters (absolute z, or -depth if origin not set)
   std::optional<std::array<double, 2>> origin; ///< {0,0} = absolute; nullopt =
                                                ///< needs resolution
 
@@ -63,9 +63,9 @@ template <>
 class cartesian_coordinates<specfem::element::dimension_tag::dim3> final
     : public coordinates<specfem::element::dimension_tag::dim3> {
 public:
-  double x = 0.0; ///< meters (easting in UTM)
-  double y = 0.0; ///< meters (northing in UTM)
-  double z = 0.0; ///< meters (absolute z, or -depth if origin not set)
+  double x; ///< meters (easting in UTM)
+  double y; ///< meters (northing in UTM)
+  double z; ///< meters (absolute z, or -depth if origin not set)
   std::optional<std::array<double, 3>> origin; ///< {0,0,0} = absolute; nullopt
                                                ///< = needs resolution
 

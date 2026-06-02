@@ -45,11 +45,12 @@ private:
       specfem::element::dimension_tag::dim3>::dim; ///< Number of dimensions
 
 public:
-  IndexMappingViewType index_mapping;               ///< Device index mapping
-  IndexMappingViewType::HostMirror h_index_mapping; ///< Host index mapping
+  IndexMappingViewType index_mapping; ///< Device index mapping
+  IndexMappingViewType::host_mirror_type h_index_mapping; ///< Host index
+                                                          ///< mapping
 
-  CoordViewType coord;               ///< Device coordinates
-  CoordViewType::HostMirror h_coord; ///< Host coordinates
+  CoordViewType coord;                     ///< Device coordinates
+  CoordViewType::host_mirror_type h_coord; ///< Host coordinates
 
   type_real xmin; ///< Minimum x coordinate (for tolerance calculations)
   type_real xmax; ///< Maximum x coordinate (for tolerance calculations)

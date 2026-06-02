@@ -100,7 +100,7 @@ struct FaceView {
 
   using memory_space = typename ExecutionSpace::memory_space;
 
-  using HostMirror =
+  using host_mirror_type =
       std::conditional_t<std::is_same<typename ExecutionSpace::memory_space,
                                       Kokkos::HostSpace>::value,
                          FaceView,
@@ -270,8 +270,8 @@ public:
    * @param boundary Boundary condition type
    * @return Tuple of (self_faces, coupled_faces) for host processing
    */
-  std::tuple<typename FaceViewType::HostMirror,
-             typename FaceViewType::HostMirror>
+  std::tuple<typename FaceViewType::host_mirror_type,
+             typename FaceViewType::host_mirror_type>
   get_intersections_on_host(
       const specfem::element_connections::type connection,
       const specfem::element_coupling::interface_tag face,
@@ -327,12 +327,12 @@ private:
 
   specfem::tag_dispatch::Storage<FaceViewType, IntersectionCombinations>
       self_faces;
-  specfem::tag_dispatch::Storage<FaceViewType::HostMirror,
+  specfem::tag_dispatch::Storage<FaceViewType::host_mirror_type,
                                  IntersectionCombinations>
       h_self_faces;
   specfem::tag_dispatch::Storage<FaceViewType, IntersectionCombinations>
       coupled_faces;
-  specfem::tag_dispatch::Storage<FaceViewType::HostMirror,
+  specfem::tag_dispatch::Storage<FaceViewType::host_mirror_type,
                                  IntersectionCombinations>
       h_coupled_faces;
 };
@@ -350,7 +350,7 @@ private:
  * @return Populated host-mirror FaceView
  */
 specfem::assembly::element_intersections<
-    specfem::element::dimension_tag::dim3>::FaceViewType::HostMirror
+    specfem::element::dimension_tag::dim3>::FaceViewType::host_mirror_type
 face_view_from_collected_faces(
     const std::string &label,
     const std::vector<

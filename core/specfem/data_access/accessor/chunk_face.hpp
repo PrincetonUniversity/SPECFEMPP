@@ -1,8 +1,8 @@
 #pragma once
 
+#include "specfem/data_access/accessor.hpp"
+#include "specfem/datatype/simd.hpp"
 #include "specfem/element.hpp"
-
-#include "specfem/datatype.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::data_access {
@@ -51,7 +51,7 @@ struct Accessor<specfem::datatype::AccessorType::chunk_face, DataClass,
   using scalar_type =
       Kokkos::View<typename simd<T>::datatype[nfaces][ngll][ngll],
                    Kokkos::DefaultExecutionSpace::scratch_memory_space,
-                   Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+                   Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
   /**
    * @brief Vector field storage for chunked face elements
@@ -65,7 +65,7 @@ struct Accessor<specfem::datatype::AccessorType::chunk_face, DataClass,
   using vector_type =
       Kokkos::View<typename simd<T>::datatype[nfaces][ngll][ngll][components],
                    Kokkos::DefaultExecutionSpace::scratch_memory_space,
-                   Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+                   Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
   /**
    * @brief Tensor field storage for chunked face elements
@@ -80,7 +80,7 @@ struct Accessor<specfem::datatype::AccessorType::chunk_face, DataClass,
   using tensor_type = Kokkos::View<
       typename simd<T>::datatype[nfaces][ngll][ngll][components][dimension],
       Kokkos::DefaultExecutionSpace::scratch_memory_space,
-      Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+      Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 };
 
 /**
@@ -92,7 +92,7 @@ struct is_chunk_face : std::false_type {};
 template <typename T>
 struct is_chunk_face<
     T, std::enable_if_t<T::accessor_type ==
-                        specfem::datatype::AccessorType::chunk_face> >
+                        specfem::datatype::AccessorType::chunk_face>>
     : std::true_type {};
 
 } // namespace specfem::data_access

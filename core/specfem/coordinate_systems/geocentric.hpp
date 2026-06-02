@@ -17,10 +17,10 @@ namespace coordinate_systems {
 class geocentric_coordinates final
     : public coordinates<specfem::element::dimension_tag::dim3> {
 public:
-  double r = 0.0;     ///< meters (radius from Earth center)
-  double theta = 0.0; ///< radians (colatitude: 0 at North Pole, pi at South
-                      ///< Pole)
-  double phi = 0.0;   ///< radians (longitude: 0 at prime meridian)
+  double r;     ///< meters (radius from Earth center)
+  double theta; ///< radians (colatitude: 0 at North Pole, pi at South
+                ///< Pole)
+  double phi;   ///< radians (longitude: 0 at prime meridian)
 
   /**
    * @brief Construct geocentric coordinates.
