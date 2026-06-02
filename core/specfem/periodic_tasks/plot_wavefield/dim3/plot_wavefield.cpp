@@ -24,28 +24,9 @@
 #include <vtkUnstructuredGrid.h>
 
 #ifndef NO_HDF5
-#include <hdf5.h>
+#include "specfem/io_backends/HDF5/impl/h5_check.hpp"
 
 namespace specfem::periodic_tasks::plot_wavefield_impl {
-/// @brief Check HDF5 return codes and abort on failure
-inline void h5_check(herr_t err, const char *call, int line, const char *file) {
-  if (err < 0) {
-    std::ostringstream oss;
-    oss << "HDF5 error in " << call << " at " << file << ":" << line;
-    specfem::program::abort(oss.str(), 30, line, file);
-  }
-}
-
-/// @brief Check HDF5 identifier return values and abort on failure
-inline hid_t h5_check_id(hid_t id, const char *call, int line,
-                         const char *file) {
-  if (id < 0) {
-    std::ostringstream oss;
-    oss << "HDF5 error in " << call << " at " << file << ":" << line;
-    specfem::program::abort(oss.str(), 30, line, file);
-  }
-  return id;
-}
 
 /// @brief Create a 1D dataset and write data, handling parallel/serial I/O
 inline void write_static_1d(hid_t parent, const char *name, hid_t mem_type,
@@ -53,27 +34,25 @@ inline void write_static_1d(hid_t parent, const char *name, hid_t mem_type,
                             hsize_t local_count, const void *data,
                             bool use_parallel, hid_t dxpl) {
   hsize_t dims[1] = { total_size };
-  hid_t dataspace = h5_check_id(H5Screate_simple(1, dims, NULL),
-                                "H5Screate_simple", __LINE__, __FILE__);
-  hid_t dataset = h5_check_id(H5Dcreate(parent, name, mem_type, dataspace,
-                                        H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT),
-                              "H5Dcreate", __LINE__, __FILE__);
+  hid_t dataspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, dims, NULL));
+  hid_t dataset =
+      SPECFEM_H5_CHECK_ID(H5Dcreate(parent, name, mem_type, dataspace,
+                                    H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT));
 
   if (use_parallel) {
-    h5_check(H5Sselect_hyperslab(dataspace, H5S_SELECT_SET, &local_offset, NULL,
-                                 &local_count, NULL),
-             "H5Sselect_hyperslab", __LINE__, __FILE__);
-    hid_t memspace = h5_check_id(H5Screate_simple(1, &local_count, NULL),
-                                 "H5Screate_simple", __LINE__, __FILE__);
-    h5_check(H5Dwrite(dataset, mem_type, memspace, dataspace, dxpl, data),
-             "H5Dwrite", __LINE__, __FILE__);
-    h5_check(H5Sclose(memspace), "H5Sclose", __LINE__, __FILE__);
+    SPECFEM_H5_CHECK(H5Sselect_hyperslab(
+        dataspace, H5S_SELECT_SET, &local_offset, NULL, &local_count, NULL));
+    hid_t memspace =
+        SPECFEM_H5_CHECK_ID(H5Screate_simple(1, &local_count, NULL));
+    SPECFEM_H5_CHECK(
+        H5Dwrite(dataset, mem_type, memspace, dataspace, dxpl, data));
+    SPECFEM_H5_CHECK(H5Sclose(memspace));
   } else {
-    h5_check(H5Dwrite(dataset, mem_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, data),
-             "H5Dwrite", __LINE__, __FILE__);
+    SPECFEM_H5_CHECK(
+        H5Dwrite(dataset, mem_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, data));
   }
-  h5_check(H5Dclose(dataset), "H5Dclose", __LINE__, __FILE__);
-  h5_check(H5Sclose(dataspace), "H5Sclose", __LINE__, __FILE__);
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(dataspace));
 }
 
 /// @brief Create a 2D dataset and write data, handling parallel/serial I/O
@@ -82,39 +61,29 @@ inline void write_static_2d(hid_t parent, const char *name, hid_t mem_type,
                             hsize_t row_offset, hsize_t row_count,
                             const void *data, bool use_parallel, hid_t dxpl) {
   hsize_t dims[2] = { total_rows, ncols };
-  hid_t dataspace = h5_check_id(H5Screate_simple(2, dims, NULL),
-                                "H5Screate_simple", __LINE__, __FILE__);
-  hid_t dataset = h5_check_id(H5Dcreate(parent, name, mem_type, dataspace,
-                                        H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT),
-                              "H5Dcreate", __LINE__, __FILE__);
+  hid_t dataspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(2, dims, NULL));
+  hid_t dataset =
+      SPECFEM_H5_CHECK_ID(H5Dcreate(parent, name, mem_type, dataspace,
+                                    H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT));
 
   if (use_parallel) {
     hsize_t offset[2] = { row_offset, 0 };
     hsize_t count[2] = { row_count, ncols };
-    h5_check(H5Sselect_hyperslab(dataspace, H5S_SELECT_SET, offset, NULL, count,
-                                 NULL),
-             "H5Sselect_hyperslab", __LINE__, __FILE__);
-    hid_t memspace = h5_check_id(H5Screate_simple(2, count, NULL),
-                                 "H5Screate_simple", __LINE__, __FILE__);
-    h5_check(H5Dwrite(dataset, mem_type, memspace, dataspace, dxpl, data),
-             "H5Dwrite", __LINE__, __FILE__);
-    h5_check(H5Sclose(memspace), "H5Sclose", __LINE__, __FILE__);
+    SPECFEM_H5_CHECK(H5Sselect_hyperslab(dataspace, H5S_SELECT_SET, offset,
+                                         NULL, count, NULL));
+    hid_t memspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(2, count, NULL));
+    SPECFEM_H5_CHECK(
+        H5Dwrite(dataset, mem_type, memspace, dataspace, dxpl, data));
+    SPECFEM_H5_CHECK(H5Sclose(memspace));
   } else {
-    h5_check(H5Dwrite(dataset, mem_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, data),
-             "H5Dwrite", __LINE__, __FILE__);
+    SPECFEM_H5_CHECK(
+        H5Dwrite(dataset, mem_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, data));
   }
-  h5_check(H5Dclose(dataset), "H5Dclose", __LINE__, __FILE__);
-  h5_check(H5Sclose(dataspace), "H5Sclose", __LINE__, __FILE__);
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(dataspace));
 }
 
 } // namespace specfem::periodic_tasks::plot_wavefield_impl
-
-#define SPECFEM_H5_CHECK(call)                                                 \
-  specfem::periodic_tasks::plot_wavefield_impl::h5_check((call), #call,        \
-                                                         __LINE__, __FILE__)
-#define SPECFEM_H5_CHECK_ID(call)                                              \
-  specfem::periodic_tasks::plot_wavefield_impl::h5_check_id(                   \
-      (call), #call, __LINE__, __FILE__)
 
 #endif // NO_HDF5
 

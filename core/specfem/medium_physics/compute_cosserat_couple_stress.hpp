@@ -7,71 +7,49 @@
 #include "specfem/utilities.hpp"
 #include <Kokkos_Core.hpp>
 
-template <typename T, typename PointJacobianMatrixType,
-          typename PointPropertiesType, typename PointStressIntegrandViewType,
+template <typename T, typename PointPropertiesType, typename PointStressType,
           typename PointAccelerationType>
 KOKKOS_INLINE_FUNCTION void
 assert_types(const std::integral_constant<bool, true>) {
-
-  constexpr auto DimensionTag = PointPropertiesType::dimension_tag;
-  constexpr auto MediumTag = PointPropertiesType::medium_tag;
-  constexpr auto PropertyTag = PointPropertiesType::property_tag;
-
-  static_assert(
-      specfem::data_access::is_point<PointJacobianMatrixType>::value &&
-          specfem::data_access::is_jacobian_matrix<
-              PointJacobianMatrixType>::value,
-      "point_jacobian_matrix is not a point Jacobian matrix type");
 
   static_assert(
       specfem::data_access::is_point<PointPropertiesType>::value &&
           specfem::data_access::is_properties<PointPropertiesType>::value,
       "point_properties is not a point properties type");
 
+  static_assert(specfem::data_access::is_point<PointStressType>::value &&
+                    specfem::data_access::is_stress<PointStressType>::value,
+                "point_stress is not a point stress type");
+
   static_assert(
       specfem::data_access::is_point<PointAccelerationType>::value &&
           specfem::data_access::is_field<PointAccelerationType>::value,
       "point_acceleration is not a point field type");
 
-  static_assert(
-      PointJacobianMatrixType::simd::using_simd ==
-          PointAccelerationType::simd::using_simd,
-      "point_properties and acceleration have different SIMD settings");
-
   static_assert(PointPropertiesType::dimension_tag ==
-                    PointJacobianMatrixType::dimension_tag,
-                "point_properties and point_jacobian_matrix have different "
-                "dimensions");
+                    PointStressType::dimension_tag,
+                "point_properties and point_stress have different dimensions");
+
+  static_assert(PointPropertiesType::medium_tag == PointStressType::medium_tag,
+                "point_properties and point_stress have different medium tags");
 
   static_assert(PointPropertiesType::medium_tag ==
                     PointAccelerationType::medium_tag,
                 "point_properties and acceleration have different medium tags");
 
-  static_assert(PointPropertiesType::simd::using_simd ==
-                    PointJacobianMatrixType::simd::using_simd,
-                "point_properties and point_jacobian_matrix have different "
-                "SIMD settings");
+  static_assert(PointStressType::simd::using_simd ==
+                    PointAccelerationType::simd::using_simd,
+                "point_stress and acceleration have different SIMD settings");
 
-  // Check the PointStressIntegrandViewType, which is a kokkos view for its
-  //  extent
-  static_assert(PointStressIntegrandViewType::rank() == 2,
-                "PointStressIntegrandViewType must be a 2D view");
   static_assert(
-      PointStressIntegrandViewType::static_extent(0) ==
-          specfem::element::attributes<DimensionTag, MediumTag>::components,
-      "PointStressIntegrandViewType must have the same number of "
-      "components as the medium");
-  static_assert(
-      PointStressIntegrandViewType::static_extent(1) ==
-          specfem::element::attributes<DimensionTag, MediumTag>::dimension,
-      "PointStressIntegrandViewType must have the same number of "
-      "dimensions as the medium");
+      PointPropertiesType::simd::using_simd ==
+          PointAccelerationType::simd::using_simd,
+      "point_properties and acceleration have different SIMD settings");
 
   return;
 }
 
-template <typename T, typename PointJacobianMatrixType,
-          typename PointPropertiesType, typename PointStressIntegrandViewType,
+template <typename T, typename PointPropertiesType, typename PointStressType,
           typename PointAccelerationType>
 KOKKOS_INLINE_FUNCTION void
 assert_types(const std::integral_constant<bool, false>) {
@@ -82,31 +60,25 @@ assert_types(const std::integral_constant<bool, false>) {
 namespace specfem {
 namespace medium_physics {
 
-template <typename T, typename PointJacobianMatrixType,
-          typename PointPropertiesType, typename PointStressIntegrandViewType,
+template <typename T, typename PointPropertiesType, typename PointStressType,
           typename PointAccelerationType, typename DimensionTagType,
           typename MediumTagType, typename PropertyTagType>
 KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
     const std::false_type, const DimensionTagType dimension_tag,
     const MediumTagType medium_tag, const PropertyTagType property_tag,
-    const PointJacobianMatrixType &point_jacobian_matrix,
     const PointPropertiesType &point_properties, const T factor,
-    const PointStressIntegrandViewType &F,
+    const PointStressType &point_stress,
     PointAccelerationType &acceleration) {};
 
-template <typename T, typename PointJacobianMatrixType,
-          typename PointPropertiesType, typename PointStressIntegrandViewType,
+template <typename T, typename PointPropertiesType, typename PointStressType,
           typename PointAccelerationType, typename DimensionTagType,
           typename MediumTagType, typename PropertyTagType>
 KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
     const std::true_type, const DimensionTagType dimension_tag,
     const MediumTagType medium_tag, const PropertyTagType property_tag,
-    const PointJacobianMatrixType &point_jacobian_matrix,
     const PointPropertiesType &point_properties, const T factor,
-    const PointStressIntegrandViewType &F,
-    PointAccelerationType &acceleration) {
+    const PointStressType &point_stress, PointAccelerationType &acceleration) {
 
-  // Extract actual tag types for the static_assert message
   using ActualDimensionTag = typename DimensionTagType::type;
   using ActualMediumTag = typename MediumTagType::type;
   using ActualPropertyTag = typename PropertyTagType::type;
@@ -126,32 +98,30 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
  * @brief Compute Cosserat couple stress contribution for micropolar elastic
  * media.
  *
- * Generic couple stress computation interface that adds moment equilibrium
- * equations to classical elasticity. Provides compile-time dispatch to
- * medium-specific implementations for extended continuum mechanics.
+ * Provides compile-time dispatch to medium-specific implementations. Adds the
+ * moment equilibrium contribution to @p acceleration based on stress tensor
+ * asymmetry. Only modifies the spin component for Cosserat media; for all
+ * other media this is a no-op.
  *
- * @note Only medium types with Cosserat couple stress support will modify the
- *       acceleration field. Other medium types result in no-op.
+ * @note The caller is responsible for zero-initialising @p acceleration before
+ *       calling this function. The contribution is accumulated with @c +=,
+ *       consistent with the scatter pattern where the epilogue applies the
+ *       global sign negation.
  *
- * @tparam T Scalar type for computation factor
- * @tparam PointJacobianMatrixType Jacobian transformation matrix
- * @tparam PointPropertiesType Point-wise material properties
- * @tparam PointStressIntegrandViewType Stress integrand components
- * @tparam PointAccelerationType Point-wise acceleration field
- * @param point_jacobian_matrix Coordinate transformation matrix
- * @param point_properties Cosserat material properties
- * @param factor Time step or integration factor
- * @param F Stress integrand components for moment equilibrium
- * @param acceleration[in,out] Acceleration field (modified by couple stress)
+ * @tparam T             Scalar type for the weight product
+ * @tparam PointPropertiesType    Point-wise material properties
+ * @tparam PointStressType        Point-wise physical stress tensor
+ * @tparam PointAccelerationType  Point-wise acceleration field
+ * @param point_properties  Cosserat material properties
+ * @param factor             Integration factor w(iz)*w(ix)*J for this GLL point
+ * @param point_stress      Physical stress tensor at this GLL point
+ * @param acceleration[in,out]  Acceleration delta (spin component modified)
  */
-template <typename T, typename PointJacobianMatrixType,
-          typename PointPropertiesType, typename PointStressIntegrandViewType,
+template <typename T, typename PointPropertiesType, typename PointStressType,
           typename PointAccelerationType>
 KOKKOS_INLINE_FUNCTION void compute_cosserat_couple_stress(
-    const PointJacobianMatrixType &point_jacobian_matrix,
     const PointPropertiesType &point_properties, const T factor,
-    const PointStressIntegrandViewType &F,
-    PointAccelerationType &acceleration) {
+    const PointStressType &point_stress, PointAccelerationType &acceleration) {
 
   constexpr auto DimensionTag = PointPropertiesType::dimension_tag;
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
@@ -170,15 +140,13 @@ KOKKOS_INLINE_FUNCTION void compute_cosserat_couple_stress(
   using cosserat_couple_stress_dispatch =
       std::integral_constant<bool, has_cosserat_couple_stress>;
 
-  // Check that the types are compatible
-  assert_types<T, PointJacobianMatrixType, PointPropertiesType,
-               PointStressIntegrandViewType, PointAccelerationType>(
+  assert_types<T, PointPropertiesType, PointStressType, PointAccelerationType>(
       cosserat_couple_stress_dispatch());
 
-  impl_compute_cosserat_couple_stress(
-      cosserat_couple_stress_dispatch(), dimension_dispatch(),
-      medium_dispatch(), property_dispatch(), point_jacobian_matrix,
-      point_properties, factor, F, acceleration);
+  impl_compute_cosserat_couple_stress(cosserat_couple_stress_dispatch(),
+                                      dimension_dispatch(), medium_dispatch(),
+                                      property_dispatch(), point_properties,
+                                      factor, point_stress, acceleration);
 }
 
 } // namespace medium_physics

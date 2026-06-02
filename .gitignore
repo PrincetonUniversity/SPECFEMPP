@@ -32,7 +32,6 @@ autotuning/
 profiles
 .cache/
 test*.cpp
-test*.hpp
 include/specfem_setup.hpp
 install
 bin

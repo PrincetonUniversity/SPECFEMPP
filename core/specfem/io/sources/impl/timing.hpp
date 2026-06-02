@@ -1,9 +1,12 @@
 #pragma once
 
+#include "specfem/datetime.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/setup.hpp"
 #include "specfem/source.hpp"
 #include <memory>
+#include <optional>
+#include <tuple>
 #include <vector>
 
 namespace specfem {
@@ -15,14 +18,17 @@ namespace sources_impl {
  *
  * Computes the minimum t0 and tshift across all sources, then either validates
  * the user-defined start time or auto-adjusts tshift values accordingly.
+ * If any source carries a UTC starttime, the simulation start datetime is
+ * computed and returned alongside t0.
  *
  * @tparam DimensionTag Spatial dimension (dim2 or dim3)
  * @param sources Vector of source objects (tshift may be modified in-place)
  * @param user_t0 User-defined start time (0 means auto-detect)
- * @return type_real The computed or validated t0
+ * @return tuple of (t0, optional start datetime)
  */
 template <specfem::element::dimension_tag DimensionTag>
-type_real adjust_source_timing(
+std::tuple<type_real, std::optional<specfem::datetime::type>>
+adjust_source_timing(
     std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>
         &sources,
     type_real user_t0);

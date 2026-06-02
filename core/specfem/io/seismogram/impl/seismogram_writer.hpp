@@ -1,7 +1,9 @@
 #pragma once
 
 #include "channel_generator.hpp"
+#include "specfem/datetime.hpp"
 #include "specfem/enums.hpp"
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -35,9 +37,12 @@ struct SeismogramFormatWriter;
  * @param gen        ChannelGenerator used to build output filenames.
  */
 template <specfem::enums::seismogram_format Format, typename Receivers>
-void write_seismogram(Receivers &receivers, ChannelGenerator &gen,
-                      const std::string &output_folder) {
-  SeismogramFormatWriter<Format>::write(receivers, gen, output_folder);
+void write_seismogram(
+    Receivers &receivers, ChannelGenerator &gen,
+    const std::string &output_folder,
+    std::optional<specfem::datetime::type> starttime = std::nullopt) {
+  SeismogramFormatWriter<Format>::write(receivers, gen, output_folder,
+                                        starttime);
 }
 
 } // namespace impl

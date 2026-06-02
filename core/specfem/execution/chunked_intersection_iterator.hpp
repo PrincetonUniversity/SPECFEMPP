@@ -155,6 +155,11 @@ public:
   KOKKOS_INLINE_FUNCTION
   constexpr const iterator_type get_iterator() const { return iterator_type{}; }
 
+  /// @brief Tail-skip flag required by the for_each_level dispatcher.
+  /// Interface points have no tail-skip semantics, so this is always false.
+  KOKKOS_INLINE_FUNCTION
+  constexpr bool is_end() const { return false; }
+
 private:
   index_type index;             ///< Index of the GLL point on the interface
   KokkosIndexType kokkos_index; ///< Kokkos index type
