@@ -97,20 +97,22 @@ specfem::assembly::element_intersections<
       } };
 
   // Build host face views from collected faces
-  h_self_faces = { [&]<typename TagsType>() -> FaceViewType::HostMirror {
+  h_self_faces = { [&]<typename TagsType>() -> FaceViewType::host_mirror_type {
     return face_view_from_collected_faces(
         "specfem::assembly::element_intersections::self_faces",
         collected.template get<TagsType>().self_collect, element);
   } };
 
-  h_coupled_faces = { [&]<typename TagsType>() -> FaceViewType::HostMirror {
-    return face_view_from_collected_faces(
-        "specfem::assembly::element_intersections::coupled_faces",
-        collected.template get<TagsType>().coupled_collect, element);
-  } };
+  h_coupled_faces = {
+    [&]<typename TagsType>() -> FaceViewType::host_mirror_type {
+      return face_view_from_collected_faces(
+          "specfem::assembly::element_intersections::coupled_faces",
+          collected.template get<TagsType>().coupled_collect, element);
+    }
+  };
 
   auto copy_face_view =
-      [](const FaceViewType::HostMirror &src) -> FaceViewType {
+      [](const FaceViewType::host_mirror_type &src) -> FaceViewType {
     FaceViewType dst(src.label(), src.N, src.n_points);
     Kokkos::deep_copy(dst.element_index, src.element_index);
     Kokkos::deep_copy(dst.face_index, src.face_index);
@@ -132,7 +134,7 @@ specfem::assembly::element_intersections<
   return;
 }
 
-std::tuple<FaceViewType::HostMirror, FaceViewType::HostMirror>
+std::tuple<FaceViewType::host_mirror_type, FaceViewType::host_mirror_type>
 specfem::assembly::element_intersections<
     specfem::element::dimension_tag::dim3>::
     get_intersections_on_host(
@@ -158,7 +160,7 @@ std::tuple<FaceViewType, FaceViewType> specfem::assembly::element_intersections<
 }
 
 specfem::assembly::element_intersections<
-    specfem::element::dimension_tag::dim3>::FaceViewType::HostMirror
+    specfem::element::dimension_tag::dim3>::FaceViewType::host_mirror_type
 specfem::assembly::face_view_from_collected_faces(
     const std::string &label,
     const std::vector<
@@ -170,7 +172,7 @@ specfem::assembly::face_view_from_collected_faces(
   const int count = collected_faces.size();
 
   specfem::assembly::element_intersections<
-      specfem::element::dimension_tag::dim3>::FaceViewType::HostMirror
+      specfem::element::dimension_tag::dim3>::FaceViewType::host_mirror_type
       face_view(label, count, ngll);
 
   for (int iface = 0; iface < count; iface++) {

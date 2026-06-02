@@ -11,13 +11,11 @@
 2D Specialization
 ^^^^^^^^^^^^^^^^^
 
-.. doxygenstruct:: specfem::point::jacobian_matrix< specfem::element::dimension_tag::dim2, false, UseSIMD >
-    :members:
-    :private-members:
+.. toctree::
+    :maxdepth: 1
 
-.. doxygenstruct:: specfem::point::jacobian_matrix< specfem::element::dimension_tag::dim2, true, UseSIMD >
-    :members:
-    :private-members:
+    dim2/jacobianFalse
+    dim2/jacobianTrue
 
 
 3D Specialization

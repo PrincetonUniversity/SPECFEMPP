@@ -41,11 +41,16 @@ TYPED_TEST(PointPropertiesTest, ElectromagneticIsotropic2D) {
       sig33_arr[i] = 1.0e-2 + i * 1.0e-3;      // conductivity in zz (S/m)
     }
     // Copy to SIMD types
-    mu0_inv.copy_from(mu0_inv_arr, Kokkos::Experimental::simd_flag_default);
-    eps11.copy_from(eps11_arr, Kokkos::Experimental::simd_flag_default);
-    eps33.copy_from(eps33_arr, Kokkos::Experimental::simd_flag_default);
-    sig11.copy_from(sig11_arr, Kokkos::Experimental::simd_flag_default);
-    sig33.copy_from(sig33_arr, Kokkos::Experimental::simd_flag_default);
+    mu0_inv = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        mu0_inv_arr, Kokkos::Experimental::simd_flag_default);
+    eps11 = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        eps11_arr, Kokkos::Experimental::simd_flag_default);
+    eps33 = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        eps33_arr, Kokkos::Experimental::simd_flag_default);
+    sig11 = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        sig11_arr, Kokkos::Experimental::simd_flag_default);
+    sig33 = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        sig33_arr, Kokkos::Experimental::simd_flag_default);
   } else {
     // Electromagnetic medium properties for scalar case
     mu0_inv = 7.957747e5; // 1/μ₀ (1/H/m)

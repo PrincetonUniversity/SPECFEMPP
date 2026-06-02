@@ -50,12 +50,18 @@ TYPED_TEST(PointKernelsTest, ElasticIsotropic3D) {
       beta_arr[i] = static_cast<type_real>(70.0) +
                     static_cast<type_real>(i) * static_cast<type_real>(1.0);
     }
-    rho.copy_from(rho_arr, Kokkos::Experimental::simd_flag_default);
-    mu.copy_from(mu_arr, Kokkos::Experimental::simd_flag_default);
-    kappa.copy_from(kappa_arr, Kokkos::Experimental::simd_flag_default);
-    rhop.copy_from(rhop_arr, Kokkos::Experimental::simd_flag_default);
-    alpha.copy_from(alpha_arr, Kokkos::Experimental::simd_flag_default);
-    beta.copy_from(beta_arr, Kokkos::Experimental::simd_flag_default);
+    rho = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        rho_arr, Kokkos::Experimental::simd_flag_default);
+    mu = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        mu_arr, Kokkos::Experimental::simd_flag_default);
+    kappa = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        kappa_arr, Kokkos::Experimental::simd_flag_default);
+    rhop = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        rhop_arr, Kokkos::Experimental::simd_flag_default);
+    alpha = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        alpha_arr, Kokkos::Experimental::simd_flag_default);
+    beta = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        beta_arr, Kokkos::Experimental::simd_flag_default);
   } else {
     // For scalar case, we need direct assignment
     rho = static_cast<type_real>(2.7);

@@ -76,7 +76,7 @@ public:
    *
    * **Dimensions:** [nspec]
    */
-  BoundaryViewType::HostMirror h_boundary_tags;
+  BoundaryViewType::host_mirror_type h_boundary_tags;
 
   /**
    * @brief Device-accessible mapping of spectral element index to acoustic free
@@ -119,7 +119,7 @@ public:
    * @endcode
    *
    */
-  IndexViewType::HostMirror h_acoustic_free_surface_index_mapping;
+  IndexViewType::host_mirror_type h_acoustic_free_surface_index_mapping;
 
   /**
    * @brief Device-accessible mapping of spectral element index to Stacey
@@ -163,7 +163,7 @@ public:
    * @endcode
    *
    */
-  IndexViewType::HostMirror h_stacey_index_mapping;
+  IndexViewType::host_mirror_type h_stacey_index_mapping;
 
   /**
    * @brief Data container used to store acoustic free surface boundary

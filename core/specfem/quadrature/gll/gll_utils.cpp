@@ -10,11 +10,11 @@
 #include <stdexcept>
 #include <tuple>
 
-using HostMirror1d =
+using host_mirror_type1d =
     Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>;
 
 type_real update_x(type_real &x, const type_real p, const type_real pd,
-                   const HostMirror1d xjac, const int j) {
+                   const host_mirror_type1d xjac, const int j) {
   int recsum = 0.0;
   type_real delx;
   for (int i = 1; i < j; i++) {
@@ -25,7 +25,8 @@ type_real update_x(type_real &x, const type_real p, const type_real pd,
   return delx;
 }
 
-void specfem::quadrature::gll::gll_utils::jacg(HostMirror1d xjac, const int np,
+void specfem::quadrature::gll::gll_utils::jacg(host_mirror_type1d xjac,
+                                               const int np,
                                                const type_real alpha,
                                                const type_real beta) {
 
@@ -181,7 +182,8 @@ type_real specfem::quadrature::gll::gll_utils::calc_pnormj(
   return pnormj;
 }
 
-void specfem::quadrature::gll::gll_utils::jacw(HostMirror1d z, HostMirror1d w,
+void specfem::quadrature::gll::gll_utils::jacw(host_mirror_type1d z,
+                                               host_mirror_type1d w,
                                                const int np, const int alpha,
                                                const int beta) {
 
