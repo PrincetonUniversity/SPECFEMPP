@@ -117,23 +117,38 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropicCosserat3D) {
     }
 
     // Copy to SIMD types
-    rho.copy_from(rho_arr, Kokkos::Experimental::simd_flag_default);
-    kappa.copy_from(kappa_arr, Kokkos::Experimental::simd_flag_default);
-    mu.copy_from(mu_arr, Kokkos::Experimental::simd_flag_default);
-    nu.copy_from(nu_arr, Kokkos::Experimental::simd_flag_default);
-    j.copy_from(j_arr, Kokkos::Experimental::simd_flag_default);
-    lambda_c.copy_from(lambda_c_arr, Kokkos::Experimental::simd_flag_default);
-    mu_c.copy_from(mu_c_arr, Kokkos::Experimental::simd_flag_default);
-    nu_c.copy_from(nu_c_arr, Kokkos::Experimental::simd_flag_default);
-    lambda_val.copy_from(lambda_arr, Kokkos::Experimental::simd_flag_default);
-    lambdaplus2mu_val.copy_from(lambdaplus2mu_arr,
-                                Kokkos::Experimental::simd_flag_default);
-    rho_vp_val.copy_from(rho_vp_arr, Kokkos::Experimental::simd_flag_default);
-    rho_vs_val.copy_from(rho_vs_arr, Kokkos::Experimental::simd_flag_default);
-    vp_val.copy_from(vp_arr, Kokkos::Experimental::simd_flag_default);
-    vs_val.copy_from(vs_arr, Kokkos::Experimental::simd_flag_default);
-    vmax_val.copy_from(vmax_arr, Kokkos::Experimental::simd_flag_default);
-    vmin_val.copy_from(vmin_arr, Kokkos::Experimental::simd_flag_default);
+    rho = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        rho_arr, Kokkos::Experimental::simd_flag_default);
+    kappa = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        kappa_arr, Kokkos::Experimental::simd_flag_default);
+    mu = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        mu_arr, Kokkos::Experimental::simd_flag_default);
+    nu = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        nu_arr, Kokkos::Experimental::simd_flag_default);
+    j = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        j_arr, Kokkos::Experimental::simd_flag_default);
+    lambda_c = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        lambda_c_arr, Kokkos::Experimental::simd_flag_default);
+    mu_c = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        mu_c_arr, Kokkos::Experimental::simd_flag_default);
+    nu_c = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        nu_c_arr, Kokkos::Experimental::simd_flag_default);
+    lambda_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        lambda_arr, Kokkos::Experimental::simd_flag_default);
+    lambdaplus2mu_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        lambdaplus2mu_arr, Kokkos::Experimental::simd_flag_default);
+    rho_vp_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        rho_vp_arr, Kokkos::Experimental::simd_flag_default);
+    rho_vs_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        rho_vs_arr, Kokkos::Experimental::simd_flag_default);
+    vp_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        vp_arr, Kokkos::Experimental::simd_flag_default);
+    vs_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        vs_arr, Kokkos::Experimental::simd_flag_default);
+    vmax_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        vmax_arr, Kokkos::Experimental::simd_flag_default);
+    vmin_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        vmin_arr, Kokkos::Experimental::simd_flag_default);
   } else {
     // Kulesh (2009) material properties for scalar test
     constexpr type_real rho_val = 1.0e5;      // kg/m^3

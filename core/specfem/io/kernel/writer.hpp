@@ -28,6 +28,7 @@ public:
    * HDF5, and a folder if using ASCII)
    */
   kernel_writer(const std::string &output_folder);
+  ///@}
 
   /**
    * @brief write the kernel data to disk

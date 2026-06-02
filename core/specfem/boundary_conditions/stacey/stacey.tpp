@@ -112,13 +112,17 @@ KOKKOS_FUNCTION void impl_base_elastic_psv_traction(
                     velocity(icomp) * property.rho_vs();
   }
 
-  Kokkos::Experimental::where(mask, traction(0)) =
+  traction(0) = Kokkos::Experimental::condition(
+      mask,
       traction(0) + static_cast<type_real>(-1.0) * factor[0] * jacobian1d *
-                        boundary.edge_weight;
+                        boundary.edge_weight,
+      traction(0));
 
-  Kokkos::Experimental::where(mask, traction(1)) =
+  traction(1) = Kokkos::Experimental::condition(
+      mask,
       traction(1) + static_cast<type_real>(-1.0) * factor[1] * jacobian1d *
-                        boundary.edge_weight;
+                        boundary.edge_weight,
+      traction(1));
 
   return;
 }
@@ -166,9 +170,11 @@ KOKKOS_FUNCTION void impl_base_elastic_sh_traction(
   const auto factor = boundary.edge_weight * boundary.edge_normal.l2_norm();
 
   // Apply Stacey boundary condition
-  Kokkos::Experimental::where(mask, traction(0)) =
-      traction(0) +
-      static_cast<type_real>(-1.0) * factor * property.rho_vs() * velocity(0);
+  traction(0) = Kokkos::Experimental::condition(
+      mask,
+      traction(0) + static_cast<type_real>(-1.0) * factor * property.rho_vs() *
+                        velocity(0),
+      traction(0));
 
   return;
 }
@@ -272,17 +278,23 @@ impl_base_elastic_psv_t_traction(const PointBoundaryType &boundary,
                     velocity(icomp) * rho_vs;
   }
 
-  Kokkos::Experimental::where(mask, traction(0)) =
+  traction(0) = Kokkos::Experimental::condition(
+      mask,
       traction(0) + static_cast<type_real>(-1.0) * factor[0] * jacobian1d *
-                        boundary.edge_weight;
+                        boundary.edge_weight,
+      traction(0));
 
-  Kokkos::Experimental::where(mask, traction(1)) =
+  traction(1) = Kokkos::Experimental::condition(
+      mask,
       traction(1) + static_cast<type_real>(-1.0) * factor[1] * jacobian1d *
-                        boundary.edge_weight;
+                        boundary.edge_weight,
+      traction(1));
 
-  Kokkos::Experimental::where(mask, traction(2)) =
-      traction(2) + static_cast<type_real>(-1.0) * j_vt *
-                    velocity(2) * jacobian1d * boundary.edge_weight;
+  traction(2) = Kokkos::Experimental::condition(
+      mask,
+      traction(2) + static_cast<type_real>(-1.0) * j_vt * velocity(2) *
+                        jacobian1d * boundary.edge_weight,
+      traction(2));
 
   return;
 }
@@ -361,9 +373,11 @@ impl_enforce_traction(const acoustic_type &, const isotropic_type &,
   const auto factor = boundary.edge_weight * boundary.edge_normal.l2_norm();
 
   // Apply Stacey boundary condition
-  Kokkos::Experimental::where(mask, traction(0)) =
+  traction(0) = Kokkos::Experimental::condition(
+      mask,
       traction(0) + static_cast<type_real>(-1.0) * factor *
-                        property.rho_vpinverse() * velocity(0);
+                        property.rho_vpinverse() * velocity(0),
+      traction(0));
 
   return;
 }
@@ -497,21 +511,29 @@ impl_enforce_traction(const poroelastic_type &, const isotropic_type &,
       rho_vs * (velocity(3) - vn * dn(1)); /// Fluid traction Z component
 
   // Apply Stacey boundary condition
-  Kokkos::Experimental::where(mask, traction(0)) =
+  traction(0) = Kokkos::Experimental::condition(
+      mask,
       traction(0) +
-      static_cast<type_real>(-1.0) * tsx * jacobian1d * boundary.edge_weight;
+          static_cast<type_real>(-1.0) * tsx * jacobian1d * boundary.edge_weight,
+      traction(0));
 
-  Kokkos::Experimental::where(mask, traction(1)) =
+  traction(1) = Kokkos::Experimental::condition(
+      mask,
       traction(1) +
-      static_cast<type_real>(-1.0) * tsz * jacobian1d * boundary.edge_weight;
+          static_cast<type_real>(-1.0) * tsz * jacobian1d * boundary.edge_weight,
+      traction(1));
 
-  Kokkos::Experimental::where(mask, traction(2)) =
+  traction(2) = Kokkos::Experimental::condition(
+      mask,
       traction(2) +
-      static_cast<type_real>(-1.0) * tfx * jacobian1d * boundary.edge_weight;
+          static_cast<type_real>(-1.0) * tfx * jacobian1d * boundary.edge_weight,
+      traction(2));
 
-  Kokkos::Experimental::where(mask, traction(3)) =
+  traction(3) = Kokkos::Experimental::condition(
+      mask,
       traction(3) +
-      static_cast<type_real>(-1.0) * tfz * jacobian1d * boundary.edge_weight;
+          static_cast<type_real>(-1.0) * tfz * jacobian1d * boundary.edge_weight,
+      traction(3));
 
   return;
 }

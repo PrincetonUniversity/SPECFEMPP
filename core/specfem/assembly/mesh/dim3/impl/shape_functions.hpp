@@ -76,9 +76,9 @@ public:
                       specfem::element::dimension_tag::dim3>
                       control_nodes);
 
-  ShapeFunctionViewType shape3D;                 ///< Device shape functions
-  DShapeFunctionViewType dshape3D;               ///< Device derivatives
-  ShapeFunctionViewType::HostMirror h_shape3D;   ///< Host shape functions
-  DShapeFunctionViewType::HostMirror h_dshape3D; ///< Host derivatives
+  ShapeFunctionViewType shape3D;                     ///< Device shape functions
+  DShapeFunctionViewType dshape3D;                   ///< Device derivatives
+  ShapeFunctionViewType::host_mirror_type h_shape3D; ///< Host shape functions
+  DShapeFunctionViewType::host_mirror_type h_dshape3D; ///< Host derivatives
 };
 } // namespace specfem::assembly::mesh_impl

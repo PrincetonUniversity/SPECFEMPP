@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Kokkos_Core_fwd.hpp"
 #include "accessor_type.hpp"
 #include "simd.hpp"
 #include "specfem/element/tags.hpp"
@@ -87,14 +88,15 @@ template <typename T, specfem::element::dimension_tag DimensionTag,
           specfem::datatype::AccessorType AccessorType, bool UseSIMD = false,
           typename MemorySpace =
               Kokkos::DefaultExecutionSpace::scratch_memory_space,
-          typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged>>
+          typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+          typename LayoutType = Kokkos::DefaultExecutionSpace::array_layout>
 struct ChunkNDimViewType
     : public Kokkos::View<
           typename impl::arrayify_datatype<
               typename specfem::datatype::simd<T, UseSIMD>::datatype, ChunkSize,
               typename impl::subspace_shape<ChunkSubspaceDimension, NGLL>,
               PointwiseShapeIntegerSequence>::type,
-          MemorySpace, MemoryTraits> {
+          LayoutType, MemorySpace, MemoryTraits> {
   /**
    * @name Typedefs
    *
@@ -106,8 +108,8 @@ struct ChunkNDimViewType
           typename specfem::datatype::simd<T, UseSIMD>::datatype, ChunkSize,
           typename impl::subspace_shape<ChunkSubspaceDimension, NGLL>,
           PointwiseShapeIntegerSequence>::type,
-      MemorySpace, MemoryTraits>; ///< Underlying data type used to
-                                  ///< store values
+      LayoutType, MemorySpace, MemoryTraits>; ///< Underlying data type used to
+                                              ///< store values
   using value_type = typename type::value_type; ///< Value type used to store
                                                 ///< the elements of the array
   using base_type = T;                          ///< Base type of the array
@@ -118,7 +120,7 @@ struct ChunkNDimViewType
           AccessorType == specfem::datatype::AccessorType::chunk_face,
           specfem::point::face_index<DimensionTag>,
           std::conditional_t<
-              AccessorType == specfem::datatype::AccessorType::chunk_face,
+              AccessorType == specfem::datatype::AccessorType::chunk_edge,
               specfem::point::edge_index<DimensionTag>, void>>>; ///< index type
                                                                  ///< for
                                                                  ///< accessing

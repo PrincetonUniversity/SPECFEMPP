@@ -23,6 +23,7 @@ option(SPECFEM_ENABLE_PROFILING "Enable profiling" OFF)
 option(SPECFEM_BINDING_PYTHON "Enable Python binding" OFF)
 option(SPECFEM_INSTALL "Creates clean executable directory. Location Controlled by CMAKE_INSTALL_PREFIX" ON)
 option(SPECFEM_ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
+option(SPECFEM_ENABLE_METIS "Enable METIS partitioning support in xdecompose_mesh" OFF)
 option(SPECFEM_BUILD_BENCHMARKS "Benchmarks included" ON)
 option(SPECFEM_NIGHTLY_BENCHMARKS "Include nightly benchmarks" OFF)
 option(SPECFEM_ENABLE_UNITY_BUILD "Enable unity build to speed up compilation" ON)
@@ -169,6 +170,9 @@ include("${CMAKE_SOURCE_DIR}/cmake/adios2.cmake")
 # the pugixml dependency than ADIOS2)
 include("${CMAKE_SOURCE_DIR}/cmake/vtk.cmake")
 
+# Find or install METIS graph partitioner (used by xdecompose_mesh)
+include("${CMAKE_SOURCE_DIR}/cmake/metis.cmake")
+
 if (SPECFEM_ENABLE_SIMD)
     message(STATUS "Enabling SIMD")
     add_compile_definitions(SPECFEM_ENABLE_SIMD)
@@ -220,6 +224,14 @@ set(CMAKE_MESSAGE_LOG_LEVEL ${SUBDIR_LOG_LEVEL})
 add_subdirectory(fortran/meshfem3d)
 set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
 # =================================
+
+# ========== DECOMPOSE_MESH =========
+message(STATUS "Configuring decompose_mesh")
+set(_saved_CMAKE_MESSAGE_LOG_LEVEL ${CMAKE_MESSAGE_LOG_LEVEL})
+set(CMAKE_MESSAGE_LOG_LEVEL ${SUBDIR_LOG_LEVEL})
+add_subdirectory(fortran/decompose_mesh)
+set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
+# ===================================
 
 # Add module subdirectories
 add_subdirectory(core)
@@ -312,7 +324,7 @@ if (SPECFEM_INSTALL AND NOT SPECFEM_USE_SKBUILD)
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Organizing specfem++ executables into: ${CMAKE_INSTALL_PREFIX}"
         # Make this run after your main targets
-        DEPENDS specfem specfem2d specfem3d xmeshfem2D xmeshfem3D xadj_seismogram # list all your targets here
+        DEPENDS specfem specfem2d specfem3d xmeshfem2D xmeshfem3D xadj_seismogram xdecompose_mesh # list all your targets here
     )
 
     # Add the prefix directory to the clean target
