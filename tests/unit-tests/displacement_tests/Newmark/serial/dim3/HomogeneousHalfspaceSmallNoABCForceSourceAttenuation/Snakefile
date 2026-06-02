@@ -1,3 +1,7 @@
+source_file = "FORCESOLUTION"
+fortran_mesh_files = ["meshfem3D_files/interface1.txt", "meshfem3D_files/interfaces.txt", "meshfem3D_files/Mesh_Par_file"]
+specfempp_mesh_files = ["interface1.txt", "interfaces.txt", "Mesh_Par_file"]
+
 include: "../../../specfem3d.smk"
 
 networks = ["X", "Y", "Z", "XYZ"]
