@@ -43,9 +43,9 @@ SAVE_MESH_AS_CUBIT              = .false.
 
 LOCAL_PATH                      = @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES
 
-THICKNESS_OF_X_PML              = 20.d0
+THICKNESS_OF_X_PML              = 0.d0
 THICKNESS_OF_Y_PML              = 0.d0
-THICKNESS_OF_Z_PML              = 20.d0
+THICKNESS_OF_Z_PML              = 0.d0
 
 NMATERIALS                      = 1
 # #material_id  #rho  #vp  #vs  #Q_Kappa  #Q_mu  #anisotropy_flag  #domain_id

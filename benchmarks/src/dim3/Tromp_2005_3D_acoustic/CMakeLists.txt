@@ -14,7 +14,6 @@ file(
     ${CMAKE_CURRENT_SOURCE_DIR}/forward_source.yaml
     ${CMAKE_CURRENT_SOURCE_DIR}/adjoint_source.yaml
     ${CMAKE_CURRENT_SOURCE_DIR}/plot.py
-    ${CMAKE_CURRENT_SOURCE_DIR}/plot_seismograms.py
     ${CMAKE_CURRENT_SOURCE_DIR}/README.md
   DESTINATION ${CURRENT_BENCHMARK_BUILD_DIR}
 )
