@@ -23,8 +23,16 @@ int compute_stiffness_interaction(
   constexpr auto attenuation_tag = Tags::attenuation_tag;
   constexpr auto dimension_tag = Tags::dimension_tag;
 
-  const auto elements = assembly.element_types.get_elements_on_device(
-      medium_tag, property_tag, attenuation_tag, boundary_tag);
+  const auto elements = [&]() {
+    if constexpr (requires { Tags::mpi_tag; }) {
+      return assembly.element_types.get_elements_on_device(
+          medium_tag, property_tag, attenuation_tag, boundary_tag,
+          Tags::mpi_tag);
+    } else {
+      return assembly.element_types.get_elements_on_device(
+          medium_tag, property_tag, attenuation_tag, boundary_tag);
+    }
+  }();
 
   const int nelements = elements.extent(0);
 

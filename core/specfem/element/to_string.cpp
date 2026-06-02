@@ -162,6 +162,19 @@ const std::string specfem::element::to_string(
   return attenuation_string;
 }
 
+const std::string
+specfem::element::to_string(const specfem::element::mpi_tag &mpi) {
+
+  switch (mpi) {
+  case specfem::element::mpi_tag::inner:
+    return "inner";
+  case specfem::element::mpi_tag::outer:
+    return "outer";
+  default:
+    return "unknown";
+  }
+}
+
 specfem::element::medium_tag
 specfem::element::from_string(const std::string &medium_tag) {
   if (medium_tag == "elastic_psv") {

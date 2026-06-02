@@ -42,8 +42,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
                  mesh.control_nodes,
                  quadratures };
 
-  this->element_types = { nspec, this->mesh.element_grid, this->mesh,
-                          mesh.tags };
+  this->element_types = { nspec, this->mesh.element_grid, this->mesh, mesh.tags,
+                          mesh.adjacency_graph };
 
   this->element_intersections = { ngllz, nglly, ngllx, this->mesh,
                                   this->element_types };
@@ -85,6 +85,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
                            ngllz,
                            nglly,
                            ngllx };
+
+  this->accel_buffers = { this->mpi_interfaces, simulation };
 
   // if (allocate_boundary_values)
   //   this->boundary_values = { max_timesteps, this->mesh, this->element_types,

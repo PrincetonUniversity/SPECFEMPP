@@ -9,10 +9,10 @@
 specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
     const specfem::mesh::mesh<dimension_tag> &mesh,
     const specfem::quadrature::quadratures &quadratures,
-    std::vector<std::shared_ptr<specfem::sources::source<dimension_tag> > >
+    std::vector<std::shared_ptr<specfem::sources::source<dimension_tag>>>
         &sources,
     const std::vector<std::shared_ptr<
-        specfem::receivers::receiver<specfem::element::dimension_tag::dim2> > >
+        specfem::receivers::receiver<specfem::element::dimension_tag::dim2>>>
         &receivers,
     const std::vector<specfem::enums::wavefield> &stypes, const type_real t0,
     const type_real dt, const int max_timesteps, const int max_sig_step,
@@ -27,7 +27,7 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
   this->mesh = { mesh.tags, mesh.control_nodes, quadratures,
                  mesh.adjacency_graph };
   this->element_types = { this->mesh.nspec, this->mesh.element_grid, this->mesh,
-                          mesh.tags };
+                          mesh.tags, mesh.adjacency_graph };
   this->element_intersections = { this->mesh.element_grid.ngllx,
                                   this->mesh.element_grid.ngllz, this->mesh,
                                   this->element_types, flux_scheme_config };

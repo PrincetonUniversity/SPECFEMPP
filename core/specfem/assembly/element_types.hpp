@@ -19,6 +19,7 @@ template <> struct ElementSets<specfem::element::dimension_tag::dim2> {
       none, stacey, acoustic_free_surface, composite_stacey_dirichlet);
   constexpr static auto attenuation_set =
       ATTENUATION_SET(none, constant_isotropic);
+  constexpr static auto mpi_set = MPI_SET(inner, outer);
 };
 
 template <> struct ElementSets<specfem::element::dimension_tag::dim3> {
@@ -29,6 +30,7 @@ template <> struct ElementSets<specfem::element::dimension_tag::dim3> {
   constexpr static auto boundary_set = BOUNDARY_SET(none);
   constexpr static auto attenuation_set =
       ATTENUATION_SET(none, constant_isotropic);
+  constexpr static auto mpi_set = MPI_SET(inner, outer);
 };
 } // namespace element_types_impl
 
@@ -44,5 +46,5 @@ template <> struct ElementSets<specfem::element::dimension_tag::dim3> {
  */
 template <specfem::element::dimension_tag DimensionTag>
 using element_types = element_types_impl::element_types_base<
-    element_types_impl::ElementSets<DimensionTag> >;
+    element_types_impl::ElementSets<DimensionTag>>;
 } // namespace specfem::assembly

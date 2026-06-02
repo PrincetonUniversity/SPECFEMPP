@@ -66,6 +66,10 @@ protected:
   static constexpr auto combinations_by_element =
       combinations_by_medium * ElementSets::property_set *
       ElementSets::attenuation_set * ElementSets::boundary_set;
+  /** All valid (dimension, medium, property, attenuation, boundary, mpi)
+   * combos. */
+  static constexpr auto combinations_by_mpi_element =
+      combinations_by_element * ElementSets::mpi_set;
 
 public:
   // ── Per-element tag views (host) ─────────────────────────────────────────
@@ -83,6 +87,8 @@ public:
   TagViewType<specfem::element::boundary_tag> boundary_tags;
   /** Host view of per-element attenuation tags (size: nspec). */
   TagViewType<specfem::element::attenuation_tag> attenuation_tags;
+  /** Host view of per-element MPI partition tags (size: nspec). */
+  TagViewType<specfem::element::mpi_tag> mpi_tags;
 
 protected:
   // ── Index stores ─────────────────────────────────────────────────────────
@@ -110,6 +116,12 @@ protected:
   IndexStorage<decltype(combinations_by_element)> elements_by_element;
   /** Host mirror of elements_by_element. */
   HostIndexStorage<decltype(combinations_by_element)> h_elements_by_element;
+  /** Device index store keyed by (dimension, medium, property, attenuation,
+   * boundary, mpi). */
+  IndexStorage<decltype(combinations_by_mpi_element)> elements_by_mpi_element;
+  /** Host mirror of elements_by_mpi_element. */
+  HostIndexStorage<decltype(combinations_by_mpi_element)>
+      h_elements_by_mpi_element;
 
 public:
   /** @brief Default constructor; leaves all views and stores empty. */
@@ -219,6 +231,44 @@ public:
     build_index_stores();
   }
 
+  /**
+   * @brief Construct from mesh objects with MPI partition classification.
+   *
+   * Extends the mesh constructor by additionally classifying each element
+   * as inner (not touching MPI boundaries) or outer (sharing a face, edge,
+   * or corner with another MPI rank). The classification uses the mesh-domain
+   * adjacency graph's MPI connections, mapped to compute-domain indices.
+   *
+   * @param nspec                  Number of spectral elements.
+   * @param element_grid           GLL grid layout.
+   * @param mesh                   Compute-to-mesh index mapping.
+   * @param tags                   Per-element tag data from the mesh.
+   * @param mesh_adjacency_graph   Mesh-domain adjacency graph with MPI
+   *                               connections (local_index is mesh-domain).
+   */
+  element_types_base(
+      int nspec,
+      const specfem::mesh_entity::element_grid<dimension_tag> &element_grid,
+      const specfem::assembly::mesh<dimension_tag> &mesh,
+      const specfem::mesh::tags<dimension_tag> &tags,
+      const specfem::mesh::adjacency_graph<dimension_tag> &mesh_adjacency_graph)
+      : element_types_base(nspec, element_grid, mesh, tags) {
+    // Allocate MPI tags and default all to inner
+    mpi_tags = TagViewType<specfem::element::mpi_tag>(
+        "specfem::assembly::element_types::mpi_tags", nspec);
+    for (int ispec = 0; ispec < nspec; ++ispec)
+      mpi_tags(ispec) = specfem::element::mpi_tag::inner;
+
+    // Mark elements touching MPI boundaries as outer
+    for (const auto &mpi_edge : mesh_adjacency_graph.mpi_connections()) {
+      const int ispec_mesh = static_cast<int>(mpi_edge.local_index);
+      const int ispec_compute = mesh.h_mesh_to_compute(ispec_mesh);
+      mpi_tags(ispec_compute) = specfem::element::mpi_tag::outer;
+    }
+
+    build_mpi_index_stores();
+  }
+
 private:
   void build_index_stores() {
     auto make_initializer = [&](std::string label_prefix, auto... tag_views) {
@@ -265,6 +315,31 @@ private:
         boundary_tags) };
     elements_by_element = specfem::tag_dispatch::create_mirror_storage_and_copy(
         Kokkos::DefaultExecutionSpace{}, h_elements_by_element);
+  }
+
+  void build_mpi_index_stores() {
+    auto make_initializer = [&](std::string label_prefix, auto... tag_views) {
+      return [&, label_prefix,
+              tag_views...]<typename TagsType>() -> HostIndexViewType {
+        int count = 0;
+        for (int ispec = 0; ispec < nspec; ++ispec)
+          if (TagsType{}.has(tag_views(ispec)...))
+            ++count;
+        HostIndexViewType host_view(label_prefix + TagsType::name(), count);
+        int index = 0;
+        for (int ispec = 0; ispec < nspec; ++ispec)
+          if (TagsType{}.has(tag_views(ispec)...))
+            host_view(index++) = ispec;
+        return host_view;
+      };
+    };
+
+    h_elements_by_mpi_element = { make_initializer(
+        "element_by_mpi_element_", medium_tags, property_tags, attenuation_tags,
+        boundary_tags, mpi_tags) };
+    elements_by_mpi_element =
+        specfem::tag_dispatch::create_mirror_storage_and_copy(
+            Kokkos::DefaultExecutionSpace{}, h_elements_by_mpi_element);
   }
 
 public:
@@ -457,6 +532,69 @@ public:
                                    boundary_tag);
   }
 
+  // ── Accessors by mpi element (medium + property + attenuation + boundary +
+  // mpi) ──
+
+  /**
+   * @brief Host view of element indices matching the given element type and
+   * MPI partition classification.
+   * @param medium_tag      Medium to query.
+   * @param property_tag    Material property to query.
+   * @param attenuation_tag Attenuation model to query.
+   * @param boundary_tag    Boundary condition to query.
+   * @param mpi_tag         MPI partition classification (inner or outer).
+   * @return Host-accessible 1-D view of spectral-element indices.
+   */
+  HostIndexViewType
+  get_elements_on_host(const specfem::element::medium_tag medium_tag,
+                       const specfem::element::property_tag property_tag,
+                       const specfem::element::attenuation_tag attenuation_tag,
+                       const specfem::element::boundary_tag boundary_tag,
+                       const specfem::element::mpi_tag mpi_tag) const {
+    return h_elements_by_mpi_element.get(
+        medium_tag, property_tag, attenuation_tag, boundary_tag, mpi_tag);
+  }
+
+  /**
+   * @brief Number of elements matching the given element type and MPI
+   * partition classification.
+   * @param medium_tag      Medium to query.
+   * @param property_tag    Material property to query.
+   * @param attenuation_tag Attenuation model to query.
+   * @param boundary_tag    Boundary condition to query.
+   * @param mpi_tag         MPI partition classification (inner or outer).
+   */
+  int get_number_of_elements(
+      const specfem::element::medium_tag medium_tag,
+      const specfem::element::property_tag property_tag,
+      const specfem::element::attenuation_tag attenuation_tag,
+      const specfem::element::boundary_tag boundary_tag,
+      const specfem::element::mpi_tag mpi_tag) const {
+    return get_elements_on_host(medium_tag, property_tag, attenuation_tag,
+                                boundary_tag, mpi_tag)
+        .extent(0);
+  }
+
+  /**
+   * @brief Device view of element indices matching the given element type
+   * and MPI partition classification.
+   * @param medium_tag      Medium to query.
+   * @param property_tag    Material property to query.
+   * @param attenuation_tag Attenuation model to query.
+   * @param boundary_tag    Boundary condition to query.
+   * @param mpi_tag         MPI partition classification (inner or outer).
+   * @return Device-accessible 1-D view of spectral-element indices.
+   */
+  IndexViewType get_elements_on_device(
+      const specfem::element::medium_tag medium_tag,
+      const specfem::element::property_tag property_tag,
+      const specfem::element::attenuation_tag attenuation_tag,
+      const specfem::element::boundary_tag boundary_tag,
+      const specfem::element::mpi_tag mpi_tag) const {
+    return elements_by_mpi_element.get(medium_tag, property_tag,
+                                       attenuation_tag, boundary_tag, mpi_tag);
+  }
+
   // ── Per-element tag accessors ────────────────────────────────────────────
 
   /**
@@ -489,6 +627,18 @@ public:
    */
   specfem::element::attenuation_tag get_attenuation_tag(const int ispec) const {
     return attenuation_tags(ispec);
+  }
+
+  /**
+   * @brief MPI partition tag of element @p ispec in the compute domain.
+   * @param ispec Compute-domain element index.
+   * @return inner if the element is not on an MPI boundary, outer otherwise.
+   *         Returns inner if MPI tags have not been initialized.
+   */
+  specfem::element::mpi_tag get_mpi_tag(const int ispec) const {
+    if (mpi_tags.extent(0) == 0)
+      return specfem::element::mpi_tag::inner;
+    return mpi_tags(ispec);
   }
 };
 
