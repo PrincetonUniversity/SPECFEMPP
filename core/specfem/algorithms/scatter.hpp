@@ -41,14 +41,13 @@ namespace impl {
  * @param acc          Shared scratch acceleration view (non-const, atomic
  * writes)
  */
-template <typename TensorPointViewType, typename WeightsType,
-          typename QuadratureType, typename ChunkAccType>
+template <typename TensorPointViewType, typename T, typename QuadratureType,
+          typename ChunkAccType>
 KOKKOS_FORCEINLINE_FUNCTION void scattered_divergence(
     const TensorPointViewType &F,
     const specfem::point::index<specfem::element::dimension_tag::dim2,
                                 TensorPointViewType::using_simd> &local_index,
-    const WeightsType &weights, const QuadratureType &hprime,
-    ChunkAccType &acc) {
+    const T &w_product, const QuadratureType &hprime, ChunkAccType &acc) {
 
   constexpr int ngll = ChunkAccType::ngll;
   constexpr int components = TensorPointViewType::components;
@@ -60,15 +59,13 @@ KOKKOS_FORCEINLINE_FUNCTION void scattered_divergence(
   for (int ix = 0; ix < ngll; ++ix)
     for (int icomp = 0; icomp < components; ++icomp)
       Kokkos::atomic_add(&acc(ielement, iz0, ix, icomp),
-                         weights(iz0) * F(icomp, 0) * hprime.xi(ix0, ix) *
-                             weights(ix0));
+                         F(icomp, 0) * hprime.xi(ix0, ix) * w_product);
 
   // z-direction: F[c][1] at (iz0,ix0) scatters to acc[iz][ix0] for all iz
   for (int iz = 0; iz < ngll; ++iz)
     for (int icomp = 0; icomp < components; ++icomp)
       Kokkos::atomic_add(&acc(ielement, iz, ix0, icomp),
-                         weights(ix0) * F(icomp, 1) * hprime.gamma(iz0, iz) *
-                             weights(iz0));
+                         w_product * F(icomp, 1) * hprime.gamma(iz0, iz));
 }
 
 /**
@@ -88,14 +85,13 @@ KOKKOS_FORCEINLINE_FUNCTION void scattered_divergence(
  * @tparam QuadratureType       Lagrange derivative accessor (.xi, .eta, .gamma)
  * @tparam ChunkAccType         Chunk acceleration scratch type
  */
-template <typename TensorPointViewType, typename WeightsType,
-          typename QuadratureType, typename ChunkAccType>
+template <typename TensorPointViewType, typename T, typename QuadratureType,
+          typename ChunkAccType>
 KOKKOS_FORCEINLINE_FUNCTION void scattered_divergence(
     const TensorPointViewType &F,
     const specfem::point::index<specfem::element::dimension_tag::dim3,
                                 TensorPointViewType::using_simd> &local_index,
-    const WeightsType &weights, const QuadratureType &hprime,
-    ChunkAccType &acc) {
+    const T &w_product, const QuadratureType &hprime, ChunkAccType &acc) {
 
   constexpr int ngll = ChunkAccType::ngll;
   constexpr int components = TensorPointViewType::components;
@@ -108,22 +104,19 @@ KOKKOS_FORCEINLINE_FUNCTION void scattered_divergence(
   for (int ix = 0; ix < ngll; ++ix)
     for (int icomp = 0; icomp < components; ++icomp)
       Kokkos::atomic_add(&acc(ielement, iz0, iy0, ix, icomp),
-                         weights(iz0) * weights(iy0) * F(icomp, 0) *
-                             hprime.xi(ix0, ix) * weights(ix0));
+                         w_product * F(icomp, 0) * hprime.xi(ix0, ix));
 
   // y-direction: scatters to acc[iz0][iy][ix0] for all iy
   for (int iy = 0; iy < ngll; ++iy)
     for (int icomp = 0; icomp < components; ++icomp)
       Kokkos::atomic_add(&acc(ielement, iz0, iy, ix0, icomp),
-                         weights(iz0) * weights(ix0) * F(icomp, 1) *
-                             hprime.eta(iy0, iy) * weights(iy0));
+                         w_product * F(icomp, 1) * hprime.eta(iy0, iy));
 
   // z-direction: scatters to acc[iz][iy0][ix0] for all iz
   for (int iz = 0; iz < ngll; ++iz)
     for (int icomp = 0; icomp < components; ++icomp)
       Kokkos::atomic_add(&acc(ielement, iz, iy0, ix0, icomp),
-                         weights(iy0) * weights(ix0) * F(icomp, 2) *
-                             hprime.gamma(iz0, iz) * weights(iz0));
+                         w_product * F(icomp, 2) * hprime.gamma(iz0, iz));
 }
 
 } // namespace impl

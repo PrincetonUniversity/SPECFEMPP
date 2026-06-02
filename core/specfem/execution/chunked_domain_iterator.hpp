@@ -1,6 +1,7 @@
 #pragma once
 
 #include "policy.hpp"
+#include "specfem/mesh_entity.hpp"
 #include "specfem/point.hpp"
 #include "void_iterator.hpp"
 #include <Kokkos_Core.hpp>
@@ -11,7 +12,8 @@ namespace chunk_element {
 
 // Forward declaration for PointIndex
 template <specfem::element::dimension_tag DimensionTag, typename SIMD,
-          typename ViewType, typename TeamMemberType>
+          typename ViewType, typename TeamMemberType,
+          typename G = specfem::mesh_entity::Grid<>, int ChunkSize = 1>
 class Index;
 } // namespace chunk_element
 } // namespace specfem
@@ -170,10 +172,21 @@ public:
       : index(ispec, iz, iy, ix), local_index(ielement, iz, iy, ix),
         kokkos_index(kokkos_index) {}
 
+  /// @brief Construct an "end" sentinel index. Used by the chunked iterator
+  /// to signal that the policy index falls in the unused tail of the last
+  /// chunk and the closure must be skipped.
   KOKKOS_INLINE_FUNCTION
-  constexpr bool is_end() const {
-    return false; ///< Returns false as this is not an end iterator
+  static PointIndex end() {
+    PointIndex index;
+    index.is_end_flag = true;
+    return index;
   }
+
+  KOKKOS_INLINE_FUNCTION
+  PointIndex() = default;
+
+  KOKKOS_INLINE_FUNCTION
+  bool is_end() const { return is_end_flag; }
 
 private:
   point_index_type index;       ///< Index of the GLL
@@ -183,6 +196,8 @@ private:
                                 ///< relative to
                                 ///< current chunk
   KokkosIndexType kokkos_index; ///< The Kokkos index
+  bool is_end_flag = false;     ///< True if this index is the tail-skip
+                                ///< sentinel.
 };
 
 /**
@@ -196,7 +211,8 @@ private:
  *
  */
 template <specfem::element::dimension_tag DimensionTag, typename SIMD,
-          typename ViewType, typename TeamMemberType>
+          typename ViewType, typename TeamMemberType,
+          typename G = specfem::mesh_entity::Grid<>, int ChunkSize = 1>
 class ChunkElementIterator
     : public TeamThreadRangePolicy<TeamMemberType,
                                    typename ViewType::value_type> {
@@ -231,19 +247,32 @@ public:
    * @param i The policy index to convert to an index.
    * @return const index_type The index corresponding to the policy index.
    */
+  KOKKOS_INLINE_FUNCTION
+  const index_type operator()(const policy_index_type &i) const {
+    return dispatch(i, G{});
+  }
+
+private:
+  // ---------------------------------------------------------------
+  // Dynamic-grid dispatch overloads (G = Grid<>): divisors are runtime
+  // members of `element_grid`. Bodies are the existing implementation,
+  // selected by SFINAE on (dimension, using_simd).
+  // ---------------------------------------------------------------
   template <bool U = using_simd,
             specfem::element::dimension_tag D = dimension_tag>
   KOKKOS_INLINE_FUNCTION
       typename std::enable_if<U && D == specfem::element::dimension_tag::dim2,
                               const index_type>::type
-      operator()(const policy_index_type &i) const {
+      dispatch(const policy_index_type &i, specfem::mesh_entity::Grid<>) const {
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
-    int ielement = i % num_elements;
+    int ielement = i % ChunkSize;
+    if (ielement >= num_elements)
+      return index_type::end();
     int simd_elements = (simd_size + ielement > indices.extent(0))
                             ? indices.extent(0) - ielement
                             : simd_size;
     int ispec = indices(ielement);
-    int xz = i / num_elements;
+    int xz = i / ChunkSize;
     const int iz = xz / element_grid.ngllx;
     const int ix = xz % element_grid.ngllx;
 #else
@@ -251,6 +280,8 @@ public:
     const int ix = i % element_grid.ngllx;
     const int iz = (i / element_grid.ngllx) % element_grid.ngllz;
     const int ielement = i / ngll_total;
+    if (ielement >= num_elements)
+      return index_type::end();
     int simd_elements = (simd_size + ielement > indices.extent(0))
                             ? indices.extent(0) - ielement
                             : simd_size;
@@ -264,41 +295,41 @@ public:
   KOKKOS_INLINE_FUNCTION
       typename std::enable_if<!U && D == specfem::element::dimension_tag::dim2,
                               const index_type>::type
-      operator()(const policy_index_type &i) const {
+      dispatch(const policy_index_type &i, specfem::mesh_entity::Grid<>) const {
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
-    int ielement = i % num_elements;
+    int ielement = i % ChunkSize;
+    if (ielement >= num_elements)
+      return index_type::end();
     int ispec = indices(ielement);
-    int xz = i / num_elements;
+    int xz = i / ChunkSize;
     const int iz = xz / element_grid.ngllx;
     const int ix = xz % element_grid.ngllx;
 #else
     const int ix = i % element_grid.ngllx;
     const int iz = (i / element_grid.ngllx) % element_grid.ngllz;
     const int ielement = i / (element_grid.ngllz * element_grid.ngllx);
+    if (ielement >= num_elements)
+      return index_type::end();
     int ispec = indices(ielement);
 #endif
     return index_type(ispec, iz, ix, ielement, i);
   }
 
-  /**
-   * @brief Operator to get the index for a given policy index.
-   *
-   * @param i The policy index to convert to an index.
-   * @return const index_type The index corresponding to the policy index.
-   */
   template <bool U = using_simd,
             specfem::element::dimension_tag D = dimension_tag>
   KOKKOS_INLINE_FUNCTION
       typename std::enable_if<U && D == specfem::element::dimension_tag::dim3,
                               const index_type>::type
-      operator()(const policy_index_type &i) const {
+      dispatch(const policy_index_type &i, specfem::mesh_entity::Grid<>) const {
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
-    int ielement = i % num_elements;
+    int ielement = i % ChunkSize;
+    if (ielement >= num_elements)
+      return index_type::end();
     int simd_elements = (simd_size + ielement > indices.extent(0))
                             ? indices.extent(0) - ielement
                             : simd_size;
     int ispec = indices(ielement);
-    int zyx = i / num_elements;
+    int zyx = i / ChunkSize;
     const int iz = zyx / (element_grid.nglly * element_grid.ngllx);
     const int iy = (zyx / element_grid.ngllx) % element_grid.nglly;
     const int ix = zyx % element_grid.ngllx;
@@ -310,6 +341,8 @@ public:
     const int iz =
         (i / (element_grid.ngllx * element_grid.nglly)) % element_grid.ngllz;
     const int ielement = i / ngll_total;
+    if (ielement >= num_elements)
+      return index_type::end();
     int simd_elements = (simd_size + ielement > indices.extent(0))
                             ? indices.extent(0) - ielement
                             : simd_size;
@@ -323,11 +356,13 @@ public:
   KOKKOS_INLINE_FUNCTION
       typename std::enable_if<!U && D == specfem::element::dimension_tag::dim3,
                               const index_type>::type
-      operator()(const policy_index_type &i) const {
+      dispatch(const policy_index_type &i, specfem::mesh_entity::Grid<>) const {
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
-    int ielement = i % num_elements;
+    int ielement = i % ChunkSize;
+    if (ielement >= num_elements)
+      return index_type::end();
     int ispec = indices(ielement);
-    int zyx = i / num_elements;
+    int zyx = i / ChunkSize;
     const int iz = zyx / (element_grid.nglly * element_grid.ngllx);
     const int iy = (zyx / element_grid.ngllx) % element_grid.nglly;
     const int ix = zyx % element_grid.ngllx;
@@ -338,11 +373,93 @@ public:
         (i / (element_grid.ngllx * element_grid.nglly)) % element_grid.ngllz;
     const int ielement =
         i / (element_grid.ngllz * element_grid.nglly * element_grid.ngllx);
+    if (ielement >= num_elements)
+      return index_type::end();
     int ispec = indices(ielement);
 #endif
     return index_type(ispec, iz, iy, ix, ielement, i);
   }
 
+  // ---------------------------------------------------------------
+  // Compile-time-grid dispatch overloads: divisors are non-type template
+  // parameters Nz/Ny/Nx so the compiler is *guaranteed* to substitute the
+  // literal extent into the div/mod expressions.
+  // ---------------------------------------------------------------
+  template <int Nz, int Nx>
+  KOKKOS_INLINE_FUNCTION const index_type dispatch(
+      const policy_index_type &i, specfem::mesh_entity::Grid<Nz, Nx>) const {
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+    int ielement = i % ChunkSize;
+    if (ielement >= num_elements)
+      return index_type::end();
+    int ispec = indices(ielement);
+    int xz = i / ChunkSize;
+    const int iz = xz / Nx;
+    const int ix = xz % Nx;
+#else
+    const int ix = i % Nx;
+    const int iz = (i / Nx) % Nz;
+    const int ielement = i / (Nz * Nx);
+    if (ielement >= num_elements)
+      return index_type::end();
+    int ispec = indices(ielement);
+#endif
+    if constexpr (using_simd) {
+      int simd_elements = (simd_size + ielement > indices.extent(0))
+                              ? indices.extent(0) - ielement
+                              : simd_size;
+      return index_type(ispec, simd_elements, iz, ix, ielement, i);
+    } else {
+      return index_type(ispec, iz, ix, ielement, i);
+    }
+  }
+
+  // Isotropic shortcut: Grid<N> forwards to the canonical multi-arg
+  // overload based on dimension_tag. N stays a non-type template parameter
+  // so the literal substitution propagates through the forward.
+  template <int N>
+  KOKKOS_INLINE_FUNCTION const index_type
+  dispatch(const policy_index_type &i, specfem::mesh_entity::Grid<N>) const {
+    if constexpr (dimension_tag == specfem::element::dimension_tag::dim2) {
+      return dispatch(i, specfem::mesh_entity::Grid<N, N>{});
+    } else {
+      return dispatch(i, specfem::mesh_entity::Grid<N, N, N>{});
+    }
+  }
+
+  template <int Nz, int Ny, int Nx>
+  KOKKOS_INLINE_FUNCTION const index_type
+  dispatch(const policy_index_type &i,
+           specfem::mesh_entity::Grid<Nz, Ny, Nx>) const {
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+    int ielement = i % ChunkSize;
+    if (ielement >= num_elements)
+      return index_type::end();
+    int ispec = indices(ielement);
+    int zyx = i / ChunkSize;
+    const int iz = zyx / (Ny * Nx);
+    const int iy = (zyx / Nx) % Ny;
+    const int ix = zyx % Nx;
+#else
+    const int ix = i % Nx;
+    const int iy = (i / Nx) % Ny;
+    const int iz = (i / (Nx * Ny)) % Nz;
+    const int ielement = i / (Nz * Ny * Nx);
+    if (ielement >= num_elements)
+      return index_type::end();
+    int ispec = indices(ielement);
+#endif
+    if constexpr (using_simd) {
+      int simd_elements = (simd_size + ielement > indices.extent(0))
+                              ? indices.extent(0) - ielement
+                              : simd_size;
+      return index_type(ispec, simd_elements, iz, iy, ix, ielement, i);
+    } else {
+      return index_type(ispec, iz, iy, ix, ielement, i);
+    }
+  }
+
+public:
   /**
    * @brief Constructor for ChunkElementIterator.
    *
@@ -353,18 +470,16 @@ public:
    */
   KOKKOS_INLINE_FUNCTION ChunkElementIterator(
       const TeamMemberType &team, const ViewType indices,
-      const specfem::mesh_entity::element_grid<dimension_tag> &element_grid)
+      const specfem::mesh_entity::element_grid<dimension_tag, G> &element_grid)
       : indices(indices), element_grid(element_grid),
         num_elements((indices.extent(0) / simd_size) +
                      ((indices.extent(0) % simd_size) != 0)),
-        base_type(team, (((indices.extent(0) / simd_size) +
-                          (indices.extent(0) % simd_size != 0)) *
-                         element_grid.size)) {}
+        base_type(team, ChunkSize * element_grid.size) {}
 
 private:
   ViewType indices; ///< View of indices of elements within this chunk
   int num_elements; ///< Number of elements in the chunk, adjusted for SIMD
-  specfem::mesh_entity::element_grid<dimension_tag>
+  specfem::mesh_entity::element_grid<dimension_tag, G>
       element_grid; ///< Element grid
                     ///< information
 };
@@ -383,21 +498,24 @@ private:
  * @tparam TeamMemberType The type of the Kokkos team member.
  */
 template <specfem::element::dimension_tag DimensionTag, typename SIMD,
-          typename ViewType, typename TeamMemberType>
+          typename ViewType, typename TeamMemberType,
+          typename G = specfem::mesh_entity::Grid<>, int ChunkSize = 1>
 class ChunkElementIndex {
 private:
   using index_type =
       specfem::chunk_element::Index<DimensionTag, SIMD, ViewType,
-                                    TeamMemberType>; ///< Underlying index type
-                                                     ///< used to store the
-                                                     ///< indices within the
-                                                     ///< chunk.
+                                    TeamMemberType, G,
+                                    ChunkSize>; ///< Underlying
+                                                ///< index
+                                                ///< type for
+                                                ///< the
+                                                ///< chunk element index.
 
 public:
   using iterator_type =
-      ChunkElementIterator<DimensionTag, SIMD, ViewType,
-                           TeamMemberType>; ///< Iterator type for iterating
-                                            ///< over the elements in the chunk.
+      ChunkElementIterator<DimensionTag, SIMD, ViewType, TeamMemberType, G,
+                           ChunkSize>; ///< Iterator type for iterating
+                                       ///< over the elements in the chunk.
 
   /**
    * @brief Get the policy index that defined this chunk element index.
@@ -438,7 +556,7 @@ public:
   KOKKOS_INLINE_FUNCTION
   ChunkElementIndex(
       const ViewType indices,
-      const specfem::mesh_entity::element_grid<DimensionTag> &element_grid,
+      const specfem::mesh_entity::element_grid<DimensionTag, G> &element_grid,
       const TeamMemberType &kokkos_index)
       : indices(indices), element_grid(element_grid),
         kokkos_index(kokkos_index),
@@ -461,7 +579,7 @@ public:
 
 private:
   ViewType indices; ///< View of indices
-  specfem::mesh_entity::element_grid<DimensionTag>
+  specfem::mesh_entity::element_grid<DimensionTag, G>
       element_grid;            ///< Element grid
                                ///< information
   TeamMemberType kokkos_index; ///< Kokkos index type
@@ -481,7 +599,7 @@ private:
  * @tparam ViewType Type of the view containing indices of elements.
  */
 template <specfem::element::dimension_tag DimensionTag, typename ParallelConfig,
-          typename ViewType>
+          typename ViewType, typename G = specfem::mesh_entity::Grid<>>
 class ChunkedDomainIterator : public TeamPolicy<ParallelConfig> {
 private:
   using base_type = TeamPolicy<ParallelConfig>;       ///< Base policy type
@@ -499,11 +617,12 @@ public:
   using index_type = ChunkElementIndex<
       DimensionTag, typename ParallelConfig::simd,
       decltype(Kokkos::subview(std::declval<ViewType>(),
-                               std::declval<Kokkos::pair<int, int> >())),
-      policy_index_type>; ///< Underlying index type. This index
-                          ///< will be passed to the closure when
-                          ///< calling @ref
-                          ///< specfem::execution::for_each_level
+                               std::declval<Kokkos::pair<int, int>>())),
+      policy_index_type, G,
+      ParallelConfig::chunk_size>; ///< Underlying index type. This index
+                                   ///< will be passed to the closure when
+                                   ///< calling @ref
+                                   ///< specfem::execution::for_each_level
   using execution_space =
       typename base_type::execution_space; ///< Execution space type.
   using base_index_type = PointIndex<
@@ -524,7 +643,7 @@ public:
    */
   ChunkedDomainIterator(
       const ViewType indices,
-      const specfem::mesh_entity::element_grid<DimensionTag> &element_grid)
+      const specfem::mesh_entity::element_grid<DimensionTag, G> &element_grid)
       : indices(indices), element_grid(element_grid),
         base_type(((indices.extent(0) / (chunk_size * simd_size)) +
                    ((indices.extent(0) % (chunk_size * simd_size)) != 0)),
@@ -541,7 +660,7 @@ public:
    */
   ChunkedDomainIterator(
       const ParallelConfig, const ViewType indices,
-      const specfem::mesh_entity::element_grid<DimensionTag> &element_grid)
+      const specfem::mesh_entity::element_grid<DimensionTag, G> &element_grid)
       : ChunkedDomainIterator(indices, element_grid) {}
 
   /**
@@ -584,24 +703,27 @@ public:
 
 protected:
   ViewType indices; ///< View of indices of elements within this iterator
-  specfem::mesh_entity::element_grid<DimensionTag>
+  specfem::mesh_entity::element_grid<DimensionTag, G>
       element_grid; ///< Element grid
                     ///< information
 };
 
 // Template argument deduction guides
 template <typename ParallelConfig, typename ViewType,
-          specfem::element::dimension_tag DimensionTag>
-ChunkedDomainIterator(ParallelConfig, ViewType,
-                      const specfem::mesh_entity::element_grid<DimensionTag> &)
-    -> ChunkedDomainIterator<DimensionTag, ParallelConfig, ViewType>;
+          specfem::element::dimension_tag DimensionTag, typename G>
+ChunkedDomainIterator(
+    ParallelConfig, ViewType,
+    const specfem::mesh_entity::element_grid<DimensionTag, G> &)
+    -> ChunkedDomainIterator<DimensionTag, ParallelConfig, ViewType, G>;
 
-template <typename ViewType, specfem::element::dimension_tag DimensionTag>
-ChunkedDomainIterator(ViewType,
-                      const specfem::mesh_entity::element_grid<DimensionTag> &)
+template <typename ViewType, specfem::element::dimension_tag DimensionTag,
+          typename G>
+ChunkedDomainIterator(
+    ViewType, const specfem::mesh_entity::element_grid<DimensionTag, G> &)
     -> ChunkedDomainIterator<
         DimensionTag,
-        decltype(std::declval<typename ViewType::execution_space>()), ViewType>;
+        decltype(std::declval<typename ViewType::execution_space>()), ViewType,
+        G>;
 
 } // namespace execution
 } // namespace specfem

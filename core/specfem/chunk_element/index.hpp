@@ -51,19 +51,18 @@ namespace chunk_element {
  */
 // clang-format on
 template <specfem::element::dimension_tag DimensionTag, typename SIMD,
-          typename ViewType, typename TeamMemberType>
-class Index
-    : public specfem::execution::ChunkElementIndex<DimensionTag, SIMD, ViewType,
-                                                   TeamMemberType>,
-      public specfem::data_access::Accessor<
-          specfem::datatype::AccessorType::chunk_element,
-          specfem::data_access::DataClassType::index, DimensionTag,
-          SIMD::using_simd> {
+          typename ViewType, typename TeamMemberType, typename G, int ChunkSize>
+class Index : public specfem::execution::ChunkElementIndex<
+                  DimensionTag, SIMD, ViewType, TeamMemberType, G, ChunkSize>,
+              public specfem::data_access::Accessor<
+                  specfem::datatype::AccessorType::chunk_element,
+                  specfem::data_access::DataClassType::index, DimensionTag,
+                  SIMD::using_simd> {
 private:
   /// @brief Base type providing chunk element iteration functionality
   using base_type =
       specfem::execution::ChunkElementIndex<DimensionTag, SIMD, ViewType,
-                                            TeamMemberType>;
+                                            TeamMemberType, G, ChunkSize>;
 
 public:
   /// @brief Iterator type for traversing elements in the chunk

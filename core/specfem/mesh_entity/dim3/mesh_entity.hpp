@@ -211,12 +211,13 @@ template <> struct edge<specfem::element::dimension_tag::dim3> {
 };
 
 template <specfem::element::dimension_tag Dimension> struct element;
-template <specfem::element::dimension_tag Dimension> struct element_grid;
+template <specfem::element::dimension_tag Dimension, typename G>
+struct element_grid;
 
 /**
- * @brief 3D element grid with GLL point configuration.
+ * @brief 3D element grid with GLL point configuration (runtime variant).
  */
-template <> struct element_grid<specfem::element::dimension_tag::dim3> {
+template <> struct element_grid<specfem::element::dimension_tag::dim3, Grid<>> {
 
 public:
   int ngllz;  ///< Number of GLL points in z-direction
@@ -279,11 +280,55 @@ public:
 };
 
 /**
+ * @brief 3D element grid with GLL point configuration (compile-time variant).
+ *
+ * GLL counts are encoded as non-type template parameters so the compiler can
+ * treat dimensions, strides, and `size` as compile-time constants.
+ */
+template <int Nz, int Ny, int Nx>
+struct element_grid<specfem::element::dimension_tag::dim3, Grid<Nz, Ny, Nx>> {
+  static_assert(Nz >= 2 && Ny >= 2 && Nx >= 2,
+                "ngllz, nglly, and ngllx must be at least 2 to define a 3D "
+                "element");
+  static_assert(Nz == Ny && Nz == Nx,
+                "ngllz, nglly, and ngllx must be equal for a cubic 3D element");
+
+  static constexpr int ngllz = Nz;          ///< Number of GLL points in z
+  static constexpr int nglly = Ny;          ///< Number of GLL points in y
+  static constexpr int ngllx = Nx;          ///< Number of GLL points in x
+  static constexpr int orderz = Nz - 1;     ///< Polynomial order in z
+  static constexpr int ordery = Ny - 1;     ///< Polynomial order in y
+  static constexpr int orderx = Nx - 1;     ///< Polynomial order in x
+  static constexpr int size = Nz * Ny * Nx; ///< Total number of GLL points
+
+  KOKKOS_INLINE_FUNCTION
+  element_grid() = default;
+
+  /// @brief Check if element matches specified GLL point count.
+  KOKKOS_INLINE_FUNCTION
+  constexpr bool operator==(const int ngll) const {
+    return ngll == ngllz && ngll == nglly && ngll == ngllx;
+  }
+  /// @brief Check if element does not match specified GLL point count.
+  KOKKOS_INLINE_FUNCTION
+  constexpr bool operator!=(const int ngll) const { return !(*this == ngll); }
+};
+
+/**
+ * @brief 3D element grid with isotropic compile-time GLL count.
+ *
+ * Convenience specialization: `Grid<N>` expands to `Grid<N, N, N>`.
+ */
+template <int N>
+struct element_grid<specfem::element::dimension_tag::dim3, Grid<N>>
+    : element_grid<specfem::element::dimension_tag::dim3, Grid<N, N, N>> {};
+
+/**
  * @brief 3D element with coordinate mapping capabilities.
  */
 template <>
 struct element<specfem::element::dimension_tag::dim3>
-    : element_grid<specfem::element::dimension_tag::dim3> {
+    : element_grid<specfem::element::dimension_tag::dim3, Grid<>> {
 
 public:
   int ngll2d; ///< Points per 2D face
