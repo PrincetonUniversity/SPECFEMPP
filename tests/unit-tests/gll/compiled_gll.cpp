@@ -41,9 +41,8 @@ static_assert(
                        std::ratio<2>, std::ratio<4>, std::ratio<9>>>,
     "derivative of 3x^3 + 2x^2 + 2x + 1 should be 9x^2 + 4x + 2");
 
-template <size_t N>
-constexpr bool array_close(const std::array<double, N> &a,
-                           const std::array<double, N> &b) {
+template <typename T, size_t N, template <typename, size_t> typename Arr1>
+constexpr bool array_close(const Arr1<T, N> &a, const std::array<T, N> &b) {
   for (int i = 0; i < N; i++) {
     if (specfem::quadrature::compiletime::impl::fabs(a[i] - b[i]) > 1e-10) {
       return false;
@@ -99,7 +98,7 @@ template <int NGLL> void verify_against_runtime_on_device() {
       "impl_compute_coupling_test", NGLL, KOKKOS_LAMBDA(const int &iworker) {
         xi_vals(iworker) = compiled_nodes(iworker);
 
-        std::array<type_real, NGLL> L;
+        Kokkos::Array<type_real, NGLL> L;
         CompiledGLL::eval_all(runtime_xi(iworker), L);
         for (int i = 0; i < NGLL; i++) {
           lagrange_evaluations(i, iworker) = L[i];
@@ -112,7 +111,8 @@ template <int NGLL> void verify_against_runtime_on_device() {
   for (int igll = 0; igll < NGLL; igll++) {
     EXPECT_TRUE(
         specfem::utilities::is_close(h_xi_vals(igll), runtime_hxi(igll)))
-        << "NGLL = " << NGLL << ": quadrature point " << igll << "\n"
+        << "node values (NGLL = " << NGLL << "): quadrature point " << igll
+        << "\n"
         << expected_got(runtime_hxi(igll), h_xi_vals(igll));
   }
 
@@ -126,8 +126,9 @@ template <int NGLL> void verify_against_runtime_on_device() {
       EXPECT_TRUE(specfem::utilities::is_close(
           h_lagrange_evaluations(ipoly, igll), expected, (type_real)1e-5,
           (type_real)1e-4))
-          << "NGLL = " << NGLL << ": Lagrange polynomial " << ipoly
-          << ", quadrature point " << igll << "\n"
+          << "Lagrange polynomial evaluations at nodes (NGLL = " << NGLL
+          << "): Lagrange polynomial " << ipoly << ", quadrature point " << igll
+          << "\n"
           << expected_got(expected, h_lagrange_evaluations(ipoly, igll));
     }
   }

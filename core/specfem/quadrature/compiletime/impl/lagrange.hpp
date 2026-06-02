@@ -1,6 +1,6 @@
 #pragma once
 
-#include <array>
+#include <Kokkos_Core.hpp>
 
 namespace specfem::quadrature::compiletime::impl {
 /**
@@ -17,10 +17,10 @@ namespace specfem::quadrature::compiletime::impl {
  * @return Array of @p N polynomial coefficients, lowest-degree first.
  */
 template <typename Number, std::size_t N>
-consteval std::array<Number, N>
-make_lagrange_coeffs_for_basis(const std::array<Number, N> &nodes,
+consteval Kokkos::Array<Number, N>
+make_lagrange_coeffs_for_basis(const Kokkos::Array<Number, N> &nodes,
                                std::size_t basis_idx) {
-  std::array<Number, N> coeff{};
+  Kokkos::Array<Number, N> coeff{};
   coeff[0] = 1.f;
   std::size_t degree = 0;
   Number denom = 1.f;
@@ -49,9 +49,9 @@ make_lagrange_coeffs_for_basis(const std::array<Number, N> &nodes,
  * @return NxN array where row @p i holds the coefficients of @f$ L_i @f$.
  */
 template <typename Number, std::size_t N>
-consteval std::array<std::array<Number, N>, N>
-make_lagrange_coeff_table(const std::array<Number, N> &nodes) {
-  std::array<std::array<Number, N>, N> table{};
+consteval Kokkos::Array<Kokkos::Array<Number, N>, N>
+make_lagrange_coeff_table(const Kokkos::Array<Number, N> &nodes) {
+  Kokkos::Array<Kokkos::Array<Number, N>, N> table{};
   for (std::size_t i = 0; i < N; ++i)
     table[i] = make_lagrange_coeffs_for_basis(nodes, i);
   return table;

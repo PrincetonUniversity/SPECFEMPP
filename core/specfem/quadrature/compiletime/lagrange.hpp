@@ -26,25 +26,24 @@ template <typename NodeInitializer> struct Lagrange {
     static constexpr std::size_t N =
         sizeof(initializer_node_type) / sizeof(numerical_type);
 
-  private:
     static_assert(std::is_same_v<std::decay_t<initializer_node_type>,
-                                 std::array<numerical_type, N>>,
-                  "NodeInitializer() should be type std::array<T,N>");
+                                 Kokkos::Array<numerical_type, N>>,
+                  "NodeInitializer() should be type Kokkos::Array<T,N>");
 
     // bypass NodeInitializer to force compile time
-    static consteval std::array<numerical_type, N> get_nodes() {
+    static consteval Kokkos::Array<numerical_type, N> get_nodes() {
       return NodeInitializer::get_nodes();
     }
-
-  public:
-    static constexpr std::array<numerical_type, N> nodes = get_nodes();
-
     /**
      * @brief Retrieves the node corresponding to the given index at runtime.
      */
+    static constexpr KOKKOS_INLINE_FUNCTION numerical_type
+    node(const int &node_index) {
+      return get_nodes()[node_index];
+    }
     KOKKOS_INLINE_FUNCTION numerical_type
     operator()(const int &node_index) const {
-      return nodes[node_index];
+      return node(node_index);
     }
   };
 
@@ -54,11 +53,17 @@ template <typename NodeInitializer> struct Lagrange {
 public:
   Lagrange(const NodeInitializer &) {}
 
-  static constexpr std::array<numerical_type, N> nodes = Nodes::nodes;
+  static constexpr KOKKOS_INLINE_FUNCTION numerical_type
+  node(const int &node_index) {
+    return Nodes::node(node_index);
+  }
 
-  // consteval means this exists at compile time.
-  static constexpr auto poly_coeffs =
-      impl::make_lagrange_coeff_table(Nodes::nodes);
+  static constexpr KOKKOS_INLINE_FUNCTION numerical_type
+  poly_coeff(const int &polynomial_index, const int &coefficient_index) {
+    // consteval means this exists at compile time.
+    return impl::make_lagrange_coeff_table(
+        Nodes::get_nodes())[polynomial_index][coefficient_index];
+  }
 
   /**
    * @brief Evaluate all five basis polynomials at @p x using Horner's method.
@@ -67,11 +72,11 @@ public:
    */
   template <typename SampleNumberType>
   KOKKOS_INLINE_FUNCTION static void
-  eval_all(SampleNumberType x, std::array<SampleNumberType, N> &L) {
+  eval_all(SampleNumberType x, Kokkos::Array<SampleNumberType, N> &L) {
     for (int i = 0; i < N; ++i) {
-      float v = poly_coeffs[i][N - 1];
+      float v = poly_coeff(i, N - 1);
       for (int k = N - 2; k >= 0; --k)
-        v = v * x + poly_coeffs[i][k];
+        v = v * x + poly_coeff(i, k);
       L[i] = v;
     }
   }
@@ -79,8 +84,8 @@ public:
 
 template <int NGLL, typename numerical_type = type_real>
 struct gll_initializer {
-  static consteval std::array<numerical_type, NGLL> get_nodes() {
-    std::array<numerical_type, NGLL> knots;
+  static consteval Kokkos::Array<numerical_type, NGLL> get_nodes() {
+    Kokkos::Array<numerical_type, NGLL> knots;
     knots[0] = -1;
 
     using Lp =
