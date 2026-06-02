@@ -89,7 +89,7 @@ struct EdgeView {
 
   using memory_space = typename ExecutionSpace::memory_space;
 
-  using HostMirror =
+  using host_mirror_type =
       std::conditional_t<std::is_same<typename ExecutionSpace::memory_space,
                                       Kokkos::HostSpace>::value,
                          EdgeView,
@@ -252,8 +252,8 @@ public:
    * @param boundary Boundary condition type
    * @return Tuple of (self_edges, coupled_edges) for host processing
    */
-  std::tuple<typename EdgeViewType::HostMirror,
-             typename EdgeViewType::HostMirror>
+  std::tuple<typename EdgeViewType::host_mirror_type,
+             typename EdgeViewType::host_mirror_type>
   get_intersections_on_host(
       const specfem::element_connections::type connection,
       const specfem::element_coupling::interface_tag edge,
@@ -310,18 +310,18 @@ private:
 
   specfem::tag_dispatch::Storage<EdgeViewType, IntersectionCombinations>
       self_edges;
-  specfem::tag_dispatch::Storage<EdgeViewType::HostMirror,
+  specfem::tag_dispatch::Storage<EdgeViewType::host_mirror_type,
                                  IntersectionCombinations>
       h_self_edges;
   specfem::tag_dispatch::Storage<EdgeViewType, IntersectionCombinations>
       coupled_edges;
-  specfem::tag_dispatch::Storage<EdgeViewType::HostMirror,
+  specfem::tag_dispatch::Storage<EdgeViewType::host_mirror_type,
                                  IntersectionCombinations>
       h_coupled_edges;
 };
 
 specfem::assembly::element_intersections<
-    specfem::element::dimension_tag::dim2>::EdgeViewType::HostMirror
+    specfem::element::dimension_tag::dim2>::EdgeViewType::host_mirror_type
 edge_view_from_collected_edges(
     const std::string &label,
     const std::vector<

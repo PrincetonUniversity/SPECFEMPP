@@ -1,7 +1,7 @@
 #pragma once
 
 #include "specfem/data_access/accessor.hpp"
-#include "specfem/datatype.hpp"
+#include "specfem/datatype/simd.hpp"
 #include "specfem/enums.hpp"
 
 namespace specfem::data_access {
@@ -97,7 +97,7 @@ template <typename T, typename = void> struct is_point : std::false_type {};
 
 template <typename T>
 struct is_point<T, std::enable_if_t<T::accessor_type ==
-                                    specfem::datatype::AccessorType::point> >
+                                    specfem::datatype::AccessorType::point>>
     : std::true_type {};
 
 } // namespace specfem::data_access

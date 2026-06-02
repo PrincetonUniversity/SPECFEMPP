@@ -81,24 +81,38 @@ TYPED_TEST(PointPropertiesTest, ElasticAnisotropic2D) {
       vmin_val_arr[i] = std::min(vp_val_arr[i], vs_val_arr[i]);
     }
     // Copy to SIMD types
-    rho.copy_from(rho_arr, Kokkos::Experimental::simd_flag_default);
-    c11.copy_from(c11_arr, Kokkos::Experimental::simd_flag_default);
-    c13.copy_from(c13_arr, Kokkos::Experimental::simd_flag_default);
-    c15.copy_from(c15_arr, Kokkos::Experimental::simd_flag_default);
-    c33.copy_from(c33_arr, Kokkos::Experimental::simd_flag_default);
-    c35.copy_from(c35_arr, Kokkos::Experimental::simd_flag_default);
-    c55.copy_from(c55_arr, Kokkos::Experimental::simd_flag_default);
-    c12.copy_from(c12_arr, Kokkos::Experimental::simd_flag_default);
-    c23.copy_from(c23_arr, Kokkos::Experimental::simd_flag_default);
-    c25.copy_from(c25_arr, Kokkos::Experimental::simd_flag_default);
-    rho_vp_val.copy_from(rho_vp_val_arr,
-                         Kokkos::Experimental::simd_flag_default);
-    rho_vs_val.copy_from(rho_vs_val_arr,
-                         Kokkos::Experimental::simd_flag_default);
-    vp_val.copy_from(vp_val_arr, Kokkos::Experimental::simd_flag_default);
-    vs_val.copy_from(vs_val_arr, Kokkos::Experimental::simd_flag_default);
-    vmax_val.copy_from(vmax_val_arr, Kokkos::Experimental::simd_flag_default);
-    vmin_val.copy_from(vmin_val_arr, Kokkos::Experimental::simd_flag_default);
+    rho = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        rho_arr, Kokkos::Experimental::simd_flag_default);
+    c11 = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        c11_arr, Kokkos::Experimental::simd_flag_default);
+    c13 = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        c13_arr, Kokkos::Experimental::simd_flag_default);
+    c15 = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        c15_arr, Kokkos::Experimental::simd_flag_default);
+    c33 = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        c33_arr, Kokkos::Experimental::simd_flag_default);
+    c35 = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        c35_arr, Kokkos::Experimental::simd_flag_default);
+    c55 = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        c55_arr, Kokkos::Experimental::simd_flag_default);
+    c12 = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        c12_arr, Kokkos::Experimental::simd_flag_default);
+    c23 = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        c23_arr, Kokkos::Experimental::simd_flag_default);
+    c25 = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        c25_arr, Kokkos::Experimental::simd_flag_default);
+    rho_vp_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        rho_vp_val_arr, Kokkos::Experimental::simd_flag_default);
+    rho_vs_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        rho_vs_val_arr, Kokkos::Experimental::simd_flag_default);
+    vp_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        vp_val_arr, Kokkos::Experimental::simd_flag_default);
+    vs_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        vs_val_arr, Kokkos::Experimental::simd_flag_default);
+    vmax_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        vmax_val_arr, Kokkos::Experimental::simd_flag_default);
+    vmin_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        vmin_val_arr, Kokkos::Experimental::simd_flag_default);
   } else {
     // Anisotropic material values (e.g., shale-like)
     constexpr type_real rho_val = 2500.0; // kg/m³

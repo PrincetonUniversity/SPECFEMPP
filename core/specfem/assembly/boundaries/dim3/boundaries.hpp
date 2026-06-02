@@ -30,8 +30,8 @@ public:
       specfem::element::dimension_tag::dim3; ///< Dimension tag
   BoundaryViewType boundary_tags; ///< Boundary tags for every element in the
                                   ///< mesh
-  BoundaryViewType::HostMirror h_boundary_tags; ///< Host mirror of boundary
-                                                ///< tags
+  BoundaryViewType::host_mirror_type h_boundary_tags; ///< Host mirror of
+                                                      ///< boundary tags
 
   /**
    * @name Constructors

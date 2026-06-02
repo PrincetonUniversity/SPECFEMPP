@@ -164,21 +164,24 @@ public:
 
   IndexView source_index_mapping; ///< Maps source index to element index
                                   ///< (device)
-  IndexView::HostMirror h_source_index_mapping; ///< Maps source index to
-                                                ///< element index (host)
+  IndexView::host_mirror_type h_source_index_mapping; ///< Maps source index to
+                                                      ///< element index (host)
 
   SourceTimeFunctionView
       source_time_function; ///< Source time function values
                             ///< [timestep][source][component]
                             ///< (device)
-  SourceTimeFunctionView::HostMirror h_source_time_function; ///< Source time
-                                                             ///< function
-                                                             ///< values (host)
+  SourceTimeFunctionView::host_mirror_type h_source_time_function; ///< Source
+                                                                   ///< time
+                                                                   ///< function
+                                                                   ///< values
+                                                                   ///< (host)
 
   SourceArrayView source_array; ///< Lagrange interpolant weights at GLL points
                                 ///< (device)
-  typename SourceArrayView::HostMirror h_source_array; ///< Lagrange interpolant
-                                                       ///< weights (host)
+  typename SourceArrayView::host_mirror_type h_source_array; ///< Lagrange
+                                                             ///< interpolant
+                                                             ///< weights (host)
 
   ///@}
 

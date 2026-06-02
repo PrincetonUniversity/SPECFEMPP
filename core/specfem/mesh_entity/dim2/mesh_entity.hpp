@@ -107,12 +107,13 @@ template <> struct edge<specfem::element::dimension_tag::dim2> {
 };
 
 template <specfem::element::dimension_tag Dimension> struct element;
-template <specfem::element::dimension_tag Dimension> struct element_grid;
+template <specfem::element::dimension_tag Dimension, typename G>
+struct element_grid;
 
 /**
- * @brief 2D element grid with GLL point configuration.
+ * @brief 2D element grid with GLL point configuration (runtime variant).
  */
-template <> struct element_grid<specfem::element::dimension_tag::dim2> {
+template <> struct element_grid<specfem::element::dimension_tag::dim2, Grid<>> {
 
 public:
   int ngllz;  ///< Number of GLL points in z-direction
@@ -168,13 +169,56 @@ public:
 };
 
 /**
+ * @brief 2D element grid with GLL point configuration (compile-time variant).
+ *
+ * GLL counts are encoded as non-type template parameters so the compiler can
+ * treat dimensions, strides, and `size` as compile-time constants.
+ */
+template <int Nz, int Nx>
+struct element_grid<specfem::element::dimension_tag::dim2, Grid<Nz, Nx>> {
+  static_assert(
+      Nz == Nx,
+      "Different number of GLL points for Z and X are not supported.");
+
+  static constexpr int ngllz = Nz;      ///< Number of GLL points in z
+  static constexpr int ngllx = Nx;      ///< Number of GLL points in x
+  static constexpr int ngll = Nz;       ///< Number of GLL points (Nz == Nx)
+  static constexpr int orderz = Nz - 1; ///< Polynomial order in z
+  static constexpr int orderx = Nx - 1; ///< Polynomial order in x
+  static constexpr int size = Nz * Nx;  ///< Total number of GLL points
+
+  KOKKOS_INLINE_FUNCTION
+  element_grid() = default;
+
+  /// @brief Check if element matches specified GLL point count.
+  KOKKOS_INLINE_FUNCTION
+  constexpr bool operator==(const int ngll_in) const {
+    return ngll_in == ngllz && ngll_in == ngllx;
+  }
+  /// @brief Check if element does not match specified GLL point count.
+  KOKKOS_INLINE_FUNCTION
+  constexpr bool operator!=(const int ngll_in) const {
+    return !(*this == ngll_in);
+  }
+};
+
+/**
+ * @brief 2D element grid with isotropic compile-time GLL count.
+ *
+ * Convenience specialization: `Grid<N>` expands to `Grid<N, N>`.
+ */
+template <int N>
+struct element_grid<specfem::element::dimension_tag::dim2, Grid<N>>
+    : element_grid<specfem::element::dimension_tag::dim2, Grid<N, N>> {};
+
+/**
  * @brief 2D element with coordinate mapping capabilities.
  */
 template <>
 struct element<specfem::element::dimension_tag::dim2>
-    : public element_grid<specfem::element::dimension_tag::dim2> {
+    : public element_grid<specfem::element::dimension_tag::dim2, Grid<>> {
 private:
-  using base = element_grid<specfem::element::dimension_tag::dim2>;
+  using base = element_grid<specfem::element::dimension_tag::dim2, Grid<>>;
 
 public:
   /**

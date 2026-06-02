@@ -12,7 +12,8 @@ namespace chunk_element {
 
 // Forward declaration for PointIndex
 template <specfem::element::dimension_tag DimensionTag, typename SIMD,
-          typename ViewType, typename TeamMemberType>
+          typename ViewType, typename TeamMemberType,
+          typename G = specfem::mesh_entity::Grid<>, int ChunkSize = 1>
 class MappedIndex;
 } // namespace chunk_element
 } // namespace specfem
@@ -61,24 +62,36 @@ public:
         kokkos_index(kokkos_index) {}
 
   KOKKOS_INLINE_FUNCTION
-  constexpr bool is_end() const {
-    return false; ///< Returns false as this is not an end iterator
+  MappedPointIndex() = default;
+
+  /// @brief Construct an "end" sentinel index — tail-skip marker for the
+  /// chunked iterator.
+  KOKKOS_INLINE_FUNCTION
+  static MappedPointIndex end() {
+    MappedPointIndex index;
+    index.is_end_flag = true;
+    return index;
   }
+
+  KOKKOS_INLINE_FUNCTION
+  bool is_end() const { return is_end_flag; }
 
 private:
   index_type index;             ///< Point
   point_index_type local_index; ///< Local point index
   KokkosIndexType kokkos_index; ///< Kokkos index type
+  bool is_end_flag = false;     ///< True if this is the tail-skip sentinel.
 };
 
 template <specfem::element::dimension_tag DimensionTag, typename SIMD,
-          typename ViewType, typename TeamMemberType>
+          typename ViewType, typename TeamMemberType,
+          typename G = specfem::mesh_entity::Grid<>, int ChunkSize = 1>
 class MappedChunkElementIterator
-    : public ChunkElementIterator<DimensionTag, SIMD, ViewType,
-                                  TeamMemberType> {
+    : public ChunkElementIterator<DimensionTag, SIMD, ViewType, TeamMemberType,
+                                  G, ChunkSize> {
 private:
-  using base_type =
-      ChunkElementIterator<DimensionTag, SIMD, ViewType, TeamMemberType>;
+  using base_type = ChunkElementIterator<DimensionTag, SIMD, ViewType,
+                                         TeamMemberType, G, ChunkSize>;
   constexpr static auto simd_size = SIMD::size();
   constexpr static auto using_simd = SIMD::using_simd;
 
@@ -93,6 +106,8 @@ public:
   KOKKOS_INLINE_FUNCTION const index_type
   operator()(const policy_index_type &i) const {
     const auto base_index = base_type::operator()(i);
+    if (base_index.is_end())
+      return index_type::end();
     // Calculate the mapped index
     const auto index = base_index.get_index();
     const auto local_index = base_index.get_local_index();
@@ -103,7 +118,7 @@ public:
   MappedChunkElementIterator(
       const TeamMemberType &team, const ViewType indices,
       const ViewType mapping,
-      const specfem::mesh_entity::element_grid<DimensionTag> &element_grid)
+      const specfem::mesh_entity::element_grid<DimensionTag, G> &element_grid)
       : base_type(team, indices, element_grid), mapping(mapping) {}
 
 private:
@@ -111,23 +126,27 @@ private:
 };
 
 template <specfem::element::dimension_tag DimensionTag, typename SIMD,
-          typename ViewType, typename TeamMemberType>
+          typename ViewType, typename TeamMemberType,
+          typename G = specfem::mesh_entity::Grid<>, int ChunkSize = 1>
 class MappedChunkElementIndex
-    : public ChunkElementIndex<DimensionTag, SIMD, ViewType, TeamMemberType> {
+    : public ChunkElementIndex<DimensionTag, SIMD, ViewType, TeamMemberType, G,
+                               ChunkSize> {
 private:
-  using base_type =
-      ChunkElementIndex<DimensionTag, SIMD, ViewType, TeamMemberType>;
+  using base_type = ChunkElementIndex<DimensionTag, SIMD, ViewType,
+                                      TeamMemberType, G, ChunkSize>;
   using index_type =
       specfem::chunk_element::MappedIndex<DimensionTag, SIMD, ViewType,
-                                          TeamMemberType>; ///< Underlying index
-                                                           ///< type used to
-                                                           ///< store the
-                                                           ///< indices within
-                                                           ///< the chunk.
+                                          TeamMemberType, G,
+                                          ChunkSize>; ///< Underlying index
+                                                      ///< type used to
+                                                      ///< store the
+                                                      ///< indices within
+                                                      ///< the chunk.
 
 public:
   using iterator_type =
-      MappedChunkElementIterator<DimensionTag, SIMD, ViewType, TeamMemberType>;
+      MappedChunkElementIterator<DimensionTag, SIMD, ViewType, TeamMemberType,
+                                 G, ChunkSize>;
 
   KOKKOS_INLINE_FUNCTION
   constexpr const index_type get_index() const { return { *this }; }
@@ -138,7 +157,7 @@ public:
   KOKKOS_INLINE_FUNCTION
   MappedChunkElementIndex(
       const ViewType indices, const ViewType mapping,
-      const specfem::mesh_entity::element_grid<DimensionTag> &element_grid,
+      const specfem::mesh_entity::element_grid<DimensionTag, G> &element_grid,
       const TeamMemberType &kokkos_index)
       : base_type(indices, element_grid, kokkos_index), mapping(mapping),
         iterator(kokkos_index, indices, mapping, element_grid) {}
@@ -149,12 +168,12 @@ private:
 };
 
 template <specfem::element::dimension_tag DimensionTag, typename ParallelConfig,
-          typename ViewType>
+          typename ViewType, typename G = specfem::mesh_entity::Grid<>>
 class MappedChunkedDomainIterator
-    : public ChunkedDomainIterator<DimensionTag, ParallelConfig, ViewType> {
+    : public ChunkedDomainIterator<DimensionTag, ParallelConfig, ViewType, G> {
 private:
   using base_type =
-      ChunkedDomainIterator<DimensionTag, ParallelConfig, ViewType>;
+      ChunkedDomainIterator<DimensionTag, ParallelConfig, ViewType, G>;
   constexpr static auto simd_size = ParallelConfig::simd::size();
   constexpr static auto chunk_size = ParallelConfig::chunk_size;
 
@@ -164,8 +183,8 @@ public:
   using index_type = MappedChunkElementIndex<
       ParallelConfig::dimension, typename ParallelConfig::simd,
       decltype(Kokkos::subview(std::declval<ViewType>(),
-                               std::declval<Kokkos::pair<int, int> >())),
-      policy_index_type>;
+                               std::declval<Kokkos::pair<int, int>>())),
+      policy_index_type, G, ParallelConfig::chunk_size>;
   using execution_space =
       typename base_type::execution_space; ///< Execution space type
 
@@ -175,12 +194,12 @@ public:
 
   MappedChunkedDomainIterator(
       const ViewType indices, const ViewType mapping,
-      const specfem::mesh_entity::element_grid<DimensionTag> &element_grid)
+      const specfem::mesh_entity::element_grid<DimensionTag, G> &element_grid)
       : base_type(indices, element_grid), mapping(mapping) {}
 
   MappedChunkedDomainIterator(
       const ParallelConfig, const ViewType indices, const ViewType mapping,
-      const specfem::mesh_entity::element_grid<DimensionTag> &element_grid)
+      const specfem::mesh_entity::element_grid<DimensionTag, G> &element_grid)
       : MappedChunkedDomainIterator(indices, mapping, element_grid) {}
 
   KOKKOS_INLINE_FUNCTION
@@ -210,19 +229,21 @@ private:
 
 // Template argument deduction guides
 template <typename ParallelConfig, typename ViewType,
-          specfem::element::dimension_tag DimensionTag>
+          specfem::element::dimension_tag DimensionTag, typename G>
 MappedChunkedDomainIterator(
     ParallelConfig, ViewType, ViewType,
-    const specfem::mesh_entity::element_grid<DimensionTag> &)
-    -> MappedChunkedDomainIterator<DimensionTag, ParallelConfig, ViewType>;
+    const specfem::mesh_entity::element_grid<DimensionTag, G> &)
+    -> MappedChunkedDomainIterator<DimensionTag, ParallelConfig, ViewType, G>;
 
-template <typename ViewType, specfem::element::dimension_tag DimensionTag>
+template <typename ViewType, specfem::element::dimension_tag DimensionTag,
+          typename G>
 MappedChunkedDomainIterator(
     ViewType, ViewType,
-    const specfem::mesh_entity::element_grid<DimensionTag> &)
+    const specfem::mesh_entity::element_grid<DimensionTag, G> &)
     -> MappedChunkedDomainIterator<
         DimensionTag,
-        decltype(std::declval<typename ViewType::execution_space>()), ViewType>;
+        decltype(std::declval<typename ViewType::execution_space>()), ViewType,
+        G>;
 
 } // namespace execution
 } // namespace specfem

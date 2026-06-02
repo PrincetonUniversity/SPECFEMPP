@@ -84,13 +84,11 @@ public:
    *        Ignored for pressure seismograms (always single 'P' component).
    * @return std::vector<std::string> Filenames, one per component.
    */
-  std::vector<std::string>
-  get_station_filenames(const std::string &network_name,
-                        const std::string &station_name,
-                        const std::string &location_code,
-                        specfem::enums::wavefield seismogram_type,
-                        std::span<const char> elastic_components = {
-                            kDefaultElasticComponents });
+  std::vector<std::string> get_station_filenames(
+      const std::string &network_name, const std::string &station_name,
+      const std::string &location_code,
+      specfem::enums::wavefield seismogram_type,
+      std::span<const char> elastic_components = { kDefaultElasticComponents });
 
   /**
    * @brief Generate output filenames for one station/seismogram-type pair.
@@ -111,10 +109,9 @@ public:
                         specfem::enums::wavefield seismogram_type) {
     if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
       static constexpr std::array<char, 2> kLetters = { 'X', 'Z' };
-      return get_station_filenames(station_info.network_name,
-                                   station_info.station_name, "S2",
-                                   seismogram_type,
-                                   std::span<const char>{ kLetters });
+      return get_station_filenames(
+          station_info.network_name, station_info.station_name, "S2",
+          seismogram_type, std::span<const char>{ kLetters });
     } else if constexpr (DimensionTag ==
                          specfem::element::dimension_tag::dim3) {
       return get_station_filenames(station_info.network_name,
@@ -195,7 +192,7 @@ public:
 private:
   /// Default 3-D elastic component letters.
   static constexpr std::array<char, 3> kDefaultElasticComponents = { 'X', 'Y',
-                                                                      'Z' };
+                                                                     'Z' };
 
   const std::string band_code; ///< SEED band code (L, M, B, H, C, or F)
                                ///< determined from timestep
@@ -209,8 +206,7 @@ private:
    * FDSN conventions for broad-band instruments. The band code indicates the
    * frequency range of the synthetic seismograms.
    *
-   * FDSN Band Code Table (from IRIS SEED Appendix A):
-   * =================================================
+   * **FDSN Band Code Table** (from IRIS SEED Appendix A):
    *
    * | Band | Band Type                      | Sample Rate (Hz)        | Corner Period |
    * |------|--------------------------------|-------------------------|---------------|
