@@ -89,8 +89,8 @@ public:
 
   MediumTagViewType connection_medium_tag; /**< Medium tag of the local element
                                               for each interface (n) */
-  MediumTagViewType::HostMirror h_connection_medium_tag; /**< Host mirror for
-  connection_medium_tag */
+  MediumTagViewType::host_mirror_type h_connection_medium_tag; /**< Host mirror
+  for connection_medium_tag */
 
   communication_group() : n(0), ngll(0) {}
 
