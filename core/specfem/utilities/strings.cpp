@@ -39,6 +39,15 @@ std::string to_lower(const std::string &str) {
   return lower_str;
 }
 
+// Strip leading and trailing whitespace
+std::string trim(const std::string &str) {
+  auto start = str.find_first_not_of(" \t\r\n");
+  if (start == std::string::npos)
+    return "";
+  auto end = str.find_last_not_of(" \t\r\n");
+  return str.substr(start, end - start + 1);
+}
+
 BOOST_PP_SEQ_FOR_EACH(_DEFINE_CONFIG_STRING_FUNCTIONS, _, CONFIG_STRINGS)
 
 } // namespace utilities

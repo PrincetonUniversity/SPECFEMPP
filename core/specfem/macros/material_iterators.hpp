@@ -80,7 +80,6 @@
  */
 #define MEDIUM_TAG_ELASTIC                                                     \
   (6, specfem::element::medium_tag::elastic, elastic, _ENUM_ID_MEDIUM_TAG)
-/** @} */
 
 /**
  * @brief Medium tag for Elastic Spin
