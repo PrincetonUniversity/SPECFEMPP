@@ -121,98 +121,65 @@ namespace impl {
  * @brief Dispatch a `TagValueTuple` of any arity to the appropriate validity
  *        predicate.
  *
- * Selects among `is_valid_medium_combo` (arity 2), `is_valid_property_combo`
- * (arity 3), `is_valid_material_combo` / `is_valid_boundary_combo` (arity 4,
- * distinguished by the type of the 4th slot), `is_valid_full_combo` (arity 5),
- * and extended checks for arity-6 tuples where the 6th slot (wavefield or
- * mpi_tag) never invalidates a combination, and arity-7 tuples where both
- * the mpi and wavefield slots are stripped before validation.
+ * Dispatches by first-slot type:
+ * - `field_type` first slot: wavefield-keyed combos, always valid.
+ * - `dimension_tag` first slot: element combos, dispatched by arity 2–5.
+ *   Trailing non-physical tags (wavefield, mpi) are recursively stripped.
+ * - `element_connections::type` second slot: interface/coupling combos.
  *
  * @tparam Tuple  A `TagValueTuple` specialisation.
  * @param  t      The tuple to validate.
  * @return `true` if the combination is physically meaningful.
  */
 template <typename Tuple> constexpr bool is_valid(const Tuple &t) {
-  using T1 = decltype(t.template get<1>());
-  if constexpr (std::is_same_v<T1, specfem::element::medium_tag>) {
-    // Medium-based element combinations
-    if constexpr (Tuple::arity == 2)
-      return is_valid_medium_combo(t);
-    else if constexpr (Tuple::arity == 3)
-      return is_valid_property_combo(t);
-    else if constexpr (Tuple::arity == 4) {
-      using T3 = decltype(t.template get<3>());
-      if constexpr (std::is_same_v<T3, specfem::element::boundary_tag>)
-        return is_valid_boundary_combo(t);
-      else if constexpr (std::is_same_v<T3, specfem::element::attenuation_tag>)
-        return is_valid_material_combo(t);
+  using T0 = decltype(t.template get<0>());
+
+  // Wavefield-keyed combinations (e.g., wavefield_set * medium_set):
+  // all combos are valid — no physics constraints on wavefield × medium.
+  if constexpr (std::is_same_v<T0, specfem::simulation::field_type>) {
+    return true;
+  } else if constexpr (std::is_same_v<T0, specfem::element::dimension_tag>) {
+    using T1 = decltype(t.template get<1>());
+
+    if constexpr (std::is_same_v<T1, specfem::element::medium_tag>) {
+      // Element combinations: dispatch by arity
+      if constexpr (Tuple::arity == 2)
+        return is_valid_medium_combo(t);
+      else if constexpr (Tuple::arity == 3)
+        return is_valid_property_combo(t);
+      else if constexpr (Tuple::arity == 4) {
+        using T3 = decltype(t.template get<3>());
+        if constexpr (std::is_same_v<T3, specfem::element::boundary_tag>)
+          return is_valid_boundary_combo(t);
+        else if constexpr (std::is_same_v<T3,
+                                          specfem::element::attenuation_tag>)
+          return is_valid_material_combo(t);
+        else
+          return false;
+      } else if constexpr (Tuple::arity >= 5) {
+        // Recursively strip trailing non-physical tags (wavefield, mpi)
+        using TLast = decltype(t.template get<Tuple::arity - 1>());
+        if constexpr (non_physical_tag<TLast>)
+          return is_valid(strip_last(t));
+        else if constexpr (Tuple::arity == 5)
+          return is_valid_full_combo(t);
+        else
+          return false;
+      } else
+        return false;
+
+    } else if constexpr (std::is_same_v<T1,
+                                        specfem::element_connections::type>) {
+      // Interface / coupling combinations
+      if constexpr (Tuple::arity == 3)
+        return is_valid_interface_system(t);
+      else if constexpr (Tuple::arity == 4)
+        return is_valid_edge(t);
+      else if constexpr (Tuple::arity == 5)
+        return is_valid_edge_and_flux_scheme(t);
       else
         return false;
-    } else if constexpr (Tuple::arity == 5)
-
-      // Wavefield slot does not affect validity, so ignore it if present
-      if constexpr (std::is_same_v<decltype(t.template get<4>()),
-                                   specfem::simulation::field_type>) {
-        return is_valid_boundary_combo(
-            specfem::tag_dispatch::impl::TagValueTuple<
-                decltype(t.template get<0>()), decltype(t.template get<1>()),
-                decltype(t.template get<2>()), decltype(t.template get<3>())>{
-                t.template get<0>(), t.template get<1>(), t.template get<2>(),
-                t.template get<3>() });
-      } else {
-        return is_valid_full_combo(t);
-      }
-
-    else if constexpr (Tuple::arity == 6) {
-      using T5 = decltype(t.template get<5>());
-      if constexpr (std::is_same_v<T5, specfem::simulation::field_type>) {
-        // Arity-6: (dim, medium, property, attenuation, boundary, wavefield).
-        // Only the first 5 slots determine validity; wavefield never
-        // invalidates.
-        return is_valid_full_combo(
-            specfem::tag_dispatch::impl::TagValueTuple<
-                decltype(t.template get<0>()), decltype(t.template get<1>()),
-                decltype(t.template get<2>()), decltype(t.template get<3>()),
-                decltype(t.template get<4>())>{
-                t.template get<0>(), t.template get<1>(), t.template get<2>(),
-                t.template get<3>(), t.template get<4>() });
-      } else if constexpr (std::is_same_v<T5, specfem::element::mpi_tag>) {
-        // Arity-6: (dim, medium, property, attenuation, boundary, mpi).
-        // MPI tag never invalidates; strip it and validate the first 5 slots.
-        return is_valid_full_combo(
-            specfem::tag_dispatch::impl::TagValueTuple<
-                decltype(t.template get<0>()), decltype(t.template get<1>()),
-                decltype(t.template get<2>()), decltype(t.template get<3>()),
-                decltype(t.template get<4>())>{
-                t.template get<0>(), t.template get<1>(), t.template get<2>(),
-                t.template get<3>(), t.template get<4>() });
-      } else {
-        return false;
-      }
-    } else if constexpr (Tuple::arity == 7) {
-      // Arity-7: (dim, medium, property, attenuation, boundary, mpi,
-      // wavefield) or (dim, medium, property, attenuation, boundary,
-      // wavefield, mpi). Both mpi and wavefield never invalidate; strip them
-      // and validate the first 5 slots.
-      return is_valid_full_combo(
-          specfem::tag_dispatch::impl::TagValueTuple<
-              decltype(t.template get<0>()), decltype(t.template get<1>()),
-              decltype(t.template get<2>()), decltype(t.template get<3>()),
-              decltype(t.template get<4>())>{
-              t.template get<0>(), t.template get<1>(), t.template get<2>(),
-              t.template get<3>(), t.template get<4>() });
     } else
-      return false;
-
-  } else if constexpr (std::is_same_v<T1, specfem::element_connections::type>) {
-    // Interface / coupling combinations
-    if constexpr (Tuple::arity == 3)
-      return is_valid_interface_system(t);
-    else if constexpr (Tuple::arity == 4)
-      return is_valid_edge(t);
-    else if constexpr (Tuple::arity == 5)
-      return is_valid_edge_and_flux_scheme(t);
-    else
       return false;
   } else
     return false;

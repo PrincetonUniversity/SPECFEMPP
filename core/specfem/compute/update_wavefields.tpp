@@ -11,19 +11,19 @@
 namespace specfem::compute {
 
 /**
- * @brief Updates the wavefield for a given medium
+ * @brief Updates the wavefield for a given medium.
  *
- * This function updates the wavefield for a given medium type. It computes
- * the coupling, source interaction, stiffness interaction, and divides the
- * mass matrix. The function is specialized for different medium types and
- * properties.
+ * Computes coupling, source interaction, stiffness interaction (with MPI
+ * communication-computation overlap), and divides by the mass matrix.
  *
- * For 3D simulations, stiffness computation is split into two phases to
- * overlap MPI communication with computation:
+ * Stiffness is split into two phases to overlap MPI halo exchange:
  * 1. Compute stiffness on outer elements (touching MPI boundaries)
  * 2. Begin async MPI exchange of acceleration
  * 3. Compute stiffness on inner elements (overlaps with MPI transfer)
  * 4. Complete MPI exchange and accumulate received contributions
+ *
+ * For dim2 (no MPI yet), all elements are classified as inner, the outer
+ * pass finds zero elements, and begin/complete_exchange are no-ops.
  *
  * @tparam NGLL Number of GLL points
  * @tparam Tags Compile-time tags (dimension, medium, wavefield, etc.)
@@ -40,79 +40,41 @@ int update_wavefields(
 
   int elements_updated = 0;
 
-  if constexpr (Tags::dimension_tag ==
-                specfem::element::dimension_tag::dim3) {
-    // Phase 1: Stiffness on OUTER elements (touching MPI boundaries)
-    specfem::tag_dispatch::for_each(
-        specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
-            specfem::tag_dispatch::medium_set<Tags::medium_tag>{} *
-            PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
-            ATTENUATION_SET(none, constant_isotropic) *
-            BOUNDARY_SET(none, stacey, acoustic_free_surface,
-                         composite_stacey_dirichlet) *
-            MPI_SET(outer),
-        [&]<typename ElementTags>() {
-          elements_updated +=
-              impl::compute_stiffness_interaction<
-                  NGLL,
-                  specfem::tags::expand<ElementTags, Tags::wavefield_tag>>(
-                  assembly, istep);
-        });
+  // Tag set products for stiffness dispatch
+  constexpr auto base_set =
+      specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
+      specfem::tag_dispatch::medium_set<Tags::medium_tag>{} *
+      PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
+      ATTENUATION_SET(none, constant_isotropic) *
+      BOUNDARY_SET(none, stacey, acoustic_free_surface,
+                   composite_stacey_dirichlet);
+  constexpr auto outer_set = base_set * MPI_SET(outer);
+  constexpr auto inner_set = base_set * MPI_SET(inner);
 
-    // Get a mutable reference to the simulation field for MPI exchange
-    auto &sim_field = [&]() -> auto & {
-      if constexpr (Tags::wavefield_tag ==
-                    specfem::simulation::field_type::forward)
-        return assembly.fields.forward;
-      else if constexpr (Tags::wavefield_tag ==
-                         specfem::simulation::field_type::backward)
-        return assembly.fields.backward;
-      else
-        return assembly.fields.adjoint;
-    }();
+  auto stiffness = [&]<typename ElementTags>() {
+    elements_updated +=
+        impl::compute_stiffness_interaction<
+            NGLL,
+            specfem::tags::expand<ElementTags, Tags::wavefield_tag>>(
+            assembly, istep);
+  };
 
-    // Phase 2: Begin async MPI exchange of acceleration
-    assembly.accel_buffers.template begin_exchange<Tags::wavefield_tag,
-                                                   Tags::medium_tag>(sim_field);
+  // Phase 1: outer elements (touching MPI boundaries)
+  specfem::tag_dispatch::for_each(outer_set, stiffness);
 
-    // Phase 3: Stiffness on INNER elements (overlaps with MPI transfer)
-    specfem::tag_dispatch::for_each(
-        specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
-            specfem::tag_dispatch::medium_set<Tags::medium_tag>{} *
-            PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
-            ATTENUATION_SET(none, constant_isotropic) *
-            BOUNDARY_SET(none, stacey, acoustic_free_surface,
-                         composite_stacey_dirichlet) *
-            MPI_SET(inner),
-        [&]<typename ElementTags>() {
-          elements_updated +=
-              impl::compute_stiffness_interaction<
-                  NGLL,
-                  specfem::tags::expand<ElementTags, Tags::wavefield_tag>>(
-                  assembly, istep);
-        });
+  // Phase 2: begin async MPI exchange of acceleration
+  auto &sim_field =
+      assembly.fields.template get_simulation_field<Tags::wavefield_tag>();
+  assembly.accel_buffers.template begin_exchange<Tags::wavefield_tag,
+                                                  Tags::medium_tag>(sim_field);
 
-    // Phase 4: Complete MPI exchange and accumulate
-    assembly.accel_buffers.template complete_exchange<Tags::wavefield_tag,
-                                                     Tags::medium_tag>(
-        sim_field);
-  } else {
-    // Dim2: no MPI overlap (existing behavior)
-    specfem::tag_dispatch::for_each(
-        specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
-            specfem::tag_dispatch::medium_set<Tags::medium_tag>{} *
-            PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
-            ATTENUATION_SET(none, constant_isotropic) *
-            BOUNDARY_SET(none, stacey, acoustic_free_surface,
-                         composite_stacey_dirichlet),
-        [&]<typename ElementTags>() {
-          elements_updated +=
-              impl::compute_stiffness_interaction<
-                  NGLL,
-                  specfem::tags::expand<ElementTags, Tags::wavefield_tag>>(
-                  assembly, istep);
-        });
-  }
+  // Phase 3: inner elements (overlaps with MPI transfer)
+  specfem::tag_dispatch::for_each(inner_set, stiffness);
+
+  // Phase 4: complete MPI exchange and accumulate
+  assembly.accel_buffers.template complete_exchange<Tags::wavefield_tag,
+                                                    Tags::medium_tag>(
+      sim_field);
 
   impl::divide_mass_matrix<NGLL, Tags>(assembly);
   return elements_updated;

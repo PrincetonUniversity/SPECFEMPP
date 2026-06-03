@@ -2,6 +2,7 @@
 
 #include "specfem/tags.hpp"
 #include <array>
+#include <concepts>
 #include <cstddef>
 #include <string>
 #include <type_traits>
@@ -57,7 +58,7 @@ struct TagValueTupleBase<std::index_sequence<Is...>, TagTypes...>
    * @return    The stored enum value.
    */
   template <std::size_t I> constexpr auto get() const {
-    using T = typename std::tuple_element<I, std::tuple<TagTypes...> >::type;
+    using T = typename std::tuple_element<I, std::tuple<TagTypes...>>::type;
     return static_cast<const TagValueHolder<I, T> &>(*this).v;
   }
 
@@ -82,6 +83,33 @@ template <typename... TagTypes>
 using TagValueTuple =
     impl::TagValueTupleBase<std::make_index_sequence<sizeof...(TagTypes)>,
                             TagTypes...>;
+
+/**
+ * @brief Tags that never affect physical validity of element combinations.
+ *
+ * Non-physical tags represent computational metadata (simulation phase, MPI
+ * partitioning) rather than physics constraints. They are stripped from
+ * tuples before validity checking.
+ */
+template <typename T>
+concept non_physical_tag = std::is_same_v<T, specfem::simulation::field_type> ||
+                           std::is_same_v<T, specfem::element::mpi_tag>;
+
+/**
+ * @brief Build a new TagValueTuple containing all but the last slot.
+ *
+ * Used by `is_valid` to recursively strip trailing non-physical tags.
+ */
+template <typename Tuple, std::size_t... Is>
+constexpr auto strip_last_impl(const Tuple &t, std::index_sequence<Is...>) {
+  return TagValueTuple<decltype(t.template get<Is>())...>{
+    t.template get<Is>()...
+  };
+}
+
+template <typename Tuple> constexpr auto strip_last(const Tuple &t) {
+  return strip_last_impl(t, std::make_index_sequence<Tuple::arity - 1>{});
+}
 
 /** @brief Tuple of (dimension, medium) used by `is_valid_medium_combo`. */
 using MediumTagTuple = TagValueTuple<specfem::element::dimension_tag,

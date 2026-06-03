@@ -270,23 +270,35 @@ public:
   }
 
 private:
-  void build_index_stores() {
-    auto make_initializer = [&](std::string label_prefix, auto... tag_views) {
-      return [&, label_prefix,
-              tag_views...]<typename TagsType>() -> HostIndexViewType {
-        int count = 0;
-        for (int ispec = 0; ispec < nspec; ++ispec)
-          if (TagsType{}.has(tag_views(ispec)...))
-            ++count;
-        HostIndexViewType host_view(label_prefix + TagsType::name(), count);
-        int index = 0;
-        for (int ispec = 0; ispec < nspec; ++ispec)
-          if (TagsType{}.has(tag_views(ispec)...))
-            host_view(index++) = ispec;
-        return host_view;
-      };
+  /**
+   * @brief Create an initializer functor that filters elements by tag views.
+   *
+   * Returns a generic lambda suitable for constructing a HostIndexStorage.
+   * For each TagsType combo, the lambda counts elements whose tags match,
+   * allocates a host view, and populates it with matching element indices.
+   *
+   * @param label_prefix  Label prefix for the Kokkos view allocation.
+   * @param tag_views     Per-element tag views to filter by.
+   */
+  template <typename... TagViewTypes>
+  auto make_initializer(const std::string &label_prefix,
+                        TagViewTypes... tag_views) {
+    return [this, label_prefix,
+            tag_views...]<typename TagsType>() -> HostIndexViewType {
+      int count = 0;
+      for (int ispec = 0; ispec < nspec; ++ispec)
+        if (TagsType{}.has(tag_views(ispec)...))
+          ++count;
+      HostIndexViewType host_view(label_prefix + TagsType::name(), count);
+      int index = 0;
+      for (int ispec = 0; ispec < nspec; ++ispec)
+        if (TagsType{}.has(tag_views(ispec)...))
+          host_view(index++) = ispec;
+      return host_view;
     };
+  }
 
+  void build_index_stores() {
     h_elements_by_medium = { make_initializer("element_by_medium_",
                                               medium_tags) };
     elements_by_medium = specfem::tag_dispatch::create_mirror_storage_and_copy(
@@ -318,22 +330,6 @@ private:
   }
 
   void build_mpi_index_stores() {
-    auto make_initializer = [&](std::string label_prefix, auto... tag_views) {
-      return [&, label_prefix,
-              tag_views...]<typename TagsType>() -> HostIndexViewType {
-        int count = 0;
-        for (int ispec = 0; ispec < nspec; ++ispec)
-          if (TagsType{}.has(tag_views(ispec)...))
-            ++count;
-        HostIndexViewType host_view(label_prefix + TagsType::name(), count);
-        int index = 0;
-        for (int ispec = 0; ispec < nspec; ++ispec)
-          if (TagsType{}.has(tag_views(ispec)...))
-            host_view(index++) = ispec;
-        return host_view;
-      };
-    };
-
     h_elements_by_mpi_element = { make_initializer(
         "element_by_mpi_element_", medium_tags, property_tags, attenuation_tags,
         boundary_tags, mpi_tags) };
