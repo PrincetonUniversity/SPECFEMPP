@@ -19,10 +19,21 @@ namespace specfem::mesh_entity {
 template <specfem::element::dimension_tag DimensionTag> struct edge;
 
 /**
+ * @brief Compile-time grid extent tag for @ref element_grid.
+ *
+ * Empty form `Grid<>` selects the runtime (dynamic) variant; a non-empty form
+ * encodes the GLL counts in the type (e.g. `Grid<5, 5>` for 2D, `Grid<5, 5, 5>`
+ * for 3D), selecting the compile-time variant.
+ */
+template <int... Extents> struct Grid {};
+
+/**
  * @brief Element grid structure with GLL point configuration.
  * @tparam DimensionTag Spatial dimension (2D or 3D)
+ * @tparam G Grid extent tag; defaults to `Grid<>` (runtime variant).
  */
-template <specfem::element::dimension_tag DimensionTag> struct element_grid;
+template <specfem::element::dimension_tag DimensionTag, typename G = Grid<>>
+struct element_grid;
 
 /**
  * @brief Element structure with coordinate mapping capabilities.

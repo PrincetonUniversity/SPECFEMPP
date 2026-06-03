@@ -102,6 +102,11 @@ public:
     return iterator_type{};
   }
 
+  /// @brief Tail-skip flag required by the for_each_level dispatcher.
+  /// Face points have no tail-skip semantics, so this is always false.
+  KOKKOS_INLINE_FUNCTION
+  constexpr bool is_end() const { return false; }
+
 private:
   index_type index;       ///< Local element coordinates of the face point
   index_type local_index; ///< Local element coordinates relative to chunk

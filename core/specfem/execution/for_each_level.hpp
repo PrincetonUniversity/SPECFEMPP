@@ -125,6 +125,8 @@ impl_for_each_level(const Iterator &iterator, const ClosureType &closure) {
       static_cast<const typename Iterator::base_policy_type &>(iterator),
       [&](const typename Iterator::policy_index_type &i) {
         const typename Iterator::index_type index = iterator(i);
+        if (index.is_end())
+          return; // skip tail-chunk positions with no backing element
         closure(index);
       });
 }
@@ -146,6 +148,8 @@ impl_for_each_level(const Iterator &iterator, const ClosureType &closure) {
       static_cast<const typename Iterator::base_policy_type &>(iterator),
       [&](const typename Iterator::policy_index_type &i) {
         const typename Iterator::index_type index = iterator(i);
+        if (index.is_end())
+          return; // skip tail-chunk positions with no backing element
         closure(index);
       });
 }
