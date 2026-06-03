@@ -83,15 +83,16 @@ public:
    */
   bool operator==(const receiver &other) const;
 
-  int get_islice() const { return islice_; }
-  void set_islice(int rank) { islice_ = rank; }
+  int get_partition_index() const { return partition_index_; }
+  void set_partition_index(int rank) { partition_index_ = rank; }
 
 private:
   specfem::point::global_coordinates<dimension_tag>
       global_coordinates;   ///< Global coordinates of the receiver
   std::string network_name; ///< Name of the network where this station lies
   std::string station_name; ///< Name of the station
-  int islice_ = -1; ///< MPI rank that owns this receiver (-1 = not yet located)
+  int partition_index_ =
+      -1; ///< MPI rank that owns this receiver (-1 = not yet located)
 };
 
 } // namespace specfem::receivers

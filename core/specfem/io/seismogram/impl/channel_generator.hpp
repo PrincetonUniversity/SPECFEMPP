@@ -63,14 +63,19 @@ public:
    * @param timestep Simulation time step (dt) in seconds, used to determine
    * band code
    */
-  ChannelGenerator(const type_real timestep)
-      : band_code(compute_band_code(timestep)), timestep(timestep) {}
+  ChannelGenerator(const type_real timestep,
+                   const int nstep_between_samples = 1)
+      : band_code(compute_band_code(timestep)), timestep(timestep),
+        nstep_between_samples_(nstep_between_samples) {}
 
   /**
    * @brief Returns the simulation timestep (dt) in seconds.
    * @return type_real Simulation time step used to construct this generator.
    */
   type_real get_timestep() const { return this->timestep; }
+  type_real get_sample_interval() const {
+    return timestep * nstep_between_samples_;
+  }
 
   /**
    * @brief Generates SEED-compliant seismogram filenames for a given station.
@@ -194,9 +199,10 @@ private:
   static constexpr std::array<char, 3> kDefaultElasticComponents = { 'X', 'Y',
                                                                      'Z' };
 
-  const std::string band_code; ///< SEED band code (L, M, B, H, C, or F)
-                               ///< determined from timestep
-  type_real timestep;          ///< Simulation time step in seconds
+  const std::string band_code;    ///< SEED band code (L, M, B, H, C, or F)
+                                  ///< determined from timestep
+  type_real timestep;             ///< Simulation time step in seconds
+  int nstep_between_samples_ = 1; ///< Timesteps between seismogram samples
 
   // clang-format off
   /**
