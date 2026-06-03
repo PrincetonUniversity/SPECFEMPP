@@ -3,14 +3,7 @@ MESHFEM_BIN = "@CMAKE_BINARY_DIR@/bin/xmeshfem3D"
 
 rule all:
     input:
-        summary_plot="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/seismogram_plot.png",
-        traces=expand(
-            "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/{network_name}.{station_name}.S3.{component}.semp",
-            station_name=["X40"],
-            network_name=["DB"],
-            component=["MXP"],
-        ),
-        # vtk_file="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/vtk/wavefield.vtkhdf",
+        kernel_plot="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/kernels.png",
     localrule: True
 
 
@@ -29,44 +22,96 @@ rule generate_mesh:
             {MESHFEM_BIN} -p {input}
         """
 
-rule run_solver:
+
+rule forward_simulation:
     input:
         database=rules.generate_mesh.output.database,
         stations="@CURRENT_BENCHMARK_BUILD_DIR@/DATA/STATIONS",
-        source="@CURRENT_BENCHMARK_BUILD_DIR@/force.yaml",
-        config="@CURRENT_BENCHMARK_BUILD_DIR@/specfem_config.yaml",
+        source="@CURRENT_BENCHMARK_BUILD_DIR@/forward_source.yaml",
+        config="@CURRENT_BENCHMARK_BUILD_DIR@/forward_config.yaml",
     output:
-        traces=rules.all.input.traces,
-        # vtk_file=rules.all.input.vtk_file,
-        log="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/output.log",
+        seismograms=expand(
+            "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/{network_name}.{station_name}.S3.{component}.semp",
+            station_name=["X40"],
+            network_name=["DB"],
+            component=["MXP"],
+        ),
+        log="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/output_forward.log",
     resources:
         nodes=1,
         tasks=1,
         cpus_per_task=1,
-        runtime=10,
+        runtime=30,
     params:
         KOKKOS_TOOLS_LIBS="",
     shell:
         """
-            # module purge
-            # module load boost/1.73.0
             export KOKKOS_TOOLS_LIBS={params.KOKKOS_TOOLS_LIBS}
             mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results
-            mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/vtk
+            mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/ForwardWavefield
             echo "Hostname: $(hostname)" > {output.log}
             {SPECFEM_BIN} -p {input.config} >> {output.log}
         """
 
 
-rule plot_seismogram:
+rule compute_adjoint_sources:
     input:
-        rules.run_solver.output.traces,
+        seismograms=rules.forward_simulation.output.seismograms,
     output:
-        summary_plot=rules.all.input.summary_plot,
+        adjoint_sources=expand(
+            "@CURRENT_BENCHMARK_BUILD_DIR@/adjoint_sources/{network_name}.{station_name}.S3.{component}.adj",
+            station_name=["X40"],
+            network_name=["DB"],
+            component=["MXP"],
+        ),
     localrule: True
     shell:
         """
-            python @CURRENT_BENCHMARK_BUILD_DIR@/plot_seismograms.py
+            mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/adjoint_sources
+            python @CURRENT_BENCHMARK_BUILD_DIR@/compute_adjoint_sources.py \
+                @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results \
+                @CURRENT_BENCHMARK_BUILD_DIR@/adjoint_sources \
+                DB.X40.S3.MXP.semp
+        """
+
+
+rule adjoint_simulation:
+    input:
+        database=rules.generate_mesh.output.database,
+        forward_log=rules.forward_simulation.output.log,
+        stations="@CURRENT_BENCHMARK_BUILD_DIR@/DATA/STATIONS",
+        source="@CURRENT_BENCHMARK_BUILD_DIR@/adjoint_source.yaml",
+        config="@CURRENT_BENCHMARK_BUILD_DIR@/adjoint_config.yaml",
+        adjoint_sources=rules.compute_adjoint_sources.output.adjoint_sources,
+    output:
+        log="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/output_adjoint.log",
+    resources:
+        nodes=1,
+        tasks=1,
+        cpus_per_task=1,
+        runtime=30,
+    params:
+        KOKKOS_TOOLS_LIBS="",
+    shell:
+        """
+            export KOKKOS_TOOLS_LIBS={params.KOKKOS_TOOLS_LIBS}
+            mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/kernels
+            echo "Hostname: $(hostname)" > {output.log}
+            {SPECFEM_BIN} -p {input.config} >> {output.log}
+        """
+
+
+rule plot_kernels:
+    input:
+        log=rules.adjoint_simulation.output.log,
+    output:
+        kernel_plot=rules.all.input.kernel_plot,
+    localrule: True
+    shell:
+        """
+            python @CURRENT_BENCHMARK_BUILD_DIR@/plot_kernels.py \
+                @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/kernels \
+                {output.kernel_plot}
         """
 
 
@@ -74,5 +119,5 @@ rule clean:
     localrule: True
     shell:
         """
-            rm -rf @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES
+            rm -rf @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES @CURRENT_BENCHMARK_BUILD_DIR@/adjoint_sources
         """
