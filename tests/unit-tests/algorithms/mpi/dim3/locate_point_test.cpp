@@ -87,9 +87,10 @@ TEST_P(LocatePointMPI3DTest, EachPointOwnedByExactlyOneRank) {
   const int npts = static_cast<int>(TEST_POINTS.size());
 
   for (int i = 0; i < npts; ++i) {
-    EXPECT_GE(owners[i], 0) << "Point " << i << " (" << TEST_POINTS[i].x << ", "
-                            << TEST_POINTS[i].y << ", " << TEST_POINTS[i].z
-                            << ") has no owner (islice = " << owners[i] << ")";
+    EXPECT_GE(owners[i], 0)
+        << "Point " << i << " (" << TEST_POINTS[i].x << ", " << TEST_POINTS[i].y
+        << ", " << TEST_POINTS[i].z
+        << ") has no owner (partition_index = " << owners[i] << ")";
     EXPECT_LT(owners[i], nproc) << "Point " << i << " owner rank " << owners[i]
                                 << " exceeds nproc-1 = " << nproc - 1;
   }

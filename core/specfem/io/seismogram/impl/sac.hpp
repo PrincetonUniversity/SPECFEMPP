@@ -1,10 +1,13 @@
 #pragma once
 
 #include "seismogram_writer.hpp"
+#include "specfem/assembly/receivers/impl/receiver_iterator.hpp"
 #include "specfem/datetime.hpp"
 #include "specfem/element/tags.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/enums/wavefield.hpp"
+#include "specfem/logger.hpp"
+#include "specfem/mpi.hpp"
 #include "specfem/setup.hpp"
 #include <algorithm>
 #include <array>
@@ -266,9 +269,9 @@ inline void write_sac_binary(
 // ---------------------------------------------------------------------------
 template <>
 struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
-  template <typename Receivers>
+  template <typename Stations, typename Receivers>
   static void
-  write(Receivers &receivers, ChannelGenerator &gen,
+  write(Stations &&stations, Receivers &receivers, ChannelGenerator &gen,
         const std::string &output_folder,
         std::optional<specfem::datetime::type> starttime = std::nullopt) {
     // SEED location code encodes simulation dimensionality.
@@ -277,7 +280,13 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
             ? "S2"
             : "S3";
 
-    for (auto station_info : receivers.stations()) {
+    const int my_rank = specfem::MPI::get_rank();
+
+    specfem::Logger::debug("Writing SAC seismograms to " + output_folder +
+                           " from rank " + std::to_string(my_rank) + " (" +
+                           std::to_string(stations.size()) + " stations)");
+
+    for (const auto &station_info : stations) {
       for (auto seismogram_type : station_info.get_seismogram_types()) {
 
         const auto base_filenames =
@@ -287,37 +296,25 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
         // SAC IDEP: 6=displacement, 7=velocity, 8=acceleration, −12345=other
         const int32_t idep = get_idep_for_wavefield(seismogram_type);
 
-        // The channel generator is now dimension-aware and returns the same
-        // number of filenames as value.size() for elastic types (2 for dim2,
-        // 3 for dim3) and 1 for pressure.
-        int ncomp = -1;
-        float b = UNDEF_F;
-        // Pre-seed delta from the configured timestep so that single-sample
-        // seismograms still get a valid DELTA header value.
-        float delta = static_cast<float>(gen.get_timestep());
-        std::vector<std::vector<float>> samples;
+        const int ncomp = static_cast<int>(base_filenames.size());
+        const int nsteps = receivers.get_nsteps();
+
+        if (ncomp == 0 || nsteps == 0)
+          continue;
+
+        const float b = static_cast<float>(receivers.get_t0());
+        const float delta = static_cast<float>(gen.get_sample_interval());
+
+        std::vector<std::vector<float>> samples(ncomp);
+        for (auto &s : samples)
+          s.reserve(nsteps);
 
         for (auto [time, value] : receivers.get_seismogram(
                  station_info.station_name, station_info.network_name,
                  seismogram_type)) {
-          const float t = static_cast<float>(time);
-
-          if (ncomp < 0) {
-            // First sample: fix component count and begin time.
-            ncomp = static_cast<int>(base_filenames.size());
-            samples.resize(ncomp);
-            b = t;
-          } else if (samples[0].size() == 1) {
-            // Second sample: derive the effective sample interval from data.
-            delta = t - b;
-          }
-
           for (int i = 0; i < ncomp; ++i)
             samples[i].push_back(static_cast<float>(value[i]));
         }
-
-        if (ncomp <= 0 || samples.empty() || samples[0].empty())
-          continue;
 
         // ── Write one SAC file per component ────────────────────────────────
         for (int icomp = 0; icomp < ncomp; ++icomp) {
@@ -338,6 +335,12 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
                            station_info.network_name, location_code,
                            channel_code, delta, b, orientation, idep,
                            samples[icomp], starttime);
+
+          specfem::Logger::debug(
+              "SAC file for station " + station_info.network_name + "." +
+              station_info.station_name + " (" + channel_code +
+              " component) written to: " + sac_path + " from rank " +
+              std::to_string(my_rank));
         }
       }
     }
