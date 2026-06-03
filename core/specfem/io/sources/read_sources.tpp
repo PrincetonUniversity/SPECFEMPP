@@ -1,6 +1,7 @@
 #pragma once
 
 // Internal Includes
+#include "specfem/datetime.hpp"
 #include "specfem/io.hpp"
 #include "specfem/io/sources/impl/reader.hpp"
 #include "specfem/io/sources/impl/timing.hpp"
@@ -10,6 +11,7 @@
 
 // External Includes
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -30,7 +32,7 @@ specfem::io::sources_impl::wavefield_type_from_simulation(
 
 template <specfem::element::dimension_tag DimensionTag>
 std::tuple<std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>,
-           type_real>
+           type_real, std::optional<specfem::datetime::type>>
 specfem::io::read_sources(
     const std::vector<specfem::enums::source_file_entry> &entries,
     const int nsteps, const type_real user_t0, const type_real dt,
@@ -53,9 +55,15 @@ specfem::io::read_sources(
           entry.file_path, nsteps, dt, source_wavefield_type);
       break;
     case specfem::enums::source_format::CMTSOLUTION:
-      throw std::runtime_error("CMTSOLUTION reader not yet implemented");
+      batch = specfem::io::sources_impl::read<
+          DimensionTag, specfem::enums::source_format::CMTSOLUTION>(
+          entry.file_path, nsteps, dt, source_wavefield_type);
+      break;
     case specfem::enums::source_format::FORCESOLUTION:
-      throw std::runtime_error("FORCESOLUTION reader not yet implemented");
+      batch = specfem::io::sources_impl::read<
+          DimensionTag, specfem::enums::source_format::FORCESOLUTION>(
+          entry.file_path, nsteps, dt, source_wavefield_type);
+      break;
     }
 
     all_sources.insert(all_sources.end(), batch.begin(), batch.end());
@@ -64,9 +72,9 @@ specfem::io::read_sources(
   specfem::io::sources_impl::validate_source_simulation_type<DimensionTag>(
       all_sources, simulation_type);
 
-  type_real t0 =
+  auto [t0, starttime] =
       specfem::io::sources_impl::adjust_source_timing<DimensionTag>(
           all_sources, user_t0);
 
-  return std::make_tuple(all_sources, t0);
+  return std::make_tuple(all_sources, t0, starttime);
 }

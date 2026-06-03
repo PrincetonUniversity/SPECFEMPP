@@ -25,4 +25,5 @@ namespace specfem::algorithms {}
 #include "algorithms/gradient.hpp"
 #include "algorithms/interpolate.hpp"
 #include "algorithms/locate_point.hpp"
+#include "algorithms/scatter.hpp"
 #include "algorithms/transfer.hpp"

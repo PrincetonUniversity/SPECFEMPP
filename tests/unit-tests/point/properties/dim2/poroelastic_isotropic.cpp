@@ -114,32 +114,45 @@ TYPED_TEST(PointPropertiesTest, PoroelasticIsotropic2D) {
       vs_expected_arr[i] = Kokkos::sqrt(mu_G_arr[i] / afactor);
     }
     // Copy to SIMD types
-    phi.copy_from(phi_arr, Kokkos::Experimental::simd_flag_default);
-    rho_s.copy_from(rho_s_arr, Kokkos::Experimental::simd_flag_default);
-    rho_f.copy_from(rho_f_arr, Kokkos::Experimental::simd_flag_default);
-    tortuosity.copy_from(tortuosity_arr,
-                         Kokkos::Experimental::simd_flag_default);
-    mu_G.copy_from(mu_G_arr, Kokkos::Experimental::simd_flag_default);
-    H_Biot.copy_from(H_Biot_arr, Kokkos::Experimental::simd_flag_default);
-    C_Biot.copy_from(C_Biot_arr, Kokkos::Experimental::simd_flag_default);
-    M_Biot.copy_from(M_Biot_arr, Kokkos::Experimental::simd_flag_default);
-    permxx.copy_from(permxx_arr, Kokkos::Experimental::simd_flag_default);
-    permxz.copy_from(permxz_arr, Kokkos::Experimental::simd_flag_default);
-    permzz.copy_from(permzz_arr, Kokkos::Experimental::simd_flag_default);
-    eta_f.copy_from(eta_f_arr, Kokkos::Experimental::simd_flag_default);
+    phi = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        phi_arr, Kokkos::Experimental::simd_flag_default);
+    rho_s = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        rho_s_arr, Kokkos::Experimental::simd_flag_default);
+    rho_f = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        rho_f_arr, Kokkos::Experimental::simd_flag_default);
+    tortuosity = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        tortuosity_arr, Kokkos::Experimental::simd_flag_default);
+    mu_G = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        mu_G_arr, Kokkos::Experimental::simd_flag_default);
+    H_Biot = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        H_Biot_arr, Kokkos::Experimental::simd_flag_default);
+    C_Biot = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        C_Biot_arr, Kokkos::Experimental::simd_flag_default);
+    M_Biot = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        M_Biot_arr, Kokkos::Experimental::simd_flag_default);
+    permxx = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        permxx_arr, Kokkos::Experimental::simd_flag_default);
+    permxz = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        permxz_arr, Kokkos::Experimental::simd_flag_default);
+    permzz = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        permzz_arr, Kokkos::Experimental::simd_flag_default);
+    eta_f = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        eta_f_arr, Kokkos::Experimental::simd_flag_default);
 
-    lambda_G_val.copy_from(lambda_G_arr,
-                           Kokkos::Experimental::simd_flag_default);
-    rho_bar_val.copy_from(rho_bar_arr, Kokkos::Experimental::simd_flag_default);
-    perm_det.copy_from(perm_det_arr, Kokkos::Experimental::simd_flag_default);
-    inverse_permxx_val.copy_from(inverse_permxx_arr,
-                                 Kokkos::Experimental::simd_flag_default);
-    inverse_permxz_val.copy_from(inverse_permxz_arr,
-                                 Kokkos::Experimental::simd_flag_default);
-    inverse_permzz_val.copy_from(inverse_permzz_arr,
-                                 Kokkos::Experimental::simd_flag_default);
-    vs_expected.copy_from(vs_expected_arr,
-                          Kokkos::Experimental::simd_flag_default);
+    lambda_G_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        lambda_G_arr, Kokkos::Experimental::simd_flag_default);
+    rho_bar_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        rho_bar_arr, Kokkos::Experimental::simd_flag_default);
+    perm_det = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        perm_det_arr, Kokkos::Experimental::simd_flag_default);
+    inverse_permxx_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        inverse_permxx_arr, Kokkos::Experimental::simd_flag_default);
+    inverse_permxz_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        inverse_permxz_arr, Kokkos::Experimental::simd_flag_default);
+    inverse_permzz_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        inverse_permzz_arr, Kokkos::Experimental::simd_flag_default);
+    vs_expected = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        vs_expected_arr, Kokkos::Experimental::simd_flag_default);
   } else {
     // Sandstone-like poroelastic material for scalar case
     phi = 0.2;        // porosity

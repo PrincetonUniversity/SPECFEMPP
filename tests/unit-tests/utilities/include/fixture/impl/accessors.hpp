@@ -83,11 +83,12 @@ public:
     return data_(indices...);
   }
 
-  typename DataViewType::HostMirror create_host_mirror() {
+  typename DataViewType::host_mirror_type create_host_mirror() {
     return Kokkos::create_mirror_view(data_);
   }
 
-  void sync_to_device(const typename DataViewType::HostMirror &host_data) {
+  void
+  sync_to_device(const typename DataViewType::host_mirror_type &host_data) {
     Kokkos::deep_copy(data_, host_data);
   }
 };

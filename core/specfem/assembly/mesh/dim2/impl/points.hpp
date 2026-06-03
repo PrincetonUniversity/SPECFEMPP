@@ -51,12 +51,12 @@ public:
                                       ///< quadrature point
   CoordViewType coord;                ///< (x, z) for every distinct
                                       ///< quadrature point
-  IndexMappingViewType::HostMirror h_index_mapping; ///< Global element
-                                                    ///< number for every
-                                                    ///< quadrature point
-  CoordViewType::HostMirror h_coord;                ///< (x, z) for every
-                                                    ///< distinct quadrature
-                                                    ///< point
+  IndexMappingViewType::host_mirror_type h_index_mapping; ///< Global element
+                                                          ///< number for every
+                                                          ///< quadrature point
+  CoordViewType::host_mirror_type h_coord;                ///< (x, z) for every
+                                           ///< distinct quadrature
+                                           ///< point
   type_real xmin, xmax, zmin, zmax; ///< Min and max values of x and z
                                     ///< coordinates
 
@@ -105,8 +105,8 @@ public:
    * @param zmax_in Maximum z coordinate value
    */
   points(const int &nspec, const int &ngllz, const int &ngllx, const int &nglob,
-         IndexMappingViewType::HostMirror h_index_mapping_in,
-         CoordViewType::HostMirror h_coord_in, type_real xmin_in,
+         IndexMappingViewType::host_mirror_type h_index_mapping_in,
+         CoordViewType::host_mirror_type h_coord_in, type_real xmin_in,
          type_real xmax_in, type_real zmin_in, type_real zmax_in)
       : nspec(nspec), ngllz(ngllz), ngllx(ngllx), nglob(nglob),
         index_mapping("specfem::assembly::points::index_mapping", nspec, ngllz,

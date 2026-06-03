@@ -68,6 +68,7 @@ public:
    * @name Constructors
    *
    */
+  ///@{
 
   /**
    * @brief Construct a new ADIOS2 Group object with the given name

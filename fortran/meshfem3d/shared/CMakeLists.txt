@@ -22,6 +22,7 @@ endif()
 
 set(MESHFEM3D_SHARED_MODULE
   ${MESHFEM3D_MPI_MODULE}
+  adjacency_graph.f90
   assemble_MPI_scalar.f90
   check_mesh_resolution.f90
   count_number_of_sources.f90

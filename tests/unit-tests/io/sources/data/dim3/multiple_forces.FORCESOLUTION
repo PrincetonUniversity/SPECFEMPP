@@ -1,0 +1,22 @@
+FORCE  001
+time shift:     5.0
+hdurorf0:       10.0
+x:              2500.0
+y:              2500.0
+z:              2500.0
+source time function:            1
+factor force source:             0.d0
+component dir vect source X:     1.d0
+component dir vect source Y:     0.d0
+component dir vect source Z_UP:  0.d0
+FORCE  002
+time shift:     2.0
+hdurorf0:       5.0
+x:              4000.0
+y:              5000.0
+z:              3000.0
+source time function:            0
+factor force source:             1.0e10
+component dir vect source X:     0.d0
+component dir vect source Y:     1.d0
+component dir vect source Z_UP:  0.d0

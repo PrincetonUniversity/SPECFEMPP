@@ -72,12 +72,13 @@ std::ostream &operator<<(std::ostream &os,
 // ------------------------------------------------------------------------
 
 template <typename ParallelConfig>
-typename Kokkos::View<type_real *, Kokkos::DefaultExecutionSpace>::HostMirror
+typename Kokkos::View<type_real *,
+                      Kokkos::DefaultExecutionSpace>::host_mirror_type
 execute_range_policy(const int nglob) {
   specfem::execution::RangeIterator iterator(ParallelConfig(), nglob);
   using TestViewType = Kokkos::View<type_real *, Kokkos::DefaultExecutionSpace>;
   TestViewType test_view("test_view", nglob);
-  TestViewType::HostMirror test_view_host =
+  TestViewType::host_mirror_type test_view_host =
       Kokkos::create_mirror_view(test_view);
 
   constexpr bool using_simd = ParallelConfig::simd::using_simd;
@@ -104,13 +105,12 @@ execute_range_policy(const int nglob) {
           using datatype = typename ParallelConfig::simd::datatype;
           using mask_type = typename ParallelConfig::simd::mask_type;
           mask_type mask([&](std::size_t lane) { return index.mask(lane); });
-          datatype data(0);
-          Kokkos::Experimental::where(mask, data)
-              .copy_from(&l_test_view(index.iglob), tag_type());
+          datatype data = Kokkos::Experimental::simd_partial_load(
+              &l_test_view(index.iglob), mask, tag_type());
 
           data = data + datatype(1);
-          Kokkos::Experimental::where(mask, data)
-              .copy_to(&l_test_view(index.iglob), tag_type());
+          Kokkos::Experimental::simd_partial_store(
+              data, &l_test_view(index.iglob), mask, tag_type());
         } else {
           l_test_view(index.iglob) += 1;
         }
@@ -124,7 +124,7 @@ execute_range_policy(const int nglob) {
 
 template <typename ParallelConfig>
 typename Kokkos::View<type_real ***, Kokkos::LayoutLeft,
-                      Kokkos::DefaultExecutionSpace>::HostMirror
+                      Kokkos::DefaultExecutionSpace>::host_mirror_type
 execute_chunk_element_policy(const int nspec, const int ngllz,
                              const int ngllx) {
 
@@ -153,7 +153,7 @@ execute_chunk_element_policy(const int nspec, const int ngllz,
                                     Kokkos::DefaultExecutionSpace>;
 
   TestViewType test_view("test_view", nspec, ngllz, ngllx);
-  TestViewType::HostMirror test_view_host =
+  TestViewType::host_mirror_type test_view_host =
       Kokkos::create_mirror_view(test_view);
 
   // initialize test_view
@@ -186,13 +186,12 @@ execute_chunk_element_policy(const int nspec, const int ngllz,
               [&](std::size_t lane) { return point_index.mask(lane); });
           using tag_type = typename ParallelConfig::simd::tag_type;
           using datatype = typename ParallelConfig::simd::datatype;
-          datatype data(0);
-          Kokkos::Experimental::where(mask, data)
-              .copy_from(&l_test_view(ispec, iz, ix), tag_type());
+          datatype data = Kokkos::Experimental::simd_partial_load(
+              &l_test_view(ispec, iz, ix), mask, tag_type());
 
           data = data + datatype(1);
-          Kokkos::Experimental::where(mask, data)
-              .copy_to(&l_test_view(ispec, iz, ix), tag_type());
+          Kokkos::Experimental::simd_partial_store(
+              data, &l_test_view(ispec, iz, ix), mask, tag_type());
         } else {
           l_test_view(ispec, iz, ix) += 1;
         }
@@ -206,7 +205,7 @@ execute_chunk_element_policy(const int nspec, const int ngllz,
 
 template <typename ParallelConfig>
 typename Kokkos::View<type_real ****, Kokkos::LayoutLeft,
-                      Kokkos::DefaultExecutionSpace>::HostMirror
+                      Kokkos::DefaultExecutionSpace>::host_mirror_type
 execute_chunk_element_policy_3d(const int nspec, const int ngllz,
                                 const int nglly, const int ngllx) {
 
@@ -234,7 +233,7 @@ execute_chunk_element_policy_3d(const int nspec, const int ngllz,
                                     Kokkos::DefaultExecutionSpace>;
 
   TestViewType test_view("test_view", nspec, ngllz, nglly, ngllx);
-  TestViewType::HostMirror test_view_host =
+  TestViewType::host_mirror_type test_view_host =
       Kokkos::create_mirror_view(test_view);
 
   // initialize test_view
@@ -268,13 +267,12 @@ execute_chunk_element_policy_3d(const int nspec, const int ngllz,
               [&](std::size_t lane) { return point_index.mask(lane); });
           using tag_type = typename ParallelConfig::simd::tag_type;
           using datatype = typename ParallelConfig::simd::datatype;
-          datatype data(0);
-          Kokkos::Experimental::where(mask, data)
-              .copy_from(&l_test_view(ispec, iz, iy, ix), tag_type());
+          datatype data = Kokkos::Experimental::simd_partial_load(
+              &l_test_view(ispec, iz, iy, ix), mask, tag_type());
 
           data = data + datatype(1);
-          Kokkos::Experimental::where(mask, data)
-              .copy_to(&l_test_view(ispec, iz, iy, ix), tag_type());
+          Kokkos::Experimental::simd_partial_store(
+              data, &l_test_view(ispec, iz, iy, ix), mask, tag_type());
         } else {
           l_test_view(ispec, iz, iy, ix) += 1;
         }

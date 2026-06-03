@@ -88,18 +88,28 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic3D) {
     }
 
     // Copy to SIMD types
-    rho.copy_from(rho_arr, Kokkos::Experimental::simd_flag_default);
-    kappa.copy_from(kappa_arr, Kokkos::Experimental::simd_flag_default);
-    mu.copy_from(mu_arr, Kokkos::Experimental::simd_flag_default);
-    lambda_val.copy_from(lambda_arr, Kokkos::Experimental::simd_flag_default);
-    lambdaplus2mu_val.copy_from(lambdaplus2mu_arr,
-                                Kokkos::Experimental::simd_flag_default);
-    rho_vp_val.copy_from(rho_vp_arr, Kokkos::Experimental::simd_flag_default);
-    rho_vs_val.copy_from(rho_vs_arr, Kokkos::Experimental::simd_flag_default);
-    vp_val.copy_from(vp_arr, Kokkos::Experimental::simd_flag_default);
-    vs_val.copy_from(vs_arr, Kokkos::Experimental::simd_flag_default);
-    vmax_val.copy_from(vmax_arr, Kokkos::Experimental::simd_flag_default);
-    vmin_val.copy_from(vmin_arr, Kokkos::Experimental::simd_flag_default);
+    rho = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        rho_arr, Kokkos::Experimental::simd_flag_default);
+    kappa = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        kappa_arr, Kokkos::Experimental::simd_flag_default);
+    mu = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        mu_arr, Kokkos::Experimental::simd_flag_default);
+    lambda_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        lambda_arr, Kokkos::Experimental::simd_flag_default);
+    lambdaplus2mu_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        lambdaplus2mu_arr, Kokkos::Experimental::simd_flag_default);
+    rho_vp_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        rho_vp_arr, Kokkos::Experimental::simd_flag_default);
+    rho_vs_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        rho_vs_arr, Kokkos::Experimental::simd_flag_default);
+    vp_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        vp_arr, Kokkos::Experimental::simd_flag_default);
+    vs_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        vs_arr, Kokkos::Experimental::simd_flag_default);
+    vmax_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        vmax_arr, Kokkos::Experimental::simd_flag_default);
+    vmin_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        vmin_arr, Kokkos::Experimental::simd_flag_default);
   } else {
     // Granite-like material for scalar test
     constexpr type_real rho_val = 2700.0;           // kg/m³
