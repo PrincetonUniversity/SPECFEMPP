@@ -4,16 +4,31 @@
 #include "specfem/element.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
+#include "specfem/macros/tag_dispatch.hpp"
 #include "specfem/mesh_entity.hpp"
 #include "specfem/point.hpp"
+#include "specfem/tags.hpp"
 #include "stiffness_kernels.hpp"
 #include <Kokkos_Core.hpp>
 #include <limits>
 
 namespace specfem::compute::impl {
 
+/**
+ * @brief Compute stiffness interaction for a single element-tag combination.
+ *
+ * Dispatches the appropriate stiffness kernel (gather or scatter) for all
+ * elements matching the compile-time tag combination in Tags.
+ *
+ * @tparam NGLL Number of GLL points per element edge
+ * @tparam Tags Compile-time tags (dimension, medium, property, attenuation,
+ *              boundary, wavefield, and optionally mpi)
+ * @param assembly The assembly object containing the mesh
+ * @param istep Current time step
+ * @return Number of elements processed
+ */
 template <int NGLL, typename Tags>
-int compute_stiffness_interaction(
+int compute_stiffness_interaction_core(
     const specfem::assembly::assembly<Tags::dimension_tag> &assembly,
     const int &istep) {
 
@@ -94,6 +109,70 @@ int compute_stiffness_interaction(
   Kokkos::Profiling::popRegion();
 
   return nelements;
+}
+
+/**
+ * @brief Compute stiffness interaction with MPI communication-computation
+ * overlap.
+ *
+ * Orchestrates the four-phase stiffness computation that overlaps MPI halo
+ * exchange with inner-element work:
+ * 1. Compute stiffness on outer elements (touching MPI boundaries)
+ * 2. Begin async MPI exchange of acceleration
+ * 3. Compute stiffness on inner elements (overlaps with MPI transfer)
+ * 4. Complete MPI exchange and accumulate received contributions
+ *
+ * For dim2 (no MPI yet), all elements are classified as inner, the outer
+ * pass finds zero elements, and begin/complete_exchange are no-ops.
+ *
+ * @tparam NGLL Number of GLL points per element edge
+ * @tparam Tags Compile-time tags (dimension, medium, wavefield)
+ * @param assembly The assembly object (mutated by MPI exchange)
+ * @param istep Current time step
+ * @return Number of elements updated across all tag combinations
+ */
+template <int NGLL, typename Tags>
+int compute_stiffness_interaction(
+    specfem::assembly::assembly<Tags::dimension_tag> &assembly,
+    const int istep) {
+
+  int elements_updated = 0;
+
+  constexpr auto base_set =
+      specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
+      specfem::tag_dispatch::medium_set<Tags::medium_tag>{} *
+      PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
+      ATTENUATION_SET(none, constant_isotropic) *
+      BOUNDARY_SET(none, stacey, acoustic_free_surface,
+                   composite_stacey_dirichlet);
+  constexpr auto outer_set = base_set * MPI_SET(outer);
+  constexpr auto inner_set = base_set * MPI_SET(inner);
+
+  auto compute_stiffness = [&]<typename ElementTags>() {
+    elements_updated += compute_stiffness_interaction_core<
+        NGLL, specfem::tags::expand<ElementTags, Tags::wavefield_tag>>(assembly,
+                                                                       istep);
+  };
+
+  // Phase 1: outer elements (touching MPI boundaries)
+  specfem::tag_dispatch::for_each(outer_set, compute_stiffness);
+
+  // Phase 2: begin async MPI exchange of acceleration
+  auto &sim_field =
+      assembly.fields.template get_simulation_field<Tags::wavefield_tag>();
+  assembly.accel_buffers
+      .template begin_exchange<Tags::wavefield_tag, Tags::medium_tag>(
+          sim_field);
+
+  // Phase 3: inner elements (overlaps with MPI transfer)
+  specfem::tag_dispatch::for_each(inner_set, compute_stiffness);
+
+  // Phase 4: complete MPI exchange and accumulate
+  assembly.accel_buffers
+      .template complete_exchange<Tags::wavefield_tag, Tags::medium_tag>(
+          sim_field);
+
+  return elements_updated;
 }
 
 } // namespace specfem::compute::impl
