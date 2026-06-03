@@ -3,7 +3,7 @@
 
 #include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/mesh.hpp"
-#include "specfem/data_access.hpp"
+#include "specfem/assembly/nonconforming_interfaces/fwd.hpp"
 #include "specfem/element_coupling/flux_scheme_configuration.hpp"
 #include "specfem/element_coupling/tags.hpp"
 #include "specfem/enums.hpp"
@@ -169,8 +169,7 @@ private:
                   "impl_load requires edge_index type for IndexType");
 
     constexpr int nquad_intersection =
-        std::tuple_element_t<0,
-                             std::tuple<PointTypes...> >::n_quad_intersection;
+        std::tuple_element_t<0, std::tuple<PointTypes...>>::n_quad_intersection;
 
     const auto assign = [&](auto &point, auto &iquad, auto &index) {
       using PointType = std::decay_t<decltype(point)>;
@@ -204,7 +203,7 @@ private:
                   "impl_load requires chunk_edge type for IndexType");
 
     constexpr int nquad_intersection =
-        std::tuple_element_t<0, std::tuple<EdgeTypes...> >::n_quad_intersection;
+        std::tuple_element_t<0, std::tuple<EdgeTypes...>>::n_quad_intersection;
 
     const auto factor_subview = [&]() {
       if constexpr (on_device) {

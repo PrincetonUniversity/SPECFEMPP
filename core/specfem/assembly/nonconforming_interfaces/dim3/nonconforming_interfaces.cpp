@@ -1,6 +1,5 @@
 
-#include "specfem/assembly/nonconforming_interfaces.hpp"
-#include "impl/interface_container.tpp"
+#include "nonconforming_interfaces.hpp"
 #include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/enums.hpp"

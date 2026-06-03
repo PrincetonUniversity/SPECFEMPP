@@ -3,6 +3,7 @@
 #include "specfem/assembly/nonconforming_interfaces/fwd.hpp"
 
 #include "specfem/assembly/element_intersections.hpp"
+#include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access/container.hpp"
 #include "specfem/element/dimension.hpp"
@@ -103,6 +104,7 @@ public:
       const int &ngllz, const int &nglly, const int &ngllx,
       const specfem::assembly::element_intersections<
           specfem::element::dimension_tag::dim3> &element_intersections,
+      const specfem::assembly::jacobian_matrix<dimension_tag> &jacobian_matrix,
       const specfem::assembly::mesh<dimension_tag> &mesh,
       const specfem::element_coupling::flux_scheme_configuration
           &flux_scheme_config = {});

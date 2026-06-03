@@ -24,7 +24,7 @@ struct nonconforming_interfaces;
 template <>
 class nonconforming_interfaces<specfem::element::dimension_tag::dim3>
     : public specfem::data_access::Container<
-          specfem::data_access::ContainerType::edge,
+          specfem::data_access::ContainerType::face,
           specfem::data_access::DataClassType::nonconforming_interface,
           specfem::element::dimension_tag::dim3> {
 public:
