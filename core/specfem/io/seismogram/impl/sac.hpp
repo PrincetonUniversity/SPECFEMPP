@@ -2,6 +2,7 @@
 
 #include "seismogram_writer.hpp"
 #include "specfem/assembly/receivers/impl/receiver_iterator.hpp"
+#include "specfem/datetime.hpp"
 #include "specfem/element/tags.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/enums/wavefield.hpp"
@@ -10,6 +11,7 @@
 #include "specfem/setup.hpp"
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <cstring>
 #include <fstream>
 #include <optional>
@@ -135,13 +137,12 @@ inline void fill_text_field(char *dst, std::string_view sv, int len) noexcept {
  * @param samples       Single-component seismogram samples.
  */
 // ---------------------------------------------------------------------------
-inline void write_sac_binary(const std::string &filepath,
-                             std::string_view station_name,
-                             std::string_view network_name,
-                             std::string_view location_code,
-                             std::string_view channel_code, float delta,
-                             float b, Orientation orientation, int32_t idep,
-                             const std::vector<float> &samples) {
+inline void write_sac_binary(
+    const std::string &filepath, std::string_view station_name,
+    std::string_view network_name, std::string_view location_code,
+    std::string_view channel_code, float delta, float b,
+    Orientation orientation, int32_t idep, const std::vector<float> &samples,
+    std::optional<specfem::datetime::type> reference_time = std::nullopt) {
   const int32_t npts = static_cast<int32_t>(samples.size());
 
   // ── Compute statistics ───────────────────────────────────────────────────
@@ -181,12 +182,34 @@ inline void write_sac_binary(const std::string &filepath,
   //  35 LEVEN    36 LPSPOL 37 LOVROK 38 LCALDA
   int32_t ihdr[40];
   std::fill_n(ihdr, 40, UNDEF_I);
-  ihdr[0] = 1970;  // NZYEAR  (Unix epoch; no real event time in synthetics)
-  ihdr[1] = 1;     // NZJDAY
-  ihdr[2] = 0;     // NZHOUR
-  ihdr[3] = 0;     // NZMIN
-  ihdr[4] = 0;     // NZSEC
-  ihdr[5] = 0;     // NZMSEC
+  if (reference_time) {
+    auto dp = std::chrono::floor<std::chrono::days>(
+        *reference_time); // Date part (00:00:00 of the day)
+    std::chrono::year_month_day ymd{ dp };
+    auto jan1 = std::chrono::sys_days{ ymd.year() / std::chrono::January / 1 };
+    int jday =
+        static_cast<int>((dp - jan1).count()) + 1; // Julian day (1-based)
+    auto time_of_day = *reference_time - dp;       // Time since 00:00:00
+    auto h = std::chrono::duration_cast<std::chrono::hours>(time_of_day);
+    auto m = std::chrono::duration_cast<std::chrono::minutes>(time_of_day - h);
+    auto s =
+        std::chrono::duration_cast<std::chrono::seconds>(time_of_day - h - m);
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        time_of_day - h - m - s);
+    ihdr[0] = static_cast<int32_t>(static_cast<int>(ymd.year())); // NZYEAR
+    ihdr[1] = static_cast<int32_t>(jday);                         // NZJDAY
+    ihdr[2] = static_cast<int32_t>(h.count());                    // NZHOUR
+    ihdr[3] = static_cast<int32_t>(m.count());                    // NZMIN
+    ihdr[4] = static_cast<int32_t>(s.count());                    // NZSEC
+    ihdr[5] = static_cast<int32_t>(ms.count());                   // NZMSEC
+  } else {
+    ihdr[0] = 1970; // NZYEAR  (Unix epoch; no real event time in synthetics)
+    ihdr[1] = 1;    // NZJDAY
+    ihdr[2] = 0;    // NZHOUR
+    ihdr[3] = 0;    // NZMIN
+    ihdr[4] = 0;    // NZSEC
+    ihdr[5] = 0;    // NZMSEC
+  }
   ihdr[6] = 6;     // NVHDR  (current SAC header version)
   ihdr[9] = npts;  // NPTS   [REQUIRED]
   ihdr[15] = 1;    // IFTYPE = ITIME (time-series)
@@ -247,8 +270,10 @@ inline void write_sac_binary(const std::string &filepath,
 template <>
 struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
   template <typename Stations, typename Receivers>
-  static void write(Stations &&stations, Receivers &receivers,
-                    ChannelGenerator &gen, const std::string &output_folder) {
+  static void
+  write(Stations &&stations, Receivers &receivers, ChannelGenerator &gen,
+        const std::string &output_folder,
+        std::optional<specfem::datetime::type> starttime = std::nullopt) {
     // SEED location code encodes simulation dimensionality.
     constexpr std::string_view location_code =
         (Receivers::dimension_tag == specfem::element::dimension_tag::dim2)
@@ -309,7 +334,7 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::sac> {
           write_sac_binary(sac_path, station_info.station_name,
                            station_info.network_name, location_code,
                            channel_code, delta, b, orientation, idep,
-                           samples[icomp]);
+                           samples[icomp], starttime);
 
           specfem::Logger::debug(
               "SAC file for station " + station_info.network_name + "." +

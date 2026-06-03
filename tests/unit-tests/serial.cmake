@@ -476,6 +476,7 @@ add_executable(
   io_tests
   io/sources/test_read_sources_file.cpp
   io/sources/test_read_sources_yaml.cpp
+  io/sources/test_read_sources_datetime.cpp
   io/sources/test_source_solutions.cpp
   io/receivers/test_receiver_solutions.cpp
   io/receivers/test_read_stations_file.cpp
@@ -489,6 +490,19 @@ target_link_libraries(
   yaml-cpp
   specfem::enums
   ${BOOST_LIBS}
+)
+
+add_executable(
+  timing_tests
+  io/sources/timing.cpp
+)
+
+target_link_libraries(
+  timing_tests
+  specfem::io
+  specfem_environment
+  specfem::enums
+  specfem::datetime
 )
 
 add_executable(
@@ -861,6 +875,17 @@ add_custom_command(TARGET displacement_newmark_3d_tests POST_BUILD
      COMMENT "Moving displacement_newmark_3d_tests data files to ${TEST_OUTPUT_DIR}/displacement_tests/Newmark/dim3"
 )
 
+add_executable(
+  coordinate_systems_tests
+  coordinate_systems/utm_tests.cpp
+)
+
+target_link_libraries(
+  coordinate_systems_tests
+  specfem::coordinate_systems
+  gtest_main
+)
+
 # Register serial tests for discovery
 set(SERIAL_TEST_TARGETS
   serial_mpi_tests
@@ -880,6 +905,7 @@ set(SERIAL_TEST_TARGETS
   interpolate_function
   io_framework_tests
   io_tests
+  timing_tests
   seismogram_writer_tests
   is_close_tests
   logspace_tests
@@ -907,6 +933,7 @@ set(SERIAL_TEST_TARGETS
   test_mesh_utilities_mapping_2d
   test_mesh_utilities_mapping_3d
   units_tests
+  coordinate_systems_tests
 )
 
 if (NOT SPECFEM_ENABLE_MPI)

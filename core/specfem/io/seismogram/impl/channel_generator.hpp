@@ -212,8 +212,7 @@ private:
    * FDSN conventions for broad-band instruments. The band code indicates the
    * frequency range of the synthetic seismograms.
    *
-   * FDSN Band Code Table (from IRIS SEED Appendix A):
-   * =================================================
+   * **FDSN Band Code Table** (from IRIS SEED Appendix A):
    *
    * | Band | Band Type                      | Sample Rate (Hz)        | Corner Period |
    * |------|--------------------------------|-------------------------|---------------|

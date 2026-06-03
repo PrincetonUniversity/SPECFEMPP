@@ -62,7 +62,6 @@ public:
    *        5 for 3D: [sources][components][z][y][x])
    */
   constexpr static int wavefield_grid_rank = ndim + 2;
-  ///@}
 
   // Create dimension-dependent viewtype for wavefield on entire gridusing
   // SourceArrayView =

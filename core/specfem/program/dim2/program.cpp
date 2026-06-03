@@ -61,11 +61,12 @@ void program_2d(
   // --------------------------------------------------------------
   const int nsteps = setup.get_nsteps();
   const specfem::simulation::type simulation_type = setup.get_simulation_type();
-  auto [sources, t0] =
+  auto [sources, t0, starttime] =
       specfem::io::read_sources<specfem::element::dimension_tag::dim2>(
           setup.get_source_entries(), nsteps, setup.get_t0(), setup.get_dt(),
           simulation_type);
   setup.update_t0(t0); // Update t0 in case it was changed
+  setup.set_starttime(starttime);
 
   const auto stations_node = setup.get_stations();
   const auto angle = setup.get_receiver_angle();

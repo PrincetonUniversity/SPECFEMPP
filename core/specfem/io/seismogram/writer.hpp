@@ -5,6 +5,7 @@
 #include "impl/sac.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/constants.hpp"
+#include "specfem/datetime.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/io/writer.hpp"
 #include "specfem/mpi.hpp"
@@ -39,13 +40,14 @@ public:
       const specfem::enums::seismogram_format type,
       const specfem::enums::elastic_wave elastic_wave,
       const specfem::enums::electromagnetic_wave electromagnetic_wave,
-      const std::string output_folder, const type_real dt,
+      const std::string output_folder, const type_real dt, const type_real t0,
       const int nstep_between_samples,
+      std::optional<specfem::datetime::type> starttime = std::nullopt,
       const std::optional<bool> write_from_main = std::nullopt)
       : impl::ChannelGenerator(dt, nstep_between_samples), type(type),
         elastic_wave(elastic_wave), electromagnetic_wave(electromagnetic_wave),
-        output_folder(output_folder), dt(dt),
-        nstep_between_samples(nstep_between_samples),
+        output_folder(output_folder), dt(dt), t0(t0),
+        nstep_between_samples(nstep_between_samples), starttime_(starttime),
         write_from_main(write_from_main) {};
 
   void write(specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
@@ -79,12 +81,12 @@ private:
     case specfem::enums::seismogram_format::ascii:
       specfem::io::impl::write_seismogram<
           specfem::enums::seismogram_format::ascii>(
-          filtered_stations, receivers, *this, output_folder);
+          filtered_stations, receivers, *this, output_folder, starttime_);
       break;
     case specfem::enums::seismogram_format::sac:
       specfem::io::impl::write_seismogram<
-          specfem::enums::seismogram_format::sac>(filtered_stations, receivers,
-                                                  *this, output_folder);
+          specfem::enums::seismogram_format::sac>(
+          filtered_stations, receivers, *this, output_folder, starttime_);
       break;
     default:
       throw std::runtime_error(
@@ -97,6 +99,7 @@ private:
   std::string output_folder; ///< Path to output folder where results will be
                              ///< stored
   type_real dt;              ///< Time interval between subsequent timesteps
+  type_real t0;              ///< Solver start time
   specfem::enums::elastic_wave elastic_wave; ///< Type of wavefield (Writes
                                              ///< .BXY for SH waves and .BXX,
                                              ///< .BXZ for P-SV waves)
@@ -106,6 +109,9 @@ private:
                              ///< wavefield
   int nstep_between_samples; ///< number of timesteps between seismogram
                              ///< sampling (seismogram sampling frequency)
+  std::optional<specfem::datetime::type> starttime_; ///< Optional UTC start
+                                                     ///< datetime of the
+                                                     ///< simulation
   std::optional<bool> write_from_main; ///< Gather all data to rank 0 and write
                                        ///< from main proc
 };

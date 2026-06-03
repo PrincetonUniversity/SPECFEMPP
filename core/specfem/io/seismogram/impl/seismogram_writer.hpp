@@ -1,6 +1,7 @@
 #pragma once
 
 #include "channel_generator.hpp"
+#include "specfem/datetime.hpp"
 #include "specfem/enums.hpp"
 #include <optional>
 #include <string>
@@ -35,10 +36,13 @@ struct SeismogramFormatWriter;
  */
 template <specfem::enums::seismogram_format Format, typename Stations,
           typename Receivers>
-void write_seismogram(Stations &&stations, Receivers &receivers,
-                      ChannelGenerator &gen, const std::string &output_folder) {
+void write_seismogram(
+    Stations &&stations, Receivers &receivers, ChannelGenerator &gen,
+    const std::string &output_folder,
+    std::optional<specfem::datetime::type> starttime = std::nullopt) {
   SeismogramFormatWriter<Format>::write(std::forward<Stations>(stations),
-                                        receivers, gen, output_folder);
+                                        receivers, gen, output_folder,
+                                        starttime);
 }
 
 } // namespace impl

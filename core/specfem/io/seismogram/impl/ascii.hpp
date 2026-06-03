@@ -2,9 +2,11 @@
 
 #include "seismogram_writer.hpp"
 #include "specfem/assembly/receivers/impl/receiver_iterator.hpp"
+#include "specfem/datetime.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/mpi.hpp"
 #include <fstream>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -22,8 +24,10 @@ namespace impl {
 template <>
 struct SeismogramFormatWriter<specfem::enums::seismogram_format::ascii> {
   template <typename Stations, typename Receivers>
-  static void write(Stations &&stations, Receivers &receivers,
-                    ChannelGenerator &gen, const std::string &output_folder) {
+  static void
+  write(Stations &&stations, Receivers &receivers, ChannelGenerator &gen,
+        const std::string &output_folder,
+        std::optional<specfem::datetime::type> /*starttime*/ = std::nullopt) {
     const int my_rank = specfem::MPI::get_rank();
 
     specfem::Logger::debug("Writing ASCII seismograms to " + output_folder +

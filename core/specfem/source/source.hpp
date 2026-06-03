@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/constants.hpp"
+#include "specfem/datetime.hpp"
 
 #include "specfem/enums.hpp"
 #include "specfem/point.hpp"
@@ -11,6 +12,7 @@
 #include "specfem/utilities.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
+#include <optional>
 #include <sstream>
 
 namespace specfem::sources {
@@ -160,6 +162,20 @@ public:
   void update_tshift(type_real tshift) {
     source_time_function->update_tshift(tshift);
   };
+
+  /**
+   * @brief Get the UTC start time of this source (nullopt if not set).
+   */
+  std::optional<specfem::datetime::type> get_starttime() const {
+    return starttime_;
+  }
+
+  /**
+   * @brief Set the UTC start time of this source.
+   */
+  void set_starttime(std::optional<specfem::datetime::type> t) {
+    starttime_ = t;
+  }
   /**
    * @brief User output — assembles source name, location, type-specific
    * details, source time function, and (when MPI-enabled) the owning rank.
@@ -338,6 +354,8 @@ protected:
       global_coordinates; ///< Global coordinates of the source in the global
                           ///< coordinate system
   specfem::element::medium_tag medium_tag;
+  std::optional<specfem::datetime::type> starttime_; ///< Optional UTC origin
+                                                     ///< time
   int partition_index_ =
       -1; ///< MPI rank that owns this source (-1 = not yet located)
 };

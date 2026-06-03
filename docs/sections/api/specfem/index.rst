@@ -14,11 +14,13 @@
     chunk_edge/index
     chunk_element/index
     compute/index
+    coordinate_systems/index
     datatype/index
     data_access/index
     element/index
-    element_coupling/index
     element_connections/index
+    element_coupling/index
+    ellipticity/index
     enums/index
     execution/index
     io/index
