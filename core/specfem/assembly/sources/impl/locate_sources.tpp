@@ -28,15 +28,15 @@ void specfem::assembly::sources_impl::locate_sources(
   // Locate all sources across MPI partitions with inside-preference.
   // The function prefers elements where xi/eta/gamma ∈ [-1,1] and falls back
   // to minimum Cartesian distance when no rank owns an inside element.
-  auto [lcoords, islice_selected] =
+  auto [lcoords, partition_index_selected] =
       specfem::algorithms::locate_point(coords, mesh);
 
   // Assign local coordinates and medium tags to each source.
   // Only the owning rank sets valid coordinates; all others receive ispec = -1
   // so that downstream filtering skips them.
   for (int isrc = 0; isrc < nsources; ++isrc) {
-    sources[isrc]->set_islice(islice_selected[isrc]);
-    if (islice_selected[isrc] == myrank) {
+    sources[isrc]->set_partition_index(partition_index_selected[isrc]);
+    if (partition_index_selected[isrc] == myrank) {
       const auto &lcoord = lcoords[isrc];
       sources[isrc]->set_local_coordinates(lcoord);
       sources[isrc]->set_medium_tag(element_types.get_medium_tag(lcoord.ispec));

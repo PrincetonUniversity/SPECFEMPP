@@ -44,9 +44,9 @@ specfem::assembly::sources<DimensionTag>::sources(
   specfem::assembly::sources_impl::locate_sources(element_types, mesh, sources);
 
   // Create vector of MPI slice indices for each source (host memory)
-  source_islice_.resize(sources.size());
+  source_partition_index_.resize(sources.size());
   for (int i = 0; i < static_cast<int>(sources.size()); ++i)
-    source_islice_[i] = sources[i]->get_islice();
+    source_partition_index_[i] = sources[i]->get_partition_index();
 
   // Initialize source_by_medium using TypedStorage initializer
   source_by_medium = { [&]<typename TagsType>()
