@@ -8,6 +8,32 @@
 
 namespace specfem {
 namespace execution {
+
+/**
+ * @brief Integer coordinate index for a rank-`Rank` multi-dimensional range.
+ *
+ * Holds the `Rank` integer coordinates produced by a multi-dimensional
+ * iterator. Coordinates are accessed via `index(0)`, `index(1)`, ...,
+ * `index(Rank - 1)`. `is_end()` reports whether this index is a
+ * past-the-end sentinel.
+ *
+ * @tparam Rank Number of coordinate dimensions (2 or 3).
+ */
+template <int Rank>
+struct MDRangeIndex
+    : public specfem::datatype::RegisterArray<
+          int, Kokkos::extents<std::size_t, Rank>, Kokkos::layout_left> {
+  using base_type =
+      specfem::datatype::RegisterArray<int, Kokkos::extents<std::size_t, Rank>,
+                                       Kokkos::layout_left>;
+  using base_type::base_type;
+  using base_type::operator();
+
+  /// @brief True if this index is a past-the-end sentinel.
+  KOKKOS_INLINE_FUNCTION
+  constexpr bool is_end() const { return false; }
+};
+
 /**
  * @brief Multi-dimensional range iterator for team-based parallel execution
  *
@@ -32,18 +58,16 @@ public:
   using base_policy_type =
       typename base_type::base_policy_type; ///< Base policy type. Evaluates to
                                             ///< @c Kokkos::TeamThreadRange
-  using index_type = specfem::datatype::RegisterArray<
-      int, Kokkos::extents<std::size_t, rank>,
-      Kokkos::layout_left>; ///< Underlying
-                            ///< index type.
-                            ///< This index
-                            ///< will be passed
-                            ///< to the closure
-                            ///< when calling
-                            ///< @ref
-                            ///< kokkos::parallel_for
-                            ///< with this
-                            ///< iterator.
+  using index_type = MDRangeIndex<rank>;    ///< Underlying
+                                            ///< index type.
+                                            ///< This index
+                                            ///< will be passed
+                                            ///< to the closure
+                                            ///< when calling
+                                            ///< @ref
+                                            ///< kokkos::parallel_for
+                                            ///< with this
+                                            ///< iterator.
 
   using execution_space =
       typename base_type::execution_space; ///< Execution space type.
@@ -107,8 +131,8 @@ public:
 #endif
 
   template <typename... Indices>
-  KOKKOS_INLINE_FUNCTION constexpr
-  TeamThreadMDRangeIterator(const TeamMemberType &team, Indices... indices)
+  KOKKOS_INLINE_FUNCTION constexpr TeamThreadMDRangeIterator(
+      const TeamMemberType &team, Indices... indices)
       : base_type(team,
                   [&]() {
                     size_t product = 1;

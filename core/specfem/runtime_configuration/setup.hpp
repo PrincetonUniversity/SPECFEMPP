@@ -12,6 +12,7 @@
 #include "solver.hpp"
 #include "sources.hpp"
 #include "specfem/attenuation.hpp"
+#include "specfem/datetime.hpp"
 #include "specfem/io.hpp"
 #include "specfem/setup.hpp"
 #include "time_scheme.hpp"
@@ -22,6 +23,7 @@
 #include "writer/wavefield.hpp"
 #include "yaml-cpp/yaml.h"
 #include <memory>
+#include <optional>
 #include <tuple>
 
 namespace specfem {
@@ -111,6 +113,20 @@ public:
   type_real get_t0() const { return this->time_scheme->get_t0(); }
 
   /**
+   * @brief Set the UTC start datetime of the simulation.
+   */
+  void set_starttime(std::optional<specfem::datetime::type> t) {
+    starttime_ = t;
+  }
+
+  /**
+   * @brief Get the UTC start datetime of the simulation (nullopt if not set).
+   */
+  std::optional<specfem::datetime::type> get_starttime() const {
+    return starttime_;
+  }
+
+  /**
    * @brief Get the type of the elastic wave
    *
    * @return specfem::enums::elastic_wave Type of the elastic wave
@@ -191,7 +207,7 @@ public:
       return this->seismogram->instantiate_seismogram_writer(
           this->get_elastic_wave_type(), this->get_electromagnetic_wave_type(),
           this->time_scheme->get_dt(), this->time_scheme->get_t0(),
-          this->receivers->get_nstep_between_samples());
+          this->receivers->get_nstep_between_samples(), this->starttime_);
     } else {
       return nullptr;
     }
@@ -485,6 +501,9 @@ private:
       solver; ///< Solver algorithm configuration
   std::unique_ptr<specfem::runtime_configuration::flux_schemes>
       flux_schemes; ///< flux-scheme configuration
+  std::optional<specfem::datetime::type> starttime_; ///< Optional UTC start
+                                                     ///< datetime of the
+                                                     ///< simulation
 };
 } // namespace runtime_configuration
 } // namespace specfem

@@ -28,6 +28,7 @@ public:
    * HDF5, and a folder if using ASCII)
    */
   property_writer(const std::string &output_folder);
+  ///@}
 
   /**
    * @brief write the property data to disk

@@ -92,6 +92,7 @@ public:
   KOKKOS_FUNCTION
   jacobian_matrix(const value_type constant)
       : xix(constant), gammax(constant), xiz(constant), gammaz(constant) {}
+  ///@}
 
   KOKKOS_FUNCTION
   void init() {
@@ -233,6 +234,7 @@ public:
       : xix(constant), etax(constant), gammax(constant), xiy(constant),
         etay(constant), gammay(constant), xiz(constant), etaz(constant),
         gammaz(constant) {}
+  ///@}
 
   KOKKOS_FUNCTION
   void init() {

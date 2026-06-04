@@ -63,14 +63,19 @@ public:
    * @param timestep Simulation time step (dt) in seconds, used to determine
    * band code
    */
-  ChannelGenerator(const type_real timestep)
-      : band_code(compute_band_code(timestep)), timestep(timestep) {}
+  ChannelGenerator(const type_real timestep,
+                   const int nstep_between_samples = 1)
+      : band_code(compute_band_code(timestep)), timestep(timestep),
+        nstep_between_samples_(nstep_between_samples) {}
 
   /**
    * @brief Returns the simulation timestep (dt) in seconds.
    * @return type_real Simulation time step used to construct this generator.
    */
   type_real get_timestep() const { return this->timestep; }
+  type_real get_sample_interval() const {
+    return timestep * nstep_between_samples_;
+  }
 
   /**
    * @brief Generates SEED-compliant seismogram filenames for a given station.
@@ -84,13 +89,11 @@ public:
    *        Ignored for pressure seismograms (always single 'P' component).
    * @return std::vector<std::string> Filenames, one per component.
    */
-  std::vector<std::string>
-  get_station_filenames(const std::string &network_name,
-                        const std::string &station_name,
-                        const std::string &location_code,
-                        specfem::enums::wavefield seismogram_type,
-                        std::span<const char> elastic_components = {
-                            kDefaultElasticComponents });
+  std::vector<std::string> get_station_filenames(
+      const std::string &network_name, const std::string &station_name,
+      const std::string &location_code,
+      specfem::enums::wavefield seismogram_type,
+      std::span<const char> elastic_components = { kDefaultElasticComponents });
 
   /**
    * @brief Generate output filenames for one station/seismogram-type pair.
@@ -111,10 +114,9 @@ public:
                         specfem::enums::wavefield seismogram_type) {
     if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
       static constexpr std::array<char, 2> kLetters = { 'X', 'Z' };
-      return get_station_filenames(station_info.network_name,
-                                   station_info.station_name, "S2",
-                                   seismogram_type,
-                                   std::span<const char>{ kLetters });
+      return get_station_filenames(
+          station_info.network_name, station_info.station_name, "S2",
+          seismogram_type, std::span<const char>{ kLetters });
     } else if constexpr (DimensionTag ==
                          specfem::element::dimension_tag::dim3) {
       return get_station_filenames(station_info.network_name,
@@ -195,11 +197,12 @@ public:
 private:
   /// Default 3-D elastic component letters.
   static constexpr std::array<char, 3> kDefaultElasticComponents = { 'X', 'Y',
-                                                                      'Z' };
+                                                                     'Z' };
 
-  const std::string band_code; ///< SEED band code (L, M, B, H, C, or F)
-                               ///< determined from timestep
-  type_real timestep;          ///< Simulation time step in seconds
+  const std::string band_code;    ///< SEED band code (L, M, B, H, C, or F)
+                                  ///< determined from timestep
+  type_real timestep;             ///< Simulation time step in seconds
+  int nstep_between_samples_ = 1; ///< Timesteps between seismogram samples
 
   // clang-format off
   /**
@@ -209,8 +212,7 @@ private:
    * FDSN conventions for broad-band instruments. The band code indicates the
    * frequency range of the synthetic seismograms.
    *
-   * FDSN Band Code Table (from IRIS SEED Appendix A):
-   * =================================================
+   * **FDSN Band Code Table** (from IRIS SEED Appendix A):
    *
    * | Band | Band Type                      | Sample Rate (Hz)        | Corner Period |
    * |------|--------------------------------|-------------------------|---------------|

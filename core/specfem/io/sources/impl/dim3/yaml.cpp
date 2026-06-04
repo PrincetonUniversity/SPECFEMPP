@@ -1,9 +1,11 @@
 #include "yaml-cpp/yaml.h"
+#include "specfem/datetime.hpp"
 #include "specfem/io/sources/impl/reader.hpp"
 #include "specfem/source.hpp"
 
 #include <cassert>
 #include <memory>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -41,6 +43,13 @@ specfem::io::sources_impl::read<specfem::element::dimension_tag::dim3,
       specfem::sources::source<specfem::element::dimension_tag::dim3>>>
       sources;
 
+  // Parse optional top-level datetime (fallback for all sources)
+  std::optional<specfem::datetime::type> global_datetime;
+  if (source_dict["datetime"]) {
+    global_datetime =
+        specfem::datetime::parse_iso(source_dict["datetime"].as<std::string>());
+  }
+
   // Note: Make sure you name the YAML node different from the name of the
   // source class Otherwise, the compiler will get confused and throw an error
   // I've spent hours debugging this issue. It is very annoying since it only
@@ -57,6 +66,14 @@ specfem::io::sources_impl::read<specfem::element::dimension_tag::dim3,
           moment_tensor_source, nsteps, dt, wavefield_type));
     } else {
       throw std::runtime_error("Unknown source type in YAML source file");
+    }
+
+    // Per-source datetime overrides global
+    if (N["datetime"]) {
+      sources.back()->set_starttime(
+          specfem::datetime::parse_iso(N["datetime"].as<std::string>()));
+    } else if (global_datetime) {
+      sources.back()->set_starttime(global_datetime);
     }
   }
 
