@@ -7,6 +7,7 @@
 #include "specfem/attenuation/compute_tau_sigma.hpp"
 #include "specfem/constants.hpp"
 #include "specfem/data_access/container.hpp"
+#include "specfem/datatype.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/mesh/dim3/materials/materials.hpp"
 #include "specfem/setup.hpp"
@@ -106,55 +107,64 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
         "mu_scale", nspec_attn);
     kappa_relaxation_rate = view_type("kappa_relaxation_rate", nspec_attn,
                                       ngllz, nglly, ngllx, N_SLS);
-    h_kappa_relaxation_rate = Kokkos::create_mirror_view(kappa_relaxation_rate);
+    h_kappa_relaxation_rate =
+        specfem::datatype::create_mirror_view(kappa_relaxation_rate);
     mu_relaxation_rate =
         view_type("mu_relaxation_rate", nspec_attn, ngllz, nglly, ngllx, N_SLS);
-    h_mu_relaxation_rate = Kokkos::create_mirror_view(mu_relaxation_rate);
+    h_mu_relaxation_rate =
+        specfem::datatype::create_mirror_view(mu_relaxation_rate);
     memory_variable_kappa =
         view_type("mem_kappa", nspec_attn, ngllz, nglly, ngllx, N_SLS);
-    h_memory_variable_kappa = Kokkos::create_mirror_view(memory_variable_kappa);
+    h_memory_variable_kappa =
+        specfem::datatype::create_mirror_view(memory_variable_kappa);
     memory_variable_Rxx =
         view_type("mem_Rxx", nspec_attn, ngllz, nglly, ngllx, N_SLS);
-    h_memory_variable_Rxx = Kokkos::create_mirror_view(memory_variable_Rxx);
+    h_memory_variable_Rxx =
+        specfem::datatype::create_mirror_view(memory_variable_Rxx);
     memory_variable_Ryy =
         view_type("mem_Ryy", nspec_attn, ngllz, nglly, ngllx, N_SLS);
-    h_memory_variable_Ryy = Kokkos::create_mirror_view(memory_variable_Ryy);
+    h_memory_variable_Ryy =
+        specfem::datatype::create_mirror_view(memory_variable_Ryy);
     memory_variable_Rzz =
         view_type("mem_Rzz", nspec_attn, ngllz, nglly, ngllx, N_SLS);
-    h_memory_variable_Rzz = Kokkos::create_mirror_view(memory_variable_Rzz);
+    h_memory_variable_Rzz =
+        specfem::datatype::create_mirror_view(memory_variable_Rzz);
     memory_variable_Rxy =
         view_type("mem_Rxy", nspec_attn, ngllz, nglly, ngllx, N_SLS);
-    h_memory_variable_Rxy = Kokkos::create_mirror_view(memory_variable_Rxy);
+    h_memory_variable_Rxy =
+        specfem::datatype::create_mirror_view(memory_variable_Rxy);
     memory_variable_Rxz =
         view_type("mem_Rxz", nspec_attn, ngllz, nglly, ngllx, N_SLS);
-    h_memory_variable_Rxz = Kokkos::create_mirror_view(memory_variable_Rxz);
+    h_memory_variable_Rxz =
+        specfem::datatype::create_mirror_view(memory_variable_Rxz);
     memory_variable_Ryz =
         view_type("mem_Ryz", nspec_attn, ngllz, nglly, ngllx, N_SLS);
-    h_memory_variable_Ryz = Kokkos::create_mirror_view(memory_variable_Ryz);
+    h_memory_variable_Ryz =
+        specfem::datatype::create_mirror_view(memory_variable_Ryz);
 
     epsilon_xx_att =
         scalar_view_type("epsilon_xx_att", nspec_attn, ngllz, nglly, ngllx);
-    h_epsilon_xx_att = Kokkos::create_mirror_view(epsilon_xx_att);
+    h_epsilon_xx_att = specfem::datatype::create_mirror_view(epsilon_xx_att);
     Kokkos::deep_copy(epsilon_xx_att, static_cast<type_real>(0));
     epsilon_yy_att =
         scalar_view_type("epsilon_yy_att", nspec_attn, ngllz, nglly, ngllx);
-    h_epsilon_yy_att = Kokkos::create_mirror_view(epsilon_yy_att);
+    h_epsilon_yy_att = specfem::datatype::create_mirror_view(epsilon_yy_att);
     Kokkos::deep_copy(epsilon_yy_att, static_cast<type_real>(0));
     epsilon_zz_att =
         scalar_view_type("epsilon_zz_att", nspec_attn, ngllz, nglly, ngllx);
-    h_epsilon_zz_att = Kokkos::create_mirror_view(epsilon_zz_att);
+    h_epsilon_zz_att = specfem::datatype::create_mirror_view(epsilon_zz_att);
     Kokkos::deep_copy(epsilon_zz_att, static_cast<type_real>(0));
     epsilon_xy_att =
         scalar_view_type("epsilon_xy_att", nspec_attn, ngllz, nglly, ngllx);
-    h_epsilon_xy_att = Kokkos::create_mirror_view(epsilon_xy_att);
+    h_epsilon_xy_att = specfem::datatype::create_mirror_view(epsilon_xy_att);
     Kokkos::deep_copy(epsilon_xy_att, static_cast<type_real>(0));
     epsilon_xz_att =
         scalar_view_type("epsilon_xz_att", nspec_attn, ngllz, nglly, ngllx);
-    h_epsilon_xz_att = Kokkos::create_mirror_view(epsilon_xz_att);
+    h_epsilon_xz_att = specfem::datatype::create_mirror_view(epsilon_xz_att);
     Kokkos::deep_copy(epsilon_xz_att, static_cast<type_real>(0));
     epsilon_yz_att =
         scalar_view_type("epsilon_yz_att", nspec_attn, ngllz, nglly, ngllx);
-    h_epsilon_yz_att = Kokkos::create_mirror_view(epsilon_yz_att);
+    h_epsilon_yz_att = specfem::datatype::create_mirror_view(epsilon_yz_att);
     Kokkos::deep_copy(epsilon_yz_att, static_cast<type_real>(0));
 
     // Allocate and populate the inverse index mapping (global ispec -> compact
@@ -233,39 +243,39 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
   }
 
   void copy_to_host() {
-    Kokkos::deep_copy(h_kappa_relaxation_rate, kappa_relaxation_rate);
-    Kokkos::deep_copy(h_mu_relaxation_rate, mu_relaxation_rate);
-    Kokkos::deep_copy(h_memory_variable_kappa, memory_variable_kappa);
-    Kokkos::deep_copy(h_memory_variable_Rxx, memory_variable_Rxx);
-    Kokkos::deep_copy(h_memory_variable_Ryy, memory_variable_Ryy);
-    Kokkos::deep_copy(h_memory_variable_Rzz, memory_variable_Rzz);
-    Kokkos::deep_copy(h_memory_variable_Rxy, memory_variable_Rxy);
-    Kokkos::deep_copy(h_memory_variable_Rxz, memory_variable_Rxz);
-    Kokkos::deep_copy(h_memory_variable_Ryz, memory_variable_Ryz);
-    Kokkos::deep_copy(h_epsilon_xx_att, epsilon_xx_att);
-    Kokkos::deep_copy(h_epsilon_yy_att, epsilon_yy_att);
-    Kokkos::deep_copy(h_epsilon_zz_att, epsilon_zz_att);
-    Kokkos::deep_copy(h_epsilon_xy_att, epsilon_xy_att);
-    Kokkos::deep_copy(h_epsilon_xz_att, epsilon_xz_att);
-    Kokkos::deep_copy(h_epsilon_yz_att, epsilon_yz_att);
+    specfem::datatype::deep_copy(h_kappa_relaxation_rate, kappa_relaxation_rate);
+    specfem::datatype::deep_copy(h_mu_relaxation_rate, mu_relaxation_rate);
+    specfem::datatype::deep_copy(h_memory_variable_kappa, memory_variable_kappa);
+    specfem::datatype::deep_copy(h_memory_variable_Rxx, memory_variable_Rxx);
+    specfem::datatype::deep_copy(h_memory_variable_Ryy, memory_variable_Ryy);
+    specfem::datatype::deep_copy(h_memory_variable_Rzz, memory_variable_Rzz);
+    specfem::datatype::deep_copy(h_memory_variable_Rxy, memory_variable_Rxy);
+    specfem::datatype::deep_copy(h_memory_variable_Rxz, memory_variable_Rxz);
+    specfem::datatype::deep_copy(h_memory_variable_Ryz, memory_variable_Ryz);
+    specfem::datatype::deep_copy(h_epsilon_xx_att, epsilon_xx_att);
+    specfem::datatype::deep_copy(h_epsilon_yy_att, epsilon_yy_att);
+    specfem::datatype::deep_copy(h_epsilon_zz_att, epsilon_zz_att);
+    specfem::datatype::deep_copy(h_epsilon_xy_att, epsilon_xy_att);
+    specfem::datatype::deep_copy(h_epsilon_xz_att, epsilon_xz_att);
+    specfem::datatype::deep_copy(h_epsilon_yz_att, epsilon_yz_att);
   }
 
   void copy_to_device() {
-    Kokkos::deep_copy(kappa_relaxation_rate, h_kappa_relaxation_rate);
-    Kokkos::deep_copy(mu_relaxation_rate, h_mu_relaxation_rate);
-    Kokkos::deep_copy(memory_variable_kappa, h_memory_variable_kappa);
-    Kokkos::deep_copy(memory_variable_Rxx, h_memory_variable_Rxx);
-    Kokkos::deep_copy(memory_variable_Ryy, h_memory_variable_Ryy);
-    Kokkos::deep_copy(memory_variable_Rzz, h_memory_variable_Rzz);
-    Kokkos::deep_copy(memory_variable_Rxy, h_memory_variable_Rxy);
-    Kokkos::deep_copy(memory_variable_Rxz, h_memory_variable_Rxz);
-    Kokkos::deep_copy(memory_variable_Ryz, h_memory_variable_Ryz);
-    Kokkos::deep_copy(epsilon_xx_att, h_epsilon_xx_att);
-    Kokkos::deep_copy(epsilon_yy_att, h_epsilon_yy_att);
-    Kokkos::deep_copy(epsilon_zz_att, h_epsilon_zz_att);
-    Kokkos::deep_copy(epsilon_xy_att, h_epsilon_xy_att);
-    Kokkos::deep_copy(epsilon_xz_att, h_epsilon_xz_att);
-    Kokkos::deep_copy(epsilon_yz_att, h_epsilon_yz_att);
+    specfem::datatype::deep_copy(kappa_relaxation_rate, h_kappa_relaxation_rate);
+    specfem::datatype::deep_copy(mu_relaxation_rate, h_mu_relaxation_rate);
+    specfem::datatype::deep_copy(memory_variable_kappa, h_memory_variable_kappa);
+    specfem::datatype::deep_copy(memory_variable_Rxx, h_memory_variable_Rxx);
+    specfem::datatype::deep_copy(memory_variable_Ryy, h_memory_variable_Ryy);
+    specfem::datatype::deep_copy(memory_variable_Rzz, h_memory_variable_Rzz);
+    specfem::datatype::deep_copy(memory_variable_Rxy, h_memory_variable_Rxy);
+    specfem::datatype::deep_copy(memory_variable_Rxz, h_memory_variable_Rxz);
+    specfem::datatype::deep_copy(memory_variable_Ryz, h_memory_variable_Ryz);
+    specfem::datatype::deep_copy(epsilon_xx_att, h_epsilon_xx_att);
+    specfem::datatype::deep_copy(epsilon_yy_att, h_epsilon_yy_att);
+    specfem::datatype::deep_copy(epsilon_zz_att, h_epsilon_zz_att);
+    specfem::datatype::deep_copy(epsilon_xy_att, h_epsilon_xy_att);
+    specfem::datatype::deep_copy(epsilon_xz_att, h_epsilon_xz_att);
+    specfem::datatype::deep_copy(epsilon_yz_att, h_epsilon_yz_att);
   }
 
   /**
