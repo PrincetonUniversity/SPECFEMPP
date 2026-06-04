@@ -29,46 +29,59 @@ specfem::io::wavefield_reader<IOLibrary>::wavefield_reader(
       file(typename IOLibrary::File(file_path)) {}
 
 template <typename IOLibrary>
+template <specfem::element::dimension_tag DimensionTag>
 void specfem::io::wavefield_reader<IOLibrary>::initialize(
-    specfem::assembly::assembly<specfem::element::dimension_tag::dim2> &assembly) {
+    specfem::assembly::assembly<DimensionTag> &assembly) {
 
   auto &buffer = assembly.fields.buffer;
   int ngroups = 0;
 
-  specfem::tag_dispatch::for_each(
-      DIMENSION_SET(dim2) *
-          MEDIUM_SET(elastic_psv, elastic_psv_t, elastic_sh, acoustic,
-                     poroelastic),
-      [&]<typename TagsType>() {
-        if (buffer.get_nglob<TagsType::medium_tag>() > 0) {
-          ngroups++;
-        }
-      });
+  auto count_group = [&]<typename TagsType>() {
+    if (buffer.template get_nglob<TagsType::medium_tag>() > 0) ngroups++;
+  };
+
+  if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
+    specfem::tag_dispatch::for_each(
+        DIMENSION_SET(dim2) *
+            MEDIUM_SET(elastic_psv, elastic_psv_t, elastic_sh, acoustic,
+                       poroelastic),
+        count_group);
+  } else {
+    specfem::tag_dispatch::for_each(
+        DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic), count_group);
+  }
 
   Kokkos::View<std::string *, Kokkos::HostSpace> medium_tags("medium_tags", ngroups);
   file.openDataset("medium_tags", medium_tags).read();
 
-  specfem::tag_dispatch::for_each(
-      DIMENSION_SET(dim2) *
-          MEDIUM_SET(elastic_psv, elastic_psv_t, elastic_sh, acoustic,
-                     poroelastic),
-      [&]<typename TagsType>() {
-        constexpr auto medium_tag = TagsType::medium_tag;
-        if (buffer.get_nglob<medium_tag>() > 0) {
-          const std::string current_tag = specfem::element::to_string(medium_tag);
-          bool found = false;
-          for (int i = 0; i < (int)medium_tags.extent(0); ++i) {
-            if (current_tag == medium_tags(i)) {
-              found = true;
-              break;
-            }
-          }
-          if (!found) {
-            throw std::runtime_error("Medium tag " + current_tag +
-                                     " not found in wavefield file");
-          }
+  auto check_medium = [&]<typename TagsType>() {
+    constexpr auto medium_tag = TagsType::medium_tag;
+    if (buffer.template get_nglob<medium_tag>() > 0) {
+      const std::string current_tag = specfem::element::to_string(medium_tag);
+      bool found = false;
+      for (int i = 0; i < (int)medium_tags.extent(0); ++i) {
+        if (current_tag == medium_tags(i)) {
+          found = true;
+          break;
         }
-      });
+      }
+      if (!found) {
+        throw std::runtime_error("Medium tag " + current_tag +
+                                 " not found in wavefield file");
+      }
+    }
+  };
+
+  if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
+    specfem::tag_dispatch::for_each(
+        DIMENSION_SET(dim2) *
+            MEDIUM_SET(elastic_psv, elastic_psv_t, elastic_sh, acoustic,
+                       poroelastic),
+        check_medium);
+  } else {
+    specfem::tag_dispatch::for_each(
+        DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic), check_medium);
+  }
 
   auto &boundary_values = assembly.boundary_values;
 
@@ -93,64 +106,70 @@ void specfem::io::wavefield_reader<IOLibrary>::initialize(
                    boundary_values.stacey.h_property_index_mapping)
       .read();
 
-  specfem::tag_dispatch::for_each(
-      DIMENSION_SET(dim2) *
-          MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
-                     elastic_psv_t),
-      [&]<typename TagsType>() {
-        constexpr auto medium_tag = TagsType::medium_tag;
-        auto &ctr = boundary_values.stacey.container.template get<TagsType>();
-        if (ctr.h_values.size() > 0) {
-          const std::string dataset_name =
-              specfem::element::to_string(medium_tag) + "Acceleration";
-          stacey.openDataset(dataset_name, ctr.h_values).read();
-        }
-      });
+  auto read_stacey = [&]<typename TagsType>() {
+    constexpr auto medium_tag = TagsType::medium_tag;
+    auto &ctr = boundary_values.stacey.container.template get<TagsType>();
+    if (ctr.h_values.size() > 0) {
+      const std::string dataset_name =
+          specfem::element::to_string(medium_tag) + "Acceleration";
+      stacey.openDataset(dataset_name, ctr.h_values).read();
+    }
+  };
+
+  if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
+    specfem::tag_dispatch::for_each(
+        DIMENSION_SET(dim2) *
+            MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
+                       elastic_psv_t),
+        read_stacey);
+  } else {
+    specfem::tag_dispatch::for_each(
+        DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic), read_stacey);
+  }
 
   boundary_values.copy_to_device();
-
-  return;
 }
 
 template <typename IOLibrary>
+template <specfem::element::dimension_tag DimensionTag>
 void specfem::io::wavefield_reader<IOLibrary>::run(
-    specfem::assembly::assembly<specfem::element::dimension_tag::dim2> &assembly,
-    const int istep) {
+    specfem::assembly::assembly<DimensionTag> &assembly, const int istep) {
   auto &buffer = assembly.fields.buffer;
-
-  // Note: boundary values not read/needed?
-  // auto &boundary_values = assembly.boundary_values;
 
   typename IOLibrary::Group base_group = file.openGroup(
       std::string("/Step") + specfem::utilities::to_zero_lead(istep, 6));
 
-  specfem::tag_dispatch::for_each(
-      DIMENSION_SET(dim2) *
-          MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
-                     elastic_psv_t),
-      [&]<typename TagsType>() {
-        constexpr auto medium_tag = TagsType::medium_tag;
-        int nglob_medium = buffer.get_nglob<medium_tag>();
+  auto read_field = [&]<typename TagsType>() {
+    constexpr auto medium_tag = TagsType::medium_tag;
+    int nglob_medium = buffer.template get_nglob<medium_tag>();
+    if (nglob_medium > 0) {
+      typename IOLibrary::Group group =
+          base_group.openGroup(specfem::element::to_string(medium_tag));
+      const auto &field = buffer.template get_field<medium_tag>();
+      if constexpr (medium_tag == specfem::element::medium_tag::acoustic) {
+        group.openDataset("Potential", field.get_host_field()).read();
+        group.openDataset("PotentialDot", field.get_host_field_dot()).read();
+        group.openDataset("PotentialDotDot", field.get_host_field_dot_dot())
+            .read();
+      } else {
+        group.openDataset("Displacement", field.get_host_field()).read();
+        group.openDataset("Velocity", field.get_host_field_dot()).read();
+        group.openDataset("Acceleration", field.get_host_field_dot_dot())
+            .read();
+      }
+    }
+  };
 
-        if (nglob_medium > 0) {
-          typename IOLibrary::Group group =
-              base_group.openGroup(specfem::element::to_string(medium_tag));
-          const auto &field = buffer.get_field<medium_tag>();
-
-          if constexpr (medium_tag == specfem::element::medium_tag::acoustic) {
-            group.openDataset("Potential", field.get_host_field()).read();
-            group.openDataset("PotentialDot", field.get_host_field_dot())
-                .read();
-            group.openDataset("PotentialDotDot", field.get_host_field_dot_dot())
-                .read();
-          } else {
-            group.openDataset("Displacement", field.get_host_field()).read();
-            group.openDataset("Velocity", field.get_host_field_dot()).read();
-            group.openDataset("Acceleration", field.get_host_field_dot_dot())
-                .read();
-          }
-        }
-      });
+  if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
+    specfem::tag_dispatch::for_each(
+        DIMENSION_SET(dim2) *
+            MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
+                       elastic_psv_t),
+        read_field);
+  } else {
+    specfem::tag_dispatch::for_each(
+        DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic), read_field);
+  }
 
   buffer.copy_to_device();
 }
