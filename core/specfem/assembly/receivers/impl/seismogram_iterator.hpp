@@ -1,6 +1,10 @@
 #pragma once
 
+#include "specfem/element/dimension.hpp"
+#include "specfem/element/tags.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/mpi.hpp"
+#include "specfem/setup.hpp"
 #include <array>
 #include <string>
 #include <tuple>
@@ -9,12 +13,22 @@
 
 namespace specfem::assembly::receivers_impl {
 
-//
-// DIM3 SPECIALIZATION
-//
-template <> class SeismogramIterator<specfem::element::dimension_tag::dim3> {
+/**
+ * @brief Unified seismogram iterator for 2D and 3D simulations.
+ *
+ * Both dimensions use a rotation matrix (nrec x ncomponents x ncomponents)
+ * to transform raw field components into output seismogram components.
+ *
+ * - dim2: 2x2 rotation matrix built from the receiver angle (cos/sin)
+ * - dim3: 3x3 rotation matrix set explicitly per receiver
+ *
+ * @tparam DimensionTag specfem::element::dimension_tag::dim2 or dim3
+ */
+template <specfem::element::dimension_tag DimensionTag>
+class SeismogramIterator {
 private:
-  static constexpr int ncomponents = 3;
+  static constexpr int ncomponents =
+      specfem::element::dimension<DimensionTag>::dim;
 
   class Iterator {
   public:
@@ -23,7 +37,7 @@ private:
              const int nstep_between_samples,
              Kokkos::View<type_real ***, Kokkos::DefaultHostExecutionSpace>
                  h_rotation_matrices,
-             Kokkos::View<type_real ***[3], Kokkos::LayoutLeft,
+             Kokkos::View<type_real ***[ncomponents], Kokkos::LayoutLeft,
                           Kokkos::DefaultHostExecutionSpace>
                  seismogram_components)
         : irec(irec), iseis(iseis), seis_step(seis_step), dt(dt), t0(t0),
@@ -31,16 +45,14 @@ private:
           h_rotation_matrices(h_rotation_matrices),
           seismo_components(seismogram_components) {}
 
-    std::tuple<type_real, std::array<type_real, 3> > operator*() {
+    std::tuple<type_real, std::array<type_real, ncomponents>> operator*() {
       type_real time = seis_step * dt * nstep_between_samples + t0;
 
-      std::array<type_real, 3> seismograms;
+      std::array<type_real, ncomponents> seismograms;
 
-      // 3D: Use rotation matrix (nrec, 3, 3) layout
-      // Apply rotation matrix: seismograms = R * raw_components
-      for (int i = 0; i < 3; ++i) {
+      for (int i = 0; i < ncomponents; ++i) {
         seismograms[i] = 0.0;
-        for (int j = 0; j < 3; ++j) {
+        for (int j = 0; j < ncomponents; ++j) {
           seismograms[i] += h_rotation_matrices(irec, i, j) *
                             seismo_components(seis_step, iseis, irec, j);
         }
@@ -70,7 +82,7 @@ private:
     type_real dt;
     type_real t0;
 
-    Kokkos::View<type_real ***[3], Kokkos::LayoutLeft,
+    Kokkos::View<type_real ***[ncomponents], Kokkos::LayoutLeft,
                  Kokkos::DefaultHostExecutionSpace>
         seismo_components;
     Kokkos::View<type_real ***, Kokkos::DefaultHostExecutionSpace>
@@ -87,17 +99,17 @@ public:
         nstep_between_samples(nstep_between_samples),
         max_sig_step(max_sig_step), dt(dt), t0(t0),
         h_rotation_matrices("specfem::assembly::receivers::rotation_matrices",
-                            nreceivers, 3, 3),
+                            nreceivers, ncomponents, ncomponents),
         seismogram_components(
             "specfem::assembly::receivers::seismogram_components", max_sig_step,
-            nseismograms, nreceivers, 3),
+            nseismograms, nreceivers, ncomponents),
         h_seismogram_components(
             Kokkos::create_mirror_view(seismogram_components)) {
     // Initialize rotation matrices to identity
-    for (int irec = 0; irec < nreceivers; ++irec) {
-      for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 3; ++j) {
-          h_rotation_matrices(irec, i, j) = (i == j) ? 1.0 : 0.0;
+    for (int irec_local = 0; irec_local < nreceivers; ++irec_local) {
+      for (int i = 0; i < ncomponents; ++i) {
+        for (int j = 0; j < ncomponents; ++j) {
+          h_rotation_matrices(irec_local, i, j) = (i == j) ? 1.0 : 0.0;
         }
       }
     }
@@ -124,27 +136,38 @@ public:
   void set_seismogram_step(const int isig_step) { this->seis_step = isig_step; }
   void set_seismogram_type(const int iseis) { this->iseis = iseis; }
 
-  /**
-   * @brief Get the time step between the samples
-   *
-   * @return type_real Time step between samples
-   */
-  type_real get_timestep() const { return dt; }
-
   KOKKOS_FUNCTION int get_seismogram_step() const { return seis_step; }
   KOKKOS_FUNCTION int get_seis_type() const { return iseis; }
+
+  type_real get_t0() const { return t0; }
+  int get_nsteps() const { return max_sig_step; }
 
   void sync_seismograms() {
     Kokkos::deep_copy(h_seismogram_components, seismogram_components);
   }
 
-  // Set rotation matrix for a receiver
-  void set_rotation_matrix(
-      int irec,
-      const std::array<std::array<type_real, 3>, 3> &rotation_matrix) {
-    for (int i = 0; i < 3; ++i) {
-      for (int j = 0; j < 3; ++j) {
-        h_rotation_matrices(irec, i, j) = rotation_matrix[i][j];
+  void gather_to_main() {
+#ifdef SPECFEM_ENABLE_MPI
+    const int count = static_cast<int>(h_seismogram_components.span());
+    if (specfem::MPI::main_proc()) {
+      SPECFEM_MPI_SAFECALL(MPI_Reduce(
+          MPI_IN_PLACE, h_seismogram_components.data(), count,
+          SPECFEM_MPI_TYPE_REAL, MPI_SUM, 0, specfem::MPI::communicator()));
+    } else {
+      SPECFEM_MPI_SAFECALL(MPI_Reduce(h_seismogram_components.data(), nullptr,
+                                      count, SPECFEM_MPI_TYPE_REAL, MPI_SUM, 0,
+                                      specfem::MPI::communicator()));
+    }
+#endif
+  }
+
+  // Set rotation matrix for a receiver (ncomponents x ncomponents)
+  void set_rotation_matrix(int irec_local,
+                           const std::array<std::array<type_real, ncomponents>,
+                                            ncomponents> &rotation_matrix) {
+    for (int i = 0; i < ncomponents; ++i) {
+      for (int j = 0; j < ncomponents; ++j) {
+        h_rotation_matrices(irec_local, i, j) = rotation_matrix[i][j];
       }
     }
   }
@@ -161,18 +184,17 @@ private:
   type_real t0;
 
 protected:
-  // dim3 rotation matrix (nrec, 3, 3) - always 3x3 regardless of dimension
   Kokkos::View<type_real ***, Kokkos::DefaultHostExecutionSpace>
       h_rotation_matrices;
 
-  Kokkos::View<type_real ***[3], Kokkos::LayoutLeft,
+  Kokkos::View<type_real ***[ncomponents], Kokkos::LayoutLeft,
                Kokkos::DefaultExecutionSpace>
       seismogram_components;
-  Kokkos::View<type_real ***[3], Kokkos::LayoutLeft,
+  Kokkos::View<type_real ***[ncomponents], Kokkos::LayoutLeft,
                Kokkos::DefaultExecutionSpace>::host_mirror_type
       h_seismogram_components;
 
-  std::unordered_map<std::string, std::unordered_map<std::string, int> >
+  std::unordered_map<std::string, std::unordered_map<std::string, int>>
       station_network_map;
   std::unordered_map<specfem::enums::wavefield, int> seismogram_type_map;
 };

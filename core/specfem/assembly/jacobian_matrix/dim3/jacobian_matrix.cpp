@@ -1,4 +1,5 @@
 #include "specfem/assembly/jacobian_matrix.hpp"
+#include "specfem/datatype.hpp"
 #include "specfem/jacobian.hpp"
 #include "specfem/mesh.hpp"
 
@@ -28,16 +29,16 @@ specfem::assembly::jacobian_matrix<
              ngllx),
       jacobian("specfem::assembly::jacobian_matrix::jacobian", nspec, ngllz,
                nglly, ngllx),
-      h_xix(Kokkos::create_mirror_view(xix)),
-      h_xiy(Kokkos::create_mirror_view(xiy)),
-      h_xiz(Kokkos::create_mirror_view(xiz)),
-      h_etax(Kokkos::create_mirror_view(etax)),
-      h_etay(Kokkos::create_mirror_view(etay)),
-      h_etaz(Kokkos::create_mirror_view(etaz)),
-      h_gammax(Kokkos::create_mirror_view(gammax)),
-      h_gammay(Kokkos::create_mirror_view(gammay)),
-      h_gammaz(Kokkos::create_mirror_view(gammaz)),
-      h_jacobian(Kokkos::create_mirror_view(jacobian)) {}
+      h_xix(specfem::datatype::create_mirror_view(xix)),
+      h_xiy(specfem::datatype::create_mirror_view(xiy)),
+      h_xiz(specfem::datatype::create_mirror_view(xiz)),
+      h_etax(specfem::datatype::create_mirror_view(etax)),
+      h_etay(specfem::datatype::create_mirror_view(etay)),
+      h_etaz(specfem::datatype::create_mirror_view(etaz)),
+      h_gammax(specfem::datatype::create_mirror_view(gammax)),
+      h_gammay(specfem::datatype::create_mirror_view(gammay)),
+      h_gammaz(specfem::datatype::create_mirror_view(gammaz)),
+      h_jacobian(specfem::datatype::create_mirror_view(jacobian)) {}
 
 template <typename ShapeFunctionView, typename CoordinateView>
 void initialize_jacobian_matrix(
@@ -51,8 +52,8 @@ void initialize_jacobian_matrix(
 
   Kokkos::parallel_for(
       "specfem::assembly::jacobian_matrix::initialize_from_mesh",
-      Kokkos::MDRangePolicy<Kokkos::Rank<4> >({ 0, 0, 0, 0 },
-                                              { nspec, ngllz, nglly, ngllx }),
+      Kokkos::MDRangePolicy<Kokkos::Rank<4>>({ 0, 0, 0, 0 },
+                                             { nspec, ngllz, nglly, ngllx }),
       KOKKOS_LAMBDA(const int ispec, const int iz, const int iy, const int ix) {
         // compute jacobian matrix
         const auto point_jacobian = specfem::jacobian::compute_jacobian(
@@ -70,19 +71,19 @@ void initialize_jacobian_matrix(
 
 void specfem::assembly::jacobian_matrix<
     specfem::element::dimension_tag::dim3>::sync_views() {
-  Kokkos::deep_copy(xix, h_xix);
-  Kokkos::deep_copy(xiy, h_xiy);
-  Kokkos::deep_copy(xiz, h_xiz);
-  Kokkos::deep_copy(etax, h_etax);
-  Kokkos::deep_copy(etay, h_etay);
-  Kokkos::deep_copy(etaz, h_etaz);
-  Kokkos::deep_copy(gammax, h_gammax);
-  Kokkos::deep_copy(gammay, h_gammay);
-  Kokkos::deep_copy(gammaz, h_gammaz);
-  Kokkos::deep_copy(jacobian, h_jacobian);
+  specfem::datatype::deep_copy(xix, h_xix);
+  specfem::datatype::deep_copy(xiy, h_xiy);
+  specfem::datatype::deep_copy(xiz, h_xiz);
+  specfem::datatype::deep_copy(etax, h_etax);
+  specfem::datatype::deep_copy(etay, h_etay);
+  specfem::datatype::deep_copy(etaz, h_etaz);
+  specfem::datatype::deep_copy(gammax, h_gammax);
+  specfem::datatype::deep_copy(gammay, h_gammay);
+  specfem::datatype::deep_copy(gammaz, h_gammaz);
+  specfem::datatype::deep_copy(jacobian, h_jacobian);
 }
 
-std::tuple<bool, Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace> >
+std::tuple<bool, Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace>>
 specfem::assembly::jacobian_matrix<
     specfem::element::dimension_tag::dim3>::check_small_jacobian() const {
   Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace> small_jacobian(
@@ -165,16 +166,16 @@ specfem::assembly::jacobian_matrix<specfem::element::dimension_tag::dim3>::
                assembly_mesh.nspec, assembly_mesh.element_grid.ngllz,
                assembly_mesh.element_grid.nglly,
                assembly_mesh.element_grid.ngllx),
-      h_xix(Kokkos::create_mirror_view(xix)),
-      h_xiy(Kokkos::create_mirror_view(xiy)),
-      h_xiz(Kokkos::create_mirror_view(xiz)),
-      h_etax(Kokkos::create_mirror_view(etax)),
-      h_etay(Kokkos::create_mirror_view(etay)),
-      h_etaz(Kokkos::create_mirror_view(etaz)),
-      h_gammax(Kokkos::create_mirror_view(gammax)),
-      h_gammay(Kokkos::create_mirror_view(gammay)),
-      h_gammaz(Kokkos::create_mirror_view(gammaz)),
-      h_jacobian(Kokkos::create_mirror_view(jacobian)) {
+      h_xix(specfem::datatype::create_mirror_view(xix)),
+      h_xiy(specfem::datatype::create_mirror_view(xiy)),
+      h_xiz(specfem::datatype::create_mirror_view(xiz)),
+      h_etax(specfem::datatype::create_mirror_view(etax)),
+      h_etay(specfem::datatype::create_mirror_view(etay)),
+      h_etaz(specfem::datatype::create_mirror_view(etaz)),
+      h_gammax(specfem::datatype::create_mirror_view(gammax)),
+      h_gammay(specfem::datatype::create_mirror_view(gammay)),
+      h_gammaz(specfem::datatype::create_mirror_view(gammaz)),
+      h_jacobian(specfem::datatype::create_mirror_view(jacobian)) {
 
   nspec = assembly_mesh.nspec;
   ngllx = assembly_mesh.element_grid.ngllx;
@@ -187,15 +188,15 @@ specfem::assembly::jacobian_matrix<specfem::element::dimension_tag::dim3>::
   initialize_jacobian_matrix(nspec, ngllz, nglly, ngllx, *this,
                              shape_derivatives, coordinates);
 
-  Kokkos::deep_copy(h_xix, xix);
-  Kokkos::deep_copy(h_xiy, xiy);
-  Kokkos::deep_copy(h_xiz, xiz);
-  Kokkos::deep_copy(h_etax, etax);
-  Kokkos::deep_copy(h_etay, etay);
-  Kokkos::deep_copy(h_etaz, etaz);
-  Kokkos::deep_copy(h_gammax, gammax);
-  Kokkos::deep_copy(h_gammay, gammay);
-  Kokkos::deep_copy(h_gammaz, gammaz);
-  Kokkos::deep_copy(h_jacobian, jacobian);
+  specfem::datatype::deep_copy(h_xix, xix);
+  specfem::datatype::deep_copy(h_xiy, xiy);
+  specfem::datatype::deep_copy(h_xiz, xiz);
+  specfem::datatype::deep_copy(h_etax, etax);
+  specfem::datatype::deep_copy(h_etay, etay);
+  specfem::datatype::deep_copy(h_etaz, etaz);
+  specfem::datatype::deep_copy(h_gammax, gammax);
+  specfem::datatype::deep_copy(h_gammay, gammay);
+  specfem::datatype::deep_copy(h_gammaz, gammaz);
+  specfem::datatype::deep_copy(h_jacobian, jacobian);
   return;
 }

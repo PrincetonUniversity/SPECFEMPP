@@ -78,7 +78,7 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
   for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver)
     gcoords.push_back(receivers[ireceiver]->get_global_coordinates());
 
-  auto [local_coords, islice_selected] =
+  auto [local_coords, partition_index_selected] =
       specfem::algorithms::locate_point(gcoords, mesh);
 
   for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
@@ -86,11 +86,10 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
     std::string station_name = receiver->get_station_name();
     std::string network_name = receiver->get_network_name();
 
-    station_names_.push_back(station_name);
-    network_names_.push_back(network_name);
+    stations_.push_back({ network_name, station_name, 0, seismogram_types_ });
     station_network_map[station_name][network_name] = ireceiver;
 
-    if (islice_selected[ireceiver] != myrank) {
+    if (partition_index_selected[ireceiver] != myrank) {
       h_elements(ireceiver) = -1;
       continue;
     }
@@ -139,10 +138,12 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
   // Build per-material receiver index stores using tag_dispatch::Storage.
   this->build_index_stores(h_elements, element_types);
 
-  receiver_islice_.assign(islice_selected.begin(), islice_selected.end());
+  for (int i = 0; i < nreceivers; ++i)
+    stations_[i].partition_index = partition_index_selected[i];
 
   for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver)
-    receivers[ireceiver]->set_islice(islice_selected[ireceiver]);
+    receivers[ireceiver]->set_partition_index(
+        partition_index_selected[ireceiver]);
 
   Kokkos::deep_copy(lagrange_interpolant, h_lagrange_interpolant);
   Kokkos::deep_copy(elements, h_elements);
