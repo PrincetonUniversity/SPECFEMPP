@@ -51,9 +51,10 @@ template <> Assembly<specfem::element::dimension_tag::dim2>::Assembly() {
       { specfem::enums::source_format::YAML, sources_file }
     };
 
-    auto [sources, t0] =
+    auto [sources, t0, starttime] =
         specfem::io::read_sources<specfem::element::dimension_tag::dim2>(
             entries, 1, 0, 0, specfem::simulation::type::forward);
+    (void)starttime; // unused in test
 
     this->Sources.push_back(sources);
 
@@ -102,9 +103,10 @@ template <> Assembly<specfem::element::dimension_tag::dim3>::Assembly() {
       { specfem::enums::source_format::YAML, sources_file }
     };
 
-    auto [sources, t0] =
+    auto [sources, t0, starttime3d] =
         specfem::io::read_sources<specfem::element::dimension_tag::dim3>(
             entries, 1, 0, 0, specfem::simulation::type::forward);
+    (void)starttime3d; // unused in test
 
     this->Sources.push_back(sources);
 

@@ -31,7 +31,7 @@ using AnyQuantity =
     std::variant<Dimensionless, Seconds, Hertz, Omega, Meters, Kilometers,
                  MetersPerSecond, KilometersPerSecond, Radians, Grams,
                  Kilograms, GramPerCubicMeter, KilogramPerCubicMeter, Pascal,
-                 Megapascal>;
+                 Megapascal, DyneCentimeter, NewtonMeter>;
 
 // ---------------------------------------------------------------------------
 // Internal helpers

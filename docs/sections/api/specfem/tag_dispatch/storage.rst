@@ -6,10 +6,7 @@
 
 .. doxygentypedef:: specfem::tag_dispatch::TypedStorage
 
-.. doxygenfunction:: specfem::tag_dispatch::impl::deep_copy
-
-.. doxygenstruct:: specfem::tag_dispatch::impl::UnifiedSlot
-    :members:
+.. doxygenfunction:: specfem::tag_dispatch::deep_copy
 
 .. doxygenstruct:: specfem::tag_dispatch::impl::TypePolicy
     :members:

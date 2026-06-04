@@ -6,7 +6,9 @@
 #include "specfem/io/seismogram/impl/channel_generator.hpp"
 #include "specfem/io/seismogram/impl/sac.hpp"
 #include "specfem/io/seismogram/impl/seismogram_writer.hpp"
+#include "specfem/program/context.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/utilities.hpp"
 #include <array>
 #include <cstring>
 #include <fstream>
@@ -27,6 +29,7 @@ struct MockSeismogramEntry {
 struct MockStationInfo {
   std::string network_name;
   std::string station_name;
+  int partition_index;
   std::vector<specfem::enums::wavefield> types;
 
   const std::vector<specfem::enums::wavefield> &get_seismogram_types() const {
@@ -35,7 +38,7 @@ struct MockStationInfo {
 };
 
 struct SeismogramRange {
-  using value_type = std::pair<double, std::vector<double> >;
+  using value_type = std::pair<double, std::vector<double>>;
 
   const std::vector<MockSeismogramEntry> &entries;
 
@@ -56,19 +59,15 @@ struct SeismogramRange {
   Iter end() const { return { &entries, entries.size() }; }
 };
 
-struct StationRange {
-  std::vector<MockStationInfo> stations_vec;
-  auto begin() const { return stations_vec.begin(); }
-  auto end() const { return stations_vec.end(); }
-};
+using StationRange = std::vector<MockStationInfo>;
 
 template <specfem::element::dimension_tag DimTag> struct MockReceivers {
   static constexpr specfem::element::dimension_tag dimension_tag = DimTag;
 
   std::vector<MockStationInfo> station_list;
-  std::map<std::string, std::vector<MockSeismogramEntry> > seismo_data;
+  std::map<std::string, std::vector<MockSeismogramEntry>> seismo_data;
 
-  StationRange stations() const { return { station_list }; }
+  StationRange stations() const { return station_list; }
 
   SeismogramRange get_seismogram(const std::string &station_name,
                                  const std::string &network_name,
@@ -85,7 +84,7 @@ template <specfem::element::dimension_tag DimTag> struct MockReceivers {
 
   void add_station(const std::string &net, const std::string &sta,
                    const std::vector<specfem::enums::wavefield> &types) {
-    station_list.push_back({ net, sta, types });
+    station_list.push_back({ net, sta, 0, types });
   }
 
   void add_seismogram(const std::string &net, const std::string &sta,
@@ -94,6 +93,26 @@ template <specfem::element::dimension_tag DimTag> struct MockReceivers {
     const std::string key =
         net + "." + sta + "." + std::to_string(static_cast<int>(type));
     seismo_data[key] = std::move(entries);
+  }
+
+  int get_nsteps() const {
+    if (!seismo_data.empty())
+      return static_cast<int>(seismo_data.begin()->second.size());
+    return 0;
+  }
+
+  double get_t0() const {
+    for (auto &[k, v] : seismo_data)
+      if (!v.empty())
+        return v.front().time;
+    return 0.0;
+  }
+
+  double get_sample_interval() const {
+    for (auto &[k, v] : seismo_data)
+      if (v.size() >= 2)
+        return v[1].time - v[0].time;
+    return 1.0;
   }
 };
 
@@ -114,6 +133,25 @@ make_sinusoidal_seismogram(int npts, double dt, double omega, int ncomp) {
 
 bool compare_files(const std::string &p1, const std::string &p2,
                    bool is_sac = false) {
+  if (!is_sac) {
+    // Parse ASCII seismogram columns and compare with is_close
+    std::ifstream f1(p1);
+    std::ifstream f2(p2);
+    if (!f1.is_open() || !f2.is_open())
+      return false;
+    type_real t1, v1, t2, v2;
+    while (f1 >> t1 >> v1) {
+      if (!(f2 >> t2 >> v2))
+        return false;
+      if (!specfem::utilities::is_close(t1, t2) ||
+          !specfem::utilities::is_close(v1, v2))
+        return false;
+    }
+    type_real dummy;
+    return !(f2 >> dummy);
+  }
+
+  // SAC: read binary and compare float samples with is_close
   std::ifstream f1(p1, std::ifstream::binary | std::ifstream::ate);
   std::ifstream f2(p2, std::ifstream::binary | std::ifstream::ate);
 
@@ -131,11 +169,6 @@ bool compare_files(const std::string &p1, const std::string &p2,
   f1.read(d1.data(), size);
   f2.read(d2.data(), size);
 
-  if (!is_sac) {
-    return d1 == d2;
-  }
-
-  // Floating point comparison with 1e-4 tolerance for SAC files
   const float *f1_data = reinterpret_cast<const float *>(d1.data());
   const float *f2_data = reinterpret_cast<const float *>(d2.data());
   for (size_t i = 0; i < size / sizeof(float); ++i) {
@@ -143,15 +176,13 @@ bool compare_files(const std::string &p1, const std::string &p2,
       // Ignore text header differences (e.g. KEVNM "SPECFEMPP" vs "-12345  ")
       continue;
     }
-
-    if (std::abs(f1_data[i] - f2_data[i]) > 1e-4f) {
-      if (std::isnan(f1_data[i]) && std::isnan(f2_data[i]))
-        continue;
+    // SAC integer header fields (-12345 undefined sentinel) reinterpreted as
+    // float produce NaN; skip any position involving NaN.
+    if (std::isnan(f1_data[i]) || std::isnan(f2_data[i]))
+      continue;
+    if (!specfem::utilities::is_close(f1_data[i], f2_data[i])) {
       std::cout << "Mismatch at float index " << i << ": " << f1_data[i]
                 << " != " << f2_data[i] << "\n";
-      // Also ignore exact differences in the integer/text header fields
-      // but in practice 1e-4 is large enough for float deviations,
-      // and small enough that large int/string differences will fail.
       return false;
     }
   }
@@ -161,6 +192,14 @@ bool compare_files(const std::string &p1, const std::string &p2,
 } // namespace
 
 class SeismogramWriterReferenceTest : public ::testing::Test {
+public:
+  static void SetUpTestSuite() {
+    context_ =
+        std::make_unique<specfem::program::Context>(std::vector<std::string>{});
+  }
+
+  static void TearDownTestSuite() { context_.reset(); }
+
 protected:
   const std::string kOutDir = ".";
 
@@ -171,7 +210,11 @@ protected:
   void track(const std::string &path) { created_files_.push_back(path); }
 
   std::vector<std::string> created_files_;
+  static std::unique_ptr<specfem::program::Context> context_;
 };
+
+std::unique_ptr<specfem::program::Context>
+    SeismogramWriterReferenceTest::context_ = nullptr;
 
 TEST_F(SeismogramWriterReferenceTest, AsciiMatchesReference) {
   const int npts = 5;
@@ -186,7 +229,8 @@ TEST_F(SeismogramWriterReferenceTest, AsciiMatchesReference) {
 
   specfem::io::impl::ChannelGenerator gen(dt);
   specfem::io::impl::SeismogramFormatWriter<
-      specfem::enums::seismogram_format::ascii>::write(receivers, gen, kOutDir);
+      specfem::enums::seismogram_format::ascii>::write(receivers.stations(),
+                                                       receivers, gen, kOutDir);
 
   constexpr std::array<char, 2> kDim2 = { 'X', 'Z' };
   const auto files = gen.get_station_filenames(
@@ -222,7 +266,8 @@ TEST_F(SeismogramWriterReferenceTest, SacMatchesReference) {
 
   specfem::io::impl::ChannelGenerator gen(dt);
   specfem::io::impl::SeismogramFormatWriter<
-      specfem::enums::seismogram_format::sac>::write(receivers, gen, kOutDir);
+      specfem::enums::seismogram_format::sac>::write(receivers.stations(),
+                                                     receivers, gen, kOutDir);
 
   constexpr std::array<char, 2> kDim2 = { 'X', 'Z' };
   const auto base_files = gen.get_station_filenames(

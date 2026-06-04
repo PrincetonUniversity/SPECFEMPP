@@ -63,11 +63,12 @@ void program_3d(
   // --------------------------------------------------------------
   //                   Get Sources
   // --------------------------------------------------------------
-  auto [sources, t0] =
+  auto [sources, t0, starttime] =
       specfem::io::read_sources<specfem::element::dimension_tag::dim3>(
           setup.get_source_entries(), nsteps, setup.get_t0(), setup.get_dt(),
           simulation_type);
   setup.update_t0(t0); // Update t0 in case it was changed
+  setup.set_starttime(starttime);
 
   // --------------------------------------------------------------
   //                   Get receivers

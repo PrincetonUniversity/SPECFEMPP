@@ -1,0 +1,13 @@
+PDE 2000 1 1 0 0 0.00 0.0 0.0 0.0 0.0 0.0 TEST
+event name:      test
+time shift:      30.0
+half duration:   1.0
+x:               2000.0
+y:               3000.0
+z:               2000.0
+Mrr:             0.0
+Mtt:             1.0e7
+Mpp:             1.0e7
+Mrt:             0.0
+Mrp:             0.0
+Mtp:            -1.0e7

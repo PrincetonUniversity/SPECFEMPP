@@ -9,6 +9,12 @@
 Dimension-Specific Implementation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. toctree::
+    :maxdepth: 1
+
+    dim2/index
+    dim3/index
+
 .. doxygenstruct:: specfem::assembly::mesh< specfem::element::dimension_tag::dim2 >
    :members:
 
