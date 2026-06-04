@@ -1,5 +1,6 @@
 #include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/element_types.hpp"
+#include "specfem/element_connections/tags.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/mesh.hpp"
@@ -34,8 +35,8 @@ specfem::assembly::element_intersections<
 
   // Collect self/coupled face vectors for each tag combination
   struct CollectedFaces {
-    std::vector<specfem::mesh_entity::face<dimension_tag> > self_collect;
-    std::vector<specfem::mesh_entity::face<dimension_tag> > coupled_collect;
+    std::vector<specfem::mesh_entity::face<dimension_tag>> self_collect;
+    std::vector<specfem::mesh_entity::face<dimension_tag>> coupled_collect;
   };
 
   specfem::tag_dispatch::Storage<CollectedFaces, IntersectionCombinations>
@@ -45,15 +46,25 @@ specfem::assembly::element_intersections<
         constexpr auto coupled_medium = specfem::element_coupling::attributes<
             TagsType::dimension_tag, TagsType::interface_tag>::coupled_medium();
 
-        std::vector<specfem::mesh_entity::face<dimension_tag> > self_collect;
-        std::vector<specfem::mesh_entity::face<dimension_tag> > coupled_collect;
+        std::vector<specfem::mesh_entity::face<dimension_tag>> self_collect;
+        std::vector<specfem::mesh_entity::face<dimension_tag>> coupled_collect;
 
         const auto &graph = mesh.graph();
 
         // Filter out corresponding connections
         auto filter = [&graph](const auto &edge) {
+          if constexpr (TagsType::connection_tag ==
+                        specfem::element_connections::type::weakly_conforming) {
+            return false;
+          } else if constexpr (TagsType::connection_tag ==
+                               specfem::element_connections::type::
+                                   weakly_conforming) {
+            return true;
+          }
           return graph[edge].connection == TagsType::connection_tag;
-        };
+        }; // TODO yell at Hanson if this is still in when the PR is reviewed.
+           // This is to test the nonconforming kernel on a conforming mesh
+           // prior to a NC mesher.
 
         // Create a filtered graph view
         const auto &nc_graph = boost::make_filtered_graph(graph, filter);
@@ -164,7 +175,7 @@ specfem::assembly::element_intersections<
 specfem::assembly::face_view_from_collected_faces(
     const std::string &label,
     const std::vector<
-        specfem::mesh_entity::face<specfem::element::dimension_tag::dim3> >
+        specfem::mesh_entity::face<specfem::element::dimension_tag::dim3>>
         &collected_faces,
     const specfem::mesh_entity::element<specfem::element::dimension_tag::dim3>
         &element) {

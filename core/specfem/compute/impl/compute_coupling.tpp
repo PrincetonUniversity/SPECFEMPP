@@ -5,6 +5,7 @@
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/boundary_conditions.hpp"
 #include "specfem/chunk_edge.hpp"
+#include "specfem/element/tags.hpp"
 #include "specfem/element_connections.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
@@ -58,9 +59,12 @@ void compute_coupling_core_weakly_conforming(
 
   const auto num_points = assembly.mesh.element_grid.ngllx;
 
-  using parallel_config =
+  using parallel_config = std::conditional<
+      dimension_tag == specfem::element::dimension_tag::dim2,
       specfem::parallel_configuration::default_chunk_edge_config<
-          dimension_tag, Kokkos::DefaultExecutionSpace>;
+          dimension_tag, Kokkos::DefaultExecutionSpace>,
+      specfem::parallel_configuration::default_chunk_face_config<
+          dimension_tag, Kokkos::DefaultExecutionSpace>>;
 
   using CoupledFieldType = typename specfem::element_coupling::attributes<
       dimension_tag, interface_tag>::template coupled_field_t<connection_tag>;
@@ -139,9 +143,12 @@ void compute_coupling_core_nonconforming(
 
   const auto num_points = assembly.mesh.element_grid.ngllx;
 
-  using parallel_config =
+  using parallel_config = std::conditional<
+      dimension_tag == specfem::element::dimension_tag::dim2,
       specfem::parallel_configuration::default_chunk_edge_config<
-          dimension_tag, Kokkos::DefaultExecutionSpace>;
+          dimension_tag, Kokkos::DefaultExecutionSpace>,
+      specfem::parallel_configuration::default_chunk_face_config<
+          dimension_tag, Kokkos::DefaultExecutionSpace>>;
 
   // As written, field types cannot readily be defined in attributes. Define
   // them here.
@@ -159,7 +166,7 @@ void compute_coupling_core_nonconforming(
                                         using_simd>,
       specfem::chunk_edge::acceleration<parallel_config::chunk_size, NGLL,
                                         dimension_tag, coupled_medium,
-                                        using_simd> >;
+                                        using_simd>>;
 
   using CouplingTermsPack = specfem::chunk_edge::coupling_terms_pack<
       dimension_tag, interface_tag, boundary_tag, flux_scheme_tag,
@@ -172,7 +179,7 @@ void compute_coupling_core_nonconforming(
       type_real, dimension_tag, parallel_config::chunk_size, NQuad_intersection,
       specfem::element::attributes<dimension_tag, self_medium>::components,
       using_simd, Kokkos::DefaultExecutionSpace::scratch_memory_space,
-      Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+      Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
   specfem::execution::ChunkedIntersectionIterator chunk(
       parallel_config(), self_intersections, coupled_intersections);
@@ -260,11 +267,11 @@ void compute_coupling(
 
   specfem::tag_dispatch::for_each(
       specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
-      CONNECTION_SET(weakly_conforming, nonconforming) *
-      INTERFACE_SET(elastic_acoustic, acoustic_elastic) *
-      BOUNDARY_SET(none, acoustic_free_surface, stacey,
-                   composite_stacey_dirichlet) *
-      FLUX_SCHEME_SET(natural),
+          CONNECTION_SET(weakly_conforming, nonconforming) *
+          INTERFACE_SET(elastic_acoustic, acoustic_elastic) *
+          BOUNDARY_SET(none, acoustic_free_surface, stacey,
+                       composite_stacey_dirichlet) *
+          FLUX_SCHEME_SET(natural),
       [&]<typename ElementTags>() {
         constexpr auto self_medium = specfem::element_coupling::attributes<
             ElementTags::dimension_tag,
@@ -272,12 +279,10 @@ void compute_coupling(
         if constexpr (self_medium == Tags::medium_tag) {
           compute_coupling_core<
               NGLL, NGLL,
-              specfem::tags::Tags<ElementTags::dimension_tag,
-                                  ElementTags::connection_tag,
-                                  WavefieldType,
-                                  ElementTags::interface_tag,
-                                  ElementTags::boundary_tag,
-                                  ElementTags::flux_scheme_tag> >(
+              specfem::tags::Tags<
+                  ElementTags::dimension_tag, ElementTags::connection_tag,
+                  WavefieldType, ElementTags::interface_tag,
+                  ElementTags::boundary_tag, ElementTags::flux_scheme_tag>>(
               assembly);
         }
       });
