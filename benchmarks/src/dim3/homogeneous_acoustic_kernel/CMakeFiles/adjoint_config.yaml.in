@@ -27,6 +27,12 @@ parameters:
             format: NPY
             directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/ForwardWavefield"
         writer:
+          # display:
+          #   format: VTKHDF
+          #   directory: @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/vtk/
+          #   field: displacement
+          #   simulation-field: adjoint
+          #   time-interval: 5
           kernels:
             format: NPY
             directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/kernels"

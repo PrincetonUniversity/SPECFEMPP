@@ -55,7 +55,7 @@ struct point_container<DimensionTag, specfem::element::medium_tag::acoustic,
 
   KOKKOS_FUNCTION
   point_container(const value_type rho, const value_type kappa)
-      : point_container(rho, kappa, rho * kappa,
+      : point_container(rho, kappa, rho + kappa,
                         static_cast<type_real>(2.0) * kappa) {}
 };
 
