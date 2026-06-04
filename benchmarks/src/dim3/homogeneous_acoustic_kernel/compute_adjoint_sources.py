@@ -17,7 +17,7 @@ import numpy as np
 def compute_adjoint_source(time, pressure):
     dt = time[1] - time[0]
     dp_dt = np.gradient(pressure, dt)
-    norm = np.trapz(dp_dt**2, time)
+    norm = np.trapezoid(dp_dt**2, time)
     if norm == 0.0:
         return np.zeros_like(pressure)
     return -dp_dt / norm

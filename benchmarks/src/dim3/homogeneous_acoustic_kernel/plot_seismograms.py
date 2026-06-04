@@ -53,7 +53,7 @@ def calculate_epicentral_distance(station_x, station_y, source_x, source_y):
 def main():
     # Read station and source data
     stations = read_stations("DATA/STATIONS")
-    source = read_force_yaml("force.yaml")
+    source = read_force_yaml("forward_source.yaml")
 
     # Calculate epicentral distances and sort stations
     for station in stations:
@@ -89,10 +89,10 @@ def main():
 
     ax1.plot(source["x"], source["y"], "r*", markersize=15, label="Source")
 
-    ax1.set_xlim(0, 100000)
+    ax1.set_xlim(0, 150000)
     ax1.set_ylim(0, 100000)
-    ax1.set_xticks(range(0, 100001, 20000))
-    ax1.set_xticklabels([f"{x // 1000}km" for x in range(0, 100001, 20000)])
+    ax1.set_xticks(range(0, 150001, 20000))
+    ax1.set_xticklabels([f"{x // 1000}km" for x in range(0, 150001, 20000)])
     ax1.set_yticks(range(0, 100001, 20000))
     ax1.set_yticklabels([f"{y // 1000}km" for y in range(0, 100001, 20000)])
     ax1.set_xlabel("X")

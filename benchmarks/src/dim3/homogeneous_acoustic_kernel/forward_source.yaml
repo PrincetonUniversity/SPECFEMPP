@@ -1,7 +1,7 @@
 number-of-sources: 1
 sources:
   - force:
-      x : 60000.0
+      x : 110000.0
       y : 50000.0
       z : -50000.0
       source_surf: false

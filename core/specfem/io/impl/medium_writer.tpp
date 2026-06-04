@@ -123,11 +123,9 @@ int specfem::io::impl::write_medium_group(
 
   const int n_elements = element_indices.size();
 
-    using DomainView3d =
-      typename specfem::data_access::impl::ContainerValueType<
-        specfem::data_access::ContainerType::domain,
-        specfem::element::dimension_tag::dim3>::template scalar_type<
-        type_real, Kokkos::HostSpace>;
+  using DomainView3d =
+      specfem::datatype::DomainView<specfem::element::dimension_tag::dim3,
+                                    type_real, 4, Kokkos::HostSpace>;
   DomainView3d x("xcoordinates", n_elements, ngllz, nglly, ngllx);
   DomainView3d y("ycoordinates", n_elements, ngllz, nglly, ngllx);
   DomainView3d z("zcoordinates", n_elements, ngllz, nglly, ngllx);

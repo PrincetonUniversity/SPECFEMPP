@@ -55,14 +55,14 @@ def main():
     kernels_dir = sys.argv[1]
     output_png = sys.argv[2]
 
-    source = (60000.0, 50000.0, -50000.0)
+    source = (110000.0, 50000.0, -50000.0)
     station = (40000.0, 50000.0, -50000.0)
     y_center = source[1]
 
     X, Y, Z, kernels = load_kernels(kernels_dir)
     x, z, ks = slice_xz(X, Y, Z, kernels, y_center)
 
-    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+    fig, axes = plt.subplots(1, 3, figsize=(20, 5))
     labels = {"kappa": "κ kernel", "alpha": "α kernel", "rhop": "ρ' kernel"}
 
     for ax, (name, label) in zip(axes, labels.items()):
