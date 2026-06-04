@@ -30,3 +30,7 @@ template class specfem::solver::time_marching<
 // template class specfem::solver::time_marching<
 //     specfem::simulation::type::forward,
 //     specfem::element::dimension_tag::dim3, 8>;
+
+template class specfem::solver::time_marching<
+    specfem::simulation::type::combined, specfem::element::dimension_tag::dim3,
+    5>;
