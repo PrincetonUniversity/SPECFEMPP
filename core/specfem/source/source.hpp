@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/constants.hpp"
+#include "specfem/datetime.hpp"
 
 #include "specfem/enums.hpp"
 #include "specfem/point.hpp"
@@ -11,6 +12,7 @@
 #include "specfem/utilities.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
+#include <optional>
 #include <sstream>
 
 namespace specfem::sources {
@@ -160,6 +162,20 @@ public:
   void update_tshift(type_real tshift) {
     source_time_function->update_tshift(tshift);
   };
+
+  /**
+   * @brief Get the UTC start time of this source (nullopt if not set).
+   */
+  std::optional<specfem::datetime::type> get_starttime() const {
+    return starttime_;
+  }
+
+  /**
+   * @brief Set the UTC start time of this source.
+   */
+  void set_starttime(std::optional<specfem::datetime::type> t) {
+    starttime_ = t;
+  }
   /**
    * @brief User output — assembles source name, location, type-specific
    * details, source time function, and (when MPI-enabled) the owning rank.
@@ -181,8 +197,8 @@ public:
     os << "    Source Time Function: \n"
        << source_time_function->print() << "\n";
 #ifdef SPECFEM_ENABLE_MPI
-    if (islice_ >= 0)
-      os << "    MPI Rank: " << islice_ << "\n";
+    if (partition_index_ >= 0)
+      os << "    MPI Rank: " << partition_index_ << "\n";
 #endif
     return os.str();
   }
@@ -324,8 +340,8 @@ public:
    */
   specfem::element::medium_tag get_medium_tag() const { return medium_tag; }
 
-  int get_islice() const { return islice_; }
-  void set_islice(int rank) { islice_ = rank; }
+  int get_partition_index() const { return partition_index_; }
+  void set_partition_index(int rank) { partition_index_ = rank; }
 
 protected:
   std::unique_ptr<specfem::source_time_functions::stf>
@@ -338,7 +354,10 @@ protected:
       global_coordinates; ///< Global coordinates of the source in the global
                           ///< coordinate system
   specfem::element::medium_tag medium_tag;
-  int islice_ = -1; ///< MPI rank that owns this source (-1 = not yet located)
+  std::optional<specfem::datetime::type> starttime_; ///< Optional UTC origin
+                                                     ///< time
+  int partition_index_ =
+      -1; ///< MPI rank that owns this source (-1 = not yet located)
 };
 
 } // namespace specfem::sources

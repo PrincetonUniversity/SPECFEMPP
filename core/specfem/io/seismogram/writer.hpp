@@ -5,9 +5,12 @@
 #include "impl/sac.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/constants.hpp"
+#include "specfem/datetime.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/io/writer.hpp"
+#include "specfem/mpi.hpp"
 #include "specfem/setup.hpp"
+#include <optional>
 #include <stdexcept>
 #include <vector>
 
@@ -38,11 +41,14 @@ public:
       const specfem::enums::elastic_wave elastic_wave,
       const specfem::enums::electromagnetic_wave electromagnetic_wave,
       const std::string output_folder, const type_real dt, const type_real t0,
-      const int nstep_between_samples)
-      : impl::ChannelGenerator(dt), type(type), elastic_wave(elastic_wave),
-        electromagnetic_wave(electromagnetic_wave),
+      const int nstep_between_samples,
+      std::optional<specfem::datetime::type> starttime = std::nullopt,
+      const std::optional<bool> write_from_main = std::nullopt)
+      : impl::ChannelGenerator(dt, nstep_between_samples), type(type),
+        elastic_wave(elastic_wave), electromagnetic_wave(electromagnetic_wave),
         output_folder(output_folder), dt(dt), t0(t0),
-        nstep_between_samples(nstep_between_samples) {};
+        nstep_between_samples(nstep_between_samples), starttime_(starttime),
+        write_from_main(write_from_main) {};
 
   void write(specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
                  &assembly) override {
@@ -59,16 +65,28 @@ private:
   void write_impl(specfem::assembly::assembly<DimensionTag> &assembly) {
     auto &receivers = assembly.receivers;
     receivers.sync_seismograms();
+
+    const int my_rank = specfem::MPI::get_rank();
+    const bool is_main = specfem::MPI::main_proc();
+    const bool from_main = write_from_main.value_or(false);
+
+    if (from_main)
+      receivers.gather_to_main();
+
+    auto filtered_stations = receivers.stations([&](const auto &s) {
+      return from_main ? is_main : s.partition_index == my_rank;
+    });
+
     switch (type) {
     case specfem::enums::seismogram_format::ascii:
       specfem::io::impl::write_seismogram<
-          specfem::enums::seismogram_format::ascii>(receivers, *this,
-                                                    output_folder);
+          specfem::enums::seismogram_format::ascii>(
+          filtered_stations, receivers, *this, output_folder, starttime_);
       break;
     case specfem::enums::seismogram_format::sac:
       specfem::io::impl::write_seismogram<
-          specfem::enums::seismogram_format::sac>(receivers, *this,
-                                                  output_folder);
+          specfem::enums::seismogram_format::sac>(
+          filtered_stations, receivers, *this, output_folder, starttime_);
       break;
     default:
       throw std::runtime_error(
@@ -91,6 +109,11 @@ private:
                              ///< wavefield
   int nstep_between_samples; ///< number of timesteps between seismogram
                              ///< sampling (seismogram sampling frequency)
+  std::optional<specfem::datetime::type> starttime_; ///< Optional UTC start
+                                                     ///< datetime of the
+                                                     ///< simulation
+  std::optional<bool> write_from_main; ///< Gather all data to rank 0 and write
+                                       ///< from main proc
 };
 
 } // namespace io

@@ -50,6 +50,18 @@ std::string snake_to_pascal(const std::string &str);
  */
 std::string to_lower(const std::string &str);
 
+/**
+ * @brief Strip leading and trailing whitespace from a string.
+ *
+ * @param str Input string
+ * @return std::string String with leading/trailing whitespace removed
+ *
+ * @code
+ * trim("  hello world  "); // Returns "hello world"
+ * @endcode
+ */
+std::string trim(const std::string &str);
+
 BOOST_PP_SEQ_FOR_EACH(_DECLARE_CONFIG_STRING_FUNCTIONS, _, CONFIG_STRINGS)
 
 } // namespace utilities

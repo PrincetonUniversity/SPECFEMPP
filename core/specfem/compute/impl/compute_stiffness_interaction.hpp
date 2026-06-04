@@ -1,23 +1,14 @@
 #pragma once
 
-#include "compute_stiffness_interaction.hpp"
-#include "specfem/algorithms.hpp"
 #include "specfem/assembly/assembly.hpp"
-#include "specfem/boundary_conditions.hpp"
-#include "specfem/chunk_element.hpp"
-#include "specfem/datatype.hpp"
 #include "specfem/element.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
-#include "specfem/macros.hpp"
-#include "specfem/medium_physics.hpp"
-#include "specfem/parallel_configuration.hpp"
+#include "specfem/mesh_entity.hpp"
 #include "specfem/point.hpp"
-#include "specfem/quadrature.hpp"
-#include "specfem/tag_dispatch.hpp"
-#include "specfem/tags.hpp"
+#include "stiffness_kernels.hpp"
 #include <Kokkos_Core.hpp>
-#include <type_traits>
+#include <limits>
 
 namespace specfem::compute::impl {
 
@@ -31,92 +22,26 @@ int compute_stiffness_interaction(
   constexpr auto boundary_tag = Tags::boundary_tag;
   constexpr auto attenuation_tag = Tags::attenuation_tag;
   constexpr auto dimension_tag = Tags::dimension_tag;
-  constexpr int ngll = NGLL;
 
   const auto elements = assembly.element_types.get_elements_on_device(
       medium_tag, property_tag, attenuation_tag, boundary_tag);
 
-  // Get the number of elements that match the specified tags
   const int nelements = elements.extent(0);
 
-  // Get the element grid information (ngll, ngllx, ngllz, order)
-  const auto &element_grid = assembly.mesh.element_grid;
-
-  // Return if there are no elements matching the tag combination
   if (nelements == 0)
     return 0;
 
-  // Check if the number of GLL points in the mesh elements matches the template
-  if (element_grid != NGLL) {
+  if (assembly.mesh.element_grid != NGLL) {
     throw std::runtime_error(
         "The number of GLL points in the mesh elements must match "
         "the template parameter NGLL.");
   }
 
-  // Alias some assembly members for easier acces
-  const auto &mesh = assembly.mesh;
-  const auto &jacobian_matrix = assembly.jacobian_matrix;
-  const auto &properties = assembly.properties;
-  const auto &boundaries = assembly.boundaries;
-  const auto &attenuation = assembly.attenuation;
+  specfem::mesh_entity::element_grid<dimension_tag,
+                                     specfem::mesh_entity::Grid<NGLL>>
+      element_grid{};
 
-  // Get the simulation field and boundary values
-  const auto &field =
-      assembly.fields.template get_simulation_field<Tags::wavefield_tag>();
-  const auto &boundary_values =
-      assembly.boundary_values.template get_container<boundary_tag>();
-
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
-  constexpr bool using_simd = false;
-#else
-  // TODO(Rohit : DIM3_SIMD) Enable simd execution for dim3 solver
-  constexpr bool using_simd =
-      (Tags::dimension_tag == specfem::element::dimension_tag::dim2) ? true
-                                                                     : false;
-#endif
-
-  using simd = specfem::datatype::simd<type_real, using_simd>;
-
-  using ParallelConfig = specfem::parallel_configuration::default_chunk_config<
-      Tags::dimension_tag, simd, Kokkos::DefaultExecutionSpace>;
-
-  using ChunkFieldPackType = specfem::chunk_element::stiffness_field_pack<
-      attenuation_tag, ParallelConfig::chunk_size, ngll, dimension_tag,
-      medium_tag, using_simd>;
-
-  using ChunkStressIntegrandType = specfem::chunk_element::stress_integrand<
-      ParallelConfig::chunk_size, ngll, Tags::dimension_tag, Tags::medium_tag,
-      Kokkos::DefaultExecutionSpace::scratch_memory_space,
-      Kokkos::MemoryTraits<Kokkos::Unmanaged>, using_simd>;
-  using ElementQuadratureType = specfem::quadrature::lagrange_derivative<
-      ngll, Tags::dimension_tag,
-      Kokkos::DefaultExecutionSpace::scratch_memory_space,
-      Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
-
-  using PointTags = specfem::tags::Tags<Tags::dimension_tag, Tags::medium_tag,
-                                        Tags::property_tag,
-                                        Tags::attenuation_tag, using_simd>;
-
-  using PointBoundaryType =
-      specfem::point::boundary<Tags::boundary_tag, Tags::dimension_tag,
-                               using_simd>;
-  using PointDisplacementType = specfem::point::displacement<PointTags>;
-  using PointVelocityType = specfem::point::velocity<PointTags>;
-  using PointAccelerationType = specfem::point::acceleration<PointTags>;
-  using PointJacobianMatrixType =
-      specfem::point::jacobian_matrix<Tags::dimension_tag, true, using_simd>;
-  using PointPropertyType = specfem::point::properties<PointTags>;
-  using PointFieldDerivativesType =
-      specfem::point::field_derivatives<PointTags>;
-
-  using GradientPackType = specfem::point::stiffness_gradient_pack<
-      attenuation_tag, typename PointFieldDerivativesType::value_type>;
-
-  using PointWeightsType = specfem::point::weights<Tags::dimension_tag>;
-
-  int scratch_size = ChunkFieldPackType::shmem_size() +
-                     ChunkStressIntegrandType::shmem_size() +
-                     ElementQuadratureType::shmem_size();
+  using ParallelConfig = typename gather_kernel<NGLL, Tags>::ParallelConfig;
 
   specfem::execution::ChunkedDomainIterator chunk(ParallelConfig(), elements,
                                                   element_grid);
@@ -127,6 +52,14 @@ int compute_stiffness_interaction(
                 Tags::wavefield_tag ==
                     specfem::simulation::field_type::backward) {
 
+    const auto &field =
+        assembly.fields.template get_simulation_field<Tags::wavefield_tag>();
+    const auto &boundary_values =
+        assembly.boundary_values.template get_container<boundary_tag>();
+
+    using PointAccelerationType =
+        typename gather_kernel<NGLL, Tags>::PointAccelerationType;
+
     specfem::execution::for_all(
         "specfem::compute::compute_stiffness_interaction", chunk,
         KOKKOS_LAMBDA(
@@ -135,129 +68,33 @@ int compute_stiffness_interaction(
           PointAccelerationType acceleration;
           specfem::assembly::load_on_device(istep, index, boundary_values,
                                             acceleration);
-
           specfem::assembly::atomic_add_on_device(index, field, acceleration);
         });
+
   } else {
 
-    specfem::execution::for_each_level(
-        "specfem::compute::compute_stiffness_interaction",
-        chunk.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
-        KOKKOS_LAMBDA(
-            const typename decltype(chunk)::index_type &chunk_iterator_index) {
-          const auto &chunk_index = chunk_iterator_index.get_index();
-          const auto team = chunk_index.get_policy_index();
-          ChunkFieldPackType field_pack(team.team_scratch(0));
-          ElementQuadratureType lagrange_derivative(team);
-          ChunkStressIntegrandType stress_integrand(team);
-          specfem::assembly::load_on_device(team, mesh, lagrange_derivative);
-          specfem::assembly::load_on_device(chunk_index, field, field_pack);
-
-          team.team_barrier();
-
-          specfem::algorithms::gradient(
-              chunk_index, jacobian_matrix, lagrange_derivative, field_pack,
-              [&](const auto &iterator_index,
-                  const GradientPackType &grad_pack) {
-                const auto &index = iterator_index.get_index();
-                const auto &local_index = iterator_index.get_local_index();
-                PointJacobianMatrixType point_jacobian_matrix;
-                specfem::assembly::load_on_device(index, jacobian_matrix,
-                                                  point_jacobian_matrix);
-
-                PointPropertyType point_property;
-                specfem::assembly::load_on_device(index, properties,
-                                                  point_property);
-
-                const auto field_derivatives =
-                    grad_pack.template get_du<PointTags>();
-
-                // Only not null_field_derivatives if attenuation is enabled.
-                const auto field_derivatives_velocity =
-                    grad_pack.template get_dv<PointTags>();
-
-                PointDisplacementType point_displacement;
-                specfem::assembly::load_on_device(index, field,
-                                                  point_displacement);
-
-                auto point_stress =
-                    specfem::medium_physics::compute_stress<PointTags>(
-                        point_property, field_derivatives);
-
-                specfem::medium_physics::compute_attenuation<PointTags>(
-                    index, point_stress, grad_pack, attenuation);
-
-                specfem::medium_physics::compute_cosserat_stress(
-                    point_property, point_displacement, point_stress);
-
-                stress_integrand.F(local_index) =
-                    point_stress * point_jacobian_matrix;
-              });
-
-          team.team_barrier();
-
-          specfem::algorithms::divergence(
-              chunk_index, mesh.weights, lagrange_derivative,
-              stress_integrand.F,
-              [&](const auto &iterator_index,
-                  const typename PointAccelerationType::value_type &result) {
-                const auto &index = iterator_index.get_index();
-                const auto &local_index = iterator_index.get_local_index();
-                PointAccelerationType acceleration(result);
-
-                acceleration *= static_cast<type_real>(-1.0);
-
-                PointPropertyType point_property;
-                specfem::assembly::load_on_device(index, properties,
-                                                  point_property);
-
-                PointVelocityType velocity;
-                specfem::assembly::load_on_device(index, field, velocity);
-
-                PointBoundaryType point_boundary;
-                specfem::assembly::load_on_device(index, boundaries,
-                                                  point_boundary);
-
-                PointWeightsType point_weights;
-                specfem::assembly::load_on_device(index, mesh.weights,
-                                                  point_weights);
-
-                specfem::point::jacobian_matrix<dimension_tag, true, using_simd>
-                    point_jacobian_matrix;
-
-                specfem::assembly::load_on_device(index, jacobian_matrix,
-                                                  point_jacobian_matrix);
-
-                // Computing the integration factor
-                const auto factor =
-                    point_weights.product() * point_jacobian_matrix.jacobian;
-
-                specfem::medium_physics::compute_damping_force<decltype(factor),
-                                                               PointTags>(
-                    factor, point_property, velocity, acceleration);
-
-                // Compute the couple stress from the stress integrand
-                specfem::medium_physics::compute_cosserat_couple_stress(
-                    point_jacobian_matrix, point_property, factor,
-                    stress_integrand.F(local_index), acceleration);
-
-                // Apply boundary conditions
-                specfem::boundary_conditions::apply_boundary_conditions(
-                    point_boundary, point_property, velocity, acceleration);
-
-                // Store forward boundary values for reconstruction during
-                // adjoint simulations. The function does nothing if the
-                // boundary tag is not stacey
-                if (Tags::wavefield_tag ==
-                    specfem::simulation::field_type::forward) {
-                  specfem::assembly::store_on_device(istep, index, acceleration,
-                                                     boundary_values);
-                }
-
-                specfem::assembly::atomic_add_on_device(index, field,
-                                                        acceleration);
-              });
-        });
+    // Gather kernel uses more shared memory but avoids atomics (~7% faster).
+    // Scatter kernel uses less shared memory via atomic accumulation.
+    // Select gather when it fits within the device limit;
+    if (gather_kernel<NGLL, Tags>::shmem_size() <= chunk.scratch_size_max(0)) {
+      gather_kernel<NGLL, Tags>{ assembly, istep }(chunk.set_scratch_size(
+          0, Kokkos::PerTeam(gather_kernel<NGLL, Tags>::shmem_size())));
+    } else if (scatter_kernel<NGLL, Tags>::shmem_size() <=
+               chunk.scratch_size_max(0)) {
+      scatter_kernel<NGLL, Tags>{ assembly, istep }(chunk.set_scratch_size(
+          0, Kokkos::PerTeam(scatter_kernel<NGLL, Tags>::shmem_size())));
+    } else if (gather_kernel<NGLL, Tags>::shmem_size() <=
+               chunk.scratch_size_max(1)) {
+      gather_kernel<NGLL, Tags>{ assembly, istep }(chunk.set_scratch_size(
+          1, Kokkos::PerTeam(gather_kernel<NGLL, Tags>::shmem_size())));
+    } else if (scatter_kernel<NGLL, Tags>::shmem_size() <=
+               chunk.scratch_size_max(1)) {
+      scatter_kernel<NGLL, Tags>{ assembly, istep }(chunk.set_scratch_size(
+          1, Kokkos::PerTeam(scatter_kernel<NGLL, Tags>::shmem_size())));
+    } else {
+      throw std::runtime_error(
+          "Not enough shared memory for stiffness interaction kernels.");
+    }
   }
 
   Kokkos::Profiling::popRegion();
