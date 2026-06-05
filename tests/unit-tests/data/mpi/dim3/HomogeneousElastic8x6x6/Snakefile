@@ -6,7 +6,7 @@ rule all:
     shell:
         "echo 'All tasks completed successfully.'"
 
-rule check_executible:
+rule check_executable:
     output:
         executable_checked = "executable_checked.txt",
     shell:

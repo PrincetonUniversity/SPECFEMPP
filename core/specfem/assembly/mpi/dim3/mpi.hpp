@@ -22,7 +22,7 @@ template <specfem::element::dimension_tag DimensionTag> class mpi;
 template <specfem::simulation::field_type FieldType,
           specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
-          specfem::data_access::DataClassType DCT>
+          specfem::data_access::DataClassType DataClass>
 class mpi_buffer;
 
 namespace mpi_impl {
@@ -201,7 +201,7 @@ public:
   unsigned int nfaces;        /**< Number of faces in communication group */
   unsigned int ngll;          /**< GLL points per face dimension */
 
-  unsigned int nglob = 0; /**< Number of unique GLL points on the MPI surface */
+  unsigned int nglob; /**< Number of unique GLL points on the MPI surface */
 
   using IndexMappingView = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
 
@@ -265,7 +265,7 @@ public:
   unsigned int nedges;        /**< Number of edges in communication group */
   unsigned int ncorners;      /**< Number of corners in communication group */
   unsigned int ngll;          /**< GLL points per face dimension */
-  unsigned int nglob = 0;     /**< Number of unique GLL points received from
+  unsigned int nglob;         /**< Number of unique GLL points received from
                                    the neighbor MPI surface */
 
   using IndexMappingView = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
@@ -284,7 +284,9 @@ public:
                                                 orientations (medium-tag
                                                 filtered) */
 
-  unpacker() = default;
+  unpacker()
+      : my_rank(0), neighbor_rank(0), nfaces(0), nedges(0), ncorners(0),
+        ngll(0), nglob(0) {}
 
   unpacker(const corner_communication_group &corner_group,
            const edge_communication_group &edge_group,
@@ -460,8 +462,8 @@ public:
 
   template <specfem::simulation::field_type FieldType,
             specfem::element::medium_tag MediumTag,
-            specfem::data_access::DataClassType DCT>
-  mpi_buffer<FieldType, dimension_tag, MediumTag, DCT>
+            specfem::data_access::DataClassType DataClass>
+  mpi_buffer<FieldType, dimension_tag, MediumTag, DataClass>
   create_mpi_buffer() const;
 };
 
@@ -469,13 +471,13 @@ namespace mpi_impl {
 template <specfem::simulation::field_type FieldType,
           specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
-          specfem::data_access::DataClassType DCT>
+          specfem::data_access::DataClassType DataClass>
 struct mpi_buffer {
 public:
   constexpr static auto field_type = FieldType;       ///< Simulation field type
   constexpr static auto dimension_tag = DimensionTag; ///< Dimension tag
   constexpr static auto medium_tag = MediumTag;
-  constexpr static auto data_class_type = DCT; ///< Data class type
+  constexpr static auto data_class = DataClass; ///< Data class type
   constexpr static unsigned int components =
       specfem::element::attributes<DimensionTag, MediumTag>::components;
 
@@ -538,7 +540,7 @@ public:
 template <specfem::simulation::field_type FieldType,
           specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
-          specfem::data_access::DataClassType DCT>
+          specfem::data_access::DataClassType DataClass>
 class mpi_buffer {
 
 private:
@@ -550,11 +552,11 @@ public:
   constexpr static auto field_type = FieldType;
   constexpr static auto dimension_tag = DimensionTag;
   constexpr static auto medium_tag = MediumTag;
-  constexpr static auto data_class_type = DCT;
+  constexpr static auto data_class = DataClass;
 
   using BufferMap = std::unordered_map<
       unsigned int,
-      mpi_impl::mpi_buffer<field_type, dimension_tag, medium_tag, DCT>>;
+      mpi_impl::mpi_buffer<field_type, dimension_tag, medium_tag, DataClass>>;
 
   BufferMap buffers;
 
@@ -585,8 +587,8 @@ public:
     for (const auto &[neighbor_rank, comm_pattern] : patterns) {
       buffers.emplace(
           neighbor_rank,
-          mpi_impl::mpi_buffer<field_type, dimension_tag, medium_tag, DCT>(
-              comm_pattern));
+          mpi_impl::mpi_buffer<field_type, dimension_tag, medium_tag,
+                               DataClass>(comm_pattern));
     }
 
     this->max_connections_per_process = buffers.size();
