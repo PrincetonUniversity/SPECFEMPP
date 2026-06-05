@@ -41,11 +41,7 @@ namespace medium_physics {
  * \f$\ddot{u}^{\dagger}\f$ is the adjoint acceleration, and \f$\Delta t\f$ is
  * the time step.
  *
- * @tparam PointPropertiesType Acoustic material properties
- * @tparam AdjointPointVelocityType Adjoint velocity field
- * @tparam AdjointPointAccelerationType Adjoint acceleration field
- * @tparam BackwardPointDisplacementType Backward displacement field
- * @tparam PointFieldDerivativesType Spatial field derivatives
+ * @tparam Tags Compile-time tag bundle (dimension, medium, property, SIMD)
  *
  * @param properties Acoustic material properties (density, bulk modulus)
  * @param adjoint_velocity Adjoint velocity field
@@ -58,26 +54,22 @@ namespace medium_physics {
  *
  * @note This is the specialized implementation for 2D acoustic isotropic media
  */
-template <typename PointPropertiesType, typename AdjointPointVelocityType,
-          typename AdjointPointAccelerationType,
-          typename BackwardPointDisplacementType,
-          typename PointFieldDerivativesType>
-KOKKOS_FUNCTION specfem::point::kernels<
-    PointPropertiesType::dimension_tag, PointPropertiesType::medium_tag,
-    PointPropertiesType::property_tag, PointPropertiesType::simd::using_simd>
-impl_compute_frechet_derivatives(
-    const std::integral_constant<specfem::element::dimension_tag,
-                                 specfem::element::dimension_tag::dim2>,
-    const std::integral_constant<specfem::element::medium_tag,
-                                 specfem::element::medium_tag::acoustic>,
-    const std::integral_constant<specfem::element::property_tag,
-                                 specfem::element::property_tag::isotropic>,
-    const PointPropertiesType &properties,
-    const AdjointPointVelocityType &adjoint_velocity,
-    const AdjointPointAccelerationType &adjoint_acceleration,
-    const BackwardPointDisplacementType &backward_displacement,
-    const PointFieldDerivativesType &adjoint_derivatives,
-    const PointFieldDerivativesType &backward_derivatives,
+template <
+    typename Tags,
+    std::enable_if_t<
+        Tags::dimension_tag == specfem::element::dimension_tag::dim2 &&
+            Tags::medium_tag == specfem::element::medium_tag::acoustic &&
+            Tags::property_tag == specfem::element::property_tag::isotropic,
+        int> = 0>
+KOKKOS_FUNCTION specfem::point::kernels<Tags::dimension_tag, Tags::medium_tag,
+                                        Tags::property_tag, Tags::using_simd>
+compute_frechet_derivatives(
+    const specfem::point::properties<Tags> &properties,
+    const specfem::point::velocity<Tags> &adjoint_velocity,
+    const specfem::point::acceleration<Tags> &adjoint_acceleration,
+    const specfem::point::displacement<Tags> &backward_displacement,
+    const specfem::point::field_derivatives<Tags> &adjoint_derivatives,
+    const specfem::point::field_derivatives<Tags> &backward_derivatives,
     const type_real &dt) {
 
   const auto rho_kl =
