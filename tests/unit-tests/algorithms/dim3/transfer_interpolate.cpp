@@ -1,5 +1,4 @@
 #include "specfem/algorithms/transfer_interpolate.hpp"
-#include "Kokkos_Core_fwd.hpp"
 #include "specfem/chunk_face/nonconforming_interface.hpp"
 
 #include "specfem/datatype/accessor_type.hpp"
