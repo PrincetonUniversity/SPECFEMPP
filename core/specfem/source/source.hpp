@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/constants.hpp"
+#include "specfem/coordinate_systems/coordinates.hpp"
 #include "specfem/datetime.hpp"
 
 #include "specfem/enums.hpp"
@@ -146,6 +147,29 @@ public:
 
   /** @} */
 
+  /** @name Generic coordinate constructors
+   * @{
+   */
+
+  /**
+   * @brief Construct a source from generic coordinates and a source time
+   * function.
+   *
+   * The coordinates are stored for later resolution to global_coordinates
+   * at assembly time (via @ref specfem::assembly::resolve_coordinates).
+   *
+   * @param coordinates Generic coordinate object
+   * @param source_time_function pointer to source time function
+   */
+  source(
+      std::unique_ptr<specfem::coordinate_systems::coordinates<dimension_tag>>
+          coordinates,
+      std::unique_ptr<specfem::source_time_functions::stf> source_time_function)
+      : read_coordinates_(std::move(coordinates)),
+        source_time_function(std::move(source_time_function)) {};
+
+  /** @} */
+
   /**
    * @brief Get the value of t0 from the specfem::stf::stf object
    *
@@ -182,16 +206,24 @@ public:
    */
   std::string print() const {
     std::ostringstream os;
-    const auto gcoord = get_global_coordinates();
-    os << "- " << source_name() << " \n"
-       << "    Source Location: \n";
-    if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
-      os << "      x = " << type_real(gcoord.x) << "\n"
-         << "      z = " << type_real(gcoord.z) << "\n";
-    } else {
-      os << "      x = " << type_real(gcoord.x) << "\n"
-         << "      y = " << type_real(gcoord.y) << "\n"
-         << "      z = " << type_real(gcoord.z) << "\n";
+    os << "- " << source_name() << " \n";
+    if (read_coordinates_) {
+      os << "    Input Coordinates: " << read_coordinates_->print() << "\n";
+    }
+    // Only print resolved global coordinates when they have been set:
+    // either directly (no read_coordinates_) or after assembly-time
+    // resolution.
+    if (!read_coordinates_ || islice_ >= 0) {
+      const auto gcoord = get_global_coordinates();
+      os << "    Source Location: \n";
+      if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
+        os << "      x = " << type_real(gcoord.x) << "\n"
+           << "      z = " << type_real(gcoord.z) << "\n";
+      } else {
+        os << "      x = " << type_real(gcoord.x) << "\n"
+           << "      y = " << type_real(gcoord.y) << "\n"
+           << "      z = " << type_real(gcoord.z) << "\n";
+      }
     }
     os << print_details();
     os << "    Source Time Function: \n"
@@ -343,6 +375,35 @@ public:
   int get_partition_index() const { return partition_index_; }
   void set_partition_index(int rank) { partition_index_ = rank; }
 
+  /**
+   * @brief Set the generic coordinates for this source.
+   *
+   * @param coordinates Generic coordinate object (ownership transferred)
+   */
+  void set_read_coordinates(
+      std::unique_ptr<specfem::coordinate_systems::coordinates<dimension_tag>>
+          coordinates) {
+    read_coordinates_ = std::move(coordinates);
+  }
+
+  /**
+   * @brief Get the generic coordinates (const), or nullptr if not set.
+   */
+  const specfem::coordinate_systems::coordinates<dimension_tag> *
+  get_read_coordinates() const {
+    return read_coordinates_.get();
+  }
+
+  /**
+   * @brief Get the generic coordinates (mutable), or nullptr if not set.
+   *
+   * Used by resolve_coordinates to set the origin on cartesian coordinates.
+   */
+  specfem::coordinate_systems::coordinates<dimension_tag> *
+  get_read_coordinates() {
+    return read_coordinates_.get();
+  }
+
 protected:
   std::unique_ptr<specfem::source_time_functions::stf>
       source_time_function; ///< pointer to source time function
@@ -353,6 +414,8 @@ protected:
   specfem::point::global_coordinates<dimension_tag>
       global_coordinates; ///< Global coordinates of the source in the global
                           ///< coordinate system
+  std::unique_ptr<specfem::coordinate_systems::coordinates<dimension_tag>>
+      read_coordinates_; ///< Generic coordinates (resolved at assembly time)
   specfem::element::medium_tag medium_tag;
   std::optional<specfem::datetime::type> starttime_; ///< Optional UTC origin
                                                      ///< time

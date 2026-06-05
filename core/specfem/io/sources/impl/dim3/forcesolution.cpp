@@ -1,3 +1,4 @@
+#include "specfem/coordinate_systems/cartesian.hpp"
 #include "specfem/io/sources/impl/reader.hpp"
 #include "specfem/io/sources/impl/solution_format_helpers.hpp"
 #include "specfem/source.hpp"
@@ -49,10 +50,25 @@ specfem::io::sources_impl::read<specfem::element::dimension_tag::dim3,
     // Coordinates (x, y required; z or depth required)
     auto x = specfem::io::sources_impl::get_real(fields, "x");
     auto y = specfem::io::sources_impl::get_real(fields, "y");
-    auto z =
-        fields.contains("z")
-            ? specfem::io::sources_impl::get_real(fields, "z")
-            : -specfem::io::sources_impl::get_real(fields, "depth") * 1000.0;
+
+    // Build generic coordinates — resolution to global (x,y,z) is deferred
+    // to assembly time when topography/ellipticity are available.
+    std::unique_ptr<specfem::coordinate_systems::coordinates<dim3>> coords;
+    if (fields.contains("z")) {
+      // Absolute z: origin = {0,0,0}
+      coords = std::make_unique<
+          specfem::coordinate_systems::cartesian_coordinates<dim3>>(
+          x, y, specfem::io::sources_impl::get_real(fields, "z"),
+          std::array<double, 3>{ 0.0, 0.0, 0.0 });
+    } else {
+      // FORCESOLUTION depth is in km — convert to meters.
+      // Store as -depth; origin = nullopt (needs topographic resolution).
+      double depth_m =
+          specfem::io::sources_impl::get_real(fields, "depth") * 1000.0;
+      coords = std::make_unique<
+          specfem::coordinate_systems::cartesian_coordinates<dim3>>(
+          x, y, -depth_m, std::nullopt);
+    }
 
     // STF type, factor, and force direction
     auto stf_type =
@@ -95,7 +111,7 @@ specfem::io::sources_impl::read<specfem::element::dimension_tag::dim3,
 
     // Construct source (no datetime for FORCESOLUTION)
     sources.push_back(std::make_shared<specfem::sources::force<dim3>>(
-        x, y, z, fx, fy, fz, std::move(stf_ptr), wavefield_type));
+        std::move(coords), fx, fy, fz, std::move(stf_ptr), wavefield_type));
   }
 
   return sources;

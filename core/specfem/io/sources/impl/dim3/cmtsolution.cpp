@@ -1,3 +1,4 @@
+#include "specfem/coordinate_systems/cartesian.hpp"
 #include "specfem/datetime.hpp"
 #include "specfem/io/sources/impl/reader.hpp"
 #include "specfem/io/sources/impl/solution_format_helpers.hpp"
@@ -67,12 +68,24 @@ specfem::io::sources_impl::read<specfem::element::dimension_tag::dim3,
     auto x = specfem::io::sources_impl::get_real(fields, "x");
     auto y = specfem::io::sources_impl::get_real(fields, "y");
 
-    // This is a problem! Depth is defined as positive downward from topography.
-    // Unless we pass mesh to read_sources, we cannot determine the topography.
-    auto z =
-        fields.contains("z")
-            ? specfem::io::sources_impl::get_real(fields, "z")
-            : -specfem::io::sources_impl::get_real(fields, "depth") * 1000.0;
+    // Build generic coordinates — resolution to global (x,y,z) is deferred
+    // to assembly time when topography/ellipticity are available.
+    std::unique_ptr<specfem::coordinate_systems::coordinates<dim3>> coords;
+    if (fields.contains("z")) {
+      // Absolute z: origin = {0,0,0}
+      coords = std::make_unique<
+          specfem::coordinate_systems::cartesian_coordinates<dim3>>(
+          x, y, specfem::io::sources_impl::get_real(fields, "z"),
+          std::array<double, 3>{ 0.0, 0.0, 0.0 });
+    } else {
+      // CMTSOLUTION depth is in km — convert to meters.
+      // Store as -depth; origin = nullopt (needs topographic resolution).
+      double depth_m =
+          specfem::io::sources_impl::get_real(fields, "depth") * 1000.0;
+      coords = std::make_unique<
+          specfem::coordinate_systems::cartesian_coordinates<dim3>>(
+          x, y, -depth_m, std::nullopt);
+    }
 
     // Moment tensor — parse as DyneCentimeter, detect Cartesian vs spherical
     using namespace specfem::units::unit_symbols;
@@ -116,8 +129,8 @@ specfem::io::sources_impl::read<specfem::element::dimension_tag::dim3,
             nsteps, dt, hdur, tshift, 1.0, false);
 
     auto src = std::make_shared<specfem::sources::moment_tensor<dim3>>(
-        x, y, z, to_Nm(Mxx), to_Nm(Myy), to_Nm(Mzz), to_Nm(Mxy), to_Nm(Mxz),
-        to_Nm(Myz), std::move(stf_ptr), wavefield_type);
+        std::move(coords), to_Nm(Mxx), to_Nm(Myy), to_Nm(Mzz), to_Nm(Mxy),
+        to_Nm(Mxz), to_Nm(Myz), std::move(stf_ptr), wavefield_type);
     src->set_starttime(starttime);
     sources.push_back(std::move(src));
   }
