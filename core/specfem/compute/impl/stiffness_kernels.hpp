@@ -24,6 +24,24 @@ namespace specfem::compute::impl {
 // Uses more shared memory than scatter but avoids atomic operations.
 // ---------------------------------------------------------------------------
 
+/**
+ * @brief Stiffness computation kernel using gather-based accumulation.
+ *
+ * Two-pass parallel kernel: (1) computes field gradients and stress,
+ * (2) divergence of stress accumulates acceleration. Uses scratch memory
+ * for shared data to avoid atomic operations.
+ *
+ * @tparam NGLL Number of quadrature points per dimension (typically 5 or 6)
+ * @tparam Tags Compilation tags (medium, property, boundary, attenuation,
+ * dimension)
+ *
+ * @code
+ * gather_kernel<5, MyTags> kernel(assembly, istep);
+ * Kokkos::parallel_for(policy, kernel);
+ * @endcode
+ *
+ * @ingroup ComputeKernels
+ */
 template <int NGLL, typename Tags> class gather_kernel {
 public:
   constexpr static auto medium_tag = Tags::medium_tag;
@@ -143,9 +161,6 @@ public:
 
                 const auto field_derivatives =
                     grad_pack.template get_du<PointTags>();
-
-                const auto field_derivatives_velocity =
-                    grad_pack.template get_dv<PointTags>();
 
                 PointDisplacementType point_displacement;
                 specfem::assembly::load_on_device(index, field,

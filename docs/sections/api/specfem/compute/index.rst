@@ -35,6 +35,7 @@ Implementation Details
 
     compute_mass_matrix
     compute_stiffness_interaction
+    stiffness_kernels
     compute_source_interaction
     compute_material_derivatives
     compute_coupling

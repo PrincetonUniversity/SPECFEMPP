@@ -5,14 +5,15 @@
 namespace specfem::assembly {
 
 /**
- * @brief Spectral element Jacobian matrix data container
+ * @brief Container for spectral element Jacobian matrix components.
  *
- * This class provides storage and data access functions for the Jacobian
- * matrices associated with spectral elements in spectral element mesh. The
- * dimension specific implementations provide data containers for storing
- * individual terms of the Jacobian matrix as well as methods for loading and
- * storing data on device and host.
+ * Stores Jacobian matrix terms for coordinate transformations between
+ * reference and physical element coordinates. Dimension-specific
+ * specializations manage component data on both host and device.
  *
+ * @tparam DimensionTag Spatial dimension (dim2 or dim3)
+ *
+ * @ingroup Assembly
  */
 template <specfem::element::dimension_tag DimensionTag> struct jacobian_matrix;
 
@@ -25,5 +26,7 @@ template <specfem::element::dimension_tag DimensionTag> struct jacobian_matrix;
 // Data access functions
 #include "jacobian_matrix/load_on_device.hpp"
 #include "jacobian_matrix/load_on_host.hpp"
+#include "jacobian_matrix/prefetch_on_device.hpp"
+#include "jacobian_matrix/prefetch_on_host.hpp"
 #include "jacobian_matrix/store_on_device.hpp"
 #include "jacobian_matrix/store_on_host.hpp"
