@@ -240,40 +240,51 @@ void compute_coupling_core_nonconforming(
         specfem::assembly::load_on_device(coupled_chunk_index, field,
                                           coupled_field);
 
-        if constexpr (is_pointwise_coupling) {
+
+
+
+        const auto &nonconforming_interfaces =
+            assembly.nonconforming_interfaces;
+        const auto& assembly_mesh_xi = assembly.mesh.xi;
+        const auto& boundaries = assembly.boundaries;
+
+
+        // internal to lambda, since nvcc could not compile otherwise
+        constexpr bool is_pointwise_coupling_ = is_pointwise_coupling;
+        if constexpr (is_pointwise_coupling_) {
           specfem::execution::for_each_level(
-              chunk_index.get_iterator(),
-              [&](const typename std::decay_t<decltype(chunk_index)>::
+              self_chunk_index.get_iterator(),
+              [&](const typename std::decay_t<decltype(self_chunk_index)>::
                       iterator_type::index_type &iterator_index) {
                 const auto &index = iterator_index.get_index();
+                const auto &local_index = iterator_index.get_local_index();
 
                 using SelfFieldType =
                     specfem::point::acceleration<specfem::tags::Tags<
                         dimension_tag, self_medium, false /*UseSIMD*/>>;
 
                 CouplingTermsPack point_interface_data;
-                specfem::assembly::load_on_device(index.self_index,
-                                                  nonconforming_interfaces,
-                                                  point_interface_data);
+                specfem::assembly::load_on_device(
+                    index, nonconforming_interfaces, point_interface_data);
                 // TEMPORARY until we get rid of non-static interpolants
                 point_interface_data.set_interpolants(
-                    specfem::algorithms::LagrangeInterpolant(assembly.mesh.xi));
+                    specfem::algorithms::LagrangeInterpolant(assembly_mesh_xi));
 
                 SelfFieldType self_field;
                 specfem::medium_physics::compute_coupling(
-                    index.self_index, point_interface_data, coupled_field,
+                    local_index, point_interface_data, coupled_field,
                     self_field);
 
                 specfem::point::boundary<boundary_tag, dimension_tag, false>
                     point_boundary;
-                specfem::assembly::load_on_device(index.self_index, boundaries,
+                specfem::assembly::load_on_device(index, boundaries,
                                                   point_boundary);
                 if constexpr (boundary_tag == specfem::element::boundary_tag::
                                                   acoustic_free_surface) {
                   specfem::boundary_conditions::apply_boundary_conditions(
                       point_boundary, self_field);
                 }
-                specfem::assembly::atomic_add_on_device(index.self_index, field,
+                specfem::assembly::atomic_add_on_device(index, field,
                                                         self_field);
               });
 
