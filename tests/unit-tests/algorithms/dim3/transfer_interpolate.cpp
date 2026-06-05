@@ -195,7 +195,7 @@ void execute(const TransferCoordinates &transfer_coordinates,
           boundary_tag, flux_scheme_tag, Kokkos::DefaultExecutionSpace,
           Kokkos::MemoryTraits<>, Kokkos::LayoutRight>;
   using ContainerTransferCoordinatesPoint =
-      specfem::point::nonconforming_interface<dimension_tag, ngll_sample_face,
+      specfem::point::nonconforming_interface<dimension_tag, ngll_coupled_face,
                                               interface_tag, boundary_tag,
                                               flux_scheme_tag>;
 
