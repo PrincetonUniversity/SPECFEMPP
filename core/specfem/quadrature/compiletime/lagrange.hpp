@@ -30,25 +30,38 @@ template <typename NodeInitializer> struct Lagrange {
                                  Kokkos::Array<numerical_type, N>>,
                   "NodeInitializer() should be type Kokkos::Array<T,N>");
 
-    // bypass NodeInitializer to force compile time
+    // bypass NodeInitializer to force compile time with an explicit consteval
     static consteval Kokkos::Array<numerical_type, N> get_nodes() {
       return NodeInitializer::get_nodes();
     }
+
+  private:
+    static constexpr Kokkos::Array<numerical_type, N> nodes = get_nodes();
+
+  public:
     /**
      * @brief Retrieves the node corresponding to the given index at runtime.
      */
     static constexpr KOKKOS_INLINE_FUNCTION numerical_type
     node(const int &node_index) {
-      return get_nodes()[node_index];
+      constexpr auto nodes_ = nodes;
+      // so for some reason this works, while directly referencing nodes has
+      // nvcc crying
+      return nodes_[node_index];
     }
     KOKKOS_INLINE_FUNCTION numerical_type
     operator()(const int &node_index) const {
-      return node(node_index);
+      constexpr auto nodes_ = nodes;
+      return nodes_[node_index];
     }
   };
 
   using numerical_type = Nodes::numerical_type;
   static constexpr std::size_t N = Nodes::N;
+
+  // make_lagrange_coeff_table is already consteval.
+  static constexpr auto coeff_table =
+      impl::make_lagrange_coeff_table(Nodes::get_nodes());
 
 public:
   Lagrange(const NodeInitializer &) {}
@@ -60,9 +73,10 @@ public:
 
   static constexpr KOKKOS_INLINE_FUNCTION numerical_type
   poly_coeff(const int &polynomial_index, const int &coefficient_index) {
-    // consteval means this exists at compile time.
-    return impl::make_lagrange_coeff_table(
-        Nodes::get_nodes())[polynomial_index][coefficient_index];
+    constexpr auto coeff_table_ = coeff_table;
+
+    // same thing as Nodes::node(const int&)
+    return coeff_table_[polynomial_index][coefficient_index];
   }
 
   /**

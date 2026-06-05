@@ -31,7 +31,7 @@ struct root_array : public std::tuple<double[size]> {
 };
 
 /**
- * @brief Computes the newton step described in polynomial_zeros.ipynb
+ * @brief Computes the newton step with deflation
  *
  * @tparam RationalPolynomialCoefficientTuple
  * @param x - the current point
@@ -75,8 +75,7 @@ consteval double rootfind_newton_step(RationalPolynomialCoefficientTuple,
 }
 
 /**
- * @brief Populates poly.roots using the algo described in
- * polynomial_zeros.ipynb
+ * @brief Populates polynomial roots.
  *
  *
  * # Finding Zeros of Polynomials
@@ -155,7 +154,6 @@ rootfind(const RationalPolynomialCoefficientTuple &poly, double x,
   if (degree == 0) {
     return roots;
   }
-  // for algorithm, see polynomial_zeros.ipynb
 
   // first root
   double px = evaluate_polynomial(poly, x);
