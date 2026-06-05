@@ -15,7 +15,7 @@ specfem::receivers::receiver<specfem::element::dimension_tag::dim2>::print()
             << "\n";
   }
   // Only print resolved global coordinates when they have been set
-  if (!this->read_coordinates_ || this->islice_ >= 0) {
+  if (!this->read_coordinates_ || this->partition_index_ >= 0) {
     message << "      Receiver Location: \n"
             << "        x = " << type_real(this->global_coordinates.x) << "\n"
             << "        z = " << type_real(this->global_coordinates.z) << "\n";

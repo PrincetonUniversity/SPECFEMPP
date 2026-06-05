@@ -213,7 +213,7 @@ public:
     // Only print resolved global coordinates when they have been set:
     // either directly (no read_coordinates_) or after assembly-time
     // resolution.
-    if (!read_coordinates_ || islice_ >= 0) {
+    if (!read_coordinates_ || partition_index_ >= 0) {
       const auto gcoord = get_global_coordinates();
       os << "    Source Location: \n";
       if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
