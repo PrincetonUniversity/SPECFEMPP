@@ -59,9 +59,10 @@ protected:
 
 public:
   nonconforming_interfaces(
-      const int ngllz, const int ngllx,
+      const int &ngllz, const int &nglly, const int &ngllx,
       const specfem::assembly::element_intersections<dimension_tag>
           &element_intersections,
+      const specfem::assembly::jacobian_matrix<dimension_tag> &jacobian_matrix,
       const specfem::assembly::mesh<dimension_tag> &mesh,
       const specfem::element_coupling::flux_scheme_configuration
           &flux_scheme_config = {});

@@ -160,7 +160,7 @@ public:
                   "impl_load requires face index type for IndexType");
 
     static_assert(
-        specfem::data_access::is_conforming_interface<PointType>::value,
+        specfem::data_access::is_nonconforming_interface<PointType>::value,
         "impl_load requires conforming interface point type for PointType");
 
     if constexpr (on_device) {

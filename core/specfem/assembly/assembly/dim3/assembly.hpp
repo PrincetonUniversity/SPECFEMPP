@@ -20,6 +20,8 @@
 #include "specfem/receivers.hpp"
 #include "specfem/source.hpp"
 
+#include "specfem/assembly/nonconforming_interfaces/dim3/nonconforming_interfaces.hpp"
+
 namespace specfem::io {
 class reader;
 }
@@ -125,6 +127,9 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
   specfem::assembly::conforming_interfaces<dimension_tag>
       conforming_interfaces; ///< Conforming interfaces between different media
                              ///< (e.g., fluid-solid interface)
+  specfem::assembly::nonconforming_interfaces<dimension_tag>
+      nonconforming_interfaces; ///< Nonconforming interfaces between different
+                                ///< media (e.g., fluid-solid interface)
 
   specfem::assembly::boundary_values<dimension_tag>
       boundary_values; ///< Field
@@ -166,23 +171,22 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
    * assignment if exists)
    * @param flux_scheme_config Flux scheme rules for nonconforming interfaces
    */
-  assembly(
-      const specfem::mesh::mesh<dimension_tag> &mesh,
-      const specfem::quadrature::quadratures &quadratures,
-      std::vector<std::shared_ptr<specfem::sources::source<dimension_tag> > >
-          &sources,
-      const std::vector<
-          std::shared_ptr<specfem::receivers::receiver<dimension_tag> > >
-          &receivers,
-      const std::vector<specfem::enums::wavefield> &stypes, const type_real t0,
-      const type_real dt, const int max_timesteps, const int max_sig_step,
-      const int nsteps_between_samples,
-      const specfem::simulation::type simulation,
-      const bool allocate_boundary_values,
-      const std::shared_ptr<specfem::io::reader> &property_reader,
-      const specfem::element_coupling::flux_scheme_configuration
-          &flux_scheme_config =
-              specfem::element_coupling::flux_scheme_configuration());
+  assembly(const specfem::mesh::mesh<dimension_tag> &mesh,
+           const specfem::quadrature::quadratures &quadratures,
+           std::vector<std::shared_ptr<specfem::sources::source<dimension_tag>>>
+               &sources,
+           const std::vector<
+               std::shared_ptr<specfem::receivers::receiver<dimension_tag>>>
+               &receivers,
+           const std::vector<specfem::enums::wavefield> &stypes,
+           const type_real t0, const type_real dt, const int max_timesteps,
+           const int max_sig_step, const int nsteps_between_samples,
+           const specfem::simulation::type simulation,
+           const bool allocate_boundary_values,
+           const std::shared_ptr<specfem::io::reader> &property_reader,
+           const specfem::element_coupling::flux_scheme_configuration
+               &flux_scheme_config =
+                   specfem::element_coupling::flux_scheme_configuration());
 
   assembly() = default;
 

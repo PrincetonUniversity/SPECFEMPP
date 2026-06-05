@@ -2,13 +2,18 @@
 
 #include "compute_coupling.hpp"
 #include "specfem/algorithms.hpp"
+#include "specfem/algorithms/transfer_interpolate.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/boundary_conditions.hpp"
 #include "specfem/chunk_edge.hpp"
+#include "specfem/chunk_face.hpp"
+#include "specfem/data_access/accessor.hpp"
+#include "specfem/data_access/accessor/point_accessor.hpp"
 #include "specfem/element/tags.hpp"
 #include "specfem/element_connections.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
+#include "specfem/execution/for_each_level.hpp"
 #include "specfem/medium_physics.hpp"
 #include "specfem/parallel_configuration.hpp"
 #include "specfem/point.hpp"
@@ -61,7 +66,7 @@ void compute_coupling_core_weakly_conforming(
 
   const auto num_points = assembly.mesh.element_grid.ngllx;
 
-  using parallel_config = std::conditional<
+  using parallel_config = std::conditional_t<
       dimension_tag == specfem::element::dimension_tag::dim2,
       specfem::parallel_configuration::default_chunk_edge_config<
           dimension_tag, Kokkos::DefaultExecutionSpace>,
@@ -134,6 +139,8 @@ void compute_coupling_core_nonconforming(
                 "Currently, we are enforcing only one flux scheme: natural");
 
   const auto &nonconforming_interfaces = assembly.nonconforming_interfaces;
+  const auto &boundaries = assembly.boundaries;
+
   const auto [self_intersections, coupled_intersections] =
       assembly.element_intersections.get_intersections_on_device(
           connection_tag, interface_tag, boundary_tag, flux_scheme_tag);
@@ -145,7 +152,7 @@ void compute_coupling_core_nonconforming(
 
   const auto num_points = assembly.mesh.element_grid.ngllx;
 
-  using parallel_config = std::conditional<
+  using parallel_config = std::conditional_t<
       dimension_tag == specfem::element::dimension_tag::dim2,
       specfem::parallel_configuration::default_chunk_edge_config<
           dimension_tag, Kokkos::DefaultExecutionSpace>,
@@ -161,29 +168,52 @@ void compute_coupling_core_nonconforming(
       specfem::element_coupling::attributes<dimension_tag,
                                             interface_tag>::coupled_medium();
   using CoupledFieldType = std::conditional_t<
-      interface_tag ==
-          specfem::element_coupling::interface_tag::acoustic_elastic,
-      specfem::chunk_edge::displacement<parallel_config::chunk_size, NGLL,
-                                        dimension_tag, coupled_medium,
-                                        using_simd>,
-      specfem::chunk_edge::acceleration<parallel_config::chunk_size, NGLL,
-                                        dimension_tag, coupled_medium,
-                                        using_simd>>;
+      dimension_tag == specfem::element::dimension_tag::dim2,
+      std::conditional_t<
+          interface_tag ==
+              specfem::element_coupling::interface_tag::acoustic_elastic,
+          specfem::chunk_edge::displacement<parallel_config::chunk_size, NGLL,
+                                            dimension_tag, coupled_medium,
+                                            using_simd>,
+          specfem::chunk_edge::acceleration<parallel_config::chunk_size, NGLL,
+                                            dimension_tag, coupled_medium,
+                                            using_simd>>,
+      std::conditional_t<
+          interface_tag ==
+              specfem::element_coupling::interface_tag::acoustic_elastic,
+          specfem::chunk_face::displacement<parallel_config::chunk_size, NGLL,
+                                            dimension_tag, coupled_medium,
+                                            using_simd>,
+          specfem::chunk_face::acceleration<parallel_config::chunk_size, NGLL,
+                                            dimension_tag, coupled_medium,
+                                            using_simd>>>;
 
   using CouplingTermsPack =
       specfem::element_coupling::accessor::coupling_terms_pack<
           dimension_tag, interface_tag, boundary_tag, flux_scheme_tag,
           parallel_config::chunk_size, NGLL, NQuad_intersection>;
-  using IntegrationFactor =
+
+  // should the nonconforming transfer be computed self-pointwise, or is it an
+  // intersection-type, where the entire intersection needs to be computed
+  // together?
+  constexpr bool is_pointwise_coupling =
+      specfem::data_access::is_point<CouplingTermsPack>::value;
+
+  // teamwise integration data, only needed if not pointwise
+  using IntegrationFactor = std::conditional_t<
+      is_pointwise_coupling, specfem::data_access::EmptyAccessor,
       specfem::element_coupling::accessor::intersection_factor<
           dimension_tag, interface_tag, boundary_tag, flux_scheme_tag,
-          parallel_config::chunk_size, NQuad_intersection>;
+          parallel_config::chunk_size, NQuad_intersection>>;
 
-  using InterfaceFieldViewType = specfem::datatype::VectorChunkEdgeViewType<
-      type_real, dimension_tag, parallel_config::chunk_size, NQuad_intersection,
-      specfem::element::attributes<dimension_tag, self_medium>::components,
-      using_simd, Kokkos::DefaultExecutionSpace::scratch_memory_space,
-      Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+  using InterfaceFieldViewType = std::conditional_t<
+      is_pointwise_coupling, specfem::data_access::EmptyAccessor,
+      specfem::datatype::VectorChunkEdgeViewType<
+          type_real, dimension_tag, parallel_config::chunk_size,
+          NQuad_intersection,
+          specfem::element::attributes<dimension_tag, self_medium>::components,
+          using_simd, Kokkos::DefaultExecutionSpace::scratch_memory_space,
+          Kokkos::MemoryTraits<Kokkos::Unmanaged>>>;
 
   specfem::execution::ChunkedIntersectionIterator chunk(
       parallel_config(), self_intersections, coupled_intersections);
@@ -210,40 +240,80 @@ void compute_coupling_core_nonconforming(
         specfem::assembly::load_on_device(coupled_chunk_index, field,
                                           coupled_field);
 
-        CouplingTermsPack interface_data(team);
+        if constexpr (is_pointwise_coupling) {
+          specfem::execution::for_each_level(
+              chunk_index.get_iterator(),
+              [&](const typename std::decay_t<decltype(chunk_index)>::
+                      iterator_type::index_type &iterator_index) {
+                const auto &index = iterator_index.get_index();
 
-        specfem::assembly::load_on_device(
-            self_chunk_index, nonconforming_interfaces, interface_data);
-        InterfaceFieldViewType interface_field(team.team_scratch(0));
+                using SelfFieldType =
+                    specfem::point::acceleration<specfem::tags::Tags<
+                        dimension_tag, self_medium, false /*UseSIMD*/>>;
 
-        team.team_barrier();
-        specfem::medium_physics::compute_coupling(
-            self_chunk_index, interface_data, coupled_field, interface_field);
+                CouplingTermsPack point_interface_data;
+                specfem::assembly::load_on_device(index.self_index,
+                                                  nonconforming_interfaces,
+                                                  point_interface_data);
+                // TEMPORARY until we get rid of non-static interpolants
+                point_interface_data.set_interpolants(
+                    specfem::algorithms::LagrangeInterpolant(assembly.mesh.xi));
 
-        IntegrationFactor integration_factor(team);
+                SelfFieldType self_field;
+                specfem::medium_physics::compute_coupling(
+                    index.self_index, point_interface_data, coupled_field,
+                    self_field);
 
-        specfem::assembly::load_on_device(
-            self_chunk_index, nonconforming_interfaces, integration_factor);
+                specfem::point::boundary<boundary_tag, dimension_tag, false>
+                    point_boundary;
+                specfem::assembly::load_on_device(index.self_index, boundaries,
+                                                  point_boundary);
+                if constexpr (boundary_tag == specfem::element::boundary_tag::
+                                                  acoustic_free_surface) {
+                  specfem::boundary_conditions::apply_boundary_conditions(
+                      point_boundary, self_field);
+                }
+                specfem::assembly::atomic_add_on_device(index.self_index, field,
+                                                        self_field);
+              });
 
-        team.team_barrier();
+        } else {
 
-        specfem::algorithms::coupling_integral(
-            assembly.nonconforming_interfaces, self_chunk_index,
-            interface_field, integration_factor,
-            [&](const auto &self_index, auto &self_field) {
-              specfem::point::boundary<boundary_tag, dimension_tag, false>
-                  point_boundary;
-              specfem::assembly::load_on_device(self_index, assembly.boundaries,
-                                                point_boundary);
-              if constexpr (boundary_tag == specfem::element::boundary_tag::
-                                                acoustic_free_surface) {
-                specfem::boundary_conditions::apply_boundary_conditions(
-                    point_boundary, self_field);
-              }
+          CouplingTermsPack interface_data(team);
 
-              specfem::assembly::atomic_add_on_device(self_index, field,
-                                                      self_field);
-            });
+          specfem::assembly::load_on_device(
+              self_chunk_index, nonconforming_interfaces, interface_data);
+          InterfaceFieldViewType interface_field(team.team_scratch(0));
+
+          team.team_barrier();
+          specfem::medium_physics::compute_coupling(
+              self_chunk_index, interface_data, coupled_field, interface_field);
+
+          IntegrationFactor integration_factor(team);
+
+          specfem::assembly::load_on_device(
+              self_chunk_index, nonconforming_interfaces, integration_factor);
+
+          team.team_barrier();
+
+          specfem::algorithms::coupling_integral(
+              assembly.nonconforming_interfaces, self_chunk_index,
+              interface_field, integration_factor,
+              [&](const auto &self_index, auto &self_field) {
+                specfem::point::boundary<boundary_tag, dimension_tag, false>
+                    point_boundary;
+                specfem::assembly::load_on_device(
+                    self_index, assembly.boundaries, point_boundary);
+                if constexpr (boundary_tag == specfem::element::boundary_tag::
+                                                  acoustic_free_surface) {
+                  specfem::boundary_conditions::apply_boundary_conditions(
+                      point_boundary, self_field);
+                }
+
+                specfem::assembly::atomic_add_on_device(self_index, field,
+                                                        self_field);
+              });
+        }
       });
 
   return;

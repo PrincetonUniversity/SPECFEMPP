@@ -58,7 +58,7 @@ specfem::assembly::element_intersections<
             return false;
           } else if constexpr (TagsType::connection_tag ==
                                specfem::element_connections::type::
-                                   weakly_conforming) {
+                                   nonconforming) {
             return true;
           }
           return graph[edge].connection == TagsType::connection_tag;

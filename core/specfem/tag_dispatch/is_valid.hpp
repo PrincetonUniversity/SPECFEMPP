@@ -57,7 +57,7 @@ struct TagValueTupleBase<std::index_sequence<Is...>, TagTypes...>
    * @return    The stored enum value.
    */
   template <std::size_t I> constexpr auto get() const {
-    using T = typename std::tuple_element<I, std::tuple<TagTypes...> >::type;
+    using T = typename std::tuple_element<I, std::tuple<TagTypes...>>::type;
     return static_cast<const TagValueHolder<I, T> &>(*this).v;
   }
 
@@ -341,9 +341,9 @@ constexpr bool is_valid_edge(EdgeTuple t) {
   if (i != I::elastic_acoustic && i != I::acoustic_elastic)
     return false;
 
-  // dim3: only weakly_conforming + none
+  // dim3: only none
   if (d == D::dim3)
-    return c == C::weakly_conforming && b == B::none;
+    return b == B::none;
 
   // dim2: boundary rules depend on interface direction
   if (i == I::elastic_acoustic)

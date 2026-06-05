@@ -101,10 +101,12 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
       }
     }();
 
-    for (int ipoint_i = 0; ipoint_i < nglli; ipoint_i++) {
-      for (int ipoint_j = 0; ipoint_j < ngllj; ipoint_j++) {
+    for (ipoint_i = 0; ipoint_i < nglli; ipoint_i++) {
+      for (ipoint_j = 0; ipoint_j < ngllj; ipoint_j++) {
         specfem::point::global_coordinates<dimension_tag> global_coord(
-            Kokkos::subview(mesh.h_coord, ispec, iz, iy, ix, Kokkos::ALL));
+            mesh.h_coord(ispec, iz, iy, ix, 0),
+            mesh.h_coord(ispec, iz, iy, ix, 1),
+            mesh.h_coord(ispec, iz, iy, ix, 2));
 
         const auto [local_coords, found] =
             specfem::algorithms::locate_point_impl::locate_point(
