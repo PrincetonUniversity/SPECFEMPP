@@ -207,7 +207,8 @@ KOKKOS_FORCEINLINE_FUNCTION auto element_transform(
  *
  * Computes field gradients at quadrature points using the spectral element
  * method (Komatitsch & Tromp, 1999). Transforms from reference to physical
- * coordinates via Jacobian matrices. Invokes callback for each quadrature point.
+ * coordinates via Jacobian matrices. Invokes callback for each quadrature
+ * point.
  *
  * @tparam ChunkIndexType Chunk element index
  * @tparam VectorFieldType Field container
@@ -221,22 +222,19 @@ KOKKOS_FORCEINLINE_FUNCTION auto element_transform(
  * @param f Input field
  * @param callback Invoked with gradient tensor at each quadrature point
  *
- * @code
- * specfem::algorithms::gradient(
- *   chunk_index, jac, quad, field,
- *   [](auto idx, auto grad) { /* process gradient */ });
-*@endcode **@ingroup AlgorithmsGradient * /
-    template <typename ChunkIndexType, typename VectorFieldType,
-              typename JacobianMatrixType, typename QuadratureType,
-              typename CallbackFunctor,
-              std::enable_if_t<specfem::data_access::is_chunk_element<
-                                   VectorFieldType>::value,
-                               int> = 0>
-    KOKKOS_FORCEINLINE_FUNCTION void
-    gradient(const ChunkIndexType &chunk_index,
-             const JacobianMatrixType &jacobian_matrix,
-             const QuadratureType &quadrature, const VectorFieldType &f,
-             const CallbackFunctor &callback) {
+ * @ingroup AlgorithmsGradient
+ */
+template <typename ChunkIndexType, typename VectorFieldType,
+          typename JacobianMatrixType, typename QuadratureType,
+          typename CallbackFunctor,
+          std::enable_if_t<
+              specfem::data_access::is_chunk_element<VectorFieldType>::value,
+              int> = 0>
+KOKKOS_FORCEINLINE_FUNCTION void
+gradient(const ChunkIndexType &chunk_index,
+         const JacobianMatrixType &jacobian_matrix,
+         const QuadratureType &quadrature, const VectorFieldType &f,
+         const CallbackFunctor &callback) {
 
   constexpr specfem::element::dimension_tag dimension_tag =
       VectorFieldType::dimension_tag;
