@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-namespace {
+namespace specfem::assembly::mpi_impl {
 
 /// Find position of anchor in face corner array
 int find_anchor_position(
@@ -70,10 +70,6 @@ filter_indices_by_medium_tag(
   return std::make_tuple(face_indices, edge_indices, corner_indices);
 }
 
-} // anonymous namespace
-
-namespace {
-
 /**
  * @brief Apply rotation permutation to a 2D GLL grid based on theta value.
  *
@@ -112,7 +108,7 @@ unsigned int apply_reflection(unsigned int ipoint, unsigned int ngll,
   return do_reflect ? (ngll - 1 - ipoint) : ipoint;
 }
 
-} // anonymous namespace
+} // namespace specfem::assembly::mpi_impl
 
 // ---------------------------------------------------------------------------
 // communication_group constructor (base)

@@ -23,6 +23,7 @@ target_link_libraries(
         shape_functions
         Kokkos::kokkos
         specfem::enums
+        specfem_program
         ${BOOST_LIBS}
         $<$<BOOL:${SPECFEM_ENABLE_VTK}>:${VTK_LIBRARIES}>
 )
