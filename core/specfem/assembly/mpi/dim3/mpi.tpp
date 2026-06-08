@@ -13,16 +13,16 @@
 template <specfem::simulation::field_type FieldType,
           specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
-          specfem::data_access::DataClassType DCT>
+          specfem::data_access::DataClassType DataClass>
 void specfem::assembly::mpi_impl::
-    mpi_buffer<FieldType, DimensionTag, MediumTag, DCT>::pack(
+    mpi_buffer<FieldType, DimensionTag, MediumTag, DataClass>::pack(
         const specfem::assembly::simulation_field<dimension_tag, field_type>
             &field) {
 
   const auto field_m = field.template get_field<MediumTag>();
 
   using data_class_tag =
-      std::integral_constant<specfem::data_access::DataClassType, DCT>;
+      std::integral_constant<specfem::data_access::DataClassType, DataClass>;
 
   auto mapping = pack_mapping;
   Kokkos::parallel_for(
@@ -40,15 +40,15 @@ void specfem::assembly::mpi_impl::
 template <specfem::simulation::field_type FieldType,
           specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
-          specfem::data_access::DataClassType DCT>
+          specfem::data_access::DataClassType DataClass>
 void specfem::assembly::mpi_impl::
-    mpi_buffer<FieldType, DimensionTag, MediumTag, DCT>::unpack(
+    mpi_buffer<FieldType, DimensionTag, MediumTag, DataClass>::unpack(
         specfem::assembly::simulation_field<dimension_tag, field_type> &field) {
 
   const auto field_m = field.template get_field<MediumTag>();
 
   using data_class_tag =
-      std::integral_constant<specfem::data_access::DataClassType, DCT>;
+      std::integral_constant<specfem::data_access::DataClassType, DataClass>;
 
   auto mapping = unpack_mapping;
   Kokkos::parallel_for(
@@ -61,14 +61,15 @@ void specfem::assembly::mpi_impl::
           field_m.template get_value<true>(data_class_tag{}, iglob, icomp) +=
               this->recv_buffer(i, icomp);
       });
+  Kokkos::fence("assembly::mpi_buffer::unpack");
 }
 
 template <specfem::simulation::field_type FieldType,
           specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
-          specfem::data_access::DataClassType DCT>
+          specfem::data_access::DataClassType DataClass>
 void specfem::assembly::mpi_impl::mpi_buffer<FieldType, DimensionTag,
-                                             MediumTag, DCT>::send() {
+                                             MediumTag, DataClass>::send() {
 
   if (send_buffer.extent(0) == 0) {
     this->send_request = MPI_REQUEST_NULL;
@@ -97,9 +98,9 @@ void specfem::assembly::mpi_impl::mpi_buffer<FieldType, DimensionTag,
 template <specfem::simulation::field_type FieldType,
           specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
-          specfem::data_access::DataClassType DCT>
+          specfem::data_access::DataClassType DataClass>
 void specfem::assembly::mpi_impl::mpi_buffer<FieldType, DimensionTag,
-                                             MediumTag, DCT>::receive() {
+                                             MediumTag, DataClass>::receive() {
 
   if (recv_buffer.extent(0) == 0) {
     this->recv_request = MPI_REQUEST_NULL;
@@ -127,9 +128,9 @@ void specfem::assembly::mpi_impl::mpi_buffer<FieldType, DimensionTag,
 
 template <specfem::simulation::field_type FieldType,
           specfem::element::medium_tag MediumTag,
-          specfem::data_access::DataClassType DCT>
+          specfem::data_access::DataClassType DataClass>
 specfem::assembly::mpi_buffer<FieldType, specfem::element::dimension_tag::dim3,
-                              MediumTag, DCT>
+                              MediumTag, DataClass>
 specfem::assembly::mpi<
     specfem::element::dimension_tag::dim3>::create_mpi_buffer() const {
 
@@ -149,14 +150,14 @@ specfem::assembly::mpi<
         "mpi::create_mpi_buffer: unsupported simulation type for mpi_buffer");
   }
 
-  return mpi_buffer<FieldType, dimension_tag, MediumTag, DCT>(*this);
+  return mpi_buffer<FieldType, dimension_tag, MediumTag, DataClass>(*this);
 }
 
 template <specfem::simulation::field_type FieldType,
           specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
-          specfem::data_access::DataClassType DCT>
-void specfem::assembly::mpi_buffer<FieldType, DimensionTag, MediumTag, DCT>::wait() {
+          specfem::data_access::DataClassType DataClass>
+void specfem::assembly::mpi_buffer<FieldType, DimensionTag, MediumTag, DataClass>::wait() {
   // Collect all MPI_Request handles from the buffer map
   std::vector<MPI_Request> requests;
   for (const auto &entry : buffers) {

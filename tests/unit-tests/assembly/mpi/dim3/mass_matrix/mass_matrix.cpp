@@ -21,6 +21,7 @@
 #include "specfem/quadrature.hpp"
 #include "specfem/tags.hpp"
 #include <gtest/gtest.h>
+#include <type_traits>
 #include <unordered_map>
 #include <vector>
 

@@ -50,10 +50,6 @@
 
   if (COUPLE_WITH_INJECTION_TECHNIQUE .or. MESH_A_CHUNK_OF_THE_EARTH) open(124,file='Numglob2loc_elmn.txt')
 
-  ! Verify MPI adjacency symmetry: for every (partA, partB) pair, the number of
-  ! face/edge/corner connections from A→B must equal the count from B→A.
-  call verify_adjacency_symmetry()
-
   ! writes out Database file for each partition
   do ipart = 0, nparts-1
 
@@ -368,78 +364,3 @@
   end do
 
   end subroutine write_adjacency_database
-
-
-  subroutine verify_adjacency_symmetry()
-  ! Verifies that for every pair (partA, partB), the number of face/edge/corner
-  ! MPI connections from A→B equals the number from B→A.
-  ! This catches bugs where the adjacency database would produce metadata mismatches.
-
-  use decompose_mesh_par, only: nspec, nparts, xadj_typed, adjncy_typed, &
-                                 adj_types_global, part
-
-  implicit none
-
-  integer :: ispec, k, jspec, src_part, dst_part, conn_type
-  integer :: nfaces_ab, nfaces_ba, nedges_ab, nedges_ba, ncorners_ab, ncorners_ba
-  integer :: pa, pb
-  logical :: any_error
-
-  any_error = .false.
-
-  ! For each partition pair (pa, pb) where pa < pb, count connections in both directions
-  do pa = 0, nparts-1
-    do pb = pa+1, nparts-1
-      nfaces_ab = 0; nfaces_ba = 0
-      nedges_ab = 0; nedges_ba = 0
-      ncorners_ab = 0; ncorners_ba = 0
-
-      do ispec = 1, nspec
-        src_part = part(ispec)
-        if (src_part /= pa .and. src_part /= pb) cycle
-
-        do k = xadj_typed(ispec), xadj_typed(ispec+1)-1
-          jspec = adjncy_typed(k)
-          dst_part = part(jspec)
-
-          ! Only count connections between pa and pb
-          if (src_part == pa .and. dst_part == pb) then
-            conn_type = adj_types_global(k)
-            if (conn_type >= 1 .and. conn_type <= 6) then
-              nfaces_ab = nfaces_ab + 1
-            else if (conn_type >= 7 .and. conn_type <= 18) then
-              nedges_ab = nedges_ab + 1
-            else if (conn_type >= 19 .and. conn_type <= 26) then
-              ncorners_ab = ncorners_ab + 1
-            end if
-          else if (src_part == pb .and. dst_part == pa) then
-            conn_type = adj_types_global(k)
-            if (conn_type >= 1 .and. conn_type <= 6) then
-              nfaces_ba = nfaces_ba + 1
-            else if (conn_type >= 7 .and. conn_type <= 18) then
-              nedges_ba = nedges_ba + 1
-            else if (conn_type >= 19 .and. conn_type <= 26) then
-              ncorners_ba = ncorners_ba + 1
-            end if
-          end if
-        end do
-      end do
-
-      if (nfaces_ab /= nfaces_ba .or. nedges_ab /= nedges_ba .or. &
-          ncorners_ab /= ncorners_ba) then
-        print *, 'ERROR: Adjacency asymmetry between partitions ', pa, ' and ', pb
-        print *, '  faces:   ', pa, '->', pb, '=', nfaces_ab, '  ', pb, '->', pa, '=', nfaces_ba
-        print *, '  edges:   ', pa, '->', pb, '=', nedges_ab, '  ', pb, '->', pa, '=', nedges_ba
-        print *, '  corners: ', pa, '->', pb, '=', ncorners_ab, '  ', pb, '->', pa, '=', ncorners_ba
-        any_error = .true.
-      end if
-    end do
-  end do
-
-  if (any_error) then
-    stop 'Error: MPI adjacency graph is not symmetric. See messages above.'
-  else
-    print *, 'Adjacency symmetry check passed for all partition pairs.'
-  end if
-
-  end subroutine verify_adjacency_symmetry

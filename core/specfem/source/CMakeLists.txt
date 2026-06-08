@@ -9,6 +9,7 @@ add_library(specfem::source ALIAS source_class)
 target_link_libraries(
         source_class
         Kokkos::kokkos
+        specfem::coordinate_systems
         specfem::datetime
         specfem::utilities
         specfem::source_time_functions

@@ -37,9 +37,7 @@ public:
   constexpr static bool using_simd = false;
 #else
   // TODO(Rohit : DIM3_SIMD) Enable simd execution for dim3 solver
-  constexpr static bool using_simd =
-      (Tags::dimension_tag == specfem::element::dimension_tag::dim2) ? true
-                                                                     : false;
+  constexpr static bool using_simd = true;
 #endif
 
   using simd = specfem::datatype::simd<type_real, using_simd>;
@@ -114,8 +112,7 @@ public:
     const int istep = istep_;
 
     specfem::execution::for_each_level(
-        "specfem::compute::compute_stiffness_interaction::gather",
-        chunk.set_scratch_size(0, Kokkos::PerTeam(shmem_size())),
+        "specfem::compute::compute_stiffness_interaction::gather", chunk,
         KOKKOS_LAMBDA(
             const typename ChunkType::index_type &chunk_iterator_index) {
           const auto &chunk_index = chunk_iterator_index.get_index();
@@ -277,9 +274,7 @@ public:
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
   constexpr static bool using_simd = false;
 #else
-  constexpr static bool using_simd =
-      (Tags::dimension_tag == specfem::element::dimension_tag::dim2) ? true
-                                                                     : false;
+  constexpr static bool using_simd = true;
 #endif
 
   using simd = specfem::datatype::simd<type_real, using_simd>;
@@ -351,8 +346,7 @@ public:
     const int istep = istep_;
 
     specfem::execution::for_each_level(
-        "specfem::compute::compute_stiffness_interaction::scatter",
-        chunk.set_scratch_size(0, Kokkos::PerTeam(shmem_size())),
+        "specfem::compute::compute_stiffness_interaction::scatter", chunk,
         KOKKOS_LAMBDA(
             const typename ChunkType::index_type &chunk_iterator_index) {
           const auto &chunk_index = chunk_iterator_index.get_index();

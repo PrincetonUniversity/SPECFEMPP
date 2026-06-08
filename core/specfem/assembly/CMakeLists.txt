@@ -10,6 +10,7 @@ target_link_libraries(
         $<$<BOOL:${SPECFEM_ENABLE_VTK}>:${VTK_LIBRARIES}>
         PRIVATE
         specfem::algorithms
+        specfem::coordinate_systems
         specfem::attenuation
         specfem::element
         specfem::element_coupling
@@ -23,6 +24,7 @@ target_link_libraries(
         shape_functions
         Kokkos::kokkos
         specfem::enums
+        specfem_program
         ${BOOST_LIBS}
         $<$<BOOL:${SPECFEM_ENABLE_VTK}>:${VTK_LIBRARIES}>
 )

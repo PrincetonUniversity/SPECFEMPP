@@ -100,9 +100,23 @@ int compute_stiffness_interaction_core(
     // Scatter kernel uses less shared memory via atomic accumulation.
     // Select gather when it fits within the device limit;
     if (gather_kernel<NGLL, Tags>::shmem_size() <= chunk.scratch_size_max(0)) {
-      gather_kernel<NGLL, Tags>{ assembly, istep }(chunk);
+      gather_kernel<NGLL, Tags>{ assembly, istep }(chunk.set_scratch_size(
+          0, Kokkos::PerTeam(gather_kernel<NGLL, Tags>::shmem_size())));
+    } else if (scatter_kernel<NGLL, Tags>::shmem_size() <=
+               chunk.scratch_size_max(0)) {
+      scatter_kernel<NGLL, Tags>{ assembly, istep }(chunk.set_scratch_size(
+          0, Kokkos::PerTeam(scatter_kernel<NGLL, Tags>::shmem_size())));
+    } else if (gather_kernel<NGLL, Tags>::shmem_size() <=
+               chunk.scratch_size_max(1)) {
+      gather_kernel<NGLL, Tags>{ assembly, istep }(chunk.set_scratch_size(
+          1, Kokkos::PerTeam(gather_kernel<NGLL, Tags>::shmem_size())));
+    } else if (scatter_kernel<NGLL, Tags>::shmem_size() <=
+               chunk.scratch_size_max(1)) {
+      scatter_kernel<NGLL, Tags>{ assembly, istep }(chunk.set_scratch_size(
+          1, Kokkos::PerTeam(scatter_kernel<NGLL, Tags>::shmem_size())));
     } else {
-      scatter_kernel<NGLL, Tags>{ assembly, istep }(chunk);
+      throw std::runtime_error(
+          "Not enough shared memory for stiffness interaction kernels.");
     }
   }
 

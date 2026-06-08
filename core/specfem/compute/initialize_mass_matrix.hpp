@@ -77,7 +77,6 @@ void initialize_mass_matrix(
           mpi_buf.wait();
           mpi_buf.unpack(field);
         });
-    Kokkos::fence("initialize_mass_matrix::mpi_assembly");
   }
 
   // Step 3: Invert mass matrix

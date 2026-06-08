@@ -2,15 +2,16 @@
 #include "specfem/logger.hpp"
 #include "specfem/mesh_entity.hpp"
 #include "specfem/mpi.hpp"
+#include "specfem/program/abort.hpp"
 #include "specfem/setup.hpp"
 #include "specfem/tag_dispatch.hpp"
 #include <array>
 #include <cmath>
-#include <stdexcept>
+#include <sstream>
 #include <unordered_map>
 #include <unordered_set>
 
-namespace {
+namespace specfem::assembly::mpi_impl {
 
 /// Find position of anchor in face corner array
 int find_anchor_position(
@@ -20,18 +21,21 @@ int find_anchor_position(
     if (corners[i] == anchor)
       return i;
   }
-  throw std::runtime_error(
+  std::string msg =
       "Anchor point not found among face corners: anchor=" +
       std::to_string(static_cast<int>(anchor)) +
       " not in corners_of_face() array. "
       "Check that the mesh database was generated with correct anchor point "
-      "encoding (expected element-absolute corner IDs 19-26).");
+      "encoding (expected element-absolute corner IDs 19-26).";
+  specfem::Logger::error(msg);
+  specfem::program::abort(msg);
 }
 
 /// Filter communication group indices by medium tag: include a connection only
-/// if BOTH the local and neighbor elements have the target medium tag.
-/// This ensures symmetric filtering (both packer and unpacker agree) and that
-/// both sides have valid DOFs for the given medium type.
+/// if the local element has the target medium tag. Each rank filters its own
+/// side independently, so symmetric filtering is achieved because both the
+/// packer and unpacker apply the same local-element check on their respective
+/// partitions.
 /// Returns tuple of (face_indices, edge_indices, corner_indices)
 template <specfem::element::medium_tag MediumTag>
 std::tuple<std::vector<unsigned int>, std::vector<unsigned int>,
@@ -65,10 +69,6 @@ filter_indices_by_medium_tag(
 
   return std::make_tuple(face_indices, edge_indices, corner_indices);
 }
-
-} // anonymous namespace
-
-namespace {
 
 /**
  * @brief Apply rotation permutation to a 2D GLL grid based on theta value.
@@ -108,7 +108,7 @@ unsigned int apply_reflection(unsigned int ipoint, unsigned int ngll,
   return do_reflect ? (ngll - 1 - ipoint) : ipoint;
 }
 
-} // anonymous namespace
+} // namespace specfem::assembly::mpi_impl
 
 // ---------------------------------------------------------------------------
 // communication_group constructor (base)
@@ -261,7 +261,7 @@ specfem::assembly::mpi_impl::edge_communication_group::edge_communication_group(
     }
 
     if (pos_local == -1 || pos_neigh == -1) {
-      throw std::runtime_error(
+      std::string msg =
           "edge_communication_group: anchor point not found among edge "
           "endpoints. local_anchor=" +
           std::to_string(static_cast<int>(edge.local_anchor_point)) +
@@ -270,7 +270,9 @@ specfem::assembly::mpi_impl::edge_communication_group::edge_communication_group(
           ", edge_orientation=" +
           std::to_string(static_cast<int>(edge.orientation)) +
           ". Check that the mesh database was generated with correct anchor "
-          "point encoding (expected element-absolute corner IDs 19-26).");
+          "point encoding (expected element-absolute corner IDs 19-26).";
+      specfem::Logger::error(msg);
+      specfem::program::abort(msg);
     }
 
     // Anchors at the same endpoint → same traversal direction (no reflect)
@@ -370,7 +372,9 @@ specfem::assembly::mpi_impl::packer<FieldType, DimensionTag, MediumTag>::packer(
   else
     this->ngll = 0;
 
-  // Early exit if no faces in this communication group
+  this->nglob = 0;
+
+  // Early exit if no connections after medium-tag filtering
   if ((this->nfaces == 0) && (this->nedges == 0) && (this->ncorners == 0))
     return;
 
@@ -652,6 +656,7 @@ specfem::assembly::mpi_impl::unpacker<FieldType, DimensionTag, MediumTag>::
   this->nfaces = face_indices.size();
   this->nedges = edge_indices.size();
   this->ncorners = corner_indices.size();
+  this->nglob = 0;
 
   // Build filtered local orientation views for use in
   // assemble_unpacking_mapping
@@ -875,7 +880,7 @@ void specfem::assembly::mpi_impl::unpacker<FieldType, DimensionTag, MediumTag>::
   // Validate received metadata {nfaces, nedges, ncorners, ngll, nglob}
   if (metadata_buf[0] != this->nfaces || metadata_buf[1] != this->nedges ||
       metadata_buf[2] != this->ncorners || metadata_buf[3] != this->ngll) {
-    throw std::runtime_error(
+    std::string msg =
         "unpacker::assemble_unpacking_mapping: metadata mismatch with sender. "
         "Local (nfaces=" +
         std::to_string(this->nfaces) +
@@ -886,7 +891,9 @@ void specfem::assembly::mpi_impl::unpacker<FieldType, DimensionTag, MediumTag>::
         ", nedges=" + std::to_string(metadata_buf[1]) +
         ", ncorners=" + std::to_string(metadata_buf[2]) +
         ", ngll=" + std::to_string(metadata_buf[3]) + ") from neighbor rank " +
-        std::to_string(this->neighbor_rank));
+        std::to_string(this->neighbor_rank);
+    specfem::Logger::error(msg);
+    specfem::program::abort(msg);
   }
 
   const int nglob = static_cast<int>(metadata_buf[4]);
@@ -1057,14 +1064,13 @@ specfem::assembly::mpi<specfem::element::dimension_tag::dim3>::mpi(
   // Debug: print per-neighbor connection counts
   for (const auto &[nr, edges] : face_grouped) {
     specfem::Logger::debug(
-        "MPI adjacency: rank " + std::to_string(my_rank) + " -> neighbor " +
-            std::to_string(nr) + " faces=" + std::to_string(edges.size()) +
-            " edges=" +
-            std::to_string(edge_grouped.count(nr) ? edge_grouped[nr].size()
-                                                  : 0) +
-            " corners=" +
-            std::to_string(corner_grouped.count(nr) ? corner_grouped[nr].size()
-                                                    : 0),
+        [&](std::ostringstream &os) {
+          os << "MPI adjacency: rank " << my_rank << " -> neighbor " << nr
+             << " faces=" << edges.size() << " edges="
+             << (edge_grouped.count(nr) ? edge_grouped[nr].size() : 0)
+             << " corners="
+             << (corner_grouped.count(nr) ? corner_grouped[nr].size() : 0);
+        },
         false);
   }
 
