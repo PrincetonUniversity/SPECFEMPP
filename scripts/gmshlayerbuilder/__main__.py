@@ -1,21 +1,29 @@
-from argparse import ArgumentParser, Action
 import re
+from argparse import Action, ArgumentParser
+from pathlib import Path
 from typing import override
 
-# ensure _gmsh2meshfem is in path.
+gmshlayerbuilder_dir = Path(__file__).parent
+# ensure gmsh2meshfem is in path.
 # There may be a better way to go about this.
 try:
-    import _gmsh2meshfem  # noqa: F401
+    import gmsh2meshfem  # noqa: F401
 except ImportError:
     import sys
-    import os
 
-    sys.path.append(os.path.dirname(__file__))
-    import _gmsh2meshfem  # noqa: F401
+    sys.path.append(str(gmshlayerbuilder_dir.parent))
+    import gmsh2meshfem  # noqa: F401
+
+try:
+    import topo_import  # noqa: F401
+except ImportError:
+    import sys
+
+    sys.path.append(str(gmshlayerbuilder_dir))
+    import topo_import  # noqa: F401
 
 
-from _gmsh2meshfem.topo_import.layer_builder.layeredbuilder import BOUNDARY_TYPES
-from _gmsh2meshfem.topo_import.topo_reader import IS_FLUID_PER_MATERIAL_STRCODE
+from topo_import.tags import BOUNDARY_TYPES, IS_FLUID_PER_MATERIAL_STRCODE  # noqa: E402
 
 
 class MaterialTypeStringCode(Action):
@@ -106,12 +114,11 @@ def get_parser():
 
 
 def run2D():
-    import _gmsh2meshfem.dim2
-    import _gmsh2meshfem.topo_import
+    from gmsh2meshfem.dim2 import Exporter
 
     args = get_parser().parse_args()
 
-    builder = _gmsh2meshfem.topo_import.builder_from_topo_file(
+    builder = topo_import.builder_from_topo_file2d(
         args.topo_file,
         set_bottom_boundary=args.bdry_bottom,
         set_top_boundary=args.bdry_top,
@@ -124,7 +131,7 @@ def run2D():
     if args.should_plot:
         model.plot()
 
-    _gmsh2meshfem.dim2.Exporter(
+    Exporter(
         model, args.output_folder, nonconforming_adjacencies_file="nc_adjacencies"
     ).export_mesh()
 
