@@ -3,22 +3,14 @@
  * @brief Implementation of MESHFEM3D element tagging system
  *
  * Implements parallel extraction of material classification from MESHFEM3D
- * Materials containers. Sets boundary tags to `none` since other boundary
- * conditions are not yet implemented.
+ * Materials containers. Boundary tags are not yet derived from mesh boundaries
+ * because mesh.boundaries stores all domain faces (not only absorbing ones).
+ * When proper absorbing-boundary configuration is available, this can be
+ * updated to classify faces as stacey vs. none.
  */
 #include "specfem/enums.hpp"
 #include "specfem/mesh.hpp"
 
-/**
- * @brief Constructor that extracts material tags in parallel
- *
- * Uses Kokkos parallel_for to extract material classification from the
- * Materials container. Sets all boundary tags to `none` since other
- * boundary conditions are not yet implemented.
- *
- * @param nspec Number of spectral elements
- * @param materials Materials container with material data
- */
 specfem::mesh::tags<specfem::element::dimension_tag::dim3>::tags(
     const int nspec, specfem::mesh::materials<dimension_tag> &materials) {
 
@@ -35,7 +27,9 @@ specfem::mesh::tags<specfem::element::dimension_tag::dim3>::tags(
         const auto [material_tag, property_tag, attenuation_tag] =
             materials.get_material_type(ispec);
 
-        // Set to none since other boundary conditions are not yet implemented
+        // Boundary tags are set to none: mesh.boundaries stores all domain
+        // faces and cannot distinguish absorbing from free-surface faces
+        // without simulation configuration information.
         const auto boundary_tag = specfem::element::boundary_tag::none;
 
         this->tags_container(ispec) = { material_tag, property_tag,

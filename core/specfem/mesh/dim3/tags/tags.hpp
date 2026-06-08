@@ -73,6 +73,14 @@ template <> struct tags<specfem::element::dimension_tag::dim3> {
    *
    * @see specfem::mesh::materials::get_material_type
    */
+  /**
+   * @brief Construct tags from MESHFEM3D materials database
+   *
+   * @param nspec Total number of spectral elements in the mesh
+   * @param materials MESHFEM3D materials container with material data
+   *
+   * @see specfem::mesh::materials::get_material_type
+   */
   tags(const int nspec, specfem::mesh::materials<dimension_tag> &materials);
 
   /** @} */

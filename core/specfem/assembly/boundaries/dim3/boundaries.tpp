@@ -1,6 +1,8 @@
 #pragma once
 
 #include "boundaries.hpp"
+#include "impl/acoustic_free_surface.hpp"
+#include "impl/stacey.hpp"
 #include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 #include <vector>
@@ -11,28 +13,40 @@ specfem::assembly::boundaries<specfem::element::dimension_tag::dim3>::boundaries
     const specfem::assembly::mesh<dimension_tag> &mesh_assembly,
     const specfem::assembly::jacobian_matrix<dimension_tag> &jacobian_matrix)
     : boundary_tags("specfem::assembly::boundaries::boundary_tags", nspec),
-      h_boundary_tags(Kokkos::create_mirror_view(boundary_tags)) {
+      h_boundary_tags(Kokkos::create_mirror_view(boundary_tags)),
+      acoustic_free_surface_index_mapping(
+          "specfem::assembly::boundaries::acoustic_free_surface_index_mapping",
+          nspec),
+      h_acoustic_free_surface_index_mapping(
+          Kokkos::create_mirror_view(acoustic_free_surface_index_mapping)),
+      stacey_index_mapping(
+          "specfem::assembly::boundaries::stacey_index_mapping", nspec),
+      h_stacey_index_mapping(
+          Kokkos::create_mirror_view(stacey_index_mapping)) {
 
   std::vector<specfem::element::boundary_tag_container> boundary_tag(nspec);
+
+  this->acoustic_free_surface =
+      specfem::assembly::boundaries_impl::acoustic_free_surface<dimension_tag>(
+          nspec, ngllz, nglly, ngllx, mesh, mesh_assembly,
+          this->h_acoustic_free_surface_index_mapping, boundary_tag);
+
+  this->stacey = specfem::assembly::boundaries_impl::stacey<dimension_tag>(
+      nspec, ngllz, nglly, ngllx, mesh, mesh_assembly, jacobian_matrix,
+      this->h_stacey_index_mapping, boundary_tag);
 
   for (int ispec = 0; ispec < nspec; ispec++) {
     this->h_boundary_tags(ispec) = boundary_tag[ispec].get_tag();
   }
 
-  // Check if mesh and compute boundary tags match
-  for (int ispec = 0; ispec < nspec; ++ispec) {
-    // In dim3, mesh and compute indices are the same (no reordering)
-    const int ispec_compute = ispec;
-    const auto m_boundary_tag = mesh.tags.tags_container(ispec).boundary_tag;
-    const auto c_boundary_tag = this->h_boundary_tags(ispec_compute);
-    if (m_boundary_tag != c_boundary_tag) {
-      std::cout << "ispec: " << ispec << std::endl;
-      std::cout << "m_boundary_tag: " << specfem::element::to_string(m_boundary_tag) << std::endl;
-      std::cout << "c_boundary_tag: " << specfem::element::to_string(c_boundary_tag) << std::endl;
-      throw std::runtime_error("Mesh and compute boundary tags do not match");
-    }
-  }
+  // Note: mesh.tags.boundary_tag is currently always boundary_tag::none for
+  // dim3 because mesh.boundaries stores ALL domain boundary faces (not only
+  // absorbing ones). Once proper absorbing-boundary configuration is threaded
+  // through the mesh reader, the validation check can be re-enabled.
 
+  Kokkos::deep_copy(this->acoustic_free_surface_index_mapping,
+                    this->h_acoustic_free_surface_index_mapping);
+  Kokkos::deep_copy(this->stacey_index_mapping, this->h_stacey_index_mapping);
   Kokkos::deep_copy(this->boundary_tags, this->h_boundary_tags);
   return;
 }
