@@ -123,21 +123,21 @@ locate_point(
   // clusters MPI may perform FP format conversion during the reduction
   // (§4.1), which can alter the low-order bits.  A relative tolerance of one
   // machine-epsilon guards against this for future heterogeneous deployments.
-  std::vector<int> islice_selected(npoints, -1);
+  std::vector<int> partition_index_selected(npoints, -1);
   for (int i = 0; i < npoints; ++i) {
     if (specfem::utilities::is_close(local_priority[i], global_priority[i],
                                      std::numeric_limits<type_real>::epsilon(),
                                      type_real(0)))
-      islice_selected[i] = myrank;
+      partition_index_selected[i] = myrank;
   }
-  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, islice_selected.data(),
-                                     npoints, MPI_INT, MPI_MAX,
-                                     MPI_COMM_WORLD));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE,
+                                     partition_index_selected.data(), npoints,
+                                     MPI_INT, MPI_MAX, MPI_COMM_WORLD));
 
   // Sanity check: every point must have been claimed by at least one rank.
   // -----
   for (int i = 0; i < npoints; ++i) {
-    if (islice_selected[i] < 0) {
+    if (partition_index_selected[i] < 0) {
       throw std::runtime_error("Point " + std::to_string(i) +
                                " could not be located in any MPI partition");
     }
@@ -147,14 +147,14 @@ locate_point(
   std::vector<specfem::point::local_coordinates<DimensionTag> > result_coords(
       npoints);
   for (int i = 0; i < npoints; ++i) {
-    if (islice_selected[i] == myrank) {
+    if (partition_index_selected[i] == myrank) {
       result_coords[i] = local_lcoords[i];
     } else {
       result_coords[i].ispec = -1;
     }
   }
 
-  return { result_coords, islice_selected };
+  return { result_coords, partition_index_selected };
 }
 
 } // namespace algorithms

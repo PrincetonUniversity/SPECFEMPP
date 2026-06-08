@@ -89,6 +89,27 @@ public:
         fz(fz) {};
 
   /**
+   * @brief Construct a new collocated force object from generic coordinates
+   *
+   * @param coordinates Generic coordinate object
+   * @param fx Force in x-direction
+   * @param fy Force in y-direction
+   * @param fz Force in z-direction
+   * @param source_time_function pointer to source time function
+   * @param wavefield_type type of wavefield
+   */
+  force(
+      std::unique_ptr<specfem::coordinate_systems::coordinates<
+          specfem::element::dimension_tag::dim3>>
+          coordinates,
+      type_real fx, type_real fy, type_real fz,
+      std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
+      const specfem::simulation::field_type wavefield_type)
+      : wavefield_type(wavefield_type),
+        vector_source(std::move(coordinates), std::move(source_time_function)),
+        fx(fx), fy(fy), fz(fz) {};
+
+  /**
    * @brief User output
    *
    */

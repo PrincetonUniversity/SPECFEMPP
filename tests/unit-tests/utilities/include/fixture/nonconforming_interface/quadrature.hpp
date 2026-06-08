@@ -169,6 +169,24 @@ struct GLL2 : QuadraturePoints {
   }
 };
 
+struct GLL4 : QuadraturePoints {
+  static constexpr int nquad = 5;
+
+  // computed from scipy.special.roots_jacobi(3,1,1)
+  // (https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.roots_jacobi.html)
+  // N=5 ; print(-1,*(f"{x:.40}" for x in
+  // scipy.special.roots_jacobi(N-2,1,1)[0]),1, sep=", ")
+
+  static constexpr std::array<double, nquad> quadrature_points = {
+    -1, -0.6546536707079770867068191364523954689503, 0.0,
+    0.6546536707079770867068191364523954689503, 1
+  };
+  static std::string name() { return "GLL4"; }
+  static std::string description() {
+    return "5-Point (degree-4) GLL (7 degrees of exactness)";
+  }
+};
+
 struct Asymm5Point : QuadraturePoints {
   static constexpr int nquad = 5;
   static constexpr std::array<double, nquad> quadrature_points = { -1, -0.8,
@@ -192,6 +210,28 @@ struct Asymm4Point : QuadraturePoints {
             "  points = [-0.3, 0, 0.4, -0.6]");
   }
 };
+struct GLL6 : QuadraturePoints {
+  static constexpr int nquad = 7;
+
+  // computed from scipy.special.roots_jacobi(5,1,1)
+  // (https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.roots_jacobi.html)
+  // N=7 ; print(-1,*(f"{x:.40}" for x in
+  // scipy.special.roots_jacobi(N-2,1,1)[0]),1, sep=", ")
+
+  static constexpr std::array<double, nquad> quadrature_points = {
+    -1,
+    -0.8302238962785670750577082799281924962997,
+    -0.4688487934707141757684212279855273663998,
+    0.0,
+    0.4688487934707141757684212279855273663998,
+    0.8302238962785670750577082799281924962997,
+    1
+  };
+  static std::string name() { return "GLL6"; }
+  static std::string description() {
+    return "7 Point (degree-6) GLL (11 degrees of exactness)";
+  }
+};
 struct GL6 : QuadraturePoints {
   static constexpr int nquad = 7;
 
@@ -209,7 +249,7 @@ struct GL6 : QuadraturePoints {
   };
   static std::string name() { return "GL6"; }
   static std::string description() {
-    return "7 Point (degree-6) Gauss-Legendre (11 degrees of exactness)";
+    return "7 Point (degree-6) Gauss-Legendre (13 degrees of exactness)";
   }
 };
 
