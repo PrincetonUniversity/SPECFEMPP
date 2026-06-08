@@ -51,6 +51,7 @@ enum DataClassType {
   weights,                   ///< Quadrature weights
   transfer_function_self,    ///< Self-coupling transfer functions
   transfer_function_coupled, ///< Cross-coupling transfer functions
+  coupled_coordinates,       ///< Cross-coupling nodal coordinates
   intersection_factor,       ///< Interface intersection factors
   intersection_normal,       ///< Interface normal vectors
   nonconforming_interface,   ///< Non-conforming mesh interfaces

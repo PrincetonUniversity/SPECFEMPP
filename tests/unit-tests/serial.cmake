@@ -515,6 +515,7 @@ target_link_libraries(
   specfem::io
   specfem::enums
   specfem::element
+  specfem::program
   gtest_main
 )
 
@@ -593,6 +594,7 @@ set_target_properties(gradient_tests PROPERTIES UNITY_BUILD OFF)
 add_executable(
   transfer_tests
   algorithms/dim2/transfer.cpp
+  algorithms/dim3/transfer_interpolate.cpp
 )
 
 target_link_libraries(
@@ -885,6 +887,18 @@ target_link_libraries(
   gtest_main
 )
 
+add_executable(
+  resolve_coordinates_tests
+  assembly/resolve_coordinates/test_resolve_coordinates.cpp
+)
+
+target_link_libraries(
+  resolve_coordinates_tests
+  specfem::assembly
+  specfem::coordinate_systems
+  gtest_main
+)
+
 # Register serial tests for discovery
 set(SERIAL_TEST_TARGETS
   serial_mpi_tests
@@ -933,6 +947,7 @@ set(SERIAL_TEST_TARGETS
   test_mesh_utilities_mapping_3d
   units_tests
   coordinate_systems_tests
+  resolve_coordinates_tests
 )
 
 if (NOT SPECFEM_ENABLE_MPI)

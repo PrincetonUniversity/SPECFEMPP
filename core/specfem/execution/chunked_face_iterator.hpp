@@ -173,6 +173,8 @@ public:
         faces(faces_) {}
 
   const int nfaces; ///< Total number of faces in this chunk
+  const int &chunk_size = nfaces;
+
 private:
   ViewType faces;         ///< View of mesh faces to iterate over
   std::size_t num_points; ///< Number of GLL points per face dimension
