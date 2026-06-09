@@ -23,28 +23,17 @@ specfem::assembly::boundaries_impl::stacey<
            std::vector<specfem::element::boundary_tag_container>
                &element_boundary_tags) {
 
-  // Collect stacey boundary faces: all boundary faces that are NOT acoustic
-  // free surface (i.e., not top face on acoustic element).
+  // Stacey boundary faces are all faces in the absorbing_boundary sub-struct
+  // (X_MIN/X_MAX/Y_MIN/Y_MAX/Z_MIN directions).
 
-  const int nfaces = mesh.boundaries.nfaces;
+  const auto &abs = mesh.boundaries.absorbing_boundary;
 
   std::map<int, std::vector<int>> ispec_to_stacey_faces;
 
-  for (int iface = 0; iface < nfaces; ++iface) {
-    const auto face_type = mesh.boundaries.face_type(iface);
-    const int ispec_mesh = mesh.boundaries.index_mapping(iface);
+  for (int i = 0; i < abs.nelements; ++i) {
+    const int ispec_mesh = abs.index_mapping(i);
     const int ispec_compute = mesh_assembly.h_mesh_to_compute(ispec_mesh);
-
-    const auto medium_tag =
-        mesh.tags.tags_container(ispec_mesh).medium_tag;
-
-    // Top face on acoustic element is handled as acoustic_free_surface,
-    // not stacey.
-    if (face_type == specfem::mesh_entity::dim3::type::top &&
-        medium_tag == specfem::element::medium_tag::acoustic)
-      continue;
-
-    ispec_to_stacey_faces[ispec_compute].push_back(iface);
+    ispec_to_stacey_faces[ispec_compute].push_back(i);
   }
 
   const int total_stacey_elements = ispec_to_stacey_faces.size();
@@ -100,8 +89,8 @@ specfem::assembly::boundaries_impl::stacey<
     element_boundary_tags[ispec_compute] +=
         specfem::element::boundary_tag::stacey;
 
-    for (int iface : kv.second) {
-      const auto face_type = mesh.boundaries.face_type(iface);
+    for (int i : kv.second) {
+      const auto face_type = abs.type(i);
 
       for (int iz = 0; iz < ngllz; ++iz) {
         for (int iy = 0; iy < nglly; ++iy) {

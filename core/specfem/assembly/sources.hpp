@@ -59,7 +59,8 @@ template <> struct SourceSets<specfem::element::dimension_tag::dim3> {
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
   constexpr static auto medium_set = MEDIUM_SET(elastic, acoustic);
   constexpr static auto property_set = PROPERTY_SET(isotropic);
-  constexpr static auto boundary_set = BOUNDARY_SET(none);
+  constexpr static auto boundary_set = BOUNDARY_SET(
+      none, stacey, acoustic_free_surface, composite_stacey_dirichlet);
   constexpr static auto wavefield_set =
       WAVEFIELD_SET(forward, backward, adjoint);
 };

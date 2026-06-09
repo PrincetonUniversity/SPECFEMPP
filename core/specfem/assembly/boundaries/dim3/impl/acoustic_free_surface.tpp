@@ -18,29 +18,23 @@ specfem::assembly::boundaries_impl::acoustic_free_surface<
         std::vector<specfem::element::boundary_tag_container>
             &element_boundary_tags) {
 
-  // Identify acoustic free surface elements: acoustic elements with a top
-  // (face_type::top) face listed in mesh.boundaries.
+  // Identify acoustic free surface elements: acoustic elements in the
+  // mesh.boundaries.acoustic_free_surface sub-struct (Z_MAX faces).
 
-  const int nfaces = mesh.boundaries.nfaces;
+  const auto &fs = mesh.boundaries.acoustic_free_surface;
 
-  // Build a map from compute element index to face types for top faces
+  // Build a map from compute element index to sub-struct face indices
   std::map<int, std::vector<int>> ispec_to_top_faces;
 
-  for (int iface = 0; iface < nfaces; ++iface) {
-    const auto face_type = mesh.boundaries.face_type(iface);
-    if (face_type != specfem::mesh_entity::dim3::type::top)
-      continue;
-
-    const int ispec_mesh = mesh.boundaries.index_mapping(iface);
+  for (int i = 0; i < fs.nelem_acoustic_surface; ++i) {
+    const int ispec_mesh = fs.index_mapping(i);
     const int ispec_compute = mesh_assembly.h_mesh_to_compute(ispec_mesh);
 
-    // Only include acoustic elements
-    const auto medium_tag =
-        mesh.tags.tags_container(ispec_mesh).medium_tag;
+    const auto medium_tag = mesh.tags.tags_container(ispec_mesh).medium_tag;
     if (medium_tag != specfem::element::medium_tag::acoustic)
       continue;
 
-    ispec_to_top_faces[ispec_compute].push_back(iface);
+    ispec_to_top_faces[ispec_compute].push_back(i);
   }
 
   const int total_acfree_elements = ispec_to_top_faces.size();
@@ -87,8 +81,8 @@ specfem::assembly::boundaries_impl::acoustic_free_surface<
     element_boundary_tags[ispec_compute] +=
         specfem::element::boundary_tag::acoustic_free_surface;
 
-    for (int iface : kv.second) {
-      const auto face_type = mesh.boundaries.face_type(iface);
+    for (int i : kv.second) {
+      const auto face_type = fs.type(i);
       for (int iz = 0; iz < ngllz; ++iz) {
         for (int iy = 0; iy < nglly; ++iy) {
           for (int ix = 0; ix < ngllx; ++ix) {

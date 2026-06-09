@@ -1,22 +1,7 @@
-/**
- * @file tags.hpp
- * @brief MESHFEM3D element tagging system for 3D spectral element
- * classification
- *
- * This file implements element tagging for 3D spectral element meshes based on
- * MESHFEM3D material database information. It extracts material classification
- * from materials containers and creates tags_container objects for each
- * element.
- *
- * Currently sets all boundary tags to `none` as other boundary conditions are
- * not yet implemented in the MESHFEM3D workflow.
- *
- * @see specfem::mesh::materials
- * @see specfem::mesh::impl::tags_container
- */
 #pragma once
 
 #include "specfem/enums.hpp"
+#include "specfem/mesh/dim3/boundaries/boundaries.hpp"
 #include "specfem/mesh/dim3/materials/materials.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -25,26 +10,11 @@ namespace specfem::mesh {
 template <specfem::element::dimension_tag DimensionTag> struct tags;
 
 /**
- * @brief Element tagging system for 3D MESHFEM3D spectral elements
+ * @brief Element tagging system for 3D spectral elements
  *
- * Extracts material classification from MESHFEM3D materials containers and
- * creates tags_container objects for each spectral element. Uses parallel
- * initialization to assign medium and property tags based on material data.
- *
- * Currently assigns boundary_tag::none to all elements since other boundary
- * conditions are not yet implemented in the MESHFEM3D workflow.
- *
- * @code
- * specfem::mesh::materials<specfem::element::dimension_tag::dim3>
- * materials;
- * // ... populate materials ...
- *
- * specfem::mesh::tags<specfem::element::dimension_tag::dim3> tags(
- *     nspec, materials);
- * @endcode
- *
- * @see specfem::mesh::materials::get_material_type
- * @see specfem::mesh::impl::tags_container
+ * Assigns medium, property, and boundary tags to every spectral element
+ * using material data and the two boundary sub-structures
+ * (absorbing_boundary and acoustic_free_surface).
  */
 template <> struct tags<specfem::element::dimension_tag::dim3> {
   /**
@@ -55,33 +25,25 @@ template <> struct tags<specfem::element::dimension_tag::dim3> {
   /** @name Constructors */
   /** @{ */
 
-  /**
-   * @brief Default constructor creating empty tags container
-   */
   tags() = default;
 
   /**
-   * @brief Construct tags from MESHFEM3D materials database
+   * @brief Construct tags from materials and boundary information.
    *
-   * Extracts material classification (medium and property tags) from the
-   * materials container for each element using parallel initialization.
-   * Sets all boundary tags to `none` since other boundary conditions are
-   * not yet implemented.
+   * Assigns medium/property tags from materials and derives boundary tags
+   * directly from the boundary sub-structures:
+   * - Elements in @c boundaries.absorbing_boundary → stacey
+   * - Acoustic elements in @c boundaries.acoustic_free_surface →
+   *   acoustic_free_surface
    *
-   * @param nspec Total number of spectral elements in the mesh
-   * @param materials MESHFEM3D materials container with material data
-   *
-   * @see specfem::mesh::materials::get_material_type
-   */
-  /**
-   * @brief Construct tags from MESHFEM3D materials database
-   *
-   * @param nspec Total number of spectral elements in the mesh
-   * @param materials MESHFEM3D materials container with material data
+   * @param nspec      Total number of spectral elements
+   * @param materials  Material container with medium/property info
+   * @param boundaries Domain boundary face information (two sub-structs)
    *
    * @see specfem::mesh::materials::get_material_type
    */
-  tags(const int nspec, specfem::mesh::materials<dimension_tag> &materials);
+  tags(const int nspec, specfem::mesh::materials<dimension_tag> &materials,
+       const specfem::mesh::boundaries<dimension_tag> &boundaries);
 
   /** @} */
 

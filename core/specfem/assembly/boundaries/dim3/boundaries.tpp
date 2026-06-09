@@ -39,11 +39,6 @@ specfem::assembly::boundaries<specfem::element::dimension_tag::dim3>::boundaries
     this->h_boundary_tags(ispec) = boundary_tag[ispec].get_tag();
   }
 
-  // Note: mesh.tags.boundary_tag is currently always boundary_tag::none for
-  // dim3 because mesh.boundaries stores ALL domain boundary faces (not only
-  // absorbing ones). Once proper absorbing-boundary configuration is threaded
-  // through the mesh reader, the validation check can be re-enabled.
-
   Kokkos::deep_copy(this->acoustic_free_surface_index_mapping,
                     this->h_acoustic_free_surface_index_mapping);
   Kokkos::deep_copy(this->stacey_index_mapping, this->h_stacey_index_mapping);
