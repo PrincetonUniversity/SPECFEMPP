@@ -78,19 +78,19 @@ operator==(const specfem::sources::source<specfem::element::dimension_tag::dim3>
     return false;
   }
 
-  const auto gcoord = this->get_global_coordinates();
-  const auto other_gcoord = other_source->get_global_coordinates();
+  // Compare input coordinates (identity depends solely on input, not mesh)
+  const auto *c1 = this->get_read_coordinates();
+  const auto *c2 = other_source->get_read_coordinates();
+  bool coords_equal = (c1 && c2) ? (*c1 == *c2) : (!c1 && !c2);
 
   bool internal =
+      coords_equal &&
       specfem::utilities::is_close(this->fx, other_source->fx) &&
       specfem::utilities::is_close(this->fy, other_source->fy) &&
       specfem::utilities::is_close(this->fz, other_source->fz) &&
       specfem::utilities::is_close(this->fc_x, other_source->fc_x) &&
       specfem::utilities::is_close(this->fc_y, other_source->fc_y) &&
-      specfem::utilities::is_close(this->fc_z, other_source->fc_z) &&
-      specfem::utilities::is_close(gcoord.x, other_gcoord.x) &&
-      specfem::utilities::is_close(gcoord.y, other_gcoord.y) &&
-      specfem::utilities::is_close(gcoord.z, other_gcoord.z);
+      specfem::utilities::is_close(this->fc_z, other_source->fc_z);
 
   if (!internal) {
     std::cout << "Cosserat force sources not equal" << std::endl;

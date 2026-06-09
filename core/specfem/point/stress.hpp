@@ -139,6 +139,29 @@ public:
   }
 
   /**
+   * @brief Transform stress tensor using a 3D jacobian matrix.
+   *
+   * Identical to the 2D overload but for 3D jacobian matrices: applies the
+   * coordinate transformation \f$ F = J \cdot (T \cdot J^{-1}) \f$ from the
+   * reference (ξ, η, ζ) to the physical (x, y, z) coordinate system.
+   *
+   * @param jacobian_matrix 3D Jacobian matrix containing transformation
+   * derivatives
+   * @return Transformed stress tensor in physical coordinates
+   */
+  KOKKOS_INLINE_FUNCTION
+  value_type operator*(const specfem::point::jacobian_matrix<
+                       specfem::element::dimension_tag::dim3, true, UseSIMD>
+                           &jacobian_matrix) const {
+    const auto &J = static_cast<
+        const typename std::decay_t<decltype(jacobian_matrix)>::tensor_type &>(
+        jacobian_matrix);
+    value_type F = T * J;
+    F *= jacobian_matrix.jacobian;
+    return F;
+  }
+
+  /**
    * @brief Equality comparison operator.
    *
    * Compares two stress tensors for equality by comparing their underlying

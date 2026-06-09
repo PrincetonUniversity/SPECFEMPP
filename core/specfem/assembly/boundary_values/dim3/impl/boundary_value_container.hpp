@@ -30,7 +30,7 @@ public:
       DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic, elastic_spin);
 
   IndexViewType property_index_mapping;
-  IndexViewType::HostMirror h_property_index_mapping;
+  IndexViewType::host_mirror_type h_property_index_mapping;
 
   specfem::tag_dispatch::TypedStorage<BoundaryMediumTemplateType,
                                       decltype(combinations_by_medium)>

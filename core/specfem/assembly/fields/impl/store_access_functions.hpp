@@ -29,10 +29,10 @@ base_store_accessor(const int iglob, const int icomp, const MaskType &mask,
   using data_accessor =
       std::integral_constant<specfem::data_access::DataClassType, DataClass>;
 
-  Kokkos::Experimental::where(mask, value)
-      .copy_to(
-          &(field.template get_value<on_device>(data_accessor(), iglob, icomp)),
-          tag_type);
+  Kokkos::Experimental::simd_partial_store(
+      value,
+      &(field.template get_value<on_device>(data_accessor(), iglob, icomp)),
+      mask, tag_type);
 }
 
 template <

@@ -34,7 +34,7 @@ struct receivers<specfem::element::dimension_tag::dim2>
           specfem::element::dimension_tag::dim2>,
       public receivers_impl::ReceiverIndexBase<
           specfem::assembly::element_types_impl::ElementSets<
-              specfem::element::dimension_tag::dim2> > {
+              specfem::element::dimension_tag::dim2>> {
 
 public:
   constexpr static specfem::element::dimension_tag dimension_tag =
@@ -81,7 +81,7 @@ public:
       const int nspec, const int ngllz, const int ngllx, const int max_sig_step,
       const type_real dt, const type_real t0, const int nsteps_between_samples,
       const std::vector<
-          std::shared_ptr<specfem::receivers::receiver<dimension_tag> > >
+          std::shared_ptr<specfem::receivers::receiver<dimension_tag>>>
           &receivers,
       const std::vector<specfem::enums::wavefield> &stypes,
       const specfem::assembly::mesh<dimension_tag> &mesh,
@@ -97,25 +97,16 @@ public:
     return seismogram_types_;
   }
 
-  /**
-   * @brief Get the station iterator
-   *
-   * @return const StationIterator& Iterator over stations
-   */
-  const receivers_impl::StationIterator &stations() const {
-    return static_cast<const receivers_impl::StationIterator &>(*this);
-  }
-
 private:
   int nspec;              ///< Total number of spectral elements
   IndexViewType elements; ///< View to store the elements associated with the
                           ///< receivers
-  IndexViewType::HostMirror h_elements; ///< Host view to store the
-                                        ///< elements associated with the
-                                        ///< receivers
+  IndexViewType::host_mirror_type h_elements; ///< Host view to store the
+                                              ///< elements associated with the
+                                              ///< receivers
   LagrangeInterpolantType lagrange_interpolant; ///< Lagrange interpolant for
                                                 ///< every receiver
-  LagrangeInterpolantType::HostMirror
+  LagrangeInterpolantType::host_mirror_type
       h_lagrange_interpolant; ///< Lagrange interpolant for every receiver
                               ///< stored on the host
 

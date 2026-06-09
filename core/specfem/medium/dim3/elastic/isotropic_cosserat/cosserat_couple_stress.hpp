@@ -26,37 +26,29 @@ namespace medium_physics {
  * \f$ j\ddot{\phi} = \nabla\cdot \sigma_c + \epsilon : \sigma \f$
  * \nabla\cdot \sigma_c is already handled by existing wavefield logic,
  * so we just need the adjustments given by
- * \f$ j\ddot{\phi}_x = -(\sigma_{zy} - \sigma_{yz}) \f$
- * \f$ j\ddot{\phi}_y = -(\sigma_{xz} - \sigma_{zx}) \f$
- * \f$ j\ddot{\phi}_z = -(\sigma_{yx} - \sigma_{xy}) \f$
- *
- * **Coordinate transformation:**
- * If
- * \f$ \mathbf{J} = \begin{bmatrix} \xi_x & \xi_y & \xi_z \\ \eta_x & \eta_y & \eta_z \\ \gamma_x & \gamma_y & \gamma_z \end{bmatrix} \f$
- * then
- * \f$ \mathbf{J}^{-1} = \frac{1}{\det(\mathbf{J})}
- * \begin{bmatrix}
- * (\eta_y\gamma_z - \eta_z\gamma_y) & -(\xi_y\gamma_z - \xi_z\gamma_y) & (\xi_y\eta_z - \xi_z\eta_y) \\
- * -(\eta_x\gamma_z - \eta_z\gamma_x) & (\xi_x\gamma_z - \xi_z\gamma_x) & -(\xi_x\eta_z - \xi_z\eta_x) \\
- * (\eta_x\gamma_y - \eta_y\gamma_x) & -(\xi_x\gamma_y - \xi_y\gamma_x) & (\xi_x\eta_y - \xi_y\eta_x)
- * \end{bmatrix}
- * \f$
+ * \f$ j\ddot{\phi}_x = (\sigma_{zy} - \sigma_{yz}) \cdot w_{iz} \cdot w_{iy} \cdot w_{ix} \cdot J \f$
+ * \f$ j\ddot{\phi}_y = (\sigma_{xz} - \sigma_{zx}) \cdot w_{iz} \cdot w_{iy} \cdot w_{ix} \cdot J \f$
+ * \f$ j\ddot{\phi}_z = (\sigma_{yx} - \sigma_{xy}) \cdot w_{iz} \cdot w_{iy} \cdot w_{ix} \cdot J \f$
  *
  * where:
  * - \f$ j \f$: rotational inertia
  * - \f$ \phi \f$: rotation vector (microrotation field)
- * - \f$ \sigma_{xz} \neq \sigma_{zx} \f$: asymmetric stress tensor
- * - \f$ \mathbf{J} \f$: Jacobian transformation matrix
+ * - \f$ \sigma_{ij} \neq \sigma_{ji} \f$: asymmetric stress tensor
  *
- * @param point_jacobian_matrix Coordinate transformation matrix
+ * @note The caller (epilogue) applies a global sign negation when reading from
+ *       the scatter accumulator, so this function uses @c += (positive sign).
+ *       The final contribution to the global acceleration field is
+ *       @c -(sigma_a - sigma_b)*factor, matching the stiffness sign convention.
+ *
  * @param point_properties Cosserat material properties
- * @param factor Integration scaling factor
- * @param F Stress integrand components in reference coordinates
- * @param acceleration[in,out] Acceleration field (rotational component modified)
+ * @param factor           Integration factor w(iz)*w(iy)*w(ix)*J for this GLL
+ *                         point
+ * @param point_stress     Physical stress tensor at this GLL point
+ * @param acceleration[in,out] Acceleration delta (rotational components
+ *                         modified)
  */
 // clang-format on
-template <typename T, typename PointJacobianMatrixType,
-          typename PointStressIntegrandViewType, typename PointPropertiesType,
+template <typename T, typename PointPropertiesType, typename PointStressType,
           typename PointAccelerationType>
 KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
     const std::true_type,
@@ -67,26 +59,20 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
     const std::integral_constant<
         specfem::element::property_tag,
         specfem::element::property_tag::isotropic_cosserat>,
-    const PointJacobianMatrixType &point_jacobian_matrix,
     const PointPropertiesType &point_properties, const T factor,
-    const PointStressIntegrandViewType &F,
-    PointAccelerationType &acceleration) {
-  const auto jacobian_inv =
-      specfem::algorithms::inverse(point_jacobian_matrix.tensor());
-  const auto stress = F * jacobian_inv / point_jacobian_matrix.jacobian;
+    const PointStressType &point_stress, PointAccelerationType &acceleration) {
 
-  // Reassign stress components due to transpose in its original definition
-  const auto sigma_xy = stress(1, 0);
-  const auto sigma_yx = stress(0, 1);
-  const auto sigma_xz = stress(2, 0);
-  const auto sigma_zx = stress(0, 2);
-  const auto sigma_yz = stress(2, 1);
-  const auto sigma_zy = stress(1, 2);
+  // T(i,j) is the physical stress tensor (see stress.hpp layout)
+  const auto sigma_xy = point_stress.T(1, 0);
+  const auto sigma_yx = point_stress.T(0, 1);
+  const auto sigma_xz = point_stress.T(2, 0);
+  const auto sigma_zx = point_stress.T(0, 2);
+  const auto sigma_yz = point_stress.T(2, 1);
+  const auto sigma_zy = point_stress.T(1, 2);
 
-  // Add to acceleration
-  acceleration(3) -= (sigma_zy - sigma_yz) * factor;
-  acceleration(4) -= (sigma_xz - sigma_zx) * factor;
-  acceleration(5) -= (sigma_yx - sigma_xy) * factor;
+  acceleration(3) += (sigma_zy - sigma_yz) * factor;
+  acceleration(4) += (sigma_xz - sigma_zx) * factor;
+  acceleration(5) += (sigma_yx - sigma_xy) * factor;
 };
 
 } // namespace medium_physics

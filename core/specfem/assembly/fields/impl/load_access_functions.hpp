@@ -28,10 +28,9 @@ base_load_accessor(const int iglob, const int icomp, const MaskType &mask,
   using data_accessor =
       std::integral_constant<specfem::data_access::DataClassType, DataClass>;
 
-  Kokkos::Experimental::where(mask, value)
-      .copy_from(
-          &(field.template get_value<on_device>(data_accessor(), iglob, icomp)),
-          tag_type);
+  value = Kokkos::Experimental::simd_partial_load(
+      &(field.template get_value<on_device>(data_accessor(), iglob, icomp)),
+      mask, tag_type);
 }
 
 template <bool on_device, specfem::data_access::DataClassType DataClass,

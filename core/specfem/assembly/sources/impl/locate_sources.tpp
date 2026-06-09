@@ -3,6 +3,7 @@
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/assembly/resolve_coordinates.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/source.hpp"
 
@@ -14,10 +15,23 @@ void specfem::assembly::sources_impl::locate_sources(
     const specfem::assembly::element_types<DimensionTag> &element_types,
     const specfem::assembly::mesh<DimensionTag> &mesh,
     std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
-        &sources) {
+        &sources,
+    const std::optional<specfem::coordinate_systems::utm_projection_config>
+        &utm_config) {
 
   const int nsources = static_cast<int>(sources.size());
   const int myrank = specfem::MPI::get_rank();
+
+  // Resolve any generic coordinates to global coordinates using mesh context.
+  // Sources constructed with (x,y,z) directly have no read_coordinates_ set,
+  // so this is a no-op for them.
+  for (int isrc = 0; isrc < nsources; ++isrc) {
+    if (auto *coords = sources[isrc]->get_read_coordinates()) {
+      auto gc =
+          specfem::assembly::resolve_coordinates(*coords, mesh, utm_config);
+      sources[isrc]->set_global_coordinates(gc);
+    }
+  }
 
   // Collect global coordinates for all sources.
   std::vector<specfem::point::global_coordinates<DimensionTag>> coords;
@@ -28,15 +42,15 @@ void specfem::assembly::sources_impl::locate_sources(
   // Locate all sources across MPI partitions with inside-preference.
   // The function prefers elements where xi/eta/gamma ∈ [-1,1] and falls back
   // to minimum Cartesian distance when no rank owns an inside element.
-  auto [lcoords, islice_selected] =
+  auto [lcoords, partition_index_selected] =
       specfem::algorithms::locate_point(coords, mesh);
 
   // Assign local coordinates and medium tags to each source.
   // Only the owning rank sets valid coordinates; all others receive ispec = -1
   // so that downstream filtering skips them.
   for (int isrc = 0; isrc < nsources; ++isrc) {
-    sources[isrc]->set_islice(islice_selected[isrc]);
-    if (islice_selected[isrc] == myrank) {
+    sources[isrc]->set_partition_index(partition_index_selected[isrc]);
+    if (partition_index_selected[isrc] == myrank) {
       const auto &lcoord = lcoords[isrc];
       sources[isrc]->set_local_coordinates(lcoord);
       sources[isrc]->set_medium_tag(element_types.get_medium_tag(lcoord.ispec));

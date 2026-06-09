@@ -101,20 +101,22 @@ specfem::assembly::element_intersections<
       } };
 
   // Build host edge views from collected edges
-  h_self_edges = { [&]<typename TagsType>() -> EdgeViewType::HostMirror {
+  h_self_edges = { [&]<typename TagsType>() -> EdgeViewType::host_mirror_type {
     return edge_view_from_collected_edges(
         "specfem::assembly::interface_types::self_edges",
         collected.template get<TagsType>().self_collect, element);
   } };
 
-  h_coupled_edges = { [&]<typename TagsType>() -> EdgeViewType::HostMirror {
-    return edge_view_from_collected_edges(
-        "specfem::assembly::interface_types::coupled_edges",
-        collected.template get<TagsType>().coupled_collect, element);
-  } };
+  h_coupled_edges = {
+    [&]<typename TagsType>() -> EdgeViewType::host_mirror_type {
+      return edge_view_from_collected_edges(
+          "specfem::assembly::interface_types::coupled_edges",
+          collected.template get<TagsType>().coupled_collect, element);
+    }
+  };
 
   auto copy_edge_view =
-      [](const EdgeViewType::HostMirror &src) -> EdgeViewType {
+      [](const EdgeViewType::host_mirror_type &src) -> EdgeViewType {
     EdgeViewType dst(src.label(), src.N, src.n_points);
     Kokkos::deep_copy(dst.element_index, src.element_index);
     Kokkos::deep_copy(dst.edge_index, src.edge_index);
@@ -135,7 +137,7 @@ specfem::assembly::element_intersections<
   return;
 }
 
-std::tuple<EdgeViewType::HostMirror, EdgeViewType::HostMirror>
+std::tuple<EdgeViewType::host_mirror_type, EdgeViewType::host_mirror_type>
 specfem::assembly::element_intersections<
     specfem::element::dimension_tag::dim2>::
     get_intersections_on_host(
@@ -161,7 +163,7 @@ std::tuple<EdgeViewType, EdgeViewType> specfem::assembly::element_intersections<
 }
 
 specfem::assembly::element_intersections<
-    specfem::element::dimension_tag::dim2>::EdgeViewType::HostMirror
+    specfem::element::dimension_tag::dim2>::EdgeViewType::host_mirror_type
 specfem::assembly::edge_view_from_collected_edges(
     const std::string &label,
     const std::vector<
@@ -173,7 +175,7 @@ specfem::assembly::edge_view_from_collected_edges(
   const int &count = self_collect.size();
 
   specfem::assembly::element_intersections<
-      specfem::element::dimension_tag::dim2>::EdgeViewType::HostMirror
+      specfem::element::dimension_tag::dim2>::EdgeViewType::host_mirror_type
       self_edges(label, count, ngll);
   for (int iedge = 0; iedge < count; iedge++) {
     self_edges.element_index(iedge) = self_collect[iedge].ispec;

@@ -123,8 +123,8 @@ public:
             typename std::enable_if<
                 U == specfem::element::dimension_tag::dim2>::type * = nullptr>
   source_medium(
-      const std::vector<
-          std::shared_ptr<specfem::sources::source<DimensionTag> > > &sources,
+      const std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>
+          &sources,
       const specfem::assembly::mesh<DimensionTag> &mesh,
       const specfem::assembly::jacobian_matrix<DimensionTag> &jacobian_matrix,
       const specfem::assembly::element_types<DimensionTag> &element_types,
@@ -148,8 +148,8 @@ public:
             typename std::enable_if<
                 U == specfem::element::dimension_tag::dim3>::type * = nullptr>
   source_medium(
-      const std::vector<
-          std::shared_ptr<specfem::sources::source<DimensionTag> > > &sources,
+      const std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>
+          &sources,
       const specfem::assembly::mesh<DimensionTag> &mesh,
       const specfem::assembly::jacobian_matrix<DimensionTag> &jacobian_matrix,
       const specfem::assembly::element_types<DimensionTag> &element_types,
@@ -164,21 +164,24 @@ public:
 
   IndexView source_index_mapping; ///< Maps source index to element index
                                   ///< (device)
-  IndexView::HostMirror h_source_index_mapping; ///< Maps source index to
-                                                ///< element index (host)
+  IndexView::host_mirror_type h_source_index_mapping; ///< Maps source index to
+                                                      ///< element index (host)
 
   SourceTimeFunctionView
       source_time_function; ///< Source time function values
                             ///< [timestep][source][component]
                             ///< (device)
-  SourceTimeFunctionView::HostMirror h_source_time_function; ///< Source time
-                                                             ///< function
-                                                             ///< values (host)
+  SourceTimeFunctionView::host_mirror_type h_source_time_function; ///< Source
+                                                                   ///< time
+                                                                   ///< function
+                                                                   ///< values
+                                                                   ///< (host)
 
   SourceArrayView source_array; ///< Lagrange interpolant weights at GLL points
                                 ///< (device)
-  typename SourceArrayView::HostMirror h_source_array; ///< Lagrange interpolant
-                                                       ///< weights (host)
+  typename SourceArrayView::host_mirror_type h_source_array; ///< Lagrange
+                                                             ///< interpolant
+                                                             ///< weights (host)
 
   ///@}
 
@@ -351,16 +354,15 @@ public:
  */
 template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag>
-std::tuple<
-    std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >,
-    std::vector<int> >
+std::tuple<std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>,
+           std::vector<int>>
 sort_sources_per_medium(
-    const std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
+    const std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>
         &sources,
     const specfem::assembly::element_types<DimensionTag> &element_types,
     const specfem::assembly::mesh<DimensionTag> &mesh) {
 
-  std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
+  std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>
       sorted_sources;
   std::vector<int> source_indices;
 
@@ -368,9 +370,9 @@ sort_sources_per_medium(
   for (int isource = 0; isource < (int)sources.size(); isource++) {
     const auto &source = sources[isource];
 
-    // In MPI builds a source not owned by this rank has islice != myrank.
-    // Skip it here so it is never added to any medium's source list.
-    if (source->get_islice() != myrank) {
+    // In MPI builds a source not owned by this rank has partition_index !=
+    // myrank. Skip it here so it is never added to any medium's source list.
+    if (source->get_partition_index() != myrank) {
       continue;
     }
     if (source->get_medium_tag() == MediumTag) {

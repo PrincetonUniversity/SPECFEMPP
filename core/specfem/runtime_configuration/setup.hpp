@@ -12,6 +12,7 @@
 #include "solver.hpp"
 #include "sources.hpp"
 #include "specfem/attenuation.hpp"
+#include "specfem/datetime.hpp"
 #include "specfem/io.hpp"
 #include "specfem/setup.hpp"
 #include "time_scheme.hpp"
@@ -22,6 +23,7 @@
 #include "writer/wavefield.hpp"
 #include "yaml-cpp/yaml.h"
 #include <memory>
+#include <optional>
 #include <tuple>
 
 namespace specfem {
@@ -111,6 +113,20 @@ public:
   type_real get_t0() const { return this->time_scheme->get_t0(); }
 
   /**
+   * @brief Set the UTC start datetime of the simulation.
+   */
+  void set_starttime(std::optional<specfem::datetime::type> t) {
+    starttime_ = t;
+  }
+
+  /**
+   * @brief Get the UTC start datetime of the simulation (nullopt if not set).
+   */
+  std::optional<specfem::datetime::type> get_starttime() const {
+    return starttime_;
+  }
+
+  /**
    * @brief Get the type of the elastic wave
    *
    * @return specfem::enums::elastic_wave Type of the elastic wave
@@ -146,11 +162,14 @@ public:
   std::string get_databases() const { return databases->get_databases(); }
 
   /**
-   * @brief Get the sources YAML object
+   * @brief Get the parsed source file entries for multi-format dispatch.
    *
-   * @return YAML::Node YAML node describing the sources
+   * @return const reference to vector of source_file_entry
    */
-  YAML::Node get_sources() const { return this->sources->get_sources(); }
+  const std::vector<specfem::enums::source_file_entry> &
+  get_source_entries() const {
+    return this->sources->get_source_entries();
+  }
 
   /**
    * @brief Get the path to stations file
@@ -188,7 +207,7 @@ public:
       return this->seismogram->instantiate_seismogram_writer(
           this->get_elastic_wave_type(), this->get_electromagnetic_wave_type(),
           this->time_scheme->get_dt(), this->time_scheme->get_t0(),
-          this->receivers->get_nstep_between_samples());
+          this->receivers->get_nstep_between_samples(), this->starttime_);
     } else {
       return nullptr;
     }
@@ -275,7 +294,7 @@ public:
    * configured
    */
   template <specfem::element::dimension_tag DimensionTag>
-  std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag> >
+  std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag>>
   instantiate_wavefield_writer() const {
     if (this->wavefield) {
       return this->wavefield
@@ -293,7 +312,7 @@ public:
    * configured
    */
   template <specfem::element::dimension_tag DimensionTag>
-  std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag> >
+  std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag>>
   instantiate_wavefield_reader() const {
     if (this->wavefield) {
       return this->wavefield
@@ -307,18 +326,16 @@ public:
    * @brief Create 2D wavefield plotter for visualization.
    *
    * @param assembly 2D assembly containing mesh and field information
-   * @param dt Time step size
 
    * @return Shared pointer to 2D wavefield plotter or nullptr if not configured
    */
   std::shared_ptr<specfem::periodic_tasks::periodic_task<
-      specfem::element::dimension_tag::dim2> >
+      specfem::element::dimension_tag::dim2>>
   instantiate_wavefield_plotter(
       const specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
-          &assembly,
-      const type_real &dt) const {
+          &assembly) const {
     if (this->plot_wavefield) {
-      return this->plot_wavefield->instantiate_wavefield_plotter(assembly, dt);
+      return this->plot_wavefield->instantiate_wavefield_plotter(assembly);
     } else {
       return nullptr;
     }
@@ -328,17 +345,15 @@ public:
    * @brief Create 3D wavefield plotter for visualization.
    *
    * @param assembly 3D assembly containing mesh and field information
-   * @param dt Time step size
    * @return Shared pointer to 3D wavefield plotter or nullptr if not configured
    */
   std::shared_ptr<specfem::periodic_tasks::periodic_task<
-      specfem::element::dimension_tag::dim3> >
+      specfem::element::dimension_tag::dim3>>
   instantiate_wavefield_plotter(
       const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
-          &assembly,
-      const type_real &dt) const {
+          &assembly) const {
     if (this->plot_wavefield) {
-      return this->plot_wavefield->instantiate_wavefield_plotter(assembly, dt);
+      return this->plot_wavefield->instantiate_wavefield_plotter(assembly);
     } else {
       return nullptr;
     }
@@ -408,9 +423,9 @@ public:
       const type_real dt,
       const specfem::assembly::assembly<DimensionTag> &assembly,
       std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
-      const std::vector<std::shared_ptr<
-          specfem::periodic_tasks::periodic_task<DimensionTag> > > &tasks)
-      const {
+      const std::vector<
+          std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag>>>
+          &tasks) const {
     return this->solver->instantiate<NGLL, DimensionTag>(dt, assembly,
                                                          time_scheme, tasks);
   }
@@ -486,6 +501,9 @@ private:
       solver; ///< Solver algorithm configuration
   std::unique_ptr<specfem::runtime_configuration::flux_schemes>
       flux_schemes; ///< flux-scheme configuration
+  std::optional<specfem::datetime::type> starttime_; ///< Optional UTC start
+                                                     ///< datetime of the
+                                                     ///< simulation
 };
 } // namespace runtime_configuration
 } // namespace specfem

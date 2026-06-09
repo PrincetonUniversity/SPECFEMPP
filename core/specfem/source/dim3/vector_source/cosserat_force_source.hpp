@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/coordinate_systems/cartesian.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/quadrature.hpp"
@@ -73,7 +74,17 @@ public:
       : fx(Node["fx"].as<type_real>()), fy(Node["fy"].as<type_real>()),
         fz(Node["fz"].as<type_real>()), fc_x(Node["fc_x"].as<type_real>()),
         fc_y(Node["fc_y"].as<type_real>()), fc_z(Node["fc_z"].as<type_real>()),
-        wavefield_type(wavefield_type), vector_source(Node, nsteps, dt) {};
+        wavefield_type(wavefield_type), vector_source(Node, nsteps, dt) {
+    // Store the parsed location as generic (coordinate-system) coordinates so
+    // that source identity (operator==, which compares get_read_coordinates())
+    // reflects the input coordinates. The base vector_source(Node, ...) ctor
+    // only populates global_coordinates.
+    this->set_read_coordinates(
+        std::make_unique<specfem::coordinate_systems::cartesian_coordinates<
+            specfem::element::dimension_tag::dim3>>(Node["x"].as<type_real>(),
+                                                    Node["y"].as<type_real>(),
+                                                    Node["z"].as<type_real>()));
+  };
 
   type_real get_fx() const { return fx; }
   type_real get_fy() const { return fy; }
@@ -104,6 +115,32 @@ public:
       : fx(fx), fy(fy), fz(fz), fc_x(fc_x), fc_y(fc_y), fc_z(fc_z),
         wavefield_type(wavefield_type),
         vector_source(x, y, z, std::move(source_time_function)) {};
+
+  /**
+   * @brief Construct a new cosserat force object from generic coordinates
+   *
+   * @param coordinates Generic coordinate object (resolved at assembly time)
+   * @param fx Elastic force component in x-direction
+   * @param fy Elastic force component in y-direction
+   * @param fz Elastic force component in z-direction
+   * @param fc_x Rotational force component in x-direction
+   * @param fc_y Rotational force component in y-direction
+   * @param fc_z Rotational force component in z-direction
+   * @param source_time_function Pointer to source time function
+   * @param wavefield_type Type of wavefield on which the source acts
+   */
+  cosserat_force(
+      std::unique_ptr<specfem::coordinate_systems::coordinates<
+          specfem::element::dimension_tag::dim3>>
+          coordinates,
+      type_real fx, type_real fy, type_real fz, type_real fc_x, type_real fc_y,
+      type_real fc_z,
+      std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
+      const specfem::simulation::field_type wavefield_type)
+      : fx(fx), fy(fy), fz(fz), fc_x(fc_x), fc_y(fc_y), fc_z(fc_z),
+        wavefield_type(wavefield_type),
+        vector_source(std::move(coordinates), std::move(source_time_function)) {
+        };
 
   std::string source_name() const override { return "3-D Cosserat force"; }
 

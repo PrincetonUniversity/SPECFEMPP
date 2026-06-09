@@ -34,7 +34,7 @@ subroutine save_databases(nspec,nglob, &
   use constants, only: MAX_STRING_LEN,IDOMAIN_ACOUSTIC,IDOMAIN_ELASTIC,IDOMAIN_COSSERAT, &
     IDOMAIN_POROELASTIC, NDIM,IMAIN,IIN_DB,myrank,NGLLZ,NGLLY,NGLLX
 
-  use constants_meshfem, only: NGLLX_M,NGLLY_M,NGLLZ_M,MAX_NEIGHBORS
+  use constants_meshfem, only: NGLLX_M,NGLLY_M,NGLLZ_M
 
   use shared_parameters, only: COUPLE_WITH_INJECTION_TECHNIQUE,NGNOD,NGNOD2D,LOCAL_PATH
 
@@ -44,7 +44,8 @@ subroutine save_databases(nspec,nglob, &
     NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
     NMATERIALS,material_properties,material_properties_undef, &
     nspec_CPML,is_CPML,CPML_to_spec,CPML_regions, &
-    SAVE_MESH_AS_CUBIT, MESH_A_CHUNK_OF_THE_EARTH,adjacency_matrix
+    SAVE_MESH_AS_CUBIT, MESH_A_CHUNK_OF_THE_EARTH, &
+    xadj_adj, adjncy_adj, adj_types_local, nb_adj_edges
 
   use assemble_MPI_par, only: mpi_adjacency, num_mpi_adjacencies
 
@@ -105,13 +106,7 @@ subroutine save_databases(nspec,nglob, &
   integer, dimension(NGNOD) :: loc_node
   integer, dimension(NGNOD) :: anchor_iax,anchor_iay,anchor_iaz
   integer :: ia,inode
-  integer :: index, total_nadj_element, jspec
-  integer :: nadj_element(nspec)
-  integer :: adj_element(nspec,0:MAX_NEIGHBORS-1), adj_type(nspec,0:MAX_NEIGHBORS-1)
-
-  nadj_element(:) = 0
-  adj_element(:,:) = -1
-  adj_type(:,:) = -1
+  integer :: index, total_nadj_element
 
   ! assignes material index
   ! format: (1,ispec) = #material_id , (2,ispec) = #material_definition
@@ -451,28 +446,14 @@ subroutine save_databases(nspec,nglob, &
     enddo
   endif
 
-  total_nadj_element = 0
-  nadj_element(:) = 0
-  ! Write the adjacency list for the mesh
-  do ispec = 1, nspec
-    do jspec = 1, nspec
-      if (adjacency_matrix(ispec,jspec) /= 0) then
-        adj_element(ispec, nadj_element(ispec)) = jspec
-        adj_type(ispec, nadj_element(ispec)) = adjacency_matrix(ispec,jspec)
-        nadj_element(ispec) = nadj_element(ispec) + 1
-        total_nadj_element = total_nadj_element + 1
-      endif
-    enddo
-  enddo
-
-  ! Total adjacency count = local + MPI
+  ! Write adjacency list from CSR arrays (built by compute_adjacency_graph)
+  total_nadj_element = nb_adj_edges
   write(IIN_database) total_nadj_element
   index = 0
 
-  ! Write local adjacencies
   do ispec = 1, nspec
-    do i = 0, nadj_element(ispec)-1
-      write(IIN_database) ispec, adj_element(ispec,i), 1, adj_type(ispec,i)
+    do i = xadj_adj(ispec), xadj_adj(ispec+1)-1
+      write(IIN_database) ispec, adjncy_adj(i), 1, adj_types_local(i)
       index = index + 1
     enddo
   enddo

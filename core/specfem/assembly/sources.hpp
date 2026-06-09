@@ -180,7 +180,7 @@ public:
    * @brief Get the MPI slice index for each source
    * @return Vector of MPI slice indices corresponding to each source (host memory)
    */
-  const std::vector<int> &get_islice() const { return source_islice_; }
+  const std::vector<int> &get_partition_index() const { return source_partition_index_; }
 
   /**
    * @brief Update the current simulation time step
@@ -201,25 +201,25 @@ private:
   int nspec; ///< Number of spectral elements in mesh
 
   IndexViewType source_domain_index_mapping; ///< Source-to-domain mapping (device)
-  IndexViewType::HostMirror h_source_domain_index_mapping; ///< Source-to-domain mapping (host)
+  IndexViewType::host_mirror_type h_source_domain_index_mapping; ///< Source-to-domain mapping (host)
 
   IndexViewType element_indices; ///< Element index for each source (device)
-  IndexViewType::HostMirror h_element_indices; ///< Element index for each source (host)
+  IndexViewType::host_mirror_type h_element_indices; ///< Element index for each source (host)
 
   IndexViewType source_indices; ///< Source indices (device)
-  IndexViewType::HostMirror h_source_indices; ///< Source indices (host)
+  IndexViewType::host_mirror_type h_source_indices; ///< Source indices (host)
 
   MediumTagViewType medium_types; ///< Medium tag for each source (device)
-  MediumTagViewType::HostMirror h_medium_types; ///< Medium tag for each source (host)
+  MediumTagViewType::host_mirror_type h_medium_types; ///< Medium tag for each source (host)
 
   WavefieldTagViewType wavefield_types; ///< Wavefield type for each source (device)
-  WavefieldTagViewType::HostMirror h_wavefield_types; ///< Wavefield type for each source (host)
+  WavefieldTagViewType::host_mirror_type h_wavefield_types; ///< Wavefield type for each source (host)
 
   BoundaryTagViewType boundary_types; ///< Boundary tag for each source (device)
-  BoundaryTagViewType::HostMirror h_boundary_types; ///< Boundary tag for each source (host)
+  BoundaryTagViewType::host_mirror_type h_boundary_types; ///< Boundary tag for each source (host)
 
   PropertyTagViewType property_types; ///< Property tag for each source (device)
-  PropertyTagViewType::HostMirror h_property_types; ///< Property tag for each source (host)
+  PropertyTagViewType::host_mirror_type h_property_types; ///< Property tag for each source (host)
 
   ///@}
 
@@ -245,7 +245,7 @@ private:
       source_by_medium;
 
   int timestep; ///< Current simulation timestep
-  std::vector<int> source_islice_; ///< MPI slice index for each source (host)
+  std::vector<int> source_partition_index_; ///< MPI slice index for each source (host)
 
   ///@}
 

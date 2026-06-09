@@ -95,9 +95,9 @@ template <specfem::element::dimension_tag DimensionTag> struct fields {
    * @endcode
    */
   template <specfem::simulation::field_type ReturnFieldType>
-  KOKKOS_INLINE_FUNCTION
-      specfem::assembly::simulation_field<dimension_tag, ReturnFieldType>
-      get_simulation_field() const {
+  KOKKOS_INLINE_FUNCTION constexpr const specfem::assembly::simulation_field<
+      dimension_tag, ReturnFieldType> &
+  get_simulation_field() const {
     if constexpr (ReturnFieldType == specfem::simulation::field_type::forward) {
       return forward;
     } else if constexpr (ReturnFieldType ==

@@ -103,6 +103,19 @@ public:
       : source<DimensionTag>(x, y, z, std::move(source_time_function)){};
 
   /**
+   * @brief Construct a new tensor source from generic coordinates
+   *
+   * @param coordinates Generic coordinate object
+   * @param source_time_function pointer to source time function
+   */
+  tensor_source(
+      std::unique_ptr<specfem::coordinate_systems::coordinates<DimensionTag>>
+          coordinates,
+      std::unique_ptr<specfem::source_time_functions::stf> source_time_function)
+      : source<DimensionTag>(std::move(coordinates),
+                             std::move(source_time_function)) {};
+
+  /**
    * @brief Construct a new tensor source object from a YAML node and time steps
    *
    * @param Node YAML node defining the tensor source

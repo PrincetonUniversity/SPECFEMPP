@@ -416,35 +416,19 @@ TEST(Stress, ElasticIsotropicCosserat3D_CoupleStressAcceleration) {
     acceleration(i) = 0.0;
   }
 
-  // Apply couple stress acceleration
+  // Apply couple stress acceleration. With devel's stiffness kernels the global
+  // sign negation is applied by the caller (epilogue), so the impl accumulates
+  // positively; this unit test exercises that positive accumulation directly by
+  // passing the physical stress tensor.
   const type_real factor = 1.0;
-  struct StressIntegrandAdapter {
-    StressType::value_type F;
+  specfem::medium_physics::compute_cosserat_couple_stress(properties, factor,
+                                                          stress, acceleration);
 
-    static constexpr int rank() { return 2; }
-
-    static constexpr int static_extent(const int dim) {
-      return (dim == 0) ? StressType::components : StressType::dimension;
-    }
-
-    type_real operator()(const int i, const int j) const { return F(i, j); }
-
-    StressType::value_type
-    operator*(const JacobianMatrixType::tensor_type &tensor) const {
-      return F * tensor;
-    }
-  };
-
-  const StressIntegrandAdapter stress_integrand{
-    stress.T * jacobian_matrix.tensor() * jacobian_matrix.jacobian
-  };
-  specfem::medium_physics::compute_cosserat_couple_stress(
-      jacobian_matrix, properties, factor, stress_integrand, acceleration);
-
-  // Expected angular accelerations from asymmetric stress
-  // acceleration(3) -= (sigma_zy - sigma_yz) * factor / jacobian
-  // acceleration(4) -= (sigma_xz - sigma_zx) * factor / jacobian
-  // acceleration(5) -= (sigma_yx - sigma_xy) * factor / jacobian
+  // Expected angular accelerations from asymmetric stress (positive
+  // accumulation; the caller applies the global negation):
+  // acceleration(3) += (sigma_zy - sigma_yz) * factor
+  // acceleration(4) += (sigma_xz - sigma_zx) * factor
+  // acceleration(5) += (sigma_yx - sigma_xy) * factor
 
   // From our setup:
   // sigma_yz = mu*(du(2,1)+du(1,2)) + nu*(du(2,1)-du(1,2)) = 3*mu + nu
@@ -459,7 +443,7 @@ TEST(Stress, ElasticIsotropicCosserat3D_CoupleStressAcceleration) {
   expected_acceleration(1) = 0.0;
   expected_acceleration(2) = 0.0;
   expected_acceleration(3) =
-      -(sigma_zy - sigma_yz) * factor / jacobian_matrix.jacobian;
+      (sigma_zy - sigma_yz) * factor / jacobian_matrix.jacobian;
   expected_acceleration(4) = 0.0; // No xz/zx asymmetry
   expected_acceleration(5) = 0.0; // No xy/yx asymmetry
 

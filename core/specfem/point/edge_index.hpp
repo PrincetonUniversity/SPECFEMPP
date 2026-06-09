@@ -1,4 +1,5 @@
 #pragma once
+#include "specfem/data_access/accessor.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/mesh_entity.hpp"
 

@@ -154,7 +154,7 @@ public:
   KOKKOS_INLINE_FUNCTION int get_nglob() const {
     return field
         .template get<specfem::tags::Tags<specfem::element::dimension_tag::dim3,
-                                          MediumTag> >()
+                                          MediumTag>>()
         .nglob;
   }
 
@@ -178,10 +178,9 @@ public:
    * @endcode
    */
   template <specfem::element::medium_tag MediumTag>
-  KOKKOS_INLINE_FUNCTION
-      constexpr specfem::assembly::fields_impl::field_impl<dimension_tag,
-                                                           MediumTag> const &
-      get_field() const {
+  KOKKOS_INLINE_FUNCTION constexpr specfem::assembly::fields_impl::field_impl<
+      dimension_tag, MediumTag> const &
+  get_field() const {
     using TagsType =
         specfem::tags::Tags<specfem::element::dimension_tag::dim3, MediumTag>;
     return field.template get<TagsType>();
@@ -193,11 +192,11 @@ public:
                                                  const int &ix) const {
     if constexpr (on_device) {
       return assembly_index_mapping.template get<specfem::tags::Tags<
-          specfem::element::dimension_tag::dim3, MediumTag> >()(
+          specfem::element::dimension_tag::dim3, MediumTag>>()(
           index_mapping(ispec, iz, iy, ix));
     } else {
       return h_assembly_index_mapping.template get<specfem::tags::Tags<
-          specfem::element::dimension_tag::dim3, MediumTag> >()(
+          specfem::element::dimension_tag::dim3, MediumTag>>()(
           h_index_mapping(ispec, iz, iy, ix));
     }
   }
@@ -236,8 +235,9 @@ public:
   int ngllx;                   ///< Number of quadrature points in x direction
   IndexViewType index_mapping; ///< Device 3D index mapping from
                                ///< (ispec,iz,iy,ix) to linear index
-  IndexViewType::HostMirror h_index_mapping; ///< Host mirror of 3D index
-                                             ///< mapping for CPU operations
+  IndexViewType::host_mirror_type h_index_mapping; ///< Host mirror of 3D index
+                                                   ///< mapping for CPU
+                                                   ///< operations
 
   specfem::tag_dispatch::TypedStorage<FieldImplTemplateType,
                                       decltype(combinations)>
@@ -246,7 +246,7 @@ public:
   specfem::tag_dispatch::Storage<AssemblyIndexViewType, decltype(combinations)>
       assembly_index_mapping;
 
-  specfem::tag_dispatch::Storage<AssemblyIndexViewType::HostMirror,
+  specfem::tag_dispatch::Storage<AssemblyIndexViewType::host_mirror_type,
                                  decltype(combinations)>
       h_assembly_index_mapping;
 

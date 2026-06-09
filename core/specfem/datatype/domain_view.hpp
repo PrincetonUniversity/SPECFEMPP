@@ -194,7 +194,7 @@ public:
   KOKKOS_INLINE_FUNCTION
   View() = default;
 
-  using HostMirror =
+  using host_mirror_type =
       View<T, Extents, Layout, typename Kokkos::HostSpace::memory_space>;
 
 public:
@@ -226,6 +226,9 @@ public:
   KOKKOS_INLINE_FUNCTION
   const mapping_type &get_mapping() const { return _mapping; }
 
+  KOKKOS_INLINE_FUNCTION
+  std::size_t extent(int idim) const { return _mapping.extents().extent(idim); }
+
 private:
   mapping_type _mapping;
 };
@@ -237,6 +240,13 @@ template <typename T, std::size_t Rank, typename MemorySpace>
 using DomainView2d =
     View<T, chunked_tiled_layout2d<Rank>,
          DomainViewMapping<specfem::element::dimension_tag::dim2,
+                           specfem::parallel_configuration::storage_chunk_size>,
+         MemorySpace>;
+
+template <typename T, std::size_t Rank, typename MemorySpace>
+using DomainView3d =
+    View<T, Kokkos::dextents<std::size_t, Rank>,
+         DomainViewMapping<specfem::element::dimension_tag::dim3,
                            specfem::parallel_configuration::storage_chunk_size>,
          MemorySpace>;
 

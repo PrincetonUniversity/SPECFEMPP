@@ -23,7 +23,8 @@ extern type_real user_t0;
 template <specfem::element::dimension_tag DimensionTag> struct SourceTestParam {
   std::string testname;
   std::string sourcefilename;
-  std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
+  specfem::enums::source_format format;
+  std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>
       expected_sources;
 };
 
@@ -50,9 +51,13 @@ class Read2DSourcesTest : public ::testing::TestWithParam<SourceTestParam2D> {};
 TEST_P(Read2DSourcesTest, ReadSources) {
   const auto &param = GetParam();
 
-  auto [sources, _t0] =
-      specfem::io::read_2d_sources(param.sourcefilename, nsteps, user_t0, dt,
-                                   specfem::simulation::type::forward);
+  std::vector<specfem::enums::source_file_entry> entries = {
+    { param.format, param.sourcefilename }
+  };
+
+  auto [sources, _t0, _starttime] =
+      specfem::io::read_sources<specfem::element::dimension_tag::dim2>(
+          entries, nsteps, user_t0, dt, specfem::simulation::type::forward);
 
   ASSERT_EQ(sources.size(), param.expected_sources.size());
 
@@ -79,16 +84,18 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values(
         SourceTestParam2D{ "2D Single Moment Tensor",
                            "io/sources/data/dim2/single_moment_tensor.yaml",
+                           specfem::enums::source_format::YAML,
                            single_moment_tensor_2d },
-        SourceTestParam2D{ "2D Single Force",
-                           "io/sources/data/dim2/single_force.yaml",
-                           single_force_2d },
+        SourceTestParam2D{
+            "2D Single Force", "io/sources/data/dim2/single_force.yaml",
+            specfem::enums::source_format::YAML, single_force_2d },
         SourceTestParam2D{ "2D Single Cosserat Force",
                            "io/sources/data/dim2/single_cosserat_force.yaml",
+                           specfem::enums::source_format::YAML,
                            single_cosserat_force_2d },
-        SourceTestParam2D{ "2D Multiple Sources",
-                           "io/sources/data/dim2/multiple_sources.yaml",
-                           multiple_sources_2d }));
+        SourceTestParam2D{
+            "2D Multiple Sources", "io/sources/data/dim2/multiple_sources.yaml",
+            specfem::enums::source_format::YAML, multiple_sources_2d }));
 
 using SourceTestParam3D =
     SourceTestParam<specfem::element::dimension_tag::dim3>;
@@ -98,9 +105,13 @@ class Read3DSourcesTest : public ::testing::TestWithParam<SourceTestParam3D> {};
 TEST_P(Read3DSourcesTest, ReadSources) {
   const auto &param = GetParam();
 
-  auto [sources, _t0] =
-      specfem::io::read_3d_sources(param.sourcefilename, nsteps, user_t0, dt,
-                                   specfem::simulation::type::forward);
+  std::vector<specfem::enums::source_file_entry> entries = {
+    { param.format, param.sourcefilename }
+  };
+
+  auto [sources, _t0, _starttime] =
+      specfem::io::read_sources<specfem::element::dimension_tag::dim3>(
+          entries, nsteps, user_t0, dt, specfem::simulation::type::forward);
 
   ASSERT_EQ(sources.size(), param.expected_sources.size());
 
@@ -126,15 +137,39 @@ TEST_P(Read3DSourcesTest, ReadSources) {
 INSTANTIATE_TEST_SUITE_P(
     IO_TESTS, Read3DSourcesTest,
     ::testing::Values(
-        SourceTestParam3D{ "3D Single Force",
-                           "io/sources/data/dim3/single_force.yaml",
-                           single_force_3d },
+        SourceTestParam3D{
+            "3D Single Force", "io/sources/data/dim3/single_force.yaml",
+            specfem::enums::source_format::YAML, single_force_3d },
         SourceTestParam3D{ "3D Single Moment Tensor",
                            "io/sources/data/dim3/single_moment_tensor.yaml",
+                           specfem::enums::source_format::YAML,
                            single_moment_tensor_3d },
-        SourceTestParam3D{ "3D Multiple Sources",
-                           "io/sources/data/dim3/multiple_sources.yaml",
-                           multiple_sources_3d },
+        SourceTestParam3D{
+            "3D Multiple Sources", "io/sources/data/dim3/multiple_sources.yaml",
+            specfem::enums::source_format::YAML, multiple_sources_3d },
         SourceTestParam3D{ "3D Single Cosserat Force",
                            "io/sources/data/dim3/single_cosserat_force.yaml",
-                           single_cosserat_force_3d }));
+                           specfem::enums::source_format::YAML,
+                           single_cosserat_force_3d },
+        SourceTestParam3D{
+            "3D CMTSOLUTION Single Moment Tensor",
+            "io/sources/data/dim3/single_moment_tensor.CMTSOLUTION",
+            specfem::enums::source_format::CMTSOLUTION,
+            single_moment_tensor_cmt_3d },
+        SourceTestParam3D{
+            "3D CMTSOLUTION Spherical Moment Tensor",
+            "io/sources/data/dim3/spherical_moment_tensor.CMTSOLUTION",
+            specfem::enums::source_format::CMTSOLUTION,
+            spherical_moment_tensor_cmt_3d },
+        SourceTestParam3D{ "3D FORCESOLUTION Single Force",
+                           "io/sources/data/dim3/single_force.FORCESOLUTION",
+                           specfem::enums::source_format::FORCESOLUTION,
+                           single_force_forcesolution_3d },
+        SourceTestParam3D{ "3D CMTSOLUTION Multiple Sources",
+                           "io/sources/data/dim3/multiple_sources.CMTSOLUTION",
+                           specfem::enums::source_format::CMTSOLUTION,
+                           multiple_sources_cmt_3d },
+        SourceTestParam3D{ "3D FORCESOLUTION Multiple Forces",
+                           "io/sources/data/dim3/multiple_forces.FORCESOLUTION",
+                           specfem::enums::source_format::FORCESOLUTION,
+                           multiple_forces_forcesolution_3d }));

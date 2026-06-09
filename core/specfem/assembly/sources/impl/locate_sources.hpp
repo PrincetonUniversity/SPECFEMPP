@@ -3,7 +3,10 @@
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/coordinate_systems/utm.hpp"
 #include "specfem/source.hpp"
+
+#include <optional>
 
 namespace specfem::assembly::sources_impl {
 
@@ -39,7 +42,9 @@ template <specfem::element::dimension_tag DimensionTag>
 void locate_sources(
     const specfem::assembly::element_types<DimensionTag> &element_types,
     const specfem::assembly::mesh<DimensionTag> &mesh,
-    std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
-        &sources);
+    std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>
+        &sources,
+    const std::optional<specfem::coordinate_systems::utm_projection_config>
+        &utm_config = std::nullopt);
 
 } // namespace specfem::assembly::sources_impl

@@ -176,7 +176,12 @@ private:
     bool logging_enabled = false;  ///< True when file logging is active
     bool per_rank_logging = false; ///< True when using per-rank files
     bool auto_flush = false;       ///< True to flush after each message
+
+#ifndef NDEBUG
+    LogLevel min_log_level = LogLevel::TRACE; ///< Minimum level to trace
+#else
     LogLevel min_log_level = LogLevel::INFO; ///< Minimum level to log
+#endif
 
     // CLI override flags
     bool cli_log_file_set = false;

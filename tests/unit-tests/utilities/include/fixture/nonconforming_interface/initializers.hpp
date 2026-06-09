@@ -1,6 +1,9 @@
 #pragma once
 
 // all non-specific declarations for NCIs
+#include "specfem/data_access/data_class.hpp"
+#include "specfem/element/tags.hpp"
+#include "specfem/element_coupling/tags.hpp"
 
 namespace specfem::test_fixture {
 
@@ -21,6 +24,16 @@ template <typename AnalyticalFunctionInitializer,
           typename EdgePointsInitializer>
 struct FromAnalyticalFunction;
 } // namespace EdgeFunctionInitializer2D
+/**
+ * @brief Initializes views of field values along an edge.
+ *
+ */
+namespace FaceFunctionInitializer3D {
+struct FaceFunctionInitializer3D {};
+template <typename AnalyticalFunctionInitializer,
+          typename FacePointsInitializer>
+struct FromAnalyticalFunction;
+} // namespace FaceFunctionInitializer3D
 
 /**
  * @brief Manages views of the transfer function.

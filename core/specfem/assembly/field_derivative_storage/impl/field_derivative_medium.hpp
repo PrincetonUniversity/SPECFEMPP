@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/data_access/container.hpp"
+#include "specfem/datatype.hpp"
 #include "specfem/element.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/setup.hpp"
@@ -61,11 +62,11 @@ struct field_derivative_medium
   /// Compact storage: shape
   /// [nspec_attn][ngllz][...][components][num_dimensions]
   view_type du;
-  typename view_type::HostMirror h_du;
+  typename view_type::host_mirror_type h_du;
 
   /// Maps global ispec → compact index (or -1 for non-matching elements)
   index_view_type ispec_to_compact;
-  typename index_view_type::HostMirror h_ispec_to_compact;
+  typename index_view_type::host_mirror_type h_ispec_to_compact;
 
   field_derivative_medium() = default;
 
@@ -90,9 +91,9 @@ struct field_derivative_medium
 
     du = view_type("field_derivative_storage", nspec_attn, ngllz, ngllx,
                    components, num_dimensions);
-    h_du = typename view_type::HostMirror("h_field_derivative_storage",
-                                          nspec_attn, ngllz, ngllx, components,
-                                          num_dimensions);
+    h_du = typename view_type::host_mirror_type("h_field_derivative_storage",
+                                                nspec_attn, ngllz, ngllx,
+                                                components, num_dimensions);
     Kokkos::deep_copy(du, static_cast<type_real>(0));
 
     // Build ispec → compact-index inverse mapping (initialized to -1)
@@ -132,9 +133,9 @@ struct field_derivative_medium
 
     du = view_type("field_derivative_storage", nspec_attn, ngllz, nglly, ngllx,
                    components, num_dimensions);
-    h_du = typename view_type::HostMirror("h_field_derivative_storage",
-                                          nspec_attn, ngllz, nglly, ngllx,
-                                          components, num_dimensions);
+    h_du = typename view_type::host_mirror_type("h_field_derivative_storage",
+                                                nspec_attn, ngllz, nglly, ngllx,
+                                                components, num_dimensions);
 
     Kokkos::deep_copy(du, static_cast<type_real>(0));
 
@@ -152,12 +153,12 @@ struct field_derivative_medium
   }
 
   void copy_to_host() {
-    Kokkos::deep_copy(h_du, du);
+    specfem::datatype::deep_copy(h_du, du);
     Kokkos::deep_copy(h_ispec_to_compact, ispec_to_compact);
   }
 
   void copy_to_device() {
-    Kokkos::deep_copy(du, h_du);
+    specfem::datatype::deep_copy(du, h_du);
     Kokkos::deep_copy(ispec_to_compact, h_ispec_to_compact);
   }
 
@@ -202,12 +203,11 @@ struct field_derivative_medium
     for (int ic = 0; ic < PointFDType::components; ++ic) {
       for (int id = 0; id < PointFDType::num_dimensions; ++id) {
         if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
-          Kokkos::Experimental::where(mask, point_fd.du[ic][id])
-              .copy_from(&du(i, index.iz, index.ix, ic, id), tag_type());
+          point_fd.du[ic][id] = Kokkos::Experimental::simd_partial_load(
+              &du(i, index.iz, index.ix, ic, id), mask, tag_type());
         } else {
-          Kokkos::Experimental::where(mask, point_fd.du[ic][id])
-              .copy_from(&du(i, index.iz, index.iy, index.ix, ic, id),
-                         tag_type());
+          point_fd.du[ic][id] = Kokkos::Experimental::simd_partial_load(
+              &du(i, index.iz, index.iy, index.ix, ic, id), mask, tag_type());
         }
       }
     }
@@ -234,10 +234,11 @@ struct field_derivative_medium
   }
 
   /**
-   * @brief Store field derivatives for a SIMD GLL point into compact storage.
+   * @brief Store field derivatives for a SIMD GLL point into compact storage
+   * (dim2).
    *
-   * Uses copy_to to scatter SIMD_WIDTH consecutive compact-index values
-   * starting at the compact index of the first lane, matching the
+   * Uses simd_partial_store to scatter SIMD_WIDTH consecutive compact-index
+   * values starting at the compact index of the first lane, matching the
    * jacobian_matrix SIMD pattern.
    */
   template <typename PointFDType, typename IndexType,
@@ -256,14 +257,41 @@ struct field_derivative_medium
 
     for (int ic = 0; ic < PointFDType::components; ++ic) {
       for (int id = 0; id < PointFDType::num_dimensions; ++id) {
-        if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
-          Kokkos::Experimental::where(mask, point_fd.du[ic][id])
-              .copy_to(&du(i, index.iz, index.ix, ic, id), tag_type());
-        } else {
-          Kokkos::Experimental::where(mask, point_fd.du[ic][id])
-              .copy_to(&du(i, index.iz, index.iy, index.ix, ic, id),
-                       tag_type());
-        }
+        Kokkos::Experimental::simd_partial_store(
+            point_fd.du[ic][id], &du(i, index.iz, index.ix, ic, id), mask,
+            tag_type());
+      }
+    }
+  }
+
+  /**
+   * @brief Store field derivatives for a SIMD GLL point into compact storage
+   * (dim3).
+   *
+   * Uses simd_partial_store to scatter SIMD_WIDTH consecutive compact-index
+   * values starting at the compact index of the first lane. The du view uses
+   * Kokkos::LayoutLeft so consecutive compact indices for a fixed (iz,iy,ix)
+   * are contiguous in memory (stride-1 along the first axis).
+   */
+  template <typename PointFDType, typename IndexType,
+            std::enable_if_t<(IndexType::using_simd &&
+                              IndexType::dimension_tag ==
+                                  specfem::element::dimension_tag::dim3),
+                             int> = 0>
+  KOKKOS_FORCEINLINE_FUNCTION void
+  store_device_values(const IndexType &index, const PointFDType &point_fd) {
+    using simd_type = typename PointFDType::simd;
+    using mask_type = typename simd_type::mask_type;
+    using tag_type = typename simd_type::tag_type;
+
+    const int i = ispec_to_compact(index.ispec);
+    const auto mask = index.template get_mask<simd_type>();
+
+    for (int ic = 0; ic < PointFDType::components; ++ic) {
+      for (int id = 0; id < PointFDType::num_dimensions; ++id) {
+        Kokkos::Experimental::simd_partial_store(
+            point_fd.du[ic][id], &du(i, index.iz, index.iy, index.ix, ic, id),
+            mask, tag_type());
       }
     }
   }

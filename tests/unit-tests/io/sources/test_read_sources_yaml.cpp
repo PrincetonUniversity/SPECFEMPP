@@ -1,6 +1,6 @@
 #include "../../SPECFEM_Environment.hpp"
 #include "specfem/enums.hpp"
-#include "specfem/io.hpp"
+#include "specfem/io/sources/impl/reader.hpp"
 #include "specfem/setup.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
@@ -25,7 +25,7 @@ template <specfem::element::dimension_tag DimensionTag>
 struct SourceYAMLTestParam {
   std::string testname;
   YAML::Node sources_node;
-  std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
+  std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>
       expected_sources;
 };
 
@@ -277,9 +277,11 @@ class Read2DSourcesYAMLTest
 TEST_P(Read2DSourcesYAMLTest, ReadYAMLnode) {
   const auto &param = GetParam();
 
-  auto [sources, _t0] =
-      specfem::io::read_2d_sources(param.sources_node, nsteps, user_t0, dt,
-                                   specfem::simulation::type::forward);
+  auto sources =
+      specfem::io::sources_impl::read<specfem::element::dimension_tag::dim2,
+                                      specfem::enums::source_format::YAML>(
+          param.sources_node, nsteps, dt,
+          specfem::simulation::field_type::forward);
 
   ASSERT_EQ(sources.size(), param.expected_sources.size());
 
@@ -319,9 +321,11 @@ class Read3DSourcesYAMLTest
 TEST_P(Read3DSourcesYAMLTest, ReadYAMLnode) {
   const auto &param = GetParam();
 
-  auto [sources, _t0] =
-      specfem::io::read_3d_sources(param.sources_node, nsteps, user_t0, dt,
-                                   specfem::simulation::type::forward);
+  auto sources =
+      specfem::io::sources_impl::read<specfem::element::dimension_tag::dim3,
+                                      specfem::enums::source_format::YAML>(
+          param.sources_node, nsteps, dt,
+          specfem::simulation::field_type::forward);
 
   ASSERT_EQ(sources.size(), param.expected_sources.size());
 
