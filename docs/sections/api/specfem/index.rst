@@ -11,7 +11,6 @@
     assembly/index
     attenuation/index
     boundary_conditions/index
-    cache_line
     chunk_edge/index
     chunk_element/index
     compute/index

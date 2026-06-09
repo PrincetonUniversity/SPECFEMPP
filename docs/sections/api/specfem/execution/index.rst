@@ -17,6 +17,5 @@
     iterators/team_thread_md_range_iterator
     iterators/chunked_edge_iterator
     iterators/chunked_intersection_iterator
-    pattern/prefetch_ahead
     pattern/for_each_level
     pattern/for_all

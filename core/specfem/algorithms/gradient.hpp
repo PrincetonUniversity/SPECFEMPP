@@ -19,122 +19,109 @@ namespace specfem {
 namespace algorithms {
 /// @brief Implementation details
 namespace impl {
-
 /**
- * @brief Accumulate partial derivatives of a 2D vector field in reference
- * coordinates.
+ * @brief Compute the gradient of a vector field at a specific point in a 2D
+ * spectral element
  *
- * Computes partial derivatives with respect to reference coordinates (ξ, γ)
- * by accumulating contributions from Lagrange polynomial derivatives.
- * Reads field data and quadrature information from scratch memory.
- *
- * @tparam VectorFieldType Field type with dimension_tag=dim2
- * @tparam QuadratureType Quadrature type providing lagrange derivatives
- * @param f Input vector field
- * @param local_index Element and point indices (ispec, iz, ix)
- * @param lagrange_derivative Quadrature derivative values
- * @param df_dq Output: accumulated partial derivatives (components × 2 tensor)
+ * @tparam VectorFieldType Type of the vector field (must be 2D)
+ * @tparam QuadratureType Type of the Lagrange derivative polynomial
+ * @param f Vector field to compute gradient of
+ * @param local_index Local indices within the spectral element
+ * @param point_jacobian_matrix Jacobian matrix for coordinate transformation
+ * @param lagrange_derivative Lagrange derivative polynomials for
+ * differentiation
+ * @param df_dxi Output array for derivatives with respect to xi
+ * @param df_dgamma Output array for derivatives with respect to gamma
+ * @return Auto-deduced return type containing the gradient values
  */
 template <typename VectorFieldType, typename QuadratureType,
           typename std::enable_if_t<VectorFieldType::dimension_tag ==
                                         specfem::element::dimension_tag::dim2,
                                     int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void element_accumulate(
+KOKKOS_FORCEINLINE_FUNCTION auto element_gradient(
     const VectorFieldType &f,
     const specfem::point::index<specfem::element::dimension_tag::dim2,
                                 VectorFieldType::using_simd> &local_index,
+    const specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2,
+                                          false, VectorFieldType::using_simd>
+        &point_jacobian_matrix,
     const QuadratureType &lagrange_derivative,
-    specfem::datatype::TensorPointViewType<
-        type_real, VectorFieldType::components, 2,
-        VectorFieldType::simd::using_simd> &df_dq) {
+    typename VectorFieldType::simd::datatype (
+        &df_dxi)[VectorFieldType::components],
+    typename VectorFieldType::simd::datatype (
+        &df_dgamma)[VectorFieldType::components]) {
 
+  constexpr int dimension = 2;
   constexpr int components = VectorFieldType::components;
   constexpr int ngll = VectorFieldType::ngll;
+  using TensorPointViewType = specfem::datatype::TensorPointViewType<
+      type_real, VectorFieldType::components, dimension,
+      VectorFieldType::simd::using_simd>;
   const int ielement = local_index.ispec;
   const int iz = local_index.iz;
   const int ix = local_index.ix;
 
   for (int l = 0; l < ngll; ++l) {
     for (int icomponent = 0; icomponent < components; ++icomponent) {
-      df_dq(icomponent, 0) +=
+      df_dxi[icomponent] +=
           lagrange_derivative.xi(ix, l) * f(ielement, iz, l, icomponent);
-      df_dq(icomponent, 1) +=
+      df_dgamma[icomponent] +=
           lagrange_derivative.gamma(iz, l) * f(ielement, l, ix, icomponent);
     }
   }
-}
-
-/**
- * @brief Transform 2D reference-frame derivatives to physical coordinates.
- *
- * Applies Jacobian matrix transformation to convert partial derivatives
- * from reference coordinates to physical coordinates using the chain rule.
- *
- * @tparam VectorFieldType Field type with dimension_tag=dim2
- * @param point_jacobian_matrix Jacobian transformation matrix
- * @param df_dq Partial derivatives in reference frame (components × 2)
- * @return Partial derivatives in physical coordinates
- */
-template <typename VectorFieldType,
-          typename std::enable_if_t<VectorFieldType::dimension_tag ==
-                                        specfem::element::dimension_tag::dim2,
-                                    int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION auto element_transform(
-    const specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2,
-                                          false, VectorFieldType::using_simd>
-        &point_jacobian_matrix,
-    const specfem::datatype::TensorPointViewType<
-        type_real, VectorFieldType::components, 2,
-        VectorFieldType::simd::using_simd> &df_dq) {
-
-  constexpr int dimension = 2;
-  constexpr int components = VectorFieldType::components;
-  using TensorPointViewType =
-      specfem::datatype::TensorPointViewType<type_real, components, dimension,
-                                             VectorFieldType::simd::using_simd>;
 
   TensorPointViewType df;
 
   for (int icomponent = 0; icomponent < components; ++icomponent) {
-    df(icomponent, 0) = point_jacobian_matrix.xix * df_dq(icomponent, 0) +
-                        point_jacobian_matrix.gammax * df_dq(icomponent, 1);
+    df(icomponent, 0) = point_jacobian_matrix.xix * df_dxi[icomponent] +
+                        point_jacobian_matrix.gammax * df_dgamma[icomponent];
 
-    df(icomponent, 1) = point_jacobian_matrix.xiz * df_dq(icomponent, 0) +
-                        point_jacobian_matrix.gammaz * df_dq(icomponent, 1);
+    df(icomponent, 1) = point_jacobian_matrix.xiz * df_dxi[icomponent] +
+                        point_jacobian_matrix.gammaz * df_dgamma[icomponent];
   }
   return df;
 }
-
 /**
- * @brief Accumulate partial derivatives of a 3D vector field in reference
- * coordinates.
+ * @brief Compute the gradient of a vector field at a specific point in a 3D
+ * spectral element
  *
- * Computes partial derivatives with respect to reference coordinates (ξ, η, γ)
- * by accumulating contributions from Lagrange polynomial derivatives.
- * Reads field data and quadrature information from scratch memory.
- *
- * @tparam VectorFieldType Field type with dimension_tag=dim3
- * @tparam QuadratureType Quadrature type providing lagrange derivatives
- * @param f Input vector field
- * @param local_index Element and point indices (ispec, iz, iy, ix)
- * @param lagrange_derivative Quadrature derivative values
- * @param df_dq Output: accumulated partial derivatives (components × 3 tensor)
+ * @tparam VectorFieldType Type of the vector field (must be 3D)
+ * @tparam QuadratureType Type of the Lagrange derivative polynomial
+ * @param f Vector field to compute gradient of
+ * @param local_index Local indices within the spectral element
+ * @param point_jacobian_matrix Jacobian matrix for coordinate transformation
+ * @param lagrange_derivative Lagrange derivative polynomials for
+ * differentiation
+ * @param df_dxi Output array for derivatives with respect to xi
+ * @param df_deta Output array for derivatives with respect to eta
+ * @param df_dgamma Output array for derivatives with respect to gamma
+ * @return Auto-deduced return type containing the gradient values
  */
 template <typename VectorFieldType, typename QuadratureType,
           typename std::enable_if_t<VectorFieldType::dimension_tag ==
                                         specfem::element::dimension_tag::dim3,
                                     int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void element_accumulate(
+KOKKOS_FORCEINLINE_FUNCTION auto element_gradient(
     const VectorFieldType &f,
     const specfem::point::index<specfem::element::dimension_tag::dim3,
                                 VectorFieldType::using_simd> &local_index,
+    const specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim3,
+                                          false, VectorFieldType::using_simd>
+        &point_jacobian_matrix,
     const QuadratureType &lagrange_derivative,
-    specfem::datatype::TensorPointViewType<
-        type_real, VectorFieldType::components, 3,
-        VectorFieldType::simd::using_simd> &df_dq) {
+    typename VectorFieldType::simd::datatype (
+        &df_dxi)[VectorFieldType::components],
+    typename VectorFieldType::simd::datatype (
+        &df_deta)[VectorFieldType::components],
+    typename VectorFieldType::simd::datatype (
+        &df_dgamma)[VectorFieldType::components]) {
 
+  constexpr int dimension = 3;
   constexpr int components = VectorFieldType::components;
   constexpr int ngll = VectorFieldType::ngll;
+  using TensorPointViewType = specfem::datatype::TensorPointViewType<
+      type_real, VectorFieldType::components, dimension,
+      VectorFieldType::simd::using_simd>;
   const int ielement = local_index.ispec;
   const int iz = local_index.iz;
   const int iy = local_index.iy;
@@ -142,87 +129,55 @@ KOKKOS_FORCEINLINE_FUNCTION void element_accumulate(
 
   for (int l = 0; l < ngll; ++l) {
     for (int icomponent = 0; icomponent < components; ++icomponent) {
-      df_dq(icomponent, 0) +=
+      df_dxi[icomponent] +=
           lagrange_derivative.xi(ix, l) * f(ielement, iz, iy, l, icomponent);
-      df_dq(icomponent, 1) +=
+      df_deta[icomponent] +=
           lagrange_derivative.eta(iy, l) * f(ielement, iz, l, ix, icomponent);
-      df_dq(icomponent, 2) +=
+      df_dgamma[icomponent] +=
           lagrange_derivative.gamma(iz, l) * f(ielement, l, iy, ix, icomponent);
     }
   }
-}
-
-/**
- * @brief Transform 3D reference-frame derivatives to physical coordinates.
- *
- * Applies Jacobian matrix transformation to convert partial derivatives
- * from reference coordinates (ξ, η, γ) to physical coordinates (x, y, z)
- * using the chain rule.
- *
- * @tparam VectorFieldType Field type with dimension_tag=dim3
- * @param point_jacobian_matrix Jacobian transformation matrix (9 components)
- * @param df_dq Partial derivatives in reference frame (components × 3)
- * @return Partial derivatives in physical coordinates
- */
-template <typename VectorFieldType,
-          typename std::enable_if_t<VectorFieldType::dimension_tag ==
-                                        specfem::element::dimension_tag::dim3,
-                                    int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION auto element_transform(
-    const specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim3,
-                                          false, VectorFieldType::using_simd>
-        &point_jacobian_matrix,
-    const specfem::datatype::TensorPointViewType<
-        type_real, VectorFieldType::components, 3,
-        VectorFieldType::simd::using_simd> &df_dq) {
-
-  constexpr int dimension = 3;
-  constexpr int components = VectorFieldType::components;
-  using TensorPointViewType =
-      specfem::datatype::TensorPointViewType<type_real, components, dimension,
-                                             VectorFieldType::simd::using_simd>;
 
   TensorPointViewType df;
 
   for (int icomponent = 0; icomponent < components; ++icomponent) {
-    df(icomponent, 0) = point_jacobian_matrix.xix * df_dq(icomponent, 0) +
-                        point_jacobian_matrix.etax * df_dq(icomponent, 1) +
-                        point_jacobian_matrix.gammax * df_dq(icomponent, 2);
+    df(icomponent, 0) = point_jacobian_matrix.xix * df_dxi[icomponent] +
+                        point_jacobian_matrix.etax * df_deta[icomponent] +
+                        point_jacobian_matrix.gammax * df_dgamma[icomponent];
 
-    df(icomponent, 1) = point_jacobian_matrix.xiy * df_dq(icomponent, 0) +
-                        point_jacobian_matrix.etay * df_dq(icomponent, 1) +
-                        point_jacobian_matrix.gammay * df_dq(icomponent, 2);
+    df(icomponent, 1) = point_jacobian_matrix.xiy * df_dxi[icomponent] +
+                        point_jacobian_matrix.etay * df_deta[icomponent] +
+                        point_jacobian_matrix.gammay * df_dgamma[icomponent];
 
-    df(icomponent, 2) = point_jacobian_matrix.xiz * df_dq(icomponent, 0) +
-                        point_jacobian_matrix.etaz * df_dq(icomponent, 1) +
-                        point_jacobian_matrix.gammaz * df_dq(icomponent, 2);
+    df(icomponent, 2) = point_jacobian_matrix.xiz * df_dxi[icomponent] +
+                        point_jacobian_matrix.etaz * df_deta[icomponent] +
+                        point_jacobian_matrix.gammaz * df_dgamma[icomponent];
   }
   return df;
 }
-
 } // namespace impl
 
 /**
- * @brief Compute gradients of a vector field in spectral elements.
+ * @defgroup AlgorithmsGradient
  *
- * Computes field gradients at quadrature points using the spectral element
- * method (Komatitsch & Tromp, 1999). Transforms from reference to physical
- * coordinates via Jacobian matrices. Invokes callback for each quadrature
- * point.
- *
- * @tparam ChunkIndexType Chunk element index
- * @tparam VectorFieldType Field container
- * @tparam JacobianMatrixType Jacobian matrix container
- * @tparam QuadratureType Lagrange derivative quadrature
- * @tparam CallbackFunctor Callback taking (iterator_index, gradient_tensor)
- *
- * @param chunk_index Elements in chunk
- * @param jacobian_matrix Coordinate transformation matrices
- * @param quadrature Lagrange polynomial derivatives
- * @param f Input field
- * @param callback Invoked with gradient tensor at each quadrature point
+ */
+
+/**
+ * @brief Compute the gradient of a vector field f using the spectral element
+ * formulation (eqn: 29 in Komatitsch and Tromp, 1999)
  *
  * @ingroup AlgorithmsGradient
+ *
+ * @tparam ChunkIndexType  Chunk index type
+ * @tparam VectorFieldType Field view type (Chunk view)
+ * @tparam QuadratureType  Quadrature view type
+ * @tparam CallbackFunctor Callback functor type
+ * @param chunk_index      Chunk index specifying the elements within this chunk
+ * @param jacobian_matrix  Jacobian matrix of basis functions
+ * @param quadrature       Integration quadrature
+ * @param f                Field to compute the gradient of
+ * @param callback         Callback functor receiving
+ *        (iterator_index, TensorPointViewType<components, dim>)
  */
 template <typename ChunkIndexType, typename VectorFieldType,
           typename JacobianMatrixType, typename QuadratureType,
@@ -242,37 +197,40 @@ gradient(const ChunkIndexType &chunk_index,
   constexpr int dimension = specfem::element::dimension<dimension_tag>::dim;
   constexpr bool using_simd = VectorFieldType::simd::using_simd;
 
-  using TPViewType =
+  using TensorPointViewType =
       specfem::datatype::TensorPointViewType<type_real, components, dimension,
                                              using_simd>;
+  using datatype = typename VectorFieldType::simd::datatype;
 
   static_assert(
       std::is_invocable_v<CallbackFunctor,
                           typename ChunkIndexType::iterator_type::index_type,
-                          TPViewType>,
+                          TensorPointViewType>,
       "CallbackFunctor must be invocable with (iterator_index, "
       "TensorPointViewType)");
 
   specfem::execution::for_each_level(
-      specfem::execution::prefetch_ahead<4>(
-          chunk_index,
-          [&](const auto &prefetch_index) {
-            specfem::assembly::prefetch_on_device(prefetch_index.get_index(),
-                                                  jacobian_matrix);
-          })
-          .get_iterator(),
+      chunk_index.get_iterator(),
       [&](const typename ChunkIndexType::iterator_type::index_type
               &iterator_index) {
         const auto index = iterator_index.get_index();
         const auto local_index = iterator_index.get_local_index();
-        TPViewType df_dq;
-        impl::element_accumulate(f, local_index, quadrature, df_dq);
+        datatype df_dxi[components] = { 0.0 };
+        datatype df_dgamma[components] = { 0.0 };
         specfem::point::jacobian_matrix<dimension_tag, false, using_simd>
             point_jacobian_matrix;
         specfem::assembly::load_on_device(index, jacobian_matrix,
                                           point_jacobian_matrix);
-        callback(iterator_index, impl::element_transform<VectorFieldType>(
-                                     point_jacobian_matrix, df_dq));
+        if constexpr (dimension_tag == specfem::element::dimension_tag::dim3) {
+          datatype df_deta[components] = { 0.0 };
+          callback(iterator_index, impl::element_gradient(
+                                       f, local_index, point_jacobian_matrix,
+                                       quadrature, df_dxi, df_deta, df_dgamma));
+        } else {
+          callback(iterator_index,
+                   impl::element_gradient(f, local_index, point_jacobian_matrix,
+                                          quadrature, df_dxi, df_dgamma));
+        }
       });
 }
 
@@ -313,42 +271,48 @@ gradient(const ChunkIndexType &chunk_index,
   constexpr int dimension = specfem::element::dimension<dimension_tag>::dim;
   constexpr bool using_simd = VectorFieldType::simd::using_simd;
 
-  using TPViewType =
+  using TensorPointViewType =
       specfem::datatype::TensorPointViewType<type_real, components, dimension,
                                              using_simd>;
+  using datatype = typename VectorFieldType::simd::datatype;
 
   static_assert(
       std::is_invocable_v<CallbackFunctor,
                           typename ChunkIndexType::iterator_type::index_type,
-                          TPViewType, TPViewType>,
+                          TensorPointViewType, TensorPointViewType>,
       "CallbackFunctor must be invocable with (iterator_index, "
       "TensorPointViewType, TensorPointViewType)");
 
   specfem::execution::for_each_level(
-      specfem::execution::prefetch_ahead<4>(
-          chunk_index,
-          [&](const auto &prefetch_index) {
-            specfem::assembly::prefetch_on_device(prefetch_index.get_index(),
-                                                  jacobian_matrix);
-          })
-          .get_iterator(),
+      chunk_index.get_iterator(),
       [&](const typename ChunkIndexType::iterator_type::index_type
               &iterator_index) {
         const auto index = iterator_index.get_index();
         const auto local_index = iterator_index.get_local_index();
-        TPViewType df_dq;
-        TPViewType dg_dq;
-        impl::element_accumulate(f, local_index, quadrature, df_dq);
-        impl::element_accumulate(g, local_index, quadrature, dg_dq);
+        datatype df_dxi[components] = { 0.0 };
+        datatype df_dgamma[components] = { 0.0 };
+        datatype dg_dxi[components] = { 0.0 };
+        datatype dg_dgamma[components] = { 0.0 };
         specfem::point::jacobian_matrix<dimension_tag, false, using_simd>
             point_jacobian_matrix;
         specfem::assembly::load_on_device(index, jacobian_matrix,
                                           point_jacobian_matrix);
-        callback(iterator_index,
-                 impl::element_transform<VectorFieldType>(point_jacobian_matrix,
-                                                          df_dq),
-                 impl::element_transform<VectorFieldType>(point_jacobian_matrix,
-                                                          dg_dq));
+        if constexpr (dimension_tag == specfem::element::dimension_tag::dim3) {
+          datatype df_deta[components] = { 0.0 };
+          datatype dg_deta[components] = { 0.0 };
+          callback(
+              iterator_index,
+              impl::element_gradient(f, local_index, point_jacobian_matrix,
+                                     quadrature, df_dxi, df_deta, df_dgamma),
+              impl::element_gradient(g, local_index, point_jacobian_matrix,
+                                     quadrature, dg_dxi, dg_deta, dg_dgamma));
+        } else {
+          callback(iterator_index,
+                   impl::element_gradient(f, local_index, point_jacobian_matrix,
+                                          quadrature, df_dxi, df_dgamma),
+                   impl::element_gradient(g, local_index, point_jacobian_matrix,
+                                          quadrature, dg_dxi, dg_dgamma));
+        }
       });
 }
 
@@ -382,31 +346,36 @@ gradient(const ChunkIndexType &chunk_index,
   using TensorPointViewTypeF =
       specfem::datatype::TensorPointViewType<type_real, components, dimension,
                                              using_simd>;
+  using datatypeF = typename VectorFieldType::simd::datatype;
 
   specfem::execution::for_each_level(
-      specfem::execution::prefetch_ahead<4>(
-          chunk_index,
-          [&](const auto &prefetch_index) {
-            specfem::assembly::prefetch_on_device(prefetch_index.get_index(),
-                                                  jacobian_matrix);
-          })
-          .get_iterator(),
+      chunk_index.get_iterator(),
       [&](const typename ChunkIndexType::iterator_type::index_type
               &iterator_index) {
         const auto index = iterator_index.get_index();
         const auto local_index = iterator_index.get_local_index();
-        TensorPointViewTypeF df_dq;
-        impl::element_accumulate(
-            static_cast<const VectorFieldType &>(field_pack), local_index,
-            quadrature, df_dq);
+        datatypeF df_dxi[components] = { 0.0 };
+        datatypeF df_dgamma[components] = { 0.0 };
         specfem::point::jacobian_matrix<dimension_tag, false, using_simd>
             point_jacobian_matrix;
         specfem::assembly::load_on_device(index, jacobian_matrix,
                                           point_jacobian_matrix);
-        callback(iterator_index,
-                 specfem::point::GradientPack<TensorPointViewTypeF>{
-                     impl::element_transform<VectorFieldType>(
-                         point_jacobian_matrix, df_dq) });
+        if constexpr (dimension_tag == specfem::element::dimension_tag::dim3) {
+          datatypeF df_deta[components] = { 0.0 };
+          callback(iterator_index,
+                   specfem::point::GradientPack<TensorPointViewTypeF>{
+                       impl::element_gradient(
+                           static_cast<const VectorFieldType &>(field_pack),
+                           local_index, point_jacobian_matrix, quadrature,
+                           df_dxi, df_deta, df_dgamma) });
+        } else {
+          callback(iterator_index,
+                   specfem::point::GradientPack<TensorPointViewTypeF>{
+                       impl::element_gradient(
+                           static_cast<const VectorFieldType &>(field_pack),
+                           local_index, point_jacobian_matrix, quadrature,
+                           df_dxi, df_dgamma) });
+        }
       });
 }
 
@@ -450,37 +419,50 @@ KOKKOS_FORCEINLINE_FUNCTION void gradient(
   using TensorPointViewTypeG = specfem::datatype::TensorPointViewType<
       type_real, componentsG, dimension, VectorFieldTypeG::simd::using_simd>;
 
+  using datatypeF = typename VectorFieldTypeF::simd::datatype;
+  using datatypeG = typename VectorFieldTypeG::simd::datatype;
+
   specfem::execution::for_each_level(
-      specfem::execution::prefetch_ahead<4>(
-          chunk_index,
-          [&](const auto &prefetch_index) {
-            specfem::assembly::prefetch_on_device(prefetch_index.get_index(),
-                                                  jacobian_matrix);
-          })
-          .get_iterator(),
+      chunk_index.get_iterator(),
       [&](const typename ChunkIndexType::iterator_type::index_type
               &iterator_index) {
         const auto index = iterator_index.get_index();
         const auto local_index = iterator_index.get_local_index();
-        TensorPointViewTypeF df_dq;
-        TensorPointViewTypeG dg_dq;
-        impl::element_accumulate(
-            static_cast<const VectorFieldTypeF &>(field_pack), local_index,
-            quadrature, df_dq);
-        impl::element_accumulate(
-            static_cast<const VectorFieldTypeG &>(field_pack), local_index,
-            quadrature, dg_dq);
+        datatypeF df_dxi[componentsF] = { 0.0 };
+        datatypeF df_dgamma[componentsF] = { 0.0 };
+        datatypeG dg_dxi[componentsG] = { 0.0 };
+        datatypeG dg_dgamma[componentsG] = { 0.0 };
         specfem::point::jacobian_matrix<dimension_tag, false, using_simd>
             point_jacobian_matrix;
         specfem::assembly::load_on_device(index, jacobian_matrix,
                                           point_jacobian_matrix);
-        callback(iterator_index,
-                 specfem::point::GradientPack<TensorPointViewTypeF,
-                                              TensorPointViewTypeG>{
-                     impl::element_transform<VectorFieldTypeF>(
-                         point_jacobian_matrix, df_dq),
-                     impl::element_transform<VectorFieldTypeG>(
-                         point_jacobian_matrix, dg_dq) });
+        if constexpr (dimension_tag == specfem::element::dimension_tag::dim3) {
+          datatypeF df_deta[componentsF] = { 0.0 };
+          datatypeG dg_deta[componentsG] = { 0.0 };
+          callback(iterator_index,
+                   specfem::point::GradientPack<TensorPointViewTypeF,
+                                                TensorPointViewTypeG>{
+                       impl::element_gradient(
+                           static_cast<const VectorFieldTypeF &>(field_pack),
+                           local_index, point_jacobian_matrix, quadrature,
+                           df_dxi, df_deta, df_dgamma),
+                       impl::element_gradient(
+                           static_cast<const VectorFieldTypeG &>(field_pack),
+                           local_index, point_jacobian_matrix, quadrature,
+                           dg_dxi, dg_deta, dg_dgamma) });
+        } else {
+          callback(iterator_index,
+                   specfem::point::GradientPack<TensorPointViewTypeF,
+                                                TensorPointViewTypeG>{
+                       impl::element_gradient(
+                           static_cast<const VectorFieldTypeF &>(field_pack),
+                           local_index, point_jacobian_matrix, quadrature,
+                           df_dxi, df_dgamma),
+                       impl::element_gradient(
+                           static_cast<const VectorFieldTypeG &>(field_pack),
+                           local_index, point_jacobian_matrix, quadrature,
+                           dg_dxi, dg_dgamma) });
+        }
       });
 }
 
