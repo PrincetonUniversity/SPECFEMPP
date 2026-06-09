@@ -1,20 +1,19 @@
 #pragma once
 
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/io/wavefield/writer.hpp"
-#include "specfem/assembly/assembly.hpp"
+#include "specfem/logger.hpp"
 #include "specfem/macros/tag_dispatch.hpp"
+#include "specfem/mpi.hpp"
 #include "specfem/tag_dispatch.hpp"
 #include "specfem/utilities.hpp"
-#include "specfem/logger.hpp"
-#include "specfem/mpi.hpp"
 #include <boost/filesystem.hpp>
 
 template <typename OutputLibrary>
 specfem::io::wavefield_writer<OutputLibrary>::wavefield_writer(
     const std::string &output_folder, const bool save_boundary_values)
-    : output_folder(output_folder),
-      save_boundary_values(save_boundary_values),
+    : output_folder(output_folder), save_boundary_values(save_boundary_values),
       // Build rank-specific path:
       //   serial:   {output_folder}/ForwardWavefield
       //   parallel: {output_folder}/ForwardWavefield/proc_N
@@ -43,26 +42,20 @@ void specfem::io::wavefield_writer<OutputLibrary>::initialize(
   using DomainView =
       Kokkos::View<type_real *, Kokkos::LayoutLeft, Kokkos::HostSpace>;
 
-  const int ngllz = mesh.element_grid.ngllz;
-  const int ngllx = mesh.element_grid.ngllx;
-
   int ngroups = 0;
   auto count_group = [&]<typename TagsType>() {
-    if (forward.template get_nglob<TagsType::medium_tag>() > 0) ngroups++;
+    if (forward.template get_nglob<TagsType::medium_tag>() > 0)
+      ngroups++;
   };
-  if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
-    specfem::tag_dispatch::for_each(
-        DIMENSION_SET(dim2) *
-            MEDIUM_SET(elastic_psv, elastic_psv_t, elastic_sh, acoustic,
-                       poroelastic),
-        count_group);
-  } else {
-    specfem::tag_dispatch::for_each(
-        DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic), count_group);
-  }
+
+  specfem::tag_dispatch::for_each(DIMENSION_SET(dim2, dim3) *
+                                      MEDIUM_SET(elastic, elastic_psv,
+                                                 elastic_psv_t, elastic_sh,
+                                                 acoustic, poroelastic),
+                                  count_group);
 
   Kokkos::View<std::string *, Kokkos::HostSpace> medium_tags("medium_tags",
-                                                              ngroups);
+                                                             ngroups);
 
   typename OutputLibrary::Group base_group =
       file.createGroup(std::string("/Coordinates"));
@@ -85,6 +78,9 @@ void specfem::io::wavefield_writer<OutputLibrary>::initialize(
 
       DomainView x("xcoordinates", nglob_medium);
       DomainView z("zcoordinates", nglob_medium);
+
+      const int ngllz = mesh.element_grid.ngllz;
+      const int ngllx = mesh.element_grid.ngllx;
 
       if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
         using MappingView =
@@ -134,16 +130,11 @@ void specfem::io::wavefield_writer<OutputLibrary>::initialize(
     }
   };
 
-  if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
-    specfem::tag_dispatch::for_each(
-        DIMENSION_SET(dim2) *
-            MEDIUM_SET(elastic_psv, elastic_psv_t, elastic_sh, acoustic,
-                       poroelastic),
-        process_medium);
-  } else {
-    specfem::tag_dispatch::for_each(
-        DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic), process_medium);
-  }
+  specfem::tag_dispatch::for_each(DIMENSION_SET(dim2, dim3) *
+                                      MEDIUM_SET(elastic, elastic_psv,
+                                                 elastic_psv_t, elastic_sh,
+                                                 acoustic, poroelastic),
+                                  process_medium);
 
   file.createDataset("medium_tags", medium_tags).write();
   file.flush();
@@ -183,16 +174,11 @@ void specfem::io::wavefield_writer<OutputLibrary>::run(
     }
   };
 
-  if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
-    specfem::tag_dispatch::for_each(
-        DIMENSION_SET(dim2) *
-            MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
-                       elastic_psv_t),
-        write_field);
-  } else {
-    specfem::tag_dispatch::for_each(
-        DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic), write_field);
-  }
+  specfem::tag_dispatch::for_each(DIMENSION_SET(dim2, dim3) *
+                                      MEDIUM_SET(elastic, elastic_psv,
+                                                 elastic_sh, acoustic,
+                                                 poroelastic, elastic_psv_t),
+                                  write_field);
 
   file.flush();
 }
@@ -232,16 +218,12 @@ void specfem::io::wavefield_writer<OutputLibrary>::finalize(
       }
     };
 
-    if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
-      specfem::tag_dispatch::for_each(
-          DIMENSION_SET(dim2) *
-              MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
-                         elastic_psv_t),
-          write_stacey);
-    } else {
-      specfem::tag_dispatch::for_each(
-          DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic), write_stacey);
-    }
+    specfem::tag_dispatch::for_each(DIMENSION_SET(dim2, dim3) *
+                                        MEDIUM_SET(elastic, elastic_psv,
+                                                   elastic_sh, acoustic,
+                                                   poroelastic, elastic_psv_t),
+                                    write_stacey);
+
     file.flush();
   }
 

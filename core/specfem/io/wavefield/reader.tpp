@@ -3,9 +3,9 @@
 #include "specfem/assembly.hpp"
 #include "specfem/io/wavefield/reader.hpp"
 #include "specfem/macros/tag_dispatch.hpp"
+#include "specfem/mpi.hpp"
 #include "specfem/tag_dispatch.hpp"
 #include "specfem/utilities.hpp"
-#include "specfem/mpi.hpp"
 #include <boost/filesystem.hpp>
 
 template <typename IOLibrary>
@@ -37,21 +37,18 @@ void specfem::io::wavefield_reader<IOLibrary>::initialize(
   int ngroups = 0;
 
   auto count_group = [&]<typename TagsType>() {
-    if (buffer.template get_nglob<TagsType::medium_tag>() > 0) ngroups++;
+    if (buffer.template get_nglob<TagsType::medium_tag>() > 0)
+      ngroups++;
   };
 
-  if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
-    specfem::tag_dispatch::for_each(
-        DIMENSION_SET(dim2) *
-            MEDIUM_SET(elastic_psv, elastic_psv_t, elastic_sh, acoustic,
-                       poroelastic),
-        count_group);
-  } else {
-    specfem::tag_dispatch::for_each(
-        DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic), count_group);
-  }
+  specfem::tag_dispatch::for_each(DIMENSION_SET(dim2, dim3) *
+                                      MEDIUM_SET(elastic, elastic_psv,
+                                                 elastic_psv_t, elastic_sh,
+                                                 acoustic, poroelastic),
+                                  count_group);
 
-  Kokkos::View<std::string *, Kokkos::HostSpace> medium_tags("medium_tags", ngroups);
+  Kokkos::View<std::string *, Kokkos::HostSpace> medium_tags("medium_tags",
+                                                             ngroups);
   file.openDataset("medium_tags", medium_tags).read();
 
   auto check_medium = [&]<typename TagsType>() {
@@ -72,16 +69,10 @@ void specfem::io::wavefield_reader<IOLibrary>::initialize(
     }
   };
 
-  if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
-    specfem::tag_dispatch::for_each(
-        DIMENSION_SET(dim2) *
-            MEDIUM_SET(elastic_psv, elastic_psv_t, elastic_sh, acoustic,
-                       poroelastic),
-        check_medium);
-  } else {
-    specfem::tag_dispatch::for_each(
-        DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic), check_medium);
-  }
+  specfem::tag_dispatch::for_each(
+      DIMENSION_SET(dim2, dim3) * MEDIUM_SET(elastic, elastic_psv, elastic_psv_t, elastic_sh,
+                                       acoustic, poroelastic),
+      check_medium);
 
   auto &boundary_values = assembly.boundary_values;
 
@@ -116,16 +107,10 @@ void specfem::io::wavefield_reader<IOLibrary>::initialize(
     }
   };
 
-  if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
-    specfem::tag_dispatch::for_each(
-        DIMENSION_SET(dim2) *
-            MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
-                       elastic_psv_t),
-        read_stacey);
-  } else {
-    specfem::tag_dispatch::for_each(
-        DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic), read_stacey);
-  }
+  specfem::tag_dispatch::for_each(
+      DIMENSION_SET(dim2, dim3) * MEDIUM_SET(elastic, elastic_psv, elastic_psv_t, elastic_sh,
+                                       acoustic, poroelastic),
+      read_stacey);
 
   boundary_values.copy_to_device();
 }
@@ -160,16 +145,10 @@ void specfem::io::wavefield_reader<IOLibrary>::run(
     }
   };
 
-  if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
-    specfem::tag_dispatch::for_each(
-        DIMENSION_SET(dim2) *
-            MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
-                       elastic_psv_t),
-        read_field);
-  } else {
-    specfem::tag_dispatch::for_each(
-        DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic), read_field);
-  }
+  specfem::tag_dispatch::for_each(
+      DIMENSION_SET(dim2, dim3) * MEDIUM_SET(elastic, elastic_psv, elastic_psv_t, elastic_sh,
+                                       acoustic, poroelastic),
+      read_field);
 
   buffer.copy_to_device();
 }
