@@ -716,6 +716,7 @@ void specfem::periodic_tasks::
   }
 }
 
+#ifndef NO_HDF5
 // Helper: extend a 1D dataset, select hyperslab at write_offset, write one
 // scalar value, then close the dataset.
 // When do_write is false, the dataset is extended (collective in parallel HDF5)
@@ -726,7 +727,6 @@ void specfem::periodic_tasks::plot_wavefield<
                             hsize_t new_extent, hsize_t write_offset,
                             hid_t mem_type, const void *data, hid_t dxpl,
                             bool do_write) {
-#ifndef NO_HDF5
   hid_t ds = SPECFEM_H5_CHECK_ID(H5Dopen(parent, dataset_name, H5P_DEFAULT));
   SPECFEM_H5_CHECK(H5Dset_extent(ds, &new_extent));
 
@@ -742,7 +742,6 @@ void specfem::periodic_tasks::plot_wavefield<
   }
 
   SPECFEM_H5_CHECK(H5Dclose(ds));
-#endif
 }
 
 // Helper: extend a 1D dataset, select hyperslab at write_offset with the given
@@ -754,7 +753,6 @@ void specfem::periodic_tasks::plot_wavefield<
                            hsize_t new_extent, hsize_t write_offset,
                            hsize_t count, hid_t mem_type, const void *data,
                            hid_t dxpl, bool do_write) {
-#ifndef NO_HDF5
   hid_t ds = SPECFEM_H5_CHECK_ID(H5Dopen(parent, dataset_name, H5P_DEFAULT));
   SPECFEM_H5_CHECK(H5Dset_extent(ds, &new_extent));
 
@@ -769,8 +767,8 @@ void specfem::periodic_tasks::plot_wavefield<
   }
 
   SPECFEM_H5_CHECK(H5Dclose(ds));
-#endif
 }
+#endif // NO_HDF5
 
 void specfem::periodic_tasks::plot_wavefield<
     specfem::element::dimension_tag::dim3>::compute_mpi_offsets() {
@@ -843,9 +841,9 @@ void specfem::periodic_tasks::plot_wavefield<
 #endif // NO_HDF5
 }
 
+#ifndef NO_HDF5
 hid_t specfem::periodic_tasks::plot_wavefield<
     specfem::element::dimension_tag::dim3>::create_file_access_plist() const {
-#ifndef NO_HDF5
   hid_t fapl = SPECFEM_H5_CHECK_ID(H5Pcreate(H5P_FILE_ACCESS));
 #ifdef SPECFEM_HDF5_IS_PARALLEL
   if (this->use_parallel_hdf5) {
@@ -854,10 +852,8 @@ hid_t specfem::periodic_tasks::plot_wavefield<
   }
 #endif // SPECFEM_HDF5_IS_PARALLEL
   return fapl;
-#else
-  return 0;
-#endif // NO_HDF5
 }
+#endif // NO_HDF5
 
 void specfem::periodic_tasks::
     plot_wavefield<specfem::element::dimension_tag::dim3>::run_vtkhdf(
