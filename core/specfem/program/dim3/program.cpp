@@ -121,6 +121,26 @@ void program_3d(
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
+  //                   Read wavefields
+  // --------------------------------------------------------------
+  const auto wavefield_reader = setup.instantiate_wavefield_reader<
+      specfem::element::dimension_tag::dim3>();
+  if (wavefield_reader) {
+    tasks.push_back(wavefield_reader);
+  }
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
+  //                  Write Forward Wavefields
+  // --------------------------------------------------------------
+  const auto wavefield_writer = setup.instantiate_wavefield_writer<
+      specfem::element::dimension_tag::dim3>();
+  if (wavefield_writer) {
+    tasks.push_back(wavefield_writer);
+  }
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
   //                   Instantiate plotter
   // --------------------------------------------------------------
   specfem::Logger::info("(If set) Instantiate wavefield "
@@ -164,6 +184,17 @@ void program_3d(
   if (seismogram_writer) {
     specfem::Logger::info("Writing seismogram files.");
     seismogram_writer->write(assembly);
+  }
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
+  //                Write Kernels
+  // --------------------------------------------------------------
+  const auto kernel_writer = setup.instantiate_kernel_writer();
+  if (kernel_writer) {
+    specfem::Logger::info(
+        "Writing kernel files:\n-------------------------------");
+    kernel_writer->write(assembly);
   }
   // --------------------------------------------------------------
 
