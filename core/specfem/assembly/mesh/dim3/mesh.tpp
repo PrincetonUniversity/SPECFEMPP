@@ -16,7 +16,7 @@ specfem::assembly::mesh<specfem::element::dimension_tag::dim3>::mesh(
   // Initialize base classes
   static_cast<
       specfem::assembly::mesh_impl::mesh_to_compute_mapping<dimension_tag> &>(
-      *this) = { tags };
+      *this) = { tags, adjacency_graph };
   static_cast<specfem::assembly::mesh_impl::adjacency_graph<dimension_tag> &>(
       *this) = {
     nspec,
