@@ -16,22 +16,21 @@ namespace medium_physics {
  * @ingroup specfem_medium_dim2_compute_source_contribution_acoustic
  * @brief Compute source contribution for 2D acoustic isotropic media.
  *
- * Implements pressure source contribution for acoustic wave propagation.
- *
- * **Source equation:**
+ * **Forward/backward source equation:**
  * \f$ \ddot{\chi} = -\frac{S(t) \cdot L(\mathbf{x})}{\kappa} \f$
  *
- * where:
- * - \f$ \chi \f$: acoustic potential (related to pressure: \f$ p = -\ddot{\chi}
- * \f$)
- * - \f$ S(t) \f$: source time function
- * - \f$ L(\mathbf{x}) \f$: Lagrange interpolant for spatial localization
- * - \f$ \kappa \f$: bulk modulus of fluid
+ * Negative sign ensures \f$ +S(t) \f$ produces \f$ +p \f$ (pressure =
+ * \f$-\ddot{\chi}\f$).
  *
- * **Sign convention:**
- * Negative sign ensures \f$ +S(t) \f$ produces \f$ +p \f$ in pressure field.
+ * **Adjoint source equation:**
+ * \f$ \ddot{\chi}^\dagger = S^\dagger(t) \cdot L(\mathbf{x}) \f$
  *
- * @tparam PointSourceType Point-wise source parameters
+ * Adjoint sources are injected with positive sign and without \f$\kappa\f$
+ * scaling (following Peter et al. eq. A-8 / Fortran SPECFEM3D convention):
+ * the adjoint source file already incorporates the correct sign and the mass
+ * matrix subsequently supplies the \f$\kappa\f$ factor.
+ *
+ * @tparam PointSourceType Point-wise source parameters (carries wavefield tag)
  * @tparam PointPropertiesType Point-wise material properties
  * @param point_source Source parameters (STF, interpolant)
  * @param point_properties Material properties (κ)
@@ -52,17 +51,30 @@ KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
 
   using PointAccelerationType = specfem::point::acceleration<
       specfem::tags::Tags<specfem::element::dimension_tag::dim2,
-                          specfem::element::medium_tag::acoustic, using_simd> >;
+                          specfem::element::medium_tag::acoustic, using_simd>>;
 
   PointAccelerationType result;
 
-  /* note: for acoustic medium, the source is a pressure source and gets divided
-   *       by Kappa of the fluid. The sign is negative because pressure p = -
-   *       Chi_dot_dot therefore we need to add minus the source to Chi_dot_dot
-   *       to get plus the source in pressure
-   */
-  result(0) = -point_source.stf(0) * point_source.lagrange_interpolant(0) /
-              point_properties.kappa();
+  if constexpr (PointSourceType::wavefield_tag ==
+                specfem::simulation::field_type::adjoint) {
+    // Adjoint convention (SPECFEM3D Fortran: compute_add_sources_acoustic.f90,
+    // line 245): inject as-is with positive sign and without 1/kappa.
+    // The adjoint source file already encodes the correct sign from the
+    // optimization problem (Peter et al. eq. A-8), and the mass-matrix
+    // multiply (x kappa) that follows this call supplies the kappa factor.
+    // Using the forward formula here would negate the adjoint field and
+    // drop a factor of kappa, flipping the kernel sign and suppressing its
+    // amplitude by ~kappa (~1e10 Pa for typical rock).
+    result(0) = point_source.stf(0) * point_source.lagrange_interpolant(0);
+  } else {
+    // Forward/backward convention (SPECFEM3D Fortran:
+    // compute_add_sources_acoustic.f90, line 125): divide by kappa so that
+    // after the mass-matrix multiply (x kappa) the net contribution to
+    // ddot_chi is -S*L. The negative sign makes pressure p = -ddot_chi
+    // positive for a positive source time function.
+    result(0) = -point_source.stf(0) * point_source.lagrange_interpolant(0) /
+                point_properties.kappa();
+  }
 
   return result;
 }
