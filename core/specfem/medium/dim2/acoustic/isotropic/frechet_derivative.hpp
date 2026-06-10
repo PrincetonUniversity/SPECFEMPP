@@ -74,7 +74,8 @@ compute_frechet_derivatives(
   constexpr int ndim = specfem::element::dimension<Tags::dimension_tag>::dim;
 
   // Density kernel: 1/rho * (grad(phi^adj) · grad(phi)) * dt
-  type_real rho_kl = 0;
+  typename specfem::datatype::simd<type_real, Tags::using_simd>::datatype
+      rho_kl = 0;
   for (int i = 0; i < ndim; ++i)
     rho_kl += adjoint_derivatives.du(0, i) * backward_derivatives.du(0, i);
   rho_kl *= properties.rho_inverse() * dt;
