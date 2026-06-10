@@ -74,13 +74,10 @@ compute_frechet_derivatives(
   constexpr int ndim = specfem::element::dimension<Tags::dimension_tag>::dim;
 
   // Density kernel: 1/rho * (grad(phi^adj) · grad(phi)) * dt
-  // Fold expression over integer_sequence guarantees compile-time expansion
-  const auto rho_kl =
-      [&]<int... Is>(std::integer_sequence<int, Is...>) {
-        return (... + (adjoint_derivatives.du(0, Is) *
-                       backward_derivatives.du(0, Is)));
-      }(std::make_integer_sequence<int, ndim>{}) *
-      properties.rho_inverse() * dt;
+  type_real rho_kl = 0;
+  for (int i = 0; i < ndim; ++i)
+    rho_kl += adjoint_derivatives.du(0, i) * backward_derivatives.du(0, i);
+  rho_kl *= properties.rho_inverse() * dt;
 
   // Bulk modulus kernel: ddot(phi^adj) * phi / kappa * dt
   const auto kappa_kl =
