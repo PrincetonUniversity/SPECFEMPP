@@ -22,5 +22,7 @@ target_compile_definitions(
         periodic_tasks
         PUBLIC
         $<$<NOT:$<BOOL:${SPECFEM_ENABLE_VTK}>>:-DNO_VTK>
+        $<$<NOT:$<BOOL:${SPECFEM_ENABLE_HDF5}>>:-DNO_HDF5>
+        $<$<BOOL:${SPECFEM_HDF5_IS_PARALLEL}>:-DSPECFEM_HDF5_IS_PARALLEL>
         $<$<BOOL:${__APPLE__}>:__APPLE__>
 )

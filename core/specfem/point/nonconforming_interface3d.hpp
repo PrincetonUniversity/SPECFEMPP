@@ -56,6 +56,21 @@ public:
 
   // ========================= START TEMPORARY =========================
   tensor_type<type_real, NGLL, ndim - 1> interpolants;
+
+  /**
+   * @brief Populates the interpolants.
+   */
+  template <typename LagrangeInterpolantType>
+  KOKKOS_INLINE_FUNCTION void
+  set_interpolants(const LagrangeInterpolantType &lagrange_interpolant) {
+    // populate interpolants array.
+    for (int igll = 0; igll < NGLL; igll++) {
+      for (int idim = 0; idim < ndim - 1; idim++) {
+        interpolants(igll, idim) =
+            lagrange_interpolant(igll, coupled_coordinates(idim));
+      }
+    }
+  }
   template <typename LagrangeInterpolantType>
   KOKKOS_INLINE_FUNCTION nonconforming_interface(
       const vector_type<type_real, ndim - 1> &coupled_coordinates,
@@ -64,13 +79,7 @@ public:
       const LagrangeInterpolantType &lagrange_interpolant)
       : coupled_coordinates(coupled_coordinates), face_factor(face_factor),
         face_normal(face_normal) {
-    // populate interpolants array.
-    for (int igll = 0; igll < NGLL; igll++) {
-      for (int idim = 0; idim < ndim - 1; idim++) {
-        interpolants(igll, idim) =
-            lagrange_interpolant(igll, coupled_coordinates(idim));
-      }
-    }
+    set_interpolants(lagrange_interpolant);
   }
 
   // =========================  END TEMPORARY  =========================
@@ -87,6 +96,12 @@ public:
    */
   KOKKOS_INLINE_FUNCTION
   nonconforming_interface() = default;
+
+  /**
+   * @brief Get shared memory size requirement
+   * @return Size in bytes needed for scratch memory
+   */
+  constexpr static int shmem_size() { return 0; }
 };
 
 } // namespace specfem::point

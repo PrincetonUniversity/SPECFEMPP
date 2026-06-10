@@ -38,9 +38,11 @@ constexpr double ep2 = e2 / (1.0 - e2); ///< Second eccentricity squared
 } // namespace specfem
 
 template <>
-specfem::coordinate_systems::cartesian_coordinates
+specfem::coordinate_systems::cartesian_coordinates<
+    specfem::element::dimension_tag::dim3>
 specfem::coordinate_systems::transform<
-    specfem::coordinate_systems::cartesian_coordinates,
+    specfem::coordinate_systems::cartesian_coordinates<
+        specfem::element::dimension_tag::dim3>,
     specfem::coordinate_systems::geographic_coordinates,
     specfem::coordinate_systems::utm_projection_config>(
     const specfem::coordinate_systems::geographic_coordinates &geo,
@@ -50,7 +52,7 @@ specfem::coordinate_systems::transform<
   namespace utm_impl = specfem::coordinate_systems::utm_impl;
 
   if (config.suppress) {
-    return { geo.longitude, geo.latitude, geo.depth };
+    return { geo.longitude, geo.latitude, geo.depth, std::nullopt };
   }
 
   const double dlat = geo.latitude;
@@ -132,16 +134,19 @@ specfem::coordinate_systems::transform<
   if (lsouth)
     yy = yy + 1.0e7;
 
-  return { xx, yy, geo.depth };
+  // Depth is negated to z; origin is nullopt (needs topographic resolution)
+  return { xx, yy, -geo.depth, std::nullopt };
 }
 
 template <>
 specfem::coordinate_systems::geographic_coordinates
 specfem::coordinate_systems::transform<
     specfem::coordinate_systems::geographic_coordinates,
-    specfem::coordinate_systems::cartesian_coordinates,
+    specfem::coordinate_systems::cartesian_coordinates<
+        specfem::element::dimension_tag::dim3>,
     specfem::coordinate_systems::utm_projection_config>(
-    const specfem::coordinate_systems::cartesian_coordinates &cart,
+    const specfem::coordinate_systems::cartesian_coordinates<
+        specfem::element::dimension_tag::dim3> &cart,
     const specfem::coordinate_systems::utm_projection_config &config) {
   namespace utm_impl = specfem::coordinate_systems::utm_impl;
 
