@@ -1,5 +1,6 @@
 #pragma once
 
+#include "mpi_buffers.hpp"
 #include "solver.hpp"
 #include "specfem/compute.hpp"
 #include "specfem/element.hpp"
@@ -49,10 +50,13 @@ public:
    */
   time_marching(
       const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
-      const std::vector<std::shared_ptr<
-          specfem::periodic_tasks::periodic_task<DimensionTag> > > &tasks,
+      const std::vector<
+          std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag>>>
+          &tasks,
       specfem::assembly::assembly<dimension_tag> assembly)
-      : time_scheme(time_scheme), tasks(tasks), assembly(assembly) {}
+      : time_scheme(time_scheme), tasks(tasks), assembly(assembly),
+        mpi_buffers(specfem::solver::make_mpi_buffers(
+            this->assembly, specfem::simulation::type::forward)) {}
 
   ///@}
 
@@ -82,11 +86,14 @@ private:
   std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme; ///< Time
                                                                   ///< scheme
   std::vector<
-      std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag> > >
+      std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag>>>
       tasks; ///< Periodic tasks
   ///< objects
   specfem::assembly::assembly<dimension_tag> assembly; ///< Spectral element
                                                        ///< assembly object
+  specfem::solver::MPIBuffers<dimension_tag>
+      mpi_buffers; ///< Solver-owned MPI buffers for acceleration and
+                   ///< mass-matrix exchange (inner/outer overlap)
 };
 
 /**
@@ -118,8 +125,10 @@ public:
       const specfem::assembly::assembly<dimension_tag> &assembly,
       const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
       const std::vector<std::shared_ptr<
-          specfem::periodic_tasks::periodic_task<dimension_tag> > > &tasks)
-      : assembly(assembly), time_scheme(time_scheme), tasks(tasks) {}
+          specfem::periodic_tasks::periodic_task<dimension_tag>>> &tasks)
+      : assembly(assembly), time_scheme(time_scheme), tasks(tasks),
+        mpi_buffers(specfem::solver::make_mpi_buffers(
+            this->assembly, specfem::simulation::type::combined)) {}
   ///@}
 
   /**
@@ -154,9 +163,12 @@ private:
   std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme; ///< Time
                                                                   ///< scheme
   std::vector<
-      std::shared_ptr<specfem::periodic_tasks::periodic_task<dimension_tag> > >
+      std::shared_ptr<specfem::periodic_tasks::periodic_task<dimension_tag>>>
       tasks; ///< Periodic tasks
              ///< objects
+  specfem::solver::MPIBuffers<dimension_tag>
+      mpi_buffers; ///< Solver-owned MPI buffers for acceleration and
+                   ///< mass-matrix exchange (inner/outer overlap)
 };
 } // namespace solver
 } // namespace specfem

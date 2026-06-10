@@ -12,7 +12,6 @@
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/kernels.hpp"
 #include "specfem/assembly/mesh.hpp"
-#include "specfem/assembly/mpi_accel_buffers.hpp"
 #include "specfem/assembly/nonconforming_interfaces.hpp"
 #include "specfem/assembly/properties.hpp"
 #include "specfem/assembly/receivers.hpp"
@@ -155,9 +154,6 @@ template <> struct assembly<specfem::element::dimension_tag::dim2> {
    * \f$(s, \partial s / \partial t, \partial^2 s /\partial t^2)\f$
    */
   specfem::assembly::fields<dimension_tag> fields;
-
-  specfem::assembly::mpi_accel_buffers<dimension_tag>
-      accel_buffers; ///< No-op MPI buffers (dim2 MPI not yet implemented)
 
   /**
    * @brief Field values at the boundaries at every time step.

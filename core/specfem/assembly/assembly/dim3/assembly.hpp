@@ -12,7 +12,6 @@
 #include "specfem/assembly/kernels.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/mpi/dim3/mpi.hpp"
-#include "specfem/assembly/mpi_accel_buffers.hpp"
 #include "specfem/assembly/properties.hpp"
 #include "specfem/assembly/receivers.hpp"
 #include "specfem/assembly/sources.hpp"
@@ -140,10 +139,6 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
                                                         ///< groups for face
                                                         ///< data exchange
                                                         ///< between partitions
-
-  specfem::assembly::mpi_accel_buffers<dimension_tag>
-      accel_buffers; ///< Pre-allocated MPI buffers for acceleration exchange
-                     ///< during time-stepping (inner/outer overlap)
 
   type_real t0; ///< Simulation start time
 

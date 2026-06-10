@@ -126,24 +126,19 @@ int compute_stiffness_interaction_core(
 }
 
 /**
- * @brief Compute stiffness interaction with MPI communication-computation
- * overlap.
+ * @brief Compute stiffness interaction for one inner/outer element subset.
  *
- * Orchestrates the four-phase stiffness computation that overlaps MPI halo
- * exchange with inner-element work:
- * 1. Compute stiffness on outer elements (touching MPI boundaries)
- * 2. Begin async MPI exchange of acceleration
- * 3. Compute stiffness on inner elements (overlaps with MPI transfer)
- * 4. Complete MPI exchange and accumulate received contributions
- *
- * For dim2 (no MPI yet), all elements are classified as inner, the outer
- * pass finds zero elements, and begin/complete_exchange are no-ops.
+ * Iterates all property/attenuation/boundary combinations for the medium and
+ * wavefield identified by @p Tags, restricted to the inner or outer element
+ * subset carried by `Tags::mpi_tag`. This is a single compute pass with no MPI
+ * communication; the solver orchestrates the begin/finish communication around
+ * the outer and inner passes.
  *
  * @tparam NGLL Number of GLL points per element edge
- * @tparam Tags Compile-time tags (dimension, medium, wavefield)
- * @param assembly The assembly object (mutated by MPI exchange)
+ * @tparam Tags Compile-time tags (dimension, medium, wavefield, mpi)
+ * @param assembly The assembly object containing the mesh
  * @param istep Current time step
- * @return Number of elements updated across all tag combinations
+ * @return Number of elements updated in this inner/outer subset
  */
 template <int NGLL, typename Tags>
 int compute_stiffness_interaction(
@@ -159,32 +154,17 @@ int compute_stiffness_interaction(
       ATTENUATION_SET(none, constant_isotropic) *
       BOUNDARY_SET(none, stacey, acoustic_free_surface,
                    composite_stacey_dirichlet);
-  constexpr auto outer_set = base_set * MPI_SET(outer);
-  constexpr auto inner_set = base_set * MPI_SET(inner);
 
   auto compute_stiffness = [&]<typename ElementTags>() {
+    // Append the wavefield tag, then the mpi (inner/outer) tag, to the
+    // per-combo element tags before dispatching the kernel.
     elements_updated += compute_stiffness_interaction_core<
-        NGLL, specfem::tags::expand<ElementTags, Tags::wavefield_tag>>(assembly,
-                                                                       istep);
+        NGLL, specfem::tags::expand<
+                  specfem::tags::expand<ElementTags, Tags::wavefield_tag>,
+                  Tags::mpi_tag>>(assembly, istep);
   };
 
-  // Phase 1: outer elements (touching MPI boundaries)
-  specfem::tag_dispatch::for_each(outer_set, compute_stiffness);
-
-  // Phase 2: begin async MPI exchange of acceleration
-  auto &sim_field =
-      assembly.fields.template get_simulation_field<Tags::wavefield_tag>();
-  assembly.accel_buffers
-      .template begin_exchange<Tags::wavefield_tag, Tags::medium_tag>(
-          sim_field);
-
-  // Phase 3: inner elements (overlaps with MPI transfer)
-  specfem::tag_dispatch::for_each(inner_set, compute_stiffness);
-
-  // Phase 4: complete MPI exchange and accumulate
-  assembly.accel_buffers
-      .template complete_exchange<Tags::wavefield_tag, Tags::medium_tag>(
-          sim_field);
+  specfem::tag_dispatch::for_each(base_set, compute_stiffness);
 
   return elements_updated;
 }
