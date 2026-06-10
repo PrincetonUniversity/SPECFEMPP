@@ -26,7 +26,8 @@ template <> struct ElementSets<specfem::element::dimension_tag::dim3> {
   constexpr static auto medium_set = MEDIUM_SET(elastic, acoustic);
   constexpr static auto property_set =
       PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat);
-  constexpr static auto boundary_set = BOUNDARY_SET(none);
+  constexpr static auto boundary_set = BOUNDARY_SET(
+      none, stacey, acoustic_free_surface, composite_stacey_dirichlet);
   constexpr static auto attenuation_set =
       ATTENUATION_SET(none, constant_isotropic);
 };
@@ -44,5 +45,5 @@ template <> struct ElementSets<specfem::element::dimension_tag::dim3> {
  */
 template <specfem::element::dimension_tag DimensionTag>
 using element_types = element_types_impl::element_types_base<
-    element_types_impl::ElementSets<DimensionTag> >;
+    element_types_impl::ElementSets<DimensionTag>>;
 } // namespace specfem::assembly
