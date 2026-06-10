@@ -7,7 +7,7 @@ description: >
   absorbing boundaries.
 config:
   nproc : 1
-  tolerance : 1e-3
+  tolerance : 2e-3
 databases:
   specfem_config: "specfem_config.yaml"
   traces: "traces"

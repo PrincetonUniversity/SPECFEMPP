@@ -77,6 +77,7 @@ APPROXIMATE_OCEAN_LOAD          = .false.
 TOPOGRAPHY                      = .false.
 ATTENUATION                     = .false.
 ANISOTROPY                      = .false.
+ROTATION                        = .false.
 GRAVITY                         = .false.
 
 # in case of attenuation, reference frequency in Hz at which the velocity values in the velocity model are given (unused otherwise)
@@ -402,5 +403,3 @@ ADIOS_FOR_UNDO_ATTENUATION      = .false.
 HDF5_ENABLED                    = .false.
 HDF5_FOR_MOVIES                 = .false.
 HDF5_IO_NODES                   = 0   # HDF5 IO server with number of IO dedicated procs
-
-ROTATION                         = .false.

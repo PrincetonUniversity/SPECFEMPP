@@ -861,18 +861,21 @@ impl_enforce_traction(const elastic_type &, const isotropic_type &,
 
   const auto &dn = boundary.face_normal;
   const auto jacobian2d = dn.l2_norm();
+  const auto inv_j = static_cast<type_real>(1.0) / jacobian2d;
 
-  // Dot product v · n̂ (n̂ = dn / jacobian2d)
-  const auto vn = velocity(0) * dn(0) + velocity(1) * dn(1) +
-                  velocity(2) * dn(2);
+  // Unit outward normal components (matching Fortran reference)
+  const type_real nhat[3] = { dn(0) * inv_j, dn(1) * inv_j, dn(2) * inv_j };
+
+  // Normal velocity component v · n̂
+  const auto vn =
+      velocity(0) * nhat[0] + velocity(1) * nhat[1] + velocity(2) * nhat[2];
 
   const auto rho_vp_minus_vs = property.rho_vp() - property.rho_vs();
   const auto rho_vs = property.rho_vs();
 
   for (int icomp = 0; icomp < 3; ++icomp) {
     const auto factor =
-        (vn * dn(icomp) / (jacobian2d * jacobian2d)) * rho_vp_minus_vs +
-        velocity(icomp) * rho_vs;
+        vn * nhat[icomp] * rho_vp_minus_vs + velocity(icomp) * rho_vs;
     traction(icomp) += static_cast<type_real>(-1.0) * factor * jacobian2d *
                        boundary.face_weight;
   }
@@ -915,22 +918,35 @@ impl_enforce_traction(const elastic_type &, const isotropic_type &,
   const auto &dn = boundary.face_normal;
   const auto jacobian2d = dn.l2_norm();
 
-  const auto vn = velocity(0) * dn(0) + velocity(1) * dn(1) +
-                  velocity(2) * dn(2);
+  // Unit outward normal components (matching Fortran reference)
+  const auto nx = dn(0) / jacobian2d;
+  const auto ny = dn(1) / jacobian2d;
+  const auto nz = dn(2) / jacobian2d;
+
+  // Normal velocity component v · n̂
+  const auto vn = velocity(0) * nx + velocity(1) * ny + velocity(2) * nz;
 
   const auto rho_vp_minus_vs = property.rho_vp() - property.rho_vs();
   const auto rho_vs = property.rho_vs();
 
-  for (int icomp = 0; icomp < 3; ++icomp) {
-    const auto factor =
-        (vn * dn(icomp) / (jacobian2d * jacobian2d)) * rho_vp_minus_vs +
-        velocity(icomp) * rho_vs;
-    traction(icomp) = Kokkos::Experimental::condition(
-        mask,
-        traction(icomp) + static_cast<type_real>(-1.0) * factor * jacobian2d *
-                              boundary.face_weight,
-        traction(icomp));
-  }
+  const auto factor0 = vn * nx * rho_vp_minus_vs + velocity(0) * rho_vs;
+  traction(0) = Kokkos::Experimental::condition(
+      mask,
+      traction(0) + static_cast<type_real>(-1.0) * factor0 * jacobian2d *
+                        boundary.face_weight,
+      traction(0));
+  const auto factor1 = vn * ny * rho_vp_minus_vs + velocity(1) * rho_vs;
+  traction(1) = Kokkos::Experimental::condition(
+      mask,
+      traction(1) + static_cast<type_real>(-1.0) * factor1 * jacobian2d *
+                        boundary.face_weight,
+      traction(1));
+  const auto factor2 = vn * nz * rho_vp_minus_vs + velocity(2) * rho_vs;
+  traction(2) = Kokkos::Experimental::condition(
+      mask,
+      traction(2) + static_cast<type_real>(-1.0) * factor2 * jacobian2d *
+                        boundary.face_weight,
+      traction(2));
 
   return;
 }
