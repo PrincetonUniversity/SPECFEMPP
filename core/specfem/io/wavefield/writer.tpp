@@ -4,7 +4,6 @@
 #include "specfem/enums.hpp"
 #include "specfem/io/wavefield/writer.hpp"
 #include "specfem/logger.hpp"
-#include "specfem/macros/tag_dispatch.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/tag_dispatch.hpp"
 #include "specfem/utilities.hpp"
@@ -48,11 +47,8 @@ void specfem::io::wavefield_writer<OutputLibrary>::initialize(
       ngroups++;
   };
 
-  specfem::tag_dispatch::for_each(DIMENSION_SET(dim2, dim3) *
-                                      MEDIUM_SET(elastic, elastic_psv,
-                                                 elastic_psv_t, elastic_sh,
-                                                 acoustic, poroelastic),
-                                  count_group);
+  specfem::tag_dispatch::for_each(
+      std::remove_reference_t<decltype(forward)>::combinations, count_group);
 
   Kokkos::View<std::string *, Kokkos::HostSpace> medium_tags("medium_tags",
                                                              ngroups);
@@ -130,11 +126,9 @@ void specfem::io::wavefield_writer<OutputLibrary>::initialize(
     }
   };
 
-  specfem::tag_dispatch::for_each(DIMENSION_SET(dim2, dim3) *
-                                      MEDIUM_SET(elastic, elastic_psv,
-                                                 elastic_psv_t, elastic_sh,
-                                                 acoustic, poroelastic),
-                                  process_medium);
+  specfem::tag_dispatch::for_each(
+      std::remove_reference_t<decltype(forward)>::combinations,
+      process_medium);
 
   file.createDataset("medium_tags", medium_tags).write();
   file.flush();
@@ -174,11 +168,8 @@ void specfem::io::wavefield_writer<OutputLibrary>::run(
     }
   };
 
-  specfem::tag_dispatch::for_each(DIMENSION_SET(dim2, dim3) *
-                                      MEDIUM_SET(elastic, elastic_psv,
-                                                 elastic_sh, acoustic,
-                                                 poroelastic, elastic_psv_t),
-                                  write_field);
+  specfem::tag_dispatch::for_each(
+      std::remove_reference_t<decltype(forward)>::combinations, write_field);
 
   file.flush();
 }
@@ -218,11 +209,9 @@ void specfem::io::wavefield_writer<OutputLibrary>::finalize(
       }
     };
 
-    specfem::tag_dispatch::for_each(DIMENSION_SET(dim2, dim3) *
-                                        MEDIUM_SET(elastic, elastic_psv,
-                                                   elastic_sh, acoustic,
-                                                   poroelastic, elastic_psv_t),
-                                    write_stacey);
+    specfem::tag_dispatch::for_each(
+        decltype(boundary_values.stacey)::combinations_by_medium,
+        write_stacey);
 
     file.flush();
   }

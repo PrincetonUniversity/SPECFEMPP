@@ -2,7 +2,6 @@
 
 #include "specfem/assembly.hpp"
 #include "specfem/io/wavefield/reader.hpp"
-#include "specfem/macros/tag_dispatch.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/tag_dispatch.hpp"
 #include "specfem/utilities.hpp"
@@ -41,11 +40,8 @@ void specfem::io::wavefield_reader<IOLibrary>::initialize(
       ngroups++;
   };
 
-  specfem::tag_dispatch::for_each(DIMENSION_SET(dim2, dim3) *
-                                      MEDIUM_SET(elastic, elastic_psv,
-                                                 elastic_psv_t, elastic_sh,
-                                                 acoustic, poroelastic),
-                                  count_group);
+  specfem::tag_dispatch::for_each(
+      std::remove_reference_t<decltype(buffer)>::combinations, count_group);
 
   Kokkos::View<std::string *, Kokkos::HostSpace> medium_tags("medium_tags",
                                                              ngroups);
@@ -70,9 +66,7 @@ void specfem::io::wavefield_reader<IOLibrary>::initialize(
   };
 
   specfem::tag_dispatch::for_each(
-      DIMENSION_SET(dim2, dim3) * MEDIUM_SET(elastic, elastic_psv, elastic_psv_t, elastic_sh,
-                                       acoustic, poroelastic),
-      check_medium);
+      std::remove_reference_t<decltype(buffer)>::combinations, check_medium);
 
   auto &boundary_values = assembly.boundary_values;
 
@@ -108,8 +102,7 @@ void specfem::io::wavefield_reader<IOLibrary>::initialize(
   };
 
   specfem::tag_dispatch::for_each(
-      DIMENSION_SET(dim2, dim3) * MEDIUM_SET(elastic, elastic_psv, elastic_psv_t, elastic_sh,
-                                       acoustic, poroelastic),
+      decltype(boundary_values.stacey)::combinations_by_medium,
       read_stacey);
 
   boundary_values.copy_to_device();
@@ -146,9 +139,7 @@ void specfem::io::wavefield_reader<IOLibrary>::run(
   };
 
   specfem::tag_dispatch::for_each(
-      DIMENSION_SET(dim2, dim3) * MEDIUM_SET(elastic, elastic_psv, elastic_psv_t, elastic_sh,
-                                       acoustic, poroelastic),
-      read_field);
+      std::remove_reference_t<decltype(buffer)>::combinations, read_field);
 
   buffer.copy_to_device();
 }
