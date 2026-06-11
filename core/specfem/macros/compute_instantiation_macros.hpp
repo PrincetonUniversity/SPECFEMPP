@@ -64,4 +64,16 @@
   MACRO(5, dimension_tag::dim3, field_type::forward, medium_tag::elastic_sh)   \
   MACRO(5, dimension_tag::dim3, field_type::forward,                           \
         medium_tag::elastic_psv_t)                                             \
-  MACRO(5, dimension_tag::dim3, field_type::forward, medium_tag::poroelastic)
+  MACRO(5, dimension_tag::dim3, field_type::forward, medium_tag::poroelastic)  \
+  /* dim3, NGLL=5, adjoint */                                                  \
+  MACRO(5, dimension_tag::dim3, field_type::adjoint, medium_tag::acoustic)     \
+  MACRO(5, dimension_tag::dim3, field_type::adjoint, medium_tag::elastic)      \
+  MACRO(5, dimension_tag::dim3, field_type::adjoint, medium_tag::elastic_psv)  \
+  MACRO(5, dimension_tag::dim3, field_type::adjoint, medium_tag::elastic_sh)   \
+  MACRO(5, dimension_tag::dim3, field_type::adjoint, medium_tag::poroelastic)  \
+  /* dim3, NGLL=5, backward */                                                 \
+  MACRO(5, dimension_tag::dim3, field_type::backward, medium_tag::acoustic)    \
+  MACRO(5, dimension_tag::dim3, field_type::backward, medium_tag::elastic)     \
+  MACRO(5, dimension_tag::dim3, field_type::backward, medium_tag::elastic_psv) \
+  MACRO(5, dimension_tag::dim3, field_type::backward, medium_tag::elastic_sh)  \
+  MACRO(5, dimension_tag::dim3, field_type::backward, medium_tag::poroelastic)
