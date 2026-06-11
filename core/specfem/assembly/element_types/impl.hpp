@@ -237,7 +237,7 @@ private:
                      "to "
                      "a single contiguous range.";
               specfem::Logger::error(msg.str());
-              specfem::program::abort(msg.str());
+              specfem::program::abort();
             }
             if (start == -1)
               start = ispec;

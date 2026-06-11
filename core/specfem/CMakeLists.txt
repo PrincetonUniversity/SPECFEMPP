@@ -29,6 +29,23 @@ target_include_directories(specfem_version INTERFACE ${CMAKE_BINARY_DIR}/include
 add_dependencies(specfem_version specfem_version_header)
 
 # Add existing subdirectories
+# mpi and logger must come first so specfem_program_abort can depend on them
+add_subdirectory(mpi)
+add_subdirectory(logger)
+
+# Minimal abort library -- depends only on mpi + logger, so assembly can safely
+# link it without creating a circular dependency with specfem::program.
+add_library(specfem_program_abort STATIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/program/abort.cpp)
+add_library(specfem::program_abort ALIAS specfem_program_abort)
+target_include_directories(specfem_program_abort PUBLIC ${CMAKE_SOURCE_DIR}/core)
+target_link_libraries(specfem_program_abort
+    PUBLIC
+        specfem::mpi
+        specfem::logger
+        $<TARGET_NAME_IF_EXISTS:MPI::MPI_CXX>
+)
+
 add_subdirectory(algorithms)
 add_subdirectory(element_coupling)
 add_subdirectory(assembly)
@@ -40,11 +57,9 @@ add_subdirectory(enums)
 add_subdirectory(jacobian)
 add_subdirectory(io)
 add_subdirectory(io_backends)
-add_subdirectory(logger)
 add_subdirectory(macros)
 add_subdirectory(mesh)
 add_subdirectory(mesh_entity)
-add_subdirectory(mpi)
 add_subdirectory(periodic_tasks)
 add_subdirectory(point)
 add_subdirectory(program)
