@@ -17,6 +17,15 @@ the ``xdecompose_mesh`` partitioner followed by ``specfem3d``.
     meshing with Gmsh please refer to the
     `Gmsh tutorials <https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-tutorial>`_.
 
+.. note::
+
+    All cookbook files can be copy and pasted from the code blocks below, or you
+    can download a zip file containing all the files needed to run this example.
+
+    .. download-folder:: parameter_files
+        :filename: gmsh_3d_cookbook.zip
+        :text: GMSH 3D cookbook
+
 Setting up your workspace
 -------------------------
 
@@ -255,7 +264,7 @@ Running ``xdecompose_mesh``
 ``xdecompose_mesh`` partitions the mesh text files into a binary database that
 ``specfem3d`` can read. We first define the decomposer parameters in a ``Par_file``.
 
-.. literalinclude:: Par_file
+.. literalinclude:: parameter_files/Par_file
     :language: bash
     :caption: Par_file
 
@@ -292,7 +301,7 @@ with the format:
 
 ``STATION_NAME NETWORK_CODE X Y ELEVATION BURIAL``
 
-.. literalinclude:: DATA/STATIONS
+.. literalinclude:: parameter_files/DATA/STATIONS
     :language: bash
     :caption: STATIONS
 
@@ -305,7 +314,7 @@ Defining sources
 The source is defined in ``sources.yaml``. We place a vertical force at the centre of
 the domain, 500 m below the free surface, with a 1 Hz Ricker wavelet.
 
-.. literalinclude:: sources.yaml
+.. literalinclude:: parameter_files/sources.yaml
     :language: yaml
     :caption: sources.yaml
 
@@ -314,7 +323,7 @@ Configuring the solver
 
 Define the simulation parameters in ``specfem_config.yaml``:
 
-.. literalinclude:: specfem_config.yaml
+.. literalinclude:: parameter_files/specfem_config.yaml
     :language: yaml
     :caption: specfem_config.yaml
     :emphasize-lines: 20-24,41-42
