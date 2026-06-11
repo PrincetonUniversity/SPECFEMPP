@@ -1,10 +1,10 @@
 #pragma once
 
+#include "divide_mass_matrix.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/parallel_configuration.hpp"
-#include "specfem/assembly/assembly.hpp"
 #include "specfem/point.hpp"
-#include "divide_mass_matrix.hpp"
 #include "specfem/tag_dispatch.hpp"
 #include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
@@ -25,22 +25,18 @@ void divide_mass_matrix_core(
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
   constexpr bool using_simd = false;
 #else
-  // TODO(Rohit : DIM3_SIMD) Enable simd execution for dim3 solver
-  constexpr bool using_simd = (dimension_tag == specfem::element::dimension_tag::dim2) ? true : false;
+  constexpr bool using_simd = true;
 #endif
 
   using simd = specfem::datatype::simd<type_real, using_simd>;
 
   using PointTags = specfem::tags::Tags<dimension_tag, medium_tag, using_simd>;
 
-  using PointAccelerationType =
-      specfem::point::acceleration<PointTags>;
-  using PointMassInverseType =
-      specfem::point::mass_inverse<PointTags>;
+  using PointAccelerationType = specfem::point::acceleration<PointTags>;
+  using PointMassInverseType = specfem::point::mass_inverse<PointTags>;
 
   using parallel_config = specfem::parallel_configuration::default_range_config<
-      simd,
-      Kokkos::DefaultExecutionSpace>;
+      simd, Kokkos::DefaultExecutionSpace>;
 
   using IndexType = specfem::point::assembly_index<using_simd>;
 
@@ -50,7 +46,8 @@ void divide_mass_matrix_core(
 
   specfem::execution::for_all(
       "specfem::compute::divide_mass_matrix", range,
-      KOKKOS_LAMBDA(const typename decltype(range)::base_index_type &iterator_index) {
+      KOKKOS_LAMBDA(
+          const typename decltype(range)::base_index_type &iterator_index) {
         const auto index = iterator_index.get_index();
         PointAccelerationType acceleration;
         PointMassInverseType mass_inverse;
@@ -73,12 +70,11 @@ void divide_mass_matrix_core(
 template <int NGLL, typename Tags>
 void divide_mass_matrix(
     const specfem::assembly::assembly<Tags::dimension_tag> &assembly) {
-  // Call divide_mass_matrix_core only if Tags represent a valid combination of dimension and medium tags
+  // Call divide_mass_matrix_core only if Tags represent a valid combination of
+  // dimension and medium tags
   specfem::tag_dispatch::for_each(
       specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
-      specfem::tag_dispatch::medium_set<Tags::medium_tag>{},
-      [&]<typename ElementTags>() {
-        divide_mass_matrix_core<Tags>(assembly);
-      });
+          specfem::tag_dispatch::medium_set<Tags::medium_tag>{},
+      [&]<typename ElementTags>() { divide_mass_matrix_core<Tags>(assembly); });
 }
 } // namespace specfem::compute::impl

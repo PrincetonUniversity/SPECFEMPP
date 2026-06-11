@@ -1,13 +1,9 @@
-
-
 #include "specfem/enums.hpp"
 #include "specfem/setup.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
-// #include "utilities.cpp"
 #include "yaml-cpp/yaml.h"
 #include <cmath>
-#include <stdexcept>
 
 std::vector<specfem::element::medium_tag> specfem::sources::moment_tensor<
     specfem::element::dimension_tag::dim3>::get_supported_media() const {
@@ -73,17 +69,18 @@ operator==(const specfem::sources::source<specfem::element::dimension_tag::dim3>
     return false;
   }
 
-  const auto gcoord = this->get_global_coordinates();
-  const auto other_gcoord = other_source->get_global_coordinates();
+  // Compare input coordinates (identity depends solely on input, not mesh)
+  const auto *c1 = this->get_read_coordinates();
+  const auto *c2 = other_source->get_read_coordinates();
+  bool coords_equal = (c1 && c2) ? (*c1 == *c2) : (!c1 && !c2);
 
-  bool internal = specfem::utilities::is_close(this->Mxx, other_source->Mxx) &&
+  bool internal = coords_equal &&
+                  specfem::utilities::is_close(this->Mxx, other_source->Mxx) &&
                   specfem::utilities::is_close(this->Myy, other_source->Myy) &&
                   specfem::utilities::is_close(this->Mzz, other_source->Mzz) &&
                   specfem::utilities::is_close(this->Mxy, other_source->Mxy) &&
                   specfem::utilities::is_close(this->Mxz, other_source->Mxz) &&
-                  specfem::utilities::is_close(this->Myz, other_source->Myz) &&
-                  specfem::utilities::is_close(gcoord.x, other_gcoord.x) &&
-                  specfem::utilities::is_close(gcoord.z, other_gcoord.z);
+                  specfem::utilities::is_close(this->Myz, other_source->Myz);
 
   if (!internal) {
     std::cout << "3-D moment tensor source not equal" << std::endl;

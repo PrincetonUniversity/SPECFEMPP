@@ -79,7 +79,8 @@
   use shared_parameters, only: &
     NGNOD, NGNOD2D, NPROC, PARTITIONING_TYPE, LTS_MODE, ATTENUATION, &
     PML_CONDITIONS, SAVE_MESH_FILES, ADIOS_FOR_DATABASES, &
-    COUPLE_WITH_INJECTION_TECHNIQUE, IS_WAVEFIELD_DISCONTINUITY, LOCAL_PATH
+    COUPLE_WITH_INJECTION_TECHNIQUE, IS_WAVEFIELD_DISCONTINUITY, LOCAL_PATH, &
+    UTM_PROJECTION_ZONE, SUPPRESS_UTM_PROJECTION
 
   use decompose_mesh_filenames
 
@@ -133,6 +134,18 @@
 
   call read_value_logical(COUPLE_WITH_INJECTION_TECHNIQUE, 'COUPLE_WITH_INJECTION_TECHNIQUE', ier)
   if (ier /= 0) stop 'Error reading COUPLE_WITH_INJECTION_TECHNIQUE from Par_file'
+
+  call read_value_integer(UTM_PROJECTION_ZONE,             'UTM_PROJECTION_ZONE',             ier)
+  if (ier /= 0) then
+    UTM_PROJECTION_ZONE = 11
+    ier = 0
+  endif
+
+  call read_value_logical(SUPPRESS_UTM_PROJECTION,         'SUPPRESS_UTM_PROJECTION',         ier)
+  if (ier /= 0) then
+    SUPPRESS_UTM_PROJECTION = .true.
+    ier = 0
+  endif
 
   call read_value_string (LOCAL_PATH,                      'LOCAL_PATH',                      ier)
   if (ier /= 0) stop 'Error reading LOCAL_PATH from Par_file'

@@ -146,6 +146,32 @@ public:
         tensor_source(x, y, z, std::move(source_time_function)) {};
 
   /**
+   * @brief Construct a new moment tensor source from generic coordinates
+   *
+   * @param coordinates Generic coordinate object
+   * @param Mxx Mxx component of moment tensor
+   * @param Myy Myy component of moment tensor
+   * @param Mzz Mzz component of moment tensor
+   * @param Mxy Mxy component of moment tensor
+   * @param Mxz Mxz component of moment tensor
+   * @param Myz Myz component of moment tensor
+   * @param source_time_function pointer to source time function
+   * @param wavefield_type type of wavefield
+   */
+  moment_tensor(
+      std::unique_ptr<specfem::coordinate_systems::coordinates<
+          specfem::element::dimension_tag::dim3>>
+          coordinates,
+      type_real Mxx, type_real Myy, type_real Mzz, type_real Mxy, type_real Mxz,
+      type_real Myz,
+      std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
+      const specfem::simulation::field_type wavefield_type)
+      : Mxx(Mxx), Myy(Myy), Mzz(Mzz), Mxy(Mxy), Mxz(Mxz), Myz(Myz),
+        wavefield_type(wavefield_type),
+        tensor_source(std::move(coordinates), std::move(source_time_function)) {
+        };
+
+  /**
    * @brief User output
    *
    */

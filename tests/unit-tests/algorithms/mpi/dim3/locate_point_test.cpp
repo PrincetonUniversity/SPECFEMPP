@@ -23,8 +23,8 @@
 #include <vector>
 
 namespace {
-constexpr auto dim3 = specfem::element::dimension_tag::dim3;
-using GlobalCoord = specfem::point::global_coordinates<dim3>;
+using GlobalCoord =
+    specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>;
 
 // Points spread across the domain [0,100000]×[0,80000]×[0,60000].
 // Element sizes ≈ 25000×20000×60000 m.  Points are placed at element
@@ -46,7 +46,7 @@ const std::vector<GlobalCoord> TEST_POINTS = {
 // ---------------------------------------------------------------------------
 class LocatePointMPI3DTest : public ::testing::TestWithParam<std::string> {
 protected:
-  specfem::assembly::mesh<dim3> assembly_mesh;
+  specfem::assembly::mesh<specfem::element::dimension_tag::dim3> assembly_mesh;
 
   void SetUp() override {
     if (!SPECFEMEnvironment::IsMPISizeValid()) {
@@ -69,10 +69,11 @@ protected:
     specfem::quadrature::quadratures quadratures(gll);
 
     constexpr int ngll = 5;
-    assembly_mesh = specfem::assembly::mesh<dim3>(
-        mesh_data.nspec, mesh_data.control_nodes.ngnod, ngll, ngll, ngll,
-        mesh_data.tags, mesh_data.adjacency_graph, mesh_data.control_nodes,
-        quadratures);
+    assembly_mesh =
+        specfem::assembly::mesh<specfem::element::dimension_tag::dim3>(
+            mesh_data.nspec, mesh_data.control_nodes.ngnod, ngll, ngll, ngll,
+            mesh_data.tags, mesh_data.adjacency_graph, mesh_data.control_nodes,
+            quadratures);
   }
 };
 

@@ -76,6 +76,8 @@
 
     ! file header — matches meshfem3d save_databases.F90 binary format
     write(IIN_database) MESH_A_CHUNK_OF_THE_EARTH
+    write(IIN_database) UTM_PROJECTION_ZONE
+    write(IIN_database) SUPPRESS_UTM_PROJECTION
     write(IIN_database) NGNOD
 
     ! gets number of local nodes nnodes_loc in this partition
