@@ -3,10 +3,11 @@ from typing import override
 
 from gmsh2meshfem.gmsh_dep import GmshContext
 
-from .layer import EPS, LayerBoundary
+from ...tags import EPS
+from ..layer2d import LayerBoundary2D
 
 
-class LerpLayerBoundary(LayerBoundary):
+class LerpLayerBoundary2D(LayerBoundary2D):
     """A boundary represented using a piecewise-linear curve."""
 
     points: list[tuple[float, float]]
@@ -26,7 +27,7 @@ class LerpLayerBoundary(LayerBoundary):
         if xhigh - left_to_right[-1][0] > (xhigh - xlow) * EPS:
             left_to_right = [*left_to_right, (xhigh, left_to_right[-1][1])]
         verts = [gmsh.model.geo.add_point(x, 0, z) for x, z in left_to_right]
-        return LayerBoundary.BuildResult(
+        return LayerBoundary2D.BuildResult(
             left_vertex=verts[0],
             right_vertex=verts[-1],
             curve=gmsh.model.geo.add_polyline(verts),
