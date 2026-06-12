@@ -152,7 +152,10 @@ public:
         property_tags("specfem::assembly::element_types::property_tags", nspec),
         boundary_tags("specfem::assembly::element_types::boundary_tags", nspec),
         attenuation_tags("specfem::assembly::element_types::attenuation_tags",
-                         nspec) {
+                         nspec),
+        mpi_tags("specfem::assembly::element_types::mpi_tags", nspec) {
+    // mpi_tags is value-initialized to mpi_tag::inner (no MPI classification
+    // from raw tag views).
     for (int ispec = 0; ispec < nspec; ispec++) {
       medium_tags(ispec) = medium_tags_in(ispec);
       property_tags(ispec) = property_tags_in(ispec);
@@ -202,8 +205,9 @@ public:
    * @brief Construct from mesh objects, mapping compute-to-mesh indices.
    *
    * Translates each compute-domain index to its mesh-domain counterpart via
-   * @p mesh, reads medium/property/boundary/attenuation tags from @p tags,
-   * then builds all index stores.
+   * @p mesh, reads medium/property/boundary/attenuation/mpi tags from @p tags,
+   * then builds all index stores (including the MPI-classified store). The
+   * MPI inner/outer classification is carried by the mesh @p tags.
    *
    * @param nspec        Number of spectral elements in the compute domain.
    * @param element_grid GLL grid layout (ngllx, ngllz, etc.).
@@ -220,53 +224,17 @@ public:
         property_tags("specfem::assembly::element_types::property_tags", nspec),
         boundary_tags("specfem::assembly::element_types::boundary_tags", nspec),
         attenuation_tags("specfem::assembly::element_types::attenuation_tags",
-                         nspec) {
+                         nspec),
+        mpi_tags("specfem::assembly::element_types::mpi_tags", nspec) {
     for (int ispec = 0; ispec < nspec; ispec++) {
       const int ispec_mesh = mesh.h_compute_to_mesh(ispec);
       medium_tags(ispec) = tags.tags_container(ispec_mesh).medium_tag;
       property_tags(ispec) = tags.tags_container(ispec_mesh).property_tag;
       attenuation_tags(ispec) = tags.tags_container(ispec_mesh).attenuation_tag;
       boundary_tags(ispec) = tags.tags_container(ispec_mesh).boundary_tag;
+      mpi_tags(ispec) = tags.tags_container(ispec_mesh).mpi_tag;
     }
     build_index_stores();
-  }
-
-  /**
-   * @brief Construct from mesh objects with MPI partition classification.
-   *
-   * Extends the mesh constructor by additionally classifying each element
-   * as inner (not touching MPI boundaries) or outer (sharing a face, edge,
-   * or corner with another MPI rank). The classification uses the mesh-domain
-   * adjacency graph's MPI connections, mapped to compute-domain indices.
-   *
-   * @param nspec                  Number of spectral elements.
-   * @param element_grid           GLL grid layout.
-   * @param mesh                   Compute-to-mesh index mapping.
-   * @param tags                   Per-element tag data from the mesh.
-   * @param mesh_adjacency_graph   Mesh-domain adjacency graph with MPI
-   *                               connections (local_index is mesh-domain).
-   */
-  element_types_base(
-      int nspec,
-      const specfem::mesh_entity::element_grid<dimension_tag> &element_grid,
-      const specfem::assembly::mesh<dimension_tag> &mesh,
-      const specfem::mesh::tags<dimension_tag> &tags,
-      const specfem::mesh::adjacency_graph<dimension_tag> &mesh_adjacency_graph)
-      : element_types_base(nspec, element_grid, mesh, tags) {
-    // Allocate MPI tags and default all to inner
-    mpi_tags = TagViewType<specfem::element::mpi_tag>(
-        "specfem::assembly::element_types::mpi_tags", nspec);
-    for (int ispec = 0; ispec < nspec; ++ispec)
-      mpi_tags(ispec) = specfem::element::mpi_tag::inner;
-
-    // Mark elements touching MPI boundaries as outer
-    for (const auto &mpi_edge : mesh_adjacency_graph.mpi_connections()) {
-      const int ispec_mesh = static_cast<int>(mpi_edge.local_index);
-      const int ispec_compute = mesh.h_mesh_to_compute(ispec_mesh);
-      mpi_tags(ispec_compute) = specfem::element::mpi_tag::outer;
-    }
-
-    build_mpi_index_stores();
   }
 
 private:
@@ -327,9 +295,7 @@ private:
         boundary_tags) };
     elements_by_element = specfem::tag_dispatch::create_mirror_storage_and_copy(
         Kokkos::DefaultExecutionSpace{}, h_elements_by_element);
-  }
 
-  void build_mpi_index_stores() {
     h_elements_by_mpi_element = { make_initializer(
         "element_by_mpi_element_", medium_tags, property_tags, attenuation_tags,
         boundary_tags, mpi_tags) };
