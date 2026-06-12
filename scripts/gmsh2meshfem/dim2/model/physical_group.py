@@ -4,8 +4,8 @@ from dataclasses import dataclass
 from typing import override
 
 import numpy as np
-from _gmsh2meshfem.gmsh_dep import GmshContext
 
+from ...gmsh_dep import GmshContext
 from .boundary import BoundarySpec
 from .edges import edges_of_all_elements, unique_edges
 from .index_mapping import IndexMapping
