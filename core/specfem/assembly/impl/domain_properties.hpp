@@ -63,7 +63,7 @@ struct domain_properties<specfem::element::dimension_tag::dim2, MediumTag,
       public DomainAccessor<
           specfem::element::dimension_tag::dim2,
           domain_properties<specfem::element::dimension_tag::dim2, MediumTag,
-                            PropertyTag> > {
+                            PropertyTag>> {
 
   /// Base data container type for property storage
   using base_type = specfem::medium_container::properties::data_container<
@@ -92,14 +92,14 @@ struct domain_properties<specfem::element::dimension_tag::dim2, MediumTag,
    * @param has_gll_model Skip material assignment for GLL models
    * @param property_index_mapping Element to property mapping
    */
-  domain_properties(
-      const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
-      const specfem::assembly::mesh<dimension_tag> &mesh,
-      const specfem::mesh::materials<dimension_tag> &materials,
-      const bool has_gll_model,
-      const Kokkos::View<int *, Kokkos::LayoutRight,
-                         Kokkos::DefaultHostExecutionSpace>
-          property_index_mapping);
+  template <typename ViewType>
+  domain_properties(const ViewType &elements,
+                    const specfem::assembly::mesh<dimension_tag> &mesh,
+                    const specfem::mesh::materials<dimension_tag> &materials,
+                    const bool has_gll_model,
+                    const Kokkos::View<int *, Kokkos::LayoutRight,
+                                       Kokkos::DefaultHostExecutionSpace>
+                        property_index_mapping);
 
   /// Device value access disabled for this container type
   template <typename PointValues, typename IndexType>
@@ -131,7 +131,7 @@ struct domain_properties<specfem::element::dimension_tag::dim3, MediumTag,
       public DomainAccessor<
           specfem::element::dimension_tag::dim3,
           domain_properties<specfem::element::dimension_tag::dim3, MediumTag,
-                            PropertyTag> > {
+                            PropertyTag>> {
 
   /// Base data container type for property storage
   using base_type = specfem::medium_container::properties::data_container<
@@ -159,14 +159,14 @@ struct domain_properties<specfem::element::dimension_tag::dim3, MediumTag,
    * @param materials Material database indexed by element
    * @param property_index_mapping Element to property mapping
    */
-  domain_properties(
-      const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
-      const specfem::assembly::mesh<dimension_tag> &mesh,
-      const specfem::mesh::materials<dimension_tag> &materials,
-      const bool has_gll_model,
-      const Kokkos::View<int *, Kokkos::LayoutRight,
-                         Kokkos::DefaultHostExecutionSpace>
-          property_index_mapping);
+  template <typename ViewType>
+  domain_properties(const ViewType &elements,
+                    const specfem::assembly::mesh<dimension_tag> &mesh,
+                    const specfem::mesh::materials<dimension_tag> &materials,
+                    const bool has_gll_model,
+                    const Kokkos::View<int *, Kokkos::LayoutRight,
+                                       Kokkos::DefaultHostExecutionSpace>
+                        property_index_mapping);
 
   /// Device value access disabled for this container type
   template <typename PointValues, typename IndexType>

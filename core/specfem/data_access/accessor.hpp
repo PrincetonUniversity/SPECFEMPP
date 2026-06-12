@@ -38,6 +38,22 @@ struct is_accessor<
                                        specfem::datatype::AccessorType>>>
     : std::true_type {};
 
+/**
+ * @brief Type trait to detect a codimension-1 accessor type (chunk_edge for
+ * dim2, chunk_face for dim3).
+ */
+template <typename T, typename = void>
+struct is_codim1_chunk : std::false_type {};
+
+template <typename T>
+struct is_codim1_chunk<
+    T, std::enable_if_t<
+           (T::accessor_type == specfem::datatype::AccessorType::chunk_edge &&
+            T::dimension_tag == specfem::element::dimension_tag::dim2) ||
+           (T::accessor_type == specfem::datatype::AccessorType::chunk_face &&
+            T::dimension_tag == specfem::element::dimension_tag::dim3)>>
+    : std::true_type {};
+
 } // namespace specfem::data_access
 
 #include "accessor/chunk_edge.hpp"

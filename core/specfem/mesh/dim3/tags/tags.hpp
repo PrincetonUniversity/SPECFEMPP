@@ -17,6 +17,7 @@
 #pragma once
 
 #include "specfem/enums.hpp"
+#include "specfem/mesh/dim3/adjacency_graph/adjacency_graph.hpp"
 #include "specfem/mesh/dim3/materials/materials.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -40,7 +41,7 @@ template <specfem::element::dimension_tag DimensionTag> struct tags;
  * // ... populate materials ...
  *
  * specfem::mesh::tags<specfem::element::dimension_tag::dim3> tags(
- *     nspec, materials);
+ *     nspec, materials, adjacency_graph);
  * @endcode
  *
  * @see specfem::mesh::materials::get_material_type
@@ -66,14 +67,18 @@ template <> struct tags<specfem::element::dimension_tag::dim3> {
    * Extracts material classification (medium and property tags) from the
    * materials container for each element using parallel initialization.
    * Sets all boundary tags to `none` since other boundary conditions are
-   * not yet implemented.
+   * not yet implemented. Classifies each element as MPI inner or outer from
+   * the adjacency graph's MPI connections.
    *
    * @param nspec Total number of spectral elements in the mesh
    * @param materials MESHFEM3D materials container with material data
+   * @param adjacency_graph Mesh-domain adjacency graph; its MPI connections
+   *                        mark elements touching a partition boundary as outer
    *
    * @see specfem::mesh::materials::get_material_type
    */
-  tags(const int nspec, specfem::mesh::materials<dimension_tag> &materials);
+  tags(const int nspec, specfem::mesh::materials<dimension_tag> &materials,
+       const specfem::mesh::adjacency_graph<dimension_tag> &adjacency_graph);
 
   /** @} */
 

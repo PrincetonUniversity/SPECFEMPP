@@ -42,8 +42,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
                  mesh.control_nodes,
                  quadratures };
 
-  this->element_types = { nspec, this->mesh.element_grid, this->mesh, mesh.tags,
-                          mesh.adjacency_graph };
+  this->element_types = { nspec, this->mesh.element_grid, this->mesh,
+                          mesh.tags };
 
   this->element_intersections = { ngllz, nglly, ngllx, this->mesh,
                                   this->element_types };

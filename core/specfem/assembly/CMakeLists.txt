@@ -17,6 +17,7 @@ target_link_libraries(
         specfem::quadrature
         specfem::mesh
         specfem::mpi
+        specfem::program_abort
         source_class
         jacobian
         point
@@ -24,7 +25,6 @@ target_link_libraries(
         shape_functions
         Kokkos::kokkos
         specfem::enums
-        specfem_program
         ${BOOST_LIBS}
         $<$<BOOL:${SPECFEM_ENABLE_VTK}>:${VTK_LIBRARIES}>
 )

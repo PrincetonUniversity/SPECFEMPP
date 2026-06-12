@@ -15,10 +15,9 @@ using ParallelConfig = specfem::parallel_configuration::default_chunk_config<
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd,
-          typename ViewType>
-std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
-                                Kokkos::DefaultHostExecutionSpace>,
-                 void>
+          typename ExecutionSpace, typename ViewType>
+std::enable_if_t<
+    std::is_same_v<ExecutionSpace, Kokkos::DefaultHostExecutionSpace>, void>
 set_property_value(
     const ViewType elements,
     specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
@@ -29,7 +28,7 @@ set_property_value(
 
   using PointPropertiesType = specfem::point::properties<
       specfem::tags::Tags<specfem::element::dimension_tag::dim2, MediumTag,
-                          PropertyTag, using_simd> >;
+                          PropertyTag, using_simd>>;
   using PointType = typename PointPropertiesType::value_type;
 
   specfem::execution::ChunkedDomainIterator policy(
@@ -49,10 +48,9 @@ set_property_value(
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd,
-          typename ViewType>
-std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
-                                Kokkos::DefaultHostExecutionSpace>,
-                 void>
+          typename ExecutionSpace, typename ViewType>
+std::enable_if_t<
+    std::is_same_v<ExecutionSpace, Kokkos::DefaultHostExecutionSpace>, void>
 check_property_value(
     const ViewType elements,
     specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
@@ -62,7 +60,7 @@ check_property_value(
   const auto &properties = assembly.properties;
   using PointType = specfem::point::properties<
       specfem::tags::Tags<specfem::element::dimension_tag::dim2, MediumTag,
-                          PropertyTag, using_simd> >;
+                          PropertyTag, using_simd>>;
 
   specfem::execution::ChunkedDomainIterator policy(
       ParallelConfig<using_simd, Kokkos::DefaultHostExecutionSpace>(), elements,
@@ -111,9 +109,8 @@ check_property_value(
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd,
-          typename ViewType>
-std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
-                                Kokkos::DefaultExecutionSpace>,
+          typename ExecutionSpace, typename ViewType>
+std::enable_if_t<std::is_same_v<ExecutionSpace, Kokkos::DefaultExecutionSpace>,
                  void>
 check_property_value(
     const ViewType elements,
@@ -127,7 +124,7 @@ check_property_value(
 
   using PointType = specfem::point::properties<
       specfem::tags::Tags<specfem::element::dimension_tag::dim2, MediumTag,
-                          PropertyTag, using_simd> >;
+                          PropertyTag, using_simd>>;
 
   Kokkos::View<PointType ***, Kokkos::DefaultExecutionSpace> point_view(
       "point_view", nspec, ngll, ngll);
@@ -155,16 +152,22 @@ check_property_value(
   const auto point_view_host = Kokkos::create_mirror_view_and_copy(
       Kokkos::DefaultHostExecutionSpace(), point_view);
 
-  const auto host_elements = Kokkos::create_mirror_view_and_copy(
-      Kokkos::DefaultHostExecutionSpace(), elements);
+  auto host_elements = [&]() {
+    if constexpr (Kokkos::is_view<ViewType>::value) {
+      return Kokkos::create_mirror_view_and_copy(
+          Kokkos::DefaultHostExecutionSpace(), elements);
+    } else {
+      return elements;
+    }
+  }();
   specfem::execution::ChunkedDomainIterator host_policy(
       ParallelConfig<using_simd, Kokkos::DefaultHostExecutionSpace>(),
       host_elements, assembly.mesh.element_grid);
 
   specfem::execution::for_all(
       "set_to_value", host_policy,
-      [=](const typename decltype(
-          host_policy)::base_index_type &iterator_index) {
+      [=](const typename decltype(host_policy)::base_index_type
+              &iterator_index) {
         const auto index = iterator_index.get_index();
         PointType expected(static_cast<type_real>(index.ispec + offset));
         const int ispec = index.ispec;
@@ -206,7 +209,7 @@ void check_compute_to_mesh(
       MediumTag, PropertyTag, AttenuationTag);
 
   using PointType = specfem::point::properties<specfem::tags::Tags<
-      specfem::element::dimension_tag::dim2, MediumTag, PropertyTag, false> >;
+      specfem::element::dimension_tag::dim2, MediumTag, PropertyTag, false>>;
 
   specfem::execution::ChunkedDomainIterator policy(
       ParallelConfig<false, Kokkos::DefaultHostExecutionSpace>(), elements,
@@ -265,7 +268,8 @@ TEST_F(Assembly2D, properties_access_functions) {
             const auto elements = assembly.element_types.get_elements_on_host(
                 ElementTags::medium_tag, ElementTags::property_tag);
             set_property_value<ElementTags::medium_tag,
-                               ElementTags::property_tag, false>(
+                               ElementTags::property_tag, false,
+                               Kokkos::DefaultHostExecutionSpace>(
                 elements, assembly, offset);
           });
 
@@ -279,7 +283,8 @@ TEST_F(Assembly2D, properties_access_functions) {
             const auto elements = assembly.element_types.get_elements_on_host(
                 ElementTags::medium_tag, ElementTags::property_tag);
             check_property_value<ElementTags::medium_tag,
-                                 ElementTags::property_tag, false>(
+                                 ElementTags::property_tag, false,
+                                 Kokkos::DefaultHostExecutionSpace>(
                 elements, assembly, offset);
           });
 
@@ -294,7 +299,8 @@ TEST_F(Assembly2D, properties_access_functions) {
             const auto elements = assembly.element_types.get_elements_on_host(
                 ElementTags::medium_tag, ElementTags::property_tag);
             set_property_value<ElementTags::medium_tag,
-                               ElementTags::property_tag, true>(
+                               ElementTags::property_tag, true,
+                               Kokkos::DefaultHostExecutionSpace>(
                 elements, assembly, offset);
           });
 
@@ -308,7 +314,8 @@ TEST_F(Assembly2D, properties_access_functions) {
             const auto elements = assembly.element_types.get_elements_on_host(
                 ElementTags::medium_tag, ElementTags::property_tag);
             check_property_value<ElementTags::medium_tag,
-                                 ElementTags::property_tag, true>(
+                                 ElementTags::property_tag, true,
+                                 Kokkos::DefaultHostExecutionSpace>(
                 elements, assembly, offset);
           });
 
@@ -394,7 +401,8 @@ TEST_F(Assembly2D, properties_io_routines) {
             const auto elements = assembly.element_types.get_elements_on_host(
                 ElementTags::medium_tag, ElementTags::property_tag);
             set_property_value<ElementTags::medium_tag,
-                               ElementTags::property_tag, false>(
+                               ElementTags::property_tag, false,
+                               Kokkos::DefaultHostExecutionSpace>(
                 elements, assembly, random_value);
           });
 
@@ -403,14 +411,14 @@ TEST_F(Assembly2D, properties_io_routines) {
 
       // Create a property writer
       specfem::io::property_writer<
-          specfem::io_backends::ASCII<specfem::io::write> >
+          specfem::io_backends::ASCII<specfem::io::write>>
           writer(temp_io_directory);
 
       writer.write(assembly);
 
       // Create a property reader
       specfem::io::property_reader<
-          specfem::io_backends::ASCII<specfem::io::read> >
+          specfem::io_backends::ASCII<specfem::io::read>>
           reader(temp_io_directory);
       reader.read(assembly);
 
@@ -424,7 +432,8 @@ TEST_F(Assembly2D, properties_io_routines) {
             const auto elements = assembly.element_types.get_elements_on_host(
                 ElementTags::medium_tag, ElementTags::property_tag);
             check_property_value<ElementTags::medium_tag,
-                                 ElementTags::property_tag, false>(
+                                 ElementTags::property_tag, false,
+                                 Kokkos::DefaultHostExecutionSpace>(
                 elements, assembly, random_value);
           });
 

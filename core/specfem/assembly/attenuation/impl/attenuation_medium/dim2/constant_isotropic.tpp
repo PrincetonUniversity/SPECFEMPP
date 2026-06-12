@@ -73,8 +73,9 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
 
   attenuation_medium() = default;
 
+  template <typename ViewType>
   attenuation_medium(
-      const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
+      const ViewType &elements,
       const specfem::assembly::mesh<specfem::element::dimension_tag::dim2>
           &mesh,
       const specfem::mesh::materials<specfem::element::dimension_tag::dim2>

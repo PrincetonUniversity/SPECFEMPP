@@ -5,7 +5,7 @@ from enum import IntEnum
 import numpy as np
 from numpy.typing import NDArray
 
-from _gmsh2meshfem.dim2.binary_detect_N3 import maxfind_coefs_a, maxfind_coefs_b, L
+from ..binary_detect_N3 import L, maxfind_coefs_a, maxfind_coefs_b
 
 
 class EdgeType(IntEnum):
