@@ -22,6 +22,7 @@ specfem::assembly::mesh_impl::mesh_to_compute_mapping<
       DIMENSION_SET(dim3) *
       MEDIUM_SET(elastic, acoustic, elastic_spin) *
       PROPERTY_SET(isotropic, isotropic_cosserat) *
+      ATTENUATION_SET(none, constant_isotropic) *
       BOUNDARY_SET(none));
   constexpr auto element_types = ET::combos;
   constexpr int total_element_types = ET::size;
@@ -30,13 +31,15 @@ specfem::assembly::mesh_impl::mesh_to_compute_mapping<
   int total_counted = 0;
 
   for (int i = 0; i < total_element_types; i++) {
-    const auto medium_tag   = element_types[i].template get<1>();
-    const auto property_tag = element_types[i].template get<2>();
-    const auto boundary_tag = element_types[i].template get<3>();
+    const auto medium_tag      = element_types[i].template get<1>();
+    const auto property_tag    = element_types[i].template get<2>();
+    const auto attenuation_tag = element_types[i].template get<3>();
+    const auto boundary_tag    = element_types[i].template get<4>();
     for (int ispec = 0; ispec < nspec; ispec++) {
       const auto tag = tags.tags_container(ispec);
       if (tag.medium_tag == medium_tag && tag.property_tag == property_tag &&
-          tag.boundary_tag == boundary_tag) {
+          tag.boundary_tag == boundary_tag &&
+          tag.attenuation_tag == attenuation_tag) {
         element_type_ispec[i].push_back(ispec);
       }
     }

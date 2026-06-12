@@ -1,12 +1,15 @@
 #pragma once
 
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/datatype/element_index_range.hpp"
 #include "specfem/element.hpp"
+#include "specfem/logger.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/mesh_entity.hpp"
+#include "specfem/program/abort.hpp"
 #include "specfem/tag_dispatch.hpp"
 #include <Kokkos_Core.hpp>
-#include <string>
+#include <sstream>
 
 namespace specfem::assembly::element_types_impl {
 
@@ -34,16 +37,7 @@ protected:
   template <typename T>
   using TagViewType = Kokkos::View<T *, Kokkos::DefaultHostExecutionSpace>;
 
-  using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
-  using HostIndexViewType =
-      Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>;
-
-  template <typename Sets>
-  using IndexStorage = specfem::tag_dispatch::Storage<IndexViewType, Sets>;
-
-  template <typename Sets>
-  using HostIndexStorage =
-      specfem::tag_dispatch::Storage<HostIndexViewType, Sets>;
+  using IndexRangeView = specfem::datatype::ElementIndexRange;
 
   // ── Tag-combination sets ─────────────────────────────────────────────────
 
@@ -92,36 +86,36 @@ public:
 
 protected:
   // ── Index stores ─────────────────────────────────────────────────────────
+  // Each store holds one ElementIndexRange per valid tag combination.
+  // Because mesh_to_compute_mapping guarantees contiguity, no Kokkos::View
+  // allocation or host→device copy is needed.
 
-  /** Device index store keyed by (dimension, medium). */
-  IndexStorage<decltype(combinations_by_medium)> elements_by_medium;
-  /** Host mirror of elements_by_medium. */
-  HostIndexStorage<decltype(combinations_by_medium)> h_elements_by_medium;
-  /** Device index store keyed by (dimension, medium, property). */
-  IndexStorage<decltype(combinations_by_medium_property)>
+  /** Index range store keyed by (dimension, medium). */
+  specfem::tag_dispatch::Storage<IndexRangeView,
+                                 decltype(combinations_by_medium)>
+      elements_by_medium;
+  /** Index range store keyed by (dimension, medium, property). */
+  specfem::tag_dispatch::Storage<IndexRangeView,
+                                 decltype(combinations_by_medium_property)>
       elements_by_medium_property;
-  /** Host mirror of elements_by_medium_property. */
-  HostIndexStorage<decltype(combinations_by_medium_property)>
-      h_elements_by_medium_property;
-  /** Device index store keyed by (dimension, medium, property, attenuation). */
-  IndexStorage<decltype(combinations_by_material)> elements_by_material;
-  /** Host mirror of elements_by_material. */
-  HostIndexStorage<decltype(combinations_by_material)> h_elements_by_material;
-  /** Device index store keyed by (dimension, medium, property, boundary). */
-  IndexStorage<decltype(combinations_by_boundary)> elements_by_boundary;
-  /** Host mirror of elements_by_boundary. */
-  HostIndexStorage<decltype(combinations_by_boundary)> h_elements_by_boundary;
-  /** Device index store keyed by (dimension, medium, property, attenuation,
+  /** Index range store keyed by (dimension, medium, property, attenuation). */
+  specfem::tag_dispatch::Storage<IndexRangeView,
+                                 decltype(combinations_by_material)>
+      elements_by_material;
+  /** Index range store keyed by (dimension, medium, property, boundary). */
+  specfem::tag_dispatch::Storage<IndexRangeView,
+                                 decltype(combinations_by_boundary)>
+      elements_by_boundary;
+  /** Index range store keyed by (dimension, medium, property, attenuation,
    * boundary). */
-  IndexStorage<decltype(combinations_by_element)> elements_by_element;
-  /** Host mirror of elements_by_element. */
-  HostIndexStorage<decltype(combinations_by_element)> h_elements_by_element;
-  /** Device index store keyed by (dimension, medium, property, attenuation,
+  specfem::tag_dispatch::Storage<IndexRangeView,
+                                 decltype(combinations_by_element)>
+      elements_by_element;
+  /** Index range store keyed by (dimension, medium, property, attenuation,
    * boundary, mpi). */
-  IndexStorage<decltype(combinations_by_mpi_element)> elements_by_mpi_element;
-  /** Host mirror of elements_by_mpi_element. */
-  HostIndexStorage<decltype(combinations_by_mpi_element)>
-      h_elements_by_mpi_element;
+  specfem::tag_dispatch::Storage<IndexRangeView,
+                                 decltype(combinations_by_mpi_element)>
+      elements_by_mpi_element;
 
 public:
   /** @brief Default constructor; leaves all views and stores empty. */
@@ -238,83 +232,65 @@ public:
   }
 
 private:
-  /**
-   * @brief Create an initializer functor that filters elements by tag views.
-   *
-   * Returns a generic lambda suitable for constructing a HostIndexStorage.
-   * For each TagsType combo, the lambda counts elements whose tags match,
-   * allocates a host view, and populates it with matching element indices.
-   *
-   * @param label_prefix  Label prefix for the Kokkos view allocation.
-   * @param tag_views     Per-element tag views to filter by.
-   */
-  template <typename... TagViewTypes>
-  auto make_initializer(const std::string &label_prefix,
-                        TagViewTypes... tag_views) {
-    return [this, label_prefix,
-            tag_views...]<typename TagsType>() -> HostIndexViewType {
-      int count = 0;
-      for (int ispec = 0; ispec < nspec; ++ispec)
-        if (TagsType{}.has(tag_views(ispec)...))
-          ++count;
-      HostIndexViewType host_view(label_prefix + TagsType::name(), count);
-      int index = 0;
-      for (int ispec = 0; ispec < nspec; ++ispec)
-        if (TagsType{}.has(tag_views(ispec)...))
-          host_view(index++) = ispec;
-      return host_view;
-    };
-  }
-
   void build_index_stores() {
-    h_elements_by_medium = { make_initializer("element_by_medium_",
-                                              medium_tags) };
-    elements_by_medium = specfem::tag_dispatch::create_mirror_storage_and_copy(
-        Kokkos::DefaultExecutionSpace{}, h_elements_by_medium);
-
-    h_elements_by_medium_property = { make_initializer(
-        "element_by_medium_property_", medium_tags, property_tags) };
-    elements_by_medium_property =
-        specfem::tag_dispatch::create_mirror_storage_and_copy(
-            Kokkos::DefaultExecutionSpace{}, h_elements_by_medium_property);
-
-    h_elements_by_material = { make_initializer(
-        "element_by_material_", medium_tags, property_tags, attenuation_tags) };
-    elements_by_material =
-        specfem::tag_dispatch::create_mirror_storage_and_copy(
-            Kokkos::DefaultExecutionSpace{}, h_elements_by_material);
-
-    h_elements_by_boundary = { make_initializer(
-        "element_by_boundary_", medium_tags, property_tags, boundary_tags) };
-    elements_by_boundary =
-        specfem::tag_dispatch::create_mirror_storage_and_copy(
-            Kokkos::DefaultExecutionSpace{}, h_elements_by_boundary);
-
-    h_elements_by_element = { make_initializer(
-        "element_by_element_", medium_tags, property_tags, attenuation_tags,
-        boundary_tags) };
-    elements_by_element = specfem::tag_dispatch::create_mirror_storage_and_copy(
-        Kokkos::DefaultExecutionSpace{}, h_elements_by_element);
-
-    h_elements_by_mpi_element = { make_initializer(
-        "element_by_mpi_element_", medium_tags, property_tags, attenuation_tags,
-        boundary_tags, mpi_tags) };
-    elements_by_mpi_element =
-        specfem::tag_dispatch::create_mirror_storage_and_copy(
-            Kokkos::DefaultExecutionSpace{}, h_elements_by_mpi_element);
+    auto make_initializer = [&](auto... tag_views) {
+      return [&, tag_views...]<typename TagsType>() -> IndexRangeView {
+        int start = -1, end = 0;
+        bool exited = false;
+        for (int ispec = 0; ispec < nspec; ++ispec) {
+          if (TagsType{}.has(tag_views(ispec)...)) {
+            if (exited) {
+              std::ostringstream msg;
+              msg << "element_types: element combination is not contiguous in "
+                     "compute-domain index space.\n"
+                  << "  First block started at ispec=" << start
+                  << " and ended before ispec=" << (end) << ".\n"
+                  << "  A second matching element was found at ispec=" << ispec
+                  << ".\n"
+                  << "  This indicates a bug in mesh_to_compute_mapping: "
+                     "attenuation, medium, property, boundary, and mpi tags "
+                     "must all be included as sort keys so every tag "
+                     "combination maps to a single contiguous range.";
+              specfem::Logger::error(msg.str());
+              specfem::program::abort();
+            }
+            if (start == -1)
+              start = ispec;
+            end = ispec + 1;
+          } else if (start != -1) {
+            exited = true;
+          }
+        }
+        return (start == -1) ? IndexRangeView{ 0, 0 }
+                             : IndexRangeView{ start, end };
+      };
+    };
+    elements_by_medium = { make_initializer(medium_tags) };
+    elements_by_medium_property = { make_initializer(medium_tags,
+                                                     property_tags) };
+    elements_by_material = { make_initializer(medium_tags, property_tags,
+                                              attenuation_tags) };
+    elements_by_boundary = { make_initializer(medium_tags, property_tags,
+                                              boundary_tags) };
+    elements_by_element = { make_initializer(medium_tags, property_tags,
+                                             attenuation_tags, boundary_tags) };
+    elements_by_mpi_element = { make_initializer(medium_tags, property_tags,
+                                                 attenuation_tags,
+                                                 boundary_tags, mpi_tags) };
   }
 
 public:
   // ── Accessors by medium ──────────────────────────────────────────────────
 
   /**
-   * @brief Host view of element indices matching the given medium.
+   * @brief Element index range matching the given medium.
    * @param medium_tag Medium to query.
-   * @return Host-accessible 1-D view of spectral-element indices.
+   * @return Contiguous half-open range [start, end) of spectral-element
+   * indices.
    */
-  HostIndexViewType
+  IndexRangeView
   get_elements_on_host(const specfem::element::medium_tag medium_tag) const {
-    return h_elements_by_medium.get(medium_tag);
+    return elements_by_medium.get(medium_tag);
   }
 
   /**
@@ -323,15 +299,16 @@ public:
    */
   int get_number_of_elements(
       const specfem::element::medium_tag medium_tag) const {
-    return get_elements_on_host(medium_tag).extent(0);
+    return get_elements_on_host(medium_tag).size();
   }
 
   /**
-   * @brief Device view of element indices matching the given medium.
+   * @brief Element index range matching the given medium (device-callable).
    * @param medium_tag Medium to query.
-   * @return Device-accessible 1-D view of spectral-element indices.
+   * @return Contiguous half-open range [start, end) of spectral-element
+   * indices.
    */
-  IndexViewType
+  IndexRangeView
   get_elements_on_device(const specfem::element::medium_tag medium_tag) const {
     return elements_by_medium.get(medium_tag);
   }
@@ -339,15 +316,16 @@ public:
   // ── Accessors by medium + property ──────────────────────────────────────
 
   /**
-   * @brief Host view of element indices matching the given medium and property.
+   * @brief Element index range matching the given medium and property.
    * @param medium_tag   Medium to query.
    * @param property_tag Material property to query.
-   * @return Host-accessible 1-D view of spectral-element indices.
+   * @return Contiguous half-open range [start, end) of spectral-element
+   * indices.
    */
-  HostIndexViewType get_elements_on_host(
+  IndexRangeView get_elements_on_host(
       const specfem::element::medium_tag medium_tag,
       const specfem::element::property_tag property_tag) const {
-    return h_elements_by_medium_property.get(medium_tag, property_tag);
+    return elements_by_medium_property.get(medium_tag, property_tag);
   }
 
   /**
@@ -358,17 +336,18 @@ public:
   int get_number_of_elements(
       const specfem::element::medium_tag medium_tag,
       const specfem::element::property_tag property_tag) const {
-    return get_elements_on_host(medium_tag, property_tag).extent(0);
+    return get_elements_on_host(medium_tag, property_tag).size();
   }
 
   /**
-   * @brief Device view of element indices matching the given medium and
-   * property.
+   * @brief Element index range matching the given medium and property
+   * (device-callable).
    * @param medium_tag   Medium to query.
    * @param property_tag Material property to query.
-   * @return Device-accessible 1-D view of spectral-element indices.
+   * @return Contiguous half-open range [start, end) of spectral-element
+   * indices.
    */
-  IndexViewType get_elements_on_device(
+  IndexRangeView get_elements_on_device(
       const specfem::element::medium_tag medium_tag,
       const specfem::element::property_tag property_tag) const {
     return elements_by_medium_property.get(medium_tag, property_tag);
@@ -377,18 +356,18 @@ public:
   // ── Accessors by material (medium + property + attenuation) ─────────────
 
   /**
-   * @brief Host view of element indices matching the given material.
+   * @brief Element index range matching the given material.
    * @param medium_tag      Medium to query.
    * @param property_tag    Material property to query.
    * @param attenuation_tag Attenuation model to query.
-   * @return Host-accessible 1-D view of spectral-element indices.
+   * @return Contiguous half-open range [start, end) of spectral-element
+   * indices.
    */
-  HostIndexViewType get_elements_on_host(
+  IndexRangeView get_elements_on_host(
       const specfem::element::medium_tag medium_tag,
       const specfem::element::property_tag property_tag,
       const specfem::element::attenuation_tag attenuation_tag) const {
-    return h_elements_by_material.get(medium_tag, property_tag,
-                                      attenuation_tag);
+    return elements_by_material.get(medium_tag, property_tag, attenuation_tag);
   }
 
   /**
@@ -402,17 +381,18 @@ public:
       const specfem::element::property_tag property_tag,
       const specfem::element::attenuation_tag attenuation_tag) const {
     return get_elements_on_host(medium_tag, property_tag, attenuation_tag)
-        .extent(0);
+        .size();
   }
 
   /**
-   * @brief Device view of element indices matching the given material.
+   * @brief Element index range matching the given material (device-callable).
    * @param medium_tag      Medium to query.
    * @param property_tag    Material property to query.
    * @param attenuation_tag Attenuation model to query.
-   * @return Device-accessible 1-D view of spectral-element indices.
+   * @return Contiguous half-open range [start, end) of spectral-element
+   * indices.
    */
-  IndexViewType get_elements_on_device(
+  IndexRangeView get_elements_on_device(
       const specfem::element::medium_tag medium_tag,
       const specfem::element::property_tag property_tag,
       const specfem::element::attenuation_tag attenuation_tag) const {
@@ -422,17 +402,18 @@ public:
   // ── Accessors by boundary (medium + property + boundary) ────────────────
 
   /**
-   * @brief Host view of element indices matching the given boundary condition.
+   * @brief Element index range matching the given boundary condition.
    * @param medium_tag   Medium to query.
    * @param property_tag Material property to query.
    * @param boundary_tag Boundary condition to query.
-   * @return Host-accessible 1-D view of spectral-element indices.
+   * @return Contiguous half-open range [start, end) of spectral-element
+   * indices.
    */
-  HostIndexViewType get_elements_on_host(
+  IndexRangeView get_elements_on_host(
       const specfem::element::medium_tag medium_tag,
       const specfem::element::property_tag property_tag,
       const specfem::element::boundary_tag boundary_tag) const {
-    return h_elements_by_boundary.get(medium_tag, property_tag, boundary_tag);
+    return elements_by_boundary.get(medium_tag, property_tag, boundary_tag);
   }
 
   /**
@@ -445,19 +426,19 @@ public:
       const specfem::element::medium_tag medium_tag,
       const specfem::element::property_tag property_tag,
       const specfem::element::boundary_tag boundary_tag) const {
-    return get_elements_on_host(medium_tag, property_tag, boundary_tag)
-        .extent(0);
+    return get_elements_on_host(medium_tag, property_tag, boundary_tag).size();
   }
 
   /**
-   * @brief Device view of element indices matching the given boundary
-   * condition.
+   * @brief Element index range matching the given boundary condition
+   * (device-callable).
    * @param medium_tag   Medium to query.
    * @param property_tag Material property to query.
    * @param boundary_tag Boundary condition to query.
-   * @return Device-accessible 1-D view of spectral-element indices.
+   * @return Contiguous half-open range [start, end) of spectral-element
+   * indices.
    */
-  IndexViewType get_elements_on_device(
+  IndexRangeView get_elements_on_device(
       const specfem::element::medium_tag medium_tag,
       const specfem::element::property_tag property_tag,
       const specfem::element::boundary_tag boundary_tag) const {
@@ -466,13 +447,16 @@ public:
 
   // ── Accessors by element (medium + property + attenuation + boundary) ──────
 
-  HostIndexViewType get_elements_on_host(
+  /**
+   * @brief Element index range matching the given full element tag combination.
+   */
+  IndexRangeView get_elements_on_host(
       const specfem::element::medium_tag medium_tag,
       const specfem::element::property_tag property_tag,
       const specfem::element::attenuation_tag attenuation_tag,
       const specfem::element::boundary_tag boundary_tag) const {
-    return h_elements_by_element.get(medium_tag, property_tag, attenuation_tag,
-                                     boundary_tag);
+    return elements_by_element.get(medium_tag, property_tag, attenuation_tag,
+                                   boundary_tag);
   }
 
   int get_number_of_elements(
@@ -482,10 +466,14 @@ public:
       const specfem::element::boundary_tag boundary_tag) const {
     return get_elements_on_host(medium_tag, property_tag, attenuation_tag,
                                 boundary_tag)
-        .extent(0);
+        .size();
   }
 
-  IndexViewType get_elements_on_device(
+  /**
+   * @brief Element index range matching the given full element tag combination
+   * (device-callable).
+   */
+  IndexRangeView get_elements_on_device(
       const specfem::element::medium_tag medium_tag,
       const specfem::element::property_tag property_tag,
       const specfem::element::attenuation_tag attenuation_tag,
@@ -498,23 +486,24 @@ public:
   // mpi) ──
 
   /**
-   * @brief Host view of element indices matching the given element type and
-   * MPI partition classification.
+   * @brief Element index range matching the given element type and MPI
+   * partition classification.
    * @param medium_tag      Medium to query.
    * @param property_tag    Material property to query.
    * @param attenuation_tag Attenuation model to query.
    * @param boundary_tag    Boundary condition to query.
    * @param mpi_tag         MPI partition classification (inner or outer).
-   * @return Host-accessible 1-D view of spectral-element indices.
+   * @return Contiguous half-open range [start, end) of spectral-element
+   * indices.
    */
-  HostIndexViewType
+  IndexRangeView
   get_elements_on_host(const specfem::element::medium_tag medium_tag,
                        const specfem::element::property_tag property_tag,
                        const specfem::element::attenuation_tag attenuation_tag,
                        const specfem::element::boundary_tag boundary_tag,
                        const specfem::element::mpi_tag mpi_tag) const {
-    return h_elements_by_mpi_element.get(
-        medium_tag, property_tag, attenuation_tag, boundary_tag, mpi_tag);
+    return elements_by_mpi_element.get(medium_tag, property_tag,
+                                       attenuation_tag, boundary_tag, mpi_tag);
   }
 
   /**
@@ -534,20 +523,21 @@ public:
       const specfem::element::mpi_tag mpi_tag) const {
     return get_elements_on_host(medium_tag, property_tag, attenuation_tag,
                                 boundary_tag, mpi_tag)
-        .extent(0);
+        .size();
   }
 
   /**
-   * @brief Device view of element indices matching the given element type
-   * and MPI partition classification.
+   * @brief Element index range matching the given element type and MPI
+   * partition classification (device-callable).
    * @param medium_tag      Medium to query.
    * @param property_tag    Material property to query.
    * @param attenuation_tag Attenuation model to query.
    * @param boundary_tag    Boundary condition to query.
    * @param mpi_tag         MPI partition classification (inner or outer).
-   * @return Device-accessible 1-D view of spectral-element indices.
+   * @return Contiguous half-open range [start, end) of spectral-element
+   * indices.
    */
-  IndexViewType get_elements_on_device(
+  IndexRangeView get_elements_on_device(
       const specfem::element::medium_tag medium_tag,
       const specfem::element::property_tag property_tag,
       const specfem::element::attenuation_tag attenuation_tag,

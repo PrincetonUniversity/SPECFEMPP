@@ -1,7 +1,6 @@
 from types import TracebackType
 from typing import Any
 
-
 gmsh_inactive = True
 
 try:
