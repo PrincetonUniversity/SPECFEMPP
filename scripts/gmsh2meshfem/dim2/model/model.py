@@ -3,8 +3,8 @@ from dataclasses import replace as dataclass_replace
 from typing import Iterable
 
 import numpy as np
-from _gmsh2meshfem.gmsh_dep import GmshContext
 
+from ...gmsh_dep import GmshContext
 from .boundary import BoundarySpec
 from .edges import ConformingInterfaces
 from .index_mapping import IndexMapping, JoinedIndexMapping
