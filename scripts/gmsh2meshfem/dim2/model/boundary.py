@@ -2,8 +2,8 @@ from dataclasses import dataclass, field
 from dataclasses import replace as dataclass_replace
 
 import numpy as np
+from gmsh2meshfem.gmsh_dep import GmshContext
 from rtree.index import Index as RTree
-from _gmsh2meshfem.gmsh_dep import GmshContext
 
 from .edges import EdgeType, vectorized_bbox_calc
 from .index_mapping import IndexMapping

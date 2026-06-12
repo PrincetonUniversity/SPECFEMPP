@@ -1,14 +1,12 @@
-from pathlib import Path, PurePath
 import os
-
-from _gmsh2meshfem.dim2.model.physical_group import (
-    NullPhysicalGroup,
-    PhysicalGroupBase,
-)
+from pathlib import Path, PurePath
 
 from .model import Model
 from .model.edges import EdgeType
-
+from .model.physical_group import (
+    NullPhysicalGroup,
+    PhysicalGroupBase,
+)
 
 NONCONFORMING_CONNECTION_TYPE = 3
 
@@ -181,7 +179,6 @@ class Exporter:
         # materials
         # =========================
         with (self.destination_folder / self.materials_file).open("w") as f:
-
             # no header entry
 
             for mat in self.model.materials:

@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from _gmsh2meshfem.dim2.binary_detect_N3 import quadratic_beziers_intersect
+from ..binary_detect_N3 import quadratic_beziers_intersect
 from .boundary import BoundarySpec
 from .edges import edges_of_all_elements, vectorized_bbox_calc
 

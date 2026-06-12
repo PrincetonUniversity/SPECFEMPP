@@ -12,9 +12,7 @@
 specfem::assembly::mesh_impl::mesh_to_compute_mapping<
     specfem::element::dimension_tag::dim3>::
     mesh_to_compute_mapping(
-        const specfem::mesh::tags<specfem::element::dimension_tag::dim3> &tags,
-        const specfem::mesh::adjacency_graph<
-            specfem::element::dimension_tag::dim3> &adjacency_graph)
+        const specfem::mesh::tags<specfem::element::dimension_tag::dim3> &tags)
     : compute_to_mesh("specfem::assembly::compute_to_mesh_mapping", tags.nspec),
       mesh_to_compute("specfem::assembly::mesh_to_compute_mapping", tags.nspec),
       h_compute_to_mesh(Kokkos::create_mirror_view(compute_to_mesh)),
@@ -22,19 +20,12 @@ specfem::assembly::mesh_impl::mesh_to_compute_mapping<
 
   const int nspec = tags.nspec;
 
-  // Identify outer (MPI-boundary) elements: any element appearing as a local
-  // element in an MPI connection. This must match the classification used in
-  // specfem::assembly::element_types (which also uses mpi_connections()).
-  std::vector<bool> is_outer(nspec, false);
-  for (const auto &mpi_edge : adjacency_graph.mpi_connections()) {
-    is_outer[static_cast<int>(mpi_edge.local_index)] = true;
-  }
-
   // Here we need to put ALL element combinations!
   using ET = decltype(
       DIMENSION_SET(dim3) *
       MEDIUM_SET(elastic, acoustic, elastic_spin) *
       PROPERTY_SET(isotropic, isotropic_cosserat) *
+      ATTENUATION_SET(none, constant_isotropic) *
       BOUNDARY_SET(none));
   constexpr auto element_types = ET::combos;
   constexpr int total_element_types = ET::size;
@@ -43,20 +34,23 @@ specfem::assembly::mesh_impl::mesh_to_compute_mapping<
   int total_counted = 0;
 
   for (int i = 0; i < total_element_types; i++) {
-    const auto medium_tag   = element_types[i].template get<1>();
-    const auto property_tag = element_types[i].template get<2>();
-    const auto boundary_tag = element_types[i].template get<3>();
+    const auto medium_tag      = element_types[i].template get<1>();
+    const auto property_tag    = element_types[i].template get<2>();
+    const auto attenuation_tag = element_types[i].template get<3>();
+    const auto boundary_tag    = element_types[i].template get<4>();
     // Emit inner (partition-interior) elements first, then outer (MPI-boundary)
-    // elements, so that each (medium, property, boundary, mpi_tag) sublist is a
-    // contiguous element range. The stiffness kernels iterate these sublists
-    // with SIMD, where lane L is mesh element `ispec + L`; a non-contiguous
-    // list would make the lanes read the wrong elements.
+    // elements, so that each (medium, property, attenuation, boundary, mpi_tag)
+    // sublist is a contiguous element range. The stiffness kernels iterate these
+    // sublists with SIMD, where lane L is mesh element `ispec + L`; a
+    // non-contiguous list would make the lanes read the wrong elements.
     for (int pass = 0; pass < 2; pass++) {
       const bool want_outer = (pass == 1);
       for (int ispec = 0; ispec < nspec; ispec++) {
         const auto tag = tags.tags_container(ispec);
+        const bool is_outer = tag.mpi_tag == specfem::element::mpi_tag::outer;
         if (tag.medium_tag == medium_tag && tag.property_tag == property_tag &&
-            tag.boundary_tag == boundary_tag && is_outer[ispec] == want_outer) {
+            tag.attenuation_tag == attenuation_tag &&
+            tag.boundary_tag == boundary_tag && is_outer == want_outer) {
           element_type_ispec[i].push_back(ispec);
         }
       }

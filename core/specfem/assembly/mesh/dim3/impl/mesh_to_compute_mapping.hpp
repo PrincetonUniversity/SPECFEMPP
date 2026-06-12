@@ -62,12 +62,10 @@ struct mesh_to_compute_mapping<specfem::element::dimension_tag::dim3> {
    * which is required for the contiguous SIMD lane access (`ispec + lane`) used
    * by the stiffness kernels.
    *
-   * @param tags Tags for every spectral element within the mesh
-   * @param adjacency_graph Mesh adjacency graph used to identify the
-   *        outer (MPI-boundary) elements
+   * @param tags Tags for every spectral element within the mesh; each
+   *        element's mpi_tag carries the inner/outer (MPI-boundary)
+   *        classification used for the contiguous reordering
    */
-  mesh_to_compute_mapping(
-      const specfem::mesh::tags<dimension_tag> &tags,
-      const specfem::mesh::adjacency_graph<dimension_tag> &adjacency_graph);
+  mesh_to_compute_mapping(const specfem::mesh::tags<dimension_tag> &tags);
 };
 } // namespace specfem::assembly::mesh_impl

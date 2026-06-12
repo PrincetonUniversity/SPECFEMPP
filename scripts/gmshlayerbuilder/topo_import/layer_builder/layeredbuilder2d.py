@@ -1,16 +1,13 @@
 import itertools
-from typing import Literal
 
-from _gmsh2meshfem.gmsh_dep import GmshContext
-from _gmsh2meshfem.dim2.model import Model
+from gmsh2meshfem.dim2.model import Model
+from gmsh2meshfem.gmsh_dep import GmshContext
 
+from ..tags import BOUNDARY_TYPES, BoundaryConditionType
 from .layer import Layer, LayerBoundary
 
-BoundaryConditionType = Literal["neumann", "acoustic_free_surface", "absorbing"]
-BOUNDARY_TYPES = ["neumann", "acoustic_free_surface", "absorbing"]
 
-
-class LayeredBuilder:
+class LayeredBuilder2D:
     """Generates a layer topography domain in 2D, spanning from x=xlow to x=xhigh.
     Each layer `layers[i]` is bounded below by `boundaries[i]` and above by `boundaries[i+1]`.
     """
