@@ -66,9 +66,17 @@ class LayeredBuilder3D:
             # generate geometry of layer boundaries in gmsh
             built_layerbds = [
                 bdlayer.build_layer(
-                    self.xlow, self.xhigh, self.ylow, self.yhigh, gmsh=gmsh
+                    self.xlow,
+                    self.xhigh,
+                    self.ylow,
+                    self.yhigh,
+                    ilayer > 0
+                    and ilayer
+                    < len(self.boundaries)
+                    - 1,  # assume nonconformity for all (except top and bottom boundaries)
+                    gmsh=gmsh,
                 )
-                for bdlayer in self.boundaries
+                for ilayer, bdlayer in enumerate(self.boundaries)
             ]
 
             # clean up node formation (assign boundary nodes to their respective entities)
@@ -76,37 +84,33 @@ class LayeredBuilder3D:
             # generate geometric entities from discrete (mesh) entities
             gmsh.model.mesh.createGeometry()
 
-            for ilayer, layerbd in enumerate(built_layerbds):
-                layerbd.initialize_copy(
-                    None if ilayer == 0 else self.layers[ilayer - 1],
-                    None if ilayer == len(self.layers) else self.layers[-1],
-                    gmsh,
-                )
-
             # store tags
             volumes = []
             left_walls = []
             right_walls = []
             front_walls = []
             back_walls = []
+
+            layer_results = []
             for i, (l0, l1) in enumerate(itertools.pairwise(built_layerbds)):
-                layer_result = self.layers[i].generate_layer(l0, l1, gmsh)
+                layer_result = self.layers[i].generate_layer_geometry(l0, l1, gmsh)
+                layer_results.append(layer_result)
                 volumes.append(layer_result.volume_index)
                 left_walls.append(layer_result.left_wall_index)
                 right_walls.append(layer_result.right_wall_index)
                 front_walls.append(layer_result.front_wall_index)
                 back_walls.append(layer_result.back_wall_index)
 
-            # physical groups in model space, but our geometry construction is
-            # currently only in geo space. Sync so physical groups can access
-            # entities
             gmsh.model.geo.synchronize()
+
+            for layer_result in layer_results:
+                layer_result.update_mesh_params(gmsh)
 
             # set physical groups for 4 sides. These aren't used by Model,
             # but may be useful for future implementation.
             # We will select from these physical groups when setting BCs
-            bottom_floor = built_layerbds[0].surface
-            top_ceiling = built_layerbds[-1].surface_copy
+            bottom_floor = built_layerbds[0].above.surface
+            top_ceiling = built_layerbds[-1].below.surface
 
             gmsh.model.add_physical_group(1, left_walls, name="left_boundary")
             gmsh.model.add_physical_group(1, right_walls, name="right_boundary")

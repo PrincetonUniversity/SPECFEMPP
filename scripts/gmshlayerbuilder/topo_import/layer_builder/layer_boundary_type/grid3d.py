@@ -1,17 +1,17 @@
-from pathlib import Path
-from dataclasses import dataclass, field
 import functools
+from dataclasses import dataclass, field
+from pathlib import Path
 from typing import override
 
 import numpy as np
 from gmsh2meshfem.gmsh_dep import GmshContext
 
-from ..layer3d import LayerBoundary3D
 from ...tags import EPS
+from ..layer3d import LayerBoundary3D
 
 
 @dataclass
-class LerpLayerBoundary3D(LayerBoundary3D):
+class Gridded3D(LayerBoundary3D):
     """A boundary represented on a grid"""
 
     suppress_utm_projection: bool
@@ -45,7 +45,7 @@ class LerpLayerBoundary3D(LayerBoundary3D):
         spacing_eta: float,
         elevation_filename: Path | str,
     ):
-        bd = LerpLayerBoundary3D(
+        bd = Gridded3D(
             suppress_utm_projection=suppress_utm_projection,
             nx=nxi,
             ny=neta,
@@ -66,7 +66,13 @@ class LerpLayerBoundary3D(LayerBoundary3D):
 
     @override
     def build_layer(
-        self, xlow: float, xhigh: float, ylow: float, yhigh: float, gmsh: GmshContext
+        self,
+        xlow: float,
+        xhigh: float,
+        ylow: float,
+        yhigh: float,
+        nonconforming_above_and_below: bool,
+        gmsh: GmshContext,
     ):
         # which dims should be expanded
         pad_xlow = self.xmin - xlow > (xhigh - xlow) * EPS
@@ -147,9 +153,6 @@ class LerpLayerBoundary3D(LayerBoundary3D):
         )
         coords_arr = np.stack([xgrid, ygrid, zgrid], axis=-1)
 
-        xlines = np.empty((nx, ny + 1), dtype=int)
-        ylines = np.empty((nx + 1, ny), dtype=int)
-        surfaces = np.empty((nx, ny), dtype=int)
         gmsh.model.mesh.add_nodes(
             dim=2,
             tag=surf,
@@ -215,7 +218,7 @@ class LerpLayerBoundary3D(LayerBoundary3D):
             ).reshape(-1),
         )
 
-        return LayerBoundary3D.BuildResult(
+        one_part = LayerBoundary3D.BuildResultPart(
             corner_front_left=corner_nodes[0, 0],
             corner_front_right=corner_nodes[1, 0],
             corner_back_left=corner_nodes[0, 1],
@@ -226,3 +229,11 @@ class LerpLayerBoundary3D(LayerBoundary3D):
             curve_right=curve_right,
             surface=surf,
         )
+
+        if nonconforming_above_and_below:
+            # run this same code again to generate other side
+            result = self.build_layer(xlow, xhigh, ylow, yhigh, False, gmsh)
+            return LayerBoundary3D.BuildResult(result.below, one_part)
+        else:
+            # only expect one side, so return it
+            return LayerBoundary3D.BuildResult(one_part)

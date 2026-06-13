@@ -14,11 +14,71 @@ class Layer3D:
 
     @dataclass
     class BuildResult:
+        nx: int
+        ny: int
+        nz: int
+
+        curve_top_front_index: int
+        curve_bottom_front_index: int
+        curve_top_back_index: int
+        curve_bottom_back_index: int
+        curve_top_left_index: int
+        curve_bottom_left_index: int
+        curve_top_right_index: int
+        curve_bottom_right_index: int
+
+        line_front_left_index: int
+        line_front_right_index: int
+        line_back_right_index: int
+        line_back_left_index: int
+
         left_wall_index: int
         right_wall_index: int
         front_wall_index: int
         back_wall_index: int
+        top_surface_index: int
+        bottom_surface_index: int
+
         volume_index: int
+
+        def update_mesh_params(self, gmsh: GmshContext):
+            # set resolution explicitly
+            for curve in [
+                self.curve_top_front_index,
+                self.curve_bottom_front_index,
+                self.curve_top_back_index,
+                self.curve_bottom_back_index,
+            ]:
+                gmsh.model.mesh.set_transfinite_curve(curve, self.nx + 1)
+            for curve in [
+                self.curve_top_left_index,
+                self.curve_bottom_left_index,
+                self.curve_top_right_index,
+                self.curve_bottom_right_index,
+            ]:
+                gmsh.model.mesh.set_transfinite_curve(curve, self.ny + 1)
+            for curve in [
+                self.line_front_left_index,
+                self.line_front_right_index,
+                self.line_back_right_index,
+                self.line_back_left_index,
+            ]:
+                gmsh.model.mesh.set_transfinite_curve(curve, self.nz + 1)
+            for surf in [
+                self.front_wall_index,
+                self.right_wall_index,
+                self.back_wall_index,
+                self.left_wall_index,
+                self.top_surface_index,
+                self.bottom_surface_index,
+            ]:
+                gmsh.model.mesh.set_transfinite_surface(surf)
+                gmsh.model.mesh.setRecombine(2, surf)  # quads
+                gmsh.model.mesh.set_smoothing(
+                    2, surf, 30
+                )  # relax quads to be more regular
+
+            gmsh.model.mesh.set_transfinite_volume(self.volume_index)
 
     nx: int
     ny: int
@@ -28,7 +88,7 @@ class Layer3D:
     def is_conforming(self, other: "Layer3D"):
         return self.nx == other.nx and self.ny == other.ny
 
-    def generate_layer(
+    def generate_layer_geometry(
         self,
         boundary_below: "LayerBoundary3D.BuildResult",
         boundary_above: "LayerBoundary3D.BuildResult",
@@ -38,23 +98,26 @@ class Layer3D:
         # above should use the *_copy variants.
 
         line_front_left = gmsh.model.geo.add_line(
-            boundary_below.corner_front_left, boundary_above.corner_front_left_copy
+            boundary_below.above.corner_front_left,
+            boundary_above.below.corner_front_left,
         )
         line_front_right = gmsh.model.geo.add_line(
-            boundary_below.corner_front_right, boundary_above.corner_front_right_copy
+            boundary_below.above.corner_front_right,
+            boundary_above.below.corner_front_right,
         )
         line_back_left = gmsh.model.geo.add_line(
-            boundary_below.corner_back_left, boundary_above.corner_back_left_copy
+            boundary_below.above.corner_back_left, boundary_above.below.corner_back_left
         )
         line_back_right = gmsh.model.geo.add_line(
-            boundary_below.corner_back_right, boundary_above.corner_back_right_copy
+            boundary_below.above.corner_back_right,
+            boundary_above.below.corner_back_right,
         )
 
         curveloop = gmsh.model.geo.add_curve_loop(
             [
-                boundary_below.curve_front,
+                boundary_below.above.curve_front,
                 line_front_right,
-                -boundary_above.curve_front_copy,
+                -boundary_above.below.curve_front,
                 -line_front_left,
             ]
         )
@@ -62,9 +125,9 @@ class Layer3D:
 
         curveloop = gmsh.model.geo.add_curve_loop(
             [
-                -boundary_below.curve_back,
+                -boundary_below.above.curve_back,
                 line_back_left,
-                boundary_above.curve_back_copy,
+                boundary_above.below.curve_back,
                 -line_back_right,
             ]
         )
@@ -72,9 +135,9 @@ class Layer3D:
 
         curveloop = gmsh.model.geo.add_curve_loop(
             [
-                boundary_below.curve_right,
+                boundary_below.above.curve_right,
                 line_back_right,
-                -boundary_above.curve_right_copy,
+                -boundary_above.below.curve_right,
                 -line_front_right,
             ]
         )
@@ -82,9 +145,9 @@ class Layer3D:
 
         curveloop = gmsh.model.geo.add_curve_loop(
             [
-                -boundary_below.curve_back,
+                -boundary_below.above.curve_left,
                 line_front_left,
-                boundary_above.curve_back_copy,
+                boundary_above.below.curve_left,
                 -line_back_left,
             ]
         )
@@ -96,45 +159,33 @@ class Layer3D:
                 right_wall,
                 back_wall,
                 left_wall,
-                boundary_above.surface_copy,
-                boundary_below.surface,
+                boundary_above.below.surface,
+                boundary_below.above.surface,
             ]
         )
         volume = gmsh.model.geo.add_volume([surfloop])
 
-        # set resolution explicitly
-        for curve in [
-            boundary_below.curve_front,
-            boundary_above.curve_front_copy,
-            boundary_below.curve_back,
-            boundary_above.curve_back_copy,
-        ]:
-            gmsh.model.mesh.set_transfinite_curve(curve, self.nx + 1)
-        for curve in [
-            boundary_below.curve_left,
-            boundary_above.curve_left_copy,
-            boundary_below.curve_right,
-            boundary_above.curve_right_copy,
-        ]:
-            gmsh.model.mesh.set_transfinite_curve(curve, self.ny + 1)
-        for curve in [
-            line_front_left,
-            line_front_right,
-            line_back_right,
-            line_back_left,
-        ]:
-            gmsh.model.mesh.set_transfinite_curve(curve, self.nz + 1)
-        for surf in [front_wall, right_wall, back_wall, left_wall]:
-            gmsh.model.geo.mesh.set_transfinite_surface(surf)
-            gmsh.model.geo.mesh.setRecombine(2, surf)  # quads
-            gmsh.model.mesh.set_smoothing(2, surf, 30)  # relax quads to be more regular
-
-        gmsh.model.mesh.set_transfinite_volume(volume)
-
         return Layer3D.BuildResult(
+            nx=self.nx,
+            ny=self.ny,
+            nz=self.nz,
+            curve_top_front_index=boundary_above.below.curve_front,
+            curve_bottom_front_index=boundary_below.above.curve_front,
+            curve_top_back_index=boundary_above.below.curve_back,
+            curve_bottom_back_index=boundary_below.above.curve_back,
+            curve_top_left_index=boundary_above.below.curve_left,
+            curve_bottom_left_index=boundary_below.above.curve_left,
+            curve_top_right_index=boundary_above.below.curve_right,
+            curve_bottom_right_index=boundary_below.above.curve_right,
+            line_front_left_index=line_front_left,
+            line_back_left_index=line_back_left,
+            line_front_right_index=line_front_right,
+            line_back_right_index=line_back_right,
             left_wall_index=left_wall,
             right_wall_index=right_wall,
             front_wall_index=front_wall,
+            top_surface_index=boundary_above.below.surface,
+            bottom_surface_index=boundary_below.above.surface,
             back_wall_index=back_wall,
             volume_index=volume,
         )
@@ -146,7 +197,7 @@ class LayerBoundary3D(ABC):
     """
 
     @dataclass(frozen=True)
-    class BuildResult:
+    class BuildResultPart:
         """Stores gmsh tags relevant to the interface. curve is directed from lower coordinate
         value to upper."""
 
@@ -162,178 +213,32 @@ class LayerBoundary3D(ABC):
 
         surface: int
 
-        _copy_corner_front_left: int = field(init=False, default=0)
-        _copy_corner_front_right: int = field(init=False, default=0)
-        _copy_corner_back_right: int = field(init=False, default=0)
-        _copy_corner_back_left: int = field(init=False, default=0)
+    @dataclass(frozen=True)
+    class BuildResult:
+        """Stores gmsh tags relevant to the interface. curve is directed from lower coordinate
+        value to upper."""
 
-        _copy_curve_front: int = field(init=False, default=0)
-        _copy_curve_right: int = field(init=False, default=0)
-        _copy_curve_back: int = field(init=False, default=0)
-        _copy_curve_left: int = field(init=False, default=0)
+        below: "LayerBoundary3D.BuildResultPart" = None  # type: ignore
+        above: "LayerBoundary3D.BuildResultPart" = None  # type: ignore
 
-        _copy_surface: int = field(init=False, default=0)
+        def __post_init__(self):
+            # in case only one was passed in, set the other to same reference
+            if self.below is None and self.above is None:
+                e = RuntimeError("BuildResult requires at least one side set.")
+                raise e
 
-        def initialize_copy(
-            self,
-            layer_below: Layer3D | None,
-            layer_above: Layer3D | None,
-            gmsh: GmshContext,
-        ):
-            # duplicate curve only if we desire/need nonconformity:
-            if (
-                layer_above is None or layer_below is None
-                # for now, don't repeat geometry -- we will just assume users want nonconforming.
-                # uncomment this line below:
-                # or layer_above.is_conforming(layer_below)
-            ):
-                # prevent duplication by setting copied entity fields to reference original.
-                for fieldname in [
-                    "surface",
-                    "curve_front",
-                    "curve_right",
-                    "curve_back",
-                    "curve_left",
-                    "corner_front_left",
-                    "corner_front_right",
-                    "corner_back_right",
-                    "corner_back_left",
-                ]:
-                    object.__setattr__(
-                        self, f"_copy_{fieldname}", getattr(self, fieldname)
-                    )
-
-                return
-            ((_, surface_copy),) = gmsh.model.geo.copy([(2, self.surface)])
-            object.__setattr__(self, "_copy_surface", surface_copy)
-
-            gmsh.model.geo.synchronize()
-
-            # no clean way to get the copies of boundaries except by
-            # querying get_boundary:
-            bd_dimtags = gmsh.model.get_boundary([(2, surface_copy)], recursive=True)
-            curve_sample_coord = 1
-
-            # tag and coordinates
-            curves = {
-                tag: gmsh.model.get_value(1, tag, [curve_sample_coord])
-                for dim, tag in bd_dimtags
-                if dim == 1
-            }
-            verts = {
-                tag: gmsh.model.get_value(0, tag, [])
-                for dim, tag in bd_dimtags
-                if dim == 0
-            }
-
-            for fieldname, is_curve in [
-                ("curve_front", True),
-                ("curve_right", True),
-                ("curve_back", True),
-                ("curve_left", True),
-                ("corner_front_left", False),
-                ("corner_front_right", False),
-                ("corner_back_right", False),
-                ("corner_back_left", False),
-            ]:
-                # get closest
-                matchtag = 0
-                dist_val = np.inf
-
-                orig_tag = getattr(self, fieldname)
-                if is_curve:
-                    thisloc = gmsh.model.get_value(1, orig_tag, [curve_sample_coord])
-                else:
-                    thisloc = gmsh.model.get_value(0, orig_tag, [])
-
-                for sampletag, pt in curves if is_curve else verts:
-                    if np.linalg.norm(pt - thisloc) < dist_val:
-                        matchtag = sampletag
-
-                assert dist_val < 1e-5, (
-                    f"When matching boundary entity {fieldname} ({orig_tag}) of cloned surface:"
-                    f" matched entity ({matchtag}) is distance {dist_val}, which should be 0."
-                )
-                object.__setattr__(self, f"_copy_{fieldname}", matchtag)
-
-                if is_curve:
-                    del curves[matchtag]
-                else:
-                    del verts[matchtag]
-
-        @property
-        def curve_front_copy(self) -> int:
-            if self._copy_curve_front < 0:
-                raise RuntimeError(
-                    "curve copy not initialized. use initialize_copy() first!"
-                )
-            return self._copy_curve_front
-
-        @property
-        def curve_back_copy(self) -> int:
-            if self._copy_curve_back < 0:
-                raise RuntimeError(
-                    "curve copy not initialized. use initialize_copy() first!"
-                )
-            return self._copy_curve_back
-
-        @property
-        def curve_left_copy(self) -> int:
-            if self._copy_curve_left < 0:
-                raise RuntimeError(
-                    "curve copy not initialized. use initialize_copy() first!"
-                )
-            return self._copy_curve_left
-
-        @property
-        def curve_right_copy(self) -> int:
-            if self._copy_curve_right < 0:
-                raise RuntimeError(
-                    "curve copy not initialized. use initialize_copy() first!"
-                )
-            return self._copy_curve_right
-
-        @property
-        def corner_back_left_copy(self) -> int:
-            if self._copy_corner_back_left < 0:
-                raise RuntimeError(
-                    "curve copy not initialized. use initialize_copy() first!"
-                )
-            return self._copy_corner_back_left
-
-        @property
-        def corner_back_right_copy(self) -> int:
-            if self._copy_corner_back_right < 0:
-                raise RuntimeError(
-                    "curve copy not initialized. use initialize_copy() first!"
-                )
-            return self._copy_corner_back_right
-
-        @property
-        def corner_front_left_copy(self) -> int:
-            if self._copy_corner_front_left < 0:
-                raise RuntimeError(
-                    "curve copy not initialized. use initialize_copy() first!"
-                )
-            return self._copy_corner_front_left
-
-        @property
-        def corner_front_right_copy(self) -> int:
-            if self._copy_corner_front_right < 0:
-                raise RuntimeError(
-                    "curve copy not initialized. use initialize_copy() first!"
-                )
-            return self._copy_corner_front_right
-
-        @property
-        def surface_copy(self) -> int:
-            if self._copy_surface < 0:
-                raise RuntimeError(
-                    "curve copy not initialized. use initialize_copy() first!"
-                )
-            return self._copy_surface
+            if self.below is None:
+                object.__setattr__(self, "below", self.above)
+            if self.above is None:
+                object.__setattr__(self, "above", self.below)
 
     @abstractmethod
     def build_layer(
-        self, xlow: float, xhigh: float, ylow: float, yhigh: float, gmsh: GmshContext
+        self,
+        xlow: float,
+        xhigh: float,
+        ylow: float,
+        yhigh: float,
+        nonconforming_above_and_below: bool,
+        gmsh: GmshContext,
     ) -> "LayerBoundary3D.BuildResult": ...
