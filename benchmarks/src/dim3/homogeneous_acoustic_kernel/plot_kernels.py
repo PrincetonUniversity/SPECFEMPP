@@ -2,10 +2,11 @@
 Plot acoustic sensitivity kernels on the source-receiver plane (X-Z at Y=center).
 """
 
-import sys
 import os
-import numpy as np
+import sys
+
 import matplotlib.pyplot as plt
+import numpy as np
 from scipy.interpolate import griddata
 
 
@@ -14,10 +15,9 @@ def load_kernels(kernels_dir):
     X = np.load(os.path.join(subdir, "X.npy")).flatten()
     Y = np.load(os.path.join(subdir, "Y.npy")).flatten()
     Z = np.load(os.path.join(subdir, "Z.npy")).flatten()
-    n = len(X)
-    kappa = np.load(os.path.join(subdir, "kappa.npy"))[:n]
-    alpha = np.load(os.path.join(subdir, "alpha.npy"))[:n]
-    rhop = np.load(os.path.join(subdir, "rhop.npy"))[:n]
+    kappa = np.load(os.path.join(subdir, "kappa.npy")).flatten()
+    alpha = np.load(os.path.join(subdir, "alpha.npy")).flatten()
+    rhop = np.load(os.path.join(subdir, "rhop.npy")).flatten()
     return X, Y, Z, {"kappa": kappa, "alpha": alpha, "rhop": rhop}
 
 
