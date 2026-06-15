@@ -1,5 +1,9 @@
 #pragma once
 
+#include "specfem/data_access/accessor.hpp"
+#include "specfem/data_access/data_class.hpp"
+#include "specfem/element/tags.hpp"
+#include "specfem/element_connections/tags.hpp"
 #include "specfem/element_coupling/tags.hpp"
 namespace specfem::chunk_edge {
 
@@ -30,7 +34,7 @@ template <specfem::element::dimension_tag DimensionTag, int NumberElements,
           specfem::element_coupling::flux_scheme_tag FluxSchemeTag,
           typename MemorySpace =
               Kokkos::DefaultExecutionSpace::scratch_memory_space,
-          typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged> >
+          typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged>>
 struct transfer_function;
 
 /**
@@ -196,7 +200,7 @@ template <specfem::element::dimension_tag DimensionTag,
           int NumberElements, int NQuadIntersection,
           typename MemorySpace =
               Kokkos::DefaultExecutionSpace::scratch_memory_space,
-          typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged> >
+          typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged>>
 struct intersection_factor;
 
 /**
@@ -313,7 +317,7 @@ template <specfem::element::dimension_tag DimensionTag,
           int NumberElements, int NQuadIntersection,
           typename MemorySpace =
               Kokkos::DefaultExecutionSpace::scratch_memory_space,
-          typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged> >
+          typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged>>
 struct intersection_normal;
 
 /**
@@ -429,16 +433,16 @@ struct NonconformingAccessorPack
 
   /// Spatial dimension inherited from first accessor
   constexpr static auto dimension_tag =
-      std::tuple_element_t<0, std::tuple<Accessors...> >::dimension_tag;
+      std::tuple_element_t<0, std::tuple<Accessors...>>::dimension_tag;
   /// Interface medium type inherited from first accessor
   constexpr static auto interface_tag =
-      std::tuple_element_t<0, std::tuple<Accessors...> >::interface_tag;
+      std::tuple_element_t<0, std::tuple<Accessors...>>::interface_tag;
   /// Boundary condition tag inherited from first accessor
   constexpr static auto boundary_tag =
-      std::tuple_element_t<0, std::tuple<Accessors...> >::boundary_tag;
+      std::tuple_element_t<0, std::tuple<Accessors...>>::boundary_tag;
   /// Flux scheme tag inherited from first accessor
   constexpr static auto flux_scheme_tag =
-      std::tuple_element_t<0, std::tuple<Accessors...> >::flux_scheme_tag;
+      std::tuple_element_t<0, std::tuple<Accessors...>>::flux_scheme_tag;
   /// Number of packed accessor types
   constexpr static size_t n_accessors = sizeof...(Accessors);
   /// Tuple type containing all packed accessors
@@ -455,7 +459,7 @@ struct NonconformingAccessorPack
       (std::is_same_v<std::integral_constant<specfem::element::dimension_tag,
                                              Accessors::dimension_tag>,
                       std::integral_constant<specfem::element::dimension_tag,
-                                             dimension_tag> > &&
+                                             dimension_tag>> &&
        ...),
       "All Accessors in NonconformingAccessorPack must have the same "
       "dimension_tag");
@@ -465,7 +469,7 @@ struct NonconformingAccessorPack
            std::integral_constant<specfem::element_coupling::interface_tag,
                                   Accessors::interface_tag>,
            std::integral_constant<specfem::element_coupling::interface_tag,
-                                  interface_tag> > &&
+                                  interface_tag>> &&
        ...),
       "All Accessors in NonconformingAccessorPack must have the same "
       "interface_tag");
@@ -474,7 +478,7 @@ struct NonconformingAccessorPack
       (std::is_same_v<std::integral_constant<specfem::element::boundary_tag,
                                              Accessors::boundary_tag>,
                       std::integral_constant<specfem::element::boundary_tag,
-                                             boundary_tag> > &&
+                                             boundary_tag>> &&
        ...),
       "All Accessors in NonconformingAccessorPack must have the same "
       "boundary_tag");
@@ -484,7 +488,7 @@ struct NonconformingAccessorPack
            std::integral_constant<specfem::element_coupling::flux_scheme_tag,
                                   Accessors::flux_scheme_tag>,
            std::integral_constant<specfem::element_coupling::flux_scheme_tag,
-                                  flux_scheme_tag> > &&
+                                  flux_scheme_tag>> &&
        ...),
       "All Accessors in NonconformingAccessorPack must have the same "
       "flux_scheme_tag");
@@ -543,7 +547,7 @@ using coupling_terms_pack = NonconformingAccessorPack<
                               FluxSchemeTag, NumberElements, NQuadIntersection,
                               NQuadElement>,
     intersection_normal<DimensionTag, InterfaceTag, BoundaryTag, FluxSchemeTag,
-                        NumberElements, NQuadIntersection> >;
+                        NumberElements, NQuadIntersection>>;
 
 /**
  * @brief Type alias for integral data accessor pack
@@ -558,6 +562,6 @@ template <specfem::element::dimension_tag DimensionTag,
           int NumberElements, int NQuadIntersection>
 using integral_data_pack = NonconformingAccessorPack<
     intersection_factor<DimensionTag, InterfaceTag, BoundaryTag, FluxSchemeTag,
-                        NumberElements, NQuadIntersection> >;
+                        NumberElements, NQuadIntersection>>;
 
 } // namespace specfem::chunk_edge

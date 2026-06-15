@@ -11,6 +11,7 @@
     :maxdepth: 1
 
     accessor_type
+    element_index_range
     simd
     register_array
     vector_point_view

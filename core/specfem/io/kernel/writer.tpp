@@ -34,5 +34,21 @@ void kernel_writer<OutputLibrary>::write(
                                        assembly.kernels);
 }
 
+template <typename OutputLibrary>
+void kernel_writer<OutputLibrary>::write(
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &assembly) {
+  const std::string formatted =
+      specfem::MPI::format_proc_filename(output_folder + "/Kernels");
+  const boost::filesystem::path formatted_path(formatted);
+  const std::string base_folder = formatted_path.parent_path().string();
+  const std::string ns = formatted_path.stem().string();
+
+  boost::filesystem::create_directories(base_folder);
+
+  impl::write_container<OutputLibrary>(base_folder, ns, assembly.mesh,
+                                       assembly.element_types,
+                                       assembly.kernels);
+}
+
 } // namespace io
 } // namespace specfem

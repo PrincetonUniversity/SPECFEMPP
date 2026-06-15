@@ -16,7 +16,3 @@ target_link_libraries(
         Kokkos::kokkos
         specfem::io_backends
 )
-
-set_target_properties(specfem_io PROPERTIES
-    UNITY_BUILD $<NOT:$<BOOL:${__APPLE__}>>
-)

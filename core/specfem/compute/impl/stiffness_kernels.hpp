@@ -36,7 +36,6 @@ public:
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
   constexpr static bool using_simd = false;
 #else
-  // TODO(Rohit : DIM3_SIMD) Enable simd execution for dim3 solver
   constexpr static bool using_simd = true;
 #endif
 
