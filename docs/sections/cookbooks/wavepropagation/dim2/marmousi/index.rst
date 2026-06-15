@@ -15,7 +15,7 @@ making it an excellent benchmark for validating numerical methods.
 
     .. download-folder:: parameter_files
         :filename: marmousi_cookbook.zip
-        :text: Marmousi2 cookbook
+        :text: Marmou si2 cookbook
 
 .. warning::
 

@@ -41,6 +41,14 @@ void specfem::io::property_reader<InputLibrary>::read(
         constexpr auto medium_tag = TagsType::medium_tag;
         constexpr auto property_tag = TagsType::property_tag;
 
+        // Skip combinations with no elements — the writer never created
+        // a group for them, so there is nothing to read.
+        const auto element_indices =
+            assembly.element_types.get_elements_on_host(medium_tag,
+                                                        property_tag);
+        if (element_indices.size() == 0)
+          return;
+
         const std::string name =
             std::string("/") +
             specfem::element::to_string(medium_tag, property_tag);

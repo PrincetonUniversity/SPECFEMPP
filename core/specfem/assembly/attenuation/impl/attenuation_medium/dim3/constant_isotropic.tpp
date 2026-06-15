@@ -85,8 +85,9 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
 
   attenuation_medium() = default;
 
+  template <typename ViewType>
   attenuation_medium(
-      const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
+      const ViewType &elements,
       const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
           &mesh,
       const specfem::mesh::materials<specfem::element::dimension_tag::dim3>
@@ -243,9 +244,11 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
   }
 
   void copy_to_host() {
-    specfem::datatype::deep_copy(h_kappa_relaxation_rate, kappa_relaxation_rate);
+    specfem::datatype::deep_copy(h_kappa_relaxation_rate,
+                                 kappa_relaxation_rate);
     specfem::datatype::deep_copy(h_mu_relaxation_rate, mu_relaxation_rate);
-    specfem::datatype::deep_copy(h_memory_variable_kappa, memory_variable_kappa);
+    specfem::datatype::deep_copy(h_memory_variable_kappa,
+                                 memory_variable_kappa);
     specfem::datatype::deep_copy(h_memory_variable_Rxx, memory_variable_Rxx);
     specfem::datatype::deep_copy(h_memory_variable_Ryy, memory_variable_Ryy);
     specfem::datatype::deep_copy(h_memory_variable_Rzz, memory_variable_Rzz);
@@ -261,9 +264,11 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
   }
 
   void copy_to_device() {
-    specfem::datatype::deep_copy(kappa_relaxation_rate, h_kappa_relaxation_rate);
+    specfem::datatype::deep_copy(kappa_relaxation_rate,
+                                 h_kappa_relaxation_rate);
     specfem::datatype::deep_copy(mu_relaxation_rate, h_mu_relaxation_rate);
-    specfem::datatype::deep_copy(memory_variable_kappa, h_memory_variable_kappa);
+    specfem::datatype::deep_copy(memory_variable_kappa,
+                                 h_memory_variable_kappa);
     specfem::datatype::deep_copy(memory_variable_Rxx, h_memory_variable_Rxx);
     specfem::datatype::deep_copy(memory_variable_Ryy, h_memory_variable_Ryy);
     specfem::datatype::deep_copy(memory_variable_Rzz, h_memory_variable_Rzz);

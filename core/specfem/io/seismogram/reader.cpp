@@ -1,5 +1,6 @@
 #include "specfem/io/seismogram/reader.hpp"
 #include <fstream>
+#include <sstream>
 #include <tuple>
 #include <vector>
 

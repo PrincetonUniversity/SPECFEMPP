@@ -17,6 +17,8 @@
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
+#include "specfem/element_coupling/accessor.hpp"
+
 namespace specfem::compute::impl {
 
 template <int NGLL, int NQuad_intersection, typename Tags>
@@ -159,20 +161,22 @@ void compute_coupling_core_nonconforming(
                                         using_simd>,
       specfem::chunk_edge::acceleration<parallel_config::chunk_size, NGLL,
                                         dimension_tag, coupled_medium,
-                                        using_simd> >;
+                                        using_simd>>;
 
-  using CouplingTermsPack = specfem::chunk_edge::coupling_terms_pack<
-      dimension_tag, interface_tag, boundary_tag, flux_scheme_tag,
-      parallel_config::chunk_size, NGLL, NQuad_intersection>;
-  using IntegrationFactor = specfem::chunk_edge::intersection_factor<
-      dimension_tag, interface_tag, boundary_tag, flux_scheme_tag,
-      parallel_config::chunk_size, NQuad_intersection>;
+  using CouplingTermsPack =
+      specfem::element_coupling::accessor::coupling_terms_pack<
+          dimension_tag, interface_tag, boundary_tag, flux_scheme_tag,
+          parallel_config::chunk_size, NGLL, NQuad_intersection>;
+  using IntegrationFactor =
+      specfem::element_coupling::accessor::intersection_factor<
+          dimension_tag, interface_tag, boundary_tag, flux_scheme_tag,
+          parallel_config::chunk_size, NQuad_intersection>;
 
   using InterfaceFieldViewType = specfem::datatype::VectorChunkEdgeViewType<
       type_real, dimension_tag, parallel_config::chunk_size, NQuad_intersection,
       specfem::element::attributes<dimension_tag, self_medium>::components,
       using_simd, Kokkos::DefaultExecutionSpace::scratch_memory_space,
-      Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+      Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
   specfem::execution::ChunkedIntersectionIterator chunk(
       parallel_config(), self_intersections, coupled_intersections);
@@ -260,11 +264,11 @@ void compute_coupling(
 
   specfem::tag_dispatch::for_each(
       specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
-      CONNECTION_SET(weakly_conforming, nonconforming) *
-      INTERFACE_SET(elastic_acoustic, acoustic_elastic) *
-      BOUNDARY_SET(none, acoustic_free_surface, stacey,
-                   composite_stacey_dirichlet) *
-      FLUX_SCHEME_SET(natural),
+          CONNECTION_SET(weakly_conforming, nonconforming) *
+          INTERFACE_SET(elastic_acoustic, acoustic_elastic) *
+          BOUNDARY_SET(none, acoustic_free_surface, stacey,
+                       composite_stacey_dirichlet) *
+          FLUX_SCHEME_SET(natural),
       [&]<typename ElementTags>() {
         constexpr auto self_medium = specfem::element_coupling::attributes<
             ElementTags::dimension_tag,
@@ -272,12 +276,10 @@ void compute_coupling(
         if constexpr (self_medium == Tags::medium_tag) {
           compute_coupling_core<
               NGLL, NGLL,
-              specfem::tags::Tags<ElementTags::dimension_tag,
-                                  ElementTags::connection_tag,
-                                  WavefieldType,
-                                  ElementTags::interface_tag,
-                                  ElementTags::boundary_tag,
-                                  ElementTags::flux_scheme_tag> >(
+              specfem::tags::Tags<
+                  ElementTags::dimension_tag, ElementTags::connection_tag,
+                  WavefieldType, ElementTags::interface_tag,
+                  ElementTags::boundary_tag, ElementTags::flux_scheme_tag>>(
               assembly);
         }
       });

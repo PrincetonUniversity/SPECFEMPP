@@ -140,6 +140,7 @@ private:
   void initialize_vtkhdf(vtkSmartPointer<vtkFloatArray> &scalars);
   void run_vtkhdf(vtkSmartPointer<vtkFloatArray> &scalars, const int istep);
 
+#ifndef NO_HDF5
   // Helper to extend a 1D HDF5 dataset and write a single scalar value.
   // When do_write is false, extends the dataset but writes nothing (for
   // collective H5Dset_extent on non-writing ranks in parallel HDF5).
@@ -156,12 +157,15 @@ private:
                                      hsize_t count, hid_t mem_type,
                                      const void *data, hid_t dxpl = H5P_DEFAULT,
                                      bool do_write = true);
+#endif // NO_HDF5
 
   /// @brief Compute MPI offsets via prefix sum (no-op for serial)
   void compute_mpi_offsets();
 
+#ifndef NO_HDF5
   /// @brief Create HDF5 file access property list (parallel or serial)
   hid_t create_file_access_plist() const;
+#endif // NO_HDF5
 
   // Helper function to get scalar value at a given point
   static float get_scalar_value_at_point(

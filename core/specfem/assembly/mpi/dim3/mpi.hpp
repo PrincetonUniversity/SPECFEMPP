@@ -2,6 +2,7 @@
 #pragma once
 
 #include "specfem/assembly/fields.hpp"
+#include "specfem/data_access/data_class.hpp"
 #include "specfem/element.hpp"
 #include "specfem/macros/tag_dispatch.hpp"
 #include "specfem/mesh.hpp"
@@ -20,7 +21,8 @@ namespace specfem::assembly {
 template <specfem::element::dimension_tag DimensionTag> class mpi;
 template <specfem::simulation::field_type FieldType,
           specfem::element::dimension_tag DimensionTag,
-          specfem::element::medium_tag MediumTag>
+          specfem::element::medium_tag MediumTag,
+          specfem::data_access::DataClassType DataClass>
 class mpi_buffer;
 
 namespace mpi_impl {
@@ -85,8 +87,8 @@ public:
   ElementIndexViewType::host_mirror_type h_neighbor_element; /**< Host mirror
                                                        for neighbor_element */
 
-  MediumTagViewType connection_medium_tag; /**< Medium tag of each face in the
-                                              local element (nfaces) */
+  MediumTagViewType connection_medium_tag; /**< Medium tag of the local element
+                                              for each interface (n) */
   MediumTagViewType::host_mirror_type h_connection_medium_tag; /**< Host mirror
   for connection_medium_tag */
 
@@ -263,7 +265,7 @@ public:
   unsigned int nedges;        /**< Number of edges in communication group */
   unsigned int ncorners;      /**< Number of corners in communication group */
   unsigned int ngll;          /**< GLL points per face dimension */
-  unsigned int nglob = 0;     /**< Number of unique GLL points received from
+  unsigned int nglob;         /**< Number of unique GLL points received from
                                    the neighbor MPI surface */
 
   using IndexMappingView = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
@@ -282,7 +284,9 @@ public:
                                                 orientations (medium-tag
                                                 filtered) */
 
-  unpacker() = default;
+  unpacker()
+      : my_rank(0), neighbor_rank(0), nfaces(0), nedges(0), ncorners(0),
+        ngll(0), nglob(0) {}
 
   unpacker(const corner_communication_group &corner_group,
            const edge_communication_group &edge_group,
@@ -302,7 +306,7 @@ public:
              Kokkos::View<int **, Kokkos::HostSpace>,
              Kokkos::View<int *, Kokkos::HostSpace>,
              Kokkos::View<int *, Kokkos::HostSpace>,
-             Kokkos::View<int *, Kokkos::HostSpace> >
+             Kokkos::View<int *, Kokkos::HostSpace>>
   receive_unpacking_buffers();
 
   /**
@@ -352,7 +356,7 @@ public:
                  Kokkos::View<int **, Kokkos::HostSpace>,
                  Kokkos::View<int *, Kokkos::HostSpace>,
                  Kokkos::View<int *, Kokkos::HostSpace>,
-                 Kokkos::View<int *, Kokkos::HostSpace> >;
+                 Kokkos::View<int *, Kokkos::HostSpace>>;
 
   /**
    * @brief Phase 1: initialises ranks, constructs the unpacker, and posts all
@@ -404,21 +408,21 @@ public:
       std::unordered_map<unsigned int,
                          mpi_impl::communication_pattern<
                              specfem::simulation::field_type::forward,
-                             TagsType::dimension_tag, TagsType::medium_tag> >;
+                             TagsType::dimension_tag, TagsType::medium_tag>>;
 
   template <typename TagsType>
   using BackwardCommunicationPatternMap =
       std::unordered_map<unsigned int,
                          mpi_impl::communication_pattern<
                              specfem::simulation::field_type::backward,
-                             TagsType::dimension_tag, TagsType::medium_tag> >;
+                             TagsType::dimension_tag, TagsType::medium_tag>>;
 
   template <typename TagsType>
   using AdjointCommunicationPatternMap =
       std::unordered_map<unsigned int,
                          mpi_impl::communication_pattern<
                              specfem::simulation::field_type::adjoint,
-                             TagsType::dimension_tag, TagsType::medium_tag> >;
+                             TagsType::dimension_tag, TagsType::medium_tag>>;
 
   specfem::simulation::type simulation; ///< Simulation mode (forward, combined,
                                         ///< etc.)
@@ -457,19 +461,23 @@ public:
       const int nglly, const int ngllx);
 
   template <specfem::simulation::field_type FieldType,
-            specfem::element::medium_tag MediumTag>
-  mpi_buffer<FieldType, dimension_tag, MediumTag> create_mpi_buffer() const;
+            specfem::element::medium_tag MediumTag,
+            specfem::data_access::DataClassType DataClass>
+  mpi_buffer<FieldType, dimension_tag, MediumTag, DataClass>
+  create_mpi_buffer() const;
 };
 
 namespace mpi_impl {
 template <specfem::simulation::field_type FieldType,
           specfem::element::dimension_tag DimensionTag,
-          specfem::element::medium_tag MediumTag>
+          specfem::element::medium_tag MediumTag,
+          specfem::data_access::DataClassType DataClass>
 struct mpi_buffer {
 public:
   constexpr static auto field_type = FieldType;       ///< Simulation field type
   constexpr static auto dimension_tag = DimensionTag; ///< Dimension tag
   constexpr static auto medium_tag = MediumTag;
+  constexpr static auto data_class = DataClass; ///< Data class type
   constexpr static unsigned int components =
       specfem::element::attributes<DimensionTag, MediumTag>::components;
 
@@ -531,7 +539,8 @@ public:
 
 template <specfem::simulation::field_type FieldType,
           specfem::element::dimension_tag DimensionTag,
-          specfem::element::medium_tag MediumTag>
+          specfem::element::medium_tag MediumTag,
+          specfem::data_access::DataClassType DataClass>
 class mpi_buffer {
 
 private:
@@ -543,10 +552,11 @@ public:
   constexpr static auto field_type = FieldType;
   constexpr static auto dimension_tag = DimensionTag;
   constexpr static auto medium_tag = MediumTag;
+  constexpr static auto data_class = DataClass;
 
   using BufferMap = std::unordered_map<
       unsigned int,
-      mpi_impl::mpi_buffer<field_type, dimension_tag, medium_tag> >;
+      mpi_impl::mpi_buffer<field_type, dimension_tag, medium_tag, DataClass>>;
 
   BufferMap buffers;
 
@@ -577,8 +587,8 @@ public:
     for (const auto &[neighbor_rank, comm_pattern] : patterns) {
       buffers.emplace(
           neighbor_rank,
-          mpi_impl::mpi_buffer<field_type, dimension_tag, medium_tag>(
-              comm_pattern));
+          mpi_impl::mpi_buffer<field_type, dimension_tag, medium_tag,
+                               DataClass>(comm_pattern));
     }
 
     this->max_connections_per_process = buffers.size();
