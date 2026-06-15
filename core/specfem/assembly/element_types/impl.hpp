@@ -56,14 +56,12 @@ protected:
   static constexpr auto combinations_by_boundary = combinations_by_medium *
                                                    ElementSets::property_set *
                                                    ElementSets::boundary_set;
-  /** All valid (dimension, medium, property, attenuation, boundary) combos. */
-  static constexpr auto combinations_by_element =
-      combinations_by_medium * ElementSets::property_set *
-      ElementSets::attenuation_set * ElementSets::boundary_set;
   /** All valid (dimension, medium, property, attenuation, boundary, mpi)
    * combos. */
-  static constexpr auto combinations_by_mpi_element =
-      combinations_by_element * ElementSets::mpi_set;
+  static constexpr auto combinations_by_element =
+      combinations_by_medium * ElementSets::property_set *
+      ElementSets::attenuation_set * ElementSets::boundary_set *
+      ElementSets::mpi_set;
 
 public:
   // ── Per-element tag views (host) ─────────────────────────────────────────
@@ -107,15 +105,10 @@ protected:
                                  decltype(combinations_by_boundary)>
       elements_by_boundary;
   /** Index range store keyed by (dimension, medium, property, attenuation,
-   * boundary). */
+   * boundary, mpi). */
   specfem::tag_dispatch::Storage<IndexRangeView,
                                  decltype(combinations_by_element)>
       elements_by_element;
-  /** Index range store keyed by (dimension, medium, property, attenuation,
-   * boundary, mpi). */
-  specfem::tag_dispatch::Storage<IndexRangeView,
-                                 decltype(combinations_by_mpi_element)>
-      elements_by_mpi_element;
 
 public:
   /** @brief Default constructor; leaves all views and stores empty. */
@@ -273,10 +266,8 @@ private:
     elements_by_boundary = { make_initializer(medium_tags, property_tags,
                                               boundary_tags) };
     elements_by_element = { make_initializer(medium_tags, property_tags,
-                                             attenuation_tags, boundary_tags) };
-    elements_by_mpi_element = { make_initializer(medium_tags, property_tags,
-                                                 attenuation_tags,
-                                                 boundary_tags, mpi_tags) };
+                                             attenuation_tags, boundary_tags,
+                                             mpi_tags) };
   }
 
 public:
@@ -445,44 +436,7 @@ public:
     return elements_by_boundary.get(medium_tag, property_tag, boundary_tag);
   }
 
-  // ── Accessors by element (medium + property + attenuation + boundary) ──────
-
-  /**
-   * @brief Element index range matching the given full element tag combination.
-   */
-  IndexRangeView get_elements_on_host(
-      const specfem::element::medium_tag medium_tag,
-      const specfem::element::property_tag property_tag,
-      const specfem::element::attenuation_tag attenuation_tag,
-      const specfem::element::boundary_tag boundary_tag) const {
-    return elements_by_element.get(medium_tag, property_tag, attenuation_tag,
-                                   boundary_tag);
-  }
-
-  int get_number_of_elements(
-      const specfem::element::medium_tag medium_tag,
-      const specfem::element::property_tag property_tag,
-      const specfem::element::attenuation_tag attenuation_tag,
-      const specfem::element::boundary_tag boundary_tag) const {
-    return get_elements_on_host(medium_tag, property_tag, attenuation_tag,
-                                boundary_tag)
-        .size();
-  }
-
-  /**
-   * @brief Element index range matching the given full element tag combination
-   * (device-callable).
-   */
-  IndexRangeView get_elements_on_device(
-      const specfem::element::medium_tag medium_tag,
-      const specfem::element::property_tag property_tag,
-      const specfem::element::attenuation_tag attenuation_tag,
-      const specfem::element::boundary_tag boundary_tag) const {
-    return elements_by_element.get(medium_tag, property_tag, attenuation_tag,
-                                   boundary_tag);
-  }
-
-  // ── Accessors by mpi element (medium + property + attenuation + boundary +
+  // ── Accessors by element (medium + property + attenuation + boundary +
   // mpi) ──
 
   /**
@@ -502,8 +456,8 @@ public:
                        const specfem::element::attenuation_tag attenuation_tag,
                        const specfem::element::boundary_tag boundary_tag,
                        const specfem::element::mpi_tag mpi_tag) const {
-    return elements_by_mpi_element.get(medium_tag, property_tag,
-                                       attenuation_tag, boundary_tag, mpi_tag);
+    return elements_by_element.get(medium_tag, property_tag, attenuation_tag,
+                                   boundary_tag, mpi_tag);
   }
 
   /**
@@ -543,8 +497,8 @@ public:
       const specfem::element::attenuation_tag attenuation_tag,
       const specfem::element::boundary_tag boundary_tag,
       const specfem::element::mpi_tag mpi_tag) const {
-    return elements_by_mpi_element.get(medium_tag, property_tag,
-                                       attenuation_tag, boundary_tag, mpi_tag);
+    return elements_by_element.get(medium_tag, property_tag, attenuation_tag,
+                                   boundary_tag, mpi_tag);
   }
 
   // ── Per-element tag accessors ────────────────────────────────────────────
