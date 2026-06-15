@@ -17,12 +17,8 @@ void specfem::periodic_tasks::stability_check<DimensionTag>::run(
   type_real local_max_displacement = 0;
 
   auto check_medium = [&]<typename TagsType>() {
-    // Skip combinations belonging to a different dimension
-    if constexpr (TagsType::dimension_tag != DimensionTag)
-      return;
-
     constexpr int num_components =
-        specfem::element::attributes<DimensionTag,
+        specfem::element::attributes<TagsType::dimension_tag,
                                      TagsType::medium_tag>::components;
     const auto &medium_field =
         forward_field.template get_field<TagsType::medium_tag>();
@@ -43,14 +39,16 @@ void specfem::periodic_tasks::stability_check<DimensionTag>::run(
     local_max_displacement = std::max(local_max_displacement, medium_max);
   };
 
-  // Single for_each covers all dimensions; the constexpr guard skips
-  // combinations that don't belong to DimensionTag, preventing invalid
-  // get_field<> instantiations (e.g. get_field<elastic> on sim_field<dim2>).
-  specfem::tag_dispatch::for_each(DIMENSION_SET(dim2, dim3) *
-                                      MEDIUM_SET(elastic_psv, elastic_sh,
-                                                 acoustic, poroelastic,
-                                                 elastic_psv_t, elastic),
-                                  check_medium);
+  if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
+    specfem::tag_dispatch::for_each(
+        DIMENSION_SET(dim2) * MEDIUM_SET(elastic_psv, elastic_sh, acoustic,
+                                         poroelastic, elastic_psv_t),
+        check_medium);
+  } else {
+    static_assert(DimensionTag == specfem::element::dimension_tag::dim3);
+    specfem::tag_dispatch::for_each(
+        DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic), check_medium);
+  }
 
   // Reduce across MPI ranks
   const auto comm = specfem::MPI::communicator();
