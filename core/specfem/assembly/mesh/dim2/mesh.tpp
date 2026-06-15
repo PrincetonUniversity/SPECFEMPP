@@ -85,14 +85,14 @@ build_assembly_adjacency_graph(
 
   for (int ispec = 0; ispec < nspec; ispec++) {
     // Get mesh index
-        const int ispec_mesh = mapping.h_compute_to_mesh(ispec);
+    const int ispec_mesh = mapping.h_compute_to_mesh(ispec);
     // Iterate over all outgoing edges
     for (auto iedge :
          boost::make_iterator_range(boost::out_edges(ispec_mesh, mesh_g))) {
       // Get the target mesh index
       const int target_ispec_mesh = boost::target(iedge, mesh_g);
       // Get the target specfem index
-    const int target_ispec = mapping.h_mesh_to_compute(target_ispec_mesh);
+      const int target_ispec = mapping.h_mesh_to_compute(target_ispec_mesh);
       // Get edge property
       const auto edge_property = mesh_g[iedge];
       // Add the edge to the adjacency graph
@@ -159,5 +159,13 @@ specfem::assembly::mesh<specfem::element::dimension_tag::dim2>::mesh(
       specfem::assembly::mesh_impl::build_assembly_adjacency_graph(
           nspec, mapping, mesh_adjacency_graph);
 
-  this->assemble();
+  Kokkos::View<specfem::element::medium_tag *, Kokkos::HostSpace> medium_tags(
+      "specfem::assembly::mesh::medium_tags", nspec);
+
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    const int ispec_mesh = mapping.h_compute_to_mesh(ispec);
+    medium_tags(ispec) = tags.tags_container[ispec_mesh].medium_tag;
+  }
+
+  this->assemble(medium_tags);
 }

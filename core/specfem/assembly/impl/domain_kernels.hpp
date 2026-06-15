@@ -46,7 +46,8 @@ struct domain_kernels
   constexpr static auto property_tag =
       base_type::property_tag; ///< Material property type
 
-  int base_ispec = 0; ///< First global element index for this type's range
+  specfem::datatype::ElementIndexRange element_range; ///< Global element index
+                                                      ///< range for this type
 
   /// Default constructor for empty kernels container
   domain_kernels() = default;
@@ -63,7 +64,7 @@ struct domain_kernels
   domain_kernels(const specfem::datatype::ElementIndexRange &elements,
                  const specfem::mesh_entity::element_grid<dimension_tag> &grid)
       : base_type(elements.extent(0), grid) {
-    base_ispec = elements.begin_index();
+    element_range = elements;
   }
 };
 
