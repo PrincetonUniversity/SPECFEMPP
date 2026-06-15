@@ -25,8 +25,7 @@ int specfem::io::impl::write_medium_group(
   const int ngllz = mesh.element_grid.ngllz;
   const int ngllx = mesh.element_grid.ngllx;
 
-  using DomainView =
-      specfem::datatype::DomainView2d<type_real, 3, Kokkos::HostSpace>;
+  using DomainView = typename DataContainerType::domain_view_type;
 
   const int n_elements = element_indices.size();
   DomainView x("xcoordinates", n_elements, ngllz, ngllx);
@@ -58,8 +57,6 @@ void specfem::io::impl::write_container(
     const specfem::assembly::element_types<
         specfem::element::dimension_tag::dim2> &element_types,
     ContainerType &container) {
-  using DomainView =
-      specfem::datatype::DomainView2d<type_real, 3, Kokkos::HostSpace>;
 
   container.copy_to_host();
 
@@ -123,9 +120,7 @@ int specfem::io::impl::write_medium_group(
 
   const int n_elements = element_indices.size();
 
-  using DomainView3d =
-      specfem::datatype::DomainView<specfem::element::dimension_tag::dim3,
-                                    type_real, 4, Kokkos::HostSpace>;
+  using DomainView3d = typename DataContainerType::domain_view_type;
   DomainView3d x("xcoordinates", n_elements, ngllz, nglly, ngllx);
   DomainView3d y("ycoordinates", n_elements, ngllz, nglly, ngllx);
   DomainView3d z("zcoordinates", n_elements, ngllz, nglly, ngllx);
