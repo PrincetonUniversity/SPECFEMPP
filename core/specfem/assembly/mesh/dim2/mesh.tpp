@@ -164,7 +164,7 @@ specfem::assembly::mesh<specfem::element::dimension_tag::dim2>::mesh(
 
   for (int ispec = 0; ispec < nspec; ispec++) {
     const int ispec_mesh = mapping.h_compute_to_mesh(ispec);
-    medium_tags(ispec) = tags.tags_container[ispec_mesh].medium_tag;
+    medium_tags(ispec) = tags.tags_container(ispec_mesh).medium_tag;
   }
 
   this->assemble(medium_tags);
