@@ -20,20 +20,22 @@ specfem::boundary_conditions::impl_apply_boundary_conditions(
                     specfem::element::boundary_tag::composite_stacey_dirichlet,
                 "Boundary tag must be composite_stacey_dirichlet");
 
+  constexpr static auto DimTag = PointBoundaryType::dimension_tag;
+  constexpr static bool UseSIMD = PointBoundaryType::simd::using_simd;
+
   const auto &stacey_boundary = static_cast<
-      const specfem::point::boundary<specfem::element::boundary_tag::stacey, specfem::element::dimension_tag::dim2,
-                                     PointBoundaryType::simd::using_simd> &>(
-      boundary);
+      const specfem::point::boundary<specfem::element::boundary_tag::stacey,
+                                     DimTag, UseSIMD> &>(boundary);
 
   impl_apply_boundary_conditions(
       std::integral_constant<specfem::element::boundary_tag,
                              specfem::element::boundary_tag::stacey>(),
       stacey_boundary, property, field, acceleration);
 
-  const auto &acoustic_free_surface_boundary =
-      static_cast<const specfem::point::boundary<
-          specfem::element::boundary_tag::acoustic_free_surface, specfem::element::dimension_tag::dim2,
-          PointBoundaryType::simd::using_simd> &>(boundary);
+  const auto &acoustic_free_surface_boundary = static_cast<
+      const specfem::point::boundary<
+          specfem::element::boundary_tag::acoustic_free_surface, DimTag,
+          UseSIMD> &>(boundary);
 
   impl_apply_boundary_conditions(
       std::integral_constant<
@@ -56,20 +58,22 @@ specfem::boundary_conditions::impl_compute_mass_matrix_terms(
                     specfem::element::boundary_tag::composite_stacey_dirichlet,
                 "Boundary tag must be composite_stacey_dirichlet");
 
+  constexpr static auto DimTag = PointBoundaryType::dimension_tag;
+  constexpr static bool UseSIMD = PointBoundaryType::simd::using_simd;
+
   const auto &stacey_boundary = static_cast<
-      const specfem::point::boundary<specfem::element::boundary_tag::stacey, specfem::element::dimension_tag::dim2,
-                                     PointBoundaryType::simd::using_simd> &>(
-      boundary);
+      const specfem::point::boundary<specfem::element::boundary_tag::stacey,
+                                     DimTag, UseSIMD> &>(boundary);
 
   impl_compute_mass_matrix_terms(
       std::integral_constant<specfem::element::boundary_tag,
                              specfem::element::boundary_tag::stacey>(),
       dt, stacey_boundary, property, mass_matrix);
 
-  const auto &acoustic_free_surface_boundary =
-      static_cast<const specfem::point::boundary<
-          specfem::element::boundary_tag::acoustic_free_surface, specfem::element::dimension_tag::dim2,
-          PointBoundaryType::simd::using_simd> &>(boundary);
+  const auto &acoustic_free_surface_boundary = static_cast<
+      const specfem::point::boundary<
+          specfem::element::boundary_tag::acoustic_free_surface, DimTag,
+          UseSIMD> &>(boundary);
 
   impl_compute_mass_matrix_terms(
       std::integral_constant<

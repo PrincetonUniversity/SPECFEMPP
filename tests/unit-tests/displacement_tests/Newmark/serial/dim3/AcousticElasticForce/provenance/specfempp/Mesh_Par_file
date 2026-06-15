@@ -109,3 +109,14 @@ NREGIONS                        = 2
 #NEX_XI_BEGIN  #NEX_XI_END  #NEX_ETA_BEGIN  #NEX_ETA_END  #NZ_BEGIN #NZ_END  #material_id
 1              24           1                18            1        13         1
 1              24           1                18            14       18        2
+
+
+#-----------------------------------------------------------
+#
+# Boundary conditions
+#
+#-----------------------------------------------------------
+
+STACEY_ABSORBING_CONDITIONS    = .false.
+TOP_FREE_SURFACE               = .true.
+BOTTOM_FREE_SURFACE            = .false.

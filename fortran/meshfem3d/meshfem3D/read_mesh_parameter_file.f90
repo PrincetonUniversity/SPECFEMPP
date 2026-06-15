@@ -37,7 +37,8 @@
     USE_REGULAR_MESH,NDOUBLINGS,ner_doublings, &
     THICKNESS_OF_X_PML,THICKNESS_OF_Y_PML,THICKNESS_OF_Z_PML, &
     myrank,sizeprocs,NUMBER_OF_MATERIAL_PROPERTIES, &
-    SAVE_MESH_AS_CUBIT, MESH_A_CHUNK_OF_THE_EARTH, CHUNK_MESH_PAR_FILE
+    SAVE_MESH_AS_CUBIT, MESH_A_CHUNK_OF_THE_EARTH, CHUNK_MESH_PAR_FILE, &
+    STACEY_ABSORBING_CONDITIONS, TOP_FREE_SURFACE, BOTTOM_FREE_SURFACE
 
   use constants, only: IIN,MAX_STRING_LEN,IMAIN, &
     IDOMAIN_ACOUSTIC,IDOMAIN_ELASTIC,IDOMAIN_POROELASTIC, &
@@ -296,6 +297,55 @@
       call flush_IMAIN()
     endif
   enddo
+
+  ! boundary conditions
+  if (myrank == 0) then
+    write(IMAIN,*) '  boundary conditions...'
+    call flush_IMAIN()
+  endif
+
+  call read_value_logical_mesh(IIN,IGNORE_JUNK,STACEY_ABSORBING_CONDITIONS,'STACEY_ABSORBING_CONDITIONS',ier)
+  if (ier /= 0) then
+    ! default: enable Stacey absorbing conditions
+    STACEY_ABSORBING_CONDITIONS = .true.
+    if (myrank == 0) then
+      write(IMAIN,*) '    STACEY_ABSORBING_CONDITIONS not found, defaulting to .true.'
+      call flush_IMAIN()
+    endif
+  endif
+
+  if (myrank == 0) then
+    write(IMAIN,*) '    STACEY_ABSORBING_CONDITIONS = ',STACEY_ABSORBING_CONDITIONS
+    call flush_IMAIN()
+  endif
+
+  call read_value_logical_mesh(IIN,IGNORE_JUNK,TOP_FREE_SURFACE,'TOP_FREE_SURFACE',ier)
+  if (ier /= 0) then
+    TOP_FREE_SURFACE = .true.
+    if (myrank == 0) then
+      write(IMAIN,*) '    TOP_FREE_SURFACE not found, defaulting to .true.'
+      call flush_IMAIN()
+    endif
+  endif
+
+  if (myrank == 0) then
+    write(IMAIN,*) '    TOP_FREE_SURFACE            = ',TOP_FREE_SURFACE
+    call flush_IMAIN()
+  endif
+
+  call read_value_logical_mesh(IIN,IGNORE_JUNK,BOTTOM_FREE_SURFACE,'BOTTOM_FREE_SURFACE',ier)
+  if (ier /= 0) then
+    BOTTOM_FREE_SURFACE = .false.
+    if (myrank == 0) then
+      write(IMAIN,*) '    BOTTOM_FREE_SURFACE not found, defaulting to .false.'
+      call flush_IMAIN()
+    endif
+  endif
+
+  if (myrank == 0) then
+    write(IMAIN,*) '    BOTTOM_FREE_SURFACE         = ',BOTTOM_FREE_SURFACE
+    call flush_IMAIN()
+  endif
 
   ! close parameter file
   call close_parameter_file_mesh()

@@ -59,7 +59,7 @@ specfem::io::read_3d_mesh(
       param_stream, nspec, mesh.control_nodes);
 
   mesh.tags = specfem::mesh::tags<specfem::element::dimension_tag::dim3>(
-      nspec, mesh.materials);
+      nspec, mesh.materials, mesh.boundaries);
 
   // CPML boundaries are not supported yet
   // TODO (Rohit: PML_BOUNDARIES): Add support for PML boundaries
