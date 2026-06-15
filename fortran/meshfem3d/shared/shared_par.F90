@@ -137,6 +137,8 @@ end module constants
   logical :: STACEY_ABSORBING_CONDITIONS,STACEY_INSTEAD_OF_FREE_SURFACE
   ! To use a bottom free surface instead of absorbing Stacey or PML condition
   logical :: BOTTOM_FREE_SURFACE
+  ! .true. : write top (zmax) faces as free-surface section in database
+  logical :: TOP_FREE_SURFACE
 
   ! sources and receivers Z coordinates given directly instead of with depth
   logical :: USE_SOURCES_RECEIVERS_Z

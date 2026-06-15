@@ -111,3 +111,14 @@ NREGIONS                        = 2
 1              4            1               4             1         4         2
 # acoustic fluid (top 20 km, NZ 5-6)
 1              4            1               4             5         6         1
+
+
+#-----------------------------------------------------------
+#
+# Boundary conditions
+#
+#-----------------------------------------------------------
+
+STACEY_ABSORBING_CONDITIONS    = .false.
+TOP_FREE_SURFACE               = .true.
+BOTTOM_FREE_SURFACE            = .false.
