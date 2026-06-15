@@ -47,6 +47,11 @@ if (SPECFEM_ENABLE_HDF5)
         set(HDF5_BUILD_TESTS OFF CACHE BOOL "Build HDF5 tests")
         set(HDF5_BUILD_TOOLS OFF CACHE BOOL "Build HDF5 tools")
 
+        # Enable parallel HDF5 when MPI is available
+        if(SPECFEM_ENABLE_MPI)
+            set(HDF5_ENABLE_PARALLEL ON CACHE BOOL "Build HDF5 with parallel MPI support")
+        endif()
+
         # Disable HDF5 installation
         set(HDF5_INSTALL OFF CACHE BOOL "Don't install HDF5" FORCE)
         set(SKIP_HDF5_FORTRAN_SHARED ON CACHE BOOL "Skip HDF5 Fortran shared install" FORCE)
@@ -91,6 +96,11 @@ if (SPECFEM_ENABLE_HDF5)
             target_include_directories(hdf5 INTERFACE ${HDF5_INCLUDE_DIRS})
         endif()
 
+        # Mark parallel HDF5 for source builds with MPI
+        if(SPECFEM_ENABLE_MPI)
+            set(SPECFEM_HDF5_IS_PARALLEL TRUE)
+        endif()
+
         message(STATUS "HDF5 configured from source")
 
         # Restore the original unity build setting
@@ -112,6 +122,43 @@ if (SPECFEM_ENABLE_HDF5)
     else ()
         message(STATUS "HDF5 not found.")
         set(SPECFEM_ENABLE_HDF5 OFF CACHE BOOL "Disable HDF5 support" FORCE)
+    endif()
+
+    # Verify that the HDF5 parallel mode matches the SPECFEM MPI setting.
+    # A parallel HDF5 will transitively include <mpi.h>, which conflicts
+    # with the non-MPI type shims in mpi.hpp.
+    if(HDF5_FOUND)
+        include(CheckSymbolExists)
+        set(CMAKE_REQUIRED_INCLUDES ${HDF5_INCLUDE_DIRS})
+        check_symbol_exists(H5_HAVE_PARALLEL "H5pubconf.h" _HDF5_IS_PARALLEL)
+
+        if(_HDF5_IS_PARALLEL AND NOT SPECFEM_ENABLE_MPI)
+            message(FATAL_ERROR
+                "The system HDF5 (${HDF5_INCLUDE_DIRS}) was built with MPI "
+                "support, but SPECFEM_ENABLE_MPI is OFF.\n"
+                "This will cause type-redefinition errors at compile time.\n"
+                "Options:\n"
+                "  1. Switch to a serial HDF5 (e.g. `brew install hdf5` without MPI)\n"
+                "  2. Enable MPI: -DSPECFEM_ENABLE_MPI=ON\n"
+                "  3. Build HDF5 from source: -DSPECFEM_ENABLE_HDF5_FORCE_INSTALL=ON")
+        endif()
+
+        if(SPECFEM_ENABLE_MPI AND NOT _HDF5_IS_PARALLEL)
+            message(WARNING
+                "SPECFEM_ENABLE_MPI is ON but the system HDF5 was built "
+                "without parallel support. Parallel HDF5 I/O will not be "
+                "available. Consider using a parallel HDF5 or "
+                "-DSPECFEM_ENABLE_HDF5_FORCE_INSTALL=ON.")
+        endif()
+
+        # Persist the parallel detection as a non-cache variable for use
+        # in compile definitions
+        set(SPECFEM_HDF5_IS_PARALLEL ${_HDF5_IS_PARALLEL})
+        unset(_HDF5_IS_PARALLEL CACHE)
+    endif()
+
+    if(SPECFEM_HDF5_IS_PARALLEL)
+        message(STATUS "HDF5 parallel support detected — SPECFEM_HDF5_IS_PARALLEL is ON")
     endif()
 
     # Pop the indentation for HDF5 messages

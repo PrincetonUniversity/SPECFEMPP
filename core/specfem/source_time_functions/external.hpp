@@ -90,9 +90,10 @@ private:
   type_real dt_;                             ///< Time step size
   specfem::enums::seismogram_format format_; ///< File format type
   int ncomponents_;                          ///< Number of components
-  std::string x_component_ = "";             ///< X-component file path
-  std::string y_component_ = "";             ///< Y-component file path
-  std::string z_component_ = "";             ///< Z-component file path
+  bool is_scalar_component_ = false; ///< True for scalar P-component STF
+  std::string x_component_ = "";     ///< X-component file path
+  std::string y_component_ = "";     ///< Y-component file path
+  std::string z_component_ = "";     ///< Z-component file path
 };
 } // namespace source_time_functions
 } // namespace specfem

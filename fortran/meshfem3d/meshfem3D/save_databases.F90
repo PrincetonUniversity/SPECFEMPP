@@ -36,7 +36,8 @@ subroutine save_databases(nspec,nglob, &
 
   use constants_meshfem, only: NGLLX_M,NGLLY_M,NGLLZ_M
 
-  use shared_parameters, only: COUPLE_WITH_INJECTION_TECHNIQUE,NGNOD,NGNOD2D,LOCAL_PATH
+  use shared_parameters, only: COUPLE_WITH_INJECTION_TECHNIQUE,NGNOD,NGNOD2D,LOCAL_PATH, &
+    UTM_PROJECTION_ZONE,SUPPRESS_UTM_PROJECTION
 
   use meshfem_par, only: ibool,xstore,ystore,zstore, &
     addressing,NPROC_XI,NPROC_ETA,iproc_xi_current,iproc_eta_current, &
@@ -178,6 +179,8 @@ subroutine save_databases(nspec,nglob, &
   endif
 
   write(IIN_database) MESH_A_CHUNK_OF_THE_EARTH
+  write(IIN_database) UTM_PROJECTION_ZONE
+  write(IIN_database) SUPPRESS_UTM_PROJECTION
   write(IIN_database) NGNOD
 
   ! global nodes

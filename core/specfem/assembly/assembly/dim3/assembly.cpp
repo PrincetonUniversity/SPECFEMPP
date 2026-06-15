@@ -84,6 +84,14 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
 
   this->fields = { this->mesh, this->element_types, simulation };
 
+  this->mpi_interfaces = { mesh.adjacency_graph,
+                           this->element_types,
+                           simulation,
+                           this->fields,
+                           ngllz,
+                           nglly,
+                           ngllx };
+
   // if (allocate_boundary_values)
   //   this->boundary_values = { max_timesteps, this->mesh, this->element_types,
   //                             this->boundaries };

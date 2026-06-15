@@ -3,6 +3,7 @@
 #include "specfem/element.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
+#include <utility>
 
 namespace specfem {
 namespace medium_physics {
@@ -14,21 +15,22 @@ namespace medium_physics {
 
 /**
  * @ingroup specfem_medium_frechet_derivative_dim2_acoustic
- * @brief Compute Fréchet derivatives for 2D acoustic isotropic media.
+ * @brief Compute Fréchet derivatives for acoustic isotropic media (2D and 3D).
  *
  * Calculates sensitivity kernels for density and bulk modulus in
- * 2D acoustic wave propagation. Returns kernels \f$ K_{rho}\f$ and
- * \f$ K_{kappa}\f$ used in seismic inversion.
+ * acoustic wave propagation. Returns kernels \f$ K_{rho}\f$ and
+ * \f$ K_{kappa}\f$ used in seismic inversion. Applies to both 2D and 3D
+ * via a compile-time loop over the number of spatial dimensions.
  *
- * The kernels are computed using the following equations:
+ * The kernels are computed using the following equations
+ * (Luo et al. 2013, eqs. A-27, A-28):
  *
  * Density kernel:
  * \f[
- *  \Delta K_{rho} = \left( \frac{\partial u^{\dagger}}{\partial x}
- * \frac{\partial u^{b}}{\partial x} +
- *                    \frac{\partial u^{\dagger}}{\partial z} \frac{\partial
- * u^{b}}{\partial z} \right)
- *             \frac{1}{\rho} \Delta t
+ *  \Delta K_{rho} = \sum_{i=1}^{n_{dim}}
+ *    \frac{\partial u^{\dagger}}{\partial x_i}
+ *    \frac{\partial u^{b}}{\partial x_i}
+ *    \frac{1}{\rho} \Delta t
  * \f]
  *
  * Bulk modulus kernel:
@@ -36,16 +38,11 @@ namespace medium_physics {
  *  \Delta K_{kappa} = \ddot{u}^{\dagger} \cdot u^{b} \frac{1}{\kappa} \Delta t
  * \f]
  *
- * where \f$u^{\dagger}\f$ is the adjoint field, \f$u^{b}\f$ is the backward
- * field,
- * \f$\ddot{u}^{\dagger}\f$ is the adjoint acceleration, and \f$\Delta t\f$ is
- * the time step.
+ * where \f$u^{\dagger}\f$ is the adjoint acoustic potential, \f$u^{b}\f$ is
+ * the backward acoustic potential, \f$\ddot{u}^{\dagger}\f$ is the adjoint
+ * potential second time derivative, and \f$\Delta t\f$ is the time step.
  *
- * @tparam PointPropertiesType Acoustic material properties
- * @tparam AdjointPointVelocityType Adjoint velocity field
- * @tparam AdjointPointAccelerationType Adjoint acceleration field
- * @tparam BackwardPointDisplacementType Backward displacement field
- * @tparam PointFieldDerivativesType Spatial field derivatives
+ * @tparam Tags Compile-time tag bundle (dimension, medium, property, SIMD)
  *
  * @param properties Acoustic material properties (density, bulk modulus)
  * @param adjoint_velocity Adjoint velocity field
@@ -55,36 +52,35 @@ namespace medium_physics {
  * @param backward_derivatives Spatial derivatives of backward field
  * @param dt Time step size
  * @return Point kernels containing density and bulk modulus sensitivities
- *
- * @note This is the specialized implementation for 2D acoustic isotropic media
  */
-template <typename PointPropertiesType, typename AdjointPointVelocityType,
-          typename AdjointPointAccelerationType,
-          typename BackwardPointDisplacementType,
-          typename PointFieldDerivativesType>
-KOKKOS_FUNCTION specfem::point::kernels<
-    PointPropertiesType::dimension_tag, PointPropertiesType::medium_tag,
-    PointPropertiesType::property_tag, PointPropertiesType::simd::using_simd>
-impl_compute_frechet_derivatives(
-    const std::integral_constant<specfem::element::dimension_tag,
-                                 specfem::element::dimension_tag::dim2>,
-    const std::integral_constant<specfem::element::medium_tag,
-                                 specfem::element::medium_tag::acoustic>,
-    const std::integral_constant<specfem::element::property_tag,
-                                 specfem::element::property_tag::isotropic>,
-    const PointPropertiesType &properties,
-    const AdjointPointVelocityType &adjoint_velocity,
-    const AdjointPointAccelerationType &adjoint_acceleration,
-    const BackwardPointDisplacementType &backward_displacement,
-    const PointFieldDerivativesType &adjoint_derivatives,
-    const PointFieldDerivativesType &backward_derivatives,
+template <
+    typename Tags,
+    std::enable_if_t<
+        Tags::medium_tag == specfem::element::medium_tag::acoustic &&
+            Tags::property_tag == specfem::element::property_tag::isotropic,
+        int> = 0>
+KOKKOS_FUNCTION specfem::point::kernels<Tags::dimension_tag, Tags::medium_tag,
+                                        Tags::property_tag, Tags::using_simd>
+compute_frechet_derivatives(
+    const specfem::point::properties<Tags> &properties,
+    const specfem::point::velocity<Tags> &adjoint_velocity,
+    const specfem::point::acceleration<Tags> &adjoint_acceleration,
+    const specfem::point::displacement<Tags> &backward_displacement,
+    const specfem::point::field_derivatives<Tags> &adjoint_derivatives,
+    const specfem::point::field_derivatives<Tags> &backward_derivatives,
     const type_real &dt) {
 
-  const auto rho_kl =
-      (adjoint_derivatives.du(0, 0) * backward_derivatives.du(0, 0) +
-       adjoint_derivatives.du(0, 1) * backward_derivatives.du(0, 1)) *
-      properties.rho_inverse() * dt;
+  // Number of spatial dimensions: 2 for dim2, 3 for dim3
+  constexpr int ndim = specfem::element::dimension<Tags::dimension_tag>::dim;
 
+  // Density kernel: 1/rho * (grad(phi^adj) · grad(phi)) * dt
+  typename specfem::datatype::simd<type_real, Tags::using_simd>::datatype
+      rho_kl = 0;
+  for (int i = 0; i < ndim; ++i)
+    rho_kl += adjoint_derivatives.du(0, i) * backward_derivatives.du(0, i);
+  rho_kl *= properties.rho_inverse() * dt;
+
+  // Bulk modulus kernel: ddot(phi^adj) * phi / kappa * dt
   const auto kappa_kl =
       (adjoint_acceleration.get_data() * backward_displacement.get_data()) *
       static_cast<type_real>(1.0) / properties.kappa() * dt;

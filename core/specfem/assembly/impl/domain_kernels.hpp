@@ -31,7 +31,7 @@ struct domain_kernels
     : public specfem::medium_container::kernels::data_container<
           DimensionTag, MediumTag, PropertyTag>,
       public DomainAccessor<
-          DimensionTag, domain_kernels<DimensionTag, MediumTag, PropertyTag> > {
+          DimensionTag, domain_kernels<DimensionTag, MediumTag, PropertyTag>> {
 
   /// Base kernels data container type
   using base_type = specfem::medium_container::kernels::data_container<
@@ -60,12 +60,12 @@ struct domain_kernels
    * @param property_index_mapping Output mapping from element index to kernel
    * storage index
    */
-  domain_kernels(
-      const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
-      const specfem::mesh_entity::element_grid<dimension_tag> &grid,
-      const Kokkos::View<int *, Kokkos::LayoutRight,
-                         Kokkos::DefaultHostExecutionSpace>
-          property_index_mapping)
+  template <typename ViewType>
+  domain_kernels(const ViewType &elements,
+                 const specfem::mesh_entity::element_grid<dimension_tag> &grid,
+                 const Kokkos::View<int *, Kokkos::LayoutRight,
+                                    Kokkos::DefaultHostExecutionSpace>
+                     property_index_mapping)
       : base_type(elements.extent(0), grid) {
     const int nelement = elements.extent(0);
     int count = 0;

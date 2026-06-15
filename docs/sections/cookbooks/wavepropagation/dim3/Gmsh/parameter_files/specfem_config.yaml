@@ -1,0 +1,51 @@
+parameters:
+
+  header:
+    title: 3D Gmsh external mesh -- homogeneous elastic halfspace
+    description: |
+      Material systems : Elastic domain (1)
+      Interfaces : None
+      Sources : Force source (1), Ricker wavelet, f0=1 Hz
+      Boundary conditions : Absorbing (xmin, xmax, ymin, ymax, bottom), Free surface (zmax)
+
+  simulation-setup:
+    quadrature:
+      quadrature-type: GLL4
+
+    solver:
+      time-marching:
+        time-scheme:
+          type: Newmark
+          dt: 0.004
+          nstep: 1250
+
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:
+            format: "ascii"
+            directory: "OUTPUT_FILES/results"
+
+          # display:
+          #   format: VTKHDF
+          #   directory: OUTPUT_FILES/
+          #   field: displacement
+          #   component: z
+          #   simulation-field: forward
+          #   time-interval: 5
+
+  receivers:
+    stations: "DATA/STATIONS"
+    angle: 0.0
+    seismogram-type:
+      - displacement
+    nstep_between_samples: 1
+
+  run-setup:
+    number-of-processors: 1
+    number-of-runs: 1
+
+  databases:
+    mesh-database: "DATABASES_MPI/Database.bin"
+
+  sources: "sources.yaml"

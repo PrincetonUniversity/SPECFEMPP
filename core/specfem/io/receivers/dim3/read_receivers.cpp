@@ -12,12 +12,12 @@
 #include <vector>
 
 std::vector<std::shared_ptr<
-    specfem::receivers::receiver<specfem::element::dimension_tag::dim3> > >
+    specfem::receivers::receiver<specfem::element::dimension_tag::dim3>>>
 specfem::io::read_3d_receivers(const std::string &stations_file) {
 
-  boost::char_separator<char> sep(" ");
+  boost::char_separator<char> sep(" \t", "", boost::drop_empty_tokens);
   std::vector<std::shared_ptr<
-      specfem::receivers::receiver<specfem::element::dimension_tag::dim3> > >
+      specfem::receivers::receiver<specfem::element::dimension_tag::dim3>>>
       receivers;
   std::fstream stations;
   stations.open(stations_file, std::ios::in);
@@ -25,8 +25,8 @@ specfem::io::read_3d_receivers(const std::string &stations_file) {
     std::string line;
     // Read stations file line by line
     while (std::getline(stations, line)) {
-      // split every line with " " delimiter
-      boost::tokenizer<boost::char_separator<char> > tokens(line, sep);
+      // split every line on any whitespace (spaces or tabs)
+      boost::tokenizer<boost::char_separator<char>> tokens(line, sep);
       std::vector<std::string> current_station;
       for (const auto &t : tokens) {
         current_station.push_back(t);
@@ -38,6 +38,10 @@ specfem::io::read_3d_receivers(const std::string &stations_file) {
        */
       const std::string station_name = current_station[0];
       const std::string network_name = current_station[1];
+      assert(station_name.size() <= 32 &&
+             "Station name must be at most 32 characters");
+      assert(network_name.size() <= 8 &&
+             "Network name must be at most 8 characters");
       // get the x, y and z coordinates of the station; Note the switch in the
       // columns of x and y. This is due to the latitude/longitude convention,
       // where the y coordinate is the latitude and the x coordinate is the
@@ -48,7 +52,7 @@ specfem::io::read_3d_receivers(const std::string &stations_file) {
       const type_real z = static_cast<type_real>(std::stod(current_station[5]));
 
       receivers.push_back(std::make_shared<specfem::receivers::receiver<
-                              specfem::element::dimension_tag::dim3> >(
+                              specfem::element::dimension_tag::dim3>>(
           network_name, station_name, x, y, z));
     }
 
@@ -66,7 +70,7 @@ specfem::io::read_3d_receivers(const std::string &stations_file) {
 }
 
 std::vector<std::shared_ptr<
-    specfem::receivers::receiver<specfem::element::dimension_tag::dim3> > >
+    specfem::receivers::receiver<specfem::element::dimension_tag::dim3>>>
 specfem::io::read_3d_receivers(const YAML::Node &stations) {
 
   // If stations file is a string then read the stations file from text format
@@ -79,7 +83,7 @@ specfem::io::read_3d_receivers(const YAML::Node &stations) {
   }
 
   std::vector<std::shared_ptr<
-      specfem::receivers::receiver<specfem::element::dimension_tag::dim3> > >
+      specfem::receivers::receiver<specfem::element::dimension_tag::dim3>>>
       receivers;
 
   // Throw error if length of stations is zero or if it is not a sequence
@@ -102,7 +106,7 @@ specfem::io::read_3d_receivers(const YAML::Node &stations) {
       const type_real z = station["z"].as<type_real>();
 
       receivers.push_back(std::make_shared<specfem::receivers::receiver<
-                              specfem::element::dimension_tag::dim3> >(
+                              specfem::element::dimension_tag::dim3>>(
           network_name, station_name, x, y, z));
     }
   } catch (const YAML::Exception &e) {

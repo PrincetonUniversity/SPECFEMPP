@@ -15,7 +15,19 @@
       "Bash(git show *)",
       "Bash(ctest *)",
       "Bash(uv run pre-commit *)",
-      "Bash(cmake --list-presets *)"
+      "Bash(cmake --list-presets *)",
+      "Bash(nm -C build/debug/archive/libio.a)",
+      "Bash(nm --print-armap build/debug/archive/libio.a)",
+      "Bash(xargs -I{} basename {})",
+      "Bash(nm --print-armap thick.a)",
+      "Bash(echo \" -> count: $\\(nm --print-armap thick.a)",
+      "Bash(nm --print-armap thin.a)",
+      "Bash(echo \" -> count: $\\(nm --print-armap thin.a)",
+      "Bash(nm build/debug/archive/libperiodic_tasks.a)",
+      "Bash(nm build/debug/archive/libassembly.a)",
+      "Bash(nm --print-armap build/debug/archive/libassembly.a)",
+      "Bash(nm -C build/debug/archive/libspecfem_program.a)",
+      "Bash(nm -C build/debug/archive/libspecfem_program_abort.a)"
     ]
   }
 }
