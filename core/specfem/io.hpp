@@ -74,10 +74,7 @@ read_2d_mesh(const std::string &filename,
 /**
  * @brief Construct a 3D mesh object from the SPECFEM++ 3D binary database.
  *
- * Reads boundary face data and classifies faces into absorbing boundaries
- * (X_MIN/X_MAX/Y_MIN/Y_MAX/Z_MIN) and top-surface faces (Z_MAX).  Acoustic
- * elements at Z_MAX receive the @c acoustic_free_surface boundary tag;
- * all other boundary-face elements receive the @c stacey tag.
+ * Reads boundary face data and classifies faces into absorbing boundaries.
  *
  * @param database_file Path to the binary mesh database
  * @param attenuation_setup Attenuation configuration
