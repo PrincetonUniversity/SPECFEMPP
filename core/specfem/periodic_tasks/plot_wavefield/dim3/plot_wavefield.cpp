@@ -768,6 +768,7 @@ void specfem::periodic_tasks::plot_wavefield<
 
   SPECFEM_H5_CHECK(H5Dclose(ds));
 }
+#endif // NO_HDF5
 
 void specfem::periodic_tasks::plot_wavefield<
     specfem::element::dimension_tag::dim3>::compute_mpi_offsets() {
@@ -838,6 +839,7 @@ void specfem::periodic_tasks::plot_wavefield<
   this->all_connectivity_counts = { this->numConnectivityIds };
 }
 
+#ifndef NO_HDF5
 hid_t specfem::periodic_tasks::plot_wavefield<
     specfem::element::dimension_tag::dim3>::create_file_access_plist() const {
   hid_t fapl = SPECFEM_H5_CHECK_ID(H5Pcreate(H5P_FILE_ACCESS));

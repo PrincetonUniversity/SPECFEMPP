@@ -224,6 +224,12 @@
   integer :: neighbor_proc
   logical :: reverse_found
 
+  ! Mapping from elmnts array position (1-8) to element-absolute corner ID (19-26).
+  ! Follows SPECFEM hex node ordering convention:
+  !   pos 1 → 19 (BFL), pos 2 → 20 (BFR), pos 3 → 22 (BBR), pos 4 → 21 (BBL),
+  !   pos 5 → 23 (TFL), pos 6 → 24 (TFR), pos 7 → 26 (TBR), pos 8 → 25 (TBL)
+  integer, parameter :: pos_to_corner_id(8) = [19, 20, 22, 21, 23, 24, 26, 25]
+
   ! Count and write local adjacencies
   total_nadj_element = 0
   do ispec = 1, nspec
@@ -326,7 +332,8 @@
       endif
 
       ! Find anchor: first shared corner node between ispec and jspec.
-      ! elmnts(ia, ispec) is a 0-indexed global node ID; equality means same node.
+      ! elmnts(ia, ispec) is a global node ID; equality means same node.
+      ! Convert array positions (1-8) to element-absolute corner IDs (19-26).
       anchor_local  = 0
       anchor_remote = 0
       outer: do ia = 1, NGNOD
@@ -334,8 +341,8 @@
         do ib = 1, NGNOD
           node_ib = elmnts(ib, jspec)
           if (node_ia == node_ib) then
-            anchor_local  = ia
-            anchor_remote = ib
+            anchor_local  = pos_to_corner_id(ia)
+            anchor_remote = pos_to_corner_id(ib)
             exit outer
           endif
         end do

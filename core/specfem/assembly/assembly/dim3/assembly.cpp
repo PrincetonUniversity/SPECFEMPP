@@ -9,10 +9,10 @@
 specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
     const specfem::mesh::mesh<dimension_tag> &mesh,
     const specfem::quadrature::quadratures &quadratures,
-    std::vector<std::shared_ptr<specfem::sources::source<dimension_tag> > >
+    std::vector<std::shared_ptr<specfem::sources::source<dimension_tag>>>
         &sources,
     const std::vector<
-        std::shared_ptr<specfem::receivers::receiver<dimension_tag> > >
+        std::shared_ptr<specfem::receivers::receiver<dimension_tag>>>
         &receivers,
     const std::vector<specfem::enums::wavefield> &stypes, const type_real t0,
     const type_real dt, const int max_timesteps, const int max_sig_step,
@@ -77,6 +77,14 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
     this->mesh
   };
   this->fields = { this->mesh, this->element_types, simulation };
+
+  this->mpi_interfaces = { mesh.adjacency_graph,
+                           this->element_types,
+                           simulation,
+                           this->fields,
+                           ngllz,
+                           nglly,
+                           ngllx };
 
   // if (allocate_boundary_values)
   //   this->boundary_values = { max_timesteps, this->mesh, this->element_types,
