@@ -80,7 +80,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
         FieldDerivativesType point_field_derivatives(du);
 
         const auto point_stress =
-            impl_compute_stress<Tags>(point_property, point_field_derivatives);
+            compute_stress<Tags>(point_property, point_field_derivatives);
 
         wavefield(ielement, index.iz, index.ix, 0) = point_stress.T(0, 0);
         wavefield(ielement, index.iz, index.ix, 1) = point_stress.T(0, 1);

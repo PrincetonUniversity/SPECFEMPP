@@ -59,6 +59,15 @@ template <> struct mesh<specfem::element::dimension_tag::dim3> {
    */
   int nspec;
 
+  /// UTM projection zone (positive = Northern hemisphere, negative = Southern).
+  /// Range: ±1–60. Only meaningful when suppress_utm_projection is false.
+  int utm_projection_zone = 0;
+
+  /// When true, mesh coordinates are Cartesian (no lat/lon to UTM conversion
+  /// needed). When false, source/receiver lat/lon must be converted to UTM
+  /// using utm_projection_zone.
+  bool suppress_utm_projection = true;
+
   specfem::mesh_entity::element<dimension_tag> element_grid;
 
   /**

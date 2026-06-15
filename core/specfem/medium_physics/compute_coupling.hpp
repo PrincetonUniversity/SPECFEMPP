@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/chunk_edge/nonconforming_interface.hpp"
 #include "specfem/data_access.hpp"
 #include "specfem/data_access/accessor/chunk_edge.hpp"
 #include "specfem/data_access/check_compatibility.hpp"
@@ -147,13 +148,30 @@ KOKKOS_INLINE_FUNCTION void compute_coupling(
   constexpr auto interface_tag = InterfaceDataType::interface_tag;
   constexpr auto connection_tag = InterfaceDataType::connection_tag;
 
+  if constexpr (specfem::data_access::is_point<IndexType>::value) {
+    static_assert(
+        specfem::data_access::is_point<SelfFieldType>::value,
+        "The index is given as a point index (assuming transfer function is "
+        "coupled chunk -> self-point). In this case, `self_field` must have "
+        "pointwise type!");
+  } else {
+    static_assert(
+        specfem::data_access::is_codim1_chunk<IndexType>::value,
+        "Since the index is not a point index, we assume the transfer function "
+        "should be coupled chunk -> self chunk. The index must be chunk_edge "
+        "(2d) or chunk_face (3d), but is not!");
+    static_assert(
+        specfem::data_access::is_codim1_chunk<SelfFieldType>::value,
+        "Since the index is not a point index, we assume the transfer function "
+        "should be coupled chunk -> self chunk. `self_field` must be "
+        "chunk_edge (2d) or chunk_face (3d), but is not!");
+  }
   static_assert(
-      specfem::data_access::is_chunk_edge<IndexType>::value,
-      "The index for a nonconforming compute_coupling must be a chunk_edge.");
+      specfem::data_access::is_codim1_chunk<CoupledFieldType>::value,
+      "coupled_field is not a chunk_edge (2d) or chunk_face (3d) accessor");
 
-  static_assert(specfem::data_access::is_chunk_edge<CoupledFieldType>::value &&
-                    specfem::data_access::is_field<CoupledFieldType>::value,
-                "coupled_field is not a chunk_edge field type");
+  static_assert(specfem::data_access::is_field<CoupledFieldType>::value,
+                "coupled_field is not a field type");
   constexpr auto coupled_medium_tag = CoupledFieldType::medium_tag;
 
   static_assert(
@@ -171,10 +189,24 @@ KOKKOS_INLINE_FUNCTION void compute_coupling(
       std::integral_constant<specfem::element_coupling::interface_tag,
                              interface_tag>;
 
-  impl::compute_coupling_expand(
-      dimension_dispatch(), connection_dispatch(), interface_dispatch(),
-      std::make_integer_sequence<std::size_t, InterfaceDataType::n_accessors>{},
-      index, interface_data, coupled_field, self_field);
+  if constexpr (specfem::data_access::is_packed_accessor<
+                    InterfaceDataType>::value) {
+    /* after the addition of `flux_scheme_tag` to the accessor template
+     * parameters, accessor packs are no longer needed. However, since the 2d
+     * implementation was made prior to that, this will stay in until the
+     * `AccessorPack`s are fully deprecated.
+     *
+     */
+    impl::compute_coupling_expand(
+        dimension_dispatch(), connection_dispatch(), interface_dispatch(),
+        std::make_integer_sequence<std::size_t,
+                                   InterfaceDataType::n_accessors>{},
+        index, interface_data, coupled_field, self_field);
+  } else {
+    impl::compute_coupling(dimension_dispatch(), connection_dispatch(),
+                           interface_dispatch(), index, interface_data,
+                           coupled_field, self_field);
+  }
 }
 
 } // namespace specfem::medium_physics

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "policy.hpp"
+#include "specfem/datatype/element_index_range.hpp"
 #include "specfem/mesh_entity.hpp"
 #include "specfem/point.hpp"
 #include "void_iterator.hpp"
@@ -587,6 +588,29 @@ private:
                                ///< in the chunk.
 };
 
+namespace impl {
+// ── subview forwarding helpers
+// ──────────────────────────────────────────────── These overloads make
+// `subview` visible in the specfem::execution namespace at class-template
+// definition time, so the `using index_type = decltype(subview(...))`
+// declaration inside ChunkedDomainIterator can rely on unqualified ADL lookup.
+
+// Forward Kokkos::View subviews to Kokkos::subview.
+template <typename ViewType, typename Pair>
+KOKKOS_INLINE_FUNCTION auto subview(const ViewType &v, Pair p)
+    -> std::enable_if_t<Kokkos::is_view<ViewType>::value,
+                        decltype(Kokkos::subview(v, p))> {
+  return Kokkos::subview(v, p);
+}
+
+// Forward ElementIndexRange subviews to specfem::datatype::subview.
+KOKKOS_INLINE_FUNCTION specfem::datatype::ElementIndexRange
+subview(const specfem::datatype::ElementIndexRange &r,
+        Kokkos::pair<int, int> p) {
+  return specfem::datatype::subview(r, p);
+}
+} // namespace impl
+
 /**
  * @brief ChunkedDomainIterator class is used to iterate over all quadrature
  * points within a given set of finite elements.
@@ -616,8 +640,8 @@ public:
                          ///< @c Kokkos::TeamPolicy::member_type
   using index_type = ChunkElementIndex<
       DimensionTag, typename ParallelConfig::simd,
-      decltype(Kokkos::subview(std::declval<ViewType>(),
-                               std::declval<Kokkos::pair<int, int>>())),
+      decltype(impl::subview(std::declval<ViewType>(),
+                             std::declval<Kokkos::pair<int, int>>())),
       policy_index_type, G,
       ParallelConfig::chunk_size>; ///< Underlying index type. This index
                                    ///< will be passed to the closure when
@@ -679,7 +703,7 @@ public:
                         ? indices.extent(0)
                         : start + chunk_size * simd_size;
     const auto my_indices =
-        Kokkos::subview(indices, Kokkos::make_pair(start, end));
+        impl::subview(indices, Kokkos::make_pair(start, end));
     return index_type(my_indices, element_grid, team);
   }
 

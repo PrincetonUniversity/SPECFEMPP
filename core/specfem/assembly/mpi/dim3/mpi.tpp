@@ -12,17 +12,17 @@
 
 template <specfem::simulation::field_type FieldType,
           specfem::element::dimension_tag DimensionTag,
-          specfem::element::medium_tag MediumTag>
+          specfem::element::medium_tag MediumTag,
+          specfem::data_access::DataClassType DataClass>
 void specfem::assembly::mpi_impl::
-    mpi_buffer<FieldType, DimensionTag, MediumTag>::pack(
+    mpi_buffer<FieldType, DimensionTag, MediumTag, DataClass>::pack(
         const specfem::assembly::simulation_field<dimension_tag, field_type>
             &field) {
 
   const auto field_m = field.template get_field<MediumTag>();
 
-  using acc_tag =
-      std::integral_constant<specfem::data_access::DataClassType,
-                             specfem::data_access::DataClassType::acceleration>;
+  using data_class_tag =
+      std::integral_constant<specfem::data_access::DataClassType, DataClass>;
 
   auto mapping = pack_mapping;
   Kokkos::parallel_for(
@@ -33,22 +33,22 @@ void specfem::assembly::mpi_impl::
         const int iglob = mapping(i);
         for (unsigned int icomp = 0; icomp < components; icomp++)
           this->send_buffer(i, icomp) =
-              field_m.template get_value<true>(acc_tag{}, iglob, icomp);
+              field_m.template get_value<true>(data_class_tag{}, iglob, icomp);
       });
 }
 
 template <specfem::simulation::field_type FieldType,
           specfem::element::dimension_tag DimensionTag,
-          specfem::element::medium_tag MediumTag>
+          specfem::element::medium_tag MediumTag,
+          specfem::data_access::DataClassType DataClass>
 void specfem::assembly::mpi_impl::
-    mpi_buffer<FieldType, DimensionTag, MediumTag>::unpack(
+    mpi_buffer<FieldType, DimensionTag, MediumTag, DataClass>::unpack(
         specfem::assembly::simulation_field<dimension_tag, field_type> &field) {
 
   const auto field_m = field.template get_field<MediumTag>();
 
-  using acc_tag =
-      std::integral_constant<specfem::data_access::DataClassType,
-                             specfem::data_access::DataClassType::acceleration>;
+  using data_class_tag =
+      std::integral_constant<specfem::data_access::DataClassType, DataClass>;
 
   auto mapping = unpack_mapping;
   Kokkos::parallel_for(
@@ -58,16 +58,23 @@ void specfem::assembly::mpi_impl::
       KOKKOS_CLASS_LAMBDA(const int &i) {
         const int iglob = mapping(i);
         for (unsigned int icomp = 0; icomp < components; icomp++)
-          field_m.template get_value<true>(acc_tag{}, iglob, icomp) +=
+          field_m.template get_value<true>(data_class_tag{}, iglob, icomp) +=
               this->recv_buffer(i, icomp);
       });
+  Kokkos::fence("assembly::mpi_buffer::unpack");
 }
 
 template <specfem::simulation::field_type FieldType,
           specfem::element::dimension_tag DimensionTag,
-          specfem::element::medium_tag MediumTag>
+          specfem::element::medium_tag MediumTag,
+          specfem::data_access::DataClassType DataClass>
 void specfem::assembly::mpi_impl::mpi_buffer<FieldType, DimensionTag,
-                                             MediumTag>::send() {
+                                             MediumTag, DataClass>::send() {
+
+  if (send_buffer.extent(0) == 0) {
+    this->send_request = MPI_REQUEST_NULL;
+    return;
+  }
 
 #ifdef SPECFEM_CUDA_AWARE_MPI
   SPECFEM_MPI_SAFECALL(
@@ -90,9 +97,16 @@ void specfem::assembly::mpi_impl::mpi_buffer<FieldType, DimensionTag,
 
 template <specfem::simulation::field_type FieldType,
           specfem::element::dimension_tag DimensionTag,
-          specfem::element::medium_tag MediumTag>
+          specfem::element::medium_tag MediumTag,
+          specfem::data_access::DataClassType DataClass>
 void specfem::assembly::mpi_impl::mpi_buffer<FieldType, DimensionTag,
-                                             MediumTag>::receive() {
+                                             MediumTag, DataClass>::receive() {
+
+  if (recv_buffer.extent(0) == 0) {
+    this->recv_request = MPI_REQUEST_NULL;
+    return;
+  }
+
   // Receiver uses the sender's tag base (neighbor is sender for recv)
 #ifdef SPECFEM_CUDA_AWARE_MPI
   SPECFEM_MPI_SAFECALL(
@@ -113,9 +127,10 @@ void specfem::assembly::mpi_impl::mpi_buffer<FieldType, DimensionTag,
 }
 
 template <specfem::simulation::field_type FieldType,
-          specfem::element::medium_tag MediumTag>
+          specfem::element::medium_tag MediumTag,
+          specfem::data_access::DataClassType DataClass>
 specfem::assembly::mpi_buffer<FieldType, specfem::element::dimension_tag::dim3,
-                              MediumTag>
+                              MediumTag, DataClass>
 specfem::assembly::mpi<
     specfem::element::dimension_tag::dim3>::create_mpi_buffer() const {
 
@@ -135,13 +150,14 @@ specfem::assembly::mpi<
         "mpi::create_mpi_buffer: unsupported simulation type for mpi_buffer");
   }
 
-  return mpi_buffer<FieldType, dimension_tag, MediumTag>(*this);
+  return mpi_buffer<FieldType, dimension_tag, MediumTag, DataClass>(*this);
 }
 
 template <specfem::simulation::field_type FieldType,
           specfem::element::dimension_tag DimensionTag,
-          specfem::element::medium_tag MediumTag>
-void specfem::assembly::mpi_buffer<FieldType, DimensionTag, MediumTag>::wait() {
+          specfem::element::medium_tag MediumTag,
+          specfem::data_access::DataClassType DataClass>
+void specfem::assembly::mpi_buffer<FieldType, DimensionTag, MediumTag, DataClass>::wait() {
   // Collect all MPI_Request handles from the buffer map
   std::vector<MPI_Request> requests;
   for (const auto &entry : buffers) {

@@ -38,6 +38,59 @@ std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>
 read(const std::string &file_path, int nsteps, type_real dt,
      specfem::simulation::field_type wavefield_type);
 
+// Explicit specialization declarations for the file-path overload. These must
+// be visible before read_sources.tpp implicitly instantiates read<...>;
+// otherwise the compiler instantiates the primary template first and the
+// out-of-line specializations in impl/{dim2,dim3}/*.cpp become "explicit
+// specialization after instantiation" errors (exposed by unity builds / LTO).
+template <>
+std::vector<std::shared_ptr<
+    specfem::sources::source<specfem::element::dimension_tag::dim2>>>
+read<specfem::element::dimension_tag::dim2,
+     specfem::enums::source_format::CMTSOLUTION>(
+    const std::string &file_path, int nsteps, type_real dt,
+    specfem::simulation::field_type wavefield_type);
+
+template <>
+std::vector<std::shared_ptr<
+    specfem::sources::source<specfem::element::dimension_tag::dim2>>>
+read<specfem::element::dimension_tag::dim2,
+     specfem::enums::source_format::FORCESOLUTION>(
+    const std::string &file_path, int nsteps, type_real dt,
+    specfem::simulation::field_type wavefield_type);
+
+template <>
+std::vector<std::shared_ptr<
+    specfem::sources::source<specfem::element::dimension_tag::dim2>>>
+read<specfem::element::dimension_tag::dim2,
+     specfem::enums::source_format::YAML>(
+    const std::string &file_path, int nsteps, type_real dt,
+    specfem::simulation::field_type wavefield_type);
+
+template <>
+std::vector<std::shared_ptr<
+    specfem::sources::source<specfem::element::dimension_tag::dim3>>>
+read<specfem::element::dimension_tag::dim3,
+     specfem::enums::source_format::CMTSOLUTION>(
+    const std::string &file_path, int nsteps, type_real dt,
+    specfem::simulation::field_type wavefield_type);
+
+template <>
+std::vector<std::shared_ptr<
+    specfem::sources::source<specfem::element::dimension_tag::dim3>>>
+read<specfem::element::dimension_tag::dim3,
+     specfem::enums::source_format::FORCESOLUTION>(
+    const std::string &file_path, int nsteps, type_real dt,
+    specfem::simulation::field_type wavefield_type);
+
+template <>
+std::vector<std::shared_ptr<
+    specfem::sources::source<specfem::element::dimension_tag::dim3>>>
+read<specfem::element::dimension_tag::dim3,
+     specfem::enums::source_format::YAML>(
+    const std::string &file_path, int nsteps, type_real dt,
+    specfem::simulation::field_type wavefield_type);
+
 /**
  * @brief Read sources from a YAML node directly.
  *
@@ -56,6 +109,25 @@ template <specfem::element::dimension_tag DimensionTag,
 std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>
 read(const YAML::Node &source_node, int nsteps, type_real dt,
      specfem::simulation::field_type wavefield_type);
+
+// Explicit specialization declarations for the YAML-node overload (only the
+// YAML format is valid here). Declared before any implicit instantiation for
+// the same reason as the file-path overload above.
+template <>
+std::vector<std::shared_ptr<
+    specfem::sources::source<specfem::element::dimension_tag::dim2>>>
+read<specfem::element::dimension_tag::dim2,
+     specfem::enums::source_format::YAML>(
+    const YAML::Node &source_node, int nsteps, type_real dt,
+    specfem::simulation::field_type wavefield_type);
+
+template <>
+std::vector<std::shared_ptr<
+    specfem::sources::source<specfem::element::dimension_tag::dim3>>>
+read<specfem::element::dimension_tag::dim3,
+     specfem::enums::source_format::YAML>(
+    const YAML::Node &source_node, int nsteps, type_real dt,
+    specfem::simulation::field_type wavefield_type);
 
 } // namespace sources_impl
 } // namespace io

@@ -1,0 +1,10 @@
+[pytest]
+minversion = "9.0"
+addopts = [
+  "-ra", # test summary (https://docs.pytest.org/en/9.0.x/reference/reference.html#cmdoption-r)
+  "-q",  # quiet (https://docs.pytest.org/en/9.0.x/reference/reference.html#cmdoption-q)
+]
+pythonpath = [
+  "../../scripts", # add scripts directory to path so that imports make sense
+]
+testpaths = ["."]
