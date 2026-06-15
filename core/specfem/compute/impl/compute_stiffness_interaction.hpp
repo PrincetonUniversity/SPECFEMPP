@@ -22,7 +22,7 @@ namespace specfem::compute::impl {
  *
  * @tparam NGLL Number of GLL points per element edge
  * @tparam Tags Compile-time tags (dimension, medium, property, attenuation,
- *              boundary, wavefield, and optionally mpi)
+ *              boundary, wavefield, and mpi)
  * @param assembly The assembly object containing the mesh
  * @param istep Current time step
  * @return Number of elements processed
@@ -37,17 +37,10 @@ int compute_stiffness_interaction_core(
   constexpr auto boundary_tag = Tags::boundary_tag;
   constexpr auto attenuation_tag = Tags::attenuation_tag;
   constexpr auto dimension_tag = Tags::dimension_tag;
+  constexpr auto mpi_tag = Tags::mpi_tag;
 
-  const auto elements = [&]() {
-    if constexpr (requires { Tags::mpi_tag; }) {
-      return assembly.element_types.get_elements_on_device(
-          medium_tag, property_tag, attenuation_tag, boundary_tag,
-          Tags::mpi_tag);
-    } else {
-      return assembly.element_types.get_elements_on_device(
-          medium_tag, property_tag, attenuation_tag, boundary_tag);
-    }
-  }();
+  const auto elements = assembly.element_types.get_elements_on_device(
+      medium_tag, property_tag, attenuation_tag, boundary_tag, mpi_tag);
 
   const int nelements = elements.extent(0);
 
