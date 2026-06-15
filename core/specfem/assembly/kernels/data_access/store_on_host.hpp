@@ -42,13 +42,13 @@ template <typename PointKernelType, typename IndexType,
                                   int>::type = 0>
 void store_on_host(const IndexType &index, const PointKernelType &point_kernels,
                    const kernels<PointKernelType::dimension_tag> &kernels) {
-  const int ispec = kernels.h_property_index_mapping(index.ispec);
-
   constexpr auto MediumTag = PointKernelType::medium_tag;
   constexpr auto PropertyTag = PointKernelType::property_tag;
 
   IndexType l_index = index;
-  l_index.ispec = ispec;
+  l_index.ispec =
+      kernels.template property_index_mapping<MediumTag, PropertyTag>(
+          index.ispec);
 
   kernels.template get_container<MediumTag, PropertyTag>().store_host_values(
       l_index, point_kernels);
