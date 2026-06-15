@@ -1,0 +1,13 @@
+id : "HomogeneousHalfSpaceStacey"
+name : "Homogeneous elastic isotropic half space with Stacey absorbing boundaries"
+description: >
+  Testing newmark time-marching solver on a homogeneous elastic domain with
+  Stacey absorbing boundary conditions on five faces and a free surface on top.
+  The simulation runs long enough for P-waves to reach and interact with all
+  absorbing boundaries.
+config:
+  nproc : 1
+  tolerance : 2e-3
+databases:
+  specfem_config: "specfem_config.yaml"
+  traces: "traces"
