@@ -5,6 +5,12 @@ Homogeneous elastic media
 
 In this example we simulate wave propagation through a 3-dimensional homogeneous halfspace using a force source.
 
+.. seealso::
+
+   :ref:`known_limitations` — several 3-D features (PML boundaries,
+   poroelastic/tomographic/anisotropic materials, property output) are not yet
+   implemented and will raise a runtime error if requested.
+
 Setting up your workspace
 -------------------------
 
