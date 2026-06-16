@@ -25,7 +25,8 @@ int specfem::io::impl::write_medium_group(
   const int ngllz = mesh.element_grid.ngllz;
   const int ngllx = mesh.element_grid.ngllx;
 
-  using DomainView = typename DataContainerType::domain_view_type;
+  using DomainView =
+      typename DataContainerType::domain_view_type::host_mirror_type;
 
   const int n_elements = element_indices.size();
   DomainView x("xcoordinates", n_elements, ngllz, ngllx);
@@ -120,7 +121,8 @@ int specfem::io::impl::write_medium_group(
 
   const int n_elements = element_indices.size();
 
-  using DomainView3d = typename DataContainerType::domain_view_type;
+  using DomainView3d =
+      typename DataContainerType::domain_view_type::host_mirror_type;
   DomainView3d x("xcoordinates", n_elements, ngllz, nglly, ngllx);
   DomainView3d y("ycoordinates", n_elements, ngllz, nglly, ngllx);
   DomainView3d z("zcoordinates", n_elements, ngllz, nglly, ngllx);
