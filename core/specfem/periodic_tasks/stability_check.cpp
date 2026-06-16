@@ -10,6 +10,37 @@
 #include <cmath>
 #include <sstream>
 
+namespace specfem::periodic_tasks::impl {
+
+template <typename TagsType>
+void get_max_displacement(
+    const specfem::assembly::assembly<TagsType::dimension_tag> &assembly,
+    type_real &local_max_displacement) {
+
+  constexpr auto num_components =
+      specfem::element::attributes<TagsType::dimension_tag,
+                                   TagsType::medium_tag>::components;
+  const auto &forward_field = assembly.fields.forward;
+  const auto &medium_field =
+      forward_field.template get_field<TagsType::medium_tag>();
+  if (medium_field.nglob == 0)
+    return;
+  const auto displacement = medium_field.get_field();
+  type_real medium_max = 0;
+  Kokkos::parallel_reduce(
+      "specfem::periodic_tasks::stability_check",
+      Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, medium_field.nglob),
+      KOKKOS_LAMBDA(int iglob, type_real &lmax) {
+        for (int icomp = 0; icomp < num_components; ++icomp)
+          lmax = Kokkos::max(lmax, Kokkos::fabs(displacement(iglob, icomp)));
+      },
+      Kokkos::Max<type_real>(medium_max));
+  Kokkos::fence();
+  local_max_displacement = std::max(local_max_displacement, medium_max);
+}
+
+} // namespace specfem::periodic_tasks::impl
+
 template <specfem::element::dimension_tag DimensionTag>
 void specfem::periodic_tasks::stability_check<DimensionTag>::run(
     specfem::assembly::assembly<DimensionTag> &assembly, const int istep) {
@@ -17,26 +48,8 @@ void specfem::periodic_tasks::stability_check<DimensionTag>::run(
   type_real local_max_displacement = 0;
 
   auto check_medium = [&]<typename TagsType>() {
-    constexpr int num_components =
-        specfem::element::attributes<TagsType::dimension_tag,
-                                     TagsType::medium_tag>::components;
-    const auto &medium_field =
-        forward_field.template get_field<TagsType::medium_tag>();
-    if (medium_field.nglob == 0)
-      return;
-    const auto displacement = medium_field.get_field();
-    type_real medium_max = 0;
-    Kokkos::parallel_reduce(
-        "specfem::periodic_tasks::stability_check",
-        Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0,
-                                                           medium_field.nglob),
-        KOKKOS_LAMBDA(int iglob, type_real &lmax) {
-          for (int icomp = 0; icomp < num_components; ++icomp)
-            lmax = Kokkos::max(lmax, Kokkos::fabs(displacement(iglob, icomp)));
-        },
-        Kokkos::Max<type_real>(medium_max));
-    Kokkos::fence();
-    local_max_displacement = std::max(local_max_displacement, medium_max);
+    specfem::periodic_tasks::impl::get_max_displacement<TagsType>(
+        assembly, local_max_displacement);
   };
 
   if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
