@@ -46,6 +46,9 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
   this->mesh.utm_projection_zone = mesh.utm_projection_zone;
   this->mesh.suppress_utm_projection = mesh.suppress_utm_projection;
 
+  // Top-surface faces for topographic depth resolution.
+  this->mesh.free_surface = mesh.boundaries.acoustic_free_surface;
+
   this->element_types = { nspec, this->mesh.element_grid, this->mesh,
                           mesh.tags };
 

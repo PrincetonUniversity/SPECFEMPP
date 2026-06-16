@@ -1,5 +1,6 @@
 #include "specfem/assembly/resolve_coordinates.hpp"
 
+#include "specfem/algorithms/locate_point.hpp"
 #include "specfem/coordinate_systems/cartesian.hpp"
 #include "specfem/coordinate_systems/geocentric.hpp"
 #include "specfem/coordinate_systems/geographic.hpp"
@@ -52,10 +53,11 @@ specfem::assembly::resolve_coordinates<specfem::element::dimension_tag::dim3>(
   if (auto *c = dynamic_cast<specfem::coordinate_systems::cartesian_coordinates<
           specfem::element::dimension_tag::dim3> *>(&coords)) {
     if (!c->origin.has_value()) {
-      // Origin not set — depth-based coordinates.
-      // Future: query topography for surface elevation at (x, y).
-      // For now, flat topography fallback: origin = {0, 0, 0}.
-      c->origin = { 0.0, 0.0, 0.0 };
+      // Depth-based: set the origin elevation from the topographic surface
+      // above (x, y). With no free surface the helper returns 0 (flat).
+      const auto surface =
+          specfem::algorithms::surface_elevation_at(mesh, c->x, c->y);
+      c->origin = { 0.0, 0.0, static_cast<double>(surface.first) };
     }
     const auto &o = *c->origin;
     return { static_cast<type_real>(c->x + o[0]),

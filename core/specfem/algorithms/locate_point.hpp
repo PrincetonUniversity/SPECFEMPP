@@ -60,11 +60,10 @@ inline bool coords_inside(const specfem::point::local_coordinates<
  * @throws std::runtime_error if any point cannot be located on any rank.
  */
 template <specfem::element::dimension_tag DimensionTag>
-std::pair<std::vector<specfem::point::local_coordinates<DimensionTag> >,
-          std::vector<int> >
+std::pair<std::vector<specfem::point::local_coordinates<DimensionTag>>,
+          std::vector<int>>
 locate_point(
-    const std::vector<specfem::point::global_coordinates<DimensionTag> >
-        &coords,
+    const std::vector<specfem::point::global_coordinates<DimensionTag>> &coords,
     const specfem::assembly::mesh<DimensionTag> &mesh) {
 
   const int npoints = static_cast<int>(coords.size());
@@ -78,7 +77,7 @@ locate_point(
       std::numeric_limits<type_real>::max() / 4;
 
   // Per-point local state -------------------------------------------------
-  std::vector<specfem::point::local_coordinates<DimensionTag> > local_lcoords(
+  std::vector<specfem::point::local_coordinates<DimensionTag>> local_lcoords(
       npoints);
   for (auto &lc : local_lcoords)
     lc.ispec = -1;
@@ -144,7 +143,7 @@ locate_point(
   }
 
   // Build output: non-owning ranks get ispec = -1. ----------------------------
-  std::vector<specfem::point::local_coordinates<DimensionTag> > result_coords(
+  std::vector<specfem::point::local_coordinates<DimensionTag>> result_coords(
       npoints);
   for (int i = 0; i < npoints; ++i) {
     if (partition_index_selected[i] == myrank) {
@@ -156,6 +155,27 @@ locate_point(
 
   return { result_coords, partition_index_selected };
 }
+
+/**
+ * @brief Elevation of the free surface directly above a horizontal location.
+ *
+ * Finds the Z_MAX free-surface face nearest to @p x, @p y, then Newton-solves
+ * the face reference coordinates so the interpolated @f$(x, y)@f$ matches the
+ * target (ignoring the @f$z@f$ residual, i.e. a vertical rather than
+ * perpendicular projection) and reads the interpolated @f$z@f$ there. In MPI
+ * builds the result is reduced to the rank owning the globally nearest face so
+ * every rank agrees.
+ *
+ * @param mesh Assembled 3D mesh (free-surface faces, coordinates, mapping)
+ * @param x Target x / easting coordinate (meters)
+ * @param y Target y / northing coordinate (meters)
+ * @return Pair of (surface elevation z in meters, squared horizontal distance
+ *         to the nearest free-surface node). The distance is `HUGE_VAL` when no
+ *         free surface exists, signalling a flat (z = 0) fallback.
+ */
+std::pair<type_real, type_real> surface_elevation_at(
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
+    double x, double y);
 
 } // namespace algorithms
 } // namespace specfem
