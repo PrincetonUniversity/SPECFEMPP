@@ -55,8 +55,7 @@ public:
           &tasks,
       specfem::assembly::assembly<dimension_tag> assembly)
       : time_scheme(time_scheme), tasks(tasks), assembly(assembly),
-        mpi_buffers(specfem::solver::make_mpi_buffers(
-            this->assembly, specfem::simulation::type::forward)) {}
+        mpi_buffers(specfem::solver::make_mpi_buffers(this->assembly)) {}
 
   ///@}
 
@@ -127,8 +126,7 @@ public:
       const std::vector<std::shared_ptr<
           specfem::periodic_tasks::periodic_task<dimension_tag>>> &tasks)
       : assembly(assembly), time_scheme(time_scheme), tasks(tasks),
-        mpi_buffers(specfem::solver::make_mpi_buffers(
-            this->assembly, specfem::simulation::type::combined)) {}
+        mpi_buffers(specfem::solver::make_mpi_buffers(this->assembly)) {}
   ///@}
 
   /**
