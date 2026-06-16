@@ -23,6 +23,7 @@ extern const SourceVector2DType multiple_sources_2d;
 extern const SourceVector3DType single_force_3d;
 extern const SourceVector3DType single_moment_tensor_3d;
 extern const SourceVector3DType single_moment_tensor_geographic_yaml_3d;
+extern const SourceVector3DType single_moment_tensor_depth_yaml_3d;
 extern const SourceVector3DType multiple_sources_3d;
 
 // 3D CMTSOLUTION expected sources (GaussianHdur STF)
@@ -32,6 +33,7 @@ extern const SourceVector3DType single_moment_tensor_geographic_cmt_3d;
 
 // 3D FORCESOLUTION expected sources (STF factor = 1.0)
 extern const SourceVector3DType single_force_forcesolution_3d;
+extern const SourceVector3DType single_force_geographic_forcesolution_3d;
 
 // 3D multi-source tests
 extern const SourceVector3DType multiple_sources_cmt_3d;

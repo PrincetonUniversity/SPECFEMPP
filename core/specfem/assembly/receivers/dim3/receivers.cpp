@@ -5,11 +5,13 @@
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/receivers.hpp"
 #include "specfem/assembly/resolve_coordinates.hpp"
+#include "specfem/coordinate_systems/utm.hpp"
 #include "specfem/element.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
+#include <optional>
 #include <vector>
 
 specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(

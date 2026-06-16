@@ -4,12 +4,14 @@
 
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/coordinate_systems/utm.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/setup.hpp"
 #include "specfem/source.hpp"
 #include <Kokkos_Core.hpp>
 #include <memory>
+#include <optional>
 #include <vector>
 
 // ── Constructor template definition ─────────────────────────────────────────

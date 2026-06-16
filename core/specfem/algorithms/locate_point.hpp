@@ -170,8 +170,9 @@ locate_point(
  * @param x Target x / easting coordinate (meters)
  * @param y Target y / northing coordinate (meters)
  * @return Pair of (surface elevation z in meters, squared horizontal distance
- *         to the nearest free-surface node). The distance is `HUGE_VAL` when no
- *         free surface exists, signalling a flat (z = 0) fallback.
+ *         to the nearest free-surface node). The distance is the maximum
+ *         representable value when no free surface exists, signalling a flat
+ *         (z = 0) fallback.
  */
 std::pair<type_real, type_real> surface_elevation_at(
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,

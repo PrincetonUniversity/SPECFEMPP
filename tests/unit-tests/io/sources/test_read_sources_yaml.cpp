@@ -175,6 +175,30 @@ const static YAML::Node single_moment_tensor_geographic_yaml_3d_node = []() {
   return node;
 }();
 
+// Depth-based cartesian moment tensor: x/y/depth (meters), no z. Resolved
+// against topography at assembly time (z = -depth, origin nullopt).
+const static YAML::Node single_moment_tensor_depth_yaml_3d_node = []() {
+  YAML::Node node;
+  node["number-of-sources"] = 1;
+  YAML::Node source;
+  YAML::Node moment_tensor;
+  moment_tensor["x"] = 2000.0;
+  moment_tensor["y"] = 3000.0;
+  moment_tensor["depth"] = 1000.0;
+  moment_tensor["Mxx"] = 1.0;
+  moment_tensor["Myy"] = 1.0;
+  moment_tensor["Mzz"] = 0.0;
+  moment_tensor["Mxy"] = 1.0;
+  moment_tensor["Mxz"] = 0.0;
+  moment_tensor["Myz"] = 0.0;
+  moment_tensor["Ricker"]["factor"] = 1.0e10;
+  moment_tensor["Ricker"]["tshift"] = 30.0;
+  moment_tensor["Ricker"]["f0"] = 1.0;
+  source["moment-tensor"] = moment_tensor;
+  node["sources"].push_back(source);
+  return node;
+}();
+
 const static YAML::Node multiple_sources_yaml_2d = []() {
   YAML::Node node;
   node["number-of-sources"] = 2;
@@ -337,6 +361,9 @@ INSTANTIATE_TEST_SUITE_P(
         SourceYAMLTestParam3D{ "3D YAML Geographic Moment Tensor",
                                single_moment_tensor_geographic_yaml_3d_node,
                                single_moment_tensor_geographic_yaml_3d },
+        SourceYAMLTestParam3D{ "3D YAML Depth Moment Tensor",
+                               single_moment_tensor_depth_yaml_3d_node,
+                               single_moment_tensor_depth_yaml_3d },
         SourceYAMLTestParam3D{ "3D YAML Multiple Sources",
                                multiple_sources_yaml_3d,
                                multiple_sources_3d }));

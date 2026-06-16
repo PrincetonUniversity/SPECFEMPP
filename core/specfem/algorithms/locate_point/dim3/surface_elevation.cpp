@@ -41,15 +41,19 @@ std::pair<type_real, type_real> specfem::algorithms::surface_elevation_at(
       ny = h_coord(compute_ispec, iz, iy, ix, 1);
     };
 
-    // Stage 1: find the surface face whose interior node is nearest to (x, y)
-    // (edges excluded so nodes shared between faces don't bias the choice).
+    // Stage 1: find the surface face whose node is nearest to (x, y). For the
+    // usual SEM case (ngll >= 3) only interior nodes are considered, so nodes
+    // shared between faces don't bias the choice; for ngll < 3 there are no
+    // interior nodes, so all face nodes are used as a fallback.
+    const int lo = (ngll > 2) ? 1 : 0;
+    const int hi = (ngll > 2) ? ngll - 1 : ngll;
     double distmin = huge;
     int sel_face = -1;
     for (int f = 0; f < nfaces; ++f) {
       const int compute_ispec = mesh_to_compute(free_surface.index_mapping(f));
       const auto face = free_surface.type(f);
-      for (int ip = 1; ip < ngll - 1; ++ip) {
-        for (int jp = 1; jp < ngll - 1; ++jp) {
+      for (int ip = lo; ip < hi; ++ip) {
+        for (int jp = lo; jp < hi; ++jp) {
           double nx, ny;
           node_xy(compute_ispec, face, ip, jp, nx, ny);
           const double d = (x_target - nx) * (x_target - nx) +
@@ -87,6 +91,10 @@ std::pair<type_real, type_real> specfem::algorithms::surface_elevation_at(
 
       // Select the two free reference coordinates for this face and the inverse
       // Jacobian rows that map a horizontal (x, y) residual into their updates.
+      // free1/free2 alias xi/eta/gamma and j1x..j2y alias members of
+      // `jacobian`; because `jacobian` is reassigned in place below (same
+      // object, members updated), those references stay valid across
+      // iterations.
       auto [free1, free2, j1x, j1y, j2x, j2y] =
           [&xi, &eta, &gamma, &face,
            &jacobian]() -> std::tuple<type_real &, type_real &, type_real &,
@@ -107,7 +115,10 @@ std::pair<type_real, type_real> specfem::algorithms::surface_elevation_at(
         }
       }();
 
-      const type_real tol = Kokkos::fabs(type_real(1e-18));
+      // Converged when the squared reference-coordinate update is negligible.
+      // Accuracy is bounded by type_real precision (the mesh geometry is stored
+      // in type_real); the 100-iteration cap below is the backstop.
+      const type_real tol = type_real(1e-12);
 
       for (int iter = 0; iter < 100; ++iter) {
         const auto loc = specfem::jacobian::compute_locations(coorg, mesh.ngnod,

@@ -1,4 +1,5 @@
 // Internal Includes
+#include "specfem/coordinate_systems/cartesian.hpp"
 #include "specfem/coordinate_systems/geographic.hpp"
 #include "specfem/io.hpp"
 #include "specfem/receivers.hpp"
@@ -7,9 +8,11 @@
 #include "yaml-cpp/yaml.h"
 
 // External Includes
+#include <array>
 #include <boost/tokenizer.hpp>
 #include <fstream>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -59,16 +62,18 @@ specfem::io::read_3d_receivers(const std::string &stations_file,
                 specfem::coordinate_systems::geographic_coordinates>(
                 longitude, latitude, depth)));
       } else {
-        // Cartesian: latitude column -> y, longitude column -> x.
-        const type_real y =
-            static_cast<type_real>(std::stod(current_station[2]));
-        const type_real x =
-            static_cast<type_real>(std::stod(current_station[3]));
-        const type_real z =
-            static_cast<type_real>(std::stod(current_station[5]));
+        // Cartesian: latitude column -> y, longitude column -> x, burial
+        // (col 6) -> absolute z. Resolution is deferred to assembly time via
+        // read_coordinates_ (origin {0,0,0}: already global).
+        const double y = std::stod(current_station[2]);
+        const double x = std::stod(current_station[3]);
+        const double z = std::stod(current_station[5]);
         receivers.push_back(std::make_shared<specfem::receivers::receiver<
                                 specfem::element::dimension_tag::dim3>>(
-            network_name, station_name, x, y, z));
+            network_name, station_name,
+            std::make_unique<specfem::coordinate_systems::cartesian_coordinates<
+                specfem::element::dimension_tag::dim3>>(
+                x, y, z, std::array<double, 3>{ 0.0, 0.0, 0.0 })));
       }
     }
 
@@ -128,13 +133,26 @@ specfem::io::read_3d_receivers(const YAML::Node &stations, bool geographic) {
             std::make_unique<
                 specfem::coordinate_systems::geographic_coordinates>(
                 longitude, latitude, depth)));
-      } else {
-        const type_real x = station["x"].as<type_real>();
-        const type_real y = station["y"].as<type_real>();
-        const type_real z = station["z"].as<type_real>();
+      } else if (station["z"]) {
+        // Absolute cartesian: origin {0,0,0}.
         receivers.push_back(std::make_shared<specfem::receivers::receiver<
                                 specfem::element::dimension_tag::dim3>>(
-            network_name, station_name, x, y, z));
+            network_name, station_name,
+            std::make_unique<specfem::coordinate_systems::cartesian_coordinates<
+                specfem::element::dimension_tag::dim3>>(
+                station["x"].as<double>(), station["y"].as<double>(),
+                station["z"].as<double>(),
+                std::array<double, 3>{ 0.0, 0.0, 0.0 })));
+      } else {
+        // Depth-based cartesian (x/y/depth, no z): z = -depth, origin nullopt
+        // so it is resolved against topography at assembly time.
+        receivers.push_back(std::make_shared<specfem::receivers::receiver<
+                                specfem::element::dimension_tag::dim3>>(
+            network_name, station_name,
+            std::make_unique<specfem::coordinate_systems::cartesian_coordinates<
+                specfem::element::dimension_tag::dim3>>(
+                station["x"].as<double>(), station["y"].as<double>(),
+                -station["depth"].as<double>(), std::nullopt)));
       }
     }
   } catch (const YAML::Exception &e) {
