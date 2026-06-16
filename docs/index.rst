@@ -218,12 +218,6 @@ case, see the Poroelastic Isotropic row.
     code/documentation more complete, please refer relevant SPECFEM package
     documentations for technical details on SPECFEM theory.
 
-.. seealso::
-
-    :ref:`known_limitations` — features that are planned but not yet
-    implemented in 3-D simulations. Attempting these will raise a runtime
-    error.
-
 .. raw:: html
 
    <style>
@@ -265,7 +259,6 @@ User Documentation
     sections/meshfem/index
     sections/parameter_documentation/index
     sections/source_description/index
-    sections/known_limitations
 
 Contribution
 ------------
