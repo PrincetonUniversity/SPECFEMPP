@@ -69,6 +69,18 @@ const SourceVector3DType single_moment_tensor_3d = { std::make_shared<
         nsteps, dt, 1.0, 30.0, 1.0e10, false),
     wavefield_type) };
 
+// Same as single_moment_tensor_3d but from geographic latitude/longitude/depth
+const SourceVector3DType single_moment_tensor_geographic_yaml_3d = {
+  std::make_shared<
+      specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3>>(
+      std::make_unique<specfem::coordinate_systems::geographic_coordinates>(
+          2.674, 51.561, 2000.0),
+      1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
+      std::make_unique<specfem::source_time_functions::Ricker>(
+          nsteps, dt, 1.0, 30.0, 1.0e10, false),
+      wavefield_type)
+};
+
 const SourceVector3DType multiple_sources_3d = {
   std::make_shared<
       specfem::sources::force<specfem::element::dimension_tag::dim3>>(

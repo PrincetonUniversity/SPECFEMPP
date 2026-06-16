@@ -152,6 +152,29 @@ const static YAML::Node single_moment_tensor_yaml_3d = []() {
   return node;
 }();
 
+// Geographic moment tensor: latitude/longitude/depth (meters) instead of x/y/z
+const static YAML::Node single_moment_tensor_geographic_yaml_3d_node = []() {
+  YAML::Node node;
+  node["number-of-sources"] = 1;
+  YAML::Node source;
+  YAML::Node moment_tensor;
+  moment_tensor["latitude"] = 51.561;
+  moment_tensor["longitude"] = 2.674;
+  moment_tensor["depth"] = 2000.0;
+  moment_tensor["Mxx"] = 1.0;
+  moment_tensor["Myy"] = 1.0;
+  moment_tensor["Mzz"] = 0.0;
+  moment_tensor["Mxy"] = 1.0;
+  moment_tensor["Mxz"] = 0.0;
+  moment_tensor["Myz"] = 0.0;
+  moment_tensor["Ricker"]["factor"] = 1.0e10;
+  moment_tensor["Ricker"]["tshift"] = 30.0;
+  moment_tensor["Ricker"]["f0"] = 1.0;
+  source["moment-tensor"] = moment_tensor;
+  node["sources"].push_back(source);
+  return node;
+}();
+
 const static YAML::Node multiple_sources_yaml_2d = []() {
   YAML::Node node;
   node["number-of-sources"] = 2;
@@ -305,12 +328,15 @@ TEST_P(Read3DSourcesYAMLTest, ReadYAMLnode) {
 
 INSTANTIATE_TEST_SUITE_P(
     IO_TESTS, Read3DSourcesYAMLTest,
-    ::testing::Values(SourceYAMLTestParam3D{ "3D YAML Force",
-                                             single_force_yaml_3d,
-                                             single_force_3d },
-                      SourceYAMLTestParam3D{ "3D YAML Moment Tensor",
-                                             single_moment_tensor_yaml_3d,
-                                             single_moment_tensor_3d },
-                      SourceYAMLTestParam3D{ "3D YAML Multiple Sources",
-                                             multiple_sources_yaml_3d,
-                                             multiple_sources_3d }));
+    ::testing::Values(
+        SourceYAMLTestParam3D{ "3D YAML Force", single_force_yaml_3d,
+                               single_force_3d },
+        SourceYAMLTestParam3D{ "3D YAML Moment Tensor",
+                               single_moment_tensor_yaml_3d,
+                               single_moment_tensor_3d },
+        SourceYAMLTestParam3D{ "3D YAML Geographic Moment Tensor",
+                               single_moment_tensor_geographic_yaml_3d_node,
+                               single_moment_tensor_geographic_yaml_3d },
+        SourceYAMLTestParam3D{ "3D YAML Multiple Sources",
+                               multiple_sources_yaml_3d,
+                               multiple_sources_3d }));

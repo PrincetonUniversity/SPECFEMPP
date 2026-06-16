@@ -22,6 +22,7 @@ extern const SourceVector2DType multiple_sources_2d;
 // 3D source test solutions
 extern const SourceVector3DType single_force_3d;
 extern const SourceVector3DType single_moment_tensor_3d;
+extern const SourceVector3DType single_moment_tensor_geographic_yaml_3d;
 extern const SourceVector3DType multiple_sources_3d;
 
 // 3D CMTSOLUTION expected sources (GaussianHdur STF)
