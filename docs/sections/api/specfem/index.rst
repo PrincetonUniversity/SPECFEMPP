@@ -13,7 +13,9 @@
     boundary_conditions/index
     chunk_edge/index
     chunk_element/index
+    chunk_face/index
     compute/index
+    constants/index
     coordinate_systems/index
     datatype/index
     data_access/index
