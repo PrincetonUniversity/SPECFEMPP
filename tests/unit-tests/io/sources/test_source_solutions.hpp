@@ -27,6 +27,7 @@ extern const SourceVector3DType multiple_sources_3d;
 // 3D CMTSOLUTION expected sources (GaussianHdur STF)
 extern const SourceVector3DType single_moment_tensor_cmt_3d;
 extern const SourceVector3DType spherical_moment_tensor_cmt_3d;
+extern const SourceVector3DType single_moment_tensor_geographic_cmt_3d;
 
 // 3D FORCESOLUTION expected sources (STF factor = 1.0)
 extern const SourceVector3DType single_force_forcesolution_3d;

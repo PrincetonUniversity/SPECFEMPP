@@ -1,5 +1,6 @@
 #include "test_source_solutions.hpp"
 #include "specfem/coordinate_systems/cartesian.hpp"
+#include "specfem/coordinate_systems/geographic.hpp"
 #include "specfem/datetime.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/io/sources/impl/timing.hpp"
@@ -105,6 +106,20 @@ const SourceVector3DType spherical_moment_tensor_cmt_3d = []() {
       specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3>>(
       std::make_unique<specfem::coordinate_systems::cartesian_coordinates<
           specfem::element::dimension_tag::dim3>>(2000.0, 3000.0, 2000.0),
+      1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
+      std::make_unique<specfem::source_time_functions::GaussianHdur>(
+          nsteps, dt, 1.0, 30.0, 1.0, false),
+      wavefield_type);
+  src->set_starttime(specfem::datetime::make(2000, 1, 1, 0, 0, 0.0));
+  return SourceVector3DType{ std::move(src) };
+}();
+
+// Same physical source from latitude/longitude/depth (depth 2.0 km -> 2000 m)
+const SourceVector3DType single_moment_tensor_geographic_cmt_3d = []() {
+  auto src = std::make_shared<
+      specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3>>(
+      std::make_unique<specfem::coordinate_systems::geographic_coordinates>(
+          2.674, 51.561, 2000.0),
       1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
       std::make_unique<specfem::source_time_functions::GaussianHdur>(
           nsteps, dt, 1.0, 30.0, 1.0, false),

@@ -157,6 +157,11 @@ INSTANTIATE_TEST_SUITE_P(
             "io/sources/data/dim3/spherical_moment_tensor.CMTSOLUTION",
             specfem::enums::source_format::CMTSOLUTION,
             spherical_moment_tensor_cmt_3d },
+        SourceTestParam3D{
+            "3D CMTSOLUTION Geographic Moment Tensor",
+            "io/sources/data/dim3/single_moment_tensor_geographic.CMTSOLUTION",
+            specfem::enums::source_format::CMTSOLUTION,
+            single_moment_tensor_geographic_cmt_3d },
         SourceTestParam3D{ "3D FORCESOLUTION Single Force",
                            "io/sources/data/dim3/single_force.FORCESOLUTION",
                            specfem::enums::source_format::FORCESOLUTION,

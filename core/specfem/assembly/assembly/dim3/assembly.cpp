@@ -42,6 +42,10 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
                  mesh.control_nodes,
                  quadratures };
 
+  // Needed to project geographic source/receiver coordinates.
+  this->mesh.utm_projection_zone = mesh.utm_projection_zone;
+  this->mesh.suppress_utm_projection = mesh.suppress_utm_projection;
+
   this->element_types = { nspec, this->mesh.element_grid, this->mesh,
                           mesh.tags };
 

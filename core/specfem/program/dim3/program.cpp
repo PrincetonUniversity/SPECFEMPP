@@ -73,8 +73,9 @@ void program_3d(
   // --------------------------------------------------------------
   //                   Get receivers
   // --------------------------------------------------------------
-  // create single receiver receivers vector for now
-  auto receivers = specfem::io::read_3d_receivers(setup.get_stations());
+  // A UTM-projected mesh implies geographic STATIONS coordinates.
+  auto receivers = specfem::io::read_3d_receivers(
+      setup.get_stations(), !mesh.suppress_utm_projection);
 
   // --------------------------------------------------------------
   //                   Generate Assembly

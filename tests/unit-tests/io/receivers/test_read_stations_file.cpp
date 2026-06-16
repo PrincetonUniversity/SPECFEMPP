@@ -1,4 +1,5 @@
 #include "../../SPECFEM_Environment.hpp"
+#include "specfem/coordinate_systems/geographic.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/io.hpp"
 #include "specfem/receivers.hpp"
@@ -16,7 +17,7 @@ template <specfem::element::dimension_tag DimensionTag>
 struct ReceiverTestParam {
   std::string testname;
   std::string stationsfilename;
-  std::vector<std::shared_ptr<specfem::receivers::receiver<DimensionTag> > >
+  std::vector<std::shared_ptr<specfem::receivers::receiver<DimensionTag>>>
       expected_receivers;
   type_real angle;
 };
@@ -118,3 +119,24 @@ INSTANTIATE_TEST_SUITE_P(
         ReceiverTestParam3D{ "Three receivers",
                              "io/receivers/data/dim3/three_stations_3d.txt",
                              three_receivers_3d, 0.0 }));
+
+// Geographic STATIONS: columns are name network latitude longitude elevation
+// burial (SPECFEM3D convention). With geographic=true, latitude/longitude map
+// to a geographic_coordinates and burial (col 6, meters) to depth.
+TEST(Read3DReceiversGeographic, ReadSTATIONSfile) {
+  auto receivers = specfem::io::read_3d_receivers(
+      "io/receivers/data/dim3/single_station_geographic_3d.txt", true);
+
+  ASSERT_EQ(receivers.size(), 1u);
+
+  const auto *coords = receivers[0]->get_read_coordinates();
+  ASSERT_NE(coords, nullptr);
+  const auto *geo =
+      dynamic_cast<const specfem::coordinate_systems::geographic_coordinates *>(
+          coords);
+  ASSERT_NE(geo, nullptr);
+
+  EXPECT_NEAR(geo->latitude, 51.561, 1e-9);
+  EXPECT_NEAR(geo->longitude, 2.674, 1e-9);
+  EXPECT_NEAR(geo->depth, 2000.0, 1e-9);
+}

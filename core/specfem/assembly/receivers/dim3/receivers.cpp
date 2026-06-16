@@ -72,10 +72,18 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
   const int nreceivers = static_cast<int>(receivers.size());
   const int myrank = specfem::MPI::get_rank();
 
+  // UTM config for projecting geographic coordinates; nullopt when suppressed.
+  std::optional<specfem::coordinate_systems::utm_projection_config> utm_config;
+  if (!mesh.suppress_utm_projection)
+    utm_config = specfem::coordinate_systems::utm_projection_config{
+      mesh.utm_projection_zone, false
+    };
+
   // Resolve any generic coordinates to global coordinates using mesh context.
   for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
     if (auto *coords = receivers[ireceiver]->get_read_coordinates()) {
-      auto gc = specfem::assembly::resolve_coordinates(*coords, mesh);
+      auto gc =
+          specfem::assembly::resolve_coordinates(*coords, mesh, utm_config);
       receivers[ireceiver]->set_global_coordinates(gc);
     }
   }
