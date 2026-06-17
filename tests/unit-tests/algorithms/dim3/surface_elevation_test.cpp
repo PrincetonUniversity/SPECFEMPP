@@ -11,9 +11,9 @@
 #include <gtest/gtest.h>
 #include <optional>
 
-namespace {
+namespace surface_elevation_test {
 
-constexpr auto dim3 = specfem::element::dimension_tag::dim3;
+constexpr auto dimension = specfem::element::dimension_tag::dim3;
 
 // Build a single-element (ngll=3) mesh whose top face is a plane gently sloped
 // in x: z = 100 + 0.1*x, with node spacing x = 10*ix, y = 10*iy. The
@@ -22,12 +22,12 @@ constexpr auto dim3 = specfem::element::dimension_tag::dim3;
 // Control nodes are needed because the elevation is interpolated with the
 // spectral element machinery (compute_locations/compute_jacobian). With
 // ngnod = 8 the control nodes are the element corners.
-specfem::assembly::mesh<dim3> make_sloped_mesh() {
-  specfem::assembly::mesh<dim3> mesh;
+specfem::assembly::mesh<dimension> make_sloped_mesh() {
+  specfem::assembly::mesh<dimension> mesh;
   mesh.ngnod = 8;
-  mesh.element_grid = specfem::mesh_entity::element<dim3>(3, 3, 3);
+  mesh.element_grid = specfem::mesh_entity::element<dimension>(3, 3, 3);
 
-  mesh.free_surface = specfem::mesh::acoustic_free_surface<dim3>(1);
+  mesh.free_surface = specfem::mesh::acoustic_free_surface<dimension>(1);
   mesh.free_surface.index_mapping(0) = 0;
   mesh.free_surface.type(0) = specfem::mesh_entity::dim3::type::top;
 
@@ -64,13 +64,13 @@ specfem::assembly::mesh<dim3> make_sloped_mesh() {
 // Build a single-element (ngll=3) mesh with a flat top face at z = surface_z,
 // centered horizontally on (cx, cy) and spanning +/- half in x and y. Used to
 // resolve geographic coordinates whose UTM projection lands at (cx, cy).
-specfem::assembly::mesh<dim3>
+specfem::assembly::mesh<dimension>
 make_flat_surface_mesh(double cx, double cy, double surface_z, double half) {
-  specfem::assembly::mesh<dim3> mesh;
+  specfem::assembly::mesh<dimension> mesh;
   mesh.ngnod = 8;
-  mesh.element_grid = specfem::mesh_entity::element<dim3>(3, 3, 3);
+  mesh.element_grid = specfem::mesh_entity::element<dimension>(3, 3, 3);
 
-  mesh.free_surface = specfem::mesh::acoustic_free_surface<dim3>(1);
+  mesh.free_surface = specfem::mesh::acoustic_free_surface<dimension>(1);
   mesh.free_surface.index_mapping(0) = 0;
   mesh.free_surface.type(0) = specfem::mesh_entity::dim3::type::top;
 
@@ -100,10 +100,10 @@ make_flat_surface_mesh(double cx, double cy, double surface_z, double half) {
   return mesh;
 }
 
-} // namespace
+} // namespace surface_elevation_test
 
 TEST(SurfaceElevation, InterpolatesBetweenNodes) {
-  const auto mesh = make_sloped_mesh();
+  const auto mesh = surface_elevation_test::make_sloped_mesh();
   const type_real elevation =
       specfem::algorithms::surface_elevation_at(mesh, 5.0, 10.0).first;
   // Surface plane value at x=5 is 100.5.
@@ -111,7 +111,7 @@ TEST(SurfaceElevation, InterpolatesBetweenNodes) {
 }
 
 TEST(SurfaceElevation, ExactOnNode) {
-  const auto mesh = make_sloped_mesh();
+  const auto mesh = surface_elevation_test::make_sloped_mesh();
   // (x, y) = (10, 10) lies on the surface (z = 101).
   const type_real elevation =
       specfem::algorithms::surface_elevation_at(mesh, 10.0, 10.0).first;
@@ -119,17 +119,19 @@ TEST(SurfaceElevation, ExactOnNode) {
 }
 
 TEST(SurfaceElevation, NoFreeSurfaceReturnsFlat) {
-  const specfem::assembly::mesh<dim3> mesh{}; // no free-surface faces
+  const specfem::assembly::mesh<surface_elevation_test::dimension>
+      mesh{}; // no free-surface faces
   const type_real elevation =
       specfem::algorithms::surface_elevation_at(mesh, 1.0, 2.0).first;
   EXPECT_FLOAT_EQ(elevation, 0.0);
 }
 
 TEST(SurfaceElevation, DepthResolvedAgainstTopography) {
-  const auto mesh = make_sloped_mesh();
+  const auto mesh = surface_elevation_test::make_sloped_mesh();
   // Depth-based cartesian: z = -depth, origin unset -> resolve against topo.
-  specfem::coordinate_systems::cartesian_coordinates<dim3> coords(
-      5.0, 10.0, -1000.0, std::nullopt);
+  specfem::coordinate_systems::cartesian_coordinates<
+      surface_elevation_test::dimension>
+      coords(5.0, 10.0, -1000.0, std::nullopt);
 
   const auto gc = specfem::assembly::resolve_coordinates(coords, mesh);
 
@@ -147,11 +149,13 @@ TEST(SurfaceElevation, GeographicResolvesViaUtmFlatFallback) {
 
   // Expected easting/northing from the same forward projection.
   const auto cart = specfem::coordinate_systems::transform<
-      specfem::coordinate_systems::cartesian_coordinates<dim3>>(
+      specfem::coordinate_systems::cartesian_coordinates<
+          surface_elevation_test::dimension>>(
       specfem::coordinate_systems::geographic_coordinates{ lon, lat, depth },
       cfg);
 
-  const specfem::assembly::mesh<dim3> mesh{}; // no free surface -> flat
+  const specfem::assembly::mesh<surface_elevation_test::dimension>
+      mesh{}; // no free surface -> flat
   specfem::coordinate_systems::geographic_coordinates geo(lon, lat, depth);
   const auto gc = specfem::assembly::resolve_coordinates(geo, mesh, cfg);
 
@@ -168,11 +172,13 @@ TEST(SurfaceElevation, GeographicResolvesAgainstTopography) {
   const specfem::coordinate_systems::utm_projection_config cfg{ 31, false };
 
   const auto cart = specfem::coordinate_systems::transform<
-      specfem::coordinate_systems::cartesian_coordinates<dim3>>(
+      specfem::coordinate_systems::cartesian_coordinates<
+          surface_elevation_test::dimension>>(
       specfem::coordinate_systems::geographic_coordinates{ lon, lat, depth },
       cfg);
 
-  const auto mesh = make_flat_surface_mesh(cart.x, cart.y, surface_z, 5000.0);
+  const auto mesh = surface_elevation_test::make_flat_surface_mesh(
+      cart.x, cart.y, surface_z, 5000.0);
   specfem::coordinate_systems::geographic_coordinates geo(lon, lat, depth);
   const auto gc = specfem::assembly::resolve_coordinates(geo, mesh, cfg);
 
@@ -183,7 +189,7 @@ TEST(SurfaceElevation, GeographicResolvesAgainstTopography) {
 
 // Geographic coordinates without a UTM config cannot be projected.
 TEST(SurfaceElevation, GeographicWithoutUtmConfigThrows) {
-  const specfem::assembly::mesh<dim3> mesh{};
+  const specfem::assembly::mesh<surface_elevation_test::dimension> mesh{};
   specfem::coordinate_systems::geographic_coordinates geo(2.674, 51.561,
                                                           2000.0);
   EXPECT_THROW(specfem::assembly::resolve_coordinates(geo, mesh),
