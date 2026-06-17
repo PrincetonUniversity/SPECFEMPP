@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from .layer_builder.layer import Layer
-from .layer_builder.layer_boundaries import LerpLayerBoundary
+from .layer_builder.layer2d import Layer2D
+from .layer_builder.layer_boundary_type.lerp import LerpLayerBoundary2D
 from .layer_builder.layeredbuilder2d import LayeredBuilder2D
 from .tags import IS_FLUID_PER_MATERIAL_STRCODE, BoundaryConditionType
 
@@ -44,7 +44,7 @@ def builder_from_topo_file2d(
 
         for iinterface in range(ninterfaces):
             # each interface gives a set of points. Read those into bd:
-            bd = LerpLayerBoundary()
+            bd = LerpLayerBoundary2D()
 
             npoints = int(_file_get_line(f))
             for ipoint in range(npoints):
@@ -88,10 +88,10 @@ def builder_from_topo_file2d(
             layer_aspect_ratio = (xmax - xmin) / (zavg_above - zavg_below)
             nx = max(1, round(nz * layer_aspect_ratio))
             if materialtype_strcode is None:
-                layers.append(Layer(nx, nz))
+                layers.append(Layer2D(nx, nz))
             else:
                 layers.append(
-                    Layer(
+                    Layer2D(
                         nx,
                         nz,
                         skip_acoustic_free_surface=not IS_FLUID_PER_MATERIAL_STRCODE[

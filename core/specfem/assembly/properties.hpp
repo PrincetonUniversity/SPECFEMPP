@@ -34,17 +34,14 @@ struct properties
       bool has_gll_model)
       : impl::value_containers<DimensionTag, impl::domain_properties>(
             element_types.nspec, element_types.element_grid,
-            "specfem::assembly::properties::property_index_mapping",
-            [&element_types, &mesh, &materials, has_gll_model](auto h_prop) {
-              return [&element_types, &mesh, &materials, has_gll_model,
-                      h_prop]<typename TagsType>() {
-                return specfem::assembly::impl::domain_properties<
-                    TagsType::dimension_tag, TagsType::medium_tag,
-                    TagsType::property_tag>(
-                    element_types.get_elements_on_host(TagsType::medium_tag,
-                                                       TagsType::property_tag),
-                    mesh, materials, has_gll_model, h_prop);
-              };
+            [&element_types, &mesh, &materials,
+             has_gll_model]<typename TagsType>() {
+              return specfem::assembly::impl::domain_properties<
+                  TagsType::dimension_tag, TagsType::medium_tag,
+                  TagsType::property_tag>(
+                  element_types.get_elements_on_host(TagsType::medium_tag,
+                                                     TagsType::property_tag),
+                  mesh, materials, has_gll_model);
             }) {}
 };
 
@@ -68,15 +65,14 @@ void max(
 
   IndexViewType local_ispecs("local_ispecs", ispecs.extent(0));
 
-  const auto index_mapping = properties.get_property_index_mapping<on_device>();
-
   Kokkos::parallel_for(
       "local_work_items",
       Kokkos::RangePolicy<typename IndexViewType::execution_space>(
           0, ispecs.extent(0)),
       KOKKOS_LAMBDA(const int i) {
         local_ispecs(i) =
-            index_mapping(ispecs(i)); // Map the ispec to the property index
+            properties.template property_index_mapping<MediumTag, PropertyTag>(
+                ispecs(i));
       });
 
   Kokkos::fence(); // Ensure the above parallel for is complete before

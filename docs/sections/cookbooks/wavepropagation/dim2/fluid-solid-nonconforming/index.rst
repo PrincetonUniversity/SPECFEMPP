@@ -89,7 +89,7 @@ If you've updated ``PYTHONPATH``, ``python`` can run
 
 .. code:: bash
 
-   python -m gmshlayerbuilder --top acoustic_free_surface --bottom absorbing --left absorbing --right absorbing topography_file.dat OUTPUT_FILES/MESH
+   python -m gmshlayerbuilder 2d --top acoustic_free_surface --bottom absorbing --left absorbing --right absorbing topography_file.dat OUTPUT_FILES/MESH
 
 Otherwise, you can drop the ``-m`` flag and reference the script
 exactly:
