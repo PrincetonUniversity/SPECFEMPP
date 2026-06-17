@@ -20,7 +20,7 @@ The simulation should then be run with the following command:
 
 ```bash
 cd ..
-specfem2d -p specfem_config.yaml
+specfem 2d -p specfem_config.yaml
 ```
 
 in the figure below, we show the source-station geometry.
