@@ -1,0 +1,19 @@
+# Codecov configuration for SPECFEM++.
+# Coverage reflects the C++ library under core/specfem/; everything else is ignored.
+
+coverage:
+  status:
+    project:
+      default:
+        # Report only; do not block merges until a baseline is established.
+        informational: true
+    patch:
+      default:
+        informational: true
+
+ignore:
+  - "_deps/**/*"
+  - "tests/**/*"
+  - "src/**/*"
+  - "fortran/**/*"
+  - "benchmarks/**/*"

@@ -1,0 +1,53 @@
+name: Coverage
+
+# LLVM source-based coverage (Clang). Independent of the gcc unittests/compilation
+# jobs. Builds the instrumented `coverage` preset, runs the C++ unit tests, and
+# uploads the lcov trace to Codecov plus the HTML report as a workflow artifact.
+
+on:
+  push:
+    branches:
+      - main
+      - devel
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm ninja-build gfortran cmake
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Build, test, and generate coverage
+        run: |
+          # Pick llvm tools matching the installed clang so `llvm-profdata merge`
+          # does not hit a version mismatch; fall back to unversioned names.
+          LLVM_VER="$(clang --version | sed -nE 's/.*version ([0-9]+).*/\1/p' | head -1)"
+          export LLVM_PROFDATA="llvm-profdata-${LLVM_VER}"
+          export LLVM_COV="llvm-cov-${LLVM_VER}"
+          command -v "$LLVM_PROFDATA" >/dev/null 2>&1 || export LLVM_PROFDATA="llvm-profdata"
+          command -v "$LLVM_COV"      >/dev/null 2>&1 || export LLVM_COV="llvm-cov"
+          uvx --from snakemake==9.13.4 snakemake -s scripts/coverage.smk --cores all
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: build/coverage/coverage.lcov
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+
+      - name: Upload HTML report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html
+          path: build/coverage/coverage-html

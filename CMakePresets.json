@@ -236,6 +236,27 @@
         "SPECFEM_BUILD_BENCHMARKS": "ON",
         "SPECFEM_BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/profile-release"
       }
+    },
+    {
+      "name": "coverage",
+      "displayName": "Coverage -- LLVM source-based (Clang)",
+      "description": "Instrumented Clang build for llvm-cov. Unity OFF, serial, no benchmarks/VTK.",
+      "binaryDir": "build/coverage",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/coverage",
+        "SPECFEM_ENABLE_COVERAGE": "ON",
+        "SPECFEM_BUILD_TESTS": "ON",
+        "SPECFEM_ENABLE_SIMD": "OFF",
+        "SPECFEM_ENABLE_MPI": "OFF",
+        "SPECFEM_ENABLE_UNITY_BUILD": "OFF",
+        "SPECFEM_ENABLE_VTK": "OFF",
+        "SPECFEM_BUILD_BENCHMARKS": "OFF",
+        "Kokkos_ARCH_NATIVE": "OFF"
+      }
     }
   ],
   "buildPresets": [
@@ -319,6 +340,13 @@
     {
       "name": "profile-release",
       "configurePreset": "profile-release",
+      "targets": [
+        "all"
+      ]
+    },
+    {
+      "name": "coverage",
+      "configurePreset": "coverage",
       "targets": [
         "all"
       ]
