@@ -35,31 +35,23 @@ template <int NGLL, typename Tags>
 void compute_mass_matrix(
     specfem::assembly::assembly<Tags::dimension_tag> &assembly,
     const type_real &dt) {
-  constexpr auto wavefield = Tags::wavefield_tag;
-  constexpr auto medium = Tags::medium_tag;
+  constexpr auto wavefield_tag = Tags::wavefield_tag;
+  constexpr auto dimension_tag = Tags::dimension_tag;
+  constexpr auto medium_tag = Tags::medium_tag;
+  constexpr auto mpi_tag = Tags::mpi_tag;
 
   specfem::tag_dispatch::for_each(
-      specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
-          specfem::tag_dispatch::medium_set<medium>{} *
+      specfem::tag_dispatch::dimension_set<dimension_tag>{} *
+          specfem::tag_dispatch::medium_set<medium_tag>{} *
           PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
           ATTENUATION_SET(none, constant_isotropic) *
           BOUNDARY_SET(none, acoustic_free_surface, stacey,
-                       composite_stacey_dirichlet),
+                       composite_stacey_dirichlet) *
+          specfem::tag_dispatch::wavefield_set<wavefield_tag>{} *
+          specfem::tag_dispatch::mpi_set<mpi_tag>{},
       [&]<typename ElementTags>() {
-        if constexpr (requires { Tags::mpi_tag; }) {
-          specfem::compute::impl::compute_mass_matrix<
-              NGLL, specfem::tags::Tags<
-                        Tags::dimension_tag, wavefield, ElementTags::medium_tag,
-                        ElementTags::property_tag, ElementTags::attenuation_tag,
-                        ElementTags::boundary_tag, Tags::mpi_tag>>(dt,
-                                                                   assembly);
-        } else {
-          specfem::compute::impl::compute_mass_matrix<
-              NGLL, specfem::tags::Tags<
-                        Tags::dimension_tag, wavefield, ElementTags::medium_tag,
-                        ElementTags::property_tag, ElementTags::attenuation_tag,
-                        ElementTags::boundary_tag>>(dt, assembly);
-        }
+        specfem::compute::impl::compute_mass_matrix<NGLL, ElementTags>(
+            dt, assembly);
       });
 }
 

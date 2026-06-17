@@ -30,16 +30,9 @@ void specfem::compute::impl::compute_mass_matrix(
   // an attenuation tag will fail this access at compile time, by design.
   constexpr auto attenuation_tag = Tags::attenuation_tag;
 
-  const auto elements = [&]() {
-    if constexpr (requires { Tags::mpi_tag; }) {
-      return assembly.element_types.get_elements_on_device(
+  const auto elements = assembly.element_types.get_elements_on_device(
           medium_tag, property_tag, attenuation_tag, boundary_tag,
           Tags::mpi_tag);
-    } else {
-      return assembly.element_types.get_elements_on_device(
-          medium_tag, property_tag, attenuation_tag, boundary_tag);
-    }
-  }();
 
   // Get number of elements matching the tag combinations
   const int nelements = elements.extent(0);
