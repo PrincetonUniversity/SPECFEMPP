@@ -21,7 +21,7 @@ parameters:
         time-scheme:
           type: Newmark
           dt: 0.16
-          nstep: 250
+          nstep: 1000
 
     simulation-mode:
       forward:

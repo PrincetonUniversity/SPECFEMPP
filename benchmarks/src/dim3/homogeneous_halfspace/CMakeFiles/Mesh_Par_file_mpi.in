@@ -114,6 +114,6 @@ NREGIONS                        = 1
 #
 #-----------------------------------------------------------
 
-STACEY_ABSORBING_CONDITIONS    = .false.
+STACEY_ABSORBING_CONDITIONS    = .true.
 TOP_FREE_SURFACE               = .true.
 BOTTOM_FREE_SURFACE            = .false.
