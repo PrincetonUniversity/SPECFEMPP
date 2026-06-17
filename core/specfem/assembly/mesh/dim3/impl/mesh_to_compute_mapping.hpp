@@ -54,20 +54,10 @@ struct mesh_to_compute_mapping<specfem::element::dimension_tag::dim3> {
   /**
    * @brief Construct a new mesh to compute mapping object
    *
-   * Elements are reordered so that elements sharing the same
-   * (medium, property, boundary) tag combination are contiguous, and within
-   * each such group the inner (partition-interior) elements precede the outer
-   * (MPI-boundary) elements. This keeps each
-   * (medium, property, boundary, mpi_tag) sublist a contiguous element range,
-   * which is required for the contiguous SIMD lane access (`ispec + lane`) used
-   * by the stiffness kernels.
-   *
-   * @param tags Tags for every spectral element within the mesh
-   * @param adjacency_graph Mesh adjacency graph used to identify the
-   *        outer (MPI-boundary) elements
+   * @param tags Tags for every spectral element within the mesh; each element's
+   *        mpi_tag carries the inner/outer (MPI-boundary) classification used
+   *        for the contiguous reordering
    */
-  mesh_to_compute_mapping(
-      const specfem::mesh::tags<dimension_tag> &tags,
-      const specfem::mesh::adjacency_graph<dimension_tag> &adjacency_graph);
+  mesh_to_compute_mapping(const specfem::mesh::tags<dimension_tag> &tags);
 };
 } // namespace specfem::assembly::mesh_impl

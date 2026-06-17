@@ -1,11 +1,9 @@
 from pathlib import Path
 
-from .layer_builder.layer_boundaries import LerpLayerBoundary
 from .layer_builder.layer import Layer
-from .layer_builder.layeredbuilder import (
-    LayeredBuilder,
-    BoundaryConditionType,
-)
+from .layer_builder.layer_boundaries import LerpLayerBoundary
+from .layer_builder.layeredbuilder2d import LayeredBuilder2D
+from .tags import IS_FLUID_PER_MATERIAL_STRCODE, BoundaryConditionType
 
 
 # processes out comments from topo file
@@ -28,17 +26,14 @@ def _file_get_line(file_input_stream):
     return line
 
 
-IS_FLUID_PER_MATERIAL_STRCODE: dict[str, bool] = {"S": False, "F": True}
-
-
-def builder_from_topo_file(
+def builder_from_topo_file2d(
     file: Path | str,
     set_left_boundary: BoundaryConditionType = "neumann",
     set_right_boundary: BoundaryConditionType = "neumann",
     set_top_boundary: BoundaryConditionType = "neumann",
     set_bottom_boundary: BoundaryConditionType = "neumann",
     materialtype_strcode: str | None = None,
-) -> LayeredBuilder:
+) -> LayeredBuilder2D:
     with Path(file).open("r") as f:
         ninterfaces = int(_file_get_line(f))
         layer_boundaries = []
@@ -105,7 +100,7 @@ def builder_from_topo_file(
                     )
                 )
 
-        builder = LayeredBuilder(
+        builder = LayeredBuilder2D(
             xmin,
             xmax,
             set_bottom_boundary=set_bottom_boundary,

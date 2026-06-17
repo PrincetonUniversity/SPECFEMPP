@@ -7,10 +7,8 @@
 #include "specfem/element.hpp"
 #include "specfem/macros/tag_dispatch.hpp"
 #include "specfem/simulation.hpp"
+#include "specfem/utilities/errors.hpp"
 #include <Kokkos_Core.hpp>
-#include <cstddef>
-#include <tuple>
-#include <utility>
 
 namespace specfem::solver {
 
@@ -18,14 +16,13 @@ namespace specfem::solver {
  * @brief Solver-owned MPI buffers for field exchange during time-stepping.
  *
  * Pre-allocates, per (wavefield, medium), a `MediumBuffers` collection holding
- * one communication buffer per data class in `exchanged_data_classes`
- * (currently acceleration and mass_matrix). Each buffer exposes split-phase
- * `begin_communicate` / `finish_communicate` methods for overlapping halo
- * exchange with computation, and `reset` to free its device allocations once it
- * is no longer needed. Ownership lives in the solver so that the communication
- * schedule can vary per solver. The set of exchanged data classes is
- * data-driven: adding one to `exchanged_data_classes` extends every (wavefield,
- * medium) slot.
+ * one communication buffer per exchanged data class (acceleration and
+ * mass_matrix). Each buffer exposes split-phase `begin_communicate` /
+ * `finish_communicate` methods for overlapping halo exchange with computation,
+ * and `reset` to free its device allocations once it is no longer needed.
+ * Ownership lives in the solver so that the communication schedule can vary per
+ * solver. To exchange a new data class, add a `CommBuffer` member to
+ * `MediumBuffers` and a branch to its `get<DataClass>()`.
  *
  * @tparam DimensionTag Spatial dimension (dim2 or dim3).
  */
@@ -97,127 +94,42 @@ struct CommBuffer {
 };
 
 /**
- * @brief Compile-time list of data classes exchanged over MPI.
- *
- * A non-type-template-parameter pack carrier — purely a type, with no runtime
- * storage. The pack is unpacked at compile time to build the per-medium buffer
- * tuple, to look up a data class's slot index, and to iterate data classes
- * during construction.
- *
- * @tparam DataClasses The data classes carried by this list.
- */
-template <specfem::data_access::DataClassType... DataClasses>
-struct data_class_list {};
-
-/**
- * @brief The data classes a medium exchanges across ranks.
- *
- * Single edit point for the data-class axis: to exchange a new field (e.g.
- * displacement), add its `DataClassType` here and every consumer (per-medium
- * buffer tuple, `MediumBuffers::get` / `reset`, the construction loop) picks it
- * up automatically.
- */
-using exchanged_data_classes =
-    data_class_list<specfem::data_access::DataClassType::acceleration,
-                    specfem::data_access::DataClassType::mass_matrix>;
-
-/**
- * @brief Compile-time position of @p Target within a `data_class_list`.
- *
- * @tparam Target      The data class to locate.
- * @tparam DataClasses The data classes carried by the list (deduced).
- * @param  list        A `data_class_list` instance (its pack is deduced).
- * @return Zero-based index of @p Target within the list.
- */
-template <specfem::data_access::DataClassType Target,
-          specfem::data_access::DataClassType... DataClasses>
-constexpr std::size_t index_of(data_class_list<DataClasses...> list) {
-  (void)list;
-  static_assert(((Target == DataClasses) || ...),
-                "DataClass is not a registered exchanged data class");
-  std::size_t index = 0;
-  ((Target == DataClasses ? true : (++index, false)) || ...);
-  return index;
-}
-
-/**
- * @brief Invoke @p func once per data class in @p list (compile-time fold).
- *
- * @p func must be a generic callable taking a `DataClassType` non-type template
- * parameter, i.e. `[]<specfem::data_access::DataClassType DataClass>() { ...
- * }`.
- *
- * @tparam DataClasses The data classes carried by the list (deduced).
- * @tparam Func        The per-data-class callable.
- * @param  list        A `data_class_list` instance (its pack is deduced).
- * @param  func        The callable invoked once per data class.
- */
-template <specfem::data_access::DataClassType... DataClasses, typename Func>
-void for_each_data_class(data_class_list<DataClasses...> list, Func &&func) {
-  (void)list;
-  (func.template operator()<DataClasses>(), ...);
-}
-
-/// Convenience overload iterating over `exchanged_data_classes`.
-template <typename Func> void for_each_data_class(Func &&func) {
-  for_each_data_class(exchanged_data_classes{}, std::forward<Func>(func));
-}
-
-/**
- * @brief Primary template for the per-(wavefield, medium) buffer tuple.
- *
- * @tparam FieldType     Wavefield type (forward, backward, adjoint).
- * @tparam MediumTag     Medium (elastic, acoustic).
- * @tparam DataClassList The `data_class_list` to expand.
- */
-template <specfem::simulation::field_type FieldType,
-          specfem::element::medium_tag MediumTag, typename DataClassList>
-struct medium_buffer_tuple;
-
-/// Partial specialization expanding the `data_class_list` pack into one
-/// `CommBuffer` per data class.
-template <specfem::simulation::field_type FieldType,
-          specfem::element::medium_tag MediumTag,
-          specfem::data_access::DataClassType... DataClasses>
-struct medium_buffer_tuple<FieldType, MediumTag,
-                           data_class_list<DataClasses...>> {
-  using type = std::tuple<CommBuffer<FieldType, MediumTag, DataClasses>...>;
-};
-
-/// Alias for `medium_buffer_tuple<...>::type`.
-template <specfem::simulation::field_type FieldType,
-          specfem::element::medium_tag MediumTag, typename DataClassList>
-using medium_buffer_tuple_t =
-    typename medium_buffer_tuple<FieldType, MediumTag, DataClassList>::type;
-
-/**
  * @brief Per-(wavefield, medium) collection of `CommBuffer`s, one per exchanged
  * data class.
  *
- * Holds a heterogeneous tuple of `CommBuffer`s keyed by position in
- * `exchanged_data_classes`. `get<DataClass>()` returns the buffer for a data
- * class; adding a data class to `exchanged_data_classes` grows this collection
- * automatically.
+ * Holds one named `CommBuffer` per exchanged data class (acceleration and
+ * mass_matrix). `get<DataClass>()` returns the buffer for a data class; to
+ * exchange a new data class, add a `CommBuffer` member and a matching branch to
+ * `get<DataClass>()`.
  *
  * @tparam TagsType Tags<wavefield_tag, medium_tag> identifying the slot.
  */
 template <typename TagsType> struct MediumBuffers {
-  /// One `CommBuffer` per data class in `exchanged_data_classes`.
-  medium_buffer_tuple_t<TagsType::wavefield_tag, TagsType::medium_tag,
-                        exchanged_data_classes>
-      buffers;
+  /// Acceleration buffer, exchanged every time step.
+  CommBuffer<TagsType::wavefield_tag, TagsType::medium_tag,
+             specfem::data_access::DataClassType::acceleration>
+      acceleration_buffer;
+  /// Mass-matrix buffer, exchanged once during assembly then freed via `reset`.
+  CommBuffer<TagsType::wavefield_tag, TagsType::medium_tag,
+             specfem::data_access::DataClassType::mass_matrix>
+      mass_matrix_buffer;
 
   /**
    * @brief Access the `CommBuffer` for one data class.
    *
-   * @tparam DataClass Data class to access; must be in
-   * `exchanged_data_classes`.
+   * @tparam DataClass Data class to access (acceleration or mass_matrix).
    */
   template <specfem::data_access::DataClassType DataClass> auto &get() {
-    constexpr std::size_t index =
-        specfem::solver::mpi_buffers_impl::index_of<DataClass>(
-            exchanged_data_classes{});
-    return std::get<index>(buffers);
+    if constexpr (DataClass ==
+                  specfem::data_access::DataClassType::acceleration)
+      return acceleration_buffer;
+    else if constexpr (DataClass ==
+                       specfem::data_access::DataClassType::mass_matrix)
+      return mass_matrix_buffer;
+    else
+      static_assert(
+          specfem::utilities::always_false<DataClass>,
+          "MediumBuffers only holds acceleration and mass_matrix buffers");
   }
 
   /// Free the buffer for one data class.
@@ -273,9 +185,12 @@ template <> struct MPIBuffers<specfem::element::dimension_tag::dim2> {
 template <> struct MPIBuffers<specfem::element::dimension_tag::dim3> {
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
 
-  /// All (wavefield, medium) combinations with cross-rank exchange.
+  /// All (wavefield, medium) combinations with cross-rank exchange. The media
+  /// are sourced from the assembly's mpi object so the exchanging-media set is
+  /// stated in exactly one place.
   static constexpr auto buffer_combos =
-      WAVEFIELD_SET(forward, backward, adjoint) * MEDIUM_SET(elastic, acoustic);
+      WAVEFIELD_SET(forward, backward, adjoint) *
+      specfem::assembly::mpi<dimension_tag>::media;
 
   /// Per-(wavefield, medium) unified buffer pair.
   template <typename TagsType>
@@ -285,10 +200,15 @@ template <> struct MPIBuffers<specfem::element::dimension_tag::dim3> {
   specfem::tag_dispatch::TypedStorage<buffers_for_tags, decltype(buffer_combos)>
       buffers;
 
-  /// True when the given medium has a cross-rank exchange buffer.
+  /// True when the given medium participates in cross-rank exchange. Derived
+  /// from the assembly's mpi media so the set is stated in exactly one place.
   static constexpr bool has_buffer(const specfem::element::medium_tag medium) {
-    return medium == specfem::element::medium_tag::elastic ||
-           medium == specfem::element::medium_tag::acoustic;
+    for (const auto exchanging_medium :
+         specfem::assembly::mpi<dimension_tag>::media.values) {
+      if (exchanging_medium == medium)
+        return true;
+    }
+    return false;
   }
 
   MPIBuffers() = default;
@@ -296,35 +216,38 @@ template <> struct MPIBuffers<specfem::element::dimension_tag::dim3> {
   /**
    * @brief Construct pre-allocated buffers from MPI interfaces.
    *
-   * Only allocates buffers for the field types relevant to the simulation mode:
-   * forward-only creates forward buffers; combined creates backward and adjoint
-   * buffers. Each active slot receives one buffer per data class in
-   * `exchanged_data_classes`. Unused slots remain default-constructed
+   * Only allocates buffers for the field types relevant to the simulation mode,
+   * read from @p mpi_obj: forward-only creates forward buffers; combined
+   * creates backward and adjoint buffers. Each active slot receives one buffer
+   * per exchanged data class. Unused slots remain default-constructed
    * (inactive).
    *
-   * @param mpi_obj    Fully-constructed MPI communication object.
-   * @param simulation Simulation mode (forward, combined, etc.).
+   * @param mpi_obj Fully-constructed MPI communication object; its `simulation`
+   * member selects which field types are allocated.
    */
-  MPIBuffers(const specfem::assembly::mpi<dimension_tag> &mpi_obj,
-             const specfem::simulation::type simulation)
+  MPIBuffers(const specfem::assembly::mpi<dimension_tag> &mpi_obj)
       : buffers([&]<typename TagsType>() -> buffers_for_tags<TagsType> {
+          constexpr auto acceleration =
+              specfem::data_access::DataClassType::acceleration;
+          constexpr auto mass_matrix =
+              specfem::data_access::DataClassType::mass_matrix;
           const bool should_create =
               (TagsType::wavefield_tag ==
                    specfem::simulation::field_type::forward &&
-               simulation == specfem::simulation::type::forward) ||
+               mpi_obj.simulation == specfem::simulation::type::forward) ||
               (TagsType::wavefield_tag !=
                    specfem::simulation::field_type::forward &&
-               simulation == specfem::simulation::type::combined);
+               mpi_obj.simulation == specfem::simulation::type::combined);
           buffers_for_tags<TagsType> slot{};
           if (should_create) {
-            mpi_buffers_impl::for_each_data_class(
-                [&]<specfem::data_access::DataClassType DataClass>() {
-                  slot.template get<DataClass>().buffer =
-                      mpi_obj.template create_mpi_buffer<
-                          TagsType::wavefield_tag, TagsType::medium_tag,
-                          DataClass>();
-                  slot.template get<DataClass>().active = true;
-                });
+            slot.template get<acceleration>()
+                .buffer = mpi_obj.template create_mpi_buffer<
+                TagsType::wavefield_tag, TagsType::medium_tag, acceleration>();
+            slot.template get<acceleration>().active = true;
+            slot.template get<mass_matrix>()
+                .buffer = mpi_obj.template create_mpi_buffer<
+                TagsType::wavefield_tag, TagsType::medium_tag, mass_matrix>();
+            slot.template get<mass_matrix>().active = true;
           }
           return slot;
         }) {}
@@ -373,19 +296,17 @@ template <> struct MPIBuffers<specfem::element::dimension_tag::dim3> {
  * exchange and yields a default (no-op) container.
  *
  * @tparam DimensionTag Spatial dimension (dim2 or dim3).
- * @param assembly The assembly object providing the MPI interfaces (dim3).
- * @param simulation Simulation mode (forward, combined, etc.).
+ * @param assembly The assembly object providing the MPI interfaces (dim3); the
+ * simulation mode is read from its `mpi_interfaces`.
  * @return A populated `MPIBuffers<DimensionTag>`.
  */
 template <specfem::element::dimension_tag DimensionTag>
 MPIBuffers<DimensionTag>
-make_mpi_buffers(const specfem::assembly::assembly<DimensionTag> &assembly,
-                 const specfem::simulation::type simulation) {
+make_mpi_buffers(const specfem::assembly::assembly<DimensionTag> &assembly) {
   if constexpr (DimensionTag == specfem::element::dimension_tag::dim3) {
-    return MPIBuffers<DimensionTag>(assembly.mpi_interfaces, simulation);
+    return MPIBuffers<DimensionTag>(assembly.mpi_interfaces);
   } else {
     (void)assembly;
-    (void)simulation;
     return MPIBuffers<DimensionTag>{};
   }
 }

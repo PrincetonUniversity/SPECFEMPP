@@ -22,7 +22,7 @@ namespace specfem::compute::impl {
  *
  * @tparam NGLL Number of GLL points per element edge
  * @tparam Tags Compile-time tags (dimension, medium, property, attenuation,
- *              boundary, wavefield, and optionally mpi)
+ *              boundary, wavefield, and mpi)
  * @param assembly The assembly object containing the mesh
  * @param istep Current time step
  * @return Number of elements processed

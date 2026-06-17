@@ -22,7 +22,8 @@ namespace specfem::solver::impl {
  * Coupling and source must complete before the field is packed for exchange,
  * and `divide_mass_matrix` must run after the cross-rank acceleration has been
  * accumulated. For media without a cross-rank buffer (and all of dim2) the
- * begin/finish exchange calls are no-ops and the outer element set is empty.
+ * begin/finish exchange calls are no-ops; mass assembly still runs over the
+ * outer/inner subsets but without any MPI communication.
  *
  * @tparam NGLL Number of GLL points per element edge
  * @tparam Tags Compile-time tags (dimension, wavefield, medium)
@@ -44,21 +45,21 @@ int update_medium(specfem::assembly::assembly<Tags::dimension_tag> &assembly,
   specfem::compute::impl::compute_source_interaction<NGLL, Tags>(assembly,
                                                                  istep);
 
+  auto &field =
+      assembly.fields.template get_simulation_field<Tags::wavefield_tag>();
+
+  auto acceleration_buffer =
+      mpi_buffers.template get<Tags>().template get<acceleration>();
+
   int elements_updated = specfem::compute::impl::compute_stiffness_interaction<
       NGLL, specfem::tags::expand<Tags, outer>>(assembly, istep);
 
-  auto &field =
-      assembly.fields.template get_simulation_field<Tags::wavefield_tag>();
-  mpi_buffers.template get<Tags>()
-      .template get<acceleration>()
-      .begin_communicate(field);
+  acceleration_buffer.begin_communicate(field);
 
   elements_updated += specfem::compute::impl::compute_stiffness_interaction<
       NGLL, specfem::tags::expand<Tags, inner>>(assembly, istep);
 
-  mpi_buffers.template get<Tags>()
-      .template get<acceleration>()
-      .finish_communicate(field);
+  acceleration_buffer.finish_communicate(field);
 
   specfem::compute::impl::divide_mass_matrix<NGLL, Tags>(assembly);
   return elements_updated;
@@ -94,17 +95,17 @@ void init_medium_mass(
 
   auto &field =
       assembly.fields.template get_simulation_field<Tags::wavefield_tag>();
-  mpi_buffers.template get<Tags>()
-      .template get<mass_matrix>()
-      .begin_communicate(field);
+
+  auto mass_matrix_buffer =
+      mpi_buffers.template get<Tags>().template get<mass_matrix>();
+
+  mass_matrix_buffer.begin_communicate(field);
 
   specfem::compute::compute_mass_matrix<NGLL,
                                         specfem::tags::expand<Tags, inner>>(
       assembly, dt);
 
-  mpi_buffers.template get<Tags>()
-      .template get<mass_matrix>()
-      .finish_communicate(field);
+  mass_matrix_buffer.finish_communicate(field);
 
   specfem::compute::invert_mass<NGLL, Tags>(assembly);
 }

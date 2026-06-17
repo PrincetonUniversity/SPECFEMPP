@@ -51,6 +51,7 @@ struct ElementTags {
                                                      ///< isotropic, etc.)
   specfem::element::boundary_tag boundary_tag; ///< Boundary condition (none,
                                                ///< stacey, etc.)
+  specfem::element::mpi_tag mpi_tag; ///< MPI partition tag (inner/outer)
 
   /**
    * @brief Construct element tag specification
@@ -59,14 +60,17 @@ struct ElementTags {
    * @param medium_tag Expected physical medium classification
    * @param property_tag Expected material property classification
    * @param boundary_tag Expected boundary condition classification
+   * @param mpi_tag Expected MPI partition classification (defaults to inner)
    */
-  ElementTags(int element_id, specfem::element::medium_tag medium_tag,
-              specfem::element::property_tag property_tag,
-              specfem::element::attenuation_tag attenuation_tag,
-              specfem::element::boundary_tag boundary_tag)
+  ElementTags(
+      int element_id, specfem::element::medium_tag medium_tag,
+      specfem::element::property_tag property_tag,
+      specfem::element::attenuation_tag attenuation_tag,
+      specfem::element::boundary_tag boundary_tag,
+      specfem::element::mpi_tag mpi_tag = specfem::element::mpi_tag::inner)
       : element_id(element_id), medium_tag(medium_tag),
         property_tag(property_tag), attenuation_tag(attenuation_tag),
-        boundary_tag(boundary_tag) {}
+        boundary_tag(boundary_tag), mpi_tag(mpi_tag) {}
 };
 
 /**
@@ -122,24 +126,27 @@ struct ExpectedTags3D {
       }
 
       // Extract computed tags from mesh structure
-      const auto [medium_tag, property_tag, attenuation_tag, boundary_tag] =
-          tags.tags_container(expected.element_id);
+      const auto [medium_tag, property_tag, attenuation_tag, boundary_tag,
+                  mpi_tag] = tags.tags_container(expected.element_id);
 
       // Compare all tag components with detailed error reporting
       if (medium_tag != expected.medium_tag ||
           property_tag != expected.property_tag ||
           attenuation_tag != expected.attenuation_tag ||
-          boundary_tag != expected.boundary_tag) {
+          boundary_tag != expected.boundary_tag ||
+          mpi_tag != expected.mpi_tag) {
         FAIL() << "Tag mismatch for element " << expected.element_id << ". "
                << "Expected: ("
                << specfem::element::to_string(expected.medium_tag) << ", "
                << specfem::element::to_string(expected.property_tag) << ", "
                << specfem::element::to_string(expected.attenuation_tag) << ", "
-               << specfem::element::to_string(expected.boundary_tag) << "), "
+               << specfem::element::to_string(expected.boundary_tag) << ", "
+               << specfem::element::to_string(expected.mpi_tag) << "), "
                << "Got: (" << specfem::element::to_string(medium_tag) << ", "
                << specfem::element::to_string(property_tag) << ", "
                << specfem::element::to_string(attenuation_tag) << ", "
-               << specfem::element::to_string(boundary_tag) << ")" << std::endl;
+               << specfem::element::to_string(boundary_tag) << ", "
+               << specfem::element::to_string(mpi_tag) << ")" << std::endl;
       }
     }
 

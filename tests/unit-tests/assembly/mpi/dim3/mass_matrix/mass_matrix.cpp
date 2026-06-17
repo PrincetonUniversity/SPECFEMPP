@@ -72,8 +72,7 @@ protected:
     // Build the mass matrix through the production solver path: per-medium
     // outer/inner compute with overlapped cross-rank exchange, then invert.
     constexpr auto forward = specfem::simulation::field_type::forward;
-    auto mpi_buffers = specfem::solver::make_mpi_buffers(
-        assembly, specfem::simulation::type::forward);
+    auto mpi_buffers = specfem::solver::make_mpi_buffers(assembly);
 
     specfem::tag_dispatch::for_each(
         specfem::tag_dispatch::dimension_set<dimension>{} *
