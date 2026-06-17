@@ -1,6 +1,7 @@
 #pragma once
 
 #include "domain_accessor.hpp"
+#include "specfem/datatype/element_index_range.hpp"
 #include "specfem/element.hpp"
 #include "specfem/medium_container.hpp"
 #include <Kokkos_Core.hpp>
@@ -77,6 +78,8 @@ struct domain_properties<specfem::element::dimension_tag::dim2, MediumTag,
   constexpr static auto property_tag =
       base_type::property_tag; ///< Material property type
 
+  int base_ispec = 0; ///< First global element index for this type's range
+
   /// Default constructor for empty container
   domain_properties() = default;
 
@@ -90,16 +93,11 @@ struct domain_properties<specfem::element::dimension_tag::dim2, MediumTag,
    * @param mesh 2D mesh geometry and connectivity
    * @param materials Material database indexed by element
    * @param has_gll_model Skip material assignment for GLL models
-   * @param property_index_mapping Element to property mapping
    */
-  template <typename ViewType>
-  domain_properties(const ViewType &elements,
+  domain_properties(const specfem::datatype::ElementIndexRange &elements,
                     const specfem::assembly::mesh<dimension_tag> &mesh,
                     const specfem::mesh::materials<dimension_tag> &materials,
-                    const bool has_gll_model,
-                    const Kokkos::View<int *, Kokkos::LayoutRight,
-                                       Kokkos::DefaultHostExecutionSpace>
-                        property_index_mapping);
+                    const bool has_gll_model);
 
   /// Device value access disabled for this container type
   template <typename PointValues, typename IndexType>
@@ -145,6 +143,8 @@ struct domain_properties<specfem::element::dimension_tag::dim3, MediumTag,
   constexpr static auto property_tag =
       base_type::property_tag; ///< Material property type
 
+  int base_ispec = 0; ///< First global element index for this type's range
+
   /// Default constructor for empty container
   domain_properties() = default;
 
@@ -157,16 +157,11 @@ struct domain_properties<specfem::element::dimension_tag::dim3, MediumTag,
    * @param elements Element indices to initialize
    * @param mesh 3D mesh geometry and connectivity
    * @param materials Material database indexed by element
-   * @param property_index_mapping Element to property mapping
    */
-  template <typename ViewType>
-  domain_properties(const ViewType &elements,
+  domain_properties(const specfem::datatype::ElementIndexRange &elements,
                     const specfem::assembly::mesh<dimension_tag> &mesh,
                     const specfem::mesh::materials<dimension_tag> &materials,
-                    const bool has_gll_model,
-                    const Kokkos::View<int *, Kokkos::LayoutRight,
-                                       Kokkos::DefaultHostExecutionSpace>
-                        property_index_mapping);
+                    const bool has_gll_model);
 
   /// Device value access disabled for this container type
   template <typename PointValues, typename IndexType>
