@@ -29,9 +29,9 @@ to the ``PATH``.
 
 .. code:: bash
 
-   which specfem2d
+   which specfem
 
-If the above command returns a path to the ``specfem2d`` executable,
+If the above command returns a path to the ``specfem`` executable,
 then the executable directory is added to the ``PATH``. If not, you need
 to add the executable directory to the ``PATH`` using the following
 command.
@@ -188,7 +188,7 @@ following command:
 
 .. code:: bash
 
-   specfem2d -p specfem_config.yaml
+   specfem 2d -p specfem_config.yaml
 
 
 Visualizing the results
