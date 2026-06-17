@@ -5,7 +5,7 @@ from gmsh2meshfem.gmsh_dep import GmshContext
 
 
 @dataclass
-class Layer:
+class Layer2D:
     """A "layer" denoes a region spanning the width of the domain between two `LayerBoundary`s.
     Each Layer is meshed as a deformed grid (gmsh-transfinite) with specified number of cells
     along the horizontal axis (nx) and vertical axis (nz).
@@ -20,15 +20,15 @@ class Layer:
     nz: int
     skip_acoustic_free_surface: bool = False
 
-    def is_conforming(self, other: "Layer"):
+    def is_conforming(self, other: "Layer2D"):
         return self.nx == other.nx
 
     def generate_layer(
         self,
-        boundary_below: "LayerBoundary.BuildResult",
-        boundary_above: "LayerBoundary.BuildResult",
+        boundary_below: "LayerBoundary2D.BuildResult",
+        boundary_above: "LayerBoundary2D.BuildResult",
         gmsh: GmshContext,
-    ) -> "Layer.BuildResult":
+    ) -> "Layer2D.BuildResult":
         # join boundary_below and boundary_above with left and right walls:
         # above should use the *_copy variants.
         wall_right = gmsh.model.geo.add_line(
@@ -53,13 +53,12 @@ class Layer:
         gmsh.model.geo.mesh.set_transfinite_surface(surf)
         gmsh.model.geo.mesh.setRecombine(2, surf)  # quads
 
-        return Layer.BuildResult(
+        return Layer2D.BuildResult(
             left_wall_index=wall_left, right_wall_index=wall_right, surface_index=surf
         )
-EPS = 1e-6
 
 
-class LayerBoundary(ABC):
+class LayerBoundary2D(ABC):
     """Represents an interface spanning across the entire length of the domain or the top/bottom
     boundaries.
     """
@@ -78,8 +77,8 @@ class LayerBoundary(ABC):
 
         def initialize_curve_copy(
             self,
-            layer_below: Layer | None,
-            layer_above: Layer | None,
+            layer_below: Layer2D | None,
+            layer_above: Layer2D | None,
             gmsh: GmshContext,
         ):
             # duplicate curve only if we desire/need nonconformity:
@@ -138,4 +137,4 @@ class LayerBoundary(ABC):
     @abstractmethod
     def build_layer(
         self, xlow: float, xhigh: float, gmsh: GmshContext
-    ) -> "LayerBoundary.BuildResult": ...
+    ) -> "LayerBoundary2D.BuildResult": ...
