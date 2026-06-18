@@ -20,14 +20,19 @@ def load_data(kernel_file):
 
 # Preprocess the data into a 2D grid for plotting
 def preprocess_data(X, Z, **kwargs):
-    xi = np.linspace(X.min(), X.max(), 100)
-    zi = np.linspace(Z.min(), Z.max(), 100)
+    X_flat = X.ravel()
+    Z_flat = Z.ravel()
+
+    xi = np.linspace(X_flat.min(), X_flat.max(), 100)
+    zi = np.linspace(Z_flat.min(), Z_flat.max(), 100)
 
     X_grid, Z_grid = np.meshgrid(xi, zi)
 
     data = {}
     for key, value in kwargs.items():
-        data[key] = griddata((X, Z), value, (X_grid, Z_grid), method="cubic")
+        data[key] = griddata(
+            (X_flat, Z_flat), value.ravel(), (X_grid, Z_grid), method="cubic"
+        )
 
     return X_grid, Z_grid, data
 
