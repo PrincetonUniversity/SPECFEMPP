@@ -26,7 +26,8 @@ specfem::assembly::mesh_impl::mesh_to_compute_mapping<
       MEDIUM_SET(elastic, acoustic, elastic_spin) *
       PROPERTY_SET(isotropic, isotropic_cosserat) *
       ATTENUATION_SET(none, constant_isotropic) *
-      BOUNDARY_SET(none));
+      BOUNDARY_SET(none) *
+      MPI_SET(inner, outer));
   constexpr auto element_types = ET::combos;
   constexpr int total_element_types = ET::size;
 
@@ -38,21 +39,13 @@ specfem::assembly::mesh_impl::mesh_to_compute_mapping<
     const auto property_tag    = element_types[i].template get<2>();
     const auto attenuation_tag = element_types[i].template get<3>();
     const auto boundary_tag    = element_types[i].template get<4>();
-    // Emit inner (partition-interior) elements first, then outer (MPI-boundary)
-    // elements, so that each (medium, property, attenuation, boundary, mpi_tag)
-    // sublist is a contiguous element range. The stiffness kernels iterate these
-    // sublists with SIMD, where lane L is mesh element `ispec + L`; a
-    // non-contiguous list would make the lanes read the wrong elements.
-    for (int pass = 0; pass < 2; pass++) {
-      const bool want_outer = (pass == 1);
-      for (int ispec = 0; ispec < nspec; ispec++) {
-        const auto tag = tags.tags_container(ispec);
-        const bool is_outer = tag.mpi_tag == specfem::element::mpi_tag::outer;
-        if (tag.medium_tag == medium_tag && tag.property_tag == property_tag &&
-            tag.attenuation_tag == attenuation_tag &&
-            tag.boundary_tag == boundary_tag && is_outer == want_outer) {
-          element_type_ispec[i].push_back(ispec);
-        }
+    const auto mpi_tag         = element_types[i].template get<5>();
+    for (int ispec = 0; ispec < nspec; ispec++) {
+      const auto tag = tags.tags_container(ispec);
+      if (tag.medium_tag == medium_tag && tag.property_tag == property_tag &&
+          tag.attenuation_tag == attenuation_tag &&
+          tag.boundary_tag == boundary_tag && tag.mpi_tag == mpi_tag) {
+        element_type_ispec[i].push_back(ispec);
       }
     }
     total_counted += element_type_ispec[i].size();
@@ -62,7 +55,8 @@ specfem::assembly::mesh_impl::mesh_to_compute_mapping<
     const std::string msg =
         "specfem::assembly::mesh_to_compute_mapping: only " +
         std::to_string(total_counted) + " of " + std::to_string(nspec) +
-        " elements matched a known (medium, property, boundary) combination. "
+        " elements matched a known (medium, property, attenuation, boundary, "
+        "mpi) combination. "
         "The compute<->mesh index mapping would be left partially "
         "uninitialized. This usually means an element carries a tag "
         "combination not present in the supported element-type set.";

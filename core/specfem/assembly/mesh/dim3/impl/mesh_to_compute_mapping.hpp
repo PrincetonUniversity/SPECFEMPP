@@ -11,11 +11,7 @@ namespace specfem::assembly::mesh_impl {
  * specfem::mesh::mesh and @ref specfem::assembly::mesh
  *
  * We reorder the mesh to enable better memory access patterns when computing
- * forces. Beyond grouping elements by type, within each
- * (medium, property, boundary) group the inner (partition-interior) elements
- * precede the outer (MPI-boundary) elements so each sublist is a contiguous
- * compute-index range (required by the SIMD stiffness kernels). See the
- * constructor documentation for details.
+ * forces.
  *
  * To access the mapping, use the following:
  * @code{.cpp}
@@ -54,9 +50,7 @@ struct mesh_to_compute_mapping<specfem::element::dimension_tag::dim3> {
   /**
    * @brief Construct a new mesh to compute mapping object
    *
-   * @param tags Tags for every spectral element within the mesh; each element's
-   *        mpi_tag carries the inner/outer (MPI-boundary) classification used
-   *        for the contiguous reordering
+   * @param tags Tags for every spectral element within the mesh
    */
   mesh_to_compute_mapping(const specfem::mesh::tags<dimension_tag> &tags);
 };
