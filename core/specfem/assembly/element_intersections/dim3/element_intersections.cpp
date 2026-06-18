@@ -53,18 +53,8 @@ specfem::assembly::element_intersections<
 
         // Filter out corresponding connections
         auto filter = [&graph](const auto &edge) {
-          if constexpr (TagsType::connection_tag ==
-                        specfem::element_connections::type::weakly_conforming) {
-            return false;
-          } else if constexpr (TagsType::connection_tag ==
-                               specfem::element_connections::type::
-                                   nonconforming) {
-            return true;
-          }
           return graph[edge].connection == TagsType::connection_tag;
-        }; // TODO yell at Hanson if this is still in when the PR is reviewed.
-           // This is to test the nonconforming kernel on a conforming mesh
-           // prior to a NC mesher.
+        };
 
         // Create a filtered graph view
         const auto &nc_graph = boost::make_filtered_graph(graph, filter);
