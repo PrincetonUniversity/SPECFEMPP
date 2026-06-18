@@ -52,16 +52,6 @@ public:
   int nspec; ///< Number of spectral elements
   int ngnod; ///< Number of control nodes per element
 
-  int utm_projection_zone = 0; ///< UTM zone (+N/-S); used to project geographic
-                               ///< source/receiver coordinates
-  bool suppress_utm_projection = true; ///< true: mesh is Cartesian, no
-                                       ///< projection
-
-  /// Z_MAX top-surface faces (raw-mesh ispec + face orientation), used to
-  /// resolve source/receiver depth against topography. The reader places only
-  /// Z_MAX faces here, so it never contains bottom faces.
-  specfem::mesh::acoustic_free_surface<dimension_tag> free_surface;
-
   specfem::mesh_entity::element<dimension_tag> element_grid; ///< 3D GLL grid
                                                              ///< info
 

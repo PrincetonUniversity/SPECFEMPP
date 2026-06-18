@@ -2,26 +2,38 @@
 
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/jacobian.hpp"
+#include "specfem/mesh.hpp"
 #include "specfem/mesh_entity.hpp"
 #include "specfem/mpi/mpi.hpp"
 #include "specfem/point.hpp"
 
 #include <Kokkos_Core.hpp>
 #include <limits>
+#include <stdexcept>
 #include <tuple>
-#include <utility>
 
-std::pair<type_real, type_real> specfem::algorithms::surface_elevation_at(
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
+specfem::algorithms::project_onto_surface(
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
-    double x_target, double y_target) {
+    const specfem::mesh::acoustic_free_surface<
+        specfem::element::dimension_tag::dim3> &surface,
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim3> &target,
+    const specfem::algorithms::projection along) {
+
+  // Only vertical (z) projection is implemented; see projection enum.
+  if (along != specfem::algorithms::projection::along_z) {
+    throw std::runtime_error(
+        "specfem::algorithms::project_onto_surface: only projection::along_z "
+        "is implemented");
+  }
 
   constexpr double huge = std::numeric_limits<double>::max();
 
-  const auto &free_surface = mesh.free_surface;
-  const int nfaces = free_surface.nelem_acoustic_surface;
+  const int nfaces = surface.nelem_acoustic_surface;
 
   double elevation = 0.0; // flat fallback when no free surface is found
-  double elevation_distmin = huge;
+  [[maybe_unused]] double elevation_distmin = huge; // only read in MPI builds
 
   if (nfaces > 0) {
     const auto &h_coord = mesh.h_coord;
@@ -50,14 +62,14 @@ std::pair<type_real, type_real> specfem::algorithms::surface_elevation_at(
     double distmin = huge;
     int sel_face = -1;
     for (int f = 0; f < nfaces; ++f) {
-      const int compute_ispec = mesh_to_compute(free_surface.index_mapping(f));
-      const auto face = free_surface.type(f);
+      const int compute_ispec = mesh_to_compute(surface.index_mapping(f));
+      const auto face = surface.type(f);
       for (int ip = lo; ip < hi; ++ip) {
         for (int jp = lo; jp < hi; ++jp) {
           double nx, ny;
           node_xy(compute_ispec, face, ip, jp, nx, ny);
-          const double d = (x_target - nx) * (x_target - nx) +
-                           (y_target - ny) * (y_target - ny);
+          const double d = (target.x - nx) * (target.x - nx) +
+                           (target.y - ny) * (target.y - ny);
           if (d < distmin) {
             distmin = d;
             sel_face = f;
@@ -71,13 +83,13 @@ std::pair<type_real, type_real> specfem::algorithms::surface_elevation_at(
     // the interpolated (x, y) matches the target (z is ignored), then read z.
     if (sel_face >= 0) {
       const int compute_ispec =
-          mesh_to_compute(free_surface.index_mapping(sel_face));
-      const auto face = free_surface.type(sel_face);
+          mesh_to_compute(surface.index_mapping(sel_face));
+      const auto face = surface.type(sel_face);
 
       Kokkos::View<specfem::point::global_coordinates<
                        specfem::element::dimension_tag::dim3> *,
                    Kokkos::HostSpace>
-          coorg("specfem::algorithms::surface_elevation::coorg", mesh.ngnod);
+          coorg("specfem::algorithms::project_onto_surface::coorg", mesh.ngnod);
       for (int i = 0; i < mesh.ngnod; ++i) {
         coorg(i).x = mesh.h_control_node_coordinates(0, compute_ispec, i);
         coorg(i).y = mesh.h_control_node_coordinates(1, compute_ispec, i);
@@ -123,8 +135,8 @@ std::pair<type_real, type_real> specfem::algorithms::surface_elevation_at(
       for (int iter = 0; iter < 100; ++iter) {
         const auto loc = specfem::jacobian::compute_locations(coorg, mesh.ngnod,
                                                               xi, eta, gamma);
-        const type_real dx = static_cast<type_real>(x_target) - loc.x;
-        const type_real dy = static_cast<type_real>(y_target) - loc.y;
+        const type_real dx = target.x - loc.x;
+        const type_real dy = target.y - loc.y;
 
         jacobian = specfem::jacobian::compute_jacobian(coorg, mesh.ngnod, xi,
                                                        eta, gamma);
@@ -161,9 +173,7 @@ std::pair<type_real, type_real> specfem::algorithms::surface_elevation_at(
                                      MPI_MINLOC, specfem::MPI::communicator()));
   SPECFEM_MPI_SAFECALL(MPI_Bcast(&elevation, 1, MPI_DOUBLE, global.rank,
                                  specfem::MPI::communicator()));
-  elevation_distmin = global.dist;
 #endif
 
-  return { static_cast<type_real>(elevation),
-           static_cast<type_real>(elevation_distmin) };
+  return { target.x, target.y, static_cast<type_real>(elevation) };
 }

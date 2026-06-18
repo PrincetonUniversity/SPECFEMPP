@@ -42,13 +42,6 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
                  mesh.control_nodes,
                  quadratures };
 
-  // Needed to project geographic source/receiver coordinates.
-  this->mesh.utm_projection_zone = mesh.utm_projection_zone;
-  this->mesh.suppress_utm_projection = mesh.suppress_utm_projection;
-
-  // Top-surface faces for topographic depth resolution.
-  this->mesh.free_surface = mesh.boundaries.acoustic_free_surface;
-
   this->element_types = { nspec, this->mesh.element_grid, this->mesh,
                           mesh.tags };
 
@@ -65,12 +58,12 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
   this->kernels = { this->element_types };
 
   this->sources = {
-    sources, this->mesh, this->jacobian_matrix, this->element_types,
-    t0,      dt,         max_timesteps
+    sources, this->mesh,   mesh, this->jacobian_matrix, this->element_types, t0,
+    dt,      max_timesteps
   };
   this->receivers = {
-    max_sig_step, dt,         t0,        nsteps_between_samples, receivers,
-    stypes,       this->mesh, mesh.tags, this->element_types
+    max_sig_step, dt,         t0,   nsteps_between_samples, receivers,
+    stypes,       this->mesh, mesh, this->element_types
   };
   this->boundaries = { this->mesh.nspec,
                        this->mesh.element_grid.ngllz,

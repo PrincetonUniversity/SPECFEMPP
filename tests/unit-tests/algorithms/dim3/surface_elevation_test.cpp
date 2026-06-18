@@ -15,6 +15,14 @@ namespace surface_elevation_test {
 
 constexpr auto dimension = specfem::element::dimension_tag::dim3;
 
+// Single top (Z_MAX) face for the single-element test meshes below.
+specfem::mesh::acoustic_free_surface<dimension> make_top_surface() {
+  specfem::mesh::acoustic_free_surface<dimension> surface(1);
+  surface.index_mapping(0) = 0;
+  surface.type(0) = specfem::mesh_entity::dim3::type::top;
+  return surface;
+}
+
 // Build a single-element (ngll=3) mesh whose top face is a plane gently sloped
 // in x: z = 100 + 0.1*x, with node spacing x = 10*ix, y = 10*iy. The
 // surface elevation at horizontal (x, y) is therefore 100 + 0.1*x.
@@ -26,10 +34,6 @@ specfem::assembly::mesh<dimension> make_sloped_mesh() {
   specfem::assembly::mesh<dimension> mesh;
   mesh.ngnod = 8;
   mesh.element_grid = specfem::mesh_entity::element<dimension>(3, 3, 3);
-
-  mesh.free_surface = specfem::mesh::acoustic_free_surface<dimension>(1);
-  mesh.free_surface.index_mapping(0) = 0;
-  mesh.free_surface.type(0) = specfem::mesh_entity::dim3::type::top;
 
   mesh.h_mesh_to_compute = decltype(mesh.h_mesh_to_compute)("m2c", 1);
   mesh.h_mesh_to_compute(0) = 0;
@@ -70,10 +74,6 @@ make_flat_surface_mesh(double cx, double cy, double surface_z, double half) {
   mesh.ngnod = 8;
   mesh.element_grid = specfem::mesh_entity::element<dimension>(3, 3, 3);
 
-  mesh.free_surface = specfem::mesh::acoustic_free_surface<dimension>(1);
-  mesh.free_surface.index_mapping(0) = 0;
-  mesh.free_surface.type(0) = specfem::mesh_entity::dim3::type::top;
-
   mesh.h_mesh_to_compute = decltype(mesh.h_mesh_to_compute)("m2c", 1);
   mesh.h_mesh_to_compute(0) = 0;
 
@@ -104,36 +104,43 @@ make_flat_surface_mesh(double cx, double cy, double surface_z, double half) {
 
 TEST(SurfaceElevation, InterpolatesBetweenNodes) {
   const auto mesh = surface_elevation_test::make_sloped_mesh();
-  const type_real elevation =
-      specfem::algorithms::surface_elevation_at(mesh, 5.0, 10.0).first;
+  const auto surface = surface_elevation_test::make_top_surface();
+  const type_real elevation = specfem::algorithms::project_onto_surface(
+                                  mesh, surface, { 5.0, 10.0, 0.0 })
+                                  .z;
   // Surface plane value at x=5 is 100.5.
   EXPECT_NEAR(elevation, 100.5, 0.1);
 }
 
 TEST(SurfaceElevation, ExactOnNode) {
   const auto mesh = surface_elevation_test::make_sloped_mesh();
+  const auto surface = surface_elevation_test::make_top_surface();
   // (x, y) = (10, 10) lies on the surface (z = 101).
-  const type_real elevation =
-      specfem::algorithms::surface_elevation_at(mesh, 10.0, 10.0).first;
+  const type_real elevation = specfem::algorithms::project_onto_surface(
+                                  mesh, surface, { 10.0, 10.0, 0.0 })
+                                  .z;
   EXPECT_NEAR(elevation, 101.0, 1e-3);
 }
 
 TEST(SurfaceElevation, NoFreeSurfaceReturnsFlat) {
-  const specfem::assembly::mesh<surface_elevation_test::dimension>
-      mesh{}; // no free-surface faces
-  const type_real elevation =
-      specfem::algorithms::surface_elevation_at(mesh, 1.0, 2.0).first;
+  const specfem::assembly::mesh<surface_elevation_test::dimension> mesh{};
+  const specfem::mesh::acoustic_free_surface<surface_elevation_test::dimension>
+      surface{}; // no free-surface faces
+  const type_real elevation = specfem::algorithms::project_onto_surface(
+                                  mesh, surface, { 1.0, 2.0, 0.0 })
+                                  .z;
   EXPECT_FLOAT_EQ(elevation, 0.0);
 }
 
 TEST(SurfaceElevation, DepthResolvedAgainstTopography) {
   const auto mesh = surface_elevation_test::make_sloped_mesh();
+  const auto surface = surface_elevation_test::make_top_surface();
   // Depth-based cartesian: z = -depth, origin unset -> resolve against topo.
   specfem::coordinate_systems::cartesian_coordinates<
       surface_elevation_test::dimension>
       coords(5.0, 10.0, -1000.0, std::nullopt);
 
-  const auto gc = specfem::assembly::resolve_coordinates(coords, mesh);
+  const auto gc = specfem::assembly::resolve_coordinates(coords, mesh, surface);
 
   EXPECT_FLOAT_EQ(gc.x, 5.0);
   EXPECT_FLOAT_EQ(gc.y, 10.0);
@@ -156,8 +163,11 @@ TEST(SurfaceElevation, GeographicResolvesViaUtmFlatFallback) {
 
   const specfem::assembly::mesh<surface_elevation_test::dimension>
       mesh{}; // no free surface -> flat
+  const specfem::mesh::acoustic_free_surface<surface_elevation_test::dimension>
+      surface{};
   specfem::coordinate_systems::geographic_coordinates geo(lon, lat, depth);
-  const auto gc = specfem::assembly::resolve_coordinates(geo, mesh, cfg);
+  const auto gc =
+      specfem::assembly::resolve_coordinates(geo, mesh, surface, cfg);
 
   EXPECT_NEAR(gc.x, static_cast<type_real>(cart.x), 1.0);
   EXPECT_NEAR(gc.y, static_cast<type_real>(cart.y), 1.0);
@@ -179,8 +189,10 @@ TEST(SurfaceElevation, GeographicResolvesAgainstTopography) {
 
   const auto mesh = surface_elevation_test::make_flat_surface_mesh(
       cart.x, cart.y, surface_z, 5000.0);
+  const auto surface = surface_elevation_test::make_top_surface();
   specfem::coordinate_systems::geographic_coordinates geo(lon, lat, depth);
-  const auto gc = specfem::assembly::resolve_coordinates(geo, mesh, cfg);
+  const auto gc =
+      specfem::assembly::resolve_coordinates(geo, mesh, surface, cfg);
 
   EXPECT_NEAR(gc.x, static_cast<type_real>(cart.x), 1.0);
   EXPECT_NEAR(gc.y, static_cast<type_real>(cart.y), 1.0);
@@ -190,9 +202,11 @@ TEST(SurfaceElevation, GeographicResolvesAgainstTopography) {
 // Geographic coordinates without a UTM config cannot be projected.
 TEST(SurfaceElevation, GeographicWithoutUtmConfigThrows) {
   const specfem::assembly::mesh<surface_elevation_test::dimension> mesh{};
+  const specfem::mesh::acoustic_free_surface<surface_elevation_test::dimension>
+      surface{};
   specfem::coordinate_systems::geographic_coordinates geo(2.674, 51.561,
                                                           2000.0);
-  EXPECT_THROW(specfem::assembly::resolve_coordinates(geo, mesh),
+  EXPECT_THROW(specfem::assembly::resolve_coordinates(geo, mesh, surface),
                std::runtime_error);
 }
 

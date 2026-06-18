@@ -2,6 +2,7 @@
 
 #include "locate_point/locate_point_impl.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/mesh.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/point.hpp"
 #include "specfem/setup.hpp"
@@ -157,26 +158,37 @@ locate_point(
 }
 
 /**
- * @brief Elevation of the free surface directly above a horizontal location.
+ * @brief Path used to project a point onto a surface.
  *
- * Finds the Z_MAX free-surface face nearest to @p x, @p y, then Newton-solves
- * the face reference coordinates so the interpolated @f$(x, y)@f$ matches the
- * target (ignoring the @f$z@f$ residual, i.e. a vertical rather than
- * perpendicular projection) and reads the interpolated @f$z@f$ there. In MPI
- * builds the result is reduced to the rank owning the globally nearest face so
- * every rank agrees.
- *
- * @param mesh Assembled 3D mesh (free-surface faces, coordinates, mapping)
- * @param x Target x / easting coordinate (meters)
- * @param y Target y / northing coordinate (meters)
- * @return Pair of (surface elevation z in meters, squared horizontal distance
- *         to the nearest free-surface node). The distance is the maximum
- *         representable value when no free surface exists, signalling a flat
- *         (z = 0) fallback.
+ * Only along_z (vertical) is currently implemented.
+ * along_x, along_y, and ellipsoidal are reserved and will throw.
  */
-std::pair<type_real, type_real> surface_elevation_at(
+enum class projection { along_x, along_y, along_z, ellipsoidal };
+
+/**
+ * @brief Project @p target onto @p surface along @p along, returning the
+ * landing point.
+ *
+ * For @c along_z the result is @c {target.x,target.y,elevation}, where the
+ * elevation is the free surface above @c (x,y), or 0 when @p surface is empty.
+ * MPI-reduced to the rank owning the nearest face.
+ *
+ * @param mesh Assembled 3D mesh geometry
+ * @param surface Faces defining the target surface
+ * @param target Point to project (only components orthogonal to @p along used)
+ * @param along Projection geometry; only @ref projection::along_z is
+ * implemented
+ * @return The surface point @p target projects to
+ * @throws std::runtime_error for unimplemented geometries
+ */
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
+project_onto_surface(
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
-    double x, double y);
+    const specfem::mesh::acoustic_free_surface<
+        specfem::element::dimension_tag::dim3> &surface,
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim3> &target,
+    projection along = projection::along_z);
 
 } // namespace algorithms
 } // namespace specfem

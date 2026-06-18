@@ -22,7 +22,7 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
         &receivers,
     const std::vector<specfem::enums::wavefield> &stypes,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
-    const specfem::mesh::tags<specfem::element::dimension_tag::dim3> &tags,
+    const specfem::mesh::mesh<specfem::element::dimension_tag::dim3> &raw_mesh,
     const specfem::assembly::element_types<
         specfem::element::dimension_tag::dim3> &element_types)
     : lagrange_interpolant("specfem::assembly::receivers::lagrange_interpolant",
@@ -76,16 +76,16 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
 
   // UTM config for projecting geographic coordinates; nullopt when suppressed.
   std::optional<specfem::coordinate_systems::utm_projection_config> utm_config;
-  if (!mesh.suppress_utm_projection)
+  if (!raw_mesh.suppress_utm_projection)
     utm_config = specfem::coordinate_systems::utm_projection_config{
-      mesh.utm_projection_zone, false
+      raw_mesh.utm_projection_zone, false
     };
 
   // Resolve any generic coordinates to global coordinates using mesh context.
   for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
     if (auto *coords = receivers[ireceiver]->get_read_coordinates()) {
-      auto gc =
-          specfem::assembly::resolve_coordinates(*coords, mesh, utm_config);
+      auto gc = specfem::assembly::resolve_coordinates(
+          *coords, mesh, raw_mesh.boundaries.acoustic_free_surface, utm_config);
       receivers[ireceiver]->set_global_coordinates(gc);
     }
   }

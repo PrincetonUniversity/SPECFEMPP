@@ -21,6 +21,7 @@ specfem::assembly::sources<DimensionTag>::sources(
     std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>
         &sources,
     const specfem::assembly::mesh<DimensionTag> &mesh,
+    const specfem::mesh::mesh<DimensionTag> &raw_mesh,
     const specfem::assembly::jacobian_matrix<DimensionTag> &jacobian_matrix,
     const specfem::assembly::element_types<DimensionTag> &element_types,
     const type_real t0, const type_real dt, const int nsteps)
@@ -45,16 +46,17 @@ specfem::assembly::sources<DimensionTag>::sources(
   // a suppressed (Cartesian) mesh leaves it nullopt.
   std::optional<specfem::coordinate_systems::utm_projection_config> utm_config;
   if constexpr (DimensionTag == specfem::element::dimension_tag::dim3) {
-    if (!mesh.suppress_utm_projection)
+    if (!raw_mesh.suppress_utm_projection)
       utm_config = specfem::coordinate_systems::utm_projection_config{
-        mesh.utm_projection_zone, false
+        raw_mesh.utm_projection_zone, false
       };
   }
 
   // Locate all sources in the mesh and set their local coordinates,
   // global element index, and medium that the source is located in
-  specfem::assembly::sources_impl::locate_sources(element_types, mesh, sources,
-                                                  utm_config);
+  specfem::assembly::sources_impl::locate_sources(
+      element_types, mesh, sources, raw_mesh.boundaries.acoustic_free_surface,
+      utm_config);
 
   // Create vector of MPI slice indices for each source (host memory)
   source_partition_index_.resize(sources.size());
