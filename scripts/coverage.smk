@@ -85,11 +85,14 @@ rule test:
         touch(TEST_STAMP),
     threads: CTEST_JOBS
     shell:
-        # %p = PID, so parallel test processes never clobber each other's profiles.
+        # %m-%p names each profile by (binary signature, PID). ctest still runs
+        # cases in parallel; %p keeps parallel writers separate, and the shared %m
+        # prefix lets the report step group profiles per binary -- which is what
+        # avoids the cross-binary hash-collision "mismatched data" in the lcov.
         """
         rm -rf {PROFRAW_DIR}
         mkdir -p {PROFRAW_DIR}
-        LLVM_PROFILE_FILE="$(pwd)/{PROFRAW_DIR}/cov-%p.profraw" \
+        LLVM_PROFILE_FILE="$(pwd)/{PROFRAW_DIR}/cov-%m-%p.profraw" \
             ctest --test-dir {BUILD}/tests/unit-tests --output-on-failure -j {CTEST_JOBS}
         """
 
@@ -114,7 +117,6 @@ rule reports:
     shell:
         # Test executables are copied flat into <build>/tests/unit-tests
         # (extension-less); discovery/data files carry extensions and are skipped.
-        # llvm-cov takes one positional binary; the rest are passed via -object.
         """
         objects=()
         while IFS= read -r -d '' f; do objects+=("$f"); done \
@@ -122,9 +124,14 @@ rule reports:
         if [ ${{#objects[@]}} -eq 0 ]; then
             echo "ERROR: no instrumented test binaries found" >&2; exit 1
         fi
+
+        # --- HTML + terminal summary: single merged profile (human drill-down).
+        # llvm-cov takes one positional binary; the rest are passed via -object.
+        # The 'mismatched data' warning here is expected -- mostly _deps/STL noise
+        # from template instantiations shared across binaries -- and does NOT
+        # affect the per-binary lcov produced below for Codecov.
         cov_objects=("${{objects[0]}}")
         for b in "${{objects[@]:1}}"; do cov_objects+=(-object "$b"); done
-
         {LLVM_COV} report "${{cov_objects[@]}}" \
             -instr-profile={input.profdata} \
             -ignore-filename-regex='{IGNORE_REGEX}' | tee {output.summary}
@@ -132,11 +139,65 @@ rule reports:
             -instr-profile={input.profdata} \
             -ignore-filename-regex='{IGNORE_REGEX}' \
             -format=html -output-dir={output.html}
-        {LLVM_COV} export "${{cov_objects[@]}}" \
-            -instr-profile={input.profdata} \
-            -ignore-filename-regex='{IGNORE_REGEX}' \
-            -format=lcov > {output.lcov}
+
+        # --- lcov for Codecov: prefer each binary's OWN profile (no hash-collision
+        # drops), falling back to the merged profile for any binary we cannot
+        # isolate. Per-binary steps are non-fatal -- one odd binary must never sink
+        # the whole report. A binary's own profiles are its cov-<sig>-*.profraw
+        # files; we recover <sig> with an instant --gtest_list_tests probe, run
+        # from the test dir (the cwd ctest uses) so startup-time file access in a
+        # binary doesn't make the probe abort.
+        probe={BUILD}/probe
+        probe_abs="$(pwd)/$probe"
+        testdir={BUILD}/tests/unit-tests
+        : > {output.lcov}
+        for b in "${{objects[@]}}"; do
+            name=$(basename "$b")
+            rm -rf "$probe"; mkdir -p "$probe"
+            ( cd "$testdir" && LLVM_PROFILE_FILE="$probe_abs/p-%m-%p.profraw" \
+                "./$name" --gtest_list_tests ) >/dev/null 2>&1 || true
+            one=""
+            praw=$(ls "$probe"/p-*.profraw 2>/dev/null | head -1)
+            if [ -n "$praw" ]; then
+                sig=$(basename "$praw"); sig=${{sig#p-}}; sig=${{sig%.profraw}}; sig=${{sig%-*}}
+                reals=( {PROFRAW_DIR}/cov-"$sig"-*.profraw )
+                if [ -e "${{reals[0]}}" ] \
+                   && {LLVM_PROFDATA} merge -sparse "${{reals[@]}}" -o "$probe/one.profdata" 2>/dev/null; then
+                    one="$probe/one.profdata"
+                fi
+            fi
+            if [ -z "$one" ]; then
+                echo "WARN: $name -- using merged profile (could not isolate its own)" >&2
+                one={input.profdata}
+            fi
+            {LLVM_COV} export "$b" -instr-profile="$one" \
+                -ignore-filename-regex='{IGNORE_REGEX}' -format=lcov >> {output.lcov} \
+                || echo "WARN: lcov export failed for $name; skipping" >&2
+        done
+        rm -rf "$probe"
+        if [ ! -s {output.lcov} ]; then
+            echo "ERROR: coverage.lcov is empty (no profiles exported)" >&2; exit 1
+        fi
         """
+
+
+rule html_lcov:
+    # Optional, on-demand: accurate browsable HTML built from the per-binary
+    # coverage.lcov, so it matches the Codecov number (unlike the merged-profile
+    # llvm-cov HTML, which drops hash-collided functions). Line/function based --
+    # no per-instantiation region drill-down. genhtml merges the duplicate
+    # per-file records from the concatenated trace automatically.
+    # Requires `genhtml` from the lcov package
+    # (macOS: brew install lcov; Debian/Ubuntu: apt-get install lcov):
+    #   uv run snakemake -s scripts/coverage.smk --cores 1 html_lcov
+    input:
+        f"{BUILD}/coverage.lcov",
+    output:
+        directory(f"{BUILD}/coverage-html-lcov"),
+    localrule: True
+    shell:
+        "genhtml {input} --output-directory {output} "
+        "--title 'SPECFEM++ coverage' --legend"
 
 
 rule clean:

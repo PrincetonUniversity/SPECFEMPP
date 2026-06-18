@@ -23,7 +23,7 @@ jobs:
       - name: Install toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang llvm ninja-build gfortran cmake
+          sudo apt-get install -y clang llvm ninja-build gfortran cmake lcov
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
@@ -38,6 +38,23 @@ jobs:
           command -v "$LLVM_PROFDATA" >/dev/null 2>&1 || export LLVM_PROFDATA="llvm-profdata"
           command -v "$LLVM_COV"      >/dev/null 2>&1 || export LLVM_COV="llvm-cov"
           uvx --from snakemake==9.13.4 snakemake -s scripts/coverage.smk --cores all
+
+      - name: Deduplicate lcov for upload
+        run: |
+          # coverage.lcov concatenates one trace per test binary, so most
+          # core/specfem files appear many times. lcov -a collapses the duplicate
+          # records into one (much smaller upload). Codecov would merge them
+          # anyway, so on any lcov error we just keep the raw file.
+          raw=build/coverage/coverage.lcov
+          out=build/coverage/coverage.dedup.lcov
+          if lcov --add-tracefile "$raw" --output-file "$out" \
+                  --ignore-errors inconsistent,corrupt,unused,empty,format,unsupported,range 2>/dev/null \
+             && [ -s "$out" ]; then
+            mv "$out" "$raw"
+            echo "deduplicated: $(grep -c '^SF:' "$raw") records, $(wc -c < "$raw") bytes"
+          else
+            echo "lcov dedup unavailable/failed; uploading raw coverage.lcov" >&2
+          fi
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
