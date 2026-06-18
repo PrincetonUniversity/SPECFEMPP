@@ -227,6 +227,7 @@ add_executable(
   assembly/mpi/dim3/communication_group/communication_group.cpp
   assembly/mpi/dim3/communication_pattern/communication_pattern.cpp
   assembly/mpi/dim3/mass_matrix/mass_matrix.cpp
+  assembly/mpi/dim3/reordering/reordering.cpp
   assembly/mpi/dim3/runner.cpp
 )
 
