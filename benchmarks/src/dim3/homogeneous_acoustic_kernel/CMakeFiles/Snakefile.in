@@ -80,7 +80,8 @@ rule adjoint_simulation:
         database=rules.generate_mesh.output.database,
         forward_log=rules.forward_simulation.output.log,
         stations="@CURRENT_BENCHMARK_BUILD_DIR@/DATA/STATIONS",
-        source="@CURRENT_BENCHMARK_BUILD_DIR@/adjoint_source.yaml",
+        forward_source="@CURRENT_BENCHMARK_BUILD_DIR@/forward_source.yaml",
+        adjoint_source="@CURRENT_BENCHMARK_BUILD_DIR@/adjoint_source.yaml",
         config="@CURRENT_BENCHMARK_BUILD_DIR@/adjoint_config.yaml",
         adjoint_sources=rules.compute_adjoint_sources.output.adjoint_sources,
     output:

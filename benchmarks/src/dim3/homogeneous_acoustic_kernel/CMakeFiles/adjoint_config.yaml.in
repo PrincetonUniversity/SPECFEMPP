@@ -51,6 +51,9 @@ parameters:
   databases:
     mesh-database: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES/Database.bin"
 
-  sources: "@CURRENT_BENCHMARK_BUILD_DIR@/adjoint_source.yaml"
+  sources:
+    YAML:
+      - "@CURRENT_BENCHMARK_BUILD_DIR@/forward_source.yaml"
+      - "@CURRENT_BENCHMARK_BUILD_DIR@/adjoint_source.yaml"
 
   log-file: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/output_adjoint"
