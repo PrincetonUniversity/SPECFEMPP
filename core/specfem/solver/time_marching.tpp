@@ -164,6 +164,13 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
     }
   }
 
+  // Initialize the backward wavefield from the buffer (which was populated by
+  // the wavefield reader above). This must happen before the first backward
+  // time step so that Stacey stored values are loaded from the correct step
+  // index at every iteration of the loop.
+  specfem::assembly::deep_copy(assembly.fields.backward,
+                               assembly.fields.buffer);
+
   for (const auto [istep, dt] : time_scheme->iterate_backward()) {
     for (const auto &task : tasks) {
       if (task && task->should_run(istep+1)) {
@@ -193,6 +200,11 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
     elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, adjoint, poroelastic>>(assembly, istep);
     dofs_updated += time_scheme->apply_corrector_phase_forward(poroelastic);
 
+    // Compute kernels using adjoint at t=(j+1)*dt and backward at
+    // t=(nstep-j)*dt. This matches the Fortran kernel wavefield pairing after
+    // the reconstructed forward field has been loaded.
+    specfem::compute::compute_derivatives<NGLL, specfem::tags::Tags<DimensionTag>>(assembly, dt);
+
     // Backward time step
     dofs_updated += time_scheme->apply_predictor_phase_backward(elastic);
     dofs_updated += time_scheme->apply_predictor_phase_backward(elastic_psv);
@@ -212,17 +224,6 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
 
     elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, backward, poroelastic>>(assembly, istep);
     dofs_updated += time_scheme->apply_corrector_phase_backward(poroelastic);
-
-    // Copy read wavefield buffer to the backward wavefield
-    // We need to do this after the first backward step to align
-    // the wavefields for the adjoint and backward simulations
-    // for accurate Frechet derivatives
-    if (istep == nstep - 1) {
-      specfem::assembly::deep_copy(assembly.fields.backward,
-                                  assembly.fields.buffer);
-    }
-
-    specfem::compute::compute_derivatives<NGLL, specfem::tags::Tags<DimensionTag>>(assembly, dt);
 
     if (time_scheme->compute_seismogram(istep)) {
       // compute seismogram for backward time step

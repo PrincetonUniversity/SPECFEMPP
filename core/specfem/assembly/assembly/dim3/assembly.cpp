@@ -86,9 +86,9 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
                            nglly,
                            ngllx };
 
-  // if (allocate_boundary_values)
-  //   this->boundary_values = { max_timesteps, this->mesh, this->element_types,
-  //                             this->boundaries };
+  if (allocate_boundary_values)
+    this->boundary_values = { max_timesteps, this->mesh, this->element_types,
+                              this->boundaries };
 
   // Currently done in the mesher!
   this->check_jacobian_matrix();

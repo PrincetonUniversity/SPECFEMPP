@@ -48,7 +48,9 @@ int compute_stiffness_interaction(
 
   Kokkos::Profiling::pushRegion("Compute Stiffness Interaction");
 
-  if constexpr (Tags::boundary_tag == specfem::element::boundary_tag::stacey &&
+  if constexpr ((Tags::boundary_tag == specfem::element::boundary_tag::stacey ||
+                 Tags::boundary_tag == specfem::element::boundary_tag::
+                                           composite_stacey_dirichlet) &&
                 Tags::wavefield_tag ==
                     specfem::simulation::field_type::backward) {
 
@@ -60,16 +62,19 @@ int compute_stiffness_interaction(
     using PointAccelerationType =
         typename gather_kernel<NGLL, Tags>::PointAccelerationType;
 
-    specfem::execution::for_all(
-        "specfem::compute::compute_stiffness_interaction", chunk,
-        KOKKOS_LAMBDA(
-            const typename decltype(chunk)::base_index_type &iterator_index) {
-          const auto index = iterator_index.get_index();
-          PointAccelerationType acceleration;
-          specfem::assembly::load_on_device(istep, index, boundary_values,
-                                            acceleration);
-          specfem::assembly::atomic_add_on_device(index, field, acceleration);
-        });
+    if (istep > 0) {
+      const int boundary_istep = istep - 1;
+      specfem::execution::for_all(
+          "specfem::compute::compute_stiffness_interaction", chunk,
+          KOKKOS_LAMBDA(
+              const typename decltype(chunk)::base_index_type &iterator_index) {
+            const auto index = iterator_index.get_index();
+            PointAccelerationType acceleration;
+            specfem::assembly::load_on_device(boundary_istep, index,
+                                              boundary_values, acceleration);
+            specfem::assembly::atomic_add_on_device(index, field, acceleration);
+          });
+    }
 
   } else {
 
