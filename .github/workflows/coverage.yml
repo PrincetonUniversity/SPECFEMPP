@@ -2,16 +2,30 @@ name: Coverage
 
 # LLVM source-based coverage (Clang). Independent of the gcc unittests/compilation
 # jobs. Builds the instrumented `coverage` preset, runs the C++ unit tests, and
-# uploads the lcov trace to Codecov plus the HTML report as a workflow artifact.
+# uploads the lcov trace to Codecov.
+#
+# Two modes, same build:
+#   - push to main/devel  -> FULL report (Codecov project baseline + HTML artifact).
+#   - pull_request         -> Codecov computes the PATCH status (coverage of the
+#                             lines the PR changes); blocks if <75% of changed core/
+#                             lines are covered (see codecov.yml). Skips the
+#                             expensive HTML report. Only fires when core/ changes.
+#
+# A ccache compiler cache (persisted via actions cache) keeps repeat PR pushes fast.
 
 on:
   push:
     branches:
       - main
       - devel
+
   pull_request:
+    types: [opened, synchronize, reopened]
     branches:
-      - '*'
+      - main
+      - devel
+    paths:
+      - 'core/**'
 
 jobs:
   coverage:
@@ -23,12 +37,26 @@ jobs:
       - name: Install toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang llvm ninja-build gfortran cmake lcov
+          sudo apt-get install -y clang llvm ninja-build gfortran cmake lcov ccache
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
+      - name: Set up ccache
+        # Restores/saves the compiler cache across runs. Keyed on the target
+        # branch so PRs warm-start from their base (main/devel) cache.
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: coverage-${{ github.event_name == 'pull_request' && github.base_ref || github.ref_name }}
+          max-size: 2G
+
       - name: Build, test, and generate coverage
+        env:
+          # Wire ccache as the compiler launcher (CI-only; the coverage preset is
+          # untouched). CCACHE_BASEDIR normalises absolute paths so cache entries
+          # are reused across runs.
+          CMAKE_EXTRA_ARGS: "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache"
+          CCACHE_BASEDIR: ${{ github.workspace }}
         run: |
           # Pick llvm tools matching the installed clang so `llvm-profdata merge`
           # does not hit a version mismatch; fall back to unversioned names.
@@ -37,7 +65,12 @@ jobs:
           export LLVM_COV="llvm-cov-${LLVM_VER}"
           command -v "$LLVM_PROFDATA" >/dev/null 2>&1 || export LLVM_PROFDATA="llvm-profdata"
           command -v "$LLVM_COV"      >/dev/null 2>&1 || export LLVM_COV="llvm-cov"
-          uvx --from snakemake==9.13.4 snakemake -s scripts/coverage.smk --cores all
+
+          # PRs only need the lcov (Codecov derives the patch status from it) and
+          # the terminal summary -- skip the costly HTML report. Push builds `all`
+          # (adds the browsable HTML report uploaded as an artifact below).
+          TARGETS="${{ github.event_name == 'pull_request' && 'build/coverage/coverage.lcov build/coverage/coverage-summary.txt' || 'all' }}"
+          uvx --from snakemake==9.13.4 snakemake -s scripts/coverage.smk --cores all $TARGETS
 
       - name: Deduplicate lcov for upload
         run: |
@@ -57,6 +90,9 @@ jobs:
           fi
 
       - name: Upload coverage to Codecov
+        # On push this is the full project report; on a PR, Codecov uses it to
+        # compute the patch status (the merge gate). The CODECOV_TOKEN secret is
+        # unavailable to fork PRs, so the gate only applies to same-repo branches.
         uses: codecov/codecov-action@v4
         with:
           files: build/coverage/coverage.lcov
@@ -64,6 +100,8 @@ jobs:
           fail_ci_if_error: false
 
       - name: Upload HTML report artifact
+        # Only produced on push (PRs skip the HTML report to save time).
+        if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: coverage-html

@@ -8,8 +8,17 @@ coverage:
         # Report only; do not block merges until a baseline is established.
         informational: true
     patch:
+      # Gate PRs on the coverage of the lines they add/change. Only lines under
+      # core/ count (see paths + the ignore list below); everything else is
+      # irrelevant to pass/fail.
       default:
-        informational: true
+        target: 80%           # fail if <80% of changed lines are covered
+        threshold: 5%         # some slack below target
+        informational: false  # block the PR (was: informational: true)
+        paths:
+          - "core/"           # only changed lines under core/ drive the status
+        if_not_found: success  # PRs touching no measurable core lines pass
+        if_ci_failed: error
 
 ignore:
   - "_deps/**/*"

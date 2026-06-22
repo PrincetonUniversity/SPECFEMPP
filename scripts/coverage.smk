@@ -19,9 +19,21 @@ import os
 import platform
 from pathlib import Path
 
+import subprocess
+import os
+
+def get_performance_core_count():
+    """Returns the number of performance cores on macOS, or None if it cannot be determined."""
+    try:
+        # Query macOS system control for the number of performance cores
+        result = subprocess.check_output(['sysctl', '-n', 'hw.perflevel0.logicalcpu'])
+        return int(result.strip())
+    except (subprocess.SubprocessError, ValueError, FileNotFoundError):
+        # Fallback to total cores if the command fails (e.g., older Intel Macs)
+        return os.cpu_count() or 1
+
 # This file lives in scripts/; the repo root is its parent.
 REPO_ROOT = Path(workflow.basedir).parent.resolve()
-
 
 workdir: str(REPO_ROOT)
 
@@ -32,13 +44,21 @@ PROFDATA = f"{BUILD}/coverage.profdata"
 BUILD_STAMP = f"{BUILD}/.coverage_build.stamp"
 TEST_STAMP = f"{BUILD}/.coverage_tests.stamp"
 
-# Parallel test jobs: at least 4, more if the machine has more cores.
-# Override with CTEST_JOBS=N. The %p (PID) in LLVM_PROFILE_FILE keeps each
-# parallel test process's raw profile separate, so parallelism is safe.
-CTEST_JOBS = int(os.environ.get("CTEST_JOBS", max(4, os.cpu_count() or 4)))
+# Parallel jobs for BOTH the build (CMAKE_BUILD_PARALLEL_LEVEL) and the test run
+# (CTEST_PARALLEL_LEVEL): at least 4, more if the machine has more cores. Override
+# with CTEST_JOBS=N. We use the env vars rather than `-j N` because cmake/ctest
+# >= 3.29 take an OPTIONAL -j argument, so a space-separated "-j 4" is silently
+# dropped (the value is not consumed) and the tools fall back to serial/default.
+CTEST_JOBS = int(os.environ.get("CTEST_JOBS", max(4, get_performance_core_count() or 4)))
 
 # Library code only: drop dependencies, tests, and system/SDK headers.
 IGNORE_REGEX = r"(/_deps/|/tests/|/usr/|/Applications/|/Library/Developer/)"
+
+# Extra args appended verbatim to the `cmake --preset coverage` configure step.
+# Empty by default (local runs are unaffected); CI sets this to wire a compiler
+# launcher, e.g.
+#   CMAKE_EXTRA_ARGS="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache"
+CMAKE_EXTRA_ARGS = os.environ.get("CMAKE_EXTRA_ARGS", "")
 
 if platform.system() == "Darwin":
     LLVM_PROFDATA = os.environ.get("LLVM_PROFDATA", "xcrun llvm-profdata")
@@ -65,17 +85,20 @@ rule configure:
         f"{BUILD}/CMakeCache.txt",
     localrule: True
     shell:
-        "cmake --preset coverage"
+        "cmake --preset coverage {CMAKE_EXTRA_ARGS}"
 
 
 rule build:
-    # Ninja parallelizes the build internally across all available cores.
+    # CMAKE_BUILD_PARALLEL_LEVEL drives the build width. (A plain `-j N` is
+    # unreliable here: cmake >= 3.29 makes -j's argument optional, so a
+    # space-separated value is dropped and Ninja falls back to its native default.)
     input:
         f"{BUILD}/CMakeCache.txt",
     output:
         touch(BUILD_STAMP),
+    threads: CTEST_JOBS
     shell:
-        "cmake --build {BUILD}"
+        "CMAKE_BUILD_PARALLEL_LEVEL={CTEST_JOBS} cmake --build {BUILD}"
 
 
 rule test:
@@ -89,11 +112,14 @@ rule test:
         # cases in parallel; %p keeps parallel writers separate, and the shared %m
         # prefix lets the report step group profiles per binary -- which is what
         # avoids the cross-binary hash-collision "mismatched data" in the lcov.
+        # CTEST_PARALLEL_LEVEL sets the parallel width (a space-separated `-j N` is
+        # dropped by ctest >= 3.29, whose -j argument is optional).
         """
         rm -rf {PROFRAW_DIR}
         mkdir -p {PROFRAW_DIR}
+        export CTEST_PARALLEL_LEVEL={CTEST_JOBS}
         LLVM_PROFILE_FILE="$(pwd)/{PROFRAW_DIR}/cov-%m-%p.profraw" \
-            ctest --test-dir {BUILD}/tests/unit-tests --output-on-failure -j {CTEST_JOBS}
+            ctest --test-dir {BUILD}/tests/unit-tests --output-on-failure
         """
 
 
@@ -113,7 +139,6 @@ rule reports:
     output:
         summary=f"{BUILD}/coverage-summary.txt",
         lcov=f"{BUILD}/coverage.lcov",
-        html=directory(f"{BUILD}/coverage-html"),
     shell:
         # Test executables are copied flat into <build>/tests/unit-tests
         # (extension-less); discovery/data files carry extensions and are skipped.
@@ -125,7 +150,7 @@ rule reports:
             echo "ERROR: no instrumented test binaries found" >&2; exit 1
         fi
 
-        # --- HTML + terminal summary: single merged profile (human drill-down).
+        # --- terminal summary: single merged profile.
         # llvm-cov takes one positional binary; the rest are passed via -object.
         # The 'mismatched data' warning here is expected -- mostly _deps/STL noise
         # from template instantiations shared across binaries -- and does NOT
@@ -135,10 +160,6 @@ rule reports:
         {LLVM_COV} report "${{cov_objects[@]}}" \
             -instr-profile={input.profdata} \
             -ignore-filename-regex='{IGNORE_REGEX}' | tee {output.summary}
-        {LLVM_COV} show "${{cov_objects[@]}}" \
-            -instr-profile={input.profdata} \
-            -ignore-filename-regex='{IGNORE_REGEX}' \
-            -format=html -output-dir={output.html}
 
         # --- lcov for Codecov: prefer each binary's OWN profile (no hash-collision
         # drops), falling back to the merged profile for any binary we cannot
@@ -178,6 +199,34 @@ rule reports:
         if [ ! -s {output.lcov} ]; then
             echo "ERROR: coverage.lcov is empty (no profiles exported)" >&2; exit 1
         fi
+        """
+
+
+rule report_html:
+    # Browsable per-instantiation HTML report from the merged profile. Split out
+    # from `reports` (and not part of the lcov path) because `llvm-cov show
+    # -format=html` is the expensive step -- PR patch-coverage runs request only
+    # the lcov + summary targets and skip this; full main/devel runs build `all`,
+    # which includes it for the workflow artifact.
+    input:
+        profdata=PROFDATA,
+        built=BUILD_STAMP,
+    output:
+        html=directory(f"{BUILD}/coverage-html"),
+    shell:
+        """
+        objects=()
+        while IFS= read -r -d '' f; do objects+=("$f"); done \
+            < <(find {BUILD}/tests/unit-tests -maxdepth 1 -type f ! -name '*.*' -print0)
+        if [ ${{#objects[@]}} -eq 0 ]; then
+            echo "ERROR: no instrumented test binaries found" >&2; exit 1
+        fi
+        cov_objects=("${{objects[0]}}")
+        for b in "${{objects[@]:1}}"; do cov_objects+=(-object "$b"); done
+        {LLVM_COV} show "${{cov_objects[@]}}" \
+            -instr-profile={input.profdata} \
+            -ignore-filename-regex='{IGNORE_REGEX}' \
+            -format=html -output-dir={output.html}
         """
 
 

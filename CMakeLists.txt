@@ -256,6 +256,11 @@ if(SPECFEM_ENABLE_COVERAGE)
     # imprecision only).
     string(APPEND CMAKE_CXX_FLAGS
         " -fprofile-instr-generate -fcoverage-mapping -g")
+    # Re-enable assert()/NDEBUG-guarded code so it is compiled and shows up in
+    # coverage. RelWithDebInfo (and Release) define NDEBUG via
+    # CMAKE_CXX_FLAGS_<CONFIG>, which CMake places after CMAKE_CXX_FLAGS; using
+    # add_compile_options() puts -UNDEBUG after that, so it wins. Scoped to C++.
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-UNDEBUG>)
     # Belt-and-suspenders: scope the profiling-runtime link flag to C++-linked
     # targets (CMake >= 3.18) so any Fortran-linked target added later still
     # links cleanly even if it pulls in an instrumented C++ object.
