@@ -39,6 +39,15 @@ public:
   void read(specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
                 &assembly) override;
 
+  /**
+   * @brief read the property from disk
+   *
+   * @param assembly SPECFEM++ 3D assembly
+   *
+   */
+  void read(specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
+                &assembly) override;
+
 private:
   std::string input_folder; ///< Path to output folder
   specfem::assembly::properties<specfem::element::dimension_tag::dim2>

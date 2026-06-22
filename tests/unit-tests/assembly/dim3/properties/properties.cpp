@@ -20,10 +20,14 @@
 #include "../test_fixture.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/io.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/point.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include <any>
+#include <boost/filesystem.hpp>
+#include <cstdlib>
 #include <gtest/gtest.h>
 #include <initializer_list>
 #include <string>
@@ -212,7 +216,7 @@ struct ExpectedProperties3D {
               const auto computed_property = [&]() {
                 specfem::point::properties<specfem::tags::Tags<
                     ElementTags::dimension_tag, ElementTags::medium_tag,
-                    ElementTags::property_tag, false> >
+                    ElementTags::property_tag, false>>
                     prop_accessor;
                 specfem::assembly::load_on_host(index, properties,
                                                 prop_accessor);
@@ -223,7 +227,7 @@ struct ExpectedProperties3D {
               const auto expected_property =
                   std::any_cast<specfem::point::properties<specfem::tags::Tags<
                       ElementTags::dimension_tag, ElementTags::medium_tag,
-                      ElementTags::property_tag, false> > >(expected.property);
+                      ElementTags::property_tag, false>>>(expected.property);
 
               // Compare properties with detailed error reporting
               if (computed_property != expected_property) {
@@ -275,7 +279,7 @@ std::unordered_map<std::string, ExpectedProperties3D>
                     specfem::point::properties<specfem::tags::Tags<
                         specfem::element::dimension_tag::dim3,
                         specfem::element::medium_tag::elastic,
-                        specfem::element::property_tag::isotropic, false> >(
+                        specfem::element::property_tag::isotropic, false>>(
                         11.132e9, 5.175e9, 2300)) // κ, μ, ρ
                                                   // Add more GLL points as
                                                   // needed
@@ -329,4 +333,79 @@ TEST_P(Assembly3DTest, Properties) {
 
   // Perform comprehensive validation
   expected_properties.check(properties);
+}
+
+/**
+ * @brief Round-trip write/read test for the 3D property writer/reader.
+ *
+ * Mirrors the 2D `properties_io_routines` test: fills every property host view
+ * with a known value, writes the model to disk with the ASCII backend, corrupts
+ * the host views, reads the model back, and verifies the recovered values.
+ */
+TEST_P(Assembly3DTest, PropertiesIORoutines) {
+  // Mutable access to the fixture's assembly (the public accessor is const).
+  auto &assembly = this->assembly.assembly;
+
+  const std::string temp_io_directory =
+      (std::getenv("BUILD_DIR") ? std::string(std::getenv("BUILD_DIR"))
+                                : boost::filesystem::current_path().string()) +
+      "/tests/unit-tests/temp_properties_io_dim3";
+  boost::filesystem::create_directories(temp_io_directory);
+
+  const auto for_each_property_view = [&](auto fn) {
+    specfem::tag_dispatch::for_each(
+        DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic) *
+            PROPERTY_SET(isotropic),
+        [&]<typename ElementTags>() {
+          constexpr auto medium_tag = ElementTags::medium_tag;
+          constexpr auto property_tag = ElementTags::property_tag;
+          const auto elements = assembly.element_types.get_elements_on_host(
+              medium_tag, property_tag);
+          if (elements.size() == 0)
+            return;
+          const auto container =
+              assembly.properties.get_container<medium_tag, property_tag>();
+          container.for_each_host_view(
+              [&](const auto view, const std::string) { fn(view); });
+        });
+  };
+
+  try {
+    const type_real random_value = 10.1;
+
+    // 1. Set every property host view to a known value and push to device.
+    for_each_property_view(
+        [&](const auto view) { Kokkos::deep_copy(view, random_value); });
+    assembly.properties.copy_to_device();
+
+    // 2. Write the model to disk.
+    specfem::io::property_writer<
+        specfem::io_backends::ASCII<specfem::io::write>>
+        writer(temp_io_directory);
+    writer.write(assembly);
+
+    // 3. Corrupt the host views so a successful read is unambiguous.
+    for_each_property_view([&](const auto view) {
+      Kokkos::deep_copy(view, static_cast<type_real>(-999.0));
+    });
+    assembly.properties.copy_to_device();
+
+    // 4. Read the model back.
+    specfem::io::property_reader<specfem::io_backends::ASCII<specfem::io::read>>
+        reader(temp_io_directory);
+    reader.read(assembly);
+
+    // 5. Verify the recovered host values.
+    for_each_property_view([&](const auto view) {
+      const auto *data = view.data();
+      for (std::size_t i = 0; i < view.size(); ++i) {
+        EXPECT_NEAR(data[i], random_value, 1e-4);
+      }
+    });
+  } catch (std::exception &e) {
+    boost::filesystem::remove_all(temp_io_directory);
+    FAIL() << "3D property IO round-trip failed: " << e.what();
+  }
+
+  boost::filesystem::remove_all(temp_io_directory);
 }
