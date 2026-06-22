@@ -942,7 +942,8 @@
   if (ier /= 0) stop 'Error allocating array nonconforming_adjacency_face'
 
   do ispec = 1,nnonconforming_adjacencies
-    read(IIN_DB,*) nonconforming_ispec_source(ispec), nonconforming_ispec_target(ispec), nonconforming_adjacency_type(ispec), nonconforming_adjacency_face(ispec)
+    read(IIN_DB,*) nonconforming_ispec_source(ispec), nonconforming_ispec_target(ispec), &
+                   nonconforming_adjacency_type(ispec), nonconforming_adjacency_face(ispec)
   enddo
 
 
