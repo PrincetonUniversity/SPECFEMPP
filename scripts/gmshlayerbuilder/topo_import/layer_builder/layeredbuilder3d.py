@@ -1,6 +1,7 @@
 import itertools
 
 from gmsh2meshfem.dim3.model.model import Model
+from gmsh2meshfem.dim3.model.gmshmodel import GmshModel3D
 from gmsh2meshfem.gmsh_dep import GmshContext
 
 from ..tags import BOUNDARY_TYPES, BoundaryConditionType
@@ -180,8 +181,9 @@ class LayeredBuilder3D:
             # =====================================================================
             #                      extract mesh model
             # =====================================================================
-            return Model.from_meshed_volume(
-                volume=volumes,
-                gmsh=gmsh,
-                physical_group_captures=bdry_by_name.keys(),
-            )
+            return GmshModel3D(gmsh,volumes).to_model({v:v for v in volumes})
+            # return Model.from_meshed_volume(
+            #     volume=volumes,
+            #     gmsh=gmsh,
+            #     physical_group_captures=bdry_by_name.keys(),
+            # )
