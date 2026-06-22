@@ -210,7 +210,10 @@
   !     adjacency format read by read_adjacency_graph.cpp
 
   use decompose_mesh_par, only: nspec, xadj_typed, adjncy_typed, adj_types_global, &
-                                 glob2loc_elmnts, part, elmnts, NGNOD, nnonconforming_adjacencies, nonconforming_ispec_source, nonconforming_ispec_target,nonconforming_adjacency_type,nonconforming_adjacency_face
+                                 glob2loc_elmnts, part, elmnts, NGNOD, &
+                                 nnonconforming_adjacencies, nonconforming_ispec_source, &
+                                 nonconforming_ispec_target,nonconforming_adjacency_type, &
+                                 nonconforming_adjacency_face
 
   implicit none
 
@@ -263,7 +266,8 @@
 
   ! write nonconforming
   do k = 1,nnonconforming_adjacencies
-    write(IIN_database) nonconforming_ispec_source(k), nonconforming_ispec_target(k), nonconforming_adjacency_type(k), nonconforming_adjacency_face(k)
+    write(IIN_database) nonconforming_ispec_source(k), nonconforming_ispec_target(k), &
+                        nonconforming_adjacency_type(k), nonconforming_adjacency_face(k)
   end do
 
 
