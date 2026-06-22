@@ -5,32 +5,76 @@ from enum import IntEnum
 import numpy as np
 from numpy.typing import NDArray
 
-from ..binary_detect_N3 import L, maxfind_coefs_a, maxfind_coefs_b
+from ...dim2.binary_detect_N3 import L, maxfind_coefs_a, maxfind_coefs_b
+from ...dim2.model.edges import EdgeType
+
+# https://gmsh.info/doc/texinfo/
+# Hexahedron:             Hexahedron20:          Hexahedron27:
+#
+#        v
+# 3----------2            3----13----2           3----13----2
+# |\     ^   |\           |\         |\          |\         |\
+# | \    |   | \          | 15       | 14        |15    24  | 14
+# |  \   |   |  \         9  \       11 \        9  \ 20    11 \
+# |   7------+---6        |   7----19+---6       |   7----19+---6
+# |   |  +-- |-- | -> u   |   |      |   |       |22 |  26  | 23|
+# 0---+---\--1   |        0---+-8----1   |       0---+-8----1   |
+#  \  |    \  \  |         \  17      \  18       \ 17    25 \  18
+#   \ |     \  \ |         10 |        12|        10 |  21    12|
+#    \|      w  \|           \|         \|          \|         \|
+#     4----------5            4----16----5           4----16----5
 
 
-class EdgeType(IntEnum):
+class FaceType(IntEnum):
     # this indexing is 1 less than the meshfem indexing. Keep that in mind.
     BOTTOM = 0
     RIGHT = 1
     TOP = 2
     LEFT = 3
+    FRONT = 4
+    BACK = 5
 
     @staticmethod
-    def QUA_9_node_indices_on_type(edgetype: int) -> tuple[int, int, int]:
-        if edgetype == EdgeType.BOTTOM:
-            return (0, 4, 1)
-        if edgetype == EdgeType.RIGHT:
-            return (1, 5, 2)
-        if edgetype == EdgeType.TOP:
-            return (2, 6, 3)
-        if edgetype == EdgeType.LEFT:
-            return (3, 7, 0)
-        msg = f"`edgetype` (={edgetype}) must be an EdgeType"
+    def HEX_27_node_indices_on_type(
+        facetype: int,
+    ) -> tuple[int, int, int, int, int, int, int, int, int]:
+        if facetype == FaceType.BOTTOM:
+            return (0, 3, 2, 1, 9, 13, 11, 8, 20)
+        if facetype == FaceType.RIGHT:
+            return (1, 2, 6, 5, 11, 14, 18, 12, 23)
+        if facetype == FaceType.TOP:
+            return (4, 5, 6, 7, 16, 18, 19, 17, 25)
+        if facetype == FaceType.LEFT:
+            return (0, 4, 7, 3, 10, 17, 15, 9, 22)
+        if facetype == FaceType.FRONT:
+            return (0, 1, 5, 4, 8, 12, 16, 10, 21)
+        if facetype == FaceType.BACK:
+            return (3, 2, 6, 7, 13, 14, 19, 15, 24)
+        msg = f"`facetype` (={facetype}) must be an FaceType"
         raise ValueError(msg)
 
     @staticmethod
-    def QUA_9_edge_to_inds_matrix() -> np.ndarray:
-        return np.array([EdgeType.QUA_9_node_indices_on_type(i) for i in range(4)])
+    def HEX_27_edge_to_inds_matrix() -> np.ndarray:
+        return np.array([FaceType.HEX_27_node_indices_on_type(i) for i in range(6)])
+
+
+_QUA_9_facecoords_at_node = np.array(
+    [
+        (-1, -1),
+        (1, -1),
+        (1, 1),
+        (-1, 1),
+        (0, -1),
+        (1, 0),
+        (0, 1),
+        (-1, 0),
+        (0, 0),
+    ]
+)
+
+
+def QUA_9_facecoords_at_node(node_index: int):
+    return _QUA_9_facecoords_at_node[node_index, :]
 
 
 @dataclass
@@ -166,47 +210,51 @@ def edges_of_all_elements(
 
 
 def vectorized_bbox_calc(node_coord_matrix: np.ndarray) -> np.ndarray:
-    """Computes the bounding boxes for all of the given edges in a fast way.
+    """Computes the bounding boxes for all of the given faces in a fast way.
 
     Args:
-        node_coord_matrix(np.ndarray): ...x3x2 array of node coordinates.
+        node_coord_matrix(np.ndarray): ...x9x3 array of node coordinates.
+                The last index is the dimension, while the second last is the intra-element node
 
     Returns:
-        np.ndarray: (...x4) array, with bbox = (xmin, ymin, xmax, ymax)
+        np.ndarray: (...x6) array, with bbox = (xmin, ymin, zmin, xmax, ymax, zmax)
     """
-    ndim = node_coord_matrix.shape[-1]  # should be 2, can be 3
+    ndim = node_coord_matrix.shape[-1]  # should be 3
     ret = np.empty(
-        node_coord_matrix.shape[:-2] + (ndim * 2,), dtype=node_coord_matrix.dtype
+        node_coord_matrix.shape[:-2] + (2 * ndim,), dtype=node_coord_matrix.dtype
     )
+    ret_min = ret[..., :ndim]
+    ret_max = ret[..., ndim:]
 
-    # compute critical point
+    # initialize (start with corners)
+    ret_min[...] = node_coord_matrix[..., 0, :]
+    ret_max[...] = node_coord_matrix[..., 0, :]
+    for inod in [1, 2, 3]:
+        np.minimum(ret_min, node_coord_matrix[..., inod, :], ret_min)
+        np.maximum(ret_max, node_coord_matrix[..., inod, :], ret_max)
 
-    with np.errstate(divide="ignore", invalid="ignore"):
-        crit = np.einsum(
-            "k,...kd->...d", maxfind_coefs_b, node_coord_matrix
-        ) / np.einsum("k,...kd->...d", maxfind_coefs_a, node_coord_matrix)
-    valid_search = (crit > -1) * (crit < 1)
+    # since jacobian is assumed > 1, the only possible critical points are on the boundaries.
+    for iedge in range(4):
+        edgenodes = EdgeType.QUA_9_node_indices_on_type(iedge)
+        edge_coords = node_coord_matrix[..., edgenodes, :]
 
-    extrema = np.einsum(
-        "ji,...i,...j->...",
-        L,
-        crit[valid_search, None] ** np.arange(3),
-        np.swapaxes(node_coord_matrix, -2, -1)[valid_search, :],
-    )
+        # compute critical point
+        with np.errstate(divide="ignore", invalid="ignore"):
+            crit = np.einsum("k,...kd->...d", maxfind_coefs_b, edge_coords) / np.einsum(
+                "k,...kd->...d", maxfind_coefs_a, edge_coords
+            )
+        valid_search = (crit > -1) * (crit < 1)
 
-    # initialize (extrema or some point on edge)
-    ret[..., :ndim] = node_coord_matrix[..., 0, :]
-    ret[..., :ndim][valid_search] = extrema
+        extrema = np.einsum(
+            "ji,...i,...j->...",
+            L,
+            crit[valid_search, None] ** np.arange(3),
+            np.swapaxes(edge_coords, -2, -1)[valid_search, :],
+        )
 
-    # maximum values (between extrema and endpoints)
-    np.maximum(
-        node_coord_matrix[..., 0, :], node_coord_matrix[..., 2, :], ret[..., ndim:]
-    )
-    np.maximum(ret[..., :ndim], ret[..., ndim:], ret[..., ndim:])
+        ret_min[valid_search] = np.minimum(ret_min[valid_search], extrema)
+        ret_max[valid_search] = np.maximum(ret_max[valid_search], extrema)
 
-    # minima
-    np.minimum(ret[..., :ndim], node_coord_matrix[..., 0, :], ret[..., :ndim])
-    np.minimum(ret[..., :ndim], node_coord_matrix[..., 2, :], ret[..., :ndim])
     return ret
 
 

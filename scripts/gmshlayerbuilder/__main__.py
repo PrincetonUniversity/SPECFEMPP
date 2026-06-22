@@ -153,13 +153,12 @@ def get_parser():
 
 
 def run2D():
-    from gmsh2meshfem.dim2 import Exporter as Exporter2D
-    # from gmsh2meshfem.dim3 import Exporter as Exporter3D
-
     args = get_parser().parse_args()
     print(args)
 
     if args.dimension.lower() == "2d":
+        from gmsh2meshfem.dim2.exporter import Exporter as Exporter2D
+
         builder = topo_import.builder_from_topo_file2d(
             args.topo_file,
             set_bottom_boundary=args.bdry_bottom,
@@ -177,6 +176,8 @@ def run2D():
             model, args.output_folder, nonconforming_adjacencies_file="nc_adjacencies"
         ).export_mesh()
     else:
+        from gmsh2meshfem.dim3.exporter import Exporter as Exporter3D
+
         if args.depth_block_km is None:
             depth_block_m = None
         else:
@@ -199,6 +200,9 @@ def run2D():
             depth_block_m=depth_block_m,
         )
         model = builder.create_model()
+        Exporter3D(
+            model, args.output_folder, nonconforming_adjacencies_file="nc_adjacencies"
+        ).export_mesh()
 
 
 if __name__ == "__main__":
