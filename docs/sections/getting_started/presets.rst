@@ -34,7 +34,7 @@ To build with CUDA support:
     cmake --build --preset release-cuda
 
 The binaries built with and without CUDA will be generated in the ``bin/release`` and ``bin/release-cuda`` directories, respectively.
-When running SPECFEM++, make sure you are using the correct binary for your chosen preset. You can either export the appropriate directory to your ``PATH`` environment variable, or run the executable by specifying its full path (e.g., ``<SPECFEMPP_DIR>/bin/release/specfem2d`` or ``<SPECFEMPP_DIR>/bin/release-cuda/specfem2d``).
+When running SPECFEM++, make sure you are using the correct binary for your chosen preset. You can either export the appropriate directory to your ``PATH`` environment variable, or run the executable by specifying its full path (e.g., ``<SPECFEMPP_DIR>/bin/release/specfem`` or ``<SPECFEMPP_DIR>/bin/release-cuda/specfem``).
 
 .. note::
 

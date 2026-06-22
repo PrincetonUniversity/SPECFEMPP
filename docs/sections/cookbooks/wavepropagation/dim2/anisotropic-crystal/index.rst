@@ -17,9 +17,9 @@ We also need to check that the SPECFEM++ executable directory is added to the ``
 
 .. code:: bash
 
-    which specfem2d
+    which specfem
 
-If the above command returns a path to the ``specfem2d`` executable, then the
+If the above command returns a path to the ``specfem`` executable, then the
 build directory is added to the ``PATH``. If not, you need to add the executable
 directory to the ``PATH`` using the following command.
 
@@ -150,7 +150,7 @@ Now we can run the solver using the following command.
 
 .. code:: bash
 
-    specfem2d -p specfem_config.yaml
+    specfem 2d -p specfem_config.yaml
 
 
 Visualizing the traces and wavefield
