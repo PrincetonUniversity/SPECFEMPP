@@ -16,15 +16,6 @@ namespace specfem::solver::impl {
 /**
  * @brief Update one medium's wavefield, overlapping MPI exchange with compute.
  *
- * Runs the solver's per-medium update: coupling and source interaction
- * (unpartitioned, once), outer-element stiffness, begin acceleration exchange,
- * inner-element stiffness, finish exchange, then divide by the mass matrix.
- * Coupling and source must complete before the field is packed for exchange,
- * and `divide_mass_matrix` must run after the cross-rank acceleration has been
- * accumulated. For media without a cross-rank buffer (and all of dim2) the
- * begin/finish exchange calls are no-ops; mass assembly still runs over the
- * outer/inner subsets but without any MPI communication.
- *
  * @tparam NGLL Number of GLL points per element edge
  * @tparam Tags Compile-time tags (dimension, wavefield, medium)
  * @param assembly The assembly object containing the mesh and fields
@@ -68,11 +59,6 @@ int update_medium(specfem::assembly::assembly<Tags::dimension_tag> &assembly,
 /**
  * @brief Initialize one medium's mass matrix, overlapping exchange with
  * compute.
- *
- * Computes the local mass-matrix contributions on outer elements, begins the
- * cross-rank exchange, computes inner elements, finishes the exchange, then
- * inverts. For media without a cross-rank buffer (and all of dim2) the
- * begin/finish exchange calls are no-ops and the outer element set is empty.
  *
  * @tparam NGLL Number of GLL points per element edge
  * @tparam Tags Compile-time tags (dimension, wavefield, medium)

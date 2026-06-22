@@ -20,10 +20,9 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
   constexpr auto elastic_psv_t = specfem::element::medium_tag::elastic_psv_t;
   constexpr auto forward = specfem::simulation::field_type::forward;
 
-  // Compute and invert the mass matrix. Media with a cross-rank buffer
-  // (elastic, acoustic) overlap the exchange with computation; the rest are
-  // local no-ops on the exchange.
+  // Compute and invert the mass matrix.
   const auto mass_dt = time_scheme->get_timestep();
+
   specfem::tag_dispatch::for_each(
       specfem::tag_dispatch::dimension_set<DimensionTag>{} *
           MEDIUM_SET(acoustic, elastic, elastic_psv, elastic_sh, poroelastic,
@@ -171,29 +170,21 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
   constexpr auto adjoint = specfem::simulation::field_type::adjoint;
   constexpr auto backward = specfem::simulation::field_type::backward;
 
-  // Compute and invert the mass matrix for both wavefields. Media with a
-  // cross-rank buffer (elastic, acoustic) overlap the exchange with
-  // computation; the rest are local no-ops on the exchange.
-  {
-    const auto mass_dt = time_scheme->get_timestep();
-    const auto mass_set =
-        specfem::tag_dispatch::dimension_set<DimensionTag>{} *
-        MEDIUM_SET(acoustic, elastic, elastic_psv, elastic_sh, poroelastic);
-    const auto init_mass = [&]<specfem::simulation::field_type WF>() {
-      specfem::tag_dispatch::for_each(
-          mass_set, [&]<typename ElementTags>() {
-            specfem::solver::impl::init_medium_mass<
-                NGLL, specfem::tags::expand<ElementTags, WF>>(
-                assembly, mpi_buffers, mass_dt);
-          });
-    };
-    init_mass.template operator()<adjoint>();
-    init_mass.template operator()<backward>();
+  // Compute and invert the mass matrix for both wavefields.
+  const auto mass_dt = time_scheme->get_timestep();
+  const auto mass_set =
+      specfem::tag_dispatch::dimension_set<DimensionTag>{} *
+      MEDIUM_SET(acoustic, elastic, elastic_psv, elastic_sh, poroelastic) *
+      WAVEFIELD_SET(adjoint, backward);
 
-    // The mass-matrix buffers are no longer needed after assembly + inversion.
-    mpi_buffers
-        .template reset<specfem::data_access::DataClassType::mass_matrix>();
-  }
+  specfem::tag_dispatch::for_each(mass_set, [&]<typename ElementTags>() {
+      specfem::solver::impl::init_medium_mass<NGLL, ElementTags>(
+          assembly, mpi_buffers, mass_dt);
+  });
+
+  // The mass-matrix buffers are no longer needed after assembly + inversion.
+  mpi_buffers
+      .template reset<specfem::data_access::DataClassType::mass_matrix>();
 
   const int nstep = time_scheme->get_max_timestep();
 

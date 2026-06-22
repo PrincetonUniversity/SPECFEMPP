@@ -399,8 +399,7 @@ template <> class mpi<specfem::element::dimension_tag::dim3> {
 public:
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
 
-  /// Media that participate in 3D cross-rank MPI exchange. Single source of
-  /// truth for the dim3 exchanging media, reused by solver-owned buffers.
+  /// Media that participate in 3D cross-rank MPI exchange.
   static constexpr auto media = MEDIUM_SET(elastic, acoustic);
 
   /// Medium combinations for 3D MPI communication patterns

@@ -121,11 +121,9 @@ int compute_stiffness_interaction_core(
 /**
  * @brief Compute stiffness interaction for one inner/outer element subset.
  *
- * Iterates all property/attenuation/boundary combinations for the medium and
- * wavefield identified by @p Tags, restricted to the inner or outer element
- * subset carried by `Tags::mpi_tag`. This is a single compute pass with no MPI
- * communication; the solver orchestrates the begin/finish communication around
- * the outer and inner passes.
+ * Iterates all tag combinations for the medium and wavefield identified by
+ * @p Tags, restricted to the inner or outer element
+ * subset carried by `Tags::mpi_tag`.
  *
  * @tparam NGLL Number of GLL points per element edge
  * @tparam Tags Compile-time tags (dimension, medium, wavefield, mpi)
@@ -140,9 +138,11 @@ int compute_stiffness_interaction(
 
   int elements_updated = 0;
 
-  constexpr auto base_set =
+  constexpr auto element_combinations =
       specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
       specfem::tag_dispatch::medium_set<Tags::medium_tag>{} *
+      specfem::tag_dispatch::wavefield_set<Tags::wavefield_tag>{} *
+      specfem::tag_dispatch::mpi_set<Tags::mpi_tag>{} *
       PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
       ATTENUATION_SET(none, constant_isotropic) *
       BOUNDARY_SET(none, stacey, acoustic_free_surface,
@@ -151,13 +151,11 @@ int compute_stiffness_interaction(
   auto compute_stiffness = [&]<typename ElementTags>() {
     // Append the wavefield tag, then the mpi (inner/outer) tag, to the
     // per-combo element tags before dispatching the kernel.
-    elements_updated += compute_stiffness_interaction_core<
-        NGLL, specfem::tags::expand<
-                  specfem::tags::expand<ElementTags, Tags::wavefield_tag>,
-                  Tags::mpi_tag>>(assembly, istep);
+    elements_updated +=
+        compute_stiffness_interaction_core<NGLL, ElementTags>(assembly, istep);
   };
 
-  specfem::tag_dispatch::for_each(base_set, compute_stiffness);
+  specfem::tag_dispatch::for_each(element_combinations, compute_stiffness);
 
   return elements_updated;
 }

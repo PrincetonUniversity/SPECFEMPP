@@ -185,9 +185,7 @@ template <> struct MPIBuffers<specfem::element::dimension_tag::dim2> {
 template <> struct MPIBuffers<specfem::element::dimension_tag::dim3> {
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
 
-  /// All (wavefield, medium) combinations with cross-rank exchange. The media
-  /// are sourced from the assembly's mpi object so the exchanging-media set is
-  /// stated in exactly one place.
+  // The set of (wavefield, medium) combinations that have cross-rank buffers
   static constexpr auto buffer_combos =
       WAVEFIELD_SET(forward, backward, adjoint) *
       specfem::assembly::mpi<dimension_tag>::media;
@@ -255,11 +253,6 @@ template <> struct MPIBuffers<specfem::element::dimension_tag::dim3> {
   /**
    * @brief Access the buffer collection for a (wavefield, medium) slot.
    *
-   * Returns the real buffer collection for media with cross-rank exchange
-   * (elastic, acoustic); for any other medium it returns a shared no-op
-   * collection, so callers can dispatch the same communication sequence over
-   * every medium uniformly.
-   *
    * @tparam TagsType Tags<wavefield_tag, medium_tag, ...> identifying the slot.
    */
   template <typename TagsType> auto &get() {
@@ -277,9 +270,6 @@ template <> struct MPIBuffers<specfem::element::dimension_tag::dim3> {
    * @brief Free the given data class buffer across all (wavefield, medium)
    * slots.
    *
-   * Used to deallocate the mass-matrix buffers once the mass matrix has been
-   * assembled and inverted, since they are not needed during time-stepping.
-   *
    * @tparam DataClass Data class to free (acceleration or mass_matrix).
    */
   template <specfem::data_access::DataClassType DataClass> void reset() {
@@ -291,9 +281,6 @@ template <> struct MPIBuffers<specfem::element::dimension_tag::dim3> {
 
 /**
  * @brief Build solver-owned MPI buffers from an assembly.
- *
- * dim3 buffers are constructed from `assembly.mpi_interfaces`; dim2 has no MPI
- * exchange and yields a default (no-op) container.
  *
  * @tparam DimensionTag Spatial dimension (dim2 or dim3).
  * @param assembly The assembly object providing the MPI interfaces (dim3); the
