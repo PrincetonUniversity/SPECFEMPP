@@ -205,24 +205,31 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
     // the reconstructed forward field has been loaded.
     specfem::compute::compute_derivatives<NGLL, specfem::tags::Tags<DimensionTag>>(assembly, dt);
 
-    // Backward time step
+    // Backward time step. The initial backward state is copied from the final
+    // saved forward snapshot before entering the loop. Fortran computes a
+    // backward force at it=1, then immediately overwrites it with
+    // read_forward_arrays(); the first force/source sample that affects the
+    // reconstructed field is therefore NSTEP - 1. Use istep - 1 here to keep
+    // the source replay aligned with that sequence.
+    const int backward_istep = istep > 0 ? istep - 1 : 0;
+
     dofs_updated += time_scheme->apply_predictor_phase_backward(elastic);
     dofs_updated += time_scheme->apply_predictor_phase_backward(elastic_psv);
     dofs_updated += time_scheme->apply_predictor_phase_backward(elastic_sh);
     dofs_updated += time_scheme->apply_predictor_phase_backward(acoustic);
     dofs_updated += time_scheme->apply_predictor_phase_backward(poroelastic);
 
-    elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, backward, elastic>>(assembly, istep);
-    elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, backward, elastic_psv>>(assembly, istep);
-    elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, backward, elastic_sh>>(assembly, istep);
+    elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, backward, elastic>>(assembly, backward_istep);
+    elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, backward, elastic_psv>>(assembly, backward_istep);
+    elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, backward, elastic_sh>>(assembly, backward_istep);
     dofs_updated += time_scheme->apply_corrector_phase_backward(elastic);
     dofs_updated += time_scheme->apply_corrector_phase_backward(elastic_psv);
     dofs_updated += time_scheme->apply_corrector_phase_backward(elastic_sh);
 
-    elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, backward, acoustic>>(assembly, istep);
+    elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, backward, acoustic>>(assembly, backward_istep);
     dofs_updated += time_scheme->apply_corrector_phase_backward(acoustic);
 
-    elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, backward, poroelastic>>(assembly, istep);
+    elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, backward, poroelastic>>(assembly, backward_istep);
     dofs_updated += time_scheme->apply_corrector_phase_backward(poroelastic);
 
     if (time_scheme->compute_seismogram(istep)) {
