@@ -4,7 +4,7 @@ from gmsh2meshfem.dim2.model import Model
 from gmsh2meshfem.gmsh_dep import GmshContext
 
 from ..tags import BOUNDARY_TYPES, BoundaryConditionType
-from .layer import Layer, LayerBoundary
+from .layer2d import Layer2D, LayerBoundary2D
 
 
 class LayeredBuilder2D:
@@ -15,8 +15,8 @@ class LayeredBuilder2D:
     xlow: float
     xhigh: float
 
-    boundaries: list[LayerBoundary]
-    layers: list[Layer]
+    boundaries: list[LayerBoundary2D]
+    layers: list[Layer2D]
 
     domain_boundary_type_top: BoundaryConditionType
     domain_boundary_type_bottom: BoundaryConditionType

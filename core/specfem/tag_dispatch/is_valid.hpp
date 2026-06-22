@@ -251,7 +251,8 @@ constexpr bool is_valid_material_combo(MaterialTagTuple t) {
 /**
  * @brief Check whether a (dimension, medium, property, boundary) quad is valid.
  *
- * dim3 elements only support `boundary_tag::none`.  For dim2:
+ * dim3 acoustic elements accept all boundary types; dim3 elastic elements
+ * accept `none` or `stacey`.  For dim2:
  * - `acoustic` accepts all boundary types.
  * - `electromagnetic_te` only accepts `none`.
  * - All other dim2 media accept `none` or `stacey`.
@@ -272,9 +273,12 @@ constexpr bool is_valid_boundary_combo(BoundaryComboTuple t) {
   if (!is_valid_property_combo({ d, m, p }))
     return false;
 
-  // dim3: boundary must be none
-  if (d == D::dim3)
-    return b == B::none;
+  if (d == D::dim3) {
+    if (m == M::acoustic)
+      return b == B::none || b == B::acoustic_free_surface || b == B::stacey ||
+             b == B::composite_stacey_dirichlet;
+    return b == B::none || b == B::stacey;
+  }
 
   switch (m) {
   case M::acoustic:

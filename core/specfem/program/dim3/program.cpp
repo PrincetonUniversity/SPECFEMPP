@@ -1,13 +1,17 @@
 #include "program.hpp"
 #include "specfem/assembly/assembly.hpp"
+#include "specfem/constants.hpp"
 #include "specfem/element.hpp"
 #include "specfem/io.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/mesh.hpp"
+#include "specfem/periodic_tasks/stability_check.hpp"
+#include "specfem/program/abort.hpp"
 #include "specfem/receivers.hpp"
 #include "specfem/solver.hpp"
 #include "specfem/source.hpp"
 #include "specfem/timescheme.hpp"
+#include <algorithm>
 
 namespace specfem::program {
 
@@ -113,11 +117,63 @@ void program_3d(
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
+  //                   CFL Condition Check
+  // --------------------------------------------------------------
+  {
+    const type_real cfl =
+        dt * assembly.info.v.max / assembly.info.gll_distance.min;
+    specfem::Logger::info([&](std::ostringstream &oss) {
+      oss << "CFL Condition Check:\n"
+          << "-------------------------------\n"
+          << " CFL number: ............. " << cfl << "\n"
+          << " Maximum CFL (Cmax): ..... "
+          << specfem::constants::COURANT_NUMBER_SUGGESTED << "\n";
+    });
+    if (cfl > specfem::constants::COURANT_NUMBER_SUGGESTED) {
+      std::ostringstream msg;
+      msg << "CFL condition violated!\n"
+          << "  CFL = " << cfl
+          << " > Cmax = " << specfem::constants::COURANT_NUMBER_SUGGESTED
+          << "\n"
+          << "  Current dt = " << dt << "\n"
+          << "  Suggested dt (satisfies CFL): "
+          << assembly.info.suggested_time_step << "\n"
+          << "  Please update the 'dt' parameter in your configuration.";
+      specfem_abort(msg.str(), 30);
+    }
+  }
+  // Divergence check — runs ~100 times over the full simulation
+  tasks.push_back(
+      std::make_shared<specfem::periodic_tasks::stability_check<
+          specfem::element::dimension_tag::dim3>>(std::max(10, nsteps / 100)));
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
   //                   Instantiate Timescheme
   // --------------------------------------------------------------
   const auto time_scheme = setup.instantiate_timescheme(assembly.fields);
   specfem::Logger::info(
       [&](std::ostringstream &oss) { oss << time_scheme->to_string(); });
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
+  //                   Read wavefields
+  // --------------------------------------------------------------
+  const auto wavefield_reader = setup.instantiate_wavefield_reader<
+      specfem::element::dimension_tag::dim3>();
+  if (wavefield_reader) {
+    tasks.push_back(wavefield_reader);
+  }
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
+  //                  Write Forward Wavefields
+  // --------------------------------------------------------------
+  const auto wavefield_writer = setup.instantiate_wavefield_writer<
+      specfem::element::dimension_tag::dim3>();
+  if (wavefield_writer) {
+    tasks.push_back(wavefield_writer);
+  }
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
@@ -164,6 +220,17 @@ void program_3d(
   if (seismogram_writer) {
     specfem::Logger::info("Writing seismogram files.");
     seismogram_writer->write(assembly);
+  }
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
+  //                Write Kernels
+  // --------------------------------------------------------------
+  const auto kernel_writer = setup.instantiate_kernel_writer();
+  if (kernel_writer) {
+    specfem::Logger::info(
+        "Writing kernel files:\n-------------------------------");
+    kernel_writer->write(assembly);
   }
   // --------------------------------------------------------------
 

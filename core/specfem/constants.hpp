@@ -52,6 +52,14 @@ const type_real COURANT_NUMBER_SUGGESTED = 0.5;
 const type_real NPTS_PER_WAVELENGTH = 5;
 
 /**
+ * @brief Displacement stability threshold for divergence detection.
+ *
+ * The solver aborts if max |displacement| exceeds this value during
+ * time marching, indicating a diverging solution.
+ */
+const type_real STABILITY_THRESHOLD = 1e10;
+
+/**
  * @brief Number of frequencies used for evaluating attenuation objective
  *
  */

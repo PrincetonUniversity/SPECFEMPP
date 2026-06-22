@@ -21,11 +21,6 @@ specfem::runtime_configuration::solver::solver::instantiate(
         time_scheme, tasks, assembly);
   } else if (specfem::utilities::is_combined_string(this->simulation_type)) {
 
-    if (DimensionTag == specfem::element::dimension_tag::dim3) {
-      throw std::runtime_error(
-          "Combined simulation not implemented for 3D problems");
-    }
-
     return std::make_shared<
         specfem::solver::time_marching<specfem::simulation::type::combined,
                                        DimensionTag, NGLL> >(

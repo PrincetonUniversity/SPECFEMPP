@@ -159,10 +159,10 @@ private:
                                      bool do_write = true);
 #endif // NO_HDF5
 
+#ifndef NO_HDF5
   /// @brief Compute MPI offsets via prefix sum (no-op for serial)
   void compute_mpi_offsets();
 
-#ifndef NO_HDF5
   /// @brief Create HDF5 file access property list (parallel or serial)
   hid_t create_file_access_plist() const;
 #endif // NO_HDF5

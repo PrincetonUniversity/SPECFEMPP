@@ -70,7 +70,7 @@ specfem::io::read_3d_mesh(
   // Build element tags. Constructed after the adjacency graph is read so the
   // MPI inner/outer classification can be derived from its MPI connections.
   mesh.tags = specfem::mesh::tags<specfem::element::dimension_tag::dim3>(
-      nspec, mesh.materials, mesh.adjacency_graph);
+      nspec, mesh.materials, mesh.adjacency_graph, mesh.boundaries);
 
   param_stream.close();
 

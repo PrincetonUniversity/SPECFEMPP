@@ -11,6 +11,10 @@ namespace specfem {
 namespace boundary_conditions {
 namespace impl {
 
+using elastic_type =
+    std::integral_constant<specfem::element::medium_tag,
+                           specfem::element::medium_tag::elastic>;
+
 using elastic_psv_type =
     std::integral_constant<specfem::element::medium_tag,
                            specfem::element::medium_tag::elastic_psv>;
@@ -300,6 +304,7 @@ impl_base_elastic_psv_t_traction(const PointBoundaryType &boundary,
 }
 
 // Acoustic Isotropic Stacey Boundary Conditions not using SIMD types
+// Works for both dim2 (edge_weight/edge_normal) and dim3 (face_weight/face_normal).
 template <
     typename PointBoundaryType, typename PointPropertyType,
     typename PointVelocityType, typename ViewType,
@@ -323,21 +328,26 @@ impl_enforce_traction(const acoustic_type &, const isotropic_type &,
                 "Property tag must be isotropic");
 
   constexpr static auto tag = PointBoundaryType::boundary_tag;
+  constexpr static auto dim_tag = PointBoundaryType::dimension_tag;
 
   if (boundary.tag != tag)
     return;
 
-  const auto factor = boundary.edge_weight * boundary.edge_normal.l2_norm();
+  type_real factor;
+  if constexpr (dim_tag == specfem::element::dimension_tag::dim3) {
+    factor = boundary.face_weight * boundary.face_normal.l2_norm();
+  } else {
+    factor = boundary.edge_weight * boundary.edge_normal.l2_norm();
+  }
 
-  // Apply Stacey boundary condition
   traction(0) += static_cast<type_real>(-1.0) * factor *
                  property.rho_vpinverse() * velocity(0);
 
-  // Do nothing
   return;
 }
 
 // Acoustic Isotropic Stacey Boundary Conditions using SIMD types
+// Works for both dim2 (edge_weight/edge_normal) and dim3 (face_weight/face_normal).
 template <
     typename PointBoundaryType, typename PointPropertyType,
     typename PointVelocityType, typename ViewType,
@@ -362,6 +372,7 @@ impl_enforce_traction(const acoustic_type &, const isotropic_type &,
 
   constexpr int components = PointVelocityType::components;
   constexpr auto tag = PointBoundaryType::boundary_tag;
+  constexpr static auto dim_tag = PointBoundaryType::dimension_tag;
 
   using mask_type = typename PointBoundaryType::simd::mask_type;
 
@@ -370,14 +381,21 @@ impl_enforce_traction(const acoustic_type &, const isotropic_type &,
   if (Kokkos::Experimental::none_of(mask))
     return;
 
-  const auto factor = boundary.edge_weight * boundary.edge_normal.l2_norm();
-
-  // Apply Stacey boundary condition
-  traction(0) = Kokkos::Experimental::condition(
-      mask,
-      traction(0) + static_cast<type_real>(-1.0) * factor *
-                        property.rho_vpinverse() * velocity(0),
-      traction(0));
+  if constexpr (dim_tag == specfem::element::dimension_tag::dim3) {
+    const auto factor = boundary.face_weight * boundary.face_normal.l2_norm();
+    traction(0) = Kokkos::Experimental::condition(
+        mask,
+        traction(0) + static_cast<type_real>(-1.0) * factor *
+                          property.rho_vpinverse() * velocity(0),
+        traction(0));
+  } else {
+    const auto factor = boundary.edge_weight * boundary.edge_normal.l2_norm();
+    traction(0) = Kokkos::Experimental::condition(
+        mask,
+        traction(0) + static_cast<type_real>(-1.0) * factor *
+                          property.rho_vpinverse() * velocity(0),
+        traction(0));
+  }
 
   return;
 }
@@ -813,6 +831,126 @@ impl_enforce_traction(const elastic_psv_t_type &, const isotropic_cosserat_type 
 
   return;
 }
+// 3D Elastic Isotropic Stacey Boundary Conditions not using SIMD types
+template <
+    typename PointBoundaryType, typename PointPropertyType,
+    typename PointVelocityType, typename ViewType,
+    typename std::enable_if_t<!PointBoundaryType::simd::using_simd, int> = 0>
+KOKKOS_FUNCTION void
+impl_enforce_traction(const elastic_type &, const isotropic_type &,
+                      const PointBoundaryType &boundary,
+                      const PointPropertyType &property,
+                      const PointVelocityType &velocity, ViewType &traction) {
+
+  static_assert(PointBoundaryType::boundary_tag ==
+                    specfem::element::boundary_tag::stacey,
+                "Boundary tag must be stacey");
+
+  static_assert(PointPropertyType::medium_tag ==
+                    specfem::element::medium_tag::elastic,
+                "Medium tag must be elastic (3D)");
+
+  static_assert(PointPropertyType::property_tag ==
+                    specfem::element::property_tag::isotropic,
+                "Property tag must be isotropic");
+
+  constexpr static auto tag = PointBoundaryType::boundary_tag;
+
+  if (boundary.tag != tag)
+    return;
+
+  const auto &dn = boundary.face_normal;
+  const auto jacobian2d = dn.l2_norm();
+  const auto inv_j = static_cast<type_real>(1.0) / jacobian2d;
+
+  // Unit outward normal components (matching Fortran reference)
+  const type_real nhat[3] = { dn(0) * inv_j, dn(1) * inv_j, dn(2) * inv_j };
+
+  // Normal velocity component v · n̂
+  const auto vn =
+      velocity(0) * nhat[0] + velocity(1) * nhat[1] + velocity(2) * nhat[2];
+
+  const auto rho_vp_minus_vs = property.rho_vp() - property.rho_vs();
+  const auto rho_vs = property.rho_vs();
+
+  for (int icomp = 0; icomp < 3; ++icomp) {
+    const auto factor =
+        vn * nhat[icomp] * rho_vp_minus_vs + velocity(icomp) * rho_vs;
+    traction(icomp) += static_cast<type_real>(-1.0) * factor * jacobian2d *
+                       boundary.face_weight;
+  }
+
+  return;
+}
+
+// 3D Elastic Isotropic Stacey Boundary Conditions using SIMD types
+template <
+    typename PointBoundaryType, typename PointPropertyType,
+    typename PointVelocityType, typename ViewType,
+    typename std::enable_if_t<PointBoundaryType::simd::using_simd, int> = 0>
+KOKKOS_FUNCTION void
+impl_enforce_traction(const elastic_type &, const isotropic_type &,
+                      const PointBoundaryType &boundary,
+                      const PointPropertyType &property,
+                      const PointVelocityType &velocity, ViewType &traction) {
+
+  static_assert(PointBoundaryType::boundary_tag ==
+                    specfem::element::boundary_tag::stacey,
+                "Boundary tag must be stacey");
+
+  static_assert(PointPropertyType::medium_tag ==
+                    specfem::element::medium_tag::elastic,
+                "Medium tag must be elastic (3D)");
+
+  static_assert(PointPropertyType::property_tag ==
+                    specfem::element::property_tag::isotropic,
+                "Property tag must be isotropic");
+
+  constexpr auto tag = PointBoundaryType::boundary_tag;
+
+  using mask_type = typename PointBoundaryType::simd::mask_type;
+
+  mask_type mask([&](std::size_t lane) { return boundary.tag[lane] == tag; });
+
+  if (Kokkos::Experimental::none_of(mask))
+    return;
+
+  const auto &dn = boundary.face_normal;
+  const auto jacobian2d = dn.l2_norm();
+
+  // Unit outward normal components (matching Fortran reference)
+  const auto nx = dn(0) / jacobian2d;
+  const auto ny = dn(1) / jacobian2d;
+  const auto nz = dn(2) / jacobian2d;
+
+  // Normal velocity component v · n̂
+  const auto vn = velocity(0) * nx + velocity(1) * ny + velocity(2) * nz;
+
+  const auto rho_vp_minus_vs = property.rho_vp() - property.rho_vs();
+  const auto rho_vs = property.rho_vs();
+
+  const auto factor0 = vn * nx * rho_vp_minus_vs + velocity(0) * rho_vs;
+  traction(0) = Kokkos::Experimental::condition(
+      mask,
+      traction(0) + static_cast<type_real>(-1.0) * factor0 * jacobian2d *
+                        boundary.face_weight,
+      traction(0));
+  const auto factor1 = vn * ny * rho_vp_minus_vs + velocity(1) * rho_vs;
+  traction(1) = Kokkos::Experimental::condition(
+      mask,
+      traction(1) + static_cast<type_real>(-1.0) * factor1 * jacobian2d *
+                        boundary.face_weight,
+      traction(1));
+  const auto factor2 = vn * nz * rho_vp_minus_vs + velocity(2) * rho_vs;
+  traction(2) = Kokkos::Experimental::condition(
+      mask,
+      traction(2) + static_cast<type_real>(-1.0) * factor2 * jacobian2d *
+                        boundary.face_weight,
+      traction(2));
+
+  return;
+}
+
 } // namespace impl
 } // namespace boundary_conditions
 } // namespace specfem
@@ -850,13 +988,14 @@ specfem::boundary_conditions::impl_compute_mass_matrix_terms(
   constexpr static auto MediumTag = PointPropertyType::medium_tag;
   constexpr static auto PropertyTag = PointPropertyType::property_tag;
   constexpr static bool using_simd = PointPropertyType::simd::using_simd;
+  constexpr static auto DimTag = PointBoundaryType::dimension_tag;
 
   using PointVelocityType =
-      specfem::point::velocity<specfem::tags::Tags<specfem::element::dimension_tag::dim2, MediumTag,
+      specfem::point::velocity<specfem::tags::Tags<DimTag, MediumTag,
                                                     using_simd>>;
 
   using PointAccelerationType =
-      specfem::point::acceleration<specfem::tags::Tags<specfem::element::dimension_tag::dim2, MediumTag,
+      specfem::point::acceleration<specfem::tags::Tags<DimTag, MediumTag,
                                                         using_simd>>;
   using ViewType = typename PointVelocityType::value_type;
 

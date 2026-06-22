@@ -5,8 +5,8 @@ import numpy as np
 from gmsh2meshfem.gmsh_dep import GmshContext
 from rtree.index import Index as RTree
 
+from ...helper.index_mapping import IndexMapping
 from .edges import EdgeType, vectorized_bbox_calc
-from .index_mapping import IndexMapping
 
 
 @dataclass

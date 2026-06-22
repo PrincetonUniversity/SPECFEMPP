@@ -52,7 +52,7 @@ rule specfempp_external_mesher:
         external_mesh=directory("<cwd>/specfem2d_workdir/specfempp/MESH"),
     shell:
         """
-            python $SPECFEMPP_SCRIPTS_DIR/gmshlayerbuilder {input.topography} {output.external_mesh}
+            python $SPECFEMPP_SCRIPTS_DIR/gmshlayerbuilder 2d {input.topography} {output.external_mesh}
         """
 
 rule specfempp_mesher_using_external_mesh:

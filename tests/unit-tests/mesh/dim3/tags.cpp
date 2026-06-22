@@ -183,20 +183,22 @@ using namespace specfem::test_configuration;
  * @note Additional test cases can be added by extending this map with new
  *       ExpectedTags3D specifications for different mesh configurations.
  */
+// In a 2×2×2 hex mesh all 8 elements lie on at least one non-top boundary
+// face, so they all receive the stacey tag.
 std::unordered_map<std::string, ExpectedTags3D> expected_tags_map = {
   { "EightNodeElastic",
     ExpectedTags3D(8, { ElementTags(0, specfem::element::medium_tag::elastic,
                                     specfem::element::property_tag::isotropic,
                                     specfem::element::attenuation_tag::none,
-                                    specfem::element::boundary_tag::none),
+                                    specfem::element::boundary_tag::stacey),
                         ElementTags(1, specfem::element::medium_tag::elastic,
                                     specfem::element::property_tag::isotropic,
                                     specfem::element::attenuation_tag::none,
-                                    specfem::element::boundary_tag::none),
+                                    specfem::element::boundary_tag::stacey),
                         ElementTags(5, specfem::element::medium_tag::elastic,
                                     specfem::element::property_tag::isotropic,
                                     specfem::element::attenuation_tag::none,
-                                    specfem::element::boundary_tag::none) }) }
+                                    specfem::element::boundary_tag::stacey) }) }
   // Add more test cases as needed
 };
 

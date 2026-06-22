@@ -1,6 +1,6 @@
 # `gmshlayerbuilder`
 
-Converts a topography file (used by the internal mesher) into a set of output files to be read in by `meshfem2D`.
+Converts a topography file (used by the internal mesher) into a set of output files to be read in by `meshfem2D` (for `gmshlayerbuilder 2d`) or `meshfem3D` (for `gmshlayerbuilder 3d`).
 A list of options is provided with the `-h` flag.
 
 > All commands are assumed to be run in the `scripts` directory.
@@ -8,19 +8,21 @@ A list of options is provided with the `-h` flag.
 This script can convert a topography file `topography.dat` into external mesh files in a directory `outputs` using
 
 ```sh
-python gmshlayerbuilder topography.dat outputs/
+python gmshlayerbuilder 2d topography.dat outputs/
 ```
 
 More information can be found using
 
 ```sh
 python gmshlayerbuilder -h
+python gmshlayerbuilder 2d -h
+python gmshlayerbuilder 3d -h
 ```
 
 A test file has been placed in the `gmshlayerbuilder` directory for a demo. Running the following command generates the files read in by `meshfem`, which are placed in the `results` directory.
 
 ```sh
-python gmshlayerbuilder gmshlayerbuilder/test_topo.dat ../results/gmsh_demo/
+python gmshlayerbuilder 2d gmshlayerbuilder/test_topo.dat ../results/gmsh_demo/
 ```
 
 ## Plotting
@@ -28,7 +30,7 @@ python gmshlayerbuilder gmshlayerbuilder/test_topo.dat ../results/gmsh_demo/
 The output can be viewed with the inclusion of a `--plot` flag. `matplotlib` must be installed to do so.
 
 ```sh
-python gmshlayerbuilder gmshlayerbuilder/test_topo.dat ../results/gmsh_demo/ --plot
+python gmshlayerbuilder 2d gmshlayerbuilder/test_topo.dat ../results/gmsh_demo/ --plot
 ```
 
 ## Setting boundaries
@@ -36,7 +38,7 @@ python gmshlayerbuilder gmshlayerbuilder/test_topo.dat ../results/gmsh_demo/ --p
 Boundary conditions can be set on the top, bottom, left, and right sides of the domain using `--top`, `--bottom`, `--left`, and `--right` respectively. The available conditions are `neumann`, `acoustic_free_surface`, and `absorbing`. Default is `neumann` for all sides.
 
 ```sh
-python gmshlayerbuilder gmshlayerbuilder/test_topo.dat ../results/gmsh_demo/ --top acoustic_free_surface
+python gmshlayerbuilder 2d gmshlayerbuilder/test_topo.dat ../results/gmsh_demo/ --top acoustic_free_surface
 ```
 
 Note that `gmshlayerbuilder` is not aware of the material by default. Currently, there is only one way of telling which material type each layer is:

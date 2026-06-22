@@ -72,17 +72,17 @@ read_2d_mesh(const std::string &filename,
              const specfem::attenuation::Setup &attenuation_setup);
 
 /**
- * @brief Construct a 3D mesh object from MESHFEM3D Fortran binary database file
+ * @brief Construct a 3D mesh object from the SPECFEM++ 3D binary database.
  *
- * @param database_file MESHFEM3D database file
+ * Reads boundary face data and classifies faces into absorbing boundaries.
+ *
+ * @param database_file Path to the binary mesh database
+ * @param attenuation_setup Attenuation configuration
  * @return specfem::mesh::mesh<specfem::element::dimension_tag::dim3>
- *         Specfem mesh object for dimension type dim3
  *
  * @code
- * // Read 3D mesh from MESHFEM3D database file
- * auto mesh = specfem::io::read_3d_mesh(
- *      "DATABASES_MPI",
- *      specfem::attenuation::Setup{}); // attenuation disabled
+ * auto mesh = specfem::io::read_3d_mesh("database.bin",
+ *                                        specfem::attenuation::Setup{});
  * @endcode
  */
 specfem::mesh::mesh<specfem::element::dimension_tag::dim3>

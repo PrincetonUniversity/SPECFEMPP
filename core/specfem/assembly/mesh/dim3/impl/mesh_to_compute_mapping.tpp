@@ -26,7 +26,8 @@ specfem::assembly::mesh_impl::mesh_to_compute_mapping<
       MEDIUM_SET(elastic, acoustic, elastic_spin) *
       PROPERTY_SET(isotropic, isotropic_cosserat) *
       ATTENUATION_SET(none, constant_isotropic) *
-      BOUNDARY_SET(none) *
+      BOUNDARY_SET(none, stacey, acoustic_free_surface,
+                   composite_stacey_dirichlet) *
       MPI_SET(inner, outer));
   constexpr auto element_types = ET::combos;
   constexpr int total_element_types = ET::size;
