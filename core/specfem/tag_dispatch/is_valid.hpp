@@ -63,6 +63,39 @@ struct TagValueTupleBase<std::index_sequence<Is...>, TagTypes...>
   }
 
   /**
+   * @brief Whether a slot of enum type `T` exists in this tuple.
+   *
+   * Enables order-agnostic dispatch: callers query tag presence by type rather
+   * than by slot position.
+   *
+   * @tparam T  Enum type to search for.
+   */
+  template <typename T> static constexpr bool contains() {
+    return (std::is_same_v<TagTypes, T> || ...);
+  }
+
+  /**
+   * @brief Retrieve the value of the slot whose enum type is `T`.
+   *
+   * Looks the value up by type rather than by position. `T` must appear at most
+   * once; guard with `contains<T>()` when its presence is not guaranteed (a
+   * value-initialised `T` is returned when absent).
+   *
+   * @tparam T  Enum type to retrieve.
+   * @return    The stored value of type `T`.
+   */
+  template <typename T> constexpr T get_by_type() const {
+    T result{};
+    (
+        [&] {
+          if constexpr (std::is_same_v<TagTypes, T>)
+            result = static_cast<const TagValueHolder<Is, TagTypes> &>(*this).v;
+        }(),
+        ...);
+    return result;
+  }
+
+  /**
    * @brief Element-wise equality comparison.
    * @return `true` if all slots compare equal.
    */
@@ -83,33 +116,6 @@ template <typename... TagTypes>
 using TagValueTuple =
     impl::TagValueTupleBase<std::make_index_sequence<sizeof...(TagTypes)>,
                             TagTypes...>;
-
-/**
- * @brief Tags that never affect physical validity of element combinations.
- *
- * Non-physical tags represent computational metadata (simulation phase, MPI
- * partitioning) rather than physics constraints. They are stripped from
- * tuples before validity checking.
- */
-template <typename T>
-concept non_physical_tag = std::is_same_v<T, specfem::simulation::field_type> ||
-                           std::is_same_v<T, specfem::element::mpi_tag>;
-
-/**
- * @brief Build a new TagValueTuple containing all but the last slot.
- *
- * Used by `is_valid` to recursively strip trailing non-physical tags.
- */
-template <typename Tuple, std::size_t... Is>
-constexpr auto strip_last_impl(const Tuple &t, std::index_sequence<Is...>) {
-  return TagValueTuple<decltype(t.template get<Is>())...>{
-    t.template get<Is>()...
-  };
-}
-
-template <typename Tuple> constexpr auto strip_last(const Tuple &t) {
-  return strip_last_impl(t, std::make_index_sequence<Tuple::arity - 1>{});
-}
 
 /** @brief Tuple of (dimension, medium) used by `is_valid_medium_combo`. */
 using MediumTagTuple = TagValueTuple<specfem::element::dimension_tag,

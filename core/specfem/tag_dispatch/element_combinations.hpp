@@ -118,71 +118,74 @@ template <specfem::simulation::field_type... Vs> struct wavefield_set {
 namespace impl {
 
 /**
- * @brief Dispatch a `TagValueTuple` of any arity to the appropriate validity
- *        predicate.
+ * @brief Validate a `TagValueTuple` of element or coupling tags, independent of
+ *        slot order.
  *
- * Dispatches by first-slot type:
- * - `field_type` first slot: wavefield-keyed combos, always valid.
- * - `dimension_tag` first slot: element combos, dispatched by arity 2–5.
- *   Trailing non-physical tags (wavefield, mpi) are recursively stripped.
- * - `element_connections::type` second slot: interface/coupling combos.
+ * Validity depends only on the *physical* tags present — dimension, medium,
+ * property, attenuation, boundary for elements; connection, interface,
+ * boundary, flux for couplings. Each tag is located by its enum *type*, and
+ * dispatch keys on *which* physical tag types appear, not on their slot
+ * positions. As a result, slot ordering and interleaved non-physical tags
+ * (wavefield, mpi) do not change the outcome.
  *
  * @tparam Tuple  A `TagValueTuple` specialisation.
  * @param  t      The tuple to validate.
  * @return `true` if the combination is physically meaningful.
  */
 template <typename Tuple> constexpr bool is_valid(const Tuple &t) {
-  using T0 = decltype(t.template get<0>());
+  using D = specfem::element::dimension_tag;
+  using M = specfem::element::medium_tag;
+  using P = specfem::element::property_tag;
+  using A = specfem::element::attenuation_tag;
+  using B = specfem::element::boundary_tag;
+  using C = specfem::element_connections::type;
 
-  // Wavefield-keyed combinations (e.g., wavefield_set * medium_set):
-  // all combos are valid — no physics constraints on wavefield × medium.
-  if constexpr (std::is_same_v<T0, specfem::simulation::field_type>) {
+  if constexpr (Tuple::template contains<C>()) {
+    // Interface / coupling combinations:
+    // (dimension, connection, interface[, boundary[, flux scheme]]).
+    using I = specfem::element_coupling::interface_tag;
+    using F = specfem::element_coupling::flux_scheme_tag;
+    const auto d = t.template get_by_type<D>();
+    const auto c = t.template get_by_type<C>();
+    const auto i = t.template get_by_type<I>();
+    if constexpr (Tuple::template contains<F>())
+      return is_valid_edge_and_flux_scheme({ d, c, i,
+                                             t.template get_by_type<B>(),
+                                             t.template get_by_type<F>() });
+    else if constexpr (Tuple::template contains<B>())
+      return is_valid_edge({ d, c, i, t.template get_by_type<B>() });
+    else
+      return is_valid_interface_system({ d, c, i });
+
+  } else if constexpr (Tuple::template contains<D>() &&
+                       Tuple::template contains<M>()) {
+    // Element combinations: dispatch on which material tags are present.
+    const auto d = t.template get_by_type<D>();
+    const auto m = t.template get_by_type<M>();
+    constexpr bool has_p = Tuple::template contains<P>();
+    constexpr bool has_a = Tuple::template contains<A>();
+    constexpr bool has_b = Tuple::template contains<B>();
+
+    if constexpr (has_p && has_a && has_b)
+      return is_valid_full_combo({ d, m, t.template get_by_type<P>(),
+                                   t.template get_by_type<A>(),
+                                   t.template get_by_type<B>() });
+    else if constexpr (has_p && has_b)
+      return is_valid_boundary_combo(
+          { d, m, t.template get_by_type<P>(), t.template get_by_type<B>() });
+    else if constexpr (has_p && has_a)
+      return is_valid_material_combo(
+          { d, m, t.template get_by_type<P>(), t.template get_by_type<A>() });
+    else if constexpr (has_p)
+      return is_valid_property_combo({ d, m, t.template get_by_type<P>() });
+    else
+      return is_valid_medium_combo({ d, m });
+
+  } else {
+    // No connection tag and not a (dimension, medium) element combo — e.g. a
+    // wavefield × medium buffer key. No physical constraint applies.
     return true;
-  } else if constexpr (std::is_same_v<T0, specfem::element::dimension_tag>) {
-    using T1 = decltype(t.template get<1>());
-
-    if constexpr (std::is_same_v<T1, specfem::element::medium_tag>) {
-      // Element combinations: dispatch by arity
-      if constexpr (Tuple::arity == 2)
-        return is_valid_medium_combo(t);
-      else if constexpr (Tuple::arity == 3)
-        return is_valid_property_combo(t);
-      else if constexpr (Tuple::arity == 4) {
-        using T3 = decltype(t.template get<3>());
-        if constexpr (std::is_same_v<T3, specfem::element::boundary_tag>)
-          return is_valid_boundary_combo(t);
-        else if constexpr (std::is_same_v<T3,
-                                          specfem::element::attenuation_tag>)
-          return is_valid_material_combo(t);
-        else
-          return false;
-      } else if constexpr (Tuple::arity >= 5) {
-        // Recursively strip trailing non-physical tags (wavefield, mpi)
-        using TLast = decltype(t.template get<Tuple::arity - 1>());
-        if constexpr (non_physical_tag<TLast>)
-          return is_valid(strip_last(t));
-        else if constexpr (Tuple::arity == 5)
-          return is_valid_full_combo(t);
-        else
-          return false;
-      } else
-        return false;
-
-    } else if constexpr (std::is_same_v<T1,
-                                        specfem::element_connections::type>) {
-      // Interface / coupling combinations
-      if constexpr (Tuple::arity == 3)
-        return is_valid_interface_system(t);
-      else if constexpr (Tuple::arity == 4)
-        return is_valid_edge(t);
-      else if constexpr (Tuple::arity == 5)
-        return is_valid_edge_and_flux_scheme(t);
-      else
-        return false;
-    } else
-      return false;
-  } else
-    return false;
+  }
 }
 
 template <typename Combo, std::size_t I = 0, typename ArrayTuple,

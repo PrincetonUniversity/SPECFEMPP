@@ -399,10 +399,12 @@ template <> class mpi<specfem::element::dimension_tag::dim3> {
 public:
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
 
+  /// Media that participate in 3D cross-rank MPI exchange.
+  static constexpr auto media = MEDIUM_SET(elastic, acoustic);
+
   /// Medium combinations for 3D MPI communication patterns
   static constexpr auto medium_combinations =
-      specfem::tag_dispatch::dimension_set<dimension_tag>{} *
-      MEDIUM_SET(elastic, acoustic);
+      specfem::tag_dispatch::dimension_set<dimension_tag>{} * media;
 
   /// Per-medium map from neighbor rank to communication pattern
   template <typename TagsType>
