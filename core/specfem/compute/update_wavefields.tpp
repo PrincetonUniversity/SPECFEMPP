@@ -29,8 +29,17 @@ template <int NGLL, typename Tags>
 int update_wavefields(
     specfem::assembly::assembly<Tags::dimension_tag> &assembly,
     const int istep) {
+  constexpr auto backward = specfem::simulation::field_type::backward;
+  constexpr auto wavefield = Tags::wavefield_tag;
+
   impl::compute_coupling<NGLL, Tags>(assembly);
-  impl::compute_source_interaction<NGLL, Tags>(assembly, istep);
+
+  // Fortran backward source replay uses NSTEP - it + 1. Because C++ iterates
+  // backward with zero-based istep values, this is the previous source sample
+  // relative to the current reconstructed-field stiffness/Stacey update.
+  const int source_istep = (wavefield == backward && istep > 0) ? istep - 1
+                                                               : istep;
+  impl::compute_source_interaction<NGLL, Tags>(assembly, source_istep);
 
   int elements_updated = 0;
 
