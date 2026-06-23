@@ -6,9 +6,9 @@ from typing import override
 import numpy as np
 
 from ...gmsh_dep import GmshContext
+from ...helper.index_mapping import IndexMapping
 from .boundary import BoundarySpec
 from .edges import edges_of_all_elements, unique_edges
-from .index_mapping import IndexMapping
 
 
 @dataclass(frozen=True)
