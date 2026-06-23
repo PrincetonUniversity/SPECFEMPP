@@ -14,6 +14,13 @@
 TEST_F(Assembly2D, locate_sources) {
   for (auto parameters : *this) {
     const auto Test = std::get<0>(parameters);
+
+    // Skip configs that do not declare a reference source solution (e.g.
+    // attenuation-only configs added solely to exercise other tests).
+    if (!Test.solutions.has_source) {
+      continue;
+    }
+
     const auto source_solution = Test.solutions.source;
     auto sources = std::get<2>(parameters);
     specfem::assembly::assembly<specfem::element::dimension_tag::dim2>

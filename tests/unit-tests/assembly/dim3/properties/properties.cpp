@@ -347,8 +347,7 @@ TEST_P(Assembly3DTest, PropertiesIORoutines) {
   auto &assembly = this->assembly.assembly;
 
   const std::string temp_io_directory =
-      (std::getenv("BUILD_DIR") ? std::string(std::getenv("BUILD_DIR"))
-                                : boost::filesystem::current_path().string()) +
+      boost::filesystem::current_path().string() +
       "/tests/unit-tests/temp_properties_io_dim3";
   boost::filesystem::create_directories(temp_io_directory);
 
@@ -395,12 +394,16 @@ TEST_P(Assembly3DTest, PropertiesIORoutines) {
         reader(temp_io_directory);
     reader.read(assembly);
 
-    // 5. Verify the recovered host values.
+    // 5. Verify the recovered host values. Iterate logical extents (not the
+    // flat base span, which may include tiling padding the reader does not
+    // restore).
     for_each_property_view([&](const auto view) {
-      const auto *data = view.data();
-      for (std::size_t i = 0; i < view.size(); ++i) {
-        EXPECT_NEAR(data[i], random_value, 1e-4);
-      }
+      for (std::size_t e = 0; e < view.extent(0); ++e)
+        for (std::size_t iz = 0; iz < view.extent(1); ++iz)
+          for (std::size_t iy = 0; iy < view.extent(2); ++iy)
+            for (std::size_t ix = 0; ix < view.extent(3); ++ix) {
+              EXPECT_NEAR(view(e, iz, iy, ix), random_value, 1e-4);
+            }
     });
   } catch (std::exception &e) {
     boost::filesystem::remove_all(temp_io_directory);

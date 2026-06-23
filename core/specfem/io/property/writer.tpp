@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/io/property/writer.hpp"
+#include "specfem/io/impl/attenuation_io.hpp"
 #include "specfem/io/impl/medium_writer.hpp"
 #include "writer.hpp"
 #include "specfem/assembly/assembly.hpp"
@@ -31,8 +32,12 @@ void property_writer<OutputLibrary>::write(specfem::assembly::assembly<specfem::
   // base_folder = output_folder/Properties/ which may not exist yet)
   boost::filesystem::create_directories(base_folder);
 
-  impl::write_container<OutputLibrary>(base_folder, ns,
-      assembly.mesh, assembly.element_types, assembly.properties);
+  impl::write_container<OutputLibrary>(
+      base_folder, ns, assembly.mesh, assembly.element_types,
+      assembly.properties,
+      impl::AttenuationIO<decltype(assembly.attenuation),
+                             decltype(assembly.element_types)>{
+          assembly.attenuation, assembly.element_types });
 }
 
 template <typename OutputLibrary>
@@ -48,8 +53,12 @@ void property_writer<OutputLibrary>::write(specfem::assembly::assembly<specfem::
 
   boost::filesystem::create_directories(base_folder);
 
-  impl::write_container<OutputLibrary>(base_folder, ns,
-      assembly.mesh, assembly.element_types, assembly.properties);
+  impl::write_container<OutputLibrary>(
+      base_folder, ns, assembly.mesh, assembly.element_types,
+      assembly.properties,
+      impl::AttenuationIO<decltype(assembly.attenuation),
+                             decltype(assembly.element_types)>{
+          assembly.attenuation, assembly.element_types });
 }
 
 } // namespace io

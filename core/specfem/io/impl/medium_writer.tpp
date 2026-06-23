@@ -15,12 +15,12 @@
 #include <string>
 
 template <typename GroupType, typename ElementIndicesType,
-          typename DataContainerType>
+          typename DataContainerType, typename ViewWriter>
 int specfem::io::impl::write_medium_group(
     GroupType &group,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
     const ElementIndicesType &element_indices,
-    const DataContainerType &data_container) {
+    const DataContainerType &data_container, ViewWriter write_view) {
 
   const int ngllz = mesh.element_grid.ngllz;
   const int ngllx = mesh.element_grid.ngllx;
@@ -45,19 +45,20 @@ int specfem::io::impl::write_medium_group(
 
   data_container.for_each_host_view(
       [&](const auto view, const std::string name) mutable {
-        group.createDataset(name, view).write();
+        write_view(name, view);
       });
 
   return n_elements;
 }
 
-template <typename OutputLibrary, typename ContainerType>
+template <typename OutputLibrary, typename ContainerType,
+          typename ExtraGroupWriter>
 void specfem::io::impl::write_container(
     const std::string &output_folder, const std::string &output_namespace,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
     const specfem::assembly::element_types<
         specfem::element::dimension_tag::dim2> &element_types,
-    ContainerType &container) {
+    ContainerType &container, ExtraGroupWriter extra) {
 
   container.copy_to_host();
 
@@ -86,8 +87,16 @@ void specfem::io::impl::write_container(
         typename OutputLibrary::Group group = file.createGroup(name);
         auto data_container =
             container.template get_container<medium_tag, property_tag>();
-        n_written +=
-            write_medium_group(group, mesh, element_indices, data_container);
+        // Per-view write hook: lets the property writer un-scale attenuating
+        // kappa/mu to physical moduli; defaults to a verbatim dataset write.
+        n_written += write_medium_group(
+            group, mesh, element_indices, data_container,
+            [&](const std::string &name, const auto &view) {
+              extra.template write_view<medium_tag, property_tag>(group, name,
+                                                                  view);
+            });
+        // Append any extra datasets (e.g. attenuation Qkappa/Qmu) to the group.
+        extra.template attenuation_append<medium_tag, property_tag>(group);
       });
 
   if (n_written != nspec) {
@@ -108,12 +117,12 @@ void specfem::io::impl::write_container(
 // ---------------------------------------------------------------------------
 
 template <typename GroupType, typename ElementIndicesType,
-          typename DataContainerType>
+          typename DataContainerType, typename ViewWriter>
 int specfem::io::impl::write_medium_group(
     GroupType &group,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
     const ElementIndicesType &element_indices,
-    const DataContainerType &data_container) {
+    const DataContainerType &data_container, ViewWriter write_view) {
 
   const int ngllz = mesh.element_grid.ngllz;
   const int nglly = mesh.element_grid.nglly;
@@ -145,19 +154,20 @@ int specfem::io::impl::write_medium_group(
 
   data_container.for_each_host_view(
       [&](const auto view, const std::string name) mutable {
-        group.createDataset(name, view).write();
+        write_view(name, view);
       });
 
   return n_elements;
 }
 
-template <typename OutputLibrary, typename ContainerType>
+template <typename OutputLibrary, typename ContainerType,
+          typename ExtraGroupWriter>
 void specfem::io::impl::write_container(
     const std::string &output_folder, const std::string &output_namespace,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
     const specfem::assembly::element_types<
         specfem::element::dimension_tag::dim3> &element_types,
-    ContainerType &container) {
+    ContainerType &container, ExtraGroupWriter extra) {
 
   container.copy_to_host();
 
@@ -184,8 +194,16 @@ void specfem::io::impl::write_container(
         typename OutputLibrary::Group group = file.createGroup(name);
         auto data_container =
             container.template get_container<medium_tag, property_tag>();
-        n_written +=
-            write_medium_group(group, mesh, element_indices, data_container);
+        // Per-view write hook: lets the property writer un-scale attenuating
+        // kappa/mu to physical moduli; defaults to a verbatim dataset write.
+        n_written += write_medium_group(
+            group, mesh, element_indices, data_container,
+            [&](const std::string &name, const auto &view) {
+              extra.template write_view<medium_tag, property_tag>(group, name,
+                                                                  view);
+            });
+        // Append any extra datasets (e.g. attenuation Qkappa/Qmu) to the group.
+        extra.template attenuation_append<medium_tag, property_tag>(group);
       });
 
   if (n_written != nspec) {

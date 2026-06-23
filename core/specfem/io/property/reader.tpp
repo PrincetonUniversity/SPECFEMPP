@@ -2,6 +2,7 @@
 
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/element.hpp"
+#include "specfem/io/impl/attenuation_io.hpp"
 #include "specfem/io/property/reader.hpp"
 #include "specfem/macros/tag_dispatch.hpp"
 #include "specfem/tag_dispatch.hpp"
@@ -53,12 +54,25 @@ void specfem::io::property_reader<InputLibrary>::read(
             std::string("/") +
             specfem::element::to_string(medium_tag, property_tag);
         typename InputLibrary::Group group = file.openGroup(name);
-        // TODO ( Lucas : Attenuation update.) : need to update get_container
         const auto container =
             properties.get_container<medium_tag, property_tag>();
+        const specfem::io::impl::AttenuationIO<
+            decltype(assembly.attenuation), decltype(assembly.element_types)>
+            att_io{ assembly.attenuation, assembly.element_types };
+        // 1. Read the physical (relaxed) property views and Qkappa/Qmu.
         container.for_each_host_view(
             [&](const auto view, const std::string view_name) {
               group.openDataset(view_name, view).read();
+            });
+        // Below are no-op if the (medium, property) combination has no attenuation container.
+        att_io.template attenuation_read<medium_tag, property_tag>(group);
+        // 2. Recompute the modulus scale factors from the read-back Q.
+        assembly.attenuation
+            .template recompute_scaling<medium_tag, property_tag>();
+        container.for_each_host_view(
+            [&](const auto view, const std::string view_name) {
+              att_io.template rescale_read<medium_tag, property_tag>(view,
+                                                                     view_name);
             });
       });
 
@@ -106,9 +120,24 @@ void specfem::io::property_reader<InputLibrary>::read(
         typename InputLibrary::Group group = file.openGroup(name);
         const auto container =
             properties.get_container<medium_tag, property_tag>();
+        // 1. Read the physical (relaxed) property views and Qkappa/Qmu.
         container.for_each_host_view(
             [&](const auto view, const std::string view_name) {
               group.openDataset(view_name, view).read();
+            });
+
+        // Create helper struct to read attenuation values.
+        const specfem::io::impl::AttenuationIO<
+            decltype(assembly.attenuation), decltype(assembly.element_types)>
+            att_io{ assembly.attenuation, assembly.element_types };
+
+        att_io.template attenuation_read<medium_tag, property_tag>(group);
+        assembly.attenuation
+            .template recompute_scaling<medium_tag, property_tag>();
+        container.for_each_host_view(
+            [&](const auto view, const std::string view_name) {
+              att_io.template rescale_read<medium_tag, property_tag>(view,
+                                                                     view_name);
             });
       });
 

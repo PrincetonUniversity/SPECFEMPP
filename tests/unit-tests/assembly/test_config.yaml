@@ -181,3 +181,21 @@ Tests:
           gamma: -0.99767500162124634
           ispec: 0
           medium_tag: elastic_psv_t
+
+    - name : "Test 11: Homogeneous Elastic Isotropic Material with attenuation (P_SV wave)"
+      description: >
+        Testing the reading of a homogeneous elastic isotropic material with
+        constant-Q attenuation, used to exercise Qkappa/Qmu property I/O.
+      config:
+        nproc : 1
+        elastic_wave: "P_SV"
+        attenuation_enabled: true
+        attenuation_f0: "5.0 Hz"
+        attenuation_band:
+          - "0.5 Hz"
+          - "50.0 Hz"
+      databases:
+        mesh : "data/dim2/homogeneous_elastic_isotropic_w_attenuation/database.bin"
+        sources : "data/dim2/homogeneous_elastic_isotropic_w_attenuation/sources.yaml"
+        stations : "data/dim2/homogeneous_elastic_isotropic_w_attenuation/STATIONS"
+      suffix: "homogeneous_elastic_isotropic_w_attenuation"

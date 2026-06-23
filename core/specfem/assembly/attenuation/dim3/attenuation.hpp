@@ -16,6 +16,8 @@
 #include "specfem/tags.hpp"
 #include "specfem/units.hpp"
 #include <Kokkos_Core.hpp>
+#include <type_traits>
+#include <utility>
 
 namespace specfem::assembly {
 
@@ -132,6 +134,23 @@ struct Attenuation<specfem::element::dimension_tag::dim3>
           &tau_sigma);
 
   /**
+   * @brief Compile-time check whether (MediumTag, PropertyTag) has an
+   *        attenuation container.
+   *
+   * Used to guard @ref get_container in generic code that iterates over all
+   * (medium, property) combinations (e.g. the property writer/reader).
+   */
+  template <specfem::element::medium_tag MediumTag,
+            specfem::element::property_tag PropertyTag>
+  static constexpr bool has_attenuation() {
+    return specfem::tag_dispatch::impl::contains_v<
+        decltype(attenuation_medium_combinations),
+        specfem::tags::Tags<
+            dimension_tag, MediumTag, PropertyTag,
+            specfem::element::attenuation_tag::constant_isotropic>>;
+  }
+
+  /**
    * @brief Access the attenuation_medium for a given medium and property.
    */
   template <specfem::element::medium_tag MediumTag,
@@ -144,6 +163,25 @@ struct Attenuation<specfem::element::dimension_tag::dim3>
         dimension_tag, MediumTag, PropertyTag,
         specfem::element::attenuation_tag::constant_isotropic>;
     return attenuation_storage.template get<Key>();
+  }
+
+  /**
+   * @brief Recompute per-GLL modulus scale factors for one (medium, property)
+   *        from its current Q views.
+   *
+   * Called by the property reader after Q has been read from disk so kappa/mu
+   * can be scaled to their unrelaxed values using a factor derived from the
+   * on-disk Q. A compile-time no-op for non-attenuating combinations.
+   */
+  template <specfem::element::medium_tag MediumTag,
+            specfem::element::property_tag PropertyTag>
+  void recompute_scaling() {
+    if constexpr (has_attenuation<MediumTag, PropertyTag>()) {
+      using Key = specfem::tags::Tags<
+          dimension_tag, MediumTag, PropertyTag,
+          specfem::element::attenuation_tag::constant_isotropic>;
+      attenuation_storage.template get<Key>().recompute_scaling();
+    }
   }
 
   /**
