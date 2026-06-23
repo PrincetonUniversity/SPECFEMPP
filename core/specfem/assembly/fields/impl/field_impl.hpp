@@ -197,27 +197,6 @@ public:
   field_impl() = default;
 
   /**
-   * @brief Construct field implementation from mesh and element information.
-   *
-   * Initializes all field components (displacement, velocity, acceleration,
-   * mass matrix) based on the spectral element mesh structure and element
-   * classifications. This constructor determines the number of global points
-   * from the mesh and element types, then allocates appropriate storage for all
-   * field components.
-   *
-   * @param mesh Spectral element mesh containing connectivity and global
-   * numbering
-   * @param element_type Element type classification for medium-specific
-   * allocation
-   * @param assembly_index_mapping Host view mapping local to global indices
-   */
-  field_impl(
-      const specfem::assembly::mesh<dimension_tag> &mesh,
-      const specfem::assembly::element_types<dimension_tag> &element_type,
-      Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace>
-          assembly_index_mapping);
-
-  /**
    * @brief Construct field implementation with specified number of global
    * points.
    *

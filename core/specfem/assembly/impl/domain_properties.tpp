@@ -13,7 +13,7 @@ specfem::assembly::impl::domain_properties<
     : base_type(elements.extent(0), mesh.element_grid) {
 
   const int nelement = elements.extent(0);
-  base_ispec = elements.begin_index();
+  element_range = elements;
   for (int i = 0; i < nelement; ++i) {
     const int ispec = elements(i);
     const int mesh_ispec = mesh.h_compute_to_mesh(ispec);
@@ -50,7 +50,7 @@ specfem::assembly::impl::domain_properties<
     : base_type(elements.extent(0), mesh.element_grid) {
 
   const int nelement = elements.extent(0);
-  base_ispec = elements.begin_index();
+  element_range = elements;
   Kokkos::parallel_for(
       "specfem::assembly::impl::domain_properties::dim3::init_host_values",
       Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace, Kokkos::Rank<4>>(
