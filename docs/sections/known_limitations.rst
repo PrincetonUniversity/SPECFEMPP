@@ -24,29 +24,28 @@ limitations listed here are specific to **3-D simulations**; the corresponding
 
    * - PML / absorbing boundary conditions
      - 3-D
-     - Not implemented — raises a runtime error if the mesh contains PML
-       elements. Use Stacey absorbing boundaries instead where available.
+     - Not implemented — raises a runtime error when the mesh database reports
+       a non-zero number of PML boundaries. Use Stacey absorbing boundaries
+       instead where available.
 
    * - Poroelastic materials
      - 3-D
      - Not implemented — raises a runtime error when a poroelastic material
        is detected in the mesh. Poroelastic media are fully supported in 2-D.
 
-   * - Tomographic (model-file-based) materials
-     - 3-D
-     - Not implemented — raises a runtime error when ``tomographic_model``
-       flag equals 2 in the mesh database. Tomographic materials are
-       supported in 2-D.
-
    * - Anisotropic elastic materials
      - 3-D
      - Not implemented — raises a runtime error when an anisotropic elastic
        domain is detected. Anisotropic elastic media are supported in 2-D.
 
-   * - Property output (``output_format: properties``)
+   * - GLL-level property input/output
      - 3-D
-     - Not implemented — raises a runtime error if property output is
-       requested. Seismogram and kernel outputs are unaffected.
+     - Not implemented — covers both reading a GLL model
+       (``databases.reader.properties``), including tomographic
+       (model-file-based) materials, and writing material properties
+       (``databases.writer.properties``). 3-D property writing raises
+       ``3D property writing not yet implemented``. Both directions are
+       supported in 2-D. Seismogram and kernel outputs are unaffected.
 
    * - Earth-chunk mesh (``MESH_A_CHUNK_OF_THE_EARTH``)
      - 3-D

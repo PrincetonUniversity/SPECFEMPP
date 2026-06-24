@@ -8,7 +8,7 @@ In this example we simulate wave propagation through a 3-dimensional homogeneous
 .. seealso::
 
    :ref:`known_limitations` — several 3-D features (PML boundaries,
-   poroelastic/tomographic/anisotropic materials, property output) are not yet
+   poroelastic/anisotropic materials, GLL-level property input/output) are not yet
    implemented and will raise a runtime error if requested.
 
 Setting up your workspace
