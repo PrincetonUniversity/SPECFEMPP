@@ -42,6 +42,69 @@ def model_face_to_meshfem_face(value: FaceType):
     raise err
 
 
+# ! NGNOD == 27 ordering:
+# !   SPECFEM ordering
+# !   1. corner nodes  1-8: same as hex8
+# !   2. midside nodes (nodes located in the middle of an edge): edges bottom, mid (bottom-to-top), top
+# !   3. side center nodes (nodes located in the middle of a face): bottom,front,right,back,left,top
+# !   4. center node
+# !
+# !      8----19-----7
+# !      |\          |\
+# !      | 20    26  | 18
+# !      16  \ 24    15 \
+# !      |    5----17+---6
+# !      | 25 |  27  | 23|
+# !      4----+-11---3   |
+# !       \  13    22 \  14
+# !        12 |  21    10|
+# !          \|         \|
+# !           1----9----2
+# !
+# ! compare with http://gmsh.info/doc/texinfo/gmsh.html#Node-ordering
+# !      3----13-----2
+# !      |\          |\
+# !      | 15    24  | 14        v
+# !      9  \ 20     11 \        |
+# !      |    7----19+---6       |
+# !      | 22 |  26  | 23|       |-----> u
+# !      0----+-8----1   |        \
+# !       \  17    25 \  18        \
+# !        10 |  21    12|          w
+# !          \|         \|
+# !           4----16----5
+# !
+HEX_27_gmsh_to_specfem_node_reordering = (
+    4,
+    5,
+    1,
+    0,
+    7,
+    6,
+    2,
+    3,
+    16,
+    12,
+    8,
+    10,
+    17,
+    18,
+    11,
+    9,
+    19,
+    14,
+    13,
+    15,
+    21,
+    25,
+    23,
+    20,
+    22,
+    24,
+    26,
+)
+
+
 class Exporter:
     destination_folder: Path
     mesh_file: PurePath
@@ -195,10 +258,20 @@ class Exporter:
         # =========================
         with (self.destination_folder / self.mesh_file).open("w") as f:
             elem_arr = self.model.elements
+            ngnod = elem_arr.shape[1]
+            if ngnod == 27:
+                reordering = HEX_27_gmsh_to_specfem_node_reordering
+            else:
+                e = ValueError(f"Exporter does not currently support NGNOD={ngnod}")
+                raise e
 
             f.write(str(nelem) + "\n")
             for ielem in range(nelem):
-                f.write(" ".join(f"{k + 1:d}" for k in elem_arr[ielem, :]) + "\n")
+                f.write(
+                    f"{ielem + 1:d} "
+                    + " ".join(f"{k + 1:d}" for k in elem_arr[ielem, reordering])
+                    + "\n"
+                )
 
         # =========================
         # materials

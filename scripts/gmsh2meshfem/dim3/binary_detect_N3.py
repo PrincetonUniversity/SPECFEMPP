@@ -133,18 +133,21 @@ def locate_intersection(
         bounds=((-1, -1, -1, -1), (1, 1, 1, 1)),
         xtol=1e-6,
         ftol=1e-6,
-        method="trf"
+        method="trf",
     )
 
     return result.x[:2], result.x[2:], result.fun
 
 
-def get_interior_tangent_vector(face_jacobian: np.ndarray, coord: np.ndarray):
+def get_interior_tangent_vector(
+    face_jacobian: np.ndarray, coord: np.ndarray, projected_plane_normal: np.ndarray
+):
     """Recovers the inward facing normal (or tangent bisector for corners) and the angle made
     to the boundary. This is used to check if the tangent half or quarter space overlaps between
     two faces
     """
     eps = 1e-2
+    plane_proj = projected_plane_normal / np.linalg.norm(projected_plane_normal)
 
     left_right_boundary = False
     v1 = np.zeros(3)
@@ -167,13 +170,21 @@ def get_interior_tangent_vector(face_jacobian: np.ndarray, coord: np.ndarray):
         top_bottom_boundary = True
 
     if left_right_boundary and not top_bottom_boundary:
+        v1 -= plane_proj * np.dot(plane_proj, v1)
+        v1 /= np.linalg.norm(v1)
         return v1, np.pi / 2
     if top_bottom_boundary and not left_right_boundary:
+        v2 -= plane_proj * np.dot(plane_proj, v2)
+        v2 /= np.linalg.norm(v2)
         return v2, np.pi / 2
     if left_right_boundary and top_bottom_boundary:
+        v1 -= plane_proj * np.dot(plane_proj, v1)
+        v1 /= np.linalg.norm(v1)
+        v2 -= plane_proj * np.dot(plane_proj, v2)
+        v2 /= np.linalg.norm(v2)
         vbisect = v1 + v2
         vbisect /= np.linalg.norm(vbisect)
-        return vbisect, (np.pi - np.acos(np.dot(v1, v2))) / 2
+        return vbisect, np.acos(np.dot(v1, v2)) / 2
 
     v1[0] = 1
     return v1, 2 * np.pi
@@ -220,22 +231,33 @@ def faces_intersect(
     face1_norm = np.cross(face1_jac[:, 0], face1_jac[:, 1])
     face2_norm = np.cross(face2_jac[:, 0], face2_jac[:, 1])
 
-    sintheta = np.linalg.norm(np.cross(face1_norm, face2_norm)) / (
-        np.linalg.norm(face1_norm) * np.linalg.norm(face2_norm)
-    )
+    face1_norm /= np.linalg.norm(face1_norm)
+    face2_norm /= np.linalg.norm(face2_norm)
+
+    sintheta = np.linalg.norm(np.cross(face1_norm, face2_norm))
 
     if sintheta > 0.1:  # approx 5.<something> degrees
         return False
 
-    # inward directions overlap
-    face1_interior, face1_theta = get_interior_tangent_vector(face1_jac, face1_coord)
-    face2_interior, face2_theta = get_interior_tangent_vector(face2_jac, face2_coord)
+    # project onto avg direction of face1 and face2 norms (face*_norm are normalized,
+    # so projection_normal gives the direction of the angle bisector)
+    projection_normal = face1_norm + face2_norm
+
+    # CHECK: inward directions overlap
+    face1_interior, face1_theta = get_interior_tangent_vector(
+        face1_jac, face1_coord, projected_plane_normal=projection_normal
+    )
+    face2_interior, face2_theta = get_interior_tangent_vector(
+        face2_jac, face2_coord, projected_plane_normal=projection_normal
+    )
 
     # assuming the tangent planes are the same, we want to see if the cones intersect:
     # face*_interior is the bisector of the cone, face*_theta is the angle from the bisector
     # to the surface of the cone (think FOV)
     # pad by e-2, which would be the intersection sliver.
-    if np.dot(face1_interior, face2_interior) < np.cos(face1_theta + face2_theta - 1e-2):
+    if np.dot(face1_interior, face2_interior) < np.cos(
+        max(face1_theta + face2_theta - 1e-2, 0)
+    ):
         return False
 
     return True

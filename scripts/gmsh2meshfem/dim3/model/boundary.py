@@ -60,7 +60,18 @@ class BoundarySpec:
         sorted_keystone_nodes, keystone_inds, keystone_counts = np.unique(
             keystone_nodes, return_index=True, return_counts=True
         )
+
         externals = keystone_counts == 1
+
+        # keystones MUST appear only once or twice. Something went terribly wrong otherwise
+        if not np.all(np.logical_or(externals, keystone_counts == 2)):
+            e = RuntimeError("keystone_counts has an invalid value!")
+            e.add_note(
+                "Keystone occurance counting algorithm to find external faces found a "
+                "keystone that appeared more than twice. This should never happen!"
+            )
+            raise e
+
         elem_inds, facetypes = np.unravel_index(
             keystone_inds[externals], keystone_nodes.shape
         )
