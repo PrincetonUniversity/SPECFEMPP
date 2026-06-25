@@ -164,10 +164,9 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
     }
   }
 
-  // Initialize the backward wavefield from the buffer (which was populated by
-  // the wavefield reader above). This must happen before the first backward
-  // time step so that Stacey stored values are loaded from the correct step
-  // index at every iteration of the loop.
+  // Initialize the backward wavefield from the final forward wavefield buffer.
+  // The pre-loop task above loads StepNSTEP only when it is not also on the
+  // regular task cadence; otherwise the first in-loop task refresh below does.
   specfem::assembly::deep_copy(assembly.fields.backward,
                                assembly.fields.buffer);
 
@@ -176,6 +175,11 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
       if (task && task->should_run(istep+1)) {
         task->run(assembly, istep+1);
       }
+    }
+
+    if (istep == nstep - 1) {
+      specfem::assembly::deep_copy(assembly.fields.backward,
+                                   assembly.fields.buffer);
     }
 
     int dofs_updated = 0;
