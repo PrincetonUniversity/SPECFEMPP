@@ -10,6 +10,12 @@ does not support tetrahedral meshes. In this example we use
 simple 3D box domain, export it using a Python script, and run the simulation using
 the ``xdecompose_mesh`` partitioner followed by ``specfem3d``.
 
+.. seealso::
+
+   :ref:`known_limitations` — several 3-D features (PML boundaries,
+   poroelastic/anisotropic materials, GLL-level property input/output) are not yet
+   implemented and will raise a runtime error if requested.
+
 .. note::
 
     This cookbook is not an in-depth Gmsh tutorial. Its goal is to show how to
