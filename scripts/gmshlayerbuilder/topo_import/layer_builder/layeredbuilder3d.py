@@ -1,7 +1,7 @@
 import itertools
 
-from gmsh2meshfem.dim3.model.model import Model
 from gmsh2meshfem.dim3.model.gmshmodel import GmshModel3D
+from gmsh2meshfem.dim3.model.model import Model
 from gmsh2meshfem.gmsh_dep import GmshContext
 
 from ..tags import BOUNDARY_TYPES, BoundaryConditionType

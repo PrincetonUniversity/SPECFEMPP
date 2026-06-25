@@ -17,6 +17,9 @@ requires-python = ">=3.12,<3.13"
 [tool.uv]
 package = false
 
+[tool.uv.sources]
+specfempp-scripts = { path = "scripts", editable = true }
+
 [dependency-groups]
 all = [
   {include-group = "dev"},
@@ -74,6 +77,7 @@ scripts = [
   "gmsh==4.14.0",
   "matplotlib==3.10.3",
   "rtree==1.4.1",
+  "specfempp-scripts"
 ]
 
 [tool.scikit-build]

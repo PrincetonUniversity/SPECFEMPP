@@ -1,9 +1,9 @@
 import numpy as np
 import pytest
+from gmsh2meshfem.dim3.model.faces import FaceType
 from gmsh2meshfem.dim3.model.gmshmodel import GmshModel3D
 from gmsh2meshfem.dim3.model.model import Model
 from gmsh2meshfem.gmsh_dep import GmshContext
-from gmsh2meshfem.dim3.model.faces import FaceType
 
 
 def validate_on_grid(model: Model, grid_coordinates):
@@ -148,7 +148,7 @@ def validate_boundary(
             faces_with_ielem = np.where(model.boundary_faces.element_inds == ielem)
             assert len(faces_with_ielem) == 1  # elem_inds has 1 index.
             for iface in faces_with_ielem[0]:
-                facetype = model.boundary_faces.element_faces[iface]
+                facetype: int = model.boundary_faces.element_faces[iface]  # type: ignore
                 facepoint_inds = model.elements[
                     ielem, FaceType.HEX_27_node_indices_on_type(facetype)
                 ]
