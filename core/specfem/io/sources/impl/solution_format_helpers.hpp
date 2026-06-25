@@ -67,6 +67,17 @@ get_real(const std::unordered_map<std::string, std::string> &fields,
   return static_cast<type_real>(std::stod(fortran_to_cpp_double(it->second)));
 }
 
+/// Get a double from the field map. Used for geographic coordinates, where
+/// single precision loses ~1 m in UTM round-trips.
+inline double
+get_double(const std::unordered_map<std::string, std::string> &fields,
+           const std::string &key) {
+  auto it = fields.find(key);
+  if (it == fields.end())
+    throw std::runtime_error("Missing required field: " + key);
+  return std::stod(fortran_to_cpp_double(it->second));
+}
+
 /// Get an int from the field map.
 inline int get_int(const std::unordered_map<std::string, std::string> &fields,
                    const std::string &key) {

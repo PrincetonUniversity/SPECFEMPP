@@ -4,6 +4,7 @@
 #include "../impl/receiver_iterator.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/mesh.hpp"
 #include "specfem/receivers.hpp"
 
 namespace specfem::assembly {
@@ -70,7 +71,7 @@ public:
           &receivers,
       const std::vector<specfem::enums::wavefield> &stypes,
       const specfem::assembly::mesh<dimension_tag> &mesh,
-      const specfem::mesh::tags<dimension_tag> &tags,
+      const specfem::mesh::mesh<dimension_tag> &raw_mesh,
       const specfem::assembly::element_types<dimension_tag> &element_types);
 
   /**

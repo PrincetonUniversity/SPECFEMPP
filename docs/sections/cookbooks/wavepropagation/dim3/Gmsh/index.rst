@@ -8,7 +8,7 @@ discretize the domain. The spectral element solver requires a hexahedral mesh an
 does not support tetrahedral meshes. In this example we use
 `Gmsh <https://gmsh.info>`_ — a free, cross-platform mesh generator — to create a
 simple 3D box domain, export it using a Python script, and run the simulation using
-the ``xdecompose_mesh`` partitioner followed by ``specfem3d``.
+the ``xdecompose_mesh`` partitioner followed by ``specfem 3d``.
 
 .. seealso::
 
@@ -51,7 +51,7 @@ Create a working directory and make sure the SPECFEM++ executables are on your
 
 .. code-block:: bash
 
-    which specfem3d
+    which specfem
 
 If the command does not return a path, add the executable directory to ``PATH``:
 
@@ -268,7 +268,7 @@ Running ``xdecompose_mesh``
 ---------------------------
 
 ``xdecompose_mesh`` partitions the mesh text files into a binary database that
-``specfem3d`` can read. We first define the decomposer parameters in a ``Par_file``.
+``specfem 3d`` can read. We first define the decomposer parameters in a ``Par_file``.
 
 .. literalinclude:: parameter_files/Par_file
     :language: bash
@@ -277,7 +277,7 @@ Running ``xdecompose_mesh``
 Key parameters to note:
 
 - ``NPROC`` — number of MPI partitions. Set to 1 here for a serial run. Increase it
-  to match the number of MPI processes you plan to use with ``specfem3d``.
+  to match the number of MPI processes you plan to use with ``specfem 3d``.
 - ``NGNOD = 8`` — matches our HEX8 mesh.
 - ``LOCAL_PATH`` — directory where the binary partition databases are written.
 - The ``NODES_COORDS_FILE`` through ``FREE_OR_ABSORBING_SURFACE_FILE_ZMAX`` entries
@@ -343,7 +343,7 @@ A few parameters to highlight:
   within the stable range.
 - ``mesh-database`` points to ``DATABASES_MPI/Database.bin``, which is where
   ``xdecompose_mesh`` writes the single-process partition database. If you used
-  ``NPROC > 1`` you do not need to change this path — ``specfem3d`` automatically
+  ``NPROC > 1`` you do not need to change this path — ``specfem`` automatically
   appends the rank suffix.
 
 Running the solver
@@ -351,7 +351,7 @@ Running the solver
 
 .. code-block:: bash
 
-    specfem3d -p specfem_config.yaml
+    specfem 3d -p specfem_config.yaml
 
 The solver writes ASCII seismogram files for each station and component to
 ``OUTPUT_FILES/results/``.

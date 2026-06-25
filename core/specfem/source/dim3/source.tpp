@@ -1,16 +1,39 @@
 
 #include "specfem/source.hpp"
 
+#include "specfem/coordinate_systems/cartesian.hpp"
+#include "specfem/coordinate_systems/geographic.hpp"
 #include "specfem/setup.hpp"
+#include <array>
 #include <cmath>
+#include <memory>
+#include <optional>
 #include <yaml-cpp/yaml.h>
 
 template <specfem::element::dimension_tag DimensionTag>
 template <specfem::element::dimension_tag U, typename std::enable_if<U == specfem::element::dimension_tag::dim3>::type*>
 specfem::sources::source<DimensionTag>::source(
-    YAML::Node &Node, const int nsteps, const type_real dt)
-    : global_coordinates(Node["x"].as<type_real>(), Node["y"].as<type_real>(),
-                         Node["z"].as<type_real>()) {
+    YAML::Node &Node, const int nsteps, const type_real dt) {
+
+  if (Node["latitude"] && Node["longitude"]) {
+    this->read_coordinates_ =
+        std::make_unique<specfem::coordinate_systems::geographic_coordinates>(
+            Node["longitude"].as<double>(), Node["latitude"].as<double>(),
+            Node["depth"].as<double>());
+  } else if (Node["z"]) {
+    // Absolute cartesian: origin {0,0,0}.
+    this->read_coordinates_ = std::make_unique<
+        specfem::coordinate_systems::cartesian_coordinates<DimensionTag>>(
+        Node["x"].as<double>(), Node["y"].as<double>(), Node["z"].as<double>(),
+        std::array<double, 3>{ 0.0, 0.0, 0.0 });
+  } else {
+    // Depth-based cartesian: z = -depth, origin nullopt -> resolved against
+    // topography at assembly time.
+    this->read_coordinates_ = std::make_unique<
+        specfem::coordinate_systems::cartesian_coordinates<DimensionTag>>(
+        Node["x"].as<double>(), Node["y"].as<double>(),
+        -Node["depth"].as<double>(), std::nullopt);
+  }
 
   // Read source time function
   if (YAML::Node Dirac = Node["Dirac"]) {
