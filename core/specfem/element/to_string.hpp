@@ -84,6 +84,14 @@ const std::string to_string(const boundary_tag &boundary);
 const std::string to_string(const attenuation_tag &attenuation);
 
 /**
+ * @brief Convert MPI partition tag to string.
+ *
+ * @param mpi MPI partition classification
+ * @return String representation
+ */
+const std::string to_string(const mpi_tag &mpi);
+
+/**
  * @brief Parse medium tag from string representation.
  *
  * @param medium_tag String representation of medium type

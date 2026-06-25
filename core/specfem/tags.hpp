@@ -108,6 +108,15 @@ struct TagMember<specfem::element::attenuation_tag, AttenuationTag> {
 };
 
 /**
+ * @brief MPI partition tag specialization for inner/outer element
+ * classification.
+ */
+template <specfem::element::mpi_tag MpiTag>
+struct TagMember<specfem::element::mpi_tag, MpiTag> {
+  static constexpr specfem::element::mpi_tag mpi_tag = MpiTag;
+};
+
+/**
  * @brief SIMD tag specialization for point field types (enabled, disabled).
  */
 template <bool UseSIMD> struct TagMember<bool, UseSIMD> {
@@ -148,7 +157,7 @@ private:
     return (
         specfem::tags::tag_equals<
             decltype(TagMembers),
-            std::remove_cvref_t<QueryTagType> >::eval(TagMembers, query_tag) ||
+            std::remove_cvref_t<QueryTagType>>::eval(TagMembers, query_tag) ||
         ...);
   }
 

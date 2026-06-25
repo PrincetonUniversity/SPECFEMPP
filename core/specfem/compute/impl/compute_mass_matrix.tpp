@@ -23,9 +23,11 @@ void specfem::compute::impl::compute_mass_matrix(
   constexpr auto medium_tag = Tags::medium_tag;
   constexpr auto property_tag = Tags::property_tag;
   constexpr auto boundary_tag = Tags::boundary_tag;
+  constexpr auto attenuation_tag = Tags::attenuation_tag;
 
   const auto elements = assembly.element_types.get_elements_on_device(
-      medium_tag, property_tag, boundary_tag);
+          medium_tag, property_tag, attenuation_tag, boundary_tag,
+          Tags::mpi_tag);
 
   // Get number of elements matching the tag combinations
   const int nelements = elements.extent(0);

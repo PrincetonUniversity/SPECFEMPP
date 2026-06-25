@@ -328,7 +328,8 @@ public:
       const Kokkos::View<specfem::mesh_entity::dim3::type *, Kokkos::HostSpace>
           my_corner_orientations,
       const specfem::mesh_entity::element<dimension_tag> &element,
-      const specfem::assembly::fields<dimension_tag> &fields);
+      const specfem::assembly::fields<dimension_tag> &fields,
+      const Kokkos::View<const int *, Kokkos::HostSpace> &h_mesh_to_compute);
 };
 
 template <specfem::simulation::field_type FieldType,
@@ -381,6 +382,7 @@ public:
       const face_communication_group &face_group,
       const specfem::mesh_entity::element<dimension_tag> &element,
       const specfem::assembly::fields<dimension_tag> &fields,
+      const Kokkos::View<const int *, Kokkos::HostSpace> &h_mesh_to_compute,
       PendingReceiveState pending);
 };
 
@@ -397,10 +399,12 @@ template <> class mpi<specfem::element::dimension_tag::dim3> {
 public:
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
 
+  /// Media that participate in 3D cross-rank MPI exchange.
+  static constexpr auto media = MEDIUM_SET(elastic, acoustic);
+
   /// Medium combinations for 3D MPI communication patterns
   static constexpr auto medium_combinations =
-      specfem::tag_dispatch::dimension_set<dimension_tag>{} *
-      MEDIUM_SET(elastic, acoustic);
+      specfem::tag_dispatch::dimension_set<dimension_tag>{} * media;
 
   /// Per-medium map from neighbor rank to communication pattern
   template <typename TagsType>
@@ -457,8 +461,9 @@ public:
   mpi(const specfem::mesh::adjacency_graph<dimension_tag> &adjacency_graph,
       const specfem::assembly::element_types<dimension_tag> &element_types,
       const specfem::simulation::type simulation,
-      const specfem::assembly::fields<dimension_tag> &fields, const int ngllz,
-      const int nglly, const int ngllx);
+      const specfem::assembly::fields<dimension_tag> &fields,
+      const Kokkos::View<const int *, Kokkos::HostSpace> &h_mesh_to_compute,
+      const int ngllz, const int nglly, const int ngllx);
 
   template <specfem::simulation::field_type FieldType,
             specfem::element::medium_tag MediumTag,

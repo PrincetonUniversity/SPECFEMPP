@@ -82,6 +82,7 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
                            this->element_types,
                            simulation,
                            this->fields,
+                           this->mesh.h_mesh_to_compute,
                            ngllz,
                            nglly,
                            ngllx };

@@ -2,6 +2,7 @@
 
 #include "specfem/tags.hpp"
 #include <array>
+#include <concepts>
 #include <cstddef>
 #include <string>
 #include <type_traits>
@@ -59,6 +60,39 @@ struct TagValueTupleBase<std::index_sequence<Is...>, TagTypes...>
   template <std::size_t I> constexpr auto get() const {
     using T = typename std::tuple_element<I, std::tuple<TagTypes...>>::type;
     return static_cast<const TagValueHolder<I, T> &>(*this).v;
+  }
+
+  /**
+   * @brief Whether a slot of enum type `T` exists in this tuple.
+   *
+   * Enables order-agnostic dispatch: callers query tag presence by type rather
+   * than by slot position.
+   *
+   * @tparam T  Enum type to search for.
+   */
+  template <typename T> static constexpr bool contains() {
+    return (std::is_same_v<TagTypes, T> || ...);
+  }
+
+  /**
+   * @brief Retrieve the value of the slot whose enum type is `T`.
+   *
+   * Looks the value up by type rather than by position. `T` must appear at most
+   * once; guard with `contains<T>()` when its presence is not guaranteed (a
+   * value-initialised `T` is returned when absent).
+   *
+   * @tparam T  Enum type to retrieve.
+   * @return    The stored value of type `T`.
+   */
+  template <typename T> constexpr T get_by_type() const {
+    T result{};
+    (
+        [&] {
+          if constexpr (std::is_same_v<TagTypes, T>)
+            result = static_cast<const TagValueHolder<Is, TagTypes> &>(*this).v;
+        }(),
+        ...);
+    return result;
   }
 
   /**
