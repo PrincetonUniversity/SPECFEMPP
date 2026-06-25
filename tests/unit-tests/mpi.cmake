@@ -250,6 +250,53 @@ target_link_libraries(
   -lpthread -lm
 )
 
+# ==============================================================================
+# 3D MPI Newmark displacement tests (one executable per process count)
+# ==============================================================================
+# A gtest executable runs under a single `mpirun -n`, so per-test process counts
+# require one executable per size. Add a size to the list below (and a matching
+# tests_mpi<N>.yaml under displacement_tests/Newmark/mpi/dim3/) to run a test
+# group at a different process count. Each test declares its nproc in config.yaml.
+set(DISPLACEMENT_NEWMARK_3D_MPI_NPROCS 4)
+
+set(DISPLACEMENT_MPI_TARGETS "")
+foreach(nproc IN LISTS DISPLACEMENT_NEWMARK_3D_MPI_NPROCS)
+  set(_tgt displacement_newmark_3d_mpi${nproc}_tests)
+  add_executable(${_tgt}
+    displacement_tests/Newmark/mpi/dim3/newmark_tests.cpp
+  )
+  target_compile_definitions(${_tgt} PRIVATE SPECFEM_MPI_TEST_NPROC=${nproc})
+  target_link_libraries(${_tgt}
+    specfem::quadrature
+    specfem::mesh
+    yaml-cpp
+    specfem_environment
+    specfem::assembly
+    specfem::runtime_configuration
+    timescheme
+    point
+    specfem::algorithms
+    specfem::solver
+    specfem::periodic_tasks
+    MPI::MPI_CXX
+    ${BOOST_LIBS}
+    -lpthread -lm
+  )
+
+  # Copy the per-size test list to TEST_OUTPUT_DIR so it is available when
+  # gtest_discover_tests runs the binary (mirrors the serial.cmake pattern).
+  add_custom_command(TARGET ${_tgt} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory
+        ${TEST_OUTPUT_DIR}/displacement_tests/Newmark/mpi/dim3
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${CMAKE_CURRENT_SOURCE_DIR}/displacement_tests/Newmark/mpi/dim3/tests_mpi${nproc}.yaml
+        ${TEST_OUTPUT_DIR}/displacement_tests/Newmark/mpi/dim3/tests_mpi${nproc}.yaml
+    COMMENT "Moving ${_tgt} test list to ${TEST_OUTPUT_DIR}/displacement_tests/Newmark/mpi/dim3"
+  )
+
+  list(APPEND DISPLACEMENT_MPI_TARGETS ${_tgt})
+endforeach()
+
 # MPI test targets (4 processes)
 set(MPI_TEST_TARGETS_4PROCS
   mesh_mpi_dim3_tests
@@ -267,7 +314,7 @@ set(MPI_TEST_TARGETS_4PROCS
 
 # Expose MPI test targets for use in CMakeLists.txt (ALL_TEST_TARGETS) and
 # the registration loop below.
-set(MPI_TEST_TARGETS ${MPI_TEST_TARGETS_4PROCS})
+set(MPI_TEST_TARGETS ${MPI_TEST_TARGETS_4PROCS} ${DISPLACEMENT_MPI_TARGETS})
 
 # Setup test script writer (needed for external TEST_OUTPUT_DIR path-fix)
 specfem_write_copy_test_cmake_script()
@@ -275,6 +322,11 @@ specfem_write_copy_test_cmake_script()
 # Register MPI tests using helper function
 foreach(test_target IN LISTS MPI_TEST_TARGETS_4PROCS)
   add_mpi_test(${test_target} 4)
+endforeach()
+
+# Register the displacement MPI tests at their per-size process counts.
+foreach(nproc IN LISTS DISPLACEMENT_NEWMARK_3D_MPI_NPROCS)
+  add_mpi_test(displacement_newmark_3d_mpi${nproc}_tests ${nproc})
 endforeach()
 
 # Note: CTestTestfile.cmake generation and data directories (data, mesh) are

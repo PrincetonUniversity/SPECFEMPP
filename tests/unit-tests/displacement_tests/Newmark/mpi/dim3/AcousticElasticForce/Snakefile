@@ -1,0 +1,41 @@
+# MPI variant: partitions the mesh across `cores` ranks (database/proc_N.bin).
+# The Fortran reference path and trace list are identical to the serial sibling.
+cores = 4
+
+source_file = "FORCESOLUTION"
+fortran_mesh_files = ["meshfem3D_files/interface1.txt", "meshfem3D_files/interface2.txt", "meshfem3D_files/interfaces.txt", "meshfem3D_files/Mesh_Par_file"]
+specfempp_mesh_files = ["interface1.txt", "interface2.txt", "interfaces.txt", "Mesh_Par_file"]
+
+include: "../../../specfem3d.smk"
+
+networks = ["TEST"]
+stations = "ABCDE"
+locations = ["S3"]
+channels = ["MXX", "MXY", "MXZ"]
+extensions = ["semd"]
+
+
+traces = [
+    f"traces/{network}.{station}.{location}.{channel}.{extension}"
+    for network in networks
+    for station in stations
+    for location in locations
+    for channel in channels
+    for extension in extensions
+]
+
+
+rule all:
+    input:
+        traces=traces,
+        trace_list="<cwd>/traces/trace_list.txt",
+        database=[f"<cwd>/database/proc_{rank}.bin" for rank in range(cores)],
+    localrule: True
+
+
+rule check_traces:
+    input:
+        trace_list="<cwd>/traces/trace_list.txt",
+    output:
+        traces=traces,
+    localrule: True

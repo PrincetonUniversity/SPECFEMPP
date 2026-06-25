@@ -5,6 +5,13 @@
 #include "specfem/coordinate_systems/geographic.hpp"
 #include "specfem/coordinate_systems/utm.hpp"
 
+// resolve_coordinates() resolves depth/geographic coordinates via
+// specfem::algorithms::locate_point, which uses specfem::MPI. That requires an
+// initialized MPI Context, so this test installs a SPECFEMEnvironment (rather
+// than relying on gtest_main). Without it the 3D depth/geographic cases abort
+// with "MPI used outside Context scope" in MPI-enabled builds.
+#include "../../SPECFEM_Environment.hpp"
+
 #include <gtest/gtest.h>
 #include <stdexcept>
 
@@ -128,4 +135,10 @@ TEST(ResolveCoordinates3D, GeocentricThrows) {
   EXPECT_THROW(
       specfem::assembly::resolve_coordinates(coords, mesh3d, surface3d),
       std::runtime_error);
+}
+
+int main(int argc, char *argv[]) {
+  ::testing::InitGoogleTest(&argc, argv);
+  ::testing::AddGlobalTestEnvironment(new SPECFEMEnvironment);
+  return RUN_ALL_TESTS();
 }

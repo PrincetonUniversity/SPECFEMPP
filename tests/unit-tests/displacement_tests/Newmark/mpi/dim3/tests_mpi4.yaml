@@ -1,0 +1,8 @@
+# 3D MPI Newmark displacement tests launched with 4 processes.
+# Each listed directory has a config.yaml declaring nproc: 4. Add a tests_mpi<N>.yaml
+# (and the matching size in DISPLACEMENT_NEWMARK_3D_MPI_NPROCS in mpi.cmake) to run
+# tests at a different process count.
+tests3d:
+  - "HomogeneousHalfspaceSmallNoABCForceSource"
+  - "HomogeneousHalfSpaceStacey"
+  - "AcousticElasticForce"
