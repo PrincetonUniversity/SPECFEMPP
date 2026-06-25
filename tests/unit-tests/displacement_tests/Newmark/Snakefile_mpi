@@ -9,29 +9,27 @@
 #     snakemake -s Snakefile_mpi --cores <N>
 # Requires SPECFEM3D_BINDIR and SPECFEMPP_BINDIR in the environment.
 
-configfile: "mpi/dim3/tests_mpi4.yaml"
+configfile: "mpi/dim3/tests_mpi.yaml"
 
+# tests3d maps each test directory name -> its MPI process count.
 tests3d = config["tests3d"]
-
-# Process count for this group. Matches tests_mpi4.yaml and each case's
-# config.yaml nproc / Mesh_Par_file NPROC_XI*NPROC_ETA. Add a second master (or
-# generalize this one) for other sizes.
-cores = 4
 
 rule all:
     input:
         traces3d=expand(
-            "mpi/dim3/{test_name}/traces/trace_list.txt", test_name=tests3d
+            "mpi/dim3/{test_name}/traces/trace_list.txt", test_name=list(tests3d)
         ),
         database3d=[
             f"mpi/dim3/{test_name}/database/proc_{rank}.bin"
-            for test_name in tests3d
-            for rank in range(cores)
+            for test_name, ncores in tests3d.items()
+            for rank in range(ncores)
         ],
     localrule: True
 
-# Dynamically include each per-test Snakefile as a module (matches ./Snakefile).
-for test_name in tests3d:
+# Dynamically include each per-test Snakefile as a module (matches ./Snakefile),
+# passing that test's core count down via the module config. The per-case Snakefile
+# reads it as config["cores"], which propagates into the .smk files it includes.
+for test_name, ncores in tests3d.items():
     alias = f"{test_name}_"
 
     module:
@@ -39,6 +37,7 @@ for test_name in tests3d:
         snakefile: f"mpi/dim3/{test_name}/Snakefile"
         pathvars:
             cwd=f"mpi/dim3/{test_name}"
+        config: {"cores": ncores}
 
     use rule * from test_name as alias*
 

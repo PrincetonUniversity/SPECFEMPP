@@ -21,9 +21,6 @@
 #define SPECFEM_MPI_TEST_NPROC 4
 #endif
 
-#define SPECFEM_STRINGIFY_IMPL(x) #x
-#define SPECFEM_STRINGIFY(x) SPECFEM_STRINGIFY_IMPL(x)
-
 // ------------------------------------- //
 // ------- Test configuration ----------- //
 
@@ -77,16 +74,22 @@ struct TestConfig3D {
 
 // ----- Parse test directories ------------- //
 
+// tests_mpi.yaml maps each test directory name to its MPI process count. A
+// given executable is launched at a single size, so it keeps only the cases
+// whose core count matches `target_nproc`. Names are sorted for a deterministic
+// gtest order.
 std::vector<std::string>
-parse_3D_test_directories(const std::string &tests_file) {
+parse_3D_test_directories(const std::string &tests_file, int target_nproc) {
   YAML::Node yaml = YAML::LoadFile(tests_file)["tests3d"];
 
   std::vector<std::string> test_names;
 
-  for (const auto &test_node : yaml) {
-    std::string path = test_node.as<std::string>();
-    test_names.push_back(path);
+  for (YAML::const_iterator it = yaml.begin(); it != yaml.end(); ++it) {
+    if (it->second.as<int>() == target_nproc)
+      test_names.push_back(it->first.as<std::string>());
   }
+
+  std::sort(test_names.begin(), test_names.end());
 
   return test_names;
 }
@@ -334,15 +337,16 @@ TEST_P(NewmarkMPI, 3D) {
             << std::endl;
 }
 
-// Load test directories and create parameterized test instances. The list is
-// per-size: each executable reads only the tests_mpi<N>.yaml for the size it
-// was launched with (kept minimal so it is safe to read at discovery time,
-// before the per-case data is generated).
+// Load test directories and create parameterized test instances. All MPI cases
+// live in a single tests_mpi.yaml (name -> core count); this executable keeps
+// only the cases whose core count matches its launch size
+// (SPECFEM_MPI_TEST_NPROC). Reading just this one file at discovery time is
+// safe (it is copied to the test output dir POST_BUILD, before per-case data
+// exists).
 std::vector<std::string> GetTestDirectories() {
-  std::string tests_filename =
-      "displacement_tests/Newmark/mpi/dim3/tests_mpi" SPECFEM_STRINGIFY(
-          SPECFEM_MPI_TEST_NPROC) ".yaml";
-  return parse_3D_test_directories(tests_filename);
+  const std::string tests_filename =
+      "displacement_tests/Newmark/mpi/dim3/tests_mpi.yaml";
+  return parse_3D_test_directories(tests_filename, SPECFEM_MPI_TEST_NPROC);
 }
 
 // Instantiate the parameterized test with all configurations
