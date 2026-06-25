@@ -16,7 +16,7 @@
 
 template <specfem::element::dimension_tag DimensionTag>
 specfem::assembly::sources<DimensionTag>::sources(
-    std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
+    std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>
         &sources,
     const specfem::assembly::mesh<DimensionTag> &mesh,
     const specfem::assembly::jacobian_matrix<DimensionTag> &jacobian_matrix,
@@ -35,6 +35,9 @@ specfem::assembly::sources<DimensionTag>::sources(
       h_boundary_types(Kokkos::create_mirror_view(boundary_types)),
       wavefield_types("specfem::sources::wavefield_types", sources.size()),
       h_wavefield_types(Kokkos::create_mirror_view(wavefield_types)) {
+
+  Kokkos::deep_copy(h_element_indices, -1);
+  Kokkos::deep_copy(h_source_indices, -1);
 
   int nsources = 0;
   int nsource_indices = 0;
@@ -69,6 +72,7 @@ specfem::assembly::sources<DimensionTag>::sources(
       const int global_isource = source_indices[isource];
 
       h_element_indices(global_isource) = ispec;
+      h_source_indices(global_isource) = isource;
       assert(element_types.get_medium_tag(ispec) == medium_tag);
       h_medium_types(global_isource) = medium_tag;
       h_property_types(global_isource) = element_types.get_property_tag(ispec);
@@ -103,8 +107,10 @@ specfem::assembly::sources<DimensionTag>::sources(
             tag_views...]<typename TagsType>() -> HostIndexViewType {
       std::vector<int> matching_indices;
       matching_indices.reserve(nsources);
-      for (int isource = 0; isource < nsources; ++isource)
-        if (TagsType{}.has(tag_views(isource)...))
+      for (int isource = 0; isource < (int)h_element_indices.extent(0);
+           ++isource)
+        if (h_element_indices(isource) >= 0 &&
+            TagsType{}.has(tag_views(isource)...))
           matching_indices.emplace_back(index_selector(isource));
       HostIndexViewType host_view(label_prefix + TagsType::name(),
                                   matching_indices.size());
@@ -120,8 +126,9 @@ specfem::assembly::sources<DimensionTag>::sources(
       h_property_types, h_boundary_types, h_wavefield_types) };
 
   h_source_source_by_combination = { make_source_initializer(
-      "source_source_by_combination_", [&](int isource) { return isource; },
-      h_medium_types, h_property_types, h_boundary_types, h_wavefield_types) };
+      "source_source_by_combination_",
+      [&](int isource) { return h_source_indices(isource); }, h_medium_types,
+      h_property_types, h_boundary_types, h_wavefield_types) };
 
   source_element_by_combination =
       specfem::tag_dispatch::create_mirror_storage_and_copy(
@@ -134,13 +141,15 @@ specfem::assembly::sources<DimensionTag>::sources(
   Kokkos::deep_copy(wavefield_types, h_wavefield_types);
   Kokkos::deep_copy(property_types, h_property_types);
   Kokkos::deep_copy(boundary_types, h_boundary_types);
+  Kokkos::deep_copy(element_indices, h_element_indices);
+  Kokkos::deep_copy(source_indices, h_source_indices);
 }
 
 // ── get_sources_on_host / get_sources_on_device template definitions ─────────
 
 template <specfem::element::dimension_tag DimensionTag>
 std::tuple<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>,
-           Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >
+           Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>>
 specfem::assembly::sources<DimensionTag>::get_sources_on_host(
     const specfem::element::medium_tag medium,
     const specfem::element::property_tag property,
@@ -154,7 +163,7 @@ specfem::assembly::sources<DimensionTag>::get_sources_on_host(
 
 template <specfem::element::dimension_tag DimensionTag>
 std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
-           Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >
+           Kokkos::View<int *, Kokkos::DefaultExecutionSpace>>
 specfem::assembly::sources<DimensionTag>::get_sources_on_device(
     const specfem::element::medium_tag medium,
     const specfem::element::property_tag property,

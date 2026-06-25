@@ -178,19 +178,37 @@ specfem::io::mesh::impl::fortran::dim3::read_boundaries(
     const specfem::mesh::control_nodes<specfem::element::dimension_tag::dim3>
         &control_nodes) {
 
-  // Read boundary condition flags written before the section headers.
-  // Section 5 (Z_MIN) is free surface when bottom_free_surface=true, else
-  // absorbing. Section 6 (Z_MAX) is free surface when top_free_surface=true,
-  // else absorbing.
-  bool top_free_surface, bottom_free_surface;
-  specfem::io::fortran_read_line(stream, &top_free_surface,
-                                 &bottom_free_surface);
-
   int boundary_number;
   std::array<int, 6> nfaces_per_direction;
 
+  // New databases write boundary-condition flags before the section headers.
+  // Legacy databases start directly with section 1; keep supporting them so
+  // checked-in fixtures and older decomposed meshes remain readable.
+  const auto boundary_start = stream.tellg();
+  bool top_free_surface = true;
+  bool bottom_free_surface = false;
+  bool has_boundary_flags = true;
+  specfem::io::fortran_read_line(stream, &top_free_surface,
+                                 &bottom_free_surface);
+  specfem::io::fortran_read_line(stream, &boundary_number,
+                                 &nfaces_per_direction[0]);
+
+  if (boundary_number != 1) {
+    has_boundary_flags = false;
+    top_free_surface = true;
+    bottom_free_surface = false;
+    stream.clear();
+    stream.seekg(boundary_start);
+    specfem::io::fortran_read_line(stream, &boundary_number,
+                                   &nfaces_per_direction[0]);
+  }
+
+  if (boundary_number != 1)
+    throw std::runtime_error(
+        "Invalid database format: expected boundary number 1");
+
   // Section indices: 1=X_MIN, 2=X_MAX, 3=Y_MIN, 4=Y_MAX, 5=Z_MIN, 6=Z_MAX
-  for (int dir = 0; dir < 6; ++dir) {
+  for (int dir = 1; dir < 6; ++dir) {
     specfem::io::fortran_read_line(stream, &boundary_number,
                                    &nfaces_per_direction[dir]);
     if (boundary_number != dir + 1)
@@ -209,10 +227,10 @@ specfem::io::mesh::impl::fortran::dim3::read_boundaries(
 
   for (int dir = 0; dir < 6; ++dir) {
     const int num_faces = nfaces_per_direction[dir];
-    // Sections 5 and 6 are Z boundaries; their classification depends on
-    // TOP_FREE_SURFACE / BOTTOM_FREE_SURFACE read from the database.
-    const bool is_free_surface =
-        (dir == 4 && bottom_free_surface) || (dir == 5 && top_free_surface);
+    const bool is_free_surface = has_boundary_flags
+                                     ? ((dir == 4 && bottom_free_surface) ||
+                                        (dir == 5 && top_free_surface))
+                                     : (dir == 5);
 
     if (num_faces > 0) {
       for (int iface = 0; iface < num_faces; ++iface) {

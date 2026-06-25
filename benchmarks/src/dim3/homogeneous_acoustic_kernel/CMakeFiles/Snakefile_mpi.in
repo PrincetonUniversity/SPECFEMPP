@@ -1,6 +1,8 @@
 SPECFEM_BIN = "@CMAKE_BINARY_DIR@/bin/specfem 3d"
 MESHFEM_BIN = "@CMAKE_BINARY_DIR@/bin/xmeshfem3D"
 
+MPIRUN = "mpirun -n 6"
+
 rule all:
     input:
         kernel_plot="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/kernels.png",
@@ -11,15 +13,20 @@ rule generate_mesh:
     input:
         "@CURRENT_BENCHMARK_BUILD_DIR@/DATA/meshfem3D_files/Mesh_Par_file",
     output:
-        database="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES/Database.bin",
-        mesh_vtk="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES/mesh.vtk",
-        skewness_vtk="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES/skewness.vtk",
+        database=[f"@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES/Database/proc_{rank}.bin" for rank in range(6)],
+        mesh_vtk=[f"@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES/proc{rank}_mesh.vtk" for rank in range(6)],
+        skewness_vtk=[f"@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES/proc{rank}_skewness.vtk" for rank in range(6)],
         output_meshfem3D="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/output_meshfem3D.txt",
     localrule: True
+    resources:
+        mpi="mpirun",
+        tasks=6,
+        cpus_per_task=1,
+        runtime=1,
     shell:
         """
             mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES
-            {MESHFEM_BIN} -p {input}
+            {resources.mpi} -np {resources.tasks} {MESHFEM_BIN} -p {input}
         """
 
 
@@ -38,8 +45,8 @@ rule forward_simulation:
         ),
         log="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/output_forward.log",
     resources:
-        nodes=1,
-        tasks=1,
+        mpi="mpirun",
+        tasks=6,
         cpus_per_task=1,
         runtime=30,
     params:
@@ -50,7 +57,7 @@ rule forward_simulation:
             mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results
             mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/ForwardWavefield
             echo "Hostname: $(hostname)" > {output.log}
-            {SPECFEM_BIN} -p {input.config} >> {output.log}
+            {resources.mpi} -np {resources.tasks} {SPECFEM_BIN} -p {input.config} >> {output.log}
         """
 
 
@@ -87,8 +94,8 @@ rule adjoint_simulation:
     output:
         log="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/output_adjoint.log",
     resources:
-        nodes=1,
-        tasks=1,
+        mpi="mpirun",
+        tasks=6,
         cpus_per_task=1,
         runtime=30,
     params:
@@ -98,7 +105,7 @@ rule adjoint_simulation:
             export KOKKOS_TOOLS_LIBS={params.KOKKOS_TOOLS_LIBS}
             mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/kernels
             echo "Hostname: $(hostname)" > {output.log}
-            {SPECFEM_BIN} -p {input.config} >> {output.log}
+            {resources.mpi} -np {resources.tasks} {SPECFEM_BIN} -p {input.config} >> {output.log}
         """
 
 
