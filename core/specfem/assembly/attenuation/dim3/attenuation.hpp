@@ -119,7 +119,8 @@ struct Attenuation<specfem::element::dimension_tag::dim3>
       const specfem::assembly::element_types<
           specfem::element::dimension_tag::dim3> &element_types,
       const specfem::mesh::materials<specfem::element::dimension_tag::dim3>
-          &materials);
+          &materials,
+      const bool has_gll_model);
 
   void init_memory_variables(
       const specfem::assembly::element_types<
@@ -131,7 +132,8 @@ struct Attenuation<specfem::element::dimension_tag::dim3>
       const specfem::units::Hertz fc, const specfem::units::Hertz f0,
       const specfem::utilities::Band<specfem::units::Hertz> &band,
       const Kokkos::View<type_real[N_SLS], Kokkos::DefaultHostExecutionSpace>
-          &tau_sigma);
+          &tau_sigma,
+      const bool has_gll_model);
 
   /**
    * @brief Compile-time check whether (MediumTag, PropertyTag) has an
@@ -166,21 +168,23 @@ struct Attenuation<specfem::element::dimension_tag::dim3>
   }
 
   /**
-   * @brief Recompute per-GLL modulus scale factors for one (medium, property)
-   *        from its current Q views.
+   * @brief Recompute all read-time attenuation state for one (medium, property)
+   *        from its current Q views and the just-read property moduli.
    *
-   * Called by the property reader after Q has been read from disk so kappa/mu
-   * can be scaled to their unrelaxed values using a factor derived from the
-   * on-disk Q. A compile-time no-op for non-attenuating combinations.
+   * Single, implementation-agnostic entry point for the property reader: the
+   * underlying container recomputes its scale factors from the on-disk Q,
+   * un-relaxes the scaled moduli in place, and recomputes the relaxation rates.
+   * A compile-time no-op for non-attenuating combinations.
    */
   template <specfem::element::medium_tag MediumTag,
-            specfem::element::property_tag PropertyTag>
-  void recompute_scaling() {
+            specfem::element::property_tag PropertyTag, typename PropsContainer,
+            typename ElementsView>
+  void recompute(const PropsContainer &props, const ElementsView &elements) {
     if constexpr (has_attenuation<MediumTag, PropertyTag>()) {
       using Key = specfem::tags::Tags<
           dimension_tag, MediumTag, PropertyTag,
           specfem::element::attenuation_tag::constant_isotropic>;
-      attenuation_storage.template get<Key>().recompute_scaling();
+      attenuation_storage.template get<Key>().recompute(props, elements);
     }
   }
 

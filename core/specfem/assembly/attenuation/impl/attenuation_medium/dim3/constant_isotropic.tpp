@@ -114,7 +114,8 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
       const specfem::units::Hertz fc, const specfem::units::Hertz f0,
       const specfem::utilities::Band<specfem::units::Hertz> &band,
       const Kokkos::View<type_real[N_SLS], Kokkos::DefaultHostExecutionSpace>
-          &tau_sigma) {
+          &tau_sigma,
+      const bool has_gll_model) {
 
     const int nspec_attn = elements.extent(0);
 
@@ -225,6 +226,14 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
           "Center frequency fc and reference frequency f0 must be positive.");
     }
 
+    // When reading a GLL model from disk, recompute() refills the per-GLL Q,
+    // scale factors, and relaxation rates from the on-disk Q -- skip the
+    // (expensive, Nelder-Mead) construction-time solve here. All views are
+    // already zero-initialized on host and device.
+    if (has_gll_model) {
+      return;
+    }
+
     // 3. Loop over elements
     for (int i = 0; i < nspec_attn; ++i) {
       const int ispec = elements(i);
@@ -305,9 +314,10 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
    * Used by the property reader after Q has been read from disk, so kappa/mu are
    * scaled to their unrelaxed values using a factor derived from the on-disk Q.
    * Host-only; mirrors the scale computation in @ref ComputedAttenuationValues.
-   * Q is element-constant, so it is sampled once per element. Relaxation rates
-   * are NOT recomputed here (they remain from construction; recomputing them
-   * from an edited Q is future work).
+   * Q is sampled per GLL point, so a GLL-varying Q model is honoured. The
+   * (expensive, Nelder-Mead) tau_epsilon solve is memoized and only redone when
+   * Q changes from the previous point, so element-constant Q costs one solve
+   * per element.
    */
   void recompute_scaling() {
     const int nspec_attn = h_kappa_scale.extent(0);
@@ -315,28 +325,134 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
     const int l_nglly = h_kappa_scale.extent(2);
     const int l_ngllx = h_kappa_scale.extent(3);
     for (int i = 0; i < nspec_attn; ++i) {
-      const type_real Qkappa = h_Qkappa(i, 0, 0, 0);
-      const type_real Qmu = h_Qmu(i, 0, 0, 0);
-      const auto tau_eps_kappa =
-          specfem::attenuation::compute_tau_eps<N_SLS>(Qkappa, tau_sigma_,
-                                                       band_);
-      const auto tau_eps_mu = specfem::attenuation::compute_tau_eps<N_SLS>(
-          Qmu, tau_sigma_, band_);
-      const type_real kappa_scale =
-          specfem::attenuation::get_attenuation_scale_factor<N_SLS>(
-              fc_.raw(), tau_eps_kappa, tau_sigma_, Qkappa, f0_.raw());
-      const type_real mu_scale =
-          specfem::attenuation::get_attenuation_scale_factor<N_SLS>(
-              fc_.raw(), tau_eps_mu, tau_sigma_, Qmu, f0_.raw());
+      type_real last_Qkappa = -1, last_Qmu = -1, kappa_scale = 0, mu_scale = 0;
       for (int iz = 0; iz < l_ngllz; ++iz) {
         for (int iy = 0; iy < l_nglly; ++iy) {
           for (int ix = 0; ix < l_ngllx; ++ix) {
+            const type_real Qkappa = h_Qkappa(i, iz, iy, ix);
+            const type_real Qmu = h_Qmu(i, iz, iy, ix);
+            if (Qkappa != last_Qkappa) {
+              kappa_scale =
+                  specfem::attenuation::get_attenuation_scale_factor<N_SLS>(
+                      fc_.raw(),
+                      specfem::attenuation::compute_tau_eps<N_SLS>(
+                          Qkappa, tau_sigma_, band_),
+                      tau_sigma_, Qkappa, f0_.raw());
+              last_Qkappa = Qkappa;
+            }
+            if (Qmu != last_Qmu) {
+              mu_scale =
+                  specfem::attenuation::get_attenuation_scale_factor<N_SLS>(
+                      fc_.raw(),
+                      specfem::attenuation::compute_tau_eps<N_SLS>(
+                          Qmu, tau_sigma_, band_),
+                      tau_sigma_, Qmu, f0_.raw());
+              last_Qmu = Qmu;
+            }
             h_kappa_scale(i, iz, iy, ix) = kappa_scale;
             h_mu_scale(i, iz, iy, ix) = mu_scale;
           }
         }
       }
     }
+  }
+
+  /**
+   * @brief Recompute the per-GLL relaxation rates from the current h_Qkappa/
+   *        h_Qmu and the supplied (unrelaxed) moduli, after a model read.
+   *
+   * The relaxation rate is `modulus * beta / (tau_sigma * one_minus_sum_beta)`
+   * with `beta` derived from the on-disk Q -- mirrors the construction-time
+   * fill, so a write/read round-trip reproduces the original rates. The
+   * unrelaxed moduli come from the property container (after rescale_read). The
+   * recomputed host views are pushed to device for use at runtime.
+   *
+   * @tparam KappaView    Host kappa-modulus view type (group-local indexing).
+   * @tparam MuView       Host mu-modulus view type (group-local indexing).
+   * @tparam ElementsView Group-local index -> global ispec view type.
+   * @param h_kappa  Unrelaxed kappa modulus host view (group-local).
+   * @param h_mu     Unrelaxed mu modulus host view (group-local).
+   * @param elements Group-local element index -> global ispec mapping.
+   */
+  template <typename KappaView, typename MuView, typename ElementsView>
+  void recompute_relaxation_rates(const KappaView &h_kappa, const MuView &h_mu,
+                                  const ElementsView &elements) {
+    if (h_Qkappa.extent(0) == 0)
+      return;
+    for (std::size_t gi = 0; gi < h_kappa.extent(0); ++gi) {
+      const int a = h_attenuation_index_mapping(elements(gi));
+      if (a < 0)
+        continue;
+      // Q is sampled per GLL point so a GLL-varying Q model is honoured. The
+      // (expensive, Nelder-Mead) tau_epsilon solve is memoized and only redone
+      // when Q changes, so element-constant Q costs one solve per element.
+      type_real last_Qkappa = -1, last_Qmu = -1;
+      specfem::attenuation::AttenuationPropertyValues<N_SLS> kappa_props,
+          mu_props;
+      for (std::size_t iz = 0; iz < h_kappa.extent(1); ++iz)
+        for (std::size_t iy = 0; iy < h_kappa.extent(2); ++iy)
+          for (std::size_t ix = 0; ix < h_kappa.extent(3); ++ix) {
+            const type_real Qkappa = h_Qkappa(a, iz, iy, ix);
+            const type_real Qmu = h_Qmu(a, iz, iy, ix);
+            if (Qkappa != last_Qkappa) {
+              kappa_props =
+                  specfem::attenuation::get_attenuation_property_values<N_SLS>(
+                      tau_sigma_, specfem::attenuation::compute_tau_eps<N_SLS>(
+                                      Qkappa, tau_sigma_, band_));
+              last_Qkappa = Qkappa;
+            }
+            if (Qmu != last_Qmu) {
+              mu_props =
+                  specfem::attenuation::get_attenuation_property_values<N_SLS>(
+                      tau_sigma_, specfem::attenuation::compute_tau_eps<N_SLS>(
+                                      Qmu, tau_sigma_, band_));
+              last_Qmu = Qmu;
+            }
+            const type_real kappa_sc = h_kappa(gi, iz, iy, ix);
+            const type_real mu_sc = h_mu(gi, iz, iy, ix);
+            for (int j = 0; j < N_SLS; ++j) {
+              const type_real tauinv_j = 1.0 / tau_sigma_(j);
+              h_kappa_relaxation_rate(a, iz, iy, ix, j) =
+                  kappa_sc * kappa_props.beta(j) * tauinv_j /
+                  kappa_props.one_minus_sum_beta;
+              h_mu_relaxation_rate(a, iz, iy, ix, j) =
+                  mu_sc * 2.0 * mu_props.beta(j) * tauinv_j /
+                  mu_props.one_minus_sum_beta;
+            }
+          }
+    }
+    specfem::datatype::deep_copy(kappa_relaxation_rate, h_kappa_relaxation_rate);
+    specfem::datatype::deep_copy(mu_relaxation_rate, h_mu_relaxation_rate);
+  }
+
+  /**
+   * @brief Recompute all read-time attenuation state from the on-disk Q model.
+   *
+   * Single, implementation-agnostic entry point for the property reader: it
+   * recomputes the modulus scale factors from the read-back Q, un-relaxes the
+   * scaled property moduli in place, and recomputes the relaxation rates. A
+   * no-op when there are no attenuating elements.
+   *
+   * @tparam PropsContainer The property data container (exposes
+   *                        for_each_host_view and h_kappa/h_mu).
+   * @tparam ElementsView   Group-local index -> global ispec view type.
+   * @param props    The just-read property container; its scaled moduli are
+   *                 un-relaxed in place.
+   * @param elements Group-local element index -> global ispec mapping.
+   */
+  template <typename PropsContainer, typename ElementsView>
+  void recompute(const PropsContainer &props, const ElementsView &elements) {
+    if (!has_attenuating_elements())
+      return;
+    // 1. Scale factors from the read-back Q.
+    recompute_scaling();
+    // 2. Un-relax the scaled moduli (physical -> unrelaxed) in place.
+    props.for_each_host_view([&](const auto &view, const std::string &name) {
+      if (is_scaled_property(name))
+        scale_into(view, view, name, /*to_physical=*/false, elements);
+    });
+    // 3. Relaxation rates from the unrelaxed moduli + Q.
+    recompute_relaxation_rates(props.h_kappa, props.h_mu, elements);
   }
 
   // ---- Model-I/O interface (consumed by specfem::io::impl::AttenuationIO) ----

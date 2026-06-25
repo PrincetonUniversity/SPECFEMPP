@@ -93,11 +93,16 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
   // Currently done in the mesher!
   this->check_jacobian_matrix();
 
-  this->attenuation = { mesh.attenuation, dt, this->mesh, this->element_types,
-                        mesh.materials };
+  this->attenuation = { mesh.attenuation, dt,
+                        this->mesh,       this->element_types,
+                        mesh.materials,   property_reader != nullptr };
 
   this->properties = { this->element_types, this->mesh, mesh.materials,
                        property_reader != nullptr };
+
+  if (property_reader != nullptr) {
+    property_reader->read(*this);
+  }
 
   this->info = { this->mesh, this->properties, this->element_types };
 

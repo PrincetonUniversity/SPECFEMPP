@@ -64,16 +64,14 @@ void specfem::io::property_reader<InputLibrary>::read(
             [&](const auto view, const std::string view_name) {
               group.openDataset(view_name, view).read();
             });
-        // Below are no-op if the (medium, property) combination has no attenuation container.
+        // Read the per-medium attenuation datasets (e.g. Qkappa/Qmu); no-op for
+        // non-attenuating combinations.
         att_io.template attenuation_read<medium_tag, property_tag>(group);
-        // 2. Recompute the modulus scale factors from the read-back Q.
-        assembly.attenuation
-            .template recompute_scaling<medium_tag, property_tag>();
-        container.for_each_host_view(
-            [&](const auto view, const std::string view_name) {
-              att_io.template rescale_read<medium_tag, property_tag>(view,
-                                                                     view_name);
-            });
+        // Recompute all read-time attenuation state from the read-back model
+        // (scale factors, un-relaxed moduli, relaxation rates); no-op for
+        // non-attenuating combinations.
+        assembly.attenuation.template recompute<medium_tag, property_tag>(
+            container, element_indices);
       });
 
   std::cout << "Properties read from " << base_folder << "/" << ns
@@ -131,14 +129,14 @@ void specfem::io::property_reader<InputLibrary>::read(
             decltype(assembly.attenuation), decltype(assembly.element_types)>
             att_io{ assembly.attenuation, assembly.element_types };
 
+        // Read the per-medium attenuation datasets (e.g. Qkappa/Qmu); no-op for
+        // non-attenuating combinations.
         att_io.template attenuation_read<medium_tag, property_tag>(group);
-        assembly.attenuation
-            .template recompute_scaling<medium_tag, property_tag>();
-        container.for_each_host_view(
-            [&](const auto view, const std::string view_name) {
-              att_io.template rescale_read<medium_tag, property_tag>(view,
-                                                                     view_name);
-            });
+        // Recompute all read-time attenuation state from the read-back model
+        // (scale factors, un-relaxed moduli, relaxation rates); no-op for
+        // non-attenuating combinations.
+        assembly.attenuation.template recompute<medium_tag, property_tag>(
+            container, element_indices);
       });
 
   std::cout << "Properties read from " << base_folder << "/" << ns

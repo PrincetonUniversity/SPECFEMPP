@@ -1,4 +1,5 @@
 #include "../test_fixture/test_fixture.hpp"
+#include "specfem/constants.hpp"
 #include "specfem/datatype.hpp"
 #include "specfem/element.hpp"
 #include "specfem/execution.hpp"
@@ -446,6 +447,36 @@ TEST_F(Assembly2D, properties_io_routines) {
             });
       };
 
+      // Helper: iterate the per-(GLL, SLS) relaxation rates for any attenuating
+      // medium. The callback receives mutable refs (kappa_rate, mu_rate).
+      const auto for_each_attenuation_rate = [&](auto fn) {
+        specfem::tag_dispatch::for_each(
+            DIMENSION_SET(dim2) *
+                MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
+                           elastic_psv_t) *
+                PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
+            [&]<typename ElementTags>() {
+              constexpr auto medium_tag = ElementTags::medium_tag;
+              constexpr auto property_tag = ElementTags::property_tag;
+              if constexpr (decltype(assembly.attenuation)::
+                                template has_attenuation<medium_tag,
+                                                         property_tag>()) {
+                const auto &att =
+                    assembly.attenuation
+                        .get_container<medium_tag, property_tag>();
+                const auto &kr = att.h_kappa_relaxation_rate;
+                const auto &mr = att.h_mu_relaxation_rate;
+                if (kr.extent(0) == 0)
+                  return;
+                for (std::size_t i = 0; i < kr.extent(0); ++i)
+                  for (std::size_t iz = 0; iz < kr.extent(1); ++iz)
+                    for (std::size_t ix = 0; ix < kr.extent(2); ++ix)
+                      for (std::size_t j = 0; j < kr.extent(3); ++j)
+                        fn(kr(i, iz, ix, j), mr(i, iz, ix, j));
+              }
+            });
+      };
+
       // Re-set every property buffer (kappa/mu/rho) to a known value, so the
       // post-read check is meaningful (a no-op reader would otherwise pass).
       const auto set_all_properties = [&](const type_real offset) {
@@ -487,6 +518,14 @@ TEST_F(Assembly2D, properties_io_routines) {
         EXPECT_TRUE(any_nontrivial_scale)
             << "attenuating config should have non-unit modulus scale factors";
 
+      // Snapshot the construction-time relaxation rates so we can confirm the
+      // reader recomputes them from the read-back Q (see check below).
+      std::vector<type_real> saved_kappa_rate, saved_mu_rate;
+      for_each_attenuation_rate([&](type_real &kappa_rate, type_real &mu_rate) {
+        saved_kappa_rate.push_back(kappa_rate);
+        saved_mu_rate.push_back(mu_rate);
+      });
+
       // Copy properties to device
       assembly.properties.copy_to_device();
 
@@ -505,6 +544,13 @@ TEST_F(Assembly2D, properties_io_routines) {
         qmu = static_cast<type_real>(-999);
         kappa_scale = static_cast<type_real>(-999);
         mu_scale = static_cast<type_real>(-999);
+      });
+
+      // Corrupt the relaxation rates too, so the post-read check confirms the
+      // reader recomputed them (rather than leaving the corrupt values).
+      for_each_attenuation_rate([&](type_real &kappa_rate, type_real &mu_rate) {
+        kappa_rate = static_cast<type_real>(-999);
+        mu_rate = static_cast<type_real>(-999);
       });
 
       // Corrupt every property buffer too, so a no-op reader would fail the
@@ -545,6 +591,36 @@ TEST_F(Assembly2D, properties_io_routines) {
         EXPECT_NEAR(mu_scale, saved_mu_scale[q_index], 1e-4);
         ++q_index;
       });
+
+      // Verify the reader recomputed the relaxation rates from the read-back Q.
+      // The relaxation rate is modulus * factor(Q); the moduli were
+      // overwritten, so absolute values differ, but the per-SLS factor ratio
+      // (Q-dependent, modulus-independent) must be preserved -- and the rates
+      // must no longer be the corrupt sentinel.
+      std::vector<type_real> read_kappa_rate, read_mu_rate;
+      for_each_attenuation_rate([&](type_real &kappa_rate, type_real &mu_rate) {
+        read_kappa_rate.push_back(kappa_rate);
+        read_mu_rate.push_back(mu_rate);
+      });
+      ASSERT_EQ(read_kappa_rate.size(), saved_kappa_rate.size());
+      constexpr std::size_t n_sls = specfem::constants::N_SLS;
+      for (std::size_t g = 0; g + n_sls <= read_kappa_rate.size(); g += n_sls) {
+        for (std::size_t j = 0; j < n_sls; ++j) {
+          EXPECT_NE(read_kappa_rate[g + j], static_cast<type_real>(-999));
+          EXPECT_TRUE(std::isfinite(read_kappa_rate[g + j]));
+          EXPECT_TRUE(std::isfinite(read_mu_rate[g + j]));
+          // Per-SLS factor ratio (depends only on Q) preserved across read.
+          if (saved_kappa_rate[g + j] != 0 && saved_kappa_rate[g] != 0)
+            EXPECT_NEAR(read_kappa_rate[g + j] / saved_kappa_rate[g + j],
+                        read_kappa_rate[g] / saved_kappa_rate[g],
+                        std::abs(read_kappa_rate[g] / saved_kappa_rate[g]) *
+                            1e-3);
+          if (saved_mu_rate[g + j] != 0 && saved_mu_rate[g] != 0)
+            EXPECT_NEAR(read_mu_rate[g + j] / saved_mu_rate[g + j],
+                        read_mu_rate[g] / saved_mu_rate[g],
+                        std::abs(read_mu_rate[g] / saved_mu_rate[g]) * 1e-3);
+        }
+      }
 
       std::cout << "-------------------------------------------------------\n"
                 << "\033[0;32m[PASSED]\033[0m " << Test.name << "\n"

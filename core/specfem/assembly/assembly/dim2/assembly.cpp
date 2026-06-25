@@ -9,10 +9,10 @@
 specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
     const specfem::mesh::mesh<dimension_tag> &mesh,
     const specfem::quadrature::quadratures &quadratures,
-    std::vector<std::shared_ptr<specfem::sources::source<dimension_tag> > >
+    std::vector<std::shared_ptr<specfem::sources::source<dimension_tag>>>
         &sources,
     const std::vector<std::shared_ptr<
-        specfem::receivers::receiver<specfem::element::dimension_tag::dim2> > >
+        specfem::receivers::receiver<specfem::element::dimension_tag::dim2>>>
         &receivers,
     const std::vector<specfem::enums::wavefield> &stypes, const type_real t0,
     const type_real dt, const int max_timesteps, const int max_sig_step,
@@ -70,11 +70,18 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
                                      flux_scheme_config };
   this->fields = { this->mesh, this->element_types, simulation };
 
-  this->attenuation = { mesh.attenuation, dt, this->mesh, this->element_types,
-                        mesh.materials };
+  this->attenuation = { mesh.attenuation, dt,
+                        this->mesh,       this->element_types,
+                        mesh.materials,   property_reader != nullptr };
 
   this->properties = { this->element_types, this->mesh, mesh.materials,
                        property_reader != nullptr };
+
+  // GLL model: when a property reader is configured read properties from disk
+  // now
+  if (property_reader != nullptr) {
+    property_reader->read(*this);
+  }
 
   this->info = { this->mesh, this->properties, this->element_types };
 

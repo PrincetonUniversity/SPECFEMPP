@@ -15,7 +15,8 @@ void specfem::assembly::Attenuation<specfem::element::dimension_tag::dim2>::
         const specfem::units::Hertz fc, const specfem::units::Hertz f0,
         const specfem::utilities::Band<specfem::units::Hertz> &band,
         const Kokkos::View<type_real[N_SLS], Kokkos::DefaultHostExecutionSpace>
-            &tau_sigma) {
+            &tau_sigma,
+        const bool has_gll_model) {
 
   specfem::tag_dispatch::for_each(
       attenuation_medium_combinations, [&]<typename TagsType>() {
@@ -23,7 +24,8 @@ void specfem::assembly::Attenuation<specfem::element::dimension_tag::dim2>::
             TagsType::medium_tag, TagsType::property_tag,
             TagsType::attenuation_tag);
         attenuation_storage.template get<TagsType>() = {
-          elements, mesh, materials, ngllz, ngllx, fc, f0, band, tau_sigma
+          elements, mesh, materials, ngllz,     ngllx,
+          fc,       f0,   band,      tau_sigma, has_gll_model
         };
       });
 }
@@ -36,7 +38,8 @@ specfem::assembly::Attenuation<specfem::element::dimension_tag::dim2>::
         const specfem::assembly::element_types<
             specfem::element::dimension_tag::dim2> &element_types,
         const specfem::mesh::materials<specfem::element::dimension_tag::dim2>
-            &materials)
+            &materials,
+        const bool has_gll_model)
     : ngllz(mesh.element_grid.ngllz), ngllx(mesh.element_grid.ngllx),
       nspec(mesh.nspec), f0(config.f0), deltat(deltat) {
 
@@ -72,5 +75,5 @@ specfem::assembly::Attenuation<specfem::element::dimension_tag::dim2>::
   Kokkos::deep_copy(this->d_gamma_rk, this->gamma_rk);
 
   init_memory_variables(element_types, mesh, materials, fc, config.f0,
-                        config.band, config.tau_sigma);
+                        config.band, config.tau_sigma, has_gll_model);
 }
