@@ -7,6 +7,7 @@
 #include "specfem/attenuation/compute_tau_sigma.hpp"
 #include "specfem/constants.hpp"
 #include "specfem/data_access/container.hpp"
+#include "specfem/datatype/element_index_range.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/mesh/dim2/materials/materials.hpp"
 #include "specfem/setup.hpp"
@@ -82,17 +83,12 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
   scalar_view_type::host_mirror_type h_Qkappa;
   scalar_view_type::host_mirror_type h_Qmu;
 
-  // Index mapping: global ispec -> compact attenuation index (-1 if not
-  // attenuating)
-  Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
-      h_attenuation_index_mapping;
-  Kokkos::View<int *, Kokkos::DefaultExecutionSpace> attenuation_index_mapping;
+  specfem::datatype::ElementIndexRange element_range; ///< Global element index range for this type
 
   attenuation_medium() = default;
 
-  template <typename ViewType>
   attenuation_medium(
-      const ViewType &elements,
+      const specfem::datatype::ElementIndexRange &elements,
       const specfem::assembly::mesh<specfem::element::dimension_tag::dim2>
           &mesh,
       const specfem::mesh::materials<specfem::element::dimension_tag::dim2>
@@ -156,19 +152,7 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
     h_Qmu =
         scalar_view_type::host_mirror_type("h_Qmu", nspec_attn, ngllz, ngllx);
 
-    // Allocate and populate the inverse index mapping (global ispec -> compact
-    // index)
-    h_attenuation_index_mapping =
-        Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>(
-            "h_attenuation_index_mapping", mesh.nspec);
-    Kokkos::deep_copy(h_attenuation_index_mapping, -1);
-    for (int i = 0; i < nspec_attn; ++i) {
-      h_attenuation_index_mapping(elements(i)) = i;
-    }
-    attenuation_index_mapping =
-        Kokkos::View<int *, Kokkos::DefaultExecutionSpace>(
-            "attenuation_index_mapping", mesh.nspec);
-    Kokkos::deep_copy(attenuation_index_mapping, h_attenuation_index_mapping);
+    element_range = elements;
 
     // Sync zero-initialized device views to host mirrors
     copy_to_host();
@@ -324,8 +308,8 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
     if (h_Qkappa.extent(0) == 0)
       return;
     for (std::size_t gi = 0; gi < h_kappa.extent(0); ++gi) {
-      const int a = h_attenuation_index_mapping(elements(gi));
-      if (a < 0)
+      const int a = elements(gi) - element_range.begin_index();
+      if (a < 0 || a >= static_cast<int>(h_Qkappa.extent(0)))
         continue;
       // Q is sampled per GLL point so a GLL-varying Q model is honoured. The
       // (expensive, Nelder-Mead) tau_epsilon solve is memoized and only redone
@@ -400,39 +384,68 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
 
   // ---- Model-I/O interface (consumed by specfem::io::impl::AttenuationIO) ----
 
-  /// @brief Whether this container has any attenuating elements to persist.
+  /**
+   * @brief Whether this container has any attenuating elements to persist.
+   *
+   * @return True if at least one attenuating element is stored.
+   */
   bool has_attenuating_elements() const { return h_Qkappa.extent(0) != 0; }
 
-  /// @brief Whether the named property view carries a per-GLL modulus scale
-  ///        (i.e. must be (un)scaled between physical and runtime values).
+  /**
+   * @brief Whether the named property view carries a per-GLL modulus scale
+   *        (i.e. must be (un)scaled between physical and runtime values).
+   *
+   * @param name Property view name.
+   * @return True for the scaled moduli ("kappa", "mu").
+   */
   bool is_scaled_property(const std::string &name) const {
     return name == "kappa" || name == "mu";
   }
 
-  /// @brief Visit each persisted model-I/O dataset as (host_view, name).
-  ///        Mirrors the property container's for_each_host_view.
+  /**
+   * @brief Visit each persisted model-I/O dataset as (host_view, name).
+   *
+   * Mirrors the property container's for_each_host_view.
+   *
+   * @tparam Fn Callable invoked as fn(host_view, name).
+   * @param fn Visitor applied to each (view, name) pair.
+   */
   template <typename Fn> void for_each_io_host_view(Fn &&fn) const {
     fn(h_Qkappa, std::string("Qkappa"));
     fn(h_Qmu, std::string("Qmu"));
   }
 
-  /// @brief Convert a named modulus view between the physical (relaxed) and
-  ///        runtime (unrelaxed) representations: dst = to_physical ? src/scale
-  ///        : src*scale. Non-attenuating elements (compact index < 0) are
-  ///        copied unchanged. @p dst may alias @p src (in-place read re-scale).
-  ///
-  /// @param elements Group-local index -> global ispec (from element_types).
+  /**
+   * @brief Convert a named modulus view between the physical (relaxed) and
+   *        runtime (unrelaxed) representations: dst = to_physical ? src/scale
+   *        : src*scale.
+   *
+   * The loop runs over the (medium, property) group, a superset of the
+   * attenuating elements; rows outside the attenuation sub-range (compact index
+   * out of [0, nspec_attn)) are copied unchanged. @p dst may alias @p src
+   * (in-place read re-scale).
+   *
+   * @tparam DstView      Destination host view type.
+   * @tparam SrcView      Source host view type.
+   * @tparam ElementsView Group-local index -> global ispec view type.
+   * @param dst         Destination view (may alias @p src).
+   * @param src         Source modulus view.
+   * @param name        Property name ("kappa" or "mu").
+   * @param to_physical Divide by scale when true, multiply when false.
+   * @param elements    Group-local index -> global ispec (from element_types).
+   */
   template <typename DstView, typename SrcView, typename ElementsView>
   void scale_into(const DstView &dst, const SrcView &src,
                   const std::string &name, const bool to_physical,
                   const ElementsView &elements) const {
     const auto &scale = (name == "kappa") ? h_kappa_scale : h_mu_scale;
     for (std::size_t i = 0; i < src.extent(0); ++i) {
-      const int a = h_attenuation_index_mapping(elements(i));
+      const int a = elements(i) - element_range.begin_index();
+      const bool attenuating = (a >= 0 && a < static_cast<int>(scale.extent(0)));
       for (std::size_t iz = 0; iz < src.extent(1); ++iz)
         for (std::size_t ix = 0; ix < src.extent(2); ++ix) {
           const type_real s =
-              (a >= 0) ? scale(a, iz, ix) : static_cast<type_real>(1);
+              attenuating ? scale(a, iz, ix) : static_cast<type_real>(1);
           const type_real v = src(i, iz, ix);
           dst(i, iz, ix) = to_physical ? v / s : v * s;
         }
@@ -468,11 +481,16 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
    * Populates relaxation rates and memory variables. The global RK
    * coefficients are NOT populated here; they are added by the outer
    * load_on_device free function.
+   *
+   * @tparam IndexType Point index type (provides ispec/iz/ix and SIMD mask).
+   * @tparam PointType Point-local attenuation struct type.
+   * @param index Point index identifying the GLL location.
+   * @param point Output struct populated with relaxation rates and memory vars.
    */
   template <typename IndexType, typename PointType>
   KOKKOS_INLINE_FUNCTION void load_device_values(const IndexType &index,
                                                  PointType &point) const {
-    const int i = attenuation_index_mapping(index.ispec);
+    const int i = index.ispec - element_range.begin_index();
     if constexpr (!IndexType::using_simd) {
       for (int j = 0; j < N_SLS; ++j) {
         point.kappa_relaxation_rate(j) =
@@ -521,11 +539,16 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
    * Only the memory variables (Rxx, Rxz, Rkappa) and du field are written;
    * relaxation rates are simulation-lifetime constants and are not written
    * back.
+   *
+   * @tparam IndexType Point index type (provides ispec/iz/ix and SIMD mask).
+   * @tparam PointType Point-local attenuation struct type.
+   * @param index Point index identifying the GLL location.
+   * @param point Source struct holding the evolved memory variables.
    */
   template <typename IndexType, typename PointType>
   KOKKOS_INLINE_FUNCTION void
   store_device_values(const IndexType &index, const PointType &point) const {
-    const int i = attenuation_index_mapping(index.ispec);
+    const int i = index.ispec - element_range.begin_index();
     if constexpr (!IndexType::using_simd) {
       for (int j = 0; j < N_SLS; ++j) {
         memory_variable_Rxx(i, index.iz, index.ix, j) = point.Rxx(j);

@@ -236,24 +236,6 @@ set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
 # Add module subdirectories
 add_subdirectory(core)
 
-# specfem2d executable for backward compatibility
-add_executable(specfem2d src/specfem2d.cpp)
-target_link_libraries(specfem2d
-    PRIVATE
-        specfem::core
-        yaml-cpp::yaml-cpp
-        ${BOOST_LIBS}
-)
-
-# specfem3d executable for backward compatibility
-add_executable(specfem3d src/specfem3d.cpp)
-target_link_libraries(specfem3d
-    PRIVATE
-        specfem::core
-        yaml-cpp::yaml-cpp
-        ${BOOST_LIBS}
-)
-
 # Include tests
 if (SPECFEM_BUILD_TESTS)
         message(STATUS "Including tests.")
@@ -324,7 +306,7 @@ if (SPECFEM_INSTALL AND NOT SPECFEM_USE_SKBUILD)
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Organizing specfem++ executables into: ${CMAKE_INSTALL_PREFIX}"
         # Make this run after your main targets
-        DEPENDS specfem specfem2d specfem3d xmeshfem2D xmeshfem3D xadj_seismogram xdecompose_mesh # list all your targets here
+        DEPENDS specfem xmeshfem2D xmeshfem3D xadj_seismogram xdecompose_mesh # list all your targets here
     )
 
     # Add the prefix directory to the clean target

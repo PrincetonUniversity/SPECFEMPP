@@ -115,6 +115,32 @@ template <specfem::element::dimension_tag DimensionTag> struct fields {
   }
 
   /**
+   * @brief Get mutable simulation field of specified type.
+   *
+   * @tparam ReturnFieldType Type of simulation field to retrieve
+   * @return Mutable reference to the requested simulation field
+   */
+  template <specfem::simulation::field_type ReturnFieldType>
+  KOKKOS_INLINE_FUNCTION constexpr specfem::assembly::simulation_field<
+      dimension_tag, ReturnFieldType> &
+  get_simulation_field() {
+    if constexpr (ReturnFieldType == specfem::simulation::field_type::forward) {
+      return forward;
+    } else if constexpr (ReturnFieldType ==
+                         specfem::simulation::field_type::adjoint) {
+      return adjoint;
+    } else if constexpr (ReturnFieldType ==
+                         specfem::simulation::field_type::backward) {
+      return backward;
+    } else if constexpr (ReturnFieldType ==
+                         specfem::simulation::field_type::buffer) {
+      return buffer;
+    } else {
+      static_assert("field type not supported");
+    }
+  }
+
+  /**
    * @brief Copy all simulation fields from host to device memory.
    *
    * Transfers all active simulation fields (forward, adjoint, backward, buffer)

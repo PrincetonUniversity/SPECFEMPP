@@ -80,7 +80,9 @@ public:
    * Computes physical coordinates for all quadrature points using
    * control nodes and shape functions.
    */
-  void assemble();
+  void
+  assemble(const Kokkos::View<specfem::element::medium_tag *, Kokkos::HostSpace>
+               medium_tags);
 
   void compute_mesh_properties();
 };

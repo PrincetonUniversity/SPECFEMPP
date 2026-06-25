@@ -11,7 +11,7 @@ paths:
 - Use `/** ... */` block comment style for classes, functions, and namespaces.
 - Required tags:
   - `@brief` -- always, one-line summary
-  - `@param` -- for every parameter (describe purpose, not just type)
+  - `@param` -- for every parameter (its purpose in a few words, not just its type)
   - `@return` -- for non-void functions
   - `@tparam` -- for every template parameter, explaining constraints
 - Math notation: `\f$ ... \f$` for inline, `\f[ ... \f]` for display equations.

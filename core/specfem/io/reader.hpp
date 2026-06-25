@@ -32,6 +32,13 @@ public:
   virtual void
   read(specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
            &assembly) = 0;
+
+  /**
+   * @brief Virtual destructor
+   *
+   * Ensures proper cleanup of derived classes.
+   */
+  virtual ~reader() = default;
 };
 } // namespace io
 } // namespace specfem

@@ -14,13 +14,18 @@ struct tags_container {
   specfem::element::property_tag property_tag;       ///< Property tag
   specfem::element::attenuation_tag attenuation_tag; ///< Attenuation tag
   specfem::element::boundary_tag boundary_tag;       ///< Boundary tag
+  specfem::element::mpi_tag mpi_tag =
+      specfem::element::mpi_tag::inner; ///< MPI partition tag (inner/outer)
 
   tags_container(const specfem::element::medium_tag medium_tag_,
                  const specfem::element::property_tag property_tag_,
                  const specfem::element::attenuation_tag attenuation_tag_,
-                 const specfem::element::boundary_tag boundary_tag_)
+                 const specfem::element::boundary_tag boundary_tag_,
+                 const specfem::element::mpi_tag mpi_tag_ =
+                     specfem::element::mpi_tag::inner)
       : medium_tag(medium_tag_), property_tag(property_tag_),
-        attenuation_tag(attenuation_tag_), boundary_tag(boundary_tag_) {}
+        attenuation_tag(attenuation_tag_), boundary_tag(boundary_tag_),
+        mpi_tag(mpi_tag_) {}
 
   tags_container() = default;
 };

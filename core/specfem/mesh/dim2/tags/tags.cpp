@@ -46,5 +46,7 @@ specfem::mesh::tags<specfem::element::dimension_tag::dim2>::tags(
     this->tags_container(ispec).property_tag = property_tag;
     this->tags_container(ispec).attenuation_tag = attenuation_tag;
     this->tags_container(ispec).boundary_tag = boundary_tag[ispec].get_tag();
+    // 2D MPI not yet implemented; all elements inner for now
+    this->tags_container(ispec).mpi_tag = specfem::element::mpi_tag::inner;
   }
 }

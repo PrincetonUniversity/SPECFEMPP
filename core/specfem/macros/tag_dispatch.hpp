@@ -59,6 +59,11 @@
   specfem::tag_dispatch::wavefield_set<_SPECFEM_TAG_ENUM(_SPECFEM_WF_VAL,      \
                                                          __VA_ARGS__)> {}
 
+#define _SPECFEM_MPI_VAL(s, _, v) specfem::element::mpi_tag::v
+#define MPI_SET(...)                                                           \
+  specfem::tag_dispatch::mpi_set<_SPECFEM_TAG_ENUM(_SPECFEM_MPI_VAL,           \
+                                                   __VA_ARGS__)> {}
+
 #define _SPECFEM_CONN_VAL(s, _, v) specfem::element_connections::type::v
 #define _SPECFEM_IFACE_VAL(s, _, v) specfem::element_coupling::interface_tag::v
 #define _SPECFEM_FLUX_VAL(s, _, v) specfem::element_coupling::flux_scheme_tag::v

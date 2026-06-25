@@ -15,6 +15,14 @@ namespace {
 const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> mesh2d{};
 const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> mesh3d{};
 
+// Empty free surface → flat (z = 0) topography fallback.
+const specfem::mesh::acoustic_free_surface<
+    specfem::element::dimension_tag::dim2>
+    surface2d{};
+const specfem::mesh::acoustic_free_surface<
+    specfem::element::dimension_tag::dim3>
+    surface3d{};
+
 } // namespace
 
 // ── 2D Tests ────────────────────────────────────────────────────────────────
@@ -25,7 +33,7 @@ TEST(ResolveCoordinates2D, CartesianAbsolute) {
       specfem::element::dimension_tag::dim2>
       coords(100.0, 200.0, std::array<double, 2>{ 0.0, 0.0 });
 
-  auto gc = specfem::assembly::resolve_coordinates(coords, mesh2d);
+  auto gc = specfem::assembly::resolve_coordinates(coords, mesh2d, surface2d);
 
   EXPECT_FLOAT_EQ(gc.x, 100.0);
   EXPECT_FLOAT_EQ(gc.z, 200.0);
@@ -37,7 +45,7 @@ TEST(ResolveCoordinates2D, CartesianDepthFlatFallback) {
       specfem::element::dimension_tag::dim2>
       coords(100.0, -50.0, std::nullopt);
 
-  auto gc = specfem::assembly::resolve_coordinates(coords, mesh2d);
+  auto gc = specfem::assembly::resolve_coordinates(coords, mesh2d, surface2d);
 
   EXPECT_FLOAT_EQ(gc.x, 100.0);
   EXPECT_FLOAT_EQ(gc.z, -50.0);
@@ -53,7 +61,7 @@ TEST(ResolveCoordinates3D, CartesianAbsolute) {
       specfem::element::dimension_tag::dim3>
       coords(1.0, 2.0, 3.0, std::array<double, 3>{ 0.0, 0.0, 0.0 });
 
-  auto gc = specfem::assembly::resolve_coordinates(coords, mesh3d);
+  auto gc = specfem::assembly::resolve_coordinates(coords, mesh3d, surface3d);
 
   EXPECT_FLOAT_EQ(gc.x, 1.0);
   EXPECT_FLOAT_EQ(gc.y, 2.0);
@@ -66,7 +74,7 @@ TEST(ResolveCoordinates3D, CartesianDepthFlatFallback) {
       specfem::element::dimension_tag::dim3>
       coords(10.0, 20.0, -5000.0, std::nullopt);
 
-  auto gc = specfem::assembly::resolve_coordinates(coords, mesh3d);
+  auto gc = specfem::assembly::resolve_coordinates(coords, mesh3d, surface3d);
 
   EXPECT_FLOAT_EQ(gc.x, 10.0);
   EXPECT_FLOAT_EQ(gc.y, 20.0);
@@ -79,8 +87,9 @@ TEST(ResolveCoordinates3D, CartesianDepthFlatFallback) {
 TEST(ResolveCoordinates3D, GeographicThrowsWithoutUTMConfig) {
   specfem::coordinate_systems::geographic_coordinates coords(0.0, 0.0, 0.0);
 
-  EXPECT_THROW(specfem::assembly::resolve_coordinates(coords, mesh3d),
-               std::runtime_error);
+  EXPECT_THROW(
+      specfem::assembly::resolve_coordinates(coords, mesh3d, surface3d),
+      std::runtime_error);
 }
 
 TEST(ResolveCoordinates3D, GeographicWithUTMConfig) {
@@ -89,7 +98,8 @@ TEST(ResolveCoordinates3D, GeographicWithUTMConfig) {
       2.6741959317615298, 51.561449479910003, 0.0);
   specfem::coordinate_systems::utm_projection_config utm_config{ 31 };
 
-  auto gc = specfem::assembly::resolve_coordinates(coords, mesh3d, utm_config);
+  auto gc = specfem::assembly::resolve_coordinates(coords, mesh3d, surface3d,
+                                                   utm_config);
 
   // UTM zone 31: easting ~477415.5, northing ~5712313.5
   EXPECT_NEAR(gc.x, 477415.5, 0.01);
@@ -103,7 +113,8 @@ TEST(ResolveCoordinates3D, GeographicWithDepth) {
       2.6741959317615298, 51.561449479910003, 5000.0);
   specfem::coordinate_systems::utm_projection_config utm_config{ 31 };
 
-  auto gc = specfem::assembly::resolve_coordinates(coords, mesh3d, utm_config);
+  auto gc = specfem::assembly::resolve_coordinates(coords, mesh3d, surface3d,
+                                                   utm_config);
 
   EXPECT_NEAR(gc.x, 477415.5, 0.01);
   EXPECT_NEAR(gc.y, 5712313.5, 0.01);
@@ -114,6 +125,7 @@ TEST(ResolveCoordinates3D, GeocentricThrows) {
   specfem::coordinate_systems::geocentric_coordinates coords(6371000.0, 0.5,
                                                              1.0);
 
-  EXPECT_THROW(specfem::assembly::resolve_coordinates(coords, mesh3d),
-               std::runtime_error);
+  EXPECT_THROW(
+      specfem::assembly::resolve_coordinates(coords, mesh3d, surface3d),
+      std::runtime_error);
 }
