@@ -11,6 +11,13 @@ if(SPECFEM_ENABLE_METIS)
             "  Pass -DMETIS_ROOT=<path> to cmake or export METIS_ROOT=<path>.")
     endif()
 
+    # GKlib is a required dependency of METIS; find it via its cmake config package.
+    # The GKLIB_DIR env var is set by the gklib module file.
+    if(DEFINED ENV{GKLIB_DIR})
+        list(APPEND CMAKE_PREFIX_PATH $ENV{GKLIB_DIR})
+    endif()
+    find_package(GKlib REQUIRED)
+
     find_path(METIS_INCLUDE_DIR
         NAMES metis.h
         PATH_SUFFIXES metis include/metis include
@@ -44,6 +51,7 @@ if(SPECFEM_ENABLE_METIS)
         set_target_properties(METIS::metis PROPERTIES
             IMPORTED_LOCATION             "${METIS_LIBRARY}"
             INTERFACE_INCLUDE_DIRECTORIES "${METIS_INCLUDE_DIR}"
+            INTERFACE_LINK_LIBRARIES      "GKlib::GKlib"
         )
     endif()
 
