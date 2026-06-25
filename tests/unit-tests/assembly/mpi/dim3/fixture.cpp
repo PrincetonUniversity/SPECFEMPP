@@ -29,7 +29,7 @@ AssemblyMPI3D::AssemblyMPI3D(
       element_types(mesh.nspec, assembly_mesh.element_grid, assembly_mesh,
                     mesh.tags),
       fields(assembly_mesh, element_types, specfem::simulation::type::forward),
-      mpi_interfaces(mesh.adjacency_graph, element_types,
+      mpi_interfaces(mesh.adjacency_graph, assembly_mesh, element_types,
                      specfem::simulation::type::forward, fields,
                      mesh.element_grid.ngllz, mesh.element_grid.nglly,
                      mesh.element_grid.ngllx) {}

@@ -36,6 +36,11 @@ public:
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
   constexpr static bool using_simd = false;
 #else
+  // ElementIndexRange guarantees every tag combination maps to a contiguous
+  // global compute index range, and the assembly load/store wrappers translate
+  // global ispec to a local index before reaching the stacey struct — so
+  // ispec+lane always addresses consecutive local elements. SIMD is safe for
+  // all boundary tags on CPU.
   constexpr static bool using_simd = true;
 #endif
 
@@ -273,6 +278,11 @@ public:
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
   constexpr static bool using_simd = false;
 #else
+  // ElementIndexRange guarantees every tag combination maps to a contiguous
+  // global compute index range, and the assembly load/store wrappers translate
+  // global ispec to a local index before reaching the stacey struct — so
+  // ispec+lane always addresses consecutive local elements. SIMD is safe for
+  // all boundary tags on CPU.
   constexpr static bool using_simd = true;
 #endif
 
