@@ -20,3 +20,5 @@ The examples are as follows:
 * 3D Examples (`dim3/`):
   - `homogeneous_halfspace`: A simple example that demonstrates wave propagation
     in a homogeneous elastic halfspace with a vertical force source.
+  - `acoustic_elastic_force`: An example that demonstrates wave propagation
+    across a 3D acoustic-elastic interface with a vertical force source.
