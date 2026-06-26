@@ -15,4 +15,8 @@ The examples are as follows:
     flat topography.
   - `fluid-solid`: An example that demonstrates how to use the package to solve
     wave propagation with fluid-solid coupling.
-  - `poroelastic-semi-infinite` An example that simulates wave propagation through a 2-dimensional poroelastic medium.
+  - `poroelastic-semi-infinite` An example that simulates wave propagation
+    through a 2-dimensional poroelastic medium.
+* 3D Examples (`dim3/`):
+  - `homogeneous_halfspace`: A simple example that demonstrates wave propagation
+    in a homogeneous elastic halfspace with a vertical force source.
