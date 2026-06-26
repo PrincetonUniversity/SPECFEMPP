@@ -5,6 +5,7 @@
 #include "specfem/compute/impl/compute_source_interaction.hpp"
 #include "specfem/compute/impl/compute_stiffness_interaction.hpp"
 #include "specfem/compute/impl/divide_mass_matrix.hpp"
+#include "specfem/compute/impl/enforce_acoustic_free_surface.hpp"
 #include "specfem/compute/initialize_mass_matrix.hpp"
 #include "specfem/data_access/data_class.hpp"
 #include "specfem/element.hpp"
@@ -53,6 +54,11 @@ int update_medium(specfem::assembly::assembly<Tags::dimension_tag> &assembly,
   acceleration_buffer.finish_communicate(field);
 
   specfem::compute::impl::divide_mass_matrix<NGLL, Tags>(assembly);
+
+  if constexpr (Tags::medium_tag == specfem::element::medium_tag::acoustic) {
+    specfem::compute::impl::enforce_acoustic_free_surface<NGLL, Tags>(assembly);
+  }
+
   return elements_updated;
 }
 
