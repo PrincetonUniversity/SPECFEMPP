@@ -78,7 +78,8 @@ struct domain_properties<specfem::element::dimension_tag::dim2, MediumTag,
   constexpr static auto property_tag =
       base_type::property_tag; ///< Material property type
 
-  int base_ispec = 0; ///< First global element index for this type's range
+  specfem::datatype::ElementIndexRange element_range; ///< Global element index
+                                                      ///< range for this type
 
   /// Default constructor for empty container
   domain_properties() = default;
@@ -89,7 +90,7 @@ struct domain_properties<specfem::element::dimension_tag::dim2, MediumTag,
    * Extracts material properties from mesh materials and stores them
    * at all quadrature points for the specified spectral elements.
    *
-   * @param elements Element indices to initialize
+   * @param elements Contiguous range of global element indices for this type
    * @param mesh 2D mesh geometry and connectivity
    * @param materials Material database indexed by element
    * @param has_gll_model Skip material assignment for GLL models
@@ -143,7 +144,8 @@ struct domain_properties<specfem::element::dimension_tag::dim3, MediumTag,
   constexpr static auto property_tag =
       base_type::property_tag; ///< Material property type
 
-  int base_ispec = 0; ///< First global element index for this type's range
+  specfem::datatype::ElementIndexRange element_range; ///< Global element index
+                                                      ///< range for this type
 
   /// Default constructor for empty container
   domain_properties() = default;
@@ -154,9 +156,10 @@ struct domain_properties<specfem::element::dimension_tag::dim3, MediumTag,
    * Extracts material properties from mesh materials and stores them
    * at all quadrature points for the specified spectral elements.
    *
-   * @param elements Element indices to initialize
+   * @param elements Contiguous range of global element indices for this type
    * @param mesh 3D mesh geometry and connectivity
    * @param materials Material database indexed by element
+   * @param has_gll_model Skip material assignment for GLL models
    */
   domain_properties(const specfem::datatype::ElementIndexRange &elements,
                     const specfem::assembly::mesh<dimension_tag> &mesh,

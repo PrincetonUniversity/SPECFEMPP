@@ -3,6 +3,9 @@
 ``specfem::tag_dispatch``
 =========================
 
+.. doxygennamespace:: specfem::tag_dispatch
+    :desc-only:
+
 .. doxygengroup:: tag_dispatch_group
 
 **Core Functionality**:

@@ -7,6 +7,7 @@
 #include "specfem/data_access.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros/tag_dispatch.hpp"
+#include "specfem/mesh.hpp"
 #include "specfem/source.hpp"
 #include "specfem/tag_dispatch/element_combinations.hpp"
 
@@ -127,7 +128,9 @@ public:
    * @brief Construct source assembly from mesh and source configuration
    *
    * @param sources Vector of source objects
-   * @param mesh Finite element mesh
+   * @param mesh Assembled finite element mesh
+   * @param raw_mesh Source mesh; supplies UTM config and free-surface faces for
+   *        source location
    * @param jacobian_matrix Jacobian transformation matrices
    * @param element_types Element classification by medium and property
    * @param t0 Initial simulation time
@@ -138,6 +141,7 @@ public:
       std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
           &sources,
       const specfem::assembly::mesh<DimensionTag> &mesh,
+      const specfem::mesh::mesh<DimensionTag> &raw_mesh,
       const specfem::assembly::jacobian_matrix<DimensionTag> &jacobian_matrix,
       const specfem::assembly::element_types<DimensionTag> &element_types,
       const type_real t0, const type_real dt, const int nsteps);

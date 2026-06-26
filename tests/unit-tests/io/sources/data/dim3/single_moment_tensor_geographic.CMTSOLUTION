@@ -1,0 +1,13 @@
+PDE 2000 1 1 0 0 0.00 0.0 0.0 0.0 0.0 0.0 TEST
+event name:      test
+time shift:      30.0
+half duration:   1.0
+latitude:        51.561
+longitude:       2.674
+depth:           2.0
+Mxx:             1.0e7
+Myy:             1.0e7
+Mzz:             0.0
+Mxy:             1.0e7
+Mxz:             0.0
+Myz:             0.0

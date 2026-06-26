@@ -197,7 +197,7 @@ Adding SPECFEM to PATH
 ----------------------
 
 Finally, once compiled you could run SPECFEM++ from inside the executable
-directory ``./bin``, by running the executible ``./specfem2d``. However, we
+directory ``./bin``, by running the executable ``./specfem``. However, we
 recommend you add SPECFEM++ build directory to your ``PATH`` using
 
 .. code-block:: bash
@@ -228,7 +228,7 @@ This will generate the mesh files. Next, we will run the solver using
 .. code-block:: bash
 
   mkdir -p OUTPUT_FILES/results
-  specfem2d -p specfem_config.yaml
+  specfem 2d -p specfem_config.yaml
 
 This will run the solver and generate synthetic seismograms at the receiver
 locations specified in ``STATIONS`` file.

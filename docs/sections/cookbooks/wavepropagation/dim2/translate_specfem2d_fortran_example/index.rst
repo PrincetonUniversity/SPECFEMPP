@@ -80,7 +80,7 @@ Execution uses a two-step workflow:
 .. code-block:: bash
 
     xmeshfem2D -p Par_file             # Meshing only [and receiver generation]
-    specfem2d -p specfem_config.yaml   # Simulation with YAML config
+    specfem 2d -p specfem_config.yaml   # Simulation with YAML config
 
 The reason we want to separate the configuration files is to improve clarity and
 modularity, as well as distinguishing between fortran code and new C++
@@ -189,7 +189,7 @@ Running the example using SPECFEM++
 
     # Separate configuration files
     xmeshfem2D -p Par_file
-    specfem2d -p specfem_config.yaml
+    specfem 2d -p specfem_config.yaml
 
 Summary
 -------

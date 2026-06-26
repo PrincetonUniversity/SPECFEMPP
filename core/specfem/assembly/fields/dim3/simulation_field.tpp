@@ -4,32 +4,11 @@
 #include "specfem/assembly/fields.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/fields.hpp"
+#include "specfem/assembly/fields/impl/assign_assembly_index_mapping.hpp"
 #include "specfem/assembly/fields/impl/field_impl.tpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/datatype/element_index_range.hpp"
 #include <Kokkos_Core.hpp>
-
-namespace specfem::assembly::simulation_fields_impl {
-template <typename ViewType> int compute_nglob3D(const ViewType index_mapping) {
-  const int nspec = index_mapping.extent(0);
-  const int ngllz = index_mapping.extent(1);
-  const int nglly = index_mapping.extent(2);
-  const int ngllx = index_mapping.extent(3);
-
-  int nglob = -1;
-  // compute max value stored in index_mapping
-  for (int ispec = 0; ispec < nspec; ispec++) {
-    for (int igllz = 0; igllz < ngllz; igllz++) {
-      for (int iglly = 0; iglly < nglly; iglly++) {
-        for (int igllx = 0; igllx < ngllx; igllx++) {
-          nglob = std::max(nglob, index_mapping(ispec, igllz, iglly, igllx));
-        }
-      }
-    }
-  }
-
-  return nglob + 1;
-}
-} // namespace specfem::assembly::simulation_fields_impl
 
 template <specfem::simulation::field_type WavefieldType>
 specfem::assembly::simulation_field<specfem::element::dimension_tag::dim3,
@@ -38,33 +17,50 @@ specfem::assembly::simulation_field<specfem::element::dimension_tag::dim3,
         const specfem::assembly::mesh<dimension_tag> &mesh,
         const specfem::assembly::element_types<dimension_tag> &element_types) {
 
-  nglob = specfem::assembly::simulation_fields_impl::compute_nglob3D(
-      mesh.h_index_mapping);
-  this->index_mapping = mesh.index_mapping;
-  this->h_index_mapping = mesh.h_index_mapping;
+  this->nspec = mesh.nspec;
+  this->ngllz = mesh.element_grid.ngllz;
+  this->nglly = mesh.element_grid.nglly;
+  this->ngllx = mesh.element_grid.ngllx;
+
+  // Private copy of h_index_mapping so multiple simulation_fields constructed
+  // from the same mesh don't interfere when we remap in-place below.
+  this->h_index_mapping = IndexViewType::host_mirror_type(
+      "specfem::assembly::simulation_field::h_index_mapping",
+      mesh.nspec, mesh.element_grid.ngllz, mesh.element_grid.nglly,
+      mesh.element_grid.ngllx);
+  Kokkos::deep_copy(this->h_index_mapping, mesh.h_index_mapping);
+
+  this->index_mapping = IndexViewType(
+      "specfem::assembly::simulation_field::index_mapping",
+      mesh.nspec, mesh.element_grid.ngllz, mesh.element_grid.nglly,
+      mesh.element_grid.ngllx);
+
+  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace> dedup_table(
+      "specfem::assembly::simulation_field::dedup_table", mesh.nglob);
+  Kokkos::deep_copy(dedup_table, -1);
+
+  int base_dof = 0;
 
   specfem::tag_dispatch::for_each(combinations, [&]<typename TagsType>() {
     constexpr auto medium = TagsType::medium_tag;
-    assembly_index_mapping.template get<TagsType>() =
-        Kokkos::View<int *, Kokkos::LayoutLeft,
-                     Kokkos::DefaultExecutionSpace::memory_space>(
-            "specfem::assembly::simulation_field::index_mapping", nglob);
-    h_assembly_index_mapping.template get<TagsType>() =
-        Kokkos::create_mirror_view(
-            assembly_index_mapping.template get<TagsType>());
+    int nglob_M = 0;
 
-    for (int iglob = 0; iglob < nglob; iglob++) {
-      h_assembly_index_mapping.template get<TagsType>()(iglob) = -1;
-    }
+    specfem::assembly::fields_impl::assign_assembly_index_mapping(
+        this->h_index_mapping, element_types, dedup_table, nglob_M, medium,
+        base_dof);
+
+    dof_ranges.template get<TagsType>() =
+        specfem::datatype::ElementIndexRange(base_dof, base_dof + nglob_M);
 
     field.template get<TagsType>() =
         specfem::assembly::fields_impl::field_impl<dimension_tag, medium>(
-            mesh, element_types,
-            h_assembly_index_mapping.template get<TagsType>());
+            nglob_M);
 
-    Kokkos::deep_copy(assembly_index_mapping.template get<TagsType>(),
-                      h_assembly_index_mapping.template get<TagsType>());
+    base_dof += nglob_M;
   });
+
+  this->nglob = base_dof;
+  Kokkos::deep_copy(this->index_mapping, this->h_index_mapping);
 
   return;
 }

@@ -23,9 +23,9 @@ We also need to check that the SPECFEM++ executable directory is added to the
 
 .. code:: bash
 
-    which specfem2d
+    which specfem
 
-If the above command returns a path to the ``specfem2d`` executable, then the
+If the above command returns a path to the ``specfem`` executable, then the
 executable directory is added to the ``PATH``. If not, you need to add the
 executable directory to the ``PATH`` using the following command.
 
@@ -143,7 +143,7 @@ With the above input files, we can run the forward simulation.
 
 .. code:: bash
 
-    specfem2d -p forward_config.yaml
+    specfem 2d -p forward_config.yaml
 
 Generating adjoint sources
 --------------------------
@@ -234,7 +234,7 @@ With the above input files, we can run the adjoint simulation.
 
 .. code:: bash
 
-    specfem2d -p adjoint_config.yaml
+    specfem 2d -p adjoint_config.yaml
 
 The kernels are stored in the directory specified in the input file. We can now
 plot the kernels to visualize the banana donut kernels.

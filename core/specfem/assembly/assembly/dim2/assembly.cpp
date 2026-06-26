@@ -39,8 +39,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
 
   this->kernels = { this->element_types };
   this->sources = {
-    sources, this->mesh, this->jacobian_matrix, this->element_types,
-    t0,      dt,         max_timesteps
+    sources, this->mesh,   mesh, this->jacobian_matrix, this->element_types, t0,
+    dt,      max_timesteps
   };
   this->receivers = { this->mesh.nspec,
                       this->mesh.element_grid.ngllz,

@@ -16,6 +16,7 @@ void specfem::assembly::sources_impl::locate_sources(
     const specfem::assembly::mesh<DimensionTag> &mesh,
     std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
         &sources,
+    const specfem::mesh::acoustic_free_surface<DimensionTag> &surface,
     const std::optional<specfem::coordinate_systems::utm_projection_config>
         &utm_config) {
 
@@ -27,8 +28,8 @@ void specfem::assembly::sources_impl::locate_sources(
   // so this is a no-op for them.
   for (int isrc = 0; isrc < nsources; ++isrc) {
     if (auto *coords = sources[isrc]->get_read_coordinates()) {
-      auto gc =
-          specfem::assembly::resolve_coordinates(*coords, mesh, utm_config);
+      auto gc = specfem::assembly::resolve_coordinates(*coords, mesh, surface,
+                                                       utm_config);
       sources[isrc]->set_global_coordinates(gc);
     }
   }
