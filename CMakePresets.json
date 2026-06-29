@@ -53,6 +53,30 @@
       }
     },
     {
+      "name": "release-trilinos",
+      "displayName": "Release -- Trilinos implicit solvers enabled (CPU)",
+      "description": "Inherits 'release' and enables Trilinos. Load a TROMP trilinos/* module first so Trilinos_ROOT and Kokkos_ROOT are set in the environment.",
+      "inherits": "release",
+      "binaryDir": "build/release-trilinos",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-trilinos",
+        "SPECFEM_ENABLE_TRILINOS": "ON",
+        "SPECFEM_BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-trilinos"
+      }
+    },
+    {
+      "name": "release-cuda-trilinos",
+      "displayName": "Release -- CUDA + Trilinos implicit solvers enabled",
+      "description": "Inherits 'release-cuda' and enables Trilinos. Load a TROMP trilinos/*-cuda-* module first so Trilinos_ROOT and Kokkos_ROOT are set in the environment.",
+      "inherits": "release-cuda",
+      "binaryDir": "build/release-cuda-trilinos",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-cuda-trilinos",
+        "SPECFEM_ENABLE_TRILINOS": "ON",
+        "SPECFEM_BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-cuda-trilinos"
+      }
+    },
+    {
       "name": "release-hip",
       "displayName": "Release -- HIP enabled",
       "binaryDir": "build/release-hip",
