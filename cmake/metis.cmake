@@ -11,12 +11,21 @@ if(SPECFEM_ENABLE_METIS)
             "  Pass -DMETIS_ROOT=<path> to cmake or export METIS_ROOT=<path>.")
     endif()
 
-    # GKlib is a required dependency of METIS; find it via its cmake config package.
-    # The GKLIB_DIR env var is set by the gklib module file.
+    # GKlib's packaging depends on the METIS version:
+    #   - METIS 5.2.x (KarypisLab) ships GKlib as a separate cmake config package.
+    #   - METIS 5.1.x (e.g. Homebrew) bundles GKlib inside libmetis; there is no
+    #     standalone GKlib library or config to find.
+    # So look for GKlib but do not require it; link it only when it is found.
+    # The GKLIB_DIR env var is set by the gklib module file on HPC systems.
     if(DEFINED ENV{GKLIB_DIR})
         list(APPEND CMAKE_PREFIX_PATH $ENV{GKLIB_DIR})
     endif()
-    find_package(GKlib REQUIRED)
+    find_package(GKlib QUIET)
+    if(GKlib_FOUND)
+        message(STATUS "Found standalone GKlib; linking METIS against GKlib::GKlib")
+    else()
+        message(STATUS "No standalone GKlib found; assuming GKlib is bundled in libmetis")
+    endif()
 
     find_path(METIS_INCLUDE_DIR
         NAMES metis.h
@@ -51,8 +60,11 @@ if(SPECFEM_ENABLE_METIS)
         set_target_properties(METIS::metis PROPERTIES
             IMPORTED_LOCATION             "${METIS_LIBRARY}"
             INTERFACE_INCLUDE_DIRECTORIES "${METIS_INCLUDE_DIR}"
-            INTERFACE_LINK_LIBRARIES      "GKlib::GKlib"
         )
+        if(GKlib_FOUND)
+            set_target_properties(METIS::metis PROPERTIES
+                INTERFACE_LINK_LIBRARIES "GKlib::GKlib")
+        endif()
     endif()
 
     list(POP_BACK CMAKE_MESSAGE_INDENT)

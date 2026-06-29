@@ -140,7 +140,8 @@ TEST(SurfaceElevation, DepthResolvedAgainstTopography) {
       surface_elevation_test::dimension>
       coords(5.0, 10.0, -1000.0, std::nullopt);
 
-  const auto gc = specfem::assembly::resolve_coordinates(coords, mesh, surface);
+  const auto gc =
+      specfem::assembly::resolve_coordinates(coords, mesh, surface).global;
 
   EXPECT_FLOAT_EQ(gc.x, 5.0);
   EXPECT_FLOAT_EQ(gc.y, 10.0);
@@ -167,7 +168,7 @@ TEST(SurfaceElevation, GeographicResolvesViaUtmFlatFallback) {
       surface{};
   specfem::coordinate_systems::geographic_coordinates geo(lon, lat, depth);
   const auto gc =
-      specfem::assembly::resolve_coordinates(geo, mesh, surface, cfg);
+      specfem::assembly::resolve_coordinates(geo, mesh, surface, cfg).global;
 
   EXPECT_NEAR(gc.x, static_cast<type_real>(cart.x), 1.0);
   EXPECT_NEAR(gc.y, static_cast<type_real>(cart.y), 1.0);
@@ -192,7 +193,7 @@ TEST(SurfaceElevation, GeographicResolvesAgainstTopography) {
   const auto surface = surface_elevation_test::make_top_surface();
   specfem::coordinate_systems::geographic_coordinates geo(lon, lat, depth);
   const auto gc =
-      specfem::assembly::resolve_coordinates(geo, mesh, surface, cfg);
+      specfem::assembly::resolve_coordinates(geo, mesh, surface, cfg).global;
 
   EXPECT_NEAR(gc.x, static_cast<type_real>(cart.x), 1.0);
   EXPECT_NEAR(gc.y, static_cast<type_real>(cart.y), 1.0);

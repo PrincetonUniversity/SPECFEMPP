@@ -12,6 +12,17 @@
 namespace specfem::assembly::sources_impl {
 
 /**
+ * @brief Diagnostic record of a single source-location result
+ *
+ * Holds the input, resolved, and found coordinates for one source so they can
+ * be printed for debugging. Defined in `locate_sources.tpp`.
+ *
+ * @tparam DimensionTag Spatial dimension (`dim2` or `dim3`)
+ */
+template <specfem::element::dimension_tag DimensionTag>
+struct SourceLocationResult;
+
+/**
  * @brief Locate seismic sources within the finite element mesh
  *
  * Maps source global coordinates to local element coordinates and assigns

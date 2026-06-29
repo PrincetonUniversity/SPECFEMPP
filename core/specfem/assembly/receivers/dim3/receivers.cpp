@@ -7,6 +7,7 @@
 #include "specfem/assembly/resolve_coordinates.hpp"
 #include "specfem/coordinate_systems/utm.hpp"
 #include "specfem/element.hpp"
+#include "specfem/logger.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/setup.hpp"
@@ -84,8 +85,19 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
   // Resolve any generic coordinates to global coordinates using mesh context.
   for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
     if (auto *coords = receivers[ireceiver]->get_read_coordinates()) {
+      specfem::Logger::debug("Original receiver coordinates for receiver %d",
+                             ireceiver);
+      specfem::Logger::debug(coords->print());
+      // TODO: unify the receivers diagnostic onto CoordinateResolutionResult
+      // (mirror the source-location result). For now just take the global
+      // coordinate so the existing path is unchanged.
       auto gc = specfem::assembly::resolve_coordinates(
-          *coords, mesh, raw_mesh.boundaries.acoustic_free_surface, utm_config);
+                    *coords, mesh, raw_mesh.boundaries.acoustic_free_surface,
+                    utm_config)
+                    .global;
+      specfem::Logger::debug("Resolved receiver coordinates for receiver %d",
+                             ireceiver);
+      specfem::Logger::debug(gc.print());
       receivers[ireceiver]->set_global_coordinates(gc);
     }
   }

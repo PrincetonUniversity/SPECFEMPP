@@ -28,3 +28,9 @@ add_subdirectory(dim3/homogeneous_halfspace)
 add_subdirectory(dim3/homogeneous_acoustic_kernel)
 add_subdirectory(dim3/gmsh_halfspace_3d)
 # add_subdirectory(dim3/acoustic_elastic_interface)
+
+# Mount St. Helens uses a large topographic mesh (~26k elements) and is only
+# practical with MPI, so register it only for MPI-enabled builds.
+if (SPECFEM_ENABLE_MPI)
+  add_subdirectory(dim3/mount_st_helens)
+endif()

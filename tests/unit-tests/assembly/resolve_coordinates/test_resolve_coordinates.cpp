@@ -33,10 +33,13 @@ TEST(ResolveCoordinates2D, CartesianAbsolute) {
       specfem::element::dimension_tag::dim2>
       coords(100.0, 200.0, std::array<double, 2>{ 0.0, 0.0 });
 
-  auto gc = specfem::assembly::resolve_coordinates(coords, mesh2d, surface2d);
+  const auto result =
+      specfem::assembly::resolve_coordinates(coords, mesh2d, surface2d);
+  const auto &gc = result.global;
 
   EXPECT_FLOAT_EQ(gc.x, 100.0);
   EXPECT_FLOAT_EQ(gc.z, 200.0);
+  EXPECT_FALSE(result.topography.has_value()); // dim2 has no topography
 }
 
 TEST(ResolveCoordinates2D, CartesianDepthFlatFallback) {
@@ -45,12 +48,15 @@ TEST(ResolveCoordinates2D, CartesianDepthFlatFallback) {
       specfem::element::dimension_tag::dim2>
       coords(100.0, -50.0, std::nullopt);
 
-  auto gc = specfem::assembly::resolve_coordinates(coords, mesh2d, surface2d);
+  const auto result =
+      specfem::assembly::resolve_coordinates(coords, mesh2d, surface2d);
+  const auto &gc = result.global;
 
   EXPECT_FLOAT_EQ(gc.x, 100.0);
   EXPECT_FLOAT_EQ(gc.z, -50.0);
   // Verify origin was set
   ASSERT_TRUE(coords.origin.has_value());
+  EXPECT_FALSE(result.topography.has_value()); // dim2 has no topography
 }
 
 // ── 3D Tests ────────────────────────────────────────────────────────────────
@@ -61,11 +67,15 @@ TEST(ResolveCoordinates3D, CartesianAbsolute) {
       specfem::element::dimension_tag::dim3>
       coords(1.0, 2.0, 3.0, std::array<double, 3>{ 0.0, 0.0, 0.0 });
 
-  auto gc = specfem::assembly::resolve_coordinates(coords, mesh3d, surface3d);
+  const auto result =
+      specfem::assembly::resolve_coordinates(coords, mesh3d, surface3d);
+  const auto &gc = result.global;
 
   EXPECT_FLOAT_EQ(gc.x, 1.0);
   EXPECT_FLOAT_EQ(gc.y, 2.0);
   EXPECT_FLOAT_EQ(gc.z, 3.0);
+  // Absolute coords (origin set) skip the topographic lookup.
+  EXPECT_FALSE(result.topography.has_value());
 }
 
 TEST(ResolveCoordinates3D, CartesianDepthFlatFallback) {
@@ -74,7 +84,9 @@ TEST(ResolveCoordinates3D, CartesianDepthFlatFallback) {
       specfem::element::dimension_tag::dim3>
       coords(10.0, 20.0, -5000.0, std::nullopt);
 
-  auto gc = specfem::assembly::resolve_coordinates(coords, mesh3d, surface3d);
+  const auto result =
+      specfem::assembly::resolve_coordinates(coords, mesh3d, surface3d);
+  const auto &gc = result.global;
 
   EXPECT_FLOAT_EQ(gc.x, 10.0);
   EXPECT_FLOAT_EQ(gc.y, 20.0);
@@ -82,6 +94,9 @@ TEST(ResolveCoordinates3D, CartesianDepthFlatFallback) {
   // Verify origin was set by flat fallback
   ASSERT_TRUE(coords.origin.has_value());
   EXPECT_DOUBLE_EQ((*coords.origin)[2], 0.0);
+  // Depth-based input: topography reported as the flat-fallback elevation.
+  ASSERT_TRUE(result.topography.has_value());
+  EXPECT_FLOAT_EQ(*result.topography, 0.0);
 }
 
 TEST(ResolveCoordinates3D, GeographicThrowsWithoutUTMConfig) {
@@ -98,13 +113,17 @@ TEST(ResolveCoordinates3D, GeographicWithUTMConfig) {
       2.6741959317615298, 51.561449479910003, 0.0);
   specfem::coordinate_systems::utm_projection_config utm_config{ 31 };
 
-  auto gc = specfem::assembly::resolve_coordinates(coords, mesh3d, surface3d,
-                                                   utm_config);
+  const auto result = specfem::assembly::resolve_coordinates(
+      coords, mesh3d, surface3d, utm_config);
+  const auto &gc = result.global;
 
   // UTM zone 31: easting ~477415.5, northing ~5712313.5
   EXPECT_NEAR(gc.x, 477415.5, 0.01);
   EXPECT_NEAR(gc.y, 5712313.5, 0.01);
   EXPECT_FLOAT_EQ(gc.z, 0.0); // depth = 0 → z = 0
+  // Geographic input resolves depth against the (flat) surface.
+  ASSERT_TRUE(result.topography.has_value());
+  EXPECT_FLOAT_EQ(*result.topography, 0.0);
 }
 
 TEST(ResolveCoordinates3D, GeographicWithDepth) {
@@ -113,12 +132,15 @@ TEST(ResolveCoordinates3D, GeographicWithDepth) {
       2.6741959317615298, 51.561449479910003, 5000.0);
   specfem::coordinate_systems::utm_projection_config utm_config{ 31 };
 
-  auto gc = specfem::assembly::resolve_coordinates(coords, mesh3d, surface3d,
-                                                   utm_config);
+  const auto result = specfem::assembly::resolve_coordinates(
+      coords, mesh3d, surface3d, utm_config);
+  const auto &gc = result.global;
 
   EXPECT_NEAR(gc.x, 477415.5, 0.01);
   EXPECT_NEAR(gc.y, 5712313.5, 0.01);
   EXPECT_FLOAT_EQ(gc.z, -5000.0); // flat fallback: z = 0 - 5000
+  ASSERT_TRUE(result.topography.has_value());
+  EXPECT_FLOAT_EQ(*result.topography, 0.0);
 }
 
 TEST(ResolveCoordinates3D, GeocentricThrows) {

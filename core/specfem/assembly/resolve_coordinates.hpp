@@ -12,14 +12,34 @@ namespace specfem {
 namespace assembly {
 
 /**
+ * @brief Outcome of resolving a generic coordinate to mesh space.
+ *
+ * Carries the resolved global coordinate plus extras that only exist for
+ * certain resolution paths. Designed to grow as more resolution-type-specific
+ * information is surfaced.
+ *
+ * @tparam DimensionTag Spatial dimension (dim2 or dim3)
+ */
+template <specfem::element::dimension_tag DimensionTag>
+struct CoordinateResolutionResult {
+  specfem::point::global_coordinates<DimensionTag> global; ///< Resolved global
+                                                           ///< coordinates in
+                                                           ///< mesh space
+  std::optional<type_real> topography; ///< Surface elevation used to resolve a
+                                       ///< depth-based input; nullopt when no
+                                       ///< topographic lookup occurred
+};
+
+/**
  * @brief Convert a generic coordinate to mesh-space global coordinates.
  *
  * Uses dynamic dispatch to determine the concrete coordinate type and
  * perform the appropriate conversion:
  *
  * - **cartesian** with origin set: `global = stored + origin`
- * - **cartesian** with origin nullopt: sets origin via flat fallback
- *   (`{0,0,0}`), then resolves as above. Future: topographic query.
+ * - **cartesian** with origin nullopt: queries the topographic surface above
+ *   (x, y) to set the origin elevation, then resolves as above. The found
+ *   elevation is reported in @ref CoordinateResolutionResult::topography.
  * - **geographic**: projects via UTM (requires @p utm_config), then resolves
  *   depth as cartesian-with-depth.
  * - **geocentric**: not yet implemented (Globe3D future).
@@ -30,14 +50,14 @@ namespace assembly {
  * @param surface Free-surface faces for topographic depth resolution (dim3
  *        only)
  * @param utm_config Optional UTM projection config (required for geographic)
- * @return Resolved global coordinates in mesh space
+ * @return Resolved global coordinates plus the found topography (if any)
  *
  * @throws std::runtime_error if the coordinate type is unknown,
  *         geographic coords are used without utm_config, or
  *         geocentric coords are used (not yet implemented)
  */
 template <specfem::element::dimension_tag DimensionTag>
-specfem::point::global_coordinates<DimensionTag> resolve_coordinates(
+specfem::assembly::CoordinateResolutionResult<DimensionTag> resolve_coordinates(
     specfem::coordinate_systems::coordinates<DimensionTag> &coords,
     const specfem::assembly::mesh<DimensionTag> &mesh,
     const specfem::mesh::acoustic_free_surface<DimensionTag> &surface,
