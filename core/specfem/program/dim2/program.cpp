@@ -41,7 +41,7 @@ void program_2d(
   const auto quadrature = setup.instantiate_quadrature();
   specfem::Logger::info([&](std::ostringstream &oss) {
     oss << "Quadrature:\n"
-        << "-------------------------------\n"
+        << "-----------\n"
         << quadrature.to_string();
   });
 
@@ -96,6 +96,7 @@ void program_2d(
     for (auto &receiver : receivers) {
       oss << receiver->print();
     }
+    oss << "\n";
   });
   // --------------------------------------------------------------
 
@@ -105,6 +106,9 @@ void program_2d(
   const type_real dt = setup.get_dt();
   const int max_seismogram_time_step = setup.get_max_seismogram_step();
   const int nstep_between_samples = setup.get_nstep_between_samples();
+  specfem::Logger::info("Generating Assembly:");
+  specfem::Logger::info("====================");
+  specfem::Logger::info("\n");
   specfem::assembly::assembly<specfem::element::dimension_tag::dim2> assembly(
       mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
       setup.get_t0(), dt, nsteps, max_seismogram_time_step,

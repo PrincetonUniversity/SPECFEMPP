@@ -6,6 +6,7 @@
 #include "specfem/utilities.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
+#include <format>
 
 specfem::source_time_functions::GaussianHdur::GaussianHdur(
     const int nsteps, const type_real dt, const type_real hdur,
@@ -85,16 +86,15 @@ void specfem::source_time_functions::GaussianHdur::compute_source_time_function(
 }
 
 std::string specfem::source_time_functions::GaussianHdur::print() const {
-  std::stringstream ss;
-  ss << "        GaussianHdur source time function:\n"
-     << "          hdur: " << this->hdur_ << "\n"
-     << "          tshift: " << this->tshift_ << "\n"
-     << "          factor: " << this->factor_ << "\n"
-     << "          t0: " << this->t0_ << "\n"
-     << "          use_trick_for_better_pressure: "
-     << this->use_trick_for_better_pressure_ << "\n";
-
-  return ss.str();
+  std::ostringstream message;
+  auto format = [](type_real value, int precision) {
+    return std::format("{:.{}e}", value, precision);
+  };
+  message << "GaussianHdur(t0=" << format(this->t0_, 6)
+          << ", hdur=" << format(this->hdur_, 6)
+          << ", tshift=" << format(this->tshift_, 6)
+          << ", factor=" << format(this->factor_, 6) << ")";
+  return message.str();
 }
 
 bool specfem::source_time_functions::GaussianHdur::operator==(

@@ -3,6 +3,7 @@
 #include "specfem/enums.hpp"
 #include "specfem/io/seismogram/reader.hpp"
 #include "specfem/utilities.hpp"
+#include <format>
 #include <fstream>
 #include <tuple>
 #include <vector>
@@ -209,11 +210,13 @@ void specfem::source_time_functions::external::update_tshift(type_real tshift) {
 }
 
 std::string specfem::source_time_functions::external::print() const {
-  std::stringstream ss;
-  ss << "External source time function: "
-     << "\n"
-     << "  X-component: " << this->x_component_ << "\n"
-     << "  Y-component: " << this->y_component_ << "\n"
-     << "  Z-component: " << this->z_component_ << "\n";
-  return ss.str();
+  std::ostringstream message;
+  auto format = [](type_real value, int precision) {
+    return std::format("{:.{}e}", value, precision);
+  };
+  message << "external(t0=" << format(this->t0_, 6)
+          << ", dt=" << format(this->dt_, 6) << ", x=" << this->x_component_
+          << ", y=" << this->y_component_ << ", z=" << this->z_component_
+          << ")";
+  return message.str();
 }

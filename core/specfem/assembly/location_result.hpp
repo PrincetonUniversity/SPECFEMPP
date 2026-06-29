@@ -127,7 +127,7 @@ template <specfem::element::dimension_tag DimensionTag> struct LocationResult {
     constexpr int label_width = 22;
     const auto field = [](const std::string &label) {
       std::ostringstream oss;
-      oss << "  " << std::left << std::setw(label_width) << (label + ":");
+      oss << "    " << std::left << std::setw(label_width) << (label + ":");
       return oss.str();
     };
 
@@ -177,11 +177,14 @@ template <specfem::element::dimension_tag DimensionTag>
 void log_location_results(
     const std::map<int, LocationResult<DimensionTag>> &results,
     const std::string &kind) {
+  const int nchar = kind.size();
   const auto emit = [&kind](int index, const std::string &body) {
-    specfem::Logger::debug(kind + " " + std::to_string(index) +
-                           " location result:\n" + body);
+    specfem::Logger::debug("- " + kind + " " + std::to_string(index) + ":\n" +
+                           body);
   };
 
+  specfem::Logger::debug(kind + " Location Results:\n" +
+                         std::string(nchar + 18, '-') + "\n");
 #ifdef SPECFEM_ENABLE_MPI
   // The input/resolved/topography fields are replicated on every rank; only the
   // owner-specific fields differ. Each rank therefore sends just its owned
@@ -238,6 +241,7 @@ void log_location_results(
     if (result.located())
       emit(index, result.print());
 #endif
+  specfem::Logger::debug("\n");
 }
 
 } // namespace assembly

@@ -114,8 +114,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::print()
   SPECFEM_MPI_SAFECALL(
       MPI_Allreduce(MPI_IN_PLACE, &nspec, 1, MPI_INT, MPI_SUM, comm));
 
-  message << "Assembly information:\n"
-          << "------------------------------\n"
+  message << "\nAssembly information:\n"
+          << "---------------------\n"
           << "  Total number of spectral elements             : " << nspec
           << "\n"
           << "  Total number of quadrature points per element : "

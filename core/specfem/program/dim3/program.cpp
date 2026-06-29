@@ -59,7 +59,7 @@ void program_3d(
   const auto quadrature = setup.instantiate_quadrature();
   specfem::Logger::info([&](std::ostringstream &oss) {
     oss << "Quadrature:\n"
-        << "-------------------------------\n"
+        << "-----------\n"
         << quadrature.to_string();
   });
   // --------------------------------------------------------------
@@ -75,12 +75,13 @@ void program_3d(
   setup.set_starttime(starttime);
 
   specfem::Logger::info([&](std::ostringstream &oss) {
-    oss << "Source Information:\n"
-        << "---------------------\n"
+    oss << "Input Source Information:\n"
+        << "-------------------------\n"
         << "Number of sources : " << sources.size() << "\n";
     for (auto &source : sources) {
       oss << source->print();
     }
+    oss << "\n";
   });
 
   // --------------------------------------------------------------
@@ -91,19 +92,21 @@ void program_3d(
       setup.get_stations(), !mesh.suppress_utm_projection);
 
   specfem::Logger::info([&](std::ostringstream &oss) {
-    oss << "Receiver Information:\n"
-        << "---------------------\n"
+    oss << "Input Receiver Information:\n"
+        << "---------------------------\n"
         << "Number of receivers : " << receivers.size() << "\n";
     for (auto &receiver : receivers) {
       oss << receiver->print();
     }
+    oss << "\n";
   });
 
   // --------------------------------------------------------------
   //                   Generate Assembly
   // --------------------------------------------------------------
-  specfem::Logger::info(
-      "Generating Assembly:\n-------------------------------");
+  specfem::Logger::info("Generating Assembly:");
+  specfem::Logger::info("====================");
+  specfem::Logger::info("\n");
   const int max_seismogram_time_step = setup.get_max_seismogram_step();
   const int nstep_between_samples = setup.get_nstep_between_samples();
   specfem::assembly::assembly<specfem::element::dimension_tag::dim3> assembly(

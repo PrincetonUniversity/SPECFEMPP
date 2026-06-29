@@ -85,8 +85,7 @@ std::string specfem::sources::source<DimensionTag>::print() const {
     const auto gcoord = get_global_coordinates();
     os << "    Global Coordinates: " << gcoord.print() << "\n";
   }
-  os << "  Time Function: \n"
-     << source_time_function->print() << "\n";
+  os << "  Time Function: " << source_time_function->print() << "\n";
 #ifdef SPECFEM_ENABLE_MPI
   if (partition_index_ >= 0)
     os << "    MPI Rank: " << partition_index_ << "\n";
