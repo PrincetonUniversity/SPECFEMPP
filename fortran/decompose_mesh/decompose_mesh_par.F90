@@ -145,4 +145,12 @@ module decompose_mesh_par
   !! side_wd = 21--26: one face is on the boundary
   integer, dimension(:), allocatable :: side_wd
 
+  ! Nonconforming adjacency map
+  integer :: nnonconforming_adjacencies
+  integer, dimension(:), allocatable :: nonconforming_ispec_source, nonconforming_ispec_target
+  integer, dimension(:), allocatable :: nonconforming_adjacency_type
+  integer, dimension(:), allocatable :: nonconforming_adjacency_face
+
+
+
 end module decompose_mesh_par

@@ -914,4 +914,39 @@
   !   call close_faults(nodes_coords,nnodes)
   ! endif
 
+
+  ! reads in nonconforming adjacency file
+  if (len_trim(NONCONFORMING_ADJACENCIES_FILE) > 0) then
+    open(unit=IIN_DB, file=trim(NONCONFORMING_ADJACENCIES_FILE), status='old', form='formatted', iostat=ier)
+  else
+    ier = 1
+  endif
+  if (ier /= 0) then
+    nnonconforming_adjacencies = 0
+    print *, '  no NONCONFORMING_ADJACENCIES_FILE file found'
+  else
+    read(IIN_DB,*) nnonconforming_adjacencies
+  endif
+
+  allocate(nonconforming_ispec_source(nnonconforming_adjacencies),stat=ier)
+  if (ier /= 0) call exit_MPI_without_rank('error allocating array nonconforming_ispec_source')
+  if (ier /= 0) stop 'Error allocating array nonconforming_ispec_source'
+  allocate(nonconforming_ispec_target(nnonconforming_adjacencies),stat=ier)
+  if (ier /= 0) call exit_MPI_without_rank('error allocating array nonconforming_ispec_target')
+  if (ier /= 0) stop 'Error allocating array nonconforming_ispec_target'
+  allocate(nonconforming_adjacency_type(nnonconforming_adjacencies),stat=ier)
+  if (ier /= 0) call exit_MPI_without_rank('error allocating array nonconforming_adjacency_type')
+  if (ier /= 0) stop 'Error allocating array nonconforming_adjacency_type'
+  allocate(nonconforming_adjacency_face(nnonconforming_adjacencies),stat=ier)
+  if (ier /= 0) call exit_MPI_without_rank('error allocating array nonconforming_adjacency_face')
+  if (ier /= 0) stop 'Error allocating array nonconforming_adjacency_face'
+
+  do ispec = 1,nnonconforming_adjacencies
+    read(IIN_DB,*) nonconforming_ispec_source(ispec), nonconforming_ispec_target(ispec), &
+                   nonconforming_adjacency_type(ispec), nonconforming_adjacency_face(ispec)
+  enddo
+
+
+  close(IIN_DB)
+
   end subroutine read_mesh_files
