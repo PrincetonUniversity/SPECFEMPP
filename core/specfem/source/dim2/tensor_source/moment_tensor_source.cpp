@@ -79,9 +79,11 @@ specfem::sources::moment_tensor<
 std::string specfem::sources::moment_tensor<
     specfem::element::dimension_tag::dim2>::print_details() const {
   std::ostringstream message;
-  message << "    Moment Tensor: \n"
-          << "      Mxx, Mzz, Mxz = " << this->Mxx << ", " << this->Mzz << ", "
-          << this->Mxz << "\n";
+  auto format = [](type_real value, int precision) {
+    return std::format("{:.{}e}", value, precision);
+  };
+  message << "(Mxx, Mzz, Mxz) = (" << format(this->Mxx, 6) << ", "
+          << format(this->Mzz, 6) << ", " << format(this->Mxz, 6) << ")";
   return message.str();
 }
 

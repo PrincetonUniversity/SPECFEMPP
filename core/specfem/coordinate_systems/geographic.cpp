@@ -19,7 +19,7 @@ bool specfem::coordinate_systems::geographic_coordinates::operator==(
 
 std::string specfem::coordinate_systems::geographic_coordinates::print() const {
   std::ostringstream os;
-  os << "geographic(lon=" << longitude << ", lat=" << latitude
+  os << "Geographic(lon=" << longitude << ", lat=" << latitude
      << ", depth=" << depth << ")";
   return os.str();
 }

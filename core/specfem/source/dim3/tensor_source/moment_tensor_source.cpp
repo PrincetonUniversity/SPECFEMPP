@@ -45,13 +45,13 @@ specfem::sources::moment_tensor<
 std::string specfem::sources::moment_tensor<
     specfem::element::dimension_tag::dim3>::print_details() const {
   std::ostringstream message;
-  message << "    Moment Tensor: \n"
-          << "      Mxx = " << this->Mxx << "\n"
-          << "      Myy = " << this->Myy << "\n"
-          << "      Mzz = " << this->Mzz << "\n"
-          << "      Mxy = " << this->Mxy << "\n"
-          << "      Mxz = " << this->Mxz << "\n"
-          << "      Myz = " << this->Myz << "\n";
+  auto format = [](type_real value, int precision) {
+    return std::format("{:.{}e}", value, precision);
+  };
+  message << "(Mxx, Myy, Mzz, Mxy, Mxz, Myz) = (" << format(this->Mxx, 6)
+          << ", " << format(this->Myy, 6) << ", " << format(this->Mzz, 6)
+          << ", " << format(this->Mxy, 6) << ", " << format(this->Mxz, 6)
+          << ", " << format(this->Myz, 6) << ")";
   return message.str();
 }
 

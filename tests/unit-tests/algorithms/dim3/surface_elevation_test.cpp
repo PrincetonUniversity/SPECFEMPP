@@ -49,17 +49,18 @@ specfem::assembly::mesh<dimension> make_sloped_mesh() {
       }
 
   // Control nodes (8 corners) defining the element geometry: x,y in [0,20],
-  // z = 100 + 0.1*x (so the top face is the same gently sloped plane).
+  // z = 100 + 0.1*x (so the top face is the same gently sloped plane). The view
+  // layout is [nspec, ngnod, ndim].
   mesh.h_control_node_coordinates =
-      decltype(mesh.h_control_node_coordinates)("cn", 3, 1, 8);
+      decltype(mesh.h_control_node_coordinates)("cn", 1, 8, 3);
   const double cx[8] = { 0, 20, 20, 0, 0, 20, 20, 0 };
   const double cy[8] = { 0, 0, 20, 20, 0, 0, 20, 20 };
   const double cz_bottom = 0.0;
   for (int i = 0; i < 8; ++i) {
     const bool top = (i >= 4);
-    mesh.h_control_node_coordinates(0, 0, i) = cx[i];
-    mesh.h_control_node_coordinates(1, 0, i) = cy[i];
-    mesh.h_control_node_coordinates(2, 0, i) =
+    mesh.h_control_node_coordinates(0, i, 0) = cx[i];
+    mesh.h_control_node_coordinates(0, i, 1) = cy[i];
+    mesh.h_control_node_coordinates(0, i, 2) =
         top ? (100.0 + 0.1 * cx[i]) : cz_bottom;
   }
   return mesh;
@@ -86,15 +87,16 @@ make_flat_surface_mesh(double cx, double cy, double surface_z, double half) {
         mesh.h_coord(0, iz, iy, ix, 2) = surface_z;
       }
 
+  // View layout is [nspec, ngnod, ndim].
   mesh.h_control_node_coordinates =
-      decltype(mesh.h_control_node_coordinates)("cn", 3, 1, 8);
+      decltype(mesh.h_control_node_coordinates)("cn", 1, 8, 3);
   const double dx[8] = { -1, 1, 1, -1, -1, 1, 1, -1 };
   const double dy[8] = { -1, -1, 1, 1, -1, -1, 1, 1 };
   for (int i = 0; i < 8; ++i) {
     const bool top = (i >= 4);
-    mesh.h_control_node_coordinates(0, 0, i) = cx + dx[i] * half;
-    mesh.h_control_node_coordinates(1, 0, i) = cy + dy[i] * half;
-    mesh.h_control_node_coordinates(2, 0, i) =
+    mesh.h_control_node_coordinates(0, i, 0) = cx + dx[i] * half;
+    mesh.h_control_node_coordinates(0, i, 1) = cy + dy[i] * half;
+    mesh.h_control_node_coordinates(0, i, 2) =
         top ? surface_z : surface_z - 2000.0;
   }
   return mesh;

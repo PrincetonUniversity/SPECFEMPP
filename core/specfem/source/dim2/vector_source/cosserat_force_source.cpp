@@ -45,9 +45,11 @@ specfem::sources::cosserat_force<
 std::string specfem::sources::cosserat_force<
     specfem::element::dimension_tag::dim2>::print_details() const {
   std::ostringstream message;
-  message << "    Source Angle: " << type_real(this->angle) << "\n"
-          << "    Source f: " << type_real(this->f) << "\n"
-          << "    Source fc: " << type_real(this->fc) << "\n";
+  auto format = [](type_real value, int precision) {
+    return std::format("{:.{}e}", value, precision);
+  };
+  message << "(Angle, f, fc) = (" << format(this->angle, 6) << ", "
+          << format(this->f, 6) << ", " << format(this->fc, 6) << ")";
   return message.str();
 }
 

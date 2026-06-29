@@ -22,7 +22,7 @@ bool specfem::coordinate_systems::
 std::string specfem::coordinate_systems::cartesian_coordinates<
     specfem::element::dimension_tag::dim2>::print() const {
   std::ostringstream os;
-  os << "cartesian_2d(x=" << x << ", z=" << z;
+  os << "Cartesian(x=" << x << ", z=" << z;
   if (origin.has_value()) {
     os << ", origin=[" << (*origin)[0] << ", " << (*origin)[1] << "]";
   } else {
@@ -51,7 +51,7 @@ bool specfem::coordinate_systems::
 std::string specfem::coordinate_systems::cartesian_coordinates<
     specfem::element::dimension_tag::dim3>::print() const {
   std::ostringstream os;
-  os << "cartesian_3d(x=" << x << ", y=" << y << ", z=" << z;
+  os << "Cartesian(x=" << x << ", y=" << y << ", z=" << z;
   if (origin.has_value()) {
     os << ", origin=[" << (*origin)[0] << ", " << (*origin)[1] << ", "
        << (*origin)[2] << "]";

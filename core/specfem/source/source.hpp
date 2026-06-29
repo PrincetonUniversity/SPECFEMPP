@@ -204,36 +204,7 @@ public:
    * @brief User output — assembles source name, location, type-specific
    * details, source time function, and (when MPI-enabled) the owning rank.
    */
-  std::string print() const {
-    std::ostringstream os;
-    os << "- " << source_name() << " \n";
-    if (read_coordinates_) {
-      os << "    Input Coordinates: " << read_coordinates_->print() << "\n";
-    }
-    // Only print resolved global coordinates when they have been set:
-    // either directly (no read_coordinates_) or after assembly-time
-    // resolution.
-    if (!read_coordinates_ || partition_index_ >= 0) {
-      const auto gcoord = get_global_coordinates();
-      os << "    Source Location: \n";
-      if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
-        os << "      x = " << type_real(gcoord.x) << "\n"
-           << "      z = " << type_real(gcoord.z) << "\n";
-      } else {
-        os << "      x = " << type_real(gcoord.x) << "\n"
-           << "      y = " << type_real(gcoord.y) << "\n"
-           << "      z = " << type_real(gcoord.z) << "\n";
-      }
-    }
-    os << print_details();
-    os << "    Source Time Function: \n"
-       << source_time_function->print() << "\n";
-#ifdef SPECFEM_ENABLE_MPI
-    if (partition_index_ >= 0)
-      os << "    MPI Rank: " << partition_index_ << "\n";
-#endif
-    return os.str();
-  }
+  std::string print() const;
 
   /**
    * @brief Returns the human-readable source type name.

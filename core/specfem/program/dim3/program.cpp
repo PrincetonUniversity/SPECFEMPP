@@ -74,12 +74,30 @@ void program_3d(
   setup.update_t0(t0); // Update t0 in case it was changed
   setup.set_starttime(starttime);
 
+  specfem::Logger::info([&](std::ostringstream &oss) {
+    oss << "Source Information:\n"
+        << "---------------------\n"
+        << "Number of sources : " << sources.size() << "\n";
+    for (auto &source : sources) {
+      oss << source->print();
+    }
+  });
+
   // --------------------------------------------------------------
   //                   Get receivers
   // --------------------------------------------------------------
   // A UTM-projected mesh implies geographic STATIONS coordinates.
   auto receivers = specfem::io::read_3d_receivers(
       setup.get_stations(), !mesh.suppress_utm_projection);
+
+  specfem::Logger::info([&](std::ostringstream &oss) {
+    oss << "Receiver Information:\n"
+        << "---------------------\n"
+        << "Number of receivers : " << receivers.size() << "\n";
+    for (auto &receiver : receivers) {
+      oss << receiver->print();
+    }
+  });
 
   // --------------------------------------------------------------
   //                   Generate Assembly
@@ -94,22 +112,6 @@ void program_3d(
       nstep_between_samples, setup.get_simulation_type(),
       setup.allocate_boundary_values(), setup.instantiate_property_reader(),
       setup.get_flux_scheme_configuration());
-
-  specfem::Logger::info([&](std::ostringstream &oss) {
-    oss << "Source Information:\n"
-        << "---------------------\n"
-        << "Number of sources : " << sources.size() << "\n";
-    for (auto &source : sources) {
-      oss << source->print();
-    }
-
-    oss << "Receiver Information:\n"
-        << "---------------------\n"
-        << "Number of receivers : " << receivers.size() << "\n";
-    for (auto &receiver : receivers) {
-      oss << receiver->print();
-    }
-  });
 
   // assembly.print() always called (not wrapped in lambda function)
   // because it requires collective communication

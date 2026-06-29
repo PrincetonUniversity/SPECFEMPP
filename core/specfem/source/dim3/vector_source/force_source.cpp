@@ -48,10 +48,11 @@ std::string
 specfem::sources::force<specfem::element::dimension_tag::dim3>::print_details()
     const {
   std::ostringstream message;
-  message << "    Force Vector: \n"
-          << "      fx = " << type_real(this->fx) << "\n"
-          << "      fy = " << type_real(this->fy) << "\n"
-          << "      fz = " << type_real(this->fz) << "\n";
+  auto format = [](type_real value, int precision) {
+    return std::format("{:.{}e}", value, precision);
+  };
+  message << "(fx, fy, fz) = (" << format(this->fx, 6) << ", "
+          << format(this->fy, 6) << ", " << format(this->fz, 6) << ")";
   return message.str();
 }
 

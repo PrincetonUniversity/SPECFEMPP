@@ -19,6 +19,6 @@ bool specfem::coordinate_systems::geocentric_coordinates::operator==(
 
 std::string specfem::coordinate_systems::geocentric_coordinates::print() const {
   std::ostringstream os;
-  os << "geocentric(r=" << r << ", theta=" << theta << ", phi=" << phi << ")";
+  os << "Geocentric(r=" << r << ", theta=" << theta << ", phi=" << phi << ")";
   return os.str();
 }

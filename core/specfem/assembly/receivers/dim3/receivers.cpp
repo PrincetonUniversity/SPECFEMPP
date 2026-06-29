@@ -2,16 +2,17 @@
 
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly/element_types.hpp"
+#include "specfem/assembly/location_result.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/receivers.hpp"
 #include "specfem/assembly/resolve_coordinates.hpp"
 #include "specfem/coordinate_systems/utm.hpp"
 #include "specfem/element.hpp"
-#include "specfem/logger.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
+#include <map>
 #include <optional>
 #include <vector>
 
@@ -82,23 +83,25 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
       raw_mesh.utm_projection_zone, false
     };
 
+  // Diagnostic location records, keyed by receiver index. Discarded once this
+  // constructor returns.
+  std::map<int, specfem::assembly::LocationResult<
+                    specfem::element::dimension_tag::dim3>>
+      location_results;
+
   // Resolve any generic coordinates to global coordinates using mesh context.
+  // Receivers constructed with direct coordinates have no read_coordinates_
+  // set, so they take the direct path and produce a reduced (global-only)
+  // record.
   for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
     if (auto *coords = receivers[ireceiver]->get_read_coordinates()) {
-      specfem::Logger::debug("Original receiver coordinates for receiver %d",
-                             ireceiver);
-      specfem::Logger::debug(coords->print());
-      // TODO: unify the receivers diagnostic onto CoordinateResolutionResult
-      // (mirror the source-location result). For now just take the global
-      // coordinate so the existing path is unchanged.
-      auto gc = specfem::assembly::resolve_coordinates(
-                    *coords, mesh, raw_mesh.boundaries.acoustic_free_surface,
-                    utm_config)
-                    .global;
-      specfem::Logger::debug("Resolved receiver coordinates for receiver %d",
-                             ireceiver);
-      specfem::Logger::debug(gc.print());
-      receivers[ireceiver]->set_global_coordinates(gc);
+      auto resolution = specfem::assembly::resolve_coordinates(
+          *coords, mesh, raw_mesh.boundaries.acoustic_free_surface, utm_config);
+      location_results.try_emplace(ireceiver, coords, resolution);
+      receivers[ireceiver]->set_global_coordinates(resolution.global);
+    } else {
+      location_results.try_emplace(
+          ireceiver, receivers[ireceiver]->get_global_coordinates());
     }
   }
 
@@ -127,6 +130,13 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
 
     const auto &lcoord = local_coords[ireceiver];
     h_elements(ireceiver) = lcoord.ispec;
+
+    if (auto it = location_results.find(ireceiver);
+        it != location_results.end()) {
+      it->second.set_result(receivers[ireceiver]->get_global_coordinates(),
+                            lcoord, partition_index_selected[ireceiver],
+                            element_types.get_medium_tag(lcoord.ispec));
+    }
 
     const auto xi = mesh.h_xi;
     const auto eta = mesh.h_xi;   // Use same as dim2 pattern
@@ -175,6 +185,8 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
   for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver)
     receivers[ireceiver]->set_partition_index(
         partition_index_selected[ireceiver]);
+
+  specfem::assembly::log_location_results(location_results, "Receiver");
 
   Kokkos::deep_copy(lagrange_interpolant, h_lagrange_interpolant);
   Kokkos::deep_copy(elements, h_elements);
