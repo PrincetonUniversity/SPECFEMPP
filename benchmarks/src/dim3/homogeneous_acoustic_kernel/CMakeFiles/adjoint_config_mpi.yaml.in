@@ -1,7 +1,7 @@
 parameters:
 
   header:
-    title: Homogeneous Acoustic Kernel (3D) - Adjoint
+    title: Homogeneous Acoustic Kernel (3D) - Adjoint MPI
     description: |
       Material systems : Acoustic domain (1)
       Interfaces : None
@@ -45,7 +45,7 @@ parameters:
     nstep_between_samples: 1
 
   run-setup:
-    number-of-processors: 1
+    number-of-processors: 6
     number-of-runs: 1
 
   databases:

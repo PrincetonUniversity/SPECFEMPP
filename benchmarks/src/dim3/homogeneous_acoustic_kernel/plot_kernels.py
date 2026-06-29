@@ -12,6 +12,36 @@ from scipy.interpolate import griddata
 
 def load_kernels(kernels_dir):
     subdir = os.path.join(kernels_dir, "Kernels", "acoustic_isotropic")
+    if not os.path.isdir(subdir):
+        kernels_root = os.path.join(kernels_dir, "Kernels")
+        proc_dirs = sorted(
+            os.path.join(kernels_root, entry, "acoustic_isotropic")
+            for entry in os.listdir(kernels_root)
+            if entry.startswith("proc_")
+            and os.path.isdir(os.path.join(kernels_root, entry, "acoustic_isotropic"))
+        )
+        if not proc_dirs:
+            raise FileNotFoundError(f"No acoustic kernel files found in {kernels_root}")
+
+        arrays = {}
+        for name in ("X", "Y", "Z", "kappa", "alpha", "rhop"):
+            arrays[name] = np.concatenate(
+                [
+                    np.load(os.path.join(proc_dir, f"{name}.npy")).flatten()
+                    for proc_dir in proc_dirs
+                ]
+            )
+        return (
+            arrays["X"],
+            arrays["Y"],
+            arrays["Z"],
+            {
+                "kappa": arrays["kappa"],
+                "alpha": arrays["alpha"],
+                "rhop": arrays["rhop"],
+            },
+        )
+
     X = np.load(os.path.join(subdir, "X.npy")).flatten()
     Y = np.load(os.path.join(subdir, "Y.npy")).flatten()
     Z = np.load(os.path.join(subdir, "Z.npy")).flatten()

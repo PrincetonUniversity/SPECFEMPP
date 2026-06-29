@@ -3,6 +3,9 @@
 #include "impl/compute_stiffness_interaction.hpp"
 #include "impl/divide_mass_matrix.hpp"
 #include "specfem/assembly/assembly.hpp"
+#include "specfem/assembly/mpi/dim3/mpi.hpp"
+#include "specfem/data_access/data_class.hpp"
+#include "specfem/element.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/tags.hpp"
 #include "update_wavefields.hpp"
@@ -54,6 +57,34 @@ int update_wavefields(
         impl::compute_stiffness_interaction<NGLL, specfem::tags::expand<ElementTags, Tags::wavefield_tag>>(
             assembly, istep);
   });
+
+  if constexpr (Tags::dimension_tag ==
+                specfem::element::dimension_tag::dim3) {
+    constexpr auto medium = Tags::medium_tag;
+    constexpr auto acceleration =
+        specfem::data_access::DataClassType::acceleration;
+
+    if constexpr (medium == specfem::element::medium_tag::acoustic ||
+                  medium == specfem::element::medium_tag::elastic) {
+      auto mpi_buf = assembly.mpi_interfaces.template create_mpi_buffer<
+          wavefield, medium, acceleration>();
+      auto &field = [&]() -> auto & {
+        if constexpr (wavefield == specfem::simulation::field_type::forward)
+          return assembly.fields.forward;
+        else if constexpr (wavefield ==
+                           specfem::simulation::field_type::adjoint)
+          return assembly.fields.adjoint;
+        else
+          return assembly.fields.backward;
+      }();
+
+      mpi_buf.pack(field);
+      mpi_buf.receive();
+      mpi_buf.send();
+      mpi_buf.wait();
+      mpi_buf.unpack(field);
+    }
+  }
 
   impl::divide_mass_matrix<NGLL, Tags>(assembly);
   return elements_updated;
