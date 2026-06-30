@@ -5,11 +5,13 @@
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/receivers.hpp"
 #include "specfem/assembly/resolve_coordinates.hpp"
+#include "specfem/coordinate_systems/utm.hpp"
 #include "specfem/element.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
+#include <optional>
 #include <vector>
 
 specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
@@ -20,7 +22,7 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
         &receivers,
     const std::vector<specfem::enums::wavefield> &stypes,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
-    const specfem::mesh::tags<specfem::element::dimension_tag::dim3> &tags,
+    const specfem::mesh::mesh<specfem::element::dimension_tag::dim3> &raw_mesh,
     const specfem::assembly::element_types<
         specfem::element::dimension_tag::dim3> &element_types)
     : lagrange_interpolant("specfem::assembly::receivers::lagrange_interpolant",
@@ -72,10 +74,18 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
   const int nreceivers = static_cast<int>(receivers.size());
   const int myrank = specfem::MPI::get_rank();
 
+  // UTM config for projecting geographic coordinates; nullopt when suppressed.
+  std::optional<specfem::coordinate_systems::utm_projection_config> utm_config;
+  if (!raw_mesh.suppress_utm_projection)
+    utm_config = specfem::coordinate_systems::utm_projection_config{
+      raw_mesh.utm_projection_zone, false
+    };
+
   // Resolve any generic coordinates to global coordinates using mesh context.
   for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
     if (auto *coords = receivers[ireceiver]->get_read_coordinates()) {
-      auto gc = specfem::assembly::resolve_coordinates(*coords, mesh);
+      auto gc = specfem::assembly::resolve_coordinates(
+          *coords, mesh, raw_mesh.boundaries.acoustic_free_surface, utm_config);
       receivers[ireceiver]->set_global_coordinates(gc);
     }
   }

@@ -899,6 +899,23 @@ target_link_libraries(
   gtest_main
 )
 
+add_executable(
+  surface_elevation_tests
+  algorithms/dim3/surface_elevation_test.cpp
+)
+
+target_link_libraries(
+  surface_elevation_tests
+  specfem::assembly
+  specfem::algorithms
+  specfem::coordinate_systems
+  specfem::mesh
+  specfem::mesh_entity
+  specfem_environment
+  gtest_main
+  Kokkos::kokkos
+)
+
 # Register serial tests for discovery
 set(SERIAL_TEST_TARGETS
   serial_mpi_tests
@@ -948,6 +965,7 @@ set(SERIAL_TEST_TARGETS
   units_tests
   coordinate_systems_tests
   resolve_coordinates_tests
+  surface_elevation_tests
 )
 
 if (NOT SPECFEM_ENABLE_MPI)

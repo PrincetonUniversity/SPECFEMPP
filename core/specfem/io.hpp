@@ -137,11 +137,15 @@ read_2d_receivers(const YAML::Node &stations, const type_real angle);
  * specfem::receiver::receiver * object
  *
  * @param stations_file Stations file describing receiver locations
+ * @param geographic If true, interpret the STATIONS columns as
+ *   `name network latitude longitude elevation burial` (degrees/meters) and
+ *   defer UTM projection to assembly time; if false (default), interpret them
+ *   as `name network y x elevation z` cartesian coordinates (meters).
  * @return vector of instantiated receiver objects
  */
 std::vector<std::shared_ptr<
     specfem::receivers::receiver<specfem::element::dimension_tag::dim3>>>
-read_3d_receivers(const std::string &stations_file);
+read_3d_receivers(const std::string &stations_file, bool geographic = false);
 
 /**
  * @overload
@@ -164,11 +168,13 @@ read_3d_receivers(const std::string &stations_file);
  * @endcode
  *
  * @param stations YAML node containing receiver locations
+ * @param geographic If true, interpret coordinates as geographic
+ *   (latitude/longitude/depth); if false (default), as cartesian (x/y/z).
  * @return vector of instantiated receiver objects
  */
 std::vector<std::shared_ptr<
     specfem::receivers::receiver<specfem::element::dimension_tag::dim3>>>
-read_3d_receivers(const YAML::Node &stations);
+read_3d_receivers(const YAML::Node &stations, bool geographic = false);
 
 /**
  * @brief Read sources from parsed config entries (multi-format dispatch).

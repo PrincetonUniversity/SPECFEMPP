@@ -66,5 +66,17 @@ enum class attenuation_tag {
   constant_isotropic, ///< Constant Q-Band attenuation
 };
 
+/**
+ * @brief MPI partition classification for communication-computation overlap.
+ *
+ * Classifies elements by their proximity to MPI partition boundaries,
+ * enabling a two-phase stiffness computation that overlaps with MPI
+ * halo exchange of the acceleration field.
+ */
+enum class mpi_tag {
+  inner, ///< Elements not touching any MPI partition boundary
+  outer  ///< Elements sharing a face, edge, or corner with another MPI rank
+};
+
 } // namespace element
 } // namespace specfem

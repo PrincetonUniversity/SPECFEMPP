@@ -1,0 +1,28 @@
+# Par_file for the 8-partition MPI regression fixture (HomogeneousElasticMPI2x2x2).
+# Paths are relative to this directory (provenance/); run xdecompose_mesh from here.
+# xdecompose_mesh writes the per-rank databases to <LOCAL_PATH>/Database/proc_*.bin,
+# i.e. ../Database/proc_0.bin ... proc_7.bin (the directory read by the test fixture).
+
+NPROC                           = 8
+NGNOD                           = 8
+PARTITIONING_TYPE               = 2
+LTS_MODE                        = .false.
+ATTENUATION                     = .false.
+PML_CONDITIONS                  = .false.
+SAVE_MESH_FILES                 = .false.
+ADIOS_FOR_DATABASES             = .false.
+HDF5_ENABLED                    = .false.
+COUPLE_WITH_INJECTION_TECHNIQUE = .false.
+IS_WAVEFIELD_DISCONTINUITY      = .false.
+
+LOCAL_PATH                      = ..
+NODES_COORDS_FILE               = MESH/nodes_coords_file
+MESH_FILE                       = MESH/mesh_file
+MATERIALS_FILE                  = MESH/materials_file
+NUMMATERIAL_VELOCITY_FILE       = MESH/nummaterial_velocity_file
+ABSORBING_SURFACE_FILE_XMIN     = MESH/absorbing_surface_file_xmin
+ABSORBING_SURFACE_FILE_XMAX     = MESH/absorbing_surface_file_xmax
+ABSORBING_SURFACE_FILE_YMIN     = MESH/absorbing_surface_file_ymin
+ABSORBING_SURFACE_FILE_YMAX     = MESH/absorbing_surface_file_ymax
+ABSORBING_SURFACE_FILE_BOTTOM   = MESH/absorbing_surface_file_bottom
+FREE_OR_ABSORBING_SURFACE_FILE_ZMAX = MESH/free_or_absorbing_surface_file_zmax

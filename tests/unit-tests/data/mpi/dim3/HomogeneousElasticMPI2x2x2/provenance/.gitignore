@@ -1,0 +1,4 @@
+# Regenerable intermediates (see README.md); only Database/proc_*.bin is committed.
+cube.msh
+MESH/
+.snakemake/

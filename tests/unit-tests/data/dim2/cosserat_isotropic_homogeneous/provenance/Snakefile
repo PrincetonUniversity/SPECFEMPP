@@ -1,4 +1,4 @@
-SPECFEM_BIN = "/Users/lsawade/SPECFEMPP/build/release/bin/specfem2d"
+SPECFEM_BIN = "/Users/lsawade/SPECFEMPP/build/release/bin/specfem 2d"
 MESHFEM_BIN = "/Users/lsawade/SPECFEMPP/build/release/bin/xmeshfem2D"
 
 rule all:

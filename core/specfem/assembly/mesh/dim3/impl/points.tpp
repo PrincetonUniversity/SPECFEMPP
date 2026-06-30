@@ -12,8 +12,8 @@ void initialize_coordinates(
 
   Kokkos::parallel_for(
       "specfem::assembly::mesh::points::initialize_coordinates",
-      Kokkos::MDRangePolicy<Kokkos::Rank<4> >({ 0, 0, 0, 0 },
-                                              { nspec, ngllz, nglly, ngllx }),
+      Kokkos::MDRangePolicy<Kokkos::Rank<4>>({ 0, 0, 0, 0 },
+                                             { nspec, ngllz, nglly, ngllx }),
       KOKKOS_LAMBDA(const int ispec, const int iz, const int iy, const int ix) {
         for (int ia = 0; ia < ngnod; ia++) {
           coordinates(ispec, iz, iy, ix, 0) +=
@@ -41,8 +41,8 @@ compute_bounds(const char *label, const int nspec, const int ngllz,
   Kokkos::MinMaxScalar<type_real> result;
   Kokkos::parallel_reduce(
       label,
-      Kokkos::MDRangePolicy<Kokkos::Rank<4> >({ 0, 0, 0, 0 },
-                                              { nspec, ngllz, nglly, ngllx }),
+      Kokkos::MDRangePolicy<Kokkos::Rank<4>>({ 0, 0, 0, 0 },
+                                             { nspec, ngllz, nglly, ngllx }),
       KOKKOS_LAMBDA(const int ispec, const int iz, const int iy, const int ix,
                     Kokkos::MinMaxScalar<type_real> &r) {
         r.min_val = Kokkos::min(r.min_val, coord(ispec, iz, iy, ix, dim));
@@ -57,6 +57,8 @@ compute_bounds(const char *label, const int nspec, const int ngllz,
 specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::
     points(const int &nspec, const int &ngllz, const int &nglly,
            const int &ngllx,
+           const Kokkos::View<specfem::element::medium_tag *, Kokkos::HostSpace>
+               &medium_tags,
            const specfem::assembly::mesh_impl::adjacency_graph<dimension_tag>
                &adjacency_graph,
            const specfem::assembly::mesh_impl::control_nodes<dimension_tag>
@@ -80,9 +82,8 @@ specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::
   // Initialize to -1
   Kokkos::parallel_for(
       "specfem::assembly::mesh::points::initialize_index_mapping",
-      Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace,
-                            Kokkos::Rank<4> >({ 0, 0, 0, 0 },
-                                              { nspec, ngllz, nglly, ngllx }),
+      Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace, Kokkos::Rank<4>>(
+          { 0, 0, 0, 0 }, { nspec, ngllz, nglly, ngllx }),
       [=, this](const int ispec, const int iz, const int iy, const int ix) {
         this->h_index_mapping(ispec, iz, iy, ix) = -1;
       });
@@ -100,8 +101,7 @@ specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::
   // at ig = nspec*(ngllz-2)*(nglly-2)*(ngllx-2) below.
   Kokkos::parallel_for(
       "specfem::assembly::mesh::points::initialize_internal_indices",
-      Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace,
-                            Kokkos::Rank<4> >(
+      Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace, Kokkos::Rank<4>>(
           { 0, 1, 1, 1 }, { nchunks, ngllz - 1, nglly - 1, ngllx - 1 }),
       [=, this](const int ichunk, const int iz, const int iy, const int ix) {
         for (int ielement = 0; ielement < chunk_size; ielement++) {
@@ -155,6 +155,9 @@ specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::
                boost::make_iterator_range(boost::out_edges(ispec, fg))) {
             if (fg[face].orientation == iface) {
               const int jspec = boost::target(face, fg);
+              if (medium_tags(ispec) != medium_tags(jspec)) {
+                continue;
+              }
               const auto other_face = boost::edge(jspec, ispec, graph).first;
               const auto jface = fg[other_face].orientation;
 
@@ -209,6 +212,9 @@ specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::
             if (specfem::mesh_entity::contains(valid_connections,
                                                fg[edge].orientation)) {
               const int jspec = boost::target(edge, fg);
+              if (medium_tags(ispec) != medium_tags(jspec)) {
+                continue;
+              }
               const auto other_face = boost::edge(jspec, ispec, graph).first;
               const auto jorientation = fg[other_face].orientation;
               const auto connections =
@@ -263,6 +269,9 @@ specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::
           if (specfem::mesh_entity::contains(valid_connections,
                                              fg[corner].orientation)) {
             const int jspec = boost::target(corner, fg);
+            if (medium_tags(ispec) != medium_tags(jspec)) {
+              continue;
+            }
             const auto other_face = boost::edge(jspec, ispec, graph).first;
             const auto jorientation = fg[other_face].orientation;
             const auto connections =
@@ -307,9 +316,8 @@ specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::
   // Make sure all points have been assigned
   Kokkos::parallel_for(
       "specfem::assembly::mesh::points::check_all_points_assigned",
-      Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace,
-                            Kokkos::Rank<4> >({ 0, 0, 0, 0 },
-                                              { nspec, ngllz, nglly, ngllx }),
+      Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace, Kokkos::Rank<4>>(
+          { 0, 0, 0, 0 }, { nspec, ngllz, nglly, ngllx }),
       [=, this](const int ispec, const int iz, const int iy, const int ix) {
         if (this->h_index_mapping(ispec, iz, iy, ix) == -1) {
           std::stringstream ss;
@@ -337,15 +345,15 @@ specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::
 
   const auto coord = this->coord;
 
-  const auto x_result = compute_bounds(
-      "specfem::assembly::mesh::points::compute_x_bounds", nspec, ngllz, nglly,
-      ngllx, coord, 0);
-  const auto y_result = compute_bounds(
-      "specfem::assembly::mesh::points::compute_y_bounds", nspec, ngllz, nglly,
-      ngllx, coord, 1);
-  const auto z_result = compute_bounds(
-      "specfem::assembly::mesh::points::compute_z_bounds", nspec, ngllz, nglly,
-      ngllx, coord, 2);
+  const auto x_result =
+      compute_bounds("specfem::assembly::mesh::points::compute_x_bounds", nspec,
+                     ngllz, nglly, ngllx, coord, 0);
+  const auto y_result =
+      compute_bounds("specfem::assembly::mesh::points::compute_y_bounds", nspec,
+                     ngllz, nglly, ngllx, coord, 1);
+  const auto z_result =
+      compute_bounds("specfem::assembly::mesh::points::compute_z_bounds", nspec,
+                     ngllz, nglly, ngllx, coord, 2);
 
   this->xmin = x_result.min_val;
   this->xmax = x_result.max_val;

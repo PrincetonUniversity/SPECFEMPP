@@ -86,6 +86,8 @@ public:
    * @param shape_functions Shape function values at GLL points
    */
   points(const int &nspec, const int &ngllz, const int &nglly, const int &ngllx,
+         const Kokkos::View<specfem::element::medium_tag *, Kokkos::HostSpace>
+             &medium_tags,
          const specfem::assembly::mesh_impl::adjacency_graph<dimension_tag>
              &adjacency_graph,
          const specfem::assembly::mesh_impl::control_nodes<dimension_tag>

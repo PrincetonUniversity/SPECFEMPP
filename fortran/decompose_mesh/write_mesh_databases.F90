@@ -211,7 +211,10 @@
   !     adjacency format read by read_adjacency_graph.cpp
 
   use decompose_mesh_par, only: nspec, xadj_typed, adjncy_typed, adj_types_global, &
-                                 glob2loc_elmnts, part, elmnts, NGNOD
+                                 glob2loc_elmnts, part, elmnts, NGNOD, &
+                                 nnonconforming_adjacencies, nonconforming_ispec_source, &
+                                 nonconforming_ispec_target,nonconforming_adjacency_type, &
+                                 nonconforming_adjacency_face
 
   implicit none
 
@@ -240,9 +243,11 @@
     end do
   end do
 
-  write(IIN_database) total_nadj_element
+  ! total conforming + nonconforming adjacencies
+  write(IIN_database) total_nadj_element + nnonconforming_adjacencies
   index = 0
 
+  ! write weakly conforming
   do ispec = 1, nspec
     if (part(ispec) /= ipart) cycle
     ispec_local = glob2loc_elmnts(ispec-1) + 1
@@ -259,6 +264,13 @@
     print *,'Error: index ',index,' /= total_nadj_element ',total_nadj_element,' in partition ',ipart
     stop 'Error in write_adjacency_database (local)'
   endif
+
+  ! write nonconforming
+  do k = 1,nnonconforming_adjacencies
+    write(IIN_database) nonconforming_ispec_source(k), nonconforming_ispec_target(k), &
+                        nonconforming_adjacency_type(k), nonconforming_adjacency_face(k)
+  end do
+
 
   ! Count MPI (cross-partition) adjacencies
   num_mpi_adjacencies = 0

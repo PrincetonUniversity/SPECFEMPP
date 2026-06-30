@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/datatype/element_index_range.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/mesh_entity.hpp"
@@ -56,9 +57,11 @@ struct value_containers_base {
   constexpr static auto dimension_tag = DimensionTag;
   constexpr static auto combinations = ContainerSetsType::combinations;
 
-  /// Per-(medium,property) first global element index; enables arithmetic
-  /// index mapping without a device View.
-  specfem::tag_dispatch::Storage<int, decltype(combinations)> base_offsets;
+  /// Per-(medium,property) element index range; enables arithmetic index
+  /// mapping without a device View.
+  specfem::tag_dispatch::Storage<specfem::datatype::ElementIndexRange,
+                                 decltype(combinations)>
+      element_ranges;
 
   template <typename TagsType>
   using ContainerType =
@@ -78,8 +81,10 @@ struct value_containers_base {
             specfem::element::property_tag PropertyTag>
   KOKKOS_INLINE_FUNCTION int property_index_mapping(int ispec) const {
     return ispec -
-           base_offsets.template get<
-               specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag>>();
+           element_ranges
+               .template get<
+                   specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag>>()
+               .begin_index();
   }
 
   /**
@@ -91,7 +96,7 @@ struct value_containers_base {
    * @brief Construct and fully initialise a value_containers_base.
    *
    * Constructs every slot of @c value via the supplied per-tag initializer,
-   * then reads @c base_ispec from each slot to populate @c base_offsets.
+   * then reads @c element_range from each slot to populate @c element_ranges.
    *
    * @tparam Initializer  Callable invocable as
    *   `initializer.template operator()<TagsType>()` returning the slot value.
@@ -105,8 +110,8 @@ struct value_containers_base {
                         Initializer &&initializer)
       : nspec(nspec_), element_grid(grid), value(initializer) {
     specfem::tag_dispatch::for_each(combinations, [&]<typename TagsType>() {
-      base_offsets.template get<TagsType>() =
-          value.template get<TagsType>().base_ispec;
+      element_ranges.template get<TagsType>() =
+          value.template get<TagsType>().element_range;
     });
   }
 

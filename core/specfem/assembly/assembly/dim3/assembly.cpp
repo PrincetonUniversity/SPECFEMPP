@@ -58,12 +58,12 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
   this->kernels = { this->element_types };
 
   this->sources = {
-    sources, this->mesh, this->jacobian_matrix, this->element_types,
-    t0,      dt,         max_timesteps
+    sources, this->mesh,   mesh, this->jacobian_matrix, this->element_types, t0,
+    dt,      max_timesteps
   };
   this->receivers = {
-    max_sig_step, dt,         t0,        nsteps_between_samples, receivers,
-    stypes,       this->mesh, mesh.tags, this->element_types
+    max_sig_step, dt,         t0,   nsteps_between_samples, receivers,
+    stypes,       this->mesh, mesh, this->element_types
   };
   this->boundaries = { this->mesh.nspec,
                        this->mesh.element_grid.ngllz,
