@@ -5,6 +5,7 @@
 #include "specfem/source_time_functions.hpp"
 #include "specfem/utilities.hpp"
 #include <cmath>
+#include <format>
 
 std::vector<specfem::element::medium_tag> specfem::sources::cosserat_force<
     specfem::element::dimension_tag::dim2>::get_supported_media() const {

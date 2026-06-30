@@ -4,6 +4,7 @@
 #include "specfem/source_time_functions.hpp"
 #include "yaml-cpp/yaml.h"
 #include <cmath>
+#include <format>
 
 std::vector<specfem::element::medium_tag> specfem::sources::moment_tensor<
     specfem::element::dimension_tag::dim3>::get_supported_media() const {

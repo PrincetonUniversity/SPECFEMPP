@@ -6,6 +6,7 @@
 #include "specfem/utilities.hpp"
 #include "yaml-cpp/yaml.h"
 #include <cmath>
+#include <format>
 
 std::vector<specfem::element::medium_tag> specfem::sources::force<
     specfem::element::dimension_tag::dim2>::get_supported_media() const {
