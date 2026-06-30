@@ -206,8 +206,9 @@ void log_location_results(
   const int local_bytes = static_cast<int>(local.size() * sizeof(Packed));
 
   std::vector<int> byte_counts(rank == 0 ? size : 0);
-  MPI_Gather(&local_bytes, 1, MPI_INT, byte_counts.data(), 1, MPI_INT, 0, comm);
-
+  SPECFEM_MPI_SAFECALL(MPI_Gather(
+      &local_bytes, 1, MPI_INT, rank == 0 ? byte_counts.data() : nullptr, 1,
+      MPI_INT, 0, comm));
   std::vector<int> byte_displs(rank == 0 ? size : 0);
   std::vector<Packed> gathered;
   if (rank == 0) {
@@ -218,9 +219,11 @@ void log_location_results(
     }
     gathered.resize(total / sizeof(Packed));
   }
-  MPI_Gatherv(local.data(), local_bytes, MPI_BYTE,
-              rank == 0 ? gathered.data() : nullptr, byte_counts.data(),
-              byte_displs.data(), MPI_BYTE, 0, comm);
+  SPECFEM_MPI_SAFECALL(MPI_Gatherv(
+      local.data(), local_bytes, MPI_BYTE,
+      rank == 0 ? gathered.data() : nullptr,
+      rank == 0 ? byte_counts.data() : nullptr,
+      rank == 0 ? byte_displs.data() : nullptr, MPI_BYTE, 0, comm));
 
   if (rank == 0) {
     // Complete each record from the replicated map and print in index order.
