@@ -11,7 +11,7 @@ NPROC                           = 4
 NGNOD                           = 8
 
 # partitioner: 1=SCOTCH (default), 2=METIS, 3=PATOH, 4=ROWS_PART
-PARTITIONING_TYPE               = 1
+PARTITIONING_TYPE               = 2
 
 # local-time stepping (must match solver Par_file)
 LTS_MODE                        = .false.
