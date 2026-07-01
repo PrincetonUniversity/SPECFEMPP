@@ -62,7 +62,7 @@ rule decompose_mesh:
         materials=rules.export_mesh.output.materials,
         velocity=rules.export_mesh.output.velocity,
     output:
-        database=[f"@CURRENT_BENCHMARK_BUILD_DIR@/DATABASES_MPI/proc_{rank}.bin" for rank in range(NPROC)],
+        database=[f"@CURRENT_BENCHMARK_BUILD_DIR@/DATABASES_MPI/Database/proc_{rank}.bin" for rank in range(NPROC)],
     localrule: True
     shell:
         """

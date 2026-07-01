@@ -33,8 +33,14 @@ int update_medium(specfem::assembly::assembly<Tags::dimension_tag> &assembly,
       specfem::data_access::DataClassType::acceleration;
 
   specfem::compute::impl::compute_coupling<NGLL, Tags>(assembly);
+  // Backward source replay follows the same time alignment as the
+  // reconstructed-field Stacey/source update.
+  constexpr auto backward = specfem::simulation::field_type::backward;
+  constexpr auto wavefield = Tags::wavefield_tag;
+  const int source_istep =
+      (wavefield == backward && istep > 0) ? istep - 1 : istep;
   specfem::compute::impl::compute_source_interaction<NGLL, Tags>(assembly,
-                                                                 istep);
+                                                                 source_istep);
 
   auto &field =
       assembly.fields.template get_simulation_field<Tags::wavefield_tag>();

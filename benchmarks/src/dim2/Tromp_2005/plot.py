@@ -20,6 +20,9 @@ def load_data(kernel_file):
 
 # Preprocess the data into a 2D grid for plotting
 def preprocess_data(X, Z, **kwargs):
+    X = np.asarray(X).ravel()
+    Z = np.asarray(Z).ravel()
+
     xi = np.linspace(X.min(), X.max(), 100)
     zi = np.linspace(Z.min(), Z.max(), 100)
 
@@ -27,6 +30,11 @@ def preprocess_data(X, Z, **kwargs):
 
     data = {}
     for key, value in kwargs.items():
+        value = np.asarray(value).ravel()
+        if value.size != X.size:
+            raise ValueError(
+                f"{key} has {value.size} values, but coordinates have {X.size}"
+            )
         data[key] = griddata((X, Z), value, (X_grid, Z_grid), method="cubic")
 
     return X_grid, Z_grid, data
