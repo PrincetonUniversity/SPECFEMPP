@@ -100,7 +100,7 @@ rule build:
         """
         echo Number of cores used to build: {CTEST_JOBS}
         cmake --build {BUILD} -j {CTEST_JOBS}
-        """"""
+        """
 
 
 rule test:
