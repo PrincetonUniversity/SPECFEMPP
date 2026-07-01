@@ -683,7 +683,8 @@ contains
                                        nodes_ibelm_xmin, nodes_ibelm_xmax, nodes_ibelm_ymin, &
                                        nodes_ibelm_ymax, nodes_ibelm_bottom, nodes_ibelm_top, &
                                        glob2loc_elmnts, glob2loc_nodes_nparts, &
-                                       glob2loc_nodes_parts, glob2loc_nodes, part, NGNOD2D)
+                                       glob2loc_nodes_parts, glob2loc_nodes, part, NGNOD2D, &
+                                       stacey_absorbing, top_free_surface, bottom_free_surface)
 
   implicit none
   integer, intent(in)  :: IIN_database
@@ -711,6 +712,7 @@ contains
   integer, dimension(:), pointer :: glob2loc_nodes_parts
   integer, dimension(:), pointer :: glob2loc_nodes
   integer, dimension(1:nspec)  :: part
+  logical, intent(in) :: stacey_absorbing, top_free_surface, bottom_free_surface
 
   ! local parameters
   integer :: i,j,inode
@@ -719,53 +721,57 @@ contains
              loc_nspec2D_ymax,loc_nspec2D_bottom,loc_nspec2D_top
 
 
-  ! counts number of elements for boundary at xmin, xmax, ymin, ymax, bottom, top in this partition
+  ! Write boundary condition flags so the C++ reader can classify sections 5 and 6
+  write(IIN_database) top_free_surface, bottom_free_surface
+
   loc_nspec2D_xmin = 0
-  do i = 1,nspec2D_xmin
-     if (part(ibelm_xmin(i)) == iproc) then
-        loc_nspec2D_xmin = loc_nspec2D_xmin + 1
-     endif
-  enddo
+  if (stacey_absorbing) then
+    do i = 1,nspec2D_xmin
+       if (part(ibelm_xmin(i)) == iproc) loc_nspec2D_xmin = loc_nspec2D_xmin + 1
+    enddo
+  endif
   write(IIN_database) 1, loc_nspec2D_xmin
 
   loc_nspec2D_xmax = 0
-  do i = 1,nspec2D_xmax
-     if (part(ibelm_xmax(i)) == iproc) then
-        loc_nspec2D_xmax = loc_nspec2D_xmax + 1
-     endif
-  enddo
+  if (stacey_absorbing) then
+    do i = 1,nspec2D_xmax
+       if (part(ibelm_xmax(i)) == iproc) loc_nspec2D_xmax = loc_nspec2D_xmax + 1
+    enddo
+  endif
   write(IIN_database) 2, loc_nspec2D_xmax
 
   loc_nspec2D_ymin = 0
-  do i = 1,nspec2D_ymin
-     if (part(ibelm_ymin(i)) == iproc) then
-        loc_nspec2D_ymin = loc_nspec2D_ymin + 1
-     endif
-  enddo
+  if (stacey_absorbing) then
+    do i = 1,nspec2D_ymin
+       if (part(ibelm_ymin(i)) == iproc) loc_nspec2D_ymin = loc_nspec2D_ymin + 1
+    enddo
+  endif
   write(IIN_database) 3, loc_nspec2D_ymin
 
   loc_nspec2D_ymax = 0
-  do i = 1,nspec2D_ymax
-     if (part(ibelm_ymax(i)) == iproc) then
-        loc_nspec2D_ymax = loc_nspec2D_ymax + 1
-     endif
-  enddo
+  if (stacey_absorbing) then
+    do i = 1,nspec2D_ymax
+       if (part(ibelm_ymax(i)) == iproc) loc_nspec2D_ymax = loc_nspec2D_ymax + 1
+    enddo
+  endif
   write(IIN_database) 4, loc_nspec2D_ymax
 
+  ! Section 5: Z_MIN faces — present when bottom is free surface or Stacey absorbing
   loc_nspec2D_bottom = 0
-  do i = 1,nspec2D_bottom
-     if (part(ibelm_bottom(i)) == iproc) then
-        loc_nspec2D_bottom = loc_nspec2D_bottom + 1
-     endif
-  enddo
+  if (bottom_free_surface .or. stacey_absorbing) then
+    do i = 1,nspec2D_bottom
+       if (part(ibelm_bottom(i)) == iproc) loc_nspec2D_bottom = loc_nspec2D_bottom + 1
+    enddo
+  endif
   write(IIN_database) 5, loc_nspec2D_bottom
 
+  ! Section 6: Z_MAX faces — present when top is free surface or Stacey absorbing
   loc_nspec2D_top = 0
-  do i = 1,nspec2D_top
-     if (part(ibelm_top(i)) == iproc) then
-        loc_nspec2D_top = loc_nspec2D_top + 1
-     endif
-  enddo
+  if (top_free_surface .or. stacey_absorbing) then
+    do i = 1,nspec2D_top
+       if (part(ibelm_top(i)) == iproc) loc_nspec2D_top = loc_nspec2D_top + 1
+    enddo
+  endif
   write(IIN_database) 6, loc_nspec2D_top
 
   ! outputs element index and element node indices
@@ -773,89 +779,97 @@ contains
   !          (this is assigned by CUBIT, if this changes the following indexing must be changed as well)
   !          while glob2loc_elmnts(.) is shifted from 0 to nspec-1  thus
   !          we need to have the arg of glob2loc_elmnts start at 0, and thus we use glob2loc_nodes(ibelm_** -1)
-  do i = 1,nspec2D_xmin
-     if (part(ibelm_xmin(i)) == iproc) then
-        do inode = 1,NGNOD2D
-        do j = glob2loc_nodes_nparts(nodes_ibelm_xmin(inode,i)-1), &
-                glob2loc_nodes_nparts(nodes_ibelm_xmin(inode,i))-1
-           if (glob2loc_nodes_parts(j) == iproc) then
-              loc_node(inode) = glob2loc_nodes(j)+1
-           endif
-        enddo
-        enddo
-        write(IIN_database) glob2loc_elmnts(ibelm_xmin(i)-1)+1, (loc_node(inode), inode = 1,NGNOD2D)
-     endif
-  enddo
+  if (stacey_absorbing) then
+    do i = 1,nspec2D_xmin
+       if (part(ibelm_xmin(i)) == iproc) then
+          do inode = 1,NGNOD2D
+          do j = glob2loc_nodes_nparts(nodes_ibelm_xmin(inode,i)-1), &
+                  glob2loc_nodes_nparts(nodes_ibelm_xmin(inode,i))-1
+             if (glob2loc_nodes_parts(j) == iproc) then
+                loc_node(inode) = glob2loc_nodes(j)+1
+             endif
+          enddo
+          enddo
+          write(IIN_database) glob2loc_elmnts(ibelm_xmin(i)-1)+1, (loc_node(inode), inode = 1,NGNOD2D)
+       endif
+    enddo
 
-  do i = 1,nspec2D_xmax
-     if (part(ibelm_xmax(i)) == iproc) then
-        do inode = 1,NGNOD2D
-        do j = glob2loc_nodes_nparts(nodes_ibelm_xmax(inode,i)-1), &
-                glob2loc_nodes_nparts(nodes_ibelm_xmax(inode,i))-1
-           if (glob2loc_nodes_parts(j) == iproc) then
-              loc_node(inode) = glob2loc_nodes(j)+1
-           endif
-        enddo
-        enddo
-        write(IIN_database) glob2loc_elmnts(ibelm_xmax(i)-1)+1, (loc_node(inode), inode = 1,NGNOD2D)
-     endif
-  enddo
+    do i = 1,nspec2D_xmax
+       if (part(ibelm_xmax(i)) == iproc) then
+          do inode = 1,NGNOD2D
+          do j = glob2loc_nodes_nparts(nodes_ibelm_xmax(inode,i)-1), &
+                  glob2loc_nodes_nparts(nodes_ibelm_xmax(inode,i))-1
+             if (glob2loc_nodes_parts(j) == iproc) then
+                loc_node(inode) = glob2loc_nodes(j)+1
+             endif
+          enddo
+          enddo
+          write(IIN_database) glob2loc_elmnts(ibelm_xmax(i)-1)+1, (loc_node(inode), inode = 1,NGNOD2D)
+       endif
+    enddo
 
-  do i = 1,nspec2D_ymin
-     if (part(ibelm_ymin(i)) == iproc) then
-        do inode = 1,NGNOD2D
-        do j = glob2loc_nodes_nparts(nodes_ibelm_ymin(inode,i)-1), &
-                glob2loc_nodes_nparts(nodes_ibelm_ymin(inode,i))-1
-           if (glob2loc_nodes_parts(j) == iproc) then
-              loc_node(inode) = glob2loc_nodes(j)+1
-           endif
-        enddo
-        enddo
-        write(IIN_database) glob2loc_elmnts(ibelm_ymin(i)-1)+1, (loc_node(inode), inode = 1,NGNOD2D)
-     endif
-  enddo
+    do i = 1,nspec2D_ymin
+       if (part(ibelm_ymin(i)) == iproc) then
+          do inode = 1,NGNOD2D
+          do j = glob2loc_nodes_nparts(nodes_ibelm_ymin(inode,i)-1), &
+                  glob2loc_nodes_nparts(nodes_ibelm_ymin(inode,i))-1
+             if (glob2loc_nodes_parts(j) == iproc) then
+                loc_node(inode) = glob2loc_nodes(j)+1
+             endif
+          enddo
+          enddo
+          write(IIN_database) glob2loc_elmnts(ibelm_ymin(i)-1)+1, (loc_node(inode), inode = 1,NGNOD2D)
+       endif
+    enddo
 
-  do i = 1,nspec2D_ymax
-     if (part(ibelm_ymax(i)) == iproc) then
-        do inode = 1,NGNOD2D
-        do j = glob2loc_nodes_nparts(nodes_ibelm_ymax(inode,i)-1), &
-                glob2loc_nodes_nparts(nodes_ibelm_ymax(inode,i))-1
-           if (glob2loc_nodes_parts(j) == iproc) then
-              loc_node(inode) = glob2loc_nodes(j)+1
-           endif
-        enddo
-        enddo
-        write(IIN_database) glob2loc_elmnts(ibelm_ymax(i)-1)+1, (loc_node(inode), inode = 1,NGNOD2D)
-     endif
-  enddo
+    do i = 1,nspec2D_ymax
+       if (part(ibelm_ymax(i)) == iproc) then
+          do inode = 1,NGNOD2D
+          do j = glob2loc_nodes_nparts(nodes_ibelm_ymax(inode,i)-1), &
+                  glob2loc_nodes_nparts(nodes_ibelm_ymax(inode,i))-1
+             if (glob2loc_nodes_parts(j) == iproc) then
+                loc_node(inode) = glob2loc_nodes(j)+1
+             endif
+          enddo
+          enddo
+          write(IIN_database) glob2loc_elmnts(ibelm_ymax(i)-1)+1, (loc_node(inode), inode = 1,NGNOD2D)
+       endif
+    enddo
+  endif
 
-  do i = 1,nspec2D_bottom
-     if (part(ibelm_bottom(i)) == iproc) then
-        do inode = 1,NGNOD2D
-        do j = glob2loc_nodes_nparts(nodes_ibelm_bottom(inode,i)-1), &
-                glob2loc_nodes_nparts(nodes_ibelm_bottom(inode,i))-1
-           if (glob2loc_nodes_parts(j) == iproc) then
-              loc_node(inode) = glob2loc_nodes(j)+1
-           endif
-        enddo
-        enddo
-        write(IIN_database) glob2loc_elmnts(ibelm_bottom(i)-1)+1, (loc_node(inode), inode = 1,NGNOD2D)
-     endif
-  enddo
+  ! section 5: Z_MIN faces (bottom — free surface or absorbing)
+  if (bottom_free_surface .or. stacey_absorbing) then
+    do i = 1,nspec2D_bottom
+       if (part(ibelm_bottom(i)) == iproc) then
+          do inode = 1,NGNOD2D
+          do j = glob2loc_nodes_nparts(nodes_ibelm_bottom(inode,i)-1), &
+                  glob2loc_nodes_nparts(nodes_ibelm_bottom(inode,i))-1
+             if (glob2loc_nodes_parts(j) == iproc) then
+                loc_node(inode) = glob2loc_nodes(j)+1
+             endif
+          enddo
+          enddo
+          write(IIN_database) glob2loc_elmnts(ibelm_bottom(i)-1)+1, (loc_node(inode), inode = 1,NGNOD2D)
+       endif
+    enddo
+  endif
 
-  do i = 1,nspec2D_top
-     if (part(ibelm_top(i)) == iproc) then
-        do inode = 1,NGNOD2D
-        do j = glob2loc_nodes_nparts(nodes_ibelm_top(inode,i)-1), &
-                glob2loc_nodes_nparts(nodes_ibelm_top(inode,i))-1
-           if (glob2loc_nodes_parts(j) == iproc) then
-              loc_node(inode) = glob2loc_nodes(j)+1
-           endif
-        enddo
-        enddo
-        write(IIN_database) glob2loc_elmnts(ibelm_top(i)-1)+1, (loc_node(inode), inode = 1,NGNOD2D)
-     endif
-  enddo
+  ! section 6: Z_MAX faces (top — free surface or absorbing)
+  if (top_free_surface .or. stacey_absorbing) then
+    do i = 1,nspec2D_top
+       if (part(ibelm_top(i)) == iproc) then
+          do inode = 1,NGNOD2D
+          do j = glob2loc_nodes_nparts(nodes_ibelm_top(inode,i)-1), &
+                  glob2loc_nodes_nparts(nodes_ibelm_top(inode,i))-1
+             if (glob2loc_nodes_parts(j) == iproc) then
+                loc_node(inode) = glob2loc_nodes(j)+1
+             endif
+          enddo
+          enddo
+          write(IIN_database) glob2loc_elmnts(ibelm_top(i)-1)+1, (loc_node(inode), inode = 1,NGNOD2D)
+       endif
+    enddo
+  endif
 
   end subroutine write_boundaries_database
 

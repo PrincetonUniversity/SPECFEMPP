@@ -105,6 +105,31 @@ void specfem::io::wavefield_reader<IOLibrary>::initialize(
       decltype(boundary_values.stacey)::combinations_by_medium,
       read_stacey);
 
+  typename IOLibrary::Group composite =
+      boundary_group.openGroup("CompositeStaceyDirichlet");
+
+  composite
+      .openDataset(
+          "IndexMapping",
+          boundary_values.composite_stacey_dirichlet.h_property_index_mapping)
+      .read();
+
+  auto read_composite = [&]<typename TagsType>() {
+    constexpr auto medium_tag = TagsType::medium_tag;
+    auto &ctr = boundary_values.composite_stacey_dirichlet.container
+                    .template get<TagsType>();
+    if (ctr.h_values.size() > 0) {
+      const std::string dataset_name =
+          specfem::element::to_string(medium_tag) + "Acceleration";
+      composite.openDataset(dataset_name, ctr.h_values).read();
+    }
+  };
+
+  specfem::tag_dispatch::for_each(
+      decltype(boundary_values.composite_stacey_dirichlet)::
+          combinations_by_medium,
+      read_composite);
+
   boundary_values.copy_to_device();
 }
 

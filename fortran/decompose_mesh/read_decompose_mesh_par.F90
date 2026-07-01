@@ -64,6 +64,10 @@
   ! wavefield discontinuity interface (optional — skipped when '')
   character(len=MAX_STRING_LEN) :: WAVEFIELD_DISCONTINUITY_INTERFACE_FILE = ''
 
+  ! nonconforming adjacencies
+  character(len=MAX_STRING_LEN) :: NONCONFORMING_ADJACENCIES_FILE = ''
+
+
   end module decompose_mesh_filenames
 
 
@@ -225,6 +229,12 @@
   call read_value_string(WAVEFIELD_DISCONTINUITY_INTERFACE_FILE, 'WAVEFIELD_DISCONTINUITY_INTERFACE_FILE', ier)
   if (ier /= 0) then
     WAVEFIELD_DISCONTINUITY_INTERFACE_FILE = ''
+    ier = 0
+  endif
+
+  call read_value_string(NONCONFORMING_ADJACENCIES_FILE,       'NONCONFORMING_ADJACENCIES_FILE',     ier)
+  if (ier /= 0) then
+    NONCONFORMING_ADJACENCIES_FILE = ''
     ier = 0
   endif
 
