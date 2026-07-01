@@ -121,7 +121,8 @@
                                   nodes_ibelm_xmin, nodes_ibelm_xmax, nodes_ibelm_ymin, &
                                   nodes_ibelm_ymax, nodes_ibelm_bottom, nodes_ibelm_top, &
                                   glob2loc_elmnts, glob2loc_nodes_nparts, &
-                                  glob2loc_nodes_parts, glob2loc_nodes, part, NGNOD2D)
+                                  glob2loc_nodes_parts, glob2loc_nodes, part, NGNOD2D, &
+                                  STACEY_ABSORBING_CONDITIONS, TOP_FREE_SURFACE, BOTTOM_FREE_SURFACE)
 
     ! writes out C-PML elements indices, CPML-regions and thickness of C-PML layer
     call write_cpml_database(IIN_database, ipart, nspec, nspec_cpml, CPML_to_spec, &
