@@ -1,12 +1,3 @@
-# Common CMake configuration for unit tests
-# This file contains shared setup, libraries, and utilities used by both
-# serial (non-MPI) and MPI test builds.
-
-set(CMAKE_CXX_STANDARD 20)
-
-# Include the GoogleTest framework
-include("${CMAKE_SOURCE_DIR}/cmake/googletest.cmake")
-include(GoogleTest)
 
 # Explicitly set binary output directory for tests
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests/unit-tests)
@@ -29,18 +20,6 @@ enable_testing()
 
 # Add test output directory to clean target
 set_directory_properties(PROPERTIES ADDITIONAL_CLEAN_FILES "${TEST_OUTPUT_DIR}")
-
-# Common library: Test environment setup
-add_library(
-  specfem_environment
-  SPECFEM_Environment.cpp
-)
-
-target_link_libraries(
-  specfem_environment
-  gtest_main
-  specfem_program
-)
 
 # Common library: Mesh utilities mapping
 add_library(

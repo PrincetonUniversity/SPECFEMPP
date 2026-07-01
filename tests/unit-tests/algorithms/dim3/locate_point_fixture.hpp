@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../../SPECFEM_Environment.hpp"
-#include "../../mesh_utilities/mapping.hpp"
-#include "../../test_macros.hpp"
+#include "SPECFEM_Environment.hpp"
+#include "mesh_utilities/mapping.hpp"
+#include "test_macros.hpp"
 
 #include "specfem/algorithms.hpp"
 #include "specfem/algorithms/locate_point/locate_point_impl.hpp"
@@ -40,11 +40,11 @@ protected:
   void TearDown() override {}
 
   // Helper to create unit cube coordinates programmatically
-  std::vector<std::vector<std::tuple<double, double, double> > >
+  std::vector<std::vector<std::tuple<double, double, double>>>
   create_unit_cube(int ngll, double xmin = -1.0, double xmax = 1.0,
                    double ymin = -1.0, double ymax = 1.0, double zmin = -1.0,
                    double zmax = 1.0) {
-    std::vector<std::tuple<double, double, double> > coords;
+    std::vector<std::tuple<double, double, double>> coords;
     for (int iz = 0; iz < ngll; iz++) {
       for (int iy = 0; iy < ngll; iy++) {
         for (int ix = 0; ix < ngll; ix++) {
@@ -59,11 +59,11 @@ protected:
   }
 
   // Helper to create control nodes for 8-node or 27-node elements
-  std::vector<std::vector<std::tuple<double, double, double> > >
+  std::vector<std::vector<std::tuple<double, double, double>>>
   create_control_nodes(int ngnod, double xmin = 0.0, double xmax = 1.0,
                        double ymin = 0.0, double ymax = 1.0, double zmin = 0.0,
                        double zmax = 1.0) {
-    std::vector<std::tuple<double, double, double> > nodes;
+    std::vector<std::tuple<double, double, double>> nodes;
 
     if (ngnod == 8) {
       // 8-node hexahedral: corners only - standard hexahedral ordering
@@ -125,7 +125,7 @@ protected:
   // Helper to create coordinate array from element corners and ngll points
   Kokkos::View<type_real *****, Kokkos::LayoutLeft, Kokkos::HostSpace>
   create_coordinate_array(
-      const std::vector<std::vector<std::tuple<double, double, double> > >
+      const std::vector<std::vector<std::tuple<double, double, double>>>
           &element_coords) {
     int nspec = element_coords.size();
     int ngll = std::cbrt(element_coords[0].size()); // cube root for 3D
@@ -154,9 +154,9 @@ protected:
 
   // Create element geometry using tested utility functions
   ElementGeometry create_element_geometry(
-      const std::vector<std::vector<std::tuple<double, double, double> > >
+      const std::vector<std::vector<std::tuple<double, double, double>>>
           &element_coords,
-      const std::vector<std::vector<std::tuple<double, double, double> > >
+      const std::vector<std::vector<std::tuple<double, double, double>>>
           &control_coords) {
 
     ElementGeometry geom;
@@ -227,14 +227,14 @@ protected:
 
   // Create two adjacent elements in x-direction with 2x2x2 GLL points
   ElementGeometry create_two_adjacent_elements_3d_2x2x2() {
-    std::vector<std::vector<std::tuple<double, double, double> > >
+    std::vector<std::vector<std::tuple<double, double, double>>>
         element_coords = {
           create_unit_cube(2, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5)[0], // Left element
           create_unit_cube(2, 0.5, 1.0, 0.0, 0.5, 0.0,
                            0.5)[0] // Right element (shares face at x=0.5)
         };
     auto control_coords =
-        std::vector<std::vector<std::tuple<double, double, double> > >{
+        std::vector<std::vector<std::tuple<double, double, double>>>{
           create_control_nodes(8, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5)[0], // Left
                                                                     // element
           create_control_nodes(8, 0.5, 1.0, 0.0, 0.5, 0.0, 0.5)[0]  // Right
@@ -245,10 +245,8 @@ protected:
 
   // Create 2x2x2 grid of elements with 2x2x2 GLL points each
   ElementGeometry create_2x2x2_grid_elements_2x2x2() {
-    std::vector<std::vector<std::tuple<double, double, double> > >
-        element_coords;
-    std::vector<std::vector<std::tuple<double, double, double> > >
-        control_coords;
+    std::vector<std::vector<std::tuple<double, double, double>>> element_coords;
+    std::vector<std::vector<std::tuple<double, double, double>>> control_coords;
 
     // Create 8 elements in 2x2x2 grid
     for (int ez = 0; ez < 2; ez++) {

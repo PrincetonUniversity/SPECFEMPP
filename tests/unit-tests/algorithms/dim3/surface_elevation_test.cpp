@@ -1,4 +1,4 @@
-#include "../../SPECFEM_Environment.hpp"
+#include "SPECFEM_Environment.hpp"
 #include "specfem/algorithms/locate_point.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/resolve_coordinates.hpp"

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../SPECFEM_Environment.hpp"
+#include "SPECFEM_Environment.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/io.hpp"
@@ -337,10 +337,10 @@ protected:
     Iterator(
         test_configuration::Test<DimensionType> *p_Test,
         specfem::mesh::mesh<DimensionType> *p_mesh,
-        std::vector<std::shared_ptr<specfem::sources::source<DimensionType> > >
+        std::vector<std::shared_ptr<specfem::sources::source<DimensionType>>>
             *p_sources,
         std::vector<
-            std::shared_ptr<specfem::receivers::receiver<DimensionType> > >
+            std::shared_ptr<specfem::receivers::receiver<DimensionType>>>
             *p_stations,
         std::string *p_suffixes,
         specfem::assembly::assembly<DimensionType> *p_assembly)
@@ -351,10 +351,10 @@ protected:
     std::tuple<
         test_configuration::Test<DimensionType>,
         specfem::mesh::mesh<DimensionType>,
-        std::vector<std::shared_ptr<specfem::sources::source<DimensionType> > >,
+        std::vector<std::shared_ptr<specfem::sources::source<DimensionType>>>,
         std::vector<
-            std::shared_ptr<specfem::receivers::receiver<DimensionType> > >,
-        std::string, specfem::assembly::assembly<DimensionType> >
+            std::shared_ptr<specfem::receivers::receiver<DimensionType>>>,
+        std::string, specfem::assembly::assembly<DimensionType>>
     operator*() {
       std::cout << "-------------------------------------------------------\n"
                 << "\033[0;32m[RUNNING]\033[0m " << p_Test->name << "\n"
@@ -381,9 +381,9 @@ protected:
   private:
     test_configuration::Test<DimensionType> *p_Test;
     specfem::mesh::mesh<DimensionType> *p_mesh;
-    std::vector<std::shared_ptr<specfem::sources::source<DimensionType> > >
+    std::vector<std::shared_ptr<specfem::sources::source<DimensionType>>>
         *p_sources;
-    std::vector<std::shared_ptr<specfem::receivers::receiver<DimensionType> > >
+    std::vector<std::shared_ptr<specfem::receivers::receiver<DimensionType>>>
         *p_stations;
     std::string *p_suffixes;
     specfem::assembly::assembly<DimensionType> *p_assembly;
@@ -402,16 +402,16 @@ protected:
                     &suffixes[suffixes.size()], &assemblies[assemblies.size()]);
   }
 
-  std::vector<test_configuration::Test<DimensionType> > Tests;
-  std::vector<specfem::mesh::mesh<DimensionType> > Meshes;
+  std::vector<test_configuration::Test<DimensionType>> Tests;
+  std::vector<specfem::mesh::mesh<DimensionType>> Meshes;
   std::vector<
-      std::vector<std::shared_ptr<specfem::sources::source<DimensionType> > > >
+      std::vector<std::shared_ptr<specfem::sources::source<DimensionType>>>>
       Sources;
-  std::vector<std::vector<
-      std::shared_ptr<specfem::receivers::receiver<DimensionType> > > >
+  std::vector<
+      std::vector<std::shared_ptr<specfem::receivers::receiver<DimensionType>>>>
       Stations;
   std::vector<std::string> suffixes;
-  std::vector<specfem::assembly::assembly<DimensionType> > assemblies;
+  std::vector<specfem::assembly::assembly<DimensionType>> assemblies;
 };
 
 // Template specializations

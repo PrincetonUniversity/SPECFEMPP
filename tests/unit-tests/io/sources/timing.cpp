@@ -1,5 +1,5 @@
 #include "specfem/io/sources/impl/timing.hpp"
-#include "../../SPECFEM_Environment.hpp"
+#include "SPECFEM_Environment.hpp"
 #include "specfem/datetime.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
