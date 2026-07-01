@@ -5,9 +5,11 @@
 #include "specfem/program/abort.hpp"
 #include "specfem/setup.hpp"
 #include "specfem/tag_dispatch.hpp"
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <sstream>
+#include <tuple>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -1052,6 +1054,37 @@ specfem::assembly::mpi<specfem::element::dimension_tag::dim3>::mpi(
   // left in the neighbor's mesh ordering: it is sent to the neighbor, who
   // translates it with its own mesh_to_compute on receipt.
   auto mpi_conns = adjacency_graph.mpi_connections();
+
+  // Establish a canonical, rank-symmetric ordering of the MPI connections.
+  // The packer (sender) and unpacker (receiver) pair connections by list
+  // index, so both ranks of a neighbor pair MUST enumerate the shared
+  // connections in the same order. The order returned by mpi_connections()
+  // follows each rank's local element numbering, which differs between ranks;
+  // for structured partitions every connection to a neighbor shares a single
+  // orientation so the mismatch is harmless, but for general (e.g. METIS)
+  // partitions a neighbor pair shares connections of mixed orientations and
+  // the index-based pairing breaks.
+  //
+  // Sort by a key both ranks compute identically: order the (local, neighbor)
+  // element pair so the lower rank's element comes first. For a connection
+  // c on rank A with neighbor B, A stores (local=eA, neighbor=eB) while B's
+  // reverse connection stores (local=eB, neighbor=eA); keying on the lower
+  // rank yields (eA, eB) on both sides. Element indices are still in mesh
+  // ordering here (matching neighbor_local_index, which is never translated),
+  // so this must happen BEFORE local_index is translated to compute ordering.
+  std::stable_sort(
+      mpi_conns.begin(), mpi_conns.end(),
+      [my_rank](const auto &a, const auto &b) {
+        const auto key = [my_rank](const auto &c) {
+          return (static_cast<std::size_t>(my_rank) < c.neighbor_partition)
+                     ? std::make_tuple(c.neighbor_partition, c.local_index,
+                                       c.neighbor_local_index)
+                     : std::make_tuple(c.neighbor_partition,
+                                       c.neighbor_local_index, c.local_index);
+        };
+        return key(a) < key(b);
+      });
+
   for (auto &conn : mpi_conns) {
     conn.local_index = static_cast<std::size_t>(
         h_mesh_to_compute(static_cast<int>(conn.local_index)));

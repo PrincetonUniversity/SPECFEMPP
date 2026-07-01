@@ -250,6 +250,74 @@ target_link_libraries(
   -lpthread -lm
 )
 
+# Register MPI tests using helper function
+foreach(test_target IN LISTS MPI_TEST_TARGETS_4PROCS)
+  add_mpi_test(${test_target} 4)
+endforeach()
+
+# 8-rank assembly MPI tests. Uses the HomogeneousElasticMPI2x2x2 fixture (a
+# METIS-decomposed cube) to exercise the general MPI interface set -- top/bottom
+# faces, horizontal edges, and single-node corner connections -- that the
+# structured 4-rank fixtures cannot. Guards the connection-ordering fix in
+# specfem::assembly::mpi<dim3>.
+add_executable(
+  assembly_mpi_dim3_8proc_tests
+  assembly/mpi/dim3/fixture.cpp
+  assembly/mpi/dim3/communication_pattern/communication_pattern.cpp
+  assembly/mpi/dim3/reordering/reordering.cpp
+  assembly/mpi/dim3/runner_8proc.cpp
+)
+
+target_compile_definitions(assembly_mpi_dim3_8proc_tests PRIVATE TEST_OUTPUT_DIR=${TEST_OUTPUT_DIR})
+set_target_properties(assembly_mpi_dim3_8proc_tests PROPERTIES UNITY_BUILD OFF)
+
+target_link_libraries(
+  assembly_mpi_dim3_8proc_tests
+  specfem::mesh
+  specfem::assembly
+  specfem::quadrature
+  specfem_environment
+  specfem::io
+  specfem::utilities
+  specfem::enums
+  specfem::element
+  MPI::MPI_CXX
+  Kokkos::kokkos
+  gtest_main
+  $<$<BOOL:${SPECFEM_ENABLE_HDF5}>:hdf5>
+  -lpthread -lm
+)
+
+# MPI test targets (4 processes)
+set(MPI_TEST_TARGETS_4PROCS
+  mesh_mpi_dim3_tests
+  mesh_mpi_dim2_tests
+  io_mesh_mpi_tests
+  io_mesh_mpi_dim2_tests
+  mpi_standard_tests
+  mpi_subset_2of4_tests
+  mpi_subset_1of4_tests
+  mpi_subset_all_tests
+  algorithms_locate_point_mpi_dim2_tests
+  algorithms_locate_point_mpi_dim3_tests
+  assembly_mpi_dim3_tests
+)
+
+# MPI test targets (8 processes)
+set(MPI_TEST_TARGETS_8PROCS
+  assembly_mpi_dim3_8proc_tests
+)
+
+set(MPI_TEST_TARGETS ${MPI_TEST_TARGETS_4PROCS} ${MPI_TEST_TARGETS_8PROCS})
+
+# Setup test script writer (needed for external TEST_OUTPUT_DIR path-fix)
+specfem_write_copy_test_cmake_script()
+
+foreach(test_target IN LISTS MPI_TEST_TARGETS_8PROCS)
+  add_mpi_test(${test_target} 8)
+endforeach()
+
+
 # ==============================================================================
 # 3D MPI Newmark displacement tests (one executable per process count)
 # ==============================================================================
@@ -314,32 +382,7 @@ foreach(nproc IN LISTS DISPLACEMENT_NEWMARK_3D_MPI_NPROCS)
   list(APPEND DISPLACEMENT_MPI_TARGETS ${_tgt})
 endforeach()
 
-# MPI test targets (4 processes)
-set(MPI_TEST_TARGETS_4PROCS
-  mesh_mpi_dim3_tests
-  mesh_mpi_dim2_tests
-  io_mesh_mpi_tests
-  io_mesh_mpi_dim2_tests
-  mpi_standard_tests
-  mpi_subset_2of4_tests
-  mpi_subset_1of4_tests
-  mpi_subset_all_tests
-  algorithms_locate_point_mpi_dim2_tests
-  algorithms_locate_point_mpi_dim3_tests
-  assembly_mpi_dim3_tests
-)
-
-# Expose MPI test targets for use in CMakeLists.txt (ALL_TEST_TARGETS) and
-# the registration loop below.
 set(MPI_TEST_TARGETS ${MPI_TEST_TARGETS_4PROCS} ${DISPLACEMENT_MPI_TARGETS})
-
-# Setup test script writer (needed for external TEST_OUTPUT_DIR path-fix)
-specfem_write_copy_test_cmake_script()
-
-# Register MPI tests using helper function
-foreach(test_target IN LISTS MPI_TEST_TARGETS_4PROCS)
-  add_mpi_test(${test_target} 4)
-endforeach()
 
 # Register the displacement MPI tests at their per-size process counts.
 foreach(nproc IN LISTS DISPLACEMENT_NEWMARK_3D_MPI_NPROCS)

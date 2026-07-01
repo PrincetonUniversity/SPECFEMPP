@@ -20,6 +20,7 @@ option(SPECFEM_ENABLE_MPI "MPI enabled" OFF)
 option(SPECFEM_BUILD_TESTS "Tests included" OFF)
 option(SPECFEM_ENABLE_SIMD "Enable SIMD" OFF)
 option(SPECFEM_ENABLE_PROFILING "Enable profiling" OFF)
+option(SPECFEM_ENABLE_COVERAGE "Instrument C++ for LLVM source-based coverage (Clang only)" OFF)
 option(SPECFEM_BINDING_PYTHON "Enable Python binding" OFF)
 option(SPECFEM_INSTALL "Creates clean executable directory. Location Controlled by CMAKE_INSTALL_PREFIX" ON)
 option(SPECFEM_ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
@@ -232,6 +233,41 @@ set(CMAKE_MESSAGE_LOG_LEVEL ${SUBDIR_LOG_LEVEL})
 add_subdirectory(fortran/decompose_mesh)
 set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
 # ===================================
+
+# LLVM source-based code coverage instrumentation.
+# Appended here -- AFTER the Fortran subdirectories above -- on purpose: none of
+# the Fortran tools or their C++ glue (e.g. fortran/decompose_mesh/wrap_patoh.cpp)
+# may be instrumented, because those executables link with gfortran, which
+# neither understands -fprofile-instr-generate nor provides the LLVM profile
+# runtime (an instrumented object would leave __llvm_profile_runtime undefined).
+# core/ and the unit tests below still receive full instrumentation.
+# Driven by scripts/coverage.smk.
+if(SPECFEM_ENABLE_COVERAGE)
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        message(FATAL_ERROR
+            "SPECFEM_ENABLE_COVERAGE requires Clang or AppleClang "
+            "(CMAKE_CXX_COMPILER_ID is '${CMAKE_CXX_COMPILER_ID}').")
+    endif()
+    message(STATUS "Coverage instrumentation enabled (LLVM source-based)")
+    # Keep -g for symbols but let CMAKE_BUILD_TYPE choose the optimization level:
+    # the coverage preset uses RelWithDebInfo (-O2) so the heavy integration tests
+    # (displacement_tests_2d/3d) run at a tolerable speed. Forcing -O0 here makes
+    # them glacial. Coverage stays reliable under optimization (minor region-count
+    # imprecision only).
+    string(APPEND CMAKE_CXX_FLAGS
+        " -fprofile-instr-generate -fcoverage-mapping -g")
+    # Re-enable assert()/NDEBUG-guarded code so it is compiled and shows up in
+    # coverage. RelWithDebInfo (and Release) define NDEBUG via
+    # CMAKE_CXX_FLAGS_<CONFIG>, which CMake places after CMAKE_CXX_FLAGS; using
+    # add_compile_options() puts -UNDEBUG after that, so it wins. Scoped to C++.
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-UNDEBUG>)
+    # Belt-and-suspenders: scope the profiling-runtime link flag to C++-linked
+    # targets (CMake >= 3.18) so any Fortran-linked target added later still
+    # links cleanly even if it pulls in an instrumented C++ object.
+    add_link_options($<$<LINK_LANGUAGE:CXX>:-fprofile-instr-generate>)
+    # Coverage needs per-source-file attribution, so force unity builds off.
+    set(CMAKE_UNITY_BUILD OFF)
+endif()
 
 # Add module subdirectories
 add_subdirectory(core)

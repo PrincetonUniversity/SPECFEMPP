@@ -1,0 +1,117 @@
+SPECFEM_BIN = "@CMAKE_BINARY_DIR@/bin/specfem 3d"
+DECOMPOSE_BIN = "@CMAKE_BINARY_DIR@/bin/xdecompose_mesh"
+SPECFEM_SCRIPTS_DIR = "@CMAKE_SOURCE_DIR@/scripts"
+
+rule all:
+    input:
+        summary_plot="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/seismogram_plot.png",
+        traces=expand(
+            "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/{network_name}.{station_name}.S3.{component}.semd",
+            station_name=["ST001", "ST002", "ST003", "ST004", "ST005", "ST006"],
+            network_name=["DB"],
+            component=["CXX", "CXY", "CXZ"],
+        ),
+    localrule: True
+
+
+rule create_mesh:
+    input:
+        script="@CURRENT_BENCHMARK_BUILD_DIR@/create_mesh.py",
+    output:
+        msh="@CURRENT_BENCHMARK_BUILD_DIR@/halfspace.msh",
+    localrule: True
+    shell:
+        """
+            cd @CURRENT_BENCHMARK_BUILD_DIR@
+            python {input.script}
+        """
+
+
+rule export_mesh:
+    input:
+        msh=rules.create_mesh.output.msh,
+        script="@CURRENT_BENCHMARK_BUILD_DIR@/export_mesh.py",
+    output:
+        nodes="@CURRENT_BENCHMARK_BUILD_DIR@/MESH/nodes_coords_file",
+        mesh="@CURRENT_BENCHMARK_BUILD_DIR@/MESH/mesh_file",
+        materials="@CURRENT_BENCHMARK_BUILD_DIR@/MESH/materials_file",
+        velocity="@CURRENT_BENCHMARK_BUILD_DIR@/MESH/nummaterial_velocity_file",
+        abs_xmin="@CURRENT_BENCHMARK_BUILD_DIR@/MESH/absorbing_surface_file_xmin",
+        abs_xmax="@CURRENT_BENCHMARK_BUILD_DIR@/MESH/absorbing_surface_file_xmax",
+        abs_ymin="@CURRENT_BENCHMARK_BUILD_DIR@/MESH/absorbing_surface_file_ymin",
+        abs_ymax="@CURRENT_BENCHMARK_BUILD_DIR@/MESH/absorbing_surface_file_ymax",
+        abs_bottom="@CURRENT_BENCHMARK_BUILD_DIR@/MESH/absorbing_surface_file_bottom",
+        free_surface="@CURRENT_BENCHMARK_BUILD_DIR@/MESH/free_or_absorbing_surface_file_zmax",
+    localrule: True
+    shell:
+        """
+            mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/MESH
+            cd @CURRENT_BENCHMARK_BUILD_DIR@
+            python {input.script}
+        """
+
+
+rule decompose_mesh:
+    input:
+        par_file="@CURRENT_BENCHMARK_BUILD_DIR@/Par_file",
+        nodes=rules.export_mesh.output.nodes,
+        mesh=rules.export_mesh.output.mesh,
+        materials=rules.export_mesh.output.materials,
+        velocity=rules.export_mesh.output.velocity,
+    output:
+        database="@CURRENT_BENCHMARK_BUILD_DIR@/DATABASES_MPI/Database.bin",
+    localrule: True
+    shell:
+        """
+            mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/DATABASES_MPI
+            cd @CURRENT_BENCHMARK_BUILD_DIR@
+            {DECOMPOSE_BIN} -p {input.par_file}
+        """
+
+
+rule run_solver:
+    input:
+        database=rules.decompose_mesh.output.database,
+        stations="@CURRENT_BENCHMARK_BUILD_DIR@/DATA/STATIONS",
+        source="@CURRENT_BENCHMARK_BUILD_DIR@/sources.yaml",
+        config="@CURRENT_BENCHMARK_BUILD_DIR@/specfem_config.yaml",
+    output:
+        traces=rules.all.input.traces,
+        log="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/output.log",
+    resources:
+        nodes=1,
+        tasks=1,
+        cpus_per_task=1,
+        runtime=10,
+    params:
+        KOKKOS_TOOLS_LIBS="",
+    shell:
+        """
+            export KOKKOS_TOOLS_LIBS={params.KOKKOS_TOOLS_LIBS}
+            mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results
+            echo "Hostname: $(hostname)" > {output.log}
+            {SPECFEM_BIN} -p {input.config} >> {output.log}
+        """
+
+
+rule plot_seismogram:
+    input:
+        rules.run_solver.output.traces,
+    output:
+        summary_plot=rules.all.input.summary_plot,
+    localrule: True
+    shell:
+        """
+            python @CURRENT_BENCHMARK_BUILD_DIR@/plot_seismograms.py
+        """
+
+
+rule clean:
+    localrule: True
+    shell:
+        """
+            rm -rf @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES
+            rm -rf @CURRENT_BENCHMARK_BUILD_DIR@/MESH
+            rm -rf @CURRENT_BENCHMARK_BUILD_DIR@/DATABASES_MPI
+            rm -f  @CURRENT_BENCHMARK_BUILD_DIR@/halfspace.msh
+        """
