@@ -2,6 +2,7 @@
 #pragma once
 
 #include "specfem/assembly/fields.hpp"
+#include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access/data_class.hpp"
 #include "specfem/element.hpp"
 #include "specfem/macros/tag_dispatch.hpp"
@@ -275,6 +276,7 @@ public:
 
   using OrientationHostView =
       Kokkos::View<specfem::mesh_entity::dim3::type *, Kokkos::HostSpace>;
+  using ElementHostView = Kokkos::View<int *, Kokkos::HostSpace>;
 
   OrientationHostView h_face_orientations; /**< Filtered local face orientations
                                               (medium-tag filtered) */
@@ -283,6 +285,12 @@ public:
   OrientationHostView h_corner_orientations; /**< Filtered local corner
                                                 orientations (medium-tag
                                                 filtered) */
+  ElementHostView h_face_elements;           /**< Filtered local face elements
+                                                in compute ordering */
+  ElementHostView h_edge_elements;           /**< Filtered local edge elements
+                                                in compute ordering */
+  ElementHostView h_corner_elements;         /**< Filtered local corner elements
+                                                in compute ordering */
 
   unpacker()
       : my_rank(0), neighbor_rank(0), nfaces(0), nedges(0), ncorners(0),
@@ -456,6 +464,8 @@ public:
    *                         communication maps are instantiated
    * @param fields           Assembly fields (any field type; iglob is
    *                         field-type-independent)
+   * @param h_mesh_to_compute  Host map from mesh-order element indices to
+   *                           compute-order element indices
    * @param ngllz, nglly, ngllx  GLL points per element dimension
    */
   mpi(const specfem::mesh::adjacency_graph<dimension_tag> &adjacency_graph,
