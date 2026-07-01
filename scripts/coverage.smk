@@ -99,7 +99,8 @@ rule build:
     shell:
         """
         echo Number of cores used to build: {CTEST_JOBS}
-        cmake --build {BUILD} -j {CTEST_JOBS}
+        export CMAKE_BUILD_PARALLEL_LEVEL={CTEST_JOBS}
+        cmake --build {BUILD} -j{CTEST_JOBS}
         """
 
 
@@ -113,14 +114,14 @@ rule test:
         # cases in parallel; %p keeps parallel writers separate, and the shared %m
         # prefix lets the report step group profiles per binary -- which is what
         # avoids the cross-binary hash-collision "mismatched data" in the lcov.
-        # CTEST_PARALLEL_LEVEL sets the parallel width (a space-separated `-j N` is
+        # CTEST_PARALLEL_LEVEL sets the parallel width (a space-separated `-jN` is
         # dropped by ctest >= 3.29, whose -j argument is optional).
         """
         rm -rf {PROFRAW_DIR}
         mkdir -p {PROFRAW_DIR}
         echo Number of cores used to run the tests {CTEST_JOBS}
         LLVM_PROFILE_FILE="$(pwd)/{PROFRAW_DIR}/cov-%m-%p.profraw" \
-            ctest --test-dir {BUILD}/tests/unit-tests --output-on-failure -j {CTEST_JOBS}
+            ctest --test-dir {BUILD}/tests/unit-tests --output-on-failure -j{CTEST_JOBS}
         """
 
 
