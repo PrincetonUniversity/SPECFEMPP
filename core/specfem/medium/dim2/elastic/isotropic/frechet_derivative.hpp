@@ -54,9 +54,7 @@ template <
             Tags::medium_tag == specfem::element::medium_tag::elastic_psv &&
             Tags::property_tag == specfem::element::property_tag::isotropic,
         int> = 0>
-KOKKOS_FUNCTION specfem::point::kernels<Tags::dimension_tag, Tags::medium_tag,
-                                        Tags::property_tag, Tags::using_simd>
-compute_frechet_derivatives(
+KOKKOS_FUNCTION specfem::point::kernels<Tags> compute_frechet_derivatives(
     const specfem::point::properties<Tags> &properties,
     const specfem::point::velocity<Tags> &adjoint_velocity,
     const specfem::point::acceleration<Tags> &adjoint_acceleration,
@@ -210,9 +208,7 @@ template <
             Tags::medium_tag == specfem::element::medium_tag::elastic_sh &&
             Tags::property_tag == specfem::element::property_tag::isotropic,
         int> = 0>
-KOKKOS_FUNCTION specfem::point::kernels<Tags::dimension_tag, Tags::medium_tag,
-                                        Tags::property_tag, Tags::using_simd>
-compute_frechet_derivatives(
+KOKKOS_FUNCTION specfem::point::kernels<Tags> compute_frechet_derivatives(
     const specfem::point::properties<Tags> &properties,
     const specfem::point::velocity<Tags> &adjoint_velocity,
     const specfem::point::acceleration<Tags> &adjoint_acceleration,
