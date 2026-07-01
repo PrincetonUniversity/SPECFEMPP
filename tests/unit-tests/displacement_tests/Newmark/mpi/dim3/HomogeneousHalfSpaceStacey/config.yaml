@@ -1,0 +1,13 @@
+id : "HomogeneousHalfSpaceStacey"
+name : "Homogeneous elastic isotropic half space with Stacey absorbing boundaries (MPI, 4 ranks)"
+description: >
+  Testing newmark time-marching solver on a homogeneous elastic domain with
+  Stacey absorbing boundary conditions on five faces and a free surface on top.
+  Test is run on 4 MPI processes (2x2 partition) and the gathered seismograms
+  are compared against the single-process Fortran reference traces.
+config:
+  nproc : 4
+  tolerance : 2e-3
+databases:
+  specfem_config: "specfem_config.yaml"
+  traces: "traces"

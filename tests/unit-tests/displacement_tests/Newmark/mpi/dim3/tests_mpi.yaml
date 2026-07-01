@@ -1,0 +1,13 @@
+# MPI Newmark displacement tests (3D): test directory name -> MPI process count.
+#
+# This single file is the source of truth for each test's core count. It drives:
+#   - Snakemake (Snakefile_mpi passes the value into each per-case module),
+#   - the C++ driver (each per-size executable runs only the cases matching its size),
+#   - CMake (mpi.cmake derives one executable per distinct core count below).
+#
+# The value must equal NPROC_XI * NPROC_ETA in that case's Mesh_Par_file (and the
+# nproc declared in its config.yaml). One "name: <int>" entry per line.
+tests3d:
+  HomogeneousHalfspaceSmallNoABCForceSource: 4
+  HomogeneousHalfSpaceStacey: 4
+  AcousticElasticForce: 4
