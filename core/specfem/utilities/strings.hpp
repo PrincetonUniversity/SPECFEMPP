@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/macros.hpp"
+#include "specfem/setup.hpp"
 #include <string>
 
 namespace specfem {
@@ -61,6 +62,21 @@ std::string to_lower(const std::string &str);
  * @endcode
  */
 std::string trim(const std::string &str);
+
+/**
+ * @brief Format a distance in metres as a "km, m, mm" string.
+ *
+ * Breaks a distance down into whole kilometres, metres, and millimetres for
+ * human-readable location diagnostics.
+ *
+ * @param metres Distance in metres
+ * @return std::string e.g. "0 km, 5 m, 320 mm"
+ *
+ * @code
+ * format_distance(5.32); // Returns "0 km, 5 m, 320 mm"
+ * @endcode
+ */
+std::string format_distance(type_real metres);
 
 BOOST_PP_SEQ_FOR_EACH(_DECLARE_CONFIG_STRING_FUNCTIONS, _, CONFIG_STRINGS)
 
