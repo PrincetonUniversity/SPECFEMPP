@@ -46,7 +46,6 @@ High-level orchestration functions that wire together `algorithms`, `medium_phys
 | Function | Description |
 |---|---|
 | `compute_derivatives` | Compute field spatial derivatives across all elements |
-| `update_wavefields` | Apply computed forces to update acceleration fields |
 | `compute_seismograms` | Sample the wavefield at receiver GLL points |
 | `initialize_mass_matrix` | Assemble the lumped mass matrix |
 
