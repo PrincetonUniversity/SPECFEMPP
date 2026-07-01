@@ -108,7 +108,6 @@ rule test:
         BUILD_STAMP,
     output:
         touch(TEST_STAMP),
-    threads: CTEST_JOBS
     shell:
         # %m-%p names each profile by (binary signature, PID). ctest still runs
         # cases in parallel; %p keeps parallel writers separate, and the shared %m
@@ -121,7 +120,7 @@ rule test:
         mkdir -p {PROFRAW_DIR}
         echo Number of cores used to run the tests {CTEST_JOBS}
         LLVM_PROFILE_FILE="$(pwd)/{PROFRAW_DIR}/cov-%m-%p.profraw" \
-            ctest --test-dir {BUILD}/tests/unit-tests --output-on-failure
+            ctest --test-dir {BUILD}/tests/unit-tests --output-on-failure -j {CTEST_JOBS}
         """
 
 
