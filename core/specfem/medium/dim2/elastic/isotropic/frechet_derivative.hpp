@@ -47,13 +47,10 @@ namespace medium_physics {
  * @param dt Time step size
  * @return Point kernels containing all elastic parameter sensitivities
  */
-template <
-    typename Tags,
-    std::enable_if_t<
-        Tags::dimension_tag == specfem::element::dimension_tag::dim2 &&
-            Tags::medium_tag == specfem::element::medium_tag::elastic_psv &&
-            Tags::property_tag == specfem::element::property_tag::isotropic,
-        int> = 0>
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim2 &&
+           Tags::medium_tag == specfem::element::medium_tag::elastic_psv &&
+           Tags::property_tag == specfem::element::property_tag::isotropic)
 KOKKOS_FUNCTION specfem::point::kernels<Tags> compute_frechet_derivatives(
     const specfem::point::properties<Tags> &properties,
     const specfem::point::velocity<Tags> &adjoint_velocity,
@@ -201,13 +198,10 @@ KOKKOS_FUNCTION specfem::point::kernels<Tags> compute_frechet_derivatives(
  *
  * @note For SH waves: K_{kappa} = 0, K_{alpha} = 0, K_{beta} = 2K_{mu}
  */
-template <
-    typename Tags,
-    std::enable_if_t<
-        Tags::dimension_tag == specfem::element::dimension_tag::dim2 &&
-            Tags::medium_tag == specfem::element::medium_tag::elastic_sh &&
-            Tags::property_tag == specfem::element::property_tag::isotropic,
-        int> = 0>
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim2 &&
+           Tags::medium_tag == specfem::element::medium_tag::elastic_sh &&
+           Tags::property_tag == specfem::element::property_tag::isotropic)
 KOKKOS_FUNCTION specfem::point::kernels<Tags> compute_frechet_derivatives(
     const specfem::point::properties<Tags> &properties,
     const specfem::point::velocity<Tags> &adjoint_velocity,

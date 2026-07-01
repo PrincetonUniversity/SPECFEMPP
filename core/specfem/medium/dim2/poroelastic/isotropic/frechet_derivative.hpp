@@ -48,13 +48,10 @@ namespace medium_physics {
  * refer to: <a href="https://doi.org/10.1111/j.1365-246X.2009.04332.x">Morency,
  * C., Luo, Y., & Tromp, J. (2009).</a>
  */
-template <
-    typename Tags,
-    std::enable_if_t<
-        Tags::dimension_tag == specfem::element::dimension_tag::dim2 &&
-            Tags::medium_tag == specfem::element::medium_tag::poroelastic &&
-            Tags::property_tag == specfem::element::property_tag::isotropic,
-        int> = 0>
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim2 &&
+           Tags::medium_tag == specfem::element::medium_tag::poroelastic &&
+           Tags::property_tag == specfem::element::property_tag::isotropic)
 KOKKOS_FUNCTION specfem::point::kernels<Tags> compute_frechet_derivatives(
     const specfem::point::properties<Tags> &properties,
     const specfem::point::velocity<Tags> &adjoint_velocity,

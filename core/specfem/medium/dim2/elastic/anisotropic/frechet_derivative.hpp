@@ -44,13 +44,10 @@ namespace medium_physics {
  * @return Point kernels containing density and stiffness parameter
  * sensitivities
  */
-template <
-    typename Tags,
-    std::enable_if_t<
-        Tags::dimension_tag == specfem::element::dimension_tag::dim2 &&
-            Tags::medium_tag == specfem::element::medium_tag::elastic_psv &&
-            Tags::property_tag == specfem::element::property_tag::anisotropic,
-        int> = 0>
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim2 &&
+           Tags::medium_tag == specfem::element::medium_tag::elastic_psv &&
+           Tags::property_tag == specfem::element::property_tag::anisotropic)
 KOKKOS_FUNCTION specfem::point::kernels<Tags> compute_frechet_derivatives(
     const specfem::point::properties<Tags> &properties,
     const specfem::point::velocity<Tags> &adjoint_velocity,
@@ -139,13 +136,10 @@ KOKKOS_FUNCTION specfem::point::kernels<Tags> compute_frechet_derivatives(
  * @note Requires additional stiffness coefficients (c44, c45) for full
  * implementation
  */
-template <
-    typename Tags,
-    std::enable_if_t<
-        Tags::dimension_tag == specfem::element::dimension_tag::dim2 &&
-            Tags::medium_tag == specfem::element::medium_tag::elastic_sh &&
-            Tags::property_tag == specfem::element::property_tag::anisotropic,
-        int> = 0>
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim2 &&
+           Tags::medium_tag == specfem::element::medium_tag::elastic_sh &&
+           Tags::property_tag == specfem::element::property_tag::anisotropic)
 KOKKOS_FUNCTION specfem::point::kernels<Tags> compute_frechet_derivatives(
     const specfem::point::properties<Tags> &properties,
     const specfem::point::velocity<Tags> &adjoint_velocity,

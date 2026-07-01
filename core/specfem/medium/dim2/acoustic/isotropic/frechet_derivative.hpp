@@ -53,12 +53,9 @@ namespace medium_physics {
  * @param dt Time step size
  * @return Point kernels containing density and bulk modulus sensitivities
  */
-template <
-    typename Tags,
-    std::enable_if_t<
-        Tags::medium_tag == specfem::element::medium_tag::acoustic &&
-            Tags::property_tag == specfem::element::property_tag::isotropic,
-        int> = 0>
+template <typename Tags>
+  requires(Tags::medium_tag == specfem::element::medium_tag::acoustic &&
+           Tags::property_tag == specfem::element::property_tag::isotropic)
 KOKKOS_FUNCTION specfem::point::kernels<Tags> compute_frechet_derivatives(
     const specfem::point::properties<Tags> &properties,
     const specfem::point::velocity<Tags> &adjoint_velocity,
