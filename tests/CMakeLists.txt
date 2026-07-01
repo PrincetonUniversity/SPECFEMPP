@@ -46,4 +46,7 @@ target_link_libraries(
   specfem_program
 )
 
+include(test_registration.cmake)
+
 add_subdirectory(unit-tests)
+add_subdirectory(integration-tests)

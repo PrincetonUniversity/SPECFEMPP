@@ -817,66 +817,6 @@ target_link_libraries(
 )
 
 add_executable(
-  displacement_newmark_2d_tests
-  displacement_tests/Newmark/dim2/newmark_tests.cpp
-)
-
-target_link_libraries(
-  displacement_newmark_2d_tests
-  specfem::quadrature
-  specfem::mesh
-  yaml-cpp
-  specfem_environment
-  specfem::assembly
-  specfem::runtime_configuration
-  timescheme
-  point
-  specfem::algorithms
-  specfem::solver
-  specfem::periodic_tasks
-  ${BOOST_LIBS}
-  -lpthread -lm
-)
-
-add_custom_command(TARGET displacement_newmark_2d_tests POST_BUILD
-     COMMAND ${CMAKE_COMMAND} -E make_directory ${TEST_OUTPUT_DIR}/displacement_tests/Newmark/dim2
-     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-          ${CMAKE_CURRENT_SOURCE_DIR}/displacement_tests/Newmark/dim2/tests.yaml
-          ${TEST_OUTPUT_DIR}/displacement_tests/Newmark/dim2/tests.yaml
-     COMMENT "Moving displacement_newmark_2d_tests data files to ${TEST_OUTPUT_DIR}/displacement_tests/Newmark/dim2"
-)
-
-add_executable(
-  displacement_newmark_3d_tests
-  displacement_tests/Newmark/dim3/newmark_tests.cpp
-)
-
-target_link_libraries(
-  displacement_newmark_3d_tests
-  specfem::quadrature
-  specfem::mesh
-  yaml-cpp
-  specfem_environment
-  specfem::assembly
-  specfem::runtime_configuration
-  timescheme
-  point
-  specfem::algorithms
-  specfem::solver
-  specfem::periodic_tasks
-  ${BOOST_LIBS}
-  -lpthread -lm
-)
-
-add_custom_command(TARGET displacement_newmark_3d_tests POST_BUILD
-     COMMAND ${CMAKE_COMMAND} -E make_directory ${TEST_OUTPUT_DIR}/displacement_tests/Newmark/dim3
-     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-          ${CMAKE_CURRENT_SOURCE_DIR}/displacement_tests/Newmark/dim3/tests.yaml
-          ${TEST_OUTPUT_DIR}/displacement_tests/Newmark/dim3/tests.yaml
-     COMMENT "Moving displacement_newmark_3d_tests data files to ${TEST_OUTPUT_DIR}/displacement_tests/Newmark/dim3"
-)
-
-add_executable(
   coordinate_systems_tests
   coordinate_systems/utm_tests.cpp
 )
@@ -926,8 +866,6 @@ set(SERIAL_TEST_TARGETS
   chunked_face_tests
   chunked_face_intersection_tests
   compute_coupling_tests
-  displacement_newmark_2d_tests
-  displacement_newmark_3d_tests
   element_types_tests
   fortranio_test
   enumerations_tests
@@ -978,7 +916,6 @@ set(SERIAL_LINK_DIRS
   assembly
   assembly_mesh
   data
-  displacement_tests
   fortran_io
   io
   mesh

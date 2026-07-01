@@ -1,6 +1,6 @@
 
 # Explicitly set binary output directory for tests
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests/unit-tests)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests/integration-tests)
 
 include_directories(.)
 
@@ -20,14 +20,3 @@ enable_testing()
 
 # Add test output directory to clean target
 set_directory_properties(PROPERTIES ADDITIONAL_CLEAN_FILES "${TEST_OUTPUT_DIR}")
-
-# Common library: Mesh utilities mapping
-add_library(
-  mesh_utilities_mapping
-  mesh_utilities/mapping.cpp
-)
-
-target_link_libraries(
-  mesh_utilities_mapping
-  Kokkos::kokkos
-)
