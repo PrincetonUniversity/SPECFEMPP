@@ -10,7 +10,7 @@
 // initialized MPI Context, so this test installs a SPECFEMEnvironment (rather
 // than relying on gtest_main). Without it the 3D depth/geographic cases abort
 // with "MPI used outside Context scope" in MPI-enabled builds.
-#include "../../SPECFEM_Environment.hpp"
+#include "SPECFEM_Environment.hpp"
 
 #include <gtest/gtest.h>
 #include <stdexcept>
