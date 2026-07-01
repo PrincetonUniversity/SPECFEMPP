@@ -96,9 +96,11 @@ rule build:
         f"{BUILD}/CMakeCache.txt",
     output:
         touch(BUILD_STAMP),
-    threads: CTEST_JOBS
     shell:
-        "CMAKE_BUILD_PARALLEL_LEVEL={CTEST_JOBS} cmake --build {BUILD}"
+        """
+        echo Number of cores used to build: {CTEST_JOBS}
+        cmake --build {BUILD} -j {CTEST_JOBS}
+        """"""
 
 
 rule test:
@@ -117,7 +119,7 @@ rule test:
         """
         rm -rf {PROFRAW_DIR}
         mkdir -p {PROFRAW_DIR}
-        export CTEST_PARALLEL_LEVEL={CTEST_JOBS}
+        echo Number of cores used to run the tests {CTEST_JOBS}
         LLVM_PROFILE_FILE="$(pwd)/{PROFRAW_DIR}/cov-%m-%p.profraw" \
             ctest --test-dir {BUILD}/tests/unit-tests --output-on-failure
         """
