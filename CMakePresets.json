@@ -256,8 +256,7 @@
         "SPECFEM_ENABLE_MPI": "OFF",
         "SPECFEM_ENABLE_UNITY_BUILD": "OFF",
         "SPECFEM_ENABLE_VTK": "OFF",
-        "SPECFEM_BUILD_BENCHMARKS": "OFF",
-        "Kokkos_ARCH_NATIVE": "ON"
+        "SPECFEM_BUILD_BENCHMARKS": "OFF"
       }
     }
   ],
