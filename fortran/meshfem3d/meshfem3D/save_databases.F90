@@ -95,10 +95,9 @@ subroutine save_databases(nspec,nglob, &
   integer :: ndef,nundef
   integer :: mat_id,domain_id
   ! effective boundary counts: zeroed when STACEY_ABSORBING_CONDITIONS is false
-  integer :: n_abs_xmin, n_abs_xmax, n_abs_ymin, n_abs_ymax, n_abs_bottom
-  ! effective free-surface count: combines top (if TOP_FREE_SURFACE) and
-  ! bottom (if BOTTOM_FREE_SURFACE) faces into section 6
-  integer :: n_top
+  integer :: n_abs_xmin, n_abs_xmax, n_abs_ymin, n_abs_ymax
+  ! Z boundary face counts: present whenever the face has any BC applied
+  integer :: n_bottom, n_top
   ! there was a potential bug here if nspec is big
   !integer,dimension(2,nspec) :: material_index
   integer,dimension(:,:),allocatable :: material_index
@@ -302,35 +301,35 @@ subroutine save_databases(nspec,nglob, &
   !
   ! note: check with routine write_boundaries_database() to produce identical output
   !
-  ! Determine effective absorbing face counts (sections 1-5).
-  ! BOTTOM_FREE_SURFACE overrides STACEY_ABSORBING_CONDITIONS for the bottom:
-  ! when bottom is a free surface it must not also appear as absorbing.
+  ! Sections 1-4: side absorbing faces, zeroed when Stacey is off
   if (STACEY_ABSORBING_CONDITIONS) then
-    n_abs_xmin   = nspec2D_xmin
-    n_abs_xmax   = nspec2D_xmax
-    n_abs_ymin   = nspec2D_ymin
-    n_abs_ymax   = nspec2D_ymax
-    n_abs_bottom = NSPEC2D_BOTTOM
+    n_abs_xmin = nspec2D_xmin
+    n_abs_xmax = nspec2D_xmax
+    n_abs_ymin = nspec2D_ymin
+    n_abs_ymax = nspec2D_ymax
   else
-    n_abs_xmin   = 0
-    n_abs_xmax   = 0
-    n_abs_ymin   = 0
-    n_abs_ymax   = 0
-    n_abs_bottom = 0
+    n_abs_xmin = 0
+    n_abs_xmax = 0
+    n_abs_ymin = 0
+    n_abs_ymax = 0
   endif
-  if (BOTTOM_FREE_SURFACE) n_abs_bottom = 0
 
-  ! Section 6 (free surface): top faces when TOP_FREE_SURFACE, plus
-  ! bottom faces when BOTTOM_FREE_SURFACE (treated as free surface in C++).
+  ! Section 5 (Z_MIN): present when bottom is free surface or Stacey absorbing
+  n_bottom = 0
+  if (BOTTOM_FREE_SURFACE .or. STACEY_ABSORBING_CONDITIONS) n_bottom = NSPEC2D_BOTTOM
+
+  ! Section 6 (Z_MAX): present when top is free surface or Stacey absorbing
   n_top = 0
-  if (TOP_FREE_SURFACE)    n_top = n_top + NSPEC2D_TOP
-  if (BOTTOM_FREE_SURFACE) n_top = n_top + NSPEC2D_BOTTOM
+  if (TOP_FREE_SURFACE .or. STACEY_ABSORBING_CONDITIONS) n_top = NSPEC2D_TOP
+
+  ! Write boundary condition flags so the C++ reader can classify sections 5 and 6
+  write(IIN_database) TOP_FREE_SURFACE, BOTTOM_FREE_SURFACE
 
   write(IIN_database) 1,n_abs_xmin
   write(IIN_database) 2,n_abs_xmax
   write(IIN_database) 3,n_abs_ymin
   write(IIN_database) 4,n_abs_ymax
-  write(IIN_database) 5,n_abs_bottom
+  write(IIN_database) 5,n_bottom
   write(IIN_database) 6,n_top
 
   do i = 1,n_abs_xmin
@@ -410,9 +409,9 @@ subroutine save_databases(nspec,nglob, &
     !      ibool(NGLLX_M,NGLLY_M,NGLLZ_M,ibelm_ymax(i)),ibool(1,NGLLY_M,NGLLZ_M,ibelm_ymax(i))
   enddo
 
-  do i = 1,n_abs_bottom
+  ! Section 5: Z_MIN faces (bottom — free surface or absorbing)
+  do i = 1,n_bottom
     ispec = ibelm_bottom(i)
-    ! gets anchor nodes on bottom
     inode = 0
     do ia = 1,NGNOD
       if (anchor_iaz(ia) == 1) then
@@ -424,46 +423,23 @@ subroutine save_databases(nspec,nglob, &
     enddo
     if (inode /= NGNOD2D) stop 'Invalid number of inodes found for bottom'
     write(IIN_database) ispec,(loc_node(inode), inode = 1,NGNOD2D)
-
-    ! write(IIN_database) ibelm_bottom(i),ibool(1,1,1,ibelm_bottom(i)),ibool(NGLLX_M,1,1,ibelm_bottom(i)), &
-    !      ibool(NGLLX_M,NGLLY_M,1,ibelm_bottom(i)),ibool(1,NGLLY_M,1,ibelm_bottom(i))
   enddo
 
-  if (TOP_FREE_SURFACE) then
-    do i = 1,NSPEC2D_TOP
-      ispec = ibelm_top(i)
-      ! gets anchor nodes on top
-      inode = 0
-      do ia = 1,NGNOD
-        if (anchor_iaz(ia) == NGLLZ_M) then
-          iglob = ibool(anchor_iax(ia),anchor_iay(ia),anchor_iaz(ia),ispec)
-          inode = inode + 1
-          if (inode > NGNOD2D) stop 'inode index exceeds NGNOD2D for top'
-          loc_node(inode) = iglob
-        endif
-      enddo
-      if (inode /= NGNOD2D) stop 'Invalid number of inodes found for top'
-      write(IIN_database) ispec,(loc_node(inode), inode = 1,NGNOD2D)
+  ! Section 6: Z_MAX faces (top — free surface or absorbing)
+  do i = 1,n_top
+    ispec = ibelm_top(i)
+    inode = 0
+    do ia = 1,NGNOD
+      if (anchor_iaz(ia) == NGLLZ_M) then
+        iglob = ibool(anchor_iax(ia),anchor_iay(ia),anchor_iaz(ia),ispec)
+        inode = inode + 1
+        if (inode > NGNOD2D) stop 'inode index exceeds NGNOD2D for top'
+        loc_node(inode) = iglob
+      endif
     enddo
-  endif
-
-  if (BOTTOM_FREE_SURFACE) then
-    do i = 1,NSPEC2D_BOTTOM
-      ispec = ibelm_bottom(i)
-      ! bottom faces written as free-surface faces (section 6)
-      inode = 0
-      do ia = 1,NGNOD
-        if (anchor_iaz(ia) == 1) then
-          iglob = ibool(anchor_iax(ia),anchor_iay(ia),anchor_iaz(ia),ispec)
-          inode = inode + 1
-          if (inode > NGNOD2D) stop 'inode index exceeds NGNOD2D for bottom-as-free-surface'
-          loc_node(inode) = iglob
-        endif
-      enddo
-      if (inode /= NGNOD2D) stop 'Invalid number of inodes found for bottom-as-free-surface'
-      write(IIN_database) ispec,(loc_node(inode), inode = 1,NGNOD2D)
-    enddo
-  endif
+    if (inode /= NGNOD2D) stop 'Invalid number of inodes found for top'
+    write(IIN_database) ispec,(loc_node(inode), inode = 1,NGNOD2D)
+  enddo
 
   ! CPML
   !

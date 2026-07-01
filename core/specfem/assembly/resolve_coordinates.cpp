@@ -12,7 +12,7 @@
 // ── dim2 specialization ─────────────────────────────────────────────────────
 
 template <>
-specfem::assembly::CoordinateResolutionResult<
+specfem::coordinate_systems::CoordinateResolutionResult<
     specfem::element::dimension_tag::dim2>
 specfem::assembly::resolve_coordinates<specfem::element::dimension_tag::dim2>(
     specfem::coordinate_systems::coordinates<
@@ -47,7 +47,7 @@ specfem::assembly::resolve_coordinates<specfem::element::dimension_tag::dim2>(
 // ── dim3 specialization ─────────────────────────────────────────────────────
 
 template <>
-specfem::assembly::CoordinateResolutionResult<
+specfem::coordinate_systems::CoordinateResolutionResult<
     specfem::element::dimension_tag::dim3>
 specfem::assembly::resolve_coordinates<specfem::element::dimension_tag::dim3>(
     specfem::coordinate_systems::coordinates<

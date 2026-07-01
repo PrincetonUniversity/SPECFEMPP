@@ -73,16 +73,7 @@ void program_3d(
           simulation_type);
   setup.update_t0(t0); // Update t0 in case it was changed
   setup.set_starttime(starttime);
-
-  specfem::Logger::info([&](std::ostringstream &oss) {
-    oss << "Input Source Information:\n"
-        << "-------------------------\n"
-        << "Number of sources : " << sources.size() << "\n";
-    for (auto &source : sources) {
-      oss << source->print();
-    }
-    oss << "\n";
-  });
+  // --------------------------------------------------------------
 
   // --------------------------------------------------------------
   //                   Get receivers
@@ -90,16 +81,7 @@ void program_3d(
   // A UTM-projected mesh implies geographic STATIONS coordinates.
   auto receivers = specfem::io::read_3d_receivers(
       setup.get_stations(), !mesh.suppress_utm_projection);
-
-  specfem::Logger::info([&](std::ostringstream &oss) {
-    oss << "Input Receiver Information:\n"
-        << "---------------------------\n"
-        << "Number of receivers : " << receivers.size() << "\n";
-    for (auto &receiver : receivers) {
-      oss << receiver->print();
-    }
-    oss << "\n";
-  });
+  // --------------------------------------------------------------
 
   // --------------------------------------------------------------
   //                   Generate Assembly
@@ -119,6 +101,28 @@ void program_3d(
   // assembly.print() always called (not wrapped in lambda function)
   // because it requires collective communication
   specfem::Logger::info(assembly.print());
+
+  // Sources and receivers are printed after assembly so that resolved
+  // coordinates, the owning partition, and the location error are populated.
+  specfem::Logger::info([&](std::ostringstream &oss) {
+    oss << "Source Information:\n"
+        << "-------------------------\n"
+        << "Number of sources : " << sources.size() << "\n";
+    for (auto &source : sources) {
+      oss << source->print();
+    }
+    oss << "\n";
+  });
+
+  specfem::Logger::info([&](std::ostringstream &oss) {
+    oss << "Receiver Information:\n"
+        << "---------------------------\n"
+        << "Number of receivers : " << receivers.size() << "\n";
+    for (auto &receiver : receivers) {
+      oss << receiver->print();
+    }
+    oss << "\n";
+  });
 
   // --------------------------------------------------------------
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/constants.hpp"
+#include "specfem/coordinate_systems/coordinate_resolution_result.hpp"
 #include "specfem/coordinate_systems/coordinates.hpp"
 #include "specfem/datetime.hpp"
 
@@ -347,6 +348,37 @@ public:
   void set_partition_index(int rank) { partition_index_ = rank; }
 
   /**
+   * @brief Set the coordinate resolution result (resolved global + topography).
+   *
+   * Populated at assembly time for sources given generic coordinates; left
+   * unset for sources specified directly as (x, y, z).
+   */
+  void set_resolution_result(
+      const specfem::coordinate_systems::CoordinateResolutionResult<
+          dimension_tag> &resolution) {
+    resolution_ = resolution;
+  }
+
+  /**
+   * @brief Get the coordinate resolution result, or nullopt if not resolved.
+   */
+  const std::optional<
+      specfem::coordinate_systems::CoordinateResolutionResult<dimension_tag>> &
+  get_resolution_result() const {
+    return resolution_;
+  }
+
+  /**
+   * @brief Set the location error (target-to-found distance) in metres.
+   */
+  void set_location_error(type_real error) { location_error_ = error; }
+
+  /**
+   * @brief Get the location error (target-to-found distance) in metres.
+   */
+  type_real get_location_error() const { return location_error_; }
+
+  /**
    * @brief Set the generic coordinates for this source.
    *
    * @param coordinates Generic coordinate object (ownership transferred)
@@ -387,11 +419,16 @@ protected:
                           ///< coordinate system
   std::unique_ptr<specfem::coordinate_systems::coordinates<dimension_tag>>
       read_coordinates_; ///< Generic coordinates (resolved at assembly time)
+  std::optional<
+      specfem::coordinate_systems::CoordinateResolutionResult<dimension_tag>>
+      resolution_; ///< Resolved global + topography (set for generic coords)
   specfem::element::medium_tag medium_tag;
   std::optional<specfem::datetime::type> starttime_; ///< Optional UTC origin
                                                      ///< time
   int partition_index_ =
       -1; ///< MPI rank that owns this source (-1 = not yet located)
+  type_real location_error_ =
+      -1; ///< Target-to-found distance in metres (-1 = not yet located)
 };
 
 } // namespace specfem::sources

@@ -48,6 +48,15 @@ std::string trim(const std::string &str) {
   return str.substr(start, end - start + 1);
 }
 
+// Format a distance in metres as whole km, m, and mm for readability.
+std::string format_distance(type_real metres) {
+  const int km = static_cast<int>(metres / 1000);
+  const int m = static_cast<int>(metres) % 1000;
+  const int mm = static_cast<int>(metres * 1000) % 1000;
+  return std::to_string(km) + " km, " + std::to_string(m) + " m, " +
+         std::to_string(mm) + " mm";
+}
+
 BOOST_PP_SEQ_FOR_EACH(_DEFINE_CONFIG_STRING_FUNCTIONS, _, CONFIG_STRINGS)
 
 } // namespace utilities

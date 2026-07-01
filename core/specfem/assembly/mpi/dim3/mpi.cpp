@@ -664,18 +664,28 @@ specfem::assembly::mpi_impl::unpacker<FieldType, DimensionTag, MediumTag>::
   // assemble_unpacking_mapping
   h_face_orientations =
       OrientationHostView("unpacker::h_face_orientations", this->nfaces);
-  for (unsigned int i = 0; i < this->nfaces; i++)
+  h_face_elements = ElementHostView("unpacker::h_face_elements", this->nfaces);
+  for (unsigned int i = 0; i < this->nfaces; i++) {
     h_face_orientations(i) = face_group.h_my_orientation(face_indices[i]);
+    h_face_elements(i) = face_group.h_my_element(face_indices[i]);
+  }
 
   h_edge_orientations =
       OrientationHostView("unpacker::h_edge_orientations", this->nedges);
-  for (unsigned int i = 0; i < this->nedges; i++)
+  h_edge_elements = ElementHostView("unpacker::h_edge_elements", this->nedges);
+  for (unsigned int i = 0; i < this->nedges; i++) {
     h_edge_orientations(i) = edge_group.h_my_orientation(edge_indices[i]);
+    h_edge_elements(i) = edge_group.h_my_element(edge_indices[i]);
+  }
 
   h_corner_orientations =
       OrientationHostView("unpacker::h_corner_orientations", this->ncorners);
-  for (unsigned int i = 0; i < this->ncorners; i++)
+  h_corner_elements =
+      ElementHostView("unpacker::h_corner_elements", this->ncorners);
+  for (unsigned int i = 0; i < this->ncorners; i++) {
     h_corner_orientations(i) = corner_group.h_my_orientation(corner_indices[i]);
+    h_corner_elements(i) = corner_group.h_my_element(corner_indices[i]);
+  }
 
   // Derive ranks and ngll from first non-empty group
   if (face_group.n > 0) {
@@ -906,9 +916,7 @@ void specfem::assembly::mpi_impl::unpacker<FieldType, DimensionTag, MediumTag>::
 
   // Fill mapping from faces: recv_face_indices[iface][j][i] → nglob position
   for (unsigned int iface = 0; iface < this->nfaces; iface++) {
-    // Received element indices are in the neighbor's record of our mesh
-    // ordering; translate to our compute ordering for get_iglob.
-    const int ielem = h_mesh_to_compute(face_elements(iface));
+    const int ielem = h_face_elements(iface);
     const auto face_type = my_face_orientations(iface);
     for (unsigned int j = 0; j < this->ngll; j++) {
       for (unsigned int i = 0; i < this->ngll; i++) {
@@ -925,7 +933,7 @@ void specfem::assembly::mpi_impl::unpacker<FieldType, DimensionTag, MediumTag>::
 
   // Fill mapping from edges: recv_edge_indices[iedge][ipoint] → nglob position
   for (unsigned int iedge = 0; iedge < this->nedges; iedge++) {
-    const int ielem = h_mesh_to_compute(edge_elements(iedge));
+    const int ielem = h_edge_elements(iedge);
     const auto edge_type = my_edge_orientations(iedge);
     for (unsigned int ipoint = 0; ipoint < this->ngll; ipoint++) {
       const int nglob_idx = recv_edge_indices(iedge, ipoint);
@@ -938,7 +946,7 @@ void specfem::assembly::mpi_impl::unpacker<FieldType, DimensionTag, MediumTag>::
 
   // Fill mapping from corners: corner_nglob_idx[icorner] → nglob position
   for (unsigned int icorner = 0; icorner < this->ncorners; icorner++) {
-    const int ielem = h_mesh_to_compute(corner_elements(icorner));
+    const int ielem = h_corner_elements(icorner);
     const auto corner_type = my_corner_orientations(icorner);
     const int nglob_idx = corner_nglob_idx(icorner);
     const auto [iz, iy, ix] = element.map_coordinates(corner_type);

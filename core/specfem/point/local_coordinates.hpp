@@ -74,6 +74,36 @@ template <> struct local_coordinates<specfem::element::dimension_tag::dim2> {
     oss << "ispec=" << ispec << ", xi=" << xi << ", gamma=" << gamma;
     return oss.str();
   }
+
+  /**
+   * @brief Whether the point lies inside the reference element.
+   *
+   * @return true if the element index is valid and every local coordinate
+   * magnitude is within the reference element \f$ [-1, 1] \f$.
+   */
+  KOKKOS_INLINE_FUNCTION
+  bool inside() const {
+    return ispec >= 0 && Kokkos::abs(xi) <= type_real(1) &&
+           Kokkos::abs(gamma) <= type_real(1);
+  }
+
+  /**
+   * @brief Whether the point lies outside the reference element beyond @p
+   * bound.
+   *
+   * Deliberately not the negation of @ref inside(): a located point in the
+   * tolerance band (1 < |coord| <= bound) is neither inside nor outside. An
+   * unlocated point (ispec < 0) is not in any element and therefore counts as
+   * outside.
+   *
+   * @param bound Tolerance on the reference-element coordinate magnitude.
+   * @return true if the element index is invalid (ispec < 0) or any local
+   * coordinate magnitude exceeds @p bound.
+   */
+  KOKKOS_INLINE_FUNCTION
+  bool outside(type_real bound) const {
+    return ispec < 0 || Kokkos::abs(xi) > bound || Kokkos::abs(gamma) > bound;
+  }
 };
 
 //-------------------------- 3D Specializations ------------------------------//
@@ -135,6 +165,38 @@ template <> struct local_coordinates<specfem::element::dimension_tag::dim3> {
     oss << "ispec=" << ispec << ", xi=" << xi << ", eta=" << eta
         << ", gamma=" << gamma;
     return oss.str();
+  }
+
+  /**
+   * @brief Whether the point lies inside the reference element.
+   *
+   * @return true if the element index is valid and every local coordinate
+   * magnitude is within the reference element \f$ [-1, 1] \f$.
+   */
+  KOKKOS_INLINE_FUNCTION
+  bool inside() const {
+    return ispec >= 0 && Kokkos::abs(xi) <= type_real(1) &&
+           Kokkos::abs(eta) <= type_real(1) &&
+           Kokkos::abs(gamma) <= type_real(1);
+  }
+
+  /**
+   * @brief Whether the point lies outside the reference element beyond @p
+   * bound.
+   *
+   * Deliberately not the negation of @ref inside(): a located point in the
+   * tolerance band (1 < |coord| <= bound) is neither inside nor outside. An
+   * unlocated point (ispec < 0) is not in any element and therefore counts as
+   * outside.
+   *
+   * @param bound Tolerance on the reference-element coordinate magnitude.
+   * @return true if the element index is invalid (ispec < 0) or any local
+   * coordinate magnitude exceeds @p bound.
+   */
+  KOKKOS_INLINE_FUNCTION
+  bool outside(type_real bound) const {
+    return ispec < 0 || Kokkos::abs(xi) > bound || Kokkos::abs(eta) > bound ||
+           Kokkos::abs(gamma) > bound;
   }
 };
 
