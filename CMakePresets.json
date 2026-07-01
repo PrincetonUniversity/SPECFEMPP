@@ -250,6 +250,7 @@
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/coverage",
         "Kokkos_ENABLE_ATOMICS_BYPASS": "ON",
         "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
+        "Kokkos_ENABLE_ARCH_NATIVE": "ON",
         "SPECFEM_ENABLE_COVERAGE": "ON",
         "SPECFEM_BUILD_TESTS": "ON",
         "SPECFEM_ENABLE_SIMD": "ON",
