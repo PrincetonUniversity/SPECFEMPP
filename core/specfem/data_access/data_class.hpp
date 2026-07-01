@@ -45,7 +45,6 @@ enum DataClassType {
   mass_matrix,               ///< Mass matrix coefficients
   source,                    ///< Source terms and excitations
   stress,                    ///< Stress tensor components
-  stress_integrand,          ///< Stress integration quantities
   boundary,                  ///< Boundary condition data
   lagrange_derivative,       ///< Lagrange derivative operators
   weights,                   ///< Quadrature weights

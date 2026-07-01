@@ -253,7 +253,6 @@ add_executable(
   point/attenuation_tests.cpp
   point/field_derivatives_tests.cpp
   point/source_tests.cpp
-  point/stress_integrand_tests.cpp
   point/stress_tests.cpp
   # Kernels
   # Dim 2
