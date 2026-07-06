@@ -164,8 +164,7 @@ void specfem::solver::time_marching<specfem::simulation::type::combined_undoatt,
   // ------------------------------------------------------------------
   // Locate the wavefield reader task needed for checkpoint I/O.
   // ------------------------------------------------------------------
-  using CheckpointReader =
-      specfem::periodic_tasks::periodic_task<DimensionTag>;
+  using CheckpointReader = specfem::periodic_tasks::periodic_task<DimensionTag>;
 
   CheckpointReader *checkpoint_reader = nullptr;
 
@@ -176,8 +175,7 @@ void specfem::solver::time_marching<specfem::simulation::type::combined_undoatt,
 
   for (const auto &task : tasks) {
     if (!checkpoint_reader && task &&
-        task->get_type() ==
-            specfem::periodic_tasks::type::wavefield_reader) {
+        task->get_type() == specfem::periodic_tasks::type::wavefield_reader) {
       checkpoint_reader = task.get();
     }
   }
@@ -359,14 +357,9 @@ void specfem::solver::time_marching<specfem::simulation::type::combined_undoatt,
         }
       }
 
-      // Advance adjoint wavefield one step forward. undo-attenuation reserves
-      // the *_phase_forward methods for replay, so the adjoint field is driven
-      // through the dedicated *_phase_adjoint phases.
+      // Advance adjoint wavefield one step forward.
       specfem::solver::impl::apply_adjoint_step<NGLL, adjoint_ft, DimensionTag>(
-          *time_scheme,
-          &specfem::time_scheme::time_scheme::apply_predictor_phase_adjoint,
-          &specfem::time_scheme::time_scheme::apply_corrector_phase_adjoint,
-          assembly, mpi_buffers, global_istep);
+          *time_scheme, assembly, mpi_buffers, global_istep);
 
       // Accumulate Fréchet kernels.
       // assembly.fields.backward now holds b_displ (copied from the RAM

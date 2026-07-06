@@ -60,14 +60,9 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
                                    assembly.fields.buffer);
     }
 
-    // Adjoint time step. For the combined solver the forward phase drives the
-    // adjoint field, so the *_phase_forward methods are passed to the shared
-    // adjoint step.
+    // Adjoint time step.
     specfem::solver::impl::apply_adjoint_step<NGLL, adjoint, DimensionTag>(
-        *time_scheme,
-        &specfem::time_scheme::time_scheme::apply_predictor_phase_forward,
-        &specfem::time_scheme::time_scheme::apply_corrector_phase_forward,
-        assembly, mpi_buffers, istep);
+        *time_scheme, assembly, mpi_buffers, istep);
 
     // Compute kernels using adjoint at t=(j+1)*dt and backward at
     // t=(nstep-j)*dt. This matches the Fortran kernel wavefield pairing after

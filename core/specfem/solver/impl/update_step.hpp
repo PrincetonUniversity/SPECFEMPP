@@ -142,20 +142,11 @@ apply_forward_step(specfem::time_scheme::time_scheme &time_scheme,
   return { dofs_updated, elements_updated };
 }
 
-/// Member-function pointer to a predictor/corrector phase on the time scheme.
-using phase_method = int (specfem::time_scheme::time_scheme::*)(
-    const specfem::element::medium_tag);
-
 /**
  * @brief Advance the adjoint wavefield through one predictor/corrector step
  * across all media, honoring the acoustic/elastic/poroelastic coupling order.
  *
- * Shared by the @c combined and @c combined_undoatt solvers, which apply the
- * identical adjoint update but reach it through differently-named time-scheme
- * phases: @c combined reuses the @c *_phase_forward methods (its forward phase
- * drives @c fields.adjoint), whereas @c combined_undoatt uses the dedicated
- * @c *_phase_adjoint methods (its forward phase is reserved for replay). The
- * predictor/corrector to invoke is therefore passed in explicitly. Unlike the
+ * Shared by the @c combined and @c combined_undoatt solvers. Unlike the
  * forward step this excludes @c elastic_psv_t, which the combined solvers do
  * not support.
  *
@@ -163,8 +154,6 @@ using phase_method = int (specfem::time_scheme::time_scheme::*)(
  * @tparam FieldType Wavefield tag to update (adjoint)
  * @tparam DimensionTag Spatial dimension (2D/3D)
  * @param time_scheme Time integration scheme driving the phases
- * @param predictor Predictor phase to invoke per medium
- * @param corrector Corrector phase to invoke per medium
  * @param assembly The assembly object containing the mesh and fields
  * @param mpi_buffers Solver-owned MPI buffers
  * @param istep Current time step
@@ -174,7 +163,6 @@ template <int NGLL, specfem::simulation::field_type FieldType,
           specfem::element::dimension_tag DimensionTag>
 std::pair<int, int>
 apply_adjoint_step(specfem::time_scheme::time_scheme &time_scheme,
-                   const phase_method predictor, const phase_method corrector,
                    specfem::assembly::assembly<DimensionTag> &assembly,
                    specfem::solver::MPIBuffers<DimensionTag> &mpi_buffers,
                    const int istep) {
@@ -182,17 +170,17 @@ apply_adjoint_step(specfem::time_scheme::time_scheme &time_scheme,
   int dofs_updated = 0;
   int elements_updated = 0;
 
-  dofs_updated += (time_scheme.*predictor)(acoustic);
-  dofs_updated += (time_scheme.*predictor)(elastic);
-  dofs_updated += (time_scheme.*predictor)(elastic_psv);
-  dofs_updated += (time_scheme.*predictor)(elastic_sh);
-  dofs_updated += (time_scheme.*predictor)(poroelastic);
+  dofs_updated += time_scheme.apply_predictor_phase_adjoint(acoustic);
+  dofs_updated += time_scheme.apply_predictor_phase_adjoint(elastic);
+  dofs_updated += time_scheme.apply_predictor_phase_adjoint(elastic_psv);
+  dofs_updated += time_scheme.apply_predictor_phase_adjoint(elastic_sh);
+  dofs_updated += time_scheme.apply_predictor_phase_adjoint(poroelastic);
 
   elements_updated +=
       update_medium<NGLL,
                     specfem::tags::Tags<DimensionTag, FieldType, acoustic>>(
           assembly, mpi_buffers, istep);
-  dofs_updated += (time_scheme.*corrector)(acoustic);
+  dofs_updated += time_scheme.apply_corrector_phase_adjoint(acoustic);
 
   elements_updated +=
       update_medium<NGLL,
@@ -206,15 +194,15 @@ apply_adjoint_step(specfem::time_scheme::time_scheme &time_scheme,
       update_medium<NGLL,
                     specfem::tags::Tags<DimensionTag, FieldType, elastic_sh>>(
           assembly, mpi_buffers, istep);
-  dofs_updated += (time_scheme.*corrector)(elastic);
-  dofs_updated += (time_scheme.*corrector)(elastic_psv);
-  dofs_updated += (time_scheme.*corrector)(elastic_sh);
+  dofs_updated += time_scheme.apply_corrector_phase_adjoint(elastic);
+  dofs_updated += time_scheme.apply_corrector_phase_adjoint(elastic_psv);
+  dofs_updated += time_scheme.apply_corrector_phase_adjoint(elastic_sh);
 
   elements_updated +=
       update_medium<NGLL,
                     specfem::tags::Tags<DimensionTag, FieldType, poroelastic>>(
           assembly, mpi_buffers, istep);
-  dofs_updated += (time_scheme.*corrector)(poroelastic);
+  dofs_updated += time_scheme.apply_corrector_phase_adjoint(poroelastic);
 
   check_medium_step_update(assembly, dofs_updated, elements_updated, "adjoint");
 
