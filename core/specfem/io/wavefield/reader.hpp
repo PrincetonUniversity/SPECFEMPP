@@ -22,8 +22,11 @@ public:
    * @brief Construct a new reader object
    *
    * @param output_folder Path to output folder or .h5 file
+   * @param load_attenuation_value Whether attenuation is enabled; when true,
+   * run() also loads the SLS memory variables into assembly.attenuation
    */
-  wavefield_reader(const std::string &output_folder);
+  wavefield_reader(const std::string &output_folder,
+                   const bool load_attenuation_value);
 
   /**
    * @brief Read the wavefield data from disk
@@ -35,26 +38,23 @@ public:
   template <specfem::element::dimension_tag DimensionTag>
   void initialize(specfem::assembly::assembly<DimensionTag> &assembly);
 
-  template <specfem::element::dimension_tag DimensionTag>
-  void run(specfem::assembly::assembly<DimensionTag> &assembly,
-           const int istep);
-
   /**
-   * @brief Read wavefield snapshot including attenuation memory variables
+   * @brief Read the wavefield snapshot for a single time step
    *
-   * Counterpart to wavefield_writer::run_with_attenuation. Reads
-   * displacement/velocity/acceleration into assembly.fields.buffer and the
-   * SLS memory variables into assembly.attenuation (which the
-   * combined_undoatt solver will then deep_copy into the forward attenuation
-   * container before replaying the subset).
+   * Loads displacement/velocity/acceleration (or the acoustic potentials) into
+   * assembly.fields.buffer. When the reader was constructed with
+   * @p load_attenuation_value set, this additionally loads the SLS memory
+   * variables into assembly.attenuation (which the combined_undoatt solver then
+   * deep_copies into the forward attenuation container before replaying the
+   * subset).
    *
    * @tparam DimensionTag Spatial dimension (dim2 or dim3)
    * @param assembly SPECFEM++ assembly
    * @param istep    Time step index of the checkpoint to load
    */
   template <specfem::element::dimension_tag DimensionTag>
-  void run_with_attenuation(specfem::assembly::assembly<DimensionTag> &assembly,
-                            const int istep);
+  void run(specfem::assembly::assembly<DimensionTag> &assembly,
+           const int istep);
 
   template <specfem::element::dimension_tag DimensionTag>
   void finalize(specfem::assembly::assembly<DimensionTag> &assembly) {}
@@ -72,6 +72,8 @@ private:
   std::string output_folder; ///< Path to output folder
   std::string file_path; ///< Rank-specific path to the wavefield file/folder
   std::optional<typename IOLibrary::File> file; ///< Lazily-opened file object
+  bool load_attenuation_value; ///< Whether to load attenuation memory variables
+                               ///< alongside the kinematic fields
 };
 
 } // namespace io
