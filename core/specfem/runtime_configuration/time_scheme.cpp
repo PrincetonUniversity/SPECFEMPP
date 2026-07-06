@@ -15,11 +15,15 @@ specfem::runtime_configuration::time_scheme::instantiate(
     if (this->type == specfem::simulation::type::forward) {
 
       it = std::make_shared<specfem::time_scheme::newmark<
-          AssemblyFields, specfem::simulation::type::forward> >(
+          AssemblyFields, specfem::simulation::type::forward>>(
           fields, this->nstep, nstep_between_samples, this->dt, this->t0);
     } else if (this->type == specfem::simulation::type::combined) {
       it = std::make_shared<specfem::time_scheme::newmark<
-          AssemblyFields, specfem::simulation::type::combined> >(
+          AssemblyFields, specfem::simulation::type::combined>>(
+          fields, this->nstep, nstep_between_samples, this->dt, this->t0);
+    } else if (this->type == specfem::simulation::type::combined_undoatt) {
+      it = std::make_shared<specfem::time_scheme::newmark<
+          AssemblyFields, specfem::simulation::type::combined_undoatt>>(
           fields, this->nstep, nstep_between_samples, this->dt, this->t0);
     } else {
       std::ostringstream message;
@@ -64,12 +68,12 @@ specfem::runtime_configuration::time_scheme::time_scheme(
 // Explicit template instantiations for dim2 and dim3 assembly fields
 template std::shared_ptr<specfem::time_scheme::time_scheme>
 specfem::runtime_configuration::time_scheme::instantiate<
-    specfem::assembly::fields<specfem::element::dimension_tag::dim2> >(
+    specfem::assembly::fields<specfem::element::dimension_tag::dim2>>(
     specfem::assembly::fields<specfem::element::dimension_tag::dim2> &fields,
     const int nstep_between_samples);
 
 template std::shared_ptr<specfem::time_scheme::time_scheme>
 specfem::runtime_configuration::time_scheme::instantiate<
-    specfem::assembly::fields<specfem::element::dimension_tag::dim3> >(
+    specfem::assembly::fields<specfem::element::dimension_tag::dim3>>(
     specfem::assembly::fields<specfem::element::dimension_tag::dim3> &fields,
     const int nstep_between_samples);

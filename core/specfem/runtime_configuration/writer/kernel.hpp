@@ -52,6 +52,13 @@ public:
     return this->simulation_type;
   }
 
+  /**
+   * @brief Update the resolved simulation type.
+   */
+  void set_simulation_type(const specfem::simulation::type simulation) {
+    this->simulation_type = simulation;
+  }
+
 private:
   std::string output_format; ///< Output file format (binary/ascii)
   std::string output_folder; ///< Output directory path

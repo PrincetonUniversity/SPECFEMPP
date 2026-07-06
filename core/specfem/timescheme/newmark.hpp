@@ -378,5 +378,65 @@ protected:
   AssemblyFields fields;      ///< Assembly fields
 };
 
+/**
+ * @brief Newmark scheme for undo attenuation simulations.
+ *
+ * The internal checkpoint/replay pass advances the physical forward field,
+ * while the adjoint sweep advances the adjoint field. This differs from
+ * combined mode, where the legacy forward phase advances the adjoint field.
+ */
+template <typename AssemblyFields>
+class newmark<AssemblyFields, specfem::simulation::type::combined_undoatt>
+    : public time_scheme {
+
+public:
+  constexpr static auto dimension_tag = AssemblyFields::dimension_tag;
+  constexpr static auto simulation_type =
+      specfem::simulation::type::combined_undoatt;
+
+  newmark(AssemblyFields &fields, const int nstep,
+          const int nstep_between_samples, const type_real dt,
+          const type_real t0)
+      : time_scheme(nstep, nstep_between_samples, dt), deltat(dt),
+        deltatover2(dt / 2.0), deltasquareover2(dt * dt / 2.0), t0(t0),
+        fields(fields) {}
+
+  std::string to_string() const override;
+  void print(std::ostream &out) const override;
+
+  int apply_predictor_phase_forward(
+      const specfem::element::medium_tag tag) override;
+  int apply_corrector_phase_forward(
+      const specfem::element::medium_tag tag) override;
+
+  int apply_predictor_phase_adjoint(
+      const specfem::element::medium_tag tag) override;
+  int apply_corrector_phase_adjoint(
+      const specfem::element::medium_tag tag) override;
+
+  int apply_predictor_phase_backward(
+      const specfem::element::medium_tag tag) override {
+    return 0;
+  }
+
+  int apply_corrector_phase_backward(
+      const specfem::element::medium_tag tag) override {
+    return 0;
+  }
+
+  specfem::time_scheme::type timescheme() const override {
+    return specfem::time_scheme::type::newmark;
+  }
+
+  type_real get_timestep() const override { return this->deltat; }
+
+protected:
+  type_real t0;
+  type_real deltat;
+  type_real deltatover2;
+  type_real deltasquareover2;
+  AssemblyFields fields;
+};
+
 } // namespace time_scheme
 } // namespace specfem

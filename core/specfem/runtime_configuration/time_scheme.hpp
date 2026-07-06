@@ -66,6 +66,13 @@ public:
 
   int get_nsteps() const { return this->nstep; }
 
+  /**
+   * @brief Update the resolved simulation type.
+   */
+  void set_simulation_type(const specfem::simulation::type simulation) {
+    this->type = simulation;
+  }
+
 private:
   int nstep;              ///< number of time steps
   type_real dt;           ///< delta time for the timescheme
