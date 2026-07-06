@@ -9,9 +9,8 @@
 
 template <typename IOLibrary>
 specfem::io::wavefield_reader<IOLibrary>::wavefield_reader(
-    const std::string &output_folder, const bool load_attenuation_value)
+    const std::string &output_folder)
     : output_folder(output_folder),
-      load_attenuation_value(load_attenuation_value),
       // Build rank-specific path:
       //   serial:   {output_folder}/ForwardWavefield
       //   parallel: {output_folder}/ForwardWavefield/proc_N
@@ -85,13 +84,14 @@ void specfem::io::wavefield_reader<IOLibrary>::initialize(
 
   typename IOLibrary::Group boundary_group = file->openGroup("/BoundaryValues");
 
-  Kokkos::View<bool *, Kokkos::HostSpace> boundary_values_view(
-      "save_boundary_values", 1);
+  Kokkos::View<bool *, Kokkos::HostSpace> adjoint_simulations_view(
+      "for_adjoint_simulations", 1);
 
-  boundary_group.openDataset("save_boundary_values", boundary_values_view)
+  boundary_group
+      .openDataset("for_adjoint_simulations", adjoint_simulations_view)
       .read();
 
-  if (!boundary_values_view(0)) {
+  if (!adjoint_simulations_view(0)) {
     throw std::runtime_error("Boundary values were not saved in the wavefield "
                              "output, please set `for_adjoint_simulations` to "
                              "true in the input file for forward simulations.");
@@ -180,10 +180,6 @@ void specfem::io::wavefield_reader<IOLibrary>::run(
       std::remove_reference_t<decltype(buffer)>::combinations, read_field);
 
   buffer.copy_to_device();
-
-  if (!load_attenuation_value) {
-    return;
-  }
 
   // Load attenuation memory variables into assembly.attenuation.
   // The combined_undoatt solver will deep_copy these into its forward
