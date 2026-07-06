@@ -19,29 +19,28 @@ template <specfem::element::dimension_tag DimensionTag,
 class wavefield_writer : public periodic_task<DimensionTag> {
 private:
   specfem::io::wavefield_writer<IOLibrary<specfem::io::write>> writer;
-  bool save_attenuation;
+  bool for_adjoint_simulations;
 
 public:
   wavefield_writer(const std::string &output_folder, const int time_interval,
                    const bool include_last_step,
-                   const bool save_boundary_values)
+                   const bool for_adjoint_simulations)
       : periodic_task<DimensionTag>(time_interval, include_last_step),
         writer(specfem::io::wavefield_writer<IOLibrary<specfem::io::write>>(
-            output_folder, save_boundary_values,
-            /*save_attenuation_value=*/save_boundary_values)),
-        save_attenuation(save_boundary_values) {}
+            output_folder, for_adjoint_simulations)),
+        for_adjoint_simulations(for_adjoint_simulations) {}
 
   /**
    * @brief Write wavefield data to file
    *
    * When attenuation checkpointing is enabled the SLS memory variables are
    * written alongside the kinematic fields; this is handled internally by the
-   * writer based on its save_attenuation_value flag.
+   * writer based on its for_adjoint_simulations flag.
    */
   void run(specfem::assembly::assembly<DimensionTag> &assembly,
            const int istep) override {
-    if (save_attenuation) {
-      specfem::Logger::info("Writing wavefield checkpoint (with attenuation):");
+    if (for_adjoint_simulations) {
+      specfem::Logger::info("Writing wavefield checkpoint:");
     } else {
       std::cout << "Writing wavefield files:" << std::endl;
       std::cout << "-------------------------------" << std::endl;
@@ -57,7 +56,7 @@ public:
     specfem::Logger::info("Writing coordinate files:");
     specfem::Logger::info("-------------------------");
     writer.initialize(assembly);
-    if (save_attenuation) {
+    if (for_adjoint_simulations) {
       run(assembly, 0);
     }
   }

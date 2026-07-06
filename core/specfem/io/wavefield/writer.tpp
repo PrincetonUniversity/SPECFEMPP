@@ -11,10 +11,9 @@
 
 template <typename OutputLibrary>
 specfem::io::wavefield_writer<OutputLibrary>::wavefield_writer(
-    const std::string &output_folder, const bool save_boundary_values,
-    const bool save_attenuation_value)
-    : output_folder(output_folder), save_boundary_values(save_boundary_values),
-      save_attenuation_value(save_attenuation_value),
+    const std::string &output_folder, const bool for_adjoint_simulations)
+    : output_folder(output_folder),
+      for_adjoint_simulations(for_adjoint_simulations),
       // Build rank-specific path:
       //   serial:   {output_folder}/ForwardWavefield
       //   parallel: {output_folder}/ForwardWavefield/proc_N
@@ -156,7 +155,7 @@ void specfem::io::wavefield_writer<OutputLibrary>::run(
   auto &attenuation = assembly.attenuation;
 
   forward.copy_to_host();
-  if (save_attenuation_value) {
+  if (for_adjoint_simulations) {
     attenuation.copy_to_host();
   }
 
@@ -189,7 +188,7 @@ void specfem::io::wavefield_writer<OutputLibrary>::run(
       }
 
       // Attenuation memory variables for this medium (if any)
-      if (save_attenuation_value) {
+      if (for_adjoint_simulations) {
         specfem::tag_dispatch::for_each(
             attenuation.attenuation_medium_combinations,
             [&]<typename AttTagsType>() {
@@ -201,7 +200,8 @@ void specfem::io::wavefield_writer<OutputLibrary>::run(
 
                 typename OutputLibrary::Group att_group =
                     med_group.createGroup("Attenuation");
-                att_group.createDataset("Rkappa", medium.h_memory_variable_kappa)
+                att_group
+                    .createDataset("Rkappa", medium.h_memory_variable_kappa)
                     .write();
                 att_group.createDataset("Rxx", medium.h_memory_variable_Rxx)
                     .write();
@@ -250,13 +250,14 @@ void specfem::io::wavefield_writer<OutputLibrary>::finalize(
   typename OutputLibrary::Group boundary_group =
       file.createGroup(std::string("/BoundaryValues"));
 
-  Kokkos::View<bool *, Kokkos::HostSpace> boundary_values_view(
-      "save_boundary_values", 1);
-  boundary_values_view(0) = this->save_boundary_values;
-  boundary_group.createDataset("save_boundary_values", boundary_values_view)
+  Kokkos::View<bool *, Kokkos::HostSpace> adjoint_simulations_view(
+      "for_adjoint_simulations", 1);
+  adjoint_simulations_view(0) = this->for_adjoint_simulations;
+  boundary_group
+      .createDataset("for_adjoint_simulations", adjoint_simulations_view)
       .write();
 
-  if (save_boundary_values) {
+  if (for_adjoint_simulations) {
     auto &boundary_values = assembly.boundary_values;
     boundary_values.copy_to_host();
 

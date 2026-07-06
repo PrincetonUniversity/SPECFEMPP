@@ -141,36 +141,27 @@ specfem::runtime_configuration::wavefield::instantiate_wavefield_reader()
     const bool needs_reader =
         (this->simulation_type == specfem::simulation::type::combined) ||
         (this->simulation_type == specfem::simulation::type::combined_undoatt);
-    // Attenuation memory variables are only checkpointed (and therefore only
-    // read back) for the UNDO_ATTENUATION workflow.
-    const bool load_attenuation =
-        (this->simulation_type == specfem::simulation::type::combined_undoatt);
     if (needs_reader) {
       if (specfem::utilities::is_hdf5_string(this->output_format)) {
         return std::make_shared<specfem::periodic_tasks::wavefield_reader<
             DimensionTag, specfem::io_backends::HDF5>>(
-            this->output_folder, this->time_interval, this->include_last_step,
-            load_attenuation);
+            this->output_folder, this->time_interval, this->include_last_step);
       } else if (specfem::utilities::is_adios2_string(this->output_format)) {
         return std::make_shared<specfem::periodic_tasks::wavefield_reader<
             DimensionTag, specfem::io_backends::ADIOS2>>(
-            this->output_folder, this->time_interval, this->include_last_step,
-            load_attenuation);
+            this->output_folder, this->time_interval, this->include_last_step);
       } else if (specfem::utilities::is_ascii_string(this->output_format)) {
         return std::make_shared<specfem::periodic_tasks::wavefield_reader<
             DimensionTag, specfem::io_backends::ASCII>>(
-            this->output_folder, this->time_interval, this->include_last_step,
-            load_attenuation);
+            this->output_folder, this->time_interval, this->include_last_step);
       } else if (specfem::utilities::is_npy_string(this->output_format)) {
         return std::make_shared<specfem::periodic_tasks::wavefield_reader<
             DimensionTag, specfem::io_backends::NPY>>(
-            this->output_folder, this->time_interval, this->include_last_step,
-            load_attenuation);
+            this->output_folder, this->time_interval, this->include_last_step);
       } else if (specfem::utilities::is_npz_string(this->output_format)) {
         return std::make_shared<specfem::periodic_tasks::wavefield_reader<
             DimensionTag, specfem::io_backends::NPZ>>(
-            this->output_folder, this->time_interval, this->include_last_step,
-            load_attenuation);
+            this->output_folder, this->time_interval, this->include_last_step);
       } else {
         throw std::runtime_error("Unknown wavefield format");
       }

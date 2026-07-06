@@ -22,11 +22,8 @@ public:
    * @brief Construct a new reader object
    *
    * @param output_folder Path to output folder or .h5 file
-   * @param load_attenuation_value Whether attenuation is enabled; when true,
-   * run() also loads the SLS memory variables into assembly.attenuation
    */
-  wavefield_reader(const std::string &output_folder,
-                   const bool load_attenuation_value);
+  wavefield_reader(const std::string &output_folder);
 
   /**
    * @brief Read the wavefield data from disk
@@ -42,9 +39,8 @@ public:
    * @brief Read the wavefield snapshot for a single time step
    *
    * Loads displacement/velocity/acceleration (or the acoustic potentials) into
-   * assembly.fields.buffer. When the reader was constructed with
-   * @p load_attenuation_value set, this additionally loads the SLS memory
-   * variables into assembly.attenuation (which the combined_undoatt solver then
+   * assembly.fields.buffer. This additionally loads the SLS memory variables
+   * into assembly.attenuation (which the combined_undoatt solver then
    * deep_copies into the forward attenuation container before replaying the
    * subset).
    *
@@ -72,8 +68,6 @@ private:
   std::string output_folder; ///< Path to output folder
   std::string file_path; ///< Rank-specific path to the wavefield file/folder
   std::optional<typename IOLibrary::File> file; ///< Lazily-opened file object
-  bool load_attenuation_value; ///< Whether to load attenuation memory variables
-                               ///< alongside the kinematic fields
 };
 
 } // namespace io
