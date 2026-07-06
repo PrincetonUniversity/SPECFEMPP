@@ -162,22 +162,23 @@ void specfem::solver::time_marching<specfem::simulation::type::combined_undoatt,
   constexpr auto adjoint_ft = specfem::simulation::field_type::adjoint;
 
   // ------------------------------------------------------------------
-  // Locate the wavefield reader task needed for checkpoint I/O. Dynamic_cast
-  // is used so that the solver does not need to know the concrete I/O backend
-  // at compile time.
+  // Locate the wavefield reader task needed for checkpoint I/O.
   // ------------------------------------------------------------------
-  using ReaderBase =
-      specfem::periodic_tasks::wavefield_reader_base<DimensionTag>;
+  using CheckpointReader =
+      specfem::periodic_tasks::periodic_task<DimensionTag>;
 
-  ReaderBase *checkpoint_reader = nullptr;
+  CheckpointReader *checkpoint_reader = nullptr;
 
-  auto is_checkpoint_task = [](const auto &task, const ReaderBase *reader) {
+  auto is_checkpoint_task = [](const auto &task,
+                               const CheckpointReader *reader) {
     return task.get() == reader;
   };
 
   for (const auto &task : tasks) {
-    if (!checkpoint_reader) {
-      checkpoint_reader = dynamic_cast<ReaderBase *>(task.get());
+    if (!checkpoint_reader && task &&
+        task->get_type() ==
+            specfem::periodic_tasks::type::wavefield_reader) {
+      checkpoint_reader = task.get();
     }
   }
 
@@ -295,7 +296,7 @@ void specfem::solver::time_marching<specfem::simulation::type::combined_undoatt,
         });
 
     // Loads into fields.buffer (kinematic) and assembly.attenuation (R_xx etc.)
-    checkpoint_reader->run_with_attenuation(assembly, checkpoint_step);
+    checkpoint_reader->run(assembly, checkpoint_step);
 
     std::ostringstream message;
     message << "Running forward simulation for subset " << subset_idx + 1

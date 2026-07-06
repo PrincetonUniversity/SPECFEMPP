@@ -54,6 +54,10 @@ public:
     specfem::Logger::info("-------------------------");
     reader.initialize(assembly);
   }
+
+  specfem::periodic_tasks::type get_type() const override {
+    return specfem::periodic_tasks::type::wavefield_reader;
+  }
 };
 
 } // namespace periodic_tasks
