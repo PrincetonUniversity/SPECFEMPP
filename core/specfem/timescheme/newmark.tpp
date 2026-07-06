@@ -172,6 +172,40 @@ int apply_predictor_phase(
   return result;
 }
 
+template <typename AssemblyFields>
+int apply_corrector_phase_adjoint(const AssemblyFields &fields,
+                                  const specfem::element::medium_tag tag,
+                                  const type_real deltatover2) {
+  return apply_corrector_phase<AssemblyFields,
+                               specfem::simulation::field_type::adjoint>(
+      fields.adjoint, tag, deltatover2);
+}
+
+template <typename AssemblyFields>
+int apply_predictor_phase_adjoint(const AssemblyFields &fields,
+                                  const specfem::element::medium_tag tag,
+                                  const type_real deltat,
+                                  const type_real deltatover2,
+                                  const type_real deltasquareover2) {
+  return apply_predictor_phase<AssemblyFields,
+                               specfem::simulation::field_type::adjoint>(
+      fields.adjoint, tag, deltat, deltatover2, deltasquareover2);
+}
+
+template <specfem::simulation::type SimulationType>
+std::string simulation_type_string() {
+  if constexpr (SimulationType == specfem::simulation::type::forward) {
+    return "forward";
+  } else if constexpr (SimulationType == specfem::simulation::type::combined) {
+    return "adjoint";
+  } else if constexpr (SimulationType ==
+                       specfem::simulation::type::combined_undoatt) {
+    return "combined_undoatt";
+  } else {
+    return "unknown";
+  }
+}
+
 std::string to_string(const std::string &simulation_type,
                       const type_real deltat, const type_real t0) {
   std::ostringstream message;
@@ -187,146 +221,99 @@ std::string to_string(const std::string &simulation_type,
 
 } // namespace specfem::time_scheme::newmark_impl
 
-template <typename AssemblyFields>
-int specfem::time_scheme::newmark<AssemblyFields,
-                                  specfem::simulation::type::forward>::
+template <typename AssemblyFields, specfem::simulation::type SimulationType>
+int specfem::time_scheme::newmark<AssemblyFields, SimulationType>::
     apply_corrector_phase_forward(const specfem::element::medium_tag tag) {
 
-  return specfem::time_scheme::newmark_impl::apply_corrector_phase<
-      AssemblyFields, specfem::simulation::field_type::forward>(
-      fields.forward, tag, deltatover2);
+  if constexpr (SimulationType == specfem::simulation::type::forward ||
+                SimulationType == specfem::simulation::type::combined_undoatt) {
+    return specfem::time_scheme::newmark_impl::apply_corrector_phase<
+        AssemblyFields, specfem::simulation::field_type::forward>(
+        fields.forward, tag, deltatover2);
+  } else {
+    return 0;
+  }
 }
 
-template <typename AssemblyFields>
-int specfem::time_scheme::newmark<AssemblyFields,
-                                  specfem::simulation::type::forward>::
+template <typename AssemblyFields, specfem::simulation::type SimulationType>
+int specfem::time_scheme::newmark<AssemblyFields, SimulationType>::
     apply_predictor_phase_forward(const specfem::element::medium_tag tag) {
 
-  return specfem::time_scheme::newmark_impl::apply_predictor_phase<
-      AssemblyFields, specfem::simulation::field_type::forward>(
-      fields.forward, tag, deltat, deltatover2, deltasquareover2);
+  if constexpr (SimulationType == specfem::simulation::type::forward ||
+                SimulationType == specfem::simulation::type::combined_undoatt) {
+    return specfem::time_scheme::newmark_impl::apply_predictor_phase<
+        AssemblyFields, specfem::simulation::field_type::forward>(
+        fields.forward, tag, deltat, deltatover2, deltasquareover2);
+  } else {
+    return 0;
+  }
 }
 
-template <typename AssemblyFields>
-int specfem::time_scheme::newmark<AssemblyFields,
-                                  specfem::simulation::type::combined>::
-    apply_corrector_phase_forward(const specfem::element::medium_tag tag) {
-
-  return specfem::time_scheme::newmark_impl::apply_corrector_phase<
-      AssemblyFields, specfem::simulation::field_type::adjoint>(
-      fields.adjoint, tag, deltatover2);
-}
-
-template <typename AssemblyFields>
-int specfem::time_scheme::newmark<AssemblyFields,
-                                  specfem::simulation::type::combined>::
-    apply_corrector_phase_backward(const specfem::element::medium_tag tag) {
-
-  return specfem::time_scheme::newmark_impl::apply_corrector_phase<
-      AssemblyFields, specfem::simulation::field_type::backward>(
-      fields.backward, tag, -1.0 * deltatover2);
-}
-
-template <typename AssemblyFields>
-int specfem::time_scheme::newmark<AssemblyFields,
-                                  specfem::simulation::type::combined>::
-    apply_predictor_phase_forward(const specfem::element::medium_tag tag) {
-
-  return specfem::time_scheme::newmark_impl::apply_predictor_phase<
-      AssemblyFields, specfem::simulation::field_type::adjoint>(
-      fields.adjoint, tag, deltat, deltatover2, deltasquareover2);
-}
-
-template <typename AssemblyFields>
-int specfem::time_scheme::newmark<AssemblyFields,
-                                  specfem::simulation::type::combined>::
-    apply_predictor_phase_backward(const specfem::element::medium_tag tag) {
-
-  return specfem::time_scheme::newmark_impl::apply_predictor_phase<
-      AssemblyFields, specfem::simulation::field_type::backward>(
-      fields.backward, tag, -1.0 * deltat, -1.0 * deltatover2,
-      deltasquareover2);
-}
-
-template <typename AssemblyFields>
-int specfem::time_scheme::newmark<AssemblyFields,
-                                  specfem::simulation::type::combined_undoatt>::
-    apply_corrector_phase_forward(const specfem::element::medium_tag tag) {
-
-  return specfem::time_scheme::newmark_impl::apply_corrector_phase<
-      AssemblyFields, specfem::simulation::field_type::forward>(
-      fields.forward, tag, deltatover2);
-}
-
-template <typename AssemblyFields>
-int specfem::time_scheme::newmark<AssemblyFields,
-                                  specfem::simulation::type::combined_undoatt>::
-    apply_predictor_phase_forward(const specfem::element::medium_tag tag) {
-
-  return specfem::time_scheme::newmark_impl::apply_predictor_phase<
-      AssemblyFields, specfem::simulation::field_type::forward>(
-      fields.forward, tag, deltat, deltatover2, deltasquareover2);
-}
-
-template <typename AssemblyFields>
-int specfem::time_scheme::newmark<AssemblyFields,
-                                  specfem::simulation::type::combined_undoatt>::
+template <typename AssemblyFields, specfem::simulation::type SimulationType>
+int specfem::time_scheme::newmark<AssemblyFields, SimulationType>::
     apply_corrector_phase_adjoint(const specfem::element::medium_tag tag) {
 
-  return specfem::time_scheme::newmark_impl::apply_corrector_phase<
-      AssemblyFields, specfem::simulation::field_type::adjoint>(
-      fields.adjoint, tag, deltatover2);
+  if constexpr (SimulationType == specfem::simulation::type::combined ||
+                SimulationType == specfem::simulation::type::combined_undoatt) {
+    return specfem::time_scheme::newmark_impl::apply_corrector_phase_adjoint(
+        fields, tag, deltatover2);
+  } else {
+    return 0;
+  }
 }
 
-template <typename AssemblyFields>
-int specfem::time_scheme::newmark<AssemblyFields,
-                                  specfem::simulation::type::combined_undoatt>::
+template <typename AssemblyFields, specfem::simulation::type SimulationType>
+int specfem::time_scheme::newmark<AssemblyFields, SimulationType>::
+    apply_corrector_phase_backward(const specfem::element::medium_tag tag) {
+
+  if constexpr (SimulationType == specfem::simulation::type::combined) {
+    return specfem::time_scheme::newmark_impl::apply_corrector_phase<
+        AssemblyFields, specfem::simulation::field_type::backward>(
+        fields.backward, tag, -1.0 * deltatover2);
+  } else {
+    return 0;
+  }
+}
+
+template <typename AssemblyFields, specfem::simulation::type SimulationType>
+int specfem::time_scheme::newmark<AssemblyFields, SimulationType>::
     apply_predictor_phase_adjoint(const specfem::element::medium_tag tag) {
 
-  return specfem::time_scheme::newmark_impl::apply_predictor_phase<
-      AssemblyFields, specfem::simulation::field_type::adjoint>(
-      fields.adjoint, tag, deltat, deltatover2, deltasquareover2);
+  if constexpr (SimulationType == specfem::simulation::type::combined ||
+                SimulationType == specfem::simulation::type::combined_undoatt) {
+    return specfem::time_scheme::newmark_impl::apply_predictor_phase_adjoint(
+        fields, tag, deltat, deltatover2, deltasquareover2);
+  } else {
+    return 0;
+  }
 }
 
-template <typename AssemblyFields>
-std::string specfem::time_scheme::newmark<
-    AssemblyFields, specfem::simulation::type::forward>::to_string() const {
-  return specfem::time_scheme::newmark_impl::to_string("forward", this->deltat,
-                                                       this->t0);
+template <typename AssemblyFields, specfem::simulation::type SimulationType>
+int specfem::time_scheme::newmark<AssemblyFields, SimulationType>::
+    apply_predictor_phase_backward(const specfem::element::medium_tag tag) {
+
+  if constexpr (SimulationType == specfem::simulation::type::combined) {
+    return specfem::time_scheme::newmark_impl::apply_predictor_phase<
+        AssemblyFields, specfem::simulation::field_type::backward>(
+        fields.backward, tag, -1.0 * deltat, -1.0 * deltatover2,
+        deltasquareover2);
+  } else {
+    return 0;
+  }
 }
 
-template <typename AssemblyFields>
-void specfem::time_scheme::newmark<
-    AssemblyFields,
-    specfem::simulation::type::forward>::print(std::ostream &message) const {
-  message << this->to_string();
-}
-
-template <typename AssemblyFields>
-std::string specfem::time_scheme::newmark<
-    AssemblyFields, specfem::simulation::type::combined>::to_string() const {
-  return specfem::time_scheme::newmark_impl::to_string("adjoint", this->deltat,
-                                                       this->t0);
-}
-
-template <typename AssemblyFields>
-void specfem::time_scheme::newmark<
-    AssemblyFields,
-    specfem::simulation::type::combined>::print(std::ostream &message) const {
-  message << this->to_string();
-}
-
-template <typename AssemblyFields>
-std::string specfem::time_scheme::newmark<
-    AssemblyFields, specfem::simulation::type::combined_undoatt>::to_string()
+template <typename AssemblyFields, specfem::simulation::type SimulationType>
+std::string
+specfem::time_scheme::newmark<AssemblyFields, SimulationType>::to_string()
     const {
-  return specfem::time_scheme::newmark_impl::to_string("combined_undoatt",
-                                                       this->deltat, this->t0);
+  return specfem::time_scheme::newmark_impl::to_string(
+      specfem::time_scheme::newmark_impl::simulation_type_string<
+          SimulationType>(),
+      this->deltat, this->t0);
 }
 
-template <typename AssemblyFields>
-void specfem::time_scheme::
-    newmark<AssemblyFields, specfem::simulation::type::combined_undoatt>::print(
-        std::ostream &message) const {
+template <typename AssemblyFields, specfem::simulation::type SimulationType>
+void specfem::time_scheme::newmark<AssemblyFields, SimulationType>::print(
+    std::ostream &message) const {
   message << this->to_string();
 }
