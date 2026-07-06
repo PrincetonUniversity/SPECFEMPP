@@ -40,7 +40,7 @@ public:
   void run(specfem::assembly::assembly<DimensionTag> &assembly,
            const int istep) override {
     if (for_adjoint_simulations) {
-      specfem::Logger::info("Writing wavefield checkpoint (with attenuation):");
+      specfem::Logger::info("Writing wavefield checkpoint:");
     } else {
       std::cout << "Writing wavefield files:" << std::endl;
       std::cout << "-------------------------------" << std::endl;
