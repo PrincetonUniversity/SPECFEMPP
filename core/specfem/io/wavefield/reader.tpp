@@ -25,7 +25,17 @@ specfem::io::wavefield_reader<IOLibrary>::wavefield_reader(
         }
         return p.string();
       }()),
-      file(typename IOLibrary::File(file_path)) {}
+      // File is opened lazily in open_file() / initialize() so that the reader
+      // can be constructed before the checkpoint directory exists (needed for
+      // the combined_undoatt workflow where the forward pass creates the dir).
+      file(std::nullopt) {}
+
+template <typename IOLibrary>
+void specfem::io::wavefield_reader<IOLibrary>::open_file() {
+  if (!file.has_value()) {
+    file.emplace(file_path);
+  }
+}
 
 template <typename IOLibrary>
 template <specfem::element::dimension_tag DimensionTag>
@@ -43,9 +53,11 @@ void specfem::io::wavefield_reader<IOLibrary>::initialize(
   specfem::tag_dispatch::for_each(
       std::remove_reference_t<decltype(buffer)>::combinations, count_group);
 
+  open_file();
+
   Kokkos::View<std::string *, Kokkos::HostSpace> medium_tags("medium_tags",
                                                              ngroups);
-  file.openDataset("medium_tags", medium_tags).read();
+  file->openDataset("medium_tags", medium_tags).read();
 
   auto check_medium = [&]<typename TagsType>() {
     constexpr auto medium_tag = TagsType::medium_tag;
@@ -70,7 +82,7 @@ void specfem::io::wavefield_reader<IOLibrary>::initialize(
 
   auto &boundary_values = assembly.boundary_values;
 
-  typename IOLibrary::Group boundary_group = file.openGroup("/BoundaryValues");
+  typename IOLibrary::Group boundary_group = file->openGroup("/BoundaryValues");
 
   Kokkos::View<bool *, Kokkos::HostSpace> boundary_values_view(
       "save_boundary_values", 1);
@@ -102,8 +114,7 @@ void specfem::io::wavefield_reader<IOLibrary>::initialize(
   };
 
   specfem::tag_dispatch::for_each(
-      decltype(boundary_values.stacey)::combinations_by_medium,
-      read_stacey);
+      decltype(boundary_values.stacey)::combinations_by_medium, read_stacey);
 
   typename IOLibrary::Group composite =
       boundary_group.openGroup("CompositeStaceyDirichlet");
@@ -126,8 +137,8 @@ void specfem::io::wavefield_reader<IOLibrary>::initialize(
   };
 
   specfem::tag_dispatch::for_each(
-      decltype(boundary_values.composite_stacey_dirichlet)::
-          combinations_by_medium,
+      decltype(boundary_values
+                   .composite_stacey_dirichlet)::combinations_by_medium,
       read_composite);
 
   boundary_values.copy_to_device();
@@ -137,9 +148,10 @@ template <typename IOLibrary>
 template <specfem::element::dimension_tag DimensionTag>
 void specfem::io::wavefield_reader<IOLibrary>::run(
     specfem::assembly::assembly<DimensionTag> &assembly, const int istep) {
+  open_file();
   auto &buffer = assembly.fields.buffer;
 
-  typename IOLibrary::Group base_group = file.openGroup(
+  typename IOLibrary::Group base_group = file->openGroup(
       std::string("/Step") + specfem::utilities::to_zero_lead(istep, 6));
 
   auto read_field = [&]<typename TagsType>() {
@@ -167,4 +179,55 @@ void specfem::io::wavefield_reader<IOLibrary>::run(
       std::remove_reference_t<decltype(buffer)>::combinations, read_field);
 
   buffer.copy_to_device();
+}
+
+template <typename IOLibrary>
+template <specfem::element::dimension_tag DimensionTag>
+void specfem::io::wavefield_reader<IOLibrary>::run_with_attenuation(
+    specfem::assembly::assembly<DimensionTag> &assembly, const int istep) {
+  // Load kinematic fields into fields.buffer (reuse existing run() path)
+  this->run(assembly, istep);
+
+  // Load attenuation memory variables into assembly.attenuation.
+  // The combined_undoatt solver will deep_copy these into its forward
+  // attenuation container before replaying the subset, mirroring
+  // read_forward_arrays_undoatt() in the Fortran code.
+  auto &attenuation = assembly.attenuation;
+
+  typename IOLibrary::Group step_group = file->openGroup(
+      std::string("/Step") + specfem::utilities::to_zero_lead(istep, 6));
+
+  specfem::tag_dispatch::for_each(
+      attenuation.attenuation_medium_combinations, [&]<typename TagsType>() {
+        constexpr auto medium_tag = TagsType::medium_tag;
+
+        auto &medium = attenuation.attenuation_storage.template get<TagsType>();
+
+        if (medium.element_range.extent(0) == 0)
+          return;
+
+        typename IOLibrary::Group med_group =
+            step_group.openGroup(specfem::element::to_string(medium_tag));
+        typename IOLibrary::Group att_group =
+            med_group.openGroup("Attenuation");
+
+        att_group.openDataset("Rkappa", medium.h_memory_variable_kappa).read();
+        att_group.openDataset("Rxx", medium.h_memory_variable_Rxx).read();
+        att_group.openDataset("Rxz", medium.h_memory_variable_Rxz).read();
+        att_group.openDataset("EpsilonXX", medium.h_epsilon_xx_att).read();
+        att_group.openDataset("EpsilonZZ", medium.h_epsilon_zz_att).read();
+        att_group.openDataset("EpsilonXZ", medium.h_epsilon_xz_att).read();
+
+        if constexpr (DimensionTag == specfem::element::dimension_tag::dim3) {
+          att_group.openDataset("Ryy", medium.h_memory_variable_Ryy).read();
+          att_group.openDataset("Rzz", medium.h_memory_variable_Rzz).read();
+          att_group.openDataset("Rxy", medium.h_memory_variable_Rxy).read();
+          att_group.openDataset("Ryz", medium.h_memory_variable_Ryz).read();
+          att_group.openDataset("EpsilonYY", medium.h_epsilon_yy_att).read();
+          att_group.openDataset("EpsilonXY", medium.h_epsilon_xy_att).read();
+          att_group.openDataset("EpsilonYZ", medium.h_epsilon_yz_att).read();
+        }
+      });
+
+  attenuation.copy_to_device();
 }

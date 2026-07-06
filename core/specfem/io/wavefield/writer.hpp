@@ -48,6 +48,24 @@ public:
   void run(specfem::assembly::assembly<DimensionTag> &assembly,
            const int istep);
 
+  /**
+   * @brief Write wavefield snapshot including attenuation memory variables
+   *
+   * Used by the UNDO_ATTENUATION solver to checkpoint the complete simulation
+   * state at subset boundaries. Saves displacement/velocity/acceleration and
+   * the SLS memory variables (Rxx, Rxz, Rkappa for dim2; Rxx, Ryy, Rxy, Rxz,
+   * Ryz, Rkappa for dim3) needed to restart the forward attenuation physics
+   * from this point. Strain (epsilondev) is NOT saved and will be recomputed
+   * from the displacement gradient, matching the Fortran strategy.
+   *
+   * @tparam DimensionTag Spatial dimension (dim2 or dim3)
+   * @param assembly SPECFEM++ assembly
+   * @param istep    Current time step index used to name the on-disk group
+   */
+  template <specfem::element::dimension_tag DimensionTag>
+  void run_with_attenuation(specfem::assembly::assembly<DimensionTag> &assembly,
+                            const int istep);
+
   template <specfem::element::dimension_tag DimensionTag>
   void finalize(specfem::assembly::assembly<DimensionTag> &assembly);
 

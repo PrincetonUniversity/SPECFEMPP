@@ -68,6 +68,13 @@ public:
     return false;
   }
 
+  /**
+   * @brief Returns the time interval between subsequent task executions.
+   *
+   * @return Time interval as number of steps
+   */
+  int get_time_interval() const { return time_interval; }
+
 protected:
   int time_interval;
   bool include_last_step;
