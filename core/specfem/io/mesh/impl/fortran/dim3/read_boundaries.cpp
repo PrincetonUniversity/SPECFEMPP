@@ -181,45 +181,41 @@ specfem::io::mesh::impl::fortran::dim3::read_boundaries(
   int boundary_number;
   std::array<int, 6> nfaces_per_direction;
 
-  // Direction indices used in the binary format
-  // 1=X_MIN, 2=X_MAX, 3=Y_MIN, 4=Y_MAX, 5=Z_MIN, 6=Z_MAX
-  constexpr int Z_MAX_DIR = 6;
-
+  // New databases write boundary-condition flags before the section headers.
+  // Legacy databases start directly with section 1; keep supporting them so
+  // checked-in fixtures and older decomposed meshes remain readable.
+  const auto boundary_start = stream.tellg();
+  bool top_free_surface = true;
+  bool bottom_free_surface = false;
+  bool has_boundary_flags = true;
+  specfem::io::fortran_read_line(stream, &top_free_surface,
+                                 &bottom_free_surface);
   specfem::io::fortran_read_line(stream, &boundary_number,
                                  &nfaces_per_direction[0]);
+
+  if (boundary_number != 1) {
+    has_boundary_flags = false;
+    top_free_surface = true;
+    bottom_free_surface = false;
+    stream.clear();
+    stream.seekg(boundary_start);
+    specfem::io::fortran_read_line(stream, &boundary_number,
+                                   &nfaces_per_direction[0]);
+  }
+
   if (boundary_number != 1)
     throw std::runtime_error(
         "Invalid database format: expected boundary number 1");
 
-  specfem::io::fortran_read_line(stream, &boundary_number,
-                                 &nfaces_per_direction[1]);
-  if (boundary_number != 2)
-    throw std::runtime_error(
-        "Invalid database format: expected boundary number 2");
-
-  specfem::io::fortran_read_line(stream, &boundary_number,
-                                 &nfaces_per_direction[2]);
-  if (boundary_number != 3)
-    throw std::runtime_error(
-        "Invalid database format: expected boundary number 3");
-
-  specfem::io::fortran_read_line(stream, &boundary_number,
-                                 &nfaces_per_direction[3]);
-  if (boundary_number != 4)
-    throw std::runtime_error(
-        "Invalid database format: expected boundary number 4");
-
-  specfem::io::fortran_read_line(stream, &boundary_number,
-                                 &nfaces_per_direction[4]);
-  if (boundary_number != 5)
-    throw std::runtime_error(
-        "Invalid database format: expected boundary number 5");
-
-  specfem::io::fortran_read_line(stream, &boundary_number,
-                                 &nfaces_per_direction[5]);
-  if (boundary_number != Z_MAX_DIR)
-    throw std::runtime_error(
-        "Invalid database format: expected boundary number 6");
+  // Section indices: 1=X_MIN, 2=X_MAX, 3=Y_MIN, 4=Y_MAX, 5=Z_MIN, 6=Z_MAX
+  for (int dir = 1; dir < 6; ++dir) {
+    specfem::io::fortran_read_line(stream, &boundary_number,
+                                   &nfaces_per_direction[dir]);
+    if (boundary_number != dir + 1)
+      throw std::runtime_error(
+          "Invalid database format: expected boundary number " +
+          std::to_string(dir + 1));
+  }
 
   const int nnodes_on_face = (control_nodes.ngnod == 8) ? 4 : 9;
 
@@ -231,7 +227,10 @@ specfem::io::mesh::impl::fortran::dim3::read_boundaries(
 
   for (int dir = 0; dir < 6; ++dir) {
     const int num_faces = nfaces_per_direction[dir];
-    const bool is_top = (dir + 1 == Z_MAX_DIR);
+    const bool is_free_surface = has_boundary_flags
+                                     ? ((dir == 4 && bottom_free_surface) ||
+                                        (dir == 5 && top_free_surface))
+                                     : (dir == 5);
 
     if (num_faces > 0) {
       for (int iface = 0; iface < num_faces; ++iface) {
@@ -244,7 +243,7 @@ specfem::io::mesh::impl::fortran::dim3::read_boundaries(
         const auto face =
             specfem::io::mesh::impl::fortran::dim3_impl::find_face_from_nodes(
                 control_nodes, element_index - 1, face_nodes);
-        if (is_top) {
+        if (is_free_surface) {
           fs_elements.push_back(element_index - 1);
           fs_faces.push_back(face);
         } else {

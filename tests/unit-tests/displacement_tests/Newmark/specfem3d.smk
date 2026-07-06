@@ -11,12 +11,16 @@ rule specfem3d_solver:
         stations="<cwd>/provenance/fortran/DATA/STATIONS",
     output:
         solver="<cwd>/specfem3d_workdir/fortran/OUTPUT_FILES/output_solver.txt",
+    params:
+        # `cores` is provided by meshfem3d.smk (included above); defaults to 1
+        # for serial tests, set to <nproc> by MPI test Snakefiles.
+        launcher=f"mpirun -n {cores}",
     shell:
         """
             cp -f {input.source} {input.cwd}/DATA/$(basename {input.source})
             cp -f {input.stations} {input.cwd}/DATA/STATIONS
             cd {input.cwd}
-            mpirun -n 1 $SPECFEM3D_BINDIR/xspecfem3D
+            {params.launcher} $SPECFEM3D_BINDIR/xspecfem3D
         """
 
 

@@ -1,0 +1,111 @@
+SPECFEM_BIN = "@CMAKE_BINARY_DIR@/bin/specfem 3d"
+MESHFEM_BIN = "@CMAKE_BINARY_DIR@/bin/xmeshfem3D"
+
+stations = ["A", "B", "C", "D", "E", "F"]
+network_name = ["TEST"]
+vector_components = ["MXX", "MXY", "MXZ"]
+
+displacement_traces = expand(
+    "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/{network}.{station}.S3.{component}.semd",
+    network=network_name,
+    station=stations,
+    component=vector_components,
+)
+velocity_traces = expand(
+    "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/{network}.{station}.S3.{component}.semv",
+    network=network_name,
+    station=stations,
+    component=vector_components,
+)
+acceleration_traces = expand(
+    "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/{network}.{station}.S3.{component}.sema",
+    network=network_name,
+    station=stations,
+    component=vector_components,
+)
+pressure_traces = expand(
+    "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/{network}.{station}.S3.MXP.semp",
+    network=network_name,
+    station=stations,
+)
+
+traces = displacement_traces + velocity_traces + acceleration_traces + pressure_traces
+reference_traces = [
+    trace.replace("/OUTPUT_FILES/results/", "/reference_seismograms/")
+    for trace in traces
+]
+
+rule all:
+    input:
+        traces=traces,
+        reference_traces=reference_traces,
+        geometry="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/geometry.png",
+        displacement_plot="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/displacement_seismograms.png",
+        velocity_plot="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/velocity_seismograms.png",
+        acceleration_plot="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/acceleration_seismograms.png",
+        pressure_plot="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/pressure_seismograms.png",
+    localrule: True
+
+
+rule generate_mesh:
+    input:
+        "@CURRENT_BENCHMARK_BUILD_DIR@/DATA/meshfem3D_files/Mesh_Par_file",
+    output:
+        database="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES/Database.bin",
+        output_meshfem3D="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/output_meshfem3D.txt",
+    localrule: True
+    shell:
+        """
+            mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES
+            {MESHFEM_BIN} -p {input}
+        """
+
+
+rule run_solver:
+    input:
+        database=rules.generate_mesh.output.database,
+        stations="@CURRENT_BENCHMARK_BUILD_DIR@/DATA/STATIONS",
+        source="@CURRENT_BENCHMARK_BUILD_DIR@/source.yaml",
+        config="@CURRENT_BENCHMARK_BUILD_DIR@/specfem_config.yaml",
+    output:
+        traces=traces,
+        log="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/output.log",
+    resources:
+        nodes=1,
+        tasks=1,
+        cpus_per_task=1,
+        runtime=10,
+    params:
+        KOKKOS_TOOLS_LIBS="",
+    shell:
+        """
+            export KOKKOS_TOOLS_LIBS={params.KOKKOS_TOOLS_LIBS}
+            mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results
+            echo "Hostname: $(hostname)" > {output.log}
+            {SPECFEM_BIN} -p {input.config} >> {output.log}
+        """
+
+
+rule plot_seismograms:
+    input:
+        traces=rules.run_solver.output.traces,
+    output:
+        geometry=rules.all.input.geometry,
+        displacement_plot=rules.all.input.displacement_plot,
+        velocity_plot=rules.all.input.velocity_plot,
+        acceleration_plot=rules.all.input.acceleration_plot,
+        pressure_plot=rules.all.input.pressure_plot,
+    localrule: True
+    shell:
+        """
+            cd @CURRENT_BENCHMARK_BUILD_DIR@
+            python3 plot_seismograms.py
+        """
+
+
+rule clean:
+    localrule: True
+    shell:
+        """
+            rm -rf @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES
+        """

@@ -1,0 +1,54 @@
+parameters:
+
+  header:
+    ## Header information is used for logging. It is good practice to give your simulations explicit names
+    title: Acoustic Elastic Force Simulation # name for your simulation
+    # A detailed description for your simulation
+    description: |
+      Material systems : Elastic & Acoustic domain (2)
+      Interfaces : Acoustic-elastic interface (1)
+      Sources : Vertical up force (1)
+      Boundary conditions : Stacey absorbing boundaries on sides and bottom,
+                            free surface at top
+
+  simulation-setup:
+    ## quadrature setup
+    quadrature:
+      quadrature-type: GLL4
+
+    ## Solver setup
+    solver:
+      time-marching:
+        type-of-simulation: forward
+        time-scheme:
+          type: Newmark
+          dt: 0.16
+          nstep: 1500
+
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:
+            format: ascii
+            directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results"
+
+  receivers:
+    stations: "@CURRENT_BENCHMARK_BUILD_DIR@/DATA/STATIONS"
+    angle: 0.0
+    seismogram-type:
+      - displacement
+      - velocity
+      - acceleration
+      - pressure
+    nstep_between_samples: 1
+
+  ## Runtime setup
+  run-setup:
+    number-of-processors: 1
+    number-of-runs: 1
+
+  ## databases
+  databases:
+    mesh-database: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES/Database.bin"
+
+  sources: "@CURRENT_BENCHMARK_BUILD_DIR@/source.yaml"
