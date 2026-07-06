@@ -895,7 +895,7 @@ target_link_libraries(
   resolve_coordinates_tests
   specfem::assembly
   specfem::coordinate_systems
-  gtest_main
+  specfem_environment
 )
 
 add_executable(

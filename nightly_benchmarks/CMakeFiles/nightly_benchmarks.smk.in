@@ -1,4 +1,4 @@
-SPECFEM_BIN = "@CMAKE_BINARY_DIR@/bin/specfem2d"
+SPECFEM_BIN = "@CMAKE_BINARY_DIR@/bin/specfem 2d"
 MESHFEM_BIN = "@CMAKE_BINARY_DIR@/bin/xmeshfem2D"
 
 configfile: "@SPECFEM_NIGHTLY_BENCHMARKS_BUILD_DIR@/nightly_config.yaml"
