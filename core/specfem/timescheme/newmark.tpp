@@ -5,6 +5,10 @@
 #include "specfem/tag_dispatch.hpp"
 #include "specfem/timescheme/newmark.hpp"
 
+#include <ostream>
+#include <sstream>
+#include <string>
+
 template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::simulation::field_type WavefieldType>
@@ -32,8 +36,6 @@ int specfem::time_scheme::newmark_impl::corrector_phase_impl(
       Kokkos::DefaultExecutionSpace>;
 
   specfem::execution::RangeIterator range(parallel_config(), nglob);
-
-  using IndexType = specfem::point::assembly_index<using_simd>;
 
   Kokkos::Profiling::pushRegion("Compute Corrector Phase");
 
@@ -90,8 +92,6 @@ int specfem::time_scheme::newmark_impl::predictor_phase_impl(
 
   specfem::execution::RangeIterator range(parallel_config(), nglob);
 
-  using IndexType = specfem::point::assembly_index<using_simd>;
-
   Kokkos::Profiling::pushRegion("Compute Predictor Phase");
 
   specfem::execution::for_all(
@@ -123,12 +123,14 @@ int specfem::time_scheme::newmark_impl::predictor_phase_impl(
   return nglob * ncomponents;
 }
 
-template <typename AssemblyFields>
-int specfem::time_scheme::newmark<AssemblyFields,
-                                  specfem::simulation::type::forward>::
-    apply_corrector_phase_forward(const specfem::element::medium_tag tag) {
+namespace specfem::time_scheme::newmark_impl {
 
-  constexpr auto wavefield = specfem::simulation::field_type::forward;
+template <typename AssemblyFields,
+          specfem::simulation::field_type WavefieldType>
+int apply_corrector_phase(
+    const specfem::assembly::simulation_field<AssemblyFields::dimension_tag,
+                                              WavefieldType> &field,
+    const specfem::element::medium_tag tag, const type_real deltatover2) {
 
   int result = 0;
   specfem::tag_dispatch::for_each(
@@ -139,18 +141,20 @@ int specfem::time_scheme::newmark<AssemblyFields,
         if (tag == ElementTags::medium_tag) {
           result = specfem::time_scheme::newmark_impl::corrector_phase_impl<
               AssemblyFields::dimension_tag, ElementTags::medium_tag,
-              wavefield>(fields.forward, deltatover2);
+              WavefieldType>(field, deltatover2);
         }
       });
+
   return result;
 }
 
-template <typename AssemblyFields>
-int specfem::time_scheme::newmark<AssemblyFields,
-                                  specfem::simulation::type::forward>::
-    apply_predictor_phase_forward(const specfem::element::medium_tag tag) {
-
-  constexpr auto wavefield = specfem::simulation::field_type::forward;
+template <typename AssemblyFields,
+          specfem::simulation::field_type WavefieldType>
+int apply_predictor_phase(
+    const specfem::assembly::simulation_field<AssemblyFields::dimension_tag,
+                                              WavefieldType> &field,
+    const specfem::element::medium_tag tag, const type_real deltat,
+    const type_real deltatover2, const type_real deltasquareover2) {
 
   int result = 0;
   specfem::tag_dispatch::for_each(
@@ -161,10 +165,46 @@ int specfem::time_scheme::newmark<AssemblyFields,
         if (tag == ElementTags::medium_tag) {
           result = specfem::time_scheme::newmark_impl::predictor_phase_impl<
               AssemblyFields::dimension_tag, ElementTags::medium_tag,
-              wavefield>(fields.forward, deltat, deltatover2, deltasquareover2);
+              WavefieldType>(field, deltat, deltatover2, deltasquareover2);
         }
       });
+
   return result;
+}
+
+std::string to_string(const std::string &simulation_type,
+                      const type_real deltat, const type_real t0) {
+  std::ostringstream message;
+  message << "  Time Scheme:\n"
+          << "------------------------------\n"
+          << "- Newmark\n"
+          << "    simulation type = " << simulation_type << "\n"
+          << "    dt = " << deltat << "\n"
+          << "    Start time = " << t0 << "\n";
+
+  return message.str();
+}
+
+} // namespace specfem::time_scheme::newmark_impl
+
+template <typename AssemblyFields>
+int specfem::time_scheme::newmark<AssemblyFields,
+                                  specfem::simulation::type::forward>::
+    apply_corrector_phase_forward(const specfem::element::medium_tag tag) {
+
+  return specfem::time_scheme::newmark_impl::apply_corrector_phase<
+      AssemblyFields, specfem::simulation::field_type::forward>(
+      fields.forward, tag, deltatover2);
+}
+
+template <typename AssemblyFields>
+int specfem::time_scheme::newmark<AssemblyFields,
+                                  specfem::simulation::type::forward>::
+    apply_predictor_phase_forward(const specfem::element::medium_tag tag) {
+
+  return specfem::time_scheme::newmark_impl::apply_predictor_phase<
+      AssemblyFields, specfem::simulation::field_type::forward>(
+      fields.forward, tag, deltat, deltatover2, deltasquareover2);
 }
 
 template <typename AssemblyFields>
@@ -172,21 +212,9 @@ int specfem::time_scheme::newmark<AssemblyFields,
                                   specfem::simulation::type::combined>::
     apply_corrector_phase_forward(const specfem::element::medium_tag tag) {
 
-  constexpr auto wavefield = specfem::simulation::field_type::adjoint;
-
-  int result = 0;
-  specfem::tag_dispatch::for_each(
-      specfem::tag_dispatch::dimension_set<AssemblyFields::dimension_tag>{} *
-          MEDIUM_SET(elastic, elastic_psv, elastic_sh, acoustic, poroelastic,
-                     elastic_psv_t),
-      [&]<typename ElementTags>() {
-        if (tag == ElementTags::medium_tag) {
-          result = specfem::time_scheme::newmark_impl::corrector_phase_impl<
-              AssemblyFields::dimension_tag, ElementTags::medium_tag,
-              wavefield>(fields.adjoint, deltatover2);
-        }
-      });
-  return result;
+  return specfem::time_scheme::newmark_impl::apply_corrector_phase<
+      AssemblyFields, specfem::simulation::field_type::adjoint>(
+      fields.adjoint, tag, deltatover2);
 }
 
 template <typename AssemblyFields>
@@ -194,21 +222,9 @@ int specfem::time_scheme::newmark<AssemblyFields,
                                   specfem::simulation::type::combined>::
     apply_corrector_phase_backward(const specfem::element::medium_tag tag) {
 
-  constexpr auto wavefield = specfem::simulation::field_type::backward;
-
-  int result = 0;
-  specfem::tag_dispatch::for_each(
-      specfem::tag_dispatch::dimension_set<AssemblyFields::dimension_tag>{} *
-          MEDIUM_SET(elastic, elastic_psv, elastic_sh, acoustic, elastic_psv_t,
-                     poroelastic),
-      [&]<typename ElementTags>() {
-        if (tag == ElementTags::medium_tag) {
-          result = specfem::time_scheme::newmark_impl::corrector_phase_impl<
-              AssemblyFields::dimension_tag, ElementTags::medium_tag,
-              wavefield>(fields.backward, -1.0 * deltatover2);
-        }
-      });
-  return result;
+  return specfem::time_scheme::newmark_impl::apply_corrector_phase<
+      AssemblyFields, specfem::simulation::field_type::backward>(
+      fields.backward, tag, -1.0 * deltatover2);
 }
 
 template <typename AssemblyFields>
@@ -216,21 +232,9 @@ int specfem::time_scheme::newmark<AssemblyFields,
                                   specfem::simulation::type::combined>::
     apply_predictor_phase_forward(const specfem::element::medium_tag tag) {
 
-  constexpr auto wavefield = specfem::simulation::field_type::adjoint;
-
-  int result = 0;
-  specfem::tag_dispatch::for_each(
-      specfem::tag_dispatch::dimension_set<AssemblyFields::dimension_tag>{} *
-          MEDIUM_SET(elastic, elastic_psv, elastic_sh, acoustic, poroelastic,
-                     elastic_psv_t),
-      [&]<typename ElementTags>() {
-        if (tag == ElementTags::medium_tag) {
-          result = specfem::time_scheme::newmark_impl::predictor_phase_impl<
-              AssemblyFields::dimension_tag, ElementTags::medium_tag,
-              wavefield>(fields.adjoint, deltat, deltatover2, deltasquareover2);
-        }
-      });
-  return result;
+  return specfem::time_scheme::newmark_impl::apply_predictor_phase<
+      AssemblyFields, specfem::simulation::field_type::adjoint>(
+      fields.adjoint, tag, deltat, deltatover2, deltasquareover2);
 }
 
 template <typename AssemblyFields>
@@ -238,22 +242,10 @@ int specfem::time_scheme::newmark<AssemblyFields,
                                   specfem::simulation::type::combined>::
     apply_predictor_phase_backward(const specfem::element::medium_tag tag) {
 
-  constexpr auto wavefield = specfem::simulation::field_type::backward;
-
-  int result = 0;
-  specfem::tag_dispatch::for_each(
-      specfem::tag_dispatch::dimension_set<AssemblyFields::dimension_tag>{} *
-          MEDIUM_SET(elastic, elastic_psv, elastic_sh, acoustic, poroelastic,
-                     elastic_psv_t),
-      [&]<typename ElementTags>() {
-        if (tag == ElementTags::medium_tag) {
-          result = specfem::time_scheme::newmark_impl::predictor_phase_impl<
-              AssemblyFields::dimension_tag, ElementTags::medium_tag,
-              wavefield>(fields.backward, -1.0 * deltat, -1.0 * deltatover2,
-                         deltasquareover2);
-        }
-      });
-  return result;
+  return specfem::time_scheme::newmark_impl::apply_predictor_phase<
+      AssemblyFields, specfem::simulation::field_type::backward>(
+      fields.backward, tag, -1.0 * deltat, -1.0 * deltatover2,
+      deltasquareover2);
 }
 
 template <typename AssemblyFields>
@@ -261,21 +253,9 @@ int specfem::time_scheme::newmark<AssemblyFields,
                                   specfem::simulation::type::combined_undoatt>::
     apply_corrector_phase_forward(const specfem::element::medium_tag tag) {
 
-  constexpr auto wavefield = specfem::simulation::field_type::forward;
-
-  int result = 0;
-  specfem::tag_dispatch::for_each(
-      specfem::tag_dispatch::dimension_set<AssemblyFields::dimension_tag>{} *
-          MEDIUM_SET(elastic, elastic_psv, elastic_sh, acoustic, poroelastic,
-                     elastic_psv_t),
-      [&]<typename ElementTags>() {
-        if (tag == ElementTags::medium_tag) {
-          result = specfem::time_scheme::newmark_impl::corrector_phase_impl<
-              AssemblyFields::dimension_tag, ElementTags::medium_tag,
-              wavefield>(fields.forward, deltatover2);
-        }
-      });
-  return result;
+  return specfem::time_scheme::newmark_impl::apply_corrector_phase<
+      AssemblyFields, specfem::simulation::field_type::forward>(
+      fields.forward, tag, deltatover2);
 }
 
 template <typename AssemblyFields>
@@ -283,21 +263,9 @@ int specfem::time_scheme::newmark<AssemblyFields,
                                   specfem::simulation::type::combined_undoatt>::
     apply_predictor_phase_forward(const specfem::element::medium_tag tag) {
 
-  constexpr auto wavefield = specfem::simulation::field_type::forward;
-
-  int result = 0;
-  specfem::tag_dispatch::for_each(
-      specfem::tag_dispatch::dimension_set<AssemblyFields::dimension_tag>{} *
-          MEDIUM_SET(elastic, elastic_psv, elastic_sh, acoustic, poroelastic,
-                     elastic_psv_t),
-      [&]<typename ElementTags>() {
-        if (tag == ElementTags::medium_tag) {
-          result = specfem::time_scheme::newmark_impl::predictor_phase_impl<
-              AssemblyFields::dimension_tag, ElementTags::medium_tag,
-              wavefield>(fields.forward, deltat, deltatover2, deltasquareover2);
-        }
-      });
-  return result;
+  return specfem::time_scheme::newmark_impl::apply_predictor_phase<
+      AssemblyFields, specfem::simulation::field_type::forward>(
+      fields.forward, tag, deltat, deltatover2, deltasquareover2);
 }
 
 template <typename AssemblyFields>
@@ -305,21 +273,9 @@ int specfem::time_scheme::newmark<AssemblyFields,
                                   specfem::simulation::type::combined_undoatt>::
     apply_corrector_phase_adjoint(const specfem::element::medium_tag tag) {
 
-  constexpr auto wavefield = specfem::simulation::field_type::adjoint;
-
-  int result = 0;
-  specfem::tag_dispatch::for_each(
-      specfem::tag_dispatch::dimension_set<AssemblyFields::dimension_tag>{} *
-          MEDIUM_SET(elastic, elastic_psv, elastic_sh, acoustic, poroelastic,
-                     elastic_psv_t),
-      [&]<typename ElementTags>() {
-        if (tag == ElementTags::medium_tag) {
-          result = specfem::time_scheme::newmark_impl::corrector_phase_impl<
-              AssemblyFields::dimension_tag, ElementTags::medium_tag,
-              wavefield>(fields.adjoint, deltatover2);
-        }
-      });
-  return result;
+  return specfem::time_scheme::newmark_impl::apply_corrector_phase<
+      AssemblyFields, specfem::simulation::field_type::adjoint>(
+      fields.adjoint, tag, deltatover2);
 }
 
 template <typename AssemblyFields>
@@ -327,37 +283,16 @@ int specfem::time_scheme::newmark<AssemblyFields,
                                   specfem::simulation::type::combined_undoatt>::
     apply_predictor_phase_adjoint(const specfem::element::medium_tag tag) {
 
-  constexpr auto wavefield = specfem::simulation::field_type::adjoint;
-
-  int result = 0;
-  specfem::tag_dispatch::for_each(
-      specfem::tag_dispatch::dimension_set<AssemblyFields::dimension_tag>{} *
-          MEDIUM_SET(elastic, elastic_psv, elastic_sh, acoustic, poroelastic,
-                     elastic_psv_t),
-      [&]<typename ElementTags>() {
-        if (tag == ElementTags::medium_tag) {
-          result = specfem::time_scheme::newmark_impl::predictor_phase_impl<
-              AssemblyFields::dimension_tag, ElementTags::medium_tag,
-              wavefield>(fields.adjoint, deltat, deltatover2, deltasquareover2);
-        }
-      });
-  return result;
+  return specfem::time_scheme::newmark_impl::apply_predictor_phase<
+      AssemblyFields, specfem::simulation::field_type::adjoint>(
+      fields.adjoint, tag, deltat, deltatover2, deltasquareover2);
 }
 
 template <typename AssemblyFields>
 std::string specfem::time_scheme::newmark<
     AssemblyFields, specfem::simulation::type::forward>::to_string() const {
-  std::ostringstream message;
-  message << "  Time Scheme:\n"
-          << "------------------------------\n"
-          << "- Newmark\n"
-          << "    simulation type = forward\n"
-          << "    dt = " << this->deltat
-          << "\n"
-          // << "    number of time steps = " << this->nstep << "\n"
-          << "    Start time = " << this->t0 << "\n";
-
-  return message.str();
+  return specfem::time_scheme::newmark_impl::to_string("forward", this->deltat,
+                                                       this->t0);
 }
 
 template <typename AssemblyFields>
@@ -370,17 +305,8 @@ void specfem::time_scheme::newmark<
 template <typename AssemblyFields>
 std::string specfem::time_scheme::newmark<
     AssemblyFields, specfem::simulation::type::combined>::to_string() const {
-  std::ostringstream message;
-  message << "  Time Scheme:\n"
-          << "------------------------------\n"
-          << "- Newmark\n"
-          << "    simulation type = adjoint\n"
-          << "    dt = " << this->deltat
-          << "\n"
-          // << "    number of time steps = " << this->nstep << "\n"
-          << "    Start time = " << this->t0 << "\n";
-
-  return message.str();
+  return specfem::time_scheme::newmark_impl::to_string("adjoint", this->deltat,
+                                                       this->t0);
 }
 
 template <typename AssemblyFields>
@@ -394,15 +320,8 @@ template <typename AssemblyFields>
 std::string specfem::time_scheme::newmark<
     AssemblyFields, specfem::simulation::type::combined_undoatt>::to_string()
     const {
-  std::ostringstream message;
-  message << "  Time Scheme:\n"
-          << "------------------------------\n"
-          << "- Newmark\n"
-          << "    simulation type = combined_undoatt\n"
-          << "    dt = " << this->deltat << "\n"
-          << "    Start time = " << this->t0 << "\n";
-
-  return message.str();
+  return specfem::time_scheme::newmark_impl::to_string("combined_undoatt",
+                                                       this->deltat, this->t0);
 }
 
 template <typename AssemblyFields>
