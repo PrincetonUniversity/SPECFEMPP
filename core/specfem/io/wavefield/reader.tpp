@@ -9,8 +9,9 @@
 
 template <typename IOLibrary>
 specfem::io::wavefield_reader<IOLibrary>::wavefield_reader(
-    const std::string &output_folder)
+    const std::string &output_folder, const bool load_attenuation_value)
     : output_folder(output_folder),
+      load_attenuation_value(load_attenuation_value),
       // Build rank-specific path:
       //   serial:   {output_folder}/ForwardWavefield
       //   parallel: {output_folder}/ForwardWavefield/proc_N
@@ -179,23 +180,16 @@ void specfem::io::wavefield_reader<IOLibrary>::run(
       std::remove_reference_t<decltype(buffer)>::combinations, read_field);
 
   buffer.copy_to_device();
-}
 
-template <typename IOLibrary>
-template <specfem::element::dimension_tag DimensionTag>
-void specfem::io::wavefield_reader<IOLibrary>::run_with_attenuation(
-    specfem::assembly::assembly<DimensionTag> &assembly, const int istep) {
-  // Load kinematic fields into fields.buffer (reuse existing run() path)
-  this->run(assembly, istep);
+  if (!load_attenuation_value) {
+    return;
+  }
 
   // Load attenuation memory variables into assembly.attenuation.
   // The combined_undoatt solver will deep_copy these into its forward
   // attenuation container before replaying the subset, mirroring
   // read_forward_arrays_undoatt() in the Fortran code.
   auto &attenuation = assembly.attenuation;
-
-  typename IOLibrary::Group step_group = file->openGroup(
-      std::string("/Step") + specfem::utilities::to_zero_lead(istep, 6));
 
   specfem::tag_dispatch::for_each(
       attenuation.attenuation_medium_combinations, [&]<typename TagsType>() {
@@ -207,7 +201,7 @@ void specfem::io::wavefield_reader<IOLibrary>::run_with_attenuation(
           return;
 
         typename IOLibrary::Group med_group =
-            step_group.openGroup(specfem::element::to_string(medium_tag));
+            base_group.openGroup(specfem::element::to_string(medium_tag));
         typename IOLibrary::Group att_group =
             med_group.openGroup("Attenuation");
 
