@@ -143,11 +143,12 @@ rule reports:
         lcov=f"{BUILD}/coverage.lcov",
     shell:
         # Test executables are copied flat into <build>/tests/unit-tests
-        # (extension-less); discovery/data files carry extensions and are skipped.
+        # (extension-less, mode 755). The generator's Makefile (mode 644) and the
+        # dotted discovery/data files are skipped via -perm -u+x + ! -name '*.*'.
         """
         objects=()
         while IFS= read -r -d '' f; do objects+=("$f"); done \
-            < <(find {BUILD}/tests/unit-tests -maxdepth 1 -type f ! -name '*.*' -print0)
+            < <(find {BUILD}/tests/unit-tests -maxdepth 1 -type f -perm -u+x ! -name '*.*' -print0)
         if [ ${{#objects[@]}} -eq 0 ]; then
             echo "ERROR: no instrumented test binaries found" >&2; exit 1
         fi
@@ -219,7 +220,7 @@ rule report_html:
         """
         objects=()
         while IFS= read -r -d '' f; do objects+=("$f"); done \
-            < <(find {BUILD}/tests/unit-tests -maxdepth 1 -type f ! -name '*.*' -print0)
+            < <(find {BUILD}/tests/unit-tests -maxdepth 1 -type f -perm -u+x ! -name '*.*' -print0)
         if [ ${{#objects[@]}} -eq 0 ]; then
             echo "ERROR: no instrumented test binaries found" >&2; exit 1
         fi
