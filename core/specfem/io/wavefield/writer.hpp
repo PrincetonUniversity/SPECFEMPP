@@ -11,7 +11,8 @@ namespace io {
  *
  * Template-based writer supporting multiple I/O backends. Saves displacement,
  * velocity, and acceleration fields at specified time steps. Can optionally
- * save boundary values for domain decomposition interfaces.
+ * save adjoint-simulation restart values for domain decomposition interfaces
+ * and attenuation.
  *
  * @tparam OutputLibrary Backend library type (HDF5, ASCII, NPY, NPZ, or ADIOS2)
  */
@@ -29,15 +30,11 @@ public:
    *
    * @param output_folder Path to output location (will be an .h5 file if using
    * HDF5, and a folder if using ASCII)
-   * @param save_boundary_values Whether to checkpoint Stacey/composite boundary
-   * values in finalize()
-   * @param save_attenuation_value Whether attenuation is enabled; when true,
-   * run() also checkpoints the SLS memory variables alongside the kinematic
-   * fields
+   * @param for_adjoint_simulations Whether to checkpoint Stacey/composite
+   * boundary values and attenuation memory variables for adjoint simulations
    */
   wavefield_writer(const std::string &output_folder,
-                   const bool save_boundary_values,
-                   const bool save_attenuation_value);
+                   const bool for_adjoint_simulations);
   ///@}
 
   /**
@@ -55,12 +52,12 @@ public:
    *
    * Saves displacement/velocity/acceleration (or the acoustic potentials) for
    * every medium. When the writer was constructed with
-   * @p save_attenuation_value set, this additionally checkpoints the SLS memory
-   * variables (Rxx, Rxz, Rkappa for dim2; Rxx, Ryy, Rxy, Rxz, Ryz, Rkappa for
-   * dim3) needed by the UNDO_ATTENUATION solver to restart the forward
-   * attenuation physics from this point. Strain (epsilondev) is NOT saved and
-   * will be recomputed from the displacement gradient, matching the Fortran
-   * strategy.
+   * @p for_adjoint_simulations set, this additionally checkpoints the SLS
+   * memory variables (Rxx, Rxz, Rkappa for dim2; Rxx, Ryy, Rxy, Rxz, Ryz,
+   * Rkappa for dim3) needed by the UNDO_ATTENUATION solver to restart the
+   * forward attenuation physics from this point. Strain (epsilondev) is NOT
+   * saved and will be recomputed from the displacement gradient, matching the
+   * Fortran strategy.
    *
    * @tparam DimensionTag Spatial dimension (dim2 or dim3)
    * @param assembly SPECFEM++ assembly
@@ -74,12 +71,11 @@ public:
   void finalize(specfem::assembly::assembly<DimensionTag> &assembly);
 
 private:
-  std::string output_folder; ///< Path to output folder
+  std::string output_folder;    ///< Path to output folder
+  bool for_adjoint_simulations; ///< Whether to checkpoint boundary and
+                                ///< attenuation values for adjoint simulations
   std::string file_path; ///< Rank-specific path to the wavefield file/folder
   typename OutputLibrary::File file;
-  bool save_boundary_values;
-  bool save_attenuation_value; ///< Whether to checkpoint attenuation memory
-                               ///< variables alongside the kinematic fields
 };
 } // namespace io
 } // namespace specfem

@@ -19,32 +19,24 @@ template <specfem::element::dimension_tag DimensionTag,
 class wavefield_reader : public periodic_task<DimensionTag> {
 private:
   specfem::io::wavefield_reader<IOLibrary<specfem::io::read>> reader;
-  bool load_attenuation;
 
 public:
   wavefield_reader(const std::string &output_folder, const int time_interval,
-                   const bool include_last_step,
-                   const bool load_attenuation_value)
+                   const bool include_last_step)
       : periodic_task<DimensionTag>(time_interval, include_last_step),
         reader(specfem::io::wavefield_reader<IOLibrary<specfem::io::read>>(
-            output_folder, load_attenuation_value)),
-        load_attenuation(load_attenuation_value) {}
+            output_folder)) {}
 
   /**
    * @brief Read wavefield data from file
    *
    * When attenuation checkpointing is enabled the SLS memory variables are
    * loaded alongside the kinematic fields; this is handled internally by the
-   * reader based on its load_attenuation_value flag.
+   * reader.
    */
   void run(specfem::assembly::assembly<DimensionTag> &assembly,
            const int istep) override {
-    if (load_attenuation) {
-      specfem::Logger::info("Reading wavefield checkpoint (with attenuation):");
-    } else {
-      specfem::Logger::info("Reading wavefield files:");
-      specfem::Logger::info("------------------------");
-    }
+    specfem::Logger::info("Reading wavefield checkpoint:");
     reader.run(assembly, istep);
   }
 
