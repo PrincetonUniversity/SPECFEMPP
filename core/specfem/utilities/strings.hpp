@@ -78,6 +78,24 @@ std::string trim(const std::string &str);
  */
 std::string format_distance(type_real metres);
 
+/**
+ * @brief Format a floating-point value in scientific notation.
+ *
+ * Produces the scientific ("e") representation of a value with a fixed number
+ * of digits after the decimal point, matching the output of
+ * `std::format("{:.{}e}", value, precision)` without requiring C++20's
+ * `<format>` (which is unavailable on older compilers such as GCC 11).
+ *
+ * @param value Value to format
+ * @param precision Number of digits after the decimal point
+ * @return std::string e.g. "1.000000e+16"
+ *
+ * @code
+ * format_scientific(1.0e16, 6); // Returns "1.000000e+16"
+ * @endcode
+ */
+std::string format_scientific(type_real value, int precision);
+
 BOOST_PP_SEQ_FOR_EACH(_DECLARE_CONFIG_STRING_FUNCTIONS, _, CONFIG_STRINGS)
 
 } // namespace utilities

@@ -81,7 +81,6 @@ pipeline{
                                     sh """
                                         module load cmake/3.30.8
                                         module load boost/1.85.0
-                                        module load gcc-toolset/14
                                         module load ${CUDA_MODULE}
                                         cmake3 -S . -B build_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.BUILD_TAG} \
                                           -DCMAKE_BUILD_TYPE=Release \

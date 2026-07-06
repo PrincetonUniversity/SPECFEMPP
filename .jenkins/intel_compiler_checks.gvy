@@ -64,7 +64,6 @@ pipeline{
                                     sh """
                                         module load cmake/3.30.8
                                         module load boost/1.85.0
-                                        module load gcc-toolset/14
                                         module load ${INTEL_MODULE}
                                         export CC=icx
                                         export CXX=icpx
