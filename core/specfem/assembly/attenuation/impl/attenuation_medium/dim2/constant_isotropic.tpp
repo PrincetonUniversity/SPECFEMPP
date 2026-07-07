@@ -365,6 +365,27 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
   }
 
   /**
+   * @brief Visit each host view the reader recomputes from the on-disk model
+   *        as (host_view, name).
+   *
+   * State derived from the model datasets rather than persisted itself; all
+   * views are element-major domain views. constant_isotropic yields the
+   * per-GLL modulus scale factors and relaxation rates. No-op when there are
+   * no attenuating elements.
+   *
+   * @tparam Fn Callback type invoked as fn(host_view, name)
+   * @param fn Callback invoked for each recomputed view
+   */
+  template <typename Fn> void for_each_recomputed_host_view(Fn &&fn) const {
+    if (element_range.size() == 0)
+      return;
+    fn(h_kappa_scale, std::string("kappa_scale"));
+    fn(h_mu_scale, std::string("mu_scale"));
+    fn(h_kappa_relaxation_rate, std::string("kappa_relaxation_rate"));
+    fn(h_mu_relaxation_rate, std::string("mu_relaxation_rate"));
+  }
+
+  /**
    * @brief Return the view to persist for the named property view.
    *
    * The runtime property buffer stores the unrelaxed moduli (kappa * scale,
