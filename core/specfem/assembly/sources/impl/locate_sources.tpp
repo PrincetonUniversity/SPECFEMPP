@@ -65,7 +65,7 @@ void specfem::assembly::sources_impl::locate_sources(
       // Warn when the recovered local coordinates land outside the reference
       // element beyond a small tolerance; coordinate resolution need not be
       // exact, but a large excursion signals a mislocated source.
-      if (lcoord.outside(type_real(1.001))) {
+      if (specfem::algorithms::outside(lcoord, type_real(1.001))) {
         specfem::Logger::warning(
             "Source " + std::to_string(isrc) + " (" +
                 sources[isrc]->source_name() +

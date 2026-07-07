@@ -100,7 +100,7 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim2>::receivers(
 
     // Warn when the recovered local coordinates land outside the reference
     // element beyond a small tolerance (coordinate resolution is not exact).
-    if (lcoord.outside(type_real(1.001))) {
+    if (specfem::algorithms::outside(lcoord, type_real(1.001))) {
       specfem::Logger::warning(
           "Receiver " + network_name + "." + station_name +
               " located outside its element: " + lcoord.print(),

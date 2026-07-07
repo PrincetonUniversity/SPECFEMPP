@@ -520,6 +520,19 @@ target_link_libraries(
 )
 
 add_executable(
+  inside_outside_tests
+  algorithms/inside_outside_tests.cpp
+)
+
+target_link_libraries(
+  inside_outside_tests
+  specfem::algorithms
+  point
+  gtest_main
+  Kokkos::kokkos
+)
+
+add_executable(
   interpolate_function
   algorithms/interpolate_function/dim2/interpolate_function.cpp
   algorithms/interpolate_function/dim3/interpolate_function.cpp
@@ -932,6 +945,7 @@ set(SERIAL_TEST_TARGETS
   fortranio_test
   enumerations_tests
   gll_tests
+  inside_outside_tests
   interpolate_function
   io_framework_tests
   io_tests

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "locate_point/locate_point_impl.hpp"
+#include "specfem/algorithms/inside_outside.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/mpi.hpp"
@@ -95,7 +96,8 @@ LocatePointResult<DimensionTag> locate_point(
       const type_real dist = specfem::point::distance(coords[i], found_global);
 
       local_lcoords[i] = lcoord;
-      local_priority[i] = lcoord.inside() ? dist : (OUTSIDE_PENALTY + dist);
+      local_priority[i] =
+          specfem::algorithms::inside(lcoord) ? dist : (OUTSIDE_PENALTY + dist);
     } catch (const std::exception &) {
       // Point not in this rank's partition – leave as invalid / max priority.
     }
