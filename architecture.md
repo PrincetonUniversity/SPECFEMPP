@@ -395,7 +395,6 @@ High-level orchestration functions that wire together `algorithms`, `medium_phys
 | Function | Description |
 |---|---|
 | `compute_derivatives` | Compute field spatial derivatives across all elements |
-| `update_wavefields` | Apply computed forces to update acceleration fields |
 | `compute_seismograms` | Sample the wavefield at receiver GLL points |
 | `initialize_mass_matrix` | Assemble the lumped mass matrix |
 
@@ -714,11 +713,11 @@ The following is the canonical execution sequence for a forward simulation (both
 12. solver.run()  ← main time loop
     for each timestep:
         ├── time_scheme.apply_predictor(all media)
-        ├── compute_derivatives + update_wavefields (acoustic)
+        ├── compute_derivatives + update_medium (acoustic)
         ├── time_scheme.apply_corrector(acoustic)
-        ├── compute_derivatives + update_wavefields (elastic)
+        ├── compute_derivatives + update_medium (elastic)
         ├── time_scheme.apply_corrector(elastic)
-        ├── compute_derivatives + update_wavefields (poroelastic)
+        ├── compute_derivatives + update_medium (poroelastic)
         ├── time_scheme.apply_corrector(poroelastic)
         ├── apply boundary conditions
         ├── accumulate seismograms (every nstep_between_samples)
