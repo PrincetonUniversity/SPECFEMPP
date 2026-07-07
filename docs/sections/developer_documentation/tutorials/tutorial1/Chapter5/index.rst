@@ -53,7 +53,6 @@ Point Data Types
 7. Global Coordinates :cpp:class:`specfem::point::global_coordinates`
 8. Local Coordinates :cpp:class:`specfem::point::local_coordinates`
 9. Stress :cpp:class:`specfem::point::stress`
-10. Stress Integrands :cpp:class:`specfem::point::stress_integrands`
 
 Element Data Types
 ^^^^^^^^^^^^^^^^^^
