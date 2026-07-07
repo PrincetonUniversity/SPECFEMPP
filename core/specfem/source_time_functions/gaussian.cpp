@@ -5,7 +5,6 @@
 #include "specfem/utilities.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
-#include <format>
 
 specfem::source_time_functions::Gaussian::Gaussian(
     const int nsteps, const type_real dt, const type_real f0,
@@ -71,13 +70,13 @@ void specfem::source_time_functions::Gaussian::compute_source_time_function(
 
 std::string specfem::source_time_functions::Gaussian::print() const {
   std::ostringstream message;
-  auto format = [](type_real value, int precision) {
-    return std::format("{:.{}e}", value, precision);
-  };
-  message << "Gaussian(t0=" << format(this->t0_, 6)
-          << ", f0=" << format(this->f0_, 6)
-          << ", tshift=" << format(this->tshift_, 6)
-          << ", factor=" << format(this->factor_, 6) << ")";
+  message << "Gaussian(t0="
+          << specfem::utilities::format_scientific(this->t0_, 6)
+          << ", f0=" << specfem::utilities::format_scientific(this->f0_, 6)
+          << ", tshift="
+          << specfem::utilities::format_scientific(this->tshift_, 6)
+          << ", factor="
+          << specfem::utilities::format_scientific(this->factor_, 6) << ")";
   return message.str();
 }
 

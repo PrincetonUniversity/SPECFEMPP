@@ -5,9 +5,9 @@
 #include "specfem/setup.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
+#include "specfem/utilities.hpp"
 #include "yaml-cpp/yaml.h"
 #include <cmath>
-#include <format>
 #include <stdexcept>
 
 std::vector<specfem::element::medium_tag> specfem::sources::moment_tensor<
@@ -79,11 +79,10 @@ specfem::sources::moment_tensor<
 std::string specfem::sources::moment_tensor<
     specfem::element::dimension_tag::dim2>::print_details() const {
   std::ostringstream message;
-  auto format = [](type_real value, int precision) {
-    return std::format("{:.{}e}", value, precision);
-  };
-  message << "(Mxx, Mzz, Mxz) = (" << format(this->Mxx, 6) << ", "
-          << format(this->Mzz, 6) << ", " << format(this->Mxz, 6) << ")";
+  message << "(Mxx, Mzz, Mxz) = ("
+          << specfem::utilities::format_scientific(this->Mxx, 6) << ", "
+          << specfem::utilities::format_scientific(this->Mzz, 6) << ", "
+          << specfem::utilities::format_scientific(this->Mxz, 6) << ")";
   return message.str();
 }
 

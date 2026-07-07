@@ -5,7 +5,6 @@
 #include "specfem/source_time_functions.hpp"
 #include "specfem/utilities.hpp"
 #include <cmath>
-#include <format>
 
 std::vector<specfem::element::medium_tag> specfem::sources::cosserat_force<
     specfem::element::dimension_tag::dim2>::get_supported_media() const {
@@ -46,11 +45,10 @@ specfem::sources::cosserat_force<
 std::string specfem::sources::cosserat_force<
     specfem::element::dimension_tag::dim2>::print_details() const {
   std::ostringstream message;
-  auto format = [](type_real value, int precision) {
-    return std::format("{:.{}e}", value, precision);
-  };
-  message << "(Angle, f, fc) = (" << format(this->angle, 6) << ", "
-          << format(this->f, 6) << ", " << format(this->fc, 6) << ")";
+  message << "(Angle, f, fc) = ("
+          << specfem::utilities::format_scientific(this->angle, 6) << ", "
+          << specfem::utilities::format_scientific(this->f, 6) << ", "
+          << specfem::utilities::format_scientific(this->fc, 6) << ")";
   return message.str();
 }
 

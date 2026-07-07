@@ -6,7 +6,6 @@
 #include "specfem/utilities.hpp"
 #include "yaml-cpp/yaml.h"
 #include <cmath>
-#include <format>
 
 std::vector<specfem::element::medium_tag> specfem::sources::force<
     specfem::element::dimension_tag::dim3>::get_supported_media() const {
@@ -49,11 +48,10 @@ std::string
 specfem::sources::force<specfem::element::dimension_tag::dim3>::print_details()
     const {
   std::ostringstream message;
-  auto format = [](type_real value, int precision) {
-    return std::format("{:.{}e}", value, precision);
-  };
-  message << "(fx, fy, fz) = (" << format(this->fx, 6) << ", "
-          << format(this->fy, 6) << ", " << format(this->fz, 6) << ")";
+  message << "(fx, fy, fz) = ("
+          << specfem::utilities::format_scientific(this->fx, 6) << ", "
+          << specfem::utilities::format_scientific(this->fy, 6) << ", "
+          << specfem::utilities::format_scientific(this->fz, 6) << ")";
   return message.str();
 }
 

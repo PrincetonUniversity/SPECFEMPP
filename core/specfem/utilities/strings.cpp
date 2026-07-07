@@ -1,5 +1,7 @@
 #include "strings.hpp"
 #include <algorithm>
+#include <iomanip>
+#include <sstream>
 
 namespace specfem {
 namespace utilities {
@@ -55,6 +57,14 @@ std::string format_distance(type_real metres) {
   const int mm = static_cast<int>(metres * 1000) % 1000;
   return std::to_string(km) + " km, " + std::to_string(m) + " m, " +
          std::to_string(mm) + " mm";
+}
+
+// Format a floating-point value in scientific notation (pre-C++20 equivalent of
+// std::format("{:.{}e}", value, precision)).
+std::string format_scientific(type_real value, int precision) {
+  std::ostringstream oss;
+  oss << std::scientific << std::setprecision(precision) << value;
+  return oss.str();
 }
 
 BOOST_PP_SEQ_FOR_EACH(_DEFINE_CONFIG_STRING_FUNCTIONS, _, CONFIG_STRINGS)

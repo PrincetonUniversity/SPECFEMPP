@@ -2,9 +2,9 @@
 #include "specfem/setup.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
+#include "specfem/utilities.hpp"
 #include "yaml-cpp/yaml.h"
 #include <cmath>
-#include <format>
 
 std::vector<specfem::element::medium_tag> specfem::sources::moment_tensor<
     specfem::element::dimension_tag::dim3>::get_supported_media() const {
@@ -46,13 +46,13 @@ specfem::sources::moment_tensor<
 std::string specfem::sources::moment_tensor<
     specfem::element::dimension_tag::dim3>::print_details() const {
   std::ostringstream message;
-  auto format = [](type_real value, int precision) {
-    return std::format("{:.{}e}", value, precision);
-  };
-  message << "(Mxx, Myy, Mzz, Mxy, Mxz, Myz) = (" << format(this->Mxx, 6)
-          << ", " << format(this->Myy, 6) << ", " << format(this->Mzz, 6)
-          << ", " << format(this->Mxy, 6) << ", " << format(this->Mxz, 6)
-          << ", " << format(this->Myz, 6) << ")";
+  message << "(Mxx, Myy, Mzz, Mxy, Mxz, Myz) = ("
+          << specfem::utilities::format_scientific(this->Mxx, 6) << ", "
+          << specfem::utilities::format_scientific(this->Myy, 6) << ", "
+          << specfem::utilities::format_scientific(this->Mzz, 6) << ", "
+          << specfem::utilities::format_scientific(this->Mxy, 6) << ", "
+          << specfem::utilities::format_scientific(this->Mxz, 6) << ", "
+          << specfem::utilities::format_scientific(this->Myz, 6) << ")";
   return message.str();
 }
 
