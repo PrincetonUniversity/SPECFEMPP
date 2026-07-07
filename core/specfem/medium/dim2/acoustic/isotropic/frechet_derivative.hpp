@@ -3,7 +3,6 @@
 #include "specfem/element.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
-#include <utility>
 
 namespace specfem {
 namespace medium_physics {

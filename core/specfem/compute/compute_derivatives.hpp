@@ -24,14 +24,14 @@ void compute_derivatives(
     const type_real &dt) {
   specfem::tag_dispatch::for_each(
       specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
-          MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic) *
+          MEDIUM_SET(elastic, elastic_psv, elastic_sh, acoustic, poroelastic) *
           PROPERTY_SET(isotropic, anisotropic) * ATTENUATION_SET(none),
       [&]<typename ElementTags>() {
         impl::compute_material_derivatives<
             NGLL,
             specfem::tags::Tags<Tags::dimension_tag, ElementTags::medium_tag,
                                 ElementTags::property_tag,
-                                specfem::element::attenuation_tag::none> >(
+                                specfem::element::attenuation_tag::none>>(
             assembly, dt);
       });
 }

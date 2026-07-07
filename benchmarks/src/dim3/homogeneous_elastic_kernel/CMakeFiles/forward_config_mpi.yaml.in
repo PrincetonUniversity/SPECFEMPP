@@ -1,0 +1,50 @@
+parameters:
+
+  header:
+    title: Homogeneous Elastic Kernel (3D) - Forward MPI
+    description: |
+      Material systems : Elastic domain (1)
+      Interfaces : None
+      Sources : Force source (1)
+      Boundary conditions : Neumann BCs on all edges
+      Output : Wavefield saved for adjoint simulation
+
+  simulation-setup:
+    quadrature:
+      quadrature-type: GLL4
+
+    solver:
+      time-marching:
+        time-scheme:
+          type: Newmark
+          dt: 0.08
+          nstep: 800
+
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:
+            format: ascii
+            directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results"
+          wavefield:
+            format: NPY
+            directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/ForwardWavefield"
+            for-adjoint-simulations: true
+
+  receivers:
+    stations: "@CURRENT_BENCHMARK_BUILD_DIR@/DATA/STATIONS"
+    angle: 0.0
+    seismogram-type:
+      - displacement
+    nstep_between_samples: 1
+
+  run-setup:
+    number-of-processors: 6
+    number-of-runs: 1
+
+  databases:
+    mesh-database: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES/Database.bin"
+
+  sources: "@CURRENT_BENCHMARK_BUILD_DIR@/forward_source.yaml"
+
+  log-file: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/output_forward"
