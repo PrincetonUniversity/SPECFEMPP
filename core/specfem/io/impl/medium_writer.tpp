@@ -14,19 +14,18 @@
 #include <stdexcept>
 #include <string>
 
-template <typename GroupType, typename ElementIndicesType,
-          typename DataContainerType>
-int specfem::io::impl::write_medium_group(
+template <typename GroupType, typename ElementIndicesType>
+void specfem::io::impl::write_coordinates(
     GroupType &group,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
-    const ElementIndicesType &element_indices,
-    const DataContainerType &data_container) {
+    const ElementIndicesType &element_indices) {
 
   const int ngllz = mesh.element_grid.ngllz;
   const int ngllx = mesh.element_grid.ngllx;
 
   using DomainView =
-      typename DataContainerType::domain_view_type::host_mirror_type;
+      specfem::datatype::DomainView<specfem::element::dimension_tag::dim2,
+                                    type_real, 3, Kokkos::HostSpace>;
 
   const int n_elements = element_indices.size();
   DomainView x("xcoordinates", n_elements, ngllz, ngllx);
@@ -42,13 +41,24 @@ int specfem::io::impl::write_medium_group(
   }
   group.createDataset("X", x).write();
   group.createDataset("Z", z).write();
+}
+
+template <typename GroupType, typename ElementIndicesType,
+          typename DataContainerType>
+int specfem::io::impl::write_medium_group(
+    GroupType &group,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
+    const ElementIndicesType &element_indices,
+    const DataContainerType &data_container) {
+
+  write_coordinates(group, mesh, element_indices);
 
   data_container.for_each_host_view(
       [&](const auto view, const std::string name) mutable {
         group.createDataset(name, view).write();
       });
 
-  return n_elements;
+  return element_indices.size();
 }
 
 template <typename OutputLibrary, typename ContainerType>
@@ -107,13 +117,11 @@ void specfem::io::impl::write_container(
 // dim3 overloads
 // ---------------------------------------------------------------------------
 
-template <typename GroupType, typename ElementIndicesType,
-          typename DataContainerType>
-int specfem::io::impl::write_medium_group(
+template <typename GroupType, typename ElementIndicesType>
+void specfem::io::impl::write_coordinates(
     GroupType &group,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
-    const ElementIndicesType &element_indices,
-    const DataContainerType &data_container) {
+    const ElementIndicesType &element_indices) {
 
   const int ngllz = mesh.element_grid.ngllz;
   const int nglly = mesh.element_grid.nglly;
@@ -122,7 +130,8 @@ int specfem::io::impl::write_medium_group(
   const int n_elements = element_indices.size();
 
   using DomainView3d =
-      typename DataContainerType::domain_view_type::host_mirror_type;
+      specfem::datatype::DomainView<specfem::element::dimension_tag::dim3,
+                                    type_real, 4, Kokkos::HostSpace>;
   DomainView3d x("xcoordinates", n_elements, ngllz, nglly, ngllx);
   DomainView3d y("ycoordinates", n_elements, ngllz, nglly, ngllx);
   DomainView3d z("zcoordinates", n_elements, ngllz, nglly, ngllx);
@@ -142,13 +151,24 @@ int specfem::io::impl::write_medium_group(
   group.createDataset("X", x).write();
   group.createDataset("Y", y).write();
   group.createDataset("Z", z).write();
+}
+
+template <typename GroupType, typename ElementIndicesType,
+          typename DataContainerType>
+int specfem::io::impl::write_medium_group(
+    GroupType &group,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
+    const ElementIndicesType &element_indices,
+    const DataContainerType &data_container) {
+
+  write_coordinates(group, mesh, element_indices);
 
   data_container.for_each_host_view(
       [&](const auto view, const std::string name) mutable {
         group.createDataset(name, view).write();
       });
 
-  return n_elements;
+  return element_indices.size();
 }
 
 template <typename OutputLibrary, typename ContainerType>

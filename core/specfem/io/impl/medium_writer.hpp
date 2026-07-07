@@ -34,6 +34,24 @@ int write_medium_group(
     const ElementIndicesType &element_indices,
     const DataContainerType &data_container);
 
+/**
+ * @brief Write the GLL coordinate datasets ("X"/"Z") for a group of elements.
+ *
+ * Shared between @ref write_medium_group and writers that assemble a group's
+ * datasets themselves (e.g. the attenuation-aware property writer).
+ *
+ * @tparam GroupType Output group type of the I/O backend
+ * @tparam ElementIndicesType Group-local index -> global ispec mapping type
+ * @param group Output group to write coordinate datasets into
+ * @param mesh Simulation mesh providing GLL coordinates
+ * @param element_indices Group-local element index -> global ispec mapping
+ */
+template <typename GroupType, typename ElementIndicesType>
+void write_coordinates(
+    GroupType &group,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
+    const ElementIndicesType &element_indices);
+
 template <typename OutputLibrary, typename ContainerType>
 void write_container(
     const std::string &output_folder, const std::string &output_namespace,
@@ -49,6 +67,22 @@ int write_medium_group(
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
     const ElementIndicesType &element_indices,
     const DataContainerType &data_container);
+
+/**
+ * @brief Write the GLL coordinate datasets ("X"/"Y"/"Z") for a group of
+ *        elements.
+ *
+ * @tparam GroupType Output group type of the I/O backend
+ * @tparam ElementIndicesType Group-local index -> global ispec mapping type
+ * @param group Output group to write coordinate datasets into
+ * @param mesh Simulation mesh providing GLL coordinates
+ * @param element_indices Group-local element index -> global ispec mapping
+ */
+template <typename GroupType, typename ElementIndicesType>
+void write_coordinates(
+    GroupType &group,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
+    const ElementIndicesType &element_indices);
 } // namespace impl
 } // namespace io
 } // namespace specfem

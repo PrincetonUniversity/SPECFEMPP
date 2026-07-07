@@ -158,6 +158,19 @@ void program_3d(
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
+  //               Write properties
+  // --------------------------------------------------------------
+  const auto property_writer = setup.instantiate_property_writer();
+  if (property_writer) {
+    specfem::Logger::info(
+        "Writing model files:\n-------------------------------");
+
+    property_writer->write(assembly);
+    return;
+  }
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
   //                   Read wavefields
   // --------------------------------------------------------------
   const auto wavefield_reader = setup.instantiate_wavefield_reader<

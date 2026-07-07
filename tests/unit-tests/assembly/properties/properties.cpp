@@ -1,4 +1,5 @@
 #include "../test_fixture/test_fixture.hpp"
+#include "specfem/constants.hpp"
 #include "specfem/datatype.hpp"
 #include "specfem/element.hpp"
 #include "specfem/execution.hpp"
@@ -6,12 +7,37 @@
 #include "specfem/macros.hpp"
 #include "specfem/setup.hpp"
 #include "specfem/tag_dispatch.hpp"
+#include <cmath>
 #include <gtest/gtest.h>
+#include <vector>
 
 template <bool using_simd, typename ExecutionSpace>
 using ParallelConfig = specfem::parallel_configuration::default_chunk_config<
     specfem::element::dimension_tag::dim2,
     specfem::datatype::simd<type_real, using_simd>, ExecutionSpace>;
+
+// Compile-time checks of the attenuating-combination predicate used to guard
+// Q I/O in the property writer/reader.
+static_assert(
+    specfem::assembly::Attenuation<specfem::element::dimension_tag::dim2>::
+        has_attenuation<specfem::element::medium_tag::elastic_psv,
+                        specfem::element::property_tag::isotropic>(),
+    "elastic_psv/isotropic must be an attenuating combination in 2D");
+static_assert(
+    !specfem::assembly::Attenuation<specfem::element::dimension_tag::dim2>::
+        has_attenuation<specfem::element::medium_tag::acoustic,
+                        specfem::element::property_tag::isotropic>(),
+    "acoustic must not be an attenuating combination in 2D");
+static_assert(
+    specfem::assembly::Attenuation<specfem::element::dimension_tag::dim3>::
+        has_attenuation<specfem::element::medium_tag::elastic,
+                        specfem::element::property_tag::isotropic>(),
+    "elastic/isotropic must be an attenuating combination in 3D");
+static_assert(
+    !specfem::assembly::Attenuation<specfem::element::dimension_tag::dim3>::
+        has_attenuation<specfem::element::medium_tag::acoustic,
+                        specfem::element::property_tag::isotropic>(),
+    "acoustic must not be an attenuating combination in 3D");
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd,
@@ -390,21 +416,142 @@ TEST_F(Assembly2D, properties_io_routines) {
     boost::filesystem::create_directories(temp_io_directory);
 
     try {
-      // Set all properties to a random value
+      // Helper: iterate the per-GLL attenuation quality factors and modulus
+      // scale factors for any medium that attenuates and has attenuating
+      // elements. No-op for non-attenuating configs (extent == 0). The
+      // callback receives the GLL indices plus mutable refs (Qkappa, Qmu,
+      // kappa_scale, mu_scale).
+      const auto for_each_attenuation_q = [&](auto fn) {
+        specfem::tag_dispatch::for_each(
+            DIMENSION_SET(dim2) *
+                MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
+                           elastic_psv_t) *
+                PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
+            [&]<typename ElementTags>() {
+              constexpr auto medium_tag = ElementTags::medium_tag;
+              constexpr auto property_tag = ElementTags::property_tag;
+              if constexpr (decltype(assembly.attenuation)::
+                                template has_attenuation<medium_tag,
+                                                         property_tag>()) {
+                const auto &att =
+                    assembly.attenuation
+                        .get_container<medium_tag, property_tag>();
+                if (att.h_Qkappa.extent(0) == 0)
+                  return;
+                for (std::size_t i = 0; i < att.h_Qkappa.extent(0); ++i)
+                  for (std::size_t iz = 0; iz < att.h_Qkappa.extent(1); ++iz)
+                    for (std::size_t ix = 0; ix < att.h_Qkappa.extent(2); ++ix)
+                      fn(i, iz, ix, att.h_Qkappa(i, iz, ix),
+                         att.h_Qmu(i, iz, ix), att.h_kappa_scale(i, iz, ix),
+                         att.h_mu_scale(i, iz, ix));
+              }
+            });
+      };
+
+      // Helper: recompute the per-GLL modulus scale factors of every
+      // attenuating medium from its current Q views (mirrors what the reader
+      // does after reading Q from disk).
+      const auto recompute_all_scale_factors = [&]() {
+        specfem::tag_dispatch::for_each(
+            DIMENSION_SET(dim2) *
+                MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
+                           elastic_psv_t) *
+                PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
+            [&]<typename ElementTags>() {
+              constexpr auto medium_tag = ElementTags::medium_tag;
+              constexpr auto property_tag = ElementTags::property_tag;
+              if constexpr (decltype(assembly.attenuation)::
+                                template has_attenuation<medium_tag,
+                                                         property_tag>()) {
+                assembly.attenuation.get_container<medium_tag, property_tag>()
+                    .recompute_scale_factors(assembly.attenuation.fc,
+                                             assembly.attenuation.f0,
+                                             assembly.attenuation.band,
+                                             assembly.attenuation.tau_sigma);
+              }
+            });
+      };
+
+      // Helper: iterate the per-(GLL, SLS) relaxation rates for any
+      // attenuating medium. The callback receives mutable refs (kappa_rate,
+      // mu_rate).
+      const auto for_each_attenuation_rate = [&](auto fn) {
+        specfem::tag_dispatch::for_each(
+            DIMENSION_SET(dim2) *
+                MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
+                           elastic_psv_t) *
+                PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
+            [&]<typename ElementTags>() {
+              constexpr auto medium_tag = ElementTags::medium_tag;
+              constexpr auto property_tag = ElementTags::property_tag;
+              if constexpr (decltype(assembly.attenuation)::
+                                template has_attenuation<medium_tag,
+                                                         property_tag>()) {
+                const auto &att =
+                    assembly.attenuation
+                        .get_container<medium_tag, property_tag>();
+                const auto &kr = att.h_kappa_relaxation_rate;
+                const auto &mr = att.h_mu_relaxation_rate;
+                if (kr.extent(0) == 0)
+                  return;
+                for (std::size_t i = 0; i < kr.extent(0); ++i)
+                  for (std::size_t iz = 0; iz < kr.extent(1); ++iz)
+                    for (std::size_t ix = 0; ix < kr.extent(2); ++ix)
+                      for (std::size_t j = 0; j < kr.extent(3); ++j)
+                        fn(kr(i, iz, ix, j), mr(i, iz, ix, j));
+              }
+            });
+      };
+
+      // Re-set every property buffer (kappa/mu/rho) to a known value, so the
+      // post-read check is meaningful (a no-op reader would otherwise pass).
+      const auto set_all_properties = [&](const type_real offset) {
+        specfem::tag_dispatch::for_each(
+            DIMENSION_SET(dim2) *
+                MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
+                           elastic_psv_t) *
+                PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
+            [&]<typename ElementTags>() {
+              const auto elements = assembly.element_types.get_elements_on_host(
+                  ElementTags::medium_tag, ElementTags::property_tag);
+              set_property_value<ElementTags::medium_tag,
+                                 ElementTags::property_tag, false,
+                                 Kokkos::DefaultHostExecutionSpace>(
+                  elements, assembly, offset);
+            });
+      };
+
+      // Set all properties to a known value (per point: ispec + random_value).
       const type_real random_value = 10.1;
-      specfem::tag_dispatch::for_each(
-          DIMENSION_SET(dim2) *
-              MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
-                         elastic_psv_t) *
-              PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
-          [&]<typename ElementTags>() {
-            const auto elements = assembly.element_types.get_elements_on_host(
-                ElementTags::medium_tag, ElementTags::property_tag);
-            set_property_value<ElementTags::medium_tag,
-                               ElementTags::property_tag, false,
-                               Kokkos::DefaultHostExecutionSpace>(
-                elements, assembly, random_value);
-          });
+      set_all_properties(random_value);
+
+      // Snapshot the attenuation quality factors and scale factors before
+      // writing, and confirm the scale factors are non-trivial (so the
+      // write/read (un)scaling is actually exercised by attenuating configs).
+      std::vector<type_real> saved_qkappa, saved_qmu, saved_kappa_scale,
+          saved_mu_scale;
+      bool any_nontrivial_scale = false;
+      for_each_attenuation_q([&](std::size_t, std::size_t, std::size_t,
+                                 type_real &qkappa, type_real &qmu,
+                                 type_real &kappa_scale, type_real &mu_scale) {
+        saved_qkappa.push_back(qkappa);
+        saved_qmu.push_back(qmu);
+        saved_kappa_scale.push_back(kappa_scale);
+        saved_mu_scale.push_back(mu_scale);
+        if (std::abs(kappa_scale - 1) > 1e-6 || std::abs(mu_scale - 1) > 1e-6)
+          any_nontrivial_scale = true;
+      });
+      if (!saved_kappa_scale.empty())
+        EXPECT_TRUE(any_nontrivial_scale)
+            << "attenuating config should have non-unit modulus scale factors";
+
+      // Snapshot the construction-time relaxation rates so we can confirm the
+      // reader recomputes them from the read-back Q (see check below).
+      std::vector<type_real> saved_kappa_rate, saved_mu_rate;
+      for_each_attenuation_rate([&](type_real &kappa_rate, type_real &mu_rate) {
+        saved_kappa_rate.push_back(kappa_rate);
+        saved_mu_rate.push_back(mu_rate);
+      });
 
       // Copy properties to device
       assembly.properties.copy_to_device();
@@ -415,6 +562,29 @@ TEST_F(Assembly2D, properties_io_routines) {
           writer(temp_io_directory);
 
       writer.write(assembly);
+
+      // Corrupt the host Q views and the scale factors so a successful read
+      // (which re-reads Q and recomputes the scale) is unambiguous.
+      for_each_attenuation_q([&](std::size_t, std::size_t, std::size_t,
+                                 type_real &qkappa, type_real &qmu,
+                                 type_real &kappa_scale, type_real &mu_scale) {
+        qkappa = static_cast<type_real>(-999);
+        qmu = static_cast<type_real>(-999);
+        kappa_scale = static_cast<type_real>(-999);
+        mu_scale = static_cast<type_real>(-999);
+      });
+
+      // Corrupt the relaxation rates too, so the post-read check confirms the
+      // reader recomputed them (rather than leaving the corrupt values).
+      for_each_attenuation_rate([&](type_real &kappa_rate, type_real &mu_rate) {
+        kappa_rate = static_cast<type_real>(-999);
+        mu_rate = static_cast<type_real>(-999);
+      });
+
+      // Corrupt every property buffer too, so a no-op reader would fail the
+      // round-trip check below (the buffer no longer holds random_value).
+      set_all_properties(static_cast<type_real>(-98765));
+      assembly.properties.copy_to_device();
 
       // Create a property reader
       specfem::io::property_reader<
@@ -436,6 +606,161 @@ TEST_F(Assembly2D, properties_io_routines) {
                                  Kokkos::DefaultHostExecutionSpace>(
                 elements, assembly, random_value);
           });
+
+      // Verify the attenuation quality factors round-tripped and that the
+      // reader recomputed the same scale factors from the read-back Q. No-op
+      // (and empty snapshot) for non-attenuating configs.
+      std::size_t q_index = 0;
+      for_each_attenuation_q([&](std::size_t, std::size_t, std::size_t,
+                                 type_real &qkappa, type_real &qmu,
+                                 type_real &kappa_scale, type_real &mu_scale) {
+        EXPECT_NEAR(qkappa, saved_qkappa[q_index], 1e-4);
+        EXPECT_NEAR(qmu, saved_qmu[q_index], 1e-4);
+        EXPECT_NEAR(kappa_scale, saved_kappa_scale[q_index], 1e-4);
+        EXPECT_NEAR(mu_scale, saved_mu_scale[q_index], 1e-4);
+        ++q_index;
+      });
+
+      // Verify the reader recomputed the relaxation rates from the read-back
+      // Q. The relaxation rate is modulus * factor(Q); the moduli were
+      // overwritten, so absolute values differ, but the per-SLS factor ratio
+      // (Q-dependent, modulus-independent) must be preserved -- and the rates
+      // must no longer be the corrupt sentinel.
+      std::vector<type_real> read_kappa_rate, read_mu_rate;
+      for_each_attenuation_rate([&](type_real &kappa_rate, type_real &mu_rate) {
+        read_kappa_rate.push_back(kappa_rate);
+        read_mu_rate.push_back(mu_rate);
+      });
+      ASSERT_EQ(read_kappa_rate.size(), saved_kappa_rate.size());
+      constexpr std::size_t n_sls = specfem::constants::N_SLS;
+      for (std::size_t g = 0; g + n_sls <= read_kappa_rate.size(); g += n_sls) {
+        for (std::size_t j = 0; j < n_sls; ++j) {
+          EXPECT_NE(read_kappa_rate[g + j], static_cast<type_real>(-999));
+          EXPECT_TRUE(std::isfinite(read_kappa_rate[g + j]));
+          EXPECT_TRUE(std::isfinite(read_mu_rate[g + j]));
+          // Per-SLS factor ratio (depends only on Q) preserved across read.
+          if (saved_kappa_rate[g + j] != 0 && saved_kappa_rate[g] != 0)
+            EXPECT_NEAR(read_kappa_rate[g + j] / saved_kappa_rate[g + j],
+                        read_kappa_rate[g] / saved_kappa_rate[g],
+                        std::abs(read_kappa_rate[g] / saved_kappa_rate[g]) *
+                            1e-3);
+          if (saved_mu_rate[g + j] != 0 && saved_mu_rate[g] != 0)
+            EXPECT_NEAR(read_mu_rate[g + j] / saved_mu_rate[g + j],
+                        read_mu_rate[g] / saved_mu_rate[g],
+                        std::abs(read_mu_rate[g] / saved_mu_rate[g]) * 1e-3);
+        }
+      }
+
+      // ---- Phase 2: GLL-varying Q round-trip ----
+      // Q is stored per GLL point precisely so a written model can be edited
+      // GLL-by-GLL. Perturb Q per GLL, recompute the (now GLL-varying) scale
+      // factors, write, corrupt, read back, and verify the reader honours the
+      // per-GLL Q instead of broadcasting the first point of each element.
+      if (!saved_qkappa.empty()) {
+        for_each_attenuation_q([&](std::size_t, std::size_t iz, std::size_t ix,
+                                   type_real &qkappa, type_real &qmu,
+                                   type_real &, type_real &) {
+          const type_real factor = static_cast<type_real>(1) +
+                                   static_cast<type_real>(0.1) *
+                                       static_cast<type_real>((iz + ix) % 2);
+          qkappa *= factor;
+          qmu *= factor;
+        });
+        recompute_all_scale_factors();
+
+        // Reset moduli so the round-trip check is exact, then write.
+        set_all_properties(random_value);
+        assembly.properties.copy_to_device();
+        writer.write(assembly);
+
+        // Snapshot the perturbed per-GLL model, then corrupt everything the
+        // reader must restore.
+        std::vector<type_real> gll_qkappa, gll_qmu, gll_kappa_scale,
+            gll_mu_scale;
+        for_each_attenuation_q(
+            [&](std::size_t, std::size_t, std::size_t, type_real &qkappa,
+                type_real &qmu, type_real &kappa_scale, type_real &mu_scale) {
+              gll_qkappa.push_back(qkappa);
+              gll_qmu.push_back(qmu);
+              gll_kappa_scale.push_back(kappa_scale);
+              gll_mu_scale.push_back(mu_scale);
+              qkappa = static_cast<type_real>(-999);
+              qmu = static_cast<type_real>(-999);
+              kappa_scale = static_cast<type_real>(-999);
+              mu_scale = static_cast<type_real>(-999);
+            });
+        for_each_attenuation_rate(
+            [&](type_real &kappa_rate, type_real &mu_rate) {
+              kappa_rate = static_cast<type_real>(-999);
+              mu_rate = static_cast<type_real>(-999);
+            });
+        set_all_properties(static_cast<type_real>(-98765));
+        assembly.properties.copy_to_device();
+
+        reader.read(assembly);
+
+        // Moduli round-trip exactly (the per-GLL unscale on write and rescale
+        // on read cancel).
+        specfem::tag_dispatch::for_each(
+            DIMENSION_SET(dim2) *
+                MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
+                           elastic_psv_t) *
+                PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
+            [&]<typename ElementTags>() {
+              const auto elements = assembly.element_types.get_elements_on_host(
+                  ElementTags::medium_tag, ElementTags::property_tag);
+              check_property_value<ElementTags::medium_tag,
+                                   ElementTags::property_tag, false,
+                                   Kokkos::DefaultHostExecutionSpace>(
+                  elements, assembly, random_value);
+            });
+
+        // The GLL-varying Q and the scale factors recomputed from it must
+        // round-trip per GLL point.
+        std::size_t gll_index = 0;
+        for_each_attenuation_q(
+            [&](std::size_t, std::size_t, std::size_t, type_real &qkappa,
+                type_real &qmu, type_real &kappa_scale, type_real &mu_scale) {
+              EXPECT_NEAR(qkappa, gll_qkappa[gll_index], 1e-4);
+              EXPECT_NEAR(qmu, gll_qmu[gll_index], 1e-4);
+              EXPECT_NEAR(kappa_scale, gll_kappa_scale[gll_index], 1e-4);
+              EXPECT_NEAR(mu_scale, gll_mu_scale[gll_index], 1e-4);
+              ++gll_index;
+            });
+
+        // The recomputed relaxation rates must vary across the GLL points of
+        // each element: the test moduli are element-constant, so any GLL
+        // variation can only come from the per-GLL Q.
+        specfem::tag_dispatch::for_each(
+            DIMENSION_SET(dim2) *
+                MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
+                           elastic_psv_t) *
+                PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
+            [&]<typename ElementTags>() {
+              constexpr auto medium_tag = ElementTags::medium_tag;
+              constexpr auto property_tag = ElementTags::property_tag;
+              if constexpr (decltype(assembly.attenuation)::
+                                template has_attenuation<medium_tag,
+                                                         property_tag>()) {
+                const auto &att =
+                    assembly.attenuation
+                        .get_container<medium_tag, property_tag>();
+                const auto &kr = att.h_kappa_relaxation_rate;
+                for (std::size_t i = 0; i < kr.extent(0); ++i) {
+                  bool varies = false;
+                  for (std::size_t iz = 0; iz < kr.extent(1) && !varies; ++iz)
+                    for (std::size_t ix = 0; ix < kr.extent(2) && !varies; ++ix)
+                      if (std::abs(kr(i, iz, ix, 0) - kr(i, 0, 0, 0)) >
+                          std::abs(kr(i, 0, 0, 0)) * 1e-6)
+                        varies = true;
+                  EXPECT_TRUE(varies)
+                      << "relaxation rates should vary across GLL points for "
+                         "a GLL-varying Q model (element "
+                      << i << ")";
+                }
+              }
+            });
+      }
 
       std::cout << "-------------------------------------------------------\n"
                 << "\033[0;32m[PASSED]\033[0m " << Test.name << "\n"

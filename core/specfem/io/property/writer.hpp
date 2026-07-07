@@ -46,9 +46,7 @@ public:
    *
    */
   void write(specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
-                 &assembly) override {
-    throw std::runtime_error("3D property writing not yet implemented");
-  };
+                 &assembly) override;
 
 private:
   std::string output_folder; ///< Path to output folder
