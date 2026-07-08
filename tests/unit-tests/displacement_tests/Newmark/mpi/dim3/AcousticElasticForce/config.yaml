@@ -1,0 +1,12 @@
+id : "AcousticElasticForce"
+name : "Acoustic Elastic Interface - Explosive Force (MPI, 4 ranks)"
+description: >
+  Testing newmark time-marching solver on an acoustic-elastic interface. Test is
+  run on 4 MPI processes (2x2 partition) and the gathered seismograms are
+  compared against the single-process Fortran reference traces.
+config:
+  nproc : 4
+  tolerance : 1e-2
+databases:
+  specfem_config: "specfem_config.yaml"
+  traces: "traces"

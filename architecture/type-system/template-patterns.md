@@ -51,7 +51,7 @@ Dead branches are completely removed by the compiler.
 Physics functions are passed as lambdas to `Kokkos::parallel_for` / `Kokkos::parallel_reduce`, enabling transparent GPU offload with no source-level changes:
 
 ```cpp
-Kokkos::parallel_for("update_wavefields", policy,
+Kokkos::parallel_for("update_medium", policy,
     KOKKOS_LAMBDA(const int ielement, const int igll) {
         // Runs on GPU or CPU depending on build
     });

@@ -96,9 +96,12 @@ rule build:
         f"{BUILD}/CMakeCache.txt",
     output:
         touch(BUILD_STAMP),
-    threads: CTEST_JOBS
     shell:
-        "CMAKE_BUILD_PARALLEL_LEVEL={CTEST_JOBS} cmake --build {BUILD}"
+        """
+        echo Number of cores used to build: {CTEST_JOBS}
+        export CMAKE_BUILD_PARALLEL_LEVEL={CTEST_JOBS}
+        cmake --build {BUILD} -j{CTEST_JOBS}
+        """
 
 
 rule test:
@@ -106,20 +109,19 @@ rule test:
         BUILD_STAMP,
     output:
         touch(TEST_STAMP),
-    threads: CTEST_JOBS
     shell:
         # %m-%p names each profile by (binary signature, PID). ctest still runs
         # cases in parallel; %p keeps parallel writers separate, and the shared %m
         # prefix lets the report step group profiles per binary -- which is what
         # avoids the cross-binary hash-collision "mismatched data" in the lcov.
-        # CTEST_PARALLEL_LEVEL sets the parallel width (a space-separated `-j N` is
+        # CTEST_PARALLEL_LEVEL sets the parallel width (a space-separated `-jN` is
         # dropped by ctest >= 3.29, whose -j argument is optional).
         """
         rm -rf {PROFRAW_DIR}
         mkdir -p {PROFRAW_DIR}
-        export CTEST_PARALLEL_LEVEL={CTEST_JOBS}
+        echo Number of cores used to run the tests {CTEST_JOBS}
         LLVM_PROFILE_FILE="$(pwd)/{PROFRAW_DIR}/cov-%m-%p.profraw" \
-            ctest --test-dir {BUILD}/tests/unit-tests --output-on-failure
+            ctest --test-dir {BUILD}/tests/unit-tests --output-on-failure -j{CTEST_JOBS}
         """
 
 
@@ -141,11 +143,12 @@ rule reports:
         lcov=f"{BUILD}/coverage.lcov",
     shell:
         # Test executables are copied flat into <build>/tests/unit-tests
-        # (extension-less); discovery/data files carry extensions and are skipped.
+        # (extension-less, mode 755). The generator's Makefile (mode 644) and the
+        # dotted discovery/data files are skipped via -perm -u+x + ! -name '*.*'.
         """
         objects=()
         while IFS= read -r -d '' f; do objects+=("$f"); done \
-            < <(find {BUILD}/tests/unit-tests -maxdepth 1 -type f ! -name '*.*' -print0)
+            < <(find {BUILD}/tests/unit-tests -maxdepth 1 -type f -perm -u+x ! -name '*.*' -print0)
         if [ ${{#objects[@]}} -eq 0 ]; then
             echo "ERROR: no instrumented test binaries found" >&2; exit 1
         fi
@@ -217,7 +220,7 @@ rule report_html:
         """
         objects=()
         while IFS= read -r -d '' f; do objects+=("$f"); done \
-            < <(find {BUILD}/tests/unit-tests -maxdepth 1 -type f ! -name '*.*' -print0)
+            < <(find {BUILD}/tests/unit-tests -maxdepth 1 -type f -perm -u+x ! -name '*.*' -print0)
         if [ ${{#objects[@]}} -eq 0 ]; then
             echo "ERROR: no instrumented test binaries found" >&2; exit 1
         fi

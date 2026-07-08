@@ -6,6 +6,7 @@
  *
  * This header provides a convenient way to include all algorithms functionality
  * by including the individual algorithm headers.
+ *
  */
 
 /**

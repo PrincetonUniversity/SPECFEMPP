@@ -253,7 +253,6 @@ add_executable(
   point/attenuation_tests.cpp
   point/field_derivatives_tests.cpp
   point/source_tests.cpp
-  point/stress_integrand_tests.cpp
   point/stress_tests.cpp
   # Kernels
   # Dim 2
@@ -740,6 +739,21 @@ target_link_libraries(
 )
 
 add_executable(
+  frechet_derivatives_tests
+  medium/frechet_derivatives/main.cpp
+  medium/frechet_derivatives/dim2/acoustic.cpp
+  medium/frechet_derivatives/dim2/elastic_isotropic.cpp
+  medium/frechet_derivatives/dim2/elastic_anisotropic.cpp
+  medium/frechet_derivatives/dim3/acoustic.cpp
+)
+
+target_link_libraries(
+  frechet_derivatives_tests
+  point
+  gtest_main
+)
+
+add_executable(
   strain_tests
   medium/strain/main.cpp
   medium/strain/dim2/elastic_isotropic.cpp
@@ -909,7 +923,7 @@ target_link_libraries(
   resolve_coordinates_tests
   specfem::assembly
   specfem::coordinate_systems
-  gtest_main
+  specfem_environment
 )
 
 add_executable(
@@ -942,6 +956,7 @@ set(SERIAL_TEST_TARGETS
   displacement_newmark_2d_tests
   displacement_newmark_3d_tests
   element_types_tests
+  frechet_derivatives_tests
   fortranio_test
   enumerations_tests
   gll_tests
