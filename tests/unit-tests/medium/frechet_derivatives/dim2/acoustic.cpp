@@ -28,8 +28,7 @@ TEST(FrechetDerivatives, AcousticIsotropic2D_Basic) {
   using AccelerationType = specfem::point::acceleration<Tags>;
   using DisplacementType = specfem::point::displacement<Tags>;
   using FieldDerivativesType = specfem::point::field_derivatives<Tags>;
-  using KernelsType =
-      specfem::point::kernels<dimension, medium_tag, property_tag, false>;
+  using KernelsType = specfem::point::kernels<Tags>;
 
   const type_real rho_inverse = 2.5;
   const type_real kappa = 8.0;
@@ -90,8 +89,7 @@ TEST(FrechetDerivatives, AcousticIsotropic2D_ZeroFields) {
   using AccelerationType = specfem::point::acceleration<Tags>;
   using DisplacementType = specfem::point::displacement<Tags>;
   using FieldDerivativesType = specfem::point::field_derivatives<Tags>;
-  using KernelsType =
-      specfem::point::kernels<dimension, medium_tag, property_tag, false>;
+  using KernelsType = specfem::point::kernels<Tags>;
 
   const PropertiesType properties(2.5, 8.0);
 
@@ -144,8 +142,7 @@ TEST(FrechetDerivatives, AcousticIsotropic2D_Literal) {
   using AccelerationType = specfem::point::acceleration<Tags>;
   using DisplacementType = specfem::point::displacement<Tags>;
   using FieldDerivativesType = specfem::point::field_derivatives<Tags>;
-  using KernelsType =
-      specfem::point::kernels<dimension, medium_tag, property_tag, false>;
+  using KernelsType = specfem::point::kernels<Tags>;
 
   const type_real rho_inverse = 2.0;
   const type_real kappa = 4.0;
