@@ -226,7 +226,9 @@ void program_3d(
   // --------------------------------------------------------------
   //                   Write Seismograms
   // --------------------------------------------------------------
-  const auto seismogram_writer = setup.instantiate_seismogram_writer();
+  // A UTM-projected mesh uses geographic E/N/Z seismogram channels.
+  const auto seismogram_writer =
+      setup.instantiate_seismogram_writer(!mesh.suppress_utm_projection);
   if (seismogram_writer) {
     specfem::Logger::info("Writing seismogram files.");
     seismogram_writer->write(assembly);
