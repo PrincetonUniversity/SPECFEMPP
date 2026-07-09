@@ -19,8 +19,9 @@ namespace simulation {
  * @brief Simulation execution types.
  */
 enum class type {
-  forward, ///< Forward simulation only
-  combined ///< Combined forward and adjoint simulation
+  forward,         ///< Forward simulation only
+  combined,        ///< Combined forward and adjoint simulation
+  combined_undoatt ///< Adjoint with exact forward replay (UNDO_ATTENUATION)
 };
 
 /**
@@ -122,7 +123,8 @@ inline std::string to_string(specfem::simulation::field_type field) {
 
 /**
  * @brief Simulation type traits template.
- * @tparam SimulationType Simulation type (forward or combined)
+ * @tparam SimulationType Simulation type (forward, combined, or
+ * combined_undoatt)
  */
 template <specfem::simulation::type SimulationType> class simulation;
 
@@ -140,6 +142,19 @@ public:
 template <> class simulation<specfem::simulation::type::combined> {
 public:
   static constexpr auto simulation_type = specfem::simulation::type::combined;
+};
+
+/**
+ * @brief Undo-attenuation simulation type traits.
+ *
+ * Runs a full forward pass (with checkpointing) followed by an adjoint pass
+ * in which the forward wavefield is replayed exactly from saved snapshots,
+ * matching the Fortran UNDO_ATTENUATION_AND_OR_PML strategy.
+ */
+template <> class simulation<specfem::simulation::type::combined_undoatt> {
+public:
+  static constexpr auto simulation_type =
+      specfem::simulation::type::combined_undoatt;
 };
 
 } // namespace simulation

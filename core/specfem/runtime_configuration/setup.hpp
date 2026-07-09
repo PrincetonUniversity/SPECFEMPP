@@ -408,6 +408,31 @@ public:
   }
 
   /**
+   * @brief Resolve a parsed combined run to the appropriate combined variant.
+   *
+   * Combined simulations with attenuating materials use the
+   * exact-forward-replay undo-attenuation algorithm; non-attenuating combined
+   * simulations use the standard backward-reconstruction algorithm.
+   */
+  void resolve_combined_simulation_type(const bool has_attenuation) {
+    if (this->get_simulation_type() != specfem::simulation::type::combined) {
+      return;
+    }
+
+    const auto resolved = has_attenuation
+                              ? specfem::simulation::type::combined_undoatt
+                              : specfem::simulation::type::combined;
+    this->solver->set_simulation_type(resolved);
+    this->time_scheme->set_simulation_type(resolved);
+    if (this->wavefield) {
+      this->wavefield->set_simulation_type(resolved);
+    }
+    if (this->kernel) {
+      this->kernel->set_simulation_type(resolved);
+    }
+  }
+
+  /**
    * @brief Create solver instance with specified parameters.
    *
    * @tparam NGLL Number of Gauss-Lobatto-Legendre points per element dimension
@@ -454,7 +479,9 @@ public:
     return (
         ((this->wavefield != nullptr) &&
          (this->wavefield->is_for_adjoint_simulations())) ||
-        (this->get_simulation_type() == specfem::simulation::type::combined));
+        (this->get_simulation_type() == specfem::simulation::type::combined) ||
+        (this->get_simulation_type() ==
+         specfem::simulation::type::combined_undoatt));
   }
 
   /**

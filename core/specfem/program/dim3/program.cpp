@@ -34,7 +34,6 @@ void program_3d(
   });
 
   // Get simulation parameters
-  const specfem::simulation::type simulation_type = setup.get_simulation_type();
   const type_real dt = setup.get_dt();
   const int nsteps = setup.get_nsteps();
   // --------------------------------------------------------------
@@ -46,6 +45,9 @@ void program_3d(
   auto mesh_start_time = std::chrono::system_clock::now();
   const auto mesh = specfem::io::read_3d_mesh(database_filename,
                                               setup.get_attenuation_setup());
+  setup.resolve_combined_simulation_type(mesh.materials.has_attenuation());
+  const specfem::simulation::type simulation_type = setup.get_simulation_type();
+
   const std::chrono::duration<double> mesh_read_time =
       std::chrono::system_clock::now() - mesh_start_time;
   specfem::Logger::info([&](std::ostringstream &oss) {
