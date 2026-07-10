@@ -55,6 +55,7 @@ public:
   template <specfem::element::dimension_tag DimensionTag>
   void finalize(specfem::assembly::assembly<DimensionTag> &assembly) {}
 
+private:
   /**
    * @brief Open the backing file.
    *
@@ -64,7 +65,6 @@ public:
    */
   void open_file();
 
-private:
   std::string output_folder; ///< Path to output folder
   std::string file_path; ///< Rank-specific path to the wavefield file/folder
   std::optional<typename IOLibrary::File> file; ///< Lazily-opened file object
