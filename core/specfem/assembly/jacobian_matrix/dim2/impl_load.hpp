@@ -7,6 +7,11 @@
 
 namespace specfem::assembly {
 
+/**
+ * @brief Internally load a 2D SIMD Jacobian matrix accessor.
+ *
+ * This is an internal implementation detail and is not part of the public API.
+ */
 template <
     bool on_device, typename IndexType, typename ContainerType,
     typename PointType,
@@ -64,6 +69,11 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_load(const IndexType &index,
   }
 }
 
+/**
+ * @brief Internally load a 2D scalar Jacobian matrix accessor.
+ *
+ * This is an internal implementation detail and is not part of the public API.
+ */
 template <
     bool on_device, typename IndexType, typename ContainerType,
     typename PointType,
