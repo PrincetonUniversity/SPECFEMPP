@@ -30,8 +30,7 @@ TEST(FrechetDerivatives, ElasticAnisotropic2D_PSV_Basic) {
   using AccelerationType = specfem::point::acceleration<Tags>;
   using DisplacementType = specfem::point::displacement<Tags>;
   using FieldDerivativesType = specfem::point::field_derivatives<Tags>;
-  using KernelsType =
-      specfem::point::kernels<dimension, medium_tag, property_tag, false>;
+  using KernelsType = specfem::point::kernels<Tags>;
 
   // c11, c13, c15, c33, c35, c55, c12, c23, c25, rho
   const type_real c11 = 10.0, c13 = 2.0, c15 = 1.0;
@@ -119,8 +118,7 @@ TEST(FrechetDerivatives, ElasticAnisotropic2D_PSV_ZeroFields) {
   using AccelerationType = specfem::point::acceleration<Tags>;
   using DisplacementType = specfem::point::displacement<Tags>;
   using FieldDerivativesType = specfem::point::field_derivatives<Tags>;
-  using KernelsType =
-      specfem::point::kernels<dimension, medium_tag, property_tag, false>;
+  using KernelsType = specfem::point::kernels<Tags>;
 
   const PropertiesType properties(10.0, 2.0, 1.0, 20.0, 3.0, 5.0, 1.0, 2.0, 3.0,
                                   4.0);

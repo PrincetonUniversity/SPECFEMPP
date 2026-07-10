@@ -104,6 +104,12 @@ public:
   std::vector<specfem::element::medium_tag>
   get_supported_media() const override;
 
+  std::string print_details() const override {
+    std::ostringstream message;
+    message << this->network_name << "." << this->station_name;
+    return message.str();
+  }
+
 private:
   std::string station_name;
   std::string network_name;

@@ -25,8 +25,7 @@ TEST(FrechetDerivatives, AcousticIsotropic3D_Basic) {
   using AccelerationType = specfem::point::acceleration<Tags>;
   using DisplacementType = specfem::point::displacement<Tags>;
   using FieldDerivativesType = specfem::point::field_derivatives<Tags>;
-  using KernelsType =
-      specfem::point::kernels<dimension, medium_tag, property_tag, false>;
+  using KernelsType = specfem::point::kernels<Tags>;
 
   const type_real rho_inverse = 2.0;
   const type_real kappa = 5.0;
@@ -86,8 +85,7 @@ TEST(FrechetDerivatives, AcousticIsotropic3D_ZeroFields) {
   using AccelerationType = specfem::point::acceleration<Tags>;
   using DisplacementType = specfem::point::displacement<Tags>;
   using FieldDerivativesType = specfem::point::field_derivatives<Tags>;
-  using KernelsType =
-      specfem::point::kernels<dimension, medium_tag, property_tag, false>;
+  using KernelsType = specfem::point::kernels<Tags>;
 
   const PropertiesType properties(2.0, 5.0);
 

@@ -73,6 +73,8 @@ public:
 
   type_real get_factor() const { return this->factor_; }
 
+  type_real get_denominator() const { return this->denom_; }
+
   type_real get_hdur() const { return this->hdur_; }
   int get_nsteps() const { return this->nsteps_; }
   bool get_use_trick_for_better_pressure() const {
@@ -91,12 +93,13 @@ public:
   bool operator!=(const stf &other) const override;
 
 private:
-  int nsteps_;                         ///< Number of time steps
-  type_real hdur_;                     ///< Half duration
-  type_real tshift_;                   ///< Time shift value
-  type_real t0_;                       ///< Start time
-  type_real t0_factor_;                ///< Start time computation factor
-  type_real factor_;                   ///< Scaling factor
+  int nsteps_;          ///< Number of time steps
+  type_real hdur_;      ///< Half duration
+  type_real denom_;     ///< Denominator triangle half duration -> Gaussian
+  type_real tshift_;    ///< Time shift value
+  type_real t0_;        ///< Start time
+  type_real t0_factor_; ///< Start time computation factor
+  type_real factor_;    ///< Scaling factor
   bool use_trick_for_better_pressure_; ///< Pressure optimization flag
   type_real dt_;                       ///< Time step size
 };

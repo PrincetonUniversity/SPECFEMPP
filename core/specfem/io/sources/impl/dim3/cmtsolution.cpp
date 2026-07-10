@@ -131,9 +131,8 @@ specfem::io::sources_impl::read<specfem::element::dimension_tag::dim3,
     };
 
     // Construct STF and source
-    auto stf_ptr =
-        std::make_unique<specfem::source_time_functions::GaussianHdur>(
-            nsteps, dt, hdur, tshift, 1.0, false);
+    auto stf_ptr = std::make_unique<specfem::source_time_functions::Heaviside>(
+        nsteps, dt, hdur, tshift, 1.0, false);
 
     auto src = std::make_shared<specfem::sources::moment_tensor<dim3>>(
         std::move(coords), to_Nm(Mxx), to_Nm(Myy), to_Nm(Mzz), to_Nm(Mxy),

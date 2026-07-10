@@ -59,7 +59,7 @@ void program_3d(
   const auto quadrature = setup.instantiate_quadrature();
   specfem::Logger::info([&](std::ostringstream &oss) {
     oss << "Quadrature:\n"
-        << "-------------------------------\n"
+        << "-----------\n"
         << quadrature.to_string();
   });
   // --------------------------------------------------------------
@@ -73,6 +73,7 @@ void program_3d(
           simulation_type);
   setup.update_t0(t0); // Update t0 in case it was changed
   setup.set_starttime(starttime);
+  // --------------------------------------------------------------
 
   // --------------------------------------------------------------
   //                   Get receivers
@@ -80,12 +81,14 @@ void program_3d(
   // A UTM-projected mesh implies geographic STATIONS coordinates.
   auto receivers = specfem::io::read_3d_receivers(
       setup.get_stations(), !mesh.suppress_utm_projection);
+  // --------------------------------------------------------------
 
   // --------------------------------------------------------------
   //                   Generate Assembly
   // --------------------------------------------------------------
-  specfem::Logger::info(
-      "Generating Assembly:\n-------------------------------");
+  specfem::Logger::info("Generating Assembly:");
+  specfem::Logger::info("====================");
+  specfem::Logger::info("\n");
   const int max_seismogram_time_step = setup.get_max_seismogram_step();
   const int nstep_between_samples = setup.get_nstep_between_samples();
   specfem::assembly::assembly<specfem::element::dimension_tag::dim3> assembly(
@@ -95,25 +98,31 @@ void program_3d(
       setup.allocate_boundary_values(), setup.instantiate_property_reader(),
       setup.get_flux_scheme_configuration());
 
+  // assembly.print() always called (not wrapped in lambda function)
+  // because it requires collective communication
+  specfem::Logger::info(assembly.print());
+
+  // Sources and receivers are printed after assembly so that resolved
+  // coordinates, the owning partition, and the location error are populated.
   specfem::Logger::info([&](std::ostringstream &oss) {
     oss << "Source Information:\n"
-        << "---------------------\n"
+        << "-------------------------\n"
         << "Number of sources : " << sources.size() << "\n";
     for (auto &source : sources) {
       oss << source->print();
     }
+    oss << "\n";
+  });
 
+  specfem::Logger::info([&](std::ostringstream &oss) {
     oss << "Receiver Information:\n"
-        << "---------------------\n"
+        << "---------------------------\n"
         << "Number of receivers : " << receivers.size() << "\n";
     for (auto &receiver : receivers) {
       oss << receiver->print();
     }
+    oss << "\n";
   });
-
-  // assembly.print() always called (not wrapped in lambda function)
-  // because it requires collective communication
-  specfem::Logger::info(assembly.print());
 
   // --------------------------------------------------------------
 
@@ -217,7 +226,9 @@ void program_3d(
   // --------------------------------------------------------------
   //                   Write Seismograms
   // --------------------------------------------------------------
-  const auto seismogram_writer = setup.instantiate_seismogram_writer();
+  // A UTM-projected mesh uses geographic E/N/Z seismogram channels.
+  const auto seismogram_writer =
+      setup.instantiate_seismogram_writer(!mesh.suppress_utm_projection);
   if (seismogram_writer) {
     specfem::Logger::info("Writing seismogram files.");
     seismogram_writer->write(assembly);

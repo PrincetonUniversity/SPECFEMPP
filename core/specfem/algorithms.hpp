@@ -24,6 +24,7 @@ namespace specfem::algorithms {}
 #include "algorithms/coupling_integral.hpp"
 #include "algorithms/divergence.hpp"
 #include "algorithms/gradient.hpp"
+#include "algorithms/inside_outside.hpp"
 #include "algorithms/interpolate.hpp"
 #include "algorithms/locate_point.hpp"
 #include "algorithms/scatter.hpp"

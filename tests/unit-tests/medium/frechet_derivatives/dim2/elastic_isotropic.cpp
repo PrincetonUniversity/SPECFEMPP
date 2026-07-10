@@ -29,8 +29,7 @@ TEST(FrechetDerivatives, ElasticIsotropic2D_PSV_Basic) {
   using AccelerationType = specfem::point::acceleration<Tags>;
   using DisplacementType = specfem::point::displacement<Tags>;
   using FieldDerivativesType = specfem::point::field_derivatives<Tags>;
-  using KernelsType =
-      specfem::point::kernels<dimension, medium_tag, property_tag, false>;
+  using KernelsType = specfem::point::kernels<Tags>;
 
   const type_real kappa = 2.0;
   const type_real mu = 3.0;
@@ -118,8 +117,7 @@ TEST(FrechetDerivatives, ElasticIsotropic2D_PSV_ZeroFields) {
   using AccelerationType = specfem::point::acceleration<Tags>;
   using DisplacementType = specfem::point::displacement<Tags>;
   using FieldDerivativesType = specfem::point::field_derivatives<Tags>;
-  using KernelsType =
-      specfem::point::kernels<dimension, medium_tag, property_tag, false>;
+  using KernelsType = specfem::point::kernels<Tags>;
 
   const PropertiesType properties(2.0, 3.0, 4.0);
 
@@ -179,8 +177,7 @@ TEST(FrechetDerivatives, ElasticIsotropic2D_PSV_Literal) {
   using AccelerationType = specfem::point::acceleration<Tags>;
   using DisplacementType = specfem::point::displacement<Tags>;
   using FieldDerivativesType = specfem::point::field_derivatives<Tags>;
-  using KernelsType =
-      specfem::point::kernels<dimension, medium_tag, property_tag, false>;
+  using KernelsType = specfem::point::kernels<Tags>;
 
   const PropertiesType properties(3.0, 3.0, 2.0);
 
@@ -246,8 +243,7 @@ TEST(FrechetDerivatives, ElasticIsotropic2D_SH_Basic) {
   using AccelerationType = specfem::point::acceleration<Tags>;
   using DisplacementType = specfem::point::displacement<Tags>;
   using FieldDerivativesType = specfem::point::field_derivatives<Tags>;
-  using KernelsType =
-      specfem::point::kernels<dimension, medium_tag, property_tag, false>;
+  using KernelsType = specfem::point::kernels<Tags>;
 
   const type_real kappa = 2.0;
   const type_real mu = 3.0;
@@ -310,8 +306,7 @@ TEST(FrechetDerivatives, ElasticIsotropic2D_SH_ZeroFields) {
   using AccelerationType = specfem::point::acceleration<Tags>;
   using DisplacementType = specfem::point::displacement<Tags>;
   using FieldDerivativesType = specfem::point::field_derivatives<Tags>;
-  using KernelsType =
-      specfem::point::kernels<dimension, medium_tag, property_tag, false>;
+  using KernelsType = specfem::point::kernels<Tags>;
 
   const PropertiesType properties(2.0, 3.0, 2.0);
 
