@@ -91,9 +91,9 @@ specfem::algorithms::project_onto_surface(
                    Kokkos::HostSpace>
           coorg("specfem::algorithms::project_onto_surface::coorg", mesh.ngnod);
       for (int i = 0; i < mesh.ngnod; ++i) {
-        coorg(i).x = mesh.h_control_node_coordinates(0, compute_ispec, i);
-        coorg(i).y = mesh.h_control_node_coordinates(1, compute_ispec, i);
-        coorg(i).z = mesh.h_control_node_coordinates(2, compute_ispec, i);
+        coorg(i).x = mesh.h_control_node_coordinates(compute_ispec, i, 0);
+        coorg(i).y = mesh.h_control_node_coordinates(compute_ispec, i, 1);
+        coorg(i).z = mesh.h_control_node_coordinates(compute_ispec, i, 2);
       }
 
       type_real xi = 0, eta = 0, gamma = 0;

@@ -50,7 +50,8 @@ specfem::runtime_configuration::seismogram::instantiate_seismogram_writer(
     const specfem::enums::elastic_wave elastic_wave,
     const specfem::enums::electromagnetic_wave electromagnetic_wave,
     const type_real dt, const type_real t0, const int nstep_between_samples,
-    std::optional<specfem::datetime::type> starttime) const {
+    std::optional<specfem::datetime::type> starttime,
+    const bool utm_mesh) const {
 
   const auto type = [&]() {
     if (specfem::utilities::is_su_string(this->output_format)) {
@@ -68,7 +69,7 @@ specfem::runtime_configuration::seismogram::instantiate_seismogram_writer(
   std::shared_ptr<specfem::io::writer> writer =
       std::make_shared<specfem::io::seismogram_writer>(
           type, elastic_wave, electromagnetic_wave, this->output_folder, dt, t0,
-          nstep_between_samples, starttime, this->write_from_main);
+          nstep_between_samples, starttime, this->write_from_main, utm_mesh);
 
   return writer;
 }

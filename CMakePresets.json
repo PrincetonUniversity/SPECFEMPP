@@ -242,7 +242,6 @@
       "displayName": "Coverage -- LLVM source-based (Clang)",
       "description": "Instrumented Clang build for llvm-cov. Unity OFF, serial, no benchmarks/VTK.",
       "binaryDir": "build/coverage",
-      "generator": "Ninja",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "CMAKE_C_COMPILER": "clang",
@@ -250,14 +249,14 @@
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/coverage",
         "Kokkos_ENABLE_ATOMICS_BYPASS": "ON",
         "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
+        "Kokkos_ENABLE_ARCH_NATIVE": "ON",
         "SPECFEM_ENABLE_COVERAGE": "ON",
         "SPECFEM_BUILD_TESTS": "ON",
         "SPECFEM_ENABLE_SIMD": "ON",
         "SPECFEM_ENABLE_MPI": "OFF",
         "SPECFEM_ENABLE_UNITY_BUILD": "OFF",
         "SPECFEM_ENABLE_VTK": "OFF",
-        "SPECFEM_BUILD_BENCHMARKS": "OFF",
-        "Kokkos_ARCH_NATIVE": "ON"
+        "SPECFEM_BUILD_BENCHMARKS": "OFF"
       }
     }
   ],

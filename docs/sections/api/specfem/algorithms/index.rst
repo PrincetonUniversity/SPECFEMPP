@@ -11,6 +11,7 @@
 
     divergence
     gradient
+    inside_outside
     interpolate
     locate_point
     transfer

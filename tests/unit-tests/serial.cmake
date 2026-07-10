@@ -253,7 +253,6 @@ add_executable(
   point/attenuation_tests.cpp
   point/field_derivatives_tests.cpp
   point/source_tests.cpp
-  point/stress_integrand_tests.cpp
   point/stress_tests.cpp
   # Kernels
   # Dim 2
@@ -520,6 +519,19 @@ target_link_libraries(
 )
 
 add_executable(
+  inside_outside_tests
+  algorithms/inside_outside_tests.cpp
+)
+
+target_link_libraries(
+  inside_outside_tests
+  specfem::algorithms
+  point
+  gtest_main
+  Kokkos::kokkos
+)
+
+add_executable(
   interpolate_function
   algorithms/interpolate_function/dim2/interpolate_function.cpp
   algorithms/interpolate_function/dim3/interpolate_function.cpp
@@ -727,6 +739,21 @@ target_link_libraries(
 )
 
 add_executable(
+  frechet_derivatives_tests
+  medium/frechet_derivatives/main.cpp
+  medium/frechet_derivatives/dim2/acoustic.cpp
+  medium/frechet_derivatives/dim2/elastic_isotropic.cpp
+  medium/frechet_derivatives/dim2/elastic_anisotropic.cpp
+  medium/frechet_derivatives/dim3/acoustic.cpp
+)
+
+target_link_libraries(
+  frechet_derivatives_tests
+  point
+  gtest_main
+)
+
+add_executable(
   strain_tests
   medium/strain/main.cpp
   medium/strain/dim2/elastic_isotropic.cpp
@@ -867,9 +894,11 @@ set(SERIAL_TEST_TARGETS
   chunked_face_intersection_tests
   compute_coupling_tests
   element_types_tests
+  frechet_derivatives_tests
   fortranio_test
   enumerations_tests
   gll_tests
+  inside_outside_tests
   interpolate_function
   io_framework_tests
   io_tests

@@ -84,7 +84,8 @@
     NGNOD, NGNOD2D, NPROC, PARTITIONING_TYPE, LTS_MODE, ATTENUATION, &
     PML_CONDITIONS, SAVE_MESH_FILES, ADIOS_FOR_DATABASES, &
     COUPLE_WITH_INJECTION_TECHNIQUE, IS_WAVEFIELD_DISCONTINUITY, LOCAL_PATH, &
-    UTM_PROJECTION_ZONE, SUPPRESS_UTM_PROJECTION
+    UTM_PROJECTION_ZONE, SUPPRESS_UTM_PROJECTION, &
+    STACEY_ABSORBING_CONDITIONS, TOP_FREE_SURFACE, BOTTOM_FREE_SURFACE
 
   use decompose_mesh_filenames
 
@@ -156,6 +157,29 @@
 
   ! optional flags — silently default to .false. if absent from Par_file
   call read_value_logical(IS_WAVEFIELD_DISCONTINUITY,'IS_WAVEFIELD_DISCONTINUITY',ier); ier = 0
+
+  ! Boundary-condition flags used to classify the side / Z_MIN / Z_MAX mesh
+  ! sections written to the database and read back by the SPECFEM++ boundary
+  ! reader. Keys and missing-value defaults match read_mesh_parameter_file.f90
+  ! (the internal meshfem3D reader): Stacey absorbing on by default, free
+  ! surface on top, absorbing bottom.
+  call read_value_logical(STACEY_ABSORBING_CONDITIONS, 'STACEY_ABSORBING_CONDITIONS', ier)
+  if (ier /= 0) then
+    STACEY_ABSORBING_CONDITIONS = .true.
+    ier = 0
+  endif
+
+  call read_value_logical(TOP_FREE_SURFACE, 'TOP_FREE_SURFACE', ier)
+  if (ier /= 0) then
+    TOP_FREE_SURFACE = .true.
+    ier = 0
+  endif
+
+  call read_value_logical(BOTTOM_FREE_SURFACE, 'BOTTOM_FREE_SURFACE', ier)
+  if (ier /= 0) then
+    BOTTOM_FREE_SURFACE = .false.
+    ier = 0
+  endif
 
   ! input mesh file paths (required)
   call read_value_string(NODES_COORDS_FILE,         'NODES_COORDS_FILE',         ier)
