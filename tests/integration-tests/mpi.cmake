@@ -23,52 +23,12 @@ if(NOT DISPLACEMENT_NEWMARK_3D_MPI_NPROCS)
     "No 'name: <nproc>' entries found in ${_tests_mpi_yaml}")
 endif()
 
-set(DISPLACEMENT_MPI_TARGETS "")
+# Each per-size executable reads the same test list and filters to its own size.
 foreach(nproc IN LISTS DISPLACEMENT_NEWMARK_3D_MPI_NPROCS)
-  set(_tgt displacement_newmark_3d_mpi${nproc}_tests)
-  add_executable(${_tgt}
-    displacement_tests/Newmark/mpi/dim3/newmark_tests.cpp
+  specfem_add_test(displacement_newmark_3d_mpi${nproc}_tests
+    MPI_RANKS   ${nproc}
+    SOURCES     displacement_tests/Newmark/mpi/dim3/newmark_tests.cpp
+    DEFINITIONS SPECFEM_MPI_TEST_NPROC=${nproc}
+    LIBRARIES   ${DISPLACEMENT_TEST_LIBS} MPI::MPI_CXX
   )
-  target_compile_definitions(${_tgt} PRIVATE SPECFEM_MPI_TEST_NPROC=${nproc})
-  target_link_libraries(${_tgt}
-    specfem::quadrature
-    specfem::mesh
-    yaml-cpp
-    specfem_environment
-    specfem::assembly
-    specfem::runtime_configuration
-    timescheme
-    point
-    specfem::algorithms
-    specfem::solver
-    specfem::periodic_tasks
-    MPI::MPI_CXX
-    ${BOOST_LIBS}
-    -lpthread -lm
-  )
-
-  # Copy the (single) test list to TEST_OUTPUT_DIR so it is available when
-  # gtest_discover_tests runs the binary (mirrors the serial.cmake pattern). Each
-  # per-size executable reads the same file and filters to its own size.
-  add_custom_command(TARGET ${_tgt} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory
-        ${TEST_OUTPUT_DIR}/displacement_tests/Newmark/mpi/dim3
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${_tests_mpi_yaml}
-        ${TEST_OUTPUT_DIR}/displacement_tests/Newmark/mpi/dim3/tests_mpi.yaml
-    COMMENT "Moving ${_tgt} test list to ${TEST_OUTPUT_DIR}/displacement_tests/Newmark/mpi/dim3"
-  )
-
-  list(APPEND DISPLACEMENT_MPI_TARGETS ${_tgt})
 endforeach()
-
-set(MPI_TEST_TARGETS ${MPI_TEST_TARGETS_4PROCS} ${DISPLACEMENT_MPI_TARGETS})
-
-# Register the displacement MPI tests at their per-size process counts.
-foreach(nproc IN LISTS DISPLACEMENT_NEWMARK_3D_MPI_NPROCS)
-  add_mpi_test(displacement_newmark_3d_mpi${nproc}_tests ${nproc})
-endforeach()
-
-# Note: CTestTestfile.cmake generation and data directories (data, mesh) are
-# finalized by serial.cmake via specfem_finalize_test_targets, which covers
-# both in-tree (symlinks) and external TEST_OUTPUT_DIR (install) cases.
