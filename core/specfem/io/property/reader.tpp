@@ -67,12 +67,11 @@ void specfem::io::property_reader<InputLibrary>::read(
                            container.element_range.begin_index();
         const int count = element_range.size();
 
+        // Datasets are serialized in logical row-major order (see
+        // sub_block.hpp), so every read is staged through a plain scratch
+        // view and unpacked into the chunk-tiled container view.
         const auto read_sub_block = [&](const auto view,
                                         const std::string view_name) {
-          if (offset == 0 && count == static_cast<int>(view.extent(0))) {
-            group.openDataset(view_name, view).read();
-            return;
-          }
           auto scratch = specfem::io::property_impl::make_sub_block(
               view, view_name, count);
           group.openDataset(view_name, scratch).read();
@@ -105,7 +104,10 @@ void specfem::io::property_reader<InputLibrary>::read(
                 read_sub_block(view, view_name);
               });
           for (const auto &[view_name, view] : io_views) {
-            group.openDataset(view_name, view).read();
+            auto scratch = specfem::io::property_impl::make_sub_block(
+                view, view_name, static_cast<int>(view.extent(0)));
+            group.openDataset(view_name, scratch).read();
+            specfem::io::property_impl::insert_sub_block(view, scratch, 0);
           }
           att.recompute(container, assembly.attenuation.fc,
                         assembly.attenuation.f0, assembly.attenuation.band,
@@ -173,12 +175,11 @@ void specfem::io::property_reader<InputLibrary>::read(
                            container.element_range.begin_index();
         const int count = element_range.size();
 
+        // Datasets are serialized in logical row-major order (see
+        // sub_block.hpp), so every read is staged through a plain scratch
+        // view and unpacked into the chunk-tiled container view.
         const auto read_sub_block = [&](const auto view,
                                         const std::string view_name) {
-          if (offset == 0 && count == static_cast<int>(view.extent(0))) {
-            group.openDataset(view_name, view).read();
-            return;
-          }
           auto scratch = specfem::io::property_impl::make_sub_block(
               view, view_name, count);
           group.openDataset(view_name, scratch).read();
@@ -211,7 +212,10 @@ void specfem::io::property_reader<InputLibrary>::read(
                 read_sub_block(view, view_name);
               });
           for (const auto &[view_name, view] : io_views) {
-            group.openDataset(view_name, view).read();
+            auto scratch = specfem::io::property_impl::make_sub_block(
+                view, view_name, static_cast<int>(view.extent(0)));
+            group.openDataset(view_name, scratch).read();
+            specfem::io::property_impl::insert_sub_block(view, scratch, 0);
           }
           att.recompute(container, assembly.attenuation.fc,
                         assembly.attenuation.f0, assembly.attenuation.band,

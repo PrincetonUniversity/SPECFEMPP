@@ -3,6 +3,7 @@
 #include "specfem/element.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/io.hpp"
+#include "specfem/io/property/impl/sub_block.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/setup.hpp"
 #include "specfem/tag_dispatch.hpp"
@@ -64,6 +65,65 @@ static_assert(
             specfem::element::property_tag::isotropic,
             specfem::element::attenuation_tag::constant_isotropic>(),
     "elastic/isotropic/constant_isotropic must have a container in 3D");
+
+// The property writer/reader serialize datasets in logical row-major order by
+// staging chunk-tiled domain views through plain views (sub_block.hpp).
+// Use an element count that does not divide the storage chunk size so the
+// tail tile is padded: serializing the tiled storage directly would truncate
+// real values interleaved into the padding -- a bug that only manifests on
+// SIMD builds whose chunk width does not divide the element count.
+TEST(PropertiesSubBlock, PackUnpackWithPaddedTile) {
+  constexpr int chunk = specfem::parallel_configuration::storage_chunk_size;
+  const int nspec = chunk + 3;
+  const int ngllz = 5, ngllx = 5;
+
+  using DomainView =
+      specfem::datatype::DomainView<specfem::element::dimension_tag::dim2,
+                                    type_real, 3, Kokkos::HostSpace>;
+  DomainView view("sub_block_test", nspec, ngllz, ngllx);
+  const auto value = [](const int e, const int iz, const int ix) {
+    return static_cast<type_real>(e * 10000 + iz * 100 + ix);
+  };
+  for (int e = 0; e < nspec; ++e)
+    for (int iz = 0; iz < ngllz; ++iz)
+      for (int ix = 0; ix < ngllx; ++ix)
+        view(e, iz, ix) = value(e, iz, ix);
+
+  // Full-span pack: the plain view must hold the logical values in row-major
+  // flat order (this is the payload the backends serialize).
+  const auto packed =
+      specfem::io::property_impl::extract_sub_block(view, "full", 0, nspec);
+  for (int e = 0; e < nspec; ++e)
+    for (int iz = 0; iz < ngllz; ++iz)
+      for (int ix = 0; ix < ngllx; ++ix) {
+        EXPECT_NEAR(packed(e, iz, ix), value(e, iz, ix), 1e-6);
+        EXPECT_NEAR(packed.data()[(e * ngllz + iz) * ngllx + ix],
+                    value(e, iz, ix), 1e-6);
+      }
+
+  // Partial pack at an offset (mixed-group sub-block).
+  const int offset = 2;
+  const int count = nspec - 3;
+  const auto partial = specfem::io::property_impl::extract_sub_block(
+      view, "partial", offset, count);
+  for (int e = 0; e < count; ++e)
+    for (int iz = 0; iz < ngllz; ++iz)
+      for (int ix = 0; ix < ngllx; ++ix)
+        EXPECT_NEAR(partial(e, iz, ix), value(offset + e, iz, ix), 1e-6);
+
+  // Unpack restores the slice and leaves the rest untouched.
+  DomainView restored("sub_block_restored", nspec, ngllz, ngllx);
+  Kokkos::deep_copy(restored, static_cast<type_real>(-1));
+  specfem::io::property_impl::insert_sub_block(restored, partial, offset);
+  for (int e = 0; e < nspec; ++e)
+    for (int iz = 0; iz < ngllz; ++iz)
+      for (int ix = 0; ix < ngllx; ++ix) {
+        const bool in_slice = (e >= offset && e < offset + count);
+        EXPECT_NEAR(restored(e, iz, ix),
+                    in_slice ? value(e, iz, ix) : static_cast<type_real>(-1),
+                    1e-6);
+      }
+}
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd,

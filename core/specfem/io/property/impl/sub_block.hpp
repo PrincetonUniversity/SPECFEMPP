@@ -1,63 +1,67 @@
 #pragma once
 
+#include <Kokkos_Core.hpp>
 #include <cstddef>
 #include <string>
+#include <type_traits>
 
 namespace specfem {
 namespace io {
 namespace property_impl {
 
 /**
- * @brief Allocate a host view shaped like a leading-dimension sub-block
- *        [count][ngll...] of @p view.
+ * @brief Allocate a plain row-major host view shaped like a leading-dimension
+ *        sub-block [count][ngll...] of @p view.
  *
- * Property views span a whole (medium, property) group while the property
- * writer/reader emit one file group per (medium, property, attenuation)
- * combination; datasets of a combination therefore cover only a contiguous
- * leading-dimension slice of the property view. The chunk-tiled domain-view
- * storage makes such a slice non-contiguous in memory, so sub-block I/O goes
- * through a correctly-shaped scratch view instead of a subview.
+ * Property and attenuation-model views are chunk-tiled domain views: their
+ * flat storage interleaves elements in SIMD-width tiles, padded to a full
+ * tile at the tail. The I/O backends serialize a view's flat storage
+ * linearly, so writing a domain view directly would (a) truncate real values
+ * interleaved into the padded tail whenever the element count is not a
+ * multiple of the tile width, and (b) produce a file whose payload order
+ * depends on the build's SIMD width. Every dataset is therefore staged
+ * through a plain LayoutRight view, making the file hold the logical
+ * row-major values independent of tiling.
  *
- * @tparam ViewType Host property view type (rank 3 or 4)
+ * @tparam ViewType Domain view type (rank 3 or 4)
  * @param view View whose trailing (GLL) extents are replicated
  * @param name Label prefix for the scratch allocation
  * @param count Leading-dimension (element) extent of the sub-block
- * @return Freshly allocated, uninitialized sub-block view
+ * @return Plain LayoutRight host view of shape [count][ngll...]
  */
 template <typename ViewType>
-ViewType make_sub_block(const ViewType &view, const std::string &name,
-                        const int count) {
+auto make_sub_block(const ViewType &view, const std::string &name,
+                    const int count) {
   static_assert(ViewType::rank() == 3 || ViewType::rank() == 4,
                 "sub-block helpers expect element-major per-GLL views");
+  using value_type = std::remove_const_t<typename ViewType::value_type>;
   if constexpr (ViewType::rank() == 3) {
-    return ViewType(name + "_sub", static_cast<std::size_t>(count),
-                    view.extent(1), view.extent(2));
+    return Kokkos::View<value_type ***, Kokkos::LayoutRight, Kokkos::HostSpace>(
+        name + "_sub", static_cast<std::size_t>(count), view.extent(1),
+        view.extent(2));
   } else {
-    return ViewType(name + "_sub", static_cast<std::size_t>(count),
-                    view.extent(1), view.extent(2), view.extent(3));
+    return Kokkos::View<value_type ****, Kokkos::LayoutRight,
+                        Kokkos::HostSpace>(
+        name + "_sub", static_cast<std::size_t>(count), view.extent(1),
+        view.extent(2), view.extent(3));
   }
 }
 
 /**
- * @brief Copy the leading-dimension slice [offset, offset + count) of
- *        @p view into a fresh sub-block view.
+ * @brief Pack the leading-dimension slice [offset, offset + count) of
+ *        @p view into a plain row-major host view for serialization.
  *
- * Returns @p view unchanged when the slice spans the whole view (single
- * attenuation tag in the group -- the common case), so no copy happens.
- *
- * @tparam ViewType Host property view type (rank 3 or 4)
- * @param view Source view (group-local indexing)
+ * @tparam ViewType Domain view type (rank 3 or 4)
+ * @param view Source domain view (group-local indexing)
  * @param name Label prefix for the scratch allocation
  * @param offset First element of the slice
  * @param count Number of elements in the slice
- * @return View holding the slice values
+ * @return Plain LayoutRight host view holding the slice values
  */
 template <typename ViewType>
-ViewType extract_sub_block(const ViewType &view, const std::string &name,
-                           const int offset, const int count) {
-  if (offset == 0 && count == static_cast<int>(view.extent(0)))
-    return view;
-  ViewType sub = make_sub_block(view, name, count);
+auto extract_sub_block(const ViewType &view, const std::string &name,
+                       const int offset, const int count) {
+  auto sub = make_sub_block(view, name, count);
   if constexpr (ViewType::rank() == 3) {
     for (int e = 0; e < count; ++e)
       for (std::size_t iz = 0; iz < view.extent(1); ++iz)
@@ -74,15 +78,17 @@ ViewType extract_sub_block(const ViewType &view, const std::string &name,
 }
 
 /**
- * @brief Copy a sub-block view into @p dst at leading-dimension @p offset.
+ * @brief Unpack a plain row-major sub-block view into the domain view @p dst
+ *        at leading-dimension @p offset.
  *
- * @tparam ViewType Host property view type (rank 3 or 4)
- * @param dst Destination view (group-local indexing)
+ * @tparam ViewType Destination domain view type (rank 3 or 4)
+ * @tparam PlainViewType Plain LayoutRight host view type from make_sub_block
+ * @param dst Destination domain view (group-local indexing)
  * @param src Sub-block view holding the values to insert
  * @param offset First destination element of the slice
  */
-template <typename ViewType>
-void insert_sub_block(const ViewType &dst, const ViewType &src,
+template <typename ViewType, typename PlainViewType>
+void insert_sub_block(const ViewType &dst, const PlainViewType &src,
                       const int offset) {
   const int count = static_cast<int>(src.extent(0));
   if constexpr (ViewType::rank() == 3) {

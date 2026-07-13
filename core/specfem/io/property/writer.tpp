@@ -119,7 +119,12 @@ void specfem::io::property_writer<OutputLibrary>::write(
                     .write();
               });
           for (const auto &[view_name, view] : io_views) {
-            group.createDataset(view_name, view).write();
+            group
+                .createDataset(view_name,
+                               specfem::io::property_impl::extract_sub_block(
+                                   view, view_name, 0,
+                                   static_cast<int>(view.extent(0))))
+                .write();
           }
         } else {
           data_container.for_each_host_view(
@@ -238,7 +243,12 @@ void specfem::io::property_writer<OutputLibrary>::write(
                     .write();
               });
           for (const auto &[view_name, view] : io_views) {
-            group.createDataset(view_name, view).write();
+            group
+                .createDataset(view_name,
+                               specfem::io::property_impl::extract_sub_block(
+                                   view, view_name, 0,
+                                   static_cast<int>(view.extent(0))))
+                .write();
           }
         } else {
           data_container.for_each_host_view(
