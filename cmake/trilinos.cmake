@@ -17,6 +17,19 @@ if(SPECFEM_ENABLE_TRILINOS)
             "  or pass -DTrilinos_ROOT=<install-prefix> to cmake.")
     endif()
 
+    # cmake/kokkos.cmake runs before this file and only reuses an existing Kokkos
+    # when Kokkos_ROOT is set; otherwise it FetchContent's its own copy. That
+    # would silently give SPECFEM++ a different Kokkos than the one Trilinos was
+    # built against, which fails to compile or link (see docs/sections/getting_started/trilinos.rst).
+    if(NOT Kokkos_ROOT AND NOT DEFINED ENV{Kokkos_ROOT})
+        message(FATAL_ERROR
+            "Kokkos_ROOT must be set when SPECFEM_ENABLE_TRILINOS is ON.\n"
+            "  SPECFEM++ must reuse the SAME Kokkos that Trilinos was built against.\n"
+            "  Point Kokkos_ROOT at the Kokkos install from your Trilinos build directory\n"
+            "  (e.g. `module load trilinos/16.1.0-cuda-ampere80-mpi`, which exports both\n"
+            "  Trilinos_ROOT and Kokkos_ROOT), or pass -DKokkos_ROOT=<path> to cmake.")
+    endif()
+
     find_package(Trilinos REQUIRED
         COMPONENTS Tpetra Belos Ifpack2 MueLu Amesos2
         HINTS
