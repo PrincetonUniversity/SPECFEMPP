@@ -916,6 +916,19 @@ target_link_libraries(
   Kokkos::kokkos
 )
 
+add_executable(
+  trilinos_smoke_tests
+  linear_system/trilinos_smoke_tests.cpp
+)
+
+target_link_libraries(
+  trilinos_smoke_tests
+  specfem::linear_system
+  specfem_environment
+  gtest_main
+  Kokkos::kokkos
+)
+
 # Register serial tests for discovery
 set(SERIAL_TEST_TARGETS
   serial_mpi_tests
@@ -966,6 +979,7 @@ set(SERIAL_TEST_TARGETS
   coordinate_systems_tests
   resolve_coordinates_tests
   surface_elevation_tests
+  trilinos_smoke_tests
 )
 
 if (NOT SPECFEM_ENABLE_MPI)

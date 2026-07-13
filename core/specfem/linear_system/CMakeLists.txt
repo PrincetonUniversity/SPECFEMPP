@@ -8,9 +8,14 @@ target_link_libraries(
         PUBLIC
         Kokkos::kokkos
         specfem::assembly
-        # Trilinos::all_selected_libs aggregates exactly the enabled packages
-        # (Tpetra/Belos/Ifpack2/MueLu/Amesos2) from find_package(Trilinos).
-        $<$<BOOL:${SPECFEM_ENABLE_TRILINOS}>:Trilinos::all_selected_libs>
+        # Only Tpetra is linked for now: trilinos_smoke_test() is the sole
+        # consumer today. Trilinos::all_selected_libs (Belos/Ifpack2/MueLu/
+        # Amesos2) fails to link against the float-only (Tpetra_INST_DOUBLE=OFF)
+        # TROMP Trilinos install -- MueLu references Xpetra::Matrix<double, ...>
+        # symbols unconditionally, which that install doesn't instantiate. Link
+        # the other packages once real assembly/solver code needs them and the
+        # install is revisited.
+        $<$<BOOL:${SPECFEM_ENABLE_TRILINOS}>:Tpetra::all_libs>
 )
 
 target_compile_definitions(
