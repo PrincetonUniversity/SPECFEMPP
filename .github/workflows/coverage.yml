@@ -37,18 +37,14 @@ jobs:
       - name: Install toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang llvm ninja-build gfortran cmake lcov ccache
+          sudo apt-get install -y clang llvm gfortran lcov ccache
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
-      - name: Set up ccache
-        # Restores/saves the compiler cache across runs. Keyed on the target
-        # branch so PRs warm-start from their base (main/devel) cache.
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          key: coverage-${{ github.event_name == 'pull_request' && github.base_ref || github.ref_name }}
-          max-size: 2G
+      - name: Install CMake 3.29
+        run: |
+          uv run pip install 'cmake>=3.29'
 
       - name: Build, test, and generate coverage
         env:

@@ -1,0 +1,25 @@
+import sys
+
+sys.path.insert(0, "@CMAKE_SOURCE_DIR@/scripts")
+
+from export_gmsh3d import export2SPECFEM3D_gmsh, MaterialSpec
+
+## Elastic medium for the Mount St. Helens edifice (matches the original
+## SPECFEM3D nummaterial_velocity_file).
+materials = {
+    1: MaterialSpec(
+        mat_id=1,
+        domain_id=2,       ## 2 = elastic
+        rho=2300.0,        ## density (kg/m^3)
+        vp=2800.0,         ## P-wave velocity (m/s)
+        vs=1500.0,         ## S-wave velocity (m/s)
+        q_kappa=9999.0,    ## no bulk attenuation
+        q_mu=150.0,        ## shear quality factor
+    ),
+}
+
+export2SPECFEM3D_gmsh(
+    "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/mount_sthelens.msh",
+    materials,
+    outdir="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/MESH",
+)

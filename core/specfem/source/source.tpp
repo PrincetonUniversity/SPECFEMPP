@@ -69,3 +69,31 @@ void specfem::sources::source<DimensionTag>::set_source_time_function(
     throw std::runtime_error("Error: source time function not recognized");
   }
 }
+
+template <specfem::element::dimension_tag DimensionTag>
+std::string specfem::sources::source<DimensionTag>::print() const {
+  std::ostringstream os;
+  os << "- " << source_name() << "\n";
+  if (read_coordinates_) {
+    os << "  Coordinates: " << read_coordinates_->print() << "\n";
+  }
+  os << "  " << print_details() << "\n";
+  if (resolution_.has_value())
+    os << "  Target: " << resolution_->print() << "\n";
+  // Only print resolved global coordinates when they have been set:
+  // either directly (no read_coordinates_) or after assembly-time
+  // resolution.
+  if (!read_coordinates_ || partition_index_ >= 0) {
+    const auto gcoord = get_global_coordinates();
+    os << "  Found:  " << gcoord.print() << "\n";
+  }
+  if (partition_index_ >= 0)
+    os << "  Location error: "
+       << specfem::utilities::format_distance(location_error_) << "\n";
+  os << "  Time Function: " << source_time_function->print() << "\n";
+#ifdef SPECFEM_ENABLE_MPI
+  if (partition_index_ >= 0)
+    os << "    MPI Rank: " << partition_index_ << "\n";
+#endif
+  return os.str();
+}

@@ -101,3 +101,12 @@ bool specfem::sources::force<specfem::element::dimension_tag::dim2>::operator!=(
         &other) const {
   return !(*this == other);
 }
+
+std::string
+specfem::sources::force<specfem::element::dimension_tag::dim2>::print_details()
+    const {
+  std::ostringstream message;
+  message << "(Angle) = ("
+          << specfem::utilities::format_scientific(this->angle, 6) << ")";
+  return message.str();
+}
