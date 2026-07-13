@@ -1,7 +1,5 @@
 #pragma once
 
-#include "specfem/assembly/nonconforming_interfaces/fwd.hpp"
-
 #include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
@@ -44,7 +42,7 @@ struct interface_container<
           specfem::data_access::DataClassType::nonconforming_interface,
           specfem::element::dimension_tag::dim3> {
 public:
-  /** @brief Dimension tag for 2D specialization */
+  /** @brief Dimension tag for 3D specialization */
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
   /** @brief Interface type (elastic-acoustic or acoustic-elastic) */
   constexpr static auto interface_tag = InterfaceTag;
@@ -96,6 +94,7 @@ public:
    * @brief Constructs interface container with mesh and geometry data
    *
    * @param ngllz Number of GLL points in z-direction
+   * @param nglly Number of GLL points in y-direction
    * @param ngllx Number of GLL points in x-direction
    * @param element_intersections Element intersection information from mesh
    * @param mesh Mesh connectivity and geometry

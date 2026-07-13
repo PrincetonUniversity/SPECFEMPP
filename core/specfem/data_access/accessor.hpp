@@ -63,7 +63,7 @@ struct is_codim1_chunk<
 struct EmptyAccessor {
 
   /**
-   * @brief Capture any constructer configuration. Should do nothing.
+   * @brief Capture any constructor configuration. Should do nothing.
    */
   template <typename... Args> EmptyAccessor(Args...){};
   /**

@@ -12,6 +12,7 @@
 #include "specfem/assembly/kernels.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/mpi/dim3/mpi.hpp"
+#include "specfem/assembly/nonconforming_interfaces/dim3/nonconforming_interfaces.hpp"
 #include "specfem/assembly/properties.hpp"
 #include "specfem/assembly/receivers.hpp"
 #include "specfem/assembly/sources.hpp"
@@ -19,8 +20,6 @@
 #include "specfem/mesh.hpp"
 #include "specfem/receivers.hpp"
 #include "specfem/source.hpp"
-
-#include "specfem/assembly/nonconforming_interfaces/dim3/nonconforming_interfaces.hpp"
 
 namespace specfem::io {
 class reader;

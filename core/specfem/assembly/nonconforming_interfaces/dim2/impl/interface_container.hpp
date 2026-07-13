@@ -3,13 +3,19 @@
 
 #include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/mesh.hpp"
-#include "specfem/assembly/nonconforming_interfaces/fwd.hpp"
 #include "specfem/element_coupling/flux_scheme_configuration.hpp"
 #include "specfem/element_coupling/tags.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
 
 namespace specfem::assembly::nonconforming_interfaces_impl {
+
+template <specfem::element::dimension_tag DimensionTag,
+          specfem::element_coupling::interface_tag InterfaceTag,
+          specfem::element::boundary_tag BoundaryTag,
+          specfem::element_connections::type ConnectionTag,
+          specfem::element_coupling::flux_scheme_tag FluxSchemeTag>
+struct interface_container;
 
 /**
  * @brief Container for 2D nonconforming interface data storage and access
