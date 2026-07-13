@@ -24,9 +24,9 @@ set_kernel_value(
 
   const auto &kernels = assembly.kernels;
 
-  using PointType =
-      specfem::point::kernels<specfem::element::dimension_tag::dim2, MediumTag,
-                              PropertyTag, using_simd>;
+  using PointType = specfem::point::kernels<
+      specfem::tags::Tags<specfem::element::dimension_tag::dim2, MediumTag,
+                          PropertyTag, using_simd>>;
 
   specfem::execution::ChunkedDomainIterator policy(
       ParallelConfig<using_simd, Kokkos::DefaultHostExecutionSpace>(), elements,
@@ -55,9 +55,9 @@ check_kernel_value(
     const type_real offset) {
 
   const auto &kernels = assembly.kernels;
-  using PointType =
-      specfem::point::kernels<specfem::element::dimension_tag::dim2, MediumTag,
-                              PropertyTag, using_simd>;
+  using PointType = specfem::point::kernels<
+      specfem::tags::Tags<specfem::element::dimension_tag::dim2, MediumTag,
+                          PropertyTag, using_simd>>;
 
   specfem::execution::ChunkedDomainIterator policy(
       ParallelConfig<using_simd, Kokkos::DefaultHostExecutionSpace>(), elements,
@@ -112,9 +112,9 @@ add_value(const ViewType elements,
 
   const auto &kernels = assembly.kernels;
 
-  using PointType =
-      specfem::point::kernels<specfem::element::dimension_tag::dim2, MediumTag,
-                              PropertyTag, using_simd>;
+  using PointType = specfem::point::kernels<
+      specfem::tags::Tags<specfem::element::dimension_tag::dim2, MediumTag,
+                          PropertyTag, using_simd>>;
 
   specfem::execution::ChunkedDomainIterator policy(
       ParallelConfig<using_simd, Kokkos::DefaultHostExecutionSpace>(), elements,
@@ -146,9 +146,9 @@ set_kernel_value(
 
   const auto &kernels = assembly.kernels;
 
-  using PointType =
-      specfem::point::kernels<specfem::element::dimension_tag::dim2, MediumTag,
-                              PropertyTag, using_simd>;
+  using PointType = specfem::point::kernels<
+      specfem::tags::Tags<specfem::element::dimension_tag::dim2, MediumTag,
+                          PropertyTag, using_simd>>;
 
   specfem::execution::ChunkedDomainIterator policy(
       ParallelConfig<using_simd, Kokkos::DefaultExecutionSpace>(), elements,
@@ -182,9 +182,9 @@ check_kernel_value(
   const int ngll = assembly.mesh.element_grid.ngllx;
   const auto &kernels = assembly.kernels;
 
-  using PointType =
-      specfem::point::kernels<specfem::element::dimension_tag::dim2, MediumTag,
-                              PropertyTag, using_simd>;
+  using PointType = specfem::point::kernels<
+      specfem::tags::Tags<specfem::element::dimension_tag::dim2, MediumTag,
+                          PropertyTag, using_simd>>;
 
   Kokkos::View<PointType ***, Kokkos::DefaultExecutionSpace> point_view(
       "point_view", nspec, ngll, ngll);
@@ -279,9 +279,9 @@ add_value(const ViewType elements,
 
   const auto &kernels = assembly.kernels;
 
-  using PointType =
-      specfem::point::kernels<specfem::element::dimension_tag::dim2, MediumTag,
-                              PropertyTag, using_simd>;
+  using PointType = specfem::point::kernels<
+      specfem::tags::Tags<specfem::element::dimension_tag::dim2, MediumTag,
+                          PropertyTag, using_simd>>;
   specfem::execution::ChunkedDomainIterator policy(
       ParallelConfig<using_simd, Kokkos::DefaultExecutionSpace>(), elements,
       assembly.mesh.element_grid);

@@ -124,7 +124,7 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::print()
       MPI_Allreduce(MPI_IN_PLACE, &nglob, 1, MPI_INT, MPI_SUM, comm));
 
   message << "Assembly information:\n"
-          << "------------------------------\n"
+          << "---------------------\n"
           << "Total number of spectral elements : " << nspec << "\n"
           << "Total number of geometric points : "
           << this->mesh.element_grid.ngllz << "\n"

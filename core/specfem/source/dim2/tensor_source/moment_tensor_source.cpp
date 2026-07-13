@@ -5,7 +5,7 @@
 #include "specfem/setup.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
-// #include "utilities.cpp"
+#include "specfem/utilities.hpp"
 #include "yaml-cpp/yaml.h"
 #include <cmath>
 #include <stdexcept>
@@ -79,9 +79,10 @@ specfem::sources::moment_tensor<
 std::string specfem::sources::moment_tensor<
     specfem::element::dimension_tag::dim2>::print_details() const {
   std::ostringstream message;
-  message << "    Moment Tensor: \n"
-          << "      Mxx, Mzz, Mxz = " << this->Mxx << ", " << this->Mzz << ", "
-          << this->Mxz << "\n";
+  message << "(Mxx, Mzz, Mxz) = ("
+          << specfem::utilities::format_scientific(this->Mxx, 6) << ", "
+          << specfem::utilities::format_scientific(this->Mzz, 6) << ", "
+          << specfem::utilities::format_scientific(this->Mxz, 6) << ")";
   return message.str();
 }
 

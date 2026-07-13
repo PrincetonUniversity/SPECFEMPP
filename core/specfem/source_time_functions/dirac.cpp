@@ -71,16 +71,14 @@ void specfem::source_time_functions::Dirac::compute_source_time_function(
 }
 
 std::string specfem::source_time_functions::Dirac::print() const {
-  std::stringstream ss;
-  ss << "        Dirac source time function:\n"
-     << "          f0: " << this->f0_ << "\n"
-     << "          tshift: " << this->tshift_ << "\n"
-     << "          factor: " << this->factor_ << "\n"
-     << "          t0: " << this->t0_ << "\n"
-     << "          use_trick_for_better_pressure: "
-     << this->use_trick_for_better_pressure_ << "\n";
-
-  return ss.str();
+  std::ostringstream message;
+  message << "Dirac(t0=" << specfem::utilities::format_scientific(this->t0_, 6)
+          << ", f0=" << specfem::utilities::format_scientific(this->f0_, 6)
+          << ", tshift="
+          << specfem::utilities::format_scientific(this->tshift_, 6)
+          << ", factor="
+          << specfem::utilities::format_scientific(this->factor_, 6) << ")";
+  return message.str();
 }
 
 bool specfem::source_time_functions::Dirac::operator==(const stf &other) const {

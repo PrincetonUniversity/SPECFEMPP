@@ -120,13 +120,12 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::print()
   SPECFEM_MPI_SAFECALL(
       MPI_Allreduce(MPI_IN_PLACE, &nspec, 1, MPI_INT, MPI_SUM, comm));
 
-  message << "Assembly information:\n"
-          << "------------------------------\n"
-          << "  Total number of spectral elements             : " << nspec
-          << "\n"
-          << "  Total number of quadrature points per element : "
+  message << "\nAssembly information:\n"
+          << "---------------------\n\n"
+          << "Total number of spectral elements             : " << nspec << "\n"
+          << "Total number of quadrature points per element : "
           << this->mesh.element_grid.ngllz << "\n"
-          << this->info.string() << "\n";
+          << this->info.string() << "\n\n";
 
   int total_elements = 0;
 
@@ -144,19 +143,19 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::print()
           // Adding the number of elements to the total
           total_elements += n_elements;
 
-          message << "   Total number of elements of type "
+          message << "  Total number of elements of type "
                   << specfem::element::to_string(medium_tag) << " : "
                   << n_elements << "\n";
         };
       });
 
   if (total_elements == nspec) {
-    message << "  All elements accounted for.\n";
+    message << "  All elements accounted for.\n\n";
   } else {
-    message << " NOT ALL ELEMENTS ACCOUNTED FOR\n";
-    message << "  Mesh elements:              " << nspec << "\n";
-    message << "  Assembly elements counted:  " << total_elements << "\n";
-    message << "  Total unaccounted elements: " << (nspec - total_elements)
+    message << "  NOT ALL ELEMENTS ACCOUNTED FOR:\n";
+    message << "   Mesh elements:              " << nspec << "\n";
+    message << "   Assembly elements counted:  " << total_elements << "\n";
+    message << "   Total unaccounted elements: " << (nspec - total_elements)
             << "\n";
     throw std::runtime_error(message.str());
   }

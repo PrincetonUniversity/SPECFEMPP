@@ -209,11 +209,11 @@ void specfem::source_time_functions::external::update_tshift(type_real tshift) {
 }
 
 std::string specfem::source_time_functions::external::print() const {
-  std::stringstream ss;
-  ss << "External source time function: "
-     << "\n"
-     << "  X-component: " << this->x_component_ << "\n"
-     << "  Y-component: " << this->y_component_ << "\n"
-     << "  Z-component: " << this->z_component_ << "\n";
-  return ss.str();
+  std::ostringstream message;
+  message << "external(t0="
+          << specfem::utilities::format_scientific(this->t0_, 6)
+          << ", dt=" << specfem::utilities::format_scientific(this->dt_, 6)
+          << ", x=" << this->x_component_ << ", y=" << this->y_component_
+          << ", z=" << this->z_component_ << ")";
+  return message.str();
 }

@@ -121,7 +121,7 @@ const SourceVector3DType multiple_sources_3d = {
       wavefield_type)
 };
 
-// 3D CMTSOLUTION expected sources (GaussianHdur STF, factor=1.0)
+// 3D CMTSOLUTION expected sources (Heaviside STF, factor=1.0)
 // Test data: Mxx=1e7, Myy=1e7, Mzz=0, Mxy=1e7, Mxz=0, Myz=0 in dyne-cm
 // After *1e-7: Mxx=1.0, Myy=1.0, Mzz=0.0, Mxy=1.0, Mxz=0.0, Myz=0.0 in N-m
 const SourceVector3DType single_moment_tensor_cmt_3d = []() {
@@ -130,7 +130,7 @@ const SourceVector3DType single_moment_tensor_cmt_3d = []() {
       std::make_unique<specfem::coordinate_systems::cartesian_coordinates<
           specfem::element::dimension_tag::dim3>>(2000.0, 3000.0, 2000.0),
       1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
-      std::make_unique<specfem::source_time_functions::GaussianHdur>(
+      std::make_unique<specfem::source_time_functions::Heaviside>(
           nsteps, dt, 1.0, 30.0, 1.0, false),
       wavefield_type);
   src->set_starttime(specfem::datetime::make(2000, 1, 1, 0, 0, 0.0));
@@ -144,7 +144,7 @@ const SourceVector3DType spherical_moment_tensor_cmt_3d = []() {
       std::make_unique<specfem::coordinate_systems::cartesian_coordinates<
           specfem::element::dimension_tag::dim3>>(2000.0, 3000.0, 2000.0),
       1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
-      std::make_unique<specfem::source_time_functions::GaussianHdur>(
+      std::make_unique<specfem::source_time_functions::Heaviside>(
           nsteps, dt, 1.0, 30.0, 1.0, false),
       wavefield_type);
   src->set_starttime(specfem::datetime::make(2000, 1, 1, 0, 0, 0.0));
@@ -158,7 +158,7 @@ const SourceVector3DType single_moment_tensor_geographic_cmt_3d = []() {
       std::make_unique<specfem::coordinate_systems::geographic_coordinates>(
           2.674, 51.561, 2000.0),
       1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
-      std::make_unique<specfem::source_time_functions::GaussianHdur>(
+      std::make_unique<specfem::source_time_functions::Heaviside>(
           nsteps, dt, 1.0, 30.0, 1.0, false),
       wavefield_type);
   src->set_starttime(specfem::datetime::make(2000, 1, 1, 0, 0, 0.0));
@@ -200,7 +200,7 @@ const SourceVector3DType multiple_sources_cmt_3d = []() {
       std::make_unique<specfem::coordinate_systems::cartesian_coordinates<
           specfem::element::dimension_tag::dim3>>(2000.0, 3000.0, 2000.0),
       1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
-      std::make_unique<specfem::source_time_functions::GaussianHdur>(
+      std::make_unique<specfem::source_time_functions::Heaviside>(
           nsteps, dt, 1.0, 30.0, 1.0, false),
       wavefield_type);
   src1->set_starttime(specfem::datetime::make(2000, 1, 1, 0, 0, 0.0));
@@ -210,7 +210,7 @@ const SourceVector3DType multiple_sources_cmt_3d = []() {
       std::make_unique<specfem::coordinate_systems::cartesian_coordinates<
           specfem::element::dimension_tag::dim3>>(5000.0, 6000.0, 1000.0),
       2.0, 2.0, 0.0, 2.0, 0.0, 0.0,
-      std::make_unique<specfem::source_time_functions::GaussianHdur>(
+      std::make_unique<specfem::source_time_functions::Heaviside>(
           nsteps, dt, 2.0, 10.0, 1.0, false),
       wavefield_type);
   src2->set_starttime(specfem::datetime::make(2001, 6, 15, 12, 30, 45.50));

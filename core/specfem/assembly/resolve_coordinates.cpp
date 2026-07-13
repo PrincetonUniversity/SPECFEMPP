@@ -12,7 +12,8 @@
 // ── dim2 specialization ─────────────────────────────────────────────────────
 
 template <>
-specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
+specfem::coordinate_systems::CoordinateResolutionResult<
+    specfem::element::dimension_tag::dim2>
 specfem::assembly::resolve_coordinates<specfem::element::dimension_tag::dim2>(
     specfem::coordinate_systems::coordinates<
         specfem::element::dimension_tag::dim2> &coords,
@@ -34,8 +35,9 @@ specfem::assembly::resolve_coordinates<specfem::element::dimension_tag::dim2>(
       c->origin = { 0.0, 0.0 };
     }
     const auto &o = *c->origin;
-    return { static_cast<type_real>(c->x + o[0]),
-             static_cast<type_real>(c->z + o[1]) };
+    return { { static_cast<type_real>(c->x + o[0]),
+               static_cast<type_real>(c->z + o[1]) },
+             std::nullopt };
   }
 
   throw std::runtime_error(
@@ -45,7 +47,8 @@ specfem::assembly::resolve_coordinates<specfem::element::dimension_tag::dim2>(
 // ── dim3 specialization ─────────────────────────────────────────────────────
 
 template <>
-specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
+specfem::coordinate_systems::CoordinateResolutionResult<
+    specfem::element::dimension_tag::dim3>
 specfem::assembly::resolve_coordinates<specfem::element::dimension_tag::dim3>(
     specfem::coordinate_systems::coordinates<
         specfem::element::dimension_tag::dim3> &coords,
@@ -58,6 +61,7 @@ specfem::assembly::resolve_coordinates<specfem::element::dimension_tag::dim3>(
   // Cartesian coordinates (absolute xyz or depth-based with origin)
   if (auto *c = dynamic_cast<specfem::coordinate_systems::cartesian_coordinates<
           specfem::element::dimension_tag::dim3> *>(&coords)) {
+    std::optional<type_real> topography;
     if (!c->origin.has_value()) {
       // Depth-based: set the origin elevation from the topographic surface
       // above (x, y). With no free surface the projection returns z = 0 (flat).
@@ -66,11 +70,13 @@ specfem::assembly::resolve_coordinates<specfem::element::dimension_tag::dim3>(
           { static_cast<type_real>(c->x), static_cast<type_real>(c->y),
             static_cast<type_real>(c->z) });
       c->origin = { 0.0, 0.0, static_cast<double>(landing.z) };
+      topography = landing.z;
     }
     const auto &o = *c->origin;
-    return { static_cast<type_real>(c->x + o[0]),
-             static_cast<type_real>(c->y + o[1]),
-             static_cast<type_real>(c->z + o[2]) };
+    return { { static_cast<type_real>(c->x + o[0]),
+               static_cast<type_real>(c->y + o[1]),
+               static_cast<type_real>(c->z + o[2]) },
+             topography };
   }
 
   // Geographic coordinates — project via UTM, then resolve depth

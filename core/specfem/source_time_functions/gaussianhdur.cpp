@@ -85,16 +85,15 @@ void specfem::source_time_functions::GaussianHdur::compute_source_time_function(
 }
 
 std::string specfem::source_time_functions::GaussianHdur::print() const {
-  std::stringstream ss;
-  ss << "        GaussianHdur source time function:\n"
-     << "          hdur: " << this->hdur_ << "\n"
-     << "          tshift: " << this->tshift_ << "\n"
-     << "          factor: " << this->factor_ << "\n"
-     << "          t0: " << this->t0_ << "\n"
-     << "          use_trick_for_better_pressure: "
-     << this->use_trick_for_better_pressure_ << "\n";
-
-  return ss.str();
+  std::ostringstream message;
+  message << "GaussianHdur(t0="
+          << specfem::utilities::format_scientific(this->t0_, 6)
+          << ", hdur=" << specfem::utilities::format_scientific(this->hdur_, 6)
+          << ", tshift="
+          << specfem::utilities::format_scientific(this->tshift_, 6)
+          << ", factor="
+          << specfem::utilities::format_scientific(this->factor_, 6) << ")";
+  return message.str();
 }
 
 bool specfem::source_time_functions::GaussianHdur::operator==(
