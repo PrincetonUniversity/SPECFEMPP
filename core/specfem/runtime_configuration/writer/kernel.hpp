@@ -43,22 +43,6 @@ public:
    */
   std::shared_ptr<specfem::io::writer> instantiate_kernel_writer() const;
 
-  /**
-   * @brief Get simulation type.
-   *
-   * @return Current simulation type setting
-   */
-  inline specfem::simulation::type get_simulation_type() const {
-    return this->simulation_type;
-  }
-
-  /**
-   * @brief Update the resolved simulation type.
-   */
-  void set_simulation_type(const specfem::simulation::type simulation) {
-    this->simulation_type = simulation;
-  }
-
 private:
   std::string output_format; ///< Output file format (binary/ascii)
   std::string output_folder; ///< Output directory path

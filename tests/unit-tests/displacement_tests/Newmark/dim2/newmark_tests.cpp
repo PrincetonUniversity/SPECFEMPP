@@ -118,6 +118,8 @@ TEST_P(Newmark, 2D) {
       specfem::io::read_2d_mesh(database_file, elastic_wave,
                                 electromagnetic_wave,
                                 setup.get_attenuation_setup());
+  const specfem::simulation::type simulation_type =
+      setup.get_simulation_type(mesh.materials.has_attenuation());
   const type_real dt = setup.get_dt();
   const int nsteps = setup.get_nsteps();
 
@@ -126,8 +128,7 @@ TEST_P(Newmark, 2D) {
   //    source frequencies and time shift
   auto [sources, t0, starttime] =
       specfem::io::read_sources<specfem::element::dimension_tag::dim2>(
-          source_entries, nsteps, setup.get_t0(), dt,
-          setup.get_simulation_type());
+          source_entries, nsteps, setup.get_t0(), dt, simulation_type);
   (void)starttime; // unused in test
 
   for (auto &source : sources) {
@@ -167,17 +168,18 @@ TEST_P(Newmark, 2D) {
   specfem::assembly::assembly<specfem::element::dimension_tag::dim2> assembly(
       mesh, quadratures, sources, receivers, seismogram_types, t0,
       setup.get_dt(), nsteps, max_sig_step, nstep_between_samples,
-      setup.get_simulation_type(), false, nullptr);
+      simulation_type, false, nullptr);
 
   // Instantiate the solver and timescheme
-  auto time_scheme = setup.instantiate_timescheme(assembly.fields);
+  auto time_scheme =
+      setup.instantiate_timescheme(assembly.fields, simulation_type);
 
   // User output
   specfem::Logger::info(
       [&](std::ostringstream &oss) { oss << time_scheme->to_string(); });
 
-  std::shared_ptr<specfem::solver::solver> solver =
-      setup.instantiate_solver<5>(setup.get_dt(), assembly, time_scheme, {});
+  std::shared_ptr<specfem::solver::solver> solver = setup.instantiate_solver<5>(
+      setup.get_dt(), assembly, time_scheme, simulation_type, {});
 
   solver->run();
 
