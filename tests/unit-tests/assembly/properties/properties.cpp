@@ -37,6 +37,33 @@ static_assert(
         has_attenuation<specfem::element::medium_tag::acoustic,
                         specfem::element::property_tag::isotropic>(),
     "acoustic must not be an attenuating combination in 3D");
+static_assert(
+    specfem::assembly::Attenuation<specfem::element::dimension_tag::dim2>::
+        has_attenuation<
+            specfem::element::medium_tag::elastic_psv,
+            specfem::element::property_tag::isotropic,
+            specfem::element::attenuation_tag::constant_isotropic>(),
+    "elastic_psv/isotropic/constant_isotropic must have a container in 2D");
+static_assert(
+    !specfem::assembly::Attenuation<specfem::element::dimension_tag::dim2>::
+        has_attenuation<specfem::element::medium_tag::elastic_psv,
+                        specfem::element::property_tag::isotropic,
+                        specfem::element::attenuation_tag::none>(),
+    "elastic_psv/isotropic/none must not have a container in 2D");
+static_assert(
+    !specfem::assembly::Attenuation<specfem::element::dimension_tag::dim2>::
+        has_attenuation<
+            specfem::element::medium_tag::acoustic,
+            specfem::element::property_tag::isotropic,
+            specfem::element::attenuation_tag::constant_isotropic>(),
+    "acoustic/isotropic/constant_isotropic must not have a container in 2D");
+static_assert(
+    specfem::assembly::Attenuation<specfem::element::dimension_tag::dim3>::
+        has_attenuation<
+            specfem::element::medium_tag::elastic,
+            specfem::element::property_tag::isotropic,
+            specfem::element::attenuation_tag::constant_isotropic>(),
+    "elastic/isotropic/constant_isotropic must have a container in 3D");
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd,
@@ -399,8 +426,8 @@ TEST_F(Assembly2D, properties_construction) {
 }
 
 /**
- * @brief Visit every entry of every attenuation model dataset (e.g. Q) as
- *        fn(value_ref, gll_parity).
+ * @brief Visit every entry of every attenuation model dataset (reference
+ *        moduli and Q) as fn(value_ref, gll_parity).
  *
  * gll_parity alternates between 0 and 1 across the GLL points of an element,
  * giving callers a deterministic per-GLL pattern. No-op for non-attenuating
@@ -424,12 +451,62 @@ void visit_attenuation_model(
                           medium_tag, property_tag>()) {
           const auto &att =
               assembly.attenuation.get_container<medium_tag, property_tag>();
-          att.for_each_io_host_view([&](const auto view, const std::string) {
+          for (const auto &[view_name, view] : att.io_views()) {
             for (std::size_t e = 0; e < view.extent(0); ++e)
               for (std::size_t iz = 0; iz < view.extent(1); ++iz)
                 for (std::size_t ix = 0; ix < view.extent(2); ++ix)
                   fn(view(e, iz, ix), static_cast<int>((iz + ix) % 2));
-          });
+          }
+        }
+      });
+}
+
+/**
+ * @brief Visit every entry of the runtime state that the reader derives from
+ *        the on-disk model for attenuating groups: all property views of the
+ *        (medium, property) group plus the recomputed relaxation-rate views.
+ *
+ * Used to verify read idempotence: the on-disk model fully determines this
+ * state, so a second write/read round trip must reproduce it.
+ */
+template <typename Fn>
+void visit_attenuating_group_state(
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly,
+    Fn fn) {
+  const auto visit_entries = [&](const auto view) {
+    using ViewType = std::decay_t<decltype(view)>;
+    for (std::size_t e = 0; e < view.extent(0); ++e)
+      for (std::size_t iz = 0; iz < view.extent(1); ++iz)
+        for (std::size_t ix = 0; ix < view.extent(2); ++ix) {
+          if constexpr (ViewType::rank() == 3) {
+            fn(view(e, iz, ix));
+          } else {
+            for (std::size_t j = 0; j < view.extent(3); ++j)
+              fn(view(e, iz, ix, j));
+          }
+        }
+  };
+  specfem::tag_dispatch::for_each(
+      DIMENSION_SET(dim2) *
+          MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
+                     elastic_psv_t) *
+          PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
+      [&]<typename ElementTags>() {
+        constexpr auto medium_tag = ElementTags::medium_tag;
+        constexpr auto property_tag = ElementTags::property_tag;
+        if constexpr (decltype(assembly.attenuation)::template has_attenuation<
+                          medium_tag, property_tag>()) {
+          const auto &att =
+              assembly.attenuation.get_container<medium_tag, property_tag>();
+          if (att.element_range.size() == 0)
+            return;
+          const auto &container =
+              assembly.properties.get_container<medium_tag, property_tag>();
+          container.for_each_host_view(
+              [&](const auto view, const std::string) { visit_entries(view); });
+          att.for_each_recomputed_host_view(
+              [&](const auto view, const std::string) { visit_entries(view); });
         }
       });
 }
@@ -532,6 +609,14 @@ TEST_F(Assembly2D, properties_io_routines) {
           specfem::io_backends::ASCII<specfem::io::write>>
           writer(temp_io_directory);
 
+      // Snapshot the attenuation model before writing; its datasets
+      // (reference moduli, Q) are persisted verbatim so they must round-trip
+      // through the file.
+      std::vector<type_real> model_snapshot;
+      visit_attenuation_model(assembly, [&](type_real &value, const int) {
+        model_snapshot.push_back(value);
+      });
+
       writer.write(assembly);
 
       // Create a property reader
@@ -540,24 +625,59 @@ TEST_F(Assembly2D, properties_io_routines) {
           reader(temp_io_directory);
       reader.read(assembly);
 
-      // Check that the properties are the same. For attenuating configs this
-      // also validates the attenuation I/O: the writer persists physical
-      // (un-scaled) moduli plus the model datasets (e.g. Q), and the reader
-      // recomputes the scale factors from the on-disk model -- the moduli only
-      // round-trip if that recomputation matches the write-side scaling.
+      // Full property round trip holds for combinations whose datasets all
+      // come from the property container. For attenuating combinations the
+      // "kappa"/"mu" datasets are owned by the attenuation container (the
+      // reference moduli) and the runtime moduli are recomputed from the
+      // on-disk model on read, so those are validated separately below.
       specfem::tag_dispatch::for_each(
           DIMENSION_SET(dim2) *
               MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
                          elastic_psv_t) *
-              PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
+              PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
+              ATTENUATION_SET(none, constant_isotropic),
           [&]<typename ElementTags>() {
-            const auto elements = assembly.element_types.get_elements_on_host(
-                ElementTags::medium_tag, ElementTags::property_tag);
-            check_property_value<ElementTags::medium_tag,
-                                 ElementTags::property_tag, false,
-                                 Kokkos::DefaultHostExecutionSpace>(
-                elements, assembly, random_value);
+            constexpr auto medium_tag = ElementTags::medium_tag;
+            constexpr auto property_tag = ElementTags::property_tag;
+            constexpr auto attenuation_tag = ElementTags::attenuation_tag;
+            if constexpr (!decltype(assembly.attenuation)::
+                              template has_attenuation<medium_tag, property_tag,
+                                                       attenuation_tag>()) {
+              const auto elements = assembly.element_types.get_elements_on_host(
+                  medium_tag, property_tag, attenuation_tag);
+              if (elements.size() == 0)
+                return;
+              check_property_value<medium_tag, property_tag, false,
+                                   Kokkos::DefaultHostExecutionSpace>(
+                  elements, assembly, random_value);
+            }
           });
+
+      // The model datasets round-trip verbatim (up to ASCII quantization).
+      std::size_t model_index = 0;
+      visit_attenuation_model(assembly, [&](type_real &value, const int) {
+        EXPECT_NEAR(value, model_snapshot[model_index],
+                    std::abs(model_snapshot[model_index]) * 1e-6 + 1e-4);
+        ++model_index;
+      });
+
+      // Read idempotence for attenuating groups: the on-disk model fully
+      // determines the runtime moduli and relaxation rates, so a second
+      // write/read round trip must reproduce them.
+      std::vector<type_real> state_snapshot;
+      visit_attenuating_group_state(assembly, [&](const type_real value) {
+        state_snapshot.push_back(value);
+      });
+      if (!state_snapshot.empty()) {
+        writer.write(assembly);
+        reader.read(assembly);
+        std::size_t state_index = 0;
+        visit_attenuating_group_state(assembly, [&](const type_real value) {
+          EXPECT_NEAR(value, state_snapshot[state_index],
+                      std::abs(state_snapshot[state_index]) * 1e-6 + 1e-20);
+          ++state_index;
+        });
+      }
 
       // Attenuation model datasets are stored per GLL point so a written
       // model can be edited GLL-by-GLL. Perturb the model per GLL, round-trip,
@@ -578,7 +698,8 @@ TEST_F(Assembly2D, properties_io_routines) {
 
         std::size_t index = 0;
         visit_attenuation_model(assembly, [&](type_real &value, const int) {
-          EXPECT_NEAR(value, model[index], 1e-4);
+          EXPECT_NEAR(value, model[index],
+                      std::abs(model[index]) * 1e-6 + 1e-4);
           ++index;
         });
         expect_recomputed_state_varies(assembly);

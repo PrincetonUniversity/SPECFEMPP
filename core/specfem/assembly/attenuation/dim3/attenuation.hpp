@@ -118,6 +118,11 @@ struct Attenuation<specfem::element::dimension_tag::dim3>
 
   Attenuation() = default;
 
+  /**
+   * @param property_io_enabled Allocate the model-I/O views (reference
+   *        moduli and Q) in the attenuation containers; required when the
+   *        property writer or reader will run
+   */
   Attenuation(
       const specfem::mesh::attenuation_config &config, const type_real deltat,
       const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
@@ -125,7 +130,8 @@ struct Attenuation<specfem::element::dimension_tag::dim3>
       const specfem::assembly::element_types<
           specfem::element::dimension_tag::dim3> &element_types,
       const specfem::mesh::materials<specfem::element::dimension_tag::dim3>
-          &materials);
+          &materials,
+      const bool property_io_enabled = false);
 
   void init_memory_variables(
       const specfem::assembly::element_types<
@@ -137,7 +143,8 @@ struct Attenuation<specfem::element::dimension_tag::dim3>
       const specfem::units::Hertz fc, const specfem::units::Hertz f0,
       const specfem::utilities::Band<specfem::units::Hertz> &band,
       const Kokkos::View<type_real[N_SLS], Kokkos::DefaultHostExecutionSpace>
-          &tau_sigma);
+          &tau_sigma,
+      const bool property_io_enabled);
 
   /**
    * @brief Compile-time check whether (MediumTag, PropertyTag) has an
@@ -158,6 +165,30 @@ struct Attenuation<specfem::element::dimension_tag::dim3>
         specfem::tags::Tags<
             dimension_tag, MediumTag, PropertyTag,
             specfem::element::attenuation_tag::constant_isotropic>>;
+  }
+
+  /**
+   * @brief Compile-time check whether the full (MediumTag, PropertyTag,
+   *        AttenuationTag) combination has an attenuation container.
+   *
+   * Distinguishes attenuating combinations with a container from those the
+   * mesh may tag constant_isotropic but for which no container exists (e.g.
+   * acoustic); the property writer/reader treat the latter like
+   * non-attenuating combinations.
+   *
+   * @tparam MediumTag      Medium tag to query
+   * @tparam PropertyTag    Property tag to query
+   * @tparam AttenuationTag Attenuation tag to query
+   * @return true if an attenuation_medium exists for the combination
+   */
+  template <specfem::element::medium_tag MediumTag,
+            specfem::element::property_tag PropertyTag,
+            specfem::element::attenuation_tag AttenuationTag>
+  static constexpr bool has_attenuation() {
+    return specfem::tag_dispatch::contains_v<
+        decltype(attenuation_medium_combinations),
+        specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag,
+                            AttenuationTag>>;
   }
 
   /**

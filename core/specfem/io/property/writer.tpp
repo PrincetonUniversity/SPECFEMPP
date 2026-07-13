@@ -4,12 +4,14 @@
 #include "specfem/element.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/io/impl/medium_writer.hpp"
+#include "specfem/io/property/impl/sub_block.hpp"
 #include "specfem/io/property/writer.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/macros/tag_dispatch.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/tag_dispatch.hpp"
 #include <Kokkos_Core.hpp>
+#include <algorithm>
 #include <boost/filesystem.hpp>
 #include <sstream>
 #include <stdexcept>
@@ -52,55 +54,85 @@ void specfem::io::property_writer<OutputLibrary>::write(
       DIMENSION_SET(dim2) *
           MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
                      elastic_psv_t) *
-          PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
+          PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
+          ATTENUATION_SET(none, constant_isotropic),
       [&]<typename TagsType>() {
         constexpr auto medium_tag = TagsType::medium_tag;
         constexpr auto property_tag = TagsType::property_tag;
+        constexpr auto attenuation_tag = TagsType::attenuation_tag;
 
-        const auto element_indices =
-            assembly.element_types.get_elements_on_host(medium_tag,
-                                                        property_tag);
-        if (element_indices.size() == 0)
+        const auto element_range = assembly.element_types.get_elements_on_host(
+            medium_tag, property_tag, attenuation_tag);
+        if (element_range.size() == 0)
           return;
         const std::string name =
             std::string("/") +
-            specfem::element::to_string(medium_tag, property_tag);
+            specfem::element::to_string(medium_tag, property_tag,
+                                        attenuation_tag);
         typename OutputLibrary::Group group = file.createGroup(name);
-        const auto data_container =
+        const auto &data_container =
             assembly.properties.template get_container<medium_tag,
                                                        property_tag>();
 
-        impl::write_coordinates(group, assembly.mesh, element_indices);
+        // The property container spans the whole (medium, property) group;
+        // this combination's elements are the contiguous sub-block
+        // [offset, offset + count) of its views.
+        const int offset = element_range.begin_index() -
+                           data_container.element_range.begin_index();
+        const int count = element_range.size();
+
+        impl::write_coordinates(group, assembly.mesh, element_range);
 
         using AttenuationType = specfem::assembly::Attenuation<
             specfem::element::dimension_tag::dim2>;
         if constexpr (AttenuationType::template has_attenuation<
-                          medium_tag, property_tag>()) {
-          // The model file stores PHYSICAL (relaxed) moduli plus the
-          // attenuation model datasets (e.g. Qkappa/Qmu); which views are
-          // transformed is decided by the attenuation container.
+                          medium_tag, property_tag, attenuation_tag>()) {
+          // The attenuation container owns the "kappa"/"mu" datasets (the
+          // reference physical moduli) plus the attenuation model datasets
+          // (Qkappa/Qmu); all are persisted verbatim. The remaining property
+          // views are written for this combination's sub-block.
           const auto &att =
               assembly.attenuation.template get_container<medium_tag,
                                                           property_tag>();
+          if (att.element_range.begin_index() != element_range.begin_index() ||
+              att.element_range.size() != element_range.size()) {
+            throw std::runtime_error(
+                "property writer: attenuation container element range does "
+                "not match the mesh element range for group " +
+                name);
+          }
+          const auto io_views = att.io_views();
           data_container.for_each_host_view(
               [&](const auto view, const std::string view_name) {
+                const bool owned_by_attenuation =
+                    std::any_of(io_views.begin(), io_views.end(),
+                                [&](const auto &entry) {
+                                  return entry.first == view_name;
+                                });
+                if (owned_by_attenuation)
+                  return;
                 group
-                    .createDataset(view_name, att.physical_view(
-                                                  view, view_name,
-                                                  element_indices))
+                    .createDataset(
+                        view_name,
+                        specfem::io::property_impl::extract_sub_block(
+                            view, view_name, offset, count))
                     .write();
               });
-          att.for_each_io_host_view(
-              [&](const auto view, const std::string view_name) {
-                group.createDataset(view_name, view).write();
-              });
+          for (const auto &[view_name, view] : io_views) {
+            group.createDataset(view_name, view).write();
+          }
         } else {
           data_container.for_each_host_view(
               [&](const auto view, const std::string view_name) {
-                group.createDataset(view_name, view).write();
+                group
+                    .createDataset(
+                        view_name,
+                        specfem::io::property_impl::extract_sub_block(
+                            view, view_name, offset, count))
+                    .write();
               });
         }
-        n_written += element_indices.size();
+        n_written += count;
       });
 
   if (n_written != nspec) {
@@ -141,55 +173,85 @@ void specfem::io::property_writer<OutputLibrary>::write(
 
   specfem::tag_dispatch::for_each(
       DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic) *
-          PROPERTY_SET(isotropic),
+          PROPERTY_SET(isotropic) *
+          ATTENUATION_SET(none, constant_isotropic),
       [&]<typename TagsType>() {
         constexpr auto medium_tag = TagsType::medium_tag;
         constexpr auto property_tag = TagsType::property_tag;
+        constexpr auto attenuation_tag = TagsType::attenuation_tag;
 
-        const auto element_indices =
-            assembly.element_types.get_elements_on_host(medium_tag,
-                                                        property_tag);
-        if (element_indices.size() == 0)
+        const auto element_range = assembly.element_types.get_elements_on_host(
+            medium_tag, property_tag, attenuation_tag);
+        if (element_range.size() == 0)
           return;
         const std::string name =
             std::string("/") +
-            specfem::element::to_string(medium_tag, property_tag);
+            specfem::element::to_string(medium_tag, property_tag,
+                                        attenuation_tag);
         typename OutputLibrary::Group group = file.createGroup(name);
-        const auto data_container =
+        const auto &data_container =
             assembly.properties.template get_container<medium_tag,
                                                        property_tag>();
 
-        impl::write_coordinates(group, assembly.mesh, element_indices);
+        // The property container spans the whole (medium, property) group;
+        // this combination's elements are the contiguous sub-block
+        // [offset, offset + count) of its views.
+        const int offset = element_range.begin_index() -
+                           data_container.element_range.begin_index();
+        const int count = element_range.size();
+
+        impl::write_coordinates(group, assembly.mesh, element_range);
 
         using AttenuationType = specfem::assembly::Attenuation<
             specfem::element::dimension_tag::dim3>;
         if constexpr (AttenuationType::template has_attenuation<
-                          medium_tag, property_tag>()) {
-          // The model file stores PHYSICAL (relaxed) moduli plus the
-          // attenuation model datasets (e.g. Qkappa/Qmu); which views are
-          // transformed is decided by the attenuation container.
+                          medium_tag, property_tag, attenuation_tag>()) {
+          // The attenuation container owns the "kappa"/"mu" datasets (the
+          // reference physical moduli) plus the attenuation model datasets
+          // (Qkappa/Qmu); all are persisted verbatim. The remaining property
+          // views are written for this combination's sub-block.
           const auto &att =
               assembly.attenuation.template get_container<medium_tag,
                                                           property_tag>();
+          if (att.element_range.begin_index() != element_range.begin_index() ||
+              att.element_range.size() != element_range.size()) {
+            throw std::runtime_error(
+                "property writer: attenuation container element range does "
+                "not match the mesh element range for group " +
+                name);
+          }
+          const auto io_views = att.io_views();
           data_container.for_each_host_view(
               [&](const auto view, const std::string view_name) {
+                const bool owned_by_attenuation =
+                    std::any_of(io_views.begin(), io_views.end(),
+                                [&](const auto &entry) {
+                                  return entry.first == view_name;
+                                });
+                if (owned_by_attenuation)
+                  return;
                 group
-                    .createDataset(view_name, att.physical_view(
-                                                  view, view_name,
-                                                  element_indices))
+                    .createDataset(
+                        view_name,
+                        specfem::io::property_impl::extract_sub_block(
+                            view, view_name, offset, count))
                     .write();
               });
-          att.for_each_io_host_view(
-              [&](const auto view, const std::string view_name) {
-                group.createDataset(view_name, view).write();
-              });
+          for (const auto &[view_name, view] : io_views) {
+            group.createDataset(view_name, view).write();
+          }
         } else {
           data_container.for_each_host_view(
               [&](const auto view, const std::string view_name) {
-                group.createDataset(view_name, view).write();
+                group
+                    .createDataset(
+                        view_name,
+                        specfem::io::property_impl::extract_sub_block(
+                            view, view_name, offset, count))
+                    .write();
               });
         }
-        n_written += element_indices.size();
+        n_written += count;
       });
 
   if (n_written != nspec) {

@@ -12,6 +12,15 @@ namespace io {
  * Template-based writer for material property data supporting multiple I/O
  * backends. Used to write density, velocities, and other material parameters.
  *
+ * The file holds one group per (medium, property, attenuation) combination,
+ * named specfem::element::to_string(medium, property, attenuation); property
+ * datasets cover only that combination's elements. For attenuating
+ * combinations the "kappa"/"mu" datasets hold the reference
+ * (physical/relaxed) moduli owned by the attenuation container -- persisted
+ * verbatim alongside the attenuation model datasets (e.g. Qkappa/Qmu) --
+ * rather than the runtime (unrelaxed) values. Requires an assembly
+ * constructed with property I/O enabled.
+ *
  * @tparam OutputLibrary Backend library type (HDF5, ASCII, NPY, NPZ, or ADIOS2)
  */
 template <typename OutputLibrary> class property_writer : public writer {

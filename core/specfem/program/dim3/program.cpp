@@ -96,7 +96,7 @@ void program_3d(
       setup.get_t0(), dt, nsteps, max_seismogram_time_step,
       nstep_between_samples, setup.get_simulation_type(),
       setup.allocate_boundary_values(), setup.instantiate_property_reader(),
-      setup.get_flux_scheme_configuration());
+      setup.property_io_enabled(), setup.get_flux_scheme_configuration());
 
   // assembly.print() always called (not wrapped in lambda function)
   // because it requires collective communication

@@ -377,6 +377,13 @@ public:
   }
 
   /**
+   * @brief True when a property I/O block (reader or writer) is configured.
+   *
+   * @return true if the property writer or reader will run
+   */
+  bool property_io_enabled() const { return this->property != nullptr; }
+
+  /**
    * @brief Create property writer for saving material properties.
    *
    * @return Shared pointer to property writer or nullptr if not configured

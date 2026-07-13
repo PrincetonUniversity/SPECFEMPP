@@ -23,7 +23,7 @@ template <specfem::element::dimension_tag DimensionTag,
 struct ComputedAttenuationValues<
     DimensionTag, MediumTag,
     specfem::element::attenuation_tag::constant_isotropic,
-    std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> > {
+    std::enable_if_t<specfem::element::is_elastic<MediumTag>::value>> {
 
   using view_type = Kokkos::View<type_real[specfem::constants::N_SLS],
                                  Kokkos::LayoutRight, Kokkos::HostSpace>;
@@ -78,7 +78,7 @@ template <specfem::element::dimension_tag DimensionTag,
 struct AttenuationValues<
     DimensionTag, MediumTag,
     specfem::element::attenuation_tag::constant_isotropic,
-    std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> > {
+    std::enable_if_t<specfem::element::is_elastic<MediumTag>::value>> {
 public:
   type_real Qkappa; ///< Attenuation factor for bulk modulus
   type_real Qmu;    ///< Attenuation factor for shear modulus
@@ -195,7 +195,7 @@ template <specfem::element::dimension_tag DimensionTag,
 struct material<
     DimensionTag, MediumTag, specfem::element::property_tag::isotropic,
     AttenuationTag,
-    std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
+    std::enable_if_t<specfem::element::is_elastic<MediumTag>::value>>
     : impl::AttenuationValues<DimensionTag, MediumTag, AttenuationTag> {
 public:
   constexpr static auto dimension_tag =
@@ -298,7 +298,7 @@ public:
       specfem::element::attenuation_tag T = AttenuationTag,
       std::enable_if_t<T == specfem::element::attenuation_tag::none, int> = 0>
   inline specfem::point::properties<
-      specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false> >
+      specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false>>
   get_properties() const {
     return { this->kappa, this->mu, this->density };
   }
@@ -314,11 +314,37 @@ public:
       std::enable_if_t<
           T == specfem::element::attenuation_tag::constant_isotropic, int> = 0>
   inline specfem::point::properties<
-      specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false> >
+      specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false>>
   get_properties() const {
     return { this->kappa * attenuation::get_computed_values().kappa_scale,
              this->mu * attenuation::get_computed_values().mu_scale,
              this->density };
+  }
+
+  /**
+   * @brief Reference (physical/relaxed) bulk modulus, without attenuation
+   *        scaling
+   *
+   * @return type_real Bulk modulus at the reference frequency
+   */
+  template <
+      specfem::element::attenuation_tag T = AttenuationTag,
+      std::enable_if_t<T != specfem::element::attenuation_tag::none, int> = 0>
+  type_real kappa_reference() const {
+    return this->kappa;
+  }
+
+  /**
+   * @brief Reference (physical/relaxed) shear modulus, without attenuation
+   *        scaling
+   *
+   * @return type_real Shear modulus at the reference frequency
+   */
+  template <
+      specfem::element::attenuation_tag T = AttenuationTag,
+      std::enable_if_t<T != specfem::element::attenuation_tag::none, int> = 0>
+  type_real mu_reference() const {
+    return this->mu;
   }
 
   /**

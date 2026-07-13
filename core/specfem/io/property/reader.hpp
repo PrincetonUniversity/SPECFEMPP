@@ -12,6 +12,13 @@ namespace io {
  * Template-based reader for material property data supporting multiple I/O
  * backends. Used to read density, velocities, and other material parameters.
  *
+ * Mirrors the property writer's layout: one group per (medium, property,
+ * attenuation) combination. For attenuating combinations the "kappa"/"mu"
+ * datasets (reference physical moduli) and the attenuation model datasets
+ * (e.g. Qkappa/Qmu) are read verbatim into the attenuation container, and
+ * the runtime state (unrelaxed moduli, relaxation rates) is recomputed from
+ * them. Requires an assembly constructed with property I/O enabled.
+ *
  * @tparam InputLibrary Backend library type (HDF5, ASCII, NPY, NPZ, or ADIOS2)
  */
 template <typename InputLibrary> class property_reader : public reader {

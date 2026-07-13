@@ -20,6 +20,7 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
     const specfem::simulation::type simulation,
     const bool allocate_boundary_values,
     const std::shared_ptr<specfem::io::reader> &property_reader,
+    const bool property_io_enabled,
     const specfem::element_coupling::flux_scheme_configuration
         &flux_scheme_config) {
 
@@ -94,8 +95,10 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
   // Currently done in the mesher!
   this->check_jacobian_matrix();
 
-  this->attenuation = { mesh.attenuation, dt, this->mesh, this->element_types,
-                        mesh.materials };
+  const bool io_enabled = property_io_enabled || (property_reader != nullptr);
+  this->attenuation = { mesh.attenuation, dt,
+                        this->mesh,       this->element_types,
+                        mesh.materials,   io_enabled };
 
   this->properties = { this->element_types, this->mesh, mesh.materials,
                        property_reader != nullptr };
