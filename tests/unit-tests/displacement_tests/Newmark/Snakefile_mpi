@@ -1,0 +1,50 @@
+# Master Snakefile for the MPI Newmark displacement tests (3D only).
+#
+# Mirrors ./Snakefile but targets mpi/dim3 and produces partitioned per-rank
+# databases (database/proc_N.bin). The Fortran reference path (and therefore the
+# reference traces) is identical to serial; only the SPECFEM++ mesher is
+# partitioned via `cores` (see meshfem3d.smk).
+#
+# Run from this directory with:
+#     snakemake -s Snakefile_mpi --cores <N>
+# Requires SPECFEM3D_BINDIR and SPECFEMPP_BINDIR in the environment.
+
+configfile: "mpi/dim3/tests_mpi.yaml"
+
+# tests3d maps each test directory name -> its MPI process count.
+tests3d = config["tests3d"]
+
+rule all:
+    input:
+        traces3d=expand(
+            "mpi/dim3/{test_name}/traces/trace_list.txt", test_name=list(tests3d)
+        ),
+        database3d=[
+            f"mpi/dim3/{test_name}/database/proc_{rank}.bin"
+            for test_name, ncores in tests3d.items()
+            for rank in range(ncores)
+        ],
+    localrule: True
+
+# Dynamically include each per-test Snakefile as a module (matches ./Snakefile),
+# passing that test's core count down via the module config. The per-case Snakefile
+# reads it as config["cores"], which propagates into the .smk files it includes.
+for test_name, ncores in tests3d.items():
+    alias = f"{test_name}_"
+
+    module:
+        name: test_name
+        snakefile: f"mpi/dim3/{test_name}/Snakefile"
+        pathvars:
+            cwd=f"mpi/dim3/{test_name}"
+        config: {"cores": ncores}
+
+    use rule * from test_name as alias*
+
+rule clean:
+    shell:
+        """
+            rm -rf mpi/dim3/*/specfem3d_workdir
+            rm -rf mpi/dim3/*/database
+            rm -rf mpi/dim3/*/traces
+        """

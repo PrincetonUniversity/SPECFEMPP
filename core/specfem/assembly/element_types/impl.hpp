@@ -56,10 +56,12 @@ protected:
   static constexpr auto combinations_by_boundary = combinations_by_medium *
                                                    ElementSets::property_set *
                                                    ElementSets::boundary_set;
-  /** All valid (dimension, medium, property, attenuation, boundary) combos. */
+  /** All valid (dimension, medium, property, attenuation, boundary, mpi)
+   * combos. */
   static constexpr auto combinations_by_element =
       combinations_by_medium * ElementSets::property_set *
-      ElementSets::attenuation_set * ElementSets::boundary_set;
+      ElementSets::attenuation_set * ElementSets::boundary_set *
+      ElementSets::mpi_set;
 
 public:
   // ── Per-element tag views (host) ─────────────────────────────────────────
@@ -77,6 +79,8 @@ public:
   TagViewType<specfem::element::boundary_tag> boundary_tags;
   /** Host view of per-element attenuation tags (size: nspec). */
   TagViewType<specfem::element::attenuation_tag> attenuation_tags;
+  /** Host view of per-element MPI partition tags (size: nspec). */
+  TagViewType<specfem::element::mpi_tag> mpi_tags;
 
 protected:
   // ── Index stores ─────────────────────────────────────────────────────────
@@ -101,7 +105,7 @@ protected:
                                  decltype(combinations_by_boundary)>
       elements_by_boundary;
   /** Index range store keyed by (dimension, medium, property, attenuation,
-   * boundary). */
+   * boundary, mpi). */
   specfem::tag_dispatch::Storage<IndexRangeView,
                                  decltype(combinations_by_element)>
       elements_by_element;
@@ -135,7 +139,10 @@ public:
         property_tags("specfem::assembly::element_types::property_tags", nspec),
         boundary_tags("specfem::assembly::element_types::boundary_tags", nspec),
         attenuation_tags("specfem::assembly::element_types::attenuation_tags",
-                         nspec) {
+                         nspec),
+        mpi_tags("specfem::assembly::element_types::mpi_tags", nspec) {
+    // mpi_tags is value-initialized to mpi_tag::inner (no MPI classification
+    // from raw tag views).
     for (int ispec = 0; ispec < nspec; ispec++) {
       medium_tags(ispec) = medium_tags_in(ispec);
       property_tags(ispec) = property_tags_in(ispec);
@@ -185,8 +192,9 @@ public:
    * @brief Construct from mesh objects, mapping compute-to-mesh indices.
    *
    * Translates each compute-domain index to its mesh-domain counterpart via
-   * @p mesh, reads medium/property/boundary/attenuation tags from @p tags,
-   * then builds all index stores.
+   * @p mesh, reads medium/property/boundary/attenuation/mpi tags from @p tags,
+   * then builds all index stores (including the MPI-classified store). The
+   * MPI inner/outer classification is carried by the mesh @p tags.
    *
    * @param nspec        Number of spectral elements in the compute domain.
    * @param element_grid GLL grid layout (ngllx, ngllz, etc.).
@@ -203,13 +211,15 @@ public:
         property_tags("specfem::assembly::element_types::property_tags", nspec),
         boundary_tags("specfem::assembly::element_types::boundary_tags", nspec),
         attenuation_tags("specfem::assembly::element_types::attenuation_tags",
-                         nspec) {
+                         nspec),
+        mpi_tags("specfem::assembly::element_types::mpi_tags", nspec) {
     for (int ispec = 0; ispec < nspec; ispec++) {
       const int ispec_mesh = mesh.h_compute_to_mesh(ispec);
       medium_tags(ispec) = tags.tags_container(ispec_mesh).medium_tag;
       property_tags(ispec) = tags.tags_container(ispec_mesh).property_tag;
       attenuation_tags(ispec) = tags.tags_container(ispec_mesh).attenuation_tag;
       boundary_tags(ispec) = tags.tags_container(ispec_mesh).boundary_tag;
+      mpi_tags(ispec) = tags.tags_container(ispec_mesh).mpi_tag;
     }
     build_index_stores();
   }
@@ -231,11 +241,9 @@ private:
                   << "  A second matching element was found at ispec=" << ispec
                   << ".\n"
                   << "  This indicates a bug in mesh_to_compute_mapping: "
-                     "attenuation, medium, property, and boundary tags must "
-                     "all "
-                     "be included as sort keys so every tag combination maps "
-                     "to "
-                     "a single contiguous range.";
+                     "attenuation, medium, property, boundary, and mpi tags "
+                     "must all be included as sort keys so every tag "
+                     "combination maps to a single contiguous range.";
               specfem::Logger::error(msg.str());
               specfem::program::abort();
             }
@@ -250,7 +258,6 @@ private:
                              : IndexRangeView{ start, end };
       };
     };
-
     elements_by_medium = { make_initializer(medium_tags) };
     elements_by_medium_property = { make_initializer(medium_tags,
                                                      property_tags) };
@@ -259,7 +266,8 @@ private:
     elements_by_boundary = { make_initializer(medium_tags, property_tags,
                                               boundary_tags) };
     elements_by_element = { make_initializer(medium_tags, property_tags,
-                                             attenuation_tags, boundary_tags) };
+                                             attenuation_tags, boundary_tags,
+                                             mpi_tags) };
   }
 
 public:
@@ -428,41 +436,69 @@ public:
     return elements_by_boundary.get(medium_tag, property_tag, boundary_tag);
   }
 
-  // ── Accessors by element (medium + property + attenuation + boundary) ──────
+  // ── Accessors by element (medium + property + attenuation + boundary +
+  // mpi) ──
 
   /**
-   * @brief Element index range matching the given full element tag combination.
+   * @brief Element index range matching the given element type and MPI
+   * partition classification.
+   * @param medium_tag      Medium to query.
+   * @param property_tag    Material property to query.
+   * @param attenuation_tag Attenuation model to query.
+   * @param boundary_tag    Boundary condition to query.
+   * @param mpi_tag         MPI partition classification (inner or outer).
+   * @return Contiguous half-open range [start, end) of spectral-element
+   * indices.
    */
-  IndexRangeView get_elements_on_host(
-      const specfem::element::medium_tag medium_tag,
-      const specfem::element::property_tag property_tag,
-      const specfem::element::attenuation_tag attenuation_tag,
-      const specfem::element::boundary_tag boundary_tag) const {
+  IndexRangeView
+  get_elements_on_host(const specfem::element::medium_tag medium_tag,
+                       const specfem::element::property_tag property_tag,
+                       const specfem::element::attenuation_tag attenuation_tag,
+                       const specfem::element::boundary_tag boundary_tag,
+                       const specfem::element::mpi_tag mpi_tag) const {
     return elements_by_element.get(medium_tag, property_tag, attenuation_tag,
-                                   boundary_tag);
+                                   boundary_tag, mpi_tag);
   }
 
+  /**
+   * @brief Number of elements matching the given element type and MPI
+   * partition classification.
+   * @param medium_tag      Medium to query.
+   * @param property_tag    Material property to query.
+   * @param attenuation_tag Attenuation model to query.
+   * @param boundary_tag    Boundary condition to query.
+   * @param mpi_tag         MPI partition classification (inner or outer).
+   */
   int get_number_of_elements(
       const specfem::element::medium_tag medium_tag,
       const specfem::element::property_tag property_tag,
       const specfem::element::attenuation_tag attenuation_tag,
-      const specfem::element::boundary_tag boundary_tag) const {
+      const specfem::element::boundary_tag boundary_tag,
+      const specfem::element::mpi_tag mpi_tag) const {
     return get_elements_on_host(medium_tag, property_tag, attenuation_tag,
-                                boundary_tag)
+                                boundary_tag, mpi_tag)
         .size();
   }
 
   /**
-   * @brief Element index range matching the given full element tag combination
-   * (device-callable).
+   * @brief Element index range matching the given element type and MPI
+   * partition classification (device-callable).
+   * @param medium_tag      Medium to query.
+   * @param property_tag    Material property to query.
+   * @param attenuation_tag Attenuation model to query.
+   * @param boundary_tag    Boundary condition to query.
+   * @param mpi_tag         MPI partition classification (inner or outer).
+   * @return Contiguous half-open range [start, end) of spectral-element
+   * indices.
    */
   IndexRangeView get_elements_on_device(
       const specfem::element::medium_tag medium_tag,
       const specfem::element::property_tag property_tag,
       const specfem::element::attenuation_tag attenuation_tag,
-      const specfem::element::boundary_tag boundary_tag) const {
+      const specfem::element::boundary_tag boundary_tag,
+      const specfem::element::mpi_tag mpi_tag) const {
     return elements_by_element.get(medium_tag, property_tag, attenuation_tag,
-                                   boundary_tag);
+                                   boundary_tag, mpi_tag);
   }
 
   // ── Per-element tag accessors ────────────────────────────────────────────
@@ -497,6 +533,18 @@ public:
    */
   specfem::element::attenuation_tag get_attenuation_tag(const int ispec) const {
     return attenuation_tags(ispec);
+  }
+
+  /**
+   * @brief MPI partition tag of element @p ispec in the compute domain.
+   * @param ispec Compute-domain element index.
+   * @return inner if the element is not on an MPI boundary, outer otherwise.
+   *         Returns inner if MPI tags have not been initialized.
+   */
+  specfem::element::mpi_tag get_mpi_tag(const int ispec) const {
+    if (mpi_tags.extent(0) == 0)
+      return specfem::element::mpi_tag::inner;
+    return mpi_tags(ispec);
   }
 };
 

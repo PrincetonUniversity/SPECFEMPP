@@ -226,6 +226,14 @@ public:
   KOKKOS_INLINE_FUNCTION
   const mapping_type &get_mapping() const { return _mapping; }
 
+  /// Returns the logical rank of this view (number of index dimensions).
+  /// The Kokkos::View<T*> base always reports rank 1 because the underlying
+  /// storage is a flat 1-D array; this override returns the true logical rank
+  /// derived from the Extents template parameter so that I/O backends
+  /// (e.g. the medium writer) iterate over every logical dimension.
+  KOKKOS_INLINE_FUNCTION
+  static constexpr std::size_t rank() noexcept { return extents_type::rank(); }
+
   KOKKOS_INLINE_FUNCTION
   std::size_t extent(int idim) const { return _mapping.extents().extent(idim); }
 

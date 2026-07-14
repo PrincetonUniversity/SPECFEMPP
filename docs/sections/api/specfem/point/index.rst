@@ -27,4 +27,3 @@
     properties/index
     source/index
     stress/index
-    stress_integrands/index

@@ -86,6 +86,16 @@ template <> struct global_coordinates<specfem::element::dimension_tag::dim2> {
   Kokkos::Array<type_real, 2> coordinates() const {
     return Kokkos::Array<type_real, 2>{ x, z };
   }
+
+  /**
+   * @brief Print the coordinates to a string for debugging
+   *
+   */
+  std::string print() const {
+    std::ostringstream oss;
+    oss << "(" << x << ", " << z << ")";
+    return oss.str();
+  }
 };
 
 //-------------------------- 3D Specializations ------------------------------//
@@ -143,6 +153,16 @@ template <> struct global_coordinates<specfem::element::dimension_tag::dim3> {
   KOKKOS_INLINE_FUNCTION
   Kokkos::Array<type_real, 3> coordinates() const {
     return Kokkos::Array<type_real, 3>{ x, y, z };
+  }
+
+  /**
+   * @brief Print the coordinates to a string for debugging
+   *
+   */
+  std::string print() const {
+    std::ostringstream oss;
+    oss << "(" << x << ", " << y << ", " << z << ")";
+    return oss.str();
   }
 };
 

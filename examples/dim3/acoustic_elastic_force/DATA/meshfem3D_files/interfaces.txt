@@ -1,0 +1,24 @@
+# number of interfaces
+ 2
+#
+# We describe each interface below, structured as a 2D-grid, with several parameters :
+# number of points along XI and ETA, minimal XI ETA coordinates
+# and spacing between points which must be constant.
+# Then the records contain the Z coordinates of the NXI x NETA points.
+#
+# interface number 1 (acoustic-elastic boundary at 3000m depth, Z = -3000m)
+# SUPPRESS_UTM_PROJECTION  NXI  NETA  LONG_MIN  LAT_MIN  SPACING_XI  SPACING_ETA
+ .true. 2 2 -200000.0 -150000.0 400000.0 300000.0
+ DATA/meshfem3D_files/interface1.txt
+#
+# interface number 2 (top of the mesh, free surface, Z = 0m)
+# SUPPRESS_UTM_PROJECTION  NXI  NETA  LONG_MIN  LAT_MIN  SPACING_XI  SPACING_ETA
+ .true. 2 2 -200000.0 -150000.0 400000.0 300000.0
+ DATA/meshfem3D_files/interface2.txt
+#
+# for each layer, we give the number of spectral elements in the vertical direction
+#
+# layer number 1 (bottom elastic layer)
+ 16
+# layer number 2 (top acoustic layer)
+ 5

@@ -2,9 +2,12 @@
 
 ## Naming
 
-- **Classes and structs**: `snake_case` (e.g., `time_scheme`, `absorbing_boundary`, `tags_container`)
+- **Classes and structs**: `CamelCase` (e.g., `TimeScheme`, `AbsorbingBoundary`, `TagsContainer`).
+  Note: much of the existing codebase still uses `snake_case` for class/struct names;
+  new types should use `CamelCase`, and existing types are renamed opportunistically.
 - **Functions and methods**: `snake_case` (e.g., `compute_stiffness`, `load_on_device`)
 - **Variables and members**: `snake_case` (e.g., `num_elements`, `medium_tag`)
+- **Private Variables and members**: `snake_case_` (e.g., `num_elements_`, `medium_tag_`) [with trailing underscore]
 - **Namespaces**: `snake_case` (e.g., `specfem::mesh`, `specfem::assembly`)
 - **File names**: `snake_case` with `.hpp`, `.cpp`, `.tpp` extensions
 - **Template parameters**: `CamelCase` (e.g., `DimensionTag`, `MediumTag`, `ParallelConfig`)

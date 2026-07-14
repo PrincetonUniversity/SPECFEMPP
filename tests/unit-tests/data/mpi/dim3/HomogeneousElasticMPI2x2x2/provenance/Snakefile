@@ -1,0 +1,65 @@
+# Reproducible regeneration of the HomogeneousElasticMPI2x2x2 MPI test fixture.
+#
+# A 4x4x4 elastic cube, decomposed with METIS into 8 partitions (NPROC=8). The
+# 2x2x2 octant cut produces the general set of MPI interfaces (top/bottom faces,
+# horizontal edges, single-node corner connections) that the internal mesher
+# never emits -- the regression target for the dim3 MPI assembly connection
+# ordering fix.
+#
+# Run from this directory:
+#     uv run --group scripts snakemake -c1
+#
+# Requires xdecompose_mesh on PATH (or edit DECOMPOSE_BIN below) and the HDF5 /
+# OpenMPI runtime libraries on LD_LIBRARY_PATH.
+
+import os
+
+HERE = os.path.dirname(workflow.snakefile)
+DECOMPOSE_BIN = os.environ.get("DECOMPOSE_BIN", "xdecompose_mesh")
+
+
+rule all:
+    input:
+        expand(os.path.join(HERE, "..", "Database", "proc_{p}.bin"), p=range(8)),
+
+
+rule check_executible:
+    output:
+        executable_checked=os.path.join(HERE, "executable_checked.txt"),
+    shell:
+        """
+        if ! command -v {DECOMPOSE_BIN} &> /dev/null; then
+            echo "Error: {DECOMPOSE_BIN} executable not found in PATH."
+            exit 1
+        fi
+        touch {output}
+        """
+
+
+rule create_mesh:
+    output:
+        msh=os.path.join(HERE, "cube.msh"),
+    shell:
+        "cd {HERE} && python create_mesh.py"
+
+
+rule export_mesh:
+    input:
+        msh=rules.create_mesh.output.msh,
+    output:
+        mesh=os.path.join(HERE, "MESH", "mesh_file"),
+        nodes=os.path.join(HERE, "MESH", "nodes_coords_file"),
+    shell:
+        "cd {HERE} && python export_mesh.py"
+
+
+rule decompose:
+    input:
+        executable_checked=rules.check_executible.output.executable_checked,
+        mesh=rules.export_mesh.output.mesh,
+        nodes=rules.export_mesh.output.nodes,
+        par_file=os.path.join(HERE, "Par_file"),
+    output:
+        expand(os.path.join(HERE, "..", "Database", "proc_{p}.bin"), p=range(8)),
+    shell:
+        "cd {HERE} && {DECOMPOSE_BIN} -p Par_file"

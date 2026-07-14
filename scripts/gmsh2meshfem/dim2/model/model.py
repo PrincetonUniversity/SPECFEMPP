@@ -5,9 +5,9 @@ from typing import Iterable
 import numpy as np
 
 from ...gmsh_dep import GmshContext
+from ...helper.index_mapping import IndexMapping, JoinedIndexMapping
 from .boundary import BoundarySpec
 from .edges import ConformingInterfaces
-from .index_mapping import IndexMapping, JoinedIndexMapping
 from .nonconforming_interfaces import (
     NonconformingInterfaces,
 )

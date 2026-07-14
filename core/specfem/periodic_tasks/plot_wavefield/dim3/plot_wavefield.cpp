@@ -770,6 +770,7 @@ void specfem::periodic_tasks::plot_wavefield<
 }
 #endif // NO_HDF5
 
+#ifndef NO_HDF5
 void specfem::periodic_tasks::plot_wavefield<
     specfem::element::dimension_tag::dim3>::compute_mpi_offsets() {
 #ifdef SPECFEM_ENABLE_MPI
@@ -838,6 +839,7 @@ void specfem::periodic_tasks::plot_wavefield<
   this->all_cell_counts = { this->numCells };
   this->all_connectivity_counts = { this->numConnectivityIds };
 }
+#endif // NO_HDF5
 
 #ifndef NO_HDF5
 hid_t specfem::periodic_tasks::plot_wavefield<

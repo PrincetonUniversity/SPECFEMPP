@@ -1,6 +1,7 @@
 #pragma once
 
 #include "domain_accessor.hpp"
+#include "specfem/datatype/element_index_range.hpp"
 #include "specfem/medium_container.hpp"
 #include "specfem/mesh_entity.hpp"
 
@@ -45,35 +46,25 @@ struct domain_kernels
   constexpr static auto property_tag =
       base_type::property_tag; ///< Material property type
 
+  specfem::datatype::ElementIndexRange element_range; ///< Global element index
+                                                      ///< range for this type
+
   /// Default constructor for empty kernels container
   domain_kernels() = default;
 
   /**
    * @brief Construct kernels container for specified elements.
    *
-   * Initializes kernels storage for the given spectral elements and sets up
-   * the mapping from global element indices to local kernel storage indices.
+   * Initializes kernels storage for the given spectral elements.
    * All kernel values are initialized to zero for accumulation.
    *
-   * @param elements Element indices to initialize kernels for
+   * @param elements Contiguous range of global element indices for this type
    * @param grid Element grid configuration
-   * @param property_index_mapping Output mapping from element index to kernel
-   * storage index
    */
-  template <typename ViewType>
-  domain_kernels(const ViewType &elements,
-                 const specfem::mesh_entity::element_grid<dimension_tag> &grid,
-                 const Kokkos::View<int *, Kokkos::LayoutRight,
-                                    Kokkos::DefaultHostExecutionSpace>
-                     property_index_mapping)
+  domain_kernels(const specfem::datatype::ElementIndexRange &elements,
+                 const specfem::mesh_entity::element_grid<dimension_tag> &grid)
       : base_type(elements.extent(0), grid) {
-    const int nelement = elements.extent(0);
-    int count = 0;
-    for (int i = 0; i < nelement; ++i) {
-      const int ispec = elements(i);
-      property_index_mapping(ispec) = count;
-      count++;
-    }
+    element_range = elements;
   }
 };
 

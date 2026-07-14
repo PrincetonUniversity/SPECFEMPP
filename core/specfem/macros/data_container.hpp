@@ -106,11 +106,7 @@
   }
 
 #define _DEFINE_DOMAIN_VIEW(r, data, elem)                                     \
-  specfem::datatype::DomainView<                                               \
-      dimension_tag, type_real,                                                \
-      specfem::element::dimension<dimension_tag>::dim + 1,                     \
-      Kokkos::DefaultExecutionSpace::memory_space>                             \
-      BOOST_PP_SEQ_ELEM(0, elem);                                              \
+  domain_view_type BOOST_PP_SEQ_ELEM(0, elem);                                 \
   typename decltype(BOOST_PP_SEQ_ELEM(                                         \
       0, elem))::host_mirror_type BOOST_PP_CAT(h_,                             \
                                                BOOST_PP_SEQ_ELEM(0, elem));
@@ -128,7 +124,12 @@
   BOOST_PP_CAT(h_, BOOST_PP_SEQ_ELEM(0, elem))                                 \
   (specfem::datatype::create_mirror_view(BOOST_PP_SEQ_ELEM(0, elem)))
 
-#define _DATA_DEFINITION(seq) BOOST_PP_SEQ_FOR_EACH(_DEFINE_DOMAIN_VIEW, _, seq)
+#define _DATA_DEFINITION(seq)                                                  \
+  using domain_view_type = specfem::datatype::DomainView<                      \
+      dimension_tag, type_real,                                                \
+      specfem::element::dimension<dimension_tag>::dim + 1,                     \
+      Kokkos::DefaultExecutionSpace::memory_space>;                            \
+  BOOST_PP_SEQ_FOR_EACH(_DEFINE_DOMAIN_VIEW, _, seq)
 
 #define _DATA_CONSTRUCTORS(seq)                                                \
   data_container() = default;                                                  \

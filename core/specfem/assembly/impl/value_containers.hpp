@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/datatype/element_index_range.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/mesh_entity.hpp"
@@ -49,8 +50,6 @@ struct value_containers_base {
 
   using ContainerSetsType = ContainerSets<DimensionTag>;
 
-  using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
-
   int nspec; ///< Total number of spectral elements
   specfem::mesh_entity::element_grid<DimensionTag> element_grid; ///< GLL grid
                                                                  ///< layout
@@ -58,23 +57,11 @@ struct value_containers_base {
   constexpr static auto dimension_tag = DimensionTag;
   constexpr static auto combinations = ContainerSetsType::combinations;
 
-  IndexViewType property_index_mapping; ///< View to store property index
-                                        ///< mapping
-  IndexViewType::host_mirror_type h_property_index_mapping; ///< Host mirror of
-                                                            ///< property index
-                                                            ///< mapping
-
-  template <bool on_device>
-  KOKKOS_INLINE_FUNCTION constexpr
-      typename std::conditional<on_device, IndexViewType,
-                                IndexViewType::host_mirror_type>::type
-      get_property_index_mapping() const {
-    if constexpr (on_device) {
-      return property_index_mapping;
-    } else {
-      return h_property_index_mapping;
-    }
-  }
+  /// Per-(medium,property) element index range; enables arithmetic index
+  /// mapping without a device View.
+  specfem::tag_dispatch::Storage<specfem::datatype::ElementIndexRange,
+                                 decltype(combinations)>
+      element_ranges;
 
   template <typename TagsType>
   using ContainerType =
@@ -85,6 +72,22 @@ struct value_containers_base {
       value;
 
   /**
+   * @brief Typed arithmetic index mapping replacing the old View-based lookup.
+   *
+   * Returns the container-local index for a global element index @p ispec.
+   * Valid for device and host code.
+   */
+  template <specfem::element::medium_tag MediumTag,
+            specfem::element::property_tag PropertyTag>
+  KOKKOS_INLINE_FUNCTION int property_index_mapping(int ispec) const {
+    return ispec -
+           element_ranges
+               .template get<
+                   specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag>>()
+               .begin_index();
+  }
+
+  /**
    * @brief Default constructor
    */
   value_containers_base() = default;
@@ -92,33 +95,24 @@ struct value_containers_base {
   /**
    * @brief Construct and fully initialise a value_containers_base.
    *
-   * Allocates @c property_index_mapping and its host mirror (filled with -1),
-   * constructs every slot of @c value via the supplied initializer factory,
-   * and deep-copies the index mapping to device.
+   * Constructs every slot of @c value via the supplied per-tag initializer,
+   * then reads @c element_range from each slot to populate @c element_ranges.
    *
-   * @tparam InitializerFactory  Callable `(host_mirror_typeView) ->
-   * PerTagFunctor`. The returned @c PerTagFunctor must be invocable as
-   *   `functor.template operator()<TagsType>()` returning the slot value.
-   * @param  nspec_           Number of spectral elements.
-   * @param  grid             GLL grid layout.
-   * @param  label            Kokkos label for the property index mapping view.
-   * @param  make_initializer Factory called once with @c
-   * h_property_index_mapping to produce the per-tag slot initializer.
+   * @tparam Initializer  Callable invocable as
+   *   `initializer.template operator()<TagsType>()` returning the slot value.
+   * @param  nspec_       Number of spectral elements.
+   * @param  grid         GLL grid layout.
+   * @param  initializer  Per-tag slot initializer.
    */
-  template <typename InitializerFactory>
+  template <typename Initializer>
   value_containers_base(int nspec_,
                         specfem::mesh_entity::element_grid<DimensionTag> grid,
-                        const std::string &label,
-                        InitializerFactory &&make_initializer)
-      : nspec(nspec_), element_grid(grid),
-        property_index_mapping(label, nspec_),
-        h_property_index_mapping([](const auto &pm) {
-          auto h = Kokkos::create_mirror_view(pm);
-          Kokkos::deep_copy(h, -1);
-          return h;
-        }(property_index_mapping)),
-        value(make_initializer(h_property_index_mapping)) {
-    Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
+                        Initializer &&initializer)
+      : nspec(nspec_), element_grid(grid), value(initializer) {
+    specfem::tag_dispatch::for_each(combinations, [&]<typename TagsType>() {
+      element_ranges.template get<TagsType>() =
+          value.template get<TagsType>().element_range;
+    });
   }
 
   /**
@@ -126,25 +120,23 @@ struct value_containers_base {
    */
   template <specfem::element::medium_tag MediumTag,
             specfem::element::property_tag PropertyTag>
-  KOKKOS_INLINE_FUNCTION
-      constexpr containers_type<dimension_tag, MediumTag, PropertyTag> const &
-      get_container() const {
+  KOKKOS_INLINE_FUNCTION constexpr containers_type<dimension_tag, MediumTag,
+                                                   PropertyTag> const &
+  get_container() const {
     return value.template get<
-        specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag> >();
+        specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag>>();
   }
 
   /**
    * @brief Copy data to host
    */
   void copy_to_host() {
-    Kokkos::deep_copy(h_property_index_mapping, property_index_mapping);
     specfem::tag_dispatch::for_each(combinations, [&]<typename TagsType>() {
       value.template get<TagsType>().copy_to_host();
     });
   }
 
   void copy_to_device() {
-    Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
     specfem::tag_dispatch::for_each(combinations, [&]<typename TagsType>() {
       value.template get<TagsType>().copy_to_device();
     });

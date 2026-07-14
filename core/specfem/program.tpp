@@ -45,7 +45,7 @@ print_header(const specfem::runtime_configuration::setup &setup,
           << "Title : " << setup.get_header().get_title() << "\n"
           << "Description: " << setup.get_header().get_description() << "\n"
           << "Simulation start time: " << ctime(&c_now)
-          << std::string(58, '-') << "\n";
+          << std::string(58, '-') << "\n\n";
 
   return message.str();
 

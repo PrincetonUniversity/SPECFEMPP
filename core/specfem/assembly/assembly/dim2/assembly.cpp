@@ -9,10 +9,10 @@
 specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
     const specfem::mesh::mesh<dimension_tag> &mesh,
     const specfem::quadrature::quadratures &quadratures,
-    std::vector<std::shared_ptr<specfem::sources::source<dimension_tag> > >
+    std::vector<std::shared_ptr<specfem::sources::source<dimension_tag>>>
         &sources,
     const std::vector<std::shared_ptr<
-        specfem::receivers::receiver<specfem::element::dimension_tag::dim2> > >
+        specfem::receivers::receiver<specfem::element::dimension_tag::dim2>>>
         &receivers,
     const std::vector<specfem::enums::wavefield> &stypes, const type_real t0,
     const type_real dt, const int max_timesteps, const int max_sig_step,
@@ -39,8 +39,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
 
   this->kernels = { this->element_types };
   this->sources = {
-    sources, this->mesh, this->jacobian_matrix, this->element_types,
-    t0,      dt,         max_timesteps
+    sources, this->mesh,   mesh, this->jacobian_matrix, this->element_types, t0,
+    dt,      max_timesteps
   };
   this->receivers = { this->mesh.nspec,
                       this->mesh.element_grid.ngllz,
@@ -118,7 +118,7 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::print()
       MPI_Allreduce(MPI_IN_PLACE, &nglob, 1, MPI_INT, MPI_SUM, comm));
 
   message << "Assembly information:\n"
-          << "------------------------------\n"
+          << "---------------------\n"
           << "Total number of spectral elements : " << nspec << "\n"
           << "Total number of geometric points : "
           << this->mesh.element_grid.ngllz << "\n"

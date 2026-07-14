@@ -9,8 +9,9 @@ bool is_on_boundary(specfem::mesh_entity::dim3::type type, int iz, int iy,
          (type == specfem::mesh_entity::dim3::type::bottom && iz == 0) ||
          (type == specfem::mesh_entity::dim3::type::left && ix == 0) ||
          (type == specfem::mesh_entity::dim3::type::right && ix == ngllx - 1) ||
-         (type == specfem::mesh_entity::dim3::type::front && iy == nglly - 1) ||
-         (type == specfem::mesh_entity::dim3::type::back && iy == 0) ||
+         // front = eta=-1 face (iy=0); back = eta=+1 face (iy=nglly-1)
+         (type == specfem::mesh_entity::dim3::type::front && iy == 0) ||
+         (type == specfem::mesh_entity::dim3::type::back && iy == nglly - 1) ||
          // Edges
          (type == specfem::mesh_entity::dim3::type::bottom_left && iz == 0 &&
           ix == 0) ||
@@ -20,39 +21,39 @@ bool is_on_boundary(specfem::mesh_entity::dim3::type type, int iz, int iy,
           iz == ngllz - 1 && ix == ngllx - 1) ||
          (type == specfem::mesh_entity::dim3::type::top_left &&
           iz == ngllz - 1 && ix == 0) ||
-         (type == specfem::mesh_entity::dim3::type::front_bottom &&
-          iy == nglly - 1 && iz == 0) ||
-         (type == specfem::mesh_entity::dim3::type::front_top &&
-          iy == nglly - 1 && iz == ngllz - 1) ||
-         (type == specfem::mesh_entity::dim3::type::front_left &&
-          iy == nglly - 1 && ix == 0) ||
-         (type == specfem::mesh_entity::dim3::type::front_right &&
-          iy == nglly - 1 && ix == ngllx - 1) ||
-         (type == specfem::mesh_entity::dim3::type::back_bottom && iy == 0 &&
+         (type == specfem::mesh_entity::dim3::type::front_bottom && iy == 0 &&
           iz == 0) ||
-         (type == specfem::mesh_entity::dim3::type::back_top && iy == 0 &&
+         (type == specfem::mesh_entity::dim3::type::front_top && iy == 0 &&
           iz == ngllz - 1) ||
-         (type == specfem::mesh_entity::dim3::type::back_left && iy == 0 &&
+         (type == specfem::mesh_entity::dim3::type::front_left && iy == 0 &&
           ix == 0) ||
-         (type == specfem::mesh_entity::dim3::type::back_right && iy == 0 &&
+         (type == specfem::mesh_entity::dim3::type::front_right && iy == 0 &&
           ix == ngllx - 1) ||
+         (type == specfem::mesh_entity::dim3::type::back_bottom &&
+          iy == nglly - 1 && iz == 0) ||
+         (type == specfem::mesh_entity::dim3::type::back_top &&
+          iy == nglly - 1 && iz == ngllz - 1) ||
+         (type == specfem::mesh_entity::dim3::type::back_left &&
+          iy == nglly - 1 && ix == 0) ||
+         (type == specfem::mesh_entity::dim3::type::back_right &&
+          iy == nglly - 1 && ix == ngllx - 1) ||
          // Corners
          (type == specfem::mesh_entity::dim3::type::bottom_front_left &&
-          iz == 0 && iy == nglly - 1 && ix == 0) ||
-         (type == specfem::mesh_entity::dim3::type::bottom_front_right &&
-          iz == 0 && iy == nglly - 1 && ix == ngllx - 1) ||
-         (type == specfem::mesh_entity::dim3::type::bottom_back_left &&
           iz == 0 && iy == 0 && ix == 0) ||
-         (type == specfem::mesh_entity::dim3::type::bottom_back_right &&
+         (type == specfem::mesh_entity::dim3::type::bottom_front_right &&
           iz == 0 && iy == 0 && ix == ngllx - 1) ||
+         (type == specfem::mesh_entity::dim3::type::bottom_back_left &&
+          iz == 0 && iy == nglly - 1 && ix == 0) ||
+         (type == specfem::mesh_entity::dim3::type::bottom_back_right &&
+          iz == 0 && iy == nglly - 1 && ix == ngllx - 1) ||
          (type == specfem::mesh_entity::dim3::type::top_front_left &&
-          iz == ngllz - 1 && iy == nglly - 1 && ix == 0) ||
-         (type == specfem::mesh_entity::dim3::type::top_front_right &&
-          iz == ngllz - 1 && iy == nglly - 1 && ix == ngllx - 1) ||
-         (type == specfem::mesh_entity::dim3::type::top_back_left &&
           iz == ngllz - 1 && iy == 0 && ix == 0) ||
+         (type == specfem::mesh_entity::dim3::type::top_front_right &&
+          iz == ngllz - 1 && iy == 0 && ix == ngllx - 1) ||
+         (type == specfem::mesh_entity::dim3::type::top_back_left &&
+          iz == ngllz - 1 && iy == nglly - 1 && ix == 0) ||
          (type == specfem::mesh_entity::dim3::type::top_back_right &&
-          iz == ngllz - 1 && iy == 0 && ix == ngllx - 1);
+          iz == ngllz - 1 && iy == nglly - 1 && ix == ngllx - 1);
 }
 
 std::tuple<std::array<type_real, 3>, type_real> get_boundary_face_and_weight(
@@ -74,7 +75,9 @@ std::tuple<std::array<type_real, 3>, type_real> get_boundary_face_and_weight(
         specfem::mesh_entity::dim3::type::left);
     const std::array<type_real, 3> face_normal = { normal(0), normal(1),
                                                    normal(2) };
-    return std::make_tuple(face_normal, weights[1] * weights[2]);
+    // left face: constant ix, integrate over iz (weights[0]) and iy
+    // (weights[1])
+    return std::make_tuple(face_normal, weights[0] * weights[1]);
   }
 
   if (type == specfem::mesh_entity::dim3::type::bottom_front_right ||
@@ -90,7 +93,9 @@ std::tuple<std::array<type_real, 3>, type_real> get_boundary_face_and_weight(
         specfem::mesh_entity::dim3::type::right);
     const std::array<type_real, 3> face_normal = { normal(0), normal(1),
                                                    normal(2) };
-    return std::make_tuple(face_normal, weights[1] * weights[2]);
+    // right face: constant ix, integrate over iz (weights[0]) and iy
+    // (weights[1])
+    return std::make_tuple(face_normal, weights[0] * weights[1]);
   }
 
   if (type == specfem::mesh_entity::dim3::type::top_front_left ||
@@ -106,7 +111,8 @@ std::tuple<std::array<type_real, 3>, type_real> get_boundary_face_and_weight(
         specfem::mesh_entity::dim3::type::top);
     const std::array<type_real, 3> face_normal = { normal(0), normal(1),
                                                    normal(2) };
-    return std::make_tuple(face_normal, weights[0] * weights[2]);
+    // top face: constant iz, integrate over iy (weights[1]) and ix (weights[2])
+    return std::make_tuple(face_normal, weights[1] * weights[2]);
   }
 
   if (type == specfem::mesh_entity::dim3::type::bottom_front_left ||
@@ -122,7 +128,9 @@ std::tuple<std::array<type_real, 3>, type_real> get_boundary_face_and_weight(
         specfem::mesh_entity::dim3::type::bottom);
     const std::array<type_real, 3> face_normal = { normal(0), normal(1),
                                                    normal(2) };
-    return std::make_tuple(face_normal, weights[0] * weights[2]);
+    // bottom face: constant iz, integrate over iy (weights[1]) and ix
+    // (weights[2])
+    return std::make_tuple(face_normal, weights[1] * weights[2]);
   }
 
   if (type == specfem::mesh_entity::dim3::type::bottom_front_left ||
@@ -138,7 +146,9 @@ std::tuple<std::array<type_real, 3>, type_real> get_boundary_face_and_weight(
         specfem::mesh_entity::dim3::type::front);
     const std::array<type_real, 3> face_normal = { normal(0), normal(1),
                                                    normal(2) };
-    return std::make_tuple(face_normal, weights[0] * weights[1]);
+    // front face: constant iy, integrate over iz (weights[0]) and ix
+    // (weights[2])
+    return std::make_tuple(face_normal, weights[0] * weights[2]);
   }
 
   if (type == specfem::mesh_entity::dim3::type::bottom_back_left ||
@@ -154,7 +164,9 @@ std::tuple<std::array<type_real, 3>, type_real> get_boundary_face_and_weight(
         specfem::mesh_entity::dim3::type::back);
     const std::array<type_real, 3> face_normal = { normal(0), normal(1),
                                                    normal(2) };
-    return std::make_tuple(face_normal, weights[0] * weights[1]);
+    // back face: constant iy, integrate over iz (weights[0]) and ix
+    // (weights[2])
+    return std::make_tuple(face_normal, weights[0] * weights[2]);
   }
 
   throw std::invalid_argument("Error: Unknown boundary type");

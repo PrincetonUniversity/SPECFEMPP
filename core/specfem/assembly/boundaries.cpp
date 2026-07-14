@@ -3,3 +3,5 @@
 #include "boundaries/dim2/impl/acoustic_free_surface.tpp"
 #include "boundaries/dim2/impl/stacey.tpp"
 #include "boundaries/dim3/boundaries.tpp"
+#include "boundaries/dim3/impl/acoustic_free_surface.tpp"
+#include "boundaries/dim3/impl/stacey.tpp"

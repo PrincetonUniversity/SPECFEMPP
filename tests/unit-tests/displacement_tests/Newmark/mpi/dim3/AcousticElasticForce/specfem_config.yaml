@@ -1,0 +1,48 @@
+parameters:
+
+  header:
+    title: Acoustic Elastic Simulation (MPI)
+    description: |
+      Material systems : Elastic & Acoustic domain (2)
+      Interfaces : None
+      Sources : Vertical up force (1)
+      Boundary conditions : None
+      Debugging comment : Tests acoustic elastic interface implementation under MPI
+
+  simulation-setup:
+    quadrature:
+      quadrature-type: GLL4
+
+    solver:
+      time-marching:
+        type-of-simulation: forward
+        time-scheme:
+          type: Newmark
+          dt: 0.19
+          nstep: 265
+
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:
+            format: ascii
+            directory: "./"
+
+  receivers:
+    stations: "displacement_tests/Newmark/mpi/dim3/AcousticElasticForce/STATIONS"
+    angle: 0.0
+    seismogram-type:
+      - displacement
+      - velocity
+      - acceleration
+      - pressure
+    nstep_between_samples: 1
+
+  run-setup:
+    number-of-processors: 4
+    number-of-runs: 1
+
+  databases:
+    mesh-database: "displacement_tests/Newmark/mpi/dim3/AcousticElasticForce/database.bin"
+
+  sources: "displacement_tests/Newmark/mpi/dim3/AcousticElasticForce/source.yaml"

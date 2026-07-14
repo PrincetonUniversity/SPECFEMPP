@@ -55,15 +55,14 @@ KOKKOS_FORCEINLINE_FUNCTION void load_on_device(
     PointPropertiesType &point_properties) {
   const int ispec = lcoord.ispec;
 
-  IndexType l_index = lcoord;
-
-  const int index = properties.property_index_mapping(ispec);
-
-  l_index.ispec = index;
-
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
   constexpr auto PropertyTag = PointPropertiesType::property_tag;
   constexpr auto DimensionTag = PointPropertiesType::dimension_tag;
+
+  IndexType l_index = lcoord;
+
+  l_index.ispec =
+      properties.template property_index_mapping<MediumTag, PropertyTag>(ispec);
 
   properties.template get_container<MediumTag, PropertyTag>()
       .load_device_values(l_index, point_properties);

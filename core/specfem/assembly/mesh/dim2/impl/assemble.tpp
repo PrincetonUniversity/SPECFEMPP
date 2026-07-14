@@ -6,8 +6,9 @@
 #include "specfem/point.hpp"
 #include <boost/graph/filtered_graph.hpp>
 
-void specfem::assembly::mesh<
-    specfem::element::dimension_tag::dim2>::assemble() {
+void specfem::assembly::mesh<specfem::element::dimension_tag::dim2>::assemble(
+    const Kokkos::View<specfem::element::medium_tag *, Kokkos::HostSpace>
+        medium_tags) {
 
   const int nspec = this->nspec;
   const int ngllx = this->element_grid.ngllx;
@@ -143,6 +144,9 @@ void specfem::assembly::mesh<
             // for
             if (fg[edge].orientation == iedge) {
               const int jspec = boost::target(edge, fg);
+              if (medium_tags(ispec) != medium_tags(jspec)) {
+                continue;
+              }
               // Return edge
               const auto other_edge = boost::edge(jspec, ispec, fg).first;
               const auto mapped_iedge = fg[other_edge].orientation;
@@ -217,6 +221,9 @@ void specfem::assembly::mesh<
                                              fg[edge].orientation)) {
             const auto iedge = fg[edge].orientation;
             const int jspec = boost::target(edge, fg);
+            if (medium_tags(ispec) != medium_tags(jspec)) {
+              continue;
+            }
 
             // Return edge
             const auto other_edge = boost::edge(jspec, ispec, fg).first;

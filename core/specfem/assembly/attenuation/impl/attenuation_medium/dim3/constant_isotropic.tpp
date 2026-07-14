@@ -8,6 +8,7 @@
 #include "specfem/constants.hpp"
 #include "specfem/data_access/container.hpp"
 #include "specfem/datatype.hpp"
+#include "specfem/datatype/element_index_range.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/mesh/dim3/materials/materials.hpp"
 #include "specfem/setup.hpp"
@@ -77,17 +78,12 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
   scalar_view_type epsilon_yz_att;
   scalar_view_type::host_mirror_type h_epsilon_yz_att;
 
-  // Index mapping: global ispec -> compact attenuation index (-1 if not
-  // attenuating)
-  Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
-      h_attenuation_index_mapping;
-  Kokkos::View<int *, Kokkos::DefaultExecutionSpace> attenuation_index_mapping;
+  specfem::datatype::ElementIndexRange element_range; ///< Global element index range for this type
 
   attenuation_medium() = default;
 
-  template <typename ViewType>
   attenuation_medium(
-      const ViewType &elements,
+      const specfem::datatype::ElementIndexRange &elements,
       const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
           &mesh,
       const specfem::mesh::materials<specfem::element::dimension_tag::dim3>
@@ -168,19 +164,7 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
     h_epsilon_yz_att = specfem::datatype::create_mirror_view(epsilon_yz_att);
     Kokkos::deep_copy(epsilon_yz_att, static_cast<type_real>(0));
 
-    // Allocate and populate the inverse index mapping (global ispec -> compact
-    // index)
-    h_attenuation_index_mapping =
-        Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>(
-            "h_attenuation_index_mapping", mesh.nspec);
-    Kokkos::deep_copy(h_attenuation_index_mapping, -1);
-    for (int i = 0; i < nspec_attn; ++i) {
-      h_attenuation_index_mapping(elements(i)) = i;
-    }
-    attenuation_index_mapping =
-        Kokkos::View<int *, Kokkos::DefaultExecutionSpace>(
-            "attenuation_index_mapping", mesh.nspec);
-    Kokkos::deep_copy(attenuation_index_mapping, h_attenuation_index_mapping);
+    element_range = elements;
 
     // Sync zero-initialized device views to host mirrors
     copy_to_host();
@@ -294,7 +278,7 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
   template <typename IndexType, typename PointType>
   KOKKOS_INLINE_FUNCTION void load_device_values(const IndexType &index,
                                                  PointType &point) const {
-    const int i = attenuation_index_mapping(index.ispec);
+    const int i = index.ispec - element_range.begin_index();
     if constexpr (!IndexType::using_simd) {
       for (int j = 0; j < N_SLS; ++j) {
         point.kappa_relaxation_rate(j) =
@@ -374,7 +358,7 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
   template <typename IndexType, typename PointType>
   KOKKOS_INLINE_FUNCTION void
   store_device_values(const IndexType &index, const PointType &point) const {
-    const int i = attenuation_index_mapping(index.ispec);
+    const int i = index.ispec - element_range.begin_index();
     if constexpr (!IndexType::using_simd) {
       for (int j = 0; j < N_SLS; ++j) {
         memory_variable_Rxx(i, index.iz, index.iy, index.ix, j) = point.Rxx(j);

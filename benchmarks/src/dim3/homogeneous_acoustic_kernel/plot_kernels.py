@@ -2,22 +2,52 @@
 Plot acoustic sensitivity kernels on the source-receiver plane (X-Z at Y=center).
 """
 
-import sys
 import os
-import numpy as np
+import sys
+
 import matplotlib.pyplot as plt
+import numpy as np
 from scipy.interpolate import griddata
 
 
 def load_kernels(kernels_dir):
     subdir = os.path.join(kernels_dir, "Kernels", "acoustic_isotropic")
+    if not os.path.isdir(subdir):
+        kernels_root = os.path.join(kernels_dir, "Kernels")
+        proc_dirs = sorted(
+            os.path.join(kernels_root, entry, "acoustic_isotropic")
+            for entry in os.listdir(kernels_root)
+            if entry.startswith("proc_")
+            and os.path.isdir(os.path.join(kernels_root, entry, "acoustic_isotropic"))
+        )
+        if not proc_dirs:
+            raise FileNotFoundError(f"No acoustic kernel files found in {kernels_root}")
+
+        arrays = {}
+        for name in ("X", "Y", "Z", "kappa", "alpha", "rhop"):
+            arrays[name] = np.concatenate(
+                [
+                    np.load(os.path.join(proc_dir, f"{name}.npy")).flatten()
+                    for proc_dir in proc_dirs
+                ]
+            )
+        return (
+            arrays["X"],
+            arrays["Y"],
+            arrays["Z"],
+            {
+                "kappa": arrays["kappa"],
+                "alpha": arrays["alpha"],
+                "rhop": arrays["rhop"],
+            },
+        )
+
     X = np.load(os.path.join(subdir, "X.npy")).flatten()
     Y = np.load(os.path.join(subdir, "Y.npy")).flatten()
     Z = np.load(os.path.join(subdir, "Z.npy")).flatten()
-    n = len(X)
-    kappa = np.load(os.path.join(subdir, "kappa.npy"))[:n]
-    alpha = np.load(os.path.join(subdir, "alpha.npy"))[:n]
-    rhop = np.load(os.path.join(subdir, "rhop.npy"))[:n]
+    kappa = np.load(os.path.join(subdir, "kappa.npy")).flatten()
+    alpha = np.load(os.path.join(subdir, "alpha.npy")).flatten()
+    rhop = np.load(os.path.join(subdir, "rhop.npy")).flatten()
     return X, Y, Z, {"kappa": kappa, "alpha": alpha, "rhop": rhop}
 
 

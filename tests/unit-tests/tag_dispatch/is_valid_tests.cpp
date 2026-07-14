@@ -158,15 +158,27 @@ TEST(IsValidMaterial, OthersAllowBothAttenuation) {
 
 // ── is_valid_boundary_combo ───────────────────────────────────────────
 
-TEST(IsValidBoundary, Dim3_NoneOnly) {
+TEST(IsValidBoundary, Dim3_ElasticNoneOrStacey) {
   EXPECT_TRUE(
       is_valid_boundary_combo({ D::dim3, M::elastic, P::isotropic, B::none }));
-  EXPECT_FALSE(is_valid_boundary_combo(
+  EXPECT_TRUE(is_valid_boundary_combo(
       { D::dim3, M::elastic, P::isotropic, B::stacey }));
-  EXPECT_FALSE(is_valid_boundary_combo(
-      { D::dim3, M::acoustic, P::isotropic, B::acoustic_free_surface }));
+  // composite_stacey_dirichlet requires acoustic medium
   EXPECT_FALSE(is_valid_boundary_combo(
       { D::dim3, M::elastic, P::isotropic, B::composite_stacey_dirichlet }));
+  EXPECT_FALSE(is_valid_boundary_combo(
+      { D::dim3, M::elastic, P::isotropic, B::acoustic_free_surface }));
+}
+
+TEST(IsValidBoundary, Dim3_AcousticAllBoundaries) {
+  EXPECT_TRUE(
+      is_valid_boundary_combo({ D::dim3, M::acoustic, P::isotropic, B::none }));
+  EXPECT_TRUE(is_valid_boundary_combo(
+      { D::dim3, M::acoustic, P::isotropic, B::acoustic_free_surface }));
+  EXPECT_TRUE(is_valid_boundary_combo(
+      { D::dim3, M::acoustic, P::isotropic, B::stacey }));
+  EXPECT_TRUE(is_valid_boundary_combo(
+      { D::dim3, M::acoustic, P::isotropic, B::composite_stacey_dirichlet }));
 }
 
 TEST(IsValidBoundary, Acoustic_AllBoundaries) {
@@ -244,12 +256,24 @@ TEST(IsValidFull, InvalidByMaterial) {
 }
 
 TEST(IsValidFull, InvalidByBoundary) {
-  // stacey is not allowed on dim3
-  EXPECT_FALSE(is_valid_full_combo(
-      { D::dim3, M::elastic, P::isotropic, A::none, B::stacey }));
-  // acoustic_free_surface not allowed on elastic_psv
+  // acoustic_free_surface not allowed on elastic_psv (dim2)
   EXPECT_FALSE(is_valid_full_combo({ D::dim2, M::elastic_psv, P::isotropic,
                                      A::none, B::acoustic_free_surface }));
+  // composite_stacey_dirichlet not allowed on elastic (dim3)
+  EXPECT_FALSE(is_valid_full_combo({ D::dim3, M::elastic, P::isotropic, A::none,
+                                     B::composite_stacey_dirichlet }));
+}
+
+TEST(IsValidFull, Dim3StaceyAndAcousticFreeSurface) {
+  // stacey is now valid on dim3 for both elastic and acoustic
+  EXPECT_TRUE(is_valid_full_combo(
+      { D::dim3, M::elastic, P::isotropic, A::none, B::stacey }));
+  EXPECT_TRUE(is_valid_full_combo({ D::dim3, M::acoustic, P::isotropic, A::none,
+                                    B::acoustic_free_surface }));
+  EXPECT_TRUE(is_valid_full_combo(
+      { D::dim3, M::acoustic, P::isotropic, A::none, B::stacey }));
+  EXPECT_TRUE(is_valid_full_combo({ D::dim3, M::acoustic, P::isotropic, A::none,
+                                    B::composite_stacey_dirichlet }));
 }
 
 TEST(IsValidFull, InvalidByMedium) {
@@ -284,8 +308,12 @@ static_assert(!is_valid_material_combo({ D::dim2, M::elastic_psv_t,
 
 static_assert(is_valid_boundary_combo({ D::dim2, M::acoustic, P::isotropic,
                                         B::acoustic_free_surface }));
+static_assert(is_valid_boundary_combo({ D::dim3, M::elastic, P::isotropic,
+                                        B::stacey }));
+static_assert(is_valid_boundary_combo({ D::dim3, M::acoustic, P::isotropic,
+                                        B::acoustic_free_surface }));
 static_assert(!is_valid_boundary_combo({ D::dim3, M::elastic, P::isotropic,
-                                         B::stacey }));
+                                         B::composite_stacey_dirichlet }));
 
 static_assert(is_valid_full_combo({ D::dim2, M::elastic_psv, P::isotropic,
                                     A::none, B::stacey }));

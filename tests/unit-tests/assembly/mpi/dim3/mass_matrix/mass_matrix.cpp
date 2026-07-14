@@ -2,23 +2,25 @@
  * @file mass_matrix.cpp
  * @brief Unit test for MPI consistency of the assembled mass matrix in 3D.
  *
- * After full mass matrix initialization (compute + MPI assembly + inversion),
- * verifies that every shared boundary node has the identical assembled inverse
- * mass value on all ranks that share it. Uses the same MPI exchange pattern as
- * the CommunicationPattern test: pack local values, send to neighbor, receive
- * neighbor's values, compare against local unpack mapping.
+ * Builds the mass matrix through the production solver path (per-medium
+ * outer/inner compute with overlapped cross-rank exchange, then inversion),
+ * then verifies that every shared boundary node has the identical assembled
+ * inverse mass value on all ranks that share it. Uses the same MPI exchange
+ * pattern as the CommunicationPattern test: pack local values, send to
+ * neighbor, receive neighbor's values, compare against local unpack mapping.
  */
 
 #include "SPECFEM_Environment.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/attenuation.hpp"
-#include "specfem/compute/initialize_mass_matrix.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/io.hpp"
 #include "specfem/macros/tag_dispatch.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/quadrature.hpp"
+#include "specfem/solver/impl/update_medium.hpp"
+#include "specfem/solver/mpi_buffers.hpp"
 #include "specfem/tags.hpp"
 #include <gtest/gtest.h>
 #include <type_traits>
@@ -67,10 +69,20 @@ protected:
         /* allocate_boundary_values */ false,
         /* property_reader */ nullptr);
 
-    specfem::compute::initialize_mass_matrix<
-        5, specfem::tags::Tags<dimension,
-                               specfem::simulation::field_type::forward>>(
-        assembly, assembly.dt);
+    // Build the mass matrix through the production solver path: per-medium
+    // outer/inner compute with overlapped cross-rank exchange, then invert.
+    constexpr auto forward = specfem::simulation::field_type::forward;
+    auto mpi_buffers = specfem::solver::make_mpi_buffers(assembly);
+
+    specfem::tag_dispatch::for_each(
+        specfem::tag_dispatch::dimension_set<dimension>{} *
+            MEDIUM_SET(acoustic, elastic, elastic_psv, elastic_sh, poroelastic,
+                       elastic_psv_t),
+        [&]<typename ElementTags>() {
+          specfem::solver::impl::init_medium_mass<
+              5, specfem::tags::expand<ElementTags, forward>>(
+              assembly, mpi_buffers, assembly.dt);
+        });
   }
 
   void TearDown() override {}
