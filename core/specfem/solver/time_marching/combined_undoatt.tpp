@@ -2,8 +2,8 @@
 
 #include "specfem/compute.tpp"
 #include "specfem/logger.hpp"
+#include "specfem/periodic_tasks/checkpointing.hpp"
 #include "specfem/periodic_tasks/wavefield_reader.hpp"
-#include "specfem/solver/checkpointing_strategy.hpp"
 #include "specfem/solver/forward_displacement_buffer.hpp"
 #include "specfem/solver/impl/update_medium.hpp"
 #include "specfem/solver/impl/update_step.hpp"
@@ -187,17 +187,17 @@ void specfem::solver::time_marching<specfem::simulation::type::combined_undoatt,
   }
 
   // ------------------------------------------------------------------
-  // Build the checkpointing strategy (fixed-stride by default).
-  // The stride is the reader's time_interval, matching Fortran
-  // NT_DUMP_ATTENUATION. Future: swap in a Revolve strategy here.
+  // Wavefield storage and checkpoint replay use the same periodic interval,
+  // matching NT_DUMP_ATTENUATION in Fortran.
   // ------------------------------------------------------------------
-  const int stride = checkpoint_reader->get_time_interval();
-  if (stride <= 0) {
+  const int checkpoint_interval = checkpoint_reader->get_time_interval();
+  if (checkpoint_interval <= 0) {
     throw std::runtime_error(
         "combined_undoatt solver: wavefield reader time-interval must be > 0 "
         "(this is NT_DUMP_ATTENUATION). Set it in the wavefield config.");
   }
-  const specfem::solver::FixedStrideCheckpointing strategy(stride);
+  const specfem::periodic_tasks::checkpointing<DimensionTag>
+      checkpointing_task(checkpoint_interval);
 
   // ------------------------------------------------------------------
   // Mass matrix initialization (same as forward::run()).
@@ -231,7 +231,7 @@ void specfem::solver::time_marching<specfem::simulation::type::combined_undoatt,
 
   // Pre-allocate the RAM displacement buffer for the largest possible window.
   specfem::solver::ForwardDisplacementBuffer<DimensionTag> displ_buffer;
-  displ_buffer.allocate(strategy.max_window_size(nstep),
+  displ_buffer.allocate(checkpointing_task.max_window_size(),
                         assembly.fields.forward);
 
   // ================================================================
@@ -268,13 +268,13 @@ void specfem::solver::time_marching<specfem::simulation::type::combined_undoatt,
   // Each subset window covers [checkpoint_step, window_end).
   // We iterate over checkpoint steps in reverse order.
   int num_checkpoints = 0;
-  for (int cs = 0; cs < nstep; cs += stride)
+  for (int cs = 0; cs < nstep; cs += checkpoint_interval)
     num_checkpoints++;
 
   for (int subset_idx = num_checkpoints - 1; subset_idx >= 0; --subset_idx) {
-    const int checkpoint_step = subset_idx * stride;
+    const int checkpoint_step = subset_idx * checkpoint_interval;
     const auto [win_start, win_end] =
-        strategy.replay_window(checkpoint_step, nstep);
+        checkpointing_task.replay_window(checkpoint_step, nstep);
     const int window_size = win_end - win_start;
 
     // ---- (A) Load checkpoint from disk --------------------------------

@@ -63,13 +63,12 @@ public:
   }
 
   /**
-   * @brief Returns true if the data should be plotted at the current
-   * timestep. Updates the internal timestep counter
+   * @brief Returns true if the task should run at the current timestep.
    *
    * @param istep Current timestep
-   * @return true if the data should be plotted at the current timestep
+   * @return true if the task should run at the current timestep
    */
-  bool should_run(const int istep) {
+  bool should_run(const int istep) const {
     if (include_last_step && istep == -1) {
       return true;
     }
