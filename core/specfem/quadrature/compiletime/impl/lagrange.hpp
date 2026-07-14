@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Kokkos_Array.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::quadrature::compiletime::impl {
@@ -55,6 +56,51 @@ make_lagrange_coeff_table(const Kokkos::Array<Number, N> &nodes) {
   for (std::size_t i = 0; i < N; ++i)
     table[i] = make_lagrange_coeffs_for_basis(nodes, i);
   return table;
+}
+
+/**
+ * @brief Evaluate all five basis polynomials at @p x using Horner's method.
+ * @param x  Evaluation point in @f$ [-1,1] @f$.
+ * @param L  Output array; @c L[i] receives @f$ L_i(x) @f$.
+ */
+template <std::size_t N, typename TableNumberType, typename SampleNumberType>
+KOKKOS_INLINE_FUNCTION constexpr void lagrange_eval_all(
+    const Kokkos::Array<Kokkos::Array<TableNumberType, N>, N> &coeff_table,
+    SampleNumberType x, Kokkos::Array<SampleNumberType, N> &L) {
+  for (int i = 0; i < N; ++i) {
+    float v = coeff_table[i][N - 1];
+    for (int k = N - 2; k >= 0; --k)
+      v = v * x + coeff_table[i][k];
+    L[i] = v;
+  }
+}
+
+template <typename Number, std::size_t N>
+consteval Number lagrange_polynomial_orthogonality_error(
+    const Kokkos::Array<Number, N> &nodes,
+    const Kokkos::Array<Kokkos::Array<Number, N>, N> &coeff_table) {
+  Number max_error = 0;
+  Kokkos::Array<Number, N> eval_stores;
+
+  for (std::size_t inode = 0; inode < N; ++inode) {
+
+    // for each node, evaluate all L[i] and compare to Kronecker delta.
+
+    Number x = nodes[inode];
+    lagrange_eval_all(coeff_table, x, eval_stores);
+
+    for (std::size_t ifunc = 0; ifunc < N; ++ifunc) {
+      Number error = eval_stores[ifunc] - ((ifunc == inode) ? 1 : 0);
+
+      // max_error = max(abs(error), max_error)
+      if (error > max_error) {
+        max_error = error;
+      } else if (error < -max_error) {
+        max_error = -error;
+      }
+    }
+  }
+  return max_error;
 }
 
 } // namespace specfem::quadrature::compiletime::impl

@@ -1,7 +1,6 @@
 #pragma once
 
-#include "specfem/quadrature/compiletime/legendre.hpp"
-#include "specfem/quadrature/compiletime/rational_polynomial.hpp"
+#include "gll_database.hpp"
 #include "specfem/setup.hpp"
 
 #include "impl/lagrange.hpp"
@@ -35,7 +34,6 @@ template <typename NodeInitializer> struct Lagrange {
       return NodeInitializer::get_nodes();
     }
 
-  private:
     static constexpr Kokkos::Array<numerical_type, N> nodes = get_nodes();
 
   public:
@@ -87,32 +85,34 @@ public:
   template <typename SampleNumberType>
   KOKKOS_INLINE_FUNCTION static void
   eval_all(SampleNumberType x, Kokkos::Array<SampleNumberType, N> &L) {
-    for (int i = 0; i < N; ++i) {
-      float v = poly_coeff(i, N - 1);
-      for (int k = N - 2; k >= 0; --k)
-        v = v * x + poly_coeff(i, k);
-      L[i] = v;
-    }
+    constexpr auto coeff_table_ = coeff_table;
+    return impl::lagrange_eval_all(coeff_table_, x, L);
   }
+
+  /*
+   * static check:
+   *
+   *     L_i(x_j) =?= delta(i,j)
+   *
+   * lagrange_polynomial_orthogonality_error() returns the largest error of the
+   * above equation. We compare that to a type-dependent epsilon, multiplied by
+   * NGLL, in order to account for the error accumulation.
+   */
+  static_assert(
+      impl::lagrange_polynomial_orthogonality_error<numerical_type, N>(
+          Nodes::nodes, coeff_table) <
+      N * (std::is_same_v<numerical_type, double> ? 1e-10 : 1e-5));
 };
 
 template <int NGLL, typename numerical_type = type_real>
 struct gll_initializer {
   static consteval Kokkos::Array<numerical_type, NGLL> get_nodes() {
-    Kokkos::Array<numerical_type, NGLL> knots;
-    knots[0] = -1;
-
-    using Lp =
-        decltype(specfem::quadrature::compiletime::RationalPolynomialWithRoots(
-            typename specfem::quadrature::compiletime::LegendrePolynomial<
-                NGLL - 1>::derivative()));
-
-    for (int i = 1; i < NGLL - 1; i++) {
-      knots[i] = Lp::roots[i - 1];
+    Kokkos::Array<numerical_type, NGLL> result;
+    const auto node_db = gll_database::nodes<NGLL>();
+    for (int i = 0; i < NGLL; i++) {
+      result[i] = (numerical_type)node_db[i];
     }
-
-    knots[NGLL - 1] = 1;
-    return knots;
+    return result;
   }
 };
 
