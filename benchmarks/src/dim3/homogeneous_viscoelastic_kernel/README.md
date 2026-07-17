@@ -7,6 +7,20 @@ This is a 3D homogeneous halfspace simulation with attenuation enabled. We do _n
 
 The material uses low quality factors so attenuation has a visible impact on the resulting kernel plots.
 
+The adjoint configuration can subdivide each undo-attenuation replay buffer
+under `solver.time-marching.checkpointing`:
+
+```yaml
+checkpointing:
+  subdivide-buffer: 4  # four 64-step leaves for a 256-step window
+```
+
+The default, `subdivide-buffer: 1`, buffers every displacement in a disk
+checkpoint window. Values greater than one retain the forward state between
+smaller displacement buffers. Leaf size is the checkpoint-window length
+divided by `subdivide-buffer`, rounded up when it is not exact. The solver
+derives one full-state checkpoint for each internal leaf boundary.
+
 ## Running the examples
 
 To run any example, you first need to install uv following these

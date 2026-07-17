@@ -208,9 +208,11 @@ public:
       const specfem::assembly::assembly<dimension_tag> &assembly,
       const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
       const std::vector<std::shared_ptr<
-          specfem::periodic_tasks::periodic_task<dimension_tag>>> &tasks)
+          specfem::periodic_tasks::periodic_task<dimension_tag>>> &tasks,
+      int checkpoint_buffer_subdivisions = 1)
       : assembly(assembly), time_scheme(time_scheme), tasks(tasks),
-        mpi_buffers(specfem::solver::make_mpi_buffers(this->assembly)) {}
+        mpi_buffers(specfem::solver::make_mpi_buffers(this->assembly)),
+        checkpoint_buffer_subdivisions(checkpoint_buffer_subdivisions) {}
 
   /**
    * @brief Execute adjoint pass with windowed forward replay.
@@ -224,6 +226,7 @@ private:
       std::shared_ptr<specfem::periodic_tasks::periodic_task<dimension_tag>>>
       tasks;
   specfem::solver::MPIBuffers<dimension_tag> mpi_buffers;
+  int checkpoint_buffer_subdivisions;
 };
 
 } // namespace solver
