@@ -979,6 +979,29 @@ target_link_libraries(
   -lpthread -lm
 )
 
+add_executable(
+  stiffness_assembler_tests
+  linear_system/stiffness_assembler_tests.cpp
+)
+
+target_link_libraries(
+  stiffness_assembler_tests
+  specfem::linear_system
+  specfem::quadrature
+  specfem::mesh
+  yaml-cpp
+  specfem_environment
+  specfem::assembly
+  specfem::runtime_configuration
+  timescheme
+  point
+  specfem::algorithms
+  specfem::solver
+  specfem::periodic_tasks
+  ${BOOST_LIBS}
+  -lpthread -lm
+)
+
 # Register serial tests for discovery
 set(SERIAL_TEST_TARGETS
   serial_mpi_tests
@@ -1033,6 +1056,7 @@ set(SERIAL_TEST_TARGETS
   surface_elevation_tests
   trilinos_smoke_tests
   element_stiffness_tests
+  stiffness_assembler_tests
 )
 
 if (NOT SPECFEM_ENABLE_MPI)
