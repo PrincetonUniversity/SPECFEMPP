@@ -8,6 +8,9 @@ template <specfem::element::dimension_tag DimensionTag> struct assembly;
 
 namespace specfem {
 namespace periodic_tasks {
+
+enum class type { none, wavefield_reader, wavefield_writer };
+
 /**
  * @brief Base class for tasks executed periodically during simulation
  *
@@ -48,6 +51,16 @@ public:
   virtual void finalize(specfem::assembly::assembly<DimensionTag> &assembly) {
     // Default implementation
   };
+
+  /**
+   * @brief Returns the concrete periodic task type.
+   *
+   * Solvers can use this to find task capabilities without depending on the
+   * concrete I/O backend or derived class template parameters.
+   */
+  virtual specfem::periodic_tasks::type get_type() const {
+    return specfem::periodic_tasks::type::none;
+  }
 
   /**
    * @brief Returns true if the data should be plotted at the current
