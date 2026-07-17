@@ -12,6 +12,15 @@ namespace io {
  * Template-based writer for material property data supporting multiple I/O
  * backends. Used to write density, velocities, and other material parameters.
  *
+ * The file holds one group per (medium, property, attenuation) combination,
+ * named specfem::element::to_string(medium, property, attenuation). The
+ * "kappa"/"mu" datasets always hold the physical (relaxed) moduli: for
+ * attenuating combinations the runtime (unrelaxed) values are divided by the
+ * attenuation container's per-element scale factors before writing, and the
+ * per-GLL Qkappa/Qmu model datasets are appended. Note the scale factors are
+ * per element, so after reading a GLL-varying Q model a re-written file is
+ * only approximate at GLL points where Q varies within an element.
+ *
  * @tparam OutputLibrary Backend library type (HDF5, ASCII, NPY, NPZ, or ADIOS2)
  */
 template <typename OutputLibrary> class property_writer : public writer {
@@ -46,9 +55,7 @@ public:
    *
    */
   void write(specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
-                 &assembly) override {
-    throw std::runtime_error("3D property writing not yet implemented");
-  };
+                 &assembly) override;
 
 private:
   std::string output_folder; ///< Path to output folder
