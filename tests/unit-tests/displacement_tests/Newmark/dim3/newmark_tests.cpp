@@ -269,14 +269,17 @@ TEST_P(Newmark, 3D) {
           }
 
           const auto computed_value = traces(icomp, count, 1);
-          error += std::sqrt((value[icomp] - computed_value) *
-                             (value[icomp] - computed_value));
-          computed_norm += std::sqrt(computed_value * computed_value);
+          const auto difference = value[icomp] - computed_value;
+          error += difference * difference;
+          computed_norm += computed_value * computed_value;
         }
 
         count++;
       }
     }
+
+    error = std::sqrt(error);
+    computed_norm = std::sqrt(computed_norm);
 
     // When the reference norm is zero both the reference and computed
     // seismograms must be zero for the test to pass.

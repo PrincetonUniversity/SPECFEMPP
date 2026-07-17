@@ -24,7 +24,7 @@ parameters:
         writer:
           seismogram:
             format: ascii
-            directory: "./traces_gen"
+            directory: "./"
 
   receivers:
     stations: "displacement_tests/Newmark/serial/dim3/HomogeneousAcousticFreeSurfaceForceSource3D/STATIONS"
