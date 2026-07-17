@@ -47,8 +47,8 @@ if (DEFINED KOKKOS_PATH)
     # Pop the indentation for Kokkos messages
 else()
 
-    ## TODO (Rohit: Relase0.6.0): Move to 5.2.0 when it is released
-    set(KOKKOS_VERSION "dda3bac859e5fd03d6519027e70a6f7fa7b940e7")
+    # Pinned to the Kokkos 5.2.0 release candidate branch
+    set(KOKKOS_VERSION "release-candidate-5.2.0")
 
     # Set common FetchContent parameters
     # set(KOKKOS_URL "https://github.com/kokkos/kokkos/archive/refs/tags/${KOKKOS_VERSION}.zip")
