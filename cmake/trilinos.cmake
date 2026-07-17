@@ -38,6 +38,20 @@ if(SPECFEM_ENABLE_TRILINOS)
 
     add_compile_definitions(SPECFEM_ENABLE_TRILINOS)
 
+    # Trilinos dylibs carry "@rpath/..." install names. On macOS, dyld ignores
+    # LD_LIBRARY_PATH (all the TROMP modulefiles set) and SIP strips DYLD_*
+    # under make/cmake; unlike ELF platforms, CMake also does not add imported
+    # libraries' directories to the build rpath automatically. Embed the
+    # Trilinos library directory so binaries run without environment setup.
+    # Trilinos_DIR is <prefix>/<libdir>/cmake/Trilinos, so <libdir> is two
+    # levels up.
+    if(APPLE)
+        get_filename_component(SPECFEM_TRILINOS_LIBRARY_DIR
+            "${Trilinos_DIR}/../.." ABSOLUTE)
+        list(APPEND CMAKE_BUILD_RPATH "${SPECFEM_TRILINOS_LIBRARY_DIR}")
+        list(APPEND CMAKE_INSTALL_RPATH "${SPECFEM_TRILINOS_LIBRARY_DIR}")
+    endif()
+
     message(STATUS "Found Trilinos ${Trilinos_VERSION}")
     message(STATUS "    DIR : ${Trilinos_DIR}")
     message(STATUS "    PKGS: ${Trilinos_PACKAGE_LIST}")

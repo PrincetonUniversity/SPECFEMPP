@@ -956,6 +956,29 @@ target_link_libraries(
   Kokkos::kokkos
 )
 
+add_executable(
+  element_stiffness_tests
+  linear_system/element_stiffness_tests.cpp
+)
+
+target_link_libraries(
+  element_stiffness_tests
+  specfem::linear_system
+  specfem::quadrature
+  specfem::mesh
+  yaml-cpp
+  specfem_environment
+  specfem::assembly
+  specfem::runtime_configuration
+  timescheme
+  point
+  specfem::algorithms
+  specfem::solver
+  specfem::periodic_tasks
+  ${BOOST_LIBS}
+  -lpthread -lm
+)
+
 # Register serial tests for discovery
 set(SERIAL_TEST_TARGETS
   serial_mpi_tests
@@ -1009,6 +1032,7 @@ set(SERIAL_TEST_TARGETS
   resolve_coordinates_tests
   surface_elevation_tests
   trilinos_smoke_tests
+  element_stiffness_tests
 )
 
 if (NOT SPECFEM_ENABLE_MPI)
