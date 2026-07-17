@@ -13,7 +13,7 @@
 
     periodic_task.rst
     check_signal.rst
-    checkpointing.rst
+    wavefield_checkpoint.rst
     plot_wavefield.rst
     plotter.rst
     wavefield_reader.rst

@@ -172,7 +172,8 @@ void program_2d(
   // --------------------------------------------------------------
   const auto wavefield_reader = setup.instantiate_wavefield_reader<
       specfem::element::dimension_tag::dim2>();
-  if (wavefield_reader) {
+  if (wavefield_reader &&
+      simulation_type != specfem::simulation::type::combined_undoatt) {
     tasks.push_back(wavefield_reader);
   }
   // --------------------------------------------------------------
@@ -200,7 +201,7 @@ void program_2d(
   //                   Instantiate Solver
   // --------------------------------------------------------------
   std::shared_ptr<specfem::solver::solver> solver = setup.instantiate_solver<5>(
-      dt, assembly, time_scheme, simulation_type, tasks);
+      dt, assembly, time_scheme, simulation_type, tasks, wavefield_reader);
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------

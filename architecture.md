@@ -443,7 +443,7 @@ The I/O layer is organized around abstract `reader` and `writer` base classes wi
 
 | Task | Description |
 |---|---|
-| `checkpointing` | Define fixed-stride checkpoint and replay windows |
+| `wavefield_checkpoint` | Define fixed-stride checkpoint and replay windows |
 | `wavefield_writer` | Write wavefield snapshots to disk at configured intervals |
 | `wavefield_reader` | Read pre-computed wavefield snapshots (adjoint setup) |
 | `plot_wavefield` | Real-time or file-based wavefield visualization (VTK/PNG/JPG) |

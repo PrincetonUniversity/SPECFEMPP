@@ -18,18 +18,18 @@ namespace periodic_tasks {
  * @tparam DimensionTag Spatial dimension (dim2 or dim3)
  */
 template <specfem::element::dimension_tag DimensionTag>
-class checkpointing : public periodic_task<DimensionTag> {
+class wavefield_checkpoint : public periodic_task<DimensionTag> {
 public:
   /**
    * @brief Construct a fixed-stride checkpoint task.
    *
    * @param time_interval Number of time steps in each replay window
    */
-  explicit checkpointing(const int time_interval)
+  explicit wavefield_checkpoint(const int time_interval)
       : periodic_task<DimensionTag>(time_interval, false) {
     if (time_interval < 1) {
       throw std::invalid_argument(
-          "checkpointing: time interval must be greater than zero");
+          "wavefield_checkpoint: time interval must be greater than zero");
     }
   }
 
