@@ -9,8 +9,6 @@ template <specfem::element::dimension_tag DimensionTag> struct assembly;
 namespace specfem {
 namespace periodic_tasks {
 
-enum class type { none, wavefield_reader, wavefield_writer };
-
 /**
  * @brief Base class for tasks executed periodically during simulation
  *
@@ -53,23 +51,12 @@ public:
   };
 
   /**
-   * @brief Returns the concrete periodic task type.
-   *
-   * Solvers can use this to find task capabilities without depending on the
-   * concrete I/O backend or derived class template parameters.
-   */
-  virtual specfem::periodic_tasks::type get_type() const {
-    return specfem::periodic_tasks::type::none;
-  }
-
-  /**
-   * @brief Returns true if the data should be plotted at the current
-   * timestep. Updates the internal timestep counter
+   * @brief Returns true if the task should run at the current timestep.
    *
    * @param istep Current timestep
-   * @return true if the data should be plotted at the current timestep
+   * @return true if the task should run at the current timestep
    */
-  bool should_run(const int istep) {
+  bool should_run(const int istep) const {
     if (include_last_step && istep == -1) {
       return true;
     }
