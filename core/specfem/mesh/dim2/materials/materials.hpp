@@ -60,14 +60,14 @@ template <> struct materials<specfem::element::dimension_tag::dim2> {
     int n_materials = 0; ///< Number of different materials
     std::vector<
         specfem::medium_container::material<dimension_tag, type, property,
-                                            attenuation> >
+                                            attenuation>>
         element_materials; ///< Material properties
 
     material() = default;
 
     material(const int n_materials,
              const std::vector<specfem::medium_container::material<
-                 dimension_tag, type, property, attenuation> > &l_materials)
+                 dimension_tag, type, property, attenuation>> &l_materials)
         : n_materials(n_materials), element_materials(l_materials) {}
   };
 
@@ -125,6 +125,18 @@ public:
     material_container.element_materials.push_back(material);
     material_container.n_materials += 1;
     return material_container.n_materials - 1;
+  }
+
+  bool has_attenuation() const {
+    for (int ispec = 0;
+         ispec < static_cast<int>(this->material_index_mapping.extent(0));
+         ++ispec) {
+      if (this->material_index_mapping(ispec).attenuation !=
+          specfem::element::attenuation_tag::none) {
+        return true;
+      }
+    }
+    return false;
   }
 
   void apply_attenuation(const specfem::mesh::attenuation_config &config) {
@@ -199,7 +211,7 @@ public:
             specfem::element::property_tag PropertyTag,
             specfem::element::attenuation_tag AttenuationTag>
   specfem::point::properties<
-      specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag, false> >
+      specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag, false>>
   get_properties(const int index) const {
     return get_material<MediumTag, PropertyTag, AttenuationTag>(index)
         .get_properties();
@@ -208,10 +220,10 @@ public:
   template <specfem::element::medium_tag MediumTag,
             specfem::element::property_tag PropertyTag>
   specfem::point::properties<
-      specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag, false> >
+      specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag, false>>
   get_properties(const int index) const {
     using Result = specfem::point::properties<
-        specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag, false> >;
+        specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag, false>>;
     using att = specfem::element::attenuation_tag;
     constexpr auto att_combos =
         specfem::tag_dispatch::dimension_set<dimension_tag>{} *

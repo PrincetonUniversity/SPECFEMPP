@@ -312,7 +312,7 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict) {
 
     this->time_scheme =
         std::make_unique<specfem::runtime_configuration::time_scheme>(
-            n_timescheme, simulation);
+            n_timescheme);
   } catch (YAML::InvalidNode &e) {
     std::ostringstream message;
     message << "Error reading specfem solver configuration. \n" << e.what();
@@ -334,11 +334,11 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict) {
 template std::shared_ptr<specfem::time_scheme::time_scheme>
 specfem::runtime_configuration::setup::instantiate_timescheme<
     specfem::assembly::fields<specfem::element::dimension_tag::dim2>>(
-    specfem::assembly::fields<specfem::element::dimension_tag::dim2> &fields)
-    const;
+    specfem::assembly::fields<specfem::element::dimension_tag::dim2> &fields,
+    const specfem::simulation::type simulation_type) const;
 
 template std::shared_ptr<specfem::time_scheme::time_scheme>
 specfem::runtime_configuration::setup::instantiate_timescheme<
     specfem::assembly::fields<specfem::element::dimension_tag::dim3>>(
-    specfem::assembly::fields<specfem::element::dimension_tag::dim3> &fields)
-    const;
+    specfem::assembly::fields<specfem::element::dimension_tag::dim3> &fields,
+    const specfem::simulation::type simulation_type) const;

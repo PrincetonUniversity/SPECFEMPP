@@ -131,7 +131,7 @@ template <> struct materials<specfem::element::dimension_tag::dim3> {
     std::vector<
 
         specfem::medium_container::material<dimension_tag, type, property,
-                                            attenuation> >
+                                            attenuation>>
         element_materials;
 
     /** @brief Default constructor creating empty container */
@@ -145,7 +145,7 @@ template <> struct materials<specfem::element::dimension_tag::dim3> {
      */
     material(const int n_materials,
              const std::vector<specfem::medium_container::material<
-                 dimension_tag, type, property, attenuation> > &l_material);
+                 dimension_tag, type, property, attenuation>> &l_material);
   };
 
   /** @name Core Data Members */
@@ -203,6 +203,15 @@ public:
 
   /** @name Material Access Interface */
   /** @{ */
+
+  bool has_attenuation() const {
+    for (const auto &material : this->material_index_mapping) {
+      if (material.attenuation != specfem::element::attenuation_tag::none) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   /**
    * @brief Retrieve material object for a specific element with type safety
@@ -262,7 +271,7 @@ public:
             specfem::element::property_tag PropertyTag,
             specfem::element::attenuation_tag AttenuationTag>
   const specfem::point::properties<
-      specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag, false> >
+      specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag, false>>
   get_properties(const int index) const {
     const auto material =
         this->get_material<MediumTag, PropertyTag, AttenuationTag>(index);
@@ -272,10 +281,10 @@ public:
   template <specfem::element::medium_tag MediumTag,
             specfem::element::property_tag PropertyTag>
   specfem::point::properties<
-      specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag, false> > const
+      specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag, false>> const
   get_properties(const int index) const {
     using Result = specfem::point::properties<
-        specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag, false> >;
+        specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag, false>>;
     constexpr auto att_combos =
         specfem::tag_dispatch::dimension_set<dimension_tag>{} *
         specfem::tag_dispatch::medium_set<MediumTag>{} *
