@@ -8,6 +8,9 @@ template class specfem::time_scheme::newmark<
 template class specfem::time_scheme::newmark<
     specfem::assembly::fields<specfem::element::dimension_tag::dim2>,
     specfem::simulation::type::combined>;
+template class specfem::time_scheme::newmark<
+    specfem::assembly::fields<specfem::element::dimension_tag::dim2>,
+    specfem::simulation::type::combined_undoatt>;
 
 template class specfem::time_scheme::newmark<
     specfem::assembly::fields<specfem::element::dimension_tag::dim3>,
@@ -15,3 +18,6 @@ template class specfem::time_scheme::newmark<
 template class specfem::time_scheme::newmark<
     specfem::assembly::fields<specfem::element::dimension_tag::dim3>,
     specfem::simulation::type::combined>;
+template class specfem::time_scheme::newmark<
+    specfem::assembly::fields<specfem::element::dimension_tag::dim3>,
+    specfem::simulation::type::combined_undoatt>;

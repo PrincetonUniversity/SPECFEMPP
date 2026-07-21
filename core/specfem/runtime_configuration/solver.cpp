@@ -7,8 +7,11 @@ specfem::runtime_configuration::solver::instantiate<
     const type_real,
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim2> &,
     std::shared_ptr<specfem::time_scheme::time_scheme>,
+    const specfem::simulation::type,
     const std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task<
-        specfem::element::dimension_tag::dim2> > > &) const;
+        specfem::element::dimension_tag::dim2>>> &,
+    const std::shared_ptr<specfem::periodic_tasks::periodic_task<
+        specfem::element::dimension_tag::dim2>>) const;
 
 template std::shared_ptr<specfem::solver::solver>
 specfem::runtime_configuration::solver::instantiate<
@@ -16,5 +19,8 @@ specfem::runtime_configuration::solver::instantiate<
     const type_real,
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &,
     std::shared_ptr<specfem::time_scheme::time_scheme>,
+    const specfem::simulation::type,
     const std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task<
-        specfem::element::dimension_tag::dim3> > > &) const;
+        specfem::element::dimension_tag::dim3>>> &,
+    const std::shared_ptr<specfem::periodic_tasks::periodic_task<
+        specfem::element::dimension_tag::dim3>>) const;

@@ -916,6 +916,17 @@ target_link_libraries(
   Kokkos::kokkos
 )
 
+add_executable(
+  wavefield_checkpoint_tests
+  periodic_tasks/wavefield_checkpoint.cpp
+)
+
+target_link_libraries(
+  wavefield_checkpoint_tests
+  specfem::periodic_tasks
+  gtest_main
+)
+
 # Register serial tests for discovery
 set(SERIAL_TEST_TARGETS
   serial_mpi_tests
@@ -925,6 +936,7 @@ set(SERIAL_TEST_TARGETS
   chunked_edge_tests
   chunked_face_tests
   chunked_face_intersection_tests
+  wavefield_checkpoint_tests
   compute_coupling_tests
   displacement_newmark_2d_tests
   displacement_newmark_3d_tests

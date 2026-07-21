@@ -25,6 +25,8 @@ specfem::io::sources_impl::wavefield_type_from_simulation(
     return specfem::simulation::field_type::forward;
   case specfem::simulation::type::combined:
     return specfem::simulation::field_type::backward;
+  case specfem::simulation::type::combined_undoatt:
+    return specfem::simulation::field_type::forward;
   default:
     throw std::runtime_error("Unknown simulation type");
   }
@@ -50,9 +52,10 @@ specfem::io::read_sources(
 
     switch (entry.format) {
     case specfem::enums::source_format::YAML:
-      batch = specfem::io::sources_impl::read<
-          DimensionTag, specfem::enums::source_format::YAML>(
-          entry.file_path, nsteps, dt, source_wavefield_type);
+      batch =
+          specfem::io::sources_impl::read<DimensionTag,
+                                          specfem::enums::source_format::YAML>(
+              entry.file_path, nsteps, dt, source_wavefield_type);
       break;
     case specfem::enums::source_format::CMTSOLUTION:
       batch = specfem::io::sources_impl::read<
@@ -73,8 +76,8 @@ specfem::io::read_sources(
       all_sources, simulation_type);
 
   auto [t0, starttime] =
-      specfem::io::sources_impl::adjust_source_timing<DimensionTag>(
-          all_sources, user_t0);
+      specfem::io::sources_impl::adjust_source_timing<DimensionTag>(all_sources,
+                                                                    user_t0);
 
   return std::make_tuple(all_sources, t0, starttime);
 }
