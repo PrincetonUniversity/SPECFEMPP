@@ -917,12 +917,12 @@ target_link_libraries(
 )
 
 add_executable(
-  checkpointing_tests
-  periodic_tasks/checkpointing.cpp
+  wavefield_checkpoint_tests
+  periodic_tasks/wavefield_checkpoint.cpp
 )
 
 target_link_libraries(
-  checkpointing_tests
+  wavefield_checkpoint_tests
   specfem::periodic_tasks
   gtest_main
 )
@@ -936,7 +936,7 @@ set(SERIAL_TEST_TARGETS
   chunked_edge_tests
   chunked_face_tests
   chunked_face_intersection_tests
-  checkpointing_tests
+  wavefield_checkpoint_tests
   compute_coupling_tests
   displacement_newmark_2d_tests
   displacement_newmark_3d_tests

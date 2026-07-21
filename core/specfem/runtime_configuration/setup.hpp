@@ -448,9 +448,12 @@ public:
       const specfem::simulation::type simulation_type,
       const std::vector<
           std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag>>>
-          &tasks) const {
+          &tasks,
+      const std::shared_ptr<
+          specfem::periodic_tasks::periodic_task<DimensionTag>>
+          checkpoint_reader = nullptr) const {
     return this->solver->instantiate<NGLL, DimensionTag>(
-        dt, assembly, time_scheme, simulation_type, tasks);
+        dt, assembly, time_scheme, simulation_type, tasks, checkpoint_reader);
   }
 
   auto get_flux_scheme_configuration() const {

@@ -21,7 +21,7 @@ namespace periodic_tasks {
  * @tparam DimensionTag Spatial dimension (dim2 or dim3)
  */
 template <specfem::element::dimension_tag DimensionTag>
-class checkpointing : public periodic_task<DimensionTag> {
+class wavefield_checkpoint : public periodic_task<DimensionTag> {
 public:
   /**
    * @brief Construct a checkpoint replay task.
@@ -29,8 +29,8 @@ public:
    * @param time_interval Number of time steps in each replay window
    * @param buffer_subdivisions Requested number of buffer subdivisions
    */
-  explicit checkpointing(const int time_interval,
-                         const int buffer_subdivisions = 1)
+  explicit wavefield_checkpoint(const int time_interval,
+                                const int buffer_subdivisions = 1)
       : periodic_task<DimensionTag>(validate_time_interval(time_interval),
                                     false),
         buffer_subdivisions_(std::min(
@@ -111,7 +111,7 @@ private:
   static int validate_time_interval(const int time_interval) {
     if (time_interval < 1) {
       throw std::invalid_argument(
-          "checkpointing: time interval must be greater than zero");
+          "wavefield_checkpoint: time interval must be greater than zero");
     }
     return time_interval;
   }
@@ -119,7 +119,7 @@ private:
   static int validate_subdivisions(const int buffer_subdivisions) {
     if (buffer_subdivisions < 1) {
       throw std::invalid_argument(
-          "checkpointing: subdivisions must be positive");
+          "wavefield_checkpoint: subdivisions must be positive");
     }
     return buffer_subdivisions;
   }
@@ -127,7 +127,7 @@ private:
   void validate_num_steps(const int num_steps) const {
     if (num_steps < 0 || num_steps > this->get_time_interval()) {
       throw std::out_of_range(
-          "checkpointing: interval exceeds configured size");
+          "wavefield_checkpoint: interval exceeds configured size");
     }
   }
 

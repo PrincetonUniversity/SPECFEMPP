@@ -1,9 +1,9 @@
 #pragma once
 
 #include "specfem/periodic_tasks/check_signal.hpp"
-#include "specfem/periodic_tasks/checkpointing.hpp"
 #include "specfem/periodic_tasks/periodic_task.hpp"
 #include "specfem/periodic_tasks/plot_wavefield.hpp"
+#include "specfem/periodic_tasks/wavefield_checkpoint.hpp"
 #include "specfem/periodic_tasks/wavefield_reader.hpp"
 #include "specfem/periodic_tasks/wavefield_writer.hpp"
 

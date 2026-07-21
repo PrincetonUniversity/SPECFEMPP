@@ -200,17 +200,23 @@ public:
    *
    * @param assembly     Spectral element assembly
    * @param time_scheme  Time integration scheme
-   * @param tasks        Periodic tasks (must include a wavefield_reader
-   *                     configured to read checkpoints written by the forward
-   *                     run every NT_DUMP_ATTENUATION steps)
+   * @param tasks Periodic tasks executed during simulation
+   * @param checkpoint_reader Wavefield reader configured to load checkpoints
+   * written by the forward run every NT_DUMP_ATTENUATION steps
+   * @param checkpoint_buffer_subdivisions Number of in-memory replay-buffer
+   * subdivisions per disk-checkpoint interval
    */
   time_marching(
       const specfem::assembly::assembly<dimension_tag> &assembly,
       const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
       const std::vector<std::shared_ptr<
           specfem::periodic_tasks::periodic_task<dimension_tag>>> &tasks,
+      const std::shared_ptr<
+          specfem::periodic_tasks::periodic_task<dimension_tag>>
+          checkpoint_reader,
       int checkpoint_buffer_subdivisions = 1)
       : assembly(assembly), time_scheme(time_scheme), tasks(tasks),
+        checkpoint_reader(checkpoint_reader),
         mpi_buffers(specfem::solver::make_mpi_buffers(this->assembly)),
         checkpoint_buffer_subdivisions(checkpoint_buffer_subdivisions) {}
 
@@ -225,6 +231,8 @@ private:
   std::vector<
       std::shared_ptr<specfem::periodic_tasks::periodic_task<dimension_tag>>>
       tasks;
+  std::shared_ptr<specfem::periodic_tasks::periodic_task<dimension_tag>>
+      checkpoint_reader;
   specfem::solver::MPIBuffers<dimension_tag> mpi_buffers;
   int checkpoint_buffer_subdivisions;
 };

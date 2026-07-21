@@ -66,10 +66,6 @@ public:
     specfem::Logger::info("---------------------------");
     writer.finalize(assembly);
   }
-
-  specfem::periodic_tasks::type get_type() const override {
-    return specfem::periodic_tasks::type::wavefield_writer;
-  }
 };
 
 } // namespace periodic_tasks

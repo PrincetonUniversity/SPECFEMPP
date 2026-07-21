@@ -2,7 +2,7 @@
 
 #include "specfem/compute.tpp"
 #include "specfem/logger.hpp"
-#include "specfem/periodic_tasks/checkpointing.hpp"
+#include "specfem/periodic_tasks/wavefield_checkpoint.hpp"
 #include "specfem/periodic_tasks/wavefield_reader.hpp"
 #include "specfem/solver/forward_displacement_buffer.hpp"
 #include "specfem/solver/impl/update_medium.hpp"
@@ -244,24 +244,9 @@ void specfem::solver::time_marching<specfem::simulation::type::combined_undoatt,
   constexpr auto forward_ft = specfem::simulation::field_type::forward;
   constexpr auto adjoint_ft = specfem::simulation::field_type::adjoint;
 
-  // ------------------------------------------------------------------
-  // Locate the wavefield reader task needed for checkpoint I/O.
-  // ------------------------------------------------------------------
-  using CheckpointReader = specfem::periodic_tasks::periodic_task<DimensionTag>;
-
-  CheckpointReader *const checkpoint_reader = [&]() -> CheckpointReader * {
-    for (const auto &task : tasks) {
-      if (task &&
-          task->get_type() == specfem::periodic_tasks::type::wavefield_reader) {
-        return task.get();
-      }
-    }
-    return nullptr;
-  }();
-
   if (!checkpoint_reader) {
     throw std::runtime_error(
-        "combined_undoatt solver: no wavefield_reader task found. "
+        "combined_undoatt solver: no checkpoint reader configured. "
         "Add a wavefield reader that points to forward checkpoints.");
   }
 
@@ -275,8 +260,9 @@ void specfem::solver::time_marching<specfem::simulation::type::combined_undoatt,
         "combined_undoatt solver: wavefield reader time-interval must be > 0 "
         "(this is NT_DUMP_ATTENUATION). Set it in the wavefield config.");
   }
-  const specfem::periodic_tasks::checkpointing<DimensionTag> checkpointing_task(
-      checkpoint_interval, checkpoint_buffer_subdivisions);
+  const specfem::periodic_tasks::wavefield_checkpoint<DimensionTag>
+      wavefield_checkpoint_task(checkpoint_interval,
+                                checkpoint_buffer_subdivisions);
 
   // ------------------------------------------------------------------
   // Mass matrix initialization (same as forward::run()).
@@ -310,7 +296,7 @@ void specfem::solver::time_marching<specfem::simulation::type::combined_undoatt,
 
   // Pre-allocate the RAM displacement buffer for the largest possible window.
   specfem::solver::ForwardDisplacementBuffer<DimensionTag> displ_buffer;
-  displ_buffer.allocate(checkpointing_task.buffer_steps(),
+  displ_buffer.allocate(wavefield_checkpoint_task.buffer_steps(),
                         assembly.fields.forward);
 
   // ================================================================
@@ -338,8 +324,7 @@ void specfem::solver::time_marching<specfem::simulation::type::combined_undoatt,
       });
 
   for (const auto &task : tasks) {
-    if (task &&
-        task->get_type() != specfem::periodic_tasks::type::wavefield_reader) {
+    if (task) {
       task->initialize(assembly);
     }
   }
@@ -349,9 +334,11 @@ void specfem::solver::time_marching<specfem::simulation::type::combined_undoatt,
           attenuation_memory_snapshot_for_tags,
       decltype(assembly.attenuation.attenuation_medium_combinations)>;
 
-  int num_checkpoints = 0;
-  for (int cs = 0; cs < nstep; cs += checkpoint_interval)
-    num_checkpoints++;
+  // Iterate backward over subsets: last subset first, first subset last.
+  // Each subset window covers [checkpoint_step, window_end).
+  // We iterate over checkpoint steps in reverse order.
+  const int num_checkpoints =
+      (nstep + checkpoint_interval - 1) / checkpoint_interval;
 
   using FieldSnapshot =
       specfem::solver::combined_undoatt_impl::forward_field_snapshot<
@@ -360,18 +347,19 @@ void specfem::solver::time_marching<specfem::simulation::type::combined_undoatt,
 
   std::ostringstream strategy_message;
   strategy_message << "Checkpoint replay: "
-                   << checkpointing_task.buffer_subdivisions()
+                   << wavefield_checkpoint_task.buffer_subdivisions()
                    << " buffer subdivisions, "
-                   << checkpointing_task.checkpoint_slots(checkpoint_interval)
+                   << wavefield_checkpoint_task.checkpoint_slots(
+                          checkpoint_interval)
                    << " in-memory checkpoints, "
-                   << checkpointing_task.buffer_steps()
+                   << wavefield_checkpoint_task.buffer_steps()
                    << " buffered displacement steps";
   specfem::Logger::info(strategy_message.str());
 
   for (int subset_idx = num_checkpoints - 1; subset_idx >= 0; --subset_idx) {
     const int checkpoint_step = subset_idx * checkpoint_interval;
     const auto [win_start, win_end] =
-        checkpointing_task.replay_window(checkpoint_step, nstep);
+        wavefield_checkpoint_task.replay_window(checkpoint_step, nstep);
 
     AttenuationSnapshotType adjoint_attenuation_snapshot(
         [&]<typename TagsType>() {
@@ -382,7 +370,7 @@ void specfem::solver::time_marching<specfem::simulation::type::combined_undoatt,
         });
 
     const int checkpoint_slots =
-        checkpointing_task.checkpoint_slots(win_end - win_start);
+        wavefield_checkpoint_task.checkpoint_slots(win_end - win_start);
     std::vector<std::unique_ptr<ForwardState>> slots(checkpoint_slots);
     std::vector<int> free_slots;
     for (int slot = 0; slot < checkpoint_slots; ++slot)
@@ -456,11 +444,9 @@ void specfem::solver::time_marching<specfem::simulation::type::combined_undoatt,
       specfem::assembly::deep_copy(assembly.fields.backward,
                                    assembly.fields.forward);
 
+      // Run periodic tasks that should execute at this step.
       for (const auto &task : tasks) {
-        if (task &&
-            task->get_type() !=
-                specfem::periodic_tasks::type::wavefield_reader &&
-            task->should_run(global_istep + 1)) {
+        if (task && task->should_run(global_istep + 1)) {
           task->run(assembly, global_istep + 1);
         }
       }
@@ -494,7 +480,7 @@ void specfem::solver::time_marching<specfem::simulation::type::combined_undoatt,
     std::ostringstream message;
     message << "Running checkpoint replay for subset " << subset_idx + 1
             << " / " << num_checkpoints << " ("
-            << checkpointing_task.forward_steps(win_end - win_start)
+            << wavefield_checkpoint_task.forward_steps(win_end - win_start)
             << " forward steps)";
     specfem::Logger::info(message.str());
 
@@ -507,22 +493,23 @@ void specfem::solver::time_marching<specfem::simulation::type::combined_undoatt,
         if (length <= 0)
           return;
 
-        if (length <= checkpointing_task.buffer_steps()) {
+        if (length <= wavefield_checkpoint_task.buffer_steps()) {
           reverse_buffered_leaf(start, start, end, base_slot);
           return;
         }
 
         if (available == 0) {
           for (int leaf_end = end; leaf_end > start;
-               leaf_end -= checkpointing_task.buffer_steps()) {
+               leaf_end -= wavefield_checkpoint_task.buffer_steps()) {
             const int leaf_start =
-                std::max(start, leaf_end - checkpointing_task.buffer_steps());
+                std::max(start,
+                         leaf_end - wavefield_checkpoint_task.buffer_steps());
             reverse_buffered_leaf(start, leaf_start, leaf_end, base_slot);
           }
           return;
         }
 
-        const int left_length = checkpointing_task.split(length);
+        const int left_length = wavefield_checkpoint_task.split(length);
         restore_base(base_slot);
         advance(start, left_length);
         const int split_slot = free_slots.back();
@@ -539,8 +526,7 @@ void specfem::solver::time_marching<specfem::simulation::type::combined_undoatt,
   }
 
   for (const auto &task : tasks) {
-    if (task &&
-        task->get_type() != specfem::periodic_tasks::type::wavefield_reader) {
+    if (task) {
       task->finalize(assembly);
     }
   }
