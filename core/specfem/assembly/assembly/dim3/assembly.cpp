@@ -76,6 +76,12 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
     ngllz,     nglly, ngllx, this->element_intersections, this->jacobian_matrix,
     this->mesh
   };
+
+  this->nonconforming_interfaces = {
+    ngllz,     nglly, ngllx, this->element_intersections, this->jacobian_matrix,
+    this->mesh
+  };
+
   this->fields = { this->mesh, this->element_types, simulation };
 
   this->mpi_interfaces = { mesh.adjacency_graph,

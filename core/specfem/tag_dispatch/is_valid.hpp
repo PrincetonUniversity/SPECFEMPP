@@ -379,9 +379,9 @@ constexpr bool is_valid_edge(EdgeTuple t) {
   if (i != I::elastic_acoustic && i != I::acoustic_elastic)
     return false;
 
-  // dim3: only weakly_conforming + none
+  // dim3: only none
   if (d == D::dim3)
-    return c == C::weakly_conforming && b == B::none;
+    return b == B::none;
 
   // dim2: boundary rules depend on interface direction
   if (i == I::elastic_acoustic)
