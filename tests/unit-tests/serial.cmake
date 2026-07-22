@@ -631,3 +631,11 @@ specfem_add_test(surface_elevation_tests
             gtest_main
             Kokkos::kokkos
 )
+
+specfem_add_test(trilinos_smoke_tests
+  SOURCES   linear_system/trilinos_smoke_tests.cpp
+  LIBRARIES specfem::linear_system
+            specfem_environment
+            gtest_main
+            Kokkos::kokkos
+)
