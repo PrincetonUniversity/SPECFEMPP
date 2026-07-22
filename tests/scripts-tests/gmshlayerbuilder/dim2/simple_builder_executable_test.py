@@ -112,6 +112,7 @@ def test_gmshlayerbuilder(path_scripts_root, execute_script, tmp_path):
     mesh_out_dir = tmp_path / "meshes" / "test_gmshlayerbuilder"
     cmd = [
         str(gmshlayerbuilder),
+        "2d",
         "--top",
         "neumann",
         "--bottom",

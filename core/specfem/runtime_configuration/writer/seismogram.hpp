@@ -48,6 +48,8 @@ public:
    * @param nsteps_between_samples Number of timesteps between seismogram
    * samples (seismogram sampling frequency). The solver start time (t0) is
    * obtained at write time from the receivers iterator.
+   * @param utm_mesh When true, 3-D elastic seismogram channels use the
+   * geographic E/N/Z convention instead of Cartesian X/Y/Z
    * @return std::shared_ptr<specfem::io::writer> Pointer to an instantiated
    * writer object
    */
@@ -55,7 +57,8 @@ public:
       const specfem::enums::elastic_wave wave_type,
       const specfem::enums::electromagnetic_wave electromagnetic_wave,
       const type_real dt, const type_real t0, const int nsteps_between_samples,
-      std::optional<specfem::datetime::type> starttime = std::nullopt) const;
+      std::optional<specfem::datetime::type> starttime = std::nullopt,
+      const bool utm_mesh = false) const;
 
   /**
    * @brief Whether to gather all seismogram data to rank 0 and write only from

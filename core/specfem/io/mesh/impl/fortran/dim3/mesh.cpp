@@ -58,9 +58,6 @@ specfem::io::read_3d_mesh(
   mesh.boundaries = specfem::io::mesh::impl::fortran::dim3::read_boundaries(
       param_stream, nspec, mesh.control_nodes);
 
-  mesh.tags = specfem::mesh::tags<specfem::element::dimension_tag::dim3>(
-      nspec, mesh.materials);
-
   // CPML boundaries are not supported yet
   // TODO (Rohit: PML_BOUNDARIES): Add support for PML boundaries
   specfem::io::mesh::impl::fortran::dim3::read_pml_boundaries(param_stream);
@@ -69,6 +66,11 @@ specfem::io::read_3d_mesh(
   mesh.adjacency_graph =
       specfem::io::mesh::impl::fortran::dim3::read_adjacency_graph(param_stream,
                                                                    mesh.nspec);
+
+  // Build element tags. Constructed after the adjacency graph is read so the
+  // MPI inner/outer classification can be derived from its MPI connections.
+  mesh.tags = specfem::mesh::tags<specfem::element::dimension_tag::dim3>(
+      nspec, mesh.materials, mesh.adjacency_graph, mesh.boundaries);
 
   param_stream.close();
 

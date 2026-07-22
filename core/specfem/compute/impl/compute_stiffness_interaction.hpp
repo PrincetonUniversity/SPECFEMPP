@@ -4,16 +4,31 @@
 #include "specfem/element.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
+#include "specfem/macros/tag_dispatch.hpp"
 #include "specfem/mesh_entity.hpp"
 #include "specfem/point.hpp"
+#include "specfem/tags.hpp"
 #include "stiffness_kernels.hpp"
 #include <Kokkos_Core.hpp>
 #include <limits>
 
 namespace specfem::compute::impl {
 
+/**
+ * @brief Compute stiffness interaction for a single element-tag combination.
+ *
+ * Dispatches the appropriate stiffness kernel (gather or scatter) for all
+ * elements matching the compile-time tag combination in Tags.
+ *
+ * @tparam NGLL Number of GLL points per element edge
+ * @tparam Tags Compile-time tags (dimension, medium, property, attenuation,
+ *              boundary, wavefield, and mpi)
+ * @param assembly The assembly object containing the mesh
+ * @param istep Current time step
+ * @return Number of elements processed
+ */
 template <int NGLL, typename Tags>
-int compute_stiffness_interaction(
+int compute_stiffness_interaction_core(
     const specfem::assembly::assembly<Tags::dimension_tag> &assembly,
     const int &istep) {
 
@@ -22,9 +37,10 @@ int compute_stiffness_interaction(
   constexpr auto boundary_tag = Tags::boundary_tag;
   constexpr auto attenuation_tag = Tags::attenuation_tag;
   constexpr auto dimension_tag = Tags::dimension_tag;
+  constexpr auto mpi_tag = Tags::mpi_tag;
 
   const auto elements = assembly.element_types.get_elements_on_device(
-      medium_tag, property_tag, attenuation_tag, boundary_tag);
+      medium_tag, property_tag, attenuation_tag, boundary_tag, mpi_tag);
 
   const int nelements = elements.extent(0);
 
@@ -48,7 +64,9 @@ int compute_stiffness_interaction(
 
   Kokkos::Profiling::pushRegion("Compute Stiffness Interaction");
 
-  if constexpr (Tags::boundary_tag == specfem::element::boundary_tag::stacey &&
+  if constexpr ((Tags::boundary_tag == specfem::element::boundary_tag::stacey ||
+                 Tags::boundary_tag == specfem::element::boundary_tag::
+                                           composite_stacey_dirichlet) &&
                 Tags::wavefield_tag ==
                     specfem::simulation::field_type::backward) {
 
@@ -60,16 +78,19 @@ int compute_stiffness_interaction(
     using PointAccelerationType =
         typename gather_kernel<NGLL, Tags>::PointAccelerationType;
 
-    specfem::execution::for_all(
-        "specfem::compute::compute_stiffness_interaction", chunk,
-        KOKKOS_LAMBDA(
-            const typename decltype(chunk)::base_index_type &iterator_index) {
-          const auto index = iterator_index.get_index();
-          PointAccelerationType acceleration;
-          specfem::assembly::load_on_device(istep, index, boundary_values,
-                                            acceleration);
-          specfem::assembly::atomic_add_on_device(index, field, acceleration);
-        });
+    if (istep > 0) {
+      const int boundary_istep = istep - 1;
+      specfem::execution::for_all(
+          "specfem::compute::compute_stiffness_interaction", chunk,
+          KOKKOS_LAMBDA(
+              const typename decltype(chunk)::base_index_type &iterator_index) {
+            const auto index = iterator_index.get_index();
+            PointAccelerationType acceleration;
+            specfem::assembly::load_on_device(boundary_istep, index,
+                                              boundary_values, acceleration);
+            specfem::assembly::atomic_add_on_device(index, field, acceleration);
+          });
+    }
 
   } else {
 
@@ -100,6 +121,48 @@ int compute_stiffness_interaction(
   Kokkos::Profiling::popRegion();
 
   return nelements;
+}
+
+/**
+ * @brief Compute stiffness interaction for one inner/outer element subset.
+ *
+ * Iterates all tag combinations for the medium and wavefield identified by
+ * @p Tags, restricted to the inner or outer element
+ * subset carried by `Tags::mpi_tag`.
+ *
+ * @tparam NGLL Number of GLL points per element edge
+ * @tparam Tags Compile-time tags (dimension, medium, wavefield, mpi)
+ * @param assembly The assembly object containing the mesh
+ * @param istep Current time step
+ * @return Number of elements updated in this inner/outer subset
+ */
+template <int NGLL, typename Tags>
+int compute_stiffness_interaction(
+    specfem::assembly::assembly<Tags::dimension_tag> &assembly,
+    const int istep) {
+
+  int elements_updated = 0;
+
+  constexpr auto element_combinations =
+      specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
+      specfem::tag_dispatch::medium_set<Tags::medium_tag>{} *
+      specfem::tag_dispatch::wavefield_set<Tags::wavefield_tag>{} *
+      specfem::tag_dispatch::mpi_set<Tags::mpi_tag>{} *
+      PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
+      ATTENUATION_SET(none, constant_isotropic) *
+      BOUNDARY_SET(none, stacey, acoustic_free_surface,
+                   composite_stacey_dirichlet);
+
+  auto compute_stiffness = [&]<typename ElementTags>() {
+    // Append the wavefield tag, then the mpi (inner/outer) tag, to the
+    // per-combo element tags before dispatching the kernel.
+    elements_updated +=
+        compute_stiffness_interaction_core<NGLL, ElementTags>(assembly, istep);
+  };
+
+  specfem::tag_dispatch::for_each(element_combinations, compute_stiffness);
+
+  return elements_updated;
 }
 
 } // namespace specfem::compute::impl

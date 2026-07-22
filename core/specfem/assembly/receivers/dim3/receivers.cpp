@@ -5,11 +5,16 @@
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/receivers.hpp"
 #include "specfem/assembly/resolve_coordinates.hpp"
+#include "specfem/coordinate_systems/utm.hpp"
 #include "specfem/element.hpp"
+#include "specfem/logger.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
+#include <map>
+#include <optional>
+#include <string>
 #include <vector>
 
 specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
@@ -20,7 +25,7 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
         &receivers,
     const std::vector<specfem::enums::wavefield> &stypes,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
-    const specfem::mesh::tags<specfem::element::dimension_tag::dim3> &tags,
+    const specfem::mesh::mesh<specfem::element::dimension_tag::dim3> &raw_mesh,
     const specfem::assembly::element_types<
         specfem::element::dimension_tag::dim3> &element_types)
     : lagrange_interpolant("specfem::assembly::receivers::lagrange_interpolant",
@@ -72,11 +77,23 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
   const int nreceivers = static_cast<int>(receivers.size());
   const int myrank = specfem::MPI::get_rank();
 
-  // Resolve any generic coordinates to global coordinates using mesh context.
+  // UTM config for projecting geographic coordinates; nullopt when suppressed.
+  std::optional<specfem::coordinate_systems::utm_projection_config> utm_config;
+  if (!raw_mesh.suppress_utm_projection)
+    utm_config = specfem::coordinate_systems::utm_projection_config{
+      raw_mesh.utm_projection_zone, false
+    };
+
+  // Resolve any generic coordinates to global coordinates using mesh context,
+  // storing the resolution result on the receiver. Receivers constructed with
+  // direct coordinates have no read_coordinates_ set and keep their global
+  // coordinates unchanged.
   for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
     if (auto *coords = receivers[ireceiver]->get_read_coordinates()) {
-      auto gc = specfem::assembly::resolve_coordinates(*coords, mesh);
-      receivers[ireceiver]->set_global_coordinates(gc);
+      auto resolution = specfem::assembly::resolve_coordinates(
+          *coords, mesh, raw_mesh.boundaries.acoustic_free_surface, utm_config);
+      receivers[ireceiver]->set_resolution_result(resolution);
+      receivers[ireceiver]->set_global_coordinates(resolution.global);
     }
   }
 
@@ -87,8 +104,9 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
   for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver)
     gcoords.push_back(receivers[ireceiver]->get_global_coordinates());
 
-  auto [local_coords, partition_index_selected] =
-      specfem::algorithms::locate_point(gcoords, mesh);
+  const auto located = specfem::algorithms::locate_point(gcoords, mesh);
+  const auto &local_coords = located.local;
+  const auto &partition_index_selected = located.partition_index;
 
   for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
     const auto receiver = receivers[ireceiver];
@@ -105,6 +123,15 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
 
     const auto &lcoord = local_coords[ireceiver];
     h_elements(ireceiver) = lcoord.ispec;
+
+    // Warn when the recovered local coordinates land outside the reference
+    // element beyond a small tolerance (coordinate resolution is not exact).
+    if (specfem::algorithms::outside(lcoord, type_real(1.001))) {
+      specfem::Logger::warning(
+          "Receiver " + network_name + "." + station_name +
+              " located outside its element: " + lcoord.print(),
+          /*root_only=*/false);
+    }
 
     const auto xi = mesh.h_xi;
     const auto eta = mesh.h_xi;   // Use same as dim2 pattern
@@ -150,9 +177,11 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
   for (int i = 0; i < nreceivers; ++i)
     stations_[i].partition_index = partition_index_selected[i];
 
-  for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver)
+  for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
     receivers[ireceiver]->set_partition_index(
         partition_index_selected[ireceiver]);
+    receivers[ireceiver]->set_location_error(located.error[ireceiver]);
+  }
 
   Kokkos::deep_copy(lagrange_interpolant, h_lagrange_interpolant);
   Kokkos::deep_copy(elements, h_elements);

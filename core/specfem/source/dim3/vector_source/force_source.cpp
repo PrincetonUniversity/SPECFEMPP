@@ -61,10 +61,10 @@ std::string
 specfem::sources::force<specfem::element::dimension_tag::dim3>::print_details()
     const {
   std::ostringstream message;
-  message << "    Force Vector: \n"
-          << "      fx = " << type_real(this->fx) << "\n"
-          << "      fy = " << type_real(this->fy) << "\n"
-          << "      fz = " << type_real(this->fz) << "\n";
+  message << "(fx, fy, fz) = ("
+          << specfem::utilities::format_scientific(this->fx, 6) << ", "
+          << specfem::utilities::format_scientific(this->fy, 6) << ", "
+          << specfem::utilities::format_scientific(this->fz, 6) << ")";
   return message.str();
 }
 

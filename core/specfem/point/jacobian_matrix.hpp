@@ -757,19 +757,21 @@ private:
 
   specfem::datatype::VectorPointViewType<type_real, 3, UseSIMD>
   impl_compute_normal_front() const {
-    return { static_cast<value_type>(this->etax * this->jacobian),
-             static_cast<value_type>(this->etay * this->jacobian),
-             static_cast<value_type>(this->etaz * this->jacobian) };
-  };
-
-  specfem::datatype::VectorPointViewType<type_real, 3, UseSIMD>
-  impl_compute_normal_back() const {
+    // front = eta=-1 face (iy=0); outward normal = -J*nabla(eta)
     return { static_cast<value_type>(static_cast<type_real>(-1.0) * this->etax *
                                      this->jacobian),
              static_cast<value_type>(static_cast<type_real>(-1.0) * this->etay *
                                      this->jacobian),
              static_cast<value_type>(static_cast<type_real>(-1.0) * this->etaz *
                                      this->jacobian) };
+  };
+
+  specfem::datatype::VectorPointViewType<type_real, 3, UseSIMD>
+  impl_compute_normal_back() const {
+    // back = eta=+1 face (iy=nglly-1); outward normal = +J*nabla(eta)
+    return { static_cast<value_type>(this->etax * this->jacobian),
+             static_cast<value_type>(this->etay * this->jacobian),
+             static_cast<value_type>(this->etaz * this->jacobian) };
   };
 };
 

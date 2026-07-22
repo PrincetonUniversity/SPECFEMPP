@@ -1,0 +1,47 @@
+parameters:
+
+  header:
+    title: Isotropic Elastic simulation with Stacey ABC (MPI)
+    description: |
+      Material systems : Elastic domain (1)
+      Interfaces : None
+      Sources : Force source (1)
+      Boundary conditions : Stacey ABCs on five faces, free surface on top
+      Debugging comment : Tests Stacey absorbing boundary condition under MPI
+
+  simulation-setup:
+    quadrature:
+      quadrature-type: GLL4
+
+    solver:
+      time-marching:
+        type-of-simulation: forward
+        time-scheme:
+          type: Newmark
+          dt: 0.035
+          nstep: 150
+
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:
+            format: ascii
+            directory: "./"
+
+  receivers:
+    stations: "displacement_tests/Newmark/mpi/dim3/HomogeneousHalfSpaceStacey/STATIONS"
+    angle: 0.0
+    seismogram-type:
+      - displacement
+      - velocity
+      - acceleration
+    nstep_between_samples: 1
+
+  run-setup:
+    number-of-processors: 4
+    number-of-runs: 1
+
+  databases:
+    mesh-database: "displacement_tests/Newmark/mpi/dim3/HomogeneousHalfSpaceStacey/database.bin"
+
+  sources: "displacement_tests/Newmark/mpi/dim3/HomogeneousHalfSpaceStacey/force.yaml"

@@ -2,6 +2,7 @@
 #pragma once
 
 #include "specfem/assembly/fields.hpp"
+#include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access/data_class.hpp"
 #include "specfem/element.hpp"
 #include "specfem/macros/tag_dispatch.hpp"
@@ -275,6 +276,7 @@ public:
 
   using OrientationHostView =
       Kokkos::View<specfem::mesh_entity::dim3::type *, Kokkos::HostSpace>;
+  using ElementHostView = Kokkos::View<int *, Kokkos::HostSpace>;
 
   OrientationHostView h_face_orientations; /**< Filtered local face orientations
                                               (medium-tag filtered) */
@@ -283,6 +285,12 @@ public:
   OrientationHostView h_corner_orientations; /**< Filtered local corner
                                                 orientations (medium-tag
                                                 filtered) */
+  ElementHostView h_face_elements;           /**< Filtered local face elements
+                                                in compute ordering */
+  ElementHostView h_edge_elements;           /**< Filtered local edge elements
+                                                in compute ordering */
+  ElementHostView h_corner_elements;         /**< Filtered local corner elements
+                                                in compute ordering */
 
   unpacker()
       : my_rank(0), neighbor_rank(0), nfaces(0), nedges(0), ncorners(0),
@@ -328,7 +336,8 @@ public:
       const Kokkos::View<specfem::mesh_entity::dim3::type *, Kokkos::HostSpace>
           my_corner_orientations,
       const specfem::mesh_entity::element<dimension_tag> &element,
-      const specfem::assembly::fields<dimension_tag> &fields);
+      const specfem::assembly::fields<dimension_tag> &fields,
+      const Kokkos::View<const int *, Kokkos::HostSpace> &h_mesh_to_compute);
 };
 
 template <specfem::simulation::field_type FieldType,
@@ -381,6 +390,7 @@ public:
       const face_communication_group &face_group,
       const specfem::mesh_entity::element<dimension_tag> &element,
       const specfem::assembly::fields<dimension_tag> &fields,
+      const Kokkos::View<const int *, Kokkos::HostSpace> &h_mesh_to_compute,
       PendingReceiveState pending);
 };
 
@@ -397,10 +407,12 @@ template <> class mpi<specfem::element::dimension_tag::dim3> {
 public:
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
 
+  /// Media that participate in 3D cross-rank MPI exchange.
+  static constexpr auto media = MEDIUM_SET(elastic, acoustic);
+
   /// Medium combinations for 3D MPI communication patterns
   static constexpr auto medium_combinations =
-      specfem::tag_dispatch::dimension_set<dimension_tag>{} *
-      MEDIUM_SET(elastic, acoustic);
+      specfem::tag_dispatch::dimension_set<dimension_tag>{} * media;
 
   /// Per-medium map from neighbor rank to communication pattern
   template <typename TagsType>
@@ -452,13 +464,16 @@ public:
    *                         communication maps are instantiated
    * @param fields           Assembly fields (any field type; iglob is
    *                         field-type-independent)
+   * @param h_mesh_to_compute  Host map from mesh-order element indices to
+   *                           compute-order element indices
    * @param ngllz, nglly, ngllx  GLL points per element dimension
    */
   mpi(const specfem::mesh::adjacency_graph<dimension_tag> &adjacency_graph,
       const specfem::assembly::element_types<dimension_tag> &element_types,
       const specfem::simulation::type simulation,
-      const specfem::assembly::fields<dimension_tag> &fields, const int ngllz,
-      const int nglly, const int ngllx);
+      const specfem::assembly::fields<dimension_tag> &fields,
+      const Kokkos::View<const int *, Kokkos::HostSpace> &h_mesh_to_compute,
+      const int ngllz, const int nglly, const int ngllx);
 
   template <specfem::simulation::field_type FieldType,
             specfem::element::medium_tag MediumTag,

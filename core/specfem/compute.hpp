@@ -3,7 +3,6 @@
 #include "compute/compute_derivatives.hpp"
 #include "compute/compute_seismograms.hpp"
 #include "compute/initialize_mass_matrix.hpp"
-#include "compute/update_wavefields.hpp"
 
 /**
  * @brief Kokkos-based computational kernels.

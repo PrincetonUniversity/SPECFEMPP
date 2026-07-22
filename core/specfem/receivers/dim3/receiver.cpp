@@ -7,24 +7,20 @@ std::string
 specfem::receivers::receiver<specfem::element::dimension_tag::dim3>::print()
     const {
   std::ostringstream message;
-  message << " - Receiver:\n"
-          << "      Station Name = " << this->station_name << "\n"
-          << "      Network Name = " << this->network_name << "\n";
+  message << "- " << this->network_name << "." << this->station_name;
   if (this->read_coordinates_) {
-    message << "      Input Coordinates: " << this->read_coordinates_->print()
-            << "\n";
+    message << ", Coordinates: " << this->read_coordinates_->print();
   }
-  // Only print resolved global coordinates when they have been set
-  if (!this->read_coordinates_ || this->partition_index_ >= 0) {
-    message << "      Receiver Location: \n"
-            << "        x = " << type_real(this->global_coordinates.x) << "\n"
-            << "        y = " << type_real(this->global_coordinates.y) << "\n"
-            << "        z = " << type_real(this->global_coordinates.z) << "\n";
-  }
+  if (this->resolution_.has_value())
+    message << ", Resolved: " << this->resolution_->print();
+  if (this->partition_index_ >= 0)
+    message << ", Location error: "
+            << specfem::utilities::format_distance(this->location_error_);
 #ifdef SPECFEM_ENABLE_MPI
   if (this->partition_index_ >= 0)
-    message << "      MPI Rank: " << this->partition_index_ << "\n";
+    message << ", MPI Rank: " << this->partition_index_;
 #endif
+  message << "\n";
 
   return message.str();
 }

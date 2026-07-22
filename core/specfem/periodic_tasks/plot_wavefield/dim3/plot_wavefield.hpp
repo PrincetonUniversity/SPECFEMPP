@@ -157,6 +157,9 @@ private:
                                      hsize_t count, hid_t mem_type,
                                      const void *data, hid_t dxpl = H5P_DEFAULT,
                                      bool do_write = true);
+#endif // NO_HDF5
+
+#ifndef NO_HDF5
   /// @brief Compute MPI offsets via prefix sum (no-op for serial)
   void compute_mpi_offsets();
 

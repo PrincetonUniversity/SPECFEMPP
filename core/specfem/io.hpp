@@ -72,17 +72,17 @@ read_2d_mesh(const std::string &filename,
              const specfem::attenuation::Setup &attenuation_setup);
 
 /**
- * @brief Construct a 3D mesh object from MESHFEM3D Fortran binary database file
+ * @brief Construct a 3D mesh object from the SPECFEM++ 3D binary database.
  *
- * @param database_file MESHFEM3D database file
+ * Reads boundary face data and classifies faces into absorbing boundaries.
+ *
+ * @param database_file Path to the binary mesh database
+ * @param attenuation_setup Attenuation configuration
  * @return specfem::mesh::mesh<specfem::element::dimension_tag::dim3>
- *         Specfem mesh object for dimension type dim3
  *
  * @code
- * // Read 3D mesh from MESHFEM3D database file
- * auto mesh = specfem::io::read_3d_mesh(
- *      "DATABASES_MPI",
- *      specfem::attenuation::Setup{}); // attenuation disabled
+ * auto mesh = specfem::io::read_3d_mesh("database.bin",
+ *                                        specfem::attenuation::Setup{});
  * @endcode
  */
 specfem::mesh::mesh<specfem::element::dimension_tag::dim3>
@@ -137,11 +137,15 @@ read_2d_receivers(const YAML::Node &stations, const type_real angle);
  * specfem::receiver::receiver * object
  *
  * @param stations_file Stations file describing receiver locations
+ * @param geographic If true, interpret the STATIONS columns as
+ *   `name network latitude longitude elevation burial` (degrees/meters) and
+ *   defer UTM projection to assembly time; if false (default), interpret them
+ *   as `name network y x elevation z` cartesian coordinates (meters).
  * @return vector of instantiated receiver objects
  */
 std::vector<std::shared_ptr<
     specfem::receivers::receiver<specfem::element::dimension_tag::dim3>>>
-read_3d_receivers(const std::string &stations_file);
+read_3d_receivers(const std::string &stations_file, bool geographic = false);
 
 /**
  * @overload
@@ -164,11 +168,13 @@ read_3d_receivers(const std::string &stations_file);
  * @endcode
  *
  * @param stations YAML node containing receiver locations
+ * @param geographic If true, interpret coordinates as geographic
+ *   (latitude/longitude/depth); if false (default), as cartesian (x/y/z).
  * @return vector of instantiated receiver objects
  */
 std::vector<std::shared_ptr<
     specfem::receivers::receiver<specfem::element::dimension_tag::dim3>>>
-read_3d_receivers(const YAML::Node &stations);
+read_3d_receivers(const YAML::Node &stations, bool geographic = false);
 
 /**
  * @brief Read sources from parsed config entries (multi-format dispatch).

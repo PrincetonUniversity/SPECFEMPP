@@ -63,6 +63,17 @@ template <> struct local_coordinates<specfem::element::dimension_tag::dim2> {
     static_assert(ViewType::static_extent(0) == 2,
                   "ViewType must have extent 2 for 2D coordinates");
   }
+
+  /**
+   * @brief Return a string representation of the local coordinates
+   *
+   * @return std::string
+   */
+  std::string print() const {
+    std::ostringstream oss;
+    oss << "ispec=" << ispec << ", xi=" << xi << ", gamma=" << gamma;
+    return oss.str();
+  }
 };
 
 //-------------------------- 3D Specializations ------------------------------//
@@ -112,6 +123,18 @@ template <> struct local_coordinates<specfem::element::dimension_tag::dim3> {
     static_assert(ViewType::rank() == 1, "ViewType must be rank 1");
     static_assert(ViewType::static_extent(0) == 3,
                   "ViewType must have extent 3 for 3D coordinates");
+  }
+
+  /**
+   * @brief Return a string representation of the local coordinates
+   *
+   * @return std::string
+   */
+  std::string print() const {
+    std::ostringstream oss;
+    oss << "ispec=" << ispec << ", xi=" << xi << ", eta=" << eta
+        << ", gamma=" << gamma;
+    return oss.str();
   }
 };
 

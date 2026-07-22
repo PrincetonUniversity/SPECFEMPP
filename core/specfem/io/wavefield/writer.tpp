@@ -213,6 +213,31 @@ void specfem::io::wavefield_writer<OutputLibrary>::finalize(
         decltype(boundary_values.stacey)::combinations_by_medium,
         write_stacey);
 
+    typename OutputLibrary::Group composite =
+        boundary_group.createGroup("CompositeStaceyDirichlet");
+
+    composite
+        .createDataset(
+            "IndexMapping",
+            boundary_values.composite_stacey_dirichlet.h_property_index_mapping)
+        .write();
+
+    auto write_composite = [&]<typename TagsType>() {
+      constexpr auto medium_tag = TagsType::medium_tag;
+      auto &ctr = boundary_values.composite_stacey_dirichlet.container
+                      .template get<TagsType>();
+      if (ctr.h_values.size() > 0) {
+        const std::string dataset_name =
+            specfem::element::to_string(medium_tag) + "Acceleration";
+        composite.createDataset(dataset_name, ctr.h_values).write();
+      }
+    };
+
+    specfem::tag_dispatch::for_each(
+        decltype(boundary_values.composite_stacey_dirichlet)::
+            combinations_by_medium,
+        write_composite);
+
     file.flush();
   }
 

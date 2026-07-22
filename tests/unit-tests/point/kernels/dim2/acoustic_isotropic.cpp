@@ -59,11 +59,10 @@ TYPED_TEST(PointKernelsTest, AcousticIsotropic2D) {
   }
 
   // Create the kernels object
-  using PointKernelType =
-      specfem::point::kernels<specfem::element::dimension_tag::dim2,
-                              specfem::element::medium_tag::acoustic,
-                              specfem::element::property_tag::isotropic,
-                              using_simd>;
+  using PointKernelType = specfem::point::kernels<specfem::tags::Tags<
+      specfem::element::dimension_tag::dim2,
+      specfem::element::medium_tag::acoustic,
+      specfem::element::property_tag::isotropic, using_simd>>;
   PointKernelType kernels(rho, kappa);
   PointKernelType kernels2;
 

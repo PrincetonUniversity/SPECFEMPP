@@ -5,9 +5,11 @@
 #include "specfem/program/abort.hpp"
 #include "specfem/setup.hpp"
 #include "specfem/tag_dispatch.hpp"
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <sstream>
+#include <tuple>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -662,18 +664,28 @@ specfem::assembly::mpi_impl::unpacker<FieldType, DimensionTag, MediumTag>::
   // assemble_unpacking_mapping
   h_face_orientations =
       OrientationHostView("unpacker::h_face_orientations", this->nfaces);
-  for (unsigned int i = 0; i < this->nfaces; i++)
+  h_face_elements = ElementHostView("unpacker::h_face_elements", this->nfaces);
+  for (unsigned int i = 0; i < this->nfaces; i++) {
     h_face_orientations(i) = face_group.h_my_orientation(face_indices[i]);
+    h_face_elements(i) = face_group.h_my_element(face_indices[i]);
+  }
 
   h_edge_orientations =
       OrientationHostView("unpacker::h_edge_orientations", this->nedges);
-  for (unsigned int i = 0; i < this->nedges; i++)
+  h_edge_elements = ElementHostView("unpacker::h_edge_elements", this->nedges);
+  for (unsigned int i = 0; i < this->nedges; i++) {
     h_edge_orientations(i) = edge_group.h_my_orientation(edge_indices[i]);
+    h_edge_elements(i) = edge_group.h_my_element(edge_indices[i]);
+  }
 
   h_corner_orientations =
       OrientationHostView("unpacker::h_corner_orientations", this->ncorners);
-  for (unsigned int i = 0; i < this->ncorners; i++)
+  h_corner_elements =
+      ElementHostView("unpacker::h_corner_elements", this->ncorners);
+  for (unsigned int i = 0; i < this->ncorners; i++) {
     h_corner_orientations(i) = corner_group.h_my_orientation(corner_indices[i]);
+    h_corner_elements(i) = corner_group.h_my_element(corner_indices[i]);
+  }
 
   // Derive ranks and ngll from first non-empty group
   if (face_group.n > 0) {
@@ -865,7 +877,8 @@ void specfem::assembly::mpi_impl::unpacker<FieldType, DimensionTag, MediumTag>::
                            Kokkos::HostSpace>
             my_corner_orientations,
         const specfem::mesh_entity::element<dimension_tag> &element,
-        const specfem::assembly::fields<dimension_tag> &fields) {
+        const specfem::assembly::fields<dimension_tag> &fields,
+        const Kokkos::View<const int *, Kokkos::HostSpace> &h_mesh_to_compute) {
 
   if (this->nfaces == 0 && this->nedges == 0 && this->ncorners == 0)
     return; // No Irecv calls were posted; nothing to wait on.
@@ -903,7 +916,7 @@ void specfem::assembly::mpi_impl::unpacker<FieldType, DimensionTag, MediumTag>::
 
   // Fill mapping from faces: recv_face_indices[iface][j][i] → nglob position
   for (unsigned int iface = 0; iface < this->nfaces; iface++) {
-    const int ielem = face_elements(iface);
+    const int ielem = h_face_elements(iface);
     const auto face_type = my_face_orientations(iface);
     for (unsigned int j = 0; j < this->ngll; j++) {
       for (unsigned int i = 0; i < this->ngll; i++) {
@@ -920,7 +933,7 @@ void specfem::assembly::mpi_impl::unpacker<FieldType, DimensionTag, MediumTag>::
 
   // Fill mapping from edges: recv_edge_indices[iedge][ipoint] → nglob position
   for (unsigned int iedge = 0; iedge < this->nedges; iedge++) {
-    const int ielem = edge_elements(iedge);
+    const int ielem = h_edge_elements(iedge);
     const auto edge_type = my_edge_orientations(iedge);
     for (unsigned int ipoint = 0; ipoint < this->ngll; ipoint++) {
       const int nglob_idx = recv_edge_indices(iedge, ipoint);
@@ -933,7 +946,7 @@ void specfem::assembly::mpi_impl::unpacker<FieldType, DimensionTag, MediumTag>::
 
   // Fill mapping from corners: corner_nglob_idx[icorner] → nglob position
   for (unsigned int icorner = 0; icorner < this->ncorners; icorner++) {
-    const int ielem = corner_elements(icorner);
+    const int ielem = h_corner_elements(icorner);
     const auto corner_type = my_corner_orientations(icorner);
     const int nglob_idx = corner_nglob_idx(icorner);
     const auto [iz, iy, ix] = element.map_coordinates(corner_type);
@@ -998,6 +1011,7 @@ void specfem::assembly::mpi_impl::communication_pattern<FieldType, DimensionTag,
         const face_communication_group &face_group,
         const specfem::mesh_entity::element<dimension_tag> &element,
         const specfem::assembly::fields<dimension_tag> &fields,
+        const Kokkos::View<const int *, Kokkos::HostSpace> &h_mesh_to_compute,
         PendingReceiveState pending) {
 
   auto &[requests, metadata_buf, recv_face_indices, face_elements,
@@ -1012,7 +1026,7 @@ void specfem::assembly::mpi_impl::communication_pattern<FieldType, DimensionTag,
       requests, metadata_buf, recv_face_indices, face_elements,
       recv_edge_indices, edge_elements, corner_nglob_idx, corner_elements,
       unpack.h_face_orientations, unpack.h_edge_orientations,
-      unpack.h_corner_orientations, element, fields);
+      unpack.h_corner_orientations, element, fields, h_mesh_to_compute);
 }
 
 // ---------------------------------------------------------------------------
@@ -1034,13 +1048,55 @@ specfem::assembly::mpi<specfem::element::dimension_tag::dim3>::mpi(
     const specfem::mesh::adjacency_graph<dimension_tag> &adjacency_graph,
     const specfem::assembly::element_types<dimension_tag> &element_types,
     const specfem::simulation::type simulation,
-    const specfem::assembly::fields<dimension_tag> &fields, const int ngllz,
-    const int nglly, const int ngllx) {
+    const specfem::assembly::fields<dimension_tag> &fields,
+    const Kokkos::View<const int *, Kokkos::HostSpace> &h_mesh_to_compute,
+    const int ngllz, const int nglly, const int ngllx) {
 
   const unsigned int my_rank =
       static_cast<unsigned int>(specfem::MPI::get_rank());
 
-  const auto &mpi_conns = adjacency_graph.mpi_connections();
+  // The adjacency graph stores element indices in mesh ordering, but the rest
+  // of the assembly (index_mapping, element_types, get_iglob) uses compute
+  // ordering. Translate each connection's local element to compute ordering so
+  // the communication groups store compute indices. neighbor_local_index is
+  // left in the neighbor's mesh ordering: it is sent to the neighbor, who
+  // translates it with its own mesh_to_compute on receipt.
+  auto mpi_conns = adjacency_graph.mpi_connections();
+
+  // Establish a canonical, rank-symmetric ordering of the MPI connections.
+  // The packer (sender) and unpacker (receiver) pair connections by list
+  // index, so both ranks of a neighbor pair MUST enumerate the shared
+  // connections in the same order. The order returned by mpi_connections()
+  // follows each rank's local element numbering, which differs between ranks;
+  // for structured partitions every connection to a neighbor shares a single
+  // orientation so the mismatch is harmless, but for general (e.g. METIS)
+  // partitions a neighbor pair shares connections of mixed orientations and
+  // the index-based pairing breaks.
+  //
+  // Sort by a key both ranks compute identically: order the (local, neighbor)
+  // element pair so the lower rank's element comes first. For a connection
+  // c on rank A with neighbor B, A stores (local=eA, neighbor=eB) while B's
+  // reverse connection stores (local=eB, neighbor=eA); keying on the lower
+  // rank yields (eA, eB) on both sides. Element indices are still in mesh
+  // ordering here (matching neighbor_local_index, which is never translated),
+  // so this must happen BEFORE local_index is translated to compute ordering.
+  std::stable_sort(
+      mpi_conns.begin(), mpi_conns.end(),
+      [my_rank](const auto &a, const auto &b) {
+        const auto key = [my_rank](const auto &c) {
+          return (static_cast<std::size_t>(my_rank) < c.neighbor_partition)
+                     ? std::make_tuple(c.neighbor_partition, c.local_index,
+                                       c.neighbor_local_index)
+                     : std::make_tuple(c.neighbor_partition,
+                                       c.neighbor_local_index, c.local_index);
+        };
+        return key(a) < key(b);
+      });
+
+  for (auto &conn : mpi_conns) {
+    conn.local_index = static_cast<std::size_t>(
+        h_mesh_to_compute(static_cast<int>(conn.local_index)));
+  }
 
   this->simulation = simulation;
 
@@ -1163,6 +1219,7 @@ specfem::assembly::mpi<specfem::element::dimension_tag::dim3>::mpi(
                                  ? corner_groups[corner_idx.at(nr)]
                                  : empty_corner;
             map.at(nr).complete_construction(cg, eg, fg, element, fields,
+                                             h_mesh_to_compute,
                                              std::move(pending.at(nr)));
           }
         };

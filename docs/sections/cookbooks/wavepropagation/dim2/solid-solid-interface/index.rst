@@ -37,9 +37,9 @@ We also need to check that the SPECFEM++ build directory is added to the ``PATH`
 
 .. code:: bash
 
-    which specfem2d
+    which specfem
 
-If the above command returns a path to the ``specfem2d`` executable, then the
+If the above command returns a path to the ``specfem`` executable, then the
 build directory is added to the ``PATH``. If not, you need to add the build
 directory to the ``PATH`` using the following command.
 
@@ -220,7 +220,7 @@ place, we can run the solver using the following command
 
 .. code:: bash
 
-    specfem2d -p specfem_config_psv.yaml
+    specfem 2d -p specfem_config_psv.yaml
 
 
 A snapshot of the wavefield at timestep 1100 (:math:`t=9.9\mathrm{s}`) is shown
@@ -274,7 +274,7 @@ place, we can run the solver using the following command
 
 .. code:: bash
 
-    specfem2d -p specfem_config_sh.yaml
+    specfem 2d -p specfem_config_sh.yaml
 
 
 A snapshot of the wavefield at timestep 1100 (:math:`t=9.9\mathrm{s}`) is shown

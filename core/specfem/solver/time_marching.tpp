@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/solver/time_marching.hpp"
+#include "specfem/solver/impl/update_medium.hpp"
 #include "specfem/timescheme/newmark.hpp"
 #include "specfem/compute.tpp"
 #include "specfem/logger.hpp"
@@ -20,15 +21,30 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
   constexpr auto elastic_psv_t = specfem::element::medium_tag::elastic_psv_t;
   constexpr auto forward = specfem::simulation::field_type::forward;
 
-  // Calls to compute mass matrix and invert mass matrix
-  specfem::compute::initialize_mass_matrix<NGLL, specfem::tags::Tags<DimensionTag, forward>>(assembly, time_scheme->get_timestep());
+  // Compute and invert the mass matrix.
+  const auto mass_dt = time_scheme->get_timestep();
+
+  specfem::tag_dispatch::for_each(
+      specfem::tag_dispatch::dimension_set<DimensionTag>{} *
+          MEDIUM_SET(acoustic, elastic, elastic_psv, elastic_sh, poroelastic,
+                     elastic_psv_t, elastic_spin),
+      [&]<typename ElementTags>() {
+        specfem::solver::impl::init_medium_mass<
+            NGLL, specfem::tags::expand<ElementTags, forward>>(
+            assembly, mpi_buffers, mass_dt);
+      });
+
+  // The mass-matrix buffers are no longer needed after assembly + inversion.
+  mpi_buffers
+      .template reset<specfem::data_access::DataClassType::mass_matrix>();
 
   const int nstep = time_scheme->get_max_timestep();
 
   const int total_dof_to_be_updated =
       2 * assembly.get_total_degrees_of_freedom();
 
-  const int total_elements_to_be_updated = assembly.get_total_number_of_elements();
+  const int total_elements_to_be_updated =
+      assembly.get_total_number_of_elements();
 
   for (const auto &task : tasks) {
     task->initialize(assembly);
@@ -51,20 +67,31 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
         this->time_scheme->apply_predictor_phase_forward(elastic_psv_t);
     dofs_updated +=
         this->time_scheme->apply_predictor_phase_forward(elastic_spin);
-    // Update acoustic wavefield:
-    // coupling, source interaction, stiffness, divide by mass matrix
-    elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, forward, acoustic>>(assembly, istep);
+    // Update acoustic wavefield: coupling, source, stiffness (outer/inner with
+    // overlapped MPI exchange), divide by mass matrix
+    elements_updated += specfem::solver::impl::update_medium<
+        NGLL, specfem::tags::Tags<DimensionTag, forward, acoustic>>(
+        assembly, mpi_buffers, istep);
 
     // Corrector phase forward for acoustic
     dofs_updated += this->time_scheme->apply_corrector_phase_forward(acoustic);
 
-    // Update wavefields for elastic wavefields:
-    // coupling, source, stiffness, divide by mass matrix
-    elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, forward, elastic>>(assembly, istep);
-    elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, forward, elastic_psv>>(assembly, istep);
-    elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, forward, elastic_sh>>(assembly, istep);
-    elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, forward, elastic_psv_t>>(assembly, istep);
-    elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, forward, elastic_spin>>(assembly, istep);
+    // Update wavefields for elastic wavefields
+    elements_updated += specfem::solver::impl::update_medium<
+        NGLL, specfem::tags::Tags<DimensionTag, forward, elastic>>(
+        assembly, mpi_buffers, istep);
+    elements_updated += specfem::solver::impl::update_medium<
+        NGLL, specfem::tags::Tags<DimensionTag, forward, elastic_psv>>(
+        assembly, mpi_buffers, istep);
+    elements_updated += specfem::solver::impl::update_medium<
+        NGLL, specfem::tags::Tags<DimensionTag, forward, elastic_sh>>(
+        assembly, mpi_buffers, istep);
+    elements_updated += specfem::solver::impl::update_medium<
+        NGLL, specfem::tags::Tags<DimensionTag, forward, elastic_psv_t>>(
+        assembly, mpi_buffers, istep);
+    elements_updated += specfem::solver::impl::update_medium<
+        NGLL, specfem::tags::Tags<DimensionTag, forward, elastic_spin>>(
+        assembly, mpi_buffers, istep);
     // Corrector phase forward for elastic
     dofs_updated +=
         this->time_scheme->apply_corrector_phase_forward(elastic);
@@ -77,9 +104,10 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
     dofs_updated +=
         this->time_scheme->apply_corrector_phase_forward(elastic_spin);
 
-    // Update wavefields for poroelastic wavefields:
-    // coupling, source, stiffness, divide by mass matrix
-    elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, forward, poroelastic>>(assembly, istep);
+    // Update wavefields for poroelastic wavefields
+    elements_updated += specfem::solver::impl::update_medium<
+        NGLL, specfem::tags::Tags<DimensionTag, forward, poroelastic>>(
+        assembly, mpi_buffers, istep);
 
     // Corrector phase forward for poroelastic
     dofs_updated += this->time_scheme->apply_corrector_phase_forward(poroelastic);
@@ -150,8 +178,21 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
   constexpr auto adjoint = specfem::simulation::field_type::adjoint;
   constexpr auto backward = specfem::simulation::field_type::backward;
 
-  specfem::compute::initialize_mass_matrix<NGLL, specfem::tags::Tags<DimensionTag, adjoint>>(assembly, time_scheme->get_timestep());
-  specfem::compute::initialize_mass_matrix<NGLL, specfem::tags::Tags<DimensionTag, backward>>(assembly, time_scheme->get_timestep());
+  // Compute and invert the mass matrix for both wavefields.
+  const auto mass_dt = time_scheme->get_timestep();
+  const auto mass_set =
+      specfem::tag_dispatch::dimension_set<DimensionTag>{} *
+      MEDIUM_SET(acoustic, elastic, elastic_psv, elastic_sh, poroelastic) *
+      WAVEFIELD_SET(adjoint, backward);
+
+  specfem::tag_dispatch::for_each(mass_set, [&]<typename ElementTags>() {
+      specfem::solver::impl::init_medium_mass<NGLL, ElementTags>(
+          assembly, mpi_buffers, mass_dt);
+  });
+
+  // The mass-matrix buffers are no longer needed after assembly + inversion.
+  mpi_buffers
+      .template reset<specfem::data_access::DataClassType::mass_matrix>();
 
   const int nstep = time_scheme->get_max_timestep();
 
@@ -170,11 +211,22 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
     }
   }
 
+  // Initialize the backward wavefield from the final forward wavefield buffer.
+  // The pre-loop task above loads StepNSTEP only when it is not also on the
+  // regular task cadence; otherwise the first in-loop task refresh below does.
+  specfem::assembly::deep_copy(assembly.fields.backward,
+                               assembly.fields.buffer);
+
   for (const auto [istep, dt] : time_scheme->iterate_backward()) {
     for (const auto &task : tasks) {
       if (task && task->should_run(istep+1)) {
         task->run(assembly, istep+1);
       }
+    }
+
+    if (istep == nstep - 1) {
+      specfem::assembly::deep_copy(assembly.fields.backward,
+                                   assembly.fields.buffer);
     }
 
     int dofs_updated = 0;
@@ -186,18 +238,33 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
     dofs_updated += time_scheme->apply_predictor_phase_forward(elastic_sh);
     dofs_updated += time_scheme->apply_predictor_phase_forward(poroelastic);
 
-    elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, adjoint, acoustic>>(assembly, istep);
+    elements_updated += specfem::solver::impl::update_medium<
+        NGLL, specfem::tags::Tags<DimensionTag, adjoint, acoustic>>(
+        assembly, mpi_buffers, istep);
     dofs_updated += time_scheme->apply_corrector_phase_forward(acoustic);
 
-    elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, adjoint, elastic>>(assembly, istep);
-    elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, adjoint, elastic_psv>>(assembly, istep);
-    elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, adjoint, elastic_sh>>(assembly, istep);
+    elements_updated += specfem::solver::impl::update_medium<
+        NGLL, specfem::tags::Tags<DimensionTag, adjoint, elastic>>(
+        assembly, mpi_buffers, istep);
+    elements_updated += specfem::solver::impl::update_medium<
+        NGLL, specfem::tags::Tags<DimensionTag, adjoint, elastic_psv>>(
+        assembly, mpi_buffers, istep);
+    elements_updated += specfem::solver::impl::update_medium<
+        NGLL, specfem::tags::Tags<DimensionTag, adjoint, elastic_sh>>(
+        assembly, mpi_buffers, istep);
     dofs_updated += time_scheme->apply_corrector_phase_forward(elastic);
     dofs_updated += time_scheme->apply_corrector_phase_forward(elastic_psv);
     dofs_updated += time_scheme->apply_corrector_phase_forward(elastic_sh);
 
-    elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, adjoint, poroelastic>>(assembly, istep);
+    elements_updated += specfem::solver::impl::update_medium<
+        NGLL, specfem::tags::Tags<DimensionTag, adjoint, poroelastic>>(
+        assembly, mpi_buffers, istep);
     dofs_updated += time_scheme->apply_corrector_phase_forward(poroelastic);
+
+    // Compute kernels using adjoint at t=(j+1)*dt and backward at
+    // t=(nstep-j)*dt. This matches the Fortran kernel wavefield pairing after
+    // the reconstructed forward field has been loaded.
+    specfem::compute::compute_derivatives<NGLL, specfem::tags::Tags<DimensionTag>>(assembly, dt);
 
     // Backward time step
     dofs_updated += time_scheme->apply_predictor_phase_backward(elastic);
@@ -206,29 +273,28 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
     dofs_updated += time_scheme->apply_predictor_phase_backward(acoustic);
     dofs_updated += time_scheme->apply_predictor_phase_backward(poroelastic);
 
-    elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, backward, elastic>>(assembly, istep);
-    elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, backward, elastic_psv>>(assembly, istep);
-    elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, backward, elastic_sh>>(assembly, istep);
+    elements_updated += specfem::solver::impl::update_medium<
+        NGLL, specfem::tags::Tags<DimensionTag, backward, elastic>>(
+        assembly, mpi_buffers, istep);
+    elements_updated += specfem::solver::impl::update_medium<
+        NGLL, specfem::tags::Tags<DimensionTag, backward, elastic_psv>>(
+        assembly, mpi_buffers, istep);
+    elements_updated += specfem::solver::impl::update_medium<
+        NGLL, specfem::tags::Tags<DimensionTag, backward, elastic_sh>>(
+        assembly, mpi_buffers, istep);
     dofs_updated += time_scheme->apply_corrector_phase_backward(elastic);
     dofs_updated += time_scheme->apply_corrector_phase_backward(elastic_psv);
     dofs_updated += time_scheme->apply_corrector_phase_backward(elastic_sh);
 
-    elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, backward, acoustic>>(assembly, istep);
+    elements_updated += specfem::solver::impl::update_medium<
+        NGLL, specfem::tags::Tags<DimensionTag, backward, acoustic>>(
+        assembly, mpi_buffers, istep);
     dofs_updated += time_scheme->apply_corrector_phase_backward(acoustic);
 
-    elements_updated += specfem::compute::update_wavefields<NGLL, specfem::tags::Tags<DimensionTag, backward, poroelastic>>(assembly, istep);
+    elements_updated += specfem::solver::impl::update_medium<
+        NGLL, specfem::tags::Tags<DimensionTag, backward, poroelastic>>(
+        assembly, mpi_buffers, istep);
     dofs_updated += time_scheme->apply_corrector_phase_backward(poroelastic);
-
-    // Copy read wavefield buffer to the backward wavefield
-    // We need to do this after the first backward step to align
-    // the wavefields for the adjoint and backward simulations
-    // for accurate Frechet derivatives
-    if (istep == nstep - 1) {
-      specfem::assembly::deep_copy(assembly.fields.backward,
-                                  assembly.fields.buffer);
-    }
-
-    specfem::compute::compute_derivatives<NGLL, specfem::tags::Tags<DimensionTag>>(assembly, dt);
 
     if (time_scheme->compute_seismogram(istep)) {
       // compute seismogram for backward time step

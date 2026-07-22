@@ -6,6 +6,7 @@
  *
  * This header provides a convenient way to include all algorithms functionality
  * by including the individual algorithm headers.
+ *
  */
 
 /**
@@ -23,6 +24,7 @@ namespace specfem::algorithms {}
 #include "algorithms/coupling_integral.hpp"
 #include "algorithms/divergence.hpp"
 #include "algorithms/gradient.hpp"
+#include "algorithms/inside_outside.hpp"
 #include "algorithms/interpolate.hpp"
 #include "algorithms/inverse.hpp"
 #include "algorithms/locate_point.hpp"
