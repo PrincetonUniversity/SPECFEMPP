@@ -1,6 +1,6 @@
 #include "specfem/mesh/dim2/adjacency_graph/adjacency_graph.hpp"
-#include "../../../test_macros.hpp"
 #include "specfem/enums.hpp"
+#include "test_macros.hpp"
 #include <boost/graph/adjacency_list.hpp>
 #include <gtest/gtest.h>
 #include <stdexcept>

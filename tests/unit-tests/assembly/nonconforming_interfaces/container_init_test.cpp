@@ -1,4 +1,4 @@
-#include "../../SPECFEM_Environment.hpp"
+#include "SPECFEM_Environment.hpp"
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/assembly/nonconforming_interfaces/dim2/impl/compute_intersection.tpp"
@@ -358,10 +358,10 @@ TEST(NonconformingInterfaces, ContainerInitialization) {
   }();
 
   std::vector<std::shared_ptr<
-      specfem::sources::source<specfem::element::dimension_tag::dim2> > >
+      specfem::sources::source<specfem::element::dimension_tag::dim2>>>
       sources;
   std::vector<std::shared_ptr<
-      specfem::receivers::receiver<specfem::element::dimension_tag::dim2> > >
+      specfem::receivers::receiver<specfem::element::dimension_tag::dim2>>>
       receivers;
   specfem::assembly::assembly<specfem::element::dimension_tag::dim2> assembly(
       mesh, quadrature, sources, receivers, {}, 1.0, 0.0, 1, 1, 1,

@@ -1,4 +1,3 @@
-#include "../../test_macros.hpp"
 #include "specfem/element/tags.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/enums/wavefield.hpp"
@@ -9,6 +8,7 @@
 #include "specfem/program/context.hpp"
 #include "specfem/setup.hpp"
 #include "specfem/utilities.hpp"
+#include "test_macros.hpp"
 #include <array>
 #include <cstring>
 #include <fstream>

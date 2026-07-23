@@ -1,8 +1,8 @@
 
-#include "../../../test_macros.hpp"
 #include "SPECFEM_Environment.hpp"
 #include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
+#include "test_macros.hpp"
 #include <algorithm>
 #include <boost/graph/adjacency_list.hpp>
 #include <gtest/gtest.h>
@@ -17,7 +17,7 @@ constexpr static int nx =
 constexpr static int nz =
     60; // See Par_file in data/dim2/regular_mesh/provenance
 
-const static std::unordered_map<int, std::vector<int> > expected_adjacency{
+const static std::unordered_map<int, std::vector<int>> expected_adjacency{
   // Interior node example
   { (nz / 2) * nx + (nx / 2),
     { (nz / 2 - 1) * nx + (nx / 2 - 1), (nz / 2 - 1) * nx + (nx / 2),
