@@ -1,26 +1,40 @@
 cmake_minimum_required(VERSION 3.17.5)
 
-# Include common test configuration and utilities
-# This handles C++ standard, GoogleTest setup, and shared test libraries
-include(${CMAKE_CURRENT_SOURCE_DIR}/common.cmake)
+# Test binaries stay in the build tree. scripts/coverage.smk globs executables from
+# this directory, so do not move it.
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests/unit-tests)
 
-# Include test definitions based on build configuration
-if(SPECFEM_ENABLE_MPI)
-  # Build MPI-only tests
-  include(${CMAKE_CURRENT_SOURCE_DIR}/mpi.cmake)
-endif()
+include_directories(.)
+
+# Common library: mesh utilities mapping
+add_library(
+  mesh_utilities_mapping
+  mesh_utilities/mapping.cpp
+)
+
+target_link_libraries(
+  mesh_utilities_mapping
+  PUBLIC
+  Kokkos::kokkos
+)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/serial.cmake)
 
-# Combine serial and MPI test targets for finalization
 if(SPECFEM_ENABLE_MPI)
-  set(ALL_TEST_TARGETS ${SERIAL_TEST_TARGETS} ${MPI_TEST_TARGETS})
-else()
-  set(ALL_TEST_TARGETS ${SERIAL_TEST_TARGETS})
+  include(${CMAKE_CURRENT_SOURCE_DIR}/mpi.cmake)
 endif()
 
-# Finalize test setup: generate CTestTestfile.cmake and setup data directories
-specfem_finalize_test_targets(ALL_TEST_TARGETS SERIAL_LINK_DIRS)
+# Data directories the tests read, relative to their working directory
+specfem_add_test_data(
+  algorithms
+  assembly
+  assembly_mesh
+  data
+  fortran_io
+  io
+  mesh
+  policies
+)
 
 # Data subdirectories for test provenance
 add_subdirectory(data/dim2/ncmarked_conforming_grid_curved/provenance)
