@@ -1,9 +1,9 @@
 
-#include "../../../test_macros.hpp"
 #include "SPECFEM_Environment.hpp"
 #include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/mesh_entity.hpp"
+#include "test_macros.hpp"
 #include <algorithm>
 #include <boost/graph/adjacency_list.hpp>
 #include <gtest/gtest.h>
@@ -22,7 +22,7 @@ const static std::unordered_map<std::string, std::string> mesh_files = {
 };
 
 const static std::unordered_map<
-    std::string, std::vector<specfem::testing::predicate::variant> >
+    std::string, std::vector<specfem::testing::predicate::variant>>
     expected_adjacency_rules = {
       { "Circular mesh",
         {

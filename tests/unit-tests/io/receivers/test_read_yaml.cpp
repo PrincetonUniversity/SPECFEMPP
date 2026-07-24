@@ -1,8 +1,8 @@
-#include "../../SPECFEM_Environment.hpp"
-#include "../../test_macros.hpp"
+#include "SPECFEM_Environment.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/io.hpp"
 #include "specfem/receivers.hpp"
+#include "test_macros.hpp"
 #include "test_receiver_solutions.hpp"
 #include <Kokkos_Core.hpp>
 #include <algorithm>
@@ -18,7 +18,7 @@ template <specfem::element::dimension_tag DimensionTag>
 struct ReceiverYAMLTestParam {
   std::string testname;
   YAML::Node stations_node;
-  std::vector<std::shared_ptr<specfem::receivers::receiver<DimensionTag> > >
+  std::vector<std::shared_ptr<specfem::receivers::receiver<DimensionTag>>>
       expected_receivers;
   type_real angle;
 };
