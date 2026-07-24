@@ -7,6 +7,7 @@
 
 namespace specfem::assembly {
 
+/** @brief Load a scalar 3D Jacobian matrix value on the host. */
 template <
     typename PointIndexType, typename ContainerType, typename PointType,
     typename std::enable_if_t<

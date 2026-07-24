@@ -11,6 +11,11 @@
 
 namespace specfem::assembly::simulation_field_impl {
 
+/**
+ * @brief Internally dispatch field loading for scalar point indices.
+ *
+ * This is an internal implementation detail and is not part of the public API.
+ */
 template <bool on_device, typename IndexType, typename ContainerType,
           typename... AccessorTypes,
           typename std::enable_if_t<
@@ -52,6 +57,11 @@ load_after_simd_dispatch(const std::false_type, const IndexType &index,
   return;
 }
 
+/**
+ * @brief Internally dispatch field loading for SIMD point indices.
+ *
+ * This is an internal implementation detail and is not part of the public API.
+ */
 template <bool on_device, typename IndexType, typename ContainerType,
           typename... AccessorTypes,
           typename std::enable_if_t<
@@ -102,6 +112,11 @@ load_after_simd_dispatch(const std::true_type, const IndexType &index,
   }
 }
 
+/**
+ * @brief Internally dispatch field loading for scalar assembly indices.
+ *
+ * This is an internal implementation detail and is not part of the public API.
+ */
 template <bool on_device, typename IndexType, typename ContainerType,
           typename... AccessorTypes,
           typename std::enable_if_t<
@@ -151,6 +166,11 @@ load_after_simd_dispatch(const std::false_type, const IndexType &index,
   return;
 }
 
+/**
+ * @brief Internally dispatch field loading for SIMD assembly indices.
+ *
+ * This is an internal implementation detail and is not part of the public API.
+ */
 template <bool on_device, typename IndexType, typename ContainerType,
           typename... AccessorTypes,
           typename std::enable_if_t<
@@ -213,6 +233,11 @@ load_after_simd_dispatch(const std::true_type, const IndexType &index,
   return;
 }
 
+/**
+ * @brief Internally dispatch field loading for edge assembly indices.
+ *
+ * This is an internal implementation detail and is not part of the public API.
+ */
 template <bool on_device, typename IndexType, typename ContainerType,
           typename... AccessorTypes,
           typename std::enable_if_t<
