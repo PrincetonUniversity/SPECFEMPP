@@ -363,8 +363,13 @@ TEST_P(Newmark, 2D) {
       }
     }
 
-    if (error / computed_norm > Test.tolerance ||
-        std::isnan(error / computed_norm)) {
+    // When the reference norm is zero both the reference and computed
+    // seismograms must be zero for the test to pass.
+    const bool failed = (computed_norm == 0)
+                            ? (error > Test.tolerance)
+                            : (error / computed_norm > Test.tolerance ||
+                               std::isnan(error / computed_norm));
+    if (failed) {
       FAIL() << "--------------------------------------------------\n"
              << "\033[0;31m[FAILED]\033[0m Test failed\n"
              << " - Test: " << Test.name << "\n"
