@@ -71,6 +71,7 @@ add_subdirectory(element)
 add_subdirectory(element_connections)
 add_subdirectory(enums)
 add_subdirectory(jacobian)
+add_subdirectory(linear_system)
 add_subdirectory(io)
 add_subdirectory(io_backends)
 add_subdirectory(macros)
@@ -105,6 +106,7 @@ target_link_libraries(specfem_core_interface
         specfem::datetime
         specfem::assembly
         specfem::jacobian
+        specfem::linear_system
         specfem::element
         specfem::element_connections
         specfem::element_coupling

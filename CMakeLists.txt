@@ -25,6 +25,7 @@ option(SPECFEM_BINDING_PYTHON "Enable Python binding" OFF)
 option(SPECFEM_INSTALL "Creates clean executable directory. Location Controlled by CMAKE_INSTALL_PREFIX" ON)
 option(SPECFEM_ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
 option(SPECFEM_ENABLE_METIS "Enable METIS partitioning support in xdecompose_mesh" OFF)
+option(SPECFEM_ENABLE_TRILINOS "Enable Trilinos implicit solvers (Tpetra/Belos/Ifpack2/MueLu/Amesos2)" OFF)
 option(SPECFEM_BUILD_BENCHMARKS "Benchmarks included" ON)
 option(SPECFEM_NIGHTLY_BENCHMARKS "Include nightly benchmarks" OFF)
 option(SPECFEM_ENABLE_UNITY_BUILD "Enable unity build to speed up compilation" ON)
@@ -174,6 +175,10 @@ include("${CMAKE_SOURCE_DIR}/cmake/vtk.cmake")
 # Find or install METIS graph partitioner (used by xdecompose_mesh)
 include("${CMAKE_SOURCE_DIR}/cmake/metis.cmake")
 
+# Find Trilinos (implicit solvers). MUST be after cmake/kokkos.cmake so Kokkos is
+# resolved first and Trilinos validates against the same Kokkos.
+include("${CMAKE_SOURCE_DIR}/cmake/trilinos.cmake")
+
 if (SPECFEM_ENABLE_SIMD)
     message(STATUS "Enabling SIMD")
     add_compile_definitions(SPECFEM_ENABLE_SIMD)
@@ -275,7 +280,7 @@ add_subdirectory(core)
 # Include tests
 if (SPECFEM_BUILD_TESTS)
         message(STATUS "Including tests.")
-        add_subdirectory(tests/unit-tests)
+        add_subdirectory(tests)
 endif()
 
 if (SPECFEM_BUILD_BENCHMARKS)

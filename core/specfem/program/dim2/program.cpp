@@ -41,7 +41,7 @@ void program_2d(
   const auto quadrature = setup.instantiate_quadrature();
   specfem::Logger::info([&](std::ostringstream &oss) {
     oss << "Quadrature:\n"
-        << "-------------------------------\n"
+        << "-----------\n"
         << quadrature.to_string();
   });
 
@@ -63,7 +63,7 @@ void program_2d(
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
-  //                   Read Sources and Receivers
+  //                   Read Sources
   // --------------------------------------------------------------
   const int nsteps = setup.get_nsteps();
   auto [sources, t0, starttime] =
@@ -72,10 +72,15 @@ void program_2d(
           simulation_type);
   setup.update_t0(t0); // Update t0 in case it was changed
   setup.set_starttime(starttime);
+  // --------------------------------------------------------------
 
+  // --------------------------------------------------------------
+  //                   Read Receivers
+  // --------------------------------------------------------------
   const auto stations_node = setup.get_stations();
   const auto angle = setup.get_receiver_angle();
   auto receivers = specfem::io::read_2d_receivers(stations_node, angle);
+
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
@@ -84,6 +89,9 @@ void program_2d(
   const type_real dt = setup.get_dt();
   const int max_seismogram_time_step = setup.get_max_seismogram_step();
   const int nstep_between_samples = setup.get_nstep_between_samples();
+  specfem::Logger::info("Generating Assembly:");
+  specfem::Logger::info("====================");
+  specfem::Logger::info("\n");
   specfem::assembly::assembly<specfem::element::dimension_tag::dim2> assembly(
       mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
       setup.get_t0(), dt, nsteps, max_seismogram_time_step,
@@ -91,25 +99,30 @@ void program_2d(
       setup.instantiate_property_reader(),
       setup.get_flux_scheme_configuration());
 
+  // assembly.print() always called (not wrapped in lambda function)
+  // because it requires collective communication
+  specfem::Logger::info(assembly.print());
+
+  // Sources and receivers are printed after assembly so that resolved
+  // coordinates, the owning partition, and the location error are populated.
   specfem::Logger::info([&](std::ostringstream &oss) {
     oss << "Source Information:\n"
-        << "-------------------------------\n"
+        << "-------------------------\n"
         << "Number of sources : " << sources.size() << "\n";
     for (auto &source : sources) {
       oss << source->print();
     }
+  });
 
+  specfem::Logger::info([&](std::ostringstream &oss) {
     oss << "Receiver Information:\n"
-        << "-------------------------------\n"
+        << "---------------------------\n"
         << "Number of receivers : " << receivers.size() << "\n";
     for (auto &receiver : receivers) {
       oss << receiver->print();
     }
+    oss << "\n";
   });
-
-  // assembly.print() always called (not wrapped in lambda function)
-  // because it requires collective communication
-  specfem::Logger::info(assembly.print());
 
   // --------------------------------------------------------------
 
@@ -222,7 +235,8 @@ void program_2d(
   // --------------------------------------------------------------
   //                   Write Seismograms
   // --------------------------------------------------------------
-  const auto seismogram_writer = setup.instantiate_seismogram_writer();
+  // 2-D meshes have no UTM projection, so always use Cartesian X/Z channels.
+  const auto seismogram_writer = setup.instantiate_seismogram_writer(false);
   if (seismogram_writer) {
     specfem::Logger::info(
         "Writing seismogram files:\n-------------------------------");

@@ -31,8 +31,8 @@ specfem::source_time_functions::Heaviside::Heaviside(
   this->t0_ = -this->t0_factor_ * this->hdur_ + this->tshift_;
 
   // Approximate the half duration based on the empirical relation to
-  // of a triangular source time function
-  this->hdur_ = this->hdur_ / specfem::constants::SOURCE_DECAY_MIMIC_TRIANGLE;
+  // of a triangular source time function;
+  this->denom_ = this->hdur_ / specfem::constants::SOURCE_DECAY_MIMIC_TRIANGLE;
 }
 
 specfem::source_time_functions::Heaviside::Heaviside(
@@ -61,10 +61,10 @@ type_real specfem::source_time_functions::Heaviside::compute(type_real t) {
 
   if (this->use_trick_for_better_pressure_) {
     val = this->factor_ * specfem::source_time_functions::impl::d2gaussian_hdur(
-                              t - this->tshift_, this->hdur_);
+                              t - this->tshift_, this->denom_);
   } else {
     val = this->factor_ * specfem::source_time_functions::impl::heaviside(
-                              t - this->tshift_, this->hdur_);
+                              t - this->tshift_, this->denom_);
   }
 
   return val;
@@ -85,16 +85,15 @@ void specfem::source_time_functions::Heaviside::compute_source_time_function(
 }
 
 std::string specfem::source_time_functions::Heaviside::print() const {
-  std::stringstream ss;
-  ss << "        Heaviside source time function:\n"
-     << "          hdur: " << this->hdur_ << "\n"
-     << "          tshift: " << this->tshift_ << "\n"
-     << "          factor: " << this->factor_ << "\n"
-     << "          t0: " << this->t0_ << "\n"
-     << "          use_trick_for_better_pressure: "
-     << this->use_trick_for_better_pressure_ << "\n";
-
-  return ss.str();
+  std::ostringstream message;
+  message << "Heaviside(t0="
+          << specfem::utilities::format_scientific(this->t0_, 6)
+          << ", hdur=" << specfem::utilities::format_scientific(this->hdur_, 6)
+          << ", tshift="
+          << specfem::utilities::format_scientific(this->tshift_, 6)
+          << ", factor="
+          << specfem::utilities::format_scientific(this->factor_, 6) << ")";
+  return message.str();
 }
 
 bool specfem::source_time_functions::Heaviside::operator==(

@@ -21,7 +21,6 @@
 #include "point/properties.hpp"
 #include "point/source.hpp"
 #include "point/stress.hpp"
-#include "point/stress_integrand.hpp"
 #include "point/velocity.hpp"
 #include "point/weights.hpp"
 
