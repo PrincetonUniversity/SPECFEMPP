@@ -38,7 +38,7 @@ rule run_solver:
             "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/{{variant}}/results/{network_name}.{station_name}.S2.{component}.semv",
             station_name=["S0001", "S0002", "S0003", "S0004", "S0005", "S0006"],
             network_name=["AA"],
-            component=["BXX", "BXZ"],
+            component=["CXX", "CXZ"],
         ),
         log="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/{variant}/output.log",
     wildcard_constraints:
@@ -64,7 +64,7 @@ rule plot_seismogram:
             variant=VARIANTS,
             station_name=["S0001", "S0002", "S0003", "S0004", "S0005", "S0006"],
             network_name=["AA"],
-            component=["BXX", "BXZ"],
+            component=["CXX", "CXZ"],
         ),
     output:
         traces_X="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/traces_X.png",
