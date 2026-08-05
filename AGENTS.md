@@ -14,8 +14,9 @@ CPU (serial/OpenMP), NVIDIA (CUDA), AMD (HIP), and Intel GPUs via Kokkos.
 
 ## Critical conventions
 
-- **Naming:** `snake_case` for classes, functions, variables, namespaces, and file names.
-  `CamelCase` only for template parameters (e.g., `DimensionTag`, `MediumTag`).
+- **Naming:** `snake_case` for functions, variables, namespaces, and file names.
+  `CamelCase` for classes/structs (new types) and template parameters (e.g.,
+  `DimensionTag`, `MediumTag`). Much existing code still uses `snake_case` class names.
 - **No `using namespace`** at file or namespace scope. Fully qualify all names.
   Sole exception: `using namespace specfem::units::unit_symbols;` inside function bodies.
 - **No anonymous namespaces** -- unity builds are enabled; use `_impl` suffix namespaces

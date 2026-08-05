@@ -27,12 +27,7 @@ namespace medium_physics {
  * - Wave speed kernels: cpI, cpII, cs, ratio
  * - Density normalized kernels: ρb, ρfb, φ
  *
- * @tparam PointPropertiesType Poroelastic material properties
- * @tparam AdjointPointVelocityType Adjoint velocity field (solid+fluid)
- * @tparam AdjointPointAccelerationType Adjoint acceleration field (solid+fluid)
- * @tparam BackwardPointDisplacementType Backward displacement field
- * (solid+fluid)
- * @tparam PointFieldDerivativesType Spatial field derivatives
+ * @tparam Tags Compile-time tag bundle (dimension, medium, property, SIMD)
  *
  * @param properties Poroelastic properties (ρ, μ, φ, η, permeability, Biot
  * coefficients)
@@ -53,26 +48,17 @@ namespace medium_physics {
  * refer to: <a href="https://doi.org/10.1111/j.1365-246X.2009.04332.x">Morency,
  * C., Luo, Y., & Tromp, J. (2009).</a>
  */
-template <typename PointPropertiesType, typename AdjointPointVelocityType,
-          typename AdjointPointAccelerationType,
-          typename BackwardPointDisplacementType,
-          typename PointFieldDerivativesType>
-KOKKOS_FUNCTION specfem::point::kernels<
-    PointPropertiesType::dimension_tag, PointPropertiesType::medium_tag,
-    PointPropertiesType::property_tag, PointPropertiesType::simd::using_simd>
-impl_compute_frechet_derivatives(
-    const std::integral_constant<specfem::element::dimension_tag,
-                                 specfem::element::dimension_tag::dim2>,
-    const std::integral_constant<specfem::element::medium_tag,
-                                 specfem::element::medium_tag::poroelastic>,
-    const std::integral_constant<specfem::element::property_tag,
-                                 specfem::element::property_tag::isotropic>,
-    const PointPropertiesType &properties,
-    const AdjointPointVelocityType &adjoint_velocity,
-    const AdjointPointAccelerationType &adjoint_acceleration,
-    const BackwardPointDisplacementType &backward_displacement,
-    const PointFieldDerivativesType &adjoint_derivatives,
-    const PointFieldDerivativesType &backward_derivatives,
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim2 &&
+           Tags::medium_tag == specfem::element::medium_tag::poroelastic &&
+           Tags::property_tag == specfem::element::property_tag::isotropic)
+KOKKOS_FUNCTION specfem::point::kernels<Tags> compute_frechet_derivatives(
+    const specfem::point::properties<Tags> &properties,
+    const specfem::point::velocity<Tags> &adjoint_velocity,
+    const specfem::point::acceleration<Tags> &adjoint_acceleration,
+    const specfem::point::displacement<Tags> &backward_displacement,
+    const specfem::point::field_derivatives<Tags> &adjoint_derivatives,
+    const specfem::point::field_derivatives<Tags> &backward_derivatives,
     const type_real &dt) {
 
   /*

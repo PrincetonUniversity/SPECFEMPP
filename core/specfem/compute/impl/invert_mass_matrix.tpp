@@ -1,8 +1,8 @@
 #pragma once
 
 #include "specfem/assembly/assembly.hpp"
-#include "specfem/parallel_configuration.hpp"
 #include "specfem/execution.hpp"
+#include "specfem/parallel_configuration.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -20,18 +20,16 @@ void specfem::compute::impl::invert_mass_matrix(
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
   constexpr bool using_simd = false;
 #else
-  // TODO(Rohit : DIM3_SIMD) Enable simd execution for dim3 solver
-  constexpr bool using_simd = (dimension_tag == specfem::element::dimension_tag::dim2) ? true : false;
+  constexpr bool using_simd = true;
 #endif
 
   using simd = specfem::datatype::simd<type_real, using_simd>;
 
-  using PointMassType =
-      specfem::point::mass_inverse<specfem::tags::Tags<dimension_tag, medium_tag, using_simd>>;
+  using PointMassType = specfem::point::mass_inverse<
+      specfem::tags::Tags<dimension_tag, medium_tag, using_simd>>;
 
   using parallel_config = specfem::parallel_configuration::default_range_config<
-      simd,
-      Kokkos::DefaultExecutionSpace>;
+      simd, Kokkos::DefaultExecutionSpace>;
 
   using IndexType = specfem::point::assembly_index<using_simd>;
 
@@ -39,12 +37,12 @@ void specfem::compute::impl::invert_mass_matrix(
 
   specfem::execution::for_all(
       "specfem::compute::invert_mass_matrix", range,
-      KOKKOS_LAMBDA(const typename decltype(range)::base_index_type &iterator_index) {
+      KOKKOS_LAMBDA(
+          const typename decltype(range)::base_index_type &iterator_index) {
         const auto index = iterator_index.get_index();
         PointMassType mass;
         specfem::assembly::load_on_device(index, field, mass);
-        for (int icomp = 0; icomp < PointMassType::components;
-             ++icomp) {
+        for (int icomp = 0; icomp < PointMassType::components; ++icomp) {
           mass(icomp) = static_cast<type_real>(1.0) / mass(icomp);
         }
         specfem::assembly::store_on_device(index, field, mass);

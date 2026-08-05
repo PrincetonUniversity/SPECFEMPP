@@ -1,4 +1,3 @@
-
 #include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/setup.hpp"
@@ -49,10 +48,10 @@ std::string
 specfem::sources::force<specfem::element::dimension_tag::dim3>::print_details()
     const {
   std::ostringstream message;
-  message << "    Force Vector: \n"
-          << "      fx = " << type_real(this->fx) << "\n"
-          << "      fy = " << type_real(this->fy) << "\n"
-          << "      fz = " << type_real(this->fz) << "\n";
+  message << "(fx, fy, fz) = ("
+          << specfem::utilities::format_scientific(this->fx, 6) << ", "
+          << specfem::utilities::format_scientific(this->fy, 6) << ", "
+          << specfem::utilities::format_scientific(this->fz, 6) << ")";
   return message.str();
 }
 
@@ -71,12 +70,12 @@ bool specfem::sources::force<specfem::element::dimension_tag::dim3>::operator==(
     return false;
   }
 
-  const auto gcoord = this->get_global_coordinates();
-  const auto other_gcoord = other_source->get_global_coordinates();
+  // Compare input coordinates (identity depends solely on input, not mesh)
+  const auto *c1 = this->get_read_coordinates();
+  const auto *c2 = other_source->get_read_coordinates();
+  bool coords_equal = (c1 && c2) ? (*c1 == *c2) : (!c1 && !c2);
 
-  return specfem::utilities::is_close(gcoord.x, other_gcoord.x) &&
-         specfem::utilities::is_close(gcoord.y, other_gcoord.y) &&
-         specfem::utilities::is_close(gcoord.z, other_gcoord.z) &&
+  return coords_equal &&
          specfem::utilities::is_close(this->fx, other_source->fx) &&
          specfem::utilities::is_close(this->fy, other_source->fy) &&
          specfem::utilities::is_close(this->fz, other_source->fz) &&

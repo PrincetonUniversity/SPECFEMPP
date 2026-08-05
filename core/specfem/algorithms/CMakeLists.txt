@@ -11,6 +11,6 @@ target_link_libraries(
         Kokkos::kokkos
         jacobian
         point
-        assembly
+        specfem::mpi
         ${BOOST_LIBS}
 )

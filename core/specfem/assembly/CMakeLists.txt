@@ -10,12 +10,14 @@ target_link_libraries(
         $<$<BOOL:${SPECFEM_ENABLE_VTK}>:${VTK_LIBRARIES}>
         PRIVATE
         specfem::algorithms
+        specfem::coordinate_systems
         specfem::attenuation
         specfem::element
         specfem::element_coupling
         specfem::quadrature
         specfem::mesh
         specfem::mpi
+        specfem::program_abort
         source_class
         jacobian
         point

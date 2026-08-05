@@ -9,10 +9,10 @@
 specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
     const specfem::mesh::mesh<dimension_tag> &mesh,
     const specfem::quadrature::quadratures &quadratures,
-    std::vector<std::shared_ptr<specfem::sources::source<dimension_tag> > >
+    std::vector<std::shared_ptr<specfem::sources::source<dimension_tag>>>
         &sources,
     const std::vector<
-        std::shared_ptr<specfem::receivers::receiver<dimension_tag> > >
+        std::shared_ptr<specfem::receivers::receiver<dimension_tag>>>
         &receivers,
     const std::vector<specfem::enums::wavefield> &stypes, const type_real t0,
     const type_real dt, const int max_timesteps, const int max_sig_step,
@@ -58,12 +58,12 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
   this->kernels = { this->element_types };
 
   this->sources = {
-    sources, this->mesh, this->jacobian_matrix, this->element_types,
-    t0,      dt,         max_timesteps
+    sources, this->mesh,   mesh, this->jacobian_matrix, this->element_types, t0,
+    dt,      max_timesteps
   };
   this->receivers = {
-    max_sig_step, dt,         t0,        nsteps_between_samples, receivers,
-    stypes,       this->mesh, mesh.tags, this->element_types
+    max_sig_step, dt,         t0,   nsteps_between_samples, receivers,
+    stypes,       this->mesh, mesh, this->element_types
   };
   this->boundaries = { this->mesh.nspec,
                        this->mesh.element_grid.ngllz,
@@ -78,9 +78,18 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
   };
   this->fields = { this->mesh, this->element_types, simulation };
 
-  // if (allocate_boundary_values)
-  //   this->boundary_values = { max_timesteps, this->mesh, this->element_types,
-  //                             this->boundaries };
+  this->mpi_interfaces = { mesh.adjacency_graph,
+                           this->element_types,
+                           simulation,
+                           this->fields,
+                           this->mesh.h_mesh_to_compute,
+                           ngllz,
+                           nglly,
+                           ngllx };
+
+  if (allocate_boundary_values)
+    this->boundary_values = { max_timesteps, this->mesh, this->element_types,
+                              this->boundaries };
 
   // Currently done in the mesher!
   this->check_jacobian_matrix();
@@ -105,13 +114,12 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::print()
   SPECFEM_MPI_SAFECALL(
       MPI_Allreduce(MPI_IN_PLACE, &nspec, 1, MPI_INT, MPI_SUM, comm));
 
-  message << "Assembly information:\n"
-          << "------------------------------\n"
-          << "  Total number of spectral elements             : " << nspec
-          << "\n"
-          << "  Total number of quadrature points per element : "
+  message << "\nAssembly information:\n"
+          << "---------------------\n\n"
+          << "Total number of spectral elements             : " << nspec << "\n"
+          << "Total number of quadrature points per element : "
           << this->mesh.element_grid.ngllz << "\n"
-          << this->info.string() << "\n";
+          << this->info.string() << "\n\n";
 
   int total_elements = 0;
 
@@ -129,19 +137,19 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::print()
           // Adding the number of elements to the total
           total_elements += n_elements;
 
-          message << "   Total number of elements of type "
+          message << "  Total number of elements of type "
                   << specfem::element::to_string(medium_tag) << " : "
                   << n_elements << "\n";
         };
       });
 
   if (total_elements == nspec) {
-    message << "  All elements accounted for.\n";
+    message << "  All elements accounted for.\n\n";
   } else {
-    message << " NOT ALL ELEMENTS ACCOUNTED FOR\n";
-    message << "  Mesh elements:              " << nspec << "\n";
-    message << "  Assembly elements counted:  " << total_elements << "\n";
-    message << "  Total unaccounted elements: " << (nspec - total_elements)
+    message << "  NOT ALL ELEMENTS ACCOUNTED FOR:\n";
+    message << "   Mesh elements:              " << nspec << "\n";
+    message << "   Assembly elements counted:  " << total_elements << "\n";
+    message << "   Total unaccounted elements: " << (nspec - total_elements)
             << "\n";
     throw std::runtime_error(message.str());
   }

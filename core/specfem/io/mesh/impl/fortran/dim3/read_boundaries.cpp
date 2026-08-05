@@ -30,7 +30,7 @@
  * @note The characteristic length is commonly used in finite element methods
  *       for mesh quality assessment and numerical stability calculations.
  */
-type_real characteristic_length(
+type_real specfem::io::mesh::impl::fortran::dim3_impl::characteristic_length(
     const specfem::mesh::control_nodes<specfem::element::dimension_tag::dim3>
         &control_nodes,
     const int element_index) {
@@ -79,7 +79,8 @@ type_real characteristic_length(
  * @throws std::runtime_error If no face can be matched within acceptable
  * tolerance or if an invalid face type is encountered
  */
-specfem::mesh_entity::dim3::type find_face_from_nodes(
+specfem::mesh_entity::dim3::type
+specfem::io::mesh::impl::fortran::dim3_impl::find_face_from_nodes(
     const specfem::mesh::control_nodes<specfem::element::dimension_tag::dim3>
         &control_nodes,
     const int element_index, const std::vector<int> &face_nodes) {
@@ -88,9 +89,9 @@ specfem::mesh_entity::dim3::type find_face_from_nodes(
   const auto &control_node_index = control_nodes.control_node_index;
 
   // find coordinates of midpoint for each face
-  std::unordered_map<specfem::mesh_entity::dim3::type,
-                     specfem::point::global_coordinates<
-                         specfem::element::dimension_tag::dim3> >
+  std::unordered_map<
+      specfem::mesh_entity::dim3::type,
+      specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>>
       face_midpoints;
 
   auto corner_id_on_face =
@@ -180,95 +181,95 @@ specfem::io::mesh::impl::fortran::dim3::read_boundaries(
   int boundary_number;
   std::array<int, 6> nfaces_per_direction;
 
-  using BoundaryType =
-      specfem::mesh::boundaries<specfem::element::dimension_tag::dim3>;
+  // New databases write boundary-condition flags before the section headers.
+  // Legacy databases start directly with section 1; keep supporting them so
+  // checked-in fixtures and older decomposed meshes remain readable.
+  const auto boundary_start = stream.tellg();
+  bool top_free_surface = true;
+  bool bottom_free_surface = false;
+  bool has_boundary_flags = true;
+  specfem::io::fortran_read_line(stream, &top_free_surface,
+                                 &bottom_free_surface);
+  specfem::io::fortran_read_line(stream, &boundary_number,
+                                 &nfaces_per_direction[0]);
 
-  using face_direction = BoundaryType::FaceDirection;
+  if (boundary_number != 1) {
+    has_boundary_flags = false;
+    top_free_surface = true;
+    bottom_free_surface = false;
+    stream.clear();
+    stream.seekg(boundary_start);
+    specfem::io::fortran_read_line(stream, &boundary_number,
+                                   &nfaces_per_direction[0]);
+  }
 
-  specfem::io::fortran_read_line(
-      stream, &boundary_number,
-      &nfaces_per_direction[static_cast<int>(face_direction::X_MIN) - 1]);
-  if (boundary_number != static_cast<int>(face_direction::X_MIN)) {
+  if (boundary_number != 1)
     throw std::runtime_error(
         "Invalid database format: expected boundary number 1");
+
+  // Section indices: 1=X_MIN, 2=X_MAX, 3=Y_MIN, 4=Y_MAX, 5=Z_MIN, 6=Z_MAX
+  for (int dir = 1; dir < 6; ++dir) {
+    specfem::io::fortran_read_line(stream, &boundary_number,
+                                   &nfaces_per_direction[dir]);
+    if (boundary_number != dir + 1)
+      throw std::runtime_error(
+          "Invalid database format: expected boundary number " +
+          std::to_string(dir + 1));
   }
-
-  specfem::io::fortran_read_line(
-      stream, &boundary_number,
-      &nfaces_per_direction[static_cast<int>(face_direction::X_MAX) - 1]);
-  if (boundary_number != static_cast<int>(face_direction::X_MAX)) {
-    throw std::runtime_error(
-        "Invalid database format: expected boundary number 2");
-  }
-
-  specfem::io::fortran_read_line(
-      stream, &boundary_number,
-      &nfaces_per_direction[static_cast<int>(face_direction::Y_MIN) - 1]);
-  if (boundary_number != static_cast<int>(face_direction::Y_MIN)) {
-    throw std::runtime_error(
-        "Invalid database format: expected boundary number 3");
-  }
-
-  specfem::io::fortran_read_line(
-      stream, &boundary_number,
-      &nfaces_per_direction[static_cast<int>(face_direction::Y_MAX) - 1]);
-  if (boundary_number != static_cast<int>(face_direction::Y_MAX)) {
-    throw std::runtime_error(
-        "Invalid database format: expected boundary number 4");
-  }
-
-  specfem::io::fortran_read_line(
-      stream, &boundary_number,
-      &nfaces_per_direction[static_cast<int>(face_direction::Z_MIN) - 1]);
-  if (boundary_number != static_cast<int>(face_direction::Z_MIN)) {
-    throw std::runtime_error(
-        "Invalid database format: expected boundary number 5");
-  }
-
-  specfem::io::fortran_read_line(
-      stream, &boundary_number,
-      &nfaces_per_direction[static_cast<int>(face_direction::Z_MAX) - 1]);
-  if (boundary_number != static_cast<int>(face_direction::Z_MAX)) {
-    throw std::runtime_error(
-        "Invalid database format: expected boundary number 6");
-  }
-
-  const int total_nfaces = std::accumulate(nfaces_per_direction.begin(),
-                                           nfaces_per_direction.end(), 0);
-
-  BoundaryType boundaries(total_nfaces, nspec);
 
   const int nnodes_on_face = (control_nodes.ngnod == 8) ? 4 : 9;
 
-  int index = 0;
+  // Accumulate element indices and face types per category
+  std::vector<int> abs_elements;
+  std::vector<specfem::mesh_entity::dim3::type> abs_faces;
+  std::vector<int> fs_elements;
+  std::vector<specfem::mesh_entity::dim3::type> fs_faces;
+
   for (int dir = 0; dir < 6; ++dir) {
     const int num_faces = nfaces_per_direction[dir];
-    const face_direction face_dir = static_cast<face_direction>(dir + 1);
+    const bool is_free_surface = has_boundary_flags
+                                     ? ((dir == 4 && bottom_free_surface) ||
+                                        (dir == 5 && top_free_surface))
+                                     : (dir == 5);
+
     if (num_faces > 0) {
       for (int iface = 0; iface < num_faces; ++iface) {
         int element_index;
         std::vector<int> face_nodes(nnodes_on_face);
         specfem::io::fortran_read_line(stream, &element_index, &face_nodes);
-        // Decrement to convert to zero-based indexing
         for (auto &node : face_nodes) {
           node -= 1;
         }
         const auto face =
-            find_face_from_nodes(control_nodes, element_index - 1, face_nodes);
-        boundaries.index_mapping(index) = element_index - 1;
-        boundaries.face_type(index) = face;
-        boundaries.face_direction(index) = face_dir;
-        ++index;
+            specfem::io::mesh::impl::fortran::dim3_impl::find_face_from_nodes(
+                control_nodes, element_index - 1, face_nodes);
+        if (is_free_surface) {
+          fs_elements.push_back(element_index - 1);
+          fs_faces.push_back(face);
+        } else {
+          abs_elements.push_back(element_index - 1);
+          abs_faces.push_back(face);
+        }
       }
     }
   }
 
-  if (index != total_nfaces) {
-    throw std::runtime_error("Error reading absorbing boundaries. Expected " +
-                             std::to_string(total_nfaces) +
-                             " faces, but read " + std::to_string(index) +
-                             " faces.");
+  // Build absorbing_boundary sub-struct
+  specfem::mesh::absorbing_boundary<specfem::element::dimension_tag::dim3>
+      absorbing(static_cast<int>(abs_elements.size()));
+  for (int i = 0; i < static_cast<int>(abs_elements.size()); ++i) {
+    absorbing.index_mapping(i) = abs_elements[i];
+    absorbing.type(i) = abs_faces[i];
   }
 
-  return boundaries;
+  // Build acoustic_free_surface sub-struct (stores all Z_MAX faces; tags will
+  // further filter by medium type)
+  specfem::mesh::acoustic_free_surface<specfem::element::dimension_tag::dim3>
+      free_surf(static_cast<int>(fs_elements.size()));
+  for (int i = 0; i < static_cast<int>(fs_elements.size()); ++i) {
+    free_surf.index_mapping(i) = fs_elements[i];
+    free_surf.type(i) = fs_faces[i];
+  }
+
+  return { absorbing, free_surf };
 }

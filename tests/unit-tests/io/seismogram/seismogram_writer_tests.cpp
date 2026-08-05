@@ -1,4 +1,3 @@
-#include "../../test_macros.hpp"
 #include "specfem/element/tags.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/enums/wavefield.hpp"
@@ -9,6 +8,7 @@
 #include "specfem/program/context.hpp"
 #include "specfem/setup.hpp"
 #include "specfem/utilities.hpp"
+#include "test_macros.hpp"
 #include <array>
 #include <cstring>
 #include <fstream>
@@ -297,4 +297,32 @@ TEST_F(SeismogramWriterReferenceTest, SacMatchesReference) {
           << ref_files[comp];
     }
   }
+}
+
+TEST_F(SeismogramWriterReferenceTest, Dim3ChannelOrientationFollowsMesh) {
+  const double dt = 0.05; // 20 Hz -> band code "B"
+
+  const MockStationInfo station{
+    "SY", "STA01", 0, { specfem::enums::wavefield::displacement }
+  };
+
+  // UTM-projected mesh -> geographic E/N/Z channels (X->E, Y->N, Z->Z).
+  specfem::io::impl::ChannelGenerator utm_gen(dt, 1, /*utm_mesh=*/true);
+  const auto utm_files =
+      utm_gen.get_station_filenames<specfem::element::dimension_tag::dim3>(
+          station, specfem::enums::wavefield::displacement);
+  const std::vector<std::string> expected_utm = { "SY.STA01.S3.BXE.semd",
+                                                  "SY.STA01.S3.BXN.semd",
+                                                  "SY.STA01.S3.BXZ.semd" };
+  EXPECT_EQ(utm_files, expected_utm);
+
+  // Cartesian mesh -> X/Y/Z channels.
+  specfem::io::impl::ChannelGenerator cart_gen(dt, 1, /*utm_mesh=*/false);
+  const auto cart_files =
+      cart_gen.get_station_filenames<specfem::element::dimension_tag::dim3>(
+          station, specfem::enums::wavefield::displacement);
+  const std::vector<std::string> expected_cart = { "SY.STA01.S3.BXX.semd",
+                                                   "SY.STA01.S3.BXY.semd",
+                                                   "SY.STA01.S3.BXZ.semd" };
+  EXPECT_EQ(cart_files, expected_cart);
 }

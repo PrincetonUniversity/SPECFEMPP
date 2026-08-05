@@ -1,0 +1,10 @@
+build/
+OUTPUT_FILES/
+MESH/
+DATABASES_MPI/
+halfspace.msh
+Par_file
+specfem_config.yaml
+export_mesh.py
+Snakefile
+seismogram_plot.png

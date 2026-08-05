@@ -20,10 +20,12 @@ option(SPECFEM_ENABLE_MPI "MPI enabled" OFF)
 option(SPECFEM_BUILD_TESTS "Tests included" OFF)
 option(SPECFEM_ENABLE_SIMD "Enable SIMD" OFF)
 option(SPECFEM_ENABLE_PROFILING "Enable profiling" OFF)
+option(SPECFEM_ENABLE_COVERAGE "Instrument C++ for LLVM source-based coverage (Clang only)" OFF)
 option(SPECFEM_BINDING_PYTHON "Enable Python binding" OFF)
 option(SPECFEM_INSTALL "Creates clean executable directory. Location Controlled by CMAKE_INSTALL_PREFIX" ON)
 option(SPECFEM_ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
 option(SPECFEM_ENABLE_METIS "Enable METIS partitioning support in xdecompose_mesh" OFF)
+option(SPECFEM_ENABLE_TRILINOS "Enable Trilinos implicit solvers (Tpetra/Belos/Ifpack2/MueLu/Amesos2)" OFF)
 option(SPECFEM_BUILD_BENCHMARKS "Benchmarks included" ON)
 option(SPECFEM_NIGHTLY_BENCHMARKS "Include nightly benchmarks" OFF)
 option(SPECFEM_ENABLE_UNITY_BUILD "Enable unity build to speed up compilation" ON)
@@ -173,6 +175,10 @@ include("${CMAKE_SOURCE_DIR}/cmake/vtk.cmake")
 # Find or install METIS graph partitioner (used by xdecompose_mesh)
 include("${CMAKE_SOURCE_DIR}/cmake/metis.cmake")
 
+# Find Trilinos (implicit solvers). MUST be after cmake/kokkos.cmake so Kokkos is
+# resolved first and Trilinos validates against the same Kokkos.
+include("${CMAKE_SOURCE_DIR}/cmake/trilinos.cmake")
+
 if (SPECFEM_ENABLE_SIMD)
     message(STATUS "Enabling SIMD")
     add_compile_definitions(SPECFEM_ENABLE_SIMD)
@@ -233,31 +239,48 @@ add_subdirectory(fortran/decompose_mesh)
 set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
 # ===================================
 
+# LLVM source-based code coverage instrumentation.
+# Appended here -- AFTER the Fortran subdirectories above -- on purpose: none of
+# the Fortran tools or their C++ glue (e.g. fortran/decompose_mesh/wrap_patoh.cpp)
+# may be instrumented, because those executables link with gfortran, which
+# neither understands -fprofile-instr-generate nor provides the LLVM profile
+# runtime (an instrumented object would leave __llvm_profile_runtime undefined).
+# core/ and the unit tests below still receive full instrumentation.
+# Driven by scripts/coverage.smk.
+if(SPECFEM_ENABLE_COVERAGE)
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        message(FATAL_ERROR
+            "SPECFEM_ENABLE_COVERAGE requires Clang or AppleClang "
+            "(CMAKE_CXX_COMPILER_ID is '${CMAKE_CXX_COMPILER_ID}').")
+    endif()
+    message(STATUS "Coverage instrumentation enabled (LLVM source-based)")
+    # Keep -g for symbols but let CMAKE_BUILD_TYPE choose the optimization level:
+    # the coverage preset uses RelWithDebInfo (-O2) so the heavy integration tests
+    # (displacement_tests_2d/3d) run at a tolerable speed. Forcing -O0 here makes
+    # them glacial. Coverage stays reliable under optimization (minor region-count
+    # imprecision only).
+    string(APPEND CMAKE_CXX_FLAGS
+        " -fprofile-instr-generate -fcoverage-mapping -g")
+    # Re-enable assert()/NDEBUG-guarded code so it is compiled and shows up in
+    # coverage. RelWithDebInfo (and Release) define NDEBUG via
+    # CMAKE_CXX_FLAGS_<CONFIG>, which CMake places after CMAKE_CXX_FLAGS; using
+    # add_compile_options() puts -UNDEBUG after that, so it wins. Scoped to C++.
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-UNDEBUG>)
+    # Belt-and-suspenders: scope the profiling-runtime link flag to C++-linked
+    # targets (CMake >= 3.18) so any Fortran-linked target added later still
+    # links cleanly even if it pulls in an instrumented C++ object.
+    add_link_options($<$<LINK_LANGUAGE:CXX>:-fprofile-instr-generate>)
+    # Coverage needs per-source-file attribution, so force unity builds off.
+    set(CMAKE_UNITY_BUILD OFF)
+endif()
+
 # Add module subdirectories
 add_subdirectory(core)
-
-# specfem2d executable for backward compatibility
-add_executable(specfem2d src/specfem2d.cpp)
-target_link_libraries(specfem2d
-    PRIVATE
-        specfem::core
-        yaml-cpp::yaml-cpp
-        ${BOOST_LIBS}
-)
-
-# specfem3d executable for backward compatibility
-add_executable(specfem3d src/specfem3d.cpp)
-target_link_libraries(specfem3d
-    PRIVATE
-        specfem::core
-        yaml-cpp::yaml-cpp
-        ${BOOST_LIBS}
-)
 
 # Include tests
 if (SPECFEM_BUILD_TESTS)
         message(STATUS "Including tests.")
-        add_subdirectory(tests/unit-tests)
+        add_subdirectory(tests)
 endif()
 
 if (SPECFEM_BUILD_BENCHMARKS)
@@ -324,7 +347,7 @@ if (SPECFEM_INSTALL AND NOT SPECFEM_USE_SKBUILD)
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Organizing specfem++ executables into: ${CMAKE_INSTALL_PREFIX}"
         # Make this run after your main targets
-        DEPENDS specfem specfem2d specfem3d xmeshfem2D xmeshfem3D xadj_seismogram xdecompose_mesh # list all your targets here
+        DEPENDS specfem xmeshfem2D xmeshfem3D xadj_seismogram xdecompose_mesh # list all your targets here
     )
 
     # Add the prefix directory to the clean target

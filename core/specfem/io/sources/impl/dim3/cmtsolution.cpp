@@ -1,3 +1,5 @@
+#include "specfem/coordinate_systems/cartesian.hpp"
+#include "specfem/coordinate_systems/geographic.hpp"
 #include "specfem/datetime.hpp"
 #include "specfem/io/sources/impl/reader.hpp"
 #include "specfem/io/sources/impl/solution_format_helpers.hpp"
@@ -63,16 +65,34 @@ specfem::io::sources_impl::read<specfem::element::dimension_tag::dim3,
     auto tshift = specfem::io::sources_impl::get_real(fields, "time shift");
     auto hdur = specfem::io::sources_impl::get_real(fields, "half duration");
 
-    // Coordinates (x, y required; z or depth required)
-    auto x = specfem::io::sources_impl::get_real(fields, "x");
-    auto y = specfem::io::sources_impl::get_real(fields, "y");
-
-    // This is a problem! Depth is defined as positive downward from topography.
-    // Unless we pass mesh to read_sources, we cannot determine the topography.
-    auto z =
-        fields.contains("z")
-            ? specfem::io::sources_impl::get_real(fields, "z")
-            : -specfem::io::sources_impl::get_real(fields, "depth") * 1000.0;
+    // Coordinates are resolved to global (x,y,z) at assembly time. Depth is
+    // in km here.
+    std::unique_ptr<specfem::coordinate_systems::coordinates<dim3>> coords;
+    if (fields.contains("latitude") && fields.contains("longitude")) {
+      double lon = specfem::io::sources_impl::get_double(fields, "longitude");
+      double lat = specfem::io::sources_impl::get_double(fields, "latitude");
+      double depth_m =
+          specfem::io::sources_impl::get_double(fields, "depth") * 1000.0;
+      coords =
+          std::make_unique<specfem::coordinate_systems::geographic_coordinates>(
+              lon, lat, depth_m);
+    } else if (fields.contains("z")) {
+      double x = specfem::io::sources_impl::get_double(fields, "x");
+      double y = specfem::io::sources_impl::get_double(fields, "y");
+      coords = std::make_unique<
+          specfem::coordinate_systems::cartesian_coordinates<dim3>>(
+          x, y, specfem::io::sources_impl::get_double(fields, "z"),
+          std::array<double, 3>{ 0.0, 0.0, 0.0 });
+    } else {
+      // nullopt origin: depth-based, resolved against topography at assembly.
+      double x = specfem::io::sources_impl::get_double(fields, "x");
+      double y = specfem::io::sources_impl::get_double(fields, "y");
+      double depth_m =
+          specfem::io::sources_impl::get_double(fields, "depth") * 1000.0;
+      coords = std::make_unique<
+          specfem::coordinate_systems::cartesian_coordinates<dim3>>(
+          x, y, -depth_m, std::nullopt);
+    }
 
     // Moment tensor — parse as DyneCentimeter, detect Cartesian vs spherical
     using namespace specfem::units::unit_symbols;
@@ -111,13 +131,12 @@ specfem::io::sources_impl::read<specfem::element::dimension_tag::dim3,
     };
 
     // Construct STF and source
-    auto stf_ptr =
-        std::make_unique<specfem::source_time_functions::GaussianHdur>(
-            nsteps, dt, hdur, tshift, 1.0, false);
+    auto stf_ptr = std::make_unique<specfem::source_time_functions::Heaviside>(
+        nsteps, dt, hdur, tshift, 1.0, false);
 
     auto src = std::make_shared<specfem::sources::moment_tensor<dim3>>(
-        x, y, z, to_Nm(Mxx), to_Nm(Myy), to_Nm(Mzz), to_Nm(Mxy), to_Nm(Mxz),
-        to_Nm(Myz), std::move(stf_ptr), wavefield_type);
+        std::move(coords), to_Nm(Mxx), to_Nm(Myy), to_Nm(Mzz), to_Nm(Mxy),
+        to_Nm(Mxz), to_Nm(Myz), std::move(stf_ptr), wavefield_type);
     src->set_starttime(starttime);
     sources.push_back(std::move(src));
   }

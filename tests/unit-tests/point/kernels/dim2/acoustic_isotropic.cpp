@@ -37,7 +37,7 @@ TYPED_TEST(PointKernelsTest, AcousticIsotropic2D) {
                    static_cast<type_real>(i) * static_cast<type_real>(0.1);
       kappa_arr[i] = static_cast<type_real>(3.0) +
                      static_cast<type_real>(i) * static_cast<type_real>(0.1);
-      expected_rhop_arr[i] = static_cast<type_real>(rho_arr[i]) *
+      expected_rhop_arr[i] = static_cast<type_real>(rho_arr[i]) +
                              static_cast<type_real>(kappa_arr[i]);
       expected_alpha_arr[i] =
           static_cast<type_real>(2.0) * static_cast<type_real>(kappa_arr[i]);
@@ -54,16 +54,15 @@ TYPED_TEST(PointKernelsTest, AcousticIsotropic2D) {
     // For scalar case, we need direct assignment
     rho = static_cast<type_real>(2.5);
     kappa = static_cast<type_real>(3.0);
-    expected_rhop = rho * kappa;
+    expected_rhop = rho + kappa;
     expected_alpha = static_cast<type_real>(2.0) * kappa;
   }
 
   // Create the kernels object
-  using PointKernelType =
-      specfem::point::kernels<specfem::element::dimension_tag::dim2,
-                              specfem::element::medium_tag::acoustic,
-                              specfem::element::property_tag::isotropic,
-                              using_simd>;
+  using PointKernelType = specfem::point::kernels<specfem::tags::Tags<
+      specfem::element::dimension_tag::dim2,
+      specfem::element::medium_tag::acoustic,
+      specfem::element::property_tag::isotropic, using_simd>>;
   PointKernelType kernels(rho, kappa);
   PointKernelType kernels2;
 

@@ -152,7 +152,8 @@ public:
   std::vector<specfem::element::medium_tag>
   get_supported_media() const override;
 
-public:
+  std::string print_details() const override;
+
 private:
   type_real angle;                                ///< Angle of force source
   specfem::simulation::field_type wavefield_type; ///< Type of wavefield on

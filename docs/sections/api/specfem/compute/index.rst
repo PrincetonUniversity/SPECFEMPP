@@ -12,11 +12,6 @@
 
 .. doxygenfunction:: specfem::compute::initialize_mass_matrix
 
-``specfem::compute::update_wavefields``
----------------------------------------
-
-.. doxygenfunction:: specfem::compute::update_wavefields
-
 ``specfem::compute::compute_seismograms``
 -----------------------------------------
 

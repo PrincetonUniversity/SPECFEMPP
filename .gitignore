@@ -1,5 +1,8 @@
 CMakeUserPresets.json
 .vscode/
+.zed/
+.cursor/
+.idea/
 .DS_Store
 build*/*
 build

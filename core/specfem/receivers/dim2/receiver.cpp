@@ -7,27 +7,31 @@ std::string
 specfem::receivers::receiver<specfem::element::dimension_tag::dim2>::print()
     const {
   std::ostringstream message;
-  message << " - Receiver:\n"
-          << "      Station Name = " << this->station_name << "\n"
-          << "      Network Name = " << this->network_name << "\n"
-          << "      Receiver Location: \n"
-          << "        x = " << type_real(this->global_coordinates.x) << "\n"
-          << "        z = " << type_real(this->global_coordinates.z) << "\n";
+  message << "- " << this->network_name << "." << this->station_name;
+  if (this->read_coordinates_) {
+    message << ", Coordinates: " << this->read_coordinates_->print();
+  }
+  if (this->resolution_.has_value())
+    message << ", Resolved: " << this->resolution_->print();
+  if (this->partition_index_ >= 0)
+    message << ", Location error: "
+            << specfem::utilities::format_distance(this->location_error_);
 #ifdef SPECFEM_ENABLE_MPI
   if (this->partition_index_ >= 0)
-    message << "      MPI Rank: " << this->partition_index_ << "\n";
+    message << ", MPI Rank: " << this->partition_index_;
 #endif
-
+  message << "\n";
   return message.str();
 }
 
 bool specfem::receivers::receiver<specfem::element::dimension_tag::dim2>::
 operator==(const receiver &other) const {
-  return (this->network_name == other.network_name) &&
+  // Compare input coordinates when available
+  const auto *c1 = this->get_read_coordinates();
+  const auto *c2 = other.get_read_coordinates();
+  bool coords_equal = (c1 && c2) ? (*c1 == *c2) : (!c1 && !c2);
+
+  return coords_equal && (this->network_name == other.network_name) &&
          (this->station_name == other.station_name) &&
-         specfem::utilities::is_close(this->global_coordinates.x,
-                                      other.global_coordinates.x) &&
-         specfem::utilities::is_close(this->global_coordinates.z,
-                                      other.global_coordinates.z) &&
          specfem::utilities::is_close(this->angle, other.angle);
 }

@@ -1,13 +1,10 @@
-
-
 #include "specfem/enums.hpp"
 #include "specfem/setup.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
-// #include "utilities.cpp"
+#include "specfem/utilities.hpp"
 #include "yaml-cpp/yaml.h"
 #include <cmath>
-#include <stdexcept>
 
 std::vector<specfem::element::medium_tag> specfem::sources::moment_tensor<
     specfem::element::dimension_tag::dim3>::get_supported_media() const {
@@ -49,13 +46,13 @@ specfem::sources::moment_tensor<
 std::string specfem::sources::moment_tensor<
     specfem::element::dimension_tag::dim3>::print_details() const {
   std::ostringstream message;
-  message << "    Moment Tensor: \n"
-          << "      Mxx = " << this->Mxx << "\n"
-          << "      Myy = " << this->Myy << "\n"
-          << "      Mzz = " << this->Mzz << "\n"
-          << "      Mxy = " << this->Mxy << "\n"
-          << "      Mxz = " << this->Mxz << "\n"
-          << "      Myz = " << this->Myz << "\n";
+  message << "(Mxx, Myy, Mzz, Mxy, Mxz, Myz) = ("
+          << specfem::utilities::format_scientific(this->Mxx, 6) << ", "
+          << specfem::utilities::format_scientific(this->Myy, 6) << ", "
+          << specfem::utilities::format_scientific(this->Mzz, 6) << ", "
+          << specfem::utilities::format_scientific(this->Mxy, 6) << ", "
+          << specfem::utilities::format_scientific(this->Mxz, 6) << ", "
+          << specfem::utilities::format_scientific(this->Myz, 6) << ")";
   return message.str();
 }
 
@@ -73,17 +70,18 @@ operator==(const specfem::sources::source<specfem::element::dimension_tag::dim3>
     return false;
   }
 
-  const auto gcoord = this->get_global_coordinates();
-  const auto other_gcoord = other_source->get_global_coordinates();
+  // Compare input coordinates (identity depends solely on input, not mesh)
+  const auto *c1 = this->get_read_coordinates();
+  const auto *c2 = other_source->get_read_coordinates();
+  bool coords_equal = (c1 && c2) ? (*c1 == *c2) : (!c1 && !c2);
 
-  bool internal = specfem::utilities::is_close(this->Mxx, other_source->Mxx) &&
+  bool internal = coords_equal &&
+                  specfem::utilities::is_close(this->Mxx, other_source->Mxx) &&
                   specfem::utilities::is_close(this->Myy, other_source->Myy) &&
                   specfem::utilities::is_close(this->Mzz, other_source->Mzz) &&
                   specfem::utilities::is_close(this->Mxy, other_source->Mxy) &&
                   specfem::utilities::is_close(this->Mxz, other_source->Mxz) &&
-                  specfem::utilities::is_close(this->Myz, other_source->Myz) &&
-                  specfem::utilities::is_close(gcoord.x, other_gcoord.x) &&
-                  specfem::utilities::is_close(gcoord.z, other_gcoord.z);
+                  specfem::utilities::is_close(this->Myz, other_source->Myz);
 
   if (!internal) {
     std::cout << "3-D moment tensor source not equal" << std::endl;

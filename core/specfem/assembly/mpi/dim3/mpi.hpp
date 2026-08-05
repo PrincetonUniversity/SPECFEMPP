@@ -2,6 +2,8 @@
 #pragma once
 
 #include "specfem/assembly/fields.hpp"
+#include "specfem/assembly/mesh.hpp"
+#include "specfem/data_access/data_class.hpp"
 #include "specfem/element.hpp"
 #include "specfem/macros/tag_dispatch.hpp"
 #include "specfem/mesh.hpp"
@@ -20,7 +22,8 @@ namespace specfem::assembly {
 template <specfem::element::dimension_tag DimensionTag> class mpi;
 template <specfem::simulation::field_type FieldType,
           specfem::element::dimension_tag DimensionTag,
-          specfem::element::medium_tag MediumTag>
+          specfem::element::medium_tag MediumTag,
+          specfem::data_access::DataClassType DataClass>
 class mpi_buffer;
 
 namespace mpi_impl {
@@ -85,8 +88,8 @@ public:
   ElementIndexViewType::host_mirror_type h_neighbor_element; /**< Host mirror
                                                        for neighbor_element */
 
-  MediumTagViewType connection_medium_tag; /**< Medium tag of each face in the
-                                              local element (nfaces) */
+  MediumTagViewType connection_medium_tag; /**< Medium tag of the local element
+                                              for each interface (n) */
   MediumTagViewType::host_mirror_type h_connection_medium_tag; /**< Host mirror
   for connection_medium_tag */
 
@@ -263,7 +266,7 @@ public:
   unsigned int nedges;        /**< Number of edges in communication group */
   unsigned int ncorners;      /**< Number of corners in communication group */
   unsigned int ngll;          /**< GLL points per face dimension */
-  unsigned int nglob = 0;     /**< Number of unique GLL points received from
+  unsigned int nglob;         /**< Number of unique GLL points received from
                                    the neighbor MPI surface */
 
   using IndexMappingView = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
@@ -273,6 +276,7 @@ public:
 
   using OrientationHostView =
       Kokkos::View<specfem::mesh_entity::dim3::type *, Kokkos::HostSpace>;
+  using ElementHostView = Kokkos::View<int *, Kokkos::HostSpace>;
 
   OrientationHostView h_face_orientations; /**< Filtered local face orientations
                                               (medium-tag filtered) */
@@ -281,8 +285,16 @@ public:
   OrientationHostView h_corner_orientations; /**< Filtered local corner
                                                 orientations (medium-tag
                                                 filtered) */
+  ElementHostView h_face_elements;           /**< Filtered local face elements
+                                                in compute ordering */
+  ElementHostView h_edge_elements;           /**< Filtered local edge elements
+                                                in compute ordering */
+  ElementHostView h_corner_elements;         /**< Filtered local corner elements
+                                                in compute ordering */
 
-  unpacker() = default;
+  unpacker()
+      : my_rank(0), neighbor_rank(0), nfaces(0), nedges(0), ncorners(0),
+        ngll(0), nglob(0) {}
 
   unpacker(const corner_communication_group &corner_group,
            const edge_communication_group &edge_group,
@@ -302,7 +314,7 @@ public:
              Kokkos::View<int **, Kokkos::HostSpace>,
              Kokkos::View<int *, Kokkos::HostSpace>,
              Kokkos::View<int *, Kokkos::HostSpace>,
-             Kokkos::View<int *, Kokkos::HostSpace> >
+             Kokkos::View<int *, Kokkos::HostSpace>>
   receive_unpacking_buffers();
 
   /**
@@ -324,7 +336,8 @@ public:
       const Kokkos::View<specfem::mesh_entity::dim3::type *, Kokkos::HostSpace>
           my_corner_orientations,
       const specfem::mesh_entity::element<dimension_tag> &element,
-      const specfem::assembly::fields<dimension_tag> &fields);
+      const specfem::assembly::fields<dimension_tag> &fields,
+      const Kokkos::View<const int *, Kokkos::HostSpace> &h_mesh_to_compute);
 };
 
 template <specfem::simulation::field_type FieldType,
@@ -352,7 +365,7 @@ public:
                  Kokkos::View<int **, Kokkos::HostSpace>,
                  Kokkos::View<int *, Kokkos::HostSpace>,
                  Kokkos::View<int *, Kokkos::HostSpace>,
-                 Kokkos::View<int *, Kokkos::HostSpace> >;
+                 Kokkos::View<int *, Kokkos::HostSpace>>;
 
   /**
    * @brief Phase 1: initialises ranks, constructs the unpacker, and posts all
@@ -377,6 +390,7 @@ public:
       const face_communication_group &face_group,
       const specfem::mesh_entity::element<dimension_tag> &element,
       const specfem::assembly::fields<dimension_tag> &fields,
+      const Kokkos::View<const int *, Kokkos::HostSpace> &h_mesh_to_compute,
       PendingReceiveState pending);
 };
 
@@ -393,10 +407,12 @@ template <> class mpi<specfem::element::dimension_tag::dim3> {
 public:
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
 
+  /// Media that participate in 3D cross-rank MPI exchange.
+  static constexpr auto media = MEDIUM_SET(elastic, acoustic);
+
   /// Medium combinations for 3D MPI communication patterns
   static constexpr auto medium_combinations =
-      specfem::tag_dispatch::dimension_set<dimension_tag>{} *
-      MEDIUM_SET(elastic, acoustic);
+      specfem::tag_dispatch::dimension_set<dimension_tag>{} * media;
 
   /// Per-medium map from neighbor rank to communication pattern
   template <typename TagsType>
@@ -404,21 +420,21 @@ public:
       std::unordered_map<unsigned int,
                          mpi_impl::communication_pattern<
                              specfem::simulation::field_type::forward,
-                             TagsType::dimension_tag, TagsType::medium_tag> >;
+                             TagsType::dimension_tag, TagsType::medium_tag>>;
 
   template <typename TagsType>
   using BackwardCommunicationPatternMap =
       std::unordered_map<unsigned int,
                          mpi_impl::communication_pattern<
                              specfem::simulation::field_type::backward,
-                             TagsType::dimension_tag, TagsType::medium_tag> >;
+                             TagsType::dimension_tag, TagsType::medium_tag>>;
 
   template <typename TagsType>
   using AdjointCommunicationPatternMap =
       std::unordered_map<unsigned int,
                          mpi_impl::communication_pattern<
                              specfem::simulation::field_type::adjoint,
-                             TagsType::dimension_tag, TagsType::medium_tag> >;
+                             TagsType::dimension_tag, TagsType::medium_tag>>;
 
   specfem::simulation::type simulation; ///< Simulation mode (forward, combined,
                                         ///< etc.)
@@ -448,28 +464,35 @@ public:
    *                         communication maps are instantiated
    * @param fields           Assembly fields (any field type; iglob is
    *                         field-type-independent)
+   * @param h_mesh_to_compute  Host map from mesh-order element indices to
+   *                           compute-order element indices
    * @param ngllz, nglly, ngllx  GLL points per element dimension
    */
   mpi(const specfem::mesh::adjacency_graph<dimension_tag> &adjacency_graph,
       const specfem::assembly::element_types<dimension_tag> &element_types,
       const specfem::simulation::type simulation,
-      const specfem::assembly::fields<dimension_tag> &fields, const int ngllz,
-      const int nglly, const int ngllx);
+      const specfem::assembly::fields<dimension_tag> &fields,
+      const Kokkos::View<const int *, Kokkos::HostSpace> &h_mesh_to_compute,
+      const int ngllz, const int nglly, const int ngllx);
 
   template <specfem::simulation::field_type FieldType,
-            specfem::element::medium_tag MediumTag>
-  mpi_buffer<FieldType, dimension_tag, MediumTag> create_mpi_buffer() const;
+            specfem::element::medium_tag MediumTag,
+            specfem::data_access::DataClassType DataClass>
+  mpi_buffer<FieldType, dimension_tag, MediumTag, DataClass>
+  create_mpi_buffer() const;
 };
 
 namespace mpi_impl {
 template <specfem::simulation::field_type FieldType,
           specfem::element::dimension_tag DimensionTag,
-          specfem::element::medium_tag MediumTag>
+          specfem::element::medium_tag MediumTag,
+          specfem::data_access::DataClassType DataClass>
 struct mpi_buffer {
 public:
   constexpr static auto field_type = FieldType;       ///< Simulation field type
   constexpr static auto dimension_tag = DimensionTag; ///< Dimension tag
   constexpr static auto medium_tag = MediumTag;
+  constexpr static auto data_class = DataClass; ///< Data class type
   constexpr static unsigned int components =
       specfem::element::attributes<DimensionTag, MediumTag>::components;
 
@@ -531,7 +554,8 @@ public:
 
 template <specfem::simulation::field_type FieldType,
           specfem::element::dimension_tag DimensionTag,
-          specfem::element::medium_tag MediumTag>
+          specfem::element::medium_tag MediumTag,
+          specfem::data_access::DataClassType DataClass>
 class mpi_buffer {
 
 private:
@@ -543,10 +567,11 @@ public:
   constexpr static auto field_type = FieldType;
   constexpr static auto dimension_tag = DimensionTag;
   constexpr static auto medium_tag = MediumTag;
+  constexpr static auto data_class = DataClass;
 
   using BufferMap = std::unordered_map<
       unsigned int,
-      mpi_impl::mpi_buffer<field_type, dimension_tag, medium_tag> >;
+      mpi_impl::mpi_buffer<field_type, dimension_tag, medium_tag, DataClass>>;
 
   BufferMap buffers;
 
@@ -577,8 +602,8 @@ public:
     for (const auto &[neighbor_rank, comm_pattern] : patterns) {
       buffers.emplace(
           neighbor_rank,
-          mpi_impl::mpi_buffer<field_type, dimension_tag, medium_tag>(
-              comm_pattern));
+          mpi_impl::mpi_buffer<field_type, dimension_tag, medium_tag,
+                               DataClass>(comm_pattern));
     }
 
     this->max_connections_per_process = buffers.size();

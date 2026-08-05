@@ -1,7 +1,9 @@
 #pragma once
 
 #include "locate_point/locate_point_impl.hpp"
+#include "specfem/algorithms/inside_outside.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/mesh.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/point.hpp"
 #include "specfem/setup.hpp"
@@ -15,24 +17,21 @@
 namespace specfem {
 namespace algorithms {
 
-namespace impl {
-
-// Returns true when all local coordinates lie within the reference element
-// [-1, 1]^d, i.e. the point is inside (or on the boundary of) the element.
-inline bool coords_inside(const specfem::point::local_coordinates<
-                          specfem::element::dimension_tag::dim2> &lcoord) {
-  return lcoord.ispec >= 0 && std::abs(lcoord.xi) <= type_real(1) &&
-         std::abs(lcoord.gamma) <= type_real(1);
-}
-
-inline bool coords_inside(const specfem::point::local_coordinates<
-                          specfem::element::dimension_tag::dim3> &lcoord) {
-  return lcoord.ispec >= 0 && std::abs(lcoord.xi) <= type_real(1) &&
-         std::abs(lcoord.eta) <= type_real(1) &&
-         std::abs(lcoord.gamma) <= type_real(1);
-}
-
-} // namespace impl
+/**
+ * @brief Result of locating a batch of points across MPI partitions.
+ *
+ * @tparam DimensionTag Spatial dimension (dim2 or dim3)
+ */
+template <specfem::element::dimension_tag DimensionTag>
+struct LocatePointResult {
+  std::vector<specfem::point::local_coordinates<DimensionTag>>
+      local; ///< Located local coordinates; valid (ispec >= 0) only on the
+             ///< owning rank, ispec = -1 elsewhere
+  std::vector<int> partition_index; ///< MPI rank owning each point (replicated
+                                    ///< on every rank)
+  std::vector<type_real> error;     ///< Cartesian target-to-found distance in
+                                    ///< metres (replicated on every rank)
+};
 
 /**
  * @brief Locate a batch of points across MPI partitions with inside-preference.
@@ -54,17 +53,15 @@ inline bool coords_inside(const specfem::point::local_coordinates<
  *
  * @param coords  Global coordinates of the points to locate.
  * @param mesh    This rank's local mesh partition.
- * @return { local_coords, owning_ranks }
- *         local_coords[i] is valid (ispec >= 0) only when owning_ranks[i]
- *         equals this rank's MPI rank; all other entries have ispec = -1.
+ * @return A @ref LocatePointResult whose `local[i]` is valid (ispec >= 0) only
+ *         when `partition_index[i]` equals this rank's MPI rank (ispec = -1
+ *         otherwise), and whose `error[i]` (the target-to-found distance) is
+ *         replicated on every rank.
  * @throws std::runtime_error if any point cannot be located on any rank.
  */
 template <specfem::element::dimension_tag DimensionTag>
-std::pair<std::vector<specfem::point::local_coordinates<DimensionTag> >,
-          std::vector<int> >
-locate_point(
-    const std::vector<specfem::point::global_coordinates<DimensionTag> >
-        &coords,
+LocatePointResult<DimensionTag> locate_point(
+    const std::vector<specfem::point::global_coordinates<DimensionTag>> &coords,
     const specfem::assembly::mesh<DimensionTag> &mesh) {
 
   const int npoints = static_cast<int>(coords.size());
@@ -78,7 +75,7 @@ locate_point(
       std::numeric_limits<type_real>::max() / 4;
 
   // Per-point local state -------------------------------------------------
-  std::vector<specfem::point::local_coordinates<DimensionTag> > local_lcoords(
+  std::vector<specfem::point::local_coordinates<DimensionTag>> local_lcoords(
       npoints);
   for (auto &lc : local_lcoords)
     lc.ispec = -1;
@@ -100,7 +97,7 @@ locate_point(
 
       local_lcoords[i] = lcoord;
       local_priority[i] =
-          impl::coords_inside(lcoord) ? dist : (OUTSIDE_PENALTY + dist);
+          specfem::algorithms::inside(lcoord) ? dist : (OUTSIDE_PENALTY + dist);
     } catch (const std::exception &) {
       // Point not in this rank's partition – leave as invalid / max priority.
     }
@@ -144,7 +141,7 @@ locate_point(
   }
 
   // Build output: non-owning ranks get ispec = -1. ----------------------------
-  std::vector<specfem::point::local_coordinates<DimensionTag> > result_coords(
+  std::vector<specfem::point::local_coordinates<DimensionTag>> result_coords(
       npoints);
   for (int i = 0; i < npoints; ++i) {
     if (partition_index_selected[i] == myrank) {
@@ -154,8 +151,52 @@ locate_point(
     }
   }
 
-  return { result_coords, partition_index_selected };
+  // Recover the winning back-projection distance from the reduced priority.
+  // Inside points encode priority == dist; outside points encode
+  // OUTSIDE_PENALTY + dist. global_priority is replicated on every rank, so the
+  // error is communicated identically to partition_index_selected.
+  std::vector<type_real> error(npoints);
+  for (int i = 0; i < npoints; ++i) {
+    error[i] = global_priority[i] >= OUTSIDE_PENALTY
+                   ? global_priority[i] - OUTSIDE_PENALTY
+                   : global_priority[i];
+  }
+
+  return { result_coords, partition_index_selected, error };
 }
+
+/**
+ * @brief Path used to project a point onto a surface.
+ *
+ * Only along_z (vertical) is currently implemented.
+ * along_x, along_y, and ellipsoidal are reserved and will throw.
+ */
+enum class projection { along_x, along_y, along_z, ellipsoidal };
+
+/**
+ * @brief Project @p target onto @p surface along @p along, returning the
+ * landing point.
+ *
+ * For @c along_z the result is @c {target.x,target.y,elevation}, where the
+ * elevation is the free surface above @c (x,y), or 0 when @p surface is empty.
+ * MPI-reduced to the rank owning the nearest face.
+ *
+ * @param mesh Assembled 3D mesh geometry
+ * @param surface Faces defining the target surface
+ * @param target Point to project (only components orthogonal to @p along used)
+ * @param along Projection geometry; only @ref projection::along_z is
+ * implemented
+ * @return The surface point @p target projects to
+ * @throws std::runtime_error for unimplemented geometries
+ */
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
+project_onto_surface(
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
+    const specfem::mesh::acoustic_free_surface<
+        specfem::element::dimension_tag::dim3> &surface,
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim3> &target,
+    projection along = projection::along_z);
 
 } // namespace algorithms
 } // namespace specfem

@@ -76,6 +76,8 @@
 
     ! file header — matches meshfem3d save_databases.F90 binary format
     write(IIN_database) MESH_A_CHUNK_OF_THE_EARTH
+    write(IIN_database) UTM_PROJECTION_ZONE
+    write(IIN_database) SUPPRESS_UTM_PROJECTION
     write(IIN_database) NGNOD
 
     ! gets number of local nodes nnodes_loc in this partition
@@ -119,7 +121,8 @@
                                   nodes_ibelm_xmin, nodes_ibelm_xmax, nodes_ibelm_ymin, &
                                   nodes_ibelm_ymax, nodes_ibelm_bottom, nodes_ibelm_top, &
                                   glob2loc_elmnts, glob2loc_nodes_nparts, &
-                                  glob2loc_nodes_parts, glob2loc_nodes, part, NGNOD2D)
+                                  glob2loc_nodes_parts, glob2loc_nodes, part, NGNOD2D, &
+                                  STACEY_ABSORBING_CONDITIONS, TOP_FREE_SURFACE, BOTTOM_FREE_SURFACE)
 
     ! writes out C-PML elements indices, CPML-regions and thickness of C-PML layer
     call write_cpml_database(IIN_database, ipart, nspec, nspec_cpml, CPML_to_spec, &
@@ -208,7 +211,10 @@
   !     adjacency format read by read_adjacency_graph.cpp
 
   use decompose_mesh_par, only: nspec, xadj_typed, adjncy_typed, adj_types_global, &
-                                 glob2loc_elmnts, part, elmnts, NGNOD
+                                 glob2loc_elmnts, part, elmnts, NGNOD, &
+                                 nnonconforming_adjacencies, nonconforming_ispec_source, &
+                                 nonconforming_ispec_target,nonconforming_adjacency_type, &
+                                 nonconforming_adjacency_face
 
   implicit none
 
@@ -222,6 +228,12 @@
   integer :: neighbor_proc
   logical :: reverse_found
 
+  ! Mapping from elmnts array position (1-8) to element-absolute corner ID (19-26).
+  ! Follows SPECFEM hex node ordering convention:
+  !   pos 1 → 19 (BFL), pos 2 → 20 (BFR), pos 3 → 22 (BBR), pos 4 → 21 (BBL),
+  !   pos 5 → 23 (TFL), pos 6 → 24 (TFR), pos 7 → 26 (TBR), pos 8 → 25 (TBL)
+  integer, parameter :: pos_to_corner_id(8) = [19, 20, 22, 21, 23, 24, 26, 25]
+
   ! Count and write local adjacencies
   total_nadj_element = 0
   do ispec = 1, nspec
@@ -231,9 +243,11 @@
     end do
   end do
 
-  write(IIN_database) total_nadj_element
+  ! total conforming + nonconforming adjacencies
+  write(IIN_database) total_nadj_element + nnonconforming_adjacencies
   index = 0
 
+  ! write weakly conforming
   do ispec = 1, nspec
     if (part(ispec) /= ipart) cycle
     ispec_local = glob2loc_elmnts(ispec-1) + 1
@@ -250,6 +264,13 @@
     print *,'Error: index ',index,' /= total_nadj_element ',total_nadj_element,' in partition ',ipart
     stop 'Error in write_adjacency_database (local)'
   endif
+
+  ! write nonconforming
+  do k = 1,nnonconforming_adjacencies
+    write(IIN_database) nonconforming_ispec_source(k), nonconforming_ispec_target(k), &
+                        nonconforming_adjacency_type(k), nonconforming_adjacency_face(k)
+  end do
+
 
   ! Count MPI (cross-partition) adjacencies
   num_mpi_adjacencies = 0
@@ -324,7 +345,8 @@
       endif
 
       ! Find anchor: first shared corner node between ispec and jspec.
-      ! elmnts(ia, ispec) is a 0-indexed global node ID; equality means same node.
+      ! elmnts(ia, ispec) is a global node ID; equality means same node.
+      ! Convert array positions (1-8) to element-absolute corner IDs (19-26).
       anchor_local  = 0
       anchor_remote = 0
       outer: do ia = 1, NGNOD
@@ -332,8 +354,8 @@
         do ib = 1, NGNOD
           node_ib = elmnts(ib, jspec)
           if (node_ia == node_ib) then
-            anchor_local  = ia
-            anchor_remote = ib
+            anchor_local  = pos_to_corner_id(ia)
+            anchor_remote = pos_to_corner_id(ib)
             exit outer
           endif
         end do

@@ -1,3 +1,5 @@
+#include "specfem/coordinate_systems/cartesian.hpp"
+#include "specfem/coordinate_systems/geographic.hpp"
 #include "specfem/io/sources/impl/reader.hpp"
 #include "specfem/io/sources/impl/solution_format_helpers.hpp"
 #include "specfem/source.hpp"
@@ -46,13 +48,34 @@ specfem::io::sources_impl::read<specfem::element::dimension_tag::dim3,
     auto tshift = specfem::io::sources_impl::get_real(fields, "time shift");
     auto hdurorf0 = specfem::io::sources_impl::get_real(fields, "hdurorf0");
 
-    // Coordinates (x, y required; z or depth required)
-    auto x = specfem::io::sources_impl::get_real(fields, "x");
-    auto y = specfem::io::sources_impl::get_real(fields, "y");
-    auto z =
-        fields.contains("z")
-            ? specfem::io::sources_impl::get_real(fields, "z")
-            : -specfem::io::sources_impl::get_real(fields, "depth") * 1000.0;
+    // Coordinates are resolved to global (x,y,z) at assembly time. Depth is
+    // in km here.
+    std::unique_ptr<specfem::coordinate_systems::coordinates<dim3>> coords;
+    if (fields.contains("latitude") && fields.contains("longitude")) {
+      double lon = specfem::io::sources_impl::get_double(fields, "longitude");
+      double lat = specfem::io::sources_impl::get_double(fields, "latitude");
+      double depth_m =
+          specfem::io::sources_impl::get_double(fields, "depth") * 1000.0;
+      coords =
+          std::make_unique<specfem::coordinate_systems::geographic_coordinates>(
+              lon, lat, depth_m);
+    } else if (fields.contains("z")) {
+      double x = specfem::io::sources_impl::get_double(fields, "x");
+      double y = specfem::io::sources_impl::get_double(fields, "y");
+      coords = std::make_unique<
+          specfem::coordinate_systems::cartesian_coordinates<dim3>>(
+          x, y, specfem::io::sources_impl::get_double(fields, "z"),
+          std::array<double, 3>{ 0.0, 0.0, 0.0 });
+    } else {
+      // nullopt origin: depth-based, resolved against topography at assembly.
+      double x = specfem::io::sources_impl::get_double(fields, "x");
+      double y = specfem::io::sources_impl::get_double(fields, "y");
+      double depth_m =
+          specfem::io::sources_impl::get_double(fields, "depth") * 1000.0;
+      coords = std::make_unique<
+          specfem::coordinate_systems::cartesian_coordinates<dim3>>(
+          x, y, -depth_m, std::nullopt);
+    }
 
     // STF type, factor, and force direction
     auto stf_type =
@@ -95,7 +118,7 @@ specfem::io::sources_impl::read<specfem::element::dimension_tag::dim3,
 
     // Construct source (no datetime for FORCESOLUTION)
     sources.push_back(std::make_shared<specfem::sources::force<dim3>>(
-        x, y, z, fx, fy, fz, std::move(stf_ptr), wavefield_type));
+        std::move(coords), fx, fy, fz, std::move(stf_ptr), wavefield_type));
   }
 
   return sources;

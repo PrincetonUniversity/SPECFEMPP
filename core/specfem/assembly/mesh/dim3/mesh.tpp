@@ -43,11 +43,26 @@ specfem::assembly::mesh<specfem::element::dimension_tag::dim3>::mesh(
     static_cast<const specfem::assembly::mesh_impl::control_nodes<dimension_tag>
                     &>(*this)
   };
+  Kokkos::View<specfem::element::medium_tag *, Kokkos::HostSpace>
+      h_element_medium_tags(
+          "specfem::assembly::mesh::element_medium_tags", nspec);
+  {
+    const auto &mapping = static_cast<
+        const specfem::assembly::mesh_impl::mesh_to_compute_mapping<
+            dimension_tag> &>(*this);
+    for (int compute_ispec = 0; compute_ispec < nspec; compute_ispec++) {
+      const int mesh_ispec = mapping.h_compute_to_mesh(compute_ispec);
+      h_element_medium_tags(compute_ispec) =
+          tags.tags_container(mesh_ispec).medium_tag;
+    }
+  }
+
   static_cast<specfem::assembly::mesh_impl::points<dimension_tag> &>(*this) = {
     nspec,
     ngllz,
     nglly,
     ngllx,
+    h_element_medium_tags,
     static_cast<
         const specfem::assembly::mesh_impl::adjacency_graph<dimension_tag> &>(
         *this),

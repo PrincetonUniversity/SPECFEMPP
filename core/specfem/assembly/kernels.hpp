@@ -25,16 +25,13 @@ public:
   kernels(const specfem::assembly::element_types<DimensionTag> &element_types)
       : impl::value_containers<DimensionTag, impl::domain_kernels>(
             element_types.nspec, element_types.element_grid,
-            "specfem::assembly::kernels::property_index_mapping",
-            [&element_types](auto h_prop) {
-              return [&element_types, h_prop]<typename TagsType>() {
-                return specfem::assembly::impl::domain_kernels<
-                    TagsType::dimension_tag, TagsType::medium_tag,
-                    TagsType::property_tag>(
-                    element_types.get_elements_on_host(TagsType::medium_tag,
-                                                       TagsType::property_tag),
-                    element_types.element_grid, h_prop);
-              };
+            [&element_types]<typename TagsType>() {
+              return specfem::assembly::impl::domain_kernels<
+                  TagsType::dimension_tag, TagsType::medium_tag,
+                  TagsType::property_tag>(
+                  element_types.get_elements_on_host(TagsType::medium_tag,
+                                                     TagsType::property_tag),
+                  element_types.element_grid);
             }) {}
 };
 

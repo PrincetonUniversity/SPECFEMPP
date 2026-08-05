@@ -13,3 +13,15 @@ template class specfem::periodic_tasks::wavefield_reader<
 
 template class specfem::periodic_tasks::wavefield_reader<
     specfem::element::dimension_tag::dim2, specfem::io_backends::NPZ>;
+
+template class specfem::periodic_tasks::wavefield_reader<
+    specfem::element::dimension_tag::dim3, specfem::io_backends::HDF5>;
+
+template class specfem::periodic_tasks::wavefield_reader<
+    specfem::element::dimension_tag::dim3, specfem::io_backends::ASCII>;
+
+template class specfem::periodic_tasks::wavefield_reader<
+    specfem::element::dimension_tag::dim3, specfem::io_backends::NPY>;
+
+template class specfem::periodic_tasks::wavefield_reader<
+    specfem::element::dimension_tag::dim3, specfem::io_backends::NPZ>;

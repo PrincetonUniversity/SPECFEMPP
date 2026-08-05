@@ -36,11 +36,7 @@ namespace medium_physics {
  *  \Delta K_{rho} = -\rho \Delta t \, \ddot{u}^{\dagger} \cdot u^b
  * \f]
  *
- * @tparam PointPropertiesType Elastic material properties
- * @tparam AdjointPointVelocityType Adjoint velocity field
- * @tparam AdjointPointAccelerationType Adjoint acceleration field
- * @tparam BackwardPointDisplacementType Backward displacement field
- * @tparam PointFieldDerivativesType Spatial field derivatives
+ * @tparam Tags Compile-time tag bundle (dimension, medium, property, SIMD)
  *
  * @param properties Elastic material properties (ρ, μ, κ)
  * @param adjoint_velocity Adjoint velocity field
@@ -51,26 +47,17 @@ namespace medium_physics {
  * @param dt Time step size
  * @return Point kernels containing all elastic parameter sensitivities
  */
-template <typename PointPropertiesType, typename AdjointPointVelocityType,
-          typename AdjointPointAccelerationType,
-          typename BackwardPointDisplacementType,
-          typename PointFieldDerivativesType>
-KOKKOS_FUNCTION specfem::point::kernels<
-    PointPropertiesType::dimension_tag, PointPropertiesType::medium_tag,
-    PointPropertiesType::property_tag, PointPropertiesType::simd::using_simd>
-impl_compute_frechet_derivatives(
-    const std::integral_constant<specfem::element::dimension_tag,
-                                 specfem::element::dimension_tag::dim2>,
-    const std::integral_constant<specfem::element::medium_tag,
-                                 specfem::element::medium_tag::elastic_psv>,
-    const std::integral_constant<specfem::element::property_tag,
-                                 specfem::element::property_tag::isotropic>,
-    const PointPropertiesType &properties,
-    const AdjointPointVelocityType &adjoint_velocity,
-    const AdjointPointAccelerationType &adjoint_acceleration,
-    const BackwardPointDisplacementType &backward_displacement,
-    const PointFieldDerivativesType &adjoint_derivatives,
-    const PointFieldDerivativesType &backward_derivatives,
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim2 &&
+           Tags::medium_tag == specfem::element::medium_tag::elastic_psv &&
+           Tags::property_tag == specfem::element::property_tag::isotropic)
+KOKKOS_FUNCTION specfem::point::kernels<Tags> compute_frechet_derivatives(
+    const specfem::point::properties<Tags> &properties,
+    const specfem::point::velocity<Tags> &adjoint_velocity,
+    const specfem::point::acceleration<Tags> &adjoint_acceleration,
+    const specfem::point::displacement<Tags> &backward_displacement,
+    const specfem::point::field_derivatives<Tags> &adjoint_derivatives,
+    const specfem::point::field_derivatives<Tags> &backward_derivatives,
     const type_real &dt) {
 
   const auto kappa = properties.lambdaplus2mu() - properties.mu();
@@ -198,11 +185,7 @@ impl_compute_frechet_derivatives(
  *  \Delta K_{rho} = -\rho \Delta t \, \ddot{u}^{\dagger} \cdot u^b
  * \f]
  *
- * @tparam PointPropertiesType Elastic material properties
- * @tparam AdjointPointVelocityType Adjoint velocity field
- * @tparam AdjointPointAccelerationType Adjoint acceleration field
- * @tparam BackwardPointDisplacementType Backward displacement field
- * @tparam PointFieldDerivativesType Spatial field derivatives
+ * @tparam Tags Compile-time tag bundle (dimension, medium, property, SIMD)
  *
  * @param properties Elastic material properties
  * @param adjoint_velocity Adjoint velocity field
@@ -215,26 +198,17 @@ impl_compute_frechet_derivatives(
  *
  * @note For SH waves: K_{kappa} = 0, K_{alpha} = 0, K_{beta} = 2K_{mu}
  */
-template <typename PointPropertiesType, typename AdjointPointVelocityType,
-          typename AdjointPointAccelerationType,
-          typename BackwardPointDisplacementType,
-          typename PointFieldDerivativesType>
-KOKKOS_FUNCTION specfem::point::kernels<
-    PointPropertiesType::dimension_tag, PointPropertiesType::medium_tag,
-    PointPropertiesType::property_tag, PointPropertiesType::simd::using_simd>
-impl_compute_frechet_derivatives(
-    const std::integral_constant<specfem::element::dimension_tag,
-                                 specfem::element::dimension_tag::dim2>,
-    const std::integral_constant<specfem::element::medium_tag,
-                                 specfem::element::medium_tag::elastic_sh>,
-    const std::integral_constant<specfem::element::property_tag,
-                                 specfem::element::property_tag::isotropic>,
-    const PointPropertiesType &properties,
-    const AdjointPointVelocityType &adjoint_velocity,
-    const AdjointPointAccelerationType &adjoint_acceleration,
-    const BackwardPointDisplacementType &backward_displacement,
-    const PointFieldDerivativesType &adjoint_derivatives,
-    const PointFieldDerivativesType &backward_derivatives,
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim2 &&
+           Tags::medium_tag == specfem::element::medium_tag::elastic_sh &&
+           Tags::property_tag == specfem::element::property_tag::isotropic)
+KOKKOS_FUNCTION specfem::point::kernels<Tags> compute_frechet_derivatives(
+    const specfem::point::properties<Tags> &properties,
+    const specfem::point::velocity<Tags> &adjoint_velocity,
+    const specfem::point::acceleration<Tags> &adjoint_acceleration,
+    const specfem::point::displacement<Tags> &backward_displacement,
+    const specfem::point::field_derivatives<Tags> &adjoint_derivatives,
+    const specfem::point::field_derivatives<Tags> &backward_derivatives,
     const type_real &dt) {
 
   /*

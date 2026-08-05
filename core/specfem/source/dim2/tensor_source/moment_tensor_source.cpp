@@ -5,7 +5,7 @@
 #include "specfem/setup.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
-// #include "utilities.cpp"
+#include "specfem/utilities.hpp"
 #include "yaml-cpp/yaml.h"
 #include <cmath>
 #include <stdexcept>
@@ -79,9 +79,10 @@ specfem::sources::moment_tensor<
 std::string specfem::sources::moment_tensor<
     specfem::element::dimension_tag::dim2>::print_details() const {
   std::ostringstream message;
-  message << "    Moment Tensor: \n"
-          << "      Mxx, Mzz, Mxz = " << this->Mxx << ", " << this->Mzz << ", "
-          << this->Mxz << "\n";
+  message << "(Mxx, Mzz, Mxz) = ("
+          << specfem::utilities::format_scientific(this->Mxx, 6) << ", "
+          << specfem::utilities::format_scientific(this->Mzz, 6) << ", "
+          << specfem::utilities::format_scientific(this->Mxz, 6) << ")";
   return message.str();
 }
 
@@ -99,14 +100,15 @@ operator==(const specfem::sources::source<specfem::element::dimension_tag::dim2>
     return false;
   }
 
-  const auto gcoord = this->get_global_coordinates();
-  const auto other_gcoord = other_source->get_global_coordinates();
+  // Compare input coordinates (identity depends solely on input, not mesh)
+  const auto *c1 = this->get_read_coordinates();
+  const auto *c2 = other_source->get_read_coordinates();
+  bool coords_equal = (c1 && c2) ? (*c1 == *c2) : (!c1 && !c2);
 
-  bool internal = specfem::utilities::is_close(this->Mxx, other_source->Mxx) &&
+  bool internal = coords_equal &&
+                  specfem::utilities::is_close(this->Mxx, other_source->Mxx) &&
                   specfem::utilities::is_close(this->Mxz, other_source->Mxz) &&
-                  specfem::utilities::is_close(this->Mzz, other_source->Mzz) &&
-                  specfem::utilities::is_close(gcoord.x, other_gcoord.x) &&
-                  specfem::utilities::is_close(gcoord.z, other_gcoord.z);
+                  specfem::utilities::is_close(this->Mzz, other_source->Mzz);
 
   if (!internal) {
     std::cout << "Moment tensor source not equal" << std::endl;

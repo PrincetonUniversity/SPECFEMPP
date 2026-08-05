@@ -3,7 +3,11 @@
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/coordinate_systems/utm.hpp"
+#include "specfem/mesh.hpp"
 #include "specfem/source.hpp"
+
+#include <optional>
 
 namespace specfem::assembly::sources_impl {
 
@@ -20,6 +24,8 @@ namespace specfem::assembly::sources_impl {
  * @param mesh Finite element mesh with coordinates and connectivity
  * @param sources [in,out] Source objects to locate. Input: coordinates and time
  * functions. Output: assigned element indices and medium tags.
+ * @param surface Free-surface faces for topographic depth resolution (dim3
+ * only)
  *
  * @throws std::runtime_error If source cannot be located within mesh domain
  * @throws std::invalid_argument If coordinates are invalid or mesh is malformed
@@ -39,7 +45,10 @@ template <specfem::element::dimension_tag DimensionTag>
 void locate_sources(
     const specfem::assembly::element_types<DimensionTag> &element_types,
     const specfem::assembly::mesh<DimensionTag> &mesh,
-    std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
-        &sources);
+    std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>
+        &sources,
+    const specfem::mesh::acoustic_free_surface<DimensionTag> &surface,
+    const std::optional<specfem::coordinate_systems::utm_projection_config>
+        &utm_config = std::nullopt);
 
 } // namespace specfem::assembly::sources_impl

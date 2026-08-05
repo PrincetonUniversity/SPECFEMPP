@@ -17,6 +17,7 @@ namespace specfem::datatype {}
 #include "datatype/chunk_edge_view.hpp"
 #include "datatype/chunk_element_view.hpp"
 #include "datatype/domain_view.hpp"
+#include "datatype/element_index_range.hpp"
 #include "datatype/element_view.hpp"
 #include "datatype/point_view.hpp"
 #include "datatype/simd.hpp"

@@ -1,17 +1,16 @@
 #pragma once
 
 #include "compute_mass_matrix.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/boundary_conditions.hpp"
 #include "specfem/datatype.hpp"
-#include "specfem/element.hpp"
 #include "specfem/element.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/medium_physics.hpp"
 #include "specfem/parallel_configuration.hpp"
-#include "specfem/quadrature.hpp"
-#include "specfem/assembly/assembly.hpp"
 #include "specfem/point.hpp"
+#include "specfem/quadrature.hpp"
 #include <Kokkos_Core.hpp>
 
 template <int NGLL, typename Tags>
@@ -24,9 +23,11 @@ void specfem::compute::impl::compute_mass_matrix(
   constexpr auto medium_tag = Tags::medium_tag;
   constexpr auto property_tag = Tags::property_tag;
   constexpr auto boundary_tag = Tags::boundary_tag;
+  constexpr auto attenuation_tag = Tags::attenuation_tag;
 
   const auto elements = assembly.element_types.get_elements_on_device(
-      medium_tag, property_tag, boundary_tag);
+          medium_tag, property_tag, attenuation_tag, boundary_tag,
+          Tags::mpi_tag);
 
   // Get number of elements matching the tag combinations
   const int nelements = elements.extent(0);
@@ -49,21 +50,19 @@ void specfem::compute::impl::compute_mass_matrix(
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
   constexpr bool using_simd = false;
 #else
-  // TODO(Rohit : DIM3_SIMD) Enable simd execution for dim3 solver
-  constexpr bool using_simd = (dimension_tag == specfem::element::dimension_tag::dim2) ? true : false;
+  constexpr bool using_simd = true;
 #endif
 
   using simd = specfem::datatype::simd<type_real, using_simd>;
   using parallel_config = specfem::parallel_configuration::default_chunk_config<
       dimension_tag, simd, Kokkos::DefaultExecutionSpace>;
 
-  using PointTags = specfem::tags::Tags<dimension_tag, medium_tag, property_tag, using_simd>;
+  using PointTags =
+      specfem::tags::Tags<dimension_tag, medium_tag, property_tag, using_simd>;
 
-  using PointMassType =
-      specfem::point::mass_inverse<PointTags>;
+  using PointMassType = specfem::point::mass_inverse<PointTags>;
 
-  using PointPropertyType =
-      specfem::point::properties<PointTags>;
+  using PointPropertyType = specfem::point::properties<PointTags>;
 
   using PointJacobianMatrixType =
       specfem::point::jacobian_matrix<dimension_tag, true, using_simd>;
@@ -86,7 +85,8 @@ void specfem::compute::impl::compute_mass_matrix(
 
   specfem::execution::for_all(
       "specfem::compute::compute_mass_matrix", chunk,
-      KOKKOS_LAMBDA(const typename decltype(chunk)::base_index_type &iterator_index) {
+      KOKKOS_LAMBDA(
+          const typename decltype(chunk)::base_index_type &iterator_index) {
         const auto index = iterator_index.get_index();
         PointPropertyType point_property;
         specfem::assembly::load_on_device(index, properties, point_property);
@@ -99,7 +99,8 @@ void specfem::compute::impl::compute_mass_matrix(
         specfem::assembly::load_on_device(index, mesh.weights, point_weights);
 
         PointMassType mass_matrix =
-            specfem::medium_physics::mass_matrix_component<PointTags>(point_property);
+            specfem::medium_physics::mass_matrix_component<PointTags>(
+                point_property);
 
         mass_matrix *= point_weights.product() * point_jacobian_matrix.jacobian;
 

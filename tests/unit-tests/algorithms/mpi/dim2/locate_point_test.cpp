@@ -20,8 +20,8 @@
 #include <vector>
 
 namespace {
-constexpr auto dim2 = specfem::element::dimension_tag::dim2;
-using GlobalCoord = specfem::point::global_coordinates<dim2>;
+using GlobalCoord =
+    specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>;
 
 // Points distributed across the domain [0,4000]×[0,3000].
 // Element size ≈ 50×50 m; points are placed away from element edges to
@@ -43,7 +43,7 @@ const std::vector<GlobalCoord> TEST_POINTS = {
 // ---------------------------------------------------------------------------
 class LocatePointMPI2DTest : public ::testing::TestWithParam<std::string> {
 protected:
-  specfem::assembly::mesh<dim2> assembly_mesh;
+  specfem::assembly::mesh<specfem::element::dimension_tag::dim2> assembly_mesh;
 
   void SetUp() override {
     if (!SPECFEMEnvironment::IsMPISizeValid()) {
@@ -68,8 +68,9 @@ protected:
     specfem::quadrature::quadratures quadratures(gll);
 
     assembly_mesh =
-        specfem::assembly::mesh<dim2>(mesh_data.tags, mesh_data.control_nodes,
-                                      quadratures, mesh_data.adjacency_graph);
+        specfem::assembly::mesh<specfem::element::dimension_tag::dim2>(
+            mesh_data.tags, mesh_data.control_nodes, quadratures,
+            mesh_data.adjacency_graph);
   }
 };
 
@@ -77,7 +78,7 @@ protected:
 // Test: every point has a valid owning rank in [0, nproc)
 // ---------------------------------------------------------------------------
 TEST_P(LocatePointMPI2DTest, EachPointOwnedByExactlyOneRank) {
-  const auto [lcoords, owners] =
+  const auto [lcoords, owners, errors] =
       specfem::algorithms::locate_point(TEST_POINTS, assembly_mesh);
 
   const int nproc = specfem::MPI::get_size();
@@ -98,7 +99,7 @@ TEST_P(LocatePointMPI2DTest, EachPointOwnedByExactlyOneRank) {
 // Test: the owning rank stores valid inside local coordinates
 // ---------------------------------------------------------------------------
 TEST_P(LocatePointMPI2DTest, OwnerHasInsideLocalCoords) {
-  const auto [lcoords, owners] =
+  const auto [lcoords, owners, errors] =
       specfem::algorithms::locate_point(TEST_POINTS, assembly_mesh);
 
   const int myrank = specfem::MPI::get_rank();
@@ -124,7 +125,7 @@ TEST_P(LocatePointMPI2DTest, OwnerHasInsideLocalCoords) {
 // Test: non-owning ranks store ispec = -1
 // ---------------------------------------------------------------------------
 TEST_P(LocatePointMPI2DTest, NonOwnerHasInvalidIspec) {
-  const auto [lcoords, owners] =
+  const auto [lcoords, owners, errors] =
       specfem::algorithms::locate_point(TEST_POINTS, assembly_mesh);
 
   const int myrank = specfem::MPI::get_rank();
@@ -147,7 +148,7 @@ TEST_P(LocatePointMPI2DTest, NonOwnerHasInvalidIspec) {
 //       global coordinate within a tight tolerance.
 // ---------------------------------------------------------------------------
 TEST_P(LocatePointMPI2DTest, BackProjectionAccuracy) {
-  const auto [lcoords, owners] =
+  const auto [lcoords, owners, errors] =
       specfem::algorithms::locate_point(TEST_POINTS, assembly_mesh);
 
   const int myrank = specfem::MPI::get_rank();

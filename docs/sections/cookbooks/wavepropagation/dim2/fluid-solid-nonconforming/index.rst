@@ -29,9 +29,9 @@ to the ``PATH``.
 
 .. code:: bash
 
-   which specfem2d
+   which specfem
 
-If the above command returns a path to the ``specfem2d`` executable,
+If the above command returns a path to the ``specfem`` executable,
 then the executable directory is added to the ``PATH``. If not, you need
 to add the executable directory to the ``PATH`` using the following
 command.
@@ -89,7 +89,7 @@ If you've updated ``PYTHONPATH``, ``python`` can run
 
 .. code:: bash
 
-   python -m gmshlayerbuilder --top acoustic_free_surface --bottom absorbing --left absorbing --right absorbing topography_file.dat OUTPUT_FILES/MESH
+   python -m gmshlayerbuilder 2d --top acoustic_free_surface --bottom absorbing --left absorbing --right absorbing topography_file.dat OUTPUT_FILES/MESH
 
 Otherwise, you can drop the ``-m`` flag and reference the script
 exactly:
@@ -188,7 +188,7 @@ following command:
 
 .. code:: bash
 
-   specfem2d -p specfem_config.yaml
+   specfem 2d -p specfem_config.yaml
 
 
 Visualizing the results

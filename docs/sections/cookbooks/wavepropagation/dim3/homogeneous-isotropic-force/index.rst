@@ -5,6 +5,12 @@ Homogeneous elastic media
 
 In this example we simulate wave propagation through a 3-dimensional homogeneous halfspace using a force source.
 
+.. seealso::
+
+   :ref:`known_limitations` — several 3-D features (PML boundaries,
+   poroelastic/anisotropic materials, GLL-level property input/output) are not yet
+   implemented and will raise a runtime error if requested.
+
 Setting up your workspace
 -------------------------
 
@@ -20,9 +26,9 @@ We also need to check that the SPECFEM++ executable directory is added to the
 
 .. code:: bash
 
-    which specfem3d
+    which specfem
 
-If the above command returns a path to the ``specfem3d`` executable, then the
+If the above command returns a path to the ``specfem`` executable, then the
 executable directory is added to the ``PATH``. If not, you need to add the executable
 directory to the ``PATH`` using the following command.
 
@@ -282,7 +288,7 @@ Finally, to run the SPECFEM++ solver:
 
 .. code:: bash
 
-    specfem3d -p specfem_config.yaml
+    specfem 3d -p specfem_config.yaml
 
 .. note::
 

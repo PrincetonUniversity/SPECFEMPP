@@ -27,7 +27,7 @@ rule gmshlayerbuilder:
     shell:
         """
             cd {WORKDIR}
-            python {GMSH_SCRIPT} simple_dg_topo.dat MESH
+            python {GMSH_SCRIPT} 2d simple_dg_topo.dat MESH
         """
 
 rule xmeshfem2D:
