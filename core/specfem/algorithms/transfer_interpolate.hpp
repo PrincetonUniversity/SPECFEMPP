@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Kokkos_Macros.hpp"
 #include "specfem/data_access.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
@@ -25,6 +24,7 @@ template <typename XiViewType> struct LagrangeInterpolant {
   type_real operator()(const int &lagrange_index,
                        const type_real &coordinate) const {
     // can we code-share with core/specfem/quadrature/gll/lagrange_poly.cpp?
+
     type_real val = 1;
     for (int i = 0; i < ngll; i++) {
       if (i != lagrange_index) {
@@ -172,8 +172,6 @@ transfer_interpolate(const IndexType &chunk_face_index,
 
   using VectorPointViewType = specfem::datatype::VectorPointViewType<
       type_real, FaceFunctionType::components, FaceFunctionType::using_simd>;
-
-  constexpr int ncomp = FaceFunctionType::components;
 
   specfem::execution::for_each_level(
       specfem::execution::TeamThreadMDRangeIterator(
