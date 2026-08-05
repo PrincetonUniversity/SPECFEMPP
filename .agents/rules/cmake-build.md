@@ -33,6 +33,29 @@ paths:
 
 ## Test targets
 
-- Serial tests: `SERIAL_TEST_TARGETS`
-- MPI tests: `MPI_TEST_TARGETS` (only when `SPECFEM_ENABLE_MPI` is ON)
-- Test finalization: `specfem_finalize_test_targets(ALL_TEST_TARGETS ...)`
+Tests are declared with `specfem_add_test()` (see `tests/test_registration.cmake`), which
+defines the executable and registers it with CTest in one call. There are no separate
+target lists to keep in sync:
+
+```cmake
+specfem_add_test(my_tests
+  SOURCES   my/test.cpp
+  LIBRARIES specfem::mesh specfem_environment gtest_main
+)
+```
+
+- Serial tests go in `tests/<suite>/serial.cmake`, MPI tests in `tests/<suite>/mpi.cmake`
+  (only included when `SPECFEM_ENABLE_MPI` is ON).
+- An MPI test declares its process count inline: `MPI_RANKS 4`.
+- Other options: `NO_UNITY`, `TIMEOUT`, `DEFINITIONS`, `INCLUDES`, `PROPERTIES`, `LABELS`.
+- Test data directories are exposed to the tests' working directory with
+  `specfem_add_test_data(<dir>...)`.
+
+## Test output directory
+
+- Tests run with their working directory set to `SPECFEM_TEST_OUTPUT_DIR`, an absolute path
+  computed once by `specfem_init_tests()`. Test binaries stay in the build tree.
+- Default: `<build>/tests/run`. Override with `-D SPECFEMPP_TEST_DIR=<path>` (relative paths
+  resolve against the source dir; absolute paths are used as-is).
+- `ctest --test-dir <build>/tests`, `ctest --test-dir <SPECFEM_TEST_OUTPUT_DIR>`, and
+  `cd <SPECFEM_TEST_OUTPUT_DIR> && ctest` all work.

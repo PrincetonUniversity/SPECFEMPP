@@ -1,9 +1,8 @@
-#include "../../../../SPECFEM_Environment.hpp"
+#include "SPECFEM_Environment.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/io.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/mesh.hpp"
-#include "specfem/mpi.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/runtime_configuration.hpp"
 #include "specfem/solver.hpp"
@@ -13,13 +12,6 @@
 #include <algorithm>
 #include <boost/filesystem.hpp>
 #include <gtest/gtest.h>
-
-// Number of MPI processes this executable is launched with. Provided as a
-// per-target compile definition by mpi.cmake (one executable per size). The
-// fallback keeps editors/clangd happy when the definition is absent.
-#ifndef SPECFEM_MPI_TEST_NPROC
-#define SPECFEM_MPI_TEST_NPROC 4
-#endif
 
 // ------------------------------------- //
 // ------- Test configuration ----------- //
@@ -38,7 +30,8 @@ struct TestConfig3D {
     TestConfig3D config;
 
     // Create the test path by concatenating the base path with the test name
-    std::string test_path = "displacement_tests/Newmark/mpi/dim3/" + test_name;
+    std::string test_path =
+        "displacement_tests/Newmark/serial/dim3/" + test_name;
 
     // Load config.yaml from the test directory
     std::string config_file = test_path + "/config.yaml";
@@ -74,44 +67,25 @@ struct TestConfig3D {
 
 // ----- Parse test directories ------------- //
 
-// tests_mpi.yaml maps each test directory name to its MPI process count. A
-// given executable is launched at a single size, so it keeps only the cases
-// whose core count matches `target_nproc`. Names are sorted for a deterministic
-// gtest order.
 std::vector<std::string>
-parse_3D_test_directories(const std::string &tests_file, int target_nproc) {
+parse_3D_test_directories(const std::string &tests_file) {
   YAML::Node yaml = YAML::LoadFile(tests_file)["tests3d"];
 
   std::vector<std::string> test_names;
 
-  for (YAML::const_iterator it = yaml.begin(); it != yaml.end(); ++it) {
-    if (it->second.as<int>() == target_nproc)
-      test_names.push_back(it->first.as<std::string>());
+  for (const auto &test_node : yaml) {
+    std::string path = test_node.as<std::string>();
+    test_names.push_back(path);
   }
-
-  std::sort(test_names.begin(), test_names.end());
 
   return test_names;
 }
 
-// Parameterized test fixture for the MPI Newmark tests. Named distinctly from
-// the serial fixture so the discovered gtest/ctest names carry "MPI" (e.g.
-// DisplacementMPITests/NewmarkMPI.3D/"<case>") and never collide with serial.
-class NewmarkMPI : public ::testing::TestWithParam<std::string> {
+// Parameterized test fixture for Newmark tests
+class Newmark : public ::testing::TestWithParam<std::string> {
 protected:
   void SetUp() override {
-    // Skip if the launched MPI size does not satisfy the requested size.
-    if (!SPECFEMEnvironment::IsMPISizeValid()) {
-      GTEST_SKIP() << SPECFEMEnvironment::GetMPISizeError();
-    }
-
-    // Skip ranks that are outside the active communicator (excluded ranks when
-    // the launch size exceeds the requested size).
-    if (specfem::MPI::communicator() == MPI_COMM_NULL) {
-      GTEST_SKIP() << "Rank " << specfem::MPI::get_rank()
-                   << " is outside the participating range [0-"
-                   << (SPECFEM_MPI_TEST_NPROC - 1) << "].";
-    }
+    // Any setup needed for each test
   }
 
   void TearDown() override {
@@ -119,33 +93,21 @@ protected:
   }
 };
 
-TEST_P(NewmarkMPI, 3D) {
+TEST_P(Newmark, 3D) {
   const std::string &test_path = GetParam();
 
   // Load the test configuration from the directory
   TestConfig3D Test = TestConfig3D::load_from_directory(test_path);
 
-  // The per-test process count must match the size this executable was
-  // launched with (tests are grouped into tests_mpi<N>.yaml by size).
-  EXPECT_EQ(Test.number_of_processors, SPECFEM_MPI_TEST_NPROC)
-      << "Test " << Test.name << " declares nproc=" << Test.number_of_processors
-      << " but executable runs with " << SPECFEM_MPI_TEST_NPROC
-      << " processes.";
-
-  if (specfem::MPI::main_proc()) {
-    std::cout << "-------------------------------------------------------\n"
-              << "\033[0;32m[RUNNING]\033[0m Test: " << Test.name << "\n"
-              << "-------------------------------------------------------\n\n"
-              << std::endl;
-  }
+  std::cout << "-------------------------------------------------------\n"
+            << "\033[0;32m[RUNNING]\033[0m Test: " << Test.name << "\n"
+            << "-------------------------------------------------------\n\n"
+            << std::endl;
 
   const auto parameter_file = Test.specfem_config;
 
   specfem::runtime_configuration::setup setup(parameter_file);
 
-  // get_databases() applies specfem::MPI::format_proc_filename(), so the
-  // configured "mesh-database: .../database.bin" resolves to the per-rank
-  // ".../database/proc_N.bin" automatically when size > 1.
   const auto database_filename = setup.get_databases();
   const auto &source_entries = setup.get_source_entries();
   const auto stations_node = setup.get_stations();
@@ -182,7 +144,19 @@ TEST_P(NewmarkMPI, 3D) {
   // Read receivers from stations file
   auto receivers = specfem::io::read_3d_receivers(stations_node);
 
+  std::cout << "Receiver Information:" << std::endl;
+  std::cout << "-------------------------------" << std::endl;
+  std::cout << "Number of receivers : " + std::to_string(receivers.size())
+            << "\n"
+            << std::endl;
+
+  for (auto &receiver : receivers) {
+    std::cout << receiver->print();
+  }
+
   const auto seismogram_types = setup.get_seismogram_types();
+
+  // Check only displacement seismogram types are being computed
 
   if (receivers.size() == 0) {
     FAIL() << "--------------------------------------------------\n"
@@ -224,25 +198,13 @@ TEST_P(NewmarkMPI, 3D) {
   solver->run();
 
   // --------------------------------------------------------------
-  //                   Gather seismograms to the main rank
+  //                   Write Seismograms
   // --------------------------------------------------------------
 
   auto seismograms = assembly.receivers;
 
   seismograms.sync_seismograms();
-  // Collective reduction of per-rank seismograms onto the main rank. Every rank
-  // MUST call this; only the comparison below is restricted to the main rank.
-  seismograms.gather_to_main();
 
-  // Non-main ranks have done their part (located receivers + contributed to the
-  // reduction). The comparison against the reference traces runs on rank 0
-  // only, where the full set of stations now holds the gathered data.
-  if (!specfem::MPI::main_proc()) {
-    return;
-  }
-
-  // --------------------------------------------------------------
-  //                   Compare against reference traces
   // --------------------------------------------------------------
 
   // An impl function for the seismogram writer used here for generation
@@ -321,7 +283,7 @@ TEST_P(NewmarkMPI, 3D) {
       FAIL() << "--------------------------------------------------\n"
              << "\033[0;31m[FAILED]\033[0m Test failed\n"
              << " - Test: " << Test.name << "\n"
-             << " - Error: Norm of the error is greater than the tolerance\n"
+             << " - Error: Norm of the error is greater than 1e-3\n"
              << " - Station: " << station_name << "\n"
              << " - Network: " << network_name << "\n"
              << " - Error: " << error << "\n"
@@ -337,25 +299,18 @@ TEST_P(NewmarkMPI, 3D) {
             << std::endl;
 }
 
-// Load test directories and create parameterized test instances. All MPI cases
-// live in a single tests_mpi.yaml (name -> core count); this executable keeps
-// only the cases whose core count matches its launch size
-// (SPECFEM_MPI_TEST_NPROC). Reading just this one file at discovery time is
-// safe (it is copied to the test output dir POST_BUILD, before per-case data
-// exists).
+// Load test directories and create parameterized test instances
 std::vector<std::string> GetTestDirectories() {
-  const std::string tests_filename =
-      "displacement_tests/Newmark/mpi/dim3/tests_mpi.yaml";
-  return parse_3D_test_directories(tests_filename, SPECFEM_MPI_TEST_NPROC);
+  std::string tests_filename = "displacement_tests/Newmark/dim3/tests.yaml";
+  return parse_3D_test_directories(tests_filename);
 }
 
 // Instantiate the parameterized test with all configurations
-INSTANTIATE_TEST_SUITE_P(DisplacementMPITests, NewmarkMPI,
+INSTANTIATE_TEST_SUITE_P(DisplacementTests, Newmark,
                          ::testing::ValuesIn(GetTestDirectories()));
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
-  ::testing::AddGlobalTestEnvironment(
-      new SPECFEMEnvironment(SPECFEM_MPI_TEST_NPROC));
+  ::testing::AddGlobalTestEnvironment(new SPECFEMEnvironment);
   return RUN_ALL_TESTS();
 }

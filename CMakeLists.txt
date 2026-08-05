@@ -306,7 +306,7 @@ add_subdirectory(core)
 # Include tests
 if (SPECFEM_BUILD_TESTS)
         message(STATUS "Including tests.")
-        add_subdirectory(tests/unit-tests)
+        add_subdirectory(tests)
 endif()
 
 if (SPECFEM_BUILD_BENCHMARKS)
