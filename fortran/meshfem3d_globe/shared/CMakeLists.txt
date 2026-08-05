@@ -12,6 +12,7 @@ set(MESHFEM3DG_SHARED_MODULE
 )
 
 set(MESHFEM3DG_SHARED_SOURCES
+  adjacency_graph.f90
   assemble_MPI_scalar.f90
   assemble_MPI_vector.f90
   auto_ner.f90

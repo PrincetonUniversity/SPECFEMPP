@@ -28,7 +28,9 @@
   subroutine create_meshes()
 
   use constants, only: ADD_TRINF,NLAYER_TRINF
-  use shared_parameters, only: T_min_period,ATTENUATION
+  use shared_parameters, only: T_min_period,ATTENUATION,SPECFEMPP_DATABASE
+
+  use specfempp_database_par, only: save_database_specfempp_write
 
   use meshfem_par
   use regions_mesh_par2, only: NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,NSPEC2D_CMB,NSPEC2D_ICB
@@ -229,6 +231,13 @@
 
   ! end of loop on all the regions
   enddo
+
+  ! merges the accumulated regions and writes the thin SPECFEM++ mesh database,
+  ! one merged single-mesh file per rank
+  if (SPECFEMPP_DATABASE) then
+    call save_database_specfempp_write()
+    call synchronize_all()
+  endif
 
   ! user output
   if (myrank == 0) then

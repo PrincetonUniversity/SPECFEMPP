@@ -88,6 +88,7 @@ set(MESHFEM3DG_MESH_SOURCES
   moho_stretching.f90
   save_arrays_solver.f90
   save_arrays_solver_hdf5.F90
+  save_database_specfempp.F90
   save_model_meshfiles.f90
   save_model_meshfiles_hdf5.F90
   setup_color_perm.f90

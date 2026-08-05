@@ -52,7 +52,10 @@
 
   use shared_parameters, only: &
     R_CENTRAL_CUBE,RICB,RCMB,RINF, &
-    HDF5_ENABLED
+    HDF5_ENABLED,SPECFEMPP_DATABASE
+
+  use specfempp_database_par, only: save_database_specfempp_accumulate, &
+    specfempp_has_reference_geometry
 
   use meshfem_par, only: &
     myrank,nspec,iregion_code, &
@@ -96,7 +99,9 @@
     rmassx,rmassy,rmassz,b_rmassx,b_rmassy, &
     rmass_ocean_load, &
     iMPIcut_xi,iMPIcut_eta, &
-    ispec_is_tiso
+    ispec_is_tiso, &
+    xelm_ref_store,yelm_ref_store,zelm_ref_store, &
+    rmin_store,rmax_store,elem_in_crust_store
 
   ! absorb
   use regions_mesh_par2, only: iboun, nimin, nimax, njmin, njmax, nkmin_xi,nkmin_eta, &
@@ -401,6 +406,12 @@
       ! saves MPI interface info
       call save_arrays_solver_MPI()
 
+      ! accumulates this region into the thin SPECFEM++ mesh database.
+      ! the merged single-mesh file is emitted after the region loop, in create_meshes().
+      if (SPECFEMPP_DATABASE) then
+        call save_database_specfempp_accumulate(NSPEC2D_BOTTOM,NSPEC2D_TOP)
+      endif
+
       ! boundary mesh for MOHO, 400 and 670 discontinuities
       if (SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
         ! user output
@@ -521,6 +532,14 @@
   deallocate(eta_anisostore)
   deallocate(ispec_is_tiso)
 
+  ! per-element context for the thin SPECFEM++ database (already consumed by the writer above)
+  if (allocated(xelm_ref_store)) then
+    deallocate(xelm_ref_store,yelm_ref_store,zelm_ref_store)
+  endif
+  if (allocated(rmin_store)) then
+    deallocate(rmin_store,rmax_store,elem_in_crust_store)
+  endif
+
   deallocate(c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
              c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
              c36store,c44store,c45store,c46store,c55store,c56store,c66store)
@@ -558,7 +577,9 @@
 
   use constants
 
-  use shared_parameters, only: ratio_sampling_array
+  use shared_parameters, only: ratio_sampling_array,SPECFEMPP_DATABASE
+
+  use specfempp_database_par, only: specfempp_has_reference_geometry
 
   use meshfem_par, only: &
     nspec,iregion_code, &
@@ -623,6 +644,29 @@
   eta_anisostore(:,:,:,:) = 0.0_CUSTOM_REAL
 
   ispec_is_tiso(:) = .false.
+
+  ! per-element context for the thin SPECFEM++ database (filled in compute_element_properties)
+  if (ipass == 2 .and. SPECFEMPP_DATABASE) then
+    allocate(rmin_store(nspec), &
+             rmax_store(nspec), &
+             elem_in_crust_store(nspec),stat=ier)
+    if (ier /= 0) stop 'Error in allocate 7b'
+
+    rmin_store(:) = 0.d0
+    rmax_store(:) = 0.d0
+    elem_in_crust_store(:) = .false.
+
+    if (specfempp_has_reference_geometry()) then
+      allocate(xelm_ref_store(NGNOD,nspec), &
+               yelm_ref_store(NGNOD,nspec), &
+               zelm_ref_store(NGNOD,nspec),stat=ier)
+      if (ier /= 0) stop 'Error in allocate 7c'
+
+      xelm_ref_store(:,:) = 0.d0
+      yelm_ref_store(:,:) = 0.d0
+      zelm_ref_store(:,:) = 0.d0
+    endif
+  endif
 
   ! Stacey absorbing boundaries
   if (NCHUNKS /= 6) then
