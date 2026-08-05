@@ -169,17 +169,19 @@ rule reports:
         # isolate. Per-binary steps are non-fatal -- one odd binary must never sink
         # the whole report. A binary's own profiles are its cov-<sig>-*.profraw
         # files; we recover <sig> with an instant --gtest_list_tests probe, run
-        # from the test dir (the cwd ctest uses) so startup-time file access in a
-        # binary doesn't make the probe abort.
+        # from the test working directory (the cwd ctest uses, where the test data
+        # is linked) so startup-time file access in a binary doesn't make the probe
+        # abort. The binaries stay in the build tree, so address them absolutely.
         probe={BUILD}/probe
         probe_abs="$(pwd)/$probe"
-        testdir={BUILD}/tests/unit-tests
+        testdir="$(pwd)/{BUILD}/tests/run"
         : > {output.lcov}
         for b in "${{objects[@]}}"; do
             name=$(basename "$b")
+            bin_abs="$(pwd)/$b"
             rm -rf "$probe"; mkdir -p "$probe"
             ( cd "$testdir" && LLVM_PROFILE_FILE="$probe_abs/p-%m-%p.profraw" \
-                "./$name" --gtest_list_tests ) >/dev/null 2>&1 || true
+                "$bin_abs" --gtest_list_tests ) >/dev/null 2>&1 || true
             one=""
             praw=$(ls "$probe"/p-*.profraw 2>/dev/null | head -1)
             if [ -n "$praw" ]; then

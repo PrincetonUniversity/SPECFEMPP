@@ -1,4 +1,4 @@
-#include "../../SPECFEM_Environment.hpp"
+#include "SPECFEM_Environment.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/io/sources/impl/reader.hpp"
 #include "specfem/setup.hpp"
