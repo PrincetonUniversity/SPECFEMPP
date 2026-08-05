@@ -5,10 +5,19 @@ This benchmark creates a minimal six-chunk global mesh with `xmeshfem3D_globe`.
 It is intentionally mesher-only:
 
 - `NCHUNKS = 6`
-- `NEX_XI = NEX_ETA = 16`
-- `NPROC_XI = NPROC_ETA = 1`
+- `NEX_XI = NEX_ETA = 32`
+- `NPROC_XI = NPROC_ETA = 1` (so the run uses 6 MPI ranks, one per chunk)
 - `MODEL = 1D_isotropic_prem`
+- ellipticity is enabled to exercise reference-anchor output; surface topography
+  remains disabled because its external ETOPO dataset is not part of this benchmark
 - gravity, rotation, and attenuation are disabled
+
+`SPECFEMPP_DATABASE = .true.` is set, so the mesher also writes the thin SPECFEM++
+mesh database (`DATABASES_MPI/proc??????_specfempp_database.bin`) alongside its own
+solver databases. `check_database.py` validates those files: record framing,
+node/element consistency, CSR adjacency symmetry, CMB/ICB node welding, boundary face
+counts, and cross-rank agreement on the MPI interfaces. Both the snakemake workflow
+and the CMake target run it.
 
 Configure SPECFEM++ with the globe mesher enabled:
 

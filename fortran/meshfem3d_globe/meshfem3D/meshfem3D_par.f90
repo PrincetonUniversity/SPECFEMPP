@@ -381,6 +381,15 @@
   ! flags for transverse isotropic elements
   logical, dimension(:), allocatable :: ispec_is_tiso
 
+  ! per-element context captured for the thin SPECFEM++ database (SPECFEMPP_DATABASE)
+  ! reference anchor positions: spherical + Moho-stretched, before all
+  ! topography/ellipticity deformation. dimensions (NGNOD,nspec),
+  ! non-dimensional.
+  double precision, dimension(:,:), allocatable :: xelm_ref_store,yelm_ref_store,zelm_ref_store
+  ! radial shell bounds of each element (non-dimensional) and Moho-stretching crust flag
+  double precision, dimension(:), allocatable :: rmin_store,rmax_store
+  logical, dimension(:), allocatable :: elem_in_crust_store
+
   ! name of the database file
   character(len=MAX_STRING_LEN) :: prname, prname_adios
 

@@ -12,6 +12,7 @@ set(CURRENT_BENCHMARK_BUILD_DIR
 file(
   COPY
     ${CMAKE_CURRENT_SOURCE_DIR}/README.md
+    ${CMAKE_CURRENT_SOURCE_DIR}/check_database.py
     ${CMAKE_CURRENT_SOURCE_DIR}/DATA
   DESTINATION ${CURRENT_BENCHMARK_BUILD_DIR}
 )
@@ -32,9 +33,12 @@ if(SPECFEM_BUILD_MESHFEM3D_GLOBE)
             ${CMAKE_COMMAND} -E chdir ${CURRENT_BENCHMARK_BUILD_DIR}
             ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 6
             $<TARGET_FILE:xmeshfem3D_globe>
-    COMMAND ${CMAKE_COMMAND} -E compare_files
-            ${CURRENT_BENCHMARK_BUILD_DIR}/DATABASES_MPI/mesh_parameters.bin
-            ${CURRENT_BENCHMARK_BUILD_DIR}/DATABASES_MPI/mesh_parameters.bin
+    # validates the thin SPECFEM++ mesh database (SPECFEMPP_DATABASE = .true. in the
+    # Par_file): record framing, node/element consistency, CSR symmetry, CMB/ICB
+    # welding, boundary face counts and cross-rank MPI interface agreement
+    COMMAND ${CMAKE_COMMAND} -E chdir ${CURRENT_BENCHMARK_BUILD_DIR}
+            uv run --project ${PROJECT_SOURCE_DIR} --group examples
+            python check_database.py DATABASES_MPI
     DEPENDS xmeshfem3D_globe
     WORKING_DIRECTORY ${CURRENT_BENCHMARK_BUILD_DIR}
     COMMENT "Generating dim3_globe global_small_mesh with xmeshfem3D_globe"
