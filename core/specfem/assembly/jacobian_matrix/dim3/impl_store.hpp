@@ -7,6 +7,11 @@
 
 namespace specfem::assembly {
 
+/**
+ * @brief Internally store a 3D SIMD Jacobian matrix accessor.
+ *
+ * This is an internal implementation detail and is not part of the public API.
+ */
 template <
     bool on_device, typename IndexType, typename ContainerType,
     typename PointType,
@@ -78,6 +83,11 @@ inline void impl_store(const IndexType &index, const ContainerType &container,
   }
 }
 
+/**
+ * @brief Internally store a 3D scalar Jacobian matrix accessor.
+ *
+ * This is an internal implementation detail and is not part of the public API.
+ */
 template <
     bool on_device, typename PointIndexType, typename ContainerType,
     typename PointType,

@@ -39,7 +39,7 @@ rule run_solver:
                 "S0050",
             ],
             network_name=["AA"],
-            component=["BXX", "BXZ"],
+            component=["FXX", "FXZ"],
         ),
         log="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/output.log",
     resources:
@@ -68,7 +68,7 @@ rule plot_seismogram:
                 "S0050",
             ],
             network_name=["AA"],
-            component=["BXX", "BXZ"],
+            component=["FXX", "FXZ"],
         ),
     output:
         traces="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/plot.png",
@@ -95,7 +95,7 @@ rule plot_seismogram:
             # Only get a selected few stations
             files = []
             for station in station_name:
-                globstr = directory + f"/AA.{station}.S2.BX?.semd"
+                globstr = directory + f"/AA.{station}.S2.FX?.semd"
                 files.extend(glob.glob(globstr))
 
             ## iterate over all seismograms

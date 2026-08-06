@@ -1,4 +1,4 @@
-#include "../../../../SPECFEM_Environment.hpp"
+#include "SPECFEM_Environment.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/io.hpp"
 #include "specfem/logger.hpp"
