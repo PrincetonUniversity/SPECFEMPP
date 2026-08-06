@@ -34,7 +34,7 @@
 // appears once, for the outer-core acoustic tag, where zero is a flag rather
 // than a computed quantity.
 
-namespace {
+namespace specfem::globe_model_test {
 
 // From fortran/meshfem3d_globe/setup/constants.h.in:890-908
 constexpr int iregion_crust_mantle = 1;
@@ -190,8 +190,6 @@ protected:
 
   std::unique_ptr<specfem::globe_model::Oracle> oracle_;
 };
-
-} // namespace
 
 // -----------------------------------------------------------------------------
 // Quadrature contract
@@ -637,3 +635,5 @@ TEST_F(PremOracleTest, ReturnsPositiveQmuInSolidsWhenAttenuationIsOn) {
     EXPECT_GT(properties.qmu[i], 0.0);
   }
 }
+
+} // namespace specfem::globe_model_test
