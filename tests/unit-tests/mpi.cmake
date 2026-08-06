@@ -161,3 +161,25 @@ specfem_add_test(assembly_mpi_dim3_8proc_tests
   LIBRARIES ${ASSEMBLY_MPI_TEST_LIBS}
             $<$<BOOL:${SPECFEM_ENABLE_HDF5}>:hdf5>
 )
+
+# SPECFEM3D_GLOBE model oracle (issue #2001).
+#
+# Lives here rather than in serial.cmake because the globe Fortran tree has no
+# serial MPI stub, so the oracle is only ever built in MPI configurations. It
+# runs on a single rank: the catalog's setup is collective but the spike does
+# not exercise multi-rank broadcasts.
+#
+# This is the only test target that links a Fortran archive, which is half of
+# what it is here to verify.
+if(SPECFEM_BUILD_MESHFEM3D_GLOBE)
+  specfem_add_test(globe_model_prem_tests
+    MPI_RANKS 1
+    SOURCES   models/prem.cpp
+              models/runner.cpp
+    LIBRARIES specfem::globe_model
+              specfem_environment
+              MPI::MPI_CXX
+              gtest
+              -lpthread -lm
+  )
+endif()
