@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(MESHFEM3DG_MESHFEM3D LANGUAGES Fortran C)
+project(MESHFEM3D_GLOBE_MESHFEM3D LANGUAGES Fortran C)
 
 set(CMAKE_Fortran_STANDARD 95)
 set(CMAKE_Fortran_STANDARD_REQUIRED ON)
 
-set(MESHFEM3DG_MESH_SOURCES
+set(MESHFEM3D_GLOBE_MESH_SOURCES
   add_missing_nodes.f90
   add_topography.f90
   add_topography_410_650.f90
@@ -105,40 +105,40 @@ set(MESHFEM3DG_MESH_SOURCES
   write_AVS_DX_surface_data.f90
 )
 
-add_library(meshfem3Dg_mesh_module meshfem3D_par.f90)
-add_library(meshfem3Dg::mesh_module ALIAS meshfem3Dg_mesh_module)
-target_link_libraries(meshfem3Dg_mesh_module PRIVATE
-  meshfem3Dg::constants
-  meshfem3Dg::shared_module
+add_library(meshfem3D_globe_mesh_module meshfem3D_par.f90)
+add_library(meshfem3D_globe::mesh_module ALIAS meshfem3D_globe_mesh_module)
+target_link_libraries(meshfem3D_globe_mesh_module PRIVATE
+  meshfem3D_globe::constants
+  meshfem3D_globe::shared_module
 )
 
-add_library(meshfem3Dg_mesh ${MESHFEM3DG_MESH_SOURCES})
-add_library(meshfem3Dg::mesh ALIAS meshfem3Dg_mesh)
-target_link_libraries(meshfem3Dg_mesh PRIVATE
-  meshfem3Dg::mesh_module
-  meshfem3Dg::shared
-  meshfem3Dg::shared_module
-  meshfem3Dg::shared_hdf5_module
-  meshfem3Dg::shared_adios_module
-  meshfem3Dg::version
+add_library(meshfem3D_globe_mesh ${MESHFEM3D_GLOBE_MESH_SOURCES})
+add_library(meshfem3D_globe::mesh ALIAS meshfem3D_globe_mesh)
+target_link_libraries(meshfem3D_globe_mesh PRIVATE
+  meshfem3D_globe::mesh_module
+  meshfem3D_globe::shared
+  meshfem3D_globe::shared_module
+  meshfem3D_globe::shared_hdf5_module
+  meshfem3D_globe::shared_adios_module
+  meshfem3D_globe::version
 )
 
 add_executable(xmeshfem3D_globe meshfem3D.f90)
 target_link_libraries(xmeshfem3D_globe PRIVATE
-  meshfem3Dg::mesh
-  meshfem3Dg::mesh_module
-  meshfem3Dg::shared
-  meshfem3Dg::shared_module
-  meshfem3Dg::shared_hdf5_module
-  meshfem3Dg::shared_adios_module
-  meshfem3Dg::adios_methods_stubs
-  meshfem3Dg::asdf_methods_stubs
-  meshfem3Dg::param_reader
-  meshfem3Dg::version
+  meshfem3D_globe::mesh
+  meshfem3D_globe::mesh_module
+  meshfem3D_globe::shared
+  meshfem3D_globe::shared_module
+  meshfem3D_globe::shared_hdf5_module
+  meshfem3D_globe::shared_adios_module
+  meshfem3D_globe::adios_methods_stubs
+  meshfem3D_globe::asdf_methods_stubs
+  meshfem3D_globe::param_reader
+  meshfem3D_globe::version
   specfem::version
 )
 
-target_link_libraries(meshfem3Dg_mesh PRIVATE MPI::MPI_Fortran)
+target_link_libraries(meshfem3D_globe_mesh PRIVATE MPI::MPI_Fortran)
 target_link_libraries(xmeshfem3D_globe PRIVATE MPI::MPI_Fortran)
 
 if(SPECFEM_INSTALL)

@@ -232,7 +232,7 @@ add_subdirectory(fortran/meshfem3d)
 set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
 # =================================
 
-# ========== MESHFEM3DG =============
+# ========== MESHFEM3D_GLOBE =============
 if(SPECFEM_BUILD_MESHFEM3D_GLOBE)
   if(NOT SPECFEM_ENABLE_MPI)
     message(FATAL_ERROR
