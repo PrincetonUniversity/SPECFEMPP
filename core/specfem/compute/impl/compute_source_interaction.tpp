@@ -88,6 +88,10 @@ void compute_source_interaction_core(
       "specfem::compute::compute_source_interaction", mapped_policy,
       KOKKOS_LAMBDA(const typename decltype(mapped_policy)::base_index_type
                         &iterator_index) {
+        // NVCC does not allow an extended __host__ __device__ lambda to first
+        // capture a variable from within an if constexpr statement.
+        (void)boundaries;
+
         const auto mapped_index = iterator_index.get_index();
         PointSourceType point_source;
         specfem::assembly::load_on_device(mapped_index, sources, point_source);
@@ -100,9 +104,8 @@ void compute_source_interaction_core(
             specfem::medium_physics::compute_source_contribution(
                 point_source, point_property);
 
-        if constexpr (
-            boundary_tag ==
-            specfem::element::boundary_tag::acoustic_free_surface) {
+        if constexpr (Tags::boundary_tag ==
+                      specfem::element::boundary_tag::acoustic_free_surface) {
           PointBoundaryType point_boundary;
           specfem::assembly::load_on_device(mapped_index, boundaries,
                                             point_boundary);
