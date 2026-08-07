@@ -8,6 +8,8 @@ include("${CMAKE_SOURCE_DIR}/cmake/googletest.cmake")
 
 # Explicitly set binary output directory for tests
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests/unit-tests)
+set(TEST_RUN_DIR ${CMAKE_BINARY_DIR}/tests/run)
+file(MAKE_DIRECTORY ${TEST_RUN_DIR})
 
 include_directories(.)
 
@@ -15,7 +17,7 @@ set(TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Some of the writing test need to write somewhere and we don't want that
 # to be in the source directory
-set(TEST_OUTPUT_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+set(TEST_OUTPUT_DIR ${TEST_RUN_DIR})
 
 enable_testing()
 
@@ -944,6 +946,7 @@ if(NOT MPI_PARALLEL)
       gtest_discover_tests(${test_target}
         DISCOVERY_MODE POST_BUILD
         DISCOVERY_TIMEOUT 300
+        WORKING_DIRECTORY ${TEST_RUN_DIR}
       )
   endforeach()
 
@@ -968,6 +971,10 @@ if(NOT MPI_PARALLEL)
       file(CREATE_LINK
           ${CMAKE_CURRENT_SOURCE_DIR}/${dir_name}
           ${CMAKE_CURRENT_BINARY_DIR}/${dir_name}
+          SYMBOLIC)
+      file(CREATE_LINK
+          ${CMAKE_CURRENT_SOURCE_DIR}/${dir_name}
+          ${TEST_RUN_DIR}/${dir_name}
           SYMBOLIC)
   endforeach()
 
