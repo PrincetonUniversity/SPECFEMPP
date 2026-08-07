@@ -14,8 +14,9 @@
 !  arrays -- SPECFEM++ rebuilds those itself, and gets material values by calling back
 !  into the globe model routines with the MODEL_CONFIG block written here.
 !
-!  This writer is additive and opt-in: it runs only when SPECFEMPP_DATABASE = .true.
-!  in the Par_file, and it does not modify anything save_arrays_solver.f90 produces.
+!  This writer is opt-in: it runs only when SPECFEMPP_DATABASE = .true. in the
+!  Par_file. In that mode it replaces the full solver, MPI, boundary, and
+!  visualization outputs while leaving their writer implementations available.
 !
 !  ------------------------------------------------------------------------------
 !  Record layout (format_version = 1)

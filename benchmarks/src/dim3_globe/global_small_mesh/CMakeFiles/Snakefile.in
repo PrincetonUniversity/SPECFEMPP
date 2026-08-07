@@ -21,7 +21,6 @@ rule mesh:
         cmt=example_dir / "DATA" / "CMTSOLUTION",
         xmeshfem3d_globe=xmeshfem3d_globe,
     output:
-        example_dir / "DATABASES_MPI" / "mesh_parameters.bin",
         expand(
             str(example_dir / "DATABASES_MPI" / "proc{rank:06d}_specfempp_database.bin"),
             rank=range(nproc),
