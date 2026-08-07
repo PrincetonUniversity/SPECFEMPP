@@ -385,78 +385,80 @@
     ! for gravity integrals
     ! gravity integrals computation won't need mesh nor solver runs
     if (.not. GRAVITY_INTEGRALS) then
-      if (myrank == 0) then
-        write(IMAIN,*)
-        write(IMAIN,*) '  ...saving binary files'
-        call flush_IMAIN()
-      endif
-      ! saves mesh and model parameters for solver
-      if (ADIOS_FOR_ARRAYS_SOLVER) then
-        call save_arrays_solver_adios(idoubling,ibool,xstore,ystore,zstore, &
-                                      NSPEC2DMAX_XMIN_XMAX, NSPEC2DMAX_YMIN_YMAX, &
-                                      NSPEC2D_TOP,NSPEC2D_BOTTOM)
-      else if (HDF5_ENABLED) then
-        call save_arrays_solver_hdf5(idoubling,ibool,xstore,ystore,zstore, &
-                                     NSPEC2D_TOP,NSPEC2D_BOTTOM)
-      else
-        call save_arrays_solver(idoubling,ibool,xstore,ystore,zstore, &
-                                NSPEC2D_TOP,NSPEC2D_BOTTOM)
-      endif
-
-      ! saves MPI interface info
-      call save_arrays_solver_MPI()
-
       ! accumulates this region into the thin SPECFEM++ mesh database.
       ! the merged single-mesh file is emitted after the region loop, in create_meshes().
       if (SPECFEMPP_DATABASE) then
         call save_database_specfempp_accumulate(NSPEC2D_BOTTOM,NSPEC2D_TOP)
-      endif
-
-      ! boundary mesh for MOHO, 400 and 670 discontinuities
-      if (SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
-        ! user output
-        call synchronize_all()
+      else
+        ! Retain the legacy full-mesh writers for non-SPECFEM++ workflows, but do
+        ! not emit their output when generating the thin SPECFEM++ database.
         if (myrank == 0) then
           write(IMAIN,*)
-          write(IMAIN,*) '  ...saving boundary mesh files'
+          write(IMAIN,*) '  ...saving binary files'
           call flush_IMAIN()
         endif
-        ! saves boundary file
+        ! saves mesh and model parameters for solver
         if (ADIOS_FOR_ARRAYS_SOLVER) then
-          call save_arrays_boundary_adios()
+          call save_arrays_solver_adios(idoubling,ibool,xstore,ystore,zstore, &
+                                        NSPEC2DMAX_XMIN_XMAX, NSPEC2DMAX_YMIN_YMAX, &
+                                        NSPEC2D_TOP,NSPEC2D_BOTTOM)
         else if (HDF5_ENABLED) then
-          call save_arrays_boundary_hdf5()
+          call save_arrays_solver_hdf5(idoubling,ibool,xstore,ystore,zstore, &
+                                       NSPEC2D_TOP,NSPEC2D_BOTTOM)
         else
-          call save_arrays_boundary()
-        endif
-      endif
-
-      ! saves mesh files for visualization, GLL model updates, etc.
-      ! create AVS or DX mesh data for the slices
-      if (SAVE_MESH_FILES .and. &
-          iregion_code /= IREGION_TRINFINITE .and. iregion_code /= IREGION_INFINITE) then
-        ! user output
-        call synchronize_all()
-        if (myrank == 0) then
-          write(IMAIN,*)
-          write(IMAIN,*) '  ...saving mesh files'
-          call flush_IMAIN()
+          call save_arrays_solver(idoubling,ibool,xstore,ystore,zstore, &
+                                  NSPEC2D_TOP,NSPEC2D_BOTTOM)
         endif
 
-        ! outputs model files
-        if (ADIOS_FOR_SOLVER_MESHFILES) then
-          ! adios file output
-          call save_model_meshfiles_adios()
-        else if (HDF5_ENABLED) then
-          call save_model_meshfiles_hdf5()
-        else
-          ! outputs model files in binary format
-          call save_model_meshfiles()
+        ! saves MPI interface info
+        call save_arrays_solver_MPI()
+
+        ! boundary mesh for MOHO, 400 and 670 discontinuities
+        if (SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
+          ! user output
+          call synchronize_all()
+          if (myrank == 0) then
+            write(IMAIN,*)
+            write(IMAIN,*) '  ...saving boundary mesh files'
+            call flush_IMAIN()
+          endif
+          ! saves boundary file
+          if (ADIOS_FOR_ARRAYS_SOLVER) then
+            call save_arrays_boundary_adios()
+          else if (HDF5_ENABLED) then
+            call save_arrays_boundary_hdf5()
+          else
+            call save_arrays_boundary()
+          endif
         endif
 
-        ! AVS/DX output
-        if (SAVE_MESHFILES_AVS_DX_FORMAT) then
-          call write_AVS_DX_output(npointot,iregion_code)
+        ! saves mesh files for visualization, GLL model updates, etc.
+        ! create AVS or DX mesh data for the slices
+        if (SAVE_MESH_FILES .and. &
+            iregion_code /= IREGION_TRINFINITE .and. iregion_code /= IREGION_INFINITE) then
+          ! user output
+          call synchronize_all()
+          if (myrank == 0) then
+            write(IMAIN,*)
+            write(IMAIN,*) '  ...saving mesh files'
+            call flush_IMAIN()
+          endif
+
+          ! outputs model files
+          if (ADIOS_FOR_SOLVER_MESHFILES) then
+            ! adios file output
+            call save_model_meshfiles_adios()
+          else if (HDF5_ENABLED) then
+            call save_model_meshfiles_hdf5()
+          else
+            ! outputs model files in binary format
+            call save_model_meshfiles()
+          endif
+
+          ! AVS/DX output
+          if (SAVE_MESHFILES_AVS_DX_FORMAT) then
+            call write_AVS_DX_output(npointot,iregion_code)
+          endif
         endif
       endif
 

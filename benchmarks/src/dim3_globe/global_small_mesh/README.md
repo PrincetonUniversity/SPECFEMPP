@@ -12,9 +12,9 @@ It is intentionally mesher-only:
   remains disabled because its external ETOPO dataset is not part of this benchmark
 - gravity, rotation, and attenuation are disabled
 
-`SPECFEMPP_DATABASE = .true.` is set, so the mesher also writes the thin SPECFEM++
-mesh database (`DATABASES_MPI/proc??????_specfempp_database.bin`) alongside its own
-solver databases. `check_database.py` validates those files: record framing,
+`SPECFEMPP_DATABASE = .true.` is set, so the mesher writes only the thin SPECFEM++
+mesh database (`DATABASES_MPI/proc??????_specfempp_database.bin`) and skips its
+native full-mesh databases. `check_database.py` validates those files: record framing,
 node/element consistency, CSR adjacency symmetry, CMB/ICB node welding, boundary face
 counts, and cross-rank agreement on the MPI interfaces. Both the snakemake workflow
 and the CMake target run it.
