@@ -1,7 +1,7 @@
-project(MESHFEM3DG_SETUP LANGUAGES Fortran C)
+project(MESHFEM3D_GLOBE_SETUP LANGUAGES Fortran C)
 cmake_minimum_required(VERSION 3.10)
 
-message(STATUS "-- Configuring meshfem3Dg headers...")
+message(STATUS "-- Configuring meshfem3D_globe headers...")
 
 enable_language(Fortran)
 enable_language(C)
@@ -103,22 +103,22 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/precision.h.in
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.fh.in
                ${CMAKE_CURRENT_BINARY_DIR}/version.fh @ONLY)
 
-add_library(meshfem3Dg_config INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/config.h)
-add_library(meshfem3Dg::config ALIAS meshfem3Dg_config)
-target_include_directories(meshfem3Dg_config INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
+add_library(meshfem3D_globe_config INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+add_library(meshfem3D_globe::config ALIAS meshfem3D_globe_config)
+target_include_directories(meshfem3D_globe_config INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
 
-add_library(meshfem3Dg_config_fortran INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/config.fh)
-add_library(meshfem3Dg::config_fortran ALIAS meshfem3Dg_config_fortran)
-target_include_directories(meshfem3Dg_config_fortran INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
+add_library(meshfem3D_globe_config_fortran INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/config.fh)
+add_library(meshfem3D_globe::config_fortran ALIAS meshfem3D_globe_config_fortran)
+target_include_directories(meshfem3D_globe_config_fortran INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
 
-add_library(meshfem3Dg_constants INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/constants.h)
-add_library(meshfem3Dg::constants ALIAS meshfem3Dg_constants)
-target_include_directories(meshfem3Dg_constants INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
+add_library(meshfem3D_globe_constants INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/constants.h)
+add_library(meshfem3D_globe::constants ALIAS meshfem3D_globe_constants)
+target_include_directories(meshfem3D_globe_constants INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
 
-add_library(meshfem3Dg_precision INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/precision.h)
-add_library(meshfem3Dg::precision ALIAS meshfem3Dg_precision)
-target_include_directories(meshfem3Dg_precision INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
+add_library(meshfem3D_globe_precision INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/precision.h)
+add_library(meshfem3D_globe::precision ALIAS meshfem3D_globe_precision)
+target_include_directories(meshfem3D_globe_precision INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
 
-add_library(meshfem3Dg_version INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/version.fh)
-add_library(meshfem3Dg::version ALIAS meshfem3Dg_version)
-target_include_directories(meshfem3Dg_version INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
+add_library(meshfem3D_globe_version INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/version.fh)
+add_library(meshfem3D_globe::version ALIAS meshfem3D_globe_version)
+target_include_directories(meshfem3D_globe_version INTERFACE ${CMAKE_CURRENT_BINARY_DIR})

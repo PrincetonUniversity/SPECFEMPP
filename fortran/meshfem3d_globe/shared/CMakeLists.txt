@@ -1,17 +1,17 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(MESHFEM3DG_SHARED LANGUAGES Fortran C CXX)
+project(MESHFEM3D_GLOBE_SHARED LANGUAGES Fortran C CXX)
 
 set(CMAKE_Fortran_STANDARD 95)
 set(CMAKE_Fortran_STANDARD_REQUIRED ON)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/../setup)
 
-set(MESHFEM3DG_SHARED_MODULE
+set(MESHFEM3D_GLOBE_SHARED_MODULE
   shared_par.f90
 )
 
-set(MESHFEM3DG_SHARED_SOURCES
+set(MESHFEM3D_GLOBE_SHARED_SOURCES
   adjacency_graph.f90
   assemble_MPI_scalar.f90
   assemble_MPI_vector.f90
@@ -68,43 +68,43 @@ set(MESHFEM3DG_SHARED_SOURCES
   ylm.f90
 )
 
-add_library(meshfem3Dg_shared_module ${MESHFEM3DG_SHARED_MODULE})
-add_library(meshfem3Dg::shared_module ALIAS meshfem3Dg_shared_module)
-target_link_libraries(meshfem3Dg_shared_module PRIVATE meshfem3Dg::constants)
+add_library(meshfem3D_globe_shared_module ${MESHFEM3D_GLOBE_SHARED_MODULE})
+add_library(meshfem3D_globe::shared_module ALIAS meshfem3D_globe_shared_module)
+target_link_libraries(meshfem3D_globe_shared_module PRIVATE meshfem3D_globe::constants)
 
-add_library(meshfem3Dg_shared_hdf5_module hdf5_manager.F90)
-add_library(meshfem3Dg::shared_hdf5_module ALIAS meshfem3Dg_shared_hdf5_module)
-target_link_libraries(meshfem3Dg_shared_hdf5_module PRIVATE
-  meshfem3Dg::shared_module
+add_library(meshfem3D_globe_shared_hdf5_module hdf5_manager.F90)
+add_library(meshfem3D_globe::shared_hdf5_module ALIAS meshfem3D_globe_shared_hdf5_module)
+target_link_libraries(meshfem3D_globe_shared_hdf5_module PRIVATE
+  meshfem3D_globe::shared_module
 )
 
-add_library(meshfem3Dg_shared_adios_module adios_manager.F90)
-add_library(meshfem3Dg::shared_adios_module ALIAS meshfem3Dg_shared_adios_module)
-target_link_libraries(meshfem3Dg_shared_adios_module PRIVATE
-  meshfem3Dg::constants
-  meshfem3Dg::shared_module
+add_library(meshfem3D_globe_shared_adios_module adios_manager.F90)
+add_library(meshfem3D_globe::shared_adios_module ALIAS meshfem3D_globe_shared_adios_module)
+target_link_libraries(meshfem3D_globe_shared_adios_module PRIVATE
+  meshfem3D_globe::constants
+  meshfem3D_globe::shared_module
 )
 
-add_library(meshfem3Dg_adios_methods_stubs adios_method_stubs.c)
-add_library(meshfem3Dg::adios_methods_stubs ALIAS meshfem3Dg_adios_methods_stubs)
-target_link_libraries(meshfem3Dg_adios_methods_stubs PRIVATE meshfem3Dg::config)
+add_library(meshfem3D_globe_adios_methods_stubs adios_method_stubs.c)
+add_library(meshfem3D_globe::adios_methods_stubs ALIAS meshfem3D_globe_adios_methods_stubs)
+target_link_libraries(meshfem3D_globe_adios_methods_stubs PRIVATE meshfem3D_globe::config)
 
-add_library(meshfem3Dg_asdf_methods_stubs asdf_method_stubs.c)
-add_library(meshfem3Dg::asdf_methods_stubs ALIAS meshfem3Dg_asdf_methods_stubs)
-target_link_libraries(meshfem3Dg_asdf_methods_stubs PRIVATE meshfem3Dg::config)
+add_library(meshfem3D_globe_asdf_methods_stubs asdf_method_stubs.c)
+add_library(meshfem3D_globe::asdf_methods_stubs ALIAS meshfem3D_globe_asdf_methods_stubs)
+target_link_libraries(meshfem3D_globe_asdf_methods_stubs PRIVATE meshfem3D_globe::config)
 
-add_library(meshfem3Dg_param_reader param_reader.c)
-add_library(meshfem3Dg::param_reader ALIAS meshfem3Dg_param_reader)
-target_link_libraries(meshfem3Dg_param_reader PRIVATE meshfem3Dg::config)
+add_library(meshfem3D_globe_param_reader param_reader.c)
+add_library(meshfem3D_globe::param_reader ALIAS meshfem3D_globe_param_reader)
+target_link_libraries(meshfem3D_globe_param_reader PRIVATE meshfem3D_globe::config)
 
-add_library(meshfem3Dg_shared ${MESHFEM3DG_SHARED_SOURCES})
-add_library(meshfem3Dg::shared ALIAS meshfem3Dg_shared)
-target_link_libraries(meshfem3Dg_shared PRIVATE
-  meshfem3Dg::shared_module
-  meshfem3Dg::shared_hdf5_module
-  meshfem3Dg::shared_adios_module
-  meshfem3Dg::param_reader
-  meshfem3Dg::constants
+add_library(meshfem3D_globe_shared ${MESHFEM3D_GLOBE_SHARED_SOURCES})
+add_library(meshfem3D_globe::shared ALIAS meshfem3D_globe_shared)
+target_link_libraries(meshfem3D_globe_shared PRIVATE
+  meshfem3D_globe::shared_module
+  meshfem3D_globe::shared_hdf5_module
+  meshfem3D_globe::shared_adios_module
+  meshfem3D_globe::param_reader
+  meshfem3D_globe::constants
 )
 
-target_link_libraries(meshfem3Dg_shared PRIVATE MPI::MPI_Fortran)
+target_link_libraries(meshfem3D_globe_shared PRIVATE MPI::MPI_Fortran)
