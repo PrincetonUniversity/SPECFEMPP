@@ -142,13 +142,7 @@ public:
   ///@}
 
   KOKKOS_FUNCTION
-  void init() {
-    this->xix() = 0.0;
-    this->gammax() = 0.0;
-    this->xiz() = 0.0;
-    this->gammaz() = 0.0;
-    return;
-  }
+  void init() { _data = tensor_type(); }
 
   /**
    * @brief Access the underlying 2x2 transformation tensor
@@ -373,18 +367,7 @@ public:
   ///@}
 
   KOKKOS_FUNCTION
-  void init() {
-    this->xix() = 0.0;
-    this->etax() = 0.0;
-    this->gammax() = 0.0;
-    this->xiy() = 0.0;
-    this->etay() = 0.0;
-    this->gammay() = 0.0;
-    this->xiz() = 0.0;
-    this->etaz() = 0.0;
-    this->gammaz() = 0.0;
-    return;
-  }
+  void init() { _data = tensor_type(); }
 
   /**
    * @brief Access the underlying 3x3 transformation tensor
@@ -583,7 +566,8 @@ public:
   ///@}
 
   KOKKOS_FUNCTION bool operator==(const jacobian_matrix &rhs) const {
-    return (static_cast<base_type>(*this) == static_cast<base_type>(rhs)) &&
+    return (static_cast<const base_type &>(*this) ==
+            static_cast<const base_type &>(rhs)) &&
            (specfem::utilities::is_close(this->jacobian(), rhs.jacobian()));
   }
 
@@ -738,7 +722,8 @@ public:
 
   // operator==
   KOKKOS_FUNCTION bool operator==(const jacobian_matrix &rhs) const {
-    return (static_cast<base_type>(*this) == static_cast<base_type>(rhs)) &&
+    return (static_cast<const base_type &>(*this) ==
+            static_cast<const base_type &>(rhs)) &&
            (specfem::utilities::is_close(this->jacobian(), rhs.jacobian()));
   }
 
@@ -819,22 +804,20 @@ private:
 // It must therefore have no self-pointers -- storing references into its own
 // tensor made it dangle after a `memcpy`, which segfaulted under threaded
 // backends while passing on Serial (issue #2008).
-#define SPECFEM_ASSERT_JACOBIAN_MATRIX_RELOCATABLE(UseSIMD)                    \
-  static_assert(                                                               \
-      std::is_trivially_copyable_v<specfem::point::jacobian_matrix<            \
-              specfem::element::dimension_tag::dim2, false, UseSIMD>> &&       \
-          std::is_trivially_copyable_v<specfem::point::jacobian_matrix<        \
-              specfem::element::dimension_tag::dim2, true, UseSIMD>> &&        \
-          std::is_trivially_copyable_v<specfem::point::jacobian_matrix<        \
-              specfem::element::dimension_tag::dim3, false, UseSIMD>> &&       \
-          std::is_trivially_copyable_v<specfem::point::jacobian_matrix<        \
-              specfem::element::dimension_tag::dim3, true, UseSIMD>>,          \
-      "point::jacobian_matrix must be trivially copyable")
+//
+// The `store_jacobian = true` specializations derive from their
+// `store_jacobian = false` counterparts, and a derived class cannot be
+// trivially copyable unless its bases are, so checking the former covers both.
+template <bool UseSIMD>
+inline constexpr bool jacobian_matrix_is_relocatable_v =
+    std::is_trivially_copyable_v<jacobian_matrix<
+        specfem::element::dimension_tag::dim2, true, UseSIMD>> &&
+    std::is_trivially_copyable_v<
+        jacobian_matrix<specfem::element::dimension_tag::dim3, true, UseSIMD>>;
 
-SPECFEM_ASSERT_JACOBIAN_MATRIX_RELOCATABLE(false);
-SPECFEM_ASSERT_JACOBIAN_MATRIX_RELOCATABLE(true);
-
-#undef SPECFEM_ASSERT_JACOBIAN_MATRIX_RELOCATABLE
+static_assert(jacobian_matrix_is_relocatable_v<false> &&
+                  jacobian_matrix_is_relocatable_v<true>,
+              "point::jacobian_matrix must be trivially copyable");
 
 } // namespace point
 } // namespace specfem

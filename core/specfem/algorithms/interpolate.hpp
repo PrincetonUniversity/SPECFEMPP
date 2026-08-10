@@ -4,6 +4,7 @@
 #include "specfem/execution.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
+#include <type_traits>
 
 /**
  * @file interpolate.hpp
@@ -81,12 +82,18 @@ interpolate_function(const PolynomialViewType &polynomial,
   const int N = polynomial.extent(0);
   using T = typename FunctionViewType::value_type;
 
+  // `Kokkos::Sum<T>` bit-copies the reduction scalar out of per-thread scratch
+  // on threaded backends, so a `T` holding pointers into itself dangles once
+  // that scratch is freed -- see issue #2008.
+  static_assert(std::is_trivially_copyable_v<T>,
+                "Reduction scalar must be trivially copyable");
+
   T result(0.0);
 
   impl::InterpolateFunctor functor(polynomial, function);
 
   Kokkos::parallel_reduce(
-      Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<2> >({ 0, 0 }, { N, N }),
+      Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<2>>({ 0, 0 }, { N, N }),
       functor, Kokkos::Sum<T>(result));
 
   return result;
@@ -119,10 +126,16 @@ interpolate_function(const PolynomialViewType &polynomial,
   const int N = polynomial.extent(0);
   using T = typename FunctionViewType::value_type;
 
+  // `Kokkos::Sum<T>` bit-copies the reduction scalar out of per-thread scratch
+  // on threaded backends, so a `T` holding pointers into itself dangles once
+  // that scratch is freed -- see issue #2008.
+  static_assert(std::is_trivially_copyable_v<T>,
+                "Reduction scalar must be trivially copyable");
+
   T result(0.0);
   impl::InterpolateFunctor functor(polynomial, function);
 
-  Kokkos::parallel_reduce(Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<3> >(
+  Kokkos::parallel_reduce(Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<3>>(
                               { 0, 0, 0 }, { N, N, N }),
                           functor, Kokkos::Sum<T>(result));
 
