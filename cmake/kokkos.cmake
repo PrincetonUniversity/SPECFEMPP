@@ -56,7 +56,7 @@ if (DEFINED KOKKOS_PATH)
 else()
 
     # Pinned to the Kokkos 5.2.0 release candidate branch
-    set(KOKKOS_VERSION "release-candidate-5.2.0")
+    set(KOKKOS_VERSION "5.2.0")
 
     # Set common FetchContent parameters
     # set(KOKKOS_URL "https://github.com/kokkos/kokkos/archive/refs/tags/${KOKKOS_VERSION}.zip")
