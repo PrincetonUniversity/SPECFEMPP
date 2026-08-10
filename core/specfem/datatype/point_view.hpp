@@ -222,5 +222,17 @@ struct TensorPointViewType
   }
 };
 
+// Point views are bit-copied by Kokkos (as `View` elements and as reduction
+// scalars), so they must stay relocatable in both the scalar and the SIMD
+// instantiation -- see issue #2008.
+static_assert(
+    std::is_trivially_copyable_v<VectorPointViewType<type_real, 3, false>> &&
+        std::is_trivially_copyable_v<VectorPointViewType<type_real, 3, true>> &&
+        std::is_trivially_copyable_v<
+            TensorPointViewType<type_real, 3, 3, false>> &&
+        std::is_trivially_copyable_v<
+            TensorPointViewType<type_real, 3, 3, true>>,
+    "Point view types must be trivially copyable");
+
 } // namespace datatype
 } // namespace specfem

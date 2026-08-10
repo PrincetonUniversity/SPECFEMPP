@@ -399,16 +399,16 @@ TEST(Stress, ElasticIsotropicCosserat3D_CoupleStressAcceleration) {
 
   // Create Jacobian matrix (identity for simplicity)
   JacobianMatrixType jacobian_matrix;
-  jacobian_matrix.xix = 1.0;
-  jacobian_matrix.xiy = 0.0;
-  jacobian_matrix.xiz = 0.0;
-  jacobian_matrix.etax = 0.0;
-  jacobian_matrix.etay = 1.0;
-  jacobian_matrix.etaz = 0.0;
-  jacobian_matrix.gammax = 0.0;
-  jacobian_matrix.gammay = 0.0;
-  jacobian_matrix.gammaz = 1.0;
-  jacobian_matrix.jacobian = 1.0; // det(J) = 1
+  jacobian_matrix.xix() = 1.0;
+  jacobian_matrix.xiy() = 0.0;
+  jacobian_matrix.xiz() = 0.0;
+  jacobian_matrix.etax() = 0.0;
+  jacobian_matrix.etay() = 1.0;
+  jacobian_matrix.etaz() = 0.0;
+  jacobian_matrix.gammax() = 0.0;
+  jacobian_matrix.gammay() = 0.0;
+  jacobian_matrix.gammaz() = 1.0;
+  jacobian_matrix.jacobian() = 1.0; // det(J) = 1
 
   // Initialize acceleration
   AccelerationType acceleration;
@@ -443,7 +443,7 @@ TEST(Stress, ElasticIsotropicCosserat3D_CoupleStressAcceleration) {
   expected_acceleration(1) = 0.0;
   expected_acceleration(2) = 0.0;
   expected_acceleration(3) =
-      (sigma_zy - sigma_yz) * factor / jacobian_matrix.jacobian;
+      (sigma_zy - sigma_yz) * factor / jacobian_matrix.jacobian();
   expected_acceleration(4) = 0.0; // No xz/zx asymmetry
   expected_acceleration(5) = 0.0; // No xy/yx asymmetry
 

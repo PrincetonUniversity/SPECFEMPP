@@ -93,15 +93,13 @@ public:
 
   /**
    * @brief Copy constructor
-   * @param other Array to copy from
+   *
+   * Defaulted on purpose: a user-provided copy constructor would make the type
+   * non-trivially-copyable, and Kokkos bit-copies this type both as a `View`
+   * element and as a reduction scalar.
    */
   KOKKOS_INLINE_FUNCTION
-  RegisterArray(const RegisterArray &other) {
-
-    for (std::size_t i = 0; i < size; ++i) {
-      m_value[i] = other.m_value[i];
-    }
-  }
+  RegisterArray(const RegisterArray &other) = default;
 
   /**
    * @brief Default constructor (zero-initialized)
@@ -254,6 +252,17 @@ private:
     return 0.0;
   }
 };
+
+// Kokkos bit-copies register arrays (as `View` elements, and as reduction
+// scalars via `Kokkos::Sum<>`), so they must survive a `memcpy`. Guard the
+// property here rather than discovering it as a segfault under a threaded
+// backend -- see issue #2008.
+static_assert(
+    std::is_trivially_copyable_v<RegisterArray<
+            double, Kokkos::extents<std::size_t, 3, 3>, Kokkos::layout_left>> &&
+        std::is_trivially_copyable_v<RegisterArray<
+            float, Kokkos::extents<std::size_t, 3, 3>, Kokkos::layout_left>>,
+    "RegisterArray must be trivially copyable");
 
 } // namespace datatype
 } // namespace specfem
