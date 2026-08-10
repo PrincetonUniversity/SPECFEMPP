@@ -55,7 +55,6 @@ if (DEFINED KOKKOS_PATH)
     # Pop the indentation for Kokkos messages
 else()
 
-    # Pinned to the Kokkos 5.2.0 release candidate branch
     set(KOKKOS_VERSION "5.2.0")
 
     # Set common FetchContent parameters
