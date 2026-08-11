@@ -152,11 +152,9 @@ struct Attenuation<specfem::element::dimension_tag::dim2>
   template <specfem::element::medium_tag MediumTag,
             specfem::element::property_tag PropertyTag>
   static constexpr bool has_attenuation() {
-    return specfem::tag_dispatch::contains_v<
-        decltype(attenuation_medium_combinations),
-        specfem::tags::Tags<
-            dimension_tag, MediumTag, PropertyTag,
-            specfem::element::attenuation_tag::constant_isotropic>>;
+    return has_attenuation<
+        MediumTag, PropertyTag,
+        specfem::element::attenuation_tag::constant_isotropic>();
   }
 
   /**
