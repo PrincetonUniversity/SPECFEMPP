@@ -8,6 +8,7 @@
 #include "simd.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
+#include <type_traits>
 
 namespace specfem {
 namespace datatype {

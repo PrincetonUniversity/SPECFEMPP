@@ -6,6 +6,7 @@
 #include "specfem/setup.hpp"
 #include "specfem/utilities.hpp"
 #include <Kokkos_Core.hpp>
+#include <type_traits>
 
 namespace specfem {
 namespace point {
