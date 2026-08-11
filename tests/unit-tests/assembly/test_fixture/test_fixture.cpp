@@ -40,7 +40,9 @@ template <> Assembly<specfem::element::dimension_tag::dim2>::Assembly() {
     const auto electromagnetic_wave = Test.get_electromagnetic_wave();
     auto mesh = specfem::io::read_2d_mesh(
         database_file, elastic_wave, electromagnetic_wave,
-        specfem::attenuation::Setup{ Test.is_attenuation_enabled() });
+        specfem::attenuation::Setup{ Test.is_attenuation_enabled(),
+                                     Test.get_attenuation_f0(),
+                                     Test.get_attenuation_band() });
 
     this->Meshes.push_back(mesh);
     this->suffixes.push_back(Test.suffix);
