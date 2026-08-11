@@ -309,13 +309,30 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::run() {
     u_new_->update(static_cast<scalar_type>(1), *u_, 0);
     problem_->setProblem(u_new_, rhs_);
     if (gmres_->solve() != Belos::Converged) {
+      // Single-precision PseudoBlockGmres can abort with a
+      // "loss of accuracy" flag while the solution is fine; trust only the
+      // true residual b - A u.
+      system_operator_->apply(*u_new_, *tmp_);
+      tmp_->update(static_cast<scalar_type>(1), *rhs_,
+                   static_cast<scalar_type>(-1));
+      const type_real residual_norm = tmp_->norm2();
+      const type_real rhs_norm = rhs_->norm2();
+      if (!(residual_norm <= config_.gmres_tolerance * rhs_norm)) {
+        std::ostringstream message;
+        message << "specfem::solver::ImplicitNewmarkSolver: GMRES did not "
+                   "converge at step "
+                << istep << " (" << gmres_->getNumIters()
+                << " iterations, true relative residual "
+                << residual_norm / rhs_norm << ", requested "
+                << config_.gmres_tolerance << ").";
+        throw std::runtime_error(message.str());
+      }
       std::ostringstream message;
-      message << "specfem::solver::ImplicitNewmarkSolver: GMRES did not "
-                 "converge at step "
-              << istep << " (" << gmres_->getNumIters()
-              << " iterations, achieved tolerance " << gmres_->achievedTol()
-              << ", requested " << config_.gmres_tolerance << ").";
-      throw std::runtime_error(message.str());
+      message << "GMRES flagged loss of accuracy at step " << istep
+              << " but the true relative residual " << residual_norm / rhs_norm
+              << " meets the tolerance; "
+              << "continuing.";
+      specfem::Logger::info(message.str());
     }
 
     // a_{n+1} = c_a0 (u_{n+1} - u_n - dt v_n) - c_a2 a_n
@@ -347,6 +364,15 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::run() {
                    config_.steady_state_tolerance * velocity_scale &&
                acceleration_increment <=
                    config_.steady_state_tolerance * acceleration_scale;
+      std::ostringstream message;
+      message << "Steady-state check at step " << istep << ": |dv|/max|v| = "
+              << (velocity_scale > 0 ? velocity_increment / velocity_scale : 0)
+              << ", |da|/max|a| = "
+              << (acceleration_scale > 0
+                      ? acceleration_increment / acceleration_scale
+                      : 0)
+              << " (tolerance " << config_.steady_state_tolerance << ")";
+      specfem::Logger::info(message.str());
     }
 
     std::swap(u_, u_new_);
