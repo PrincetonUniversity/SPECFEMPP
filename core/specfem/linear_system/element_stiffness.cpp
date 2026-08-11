@@ -18,7 +18,8 @@ using elastic_isotropic_tags =
 template <typename Tags>
 void specfem::linear_system::validate_stiffness_scope(
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
-        &assembly) {
+        &assembly,
+    const specfem::linear_system::StiffnessScope scope) {
 
   static_assert(Tags::dimension_tag == specfem::element::dimension_tag::dim3,
                 "validate_stiffness_scope takes a dim3 assembly; Tags must be "
@@ -60,16 +61,27 @@ void specfem::linear_system::validate_stiffness_scope(
     }
 
     const auto boundary_tag = element_types.get_boundary_tag(ispec);
-    if (boundary_tag != specfem::element::boundary_tag::none &&
-        boundary_tag != specfem::element::boundary_tag::acoustic_free_surface) {
+    const bool boundary_admitted =
+        boundary_tag == specfem::element::boundary_tag::none ||
+        boundary_tag == specfem::element::boundary_tag::acoustic_free_surface ||
+        (scope == specfem::linear_system::StiffnessScope::with_stacey &&
+         boundary_tag == specfem::element::boundary_tag::stacey);
+    if (!boundary_admitted) {
       std::ostringstream message;
       message << "specfem::linear_system::validate_stiffness_scope: element "
               << ispec << " has boundary tag '"
-              << specfem::element::to_string(boundary_tag)
-              << "'; only natural boundary conditions ('none', "
-                 "'acoustic_free_surface') are supported. Stacey boundaries "
-                 "add a velocity-dependent term the stiffness probe does not "
-                 "capture.";
+              << specfem::element::to_string(boundary_tag) << "'; ";
+      if (scope == specfem::linear_system::StiffnessScope::with_stacey) {
+        message << "only 'none', 'acoustic_free_surface', and 'stacey' are "
+                   "supported in the with_stacey scope. Dirichlet masks "
+                   "('composite_stacey_dirichlet') are not representable yet.";
+      } else {
+        message << "only natural boundary conditions ('none', "
+                   "'acoustic_free_surface') are supported. Stacey boundaries "
+                   "add a velocity-dependent term the stiffness probe does "
+                   "not capture; opt in with StiffnessScope::with_stacey and "
+                   "assemble the damping matrix separately.";
+      }
       throw std::runtime_error(message.str());
     }
   }
@@ -98,7 +110,8 @@ void specfem::linear_system::compute_element_stiffness(
 // Explicit instantiations: 3D elastic isotropic, NGLL = 5
 template void specfem::linear_system::validate_stiffness_scope<
     specfem::linear_system_impl::elastic_isotropic_tags>(
-    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &);
+    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &,
+    const specfem::linear_system::StiffnessScope);
 
 template void specfem::linear_system::compute_element_stiffness<
     5, specfem::linear_system_impl::elastic_isotropic_tags>(

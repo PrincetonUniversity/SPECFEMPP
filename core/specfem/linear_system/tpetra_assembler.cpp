@@ -17,7 +17,8 @@
 
 template <typename Tags>
 specfem::linear_system::StiffnessAssembler<Tags>::StiffnessAssembler(
-    const AssemblyType &assembly, const int batch_size)
+    const AssemblyType &assembly, const int batch_size,
+    const specfem::linear_system::StiffnessScope scope)
     : assembly_(assembly),
       dof_map_(DofMap::from_assembly<Tags::medium_tag>(assembly)),
       batch_size_(batch_size) {
@@ -28,7 +29,7 @@ specfem::linear_system::StiffnessAssembler<Tags>::StiffnessAssembler(
         "least 1.");
   }
 
-  specfem::linear_system::validate_stiffness_scope<Tags>(assembly_);
+  specfem::linear_system::validate_stiffness_scope<Tags>(assembly_, scope);
 
   // Single-medium milestone: matrix blocks coupling different media
   // (fluid-solid) are deferred, so reject mixed meshes outright rather than

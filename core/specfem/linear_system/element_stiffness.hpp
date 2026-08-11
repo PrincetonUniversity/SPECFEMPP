@@ -37,15 +37,28 @@ local_dof_index(const int icomp, const int iz, const int iy, const int ix) {
 }
 
 /**
+ * @brief Boundary conditions the caller's probe/assembly can represent.
+ *
+ * `natural_boundaries` keeps the historical strict check: only `none` and
+ * `acoustic_free_surface` boundary tags (natural boundary conditions) are
+ * admitted. `with_stacey` additionally admits `boundary_tag::stacey` -- valid
+ * because the displacement probe runs with velocity \f$ \equiv 0 \f$, where
+ * the Stacey dashpot contributes exactly nothing to \f$ K \f$; the caller
+ * must assemble the damping matrix \f$ C \f$ separately (see
+ * @ref DampingAssembler). `composite_stacey_dirichlet` stays rejected in
+ * both scopes (a Dirichlet mask is not representable yet).
+ */
+enum class StiffnessScope { natural_boundaries, with_stacey };
+
+/**
  * @brief Verify that every element of `Tags::medium_tag` is within the scope
  * supported by the stiffness probe.
  *
  * Throws `std::runtime_error` naming the offending element and tag unless all
  * elements of the medium match `Tags::property_tag`, have
- * `attenuation_tag::none`, a boundary tag of `none` or
- * `acoustic_free_surface` (natural boundary conditions only -- Stacey terms
- * would add a velocity-dependent contribution the probe does not capture),
- * and the mesh uses NGLL = 5 (the only 3D instantiation).
+ * `attenuation_tag::none`, a boundary tag admitted by `scope` (see
+ * @ref StiffnessScope), and the mesh uses NGLL = 5 (the only 3D
+ * instantiation).
  *
  * The check is per-medium: a mixed mesh passes as long as the elements of
  * `Tags::medium_tag` conform. Restrictions on the mesh as a whole (e.g.
@@ -53,11 +66,14 @@ local_dof_index(const int icomp, const int iz, const int iy, const int ix) {
  *
  * @tparam Tags Compile-time tags (dimension, medium, property, attenuation)
  * @param assembly Assembled mesh, element types, and material properties
+ * @param scope Boundary conditions the caller can represent; defaults to the
+ *              strict natural-boundaries check
  */
 template <typename Tags>
 void validate_stiffness_scope(
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
-        &assembly);
+        &assembly,
+    const StiffnessScope scope = StiffnessScope::natural_boundaries);
 
 /**
  * @brief Compute dense element stiffness blocks \f$ K_e \f$ for a contiguous
