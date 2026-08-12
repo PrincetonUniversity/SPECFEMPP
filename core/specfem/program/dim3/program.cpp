@@ -34,7 +34,6 @@ void program_3d(
   });
 
   // Get simulation parameters
-  const specfem::simulation::type simulation_type = setup.get_simulation_type();
   const type_real dt = setup.get_dt();
   const int nsteps = setup.get_nsteps();
   // --------------------------------------------------------------
@@ -46,6 +45,9 @@ void program_3d(
   auto mesh_start_time = std::chrono::system_clock::now();
   const auto mesh = specfem::io::read_3d_mesh(database_filename,
                                               setup.get_attenuation_setup());
+  const specfem::simulation::type simulation_type =
+      setup.get_simulation_type(mesh.materials.has_attenuation());
+
   const std::chrono::duration<double> mesh_read_time =
       std::chrono::system_clock::now() - mesh_start_time;
   specfem::Logger::info([&](std::ostringstream &oss) {
@@ -94,8 +96,8 @@ void program_3d(
   specfem::assembly::assembly<specfem::element::dimension_tag::dim3> assembly(
       mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
       setup.get_t0(), dt, nsteps, max_seismogram_time_step,
-      nstep_between_samples, setup.get_simulation_type(),
-      setup.allocate_boundary_values(), setup.instantiate_property_reader(),
+      nstep_between_samples, simulation_type, setup.allocate_boundary_values(),
+      setup.instantiate_property_reader(),
       setup.get_flux_scheme_configuration());
 
   // assembly.print() always called (not wrapped in lambda function)
@@ -161,7 +163,8 @@ void program_3d(
   // --------------------------------------------------------------
   //                   Instantiate Timescheme
   // --------------------------------------------------------------
-  const auto time_scheme = setup.instantiate_timescheme(assembly.fields);
+  const auto time_scheme =
+      setup.instantiate_timescheme(assembly.fields, simulation_type);
   specfem::Logger::info(
       [&](std::ostringstream &oss) { oss << time_scheme->to_string(); });
   // --------------------------------------------------------------
@@ -171,7 +174,8 @@ void program_3d(
   // --------------------------------------------------------------
   const auto wavefield_reader = setup.instantiate_wavefield_reader<
       specfem::element::dimension_tag::dim3>();
-  if (wavefield_reader) {
+  if (wavefield_reader &&
+      simulation_type != specfem::simulation::type::combined_undoatt) {
     tasks.push_back(wavefield_reader);
   }
   // --------------------------------------------------------------
@@ -200,8 +204,8 @@ void program_3d(
   //                   Instantiate Solver
   // --------------------------------------------------------------
   specfem::Logger::info("Instantiate solver\n-------------------------------");
-  std::shared_ptr<specfem::solver::solver> solver =
-      setup.instantiate_solver<5>(dt, assembly, time_scheme, tasks);
+  std::shared_ptr<specfem::solver::solver> solver = setup.instantiate_solver<5>(
+      dt, assembly, time_scheme, simulation_type, tasks, wavefield_reader);
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------

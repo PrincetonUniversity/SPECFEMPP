@@ -1,0 +1,65 @@
+parameters:
+
+  header:
+    title: Homogeneous Elastic Kernel (3D) - Adjoint
+    description: |
+      Material systems : Viscoelastic domain (1)
+      Interfaces : None
+      Sources : Force source (1) + adjoint source (1)
+      Boundary conditions : Neumann BCs on all edges
+      Output : Sensitivity kernels computed with exact attenuation undoing
+
+  simulation-setup:
+    quadrature:
+      quadrature-type: GLL4
+
+    solver:
+      time-marching:
+        time-scheme:
+          type: Newmark
+          dt: 0.08
+          nstep: 800
+
+    simulation-mode:
+      combined:
+        reader:
+          wavefield:
+            format: NPY
+            directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/Checkpoints"
+            for-adjoint-simulations: true
+            # NT_DUMP_ATTENUATION: read checkpoints every 200 steps.
+            time-interval: 200
+        writer:
+          kernels:
+            format: NPY
+            directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/kernels"
+
+  # Attenuation parameters — reference frequency matches the 0.05 Hz Ricker
+  # source and ATTENUATION_f0_REFERENCE in Par_File; the frequency band is
+  # computed automatically by the mesher (COMPUTE_FREQ_BAND_AUTOMATIC = .true.).
+  attenuation:
+    reference-frequency: 0.05 Hz
+    attenuation-frequency-band:
+      - 0.003 Hz
+      - 0.145 Hz
+
+  receivers:
+    stations: "@CURRENT_BENCHMARK_BUILD_DIR@/DATA/STATIONS"
+    angle: 0.0
+    seismogram-type:
+      - displacement
+    nstep_between_samples: 1
+
+  run-setup:
+    number-of-processors: 1
+    number-of-runs: 1
+
+  databases:
+    mesh-database: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES/Database.bin"
+
+  sources:
+    YAML:
+      - "@CURRENT_BENCHMARK_BUILD_DIR@/forward_source.yaml"
+      - "@CURRENT_BENCHMARK_BUILD_DIR@/adjoint_source.yaml"
+
+  log-file: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/output_adjoint"
