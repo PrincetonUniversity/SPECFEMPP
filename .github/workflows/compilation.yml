@@ -16,7 +16,7 @@ jobs:
       - name: Check GNU and Cmake versions
         run: gcc --version && cmake --version
       - name: Checkout repository
-        uses: actions/checkout@v1
+        uses: actions/checkout@v4
       - name: Configure Serial build
         run: cmake --preset debug
       - name: Build
@@ -28,7 +28,7 @@ jobs:
       - name: Check GNU and Cmake versions
         run: gcc --version && cmake --version
       - name: Checkout repository
-        uses: actions/checkout@v1
+        uses: actions/checkout@v4
       - name: Configure Serial build
         run: cmake --preset release
       - name: Build

@@ -36,6 +36,19 @@
       }
     },
     {
+      "name": "release-openmp",
+      "displayName": "Release -- OpenMP backend, SIMD disabled",
+      "inherits": "release-nosimd",
+      "binaryDir": "build/release-openmp",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-openmp",
+        "Kokkos_ENABLE_SERIAL": "OFF",
+        "Kokkos_ENABLE_OPENMP": "ON",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
+        "SPECFEM_BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-openmp"
+      }
+    },
+    {
       "name": "release-cuda",
       "displayName": "Release -- CUDA enabled",
       "binaryDir": "build/release-cuda",
@@ -361,6 +374,13 @@
     {
       "name": "release-nosimd",
       "configurePreset": "release-nosimd",
+      "targets": [
+        "all"
+      ]
+    },
+    {
+      "name": "release-openmp",
+      "configurePreset": "release-openmp",
       "targets": [
         "all"
       ]

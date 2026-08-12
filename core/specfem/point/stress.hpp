@@ -130,11 +130,9 @@ public:
   value_type operator*(const specfem::point::jacobian_matrix<
                        specfem::element::dimension_tag::dim2, true, UseSIMD>
                            &jacobian_matrix) const {
-    const auto &J = static_cast<
-        const typename std::decay_t<decltype(jacobian_matrix)>::tensor_type &>(
-        jacobian_matrix);
+    const auto &J = jacobian_matrix.tensor();
     value_type F = T * J;
-    F *= jacobian_matrix.jacobian;
+    F *= jacobian_matrix.jacobian();
     return F;
   }
 
@@ -153,11 +151,9 @@ public:
   value_type operator*(const specfem::point::jacobian_matrix<
                        specfem::element::dimension_tag::dim3, true, UseSIMD>
                            &jacobian_matrix) const {
-    const auto &J = static_cast<
-        const typename std::decay_t<decltype(jacobian_matrix)>::tensor_type &>(
-        jacobian_matrix);
+    const auto &J = jacobian_matrix.tensor();
     value_type F = T * J;
-    F *= jacobian_matrix.jacobian;
+    F *= jacobian_matrix.jacobian();
     return F;
   }
 

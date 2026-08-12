@@ -26,18 +26,21 @@ void store_on_host(const PointIndexType &index, const PointType &point,
 
   constexpr static bool store_jacobian = PointType::store_jacobian;
 
-  container.h_xix(index.ispec, index.iz, index.iy, index.ix) = point.xix;
-  container.h_xiy(index.ispec, index.iz, index.iy, index.ix) = point.xiy;
-  container.h_xiz(index.ispec, index.iz, index.iy, index.ix) = point.xiz;
-  container.h_etax(index.ispec, index.iz, index.iy, index.ix) = point.etax;
-  container.h_etay(index.ispec, index.iz, index.iy, index.ix) = point.etay;
-  container.h_etaz(index.ispec, index.iz, index.iy, index.ix) = point.etaz;
-  container.h_gammax(index.ispec, index.iz, index.iy, index.ix) = point.gammax;
-  container.h_gammay(index.ispec, index.iz, index.iy, index.ix) = point.gammay;
-  container.h_gammaz(index.ispec, index.iz, index.iy, index.ix) = point.gammaz;
+  container.h_xix(index.ispec, index.iz, index.iy, index.ix) = point.xix();
+  container.h_xiy(index.ispec, index.iz, index.iy, index.ix) = point.xiy();
+  container.h_xiz(index.ispec, index.iz, index.iy, index.ix) = point.xiz();
+  container.h_etax(index.ispec, index.iz, index.iy, index.ix) = point.etax();
+  container.h_etay(index.ispec, index.iz, index.iy, index.ix) = point.etay();
+  container.h_etaz(index.ispec, index.iz, index.iy, index.ix) = point.etaz();
+  container.h_gammax(index.ispec, index.iz, index.iy, index.ix) =
+      point.gammax();
+  container.h_gammay(index.ispec, index.iz, index.iy, index.ix) =
+      point.gammay();
+  container.h_gammaz(index.ispec, index.iz, index.iy, index.ix) =
+      point.gammaz();
   if constexpr (store_jacobian) {
     container.h_jacobian(index.ispec, index.iz, index.iy, index.ix) =
-        point.jacobian;
+        point.jacobian();
   }
 }
 

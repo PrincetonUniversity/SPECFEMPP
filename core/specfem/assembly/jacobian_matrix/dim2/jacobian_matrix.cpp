@@ -66,7 +66,7 @@ specfem::assembly::jacobian_matrix<specfem::element::dimension_tag::dim2>::
       for (int ix = 0; ix < ngllx; ++ix) {
 
         // compute Jacobian matrix
-        std::vector<std::vector<type_real> > sv_dershape2D(
+        std::vector<std::vector<type_real>> sv_dershape2D(
             2, std::vector<type_real>(ngnod));
         for (int in = 0; in < ngnod; ++in) {
           for (int idim = 0; idim < ndim; ++idim) {
@@ -76,11 +76,11 @@ specfem::assembly::jacobian_matrix<specfem::element::dimension_tag::dim2>::
 
         auto jacobian = jacobian::compute_jacobian(coorg, ngnod, sv_dershape2D);
 
-        this->h_xix(ispec, iz, ix) = jacobian.xix;
-        this->h_gammax(ispec, iz, ix) = jacobian.gammax;
-        this->h_xiz(ispec, iz, ix) = jacobian.xiz;
-        this->h_gammaz(ispec, iz, ix) = jacobian.gammaz;
-        this->h_jacobian(ispec, iz, ix) = jacobian.jacobian;
+        this->h_xix(ispec, iz, ix) = jacobian.xix();
+        this->h_gammax(ispec, iz, ix) = jacobian.gammax();
+        this->h_xiz(ispec, iz, ix) = jacobian.xiz();
+        this->h_gammaz(ispec, iz, ix) = jacobian.gammaz();
+        this->h_jacobian(ispec, iz, ix) = jacobian.jacobian();
       }
     }
   };
@@ -103,7 +103,7 @@ void specfem::assembly::jacobian_matrix<
   specfem::datatype::deep_copy(jacobian, h_jacobian);
 }
 
-std::tuple<bool, Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace> >
+std::tuple<bool, Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace>>
 specfem::assembly::jacobian_matrix<
     specfem::element::dimension_tag::dim2>::check_small_jacobian() const {
   Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace> small_jacobian(
@@ -129,7 +129,7 @@ specfem::assembly::jacobian_matrix<
             const auto jacobian = [&]() {
               PointJacobianMatrixType jacobian_matrix;
               specfem::assembly::load_on_host(index, *this, jacobian_matrix);
-              return jacobian_matrix.jacobian;
+              return jacobian_matrix.jacobian();
             }();
             if (jacobian < threshold) {
               small_jacobian(ispec) = true;

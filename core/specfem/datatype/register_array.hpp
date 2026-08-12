@@ -93,15 +93,13 @@ public:
 
   /**
    * @brief Copy constructor
-   * @param other Array to copy from
+   *
+   * Defaulted on purpose: a user-provided copy constructor would make the type
+   * non-trivially-copyable, and Kokkos bit-copies this type both as a `View`
+   * element and as a reduction scalar.
    */
   KOKKOS_INLINE_FUNCTION
-  RegisterArray(const RegisterArray &other) {
-
-    for (std::size_t i = 0; i < size; ++i) {
-      m_value[i] = other.m_value[i];
-    }
-  }
+  RegisterArray(const RegisterArray &other) = default;
 
   /**
    * @brief Default constructor (zero-initialized)

@@ -17,7 +17,7 @@ jobs:
       - name: Check GNU and Cmake versions
         run: gcc --version && cmake --version
       - name: Checkout repository
-        uses: actions/checkout@v1
+        uses: actions/checkout@v4
       - name: Configure
         run: cmake --preset release
       - name: Build
@@ -25,6 +25,27 @@ jobs:
       - name: Run all tests
         run: cd build/release/tests/unit-tests
           && ctest --verbose
+  # Threaded backend. Kokkos bit-copies point types into per-thread reduction
+  # scratch, which Serial never exercises -- see issue #2008.
+  build-and-test-openmp:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check GNU and Cmake versions
+        run: gcc --version && cmake --version
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Configure
+        run: cmake --preset release-openmp
+      - name: Build
+        run: cmake --build --preset release-openmp -j 2
+      # Covers integration-tests too: the Newmark moment-tensor cases in #2008
+      # only crashed there.
+      - name: Run all tests
+        run: cd build/release-openmp/tests
+          && ctest --verbose
+        env:
+          OMP_NUM_THREADS: 2
+          OMP_PROC_BIND: spread
   # This job is for building and testing with IO dependencies like HDF5 and ADIOS2
   build-and-test-with-io-dependencies:
     runs-on: ubuntu-latest
@@ -32,7 +53,7 @@ jobs:
       - name: Check GNU and Cmake versions
         run: gcc --version && cmake --version
       - name: Checkout repository
-        uses: actions/checkout@v1
+        uses: actions/checkout@v4
       - name: Configure
         run: cmake --preset release-io
       - name: Build
