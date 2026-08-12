@@ -1,6 +1,7 @@
 tests2d:
   - "HomogeneousElasticDomain"
   - "HomogeneousAcousticDomain"
+  - "HomogeneousAcousticFreeSurfaceForceSource"
   - "AcousticElasticCoupledDomain"
   - "AcousticElasticNonconformingCoupledDomain"
 # - "AcousticElasticCoupledDomainVariant2"

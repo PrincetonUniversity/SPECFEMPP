@@ -308,14 +308,17 @@ TEST_P(NewmarkMPI, 3D) {
           }
 
           const auto computed_value = traces(icomp, count, 1);
-          error += std::sqrt((value[icomp] - computed_value) *
-                             (value[icomp] - computed_value));
-          computed_norm += std::sqrt(computed_value * computed_value);
+          const auto difference = value[icomp] - computed_value;
+          error += difference * difference;
+          computed_norm += computed_value * computed_value;
         }
 
         count++;
       }
     }
+
+    error = std::sqrt(error);
+    computed_norm = std::sqrt(computed_norm);
 
     if (error / computed_norm > Test.tolerance ||
         std::isnan(error / computed_norm)) {
