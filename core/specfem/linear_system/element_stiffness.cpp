@@ -16,13 +16,10 @@ using elastic_isotropic_tags =
 } // namespace specfem::linear_system_impl
 
 template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 void specfem::linear_system::validate_stiffness_scope(
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
         &assembly) {
-
-  static_assert(Tags::dimension_tag == specfem::element::dimension_tag::dim3,
-                "validate_stiffness_scope takes a dim3 assembly; Tags must be "
-                "a dim3 bundle.");
 
   if (assembly.mesh.element_grid != 5) {
     throw std::runtime_error(
@@ -76,15 +73,13 @@ void specfem::linear_system::validate_stiffness_scope(
 }
 
 template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 void specfem::linear_system::compute_element_stiffness(
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
         &assembly,
     const specfem::datatype::ElementIndexRange &batch,
     const Kokkos::View<type_real ***, Kokkos::LayoutRight,
                        Kokkos::DefaultExecutionSpace> &k_e) {
-  static_assert(Tags::dimension_tag == specfem::element::dimension_tag::dim3,
-                "compute_element_stiffness takes a dim3 assembly; Tags must "
-                "be a dim3 bundle.");
   if (assembly.mesh.element_grid == 5) {
     specfem::linear_system::compute_element_stiffness<5, Tags>(assembly, batch,
                                                                k_e);

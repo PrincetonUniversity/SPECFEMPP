@@ -8,16 +8,13 @@
 #include <stdexcept>
 
 template <int NGLL, typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 void specfem::linear_system::compute_element_stiffness(
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
         &assembly,
     const specfem::datatype::ElementIndexRange &batch,
     const Kokkos::View<type_real ***, Kokkos::LayoutRight,
                        Kokkos::DefaultExecutionSpace> &k_e) {
-
-  static_assert(Tags::dimension_tag == specfem::element::dimension_tag::dim3,
-                "compute_element_stiffness takes a dim3 assembly; Tags must "
-                "be a dim3 bundle.");
 
   using KernelType =
       specfem::linear_system_impl::stiffness_probe_kernel<NGLL, Tags>;

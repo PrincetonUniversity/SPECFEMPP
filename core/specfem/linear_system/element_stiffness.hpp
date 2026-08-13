@@ -51,10 +51,12 @@ local_dof_index(const int icomp, const int iz, const int iy, const int ix) {
  * `Tags::medium_tag` conform. Restrictions on the mesh as a whole (e.g.
  * single-medium, deferring fluid-solid coupling) belong to the caller.
  *
- * @tparam Tags Compile-time tags (dimension, medium, property, attenuation)
+ * @tparam Tags Compile-time tags (dimension, medium, property, attenuation);
+ *              dimension must be `dim3`
  * @param assembly Assembled mesh, element types, and material properties
  */
 template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 void validate_stiffness_scope(
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
         &assembly);
@@ -80,7 +82,8 @@ void validate_stiffness_scope(
  *
  * @tparam NGLL Number of GLL points per element edge (only 5 instantiated)
  * @tparam Tags Compile-time tags (dimension, medium, property, attenuation);
- *              `Tags::attenuation_tag` must be `none`
+ *              dimension must be `dim3` and `Tags::attenuation_tag` must be
+ *              `none`
  * @param assembly Assembled mesh, jacobian matrix, and material properties
  * @param batch Contiguous element sub-range [begin, end) in compute-domain
  *              indices; the block for element `ispec` lands at slot
@@ -93,6 +96,7 @@ void validate_stiffness_scope(
  *            batched sparse-matrix row inserts.
  */
 template <int NGLL, typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 void compute_element_stiffness(
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
         &assembly,
@@ -107,12 +111,14 @@ void compute_element_stiffness(
  * instantiation. Throws `std::runtime_error` for grids other than 5 (the
  * only 3D instantiation, mirroring the time-marching solver).
  *
- * @tparam Tags Compile-time tags (dimension, medium, property, attenuation)
+ * @tparam Tags Compile-time tags (dimension, medium, property, attenuation);
+ *              dimension must be `dim3`
  * @param assembly Assembled mesh, jacobian matrix, and material properties
  * @param batch Contiguous element sub-range [begin, end)
  * @param k_e Preallocated device buffer (see the NGLL overload)
  */
 template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 void compute_element_stiffness(
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
         &assembly,
