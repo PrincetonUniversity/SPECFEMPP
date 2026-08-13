@@ -125,28 +125,25 @@ read_materials(
           throw std::runtime_error(msg.str());
         }
 
-        if (!attenuation_enabled || (std::abs(Qkappa) < 1e-6)) {
-          auto index = materials.add_material(
-              specfem::medium_container::material<
-                  specfem::element::dimension_tag::dim2, acoustic, isotropic,
-                  no_attenuation>(density, cp, compaction_grad));
-          mapping.push_back({ specfem::element::medium_tag::acoustic,
-                              specfem::element::property_tag::isotropic,
-                              specfem::element::attenuation_tag::none, index,
-                              i });
-
-        } else {
-          auto index = materials.add_material(
-              specfem::medium_container::material<
-                  specfem::element::dimension_tag::dim2, acoustic, isotropic,
-                  constant_isotropic_attenuation>(density, cp, Qkappa,
-                                                  compaction_grad));
-          mapping.push_back(
-              { specfem::element::medium_tag::acoustic,
-                specfem::element::property_tag::isotropic,
-                specfem::element::attenuation_tag::constant_isotropic, index,
-                i });
+        // Acoustic attenuation is not supported: always store the material
+        // as non-attenuating so no unsupported (acoustic, constant_isotropic)
+        // element combination reaches the assembly.
+        if (attenuation_enabled && std::abs(Qkappa) > 1e-6 &&
+            std::abs(Qkappa - 9999.0) > 1e-6) {
+          specfem::Logger::warning(
+              "Acoustic attenuation is not supported. Ignoring Qkappa = " +
+              std::to_string(Qkappa) + " for material set " +
+              std::to_string(read_values.n) +
+              "; the material is treated as non-attenuating.");
         }
+        auto index = materials.add_material(
+            specfem::medium_container::material<
+                specfem::element::dimension_tag::dim2, acoustic, isotropic,
+                no_attenuation>(density, cp, compaction_grad));
+        mapping.push_back({ specfem::element::medium_tag::acoustic,
+                            specfem::element::property_tag::isotropic,
+                            specfem::element::attenuation_tag::none, index,
+                            i });
 
       } else {
 
@@ -294,29 +291,24 @@ read_materials(
       const type_real mufr = static_cast<type_real>(read_values.val11);
       const type_real Qmu = static_cast<type_real>(read_values.val12);
 
-      if (!attenuation_enabled || (std::abs(Qmu - 9999.0) < 1e-6)) {
-        auto index =
-            materials.add_material(specfem::medium_container::material<
-                                   specfem::element::dimension_tag::dim2,
-                                   poroelastic, isotropic, no_attenuation>(
-                rhos, rhof, phi, c, kxx, kxz, kzz, Ks, Kf, Kfr, etaf, mufr));
-        mapping.push_back({ specfem::element::medium_tag::poroelastic,
-                            specfem::element::property_tag::isotropic,
-                            specfem::element::attenuation_tag::none, index,
-                            i });
-      } else {
-        auto index = materials.add_material(
-            specfem::medium_container::material<
-                specfem::element::dimension_tag::dim2, poroelastic, isotropic,
-                constant_isotropic_attenuation>(rhos, rhof, phi, c, kxx, kxz,
-                                                kzz, Ks, Kf, Kfr, etaf, mufr,
-                                                Qmu));
-        mapping.push_back(
-            { specfem::element::medium_tag::poroelastic,
-              specfem::element::property_tag::isotropic,
-              specfem::element::attenuation_tag::constant_isotropic, index,
-              i });
+      // Poroelastic attenuation is not supported: always store the material
+      // as non-attenuating so no unsupported (poroelastic,
+      // constant_isotropic) element combination reaches the assembly.
+      if (attenuation_enabled && std::abs(Qmu - 9999.0) > 1e-6) {
+        specfem::Logger::warning(
+            "Poroelastic attenuation is not supported. Ignoring Qmu = " +
+            std::to_string(Qmu) + " for material set " +
+            std::to_string(read_values.n) +
+            "; the material is treated as non-attenuating.");
       }
+      auto index =
+          materials.add_material(specfem::medium_container::material<
+                                 specfem::element::dimension_tag::dim2,
+                                 poroelastic, isotropic, no_attenuation>(
+              rhos, rhof, phi, c, kxx, kxz, kzz, Ks, Kf, Kfr, etaf, mufr));
+      mapping.push_back({ specfem::element::medium_tag::poroelastic,
+                          specfem::element::property_tag::isotropic,
+                          specfem::element::attenuation_tag::none, index, i });
     } else if (read_values.indic == 4) {
 
       const type_real mu0 = static_cast<type_real>(read_values.val0);
