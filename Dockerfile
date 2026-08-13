@@ -1,6 +1,7 @@
 # Dockerfile to build serial version
 
-FROM gcc:9.5.0
+# Kokkos 5.2 requires GCC >= 10.4 for C++20
+FROM gcc:13
 
 
 # Install vim editor
@@ -9,26 +10,21 @@ RUN apt-get update && apt-get install -y vim wget build-essential git
 # Install Emacs
 RUN apt-get update && apt-get install -y emacs
 
-#Install snakemake
-RUN apt-get update && apt-get install -y python3-pip && pip3 install snakemake
+# Install snakemake (--break-system-packages needed on Debian bookworm, PEP 668)
+RUN apt-get update && apt-get install -y python3-pip && \
+    pip3 install --break-system-packages snakemake
 
-# Build and Install CMake
+# Install CMake (prebuilt binary)
 RUN echo "Installing CMake..." && \
     echo "====================" && \
     echo "" && \
-    apt-get update && \
-    apt purge cmake && \
     version=3.26 && \
     build=5 && \
-    ## don't modify from here
+    arch=$(uname -m) && \
     mkdir ~/temp && \
     cd ~/temp && \
-    wget https://cmake.org/files/v$version/cmake-$version.$build.tar.gz && \
-    tar -xzvf cmake-$version.$build.tar.gz && \
-    cd cmake-$version.$build/ && \
-    ./bootstrap --parallel=$(nproc) && \
-    make -j$(nproc) && \
-    make -j$(nproc) install && \
+    wget https://github.com/Kitware/CMake/releases/download/v$version.$build/cmake-$version.$build-linux-$arch.sh && \
+    sh cmake-$version.$build-linux-$arch.sh --skip-license --prefix=/usr/local && \
     rm -rf ~/temp && \
     echo "Done."
 
