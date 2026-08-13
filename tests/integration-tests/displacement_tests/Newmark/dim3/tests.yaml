@@ -3,6 +3,7 @@ tests3d:
   - "HomogeneousHalfspaceSmallNoABCForceSourceLong"
   - "HomogeneousHalfspaceSmallNoABCForceSourceAttenuation"
   - "HomogeneousHalfSpaceAcousticForceSource"
+  - "HomogeneousAcousticFreeSurfaceForceSource3D"
   - "AcousticElasticForce"
   - "HomogeneousHalfspaceSmallNoABCMomentTensor"
   - "HomogeneousHalfSpaceStacey"

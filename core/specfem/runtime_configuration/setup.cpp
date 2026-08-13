@@ -150,8 +150,8 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict) {
           simulation_setup["simulation-mode"]) {
     int number_of_simulation_modes = 0;
     if (const YAML::Node &n_forward = n_simulation_mode["forward"]) {
-      this->solver =
-          std::make_unique<specfem::runtime_configuration::solver>("forward");
+      this->solver = std::make_unique<specfem::runtime_configuration::solver>(
+          specfem::simulation::type::forward, n_solver["time-marching"]);
       simulation = specfem::simulation::type::forward;
       number_of_simulation_modes++;
       bool at_least_one_writer = false; // check if at least one writer is
@@ -221,28 +221,33 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict) {
     }
 
     if (const YAML::Node &n_adjoint = n_simulation_mode["combined"]) {
-      this->solver =
-          std::make_unique<specfem::runtime_configuration::solver>("combined");
+      this->solver = std::make_unique<specfem::runtime_configuration::solver>(
+          specfem::simulation::type::combined, n_solver["time-marching"]);
       number_of_simulation_modes++;
       simulation = specfem::simulation::type::combined;
-      if (const YAML::Node &n_reader = n_adjoint["reader"]) {
-        if (const YAML::Node &n_wavefield = n_reader["wavefield"]) {
-          this->wavefield =
-              std::make_unique<specfem::runtime_configuration::wavefield>(
-                  n_wavefield, specfem::simulation::type::combined);
-        } else {
-          std::ostringstream message;
-          message << "Error reading adjoint reader configuration. \n"
-                  << "Wavefield reader must be specified. \n";
-          throw std::runtime_error(message.str());
+      const YAML::Node n_writer = n_adjoint["writer"];
+      const YAML::Node n_wavefield_reader = [&]() -> YAML::Node {
+        if (n_adjoint["reader"]) {
+          return n_adjoint["reader"]["wavefield"];
         }
+        if (n_writer) {
+          return n_writer["wavefield"];
+        }
+        return YAML::Node();
+      }();
+
+      if (n_wavefield_reader) {
+        this->wavefield =
+            std::make_unique<specfem::runtime_configuration::wavefield>(
+                n_wavefield_reader, specfem::simulation::type::combined);
       } else {
         std::ostringstream message;
-        message << "Error reading adjoint reader configuration. \n";
+        message << "Error reading combined reader configuration. \n"
+                << "Wavefield reader must be specified. \n";
         throw std::runtime_error(message.str());
       }
 
-      if (const YAML::Node &n_writer = n_adjoint["writer"]) {
+      if (n_writer) {
         if (const YAML::Node &n_seismogram = n_writer["seismogram"]) {
           std::ostringstream message;
           message
@@ -307,7 +312,7 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict) {
 
     this->time_scheme =
         std::make_unique<specfem::runtime_configuration::time_scheme>(
-            n_timescheme, simulation);
+            n_timescheme);
   } catch (YAML::InvalidNode &e) {
     std::ostringstream message;
     message << "Error reading specfem solver configuration. \n" << e.what();
@@ -328,12 +333,12 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict) {
 // Explicit template instantiations for instantiate_timescheme
 template std::shared_ptr<specfem::time_scheme::time_scheme>
 specfem::runtime_configuration::setup::instantiate_timescheme<
-    specfem::assembly::fields<specfem::element::dimension_tag::dim2> >(
-    specfem::assembly::fields<specfem::element::dimension_tag::dim2> &fields)
-    const;
+    specfem::assembly::fields<specfem::element::dimension_tag::dim2>>(
+    specfem::assembly::fields<specfem::element::dimension_tag::dim2> &fields,
+    const specfem::simulation::type simulation_type) const;
 
 template std::shared_ptr<specfem::time_scheme::time_scheme>
 specfem::runtime_configuration::setup::instantiate_timescheme<
-    specfem::assembly::fields<specfem::element::dimension_tag::dim3> >(
-    specfem::assembly::fields<specfem::element::dimension_tag::dim3> &fields)
-    const;
+    specfem::assembly::fields<specfem::element::dimension_tag::dim3>>(
+    specfem::assembly::fields<specfem::element::dimension_tag::dim3> &fields,
+    const specfem::simulation::type simulation_type) const;
