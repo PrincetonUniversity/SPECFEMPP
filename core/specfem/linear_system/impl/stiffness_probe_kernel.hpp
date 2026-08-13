@@ -28,21 +28,20 @@ namespace specfem::linear_system_impl {
  *
  * @tparam NGLL Number of GLL points per element edge
  * @tparam Tags Compile-time tags (dimension, medium, property, attenuation);
- *              attenuation must be `none` (pure stiffness, velocity == 0)
+ *              dimension must be `dim3` (3D only) and attenuation must be
+ *              `none` (pure stiffness, velocity == 0 -- attenuation would add
+ *              a velocity-dependent term)
  */
-template <int NGLL, typename Tags> class stiffness_probe_kernel {
+template <int NGLL, typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
+           Tags::attenuation_tag == specfem::element::attenuation_tag::none)
+class stiffness_probe_kernel {
 public:
   constexpr static auto dimension_tag = Tags::dimension_tag;
   constexpr static auto medium_tag = Tags::medium_tag;
   constexpr static auto property_tag = Tags::property_tag;
   constexpr static auto attenuation_tag = Tags::attenuation_tag;
   constexpr static int ngll = NGLL;
-
-  static_assert(dimension_tag == specfem::element::dimension_tag::dim3,
-                "The stiffness probe kernel is implemented for 3D only.");
-  static_assert(attenuation_tag == specfem::element::attenuation_tag::none,
-                "The stiffness probe assumes a pure stiffness operator; "
-                "attenuation would add a velocity-dependent term.");
 
   // Scalar on all backends: with SIMD, scratch and the divergence result
   // become simd packs (one lane per element), and scattering per-lane values
