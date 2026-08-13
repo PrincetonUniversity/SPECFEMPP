@@ -150,8 +150,8 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict) {
           simulation_setup["simulation-mode"]) {
     int number_of_simulation_modes = 0;
     if (const YAML::Node &n_forward = n_simulation_mode["forward"]) {
-      this->solver =
-          std::make_unique<specfem::runtime_configuration::solver>("forward");
+      this->solver = std::make_unique<specfem::runtime_configuration::solver>(
+          specfem::simulation::type::forward, n_solver["time-marching"]);
       simulation = specfem::simulation::type::forward;
       number_of_simulation_modes++;
       bool at_least_one_writer = false; // check if at least one writer is
@@ -221,8 +221,8 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict) {
     }
 
     if (const YAML::Node &n_adjoint = n_simulation_mode["combined"]) {
-      this->solver =
-          std::make_unique<specfem::runtime_configuration::solver>("combined");
+      this->solver = std::make_unique<specfem::runtime_configuration::solver>(
+          specfem::simulation::type::combined, n_solver["time-marching"]);
       number_of_simulation_modes++;
       simulation = specfem::simulation::type::combined;
       const YAML::Node n_writer = n_adjoint["writer"];

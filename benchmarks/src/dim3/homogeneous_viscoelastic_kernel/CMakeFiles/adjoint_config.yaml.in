@@ -15,6 +15,9 @@ parameters:
 
     solver:
       time-marching:
+        checkpointing:
+          # 1 stores the full 200-step window; values > 1 subdivide it.
+          subdivide-buffer: 1
         time-scheme:
           type: Newmark
           dt: 0.08

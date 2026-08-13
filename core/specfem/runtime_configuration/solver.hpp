@@ -6,6 +6,7 @@
 #include "specfem/utilities.hpp"
 #include <memory>
 #include <string>
+#include <yaml-cpp/yaml.h>
 
 namespace specfem {
 namespace runtime_configuration {
@@ -42,6 +43,28 @@ public:
       : simulation_type(simulation_type) {}
 
   /**
+   * @brief Construct a solver and parse optional checkpointing settings.
+   *
+   * @param simulation_type Type of the simulation
+   * @param time_marching Time-marching YAML node
+   */
+  solver(const specfem::simulation::type simulation_type,
+         const YAML::Node &time_marching)
+      : simulation_type(simulation_type) {
+    const YAML::Node checkpointing = time_marching["checkpointing"];
+    if (!checkpointing)
+      return;
+
+    if (checkpointing["subdivide-buffer"])
+      checkpoint_buffer_subdivisions =
+          checkpointing["subdivide-buffer"].as<int>();
+    if (checkpoint_buffer_subdivisions < 1) {
+      throw std::runtime_error(
+          "checkpointing subdivide-buffer must be greater than zero");
+    }
+  }
+
+  /**
    * @brief Instantiate the solver based on the simulation parameters
    *
    * @tparam qp_type Quadrature points type defining compile time or runtime
@@ -73,6 +96,10 @@ public:
     return this->simulation_type;
   }
 
+  int get_checkpoint_buffer_subdivisions() const {
+    return checkpoint_buffer_subdivisions;
+  }
+
 private:
   static specfem::simulation::type parse(const std::string &simulation_type) {
     if (specfem::utilities::is_forward_string(simulation_type)) {
@@ -85,6 +112,7 @@ private:
   }
 
   specfem::simulation::type simulation_type; ///< Type of the simulation
+  int checkpoint_buffer_subdivisions = 1;
 };
 } // namespace runtime_configuration
 } // namespace specfem

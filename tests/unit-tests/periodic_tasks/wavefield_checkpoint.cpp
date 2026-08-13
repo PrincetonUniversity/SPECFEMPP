@@ -33,4 +33,37 @@ TEST(WavefieldCheckpoint, RejectsInvalidInterval) {
   EXPECT_THROW(wavefield_checkpoint(0), std::invalid_argument);
 }
 
+TEST(WavefieldCheckpoint, CreatesSubdividedReplaySchedule) {
+  const wavefield_checkpoint task(256, 4);
+
+  EXPECT_EQ(task.buffer_subdivisions(), 4);
+  EXPECT_EQ(task.buffer_steps(), 64);
+  EXPECT_EQ(task.checkpoint_slots(256), 3);
+  EXPECT_EQ(task.split(256), 64);
+  EXPECT_EQ(task.forward_steps(256), 448U);
+}
+
+TEST(WavefieldCheckpoint, FallsBackToFullWindowReplay) {
+  const wavefield_checkpoint task(256, 1);
+
+  EXPECT_EQ(task.buffer_subdivisions(), 1);
+  EXPECT_EQ(task.buffer_steps(), 256);
+  EXPECT_EQ(task.checkpoint_slots(256), 0);
+  EXPECT_EQ(task.split(256), 0);
+  EXPECT_EQ(task.forward_steps(256), 256U);
+}
+
+TEST(WavefieldCheckpoint, PlacesShortSubdivisionFirst) {
+  const wavefield_checkpoint task(256, 5);
+
+  EXPECT_EQ(task.buffer_steps(), 52);
+  EXPECT_EQ(task.checkpoint_slots(256), 4);
+  EXPECT_EQ(task.split(256), 48);
+  EXPECT_EQ(task.forward_steps(256), 460U);
+}
+
+TEST(WavefieldCheckpoint, RejectsInvalidSubdivisions) {
+  EXPECT_THROW(wavefield_checkpoint(4, 0), std::invalid_argument);
+}
+
 } // namespace
