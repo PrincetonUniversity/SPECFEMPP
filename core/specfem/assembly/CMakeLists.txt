@@ -40,6 +40,12 @@ target_compile_definitions(
     $<$<NOT:$<BOOL:${SPECFEM_ENABLE_VTK}>>:-DNO_VTK>
 )
 
+if (SPECFEM_ENABLE_VTK)
+    # check_jacobian renders PNGs; assembly links into test binaries without
+    # periodic_tasks, so it needs its own factory registration
+    vtk_module_autoinit(TARGETS assembly MODULES ${VTK_LIBRARIES})
+endif()
+
 target_include_directories(
         assembly
         INTERFACE
