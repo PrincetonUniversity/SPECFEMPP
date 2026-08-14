@@ -31,19 +31,27 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libgl1 \
         libgl1-mesa-dri \
         libosmesa6 \
-        python3-venv \
+        gmsh \
+        python3-gmsh \
         vim \
         emacs-nox \
     && rm -rf /var/lib/apt/lists/*
 
-# snakemake in its own venv (PEP 668: system python is externally managed)
-RUN python3 -m venv /opt/venv && \
-    /opt/venv/bin/pip install --no-cache-dir snakemake
-ENV PATH="/opt/venv/bin:${PATH}"
-
 WORKDIR /usr/local/specfempp
 
 ENV SOURCE=/usr/local/specfempp/source
+
+# Python env from the repo lockfile via uv (docker group: examples, benchmarks,
+# dev tools). uv installs its own CPython matching requires-python. Copied
+# before the source tree so the layer caches across code changes.
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
+COPY pyproject.toml uv.lock ${SOURCE}/
+# CFLAGS: obspy has no arm64 wheel; its sdist's legacy C needs pre-C23 gcc.
+# The .pth bridges apt's python3-gmsh (pure-python ctypes binding, no
+# linux/arm64 wheel on PyPI) into the venv.
+RUN cd ${SOURCE} && CFLAGS="-std=gnu17" uv sync --frozen --group docker --no-cache && \
+    sp=$(echo ${SOURCE}/.venv/lib/python3.*/site-packages) && \
+    echo /usr/lib/python3/dist-packages > "$sp/system-gmsh.pth"
 
 COPY . ${SOURCE}
 
@@ -59,7 +67,7 @@ RUN cd ${SOURCE} && \
         -DSPECFEM_ENABLE_HDF5=ON \
         -DSPECFEM_ENABLE_VTK=ON \
         -DSPECFEM_BUILD_TESTS=OFF \
-        -DSPECFEM_BUILD_BENCHMARKS=OFF && \
+        -DSPECFEM_BUILD_BENCHMARKS=ON && \
     cmake --build --preset release-nosimd -j "$(nproc)" && \
     rm -rf ${SOURCE}/build/release-nosimd
 
@@ -77,14 +85,14 @@ RUN if [ "$TARGETARCH" = "amd64" ]; then \
             -DSPECFEM_ENABLE_HDF5=ON \
             -DSPECFEM_ENABLE_VTK=ON \
             -DSPECFEM_BUILD_TESTS=OFF \
-            -DSPECFEM_BUILD_BENCHMARKS=OFF && \
+            -DSPECFEM_BUILD_BENCHMARKS=ON && \
         cmake --build --preset release -j "$(nproc)" && \
         rm -rf ${SOURCE}/build/release ; \
     fi
 
 # no-SIMD is the default; opt into the AVX2 build with
 #   export PATH=/usr/local/specfempp/source/bin/release:$PATH
-ENV PATH="${SOURCE}/bin/release-nosimd:${PATH}"
+ENV PATH="${SOURCE}/bin/release-nosimd:${SOURCE}/.venv/bin:${PATH}"
 
 # OSMesa renders identically to native GL; the EGL/llvmpipe path has minor
 # rasterization artifacts. Unset to let VTK pick (X -> EGL -> OSMesa).
