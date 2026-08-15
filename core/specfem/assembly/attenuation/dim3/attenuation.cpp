@@ -52,6 +52,12 @@ specfem::assembly::Attenuation<specfem::element::dimension_tag::dim3>::
                                                    config.band.max.raw()) *
             Hz;
 
+  // Retain frequency-band inputs for read-time recomputation of attenuation
+  // state from an on-disk Q model.
+  this->fc = fc;
+  this->band = config.band;
+  this->tau_sigma = config.tau_sigma;
+
   // Compute Runge-Kutta memory-variable update coefficients from the
   // precomputed tau_sigma stored in the mesh attenuation_config.
   auto rk = specfem::attenuation::compute_integration_factors<N_SLS>(

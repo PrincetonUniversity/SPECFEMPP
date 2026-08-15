@@ -181,3 +181,53 @@ Tests:
           gamma: -0.99767500162124634
           ispec: 0
           medium_tag: elastic_psv_t
+
+    - name : "Test 11: Fluid-solid mesh with flat ocean bottom with attenuation"
+      description: >
+        Elastic P_SV isotropic elements with a constant isotropic attenuation
+        container, plus acoustic elements that stay non-attenuating (acoustic
+        attenuation is unsupported; the reader ignores their Qkappa).
+      config:
+        nproc : 1
+        elastic_wave: "P_SV"
+        attenuation_enabled: true
+        attenuation_f0: "5.196152422706633 Hz"
+        attenuation_band:
+          - "3.162 Hz"
+          - "31.62 Hz"
+      databases:
+        mesh : "data/dim2/fluid_solid_mesh_flat_ocean_bottom_attenuation/database.bin"
+        sources : "data/dim2/fluid_solid_mesh_flat_ocean_bottom_attenuation/sources.yaml"
+        stations : "data/dim2/fluid_solid_mesh_flat_ocean_bottom_attenuation/STATIONS"
+      suffix: "flat_ocean_bottom_attenuation_P_SV"
+      solutions:
+        source:
+          xi: -0.12500772
+          gamma: -0.50000995
+          ispec: 9372
+          medium_tag: acoustic
+
+    - name : "Test 12: Homogeneous poroelastic isotropic with attenuation enabled"
+      description: >
+        Attenuation-enabled configuration whose only medium (poroelastic) does
+        not support attenuation; the reader ignores Qmu and the property
+        writer/reader must treat the mesh as non-attenuating.
+      config:
+        nproc : 1
+        elastic_wave: "P_SV"
+        attenuation_enabled: true
+        attenuation_f0: "5.196152422706633 Hz"
+        attenuation_band:
+          - "3.162 Hz"
+          - "31.62 Hz"
+      databases:
+        mesh : "data/dim2/homogeneous_poroelastic_isotropic_w_attenuation/database.bin"
+        sources : "data/dim2/homogeneous_poroelastic_isotropic_w_attenuation/sources.yaml"
+        stations : "data/dim2/homogeneous_poroelastic_isotropic_w_attenuation/STATIONS"
+      suffix: "homogeneous_poroelastic_isotropic_attenuation_P_SV"
+      solutions:
+        source:
+          xi: 1.0
+          gamma: 1.0
+          ispec: 724
+          medium_tag: poroelastic

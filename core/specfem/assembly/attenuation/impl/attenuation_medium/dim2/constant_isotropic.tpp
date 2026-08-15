@@ -14,6 +14,10 @@
 #include "specfem/units.hpp"
 #include "specfem/utilities/logarithmic_center.hpp"
 #include <Kokkos_Core.hpp>
+#include <array>
+#include <stdexcept>
+#include <string>
+#include <utility>
 
 namespace specfem::assembly::impl {
 
@@ -41,9 +45,18 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
   using scalar_view_type = typename base_type::template scalar_type<
       type_real, Kokkos::DefaultExecutionSpace::memory_space>;
 
-  // Host-only per-element scale factors
+  // Host-only per-element scale factors: unrelaxed = physical * scale
   Kokkos::View<type_real *, Kokkos::DefaultHostExecutionSpace> h_kappa_scale;
   Kokkos::View<type_real *, Kokkos::DefaultHostExecutionSpace> h_mu_scale;
+
+  // Host-only per-GLL quality factors, persisted by the property
+  // writer/reader. Per-GLL (not per-element) for forward-compat with
+  // GLL-varying Q and format uniformity with the property datasets. Plain
+  // layout (not tiled) so they serialize directly; never copied to device.
+  using q_view_type =
+      Kokkos::View<type_real ***, Kokkos::LayoutRight, Kokkos::HostSpace>;
+  q_view_type h_Qkappa;
+  q_view_type h_Qmu;
 
   // Views: shape [nspec_attn][ngllz][ngllx][N_SLS]
   view_type kappa_relaxation_rate;
@@ -90,6 +103,8 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
             "kappa_scale", nspec_attn);
     h_mu_scale = Kokkos::View<type_real *, Kokkos::DefaultHostExecutionSpace>(
         "mu_scale", nspec_attn);
+    h_Qkappa = q_view_type("h_Qkappa", nspec_attn, ngllz, ngllx);
+    h_Qmu = q_view_type("h_Qmu", nspec_attn, ngllz, ngllx);
     kappa_relaxation_rate =
         view_type("kappa_relaxation_rate", nspec_attn, ngllz, ngllx, N_SLS);
     h_kappa_relaxation_rate =
@@ -158,6 +173,18 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
       const type_real kappa_sc = scaled_props.kappa();
       const type_real mu_sc = scaled_props.mu();
 
+      h_kappa_scale(i) = computed_values.kappa_scale;
+      h_mu_scale(i) = computed_values.mu_scale;
+
+      // Quality factors: element-constant at construction but stored per GLL
+      // point (see h_Qkappa above).
+      for (int iz = 0; iz < ngllz; ++iz) {
+        for (int ix = 0; ix < ngllx; ++ix) {
+          h_Qkappa(i, iz, ix) = material.Qkappa;
+          h_Qmu(i, iz, ix) = material.Qmu;
+        }
+      }
+
       // Per-GLL fill
       for (int j = 0; j < N_SLS; ++j) {
 
@@ -182,6 +209,147 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
     // 4. Push all host data (kappa/mu_cf filled; memory variables zero) to
     // device
     copy_to_device();
+  }
+
+  // ---- Model-I/O interface (used by the property writer/reader) ----
+
+  /**
+   * @brief Transform staged property values from unrelaxed (runtime) to
+   *        physical (relaxed) in place.
+   *
+   * The property container holds unrelaxed moduli for attenuating elements;
+   * the property file stores the physical model. Divides "kappa"/"mu" by the
+   * per-element scale factors; any other dataset name is left untouched.
+   *
+   * Precondition: the element axis of @p scratch aligns 1:1 with this
+   * container's element_range (one file group per (medium, property,
+   * attenuation) combination guarantees this).
+   *
+   * @tparam ViewType Plain host view of shape [nspec_attn][ngllz][ngllx]
+   * @param scratch Staged copy of a property dataset, modified in place
+   * @param name Property dataset name (as visited by for_each_host_view)
+   */
+  template <typename ViewType>
+  void to_physical(const ViewType &scratch, const std::string &name) const {
+    if (name != "kappa" && name != "mu") {
+      return;
+    }
+    const auto &scale = (name == "kappa") ? h_kappa_scale : h_mu_scale;
+    for (int i = 0; i < static_cast<int>(scratch.extent(0)); ++i) {
+      for (int iz = 0; iz < static_cast<int>(scratch.extent(1)); ++iz) {
+        for (int ix = 0; ix < static_cast<int>(scratch.extent(2)); ++ix) {
+          scratch(i, iz, ix) /= scale(i);
+        }
+      }
+    }
+  }
+
+  /**
+   * @brief The attenuation model datasets as (name, host_view) pairs.
+   *
+   * The property writer/reader persist these verbatim alongside the property
+   * datasets of the same file group. Call only when element_range is
+   * non-empty.
+   *
+   * @return Array of (dataset name, host view) pairs
+   */
+  std::array<std::pair<std::string, q_view_type>, 2> get_views() const {
+    return { { { "Qkappa", h_Qkappa }, { "Qmu", h_Qmu } } };
+  }
+
+  /**
+   * @brief Recompute runtime attenuation state after a model read.
+   *
+   * The property reader leaves the physical (relaxed) moduli from the file in
+   * @p props and the per-GLL Q in h_Qkappa/h_Qmu. The runtime needs unrelaxed
+   * moduli and relaxation rates: for every attenuating GLL point a modulus
+   * scale factor is derived from the read-back Q, the moduli in @p props are
+   * scaled to unrelaxed in place, and the relaxation rates are recomputed
+   * from them (pushed to device). The per-element scale factors are refreshed
+   * so a subsequent write stays consistent with the read model. Q is sampled
+   * at every GLL point, so a GLL-varying Q model is honoured; the (expensive,
+   * Nelder-Mead) tau_epsilon solve is memoized and only redone when Q changes
+   * from the previous point, so element-constant Q costs one solve per
+   * element. No-op when there are no attenuating elements. Host-only; const
+   * because only view data is mutated.
+   *
+   * @tparam PropsContainer Property data container type (exposes h_kappa,
+   *                        h_mu and element_range)
+   * @param props The just-read property container
+   * @param fc Band-center frequency for modulus scaling
+   * @param f0 Reference frequency
+   * @param band Attenuation frequency band
+   * @param tau_sigma Stress relaxation times
+   */
+  template <typename PropsContainer>
+  void recompute(
+      const PropsContainer &props, const specfem::units::Hertz fc,
+      const specfem::units::Hertz f0,
+      const specfem::utilities::Band<specfem::units::Hertz> &band,
+      const Kokkos::View<type_real[N_SLS], Kokkos::DefaultHostExecutionSpace>
+          &tau_sigma) const {
+    if (element_range.size() == 0) {
+      return;
+    }
+    const int nspec_attn = element_range.size();
+    const int offset =
+        element_range.begin_index() - props.element_range.begin_index();
+    const int l_ngllz = h_Qkappa.extent(1);
+    const int l_ngllx = h_Qkappa.extent(2);
+    for (int i = 0; i < nspec_attn; ++i) {
+      type_real last_Qkappa = -1, last_Qmu = -1, kappa_scale = 0, mu_scale = 0;
+      specfem::attenuation::AttenuationPropertyValues<N_SLS> kappa_props,
+          mu_props;
+      for (int iz = 0; iz < l_ngllz; ++iz) {
+        for (int ix = 0; ix < l_ngllx; ++ix) {
+          const type_real Qkappa = h_Qkappa(i, iz, ix);
+          const type_real Qmu = h_Qmu(i, iz, ix);
+          if (Qkappa != last_Qkappa) {
+            const auto tau_eps = specfem::attenuation::compute_tau_eps<N_SLS>(
+                Qkappa, tau_sigma, band);
+            kappa_scale =
+                specfem::attenuation::get_attenuation_scale_factor<N_SLS>(
+                    fc.raw(), tau_eps, tau_sigma, Qkappa, f0.raw());
+            kappa_props =
+                specfem::attenuation::get_attenuation_property_values<N_SLS>(
+                    tau_sigma, tau_eps);
+            last_Qkappa = Qkappa;
+          }
+          if (Qmu != last_Qmu) {
+            const auto tau_eps = specfem::attenuation::compute_tau_eps<N_SLS>(
+                Qmu, tau_sigma, band);
+            mu_scale =
+                specfem::attenuation::get_attenuation_scale_factor<N_SLS>(
+                    fc.raw(), tau_eps, tau_sigma, Qmu, f0.raw());
+            mu_props =
+                specfem::attenuation::get_attenuation_property_values<N_SLS>(
+                    tau_sigma, tau_eps);
+            last_Qmu = Qmu;
+          }
+          const type_real kappa_unrelaxed =
+              props.h_kappa(offset + i, iz, ix) * kappa_scale;
+          const type_real mu_unrelaxed =
+              props.h_mu(offset + i, iz, ix) * mu_scale;
+          props.h_kappa(offset + i, iz, ix) = kappa_unrelaxed;
+          props.h_mu(offset + i, iz, ix) = mu_unrelaxed;
+          for (int j = 0; j < N_SLS; ++j) {
+            const type_real tauinv_j = 1.0 / tau_sigma(j);
+            h_kappa_relaxation_rate(i, iz, ix, j) =
+                kappa_unrelaxed * kappa_props.beta(j) * tauinv_j /
+                kappa_props.one_minus_sum_beta;
+            h_mu_relaxation_rate(i, iz, ix, j) = mu_unrelaxed * 2.0 *
+                                                 mu_props.beta(j) * tauinv_j /
+                                                 mu_props.one_minus_sum_beta;
+          }
+        }
+      }
+      // Refresh per-element scale factors (exact for element-constant Q; for
+      // a GLL-varying model the last GLL point's value is kept).
+      h_kappa_scale(i) = kappa_scale;
+      h_mu_scale(i) = mu_scale;
+    }
+    Kokkos::deep_copy(kappa_relaxation_rate, h_kappa_relaxation_rate);
+    Kokkos::deep_copy(mu_relaxation_rate, h_mu_relaxation_rate);
   }
 
   void copy_to_host() {
