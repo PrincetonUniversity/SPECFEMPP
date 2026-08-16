@@ -26,7 +26,7 @@ namespace impl {
 template <typename T> struct to_tuple;
 
 template <auto... TagValues>
-struct to_tuple<specfem::tags::Tags<TagValues...> > {
+struct to_tuple<specfem::tags::Tags<TagValues...>> {
   constexpr static auto value =
       TagValueTuple<decltype(TagValues)...>{ TagValues... };
 };
@@ -44,12 +44,12 @@ struct to_tuple<specfem::tags::Tags<TagValues...> > {
  * @tparam Seq       Index sequence `0, 1, ..., Arity-1` (defaulted).
  */
 template <typename ET, std::size_t ComboIdx, std::size_t Arity,
-          typename Seq = std::make_index_sequence<Arity> >
+          typename Seq = std::make_index_sequence<Arity>>
 struct combo_to_tags;
 
 template <typename ET, std::size_t ComboIdx, std::size_t Arity,
           std::size_t... Js>
-struct combo_to_tags<ET, ComboIdx, Arity, std::index_sequence<Js...> > {
+struct combo_to_tags<ET, ComboIdx, Arity, std::index_sequence<Js...>> {
   using type = specfem::tags::Tags<ET::combos[ComboIdx].template get<Js>()...>;
 };
 
@@ -109,11 +109,11 @@ template <typename TagsType, typename Policy> struct StorageSlot {
  * @tparam ET      `element_combinations` type providing `combos` and `size`.
  */
 template <typename Policy, typename ET,
-          typename = std::make_index_sequence<ET::size> >
+          typename = std::make_index_sequence<ET::size>>
 class Storage;
 
 template <typename Policy, typename ET, std::size_t... Is>
-class Storage<Policy, ET, std::index_sequence<Is...> >
+class Storage<Policy, ET, std::index_sequence<Is...>>
     : private StorageSlot<combo_to_tags_t<ET, Is, ET::combo_type::arity>,
                           Policy>... {
 
@@ -147,7 +147,7 @@ public:
   Storage(Func &&initializer)
       : StorageSlot<combo_to_tags_t<ET, Is, ET::combo_type::arity>, Policy>{
           initializer.template
-          operator()<combo_to_tags_t<ET, Is, ET::combo_type::arity> >()
+          operator()<combo_to_tags_t<ET, Is, ET::combo_type::arity>>()
         }... {}
 
   /**
@@ -187,16 +187,16 @@ public:
    * @throws std::runtime_error if no combo matches the provided tags.
    */
   template <typename... QueryTagTypes>
-  requires(
-      std::is_same_v<Policy,
-                     TypePolicy<typename Policy::template type<
-                         combo_to_tags_t<ET, 0, ET::combo_type::arity> > > > &&
-      (sizeof...(QueryTagTypes) > 0) &&
-      ((std::is_enum_v<std::remove_cvref_t<QueryTagTypes> > ||
-        std::is_same_v<std::remove_cvref_t<QueryTagTypes>, bool>) &&
-       ...)) const auto &get(QueryTagTypes &&...query_tags) const {
+    requires(std::is_same_v<
+                 Policy, TypePolicy<typename Policy::template type<
+                             combo_to_tags_t<ET, 0, ET::combo_type::arity>>>> &&
+             (sizeof...(QueryTagTypes) > 0) &&
+             ((std::is_enum_v<std::remove_cvref_t<QueryTagTypes>> ||
+               std::is_same_v<std::remove_cvref_t<QueryTagTypes>, bool>) &&
+              ...))
+  const auto &get(QueryTagTypes &&...query_tags) const {
     using SlotType = typename Policy::template type<
-        combo_to_tags_t<ET, 0, ET::combo_type::arity> >;
+        combo_to_tags_t<ET, 0, ET::combo_type::arity>>;
     const SlotType *result = nullptr;
     specfem::tag_dispatch::for_each(ET{}, [&]<typename TagsType>() {
       if (!result && TagsType{}.has(query_tags...))
@@ -222,6 +222,25 @@ public:
 };
 
 } // namespace impl
+
+/**
+ * @brief Compile-time membership test: does element-combination set `ET`
+ *        contain the combination described by `Target`?
+ *
+ * Folds over every combo in `ET`, comparing each against `Target`. Useful for
+ * guarding `get<Target>()` in generic code that iterates over a wider set of
+ * (medium, property, ...) combinations than `ET` actually stores.
+ *
+ * @tparam ET     `element_combinations` type providing `combos`/`size`.
+ * @tparam Target A `specfem::tags::Tags<...>` specialisation to look for.
+ */
+template <typename ET, typename Target>
+inline constexpr bool contains_v = []<std::size_t... Is>(
+                                       std::index_sequence<Is...>) {
+  return (std::is_same_v<impl::combo_to_tags_t<ET, Is, ET::combo_type::arity>,
+                         Target> ||
+          ...);
+}(std::make_index_sequence<ET::size>{});
 
 /**
  * @brief Homogeneous per-combo storage: every combo slot holds a `T`.
@@ -283,8 +302,8 @@ template <typename Dst, typename Src> void deep_copy(Dst &&dst, Src &&src) {
  * own header *before* the point of instantiation.
  */
 template <typename Space, typename SrcView>
-requires(Kokkos::is_view_v<SrcView>) auto create_mirror(Space,
-                                                        const SrcView &src) {
+  requires(Kokkos::is_view_v<SrcView>)
+auto create_mirror(Space, const SrcView &src) {
   using DstView = Kokkos::View<typename SrcView::non_const_data_type, Space>;
   return [&]<std::size_t... Ds>(std::index_sequence<Ds...>) {
     return DstView(Kokkos::view_alloc(Kokkos::WithoutInitializing, src.label()),
@@ -333,7 +352,7 @@ template <typename Space, typename Policy, typename ET, typename Seq>
 auto create_mirror_storage_and_copy(
     Space, const impl::Storage<Policy, ET, Seq> &src_storage) {
   using SrcView = typename Policy::template type<
-      impl::combo_to_tags_t<ET, 0, ET::combo_type::arity> >;
+      impl::combo_to_tags_t<ET, 0, ET::combo_type::arity>>;
   using DstView = decltype(specfem::tag_dispatch::create_mirror(
       std::declval<Space>(), std::declval<const SrcView &>()));
   using DstStorage = impl::Storage<impl::TypePolicy<DstView>, ET>;

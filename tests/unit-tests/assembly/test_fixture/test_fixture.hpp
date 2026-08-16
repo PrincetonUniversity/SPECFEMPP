@@ -8,9 +8,11 @@
 #include "specfem/quadrature.hpp"
 #include "specfem/receivers.hpp"
 #include "specfem/source.hpp"
+#include "specfem/units.hpp"
 #include "specfem/utilities.hpp"
 #include <gtest/gtest.h>
 #include <iostream>
+#include <optional>
 #include <vector>
 #include <yaml-cpp/yaml.h>
 
@@ -153,11 +155,33 @@ public:
       // Default to false if not defined
       attenuation_enabled = false;
     }
+
+    if (Node["attenuation_f0"].IsDefined()) {
+      attenuation_f0 = specfem::units::quantity_cast<specfem::units::Hertz>(
+          Node["attenuation_f0"].as<std::string>());
+    }
+
+    if (Node["attenuation_band"].IsDefined()) {
+      const auto band_node = Node["attenuation_band"];
+      attenuation_band = specfem::utilities::Band<specfem::units::Hertz>(
+          specfem::units::quantity_cast<specfem::units::Hertz>(
+              band_node[0].as<std::string>()),
+          specfem::units::quantity_cast<specfem::units::Hertz>(
+              band_node[1].as<std::string>()));
+    }
   }
 
   int get_nproc() { return nproc; }
 
   bool is_attenuation_enabled() const { return attenuation_enabled; }
+
+  std::optional<specfem::units::Hertz> get_attenuation_f0() const {
+    return attenuation_f0;
+  }
+
+  specfem::utilities::Band<specfem::units::Hertz> get_attenuation_band() const {
+    return attenuation_band;
+  }
 
   specfem::enums::elastic_wave get_elastic_wave() {
     if (specfem::utilities::is_psv_string(elastic_wave))
@@ -182,6 +206,8 @@ private:
   std::string elastic_wave;
   std::string electromagnetic_wave;
   bool attenuation_enabled;
+  std::optional<specfem::units::Hertz> attenuation_f0;
+  specfem::utilities::Band<specfem::units::Hertz> attenuation_band;
 };
 
 // 3D config specialization
@@ -305,6 +331,14 @@ public:
 
   bool is_attenuation_enabled() const {
     return config.is_attenuation_enabled();
+  }
+
+  std::optional<specfem::units::Hertz> get_attenuation_f0() const {
+    return config.get_attenuation_f0();
+  }
+
+  specfem::utilities::Band<specfem::units::Hertz> get_attenuation_band() const {
+    return config.get_attenuation_band();
   }
 
   specfem::enums::elastic_wave get_elastic_wave() {
