@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.17.5)
 
 # C is needed so MPI-enabled distro VTK packages can resolve MPI::MPI_C
-project(SPECFEMPP VERSION 0.5.0 LANGUAGES C CXX Fortran)
+project(SPECFEMPP VERSION 0.6.0 LANGUAGES C CXX Fortran)
 
 # Extract Git version metadata
 include("${CMAKE_SOURCE_DIR}/cmake/version.cmake")
