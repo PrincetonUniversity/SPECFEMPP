@@ -26,3 +26,9 @@ target_compile_definitions(
         $<$<BOOL:${SPECFEM_HDF5_IS_PARALLEL}>:-DSPECFEM_HDF5_IS_PARALLEL>
         $<$<BOOL:${__APPLE__}>:__APPLE__>
 )
+
+if (SPECFEM_ENABLE_VTK)
+    # Registers VTK object factories; without this vtkRenderWindow::New()
+    # returns a non-rendering base class and image capture segfaults
+    vtk_module_autoinit(TARGETS periodic_tasks MODULES ${VTK_LIBRARIES})
+endif()
