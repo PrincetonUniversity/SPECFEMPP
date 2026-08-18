@@ -1,15 +1,14 @@
 #include "../../SPECFEM_Environment.hpp"
 // #include "../../utilities/include/compare_array.h"
-#include "constants.hpp"
 #include "domain/domain.hpp"
-#include "io/fortranio/interface.hpp"
-#include "io/interface.hpp"
-#include "mesh/mesh.hpp"
-#include "parameter_parser/interface.hpp"
-#include "quadrature/interface.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
+#include "specfem/constants.hpp"
+#include "specfem/io.hpp"
 #include "specfem/logger.hpp"
+#include "specfem/mesh.hpp"
 #include "specfem/mpi.hpp"
+#include "specfem/quadrature.hpp"
+#include "specfem/runtime_configuration.hpp"
 #include "specfem/solver.hpp"
 #include "specfem/timescheme.hpp"
 #include "yaml-cpp/yaml.h"
@@ -49,7 +48,7 @@ test_config parse_test_config(std::string test_configuration_file) {
 // read field from fortran binary file
 void read_field(
     const std::string filename,
-    specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft> field,
+    Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace> &field,
     const int n1, const int n2) {
 
   assert(field.extent(0) == n1);
@@ -78,7 +77,7 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
 
   const std::string parameter_file = test_config.specfem_config;
 
-  specfem::runtime_configuration::setup setup(parameter_file, __default_file__);
+  specfem::runtime_configuration::setup setup(parameter_file);
 
   const auto database_file = setup.get_databases();
   // std::cout << setup.print_header();
@@ -87,7 +86,9 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
   const auto quadratures = setup.instantiate_quadrature();
 
   // Read mesh generated MESHFEM
-  specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(database_file);
+  specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
+      database_file, setup.get_elastic_wave_type(),
+      setup.get_electromagnetic_wave_type(), setup.get_attenuation_setup());
 
   std::vector<std::shared_ptr<specfem::sources::source> > sources(0);
 
@@ -116,8 +117,9 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
   specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
 
   specfem::domain::domain<
-      specfem::wavefield::simulation_field::forward,
-      specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_psv,
+      specfem::simulation::field_type::forward,
+      specfem::element::dimension_tag::dim2,
+      specfem::element::medium_tag::elastic_psv,
       specfem::enums::element::quadrature::static_quadrature_points<5> >
       elastic_domain_static(setup.get_dt(), assembly, qp5);
 

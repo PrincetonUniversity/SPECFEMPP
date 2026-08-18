@@ -16,10 +16,10 @@
 Dimension-Specific Implementation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. doxygenstruct:: specfem::assembly::simulation_field< specfem::dimension::type::dim2, SimulationWavefieldType >
+.. doxygenstruct:: specfem::assembly::simulation_field< specfem::element::dimension_tag::dim2, SimulationWavefieldType >
     :members:
 
-.. doxygenstruct:: specfem::assembly::simulation_field< specfem::dimension::type::dim3, SimulationWavefieldType >
+.. doxygenstruct:: specfem::assembly::simulation_field< specfem::element::dimension_tag::dim3, SimulationWavefieldType >
     :members:
 
 Data Access Functions

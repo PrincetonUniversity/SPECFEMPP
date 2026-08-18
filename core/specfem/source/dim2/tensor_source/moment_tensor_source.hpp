@@ -1,14 +1,14 @@
 #pragma once
 
-#include "constants.hpp"
-#include "enumerations/interface.hpp"
-#include "kokkos_abstractions.h"
-#include "quadrature/interface.hpp"
+#include "specfem/constants.hpp"
+
+#include "specfem/enums.hpp"
+#include "specfem/quadrature.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
 
-#include "specfem_setup.hpp"
-#include "utilities/interface.hpp"
+#include "specfem/setup.hpp"
+#include "specfem/utilities.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
 
@@ -35,11 +35,11 @@ namespace sources {
  *
  * // Create a 2D moment tensor source at (5.0, 8.0)
  * auto mt_source =
- * specfem::sources::moment_tensor<specfem::dimension::type::dim2>( 5.0,  //
- * x-coordinate 8.0,  // z-coordinate 1.0,  // Mxx - normal double couple in x
- * direction 2.0,  // Mzz - normal double couple in z direction 0.5,  // Mxz -
+ * specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2>( 5.0,
+ * // x-coordinate 8.0,  // z-coordinate 1.0,  // Mxx - normal double couple in
+ * x direction 2.0,  // Mzz - normal double couple in z direction 0.5,  // Mxz -
  * shear double couple in x-z plane std::move(stf),
- *     specfem::wavefield::simulation_field::forward
+ *     specfem::simulation::field_type::forward
  * );
  *
  * // Set the medium type (moment tensors work with elastic media)
@@ -53,8 +53,8 @@ namespace sources {
  *
  */
 template <>
-class moment_tensor<specfem::dimension::type::dim2>
-    : public tensor_source<specfem::dimension::type::dim2> {
+class moment_tensor<specfem::element::dimension_tag::dim2>
+    : public tensor_source<specfem::element::dimension_tag::dim2> {
 
 public:
   /**
@@ -89,10 +89,11 @@ public:
    * written in .yml format
    */
   moment_tensor(YAML::Node &Node, const int nsteps, const type_real dt,
-                const specfem::wavefield::simulation_field wavefield_type)
+                const specfem::simulation::field_type wavefield_type)
       : Mxx(Node["Mxx"].as<type_real>()), Mzz(Node["Mzz"].as<type_real>()),
         Mxz(Node["Mxz"].as<type_real>()), wavefield_type(wavefield_type),
-        tensor_source<specfem::dimension::type::dim2>(Node, nsteps, dt) {};
+        tensor_source<specfem::element::dimension_tag::dim2>(Node, nsteps, dt) {
+        };
 
   /**
    * @brief Costruct new moment tensor source using forcing function
@@ -110,25 +111,28 @@ public:
       type_real x, type_real z, const type_real Mxx, const type_real Mzz,
       const type_real Mxz,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
-      const specfem::wavefield::simulation_field wavefield_type)
+      const specfem::simulation::field_type wavefield_type)
       : Mxx(Mxx), Mzz(Mzz), Mxz(Mxz), wavefield_type(wavefield_type),
-        tensor_source<specfem::dimension::type::dim2>(
+        tensor_source<specfem::element::dimension_tag::dim2>(
             x, z, std::move(source_time_function)) {};
 
   /**
    * @brief User output
    *
    */
-  std::string print() const override;
+  std::string source_name() const override { return "2-D moment tensor"; }
+  std::string print_details() const override;
 
-  specfem::wavefield::simulation_field get_wavefield_type() const override {
+  specfem::simulation::field_type get_wavefield_type() const override {
     return wavefield_type;
   }
 
-  bool operator==(const specfem::sources::source<specfem::dimension::type::dim2>
-                      &other) const override;
-  bool operator!=(const specfem::sources::source<specfem::dimension::type::dim2>
-                      &other) const override;
+  bool operator==(
+      const specfem::sources::source<specfem::element::dimension_tag::dim2>
+          &other) const override;
+  bool operator!=(
+      const specfem::sources::source<specfem::element::dimension_tag::dim2>
+          &other) const override;
 
   /**
    * @brief Get the source tensor
@@ -184,11 +188,12 @@ public:
    * \end{pmatrix}
    * \f]
    *
-   * @return Kokkos::View<type_real **, Kokkos::LayoutLeft, Kokkos::HostSpace>
+   * @return Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
    * Source tensor with dimensions [ncomponents][2] where each row contains
    * [Mxx, Mxz], [Mxz, Mzz] etc, depending on the medium type
    */
-  specfem::kokkos::HostView2d<type_real> get_source_tensor() const override;
+  Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+  get_source_tensor() const override;
 
   /**
    * @brief Get the list of supported media for this source type
@@ -199,16 +204,14 @@ public:
   get_supported_media() const override;
 
 private:
-  type_real Mxx;                                       ///< Mxx for the source
-  type_real Mxz;                                       ///< Mxz for the source
-  type_real Mzz;                                       ///< Mzz for the source
-  specfem::wavefield::simulation_field wavefield_type; ///< Type of wavefield on
-                                                       ///< which the source
-                                                       ///< acts
+  type_real Mxx;                                  ///< Mxx for the source
+  type_real Mxz;                                  ///< Mxz for the source
+  type_real Mzz;                                  ///< Mzz for the source
+  specfem::simulation::field_type wavefield_type; ///< Type of wavefield on
+                                                  ///< which the source
+                                                  ///< acts
 
 public:
-  static constexpr const char *name = "2-D moment tensor";
-
 protected:
 };
 } // namespace sources

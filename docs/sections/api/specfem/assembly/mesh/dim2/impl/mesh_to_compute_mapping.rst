@@ -3,5 +3,5 @@
 2D ``specfem::assembly::mesh_impl::mesh_to_compute_mapping``
 ============================================================
 
-.. doxygenstruct:: specfem::assembly::mesh_impl::mesh_to_compute_mapping< specfem::dimension::type::dim2 >
+.. doxygenstruct:: specfem::assembly::mesh_impl::mesh_to_compute_mapping< specfem::element::dimension_tag::dim2 >
     :members:

@@ -69,6 +69,13 @@ Example parameter file
           ## sources
           sources: path/to/sources.yaml
 
+          ## attenuation
+          attenuation:
+            reference-frequency: 1.0 Hz
+            attenuation-frequency-band:
+                - 0.01 Hz
+                - 10.0 Hz
+
 
 
 Parameter definitions
@@ -965,3 +972,71 @@ Parameter definitions
                         factor: 1e10
                         tshift: 0.0
                         f0: 10.0
+
+
+    .. dropdown:: ``attenuation``
+
+        Define attenuation parameters
+
+        :default value: None
+
+        :possible values: [YAML Node]
+
+        .. code-block:: yaml
+            :caption: Example attenuation section
+
+            attenuation:
+                enabled: false
+                reference-frequency: 1.0 Hz
+                attenuation-frequency-band:
+                    - 0.1 Hz
+                    - 10.0 Hz
+
+        .. note::
+
+            The parameters below are only relevant if the attenuation section is
+            defined.
+
+
+        .. dropdown:: ``enabled``
+
+            Flag to indicate whether attenuation should be included in the simulation.
+
+            :default value: False
+
+            :possible values: [bool]
+
+            .. code-block:: yaml
+                :caption: Example
+
+                enabled: true
+
+        .. dropdown:: ``reference_frequency``
+
+            Reference frequency for attenuation in Hz. This parameter is used to
+            calculate the unrelaxed moduli for the simulation.
+
+            :default value: None
+
+            :possible values: [float, double]
+
+            .. code-block:: yaml
+                :caption: Example
+
+                reference_frequency: 1.0 Hz
+
+        .. dropdown:: ``attenuation-frequency-band``
+
+            Frequency band for attenuation in Hz. This parameter is used to
+            calculate the unrelaxed moduli for the simulation.
+
+            :default value: None
+
+            :possible values: [YAML list]
+
+            .. code-block:: yaml
+                :caption: Example
+
+                attenuation-frequency-band:
+                    - 0.1 Hz
+                    - 10.0 Hz

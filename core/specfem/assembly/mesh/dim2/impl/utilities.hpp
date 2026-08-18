@@ -1,7 +1,6 @@
 #pragma once
 
-#include "kokkos_abstractions.h"
-
+#include "specfem/setup.hpp"
 #include <limits>
 #include <vector>
 
@@ -76,7 +75,8 @@ type_real compute_spatial_tolerance(const std::vector<point> &points, int nspec,
  * @return std::vector<point> The flattened vector of points
  */
 std::vector<point> flatten_coordinates(
-    const specfem::kokkos::HostView4d<double> &global_coordinates);
+    const Kokkos::View<double ****, Kokkos::LayoutRight, Kokkos::HostSpace>
+        global_coordinates);
 
 /**
  * @brief Sorts a vector of 2D points spatially

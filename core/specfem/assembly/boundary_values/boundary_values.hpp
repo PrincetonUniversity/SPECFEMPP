@@ -2,14 +2,15 @@
 
 #include "dim2/impl/boundary_value_container.hpp"
 #include "dim3/impl/boundary_value_container.hpp"
-#include "enumerations/interface.hpp"
-#include "mesh/mesh.hpp"
 #include "specfem/assembly/boundaries.hpp"
 #include "specfem/assembly/properties.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/mesh.hpp"
+#include "specfem/tags.hpp"
 
 namespace specfem::assembly {
 
-template <specfem::dimension::type DimensionTag> class boundary_values {
+template <specfem::element::dimension_tag DimensionTag> class boundary_values {
 public:
   constexpr static auto dimension_tag = DimensionTag; ///< Dimension tag
   boundary_values() = default;
@@ -51,4 +52,87 @@ public:
     composite_stacey_dirichlet.sync_to_device();
   }
 };
+
+template <typename IndexType, typename AccelerationType,
+          typename BoundaryValueContainerType,
+          typename std::enable_if_t<
+              ((BoundaryValueContainerType::boundary_tag ==
+                specfem::element::boundary_tag::none) ||
+               (BoundaryValueContainerType::boundary_tag ==
+                specfem::element::boundary_tag::acoustic_free_surface)),
+              int> = 0>
+KOKKOS_INLINE_FUNCTION void
+store_on_device(const int istep, const IndexType index,
+                const AccelerationType &acceleration,
+                const BoundaryValueContainerType &boundary_value_container) {
+  return;
+}
+
+template <typename IndexType, typename AccelerationType,
+          typename BoundaryValueContainerType,
+          typename std::enable_if_t<
+              ((BoundaryValueContainerType::boundary_tag ==
+                specfem::element::boundary_tag::stacey) ||
+               (BoundaryValueContainerType::boundary_tag ==
+                specfem::element::boundary_tag::composite_stacey_dirichlet)),
+              int> = 0>
+KOKKOS_FUNCTION void
+store_on_device(const int istep, const IndexType index,
+                const AccelerationType &acceleration,
+                const BoundaryValueContainerType &boundary_value_container) {
+
+  if (boundary_value_container.property_index_mapping.size() == 0)
+    return;
+
+  constexpr static auto medium_tag = AccelerationType::medium_tag;
+  constexpr static auto dimension_tag = AccelerationType::dimension_tag;
+
+  static_assert((BoundaryValueContainerType::dimension_tag ==
+                 AccelerationType::dimension_tag),
+                "DimensionTag must match AccelerationType::dimension_type");
+
+  using TagsType = specfem::tags::Tags<dimension_tag, medium_tag>;
+
+  IndexType l_index = index;
+  l_index.ispec = boundary_value_container.property_index_mapping(index.ispec);
+
+  boundary_value_container.container.template get<TagsType>().store_on_device(
+      istep, l_index, acceleration);
+
+  return;
+}
+
+template <typename IndexType, typename AccelerationType,
+          typename BoundaryValueContainerType,
+          typename std::enable_if_t<
+              ((BoundaryValueContainerType::boundary_tag ==
+                specfem::element::boundary_tag::stacey) ||
+               (BoundaryValueContainerType::boundary_tag ==
+                specfem::element::boundary_tag::composite_stacey_dirichlet)),
+              int> = 0>
+KOKKOS_FUNCTION void
+load_on_device(const int istep, const IndexType index,
+               const BoundaryValueContainerType &boundary_value_container,
+               AccelerationType &acceleration) {
+
+  if (boundary_value_container.property_index_mapping.size() == 0)
+    return;
+
+  constexpr static auto medium_tag = AccelerationType::medium_tag;
+  constexpr static auto dimension_tag = AccelerationType::dimension_tag;
+
+  static_assert((BoundaryValueContainerType::dimension_tag ==
+                 AccelerationType::dimension_tag),
+                "Number of dimensions must match");
+
+  using TagsType = specfem::tags::Tags<dimension_tag, medium_tag>;
+
+  IndexType l_index = index;
+  l_index.ispec = boundary_value_container.property_index_mapping(index.ispec);
+
+  boundary_value_container.container.template get<TagsType>().load_on_device(
+      istep, l_index, acceleration);
+
+  return;
+}
 } // namespace specfem::assembly

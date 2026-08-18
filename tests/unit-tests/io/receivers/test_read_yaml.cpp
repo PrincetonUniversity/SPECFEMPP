@@ -1,7 +1,8 @@
-#include "../../SPECFEM_Environment.hpp"
-#include "enumerations/specfem_enums.hpp"
-#include "io/interface.hpp"
+#include "SPECFEM_Environment.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/io.hpp"
 #include "specfem/receivers.hpp"
+#include "test_macros.hpp"
 #include "test_receiver_solutions.hpp"
 #include <Kokkos_Core.hpp>
 #include <algorithm>
@@ -13,10 +14,11 @@
  *
  * @tparam DimensionTag
  */
-template <specfem::dimension::type DimensionTag> struct ReceiverYAMLTestParam {
+template <specfem::element::dimension_tag DimensionTag>
+struct ReceiverYAMLTestParam {
   std::string testname;
   YAML::Node stations_node;
-  std::vector<std::shared_ptr<specfem::receivers::receiver<DimensionTag> > >
+  std::vector<std::shared_ptr<specfem::receivers::receiver<DimensionTag>>>
       expected_receivers;
   type_real angle;
 };
@@ -29,7 +31,7 @@ template <specfem::dimension::type DimensionTag> struct ReceiverYAMLTestParam {
  * @param params
  * @return std::ostream&
  */
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 std::ostream &operator<<(std::ostream &os,
                          const ReceiverYAMLTestParam<DimensionTag> &params) {
   os << params.testname;
@@ -37,7 +39,7 @@ std::ostream &operator<<(std::ostream &os,
 }
 
 using ReceiverYAMLTestParam2D =
-    ReceiverYAMLTestParam<specfem::dimension::type::dim2>;
+    ReceiverYAMLTestParam<specfem::element::dimension_tag::dim2>;
 
 // YAML node test data for 2D receivers
 const static YAML::Node empty_stations_yaml_2d = []() {
@@ -121,7 +123,7 @@ TEST_P(Read2DReceiversYAMLTest, ReadYAMLnode) {
   const auto &param = GetParam();
 
   if (param.expected_receivers.empty()) {
-    EXPECT_THROW(
+    LOCAL_EXPECT_THROW(
         specfem::io::read_2d_receivers(param.stations_node, param.angle),
         std::runtime_error);
     return;
@@ -156,7 +158,7 @@ INSTANTIATE_TEST_SUITE_P(
                                                two_receivers_2d, 0.0 }));
 
 using ReceiverYAMLTestParam3D =
-    ReceiverYAMLTestParam<specfem::dimension::type::dim3>;
+    ReceiverYAMLTestParam<specfem::element::dimension_tag::dim3>;
 
 class Read3DReceiversYAMLTest
     : public ::testing::TestWithParam<ReceiverYAMLTestParam3D> {};
@@ -165,8 +167,8 @@ TEST_P(Read3DReceiversYAMLTest, ReadYAMLnode) {
   const auto &param = GetParam();
 
   if (param.expected_receivers.empty()) {
-    EXPECT_THROW(specfem::io::read_3d_receivers(param.stations_node),
-                 std::runtime_error);
+    LOCAL_EXPECT_THROW(specfem::io::read_3d_receivers(param.stations_node),
+                       std::runtime_error);
     return;
   }
 

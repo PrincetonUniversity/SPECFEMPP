@@ -1,13 +1,14 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "impl/interface_container.hpp"
 #include "specfem/assembly/conforming_interfaces.hpp"
-#include "specfem/assembly/edge_types.hpp"
+#include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
-#include "specfem/macros.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/macros/tag_dispatch.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
@@ -23,23 +24,24 @@ namespace specfem::assembly {
  * elastic-acoustic, acoustic-elastic) and the boundary conditions applied
  * (e.g., free surface, Stacey absorbing).
  *
- * @tparam specfem::dimension::type::dim2 Template specialization for 2D domain
+ * @tparam specfem::element::dimension_tag::dim2 Template specialization for 2D
+ * domain
  *
  * @note This is a template specialization for 2D domains. The primary template
  *       is declared elsewhere and specialized here for dimension-specific
  *       optimizations.
  *
  * @see specfem::assembly::conforming_interfaces_impl::interface_container
- * @see specfem::assembly::edge_types
+ * @see specfem::assembly::element_intersections
  * @see specfem::assembly::jacobian_matrix
  * @see specfem::assembly::mesh
  */
 template <>
-class conforming_interfaces<specfem::dimension::type::dim2>
+class conforming_interfaces<specfem::element::dimension_tag::dim2>
     : public specfem::data_access::Container<
           specfem::data_access::ContainerType::edge,
           specfem::data_access::DataClassType::conforming_interface,
-          specfem::dimension::type::dim2> {
+          specfem::element::dimension_tag::dim2> {
 public:
   /**
    * @brief Dimension tag for this specialization
@@ -47,24 +49,30 @@ public:
    * Static constant member that identifies this specialization as operating
    * in 2D space. Used for compile-time dispatch and type checking.
    */
-  static constexpr auto dimension_tag = specfem::dimension::type::dim2;
+  static constexpr auto dimension_tag = specfem::element::dimension_tag::dim2;
 
 private:
-  template <specfem::interface::interface_tag InterfaceTag,
+  template <specfem::element_coupling::interface_tag InterfaceTag,
             specfem::element::boundary_tag BoundaryTag,
-            specfem::connections::type ConnectionTag>
+            specfem::element_connections::type ConnectionTag>
   using InterfaceContainerType =
       specfem::assembly::conforming_interfaces_impl::interface_container<
           dimension_tag, InterfaceTag, BoundaryTag, ConnectionTag>;
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), CONNECTION_TAG(WEAKLY_CONFORMING),
-                       INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
-                       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                                    COMPOSITE_STACEY_DIRICHLET)),
-                      DECLARE(((InterfaceContainerType,
-                                (_INTERFACE_TAG_, _BOUNDARY_TAG_,
-                                 _CONNECTION_TAG_)),
-                               interface_container)))
+  template <typename TagsType>
+  using InterfaceContainerTemplateType =
+      InterfaceContainerType<TagsType::interface_tag, TagsType::boundary_tag,
+                             TagsType::connection_tag>;
+
+  static constexpr auto combinations =
+      DIMENSION_SET(dim2) * CONNECTION_SET(weakly_conforming) *
+      INTERFACE_SET(elastic_acoustic, acoustic_elastic) *
+      BOUNDARY_SET(none, acoustic_free_surface, stacey,
+                   composite_stacey_dirichlet);
+
+  specfem::tag_dispatch::TypedStorage<InterfaceContainerTemplateType,
+                                      decltype(combinations)>
+      interface_container;
 
 public:
   /**
@@ -75,16 +83,16 @@ public:
    *
    * @param ngllz Number of Gauss-Lobatto-Legendre points in the z-direction
    * @param ngllx Number of Gauss-Lobatto-Legendre points in the x-direction
-   * @param edge_types Reference to the edge types container that provides
-   *                   information about the types of edges in the mesh
-   *                   (e.g., boundary edges, internal edges).
+   * @param element_intersections Reference to the element intersections
+   * container that provides information about the intersections between
+   * elements in the mesh (e.g., boundary edges, internal edges).
    * @param jacobian_matrix Reference to the Jacobian matrix container that
    *                        provides geometric transformation information
    *                        between reference and physical coordinates.
    * @param mesh Reference to the 2D mesh container that provides element
    *             connectivity, material properties, and geometric information.
    *
-   * @pre edge_types must be properly initialized for the given mesh
+   * @pre element_intersections must be properly initialized for the given mesh
    * @pre jacobian_matrix must be computed for all elements in the mesh
    * @pre mesh must contain valid element-to-node connectivity
    *
@@ -96,7 +104,8 @@ public:
    */
   conforming_interfaces(
       const int ngllz, const int ngllx,
-      const specfem::assembly::edge_types<dimension_tag> &edge_types,
+      const specfem::assembly::element_intersections<dimension_tag>
+          &element_intersections,
       const specfem::assembly::jacobian_matrix<dimension_tag> &jacobian_matrix,
       const specfem::assembly::mesh<dimension_tag> &mesh);
 
@@ -118,39 +127,20 @@ public:
    * @example
    * ```cpp
    * const auto& container = interfaces.get_interface_container<
-   *     specfem::interface::interface_tag::elastic_acoustic,
+   *     specfem::element_coupling::interface_tag::elastic_acoustic,
    *     specfem::element::boundary_tag::stacey>();
    * ```
    */
-  template <specfem::interface::interface_tag InterfaceTag,
+  template <specfem::element_coupling::interface_tag InterfaceTag,
             specfem::element::boundary_tag BoundaryTag,
-            specfem::connections::type ConnectionTag>
+            specfem::element_connections::type ConnectionTag>
   KOKKOS_INLINE_FUNCTION const
       InterfaceContainerType<InterfaceTag, BoundaryTag, ConnectionTag> &
       get_interface_container() const {
-    // Compile-time dispatch using FOR_EACH_IN_PRODUCT macro
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), CONNECTION_TAG(WEAKLY_CONFORMING),
-                         INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
-                         BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                                      COMPOSITE_STACEY_DIRICHLET)),
-                        CAPTURE((interface_container, interface_container)) {
-                          if constexpr (InterfaceTag == _interface_tag_ &&
-                                        BoundaryTag == _boundary_tag_ &&
-                                        ConnectionTag == _connection_tag_) {
-                            return _interface_container_;
-                          }
-                        })
-
-#ifndef NDEBUG
-    // Debug check: abort if no matching specialization found
-    KOKKOS_ABORT_WITH_LOCATION("specfem::assembly::conforming_interfaces::get_"
-                               "interface_container(): No "
-                               "matching specialization found.");
-#endif
-
-    // Unreachable code - satisfy compiler return requirements
-
-    SUPPRESS_TEMPORARY_REF(return {};)
+    using TagsType =
+        specfem::tags::Tags<specfem::element::dimension_tag::dim2,
+                            ConnectionTag, InterfaceTag, BoundaryTag>;
+    return interface_container.template get<TagsType>();
   }
 };
 

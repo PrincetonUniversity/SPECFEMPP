@@ -1,0 +1,123 @@
+#pragma once
+
+#include "impl/ascii.hpp"
+#include "impl/channel_generator.hpp"
+#include "impl/sac.hpp"
+#include "specfem/assembly/assembly.hpp"
+#include "specfem/constants.hpp"
+#include "specfem/datetime.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/io/writer.hpp"
+#include "specfem/mpi.hpp"
+#include "specfem/setup.hpp"
+#include <optional>
+#include <stdexcept>
+#include <vector>
+
+namespace specfem {
+namespace io {
+/**
+ * @brief Writer for outputting seismograms at receiver locations
+ *
+ * Records displacement, velocity, or acceleration at receiver stations and
+ * writes time series to disk. Supports multiple output formats and wave types,
+ * with configurable sampling intervals.
+ */
+class seismogram_writer : public writer, public impl::ChannelGenerator {
+
+public:
+  /**
+   * @brief Construct a new seismogram writer object
+   *
+   * @param type Format of the output file
+   * @param output_folder path to output folder where results will be stored
+   * @param dt Time interval between subsequent timesteps
+   * @param t0 Solver start time
+   * @param nstep_between_samples number of timesteps between seismogram
+   * sampling (seismogram sampling frequency)
+   * @param utm_mesh When true, 3-D elastic seismogram channels use the
+   * geographic E/N/Z convention instead of Cartesian X/Y/Z
+   */
+  seismogram_writer(
+      const specfem::enums::seismogram_format type,
+      const specfem::enums::elastic_wave elastic_wave,
+      const specfem::enums::electromagnetic_wave electromagnetic_wave,
+      const std::string output_folder, const type_real dt, const type_real t0,
+      const int nstep_between_samples,
+      std::optional<specfem::datetime::type> starttime = std::nullopt,
+      const std::optional<bool> write_from_main = std::nullopt,
+      const bool utm_mesh = false)
+      : impl::ChannelGenerator(dt, nstep_between_samples, utm_mesh), type(type),
+        elastic_wave(elastic_wave), electromagnetic_wave(electromagnetic_wave),
+        output_folder(output_folder), dt(dt), t0(t0),
+        nstep_between_samples(nstep_between_samples), starttime_(starttime),
+        write_from_main(write_from_main) {};
+
+  void write(specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+                 &assembly) override {
+    write_impl(assembly);
+  }
+
+  void write(specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
+                 &assembly) override {
+    write_impl(assembly);
+  }
+
+private:
+  template <specfem::element::dimension_tag DimensionTag>
+  void write_impl(specfem::assembly::assembly<DimensionTag> &assembly) {
+    auto &receivers = assembly.receivers;
+    receivers.sync_seismograms();
+
+    const int my_rank = specfem::MPI::get_rank();
+    const bool is_main = specfem::MPI::main_proc();
+    const bool from_main = write_from_main.value_or(false);
+
+    if (from_main)
+      receivers.gather_to_main();
+
+    auto filtered_stations = receivers.stations([&](const auto &s) {
+      return from_main ? is_main : s.partition_index == my_rank;
+    });
+
+    switch (type) {
+    case specfem::enums::seismogram_format::ascii:
+      specfem::io::impl::write_seismogram<
+          specfem::enums::seismogram_format::ascii>(
+          filtered_stations, receivers, *this, output_folder, starttime_);
+      break;
+    case specfem::enums::seismogram_format::sac:
+      specfem::io::impl::write_seismogram<
+          specfem::enums::seismogram_format::sac>(
+          filtered_stations, receivers, *this, output_folder, starttime_);
+      break;
+    default:
+      throw std::runtime_error(
+          "Unsupported seismogram output format requested.");
+    }
+  }
+
+  specfem::enums::seismogram_format type; ///< Output format of the seismogram
+                                          ///< file
+  std::string output_folder; ///< Path to output folder where results will be
+                             ///< stored
+  type_real dt;              ///< Time interval between subsequent timesteps
+  type_real t0;              ///< Solver start time
+  specfem::enums::elastic_wave elastic_wave; ///< Type of wavefield (Writes
+                                             ///< .BXY for SH waves and .BXX,
+                                             ///< .BXZ for P-SV waves)
+  specfem::enums::electromagnetic_wave
+      electromagnetic_wave;  ///< Type of
+                             ///< electromagnetic
+                             ///< wavefield
+  int nstep_between_samples; ///< number of timesteps between seismogram
+                             ///< sampling (seismogram sampling frequency)
+  std::optional<specfem::datetime::type> starttime_; ///< Optional UTC start
+                                                     ///< datetime of the
+                                                     ///< simulation
+  std::optional<bool> write_from_main; ///< Gather all data to rank 0 and write
+                                       ///< from main proc
+};
+
+} // namespace io
+} // namespace specfem

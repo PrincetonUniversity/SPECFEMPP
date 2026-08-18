@@ -29,10 +29,10 @@ base_store_accessor(const int iglob, const int icomp, const MaskType &mask,
   using data_accessor =
       std::integral_constant<specfem::data_access::DataClassType, DataClass>;
 
-  Kokkos::Experimental::where(mask, value)
-      .copy_to(
-          &(field.template get_value<on_device>(data_accessor(), iglob, icomp)),
-          tag_type);
+  Kokkos::Experimental::simd_partial_store(
+      value,
+      &(field.template get_value<on_device>(data_accessor(), iglob, icomp)),
+      mask, tag_type);
 }
 
 template <
@@ -71,9 +71,10 @@ KOKKOS_FORCEINLINE_FUNCTION void store_after_simd_dispatch(
 
   check_accessor_compatibility<AccessorTypes...>();
 
-  using mask_type = typename std::tuple_element_t<
-      0, std::tuple<AccessorTypes...> >::simd::mask_type;
-  mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+  using simd =
+      typename std::tuple_element_t<0, std::tuple<AccessorTypes...> >::simd;
+  using mask_type = typename simd::mask_type;
+  const auto mask = index.template get_mask<simd>();
 
   const int iglob = index.iglob;
 

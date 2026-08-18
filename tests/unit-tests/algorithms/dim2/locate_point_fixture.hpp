@@ -1,12 +1,12 @@
 #pragma once
-#include "../../mesh_utilities/mapping.hpp"
-#include "../../test_macros.hpp"
 #include "SPECFEM_Environment.hpp"
-#include "algorithms/locate_point.hpp"
-#include "algorithms/locate_point_impl.hpp"
-#include "kokkos_abstractions.h"
+#include "mesh_utilities/mapping.hpp"
+#include "test_macros.hpp"
+
+#include "specfem/algorithms.hpp"
+#include "specfem/algorithms/locate_point/locate_point_impl.hpp"
 #include "specfem/point.hpp"
-#include "utilities/utilities.hpp"
+#include "specfem/utilities.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 
@@ -35,25 +35,24 @@ protected:
   void TearDown() override {}
 
   // Helper to create unit square coordinates programmatically
-  std::vector<std::vector<std::pair<double, double> > >
+  std::vector<std::vector<std::pair<double, double>>>
   create_unit_square(int ngll, double xmin = -1.0, double xmax = 1.0,
                      double zmin = -1.0, double zmax = 1.0);
 
   // Helper to create control nodes for 4-node or 9-node elements
-  std::vector<std::vector<std::pair<double, double> > >
+  std::vector<std::vector<std::pair<double, double>>>
   create_control_nodes(int ngnod, double xmin = 0.0, double xmax = 1.0,
                        double zmin = 0.0, double zmax = 1.0);
 
   // Helper to create coordinate array from element corners and ngll points
   HostView4d create_coordinate_array(
-      const std::vector<std::vector<std::pair<double, double> > >
+      const std::vector<std::vector<std::pair<double, double>>>
           &element_coords);
 
   // Create element geometry using tested utility functions
   ElementGeometry create_element_geometry(
-      const std::vector<std::vector<std::pair<double, double> > >
-          &element_coords,
-      const std::vector<std::vector<std::pair<double, double> > >
+      const std::vector<std::vector<std::pair<double, double>>> &element_coords,
+      const std::vector<std::vector<std::pair<double, double>>>
           &control_coords);
 
   // Create a single unit square element [0,1] x [0,1] with 2x2 GLL points

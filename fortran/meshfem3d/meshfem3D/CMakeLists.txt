@@ -61,6 +61,20 @@ target_link_libraries(meshfem3D_mesh_hdf5_module PRIVATE
   meshfem3D::mesh_module
 )
 
+add_library(meshfem3D_mesh_MPI_module
+    assemble_MPI.F90
+)
+
+add_library(meshfem3D::mesh_MPI_module ALIAS meshfem3D_mesh_MPI_module)
+target_link_libraries(meshfem3D_mesh_MPI_module PRIVATE
+  meshfem3D::constants
+  meshfem3D::shared_module
+  meshfem3D::mesh_module
+)
+if (SPECFEM_ENABLE_MPI)
+  target_link_libraries(meshfem3D_mesh_MPI_module PRIVATE MPI::MPI_Fortran)
+endif()
+
 add_library(meshfem3D_mesh
   ${MESHFEM3D_MESH_MODULE}
 )
@@ -70,7 +84,12 @@ target_link_libraries(meshfem3D_mesh PRIVATE
   meshfem3D::shared_module
   meshfem3D::version
   meshfem3D::shared_adios_module
+  meshfem3D::mesh_MPI_module
 )
+
+if (SPECFEM_ENABLE_MPI)
+  target_link_libraries(meshfem3D_mesh PRIVATE MPI::MPI_Fortran)
+endif()
 
 add_executable(xmeshfem3D meshfem3D.F90)
 target_link_libraries(xmeshfem3D PRIVATE
@@ -84,7 +103,12 @@ target_link_libraries(xmeshfem3D PRIVATE
     meshfem3D::adios_methods_stubs
     meshfem3D::param_reader
     meshfem3D::version
+    specfem::version
 )
+
+if (SPECFEM_ENABLE_MPI)
+  target_link_libraries(xmeshfem3D PRIVATE MPI::MPI_Fortran)
+endif()
 if (ADIOS)
   target_link_libraries(meshfem3D_mesh_hdf5_module PRIVATE
     meshfem3D::shared_adios_module
@@ -94,5 +118,6 @@ endif(ADIOS)
 if (SPECFEM_INSTALL)
   install(TARGETS xmeshfem3D
     RUNTIME DESTINATION .
+    COMPONENT executables
   )
 endif()

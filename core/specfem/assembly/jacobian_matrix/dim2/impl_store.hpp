@@ -1,18 +1,23 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
 namespace specfem::assembly {
 
+/**
+ * @brief Internally store a 2D SIMD Jacobian matrix accessor.
+ *
+ * This is an internal implementation detail and is not part of the public API.
+ */
 template <
     bool on_device, typename IndexType, typename ContainerType,
     typename PointType,
     typename std::enable_if_t<
         specfem::data_access::is_index_type<IndexType>::value &&
-            IndexType::dimension_tag == specfem::dimension::type::dim2 &&
+            IndexType::dimension_tag == specfem::element::dimension_tag::dim2 &&
             IndexType::using_simd && PointType::simd::using_simd &&
             specfem::data_access::is_jacobian_matrix<ContainerType>::value,
         int> = 0>
@@ -30,46 +35,55 @@ inline void impl_store(const IndexType &index, const ContainerType &derivatives,
   using mask_type = typename simd::mask_type;
   using tag_type = typename simd::tag_type;
 
-  mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+  const auto mask = index.template get_mask<simd>();
 
   const auto &mapping = derivatives.xix.get_mapping();
   const std::size_t _index = mapping(ispec, iz, ix);
 
   if constexpr (on_device) {
-    Kokkos::Experimental::where(mask, jacobian_matrix.xix)
-        .copy_to(&derivatives.xix[_index], tag_type());
-    Kokkos::Experimental::where(mask, jacobian_matrix.gammax)
-        .copy_to(&derivatives.gammax[_index], tag_type());
-    Kokkos::Experimental::where(mask, jacobian_matrix.xiz)
-        .copy_to(&derivatives.xiz[_index], tag_type());
-    Kokkos::Experimental::where(mask, jacobian_matrix.gammaz)
-        .copy_to(&derivatives.gammaz[_index], tag_type());
+    Kokkos::Experimental::simd_partial_store(
+        jacobian_matrix.xix, &derivatives.xix[_index], mask, tag_type());
+    Kokkos::Experimental::simd_partial_store(
+        jacobian_matrix.gammax, &derivatives.gammax[_index], mask, tag_type());
+    Kokkos::Experimental::simd_partial_store(
+        jacobian_matrix.xiz, &derivatives.xiz[_index], mask, tag_type());
+    Kokkos::Experimental::simd_partial_store(
+        jacobian_matrix.gammaz, &derivatives.gammaz[_index], mask, tag_type());
     if constexpr (StoreJacobian) {
-      Kokkos::Experimental::where(mask, jacobian_matrix.jacobian)
-          .copy_to(&derivatives.jacobian[_index], tag_type());
+      Kokkos::Experimental::simd_partial_store(jacobian_matrix.jacobian,
+                                               &derivatives.jacobian[_index],
+                                               mask, tag_type());
     }
   } else {
-    Kokkos::Experimental::where(mask, jacobian_matrix.xix)
-        .copy_to(&derivatives.h_xix[_index], tag_type());
-    Kokkos::Experimental::where(mask, jacobian_matrix.gammax)
-        .copy_to(&derivatives.h_gammax[_index], tag_type());
-    Kokkos::Experimental::where(mask, jacobian_matrix.xiz)
-        .copy_to(&derivatives.h_xiz[_index], tag_type());
-    Kokkos::Experimental::where(mask, jacobian_matrix.gammaz)
-        .copy_to(&derivatives.h_gammaz[_index], tag_type());
+    Kokkos::Experimental::simd_partial_store(
+        jacobian_matrix.xix, &derivatives.h_xix[_index], mask, tag_type());
+    Kokkos::Experimental::simd_partial_store(jacobian_matrix.gammax,
+                                             &derivatives.h_gammax[_index],
+                                             mask, tag_type());
+    Kokkos::Experimental::simd_partial_store(
+        jacobian_matrix.xiz, &derivatives.h_xiz[_index], mask, tag_type());
+    Kokkos::Experimental::simd_partial_store(jacobian_matrix.gammaz,
+                                             &derivatives.h_gammaz[_index],
+                                             mask, tag_type());
     if constexpr (StoreJacobian) {
-      Kokkos::Experimental::where(mask, jacobian_matrix.jacobian)
-          .copy_to(&derivatives.h_jacobian[_index], tag_type());
+      Kokkos::Experimental::simd_partial_store(jacobian_matrix.jacobian,
+                                               &derivatives.h_jacobian[_index],
+                                               mask, tag_type());
     }
   }
 }
 
+/**
+ * @brief Internally store a 2D scalar Jacobian matrix accessor.
+ *
+ * This is an internal implementation detail and is not part of the public API.
+ */
 template <
     bool on_device, typename IndexType, typename ContainerType,
     typename PointType,
     typename std::enable_if_t<
         specfem::data_access::is_index_type<IndexType>::value &&
-            IndexType::dimension_tag == specfem::dimension::type::dim2 &&
+            IndexType::dimension_tag == specfem::element::dimension_tag::dim2 &&
             !IndexType::using_simd && !PointType::simd::using_simd &&
             specfem::data_access::is_jacobian_matrix<ContainerType>::value,
         int> = 0>

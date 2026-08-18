@@ -28,11 +28,11 @@
  */
 
 #include "../test_fixture.hpp"
-#include "enumerations/interface.hpp"
-#include "quadrature/interface.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/jacobian.hpp"
 #include "specfem/point.hpp"
+#include "specfem/quadrature.hpp"
 #include "gtest/gtest.h"
 #include <Kokkos_Core.hpp>
 #include <array>
@@ -164,14 +164,14 @@ public:
    * @note The returned view uses HostSpace memory and contains
    *       specfem::point::global_coordinates data structures.
    */
-  const Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
+  const Kokkos::View<specfem::point::global_coordinates<
+                         specfem::element::dimension_tag::dim3> *,
+                     Kokkos::HostSpace>
   coordinates() const {
     const int npoints = static_cast<int>(_coordinates.size());
-    Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-        Kokkos::HostSpace>
+    Kokkos::View<specfem::point::global_coordinates<
+                     specfem::element::dimension_tag::dim3> *,
+                 Kokkos::HostSpace>
         coord_view("coord_view", npoints);
     for (int i = 0; i < npoints; ++i) {
       coord_view(i) = { _coordinates[i][0], _coordinates[i][1],
@@ -201,8 +201,9 @@ public:
  * GLL point with a specified tolerance.
  */
 struct ExpectedJacobian3D {
-  constexpr static specfem::dimension::type dimension =
-      specfem::dimension::type::dim3; ///< Compile-time dimension specification
+  constexpr static specfem::element::dimension_tag dimension =
+      specfem::element::dimension_tag::dim3; ///< Compile-time dimension
+                                             ///< specification
 
   GridExtents total_gll_points;    ///< GLL discretization parameters
   std::vector<Element3D> elements; ///< Collection of test elements
@@ -322,9 +323,6 @@ struct ExpectedJacobian3D {
             const auto expected_jacobian = specfem::jacobian::compute_jacobian(
                 expected_coord, element.control_nodes_per_element, xil, etal,
                 zetal);
-
-            // Set numerical tolerance for floating-point comparison
-            const type_real tol = 1e-6;
 
             // Extract computed Jacobian data from assembly structure
             const auto point_jacobian = [&]()

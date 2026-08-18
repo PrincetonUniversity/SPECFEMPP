@@ -1,7 +1,7 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
-#include "mesh/mesh.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/mesh.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly::mesh_impl {
@@ -14,12 +14,12 @@ namespace specfem::assembly::mesh_impl {
  *
  * @see specfem::mesh::control_nodes
  */
-template <> struct control_nodes<specfem::dimension::type::dim3> {
+template <> struct control_nodes<specfem::element::dimension_tag::dim3> {
 private:
   constexpr static int ndim = 3;
 
 public:
-  constexpr static auto dimension_tag = specfem::dimension::type::dim3;
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
 
   /**
    * @brief Kokkos view type for 3D coordinate storage.
@@ -42,11 +42,11 @@ public:
   int ngnod; ///< Number of control nodes per element
 
   ControlNodeCoordinatesView control_node_coordinates; ///< Device coordinates
-  ControlNodeCoordinatesView::HostMirror
+  ControlNodeCoordinatesView::host_mirror_type
       h_control_node_coordinates; ///< Host coordinates
 
-  ControlNodeIndexView control_node_index;               ///< Device indices
-  ControlNodeIndexView::HostMirror h_control_node_index; ///< Host indices
+  ControlNodeIndexView control_node_index; ///< Device indices
+  ControlNodeIndexView::host_mirror_type h_control_node_index; ///< Host indices
 
   /**
    * @brief Default constructor.
@@ -61,6 +61,8 @@ public:
    * @param control_nodes Source mesh control nodes
    */
   control_nodes(
+      const specfem::assembly::mesh_impl::mesh_to_compute_mapping<dimension_tag>
+          &mapping,
       const specfem::mesh::control_nodes<dimension_tag> &control_nodes);
 };
 

@@ -39,9 +39,11 @@ namespace specfem::assembly {
  *
  * @code
  * // Example usage in host code
- * specfem::point::index<specfem::dimension::type::dim3> idx(ispec, iz, iy, ix);
- * specfem::point::jacobian_matrix<specfem::dimension::type::dim3> point_jac;
- * specfem::assembly::load_on_host(idx, jacobian_container, point_jac);
+ * specfem::point::index<specfem::element::dimension_tag::dim3> idx(ispec, iz,
+ * iy, ix);
+ * specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim3>
+ * point_jac; specfem::assembly::load_on_host(idx, jacobian_container,
+ * point_jac);
  *
  * // Process loaded transformation data
  * type_real volume_element = point_jac.jacobian;
@@ -55,9 +57,8 @@ template <
             specfem::data_access::is_jacobian_matrix<ContainerType>::value &&
             specfem::data_access::is_jacobian_matrix<PointType>::value,
         int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void load_on_host(const IndexType &index,
-                                              const ContainerType &container,
-                                              PointType &point) {
+void load_on_host(const IndexType &index, const ContainerType &container,
+                  PointType &point) {
 
   using compatibility =
       specfem::data_access::CheckCompatibility<IndexType, ContainerType,

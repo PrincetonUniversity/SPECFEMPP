@@ -1,0 +1,116 @@
+SPECFEM_BIN = "@CMAKE_BINARY_DIR@/bin/specfem 3d"
+DECOMPOSE_BIN = "@CMAKE_BINARY_DIR@/bin/xdecompose_mesh"
+SPECFEM_SCRIPTS_DIR = "@CMAKE_SOURCE_DIR@/scripts"
+
+NPROC = @NPROC@
+
+RUN = "mpirun -n " + str(NPROC) + " " if NPROC > 1 else ""
+DATABASES = [f"@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES/Database/proc_{rank}.bin" for rank in range(NPROC)] if NPROC > 1 else "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES/Database.bin"
+
+rule all:
+    input:
+        plots=expand(
+            "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/seismogram_{ext}.png",
+            ext=["semd", "semv", "sema"],
+        ),
+        traces=expand(
+            "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/{network_name}.{station_name}.S3.{component}.{ext}",
+            station_name=["X10", "X20", "X30", "X40", "Y10", "Y20", "Y30", "Y40"],
+            network_name=["DB"],
+            component=["HXE", "HXN", "HXZ"],
+            ext=["semd", "semv", "sema"],
+        ),
+    localrule: True
+
+
+rule create_mesh:
+    input:
+        script="@CURRENT_BENCHMARK_BUILD_DIR@/scripts/create_mesh.py",
+        topo="@CURRENT_BENCHMARK_BUILD_DIR@/DATA/ptopo.mean.utm",
+    output:
+        msh="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/mount_sthelens.msh",
+    localrule: True
+    shell:
+        """
+            cd @CURRENT_BENCHMARK_BUILD_DIR@
+            python {input.script} {output.msh} {input.topo}
+        """
+
+
+rule export_mesh:
+    input:
+        msh=rules.create_mesh.output.msh,
+        script="@CURRENT_BENCHMARK_BUILD_DIR@/scripts/export_mesh.py",
+    output:
+        nodes="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/MESH/nodes_coords_file",
+        mesh="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/MESH/mesh_file",
+        materials="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/MESH/materials_file",
+        velocity="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/MESH/nummaterial_velocity_file",
+        abs_xmin="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/MESH/absorbing_surface_file_xmin",
+        abs_xmax="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/MESH/absorbing_surface_file_xmax",
+        abs_ymin="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/MESH/absorbing_surface_file_ymin",
+        abs_ymax="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/MESH/absorbing_surface_file_ymax",
+        abs_bottom="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/MESH/absorbing_surface_file_bottom",
+        free_surface="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/MESH/free_or_absorbing_surface_file_zmax",
+    localrule: True
+    shell:
+        """
+            mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/MESH
+            cd @CURRENT_BENCHMARK_BUILD_DIR@
+            python {input.script}
+        """
+
+
+rule decompose_mesh:
+    input:
+        par_file="@CURRENT_BENCHMARK_BUILD_DIR@/Par_file",
+        nodes=rules.export_mesh.output.nodes,
+        mesh=rules.export_mesh.output.mesh,
+        materials=rules.export_mesh.output.materials,
+        velocity=rules.export_mesh.output.velocity,
+    output:
+        database=DATABASES,
+    localrule: True
+    shell:
+        """
+            mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES
+            cd @CURRENT_BENCHMARK_BUILD_DIR@
+            {DECOMPOSE_BIN} -p {input.par_file}
+        """
+
+
+rule run_solver:
+    input:
+        database=rules.decompose_mesh.output.database,
+        stations="@CURRENT_BENCHMARK_BUILD_DIR@/DATA/STATIONS",
+        source="@CURRENT_BENCHMARK_BUILD_DIR@/DATA/CMTSOLUTION",
+        config="@CURRENT_BENCHMARK_BUILD_DIR@/specfem_config.yaml",
+    output:
+        traces=rules.all.input.traces,
+        log="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/output.log",
+    shell:
+        """
+            mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results
+            echo "Hostname: $(hostname)" > {output.log}
+            {RUN}{SPECFEM_BIN} -p {input.config} >> {output.log}
+        """
+
+
+rule plot_seismogram:
+    input:
+        rules.run_solver.output.traces,
+    output:
+        plots=rules.all.input.plots,
+    localrule: True
+    shell:
+        """
+            python @CURRENT_BENCHMARK_BUILD_DIR@/scripts/plot_seismograms.py
+        """
+
+
+rule clean:
+    localrule: True
+    shell:
+        """
+            rm -rf @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES
+        """

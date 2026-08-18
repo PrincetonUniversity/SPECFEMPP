@@ -1,5 +1,5 @@
 #include "specfem/point.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "test_macros.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
@@ -31,8 +31,8 @@ TEST_F(PointCoordinatesTest, LocalCoordinates2D) {
   const int ispec = 5;
   const type_real xi = 0.5;
   const type_real gamma = -0.3;
-  specfem::point::local_coordinates<specfem::dimension::type::dim2> local(
-      ispec, xi, gamma);
+  specfem::point::local_coordinates<specfem::element::dimension_tag::dim2>
+      local(ispec, xi, gamma);
 
   // Check values
   EXPECT_EQ(local.ispec, ispec);
@@ -46,8 +46,8 @@ TEST_F(PointCoordinatesTest, GlobalCoordinates2D) {
   // Constructor with parameters
   const type_real x = 10.5;
   const type_real z = -3.2;
-  specfem::point::global_coordinates<specfem::dimension::type::dim2> global(x,
-                                                                            z);
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
+      global(x, z);
 
   // Check values
   EXPECT_REAL_EQ(global.x, x);
@@ -57,14 +57,14 @@ TEST_F(PointCoordinatesTest, GlobalCoordinates2D) {
 // Test 2D distance function
 TEST_F(PointCoordinatesTest, Distance2D) {
   // Create two points
-  specfem::point::global_coordinates<specfem::dimension::type::dim2> p1(0.0,
-                                                                        0.0);
-  specfem::point::global_coordinates<specfem::dimension::type::dim2> p2(3.0,
-                                                                        4.0);
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim2> p1(
+      0.0, 0.0);
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim2> p2(
+      3.0, 4.0);
 
   // Calculate distance
   type_real dist =
-      specfem::point::distance<specfem::dimension::type::dim2>(p1, p2);
+      specfem::point::distance<specfem::element::dimension_tag::dim2>(p1, p2);
 
   // Expected result is 5.0 (Pythagorean triangle 3-4-5)
   EXPECT_REAL_EQ(dist, 5.0);
@@ -73,16 +73,16 @@ TEST_F(PointCoordinatesTest, Distance2D) {
 // Test 2D distance symmetry
 TEST_F(PointCoordinatesTest, DistanceSymmetry2D) {
   // Create two points
-  specfem::point::global_coordinates<specfem::dimension::type::dim2> p1(1.0,
-                                                                        2.0);
-  specfem::point::global_coordinates<specfem::dimension::type::dim2> p2(3.0,
-                                                                        5.0);
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim2> p1(
+      1.0, 2.0);
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim2> p2(
+      3.0, 5.0);
 
   // Calculate distances in both directions
   type_real dist_forward =
-      specfem::point::distance<specfem::dimension::type::dim2>(p1, p2);
+      specfem::point::distance<specfem::element::dimension_tag::dim2>(p1, p2);
   type_real dist_backward =
-      specfem::point::distance<specfem::dimension::type::dim2>(p2, p1);
+      specfem::point::distance<specfem::element::dimension_tag::dim2>(p2, p1);
 
   // Check symmetry
   EXPECT_REAL_EQ(dist_forward, dist_backward);
@@ -91,12 +91,12 @@ TEST_F(PointCoordinatesTest, DistanceSymmetry2D) {
 // Test 2D zero distance
 TEST_F(PointCoordinatesTest, ZeroDistance2D) {
   // Create a point
-  specfem::point::global_coordinates<specfem::dimension::type::dim2> p(2.5,
-                                                                       3.5);
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim2> p(
+      2.5, 3.5);
 
   // Calculate distance to itself
   type_real dist =
-      specfem::point::distance<specfem::dimension::type::dim2>(p, p);
+      specfem::point::distance<specfem::element::dimension_tag::dim2>(p, p);
 
   // Expected result is 0.0
   EXPECT_REAL_EQ(dist, 0.0);
@@ -105,14 +105,14 @@ TEST_F(PointCoordinatesTest, ZeroDistance2D) {
 // Test 2D non-integer coordinates
 TEST_F(PointCoordinatesTest, NonIntegerCoordinates2D) {
   // Create two points with non-integer coordinates
-  specfem::point::global_coordinates<specfem::dimension::type::dim2> p1(1.5,
-                                                                        2.5);
-  specfem::point::global_coordinates<specfem::dimension::type::dim2> p2(4.5,
-                                                                        6.5);
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim2> p1(
+      1.5, 2.5);
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim2> p2(
+      4.5, 6.5);
 
   // Calculate distance
   type_real dist =
-      specfem::point::distance<specfem::dimension::type::dim2>(p1, p2);
+      specfem::point::distance<specfem::element::dimension_tag::dim2>(p1, p2);
 
   // Expected result
   type_real expected = std::sqrt(3.0 * 3.0 + 4.0 * 4.0);
@@ -122,14 +122,14 @@ TEST_F(PointCoordinatesTest, NonIntegerCoordinates2D) {
 // Test 2D negative coordinates
 TEST_F(PointCoordinatesTest, NegativeCoordinates2D) {
   // Create two points with negative coordinates
-  specfem::point::global_coordinates<specfem::dimension::type::dim2> p1(-1.0,
-                                                                        -2.0);
-  specfem::point::global_coordinates<specfem::dimension::type::dim2> p2(2.0,
-                                                                        1.0);
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim2> p1(
+      -1.0, -2.0);
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim2> p2(
+      2.0, 1.0);
 
   // Calculate distance
   type_real dist =
-      specfem::point::distance<specfem::dimension::type::dim2>(p1, p2);
+      specfem::point::distance<specfem::element::dimension_tag::dim2>(p1, p2);
 
   // Expected result
   type_real expected = std::sqrt(3.0 * 3.0 + 3.0 * 3.0);
@@ -146,8 +146,8 @@ TEST_F(PointCoordinatesTest, LocalCoordinates3D) {
   const type_real xi = 0.7;
   const type_real eta = 0.2;
   const type_real gamma = -0.4;
-  specfem::point::local_coordinates<specfem::dimension::type::dim3> local(
-      ispec, xi, eta, gamma);
+  specfem::point::local_coordinates<specfem::element::dimension_tag::dim3>
+      local(ispec, xi, eta, gamma);
 
   // Check values
   EXPECT_EQ(local.ispec, ispec);
@@ -163,8 +163,8 @@ TEST_F(PointCoordinatesTest, GlobalCoordinates3D) {
   const type_real x = 11.5;
   const type_real y = 22.7;
   const type_real z = -4.3;
-  specfem::point::global_coordinates<specfem::dimension::type::dim3> global(
-      x, y, z);
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
+      global(x, y, z);
 
   // Check values
   EXPECT_REAL_EQ(global.x, x);
@@ -175,14 +175,14 @@ TEST_F(PointCoordinatesTest, GlobalCoordinates3D) {
 // Test 3D distance function
 TEST_F(PointCoordinatesTest, Distance3D) {
   // Create two points
-  specfem::point::global_coordinates<specfem::dimension::type::dim3> p1(
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim3> p1(
       0.0, 0.0, 0.0);
-  specfem::point::global_coordinates<specfem::dimension::type::dim3> p2(
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim3> p2(
       3.0, 4.0, 12.0);
 
   // Calculate distance
   type_real dist =
-      specfem::point::distance<specfem::dimension::type::dim3>(p1, p2);
+      specfem::point::distance<specfem::element::dimension_tag::dim3>(p1, p2);
 
   // Expected result is 13.0 (3D extension of the Pythagorean theorem)
   EXPECT_REAL_EQ(dist, 13.0);
@@ -191,16 +191,16 @@ TEST_F(PointCoordinatesTest, Distance3D) {
 // Test 3D distance symmetry
 TEST_F(PointCoordinatesTest, DistanceSymmetry3D) {
   // Create two points
-  specfem::point::global_coordinates<specfem::dimension::type::dim3> p1(
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim3> p1(
       1.0, 2.0, 3.0);
-  specfem::point::global_coordinates<specfem::dimension::type::dim3> p2(
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim3> p2(
       4.0, 6.0, 8.0);
 
   // Calculate distances in both directions
   type_real dist_forward =
-      specfem::point::distance<specfem::dimension::type::dim3>(p1, p2);
+      specfem::point::distance<specfem::element::dimension_tag::dim3>(p1, p2);
   type_real dist_backward =
-      specfem::point::distance<specfem::dimension::type::dim3>(p2, p1);
+      specfem::point::distance<specfem::element::dimension_tag::dim3>(p2, p1);
 
   // Check symmetry
   EXPECT_REAL_EQ(dist_forward, dist_backward);
@@ -209,12 +209,12 @@ TEST_F(PointCoordinatesTest, DistanceSymmetry3D) {
 // Test 3D zero distance
 TEST_F(PointCoordinatesTest, ZeroDistance3D) {
   // Create a point
-  specfem::point::global_coordinates<specfem::dimension::type::dim3> p(2.5, 3.5,
-                                                                       4.5);
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim3> p(
+      2.5, 3.5, 4.5);
 
   // Calculate distance to itself
   type_real dist =
-      specfem::point::distance<specfem::dimension::type::dim3>(p, p);
+      specfem::point::distance<specfem::element::dimension_tag::dim3>(p, p);
 
   // Expected result is 0.0
   EXPECT_REAL_EQ(dist, 0.0);
@@ -223,14 +223,14 @@ TEST_F(PointCoordinatesTest, ZeroDistance3D) {
 // Test 3D non-integer coordinates
 TEST_F(PointCoordinatesTest, NonIntegerCoordinates3D) {
   // Create two points with non-integer coordinates
-  specfem::point::global_coordinates<specfem::dimension::type::dim3> p1(
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim3> p1(
       1.5, 2.5, 3.5);
-  specfem::point::global_coordinates<specfem::dimension::type::dim3> p2(
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim3> p2(
       4.5, 6.5, 7.5);
 
   // Calculate distance
   type_real dist =
-      specfem::point::distance<specfem::dimension::type::dim3>(p1, p2);
+      specfem::point::distance<specfem::element::dimension_tag::dim3>(p1, p2);
 
   // Expected result
   type_real expected = std::sqrt(3.0 * 3.0 + 4.0 * 4.0 + 4.0 * 4.0);
@@ -240,14 +240,14 @@ TEST_F(PointCoordinatesTest, NonIntegerCoordinates3D) {
 // Test 3D negative coordinates
 TEST_F(PointCoordinatesTest, NegativeCoordinates3D) {
   // Create two points with negative coordinates
-  specfem::point::global_coordinates<specfem::dimension::type::dim3> p1(
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim3> p1(
       -1.0, -2.0, -3.0);
-  specfem::point::global_coordinates<specfem::dimension::type::dim3> p2(
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim3> p2(
       2.0, 1.0, 0.0);
 
   // Calculate distance
   type_real dist =
-      specfem::point::distance<specfem::dimension::type::dim3>(p1, p2);
+      specfem::point::distance<specfem::element::dimension_tag::dim3>(p1, p2);
 
   // Expected result
   type_real expected = std::sqrt(3.0 * 3.0 + 3.0 * 3.0 + 3.0 * 3.0);
@@ -262,8 +262,8 @@ TEST_F(PointCoordinatesTest, GlobalCoordinates2D_ArrayConstructor) {
   coord_array[0] = 3.14;
   coord_array[1] = 2.71;
 
-  specfem::point::global_coordinates<specfem::dimension::type::dim2> coords(
-      coord_array);
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
+      coords(coord_array);
 
   EXPECT_REAL_EQ(coords.x, 3.14);
   EXPECT_REAL_EQ(coords.z, 2.71);
@@ -276,8 +276,8 @@ TEST_F(PointCoordinatesTest, GlobalCoordinates3D_ArrayConstructor) {
   coord_array[1] = 1.41;
   coord_array[2] = 2.71;
 
-  specfem::point::global_coordinates<specfem::dimension::type::dim3> coords(
-      coord_array);
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
+      coords(coord_array);
 
   EXPECT_REAL_EQ(coords.x, 3.14);
   EXPECT_REAL_EQ(coords.y, 1.41);
@@ -291,8 +291,8 @@ TEST_F(PointCoordinatesTest, LocalCoordinates2D_ArrayConstructor) {
   coord_array[0] = -0.3;
   coord_array[1] = 0.7;
 
-  specfem::point::local_coordinates<specfem::dimension::type::dim2> coords(
-      ispec, coord_array);
+  specfem::point::local_coordinates<specfem::element::dimension_tag::dim2>
+      coords(ispec, coord_array);
 
   EXPECT_EQ(coords.ispec, ispec);
   EXPECT_REAL_EQ(coords.xi, -0.3);
@@ -307,8 +307,8 @@ TEST_F(PointCoordinatesTest, LocalCoordinates3D_ArrayConstructor) {
   coord_array[1] = 0.1;
   coord_array[2] = 0.7;
 
-  specfem::point::local_coordinates<specfem::dimension::type::dim3> coords(
-      ispec, coord_array);
+  specfem::point::local_coordinates<specfem::element::dimension_tag::dim3>
+      coords(ispec, coord_array);
 
   EXPECT_EQ(coords.ispec, ispec);
   EXPECT_REAL_EQ(coords.xi, -0.3);
@@ -322,14 +322,14 @@ TEST_F(PointCoordinatesTest, GlobalCoordinates2D_ArrayValueEquivalence) {
   type_real z = -2.3;
 
   // Value constructor
-  specfem::point::global_coordinates<specfem::dimension::type::dim2>
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
       coords_value(x, z);
 
   // Array constructor
   Kokkos::View<type_real[2], Kokkos::HostSpace> coord_array("coords");
   coord_array[0] = x;
   coord_array[1] = z;
-  specfem::point::global_coordinates<specfem::dimension::type::dim2>
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
       coords_array(coord_array);
 
   // Check equivalence
@@ -344,7 +344,7 @@ TEST_F(PointCoordinatesTest, GlobalCoordinates3D_ArrayValueEquivalence) {
   type_real z = -2.3;
 
   // Value constructor
-  specfem::point::global_coordinates<specfem::dimension::type::dim3>
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
       coords_value(x, y, z);
 
   // Array constructor
@@ -352,7 +352,7 @@ TEST_F(PointCoordinatesTest, GlobalCoordinates3D_ArrayValueEquivalence) {
   coord_array[0] = x;
   coord_array[1] = y;
   coord_array[2] = z;
-  specfem::point::global_coordinates<specfem::dimension::type::dim3>
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
       coords_array(coord_array);
 
   // Check equivalence
@@ -368,14 +368,14 @@ TEST_F(PointCoordinatesTest, LocalCoordinates2D_ArrayValueEquivalence) {
   type_real gamma = -0.6;
 
   // Value constructor
-  specfem::point::local_coordinates<specfem::dimension::type::dim2>
+  specfem::point::local_coordinates<specfem::element::dimension_tag::dim2>
       coords_value(ispec, xi, gamma);
 
   // Array constructor
   Kokkos::View<type_real[2], Kokkos::HostSpace> coord_array("coords");
   coord_array[0] = xi;
   coord_array[1] = gamma;
-  specfem::point::local_coordinates<specfem::dimension::type::dim2>
+  specfem::point::local_coordinates<specfem::element::dimension_tag::dim2>
       coords_array(ispec, coord_array);
 
   // Check equivalence
@@ -392,7 +392,7 @@ TEST_F(PointCoordinatesTest, LocalCoordinates3D_ArrayValueEquivalence) {
   type_real gamma = -0.6;
 
   // Value constructor
-  specfem::point::local_coordinates<specfem::dimension::type::dim3>
+  specfem::point::local_coordinates<specfem::element::dimension_tag::dim3>
       coords_value(ispec, xi, eta, gamma);
 
   // Array constructor
@@ -400,7 +400,7 @@ TEST_F(PointCoordinatesTest, LocalCoordinates3D_ArrayValueEquivalence) {
   coord_array[0] = xi;
   coord_array[1] = eta;
   coord_array[2] = gamma;
-  specfem::point::local_coordinates<specfem::dimension::type::dim3>
+  specfem::point::local_coordinates<specfem::element::dimension_tag::dim3>
       coords_array(ispec, coord_array);
 
   // Check equivalence
@@ -418,16 +418,16 @@ TEST_F(PointCoordinatesTest, ArrayConstructor_ZeroValues) {
   Kokkos::View<type_real[2], Kokkos::HostSpace> coord_array_2d("coords_2d");
   coord_array_2d[0] = zero;
   coord_array_2d[1] = zero;
-  specfem::point::global_coordinates<specfem::dimension::type::dim2> global_2d(
-      coord_array_2d);
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
+      global_2d(coord_array_2d);
 
   // 3D global with zeros
   Kokkos::View<type_real[3], Kokkos::HostSpace> coord_array_3d("coords_3d");
   coord_array_3d[0] = zero;
   coord_array_3d[1] = zero;
   coord_array_3d[2] = zero;
-  specfem::point::global_coordinates<specfem::dimension::type::dim3> global_3d(
-      coord_array_3d);
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
+      global_3d(coord_array_3d);
 
   EXPECT_REAL_EQ(global_2d.x, zero);
   EXPECT_REAL_EQ(global_2d.z, zero);
@@ -446,15 +446,15 @@ TEST_F(PointCoordinatesTest, ArrayConstructor_ExtremeValues) {
   Kokkos::View<type_real[2], Kokkos::HostSpace> coord_array_2d("coords_2d");
   coord_array_2d[0] = large;
   coord_array_2d[1] = small;
-  specfem::point::global_coordinates<specfem::dimension::type::dim2> global_2d(
-      coord_array_2d);
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
+      global_2d(coord_array_2d);
 
   // 2D local with extreme values
   Kokkos::View<type_real[2], Kokkos::HostSpace> local_array_2d("local_2d");
   local_array_2d[0] = small;
   local_array_2d[1] = large;
-  specfem::point::local_coordinates<specfem::dimension::type::dim2> local_2d(
-      large_int, local_array_2d);
+  specfem::point::local_coordinates<specfem::element::dimension_tag::dim2>
+      local_2d(large_int, local_array_2d);
 
   EXPECT_REAL_EQ(global_2d.x, large);
   EXPECT_REAL_EQ(global_2d.z, small);

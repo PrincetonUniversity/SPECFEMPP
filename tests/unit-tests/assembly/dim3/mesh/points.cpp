@@ -1,14 +1,15 @@
 #include "../test_fixture.hpp"
 #include "SPECFEM_Environment.hpp"
-#include "enumerations/connections.hpp"
-#include "enumerations/interface.hpp"
-#include "enumerations/mesh_entities.hpp"
-#include "io/interface.hpp"
-#include "mesh/mesh.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
+#include "specfem/element_connections.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/io.hpp"
+#include "specfem/mesh.hpp"
+#include "specfem/mesh_entity.hpp"
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/filtered_graph.hpp>
 #include <gtest/gtest.h>
+#include <unordered_set>
 
 namespace specfem::assembly_test {
 
@@ -25,8 +26,8 @@ struct TotalQuadraturePoints {
 };
 
 struct ExpectedMapping {
-  constexpr static specfem::dimension::type dimension =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension =
+      specfem::element::dimension_tag::dim3;
   TotalQuadraturePoints total_quadrature_points;
   std::string database_file;
 
@@ -39,7 +40,8 @@ struct ExpectedMapping {
   check(const specfem::assembly::mesh_impl::points<dimension> &points) const {
 
     // Get the mesh
-    const auto expected_mesh = specfem::io::read_3d_mesh(database_file);
+    const auto expected_mesh =
+        specfem::io::read_3d_mesh(database_file, specfem::attenuation::Setup{});
 
     ASSERT_EQ(points.nspec, total_quadrature_points.nelements)
         << "Number of spectral elements mismatch. "
@@ -83,12 +85,12 @@ struct ExpectedMapping {
         << "Coordinate view extent 4 mismatch.";
 
     const auto &adjacency_graph = expected_mesh.adjacency_graph;
-    const auto &graph = adjacency_graph.graph();
+    const auto &graph = adjacency_graph.local_connections();
 
     // Filter out strongly conforming connections
     auto filter = [&graph](const auto &edge) {
       return graph[edge].connection ==
-             specfem::connections::type::strongly_conforming;
+             specfem::element_connections::type::strongly_conforming;
     };
 
     // Create a filtered graph view
@@ -107,12 +109,13 @@ struct ExpectedMapping {
         const auto other_edge = boost::edge(neighbor, e, graph).first;
         const auto orientation2 = fg[other_edge].orientation;
 
-        const auto connections = specfem::connections::connection_mapping(
-            points.ngllz, points.nglly, points.ngllx,
-            Kokkos::subview(expected_mesh.control_nodes.control_node_index, e,
-                            Kokkos::ALL),
-            Kokkos::subview(expected_mesh.control_nodes.control_node_index,
-                            neighbor, Kokkos::ALL));
+        const auto connections =
+            specfem::element_connections::connection_mapping(
+                points.ngllz, points.nglly, points.ngllx,
+                Kokkos::subview(expected_mesh.control_nodes.control_node_index,
+                                e, Kokkos::ALL),
+                Kokkos::subview(expected_mesh.control_nodes.control_node_index,
+                                neighbor, Kokkos::ALL));
 
         if (specfem::mesh_entity::contains(specfem::mesh_entity::dim3::corners,
                                            orientation1)) {
@@ -151,6 +154,34 @@ struct ExpectedMapping {
         }
       }
     }
+
+    // Check that every (ispec, iz, iy, ix) has a unique raw global index in
+    // [0, nglob). Collisions would cause distinct GLL points to share an iglob,
+    // silently aliasing their contributions in the field scatter.
+    std::unordered_set<int> seen;
+    for (int ispec = 0; ispec < points.nspec; ispec++) {
+      for (int iz = 0; iz < points.ngllz; iz++) {
+        for (int iy = 0; iy < points.nglly; iy++) {
+          for (int ix = 0; ix < points.ngllx; ix++) {
+            const int idx = points.h_index_mapping(ispec, iz, iy, ix);
+            ASSERT_GE(idx, 0) << "Negative raw global index at (" << ispec
+                              << ", " << iz << ", " << iy << ", " << ix << ").";
+            ASSERT_LT(idx, points.nglob)
+                << "Raw global index out of range at (" << ispec << ", " << iz
+                << ", " << iy << ", " << ix << "): " << idx
+                << " >= nglob=" << points.nglob;
+            // Only non-shared points (not on a conforming interface) must be
+            // unique; shared interface points intentionally reuse an index.
+            // We collect all and check the total count matches nglob.
+            seen.insert(idx);
+          }
+        }
+      }
+    }
+    ASSERT_EQ((int)seen.size(), points.nglob)
+        << "Number of distinct raw global indices (" << seen.size()
+        << ") does not match nglob (" << points.nglob
+        << "). Either some indices collide or some indices are unused.";
 
     SUCCEED() << "All points mapping and coordinates are correct." << std::endl;
     return;

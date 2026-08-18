@@ -1,9 +1,10 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "specfem/data_access.hpp"
-#include "specfem_setup.hpp"
-#include "utilities/utilities.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/mesh_entity.hpp"
+#include "specfem/setup.hpp"
+#include "specfem/utilities.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -16,7 +17,7 @@ namespace point {
  * @tparam StoreJacobian Boolean indicating whether to store the Jacobian
  * @tparam UseSIMD Boolean indicating whether to use SIMD
  */
-template <specfem::dimension::type DimensionTag, bool StoreJacobian,
+template <specfem::element::dimension_tag DimensionTag, bool StoreJacobian,
           bool UseSIMD>
 struct jacobian_matrix;
 
@@ -27,16 +28,16 @@ struct jacobian_matrix;
  * @tparam UseSIMD Boolean indicating whether to use SIMD
  */
 template <bool UseSIMD>
-struct jacobian_matrix<specfem::dimension::type::dim2, false, UseSIMD>
+struct jacobian_matrix<specfem::element::dimension_tag::dim2, false, UseSIMD>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::jacobian_matrix,
-          specfem::dimension::type::dim2, UseSIMD> {
+          specfem::element::dimension_tag::dim2, UseSIMD> {
 private:
   using base_type = specfem::data_access::Accessor<
-      specfem::data_access::AccessorType::point,
+      specfem::datatype::AccessorType::point,
       specfem::data_access::DataClassType::jacobian_matrix,
-      specfem::dimension::type::dim2,
+      specfem::element::dimension_tag::dim2,
       UseSIMD>; ///< Base type of the point
   ///< Jacobian matrix
 public:
@@ -91,6 +92,7 @@ public:
   KOKKOS_FUNCTION
   jacobian_matrix(const value_type constant)
       : xix(constant), gammax(constant), xiz(constant), gammaz(constant) {}
+  ///@}
 
   KOKKOS_FUNCTION
   void init() {
@@ -135,7 +137,7 @@ template <typename PointJacobianMatrixType>
 KOKKOS_FUNCTION std::enable_if_t<
     !PointJacobianMatrixType::store_jacobian &&
         PointJacobianMatrixType::dimension_tag ==
-            specfem::dimension::type::dim2 &&
+            specfem::element::dimension_tag::dim2 &&
         specfem::data_access::is_point<PointJacobianMatrixType>::value &&
         specfem::data_access::is_jacobian_matrix<
             PointJacobianMatrixType>::value,
@@ -152,16 +154,16 @@ operator*(const type_real &lhs, const PointJacobianMatrixType &rhs) {
  * @tparam UseSIMD Boolean indicating whether to use SIMD
  */
 template <bool UseSIMD>
-struct jacobian_matrix<specfem::dimension::type::dim3, false, UseSIMD>
+struct jacobian_matrix<specfem::element::dimension_tag::dim3, false, UseSIMD>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::jacobian_matrix,
-          specfem::dimension::type::dim3, UseSIMD> {
+          specfem::element::dimension_tag::dim3, UseSIMD> {
 private:
   using base_type = specfem::data_access::Accessor<
-      specfem::data_access::AccessorType::point,
+      specfem::datatype::AccessorType::point,
       specfem::data_access::DataClassType::jacobian_matrix,
-      specfem::dimension::type::dim3,
+      specfem::element::dimension_tag::dim3,
       UseSIMD>; ///< Base type of the point
                 ///< Jacobian matrix
 public:
@@ -232,6 +234,7 @@ public:
       : xix(constant), etax(constant), gammax(constant), xiy(constant),
         etay(constant), gammay(constant), xiz(constant), etaz(constant),
         gammaz(constant) {}
+  ///@}
 
   KOKKOS_FUNCTION
   void init() {
@@ -293,7 +296,7 @@ template <typename PointJacobianMatrixType,
           std::enable_if_t<
               !PointJacobianMatrixType::store_jacobian &&
                   PointJacobianMatrixType::dimension_tag ==
-                      specfem::dimension::type::dim3 &&
+                      specfem::element::dimension_tag::dim3 &&
                   PointJacobianMatrixType::data_class ==
                       specfem::data_access::DataClassType::jacobian_matrix,
               int> = 0>
@@ -312,12 +315,14 @@ operator*(const type_real &lhs, const PointJacobianMatrixType &rhs) {
  * @tparam UseSIMD Boolean indicating whether to use SIMD
  */
 template <bool UseSIMD>
-struct jacobian_matrix<specfem::dimension::type::dim2, true, UseSIMD>
-    : public jacobian_matrix<specfem::dimension::type::dim2, false, UseSIMD> {
+struct jacobian_matrix<specfem::element::dimension_tag::dim2, true, UseSIMD>
+    : public jacobian_matrix<specfem::element::dimension_tag::dim2, false,
+                             UseSIMD> {
 private:
-  using base_type = jacobian_matrix<specfem::dimension::type::dim2, false,
-                                    UseSIMD>; ///< Base type of the point
-                                              ///< Jacobian matrix
+  using base_type =
+      jacobian_matrix<specfem::element::dimension_tag::dim2, false,
+                      UseSIMD>; ///< Base type of the point
+                                ///< Jacobian matrix
 public:
   /**
    * @name Typedefs
@@ -360,7 +365,7 @@ public:
   jacobian_matrix(const value_type &xix, const value_type &gammax,
                   const value_type &xiz, const value_type &gammaz,
                   const value_type &jacobian)
-      : jacobian_matrix<specfem::dimension::type::dim2, false, UseSIMD>(
+      : jacobian_matrix<specfem::element::dimension_tag::dim2, false, UseSIMD>(
             xix, gammax, xiz, gammaz),
         jacobian(jacobian) {}
 
@@ -371,7 +376,7 @@ public:
    */
   KOKKOS_FUNCTION
   jacobian_matrix(const value_type constant)
-      : jacobian_matrix<specfem::dimension::type::dim2, false, UseSIMD>(
+      : jacobian_matrix<specfem::element::dimension_tag::dim2, false, UseSIMD>(
             constant),
         jacobian(constant) {}
   ///@}
@@ -456,12 +461,14 @@ private:
  * @tparam UseSIMD Boolean indicating whether to use SIMD
  */
 template <bool UseSIMD>
-struct jacobian_matrix<specfem::dimension::type::dim3, true, UseSIMD>
-    : public jacobian_matrix<specfem::dimension::type::dim3, false, UseSIMD> {
+struct jacobian_matrix<specfem::element::dimension_tag::dim3, true, UseSIMD>
+    : public jacobian_matrix<specfem::element::dimension_tag::dim3, false,
+                             UseSIMD> {
 private:
-  using base_type = jacobian_matrix<specfem::dimension::type::dim3, false,
-                                    UseSIMD>; ///< Base type of the point
-                                              ///< Jacobian matrix
+  using base_type =
+      jacobian_matrix<specfem::element::dimension_tag::dim3, false,
+                      UseSIMD>; ///< Base type of the point
+                                ///< Jacobian matrix
 public:
   /**
    * @name Typedefs
@@ -511,7 +518,7 @@ public:
                   const value_type &etay, const value_type &gammay,
                   const value_type &xiz, const value_type &etaz,
                   const value_type &gammaz, const value_type &jacobian)
-      : jacobian_matrix<specfem::dimension::type::dim3, false, UseSIMD>(
+      : jacobian_matrix<specfem::element::dimension_tag::dim3, false, UseSIMD>(
             xix, etax, gammax, xiy, etay, gammay, xiz, etaz, gammaz),
         jacobian(jacobian) {}
 
@@ -522,7 +529,7 @@ public:
    */
   KOKKOS_FUNCTION
   jacobian_matrix(const value_type constant)
-      : jacobian_matrix<specfem::dimension::type::dim3, false, UseSIMD>(
+      : jacobian_matrix<specfem::element::dimension_tag::dim3, false, UseSIMD>(
             constant),
         jacobian(constant) {}
   ///@}
@@ -613,19 +620,21 @@ private:
 
   specfem::datatype::VectorPointViewType<type_real, 3, UseSIMD>
   impl_compute_normal_front() const {
-    return { static_cast<value_type>(this->etax * this->jacobian),
-             static_cast<value_type>(this->etay * this->jacobian),
-             static_cast<value_type>(this->etaz * this->jacobian) };
-  };
-
-  specfem::datatype::VectorPointViewType<type_real, 3, UseSIMD>
-  impl_compute_normal_back() const {
+    // front = eta=-1 face (iy=0); outward normal = -J*nabla(eta)
     return { static_cast<value_type>(static_cast<type_real>(-1.0) * this->etax *
                                      this->jacobian),
              static_cast<value_type>(static_cast<type_real>(-1.0) * this->etay *
                                      this->jacobian),
              static_cast<value_type>(static_cast<type_real>(-1.0) * this->etaz *
                                      this->jacobian) };
+  };
+
+  specfem::datatype::VectorPointViewType<type_real, 3, UseSIMD>
+  impl_compute_normal_back() const {
+    // back = eta=+1 face (iy=nglly-1); outward normal = +J*nabla(eta)
+    return { static_cast<value_type>(this->etax * this->jacobian),
+             static_cast<value_type>(this->etay * this->jacobian),
+             static_cast<value_type>(this->etaz * this->jacobian) };
   };
 };
 

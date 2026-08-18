@@ -1,5 +1,5 @@
-#include "enumerations/interface.hpp"
-#include "medium/compute_stress.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/point.hpp"
 #include <gtest/gtest.h>
 #include <sstream>
@@ -7,16 +7,15 @@
 namespace {
 
 TEST(Stress, ElasticIsotropic3D_Basic) {
-  static constexpr auto dimension = specfem::dimension::type::dim3;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim3;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
   static constexpr auto elasticTag = specfem::element::medium_tag::elastic;
 
-  using PropertiesType =
-      specfem::point::properties<dimension, elasticTag, property_tag, false>;
-  using FieldDerivativesType =
-      specfem::point::field_derivatives<dimension, elasticTag, false>;
-  using StressType = specfem::point::stress<dimension, elasticTag, false>;
+  using Tags = specfem::tags::Tags<dimension, elasticTag, property_tag, false>;
+  using PropertiesType = specfem::point::properties<Tags>;
+  using FieldDerivativesType = specfem::point::field_derivatives<Tags>;
+  using StressType = specfem::point::stress<Tags>;
   const type_real kappa = 2.0;
   const type_real mu = 3.0;
   const type_real rho = 4.0; // Density is not used in stress computation
@@ -35,8 +34,8 @@ TEST(Stress, ElasticIsotropic3D_Basic) {
   field_derivatives.du(1, 2) = 8.0; // du_y/dz
   field_derivatives.du(2, 1) = 9.0; // du_z/dy
 
-  const StressType stress =
-      specfem::medium::compute_stress(properties, field_derivatives);
+  const StressType stress = specfem::medium_physics::compute_stress<Tags>(
+      properties, field_derivatives);
 
   StressType expected_stress;
   expected_stress.T(0, 0) =
@@ -63,16 +62,15 @@ TEST(Stress, ElasticIsotropic3D_Basic) {
 }
 
 TEST(Stress, ElasticIsotropic3D_ZeroDerivatives) {
-  static constexpr auto dimension = specfem::dimension::type::dim3;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim3;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
   static constexpr auto elasticTag = specfem::element::medium_tag::elastic;
 
-  using PropertiesType =
-      specfem::point::properties<dimension, elasticTag, property_tag, false>;
-  using FieldDerivativesType =
-      specfem::point::field_derivatives<dimension, elasticTag, false>;
-  using StressType = specfem::point::stress<dimension, elasticTag, false>;
+  using Tags = specfem::tags::Tags<dimension, elasticTag, property_tag, false>;
+  using PropertiesType = specfem::point::properties<Tags>;
+  using FieldDerivativesType = specfem::point::field_derivatives<Tags>;
+  using StressType = specfem::point::stress<Tags>;
   const type_real kappa = 2.0;
   const type_real mu = 3.0;
   const type_real rho = 4.0; // Density is not used in stress computation
@@ -89,8 +87,8 @@ TEST(Stress, ElasticIsotropic3D_ZeroDerivatives) {
   field_derivatives.du(1, 2) = 0.0;
   field_derivatives.du(2, 1) = 0.0;
 
-  const StressType stress =
-      specfem::medium::compute_stress(properties, field_derivatives);
+  const StressType stress = specfem::medium_physics::compute_stress<Tags>(
+      properties, field_derivatives);
 
   StressType expected_stress;
   expected_stress.T(0, 0) = 0.0;

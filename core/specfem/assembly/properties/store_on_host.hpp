@@ -33,7 +33,7 @@ namespace specfem::assembly {
  * @code
  * // Store modified elastic properties back to host memory
  * specfem::point::index<...> coord(ispec, iz, ix);
- * specfem::point::properties<...> props;
+ * specfem::point::properties<specfem::tags::Tags<...>> props;
  *
  * // Modify properties (e.g., after inversion or processing)
  * props.rho = updated_density;
@@ -53,15 +53,14 @@ void store_on_host(
         &properties) {
   const int ispec = lcoord.ispec;
 
-  const int index = properties.h_property_index_mapping(ispec);
-
-  IndexType l_index = lcoord;
-
-  l_index.ispec = index;
-
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
   constexpr auto PropertyTag = PointPropertiesType::property_tag;
   constexpr auto DimensionTag = PointPropertiesType::dimension_tag;
+
+  IndexType l_index = lcoord;
+
+  l_index.ispec =
+      properties.template property_index_mapping<MediumTag, PropertyTag>(ispec);
 
   properties.template get_container<MediumTag, PropertyTag>().store_host_values(
       l_index, point_properties);

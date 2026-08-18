@@ -1,13 +1,13 @@
 #pragma once
 
 #include "Kokkos_Core_fwd.hpp"
-#include "algorithms/locate_point_impl.hpp"
+#include "specfem/algorithms/locate_point/locate_point_impl.hpp"
 #include "compute_intersection.hpp"
-#include "enumerations/dimension.hpp"
-#include "enumerations/mesh_entities.hpp"
+#include "specfem/element.hpp"
+#include "specfem/mesh_entity.hpp"
 #include "specfem/jacobian/dim2/jacobian.hpp"
 #include "specfem/point/global_coordinates.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <sstream>
 #include <stdexcept>
 
@@ -15,10 +15,10 @@ template <typename TransferView1, typename TransferView2,
           typename TransferView3, typename TransferView4>
 void specfem::assembly::nonconforming_interfaces_impl::set_transfer_functions(
     const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        specfem::point::global_coordinates<specfem::element::dimension_tag::dim2> *,
         Kokkos::HostSpace> &element1,
     const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        specfem::point::global_coordinates<specfem::element::dimension_tag::dim2> *,
         Kokkos::HostSpace> &element2,
     const specfem::mesh_entity::dim2::type &edge1,
     const specfem::mesh_entity::dim2::type &edge2,
@@ -102,10 +102,10 @@ void specfem::assembly::nonconforming_interfaces_impl::set_transfer_functions(
 template <typename TransferView1, typename TransferView2>
 void specfem::assembly::nonconforming_interfaces_impl::set_transfer_functions(
     const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        specfem::point::global_coordinates<specfem::element::dimension_tag::dim2> *,
         Kokkos::HostSpace> &element1,
     const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        specfem::point::global_coordinates<specfem::element::dimension_tag::dim2> *,
         Kokkos::HostSpace> &element2,
     const specfem::mesh_entity::dim2::type &edge1,
     const specfem::mesh_entity::dim2::type &edge2,

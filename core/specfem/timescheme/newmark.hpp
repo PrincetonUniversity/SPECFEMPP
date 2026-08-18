@@ -1,10 +1,9 @@
 #pragma once
 
-#include "enumerations/simulation.hpp"
-#include "enumerations/wavefield.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/fields.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/setup.hpp"
 #include "specfem/timescheme/timescheme.hpp"
-#include "specfem_setup.hpp"
 
 namespace specfem {
 namespace time_scheme {
@@ -31,9 +30,9 @@ namespace newmark_impl {
  * @param deltatover2 Half of the timestep (dt/2, or -dt/2 for backward)
  * @return Number of degrees of freedom updated
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
-          specfem::wavefield::simulation_field WavefieldType>
+          specfem::simulation::field_type WavefieldType>
 int corrector_phase_impl(
     const specfem::assembly::simulation_field<DimensionTag, WavefieldType>
         &field,
@@ -63,9 +62,9 @@ int corrector_phase_impl(
  * @param deltasquareover2 Half of squared timestep (dt²/2)
  * @return Number of degrees of freedom updated
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
-          specfem::wavefield::simulation_field WavefieldType>
+          specfem::simulation::field_type WavefieldType>
 int predictor_phase_impl(
     const specfem::assembly::simulation_field<DimensionTag, WavefieldType>
         &field,
@@ -80,187 +79,20 @@ int predictor_phase_impl(
  * equation. This second-order accurate scheme uses predictor-corrector
  * steps:
  *
- * Specialized for forward and combined (adjoint) simulations.
+ * Behavior is selected at compile time from the simulation type.
  *
  * @tparam AssemblyFields Field assembly type containing wavefield data
- * @tparam SimulationType Either forward or combined simulation type
+ * @tparam SimulationType Forward, combined, or combined_undoatt simulation type
  */
 template <typename AssemblyFields, specfem::simulation::type SimulationType>
-class newmark;
-
-/**
- * @brief Newmark scheme for forward simulation
- *
- * Forward-only time integration where the adjoint wavefield methods are
- * no-ops (return 0).
- *
- * @code
- * // Typical usage in a time loop
- * for (const auto [istep, dt] : scheme.iterate_forward()) {
- *   scheme.apply_predictor_phase_forward(medium_tag);
- *   // ... compute forces/accelerations ...
- *   scheme.apply_corrector_phase_forward(medium_tag);
- * }
- * @endcode
- */
-template <typename AssemblyFields>
-class newmark<AssemblyFields, specfem::simulation::type::forward>
-    : public time_scheme {
+class newmark : public time_scheme {
 
 public:
   constexpr static auto dimension_tag =
       AssemblyFields::dimension_tag; ///< Dimension tag
 
-  constexpr static auto simulation_type =
-      specfem::simulation::type::forward; ///< Wavefield tag
+  constexpr static auto simulation_type = SimulationType; ///< Simulation tag
 
-  /**
-   * @name Constructors
-   */
-  ///@{
-
-  /**
-   * @brief Construct a newmark time scheme object
-   *
-   * @param nstep Maximum number of timesteps
-   * @param nstep_between_samples Number of timesteps between output seismogram
-   * samples
-   * @param dt Time increment
-   * @param t0 Initial time
-   */
-  newmark(AssemblyFields &fields, int nstep, const int nstep_between_samples,
-          const type_real dt, const type_real t0)
-      : time_scheme(nstep, nstep_between_samples, dt), deltat(dt),
-        deltatover2(dt / 2.0), deltasquareover2(dt * dt / 2.0), t0(t0),
-        fields(fields) {}
-
-  ///@}
-
-  /**
-   * @brief Convert time scheme to string representation
-   *
-   * @return String describing Newmark scheme configuration
-   */
-  std::string to_string() const override;
-
-  /**
-   * @brief Print time scheme details to output stream
-   *
-   * @param out Output stream
-   */
-  void print(std::ostream &out) const override;
-
-  /**
-   * @brief Apply the predictor phase for forward simulation on fields within
-   * the elements within a medium.
-   *
-   * Calls newmark_impl::predictor_phase_impl() on the forward wavefield with
-   * positive timestep.
-   *
-   * @param tag Medium tag for elements to apply the predictor phase
-   * @return int Returns the number of degrees of freedom updated within the
-   * medium
-   */
-  int apply_predictor_phase_forward(
-      const specfem::element::medium_tag tag) override;
-
-  /**
-   * @brief Apply the corrector phase for forward simulation on fields within
-   * the elements within a medium.
-   *
-   * Calls newmark_impl::corrector_phase_impl() on the forward wavefield with
-   * positive \f$\Delta t/2\f$.
-   *
-   * @param tag Medium tag for elements to apply the corrector phase
-   * @return int Returns the number of degrees of freedom updated within the
-   * medium
-   */
-  int apply_corrector_phase_forward(
-      const specfem::element::medium_tag tag) override;
-
-  /**
-   * @brief Apply the predictor phase for backward simulation on fields within
-   * the elements within a medium. (Empty implementation)
-   *
-   * @param tag Medium tag for elements to apply the predictor phase
-   * @return int Returns the number of degrees of freedom updated within the
-   * medium
-   */
-  int apply_predictor_phase_backward(
-      const specfem::element::medium_tag tag) override {
-    return 0;
-  };
-
-  /**
-   * @brief  Apply the corrector phase for backward simulation on fields within
-   * the elements within a medium. (Empty implementation)
-   *
-   * @param tag Medium tag for elements to apply the corrector phase
-   * @return int Returns the number of degrees of freedom updated within the
-   * medium
-   */
-  int apply_corrector_phase_backward(
-      const specfem::element::medium_tag tag) override {
-    return 0;
-  };
-
-public:
-  /**
-   * @brief Get the timescheme type
-   *
-   * @return specfem::enums::time_scheme::type Timescheme type
-   */
-  specfem::enums::time_scheme::type timescheme() const override {
-    return specfem::enums::time_scheme::type::newmark;
-  }
-
-  /**
-   * @brief Get the time increment
-   *
-   * @return type_real Time increment
-   */
-  type_real get_timestep() const override { return this->deltat; }
-
-protected:
-  type_real t0;               ///< Initial time
-  type_real deltat;           ///< Time increment
-  type_real deltatover2;      ///< Half time increment
-  type_real deltasquareover2; ///< Half of squared time increment
-  AssemblyFields fields;      ///< Assembly fields
-};
-
-/**
- * @brief Newmark scheme for combined forward-adjoint simulation
- *
- * Manages three wavefields: forward (adjoint source), adjoint, and backward.
- * Forward and adjoint integrate forward in time; backward integrates backward.
- * Used for computing sensitivity kernels and adjoint gradients.
- *
- * @code
- * // Forward phase
- * for (const auto [istep, dt] : scheme.iterate_forward()) {
- *   scheme.apply_predictor_phase_forward(medium_tag);
- *   // ... compute forces ...
- *   scheme.apply_corrector_phase_forward(medium_tag);
- * }
- * // Backward phase
- * for (const auto [istep, dt] : scheme.iterate_backward()) {
- *   scheme.apply_predictor_phase_backward(medium_tag);
- *   // ... compute forces ...
- *   scheme.apply_corrector_phase_backward(medium_tag);
- * }
- * @endcode
- */
-template <typename AssemblyFields>
-class newmark<AssemblyFields, specfem::simulation::type::combined>
-    : public time_scheme {
-
-public:
-  constexpr static auto dimension_tag =
-      AssemblyFields::dimension_tag; ///< Dimension tag
-
-  constexpr static auto simulation_type =
-      specfem::simulation::type::combined; ///< Wavefield tag
   /**
    * @name Constructors
    */
@@ -302,8 +134,8 @@ public:
    * @brief Apply the predictor phase for forward simulation on fields within
    * the elements within a medium.
    *
-   * Calls newmark_impl::predictor_phase_impl() on the adjoint wavefield with
-   * positive timestep.
+   * Advances the forward wavefield for forward and combined_undoatt
+   * simulations. Other simulation types return 0.
    *
    * @param tag Medium tag for elements to apply the predictor phase
    * @return int Returns the number of degrees of freedom updated within the
@@ -316,8 +148,8 @@ public:
    * @brief Apply the corrector phase for forward simulation on fields within
    * the elements within a medium.
    *
-   * Calls newmark_impl::corrector_phase_impl() on the adjoint wavefield with
-   * positive \f$\Delta t/2\f$.
+   * Advances the forward wavefield for forward and combined_undoatt
+   * simulations. Other simulation types return 0.
    *
    * @param tag Medium tag for elements to apply the corrector phase
    * @return int Returns the number of degrees of freedom updated within the
@@ -327,11 +159,39 @@ public:
       const specfem::element::medium_tag tag) override;
 
   /**
+   * @brief Apply the predictor phase for adjoint simulation on fields within
+   * the elements within a medium.
+   *
+   * Advances the adjoint wavefield for combined and combined_undoatt
+   * simulations. Other simulation types return 0.
+   *
+   * @param tag Medium tag for elements to apply the predictor phase
+   * @return int Returns the number of degrees of freedom updated within the
+   * medium
+   */
+  int apply_predictor_phase_adjoint(
+      const specfem::element::medium_tag tag) override;
+
+  /**
+   * @brief Apply the corrector phase for adjoint simulation on fields within
+   * the elements within a medium.
+   *
+   * Advances the adjoint wavefield for combined and combined_undoatt
+   * simulations. Other simulation types return 0.
+   *
+   * @param tag Medium tag for elements to apply the corrector phase
+   * @return int Returns the number of degrees of freedom updated within the
+   * medium
+   */
+  int apply_corrector_phase_adjoint(
+      const specfem::element::medium_tag tag) override;
+
+  /**
    * @brief Apply the predictor phase for backward simulation on fields within
    * the elements within a medium.
    *
-   * Calls newmark_impl::predictor_phase_impl() on the backward wavefield with
-   * negative timestep (\f$-\Delta t\f$).
+   * Advances the backward wavefield for combined simulations. Other simulation
+   * types return 0.
    *
    * @param tag  Medium tag for elements to apply the predictor phase
    * @return int Returns the number of degrees of freedom updated within the
@@ -344,8 +204,8 @@ public:
    * @brief  Apply the corrector phase for backward simulation on fields within
    * the elements within a medium.
    *
-   * Calls newmark_impl::corrector_phase_impl() on the backward wavefield with
-   * negative \f$\Delta t/2\f$.
+   * Advances the backward wavefield for combined simulations. Other simulation
+   * types return 0.
    *
    * @param tag  Medium tag for elements to apply the corrector phase
    * @return int Returns the number of degrees of freedom updated within the
@@ -358,10 +218,10 @@ public:
   /**
    * @brief Get the timescheme type
    *
-   * @return specfem::enums::time_scheme::type Timescheme type
+   * @return specfem::time_scheme::type Timescheme type
    */
-  specfem::enums::time_scheme::type timescheme() const override {
-    return specfem::enums::time_scheme::type::newmark;
+  specfem::time_scheme::type timescheme() const override {
+    return specfem::time_scheme::type::newmark;
   }
 
   /**

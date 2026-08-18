@@ -3,11 +3,11 @@
 #include "boundaries.hpp"
 #include "impl/acoustic_free_surface.hpp"
 #include "impl/stacey.hpp"
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 #include <vector>
 
-specfem::assembly::boundaries<specfem::dimension::type::dim2>::boundaries(
+specfem::assembly::boundaries<specfem::element::dimension_tag::dim2>::boundaries(
     const int nspec, const int ngllz, const int ngllx,
     const specfem::mesh::mesh<dimension_tag> &mesh,
     const specfem::assembly::mesh<dimension_tag> &mesh_assembly,
@@ -41,7 +41,7 @@ specfem::assembly::boundaries<specfem::dimension::type::dim2>::boundaries(
 
   // Check if mesh and compute boundary tags match
   for (int ispec = 0; ispec < nspec; ++ispec) {
-    const int ispec_compute = mesh_assembly.mesh_to_compute(ispec);
+    const int ispec_compute = mesh_assembly.h_mesh_to_compute(ispec);
     const auto m_boundary_tag = mesh.tags.tags_container(ispec).boundary_tag;
     const auto c_boundary_tag = this->h_boundary_tags(ispec_compute);
     if (m_boundary_tag != c_boundary_tag) {

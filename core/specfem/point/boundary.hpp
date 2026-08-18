@@ -1,9 +1,8 @@
 #pragma once
 
-#include "datatypes/point_view.hpp"
-#include "datatypes/simd.hpp"
-#include "enumerations/interface.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/datatype.hpp"
+#include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -18,7 +17,7 @@ namespace point {
  * @tparam UseSIMD Boolean indicating whether to use SIMD instructions
  */
 template <specfem::element::boundary_tag BoundaryTag,
-          specfem::dimension::type DimensionTag, bool UseSIMD>
+          specfem::element::dimension_tag DimensionTag, bool UseSIMD>
 struct boundary;
 
 /**
@@ -28,10 +27,10 @@ struct boundary;
  * point is located
  * @tparam UseSIMD Boolean indicating whether to use SIMD instructions
  */
-template <specfem::dimension::type DimensionTag, bool UseSIMD>
+template <specfem::element::dimension_tag DimensionTag, bool UseSIMD>
 struct boundary<specfem::element::boundary_tag::none, DimensionTag, UseSIMD>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::boundary, DimensionTag,
           UseSIMD> {
 private:
@@ -98,7 +97,7 @@ public:
  * point is located
  * @tparam UseSIMD Boolean indicating whether to use SIMD instructions
  */
-template <specfem::dimension::type DimensionTag, bool UseSIMD>
+template <specfem::element::dimension_tag DimensionTag, bool UseSIMD>
 struct boundary<specfem::element::boundary_tag::acoustic_free_surface,
                 DimensionTag, UseSIMD>
     : public boundary<specfem::element::boundary_tag::none, DimensionTag,
@@ -159,7 +158,7 @@ public:
  * point is located
  * @tparam UseSIMD Boolean indicating whether to use SIMD instructions
  */
-template <specfem::dimension::type DimensionTag, bool UseSIMD>
+template <specfem::element::dimension_tag DimensionTag, bool UseSIMD>
 struct boundary<specfem::element::boundary_tag::stacey, DimensionTag, UseSIMD>
     : public boundary<specfem::element::boundary_tag::acoustic_free_surface,
                       DimensionTag, UseSIMD> {
@@ -168,7 +167,7 @@ private:
    * @brief Number of spatial dimensions.
    */
   constexpr static int num_dimensions =
-      specfem::dimension::dimension<DimensionTag>::dim;
+      specfem::element::dimension<DimensionTag>::dim;
   /**
    * @name Private Typedefs
    *
@@ -256,9 +255,9 @@ public:
  */
 template <bool UseSIMD>
 struct boundary<specfem::element::boundary_tag::stacey,
-                specfem::dimension::type::dim3, UseSIMD>
+                specfem::element::dimension_tag::dim3, UseSIMD>
     : public boundary<specfem::element::boundary_tag::acoustic_free_surface,
-                      specfem::dimension::type::dim3, UseSIMD> {
+                      specfem::element::dimension_tag::dim3, UseSIMD> {
 private:
   constexpr static int num_dimensions = 3;
   /**
@@ -318,7 +317,7 @@ public:
   KOKKOS_FUNCTION
   boundary(const specfem::point::boundary<
            specfem::element::boundary_tag::composite_stacey_dirichlet,
-           specfem::dimension::type::dim3, UseSIMD> &boundary);
+           specfem::element::dimension_tag::dim3, UseSIMD> &boundary);
   ///@}
 
   datatype face_weight =
@@ -339,7 +338,7 @@ public:
  * point is located
  * @tparam UseSIMD Boolean indicating whether to use SIMD instructions
  */
-template <specfem::dimension::type DimensionTag, bool UseSIMD>
+template <specfem::element::dimension_tag DimensionTag, bool UseSIMD>
 struct boundary<specfem::element::boundary_tag::composite_stacey_dirichlet,
                 DimensionTag, UseSIMD>
     : public boundary<specfem::element::boundary_tag::stacey, DimensionTag,
@@ -382,7 +381,7 @@ public:
   ///@}
 };
 
-template <specfem::dimension::type DimensionTag, bool UseSIMD>
+template <specfem::element::dimension_tag DimensionTag, bool UseSIMD>
 KOKKOS_FUNCTION
 specfem::point::boundary<specfem::element::boundary_tag::acoustic_free_surface,
                          DimensionTag, UseSIMD>::
@@ -392,7 +391,7 @@ specfem::point::boundary<specfem::element::boundary_tag::acoustic_free_surface,
   this->tag = boundary.tag;
 }
 
-template <specfem::dimension::type DimensionTag, bool UseSIMD>
+template <specfem::element::dimension_tag DimensionTag, bool UseSIMD>
 KOKKOS_FUNCTION specfem::point::boundary<specfem::element::boundary_tag::stacey,
                                          DimensionTag, UseSIMD>::
     boundary(const specfem::point::boundary<
@@ -406,10 +405,10 @@ KOKKOS_FUNCTION specfem::point::boundary<specfem::element::boundary_tag::stacey,
 template <bool UseSIMD>
 KOKKOS_FUNCTION
 specfem::point::boundary<specfem::element::boundary_tag::stacey,
-                         specfem::dimension::type::dim3, UseSIMD>::
+                         specfem::element::dimension_tag::dim3, UseSIMD>::
     boundary(const specfem::point::boundary<
              specfem::element::boundary_tag::composite_stacey_dirichlet,
-             specfem::dimension::type::dim3, UseSIMD> &boundary) {
+             specfem::element::dimension_tag::dim3, UseSIMD> &boundary) {
   this->tag = boundary.tag;
   this->face_weight = boundary.face_weight;
   this->face_normal = boundary.face_normal;

@@ -7,13 +7,13 @@
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 
-#include "algorithms/transfer.hpp"
-#include "datatypes/chunk_edge_view.hpp"
-#include "enumerations/interface.hpp"
+#include "specfem/algorithms/transfer.hpp"
 #include "specfem/chunk_edge.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/datatype.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/utilities.hpp"
 #include "utilities/include/fixture/nonconforming_interface.hpp"
-#include "utilities/interface.hpp"
 
 #include "SPECFEM_Environment.hpp"
 
@@ -25,7 +25,7 @@ namespace specfem::algorithms_test {
 class ChunkEdgeIndex {
 public:
   static constexpr auto accessor_type =
-      specfem::data_access::AccessorType::chunk_edge;
+      specfem::datatype::AccessorType::chunk_edge;
   using KokkosIndexType = Kokkos::TeamPolicy<>::member_type;
 
   /**
@@ -58,12 +58,15 @@ private:
 };
 
 /** Test dimension (2D) */
-constexpr static auto dimension_tag = specfem::dimension::type::dim2;
+constexpr static auto dimension_tag = specfem::element::dimension_tag::dim2;
 /** Interface type (dummy for testing) */
 constexpr static auto interface_tag =
-    specfem::interface::interface_tag::acoustic_elastic;
+    specfem::element_coupling::interface_tag::acoustic_elastic;
 /** Boundary type (dummy for testing) */
 constexpr static auto boundary_tag = specfem::element::boundary_tag::none;
+/** Flux scheme tag (dummy for testing) */
+constexpr static auto flux_scheme_tag =
+    specfem::element_coupling::flux_scheme_tag::natural;
 
 template <typename T, typename = void>
 struct is_analytical2d : std::false_type {};
@@ -193,8 +196,8 @@ void execute(const TransferFunction2D &transfer_function,
       dimension_tag, 1, TransferFunction2D::nquad_intersection,
       TransferFunction2D::nquad_edge,
       specfem::data_access::DataClassType::transfer_function_self,
-      interface_tag, boundary_tag, typename TransferFunction2D::memory_space,
-      Kokkos::MemoryTraits<> >;
+      interface_tag, boundary_tag, flux_scheme_tag,
+      typename TransferFunction2D::memory_space, Kokkos::MemoryTraits<> >;
   using FunctionType = specfem::datatype::VectorChunkEdgeViewType<
       type_real, dimension_tag, 1, TransferFunction2D::nquad_edge,
       EdgeFunction2D::num_components, false,

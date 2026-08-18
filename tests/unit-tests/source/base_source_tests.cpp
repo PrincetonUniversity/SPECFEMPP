@@ -1,7 +1,7 @@
 #include "specfem/point/global_coordinates.hpp"
+#include "specfem/setup.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
-#include "specfem_setup.hpp"
 #include "test_macros.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
@@ -12,14 +12,14 @@ TEST(SOURCES_BASE, BaseSource_GetCoords_ReturnsCorrectArray) {
   type_real z = -2.3;
 
   // Create concrete source instance (using force as concrete implementation)
-  specfem::sources::force<specfem::dimension::type::dim2> force_source(
+  specfem::sources::force<specfem::element::dimension_tag::dim2> force_source(
       x, z, 0.0, // x, z, angle
       std::make_unique<specfem::source_time_functions::Ricker>(10, 0.01, 1.0,
                                                                0.0, 1.0, false),
-      specfem::wavefield::simulation_field::forward);
+      specfem::simulation::field_type::forward);
 
   // Access through base class reference to test base class functionality
-  specfem::sources::source<specfem::dimension::type::dim2> &base_source =
+  specfem::sources::source<specfem::element::dimension_tag::dim2> &base_source =
       force_source;
 
   // Test the base class get_coords() method
@@ -35,11 +35,11 @@ TEST(SOURCES_BASE, GetCoords_ZeroCoordinates) {
   type_real x = 0.0;
   type_real z = 0.0;
 
-  specfem::sources::force<specfem::dimension::type::dim2> force_source(
+  specfem::sources::force<specfem::element::dimension_tag::dim2> force_source(
       x, z, 0.0,
       std::make_unique<specfem::source_time_functions::Ricker>(10, 0.01, 1.0,
                                                                0.0, 1.0, false),
-      specfem::wavefield::simulation_field::forward);
+      specfem::simulation::field_type::forward);
 
   auto coords = force_source.get_global_coordinates();
 
@@ -52,11 +52,11 @@ TEST(SOURCES_BASE, GetCoords_NegativeCoordinates) {
   type_real x = -10.5;
   type_real z = -3.7;
 
-  specfem::sources::force<specfem::dimension::type::dim2> force_source(
+  specfem::sources::force<specfem::element::dimension_tag::dim2> force_source(
       x, z, 0.0,
       std::make_unique<specfem::source_time_functions::Ricker>(10, 0.01, 1.0,
                                                                0.0, 1.0, false),
-      specfem::wavefield::simulation_field::forward);
+      specfem::simulation::field_type::forward);
 
   auto coords = force_source.get_global_coordinates();
 
@@ -69,11 +69,11 @@ TEST(SOURCES_BASE, GetCoords_ExtremeValues) {
   type_real x = 1e10;
   type_real z = -1e10;
 
-  specfem::sources::force<specfem::dimension::type::dim2> force_source(
+  specfem::sources::force<specfem::element::dimension_tag::dim2> force_source(
       x, z, 0.0,
       std::make_unique<specfem::source_time_functions::Ricker>(10, 0.01, 1.0,
                                                                0.0, 1.0, false),
-      specfem::wavefield::simulation_field::forward);
+      specfem::simulation::field_type::forward);
 
   auto coords = force_source.get_global_coordinates();
 
@@ -87,23 +87,23 @@ TEST(SOURCES_BASE, GetCoords_DifferentSourceTypes) {
   type_real z = 2.71;
 
   // Test with moment tensor source
-  specfem::sources::moment_tensor<specfem::dimension::type::dim2>
+  specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2>
       moment_tensor_source(
           x, z, 1.0, 1.0, 0.0, // x, z, Mxx, Mzz, Mxz
           std::make_unique<specfem::source_time_functions::Ricker>(
               10, 0.01, 1.0, 0.0, 1.0, false),
-          specfem::wavefield::simulation_field::forward);
+          specfem::simulation::field_type::forward);
 
   auto coords_tensor = moment_tensor_source.get_global_coordinates();
   EXPECT_REAL_EQ(coords_tensor.x, x);
   EXPECT_REAL_EQ(coords_tensor.z, z);
 
   // Test with external source
-  specfem::sources::external<specfem::dimension::type::dim2> external_source(
-      x, z,
-      std::make_unique<specfem::source_time_functions::Ricker>(10, 0.01, 1.0,
-                                                               0.0, 1.0, false),
-      specfem::wavefield::simulation_field::forward);
+  specfem::sources::external<specfem::element::dimension_tag::dim2>
+      external_source(x, z,
+                      std::make_unique<specfem::source_time_functions::Ricker>(
+                          10, 0.01, 1.0, 0.0, 1.0, false),
+                      specfem::simulation::field_type::forward);
 
   const auto global_coords_external = external_source.get_global_coordinates();
   EXPECT_REAL_EQ(global_coords_external.x, x);
@@ -115,17 +115,17 @@ TEST(SOURCES_BASE, GetCoords_ConsistentWithGetters) {
   type_real x = 7.5;
   type_real z = -4.2;
 
-  specfem::point::global_coordinates<specfem::dimension::type::dim2>
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
       global_coords(x, z);
 
-  specfem::sources::force<specfem::dimension::type::dim2> force_source(
+  specfem::sources::force<specfem::element::dimension_tag::dim2> force_source(
       x, z, 0.0,
       std::make_unique<specfem::source_time_functions::Ricker>(10, 0.01, 1.0,
                                                                0.0, 1.0, false),
-      specfem::wavefield::simulation_field::forward);
+      specfem::simulation::field_type::forward);
 
   // Access through base class reference
-  specfem::sources::source<specfem::dimension::type::dim2> &base_source =
+  specfem::sources::source<specfem::element::dimension_tag::dim2> &base_source =
       force_source;
 
   auto source_coords = base_source.get_global_coordinates();
@@ -140,11 +140,11 @@ TEST(SOURCES_BASE, GetCoords_CompatibleWithCoordinateConstructors) {
   type_real x = 1.5;
   type_real z = 3.7;
 
-  specfem::sources::force<specfem::dimension::type::dim2> force_source(
+  specfem::sources::force<specfem::element::dimension_tag::dim2> force_source(
       x, z, 0.0,
       std::make_unique<specfem::source_time_functions::Ricker>(10, 0.01, 1.0,
                                                                0.0, 1.0, false),
-      specfem::wavefield::simulation_field::forward);
+      specfem::simulation::field_type::forward);
 
   auto coords = force_source.get_global_coordinates();
 
@@ -153,7 +153,7 @@ TEST(SOURCES_BASE, GetCoords_CompatibleWithCoordinateConstructors) {
 
   // Test that we can create local_coordinates from the returned array
   int ispec = 42;
-  specfem::point::local_coordinates<specfem::dimension::type::dim2>
+  specfem::point::local_coordinates<specfem::element::dimension_tag::dim2>
       local_coords(ispec, coords.x, coords.z);
 
   force_source.set_local_coordinates(local_coords);

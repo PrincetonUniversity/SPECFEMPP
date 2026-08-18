@@ -78,7 +78,7 @@ Here's an example from the elastic media implementation (``core/specfem/point/pr
 
 .. code-block:: cpp
 
-   template <specfem::dimension::type DimensionTag,
+   template <specfem::element::dimension_tag DimensionTag,
              specfem::element::medium_tag MediumTag, bool UseSIMD>
    struct data_container<
        DimensionTag, MediumTag, specfem::element::property_tag::isotropic, UseSIMD,

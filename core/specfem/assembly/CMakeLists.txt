@@ -1,6 +1,6 @@
-file(GLOB_RECURSE COMPUTE_SOURCE_FILES "./*.cpp" "./**/*.cpp")
+file(GLOB_RECURSE ASSEMBLY_SOURCE_FILES "*.cpp")
 
-add_library(assembly ${COMPUTE_SOURCE_FILES})
+add_library(assembly ${ASSEMBLY_SOURCE_FILES})
 add_library(specfem::assembly ALIAS assembly)
 
 target_link_libraries(
@@ -9,17 +9,22 @@ target_link_libraries(
         specfem::macros
         $<$<BOOL:${SPECFEM_ENABLE_VTK}>:${VTK_LIBRARIES}>
         PRIVATE
-        algorithms
-        enumerations
-        quadrature
-        mesh
+        specfem::algorithms
+        specfem::coordinate_systems
+        specfem::attenuation
+        specfem::element
+        specfem::element_coupling
+        specfem::quadrature
+        specfem::mesh
+        specfem::mpi
+        specfem::program_abort
         source_class
         jacobian
         point
         specfem::receivers
         shape_functions
         Kokkos::kokkos
-        enumerations
+        specfem::enums
         ${BOOST_LIBS}
         $<$<BOOL:${SPECFEM_ENABLE_VTK}>:${VTK_LIBRARIES}>
 )
@@ -34,6 +39,12 @@ target_compile_definitions(
     PUBLIC
     $<$<NOT:$<BOOL:${SPECFEM_ENABLE_VTK}>>:-DNO_VTK>
 )
+
+if (SPECFEM_ENABLE_VTK)
+    # check_jacobian renders PNGs; assembly links into test binaries without
+    # periodic_tasks, so it needs its own factory registration
+    vtk_module_autoinit(TARGETS assembly MODULES ${VTK_LIBRARIES})
+endif()
 
 target_include_directories(
         assembly

@@ -1,0 +1,270 @@
+#pragma once
+
+#include "specfem/element/tags.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/setup.hpp"
+#include "specfem/utilities/errors.hpp"
+#include <array>
+#include <iostream>
+#include <span>
+#include <string>
+#include <vector>
+
+namespace specfem::io::impl {
+
+// clang-format off
+/**
+ * @brief Utility class for generating SEED-compliant seismogram filenames and channel codes.
+ *
+ * The ChannelGenerator class provides functionality to create standardized seismogram
+ * output filenames following SEED (Standard for the Exchange of Earthquake Data) and
+ * FDSN (International Federation of Digital Seismograph Networks) naming conventions.
+ * It automatically determines appropriate band codes based on simulation sampling rates
+ * and generates proper channel codes for synthetic seismogram outputs.
+ *
+ * The class is used by the seismogram writer to ensure consistent naming across different
+ * wavefield types (displacement, velocity, acceleration, pressure) and component orientations.
+ * Note: @c get_station_filenames() returns relative filenames; the caller is responsible for
+ * prepending the output directory when opening files.
+ *
+ * @see specfem::io::seismogram_writer
+ * @see specfem::enums::wavefield
+ *
+ * @code
+ * // Example: Create a channel generator for a 50 Hz simulation
+ * type_real dt = 0.02;  // 50 Hz sampling rate
+ * specfem::io::ChannelGenerator generator(dt);
+ *
+ * // Generate displacement seismogram filenames for a station
+ * auto filenames = generator.get_station_filenames(
+ *     "SY", "ANMO", "S3", specfem::enums::wavefield::displacement);
+ *
+ * // Result: filenames contains relative names (caller prepends output directory):
+ * // "SY.ANMO.S3.BXX.semd"
+ * // "SY.ANMO.S3.BXY.semd"
+ * // "SY.ANMO.S3.BXZ.semd"
+ *
+ * // Get the band code
+ * std::string band = generator.get_band_code();  // Returns "B" for dt=0.02s
+ * @endcode
+ */
+// clang-format on
+class ChannelGenerator {
+
+public:
+  /**
+   * @brief Constructs a ChannelGenerator for the given simulation timestep.
+   *
+   * Initializes the generator and automatically computes the SEED band code
+   * based on the simulation sampling rate. The band code follows FDSN
+   * conventions and ranges from 'L' (long period, ~1 Hz) to 'F' (very high
+   * frequency, ≥1000 Hz).
+   *
+   * @param timestep Simulation time step (dt) in seconds, used to determine
+   * band code
+   * @param nstep_between_samples Number of timesteps between seismogram samples
+   * @param utm_mesh When true, 3-D elastic components are labeled with the
+   * geographic convention E/N/Z instead of the Cartesian X/Y/Z. Has no effect
+   * in 2-D.
+   */
+  ChannelGenerator(const type_real timestep,
+                   const int nstep_between_samples = 1,
+                   const bool utm_mesh = false)
+      : band_code(compute_band_code(timestep)), timestep(timestep),
+        nstep_between_samples_(nstep_between_samples), utm_mesh_(utm_mesh) {}
+
+  /**
+   * @brief Returns the simulation timestep (dt) in seconds.
+   * @return type_real Simulation time step used to construct this generator.
+   */
+  type_real get_timestep() const { return this->timestep; }
+  type_real get_sample_interval() const {
+    return timestep * nstep_between_samples_;
+  }
+
+  /**
+   * @brief Generates SEED-compliant seismogram filenames for a given station.
+   *
+   * @param network_name    SEED network code.
+   * @param station_name    SEED station code.
+   * @param location_code   SEED location ID (e.g. "S2", "S3").
+   * @param seismogram_type Wavefield type to output.
+   * @param elastic_components Component letters for elastic seismograms.
+   *        Defaults to {'X','Y','Z'} for 3-D. Pass {'X','Z'} for 2-D, or
+   *        {'E','N','Z'} for a UTM-projected 3-D mesh.
+   *        Ignored for pressure seismograms (always single 'P' component).
+   * @return std::vector<std::string> Filenames, one per component.
+   */
+  std::vector<std::string> get_station_filenames(
+      const std::string &network_name, const std::string &station_name,
+      const std::string &location_code,
+      specfem::enums::wavefield seismogram_type,
+      std::span<const char> elastic_components = { kDefaultElasticComponents });
+
+  /**
+   * @brief Generate output filenames for one station/seismogram-type pair.
+   *
+   * Overload that accepts a StationInfo object directly and derives the
+   * SEED location code and component letters from the simulation dimension
+   * ("S3"/{X,Y,Z} for 3-D, "S2"/{X,Z} for 2-D).
+   *
+   * @tparam DimensionTag Simulation dimension (dim2 or dim3).
+   * @tparam StationInfo  Type with public network_name and station_name
+   * members.
+   * @param station_info  Station descriptor from StationIterator.
+   * @param seismogram_type Wavefield type to write.
+   */
+  template <specfem::element::dimension_tag DimensionTag, typename StationInfo>
+  std::vector<std::string>
+  get_station_filenames(const StationInfo &station_info,
+                        specfem::enums::wavefield seismogram_type) {
+    if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
+      static constexpr std::array<char, 2> kLetters = { 'X', 'Z' };
+      return get_station_filenames(
+          station_info.network_name, station_info.station_name, "S2",
+          seismogram_type, std::span<const char>{ kLetters });
+    } else if constexpr (DimensionTag ==
+                         specfem::element::dimension_tag::dim3) {
+      // UTM-projected meshes use the geographic E/N/Z convention (X->E, Y->N,
+      // Z->Z); Cartesian meshes keep X/Y/Z. The data order is identical.
+      return get_station_filenames(
+          station_info.network_name, station_info.station_name, "S3",
+          seismogram_type,
+          utm_mesh_ ? std::span<const char>{ kUtmElasticComponents }
+                    : std::span<const char>{ kDefaultElasticComponents });
+    } else {
+      static_assert(specfem::utilities::always_false<DimensionTag>,
+                    "Unsupported dimension tag for seismogram location code.");
+    }
+  }
+
+  /**
+   * @brief Returns the SEED band code for this generator.
+   *
+   * The band code is determined from the simulation timestep and follows FDSN
+   * conventions for broad-band instruments. Valid codes are:
+   * - 'L': Long Period (\f$ dt \geq 1.0 \f$ s, \f$ \approx 1 \f$ Hz)
+   * - 'M': Mid Period (\f$ 0.1 < dt < 1.0 \f$ s, \f$ > 1 \f$ to \f$ < 10 \f$
+   * Hz)
+   * - 'B': Broad Band (\f$ 0.0125 < dt \leq 0.1 \f$ s, \f$ \geq 10 \f$ to \f$ <
+   * 80 \f$ Hz)
+   * - 'H': High Broad Band (\f$ 0.004 < dt \leq 0.0125 \f$ s, \f$ \geq 80 \f$
+   * to \f$ < 250 \f$ Hz)
+   * - 'C': Band C (\f$ 0.001 < dt \leq 0.004 \f$ s, \f$ \geq 250 \f$ to \f$ <
+   * 1000 \f$ Hz)
+   * - 'F': Band F (\f$ dt \leq 0.001 \f$ s, \f$ \geq 1000 \f$ Hz)
+   *
+   * @return std::string Single-character band code
+   *
+   * @see compute_band_code() for the mapping algorithm
+   * @see https://ds.iris.edu/ds/nodes/dmc/data/formats/seed-channel-naming/
+   */
+  std::string get_band_code() const { return this->band_code; }
+
+  // clang-format off
+  /**
+   * @brief Generates a three-character SEED channel code for synthetic seismograms.
+   *
+   * Constructs a SEED channel code following the format: [Band][Instrument][Orientation]
+   * - Band code: Determined from simulation timestep (L, M, B, H, C, or F)
+   * - Instrument code: 'X' indicating derived/synthetic data
+   * - Orientation code: Component direction (X, Y, Z, N, E, P, etc.)
+   *
+   * The 'X' instrument code denotes "Derived or Generated Channel" per SEED standards,
+   * indicating this is synthetic data from numerical simulation rather than direct
+   * instrumental recording.
+   *
+   * @param component_letter Single character specifying component orientation (e.g., 'X', 'Y', 'Z', 'P')
+   * @return std::string Three-character SEED channel code (e.g., "BXZ", "HXN", "LXP")
+   *
+   * @code
+   * specfem::io::ChannelGenerator gen(0.05);  // dt=0.05s → Band B
+   * std::string channel_z = gen.get_channel_code('Z');  // Returns "BXZ"
+   * std::string channel_n = gen.get_channel_code('N');  // Returns "BXN"
+   * @endcode
+   *
+   * @see https://ds.iris.edu/ds/nodes/dmc/data/formats/seed-channel-naming/#derived-or-generated-channel
+   */
+  // clang-format on
+  std::string get_channel_code(const char component_letter);
+
+  /**
+   * @brief Returns the file extension for a given seismogram type.
+   *
+   * Maps wavefield types to standardized SPECFEM++ file extensions:
+   * - displacement → "semd"
+   * - velocity → "semv"
+   * - acceleration → "sema"
+   * - pressure → "semp"
+   *
+   * @param seismogram_type Type of wavefield output
+   * @return std::string File extension without leading dot
+   *
+   * @throws std::runtime_error If seismogram_type is not supported
+   */
+  std::string get_file_extension(specfem::enums::wavefield seismogram_type);
+
+private:
+  /// Default 3-D elastic component letters (Cartesian mesh).
+  static constexpr std::array<char, 3> kDefaultElasticComponents = { 'X', 'Y',
+                                                                     'Z' };
+
+  /// 3-D elastic component letters for a UTM-projected mesh (X->E, Y->N, Z->Z).
+  static constexpr std::array<char, 3> kUtmElasticComponents = { 'E', 'N',
+                                                                 'Z' };
+
+  const std::string band_code;    ///< SEED band code (L, M, B, H, C, or F)
+                                  ///< determined from timestep
+  type_real timestep;             ///< Simulation time step in seconds
+  int nstep_between_samples_ = 1; ///< Timesteps between seismogram samples
+  bool utm_mesh_ = false;         ///< Use geographic E/N/Z labels in 3-D
+
+  // clang-format off
+  /**
+   * @brief Computes the FDSN band code from simulation timestep.
+   *
+   * Determines the appropriate SEED band code based on sampling rate following
+   * FDSN conventions for broad-band instruments. The band code indicates the
+   * frequency range of the synthetic seismograms.
+   *
+   * **FDSN Band Code Table** (from IRIS SEED Appendix A):
+   *
+   * | Band | Band Type                      | Sample Rate (Hz)        | Corner Period |
+   * |------|--------------------------------|-------------------------|---------------|
+   * | F    | ...                            | >= 1000 to < 5000       | >= 10 sec     |
+   * | G    | ...                            | >= 1000 to < 5000       | < 10 sec      |
+   * | D    | ...                            | >= 250 to < 1000        | < 10 sec      |
+   * | C    | ...                            | >= 250 to < 1000        | >= 10 sec     |
+   * | E    | Extremely Short Period         | >= 80 to < 250          | < 10 sec      |
+   * | S    | Short Period                   | >= 10 to < 80           | < 10 sec      |
+   * | H    | High Broad Band                | >= 80 to < 250          | >= 10 sec     |
+   * | B    | Broad Band                     | >= 10 to < 80           | >= 10 sec     |
+   * | M    | Mid Period                     | > 1 to < 10             | -             |
+   * | L    | Long Period                    | ~= 1                    | -             |
+   * | V    | Very Long Period               | ~= 0.1                  | -             |
+   * | U    | Ultra Long Period              | ~= 0.01                 | -             |
+   * | R    | Extremely Long Period          | >= 0.0001 to < 0.001    | -             |
+   * | P    | On the order of 0.1 to 1 day   | >= 0.00001 to < 0.0001  | -             |
+   * | T    | On the order of 1 to 10 days   | >= 0.000001 to < 0.00001| -             |
+   * | Q    | Greater than 10 days           | < 0.000001              | -             |
+   * | A    | Administrative Instrument Chan | variable                | NA            |
+   * | O    | Opaque Instrument Channel      | variable                | NA            |
+   *
+   * Note: Sample rate in Hz = \f$ 1 / dt \f$ (sampling interval in seconds).
+   * For example: \f$ dt = 0.01 \f$ s corresponds to sample rate = \f$ 100 \f$
+   * Hz.
+   *
+   * SPECFEM++ follows the FDSN convention assuming broad-band characteristics
+   * (corner period \f$ \geq 10 \f$ s) for consistency with observational
+   * seismology.
+   *
+   * @param dt Simulation time step (sampling interval) in seconds
+   * @return std::string Single-character band code
+   *
+   * @see https://ds.iris.edu/ds/nodes/dmc/data/formats/seed-channel-naming/
+   */
+  // clang-format on
+  static std::string compute_band_code(const type_real dt);
+};
+
+} // namespace specfem::io::impl

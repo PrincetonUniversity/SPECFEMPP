@@ -1,26 +1,50 @@
 #include "specfem/solver/time_marching.hpp"
-#include "enumerations/dimension.hpp"
-#include "enumerations/simulation.hpp"
-#include "specfem/solver/time_marching.tpp"
+#include "specfem/element.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/solver/time_marching/combined.tpp"
+#include "specfem/solver/time_marching/combined_undoatt.tpp"
+#include "specfem/solver/time_marching/forward.tpp"
 
 // Explcit template instantiation
 
 // 2D instantiations
 template class specfem::solver::time_marching<
-    specfem::simulation::type::forward, specfem::dimension::type::dim2, 5>;
+    specfem::simulation::type::forward, specfem::element::dimension_tag::dim2,
+    5>;
 
 template class specfem::solver::time_marching<
-    specfem::simulation::type::forward, specfem::dimension::type::dim2, 8>;
+    specfem::simulation::type::forward, specfem::element::dimension_tag::dim2,
+    8>;
 
 template class specfem::solver::time_marching<
-    specfem::simulation::type::combined, specfem::dimension::type::dim2, 5>;
+    specfem::simulation::type::combined, specfem::element::dimension_tag::dim2,
+    5>;
 
 template class specfem::solver::time_marching<
-    specfem::simulation::type::combined, specfem::dimension::type::dim2, 8>;
+    specfem::simulation::type::combined, specfem::element::dimension_tag::dim2,
+    8>;
+
+template class specfem::solver::time_marching<
+    specfem::simulation::type::combined_undoatt,
+    specfem::element::dimension_tag::dim2, 5>;
+
+template class specfem::solver::time_marching<
+    specfem::simulation::type::combined_undoatt,
+    specfem::element::dimension_tag::dim2, 8>;
 
 // 3D instantiations
 template class specfem::solver::time_marching<
-    specfem::simulation::type::forward, specfem::dimension::type::dim3, 5>;
+    specfem::simulation::type::forward, specfem::element::dimension_tag::dim3,
+    5>;
 
 // template class specfem::solver::time_marching<
-//     specfem::simulation::type::forward, specfem::dimension::type::dim3, 8>;
+//     specfem::simulation::type::forward,
+//     specfem::element::dimension_tag::dim3, 8>;
+
+template class specfem::solver::time_marching<
+    specfem::simulation::type::combined, specfem::element::dimension_tag::dim3,
+    5>;
+
+template class specfem::solver::time_marching<
+    specfem::simulation::type::combined_undoatt,
+    specfem::element::dimension_tag::dim3, 5>;

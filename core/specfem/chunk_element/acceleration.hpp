@@ -1,9 +1,9 @@
 
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "impl/field.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/enums.hpp"
 
 /**
  * @namespace specfem::chunk_element
@@ -44,7 +44,7 @@ namespace specfem::chunk_element {
  * @see specfem::chunk_element::velocity for velocity field accessor
  * @see specfem::chunk_element::displacement for displacement field accessor
  */
-template <int ChunkSize, int NGLL, specfem::dimension::type DimensionTag,
+template <int ChunkSize, int NGLL, specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
 class acceleration
     : public impl::field<ChunkSize, NGLL, DimensionTag, MediumTag,

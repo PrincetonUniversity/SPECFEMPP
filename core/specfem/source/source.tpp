@@ -1,24 +1,25 @@
 #pragma once
 
-#include "specfem/source.hpp"
-#include "kokkos_abstractions.h"
-#include "specfem_setup.hpp"
+#include "source.hpp"
+
+#include "specfem/setup.hpp"
 #include <yaml-cpp/yaml.h>
 
 
 
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 void specfem::sources::source<DimensionTag>::set_source_time_function(
     YAML::Node &Node, const int nsteps, const type_real dt) {
 
   if (YAML::Node Dirac = Node["Dirac"]) {
-    this->source_time_function = std::make_unique<specfem::source_time_functions::Dirac>(
-        Dirac, nsteps, dt, false);
+    this->source_time_function =
+        std::make_unique<specfem::source_time_functions::Dirac>(Dirac, nsteps,
+                                                                dt, false);
   } else if (YAML::Node Gaussian = Node["Gaussian"]) {
 
     // Determine t0_factor based on dimension
     constexpr type_real t0_factor =
-        (DimensionTag == specfem::dimension::type::dim2) ? 2.0 : 1.5;
+        (DimensionTag == specfem::element::dimension_tag::dim2) ? 2.0 : 1.5;
 
     if (Gaussian["hdur"]) {
       type_real hdur = Gaussian["hdur"].as<type_real>();
@@ -44,8 +45,8 @@ void specfem::sources::source<DimensionTag>::set_source_time_function(
   } else if (YAML::Node Ricker = Node["Ricker"]) {
 
     this->source_time_function =
-        std::make_unique<specfem::source_time_functions::Ricker>(Ricker, nsteps, dt,
-                                                            false);
+        std::make_unique<specfem::source_time_functions::Ricker>(Ricker, nsteps,
+                                                                 dt, false);
   } else if (YAML::Node dGaussian = Node["dGaussian"]) {
     this->source_time_function =
         std::make_unique<specfem::source_time_functions::dGaussian>(
@@ -54,7 +55,7 @@ void specfem::sources::source<DimensionTag>::set_source_time_function(
 
     // Determine t0_factor based on dimension
     constexpr type_real t0_factor =
-        (DimensionTag == specfem::dimension::type::dim2) ? 2.0 : 1.5;
+        (DimensionTag == specfem::element::dimension_tag::dim2) ? 2.0 : 1.5;
 
     this->source_time_function =
         std::make_unique<specfem::source_time_functions::Heaviside>(
@@ -62,10 +63,37 @@ void specfem::sources::source<DimensionTag>::set_source_time_function(
 
   } else if (YAML::Node external = Node["External"]) {
     this->source_time_function =
-        std::make_unique<specfem::source_time_functions::external>(external, nsteps,
-                                                              dt);
+        std::make_unique<specfem::source_time_functions::external>(external,
+                                                                   nsteps, dt);
   } else {
     throw std::runtime_error("Error: source time function not recognized");
   }
+}
 
+template <specfem::element::dimension_tag DimensionTag>
+std::string specfem::sources::source<DimensionTag>::print() const {
+  std::ostringstream os;
+  os << "- " << source_name() << "\n";
+  if (read_coordinates_) {
+    os << "  Coordinates: " << read_coordinates_->print() << "\n";
+  }
+  os << "  " << print_details() << "\n";
+  if (resolution_.has_value())
+    os << "  Target: " << resolution_->print() << "\n";
+  // Only print resolved global coordinates when they have been set:
+  // either directly (no read_coordinates_) or after assembly-time
+  // resolution.
+  if (!read_coordinates_ || partition_index_ >= 0) {
+    const auto gcoord = get_global_coordinates();
+    os << "  Found:  " << gcoord.print() << "\n";
+  }
+  if (partition_index_ >= 0)
+    os << "  Location error: "
+       << specfem::utilities::format_distance(location_error_) << "\n";
+  os << "  Time Function: " << source_time_function->print() << "\n";
+#ifdef SPECFEM_ENABLE_MPI
+  if (partition_index_ >= 0)
+    os << "    MPI Rank: " << partition_index_ << "\n";
+#endif
+  return os.str();
 }

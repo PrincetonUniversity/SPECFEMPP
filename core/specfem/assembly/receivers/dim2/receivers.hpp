@@ -1,7 +1,9 @@
 #pragma once
 
+#include "../impl/receiver_index_base.hpp"
 #include "../impl/receiver_iterator.hpp"
-#include "enumerations/interface.hpp"
+#include "specfem/assembly/element_types.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/receivers.hpp"
 
 namespace specfem::assembly {
@@ -26,14 +28,18 @@ namespace specfem::assembly {
  * interface for receiver management and seismogram recording.
  */
 template <>
-struct receivers<specfem::dimension::type::dim2>
+struct receivers<specfem::element::dimension_tag::dim2>
     : public receivers_impl::StationIterator,
       public receivers_impl::SeismogramIterator<
-          specfem::dimension::type::dim2> {
+          specfem::element::dimension_tag::dim2>,
+      public receivers_impl::ReceiverIndexBase<
+          specfem::assembly::element_types_impl::ElementSets<
+              specfem::element::dimension_tag::dim2>> {
 
 public:
-  constexpr static specfem::dimension::type dimension_tag =
-      specfem::dimension::type::dim2; ///< Dimension tag for this assembly
+  constexpr static specfem::element::dimension_tag dimension_tag =
+      specfem::element::dimension_tag::dim2; ///< Dimension tag for this
+                                             ///< assembly
 
 private:
   using IndexViewType =
@@ -75,87 +81,34 @@ public:
       const int nspec, const int ngllz, const int ngllx, const int max_sig_step,
       const type_real dt, const type_real t0, const int nsteps_between_samples,
       const std::vector<
-          std::shared_ptr<specfem::receivers::receiver<dimension_tag> > >
+          std::shared_ptr<specfem::receivers::receiver<dimension_tag>>>
           &receivers,
-      const std::vector<specfem::wavefield::type> &stypes,
+      const std::vector<specfem::enums::wavefield> &stypes,
       const specfem::assembly::mesh<dimension_tag> &mesh,
       const specfem::mesh::tags<dimension_tag> &tags,
       const specfem::assembly::element_types<dimension_tag> &element_types);
 
   /**
-   * @brief Get the spectral element indices in which the receivers are located
-   * on the device
-   *
-   * Returns only the indices of the elements that are associated with a
-   * specific medium and property tag
-   * @param medium Medium tag
-   * @property property Property tag
-   * @return Kokkos::View<int *, Kokkos::DefaultExecutionSpace> View of the
-   * elements indices associated with the receivers
-   */
-  std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
-             Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >
-  get_indices_on_device(const specfem::element::medium_tag medium,
-                        const specfem::element::property_tag property) const;
-
-  /**
-   * @brief Get the spectral element indices in which the receivers are located
-   * on the host
-   *
-   * Returns only the indices of the elements that are associated with a
-   * specific medium and property tag
-   * @param medium Medium tag
-   * @property property Property tag
-   * @return Kokkos::View<int *, Kokkos::DefaultExecutionSpace> View of the
-   * elements indices associated with the receivers
-   */
-  std::tuple<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>,
-             Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >
-  get_indices_on_host(const specfem::element::medium_tag medium,
-                      const specfem::element::property_tag property) const;
-
-  /**
    * @brief Get the seismogram types
    *
-   * @return std::vector<specfem::wavefield::type> Vector of seismogram types
+   * @return std::vector<specfem::enums::wavefield> Vector of seismogram types
    */
-  std::vector<specfem::wavefield::type> get_seismogram_types() const {
+  std::vector<specfem::enums::wavefield> get_seismogram_types() const {
     return seismogram_types_;
-  }
-
-  /**
-   * @brief Get the station iterator
-   *
-   * @return const StationIterator& Iterator over stations
-   */
-  const receivers_impl::StationIterator &stations() const {
-    return static_cast<const receivers_impl::StationIterator &>(*this);
   }
 
 private:
   int nspec;              ///< Total number of spectral elements
   IndexViewType elements; ///< View to store the elements associated with the
                           ///< receivers
-  IndexViewType::HostMirror h_elements; ///< Host view to store the
-                                        ///< elements associated with the
-                                        ///< receivers
+  IndexViewType::host_mirror_type h_elements; ///< Host view to store the
+                                              ///< elements associated with the
+                                              ///< receivers
   LagrangeInterpolantType lagrange_interpolant; ///< Lagrange interpolant for
                                                 ///< every receiver
-  LagrangeInterpolantType::HostMirror
+  LagrangeInterpolantType::host_mirror_type
       h_lagrange_interpolant; ///< Lagrange interpolant for every receiver
                               ///< stored on the host
-  specfem::assembly::element_types<dimension_tag> element_types; ///< Element
-                                                                 ///< types
-
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
-                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                  POROELASTIC, ELASTIC_PSV_T),
-                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC,
-                                    ISOTROPIC_COSSERAT)),
-                      DECLARE((IndexViewType, receiver_indices),
-                              (IndexViewType::HostMirror, h_receiver_indices),
-                              (IndexViewType, elements),
-                              (IndexViewType::HostMirror, h_elements)))
 
   template <typename ChunkIndexType, typename ViewType>
   friend KOKKOS_FUNCTION void load_on_device(const ChunkIndexType &chunk_index,
@@ -196,10 +149,10 @@ private:
  * receivers in the iterator
  */
 template <typename ChunkIndexType, typename ViewType>
-KOKKOS_FUNCTION void
-load_on_device(const ChunkIndexType &chunk_index,
-               const receivers<specfem::dimension::type::dim2> &receivers,
-               ViewType &lagrange_interpolant) {
+KOKKOS_FUNCTION void load_on_device(
+    const ChunkIndexType &chunk_index,
+    const receivers<specfem::element::dimension_tag::dim2> &receivers,
+    ViewType &lagrange_interpolant) {
 
   specfem::execution::for_each_level(
       chunk_index.get_iterator(),
@@ -244,10 +197,10 @@ load_on_device(const ChunkIndexType &chunk_index,
  * @param receivers Receivers object containing the receiver information
  */
 template <typename ChunkIndexType, typename SeismogramViewType>
-KOKKOS_FUNCTION void
-store_on_device(const ChunkIndexType &chunk_index,
-                const SeismogramViewType &seismogram_components,
-                const receivers<specfem::dimension::type::dim2> &receivers) {
+KOKKOS_FUNCTION void store_on_device(
+    const ChunkIndexType &chunk_index,
+    const SeismogramViewType &seismogram_components,
+    const receivers<specfem::element::dimension_tag::dim2> &receivers) {
 
   const int isig_step = receivers.get_seismogram_step();
   const int iseis = receivers.get_seis_type();

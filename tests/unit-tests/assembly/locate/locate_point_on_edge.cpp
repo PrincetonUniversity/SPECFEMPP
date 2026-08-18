@@ -1,7 +1,7 @@
 #include "../test_fixture/test_fixture.hpp"
-#include "algorithms/locate_point.hpp"
-#include "enumerations/dimension.hpp"
-#include "enumerations/mesh_entities.hpp"
+#include "specfem/algorithms.hpp"
+#include "specfem/element.hpp"
+#include "specfem/mesh_entity.hpp"
 #include "specfem/point.hpp"
 #include "specfem/point/global_coordinates.hpp"
 #include <gtest/gtest.h>
@@ -12,15 +12,8 @@ using specfem::point::global_coordinates;
 using specfem::point::local_coordinates;
 
 void test_locate_point_on_edge(
-    const specfem::assembly::assembly<specfem::dimension::type::dim2>
+    const specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
         &assembly) {
-
-  constexpr auto dim = specfem::dimension::type::dim2;
-
-  const type_real xmin = assembly.mesh.xmin;
-  const type_real xmax = assembly.mesh.xmax;
-  const type_real zmin = assembly.mesh.zmin;
-  const type_real zmax = assembly.mesh.zmax;
 
   /* =============================
    * - test_locate_point_on_edge -
@@ -89,15 +82,17 @@ void test_locate_point_on_edge(
     }
 
     // target point on perimeter selected. Get global coordinates.
-    const auto global_coords = specfem::algorithms::locate_point(
-        specfem::point::local_coordinates<specfem::dimension::type::dim2>(
-            ispec, xi_target, gamma_target),
-        assembly.mesh);
+    const auto global_coords =
+        specfem::algorithms::locate_point_impl::locate_point(
+            specfem::point::local_coordinates<
+                specfem::element::dimension_tag::dim2>(ispec, xi_target,
+                                                       gamma_target),
+            assembly.mesh);
 
     // attempt to recover local edge coordinate
     const auto [local_test, inside_domain] =
-        specfem::algorithms::locate_point_on_edge(global_coords, assembly.mesh,
-                                                  ispec, edge);
+        specfem::algorithms::locate_point_impl::locate_point(
+            global_coords, assembly.mesh, ispec, edge);
 
     // Check if the local coordinates are within the domain
     if (std::abs(local_test) > 1.0 + eps_local) {
@@ -165,8 +160,8 @@ void test_locate_point_on_edge(
 TEST_F(Assembly2D, LocatePointOnEdge) {
   for (auto parameters : *this) {
     const auto Test = std::get<0>(parameters);
-    specfem::assembly::assembly<specfem::dimension::type::dim2> assembly =
-        std::get<5>(parameters);
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        assembly = std::get<5>(parameters);
 
     try {
       test_locate_point_on_edge(assembly);

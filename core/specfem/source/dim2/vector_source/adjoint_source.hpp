@@ -1,7 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
-#include "kokkos_abstractions.h"
+#include "specfem/enums.hpp"
 #include "specfem/source.hpp"
 #include "yaml-cpp/yaml.h"
 
@@ -28,11 +27,10 @@ namespace sources {
  *
  * // Create a 2D adjoint source at receiver location (12.5, 8.3)
  * auto adj_source =
- * specfem::sources::adjoint_source<specfem::dimension::type::dim2>( 12.5,  //
- * x-coordinate (receiver location) 8.3,   // z-coordinate (receiver location)
- *     std::move(stf),
- *     "STA01",    // station name
- *     "NETWORK"   // network name
+ * specfem::sources::adjoint_source<specfem::element::dimension_tag::dim2>( 12.5,
+ * // x-coordinate (receiver location) 8.3,   // z-coordinate (receiver
+ * location) std::move(stf), "STA01",    // station name "NETWORK"   // network
+ * name
  * );
  *
  * // Set the medium type where the adjoint source is located
@@ -43,13 +41,13 @@ namespace sources {
  *
  * // Adjoint sources always return adjoint wavefield type
  * assert(adj_source.get_wavefield_type() ==
- *        specfem::wavefield::simulation_field::adjoint);
+ *        specfem::simulation::field_type::adjoint);
  * @endcode
  *
  */
 template <>
-class adjoint_source<specfem::dimension::type::dim2>
-    : public vector_source<specfem::dimension::type::dim2> {
+class adjoint_source<specfem::element::dimension_tag::dim2>
+    : public vector_source<specfem::element::dimension_tag::dim2> {
 
 public:
   adjoint_source() {};
@@ -66,11 +64,11 @@ public:
         network_name(Node["network_name"].as<std::string>()),
         vector_source(Node, nsteps, dt) {};
 
-  specfem::wavefield::simulation_field get_wavefield_type() const override {
-    return specfem::wavefield::simulation_field::adjoint;
+  specfem::simulation::field_type get_wavefield_type() const override {
+    return specfem::simulation::field_type::adjoint;
   }
 
-  std::string print() const override;
+  std::string source_name() const override { return "2-D adjoint source"; }
 
   /**
    * @brief Get the force vector
@@ -92,10 +90,11 @@ public:
    * in full waveform inversion. The adjoint source acts as a time-reversed
    * receiver that backpropagates data residuals through the medium.
    *
-   * @return Kokkos::View<type_real *, Kokkos::LayoutLeft, Kokkos::HostSpace>
+   * @return Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
    * Unit force vector with size depending on medium type
    */
-  specfem::kokkos::HostView1d<type_real> get_force_vector() const override;
+  Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+  get_force_vector() const override;
 
   /**
    * @brief Get the list of supported media for this source type
@@ -105,7 +104,11 @@ public:
   std::vector<specfem::element::medium_tag>
   get_supported_media() const override;
 
-  static constexpr const char *name = "2-D adjoint source";
+  std::string print_details() const override {
+    std::ostringstream message;
+    message << this->network_name << "." << this->station_name;
+    return message.str();
+  }
 
 private:
   std::string station_name;

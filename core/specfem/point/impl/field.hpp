@@ -1,7 +1,8 @@
 #pragma once
 
-#include "datatypes/simd.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/datatype.hpp"
+#include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
@@ -35,7 +36,7 @@ namespace specfem::point::impl {
  * @code{.cpp}
  * // Example: Creating displacement field accessors for 2D elastic medium
  * using DisplacementField = specfem::point::impl::field<
- *     specfem::dimension::type::dim2,
+ *     specfem::element::dimension_tag::dim2,
  *     specfem::element::medium_tag::elastic,
  *     specfem::data_access::DataClassType::displacement,
  *     false>;  // No SIMD
@@ -55,7 +56,7 @@ namespace specfem::point::impl {
  * @code{.cpp}
  * // Example: Creating velocity field with SIMD optimization
  * using VelocityField = specfem::point::impl::field<
- *     specfem::dimension::type::dim3,
+ *     specfem::element::dimension_tag::dim3,
  *     specfem::element::medium_tag::acoustic,
  *     specfem::data_access::DataClassType::velocity,
  *     true>;   // Enable SIMD
@@ -67,18 +68,18 @@ namespace specfem::point::impl {
  * specfem::assembly::load_on_device(point_index, field_container, v_field);
  * @endcode
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::data_access::DataClassType DataClass, bool UseSIMD>
 class field : public specfem::data_access::Accessor<
-                  specfem::data_access::AccessorType::point, DataClass,
+                  specfem::datatype::AccessorType::point, DataClass,
                   DimensionTag, UseSIMD> {
 private:
   /**
    * @brief Type alias for the base accessor class.
    */
   using base_type =
-      specfem::data_access::Accessor<specfem::data_access::AccessorType::point,
+      specfem::data_access::Accessor<specfem::datatype::AccessorType::point,
                                      DataClass, DimensionTag, UseSIMD>;
 
 public:
@@ -290,7 +291,7 @@ public:
     os << "{";
     for (std::size_t i = 0; i < components; ++i) {
       os << this->m_data(i);
-      if (i < components - 1) {
+      if (i + 1 < components) {
         os << ",\n";
       }
     }

@@ -2,7 +2,7 @@
 .. _Chapter6:
 
 Chapter 6: SPECFEM++ iteration policies
-========================================
+=======================================
 
 In :ref:`Chapter 5 <Chapter5>`, we discussed data-types in SPECFEM++ that essentially depend on the heirarchy of the mesh. In this chapter, we will introduce the iteration policies within SPECFEM++ that enable us to iterate over the mesh heirarchy in a consistent manner.
 

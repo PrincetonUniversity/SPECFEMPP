@@ -1,15 +1,15 @@
 #include "specfem/assembly/jacobian_matrix.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem/jacobian.hpp"
 #include "specfem/point.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <tuple>
 
 specfem::assembly::jacobian_matrix<
-    specfem::dimension::type::dim2>::jacobian_matrix(const int nspec,
-                                                     const int ngllz,
-                                                     const int ngllx)
+    specfem::element::dimension_tag::dim2>::jacobian_matrix(const int nspec,
+                                                            const int ngllz,
+                                                            const int ngllx)
     : nspec(nspec), ngllz(ngllz), ngllx(ngllx),
       xix("specfem::assembly::jacobian_matrix::xix", nspec, ngllz, ngllx),
       xiz("specfem::assembly::jacobian_matrix::xiz", nspec, ngllz, ngllx),
@@ -17,17 +17,18 @@ specfem::assembly::jacobian_matrix<
       gammaz("specfem::assembly::jacobian_matrix::gammaz", nspec, ngllz, ngllx),
       jacobian("specfem::assembly::jacobian_matrix::jacobian", nspec, ngllz,
                ngllx),
-      h_xix(specfem::kokkos::create_mirror_view(xix)),
-      h_xiz(specfem::kokkos::create_mirror_view(xiz)),
-      h_gammax(specfem::kokkos::create_mirror_view(gammax)),
-      h_gammaz(specfem::kokkos::create_mirror_view(gammaz)),
-      h_jacobian(specfem::kokkos::create_mirror_view(jacobian)) {
+      h_xix(specfem::datatype::create_mirror_view(xix)),
+      h_xiz(specfem::datatype::create_mirror_view(xiz)),
+      h_gammax(specfem::datatype::create_mirror_view(gammax)),
+      h_gammaz(specfem::datatype::create_mirror_view(gammaz)),
+      h_jacobian(specfem::datatype::create_mirror_view(jacobian)) {
   return;
 };
 
-specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>::
+specfem::assembly::jacobian_matrix<specfem::element::dimension_tag::dim2>::
     jacobian_matrix(
-        const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh)
+        const specfem::assembly::mesh<specfem::element::dimension_tag::dim2>
+            &mesh)
     : nspec(mesh.nspec), ngllz(mesh.element_grid.ngllz),
       ngllx(mesh.element_grid.ngllx),
       xix("specfem::assembly::jacobian_matrix::xix", nspec, ngllz, ngllx),
@@ -36,19 +37,20 @@ specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>::
       gammaz("specfem::assembly::jacobian_matrix::gammaz", nspec, ngllz, ngllx),
       jacobian("specfem::assembly::jacobian_matrix::jacobian", nspec, ngllz,
                ngllx),
-      h_xix(specfem::kokkos::create_mirror_view(xix)),
-      h_xiz(specfem::kokkos::create_mirror_view(xiz)),
-      h_gammax(specfem::kokkos::create_mirror_view(gammax)),
-      h_gammaz(specfem::kokkos::create_mirror_view(gammaz)),
-      h_jacobian(specfem::kokkos::create_mirror_view(jacobian)) {
+      h_xix(specfem::datatype::create_mirror_view(xix)),
+      h_xiz(specfem::datatype::create_mirror_view(xiz)),
+      h_gammax(specfem::datatype::create_mirror_view(gammax)),
+      h_gammaz(specfem::datatype::create_mirror_view(gammaz)),
+      h_jacobian(specfem::datatype::create_mirror_view(jacobian)) {
 
   const int ngnod = mesh.ngnod;
 
   for (int ispec = 0; ispec < nspec; ++ispec) {
 
     //----- Load coorgx, coorgz in level 0 cache to be utilized later
-    Kokkos::View<point::global_coordinates<specfem::dimension::type::dim2> *,
-                 Kokkos::HostSpace>
+    Kokkos::View<
+        point::global_coordinates<specfem::element::dimension_tag::dim2> *,
+        Kokkos::HostSpace>
         coorg("coorg", ngnod);
 
     // This loop is not vectorizable because access to coorg via
@@ -83,33 +85,33 @@ specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>::
     }
   };
 
-  specfem::kokkos::deep_copy(xix, h_xix);
-  specfem::kokkos::deep_copy(xiz, h_xiz);
-  specfem::kokkos::deep_copy(gammax, h_gammax);
-  specfem::kokkos::deep_copy(gammaz, h_gammaz);
-  specfem::kokkos::deep_copy(jacobian, h_jacobian);
+  specfem::datatype::deep_copy(xix, h_xix);
+  specfem::datatype::deep_copy(xiz, h_xiz);
+  specfem::datatype::deep_copy(gammax, h_gammax);
+  specfem::datatype::deep_copy(gammaz, h_gammaz);
+  specfem::datatype::deep_copy(jacobian, h_jacobian);
 
   return;
 }
 
 void specfem::assembly::jacobian_matrix<
-    specfem::dimension::type::dim2>::sync_views() {
-  specfem::kokkos::deep_copy(xix, h_xix);
-  specfem::kokkos::deep_copy(xiz, h_xiz);
-  specfem::kokkos::deep_copy(gammax, h_gammax);
-  specfem::kokkos::deep_copy(gammaz, h_gammaz);
-  specfem::kokkos::deep_copy(jacobian, h_jacobian);
+    specfem::element::dimension_tag::dim2>::sync_views() {
+  specfem::datatype::deep_copy(xix, h_xix);
+  specfem::datatype::deep_copy(xiz, h_xiz);
+  specfem::datatype::deep_copy(gammax, h_gammax);
+  specfem::datatype::deep_copy(gammaz, h_gammaz);
+  specfem::datatype::deep_copy(jacobian, h_jacobian);
 }
 
 std::tuple<bool, Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace> >
 specfem::assembly::jacobian_matrix<
-    specfem::dimension::type::dim2>::check_small_jacobian() const {
+    specfem::element::dimension_tag::dim2>::check_small_jacobian() const {
   Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace> small_jacobian(
       "specfem::assembly::jacobian_matrix::negative", nspec);
 
   Kokkos::deep_copy(small_jacobian, false);
 
-  constexpr auto dimension = specfem::dimension::type::dim2;
+  constexpr auto dimension = specfem::element::dimension_tag::dim2;
 
   const type_real threshold = 1e-10;
 

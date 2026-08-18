@@ -1,8 +1,8 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
-#include "execution/chunked_edge_iterator.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/execution.hpp"
 
 namespace specfem::chunk_edge {
 
@@ -18,12 +18,12 @@ namespace specfem::chunk_edge {
  * @tparam ViewType Kokkos view type for edge index storage
  * @tparam TeamMemberType Kokkos team execution context
  */
-template <specfem::dimension::type DimensionTag, typename ViewType,
+template <specfem::element::dimension_tag DimensionTag, typename ViewType,
           typename TeamMemberType>
 class Index : public specfem::execution::ChunkEdgeIndex<DimensionTag, ViewType,
                                                         TeamMemberType>,
               public specfem::data_access::Accessor<
-                  specfem::data_access::AccessorType::chunk_edge,
+                  specfem::datatype::AccessorType::chunk_edge,
                   specfem::data_access::DataClassType::edge_index, DimensionTag,
                   false> {
 private:

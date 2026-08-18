@@ -1,6 +1,7 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/data_access.hpp"
+#include "specfem/element.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly::mesh_impl {
@@ -14,14 +15,19 @@ namespace specfem::assembly::mesh_impl {
  * It uses Kokkos views for efficient memory management and device/host data
  * transfers.
  *
- * @tparam specfem::dimension::type::dim2 Template specialization for 2D case
+ * @tparam specfem::element::dimension_tag::dim2 Template specialization for 2D
+ * case
  */
-template <> struct points<specfem::dimension::type::dim2> {
+template <> struct points<specfem::element::dimension_tag::dim2> {
 public:
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim2; ///< Dimension
-  constexpr static int ndim = 2;      ///< Number of dimensions
-  int nspec;                          ///< Number of spectral elements
+      specfem::element::dimension_tag::dim2; ///< Dimension
+  constexpr static auto data_class =
+      specfem::data_access::DataClassType::global_coordinates; ///< Data class
+  constexpr static int ndim = specfem::element::dimension<
+      specfem::element::dimension_tag::dim2>::dim; ///< Number of dimensions
+
+  int nspec; ///< Number of spectral elements
   int ngllz; ///< Number of quadrature points in z dimension
   int ngllx; ///< Number of quadrature points in x dimension
   int nglob; ///< Number of global quadrature points
@@ -45,12 +51,12 @@ public:
                                       ///< quadrature point
   CoordViewType coord;                ///< (x, z) for every distinct
                                       ///< quadrature point
-  IndexMappingViewType::HostMirror h_index_mapping; ///< Global element
-                                                    ///< number for every
-                                                    ///< quadrature point
-  CoordViewType::HostMirror h_coord;                ///< (x, z) for every
-                                                    ///< distinct quadrature
-                                                    ///< point
+  IndexMappingViewType::host_mirror_type h_index_mapping; ///< Global element
+                                                          ///< number for every
+                                                          ///< quadrature point
+  CoordViewType::host_mirror_type h_coord;                ///< (x, z) for every
+                                           ///< distinct quadrature
+                                           ///< point
   type_real xmin, xmax, zmin, zmax; ///< Min and max values of x and z
                                     ///< coordinates
 
@@ -99,8 +105,8 @@ public:
    * @param zmax_in Maximum z coordinate value
    */
   points(const int &nspec, const int &ngllz, const int &ngllx, const int &nglob,
-         IndexMappingViewType::HostMirror h_index_mapping_in,
-         CoordViewType::HostMirror h_coord_in, type_real xmin_in,
+         IndexMappingViewType::host_mirror_type h_index_mapping_in,
+         CoordViewType::host_mirror_type h_coord_in, type_real xmin_in,
          type_real xmax_in, type_real zmin_in, type_real zmax_in)
       : nspec(nspec), ngllz(ngllz), ngllx(ngllx), nglob(nglob),
         index_mapping("specfem::assembly::points::index_mapping", nspec, ngllz,

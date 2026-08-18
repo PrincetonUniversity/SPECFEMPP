@@ -1,23 +1,24 @@
 #pragma once
 
 #include "SPECFEM_Environment.hpp"
-#include "enumerations/interface.hpp"
-#include "io/interface.hpp"
-#include "mesh/mesh.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/io.hpp"
+#include "specfem/mesh.hpp"
 #include <gtest/gtest.h>
 #include <string>
 
 namespace specfem::test_configuration {
 struct Assembly3D {
-  constexpr static specfem::dimension::type dimension =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension =
+      specfem::element::dimension_tag::dim3;
   specfem::assembly::assembly<dimension> assembly;
 
   Assembly3D() = default;
 
   Assembly3D(const std::string &database_file) {
-    const auto mesh = specfem::io::read_3d_mesh(database_file);
+    const auto mesh =
+        specfem::io::read_3d_mesh(database_file, specfem::attenuation::Setup{});
 
     const int nspec = mesh.nspec;
     const int ngnod = mesh.control_nodes.ngnod;
@@ -27,15 +28,20 @@ struct Assembly3D {
       return specfem::quadrature::quadratures(gll);
     }();
 
-    assembly.mesh = {
-      nspec,     ngnod, 5, 5, 5, mesh.adjacency_graph, mesh.control_nodes,
-      quadrature
-    };
-    assembly.element_types = { nspec, 5, 5, 5, assembly.mesh, mesh.tags };
+    assembly.mesh = { nspec,
+                      ngnod,
+                      5,
+                      5,
+                      5,
+                      mesh.tags,
+                      mesh.adjacency_graph,
+                      mesh.control_nodes,
+                      quadrature };
+    assembly.element_types = { nspec, assembly.mesh.element_grid, assembly.mesh,
+                               mesh.tags };
     assembly.jacobian_matrix = { assembly.mesh };
-    assembly.properties = {
-      nspec, 5, 5, 5, mesh.materials, assembly.element_types
-    };
+    assembly.properties = { assembly.element_types, assembly.mesh,
+                            mesh.materials, false };
   }
 };
 } // namespace specfem::test_configuration
@@ -43,8 +49,8 @@ struct Assembly3D {
 // Setup a fixture for parameterized tests
 class Assembly3DTest : public ::testing::TestWithParam<std::string> {
 protected:
-  constexpr static specfem::dimension::type dimension =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension =
+      specfem::element::dimension_tag::dim3;
   specfem::test_configuration::Assembly3D assembly;
 
   Assembly3DTest() = default;

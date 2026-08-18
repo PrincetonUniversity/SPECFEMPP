@@ -1,8 +1,8 @@
 #include "../properties_tests.hpp"
 #include "specfem/point/properties.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
+#include "specfem/utilities.hpp"
 #include "test_macros.hpp"
-#include "utilities/interface.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 
@@ -41,11 +41,16 @@ TYPED_TEST(PointPropertiesTest, ElectromagneticIsotropic2D) {
       sig33_arr[i] = 1.0e-2 + i * 1.0e-3;      // conductivity in zz (S/m)
     }
     // Copy to SIMD types
-    mu0_inv.copy_from(mu0_inv_arr, Kokkos::Experimental::simd_flag_default);
-    eps11.copy_from(eps11_arr, Kokkos::Experimental::simd_flag_default);
-    eps33.copy_from(eps33_arr, Kokkos::Experimental::simd_flag_default);
-    sig11.copy_from(sig11_arr, Kokkos::Experimental::simd_flag_default);
-    sig33.copy_from(sig33_arr, Kokkos::Experimental::simd_flag_default);
+    mu0_inv = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        mu0_inv_arr, Kokkos::Experimental::simd_flag_default);
+    eps11 = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        eps11_arr, Kokkos::Experimental::simd_flag_default);
+    eps33 = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        eps33_arr, Kokkos::Experimental::simd_flag_default);
+    sig11 = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        sig11_arr, Kokkos::Experimental::simd_flag_default);
+    sig33 = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        sig33_arr, Kokkos::Experimental::simd_flag_default);
   } else {
     // Electromagnetic medium properties for scalar case
     mu0_inv = 7.957747e5; // 1/μ₀ (1/H/m)
@@ -56,11 +61,10 @@ TYPED_TEST(PointPropertiesTest, ElectromagneticIsotropic2D) {
   }
 
   // Create the properties object
-  using PointPropertiesType =
-      specfem::point::properties<specfem::dimension::type::dim2,
-                                 specfem::element::medium_tag::electromagnetic,
-                                 specfem::element::property_tag::isotropic,
-                                 using_simd>;
+  using PointPropertiesType = specfem::point::properties<specfem::tags::Tags<
+      specfem::element::dimension_tag::dim2,
+      specfem::element::medium_tag::electromagnetic,
+      specfem::element::property_tag::isotropic, using_simd> >;
   PointPropertiesType props(mu0_inv, eps11, eps33, sig11, sig33);
 
   EXPECT_TRUE(specfem::utilities::is_close(props.mu0_inv(), mu0_inv))

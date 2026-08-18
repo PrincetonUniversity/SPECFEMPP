@@ -1,8 +1,9 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "specfem/data_access.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/element_coupling.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::point {
@@ -15,8 +16,8 @@ namespace specfem::point {
  * @tparam InterfaceTag Interface type (elastic-acoustic, acoustic-elastic)
  * @tparam BoundaryTag Boundary condition type
  */
-template <specfem::dimension::type DimensionTag,
-          specfem::interface::interface_tag InterfaceTag,
+template <specfem::element::dimension_tag DimensionTag,
+          specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag>
 struct conforming_interface;
 
@@ -30,34 +31,34 @@ struct conforming_interface;
  * @tparam InterfaceTag Type of interface (elastic-acoustic or acoustic-elastic)
  * @tparam BoundaryTag Boundary condition applied to the interface
  */
-template <specfem::interface::interface_tag InterfaceTag,
+template <specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag>
-struct conforming_interface<specfem::dimension::type::dim2, InterfaceTag,
+struct conforming_interface<specfem::element::dimension_tag::dim2, InterfaceTag,
                             BoundaryTag>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::conforming_interface,
-          specfem::dimension::type::dim2, false> {
+          specfem::element::dimension_tag::dim2, false> {
 private:
   /**
    * @brief Base accessor type alias.
    */
   using base_type = specfem::data_access::Accessor<
-      specfem::data_access::AccessorType::point,
+      specfem::datatype::AccessorType::point,
       specfem::data_access::DataClassType::conforming_interface,
-      specfem::dimension::type::dim2, false>;
+      specfem::element::dimension_tag::dim2, false>;
 
 public:
   /**
    * @brief Dimension tag for 2D specialization.
    */
-  static constexpr auto dimension_tag = specfem::dimension::type::dim2;
+  static constexpr auto dimension_tag = specfem::element::dimension_tag::dim2;
 
   /**
    * @brief Connection type between elements.
    */
   static constexpr auto connection_tag =
-      specfem::connections::type::weakly_conforming;
+      specfem::element_connections::type::weakly_conforming;
 
   /**
    * @brief Interface type (elastic-acoustic or acoustic-elastic).
@@ -89,6 +90,83 @@ public:
   conforming_interface(const scalar_type<type_real> &edge_factor,
                        const vector_type<type_real, 2> &edge_normal_)
       : edge_factor(edge_factor), edge_normal(edge_normal_) {}
+
+  /**
+   * @brief Default constructor.
+   */
+  KOKKOS_INLINE_FUNCTION
+  conforming_interface() = default;
+};
+
+/**
+ * @brief 3D coupled interface point data structure
+ *
+ * Represents a point on a coupled interface between different physical
+ * media in 3D spectral element simulations. Contains geometric data
+ * (face factor and normal vector) needed for interface computations.
+ *
+ * @tparam InterfaceTag Type of interface (elastic-acoustic or acoustic-elastic)
+ * @tparam BoundaryTag Boundary condition applied to the interface
+ */
+template <specfem::element_coupling::interface_tag InterfaceTag,
+          specfem::element::boundary_tag BoundaryTag>
+struct conforming_interface<specfem::element::dimension_tag::dim3, InterfaceTag,
+                            BoundaryTag>
+    : public specfem::data_access::Accessor<
+          specfem::datatype::AccessorType::point,
+          specfem::data_access::DataClassType::conforming_interface,
+          specfem::element::dimension_tag::dim3, false> {
+private:
+  /**
+   * @brief Base accessor type alias.
+   */
+  using base_type = specfem::data_access::Accessor<
+      specfem::datatype::AccessorType::point,
+      specfem::data_access::DataClassType::conforming_interface,
+      specfem::element::dimension_tag::dim3, false>;
+
+public:
+  /**
+   * @brief Dimension tag for 3D specialization.
+   */
+  static constexpr auto dimension_tag = specfem::element::dimension_tag::dim3;
+
+  /**
+   * @brief Connection type between elements.
+   */
+  static constexpr auto connection_tag =
+      specfem::element_connections::type::weakly_conforming;
+
+  /**
+   * @brief Interface type (elastic-acoustic or acoustic-elastic).
+   */
+  static constexpr auto interface_tag = InterfaceTag;
+
+  /**
+   * @brief Boundary condition type.
+   */
+  static constexpr auto boundary_tag = BoundaryTag;
+
+  /**
+   * @brief Face scaling factor for interface computations.
+   */
+  scalar_type<type_real> face_factor;
+
+  /**
+   * @brief Face normal vector (3D).
+   */
+  vector_type<type_real, 3> face_normal;
+
+  /**
+   * @brief Constructs coupled interface point with geometric data.
+   *
+   * @param face_factor_ Scaling factor for the interface face.
+   * @param face_normal_ Normal vector at the interface face.
+   */
+  KOKKOS_INLINE_FUNCTION
+  conforming_interface(const scalar_type<type_real> &face_factor_,
+                       const vector_type<type_real, 3> &face_normal_)
+      : face_factor(face_factor_), face_normal(face_normal_) {}
 
   /**
    * @brief Default constructor.

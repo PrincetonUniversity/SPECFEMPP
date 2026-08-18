@@ -2,8 +2,8 @@
 
 #include "accessor.hpp"
 #include "data_class.hpp"
-#include "domain_view.hpp"
-#include "enumerations/interface.hpp"
+#include "specfem/datatype.hpp"
+#include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::data_access {
@@ -14,6 +14,7 @@ namespace specfem::data_access {
 enum class ContainerType {
   boundary, ///< Boundary element storage
   edge,     ///< Edge-based storage
+  face,     ///< Face-based storage
   domain    ///< Domain element storage
 };
 
@@ -23,34 +24,45 @@ namespace impl {
  * @brief Maps container and dimension types to appropriate Kokkos view layouts.
  */
 template <specfem::data_access::ContainerType ContainerType,
-          specfem::dimension::type DimensionTag>
+          specfem::element::dimension_tag DimensionTag>
 struct ContainerValueType;
 
 template <>
 struct ContainerValueType<specfem::data_access::ContainerType::domain,
-                          specfem::dimension::type::dim2> {
+                          specfem::element::dimension_tag::dim2> {
   template <typename T, typename MemorySpace>
-  using scalar_type = specfem::kokkos::DomainView2d<T, 3, MemorySpace>;
+  using scalar_type = specfem::datatype::DomainView2d<T, 3, MemorySpace>;
   template <typename T, typename MemorySpace>
-  using vector_type = specfem::kokkos::DomainView2d<T, 4, MemorySpace>;
+  using vector_type = specfem::datatype::DomainView2d<T, 4, MemorySpace>;
   template <typename T, typename MemorySpace>
-  using tensor_type = specfem::kokkos::DomainView2d<T, 5, MemorySpace>;
+  using tensor_type = specfem::datatype::DomainView2d<T, 5, MemorySpace>;
 };
 
 template <>
 struct ContainerValueType<specfem::data_access::ContainerType::domain,
-                          specfem::dimension::type::dim3> {
+                          specfem::element::dimension_tag::dim3> {
   template <typename T, typename MemorySpace>
-  using scalar_type = Kokkos::View<T ****, Kokkos::LayoutLeft, MemorySpace>;
+  using scalar_type = specfem::datatype::DomainView3d<T, 4, MemorySpace>;
   template <typename T, typename MemorySpace>
-  using vector_type = Kokkos::View<T *****, Kokkos::LayoutLeft, MemorySpace>;
+  using vector_type = specfem::datatype::DomainView3d<T, 5, MemorySpace>;
   template <typename T, typename MemorySpace>
-  using tensor_type = Kokkos::View<T ******, Kokkos::LayoutLeft, MemorySpace>;
+  using tensor_type = specfem::datatype::DomainView3d<T, 6, MemorySpace>;
 };
 
 template <>
 struct ContainerValueType<specfem::data_access::ContainerType::edge,
-                          specfem::dimension::type::dim2> {
+                          specfem::element::dimension_tag::dim2> {
+  template <typename T, typename MemorySpace>
+  using scalar_type = Kokkos::View<T **, Kokkos::LayoutLeft, MemorySpace>;
+  template <typename T, typename MemorySpace>
+  using vector_type = Kokkos::View<T ***, Kokkos::LayoutLeft, MemorySpace>;
+  template <typename T, typename MemorySpace>
+  using tensor_type = Kokkos::View<T ****, Kokkos::LayoutLeft, MemorySpace>;
+};
+
+template <>
+struct ContainerValueType<specfem::data_access::ContainerType::face,
+                          specfem::element::dimension_tag::dim3> {
   template <typename T, typename MemorySpace>
   using scalar_type = Kokkos::View<T **, Kokkos::LayoutLeft, MemorySpace>;
   template <typename T, typename MemorySpace>
@@ -74,20 +86,20 @@ struct ContainerValueType<specfem::data_access::ContainerType::edge,
  * using density_container = specfem::data_access::Container<
  *     specfem::data_access::ContainerType::domain,
  *     // density data-class not explicitly defined
- *     specfem::dimension::type::dim2>;
+ *     specfem::element::dimension_tag::dim2>;
  * using scalar_view = density_container::scalar_type<float,
  *                                                     Kokkos::HostSpace>;
  * scalar_view density("density", nspec, ngllz, ngllx);
  * @endcode
  *
- * @tparam ContainerType Storage layout (domain/edge/boundary)
+ * @tparam ContainerType Storage layout (domain/edge/face/boundary)
  * @tparam DataClass Type of data being stored (properties/fields/indices)
  * @tparam DimensionTag Spatial dimension (2D/3D)
  *
  */
 template <specfem::data_access::ContainerType ContainerType,
           specfem::data_access::DataClassType DataClass,
-          specfem::dimension::type DimensionTag>
+          specfem::element::dimension_tag DimensionTag>
 struct Container {
   constexpr static auto container_type =
       ContainerType;                            ///< Container layout type
@@ -134,7 +146,7 @@ struct Container {
 template <typename T, typename = void> struct is_container : std::false_type {};
 
 template <typename T>
-struct is_container<T, std::void_t<decltype(T::container_type)> >
+struct is_container<T, std::void_t<decltype(T::container_type)>>
     : std::true_type {};
 
 } // namespace specfem::data_access

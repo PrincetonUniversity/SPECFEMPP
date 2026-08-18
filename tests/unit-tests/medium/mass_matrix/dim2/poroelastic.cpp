@@ -1,21 +1,20 @@
-#include "medium/compute_mass_matrix.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/point.hpp"
 #include <cmath>
 #include <gtest/gtest.h>
 #include <sstream>
 
 TEST(MassMatrix, PoroelasticIsotropic2DZeroPorosity) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto medium_tag = specfem::element::medium_tag::poroelastic;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
 
+  using Tags = specfem::tags::Tags<dimension, medium_tag, property_tag, false>;
   using PointJacobianMatrixType =
       specfem::point::jacobian_matrix<dimension, true, false>;
-  using PointPropertiesType =
-      specfem::point::properties<dimension, medium_tag, property_tag, false>;
-  using PointMassMatrixType =
-      specfem::point::mass_inverse<dimension, medium_tag, false>;
+  using PointPropertiesType = specfem::point::properties<Tags>;
+  using PointMassMatrixType = specfem::point::mass_inverse<Tags>;
 
   const type_real rho_s = 2.0;
   const type_real phi = 0.0;
@@ -26,7 +25,7 @@ TEST(MassMatrix, PoroelasticIsotropic2DZeroPorosity) {
   const PointPropertiesType properties(phi, rho_s, rho_f, tortuosity, 0.0, 0.0,
                                        0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
   const PointMassMatrixType mass_matrix =
-      specfem::medium::mass_matrix_component(properties);
+      specfem::medium_physics::mass_matrix_component<Tags>(properties);
 
   EXPECT_NEAR(mass_matrix(0), solid_component, 1e-6 * solid_component)
       << "Mass matrix is not equal to expected value: " << mass_matrix(0)
@@ -43,17 +42,16 @@ TEST(MassMatrix, PoroelasticIsotropic2DZeroPorosity) {
 }
 
 TEST(MassMatrix, PoroelasticIsotropic2D) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto medium_tag = specfem::element::medium_tag::poroelastic;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
 
+  using Tags = specfem::tags::Tags<dimension, medium_tag, property_tag, false>;
   using PointJacobianMatrixType =
       specfem::point::jacobian_matrix<dimension, true, false>;
-  using PointPropertiesType =
-      specfem::point::properties<dimension, medium_tag, property_tag, false>;
-  using PointMassMatrixType =
-      specfem::point::mass_inverse<dimension, medium_tag, false>;
+  using PointPropertiesType = specfem::point::properties<Tags>;
+  using PointMassMatrixType = specfem::point::mass_inverse<Tags>;
 
   const type_real rho_s = 2.0;
   const type_real phi = 0.5;
@@ -70,7 +68,7 @@ TEST(MassMatrix, PoroelasticIsotropic2D) {
                                        0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 
   const PointMassMatrixType mass_matrix =
-      specfem::medium::mass_matrix_component(properties);
+      specfem::medium_physics::mass_matrix_component<Tags>(properties);
 
   const PointMassMatrixType expected_mass_matrix(
       solid_component, solid_component, fluid_component, fluid_component);

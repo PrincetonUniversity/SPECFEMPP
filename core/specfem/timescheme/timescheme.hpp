@@ -1,8 +1,15 @@
 #pragma once
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/timescheme/impl/time_iterators.hpp"
 
 namespace specfem::time_scheme {
+/**
+ * @brief Time scheme enumeration
+ *
+ */
+enum class type {
+  newmark, ///< Newmark time scheme
+};
 
 /**
  * @brief Base class for time integration schemes
@@ -139,6 +146,28 @@ public:
   apply_corrector_phase_forward(const specfem::element::medium_tag tag) = 0;
 
   /**
+   * @brief Apply predictor phase for adjoint time integration.
+   *
+   * @param tag Medium type to process (elastic, acoustic, etc.)
+   * @return Number of degrees of freedom updated
+   */
+  virtual int
+  apply_predictor_phase_adjoint(const specfem::element::medium_tag tag) {
+    return 0;
+  }
+
+  /**
+   * @brief Apply corrector phase for adjoint time integration.
+   *
+   * @param tag Medium type to process (elastic, acoustic, etc.)
+   * @return Number of degrees of freedom updated
+   */
+  virtual int
+  apply_corrector_phase_adjoint(const specfem::element::medium_tag tag) {
+    return 0;
+  }
+
+  /**
    * @brief Apply predictor phase for backward time integration
    *
    * Updates displacement and velocity using current acceleration for the
@@ -167,7 +196,7 @@ public:
    *
    * @return Type of time integration scheme (e.g., Newmark)
    */
-  virtual specfem::enums::time_scheme::type timescheme() const = 0;
+  virtual specfem::time_scheme::type timescheme() const = 0;
 
   virtual ~time_scheme() = default;
 

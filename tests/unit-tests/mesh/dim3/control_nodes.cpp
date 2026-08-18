@@ -3,11 +3,11 @@
 #include <unordered_map>
 #include <vector>
 
-#include "enumerations/interface.hpp"
-#include "mesh/mesh.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/mesh.hpp"
+#include "specfem/setup.hpp"
+#include "specfem/utilities.hpp"
 #include "test_fixture.hpp"
-#include "utilities/utilities.hpp"
 
 namespace specfem::test_configuration {
 
@@ -55,11 +55,11 @@ struct ControlNode3D {
 
 // Expected control nodes for a specific test case
 struct ExpectedControlNodes3D {
-  constexpr static specfem::dimension::type dimension =
-      specfem::dimension::type::dim3; ///< Dimension of the control nodes
-  TotalNodes total_nodes;             ///< Total nodes and elements in the mesh
-  DomainSize domain_size;             ///< Domain size in 3D space
-  std::vector<ControlNode3D> nodes;   ///< List of expected control nodes (These
+  constexpr static specfem::element::dimension_tag dimension =
+      specfem::element::dimension_tag::dim3; ///< Dimension of the control nodes
+  TotalNodes total_nodes;           ///< Total nodes and elements in the mesh
+  DomainSize domain_size;           ///< Domain size in 3D space
+  std::vector<ControlNode3D> nodes; ///< List of expected control nodes (These
                                     ///< are hard-coded for specific test cases)
 
   ExpectedControlNodes3D(TotalNodes total_nodes, DomainSize domain_size,

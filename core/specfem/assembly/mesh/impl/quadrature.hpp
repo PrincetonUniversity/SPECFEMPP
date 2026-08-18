@@ -1,7 +1,7 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
-#include "quadrature/interface.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/quadrature.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly::mesh_impl {
@@ -12,20 +12,20 @@ namespace specfem::assembly::mesh_impl {
  * Stores Gauss-Lobatto-Legendre quadrature data using Kokkos views
  * for device/host access.
  */
-template <specfem::dimension::type DimensionTag> struct GLLQuadrature {
+template <specfem::element::dimension_tag DimensionTag> struct GLLQuadrature {
   constexpr static auto dimension_tag = DimensionTag;
 
   using ViewType = Kokkos::View<type_real *, Kokkos::DefaultExecutionSpace>;
   using DViewType = Kokkos::View<type_real **, Kokkos::LayoutRight,
                                  Kokkos::DefaultExecutionSpace>;
 
-  int N;                          ///< Number of GLL points
-  ViewType xi;                    ///< Device GLL points on [-1,1]
-  ViewType weights;               ///< Device integration weights
-  DViewType hprime;               ///< Device Lagrange derivative matrix
-  DViewType::HostMirror h_hprime; ///< Host Lagrange derivative matrix
-  ViewType::HostMirror h_xi;      ///< Host GLL points
-  ViewType::HostMirror h_weights; ///< Host weights
+  int N;                                ///< Number of GLL points
+  ViewType xi;                          ///< Device GLL points on [-1,1]
+  ViewType weights;                     ///< Device integration weights
+  DViewType hprime;                     ///< Device Lagrange derivative matrix
+  DViewType::host_mirror_type h_hprime; ///< Host Lagrange derivative matrix
+  ViewType::host_mirror_type h_xi;      ///< Host GLL points
+  ViewType::host_mirror_type h_weights; ///< Host weights
 
   GLLQuadrature() = default;
 
@@ -47,7 +47,7 @@ template <specfem::dimension::type DimensionTag> struct GLLQuadrature {
  *
  * Inherits GLL quadrature functionality for use in assembly operations.
  */
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 struct quadrature
     : public specfem::assembly::mesh_impl::GLLQuadrature<DimensionTag> {
 public:

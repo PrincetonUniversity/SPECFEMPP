@@ -1,8 +1,12 @@
 cmake_minimum_required(VERSION 3.17.5)
 
-project(SPECFEMPP VERSION 0.1.0 LANGUAGES CXX Fortran)
+# C is needed so MPI-enabled distro VTK packages can resolve MPI::MPI_C
+project(SPECFEMPP VERSION 0.6.0 LANGUAGES C CXX Fortran)
 
-set(CMAKE_CXX_STANDARD 17)
+# Extract Git version metadata
+include("${CMAKE_SOURCE_DIR}/cmake/version.cmake")
+
+set(CMAKE_CXX_STANDARD 20)
 
 # SPECFEM options
 option(SPECFEM_ENABLE_ADIOS2 "Enable ADIOS2 I/O in SPECFEM++" OFF)
@@ -17,9 +21,12 @@ option(SPECFEM_ENABLE_MPI "MPI enabled" OFF)
 option(SPECFEM_BUILD_TESTS "Tests included" OFF)
 option(SPECFEM_ENABLE_SIMD "Enable SIMD" OFF)
 option(SPECFEM_ENABLE_PROFILING "Enable profiling" OFF)
+option(SPECFEM_ENABLE_COVERAGE "Instrument C++ for LLVM source-based coverage (Clang only)" OFF)
 option(SPECFEM_BINDING_PYTHON "Enable Python binding" OFF)
 option(SPECFEM_INSTALL "Creates clean executable directory. Location Controlled by CMAKE_INSTALL_PREFIX" ON)
 option(SPECFEM_ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
+option(SPECFEM_ENABLE_METIS "Enable METIS partitioning support in xdecompose_mesh" OFF)
+option(SPECFEM_ENABLE_TRILINOS "Enable Trilinos implicit solvers (Tpetra/Belos/Ifpack2/MueLu/Amesos2)" OFF)
 option(SPECFEM_BUILD_BENCHMARKS "Benchmarks included" ON)
 option(SPECFEM_NIGHTLY_BENCHMARKS "Include nightly benchmarks" OFF)
 option(SPECFEM_ENABLE_UNITY_BUILD "Enable unity build to speed up compilation" ON)
@@ -28,6 +35,14 @@ set(SPECFEMPP_UNITY_BUILD_BATCH_SIZE 8 CACHE STRING "Set the batch size for unit
 
 if (SPECFEM_ENABLE_MPI)
     message(STATUS "Compiling SPECFEM with MPI")
+    find_package(MPI REQUIRED)
+    add_compile_definitions(SPECFEM_ENABLE_MPI)
+    # SPECFEM_ENABLE_MPI is defined for every target in the tree, so
+    # <specfem/mpi.hpp> pulls in <mpi.h> (and the inline MPI calls in
+    # specfem::mpi::Context) everywhere -- not just in targets that happen to
+    # link specfem::mpi. Make MPI usage requirements global to match.
+    link_libraries(MPI::MPI_CXX)
+    message(STATUS "MPI enabled - found MPI::MPI_CXX")
 else()
     message(STATUS "Compiling SPECFEM without MPI")
 endif()
@@ -138,11 +153,17 @@ include("${CMAKE_SOURCE_DIR}/cmake/kokkos.cmake")
 # Configure SPECFEM++ build variables based on Kokkos settings
 include("${CMAKE_SOURCE_DIR}/cmake/variables.cmake")
 
+# Load CMake configuration summary function
+include("${CMAKE_SOURCE_DIR}/cmake/cmake_summary.cmake")
+
 # Install yaml-cpp as a dependency
 include("${CMAKE_SOURCE_DIR}/cmake/yaml.cmake")
 
 # Find or install boost library function
 include("${CMAKE_SOURCE_DIR}/cmake/boost.cmake")
+
+# Install CLI11 header-only library
+include("${CMAKE_SOURCE_DIR}/cmake/cli11.cmake")
 
 # Find HDF5
 include("${CMAKE_SOURCE_DIR}/cmake/hdf5.cmake")
@@ -157,11 +178,12 @@ include("${CMAKE_SOURCE_DIR}/cmake/adios2.cmake")
 # the pugixml dependency than ADIOS2)
 include("${CMAKE_SOURCE_DIR}/cmake/vtk.cmake")
 
-# Find MPI if enabled
-if (SPECFEM_ENABLE_MPI)
-    find_package(MPI REQUIRED)
-    message(STATUS "MPI enabled - found MPI::MPI_CXX")
-endif()
+# Find or install METIS graph partitioner (used by xdecompose_mesh)
+include("${CMAKE_SOURCE_DIR}/cmake/metis.cmake")
+
+# Find Trilinos (implicit solvers). MUST be after cmake/kokkos.cmake so Kokkos is
+# resolved first and Trilinos validates against the same Kokkos.
+include("${CMAKE_SOURCE_DIR}/cmake/trilinos.cmake")
 
 if (SPECFEM_ENABLE_SIMD)
     message(STATUS "Enabling SIMD")
@@ -176,32 +198,19 @@ endif()
 if (SPECFEM_ENABLE_DOUBLE_PRECISION)
     message(STATUS "Enabling double precision")
     set(TYPE_REAL "double")
+    set(MPI_TYPE_REAL "MPI_DOUBLE")
 else(SPECFEM_ENABLE_DOUBLE_PRECISION)
     message(STATUS "Enabling single precision")
     set(TYPE_REAL "float")
+    set(MPI_TYPE_REAL "MPI_FLOAT")
 endif(SPECFEM_ENABLE_DOUBLE_PRECISION)
 
-# Configure the setup headers
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup/specfem_setup.hpp.in
-               ${CMAKE_BINARY_DIR}/include/specfem_setup.hpp)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup/constants.hpp.in
-               ${CMAKE_BINARY_DIR}/include/constants.hpp)
-
-# Add the configure files to the clean target
-set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
-    ${CMAKE_BINARY_DIR}/include/specfem_setup.hpp
-    ${CMAKE_BINARY_DIR}/include/constants.hpp
-)
-
 # Add the include directories so that the generated files can be found
-include_directories(core)
-include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core)
 include_directories(${CMAKE_BINARY_DIR}/include)
-
 
 message(STATUS "INCLUDE DIRECTORIES:")
 message(STATUS "    core: ${CMAKE_CURRENT_SOURCE_DIR}/core")
-message(STATUS "    include: ${CMAKE_SOURCE_DIR}/include")
 message(STATUS "    binary: ${CMAKE_BINARY_DIR}/include")
 
 
@@ -228,283 +237,56 @@ add_subdirectory(fortran/meshfem3d)
 set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
 # =================================
 
+# ========== DECOMPOSE_MESH =========
+message(STATUS "Configuring decompose_mesh")
+set(_saved_CMAKE_MESSAGE_LOG_LEVEL ${CMAKE_MESSAGE_LOG_LEVEL})
+set(CMAKE_MESSAGE_LOG_LEVEL ${SUBDIR_LOG_LEVEL})
+add_subdirectory(fortran/decompose_mesh)
+set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
+# ===================================
+
+# LLVM source-based code coverage instrumentation.
+# Appended here -- AFTER the Fortran subdirectories above -- on purpose: none of
+# the Fortran tools or their C++ glue (e.g. fortran/decompose_mesh/wrap_patoh.cpp)
+# may be instrumented, because those executables link with gfortran, which
+# neither understands -fprofile-instr-generate nor provides the LLVM profile
+# runtime (an instrumented object would leave __llvm_profile_runtime undefined).
+# core/ and the unit tests below still receive full instrumentation.
+# Driven by scripts/coverage.smk.
+if(SPECFEM_ENABLE_COVERAGE)
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        message(FATAL_ERROR
+            "SPECFEM_ENABLE_COVERAGE requires Clang or AppleClang "
+            "(CMAKE_CXX_COMPILER_ID is '${CMAKE_CXX_COMPILER_ID}').")
+    endif()
+    message(STATUS "Coverage instrumentation enabled (LLVM source-based)")
+    # Keep -g for symbols but let CMAKE_BUILD_TYPE choose the optimization level:
+    # the coverage preset uses RelWithDebInfo (-O2) so the heavy integration tests
+    # (displacement_tests_2d/3d) run at a tolerable speed. Forcing -O0 here makes
+    # them glacial. Coverage stays reliable under optimization (minor region-count
+    # imprecision only).
+    string(APPEND CMAKE_CXX_FLAGS
+        " -fprofile-instr-generate -fcoverage-mapping -g")
+    # Re-enable assert()/NDEBUG-guarded code so it is compiled and shows up in
+    # coverage. RelWithDebInfo (and Release) define NDEBUG via
+    # CMAKE_CXX_FLAGS_<CONFIG>, which CMake places after CMAKE_CXX_FLAGS; using
+    # add_compile_options() puts -UNDEBUG after that, so it wins. Scoped to C++.
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-UNDEBUG>)
+    # Belt-and-suspenders: scope the profiling-runtime link flag to C++-linked
+    # targets (CMake >= 3.18) so any Fortran-linked target added later still
+    # links cleanly even if it pulls in an instrumented C++ object.
+    add_link_options($<$<LINK_LANGUAGE:CXX>:-fprofile-instr-generate>)
+    # Coverage needs per-source-file attribution, so force unity builds off.
+    set(CMAKE_UNITY_BUILD OFF)
+endif()
+
 # Add module subdirectories
 add_subdirectory(core)
-
-# Build specfem2d libraries
-add_library(
-        quadrature
-        src/quadrature/quadrature.cpp
-        src/quadrature/gll/gll_utils.cpp
-        src/quadrature/gll/gll_library.cpp
-        src/quadrature/gll/lagrange_poly.cpp
-        src/quadrature/gll/gll.cpp
-)
-
-target_link_libraries(
-        quadrature
-        Kokkos::kokkos
-)
-
-add_library(
-        io
-        # IO libraries
-        src/io/NPY/impl/npy_header.cpp
-        # SPECFEM IO
-        src/io/fortranio/fortran_io.cpp
-        src/io/sources/dim2/read_sources.cpp
-        src/io/sources/dim3/read_sources.cpp
-        src/io/receivers/dim2/read_receivers.cpp
-        src/io/receivers/dim3/read_receivers.cpp
-        src/io/seismogram/impl/channel_generator.cpp
-        # Fortran 2D part
-        src/io/mesh/impl/fortran/dim2/mesh.cpp
-        src/io/mesh/impl/fortran/dim2/read_boundaries.cpp
-        src/io/mesh/impl/fortran/dim2/read_elements.cpp
-        src/io/mesh/impl/fortran/dim2/read_material_properties.cpp
-        src/io/mesh/impl/fortran/dim2/read_mesh_database.cpp
-        src/io/mesh/impl/fortran/dim2/read_parameters.cpp
-        src/io/mesh/impl/fortran/dim2/read_adjacency_graph.cpp
-        # Fortran 3D meshfem part
-        src/io/mesh/impl/fortran/dim3/mesh.cpp
-        src/io/mesh/impl/fortran/dim3/read_boundaries.cpp
-        src/io/mesh/impl/fortran/dim3/read_control_nodes.cpp
-        src/io/mesh/impl/fortran/dim3/read_materials.cpp
-        src/io/mesh/impl/fortran/dim3/read_mpi_interfaces.cpp
-        src/io/mesh/impl/fortran/dim3/read_pml_boundaries.cpp
-        src/io/mesh/impl/fortran/dim3/read_adjacency_graph.cpp
-)
-
-target_link_libraries(
-        io
-        mesh
-        source_class
-        specfem::receivers
-        yaml-cpp
-        specfem::logger
-        boost
-        $<$<BOOL:${SPECFEM_ENABLE_NPZ}>:zlib>
-        $<$<BOOL:${SPECFEM_ENABLE_HDF5}>:hdf5>
-        $<$<BOOL:${SPECFEM_ENABLE_ADIOS2}>:adios2>
-)
-
-target_compile_definitions(
-        io
-        PUBLIC
-        $<$<NOT:$<BOOL:${SPECFEM_ENABLE_NPZ}>>:-DNO_NPZ>
-        $<$<NOT:$<BOOL:${SPECFEM_ENABLE_HDF5}>>:-DNO_HDF5>
-        $<$<NOT:$<BOOL:${SPECFEM_ENABLE_ADIOS2}>>:-DNO_ADIOS2>
-)
-
-add_library(
-        enumerations
-        src/enumerations/medium.cpp
-        src/enumerations/display.cpp
-        src/enumerations/wavefield.cpp
-        src/enumerations/dim2/connections.cpp
-        src/enumerations/dim3/connections.cpp
-        src/enumerations/dim3/mesh_entities.cpp
-        src/enumerations/dim2/mesh_entities.cpp
-        src/enumerations/dim2/connections.cpp
-        src/enumerations/coupled_interface.cpp
-)
-
-target_link_libraries(
-        enumerations
-        ${BOOST_LIBS}
-        Kokkos::kokkos
-)
-
-
-
-# add_library(
-#         material_class
-#         src/material/elastic_isotropic_material.cpp
-#         src/material/acoustic_isotropic_material.cpp
-# )
-
-# target_link_libraries(
-#         material_class
-#         Kokkos::kokkos
-# )
-
-add_library(
-        mesh
-        # 2-D
-        src/mesh/dim2/boundaries/forcing_boundaries.cpp
-        src/mesh/dim2/boundaries/absorbing_boundaries.cpp
-        src/mesh/dim2/boundaries/acoustic_free_surface.cpp
-        src/mesh/dim2/elements/tangential_elements.cpp
-        src/mesh/dim2/elements/axial_elements.cpp
-        # src/mesh/mpi_interfaces/mpi_interfaces.cpp
-        src/mesh/dim2/tags/tags.cpp
-        src/mesh/dim2/adjacency_graph/assert_symmetry.cpp
-        src/mesh/dim2/mesh.cpp
-        # 3-D
-
-        src/mesh/dim3/adjacency_graph/assert_symmetry.cpp
-        src/mesh/dim3/tags/tags.cpp
-        src/mesh/dim3/mesh.cpp
-)
-
-target_link_libraries(
-        mesh
-        enumerations
-        Kokkos::kokkos
-        specfem::macros
-        # material_class
-        yaml-cpp
-        ${BOOST_LIBS}
-)
-
-add_library(
-        read_seismogram
-        src/io/seismogram/reader.cpp
-)
-
-target_link_libraries(
-        read_seismogram
-        Kokkos::kokkos
-        )
-
-add_library(utilities
-        src/utilities/strings.cpp
-)
-
-target_link_libraries(
-        utilities
-        Kokkos::kokkos
-        ${BOOST_LIBS}
-)
-
-add_library(
-        reader
-        src/io/property/reader.cpp
-        src/io/wavefield/reader.cpp
-)
-
-target_link_libraries(
-        reader
-        assembly
-        io
-        read_seismogram
-        utilities
-)
-
-add_library(
-        algorithms
-        src/algorithms/dim2/locate_point.cpp
-        src/algorithms/dim2/locate_point_impl.cpp
-        src/algorithms/dim3/locate_point.cpp
-        src/algorithms/dim3/locate_point_impl.cpp
-)
-
-target_link_libraries(
-        algorithms
-        Kokkos::kokkos
-        jacobian
-        point
-        assembly
-        ${BOOST_LIBS}
-)
-
-add_library(
-        kokkos_kernels
-        src/kokkos_kernels/impl/compute_mass_matrix.cpp
-        src/kokkos_kernels/impl/invert_mass_matrix.cpp
-        src/kokkos_kernels/impl/divide_mass_matrix.cpp
-        src/kokkos_kernels/impl/compute_seismogram.cpp
-        src/kokkos_kernels/impl/compute_source_interaction.cpp
-        src/kokkos_kernels/impl/compute_stiffness_interaction.cpp
-        src/kokkos_kernels/impl/compute_material_derivatives.cpp
-        src/kokkos_kernels/impl/compute_coupling.cpp
-        src/kokkos_kernels/frechet_kernels.cpp
-)
-
-set_target_properties(kokkos_kernels PROPERTIES
-        UNITY_BUILD $<NOT:$<BOOL:${__APPLE__}>>
-        UNITY_BUILD_BATCH_SIZE $<IF:$<BOOL:${__APPLE__}>,0,4>
-)
-
-target_link_libraries(
-        kokkos_kernels
-        PRIVATE
-        assembly
-        Kokkos::kokkos
-)
-
-add_library(
-        writer
-        src/io/seismogram/writer.cpp
-        src/io/kernel/writer.cpp
-        src/io/property/writer.cpp
-        src/io/wavefield/writer.cpp
-)
-
-target_link_libraries(
-        writer
-        assembly
-        specfem::receivers
-        io
-        utilities
-)
-
-
-add_library(
-        parameter_reader
-        src/parameter_parser/run_setup.cpp
-        src/parameter_parser/time_scheme/time_scheme.cpp
-        src/parameter_parser/database_configuration.cpp
-        src/parameter_parser/header.cpp
-        src/parameter_parser/quadrature.cpp
-        src/parameter_parser/elastic_wave.cpp
-        src/parameter_parser/electromagnetic_wave.cpp
-        src/parameter_parser/receivers.cpp
-        src/parameter_parser/writer/seismogram.cpp
-        src/parameter_parser/setup.cpp
-        src/parameter_parser/writer/wavefield.cpp
-        src/parameter_parser/writer/plot_wavefield.cpp
-        src/parameter_parser/writer/kernel.cpp
-        src/parameter_parser/writer/property.cpp
-)
-
-target_link_libraries(
-        parameter_reader
-        quadrature
-        specfem::timescheme
-        specfem::receivers
-        yaml-cpp
-        specfem::periodic_tasks
-        writer
-        reader
-        kokkos_kernels
-        specfem::solver
-        ${BOOST_LIBS}
-)
-
-
-# specfem2d executable for backward compatibility
-add_executable(specfem2d src/specfem2d.cpp)
-target_link_libraries(specfem2d
-    PRIVATE
-        specfem::core
-        yaml-cpp::yaml-cpp
-        ${BOOST_LIBS}
-)
-
-# specfem3d executable for backward compatibility
-add_executable(specfem3d src/specfem3d.cpp)
-target_link_libraries(specfem3d
-    PRIVATE
-        specfem::core
-        yaml-cpp::yaml-cpp
-        ${BOOST_LIBS}
-)
 
 # Include tests
 if (SPECFEM_BUILD_TESTS)
         message(STATUS "Including tests.")
-        add_subdirectory(tests/unit-tests)
+        add_subdirectory(tests)
 endif()
 
 if (SPECFEM_BUILD_BENCHMARKS)
@@ -562,15 +344,16 @@ if (SPECFEM_INSTALL AND NOT SPECFEM_USE_SKBUILD)
     install(
         TARGETS specfem
         RUNTIME DESTINATION .
+        COMPONENT executables
     )
 
     # Create a custom target that will run after your main build
     add_custom_target(organize_output ALL
-        COMMAND ${CMAKE_COMMAND} --install . --prefix ${CMAKE_INSTALL_PREFIX}
+        COMMAND ${CMAKE_COMMAND} --install . --prefix ${CMAKE_INSTALL_PREFIX} --component executables
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Organizing specfem++ executables into: ${CMAKE_INSTALL_PREFIX}"
         # Make this run after your main targets
-        DEPENDS specfem specfem2d specfem3d xmeshfem2D xmeshfem3D xadj_seismogram # list all your targets here
+        DEPENDS specfem xmeshfem2D xmeshfem3D xadj_seismogram xdecompose_mesh # list all your targets here
     )
 
     # Add the prefix directory to the clean target
@@ -579,3 +362,6 @@ if (SPECFEM_INSTALL AND NOT SPECFEM_USE_SKBUILD)
     )
 
 endif(SPECFEM_INSTALL AND NOT SPECFEM_USE_SKBUILD)
+
+# Print configuration summary
+specfem_print_configuration_summary()

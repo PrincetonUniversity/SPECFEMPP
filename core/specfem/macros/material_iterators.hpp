@@ -6,9 +6,9 @@
  */
 
 #include "enum_tags.hpp"
-#include "enumerations/interface.hpp"
 #include "macros_impl/array.hpp"
 #include "macros_impl/utils.hpp"
+#include "specfem/enums.hpp"
 
 #include <boost/preprocessor.hpp>
 
@@ -21,13 +21,13 @@
  * @brief Dimension tag for 2D
  */
 #define DIMENSION_TAG_DIM2                                                     \
-  (0, specfem::dimension::type::dim2, dim2, _ENUM_ID_DIMENSION_TAG)
+  (0, specfem::element::dimension_tag::dim2, dim2, _ENUM_ID_DIMENSION_TAG)
 
 /**
  * @brief Dimension tag for 3D
  */
 #define DIMENSION_TAG_DIM3                                                     \
-  (1, specfem::dimension::type::dim3, dim3, _ENUM_ID_DIMENSION_TAG)
+  (1, specfem::element::dimension_tag::dim3, dim3, _ENUM_ID_DIMENSION_TAG)
 /** @} */
 
 /**
@@ -80,6 +80,13 @@
  */
 #define MEDIUM_TAG_ELASTIC                                                     \
   (6, specfem::element::medium_tag::elastic, elastic, _ENUM_ID_MEDIUM_TAG)
+
+/**
+ * @brief Medium tag for Elastic Spin
+ */
+#define MEDIUM_TAG_ELASTIC_SPIN                                                \
+  (7, specfem::element::medium_tag::elastic_spin, elastic_spin,                \
+   _ENUM_ID_MEDIUM_TAG)
 /** @} */
 
 /**
@@ -108,6 +115,13 @@
   (2, specfem::element::property_tag::isotropic_cosserat, isotropic_cosserat,  \
    _ENUM_ID_PROPERTY_TAG)
 /** @} */
+
+#define ATTENUATION_TAG_NONE                                                   \
+  (0, specfem::element::attenuation_tag::none, none, _ENUM_ID_ATTENUATION_TAG)
+
+#define ATTENUATION_TAG_CONSTANT_ISOTROPIC                                     \
+  (1, specfem::element::attenuation_tag::constant_isotropic,                   \
+   constant_isotropic, _ENUM_ID_ATTENUATION_TAG)
 
 /**
  * @defgroup boundary_tag_macros Boundary Tag Macros
@@ -158,7 +172,10 @@
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_POROELASTIC))(                           \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_TE))
 
-#define MEDIUM_TAGS_DIM3 ((DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC))
+#define MEDIUM_TAGS_DIM3                                                       \
+  ((DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC))(                                  \
+      (DIMENSION_TAG_DIM3, MEDIUM_TAG_ACOUSTIC))(                              \
+      (DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC_SPIN))
 
 #define MEDIUM_TAGS MEDIUM_TAGS_DIM2 MEDIUM_TAGS_DIM3
 
@@ -167,6 +184,53 @@
  *
  */
 #define MATERIAL_SYSTEMS_DIM2                                                  \
+  ((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV, PROPERTY_TAG_ISOTROPIC,        \
+    ATTENUATION_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV,        \
+                            PROPERTY_TAG_ANISOTROPIC, ATTENUATION_TAG_NONE))(  \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH, PROPERTY_TAG_ISOTROPIC,      \
+       ATTENUATION_TAG_NONE))(                                                 \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH, PROPERTY_TAG_ANISOTROPIC,    \
+       ATTENUATION_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV_T,   \
+                               PROPERTY_TAG_ISOTROPIC_COSSERAT,                \
+                               ATTENUATION_TAG_NONE))(                         \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC,        \
+       ATTENUATION_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_POROELASTIC,     \
+                               PROPERTY_TAG_ISOTROPIC, ATTENUATION_TAG_NONE))( \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_TE,                      \
+       PROPERTY_TAG_ISOTROPIC, ATTENUATION_TAG_NONE))(                         \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV, PROPERTY_TAG_ISOTROPIC,     \
+       ATTENUATION_TAG_CONSTANT_ISOTROPIC))(                                   \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV, PROPERTY_TAG_ANISOTROPIC,   \
+       ATTENUATION_TAG_CONSTANT_ISOTROPIC))(                                   \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH, PROPERTY_TAG_ISOTROPIC,      \
+       ATTENUATION_TAG_CONSTANT_ISOTROPIC))(                                   \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH, PROPERTY_TAG_ANISOTROPIC,    \
+       ATTENUATION_TAG_CONSTANT_ISOTROPIC))(                                   \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC,        \
+       ATTENUATION_TAG_CONSTANT_ISOTROPIC))(                                   \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_POROELASTIC, PROPERTY_TAG_ISOTROPIC,     \
+       ATTENUATION_TAG_CONSTANT_ISOTROPIC))
+
+#define MATERIAL_SYSTEMS_DIM3                                                  \
+  ((DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC, PROPERTY_TAG_ISOTROPIC,            \
+    ATTENUATION_TAG_NONE))((DIMENSION_TAG_DIM3, MEDIUM_TAG_ACOUSTIC,           \
+                            PROPERTY_TAG_ISOTROPIC, ATTENUATION_TAG_NONE))(    \
+      (DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC, PROPERTY_TAG_ISOTROPIC,         \
+       ATTENUATION_TAG_CONSTANT_ISOTROPIC))(                                   \
+      (DIMENSION_TAG_DIM3, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC,        \
+       ATTENUATION_TAG_CONSTANT_ISOTROPIC))(                                   \
+      (DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC_SPIN,                            \
+       PROPERTY_TAG_ISOTROPIC_COSSERAT, ATTENUATION_TAG_NONE))
+
+#define MATERIAL_SYSTEMS MATERIAL_SYSTEMS_DIM2 MATERIAL_SYSTEMS_DIM3
+
+/**
+ * @brief Macro to generate a list of medium-property systems (unique
+ * combinations of dimension, medium, and property tags, without attenuation).
+ * Derived from MATERIAL_SYSTEMS by removing the attenuation tag and
+ * deduplicating.
+ */
+#define MEDIUM_PROPERTY_SYSTEMS_DIM2                                           \
   ((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV, PROPERTY_TAG_ISOTROPIC))(      \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV, PROPERTY_TAG_ANISOTROPIC))( \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH, PROPERTY_TAG_ISOTROPIC))(    \
@@ -178,10 +242,14 @@
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_TE,                      \
        PROPERTY_TAG_ISOTROPIC))
 
-#define MATERIAL_SYSTEMS_DIM3                                                  \
-  ((DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC, PROPERTY_TAG_ISOTROPIC))
+#define MEDIUM_PROPERTY_SYSTEMS_DIM3                                           \
+  ((DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC, PROPERTY_TAG_ISOTROPIC))(          \
+      (DIMENSION_TAG_DIM3, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC))(      \
+      (DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC_SPIN,                            \
+       PROPERTY_TAG_ISOTROPIC_COSSERAT))
 
-#define MATERIAL_SYSTEMS MATERIAL_SYSTEMS_DIM2 MATERIAL_SYSTEMS_DIM3
+#define MEDIUM_PROPERTY_SYSTEMS                                                \
+  MEDIUM_PROPERTY_SYSTEMS_DIM2 MEDIUM_PROPERTY_SYSTEMS_DIM3
 
 /**
  * @brief Macro to generate a list of element types
@@ -220,7 +288,10 @@
 
 #define ELEMENT_TYPES_DIM3                                                     \
   ((DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC, PROPERTY_TAG_ISOTROPIC,            \
-    BOUNDARY_TAG_NONE))
+    BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM3, MEDIUM_TAG_ACOUSTIC,              \
+                         PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_NONE))(          \
+      (DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC_SPIN,                            \
+       PROPERTY_TAG_ISOTROPIC_COSSERAT, BOUNDARY_TAG_NONE))
 
 #define ELEMENT_TYPES ELEMENT_TYPES_DIM2 ELEMENT_TYPES_DIM3
 
@@ -233,6 +304,7 @@
 #define _DIMENSION_TAG_ BOOST_PP_SEQ_TO_LIST((0))
 #define _MEDIUM_TAG_ BOOST_PP_SEQ_TO_LIST((1))
 #define _PROPERTY_TAG_ BOOST_PP_SEQ_TO_LIST((2))
+#define _ATTENUATION_TAG_ BOOST_PP_SEQ_TO_LIST((3))
 #define _BOUNDARY_TAG_ BOOST_PP_SEQ_TO_LIST((3))
 
 /**
@@ -277,9 +349,13 @@
   BOOST_PP_SEQ_TRANSFORM(_TRANSFORM_TAGS, BOUNDARY_TAG_,                       \
                          BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
 
+#define ATTENUATION_TAG(...)                                                   \
+  BOOST_PP_SEQ_TRANSFORM(_TRANSFORM_TAGS, ATTENUATION_TAG_,                    \
+                         BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+
 #define FOR_EACH_IN_PRODUCT(seq, ...)                                          \
-  BOOST_PP_SEQ_FOR_EACH(                                                       \
-      _FOR_ONE_TAG_SEQ, (seq)BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__),            \
-      BOOST_PP_CAT(_SEQ_FOR_TAGS_, BOOST_PP_TUPLE_SIZE(seq)))
+  BOOST_PP_SEQ_FOR_EACH(_FOR_ONE_TAG_SEQ,                                      \
+                        (seq)BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__),            \
+                        _GET_VALID_SEQS(BOOST_PP_TUPLE_SIZE(seq)))
 
 #include "interface_iterators.hpp"

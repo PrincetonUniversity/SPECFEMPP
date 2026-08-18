@@ -7,7 +7,7 @@ namespace periodic_tasks {
  * @brief Base plotter class
  *
  */
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 class plotter : public periodic_task<DimensionTag> {
   using periodic_task<DimensionTag>::periodic_task;
 };

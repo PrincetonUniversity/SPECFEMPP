@@ -1,16 +1,21 @@
 #pragma once
 
-#include "execution/for_each_level.hpp"
 #include "specfem/assembly/fields.hpp"
 #include "specfem/assembly/fields/impl/check_accessor_compatibility.hpp"
 #include "specfem/assembly/fields/impl/field_impl.hpp"
 #include "specfem/assembly/fields/impl/load_access_functions.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/execution.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
 namespace specfem::assembly::simulation_field_impl {
 
+/**
+ * @brief Internally dispatch field loading for scalar point indices.
+ *
+ * This is an internal implementation detail and is not part of the public API.
+ */
 template <bool on_device, typename IndexType, typename ContainerType,
           typename... AccessorTypes,
           typename std::enable_if_t<
@@ -27,19 +32,19 @@ load_after_simd_dispatch(const std::false_type, const IndexType &index,
                 "IndexType must not use SIMD in this overload");
 
   constexpr static auto MediumTag =
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag;
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::medium_tag;
 
   // Check that all accessors have the same medium tag
   specfem::assembly::fields_impl::check_accessor_compatibility<
       AccessorTypes...>();
 
-  const auto current_field = field.template get_field<MediumTag>();
+  const auto &current_field = field.template get_field<MediumTag>();
 
-  const int iglob = field.template get_iglob<on_device>(index, MediumTag);
+  const int iglob = field.template get_iglob<on_device, MediumTag>(index);
 
   constexpr static int ncomponents = specfem::element::attributes<
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::dimension_tag,
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag>::
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::dimension_tag,
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::medium_tag>::
       components;
 
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
@@ -52,6 +57,11 @@ load_after_simd_dispatch(const std::false_type, const IndexType &index,
   return;
 }
 
+/**
+ * @brief Internally dispatch field loading for SIMD point indices.
+ *
+ * This is an internal implementation detail and is not part of the public API.
+ */
 template <bool on_device, typename IndexType, typename ContainerType,
           typename... AccessorTypes,
           typename std::enable_if_t<
@@ -68,28 +78,28 @@ load_after_simd_dispatch(const std::true_type, const IndexType &index,
                 "IndexType must use SIMD in this overload");
 
   constexpr static auto MediumTag =
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag;
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::medium_tag;
 
   // Check that all accessors have the same medium tag
   specfem::assembly::fields_impl::check_accessor_compatibility<
       AccessorTypes...>();
 
   constexpr static int simd_size =
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::simd::size();
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::simd::size();
 
   int iglob[simd_size];
   for (int lane = 0; lane < simd_size; ++lane) {
     iglob[lane] =
         index.mask(lane)
-            ? field.template get_iglob<on_device>(index, lane, MediumTag)
+            ? field.template get_iglob<on_device, MediumTag>(index, lane)
             : field.nglob + 1;
   }
 
   const auto &current_field = field.template get_field<MediumTag>();
 
   constexpr static int ncomponents = specfem::element::attributes<
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::dimension_tag,
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag>::
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::dimension_tag,
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::medium_tag>::
       components;
 
   // Call load for each accessor
@@ -102,6 +112,11 @@ load_after_simd_dispatch(const std::true_type, const IndexType &index,
   }
 }
 
+/**
+ * @brief Internally dispatch field loading for scalar assembly indices.
+ *
+ * This is an internal implementation detail and is not part of the public API.
+ */
 template <bool on_device, typename IndexType, typename ContainerType,
           typename... AccessorTypes,
           typename std::enable_if_t<
@@ -118,7 +133,7 @@ load_after_simd_dispatch(const std::false_type, const IndexType &index,
                 "IndexType must not use SIMD in this overload");
 
   constexpr static auto MediumTag =
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag;
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::medium_tag;
 
   // Check that all accessors have the same medium tag
   specfem::assembly::fields_impl::check_accessor_compatibility<
@@ -127,8 +142,8 @@ load_after_simd_dispatch(const std::false_type, const IndexType &index,
   const auto &current_field = field.template get_field<MediumTag>();
 
   constexpr static int ncomponents = specfem::element::attributes<
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::dimension_tag,
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag>::
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::dimension_tag,
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::medium_tag>::
       components;
 
   specfem::execution::for_each_level(
@@ -138,7 +153,7 @@ load_after_simd_dispatch(const std::false_type, const IndexType &index,
         const auto point_index = iterator_index.get_index();
 
         const int iglob =
-            field.template get_iglob<on_device>(point_index, MediumTag);
+            field.template get_iglob<on_device, MediumTag>(point_index);
 
         for (int icomp = 0; icomp < ncomponents; ++icomp) {
           (specfem::assembly::fields_impl::base_load_accessor<
@@ -151,6 +166,11 @@ load_after_simd_dispatch(const std::false_type, const IndexType &index,
   return;
 }
 
+/**
+ * @brief Internally dispatch field loading for SIMD assembly indices.
+ *
+ * This is an internal implementation detail and is not part of the public API.
+ */
 template <bool on_device, typename IndexType, typename ContainerType,
           typename... AccessorTypes,
           typename std::enable_if_t<
@@ -167,24 +187,24 @@ load_after_simd_dispatch(const std::true_type, const IndexType &index,
                 "IndexType must use SIMD in this overload");
 
   constexpr static auto MediumTag =
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag;
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::medium_tag;
 
   // Check that all accessors have the same medium tag
   specfem::assembly::fields_impl::check_accessor_compatibility<
       AccessorTypes...>();
 
   constexpr static int simd_size =
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::simd::size();
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::simd::size();
 
   const auto &current_field = field.template get_field<MediumTag>();
 
   constexpr static int ncomponents = specfem::element::attributes<
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::dimension_tag,
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag>::
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::dimension_tag,
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::medium_tag>::
       components;
 
   using simd_type = typename std::tuple_element_t<
-      0, std::tuple<AccessorTypes...> >::simd::datatype;
+      0, std::tuple<AccessorTypes...>>::simd::datatype;
 
   specfem::execution::for_each_level(
       index.get_iterator(),
@@ -195,8 +215,8 @@ load_after_simd_dispatch(const std::true_type, const IndexType &index,
         int iglob[simd_size];
         for (int lane = 0; lane < simd_size; ++lane) {
           iglob[lane] = point_index.mask(lane)
-                            ? field.template get_iglob<on_device>(
-                                  point_index, lane, MediumTag)
+                            ? field.template get_iglob<on_device, MediumTag>(
+                                  point_index, lane)
                             : field.nglob + 1;
         }
 
@@ -213,6 +233,11 @@ load_after_simd_dispatch(const std::true_type, const IndexType &index,
   return;
 }
 
+/**
+ * @brief Internally dispatch field loading for edge assembly indices.
+ *
+ * This is an internal implementation detail and is not part of the public API.
+ */
 template <bool on_device, typename IndexType, typename ContainerType,
           typename... AccessorTypes,
           typename std::enable_if_t<
@@ -227,15 +252,15 @@ load_after_simd_dispatch(const std::false_type, const IndexType &index,
   static_assert(!IndexType::using_simd,
                 "IndexType must not use SIMD in this overload");
   constexpr static auto MediumTag =
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag;
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::medium_tag;
   // Check that all accessors have the same medium tag
   specfem::assembly::fields_impl::check_accessor_compatibility<
       AccessorTypes...>();
-  const auto current_field = field.template get_field<MediumTag>();
+  const auto &current_field = field.template get_field<MediumTag>();
 
   constexpr static int ncomponents = specfem::element::attributes<
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::dimension_tag,
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag>::
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::dimension_tag,
+      std::tuple_element_t<0, std::tuple<AccessorTypes...>>::medium_tag>::
       components;
 
   specfem::execution::for_each_level(
@@ -243,7 +268,7 @@ load_after_simd_dispatch(const std::false_type, const IndexType &index,
       [&](const typename IndexType::iterator_type::index_type &iterator_index) {
         const auto point_index = iterator_index.get_local_index();
         const int iglob =
-            field.template get_iglob<on_device>(point_index, MediumTag);
+            field.template get_iglob<on_device, MediumTag>(point_index);
         for (int icomp = 0; icomp < ncomponents; ++icomp) {
           (specfem::assembly::fields_impl::base_load_accessor<
                on_device, AccessorTypes::data_class>(

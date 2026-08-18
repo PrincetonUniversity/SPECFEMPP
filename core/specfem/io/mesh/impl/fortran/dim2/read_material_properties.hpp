@@ -1,0 +1,43 @@
+#pragma once
+
+#include "specfem/element.hpp"
+#include "specfem/mesh.hpp"
+
+#include <fstream>
+#include <iostream>
+#include <memory>
+#include <vector>
+
+namespace specfem {
+namespace io {
+namespace mesh {
+namespace impl {
+namespace fortran {
+namespace dim2 {
+
+/**
+ * Read material properties from a fotran binary database
+ *
+ * @param stream Stream object for fortran binary file buffered to materials
+ * section
+ * @param numat Number of materials to be read
+ * @return std::vector<specfem::medium *> Pointer to material objects read
+ * from the database file
+ */
+
+specfem::mesh::materials<specfem::element::dimension_tag::dim2>
+read_material_properties(
+    std::ifstream &stream, const int numat, const int nspec,
+    const specfem::enums::elastic_wave wave,
+    const specfem::enums::electromagnetic_wave electromagnetic_wave,
+    const Kokkos::View<int **, Kokkos::LayoutRight,
+                       Kokkos::DefaultHostExecutionSpace>
+        knods,
+    const bool attenuation_enabled);
+
+} // namespace dim2
+} // namespace fortran
+} // namespace impl
+} // namespace mesh
+} // namespace io
+} // namespace specfem

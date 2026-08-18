@@ -1,92 +1,100 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
-#include "kokkos_abstractions.h"
+#include "specfem/enums.hpp"
 #include "specfem/assembly/fields.hpp"
 #include "specfem/assembly/element_types.hpp"
+#include "specfem/assembly/fields.hpp"
+#include "specfem/assembly/fields/impl/assign_assembly_index_mapping.hpp"
 #include "specfem/assembly/fields/impl/field_impl.tpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/datatype/element_index_range.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace {
-template <typename ViewType> int compute_nglob3D(const ViewType index_mapping) {
-  const int nspec = index_mapping.extent(0);
-  const int ngllz = index_mapping.extent(1);
-  const int nglly = index_mapping.extent(2);
-  const int ngllx = index_mapping.extent(3);
-
-  int nglob = -1;
-  // compute max value stored in index_mapping
-  for (int ispec = 0; ispec < nspec; ispec++) {
-    for (int igllz = 0; igllz < ngllz; igllz++) {
-      for (int iglly = 0; iglly < nglly; iglly++) {
-        for (int igllx = 0; igllx < ngllx; igllx++) {
-          nglob = std::max(nglob, index_mapping(ispec, igllz, iglly, igllx));
-        }
-      }
-    }
-  }
-
-  return nglob + 1;
-}
-} // namespace
-
-template <specfem::wavefield::simulation_field WavefieldType>
-specfem::assembly::simulation_field<specfem::dimension::type::dim3,
+template <specfem::simulation::field_type WavefieldType>
+specfem::assembly::simulation_field<specfem::element::dimension_tag::dim3,
                                     WavefieldType>::
     simulation_field(
         const specfem::assembly::mesh<dimension_tag> &mesh,
         const specfem::assembly::element_types<dimension_tag> &element_types) {
 
-  nglob = compute_nglob3D(mesh.h_index_mapping);
-  this->index_mapping = mesh.index_mapping;
-  this->h_index_mapping = mesh.h_index_mapping;
+  this->nspec = mesh.nspec;
+  this->ngllz = mesh.element_grid.ngllz;
+  this->nglly = mesh.element_grid.nglly;
+  this->ngllx = mesh.element_grid.ngllx;
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
-      CAPTURE(assembly_index_mapping, h_assembly_index_mapping, field) {
-        _assembly_index_mapping_ = Kokkos::View<int *, Kokkos::LayoutLeft,
-                                                specfem::kokkos::DevMemSpace>(
-            "specfem::assembly::simulation_field::index_mapping", nglob);
-        _h_assembly_index_mapping_ =
-            Kokkos::create_mirror_view(_assembly_index_mapping_);
+  // Private copy of h_index_mapping so multiple simulation_fields constructed
+  // from the same mesh don't interfere when we remap in-place below.
+  this->h_index_mapping = IndexViewType::host_mirror_type(
+      "specfem::assembly::simulation_field::h_index_mapping",
+      mesh.nspec, mesh.element_grid.ngllz, mesh.element_grid.nglly,
+      mesh.element_grid.ngllx);
+  Kokkos::deep_copy(this->h_index_mapping, mesh.h_index_mapping);
 
-        for (int iglob = 0; iglob < nglob; iglob++) {
-          _h_assembly_index_mapping_(iglob) = -1;
-        }
+  this->index_mapping = IndexViewType(
+      "specfem::assembly::simulation_field::index_mapping",
+      mesh.nspec, mesh.element_grid.ngllz, mesh.element_grid.nglly,
+      mesh.element_grid.ngllx);
 
-        _field_ = specfem::assembly::fields_impl::field_impl<_dimension_tag_,
-                                                             _medium_tag_>(
-            mesh, element_types, _h_assembly_index_mapping_);
+  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace> dedup_table(
+      "specfem::assembly::simulation_field::dedup_table", mesh.nglob);
+  Kokkos::deep_copy(dedup_table, -1);
 
-        Kokkos::deep_copy(_assembly_index_mapping_, _h_assembly_index_mapping_);
-      })
+  int base_dof = 0;
+
+  specfem::tag_dispatch::for_each(combinations, [&]<typename TagsType>() {
+    constexpr auto medium = TagsType::medium_tag;
+    int nglob_M = 0;
+
+    specfem::assembly::fields_impl::assign_assembly_index_mapping(
+        this->h_index_mapping, element_types, dedup_table, nglob_M, medium,
+        base_dof);
+
+    dof_ranges.template get<TagsType>() =
+        specfem::datatype::ElementIndexRange(base_dof, base_dof + nglob_M);
+
+    field.template get<TagsType>() =
+        specfem::assembly::fields_impl::field_impl<dimension_tag, medium>(
+            nglob_M);
+
+    base_dof += nglob_M;
+  });
+
+  this->nglob = base_dof;
+  Kokkos::deep_copy(this->index_mapping, this->h_index_mapping);
 
   return;
 }
 
-template <specfem::wavefield::simulation_field WavefieldType>
+template <specfem::simulation::field_type WavefieldType>
 int specfem::assembly::simulation_field<
-    specfem::dimension::type::dim3,
+    specfem::element::dimension_tag::dim3,
     WavefieldType>::get_total_degrees_of_freedom() {
   if (total_degrees_of_freedom != 0) {
     return total_degrees_of_freedom;
   }
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)), CAPTURE(
-                                                                      field) {
+  specfem::tag_dispatch::for_each(combinations, [&]<typename TagsType>() {
+    constexpr auto medium = TagsType::medium_tag;
     total_degrees_of_freedom +=
-        this->get_nglob<_medium_tag_>() *
-        specfem::element::attributes<_dimension_tag_, _medium_tag_>::components;
-  })
+        this->get_nglob<medium>() *
+        specfem::element::attributes<dimension_tag, medium>::components;
+  });
 
   return total_degrees_of_freedom;
 }
 
-template <specfem::wavefield::simulation_field WavefieldType>
-template <specfem::sync::kind sync>
-void specfem::assembly::simulation_field<specfem::dimension::type::dim3,
-                                         WavefieldType>::sync_fields() {
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
-                      CAPTURE(field) { _field_.template sync_fields<sync>(); })
+template <specfem::simulation::field_type WavefieldType>
+void specfem::assembly::simulation_field<specfem::element::dimension_tag::dim3,
+                                         WavefieldType>::copy_to_host() {
+  specfem::tag_dispatch::for_each(combinations, [&]<typename TagsType>() {
+    field.template get<TagsType>().copy_to_host();
+  });
+}
+
+template <specfem::simulation::field_type WavefieldType>
+void specfem::assembly::simulation_field<specfem::element::dimension_tag::dim3,
+                                         WavefieldType>::copy_to_device() {
+  specfem::tag_dispatch::for_each(combinations, [&]<typename TagsType>() {
+    field.template get<TagsType>().copy_to_device();
+  });
 }

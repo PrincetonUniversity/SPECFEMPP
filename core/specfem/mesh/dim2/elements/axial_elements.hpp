@@ -1,0 +1,29 @@
+#pragma once
+
+#include "specfem/enums.hpp"
+
+namespace specfem {
+namespace mesh {
+namespace elements {
+/**
+ * Define axial elements
+ *
+ * @note Need to still document this section
+ *
+ */
+template <specfem::element::dimension_tag DimensionTag> struct axial_elements;
+
+template <> struct axial_elements<specfem::element::dimension_tag::dim2> {
+
+  constexpr static auto dimension = specfem::element::dimension_tag::dim2;
+
+  Kokkos::View<bool *, Kokkos::HostSpace> is_on_the_axis;
+
+  axial_elements() {};
+  axial_elements(const int nspec);
+  axial_elements(std::ifstream &stream, const int nelem_on_the_axis,
+                 const int nspec);
+};
+} // namespace elements
+} // namespace mesh
+} // namespace specfem

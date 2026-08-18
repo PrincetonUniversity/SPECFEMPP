@@ -3,15 +3,17 @@
 // combinations and assign 1.0 to all the quadrature points in the element
 
 #pragma once
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/point.hpp"
+#include "specfem/tags.hpp"
 
-template <specfem::wavefield::type component,
-          specfem::wavefield::simulation_field type,
+template <specfem::enums::wavefield component,
+          specfem::simulation::field_type type,
           specfem::element::medium_tag medium,
           specfem::element::property_tag property>
 void generate_data(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly,
     std::vector<int> &ispecs) {
 
   auto field = assembly.fields.template get_simulation_field<type>();
@@ -22,21 +24,17 @@ void generate_data(
   const auto elements =
       assembly.element_types.get_elements_on_host(medium, property);
 
-  constexpr int num_components =
-      specfem::element::attributes<specfem::dimension::type::dim2,
-                                   medium>::components;
-
   using PointDisplacementType =
-      specfem::point::displacement<specfem::dimension::type::dim2, medium,
-                                   false>;
-  using PointVelocityType =
-      specfem::point::velocity<specfem::dimension ::type::dim2, medium, false>;
+      specfem::point::displacement<specfem::tags::Tags<
+          specfem::element::dimension_tag::dim2, medium, false> >;
+  using PointVelocityType = specfem::point::velocity<specfem::tags::Tags<
+      specfem::element::dimension_tag::dim2, medium, false> >;
   using PointAccelerationType =
-      specfem::point::acceleration<specfem::dimension::type::dim2, medium,
-                                   false>;
+      specfem::point::acceleration<specfem::tags::Tags<
+          specfem::element::dimension_tag::dim2, medium, false> >;
 
   using IndexType =
-      specfem::point::index<specfem::dimension::type::dim2, false>;
+      specfem::point::index<specfem::element::dimension_tag::dim2, false>;
 
   const int nelements = elements.size();
 
@@ -62,10 +60,11 @@ void generate_data(
   field.copy_to_device();
 }
 
-template <specfem::wavefield::type component,
-          specfem::wavefield::simulation_field type>
-std::vector<int> generate_data(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+template <specfem::enums::wavefield component,
+          specfem::simulation::field_type type>
+std::vector<int>
+generate_data(specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+                  &assembly) {
 
   std::vector<int> ispecs;
 

@@ -1,25 +1,27 @@
+import glob
+
 # tests = config["tests"]
 # db_dirs = [d for d in os.listdir("dim2") if os.path.isdir(os.path.join("dim2", d))]
-db_dirs = [d for d in os.listdir("dim2") if os.path.isdir(os.path.join("dim2", d)) and not d.startswith("ncmarked")] # temporary workaround
+db_dirs = [d for d in glob.glob("dim*/*") if os.path.isdir(d) and not d.startswith("dim2/ncmarked")] # temporary workaround
 
 rule all:
     input:
-        expand("dim2/{db_name}/database.bin", db_name=db_dirs)
+        expand("{db_name}/database.bin", db_name=db_dirs)
 
 # for test_name in config["tests"]:
 for db_name in db_dirs:
-    alias = f'{db_name}_'
+    alias = f'{db_name[5:]}_'
 
     module:
         name: db_name
-        snakefile: f"dim2/{db_name}/Snakefile"
+        snakefile: f"{db_name}/Snakefile"
         pathvars:
-            cwd=f"dim2/{db_name}"
+            cwd=f"{db_name}"
 
     use rule * from db_name as alias*
 
 rule clean:
     shell:
         """
-        rm -rf dim2/*/database.bin
+        rm -rf dim*/*/database.bin
         """

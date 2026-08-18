@@ -1,13 +1,13 @@
 #pragma once
 
-#include "domain_view.hpp"
-#include "enumerations/interface.hpp"
-#include "kokkos_abstractions.h"
-#include "quadrature/interface.hpp"
+#include "specfem/datatype.hpp"
+
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/point.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/quadrature.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly {
@@ -37,21 +37,21 @@ namespace specfem::assembly {
  *
  * @code
  * // Example usage
- * specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2> jacobian(...);
+ * specfem::assembly::jacobian_matrix<specfem::element::dimension_tag::dim2> jacobian(...);
  *
  * // Access in device kernel
- * specfem::point::index<specfem::dimension::type::dim2> idx(ispec, iz, ix);
- * specfem::point::jacobian_matrix<specfem::dimension::type::dim2> point_jac;
+ * specfem::point::index<specfem::element::dimension_tag::dim2> idx(ispec, iz, ix);
+ * specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2> point_jac;
  * specfem::assembly::load_on_device(idx, jacobian, point_jac);
  * @endcode
  */
 // clang-format on
 template <>
-struct jacobian_matrix<specfem::dimension::type::dim2>
+struct jacobian_matrix<specfem::element::dimension_tag::dim2>
     : public specfem::data_access::Container<
           specfem::data_access::ContainerType::domain,
           specfem::data_access::DataClassType::jacobian_matrix,
-          specfem::dimension::type::dim2> {
+          specfem::element::dimension_tag::dim2> {
   /**
    * @name Type Definitions
    *
@@ -66,7 +66,7 @@ struct jacobian_matrix<specfem::dimension::type::dim2>
   using base_type = specfem::data_access::Container<
       specfem::data_access::ContainerType::domain,
       specfem::data_access::DataClassType::jacobian_matrix,
-      specfem::dimension::type::dim2>;
+      specfem::element::dimension_tag::dim2>;
 
   /**
    * @brief Kokkos view type for storing Jacobian matrix components
@@ -91,18 +91,20 @@ struct jacobian_matrix<specfem::dimension::type::dim2>
   int ngllx;
 
   view_type xix; // ∂ξ/∂x derivatives (device) [nspec][ngllz][ngllx]
-  view_type::HostMirror h_xix; // ∂ξ/∂x derivatives (host) [nspec][ngllz][ngllx]
+  view_type::host_mirror_type h_xix; // ∂ξ/∂x derivatives (host)
+                                     // [nspec][ngllz][ngllx]
   view_type xiz; // ∂ξ/∂z derivatives (device) [nspec][ngllz][ngllx]
-  view_type::HostMirror h_xiz; // ∂ξ/∂z derivatives (host) [nspec][ngllz][ngllx]
+  view_type::host_mirror_type h_xiz; // ∂ξ/∂z derivatives (host)
+                                     // [nspec][ngllz][ngllx]
   view_type gammax; // ∂γ/∂x derivatives (device) [nspec][ngllz][ngllx]
-  view_type::HostMirror h_gammax; // ∂γ/∂x derivatives (host)
-                                  // [nspec][ngllz][ngllx]
+  view_type::host_mirror_type h_gammax; // ∂γ/∂x derivatives (host)
+                                        // [nspec][ngllz][ngllx]
   view_type gammaz; // ∂γ/∂z derivatives (device) [nspec][ngllz][ngllx]
-  view_type::HostMirror h_gammaz; // ∂γ/∂z derivatives (host)
-                                  // [nspec][ngllz][ngllx]
+  view_type::host_mirror_type h_gammaz; // ∂γ/∂z derivatives (host)
+                                        // [nspec][ngllz][ngllx]
   view_type jacobian; // Jacobian determinant (device) [nspec][ngllz][ngllx]
-  view_type::HostMirror h_jacobian; // Jacobian determinant (host)
-                                    // [nspec][ngllz][ngllx]
+  view_type::host_mirror_type h_jacobian; // Jacobian determinant (host)
+                                          // [nspec][ngllz][ngllx]
 
   /**
    * @name Constructors
@@ -146,14 +148,15 @@ struct jacobian_matrix<specfem::dimension::type::dim2>
    *             node coordinates, and geometric information
    *
    * @code
-   * specfem::assembly::mesh<specfem::dimension::type::dim2> mesh;
+   * specfem::assembly::mesh<specfem::element::dimension_tag::dim2> mesh;
    * // ... initialize mesh
-   * specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
+   * specfem::assembly::jacobian_matrix<specfem::element::dimension_tag::dim2>
    * jac(mesh);
    * @endcode
    */
   jacobian_matrix(
-      const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh);
+      const specfem::assembly::mesh<specfem::element::dimension_tag::dim2>
+          &mesh);
   ///@}
 
   /**

@@ -7,6 +7,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <type_traits>
 
 /**
  * @file logger.hpp
@@ -102,9 +103,47 @@ public:
   static void debug(const std::string &message, bool root_only = ROOT_ONLY);
 
   /**
+   * @brief Log a debug-level message using a lazy message producer
+   *
+   * The callable is only invoked if the debug level would produce output,
+   * avoiding unnecessary work (e.g. expensive string construction).
+   *
+   * @param message_fn Callable accepting std::ostringstream &
+   */
+  template <
+      typename Fn,
+      std::enable_if_t<std::is_invocable_v<Fn, std::ostringstream &>, int> = 0>
+  static void debug(Fn &&message_fn, bool root_only = ROOT_ONLY) {
+    if (should_print(LogLevel::DEBUG, root_only)) {
+      std::ostringstream oss;
+      std::forward<Fn>(message_fn)(oss);
+      log_internal(LogLevel::DEBUG, oss.str(), root_only);
+    }
+  }
+
+  /**
    * @brief Log an info-level message
    */
   static void info(const std::string &message, bool root_only = ROOT_ONLY);
+
+  /**
+   * @brief Log an info-level message using a lazy message producer
+   *
+   * The callable is only invoked if the info level would produce output,
+   * avoiding unnecessary work (e.g. expensive string construction).
+   *
+   * @param message_fn Callable accepting std::ostringstream &
+   */
+  template <
+      typename Fn,
+      std::enable_if_t<std::is_invocable_v<Fn, std::ostringstream &>, int> = 0>
+  static void info(Fn &&message_fn, bool root_only = ROOT_ONLY) {
+    if (should_print(LogLevel::INFO, root_only)) {
+      std::ostringstream oss;
+      std::forward<Fn>(message_fn)(oss);
+      log_internal(LogLevel::INFO, oss.str(), root_only);
+    }
+  }
 
   /**
    * @brief Log a warning-level message
@@ -137,7 +176,12 @@ private:
     bool logging_enabled = false;  ///< True when file logging is active
     bool per_rank_logging = false; ///< True when using per-rank files
     bool auto_flush = false;       ///< True to flush after each message
+
+#ifndef NDEBUG
+    LogLevel min_log_level = LogLevel::TRACE; ///< Minimum level to trace
+#else
     LogLevel min_log_level = LogLevel::INFO; ///< Minimum level to log
+#endif
 
     // CLI override flags
     bool cli_log_file_set = false;
@@ -149,7 +193,11 @@ private:
     std::string cli_log_file;
     bool cli_per_rank = false;
     bool cli_auto_flush = false;
+#ifndef NDEBUG
+    LogLevel cli_log_level = LogLevel::DEBUG;
+#else
     LogLevel cli_log_level = LogLevel::INFO;
+#endif
   };
 
   static program::Context *context_ptr_; ///< Non-owning pointer to Context
@@ -170,6 +218,12 @@ private:
    */
   static void log_internal(LogLevel level, const std::string &message,
                            bool root_only);
+
+  /**
+   * @brief Check if the message is to be printed based on log level and
+   * configuration
+   */
+  static bool should_print(LogLevel level, bool root_only);
 
   /**
    * @brief Format a log message with prefix and optional color

@@ -1,11 +1,11 @@
 #include "plot_wavefield.hpp"
-#include "enumerations/display.hpp"
-#include "enumerations/interface.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/logger.hpp"
+#include "specfem/mpi/mpi.hpp"
 #include "specfem/periodic_tasks/plotter.hpp"
 #include "specfem/program.hpp"
-#include "utilities/strings.hpp"
+#include "specfem/utilities.hpp"
 
 #ifdef NO_VTK
 
@@ -13,10 +13,8 @@
 
 #else
 
-#include <algorithm>
 #include <boost/filesystem.hpp>
 #include <cmath>
-#include <fstream>
 #include <vtkCellArray.h>
 #include <vtkFloatArray.h>
 #include <vtkLagrangeHexahedron.h>
@@ -26,7 +24,67 @@
 #include <vtkUnstructuredGrid.h>
 
 #ifndef NO_HDF5
-#include <hdf5.h>
+#include "specfem/io_backends/HDF5/impl/h5_check.hpp"
+
+namespace specfem::periodic_tasks::plot_wavefield_impl {
+
+/// @brief Create a 1D dataset and write data, handling parallel/serial I/O
+inline void write_static_1d(hid_t parent, const char *name, hid_t mem_type,
+                            hsize_t total_size, hsize_t local_offset,
+                            hsize_t local_count, const void *data,
+                            bool use_parallel, hid_t dxpl) {
+  hsize_t dims[1] = { total_size };
+  hid_t dataspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, dims, NULL));
+  hid_t dataset =
+      SPECFEM_H5_CHECK_ID(H5Dcreate(parent, name, mem_type, dataspace,
+                                    H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT));
+
+  if (use_parallel) {
+    SPECFEM_H5_CHECK(H5Sselect_hyperslab(
+        dataspace, H5S_SELECT_SET, &local_offset, NULL, &local_count, NULL));
+    hid_t memspace =
+        SPECFEM_H5_CHECK_ID(H5Screate_simple(1, &local_count, NULL));
+    SPECFEM_H5_CHECK(
+        H5Dwrite(dataset, mem_type, memspace, dataspace, dxpl, data));
+    SPECFEM_H5_CHECK(H5Sclose(memspace));
+  } else {
+    SPECFEM_H5_CHECK(
+        H5Dwrite(dataset, mem_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, data));
+  }
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(dataspace));
+}
+
+/// @brief Create a 2D dataset and write data, handling parallel/serial I/O
+inline void write_static_2d(hid_t parent, const char *name, hid_t mem_type,
+                            hsize_t total_rows, hsize_t ncols,
+                            hsize_t row_offset, hsize_t row_count,
+                            const void *data, bool use_parallel, hid_t dxpl) {
+  hsize_t dims[2] = { total_rows, ncols };
+  hid_t dataspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(2, dims, NULL));
+  hid_t dataset =
+      SPECFEM_H5_CHECK_ID(H5Dcreate(parent, name, mem_type, dataspace,
+                                    H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT));
+
+  if (use_parallel) {
+    hsize_t offset[2] = { row_offset, 0 };
+    hsize_t count[2] = { row_count, ncols };
+    SPECFEM_H5_CHECK(H5Sselect_hyperslab(dataspace, H5S_SELECT_SET, offset,
+                                         NULL, count, NULL));
+    hid_t memspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(2, count, NULL));
+    SPECFEM_H5_CHECK(
+        H5Dwrite(dataset, mem_type, memspace, dataspace, dxpl, data));
+    SPECFEM_H5_CHECK(H5Sclose(memspace));
+  } else {
+    SPECFEM_H5_CHECK(
+        H5Dwrite(dataset, mem_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, data));
+  }
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(dataspace));
+}
+
+} // namespace specfem::periodic_tasks::plot_wavefield_impl
+
 #endif // NO_HDF5
 
 #endif // NO_VTK
@@ -34,18 +92,18 @@
 #ifdef NO_VTK
 
 // Add constructor implementation for NO_VTK builds
-specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
+specfem::periodic_tasks::plot_wavefield<specfem::element::dimension_tag::dim3>::
     plot_wavefield(
         const specfem::assembly::assembly<dimension_tag> &assembly,
-        const specfem::display::format &output_format,
-        const specfem::wavefield::type &wavefield_type,
-        const specfem::wavefield::simulation_field &simulation_wavefield_type,
-        const specfem::display::component &component, const type_real &dt,
+        const specfem::enums::display_format &output_format,
+        const specfem::enums::wavefield &wavefield_type,
+        const specfem::simulation::field_type &simulation_wavefield_type,
+        const specfem::enums::display_component &component,
         const int &time_interval, const boost::filesystem::path &output_folder)
     : assembly(assembly), simulation_wavefield_type(simulation_wavefield_type),
       wavefield_type(wavefield_type), component(component),
       plotter<dimension_tag>(time_interval), output_format(output_format),
-      output_folder(output_folder), nspec(assembly.mesh.nspec), dt(dt),
+      output_folder(output_folder), nspec(assembly.mesh.nspec),
       ngllx(assembly.mesh.element_grid.ngllx),
       nglly(assembly.mesh.element_grid.nglly),
       ngllz(assembly.mesh.element_grid.ngllz) {
@@ -57,8 +115,9 @@ specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
   throw std::runtime_error(message.str());
 }
 
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
-    run(specfem::assembly::assembly<dimension_tag> &assembly, const int istep) {
+void specfem::periodic_tasks::
+    plot_wavefield<specfem::element::dimension_tag::dim3>::run(
+        specfem::assembly::assembly<dimension_tag> &assembly, const int istep) {
   std::ostringstream message;
   message
       << "Display section is not enabled, since SPECFEM++ was built without "
@@ -67,8 +126,9 @@ void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
   throw std::runtime_error(message.str());
 }
 
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
-    initialize(specfem::assembly::assembly<dimension_tag> &assembly) {
+void specfem::periodic_tasks::
+    plot_wavefield<specfem::element::dimension_tag::dim3>::initialize(
+        specfem::assembly::assembly<dimension_tag> &assembly) {
   std::ostringstream message;
   message
       << "Display section is not enabled, since SPECFEM++ was built without "
@@ -77,8 +137,9 @@ void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
   throw std::runtime_error(message.str());
 }
 
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
-    finalize(specfem::assembly::assembly<dimension_tag> &assembly) {
+void specfem::periodic_tasks::
+    plot_wavefield<specfem::element::dimension_tag::dim3>::finalize(
+        specfem::assembly::assembly<dimension_tag> &assembly) {
   std::ostringstream message;
   message
       << "Display section is not enabled, since SPECFEM++ was built without "
@@ -90,66 +151,53 @@ void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
 #else
 
 // Constructor
-specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
+specfem::periodic_tasks::plot_wavefield<specfem::element::dimension_tag::dim3>::
     plot_wavefield(
         const specfem::assembly::assembly<dimension_tag> &assembly,
-        const specfem::display::format &output_format,
-        const specfem::wavefield::type &wavefield_type,
-        const specfem::wavefield::simulation_field &simulation_wavefield_type,
-        const specfem::display::component &component, const type_real &dt,
+        const specfem::enums::display_format &output_format,
+        const specfem::enums::wavefield &wavefield_type,
+        const specfem::simulation::field_type &simulation_wavefield_type,
+        const specfem::enums::display_component &component,
         const int &time_interval, const boost::filesystem::path &output_folder)
     : assembly(assembly), simulation_wavefield_type(simulation_wavefield_type),
       wavefield_type(wavefield_type), component(component),
       plotter<dimension_tag>(time_interval), output_format(output_format),
-      output_folder(output_folder), nspec(assembly.mesh.nspec), dt(dt),
+      output_folder(output_folder), nspec(assembly.mesh.nspec),
       ngllx(assembly.mesh.element_grid.ngllx),
       nglly(assembly.mesh.element_grid.nglly),
       ngllz(assembly.mesh.element_grid.ngllz) {
   // Only VTK HDF5 output is supported for 3D
-  if (output_format != specfem::display::format::vtkhdf) {
+  if (output_format != specfem::enums::display_format::vtkhdf) {
     throw std::runtime_error(
         "Only VTK HDF5 output format is supported for 3D wavefield plotting");
   }
 };
 
-// Get wavefield type to display
-specfem::wavefield::type specfem::periodic_tasks::plot_wavefield<
-    specfem::dimension::type::dim3>::get_wavefield_type() {
-  if (wavefield_type == specfem::wavefield::type::displacement) {
-    return specfem::wavefield::type::displacement;
-  } else if (wavefield_type == specfem::wavefield::type::velocity) {
-    return specfem::wavefield::type::velocity;
-  } else if (wavefield_type == specfem::wavefield::type::acceleration) {
-    return specfem::wavefield::type::acceleration;
-  } else {
-    throw std::runtime_error("Wavefield type not supported");
-  }
-}
-
 // Helper function to get scalar value at a given point
-float specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
+float specfem::periodic_tasks::plot_wavefield<
+    specfem::element::dimension_tag::dim3>::
     get_scalar_value_at_point(
         const Kokkos::View<type_real *****, Kokkos::LayoutLeft,
                            Kokkos::HostSpace> &wavefield_data,
-        const specfem::wavefield::type &wavefield_type,
-        const specfem::display::component &component, const int ispec,
+        const specfem::enums::wavefield &wavefield_type,
+        const specfem::enums::display_component &component, const int ispec,
         const int iz, const int iy, const int ix) {
 
-  if (wavefield_type == specfem::wavefield::type::pressure ||
-      wavefield_type == specfem::wavefield::type::rotation ||
-      wavefield_type == specfem::wavefield::type::intrinsic_rotation ||
-      wavefield_type == specfem::wavefield::type::curl) {
+  if (wavefield_type == specfem::enums::wavefield::pressure ||
+      wavefield_type == specfem::enums::wavefield::rotation ||
+      wavefield_type == specfem::enums::wavefield::intrinsic_rotation ||
+      wavefield_type == specfem::enums::wavefield::curl) {
     return std::abs(wavefield_data(ispec, iz, iy, ix, 0));
   }
 
   // Computing the component or magnitude for vector fields
-  if (component == specfem::display::component::x) {
+  if (component == specfem::enums::display_component::x) {
     return wavefield_data(ispec, iz, iy, ix, 0);
-  } else if (component == specfem::display::component::y) {
+  } else if (component == specfem::enums::display_component::y) {
     return wavefield_data(ispec, iz, iy, ix, 1);
-  } else if (component == specfem::display::component::z) {
+  } else if (component == specfem::enums::display_component::z) {
     return wavefield_data(ispec, iz, iy, ix, 2);
-  } else if (component == specfem::display::component::magnitude) {
+  } else if (component == specfem::enums::display_component::magnitude) {
     // Compute magnitude from 3-component vector
     type_real magnitude = 0.0;
     for (int icomp = 0; icomp < 3; ++icomp) {
@@ -159,7 +207,7 @@ float specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
     return static_cast<float>(std::sqrt(magnitude));
   } else {
     throw std::runtime_error("Invalid component,'" +
-                             specfem::display::to_string(component) +
+                             specfem::enums::to_string(component) +
                              "', for wavefield plotting in 3D.");
   }
 }
@@ -176,11 +224,10 @@ float specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
  * with 125 control points arranged in a structured 5x5x5 grid.
  */
 void specfem::periodic_tasks::plot_wavefield<
-    specfem::dimension::type::dim3>::create_lagrange_hex_grid() {
+    specfem::element::dimension_tag::dim3>::create_lagrange_hex_grid() {
   const auto &coordinates = assembly.mesh.h_coord;
 
   // Each spectral element becomes one Lagrange hexahedron
-  const int ncells = nspec;
   const int points_per_element = ngllx * nglly * ngllz;
 
   auto points = vtkSmartPointer<vtkPoints>::New();
@@ -229,10 +276,11 @@ void specfem::periodic_tasks::plot_wavefield<
 }
 
 // Compute wavefield scalar values for the grid points
-vtkSmartPointer<vtkFloatArray> specfem::periodic_tasks::
-    plot_wavefield<specfem::dimension::type::dim3>::compute_wavefield_scalars(
+vtkSmartPointer<vtkFloatArray>
+specfem::periodic_tasks::plot_wavefield<specfem::element::dimension_tag::dim3>::
+    compute_wavefield_scalars(
         specfem::assembly::assembly<dimension_tag> &assembly) {
-  const auto wavefield_type = get_wavefield_type();
+  const auto wavefield_type = this->wavefield_type;
   const auto &wavefield_data = assembly.generate_wavefield_on_entire_grid(
       this->simulation_wavefield_type, wavefield_type);
 
@@ -261,9 +309,8 @@ vtkSmartPointer<vtkFloatArray> specfem::periodic_tasks::
   return scalars;
 }
 
-template <>
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
-    initialize<specfem::display::format::vtkhdf>(
+void specfem::periodic_tasks::
+    plot_wavefield<specfem::element::dimension_tag::dim3>::initialize_vtkhdf(
         vtkSmartPointer<vtkFloatArray> &scalars) {
 
 #ifndef NO_HDF5
@@ -273,36 +320,56 @@ void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
   this->numPoints = 0;
   this->numCells = 0;
 
-  // Create HDF5 file
+  // Determine filename and parallel mode
+#ifdef SPECFEM_HDF5_IS_PARALLEL
+  this->use_parallel_hdf5 = true;
   this->hdf5_filename = (this->output_folder / "wavefield.vtkhdf").string();
-  hid_t hdf5_file_id = H5Fcreate(this->hdf5_filename.c_str(), H5F_ACC_TRUNC,
-                                 H5P_DEFAULT, H5P_DEFAULT);
-  hid_t vtkhdf_group =
-      H5Gcreate(hdf5_file_id, "/VTKHDF", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+#elif defined(SPECFEM_ENABLE_MPI)
+  this->use_parallel_hdf5 = false;
+  this->hdf5_filename = specfem::MPI::format_proc_filename(
+      (this->output_folder / "wavefield.vtkhdf").string());
+  // Create the proc subdirectory on rank 0, then synchronize
+  if (specfem::MPI::main_proc()) {
+    boost::filesystem::create_directories(
+        boost::filesystem::path(this->hdf5_filename).parent_path());
+  }
+  specfem::MPI::sync();
+#else
+  this->use_parallel_hdf5 = false;
+  this->hdf5_filename = (this->output_folder / "wavefield.vtkhdf").string();
+#endif
+
+  // Create HDF5 file with appropriate access property list
+  hid_t fapl = this->create_file_access_plist();
+  hid_t hdf5_file_id = SPECFEM_H5_CHECK_ID(
+      H5Fcreate(this->hdf5_filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, fapl));
+  SPECFEM_H5_CHECK(H5Pclose(fapl));
+  hid_t vtkhdf_group = SPECFEM_H5_CHECK_ID(H5Gcreate(
+      hdf5_file_id, "/VTKHDF", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT));
 
   // Set VTKHDF attributes
   {
-    hid_t attr_space, attr;
     int version[2] = { 2, 0 };
     hsize_t dims[1] = { 2 };
-    attr_space = H5Screate_simple(1, dims, NULL);
-    attr = H5Acreate(vtkhdf_group, "Version", H5T_NATIVE_INT, attr_space,
-                     H5P_DEFAULT, H5P_DEFAULT);
-    H5Awrite(attr, H5T_NATIVE_INT, version);
-    H5Aclose(attr);
-    H5Sclose(attr_space);
+    hid_t attr_space = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, dims, NULL));
+    hid_t attr =
+        SPECFEM_H5_CHECK_ID(H5Acreate(vtkhdf_group, "Version", H5T_NATIVE_INT,
+                                      attr_space, H5P_DEFAULT, H5P_DEFAULT));
+    SPECFEM_H5_CHECK(H5Awrite(attr, H5T_NATIVE_INT, version));
+    SPECFEM_H5_CHECK(H5Aclose(attr));
+    SPECFEM_H5_CHECK(H5Sclose(attr_space));
 
     // Set Type attribute
-    hid_t str_type = H5Tcopy(H5T_C_S1);
-    H5Tset_size(str_type, 16);
-    attr_space = H5Screate(H5S_SCALAR);
-    attr = H5Acreate(vtkhdf_group, "Type", str_type, attr_space, H5P_DEFAULT,
-                     H5P_DEFAULT);
+    hid_t str_type = SPECFEM_H5_CHECK_ID(H5Tcopy(H5T_C_S1));
+    SPECFEM_H5_CHECK(H5Tset_size(str_type, 16));
+    attr_space = SPECFEM_H5_CHECK_ID(H5Screate(H5S_SCALAR));
+    attr = SPECFEM_H5_CHECK_ID(H5Acreate(vtkhdf_group, "Type", str_type,
+                                         attr_space, H5P_DEFAULT, H5P_DEFAULT));
     const char *type_str = "UnstructuredGrid";
-    H5Awrite(attr, str_type, type_str);
-    H5Aclose(attr);
-    H5Sclose(attr_space);
-    H5Tclose(str_type);
+    SPECFEM_H5_CHECK(H5Awrite(attr, str_type, type_str));
+    SPECFEM_H5_CHECK(H5Aclose(attr));
+    SPECFEM_H5_CHECK(H5Sclose(attr_space));
+    SPECFEM_H5_CHECK(H5Tclose(str_type));
   }
 
   // Write static geometry to HDF5 file
@@ -330,6 +397,13 @@ void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
   // Store connectivity size for later use
   this->numConnectivityIds = connectivity.size();
 
+  // Compute MPI offsets (no-op for serial builds)
+  this->compute_mpi_offsets();
+
+  // For multi-partition VTKHDF, connectivity uses LOCAL point indices
+  // (each partition's data is concatenated). Do NOT shift point indices.
+  // Offsets use LOCAL connectivity indices (restarting from 0 per partition).
+
   // Extract points as 2D array (numPoints, 3)
   std::vector<double> pointCoords(this->numPoints * 3);
   for (vtkIdType i = 0; i < this->numPoints; i++) {
@@ -340,46 +414,52 @@ void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
     pointCoords[i * 3 + 2] = pt[2];
   }
 
-  // Write Points (static geometry) - 2D array (numPoints, 3)
-  hsize_t point_dims[2] = { (hsize_t)this->numPoints, 3 };
-  hid_t dataspace = H5Screate_simple(2, point_dims, NULL);
-  hid_t dataset = H5Dcreate(vtkhdf_group, "Points", H5T_NATIVE_DOUBLE,
-                            dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  H5Dwrite(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-           pointCoords.data());
-  H5Dclose(dataset);
-  H5Sclose(dataspace);
+  // Create transfer property list (collective for parallel HDF5)
+  hid_t dxpl = H5P_DEFAULT;
+#ifdef SPECFEM_HDF5_IS_PARALLEL
+  if (this->use_parallel_hdf5) {
+    dxpl = SPECFEM_H5_CHECK_ID(H5Pcreate(H5P_DATASET_XFER));
+    SPECFEM_H5_CHECK(H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT));
+  }
+#endif
 
-  // Write Connectivity (static)
-  hsize_t dims[1];
-  dims[0] = connectivity.size();
-  dataspace = H5Screate_simple(1, dims, NULL);
-  dataset = H5Dcreate(vtkhdf_group, "Connectivity", H5T_NATIVE_LLONG, dataspace,
-                      H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  H5Dwrite(dataset, H5T_NATIVE_LLONG, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-           connectivity.data());
-  H5Dclose(dataset);
-  H5Sclose(dataspace);
+  // Write static geometry datasets using helpers
+  using specfem::periodic_tasks::plot_wavefield_impl::write_static_1d;
+  using specfem::periodic_tasks::plot_wavefield_impl::write_static_2d;
 
-  // Write Offsets (static)
-  dims[0] = offsets.size();
-  dataspace = H5Screate_simple(1, dims, NULL);
-  dataset = H5Dcreate(vtkhdf_group, "Offsets", H5T_NATIVE_LLONG, dataspace,
-                      H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  H5Dwrite(dataset, H5T_NATIVE_LLONG, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-           offsets.data());
-  H5Dclose(dataset);
-  H5Sclose(dataspace);
+  // Points (2D: numPoints x 3)
+  write_static_2d(vtkhdf_group, "Points", H5T_NATIVE_DOUBLE,
+                  (hsize_t)this->total_points, 3,
+                  (hsize_t)this->global_point_offset, (hsize_t)this->numPoints,
+                  pointCoords.data(), this->use_parallel_hdf5, dxpl);
 
-  // Write Types (static)
-  dims[0] = types.size();
-  dataspace = H5Screate_simple(1, dims, NULL);
-  dataset = H5Dcreate(vtkhdf_group, "Types", H5T_NATIVE_UCHAR, dataspace,
-                      H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  H5Dwrite(dataset, H5T_NATIVE_UCHAR, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-           types.data());
-  H5Dclose(dataset);
-  H5Sclose(dataspace);
+  // Connectivity (1D)
+  write_static_1d(vtkhdf_group, "Connectivity", H5T_NATIVE_LLONG,
+                  (hsize_t)this->total_connectivity,
+                  (hsize_t)this->global_connectivity_offset,
+                  (hsize_t)this->numConnectivityIds, connectivity.data(),
+                  this->use_parallel_hdf5, dxpl);
+
+  // Offsets (1D): each partition contributes (numCells + 1) entries.
+  // Total size = total_cells + num_parts. Offsets are LOCAL per partition.
+  {
+    hsize_t off_total = (hsize_t)(this->total_cells + this->num_parts);
+    hsize_t off_offset = (hsize_t)this->global_cell_offset;
+    hsize_t off_count = (hsize_t)(this->numCells + 1);
+    if (this->use_parallel_hdf5) {
+      // Each prior partition contributes numCells[p] + 1 entries
+      off_offset += (hsize_t)specfem::MPI::get_rank();
+    }
+    write_static_1d(vtkhdf_group, "Offsets", H5T_NATIVE_LLONG, off_total,
+                    off_offset, off_count, offsets.data(),
+                    this->use_parallel_hdf5, dxpl);
+  }
+
+  // Types (1D)
+  write_static_1d(vtkhdf_group, "Types", H5T_NATIVE_UCHAR,
+                  (hsize_t)this->total_cells, (hsize_t)this->global_cell_offset,
+                  (hsize_t)this->numCells, types.data(),
+                  this->use_parallel_hdf5, dxpl);
 
   // Extract and write material IDs as CellData
   const auto &element_types = this->assembly.element_types;
@@ -394,21 +474,17 @@ void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
   }
 
   // Create CellData group and write material IDs
-  hid_t cd_group = H5Gcreate(vtkhdf_group, "CellData", H5P_DEFAULT, H5P_DEFAULT,
-                             H5P_DEFAULT);
-  dims[0] = material_ids.size();
-  dataspace = H5Screate_simple(1, dims, NULL);
-  dataset = H5Dcreate(cd_group, "MaterialID", H5T_NATIVE_INT, dataspace,
-                      H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  H5Dwrite(dataset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-           material_ids.data());
-  H5Dclose(dataset);
-  H5Sclose(dataspace);
-  H5Gclose(cd_group);
+  hid_t cd_group = SPECFEM_H5_CHECK_ID(H5Gcreate(
+      vtkhdf_group, "CellData", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT));
+  write_static_1d(cd_group, "MaterialID", H5T_NATIVE_INT,
+                  (hsize_t)this->total_cells, (hsize_t)this->global_cell_offset,
+                  (hsize_t)material_ids.size(), material_ids.data(),
+                  this->use_parallel_hdf5, dxpl);
+  SPECFEM_H5_CHECK(H5Gclose(cd_group));
 
   // Create PointData group
-  hid_t pd_group = H5Gcreate(vtkhdf_group, "PointData", H5P_DEFAULT,
-                             H5P_DEFAULT, H5P_DEFAULT);
+  hid_t pd_group = SPECFEM_H5_CHECK_ID(H5Gcreate(
+      vtkhdf_group, "PointData", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT));
 
   // Write static point data: Jacobian
   {
@@ -439,233 +515,180 @@ void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
       }
     }
 
-    dims[0] = jacobian_data.size();
-    dataspace = H5Screate_simple(1, dims, NULL);
-    dataset = H5Dcreate(pd_group, "Jacobian", H5T_NATIVE_FLOAT, dataspace,
-                        H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-             jacobian_data.data());
-    H5Dclose(dataset);
-    H5Sclose(dataspace);
-  }
-
-  // Write static point data: Material properties (kappa, mu, rho)
-  // Note: These are only available for elastic isotropic materials
-  {
-    std::vector<float> kappa_data, mu_data, rho_data;
-    kappa_data.reserve(this->numPoints);
-    mu_data.reserve(this->numPoints);
-    rho_data.reserve(this->numPoints);
-
-    // Get the elastic isotropic properties container
-    const auto &elastic_properties =
-        this->assembly.properties
-            .get_container<specfem::element::medium_tag::elastic,
-                           specfem::element::property_tag::isotropic>();
-
-    // Access the properties through the assembly
-    // We need to loop through each point and get the properties
-    for (int ispec = 0; ispec < this->nspec; ++ispec) {
-      const auto medium_tag =
-          this->assembly.element_types.get_medium_tag(ispec);
-      const auto property_tag =
-          this->assembly.element_types.get_property_tag(ispec);
-
-      // Check if this is elastic isotropic material
-      if (medium_tag == specfem::element::medium_tag::elastic &&
-          property_tag == specfem::element::property_tag::isotropic) {
-        // Get the property index for this element
-        const int property_index =
-            this->assembly.properties.h_property_index_mapping(ispec);
-
-        for (int iz = 0; iz < this->ngllz; ++iz) {
-          for (int iy = 0; iy < this->nglly; ++iy) {
-            for (int ix = 0; ix < this->ngllx; ++ix) {
-              kappa_data.push_back(static_cast<float>(
-                  elastic_properties.h_kappa(property_index, iz, iy, ix)));
-              mu_data.push_back(static_cast<float>(
-                  elastic_properties.h_mu(property_index, iz, iy, ix)));
-              rho_data.push_back(static_cast<float>(
-                  elastic_properties.h_rho(property_index, iz, iy, ix)));
-            }
-          }
-        }
-      } else {
-        // For non-elastic-isotropic materials, write zeros or NaN
-        for (int iz = 0; iz < this->ngllz; ++iz) {
-          for (int iy = 0; iy < this->nglly; ++iy) {
-            for (int ix = 0; ix < this->ngllx; ++ix) {
-              kappa_data.push_back(0.0f);
-              mu_data.push_back(0.0f);
-              rho_data.push_back(0.0f);
-            }
-          }
-        }
-      }
-    }
-
-    // Write kappa
-    dims[0] = kappa_data.size();
-    dataspace = H5Screate_simple(1, dims, NULL);
-    dataset = H5Dcreate(pd_group, "Kappa", H5T_NATIVE_FLOAT, dataspace,
-                        H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-             kappa_data.data());
-    H5Dclose(dataset);
-    H5Sclose(dataspace);
-
-    // Write mu
-    dims[0] = mu_data.size();
-    dataspace = H5Screate_simple(1, dims, NULL);
-    dataset = H5Dcreate(pd_group, "Mu", H5T_NATIVE_FLOAT, dataspace,
-                        H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-             mu_data.data());
-    H5Dclose(dataset);
-    H5Sclose(dataspace);
-
-    // Write rho
-    dims[0] = rho_data.size();
-    dataspace = H5Screate_simple(1, dims, NULL);
-    dataset = H5Dcreate(pd_group, "Rho", H5T_NATIVE_FLOAT, dataspace,
-                        H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-             rho_data.data());
-    H5Dclose(dataset);
-    H5Sclose(dataspace);
+    write_static_1d(
+        pd_group, "Jacobian", H5T_NATIVE_FLOAT, (hsize_t)this->total_points,
+        (hsize_t)this->global_point_offset, (hsize_t)jacobian_data.size(),
+        jacobian_data.data(), this->use_parallel_hdf5, dxpl);
   }
 
   // Create extensible dataset for wavefield scalars
   // Initial size: 0 (will grow as needed)
   hsize_t pd_initial_dims[1] = { 0 };
   hsize_t pd_max_dims[1] = { H5S_UNLIMITED };
-  hid_t pd_dataspace = H5Screate_simple(1, pd_initial_dims, pd_max_dims);
+  hid_t pd_dataspace =
+      SPECFEM_H5_CHECK_ID(H5Screate_simple(1, pd_initial_dims, pd_max_dims));
 
   // Create dataset creation property list and set chunking
-  hid_t pd_plist = H5Pcreate(H5P_DATASET_CREATE);
-  hsize_t pd_chunk_dims[1] = {
-    (hsize_t)this->numPoints
-  }; // Chunk size = one timestep worth of data
-  H5Pset_chunk(pd_plist, 1, pd_chunk_dims);
+  // Chunk size = one full timestep worth of data (all ranks combined)
+  hid_t pd_plist = SPECFEM_H5_CHECK_ID(H5Pcreate(H5P_DATASET_CREATE));
+  hsize_t pd_chunk_dims[1] = { (hsize_t)this->total_points };
+  SPECFEM_H5_CHECK(H5Pset_chunk(pd_plist, 1, pd_chunk_dims));
 
-  hid_t pd_dataset =
+  hid_t pd_dataset = SPECFEM_H5_CHECK_ID(
       H5Dcreate(pd_group, "Wavefield", H5T_NATIVE_FLOAT, pd_dataspace,
-                H5P_DEFAULT, pd_plist, H5P_DEFAULT);
-  H5Dclose(pd_dataset);
-  H5Pclose(pd_plist);
-  H5Sclose(pd_dataspace);
-  H5Gclose(pd_group);
+                H5P_DEFAULT, pd_plist, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dclose(pd_dataset));
+  SPECFEM_H5_CHECK(H5Pclose(pd_plist));
+  SPECFEM_H5_CHECK(H5Sclose(pd_dataspace));
+  SPECFEM_H5_CHECK(H5Gclose(pd_group));
 
   // Create extensible temporal metadata arrays instead of pre-allocated ones
+  // NumberOfPoints/Cells/ConnectivityIds: num_parts entries per timestep
   hsize_t temp_initial_dims[1] = { 0 };
   hsize_t temp_max_dims[1] = { H5S_UNLIMITED };
-  hsize_t temp_chunk_dims[1] = { 1 }; // Chunk size = 1 timestep
+  hsize_t temp_chunk_dims[1] = { (hsize_t)this->num_parts };
 
   // Create dataset creation property list for chunking
-  hid_t temp_plist = H5Pcreate(H5P_DATASET_CREATE);
-  H5Pset_chunk(temp_plist, 1, temp_chunk_dims);
+  hid_t temp_plist = SPECFEM_H5_CHECK_ID(H5Pcreate(H5P_DATASET_CREATE));
+  SPECFEM_H5_CHECK(H5Pset_chunk(temp_plist, 1, temp_chunk_dims));
 
-  hid_t temp_dataspace = H5Screate_simple(1, temp_initial_dims, temp_max_dims);
-  dataset = H5Dcreate(vtkhdf_group, "NumberOfPoints", H5T_NATIVE_LLONG,
-                      temp_dataspace, H5P_DEFAULT, temp_plist, H5P_DEFAULT);
-  H5Dclose(dataset);
-  H5Sclose(temp_dataspace);
+  hid_t temp_dataspace = SPECFEM_H5_CHECK_ID(
+      H5Screate_simple(1, temp_initial_dims, temp_max_dims));
+  hid_t dataset = SPECFEM_H5_CHECK_ID(
+      H5Dcreate(vtkhdf_group, "NumberOfPoints", H5T_NATIVE_LLONG,
+                temp_dataspace, H5P_DEFAULT, temp_plist, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(temp_dataspace));
 
-  temp_dataspace = H5Screate_simple(1, temp_initial_dims, temp_max_dims);
-  dataset = H5Dcreate(vtkhdf_group, "NumberOfCells", H5T_NATIVE_LLONG,
-                      temp_dataspace, H5P_DEFAULT, temp_plist, H5P_DEFAULT);
-  H5Dclose(dataset);
-  H5Sclose(temp_dataspace);
+  temp_dataspace = SPECFEM_H5_CHECK_ID(
+      H5Screate_simple(1, temp_initial_dims, temp_max_dims));
+  dataset = SPECFEM_H5_CHECK_ID(
+      H5Dcreate(vtkhdf_group, "NumberOfCells", H5T_NATIVE_LLONG, temp_dataspace,
+                H5P_DEFAULT, temp_plist, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(temp_dataspace));
 
-  temp_dataspace = H5Screate_simple(1, temp_initial_dims, temp_max_dims);
-  dataset = H5Dcreate(vtkhdf_group, "NumberOfConnectivityIds", H5T_NATIVE_LLONG,
-                      temp_dataspace, H5P_DEFAULT, temp_plist, H5P_DEFAULT);
-  H5Dclose(dataset);
-  H5Sclose(temp_dataspace);
+  temp_dataspace = SPECFEM_H5_CHECK_ID(
+      H5Screate_simple(1, temp_initial_dims, temp_max_dims));
+  dataset = SPECFEM_H5_CHECK_ID(
+      H5Dcreate(vtkhdf_group, "NumberOfConnectivityIds", H5T_NATIVE_LLONG,
+                temp_dataspace, H5P_DEFAULT, temp_plist, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(temp_dataspace));
 
-  H5Pclose(temp_plist);
+  SPECFEM_H5_CHECK(H5Pclose(temp_plist));
 
   // Create Steps group and extensible metadata
-  hid_t steps_group =
-      H5Gcreate(vtkhdf_group, "Steps", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  hid_t steps_group = SPECFEM_H5_CHECK_ID(
+      H5Gcreate(vtkhdf_group, "Steps", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT));
 
   // Create extensible datasets for time steps metadata
   // NSteps attribute - will be updated during run
-  hid_t attr_space = H5Screate(H5S_SCALAR);
+  hid_t attr_space = SPECFEM_H5_CHECK_ID(H5Screate(H5S_SCALAR));
   int initial_nsteps = 0;
-  hid_t attr = H5Acreate(steps_group, "NSteps", H5T_NATIVE_INT, attr_space,
-                         H5P_DEFAULT, H5P_DEFAULT);
-  H5Awrite(attr, H5T_NATIVE_INT, &initial_nsteps);
-  H5Aclose(attr);
-  H5Sclose(attr_space);
+  hid_t attr =
+      SPECFEM_H5_CHECK_ID(H5Acreate(steps_group, "NSteps", H5T_NATIVE_INT,
+                                    attr_space, H5P_DEFAULT, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Awrite(attr, H5T_NATIVE_INT, &initial_nsteps));
+  SPECFEM_H5_CHECK(H5Aclose(attr));
+  SPECFEM_H5_CHECK(H5Sclose(attr_space));
 
   // Create extensible dataset for time values
   hsize_t steps_initial_dims[1] = { 0 };
   hsize_t steps_max_dims[1] = { H5S_UNLIMITED };
   hsize_t steps_chunk_dims[1] = { 1 };
 
-  hid_t steps_plist = H5Pcreate(H5P_DATASET_CREATE);
-  H5Pset_chunk(steps_plist, 1, steps_chunk_dims);
+  hid_t steps_plist = SPECFEM_H5_CHECK_ID(H5Pcreate(H5P_DATASET_CREATE));
+  SPECFEM_H5_CHECK(H5Pset_chunk(steps_plist, 1, steps_chunk_dims));
 
-  hid_t steps_dataspace =
-      H5Screate_simple(1, steps_initial_dims, steps_max_dims);
-  dataset = H5Dcreate(steps_group, "Values", H5T_NATIVE_DOUBLE, steps_dataspace,
-                      H5P_DEFAULT, steps_plist, H5P_DEFAULT);
-  H5Dclose(dataset);
-  H5Sclose(steps_dataspace);
+  hid_t steps_dataspace = SPECFEM_H5_CHECK_ID(
+      H5Screate_simple(1, steps_initial_dims, steps_max_dims));
+  dataset = SPECFEM_H5_CHECK_ID(
+      H5Dcreate(steps_group, "Values", H5T_NATIVE_DOUBLE, steps_dataspace,
+                H5P_DEFAULT, steps_plist, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(steps_dataspace));
 
-  // Create extensible datasets for NumberOfParts and offset arrays
-  steps_dataspace = H5Screate_simple(1, steps_initial_dims, steps_max_dims);
-  dataset = H5Dcreate(steps_group, "NumberOfParts", H5T_NATIVE_LLONG,
-                      steps_dataspace, H5P_DEFAULT, steps_plist, H5P_DEFAULT);
-  H5Dclose(dataset);
-  H5Sclose(steps_dataspace);
+  // NumberOfParts: 1 entry per timestep (like Values), uses steps_plist
+  steps_dataspace = SPECFEM_H5_CHECK_ID(
+      H5Screate_simple(1, steps_initial_dims, steps_max_dims));
+  dataset = SPECFEM_H5_CHECK_ID(
+      H5Dcreate(steps_group, "NumberOfParts", H5T_NATIVE_LLONG, steps_dataspace,
+                H5P_DEFAULT, steps_plist, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(steps_dataspace));
 
-  steps_dataspace = H5Screate_simple(1, steps_initial_dims, steps_max_dims);
-  dataset = H5Dcreate(steps_group, "PartOffsets", H5T_NATIVE_LLONG,
-                      steps_dataspace, H5P_DEFAULT, steps_plist, H5P_DEFAULT);
-  H5Dclose(dataset);
-  H5Sclose(steps_dataspace);
+  // Offset arrays: 1 entry per timestep (these index into the geometry/data)
+  hid_t offsets_plist = SPECFEM_H5_CHECK_ID(H5Pcreate(H5P_DATASET_CREATE));
+  hsize_t offsets_chunk_dims[1] = { 1 };
+  SPECFEM_H5_CHECK(H5Pset_chunk(offsets_plist, 1, offsets_chunk_dims));
 
-  steps_dataspace = H5Screate_simple(1, steps_initial_dims, steps_max_dims);
-  dataset = H5Dcreate(steps_group, "PointOffsets", H5T_NATIVE_LLONG,
-                      steps_dataspace, H5P_DEFAULT, steps_plist, H5P_DEFAULT);
-  H5Dclose(dataset);
-  H5Sclose(steps_dataspace);
+  steps_dataspace = SPECFEM_H5_CHECK_ID(
+      H5Screate_simple(1, steps_initial_dims, steps_max_dims));
+  dataset = SPECFEM_H5_CHECK_ID(
+      H5Dcreate(steps_group, "PartOffsets", H5T_NATIVE_LLONG, steps_dataspace,
+                H5P_DEFAULT, offsets_plist, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(steps_dataspace));
 
-  steps_dataspace = H5Screate_simple(1, steps_initial_dims, steps_max_dims);
-  dataset = H5Dcreate(steps_group, "CellOffsets", H5T_NATIVE_LLONG,
-                      steps_dataspace, H5P_DEFAULT, steps_plist, H5P_DEFAULT);
-  H5Dclose(dataset);
-  H5Sclose(steps_dataspace);
+  steps_dataspace = SPECFEM_H5_CHECK_ID(
+      H5Screate_simple(1, steps_initial_dims, steps_max_dims));
+  dataset = SPECFEM_H5_CHECK_ID(
+      H5Dcreate(steps_group, "PointOffsets", H5T_NATIVE_LLONG, steps_dataspace,
+                H5P_DEFAULT, offsets_plist, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(steps_dataspace));
 
-  steps_dataspace = H5Screate_simple(1, steps_initial_dims, steps_max_dims);
-  dataset = H5Dcreate(steps_group, "ConnectivityIdOffsets", H5T_NATIVE_LLONG,
-                      steps_dataspace, H5P_DEFAULT, steps_plist, H5P_DEFAULT);
-  H5Dclose(dataset);
-  H5Sclose(steps_dataspace);
+  steps_dataspace = SPECFEM_H5_CHECK_ID(
+      H5Screate_simple(1, steps_initial_dims, steps_max_dims));
+  dataset = SPECFEM_H5_CHECK_ID(
+      H5Dcreate(steps_group, "CellOffsets", H5T_NATIVE_LLONG, steps_dataspace,
+                H5P_DEFAULT, offsets_plist, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(steps_dataspace));
+
+  steps_dataspace = SPECFEM_H5_CHECK_ID(
+      H5Screate_simple(1, steps_initial_dims, steps_max_dims));
+  dataset = SPECFEM_H5_CHECK_ID(
+      H5Dcreate(steps_group, "ConnectivityIdOffsets", H5T_NATIVE_LLONG,
+                steps_dataspace, H5P_DEFAULT, offsets_plist, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(steps_dataspace));
 
   // Create PointDataOffsets subgroup with extensible datasets
-  hid_t pd_offsets_group = H5Gcreate(steps_group, "PointDataOffsets",
-                                     H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  hid_t pd_offsets_group = SPECFEM_H5_CHECK_ID(H5Gcreate(
+      steps_group, "PointDataOffsets", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT));
 
-  // Wavefield offsets (extensible)
-  steps_dataspace = H5Screate_simple(1, steps_initial_dims, steps_max_dims);
-  dataset = H5Dcreate(pd_offsets_group, "Wavefield", H5T_NATIVE_LLONG,
-                      steps_dataspace, H5P_DEFAULT, steps_plist, H5P_DEFAULT);
-  H5Dclose(dataset);
-  H5Sclose(steps_dataspace);
-  H5Gclose(pd_offsets_group);
+  // Wavefield offsets: 1 entry per timestep
+  steps_dataspace = SPECFEM_H5_CHECK_ID(
+      H5Screate_simple(1, steps_initial_dims, steps_max_dims));
+  dataset = SPECFEM_H5_CHECK_ID(
+      H5Dcreate(pd_offsets_group, "Wavefield", H5T_NATIVE_LLONG,
+                steps_dataspace, H5P_DEFAULT, offsets_plist, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dclose(dataset));
+  SPECFEM_H5_CHECK(H5Sclose(steps_dataspace));
+  SPECFEM_H5_CHECK(H5Gclose(pd_offsets_group));
 
-  H5Pclose(steps_plist);
-  H5Gclose(steps_group);
+  SPECFEM_H5_CHECK(H5Pclose(offsets_plist));
+  SPECFEM_H5_CHECK(H5Pclose(steps_plist));
+  SPECFEM_H5_CHECK(H5Gclose(steps_group));
+
+  // Close transfer property list if created
+#ifdef SPECFEM_HDF5_IS_PARALLEL
+  if (this->use_parallel_hdf5) {
+    SPECFEM_H5_CHECK(H5Pclose(dxpl));
+  }
+#endif
 
   // Close HDF5 file - will reopen for each timestep write
-  H5Gclose(vtkhdf_group);
-  H5Fclose(hdf5_file_id);
+  SPECFEM_H5_CHECK(H5Gclose(vtkhdf_group));
+  SPECFEM_H5_CHECK(H5Fclose(hdf5_file_id));
 
-  specfem::Logger::info("Initialized VTK HDF5 file for 3D wavefield output: " +
-                        this->hdf5_filename + " (extensible datasets)");
+  specfem::Logger::info([&](std::ostringstream &oss) {
+    oss << "Initialized VTK HDF5 file for 3D wavefield output: "
+        << this->hdf5_filename << " (" << this->num_parts << " part(s), "
+        << this->total_points << " total points)";
+  });
 
 #else
   throw std::runtime_error(
@@ -673,39 +696,9 @@ void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
 #endif
 }
 
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
-    initialize_display(vtkSmartPointer<vtkFloatArray> &scalars) {
-  // Not implemented for 3D - only HDF5 output is supported
-  throw std::runtime_error(
-      "Display initialization not supported for 3D. Use VTK HDF5 output.");
-}
-
-template <>
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
-    initialize<specfem::display::format::on_screen>(
-        vtkSmartPointer<vtkFloatArray> &scalars) {
-  throw std::runtime_error(
-      "On-screen display not supported for 3D. Use VTK HDF5 output.");
-}
-
-template <>
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
-    initialize<specfem::display::format::PNG>(
-        vtkSmartPointer<vtkFloatArray> &scalars) {
-  throw std::runtime_error(
-      "PNG output not supported for 3D. Use VTK HDF5 output.");
-}
-
-template <>
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
-    initialize<specfem::display::format::JPG>(
-        vtkSmartPointer<vtkFloatArray> &scalars) {
-  throw std::runtime_error(
-      "JPG output not supported for 3D. Use VTK HDF5 output.");
-}
-
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
-    initialize(specfem::assembly::assembly<dimension_tag> &assembly) {
+void specfem::periodic_tasks::
+    plot_wavefield<specfem::element::dimension_tag::dim3>::initialize(
+        specfem::assembly::assembly<dimension_tag> &assembly) {
 
   // Create the grid structure
   create_lagrange_hex_grid();
@@ -715,273 +708,329 @@ void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
   unstructured_grid->GetPointData()->SetScalars(scalars);
 
   switch (output_format) {
-  case specfem::display::format::vtkhdf:
-    this->initialize<specfem::display::format::vtkhdf>(scalars);
-    break;
-  case specfem::display::format::on_screen:
-    this->initialize<specfem::display::format::on_screen>(scalars);
-    break;
-  case specfem::display::format::PNG:
-    this->initialize<specfem::display::format::PNG>(scalars);
-    break;
-  case specfem::display::format::JPG:
-    this->initialize<specfem::display::format::JPG>(scalars);
+  case specfem::enums::display_format::vtkhdf:
+    this->initialize_vtkhdf(scalars);
     break;
   default:
     throw std::runtime_error("Unsupported display format for 3D");
   }
-
-  return;
 }
 
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
-    run_render(vtkSmartPointer<vtkFloatArray> &scalars) {
-  // Not implemented for 3D
-  throw std::runtime_error(
-      "Rendering not supported for 3D. Use VTK HDF5 output.");
+#ifndef NO_HDF5
+// Helper: extend a 1D dataset, select hyperslab at write_offset, write one
+// scalar value, then close the dataset.
+// When do_write is false, the dataset is extended (collective in parallel HDF5)
+// but no data is written (for non-writing ranks).
+void specfem::periodic_tasks::plot_wavefield<
+    specfem::element::dimension_tag::dim3>::
+    extend_and_write_scalar(hid_t parent, const char *dataset_name,
+                            hsize_t new_extent, hsize_t write_offset,
+                            hid_t mem_type, const void *data, hid_t dxpl,
+                            bool do_write) {
+  hid_t ds = SPECFEM_H5_CHECK_ID(H5Dopen(parent, dataset_name, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dset_extent(ds, &new_extent));
+
+  if (do_write) {
+    hid_t filespace = SPECFEM_H5_CHECK_ID(H5Dget_space(ds));
+    hsize_t count = 1;
+    SPECFEM_H5_CHECK(H5Sselect_hyperslab(filespace, H5S_SELECT_SET,
+                                         &write_offset, NULL, &count, NULL));
+    hid_t memspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, &count, NULL));
+    SPECFEM_H5_CHECK(H5Dwrite(ds, mem_type, memspace, filespace, dxpl, data));
+    SPECFEM_H5_CHECK(H5Sclose(memspace));
+    SPECFEM_H5_CHECK(H5Sclose(filespace));
+  }
+
+  SPECFEM_H5_CHECK(H5Dclose(ds));
 }
 
-template <>
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
-    run<specfem::display::format::on_screen>(
-        vtkSmartPointer<vtkFloatArray> &scalars, const int istep) {
-  throw std::runtime_error(
-      "On-screen display not supported for 3D. Use VTK HDF5 output.");
-}
+// Helper: extend a 1D dataset, select hyperslab at write_offset with the given
+// count, write an array of values, then close the dataset.
+// When do_write is false, the dataset is extended but no data is written.
+void specfem::periodic_tasks::plot_wavefield<
+    specfem::element::dimension_tag::dim3>::
+    extend_and_write_array(hid_t parent, const char *dataset_name,
+                           hsize_t new_extent, hsize_t write_offset,
+                           hsize_t count, hid_t mem_type, const void *data,
+                           hid_t dxpl, bool do_write) {
+  hid_t ds = SPECFEM_H5_CHECK_ID(H5Dopen(parent, dataset_name, H5P_DEFAULT));
+  SPECFEM_H5_CHECK(H5Dset_extent(ds, &new_extent));
 
-template <>
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
-    run<specfem::display::format::PNG>(vtkSmartPointer<vtkFloatArray> &scalars,
-                                       const int istep) {
-  throw std::runtime_error(
-      "PNG output not supported for 3D. Use VTK HDF5 output.");
-}
+  if (do_write) {
+    hid_t filespace = SPECFEM_H5_CHECK_ID(H5Dget_space(ds));
+    SPECFEM_H5_CHECK(H5Sselect_hyperslab(filespace, H5S_SELECT_SET,
+                                         &write_offset, NULL, &count, NULL));
+    hid_t memspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, &count, NULL));
+    SPECFEM_H5_CHECK(H5Dwrite(ds, mem_type, memspace, filespace, dxpl, data));
+    SPECFEM_H5_CHECK(H5Sclose(memspace));
+    SPECFEM_H5_CHECK(H5Sclose(filespace));
+  }
 
-template <>
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
-    run<specfem::display::format::JPG>(vtkSmartPointer<vtkFloatArray> &scalars,
-                                       const int istep) {
-  throw std::runtime_error(
-      "JPG output not supported for 3D. Use VTK HDF5 output.");
+  SPECFEM_H5_CHECK(H5Dclose(ds));
 }
+#endif // NO_HDF5
 
-template <>
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
-    run<specfem::display::format::vtkhdf>(
+#ifndef NO_HDF5
+void specfem::periodic_tasks::plot_wavefield<
+    specfem::element::dimension_tag::dim3>::compute_mpi_offsets() {
+#ifdef SPECFEM_ENABLE_MPI
+  if (specfem::MPI::get_size() > 1 && this->use_parallel_hdf5) {
+    MPI_Comm comm = specfem::MPI::communicator();
+
+    SPECFEM_MPI_SAFECALL(MPI_Exscan(&this->numPoints,
+                                    &this->global_point_offset, 1,
+                                    MPI_LONG_LONG, MPI_SUM, comm));
+    SPECFEM_MPI_SAFECALL(MPI_Exscan(&this->numCells, &this->global_cell_offset,
+                                    1, MPI_LONG_LONG, MPI_SUM, comm));
+    SPECFEM_MPI_SAFECALL(MPI_Exscan(&this->numConnectivityIds,
+                                    &this->global_connectivity_offset, 1,
+                                    MPI_LONG_LONG, MPI_SUM, comm));
+
+    // MPI_Exscan leaves rank 0 undefined — set to 0 explicitly
+    if (specfem::MPI::get_rank() == 0) {
+      this->global_point_offset = 0;
+      this->global_cell_offset = 0;
+      this->global_connectivity_offset = 0;
+    }
+
+    SPECFEM_MPI_SAFECALL(MPI_Allreduce(&this->numPoints, &this->total_points, 1,
+                                       MPI_LONG_LONG, MPI_SUM, comm));
+    SPECFEM_MPI_SAFECALL(MPI_Allreduce(&this->numCells, &this->total_cells, 1,
+                                       MPI_LONG_LONG, MPI_SUM, comm));
+    SPECFEM_MPI_SAFECALL(MPI_Allreduce(&this->numConnectivityIds,
+                                       &this->total_connectivity, 1,
+                                       MPI_LONG_LONG, MPI_SUM, comm));
+
+    this->num_parts = specfem::MPI::get_size();
+
+    // Rank 0 gathers all point offsets (needed for PointDataOffsets)
+    this->all_point_offsets.resize(this->num_parts);
+    SPECFEM_MPI_SAFECALL(
+        MPI_Gather(&this->global_point_offset, 1, MPI_LONG_LONG,
+                   this->all_point_offsets.data(), 1, MPI_LONG_LONG, 0, comm));
+
+    // Rank 0 gathers per-rank counts (needed for NumberOfPoints/Cells/Conn)
+    this->all_point_counts.resize(this->num_parts);
+    this->all_cell_counts.resize(this->num_parts);
+    this->all_connectivity_counts.resize(this->num_parts);
+    SPECFEM_MPI_SAFECALL(MPI_Gather(&this->numPoints, 1, MPI_LONG_LONG,
+                                    this->all_point_counts.data(), 1,
+                                    MPI_LONG_LONG, 0, comm));
+    SPECFEM_MPI_SAFECALL(MPI_Gather(&this->numCells, 1, MPI_LONG_LONG,
+                                    this->all_cell_counts.data(), 1,
+                                    MPI_LONG_LONG, 0, comm));
+    SPECFEM_MPI_SAFECALL(MPI_Gather(&this->numConnectivityIds, 1, MPI_LONG_LONG,
+                                    this->all_connectivity_counts.data(), 1,
+                                    MPI_LONG_LONG, 0, comm));
+    return;
+  }
+#endif // SPECFEM_ENABLE_MPI
+
+  // Serial path: global == local
+  this->global_point_offset = 0;
+  this->global_cell_offset = 0;
+  this->global_connectivity_offset = 0;
+  this->total_points = this->numPoints;
+  this->total_cells = this->numCells;
+  this->total_connectivity = this->numConnectivityIds;
+  this->num_parts = 1;
+  this->all_point_offsets = { 0 };
+  this->all_point_counts = { this->numPoints };
+  this->all_cell_counts = { this->numCells };
+  this->all_connectivity_counts = { this->numConnectivityIds };
+}
+#endif // NO_HDF5
+
+#ifndef NO_HDF5
+hid_t specfem::periodic_tasks::plot_wavefield<
+    specfem::element::dimension_tag::dim3>::create_file_access_plist() const {
+  hid_t fapl = SPECFEM_H5_CHECK_ID(H5Pcreate(H5P_FILE_ACCESS));
+#ifdef SPECFEM_HDF5_IS_PARALLEL
+  if (this->use_parallel_hdf5) {
+    SPECFEM_H5_CHECK(
+        H5Pset_fapl_mpio(fapl, specfem::MPI::communicator(), MPI_INFO_NULL));
+  }
+#endif // SPECFEM_HDF5_IS_PARALLEL
+  return fapl;
+}
+#endif // NO_HDF5
+
+void specfem::periodic_tasks::
+    plot_wavefield<specfem::element::dimension_tag::dim3>::run_vtkhdf(
         vtkSmartPointer<vtkFloatArray> &scalars, const int istep) {
 
 #ifndef NO_HDF5
   // Open HDF5 file for extending datasets
-  hid_t hdf5_file_id =
-      H5Fopen(this->hdf5_filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
-  hid_t vtkhdf_group = H5Gopen(hdf5_file_id, "/VTKHDF", H5P_DEFAULT);
+  hid_t fapl = this->create_file_access_plist();
+  hid_t hdf5_file_id = SPECFEM_H5_CHECK_ID(
+      H5Fopen(this->hdf5_filename.c_str(), H5F_ACC_RDWR, fapl));
+  SPECFEM_H5_CHECK(H5Pclose(fapl));
+  hid_t vtkhdf_group =
+      SPECFEM_H5_CHECK_ID(H5Gopen(hdf5_file_id, "/VTKHDF", H5P_DEFAULT));
+
+  // Create transfer property list for parallel HDF5.
+  // Use independent I/O — each rank writes its own hyperslab independently.
+  // Collective I/O can be enabled later as an optimization once correctness
+  // is verified.
+  hid_t dxpl = H5P_DEFAULT;
+#ifdef SPECFEM_HDF5_IS_PARALLEL
+  if (this->use_parallel_hdf5) {
+    dxpl = SPECFEM_H5_CHECK_ID(H5Pcreate(H5P_DATASET_XFER));
+    SPECFEM_H5_CHECK(H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT));
+  }
+#endif
 
   // Extend and write wavefield data
-  hid_t pd_group = H5Gopen(vtkhdf_group, "PointData", H5P_DEFAULT);
-  hid_t pd_dataset = H5Dopen(pd_group, "Wavefield", H5P_DEFAULT);
+  hid_t pd_group =
+      SPECFEM_H5_CHECK_ID(H5Gopen(vtkhdf_group, "PointData", H5P_DEFAULT));
+  hid_t pd_dataset =
+      SPECFEM_H5_CHECK_ID(H5Dopen(pd_group, "Wavefield", H5P_DEFAULT));
 
   // Extend the wavefield dataset to accommodate new timestep
   hsize_t new_size[1] = { (hsize_t)((this->current_timestep + 1) *
-                                    this->numPoints) };
-  H5Dset_extent(pd_dataset, new_size);
+                                    this->total_points) };
+  SPECFEM_H5_CHECK(H5Dset_extent(pd_dataset, new_size));
 
   // Write wavefield data for this timestep
   std::vector<float> scalar_data(this->numPoints);
-  for (int i = 0; i < this->numPoints; i++) {
+  for (long long i = 0; i < this->numPoints; i++) {
     scalar_data[i] = scalars->GetValue(i);
   }
 
   // Calculate offset and count for this timestep
-  hsize_t offset = this->current_timestep * this->numPoints;
-  hsize_t count = this->numPoints;
+  // For parallel: each rank writes at its global offset within this timestep
+  hsize_t offset = (hsize_t)(this->current_timestep * this->total_points +
+                             this->global_point_offset);
+  hsize_t count = (hsize_t)this->numPoints;
 
   // Select hyperslab in the file dataset
-  hid_t filespace = H5Dget_space(pd_dataset);
-  H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &offset, NULL, &count, NULL);
+  hid_t filespace = SPECFEM_H5_CHECK_ID(H5Dget_space(pd_dataset));
+  SPECFEM_H5_CHECK(H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &offset, NULL,
+                                       &count, NULL));
 
-  // Create memory dataspace
-  hid_t memspace = H5Screate_simple(1, &count, NULL);
+  // Create memory dataspace and write
+  hid_t memspace = SPECFEM_H5_CHECK_ID(H5Screate_simple(1, &count, NULL));
+  SPECFEM_H5_CHECK(H5Dwrite(pd_dataset, H5T_NATIVE_FLOAT, memspace, filespace,
+                            dxpl, scalar_data.data()));
 
-  // Write data to dataset
-  H5Dwrite(pd_dataset, H5T_NATIVE_FLOAT, memspace, filespace, H5P_DEFAULT,
-           scalar_data.data());
+  SPECFEM_H5_CHECK(H5Sclose(memspace));
+  SPECFEM_H5_CHECK(H5Sclose(filespace));
+  SPECFEM_H5_CHECK(H5Dclose(pd_dataset));
+  SPECFEM_H5_CHECK(H5Gclose(pd_group));
 
-  H5Sclose(memspace);
-  H5Sclose(filespace);
-  H5Dclose(pd_dataset);
-  H5Gclose(pd_group);
+  // Update temporal metadata arrays (use global totals).
+  // In parallel HDF5, H5Dset_extent is collective — ALL ranks must call it.
+  // Only rank 0 actually writes data; other ranks extend but select H5S_NONE.
+  bool is_metadata_writer =
+      !this->use_parallel_hdf5 || specfem::MPI::main_proc();
 
-  // Update temporal metadata arrays - extend all arrays
-  hsize_t new_timestep_count[1] = { (hsize_t)(this->current_timestep + 1) };
+  hsize_t new_ts_count = (hsize_t)(this->current_timestep + 1);
+  hsize_t ts_offset = (hsize_t)this->current_timestep;
 
-  // Extend and update NumberOfPoints array
-  hid_t np_dataset = H5Dopen(vtkhdf_group, "NumberOfPoints", H5P_DEFAULT);
-  H5Dset_extent(np_dataset, new_timestep_count);
-  hsize_t ts_offset = this->current_timestep;
-  hsize_t ts_count = 1;
-  hid_t np_filespace = H5Dget_space(np_dataset);
-  H5Sselect_hyperslab(np_filespace, H5S_SELECT_SET, &ts_offset, NULL, &ts_count,
-                      NULL);
-  hid_t np_memspace = H5Screate_simple(1, &ts_count, NULL);
-  long long numPoints = this->numPoints;
-  H5Dwrite(np_dataset, H5T_NATIVE_LLONG, np_memspace, np_filespace, H5P_DEFAULT,
-           &numPoints);
-  H5Sclose(np_memspace);
-  H5Sclose(np_filespace);
-  H5Dclose(np_dataset);
+  // NumberOfPoints/Cells/ConnectivityIds: num_parts entries total (static
+  // geometry — partition counts are written once and reused every timestep).
+  // PartOffsets[t] = 0 tells VTK to always read counts from index 0.
+  if (this->current_timestep == 0) {
+    hsize_t count_extent = (hsize_t)this->num_parts;
+    hsize_t count_offset = 0;
+    hsize_t count_count = (hsize_t)this->num_parts;
 
-  // Extend and update NumberOfCells array
-  hid_t nc_dataset = H5Dopen(vtkhdf_group, "NumberOfCells", H5P_DEFAULT);
-  H5Dset_extent(nc_dataset, new_timestep_count);
-  hid_t nc_filespace = H5Dget_space(nc_dataset);
-  H5Sselect_hyperslab(nc_filespace, H5S_SELECT_SET, &ts_offset, NULL, &ts_count,
-                      NULL);
-  hid_t nc_memspace = H5Screate_simple(1, &ts_count, NULL);
-  long long numCells = this->numCells;
-  H5Dwrite(nc_dataset, H5T_NATIVE_LLONG, nc_memspace, nc_filespace, H5P_DEFAULT,
-           &numCells);
-  H5Sclose(nc_memspace);
-  H5Sclose(nc_filespace);
-  H5Dclose(nc_dataset);
-
-  // Extend and update NumberOfConnectivityIds array
-  hid_t nci_dataset =
-      H5Dopen(vtkhdf_group, "NumberOfConnectivityIds", H5P_DEFAULT);
-  H5Dset_extent(nci_dataset, new_timestep_count);
-  hid_t nci_filespace = H5Dget_space(nci_dataset);
-  H5Sselect_hyperslab(nci_filespace, H5S_SELECT_SET, &ts_offset, NULL,
-                      &ts_count, NULL);
-  hid_t nci_memspace = H5Screate_simple(1, &ts_count, NULL);
-  long long numConnIds = this->numConnectivityIds;
-  H5Dwrite(nci_dataset, H5T_NATIVE_LLONG, nci_memspace, nci_filespace,
-           H5P_DEFAULT, &numConnIds);
-  H5Sclose(nci_memspace);
-  H5Sclose(nci_filespace);
-  H5Dclose(nci_dataset);
+    extend_and_write_array(vtkhdf_group, "NumberOfPoints", count_extent,
+                           count_offset, count_count, H5T_NATIVE_LLONG,
+                           this->all_point_counts.data(), dxpl,
+                           is_metadata_writer);
+    extend_and_write_array(vtkhdf_group, "NumberOfCells", count_extent,
+                           count_offset, count_count, H5T_NATIVE_LLONG,
+                           this->all_cell_counts.data(), dxpl,
+                           is_metadata_writer);
+    extend_and_write_array(
+        vtkhdf_group, "NumberOfConnectivityIds", count_extent, count_offset,
+        count_count, H5T_NATIVE_LLONG, this->all_connectivity_counts.data(),
+        dxpl, is_metadata_writer);
+  }
 
   // Update Steps metadata
-  hid_t steps_group = H5Gopen(vtkhdf_group, "Steps", H5P_DEFAULT);
+  hid_t steps_group =
+      SPECFEM_H5_CHECK_ID(H5Gopen(vtkhdf_group, "Steps", H5P_DEFAULT));
 
-  // Extend and write time value for this timestep
-  double time_value = static_cast<double>(istep) * this->dt;
-  hid_t values_dataset = H5Dopen(steps_group, "Values", H5P_DEFAULT);
-  H5Dset_extent(values_dataset, new_timestep_count);
-  hid_t values_filespace = H5Dget_space(values_dataset);
-  H5Sselect_hyperslab(values_filespace, H5S_SELECT_SET, &ts_offset, NULL,
-                      &ts_count, NULL);
-  hid_t values_memspace = H5Screate_simple(1, &ts_count, NULL);
-  H5Dwrite(values_dataset, H5T_NATIVE_DOUBLE, values_memspace, values_filespace,
-           H5P_DEFAULT, &time_value);
-  H5Sclose(values_memspace);
-  H5Sclose(values_filespace);
-  H5Dclose(values_dataset);
+  {
+    double time_value =
+        static_cast<double>(this->assembly.t0) +
+        static_cast<double>(istep) * static_cast<double>(this->assembly.dt);
+    extend_and_write_scalar(steps_group, "Values", new_ts_count, ts_offset,
+                            H5T_NATIVE_DOUBLE, &time_value, dxpl,
+                            is_metadata_writer);
 
-  // Extend and update NumberOfParts (always 1)
-  hid_t nparts_dataset = H5Dopen(steps_group, "NumberOfParts", H5P_DEFAULT);
-  H5Dset_extent(nparts_dataset, new_timestep_count);
-  hid_t nparts_filespace = H5Dget_space(nparts_dataset);
-  H5Sselect_hyperslab(nparts_filespace, H5S_SELECT_SET, &ts_offset, NULL,
-                      &ts_count, NULL);
-  hid_t nparts_memspace = H5Screate_simple(1, &ts_count, NULL);
-  long long numParts = 1;
-  H5Dwrite(nparts_dataset, H5T_NATIVE_LLONG, nparts_memspace, nparts_filespace,
-           H5P_DEFAULT, &numParts);
-  H5Sclose(nparts_memspace);
-  H5Sclose(nparts_filespace);
-  H5Dclose(nparts_dataset);
+    long long num_parts_val = this->num_parts;
+    extend_and_write_scalar(steps_group, "NumberOfParts", new_ts_count,
+                            ts_offset, H5T_NATIVE_LLONG, &num_parts_val, dxpl,
+                            is_metadata_writer);
 
-  // Extend and update offset arrays (all zeros for static geometry/single part)
-  long long zeroOffset = 0;
+    // Offset arrays: 1 entry per timestep.
+    // Static geometry: PartOffsets = 0 (always read counts from index 0
+    // in NumberOfCells/Points/ConnectivityIds). Geometry offsets = 0
+    // (Points/Cells/Connectivity don't change between timesteps).
+    long long zero = 0;
+    extend_and_write_scalar(steps_group, "PartOffsets", new_ts_count, ts_offset,
+                            H5T_NATIVE_LLONG, &zero, dxpl, is_metadata_writer);
 
-  // PartOffsets
-  hid_t part_offsets_dataset = H5Dopen(steps_group, "PartOffsets", H5P_DEFAULT);
-  H5Dset_extent(part_offsets_dataset, new_timestep_count);
-  hid_t part_offsets_filespace = H5Dget_space(part_offsets_dataset);
-  H5Sselect_hyperslab(part_offsets_filespace, H5S_SELECT_SET, &ts_offset, NULL,
-                      &ts_count, NULL);
-  hid_t part_offsets_memspace = H5Screate_simple(1, &ts_count, NULL);
-  H5Dwrite(part_offsets_dataset, H5T_NATIVE_LLONG, part_offsets_memspace,
-           part_offsets_filespace, H5P_DEFAULT, &zeroOffset);
-  H5Sclose(part_offsets_memspace);
-  H5Sclose(part_offsets_filespace);
-  H5Dclose(part_offsets_dataset);
+    extend_and_write_scalar(steps_group, "PointOffsets", new_ts_count,
+                            ts_offset, H5T_NATIVE_LLONG, &zero, dxpl,
+                            is_metadata_writer);
+    extend_and_write_scalar(steps_group, "CellOffsets", new_ts_count, ts_offset,
+                            H5T_NATIVE_LLONG, &zero, dxpl, is_metadata_writer);
+    extend_and_write_scalar(steps_group, "ConnectivityIdOffsets", new_ts_count,
+                            ts_offset, H5T_NATIVE_LLONG, &zero, dxpl,
+                            is_metadata_writer);
 
-  // PointOffsets
-  hid_t point_offsets_dataset =
-      H5Dopen(steps_group, "PointOffsets", H5P_DEFAULT);
-  H5Dset_extent(point_offsets_dataset, new_timestep_count);
-  hid_t point_offsets_filespace = H5Dget_space(point_offsets_dataset);
-  H5Sselect_hyperslab(point_offsets_filespace, H5S_SELECT_SET, &ts_offset, NULL,
-                      &ts_count, NULL);
-  hid_t point_offsets_memspace = H5Screate_simple(1, &ts_count, NULL);
-  H5Dwrite(point_offsets_dataset, H5T_NATIVE_LLONG, point_offsets_memspace,
-           point_offsets_filespace, H5P_DEFAULT, &zeroOffset);
-  H5Sclose(point_offsets_memspace);
-  H5Sclose(point_offsets_filespace);
-  H5Dclose(point_offsets_dataset);
+    // PointDataOffsets/Wavefield: 1 entry per timestep
+    // Offset into the Wavefield dataset for this timestep's data
+    hid_t pd_offsets_group = SPECFEM_H5_CHECK_ID(
+        H5Gopen(steps_group, "PointDataOffsets", H5P_DEFAULT));
 
-  // CellOffsets
-  hid_t cell_offsets_dataset = H5Dopen(steps_group, "CellOffsets", H5P_DEFAULT);
-  H5Dset_extent(cell_offsets_dataset, new_timestep_count);
-  hid_t cell_offsets_filespace = H5Dget_space(cell_offsets_dataset);
-  H5Sselect_hyperslab(cell_offsets_filespace, H5S_SELECT_SET, &ts_offset, NULL,
-                      &ts_count, NULL);
-  hid_t cell_offsets_memspace = H5Screate_simple(1, &ts_count, NULL);
-  H5Dwrite(cell_offsets_dataset, H5T_NATIVE_LLONG, cell_offsets_memspace,
-           cell_offsets_filespace, H5P_DEFAULT, &zeroOffset);
-  H5Sclose(cell_offsets_memspace);
-  H5Sclose(cell_offsets_filespace);
-  H5Dclose(cell_offsets_dataset);
+    long long wf_offset_val =
+        (long long)(this->current_timestep * this->total_points);
+    extend_and_write_scalar(pd_offsets_group, "Wavefield", new_ts_count,
+                            ts_offset, H5T_NATIVE_LLONG, &wf_offset_val, dxpl,
+                            is_metadata_writer);
+    SPECFEM_H5_CHECK(H5Gclose(pd_offsets_group));
 
-  // ConnectivityIdOffsets
-  hid_t conn_offsets_dataset =
-      H5Dopen(steps_group, "ConnectivityIdOffsets", H5P_DEFAULT);
-  H5Dset_extent(conn_offsets_dataset, new_timestep_count);
-  hid_t conn_offsets_filespace = H5Dget_space(conn_offsets_dataset);
-  H5Sselect_hyperslab(conn_offsets_filespace, H5S_SELECT_SET, &ts_offset, NULL,
-                      &ts_count, NULL);
-  hid_t conn_offsets_memspace = H5Screate_simple(1, &ts_count, NULL);
-  H5Dwrite(conn_offsets_dataset, H5T_NATIVE_LLONG, conn_offsets_memspace,
-           conn_offsets_filespace, H5P_DEFAULT, &zeroOffset);
-  H5Sclose(conn_offsets_memspace);
-  H5Sclose(conn_offsets_filespace);
-  H5Dclose(conn_offsets_dataset);
+    // Update NSteps attribute — all ranks write the same value.
+    // In parallel HDF5, attribute writes are not collective but modifying
+    // metadata from a single rank can cause synchronization issues at close.
+    {
+      int nsteps_written = this->current_timestep + 1;
+      hid_t attr =
+          SPECFEM_H5_CHECK_ID(H5Aopen(steps_group, "NSteps", H5P_DEFAULT));
+      SPECFEM_H5_CHECK(H5Awrite(attr, H5T_NATIVE_INT, &nsteps_written));
+      SPECFEM_H5_CHECK(H5Aclose(attr));
+    }
+  }
 
-  // Update PointDataOffsets/Wavefield
-  hid_t pd_offsets_group =
-      H5Gopen(steps_group, "PointDataOffsets", H5P_DEFAULT);
-  hid_t wf_offsets_dataset =
-      H5Dopen(pd_offsets_group, "Wavefield", H5P_DEFAULT);
-  H5Dset_extent(wf_offsets_dataset, new_timestep_count);
-  hid_t wf_offsets_filespace = H5Dget_space(wf_offsets_dataset);
-  H5Sselect_hyperslab(wf_offsets_filespace, H5S_SELECT_SET, &ts_offset, NULL,
-                      &ts_count, NULL);
-  hid_t wf_offsets_memspace = H5Screate_simple(1, &ts_count, NULL);
-  long long wavefieldOffset = this->current_timestep * this->numPoints;
-  H5Dwrite(wf_offsets_dataset, H5T_NATIVE_LLONG, wf_offsets_memspace,
-           wf_offsets_filespace, H5P_DEFAULT, &wavefieldOffset);
-  H5Sclose(wf_offsets_memspace);
-  H5Sclose(wf_offsets_filespace);
-  H5Dclose(wf_offsets_dataset);
-  H5Gclose(pd_offsets_group);
+  SPECFEM_H5_CHECK(H5Gclose(steps_group));
 
-  // Update NSteps attribute
-  int nsteps_written = this->current_timestep + 1;
-  hid_t attr = H5Aopen(steps_group, "NSteps", H5P_DEFAULT);
-  H5Awrite(attr, H5T_NATIVE_INT, &nsteps_written);
-  H5Aclose(attr);
-
-  H5Gclose(steps_group);
+  // Close transfer property list if created
+#ifdef SPECFEM_HDF5_IS_PARALLEL
+  if (this->use_parallel_hdf5) {
+    SPECFEM_H5_CHECK(H5Pclose(dxpl));
+  }
+#endif
 
   // Close HDF5 resources
-  H5Gclose(vtkhdf_group);
-  H5Fclose(hdf5_file_id);
+  SPECFEM_H5_CHECK(H5Gclose(vtkhdf_group));
+
+  // Flush all buffers before close — ensures metadata is synchronized
+  // across ranks, preventing H5Fclose deadlocks in parallel HDF5.
+  SPECFEM_H5_CHECK(H5Fflush(hdf5_file_id, H5F_SCOPE_GLOBAL));
+
+  SPECFEM_H5_CHECK(H5Fclose(hdf5_file_id));
 
   this->current_timestep++;
 
-  specfem::Logger::info("Wrote 3D wavefield data for timestep " +
-                        std::to_string(istep) + " to HDF5 file (step " +
-                        std::to_string(this->current_timestep) + ")");
+  specfem::Logger::info([&](std::ostringstream &oss) {
+    oss << "Wrote 3D wavefield data for timestep " << istep
+        << " to HDF5 file (step " << this->current_timestep << ")";
+  });
 
 #else
   throw std::runtime_error(
@@ -989,40 +1038,35 @@ void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
 #endif
 }
 
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
-    run(specfem::assembly::assembly<dimension_tag> &assembly, const int istep) {
+void specfem::periodic_tasks::
+    plot_wavefield<specfem::element::dimension_tag::dim3>::run(
+        specfem::assembly::assembly<dimension_tag> &assembly, const int istep) {
 
   // Update the wavefield scalars only
   auto scalars = compute_wavefield_scalars(assembly);
   unstructured_grid->GetPointData()->SetScalars(scalars);
 
   switch (output_format) {
-  case (display::format::vtkhdf):
-    this->run<specfem::display::format::vtkhdf>(scalars, istep);
+  case specfem::enums::display_format::vtkhdf:
+    this->run_vtkhdf(scalars, istep);
     break;
-
-  case (display::format::on_screen):
-    this->run<specfem::display::format::on_screen>(scalars, istep);
-    break;
-
-  case (display::format::PNG):
-    this->run<specfem::display::format::PNG>(scalars, istep);
-    break;
-
-  case (display::format::JPG):
-    this->run<specfem::display::format::JPG>(scalars, istep);
-    break;
-
   default:
     throw std::runtime_error("Unsupported output format for 3D");
   }
 }
 
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
-    finalize(specfem::assembly::assembly<dimension_tag> &assembly) {
+void specfem::periodic_tasks::
+    plot_wavefield<specfem::element::dimension_tag::dim3>::finalize(
+        specfem::assembly::assembly<dimension_tag> &assembly) {
 
-  // Clean up VTK objects
-  unstructured_grid = nullptr;
+  switch (output_format) {
+  case specfem::enums::display_format::vtkhdf:
+    // Clean up VTK objects
+    unstructured_grid = nullptr;
+    break;
+  default:
+    throw std::runtime_error("Unsupported output format for 3D");
+  }
 }
 
 #endif // NO_VTK

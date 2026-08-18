@@ -1,15 +1,14 @@
-#include "enumerations/interface.hpp"
-#include "globals.h"
+
+#include "specfem/enums.hpp"
+#include "specfem/setup.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
-#include "specfem_setup.hpp"
-#include "utilities/interface.hpp"
+#include "specfem/utilities.hpp"
 #include "yaml-cpp/yaml.h"
 #include <cmath>
 
-std::vector<specfem::element::medium_tag>
-specfem::sources::force<specfem::dimension::type::dim2>::get_supported_media()
-    const {
+std::vector<specfem::element::medium_tag> specfem::sources::force<
+    specfem::element::dimension_tag::dim2>::get_supported_media() const {
   return {
     specfem::element::medium_tag::acoustic,
     specfem::element::medium_tag::elastic_psv,
@@ -19,15 +18,17 @@ specfem::sources::force<specfem::dimension::type::dim2>::get_supported_media()
   };
 }
 
-specfem::kokkos::HostView1d<type_real>
-specfem::sources::force<specfem::dimension::type::dim2>::get_force_vector()
-    const {
+Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+specfem::sources::force<
+    specfem::element::dimension_tag::dim2>::get_force_vector() const {
 
   // Get the medium tag that the source is located in
   specfem::element::medium_tag medium_tag = this->get_medium_tag();
 
   // Declare the force vector
-  specfem::kokkos::HostView1d<type_real> force_vector;
+  using ViewType =
+      Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>;
+  ViewType force_vector;
 
   // Convert angle to radians
   type_real angle_in_rad = this->angle * Kokkos::numbers::pi_v<type_real> /
@@ -35,24 +36,24 @@ specfem::sources::force<specfem::dimension::type::dim2>::get_force_vector()
 
   // Acoustic
   if (medium_tag == specfem::element::medium_tag::acoustic) {
-    force_vector = specfem::kokkos::HostView1d<type_real>("force_vector", 1);
+    force_vector = ViewType("force_vector", 1);
     force_vector(0) = 1.0;
   }
   // Elastic SH
   else if (medium_tag == specfem::element::medium_tag::elastic_sh) {
-    force_vector = specfem::kokkos::HostView1d<type_real>("force_vector", 1);
+    force_vector = ViewType("force_vector", 1);
     force_vector(0) = 1.0;
   }
   // Elastic P-SV
   else if (medium_tag == specfem::element::medium_tag::elastic_psv) {
-    force_vector = specfem::kokkos::HostView1d<type_real>("force_vector", 2);
+    force_vector = ViewType("force_vector", 2);
     // angle measured clockwise vertical direction
     force_vector(0) = std::sin(angle_in_rad);
     force_vector(1) = std::cos(angle_in_rad);
   }
   // Poroelastic
   else if (medium_tag == specfem::element::medium_tag::poroelastic) {
-    force_vector = specfem::kokkos::HostView1d<type_real>("force_vector", 4);
+    force_vector = ViewType("force_vector", 4);
     force_vector(0) = std::sin(angle_in_rad);
     force_vector(1) = std::cos(angle_in_rad);
     force_vector(2) = std::sin(angle_in_rad);
@@ -60,7 +61,7 @@ specfem::sources::force<specfem::dimension::type::dim2>::get_force_vector()
   }
   // Elastic P-SV-T
   else if (medium_tag == specfem::element::medium_tag::elastic_psv_t) {
-    force_vector = specfem::kokkos::HostView1d<type_real>("force_vector", 3);
+    force_vector = ViewType("force_vector", 3);
     force_vector(0) = std::sin(angle_in_rad);
     force_vector(1) = std::cos(angle_in_rad);
     force_vector(2) = static_cast<type_real>(0.0);
@@ -72,45 +73,40 @@ specfem::sources::force<specfem::dimension::type::dim2>::get_force_vector()
   return force_vector;
 }
 
-std::string
-specfem::sources::force<specfem::dimension::type::dim2>::print() const {
-
-  const auto gcoord = this->get_global_coordinates();
-
-  std::ostringstream message;
-  message << "- Force Source: \n"
-          << "    Source Location: \n"
-          << "      x = " << type_real(gcoord.x) << "\n"
-          << "      z = " << type_real(gcoord.z) << "\n"
-          << "    Source Time Function: \n"
-          << this->source_time_function->print() << "\n";
-
-  return message.str();
-}
-
-bool specfem::sources::force<specfem::dimension::type::dim2>::operator==(
-    const specfem::sources::source<specfem::dimension::type::dim2> &other)
-    const {
+bool specfem::sources::force<specfem::element::dimension_tag::dim2>::operator==(
+    const specfem::sources::source<specfem::element::dimension_tag::dim2>
+        &other) const {
 
   // Try casting the other source to a force source
   const auto *other_source = dynamic_cast<
-      const specfem::sources::force<specfem::dimension::type::dim2> *>(&other);
+      const specfem::sources::force<specfem::element::dimension_tag::dim2> *>(
+      &other);
 
   // Check if cast was successful
   if (other_source == nullptr) {
     std::cout << "Other source is not a force object" << std::endl;
     return false;
   }
-  const auto gcoord = this->get_global_coordinates();
-  const auto other_gcoord = other_source->get_global_coordinates();
+  // Compare input coordinates (identity depends solely on input, not mesh)
+  const auto *c1 = this->get_read_coordinates();
+  const auto *c2 = other_source->get_read_coordinates();
+  bool coords_equal = (c1 && c2) ? (*c1 == *c2) : (!c1 && !c2);
 
-  return specfem::utilities::is_close(gcoord.x, other_gcoord.x) &&
-         specfem::utilities::is_close(gcoord.z, other_gcoord.z) &&
+  return coords_equal &&
          specfem::utilities::is_close(this->angle, other_source->angle) &&
          *(this->source_time_function) == *(other_source->source_time_function);
 }
-bool specfem::sources::force<specfem::dimension::type::dim2>::operator!=(
-    const specfem::sources::source<specfem::dimension::type::dim2> &other)
-    const {
+bool specfem::sources::force<specfem::element::dimension_tag::dim2>::operator!=(
+    const specfem::sources::source<specfem::element::dimension_tag::dim2>
+        &other) const {
   return !(*this == other);
+}
+
+std::string
+specfem::sources::force<specfem::element::dimension_tag::dim2>::print_details()
+    const {
+  std::ostringstream message;
+  message << "(Angle) = ("
+          << specfem::utilities::format_scientific(this->angle, 6) << ")";
+  return message.str();
 }

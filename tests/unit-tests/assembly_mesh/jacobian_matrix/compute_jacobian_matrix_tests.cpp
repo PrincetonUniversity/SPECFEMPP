@@ -1,9 +1,9 @@
 #include "../../SPECFEM_Environment.hpp"
-#include "../../utilities/include/interface.hpp"
-#include "io/interface.hpp"
-#include "quadrature/interface.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/jacobian_matrix.hpp"
+#include "specfem/assembly/mesh.hpp"
+#include "specfem/io.hpp"
 #include "specfem/mpi.hpp"
+#include "specfem/quadrature.hpp"
 #include "yaml-cpp/yaml.h"
 #include <fstream>
 #include <iostream>
@@ -72,11 +72,11 @@ TEST(ASSEMBLY_MESH, compute_jacobian_matrix) {
 
   specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
       test_config.database_filename, specfem::enums::elastic_wave::psv,
-      specfem::enums::electromagnetic_wave::te);
+      specfem::enums::electromagnetic_wave::te, specfem::attenuation::Setup{});
 
-  specfem::assembly::mesh<specfem::dimension::type::dim2> compute_mesh(
+  specfem::assembly::mesh<specfem::element::dimension_tag::dim2> compute_mesh(
       mesh.tags, mesh.control_nodes, quadratures, mesh.adjacency_graph);
-  specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
+  specfem::assembly::jacobian_matrix<specfem::element::dimension_tag::dim2>
       jacobian_matrix(compute_mesh);
 
   const int nspec = compute_mesh.nspec;
@@ -95,17 +95,17 @@ TEST(ASSEMBLY_MESH, compute_jacobian_matrix) {
   for (int ix = 0; ix < ngllx; ++ix) {
     for (int iz = 0; iz < ngllz; ++iz) {
       for (int ispec = 0; ispec < nspec; ++ispec) {
-        const specfem::point::index<specfem::dimension::type::dim2> index(
-            ispec, iz, ix);
+        const specfem::point::index<specfem::element::dimension_tag::dim2>
+            index(ispec, iz, ix);
         const auto point_jacobian_matrix = [&]() {
-          specfem::point::jacobian_matrix<specfem::dimension::type::dim2, true,
-                                          false>
+          specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2,
+                                          true, false>
               point_jacobian_matrix;
           specfem::assembly::load_on_host(index, jacobian_matrix,
                                           point_jacobian_matrix);
           return point_jacobian_matrix;
         }();
-        const int ispec_mesh = compute_mesh.compute_to_mesh(ispec);
+        const int ispec_mesh = compute_mesh.h_compute_to_mesh(ispec);
 
         EXPECT_NEAR(point_jacobian_matrix.xix, xix_ref.data(ispec_mesh, iz, ix),
                     xix_ref.tol);
@@ -127,11 +127,11 @@ TEST(ASSEMBLY_MESH, compute_jacobian_matrix) {
       for (int ispec = 0; ispec < nspec; ispec += vector_length) {
         const int num_elements =
             (ispec + vector_length < nspec) ? vector_length : nspec - ispec;
-        const specfem::point::index<specfem::dimension::type::dim2, true>
+        const specfem::point::index<specfem::element::dimension_tag::dim2, true>
             simd_index(ispec, num_elements, iz, ix);
         const auto point_jacobian_matrix = [&]() {
-          specfem::point::jacobian_matrix<specfem::dimension::type::dim2, true,
-                                          true>
+          specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2,
+                                          true, true>
               point_jacobian_matrix;
           specfem::assembly::load_on_host(simd_index, jacobian_matrix,
                                           point_jacobian_matrix);
@@ -139,7 +139,7 @@ TEST(ASSEMBLY_MESH, compute_jacobian_matrix) {
         }();
 
         for (int i = 0; i < num_elements; ++i) {
-          const int ispec_mesh = compute_mesh.compute_to_mesh(ispec + i);
+          const int ispec_mesh = compute_mesh.h_compute_to_mesh(ispec + i);
           EXPECT_NEAR(point_jacobian_matrix.xix[i],
                       xix_ref.data(ispec_mesh, iz, ix), xix_ref.tol);
           EXPECT_NEAR(point_jacobian_matrix.gammax[i],

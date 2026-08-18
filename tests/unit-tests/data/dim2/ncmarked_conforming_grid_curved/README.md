@@ -9,13 +9,13 @@ An 8 x 8 grid of elements with the bottom half as elastic and the top half as ac
 To regenerate the database, convert the topography file into the files in `MESH` through `gmsh`, then run meshfem over `Par_file`:
 
 ```bash
-python scripts/gmshlayerbuilder simple_dg_topo.dat MESH
+python scripts/gmshlayerbuilder 2d simple_dg_topo.dat MESH
 xmeshfem2D -p Par_file
 ```
 
 Relative to `provenance`:
 
 ```bash
-python ../../../../../../scripts/gmshlayerbuilder simple_dg_topo.dat MESH
+python ../../../../../../scripts/gmshlayerbuilder 2d simple_dg_topo.dat MESH
 ../../../../../../bin/xmeshfem2D -p Par_file
 ```

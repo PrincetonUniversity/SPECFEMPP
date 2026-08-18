@@ -1,6 +1,6 @@
 #pragma once
-#include "kokkos_abstractions.h"
-#include "specfem_setup.hpp"
+
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <ostream>
 
@@ -84,7 +84,8 @@ public:
    */
   virtual void compute_source_time_function(
       const type_real t0, const type_real dt, const int nsteps,
-      specfem::kokkos::HostView2d<type_real> source_time_function) = 0;
+      Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+          source_time_function) = 0;
 };
 } // namespace source_time_functions
 } // namespace specfem

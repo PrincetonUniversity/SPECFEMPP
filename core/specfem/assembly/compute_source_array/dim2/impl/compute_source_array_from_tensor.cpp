@@ -1,26 +1,29 @@
 #include "compute_source_array_from_tensor.hpp"
-#include "algorithms/interface.hpp"
-#include "kokkos_abstractions.h"
-#include "quadrature/interface.hpp"
+
+#include "specfem/algorithms.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/point.hpp"
+#include "specfem/quadrature.hpp"
+#include "specfem/setup.hpp"
 #include "specfem/source.hpp"
-#include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly::compute_source_array_impl {
 
 void compute_source_array_from_tensor_and_element_jacobian(
-    const specfem::sources::tensor_source<specfem::dimension::type::dim2>
+    const specfem::sources::tensor_source<specfem::element::dimension_tag::dim2>
         &tensor_source,
     const JacobianViewType2D &element_jacobian_matrix,
     const specfem::assembly::mesh_impl::quadrature<
-        specfem::dimension::type::dim2> &quadrature,
+        specfem::element::dimension_tag::dim2> &quadrature,
     Kokkos::View<type_real ***, Kokkos::LayoutRight, Kokkos::HostSpace>
         source_array) {
+
+  using ViewType =
+      Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>;
 
   const int ngllx = quadrature.N;
   const int ngllz = quadrature.N;
@@ -37,8 +40,7 @@ void compute_source_array_from_tensor_and_element_jacobian(
       specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
           tensor_source.get_local_coordinates().gamma, ngllz, gamma);
 
-  specfem::kokkos::HostView2d<type_real> source_polynomial("source_polynomial",
-                                                           ngllz, ngllx);
+  ViewType source_polynomial("source_polynomial", ngllz, ngllx);
 
   // Use pre-computed jacobian data instead of loading from jacobian_matrix
   for (int iz = 0; iz < ngllz; ++iz) {
@@ -86,11 +88,11 @@ void compute_source_array_from_tensor_and_element_jacobian(
 } // namespace specfem::assembly::compute_source_array_impl
 
 void specfem::assembly::compute_source_array_impl::from_tensor(
-    const specfem::sources::tensor_source<specfem::dimension::type::dim2>
+    const specfem::sources::tensor_source<specfem::element::dimension_tag::dim2>
         &tensor_source,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
-        &jacobian_matrix,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
+    const specfem::assembly::jacobian_matrix<
+        specfem::element::dimension_tag::dim2> &jacobian_matrix,
     Kokkos::View<type_real ***, Kokkos::LayoutRight, Kokkos::HostSpace>
         source_array) {
 
@@ -103,7 +105,7 @@ void specfem::assembly::compute_source_array_impl::from_tensor(
   // Extract jacobian data from jacobian_matrix
   for (int iz = 0; iz < ngllz; ++iz) {
     for (int ix = 0; ix < ngllx; ++ix) {
-      const specfem::point::index<specfem::dimension::type::dim2> index(
+      const specfem::point::index<specfem::element::dimension_tag::dim2> index(
           tensor_source.get_local_coordinates().ispec, iz, ix);
       specfem::assembly::compute_source_array_impl::PointJacobianMatrix2D
           derivatives;
@@ -113,7 +115,7 @@ void specfem::assembly::compute_source_array_impl::from_tensor(
   }
   const auto &quadrature =
       static_cast<const specfem::assembly::mesh_impl::quadrature<
-          specfem::dimension::type::dim2> &>(mesh);
+          specfem::element::dimension_tag::dim2> &>(mesh);
 
   specfem::assembly::compute_source_array_impl::
       compute_source_array_from_tensor_and_element_jacobian(

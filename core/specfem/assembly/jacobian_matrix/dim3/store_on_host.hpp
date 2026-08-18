@@ -1,17 +1,19 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
 namespace specfem::assembly {
 
+/** @brief Store a scalar 3D Jacobian matrix value on the host. */
 template <
     typename PointIndexType, typename PointType, typename ContainerType,
     typename std::enable_if_t<
         specfem::data_access::is_index_type<PointIndexType>::value &&
-            PointIndexType::dimension_tag == specfem::dimension::type::dim3 &&
+            PointIndexType::dimension_tag ==
+                specfem::element::dimension_tag::dim3 &&
             !PointIndexType::using_simd && !PointType::simd::using_simd &&
             specfem::data_access::is_jacobian_matrix<ContainerType>::value,
         int> = 0>

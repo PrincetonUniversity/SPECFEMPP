@@ -29,7 +29,7 @@ namespace specfem::point {
  * @code{.cpp}
  * // Example: Creating 2D elastic inverse mass matrix accessor
  * using MassInvField = specfem::point::mass_inverse<
- *     specfem::dimension::type::dim2,
+ *     specfem::element::dimension_tag::dim2,
  *     specfem::element::medium_tag::elastic,
  *     false>;  // No SIMD
  *
@@ -69,7 +69,8 @@ namespace specfem::point {
  * @see specfem::point::velocity for velocity field accessor
  * @see specfem::point::acceleration for acceleration field accessor
  */
-template <specfem::dimension::type DimensionTag,
+namespace impl {
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
 class mass_inverse
     : public impl::field<DimensionTag, MediumTag,
@@ -99,5 +100,10 @@ public:
    */
   using base_type::base_type;
 };
+} // namespace impl
+
+template <typename Tags>
+using mass_inverse =
+    impl::mass_inverse<Tags::dimension_tag, Tags::medium_tag, Tags::using_simd>;
 
 } // namespace specfem::point

@@ -1,20 +1,11 @@
 #pragma once
 
 #include "data_class.hpp"
-#include "enumerations/interface.hpp"
+#include "specfem/datatype/accessor_type.hpp"
+#include "specfem/enums.hpp"
 #include <type_traits>
 
 namespace specfem::data_access {
-
-/**
- * @brief Data access patterns for spectral element simulations.
- */
-enum class AccessorType {
-  point,         ///< Single quadrature point access
-  element,       ///< Full element access
-  chunk_element, ///< Chunked element access for vectorization
-  chunk_edge     ///< Chunked edge access for interfaces
-};
 
 /**
  * @brief Type-safe data accessor for simulation components.
@@ -28,9 +19,9 @@ enum class AccessorType {
  * @tparam DimensionTag Spatial dimension (2D/3D)
  * @tparam UseSIMD Enable SIMD vectorization
  */
-template <specfem::data_access::AccessorType AccessorType,
+template <specfem::datatype::AccessorType AccessorType,
           specfem::data_access::DataClassType DataClass,
-          specfem::dimension::type DimensionTag, bool UseSIMD>
+          specfem::element::dimension_tag DimensionTag, bool UseSIMD>
 struct Accessor;
 
 /**
@@ -44,12 +35,29 @@ template <typename T, typename = void> struct is_accessor : std::false_type {};
 template <typename T>
 struct is_accessor<
     T, std::enable_if_t<std::is_same_v<decltype(T::accessor_type),
-                                       specfem::data_access::AccessorType> > >
+                                       specfem::datatype::AccessorType>>>
+    : std::true_type {};
+
+/**
+ * @brief Type trait to detect a codimension-1 accessor type (chunk_edge for
+ * dim2, chunk_face for dim3).
+ */
+template <typename T, typename = void>
+struct is_codim1_chunk : std::false_type {};
+
+template <typename T>
+struct is_codim1_chunk<
+    T, std::enable_if_t<
+           (T::accessor_type == specfem::datatype::AccessorType::chunk_edge &&
+            T::dimension_tag == specfem::element::dimension_tag::dim2) ||
+           (T::accessor_type == specfem::datatype::AccessorType::chunk_face &&
+            T::dimension_tag == specfem::element::dimension_tag::dim3)>>
     : std::true_type {};
 
 } // namespace specfem::data_access
 
 #include "accessor/chunk_edge.hpp"
 #include "accessor/chunk_element.hpp"
+#include "accessor/chunk_face.hpp"
 #include "accessor/element.hpp"
 #include "accessor/point_accessor.hpp"

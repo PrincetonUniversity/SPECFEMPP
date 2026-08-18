@@ -1,8 +1,8 @@
 #include "../properties_tests.hpp"
 #include "specfem/point/properties.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
+#include "specfem/utilities.hpp"
 #include "test_macros.hpp"
-#include "utilities/interface.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 
@@ -33,6 +33,10 @@ TYPED_TEST(PointPropertiesTest, ElasticAnisotropic2D) {
   simd_type rho;
   simd_type rho_vp_val;
   simd_type rho_vs_val;
+  simd_type vp_val;
+  simd_type vs_val;
+  simd_type vmax_val;
+  simd_type vmin_val;
 
   if constexpr (using_simd) {
     T rho_arr[simd_size];
@@ -47,6 +51,10 @@ TYPED_TEST(PointPropertiesTest, ElasticAnisotropic2D) {
     T c25_arr[simd_size];
     T rho_vp_val_arr[simd_size];
     T rho_vs_val_arr[simd_size];
+    T vp_val_arr[simd_size];
+    T vs_val_arr[simd_size];
+    T vmax_val_arr[simd_size];
+    T vmin_val_arr[simd_size];
     // Setup test data for SIMD
     for (int i = 0; i < simd_size; ++i) {
       rho_arr[i] = 2500.0 + i * 50.0;  // kg/m³
@@ -65,22 +73,46 @@ TYPED_TEST(PointPropertiesTest, ElasticAnisotropic2D) {
                                     static_cast<type_real>(c33_arr[i]));
       rho_vs_val_arr[i] = std::sqrt(static_cast<type_real>(rho_arr[i]) *
                                     static_cast<type_real>(c55_arr[i]));
+      vp_val_arr[i] = std::sqrt(static_cast<type_real>(c33_arr[i]) /
+                                static_cast<type_real>(rho_arr[i]));
+      vs_val_arr[i] = std::sqrt(static_cast<type_real>(c55_arr[i]) /
+                                static_cast<type_real>(rho_arr[i]));
+      vmax_val_arr[i] = std::max(vp_val_arr[i], vs_val_arr[i]);
+      vmin_val_arr[i] = std::min(vp_val_arr[i], vs_val_arr[i]);
     }
     // Copy to SIMD types
-    rho.copy_from(rho_arr, Kokkos::Experimental::simd_flag_default);
-    c11.copy_from(c11_arr, Kokkos::Experimental::simd_flag_default);
-    c13.copy_from(c13_arr, Kokkos::Experimental::simd_flag_default);
-    c15.copy_from(c15_arr, Kokkos::Experimental::simd_flag_default);
-    c33.copy_from(c33_arr, Kokkos::Experimental::simd_flag_default);
-    c35.copy_from(c35_arr, Kokkos::Experimental::simd_flag_default);
-    c55.copy_from(c55_arr, Kokkos::Experimental::simd_flag_default);
-    c12.copy_from(c12_arr, Kokkos::Experimental::simd_flag_default);
-    c23.copy_from(c23_arr, Kokkos::Experimental::simd_flag_default);
-    c25.copy_from(c25_arr, Kokkos::Experimental::simd_flag_default);
-    rho_vp_val.copy_from(rho_vp_val_arr,
-                         Kokkos::Experimental::simd_flag_default);
-    rho_vs_val.copy_from(rho_vs_val_arr,
-                         Kokkos::Experimental::simd_flag_default);
+    rho = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        rho_arr, Kokkos::Experimental::simd_flag_default);
+    c11 = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        c11_arr, Kokkos::Experimental::simd_flag_default);
+    c13 = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        c13_arr, Kokkos::Experimental::simd_flag_default);
+    c15 = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        c15_arr, Kokkos::Experimental::simd_flag_default);
+    c33 = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        c33_arr, Kokkos::Experimental::simd_flag_default);
+    c35 = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        c35_arr, Kokkos::Experimental::simd_flag_default);
+    c55 = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        c55_arr, Kokkos::Experimental::simd_flag_default);
+    c12 = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        c12_arr, Kokkos::Experimental::simd_flag_default);
+    c23 = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        c23_arr, Kokkos::Experimental::simd_flag_default);
+    c25 = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        c25_arr, Kokkos::Experimental::simd_flag_default);
+    rho_vp_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        rho_vp_val_arr, Kokkos::Experimental::simd_flag_default);
+    rho_vs_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        rho_vs_val_arr, Kokkos::Experimental::simd_flag_default);
+    vp_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        vp_val_arr, Kokkos::Experimental::simd_flag_default);
+    vs_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        vs_val_arr, Kokkos::Experimental::simd_flag_default);
+    vmax_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        vmax_val_arr, Kokkos::Experimental::simd_flag_default);
+    vmin_val = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        vmin_val_arr, Kokkos::Experimental::simd_flag_default);
   } else {
     // Anisotropic material values (e.g., shale-like)
     constexpr type_real rho_val = 2500.0; // kg/m³
@@ -109,12 +141,17 @@ TYPED_TEST(PointPropertiesTest, ElasticAnisotropic2D) {
     // Computed values for verification
     rho_vp_val = std::sqrt(rho_val * c33_val);
     rho_vs_val = std::sqrt(rho_val * c55_val);
+    vp_val = std::sqrt(c33_val / rho_val);
+    vs_val = std::sqrt(c55_val / rho_val);
+    vmax_val = std::max(vp_val, vs_val);
+    vmin_val = std::min(vp_val, vs_val);
   }
 
   // Create the properties object
-  using PointPropertiesType = specfem::point::properties<
-      specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-      specfem::element::property_tag::anisotropic, using_simd>;
+  using PointPropertiesType = specfem::point::properties<specfem::tags::Tags<
+      specfem::element::dimension_tag::dim2,
+      specfem::element::medium_tag::elastic,
+      specfem::element::property_tag::anisotropic, using_simd> >;
   PointPropertiesType props(c11, c13, c15, c33, c35, c55, c12, c23, c25, rho);
 
   // Additional constructors and assignment tests
@@ -193,4 +230,14 @@ TYPED_TEST(PointPropertiesTest, ElasticAnisotropic2D) {
       << ExpectedGot(rho_vp_val, props.rho_vp());
   EXPECT_TRUE(specfem::utilities::is_close(props.rho_vs(), rho_vs_val))
       << ExpectedGot(rho_vs_val, props.rho_vs());
+
+  // New property checks
+  EXPECT_TRUE(specfem::utilities::is_close(props.vp(), vp_val))
+      << ExpectedGot(vp_val, props.vp());
+  EXPECT_TRUE(specfem::utilities::is_close(props.vs(), vs_val))
+      << ExpectedGot(vs_val, props.vs());
+  EXPECT_TRUE(specfem::utilities::is_close(props.vmax(), vmax_val))
+      << ExpectedGot(vmax_val, props.vmax());
+  EXPECT_TRUE(specfem::utilities::is_close(props.vmin(), vmin_val))
+      << ExpectedGot(vmin_val, props.vmin());
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/periodic_tasks/periodic_task.hpp"
 #include <Kokkos_Core.hpp>
 #include <memory>
@@ -35,6 +35,14 @@ public:
    * @param argv Argument vector
    */
   Context(int argc, char *argv[]);
+
+  /**
+   * @brief Initialize context with subset of MPI processes
+   * @param argc Argument count
+   * @param argv Argument vector
+   * @param nprocs Number of processes to use (creates subset communicator)
+   */
+  Context(int argc, char *argv[], int nprocs);
 
   /**
    * @brief Initialize context from argument vector

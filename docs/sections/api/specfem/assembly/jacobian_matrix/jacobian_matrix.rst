@@ -10,10 +10,10 @@
 Dimension-Specific Implementations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. doxygenstruct:: specfem::assembly::jacobian_matrix< specfem::dimension::type::dim2 >
+.. doxygenstruct:: specfem::assembly::jacobian_matrix< specfem::element::dimension_tag::dim2 >
     :members:
 
-.. doxygenstruct:: specfem::assembly::jacobian_matrix< specfem::dimension::type::dim3 >
+.. doxygenstruct:: specfem::assembly::jacobian_matrix< specfem::element::dimension_tag::dim3 >
     :members:
 
 Data Access Functions

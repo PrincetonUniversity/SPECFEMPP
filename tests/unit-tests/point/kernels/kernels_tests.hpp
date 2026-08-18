@@ -1,7 +1,7 @@
 #pragma once
 
-#include "datatypes/simd.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/datatype.hpp"
+#include "specfem/setup.hpp"
 #include "test_helper.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>

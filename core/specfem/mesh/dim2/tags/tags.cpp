@@ -1,0 +1,52 @@
+#include "tags.hpp"
+#include "specfem/element.hpp"
+
+specfem::mesh::tags<specfem::element::dimension_tag::dim2>::tags(
+    const specfem::mesh::materials<specfem::element::dimension_tag::dim2>
+        &materials,
+    const specfem::mesh::boundaries<specfem::element::dimension_tag::dim2>
+        &boundaries) {
+
+  this->nspec = materials.material_index_mapping.extent(0);
+
+  this->tags_container =
+      Kokkos::View<specfem::mesh::impl::tags_container *, Kokkos::HostSpace>(
+          "specfem::mesh::tags::tags", this->nspec);
+
+  std::vector<specfem::element::boundary_tag_container> boundary_tag(
+      this->nspec);
+
+  const auto &absorbing_boundary = boundaries.absorbing_boundary;
+  for (int i = 0; i < absorbing_boundary.nelements; ++i) {
+    const int ispec = absorbing_boundary.index_mapping(i);
+    boundary_tag[ispec] += specfem::element::boundary_tag::stacey;
+  }
+
+  const auto &acoustic_free_surface = boundaries.acoustic_free_surface;
+  for (int i = 0; i < acoustic_free_surface.nelem_acoustic_surface; ++i) {
+    const int ispec = acoustic_free_surface.index_mapping(i);
+    const auto &material_specification =
+        materials.material_index_mapping(ispec);
+    if (material_specification.type != specfem::element::medium_tag::acoustic) {
+      throw std::invalid_argument(
+          "Error: Acoustic free surface boundary is not an acoustic element");
+    }
+    boundary_tag[ispec] +=
+        specfem::element::boundary_tag::acoustic_free_surface;
+  }
+
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    const auto &material_specification =
+        materials.material_index_mapping(ispec);
+    const auto medium_tag = material_specification.type;
+    const auto property_tag = material_specification.property;
+    const auto attenuation_tag = material_specification.attenuation;
+
+    this->tags_container(ispec).medium_tag = medium_tag;
+    this->tags_container(ispec).property_tag = property_tag;
+    this->tags_container(ispec).attenuation_tag = attenuation_tag;
+    this->tags_container(ispec).boundary_tag = boundary_tag[ispec].get_tag();
+    // 2D MPI not yet implemented; all elements inner for now
+    this->tags_container(ispec).mpi_tag = specfem::element::mpi_tag::inner;
+  }
+}

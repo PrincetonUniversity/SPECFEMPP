@@ -1,5 +1,5 @@
 #include "specfem/timescheme.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <ostream>
 
 std::ostream &

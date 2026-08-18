@@ -25,26 +25,31 @@
 !
 !=====================================================================
 
-  subroutine save_databases(nspec,nglob, &
-                            iMPIcut_xi,iMPIcut_eta, &
-                            nodes_coords,ispec_material_id, &
-                            nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
-                            ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top)
+subroutine save_databases(nspec,nglob, &
+  iMPIcut_xi,iMPIcut_eta, &
+  nodes_coords,ispec_material_id, &
+  nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
+  ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top)
 
   use constants, only: MAX_STRING_LEN,IDOMAIN_ACOUSTIC,IDOMAIN_ELASTIC,IDOMAIN_POROELASTIC, &
     NDIM,IMAIN,IIN_DB,myrank,NGLLZ,NGLLY,NGLLX
 
-  use constants_meshfem, only: NGLLX_M,NGLLY_M,NGLLZ_M,MAX_NEIGHBORS
+  use constants_meshfem, only: NGLLX_M,NGLLY_M,NGLLZ_M
 
-  use shared_parameters, only: COUPLE_WITH_INJECTION_TECHNIQUE,NGNOD,NGNOD2D
+  use shared_parameters, only: COUPLE_WITH_INJECTION_TECHNIQUE,NGNOD,NGNOD2D,LOCAL_PATH, &
+    UTM_PROJECTION_ZONE,SUPPRESS_UTM_PROJECTION
 
   use meshfem_par, only: ibool,xstore,ystore,zstore, &
     addressing,NPROC_XI,NPROC_ETA,iproc_xi_current,iproc_eta_current, &
-    prname, &
+    prname,sizeprocs, &
     NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
     NMATERIALS,material_properties,material_properties_undef, &
     nspec_CPML,is_CPML,CPML_to_spec,CPML_regions, &
-    SAVE_MESH_AS_CUBIT, MESH_A_CHUNK_OF_THE_EARTH,adjacency_matrix
+    SAVE_MESH_AS_CUBIT, MESH_A_CHUNK_OF_THE_EARTH, &
+    xadj_adj, adjncy_adj, adj_types_local, nb_adj_edges, &
+    STACEY_ABSORBING_CONDITIONS, TOP_FREE_SURFACE, BOTTOM_FREE_SURFACE
+
+  use assemble_MPI_par, only: mpi_adjacency, num_mpi_adjacencies
 
   !! setting up wavefield discontinuity interface
   use shared_parameters, only: IS_WAVEFIELD_DISCONTINUITY
@@ -89,22 +94,25 @@
 
   integer :: ndef,nundef
   integer :: mat_id,domain_id
+  ! effective boundary counts: zeroed when STACEY_ABSORBING_CONDITIONS is false
+  integer :: n_abs_xmin, n_abs_xmax, n_abs_ymin, n_abs_ymax
+  ! Z boundary face counts: present whenever the face has any BC applied
+  integer :: n_bottom, n_top
   ! there was a potential bug here if nspec is big
   !integer,dimension(2,nspec) :: material_index
   integer,dimension(:,:),allocatable :: material_index
   character(len=MAX_STRING_LEN), dimension(6,1) :: undef_mat_prop
 
+  ! for new MPI database path: database/proc_N.bin
+  character(len=MAX_STRING_LEN) :: database_file
+  character(len=32) :: proc_str_db, format_str_db
+  integer :: ndigits_db
+
   ! temporary array for local nodes (either NGNOD2D or NGNOD)
   integer, dimension(NGNOD) :: loc_node
   integer, dimension(NGNOD) :: anchor_iax,anchor_iay,anchor_iaz
   integer :: ia,inode
-  integer :: index, total_nadj_element, jspec
-  integer :: nadj_element(nspec)
-  integer :: adj_element(nspec,0:MAX_NEIGHBORS-1), adj_type(nspec,0:MAX_NEIGHBORS-1)
-
-  nadj_element(:) = 0
-  adj_element(:,:) = -1
-  adj_type(:,:) = -1
+  integer :: index, total_nadj_element
 
   ! assignes material index
   ! format: (1,ispec) = #material_id , (2,ispec) = #material_definition
@@ -152,15 +160,32 @@
     call flush_IMAIN()
   endif
 
+  ! construct database file path: DATABASE/proc_N.bin for MPI, Database.bin for serial
+  if (sizeprocs <= 1) then
+    database_file = trim(LOCAL_PATH) // '/Database.bin'
+  else
+    ndigits_db = int(log10(real(sizeprocs-1))) + 1
+    write(format_str_db,'(a,i0,a,i0,a)') '(i', ndigits_db, '.', ndigits_db, ')'
+    write(proc_str_db, format_str_db) myrank
+    ! create Database/ subdirectory on rank 0, then synchronize
+    if (myrank == 0) then
+      call execute_command_line('mkdir -p ' // trim(LOCAL_PATH) // '/Database', wait=.true.)
+    endif
+    call synchronize_all()
+    database_file = trim(LOCAL_PATH) // '/Database/proc_' // trim(proc_str_db) // '.bin'
+  endif
+
   ! opens database file
-  open(unit=IIN_database,file=prname(1:len_trim(prname))//'Database.bin', &
-       status='unknown',action='write',form='unformatted',iostat=ier)
+  open(unit=IIN_database,file=trim(database_file), &
+    status='unknown',action='write',form='unformatted',iostat=ier)
   if (ier /= 0) then
-    print *,'Error opening Database file: ',prname(1:len_trim(prname))//'Database'
+    print *,'Error opening Database file: ',trim(database_file)
     stop 'error opening Database file'
   endif
 
   write(IIN_database) MESH_A_CHUNK_OF_THE_EARTH
+  write(IIN_database) UTM_PROJECTION_ZONE
+  write(IIN_database) SUPPRESS_UTM_PROJECTION
   write(IIN_database) NGNOD
 
   ! global nodes
@@ -183,7 +208,7 @@
       ! pad dummy zeros to fill up 17 entries
       matpropl(:) = 0.d0
       select case(domain_id)
-      case (IDOMAIN_ACOUSTIC,IDOMAIN_ELASTIC)
+       case (IDOMAIN_ACOUSTIC,IDOMAIN_ELASTIC)
         ! material properties format:
         !#(1)rho  #(2)vp #(3)vs #(4)Q_Kappa #(5)Q_mu #(6)anisotropy_flag #(7)domain_id #(8)mat_id
         !
@@ -192,7 +217,7 @@
         !
         ! skipping mat_id, not needed
         matpropl(1:7) = material_properties(i,1:7)
-      case (IDOMAIN_POROELASTIC)
+       case (IDOMAIN_POROELASTIC)
         ! material properties format:
         !#(1)rho_s #(2)rho_f #(3)phi #(4)tort #(5)eta #(6)0 #(7)domain_id #(8)mat_id
         !            .. #(9)kxx #(10)kxy #(11)kxz #(12)kyy #(13)kyz #(14)kzz #(15)kappa_s #(16)kappa_f #(17)kappa_fr #(18)mu_fr
@@ -225,11 +250,11 @@
       undef_mat_prop(4,1) = material_properties_undef(i,3)  ! tomo-filename: tomography_model**.xyz
       ! checks consistency between domain-name and domain_id
       select case (domain_id)
-      case (IDOMAIN_ACOUSTIC)
+       case (IDOMAIN_ACOUSTIC)
         if (trim(undef_mat_prop(3,1)) /= 'acoustic') stop 'Error in undef_mat_prop acoustic domain'
-      case (IDOMAIN_ELASTIC)
+       case (IDOMAIN_ELASTIC)
         if (trim(undef_mat_prop(3,1)) /= 'elastic')  stop 'Error in undef_mat_prop elastic domain'
-      case (IDOMAIN_POROELASTIC)
+       case (IDOMAIN_POROELASTIC)
         if (trim(undef_mat_prop(3,1)) /= 'poroelastic')  stop 'Error in undef_mat_prop poroelastic domain'
       end select
       ! default name if none given
@@ -275,14 +300,39 @@
   ! Boundaries
   !
   ! note: check with routine write_boundaries_database() to produce identical output
-  write(IIN_database) 1,nspec2D_xmin
-  write(IIN_database) 2,nspec2D_xmax
-  write(IIN_database) 3,nspec2D_ymin
-  write(IIN_database) 4,nspec2D_ymax
-  write(IIN_database) 5,NSPEC2D_BOTTOM
-  write(IIN_database) 6,NSPEC2D_TOP
+  !
+  ! Sections 1-4: side absorbing faces, zeroed when Stacey is off
+  if (STACEY_ABSORBING_CONDITIONS) then
+    n_abs_xmin = nspec2D_xmin
+    n_abs_xmax = nspec2D_xmax
+    n_abs_ymin = nspec2D_ymin
+    n_abs_ymax = nspec2D_ymax
+  else
+    n_abs_xmin = 0
+    n_abs_xmax = 0
+    n_abs_ymin = 0
+    n_abs_ymax = 0
+  endif
 
-  do i = 1,nspec2D_xmin
+  ! Section 5 (Z_MIN): present when bottom is free surface or Stacey absorbing
+  n_bottom = 0
+  if (BOTTOM_FREE_SURFACE .or. STACEY_ABSORBING_CONDITIONS) n_bottom = NSPEC2D_BOTTOM
+
+  ! Section 6 (Z_MAX): present when top is free surface or Stacey absorbing
+  n_top = 0
+  if (TOP_FREE_SURFACE .or. STACEY_ABSORBING_CONDITIONS) n_top = NSPEC2D_TOP
+
+  ! Write boundary condition flags so the C++ reader can classify sections 5 and 6
+  write(IIN_database) TOP_FREE_SURFACE, BOTTOM_FREE_SURFACE
+
+  write(IIN_database) 1,n_abs_xmin
+  write(IIN_database) 2,n_abs_xmax
+  write(IIN_database) 3,n_abs_ymin
+  write(IIN_database) 4,n_abs_ymax
+  write(IIN_database) 5,n_bottom
+  write(IIN_database) 6,n_top
+
+  do i = 1,n_abs_xmin
     ispec = ibelm_xmin(i)
     ! gets anchor nodes on xmin
     inode = 0
@@ -302,7 +352,7 @@
     !                          ibool(1,1,NGLLZ_M,ispec),ibool(1,NGLLY_M,NGLLZ_M,ispec)
   enddo
 
-  do i = 1,nspec2D_xmax
+  do i = 1,n_abs_xmax
     ispec = ibelm_xmax(i)
     ! gets anchor nodes on xmax
     inode = 0
@@ -321,7 +371,7 @@
     !      ibool(NGLLX_M,1,NGLLZ_M,ibelm_xmax(i)),ibool(NGLLX_M,NGLLY_M,NGLLZ_M,ibelm_xmax(i))
   enddo
 
-  do i = 1,nspec2D_ymin
+  do i = 1,n_abs_ymin
     ispec = ibelm_ymin(i)
     ! gets anchor nodes on ymin
     inode = 0
@@ -340,7 +390,7 @@
     !      ibool(1,1,NGLLZ_M,ibelm_ymin(i)),ibool(NGLLX_M,1,NGLLZ_M,ibelm_ymin(i))
   enddo
 
-  do i = 1,nspec2D_ymax
+  do i = 1,n_abs_ymax
     ispec = ibelm_ymax(i)
     ! gets anchor nodes on ymax
     inode = 0
@@ -359,9 +409,9 @@
     !      ibool(NGLLX_M,NGLLY_M,NGLLZ_M,ibelm_ymax(i)),ibool(1,NGLLY_M,NGLLZ_M,ibelm_ymax(i))
   enddo
 
-  do i = 1,NSPEC2D_BOTTOM
+  ! Section 5: Z_MIN faces (bottom — free surface or absorbing)
+  do i = 1,n_bottom
     ispec = ibelm_bottom(i)
-    ! gets anchor nodes on bottom
     inode = 0
     do ia = 1,NGNOD
       if (anchor_iaz(ia) == 1) then
@@ -373,14 +423,11 @@
     enddo
     if (inode /= NGNOD2D) stop 'Invalid number of inodes found for bottom'
     write(IIN_database) ispec,(loc_node(inode), inode = 1,NGNOD2D)
-
-    ! write(IIN_database) ibelm_bottom(i),ibool(1,1,1,ibelm_bottom(i)),ibool(NGLLX_M,1,1,ibelm_bottom(i)), &
-    !      ibool(NGLLX_M,NGLLY_M,1,ibelm_bottom(i)),ibool(1,NGLLY_M,1,ibelm_bottom(i))
   enddo
 
-  do i = 1,NSPEC2D_TOP
+  ! Section 6: Z_MAX faces (top — free surface or absorbing)
+  do i = 1,n_top
     ispec = ibelm_top(i)
-    ! gets anchor nodes on top
     inode = 0
     do ia = 1,NGNOD
       if (anchor_iaz(ia) == NGLLZ_M) then
@@ -392,9 +439,6 @@
     enddo
     if (inode /= NGNOD2D) stop 'Invalid number of inodes found for top'
     write(IIN_database) ispec,(loc_node(inode), inode = 1,NGNOD2D)
-
-    ! write(IIN_database) ibelm_top(i),ibool(1,1,NGLLZ_M,ibelm_top(i)),ibool(NGLLX_M,1,NGLLZ_M,ibelm_top(i)), &
-    !      ibool(NGLLX_M,NGLLY_M,NGLLZ_M,ibelm_top(i)),ibool(1,NGLLY_M,NGLLZ_M,ibelm_top(i))
   enddo
 
   ! CPML
@@ -408,207 +452,60 @@
   write(IIN_database) nspec_CPML_total
 
   if (nspec_CPML_total > 0) then
-     write(IIN_database) nspec_CPML
+    write(IIN_database) nspec_CPML
 
-     do ispec_CPML = 1,nspec_CPML
-        write(IIN_database) CPML_to_spec(ispec_CPML), CPML_regions(ispec_CPML)
-     enddo
-     do ispec = 1,nspec
-        write(IIN_database) is_CPML(ispec)
-     enddo
-  endif
-
-  ! MPI Interfaces
-  !
-  ! note: check with routine write_interfaces_database() to produce identical output
-  if (NPROC_XI > 1 .or. NPROC_ETA > 1) then
-    ! determines number of MPI interfaces for each slice
-    nb_interfaces = 4
-    interfaces(W:N) = .true.
-    interfaces(NW:SW) = .false.
-
-    ! slices at model boundaries
-    if (iproc_xi_current == 0) then
-      nb_interfaces =  nb_interfaces -1
-      interfaces(W) = .false.
-    endif
-    if (iproc_xi_current == NPROC_XI-1) then
-      nb_interfaces =  nb_interfaces -1
-      interfaces(E) = .false.
-    endif
-    if (iproc_eta_current == 0) then
-      nb_interfaces =  nb_interfaces -1
-      interfaces(S) = .false.
-    endif
-    if (iproc_eta_current == NPROC_ETA-1) then
-      nb_interfaces =  nb_interfaces -1
-      interfaces(N) = .false.
-    endif
-
-    ! slices in middle of model
-    if ((interfaces(W) .eqv. .true.) .and. (interfaces(N) .eqv. .true.)) then
-      interfaces(NW) = .true.
-      nb_interfaces =  nb_interfaces +1
-    endif
-    if ((interfaces(N) .eqv. .true.) .and. (interfaces(E) .eqv. .true.)) then
-      interfaces(NE) = .true.
-      nb_interfaces =  nb_interfaces +1
-    endif
-    if ((interfaces(E) .eqv. .true.) .and. (interfaces(S) .eqv. .true.)) then
-      interfaces(SE) = .true.
-      nb_interfaces =  nb_interfaces +1
-    endif
-    if ((interfaces(W) .eqv. .true.) .and. (interfaces(S) .eqv. .true.)) then
-      interfaces(SW) = .true.
-      nb_interfaces =  nb_interfaces +1
-    endif
-
-    nspec_interface(:) = 0
-    if (interfaces(W))  nspec_interface(W) = count(iMPIcut_xi(1,:) .eqv. .true.)
-    if (interfaces(E))  nspec_interface(E) = count(iMPIcut_xi(2,:) .eqv. .true.)
-    if (interfaces(S))  nspec_interface(S) = count(iMPIcut_eta(1,:) .eqv. .true.)
-    if (interfaces(N))  nspec_interface(N) = count(iMPIcut_eta(2,:) .eqv. .true.)
-    if (interfaces(NW))  nspec_interface(NW) = count((iMPIcut_xi(1,:) .eqv. .true.) .and. (iMPIcut_eta(2,:) .eqv. .true.))
-    if (interfaces(NE))  nspec_interface(NE) = count((iMPIcut_xi(2,:) .eqv. .true.) .and. (iMPIcut_eta(2,:) .eqv. .true.))
-    if (interfaces(SE))  nspec_interface(SE) = count((iMPIcut_xi(2,:) .eqv. .true.) .and. (iMPIcut_eta(1,:) .eqv. .true.))
-    if (interfaces(SW))  nspec_interface(SW) = count((iMPIcut_xi(1,:) .eqv. .true.) .and. (iMPIcut_eta(1,:) .eqv. .true.))
-
-    nspec_interfaces_max = maxval(nspec_interface)
-
-    ! format: #number_of_MPI_interfaces  #maximum_number_of_elements_on_each_interface
-    write(IIN_database) nb_interfaces,nspec_interfaces_max
-
-    ! face elements
-    if (interfaces(W)) then
-      ! format: #process_interface_id  #number_of_elements_on_interface
-      write(IIN_database) addressing(iproc_xi_current-1,iproc_eta_current),nspec_interface(W)
-      do ispec = 1,nspec
-        if (iMPIcut_xi(1,ispec)) then
-          ! format: #(1)spectral_element_id  #(2)interface_type  #(3)node_id1  #(4)node_id2 #(5).. #(6)..
-          ! note: face outputs 4 corner points
-          write(IIN_database) ispec,4,ibool(1,1,1,ispec),ibool(1,NGLLY_M,1,ispec), &
-                                      ibool(1,1,NGLLZ_M,ispec),ibool(1,NGLLY_M,NGLLZ_M,ispec)
-        endif
-      enddo
-    endif
-
-    if (interfaces(E)) then
-      ! format: #process_interface_id  #number_of_elements_on_interface
-      write(IIN_database) addressing(iproc_xi_current+1,iproc_eta_current),nspec_interface(E)
-      do ispec = 1,nspec
-        if (iMPIcut_xi(2,ispec)) then
-          ! format: #(1)spectral_element_id  #(2)interface_type  #(3)node_id1  #(4)node_id2 #(5).. #(6)..
-          write(IIN_database) ispec,4,ibool(NGLLX_M,1,1,ispec),ibool(NGLLX_M,NGLLY_M,1,ispec), &
-                                      ibool(NGLLX_M,1,NGLLZ_M,ispec),ibool(NGLLX_M,NGLLY_M,NGLLZ_M,ispec)
-        endif
-      enddo
-    endif
-
-    if (interfaces(S)) then
-      ! format: #process_interface_id  #number_of_elements_on_interface
-      write(IIN_database) addressing(iproc_xi_current,iproc_eta_current-1),nspec_interface(S)
-      do ispec = 1,nspec
-        if (iMPIcut_eta(1,ispec)) then
-          ! format: #(1)spectral_element_id  #(2)interface_type  #(3)node_id1  #(4)node_id2 #(5).. #(6)..
-          write(IIN_database) ispec,4,ibool(1,1,1,ispec),ibool(NGLLX_M,1,1,ispec), &
-                                      ibool(1,1,NGLLZ_M,ispec),ibool(NGLLX_M,1,NGLLZ_M,ispec)
-        endif
-      enddo
-    endif
-
-    if (interfaces(N)) then
-      ! format: #process_interface_id  #number_of_elements_on_interface
-      write(IIN_database) addressing(iproc_xi_current,iproc_eta_current+1),nspec_interface(N)
-      do ispec = 1,nspec
-        if (iMPIcut_eta(2,ispec)) then
-          ! format: #(1)spectral_element_id  #(2)interface_type  #(3)node_id1  #(4)node_id2 #(5).. #(6)..
-          write(IIN_database) ispec,4,ibool(NGLLX_M,NGLLY_M,1,ispec),ibool(1,NGLLY_M,1,ispec), &
-                                      ibool(NGLLX_M,NGLLY_M,NGLLZ_M,ispec),ibool(1,NGLLY_M,NGLLZ_M,ispec)
-        endif
-      enddo
-    endif
-
-    ! edge elements
-    if (interfaces(NW)) then
-      ! format: #process_interface_id  #number_of_elements_on_interface
-      write(IIN_database) addressing(iproc_xi_current-1,iproc_eta_current+1),nspec_interface(NW)
-      do ispec = 1,nspec
-        if ((iMPIcut_xi(1,ispec) .eqv. .true.) .and. (iMPIcut_eta(2,ispec) .eqv. .true.)) then
-          ! note: edge elements output 2 corners and 2 dummy values
-          ! format: #(1)spectral_element_id  #(2)interface_type  #(3)node_id1  #(4)node_id2 #(5).. #(6)..
-          write(IIN_database) ispec,2,ibool(1,NGLLY_M,1,ispec),ibool(1,NGLLY_M,NGLLZ_M,ispec),-1,-1
-        endif
-      enddo
-    endif
-
-    if (interfaces(NE)) then
-      ! format: #process_interface_id  #number_of_elements_on_interface
-      write(IIN_database) addressing(iproc_xi_current+1,iproc_eta_current+1),nspec_interface(NE)
-      do ispec = 1,nspec
-        if ((iMPIcut_xi(2,ispec) .eqv. .true.) .and. (iMPIcut_eta(2,ispec) .eqv. .true.)) then
-          ! format: #(1)spectral_element_id  #(2)interface_type  #(3)node_id1  #(4)node_id2 #(5).. #(6)..
-          write(IIN_database) ispec,2,ibool(NGLLX_M,NGLLY_M,1,ispec),ibool(NGLLX_M,NGLLY_M,NGLLZ_M,ispec),-1,-1
-        endif
-      enddo
-    endif
-
-    if (interfaces(SE)) then
-      ! format: #process_interface_id  #number_of_elements_on_interface
-      write(IIN_database) addressing(iproc_xi_current+1,iproc_eta_current-1),nspec_interface(SE)
-      do ispec = 1,nspec
-        if ((iMPIcut_xi(2,ispec) .eqv. .true.) .and. (iMPIcut_eta(1,ispec) .eqv. .true.)) then
-          ! format: #(1)spectral_element_id  #(2)interface_type  #(3)node_id1  #(4)node_id2 #(5).. #(6)..
-          write(IIN_database) ispec,2,ibool(NGLLX_M,1,1,ispec),ibool(NGLLX_M,1,NGLLZ_M,ispec),-1,-1
-        endif
-      enddo
-    endif
-
-    if (interfaces(SW)) then
-      ! format: #process_interface_id  #number_of_elements_on_interface
-      write(IIN_database) addressing(iproc_xi_current-1,iproc_eta_current-1),nspec_interface(SW)
-      do ispec = 1,nspec
-        if ((iMPIcut_xi(1,ispec) .eqv. .true.) .and. (iMPIcut_eta(1,ispec) .eqv. .true.)) then
-          ! format: #(1)spectral_element_id  #(2)interface_type  #(3)node_id1  #(4)node_id2 #(5).. #(6)..
-          write(IIN_database) ispec,2,ibool(1,1,1,ispec),ibool(1,1,NGLLZ_M,ispec),-1,-1
-        endif
-      enddo
-    endif
-  else
-    ! single process execution, no MPI boundaries
-    nb_interfaces = 0
-    nspec_interfaces_max = 0
-    ! format: #number_of_MPI_interfaces  #maximum_number_of_elements_on_each_interface
-    write(IIN_database) nb_interfaces,nspec_interfaces_max
-  endif
-
-  total_nadj_element = 0
-  nadj_element(:) = 0
-  ! Write the adjacency list for the mesh
-  do ispec = 1, nspec
-    do jspec = 1, nspec
-      if (adjacency_matrix(ispec,jspec) /= 0) then
-        adj_element(ispec, nadj_element(ispec)) = jspec
-        adj_type(ispec, nadj_element(ispec)) = adjacency_matrix(ispec,jspec)
-        nadj_element(ispec) = nadj_element(ispec) + 1
-        total_nadj_element = total_nadj_element + 1
-      endif
+    do ispec_CPML = 1,nspec_CPML
+      write(IIN_database) CPML_to_spec(ispec_CPML), CPML_regions(ispec_CPML)
     enddo
-  enddo
+    do ispec = 1,nspec
+      write(IIN_database) is_CPML(ispec)
+    enddo
+  endif
 
+  ! Write adjacency list from CSR arrays (built by compute_adjacency_graph)
+  total_nadj_element = nb_adj_edges
   write(IIN_database) total_nadj_element
   index = 0
 
   do ispec = 1, nspec
-    do i = 0, nadj_element(ispec)-1
-      write(IIN_database) ispec, adj_element(ispec,i), 1, adj_type(ispec,i)
+    do i = xadj_adj(ispec), xadj_adj(ispec+1)-1
+      write(IIN_database) ispec, adjncy_adj(i), 1, adj_types_local(i)
       index = index + 1
     enddo
   enddo
 
-
   if (index /= total_nadj_element) then
     print *,'Error: index ',index,' /= total_nadj_element ',total_nadj_element
-    stop 'Error in writing adjacency list'
+    stop 'Error in writing local adjacency list'
+  endif
+
+  write(IIN_database) num_mpi_adjacencies
+  index = 0
+
+  ! Write MPI adjacencies with anchor point constraints
+  ! Format per row (7 columns):
+  !   col 1: myindex            — local element index (1-based)
+  !   col 2: neighbor_iproc     — MPI rank of the neighbor processor
+  !   col 3: neighbor_index     — element index on neighbor processor
+  !   col 4: my_connection_id   — face/edge/corner ID on local element
+  !   col 5: neighbor_conn_id   — face/edge/corner ID on remote element
+  !   col 6: anchor_local       — corner index (1-based) on local element
+  !                               that anchors the orientation
+  !   col 7: anchor_remote      — corner index (1-based) on remote element
+  !                               matched to anchor_local via coordinates
+  ! These anchor points remove rotational ambiguity on MPI surfaces by
+  ! establishing a canonical reference frame through corner correspondences.
+  do i = 1, num_mpi_adjacencies
+    write(IIN_database) mpi_adjacency(i, 1), mpi_adjacency(i, 2), &
+      mpi_adjacency(i, 3), mpi_adjacency(i, 4), &
+      mpi_adjacency(i, 5), mpi_adjacency(i, 6), &
+      mpi_adjacency(i, 7)
+    index = index + 1
+  enddo
+
+  if (index /= num_mpi_adjacencies) then
+    print *,'Error: index ',index,' /= num_mpi_adjacencies ',num_mpi_adjacencies
+    stop 'Error in writing MPI adjacency list'
   endif
 
   close(IIN_database)
@@ -625,17 +522,17 @@
 
     !! VM VM add outputs as CUBIT
     call save_output_mesh_files_as_cubit(nspec,nglob, &
-                                         nodes_coords, ispec_material_id, &
-                                         nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
-                                         ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
-                                         nspec_CPML_total)
+      nodes_coords, ispec_material_id, &
+      nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
+      ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
+      nspec_CPML_total)
 
     ! output for AxiSEM coupling
     if (COUPLE_WITH_INJECTION_TECHNIQUE) then
       call save_output_mesh_files_for_coupled_model(nspec, &
-                                                    nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
-                                                    ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
-                                                    xstore,ystore,zstore)
+        nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
+        ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
+        xstore,ystore,zstore)
     endif
   endif
 
@@ -652,16 +549,16 @@
     call flush_IMAIN()
   endif
 
-  end subroutine save_databases
+end subroutine save_databases
 
 !---------------------------------------------------------------------------------------------------------------
 
-  !! VM VM add subroutine to save meshes in case of a single MPI process
-  subroutine save_output_mesh_files_as_cubit(nspec,nglob, &
-                                             nodes_coords, ispec_material_id, &
-                                             nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
-                                             ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
-                                             nspec_CPML_total)
+ !! VM VM add subroutine to save meshes in case of a single MPI process
+subroutine save_output_mesh_files_as_cubit(nspec,nglob, &
+  nodes_coords, ispec_material_id, &
+  nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
+  ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
+  nspec_CPML_total)
 
   use constants, only: NDIM,IMAIN,myrank,IIN_DB
   use constants_meshfem, only: NGLLX_M,NGLLY_M,NGLLZ_M
@@ -806,9 +703,9 @@
     if (mask_iglob(iglob)) then
       ! format: #iglob #x #y #z(corrected by z_bottom)
       write(IIN_database,'(i14,3x,3(f20.5,1x))') iglob_to_nodeid(iglob), &
-                                                 nodes_coords(iglob,1), &
-                                                 nodes_coords(iglob,2), &
-                                                 nodes_coords(iglob,3)-z_bottom
+        nodes_coords(iglob,1), &
+        nodes_coords(iglob,2), &
+        nodes_coords(iglob,3)-z_bottom
     endif
   enddo
   close(IIN_database)
@@ -819,14 +716,14 @@
     ! corner points
     ! format: #ispec #iglob1 #iglob2 #iglob3 #iglob4 #iglob5 #iglob6 #iglob7 #iglob8
     write(IIN_database,'(9i15)')  ispec, &
-                                  iglob_to_nodeid(ibool(1,1,1,ispec)), &
-                                  iglob_to_nodeid(ibool(NGLLZ_M,1,1,ispec)), &
-                                  iglob_to_nodeid(ibool(NGLLZ_M,NGLLZ_M,1,ispec)), &
-                                  iglob_to_nodeid(ibool(1,NGLLZ_M,1,ispec)), &
-                                  iglob_to_nodeid(ibool(1,1,NGLLZ_M,ispec)), &
-                                  iglob_to_nodeid(ibool(NGLLZ_M,1,NGLLZ_M,ispec)), &
-                                  iglob_to_nodeid(ibool(NGLLZ_M,NGLLZ_M,NGLLZ_M,ispec)), &
-                                  iglob_to_nodeid(ibool(1,NGLLZ_M,NGLLZ_M,ispec))
+      iglob_to_nodeid(ibool(1,1,1,ispec)), &
+      iglob_to_nodeid(ibool(NGLLZ_M,1,1,ispec)), &
+      iglob_to_nodeid(ibool(NGLLZ_M,NGLLZ_M,1,ispec)), &
+      iglob_to_nodeid(ibool(1,NGLLZ_M,1,ispec)), &
+      iglob_to_nodeid(ibool(1,1,NGLLZ_M,ispec)), &
+      iglob_to_nodeid(ibool(NGLLZ_M,1,NGLLZ_M,ispec)), &
+      iglob_to_nodeid(ibool(NGLLZ_M,NGLLZ_M,NGLLZ_M,ispec)), &
+      iglob_to_nodeid(ibool(1,NGLLZ_M,NGLLZ_M,ispec))
   enddo
   close(IIN_database)
 
@@ -839,10 +736,10 @@
   do i = 1,nspec2D_xmin
     ! format: #boundary_face_id #iglob1 #iglob2 #iglob3 #iglob4
     write(IIN_database,'(5(i10,1x))') ibelm_xmin(i), &
-                                      iglob_to_nodeid(ibool(1,1,1,ibelm_xmin(i))), &
-                                      iglob_to_nodeid(ibool(1,NGLLY_M,1,ibelm_xmin(i))), &
-                                      iglob_to_nodeid(ibool(1,1,NGLLZ_M,ibelm_xmin(i))), &
-                                      iglob_to_nodeid(ibool(1,NGLLY_M,NGLLZ_M,ibelm_xmin(i)))
+      iglob_to_nodeid(ibool(1,1,1,ibelm_xmin(i))), &
+      iglob_to_nodeid(ibool(1,NGLLY_M,1,ibelm_xmin(i))), &
+      iglob_to_nodeid(ibool(1,1,NGLLZ_M,ibelm_xmin(i))), &
+      iglob_to_nodeid(ibool(1,NGLLY_M,NGLLZ_M,ibelm_xmin(i)))
   enddo
   close(IIN_database)
 
@@ -851,10 +748,10 @@
   do i = 1,nspec2D_xmax
     ! format: #boundary_face_id #iglob1 #iglob2 #iglob3 #iglob4
     write(IIN_database,'(5(i10,1x))') ibelm_xmax(i), &
-                                      iglob_to_nodeid(ibool(NGLLX_M,1,1,ibelm_xmax(i))), &
-                                      iglob_to_nodeid(ibool(NGLLX_M,NGLLY_M,1,ibelm_xmax(i))), &
-                                      iglob_to_nodeid(ibool(NGLLX_M,1,NGLLZ_M,ibelm_xmax(i))), &
-                                      iglob_to_nodeid(ibool(NGLLX_M,NGLLY_M,NGLLZ_M,ibelm_xmax(i)))
+      iglob_to_nodeid(ibool(NGLLX_M,1,1,ibelm_xmax(i))), &
+      iglob_to_nodeid(ibool(NGLLX_M,NGLLY_M,1,ibelm_xmax(i))), &
+      iglob_to_nodeid(ibool(NGLLX_M,1,NGLLZ_M,ibelm_xmax(i))), &
+      iglob_to_nodeid(ibool(NGLLX_M,NGLLY_M,NGLLZ_M,ibelm_xmax(i)))
   enddo
   close(IIN_database)
 
@@ -863,10 +760,10 @@
   do i = 1,nspec2D_ymin
     ! format: #boundary_face_id #iglob1 #iglob2 #iglob3 #iglob4
     write(IIN_database,'(5(i10,1x))') ibelm_ymin(i), &
-                                      iglob_to_nodeid(ibool(1,1,1,ibelm_ymin(i))), &
-                                      iglob_to_nodeid(ibool(NGLLX_M,1,1,ibelm_ymin(i))), &
-                                      iglob_to_nodeid(ibool(1,1,NGLLZ_M,ibelm_ymin(i))), &
-                                      iglob_to_nodeid(ibool(NGLLX_M,1,NGLLZ_M,ibelm_ymin(i)))
+      iglob_to_nodeid(ibool(1,1,1,ibelm_ymin(i))), &
+      iglob_to_nodeid(ibool(NGLLX_M,1,1,ibelm_ymin(i))), &
+      iglob_to_nodeid(ibool(1,1,NGLLZ_M,ibelm_ymin(i))), &
+      iglob_to_nodeid(ibool(NGLLX_M,1,NGLLZ_M,ibelm_ymin(i)))
   enddo
   close(IIN_database)
 
@@ -875,10 +772,10 @@
   do i = 1,nspec2D_ymax
     ! format: #boundary_face_id #iglob1 #iglob2 #iglob3 #iglob4
     write(IIN_database,'(5(i10,1x))') ibelm_ymax(i), &
-                                      iglob_to_nodeid(ibool(NGLLX_M,NGLLY_M,1,ibelm_ymax(i))), &
-                                      iglob_to_nodeid(ibool(1,NGLLY_M,1,ibelm_ymax(i))), &
-                                      iglob_to_nodeid(ibool(NGLLX_M,NGLLY_M,NGLLZ_M,ibelm_ymax(i))), &
-                                      iglob_to_nodeid(ibool(1,NGLLY_M,NGLLZ_M,ibelm_ymax(i)))
+      iglob_to_nodeid(ibool(NGLLX_M,NGLLY_M,1,ibelm_ymax(i))), &
+      iglob_to_nodeid(ibool(1,NGLLY_M,1,ibelm_ymax(i))), &
+      iglob_to_nodeid(ibool(NGLLX_M,NGLLY_M,NGLLZ_M,ibelm_ymax(i))), &
+      iglob_to_nodeid(ibool(1,NGLLY_M,NGLLZ_M,ibelm_ymax(i)))
   enddo
 
 
@@ -887,10 +784,10 @@
   do i = 1,NSPEC2D_BOTTOM
     ! format: #boundary_face_id #iglob1 #iglob2 #iglob3 #iglob4
     write(IIN_database,'(5(i10,1x))') ibelm_bottom(i), &
-                                      iglob_to_nodeid(ibool(1,1,1,ibelm_bottom(i))), &
-                                      iglob_to_nodeid(ibool(NGLLX_M,1,1,ibelm_bottom(i))), &
-                                      iglob_to_nodeid(ibool(NGLLX_M,NGLLY_M,1,ibelm_bottom(i))), &
-                                      iglob_to_nodeid(ibool(1,NGLLY_M,1,ibelm_bottom(i)))
+      iglob_to_nodeid(ibool(1,1,1,ibelm_bottom(i))), &
+      iglob_to_nodeid(ibool(NGLLX_M,1,1,ibelm_bottom(i))), &
+      iglob_to_nodeid(ibool(NGLLX_M,NGLLY_M,1,ibelm_bottom(i))), &
+      iglob_to_nodeid(ibool(1,NGLLY_M,1,ibelm_bottom(i)))
   enddo
   close(IIN_database)
 
@@ -899,10 +796,10 @@
   do i = 1,NSPEC2D_TOP
     ! format: #boundary_face_id #iglob1 #iglob2 #iglob3 #iglob4
     write(IIN_database,'(5(i10,1x))') ibelm_top(i), &
-                                      iglob_to_nodeid(ibool(1,1,NGLLZ_M,ibelm_top(i))), &
-                                      iglob_to_nodeid(ibool(NGLLX_M,1,NGLLZ_M,ibelm_top(i))), &
-                                      iglob_to_nodeid(ibool(NGLLX_M,NGLLY_M,NGLLZ_M,ibelm_top(i))), &
-                                      iglob_to_nodeid(ibool(1,NGLLY_M,NGLLZ_M,ibelm_top(i)))
+      iglob_to_nodeid(ibool(1,1,NGLLZ_M,ibelm_top(i))), &
+      iglob_to_nodeid(ibool(NGLLX_M,1,NGLLZ_M,ibelm_top(i))), &
+      iglob_to_nodeid(ibool(NGLLX_M,NGLLY_M,NGLLZ_M,ibelm_top(i))), &
+      iglob_to_nodeid(ibool(1,NGLLY_M,NGLLZ_M,ibelm_top(i)))
   enddo
   close(IIN_database)
 
@@ -918,17 +815,17 @@
 
   deallocate(mask_iglob,iglob_to_nodeid)
 
-  end subroutine save_output_mesh_files_as_cubit
+end subroutine save_output_mesh_files_as_cubit
 
 
 
 !---------------------------------------------------------------------------------------------------------------
 
-  !! VM VM add subroutine to save meshes in case of a single MPI process
-  subroutine save_output_mesh_files_for_coupled_model(nspec, &
-                                                      nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
-                                                      ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
-                                                      xgrid,ygrid,zgrid)
+ !! VM VM add subroutine to save meshes in case of a single MPI process
+subroutine save_output_mesh_files_for_coupled_model(nspec, &
+  nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
+  ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
+  xgrid,ygrid,zgrid)
 
   use constants, only: NGLLX, NGLLY, NGLLZ, NDIM, ZERO, IMAIN, myrank, &
     INJECTION_TECHNIQUE_IS_AXISEM
@@ -975,7 +872,7 @@
   !! GLL points
   double precision, dimension(NGLLX,NGLLY,NGLLZ) ::  longitud, latitud, radius
   double precision, dimension(NGLLX,NGLLY,NGLLZ) ::  xstore, ystore, zstore
-   !! Element control points
+  !! Element control points
   double precision, dimension(NGNOD) :: xelm, yelm, zelm
   double precision, dimension(NGLLZ) :: radius_Z ! for temporary copies
 
@@ -1194,7 +1091,7 @@
       do j = jmin,jmax
         do i = imin,imax
           write(92,'(3f25.10,i10,6i3)') xstore(i,j,k),ystore(i,j,k),zstore(i,j,k),ispec,i,j,k,1, &
-                                        ilayer,updown(k)
+            ilayer,updown(k)
           write(91,1000) radius(i,j,k), latitud(i,j,k), longitud(i,j,k)
           ! point counter
           icounter_pts = icounter_pts + 1
@@ -1260,7 +1157,7 @@
       do j = jmin,jmax
         do i = imin,imax
           write(92,'(3f25.10,i10,6i3)') xstore(i,j,k),ystore(i,j,k),zstore(i,j,k),ispec,i,j,k,2, &
-                                        ilayer,updown(k)
+            ilayer,updown(k)
           write(91,1000) radius(i,j,k), latitud(i,j,k), longitud(i,j,k)
           ! point counter
           icounter_pts = icounter_pts + 1
@@ -1326,7 +1223,7 @@
       do j = jmin,jmax
         do i = imin,imax
           write(92,'(3f25.10,i10,6i3)') xstore(i,j,k),ystore(i,j,k),zstore(i,j,k),ispec,i,j,k,3, &
-                                        ilayer,updown(k)
+            ilayer,updown(k)
           write(91,1000) radius(i,j,k), latitud(i,j,k), longitud(i,j,k)
           ! point counter
           icounter_pts = icounter_pts + 1
@@ -1392,7 +1289,7 @@
       do j = jmin,jmax
         do i = imin,imax
           write(92,'(3f25.10,i10,6i3)') xstore(i,j,k),ystore(i,j,k),zstore(i,j,k),ispec,i,j,k,4, &
-                                        ilayer,updown(k)
+            ilayer,updown(k)
           write(91,1000) radius(i,j,k), latitud(i,j,k), longitud(i,j,k)
           ! point counter
           icounter_pts = icounter_pts + 1
@@ -1458,7 +1355,7 @@
       do j = jmin,jmax
         do i = imin,imax
           write(92,'(3f25.10,i10,6i3)') xstore(i,j,k),ystore(i,j,k),zstore(i,j,k),ispec,i,j,k,5, &
-                                        ilayer,updown(k)
+            ilayer,updown(k)
           write(91,1000) radius(i,j,k), latitud(i,j,k), longitud(i,j,k)
           ! point counter
           icounter_pts = icounter_pts + 1
@@ -1525,7 +1422,7 @@
         do j = jmin,jmax
           do i = imin,imax
             write(92,'(3f25.10,i10,6i3)') xstore(i,j,k),ystore(i,j,k),zstore(i,j,k),ispec,i,j,k,6, &
-                                          ilayer,updown(k)
+              ilayer,updown(k)
             write(91,1000) radius(i,j,k), latitud(i,j,k), longitud(i,j,k)
             ! point counter
             icounter_pts = icounter_pts + 1
@@ -1547,4 +1444,4 @@
     call flush_IMAIN()
   endif
 
-  end subroutine save_output_mesh_files_for_coupled_model
+end subroutine save_output_mesh_files_for_coupled_model

@@ -1,18 +1,18 @@
 #include "compute_source_array_from_vector.hpp"
-#include "algorithms/interface.hpp"
-#include "kokkos_abstractions.h"
-#include "quadrature/interface.hpp"
+
+#include "specfem/algorithms.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/point.hpp"
+#include "specfem/quadrature.hpp"
+#include "specfem/setup.hpp"
 #include "specfem/source.hpp"
-#include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
 void specfem::assembly::compute_source_array_impl::from_vector(
-    const specfem::sources::vector_source<specfem::dimension::type::dim2>
+    const specfem::sources::vector_source<specfem::element::dimension_tag::dim2>
         &vector_source,
     Kokkos::View<type_real ***, Kokkos::LayoutRight, Kokkos::HostSpace>
         source_array) {

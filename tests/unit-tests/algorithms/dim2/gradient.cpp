@@ -28,15 +28,13 @@
 #include <vector>
 
 #include "SPECFEM_Environment.hpp"
-#include "algorithms/gradient.hpp"
-#include "datatypes/point_view.hpp"
-#include "datatypes/simd.hpp"
-#include "enumerations/interface.hpp"
-#include "execution/chunked_domain_iterator.hpp"
-#include "execution/for_each_level.hpp"
-#include "parallel_configuration/chunk_config.hpp"
-#include "quadrature/interface.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/algorithms/gradient.hpp"
+#include "specfem/assembly/assembly.hpp"
+#include "specfem/datatype.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/execution.hpp"
+#include "specfem/parallel_configuration.hpp"
+#include "specfem/quadrature.hpp"
 
 namespace specfem::algorithms_test {
 
@@ -162,8 +160,8 @@ init_jacobian(const JacobianInitializer2D::TWO_ELEMENT &) {
  * @tparam Initializer Tag describing which init_jacobian overload to invoke
  */
 template <typename Initializer> struct JacobianMatrix2D {
-  constexpr static specfem::dimension::type dimension_tag =
-      specfem::dimension::type::dim2;
+  constexpr static specfem::element::dimension_tag dimension_tag =
+      specfem::element::dimension_tag::dim2;
 
 private:
   std::vector<
@@ -199,7 +197,7 @@ public:
    *
    * @return Number of elements
    */
-  const int n_elements() const { return static_cast<int>(_jacobian.size()); }
+  int n_elements() const { return static_cast<int>(_jacobian.size()); }
 
   /**
    * @brief Convert to specfem::assembly::jacobian_matrix format.
@@ -304,7 +302,7 @@ template <typename Initializer> struct Quadrature2D {
       : _quadrature(init_quadrature(initializer)) {}
 
   lagrange_derivative2D quadrature() const {
-    view_type::HostMirror quadrature_view("quadrature_view");
+    view_type::host_mirror_type quadrature_view("quadrature_view");
     for (int i = 0; i < 5; ++i) {
       for (int j = 0; j < 5; ++j) {
         quadrature_view(i, j) = _quadrature[i][j];
@@ -421,8 +419,8 @@ auto init_function(const FunctionInitializer2D::TWO_ELEMENT &) {
  * @tparam Initializer Tag selecting which init_function overload to invoke
  */
 template <typename Initializer> struct Function2D {
-  constexpr static specfem::dimension::type dimension_tag =
-      specfem::dimension::type::dim2;
+  constexpr static specfem::element::dimension_tag dimension_tag =
+      specfem::element::dimension_tag::dim2;
   constexpr static int components = 1; ///< Scalar field (single component)
 
   using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
@@ -466,7 +464,7 @@ template <typename Initializer> struct Function2D {
    * @return Kokkos View containing field data in algorithm-compatible format
    */
   view_type view() const {
-    view_type::HostMirror f_view("f_view", _f.size());
+    view_type::host_mirror_type f_view("f_view", _f.size());
     for (int ielement = 0; ielement < static_cast<int>(_f.size()); ++ielement) {
       for (int iz = 0; iz < ngll; ++iz) {
         for (int ix = 0; ix < ngll; ++ix) {
@@ -608,7 +606,7 @@ execute(const Jacobian &jacobian_matrix, const Quadrature2D &quadrature,
       Kokkos::DefaultExecutionSpace(), h_element_indices);
 
   using ParallelConfig = specfem::parallel_configuration::chunk_config<
-      specfem::dimension::type::dim2, 1, 1, 1, 1, simd,
+      specfem::element::dimension_tag::dim2, 1, 1, 1, 1, simd,
       Kokkos::DefaultExecutionSpace>;
 
   const specfem::mesh_entity::element_grid element_grid(ngll, ngll);
@@ -621,7 +619,7 @@ execute(const Jacobian &jacobian_matrix, const Quadrature2D &quadrature,
   const auto function_view = function.view();
 
   using Function2DView = specfem::datatype::VectorChunkElementViewType<
-      type_real, specfem::dimension::type::dim2, 1, ngll, 1, false,
+      type_real, specfem::element::dimension_tag::dim2, 1, ngll, 1, false,
       Kokkos::DefaultExecutionSpace::memory_space, Kokkos::MemoryTraits<> >;
 
   Kokkos::View<type_real ****, Kokkos::LayoutLeft,

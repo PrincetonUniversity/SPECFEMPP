@@ -59,6 +59,20 @@ struct is_field_derivatives<
                      specfem::data_access::DataClassType::field_derivatives> >
     : std::true_type {};
 
+/// @brief Detects the null/sentinel field-derivatives type
+/// (specfem::point::null_field_derivatives).
+template <typename T, typename = void>
+struct is_null_field_derivatives : std::false_type {};
+
+template <typename T>
+struct is_null_field_derivatives<
+    T, std::enable_if_t<T::is_null_field_derivatives_v> > : std::true_type {};
+
+template <typename T>
+struct is_field_derivatives<T,
+                            std::enable_if_t<T::is_null_field_derivatives_v> >
+    : std::true_type {};
+
 /// @brief Detects source term types
 template <typename T, typename = void> struct is_source : std::false_type {};
 
@@ -157,7 +171,8 @@ struct is_index_type<
     T, std::enable_if_t<
            T::data_class == specfem::data_access::DataClassType::index ||
            T::data_class == specfem::data_access::DataClassType::mapped_index ||
-           T::data_class == specfem::data_access::DataClassType::edge_index> >
+           T::data_class == specfem::data_access::DataClassType::edge_index ||
+           T::data_class == specfem::data_access::DataClassType::face_index> >
     : std::true_type {};
 
 /// @brief Detects global assembly index types
@@ -178,6 +193,16 @@ template <typename T>
 struct is_edge_index<
     T, std::enable_if_t<T::data_class ==
                         specfem::data_access::DataClassType::edge_index> >
+    : std::true_type {};
+
+/// @brief Detects face connectivity index types
+template <typename T, typename = void>
+struct is_face_index : std::false_type {};
+
+template <typename T>
+struct is_face_index<
+    T, std::enable_if_t<T::data_class ==
+                        specfem::data_access::DataClassType::face_index> >
     : std::true_type {};
 
 /// @brief Detects interface intersection factor types
@@ -240,6 +265,17 @@ template <typename T>
 struct is_conforming_interface<
     T, std::enable_if_t<T::data_class == specfem::data_access::DataClassType::
                                              conforming_interface> >
+    : std::true_type {};
+
+/// @brief Detects global coordinate types
+template <typename T, typename = void>
+struct is_global_coordinates : std::false_type {};
+
+template <typename T>
+struct is_global_coordinates<
+    T,
+    std::enable_if_t<T::data_class ==
+                     specfem::data_access::DataClassType::global_coordinates> >
     : std::true_type {};
 
 /// @brief Detects multi-component packed accessors

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
 #include "specfem/data_access.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/element.hpp"
+#include "specfem/setup.hpp"
 
 namespace specfem {
 namespace point {
@@ -14,7 +14,7 @@ namespace point {
  * located
  * @tparam using_simd Flag to indicate if this is a simd index
  */
-template <specfem::dimension::type DimensionTag, bool using_simd = false>
+template <specfem::element::dimension_tag DimensionTag, bool using_simd = false>
 struct index;
 
 //--------------------------- 2D Specializations -----------------------------//
@@ -24,11 +24,11 @@ struct index;
  *
  */
 template <>
-struct index<specfem::dimension::type::dim2, false>
+struct index<specfem::element::dimension_tag::dim2, false>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::index,
-          specfem::dimension::type::dim2, false> {
+          specfem::element::dimension_tag::dim2, false> {
   /**
    * @brief Index of the spectral element.
    */
@@ -64,6 +64,22 @@ struct index<specfem::dimension::type::dim2, false>
   KOKKOS_FUNCTION
   index(const int &ispec, const int &iz, const int &ix)
       : ispec(ispec), iz(iz), ix(ix) {}
+
+  /**
+   * @brief Copy assignment operator.
+   *
+   * @param other The index to copy from.
+   * @return Reference to this index.
+   */
+  KOKKOS_FUNCTION
+  index &operator=(const index &other) {
+    if (this != &other) {
+      ispec = other.ispec;
+      iz = other.iz;
+      ix = other.ix;
+    }
+    return *this;
+  }
 };
 
 /**
@@ -71,11 +87,11 @@ struct index<specfem::dimension::type::dim2, false>
  *
  */
 template <>
-struct index<specfem::dimension::type::dim2, true>
+struct index<specfem::element::dimension_tag::dim2, true>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::index,
-          specfem::dimension::type::dim2, true> {
+          specfem::element::dimension_tag::dim2, true> {
   /**
    * @brief Index associated with the spectral element at the start of the SIMD
    * vector.
@@ -121,6 +137,23 @@ struct index<specfem::dimension::type::dim2, true>
       : ispec(ispec), number_elements(number_elements), iz(iz), ix(ix) {}
 
   /**
+   * @brief Copy assignment operator.
+   *
+   * @param other The index to copy from.
+   * @return Reference to this index.
+   */
+  KOKKOS_FUNCTION
+  index &operator=(const index &other) {
+    if (this != &other) {
+      ispec = other.ispec;
+      number_elements = other.number_elements;
+      iz = other.iz;
+      ix = other.ix;
+    }
+    return *this;
+  }
+
+  /**
    * @brief Returns a boolean mask to check if the SIMD index is within the SIMD
    * vector.
    *
@@ -130,6 +163,26 @@ struct index<specfem::dimension::type::dim2, true>
   KOKKOS_INLINE_FUNCTION
   bool mask(const std::size_t &lane) const {
     return int(lane) < number_elements;
+  }
+
+  /**
+   * @brief Returns a SIMD mask for valid lanes.
+   *
+   * For full chunks (all lanes valid) returns an all-true mask using the cheap
+   * broadcast constructor, avoiding the per-lane generator. For the rare
+   * partial last chunk falls back to per-lane evaluation.
+   *
+   * @tparam simd_type SIMD wrapper type (e.g. specfem::datatype::simd<float,
+   * true>)
+   * @return SIMD mask with true for valid lanes
+   */
+  template <typename simd_type>
+  KOKKOS_INLINE_FUNCTION typename simd_type::mask_type get_mask() const {
+    if (number_elements >= simd_type::size()) {
+      return typename simd_type::mask_type(true);
+    }
+    return typename simd_type::mask_type(
+        [&](std::size_t lane) { return int(lane) < number_elements; });
   }
 };
 
@@ -141,11 +194,11 @@ struct index<specfem::dimension::type::dim2, true>
  *
  */
 template <>
-struct index<specfem::dimension::type::dim3, false>
+struct index<specfem::element::dimension_tag::dim3, false>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::index,
-          specfem::dimension::type::dim3, false> {
+          specfem::element::dimension_tag::dim3, false> {
   /**
    * @brief Index of the spectral element.
    */
@@ -189,6 +242,23 @@ struct index<specfem::dimension::type::dim3, false>
   KOKKOS_FUNCTION
   index(const int &ispec, const int &iz, const int &iy, const int &ix)
       : ispec(ispec), iz(iz), iy(iy), ix(ix) {};
+
+  /**
+   * @brief Copy assignment operator.
+   *
+   * @param other The index to copy from.
+   * @return Reference to this index.
+   */
+  KOKKOS_FUNCTION
+  index &operator=(const index &other) {
+    if (this != &other) {
+      ispec = other.ispec;
+      iz = other.iz;
+      iy = other.iy;
+      ix = other.ix;
+    }
+    return *this;
+  }
 };
 
 /**
@@ -197,11 +267,11 @@ struct index<specfem::dimension::type::dim3, false>
  *
  */
 template <>
-struct index<specfem::dimension::type::dim3, true>
+struct index<specfem::element::dimension_tag::dim3, true>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::index,
-          specfem::dimension::type::dim3, true> {
+          specfem::element::dimension_tag::dim3, true> {
   /**
    * @brief Index associated with the spectral element at the start of the SIMD
    * vector.
@@ -256,6 +326,24 @@ struct index<specfem::dimension::type::dim3, true>
   }
 
   /**
+   * @brief Copy assignment operator.
+   *
+   * @param other The index to copy from.
+   * @return Reference to this index.
+   */
+  KOKKOS_FUNCTION
+  index &operator=(const index &other) {
+    if (this != &other) {
+      ispec = other.ispec;
+      number_elements = other.number_elements;
+      iz = other.iz;
+      iy = other.iy;
+      ix = other.ix;
+    }
+    return *this;
+  }
+
+  /**
    * @brief Returns a boolean mask to check if the SIMD index is within the SIMD
    * vector.
    *
@@ -265,6 +353,26 @@ struct index<specfem::dimension::type::dim3, true>
   KOKKOS_INLINE_FUNCTION
   bool mask(const std::size_t &lane) const {
     return int(lane) < number_elements;
+  }
+
+  /**
+   * @brief Returns a SIMD mask for valid lanes.
+   *
+   * For full chunks (all lanes valid) returns an all-true mask using the cheap
+   * broadcast constructor, avoiding the per-lane generator. For the rare
+   * partial last chunk falls back to per-lane evaluation.
+   *
+   * @tparam simd_type SIMD wrapper type (e.g. specfem::datatype::simd<float,
+   * true>)
+   * @return SIMD mask with true for valid lanes
+   */
+  template <typename simd_type>
+  KOKKOS_INLINE_FUNCTION typename simd_type::mask_type get_mask() const {
+    if (number_elements >= simd_type::size()) {
+      return typename simd_type::mask_type(true);
+    }
+    return typename simd_type::mask_type(
+        [&](std::size_t lane) { return int(lane) < number_elements; });
   }
 };
 

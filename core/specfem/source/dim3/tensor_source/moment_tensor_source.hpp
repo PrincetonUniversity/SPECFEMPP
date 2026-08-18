@@ -1,14 +1,14 @@
 #pragma once
 
-#include "constants.hpp"
-#include "enumerations/interface.hpp"
-#include "kokkos_abstractions.h"
-#include "quadrature/interface.hpp"
+#include "specfem/constants.hpp"
+
+#include "specfem/enums.hpp"
+#include "specfem/quadrature.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
 
-#include "specfem_setup.hpp"
-#include "utilities/interface.hpp"
+#include "specfem/setup.hpp"
+#include "specfem/utilities.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
 
@@ -36,15 +36,15 @@ namespace sources {
  *
  * // Create a 3D moment tensor source at (10.0, 15.0, 20.0)
  * auto mt_source =
- * specfem::sources::moment_tensor<specfem::dimension::type::dim3>( 10.0,  //
- * x-coordinate 15.0,  // y-coordinate 20.0,  // z-coordinate 1.2,   // Mxx -
+ * specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3>( 10.0,
+ * // x-coordinate 15.0,  // y-coordinate 20.0,  // z-coordinate 1.2,   // Mxx -
  * normal stress in x direction 0.8,   // Myy - normal stress in y direction
  *     1.5,   // Mzz - normal stress in z direction
  *     0.3,   // Mxy - shear stress component
  *     0.1,   // Mxz - shear stress component
  *     0.2,   // Myz - shear stress component
  *     std::move(stf),
- *     specfem::wavefield::simulation_field::forward
+ *     specfem::simulation::field_type::forward
  * );
  *
  * // Set the medium type (moment tensors work with elastic media)
@@ -56,8 +56,8 @@ namespace sources {
  *
  */
 template <>
-class moment_tensor<specfem::dimension::type::dim3>
-    : public tensor_source<specfem::dimension::type::dim3> {
+class moment_tensor<specfem::element::dimension_tag::dim3>
+    : public tensor_source<specfem::element::dimension_tag::dim3> {
 
 public:
   /**
@@ -115,7 +115,7 @@ public:
    * written in .yml format
    */
   moment_tensor(YAML::Node &Node, const int nsteps, const type_real dt,
-                const specfem::wavefield::simulation_field wavefield_type)
+                const specfem::simulation::field_type wavefield_type)
       : Mxx(Node["Mxx"].as<type_real>()), Myy(Node["Myy"].as<type_real>()),
         Mzz(Node["Mzz"].as<type_real>()), Mxy(Node["Mxy"].as<type_real>()),
         Mxz(Node["Mxz"].as<type_real>()), Myz(Node["Myz"].as<type_real>()),
@@ -140,25 +140,54 @@ public:
       type_real x, type_real y, type_real z, type_real Mxx, type_real Myy,
       type_real Mzz, type_real Mxy, type_real Mxz, type_real Myz,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
-      const specfem::wavefield::simulation_field wavefield_type)
+      const specfem::simulation::field_type wavefield_type)
       : Mxx(Mxx), Myy(Myy), Mzz(Mzz), Mxy(Mxy), Mxz(Mxz), Myz(Myz),
         wavefield_type(wavefield_type),
         tensor_source(x, y, z, std::move(source_time_function)) {};
 
   /**
+   * @brief Construct a new moment tensor source from generic coordinates
+   *
+   * @param coordinates Generic coordinate object
+   * @param Mxx Mxx component of moment tensor
+   * @param Myy Myy component of moment tensor
+   * @param Mzz Mzz component of moment tensor
+   * @param Mxy Mxy component of moment tensor
+   * @param Mxz Mxz component of moment tensor
+   * @param Myz Myz component of moment tensor
+   * @param source_time_function pointer to source time function
+   * @param wavefield_type type of wavefield
+   */
+  moment_tensor(
+      std::unique_ptr<specfem::coordinate_systems::coordinates<
+          specfem::element::dimension_tag::dim3>>
+          coordinates,
+      type_real Mxx, type_real Myy, type_real Mzz, type_real Mxy, type_real Mxz,
+      type_real Myz,
+      std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
+      const specfem::simulation::field_type wavefield_type)
+      : Mxx(Mxx), Myy(Myy), Mzz(Mzz), Mxy(Mxy), Mxz(Mxz), Myz(Myz),
+        wavefield_type(wavefield_type),
+        tensor_source(std::move(coordinates), std::move(source_time_function)) {
+        };
+
+  /**
    * @brief User output
    *
    */
-  std::string print() const override;
+  std::string source_name() const override { return "3-D moment tensor"; }
+  std::string print_details() const override;
 
-  specfem::wavefield::simulation_field get_wavefield_type() const override {
+  specfem::simulation::field_type get_wavefield_type() const override {
     return wavefield_type;
   }
 
-  bool operator==(const specfem::sources::source<specfem::dimension::type::dim3>
-                      &other) const override;
-  bool operator!=(const specfem::sources::source<specfem::dimension::type::dim3>
-                      &other) const override;
+  bool operator==(
+      const specfem::sources::source<specfem::element::dimension_tag::dim3>
+          &other) const override;
+  bool operator!=(
+      const specfem::sources::source<specfem::element::dimension_tag::dim3>
+          &other) const override;
 
   /**
    * @brief Get the source tensor
@@ -180,12 +209,13 @@ public:
    * The tensor format is a 3×3 symmetric matrix for elastic media, representing
    * the complete seismic moment tensor used in earthquake source modeling.
    *
-   * @return Kokkos::View<type_real **, Kokkos::LayoutLeft, Kokkos::HostSpace>
+   * @return Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
    * Source tensor with dimensions [ncomponents][3] where each row contains
    * [Mxx, Mxy, Mxz], [Mxy, Myy, Myz], [Mxz, Myz, Mzz] etc, depending on the
    * medium type
    */
-  specfem::kokkos::HostView2d<type_real> get_source_tensor() const override;
+  Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+  get_source_tensor() const override;
 
   /**
    * @brief Get the list of supported media for this source type
@@ -196,19 +226,17 @@ public:
   get_supported_media() const override;
 
 private:
-  type_real Mxx;                                       ///< Mxx for the source
-  type_real Myy;                                       ///< Myy for the source
-  type_real Mzz;                                       ///< Mzz for the source
-  type_real Mxy;                                       ///< Mxy for the source
-  type_real Mxz;                                       ///< Mxz for the source
-  type_real Myz;                                       ///< Myz for the source
-  specfem::wavefield::simulation_field wavefield_type; ///< Type of wavefield on
-                                                       ///< which the source
-                                                       ///< acts
+  type_real Mxx;                                  ///< Mxx for the source
+  type_real Myy;                                  ///< Myy for the source
+  type_real Mzz;                                  ///< Mzz for the source
+  type_real Mxy;                                  ///< Mxy for the source
+  type_real Mxz;                                  ///< Mxz for the source
+  type_real Myz;                                  ///< Myz for the source
+  specfem::simulation::field_type wavefield_type; ///< Type of wavefield on
+                                                  ///< which the source
+                                                  ///< acts
 
 public:
-  static constexpr const char *name = "3-D moment tensor";
-
 protected:
 };
 } // namespace sources

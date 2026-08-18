@@ -1,9 +1,8 @@
 #pragma once
 
-#include "enumerations/coupled_interface.hpp"
-#include "enumerations/medium.hpp"
 #include "specfem/data_access/accessor.hpp"
 #include "specfem/data_access/data_class.hpp"
+#include "specfem/element_coupling.hpp"
 namespace specfem::test_fixture::impl {
 
 /**
@@ -12,25 +11,55 @@ namespace specfem::test_fixture::impl {
  *
  * @tparam InterfaceTag
  * @tparam BoundaryTag
+ * @tparam FluxSchemeTag
  * @tparam DataClassType
  * @tparam Axes The size of the view along each axis.
  */
-template <specfem::interface::interface_tag InterfaceTag,
+template <specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
+          specfem::element_coupling::flux_scheme_tag FluxSchemeTag,
           specfem::data_access::DataClassType DataClassType, int... Axes>
 struct NonconformingAccessorPatch2D
     : specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::chunk_edge, DataClassType,
-          specfem::dimension::type::dim2, false /* UseSIMD */> {
+          specfem::datatype::AccessorType::chunk_edge, DataClassType,
+          specfem::element::dimension_tag::dim2, false /* UseSIMD */> {
 public:
-  static constexpr auto dimension_tag = specfem::dimension::type::dim2;
+  static constexpr auto dimension_tag = specfem::element::dimension_tag::dim2;
   static constexpr auto interface_tag = InterfaceTag;
   static constexpr auto boundary_tag = BoundaryTag;
   static constexpr auto connection_tag =
-      specfem::connections::type::nonconforming;
+      specfem::element_connections::type::nonconforming;
+  static constexpr auto flux_scheme_tag = FluxSchemeTag;
   /// View type for storing intersection scaling factors
+private:
+  // ======================================================================================
+  /**
+   * @brief helper to unpack [Axes][...]
+   *
+   * ViewInternalType<T,Axis1, ..., Axisk>::type = T[Axis1]...[Axisk]
+   */
+  template <typename LeftType, int... RemainingAxes> struct ViewInternalType;
+
+  // stitch in axis recursively.
+  template <typename LeftType, int Axis, int... RemainingAxes>
+  struct ViewInternalType<LeftType, Axis, RemainingAxes...> {
+
+    // I would have thought it would be
+    // ViewInternalType<LeftType[Axis], RemainingAxes...>::type
+    // but this one gave me the correct type:
+    using type =
+        typename ViewInternalType<LeftType, RemainingAxes...>::type[Axis];
+  };
+
+  // base case (recursive termination)
+  template <typename LeftType> struct ViewInternalType<LeftType> {
+    using type = LeftType;
+  };
+  // ======================================================================================
+
+public:
   using DataViewType =
-      Kokkos::View<type_real[Axes]...,
+      Kokkos::View<typename ViewInternalType<type_real, Axes...>::type,
                    Kokkos::DefaultExecutionSpace::memory_space>;
 
 private:
@@ -53,51 +82,82 @@ public:
   KOKKOS_INLINE_FUNCTION auto &operator()(Indices... indices) const {
     return data_(indices...);
   }
+
+  typename DataViewType::host_mirror_type create_host_mirror() {
+    return Kokkos::create_mirror_view(data_);
+  }
+
+  void
+  sync_to_device(const typename DataViewType::host_mirror_type &host_data) {
+    Kokkos::deep_copy(data_, host_data);
+  }
 };
 
-template <specfem::interface::interface_tag InterfaceTag,
-          specfem::element::boundary_tag BoundaryTag, int NumberElements,
-          int NQuadElement, int NQuadIntersection>
+template <specfem::element_coupling::interface_tag InterfaceTag,
+          specfem::element::boundary_tag BoundaryTag,
+          specfem::element_coupling::flux_scheme_tag FluxSchemeTag,
+          int NumberElements, int NQuadElement, int NQuadIntersection>
 struct NonconformingTransferFunctionSelfPatch
     : NonconformingAccessorPatch2D<
-          InterfaceTag, BoundaryTag,
+          InterfaceTag, BoundaryTag, FluxSchemeTag,
           specfem::data_access::DataClassType::transfer_function_self,
           NumberElements, NQuadElement, NQuadIntersection> {
+  using NonconformingAccessorPatch2D<
+      InterfaceTag, BoundaryTag, FluxSchemeTag,
+      specfem::data_access::DataClassType::transfer_function_self,
+      NumberElements, NQuadElement,
+      NQuadIntersection>::NonconformingAccessorPatch2D;
   static constexpr int chunk_size = NumberElements;
   static constexpr int n_quad_element = NQuadElement;
   static constexpr int n_quad_intersection = NQuadIntersection;
 };
-template <specfem::interface::interface_tag InterfaceTag,
-          specfem::element::boundary_tag BoundaryTag, int NumberElements,
-          int NQuadElement, int NQuadIntersection>
+template <specfem::element_coupling::interface_tag InterfaceTag,
+          specfem::element::boundary_tag BoundaryTag,
+          specfem::element_coupling::flux_scheme_tag FluxSchemeTag,
+          int NumberElements, int NQuadElement, int NQuadIntersection>
 struct NonconformingTransferFunctionCoupledPatch
     : NonconformingAccessorPatch2D<
-          InterfaceTag, BoundaryTag,
+          InterfaceTag, BoundaryTag, FluxSchemeTag,
           specfem::data_access::DataClassType::transfer_function_coupled,
           NumberElements, NQuadElement, NQuadIntersection> {
+  using NonconformingAccessorPatch2D<
+      InterfaceTag, BoundaryTag, FluxSchemeTag,
+      specfem::data_access::DataClassType::transfer_function_coupled,
+      NumberElements, NQuadElement,
+      NQuadIntersection>::NonconformingAccessorPatch2D;
   static constexpr int chunk_size = NumberElements;
   static constexpr int n_quad_element = NQuadElement;
   static constexpr int n_quad_intersection = NQuadIntersection;
 };
-template <specfem::interface::interface_tag InterfaceTag,
-          specfem::element::boundary_tag BoundaryTag, int NumberElements,
-          int NQuadIntersection>
+template <specfem::element_coupling::interface_tag InterfaceTag,
+          specfem::element::boundary_tag BoundaryTag,
+          specfem::element_coupling::flux_scheme_tag FluxSchemeTag,
+          int NumberElements, int NQuadIntersection>
 struct NonconformingIntersectionNormalPatch
     : NonconformingAccessorPatch2D<
-          InterfaceTag, BoundaryTag,
+          InterfaceTag, BoundaryTag, FluxSchemeTag,
           specfem::data_access::DataClassType::intersection_normal,
           NumberElements, NQuadIntersection, 2> {
+  using NonconformingAccessorPatch2D<
+      InterfaceTag, BoundaryTag, FluxSchemeTag,
+      specfem::data_access::DataClassType::intersection_normal, NumberElements,
+      NQuadIntersection, 2>::NonconformingAccessorPatch2D;
   static constexpr int chunk_size = NumberElements;
   static constexpr int n_quad_intersection = NQuadIntersection;
 };
-template <specfem::interface::interface_tag InterfaceTag,
-          specfem::element::boundary_tag BoundaryTag, int NumberElements,
-          int NQuadIntersection>
+template <specfem::element_coupling::interface_tag InterfaceTag,
+          specfem::element::boundary_tag BoundaryTag,
+          specfem::element_coupling::flux_scheme_tag FluxSchemeTag,
+          int NumberElements, int NQuadIntersection>
 struct NonconformingIntersectionFactorPatch
     : NonconformingAccessorPatch2D<
-          InterfaceTag, BoundaryTag,
+          InterfaceTag, BoundaryTag, FluxSchemeTag,
           specfem::data_access::DataClassType::intersection_factor,
           NumberElements, NQuadIntersection> {
+  using NonconformingAccessorPatch2D<
+      InterfaceTag, BoundaryTag, FluxSchemeTag,
+      specfem::data_access::DataClassType::intersection_factor, NumberElements,
+      NQuadIntersection>::NonconformingAccessorPatch2D;
   static constexpr int chunk_size = NumberElements;
   static constexpr int n_quad_intersection = NQuadIntersection;
 };

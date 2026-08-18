@@ -1,14 +1,15 @@
 #include "test_fixture.hpp"
 #include "SPECFEM_Environment.hpp"
-#include "io/interface.hpp"
+#include "specfem/io.hpp"
+#include "specfem/runtime_configuration/sources.hpp"
 #include "test_fixture.tpp"
 // ------------------------------------------------------------------------
 // Reading test config
 
-template <specfem::dimension::type DimensionType>
+template <specfem::element::dimension_tag DimensionType>
 void parse_test_config(
     const YAML::Node &yaml,
-    std::vector<test_configuration::Test<DimensionType> > &tests,
+    std::vector<test_configuration::Test<DimensionType>> &tests,
     const std::string &dimension) {
   YAML::Node all_tests = yaml["Tests"][dimension];
   assert(all_tests.IsSequence());
@@ -20,10 +21,10 @@ void parse_test_config(
 }
 
 // Template specialization for dim2
-template <> Assembly<specfem::dimension::type::dim2>::Assembly() {
+template <> Assembly<specfem::element::dimension_tag::dim2>::Assembly() {
 
   std::string config_filename = "assembly/test_config.yaml";
-  parse_test_config<specfem::dimension::type::dim2>(
+  parse_test_config<specfem::element::dimension_tag::dim2>(
       YAML::LoadFile(config_filename), Tests, "2D");
 
   const auto quadrature = []() {
@@ -37,16 +38,25 @@ template <> Assembly<specfem::dimension::type::dim2>::Assembly() {
 
     const auto elastic_wave = Test.get_elastic_wave();
     const auto electromagnetic_wave = Test.get_electromagnetic_wave();
-    const auto mesh = specfem::io::read_2d_mesh(database_file, elastic_wave,
-                                                electromagnetic_wave);
+    auto mesh = specfem::io::read_2d_mesh(
+        database_file, elastic_wave, electromagnetic_wave,
+        specfem::attenuation::Setup{ Test.is_attenuation_enabled(),
+                                     Test.get_attenuation_f0(),
+                                     Test.get_attenuation_band() });
 
     this->Meshes.push_back(mesh);
     this->suffixes.push_back(Test.suffix);
 
     std::cout << sources_file << std::endl;
 
-    auto [sources, t0] = specfem::io::read_2d_sources(
-        sources_file, 1, 0, 0, specfem::simulation::type::forward);
+    std::vector<specfem::enums::source_file_entry> entries = {
+      { specfem::enums::source_format::YAML, sources_file }
+    };
+
+    auto [sources, t0, starttime] =
+        specfem::io::read_sources<specfem::element::dimension_tag::dim2>(
+            entries, 1, 0, 0, specfem::simulation::type::forward);
+    (void)starttime; // unused in test
 
     this->Sources.push_back(sources);
 
@@ -54,22 +64,22 @@ template <> Assembly<specfem::dimension::type::dim2>::Assembly() {
 
     this->Stations.push_back(receivers);
 
-    std::vector<specfem::wavefield::type> seismogram_types = {
-      specfem::wavefield::type::displacement
+    std::vector<specfem::enums::wavefield> seismogram_types = {
+      specfem::enums::wavefield::displacement
     };
 
     this->assemblies.push_back(
-        specfem::assembly::assembly<specfem::dimension::type::dim2>(
+        specfem::assembly::assembly<specfem::element::dimension_tag::dim2>(
             mesh, quadrature, sources, receivers, seismogram_types, 1.0, 0.0, 1,
             1, 1, specfem::simulation::type::forward, false, nullptr));
   }
 }
 
 // Template specialization for dim3
-template <> Assembly<specfem::dimension::type::dim3>::Assembly() {
+template <> Assembly<specfem::element::dimension_tag::dim3>::Assembly() {
 
   std::string config_filename = "assembly/test_config.yaml";
-  parse_test_config<specfem::dimension::type::dim3>(
+  parse_test_config<specfem::element::dimension_tag::dim3>(
       YAML::LoadFile(config_filename), Tests, "3D");
 
   const auto quadrature = []() {
@@ -82,15 +92,23 @@ template <> Assembly<specfem::dimension::type::dim3>::Assembly() {
         Test.get_databases();
 
     // For 3D, we need different mesh and source reading functions
-    const auto mesh = specfem::io::read_3d_mesh(mesh_database_file);
+    auto mesh = specfem::io::read_3d_mesh(
+        mesh_database_file,
+        specfem::attenuation::Setup{ Test.is_attenuation_enabled() });
 
     this->Meshes.push_back(mesh);
     this->suffixes.push_back(Test.suffix);
 
     std::cout << sources_file << std::endl;
 
-    auto [sources, t0] = specfem::io::read_3d_sources(
-        sources_file, 1, 0, 0, specfem::simulation::type::forward);
+    std::vector<specfem::enums::source_file_entry> entries = {
+      { specfem::enums::source_format::YAML, sources_file }
+    };
+
+    auto [sources, t0, starttime3d] =
+        specfem::io::read_sources<specfem::element::dimension_tag::dim3>(
+            entries, 1, 0, 0, specfem::simulation::type::forward);
+    (void)starttime3d; // unused in test
 
     this->Sources.push_back(sources);
 
@@ -106,12 +124,12 @@ template <> Assembly<specfem::dimension::type::dim3>::Assembly() {
 
     std::cout << "Number of receivers: " << receivers.size() << std::endl;
 
-    std::vector<specfem::wavefield::type> seismogram_types = {
-      specfem::wavefield::type::displacement
+    std::vector<specfem::enums::wavefield> seismogram_types = {
+      specfem::enums::wavefield::displacement
     };
 
     this->assemblies.push_back(
-        specfem::assembly::assembly<specfem::dimension::type::dim3>(
+        specfem::assembly::assembly<specfem::element::dimension_tag::dim3>(
             mesh, quadrature, sources, receivers, seismogram_types, 1.0, 0.0, 1,
             1, 1, specfem::simulation::type::forward, false, nullptr));
 

@@ -9,10 +9,12 @@ add_library(specfem::source ALIAS source_class)
 target_link_libraries(
         source_class
         Kokkos::kokkos
-        utilities
+        specfem::coordinate_systems
+        specfem::datetime
+        specfem::utilities
         specfem::source_time_functions
         yaml-cpp
-        enumerations
-        algorithms
+        specfem::element
+        specfem::enums
         ${BOOST_LIBS}
 )

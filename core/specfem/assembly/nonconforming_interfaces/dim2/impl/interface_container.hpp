@@ -1,11 +1,13 @@
 
 #pragma once
 
-#include "enumerations/interface.hpp"
-#include "execution/for_each_level.hpp"
-#include "specfem/assembly/edge_types.hpp"
+#include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/element_coupling/flux_scheme_configuration.hpp"
+#include "specfem/element_coupling/tags.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/execution.hpp"
 
 namespace specfem::assembly::nonconforming_interfaces_impl {
 
@@ -21,37 +23,40 @@ namespace specfem::assembly::nonconforming_interfaces_impl {
  * @tparam InterfaceTag Type of interface (ELASTIC_ACOUSTIC or ACOUSTIC_ELASTIC)
  * @tparam BoundaryTag Boundary condition type (NONE, STACEY, etc.)
  */
-template <specfem::interface::interface_tag InterfaceTag,
-          specfem::element::boundary_tag BoundaryTag>
-struct interface_container<specfem::dimension::type::dim2, InterfaceTag,
-                           BoundaryTag,
-                           specfem::connections::type::nonconforming>
+template <specfem::element_coupling::interface_tag InterfaceTag,
+          specfem::element::boundary_tag BoundaryTag,
+          specfem::element_coupling::flux_scheme_tag FluxSchemeTag>
+struct interface_container<
+    specfem::element::dimension_tag::dim2, InterfaceTag, BoundaryTag,
+    specfem::element_connections::type::nonconforming, FluxSchemeTag>
     : public specfem::data_access::Container<
           specfem::data_access::ContainerType::edge,
           specfem::data_access::DataClassType::nonconforming_interface,
-          specfem::dimension::type::dim2> {
+          specfem::element::dimension_tag::dim2> {
 public:
   /** @brief Dimension tag for 2D specialization */
-  constexpr static auto dimension_tag = specfem::dimension::type::dim2;
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim2;
   /** @brief Interface type (elastic-acoustic or acoustic-elastic) */
   constexpr static auto interface_tag = InterfaceTag;
   /** @brief Boundary condition type */
   constexpr static auto boundary_tag = BoundaryTag;
+  /** @brief Flux scheme type */
+  constexpr static auto flux_scheme_tag = FluxSchemeTag;
   /** @brief Medium type on the self side of the interface */
   constexpr static auto self_medium =
-      specfem::interface::attributes<dimension_tag,
-                                     interface_tag>::self_medium();
+      specfem::element_coupling::attributes<dimension_tag,
+                                            interface_tag>::self_medium();
   /** @brief Medium type on the coupled side of the interface */
   constexpr static auto coupled_medium =
-      specfem::interface::attributes<dimension_tag,
-                                     interface_tag>::coupled_medium();
+      specfem::element_coupling::attributes<dimension_tag,
+                                            interface_tag>::coupled_medium();
 
 public:
   /** @brief Base container type alias */
   using base_type = specfem::data_access::Container<
       specfem::data_access::ContainerType::edge,
       specfem::data_access::DataClassType::nonconforming_interface,
-      specfem::dimension::type::dim2>;
+      specfem::element::dimension_tag::dim2>;
   /** @brief View type for edge scaling factors */
   using EdgeFactorView = typename base_type::scalar_type<
       type_real, Kokkos::DefaultExecutionSpace::memory_space>;
@@ -72,13 +77,13 @@ public:
   TransferFunctionView transfer_function_other;
 
   /** @brief Host mirror for edge scaling factors */
-  EdgeFactorView::HostMirror h_intersection_factor;
+  EdgeFactorView::host_mirror_type h_intersection_factor;
   /** @brief Host mirror for edge normal vectors */
-  EdgeNormalView::HostMirror h_intersection_normal;
+  EdgeNormalView::host_mirror_type h_intersection_normal;
   /** @brief Device view for transfer function on self */
-  TransferFunctionView::HostMirror h_transfer_function;
+  TransferFunctionView::host_mirror_type h_transfer_function;
   /** @brief Device view for transfer function on coupled side */
-  TransferFunctionView::HostMirror h_transfer_function_other;
+  TransferFunctionView::host_mirror_type h_transfer_function_other;
 
 public:
   /**
@@ -86,17 +91,39 @@ public:
    *
    * @param ngllz Number of GLL points in z-direction
    * @param ngllx Number of GLL points in x-direction
-   * @param edge_types Edge type information from mesh
+   * @param element_intersections Element intersection information from mesh
    * @param mesh Mesh connectivity and geometry
    */
   interface_container(
       const int ngllz, const int ngllx,
-      const specfem::assembly::edge_types<specfem::dimension::type::dim2>
-          &edge_types,
-      const specfem::assembly::mesh<dimension_tag> &mesh);
+      const specfem::assembly::element_intersections<
+          specfem::element::dimension_tag::dim2> &element_intersections,
+      const specfem::assembly::mesh<dimension_tag> &mesh,
+      const specfem::element_coupling::flux_scheme_configuration
+          &flux_scheme_config = {});
 
   /** @brief Default constructor */
   interface_container() = default;
+
+  interface_container(const int &ngllz, const int &ngllx,
+                      const int &nquad_intersection, const int &num_edges)
+      : intersection_factor(
+            "specfem::assembly::nonconforming_interfaces::intersection_factor",
+            num_edges, nquad_intersection),
+        h_intersection_factor(Kokkos::create_mirror_view(intersection_factor)),
+        intersection_normal(
+            "specfem::assembly::nonconforming_interfaces::intersection_normal",
+            num_edges, nquad_intersection, 2),
+        h_intersection_normal(Kokkos::create_mirror_view(intersection_normal)),
+        transfer_function(
+            "specfem::assembly::nonconforming_interfaces::transfer_function",
+            num_edges, nquad_intersection, ngllx),
+        h_transfer_function(Kokkos::create_mirror_view(transfer_function)),
+        transfer_function_other("specfem::assembly::nonconforming_interfaces::"
+                                "transfer_function_other",
+                                num_edges, nquad_intersection, ngllx),
+        h_transfer_function_other(
+            Kokkos::create_mirror_view(transfer_function_other)) {};
 
 private:
   template <bool on_device>
@@ -128,8 +155,8 @@ private:
   template <bool on_device, typename IndexType, typename... PointTypes>
   KOKKOS_FORCEINLINE_FUNCTION void impl_load_after_expansion(
       const std::integral_constant<
-          specfem::data_access::AccessorType,
-          specfem::data_access::AccessorType::point> /* AccessorType */,
+          specfem::datatype::AccessorType,
+          specfem::datatype::AccessorType::point> /* AccessorType */,
       const IndexType &index, PointTypes &...points) const {
 
     static_assert((specfem::data_access::is_point<PointTypes>::value && ...),
@@ -162,8 +189,8 @@ private:
   template <bool on_device, typename IndexType, typename... EdgeTypes>
   KOKKOS_FORCEINLINE_FUNCTION void impl_load_after_expansion(
       const std::integral_constant<
-          specfem::data_access::AccessorType,
-          specfem::data_access::AccessorType::chunk_edge> /* AccessorType */,
+          specfem::datatype::AccessorType,
+          specfem::datatype::AccessorType::chunk_edge> /* AccessorType */,
       const IndexType &index, EdgeTypes &...edges) const {
 
     static_assert(
@@ -227,6 +254,14 @@ private:
                         edge_t>::value ||
                     specfem::data_access::is_transfer_function_coupled<
                         edge_t>::value) {
+        // TODO(nquad_intersection::runtime_vs_template): I forsee a bug
+        // where the runtime-nquad_intersection value (set by runtime
+        // config) is set to something smaller than the kernel template
+        // parameter NQuadIntersection, and the values in the chunk_edge
+        // data container are not zero-padded. intersection/transfer View
+        // extents are set by the runtime value. Keep this in mind! (This TODO
+        // message is copy-pasted in other places -- remove all instances by
+        // TOOD(...) header when resolved)
         for (int iquad = 0; iquad < nquad_intersection; iquad++) {
           edge(local_index.iedge, local_index.ipoint, iquad) =
               this->get_value<on_device>(
@@ -239,6 +274,14 @@ private:
 
     specfem::execution::for_each_level(
         specfem::execution::TeamThreadMDRangeIterator(
+            // TODO(nquad_intersection::runtime_vs_template): I forsee a bug
+            // where the runtime-nquad_intersection value (set by runtime
+            // config) is set to something smaller than the kernel template
+            // parameter NQuadIntersection, and the values in the chunk_edge
+            // data container are not zero-padded. intersection/transfer View
+            // extents are set by the runtime value. Keep this in mind! (This
+            // TODO message is copy-pasted in other places -- remove all
+            // instances by TOOD(...) header when resolved)
             index.get_policy_index(), index.nedges(), nquad_intersection),
         [&](const auto index) {
           (factor_call(edges, index), ...);

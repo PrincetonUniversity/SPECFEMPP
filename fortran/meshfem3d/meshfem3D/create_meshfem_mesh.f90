@@ -58,7 +58,7 @@ end module create_meshfem_par
 !
 
 
-  subroutine create_meshfem_mesh()
+subroutine create_meshfem_mesh()
 
 ! create the different regions of the mesh
 
@@ -87,6 +87,8 @@ end module create_meshfem_par
   use shared_parameters, only: IS_WAVEFIELD_DISCONTINUITY
 
   use adjacency_graph, only: compute_adjacency_graph
+
+  use assemble_MPI_par, only: num_mpi_adjacencies
 
   implicit none
 
@@ -118,7 +120,7 @@ end module create_meshfem_par
   endif
 
   ! create the name for the database of the current slide and region
-  call create_name_database(prname,myrank,LOCAL_PATH)
+  call create_name_database(prname,myrank,LOCAL_PATH,sizeprocs)
 
   ! allocates arrays
   call cmm_allocate_arrays()
@@ -135,6 +137,10 @@ end module create_meshfem_par
   ! Build the adjacency graph
   call compute_adjacency_graph(nglob)
 
+  ! Exchange MPI interface buffers and compute cross-MPI adjacencies
+  call assemble_MPI(nglob, iMPIcut_xi, iMPIcut_eta, nodes_coords)
+  call compute_mpi_adjacency()
+
   ! CPML initialization
   call create_CPML_regions(nspec,nglob,nodes_coords)
 
@@ -148,8 +154,8 @@ end module create_meshfem_par
 
   ! outputs mesh file for visualization
   call create_visual_files(CREATE_ABAQUS_FILES,CREATE_DX_FILES,CREATE_VTK_FILES, &
-                           nspec,nglob, &
-                           prname,nodes_coords,ibool,ispec_material_id)
+    nspec,nglob, &
+    prname,nodes_coords,ibool,ispec_material_id)
 
   !! setting up wavefield discontinuity interface
   if (IS_WAVEFIELD_DISCONTINUITY) then
@@ -158,10 +164,10 @@ end module create_meshfem_par
 
   ! stores boundary informations
   call store_boundaries(iboun,nspec, &
-                        ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
-                        nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
-                        NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-                        NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX)
+    ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
+    nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
+    NSPEC2D_BOTTOM,NSPEC2D_TOP, &
+    NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX)
 
   ! checks mesh resolution
   VP_MAX = 0.0
@@ -172,31 +178,31 @@ end module create_meshfem_par
     endif
   enddo
   call check_mesh_quality(VP_MAX,nglob,nspec, &
-                          nodes_coords(:,1),nodes_coords(:,2),nodes_coords(:,3),ibool, &
-                          CREATE_VTK_FILES,prname)
+    nodes_coords(:,1),nodes_coords(:,2),nodes_coords(:,3),ibool, &
+    CREATE_VTK_FILES,prname)
 
 
   ! saves mesh as databases file
   if (ADIOS_FOR_DATABASES) then
     call save_databases_adios(LOCAL_PATH,sizeprocs, &
-                              nspec,nglob, &
-                              iMPIcut_xi,iMPIcut_eta, &
-                              nodes_coords,ispec_material_id, &
-                              nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
-                              ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top)
+      nspec,nglob, &
+      iMPIcut_xi,iMPIcut_eta, &
+      nodes_coords,ispec_material_id, &
+      nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
+      ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top)
   else if (HDF5_ENABLED) then
     call save_databases_hdf5(nspec,nglob, &
-                             iMPIcut_xi,iMPIcut_eta, &
-                             nodes_coords,ispec_material_id, &
-                             nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
-                             ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top)
+      iMPIcut_xi,iMPIcut_eta, &
+      nodes_coords,ispec_material_id, &
+      nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
+      ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top)
   else
     ! saves mesh as databases file  !! VM VM added xstore, ystore, zstore used for Axisem Coupling
     call save_databases(nspec,nglob, &
-                        iMPIcut_xi,iMPIcut_eta, &
-                        nodes_coords,ispec_material_id, &
-                        nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
-                        ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top)
+      iMPIcut_xi,iMPIcut_eta, &
+      nodes_coords,ispec_material_id, &
+      nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
+      ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top)
   endif
 
   !--- Clean ADIOS. Make sure everything is already written
@@ -212,13 +218,13 @@ end module create_meshfem_par
   deallocate(CPML_to_spec)
   deallocate(CPML_regions)
 
-  end subroutine create_meshfem_mesh
+end subroutine create_meshfem_mesh
 
 !
 !----------------------------------------------------------------------------------------------------
 !
 
-  subroutine cmm_allocate_arrays()
+subroutine cmm_allocate_arrays()
 
   use constants, only: IMAIN,myrank
   use constants_meshfem, only: NGLLX_M,NGLLY_M,NGLLZ_M
@@ -293,13 +299,13 @@ end module create_meshfem_par
   ! synchronize
   call synchronize_all()
 
-  end subroutine cmm_allocate_arrays
+end subroutine cmm_allocate_arrays
 
 !
 !----------------------------------------------------------------------------------------------------
 !
 
-  subroutine cmm_create_mesh_elements()
+subroutine cmm_create_mesh_elements()
 
   use constants, only: CUSTOM_REAL,IMAIN,NGNOD_EIGHT_CORNERS,HUGEVAL,myrank, &
     GAUSSALPHA,GAUSSBETA,NDIM
@@ -360,9 +366,9 @@ end module create_meshfem_par
 
   ! topology
   double precision :: xigll(NGLLX_M),yigll(NGLLY_M),zigll(NGLLZ_M), &
-                      wxgll(NGLLX_M),wygll(NGLLY_M),wzgll(NGLLZ_M)
+    wxgll(NGLLX_M),wygll(NGLLY_M),wzgll(NGLLZ_M)
   double precision :: shape3D(NGNOD,NGLLX_M,NGLLY_M,NGLLZ_M), &
-                      dershape3D(NDIM,NGNOD,NGLLX_M,NGLLY_M,NGLLZ_M)
+    dershape3D(NDIM,NGNOD,NGLLX_M,NGLLY_M,NGLLZ_M)
 
   ! set up coordinates of the Gauss-Lobatto-Legendre points
   if (NGLLX_M >= 3 .and. NGLLY_M >= 3 .and. NGLLZ_M >= 3) then
@@ -403,9 +409,9 @@ end module create_meshfem_par
     endif
 
     call define_model_regions(NEX_PER_PROC_XI,NEX_PER_PROC_ETA,iproc_xi_current,iproc_eta_current, &
-                              isubregion,nsubregions,subregions, &
-                              iaddx,iaddy,iaddz,ix1,ix2,dix,iy1,iy2,diy,ir1,ir2,dir,iax,iay,iar, &
-                              imaterial_number)
+      isubregion,nsubregions,subregions, &
+      iaddx,iaddy,iaddz,ix1,ix2,dix,iy1,iy2,diy,ir1,ir2,dir,iax,iay,iar, &
+      imaterial_number)
 
     ! loop on all the mesh points in current subregion
     do ir = ir1,ir2,dir
@@ -464,9 +470,9 @@ end module create_meshfem_par
 
     ! define shape of elements
     call define_mesh_regions(USE_REGULAR_MESH,isubregion,NER,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-                             iproc_xi_current,iproc_eta_current, &
-                             NDOUBLINGS,ner_doublings, &
-                             iaddx,iaddy,iaddz,ix1,ix2,dix,iy1,iy2,diy,ir1,ir2,dir,iax,iay,iar)
+      iproc_xi_current,iproc_eta_current, &
+      NDOUBLINGS,ner_doublings, &
+      iaddx,iaddy,iaddz,ix1,ix2,dix,iy1,iy2,diy,ir1,ir2,dir,iax,iay,iar)
 
     ! loop on all the mesh points in current subregion
     if (modulo(isubregion,2) == 1) then
@@ -511,10 +517,10 @@ end module create_meshfem_par
 
             ! detect mesh boundaries
             call get_flags_boundaries(nspec,iproc_xi_current,iproc_eta_current, &
-                                      ispec,doubling_index, &
-                                      xstore(:,:,:,ispec),ystore(:,:,:,ispec),zstore(:,:,:,ispec), &
-                                      iboun,iMPIcut_xi,iMPIcut_eta,NPROC_XI,NPROC_ETA, &
-                                      UTM_X_MIN,UTM_X_MAX,UTM_Y_MIN,UTM_Y_MAX,Z_DEPTH_BLOCK,NEX_XI,NEX_ETA)
+              ispec,doubling_index, &
+              xstore(:,:,:,ispec),ystore(:,:,:,ispec),zstore(:,:,:,ispec), &
+              iboun,iMPIcut_xi,iMPIcut_eta,NPROC_XI,NPROC_ETA, &
+              UTM_X_MIN,UTM_X_MAX,UTM_Y_MIN,UTM_Y_MAX,Z_DEPTH_BLOCK,NEX_XI,NEX_ETA)
           enddo
         enddo
       enddo
@@ -561,10 +567,10 @@ end module create_meshfem_par
 
               ! detect mesh boundaries
               call get_flags_boundaries(nspec,iproc_xi_current,iproc_eta_current, &
-                                        ispec,doubling_index, &
-                                        xstore(:,:,:,ispec),ystore(:,:,:,ispec),zstore(:,:,:,ispec), &
-                                        iboun,iMPIcut_xi,iMPIcut_eta,NPROC_XI,NPROC_ETA, &
-                                        UTM_X_MIN,UTM_X_MAX,UTM_Y_MIN,UTM_Y_MAX,Z_DEPTH_BLOCK,NEX_XI,NEX_ETA)
+                ispec,doubling_index, &
+                xstore(:,:,:,ispec),ystore(:,:,:,ispec),zstore(:,:,:,ispec), &
+                iboun,iMPIcut_xi,iMPIcut_eta,NPROC_XI,NPROC_ETA, &
+                UTM_X_MIN,UTM_X_MAX,UTM_Y_MIN,UTM_Y_MAX,Z_DEPTH_BLOCK,NEX_XI,NEX_ETA)
 
             enddo
           enddo
@@ -574,7 +580,7 @@ end module create_meshfem_par
 
     endif ! regular/doubling region
 
-  ! end of loop on all the subregions of the current region the mesh
+    ! end of loop on all the subregions of the current region the mesh
   enddo
 
   ! mesh dimensions
@@ -698,13 +704,13 @@ end module create_meshfem_par
 
   deallocate(material_num)
 
-  end subroutine cmm_create_mesh_elements
+end subroutine cmm_create_mesh_elements
 
 !
 !----------------------------------------------------------------------------------------------------
 !
 
-  subroutine cmm_create_addressing(nglob)
+subroutine cmm_create_addressing(nglob)
 
   use constants, only: NDIM,IMAIN,MAX_STRING_LEN,myrank
   use constants_meshfem, only: NGLLX_M,NGLLY_M,NGLLZ_M,NGLLCUBE_M
@@ -843,4 +849,4 @@ end module create_meshfem_par
 
   deallocate(iglob,locval,ifseg,xp,yp,zp)
 
-  end subroutine cmm_create_addressing
+end subroutine cmm_create_addressing

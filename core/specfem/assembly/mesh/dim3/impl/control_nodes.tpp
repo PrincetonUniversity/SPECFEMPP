@@ -1,14 +1,16 @@
 #pragma once
 
 #include "control_nodes.hpp"
-#include "enumerations/dimension.hpp"
-#include "mesh/mesh.hpp"
+#include "specfem/element.hpp"
+#include "specfem/mesh.hpp"
 #include <Kokkos_Core.hpp>
 
 void initialize_control_nodes(
-    specfem::assembly::mesh_impl::control_nodes<specfem::dimension::type::dim3>
-        &dest,
-    const specfem::mesh::control_nodes<specfem::dimension::type::dim3>
+    const specfem::assembly::mesh_impl::mesh_to_compute_mapping<
+        specfem::element::dimension_tag::dim3> &mapping,
+    specfem::assembly::mesh_impl::control_nodes<
+        specfem::element::dimension_tag::dim3> &dest,
+    const specfem::mesh::control_nodes<specfem::element::dimension_tag::dim3>
         &src) {
 
   // We use the device by default for better performance.
@@ -24,8 +26,9 @@ void initialize_control_nodes(
       "specfem::assembly::mesh::control_nodes::copy_to_device",
       Kokkos::MDRangePolicy<Kokkos::Rank<2> >({ 0, 0 },
                                               { src.nspec, src.ngnod }),
-      KOKKOS_LAMBDA(const int ispec, const int ia) {
-        const int index = control_node_index(ispec, ia);
+      KOKKOS_LAMBDA(const int ispec_mesh, const int ia) {
+        const int ispec = mapping.mesh_to_compute(ispec_mesh);
+        const int index = control_node_index(ispec_mesh, ia);
         dest.control_node_index(ispec, ia) = index;
         dest.control_node_coordinates(ispec, ia, 0) = coordinates(index, 0);
         dest.control_node_coordinates(ispec, ia, 1) = coordinates(index, 1);
@@ -40,9 +43,12 @@ void initialize_control_nodes(
   return;
 }
 
-specfem::assembly::mesh_impl::control_nodes<specfem::dimension::type::dim3>::
-    control_nodes(const specfem::mesh::control_nodes<specfem::dimension::type::dim3>
-                      &control_nodes)
+specfem::assembly::mesh_impl::
+    control_nodes<specfem::element::dimension_tag::dim3>::control_nodes(
+        const specfem::assembly::mesh_impl::mesh_to_compute_mapping<
+            dimension_tag> &mapping,
+        const specfem::mesh::control_nodes<
+            specfem::element::dimension_tag::dim3> &control_nodes)
     : nspec(control_nodes.nspec), ngnod(control_nodes.ngnod),
       control_node_index("specfem::assembly::mesh::control_nodes::index",
                          control_nodes.nspec, control_nodes.ngnod),
@@ -52,5 +58,5 @@ specfem::assembly::mesh_impl::control_nodes<specfem::dimension::type::dim3>::
       h_control_node_coordinates(
           Kokkos::create_mirror_view(control_node_coordinates)) {
 
-  initialize_control_nodes(*this, control_nodes);
+  initialize_control_nodes(mapping, *this, control_nodes);
 }

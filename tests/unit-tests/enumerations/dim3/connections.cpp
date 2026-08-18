@@ -1,11 +1,11 @@
 
-#include "enumerations/connections.hpp"
-#include "enumerations/dimension.hpp"
-#include "enumerations/mesh_entities.hpp"
-#include "quadrature/interface.hpp"
+#include "specfem/element.hpp"
+#include "specfem/element_connections.hpp"
+#include "specfem/mesh_entity.hpp"
+#include "specfem/quadrature.hpp"
+#include "specfem/setup.hpp"
 #include "specfem/shape_function.hpp"
-#include "specfem_setup.hpp"
-#include "utilities/interface.hpp"
+#include "specfem/utilities.hpp"
 #include "gtest/gtest.h"
 #include <Kokkos_Core.hpp>
 #include <array>
@@ -390,7 +390,8 @@ TEST_P(CoupledElements3D, FaceConnections) {
   // Create connection mapping between the two elements
   specfem::mesh_entity::element mapping(5, 5, 5);
 
-  specfem::connections::connection_mapping<specfem::dimension::type::dim3>
+  specfem::element_connections::connection_mapping<
+      specfem::element::dimension_tag::dim3>
       connection(5, 5, 5, element1.control_nodes, element2.control_nodes);
 
   const int num_points =
@@ -423,7 +424,8 @@ TEST_P(CoupledElements3D, EdgeConnections) {
   // Create connection mapping between the two elements
   specfem::mesh_entity::element mapping(5, 5, 5);
 
-  specfem::connections::connection_mapping<specfem::dimension::type::dim3>
+  specfem::element_connections::connection_mapping<
+      specfem::element::dimension_tag::dim3>
       connection(5, 5, 5, element1.control_nodes, element2.control_nodes);
 
   // Test edge connections
@@ -463,7 +465,8 @@ TEST_P(CoupledElements3D, NodeConnections) {
   // Create connection mapping between the two elements
   specfem::mesh_entity::element mapping(5, 5, 5);
 
-  specfem::connections::connection_mapping<specfem::dimension::type::dim3>
+  specfem::element_connections::connection_mapping<
+      specfem::element::dimension_tag::dim3>
       connection(5, 5, 5, element1.control_nodes, element2.control_nodes);
 
   const auto element_coord1 = compute_coordinates3D(element1);

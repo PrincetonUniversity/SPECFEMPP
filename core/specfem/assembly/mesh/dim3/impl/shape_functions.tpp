@@ -4,13 +4,13 @@
 #include "specfem/shape_function.hpp"
 #include <Kokkos_Core.hpp>
 
-specfem::assembly::mesh_impl::shape_functions<specfem::dimension::type::dim3>::
+specfem::assembly::mesh_impl::shape_functions<specfem::element::dimension_tag::dim3>::
     shape_functions(const int ngllz, const int nglly, const int ngllx,
                     const int ngnod,
                     const specfem::assembly::mesh_impl::quadrature<
-                        specfem::dimension::type::dim3> &quadrature,
+                        specfem::element::dimension_tag::dim3> &quadrature,
                     const specfem::assembly::mesh_impl::control_nodes<
-                        specfem::dimension::type::dim3>
+                        specfem::element::dimension_tag::dim3>
                         control_nodes)
     : ngllz(ngllz), nglly(nglly), ngllx(ngllx), ngnod(control_nodes.ngnod),
       shape3D("specfem::assembly::shape_functions::shape3D", ngllz, nglly,
@@ -27,7 +27,7 @@ specfem::assembly::mesh_impl::shape_functions<specfem::dimension::type::dim3>::
       Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace,
                             Kokkos::Rank<3> >({ 0, 0, 0 },
                                               { ngllz, nglly, ngllx }),
-      [=](const int iz, const int iy, const int ix) {
+      [=, this](const int iz, const int iy, const int ix) {
         type_real xil = xi(ix);
         type_real etal = xi(iy);
         type_real zetal = xi(iz);

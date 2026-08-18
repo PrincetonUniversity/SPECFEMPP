@@ -1,5 +1,5 @@
 #include "utilities.hpp"
-#include "parallel_configuration/chunk_config.hpp"
+#include "specfem/parallel_configuration.hpp"
 #include <algorithm>
 #include <cmath>
 
@@ -34,7 +34,8 @@ type_real compute_spatial_tolerance(const std::vector<point> &points, int nspec,
 }
 
 std::vector<point> flatten_coordinates(
-    const specfem::kokkos::HostView4d<double> &global_coordinates) {
+    const Kokkos::View<double ****, Kokkos::LayoutRight, Kokkos::HostSpace>
+        global_coordinates) {
 
   int nspec = global_coordinates.extent(0);
   int ngll = global_coordinates.extent(1);

@@ -8,13 +8,13 @@ add_executable(specfem specfem.cpp)
 target_link_libraries(specfem
     PRIVATE
         specfem::core
-        Boost::program_options
+        CLI11::CLI11
         yaml-cpp::yaml-cpp
 )
 
 # Set executable properties
 set_target_properties(specfem PROPERTIES
     OUTPUT_NAME "specfem"
-    CXX_STANDARD 17
+    CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON
 )

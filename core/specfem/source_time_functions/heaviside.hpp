@@ -1,7 +1,7 @@
 #pragma once
 
 #include "source_time_function.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
 #include <ostream>
@@ -73,6 +73,8 @@ public:
 
   type_real get_factor() const { return this->factor_; }
 
+  type_real get_denominator() const { return this->denom_; }
+
   type_real get_hdur() const { return this->hdur_; }
   int get_nsteps() const { return this->nsteps_; }
   bool get_use_trick_for_better_pressure() const {
@@ -84,18 +86,20 @@ public:
 
   void compute_source_time_function(
       const type_real t0, const type_real dt, const int nsteps,
-      specfem::kokkos::HostView2d<type_real> source_time_function) override;
+      Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+          source_time_function) override;
 
   bool operator==(const stf &other) const override;
   bool operator!=(const stf &other) const override;
 
 private:
-  int nsteps_;                         ///< Number of time steps
-  type_real hdur_;                     ///< Half duration
-  type_real tshift_;                   ///< Time shift value
-  type_real t0_;                       ///< Start time
-  type_real t0_factor_;                ///< Start time computation factor
-  type_real factor_;                   ///< Scaling factor
+  int nsteps_;          ///< Number of time steps
+  type_real hdur_;      ///< Half duration
+  type_real denom_;     ///< Denominator triangle half duration -> Gaussian
+  type_real tshift_;    ///< Time shift value
+  type_real t0_;        ///< Start time
+  type_real t0_factor_; ///< Start time computation factor
+  type_real factor_;    ///< Scaling factor
   bool use_trick_for_better_pressure_; ///< Pressure optimization flag
   type_real dt_;                       ///< Time step size
 };

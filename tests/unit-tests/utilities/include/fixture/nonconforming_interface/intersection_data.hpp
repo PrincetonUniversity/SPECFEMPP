@@ -1,39 +1,36 @@
 #pragma once
 
-#include "../impl/accessors.hpp"
-#include "accessor_patch.hpp"
-#include "enumerations/coupled_interface.hpp"
-#include "enumerations/dimension.hpp"
 #include "initializers.hpp"
-#include "specfem/data_access/accessor.hpp"
-#include "specfem_setup.hpp"
-#include "transfer_function.hpp"
+
+#include "specfem/element.hpp"
+#include "specfem/element_coupling.hpp"
+#include "specfem/setup.hpp"
 
 #include <type_traits>
-static constexpr specfem::dimension::type dimension_tag_ =
-    specfem::dimension::type::dim2;
+static constexpr specfem::element::dimension_tag dimension_tag_ =
+    specfem::element::dimension_tag::dim2;
 namespace specfem::test_fixture {
 
-// legacy: TODO remove if IntersectionDataPack2D is sufficient
-
-template <specfem::interface::interface_tag InterfaceTag, typename... Accessors>
-struct IntersectionAccessorPack
+template <specfem::element_coupling::interface_tag InterfaceTag,
+          typename... Accessors>
+struct IntersectionDataPack
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::chunk_edge,
+          specfem::datatype::AccessorType::chunk_edge,
           specfem::data_access::DataClassType::nonconforming_interface,
           dimension_tag_, false>,
       public Accessors... {
-  static constexpr specfem::connections::type connection_tag =
-      specfem::connections::type::nonconforming;
-  static constexpr specfem::interface::interface_tag interface_tag =
+  static constexpr specfem::element_connections::type connection_tag =
+      specfem::element_connections::type::nonconforming;
+  static constexpr specfem::element_coupling::interface_tag interface_tag =
       InterfaceTag;
-  static constexpr specfem::dimension::type dimension_tag = dimension_tag_;
+  static constexpr specfem::element::dimension_tag dimension_tag =
+      dimension_tag_;
 
   constexpr static size_t n_accessors = sizeof...(Accessors);
   using packed_accessors = std::tuple<Accessors...>;
 
   KOKKOS_INLINE_FUNCTION
-  IntersectionAccessorPack(const Accessors &...accessors)
+  IntersectionDataPack(const Accessors &...accessors)
       : Accessors(accessors)... {};
 
   template <typename... Indices>
@@ -51,19 +48,19 @@ struct IntersectionAccessorPack
   }
 };
 
-template <specfem::interface::interface_tag InterfaceTag,
+template <specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag, typename Initializer,
           specfem::data_access::DataClassType... PackedTypes>
 struct IntersectionDataPack2D
     : specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::chunk_edge,
+          specfem::datatype::AccessorType::chunk_edge,
           specfem::data_access::DataClassType::nonconforming_interface,
-          specfem::dimension::type::dim2, false /*UseSIMD*/>,
+          specfem::element::dimension_tag::dim2, false /*UseSIMD*/>,
       specfem::test_fixture::NonconformingAccessorPatch2D<
           InterfaceTag, BoundaryTag, Initializer, PackedTypes>... {
   constexpr static auto connection_tag =
-      specfem::connections::type::nonconforming;
-  constexpr static auto dimension_tag = specfem::dimension::type::dim2;
+      specfem::element_connections::type::nonconforming;
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim2;
 
   template <specfem::data_access::DataClassType DataClass>
   specfem::test_fixture::NonconformingAccessorPatch2D<InterfaceTag, BoundaryTag,
@@ -90,11 +87,11 @@ struct IntersectionDataPack2D
 
 namespace IntersectionDataInitializer2D {
 
-template <specfem::interface::interface_tag InterfaceTag,
+template <specfem::element_coupling::interface_tag InterfaceTag,
           typename TransferFunctionInitializer,
           typename IntersectionFunctionInitializer>
 struct CoupledTransferAndNormal : IntersectionDataInitializer2D {
-  static constexpr specfem::interface::interface_tag interface_tag =
+  static constexpr specfem::element_coupling::interface_tag interface_tag =
       InterfaceTag;
   using TransferFunction = TransferFunctionInitializer;
   static_assert(

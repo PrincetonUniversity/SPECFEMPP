@@ -1,6 +1,5 @@
 #pragma once
 
-#include "kokkos_abstractions.h"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include <Kokkos_Core.hpp>
@@ -39,7 +38,7 @@ namespace fields_impl {
  * mass_matrix)
  *
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::data_access::DataClassType DataClass>
 class base_field {
@@ -89,21 +88,17 @@ public:
     }
   }
 
-  template <specfem::sync::kind SyncType> void sync() const {
-    if constexpr (SyncType == specfem::sync::kind::HostToDevice) {
-      Kokkos::deep_copy(data, h_data);
-    } else if constexpr (SyncType == specfem::sync::kind::DeviceToHost) {
-      Kokkos::deep_copy(h_data, data);
-    }
-  }
+  void copy_to_host() { Kokkos::deep_copy(h_data, data); }
+
+  void copy_to_device() { Kokkos::deep_copy(data, h_data); }
 
 private:
   /// @brief Device-accessible view type for field data storage (nglob ×
   /// components)
   using ViewType = Kokkos::View<type_real **, Kokkos::LayoutLeft,
                                 Kokkos::DefaultExecutionSpace>;
-  ViewType data;               ///< Device memory view for field data
-  ViewType::HostMirror h_data; ///< Host mirror view for CPU operations
+  ViewType data;                     ///< Device memory view for field data
+  ViewType::host_mirror_type h_data; ///< Host mirror view for CPU operations
 
 protected:
   /**
@@ -120,7 +115,7 @@ protected:
    */
   template <bool on_device>
   KOKKOS_FORCEINLINE_FUNCTION
-      std::conditional_t<on_device, ViewType, ViewType::HostMirror>
+      std::conditional_t<on_device, ViewType, ViewType::host_mirror_type>
       get_base_field_view() const {
     if constexpr (on_device) {
       return data;
@@ -147,7 +142,7 @@ protected:
  * @tparam DimensionTag Spatial dimension (2D or 3D)
  * @tparam MediumTag Physical medium type (elastic, acoustic, poroelastic)
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag>
 class field_impl
     : public base_field<DimensionTag, MediumTag,
@@ -186,7 +181,8 @@ public:
   constexpr static int components =
       specfem::element::attributes<DimensionTag, MediumTag>::components;
 
-  // Bring get_value methods from base classes into scope for unified field access
+  // Bring get_value methods from base classes into scope for unified field
+  // access
   using acceleration_base_type::get_value; ///< Access acceleration field values
   using displacement_base_type::get_value; ///< Access displacement field values
   using mass_inverse_base_type::get_value; ///< Access mass matrix field values
@@ -201,27 +197,6 @@ public:
   field_impl() = default;
 
   /**
-   * @brief Construct field implementation from mesh and element information.
-   *
-   * Initializes all field components (displacement, velocity, acceleration,
-   * mass matrix) based on the spectral element mesh structure and element
-   * classifications. This constructor determines the number of global points
-   * from the mesh and element types, then allocates appropriate storage for all
-   * field components.
-   *
-   * @param mesh Spectral element mesh containing connectivity and global
-   * numbering
-   * @param element_type Element type classification for medium-specific
-   * allocation
-   * @param assembly_index_mapping Host view mapping local to global indices
-   */
-  field_impl(
-      const specfem::assembly::mesh<dimension_tag> &mesh,
-      const specfem::assembly::element_types<dimension_tag> &element_type,
-      Kokkos::View<int *, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
-          assembly_index_mapping);
-
-  /**
    * @brief Construct field implementation with specified number of global
    * points.
    *
@@ -233,17 +208,9 @@ public:
    */
   field_impl(const int nglob);
 
-  /**
-   * @brief Synchronize all field components between host and device memory.
-   *
-   * Performs synchronization of all field components (displacement, velocity,
-   * acceleration, mass matrix) in a single operation. This is more efficient
-   * than synchronizing each field individually when all fields need to be
-   * transferred.
-   *
-   * @tparam SyncField Synchronization direction (HostToDevice or DeviceToHost)
-   */
-  template <specfem::sync::kind SyncField> void sync_fields() const;
+  void copy_to_host();
+
+  void copy_to_device();
 
   int nglob; ///< Number of global points in this field implementation
 
@@ -320,7 +287,7 @@ public:
    * @return Host view of displacement field data
    */
   KOKKOS_FORCEINLINE_FUNCTION
-  Kokkos::View<type_real **, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
+  Kokkos::View<type_real **, Kokkos::LayoutLeft, Kokkos::HostSpace>
   get_host_field() const {
     return displacement_base_type::template get_base_field_view<false>();
   }
@@ -334,7 +301,7 @@ public:
    * @return Host view of velocity field data
    */
   KOKKOS_FORCEINLINE_FUNCTION
-  Kokkos::View<type_real **, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
+  Kokkos::View<type_real **, Kokkos::LayoutLeft, Kokkos::HostSpace>
   get_host_field_dot() const {
     return velocity_base_type::template get_base_field_view<false>();
   }
@@ -348,7 +315,7 @@ public:
    * @return Host view of acceleration field data
    */
   KOKKOS_FORCEINLINE_FUNCTION
-  Kokkos::View<type_real **, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
+  Kokkos::View<type_real **, Kokkos::LayoutLeft, Kokkos::HostSpace>
   get_host_field_dot_dot() const {
     return acceleration_base_type::template get_base_field_view<false>();
   }
@@ -362,7 +329,7 @@ public:
    * @return Host view of inverse mass matrix data
    */
   KOKKOS_FORCEINLINE_FUNCTION
-  Kokkos::View<type_real **, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
+  Kokkos::View<type_real **, Kokkos::LayoutLeft, Kokkos::HostSpace>
   get_host_mass_inverse() const {
     return mass_inverse_base_type::template get_base_field_view<false>();
   }
@@ -391,7 +358,7 @@ public:
  * initialized
  * @post dst contains identical field data as src in both device and host memory
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag>
 void deep_copy(const fields_impl::field_impl<DimensionTag, MediumTag> &dst,
                const fields_impl::field_impl<DimensionTag, MediumTag> &src) {

@@ -1,9 +1,10 @@
 #pragma once
 
 #include "control_nodes.hpp"
-#include "enumerations/interface.hpp"
-#include "mesh/mesh.hpp"
 #include "shape_functions.hpp"
+#include "specfem/data_access.hpp"
+#include "specfem/element.hpp"
+#include "specfem/mesh.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly::mesh_impl {
@@ -17,9 +18,11 @@ namespace specfem::assembly::mesh_impl {
  * @see specfem::assembly::mesh_impl::control_nodes,
  * specfem::assembly::mesh_impl::shape_functions
  */
-template <> struct points<specfem::dimension::type::dim3> {
+template <> struct points<specfem::element::dimension_tag::dim3> {
 public:
-  constexpr static auto dimension_tag = specfem::dimension::type::dim3;
+  constexpr static auto data_class =
+      specfem::data_access::DataClassType::global_coordinates; ///< Data class
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
 
   /**
    * @brief Index mapping view type.
@@ -38,14 +41,23 @@ public:
                                      Kokkos::DefaultExecutionSpace>;
 
 private:
-  constexpr static int ndim = 3;
+  constexpr static int ndim = specfem::element::dimension<
+      specfem::element::dimension_tag::dim3>::dim; ///< Number of dimensions
 
 public:
-  IndexMappingViewType index_mapping;               ///< Device index mapping
-  IndexMappingViewType::HostMirror h_index_mapping; ///< Host index mapping
+  IndexMappingViewType index_mapping; ///< Device index mapping
+  IndexMappingViewType::host_mirror_type h_index_mapping; ///< Host index
+                                                          ///< mapping
 
-  CoordViewType coord;               ///< Device coordinates
-  CoordViewType::HostMirror h_coord; ///< Host coordinates
+  CoordViewType coord;                     ///< Device coordinates
+  CoordViewType::host_mirror_type h_coord; ///< Host coordinates
+
+  type_real xmin; ///< Minimum x coordinate (for tolerance calculations)
+  type_real xmax; ///< Maximum x coordinate (for tolerance calculations)
+  type_real ymin; ///< Minimum y coordinate (for tolerance calculations)
+  type_real ymax; ///< Maximum y coordinate (for tolerance calculations)
+  type_real zmin; ///< Minimum z coordinate (for tolerance calculations)
+  type_real zmax; ///< Maximum z coordinate (for tolerance calculations)
 
   int nspec; ///< Number of spectral elements
   int ngllz; ///< Number of GLL points in z dimension
@@ -74,7 +86,10 @@ public:
    * @param shape_functions Shape function values at GLL points
    */
   points(const int &nspec, const int &ngllz, const int &nglly, const int &ngllx,
-         const specfem::mesh::adjacency_graph<dimension_tag> &adjacency_graph,
+         const Kokkos::View<specfem::element::medium_tag *, Kokkos::HostSpace>
+             &medium_tags,
+         const specfem::assembly::mesh_impl::adjacency_graph<dimension_tag>
+             &adjacency_graph,
          const specfem::assembly::mesh_impl::control_nodes<dimension_tag>
              &control_nodes,
          const specfem::assembly::mesh_impl::shape_functions<dimension_tag>

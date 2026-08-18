@@ -1,18 +1,27 @@
 #include "wavefield_reader.hpp"
-#include "io/ASCII/ASCII.hpp"
-#include "io/HDF5/HDF5.hpp"
-#include "io/NPY/NPY.hpp"
-#include "io/NPZ/NPZ.hpp"
+#include "specfem/io.hpp"
 
 // Explicit instantiation
 template class specfem::periodic_tasks::wavefield_reader<
-    specfem::dimension::type::dim2, specfem::io::HDF5>;
+    specfem::element::dimension_tag::dim2, specfem::io_backends::HDF5>;
 
 template class specfem::periodic_tasks::wavefield_reader<
-    specfem::dimension::type::dim2, specfem::io::ASCII>;
+    specfem::element::dimension_tag::dim2, specfem::io_backends::ASCII>;
 
 template class specfem::periodic_tasks::wavefield_reader<
-    specfem::dimension::type::dim2, specfem::io::NPY>;
+    specfem::element::dimension_tag::dim2, specfem::io_backends::NPY>;
 
 template class specfem::periodic_tasks::wavefield_reader<
-    specfem::dimension::type::dim2, specfem::io::NPZ>;
+    specfem::element::dimension_tag::dim2, specfem::io_backends::NPZ>;
+
+template class specfem::periodic_tasks::wavefield_reader<
+    specfem::element::dimension_tag::dim3, specfem::io_backends::HDF5>;
+
+template class specfem::periodic_tasks::wavefield_reader<
+    specfem::element::dimension_tag::dim3, specfem::io_backends::ASCII>;
+
+template class specfem::periodic_tasks::wavefield_reader<
+    specfem::element::dimension_tag::dim3, specfem::io_backends::NPY>;
+
+template class specfem::periodic_tasks::wavefield_reader<
+    specfem::element::dimension_tag::dim3, specfem::io_backends::NPZ>;

@@ -1,8 +1,8 @@
 #include "../properties_tests.hpp"
 #include "specfem/point/properties.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
+#include "specfem/utilities.hpp"
 #include "test_macros.hpp"
-#include "utilities/interface.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 
@@ -23,6 +23,7 @@ TYPED_TEST(PointPropertiesTest, AcousticIsotropic2D) {
   // Variables to hold property values
   simd_type rho;
   simd_type vp;
+  simd_type vs;
   simd_type rho_inv;
   simd_type kappa;
   simd_type kappa_inv;
@@ -32,6 +33,7 @@ TYPED_TEST(PointPropertiesTest, AcousticIsotropic2D) {
     // For SIMD case, we can use array indexing syntax
     T rho_arr[simd_size];
     T vp_arr[simd_size];
+    T vs_arr[simd_size];
     T kappa_arr[simd_size];
     T rho_inv_arr[simd_size];
     T kappa_inv_arr[simd_size];
@@ -39,6 +41,7 @@ TYPED_TEST(PointPropertiesTest, AcousticIsotropic2D) {
     for (int i = 0; i < simd_size; ++i) {
       rho_arr[i] = 1000.0 + i * 20.0; // kg/m³
       vp_arr[i] = 1500.0 + i * 50.0;  // m/s
+      vs_arr[i] = 0.0;                // VS = 0 for acoustic
       kappa_arr[i] = static_cast<type_real>(rho_arr[i]) *
                      static_cast<type_real>(vp_arr[i]) *
                      static_cast<type_real>(vp_arr[i]);
@@ -47,17 +50,26 @@ TYPED_TEST(PointPropertiesTest, AcousticIsotropic2D) {
       rho_vpinv_arr[i] = 1.0 / (static_cast<type_real>(rho_arr[i]) *
                                 static_cast<type_real>(vp_arr[i]));
     }
-    rho.copy_from(rho_arr, Kokkos::Experimental::simd_flag_default);
-    vp.copy_from(vp_arr, Kokkos::Experimental::simd_flag_default);
-    kappa.copy_from(kappa_arr, Kokkos::Experimental::simd_flag_default);
-    rho_inv.copy_from(rho_inv_arr, Kokkos::Experimental::simd_flag_default);
-    kappa_inv.copy_from(kappa_inv_arr, Kokkos::Experimental::simd_flag_default);
-    rho_vpinv.copy_from(rho_vpinv_arr, Kokkos::Experimental::simd_flag_default);
+    rho = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        rho_arr, Kokkos::Experimental::simd_flag_default);
+    vp = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        vp_arr, Kokkos::Experimental::simd_flag_default);
+    vs = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        vs_arr, Kokkos::Experimental::simd_flag_default);
+    kappa = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        kappa_arr, Kokkos::Experimental::simd_flag_default);
+    rho_inv = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        rho_inv_arr, Kokkos::Experimental::simd_flag_default);
+    kappa_inv = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        kappa_inv_arr, Kokkos::Experimental::simd_flag_default);
+    rho_vpinv = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        rho_vpinv_arr, Kokkos::Experimental::simd_flag_default);
   } else {
     // For scalar case, we need direct assignment
     // Water-like material
     rho = 1000.0;          // kg/m³
     vp = 1500.0;           // m/s
+    vs = 0.0;              // VS = 0 for acoustic
     kappa = rho * vp * vp; // bulk modulus
     rho_inv = 1.0 / rho;
     kappa_inv = 1.0 / kappa;
@@ -65,9 +77,10 @@ TYPED_TEST(PointPropertiesTest, AcousticIsotropic2D) {
   }
 
   // Create the properties object
-  using PointPropertiesType = specfem::point::properties<
-      specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
-      specfem::element::property_tag::isotropic, using_simd>;
+  using PointPropertiesType = specfem::point::properties<specfem::tags::Tags<
+      specfem::element::dimension_tag::dim2,
+      specfem::element::medium_tag::acoustic,
+      specfem::element::property_tag::isotropic, using_simd> >;
   PointPropertiesType props(rho_inv, kappa);
 
   EXPECT_TRUE(specfem::utilities::is_close(props.rho_inverse(), rho_inv))
@@ -79,6 +92,18 @@ TYPED_TEST(PointPropertiesTest, AcousticIsotropic2D) {
       << ExpectedGot(kappa_inv, props.kappa_inverse());
   EXPECT_TRUE(specfem::utilities::is_close(props.rho_vpinverse(), rho_vpinv))
       << ExpectedGot(rho_vpinv, props.rho_vpinverse());
+
+  // New property checks
+  EXPECT_TRUE(specfem::utilities::is_close(props.vp(), vp))
+      << ExpectedGot(vp, props.vp());
+  EXPECT_TRUE(specfem::utilities::is_close(props.vs(), vs))
+      << ExpectedGot(vs, props.vs());
+  EXPECT_TRUE(specfem::utilities::is_close(props.vmax(), vp))
+      << ExpectedGot(vp, props.vmax());
+  EXPECT_TRUE(specfem::utilities::is_close(props.vmin(), vp))
+      << ExpectedGot(vp, props.vmin());
+  EXPECT_TRUE(specfem::utilities::is_close(props.rho(), rho))
+      << ExpectedGot(rho, props.rho());
 
   PointPropertiesType props2;
   props2.rho_inverse() = rho_inv;

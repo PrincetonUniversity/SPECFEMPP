@@ -1,0 +1,96 @@
+#pragma once
+
+#include <type_traits>
+
+#include "Kokkos_Core.hpp"
+
+#include "specfem/algorithms.hpp"
+#include "specfem/assembly/assembly.hpp"
+#include "specfem/element.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/execution.hpp"
+#include "specfem/point.hpp"
+
+namespace specfem::medium_physics {
+
+template <
+    typename Tags, typename ChunkIndexType, typename DisplacementFieldType,
+    typename VelocityFieldType, typename AccelerationFieldType,
+    typename QuadratureType, typename WavefieldViewType,
+    std::enable_if_t<
+        Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
+            Tags::medium_tag == specfem::element::medium_tag::acoustic &&
+            Tags::property_tag == specfem::element::property_tag::isotropic,
+        int> = 0>
+KOKKOS_FUNCTION void impl_compute_wavefield(
+    const ChunkIndexType &chunk_index,
+    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
+        &assembly,
+    const QuadratureType &lagrange_derivative,
+    const DisplacementFieldType &displacement,
+    const VelocityFieldType &velocity,
+    const AccelerationFieldType &acceleration,
+    const specfem::enums::wavefield wavefield_type,
+    WavefieldViewType wavefield) {
+
+  using FieldDerivativesType = specfem::point::field_derivatives<Tags>;
+  using PointPropertyType = specfem::point::properties<Tags>;
+
+  const auto &properties = assembly.properties;
+  const auto &active_field = [&]() {
+    if (wavefield_type == specfem::enums::wavefield::displacement) {
+      return displacement.get_data();
+    } else if (wavefield_type == specfem::enums::wavefield::velocity) {
+      return velocity.get_data();
+    } else if (wavefield_type == specfem::enums::wavefield::acceleration) {
+      return acceleration.get_data();
+    } else if (wavefield_type == specfem::enums::wavefield::pressure) {
+      return acceleration.get_data();
+    } else {
+      KOKKOS_ABORT_WITH_LOCATION(
+          "Unsupported wavefield component for 3D acoustic isotropic media.");
+    }
+  }();
+
+  if (wavefield_type == specfem::enums::wavefield::pressure) {
+    specfem::execution::for_each_level(
+        chunk_index.get_iterator(),
+        [&](const typename ChunkIndexType::iterator_type::index_type
+                &iterator_index) {
+          const auto index = iterator_index.get_index();
+          const int ielement = iterator_index.get_local_index().ispec;
+          wavefield(ielement, index.iz, index.iy, index.ix, 0) =
+              -1.0 * active_field(ielement, index.iz, index.iy, index.ix, 0);
+        });
+
+    return;
+  }
+
+  specfem::algorithms::gradient(
+      chunk_index, assembly.jacobian_matrix, lagrange_derivative, active_field,
+      [&](const typename ChunkIndexType::iterator_type::index_type
+              &iterator_index,
+          const typename FieldDerivativesType::value_type &du) {
+        const auto index = iterator_index.get_index();
+        const int ielement = iterator_index.get_local_index().ispec;
+        PointPropertyType point_property;
+
+        specfem::assembly::load_on_device(index, properties, point_property);
+
+        FieldDerivativesType point_field_derivatives(du);
+
+        const auto point_stress =
+            compute_stress<Tags>(point_property, point_field_derivatives);
+
+        wavefield(ielement, index.iz, index.iy, index.ix, 0) =
+            point_stress.T(0, 0);
+        wavefield(ielement, index.iz, index.iy, index.ix, 1) =
+            point_stress.T(0, 1);
+        wavefield(ielement, index.iz, index.iy, index.ix, 2) =
+            point_stress.T(0, 2);
+      });
+
+  return;
+}
+
+} // namespace specfem::medium_physics

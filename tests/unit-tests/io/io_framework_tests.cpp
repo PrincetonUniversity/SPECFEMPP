@@ -1,15 +1,11 @@
-#include "../SPECFEM_Environment.hpp"
+#include "SPECFEM_Environment.hpp"
+#include "test_macros.hpp"
 #include <Kokkos_Core.hpp>
 #include <boost/filesystem.hpp>
 #include <gtest/gtest.h>
 
 // Include all I/O framework headers
-#include "io/ADIOS2/ADIOS2.hpp"
-#include "io/ASCII/ASCII.hpp"
-#include "io/HDF5/HDF5.hpp"
-#include "io/NPY/NPY.hpp"
-#include "io/NPZ/NPZ.hpp"
-#include "io/operators.hpp"
+#include "specfem/io.hpp"
 
 // Test utilities
 #include <type_traits>
@@ -20,20 +16,22 @@ namespace fs = boost::filesystem;
 // Helper to get write type from read type
 template <typename ReadType> struct GetWriteType;
 
-template <> struct GetWriteType<specfem::io::ASCII<specfem::io::read> > {
-  using type = specfem::io::ASCII<specfem::io::write>;
+template <>
+struct GetWriteType<specfem::io_backends::ASCII<specfem::io::read>> {
+  using type = specfem::io_backends::ASCII<specfem::io::write>;
 };
-template <> struct GetWriteType<specfem::io::HDF5<specfem::io::read> > {
-  using type = specfem::io::HDF5<specfem::io::write>;
+template <> struct GetWriteType<specfem::io_backends::HDF5<specfem::io::read>> {
+  using type = specfem::io_backends::HDF5<specfem::io::write>;
 };
-template <> struct GetWriteType<specfem::io::ADIOS2<specfem::io::read> > {
-  using type = specfem::io::ADIOS2<specfem::io::write>;
+template <>
+struct GetWriteType<specfem::io_backends::ADIOS2<specfem::io::read>> {
+  using type = specfem::io_backends::ADIOS2<specfem::io::write>;
 };
-template <> struct GetWriteType<specfem::io::NPY<specfem::io::read> > {
-  using type = specfem::io::NPY<specfem::io::write>;
+template <> struct GetWriteType<specfem::io_backends::NPY<specfem::io::read>> {
+  using type = specfem::io_backends::NPY<specfem::io::write>;
 };
-template <> struct GetWriteType<specfem::io::NPZ<specfem::io::read> > {
-  using type = specfem::io::NPZ<specfem::io::write>;
+template <> struct GetWriteType<specfem::io_backends::NPZ<specfem::io::read>> {
+  using type = specfem::io_backends::NPZ<specfem::io::write>;
 };
 
 // Base test class
@@ -44,35 +42,35 @@ protected:
   template <typename IOType>
   std::string getTestFileName(const std::string &test_name) {
     std::string base_name;
-    if constexpr (std::is_same_v<IOType,
-                                 specfem::io::ASCII<specfem::io::write> >) {
+    if constexpr (std::is_same_v<IOType, specfem::io_backends::ASCII<
+                                             specfem::io::write>>) {
       base_name = "test_ascii_write";
-    } else if constexpr (std::is_same_v<
-                             IOType, specfem::io::ASCII<specfem::io::read> >) {
+    } else if constexpr (std::is_same_v<IOType, specfem::io_backends::ASCII<
+                                                    specfem::io::read>>) {
       base_name = "test_ascii_read";
-    } else if constexpr (std::is_same_v<
-                             IOType, specfem::io::HDF5<specfem::io::write> >) {
+    } else if constexpr (std::is_same_v<IOType, specfem::io_backends::HDF5<
+                                                    specfem::io::write>>) {
       base_name = "test_hdf5_write";
-    } else if constexpr (std::is_same_v<
-                             IOType, specfem::io::HDF5<specfem::io::read> >) {
+    } else if constexpr (std::is_same_v<IOType, specfem::io_backends::HDF5<
+                                                    specfem::io::read>>) {
       base_name = "test_hdf5_read";
-    } else if constexpr (std::is_same_v<IOType, specfem::io::ADIOS2<
-                                                    specfem::io::write> >) {
+    } else if constexpr (std::is_same_v<IOType, specfem::io_backends::ADIOS2<
+                                                    specfem::io::write>>) {
       base_name = "test_adios2_write";
-    } else if constexpr (std::is_same_v<
-                             IOType, specfem::io::ADIOS2<specfem::io::read> >) {
+    } else if constexpr (std::is_same_v<IOType, specfem::io_backends::ADIOS2<
+                                                    specfem::io::read>>) {
       base_name = "test_adios2_read";
-    } else if constexpr (std::is_same_v<
-                             IOType, specfem::io::NPY<specfem::io::write> >) {
+    } else if constexpr (std::is_same_v<IOType, specfem::io_backends::NPY<
+                                                    specfem::io::write>>) {
       base_name = "test_npy_write";
-    } else if constexpr (std::is_same_v<IOType,
-                                        specfem::io::NPY<specfem::io::read> >) {
+    } else if constexpr (std::is_same_v<IOType, specfem::io_backends::NPY<
+                                                    specfem::io::read>>) {
       base_name = "test_npy_read";
-    } else if constexpr (std::is_same_v<
-                             IOType, specfem::io::NPZ<specfem::io::write> >) {
+    } else if constexpr (std::is_same_v<IOType, specfem::io_backends::NPZ<
+                                                    specfem::io::write>>) {
       base_name = "test_npz_write";
-    } else if constexpr (std::is_same_v<IOType,
-                                        specfem::io::NPZ<specfem::io::read> >) {
+    } else if constexpr (std::is_same_v<IOType, specfem::io_backends::NPZ<
+                                                    specfem::io::read>>) {
       base_name = "test_npz_read";
     } else {
       base_name = "test_unknown";
@@ -171,24 +169,27 @@ private:
 
 // Type list for all I/O frameworks - conditionally include based on available
 // packages
-using IOTypes = ::testing::Types<
-    specfem::io::ASCII<specfem::io::write>,
-    specfem::io::ASCII<specfem::io::read>, specfem::io::NPY<specfem::io::write>,
-    specfem::io::NPY<specfem::io::read>
+using IOTypes =
+    ::testing::Types<specfem::io_backends::ASCII<specfem::io::write>,
+                     specfem::io_backends::ASCII<specfem::io::read>,
+                     specfem::io_backends::NPY<specfem::io::write>,
+                     specfem::io_backends::NPY<specfem::io::read>
 #ifndef NO_NPZ
-    ,
-    specfem::io::NPZ<specfem::io::write>, specfem::io::NPZ<specfem::io::read>
+                     ,
+                     specfem::io_backends::NPZ<specfem::io::write>,
+                     specfem::io_backends::NPZ<specfem::io::read>
 #endif
 #ifndef NO_HDF5
-    ,
-    specfem::io::HDF5<specfem::io::write>, specfem::io::HDF5<specfem::io::read>
+                     ,
+                     specfem::io_backends::HDF5<specfem::io::write>,
+                     specfem::io_backends::HDF5<specfem::io::read>
 #endif
 #ifndef NO_ADIOS2
-    ,
-    specfem::io::ADIOS2<specfem::io::write>,
-    specfem::io::ADIOS2<specfem::io::read>
+                     ,
+                     specfem::io_backends::ADIOS2<specfem::io::write>,
+                     specfem::io_backends::ADIOS2<specfem::io::read>
 #endif
-    >;
+                     >;
 
 TYPED_TEST_SUITE(IOFrameworkTest, IOTypes);
 
@@ -200,18 +201,18 @@ TYPED_TEST(IOFrameworkTest, BasicFileOperations) {
   if constexpr (std::is_same_v<typename IOType::IO_OpType,
                                specfem::io::write>) {
     typename IOType::File file(this->getTestFile());
-    EXPECT_NO_THROW(file.flush());
+    LOCAL_EXPECT_NO_THROW(file.flush());
 
     // Verify file/directory was created
     std::string expected_name = this->getTestFile();
-    if constexpr (std::is_same_v<IOType,
-                                 specfem::io::HDF5<specfem::io::write> >) {
+    if constexpr (std::is_same_v<
+                      IOType, specfem::io_backends::HDF5<specfem::io::write>>) {
       expected_name += ".h5";
-    } else if constexpr (std::is_same_v<IOType, specfem::io::ADIOS2<
-                                                    specfem::io::write> >) {
+    } else if constexpr (std::is_same_v<IOType, specfem::io_backends::ADIOS2<
+                                                    specfem::io::write>>) {
       expected_name += ".bp";
-    } else if constexpr (std::is_same_v<
-                             IOType, specfem::io::NPZ<specfem::io::write> >) {
+    } else if constexpr (std::is_same_v<IOType, specfem::io_backends::NPZ<
+                                                    specfem::io::write>>) {
       expected_name += ".npz";
     }
 
@@ -230,7 +231,7 @@ TYPED_TEST(IOFrameworkTest, GroupOperations) {
     auto group1 = file.createGroup("group1");
     auto group2 = file.createGroup("group2");
     auto nested_group = group1.createGroup("nested");
-    EXPECT_NO_THROW(file.flush());
+    LOCAL_EXPECT_NO_THROW(file.flush());
   } else {
     // For read operations, first create the file with groups
     {
@@ -286,21 +287,21 @@ TYPED_TEST(IOFrameworkTest, DatasetOperations) {
 
     // Create datasets
     auto int_dataset =
-        file.template createDataset<Kokkos::View<int *, Kokkos::HostSpace> >(
+        file.template createDataset<Kokkos::View<int *, Kokkos::HostSpace>>(
             "int_data", int_view);
     auto double_dataset =
-        file.template createDataset<Kokkos::View<double *, Kokkos::HostSpace> >(
+        file.template createDataset<Kokkos::View<double *, Kokkos::HostSpace>>(
             "double_data", double_view);
     auto float_dataset =
-        file.template createDataset<Kokkos::View<float *, Kokkos::HostSpace> >(
+        file.template createDataset<Kokkos::View<float *, Kokkos::HostSpace>>(
             "float_data", float_view);
 
     // Write data
-    EXPECT_NO_THROW(int_dataset.write());
-    EXPECT_NO_THROW(double_dataset.write());
-    EXPECT_NO_THROW(float_dataset.write());
+    LOCAL_EXPECT_NO_THROW(int_dataset.write());
+    LOCAL_EXPECT_NO_THROW(double_dataset.write());
+    LOCAL_EXPECT_NO_THROW(float_dataset.write());
 
-    EXPECT_NO_THROW(file.flush());
+    LOCAL_EXPECT_NO_THROW(file.flush());
   } else {
     // For read operations, first create the file with data
     {
@@ -308,13 +309,15 @@ TYPED_TEST(IOFrameworkTest, DatasetOperations) {
       typename WriteIOType::File write_file(this->getTestFile());
       auto int_dataset =
           write_file
-              .template createDataset<Kokkos::View<int *, Kokkos::HostSpace> >(
+              .template createDataset<Kokkos::View<int *, Kokkos::HostSpace>>(
                   "int_data", int_view);
       auto double_dataset = write_file.template createDataset<
-          Kokkos::View<double *, Kokkos::HostSpace> >("double_data",
-                                                      double_view);
-      auto float_dataset = write_file.template createDataset<
-          Kokkos::View<float *, Kokkos::HostSpace> >("float_data", float_view);
+          Kokkos::View<double *, Kokkos::HostSpace>>("double_data",
+                                                     double_view);
+      auto float_dataset =
+          write_file
+              .template createDataset<Kokkos::View<float *, Kokkos::HostSpace>>(
+                  "float_data", float_view);
 
       int_dataset.write();
       double_dataset.write();
@@ -335,18 +338,18 @@ TYPED_TEST(IOFrameworkTest, DatasetOperations) {
 
     // Open datasets and read
     auto int_dataset =
-        file.template openDataset<Kokkos::View<int *, Kokkos::HostSpace> >(
+        file.template openDataset<Kokkos::View<int *, Kokkos::HostSpace>>(
             "int_data", read_int_view);
     auto double_dataset =
-        file.template openDataset<Kokkos::View<double *, Kokkos::HostSpace> >(
+        file.template openDataset<Kokkos::View<double *, Kokkos::HostSpace>>(
             "double_data", read_double_view);
     auto float_dataset =
-        file.template openDataset<Kokkos::View<float *, Kokkos::HostSpace> >(
+        file.template openDataset<Kokkos::View<float *, Kokkos::HostSpace>>(
             "float_data", read_float_view);
 
-    EXPECT_NO_THROW(int_dataset.read());
-    EXPECT_NO_THROW(double_dataset.read());
-    EXPECT_NO_THROW(float_dataset.read());
+    LOCAL_EXPECT_NO_THROW(int_dataset.read());
+    LOCAL_EXPECT_NO_THROW(double_dataset.read());
+    LOCAL_EXPECT_NO_THROW(float_dataset.read());
 
     // Verify data
     std::vector<int> read_int_data(data_size);
@@ -381,10 +384,10 @@ TYPED_TEST(IOFrameworkTest, BoolDataOperations) {
                                specfem::io::write>) {
     typename IOType::File file(this->getTestFile());
     auto bool_dataset =
-        file.template createDataset<Kokkos::View<bool *, Kokkos::HostSpace> >(
+        file.template createDataset<Kokkos::View<bool *, Kokkos::HostSpace>>(
             "bool_data", bool_view);
-    EXPECT_NO_THROW(bool_dataset.write());
-    EXPECT_NO_THROW(file.flush());
+    LOCAL_EXPECT_NO_THROW(bool_dataset.write());
+    LOCAL_EXPECT_NO_THROW(file.flush());
   } else {
     // Create file with bool data
     {
@@ -392,7 +395,7 @@ TYPED_TEST(IOFrameworkTest, BoolDataOperations) {
       typename WriteIOType::File write_file(this->getTestFile());
       auto bool_dataset =
           write_file
-              .template createDataset<Kokkos::View<bool *, Kokkos::HostSpace> >(
+              .template createDataset<Kokkos::View<bool *, Kokkos::HostSpace>>(
                   "bool_data", bool_view);
       bool_dataset.write();
       write_file.flush();
@@ -403,9 +406,9 @@ TYPED_TEST(IOFrameworkTest, BoolDataOperations) {
     Kokkos::View<bool *, Kokkos::HostSpace> read_bool_view("read_bool",
                                                            data_size);
     auto bool_dataset =
-        file.template openDataset<Kokkos::View<bool *, Kokkos::HostSpace> >(
+        file.template openDataset<Kokkos::View<bool *, Kokkos::HostSpace>>(
             "bool_data", read_bool_view);
-    EXPECT_NO_THROW(bool_dataset.read());
+    LOCAL_EXPECT_NO_THROW(bool_dataset.read());
 
     // Verify data
     std::vector<bool> read_bool_data(data_size);
@@ -465,7 +468,7 @@ TYPED_TEST(IOFrameworkTest, ComplexWorkflow) {
     }
     std::cout << "WRITE: Populated int/double view." << std::endl;
 
-    for (volatile size_t i = 0; i < small_data_size; ++i) {
+    for (size_t i = 0; i < small_data_size; ++i) {
       bool_view(i) = bool_data[i];
     }
     std::cout << "WRITE: Populated bool view." << std::endl;
@@ -473,27 +476,27 @@ TYPED_TEST(IOFrameworkTest, ComplexWorkflow) {
     // Write datasets to different groups
     auto mesh_ids_dataset =
         mesh_group
-            .template createDataset<Kokkos::View<int *, Kokkos::HostSpace> >(
+            .template createDataset<Kokkos::View<int *, Kokkos::HostSpace>>(
                 "element_ids", int_view);
 
     auto coordinates_dataset =
         mesh_group
-            .template createDataset<Kokkos::View<double *, Kokkos::HostSpace> >(
+            .template createDataset<Kokkos::View<double *, Kokkos::HostSpace>>(
                 "node_coordinates", double_view);
     auto active_dataset =
         results_group
-            .template createDataset<Kokkos::View<bool *, Kokkos::HostSpace> >(
+            .template createDataset<Kokkos::View<bool *, Kokkos::HostSpace>>(
                 "active_elements", bool_view);
 
     std::cout << "Created datasets." << std::endl;
 
-    EXPECT_NO_THROW(mesh_ids_dataset.write());
-    EXPECT_NO_THROW(coordinates_dataset.write());
-    EXPECT_NO_THROW(active_dataset.write());
+    LOCAL_EXPECT_NO_THROW(mesh_ids_dataset.write());
+    LOCAL_EXPECT_NO_THROW(coordinates_dataset.write());
+    LOCAL_EXPECT_NO_THROW(active_dataset.write());
 
     std::cout << "WRITE: Wrote datasets." << std::endl;
 
-    EXPECT_NO_THROW(file.flush());
+    LOCAL_EXPECT_NO_THROW(file.flush());
 
     std::cout << "WRITE: Flushed file." << std::endl;
 
@@ -535,7 +538,7 @@ TYPED_TEST(IOFrameworkTest, ComplexWorkflow) {
 
       std::cout << "READ: Populated int/double view." << std::endl;
 
-      for (volatile size_t i = 0; i < small_data_size; ++i) {
+      for (size_t i = 0; i < small_data_size; ++i) {
         bool_view(i) = bool_data[i];
       }
 
@@ -543,14 +546,14 @@ TYPED_TEST(IOFrameworkTest, ComplexWorkflow) {
 
       auto mesh_ids_dataset =
           mesh_group
-              .template createDataset<Kokkos::View<int *, Kokkos::HostSpace> >(
+              .template createDataset<Kokkos::View<int *, Kokkos::HostSpace>>(
                   "element_ids", int_view);
       auto coordinates_dataset = mesh_group.template createDataset<
-          Kokkos::View<double *, Kokkos::HostSpace> >("node_coordinates",
-                                                      double_view);
+          Kokkos::View<double *, Kokkos::HostSpace>>("node_coordinates",
+                                                     double_view);
       auto active_dataset =
           results_group
-              .template createDataset<Kokkos::View<bool *, Kokkos::HostSpace> >(
+              .template createDataset<Kokkos::View<bool *, Kokkos::HostSpace>>(
                   "active_elements", bool_view);
 
       std::cout << "READ: Created datasets." << std::endl;
@@ -586,15 +589,15 @@ TYPED_TEST(IOFrameworkTest, ComplexWorkflow) {
 
       auto mesh_ids_dataset =
           mesh_group
-              .template openDataset<Kokkos::View<int *, Kokkos::HostSpace> >(
+              .template openDataset<Kokkos::View<int *, Kokkos::HostSpace>>(
                   "element_ids", read_int_view);
       auto coordinates_dataset =
           mesh_group
-              .template openDataset<Kokkos::View<double *, Kokkos::HostSpace> >(
+              .template openDataset<Kokkos::View<double *, Kokkos::HostSpace>>(
                   "node_coordinates", read_double_view);
       auto active_dataset =
           results_group
-              .template openDataset<Kokkos::View<bool *, Kokkos::HostSpace> >(
+              .template openDataset<Kokkos::View<bool *, Kokkos::HostSpace>>(
                   "active_elements", read_bool_view);
 
       std::cout << "READ: Opened datasets." << std::endl;
@@ -614,7 +617,7 @@ TYPED_TEST(IOFrameworkTest, ComplexWorkflow) {
     };
 
     // Ensure no exceptions are thrown during read
-    EXPECT_NO_THROW(should_not_throw());
+    LOCAL_EXPECT_NO_THROW(should_not_throw());
   }
 
   std::cout << "==============================================================="

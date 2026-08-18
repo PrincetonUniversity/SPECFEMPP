@@ -14,8 +14,15 @@ set(CMAKE_Fortran_STANDARD_REQUIRED ON)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/../setup)
 
 
+if (SPECFEM_ENABLE_MPI)
+  set(MESHFEM3D_MPI_MODULE parallel.f90)
+else()
+  set(MESHFEM3D_MPI_MODULE serial.f90)
+endif()
+
 set(MESHFEM3D_SHARED_MODULE
-  serial.f90
+  ${MESHFEM3D_MPI_MODULE}
+  adjacency_graph.f90
   assemble_MPI_scalar.f90
   check_mesh_resolution.f90
   count_number_of_sources.f90
@@ -130,3 +137,7 @@ target_link_libraries(meshfem3D_shared PRIVATE
   meshfem3D::shared_hdf5_module
   meshfem3D::param_reader
 )
+
+if (SPECFEM_ENABLE_MPI)
+  target_link_libraries(meshfem3D_shared PRIVATE MPI::MPI_Fortran)
+endif()

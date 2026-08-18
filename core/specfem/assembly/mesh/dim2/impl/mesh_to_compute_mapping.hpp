@@ -1,7 +1,7 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
-#include "mesh/mesh.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/mesh.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly::mesh_impl {
@@ -17,24 +17,29 @@ namespace specfem::assembly::mesh_impl {
  * @code{.cpp}
  * // Mapping from compute ordering to mesh ordering
  * const int compute_index = ...;
- * int mesh_index = mapping.compute_to_mesh(compute_index);
- * assert(mapping.mesh_to_compute(mesh_index) == compute_index);
+ * int mesh_index = mapping.h_compute_to_mesh(compute_index);
+ * assert(mapping.h_mesh_to_compute(mesh_index) == compute_index);
  * @endcode
  *
  */
-template <> struct mesh_to_compute_mapping<specfem::dimension::type::dim2> {
+template <>
+struct mesh_to_compute_mapping<specfem::element::dimension_tag::dim2> {
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim2; ///< Dimension
-  int nspec;                          ///< Number of spectral elements
+      specfem::element::dimension_tag::dim2; ///< Dimension
+  int nspec;                                 ///< Number of spectral elements
 
-  using ViewType = Kokkos::View<int *, Kokkos::LayoutLeft,
-                                Kokkos::DefaultHostExecutionSpace>;
-  ViewType compute_to_mesh; ///< Mapping from compute
-                            ///< ordering to mesh
-                            ///< ordering
-  ViewType mesh_to_compute; ///< Mapping from mesh
-                            ///< ordering to compute
-                            ///< ordering
+  using ViewType =
+      Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>;
+  ViewType compute_to_mesh;                     ///< Mapping from compute
+                                                ///< ordering to mesh
+                                                ///< ordering
+  ViewType mesh_to_compute;                     ///< Mapping from mesh
+                                                ///< ordering to compute
+                                                ///< ordering
+  ViewType::host_mirror_type h_compute_to_mesh; ///< Host access for
+                                                ///< compute_to_mesh
+  ViewType::host_mirror_type h_mesh_to_compute; ///< Host access for
+                                                ///< mesh_to_compute
 
   /**
    * @brief Construct a new mesh to compute mapping object

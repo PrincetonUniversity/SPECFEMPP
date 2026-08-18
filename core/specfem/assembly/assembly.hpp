@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 
 /**
  * @namespace specfem::assembly
@@ -16,7 +16,7 @@
  * specfem::assembly::mesh, @ref specfem::assembly::jacobian_matrix, etc) that
  * store data computed at all GLL points
  * - Data access functions : Each container provides functions to load/store
- * data on device/host (e.g., @c load_on_device , @c store_on_device )
+ * data on device/host (e.g., @c lod_on_device , @c store_on_device )
  *
  */
 namespace specfem::assembly {
@@ -31,7 +31,7 @@ namespace specfem::assembly {
  * The assembly class is specialized for 2D and 3D
  * problems.
  */
-template <specfem::dimension::type DimensionTag> struct assembly;
+template <specfem::element::dimension_tag DimensionTag> struct assembly;
 
 } // namespace specfem::assembly
 

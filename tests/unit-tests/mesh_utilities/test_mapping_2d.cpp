@@ -1,6 +1,7 @@
 #include "../test_macros.hpp"
+#include "SPECFEM_Environment.hpp"
 #include "mapping.hpp"
-#include "utilities/utilities.hpp"
+#include "specfem/utilities.hpp"
 #include <gtest/gtest.h>
 #include <set>
 #include <vector>
@@ -22,7 +23,7 @@ protected:
 
   // Helper to create 4D coordinate array
   HostView4d
-  create_coordinates(const std::vector<std::vector<std::pair<double, double> > >
+  create_coordinates(const std::vector<std::vector<std::pair<double, double>>>
                          &element_coords) {
     int nspec = element_coords.size();
     int ngll = std::sqrt(element_coords[0].size());
@@ -46,10 +47,10 @@ protected:
 class TestMeshNumberingTests : public TestMeshUtilitiesTest {
 protected:
   // Helper to create unit square coordinates
-  std::vector<std::vector<std::pair<double, double> > >
+  std::vector<std::vector<std::pair<double, double>>>
   create_unit_square(int ngll, double xmin = -1.0, double xmax = 1.0,
                      double zmin = -1.0, double zmax = 1.0) {
-    std::vector<std::pair<double, double> > coords;
+    std::vector<std::pair<double, double>> coords;
     for (int iz = 0; iz < ngll; iz++) {
       for (int ix = 0; ix < ngll; ix++) {
         double x = xmin + (xmax - xmin) * ix / (ngll - 1);
@@ -61,7 +62,7 @@ protected:
   }
 
   // Helper to create two adjacent squares sharing an edge
-  std::vector<std::vector<std::pair<double, double> > >
+  std::vector<std::vector<std::pair<double, double>>>
   create_two_adjacent_squares_2x2() {
     auto left_square =
         create_unit_square(2, -2.0, 0.0, -1.0, 1.0)[0]; // Left element
@@ -70,7 +71,7 @@ protected:
     return { left_square, right_square };
   }
 
-  std::vector<std::vector<std::pair<double, double> > >
+  std::vector<std::vector<std::pair<double, double>>>
   create_two_adjacent_squares_5x5() {
     auto left_square =
         create_unit_square(5, -2.0, 2.0, -1.0, 1.0)[0]; // Left element
@@ -80,19 +81,19 @@ protected:
   }
 
   // Pre-built geometries for convenience
-  std::vector<std::vector<std::pair<double, double> > > unit_square_2x2 =
+  std::vector<std::vector<std::pair<double, double>>> unit_square_2x2 =
       create_unit_square(2);
-  std::vector<std::vector<std::pair<double, double> > > unit_square_5x5 =
+  std::vector<std::vector<std::pair<double, double>>> unit_square_5x5 =
       create_unit_square(5);
-  std::vector<std::vector<std::pair<double, double> > >
-      two_adjacent_squares_2x2 = create_two_adjacent_squares_2x2();
-  std::vector<std::vector<std::pair<double, double> > >
-      two_adjacent_squares_5x5 = create_two_adjacent_squares_5x5();
+  std::vector<std::vector<std::pair<double, double>>> two_adjacent_squares_2x2 =
+      create_two_adjacent_squares_2x2();
+  std::vector<std::vector<std::pair<double, double>>> two_adjacent_squares_5x5 =
+      create_two_adjacent_squares_5x5();
 
   // Helper to create a 2x2 grid of elements
-  std::vector<std::vector<std::pair<double, double> > >
+  std::vector<std::vector<std::pair<double, double>>>
   create_2x2_grid(int ngll) {
-    std::vector<std::vector<std::pair<double, double> > > grid;
+    std::vector<std::vector<std::pair<double, double>>> grid;
     // Element layout: [2][3]
     //                 [0][1]
     grid.push_back(create_unit_square(ngll, 0.0, 1.0, 0.0,
@@ -107,17 +108,15 @@ protected:
   }
 
   // Sheared element coordinates (manually specified since it's non-regular)
-  std::vector<std::vector<std::pair<double, double> > > sheared_element_2x2 = {
-    {
-        { -1.0, -1.0 },
-        { 2.0, -1.0 }, // iz=0: ix=0,1
-        { 0.0, 2.0 },
-        { 3.0, 2.0 } // iz=1: ix=0,1
-    }
-  };
+  std::vector<std::vector<std::pair<double, double>>> sheared_element_2x2 = { {
+      { -1.0, -1.0 },
+      { 2.0, -1.0 }, // iz=0: ix=0,1
+      { 0.0, 2.0 },
+      { 3.0, 2.0 } // iz=1: ix=0,1
+  } };
 
   // Pre-built grid geometry
-  std::vector<std::vector<std::pair<double, double> > > grid_2x2_elements_2x2 =
+  std::vector<std::vector<std::pair<double, double>>> grid_2x2_elements_2x2 =
       create_2x2_grid(2);
 };
 
@@ -570,7 +569,7 @@ TEST_F(TestMeshNumberingTests, EdgeCaseIdenticalPoints) {
 // Test create_coordinate_arrays with simple 2D single element
 TEST_F(TestMeshUtilitiesTest, CreateCoordinateArraysSingleElement2D) {
   // Create a simple single element with 2x2 GLL points
-  std::vector<std::vector<std::pair<double, double> > > element_coords = {
+  std::vector<std::vector<std::pair<double, double>>> element_coords = {
     { { 0.0, 0.0 }, { 1.0, 0.0 }, { 0.0, 1.0 }, { 1.0, 1.0 } } // Single unit
                                                                // square element
   };
@@ -629,7 +628,7 @@ TEST_F(TestMeshUtilitiesTest, CreateCoordinateArraysSingleElement2D) {
 // Test create_coordinate_arrays with two adjacent elements
 TEST_F(TestMeshUtilitiesTest, CreateCoordinateArraysTwoAdjacentElements2D) {
   // Create two adjacent elements sharing an edge
-  std::vector<std::vector<std::pair<double, double> > > element_coords = {
+  std::vector<std::vector<std::pair<double, double>>> element_coords = {
     { { 0.0, 0.0 }, { 0.5, 0.0 }, { 0.0, 0.5 }, { 0.5, 0.5 } }, // Left element
     { { 0.5, 0.0 }, { 1.0, 0.0 }, { 0.5, 0.5 }, { 1.0, 0.5 } }  // Right element
   };
@@ -686,7 +685,7 @@ TEST_F(TestMeshUtilitiesTest, CreateCoordinateArraysTwoAdjacentElements2D) {
 // Test create_coordinate_arrays with higher order elements (3x3 GLL points)
 TEST_F(TestMeshUtilitiesTest, CreateCoordinateArraysHigherOrder2D) {
   // Create single element with 3x3 GLL points
-  std::vector<std::vector<std::pair<double, double> > > element_coords = { {
+  std::vector<std::vector<std::pair<double, double>>> element_coords = { {
       { 0.0, 0.0 },
       { 0.5, 0.0 },
       { 1.0, 0.0 }, // Bottom row
@@ -744,7 +743,7 @@ TEST_F(TestMeshUtilitiesTest, CreateCoordinateArraysHigherOrder2D) {
 
 // Test create_coordinate_arrays layout consistency
 TEST_F(TestMeshUtilitiesTest, CreateCoordinateArraysLayoutConsistency2D) {
-  std::vector<std::vector<std::pair<double, double> > > element_coords = {
+  std::vector<std::vector<std::pair<double, double>>> element_coords = {
     { { 0.0, 0.0 }, { 1.0, 0.0 }, { 0.0, 1.0 }, { 1.0, 1.0 } }
   };
 
@@ -781,12 +780,12 @@ TEST_F(TestMeshUtilitiesTest, CreateCoordinateArraysLayoutConsistency2D) {
 // Test create_coordinate_arrays with 2x2 grid of elements
 TEST_F(TestMeshUtilitiesTest, CreateCoordinateArrays2x2Grid2D) {
   // Create 4 elements in a 2x2 grid, each with 3x3 GLL points
-  std::vector<std::vector<std::pair<double, double> > > element_coords;
+  std::vector<std::vector<std::pair<double, double>>> element_coords;
 
   int ngll = 3;
   for (int elem_row = 0; elem_row < 2; elem_row++) {
     for (int elem_col = 0; elem_col < 2; elem_col++) {
-      std::vector<std::pair<double, double> > elem_points;
+      std::vector<std::pair<double, double>> elem_points;
 
       for (int iz = 0; iz < ngll; iz++) {
         for (int ix = 0; ix < ngll; ix++) {
@@ -839,4 +838,10 @@ TEST_F(TestMeshUtilitiesTest, CreateCoordinateArrays2x2Grid2D) {
   EXPECT_EQ(index_mapping(0, ngll - 1, ngll - 1),
             index_mapping(2, 0, ngll - 1));
   EXPECT_EQ(index_mapping(0, ngll - 1, ngll - 1), index_mapping(3, 0, 0));
+}
+
+int main(int argc, char *argv[]) {
+  ::testing::InitGoogleTest(&argc, argv);
+  ::testing::AddGlobalTestEnvironment(new SPECFEMEnvironment);
+  return RUN_ALL_TESTS();
 }

@@ -1,8 +1,8 @@
 #include "../kernels_tests.hpp"
 #include "specfem/point/kernels.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
+#include "specfem/utilities.hpp"
 #include "test_macros.hpp"
-#include "utilities/interface.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 
@@ -110,9 +110,10 @@ TYPED_TEST(PointKernelsTest, PoroelasticIsotropic2D) {
   }
 
   // Create the kernels object
-  using PointKernelType = specfem::point::kernels<
-      specfem::dimension::type::dim2, specfem::element::medium_tag::poroelastic,
-      specfem::element::property_tag::isotropic, using_simd>;
+  using PointKernelType = specfem::point::kernels<specfem::tags::Tags<
+      specfem::element::dimension_tag::dim2,
+      specfem::element::medium_tag::poroelastic,
+      specfem::element::property_tag::isotropic, using_simd>>;
   PointKernelType kernels(rhot, rhof, eta, sm, mu_fr, B, C, M, cpI, cpII, cs,
                           rhobb, rhofbb, ratio, phib);
 

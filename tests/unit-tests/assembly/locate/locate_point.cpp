@@ -1,5 +1,5 @@
-#include "algorithms/locate_point.hpp"
 #include "../test_fixture/test_fixture.hpp"
+#include "specfem/algorithms/locate_point/locate_point_impl.hpp"
 #include "specfem/point.hpp"
 #include <gtest/gtest.h>
 
@@ -7,10 +7,10 @@ using specfem::point::global_coordinates;
 using specfem::point::local_coordinates;
 
 void test_locate_point(
-    const specfem::assembly::assembly<specfem::dimension::type::dim2>
+    const specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
         &assembly) {
 
-  constexpr auto dim = specfem::dimension::type::dim2;
+  constexpr auto dim = specfem::element::dimension_tag::dim2;
 
   const type_real xmin = assembly.mesh.xmin;
   const type_real xmax = assembly.mesh.xmax;
@@ -34,7 +34,8 @@ void test_locate_point(
 
   // Loop over the points and check if they are located correctly
   for (const auto &point : points) {
-    const auto lcoord = specfem::algorithms::locate_point(point, assembly.mesh);
+    const auto lcoord = specfem::algorithms::locate_point_impl::locate_point(
+        point, assembly.mesh);
 
     // Check if the local coordinates are within the expected range
     if (std::abs(lcoord.xi) > 1.0 + 1e-3 ||
@@ -50,8 +51,8 @@ void test_locate_point(
     }
 
     // Check if we can locate the point back to global coordinates
-    const auto gcoord =
-        specfem::algorithms::locate_point(lcoord, assembly.mesh);
+    const auto gcoord = specfem::algorithms::locate_point_impl::locate_point(
+        lcoord, assembly.mesh);
 
     // Check if the located point is close to the original point
     if ((specfem::point::distance(point, gcoord) >
@@ -72,8 +73,8 @@ void test_locate_point(
 TEST_F(Assembly2D, LocatePoint) {
   for (auto parameters : *this) {
     const auto Test = std::get<0>(parameters);
-    specfem::assembly::assembly<specfem::dimension::type::dim2> assembly =
-        std::get<5>(parameters);
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        assembly = std::get<5>(parameters);
 
     try {
       test_locate_point(assembly);

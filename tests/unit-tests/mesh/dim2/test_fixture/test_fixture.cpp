@@ -1,5 +1,5 @@
 #include "test_fixture.hpp"
-#include "io/interface.hpp"
+#include "specfem/io.hpp"
 
 // ------------------------------------------------------------------------
 // Reading test config
@@ -27,7 +27,10 @@ MESH::MESH() {
     const auto elastic_wave = Test.get_elastic_wave();
     const auto electromagnetic_wave = Test.get_electromagnetic_wave();
     specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
-        database_file, elastic_wave, electromagnetic_wave);
+        database_file, elastic_wave, electromagnetic_wave,
+        specfem::attenuation::Setup{ Test.is_attenuation_enabled(),
+                                     Test.get_attenuation_f0(),
+                                     Test.get_attenuation_band() });
 
     meshes.push_back(mesh);
   }

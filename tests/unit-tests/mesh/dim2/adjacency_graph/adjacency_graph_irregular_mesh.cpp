@@ -1,8 +1,9 @@
 
 #include "SPECFEM_Environment.hpp"
-#include "enumerations/mesh_entities.hpp"
-#include "io/interface.hpp"
-#include "mesh/mesh.hpp"
+#include "specfem/io.hpp"
+#include "specfem/mesh.hpp"
+#include "specfem/mesh_entity.hpp"
+#include "test_macros.hpp"
 #include <algorithm>
 #include <boost/graph/adjacency_list.hpp>
 #include <gtest/gtest.h>
@@ -21,7 +22,7 @@ const static std::unordered_map<std::string, std::string> mesh_files = {
 };
 
 const static std::unordered_map<
-    std::string, std::vector<specfem::testing::predicate::variant> >
+    std::string, std::vector<specfem::testing::predicate::variant>>
     expected_adjacency_rules = {
       { "Circular mesh",
         {
@@ -41,13 +42,13 @@ const static std::unordered_map<
             specfem::testing::predicate::connects(
                 0, specfem::mesh_entity::dim2::type::top, 1,
                 specfem::mesh_entity::dim2::type::bottom)
-                .with(specfem::connections::type::nonconforming),
+                .with(specfem::element_connections::type::nonconforming),
             specfem::testing::predicate::connects(
                 0, specfem::mesh_entity::dim2::type::top, 2,
                 specfem::mesh_entity::dim2::type::bottom)
-                .with(specfem::connections::type::nonconforming),
+                .with(specfem::element_connections::type::nonconforming),
             specfem::testing::predicate::connects(1, 2).with(
-                specfem::connections::type::strongly_conforming),
+                specfem::element_connections::type::strongly_conforming),
             specfem::testing::predicate::number_of_out_edges(0, 2),
             specfem::testing::predicate::number_of_out_edges(1, 2),
             specfem::testing::predicate::number_of_out_edges(2, 2),
@@ -66,13 +67,13 @@ TEST_P(CheckConnections, Test) {
 
   const std::string mesh_file = mesh_files.at(mesh_name);
 
-  auto mesh =
-      specfem::io::read_2d_mesh(mesh_file, specfem::enums::elastic_wave::psv,
-                                specfem::enums::electromagnetic_wave::te);
+  auto mesh = specfem::io::read_2d_mesh(
+      mesh_file, specfem::enums::elastic_wave::psv,
+      specfem::enums::electromagnetic_wave::te, specfem::attenuation::Setup{});
 
   const auto &adjacency_graph = mesh.adjacency_graph;
 
-  EXPECT_NO_THROW(adjacency_graph.assert_symmetry());
+  LOCAL_EXPECT_NO_THROW(adjacency_graph.assert_symmetry());
 
   for (const auto &rule : expected_adjacency_rules.at(mesh_name)) {
     specfem::testing::predicate::verify(rule, adjacency_graph);

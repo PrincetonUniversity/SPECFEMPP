@@ -5,11 +5,11 @@
 #include "impl/mesh_to_compute_mapping.hpp"
 #include "impl/points.hpp"
 #include "impl/shape_functions.hpp"
-#include "mesh/mesh.hpp"
-#include "quadrature/interface.hpp"
 #include "specfem/assembly/mesh/impl/quadrature.hpp"
+#include "specfem/mesh.hpp"
 #include "specfem/point.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/quadrature.hpp"
+#include "specfem/setup.hpp"
 #include <vector>
 
 namespace specfem::assembly {
@@ -31,22 +31,22 @@ namespace specfem::assembly {
  * @see specfem::mesh::mesh
  */
 template <>
-struct mesh<specfem::dimension::type::dim2>
+struct mesh<specfem::element::dimension_tag::dim2>
     : public specfem::assembly::mesh_impl::points<
-          specfem::dimension::type::dim2>,
+          specfem::element::dimension_tag::dim2>,
       public specfem::assembly::mesh_impl::quadrature<
-          specfem::dimension::type::dim2>,
+          specfem::element::dimension_tag::dim2>,
       public specfem::assembly::mesh_impl::control_nodes<
-          specfem::dimension::type::dim2>,
+          specfem::element::dimension_tag::dim2>,
       public specfem::assembly::mesh_impl::mesh_to_compute_mapping<
-          specfem::dimension::type::dim2>,
+          specfem::element::dimension_tag::dim2>,
       public specfem::assembly::mesh_impl::shape_functions<
-          specfem::dimension::type::dim2>,
+          specfem::element::dimension_tag::dim2>,
       public specfem::assembly::mesh_impl::adjacency_graph<
-          specfem::dimension::type::dim2> {
+          specfem::element::dimension_tag::dim2> {
 
 public:
-  constexpr static auto dimension_tag = specfem::dimension::type::dim2;
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim2;
   constexpr static auto ndim = 2;
 
   int nspec; ///< Number of spectral elements
@@ -80,6 +80,10 @@ public:
    * Computes physical coordinates for all quadrature points using
    * control nodes and shape functions.
    */
-  void assemble();
+  void
+  assemble(const Kokkos::View<specfem::element::medium_tag *, Kokkos::HostSpace>
+               medium_tags);
+
+  void compute_mesh_properties();
 };
 } // namespace specfem::assembly

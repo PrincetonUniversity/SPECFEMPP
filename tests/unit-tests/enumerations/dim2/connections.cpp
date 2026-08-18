@@ -13,16 +13,16 @@
  * - Coordinate2D transformation accuracy for different element orientations
  * - Verification that shared boundaries have matching physical coordinates2D
  *
- * @see specfem::connections::connection_mapping<dim2>
+ * @see specfem::element_connections::connection_mapping<dim2>
  */
 
-#include "enumerations/connections.hpp"
-#include "enumerations/dimension.hpp"
-#include "enumerations/mesh_entities.hpp"
-#include "quadrature/interface.hpp"
+#include "specfem/element.hpp"
+#include "specfem/element_connections.hpp"
+#include "specfem/mesh_entity.hpp"
+#include "specfem/quadrature.hpp"
+#include "specfem/setup.hpp"
 #include "specfem/shape_function.hpp"
-#include "specfem_setup.hpp"
-#include "utilities/interface.hpp"
+#include "specfem/utilities.hpp"
 #include "gtest/gtest.h"
 #include <Kokkos_Core.hpp>
 #include <array>
@@ -428,9 +428,11 @@ compute_coordinates2D(const specfem::connections_test::TestElement2D &element) {
 TEST_P(CoupledElements2D, EdgeConnections) {
   const auto &config = GetParam();
   // Create connection mapping between the two elements
-  specfem::mesh_entity::element<specfem::dimension::type::dim2> mapping(5, 5);
+  specfem::mesh_entity::element<specfem::element::dimension_tag::dim2> mapping(
+      5, 5);
 
-  specfem::connections::connection_mapping<specfem::dimension::type::dim2>
+  specfem::element_connections::connection_mapping<
+      specfem::element::dimension_tag::dim2>
       connection(5, 5, element1.control_nodes, element2.control_nodes);
 
   const int num_points =
@@ -470,9 +472,11 @@ TEST_P(CoupledElements2D, EdgeConnections) {
 TEST_P(CoupledElements2D, CornerConnections) {
   const auto &config = GetParam();
   // Create connection mapping between the two elements
-  specfem::mesh_entity::element<specfem::dimension::type::dim2> mapping(5, 5);
+  specfem::mesh_entity::element<specfem::element::dimension_tag::dim2> mapping(
+      5, 5);
 
-  specfem::connections::connection_mapping<specfem::dimension::type::dim2>
+  specfem::element_connections::connection_mapping<
+      specfem::element::dimension_tag::dim2>
       connection(5, 5, element1.control_nodes, element2.control_nodes);
 
   const auto element_coord1 = compute_coordinates2D(element1);

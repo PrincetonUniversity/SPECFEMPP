@@ -1,7 +1,7 @@
 #include "ricker.hpp"
 #include "impl/time_functions.hpp"
-#include "specfem_setup.hpp"
-#include "utilities/interface.hpp"
+#include "specfem/setup.hpp"
+#include "specfem/utilities.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
 #include <iostream>
@@ -54,7 +54,8 @@ type_real specfem::source_time_functions::Ricker::compute(type_real t) {
 
 void specfem::source_time_functions::Ricker::compute_source_time_function(
     const type_real t0, const type_real dt, const int nsteps,
-    specfem::kokkos::HostView2d<type_real> source_time_function) {
+    Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+        source_time_function) {
 
   const int ncomponents = source_time_function.extent(1);
 
@@ -66,16 +67,14 @@ void specfem::source_time_functions::Ricker::compute_source_time_function(
 }
 
 std::string specfem::source_time_functions::Ricker::print() const {
-  std::stringstream ss;
-  ss << "        Ricker source time function:\n"
-     << "          f0: " << this->f0_ << "\n"
-     << "          tshift: " << this->tshift_ << "\n"
-     << "          factor: " << this->factor_ << "\n"
-     << "          t0: " << this->t0_ << "\n"
-     << "          use_trick_for_better_pressure: "
-     << this->use_trick_for_better_pressure_ << "\n";
-
-  return ss.str();
+  std::ostringstream message;
+  message << "Ricker(t0=" << specfem::utilities::format_scientific(this->t0_, 6)
+          << ", f0=" << specfem::utilities::format_scientific(this->f0_, 6)
+          << ", tshift="
+          << specfem::utilities::format_scientific(this->tshift_, 6)
+          << ", factor="
+          << specfem::utilities::format_scientific(this->factor_, 6) << ")";
+  return message.str();
 }
 
 bool specfem::source_time_functions::Ricker::operator==(

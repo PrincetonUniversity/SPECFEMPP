@@ -1,20 +1,22 @@
 #include "../test_fixture/test_fixture.hpp"
-#include "algorithms/locate_point.hpp"
-#include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
-#include "enumerations/wavefield.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/algorithms.hpp"
+#include "specfem/assembly/assembly.hpp"
+#include "specfem/assembly/compute_source_array.hpp"
+#include "specfem/element.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/point.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include "gtest/gtest.h"
 #include <Kokkos_Core.hpp>
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag,
-          specfem::wavefield::simulation_field WavefieldType>
+          specfem::simulation::field_type WavefieldType>
 void check_store(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly) {
 
   specfem::assembly::sources<DimensionTag> &sources = assembly.sources;
   const int ngllz = assembly.mesh.element_grid.ngllz;
@@ -82,13 +84,14 @@ void check_store(
   Kokkos::fence();
 }
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag,
-          specfem::wavefield::simulation_field WavefieldType>
+          specfem::simulation::field_type WavefieldType>
 void check_load(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly) {
 
   specfem::assembly::sources<DimensionTag> &sources = assembly.sources;
   const int ngllz = assembly.mesh.element_grid.ngllz;
@@ -191,12 +194,14 @@ void check_load(
   }
 }
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag>
 void check_assembly_source_construction(
     std::vector<std::shared_ptr<
-        specfem::sources::source<specfem::dimension::type::dim2> > > &sources,
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+        specfem::sources::source<specfem::element::dimension_tag::dim2> > >
+        &sources,
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly) {
 
   const int ngllz = assembly.mesh.element_grid.ngllz;
   const int ngllx = assembly.mesh.element_grid.ngllx;
@@ -206,14 +211,15 @@ void check_assembly_source_construction(
 
   using PointSourceType =
       specfem::point::source<DimensionTag, MediumTag,
-                             specfem::wavefield::simulation_field::forward>;
+                             specfem::simulation::field_type::forward>;
 
   const int nsources = sources.size();
   for (int isource = 0; isource < nsources; isource++) {
     const auto &source = sources[isource];
     const auto coord = source->get_global_coordinates();
 
-    const auto lcoord = specfem::algorithms::locate_point(coord, assembly.mesh);
+    const auto lcoord = specfem::algorithms::locate_point_impl::locate_point(
+        coord, assembly.mesh);
 
     source->set_local_coordinates(lcoord);
     source->set_medium_tag(assembly.element_types.get_medium_tag(lcoord.ispec));
@@ -285,37 +291,46 @@ void check_assembly_source_construction(
 
 void test_assembly_source_construction(
     std::vector<std::shared_ptr<
-        specfem::sources::source<specfem::dimension::type::dim2> > > &sources,
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                       POROELASTIC, ELASTIC_PSV_T)),
-      {
-        check_assembly_source_construction<_dimension_tag_, _medium_tag_>(
-            sources, assembly);
-      })
+        specfem::sources::source<specfem::element::dimension_tag::dim2> > >
+        &sources,
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly) {
+  specfem::tag_dispatch::for_each(
+      DIMENSION_SET(dim2) * MEDIUM_SET(elastic_psv, elastic_sh, acoustic,
+                                       poroelastic, elastic_psv_t),
+      [&]<typename ElementTags>() {
+        check_assembly_source_construction<ElementTags::dimension_tag,
+                                           ElementTags::medium_tag>(sources,
+                                                                    assembly);
+      });
 }
 
-void test_sources(specfem::assembly::assembly<specfem::dimension::type::dim2>
-                      &assembly){ FOR_EACH_IN_PRODUCT(
-    (DIMENSION_TAG(DIM2),
-     MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC, ELASTIC_PSV_T),
-     PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-     BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                  COMPOSITE_STACEY_DIRICHLET)),
-    {
-      check_store<_dimension_tag_, _medium_tag_, _property_tag_, _boundary_tag_,
-                  specfem::wavefield::simulation_field::forward>(assembly);
-      check_load<_dimension_tag_, _medium_tag_, _property_tag_, _boundary_tag_,
-                 specfem::wavefield::simulation_field::forward>(assembly);
-    }) }
+void test_sources(
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly) {
+  specfem::tag_dispatch::for_each(
+      DIMENSION_SET(dim2) *
+          MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
+                     elastic_psv_t) *
+          PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
+          BOUNDARY_SET(none, acoustic_free_surface, stacey,
+                       composite_stacey_dirichlet),
+      [&]<typename ElementTags>() {
+        check_store<ElementTags::dimension_tag, ElementTags::medium_tag,
+                    ElementTags::property_tag, ElementTags::boundary_tag,
+                    specfem::simulation::field_type::forward>(assembly);
+        check_load<ElementTags::dimension_tag, ElementTags::medium_tag,
+                   ElementTags::property_tag, ElementTags::boundary_tag,
+                   specfem::simulation::field_type::forward>(assembly);
+      });
+}
 
 TEST_F(Assembly2D, sources) {
   for (auto parameters : *this) {
     const auto Test = std::get<0>(parameters);
     auto sources = std::get<2>(parameters);
-    specfem::assembly::assembly<specfem::dimension::type::dim2> assembly =
-        std::get<5>(parameters);
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        assembly = std::get<5>(parameters);
 
     try {
       test_assembly_source_construction(sources, assembly);

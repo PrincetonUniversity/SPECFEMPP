@@ -1,11 +1,11 @@
 #pragma once
 
-#include "enumerations/display.hpp"
-#include "enumerations/wavefield.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/periodic_tasks/plot_wavefield.hpp"
 #include "specfem/periodic_tasks/plotter.hpp"
 #include <boost/filesystem.hpp>
+#include <vector>
 
 #ifdef NO_VTK
 #include <sstream>
@@ -28,11 +28,11 @@ namespace periodic_tasks {
  * @brief Writer to plot the wavefield for 3D simulations
  */
 template <>
-class plot_wavefield<specfem::dimension::type::dim3>
-    : public plotter<specfem::dimension::type::dim3> {
+class plot_wavefield<specfem::element::dimension_tag::dim3>
+    : public plotter<specfem::element::dimension_tag::dim3> {
 public:
-  constexpr static specfem::dimension::type dimension_tag =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension_tag =
+      specfem::element::dimension_tag::dim3;
 
   /**
    * @brief Construct a new plotter object
@@ -46,12 +46,12 @@ public:
    * @param output_folder Path to output folder where plots will be stored
    */
   plot_wavefield(
-      const specfem::assembly::assembly<specfem::dimension::type::dim3>
+      const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
           &assembly,
-      const specfem::display::format &output_format,
-      const specfem::wavefield::type &wavefield_type,
-      const specfem::wavefield::simulation_field &simulation_wavefield_type,
-      const specfem::display::component &component, const type_real &dt,
+      const specfem::enums::display_format &output_format,
+      const specfem::enums::wavefield &wavefield_type,
+      const specfem::simulation::field_type &simulation_wavefield_type,
+      const specfem::enums::display_component &component,
       const int &time_interval, const boost::filesystem::path &output_folder);
 
   /**
@@ -80,23 +80,23 @@ public:
    */
   void finalize(specfem::assembly::assembly<dimension_tag> &assembly) override;
 
-  const specfem::display::format output_format;  ///< Output format of the plot
-  const specfem::wavefield::type wavefield_type; ///< Type of the wavefield
-  const specfem::wavefield::simulation_field
-      simulation_wavefield_type;               ///< Type of wavefield
-                                               ///< to plot
-  const specfem::display::component component; ///< Component of the wavefield
-                                               ///< to plot
-  const boost::filesystem::path output_folder; ///< Path to output folder
-  specfem::assembly::assembly<dimension_tag> assembly; ///< Assembly object
+  const specfem::enums::display_format output_format; ///< Output format of the
+                                                      ///< plot
+  const specfem::enums::wavefield wavefield_type;     ///< Type of the wavefield
+  const specfem::simulation::field_type
+      simulation_wavefield_type;                     ///< Type of wavefield
+                                                     ///< to plot
+  const specfem::enums::display_component component; ///< Component of the
+                                                     ///< wavefield to plot
+  const boost::filesystem::path output_folder;       ///< Path to output folder
+  const specfem::assembly::assembly<dimension_tag> &assembly; ///< Assembly
+                                                              ///< object
 
   // Grid parameter members
   int nspec; ///< Number of elements
   int ngllx; ///< Number of GLL points in x direction per element
   int nglly; ///< Number of GLL points in y direction per element
   int ngllz; ///< Number of GLL points in z direction per element
-
-  type_real dt; ///< Time step
 
 private:
 #ifndef NO_VTK
@@ -105,11 +105,30 @@ private:
 
 #ifndef NO_HDF5
   // VTK HDF5 file handling members
-  std::string hdf5_filename; // Store filename for reopening
-  int current_timestep;
-  int numPoints;          // Number of points in grid
-  int numCells;           // Number of cells in grid
-  int numConnectivityIds; // Number of connectivity IDs
+  std::string hdf5_filename;    ///< Store filename for reopening
+  int current_timestep;         ///< Current output timestep index
+  long long numPoints;          ///< Number of local points in grid
+  long long numCells;           ///< Number of local cells in grid
+  long long numConnectivityIds; ///< Number of local connectivity IDs
+
+  // MPI partition info (all zero/local in serial builds)
+  long long global_point_offset = 0;        ///< This rank's offset into global
+                                            ///< Points array
+  long long global_cell_offset = 0;         ///< This rank's offset into global
+                                            ///< Cells array
+  long long global_connectivity_offset = 0; ///< This rank's offset into global
+                                            ///< Connectivity array
+  long long total_points = 0;       ///< Sum of numPoints across all ranks
+  long long total_cells = 0;        ///< Sum of numCells across all ranks
+  long long total_connectivity = 0; ///< Sum of numConnectivityIds across all
+                                    ///< ranks
+  int num_parts = 1;                ///< Number of MPI ranks (1 for serial)
+  bool use_parallel_hdf5 = false;   ///< True if using collective parallel I/O
+  std::vector<long long> all_point_offsets; ///< Per-rank point offsets (rank 0)
+  std::vector<long long> all_point_counts;  ///< Per-rank point counts (rank 0)
+  std::vector<long long> all_cell_counts;   ///< Per-rank cell counts (rank 0)
+  std::vector<long long> all_connectivity_counts; ///< Per-rank connectivity
+                                                  ///< counts (rank 0)
 #endif
 
   // Grid creation and wavefield computation
@@ -117,25 +136,43 @@ private:
   vtkSmartPointer<vtkFloatArray> compute_wavefield_scalars(
       specfem::assembly::assembly<dimension_tag> &assembly);
 
-  // Get wavefield type from display type
-  specfem::wavefield::type get_wavefield_type();
+  // VTKHDF initialization and per-timestep write
+  void initialize_vtkhdf(vtkSmartPointer<vtkFloatArray> &scalars);
+  void run_vtkhdf(vtkSmartPointer<vtkFloatArray> &scalars, const int istep);
 
-  template <specfem::display::format format>
-  void initialize(vtkSmartPointer<vtkFloatArray> &scalars);
+#ifndef NO_HDF5
+  // Helper to extend a 1D HDF5 dataset and write a single scalar value.
+  // When do_write is false, extends the dataset but writes nothing (for
+  // collective H5Dset_extent on non-writing ranks in parallel HDF5).
+  static void extend_and_write_scalar(hid_t parent, const char *dataset_name,
+                                      hsize_t new_extent, hsize_t write_offset,
+                                      hid_t mem_type, const void *data,
+                                      hid_t dxpl = H5P_DEFAULT,
+                                      bool do_write = true);
 
-  void initialize_display(vtkSmartPointer<vtkFloatArray> &scalars);
+  // Helper to extend a 1D HDF5 dataset and write an array of values.
+  // When do_write is false, extends the dataset but writes nothing.
+  static void extend_and_write_array(hid_t parent, const char *dataset_name,
+                                     hsize_t new_extent, hsize_t write_offset,
+                                     hsize_t count, hid_t mem_type,
+                                     const void *data, hid_t dxpl = H5P_DEFAULT,
+                                     bool do_write = true);
+#endif // NO_HDF5
 
-  template <specfem::display::format format>
-  void run(vtkSmartPointer<vtkFloatArray> &scalars, const int istep);
+#ifndef NO_HDF5
+  /// @brief Compute MPI offsets via prefix sum (no-op for serial)
+  void compute_mpi_offsets();
 
-  void run_render(vtkSmartPointer<vtkFloatArray> &scalars);
+  /// @brief Create HDF5 file access property list (parallel or serial)
+  hid_t create_file_access_plist() const;
+#endif // NO_HDF5
 
   // Helper function to get scalar value at a given point
   static float get_scalar_value_at_point(
       const Kokkos::View<type_real *****, Kokkos::LayoutLeft, Kokkos::HostSpace>
           &wavefield_data,
-      const specfem::wavefield::type &wavefield_type,
-      const specfem::display::component &component, const int ispec,
+      const specfem::enums::wavefield &wavefield_type,
+      const specfem::enums::display_component &component, const int ispec,
       const int iz, const int iy, const int ix);
 
 #endif // NO_VTK

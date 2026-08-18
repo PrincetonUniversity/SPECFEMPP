@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
 
@@ -67,8 +67,6 @@ type_real d1gaussian(const type_real t, const type_real f0) {
 KOKKOS_INLINE_FUNCTION
 type_real d1gaussian_hdur(const type_real t, const type_real hdur) {
   // First derivative of Gaussian wavelet defined using half duration hdur
-  constexpr auto pi = Kokkos::numbers::pi_v<type_real>;
-
   type_real a = 1.0 / (hdur * hdur);
   type_real d1gaussian_hdur = -2.0 * a * t * gaussian_hdur(t, hdur);
   return d1gaussian_hdur;
@@ -85,8 +83,6 @@ type_real d2gaussian(const type_real t, const type_real f0) {
 KOKKOS_INLINE_FUNCTION
 type_real d2gaussian_hdur(const type_real t, const type_real hdur) {
   // Second derivative of Gaussian wavelet defined using half duration hdur
-  constexpr auto pi = Kokkos::numbers::pi_v<type_real>;
-
   type_real a = 1.0 / (hdur * hdur);
   type_real d2gaussian_hdur =
       2.0 * a * (-1.0 + 2.0 * a * t * t) * gaussian_hdur(t, hdur);

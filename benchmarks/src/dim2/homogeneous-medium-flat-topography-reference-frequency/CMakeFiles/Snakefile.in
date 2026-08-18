@@ -1,0 +1,106 @@
+import numpy as np
+import os
+
+SPECFEM_BIN = "@CMAKE_BINARY_DIR@/bin/specfem 2d"
+MESHFEM_BIN = "@CMAKE_BINARY_DIR@/bin/xmeshfem2D"
+BUILD_DIR   = "@CURRENT_BENCHMARK_BUILD_DIR@"
+
+F0      = 30.0   # Hz — reference frequency (matches attenuation benchmark default)
+N_FREQS = 9      # 4 below + center + 4 above (odd count ensures exact center)
+
+REFERENCE_FREQS = np.logspace(np.log10(F0 / 10), np.log10(F0 * 10), N_FREQS)
+FREQ_TAGS       = [f"{i:02d}" for i in range(N_FREQS)]
+# Index of the variant whose reference frequency is closest to F0 (plotted in black)
+CENTER_IDX      = int(np.argmin(np.abs(REFERENCE_FREQS - F0)))
+
+
+rule all:
+    input:
+        traces_X=BUILD_DIR + "/OUTPUT_FILES/results/traces_X.png",
+        traces_Z=BUILD_DIR + "/OUTPUT_FILES/results/traces_Z.png",
+    localrule: True
+
+
+rule generate_mesh:
+    input:
+        par_file=BUILD_DIR + "/Par_File",
+    output:
+        database=BUILD_DIR + "/OUTPUT_FILES/mesh/database.bin",
+        stations=BUILD_DIR + "/OUTPUT_FILES/mesh/STATIONS",
+    localrule: True
+    shell:
+        """
+            mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/mesh
+            {MESHFEM_BIN} -p {input.par_file}
+        """
+
+
+rule generate_config:
+    input:
+        template=BUILD_DIR + "/specfem_config.yaml.in",
+    output:
+        config=BUILD_DIR + "/OUTPUT_FILES/freq_{freq_tag}/specfem_config.yaml",
+    localrule: True
+    run:
+        idx  = FREQ_TAGS.index(wildcards.freq_tag)
+        freq = REFERENCE_FREQS[idx]
+        with open(input.template) as fh:
+            content = fh.read()
+        content = content.format(
+            reference_frequency=f"{freq:.6g}",
+            freq_tag=wildcards.freq_tag,
+        )
+        os.makedirs(os.path.dirname(output.config), exist_ok=True)
+        with open(output.config, "w") as fh:
+            fh.write(content)
+
+
+rule run_solver:
+    input:
+        database=BUILD_DIR + "/OUTPUT_FILES/mesh/database.bin",
+        stations=BUILD_DIR + "/OUTPUT_FILES/mesh/STATIONS",
+        source=BUILD_DIR + "/source.yaml",
+        config=BUILD_DIR + "/OUTPUT_FILES/freq_{freq_tag}/specfem_config.yaml",
+    output:
+        seismograms=expand(
+            BUILD_DIR + "/OUTPUT_FILES/freq_{{freq_tag}}/results/{network}.{station}.S2.{component}.semv",
+            network=["AA"],
+            station=["S0001", "S0002", "S0003", "S0004", "S0005", "S0006"],
+            component=["CXX", "CXZ"],
+        ),
+        log=BUILD_DIR + "/OUTPUT_FILES/freq_{freq_tag}/output.log",
+    resources:
+        nodes=1,
+        tasks=1,
+        cpus_per_task=1,
+        runtime=10,
+    shell:
+        """
+            mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/freq_{wildcards.freq_tag}/results
+            {SPECFEM_BIN} -p {input.config}
+        """
+
+
+rule plot_traces:
+    input:
+        trace_files=expand(
+            BUILD_DIR + "/OUTPUT_FILES/freq_{freq_tag}/results/{network}.{station}.S2.{component}.semv",
+            freq_tag=FREQ_TAGS,
+            network=["AA"],
+            station=["S0001", "S0002", "S0003", "S0004", "S0005", "S0006"],
+            component=["CXX", "CXZ"],
+        ),
+    output:
+        traces_X=BUILD_DIR + "/OUTPUT_FILES/results/traces_X.png",
+        traces_Z=BUILD_DIR + "/OUTPUT_FILES/results/traces_Z.png",
+    localrule: True
+    script:
+        BUILD_DIR + "/plot_traces.py"
+
+
+rule clean:
+    localrule: True
+    shell:
+        """
+            rm -rf @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES
+        """

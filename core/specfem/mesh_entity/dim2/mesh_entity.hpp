@@ -1,0 +1,335 @@
+#pragma once
+
+#include "specfem/element.hpp"
+#include <Kokkos_Core.hpp>
+#include <algorithm>
+#include <list>
+#include <stdexcept>
+#include <string>
+
+namespace specfem::mesh_entity {
+
+/**
+ * @brief 2D quadrilateral mesh entity types and utilities.
+ */
+namespace dim2 {
+
+/**
+ * @brief Mesh entity types for 2D quadrilateral elements.
+ *
+ * Numbering: edges (1-4), corners (5-8)
+ * @code
+ * 8 --- 3 --- 7
+ * |           |
+ * 4           2
+ * |           |
+ * 5 --- 1 --- 6
+ * @endcode
+ */
+enum class type : int {
+  bottom = 1,       ///< Bottom edge
+  right = 2,        ///< Right edge
+  top = 3,          ///< Top edge
+  left = 4,         ///< Left edge
+  bottom_left = 5,  ///< Bottom-left corner
+  bottom_right = 6, ///< Bottom-right corner
+  top_right = 7,    ///< Top-right corner
+  top_left = 8      ///< Top-left corner
+};
+
+/**
+ * @brief Convert entity type to string.
+ * @param entity Mesh entity type
+ * @return String representation
+ */
+const std::string to_string(const specfem::mesh_entity::dim2::type &entity);
+
+/// All edge types in counter-clockwise order
+const std::list<type> edges = { type::top, type::right, type::bottom,
+                                type::left };
+
+/// All corner types in counter-clockwise order
+const std::list<type> corners = { type::top_left, type::top_right,
+                                  type::bottom_right, type::bottom_left };
+
+} // namespace dim2
+/**
+ * @brief Get edges that meet at a corner.
+ * @param corner Corner entity type
+ * @return List of two edges meeting at the corner
+ * @throws std::runtime_error if invalid corner type
+ */
+std::list<dim2::type> edges_of_corner(const dim2::type &corner);
+
+/**
+ * @brief Get corners connected to an edge.
+ * @param edge Edge entity type
+ * @return List of two corners connected to the edge
+ * @throws std::runtime_error if invalid edge type
+ */
+std::list<dim2::type> corners_of_edge(const dim2::type &edge);
+
+/**
+ * @brief Check if container contains a mesh entity type.
+ * @tparam T Container type with iterators
+ * @param list Container to search
+ * @param value Entity type to find
+ * @return True if found, false otherwise
+ */
+template <typename T> bool contains(const T &list, const dim2::type &value) {
+  return std::find(list.begin(), list.end(), value) != list.end();
+}
+
+std::vector<int>
+nodes_on_orientation(const specfem::mesh_entity::dim2::type &entity);
+
+/**
+ * @brief 2D edge entity for quadrilateral elements.
+ */
+template <> struct edge<specfem::element::dimension_tag::dim2> {
+  specfem::mesh_entity::dim2::type edge_type; ///< Edge type
+  int ispec;                                  ///< Element index
+  int iedge;                                  ///< Local edge index
+  bool reverse_orientation;                   ///< Orientation flag
+
+  KOKKOS_INLINE_FUNCTION
+  edge(const int ispec, const int iedge,
+       const specfem::mesh_entity::dim2::type edge_type,
+       const bool reverse_orientation = false)
+      : edge_type(edge_type), ispec(ispec), iedge(iedge),
+        reverse_orientation(reverse_orientation) {}
+
+  /**
+   * @brief Default constructor.
+   */
+  KOKKOS_INLINE_FUNCTION
+  edge() = default;
+};
+
+template <specfem::element::dimension_tag Dimension> struct element;
+template <specfem::element::dimension_tag Dimension, typename G>
+struct element_grid;
+
+/**
+ * @brief 2D element grid with GLL point configuration (runtime variant).
+ */
+template <> struct element_grid<specfem::element::dimension_tag::dim2, Grid<>> {
+
+public:
+  int ngllz;  ///< Number of GLL points in z-direction
+  int ngllx;  ///< Number of GLL points in x-direction
+  int ngll;   ///< Number of GLL points (ngllz == ngllx)
+  int orderz; ///< Polynomial order in z
+  int orderx; ///< Polynomial order in x
+  int size;   ///< Total number of GLL points
+
+  /**
+   * @brief Default constructor.
+   */
+  element_grid() = default;
+
+  /**
+   * @brief Construct with uniform GLL points.
+   * @param ngll Number of GLL points in both directions
+   */
+  element_grid(const int ngll)
+      : ngllz(ngll), ngllx(ngll), ngll(ngll), orderz(ngll - 1),
+        orderx(ngll - 1), size(ngll * ngll) {}
+
+  /**
+   * @brief Construct with different GLL points per direction.
+   * @param ngllz Number of GLL points in z-direction
+   * @param ngllx Number of GLL points in x-direction
+   * @throws std::invalid_argument if ngllz != ngllx
+   */
+  element_grid(const int ngllz, const int ngllx)
+      : ngllz(ngllz), ngllx(ngllx), ngll(ngllz), orderz(ngllz - 1),
+        orderx(ngllx - 1), size(ngllz * ngllx) {
+    if (ngllz != ngllx) {
+      throw std::invalid_argument(
+          "Different number of GLL points for Z and X are not supported.");
+    }
+  };
+
+  /**
+   * @brief Check if element matches specified GLL point count.
+   * @param ngll_in Number of GLL points to compare against
+   * @return True if all dimensions match the specified count
+   */
+  bool operator==(const int ngll_in) const {
+    return ngll_in == this->ngllz && ngll_in == this->ngllx;
+  }
+
+  /**
+   * @brief Check if element does not match specified GLL point count.
+   * @param ngll_in Number of GLL points to compare against
+   * @return True if any dimension does not match the specified count
+   */
+  bool operator!=(const int ngll_in) const { return !(*this == ngll_in); }
+};
+
+/**
+ * @brief 2D element grid with GLL point configuration (compile-time variant).
+ *
+ * GLL counts are encoded as non-type template parameters so the compiler can
+ * treat dimensions, strides, and `size` as compile-time constants.
+ */
+template <int Nz, int Nx>
+struct element_grid<specfem::element::dimension_tag::dim2, Grid<Nz, Nx>> {
+  static_assert(
+      Nz == Nx,
+      "Different number of GLL points for Z and X are not supported.");
+
+  static constexpr int ngllz = Nz;      ///< Number of GLL points in z
+  static constexpr int ngllx = Nx;      ///< Number of GLL points in x
+  static constexpr int ngll = Nz;       ///< Number of GLL points (Nz == Nx)
+  static constexpr int orderz = Nz - 1; ///< Polynomial order in z
+  static constexpr int orderx = Nx - 1; ///< Polynomial order in x
+  static constexpr int size = Nz * Nx;  ///< Total number of GLL points
+
+  KOKKOS_INLINE_FUNCTION
+  element_grid() = default;
+
+  /// @brief Check if element matches specified GLL point count.
+  KOKKOS_INLINE_FUNCTION
+  constexpr bool operator==(const int ngll_in) const {
+    return ngll_in == ngllz && ngll_in == ngllx;
+  }
+  /// @brief Check if element does not match specified GLL point count.
+  KOKKOS_INLINE_FUNCTION
+  constexpr bool operator!=(const int ngll_in) const {
+    return !(*this == ngll_in);
+  }
+};
+
+/**
+ * @brief 2D element grid with isotropic compile-time GLL count.
+ *
+ * Convenience specialization: `Grid<N>` expands to `Grid<N, N>`.
+ */
+template <int N>
+struct element_grid<specfem::element::dimension_tag::dim2, Grid<N>>
+    : element_grid<specfem::element::dimension_tag::dim2, Grid<N, N>> {};
+
+/**
+ * @brief 2D element with coordinate mapping capabilities.
+ */
+template <>
+struct element<specfem::element::dimension_tag::dim2>
+    : public element_grid<specfem::element::dimension_tag::dim2, Grid<>> {
+private:
+  using base = element_grid<specfem::element::dimension_tag::dim2, Grid<>>;
+
+public:
+  /**
+   * @brief Default constructor.
+   */
+  element() = default;
+  /**
+   * @brief Construct with uniform GLL points.
+   * @param ngll Number of GLL points in both directions
+   */
+  element(const int ngll);
+  /**
+   * @brief Construct with different GLL points per direction.
+   * @param ngllz Number of GLL points in z-direction
+   * @param ngllx Number of GLL points in x-direction
+   * @throws std::invalid_argument if ngllz != ngllx
+   */
+  element(const int ngllz, const int ngllx);
+
+  /**
+   * @brief Get number of GLL points on a mesh entity.
+   * @param entity Mesh entity type (edge or corner)
+   * @return Number of GLL points on the specified entity
+   */
+  int number_of_points_on_orientation(
+      const specfem::mesh_entity::dim2::type &entity) const;
+
+  /**
+   * @brief Map point index to element coordinates.
+   * @param entity Mesh entity type
+   * @param point Point index on the entity
+   * @return Tuple of (iz, ix) coordinates
+   */
+  std::tuple<int, int>
+  map_coordinates(const specfem::mesh_entity::dim2::type &entity,
+                  const int point) const;
+
+  /**
+   * @brief Get corner coordinates.
+   * @param corner Corner entity type
+   * @return Tuple of (iz, ix) coordinates for the corner
+   */
+  std::tuple<int, int>
+  map_coordinates(const specfem::mesh_entity::dim2::type &corner) const;
+
+  /**
+   * @brief Get edge coordinates by 1D index.
+   * @param edge Edge entity type
+   * @param point Point index along the edge
+   * @param[out] iz Z-coordinate in element
+   * @param[out] ix X-coordinate in element
+   */
+  KOKKOS_INLINE_FUNCTION
+  void get_edge_coordinates(const specfem::mesh_entity::dim2::type edge,
+                            const int point, int &iz, int &ix) const {
+    switch (edge) {
+    case specfem::mesh_entity::dim2::type::bottom:
+      iz = 0;
+      ix = point;
+      break;
+    case specfem::mesh_entity::dim2::type::top:
+      iz = ngllz - 1;
+      ix = point;
+      break;
+    case specfem::mesh_entity::dim2::type::left:
+      iz = point;
+      ix = 0;
+      break;
+    case specfem::mesh_entity::dim2::type::right:
+      iz = point;
+      ix = ngllx - 1;
+      break;
+    default:
+      iz = -1;
+      ix = -1;
+      break;
+    }
+  }
+
+  /**
+   * @brief Get corner coordinates.
+   * @param corner Corner entity type
+   * @param[out] iz Z-coordinate in element
+   * @param[out] ix X-coordinate in element
+   */
+  KOKKOS_INLINE_FUNCTION
+  void get_corner_coordinates(const specfem::mesh_entity::dim2::type corner,
+                              int &iz, int &ix) const {
+    switch (corner) {
+    case specfem::mesh_entity::dim2::type::bottom_left:
+      iz = 0;
+      ix = 0;
+      break;
+    case specfem::mesh_entity::dim2::type::bottom_right:
+      iz = 0;
+      ix = ngllx - 1;
+      break;
+    case specfem::mesh_entity::dim2::type::top_left:
+      iz = ngllz - 1;
+      ix = 0;
+      break;
+    case specfem::mesh_entity::dim2::type::top_right:
+      iz = ngllz - 1;
+      ix = ngllx - 1;
+      break;
+    default:
+      iz = -1;
+      ix = -1;
+      break;
+    }
+  }
+};
+
+} // namespace specfem::mesh_entity

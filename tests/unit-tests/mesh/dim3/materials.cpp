@@ -4,11 +4,11 @@
 #include <unordered_map>
 #include <vector>
 
-#include "enumerations/interface.hpp"
-#include "medium/material.hpp"
-#include "mesh/mesh.hpp"
-#include "specfem/macros.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/medium_container.hpp"
+#include "specfem/mesh.hpp"
+#include "specfem/setup.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include "test_fixture.hpp"
 
 namespace specfem::test_configuration {
@@ -47,8 +47,8 @@ struct ElementMaterial {
 };
 
 struct ExpectedMaterials3D {
-  constexpr static specfem::dimension::type dimension =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension =
+      specfem::element::dimension_tag::dim3;
   TotalMaterials total_materials; ///< Total materials and elements in the mesh
   std::vector<ElementMaterial> element_materials; ///< List of expected element
                                                   ///< materials
@@ -80,7 +80,7 @@ struct ExpectedMaterials3D {
       }
 
       // Get the material type for the element and verify it matches expected
-      const auto [medium_tag, property_tag] =
+      const auto [medium_tag, property_tag, attenuation_tag] =
           materials.get_material_type(expected.element_id);
 
       if (medium_tag != expected.medium_tag ||
@@ -95,24 +95,30 @@ struct ExpectedMaterials3D {
       }
 
       // Retrieve the material and verify it matches expected
-      // Note: Update this macro when adding new material types
-      FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC)), {
-            if (medium_tag == _medium_tag_ && property_tag == _property_tag_) {
+      // Note: Update this section when adding new material types
+      specfem::tag_dispatch::for_each(
+          DIMENSION_SET(dim3) * MEDIUM_SET(elastic) * PROPERTY_SET(isotropic) *
+              ATTENUATION_SET(none, constant_isotropic),
+          [&]<typename ElementTags>() {
+            if (medium_tag == ElementTags::medium_tag &&
+                property_tag == ElementTags::property_tag &&
+                attenuation_tag == ElementTags::attenuation_tag) {
               const auto computed_material =
-                  materials.get_material<_medium_tag_, _property_tag_>(
+                  materials.get_material<ElementTags::medium_tag,
+                                         ElementTags::property_tag,
+                                         ElementTags::attenuation_tag>(
                       expected.element_id);
               const auto expected_material =
-                  std::any_cast<specfem::medium::material<
-                      _dimension_tag_, _medium_tag_, _property_tag_> >(
-                      expected.material);
+                  std::any_cast<specfem::medium_container::material<
+                      ElementTags::dimension_tag, ElementTags::medium_tag,
+                      ElementTags::property_tag,
+                      ElementTags::attenuation_tag> >(expected.material);
               if (computed_material != expected_material) {
                 FAIL() << "Material mismatch for element "
                        << expected.element_id << ". "
                        << "Expected: " << expected_material.print() << ", "
                        << "Got: " << computed_material.print() << std::endl;
               }
-              break;
             }
           });
     }
@@ -135,20 +141,21 @@ static const std::unordered_map<std::string, ExpectedMaterials3D>
             { // Element 0
               ElementMaterial(specfem::element::medium_tag::elastic,
                               specfem::element::property_tag::isotropic, 0,
-                              specfem::medium::material<
-                                  specfem::dimension::type::dim3,
+                              specfem::medium_container::material<
+                                  specfem::element::dimension_tag::dim3,
                                   specfem::element::medium_tag::elastic,
-                                  specfem::element::property_tag::isotropic>(
-                                  2300.0, 1500.0, 2800.0, 2444.4, 300.0, 0.0)),
+                                  specfem::element::property_tag::isotropic,
+                                  specfem::element::attenuation_tag::none>(
+                                  2300.0, 1500.0, 2800.0, 0.0)),
               // Element 5
-              ElementMaterial(
-                  specfem::element::medium_tag::elastic,
-                  specfem::element::property_tag::isotropic, 5,
-                  specfem::medium::material<
-                      specfem::dimension::type::dim3,
-                      specfem::element::medium_tag::elastic,
-                      specfem::element::property_tag::isotropic>(
-                      2300.0, 1500.0, 2800.0, 2444.4, 300.0, 0.0)) }),
+              ElementMaterial(specfem::element::medium_tag::elastic,
+                              specfem::element::property_tag::isotropic, 5,
+                              specfem::medium_container::material<
+                                  specfem::element::dimension_tag::dim3,
+                                  specfem::element::medium_tag::elastic,
+                                  specfem::element::property_tag::isotropic,
+                                  specfem::element::attenuation_tag::none>(
+                                  2300.0, 1500.0, 2800.0, 0.0)) }),
         // Add more test cases as needed
     } };
 

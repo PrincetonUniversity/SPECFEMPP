@@ -1,8 +1,8 @@
 #include "../kernels_tests.hpp"
 #include "specfem/point/kernels.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
+#include "specfem/utilities.hpp"
 #include "test_macros.hpp"
-#include "utilities/interface.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 
@@ -50,12 +50,18 @@ TYPED_TEST(PointKernelsTest, ElasticIsotropic3D) {
       beta_arr[i] = static_cast<type_real>(70.0) +
                     static_cast<type_real>(i) * static_cast<type_real>(1.0);
     }
-    rho.copy_from(rho_arr, Kokkos::Experimental::simd_flag_default);
-    mu.copy_from(mu_arr, Kokkos::Experimental::simd_flag_default);
-    kappa.copy_from(kappa_arr, Kokkos::Experimental::simd_flag_default);
-    rhop.copy_from(rhop_arr, Kokkos::Experimental::simd_flag_default);
-    alpha.copy_from(alpha_arr, Kokkos::Experimental::simd_flag_default);
-    beta.copy_from(beta_arr, Kokkos::Experimental::simd_flag_default);
+    rho = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        rho_arr, Kokkos::Experimental::simd_flag_default);
+    mu = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        mu_arr, Kokkos::Experimental::simd_flag_default);
+    kappa = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        kappa_arr, Kokkos::Experimental::simd_flag_default);
+    rhop = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        rhop_arr, Kokkos::Experimental::simd_flag_default);
+    alpha = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        alpha_arr, Kokkos::Experimental::simd_flag_default);
+    beta = Kokkos::Experimental::simd_unchecked_load<simd_type>(
+        beta_arr, Kokkos::Experimental::simd_flag_default);
   } else {
     // For scalar case, we need direct assignment
     rho = static_cast<type_real>(2.7);
@@ -67,9 +73,10 @@ TYPED_TEST(PointKernelsTest, ElasticIsotropic3D) {
   }
 
   // Create the kernels object
-  using PointKernelType = specfem::point::kernels<
-      specfem::dimension::type::dim3, specfem::element::medium_tag::elastic,
-      specfem::element::property_tag::isotropic, using_simd>;
+  using PointKernelType = specfem::point::kernels<specfem::tags::Tags<
+      specfem::element::dimension_tag::dim3,
+      specfem::element::medium_tag::elastic,
+      specfem::element::property_tag::isotropic, using_simd>>;
   PointKernelType kernels(rho, mu, kappa, rhop, alpha, beta);
 
   // Additional constructors and assignment tests (like 2D)

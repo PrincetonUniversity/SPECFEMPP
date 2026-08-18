@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/data_access.hpp"
+#include "specfem/element_coupling/tags.hpp"
 
 namespace specfem::point {
 
@@ -16,13 +17,14 @@ namespace impl {
  * @tparam InterfaceTag Interface type.
  * @tparam BoundaryTag Boundary condition type.
  */
-template <int NQuadIntersection, specfem::dimension::type DimensionTag,
+template <int NQuadIntersection, specfem::element::dimension_tag DimensionTag,
           specfem::data_access::DataClassType DataClass,
-          specfem::interface::interface_tag InterfaceTag,
-          specfem::element::boundary_tag BoundaryTag>
+          specfem::element_coupling::interface_tag InterfaceTag,
+          specfem::element::boundary_tag BoundaryTag,
+          specfem::element_coupling::flux_scheme_tag FluxSchemeTag>
 struct nonconforming_transfer_function
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point, DataClass, DimensionTag,
+          specfem::datatype::AccessorType::point, DataClass, DimensionTag,
           false> {
 public:
   /**
@@ -44,7 +46,12 @@ public:
    * @brief Connection type tag (nonconforming).
    */
   static constexpr auto connection_tag =
-      specfem::connections::type::nonconforming;
+      specfem::element_connections::type::nonconforming;
+
+  /**
+   * @brief Flux scheme tag.
+   */
+  static constexpr auto flux_scheme_tag = FluxSchemeTag;
 
   /**
    * @brief View type for the transfer function values.
@@ -103,24 +110,26 @@ public:
 /**
  * @brief Type alias for self-side transfer function.
  */
-template <int NQuadIntersection, specfem::dimension::type DimensionTag,
-          specfem::interface::interface_tag InterfaceTag,
-          specfem::element::boundary_tag BoundaryTag>
+template <int NQuadIntersection, specfem::element::dimension_tag DimensionTag,
+          specfem::element_coupling::interface_tag InterfaceTag,
+          specfem::element::boundary_tag BoundaryTag,
+          specfem::element_coupling::flux_scheme_tag FluxSchemeTag>
 using transfer_function_self = impl::nonconforming_transfer_function<
     NQuadIntersection, DimensionTag,
     specfem::data_access::DataClassType::transfer_function_self, InterfaceTag,
-    BoundaryTag>;
+    BoundaryTag, FluxSchemeTag>;
 
 /**
  * @brief Type alias for coupled-side transfer function.
  */
-template <int NQuadIntersection, specfem::dimension::type DimensionTag,
-          specfem::interface::interface_tag InterfaceTag,
-          specfem::element::boundary_tag BoundaryTag>
+template <int NQuadIntersection, specfem::element::dimension_tag DimensionTag,
+          specfem::element_coupling::interface_tag InterfaceTag,
+          specfem::element::boundary_tag BoundaryTag,
+          specfem::element_coupling::flux_scheme_tag FluxSchemeTag>
 using transfer_function_coupled = impl::nonconforming_transfer_function<
     NQuadIntersection, DimensionTag,
     specfem::data_access::DataClassType::transfer_function_coupled,
-    InterfaceTag, BoundaryTag>;
+    InterfaceTag, BoundaryTag, FluxSchemeTag>;
 
 /**
  * @struct NonconformingAccessorPack
@@ -134,9 +143,9 @@ using transfer_function_coupled = impl::nonconforming_transfer_function<
 template <typename... Accessors>
 struct NonconformingAccessorPack
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::nonconforming_interface,
-          specfem::dimension::type::dim2, false>,
+          specfem::element::dimension_tag::dim2, false>,
       public Accessors... {
 
 private:
@@ -144,9 +153,9 @@ private:
    * @brief Base accessor type alias.
    */
   using accessor_base = specfem::data_access::Accessor<
-      specfem::data_access::AccessorType::point,
+      specfem::datatype::AccessorType::point,
       specfem::data_access::DataClassType::nonconforming_interface,
-      specfem::dimension::type::dim2, false>;
+      specfem::element::dimension_tag::dim2, false>;
 
 public:
   /**
@@ -175,7 +184,13 @@ public:
    * @brief Connection type tag (nonconforming).
    */
   constexpr static auto connection_tag =
-      specfem::connections::type::nonconforming;
+      specfem::element_connections::type::nonconforming;
+
+  /**
+   * @brief Flux scheme tag derived from the first accessor.
+   */
+  constexpr static auto flux_scheme_tag =
+      std::tuple_element_t<0, std::tuple<Accessors...> >::flux_scheme_tag;
 
   /**
    * @brief Dimension tag.
@@ -198,19 +213,20 @@ public:
   constexpr static bool using_simd = accessor_base::using_simd;
 
   static_assert(
-      (std::is_same_v<
-           std::integral_constant<specfem::dimension::type,
-                                  Accessors::dimension_tag>,
-           std::integral_constant<specfem::dimension::type, dimension_tag> > &&
+      (std::is_same_v<std::integral_constant<specfem::element::dimension_tag,
+                                             Accessors::dimension_tag>,
+                      std::integral_constant<specfem::element::dimension_tag,
+                                             dimension_tag> > &&
        ...),
       "All Accessors in NonconformingAccessorPack must have the same "
       "dimension_tag");
 
   static_assert(
-      (std::is_same_v<std::integral_constant<specfem::interface::interface_tag,
-                                             Accessors::interface_tag>,
-                      std::integral_constant<specfem::interface::interface_tag,
-                                             interface_tag> > &&
+      (std::is_same_v<
+           std::integral_constant<specfem::element_coupling::interface_tag,
+                                  Accessors::interface_tag>,
+           std::integral_constant<specfem::element_coupling::interface_tag,
+                                  interface_tag> > &&
        ...),
       "All Accessors in NonconformingAccessorPack must have the same "
       "interface_tag");
@@ -224,6 +240,15 @@ public:
       "All Accessors in NonconformingAccessorPack must have the same "
       "boundary_tag");
 
+  static_assert(
+      (std::is_same_v<
+           std::integral_constant<specfem::element_coupling::flux_scheme_tag,
+                                  Accessors::flux_scheme_tag>,
+           std::integral_constant<specfem::element_coupling::flux_scheme_tag,
+                                  flux_scheme_tag> > &&
+       ...),
+      "All Accessors in NonconformingAccessorPack must have the same "
+      "flux_scheme_tag");
   /**
    * @brief Default constructor.
    */
@@ -250,11 +275,12 @@ public:
 /**
  * @brief Type alias for a pack containing the coupled transfer function.
  */
-template <int NQuadIntersection, specfem::dimension::type DimensionTag,
-          specfem::interface::interface_tag InterfaceTag,
-          specfem::element::boundary_tag BoundaryTag>
-using transfer_function_pack =
-    NonconformingAccessorPack<transfer_function_coupled<
-        NQuadIntersection, DimensionTag, InterfaceTag, BoundaryTag> >;
+template <int NQuadIntersection, specfem::element::dimension_tag DimensionTag,
+          specfem::element_coupling::interface_tag InterfaceTag,
+          specfem::element::boundary_tag BoundaryTag,
+          specfem::element_coupling::flux_scheme_tag FluxSchemeTag>
+using transfer_function_pack = NonconformingAccessorPack<
+    transfer_function_coupled<NQuadIntersection, DimensionTag, InterfaceTag,
+                              BoundaryTag, FluxSchemeTag> >;
 
 } // namespace specfem::point

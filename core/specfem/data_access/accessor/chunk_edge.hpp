@@ -1,8 +1,8 @@
 #pragma once
 
-#include "datatypes/simd.hpp"
-#include "enumerations/interface.hpp"
 #include "specfem/data_access/accessor.hpp"
+#include "specfem/datatype/simd.hpp"
+#include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::data_access {
@@ -19,12 +19,12 @@ namespace specfem::data_access {
  * @tparam UseSIMD Enable SIMD vectorization
  */
 template <specfem::data_access::DataClassType DataClass,
-          specfem::dimension::type DimensionTag, bool UseSIMD>
-struct Accessor<specfem::data_access::AccessorType::chunk_edge, DataClass,
+          specfem::element::dimension_tag DimensionTag, bool UseSIMD>
+struct Accessor<specfem::datatype::AccessorType::chunk_edge, DataClass,
                 DimensionTag, UseSIMD> {
   /// @brief Accessor pattern identifier
   constexpr static auto accessor_type =
-      specfem::data_access::AccessorType::chunk_edge;
+      specfem::datatype::AccessorType::chunk_edge;
   /// @brief Data classification type
   constexpr static auto data_class = DataClass;
   /// @brief Spatial dimension
@@ -50,7 +50,7 @@ struct Accessor<specfem::data_access::AccessorType::chunk_edge, DataClass,
   using scalar_type =
       Kokkos::View<typename simd<T>::datatype[nelements][ngll],
                    Kokkos::DefaultExecutionSpace::scratch_memory_space,
-                   Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+                   Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
   /**
    * @brief Vector field storage for chunked edge elements
@@ -64,7 +64,7 @@ struct Accessor<specfem::data_access::AccessorType::chunk_edge, DataClass,
   using vector_type =
       Kokkos::View<typename simd<T>::datatype[nelements][ngll][components],
                    Kokkos::DefaultExecutionSpace::scratch_memory_space,
-                   Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+                   Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
   /**
    * @brief Tensor field storage for chunked edge elements
@@ -79,7 +79,7 @@ struct Accessor<specfem::data_access::AccessorType::chunk_edge, DataClass,
   using tensor_type = Kokkos::View<
       typename simd<T>::datatype[nelements][ngll][components][dimension],
       Kokkos::DefaultExecutionSpace::scratch_memory_space,
-      Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+      Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 };
 
 /**
@@ -91,7 +91,7 @@ struct is_chunk_edge : std::false_type {};
 template <typename T>
 struct is_chunk_edge<
     T, std::enable_if_t<T::accessor_type ==
-                        specfem::data_access::AccessorType::chunk_edge> >
+                        specfem::datatype::AccessorType::chunk_edge>>
     : std::true_type {};
 
 } // namespace specfem::data_access

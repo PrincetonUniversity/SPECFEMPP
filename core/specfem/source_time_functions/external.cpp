@@ -1,8 +1,8 @@
 #include "external.hpp"
-#include "enumerations/specfem_enums.hpp"
-#include "io/seismogram/reader.hpp"
-#include "kokkos_abstractions.h"
-#include "utilities/strings.hpp"
+
+#include "specfem/enums.hpp"
+#include "specfem/io/seismogram/reader.hpp"
+#include "specfem/utilities.hpp"
 #include <fstream>
 #include <tuple>
 #include <vector>
@@ -15,7 +15,7 @@ specfem::source_time_functions::external::external(const YAML::Node &external,
   if (specfem::utilities::is_ascii_string(
           external["format"].as<std::string>()) ||
       !external["format"]) {
-    this->format_ = specfem::enums::seismogram::format::ascii;
+    this->format_ = specfem::enums::seismogram_format::ascii;
   } else {
     throw std::runtime_error("Only ASCII format is supported");
   }
@@ -23,14 +23,28 @@ specfem::source_time_functions::external::external(const YAML::Node &external,
   // Get the components from the file
   // Atleast one component is required
   if (const YAML::Node &stf = external["stf"]) {
-    if (stf["X-component"] || stf["Z-component"]) {
-      this->x_component_ =
-          (stf["X-component"]) ? stf["X-component"].as<std::string>() : "";
-      this->z_component_ =
-          (stf["Z-component"]) ? stf["Z-component"].as<std::string>() : "";
-      this->ncomponents_ = 2;
-    } else if (stf["Y-component"]) {
-      this->y_component_ = stf["Y-component"].as<std::string>();
+    const bool has_x = static_cast<bool>(stf["X-component"]);
+    const bool has_y = static_cast<bool>(stf["Y-component"]);
+    const bool has_z = static_cast<bool>(stf["Z-component"]);
+    const bool has_p = static_cast<bool>(stf["P-component"]);
+
+    if (has_p && (has_x || has_y || has_z)) {
+      throw std::runtime_error(
+          "Error: External source time function cannot mix P-component with "
+          "X/Y/Z vector components");
+    }
+
+    if (has_x || has_y || has_z) {
+      this->x_component_ = has_x ? stf["X-component"].as<std::string>() : "";
+      this->y_component_ = has_y ? stf["Y-component"].as<std::string>() : "";
+      this->z_component_ = has_z ? stf["Z-component"].as<std::string>() : "";
+      this->is_scalar_component_ = false;
+      this->ncomponents_ = static_cast<int>(has_x) + static_cast<int>(has_y) +
+                           static_cast<int>(has_z);
+    } else if (has_p) {
+      // Single-component (scalar) source, e.g. acoustic pressure adjoint source
+      this->y_component_ = stf["P-component"].as<std::string>();
+      this->is_scalar_component_ = true;
       this->ncomponents_ = 1;
     } else {
       throw std::runtime_error("Error: External source time function requires "
@@ -43,15 +57,17 @@ specfem::source_time_functions::external::external(const YAML::Node &external,
 
   // Get t0 and dt from the file
   const std::string filename = [&]() -> std::string {
-    if (this->ncomponents_ == 2) {
-      if (this->x_component_.empty()) {
-        return this->z_component_;
-      } else {
-        return this->x_component_;
-      }
-    } else {
+    if (this->is_scalar_component_) {
       return this->y_component_;
     }
+
+    if (!this->x_component_.empty()) {
+      return this->x_component_;
+    }
+    if (!this->y_component_.empty()) {
+      return this->y_component_;
+    }
+    return this->z_component_;
   }();
 
   std::ifstream file(filename);
@@ -82,13 +98,23 @@ specfem::source_time_functions::external::external(const YAML::Node &external,
 
 void specfem::source_time_functions::external::compute_source_time_function(
     const type_real t0, const type_real dt, const int nsteps,
-    specfem::kokkos::HostView2d<type_real> source_time_function) {
+    Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+        source_time_function) {
 
   const int ncomponents = source_time_function.extent(1);
 
-  if (ncomponents != 2) {
-    throw std::runtime_error("External source time function only supports 2 "
-                             "components");
+  if (this->is_scalar_component_) {
+    if (ncomponents != 1) {
+      throw std::runtime_error(
+          "External source time function: scalar STF files require a single "
+          "force component, but the force vector has " +
+          std::to_string(ncomponents) + " components");
+    }
+  } else if (ncomponents != 2 && ncomponents != 3) {
+    throw std::runtime_error(
+        "External source time function: vector STF files support only 2-D "
+        "(X/Z) or 3-D (X/Y/Z) force vectors, but got " +
+        std::to_string(ncomponents) + " components");
   }
 
   if (std::abs(t0 - this->t0_) > 1e-6) {
@@ -103,10 +129,14 @@ void specfem::source_time_functions::external::compute_source_time_function(
         "function does not match the simulation time step");
   }
 
-  std::vector<std::string> filename =
-      (ncomponents == 2)
-          ? std::vector<std::string>{ this->x_component_, this->z_component_ }
-          : std::vector<std::string>{ this->y_component_ };
+  std::vector<std::string> filename;
+  if (this->is_scalar_component_) {
+    filename = { this->y_component_ };
+  } else if (ncomponents == 2) {
+    filename = { this->x_component_, this->z_component_ };
+  } else {
+    filename = { this->x_component_, this->y_component_, this->z_component_ };
+  }
 
   // Check if files exist
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
@@ -132,9 +162,10 @@ void specfem::source_time_functions::external::compute_source_time_function(
     if (filename[icomp].empty())
       continue;
 
-    specfem::kokkos::HostView2d<type_real> data("external", nsteps, 2);
+    Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace> data(
+        "external", nsteps, 2);
     specfem::io::seismogram_reader reader(
-        filename[icomp], specfem::enums::seismogram::format::ascii, data);
+        filename[icomp], specfem::enums::seismogram_format::ascii, data);
     reader.read();
     for (int i = 0; i < nsteps; i++) {
       source_time_function(i, icomp) = data(i, 1);
@@ -178,11 +209,11 @@ void specfem::source_time_functions::external::update_tshift(type_real tshift) {
 }
 
 std::string specfem::source_time_functions::external::print() const {
-  std::stringstream ss;
-  ss << "External source time function: "
-     << "\n"
-     << "  X-component: " << this->x_component_ << "\n"
-     << "  Y-component: " << this->y_component_ << "\n"
-     << "  Z-component: " << this->z_component_ << "\n";
-  return ss.str();
+  std::ostringstream message;
+  message << "external(t0="
+          << specfem::utilities::format_scientific(this->t0_, 6)
+          << ", dt=" << specfem::utilities::format_scientific(this->dt_, 6)
+          << ", x=" << this->x_component_ << ", y=" << this->y_component_
+          << ", z=" << this->z_component_ << ")";
+  return message.str();
 }

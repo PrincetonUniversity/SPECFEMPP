@@ -1,7 +1,7 @@
 #include "../SPECFEM_Environment.hpp"
 #include "math.h"
+#include "specfem/setup.hpp"
 #include "specfem/source_time_functions.hpp"
-#include "specfem_setup.hpp"
 #include "test_macros.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
@@ -11,15 +11,8 @@
 // Test fixture for basic setup
 class SourceTimeFunctionSetup : public ::testing::Test {
 protected:
-  void SetUp() override {
-    if (!Kokkos::is_initialized()) {
-      Kokkos::initialize();
-    }
-  }
-
-  void TearDown() override {
-    // Note: Don't finalize Kokkos here as other tests may need it
-  }
+  void SetUp() override {}
+  void TearDown() override {}
 };
 
 // Helper to compute expected values based on mathematical formulas
@@ -311,8 +304,8 @@ TYPED_TEST(AnalyticSTFTest, ComputeSourceTimeFunctionValidOutput) {
                      Traits::default_factor, Traits::default_use_trick);
 
   // Allocate output array
-  specfem::kokkos::HostView2d<type_real> stf_values("stf_values", nsteps,
-                                                    ncomponents);
+  Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace> stf_values(
+      "stf_values", nsteps, ncomponents);
 
   // Compute STF
   stf->compute_source_time_function(t0, dt, nsteps, stf_values);
@@ -359,8 +352,8 @@ TYPED_TEST(AnalyticSTFTest, MultipleComponents) {
       Traits::create(nsteps, dt, Traits::default_f0, Traits::default_tshift,
                      Traits::default_factor, Traits::default_use_trick);
 
-  specfem::kokkos::HostView2d<type_real> stf_values("stf_values", nsteps,
-                                                    ncomponents);
+  Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace> stf_values(
+      "stf_values", nsteps, ncomponents);
 
   stf->compute_source_time_function(t0, dt, nsteps, stf_values);
 
@@ -391,10 +384,10 @@ TYPED_TEST(AnalyticSTFTest, DifferentFrequencies) {
       Traits::create(nsteps, dt, 20.0, Traits::default_tshift,
                      Traits::default_factor, Traits::default_use_trick);
 
-  specfem::kokkos::HostView2d<type_real> stf_values_low("stf_low", nsteps,
-                                                        ncomponents);
-  specfem::kokkos::HostView2d<type_real> stf_values_high("stf_high", nsteps,
-                                                         ncomponents);
+  Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+      stf_values_low("stf_low", nsteps, ncomponents);
+  Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+      stf_values_high("stf_high", nsteps, ncomponents);
 
   stf_low->compute_source_time_function(t0, dt, nsteps, stf_values_low);
   stf_high->compute_source_time_function(t0, dt, nsteps, stf_values_high);
@@ -429,10 +422,10 @@ TYPED_TEST(AnalyticSTFTest, FactorScaling) {
       Traits::create(nsteps, dt, Traits::default_f0, Traits::default_tshift,
                      factor2, Traits::default_use_trick);
 
-  specfem::kokkos::HostView2d<type_real> stf_values1("stf1", nsteps,
-                                                     ncomponents);
-  specfem::kokkos::HostView2d<type_real> stf_values2("stf2", nsteps,
-                                                     ncomponents);
+  Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+      stf_values1("stf1", nsteps, ncomponents);
+  Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+      stf_values2("stf2", nsteps, ncomponents);
 
   stf1->compute_source_time_function(t0, dt, nsteps, stf_values1);
   stf2->compute_source_time_function(t0, dt, nsteps, stf_values2);
@@ -512,10 +505,10 @@ TEST_F(SourceTimeFunctionSetup, RickerWithTrickForBetterPressure) {
       std::make_unique<specfem::source_time_functions::Ricker>(
           nsteps, dt, f0, tshift, factor, true);
 
-  specfem::kokkos::HostView2d<type_real> stf_values_without(
-      "stf_without", nsteps, ncomponents);
-  specfem::kokkos::HostView2d<type_real> stf_values_with("stf_with", nsteps,
-                                                         ncomponents);
+  Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+      stf_values_without("stf_without", nsteps, ncomponents);
+  Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+      stf_values_with("stf_with", nsteps, ncomponents);
 
   stf_without_trick->compute_source_time_function(t0, dt, nsteps,
                                                   stf_values_without);
@@ -573,10 +566,10 @@ TYPED_TEST(AnalyticSTFTest, TimeShiftAffectsTiming) {
   auto stf2 = Traits::create(nsteps, dt, Traits::default_f0, tshift2,
                              Traits::default_factor, Traits::default_use_trick);
 
-  specfem::kokkos::HostView2d<type_real> stf_values1("stf1", nsteps,
-                                                     ncomponents);
-  specfem::kokkos::HostView2d<type_real> stf_values2("stf2", nsteps,
-                                                     ncomponents);
+  Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+      stf_values1("stf1", nsteps, ncomponents);
+  Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+      stf_values2("stf2", nsteps, ncomponents);
 
   stf1->compute_source_time_function(t0, dt, nsteps, stf_values1);
   stf2->compute_source_time_function(t0, dt, nsteps, stf_values2);
@@ -631,7 +624,8 @@ TYPED_TEST(AnalyticSTFTest, DecayAtFarTimes) {
       Traits::create(nsteps, dt, Traits::default_f0, Traits::default_tshift,
                      Traits::default_factor, Traits::default_use_trick);
 
-  specfem::kokkos::HostView2d<type_real> stf_values("stf", nsteps, ncomponents);
+  Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace> stf_values(
+      "stf", nsteps, ncomponents);
 
   stf->compute_source_time_function(t0, dt, nsteps, stf_values);
 
@@ -748,7 +742,8 @@ TYPED_TEST(AnalyticSTFTest, ComputeSTFMatchesFormula) {
 
   auto stf = Traits::create(nsteps, dt, f0, tshift, factor, use_trick);
 
-  specfem::kokkos::HostView2d<type_real> stf_values("stf", nsteps, ncomponents);
+  Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace> stf_values(
+      "stf", nsteps, ncomponents);
   stf->compute_source_time_function(t0, dt, nsteps, stf_values);
 
   for (int i = 0; i < nsteps; ++i) {
@@ -761,4 +756,10 @@ TYPED_TEST(AnalyticSTFTest, ComputeSTFMatchesFormula) {
         << "compute_source_time_function doesn't match formula at step " << i
         << " (t=" << t << ")";
   }
+}
+
+int main(int argc, char *argv[]) {
+  ::testing::InitGoogleTest(&argc, argv);
+  ::testing::AddGlobalTestEnvironment(new SPECFEMEnvironment);
+  return RUN_ALL_TESTS();
 }

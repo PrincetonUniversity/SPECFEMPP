@@ -1,6 +1,14 @@
 
 
-if (DEFINED Kokkos_ROOT)
+# Honor Kokkos_ROOT from either the CMake cache/command line or the environment.
+# The latter is how the TROMP `trilinos/*` modules provide it (setenv Kokkos_ROOT),
+# and is required so SPECFEM++ uses the SAME Kokkos that Trilinos was built against
+# instead of FetchContent-ing a second, mismatched copy. Mirrors cmake/trilinos.cmake,
+# which already resolves Trilinos via `ENV Trilinos_ROOT`.
+if (DEFINED Kokkos_ROOT OR DEFINED ENV{Kokkos_ROOT})
+    if (NOT DEFINED Kokkos_ROOT)
+        set(Kokkos_ROOT "$ENV{Kokkos_ROOT}")
+    endif()
     message(STATUS "Using user-defined Kokkos root: ${Kokkos_ROOT}")
     find_package(Kokkos REQUIRED PATHS ${Kokkos_ROOT} NO_DEFAULT_PATH)
     return()
@@ -23,6 +31,14 @@ endif()
 # Set Kokkos options before fetching
 set(KOKKOS_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
 
+# On macOS, dlopen is part of libSystem and does not require a separate libdl.
+# Leaving LIBDL enabled causes Kokkos to locate dlfcn.h inside the Xcode SDK
+# and add that SDK's usr/include as an explicit -I path, which puts the SDK
+# math.h before Homebrew LLVM's libc++ math.h and breaks the <cmath> header.
+if(APPLE)
+  set(Kokkos_ENABLE_LIBDL OFF CACHE BOOL "" FORCE)
+endif()
+
 # Set the policy for CMake versions > 3.30
 if (CMAKE_VERSION VERSION_GREATER "3.30.0")
     # For CMake versions > 3.30, we need to use Set the policy)
@@ -39,10 +55,12 @@ if (DEFINED KOKKOS_PATH)
     # Pop the indentation for Kokkos messages
 else()
 
-    set(KOKKOS_VERSION "4.7.00")
+    set(KOKKOS_VERSION "5.2.0")
 
     # Set common FetchContent parameters
-    set(KOKKOS_URL "https://github.com/kokkos/kokkos/archive/refs/tags/${KOKKOS_VERSION}.zip")
+    # set(KOKKOS_URL "https://github.com/kokkos/kokkos/archive/refs/tags/${KOKKOS_VERSION}.zip")
+    set(KOKKOS_URL "https://github.com/kokkos/kokkos/archive/${KOKKOS_VERSION}.zip")
+
 
     # For CMake versions < 3.28, EXCLUDE_FROM_ALL is not supported in FetchContent_Declare
     if (CMAKE_VERSION VERSION_LESS "3.28.0")

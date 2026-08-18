@@ -4,7 +4,7 @@
 #include "specfem/shape_function.hpp"
 #include <Kokkos_Core.hpp>
 
-specfem::assembly::mesh_impl::shape_functions<specfem::dimension::type::dim2>::
+specfem::assembly::mesh_impl::shape_functions<specfem::element::dimension_tag::dim2>::
     shape_functions(
         const Kokkos::View<type_real *, Kokkos::DefaultHostExecutionSpace> xi,
         const Kokkos::View<type_real *, Kokkos::DefaultHostExecutionSpace>
@@ -22,7 +22,7 @@ specfem::assembly::mesh_impl::shape_functions<specfem::dimension::type::dim2>::
       "shape_functions",
       Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace,
                             Kokkos::Rank<2> >({ 0, 0 }, { ngllz, ngllx }),
-      [=](const int iz, const int ix) {
+      [=, this](const int iz, const int ix) {
         type_real xil = xi(ix);
         type_real gammal = gamma(iz);
 

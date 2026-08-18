@@ -1,21 +1,28 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
-#include "io/reader.hpp"
-#include "mesh/mesh.hpp"
+#include "specfem/assembly/attenuation.hpp"
 #include "specfem/assembly/boundaries.hpp"
 #include "specfem/assembly/boundary_values.hpp"
-#include "specfem/assembly/compute_source_array.hpp"
 #include "specfem/assembly/conforming_interfaces.hpp"
+#include "specfem/assembly/element_intersections.hpp"
+#include "specfem/assembly/field_derivative_storage.hpp"
 #include "specfem/assembly/fields.hpp"
+#include "specfem/assembly/info.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/kernels.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/assembly/mpi/dim3/mpi.hpp"
 #include "specfem/assembly/properties.hpp"
 #include "specfem/assembly/receivers.hpp"
 #include "specfem/assembly/sources.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/mesh.hpp"
 #include "specfem/receivers.hpp"
 #include "specfem/source.hpp"
+
+namespace specfem::io {
+class reader;
+}
 
 namespace specfem::assembly {
 
@@ -26,7 +33,7 @@ namespace specfem::assembly {
  * required for & computed during 3D SEM simulations
  *
  */
-template <> struct assembly<specfem::dimension::type::dim3> {
+template <> struct assembly<specfem::element::dimension_tag::dim3> {
 
   /**
    * @name Public Constants
@@ -34,7 +41,7 @@ template <> struct assembly<specfem::dimension::type::dim3> {
    */
   ///@{
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim3; ///< Dimension tag
+      specfem::element::dimension_tag::dim3; ///< Dimension tag
   ///@}
 
   /** @name Data Containers
@@ -56,11 +63,28 @@ template <> struct assembly<specfem::dimension::type::dim3> {
    */
   specfem::assembly::element_types<dimension_tag> element_types;
 
+  specfem::assembly::element_intersections<dimension_tag>
+      element_intersections; ///< Element intersections for different types of
+                             ///< interfaces between two media (e.g.,
+                             ///< fluid-solid interface).
+
   /**
    * @brief Partial derivatives of the basis functions at every quadrature point
    *
    */
   specfem::assembly::jacobian_matrix<dimension_tag> jacobian_matrix;
+
+  /**
+   * @brief Storage for field derivatives at every quadrature point for elements
+   * that require it (e.g., attenuating elements).
+   */
+  specfem::assembly::FieldDerivativeStorage<dimension_tag>
+      field_derivative_storage;
+
+  /**
+   * @brief Attenuation properties for the mesh at every quadrature point
+   */
+  specfem::assembly::Attenuation<dimension_tag> attenuation;
 
   /**
    * @brief Material properties for the mesh at every quadrature point
@@ -98,17 +122,27 @@ template <> struct assembly<specfem::dimension::type::dim3> {
 
   specfem::assembly::boundaries<dimension_tag> boundaries; ///< Boundary
                                                            ///< conditions
-  // specfem::assembly::coupled_interfaces<dimension_tag>
-  // coupled_interfaces;                          ///< Coupled
-  //                                         ///< interfaces
-  //                                         ///< between 2
-  //                                         ///< media
+  specfem::assembly::conforming_interfaces<dimension_tag>
+      conforming_interfaces; ///< Conforming interfaces between different media
+                             ///< (e.g., fluid-solid interface)
 
   specfem::assembly::boundary_values<dimension_tag>
       boundary_values; ///< Field
                        ///< values at
                        ///< the
                        ///< boundaries
+
+  specfem::assembly::Info<dimension_tag> info; ///< Information about the mesh
+                                               ///< and simulation
+
+  specfem::assembly::mpi<dimension_tag> mpi_interfaces; ///< MPI communication
+                                                        ///< groups for face
+                                                        ///< data exchange
+                                                        ///< between partitions
+
+  type_real t0; ///< Simulation start time
+
+  type_real dt; ///< Time step
 
   ///@}
 
@@ -130,21 +164,24 @@ template <> struct assembly<specfem::dimension::type::dim3> {
    * @param write_wavefield Whether to write wavefield
    * @param property_reader Reader for GLL model (skip material property
    * assignment if exists)
+   * @param flux_scheme_config Flux scheme rules for nonconforming interfaces
    */
-  assembly(
-      const specfem::mesh::mesh<dimension_tag> &mesh,
-      const specfem::quadrature::quadratures &quadratures,
-      std::vector<std::shared_ptr<specfem::sources::source<dimension_tag> > >
-          &sources,
-      const std::vector<
-          std::shared_ptr<specfem::receivers::receiver<dimension_tag> > >
-          &receivers,
-      const std::vector<specfem::wavefield::type> &stypes, const type_real t0,
-      const type_real dt, const int max_timesteps, const int max_sig_step,
-      const int nsteps_between_samples,
-      const specfem::simulation::type simulation,
-      const bool allocate_boundary_values,
-      const std::shared_ptr<specfem::io::reader> &property_reader);
+  assembly(const specfem::mesh::mesh<dimension_tag> &mesh,
+           const specfem::quadrature::quadratures &quadratures,
+           std::vector<std::shared_ptr<specfem::sources::source<dimension_tag>>>
+               &sources,
+           const std::vector<
+               std::shared_ptr<specfem::receivers::receiver<dimension_tag>>>
+               &receivers,
+           const std::vector<specfem::enums::wavefield> &stypes,
+           const type_real t0, const type_real dt, const int max_timesteps,
+           const int max_sig_step, const int nsteps_between_samples,
+           const specfem::simulation::type simulation,
+           const bool allocate_boundary_values,
+           const std::shared_ptr<specfem::io::reader> &property_reader,
+           const specfem::element_coupling::flux_scheme_configuration
+               &flux_scheme_config =
+                   specfem::element_coupling::flux_scheme_configuration());
 
   assembly() = default;
 
@@ -160,8 +197,8 @@ template <> struct assembly<specfem::dimension::type::dim3> {
    */
   Kokkos::View<type_real *****, Kokkos::LayoutLeft, Kokkos::HostSpace>
   generate_wavefield_on_entire_grid(
-      const specfem::wavefield::simulation_field wavefield,
-      const specfem::wavefield::type component);
+      const specfem::simulation::field_type wavefield,
+      const specfem::enums::wavefield component);
 
   /**
    * @brief Get the total number of spectral elements in the mesh

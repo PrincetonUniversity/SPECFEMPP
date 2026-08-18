@@ -1,0 +1,63 @@
+
+rule all:
+    input:
+        database = expand("Database/proc_{rank}.bin", rank=range(4)),
+        clean_done = "clean_done.txt",
+    shell:
+        "echo 'All tasks completed successfully.'"
+
+rule check_executible:
+    output:
+        executable_checked = "executable_checked.txt",
+    shell:
+        """
+        # Check if the xmeshfem3D executable exists in path
+        if ! command -v xmeshfem3D &> /dev/null; then
+            echo "Error: xmeshfem3D executable not found in PATH."
+            exit 1
+        fi
+        touch {output}
+        """
+
+rule generate_database:
+    input:
+        executable_checked = "executable_checked.txt",
+        par_file = "provenance/DATA/meshfem3D_files/Mesh_Par_file",
+        artifacts = expand("provenance/DATA/meshfem3D_files/{file}", file=["interfaces.txt"]),
+    output:
+        database = expand("Database/proc_{rank}.bin", rank=range(4)),
+    resources:
+        mpi="mpirun",
+        tasks=4,
+        cpus_per_task=1,
+        runtime=1,
+    shell:
+        """
+        # Run the meshfem3D command to generate the database
+        mkdir -p OUTPUT_FILES
+        mkdir -p Database
+        {resources.mpi} -np {resources.tasks} xmeshfem3D -p {input.par_file}
+        """
+
+rule clean_artifacts:
+    input:
+        database = expand("Database/proc_{rank}.bin", rank=range(4)),
+    output:
+        clean_done = "clean_done.txt",
+    shell:
+        """
+        # Clean up intermediate files
+        rm -rf OUTPUT_FILES
+        rm -f executable_checked.txt
+        touch {output}
+        """
+
+
+rule clean:
+    shell:
+        """
+        # Clean up intermediate files
+        rm -rf OUTPUT_FILES
+        rm -rf Database
+        rm -f executable_checked.txt
+        """

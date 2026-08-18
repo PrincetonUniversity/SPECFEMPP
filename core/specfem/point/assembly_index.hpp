@@ -25,9 +25,9 @@ template <bool using_simd = false> struct assembly_index;
 template <>
 struct assembly_index<false>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::assembly_index,
-          specfem::dimension::type::dim2, false> {
+          specfem::element::dimension_tag::dim2, false> {
   /**
    * @brief Global index number of the quadrature point.
    *
@@ -74,9 +74,9 @@ struct assembly_index<false>
 template <>
 struct assembly_index<true>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::assembly_index,
-          specfem::dimension::type::dim2, true> {
+          specfem::element::dimension_tag::dim2, true> {
   /**
    * @brief Number of active points in the SIMD vector.
    *
@@ -106,6 +106,26 @@ struct assembly_index<true>
    */
   KOKKOS_FUNCTION
   bool mask(const std::size_t &lane) const { return int(lane) < number_points; }
+
+  /**
+   * @brief Returns a SIMD mask for valid lanes.
+   *
+   * For full chunks (all lanes valid) returns an all-true mask using the cheap
+   * broadcast constructor, avoiding the per-lane generator. For the rare
+   * partial last chunk falls back to per-lane evaluation.
+   *
+   * @tparam simd_type SIMD wrapper type (e.g. specfem::datatype::simd<float,
+   * true>)
+   * @return SIMD mask with true for valid lanes
+   */
+  template <typename simd_type>
+  KOKKOS_INLINE_FUNCTION typename simd_type::mask_type get_mask() const {
+    if (number_points >= simd_type::size()) {
+      return typename simd_type::mask_type(true);
+    }
+    return typename simd_type::mask_type(
+        [&](std::size_t lane) { return int(lane) < number_points; });
+  }
 
   /**
    * @name Constructors

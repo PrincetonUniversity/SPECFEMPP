@@ -1,7 +1,7 @@
 #pragma once
-#include "enumerations/specfem_enums.hpp"
-#include "kokkos_abstractions.h"
+
 #include "source_time_function.hpp"
+#include "specfem/enums.hpp"
 #include "yaml-cpp/yaml.h"
 #include <tuple>
 #include <vector>
@@ -28,11 +28,12 @@ public:
 
   void compute_source_time_function(
       const type_real t0, const type_real dt, const int nsteps,
-      specfem::kokkos::HostView2d<type_real> source_time_function) override;
+      Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+          source_time_function) override;
 
   type_real get_tshift() const override {
-    throw std::runtime_error(
-        "Time shift not defined for external source time function");
+    // No time shift for external source time functions
+    return 0.0;
   }
 
   /**
@@ -45,9 +46,9 @@ public:
   /**
    * @brief Get the seismogram file format type
    *
-   * @return specfem::enums::seismogram::format
+   * @return specfem::enums::seismogram_format
    */
-  specfem::enums::seismogram::format get_format() const { return format_; }
+  specfem::enums::seismogram_format get_format() const { return format_; }
 
   /**
    * @brief Get the start time value
@@ -84,14 +85,15 @@ public:
   bool operator!=(const stf &other) const override;
 
 private:
-  int nsteps_;                                ///< Number of time steps
-  type_real t0_;                              ///< Start time
-  type_real dt_;                              ///< Time step size
-  specfem::enums::seismogram::format format_; ///< File format type
-  int ncomponents_;                           ///< Number of components
-  std::string x_component_ = "";              ///< X-component file path
-  std::string y_component_ = "";              ///< Y-component file path
-  std::string z_component_ = "";              ///< Z-component file path
+  int nsteps_;                               ///< Number of time steps
+  type_real t0_;                             ///< Start time
+  type_real dt_;                             ///< Time step size
+  specfem::enums::seismogram_format format_; ///< File format type
+  int ncomponents_;                          ///< Number of components
+  bool is_scalar_component_ = false; ///< True for scalar P-component STF
+  std::string x_component_ = "";     ///< X-component file path
+  std::string y_component_ = "";     ///< Y-component file path
+  std::string z_component_ = "";     ///< Z-component file path
 };
 } // namespace source_time_functions
 } // namespace specfem

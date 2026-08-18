@@ -1,0 +1,101 @@
+#pragma once
+
+#include "specfem/element.hpp"
+#include "specfem/point.hpp"
+#include <Kokkos_Core.hpp>
+
+namespace specfem {
+namespace medium_physics {
+
+/**
+ * @defgroup specfem_stress_computation_dim3_elastic_isotropic
+ *
+ */
+
+/**
+ * @ingroup specfem_stress_computation_dim3_elastic_isotropic
+ * @brief Compute stress tensor for 3D elastic isotropic media.
+ *
+ * Implements constitutive relation for 3D elastic wave propagation in isotropic
+ * solids using Hooke's law. Computes full 3x3 symmetric stress tensor from
+ * displacement gradients and Lamé parameters.
+ *
+ * **Stress components:**
+ * - Normal: \f$\sigma_{xx}\f$, \f$\sigma_{yy}\f$, \f$\sigma_{zz}\f$ (diagonal
+ * terms with volumetric coupling)
+ * - Shear: \f$\sigma_{xy}\f$, \f$\sigma_{xz}\f$, \f$\sigma_{yz}\f$
+ * (off-diagonal terms, symmetric tensor)
+ *
+ * **Constitutive relations:**
+ * - \f$\sigma_{ii} = (\lambda + 2\mu) \frac{\partial u_i}{\partial x_i} +
+ * \lambda \left(\frac{\partial u_j}{\partial x_j} + \frac{\partial
+ * u_k}{\partial x_k}\right)\f$
+ * - \f$\sigma_{ij} = \mu \left(\frac{\partial u_i}{\partial x_j} +
+ * \frac{\partial u_j}{\partial x_i}\right)\f$ for \f$i \neq j\f$
+ *
+ * Supports both P and S wave propagation with isotropic velocities:
+ * \f$V_p = \sqrt{\frac{\lambda + 2\mu}{\rho}}\f$, \f$V_s =
+ * \sqrt{\frac{\mu}{\rho}}\f$.
+ *
+ * @tparam UseSIMD Enable SIMD vectorization for performance
+ * @param properties Material properties (\f$\lambda\f$, \f$\mu\f$, \f$\rho\f$)
+ * @param field_derivatives Displacement gradients (\f$\frac{\partial
+ * u_i}{\partial x_j}\f$)
+ * @return 3x3 symmetric stress tensor
+ */
+template <
+    typename Tags,
+    std::enable_if_t<
+        Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
+            Tags::medium_tag == specfem::element::medium_tag::elastic &&
+            Tags::property_tag == specfem::element::property_tag::isotropic,
+        int> = 0>
+KOKKOS_INLINE_FUNCTION specfem::point::stress<Tags> compute_stress(
+    const specfem::point::properties<Tags> &properties,
+    const specfem::point::field_derivatives<Tags> &field_derivatives) {
+
+  using datatype =
+      typename specfem::datatype::simd<type_real, Tags::using_simd>::datatype;
+  const auto &du = field_derivatives.du;
+
+  datatype sigma_xx, sigma_yy, sigma_zz, sigma_xy, sigma_xz, sigma_yz;
+
+  // P_SV case
+  // sigma_xx
+  sigma_xx = properties.lambdaplus2mu() * du(0, 0) +
+             properties.lambda() * (du(1, 1) + du(2, 2));
+
+  // sigma_yy
+  sigma_yy = properties.lambdaplus2mu() * du(1, 1) +
+             properties.lambda() * (du(0, 0) + du(2, 2));
+
+  // sigma_zz
+  sigma_zz = properties.lambdaplus2mu() * du(2, 2) +
+             properties.lambda() * (du(0, 0) + du(1, 1));
+
+  // sigma_xy
+  sigma_xy = properties.mu() * (du(0, 1) + du(1, 0));
+
+  // sigma_xz
+  sigma_xz = properties.mu() * (du(0, 2) + du(2, 0));
+
+  // sigma_yz
+  sigma_yz = properties.mu() * (du(1, 2) + du(2, 1));
+
+  specfem::datatype::TensorPointViewType<type_real, 3, 3, Tags::using_simd> T;
+
+  T(0, 0) = sigma_xx;
+  T(1, 1) = sigma_yy;
+  T(2, 2) = sigma_zz;
+  T(0, 1) = sigma_xy;
+  T(1, 0) = sigma_xy;
+  T(0, 2) = sigma_xz;
+  T(2, 0) = sigma_xz;
+  T(1, 2) = sigma_yz;
+  T(2, 1) = sigma_yz;
+
+  return { T };
+}
+
+} // namespace medium_physics
+} // namespace specfem

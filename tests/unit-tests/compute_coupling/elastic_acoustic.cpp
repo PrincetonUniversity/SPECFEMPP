@@ -1,7 +1,9 @@
-#include "medium/compute_coupling.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
+
+#include <string>
 
 struct ElasticAcousticTestParams {
   type_real edge_factor;
@@ -11,6 +13,8 @@ struct ElasticAcousticTestParams {
   type_real tolerance;
   std::string name;
 };
+
+void PrintTo(const ElasticAcousticTestParams &, std::ostream *os) { *os << ""; }
 
 class ElasticAcousticCouplingTest
     : public ::testing::TestWithParam<ElasticAcousticTestParams> {};
@@ -26,24 +30,27 @@ TEST_P(ElasticAcousticCouplingTest, CouplingCalculation) {
 
   // Create interface data
   specfem::point::conforming_interface<
-      specfem::dimension::type::dim2,
-      specfem::interface::interface_tag::elastic_acoustic,
+      specfem::element::dimension_tag::dim2,
+      specfem::element_coupling::interface_tag::elastic_acoustic,
       specfem::element::boundary_tag::none>
       interface_data(params.edge_factor,
                      { params.normal[0], params.normal[1] });
 
   // Create coupled field (acceleration from elastic medium)
-  specfem::point::acceleration<specfem::dimension::type::dim2,
-                               specfem::element::medium_tag::acoustic, false>
+  specfem::point::acceleration<
+      specfem::tags::Tags<specfem::element::dimension_tag::dim2,
+                          specfem::element::medium_tag::acoustic, false> >
       coupled_field;
   coupled_field(0) = params.acceleration;
 
-  specfem::point::acceleration<specfem::dimension::type::dim2,
-                               specfem::element::medium_tag::elastic_psv, false>
+  specfem::point::acceleration<
+      specfem::tags::Tags<specfem::element::dimension_tag::dim2,
+                          specfem::element::medium_tag::elastic_psv, false> >
       self_field;
 
   // Perform coupling computation
-  specfem::medium::compute_coupling(interface_data, coupled_field, self_field);
+  specfem::medium_physics::compute_coupling(interface_data, coupled_field,
+                                            self_field);
 
   // Verify results
   EXPECT_NEAR(self_field(0), params.expected_result[0], params.tolerance);
@@ -102,4 +109,6 @@ INSTANTIATE_TEST_SUITE_P(
             { 1.414213562, 1.414213562 }, // expected_result (1.0 * 0.707106781
                                           // * 2.0 ≈ 1.414)
             1e-6, // tolerance (relaxed for floating point precision)
-            "DiagonalNormalTest" }));
+            "DiagonalNormalTest" }),
+    [](const ::testing::TestParamInfo<ElasticAcousticTestParams> &info)
+        -> std::string { return info.param.name; });

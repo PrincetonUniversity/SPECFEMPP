@@ -2,6 +2,10 @@
 #include "boundary_values/boundary_values.tpp"
 #include "boundary_values/dim2/impl/boundary_medium_container.tpp"
 #include "boundary_values/dim2/impl/boundary_value_container.tpp"
+#include "boundary_values/dim3/impl/boundary_medium_container.tpp"
+#include "boundary_values/dim3/impl/boundary_value_container.tpp"
 
 template class specfem::assembly::boundary_values<
-    specfem::dimension::type::dim2>;
+    specfem::element::dimension_tag::dim2>;
+template class specfem::assembly::boundary_values<
+    specfem::element::dimension_tag::dim3>;

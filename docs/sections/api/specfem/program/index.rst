@@ -11,3 +11,4 @@
     context
     execute
     abort
+    qplots

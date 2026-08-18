@@ -1,4 +1,6 @@
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/mpi/mpi.hpp"
+#include <limits>
 
 template <typename CoordinateView, typename ShapeFunctionView,
           typename ControlNodeCoordinates>
@@ -10,8 +12,8 @@ void initialize_coordinates(
 
   Kokkos::parallel_for(
       "specfem::assembly::mesh::points::initialize_coordinates",
-      Kokkos::MDRangePolicy<Kokkos::Rank<4> >({ 0, 0, 0, 0 },
-                                              { nspec, ngllz, nglly, ngllx }),
+      Kokkos::MDRangePolicy<Kokkos::Rank<4>>({ 0, 0, 0, 0 },
+                                             { nspec, ngllz, nglly, ngllx }),
       KOKKOS_LAMBDA(const int ispec, const int iz, const int iy, const int ix) {
         for (int ia = 0; ia < ngnod; ia++) {
           coordinates(ispec, iz, iy, ix, 0) +=
@@ -29,14 +31,40 @@ void initialize_coordinates(
   Kokkos::fence();
 }
 
-specfem::assembly::mesh_impl::points<specfem::dimension::type::dim3>::points(
-    const int &nspec, const int &ngllz, const int &nglly, const int &ngllx,
-    const specfem::mesh::adjacency_graph<dimension_tag>
-        &adjacency_graph,
-    const specfem::assembly::mesh_impl::control_nodes<dimension_tag>
-        &control_nodes,
-    const specfem::assembly::mesh_impl::shape_functions<dimension_tag>
-        &shape_functions)
+namespace {
+
+template <typename CoordViewType>
+Kokkos::MinMaxScalar<type_real>
+compute_bounds(const char *label, const int nspec, const int ngllz,
+               const int nglly, const int ngllx, const CoordViewType &coord,
+               const int dim) {
+  Kokkos::MinMaxScalar<type_real> result;
+  Kokkos::parallel_reduce(
+      label,
+      Kokkos::MDRangePolicy<Kokkos::Rank<4>>({ 0, 0, 0, 0 },
+                                             { nspec, ngllz, nglly, ngllx }),
+      KOKKOS_LAMBDA(const int ispec, const int iz, const int iy, const int ix,
+                    Kokkos::MinMaxScalar<type_real> &r) {
+        r.min_val = Kokkos::min(r.min_val, coord(ispec, iz, iy, ix, dim));
+        r.max_val = Kokkos::max(r.max_val, coord(ispec, iz, iy, ix, dim));
+      },
+      Kokkos::MinMax<type_real>(result));
+  return result;
+}
+
+} // namespace
+
+specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::
+    points(const int &nspec, const int &ngllz, const int &nglly,
+           const int &ngllx,
+           const Kokkos::View<specfem::element::medium_tag *, Kokkos::HostSpace>
+               &medium_tags,
+           const specfem::assembly::mesh_impl::adjacency_graph<dimension_tag>
+               &adjacency_graph,
+           const specfem::assembly::mesh_impl::control_nodes<dimension_tag>
+               &control_nodes,
+           const specfem::assembly::mesh_impl::shape_functions<dimension_tag>
+               &shape_functions)
     : nspec(nspec), ngllz(ngllz), nglly(nglly), ngllx(ngllx),
       index_mapping("specfem::assembly::mesh::points::index_mapping", nspec,
                     ngllz, nglly, ngllx),
@@ -54,29 +82,36 @@ specfem::assembly::mesh_impl::points<specfem::dimension::type::dim3>::points(
   // Initialize to -1
   Kokkos::parallel_for(
       "specfem::assembly::mesh::points::initialize_index_mapping",
-      Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace,
-                            Kokkos::Rank<4> >({ 0, 0, 0, 0 },
-                                              { nspec, ngllz, nglly, ngllx }),
-      [=](const int ispec, const int iz, const int iy, const int ix) {
+      Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace, Kokkos::Rank<4>>(
+          { 0, 0, 0, 0 }, { nspec, ngllz, nglly, ngllx }),
+      [=, this](const int ispec, const int iz, const int iy, const int ix) {
         this->h_index_mapping(ispec, iz, iy, ix) = -1;
       });
 
   Kokkos::fence();
 
   // Set up internal points
+  // iz, iy, ix iterate over the (ngllz-2)*(nglly-2)*(ngllx-2) strictly
+  // interior GLL indices {1,..,ngllz-2} x {1,..,nglly-2} x {1,..,ngllx-2}.
+  // The formula maps them to a flat 0-based index by shifting each by -1,
+  // so the interior block for chunk ichunk occupies the contiguous range
+  // [ichunk*chunk_size*(ngllz-2)*(nglly-2)*(ngllx-2),
+  //  (ichunk+1)*chunk_size*(ngllz-2)*(nglly-2)*(ngllx-2) - 1].
+  // Boundary points (faces, edges, corners) are assigned separately starting
+  // at ig = nspec*(ngllz-2)*(nglly-2)*(ngllx-2) below.
   Kokkos::parallel_for(
       "specfem::assembly::mesh::points::initialize_internal_indices",
-      Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace,
-                            Kokkos::Rank<4> >(
+      Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace, Kokkos::Rank<4>>(
           { 0, 1, 1, 1 }, { nchunks, ngllz - 1, nglly - 1, ngllx - 1 }),
-      [=](const int ichunk, const int iz, const int iy, const int ix) {
+      [=, this](const int ichunk, const int iz, const int iy, const int ix) {
         for (int ielement = 0; ielement < chunk_size; ielement++) {
           int ispec = ichunk * chunk_size + ielement;
           if (ispec >= nspec)
             break;
           this->h_index_mapping(ispec, iz, iy, ix) =
-              ielement + iz * chunk_size + iy * chunk_size * (ngllz - 2) +
-              ix * chunk_size * (ngllz - 2) * (nglly - 2) +
+              ielement + (iz - 1) * chunk_size +
+              (iy - 1) * chunk_size * (ngllz - 2) +
+              (ix - 1) * chunk_size * (ngllz - 2) * (nglly - 2) +
               ichunk * chunk_size * (ngllz - 2) * (nglly - 2) * (ngllx - 2);
         }
       });
@@ -86,7 +121,7 @@ specfem::assembly::mesh_impl::points<specfem::dimension::type::dim3>::points(
   // Filter out strongly conforming connections
   auto filter = [&graph](const auto &edge) {
     return graph[edge].connection ==
-           specfem::connections::type::strongly_conforming;
+           specfem::element_connections::type::strongly_conforming;
   };
 
   // Create a filtered graph view
@@ -120,15 +155,19 @@ specfem::assembly::mesh_impl::points<specfem::dimension::type::dim3>::points(
                boost::make_iterator_range(boost::out_edges(ispec, fg))) {
             if (fg[face].orientation == iface) {
               const int jspec = boost::target(face, fg);
+              if (medium_tags(ispec) != medium_tags(jspec)) {
+                continue;
+              }
               const auto other_face = boost::edge(jspec, ispec, graph).first;
               const auto jface = fg[other_face].orientation;
 
-              const auto connections = specfem::connections::connection_mapping(
-                  ngllz, nglly, ngllx,
-                  Kokkos::subview(control_nodes.h_control_node_index, ispec,
-                                  Kokkos::ALL),
-                  Kokkos::subview(control_nodes.h_control_node_index, jspec,
-                                  Kokkos::ALL));
+              const auto connections =
+                  specfem::element_connections::connection_mapping(
+                      ngllz, nglly, ngllx,
+                      Kokkos::subview(control_nodes.h_control_node_index, ispec,
+                                      Kokkos::ALL),
+                      Kokkos::subview(control_nodes.h_control_node_index, jspec,
+                                      Kokkos::ALL));
 
               const auto [mapped_iz, mapped_iy, mapped_ix] =
                   connections.map_coordinates(iface, jface, iz, iy, ix);
@@ -173,14 +212,18 @@ specfem::assembly::mesh_impl::points<specfem::dimension::type::dim3>::points(
             if (specfem::mesh_entity::contains(valid_connections,
                                                fg[edge].orientation)) {
               const int jspec = boost::target(edge, fg);
+              if (medium_tags(ispec) != medium_tags(jspec)) {
+                continue;
+              }
               const auto other_face = boost::edge(jspec, ispec, graph).first;
               const auto jorientation = fg[other_face].orientation;
-              const auto connections = specfem::connections::connection_mapping(
-                  ngllz, nglly, ngllx,
-                  Kokkos::subview(control_nodes.h_control_node_index, ispec,
-                                  Kokkos::ALL),
-                  Kokkos::subview(control_nodes.h_control_node_index, jspec,
-                                  Kokkos::ALL));
+              const auto connections =
+                  specfem::element_connections::connection_mapping(
+                      ngllz, nglly, ngllx,
+                      Kokkos::subview(control_nodes.h_control_node_index, ispec,
+                                      Kokkos::ALL),
+                      Kokkos::subview(control_nodes.h_control_node_index, jspec,
+                                      Kokkos::ALL));
 
               const auto [mapped_iz, mapped_iy, mapped_ix] =
                   connections.map_coordinates(fg[edge].orientation,
@@ -226,14 +269,18 @@ specfem::assembly::mesh_impl::points<specfem::dimension::type::dim3>::points(
           if (specfem::mesh_entity::contains(valid_connections,
                                              fg[corner].orientation)) {
             const int jspec = boost::target(corner, fg);
+            if (medium_tags(ispec) != medium_tags(jspec)) {
+              continue;
+            }
             const auto other_face = boost::edge(jspec, ispec, graph).first;
             const auto jorientation = fg[other_face].orientation;
-            const auto connections = specfem::connections::connection_mapping(
-                ngllz, nglly, ngllx,
-                Kokkos::subview(control_nodes.h_control_node_index, ispec,
-                                Kokkos::ALL),
-                Kokkos::subview(control_nodes.h_control_node_index, jspec,
-                                Kokkos::ALL));
+            const auto connections =
+                specfem::element_connections::connection_mapping(
+                    ngllz, nglly, ngllx,
+                    Kokkos::subview(control_nodes.h_control_node_index, ispec,
+                                    Kokkos::ALL),
+                    Kokkos::subview(control_nodes.h_control_node_index, jspec,
+                                    Kokkos::ALL));
 
             int mapped_iz, mapped_iy, mapped_ix;
             if (specfem::mesh_entity::contains(
@@ -269,10 +316,9 @@ specfem::assembly::mesh_impl::points<specfem::dimension::type::dim3>::points(
   // Make sure all points have been assigned
   Kokkos::parallel_for(
       "specfem::assembly::mesh::points::check_all_points_assigned",
-      Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace,
-                            Kokkos::Rank<4> >({ 0, 0, 0, 0 },
-                                              { nspec, ngllz, nglly, ngllx }),
-      [=](const int ispec, const int iz, const int iy, const int ix) {
+      Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace, Kokkos::Rank<4>>(
+          { 0, 0, 0, 0 }, { nspec, ngllz, nglly, ngllx }),
+      [=, this](const int ispec, const int iz, const int iy, const int ix) {
         if (this->h_index_mapping(ispec, iz, iy, ix) == -1) {
           std::stringstream ss;
           ss << "Point not assigned for element " << ispec << " at (" << iz
@@ -296,6 +342,44 @@ specfem::assembly::mesh_impl::points<specfem::dimension::type::dim3>::points(
                          control_nodes.control_node_coordinates);
 
   Kokkos::deep_copy(this->h_coord, this->coord);
+
+  const auto coord = this->coord;
+
+  const auto x_result =
+      compute_bounds("specfem::assembly::mesh::points::compute_x_bounds", nspec,
+                     ngllz, nglly, ngllx, coord, 0);
+  const auto y_result =
+      compute_bounds("specfem::assembly::mesh::points::compute_y_bounds", nspec,
+                     ngllz, nglly, ngllx, coord, 1);
+  const auto z_result =
+      compute_bounds("specfem::assembly::mesh::points::compute_z_bounds", nspec,
+                     ngllz, nglly, ngllx, coord, 2);
+
+  this->xmin = x_result.min_val;
+  this->xmax = x_result.max_val;
+  this->ymin = y_result.min_val;
+  this->ymax = y_result.max_val;
+  this->zmin = z_result.min_val;
+  this->zmax = z_result.max_val;
+
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->xmin, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MIN,
+                                     specfem::MPI::communicator()));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->xmax, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MAX,
+                                     specfem::MPI::communicator()));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->ymin, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MIN,
+                                     specfem::MPI::communicator()));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->ymax, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MAX,
+                                     specfem::MPI::communicator()));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->zmin, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MIN,
+                                     specfem::MPI::communicator()));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->zmax, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MAX,
+                                     specfem::MPI::communicator()));
 
   return;
 }

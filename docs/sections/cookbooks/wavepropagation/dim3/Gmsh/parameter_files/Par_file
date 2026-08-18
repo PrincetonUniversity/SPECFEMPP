@@ -1,0 +1,62 @@
+#-----------------------------------------------------------
+#
+# Parameters for xdecompose_mesh
+#
+#-----------------------------------------------------------
+
+# number of MPI partitions to create
+NPROC                           = 1
+
+# number of nodes per hexahedral element (8 or 27)
+NGNOD                           = 8
+
+# partitioner: 1=SCOTCH (default), 2=METIS, 3=PATOH, 4=ROWS_PART
+PARTITIONING_TYPE               = 1
+
+# local-time stepping (must match solver Par_file)
+LTS_MODE                        = .false.
+
+# attenuation (affects database layout)
+ATTENUATION                     = .false.
+
+# C-PML absorbing boundary conditions
+PML_CONDITIONS                  = .false.
+
+# save VTK mesh files for quality checking
+SAVE_MESH_FILES                 = .true.
+
+# ADIOS database output (not supported in serial decomposer -- must be .false.)
+ADIOS_FOR_DATABASES             = .false.
+
+# HDF5 database output
+HDF5_ENABLED                    = .false.
+
+# injection coupling
+COUPLE_WITH_INJECTION_TECHNIQUE = .false.
+
+# wavefield discontinuity interface
+IS_WAVEFIELD_DISCONTINUITY      = .false.
+
+# output directory for the per-partition database files
+LOCAL_PATH                      = ./DATABASES_MPI
+
+#-----------------------------------------------------------
+#
+# Input mesh file paths
+# (relative to the directory from which xdecompose_mesh is invoked)
+#
+#-----------------------------------------------------------
+
+# required
+NODES_COORDS_FILE               = MESH/nodes_coords_file
+MESH_FILE                       = MESH/mesh_file
+MATERIALS_FILE                  = MESH/materials_file
+NUMMATERIAL_VELOCITY_FILE       = MESH/nummaterial_velocity_file
+
+# absorbing boundary surfaces (comment out any that are not present)
+ABSORBING_SURFACE_FILE_XMIN     = MESH/absorbing_surface_file_xmin
+ABSORBING_SURFACE_FILE_XMAX     = MESH/absorbing_surface_file_xmax
+ABSORBING_SURFACE_FILE_YMIN     = MESH/absorbing_surface_file_ymin
+ABSORBING_SURFACE_FILE_YMAX     = MESH/absorbing_surface_file_ymax
+ABSORBING_SURFACE_FILE_BOTTOM   = MESH/absorbing_surface_file_bottom
+FREE_OR_ABSORBING_SURFACE_FILE_ZMAX = MESH/free_or_absorbing_surface_file_zmax

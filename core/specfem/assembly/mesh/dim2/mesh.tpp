@@ -1,26 +1,28 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
-#include "kokkos_abstractions.h"
-#include "mesh.hpp"
-#include "parallel_configuration/chunk_config.hpp"
-#include "quadrature/interface.hpp"
-#include "specfem/assembly.hpp"
-#include "specfem/jacobian.hpp"
-#include "specfem/shape_function.hpp"
+
 #include "impl/utilities.hpp"
-#include "specfem_setup.hpp"
+#include "mesh.hpp"
+#include "specfem/jacobian.hpp"
+#include "specfem/parallel_configuration.hpp"
+#include "specfem/quadrature.hpp"
+#include "specfem/setup.hpp"
+#include "specfem/shape_function.hpp"
 #include <Kokkos_Core.hpp>
 #include <tuple>
 #include <vector>
 
-namespace {
+namespace specfem::assembly::mesh_impl {
+
 using point = specfem::assembly::mesh_impl::dim2::point;
 using bounding_box = specfem::assembly::mesh_impl::dim2::bounding_box;
 
-specfem::assembly::mesh_impl::points<specfem::dimension::type::dim2>
-assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
+specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim2>
+assign_numbering(
+    Kokkos::View<double ****, Kokkos::LayoutRight, Kokkos::HostSpace>
+        global_coordinates) {
 
   int nspec = global_coordinates.extent(0);
   int ngll = global_coordinates.extent(1);
@@ -58,7 +60,7 @@ assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
           reordered_points, nspec, ngll, nglob);
 
   // Create mesh points object using constructor with pre-computed arrays
-  specfem::assembly::mesh_impl::points<specfem::dimension::type::dim2>
+  specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim2>
       mesh_points(nspec, ngll, ngll, nglob_actual, index_mapping, coord,
                   bbox.xmin, bbox.xmax, bbox.zmin, bbox.zmax);
   return mesh_points;
@@ -66,29 +68,31 @@ assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
 
 // We need to build a new graph since the element numbering may have changed
 // after the mesh assembly
-specfem::assembly::mesh_impl::adjacency_graph<specfem::dimension::type::dim2>
+specfem::assembly::mesh_impl::adjacency_graph<
+    specfem::element::dimension_tag::dim2>
 build_assembly_adjacency_graph(
     const int nspec,
     const specfem::assembly::mesh_impl::mesh_to_compute_mapping<
-        specfem::dimension::type::dim2> &mapping,
-    const specfem::mesh::adjacency_graph<specfem::dimension::type::dim2>
+        specfem::element::dimension_tag::dim2> &mapping,
+    const specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim2>
         &mesh_adjacency_graph) {
-  specfem::assembly::mesh_impl::adjacency_graph<specfem::dimension::type::dim2>
+  specfem::assembly::mesh_impl::adjacency_graph<
+      specfem::element::dimension_tag::dim2>
       adjacency_graph(nspec);
 
   auto &g = adjacency_graph.graph();
-  const auto &mesh_g = mesh_adjacency_graph.graph();
+  const auto &mesh_g = mesh_adjacency_graph.local_connections();
 
   for (int ispec = 0; ispec < nspec; ispec++) {
     // Get mesh index
-    const int ispec_mesh = mapping.compute_to_mesh(ispec);
+    const int ispec_mesh = mapping.h_compute_to_mesh(ispec);
     // Iterate over all outgoing edges
     for (auto iedge :
          boost::make_iterator_range(boost::out_edges(ispec_mesh, mesh_g))) {
       // Get the target mesh index
       const int target_ispec_mesh = boost::target(iedge, mesh_g);
       // Get the target specfem index
-      const int target_ispec = mapping.mesh_to_compute(target_ispec_mesh);
+      const int target_ispec = mapping.h_mesh_to_compute(target_ispec_mesh);
       // Get edge property
       const auto edge_property = mesh_g[iedge];
       // Add the edge to the adjacency graph
@@ -101,14 +105,14 @@ build_assembly_adjacency_graph(
 
   return adjacency_graph;
 }
-} // namespace
+} // namespace specfem::assembly::mesh_impl
 
-specfem::assembly::mesh<specfem::dimension::type::dim2>::mesh(
-    const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
-    const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
+specfem::assembly::mesh<specfem::element::dimension_tag::dim2>::mesh(
+    const specfem::mesh::tags<specfem::element::dimension_tag::dim2> &tags,
+    const specfem::mesh::control_nodes<specfem::element::dimension_tag::dim2>
         &control_nodes_in,
     const specfem::quadrature::quadratures &quadratures,
-    const specfem::mesh::adjacency_graph<specfem::dimension::type::dim2>
+    const specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim2>
         &mesh_adjacency_graph) {
 
   // Get the number of GLL points
@@ -126,35 +130,42 @@ specfem::assembly::mesh<specfem::dimension::type::dim2>::mesh(
 
   auto &mapping =
       static_cast<specfem::assembly::mesh_impl::mesh_to_compute_mapping<
-          specfem::dimension::type::dim2> &>(*this);
+          specfem::element::dimension_tag::dim2> &>(*this);
   auto &quadrature = static_cast<specfem::assembly::mesh_impl::quadrature<
-      specfem::dimension::type::dim2> &>(*this);
+      specfem::element::dimension_tag::dim2> &>(*this);
   auto &shape_functions =
       static_cast<specfem::assembly::mesh_impl::shape_functions<
-          specfem::dimension::type::dim2> &>(*this);
+          specfem::element::dimension_tag::dim2> &>(*this);
   auto &adjacency_graph =
       static_cast<specfem::assembly::mesh_impl::adjacency_graph<
-          specfem::dimension::type::dim2> &>(*this);
+          specfem::element::dimension_tag::dim2> &>(*this);
 
-  auto &control_nodes =
-      static_cast<specfem::assembly::mesh_impl::control_nodes<
-          specfem::dimension::type::dim2> &>(*this);
+  auto &control_nodes = static_cast<specfem::assembly::mesh_impl::control_nodes<
+      specfem::element::dimension_tag::dim2> &>(*this);
 
   mapping = specfem::assembly::mesh_impl::mesh_to_compute_mapping<
-      specfem::dimension::type::dim2>(tags);
+      specfem::element::dimension_tag::dim2>(tags);
   control_nodes = specfem::assembly::mesh_impl::control_nodes<
-      specfem::dimension::type::dim2>(mapping, control_nodes_in);
-  quadrature =
-      specfem::assembly::mesh_impl::quadrature<specfem::dimension::type::dim2>(
-          quadratures);
+      specfem::element::dimension_tag::dim2>(mapping, control_nodes_in);
+  quadrature = specfem::assembly::mesh_impl::quadrature<
+      specfem::element::dimension_tag::dim2>(quadratures);
 
   shape_functions = specfem::assembly::mesh_impl::shape_functions<
-      specfem::dimension::type::dim2>(
+      specfem::element::dimension_tag::dim2>(
       quadratures.gll.get_hxi(), quadratures.gll.get_hxi(),
       quadratures.gll.get_N(), control_nodes_in.ngnod);
 
   adjacency_graph =
-      build_assembly_adjacency_graph(nspec, mapping, mesh_adjacency_graph);
+      specfem::assembly::mesh_impl::build_assembly_adjacency_graph(
+          nspec, mapping, mesh_adjacency_graph);
 
-  this->assemble();
+  Kokkos::View<specfem::element::medium_tag *, Kokkos::HostSpace> medium_tags(
+      "specfem::assembly::mesh::medium_tags", nspec);
+
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    const int ispec_mesh = mapping.h_compute_to_mesh(ispec);
+    medium_tags(ispec) = tags.tags_container(ispec_mesh).medium_tag;
+  }
+
+  this->assemble(medium_tags);
 }

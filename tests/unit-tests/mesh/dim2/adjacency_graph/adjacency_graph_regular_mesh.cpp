@@ -1,7 +1,8 @@
 
 #include "SPECFEM_Environment.hpp"
-#include "io/interface.hpp"
-#include "mesh/mesh.hpp"
+#include "specfem/io.hpp"
+#include "specfem/mesh.hpp"
+#include "test_macros.hpp"
 #include <algorithm>
 #include <boost/graph/adjacency_list.hpp>
 #include <gtest/gtest.h>
@@ -16,7 +17,7 @@ constexpr static int nx =
 constexpr static int nz =
     60; // See Par_file in data/dim2/regular_mesh/provenance
 
-const static std::unordered_map<int, std::vector<int> > expected_adjacency{
+const static std::unordered_map<int, std::vector<int>> expected_adjacency{
   // Interior node example
   { (nz / 2) * nx + (nx / 2),
     { (nz / 2 - 1) * nx + (nx / 2 - 1), (nz / 2 - 1) * nx + (nx / 2),
@@ -35,14 +36,14 @@ TEST(AdjacencyGraphRegularMesh, CheckConnections) {
 
   const std::string mesh_file = "data/dim2/regular_mesh/database.bin";
 
-  auto mesh =
-      specfem::io::read_2d_mesh(mesh_file, specfem::enums::elastic_wave::psv,
-                                specfem::enums::electromagnetic_wave::te);
+  auto mesh = specfem::io::read_2d_mesh(
+      mesh_file, specfem::enums::elastic_wave::psv,
+      specfem::enums::electromagnetic_wave::te, specfem::attenuation::Setup{});
 
   const auto &adjacency_graph = mesh.adjacency_graph;
-  const auto g = adjacency_graph.graph();
+  const auto g = adjacency_graph.local_connections();
 
-  EXPECT_NO_THROW(adjacency_graph.assert_symmetry());
+  LOCAL_EXPECT_NO_THROW(adjacency_graph.assert_symmetry());
 
   // Interior nodes
   for (int ix = 1; ix < nx - 1; ++ix) {

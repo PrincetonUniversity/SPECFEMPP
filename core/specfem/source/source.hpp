@@ -1,16 +1,21 @@
 #pragma once
 
-#include "constants.hpp"
-#include "enumerations/interface.hpp"
-#include "kokkos_abstractions.h"
-#include "quadrature/interface.hpp"
+#include "specfem/constants.hpp"
+#include "specfem/coordinate_systems/coordinate_resolution_result.hpp"
+#include "specfem/coordinate_systems/coordinates.hpp"
+#include "specfem/datetime.hpp"
+
+#include "specfem/enums.hpp"
 #include "specfem/point.hpp"
+#include "specfem/quadrature.hpp"
+#include "specfem/setup.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
-#include "specfem_setup.hpp"
-#include "utilities/interface.hpp"
+#include "specfem/utilities.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
+#include <optional>
+#include <sstream>
 
 namespace specfem::sources {
 
@@ -40,11 +45,11 @@ namespace specfem::sources {
  * );
  *
  * // Create any source (example with 2D force source)
- * auto source = specfem::sources::force<specfem::dimension::type::dim2>(
+ * auto source = specfem::sources::force<specfem::element::dimension_tag::dim2>(
  *     5.0, 10.0,  // coordinates (x, z)
  *     0.0,        // angle
  *     std::move(stf),
- *     specfem::wavefield::simulation_field::forward
+ *     specfem::simulation::field_type::forward
  * );
  *
  * // Common operations available for all sources:
@@ -64,7 +69,7 @@ namespace specfem::sources {
  * auto supported_media = source.get_supported_media();
  * @endcode
  */
-template <specfem::dimension::type DimensionTag> class source {
+template <specfem::element::dimension_tag DimensionTag> class source {
 
 public:
   static constexpr auto dimension_tag = DimensionTag;
@@ -85,9 +90,9 @@ public:
    * @param z z-coordinate of source
    * @param source_time_function pointer to source time function
    */
-  template <specfem::dimension::type U = DimensionTag,
-            typename std::enable_if<U == specfem::dimension::type::dim2>::type
-                * = nullptr>
+  template <specfem::element::dimension_tag U = DimensionTag,
+            typename std::enable_if<
+                U == specfem::element::dimension_tag::dim2>::type * = nullptr>
   source(
       type_real x, type_real z,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function)
@@ -101,9 +106,9 @@ public:
    * @param nsteps number of time steps
    * @param dt time step size
    */
-  template <specfem::dimension::type U = DimensionTag,
-            typename std::enable_if<U == specfem::dimension::type::dim2>::type
-                * = nullptr>
+  template <specfem::element::dimension_tag U = DimensionTag,
+            typename std::enable_if<
+                U == specfem::element::dimension_tag::dim2>::type * = nullptr>
   source(YAML::Node &Node, const int nsteps, const type_real dt);
 
   /** @} */
@@ -119,9 +124,9 @@ public:
    * @param nsteps number of time steps
    * @param dt time step size
    */
-  template <specfem::dimension::type U = DimensionTag,
-            typename std::enable_if<U == specfem::dimension::type::dim3>::type
-                * = nullptr>
+  template <specfem::element::dimension_tag U = DimensionTag,
+            typename std::enable_if<
+                U == specfem::element::dimension_tag::dim3>::type * = nullptr>
   source(YAML::Node &Node, const int nsteps, const type_real dt);
 
   /**
@@ -132,14 +137,37 @@ public:
    * @param z z-coordinate of source
    * @param source_time_function pointer to source time function
    */
-  template <specfem::dimension::type U = DimensionTag,
-            typename std::enable_if<U == specfem::dimension::type::dim3>::type
-                * = nullptr>
+  template <specfem::element::dimension_tag U = DimensionTag,
+            typename std::enable_if<
+                U == specfem::element::dimension_tag::dim3>::type * = nullptr>
   source(
       type_real x, type_real y, type_real z,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function)
       : global_coordinates(x, y, z),
         source_time_function(std::move(source_time_function)){};
+
+  /** @} */
+
+  /** @name Generic coordinate constructors
+   * @{
+   */
+
+  /**
+   * @brief Construct a source from generic coordinates and a source time
+   * function.
+   *
+   * The coordinates are stored for later resolution to global_coordinates
+   * at assembly time (via @ref specfem::assembly::resolve_coordinates).
+   *
+   * @param coordinates Generic coordinate object
+   * @param source_time_function pointer to source time function
+   */
+  source(
+      std::unique_ptr<specfem::coordinate_systems::coordinates<dimension_tag>>
+          coordinates,
+      std::unique_ptr<specfem::source_time_functions::stf> source_time_function)
+      : read_coordinates_(std::move(coordinates)),
+        source_time_function(std::move(source_time_function)) {};
 
   /** @} */
 
@@ -159,11 +187,38 @@ public:
   void update_tshift(type_real tshift) {
     source_time_function->update_tshift(tshift);
   };
+
   /**
-   * @brief User output
-   *
+   * @brief Get the UTC start time of this source (nullopt if not set).
    */
-  virtual std::string print() const { return ""; };
+  std::optional<specfem::datetime::type> get_starttime() const {
+    return starttime_;
+  }
+
+  /**
+   * @brief Set the UTC start time of this source.
+   */
+  void set_starttime(std::optional<specfem::datetime::type> t) {
+    starttime_ = t;
+  }
+  /**
+   * @brief User output — assembles source name, location, type-specific
+   * details, source time function, and (when MPI-enabled) the owning rank.
+   */
+  std::string print() const;
+
+  /**
+   * @brief Returns the human-readable source type name.
+   * Derived classes should override this to return their static @c name.
+   */
+  virtual std::string source_name() const = 0;
+
+  /**
+   * @brief Type-specific output (parameters unique to this source type).
+   * The default implementation returns an empty string for sources that have
+   * no additional parameters beyond location and source time function.
+   */
+  virtual std::string print_details() const { return ""; }
 
   virtual ~source() = default;
 
@@ -171,12 +226,13 @@ public:
 
   void compute_source_time_function(
       const type_real t0, const type_real dt, const int nsteps,
-      specfem::kokkos::HostView2d<type_real> source_time_function) const {
+      Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+          source_time_function) const {
     return this->source_time_function->compute_source_time_function(
         t0, dt, nsteps, source_time_function);
   }
 
-  virtual specfem::wavefield::simulation_field get_wavefield_type() const = 0;
+  virtual specfem::simulation::field_type get_wavefield_type() const = 0;
 
   virtual bool operator==(const source &other) const {
     // Base implementation might just check type identity
@@ -288,12 +344,70 @@ public:
    */
   specfem::element::medium_tag get_medium_tag() const { return medium_tag; }
 
-protected:
-  // Read-only member variables
-  static constexpr const char *name =
-      "!!! base_source, if this was printed, you are not using the "
-      "correct source class !!!";
+  int get_partition_index() const { return partition_index_; }
+  void set_partition_index(int rank) { partition_index_ = rank; }
 
+  /**
+   * @brief Set the coordinate resolution result (resolved global + topography).
+   *
+   * Populated at assembly time for sources given generic coordinates; left
+   * unset for sources specified directly as (x, y, z).
+   */
+  void set_resolution_result(
+      const specfem::coordinate_systems::CoordinateResolutionResult<
+          dimension_tag> &resolution) {
+    resolution_ = resolution;
+  }
+
+  /**
+   * @brief Get the coordinate resolution result, or nullopt if not resolved.
+   */
+  const std::optional<
+      specfem::coordinate_systems::CoordinateResolutionResult<dimension_tag>> &
+  get_resolution_result() const {
+    return resolution_;
+  }
+
+  /**
+   * @brief Set the location error (target-to-found distance) in metres.
+   */
+  void set_location_error(type_real error) { location_error_ = error; }
+
+  /**
+   * @brief Get the location error (target-to-found distance) in metres.
+   */
+  type_real get_location_error() const { return location_error_; }
+
+  /**
+   * @brief Set the generic coordinates for this source.
+   *
+   * @param coordinates Generic coordinate object (ownership transferred)
+   */
+  void set_read_coordinates(
+      std::unique_ptr<specfem::coordinate_systems::coordinates<dimension_tag>>
+          coordinates) {
+    read_coordinates_ = std::move(coordinates);
+  }
+
+  /**
+   * @brief Get the generic coordinates (const), or nullptr if not set.
+   */
+  const specfem::coordinate_systems::coordinates<dimension_tag> *
+  get_read_coordinates() const {
+    return read_coordinates_.get();
+  }
+
+  /**
+   * @brief Get the generic coordinates (mutable), or nullptr if not set.
+   *
+   * Used by resolve_coordinates to set the origin on cartesian coordinates.
+   */
+  specfem::coordinate_systems::coordinates<dimension_tag> *
+  get_read_coordinates() {
+    return read_coordinates_.get();
+  }
+
+protected:
   std::unique_ptr<specfem::source_time_functions::stf>
       source_time_function; ///< pointer to source time function
 
@@ -303,7 +417,18 @@ protected:
   specfem::point::global_coordinates<dimension_tag>
       global_coordinates; ///< Global coordinates of the source in the global
                           ///< coordinate system
+  std::unique_ptr<specfem::coordinate_systems::coordinates<dimension_tag>>
+      read_coordinates_; ///< Generic coordinates (resolved at assembly time)
+  std::optional<
+      specfem::coordinate_systems::CoordinateResolutionResult<dimension_tag>>
+      resolution_; ///< Resolved global + topography (set for generic coords)
   specfem::element::medium_tag medium_tag;
+  std::optional<specfem::datetime::type> starttime_; ///< Optional UTC origin
+                                                     ///< time
+  int partition_index_ =
+      -1; ///< MPI rank that owns this source (-1 = not yet located)
+  type_real location_error_ =
+      -1; ///< Target-to-found distance in metres (-1 = not yet located)
 };
 
 } // namespace specfem::sources

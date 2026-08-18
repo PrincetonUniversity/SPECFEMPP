@@ -1,0 +1,30 @@
+#pragma once
+
+#include "specfem/enums.hpp"
+#include "specfem/setup.hpp"
+
+namespace specfem {
+namespace mesh {
+namespace elements {
+/**
+ * Define tangential elements
+ *
+ * @note Need to still document this section
+ *
+ */
+template <specfem::element::dimension_tag DimensionTag>
+struct tangential_elements;
+
+template <> struct tangential_elements<specfem::element::dimension_tag::dim2> {
+
+  constexpr static auto dimension = specfem::element::dimension_tag::dim2;
+
+  bool force_normal_to_surface, rec_normal_to_surface;
+  Kokkos::View<type_real *, Kokkos::HostSpace> x;
+  Kokkos::View<type_real *, Kokkos::HostSpace> y;
+  tangential_elements() {};
+  tangential_elements(const int nnodes_tangential_curve);
+};
+} // namespace elements
+} // namespace mesh
+} // namespace specfem

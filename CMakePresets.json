@@ -53,6 +53,54 @@
       }
     },
     {
+      "name": "release-trilinos",
+      "displayName": "Release -- Trilinos implicit solvers (CPU, no MPI)",
+      "description": "Inherits 'release' and enables Trilinos. Load trilinos/16.1.0-cpu-native-nompi first so Trilinos_ROOT and Kokkos_ROOT are set in the environment.",
+      "inherits": "release",
+      "binaryDir": "build/release-trilinos",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-trilinos",
+        "SPECFEM_ENABLE_TRILINOS": "ON",
+        "SPECFEM_BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-trilinos"
+      }
+    },
+    {
+      "name": "release-trilinos-mpi",
+      "displayName": "Release -- Trilinos implicit solvers (CPU, MPI)",
+      "description": "Inherits 'release-trilinos' and enables MPI. Load trilinos/16.1.0-cpu-native-mpi first so Trilinos_ROOT and Kokkos_ROOT are set in the environment.",
+      "inherits": "release-trilinos",
+      "binaryDir": "build/release-trilinos-mpi",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-trilinos-mpi",
+        "SPECFEM_ENABLE_MPI": "ON",
+        "SPECFEM_BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-trilinos-mpi"
+      }
+    },
+    {
+      "name": "release-cuda-trilinos",
+      "displayName": "Release -- CUDA + Trilinos implicit solvers (no MPI)",
+      "description": "Inherits 'release-cuda' and enables Trilinos. Load trilinos/16.1.0-cuda-ampere80-nompi first so Trilinos_ROOT and Kokkos_ROOT are set in the environment.",
+      "inherits": "release-cuda",
+      "binaryDir": "build/release-cuda-trilinos",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-cuda-trilinos",
+        "SPECFEM_ENABLE_TRILINOS": "ON",
+        "SPECFEM_BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-cuda-trilinos"
+      }
+    },
+    {
+      "name": "release-cuda-trilinos-mpi",
+      "displayName": "Release -- CUDA + Trilinos implicit solvers (MPI)",
+      "description": "Inherits 'release-cuda-trilinos' and enables MPI. Load trilinos/16.1.0-cuda-ampere80-mpi first so Trilinos_ROOT and Kokkos_ROOT are set in the environment.",
+      "inherits": "release-cuda-trilinos",
+      "binaryDir": "build/release-cuda-trilinos-mpi",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-cuda-trilinos-mpi",
+        "SPECFEM_ENABLE_MPI": "ON",
+        "SPECFEM_BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-cuda-trilinos-mpi"
+      }
+    },
+    {
       "name": "release-hip",
       "displayName": "Release -- HIP enabled",
       "binaryDir": "build/release-hip",
@@ -148,7 +196,7 @@
         "SPECFEM_ENABLE_SIMD": "ON",
         "SPECFEM_INSTALL": "ON",
         "SPECFEM_BUILD_BENCHMARKS": "ON",
-        "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/debug-cuda"
+        "SPECFEM_BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/debug-cuda"
       }
     },
     {
@@ -171,9 +219,39 @@
       }
     },
     {
+      "name": "debug-mpi",
+      "displayName": "MPI Debug -- EXPERIMENTAL",
+      "binaryDir": "build/debug-mpi",
+      "environment": {
+        "CC": "mpicc",
+        "CXX": "mpicxx",
+        "FC": "mpifort"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/debug-mpi",
+        "Kokkos_ARCH_NATIVE": "ON",
+        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "OFF",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
+        "Kokkos_ENABLE_DEBUG": "ON",
+        "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON",
+        "SPECFEM_INSTALL": "ON",
+        "SPECFEM_ENABLE_MPI": "ON",
+        "SPECFEM_BUILD_TESTS": "ON",
+        "SPECFEM_ENABLE_SIMD": "ON",
+        "SPECFEM_BUILD_BENCHMARKS": "ON",
+        "SPECFEM_BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/debug-mpi"
+      }
+    },
+    {
       "name": "release-mpi",
       "displayName": "MPI Release -- EXPERIMENTAL",
       "binaryDir": "build/release-mpi",
+      "environment": {
+        "CC": "mpicc",
+        "CXX": "mpicxx",
+        "FC": "mpifort"
+      },
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-mpi",
@@ -186,6 +264,47 @@
         "SPECFEM_ENABLE_SIMD": "ON",
         "SPECFEM_BUILD_BENCHMARKS": "ON",
         "SPECFEM_BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-mpi"
+      }
+    },
+    {
+      "name": "profile-release",
+      "displayName": "Default Release -- SIMD enabled for Profiling",
+      "binaryDir": "build/profile-release",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/profile-release",
+        "CMAKE_CXX_FLAGS": "-ftime-trace",
+        "Kokkos_ARCH_NATIVE": "ON",
+        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "ON",
+        "SPECFEM_INSTALL": "ON",
+        "SPECFEM_BUILD_TESTS": "ON",
+        "SPECFEM_ENABLE_SIMD": "ON",
+        "SPECFEM_BUILD_BENCHMARKS": "ON",
+        "SPECFEM_BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/profile-release"
+      }
+    },
+    {
+      "name": "coverage",
+      "displayName": "Coverage -- LLVM source-based (Clang)",
+      "description": "Instrumented Clang build for llvm-cov. Unity OFF, serial, no benchmarks/VTK.",
+      "binaryDir": "build/coverage",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/coverage",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "ON",
+        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
+        "Kokkos_ENABLE_ARCH_NATIVE": "ON",
+        "SPECFEM_ENABLE_COVERAGE": "ON",
+        "SPECFEM_BUILD_TESTS": "ON",
+        "SPECFEM_ENABLE_SIMD": "ON",
+        "SPECFEM_ENABLE_MPI": "OFF",
+        "SPECFEM_ENABLE_UNITY_BUILD": "OFF",
+        "SPECFEM_ENABLE_VTK": "OFF",
+        "SPECFEM_BUILD_BENCHMARKS": "OFF"
       }
     }
   ],
@@ -254,8 +373,57 @@
       ]
     },
     {
+      "name": "debug-mpi",
+      "configurePreset": "debug-mpi",
+      "targets": [
+        "all"
+      ]
+    },
+    {
       "name": "release-mpi",
       "configurePreset": "release-mpi",
+      "targets": [
+        "all"
+      ]
+    },
+    {
+      "name": "profile-release",
+      "configurePreset": "profile-release",
+      "targets": [
+        "all"
+      ]
+    },
+    {
+      "name": "coverage",
+      "configurePreset": "coverage",
+      "targets": [
+        "all"
+      ]
+    },
+    {
+      "name": "release-trilinos",
+      "configurePreset": "release-trilinos",
+      "targets": [
+        "all"
+      ]
+    },
+    {
+      "name": "release-trilinos-mpi",
+      "configurePreset": "release-trilinos-mpi",
+      "targets": [
+        "all"
+      ]
+    },
+    {
+      "name": "release-cuda-trilinos",
+      "configurePreset": "release-cuda-trilinos",
+      "targets": [
+        "all"
+      ]
+    },
+    {
+      "name": "release-cuda-trilinos-mpi",
+      "configurePreset": "release-cuda-trilinos-mpi",
       "targets": [
         "all"
       ]

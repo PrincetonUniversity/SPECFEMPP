@@ -1,6 +1,5 @@
-#include "enumerations/interface.hpp"
-#include "enumerations/wavefield.hpp"
-#include "medium/compute_source.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/point.hpp"
 #include <gtest/gtest.h>
 #include <sstream>
@@ -8,18 +7,18 @@
 namespace {
 
 TEST(Source, ElasticIsotropic3D) {
-  static constexpr auto dimension = specfem::dimension::type::dim3;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim3;
   static constexpr auto medium_tag = specfem::element::medium_tag::elastic;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
 
-  using PointPropertiesType =
-      specfem::point::properties<dimension, medium_tag, property_tag, false>;
+  using PointPropertiesType = specfem::point::properties<
+      specfem::tags::Tags<dimension, medium_tag, property_tag, false> >;
   using PointSourceType =
       specfem::point::source<dimension, medium_tag,
-                             specfem::wavefield::simulation_field::forward>;
-  using PointAccelerationType =
-      specfem::point::acceleration<dimension, medium_tag, false>;
+                             specfem::simulation::field_type::forward>;
+  using PointAccelerationType = specfem::point::acceleration<
+      specfem::tags::Tags<dimension, medium_tag, false> >;
 
   const type_real rho = 2700.0;
   const type_real mu = 40e9;
@@ -35,7 +34,8 @@ TEST(Source, ElasticIsotropic3D) {
   point_source.lagrange_interpolant(2) = 4.0;
 
   const PointAccelerationType acceleration =
-      specfem::medium::compute_source_contribution(point_source, properties);
+      specfem::medium_physics::compute_source_contribution(point_source,
+                                                           properties);
 
   PointAccelerationType expected_acceleration;
   expected_acceleration(0) =
@@ -54,18 +54,18 @@ TEST(Source, ElasticIsotropic3D) {
 }
 
 TEST(Source, ElasticIsotropic3D_ZeroSource) {
-  static constexpr auto dimension = specfem::dimension::type::dim3;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim3;
   static constexpr auto medium_tag = specfem::element::medium_tag::elastic;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
 
-  using PointPropertiesType =
-      specfem::point::properties<dimension, medium_tag, property_tag, false>;
+  using PointPropertiesType = specfem::point::properties<
+      specfem::tags::Tags<dimension, medium_tag, property_tag, false> >;
   using PointSourceType =
       specfem::point::source<dimension, medium_tag,
-                             specfem::wavefield::simulation_field::forward>;
-  using PointAccelerationType =
-      specfem::point::acceleration<dimension, medium_tag, false>;
+                             specfem::simulation::field_type::forward>;
+  using PointAccelerationType = specfem::point::acceleration<
+      specfem::tags::Tags<dimension, medium_tag, false> >;
 
   const type_real rho = 2700.0;
   const type_real mu = 40e9;
@@ -81,7 +81,8 @@ TEST(Source, ElasticIsotropic3D_ZeroSource) {
   point_source.lagrange_interpolant(2) = 4.0;
 
   const PointAccelerationType acceleration =
-      specfem::medium::compute_source_contribution(point_source, properties);
+      specfem::medium_physics::compute_source_contribution(point_source,
+                                                           properties);
 
   PointAccelerationType expected_acceleration;
   expected_acceleration(0) = 0.0;

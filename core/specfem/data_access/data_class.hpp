@@ -32,6 +32,7 @@ namespace specfem::data_access {
 enum DataClassType {
   index,                     ///< Element and point indices
   edge_index,                ///< Edge connectivity indices
+  face_index,                ///< Face connectivity indices (3D)
   assembly_index,            ///< Global assembly indices
   mapped_index,              ///< Mapped/transformed indices
   properties,                ///< Material properties (density, moduli)
@@ -44,15 +45,17 @@ enum DataClassType {
   mass_matrix,               ///< Mass matrix coefficients
   source,                    ///< Source terms and excitations
   stress,                    ///< Stress tensor components
-  stress_integrand,          ///< Stress integration quantities
   boundary,                  ///< Boundary condition data
   lagrange_derivative,       ///< Lagrange derivative operators
   weights,                   ///< Quadrature weights
   transfer_function_self,    ///< Self-coupling transfer functions
   transfer_function_coupled, ///< Cross-coupling transfer functions
+  coupled_coordinates,       ///< Cross-coupling nodal coordinates
   intersection_factor,       ///< Interface intersection factors
   intersection_normal,       ///< Interface normal vectors
   nonconforming_interface,   ///< Non-conforming mesh interfaces
-  conforming_interface       ///< Conforming mesh interfaces
+  conforming_interface,      ///< Conforming mesh interfaces
+  global_coordinates,        ///< Global coordinate data
+  attenuation, ///< Combined attenuation factors + memory variables
 };
 } // namespace specfem::data_access

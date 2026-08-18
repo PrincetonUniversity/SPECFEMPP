@@ -1,8 +1,11 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "specfem/assembly/fields/impl/field_impl.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/datatype/element_index_range.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/macros/tag_dispatch.hpp"
+#include "specfem/setup.hpp"
+#include "specfem/tag_dispatch.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly {
@@ -20,8 +23,8 @@ namespace specfem::assembly {
  * @tparam SimulationWavefieldType Type of simulation field (forward, adjoint,
  * backward, buffer)
  */
-template <specfem::wavefield::simulation_field SimulationWavefieldType>
-struct simulation_field<specfem::dimension::type::dim3,
+template <specfem::simulation::field_type SimulationWavefieldType>
+struct simulation_field<specfem::element::dimension_tag::dim3,
                         SimulationWavefieldType> {
 
 private:
@@ -34,21 +37,19 @@ private:
   using IndexViewType =
       Kokkos::View<int ****, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>;
 
-  /**
-   * @brief Assembly index mapping view type for 3D global degree of freedom
-   * indexing.
-   *
-   * Maps local 3D field indices to global assembled system indices for
-   * 3D finite element assembly operations.
-   */
-  using AssemblyIndexViewType =
-      Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
-
 public:
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim3; ///< Dimension tag
+      specfem::element::dimension_tag::dim3; ///< Dimension tag
   constexpr static auto simulation_wavefield =
       SimulationWavefieldType; ///< Simulation wavefield type
+
+  static constexpr auto combinations =
+      DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic);
+
+  template <typename TagsType>
+  using FieldImplTemplateType =
+      specfem::assembly::fields_impl::field_impl<TagsType::dimension_tag,
+                                                 TagsType::medium_tag>;
 
   /**
    * @brief Default constructor.
@@ -69,8 +70,8 @@ public:
    * @param element_types 3D element classification determining field allocation
    *
    * @code
-   * specfem::assembly::simulation_field<specfem::dimension::type::dim3,
-   *     specfem::wavefield::simulation_field::forward> field(mesh,
+   * specfem::assembly::simulation_field<specfem::element::dimension_tag::dim3,
+   *     specfem::simulation::field_type::forward> field(mesh,
    * element_types);
    * @endcode
    */
@@ -85,7 +86,7 @@ public:
    * device-accessible memory to host memory for post-processing, I/O, or
    * debugging operations. Handles the full 3D tensor structure efficiently.
    */
-  void copy_to_host() { sync_fields<specfem::sync::kind::DeviceToHost>(); }
+  void copy_to_host();
 
   /**
    * @brief Copy 3D simulation field data from host to device memory.
@@ -93,7 +94,7 @@ public:
    * Synchronizes all 3D field components and index mappings from host memory
    * to device-accessible memory for GPU-accelerated 3D computations.
    */
-  void copy_to_device() { sync_fields<specfem::sync::kind::HostToDevice>(); }
+  void copy_to_device();
 
   /**
    * @brief Assignment operator for copying between 3D wavefield types.
@@ -105,7 +106,7 @@ public:
    * @tparam DestinationWavefieldType Source wavefield type to copy from
    * @param rhs Source 3D simulation field to copy data from
    */
-  template <specfem::wavefield::simulation_field DestinationWavefieldType>
+  template <specfem::simulation::field_type DestinationWavefieldType>
   void operator=(
       const simulation_field<dimension_tag, DestinationWavefieldType> &rhs) {
     this->nglob = rhs.nglob;
@@ -113,16 +114,11 @@ public:
     this->ngllz = rhs.ngllz;
     this->nglly = rhs.nglly;
     this->ngllx = rhs.ngllx;
-    FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
-        CAPTURE(field, (rhs_field, rhs.field), assembly_index_mapping,
-                (rhs_assembly_index_mapping, rhs.assembly_index_mapping),
-                h_assembly_index_mapping,
-                (rhs_h_assembly_index_mapping, rhs.h_assembly_index_mapping)) {
-          _field_ = _rhs_field_;
-          _assembly_index_mapping_ = _rhs_assembly_index_mapping_;
-          _h_assembly_index_mapping_ = _rhs_h_assembly_index_mapping_;
-        })
+    specfem::tag_dispatch::for_each(combinations, [&]<typename TagsType>() {
+      field.template get<TagsType>() = rhs.field.template get<TagsType>();
+      dof_ranges.template get<TagsType>() =
+          rhs.dof_ranges.template get<TagsType>();
+    });
   }
 
   /**
@@ -140,16 +136,11 @@ public:
    * @endcode
    */
   template <specfem::element::medium_tag MediumTag>
-  KOKKOS_FORCEINLINE_FUNCTION int get_nglob() const {
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
-                        CAPTURE(field) {
-                          if constexpr (MediumTag == _medium_tag_) {
-                            return _field_.nglob;
-                          }
-                        })
-
-    Kokkos::abort("Medium type not supported");
-    return 0;
+  KOKKOS_INLINE_FUNCTION int get_nglob() const {
+    return field
+        .template get<specfem::tags::Tags<specfem::element::dimension_tag::dim3,
+                                          MediumTag>>()
+        .nglob;
   }
 
   /**
@@ -164,85 +155,60 @@ public:
    *
    * @code
    * const auto& elastic_field =
-   * field.get_field<specfem::element::medium_tag::elastic>(); 
+   * field.get_field<specfem::element::medium_tag::elastic>();
    * const auto& displacement = elastic_field.displacement;
    * @endcode
    */
   template <specfem::element::medium_tag MediumTag>
-  KOKKOS_INLINE_FUNCTION
-      constexpr specfem::assembly::fields_impl::field_impl<dimension_tag,
-                                                           MediumTag> const &
-      get_field() const {
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
-                        CAPTURE(field) {
-                          if constexpr (MediumTag == _medium_tag_) {
-                            return _field_;
-                          }
-                        })
-
-    Kokkos::abort("Medium type not supported");
-    /// Code path should never be reached
-
-    auto return_value =
-        new specfem::assembly::fields_impl::field_impl<dimension_tag,
-                                                       MediumTag>();
-
-    return *return_value;
+  KOKKOS_INLINE_FUNCTION constexpr specfem::assembly::fields_impl::field_impl<
+      dimension_tag, MediumTag> const &
+  get_field() const {
+    using TagsType =
+        specfem::tags::Tags<specfem::element::dimension_tag::dim3, MediumTag>;
+    return field.template get<TagsType>();
   }
 
-  template <bool on_device>
-  KOKKOS_INLINE_FUNCTION constexpr int
-  get_iglob(const int &ispec, const int &iz, const int &iy, const int &ix,
-            const specfem::element::medium_tag MediumTag) const {
+  template <bool on_device, specfem::element::medium_tag MediumTag>
+  KOKKOS_INLINE_FUNCTION constexpr int get_iglob(const int &ispec,
+                                                 const int &iz, const int &iy,
+                                                 const int &ix) const {
+    const int base =
+        dof_ranges
+            .template get<specfem::tags::Tags<
+                specfem::element::dimension_tag::dim3, MediumTag>>()
+            .begin_index();
     if constexpr (on_device) {
-      FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
-                          CAPTURE(assembly_index_mapping) {
-                            if (MediumTag == _medium_tag_) {
-                              return _assembly_index_mapping_(
-                                  index_mapping(ispec, iz, iy, ix));
-                            }
-                          })
-
+      return index_mapping(ispec, iz, iy, ix) - base;
     } else {
-      FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
-                          CAPTURE(h_assembly_index_mapping) {
-                            if (MediumTag == _medium_tag_) {
-                              return _h_assembly_index_mapping_(
-                                  h_index_mapping(ispec, iz, iy, ix));
-                            }
-                          })
+      return h_index_mapping(ispec, iz, iy, ix) - base;
     }
-
-    // If we reach here, it means the medium type is not defined in the macro
-    Kokkos::abort("Medium type not defined in the macro");
-
-    return -1;
   }
 
-  template <bool on_device, typename IndexType,
-            typename std::enable_if_t<
-                specfem::data_access::is_index_type<IndexType>::value &&
-                    IndexType::using_simd == false &&
-                    IndexType::dimension_tag == specfem::dimension::type::dim3,
-                int> = 0>
-  KOKKOS_INLINE_FUNCTION constexpr int
-  get_iglob(const IndexType &index,
-            const specfem::element::medium_tag MediumTag) const {
-    return get_iglob<on_device>(index.ispec, index.iz, index.iy, index.ix,
-                                MediumTag);
+  template <
+      bool on_device, specfem::element::medium_tag MediumTag,
+      typename IndexType,
+      typename std::enable_if_t<
+          specfem::data_access::is_index_type<IndexType>::value &&
+              IndexType::using_simd == false &&
+              IndexType::dimension_tag == specfem::element::dimension_tag::dim3,
+          int> = 0>
+  KOKKOS_INLINE_FUNCTION constexpr int get_iglob(const IndexType &index) const {
+    return get_iglob<on_device, MediumTag>(index.ispec, index.iz, index.iy,
+                                           index.ix);
   }
 
-  template <bool on_device, typename IndexType,
-            typename std::enable_if_t<
-                specfem::data_access::is_index_type<IndexType>::value &&
-                    IndexType::using_simd == true &&
-                    IndexType::dimension_tag == specfem::dimension::type::dim3,
-                int> = 0>
-  KOKKOS_INLINE_FUNCTION constexpr int
-  get_iglob(const IndexType &index, const int &lane,
-            const specfem::element::medium_tag MediumTag) const {
-    return get_iglob<on_device>(index.ispec + lane, index.iz, index.iy,
-                                index.ix, MediumTag);
+  template <
+      bool on_device, specfem::element::medium_tag MediumTag,
+      typename IndexType,
+      typename std::enable_if_t<
+          specfem::data_access::is_index_type<IndexType>::value &&
+              IndexType::using_simd == true &&
+              IndexType::dimension_tag == specfem::element::dimension_tag::dim3,
+          int> = 0>
+  KOKKOS_INLINE_FUNCTION constexpr int get_iglob(const IndexType &index,
+                                                 const int &lane) const {
+    return get_iglob<on_device, MediumTag>(index.ispec + lane, index.iz,
+                                           index.iy, index.ix);
   }
 
   int nglob = 0;               ///< Number of global degrees of freedom
@@ -252,16 +218,18 @@ public:
   int ngllx;                   ///< Number of quadrature points in x direction
   IndexViewType index_mapping; ///< Device 3D index mapping from
                                ///< (ispec,iz,iy,ix) to linear index
-  IndexViewType::HostMirror h_index_mapping; ///< Host mirror of 3D index
-                                             ///< mapping for CPU operations
+  IndexViewType::host_mirror_type h_index_mapping; ///< Host mirror of 3D index
+                                                   ///< mapping for CPU
+                                                   ///< operations
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
-                      DECLARE(((specfem::assembly::fields_impl::field_impl,
-                                (_DIMENSION_TAG_, _MEDIUM_TAG_)),
-                               field),
-                              (AssemblyIndexViewType, assembly_index_mapping),
-                              (AssemblyIndexViewType::HostMirror,
-                               h_assembly_index_mapping)))
+  specfem::tag_dispatch::TypedStorage<FieldImplTemplateType,
+                                      decltype(combinations)>
+      field;
+
+  specfem::tag_dispatch::Storage<specfem::datatype::ElementIndexRange,
+                                 decltype(combinations)>
+      dof_ranges; ///< Per-medium DOF range; begin_index() is the compact DOF
+                  ///< base offset
 
   /**
    * @brief Get total degrees of freedom in the 3D elastic system.
@@ -275,12 +243,6 @@ public:
   int get_total_degrees_of_freedom();
 
 private:
-  /**
-   * @brief Synchronize 3D field data between host and device memory.
-   *
-   * @tparam sync Synchronization direction (HostToDevice or DeviceToHost)
-   */
-  template <specfem::sync::kind sync> void sync_fields();
   int total_degrees_of_freedom = 0; ///< Total number of degrees of freedom
 };
 
@@ -304,27 +266,22 @@ private:
  */
 template <typename SimulationWavefieldType1, typename SimulationWavefieldType2,
           typename std::enable_if_t<((SimulationWavefieldType1::dimension_tag ==
-                                      specfem::dimension::type::dim3) &&
+                                      specfem::element::dimension_tag::dim3) &&
                                      (SimulationWavefieldType2::dimension_tag ==
-                                      specfem::dimension::type::dim3)),
+                                      specfem::element::dimension_tag::dim3)),
                                     int> = 0>
 inline void deep_copy(SimulationWavefieldType1 &dst,
                       const SimulationWavefieldType2 &src) {
   dst.nglob = src.nglob;
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
-      CAPTURE((src_assembly_index_mapping, src.assembly_index_mapping),
-              (dst_assembly_index_mapping, dst.assembly_index_mapping),
-              (src_h_assembly_index_mapping, src.h_assembly_index_mapping),
-              (dst_h_assembly_index_mapping, dst.h_assembly_index_mapping),
-              (src_field, src.field), (dst_field, dst.field)) {
-        Kokkos::deep_copy(_dst_assembly_index_mapping_,
-                          _src_assembly_index_mapping_);
-        Kokkos::deep_copy(_dst_h_assembly_index_mapping_,
-                          _src_h_assembly_index_mapping_);
-        specfem::assembly::fields_impl::deep_copy(_dst_field_, _src_field_);
-      })
+  specfem::tag_dispatch::for_each(SimulationWavefieldType1::combinations,
+                                  [&]<typename TagsType>() {
+                                    dst.dof_ranges.template get<TagsType>() =
+                                        src.dof_ranges.template get<TagsType>();
+                                    specfem::assembly::fields_impl::deep_copy(
+                                        dst.field.template get<TagsType>(),
+                                        src.field.template get<TagsType>());
+                                  });
 }
 
 } // namespace specfem::assembly

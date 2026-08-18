@@ -1,8 +1,7 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
-#include "kokkos_abstractions.h"
-#include "specfem/source.hpp"
+#include "source.hpp"
+#include "specfem/enums.hpp"
 #include "yaml-cpp/yaml.h"
 
 namespace specfem {
@@ -37,10 +36,10 @@ namespace sources {
  * );
  *
  * auto tensor_src =
- * specfem::sources::moment_tensor<specfem::dimension::type::dim2>( 12.5, 8.0,
+ * specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2>( 12.5, 8.0,
  * // coordinates (x, z) 1.5,        // Mxx - normal stress in x direction 2.1,
  * // Mzz - normal stress in z direction 0.7,        // Mxz - shear stress
- * component std::move(stf), specfem::wavefield::simulation_field::forward
+ * component std::move(stf), specfem::simulation::field_type::forward
  * );
  *
  * // Set the medium (tensor sources work with elastic media)
@@ -63,7 +62,7 @@ namespace sources {
  *
  * @note This class inherits from @ref specfem::sources::source
  */
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 class tensor_source : public source<DimensionTag> {
 
 public:
@@ -80,9 +79,9 @@ public:
    * @param z z-coordinate of source
    * @param source_time_function pointer to source time function
    */
-  template <specfem::dimension::type U = DimensionTag,
-            typename std::enable_if<U == specfem::dimension::type::dim2>::type
-                * = nullptr>
+  template <specfem::element::dimension_tag U = DimensionTag,
+            typename std::enable_if<
+                U == specfem::element::dimension_tag::dim2>::type * = nullptr>
   tensor_source(
       type_real x, type_real z,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function)
@@ -95,13 +94,26 @@ public:
    * @param z z-coordinate of source
    * @param source_time_function pointer to source time function
    */
-  template <specfem::dimension::type U = DimensionTag,
-            typename std::enable_if<U == specfem::dimension::type::dim3>::type
-                * = nullptr>
+  template <specfem::element::dimension_tag U = DimensionTag,
+            typename std::enable_if<
+                U == specfem::element::dimension_tag::dim3>::type * = nullptr>
   tensor_source(
       type_real x, type_real y, type_real z,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function)
       : source<DimensionTag>(x, y, z, std::move(source_time_function)){};
+
+  /**
+   * @brief Construct a new tensor source from generic coordinates
+   *
+   * @param coordinates Generic coordinate object
+   * @param source_time_function pointer to source time function
+   */
+  tensor_source(
+      std::unique_ptr<specfem::coordinate_systems::coordinates<DimensionTag>>
+          coordinates,
+      std::unique_ptr<specfem::source_time_functions::stf> source_time_function)
+      : source<DimensionTag>(std::move(coordinates),
+                             std::move(source_time_function)) {};
 
   /**
    * @brief Construct a new tensor source object from a YAML node and time steps
@@ -161,7 +173,8 @@ public:
    * Source tensor matrix with dimensions [ncomponents][ndim] where ncomponents
    * depends on medium type and ndim is spatial dimension
    */
-  virtual specfem::kokkos::HostView2d<type_real> get_source_tensor() const = 0;
+  virtual Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+  get_source_tensor() const = 0;
 
   /**
    * @brief Get the source type

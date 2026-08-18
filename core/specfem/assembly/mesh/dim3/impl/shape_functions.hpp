@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly::mesh_impl {
@@ -12,13 +12,13 @@ namespace specfem::assembly::mesh_impl {
  *
  * @see specfem::shape_function::shape_function
  */
-template <> struct shape_functions<specfem::dimension::type::dim3> {
+template <> struct shape_functions<specfem::element::dimension_tag::dim3> {
 private:
   constexpr static int ndim = 3;
 
 public:
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim3; ///< Dimension tag
+      specfem::element::dimension_tag::dim3; ///< Dimension tag
 
   int ngllz; ///< Number of GLL points in z direction
   int nglly; ///< Number of GLL points in y direction
@@ -71,14 +71,14 @@ public:
   shape_functions(const int ngllz, const int nglly, const int ngllx,
                   const int ngnod,
                   const specfem::assembly::mesh_impl::quadrature<
-                      specfem::dimension::type::dim3> &quadrature,
+                      specfem::element::dimension_tag::dim3> &quadrature,
                   const specfem::assembly::mesh_impl::control_nodes<
-                      specfem::dimension::type::dim3>
+                      specfem::element::dimension_tag::dim3>
                       control_nodes);
 
-  ShapeFunctionViewType shape3D;                 ///< Device shape functions
-  DShapeFunctionViewType dshape3D;               ///< Device derivatives
-  ShapeFunctionViewType::HostMirror h_shape3D;   ///< Host shape functions
-  DShapeFunctionViewType::HostMirror h_dshape3D; ///< Host derivatives
+  ShapeFunctionViewType shape3D;                     ///< Device shape functions
+  DShapeFunctionViewType dshape3D;                   ///< Device derivatives
+  ShapeFunctionViewType::host_mirror_type h_shape3D; ///< Host shape functions
+  DShapeFunctionViewType::host_mirror_type h_dshape3D; ///< Host derivatives
 };
 } // namespace specfem::assembly::mesh_impl

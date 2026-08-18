@@ -6,13 +6,13 @@
 #include <tuple>
 #include <vector>
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "stacey.hpp"
 #include "utilities.hpp"
 #include <Kokkos_Core.hpp>
 #include "specfem/macros.hpp"
 
-specfem::assembly::boundaries_impl::stacey<specfem::dimension::type::dim2>::
+specfem::assembly::boundaries_impl::stacey<specfem::element::dimension_tag::dim2>::
     stacey(const int nspec, const int ngllz, const int ngllx,
            const specfem::mesh::absorbing_boundary<dimension_tag> &stacey,
            const specfem::assembly::mesh<dimension_tag> &mesh,
@@ -44,7 +44,7 @@ specfem::assembly::boundaries_impl::stacey<specfem::dimension::type::dim2>::
 
   for (int i = 0; i < nelements; ++i) {
     const int ispec_mesh = stacey.index_mapping(i);
-    const int ispec_compute = mesh.mesh_to_compute(ispec_mesh);
+    const int ispec_compute = mesh.h_mesh_to_compute(ispec_mesh);
     if (ispec_to_stacey.find(ispec_compute) == ispec_to_stacey.end()) {
       ispec_to_stacey[ispec_compute] = { i };
     } else {

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
-#include "execution/mapped_chunked_domain_iterator.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/execution.hpp"
 
 namespace specfem {
 namespace chunk_element {
@@ -19,19 +19,20 @@ namespace chunk_element {
  * @tparam ViewType Kokkos view type for index storage
  * @tparam TeamMemberType Kokkos team execution context
  */
-template <specfem::dimension::type DimensionTag, typename SIMD,
-          typename ViewType, typename TeamMemberType>
-class MappedIndex : public specfem::execution::MappedChunkElementIndex<
-                        DimensionTag, SIMD, ViewType, TeamMemberType>,
-                    public specfem::data_access::Accessor<
-                        specfem::data_access::AccessorType::chunk_element,
-                        specfem::data_access::DataClassType::mapped_index,
-                        DimensionTag, SIMD::using_simd> {
+template <specfem::element::dimension_tag DimensionTag, typename SIMD,
+          typename ViewType, typename TeamMemberType, typename G, int ChunkSize>
+class MappedIndex
+    : public specfem::execution::MappedChunkElementIndex<
+          DimensionTag, SIMD, ViewType, TeamMemberType, G, ChunkSize>,
+      public specfem::data_access::Accessor<
+          specfem::datatype::AccessorType::chunk_element,
+          specfem::data_access::DataClassType::mapped_index, DimensionTag,
+          SIMD::using_simd> {
 private:
   /// @brief Base execution index type for chunk element mapping
   using base_type =
       specfem::execution::MappedChunkElementIndex<DimensionTag, SIMD, ViewType,
-                                                  TeamMemberType>;
+                                                  TeamMemberType, G, ChunkSize>;
 
 public:
   /// @brief Iterator type from base class

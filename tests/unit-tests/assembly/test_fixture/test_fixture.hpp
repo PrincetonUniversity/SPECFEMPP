@@ -1,28 +1,30 @@
 #pragma once
 
-#include "../../SPECFEM_Environment.hpp"
-#include "enumerations/interface.hpp"
-#include "io/interface.hpp"
-#include "mesh/mesh.hpp"
-#include "quadrature/quadratures.hpp"
-#include "specfem/assembly.hpp"
+#include "SPECFEM_Environment.hpp"
+#include "specfem/assembly/assembly.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/io.hpp"
+#include "specfem/mesh.hpp"
+#include "specfem/quadrature.hpp"
 #include "specfem/receivers.hpp"
 #include "specfem/source.hpp"
-#include "utilities/strings.hpp"
+#include "specfem/units.hpp"
+#include "specfem/utilities.hpp"
 #include <gtest/gtest.h>
 #include <iostream>
+#include <optional>
 #include <vector>
 #include <yaml-cpp/yaml.h>
 
 template <bool using_simd>
 KOKKOS_FUNCTION
-    specfem::point::index<specfem::dimension::type::dim2, using_simd>
+    specfem::point::index<specfem::element::dimension_tag::dim2, using_simd>
     get_index(const int ielement, const int num_elements, const int iz,
               const int ix);
 
 template <bool using_simd>
 KOKKOS_FUNCTION
-    specfem::point::index<specfem::dimension::type::dim3, using_simd>
+    specfem::point::index<specfem::element::dimension_tag::dim3, using_simd>
     get_index(const int ielement, const int num_elements, const int iz,
               const int iy, const int ix);
 
@@ -31,7 +33,7 @@ KOKKOS_FUNCTION
 namespace test_configuration {
 
 // Base database struct
-template <specfem::dimension::type DimensionType> struct database {
+template <specfem::element::dimension_tag DimensionType> struct database {
 public:
   database() : sources(""), stations("") {};
   virtual ~database() = default;
@@ -41,7 +43,7 @@ public:
 };
 
 // 2D database specialization
-template <> struct database<specfem::dimension::type::dim2> {
+template <> struct database<specfem::element::dimension_tag::dim2> {
 public:
   database() : mesh(""), sources(""), stations("") {};
   database(const YAML::Node &Node) {
@@ -60,7 +62,7 @@ public:
 };
 
 // 3D database specialization
-template <> struct database<specfem::dimension::type::dim3> {
+template <> struct database<specfem::element::dimension_tag::dim3> {
 public:
   database()
       : mesh_database(""), mesh_parameters(""), sources(""), stations("") {};
@@ -115,7 +117,7 @@ public:
 };
 
 // Base config struct
-template <specfem::dimension::type DimensionType> struct config {
+template <specfem::element::dimension_tag DimensionType> struct config {
 public:
   config() : nproc(1) {};
   virtual ~config() = default;
@@ -127,9 +129,11 @@ protected:
 };
 
 // 2D config specialization
-template <> struct config<specfem::dimension::type::dim2> {
+template <> struct config<specfem::element::dimension_tag::dim2> {
 public:
-  config() : nproc(1), elastic_wave("P_SV"), electromagnetic_wave("TE") {};
+  config()
+      : nproc(1), elastic_wave("P_SV"), electromagnetic_wave("TE"),
+        attenuation_enabled(false) {};
   config(const YAML::Node &Node) {
     nproc = Node["nproc"].as<int>();
     if (Node["elastic_wave"].IsDefined())
@@ -138,14 +142,46 @@ public:
       // Default to P_SV if not defined
       elastic_wave = "P_SV";
 
-    if (Node["electromagnetic_wave"].IsDefined())
+    if (Node["electromagnetic_wave"].IsDefined()) {
       electromagnetic_wave = Node["electromagnetic_wave"].as<std::string>();
-    else
+    } else {
       // Default to TE if not defined
       electromagnetic_wave = "TE";
+    }
+
+    if (Node["attenuation_enabled"].IsDefined()) {
+      attenuation_enabled = Node["attenuation_enabled"].as<bool>();
+    } else {
+      // Default to false if not defined
+      attenuation_enabled = false;
+    }
+
+    if (Node["attenuation_f0"].IsDefined()) {
+      attenuation_f0 = specfem::units::quantity_cast<specfem::units::Hertz>(
+          Node["attenuation_f0"].as<std::string>());
+    }
+
+    if (Node["attenuation_band"].IsDefined()) {
+      const auto band_node = Node["attenuation_band"];
+      attenuation_band = specfem::utilities::Band<specfem::units::Hertz>(
+          specfem::units::quantity_cast<specfem::units::Hertz>(
+              band_node[0].as<std::string>()),
+          specfem::units::quantity_cast<specfem::units::Hertz>(
+              band_node[1].as<std::string>()));
+    }
   }
 
   int get_nproc() { return nproc; }
+
+  bool is_attenuation_enabled() const { return attenuation_enabled; }
+
+  std::optional<specfem::units::Hertz> get_attenuation_f0() const {
+    return attenuation_f0;
+  }
+
+  specfem::utilities::Band<specfem::units::Hertz> get_attenuation_band() const {
+    return attenuation_band;
+  }
 
   specfem::enums::elastic_wave get_elastic_wave() {
     if (specfem::utilities::is_psv_string(elastic_wave))
@@ -169,21 +205,36 @@ private:
   int nproc;
   std::string elastic_wave;
   std::string electromagnetic_wave;
+  bool attenuation_enabled;
+  std::optional<specfem::units::Hertz> attenuation_f0;
+  specfem::utilities::Band<specfem::units::Hertz> attenuation_band;
 };
 
 // 3D config specialization
-template <> struct config<specfem::dimension::type::dim3> {
+template <> struct config<specfem::element::dimension_tag::dim3> {
 public:
-  config() : nproc(1) {};
-  config(const YAML::Node &Node) { nproc = Node["nproc"].as<int>(); }
+  config() : nproc(1), attenuation_enabled(false) {};
+  config(const YAML::Node &Node) {
+    nproc = Node["nproc"].as<int>();
+
+    if (Node["attenuation_enabled"].IsDefined()) {
+      attenuation_enabled = Node["attenuation_enabled"].as<bool>();
+    } else {
+      // Default to false if not defined
+      attenuation_enabled = false;
+    }
+  };
 
   int get_nproc() { return nproc; }
 
+  bool is_attenuation_enabled() const { return attenuation_enabled; }
+
 private:
   int nproc;
+  bool attenuation_enabled;
 };
 
-template <specfem::dimension::type DimensionType> struct Test {
+template <specfem::element::dimension_tag DimensionType> struct Test {
 public:
   Test(const YAML::Node &Node) {
     name = Node["name"].as<std::string>();
@@ -221,6 +272,10 @@ public:
 
   int get_nproc() { return config.get_nproc(); }
 
+  bool is_attenuation_enabled() const {
+    return config.is_attenuation_enabled();
+  }
+
   std::string get_suffix() { return suffix; }
 
   std::string name;
@@ -232,7 +287,7 @@ public:
 };
 
 // 2D Test specialization with elastic wave methods
-template <> struct Test<specfem::dimension::type::dim2> {
+template <> struct Test<specfem::element::dimension_tag::dim2> {
 public:
   Test(const YAML::Node &Node) {
     name = Node["name"].as<std::string>();
@@ -243,15 +298,17 @@ public:
     YAML::Node solutions_node = Node["solutions"];
 
     try {
-      database = test_configuration::database<specfem::dimension::type::dim2>(
-          databases);
+      database =
+          test_configuration::database<specfem::element::dimension_tag::dim2>(
+              databases);
     } catch (std::runtime_error &e) {
       throw std::runtime_error("Error in test configuration: " + name + "\n" +
                                e.what());
     }
     try {
-      config = test_configuration::config<specfem::dimension::type::dim2>(
-          configuration);
+      config =
+          test_configuration::config<specfem::element::dimension_tag::dim2>(
+              configuration);
     } catch (std::runtime_error &e) {
       throw std::runtime_error("Error in test configuration: " + name + "\n" +
                                e.what());
@@ -272,6 +329,18 @@ public:
 
   int get_nproc() { return config.get_nproc(); }
 
+  bool is_attenuation_enabled() const {
+    return config.is_attenuation_enabled();
+  }
+
+  std::optional<specfem::units::Hertz> get_attenuation_f0() const {
+    return config.get_attenuation_f0();
+  }
+
+  specfem::utilities::Band<specfem::units::Hertz> get_attenuation_band() const {
+    return config.get_attenuation_band();
+  }
+
   specfem::enums::elastic_wave get_elastic_wave() {
     return config.get_elastic_wave();
   }
@@ -285,15 +354,15 @@ public:
   std::string name;
   std::string description;
   std::string suffix;
-  test_configuration::database<specfem::dimension::type::dim2> database;
-  test_configuration::config<specfem::dimension::type::dim2> config;
+  test_configuration::database<specfem::element::dimension_tag::dim2> database;
+  test_configuration::config<specfem::element::dimension_tag::dim2> config;
   test_configuration::solutions solutions;
 };
 } // namespace test_configuration
 
 // ------------------------------------------------------------------------
 
-template <specfem::dimension::type DimensionType>
+template <specfem::element::dimension_tag DimensionType>
 class Assembly : public ::testing::Test {
 
 protected:
@@ -302,10 +371,10 @@ protected:
     Iterator(
         test_configuration::Test<DimensionType> *p_Test,
         specfem::mesh::mesh<DimensionType> *p_mesh,
-        std::vector<std::shared_ptr<specfem::sources::source<DimensionType> > >
+        std::vector<std::shared_ptr<specfem::sources::source<DimensionType>>>
             *p_sources,
         std::vector<
-            std::shared_ptr<specfem::receivers::receiver<DimensionType> > >
+            std::shared_ptr<specfem::receivers::receiver<DimensionType>>>
             *p_stations,
         std::string *p_suffixes,
         specfem::assembly::assembly<DimensionType> *p_assembly)
@@ -316,10 +385,10 @@ protected:
     std::tuple<
         test_configuration::Test<DimensionType>,
         specfem::mesh::mesh<DimensionType>,
-        std::vector<std::shared_ptr<specfem::sources::source<DimensionType> > >,
+        std::vector<std::shared_ptr<specfem::sources::source<DimensionType>>>,
         std::vector<
-            std::shared_ptr<specfem::receivers::receiver<DimensionType> > >,
-        std::string, specfem::assembly::assembly<DimensionType> >
+            std::shared_ptr<specfem::receivers::receiver<DimensionType>>>,
+        std::string, specfem::assembly::assembly<DimensionType>>
     operator*() {
       std::cout << "-------------------------------------------------------\n"
                 << "\033[0;32m[RUNNING]\033[0m " << p_Test->name << "\n"
@@ -346,9 +415,9 @@ protected:
   private:
     test_configuration::Test<DimensionType> *p_Test;
     specfem::mesh::mesh<DimensionType> *p_mesh;
-    std::vector<std::shared_ptr<specfem::sources::source<DimensionType> > >
+    std::vector<std::shared_ptr<specfem::sources::source<DimensionType>>>
         *p_sources;
-    std::vector<std::shared_ptr<specfem::receivers::receiver<DimensionType> > >
+    std::vector<std::shared_ptr<specfem::receivers::receiver<DimensionType>>>
         *p_stations;
     std::string *p_suffixes;
     specfem::assembly::assembly<DimensionType> *p_assembly;
@@ -367,18 +436,18 @@ protected:
                     &suffixes[suffixes.size()], &assemblies[assemblies.size()]);
   }
 
-  std::vector<test_configuration::Test<DimensionType> > Tests;
-  std::vector<specfem::mesh::mesh<DimensionType> > Meshes;
+  std::vector<test_configuration::Test<DimensionType>> Tests;
+  std::vector<specfem::mesh::mesh<DimensionType>> Meshes;
   std::vector<
-      std::vector<std::shared_ptr<specfem::sources::source<DimensionType> > > >
+      std::vector<std::shared_ptr<specfem::sources::source<DimensionType>>>>
       Sources;
-  std::vector<std::vector<
-      std::shared_ptr<specfem::receivers::receiver<DimensionType> > > >
+  std::vector<
+      std::vector<std::shared_ptr<specfem::receivers::receiver<DimensionType>>>>
       Stations;
   std::vector<std::string> suffixes;
-  std::vector<specfem::assembly::assembly<DimensionType> > assemblies;
+  std::vector<specfem::assembly::assembly<DimensionType>> assemblies;
 };
 
 // Template specializations
-using Assembly2D = Assembly<specfem::dimension::type::dim2>;
-using Assembly3D = Assembly<specfem::dimension::type::dim3>;
+using Assembly2D = Assembly<specfem::element::dimension_tag::dim2>;
+using Assembly3D = Assembly<specfem::element::dimension_tag::dim3>;

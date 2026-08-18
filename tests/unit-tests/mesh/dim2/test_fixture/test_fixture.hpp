@@ -1,11 +1,11 @@
 #pragma once
 
 #include "SPECFEM_Environment.hpp"
-#include "enumerations/specfem_enums.hpp"
-#include "io/interface.hpp"
-#include "mesh/mesh.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/io.hpp"
+#include "specfem/mesh.hpp"
 #include "specfem/source.hpp"
-#include "utilities/strings.hpp"
+#include "specfem/utilities.hpp"
 #include <gtest/gtest.h>
 #include <iostream>
 #include <vector>
@@ -39,11 +39,33 @@ public:
     nproc = Node["nproc"].as<int>();
     elastic_wave = Node["elastic_wave"].as<std::string>();
 
-    if (Node["electromagnetic_wave"].IsDefined())
+    if (Node["electromagnetic_wave"].IsDefined()) {
       electromagnetic_wave = Node["electromagnetic_wave"].as<std::string>();
-    else
+    } else {
       // Default to TE if not defined
       electromagnetic_wave = "TE";
+    }
+
+    if (Node["attenuation_enabled"].IsDefined()) {
+      attenuation_enabled = Node["attenuation_enabled"].as<bool>();
+    } else {
+      // Default to false if not defined
+      attenuation_enabled = false;
+    }
+
+    if (Node["attenuation_f0"].IsDefined()) {
+      attenuation_f0 = specfem::units::quantity_cast<specfem::units::Hertz>(
+          Node["attenuation_f0"].as<std::string>());
+    }
+
+    if (Node["attenuation_band"].IsDefined()) {
+      const auto band_node = Node["attenuation_band"];
+      attenuation_band = specfem::utilities::Band<specfem::units::Hertz>(
+          specfem::units::quantity_cast<specfem::units::Hertz>(
+              band_node[0].as<std::string>()),
+          specfem::units::quantity_cast<specfem::units::Hertz>(
+              band_node[1].as<std::string>()));
+    }
   }
 
   int get_nproc() { return nproc; }
@@ -54,6 +76,16 @@ public:
       return specfem::enums::elastic_wave::sh;
     else
       throw std::runtime_error("Elastic wave type not supported");
+  }
+
+  bool is_attenuation_enabled() const { return attenuation_enabled; }
+
+  std::optional<specfem::units::Hertz> get_attenuation_f0() const {
+    return attenuation_f0;
+  }
+
+  specfem::utilities::Band<specfem::units::Hertz> get_attenuation_band() const {
+    return attenuation_band;
   }
 
   specfem::enums::electromagnetic_wave get_electromagnetic_wave() {
@@ -69,6 +101,9 @@ private:
   int nproc;
   std::string elastic_wave;
   std::string electromagnetic_wave;
+  bool attenuation_enabled;
+  std::optional<specfem::units::Hertz> attenuation_f0;
+  specfem::utilities::Band<specfem::units::Hertz> attenuation_band;
 };
 
 struct Test {
@@ -100,6 +135,18 @@ public:
 
   int get_nproc() { return config.get_nproc(); }
 
+  bool is_attenuation_enabled() const {
+    return config.is_attenuation_enabled();
+  }
+
+  std::optional<specfem::units::Hertz> get_attenuation_f0() const {
+    return config.get_attenuation_f0();
+  }
+
+  specfem::utilities::Band<specfem::units::Hertz> get_attenuation_band() const {
+    return config.get_attenuation_band();
+  }
+
   specfem::enums::elastic_wave get_elastic_wave() {
     return config.get_elastic_wave();
   }
@@ -124,11 +171,11 @@ protected:
   class Iterator {
   public:
     Iterator(test_configuration::Test *p_Test,
-             specfem::mesh::mesh<specfem::dimension::type::dim2> *p_mesh)
+             specfem::mesh::mesh<specfem::element::dimension_tag::dim2> *p_mesh)
         : p_Test(p_Test), p_mesh(p_mesh) {}
 
     std::tuple<test_configuration::Test,
-               specfem::mesh::mesh<specfem::dimension::type::dim2> >
+               specfem::mesh::mesh<specfem::element::dimension_tag::dim2> >
     operator*() {
       std::cout << "-------------------------------------------------------\n"
                 << "\033[0;32m[RUNNING]\033[0m Test " << p_Test->number << ": "
@@ -150,7 +197,7 @@ protected:
 
   private:
     test_configuration::Test *p_Test;
-    specfem::mesh::mesh<specfem::dimension::type::dim2> *p_mesh;
+    specfem::mesh::mesh<specfem::element::dimension_tag::dim2> *p_mesh;
   };
 
   MESH();
@@ -162,5 +209,6 @@ protected:
   }
 
   std::vector<test_configuration::Test> Tests;
-  std::vector<specfem::mesh::mesh<specfem::dimension::type::dim2> > meshes;
+  std::vector<specfem::mesh::mesh<specfem::element::dimension_tag::dim2> >
+      meshes;
 };

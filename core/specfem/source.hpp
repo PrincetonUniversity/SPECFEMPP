@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 
 /**
  * @namespace specfem::sources
@@ -13,15 +13,18 @@
  * implementations.
  *
  * <b>2D @ref specfem::sources::vector_source implementations</b>
- * - @ref specfem::sources::force<specfem::dimension::type::dim2>
- * - @ref specfem::sources::cosserat_force<specfem::dimension::type::dim2>
- * - @ref specfem::sources::adjoint_source<specfem::dimension::type::dim2>
+ * - @ref specfem::sources::force<specfem::element::dimension_tag::dim2>
+ * - @ref
+ * specfem::sources::cosserat_force<specfem::element::dimension_tag::dim2>
+ * - @ref
+ * specfem::sources::adjoint_source<specfem::element::dimension_tag::dim2>
  *
  * <b>3D @ref specfem::sources::vector_source implementations</b>
- * - @ref specfem::sources::force<specfem::dimension::type::dim3>
+ * - @ref specfem::sources::force<specfem::element::dimension_tag::dim3>
  *
  * <b>2D @ref specfem::sources::tensor_source implementations</b>
- * - @ref specfem::sources::moment_tensor< specfem::dimension::type::dim2 >
+ * - @ref specfem::sources::moment_tensor< specfem::element::dimension_tag::dim2
+ * >
  *
  * See also
  * - @ref specfem::sources::source
@@ -37,7 +40,6 @@ enum class source_type {
 
 }
 
-#include "source/source.hpp"
 #include "source/source.tpp"
 #include "source/tensor_source.hpp"
 #include "source/vector_source.hpp"
@@ -55,7 +57,7 @@ namespace specfem::sources {
  *
  * @tparam DimensionTag The dimension tag (`dim2` or `dim3`)
  */
-template <specfem::dimension::type DimensionTag> class moment_tensor;
+template <specfem::element::dimension_tag DimensionTag> class moment_tensor;
 
 /**
  * @brief Force source
@@ -64,7 +66,7 @@ template <specfem::dimension::type DimensionTag> class moment_tensor;
  *
  * @tparam DimensionTag The dimension tag (`dim2` or `dim3`)
  */
-template <specfem::dimension::type DimensionTag> class force;
+template <specfem::element::dimension_tag DimensionTag> class force;
 
 /**
  * @brief Cosserat force source
@@ -73,7 +75,7 @@ template <specfem::dimension::type DimensionTag> class force;
  *
  * @tparam DimensionTag The dimension tag (`dim2` or `dim3`)
  */
-template <specfem::dimension::type DimensionTag> class cosserat_force;
+template <specfem::element::dimension_tag DimensionTag> class cosserat_force;
 
 /**
  * @brief Adjoint source
@@ -82,7 +84,7 @@ template <specfem::dimension::type DimensionTag> class cosserat_force;
  *
  * @tparam DimensionTag The dimension tag (`dim2` or `dim3`)
  */
-template <specfem::dimension::type DimensionTag> class adjoint_source;
+template <specfem::element::dimension_tag DimensionTag> class adjoint_source;
 
 /**
  * @brief External source
@@ -91,7 +93,7 @@ template <specfem::dimension::type DimensionTag> class adjoint_source;
  *
  * @tparam DimensionTag The dimension tag (`dim2` or `dim3`)
  */
-template <specfem::dimension::type DimensionTag> class external;
+template <specfem::element::dimension_tag DimensionTag> class external;
 
 } // namespace specfem::sources
 
@@ -106,4 +108,5 @@ template <specfem::dimension::type DimensionTag> class external;
 // dim3 specializations
 #include "source/dim3/source.tpp"
 #include "source/dim3/tensor_source/moment_tensor_source.hpp"
+#include "source/dim3/vector_source/adjoint_source.hpp"
 #include "source/dim3/vector_source/force_source.hpp"

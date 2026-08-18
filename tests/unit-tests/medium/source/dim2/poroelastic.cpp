@@ -1,6 +1,5 @@
-#include "enumerations/interface.hpp"
-#include "enumerations/wavefield.hpp"
-#include "medium/compute_source.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/point.hpp"
 #include <gtest/gtest.h>
 #include <sstream>
@@ -8,18 +7,18 @@
 namespace {
 
 TEST(Source, PoroelasticIsotropic2D) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto medium_tag = specfem::element::medium_tag::poroelastic;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
 
-  using PointPropertiesType =
-      specfem::point::properties<dimension, medium_tag, property_tag, false>;
+  using PointPropertiesType = specfem::point::properties<
+      specfem::tags::Tags<dimension, medium_tag, property_tag, false> >;
   using PointSourceType =
       specfem::point::source<dimension, medium_tag,
-                             specfem::wavefield::simulation_field::forward>;
-  using PointAccelerationType =
-      specfem::point::acceleration<dimension, medium_tag, false>;
+                             specfem::simulation::field_type::forward>;
+  using PointAccelerationType = specfem::point::acceleration<
+      specfem::tags::Tags<dimension, medium_tag, false> >;
 
   const type_real phi = 0.3;
   const type_real rho_s = 2500.0;
@@ -49,7 +48,8 @@ TEST(Source, PoroelasticIsotropic2D) {
   point_source.lagrange_interpolant(3) = 4.5;
 
   const PointAccelerationType acceleration =
-      specfem::medium::compute_source_contribution(point_source, properties);
+      specfem::medium_physics::compute_source_contribution(point_source,
+                                                           properties);
 
   PointAccelerationType expected_acceleration;
   // Values from actual implementation - calculated using the property methods
@@ -67,18 +67,18 @@ TEST(Source, PoroelasticIsotropic2D) {
 }
 
 TEST(Source, PoroelasticIsotropic2D_ZeroSource) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto medium_tag = specfem::element::medium_tag::poroelastic;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
 
-  using PointPropertiesType =
-      specfem::point::properties<dimension, medium_tag, property_tag, false>;
+  using PointPropertiesType = specfem::point::properties<
+      specfem::tags::Tags<dimension, medium_tag, property_tag, false> >;
   using PointSourceType =
       specfem::point::source<dimension, medium_tag,
-                             specfem::wavefield::simulation_field::forward>;
-  using PointAccelerationType =
-      specfem::point::acceleration<dimension, medium_tag, false>;
+                             specfem::simulation::field_type::forward>;
+  using PointAccelerationType = specfem::point::acceleration<
+      specfem::tags::Tags<dimension, medium_tag, false> >;
 
   const type_real phi = 0.3;
   const type_real rho_s = 2500.0;
@@ -108,7 +108,8 @@ TEST(Source, PoroelasticIsotropic2D_ZeroSource) {
   point_source.lagrange_interpolant(3) = 4.5;
 
   const PointAccelerationType acceleration =
-      specfem::medium::compute_source_contribution(point_source, properties);
+      specfem::medium_physics::compute_source_contribution(point_source,
+                                                           properties);
 
   PointAccelerationType expected_acceleration;
   expected_acceleration(0) = 0.0;

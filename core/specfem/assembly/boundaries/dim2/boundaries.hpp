@@ -1,11 +1,11 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "impl/acoustic_free_surface.hpp"
 #include "impl/stacey.hpp"
-#include "mesh/mesh.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/mesh.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
@@ -21,7 +21,7 @@ namespace specfem::assembly {
  * boundary conditions (e.g., acoustic free surface, Stacey boundary conditions,
  * etc.), and data access functions to load/store data on device/host.
  */
-template <> class boundaries<specfem::dimension::type::dim2> {
+template <> class boundaries<specfem::element::dimension_tag::dim2> {
 
 private:
   /**
@@ -49,7 +49,7 @@ public:
    */
   ///@{
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim2; ///< Dimension tag
+      specfem::element::dimension_tag::dim2; ///< Dimension tag
 
   ///@}
 
@@ -76,7 +76,7 @@ public:
    *
    * **Dimensions:** [nspec]
    */
-  BoundaryViewType::HostMirror h_boundary_tags;
+  BoundaryViewType::host_mirror_type h_boundary_tags;
 
   /**
    * @brief Device-accessible mapping of spectral element index to acoustic free
@@ -119,7 +119,7 @@ public:
    * @endcode
    *
    */
-  IndexViewType::HostMirror h_acoustic_free_surface_index_mapping;
+  IndexViewType::host_mirror_type h_acoustic_free_surface_index_mapping;
 
   /**
    * @brief Device-accessible mapping of spectral element index to Stacey
@@ -163,7 +163,7 @@ public:
    * @endcode
    *
    */
-  IndexViewType::HostMirror h_stacey_index_mapping;
+  IndexViewType::host_mirror_type h_stacey_index_mapping;
 
   /**
    * @brief Data container used to store acoustic free surface boundary
@@ -254,9 +254,10 @@ public:
  *
  * @code
  * // Example usage in a device kernel
- * specfem::point::index<specfem::dimension::type::dim2> index{ispec, iz, ix};
- * specfem::point::boundary<specfem::element::boundary_tag::stacey,
- *                          specfem::dimension::type::dim2, false> boundary;
+ * specfem::point::index<specfem::element::dimension_tag::dim2> index{ispec, iz,
+ * ix}; specfem::point::boundary<specfem::element::boundary_tag::stacey,
+ *                          specfem::element::dimension_tag::dim2, false>
+ * boundary;
  *
  * // Load Stacey boundary data for mass matrix computation
  * specfem::assembly::load_on_device(index, assembly.boundaries, boundary);
@@ -273,7 +274,7 @@ template <typename IndexType, typename PointBoundaryType,
                                   int>::type = 0>
 KOKKOS_FORCEINLINE_FUNCTION void load_on_device(
     const IndexType &index,
-    const specfem::assembly::boundaries<specfem::dimension::type::dim2>
+    const specfem::assembly::boundaries<specfem::element::dimension_tag::dim2>
         &boundaries,
     PointBoundaryType &boundary) {
 
@@ -366,9 +367,10 @@ KOKKOS_FORCEINLINE_FUNCTION void load_on_device(
  *
  * @code
  * // Example usage in a host function
- * specfem::point::index<specfem::dimension::type::dim2> index{ispec, iz, ix};
- * specfem::point::boundary<specfem::element::boundary_tag::stacey,
- *                          specfem::dimension::type::dim2, false> boundary;
+ * specfem::point::index<specfem::element::dimension_tag::dim2> index{ispec, iz,
+ * ix}; specfem::point::boundary<specfem::element::boundary_tag::stacey,
+ *                          specfem::element::dimension_tag::dim2, false>
+ * boundary;
  *
  * // Load Stacey boundary data for mass matrix computation
  * specfem::assembly::load_on_host(index, assembly.boundaries, boundary);
@@ -383,11 +385,11 @@ template <typename IndexType, typename PointBoundaryType,
           typename std::enable_if<PointBoundaryType::simd::using_simd ==
                                       IndexType::using_simd,
                                   int>::type = 0>
-inline void
-load_on_host(const IndexType &index,
-             const specfem::assembly::boundaries<specfem::dimension::type::dim2>
-                 &boundaries,
-             PointBoundaryType &boundary) {
+inline void load_on_host(
+    const IndexType &index,
+    const specfem::assembly::boundaries<specfem::element::dimension_tag::dim2>
+        &boundaries,
+    PointBoundaryType &boundary) {
 
   constexpr auto tag = PointBoundaryType::boundary_tag;
 

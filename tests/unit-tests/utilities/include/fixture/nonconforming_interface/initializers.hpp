@@ -1,8 +1,10 @@
 #pragma once
 
-#include "specfem/data_access/accessor.hpp"
-
 // all non-specific declarations for NCIs
+#include "specfem/data_access/data_class.hpp"
+#include "specfem/element/tags.hpp"
+#include "specfem/element_coupling/tags.hpp"
+
 namespace specfem::test_fixture {
 
 /**
@@ -22,6 +24,16 @@ template <typename AnalyticalFunctionInitializer,
           typename EdgePointsInitializer>
 struct FromAnalyticalFunction;
 } // namespace EdgeFunctionInitializer2D
+/**
+ * @brief Initializes views of field values along an edge.
+ *
+ */
+namespace FaceFunctionInitializer3D {
+struct FaceFunctionInitializer3D {};
+template <typename AnalyticalFunctionInitializer,
+          typename FacePointsInitializer>
+struct FromAnalyticalFunction;
+} // namespace FaceFunctionInitializer3D
 
 /**
  * @brief Manages views of the transfer function.
@@ -60,7 +72,7 @@ struct IntersectionFunctionInitializer2D {};
  * IntersectionDataInitializer2D
  * @tparam PackedTypes list of accessors to derive the AccessorPack.
  */
-template <specfem::interface::interface_tag InterfaceTag,
+template <specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag, typename Initializer,
           specfem::data_access::DataClassType... PackedTypes>
 struct IntersectionDataPack2D;
@@ -80,7 +92,7 @@ struct IntersectionDataInitializer2D {};
  * @brief Baseline view for a nonconforming data accessor
  * (core/specfem/chunk_edge/nonconforming_interface.hpp)
  */
-template <specfem::interface::interface_tag InterfaceTag,
+template <specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag, typename Initializer,
           specfem::data_access::DataClassType DataClassType>
 struct NonconformingAccessorPatch2D;
@@ -110,5 +122,15 @@ struct QuadraturePoints {};
 namespace AnalyticalFunctionType {
 struct AnalyticalFunctionType {};
 } // namespace AnalyticalFunctionType
+
+/**
+ * @brief Provides a struct that can be passed as a LagrangeDerivative argument
+ * to kernels.
+ *
+ * @tparam QuadraturePointsX quadrature on the xi coordinates
+ * @tparam QuadraturePointsZ quadrature on the gamma coordinates
+ */
+template <typename QuadraturePointsX, typename QuadraturePointsZ>
+struct LagrangeDerivative2D;
 
 } // namespace specfem::test_fixture

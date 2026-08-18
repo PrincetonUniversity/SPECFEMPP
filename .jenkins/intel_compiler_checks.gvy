@@ -14,11 +14,11 @@ pipeline{
                     }
                     axis{
                         name 'HostSpace'
-                        values 'SERIAL;-DKokkos_ENABLE_SERIAL=ON -DKokkos_ENABLE_ATOMICS_BYPASS=ON;-n 1 -c 20', 'OPENMP;-DKokkos_ENABLE_OPENMP=ON;-n 1 -c 20'
+                        values 'SERIAL;-DKokkos_ENABLE_SERIAL=ON -DKokkos_ENABLE_ATOMICS_BYPASS=ON;-n 1 -c 20;-j', 'OPENMP;-DKokkos_ENABLE_OPENMP=ON;-n 1 -c 20;-j 1'
                     }
                     axis{
                         name 'SIMD'
-                        values 'SIMD_NONE;-DSPECFEM_ENABLE_SIMD=OFF', 'SIMD_NATIVE;-DSPECFEM_ENABLE_SIMD=ON -DKokkos_ARCH_NATIVE=ON -DKokkos_ENABLE_AGGRESSIVE_VECTORIZATION=ON'
+                        values 'SIMD_NONE;-DSPECFEM_ENABLE_SIMD=OFF', 'SIMD_NATIVE;-DSPECFEM_ENABLE_SIMD=ON -DKokkos_ARCH_SKX=ON -DKokkos_ENABLE_AGGRESSIVE_VECTORIZATION=ON'
                     }
                 }
                 stages {
@@ -43,6 +43,10 @@ pipeline{
                             HOST_RUN_FLAGS = """${sh(
                                                     returnStdout: true,
                                                     script: 'cut -d";" -f3 <<<"${HostSpace}"'
+                                                ).trim()}"""
+                            CTEST_FLAGS = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f4 <<<"${HostSpace}"'
                                                 ).trim()}"""
                             SIMD_NAME = """${sh(
                                                     returnStdout: true,
@@ -69,6 +73,7 @@ pipeline{
                                           ${CMAKE_HOST_FLAGS} \
                                           ${SIMD_FLAGS} \
                                           -D SPECFEM_BUILD_TESTS=ON \
+                                            -D SPECFEMPP_TEST_DIR=/scratch/gpfs/TROMP/specfempp/jenkins/test_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG} \
                                           -D SPECFEM_BUILD_BENCHMARKS=OFF
                                         cmake3 --build build_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
                                     """
@@ -82,9 +87,14 @@ pipeline{
                                         module load cmake/3.30.8
                                         module load boost/1.85.0
                                         module load ${INTEL_MODULE}
-                                        cd build_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}/tests/unit-tests
-                                        export BUILD_DIR=build_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
-                                        srun -N 1 -t 00:30:00 --account rse ${HOST_RUN_FLAGS} --constraint="intel|cascade" bash -c 'export OMP_PROC_BIND=spread; export OMP_THREADS=places; ctest -j --output-on-failure;'
+
+                                        cd /scratch/gpfs/TROMP/specfempp/jenkins/test_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG} && \
+                                        srun -N 1 -t 00:30:00 --account rse ${HOST_RUN_FLAGS} \
+                                            --constraint="intel" bash -c 'export OMP_PROC_BIND=spread; \
+                                            export OMP_PLACES=threads; \
+                                            export OMP_NUM_THREADS=20; \
+                                            hostname; \
+                                            ctest ${CTEST_FLAGS} --output-on-failure --no-tests=error;'
                                     """
                                     echo ' Testing completed '
                                 }
@@ -92,9 +102,10 @@ pipeline{
                         }
                         post {
                             always {
-                                echo ' Cleaning '
+                                echo 'Executing cleanup of build and test artifacts'
                                 sh "rm -rf build_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
                                 sh "rm -rf install_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
+                                sh "rm -rf /scratch/gpfs/TROMP/specfempp/jenkins/test_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
                             }
                         }
                     }

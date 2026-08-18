@@ -1,63 +1,25 @@
 #pragma once
 
-#include "datatypes/point_view.hpp"
-#include "enumerations/interface.hpp"
 #include "jacobian_matrix.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/datatype.hpp"
+#include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem {
-namespace point {
+namespace specfem::point {
+namespace impl {
 
-/**
- * @brief Represents a stress tensor at a quadrature point in spectral element
- * simulations.
- *
- * The stress class encapsulates stress tensor data and provides operations for
- * stress transformations in finite element computations. The tensor dimensions
- * and components are determined by the medium type and spatial dimension:
- * - Acoustic medium: 1 component in 2D/3D (scalar pressure)
- * - Elastic medium: 2 components in 2D, 3 components in 3D (velocity
- * components)
- * - Poroelastic medium: 4 components in 2D (solid and fluid phases)
- *
- * The class inherits from the data access framework providing SIMD
- * vectorization support and efficient memory access patterns for
- * high-performance computing.
- *
- * @tparam DimensionTag Spatial dimension (dim2 or dim3)
- * @tparam MediumTag Physical medium type (acoustic, elastic_psv, elastic,
- * poroelastic)
- * @tparam UseSIMD Enable SIMD vectorization for performance optimization
- *
- * @code
- * // Example: Create stress tensor for 2D elastic medium
- * using stress_type = specfem::point::stress<specfem::dimension::type::dim2,
- *                                           specfem::element::medium_tag::elastic_psv,
- *                                           false>;
- *
- * // Initialize stress components (2x2 tensor for 2D elastic)
- * typename stress_type::value_type T(1.1, 2.1,  // first column  (component 0,
- * 1) 1.2, 2.2); // second column (component 0, 1) stress_type stress_tensor(T);
- *
- * // Transform stress using jacobian matrix
- * // auto jacobian = initialize_jacobian_matrix();
- * auto transformed_stress = stress_tensor * jacobian;
- * @endcode
- *
- * @see specfem::point::jacobian_matrix
- * @see specfem::data_access::Accessor
- */
-template <specfem::dimension::type DimensionTag,
+/// @private Implementation detail
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct stress
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::stress, DimensionTag, UseSIMD> {
 private:
   /** @brief Base accessor type for data access framework integration */
   using base_type = specfem::data_access::Accessor<
-      specfem::data_access::AccessorType::point,
+      specfem::datatype::AccessorType::point,
       specfem::data_access::DataClassType::stress, DimensionTag, UseSIMD>;
 
 public:
@@ -75,7 +37,7 @@ public:
       specfem::element::attributes<DimensionTag, MediumTag>::components;
 
   /** @brief Template parameter for spatial dimension */
-  constexpr static specfem::dimension::type dimension_tag = DimensionTag;
+  constexpr static specfem::element::dimension_tag dimension_tag = DimensionTag;
 
   /** @brief Template parameter for medium type */
   constexpr static specfem::element::medium_tag medium_tag = MediumTag;
@@ -164,10 +126,9 @@ public:
    * @endcode
    */
   KOKKOS_INLINE_FUNCTION
-  value_type operator*(
-      const specfem::point::jacobian_matrix<specfem::dimension::type::dim2,
-                                            true, UseSIMD> &jacobian_matrix)
-      const {
+  value_type operator*(const specfem::point::jacobian_matrix<
+                       specfem::element::dimension_tag::dim2, true, UseSIMD>
+                           &jacobian_matrix) const {
     value_type F;
 
     for (int icomponent = 0; icomponent < components; ++icomponent) {
@@ -215,10 +176,9 @@ public:
    * @endcode
    */
   KOKKOS_INLINE_FUNCTION
-  value_type operator*(
-      const specfem::point::jacobian_matrix<specfem::dimension::type::dim3,
-                                            true, UseSIMD> &jacobian_matrix)
-      const {
+  value_type operator*(const specfem::point::jacobian_matrix<
+                       specfem::element::dimension_tag::dim3, true, UseSIMD>
+                           &jacobian_matrix) const {
     value_type F;
 
     for (int icomponent = 0; icomponent < components; ++icomponent) {
@@ -285,5 +245,46 @@ public:
   }
   ///@}
 };
-} // namespace point
-} // namespace specfem
+} // namespace impl
+
+/**
+ * @brief Represents a stress tensor at a quadrature point in spectral element
+ * simulations.
+ *
+ * The stress class encapsulates stress tensor data and provides operations for
+ * stress transformations in finite element computations. The tensor dimensions
+ * and components are determined by the medium type and spatial dimension:
+ * - Acoustic medium: 1 component in 2D/3D (scalar pressure)
+ * - Elastic medium: 2 components in 2D, 3 components in 3D (velocity
+ * components)
+ * - Poroelastic medium: 4 components in 2D (solid and fluid phases)
+ *
+ * The class inherits from the data access framework providing SIMD
+ * vectorization support and efficient memory access patterns for
+ * high-performance computing.
+ *
+ * @tparam Tags The tags for the element where the quadrature point is located
+ *
+ * @code
+ * // Example: Create stress tensor for 2D elastic medium
+ * using stress_type = specfem::point::stress<
+ *     specfem::tags::Tags<specfem::element::dimension_tag::dim2,
+ *                         specfem::element::medium_tag::elastic_psv,
+ *                         false>>;
+ *
+ * // Initialize stress components (2x2 tensor for 2D elastic)
+ * typename stress_type::value_type T(1.1, 2.1,  // first column  (component 0,
+ * 1) 1.2, 2.2); // second column (component 0, 1) stress_type stress_tensor(T);
+ *
+ * // Transform stress using jacobian matrix
+ * // auto jacobian = initialize_jacobian_matrix();
+ * auto transformed_stress = stress_tensor * jacobian;
+ * @endcode
+ *
+ * @see specfem::point::jacobian_matrix
+ * @see specfem::data_access::Accessor
+ */
+template <typename Tags>
+using stress =
+    impl::stress<Tags::dimension_tag, Tags::medium_tag, Tags::using_simd>;
+} // namespace specfem::point

@@ -5,11 +5,11 @@
 #include <type_traits>
 #include <vector>
 
-#include "enumerations/interface.hpp"
-#include "mesh/mesh.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/mesh.hpp"
 #include "specfem/point.hpp"
 
 namespace specfem::assembly::boundaries_impl {
@@ -46,7 +46,7 @@ namespace specfem::assembly::boundaries_impl {
  * - Both device and host storage for hybrid CPU/GPU execution
  *
  */
-template <> struct stacey<specfem::dimension::type::dim2> {
+template <> struct stacey<specfem::element::dimension_tag::dim2> {
 private:
   /**
    * @name Private Constants
@@ -66,7 +66,7 @@ public:
   /**
    * @brief Dimension tag indicating this is a 2D implementation
    */
-  constexpr static auto dimension_tag = specfem::dimension::type::dim2;
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim2;
   ///@}
 
   /**
@@ -125,7 +125,7 @@ public:
    * Host mirror of quadrature_point_boundary_tag for CPU access during
    * initialization, debugging, and host-side computations.
    */
-  BoundaryTagView::HostMirror h_quadrature_point_boundary_tag;
+  BoundaryTagView::host_mirror_type h_quadrature_point_boundary_tag;
 
   /**
    * @brief Device-accessible edge normal vectors for boundary quadrature points
@@ -160,14 +160,14 @@ public:
    *
    * Host mirror of edge_normal for CPU access and initialization.
    */
-  EdgeNormalView::HostMirror h_edge_normal;
+  EdgeNormalView::host_mirror_type h_edge_normal;
 
   /**
    * @brief Host-accessible mirror of edge integration weights
    *
    * Host mirror of edge_weight for CPU access and initialization.
    */
-  EdgeWeightView::HostMirror h_edge_weight;
+  EdgeWeightView::host_mirror_type h_edge_weight;
   ///@}
 
   /**
@@ -327,7 +327,7 @@ public:
     using mask_type = typename simd::mask_type;
     using tag_type = typename simd::tag_type;
 
-    mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+    const auto mask = index.template get_mask<simd>();
 
     for (int lane = 0; lane < mask_type::size(); ++lane) {
       if (index.mask(lane)) {
@@ -336,16 +336,14 @@ public:
       }
     }
 
-    Kokkos::Experimental::where(mask, boundary.edge_normal(0))
-        .copy_from(&edge_normal(index.ispec, index.iz, index.ix, 0),
-                   tag_type());
+    boundary.edge_normal(0) = Kokkos::Experimental::simd_partial_load(
+        &edge_normal(index.ispec, index.iz, index.ix, 0), mask, tag_type());
 
-    Kokkos::Experimental::where(mask, boundary.edge_normal(1))
-        .copy_from(&edge_normal(index.ispec, index.iz, index.ix, 1),
-                   tag_type());
+    boundary.edge_normal(1) = Kokkos::Experimental::simd_partial_load(
+        &edge_normal(index.ispec, index.iz, index.ix, 1), mask, tag_type());
 
-    Kokkos::Experimental::where(mask, boundary.edge_weight)
-        .copy_from(&edge_weight(index.ispec, index.iz, index.ix), tag_type());
+    boundary.edge_weight = Kokkos::Experimental::simd_partial_load(
+        &edge_weight(index.ispec, index.iz, index.ix), mask, tag_type());
   }
 
   /**
@@ -375,7 +373,7 @@ public:
     using mask_type = typename simd::mask_type;
     using tag_type = typename simd::tag_type;
 
-    mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+    const auto mask = index.template get_mask<simd>();
 
     for (int lane = 0; lane < mask_type::size(); ++lane) {
       if (index.mask(lane)) {
@@ -384,16 +382,14 @@ public:
       }
     }
 
-    Kokkos::Experimental::where(mask, boundary.edge_normal(0))
-        .copy_from(&edge_normal(index.ispec, index.iz, index.ix, 0),
-                   tag_type());
+    boundary.edge_normal(0) = Kokkos::Experimental::simd_partial_load(
+        &edge_normal(index.ispec, index.iz, index.ix, 0), mask, tag_type());
 
-    Kokkos::Experimental::where(mask, boundary.edge_normal(1))
-        .copy_from(&edge_normal(index.ispec, index.iz, index.ix, 1),
-                   tag_type());
+    boundary.edge_normal(1) = Kokkos::Experimental::simd_partial_load(
+        &edge_normal(index.ispec, index.iz, index.ix, 1), mask, tag_type());
 
-    Kokkos::Experimental::where(mask, boundary.edge_weight)
-        .copy_from(&edge_weight(index.ispec, index.iz, index.ix), tag_type());
+    boundary.edge_weight = Kokkos::Experimental::simd_partial_load(
+        &edge_weight(index.ispec, index.iz, index.ix), mask, tag_type());
   }
   ///@}
 
@@ -496,7 +492,7 @@ public:
     using mask_type = typename simd::mask_type;
     using tag_type = typename simd::tag_type;
 
-    mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+    const auto mask = index.template get_mask<simd>();
 
     for (int lane = 0; lane < mask_type::size(); ++lane) {
       if (index.mask(lane)) {
@@ -505,16 +501,14 @@ public:
       }
     }
 
-    Kokkos::Experimental::where(mask, boundary.edge_normal(0))
-        .copy_from(&h_edge_normal(index.ispec, index.iz, index.ix, 0),
-                   tag_type());
+    boundary.edge_normal(0) = Kokkos::Experimental::simd_partial_load(
+        &h_edge_normal(index.ispec, index.iz, index.ix, 0), mask, tag_type());
 
-    Kokkos::Experimental::where(mask, boundary.edge_normal(1))
-        .copy_from(&h_edge_normal(index.ispec, index.iz, index.ix, 1),
-                   tag_type());
+    boundary.edge_normal(1) = Kokkos::Experimental::simd_partial_load(
+        &h_edge_normal(index.ispec, index.iz, index.ix, 1), mask, tag_type());
 
-    Kokkos::Experimental::where(mask, boundary.edge_weight)
-        .copy_from(&h_edge_weight(index.ispec, index.iz, index.ix), tag_type());
+    boundary.edge_weight = Kokkos::Experimental::simd_partial_load(
+        &h_edge_weight(index.ispec, index.iz, index.ix), mask, tag_type());
 
     return;
   }
@@ -546,7 +540,7 @@ public:
     using mask_type = typename simd::mask_type;
     using tag_type = typename simd::tag_type;
 
-    mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+    const auto mask = index.template get_mask<simd>();
 
     for (int lane = 0; lane < mask_type::size(); ++lane) {
       if (index.mask(lane)) {
@@ -555,16 +549,14 @@ public:
       }
     }
 
-    Kokkos::Experimental::where(mask, boundary.edge_normal(0))
-        .copy_from(&h_edge_normal(index.ispec, index.iz, index.ix, 0),
-                   tag_type());
+    boundary.edge_normal(0) = Kokkos::Experimental::simd_partial_load(
+        &h_edge_normal(index.ispec, index.iz, index.ix, 0), mask, tag_type());
 
-    Kokkos::Experimental::where(mask, boundary.edge_normal(1))
-        .copy_from(&h_edge_normal(index.ispec, index.iz, index.ix, 1),
-                   tag_type());
+    boundary.edge_normal(1) = Kokkos::Experimental::simd_partial_load(
+        &h_edge_normal(index.ispec, index.iz, index.ix, 1), mask, tag_type());
 
-    Kokkos::Experimental::where(mask, boundary.edge_weight)
-        .copy_from(&h_edge_weight(index.ispec, index.iz, index.ix), tag_type());
+    boundary.edge_weight = Kokkos::Experimental::simd_partial_load(
+        &h_edge_weight(index.ispec, index.iz, index.ix), mask, tag_type());
 
     return;
   }

@@ -1,9 +1,9 @@
 #include "gaussianhdur.hpp"
-#include "constants.hpp"
 #include "impl/time_functions.hpp"
+#include "specfem/constants.hpp"
 #include "specfem/logger.hpp"
-#include "specfem_setup.hpp"
-#include "utilities/interface.hpp"
+#include "specfem/setup.hpp"
+#include "specfem/utilities.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
 
@@ -32,8 +32,7 @@ specfem::source_time_functions::GaussianHdur::GaussianHdur(
 
   // The half duration is then based on the empirical relation to of a
   // triangular source time function
-  this->hdur_ =
-      this->hdur_ / specfem::constants::empirical::SOURCE_DECAY_MIMIC_TRIANGLE;
+  this->hdur_ = this->hdur_ / specfem::constants::SOURCE_DECAY_MIMIC_TRIANGLE;
 }
 
 specfem::source_time_functions::GaussianHdur::GaussianHdur(
@@ -73,7 +72,8 @@ type_real specfem::source_time_functions::GaussianHdur::compute(type_real t) {
 
 void specfem::source_time_functions::GaussianHdur::compute_source_time_function(
     const type_real t0, const type_real dt, const int nsteps,
-    specfem::kokkos::HostView2d<type_real> source_time_function) {
+    Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+        source_time_function) {
 
   const int ncomponents = source_time_function.extent(1);
 
@@ -85,16 +85,15 @@ void specfem::source_time_functions::GaussianHdur::compute_source_time_function(
 }
 
 std::string specfem::source_time_functions::GaussianHdur::print() const {
-  std::stringstream ss;
-  ss << "        GaussianHdur source time function:\n"
-     << "          hdur: " << this->hdur_ << "\n"
-     << "          tshift: " << this->tshift_ << "\n"
-     << "          factor: " << this->factor_ << "\n"
-     << "          t0: " << this->t0_ << "\n"
-     << "          use_trick_for_better_pressure: "
-     << this->use_trick_for_better_pressure_ << "\n";
-
-  return ss.str();
+  std::ostringstream message;
+  message << "GaussianHdur(t0="
+          << specfem::utilities::format_scientific(this->t0_, 6)
+          << ", hdur=" << specfem::utilities::format_scientific(this->hdur_, 6)
+          << ", tshift="
+          << specfem::utilities::format_scientific(this->tshift_, 6)
+          << ", factor="
+          << specfem::utilities::format_scientific(this->factor_, 6) << ")";
+  return message.str();
 }
 
 bool specfem::source_time_functions::GaussianHdur::operator==(

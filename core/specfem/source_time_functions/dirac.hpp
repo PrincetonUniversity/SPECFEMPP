@@ -1,8 +1,7 @@
 #pragma once
 
-#include "kokkos_abstractions.h"
 #include "source_time_function.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
 #include <ostream>
@@ -73,7 +72,8 @@ public:
 
   void compute_source_time_function(
       const type_real t0, const type_real dt, const int nsteps,
-      specfem::kokkos::HostView2d<type_real> source_time_function) override;
+      Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+          source_time_function) override;
 
   type_real get_dt() const { return this->dt_; }
   type_real get_factor() const { return this->factor_; }

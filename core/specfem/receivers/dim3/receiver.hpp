@@ -1,24 +1,27 @@
 #pragma once
 
-#include "constants.hpp"
-#include "enumerations/interface.hpp"
-#include "enumerations/specfem_enums.hpp"
-#include "kokkos_abstractions.h"
-#include "quadrature/interface.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/constants.hpp"
+#include "specfem/coordinate_systems/coordinate_resolution_result.hpp"
+#include "specfem/coordinate_systems/coordinates.hpp"
+
+#include "specfem/enums.hpp"
+#include "specfem/point.hpp"
+#include "specfem/quadrature.hpp"
+#include "specfem/setup.hpp"
 #include <cmath>
+#include <optional>
 
 namespace specfem::receivers {
 
-template <> class receiver<specfem::dimension::type::dim3> {
+template <> class receiver<specfem::element::dimension_tag::dim3> {
 
 public:
   /**
    * Compile-time constants
    * @{
    */
-  constexpr static specfem::dimension::type dimension_tag =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension_tag =
+      specfem::element::dimension_tag::dim3;
   /// @}
 
   /**
@@ -32,8 +35,22 @@ public:
    */
   receiver(const std::string &network_name, const std::string &station_name,
            const type_real x, const type_real y, const type_real z)
-      : network_name(network_name), station_name(station_name), x(x), y(y),
-        z(z) {};
+      : network_name(network_name), station_name(station_name),
+        global_coordinates(x, y, z) {};
+
+  /**
+   * @brief Construct a new receiver object from generic coordinates
+   *
+   * @param network_name Name of network where this station lies in
+   * @param station_name Name of station
+   * @param coordinates Generic coordinate object
+   */
+  receiver(
+      const std::string &network_name, const std::string &station_name,
+      std::unique_ptr<specfem::coordinate_systems::coordinates<dimension_tag>>
+          coordinates)
+      : network_name(network_name), station_name(station_name),
+        read_coordinates_(std::move(coordinates)) {};
 
   /**
    * @brief Get the name of network where this station lies
@@ -54,9 +71,26 @@ public:
    */
   std::string print() const;
 
-  type_real get_x() const { return this->x; }
-  type_real get_y() const { return this->y; }
-  type_real get_z() const { return this->z; }
+  /**
+   * @brief Get the global coordinates of the receiver
+   *
+   * @return specfem::point::global_coordinates<dimension_tag>
+   */
+  specfem::point::global_coordinates<dimension_tag>
+  get_global_coordinates() const {
+    return global_coordinates;
+  }
+
+  /**
+   * @brief Set the global coordinates of the receiver
+   *
+   * @param global_coordinates global coordinates
+   */
+  void
+  set_global_coordinates(const specfem::point::global_coordinates<dimension_tag>
+                             &global_coordinates) {
+    this->global_coordinates = global_coordinates;
+  }
 
   /**
    * @brief Equality operator
@@ -66,12 +100,79 @@ public:
    */
   bool operator==(const receiver &other) const;
 
+  int get_partition_index() const { return partition_index_; }
+  void set_partition_index(int rank) { partition_index_ = rank; }
+
+  /**
+   * @brief Set the coordinate resolution result (resolved global + topography).
+   *
+   * Populated at assembly time for receivers given generic coordinates; left
+   * unset for receivers specified directly as (x, y, z).
+   */
+  void set_resolution_result(
+      const specfem::coordinate_systems::CoordinateResolutionResult<
+          dimension_tag> &resolution) {
+    resolution_ = resolution;
+  }
+
+  /**
+   * @brief Get the coordinate resolution result, or nullopt if not resolved.
+   */
+  const std::optional<
+      specfem::coordinate_systems::CoordinateResolutionResult<dimension_tag>> &
+  get_resolution_result() const {
+    return resolution_;
+  }
+
+  /**
+   * @brief Set the location error (target-to-found distance) in metres.
+   */
+  void set_location_error(type_real error) { location_error_ = error; }
+
+  /**
+   * @brief Get the location error (target-to-found distance) in metres.
+   */
+  type_real get_location_error() const { return location_error_; }
+
+  /**
+   * @brief Set the generic coordinates for this receiver.
+   */
+  void set_read_coordinates(
+      std::unique_ptr<specfem::coordinate_systems::coordinates<dimension_tag>>
+          coordinates) {
+    read_coordinates_ = std::move(coordinates);
+  }
+
+  /**
+   * @brief Get the generic coordinates (const), or nullptr if not set.
+   */
+  const specfem::coordinate_systems::coordinates<dimension_tag> *
+  get_read_coordinates() const {
+    return read_coordinates_.get();
+  }
+
+  /**
+   * @brief Get the generic coordinates (mutable), or nullptr if not set.
+   */
+  specfem::coordinate_systems::coordinates<dimension_tag> *
+  get_read_coordinates() {
+    return read_coordinates_.get();
+  }
+
 private:
-  type_real x;              ///< x coordinate of station
-  type_real y;              ///< y coordinate of station
-  type_real z;              ///< z coordinate of station
+  specfem::point::global_coordinates<dimension_tag>
+      global_coordinates; ///< Global coordinates of the receiver
+  std::unique_ptr<specfem::coordinate_systems::coordinates<dimension_tag>>
+      read_coordinates_; ///< Generic coordinates (resolved at assembly time)
+  std::optional<
+      specfem::coordinate_systems::CoordinateResolutionResult<dimension_tag>>
+      resolution_;          ///< Resolved global + topography (generic coords)
   std::string network_name; ///< Name of the network where this station lies
   std::string station_name; ///< Name of the station
+  int partition_index_ =
+      -1; ///< MPI rank that owns this receiver (-1 = not yet located)
+  type_real location_error_ =
+      -1; ///< Target-to-found distance in metres (-1 = not yet located)
 };
 
 } // namespace specfem::receivers
