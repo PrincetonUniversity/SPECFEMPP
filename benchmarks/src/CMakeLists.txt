@@ -24,6 +24,7 @@ add_subdirectory(dim2/homogeneous-cosserat)
 add_subdirectory(dim2/marmousi)
 
 # 3D
+add_subdirectory(dim3/homogeneous_viscoelastic_kernel)
 add_subdirectory(dim3/homogeneous_halfspace)
 add_subdirectory(dim3/homogeneous_acoustic_kernel)
 add_subdirectory(dim3/homogeneous_elastic_kernel)
@@ -31,3 +32,6 @@ add_subdirectory(dim3/acoustic_elastic_force)
 add_subdirectory(dim3/gmsh_halfspace_3d)
 add_subdirectory(dim3/mount_st_helens)
 # add_subdirectory(dim3/acoustic_elastic_interface)
+
+# 3D global
+add_subdirectory(dim3_globe/global_small_mesh)

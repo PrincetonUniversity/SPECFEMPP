@@ -15,6 +15,7 @@
 #include "specfem/tag_dispatch.hpp"
 #include "specfem/tags.hpp"
 #include "specfem/units.hpp"
+#include "specfem/utilities/band.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly {
@@ -70,6 +71,13 @@ struct Attenuation<specfem::element::dimension_tag::dim3>
   // Attenuation parameters
   specfem::units::Hertz f0; ///< Reference frequency
   type_real deltat;         ///< Time step size
+
+  // Frequency-band inputs retained so attenuation state can be recomputed
+  // from a Q model read from disk (see the property reader).
+  specfem::units::Hertz fc; ///< Band-center frequency for modulus scaling
+  specfem::utilities::Band<specfem::units::Hertz> band; ///< Attenuation band
+  Kokkos::View<type_real[N_SLS], Kokkos::DefaultHostExecutionSpace>
+      tau_sigma; ///< Stress relaxation times
 
   // Runge-Kutta attenuation factors (one coefficient per SLS mechanism)
   Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight,
@@ -130,6 +138,49 @@ struct Attenuation<specfem::element::dimension_tag::dim3>
       const specfem::utilities::Band<specfem::units::Hertz> &band,
       const Kokkos::View<type_real[N_SLS], Kokkos::DefaultHostExecutionSpace>
           &tau_sigma);
+
+  /**
+   * @brief Compile-time check whether (MediumTag, PropertyTag) has an
+   *        attenuation container.
+   *
+   * Guards @ref get_container in generic code that iterates over all
+   * (medium, property) combinations (e.g. the property writer/reader).
+   *
+   * @tparam MediumTag   Medium tag to query
+   * @tparam PropertyTag Property tag to query
+   * @return true if an attenuation_medium exists for the combination
+   */
+  template <specfem::element::medium_tag MediumTag,
+            specfem::element::property_tag PropertyTag>
+  static constexpr bool has_attenuation() {
+    return has_attenuation<
+        MediumTag, PropertyTag,
+        specfem::element::attenuation_tag::constant_isotropic>();
+  }
+
+  /**
+   * @brief Compile-time check whether the full (MediumTag, PropertyTag,
+   *        AttenuationTag) combination has an attenuation container.
+   *
+   * Distinguishes attenuating combinations with a container from those the
+   * mesh may tag constant_isotropic but for which no container exists (e.g.
+   * acoustic); the property writer/reader treat the latter like
+   * non-attenuating combinations.
+   *
+   * @tparam MediumTag      Medium tag to query
+   * @tparam PropertyTag    Property tag to query
+   * @tparam AttenuationTag Attenuation tag to query
+   * @return true if an attenuation_medium exists for the combination
+   */
+  template <specfem::element::medium_tag MediumTag,
+            specfem::element::property_tag PropertyTag,
+            specfem::element::attenuation_tag AttenuationTag>
+  static constexpr bool has_attenuation() {
+    return specfem::tag_dispatch::contains_v<
+        decltype(attenuation_medium_combinations),
+        specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag,
+                            AttenuationTag>>;
+  }
 
   /**
    * @brief Access the attenuation_medium for a given medium and property.

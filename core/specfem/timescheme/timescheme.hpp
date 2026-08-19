@@ -146,6 +146,28 @@ public:
   apply_corrector_phase_forward(const specfem::element::medium_tag tag) = 0;
 
   /**
+   * @brief Apply predictor phase for adjoint time integration.
+   *
+   * @param tag Medium type to process (elastic, acoustic, etc.)
+   * @return Number of degrees of freedom updated
+   */
+  virtual int
+  apply_predictor_phase_adjoint(const specfem::element::medium_tag tag) {
+    return 0;
+  }
+
+  /**
+   * @brief Apply corrector phase for adjoint time integration.
+   *
+   * @param tag Medium type to process (elastic, acoustic, etc.)
+   * @return Number of degrees of freedom updated
+   */
+  virtual int
+  apply_corrector_phase_adjoint(const specfem::element::medium_tag tag) {
+    return 0;
+  }
+
+  /**
    * @brief Apply predictor phase for backward time integration
    *
    * Updates displacement and velocity using current acceleration for the

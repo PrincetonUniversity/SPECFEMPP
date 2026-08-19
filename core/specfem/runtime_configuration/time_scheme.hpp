@@ -22,15 +22,14 @@ public:
    * @param nstep Number of time steps
    */
   time_scheme(std::string timescheme, type_real dt, type_real nstep,
-              type_real t0, specfem::simulation::type simulation)
-      : timescheme(timescheme), dt(dt), nstep(nstep), t0(t0), type(simulation) {
-  }
+              type_real t0)
+      : timescheme(timescheme), dt(dt), nstep(nstep), t0(t0) {}
   /**
    * @brief Construct a new time marching object
    *
    * @param Node YAML node describing the time-marching method
    */
-  time_scheme(const YAML::Node &Node, specfem::simulation::type simulation);
+  time_scheme(const YAML::Node &Node);
   /**
    * @brief Update simulation start time.
    *
@@ -54,7 +53,8 @@ public:
    */
   template <typename AssemblyFields>
   std::shared_ptr<specfem::time_scheme::time_scheme>
-  instantiate(AssemblyFields &fields, const int nstep_between_samples);
+  instantiate(AssemblyFields &fields, const int nstep_between_samples,
+              const specfem::simulation::type simulation_type);
   /**
    * @brief Get the value of time increment
    *
@@ -71,8 +71,6 @@ private:
   type_real dt;           ///< delta time for the timescheme
   type_real t0 = 0.0;     ///< start time
   std::string timescheme; ///< Time scheme e.g. Newmark, Runge-Kutta, LDDRK
-  specfem::simulation::type type; ///< Type of simulation
-                                  ///< (forward/adjoint/combined)
 };
 } // namespace runtime_configuration
 } // namespace specfem
