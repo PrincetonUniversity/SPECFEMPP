@@ -146,7 +146,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  logical function specfempp_has_reference_geometry() result(has_reference_geometry)
+  logical function SPECFEMPP_HAS_REFERENCE_GEOMETRY() result(has_reference_geometry)
 
 ! returns whether the final mesh can differ from the spherical + Moho-stretched
 ! reference geometry. Keep this list synchronized with the geometry-changing
@@ -173,7 +173,7 @@
     has_reference_geometry = .true.
   end select
 
-  end function specfempp_has_reference_geometry
+  end function SPECFEMPP_HAS_REFERENCE_GEOMETRY
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -284,7 +284,7 @@
       db_y(istage) = ystore(i,j,k,ispec)
       db_z(istage) = zstore(i,j,k,ispec)
 
-      if (specfempp_has_reference_geometry()) then
+      if (SPECFEMPP_HAS_REFERENCE_GEOMETRY()) then
         db_xref(istage) = xelm_ref_store(ia,ispec)
         db_yref(istage) = yelm_ref_store(ia,ispec)
         db_zref(istage) = zelm_ref_store(ia,ispec)
@@ -361,7 +361,7 @@
            db_z(NGNOD*nspec_total),stat=ier)
   if (ier /= 0) call exit_MPI(myrank,'Error allocating anchor arrays in save_database_specfempp')
 
-  if (specfempp_has_reference_geometry()) then
+  if (SPECFEMPP_HAS_REFERENCE_GEOMETRY()) then
     allocate(db_xref(NGNOD*nspec_total), &
              db_yref(NGNOD*nspec_total), &
              db_zref(NGNOD*nspec_total),stat=ier)
@@ -630,7 +630,7 @@
 
   ! nothing meshed on this rank
   nspec_total = db_nspec
-  has_reference_geometry = specfempp_has_reference_geometry()
+  has_reference_geometry = SPECFEMPP_HAS_REFERENCE_GEOMETRY()
 
   if (myrank == 0) then
     write(IMAIN,*)
