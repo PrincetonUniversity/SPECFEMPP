@@ -1,0 +1,128 @@
+/* setup/config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Define to dummy 'main' function (if any) required to link to the Fortran
+   libraries. */
+/* #undef FC_DUMMY_MAIN */
+
+/* Define if F77 and FC dummy 'main' functions are identical. */
+/* #undef FC_DUMMY_MAIN_EQ_F77 */
+
+/* Define to a macro mangling the given C identifier (in lower and upper
+   case), which must not contain underscores, for linking with Fortran. */
+#define FC_FUNC(name,Name) @FC_FUNC@
+
+/* As FC_FUNC, but for C identifiers containing underscores. */
+#define FC_FUNC_(name,Name) @FC_FUNC_@
+
+/* Define if emmintrin.h */
+#cmakedefine01 HAVE_EMMINTRIN
+
+/* Define if err.h */
+#cmakedefine01 HAVE_ERR
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#cmakedefine01 HAVE_INTTYPES_H
+
+/* Define to 1 if you have the 'vtkCommon' library (-lvtkCommon). */
+#cmakedefine01 HAVE_LIBVTKCOMMON
+
+/* Define to 1 if you have the 'vtkDICOMParser' library (-lvtkDICOMParser). */
+#cmakedefine01 HAVE_LIBVTKDICOMPARSER
+
+/* Define to 1 if you have the 'vtkexpat' library (-lvtkexpat). */
+#cmakedefine01 HAVE_LIBVTKEXPAT
+
+/* Define to 1 if you have the 'vtkFiltering' library (-lvtkFiltering). */
+#cmakedefine01 HAVE_LIBVTKFILTERING
+
+/* Define to 1 if you have the 'vtkGenericFiltering' library
+   (-lvtkGenericFiltering). */
+#cmakedefine01 HAVE_LIBVTKGENERICFILTERING
+
+/* Define to 1 if you have the 'vtkGraphics' library (-lvtkGraphics). */
+#cmakedefine01 HAVE_LIBVTKGRAPHICS
+
+/* Define to 1 if you have the 'vtkRendering' library (-lvtkRendering). */
+#cmakedefine01 HAVE_LIBVTKRENDERING
+
+/* Define to 1 if you have the 'vtksys' library (-lvtksys). */
+#cmakedefine01 HAVE_LIBVTKSYS
+
+/* Define to 1 if you have the 'vtkzlib' library (-lvtkzlib). */
+#cmakedefine01 HAVE_LIBVTKZLIB
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#cmakedefine01 HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdio.h> header file. */
+#cmakedefine01 HAVE_STDIO_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#cmakedefine01 HAVE_STDLIB_H
+
+/* Define to 1 if you have the <strings.h> header file. */
+#cmakedefine01 HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#cmakedefine01 HAVE_STRING_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#cmakedefine01 HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#cmakedefine01 HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#cmakedefine01 HAVE_UNISTD_H
+
+/* define if the VTK library is available */
+#cmakedefine HAVE_VTK
+
+/* Define if xmmintrin.h */
+#cmakedefine01 HAVE_XMMINTRIN
+
+/* Define to the address where bug reports for this package should be sent. */
+#define PACKAGE_BUGREPORT "@PACKAGE_BUGREPORT@"
+
+/* Define to the full name of this package. */
+#define PACKAGE_NAME "@PACKAGE_NAME@"
+
+/* Define to the full name and version of this package. */
+#define PACKAGE_STRING "@PACKAGE_STRING@"
+
+/* Define to the one symbol short name of this package. */
+#define PACKAGE_TARNAME "@PACKAGE_TARNAME@"
+
+/* Define to the home page for this package. */
+#define PACKAGE_URL "@PACKAGE_URL@"
+
+/* Define to the version of this package. */
+#define PACKAGE_VERSION "@PACKAGE_VERSION@"
+
+/* Define GIT branch for package source. */
+#undef SPECFEM3D_GLOBE_GIT_BRANCH
+
+/* Define date of GIT commit for package source. */
+#undef SPECFEM3D_GLOBE_GIT_DATE
+
+/* Define GIT hash for package source. */
+#undef SPECFEM3D_GLOBE_GIT_HASH
+
+/* Define git revision commit for package source. */
+#undef SPECFEM3D_GLOBE_GIT_REVISION
+
+/* Set to 0 if source is from GIT, 1 otherwise. */
+#undef SPECFEM3D_GLOBE_RELEASE_VERSION
+
+/* Define SPECFEM3D Globe version */
+#undef SPECFEM3D_GLOBE_VERSION
+
+/* Define to 1 if all of the C89 standard headers exist (not just the ones
+   required in a freestanding environment). This macro is provided for
+   backward compatibility; new code need not use it. */
+#undef STDC_HEADERS
+
+
+/* Define to select optimized file i/o for regional simulations */
+/* map fails when output files are > 4GB, which is often the case for GPU simulations */
+#undef USE_MAP_FUNCTION

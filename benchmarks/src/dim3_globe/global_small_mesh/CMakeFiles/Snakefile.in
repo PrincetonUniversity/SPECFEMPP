@@ -1,0 +1,31 @@
+from pathlib import Path
+
+example_dir = Path("@CURRENT_BENCHMARK_BUILD_DIR@")
+xmeshfem3d_globe = Path("@CMAKE_BINARY_DIR@") / "bin" / "xmeshfem3D_globe"
+mpiexec = "@MPIEXEC_EXECUTABLE@"
+mpiexec_numproc_flag = "@MPIEXEC_NUMPROC_FLAG@"
+
+
+rule all:
+    input:
+        example_dir / "DATABASES_MPI" / "mesh_parameters.bin"
+
+
+rule mesh:
+    input:
+        par_file=example_dir / "DATA" / "Par_file",
+        stations=example_dir / "DATA" / "STATIONS",
+        cmt=example_dir / "DATA" / "CMTSOLUTION",
+        xmeshfem3d_globe=xmeshfem3d_globe,
+    output:
+        example_dir / "DATABASES_MPI" / "mesh_parameters.bin"
+    log:
+        example_dir / "OUTPUT_FILES" / "output_mesher.txt"
+    shell:
+        "cd {example_dir} && {mpiexec} {mpiexec_numproc_flag} 6 "
+        "{input.xmeshfem3d_globe} > {log} 2>&1"
+
+
+rule clean:
+    shell:
+        "rm -rf {example_dir}/DATABASES_MPI/* {example_dir}/OUTPUT_FILES/*"

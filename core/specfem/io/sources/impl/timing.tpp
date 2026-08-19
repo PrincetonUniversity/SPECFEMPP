@@ -11,8 +11,8 @@
 template <specfem::element::dimension_tag DimensionTag>
 std::tuple<type_real, std::optional<specfem::datetime::type>>
 specfem::io::sources_impl::adjust_source_timing(
-    std::vector<
-        std::shared_ptr<specfem::sources::source<DimensionTag> > > &sources,
+    std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>
+        &sources,
     type_real user_t0) {
 
   // Helper to convert type_real seconds to chrono milliseconds
@@ -93,8 +93,7 @@ specfem::io::sources_impl::adjust_source_timing(
     // All sources have starttimes.
     // Find the earliest UTC(t=0) = origin_time_i - tshift_i
     // (tshifts here are the original values from the source definitions)
-    specfem::datetime::type earliest_t0_utc =
-        specfem::datetime::type::max();
+    specfem::datetime::type earliest_t0_utc = specfem::datetime::type::max();
     for (const auto &source : sources) {
       auto otime = *source->get_starttime();
       auto candidate = otime - to_ms(source->get_tshift());
@@ -108,10 +107,11 @@ specfem::io::sources_impl::adjust_source_timing(
     for (auto &source : sources) {
       auto otime = *source->get_starttime();
       auto delta = otime - earliest_t0_utc; // milliseconds duration
-      type_real new_tshift = static_cast<type_real>(
-          std::chrono::duration_cast<std::chrono::microseconds>(delta)
-              .count()) /
-                             static_cast<type_real>(1.0e6);
+      type_real new_tshift =
+          static_cast<type_real>(
+              std::chrono::duration_cast<std::chrono::microseconds>(delta)
+                  .count()) /
+          static_cast<type_real>(1.0e6);
       source->update_tshift(new_tshift);
     }
 
@@ -120,13 +120,13 @@ specfem::io::sources_impl::adjust_source_timing(
   }
   // else: no starttimes → starttime remains nullopt
 
-  return {t0, starttime};
+  return { t0, starttime };
 }
 
 template <specfem::element::dimension_tag DimensionTag>
 void specfem::io::sources_impl::validate_source_simulation_type(
-    const std::vector<
-        std::shared_ptr<specfem::sources::source<DimensionTag> > > &sources,
+    const std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>
+        &sources,
     specfem::simulation::type simulation_type) {
 
   if (sources.empty()) {
@@ -141,7 +141,8 @@ void specfem::io::sources_impl::validate_source_simulation_type(
     }
   }
 
-  if (simulation_type == specfem::simulation::type::combined &&
+  if ((simulation_type == specfem::simulation::type::combined ||
+       simulation_type == specfem::simulation::type::combined_undoatt) &&
       number_of_adjoint_sources == 0) {
     throw std::runtime_error("No adjoint sources found in the sources file");
   }

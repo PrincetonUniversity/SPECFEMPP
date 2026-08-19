@@ -34,7 +34,7 @@ rule run_solver:
             "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}.semd",
             station_name=["S0001"],
             network_name=["AA"],
-            component=["BXX", "BXZ"],
+            component=["FXX", "FXZ"],
         ),
         log="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/output.log",
     resources:

@@ -160,14 +160,24 @@ function(specfem_add_test name)
     endif()
     gtest_discover_tests(${name} ${_discover_args})
 
-    # gtest_discover_tests() writes <name>[1]_tests.cmake next to the target at build
-    # time (the [1] is its per-target discovery counter). Copy it into the test
-    # directory so the CTestTestfile.cmake there can include it without reaching back
-    # into the build tree. Added after gtest_discover_tests() so it runs after the
-    # POST_BUILD step that generates the file.
+    # Obtain the discovery filename from the include file registered by CMake instead
+    # of reconstructing it. CMake 3.x uses <name>[1]_tests.cmake, whereas CMake 4.4+
+    # uses a hash in the filename. Copy it into the test directory so the
+    # CTestTestfile.cmake there can include it without reaching back into the build
+    # tree. Added after gtest_discover_tests() so it runs after the POST_BUILD step
+    # that generates the file.
+    get_property(_test_include_files DIRECTORY PROPERTY TEST_INCLUDE_FILES)
+    list(GET _test_include_files -1 _test_include_file)
+    string(REGEX REPLACE "_include\\.cmake$" "_tests.cmake"
+        _test_discovery_file "${_test_include_file}")
+    if(_test_discovery_file STREQUAL _test_include_file)
+        message(FATAL_ERROR
+            "specfem_add_test(${name}): unexpected GoogleTest include filename: "
+            "${_test_include_file}")
+    endif()
     add_custom_command(TARGET ${name} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_CURRENT_BINARY_DIR}/${name}[1]_tests.cmake"
+            "${_test_discovery_file}"
             "${SPECFEM_TEST_OUTPUT_DIR}/${name}_tests.cmake"
         COMMENT "Copying ${name} test discovery file to ${SPECFEM_TEST_OUTPUT_DIR}")
 

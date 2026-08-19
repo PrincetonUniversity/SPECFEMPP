@@ -8,6 +8,7 @@ template <specfem::element::dimension_tag DimensionTag> struct assembly;
 
 namespace specfem {
 namespace periodic_tasks {
+
 /**
  * @brief Base class for tasks executed periodically during simulation
  *
@@ -50,13 +51,12 @@ public:
   };
 
   /**
-   * @brief Returns true if the data should be plotted at the current
-   * timestep. Updates the internal timestep counter
+   * @brief Returns true if the task should run at the current timestep.
    *
    * @param istep Current timestep
-   * @return true if the data should be plotted at the current timestep
+   * @return true if the task should run at the current timestep
    */
-  bool should_run(const int istep) {
+  bool should_run(const int istep) const {
     if (include_last_step && istep == -1) {
       return true;
     }
@@ -67,6 +67,13 @@ public:
 
     return false;
   }
+
+  /**
+   * @brief Returns the time interval between subsequent task executions.
+   *
+   * @return Time interval as number of steps
+   */
+  int get_time_interval() const { return time_interval; }
 
 protected:
   int time_interval;
