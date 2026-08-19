@@ -55,7 +55,7 @@
     HDF5_ENABLED,SPECFEMPP_DATABASE
 
   use specfempp_database_par, only: save_database_specfempp_accumulate, &
-    specfempp_has_reference_geometry
+    SPECFEMPP_HAS_REFERENCE_GEOMETRY
 
   use meshfem_par, only: &
     myrank,nspec,iregion_code, &
@@ -581,7 +581,7 @@
 
   use shared_parameters, only: ratio_sampling_array,SPECFEMPP_DATABASE
 
-  use specfempp_database_par, only: specfempp_has_reference_geometry
+  use specfempp_database_par, only: SPECFEMPP_HAS_REFERENCE_GEOMETRY
 
   use meshfem_par, only: &
     nspec,iregion_code, &
@@ -658,7 +658,7 @@
     rmax_store(:) = 0.d0
     elem_in_crust_store(:) = .false.
 
-    if (specfempp_has_reference_geometry()) then
+    if (SPECFEMPP_HAS_REFERENCE_GEOMETRY()) then
       allocate(xelm_ref_store(NGNOD,nspec), &
                yelm_ref_store(NGNOD,nspec), &
                zelm_ref_store(NGNOD,nspec),stat=ier)

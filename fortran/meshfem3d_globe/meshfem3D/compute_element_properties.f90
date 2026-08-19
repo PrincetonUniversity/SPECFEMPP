@@ -41,7 +41,7 @@
 
   use shared_parameters, only: REGIONAL_MESH_CUTOFF,USE_LOCAL_MESH,EMC_MODEL,SPECFEMPP_DATABASE
 
-  use specfempp_database_par, only: specfempp_has_reference_geometry
+  use specfempp_database_par, only: SPECFEMPP_HAS_REFERENCE_GEOMETRY
 
   use meshfem_models_par, only: &
     TOPOGRAPHY,ELLIPTICITY,CRUSTAL,CASE_3D, &
@@ -216,7 +216,7 @@
     rmax_store(ispec) = rmax
     elem_in_crust_store(ispec) = elem_in_crust
 
-    if (specfempp_has_reference_geometry()) then
+    if (SPECFEMPP_HAS_REFERENCE_GEOMETRY()) then
       xelm_ref_store(:,ispec) = xelm(:)
       yelm_ref_store(:,ispec) = yelm(:)
       zelm_ref_store(:,ispec) = zelm(:)
