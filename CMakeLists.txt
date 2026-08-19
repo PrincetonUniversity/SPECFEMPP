@@ -258,8 +258,8 @@ if(SPECFEM_BUILD_MESHFEM3D_GLOBE)
   # clean mirror of upstream specfem3d_globe. Must come after the globe
   # subdirectory above: it consumes the meshfem3Dg::* targets and the .mod
   # files they generate.
-  message(STATUS "Configuring globe_oracle")
-  add_subdirectory(fortran/globe_oracle)
+  message(STATUS "Configuring globe_evaluator")
+  add_subdirectory(fortran/globe_evaluator)
 else()
   message(STATUS "Skipping xmeshfem3D_globe (SPECFEM_BUILD_MESHFEM3D_GLOBE=OFF)")
 endif()

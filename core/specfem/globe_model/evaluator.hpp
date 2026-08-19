@@ -11,7 +11,7 @@ namespace globe_model {
  * @brief Quadrature sizes the SPECFEM3D_GLOBE model catalog was compiled with.
  *
  * Check these against SPECFEM++'s own NGLL before trusting any evaluated
- * material: a mismatch means the oracle samples a different quadrature rule
+ * material: a mismatch means the evaluator samples a different quadrature rule
  * than the caller, which produces plausible but wrong properties.
  */
 struct Dims {
@@ -58,21 +58,22 @@ struct ModelConfig {
   /// @{
   /// Consulted only when @ref attenuation is set. Unlike everything else here,
   /// this is *not* derivable from @ref model_name: the mesher computes it in
-  /// `rcp_set_compute_parameters`, which the oracle deliberately does not call,
-  /// so the database has to carry it. The defaults below are typical global
-  /// values and a placeholder -- production must take them from the mesher.
+  /// `rcp_set_compute_parameters`, which the evaluator deliberately does not
+  /// call, so the database has to carry it. The defaults below are typical
+  /// global values and a placeholder -- production must take them from the
+  /// mesher.
   double min_attenuation_period = 20.0;
   double max_attenuation_period = 1000.0;
   /// @}
 };
 
 /**
- * @brief Factors converting the oracle's output to SI.
+ * @brief Factors converting the evaluator's output to SI.
  *
  * The catalog works in -- and @ref ElementProperties therefore reports -- the
  * globe's non-dimensional units, where density is near 1 and velocities near 2.
  * That is deliberate: handing back the catalog's own numbers untouched is what
- * makes them bit-for-bit the mesher's, whereas converting inside the oracle
+ * makes them bit-for-bit the mesher's, whereas converting inside the evaluator
  * would add a rounding step the mesher does not have. Callers re-dimensionalize
  * here, in one place.
  *
@@ -151,8 +152,8 @@ struct ElementProperties {
  * wrong results rather than errors when violated:
  *
  * 1. **Single instance.** The catalog's configuration lives in Fortran module
- *    variables, so two `Oracle` objects would share one model. Constructing a
- *    second while one is alive throws.
+ *    variables, so two `Evaluator` objects would share one model. Constructing
+ *    a second while one is alive throws.
  * 2. **Setup only, single-threaded.** Several catalog routines cache state in
  *    `save` variables. Never call @ref evaluate_element from a solver loop or
  *    from multiple threads.
@@ -163,38 +164,38 @@ struct ElementProperties {
  * final deformed positions samples the wrong depth near the surface. That
  * cannot be checked here.
  */
-class Oracle {
+class Evaluator {
 public:
   /**
    * @brief Configures the catalog. Collective over the active communicator.
    *
    * @param config Resolved model selection, from the database header.
    * @throws std::runtime_error if the catalog rejects the configuration --
-   *         notably for models needing per-GLL indexing the oracle cannot
+   *         notably for models needing per-GLL indexing the evaluator cannot
    *         provide (`MODEL_GLL`, CEM, `HETEROGEN_3D_MANTLE`,
-   *         `ATTENUATION_GLL`, EMC), or if an `Oracle` already exists.
+   *         `ATTENUATION_GLL`, EMC), or if an `Evaluator` already exists.
    *
    * @warning An unrecognized model name cannot be reported as an exception:
    *          the Fortran catalog terminates the process with a bare `stop`.
    */
-  explicit Oracle(const ModelConfig &config);
+  explicit Evaluator(const ModelConfig &config);
 
   /**
    * @brief Releases the catalog's configuration so another model may be built.
    *
-   * @warning Only the oracle's own resources are released. State allocated by
-   * individual `model_*.f90` files cannot be freed -- upstream exposes no
-   * teardown hooks -- so destroying an `Oracle` and building one for a
+   * @warning Only the evaluator's own resources are released. State allocated
+   * by individual `model_*.f90` files cannot be freed -- upstream exposes no
+   * teardown hooks -- so destroying an `Evaluator` and building one for a
    * *different 3D model* in the same process may fail inside the catalog. The
    * analytic 1D reference models allocate nothing and re-initialize cleanly.
    * Production configures once per process.
    */
-  ~Oracle();
+  ~Evaluator();
 
-  Oracle(const Oracle &) = delete;
-  Oracle &operator=(const Oracle &) = delete;
-  Oracle(Oracle &&) = delete;
-  Oracle &operator=(Oracle &&) = delete;
+  Evaluator(const Evaluator &) = delete;
+  Evaluator &operator=(const Evaluator &) = delete;
+  Evaluator(Evaluator &&) = delete;
+  Evaluator &operator=(Evaluator &&) = delete;
 
   /**
    * @brief Evaluates the model at one element's GLL points.
@@ -229,12 +230,12 @@ public:
 
   /**
    * @brief Factors converting evaluated material to SI.
-   * @throws std::runtime_error if no @ref Oracle is configured -- the scales
-   *         depend on the planet constants that construction resolves.
+   * @throws std::runtime_error if no @ref Evaluator is configured -- the
+   *         scales depend on the planet constants that construction resolves.
    */
   static Scales scales();
 
-  /** @brief Whether an @ref Oracle is currently alive. */
+  /** @brief Whether an @ref Evaluator is currently alive. */
   static bool is_active();
 
 private:
@@ -244,10 +245,10 @@ private:
 /**
  * @brief Evaluates the 1D PREM reference directly. **Test use only.**
  *
- * Bypasses the oracle path and calls the catalog's own PREM routines, so tests
- * can check @ref Oracle against the reference implementation rather than
- * against a hand-written table of expected values. Not part of the production
- * contract; requires a live @ref Oracle.
+ * Bypasses the evaluator path and calls the catalog's own PREM routines, so
+ * tests can check @ref Evaluator against the reference implementation rather
+ * than against a hand-written table of expected values. Not part of the
+ * production contract; requires a live @ref Evaluator.
  */
 struct ReferencePoint {
   double rho, vpv, vph, vsv, vsh, eta;

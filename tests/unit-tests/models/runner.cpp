@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-// The globe model oracle requires MPI (fortran/meshfem3d_globe has no serial
+// The globe model evaluator requires MPI (fortran/meshfem3d_globe has no serial
 // stub), so the environment is brought up with a single rank rather than run
 // without a communicator at all.
 int main(int argc, char *argv[]) {

@@ -162,10 +162,10 @@ specfem_add_test(assembly_mpi_dim3_8proc_tests
             $<$<BOOL:${SPECFEM_ENABLE_HDF5}>:hdf5>
 )
 
-# SPECFEM3D_GLOBE model oracle (issue #2001).
+# SPECFEM3D_GLOBE model evaluator (issue #2001).
 #
 # Lives here rather than in serial.cmake because the globe Fortran tree has no
-# serial MPI stub, so the oracle is only ever built in MPI configurations. It
+# serial MPI stub, so the evaluator is only ever built in MPI configurations. It
 # runs on a single rank: the catalog's setup is collective but the spike does
 # not exercise multi-rank broadcasts.
 #
