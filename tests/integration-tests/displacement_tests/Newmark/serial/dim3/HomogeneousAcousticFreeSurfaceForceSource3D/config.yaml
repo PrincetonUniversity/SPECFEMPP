@@ -1,0 +1,13 @@
+id: "HomogeneousAcousticFreeSurfaceForceSource3D"
+name: "Homogeneous acoustic 3D free-surface force source"
+description: >
+  Testing Newmark time-marching on a homogeneous 3D acoustic domain with a force
+  source located on the acoustic free surface. The pressure seismogram should
+  stay zero because the acoustic free-surface condition zeroes chi, chi_dot, and
+  chi_dot_dot at free-surface nodes.
+config:
+  nproc: 1
+  tolerance: 1e-6
+databases:
+  specfem_config: "specfem_config.yaml"
+  traces: "traces"

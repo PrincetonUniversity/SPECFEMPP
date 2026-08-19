@@ -1,0 +1,64 @@
+parameters:
+
+  header:
+    title: Homogeneous Elastic Kernel (3D) - Forward (seismogram-only)
+    description: |
+      Material systems : Viscoelastic domain (1)
+      Interfaces : None
+      Sources : Force source (1)
+      Boundary conditions : Neumann BCs on all edges
+      Output : Seismograms only (used to build adjoint sources)
+      Note   : Kernel computation is done by the undo-attenuation run
+
+  simulation-setup:
+    quadrature:
+      quadrature-type: GLL4
+
+    solver:
+      time-marching:
+        time-scheme:
+          type: Newmark
+          dt: 0.08
+          nstep: 800
+
+    simulation-mode:
+      forward:
+        writer:
+          wavefield:
+            format: NPY
+            directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/Checkpoints"
+            for-adjoint-simulations: true
+            # NT_DUMP_ATTENUATION: checkpoint every 200 steps.
+            time-interval: 200
+          seismogram:
+            format: ascii
+            directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results"
+
+  receivers:
+    stations: "@CURRENT_BENCHMARK_BUILD_DIR@/DATA/STATIONS"
+    angle: 0.0
+    seismogram-type:
+      - displacement
+    nstep_between_samples: 1
+
+  run-setup:
+    number-of-processors: 1
+    number-of-runs: 1
+
+  databases:
+    mesh-database: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES/Database.bin"
+
+  sources: "@CURRENT_BENCHMARK_BUILD_DIR@/forward_source.yaml"
+
+  # Reference frequency matches the 0.05 Hz Ricker source and
+  # ATTENUATION_f0_REFERENCE in Par_File. The band is derived from mesh
+  # resolution: min_period = 6.88 s, N_SLS=3 gives fmax = 1/6.88 Hz,
+  # fmin = fmax / 10^1.75 (theta for N_SLS=3). tau_sigma values are all
+  # >> dt=0.08 s, so the RK integrator is stable.
+  attenuation:
+    reference-frequency: 0.05 Hz
+    attenuation-frequency-band:
+      - 0.003 Hz
+      - 0.145 Hz
+
+  log-file: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/output_forward"

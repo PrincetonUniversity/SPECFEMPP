@@ -90,7 +90,9 @@ specfem::runtime_configuration::wavefield::instantiate_wavefield_writer()
   const std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag>>
       writer = [&]()
       -> std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag>> {
-    if (this->simulation_type == specfem::simulation::type::forward) {
+    const bool needs_writer =
+        (this->simulation_type == specfem::simulation::type::forward);
+    if (needs_writer) {
       if (specfem::utilities::is_hdf5_string(this->output_format)) {
         return std::make_shared<specfem::periodic_tasks::wavefield_writer<
             DimensionTag, specfem::io_backends::HDF5>>(
@@ -135,7 +137,11 @@ specfem::runtime_configuration::wavefield::instantiate_wavefield_reader()
   const std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag>>
       reader = [&]()
       -> std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag>> {
-    if (this->simulation_type == specfem::simulation::type::combined) {
+    // combined_undoatt adjoint pass reads checkpoints written by forward pass
+    const bool needs_reader =
+        (this->simulation_type == specfem::simulation::type::combined) ||
+        (this->simulation_type == specfem::simulation::type::combined_undoatt);
+    if (needs_reader) {
       if (specfem::utilities::is_hdf5_string(this->output_format)) {
         return std::make_shared<specfem::periodic_tasks::wavefield_reader<
             DimensionTag, specfem::io_backends::HDF5>>(
