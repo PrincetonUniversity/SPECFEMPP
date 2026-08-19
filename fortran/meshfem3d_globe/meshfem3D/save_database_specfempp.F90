@@ -111,11 +111,11 @@
   ! ---- accumulated per-rank mesh, filled region by region -------------------------
 
   ! elements kept so far (fictitious central-cube elements are excluded)
-  integer :: db_nspec = 0
+  integer :: DB_NSPEC = 0
   ! number of regions contributing elements
-  integer :: db_nregions = 0
+  integer :: DB_NREGIONS = 0
 
-  ! per-element context, dimension (db_nspec_max)
+  ! per-element context, dimensioned to the maximum database element count
   integer, dimension(:), allocatable :: db_region,db_medium_tag,db_property_tag,db_idoubling
   double precision, dimension(:), allocatable :: db_rmin,db_rmax
   logical, dimension(:), allocatable :: db_elem_in_crust
@@ -126,7 +126,7 @@
   double precision, dimension(:), allocatable :: db_xref,db_yref,db_zref
 
   ! boundary faces, in the merged element numbering
-  integer :: db_n_free = 0,db_n_cmb = 0,db_n_icb = 0,db_n_ocean = 0
+  integer :: DB_N_FREE = 0,DB_N_CMB = 0,DB_N_ICB = 0,DB_N_OCEAN = 0
   integer, dimension(:), allocatable :: db_free_ispec,db_free_face
   integer, dimension(:), allocatable :: db_cmb_ispec,db_cmb_face
   integer, dimension(:), allocatable :: db_icb_ispec,db_icb_face
@@ -135,9 +135,9 @@
   ! MPI interfaces, accumulated as one raw entry per (region,interface) pair and
   ! merged by neighbor rank at write time. db_if_pts holds *staged* anchor indices,
   ! translated to merged node ids once the global numbering exists.
-  integer :: db_n_if = 0
+  integer :: DB_N_IF = 0
   integer, dimension(:), allocatable :: db_if_rank,db_if_n,db_if_off
-  integer :: db_n_if_pts = 0
+  integer :: DB_N_IF_PTS = 0
   integer, dimension(:), allocatable :: db_if_pts
 
   contains
@@ -224,7 +224,7 @@
   ! allocates the staging arrays on first use; the final size is known up front
   call save_database_specfempp_alloc(sum(NSPEC_REGIONS(IREGION_CRUST_MANTLE:IREGION_INNER_CORE)))
 
-  db_nregions = db_nregions + 1
+  DB_NREGIONS = DB_NREGIONS + 1
 
   ! (i,j,k) positions of the 27 anchors within the GLL grid
   call hex_nodes_anchor_ijk(anchor_iax,anchor_iay,anchor_iaz)
@@ -246,8 +246,8 @@
     ! another slice and must not enter a merged single mesh
     if (idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
-    db_nspec = db_nspec + 1
-    ispec_db = db_nspec
+    DB_NSPEC = DB_NSPEC + 1
+    ispec_db = DB_NSPEC
     ispec_map(ispec) = ispec_db
 
     db_region(ispec_db) = iregion_code
@@ -308,17 +308,17 @@
   select case (iregion_code)
   case (IREGION_CRUST_MANTLE)
     call save_database_specfempp_add_faces(ibelm_top,NSPEC2D_TOP_REG,SPECFEMPP_FACE_TOP, &
-                                           ispec_map,nspec,db_free_ispec,db_free_face,db_n_free)
+                                           ispec_map,nspec,db_free_ispec,db_free_face,DB_N_FREE)
     call save_database_specfempp_add_faces(ibelm_bottom,NSPEC2D_BOTTOM_REG,SPECFEMPP_FACE_BOTTOM, &
-                                           ispec_map,nspec,db_cmb_ispec,db_cmb_face,db_n_cmb)
+                                           ispec_map,nspec,db_cmb_ispec,db_cmb_face,DB_N_CMB)
   case (IREGION_OUTER_CORE)
     call save_database_specfempp_add_faces(ibelm_top,NSPEC2D_TOP_REG,SPECFEMPP_FACE_TOP, &
-                                           ispec_map,nspec,db_cmb_ispec,db_cmb_face,db_n_cmb)
+                                           ispec_map,nspec,db_cmb_ispec,db_cmb_face,DB_N_CMB)
     call save_database_specfempp_add_faces(ibelm_bottom,NSPEC2D_BOTTOM_REG,SPECFEMPP_FACE_BOTTOM, &
-                                           ispec_map,nspec,db_icb_ispec,db_icb_face,db_n_icb)
+                                           ispec_map,nspec,db_icb_ispec,db_icb_face,DB_N_ICB)
   case (IREGION_INNER_CORE)
     call save_database_specfempp_add_faces(ibelm_top,NSPEC2D_TOP_REG,SPECFEMPP_FACE_TOP, &
-                                           ispec_map,nspec,db_icb_ispec,db_icb_face,db_n_icb)
+                                           ispec_map,nspec,db_icb_ispec,db_icb_face,DB_N_ICB)
   end select
 
   ! ---- MPI interfaces ---------------------------------------------------------------
@@ -479,54 +479,54 @@
   if (num_interfaces <= 0) return
 
   do iinterface = 1,num_interfaces
-    call save_database_specfempp_grow(db_if_rank,db_n_if + 1)
-    call save_database_specfempp_grow(db_if_n,db_n_if + 1)
-    call save_database_specfempp_grow(db_if_off,db_n_if + 1)
+    call save_database_specfempp_grow(db_if_rank,DB_N_IF + 1)
+    call save_database_specfempp_grow(db_if_n,DB_N_IF + 1)
+    call save_database_specfempp_grow(db_if_off,DB_N_IF + 1)
 
-    istart = db_n_if_pts
+    istart = DB_N_IF_PTS
     nkept = 0
 
     select case (iregion_code)
     case (IREGION_CRUST_MANTLE)
-      call save_database_specfempp_grow(db_if_pts,db_n_if_pts + nibool_interfaces_crust_mantle(iinterface))
+      call save_database_specfempp_grow(db_if_pts,DB_N_IF_PTS + nibool_interfaces_crust_mantle(iinterface))
       do ipoin = 1,nibool_interfaces_crust_mantle(iinterface)
         iglob = ibool_interfaces_crust_mantle(ipoin,iinterface)
         if (iglob < 1 .or. iglob > nglob_region) cycle
         if (stage_index(iglob) == 0) cycle
-        db_n_if_pts = db_n_if_pts + 1
+        DB_N_IF_PTS = DB_N_IF_PTS + 1
         nkept = nkept + 1
-        db_if_pts(db_n_if_pts) = stage_index(iglob)
+        db_if_pts(DB_N_IF_PTS) = stage_index(iglob)
       enddo
-      db_if_rank(db_n_if + 1) = my_neighbors_crust_mantle(iinterface)
+      db_if_rank(DB_N_IF + 1) = my_neighbors_crust_mantle(iinterface)
 
     case (IREGION_OUTER_CORE)
-      call save_database_specfempp_grow(db_if_pts,db_n_if_pts + nibool_interfaces_outer_core(iinterface))
+      call save_database_specfempp_grow(db_if_pts,DB_N_IF_PTS + nibool_interfaces_outer_core(iinterface))
       do ipoin = 1,nibool_interfaces_outer_core(iinterface)
         iglob = ibool_interfaces_outer_core(ipoin,iinterface)
         if (iglob < 1 .or. iglob > nglob_region) cycle
         if (stage_index(iglob) == 0) cycle
-        db_n_if_pts = db_n_if_pts + 1
+        DB_N_IF_PTS = DB_N_IF_PTS + 1
         nkept = nkept + 1
-        db_if_pts(db_n_if_pts) = stage_index(iglob)
+        db_if_pts(DB_N_IF_PTS) = stage_index(iglob)
       enddo
-      db_if_rank(db_n_if + 1) = my_neighbors_outer_core(iinterface)
+      db_if_rank(DB_N_IF + 1) = my_neighbors_outer_core(iinterface)
 
     case (IREGION_INNER_CORE)
-      call save_database_specfempp_grow(db_if_pts,db_n_if_pts + nibool_interfaces_inner_core(iinterface))
+      call save_database_specfempp_grow(db_if_pts,DB_N_IF_PTS + nibool_interfaces_inner_core(iinterface))
       do ipoin = 1,nibool_interfaces_inner_core(iinterface)
         iglob = ibool_interfaces_inner_core(ipoin,iinterface)
         if (iglob < 1 .or. iglob > nglob_region) cycle
         if (stage_index(iglob) == 0) cycle
-        db_n_if_pts = db_n_if_pts + 1
+        DB_N_IF_PTS = DB_N_IF_PTS + 1
         nkept = nkept + 1
-        db_if_pts(db_n_if_pts) = stage_index(iglob)
+        db_if_pts(DB_N_IF_PTS) = stage_index(iglob)
       enddo
-      db_if_rank(db_n_if + 1) = my_neighbors_inner_core(iinterface)
+      db_if_rank(DB_N_IF + 1) = my_neighbors_inner_core(iinterface)
     end select
 
-    db_n_if = db_n_if + 1
-    db_if_off(db_n_if) = istart
-    db_if_n(db_n_if) = nkept
+    DB_N_IF = DB_N_IF + 1
+    db_if_off(DB_N_IF) = istart
+    db_if_n(DB_N_IF) = nkept
   enddo
 
   end subroutine save_database_specfempp_add_mpi
@@ -629,7 +629,7 @@
   logical :: has_reference_geometry
 
   ! nothing meshed on this rank
-  nspec_total = db_nspec
+  nspec_total = DB_NSPEC
   has_reference_geometry = SPECFEMPP_HAS_REFERENCE_GEOMETRY()
 
   if (myrank == 0) then
@@ -738,7 +738,7 @@
   ! header
   write(IOUT) SPECFEMPP_DB_MAGIC,SPECFEMPP_DB_VERSION
   write(IOUT) PLANET_TYPE,R_PLANET,RHOAV
-  write(IOUT) NGNOD,NGLLX,NGLLY,NGLLZ,db_nregions
+  write(IOUT) NGNOD,NGLLX,NGLLY,NGLLZ,DB_NREGIONS
   write(IOUT) ELLIPTICITY,TOPOGRAPHY,GRAVITY,FULL_GRAVITY,ROTATION,ATTENUATION,OCEANS, &
               has_reference_geometry
   write(IOUT) SPECFEMPP_MATERIAL_ORACLE
@@ -774,14 +774,14 @@
   write(IOUT) node_ids
 
   ! boundary surfaces
-  call save_database_specfempp_write_faces(db_free_ispec,db_free_face,db_n_free)
-  call save_database_specfempp_write_faces(db_cmb_ispec,db_cmb_face,db_n_cmb)
-  call save_database_specfempp_write_faces(db_icb_ispec,db_icb_face,db_n_icb)
+  call save_database_specfempp_write_faces(db_free_ispec,db_free_face,DB_N_FREE)
+  call save_database_specfempp_write_faces(db_cmb_ispec,db_cmb_face,DB_N_CMB)
+  call save_database_specfempp_write_faces(db_icb_ispec,db_icb_face,DB_N_ICB)
   if (OCEANS) then
     ! the ocean load acts on the free surface of the crust/mantle region
-    call save_database_specfempp_write_faces(db_free_ispec,db_free_face,db_n_free)
+    call save_database_specfempp_write_faces(db_free_ispec,db_free_face,DB_N_FREE)
   else
-    call save_database_specfempp_write_faces(db_ocean_ispec,db_ocean_face,db_n_ocean)
+    call save_database_specfempp_write_faces(db_ocean_ispec,db_ocean_face,DB_N_OCEAN)
   endif
 
   ! adjacency
@@ -874,7 +874,7 @@
 
   num_neighbors = 0
 
-  if (db_n_if == 0) then
+  if (DB_N_IF == 0) then
     allocate(nb_rank(1),nb_count(1),nb_offset(1),nb_nodes(1),stat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error allocating empty neighbor arrays')
     nb_rank(:) = -1; nb_count(:) = 0; nb_offset(:) = 0; nb_nodes(:) = 0
@@ -882,11 +882,11 @@
   endif
 
   ! distinct neighbor ranks, in order of first appearance
-  allocate(nb_rank(db_n_if),nb_count(db_n_if),nb_offset(db_n_if),stat=ier)
+  allocate(nb_rank(DB_N_IF),nb_count(DB_N_IF),nb_offset(DB_N_IF),stat=ier)
   if (ier /= 0) call exit_MPI(myrank,'Error allocating neighbor arrays')
   nb_rank(:) = -1; nb_count(:) = 0; nb_offset(:) = 0
 
-  do i = 1,db_n_if
+  do i = 1,DB_N_IF
     is_known = .false.
     do j = 1,num_neighbors
       if (nb_rank(j) == db_if_rank(i)) then
@@ -901,7 +901,7 @@
   enddo
 
   ! upper bound on the concatenated node list
-  total = db_n_if_pts
+  total = DB_N_IF_PTS
   allocate(nb_nodes(max(total,1)),stat=ier)
   if (ier /= 0) call exit_MPI(myrank,'Error allocating neighbor node list')
   nb_nodes(:) = 0
@@ -915,7 +915,7 @@
   pos = 0
   do j = 1,num_neighbors
     nb_offset(j) = pos
-    do i = 1,db_n_if
+    do i = 1,DB_N_IF
       if (db_if_rank(i) /= nb_rank(j)) cycle
       do k = 1,db_if_n(i)
         inode = iglob_merged(db_if_pts(db_if_off(i) + k))
@@ -1019,11 +1019,11 @@
   if (allocated(db_if_rank)) deallocate(db_if_rank,db_if_n,db_if_off)
   if (allocated(db_if_pts)) deallocate(db_if_pts)
 
-  db_nspec = 0
-  db_nregions = 0
-  db_n_free = 0; db_n_cmb = 0; db_n_icb = 0; db_n_ocean = 0
-  db_n_if = 0
-  db_n_if_pts = 0
+  DB_NSPEC = 0
+  DB_NREGIONS = 0
+  DB_N_FREE = 0; DB_N_CMB = 0; DB_N_ICB = 0; DB_N_OCEAN = 0
+  DB_N_IF = 0
+  DB_N_IF_PTS = 0
 
   end subroutine save_database_specfempp_free
 
