@@ -39,7 +39,9 @@
     IFLAG_OUTER_CORE_NORMAL,IFLAG_IN_FICTITIOUS_CUBE, &
     IREGION_CRUST_MANTLE,SUPPRESS_INTERNAL_TOPOGRAPHY,USE_GLL
 
-  use shared_parameters, only: REGIONAL_MESH_CUTOFF,USE_LOCAL_MESH,EMC_MODEL
+  use shared_parameters, only: REGIONAL_MESH_CUTOFF,USE_LOCAL_MESH,EMC_MODEL,SPECFEMPP_DATABASE
+
+  use specfempp_database_par, only: SPECFEMPP_HAS_REFERENCE_GEOMETRY
 
   use meshfem_models_par, only: &
     TOPOGRAPHY,ELLIPTICITY,CRUSTAL,CASE_3D, &
@@ -56,6 +58,11 @@
     xixstore,xiystore,xizstore, &
     etaxstore,etaystore,etazstore, &
     gammaxstore,gammaystore,gammazstore
+
+  ! per-element context for the thin SPECFEM++ database
+  use regions_mesh_par2, only: &
+    xelm_ref_store,yelm_ref_store,zelm_ref_store, &
+    rmin_store,rmax_store,elem_in_crust_store
 
   implicit none
 
@@ -200,6 +207,21 @@
 
   ! interpolates and stores GLL point locations
   call compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec,xstore,ystore,zstore,shape3D)
+
+  ! captures the per-element context needed by the thin SPECFEM++ database.
+  ! Reference anchors must be captured after Moho stretching and GLL
+  ! interpolation, but before any topography or ellipticity deformation.
+  if (ipass == 2 .and. SPECFEMPP_DATABASE) then
+    rmin_store(ispec) = rmin
+    rmax_store(ispec) = rmax
+    elem_in_crust_store(ispec) = elem_in_crust
+
+    if (SPECFEMPP_HAS_REFERENCE_GEOMETRY()) then
+      xelm_ref_store(:,ispec) = xelm(:)
+      yelm_ref_store(:,ispec) = yelm(:)
+      zelm_ref_store(:,ispec) = zelm(:)
+    endif
+  endif
 
   !debug
   if (DEBUG_OUTPUT) then

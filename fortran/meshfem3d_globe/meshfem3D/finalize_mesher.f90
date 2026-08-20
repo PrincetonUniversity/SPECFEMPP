@@ -27,6 +27,8 @@
 
   subroutine finalize_mesher()
 
+  use shared_parameters, only: SPECFEMPP_DATABASE
+
   use meshfem_par
   use meshfem_models_par
 
@@ -138,8 +140,10 @@
       write(IMAIN,*) ' - infinite               : ',sngl(100.d0*dble(numelem_infinite)/dble(numelem_total)),' %'
     endif
     write(IMAIN,*)
-    write(IMAIN,*) 'for some mesh statistics, see comments in file OUTPUT_FILES/values_from_mesher.h'
-    write(IMAIN,*)
+    if (.not. SPECFEMPP_DATABASE) then
+      write(IMAIN,*) 'for some mesh statistics, see comments in file OUTPUT_FILES/values_from_mesher.h'
+      write(IMAIN,*)
+    endif
 
     ! load balancing
     write(IMAIN,*) 'Load balancing = 100 % by definition'
@@ -160,31 +164,32 @@
     write(IMAIN,*)
     call flush_IMAIN()
 
-    ! create include file for the solver
-    call save_header_file(NSPEC_REGIONS,NGLOB_REGIONS,NPROC,NPROCTOT, &
-                          static_memory_size, &
-                          NSPEC2D_TOP,NSPEC2D_BOTTOM, &
-                          NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
-                          NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
-                          NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
-                          NSPEC_INNER_CORE_ATTENUATION, &
-                          NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
-                          NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
-                          NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
-                          NSPEC_CRUST_MANTLE_ADJOINT, &
-                          NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
-                          NSPEC_TRINFINITE_ADJOINT,NSPEC_INFINITE_ADJOINT, &
-                          NGLOB_CRUST_MANTLE_ADJOINT, &
-                          NGLOB_OUTER_CORE_ADJOINT,NGLOB_INNER_CORE_ADJOINT, &
-                          NGLOB_TRINFINITE_ADJOINT,NGLOB_INFINITE_ADJOINT, &
-                          NSPEC_OUTER_CORE_ROT_ADJOINT, &
-                          NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-                          NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION,NT_DUMP_ATTENUATION_optimal, &
-                          PRINT_INFO_TO_SCREEN)
+    if (.not. SPECFEMPP_DATABASE) then
+      ! create include file for the solver
+      call save_header_file(NSPEC_REGIONS,NGLOB_REGIONS,NPROC,NPROCTOT, &
+                            static_memory_size, &
+                            NSPEC2D_TOP,NSPEC2D_BOTTOM, &
+                            NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
+                            NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
+                            NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
+                            NSPEC_INNER_CORE_ATTENUATION, &
+                            NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
+                            NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
+                            NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
+                            NSPEC_CRUST_MANTLE_ADJOINT, &
+                            NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
+                            NSPEC_TRINFINITE_ADJOINT,NSPEC_INFINITE_ADJOINT, &
+                            NGLOB_CRUST_MANTLE_ADJOINT, &
+                            NGLOB_OUTER_CORE_ADJOINT,NGLOB_INNER_CORE_ADJOINT, &
+                            NGLOB_TRINFINITE_ADJOINT,NGLOB_INFINITE_ADJOINT, &
+                            NSPEC_OUTER_CORE_ROT_ADJOINT, &
+                            NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
+                            NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION,NT_DUMP_ATTENUATION_optimal, &
+                            PRINT_INFO_TO_SCREEN)
 
-
-    ! save binary file for solver to read in
-    call save_arrays_mesh_parameters()
+      ! save binary file for solver to read in
+      call save_arrays_mesh_parameters()
+    endif
 
   endif   ! end of section executed by main process only
 

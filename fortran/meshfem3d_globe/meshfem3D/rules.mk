@@ -124,6 +124,7 @@ meshfem3D_MESHER_OBJECTS = \
 	$O/moho_stretching.check.o \
 	$O/save_arrays_solver.check.o \
 	$O/save_arrays_solver_hdf5.check.o \
+	$O/save_database_specfempp.check.o \
 	$O/save_model_meshfiles.check.o \
 	$O/save_model_meshfiles_hdf5.check.o \
 	$O/setup_color_perm.check.o \
@@ -142,6 +143,7 @@ meshfem3D_MESHER_OBJECTS = \
 	$(EMPTY_MACRO)
 
 meshfem3D_MODULES = \
+	$(FC_MODDIR)/specfempp_database_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/regions_mesh_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/regions_mesh_par2.$(FC_MODEXT) \
 	$(FC_MODDIR)/mpi_interfaces_par.$(FC_MODEXT) \

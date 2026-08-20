@@ -211,6 +211,9 @@
   logical :: SHIFT_SIMULTANEOUS_RUNS = .false.
   double precision :: FILESYSTEM_IO_BANDWIDTH = 0.d0
 
+  ! (optional) thin mesh database for SPECFEM++
+  logical :: SPECFEMPP_DATABASE = .false.
+
   ! HDF5 file i/o
   logical :: HDF5_ENABLED    = .false. ! for all databases i/o in hdf5
   logical :: HDF5_FOR_MOVIES = .false. ! for movies (shakemap, surface movies, volume movies)
