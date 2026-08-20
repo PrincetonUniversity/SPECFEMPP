@@ -3,7 +3,7 @@ sources:
   - cosserat-force:
       x : 0.0
       y : 0.0
-      z : -40000.0
+      z : -25000.0
       source_surf: false
       fx : 1.0e8
       fy : 2.0e8

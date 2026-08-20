@@ -20,8 +20,8 @@ parameters:
       time-marching:
         time-scheme:
           type: Newmark
-          dt: 0.05
-          nstep: 450
+          dt: 0.1
+          nstep: 225
 
     simulation-mode:
       forward:

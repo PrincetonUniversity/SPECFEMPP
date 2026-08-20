@@ -22,8 +22,8 @@ sources:
     fc: [2.0e11, 5.0e11, 1.0e12]
 
 simulation_params:
-  dt: 0.05
-  N: 450
+  dt: 0.1
+  N: 225
   refinement_factor: 1
   extension_factor: 128
 
