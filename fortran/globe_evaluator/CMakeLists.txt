@@ -33,17 +33,18 @@ target_include_directories(globe_evaluator PRIVATE
 # PUBLIC, not PRIVATE: a C++ consumer needs the whole Fortran archive chain and
 # the Fortran runtime transitively, not just this object.
 target_link_libraries(globe_evaluator PUBLIC
-  meshfem3Dg::mesh
-  meshfem3Dg::mesh_module
-  meshfem3Dg::shared
-  meshfem3Dg::shared_module
-  meshfem3Dg::constants
+  meshfem3D_globe::mesh
+  meshfem3D_globe::mesh_module
+  meshfem3D_globe::shared
+  meshfem3D_globe::shared_module
+  meshfem3D_globe::constants
   # model_gll.f90 and model_attenuation_gll.f90 reference read_gll_model_adios /
   # read_gll_qmu_model_adios unconditionally, but the *_adios.F90 sources that
-  # define them are not in MESHFEM3DG_MESH_SOURCES. xmeshfem3D_globe resolves
-  # them via these no-op stubs; any consumer of meshfem3Dg::mesh needs them too.
-  meshfem3Dg::adios_methods_stubs
-  meshfem3Dg::asdf_methods_stubs
+  # define them are not in MESHFEM3D_GLOBE_MESH_SOURCES. xmeshfem3D_globe
+  # resolves them via these no-op stubs; any consumer of meshfem3D_globe::mesh
+  # needs them too.
+  meshfem3D_globe::adios_methods_stubs
+  meshfem3D_globe::asdf_methods_stubs
   MPI::MPI_Fortran
 )
 
