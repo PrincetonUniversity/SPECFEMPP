@@ -1,4 +1,4 @@
-# C++ evaluator for the SPECFEM3D_GLOBE model catalog (issue #2001).
+# C++ binding for the SPECFEM3D_GLOBE model evaluator (issue #2001).
 #
 # Deliberately NOT part of specfem::core, and not linked into the specfem
 # executable. This target is the only thing in core/ that pulls in a Fortran
@@ -16,6 +16,6 @@ target_include_directories(specfem_globe_model
 
 target_link_libraries(specfem_globe_model
     PUBLIC
-        globe_oracle::globe_oracle
+        globe_evaluator::globe_evaluator
         specfem::mpi
 )

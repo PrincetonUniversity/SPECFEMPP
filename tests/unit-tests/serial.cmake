@@ -634,6 +634,12 @@ specfem_add_test(surface_elevation_tests
             Kokkos::kokkos
 )
 
+specfem_add_test(wavefield_checkpoint_tests
+  SOURCES   periodic_tasks/wavefield_checkpoint.cpp
+  LIBRARIES specfem::periodic_tasks
+            gtest_main
+)
+
 specfem_add_test(trilinos_smoke_tests
   SOURCES   linear_system/trilinos_smoke_tests.cpp
   LIBRARIES specfem::linear_system

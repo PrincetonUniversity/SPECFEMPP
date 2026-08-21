@@ -44,6 +44,12 @@ if(SPECFEM_BUILD_MESHFEM3D_GLOBE)
     target_compile_definitions(assembly PRIVATE SPECFEM_HAS_GLOBE_MODEL)
     target_link_libraries(assembly PRIVATE specfem::globe_model)
 endif()
+
+if (SPECFEM_ENABLE_VTK)
+    # check_jacobian renders PNGs; assembly links into test binaries without
+    # periodic_tasks, so it needs its own factory registration
+    vtk_module_autoinit(TARGETS assembly MODULES ${VTK_LIBRARIES})
+endif()
 target_include_directories(
         assembly
         INTERFACE

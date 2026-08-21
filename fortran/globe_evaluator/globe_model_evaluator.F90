@@ -1,18 +1,18 @@
 !=====================================================================
 !
-!  globe_model_oracle -- ISO_C_BINDING wrappers exposing the
+!  globe_model_evaluator -- ISO_C_BINDING wrappers exposing the
 !                        SPECFEM3D_GLOBE model catalog as a callable
-!                        "oracle" for SPECFEM++.
+!                        "evaluator" for SPECFEM++.
 !
 !  See issue #2001. This file is SPECFEM++ code; the vendored mesher
 !  tree under fortran/meshfem3d_globe/ is deliberately left untouched
 !  so it stays a clean upstream mirror.
 !
 !  Three production entry points plus one test-only shim:
-!    globe_oracle_dims            -- compile-time NGLL / N_SLS query
-!    globe_oracle_init            -- one-time model setup
-!    globe_oracle_get_element     -- material for one element's GLL points
-!    globe_oracle_prem_reference  -- TEST ONLY, see note at its definition
+!    globe_evaluator_dims            -- compile-time NGLL / N_SLS query
+!    globe_evaluator_init            -- one-time model setup
+!    globe_evaluator_get_element     -- material for one element's GLL points
+!    globe_evaluator_prem_reference  -- TEST ONLY, see note at its definition
 !
 !  Contracts (see the plan for provenance):
 !    * Coordinates and radii cross the boundary in SI metres. This module
@@ -26,15 +26,15 @@
 !
 !=====================================================================
 
-  module globe_oracle_par
+  module globe_evaluator_par
 
-! module state private to the oracle wrappers
+! module state private to the evaluator wrappers
 
   use iso_c_binding, only: c_int
 
   implicit none
 
-  ! guards against a second globe_oracle_init() -- the catalog's state is
+  ! guards against a second globe_evaluator_init() -- the catalog's state is
   ! global, so two independent configurations cannot coexist.
   logical :: is_initialized = .false.
 
@@ -43,14 +43,14 @@
   logical :: imain_is_open = .false.
 
   ! status codes returned across the C boundary
-  integer(c_int), parameter :: GLOBE_ORACLE_OK = 0
-  integer(c_int), parameter :: GLOBE_ORACLE_ALREADY_INITIALIZED = 1
-  integer(c_int), parameter :: GLOBE_ORACLE_NOT_INITIALIZED = 2
-  integer(c_int), parameter :: GLOBE_ORACLE_UNSUPPORTED_MODEL = 3
-  integer(c_int), parameter :: GLOBE_ORACLE_IMAIN_OPEN_FAILED = 4
-  integer(c_int), parameter :: GLOBE_ORACLE_BAD_ARGUMENT = 5
+  integer(c_int), parameter :: GLOBE_EVALUATOR_OK = 0
+  integer(c_int), parameter :: GLOBE_EVALUATOR_ALREADY_INITIALIZED = 1
+  integer(c_int), parameter :: GLOBE_EVALUATOR_NOT_INITIALIZED = 2
+  integer(c_int), parameter :: GLOBE_EVALUATOR_UNSUPPORTED_MODEL = 3
+  integer(c_int), parameter :: GLOBE_EVALUATOR_IMAIN_OPEN_FAILED = 4
+  integer(c_int), parameter :: GLOBE_EVALUATOR_BAD_ARGUMENT = 5
 
-  end module globe_oracle_par
+  end module globe_evaluator_par
 
 
 !
@@ -58,7 +58,7 @@
 !
 
 
-  subroutine globe_oracle_reset_sticky_flags()
+  subroutine globe_evaluator_reset_sticky_flags()
 
 ! Resets catalog flags that get_model_parameters_flags() does NOT re-initialize
 ! at its top, so a rejected or superseded configuration cannot leak into the
@@ -71,7 +71,7 @@
 ! on its declaration initializer (shared_par.f90:331).
 !
 ! That is harmless upstream, where the mesher calls get_model_parameters() once
-! per process. It is not harmless here: the oracle can be configured more than
+! per process. It is not harmless here: the evaluator can be configured more than
 ! once, so a single "gll_qmu" attempt would otherwise latch ATTENUATION_GLL true
 ! and poison every later model.
 
@@ -81,7 +81,7 @@
 
   ATTENUATION_GLL = .false.
 
-  end subroutine globe_oracle_reset_sticky_flags
+  end subroutine globe_evaluator_reset_sticky_flags
 
 
 !
@@ -89,8 +89,8 @@
 !
 
 
-  subroutine globe_oracle_dims(ngllx_out, nglly_out, ngllz_out, n_sls_out) &
-    bind(C, name="globe_oracle_dims")
+  subroutine globe_evaluator_dims(ngllx_out, nglly_out, ngllz_out, n_sls_out) &
+    bind(C, name="globe_evaluator_dims")
 
 ! reports the compile-time quadrature sizes the catalog was built with, so the
 ! caller can assert its own NGLL matches before trusting any returned values.
@@ -107,7 +107,7 @@
   ngllz_out = int(NGLLZ, kind=c_int)
   n_sls_out = int(N_SLS, kind=c_int)
 
-  end subroutine globe_oracle_dims
+  end subroutine globe_evaluator_dims
 
 
 !
@@ -115,7 +115,7 @@
 !
 
 
-  integer(c_int) function globe_oracle_init(model_name, name_len, &
+  integer(c_int) function globe_evaluator_init(model_name, name_len, &
                                             imain_path, imain_path_len, &
                                             planet_type_in, nchunks_in, &
                                             nex_xi_in, nex_eta_in, &
@@ -124,29 +124,29 @@
                                             min_attenuation_period_in, &
                                             max_attenuation_period_in, &
                                             comm_f) &
-    bind(C, name="globe_oracle_init")
+    bind(C, name="globe_evaluator_init")
 
 ! One-time model setup. Deliberately does NOT read the globe Par_file: the
 ! model is identified by name only, and get_model_parameters() re-derives every
-! flag and discontinuity radius from it. That is the whole point of the oracle
+! flag and discontinuity radius from it. That is the whole point of the evaluator
 ! design -- there is exactly one place a model is chosen (the mesher), and
 ! replaying the name here cannot drift from it.
 !
-! Returns GLOBE_ORACLE_OK (0) on success, a nonzero status otherwise.
+! Returns GLOBE_EVALUATOR_OK (0) on success, a nonzero status otherwise.
 !
 ! Caveat: an unrecognized model name cannot be reported gracefully.
 ! get_model_parameters_flags() terminates the process with a bare `stop` in its
 ! `case default` (get_model_parameters.F90:978-982), and likewise on several
 ! flag-consistency violations (:1026-1060). Only models that parse successfully
-! but land on a code path the oracle cannot reproduce come back as
-! GLOBE_ORACLE_UNSUPPORTED_MODEL.
+! but land on a code path the evaluator cannot reproduce come back as
+! GLOBE_EVALUATOR_UNSUPPORTED_MODEL.
 
   use iso_c_binding, only: c_int, c_char, c_double
 
-  use globe_oracle_par, only: is_initialized, imain_is_open, &
-    GLOBE_ORACLE_OK, GLOBE_ORACLE_ALREADY_INITIALIZED, &
-    GLOBE_ORACLE_UNSUPPORTED_MODEL, GLOBE_ORACLE_IMAIN_OPEN_FAILED, &
-    GLOBE_ORACLE_BAD_ARGUMENT
+  use globe_evaluator_par, only: is_initialized, imain_is_open, &
+    GLOBE_EVALUATOR_OK, GLOBE_EVALUATOR_ALREADY_INITIALIZED, &
+    GLOBE_EVALUATOR_UNSUPPORTED_MODEL, GLOBE_EVALUATOR_IMAIN_OPEN_FAILED, &
+    GLOBE_EVALUATOR_BAD_ARGUMENT
 
   use constants, only: MAX_STRING_LEN, IMAIN, ISTANDARD_OUTPUT, myrank
 
@@ -183,18 +183,18 @@
   integer :: i, ier
 
   ! refuse a second configuration: the catalog's state is global module state,
-  ! so re-initializing would silently mutate an oracle the caller still holds.
+  ! so re-initializing would silently mutate an evaluator the caller still holds.
   if (is_initialized) then
-    globe_oracle_init = GLOBE_ORACLE_ALREADY_INITIALIZED
+    globe_evaluator_init = GLOBE_EVALUATOR_ALREADY_INITIALIZED
     return
   endif
 
   if (name_len <= 0 .or. name_len > MAX_STRING_LEN) then
-    globe_oracle_init = GLOBE_ORACLE_BAD_ARGUMENT
+    globe_evaluator_init = GLOBE_EVALUATOR_BAD_ARGUMENT
     return
   endif
   if (imain_path_len < 0 .or. imain_path_len > MAX_STRING_LEN) then
-    globe_oracle_init = GLOBE_ORACLE_BAD_ARGUMENT
+    globe_evaluator_init = GLOBE_EVALUATOR_BAD_ARGUMENT
     return
   endif
 
@@ -232,7 +232,7 @@
 
   ! The attenuation period band is NOT derivable from the model name: the mesher
   ! computes it in rcp_set_compute_parameters/get_timestep_and_layers, which the
-  ! oracle deliberately does not call. So it has to be supplied, and the database
+  ! evaluator deliberately does not call. So it has to be supplied, and the database
   ! has to carry it. With ATTENUATION on and either bound left at zero,
   ! attenuation_tau_sigma aborts the process (model_attenuation.f90:625-628);
   ! rejecting it here turns that abort into a status code.
@@ -242,7 +242,7 @@
   if (ATTENUATION) then
     if (MIN_ATTENUATION_PERIOD <= 0.d0 .or. MAX_ATTENUATION_PERIOD <= 0.d0 .or. &
         MAX_ATTENUATION_PERIOD <= MIN_ATTENUATION_PERIOD) then
-      globe_oracle_init = GLOBE_ORACLE_BAD_ARGUMENT
+      globe_evaluator_init = GLOBE_EVALUATOR_BAD_ARGUMENT
       return
     endif
   endif
@@ -252,14 +252,14 @@
   ! write to IMAIN and to disk without a myrank check.
   SAVE_MESH_FILES = .false.
 
-  ! the oracle drops get_model's rho_vp/rho_vs Stacey branch entirely
+  ! the evaluator drops get_model's rho_vp/rho_vs Stacey branch entirely
   ABSORBING_CONDITIONS = .false.
 
   ! only consulted when TOPOGRAPHY is on (model_topo_bathy_broadcast)
   LOCAL_PATH = '.'
 
   ! ---- state that already defaults correctly; pinned here so a future change
-  !      to shared_par.f90 cannot silently alter the oracle's behaviour ------
+  !      to shared_par.f90 cannot silently alter the evaluator's behaviour ------
   REGIONAL_MESH_CUTOFF = .false.
   ADD_SCATTERING_PERTURBATIONS = .false.
 
@@ -276,7 +276,7 @@
            action='write', iostat=ier)
     endif
     if (ier /= 0) then
-      globe_oracle_init = GLOBE_ORACLE_IMAIN_OPEN_FAILED
+      globe_evaluator_init = GLOBE_EVALUATOR_IMAIN_OPEN_FAILED
       return
     endif
     imain_is_open = .true.
@@ -284,7 +284,7 @@
 
   ! clears flags a previous configuration may have latched (see the routine's
   ! own comment for why get_model_parameters_flags cannot be relied on here)
-  call globe_oracle_reset_sticky_flags()
+  call globe_evaluator_reset_sticky_flags()
 
   ! ---- resolve the model --------------------------------------------------
   ! get_model_parameters() = get_model_parameters_flags()
@@ -294,21 +294,21 @@
   ! radius (RCMB/RICB/R670/...) from PLANET_TYPE + REFERENCE_1D_MODEL.
   call get_model_parameters()
 
-  ! ---- reject model paths the oracle cannot reproduce ----------------------
+  ! ---- reject model paths the evaluator cannot reproduce ----------------------
   ! These four are exactly the consumers of (ispec,i,j,k) inside the catalog:
   !   model_gll_impose_val        (meshfem3D_models.F90:1888)
   !   request_cem                 (meshfem3D_models.F90:1049)
   !   model_heterogen_mantle      (meshfem3D_models.F90:971,1002)
   !   model_attenuation_gll       (meshfem3D_models.F90:1731)
   ! They index a per-GLL array belonging to the mesher's own discretization, so
-  ! a position-only oracle cannot evaluate them. Fail loudly rather than return
+  ! a position-only evaluator cannot evaluate them. Fail loudly rather than return
   ! a plausible wrong answer.
   if (MODEL_GLL .or. CEM_ACCEPT .or. CEM_REQUEST .or. &
       HETEROGEN_3D_MANTLE .or. ATTENUATION_GLL .or. EMC_MODEL) then
     ! leaves the catalog's flags as we found them, so a rejected model does not
     ! affect a subsequent, supported one
-    call globe_oracle_reset_sticky_flags()
-    globe_oracle_init = GLOBE_ORACLE_UNSUPPORTED_MODEL
+    call globe_evaluator_reset_sticky_flags()
+    globe_evaluator_init = GLOBE_EVALUATOR_UNSUPPORTED_MODEL
     return
   endif
 
@@ -318,9 +318,9 @@
   call meshfem3D_models_broadcast()
 
   is_initialized = .true.
-  globe_oracle_init = GLOBE_ORACLE_OK
+  globe_evaluator_init = GLOBE_EVALUATOR_OK
 
-  end function globe_oracle_init
+  end function globe_evaluator_init
 
 
 !
@@ -328,13 +328,13 @@
 !
 
 
-  integer(c_int) function globe_oracle_scales(length_scale, density_scale, &
+  integer(c_int) function globe_evaluator_scales(length_scale, density_scale, &
                                               velocity_scale) &
-    bind(C, name="globe_oracle_scales")
+    bind(C, name="globe_evaluator_scales")
 
-! Reports the factors that convert the oracle's outputs to SI.
+! Reports the factors that convert the evaluator's outputs to SI.
 !
-! The catalog works in, and this oracle returns, the globe's NON-DIMENSIONAL
+! The catalog works in, and this evaluator returns, the globe's NON-DIMENSIONAL
 ! units -- density near 1, velocities near 2. That is deliberate: returning the
 ! catalog's own numbers untouched is what makes the values bit-for-bit the
 ! mesher's. Converting here would introduce a rounding step the mesher does not
@@ -348,13 +348,13 @@
 !
 ! Qmu/Qkappa and eta are dimensionless; cij carries density * velocity^2.
 !
-! Requires a configured oracle: R_PLANET and RHOAV are planet constants set by
+! Requires a configured evaluator: R_PLANET and RHOAV are planet constants set by
 ! get_model_planet_constants() during init.
 
   use iso_c_binding, only: c_int, c_double
 
-  use globe_oracle_par, only: is_initialized, &
-    GLOBE_ORACLE_OK, GLOBE_ORACLE_NOT_INITIALIZED
+  use globe_evaluator_par, only: is_initialized, &
+    GLOBE_EVALUATOR_OK, GLOBE_EVALUATOR_NOT_INITIALIZED
 
   use constants, only: PI, GRAV
 
@@ -368,7 +368,7 @@
     length_scale = 0.d0
     density_scale = 0.d0
     velocity_scale = 0.d0
-    globe_oracle_scales = GLOBE_ORACLE_NOT_INITIALIZED
+    globe_evaluator_scales = GLOBE_EVALUATOR_NOT_INITIALIZED
     return
   endif
 
@@ -376,9 +376,9 @@
   density_scale = RHOAV
   velocity_scale = R_PLANET * sqrt(PI * GRAV * RHOAV)
 
-  globe_oracle_scales = GLOBE_ORACLE_OK
+  globe_evaluator_scales = GLOBE_EVALUATOR_OK
 
-  end function globe_oracle_scales
+  end function globe_evaluator_scales
 
 
 !
@@ -386,13 +386,13 @@
 !
 
 
-  integer(c_int) function globe_oracle_finalize() &
-    bind(C, name="globe_oracle_finalize")
+  integer(c_int) function globe_evaluator_finalize() &
+    bind(C, name="globe_evaluator_finalize")
 
-! Releases what the oracle itself owns and clears the initialization guard, so a
+! Releases what the evaluator itself owns and clears the initialization guard, so a
 ! different model can be configured afterwards. Idempotent.
 !
-! LIMITATION: this releases the oracle's own resources (the IMAIN unit and the
+! LIMITATION: this releases the evaluator's own resources (the IMAIN unit and the
 ! topo/bathy array allocated by meshfem3D_models_broadcast), but it cannot
 ! deallocate state owned by individual model_*.f90 files -- upstream provides no
 ! teardown hooks for those. Re-initializing is therefore reliable for the
@@ -402,7 +402,7 @@
 
   use iso_c_binding, only: c_int
 
-  use globe_oracle_par, only: is_initialized, imain_is_open, GLOBE_ORACLE_OK
+  use globe_evaluator_par, only: is_initialized, imain_is_open, GLOBE_EVALUATOR_OK
 
   use constants, only: IMAIN, ISTANDARD_OUTPUT
 
@@ -415,7 +415,7 @@
 
   if (allocated(ibathy_topo)) deallocate(ibathy_topo)
 
-  call globe_oracle_reset_sticky_flags()
+  call globe_evaluator_reset_sticky_flags()
 
   if (imain_is_open .and. IMAIN /= ISTANDARD_OUTPUT) then
     close(unit=IMAIN, iostat=ier)
@@ -423,9 +423,9 @@
   endif
 
   is_initialized = .false.
-  globe_oracle_finalize = GLOBE_ORACLE_OK
+  globe_evaluator_finalize = GLOBE_EVALUATOR_OK
 
-  end function globe_oracle_finalize
+  end function globe_evaluator_finalize
 
 
 !
@@ -433,7 +433,7 @@
 !
 
 
-  integer(c_int) function globe_oracle_get_element(iregion_code, idoubling, &
+  integer(c_int) function globe_evaluator_get_element(iregion_code, idoubling, &
                                                    rmin_si, rmax_si, &
                                                    elem_in_crust, elem_in_mantle, &
                                                    xyz_si, &
@@ -443,7 +443,7 @@
                                                    qmu_out, qkappa_out, &
                                                    cij_out, gc_prime_out, gs_prime_out, &
                                                    is_anisotropic) &
-    bind(C, name="globe_oracle_get_element")
+    bind(C, name="globe_evaluator_get_element")
 
 ! Evaluates the model at every GLL point of one element.
 !
@@ -465,8 +465,8 @@
 
   use iso_c_binding, only: c_int, c_double
 
-  use globe_oracle_par, only: is_initialized, &
-    GLOBE_ORACLE_OK, GLOBE_ORACLE_NOT_INITIALIZED
+  use globe_evaluator_par, only: is_initialized, &
+    GLOBE_EVALUATOR_OK, GLOBE_EVALUATOR_NOT_INITIALIZED
 
   use constants, only: NGLLX, NGLLY, NGLLZ, N_SLS, CUSTOM_REAL, &
     TINYVAL, IREGION_CRUST_MANTLE, IREGION_INNER_CORE, IREGION_OUTER_CORE
@@ -514,7 +514,7 @@
   integer :: ipoint
 
   if (.not. is_initialized) then
-    globe_oracle_get_element = GLOBE_ORACLE_NOT_INITIALIZED
+    globe_evaluator_get_element = GLOBE_EVALUATOR_NOT_INITIALIZED
     return
   endif
 
@@ -542,12 +542,12 @@
 
   ! tau_s is a per-run constant that model_attenuation_broadcast() cached in
   ! tau_s_store during init, exactly as get_model.F90:148 reads it. It does not
-  ! influence the Qmu the oracle returns (the caller builds its own SLS
+  ! influence the Qmu the evaluator returns (the caller builds its own SLS
   ! coefficients), but taking the real value keeps the call faithful and means
   ! extending the ABI to return tau_e later needs no change here.
   !
   ! Note tau_s_store is a fixed-size module array, not one of the allocatables
-  ! this oracle deliberately never allocates.
+  ! this evaluator deliberately never allocates.
   tau_s(:) = tau_s_store(:)
 
   ! loops over the element's GLL points in the mesher's order (k,j,i with i
@@ -647,7 +647,7 @@
 
     ! gets the 3-D model parameters for the mantle.
     ! the trailing ispec,i,j,k are only read by model paths rejected in
-    ! globe_oracle_init(), so passing 1s here is safe and never observable.
+    ! globe_evaluator_init(), so passing 1s here is safe and never observable.
     call meshfem3D_models_get3Dmntl_val(int(iregion_code), r_prem, rho, &
                                         vpv, vph, vsv, vsh, eta_aniso, &
                                         RCMB, RMOHO, &
@@ -667,7 +667,7 @@
     endif
 
     ! note: get_model.F90:214-219 (MODEL_GLL) is intentionally absent -- that
-    !       path is rejected in globe_oracle_init().
+    !       path is rejected in globe_evaluator_init().
 
     ! adds scattering perturbations
     if (ADD_SCATTERING_PERTURBATIONS) then
@@ -695,7 +695,7 @@
     ! Applied unconditionally, matching how get_model treats vs: for a truly
     ! isotropic point it reduces algebraically to vpv, but reproducing the
     ! arithmetic rather than short-circuiting keeps it bit-identical to the
-    ! reference path in globe_oracle_prem_reference().
+    ! reference path in globe_evaluator_prem_reference().
     vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
               + (8.d0-8.d0*eta_aniso)*vsv*vsv)/15.d0)
 
@@ -757,9 +757,9 @@
 
   enddo
 
-  globe_oracle_get_element = GLOBE_ORACLE_OK
+  globe_evaluator_get_element = GLOBE_EVALUATOR_OK
 
-  end function globe_oracle_get_element
+  end function globe_evaluator_get_element
 
 
 !
@@ -767,26 +767,26 @@
 !
 
 
-  integer(c_int) function globe_oracle_prem_reference(r_si, idoubling, iregion_code, &
+  integer(c_int) function globe_evaluator_prem_reference(r_si, idoubling, iregion_code, &
                                                       rho_out, vpv_out, vph_out, &
                                                       vsv_out, vsh_out, eta_out, &
                                                       vp_iso_out, vs_iso_out, &
                                                       qkappa_out, qmu_out) &
-    bind(C, name="globe_oracle_prem_reference")
+    bind(C, name="globe_evaluator_prem_reference")
 
-! TEST-ONLY reference evaluation, not part of the production oracle contract.
+! TEST-ONLY reference evaluation, not part of the production evaluator contract.
 !
 ! Calls model_prem_iso / model_prem_aniso directly, choosing between them the
 ! same way meshfem3D_models_get1D_val does -- on the TRANSVERSE_ISOTROPY flag,
 ! not on radius (meshfem3D_models.F90:439-486) -- and applies the same Voigt
-! reduction. This lets the tests check the oracle against the catalog's own
+! reduction. This lets the tests check the evaluator against the catalog's own
 ! reference routine instead of against a hand-written table of expected values,
 ! which would only ever confirm that the table matches itself.
 
   use iso_c_binding, only: c_int, c_double
 
-  use globe_oracle_par, only: is_initialized, &
-    GLOBE_ORACLE_OK, GLOBE_ORACLE_NOT_INITIALIZED
+  use globe_evaluator_par, only: is_initialized, &
+    GLOBE_EVALUATOR_OK, GLOBE_EVALUATOR_NOT_INITIALIZED
 
   use constants, only: IREGION_OUTER_CORE
 
@@ -806,7 +806,7 @@
   logical :: check_doubling_flag
 
   if (.not. is_initialized) then
-    globe_oracle_prem_reference = GLOBE_ORACLE_NOT_INITIALIZED
+    globe_evaluator_prem_reference = GLOBE_EVALUATOR_NOT_INITIALIZED
     return
   endif
 
@@ -843,7 +843,7 @@
     eta_aniso = 1.d0
   endif
 
-  ! Applies the same Voigt reduction the oracle applies, from the same inputs,
+  ! Applies the same Voigt reduction the evaluator applies, from the same inputs,
   ! so vp_iso/vs_iso compare exactly rather than to within an ULP. The
   ! load-bearing assertions in the tests are on the five Love velocities and
   ! rho above, which pass through untouched on both paths.
@@ -868,6 +868,6 @@
   qkappa_out = Qkappa
   qmu_out = Qmu
 
-  globe_oracle_prem_reference = GLOBE_ORACLE_OK
+  globe_evaluator_prem_reference = GLOBE_EVALUATOR_OK
 
-  end function globe_oracle_prem_reference
+  end function globe_evaluator_prem_reference

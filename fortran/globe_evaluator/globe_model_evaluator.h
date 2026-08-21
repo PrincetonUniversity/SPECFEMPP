@@ -1,7 +1,7 @@
 /*
- * globe_model_oracle.h -- C ABI for the SPECFEM3D_GLOBE model oracle.
+ * globe_model_evaluator.h -- C ABI for the SPECFEM3D_GLOBE model evaluator.
  *
- * Implemented by globe_model_oracle.F90. See issue #2001.
+ * Implemented by globe_model_evaluator.F90. See issue #2001.
  *
  * Contracts:
  *   - INPUT coordinates and radii are SI metres. The Fortran side
@@ -9,14 +9,14 @@
  *   - OUTPUT material is in the globe's NON-DIMENSIONAL units, not SI:
  *     density is near 1 and velocities near 2. This is deliberate -- returning
  *     the catalog's own numbers untouched is what makes them bit-for-bit the
- *     mesher's. Use globe_oracle_scales to convert.
- *   - globe_oracle_init must be called exactly once, before any
- *     globe_oracle_get_element call. The underlying catalog holds global
+ *     mesher's. Use globe_evaluator_scales to convert.
+ *   - globe_evaluator_init must be called exactly once, before any
+ *     globe_evaluator_get_element call. The underlying catalog holds global
  *     module state, so a second init is refused rather than honoured.
  *   - Call single-threaded, at setup only. Never from a solver hot loop.
  *   - Output arrays are indexed over the element's GLL points in the mesher's
  *     order (k outermost, i innermost) and must be at least
- *     NGLLX*NGLLY*NGLLZ long -- query the sizes with globe_oracle_dims rather
+ *     NGLLX*NGLLY*NGLLZ long -- query the sizes with globe_evaluator_dims rather
  *     than assuming 125.
  */
 
@@ -26,20 +26,20 @@
 extern "C" {
 #endif
 
-/* Status codes, mirroring globe_oracle_par in globe_model_oracle.F90. */
-#define GLOBE_ORACLE_OK 0
-#define GLOBE_ORACLE_ALREADY_INITIALIZED 1
-#define GLOBE_ORACLE_NOT_INITIALIZED 2
-#define GLOBE_ORACLE_UNSUPPORTED_MODEL 3
-#define GLOBE_ORACLE_IMAIN_OPEN_FAILED 4
-#define GLOBE_ORACLE_BAD_ARGUMENT 5
+/* Status codes, mirroring globe_evaluator_par in globe_model_evaluator.F90. */
+#define GLOBE_EVALUATOR_OK 0
+#define GLOBE_EVALUATOR_ALREADY_INITIALIZED 1
+#define GLOBE_EVALUATOR_NOT_INITIALIZED 2
+#define GLOBE_EVALUATOR_UNSUPPORTED_MODEL 3
+#define GLOBE_EVALUATOR_IMAIN_OPEN_FAILED 4
+#define GLOBE_EVALUATOR_BAD_ARGUMENT 5
 
 /*
  * Reports the quadrature sizes the catalog was compiled with. Call this and
  * check it against your own NGLL before trusting any returned values: a
- * mismatch means the oracle is sampling a different rule than the caller.
+ * mismatch means the evaluator is sampling a different rule than the caller.
  */
-void globe_oracle_dims(int *ngllx, int *nglly, int *ngllz, int *n_sls);
+void globe_evaluator_dims(int *ngllx, int *nglly, int *ngllz, int *n_sls);
 
 /*
  * One-time model setup. Identifies the model by name only -- no globe Par_file
@@ -57,21 +57,21 @@ void globe_oracle_dims(int *ngllx, int *nglly, int *ngllz, int *n_sls);
  *
  * min/max_attenuation_period are in seconds and consulted only when
  * attenuation is nonzero. They are NOT derivable from the model name -- the
- * mesher computes them in rcp_set_compute_parameters, which the oracle does not
+ * mesher computes them in rcp_set_compute_parameters, which the evaluator does not
  * call -- so the database must carry them. Supplying a non-positive or inverted
- * band with attenuation on returns GLOBE_ORACLE_BAD_ARGUMENT rather than letting
+ * band with attenuation on returns GLOBE_EVALUATOR_BAD_ARGUMENT rather than letting
  * the catalog abort the process.
  *
- * Returns GLOBE_ORACLE_OK, or a nonzero status above.
+ * Returns GLOBE_EVALUATOR_OK, or a nonzero status above.
  *
  * WARNING: an unrecognized model name cannot be reported. The catalog
  * terminates the process with a bare Fortran `stop` in that case
  * (get_model_parameters.F90:978-982), as it does for several flag-consistency
- * violations. GLOBE_ORACLE_UNSUPPORTED_MODEL is returned only for models that
- * parse successfully but require the per-GLL indexing a position-only oracle
+ * violations. GLOBE_EVALUATOR_UNSUPPORTED_MODEL is returned only for models that
+ * parse successfully but require the per-GLL indexing a position-only evaluator
  * cannot provide (MODEL_GLL, CEM, HETEROGEN_3D_MANTLE, ATTENUATION_GLL, EMC).
  */
-int globe_oracle_init(const char *model_name, int name_len,
+int globe_evaluator_init(const char *model_name, int name_len,
                       const char *imain_path, int imain_path_len,
                       int planet_type, int nchunks, int nex_xi, int nex_eta,
                       int ellipticity, int topography, int oceans,
@@ -80,30 +80,30 @@ int globe_oracle_init(const char *model_name, int name_len,
                       double max_attenuation_period, int comm_f);
 
 /*
- * Reports the factors converting this oracle's outputs to SI:
+ * Reports the factors converting this evaluator's outputs to SI:
  *
  *   rho_SI = rho * density_scale        (density_scale = RHOAV)
  *   v_SI   = v   * velocity_scale       (= R_PLANET * sqrt(PI*GRAV*RHOAV))
  *   r_SI   = r   * length_scale         (= R_PLANET)
  *
  * eta and Qmu/Qkappa are dimensionless; cij scales as density * velocity^2.
- * Requires a configured oracle; returns GLOBE_ORACLE_NOT_INITIALIZED otherwise
+ * Requires a configured evaluator; returns GLOBE_EVALUATOR_NOT_INITIALIZED otherwise
  * and writes zeros.
  */
-int globe_oracle_scales(double *length_scale, double *density_scale,
+int globe_evaluator_scales(double *length_scale, double *density_scale,
                         double *velocity_scale);
 
 /*
- * Releases what the oracle owns (its log unit and the topo/bathy array) and
+ * Releases what the evaluator owns (its log unit and the topo/bathy array) and
  * clears the initialization guard so a different model may be configured.
- * Idempotent; always returns GLOBE_ORACLE_OK.
+ * Idempotent; always returns GLOBE_EVALUATOR_OK.
  *
  * Does NOT deallocate state owned by individual model_*.f90 files -- upstream
  * exposes no teardown hooks for those. Re-initializing is therefore reliable
  * for the analytic 1D reference models and may fail inside the catalog for 3D
  * models that allocate. The production path configures once per process.
  */
-int globe_oracle_finalize(void);
+int globe_evaluator_finalize(void);
 
 /*
  * Evaluates the model at every GLL point of one element.
@@ -126,12 +126,12 @@ int globe_oracle_finalize(void);
  * vs_iso is exactly 0.0 in the outer core -- that is the acoustic tag, and it
  * is worth cross-checking against the database's own medium_tag.
  *
- * Returns GLOBE_ORACLE_OK or GLOBE_ORACLE_NOT_INITIALIZED. Note that an
+ * Returns GLOBE_EVALUATOR_OK or GLOBE_EVALUATOR_NOT_INITIALIZED. Note that an
  * inconsistent idoubling aborts the process from inside the catalog
  * (get_model_check_idoubling); converting that to a status code is a tracked
  * follow-up.
  */
-int globe_oracle_get_element(int iregion_code, int idoubling, double rmin_si,
+int globe_evaluator_get_element(int iregion_code, int idoubling, double rmin_si,
                              double rmax_si, int elem_in_crust,
                              int elem_in_mantle, const double *xyz_si,
                              double *rho, double *vpv, double *vph, double *vsv,
@@ -141,15 +141,15 @@ int globe_oracle_get_element(int iregion_code, int idoubling, double rmin_si,
                              int *is_anisotropic);
 
 /*
- * TEST ONLY -- not part of the production oracle contract.
+ * TEST ONLY -- not part of the production evaluator contract.
  *
  * Evaluates the 1D PREM reference directly (model_prem_iso / model_prem_aniso,
  * selected on TRANSVERSE_ISOTROPY exactly as meshfem3D_models_get1D_val does)
- * and applies the same Voigt reduction as globe_oracle_get_element. Exists so
- * tests can check the oracle against the catalog's own reference routine rather
+ * and applies the same Voigt reduction as globe_evaluator_get_element. Exists so
+ * tests can check the evaluator against the catalog's own reference routine rather
  * than against a hand-written table of expected values.
  */
-int globe_oracle_prem_reference(double r_si, int idoubling, int iregion_code,
+int globe_evaluator_prem_reference(double r_si, int idoubling, int iregion_code,
                                 double *rho, double *vpv, double *vph,
                                 double *vsv, double *vsh, double *eta,
                                 double *vp_iso, double *vs_iso, double *qkappa,

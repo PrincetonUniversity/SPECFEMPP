@@ -113,6 +113,12 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
 #endif
   }
 
+  // GLL model: when a property reader is configured, read properties (and
+  // recompute attenuation state) before dependent containers are built.
+  if (property_reader != nullptr) {
+    property_reader->read(*this);
+  }
+
   this->info = { this->mesh, this->properties, this->element_types };
 
   return;

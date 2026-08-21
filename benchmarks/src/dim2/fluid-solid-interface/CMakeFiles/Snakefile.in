@@ -46,7 +46,7 @@ rule run_solver:
                 "S0011",
             ],
             network_name=["AA"],
-            component=["BXX", "BXZ"],
+            component=["FXX", "FXZ"],
         ),
         log="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/output.log",
     resources:
@@ -81,7 +81,7 @@ rule plot_seismogram:
                 "S0011",
             ],
             network_name=["AA"],
-            component=["BXX", "BXZ"],
+            component=["FXX", "FXZ"],
         ),
     output:
         traces_X="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/traces_X.png",

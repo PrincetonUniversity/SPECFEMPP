@@ -55,12 +55,13 @@ const static std::unordered_map<std::string, MaterialVectorType>
                   specfem::element::property_tag::isotropic,
                   specfem::element::attenuation_tag::constant_isotropic>(
                   2500.0, 1963.0, 3400.0, 100.0, 150.0, 0.0),
+              // Acoustic attenuation is not supported: the reader ignores
+              // Qkappa and stores the material as non-attenuating.
               specfem::medium_container::material<
                   specfem::element::dimension_tag::dim2,
                   specfem::element::medium_tag::acoustic,
                   specfem::element::property_tag::isotropic,
-                  specfem::element::attenuation_tag::constant_isotropic>(
-                  1020.0, 1500, 250.0, 0.0)
+                  specfem::element::attenuation_tag::none>(1020.0, 1500, 0.0)
 
             }) },
       { "Simple mesh with curved ocean bottom",
@@ -116,14 +117,16 @@ const static std::unordered_map<std::string, MaterialVectorType>
             specfem::element::attenuation_tag::none>(
             2650.0, 880.0, 0.1, 2.0, 1.0e-9, 0.0, 1.0e-9, 12.2e9, 1.985e9,
             9.6e9, 0.0, 5.1e9) }) },
+      // Poroelastic attenuation is not supported: the reader ignores Qmu and
+      // stores the material as non-attenuating.
       { "Poroelastic mesh - Homogeneous isotropic material w attenuation",
         MaterialVectorType({ specfem::medium_container::material<
             specfem::element::dimension_tag::dim2,
             specfem::element::medium_tag::poroelastic,
             specfem::element::property_tag::isotropic,
-            specfem::element::attenuation_tag::constant_isotropic>(
+            specfem::element::attenuation_tag::none>(
             2650.0, 880.0, 0.1, 2.0, 1.0e-9, 0.0, 1.0e-9, 12.2e9, 1.985e9,
-            9.6e9, 0.0, 5.1e9, 100.0) }) },
+            9.6e9, 0.0, 5.1e9) }) },
       { "Electro-magnetic mesh example from Morency 2020",
         MaterialVectorType(
             { specfem::medium_container::material<
@@ -195,7 +198,7 @@ void check_material(
             const auto iexpected =
                 std::any_cast<specfem::medium_container::material<
                     ElementTags::dimension_tag, ElementTags::medium_tag,
-                    ElementTags::property_tag, ElementTags::attenuation_tag> >(
+                    ElementTags::property_tag, ElementTags::attenuation_tag>>(
                     expected[imaterial]);
             if (icomputed != iexpected) {
               std::ostringstream error_message;

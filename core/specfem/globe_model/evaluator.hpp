@@ -153,7 +153,7 @@ struct ElementProperties {
  *
  * 1. **Single instance.** The catalog's configuration lives in Fortran module
  *    variables, so two `Evaluator` objects would share one model. Constructing
- * a second while one is alive throws.
+ *    a second while one is alive throws.
  * 2. **Setup only, single-threaded.** Several catalog routines cache state in
  *    `save` variables. Never call @ref evaluate_element from a solver loop or
  *    from multiple threads.
@@ -230,8 +230,8 @@ public:
 
   /**
    * @brief Factors converting evaluated material to SI.
-   * @throws std::runtime_error if no @ref Evaluator is configured -- the scales
-   *         depend on the planet constants that construction resolves.
+   * @throws std::runtime_error if no @ref Evaluator is configured -- the
+   *         scales depend on the planet constants that construction resolves.
    */
   static Scales scales();
 
