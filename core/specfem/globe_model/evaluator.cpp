@@ -1,4 +1,4 @@
-#include "specfem/globe_model/oracle.hpp"
+#include "specfem/globe_model/evaluator.hpp"
 
 #include "specfem/mpi.hpp"
 
@@ -60,7 +60,7 @@ std::string describe_status(const int status) {
     return "success";
   case status_already_initialized:
     return "the globe model catalog is already configured; only one "
-           "specfem::globe_model::Oracle may exist at a time because the "
+           "specfem::globe_model::Evaluator may exist at a time because the "
            "catalog's configuration lives in Fortran module state";
   case status_not_initialized:
     return "the globe model catalog has not been configured";
@@ -84,17 +84,17 @@ std::string describe_status(const int status) {
 } // namespace globe_model_impl
 } // namespace specfem
 
-bool specfem::globe_model::Oracle::is_active_ = false;
+bool specfem::globe_model::Evaluator::is_active_ = false;
 
-specfem::globe_model::Dims specfem::globe_model::Oracle::dims() {
+specfem::globe_model::Dims specfem::globe_model::Evaluator::dims() {
   specfem::globe_model::Dims result;
   globe_oracle_dims(&result.ngllx, &result.nglly, &result.ngllz, &result.n_sls);
   return result;
 }
 
-bool specfem::globe_model::Oracle::is_active() { return is_active_; }
+bool specfem::globe_model::Evaluator::is_active() { return is_active_; }
 
-specfem::globe_model::Scales specfem::globe_model::Oracle::scales() {
+specfem::globe_model::Scales specfem::globe_model::Evaluator::scales() {
   specfem::globe_model::Scales result;
 
   const int status =
@@ -102,19 +102,19 @@ specfem::globe_model::Scales specfem::globe_model::Oracle::scales() {
 
   if (status != specfem::globe_model_impl::status_ok) {
     throw std::runtime_error(
-        "specfem::globe_model::Oracle::scales: " +
+        "specfem::globe_model::Evaluator::scales: " +
         specfem::globe_model_impl::describe_status(status));
   }
 
   return result;
 }
 
-specfem::globe_model::Oracle::Oracle(
+specfem::globe_model::Evaluator::Evaluator(
     const specfem::globe_model::ModelConfig &config) {
 
   if (is_active_) {
     throw std::runtime_error(
-        "specfem::globe_model::Oracle: " +
+        "specfem::globe_model::Evaluator: " +
         specfem::globe_model_impl::describe_status(
             specfem::globe_model_impl::status_already_initialized));
   }
@@ -136,7 +136,7 @@ specfem::globe_model::Oracle::Oracle(
 
   if (status != specfem::globe_model_impl::status_ok) {
     std::ostringstream message;
-    message << "specfem::globe_model::Oracle: failed to configure model '"
+    message << "specfem::globe_model::Evaluator: failed to configure model '"
             << config.model_name
             << "': " << specfem::globe_model_impl::describe_status(status);
     throw std::runtime_error(message.str());
@@ -145,7 +145,7 @@ specfem::globe_model::Oracle::Oracle(
   is_active_ = true;
 }
 
-specfem::globe_model::Oracle::~Oracle() {
+specfem::globe_model::Evaluator::~Evaluator() {
   // Must clear the Fortran-side guard too, not just this mirror of it: the
   // catalog's `is_initialized` is what globe_oracle_init checks, so skipping
   // this would leave the process permanently unable to configure another model.
@@ -154,7 +154,7 @@ specfem::globe_model::Oracle::~Oracle() {
 }
 
 specfem::globe_model::ElementProperties
-specfem::globe_model::Oracle::evaluate_element(
+specfem::globe_model::Evaluator::evaluate_element(
     const int iregion_code, const int idoubling, const double rmin_si,
     const double rmax_si, const bool elem_in_crust, const bool elem_in_mantle,
     const std::vector<double> &xyz_si) const {
@@ -164,7 +164,7 @@ specfem::globe_model::Oracle::evaluate_element(
 
   if (xyz_si.size() != 3 * npoints) {
     std::ostringstream message;
-    message << "specfem::globe_model::Oracle::evaluate_element: expected "
+    message << "specfem::globe_model::Evaluator::evaluate_element: expected "
             << 3 * npoints << " coordinates (3 x " << npoints
             << " GLL points) but received " << xyz_si.size();
     throw std::invalid_argument(message.str());
@@ -198,7 +198,7 @@ specfem::globe_model::Oracle::evaluate_element(
 
   if (status != specfem::globe_model_impl::status_ok) {
     throw std::runtime_error(
-        "specfem::globe_model::Oracle::evaluate_element: " +
+        "specfem::globe_model::Evaluator::evaluate_element: " +
         specfem::globe_model_impl::describe_status(status));
   }
 

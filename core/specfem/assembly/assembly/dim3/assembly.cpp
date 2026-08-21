@@ -5,6 +5,9 @@
 #include "specfem/mesh.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/tag_dispatch/for_each.hpp"
+#ifdef SPECFEM_HAS_GLOBE_MODEL
+#include "globe_properties.hpp"
+#endif
 
 specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
     const specfem::mesh::mesh<dimension_tag> &mesh,
@@ -98,7 +101,17 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
                         mesh.materials };
 
   this->properties = { this->element_types, this->mesh, mesh.materials,
-                       property_reader != nullptr };
+                       property_reader != nullptr || mesh.globe.has_value() };
+
+  if (mesh.globe.has_value()) {
+#ifdef SPECFEM_HAS_GLOBE_MODEL
+    specfem::assembly::dim3_impl::build_globe_properties(mesh, *this);
+#else
+    throw std::runtime_error(
+        "This build cannot consume globe meshes; configure with "
+        "SPECFEM_BUILD_MESHFEM3D_GLOBE=ON");
+#endif
+  }
 
   this->info = { this->mesh, this->properties, this->element_types };
 

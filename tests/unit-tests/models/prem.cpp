@@ -10,14 +10,14 @@
 #include <vector>
 
 // Spike coverage for issue #2001: the SPECFEM3D_GLOBE model catalog exposed as
-// a callable oracle. These tests answer two questions that reading the code
+// a callable evaluator. These tests answer two questions that reading the code
 // cannot settle:
 //
 //   1. Can the catalog be configured without ever reading the globe Par_file?
-//      Every test here constructs an Oracle from a model *name* only. The suite
-//      also has to pass from an arbitrary working directory -- PREM is analytic
-//      (fortran/meshfem3d_globe/shared/model_prem.f90 has no open() statement),
-//      so no DATA/ tree is consulted.
+//      Every test here constructs an Evaluator from a model *name* only. The
+//      suite also has to pass from an arbitrary working directory -- PREM is
+//      analytic (fortran/meshfem3d_globe/shared/model_prem.f90 has no open()
+//      statement), so no DATA/ tree is consulted.
 //   2. Does the Fortran archive link into a C++ target here? If this file
 //      builds and runs at all, it does.
 //
@@ -27,7 +27,7 @@
 //
 // NOTE on float comparisons: .agents/rules/testing.md asks for EXPECT_NEAR with
 // explicit tolerances, and that is the right default. It is deliberately not
-// followed here. The oracle's entire value proposition is that it reproduces
+// followed here. The evaluator's entire value proposition is that it reproduces
 // the mesher's get_model bit-for-bit; a tolerance would hide precisely the
 // drift these tests exist to catch. EXPECT_DOUBLE_EQ (4 ULP) is used for values
 // that must agree because they are the same computation, and exact EXPECT_EQ
@@ -61,7 +61,7 @@ constexpr double prem_rsurface = 6371000.0;
 /**
  * @brief One synthetic element: a radial shell with a known region and flag.
  *
- * Element *shape* is irrelevant to the oracle -- it reads only each point's
+ * Element *shape* is irrelevant to the evaluator -- it reads only each point's
  * radius -- so a radial column of GLL points spanning the shell is enough to
  * exercise the full evaluation path.
  */
@@ -107,10 +107,10 @@ specfem::globe_model::ModelConfig bare_config(const std::string &model_name) {
 /**
  * @brief Radii spanning a shell, inset from both bounds.
  *
- * The oracle clamps points to the shell interior with a 1e-6 relative tolerance
- * before sampling (get_model.F90:163-165). Sampling strictly inside the shell
- * keeps this test about the model values; the clamp itself is exercised
- * separately by ClampsPointsIntoTheirOwnShell.
+ * The evaluator clamps points to the shell interior with a 1e-6 relative
+ * tolerance before sampling (get_model.F90:163-165). Sampling strictly inside
+ * the shell keeps this test about the model values; the clamp itself is
+ * exercised separately by ClampsPointsIntoTheirOwnShell.
  */
 std::vector<double> radii_within(const RadialShell &shell,
                                  const std::size_t count) {
@@ -136,7 +136,7 @@ std::vector<double> radii_within(const RadialShell &shell,
 /**
  * @brief Packs radii into point-major coordinates along the polar axis.
  *
- * Axis-aligned on purpose. The oracle recovers each point's radius via
+ * Axis-aligned on purpose. The evaluator recovers each point's radius via
  * sqrt(x^2+y^2+z^2); along an axis that is exactly |z|, so the sampled radius
  * is bit-identical to the requested one and the exact comparisons below are
  * meaningful. An oblique direction introduces a 1-2 ULP radius error which
@@ -173,33 +173,34 @@ std::vector<double> oblique_column(const std::vector<double> &radii) {
 }
 
 /**
- * @brief Fixture owning a single Oracle.
+ * @brief Fixture owning a single Evaluator.
  *
  * The catalog's configuration is global Fortran module state, so exactly one
- * Oracle may be alive. GoogleTest runs tests sequentially within a binary, and
- * the fixture tears its Oracle down between tests, which keeps that honest.
+ * Evaluator may be alive. GoogleTest runs tests sequentially within a binary,
+ * and the fixture tears its Evaluator down between tests, which keeps that
+ * honest.
  */
-class PremOracleTest : public ::testing::Test {
+class PremEvaluatorTest : public ::testing::Test {
 protected:
   void configure(const std::string &model_name) {
-    oracle_ =
-        std::make_unique<specfem::globe_model::Oracle>(bare_config(model_name));
+    evaluator_ = std::make_unique<specfem::globe_model::Evaluator>(
+        bare_config(model_name));
   }
 
-  void TearDown() override { oracle_.reset(); }
+  void TearDown() override { evaluator_.reset(); }
 
-  std::unique_ptr<specfem::globe_model::Oracle> oracle_;
+  std::unique_ptr<specfem::globe_model::Evaluator> evaluator_;
 };
 
 // -----------------------------------------------------------------------------
 // Quadrature contract
 // -----------------------------------------------------------------------------
 
-// The oracle samples the catalog at whatever NGLL it was compiled with. If that
-// disagrees with SPECFEM++'s, every returned value is silently attributed to
-// the wrong point, so the contract has to be asserted rather than assumed.
-TEST(PremOracleDims, MatchesTheCatalogQuadrature) {
-  const auto dims = specfem::globe_model::Oracle::dims();
+// The evaluator samples the catalog at whatever NGLL it was compiled with. If
+// that disagrees with SPECFEM++'s, every returned value is silently attributed
+// to the wrong point, so the contract has to be asserted rather than assumed.
+TEST(PremEvaluatorDims, MatchesTheCatalogQuadrature) {
+  const auto dims = specfem::globe_model::Evaluator::dims();
 
   EXPECT_EQ(dims.ngllx, 5);
   EXPECT_EQ(dims.nglly, 5);
@@ -212,19 +213,19 @@ TEST(PremOracleDims, MatchesTheCatalogQuadrature) {
 // Configuration without a Par_file -- the load-bearing question
 // -----------------------------------------------------------------------------
 
-TEST_F(PremOracleTest, ConfiguresIsotropicPremFromNameAlone) {
+TEST_F(PremEvaluatorTest, ConfiguresIsotropicPremFromNameAlone) {
   EXPECT_NO_THROW(configure("1d_isotropic_prem"));
-  EXPECT_TRUE(specfem::globe_model::Oracle::is_active());
+  EXPECT_TRUE(specfem::globe_model::Evaluator::is_active());
 }
 
-TEST_F(PremOracleTest, ConfiguresTransverselyIsotropicPremFromNameAlone) {
+TEST_F(PremEvaluatorTest, ConfiguresTransverselyIsotropicPremFromNameAlone) {
   EXPECT_NO_THROW(configure("1d_transversely_isotropic_prem"));
-  EXPECT_TRUE(specfem::globe_model::Oracle::is_active());
+  EXPECT_TRUE(specfem::globe_model::Evaluator::is_active());
 }
 
 // The catalog lowercases the model name before dispatching
 // (get_model_parameters.F90:92), so the caller need not care about case.
-TEST_F(PremOracleTest, ModelNameIsCaseInsensitive) {
+TEST_F(PremEvaluatorTest, ModelNameIsCaseInsensitive) {
   EXPECT_NO_THROW(configure("1D_ISOTROPIC_PREM"));
 }
 
@@ -232,24 +233,25 @@ TEST_F(PremOracleTest, ModelNameIsCaseInsensitive) {
 // Guard rails
 // -----------------------------------------------------------------------------
 
-// The catalog's configuration lives in Fortran module state, so two Oracles
-// would silently share one model. This is the only one of the oracle's
+// The catalog's configuration lives in Fortran module state, so two Evaluators
+// would silently share one model. This is the only one of the evaluator's
 // "uncheckable" invariants that can actually be enforced in the type system.
-TEST_F(PremOracleTest, RefusesASecondInstance) {
+TEST_F(PremEvaluatorTest, RefusesASecondInstance) {
   configure("1d_isotropic_prem");
 
-  EXPECT_THROW(specfem::globe_model::Oracle{ bare_config("1d_isotropic_prem") },
-               std::runtime_error);
+  EXPECT_THROW(
+      specfem::globe_model::Evaluator{ bare_config("1d_isotropic_prem") },
+      std::runtime_error);
 }
 
-TEST_F(PremOracleTest, IsInactiveAfterDestruction) {
+TEST_F(PremEvaluatorTest, IsInactiveAfterDestruction) {
   configure("1d_isotropic_prem");
-  ASSERT_TRUE(specfem::globe_model::Oracle::is_active());
+  ASSERT_TRUE(specfem::globe_model::Evaluator::is_active());
 
-  oracle_.reset();
+  evaluator_.reset();
 
-  EXPECT_FALSE(specfem::globe_model::Oracle::is_active());
-  // ... and a fresh Oracle can then be built.
+  EXPECT_FALSE(specfem::globe_model::Evaluator::is_active());
+  // ... and a fresh Evaluator can then be built.
   EXPECT_NO_THROW(configure("1d_transversely_isotropic_prem"));
 }
 
@@ -265,30 +267,30 @@ TEST_F(PremOracleTest, IsInactiveAfterDestruction) {
 //     without CEM/NetCDF         (get_model_parameters.F90:731-737)
 // A `stop` calls exit(), which unwinds Kokkos and MPI from under the test
 // binary. Converting those to status codes is a tracked follow-up.
-TEST_F(PremOracleTest, RejectsModelsNeedingPerPointIndexing) {
+TEST_F(PremEvaluatorTest, RejectsModelsNeedingPerPointIndexing) {
   // HETEROGEN_3D_MANTLE -> model_heterogen_mantle(ispec,i,j,k,...)
   EXPECT_THROW(configure("heterogen"), std::runtime_error);
-  EXPECT_FALSE(specfem::globe_model::Oracle::is_active());
+  EXPECT_FALSE(specfem::globe_model::Evaluator::is_active());
 
   EXPECT_THROW(configure("heterogen_prem"), std::runtime_error);
-  EXPECT_FALSE(specfem::globe_model::Oracle::is_active());
+  EXPECT_FALSE(specfem::globe_model::Evaluator::is_active());
 
   // MODEL_GLL -> model_gll_impose_val(...,ispec,i,j,k,...)
   EXPECT_THROW(configure("gll_iso"), std::runtime_error);
-  EXPECT_FALSE(specfem::globe_model::Oracle::is_active());
+  EXPECT_FALSE(specfem::globe_model::Evaluator::is_active());
 
   // MODEL_GLL + ATTENUATION_GLL -> model_attenuation_gll(ispec,i,j,k,Qmu)
   EXPECT_THROW(configure("gll_qmu"), std::runtime_error);
-  EXPECT_FALSE(specfem::globe_model::Oracle::is_active());
+  EXPECT_FALSE(specfem::globe_model::Evaluator::is_active());
 }
 
-TEST_F(PremOracleTest, RejectsMalformedCoordinateArrays) {
+TEST_F(PremEvaluatorTest, RejectsMalformedCoordinateArrays) {
   configure("1d_isotropic_prem");
 
   const std::vector<double> too_short(3 * 124, 0.0);
-  EXPECT_THROW(oracle_->evaluate_element(iregion_crust_mantle,
-                                         iflag_mantle_normal, prem_rcmb,
-                                         prem_r670, false, false, too_short),
+  EXPECT_THROW(evaluator_->evaluate_element(iregion_crust_mantle,
+                                            iflag_mantle_normal, prem_rcmb,
+                                            prem_r670, false, false, too_short),
                std::invalid_argument);
 }
 
@@ -296,7 +298,7 @@ TEST_F(PremOracleTest, RejectsMalformedCoordinateArrays) {
 // Model values against the catalog's own PREM reference
 // -----------------------------------------------------------------------------
 
-class PremProfileTest : public PremOracleTest,
+class PremProfileTest : public PremEvaluatorTest,
                         public ::testing::WithParamInterface<
                             std::tuple<std::string, std::size_t>> {};
 
@@ -308,10 +310,10 @@ TEST_P(PremProfileTest, MatchesTheReferenceEverywhere) {
   configure(model_name);
 
   const std::size_t npoints =
-      specfem::globe_model::Oracle::dims().points_per_element();
+      specfem::globe_model::Evaluator::dims().points_per_element();
   const std::vector<double> radii = radii_within(shell, npoints);
 
-  const auto properties = oracle_->evaluate_element(
+  const auto properties = evaluator_->evaluate_element(
       shell.iregion_code, shell.idoubling, shell.rmin_si, shell.rmax_si,
       /* elem_in_crust = */ false, /* elem_in_mantle = */ false,
       radial_column(radii));
@@ -324,7 +326,7 @@ TEST_P(PremProfileTest, MatchesTheReferenceEverywhere) {
         radii[i], shell.idoubling, shell.iregion_code);
 
     // Exact: these pass through meshfem3D_models_get1D_val untouched for a 1D
-    // model, so anything but bit-equality means the oracle diverged from the
+    // model, so anything but bit-equality means the evaluator diverged from the
     // catalog.
     EXPECT_DOUBLE_EQ(properties.rho[i], expected.rho);
     EXPECT_DOUBLE_EQ(properties.vpv[i], expected.vpv);
@@ -369,15 +371,15 @@ INSTANTIATE_TEST_SUITE_P(
 // vs_iso == 0 in the outer core is not an approximation -- it is the acoustic
 // tag (get_model.F90:181-187), and the caller cross-checks it against the
 // database's medium_tag. An epsilon comparison here would hide a real change.
-TEST_F(PremOracleTest, OuterCoreIsExactlyAcoustic) {
+TEST_F(PremEvaluatorTest, OuterCoreIsExactlyAcoustic) {
   configure("1d_transversely_isotropic_prem");
 
   const std::size_t npoints =
-      specfem::globe_model::Oracle::dims().points_per_element();
+      specfem::globe_model::Evaluator::dims().points_per_element();
   const RadialShell &shell = shells()[1];
   ASSERT_STREQ(shell.name, "outer_core");
 
-  const auto properties = oracle_->evaluate_element(
+  const auto properties = evaluator_->evaluate_element(
       shell.iregion_code, shell.idoubling, shell.rmin_si, shell.rmax_si, false,
       false, radial_column(radii_within(shell, npoints)));
 
@@ -391,11 +393,11 @@ TEST_F(PremOracleTest, OuterCoreIsExactlyAcoustic) {
 }
 
 // The solid regions must NOT be tagged acoustic.
-TEST_F(PremOracleTest, SolidRegionsHaveNonZeroShearSpeed) {
+TEST_F(PremEvaluatorTest, SolidRegionsHaveNonZeroShearSpeed) {
   configure("1d_transversely_isotropic_prem");
 
   const std::size_t npoints =
-      specfem::globe_model::Oracle::dims().points_per_element();
+      specfem::globe_model::Evaluator::dims().points_per_element();
 
   for (const RadialShell &shell : shells()) {
     if (shell.iregion_code == iregion_outer_core) {
@@ -403,7 +405,7 @@ TEST_F(PremOracleTest, SolidRegionsHaveNonZeroShearSpeed) {
     }
     SCOPED_TRACE(std::string("shell=") + shell.name);
 
-    const auto properties = oracle_->evaluate_element(
+    const auto properties = evaluator_->evaluate_element(
         shell.iregion_code, shell.idoubling, shell.rmin_si, shell.rmax_si,
         false, false, radial_column(radii_within(shell, npoints)));
 
@@ -417,7 +419,7 @@ TEST_F(PremOracleTest, SolidRegionsHaveNonZeroShearSpeed) {
 // shells must land on opposite sides of the jump -- this is what the rmin/rmax
 // clamp at get_model.F90:163-165 buys, and it is the mechanism the database's
 // per-element rmin/rmax context exists to feed.
-TEST_F(PremOracleTest, HonorsDiscontinuitiesBetweenAdjacentShells) {
+TEST_F(PremEvaluatorTest, HonorsDiscontinuitiesBetweenAdjacentShells) {
   configure("1d_transversely_isotropic_prem");
 
   struct Boundary {
@@ -442,10 +444,10 @@ TEST_F(PremOracleTest, HonorsDiscontinuitiesBetweenAdjacentShells) {
     ASSERT_DOUBLE_EQ(lower.rmax_si, upper.rmin_si);
 
     // A single point pinned near the shared face, from each side.
-    const auto below = oracle_->evaluate_element(
+    const auto below = evaluator_->evaluate_element(
         lower.iregion_code, lower.idoubling, lower.rmin_si, lower.rmax_si,
         false, false, radial_column(radii_within(lower, 125)));
-    const auto above = oracle_->evaluate_element(
+    const auto above = evaluator_->evaluate_element(
         upper.iregion_code, upper.idoubling, upper.rmin_si, upper.rmax_si,
         false, false, radial_column(radii_within(upper, 125)));
 
@@ -468,18 +470,18 @@ TEST_F(PremOracleTest, HonorsDiscontinuitiesBetweenAdjacentShells) {
 // that an element touching a discontinuity never samples across it. Verified by
 // asking for radii beyond both bounds and checking the result equals the
 // reference evaluated at the clamped radius.
-TEST_F(PremOracleTest, ClampsPointsIntoTheirOwnShell) {
+TEST_F(PremEvaluatorTest, ClampsPointsIntoTheirOwnShell) {
   configure("1d_transversely_isotropic_prem");
 
   const RadialShell &shell = shells()[2]; // lower mantle, RCMB -> R670
   ASSERT_STREQ(shell.name, "lower_mantle");
 
   const std::size_t npoints =
-      specfem::globe_model::Oracle::dims().points_per_element();
+      specfem::globe_model::Evaluator::dims().points_per_element();
 
   // Every point sits below rmin, so all of them clamp up to rmin * (1 + 1e-6).
   std::vector<double> radii(npoints, shell.rmin_si - 5000.0);
-  const auto properties = oracle_->evaluate_element(
+  const auto properties = evaluator_->evaluate_element(
       shell.iregion_code, shell.idoubling, shell.rmin_si, shell.rmax_si, false,
       false, radial_column(radii));
 
@@ -497,16 +499,16 @@ TEST_F(PremOracleTest, ClampsPointsIntoTheirOwnShell) {
 // Units
 // -----------------------------------------------------------------------------
 
-// The oracle returns the catalog's non-dimensional values, so a caller that
+// The evaluator returns the catalog's non-dimensional values, so a caller that
 // forgets to re-dimensionalize gets densities near 1 and velocities near 2 --
 // numbers that look plausible and are wrong by three orders of magnitude. This
 // test pins the scaling contract by checking that re-dimensionalized PREM lands
 // on the textbook values, which no amount of exact-equality testing against the
 // reference shim can catch (both sides would be wrong together).
-TEST_F(PremOracleTest, ScalesToPhysicalSiValues) {
+TEST_F(PremEvaluatorTest, ScalesToPhysicalSiValues) {
   configure("1d_isotropic_prem");
 
-  const auto scales = specfem::globe_model::Oracle::scales();
+  const auto scales = specfem::globe_model::Evaluator::scales();
 
   // Earth radius and mean density.
   EXPECT_NEAR(scales.length, 6371000.0, 1.0);
@@ -515,14 +517,14 @@ TEST_F(PremOracleTest, ScalesToPhysicalSiValues) {
   EXPECT_NEAR(scales.velocity, 6850.0, 50.0);
 
   const std::size_t npoints =
-      specfem::globe_model::Oracle::dims().points_per_element();
+      specfem::globe_model::Evaluator::dims().points_per_element();
   const RadialShell &shell = shells()[2]; // lower mantle
   ASSERT_STREQ(shell.name, "lower_mantle");
 
   // Just above the CMB, PREM gives rho ~ 5560 kg/m^3, vp ~ 13.7 km/s,
   // vs ~ 7.26 km/s.
   const std::vector<double> radii(npoints, prem_rcmb + 1000.0);
-  const auto properties = oracle_->evaluate_element(
+  const auto properties = evaluator_->evaluate_element(
       shell.iregion_code, shell.idoubling, shell.rmin_si, shell.rmax_si, false,
       false, radial_column(radii));
 
@@ -531,9 +533,9 @@ TEST_F(PremOracleTest, ScalesToPhysicalSiValues) {
   EXPECT_NEAR(properties.vsv[0] * scales.velocity, 7264.0, 50.0);
 }
 
-TEST(PremOracleScales, RequireAConfiguredOracle) {
-  ASSERT_FALSE(specfem::globe_model::Oracle::is_active());
-  EXPECT_THROW(specfem::globe_model::Oracle::scales(), std::runtime_error);
+TEST(PremEvaluatorScales, RequireAConfiguredEvaluator) {
+  ASSERT_FALSE(specfem::globe_model::Evaluator::is_active());
+  EXPECT_THROW(specfem::globe_model::Evaluator::scales(), std::runtime_error);
 }
 
 // The exact-value tests sample along the polar axis so the recovered radius is
@@ -541,20 +543,20 @@ TEST(PremOracleScales, RequireAConfiguredOracle) {
 // direction, which this checks rather than assumes. The tolerance covers the
 // 1-2 ULP radius error an oblique direction introduces through
 // sqrt(x^2+y^2+z^2).
-TEST_F(PremOracleTest, IsDirectionIndependentForOneDimensionalModels) {
+TEST_F(PremEvaluatorTest, IsDirectionIndependentForOneDimensionalModels) {
   configure("1d_transversely_isotropic_prem");
 
   const std::size_t npoints =
-      specfem::globe_model::Oracle::dims().points_per_element();
+      specfem::globe_model::Evaluator::dims().points_per_element();
 
   for (const RadialShell &shell : shells()) {
     SCOPED_TRACE(std::string("shell=") + shell.name);
     const std::vector<double> radii = radii_within(shell, npoints);
 
-    const auto along_axis = oracle_->evaluate_element(
+    const auto along_axis = evaluator_->evaluate_element(
         shell.iregion_code, shell.idoubling, shell.rmin_si, shell.rmax_si,
         false, false, radial_column(radii));
-    const auto oblique = oracle_->evaluate_element(
+    const auto oblique = evaluator_->evaluate_element(
         shell.iregion_code, shell.idoubling, shell.rmin_si, shell.rmax_si,
         false, false, oblique_column(radii));
 
@@ -572,38 +574,38 @@ TEST_F(PremOracleTest, IsDirectionIndependentForOneDimensionalModels) {
 
 // The attenuation period band is the one piece of configuration that is NOT
 // derivable from the model name -- the mesher computes it in
-// rcp_set_compute_parameters, which the oracle does not call. Left unset with
-// attenuation on, the catalog would abort the process inside
-// attenuation_tau_sigma (model_attenuation.f90:625-628); the oracle rejects it
-// at the boundary instead.
-TEST_F(PremOracleTest, RejectsAnInvalidAttenuationBand) {
+// rcp_set_compute_parameters, which the evaluator does not call. Left unset
+// with attenuation on, the catalog would abort the process inside
+// attenuation_tau_sigma (model_attenuation.f90:625-628); the evaluator rejects
+// it at the boundary instead.
+TEST_F(PremEvaluatorTest, RejectsAnInvalidAttenuationBand) {
   auto config = bare_config("1d_isotropic_prem");
   config.attenuation = true;
 
   config.min_attenuation_period = 0.0;
-  EXPECT_THROW(specfem::globe_model::Oracle{ config }, std::runtime_error);
+  EXPECT_THROW(specfem::globe_model::Evaluator{ config }, std::runtime_error);
 
   config.min_attenuation_period = 1000.0;
   config.max_attenuation_period = 20.0; // inverted
-  EXPECT_THROW(specfem::globe_model::Oracle{ config }, std::runtime_error);
+  EXPECT_THROW(specfem::globe_model::Evaluator{ config }, std::runtime_error);
 
   // ... and the band is not consulted at all when attenuation is off.
   config.attenuation = false;
-  EXPECT_NO_THROW(oracle_ =
-                      std::make_unique<specfem::globe_model::Oracle>(config));
+  EXPECT_NO_THROW(
+      evaluator_ = std::make_unique<specfem::globe_model::Evaluator>(config));
 }
 
 // With ATTENUATION off the catalog never calls getatten_val, so Q must come
-// back untouched at its initial value. This pins down that the oracle is not
+// back untouched at its initial value. This pins down that the evaluator is not
 // quietly synthesizing attenuation the mesher would not have produced.
-TEST_F(PremOracleTest, LeavesQZeroWhenAttenuationIsOff) {
+TEST_F(PremEvaluatorTest, LeavesQZeroWhenAttenuationIsOff) {
   configure("1d_isotropic_prem");
 
   const std::size_t npoints =
-      specfem::globe_model::Oracle::dims().points_per_element();
+      specfem::globe_model::Evaluator::dims().points_per_element();
   const RadialShell &shell = shells()[2];
 
-  const auto properties = oracle_->evaluate_element(
+  const auto properties = evaluator_->evaluate_element(
       shell.iregion_code, shell.idoubling, shell.rmin_si, shell.rmax_si, false,
       false, radial_column(radii_within(shell, npoints)));
 
@@ -617,16 +619,16 @@ TEST_F(PremOracleTest, LeavesQZeroWhenAttenuationIsOff) {
 
 // With ATTENUATION on, the 1D reference path must produce a positive Qmu in the
 // solid regions -- the value the caller turns into SLS coefficients.
-TEST_F(PremOracleTest, ReturnsPositiveQmuInSolidsWhenAttenuationIsOn) {
+TEST_F(PremEvaluatorTest, ReturnsPositiveQmuInSolidsWhenAttenuationIsOn) {
   auto config = bare_config("1d_isotropic_prem");
   config.attenuation = true;
-  oracle_ = std::make_unique<specfem::globe_model::Oracle>(config);
+  evaluator_ = std::make_unique<specfem::globe_model::Evaluator>(config);
 
   const std::size_t npoints =
-      specfem::globe_model::Oracle::dims().points_per_element();
+      specfem::globe_model::Evaluator::dims().points_per_element();
   const RadialShell &shell = shells()[2]; // lower mantle
 
-  const auto properties = oracle_->evaluate_element(
+  const auto properties = evaluator_->evaluate_element(
       shell.iregion_code, shell.idoubling, shell.rmin_si, shell.rmax_si, false,
       false, radial_column(radii_within(shell, npoints)));
 

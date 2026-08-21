@@ -3,10 +3,12 @@
 #include "adjacency_graph/adjacency_graph.hpp"
 #include "boundaries/boundaries.hpp"
 #include "control_nodes/control_nodes.hpp"
+#include "globe.hpp"
 #include "materials/materials.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/mesh/attenuation_config.hpp"
 #include "tags/tags.hpp"
+#include <optional>
 
 namespace specfem::mesh {
 
@@ -124,6 +126,9 @@ template <> struct mesh<specfem::element::dimension_tag::dim3> {
   specfem::mesh::tags<dimension_tag> tags;
 
   specfem::mesh::attenuation_config attenuation; ///< Attenuation configuration
+
+  /** @brief Globe-specific reference geometry and model-oracle context. */
+  std::optional<specfem::mesh::globe_mesh_data> globe;
 
   /**
    * @brief Setup coupled interfaces in the mesh

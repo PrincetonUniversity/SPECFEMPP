@@ -40,6 +40,10 @@ target_compile_definitions(
     $<$<NOT:$<BOOL:${SPECFEM_ENABLE_VTK}>>:-DNO_VTK>
 )
 
+if(SPECFEM_BUILD_MESHFEM3D_GLOBE)
+    target_compile_definitions(assembly PRIVATE SPECFEM_HAS_GLOBE_MODEL)
+    target_link_libraries(assembly PRIVATE specfem::globe_model)
+endif()
 target_include_directories(
         assembly
         INTERFACE

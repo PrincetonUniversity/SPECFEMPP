@@ -89,6 +89,11 @@ specfem::mesh::mesh<specfem::element::dimension_tag::dim3>
 read_3d_mesh(const std::string &database_file,
              const specfem::attenuation::Setup &attenuation_setup);
 
+/** @brief Read a thin SPECFEM3D_GLOBE mesh database. */
+specfem::mesh::mesh<specfem::element::dimension_tag::dim3>
+read_globe_mesh(const std::string &database_file,
+                const specfem::attenuation::Setup &attenuation_setup);
+
 /**
  * @brief Read station file
  *

@@ -19,7 +19,8 @@ void program_3d(
     const YAML::Node &parameter_dict,
     std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task<
         specfem::element::dimension_tag::dim3>>>
-        tasks) {
+        tasks,
+    const bool globe) {
 
   // --------------------------------------------------------------
   //                    Read parameter file
@@ -44,8 +45,11 @@ void program_3d(
   // --------------------------------------------------------------
   specfem::Logger::info("Reading the mesh...\n===================");
   auto mesh_start_time = std::chrono::system_clock::now();
-  const auto mesh = specfem::io::read_3d_mesh(database_filename,
-                                              setup.get_attenuation_setup());
+  const auto mesh =
+      globe ? specfem::io::read_globe_mesh(database_filename,
+                                           setup.get_attenuation_setup())
+            : specfem::io::read_3d_mesh(database_filename,
+                                        setup.get_attenuation_setup());
   const std::chrono::duration<double> mesh_read_time =
       std::chrono::system_clock::now() - mesh_start_time;
   specfem::Logger::info([&](std::ostringstream &oss) {
