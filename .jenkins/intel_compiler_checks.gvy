@@ -89,7 +89,7 @@ pipeline{
                                         module load ${INTEL_MODULE}
 
                                         cd /scratch/gpfs/TROMP/specfempp/jenkins/test_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG} && \
-                                        srun -N 1 -t 00:30:00 --account rse ${HOST_RUN_FLAGS} \
+                                        srun -t 00:15:00 --account rse ${HOST_RUN_FLAGS} \
                                             --constraint="intel" bash -c 'export OMP_PROC_BIND=spread; \
                                             export OMP_PLACES=threads; \
                                             export OMP_NUM_THREADS=20; \

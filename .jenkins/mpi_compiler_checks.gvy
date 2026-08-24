@@ -22,7 +22,7 @@ pipeline {
                     }
                     axis{
                         name 'MPIEnabled'
-                        values 'MPI_GCC416;-DSPECFEM_ENABLE_MPI=ON;openmpi/gcc/4.1.6;-N 1 --ntasks-per-node=8'
+                        values 'MPI_GCC416;-DSPECFEM_ENABLE_MPI=ON;openmpi/gcc/4.1.6;--ntasks=8 --nodes=2-8'
                     }
                 }
                 stages {
@@ -103,7 +103,7 @@ pipeline {
                                         module load ${GNU_COMPILER_MODULE}
                                         module load ${MPI_MODULE}
                                         cd /scratch/gpfs/TROMP/specfempp/jenkins/test_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
-                                        srun ${MPI_RUN_FLAGS} -t 00:59:00 --account rse \
+                                        srun ${MPI_RUN_FLAGS} -t 00:15:00 --account rse \
                                             --constraint="intel" \
                                             bash -c 'export OMP_PROC_BIND=spread; \
                                             export OMP_PLACES=threads; \
