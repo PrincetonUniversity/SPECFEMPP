@@ -183,11 +183,8 @@ float specfem::periodic_tasks::plot_wavefield<
         const specfem::enums::display_component &component, const int ispec,
         const int iz, const int iy, const int ix) {
 
-  if (wavefield_type == specfem::enums::wavefield::pressure ||
-      wavefield_type == specfem::enums::wavefield::rotation ||
-      wavefield_type == specfem::enums::wavefield::intrinsic_rotation ||
-      wavefield_type == specfem::enums::wavefield::curl) {
-    return std::abs(wavefield_data(ispec, iz, iy, ix, 0));
+  if (wavefield_type == specfem::enums::wavefield::pressure) {
+    return wavefield_data(ispec, iz, iy, ix, 0);
   }
 
   // Computing the component or magnitude for vector fields
