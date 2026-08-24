@@ -41,8 +41,8 @@ target_link_libraries(globe_evaluator PUBLIC
   # model_gll.f90 and model_attenuation_gll.f90 reference read_gll_model_adios /
   # read_gll_qmu_model_adios unconditionally, but the *_adios.F90 sources that
   # define them are not in MESHFEM3D_GLOBE_MESH_SOURCES. xmeshfem3D_globe
-  # resolves them via these no-op stubs; any consumer of
-  # meshfem3D_globe::mesh needs them too.
+  # resolves them via these no-op stubs; any consumer of meshfem3D_globe::mesh
+  # needs them too.
   meshfem3D_globe::adios_methods_stubs
   meshfem3D_globe::asdf_methods_stubs
   MPI::MPI_Fortran

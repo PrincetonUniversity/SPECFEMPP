@@ -33,37 +33,64 @@
 !       OCEANS, HAS_REFERENCE_GEOMETRY (8 logicals)
 !    5  material_mode (integer: 1 = ORACLE, 2 = BAKED)
 !
-!    -- MODEL_CONFIG (the resolved model selection; replayed by SPECFEM++ into the
-!       globe model routines, so that it never has to read the globe Par_file)
+!    -- MODEL_CONFIG (the resolved model selection, so that SPECFEM++ never has to
+!       read the globe Par_file)
+!
+!       Within this block, records 6, 9 and 10 are the *configuration*: SPECFEM++
+!       replays them into globe_evaluator_init(), together with PLANET_TYPE from
+!       record 2 and the physics flags from record 4.
+!
+!       Records 7 and 8 are *verification only*. They are every flag
+!       get_model_parameters() derives from MODEL, and the evaluator re-derives all
+!       of them from the name alone -- so a reader must NOT attempt to replay them
+!       (there is nowhere to put them; get_model_parameters() would overwrite them
+!       regardless). Their purpose is to let a reader assert that
+!       the catalog compiled into SPECFEM++ derives the same flags from MODEL that
+!       the mesher's catalog did, turning a version skew between the two trees into
+!       an error instead of silently different material.
+!
 !    6  MODEL (character(len=MAX_STRING_LEN))
 !    7  n_codes (integer), codes(n_codes) (integers), in this order:
 !         REFERENCE_1D_MODEL, THREE_D_MODEL, THREE_D_MODEL_IC,
 !         REFERENCE_CRUSTAL_MODEL, MODEL_GLL_TYPE
+!       NOTE: unlike the tag codes listed at the bottom of this comment, these are
+!       raw setup/constants.h.in parameter values (REFERENCE_MODEL_PREM = 1,
+!       THREE_D_MODEL_S20RTS = 101, ...), not a format-owned encoding. They are
+!       only meaningful against a matching constants.h -- which is exactly the
+!       skew the comparison above is meant to detect.
 !    8  n_flags (integer), flags(n_flags) (logicals), in this order:
 !         TRANSVERSE_ISOTROPY, CRUSTAL, ONE_CRUST, CASE_3D, ANISOTROPIC_3D_MANTLE,
 !         ANISOTROPIC_INNER_CORE, MODEL_3D_MANTLE_PERTUBATIONS, HETEROGEN_3D_MANTLE,
 !         ATTENUATION_3D, ATTENUATION_3D_BERKELEY, ATTENUATION_GLL,
 !         HONOR_1D_SPHERICAL_MOHO, MODEL_GLL, USE_FULL_TISO_MANTLE,
 !         REGIONAL_MOHO_MESH, EMC_MODEL
-!    9  NCHUNKS, NEX_XI, NEX_ETA (3 integers), MIN_ATTENUATION_PERIOD,
-!       MAX_ATTENUATION_PERIOD (2 dp values)
+!    9  NCHUNKS, NEX_XI, NEX_ETA (3 integers)
+!   10  MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD, ATT_F_C_SOURCE (3 dp)
+!
+!       Records 9 and 10 exist because these are the only model parameters NOT
+!       derivable from MODEL: the mesher computes them in rcp_set_compute_parameters
+!       / get_timestep_and_layers, which the evaluator deliberately does not call.
+!       Both are written unconditionally, including when ATTENUATION is false, so
+!       the layout stays fixed. ATT_F_C_SOURCE is redundant -- SPECFEM++ recomputes
+!       it from the two periods via the same attenuation_source_frequency() -- and
+!       is carried purely as a numerical check that the period band round-tripped.
 !
 !    -- NODES (final, deformed geometry: what the Jacobian must be built from)
-!   10  nnode (integer)
-!   11  x(nnode), y(nnode), z(nnode) (3 dp arrays)
+!   11  nnode (integer)
+!   12  x(nnode), y(nnode), z(nnode) (3 dp arrays)
 !
 !    -- NODES_REFERENCE (written when HAS_REFERENCE_GEOMETRY; these are spherical
 !       + Moho-stretched anchors captured before external/internal topography and
 !       ellipticity deformation)
-!   12  xref(nnode), yref(nnode), zref(nnode) (3 dp arrays)
+!   13  xref(nnode), yref(nnode), zref(nnode) (3 dp arrays)
 !
 !    -- ELEMENTS
-!   13  nspec (integer)
-!   14  region(nspec), medium_tag(nspec), property_tag(nspec), idoubling(nspec)
+!   14  nspec (integer)
+!   15  region(nspec), medium_tag(nspec), property_tag(nspec), idoubling(nspec)
 !       (4 integer arrays)
-!   15  rmin(nspec), rmax(nspec) (2 dp arrays)
-!   16  elem_in_crust(nspec), elem_in_mantle(nspec) (2 logical arrays)
-!   17  node_ids(NGNOD,nspec) (integer array)
+!   16  rmin(nspec), rmax(nspec) (2 dp arrays)
+!   17  elem_in_crust(nspec), elem_in_mantle(nspec) (2 logical arrays)
+!   18  node_ids(NGNOD,nspec) (integer array)
 !
 !    -- BOUNDARY SURFACES: four blocks, in the order
 !       free surface, CMB, ICB, ocean load. Each block is two records:
@@ -78,7 +105,8 @@
 !
 !    -- MATERIAL: omitted entirely when material_mode == ORACLE.
 !
-!  Codes used in the file (deliberately explicit, not enum ordinals of either code base):
+!  Per-element and per-face tag codes (deliberately explicit, not enum ordinals of
+!  either code base -- unlike the MODEL_CONFIG `codes` of record 7, see there):
 !    region       1 = crust/mantle, 2 = outer core, 3 = inner core
 !    medium_tag   1 = acoustic, 2 = elastic  (same convention as the Cartesian
 !                 SPECFEM++ database domain_id)
@@ -96,6 +124,8 @@
 
   ! magic string and version of the on-disk format
   character(len=32), parameter :: SPECFEMPP_DB_MAGIC = 'SPECFEMPP_GLOBE_DB              '
+  ! version 2 adds MODEL_CONFIG records 9 and 10 (NCHUNKS/NEX_XI/NEX_ETA and the
+  ! attenuation period band), the model parameters that are not derivable from MODEL
   integer, parameter :: SPECFEMPP_DB_VERSION = 2
 
   ! material_mode: material values are supplied by the model oracle at SPECFEM++ setup
@@ -601,7 +631,7 @@
     ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,MODEL_3D_MANTLE_PERTUBATIONS, &
     HETEROGEN_3D_MANTLE,ATTENUATION_3D,ATTENUATION_3D_BERKELEY,ATTENUATION_GLL, &
     HONOR_1D_SPHERICAL_MOHO,MODEL_GLL,USE_FULL_TISO_MANTLE,REGIONAL_MOHO_MESH,EMC_MODEL, &
-    NCHUNKS,NEX_XI,NEX_ETA,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
+    NCHUNKS,NEX_XI,NEX_ETA,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,ATT_F_C_SOURCE
 
   use adjacency_graph_shared, only: build_adjacency_graph_csr
 
@@ -762,7 +792,11 @@
   write(IOUT) MODEL
   write(IOUT) N_CODES,codes
   write(IOUT) N_FLAGS,flags
-  write(IOUT) NCHUNKS,NEX_XI,NEX_ETA,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
+  ! the model parameters that get_model_parameters() cannot re-derive from MODEL, so
+  ! SPECFEM++ has no way to obtain them other than from here. Written unconditionally
+  ! (even with ATTENUATION off) to keep the record layout fixed.
+  write(IOUT) NCHUNKS,NEX_XI,NEX_ETA
+  write(IOUT) MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,ATT_F_C_SOURCE
 
   ! nodes: dimensionalized to SI metres on the way out
   write(IOUT) nnode
