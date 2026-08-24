@@ -21,7 +21,7 @@
 
 namespace specfem::io::mesh::impl::fortran::dim3_impl {
 
-constexpr int globe_database_version_min = 1;
+constexpr int globe_database_version_min = 2;
 constexpr int globe_database_version_max = 2;
 constexpr int material_oracle = 1;
 constexpr int medium_acoustic = 1;
@@ -448,27 +448,44 @@ specfem::io::mesh::impl::fortran::dim3::read_globe_mesh(
     throw std::runtime_error("Globe mesh database must contain hex27 anchors");
   }
 
-  specfem::io::fortran_read_line(stream, &globe.ellipticity, &globe.topography,
-                                 &globe.gravity, &globe.full_gravity,
-                                 &globe.rotation, &globe.attenuation,
-                                 &globe.oceans, &globe.has_reference_geometry);
+  auto &model_config = globe.model_config;
+  specfem::io::fortran_read_line(
+      stream, &model_config.ellipticity, &model_config.topography,
+      &model_config.gravity, &globe.full_gravity, &model_config.rotation,
+      &model_config.attenuation, &model_config.oceans,
+      &globe.has_reference_geometry);
   specfem::io::fortran_read_line(stream, &globe.material_mode);
   if (globe.material_mode != reader_impl::material_oracle) {
     throw std::runtime_error(
         "Only oracle-backed globe databases are supported");
   }
 
-  globe.model_config.model_name =
+  model_config.model_name =
       reader_impl::read_fixed_string(stream, "model name");
-  globe.model_config.codes =
+  globe.model_verification.codes =
       reader_impl::read_counted_ints(stream, "model codes");
-  globe.model_config.flags =
+  globe.model_verification.flags =
       reader_impl::read_counted_logicals(stream, "model flags");
-  if (version >= 2) {
-    specfem::io::fortran_read_line(
-        stream, &globe.model_config.nchunks, &globe.model_config.nex_xi,
-        &globe.model_config.nex_eta, &globe.model_config.min_attenuation_period,
-        &globe.model_config.max_attenuation_period);
+  specfem::io::fortran_read_line(stream, &model_config.nchunks,
+                                 &model_config.nex_xi, &model_config.nex_eta);
+  specfem::io::fortran_read_line(
+      stream, &model_config.min_attenuation_period,
+      &model_config.max_attenuation_period,
+      &globe.model_verification.attenuation_source_frequency);
+  model_config.validate();
+  if (model_config.attenuation) {
+    const double expected_source_frequency =
+        1.0 / std::sqrt(model_config.min_attenuation_period *
+                        model_config.max_attenuation_period);
+    const double source_frequency_error =
+        std::abs(globe.model_verification.attenuation_source_frequency -
+                 expected_source_frequency);
+    if (source_frequency_error >
+        1.0e-12 * std::abs(expected_source_frequency)) {
+      throw std::runtime_error(
+          "Globe mesh database attenuation period band failed its central "
+          "frequency check");
+    }
   }
 
   int nnode = 0;
@@ -516,14 +533,7 @@ specfem::io::mesh::impl::fortran::dim3::read_globe_mesh(
   std::vector<double> rmin(mesh.nspec), rmax(mesh.nspec);
   specfem::io::fortran_read_line(stream, &rmin, &rmax);
   std::vector<bool> in_crust(mesh.nspec), in_mantle(mesh.nspec);
-  if (version >= 2) {
-    specfem::io::fortran_read_line(stream, &in_crust, &in_mantle);
-  } else {
-    specfem::io::fortran_read_line(stream, &in_crust);
-    for (int ispec = 0; ispec < mesh.nspec; ++ispec) {
-      in_mantle[ispec] = regions[ispec] == 1 && !in_crust[ispec];
-    }
-  }
+  specfem::io::fortran_read_line(stream, &in_crust, &in_mantle);
   globe.element_context.resize(mesh.nspec);
   for (int ispec = 0; ispec < mesh.nspec; ++ispec) {
     globe.element_context[ispec] = { regions[ispec],  idoubling[ispec],
@@ -617,7 +627,7 @@ specfem::io::mesh::impl::fortran::dim3::read_globe_mesh(
   reader_impl::check_stream(stream, "end of file");
 
   const bool attenuation_enabled =
-      globe.attenuation && attenuation_setup.enabled;
+      model_config.attenuation && attenuation_setup.enabled;
   mesh.materials = reader_impl::make_materials(medium_tags, property_tags,
                                                attenuation_enabled);
   mesh.tags = specfem::mesh::tags<Dimension::dim3>(

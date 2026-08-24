@@ -58,7 +58,8 @@ void write_surface(std::ofstream &stream, const std::vector<int> &elements,
   }
 }
 
-std::filesystem::path write_database() {
+std::filesystem::path write_database(const bool attenuation = false,
+                                     const double source_frequency = 0.0) {
   const auto suffix =
       std::chrono::steady_clock::now().time_since_epoch().count();
   const auto path =
@@ -73,7 +74,7 @@ std::filesystem::path write_database() {
 
   write_values(stream, 1, 6371000.0, 5514.3);
   write_values(stream, 27, 5, 5, 5, 1);
-  write_values(stream, 0, 0, 0, 0, 0, 0, 0, 0);
+  write_values(stream, 0, 0, 0, 0, 0, attenuation ? 1 : 0, 0, 0);
   write_values(stream, 1);
 
   Record model;
@@ -81,7 +82,8 @@ std::filesystem::path write_database() {
   model.write(stream);
   write_values(stream, 5, std::vector<int>{ 1, 0, 0, 0, 0 });
   write_values(stream, 16, std::vector<int>(16, 0));
-  write_values(stream, 6, 8, 8, 20.0, 1000.0);
+  write_values(stream, 6, 8, 8);
+  write_values(stream, 20.0, 1000.0, source_frequency);
 
   write_values(stream, 27);
   std::vector<double> x(27), y(27), z(27);
@@ -131,7 +133,7 @@ TEST(GlobeMeshReader, ReadsThinDatabaseAndPreservesReferenceContext) {
   EXPECT_EQ(mesh.control_nodes.ngnod, 27);
   EXPECT_EQ(mesh.control_nodes.nnodes, 27);
   EXPECT_EQ(mesh.globe->model_config.model_name, "PREM");
-  EXPECT_EQ(mesh.globe->model_config.codes,
+  EXPECT_EQ(mesh.globe->model_verification.codes,
             (std::vector<int>{ 1, 0, 0, 0, 0 }));
   EXPECT_EQ(mesh.globe->model_config.nchunks, 6);
   ASSERT_EQ(mesh.globe->element_context.size(), 1);
@@ -142,4 +144,12 @@ TEST(GlobeMeshReader, ReadsThinDatabaseAndPreservesReferenceContext) {
   EXPECT_DOUBLE_EQ(mesh.globe->reference_coordinates(26, 2), 3026.0);
   EXPECT_EQ(mesh.control_nodes.control_node_index(0, 26), 26);
   EXPECT_EQ(mesh.boundaries.acoustic_free_surface.nelem_acoustic_surface, 1);
+}
+
+TEST(GlobeMeshReader, RejectsAnInconsistentAttenuationSourceFrequency) {
+  const auto path = globe_reader_test_impl::write_database(true, 1.0);
+  EXPECT_THROW(specfem::io::read_globe_mesh(path.string(),
+                                            specfem::attenuation::Setup{}),
+               std::runtime_error);
+  std::filesystem::remove(path);
 }

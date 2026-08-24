@@ -24,24 +24,7 @@ void build_globe_properties(
     return;
   }
   const auto &globe = *input_mesh.globe;
-  const auto &stored_config = globe.model_config;
-
-  specfem::globe_model::ModelConfig config;
-  config.model_name = stored_config.model_name;
-  config.planet_type = stored_config.planet_type;
-  config.nchunks = stored_config.nchunks;
-  config.nex_xi = stored_config.nex_xi;
-  config.nex_eta = stored_config.nex_eta;
-  config.ellipticity = globe.ellipticity;
-  config.topography = globe.topography;
-  config.oceans = globe.oceans;
-  config.attenuation = globe.attenuation;
-  config.gravity = globe.gravity;
-  config.rotation = globe.rotation;
-  config.min_attenuation_period = stored_config.min_attenuation_period;
-  config.max_attenuation_period = stored_config.max_attenuation_period;
-
-  specfem::globe_model::Evaluator evaluator(config);
+  specfem::globe_model::Evaluator evaluator(globe.model_config);
   const auto evaluator_dims = evaluator.dims();
   if (evaluator_dims.ngllx != assembly.mesh.element_grid.ngllx ||
       evaluator_dims.nglly != assembly.mesh.element_grid.nglly ||
