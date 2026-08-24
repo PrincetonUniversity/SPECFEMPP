@@ -58,7 +58,7 @@ public:
    * writer object
    */
   template <specfem::element::dimension_tag DimensionTag>
-  std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag> >
+  std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag>>
   instantiate_wavefield_writer() const;
 
   /**
@@ -68,12 +68,8 @@ public:
    * reader object
    */
   template <specfem::element::dimension_tag DimensionTag>
-  std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag> >
+  std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag>>
   instantiate_wavefield_reader() const;
-
-  inline specfem::simulation::type get_simulation_type() const {
-    return this->simulation_type;
-  }
 
   inline bool is_for_adjoint_simulations() const {
     return this->for_adjoint_simulations;

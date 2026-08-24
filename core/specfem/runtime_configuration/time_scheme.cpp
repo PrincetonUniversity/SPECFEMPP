@@ -8,18 +8,23 @@
 template <typename AssemblyFields>
 std::shared_ptr<specfem::time_scheme::time_scheme>
 specfem::runtime_configuration::time_scheme::instantiate(
-    AssemblyFields &fields, const int nstep_between_samples) {
+    AssemblyFields &fields, const int nstep_between_samples,
+    const specfem::simulation::type simulation_type) {
 
   std::shared_ptr<specfem::time_scheme::time_scheme> it;
   if (specfem::utilities::is_newmark_string(this->timescheme)) {
-    if (this->type == specfem::simulation::type::forward) {
+    if (simulation_type == specfem::simulation::type::forward) {
 
       it = std::make_shared<specfem::time_scheme::newmark<
-          AssemblyFields, specfem::simulation::type::forward> >(
+          AssemblyFields, specfem::simulation::type::forward>>(
           fields, this->nstep, nstep_between_samples, this->dt, this->t0);
-    } else if (this->type == specfem::simulation::type::combined) {
+    } else if (simulation_type == specfem::simulation::type::combined) {
       it = std::make_shared<specfem::time_scheme::newmark<
-          AssemblyFields, specfem::simulation::type::combined> >(
+          AssemblyFields, specfem::simulation::type::combined>>(
+          fields, this->nstep, nstep_between_samples, this->dt, this->t0);
+    } else if (simulation_type == specfem::simulation::type::combined_undoatt) {
+      it = std::make_shared<specfem::time_scheme::newmark<
+          AssemblyFields, specfem::simulation::type::combined_undoatt>>(
           fields, this->nstep, nstep_between_samples, this->dt, this->t0);
     } else {
       std::ostringstream message;
@@ -38,7 +43,7 @@ specfem::runtime_configuration::time_scheme::instantiate(
 }
 
 specfem::runtime_configuration::time_scheme::time_scheme(
-    const YAML::Node &timescheme, const specfem::simulation::type simulation) {
+    const YAML::Node &timescheme) {
 
   try {
     const type_real t0 = [&timescheme]() -> type_real {
@@ -51,7 +56,7 @@ specfem::runtime_configuration::time_scheme::time_scheme(
 
     *this = specfem::runtime_configuration::time_scheme(
         timescheme["type"].as<std::string>(), timescheme["dt"].as<type_real>(),
-        timescheme["nstep"].as<int>(), t0, simulation);
+        timescheme["nstep"].as<int>(), t0);
   } catch (YAML::ParserException &e) {
     std::ostringstream message;
 
@@ -64,12 +69,14 @@ specfem::runtime_configuration::time_scheme::time_scheme(
 // Explicit template instantiations for dim2 and dim3 assembly fields
 template std::shared_ptr<specfem::time_scheme::time_scheme>
 specfem::runtime_configuration::time_scheme::instantiate<
-    specfem::assembly::fields<specfem::element::dimension_tag::dim2> >(
+    specfem::assembly::fields<specfem::element::dimension_tag::dim2>>(
     specfem::assembly::fields<specfem::element::dimension_tag::dim2> &fields,
-    const int nstep_between_samples);
+    const int nstep_between_samples,
+    const specfem::simulation::type simulation_type);
 
 template std::shared_ptr<specfem::time_scheme::time_scheme>
 specfem::runtime_configuration::time_scheme::instantiate<
-    specfem::assembly::fields<specfem::element::dimension_tag::dim3> >(
+    specfem::assembly::fields<specfem::element::dimension_tag::dim3>>(
     specfem::assembly::fields<specfem::element::dimension_tag::dim3> &fields,
-    const int nstep_between_samples);
+    const int nstep_between_samples,
+    const specfem::simulation::type simulation_type);

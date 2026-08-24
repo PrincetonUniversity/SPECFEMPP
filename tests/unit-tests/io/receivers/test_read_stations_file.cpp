@@ -1,4 +1,4 @@
-#include "../../SPECFEM_Environment.hpp"
+#include "SPECFEM_Environment.hpp"
 #include "specfem/coordinate_systems/geographic.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/io.hpp"

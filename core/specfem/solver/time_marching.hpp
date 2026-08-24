@@ -17,7 +17,7 @@ namespace solver {
  * types (acoustic, elastic, poroelastic). Handles multi-physics coupling,
  * source interactions, and seismogram generation.
  *
- * @tparam Simulation Simulation type (forward or combined adjoint+backward)
+ * @tparam Simulation Simulation type (forward, combined, or combined_undoatt)
  * @tparam DimensionTag Spatial dimension (2D or 3D)
  * @tparam NGLL Number of Gauss-Lobatto-Legendre quadrature points per element
  */
@@ -168,5 +168,74 @@ private:
       mpi_buffers; ///< Solver-owned MPI buffers for acceleration and
                    ///< mass-matrix exchange (inner/outer overlap)
 };
+/**
+ * @brief Time marching solver for adjoint simulations with exact forward replay
+ *
+ * Implements the UNDO_ATTENUATION strategy from Komatitsch et al. (2016).
+ * A prior forward simulation must checkpoint wavefield snapshots
+ * (displacement, velocity, acceleration, attenuation memory variables) to disk
+ * at every NT_DUMP_ATTENUATION steps. The adjoint simulation iterates backward
+ * over time subsets. For each subset the checkpoint is loaded from disk, the
+ * forward wavefield is replayed exactly (including attenuation physics) over
+ * the subset window, and the resulting displacements are stored in a RAM
+ * buffer. The adjoint wavefield then sweeps through the same window
+ * (reversed), reading reconstructed forward displacements from the RAM buffer
+ * and accumulating Fréchet kernels.
+ *
+ * Because the forward wavefield is replayed from disk snapshots (not reversed
+ * in time), attenuation memory variables are always in the correct causal
+ * forward state when kernels are computed. Strain is recomputed on-the-fly
+ * from the reconstructed displacement, matching the Fortran
+ * UNDO_ATTENUATION_AND_OR_PML implementation exactly.
+ */
+template <specfem::element::dimension_tag DimensionTag, int NGLL>
+class time_marching<specfem::simulation::type::combined_undoatt, DimensionTag,
+                    NGLL> : public solver {
+public:
+  constexpr static auto dimension_tag =
+      DimensionTag; ///< Dimension of the problem
+
+  /**
+   * @brief Construct solver for undo-attenuation adjoint simulation
+   *
+   * @param assembly     Spectral element assembly
+   * @param time_scheme  Time integration scheme
+   * @param tasks Periodic tasks executed during simulation
+   * @param checkpoint_reader Wavefield reader configured to load checkpoints
+   * written by the forward run every NT_DUMP_ATTENUATION steps
+   * @param checkpoint_buffer_subdivisions Number of in-memory replay-buffer
+   * subdivisions per disk-checkpoint interval
+   */
+  time_marching(
+      const specfem::assembly::assembly<dimension_tag> &assembly,
+      const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
+      const std::vector<std::shared_ptr<
+          specfem::periodic_tasks::periodic_task<dimension_tag>>> &tasks,
+      const std::shared_ptr<
+          specfem::periodic_tasks::periodic_task<dimension_tag>>
+          checkpoint_reader,
+      int checkpoint_buffer_subdivisions = 1)
+      : assembly(assembly), time_scheme(time_scheme), tasks(tasks),
+        checkpoint_reader(checkpoint_reader),
+        mpi_buffers(specfem::solver::make_mpi_buffers(this->assembly)),
+        checkpoint_buffer_subdivisions(checkpoint_buffer_subdivisions) {}
+
+  /**
+   * @brief Execute adjoint pass with windowed forward replay.
+   */
+  void run() override;
+
+private:
+  specfem::assembly::assembly<dimension_tag> assembly;
+  std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme;
+  std::vector<
+      std::shared_ptr<specfem::periodic_tasks::periodic_task<dimension_tag>>>
+      tasks;
+  std::shared_ptr<specfem::periodic_tasks::periodic_task<dimension_tag>>
+      checkpoint_reader;
+  specfem::solver::MPIBuffers<dimension_tag> mpi_buffers;
+  int checkpoint_buffer_subdivisions;
+};
+
 } // namespace solver
 } // namespace specfem

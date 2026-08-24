@@ -91,6 +91,13 @@ add_subdirectory(timescheme)
 add_subdirectory(utilities)
 add_subdirectory(coordinate_systems)
 
+# C++ binding for the SPECFEM3D_GLOBE model evaluator. Requires the globe
+# Fortran tree, so it is only available when that is built. Not part of
+# specfem::core.
+if(SPECFEM_BUILD_MESHFEM3D_GLOBE)
+    add_subdirectory(globe_model)
+endif()
+
 
 
 # Create specfem::core interface library that ties everything together

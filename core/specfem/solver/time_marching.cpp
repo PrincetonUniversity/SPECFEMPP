@@ -1,7 +1,9 @@
 #include "specfem/solver/time_marching.hpp"
 #include "specfem/element.hpp"
 #include "specfem/enums.hpp"
-#include "specfem/solver/time_marching.tpp"
+#include "specfem/solver/time_marching/combined.tpp"
+#include "specfem/solver/time_marching/combined_undoatt.tpp"
+#include "specfem/solver/time_marching/forward.tpp"
 
 // Explcit template instantiation
 
@@ -22,6 +24,14 @@ template class specfem::solver::time_marching<
     specfem::simulation::type::combined, specfem::element::dimension_tag::dim2,
     8>;
 
+template class specfem::solver::time_marching<
+    specfem::simulation::type::combined_undoatt,
+    specfem::element::dimension_tag::dim2, 5>;
+
+template class specfem::solver::time_marching<
+    specfem::simulation::type::combined_undoatt,
+    specfem::element::dimension_tag::dim2, 8>;
+
 // 3D instantiations
 template class specfem::solver::time_marching<
     specfem::simulation::type::forward, specfem::element::dimension_tag::dim3,
@@ -34,3 +44,7 @@ template class specfem::solver::time_marching<
 template class specfem::solver::time_marching<
     specfem::simulation::type::combined, specfem::element::dimension_tag::dim3,
     5>;
+
+template class specfem::solver::time_marching<
+    specfem::simulation::type::combined_undoatt,
+    specfem::element::dimension_tag::dim3, 5>;

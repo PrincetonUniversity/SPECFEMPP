@@ -31,7 +31,7 @@ rule run_solver_psv:
     output:
         seismograms=expand(
             "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results_psv/{network_name}.{station_name}.S2.{component}.semd",
-            station_name=["S0001",], network_name=["AA"], component=["BXX", "BXZ"],
+            station_name=["S0001",], network_name=["AA"], component=["HXX", "HXZ"],
         ),
         log="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/output_psv.log",
     resources:
@@ -113,7 +113,7 @@ rule run_solver_sh:
                 "S0001",
             ],
             network_name=["AA"],
-            component=["BXY"],
+            component=["HXY"],
         ),
         log="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/output_sh.log",
     resources:
