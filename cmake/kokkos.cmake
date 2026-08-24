@@ -1,6 +1,14 @@
 
 
-if (DEFINED Kokkos_ROOT)
+# Honor Kokkos_ROOT from either the CMake cache/command line or the environment.
+# The latter is how the TROMP `trilinos/*` modules provide it (setenv Kokkos_ROOT),
+# and is required so SPECFEM++ uses the SAME Kokkos that Trilinos was built against
+# instead of FetchContent-ing a second, mismatched copy. Mirrors cmake/trilinos.cmake,
+# which already resolves Trilinos via `ENV Trilinos_ROOT`.
+if (DEFINED Kokkos_ROOT OR DEFINED ENV{Kokkos_ROOT})
+    if (NOT DEFINED Kokkos_ROOT)
+        set(Kokkos_ROOT "$ENV{Kokkos_ROOT}")
+    endif()
     message(STATUS "Using user-defined Kokkos root: ${Kokkos_ROOT}")
     find_package(Kokkos REQUIRED PATHS ${Kokkos_ROOT} NO_DEFAULT_PATH)
     return()
@@ -47,8 +55,7 @@ if (DEFINED KOKKOS_PATH)
     # Pop the indentation for Kokkos messages
 else()
 
-    ## TODO (Rohit: Relase0.6.0): Move to 5.2.0 when it is released
-    set(KOKKOS_VERSION "dda3bac859e5fd03d6519027e70a6f7fa7b940e7")
+    set(KOKKOS_VERSION "5.2.0")
 
     # Set common FetchContent parameters
     # set(KOKKOS_URL "https://github.com/kokkos/kokkos/archive/refs/tags/${KOKKOS_VERSION}.zip")

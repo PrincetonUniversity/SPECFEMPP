@@ -1,4 +1,4 @@
-#include "../../SPECFEM_Environment.hpp"
+#include "SPECFEM_Environment.hpp"
 #include <gtest/gtest.h>
 
 int main(int argc, char *argv[]) {

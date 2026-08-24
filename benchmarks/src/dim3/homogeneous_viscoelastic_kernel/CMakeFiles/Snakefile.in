@@ -1,0 +1,141 @@
+SPECFEM_BIN = "@CMAKE_BINARY_DIR@/bin/specfem 3d"
+MESHFEM_BIN = "@CMAKE_BINARY_DIR@/bin/xmeshfem3D"
+
+KERNEL_FILES = expand(
+    "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/kernels/Kernels/elastic_isotropic/{name}.npy",
+    name=["X", "Y", "Z", "rho", "mu", "kappa", "rhop", "alpha", "beta"],
+)
+
+rule all:
+    input:
+        kernel_plot="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/kernels.png",
+        kernels=KERNEL_FILES,
+    localrule: True
+
+
+rule generate_mesh:
+    input:
+        "@CURRENT_BENCHMARK_BUILD_DIR@/DATA/meshfem3D_files/Mesh_Par_file",
+    output:
+        database="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES/Database.bin",
+        mesh_vtk="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES/mesh.vtk",
+        skewness_vtk="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES/skewness.vtk",
+        output_meshfem3D="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/output_meshfem3D.txt",
+    localrule: True
+    shell:
+        """
+            mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES
+            {MESHFEM_BIN} -p {input}
+        """
+
+
+rule forward_simulation:
+    """Forward-only run used to compute seismograms for the adjoint source."""
+    input:
+        database=rules.generate_mesh.output.database,
+        stations="@CURRENT_BENCHMARK_BUILD_DIR@/DATA/STATIONS",
+        source="@CURRENT_BENCHMARK_BUILD_DIR@/forward_source.yaml",
+        config="@CURRENT_BENCHMARK_BUILD_DIR@/forward_config.yaml",
+    output:
+        checkpoints=directory(
+            "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/Checkpoints"
+        ),
+        seismograms=expand(
+            "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/{network_name}.{station_name}.S3.{component}.semd",
+            station_name=["X40"],
+            network_name=["DB"],
+            component=["BXX"],
+        ),
+        log="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/output_forward.log",
+    resources:
+        nodes=1,
+        tasks=1,
+        cpus_per_task=1,
+        runtime=30,
+    params:
+        KOKKOS_TOOLS_LIBS="",
+    shell:
+        """
+            export KOKKOS_TOOLS_LIBS={params.KOKKOS_TOOLS_LIBS}
+            mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results
+            mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/Checkpoints
+            echo "Hostname: $(hostname)" > {output.log}
+            {SPECFEM_BIN} -p {input.config} >> {output.log}
+        """
+
+
+rule compute_adjoint_sources:
+    input:
+        seismograms=rules.forward_simulation.output.seismograms,
+    output:
+        adjoint_sources=expand(
+            "@CURRENT_BENCHMARK_BUILD_DIR@/adjoint_sources/{network_name}.{station_name}.S3.{component}.adj",
+            station_name=["X40"],
+            network_name=["DB"],
+            component=["BXX"],
+        ),
+    localrule: True
+    shell:
+        """
+            mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/adjoint_sources
+            uv run python @CURRENT_BENCHMARK_BUILD_DIR@/compute_adjoint_sources.py \
+                @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results \
+                @CURRENT_BENCHMARK_BUILD_DIR@/adjoint_sources \
+                DB.X40.S3.BXX.semd
+        """
+
+
+rule adjoint_simulation:
+    """Undo-attenuation adjoint run: reads forward checkpoints and accumulates
+    sensitivity kernels with exact attenuation undoing."""
+    input:
+        database=rules.generate_mesh.output.database,
+        checkpoints=rules.forward_simulation.output.checkpoints,
+        forward_log=rules.forward_simulation.output.log,
+        stations="@CURRENT_BENCHMARK_BUILD_DIR@/DATA/STATIONS",
+        forward_source="@CURRENT_BENCHMARK_BUILD_DIR@/forward_source.yaml",
+        adjoint_source="@CURRENT_BENCHMARK_BUILD_DIR@/adjoint_source.yaml",
+        config="@CURRENT_BENCHMARK_BUILD_DIR@/adjoint_config.yaml",
+        adjoint_sources=rules.compute_adjoint_sources.output.adjoint_sources,
+    output:
+        log="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/output_adjoint.log",
+        kernels=KERNEL_FILES,
+    resources:
+        nodes=1,
+        tasks=1,
+        cpus_per_task=1,
+        runtime=120,
+    params:
+        KOKKOS_TOOLS_LIBS="",
+    shell:
+        """
+            export KOKKOS_TOOLS_LIBS={params.KOKKOS_TOOLS_LIBS}
+            rm -rf @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/kernels
+            mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/kernels
+            echo "Hostname: $(hostname)" > {output.log}
+            {SPECFEM_BIN} -p {input.config} >> {output.log}
+        """
+
+
+rule plot_kernels:
+    input:
+        log=rules.adjoint_simulation.output.log,
+        kernels=rules.adjoint_simulation.output.kernels,
+    output:
+        kernel_plot=rules.all.input.kernel_plot,
+    localrule: True
+    shell:
+        """
+            uv run python @CURRENT_BENCHMARK_BUILD_DIR@/plot_kernels.py \
+                @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/kernels \
+                {output.kernel_plot}
+        """
+
+
+rule clean:
+    localrule: True
+    shell:
+        """
+            rm -rf @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES \
+                   @CURRENT_BENCHMARK_BUILD_DIR@/adjoint_sources
+        """

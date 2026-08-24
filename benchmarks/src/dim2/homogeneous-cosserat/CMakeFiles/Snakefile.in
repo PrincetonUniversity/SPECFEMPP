@@ -35,7 +35,7 @@ rule run_solver:
             "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}",
             station_name=["S0001", "S0002", "S0003", "S0004", "S0005", "S0006", "S0007", "S0008"],
             network_name=["AA"],
-            component=["BXX.semd", "BXZ.semd", "BXY.semr", "BXY.semir", "BXY.semc"],
+            component=["FXX.semd", "FXZ.semd", "FXY.semr", "FXY.semir", "FXY.semc"],
         ),
         log="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/output.log",
     resources:

@@ -83,10 +83,11 @@ public:
    * used in the solver algorithm
    */
   template <typename AssemblyFields>
-  std::shared_ptr<specfem::time_scheme::time_scheme>
-  instantiate_timescheme(AssemblyFields &fields) const {
+  std::shared_ptr<specfem::time_scheme::time_scheme> instantiate_timescheme(
+      AssemblyFields &fields,
+      const specfem::simulation::type simulation_type) const {
     return this->time_scheme->instantiate(
-        fields, this->receivers->get_nstep_between_samples());
+        fields, this->receivers->get_nstep_between_samples(), simulation_type);
   }
   // /**
   //  * @brief Update simulation start time.
@@ -412,6 +413,27 @@ public:
   }
 
   /**
+   * @brief Get simulation type configuration after material-dependent
+   * resolution.
+   *
+   * Combined simulations with attenuating materials use the
+   * exact-forward-replay undo-attenuation algorithm; non-attenuating combined
+   * simulations use the standard backward-reconstruction algorithm.
+   *
+   * @param has_attenuation Whether the mesh contains attenuating materials
+   * @return Resolved simulation type
+   */
+  specfem::simulation::type
+  get_simulation_type(const bool has_attenuation) const {
+    if (this->get_simulation_type() != specfem::simulation::type::combined) {
+      return this->get_simulation_type();
+    }
+
+    return has_attenuation ? specfem::simulation::type::combined_undoatt
+                           : specfem::simulation::type::combined;
+  }
+
+  /**
    * @brief Create solver instance with specified parameters.
    *
    * @tparam NGLL Number of Gauss-Lobatto-Legendre points per element dimension
@@ -427,11 +449,15 @@ public:
       const type_real dt,
       const specfem::assembly::assembly<DimensionTag> &assembly,
       std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
+      const specfem::simulation::type simulation_type,
       const std::vector<
           std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag>>>
-          &tasks) const {
-    return this->solver->instantiate<NGLL, DimensionTag>(dt, assembly,
-                                                         time_scheme, tasks);
+          &tasks,
+      const std::shared_ptr<
+          specfem::periodic_tasks::periodic_task<DimensionTag>>
+          checkpoint_reader = nullptr) const {
+    return this->solver->instantiate<NGLL, DimensionTag>(
+        dt, assembly, time_scheme, simulation_type, tasks, checkpoint_reader);
   }
 
   auto get_flux_scheme_configuration() const {
@@ -458,7 +484,9 @@ public:
     return (
         ((this->wavefield != nullptr) &&
          (this->wavefield->is_for_adjoint_simulations())) ||
-        (this->get_simulation_type() == specfem::simulation::type::combined));
+        (this->get_simulation_type() == specfem::simulation::type::combined) ||
+        (this->get_simulation_type() ==
+         specfem::simulation::type::combined_undoatt));
   }
 
   /**

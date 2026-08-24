@@ -252,6 +252,7 @@ Getting Started
     sections/getting_started/index
     sections/cookbooks/index
     sections/getting_started/presets
+    sections/getting_started/trilinos
     sections/getting_started/special_machines
 
 User Documentation

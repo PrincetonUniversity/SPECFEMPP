@@ -163,6 +163,24 @@ function(specfem_print_configuration_summary)
   string(APPEND SUMMARY_STRING "\n")
 
   # ============================================================================
+  # TRILINOS CONFIGURATION
+  # ============================================================================
+  string(APPEND SUMMARY_STRING "TRILINOS CONFIGURATION\n")
+  string(APPEND SUMMARY_STRING "----------------------\n")
+
+  set(TRILINOS_STATUS "OFF")
+  if(SPECFEM_ENABLE_TRILINOS)
+    set(TRILINOS_STATUS "ON")
+    string(APPEND SUMMARY_STRING "  SPECFEM_ENABLE_TRILINOS                  | ${TRILINOS_STATUS}\n")
+    string(APPEND SUMMARY_STRING "  Trilinos_VERSION                         | ${Trilinos_VERSION}\n")
+    string(APPEND SUMMARY_STRING "  Trilinos_DIR                             | ${Trilinos_DIR}\n")
+    string(APPEND SUMMARY_STRING "  Trilinos_PACKAGE_LIST                    | ${Trilinos_PACKAGE_LIST}\n")
+  else()
+    string(APPEND SUMMARY_STRING "  SPECFEM_ENABLE_TRILINOS                  | ${TRILINOS_STATUS}\n")
+  endif()
+  string(APPEND SUMMARY_STRING "\n")
+
+  # ============================================================================
   # BUILD TYPE
   # ============================================================================
   string(APPEND SUMMARY_STRING "BUILD TYPE\n")

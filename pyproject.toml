@@ -25,6 +25,16 @@ all = [
   {include-group = "scripts"}
 ]
 
+# Everything the published Docker image ships. Includes matplotlib/rtree
+# directly instead of the scripts group: gmsh has no linux/arm64 wheel.
+docker = [
+  {include-group = "dev"},
+  {include-group = "examples"},
+  {include-group = "nightly-benchmarks"},
+  "matplotlib==3.10.3",
+  "rtree==1.4.1",
+]
+
 dev = [
   {include-group = "style"},
   {include-group = "doc"},

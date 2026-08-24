@@ -1,0 +1,7 @@
+# Local-only trees; keeps local docker build context small.
+# CI checkouts are clean, so this does not change published images.
+build/
+bin/
+benchmarks/build/
+.venv/
+__pycache__/
