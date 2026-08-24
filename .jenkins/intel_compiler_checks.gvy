@@ -14,7 +14,7 @@ pipeline{
                     }
                     axis{
                         name 'HostSpace'
-                        values 'SERIAL;-DKokkos_ENABLE_SERIAL=ON -DKokkos_ENABLE_ATOMICS_BYPASS=ON;-n 1 -c 20;-j', 'OPENMP;-DKokkos_ENABLE_OPENMP=ON;-n 1 -c 20;-j 1'
+                        values 'SERIAL;-DKokkos_ENABLE_SERIAL=ON -DKokkos_ENABLE_ATOMICS_BYPASS=ON;-n 1 -c 4;-j', 'OPENMP;-DKokkos_ENABLE_OPENMP=ON;-n 1 -c 4;-j 1'
                     }
                     axis{
                         name 'SIMD'
