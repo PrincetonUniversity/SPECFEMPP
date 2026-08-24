@@ -149,7 +149,10 @@ specfem::periodic_tasks::plot_wavefield<specfem::element::dimension_tag::dim2>::
   // and hence colormapping.
   if ((wavefield_type == specfem::enums::wavefield::displacement) ||
       (wavefield_type == specfem::enums::wavefield::velocity) ||
-      (wavefield_type == specfem::enums::wavefield::acceleration)) {
+      (wavefield_type == specfem::enums::wavefield::acceleration) ||
+      (wavefield_type == specfem::enums::wavefield::rotation) ||
+      (wavefield_type == specfem::enums::wavefield::intrinsic_rotation) ||
+      (wavefield_type == specfem::enums::wavefield::curl)) {
     if (component == specfem::enums::display_component::magnitude) {
       this->nonnegative_field = true;
     } else {
@@ -218,7 +221,7 @@ vtkSmartPointer<vtkDataSetMapper> specfem::periodic_tasks::plot_wavefield<
   int light_gray = 200;
   int gray = 130;
   int dark_gray = 80;
-  const std::unordered_map<specfem::element::medium_tag, std::array<int, 3> >
+  const std::unordered_map<specfem::element::medium_tag, std::array<int, 3>>
       material_colors = {
         { specfem::element::medium_tag::acoustic, // white color
           { white, white, white } },
@@ -295,11 +298,23 @@ float specfem::periodic_tasks::plot_wavefield<
         const specfem::enums::display_component &component, const int ispec,
         const int iz, const int ix) {
 
-  if (wavefield_type == specfem::enums::wavefield::pressure ||
-      wavefield_type == specfem::enums::wavefield::rotation ||
+  if (wavefield_type == specfem::enums::wavefield::pressure) {
+    return wavefield_data(ispec, iz, ix, 0);
+  }
+
+  // Rotation, intrinsic rotation, and curl are out-of-plane (y) in 2D
+  if (wavefield_type == specfem::enums::wavefield::rotation ||
       wavefield_type == specfem::enums::wavefield::intrinsic_rotation ||
       wavefield_type == specfem::enums::wavefield::curl) {
-    return wavefield_data(ispec, iz, ix, 0);
+    if (component == specfem::enums::display_component::y) {
+      return wavefield_data(ispec, iz, ix, 0);
+    } else if (component == specfem::enums::display_component::magnitude) {
+      return std::abs(wavefield_data(ispec, iz, ix, 0));
+    } else {
+      throw std::runtime_error("Invalid component,'" +
+                               specfem::enums::to_string(component) +
+                               "', for out-of-plane field plotting in 2D.");
+    }
   }
 
   // Computing the component or magnitude for vector fields
