@@ -12,6 +12,9 @@ namespace specfem::nonconforming_test::kernel {
 
 namespace impl {
 
+// Dependent on the extents of infield and outfield, this is an atomic_add for a
+// given iglob, since constexpr and the KOKKOS_LAMBDA macro don't play nice all
+// the time.
 template <typename OutputFieldViewType, typename InputFieldViewType>
 KOKKOS_INLINE_FUNCTION void _atomic_add_iglob_for_all_extents(
     const OutputFieldViewType &outfield, const InputFieldViewType &infield,
@@ -29,6 +32,9 @@ KOKKOS_INLINE_FUNCTION void _atomic_add_iglob_for_all_extents(
   }
 }
 
+// delegated to by the non-impl integrate_against_shape_on_faces, which doesn't
+// need the OutputFieldType parameter. This is to capture both scalar and vector
+// fields.
 template <specfem::element::medium_tag medium_tag, typename OutputFieldType,
           typename InputFieldViewType>
 OutputFieldType integrate_against_shape_on_faces(
@@ -147,6 +153,9 @@ integrate_against_shape_on_faces(
       assembly, faces, h_faces, dof_field);
 }
 
+/**
+ * @brief Recovers the unique faces from a host-space FaceView
+ */
 template <typename FaceViewType>
 std::pair<specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace>,
           specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace>::
@@ -183,6 +192,15 @@ std::pair<specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace>,
   specfem::assembly::deep_copy(faces, h_faces);
   return std::make_pair(faces, h_faces);
 }
+
+/**
+ * @brief Recovers the unique self-faces from one side of an intersection
+ *
+ * Since [self_faces, coupled_faces] specify intersections, the same face may
+ * appear multiple times in self_faces -- each instance corresponding to a
+ * different coupled face. This function recovers only one instance of each face
+ * in self_faces.
+ */
 template <specfem::element_coupling::interface_tag interface_tag>
 std::pair<specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace>,
           specfem::assembly::FaceView<
@@ -205,6 +223,15 @@ get_self_faces_on_intersection(
 
   return collect_unique_faces(self_faces, ngllz, nglly, ngllx);
 }
+
+/**
+ * @brief Recovers the unique coupled-faces from one side of an intersection
+ *
+ * Since [self_faces, coupled_faces] specify intersections, the same face may
+ * appear multiple times in coupled_faces -- each instance corresponding to a
+ * different self face. This function recovers only one instance of each face
+ * in coupled_faces.
+ */
 template <specfem::element_coupling::interface_tag interface_tag>
 std::pair<specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace>,
           specfem::assembly::FaceView<

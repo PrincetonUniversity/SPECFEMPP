@@ -94,7 +94,7 @@ public:
    * @brief Constructs interface container with mesh and geometry data
    *
    * @param ngllz Number of GLL points in z-direction
-   * @param ngllx Number of GLL points in y-direction
+   * @param nglly Number of GLL points in y-direction
    * @param ngllx Number of GLL points in x-direction
    * @param element_intersections Element intersection information from mesh
    * @param mesh Mesh connectivity and geometry

@@ -3,9 +3,24 @@
 #include "specfem/element/attributes.hpp"
 #include "specfem/element/dimension.hpp"
 #include "specfem/execution.hpp"
+#include <type_traits>
 
 namespace specfem::test_fieldmanip {
 
+/**
+ * @brief Base class for setting fields by pointwise data in set_field_values().
+ *
+ * `specfem::test_fieldmanip::set_field_values<wavefield_type>(assembly,
+ * point_setter)` sets the values of that simfield in device space.
+ * Displacement, velocity, and acceleration can be updated, based on if those
+ * boolean flags are set.
+ *
+ * For each degree of freedom `iglob`, point data (such as global coordinates)
+ * are given to `point_setter`, which returns a `point::field` result according
+ * to that data. The exact behavior of which is modified by overloading the
+ * `KOKKOS_INLINE_FUNCTION`s `displacement`, `velocity`, and `acceleration`,
+ * respectively.
+ */
 template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag>
 struct PointSetter {
@@ -73,11 +88,18 @@ public:
   }
 };
 
+/**
+ * @brief Sets field values (by iglob) of a simfield using a PointSetter.
+ */
 template <specfem::simulation::field_type field_type, typename PointSetterType,
           specfem::element::dimension_tag dimension_tag>
 void set_field_values(
     const specfem::assembly::assembly<dimension_tag> &assembly,
-    const PointSetterType &point_setter) {
+    const PointSetterType &point_setter)
+  requires(
+      std::is_base_of_v<PointSetter<dimension_tag, PointSetterType::medium_tag>,
+                        PointSetterType>)
+{
   constexpr auto medium_tag = PointSetterType::medium_tag;
   static_assert(
       std::is_base_of_v<PointSetter<dimension_tag, medium_tag>,

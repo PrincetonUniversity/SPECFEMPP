@@ -13,6 +13,7 @@
 #include <sstream>
 #include <stdexcept>
 
+// helper: hides away the specfem::compute::impl stuff.
 template <int NGLL>
 void acoustic_compute_update(
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
@@ -25,6 +26,8 @@ void acoustic_compute_update(
                                 specfem::element::medium_tag::acoustic>>(
       assembly);
 }
+
+// helper: hides away the specfem::compute::impl stuff.
 template <int NGLL>
 void elastic_compute_update(
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
@@ -38,6 +41,13 @@ void elastic_compute_update(
       assembly);
 }
 
+/**
+ * @brief Sets the acoustic acceleration field to power function.
+ *
+ * when passed to specfem::test_fieldmanip::set_field_values(), sets
+ * acceleration to (x/xscale)^{xpow} (y/yscale)^{ypow}. Zeroes out displacement
+ * and velocity.
+ */
 template <int xpow, int ypow>
 struct acoustic_field_initializer_pow
     : public specfem::test_fieldmanip::PointSetter<
@@ -62,6 +72,13 @@ struct acoustic_field_initializer_pow
         inv_yscale(1 / yscale) {};
 };
 
+/**
+ * @brief Sets the elastic displacement field to power.
+ *
+ * when passed to specfem::test_fieldmanip::set_field_values(), sets
+ * displacement to dir * (x/xscale)^{xpow} (y/yscale)^{ypow}, where dir is a
+ * constant vector. Zeroes out displacement and velocity.
+ */
 template <int xpow, int ypow>
 struct elastic_field_initializer_pow
     : public specfem::test_fieldmanip::PointSetter<
@@ -90,6 +107,17 @@ struct elastic_field_initializer_pow
         inv_xscale(1 / xscale), inv_yscale(1 / yscale) {};
 };
 
+/**
+ * @brief verifies that the acoustic-elastic coupling is exact for fields of a
+ * certain power.
+ *
+ * Given the field on the interface as f(x,y) = (x/xscale)^{xpow}
+ * (y/yscale)^{ypow} (or f multiplied by a constant vector {0,0,1} for elastic),
+ * verifies that setting field on source_medium to f and calling the
+ * compute_coupling routines produces the same acceleration field (on
+ * target_medium) as if we computed the integral of the shape function times f
+ * there.
+ */
 template <specfem::element::medium_tag target_medium,
           specfem::element::medium_tag source_medium, int NGLL, int pow_x,
           int pow_y>
@@ -104,6 +132,12 @@ void test_nonconforming_acoustic_elastic(
     const Kokkos::View<type_real *[3]> &target_medium_normal_per_dof,
     std::integral_constant<int, NGLL>, std::integral_constant<int, pow_x>,
     std::integral_constant<int, pow_y>) {
+  static_assert((target_medium == specfem::element::medium_tag::acoustic &&
+                 source_medium == specfem::element::medium_tag::elastic) ||
+                    (source_medium == specfem::element::medium_tag::acoustic &&
+                     target_medium == specfem::element::medium_tag::elastic),
+                "test_nonconforming_acoustic_elastic -- target_medium and "
+                "source_medium must be acoustic and elastic (or vice versa)!");
   constexpr type_real reltol = 1e-5;
   constexpr type_real abstol = 1e-7;
   constexpr int fail_num_verbose = 5;

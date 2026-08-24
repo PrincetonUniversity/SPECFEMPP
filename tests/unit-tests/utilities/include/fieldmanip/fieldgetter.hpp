@@ -6,6 +6,11 @@
 
 namespace specfem::test_fieldmanip {
 
+/**
+ * @brief Recovers the field values (by iglob) of a simfield from assembly.
+ *
+ * The resulting view is in device space.
+ */
 template <specfem::simulation::field_type field_type,
           specfem::element::dimension_tag dimension_tag,
           specfem::element::medium_tag medium_tag,
