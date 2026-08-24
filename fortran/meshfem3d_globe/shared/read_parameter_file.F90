@@ -383,6 +383,9 @@
     call read_value_double_precision(FILESYSTEM_IO_BANDWIDTH, 'FILESYSTEM_IO_BANDWIDTH', ier); ier = 0
   endif
 
+  ! (optional) thin mesh database for SPECFEM++
+  call read_value_logical(SPECFEMPP_DATABASE, 'SPECFEMPP_DATABASE', ier); ier = 0
+
   ! HDF5 file I/O
   ! (optional) hdf5 database io flag
   call read_value_logical(HDF5_ENABLED, 'HDF5_ENABLED', ier); ier = 0

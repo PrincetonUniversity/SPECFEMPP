@@ -258,6 +258,14 @@ if(SPECFEM_BUILD_MESHFEM3D_GLOBE)
   set(CMAKE_MESSAGE_LOG_LEVEL ${SUBDIR_LOG_LEVEL})
   add_subdirectory(fortran/meshfem3d_globe)
   set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
+
+  # ISO_C_BINDING wrappers exposing the globe model catalog to C/C++ (issue
+  # #2001). Kept in a sibling directory so fortran/meshfem3d_globe/ stays a
+  # clean mirror of upstream specfem3d_globe. Must come after the globe
+  # subdirectory above: it consumes the meshfem3Dg::* targets and the .mod
+  # files they generate.
+  message(STATUS "Configuring globe_evaluator")
+  add_subdirectory(fortran/globe_evaluator)
 else()
   message(STATUS "Skipping xmeshfem3D_globe (SPECFEM_BUILD_MESHFEM3D_GLOBE=OFF)")
 endif()
