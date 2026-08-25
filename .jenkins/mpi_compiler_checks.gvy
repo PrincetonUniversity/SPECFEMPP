@@ -207,7 +207,14 @@ pipeline {
                     result = 'FAILURE unexpected summary: ' + result
                 }
                 def desc = result.substring(state.length()).trim()
-                echo "GitHub status -> ${state}: ${desc}"
+                // PR builds check out refs/pull/N/merge, so the checked-out revision is
+                // the merge commit -- a different object from the PR head, which is what
+                // the PR's checks list is keyed on. Posting to the merge commit produced a
+                // second row alongside the old status rather than replacing it, despite
+                // both using the same context. ghprb publishes the real head SHA here;
+                // GIT_COMMIT covers plain branch builds where that variable is unset.
+                def targetSha = env.ghprbActualCommit ?: env.GIT_COMMIT
+                echo "GitHub status -> ${state} on ${targetSha}: ${desc}"
                 // githubNotify does not exist on this controller (older github-plugin), so
                 // this uses the class-based step instead. It picks up the globally
                 // configured GitHub server credentials, so no credentialsId is needed.
@@ -216,7 +223,7 @@ pipeline {
                                       context: env.GH_CONTEXT],
                       reposSource: [$class: 'ManuallyEnteredRepositorySource',
                                     url: env.GH_REPO_URL],
-                      commitShaSource: [$class: 'BuildDataRevisionShaSource'],
+                      commitShaSource: [$class: 'ManuallyEnteredShaSource', sha: targetSha],
                       statusResultSource: [$class: 'ConditionalStatusResultSource',
                           results: [[$class: 'AnyBuildResult', state: state, message: desc]]]
                 ])
