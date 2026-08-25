@@ -103,12 +103,13 @@ pipeline {
                                         module load ${GNU_COMPILER_MODULE}
                                         module load ${MPI_MODULE}
                                         cd /scratch/gpfs/TROMP/specfempp/jenkins/test_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
-                                        srun ${MPI_RUN_FLAGS} -t 00:15:00 --account rse \
+                                        salloc ${MPI_RUN_FLAGS} -t 00:15:00 --account rse \
                                             --constraint="intel" \
                                             bash -c 'export OMP_PROC_BIND=spread; \
                                             export OMP_PLACES=threads; \
                                             export OMP_NUM_THREADS=20; \
                                             hostname; \
+                                            echo "ranks run on: \$SLURM_JOB_NODELIST"; \
                                             ctest -R MPI --output-on-failure --no-tests=error;'
                                     """
                                     echo ' Testing completed '

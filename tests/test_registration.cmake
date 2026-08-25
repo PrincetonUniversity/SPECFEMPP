@@ -23,6 +23,13 @@
 #     discovery files holding absolute paths to them, so nothing needs copying.
 # ==============================================================================
 
+# Wrapper that runs gtest's discovery pass on one process and the tests themselves under
+# mpiexec; see the header of the script for why that split cannot be expressed with target
+# properties. Resolved here, at file scope, so it does not depend on which listfile is
+# being processed when specfem_add_test() is called.
+set(SPECFEM_MPI_TEST_LAUNCHER "${CMAKE_CURRENT_LIST_DIR}/mpi_test_launcher.sh"
+    CACHE INTERNAL "launcher wrapper for MPI gtest executables")
+
 # Initialize the test tree. Call once, from tests/CMakeLists.txt, before adding
 # any test suite. This is the only place SPECFEMPP_TEST_DIR is read.
 macro(specfem_init_tests)
@@ -121,6 +128,12 @@ function(specfem_add_test name)
     # even the serial tests run under `mpirun -n 1` so that MPI_Init() succeeds.
     # This must precede gtest_discover_tests(): the GoogleTest module reads
     # CROSSCOMPILING_EMULATOR off the target at call time.
+    #
+    # The emulator goes through mpi_test_launcher.sh rather than straight to mpiexec.
+    # gtest_discover_tests() reuses this same executor to *list* the binary's tests, and
+    # listing under `mpiexec -n <ranks>` makes every rank print the listing to one merged
+    # stdout -- registering each test once per rank. The wrapper routes the listing pass
+    # to a single process and everything else to mpiexec.
     if(T_MPI_RANKS)
         set(_ranks ${T_MPI_RANKS})
     elseif(SPECFEM_ENABLE_MPI)
@@ -130,7 +143,8 @@ function(specfem_add_test name)
     endif()
     if(_ranks)
         set_target_properties(${name} PROPERTIES
-            CROSSCOMPILING_EMULATOR "${MPIEXEC_EXECUTABLE};${MPIEXEC_NUMPROC_FLAG};${_ranks}")
+            CROSSCOMPILING_EMULATOR
+                "${SPECFEM_MPI_TEST_LAUNCHER};${MPIEXEC_EXECUTABLE};${MPIEXEC_NUMPROC_FLAG};${_ranks}")
     endif()
 
     # CTest properties. Multi-rank tests reserve their ranks and do not overlap
@@ -140,6 +154,23 @@ function(specfem_add_test name)
         list(APPEND _properties PROCESSORS ${T_MPI_RANKS} RUN_SERIAL ON)
         if(NOT T_TIMEOUT)
             set(T_TIMEOUT 300)
+        endif()
+        if(T_MPI_RANKS GREATER 1)
+            # Neutralize the SKIP_REGULAR_EXPRESSION that gtest_discover_tests() sets to
+            # "[  SKIPPED ]". Under `mpirun -n <ranks>` every rank writes to one merged
+            # stdout, so a GTEST_SKIP() on any *excluded* rank makes CTest mark the whole
+            # test skipped even though the active ranks ran it and asserted. Worse,
+            # SKIP_REGULAR_EXPRESSION is evaluated ahead of the return code, so a genuine
+            # failure on an active rank was also reported as "Skipped" -- eight cases
+            # across mpi_subset_{1of4,2of4} could not fail. GoogleTestAddTests.cmake emits
+            # its default before ${arg_TEST_PROPERTIES}, and set_tests_properties is
+            # last-wins, so ours takes effect.
+            #
+            # The value is a sentinel rather than "": _discover_args is expanded unquoted
+            # into gtest_discover_tests(), which drops empty list elements and would leave
+            # the property name with no value.
+            list(APPEND _properties
+                SKIP_REGULAR_EXPRESSION "SPECFEM_MPI_TEST_NEVER_SKIPS")
         endif()
     elseif(SPECFEM_ENABLE_MPI)
         list(APPEND _properties PROCESSORS 1)
