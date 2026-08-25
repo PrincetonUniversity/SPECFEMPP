@@ -7,6 +7,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 // Spike coverage for issue #2001: the SPECFEM3D_GLOBE model catalog exposed as
@@ -92,11 +93,17 @@ const std::vector<RadialShell> &shells() {
   return value;
 }
 
-/** @brief A configuration with all optional physics off, for a bare 1D run. */
+/**
+ * @brief A configuration with all optional physics off, for a bare 1D run.
+ *
+ * Stands in for the mesh database, which is the only source of these values in
+ * production. The attenuation period band is deliberately left at its rejected
+ * default: with `attenuation` off it is never consulted, and a test that wants
+ * it must say so.
+ */
 specfem::globe_model::ModelConfig bare_config(const std::string &model_name) {
   specfem::globe_model::ModelConfig config;
   config.model_name = model_name;
-  config.log_path = "";   // /dev/null
   config.planet_type = 1; // IPLANET_EARTH
   config.nchunks = 6;
   config.nex_xi = 64;
@@ -576,18 +583,20 @@ TEST_F(PremEvaluatorTest, IsDirectionIndependentForOneDimensionalModels) {
 // derivable from the model name -- the mesher computes it in
 // rcp_set_compute_parameters, which the evaluator does not call. Left unset
 // with attenuation on, the catalog would abort the process inside
-// attenuation_tau_sigma (model_attenuation.f90:625-628); the evaluator rejects
-// it at the boundary instead.
+// attenuation_tau_sigma (model_attenuation.f90:625-628); ModelConfig::validate
+// rejects it at the boundary instead.
 TEST_F(PremEvaluatorTest, RejectsAnInvalidAttenuationBand) {
   auto config = bare_config("1d_isotropic_prem");
   config.attenuation = true;
 
-  config.min_attenuation_period = 0.0;
-  EXPECT_THROW(specfem::globe_model::Evaluator{ config }, std::runtime_error);
+  // left at the default, i.e. never read from a database
+  EXPECT_THROW(specfem::globe_model::Evaluator{ config },
+               std::invalid_argument);
 
   config.min_attenuation_period = 1000.0;
   config.max_attenuation_period = 20.0; // inverted
-  EXPECT_THROW(specfem::globe_model::Evaluator{ config }, std::runtime_error);
+  EXPECT_THROW(specfem::globe_model::Evaluator{ config },
+               std::invalid_argument);
 
   // ... and the band is not consulted at all when attenuation is off.
   config.attenuation = false;
@@ -622,6 +631,9 @@ TEST_F(PremEvaluatorTest, LeavesQZeroWhenAttenuationIsOff) {
 TEST_F(PremEvaluatorTest, ReturnsPositiveQmuInSolidsWhenAttenuationIsOn) {
   auto config = bare_config("1d_isotropic_prem");
   config.attenuation = true;
+  // typical global values; in production these come from the mesh database
+  config.min_attenuation_period = 20.0;
+  config.max_attenuation_period = 1000.0;
   evaluator_ = std::make_unique<specfem::globe_model::Evaluator>(config);
 
   const std::size_t npoints =
@@ -636,6 +648,77 @@ TEST_F(PremEvaluatorTest, ReturnsPositiveQmuInSolidsWhenAttenuationIsOn) {
     SCOPED_TRACE("point=" + std::to_string(i));
     EXPECT_GT(properties.qmu[i], 0.0);
   }
+}
+
+// -----------------------------------------------------------------------------
+// ModelConfig validation
+// -----------------------------------------------------------------------------
+
+// These values exist only in the mesh database -- the catalog cannot re-derive
+// them from the model name. Before they were carried there, ModelConfig held
+// plausible defaults (nex_xi = 64, a 20-1000 s band), so a caller that failed
+// to supply them got a successful run against a model the mesher never used.
+// The defaults are now out of range, and validate() is what turns that into an
+// error. No Evaluator is constructed here, so these do not contend for the
+// catalog's single-instance guard.
+TEST(ModelConfigValidation, RejectsAnUnpopulatedConfig) {
+  const specfem::globe_model::ModelConfig empty;
+  EXPECT_THROW(empty.validate(), std::invalid_argument);
+
+  specfem::globe_model::ModelConfig named;
+  named.model_name = "1d_isotropic_prem";
+  EXPECT_THROW(named.validate(), std::invalid_argument);
+}
+
+TEST(ModelConfigValidation, RejectsEachMissingScalarByName) {
+  const auto complete = bare_config("1d_isotropic_prem");
+  ASSERT_NO_THROW(complete.validate());
+
+  using ScalarField = int specfem::globe_model::ModelConfig::*;
+  const std::vector<std::pair<std::string, ScalarField>> fields = {
+    { "planet_type", &specfem::globe_model::ModelConfig::planet_type },
+    { "nchunks", &specfem::globe_model::ModelConfig::nchunks },
+    { "nex_xi", &specfem::globe_model::ModelConfig::nex_xi },
+    { "nex_eta", &specfem::globe_model::ModelConfig::nex_eta }
+  };
+
+  for (const auto &[name, member] : fields) {
+    SCOPED_TRACE("field=" + name);
+    auto config = complete;
+    config.*member = 0;
+
+    try {
+      config.validate();
+      ADD_FAILURE() << "validate() accepted a zero " << name;
+    } catch (const std::invalid_argument &error) {
+      // the message has to name the field, or it is no better than a status
+      // code
+      EXPECT_NE(std::string(error.what()).find(name), std::string::npos)
+          << "message does not name the field: " << error.what();
+    }
+  }
+}
+
+TEST(ModelConfigValidation, ChecksThePeriodBandOnlyWhenAttenuationIsOn) {
+  auto config = bare_config("1d_isotropic_prem");
+
+  // the band is left at its rejected default, but nothing reads it
+  ASSERT_FALSE(config.attenuation);
+  EXPECT_NO_THROW(config.validate());
+
+  config.attenuation = true;
+  EXPECT_THROW(config.validate(), std::invalid_argument);
+
+  config.min_attenuation_period = 1000.0;
+  config.max_attenuation_period = 20.0; // inverted
+  EXPECT_THROW(config.validate(), std::invalid_argument);
+
+  config.min_attenuation_period = 20.0;
+  config.max_attenuation_period = 20.0; // degenerate
+  EXPECT_THROW(config.validate(), std::invalid_argument);
+
+  config.max_attenuation_period = 1000.0;
+  EXPECT_NO_THROW(config.validate());
 }
 
 } // namespace specfem::globe_model_test
