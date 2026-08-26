@@ -13,10 +13,12 @@
 #include <cmath>
 #include <fstream>
 #include <limits>
+#include <map>
 #include <optional>
 #include <set>
 #include <sstream>
 #include <stdexcept>
+#include <tuple>
 #include <vector>
 
 namespace specfem::io::mesh::impl::fortran::dim3_impl {
@@ -162,7 +164,7 @@ int corner_entity(const int local_corner) {
   return entities.at(local_corner);
 }
 
-int entity_from_corners(const std::set<int> &corners) {
+const std::array<std::pair<int, std::set<int>>, 26> &hex_entities() {
   static const std::array<std::pair<int, std::set<int>>, 26> entities = {
     { { 1, { 0, 1, 2, 3 } }, { 2, { 1, 2, 5, 6 } }, { 3, { 4, 5, 6, 7 } },
       { 4, { 0, 3, 4, 7 } }, { 5, { 0, 1, 4, 5 } }, { 6, { 2, 3, 6, 7 } },
@@ -174,7 +176,11 @@ int entity_from_corners(const std::set<int> &corners) {
       { 22, { 2 } },         { 23, { 4 } },         { 24, { 5 } },
       { 25, { 7 } },         { 26, { 6 } } }
   };
-  for (const auto &[entity, entity_corners] : entities) {
+  return entities;
+}
+
+int entity_from_corners(const std::set<int> &corners) {
+  for (const auto &[entity, entity_corners] : hex_entities()) {
     if (corners == entity_corners) {
       return entity;
     }
@@ -205,37 +211,53 @@ std::vector<mpi_element_description> describe_mpi_interface(
       int local_corner;
       bool operator<(const Point &other) const { return xyz < other.xyz; }
     };
-    std::vector<Point> points;
     for (int corner = 0; corner < 8; ++corner) {
       const int inode = nodes.control_node_index(ispec, corner);
       if (shared_nodes.contains(inode)) {
         local_corners.insert(corner);
+      }
+    }
+    if (local_corners.empty()) {
+      continue;
+    }
+
+    // At a partition junction, one neighbor rank can touch the same element
+    // through more than one entity. The merged node list then yields, for
+    // example, three shared corners that do not describe a single entity.
+    // Emit every possible entity here; after the exchange, matching selects
+    // the largest actual contact for each local/remote element pair.
+    std::vector<std::set<int>> entities;
+    for (const auto &[entity, entity_corners] : hex_entities()) {
+      static_cast<void>(entity);
+      if (!std::includes(local_corners.begin(), local_corners.end(),
+                         entity_corners.begin(), entity_corners.end())) {
+        continue;
+      }
+      entities.push_back(entity_corners);
+    }
+
+    for (const auto &entity_corners : entities) {
+      std::vector<Point> points;
+      for (const int corner : entity_corners) {
+        const int inode = nodes.control_node_index(ispec, corner);
         points.push_back(
             { { nodes.coordinates(inode, 0), nodes.coordinates(inode, 1),
                 nodes.coordinates(inode, 2) },
               corner });
       }
-    }
-    if (points.empty()) {
-      continue;
-    }
-    if (points.size() != 1 && points.size() != 2 && points.size() != 4) {
-      throw std::runtime_error(
-          "Invalid number of shared MPI corners on globe element " +
-          std::to_string(ispec));
-    }
-    std::sort(points.begin(), points.end());
-    mpi_element_description description;
-    description.local_index = ispec;
-    description.orientation = entity_from_corners(local_corners);
-    description.nshared = static_cast<int>(points.size());
-    description.anchor = corner_entity(points.front().local_corner);
-    for (int i = 0; i < description.nshared; ++i) {
-      for (int component = 0; component < 3; ++component) {
-        description.coordinates[3 * i + component] = points[i].xyz[component];
+      std::sort(points.begin(), points.end());
+      mpi_element_description description;
+      description.local_index = ispec;
+      description.orientation = entity_from_corners(entity_corners);
+      description.nshared = static_cast<int>(points.size());
+      description.anchor = corner_entity(points.front().local_corner);
+      for (int i = 0; i < description.nshared; ++i) {
+        for (int component = 0; component < 3; ++component) {
+          description.coordinates[3 * i + component] = points[i].xyz[component];
+        }
       }
+      descriptions.push_back(description);
     }
-    descriptions.push_back(description);
   }
   return descriptions;
 }
@@ -245,7 +267,10 @@ bool same_interface_entity(const mpi_element_description &left,
   if (left.nshared != right.nshared) {
     return false;
   }
-  constexpr double coordinate_tolerance = 1.0e-4;
+  // Each rank dimensionalizes its anchors independently in the Fortran
+  // mesher. At planetary scale, equivalent interface points can therefore
+  // differ at the sub-metre level after floating-point roundoff.
+  constexpr double coordinate_tolerance = 1.0;
   for (int i = 0; i < 3 * left.nshared; ++i) {
     if (std::abs(left.coordinates[i] - right.coordinates[i]) >
         coordinate_tolerance) {
@@ -306,27 +331,68 @@ void build_mpi_adjacency(
   SPECFEM_MPI_SAFECALL(MPI_Waitall(static_cast<int>(requests.size()),
                                    requests.data(), MPI_STATUSES_IGNORE));
 
+  using CoordinateCell = std::tuple<int, long long, long long, long long>;
+  constexpr double coordinate_cell_width = 1.0;
+  const auto coordinate_cell = [](const mpi_element_description &description) {
+    return CoordinateCell{
+      description.nshared,
+      static_cast<long long>(
+          std::floor(description.coordinates[0] / coordinate_cell_width)),
+      static_cast<long long>(
+          std::floor(description.coordinates[1] / coordinate_cell_width)),
+      static_cast<long long>(
+          std::floor(description.coordinates[2] / coordinate_cell_width))
+    };
+  };
+
   for (int i = 0; i < ninterfaces; ++i) {
-    std::vector<bool> matched(remote[i].size(), false);
+    std::map<CoordinateCell, std::vector<int>> remote_by_cell;
+    for (int candidate = 0; candidate < static_cast<int>(remote[i].size());
+         ++candidate) {
+      remote_by_cell[coordinate_cell(remote[i][candidate])].push_back(
+          candidate);
+    }
+
+    std::map<std::pair<int, int>,
+             std::pair<mpi_element_description, mpi_element_description>>
+        element_matches;
     for (const auto &local_element : local[i]) {
-      int match = -1;
-      for (int candidate = 0; candidate < static_cast<int>(remote[i].size());
-           ++candidate) {
-        if (!matched[candidate] &&
-            same_interface_entity(local_element, remote[i][candidate])) {
-          if (match != -1) {
-            throw std::runtime_error(
-                "Ambiguous element match across globe MPI interface");
+      const auto [nshared, cell_x, cell_y, cell_z] =
+          coordinate_cell(local_element);
+      for (long long dx = -1; dx <= 1; ++dx) {
+        for (long long dy = -1; dy <= 1; ++dy) {
+          for (long long dz = -1; dz <= 1; ++dz) {
+            const CoordinateCell cell{ nshared, cell_x + dx, cell_y + dy,
+                                       cell_z + dz };
+            const auto candidates = remote_by_cell.find(cell);
+            if (candidates == remote_by_cell.end()) {
+              continue;
+            }
+            for (const int candidate : candidates->second) {
+              const auto &remote_element = remote[i][candidate];
+              if (!same_interface_entity(local_element, remote_element)) {
+                continue;
+              }
+              const auto key = std::pair{ local_element.local_index,
+                                          remote_element.local_index };
+              const auto previous = element_matches.find(key);
+              if (previous == element_matches.end() ||
+                  previous->second.first.nshared < local_element.nshared) {
+                element_matches[key] = { local_element, remote_element };
+              }
+            }
           }
-          match = candidate;
         }
       }
-      if (match == -1) {
-        throw std::runtime_error(
-            "Could not match an element across globe MPI interface");
-      }
-      matched[match] = true;
-      const auto &remote_element = remote[i][match];
+    }
+    if (element_matches.empty()) {
+      throw std::runtime_error(
+          "No elements matched across globe MPI interface to rank " +
+          std::to_string(interfaces[i].neighbor_rank));
+    }
+    for (const auto &[indices, elements] : element_matches) {
+      static_cast<void>(indices);
+      const auto &[local_element, remote_element] = elements;
       mesh.adjacency_graph.mpi_connections().emplace_back(
           specfem::element_connections::type::strongly_conforming,
           static_cast<specfem::mesh_entity::dim3::type>(
@@ -337,10 +403,6 @@ void build_mpi_adjacency(
           local_element.local_index, remote_element.local_index,
           static_cast<specfem::mesh_entity::dim3::type>(local_element.anchor),
           static_cast<specfem::mesh_entity::dim3::type>(remote_element.anchor));
-    }
-    if (std::find(matched.begin(), matched.end(), false) != matched.end()) {
-      throw std::runtime_error(
-          "Neighbor reported unmatched elements on globe MPI interface");
     }
   }
 #endif
