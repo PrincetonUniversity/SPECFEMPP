@@ -1,6 +1,7 @@
 #include "specfem/io/mesh/impl/fortran/dim3/read_globe_mesh.hpp"
 
 #include "specfem/attenuation.hpp"
+#include "specfem/io.hpp"
 #include "specfem/io/fortranio/interface.hpp"
 #include "specfem/io/mesh/impl/fortran/dim3/globe_hex27.hpp"
 #include "specfem/medium_container.hpp"
