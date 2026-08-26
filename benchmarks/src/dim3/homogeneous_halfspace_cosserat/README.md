@@ -64,3 +64,6 @@ To clean up the example directory, you can run the following command in the dire
 uv run snakemake clean -j 1
 
 ```
+
+## Regeneration of reference traces
+The rerference traces are generated from `reference_generation_files/params.yaml` using the [Cosserat Solver](https://github.com/maxlchien/Cosserat-Solver) package.
