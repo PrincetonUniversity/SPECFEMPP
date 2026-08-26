@@ -21,6 +21,13 @@ file(
   DESTINATION ${CURRENT_BENCHMARK_BUILD_DIR}
 )
 
+file(
+  CREATE_LINK
+    ${CMAKE_CURRENT_SOURCE_DIR}/reference_seismograms
+    ${CURRENT_BENCHMARK_BUILD_DIR}/reference_seismograms
+    SYMBOLIC
+)
+
 configure_file(CMakeFiles/interfaces.txt.in ${CURRENT_BENCHMARK_BUILD_DIR}/DATA/meshfem3D_files/interfaces.txt)
 configure_file(CMakeFiles/specfem_config.yaml.in ${CURRENT_BENCHMARK_BUILD_DIR}/specfem_config.yaml)
 

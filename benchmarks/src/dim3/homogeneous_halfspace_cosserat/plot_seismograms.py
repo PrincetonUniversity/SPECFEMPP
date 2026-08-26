@@ -12,6 +12,7 @@ FIELDS = [
     ("Curl", "semc"),
 ]
 COMPONENTS = ["BXX", "BXY", "BXZ"]
+REFERENCE_DIRECTORIES = ("reference_seismograms",)
 
 
 def read_stations(filename):
@@ -58,6 +59,15 @@ def read_seismogram(filename):
     """Read seismogram file"""
     data = np.loadtxt(filename)
     return data[:, 0], data[:, 1]  # time, value
+
+
+def find_reference_files(component, extension):
+    """Find reference traces."""
+    for directory in REFERENCE_DIRECTORIES:
+        files = sorted(glob.glob(f"{directory}/*.S3.{component}.{extension}"))
+        if files:
+            return files
+    return []
 
 
 def calculate_distance(station, source):
@@ -144,6 +154,7 @@ def main():
     for row, (field_name, ext) in enumerate(FIELDS):
         # Read all traces for this field type
         seismograms = {}
+        reference_seismograms = {}
         time_range = None
         max_amplitude = 0
 
@@ -163,6 +174,24 @@ def main():
                         max(time_range[1], time.max()),
                     )
                 max_amplitude = max(max_amplitude, np.abs(value).max())
+
+            # Reference data is available only for displacement and rotation.
+            if ext in ("semd", "semr"):
+                for component in COMPONENTS:
+                    reference_seismograms[component] = {}
+                    for filename in find_reference_files(component, ext):
+                        station_name = filename.split("/")[-1].split(".")[1]
+                        time, value = read_seismogram(filename)
+                        reference_seismograms[component][station_name] = (time, value)
+
+                        if time_range is None:
+                            time_range = (time.min(), time.max())
+                        else:
+                            time_range = (
+                                min(time_range[0], time.min()),
+                                max(time_range[1], time.max()),
+                            )
+                        max_amplitude = max(max_amplitude, np.abs(value).max())
 
         if max_amplitude == 0 or time_range is None:
             continue
@@ -187,6 +216,18 @@ def main():
 
                 ax.plot(time, normalized + y_pos, "k-", linewidth=0.8)
 
+                if station_name in reference_seismograms.get(component, {}):
+                    time_ref, value_ref = reference_seismograms[component][station_name]
+                    normalized_ref = value_ref / max_amplitude * y_spacing * 0.8
+                    ax.plot(
+                        time_ref,
+                        normalized_ref + y_pos,
+                        "r--",
+                        linewidth=0.8,
+                        alpha=0.7,
+                        label="Analytic Solution" if j == 0 else "",
+                    )
+
                 # Add station label and distance on the leftmost column
                 if i == 0:
                     ax.text(
@@ -203,6 +244,9 @@ def main():
             ax.set_title(f"{field_name} {component}", fontsize=10)
             ax.set_xlim(time_range)
             ax.grid(True, alpha=0.3)
+
+            if i == 0 and ext in ("semd", "semr"):
+                ax.legend(loc="upper left", fontsize=8, fancybox=False)
 
             # Set y-axis limits to show all traces properly
             if len(stations_sorted) > 0:

@@ -7,7 +7,7 @@ medium. We do _not_ have:
 - any internal interfaces (the medium is homogeneous)
 - absorbing boundaries (free surfaces on all sides)
 
-A Cosserat force + couple source is buried at the center of a 50 km cube, and
+A Cosserat force + couple source is buried at the center of a 110 km cube, and
 buried receivers around it record displacement, rotation, intrinsic rotation,
 and curl seismograms. The material, source, and station parameters follow the
 analytic validation setup of the `HomogeneousIsotropicCosseratDomain`
@@ -42,6 +42,8 @@ uv run snakemake -j 1
 uv run snakemake --executor slurm -j 1
 
 ```
+
+The Cosserat example takes approximately 100 seconds to run on a single node.
 
 ## Wavefield snapshots (optional)
 
