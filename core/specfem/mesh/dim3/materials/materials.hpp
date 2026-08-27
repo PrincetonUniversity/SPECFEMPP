@@ -174,7 +174,7 @@ private:
 
   static constexpr auto combinations =
       specfem::tag_dispatch::dimension_set<dimension_tag>{} *
-      MEDIUM_SET(acoustic, elastic) * PROPERTY_SET(isotropic) *
+      MEDIUM_SET(acoustic, elastic) * PROPERTY_SET(isotropic, anisotropic) *
       ATTENUATION_SET(none, constant_isotropic);
   template <typename TagsType>
   using MaterialContainerTemplate =

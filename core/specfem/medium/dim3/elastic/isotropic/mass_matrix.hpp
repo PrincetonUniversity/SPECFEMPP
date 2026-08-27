@@ -27,11 +27,13 @@ namespace medium_physics {
  * @param properties Material properties
  * @return Mass inverse components for \f$ [u_x, u_y, u_z] \f$
  */
-template <typename Tags,
-          std::enable_if_t<
-              Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
-                  Tags::medium_tag == specfem::element::medium_tag::elastic,
-              int> = 0>
+template <
+    typename Tags,
+    std::enable_if_t<
+        Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
+            Tags::medium_tag == specfem::element::medium_tag::elastic &&
+            Tags::property_tag == specfem::element::property_tag::isotropic,
+        int> = 0>
 KOKKOS_FUNCTION specfem::point::mass_inverse<Tags>
 impl_mass_matrix_component(const specfem::point::properties<Tags> &properties) {
   return { properties.rho(), properties.rho(), properties.rho() };

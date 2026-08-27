@@ -24,7 +24,7 @@ specfem::assembly::mesh_impl::mesh_to_compute_mapping<
   using ET = decltype(
       DIMENSION_SET(dim3) *
       MEDIUM_SET(elastic, acoustic, elastic_spin) *
-      PROPERTY_SET(isotropic, isotropic_cosserat) *
+      PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
       ATTENUATION_SET(none, constant_isotropic) *
       BOUNDARY_SET(none, stacey, acoustic_free_surface,
                    composite_stacey_dirichlet) *

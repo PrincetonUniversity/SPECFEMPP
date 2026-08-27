@@ -433,6 +433,12 @@ make_materials(const std::vector<int> &medium_tags,
       elastic(1.0, 1.0, 2.0, 0.0);
   const int elastic_index = materials.add_material(elastic);
 
+  specfem::medium_container::material<Dimension::dim3, Medium::elastic,
+                                      Property::anisotropic, Attenuation::none>
+      anisotropic(1.0, 3.0, 1.0, 1.0, 0.0, 0.0, 0.0, 3.0, 1.0, 0.0, 0.0, 0.0,
+                  3.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0);
+  const int anisotropic_index = materials.add_material(anisotropic);
+
   std::optional<int> attenuating_elastic_index;
   if (attenuation_enabled) {
     specfem::medium_container::material<Dimension::dim3, Medium::elastic,
@@ -443,17 +449,27 @@ make_materials(const std::vector<int> &medium_tags,
   }
 
   for (int ispec = 0; ispec < materials.nspec; ++ispec) {
-    if (property_tags[ispec] != 0) {
-      throw std::runtime_error(
-          "The globe database contains anisotropic/TISO elements, but "
-          "SPECFEM++ has no 3-D anisotropic property container or kernel yet");
-    }
     if (medium_tags[ispec] == medium_acoustic) {
+      if (property_tags[ispec] != 0) {
+        throw std::runtime_error(
+            "An acoustic globe element cannot be anisotropic");
+      }
       materials.material_index_mapping[ispec] = { Medium::acoustic,
                                                   Property::isotropic,
                                                   Attenuation::none,
                                                   acoustic_index, ispec };
     } else if (medium_tags[ispec] == medium_elastic) {
+      if (property_tags[ispec] == 1) {
+        materials.material_index_mapping[ispec] = { Medium::elastic,
+                                                    Property::anisotropic,
+                                                    Attenuation::none,
+                                                    anisotropic_index, ispec };
+        continue;
+      }
+      if (property_tags[ispec] != 0) {
+        throw std::runtime_error("Unknown elastic property tag in globe "
+                                 "mesh database");
+      }
       const auto attenuation = attenuation_enabled
                                    ? Attenuation::constant_isotropic
                                    : Attenuation::none;

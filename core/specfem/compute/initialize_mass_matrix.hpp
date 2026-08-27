@@ -40,10 +40,18 @@ void compute_mass_matrix(
   constexpr auto medium_tag = Tags::medium_tag;
   constexpr auto mpi_tag = Tags::mpi_tag;
 
+  constexpr auto property_set = []() {
+    if constexpr (Tags::dimension_tag ==
+                  specfem::element::dimension_tag::dim3) {
+      return PROPERTY_SET(isotropic);
+    } else {
+      return PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat);
+    }
+  }();
+
   specfem::tag_dispatch::for_each(
       specfem::tag_dispatch::dimension_set<dimension_tag>{} *
-          specfem::tag_dispatch::medium_set<medium_tag>{} *
-          PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
+          specfem::tag_dispatch::medium_set<medium_tag>{} * property_set *
           ATTENUATION_SET(none, constant_isotropic) *
           BOUNDARY_SET(none, acoustic_free_surface, stacey,
                        composite_stacey_dirichlet) *

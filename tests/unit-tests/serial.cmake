@@ -190,6 +190,7 @@ specfem_add_test(point_tests
             point/properties/dim2/poroelastic_isotropic.cpp
             # Dim 3
             point/properties/dim3/elastic_isotropic.cpp
+            point/properties/dim3/elastic_anisotropic.cpp
             point/properties/dim3/elastic_isotropic_cosserat.cpp
   LIBRARIES point
             specfem_environment
@@ -520,6 +521,7 @@ specfem_add_test(mass_matrix_tests
             medium/mass_matrix/dim2/acoustic.cpp
             medium/mass_matrix/dim2/poroelastic.cpp
             medium/mass_matrix/dim3/elastic_isotropic.cpp
+            medium/mass_matrix/dim3/elastic_anisotropic.cpp
             medium/mass_matrix/dim3/acoustic.cpp
   LIBRARIES point
             gtest_main

@@ -28,6 +28,10 @@ namespace specfem::assembly::impl {
 template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
+  requires requires {
+    sizeof(specfem::medium_container::kernels::data_container<
+           DimensionTag, MediumTag, PropertyTag>);
+  }
 struct domain_kernels
     : public specfem::medium_container::kernels::data_container<
           DimensionTag, MediumTag, PropertyTag>,

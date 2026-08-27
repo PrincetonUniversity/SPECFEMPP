@@ -125,10 +125,19 @@ void compute_source_interaction(
     specfem::assembly::assembly<Tags::dimension_tag> &assembly,
     const int istep) {
 
+  constexpr auto property_set = []() {
+    if constexpr (Tags::dimension_tag ==
+                  specfem::element::dimension_tag::dim3) {
+      return PROPERTY_SET(isotropic);
+    } else {
+      return PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat);
+    }
+  }();
+
   specfem::tag_dispatch::for_each(
       specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
           specfem::tag_dispatch::medium_set<Tags::medium_tag>{} *
-          PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
+          property_set *
           BOUNDARY_SET(none, acoustic_free_surface, stacey,
                        composite_stacey_dirichlet),
       [&]<typename ElementTags>() {

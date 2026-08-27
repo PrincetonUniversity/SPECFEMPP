@@ -36,6 +36,14 @@ Elastic Anisotropic
     :private-members:
     :content-only:
 
+3D Elastic Anisotropic
+"""""""""""""""""""""
+
+.. doxygengroup:: specfem_point_properties_dim3_elastic_anisotropic
+    :members:
+    :private-members:
+    :content-only:
+
 Elastic Isotropic Cosserat
 """"""""""""""""""""""""""
 

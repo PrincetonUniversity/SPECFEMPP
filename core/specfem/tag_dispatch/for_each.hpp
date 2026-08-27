@@ -51,7 +51,7 @@ void for_each_impl(Func &f, std::index_sequence<Is...>) {
  * @brief Iterate over all valid element combinations in `ET`, calling
  *        `f.operator()<TagsType>()` for each.
  *
- * @tparam Sets  Tag-set types of the `element_combinations`.
+ * @tparam ET Combination sequence exposing `combo_type`, `size`, and `combos`.
  * @tparam Func  Generic callable; must provide
  *               `template <typename TagsType> void operator()()`.
  *
@@ -63,9 +63,13 @@ void for_each_impl(Func &f, std::index_sequence<Is...>) {
  * });
  * @endcode
  */
-template <typename... Sets, typename Func>
-void for_each(element_combinations<Sets...>, Func &&f) {
-  using ET = element_combinations<Sets...>;
+template <typename ET, typename Func>
+  requires requires {
+    typename ET::combo_type;
+    ET::size;
+    ET::combos;
+  }
+void for_each(ET, Func &&f) {
   impl::for_each_impl<ET>(f, std::make_index_sequence<ET::size>{});
 }
 
