@@ -10,7 +10,8 @@
 namespace globe_mesh_test_impl {
 
 constexpr int nproc = 6;
-const std::string database_directory = "io/mesh/dim3_globe/DATABASES_MPI";
+const std::string database_directory =
+    "data/dim3_globe/GlobalSmallMesh/DATABASES_MPI";
 
 std::string database_path(const std::string &directory, const int rank) {
   std::ostringstream path;

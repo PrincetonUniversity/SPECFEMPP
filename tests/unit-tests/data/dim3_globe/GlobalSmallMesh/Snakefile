@@ -1,0 +1,8 @@
+nproc = 6
+
+include: "../../meshfem3d_globe.smk"
+
+rule all:
+    input:
+        databases,
+    localrule: True

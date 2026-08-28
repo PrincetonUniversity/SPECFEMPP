@@ -1,12 +1,47 @@
 import glob
+import os
+import re
 
 # tests = config["tests"]
 # db_dirs = [d for d in os.listdir("dim2") if os.path.isdir(os.path.join("dim2", d))]
-db_dirs = [d for d in glob.glob("dim*/*") if os.path.isdir(d) and not d.startswith("dim2/ncmarked")] # temporary workaround
+db_dirs = [
+    d
+    for d in glob.glob("dim[23]/*")
+    if os.path.isdir(d) and not d.startswith("dim2/ncmarked")
+] # temporary workaround
+globe_db_dirs = [d for d in glob.glob("dim3_globe/*") if os.path.isdir(d)]
+
+
+def read_globe_nproc(db_dir):
+    par_file = os.path.join(db_dir, "provenance", "DATA", "Par_file")
+    values = {}
+    with open(par_file) as file:
+        for line in file:
+            match = re.match(r"\s*(NCHUNKS|NPROC_XI|NPROC_ETA)\s*=\s*(\d+)", line)
+            if match:
+                values[match.group(1)] = int(match.group(2))
+
+    return values["NCHUNKS"] * values["NPROC_XI"] * values["NPROC_ETA"]
+
+
+def globe_database_outputs(db_dir):
+    return expand(
+        "{db_name}/DATABASES_MPI/proc{rank:06d}_specfempp_database.bin",
+        db_name=db_dir,
+        rank=range(read_globe_nproc(db_dir)),
+    )
+
+
+globe_databases = [
+    database
+    for globe_db_dir in globe_db_dirs
+    for database in globe_database_outputs(globe_db_dir)
+]
 
 rule all:
     input:
-        expand("{db_name}/database.bin", db_name=db_dirs)
+        expand("{db_name}/database.bin", db_name=db_dirs),
+        globe_databases,
 
 # for test_name in config["tests"]:
 for db_name in db_dirs:
@@ -20,8 +55,20 @@ for db_name in db_dirs:
 
     use rule * from db_name as alias*
 
+for globe_db_dir in globe_db_dirs:
+    alias = f'{globe_db_dir[11:]}_'
+
+    module:
+        name: globe_db_dir
+        snakefile: f"{globe_db_dir}/Snakefile"
+        pathvars:
+            cwd=f"{globe_db_dir}"
+
+    use rule * from globe_db_dir as alias*
+
 rule clean:
     shell:
         """
-        rm -rf dim*/*/database.bin
+        rm -rf dim[23]/*/database.bin
+        rm -rf dim3_globe/*/DATABASES_MPI
         """
