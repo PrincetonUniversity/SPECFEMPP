@@ -292,11 +292,12 @@ TEST_P(Newmark, 3D) {
       FAIL() << "--------------------------------------------------\n"
              << "\033[0;31m[FAILED]\033[0m Test failed\n"
              << " - Test: " << Test.name << "\n"
-             << " - Error: Norm of the error is greater than 1e-3\n"
+             << " - Error: Error / Norm is greater than tolerance\n"
              << " - Station: " << station_name << "\n"
              << " - Network: " << network_name << "\n"
              << " - Error: " << error << "\n"
              << " - Norm: " << computed_norm << "\n"
+             << " - Tolerance: " << Test.tolerance << "\n"
              << "--------------------------------------------------\n\n"
              << std::endl;
     }

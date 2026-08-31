@@ -8,3 +8,4 @@ tests3d:
   - "HomogeneousHalfspaceSmallNoABCMomentTensor"
   - "HomogeneousHalfSpaceStacey"
   - "HomogeneousHalfSpaceAcousticStacey"
+  - "HomogeneousIsotropicCosseratDomain"
