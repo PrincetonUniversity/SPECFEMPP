@@ -1,0 +1,48 @@
+parameters:
+
+  header:
+    title: Static elastic deformation via a Heaviside force with Stacey ABC
+    description: |
+      Material systems : Elastic domain (1)
+      Interfaces : None
+      Sources : Force source (1), Heaviside step (hdur 1 s)
+      Boundary conditions : Stacey ABCs on five faces, free surface on top
+      Debugging comment : Explicit reference for the implicit static solver
+      test -- a long run driven to steady state. The mesh database and
+      stations are shared with HomogeneousHalfSpaceStacey.
+
+  simulation-setup:
+    quadrature:
+      quadrature-type: GLL4
+
+    solver:
+      time-marching:
+        type-of-simulation: forward
+        time-scheme:
+          type: Newmark
+          dt: 0.035
+          nstep: 600
+
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:
+            format: ascii
+            directory: "./"
+
+  receivers:
+    stations: "displacement_tests/ImplicitNewmark/serial/dim3/HomogeneousHalfSpaceStaceyStatic/STATIONS"
+    angle: 0.0
+    seismogram-type:
+      - displacement
+      - velocity
+    nstep_between_samples: 1
+
+  run-setup:
+    number-of-processors: 1
+    number-of-runs: 1
+
+  databases:
+    mesh-database: "displacement_tests/ImplicitNewmark/serial/dim3/HomogeneousHalfSpaceStaceyStatic/database.bin"
+
+  sources: "displacement_tests/ImplicitNewmark/serial/dim3/HomogeneousHalfSpaceStaceyStatic/force.yaml"

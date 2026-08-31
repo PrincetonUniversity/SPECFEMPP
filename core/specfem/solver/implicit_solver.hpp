@@ -208,6 +208,20 @@ public:
   /// the steady-state criterion stopped the run early)
   int last_step() const { return last_step_; }
 
+  /**
+   * @brief Change the steady-state stopping tolerance between runs.
+   *
+   * `run()` re-initializes the state, so one solver instance -- with its
+   * assembled operators and preconditioner -- can be rerun under a
+   * different stopping criterion without paying the assembly cost again.
+   *
+   * @param tolerance New tolerance (see
+   *        @ref ImplicitSolverConfig::steady_state_tolerance); 0 disables
+   */
+  void set_steady_state_tolerance(const type_real tolerance) {
+    config_.steady_state_tolerance = tolerance;
+  }
+
 private:
   /// (Re)build A from K, C, M for time step `dt`, then preconditioner and
   /// Belos problem. Idempotent; exact for any dt since K, C, M are kept.

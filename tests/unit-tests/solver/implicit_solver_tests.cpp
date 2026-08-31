@@ -95,59 +95,28 @@ TEST(ImplicitSolverScope3D, RejectsMixedMediumMesh) {
       std::runtime_error);
 }
 
-// Shared fixture: the solver on the Stacey halfspace (K, C, M, and A all
-// nontrivial), built once on first access.
-class ImplicitSolver3D : public ::testing::Test {
-protected:
-  static void TearDownTestSuite() {
-    solver_.reset();
-    delete test_case_;
-    test_case_ = nullptr;
-  }
+// One test covers construction and the operator identity: ctest runs every
+// test case in its own process, and the solver construction (stiffness
+// probe + preconditioner setup, ~25 s serial) dominates -- splitting the
+// assertions would pay it once per case.
+//
+// A x must equal M/(beta dt^2) x + gamma/(beta dt) C x + K x entry by entry
+// -- validates the value plumbing of form_operator (K copy, scaled C sum,
+// mass diagonal) through independent applies of the constituent operators.
+TEST(ImplicitSolver3D, ConstructsAndOperatorMatchesOnStaceyMesh) {
+  auto test_case = build_case_3d("HomogeneousHalfSpaceStacey");
+  SolverType solver(test_case.time_scheme, {}, *test_case.assembly);
 
-  static TestCase &test_case() {
-    if (test_case_ == nullptr) {
-      test_case_ = new TestCase(build_case_3d("HomogeneousHalfSpaceStacey"));
-    }
-    return *test_case_;
-  }
-
-  static SolverType &solver() {
-    if (!solver_) {
-      solver_ = std::make_unique<SolverType>(
-          test_case().time_scheme,
-          std::vector<std::shared_ptr<
-              specfem::periodic_tasks::periodic_task<dim3_tag>>>{},
-          *test_case().assembly);
-    }
-    return *solver_;
-  }
-
-  static TestCase *test_case_;
-  static std::unique_ptr<SolverType> solver_;
-};
-
-TestCase *ImplicitSolver3D::test_case_ = nullptr;
-std::unique_ptr<SolverType> ImplicitSolver3D::solver_;
-
-TEST_F(ImplicitSolver3D, ConstructsOnStaceyMesh) {
-  const auto &solver = this->solver();
   EXPECT_GT(solver.stiffness()->getGlobalNumEntries(), 0u);
   EXPECT_GT(solver.damping()->getGlobalNumEntries(), 0u)
       << "the Stacey fixture must produce a nonempty damping matrix";
   EXPECT_EQ(solver.system_operator()->getGlobalNumEntries(),
             solver.stiffness()->getGlobalNumEntries())
       << "A must live on K's graph";
-}
 
-// A x must equal M/(beta dt^2) x + gamma/(beta dt) C x + K x entry by entry
-// -- validates the value plumbing of form_operator (K copy, scaled C sum,
-// mass diagonal) through independent applies of the constituent operators.
-TEST_F(ImplicitSolver3D, OperatorMatchesConstituents) {
-  const auto &solver = this->solver();
   const auto &dof_map = solver.dof_map();
 
-  const type_real dt = test_case().time_scheme->get_timestep();
+  const type_real dt = test_case.time_scheme->get_timestep();
   const specfem::solver::ImplicitSolverConfig config; // defaults the solver
                                                       // used
   const type_real beta = config.newmark.beta;
