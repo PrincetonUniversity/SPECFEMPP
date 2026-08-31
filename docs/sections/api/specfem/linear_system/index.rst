@@ -15,17 +15,27 @@ Stacey dashpot contributes nothing to :math:`K`; callers opting in must
 assemble the damping matrix separately.
 
 When SPECFEM++ is built with Trilinos (``SPECFEM_ENABLE_TRILINOS=ON``), the
-module additionally provides ``DofMap`` -- the per-medium mapping from
-SPECFEM++ ``(iglob, icomp)`` degrees of freedom to Tpetra global ids, with
-component-blocked layout ``gid = icomp * nglob + iglob`` matching field
-storage -- and ``StiffnessAssembler``, which assembles the global stiffness
-matrix :math:`K` of one medium as a ``Tpetra::CrsMatrix`` by scattering
-batched dense element blocks into a ``Tpetra::CrsGraph`` built from element
-connectivity. The assembled operator satisfies :math:`K u =` internal force
+module additionally provides ``SystemLayout`` -- the per-medium bridge from
+SPECFEM++ ``(iglob, icomp)`` degrees of freedom onto Tpetra objects. It owns
+the numbering (component-blocked layout ``gid = icomp * nglob + iglob``,
+matching field storage), the owned/overlap maps, and the sparsity graphs,
+and hands out the structural containers the assemblers fill:
+``full_matrix()`` on the fully-connected element-connectivity graph,
+``block_diagonal_matrix(mask)`` on a compact graph carrying one
+``ncomp x ncomp`` block per admitted mesh point, and ``create_vector()``.
+It owns structure only -- the matrices come back zero-valued on a
+fill-complete graph, and the assemblers supply the values. Because both
+graphs come from one numbering, every entry of a block-diagonal matrix also
+exists in the full graph by construction, which is what lets the implicit
+Newmark operator sum :math:`C` onto :math:`K`'s graph.
+
+``StiffnessAssembler`` assembles the global stiffness matrix :math:`K` of one
+medium by scattering batched dense element blocks into the layout's full
+matrix. The assembled operator satisfies :math:`K u =` internal force
 :math:`= -\mathrm{accel}` of the matrix-free
 ``compute_stiffness_interaction`` kernel (before mass division). Assembly is
-serial-only in this milestone; the owned/overlap map split in ``DofMap``
-keeps the API ready for distributed Export(ADD) assembly.
+serial-only in this milestone; the owned/overlap map split in
+``SystemLayout`` keeps the API ready for distributed Export(ADD) assembly.
 
 Toward the implicit Newmark solver (issue #1984), the module also assembles
 the remaining operators of the equation of motion
@@ -43,10 +53,10 @@ the remaining operators of the equation of motion
   point, the kernel returns :math:`-C e_c` per point. Because the Stacey
   traction is pointwise in velocity, :math:`C` is block-diagonal (one
   symmetric positive-semidefinite ``ncomp x ncomp`` block per boundary GLL
-  point) and ``ncomp`` kernel launches recover all blocks. The matrix lives
-  on a compact graph whose entries all exist in the stiffness graph, so an
-  implicit Newmark operator :math:`M/(\beta \Delta t^2) + \gamma/(\beta
-  \Delta t)\, C + K` can be summed on :math:`K`'s graph.
+  point) and ``ncomp`` kernel launches recover all blocks. The matrix comes
+  from ``SystemLayout::block_diagonal_matrix`` with the damping-point mask,
+  so an implicit Newmark operator :math:`M/(\beta \Delta t^2) +
+  \gamma/(\beta \Delta t)\, C + K` can be summed on :math:`K`'s graph.
 
 ``linear_solver_smoke_test`` gates the Belos + Ifpack2 toolchain (GMRES with
 a RILUK right preconditioner on ``type_real``) ahead of the implicit solver;

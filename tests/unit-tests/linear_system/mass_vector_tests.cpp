@@ -5,8 +5,8 @@
 
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/io.hpp"
-#include "specfem/linear_system/dof_map.hpp"
 #include "specfem/linear_system/mass_vector.hpp"
+#include "specfem/linear_system/system_layout.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/runtime_configuration.hpp"
@@ -69,29 +69,29 @@ std::unique_ptr<AssemblyType> build_assembly_3d(const std::string &test_name) {
 
 void check_mass_vector(const std::string &fixture) {
   const auto assembly = build_assembly_3d(fixture);
-  const auto dof_map =
-      specfem::linear_system::DofMap::from_assembly<elastic_tag>(*assembly);
-  const auto mass = specfem::linear_system::assemble_mass_vector<MassTags>(
-      *assembly, dof_map);
+  const auto layout =
+      specfem::linear_system::SystemLayout<MassTags>::from_assembly(*assembly);
+  const auto mass =
+      specfem::linear_system::assemble_mass_vector<MassTags>(*assembly, layout);
 
   ASSERT_EQ(static_cast<std::size_t>(mass->getGlobalLength()),
-            static_cast<std::size_t>(dof_map.num_global_dofs()));
+            static_cast<std::size_t>(layout.num_global_dofs()));
 
-  const auto view = mass->getLocalViewHost(Tpetra::Access::ReadOnly);
-  const int nglob = dof_map.nglob();
+  const int nglob = layout.nglob();
+  specfem::linear_system::SystemLayout<MassTags>::host_field_view_type view(
+      "mass_vector_test::mass", nglob, ncomp);
+  layout.gather(*mass, view);
 
   // Lumped mass is strictly positive everywhere and, for an isotropic
   // medium, identical across components (same rho * w * J accumulation; the
   // tolerance only covers accumulation-order rounding on threaded backends).
   double total_mass = 0;
   for (int iglob = 0; iglob < nglob; ++iglob) {
-    const type_real reference =
-        view(static_cast<std::size_t>(dof_map.gid(iglob, 0)), 0);
+    const type_real reference = view(iglob, 0);
     ASSERT_GT(reference, 0) << "non-positive lumped mass at point " << iglob;
     total_mass += static_cast<double>(reference);
     for (int icomp = 1; icomp < ncomp; ++icomp) {
-      const type_real other =
-          view(static_cast<std::size_t>(dof_map.gid(iglob, icomp)), 0);
+      const type_real other = view(iglob, icomp);
       EXPECT_NEAR(other, reference, 1e-5 * reference)
           << "component " << icomp << " mass differs at point " << iglob;
     }

@@ -4,7 +4,7 @@
 
 #include "solver.hpp"
 #include "specfem/enums.hpp"
-#include "specfem/linear_system/dof_map.hpp"
+#include "specfem/linear_system/system_layout.hpp"
 #include "specfem/periodic_tasks.hpp"
 #include "specfem/timescheme.hpp"
 #include <BelosLinearProblem.hpp>
@@ -184,8 +184,10 @@ public:
    */
   void run() override;
 
-  /// Dof numbering shared by all assembled operators
-  const specfem::linear_system::DofMap &dof_map() const { return *dof_map_; }
+  /// Dof numbering and structure shared by all assembled operators
+  const specfem::linear_system::SystemLayout<Tags> &layout() const {
+    return *layout_;
+  }
   /// Assembled stiffness matrix \f$ K \f$
   Teuchos::RCP<const specfem::linear_system::crs_matrix_type>
   stiffness() const {
@@ -243,7 +245,8 @@ private:
   AssemblyType assembly_;       ///< Assembly (probe scratch + output mirror)
   ImplicitSolverConfig config_; ///< Solver configuration
 
-  std::unique_ptr<specfem::linear_system::DofMap> dof_map_; ///< Dof numbering
+  std::unique_ptr<specfem::linear_system::SystemLayout<Tags>>
+      layout_; ///< Dof numbering, maps and graphs
   Teuchos::RCP<specfem::linear_system::crs_matrix_type> stiffness_;       ///< K
   Teuchos::RCP<specfem::linear_system::crs_matrix_type> damping_;         ///< C
   Teuchos::RCP<specfem::linear_system::vector_type> mass_;                ///< M

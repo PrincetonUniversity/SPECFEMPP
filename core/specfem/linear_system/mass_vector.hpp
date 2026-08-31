@@ -3,7 +3,7 @@
 #ifdef SPECFEM_ENABLE_TRILINOS
 
 #include "specfem/enums.hpp"
-#include "specfem/linear_system/dof_map.hpp"
+#include "specfem/linear_system/system_layout.hpp"
 #include <Teuchos_RCP.hpp>
 
 namespace specfem {
@@ -25,20 +25,20 @@ namespace linear_system {
  * mirror, and zeroed again on exit, so the assembly is left as found. The
  * inversion step of the explicit solver (`invert_mass`) is never called.
  *
- * Entry `DofMap::gid(iglob, icomp)` of the returned vector holds the lumped
- * mass of component `icomp` at mesh point `iglob`.
+ * Entry `SystemLayout::gid(iglob, icomp)` of the returned vector holds the
+ * lumped mass of component `icomp` at mesh point `iglob`.
  *
  * @tparam Tags Compile-time tags (dimension, medium, property, attenuation);
  *              only `dim3, elastic, isotropic, none` is instantiated
  * @param assembly Assembled mesh, material properties, and fields; the
  *        forward field's mass storage is used as scratch
- * @param dof_map Dof numbering shared with the stiffness/damping matrices
+ * @param layout Dof numbering shared with the stiffness/damping matrices
  * @return Lumped mass vector on the owned map
  */
 template <typename Tags>
 Teuchos::RCP<vector_type>
 assemble_mass_vector(specfem::assembly::assembly<Tags::dimension_tag> &assembly,
-                     const DofMap &dof_map);
+                     const SystemLayout<Tags> &layout);
 
 } // namespace linear_system
 } // namespace specfem

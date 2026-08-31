@@ -42,26 +42,25 @@ specfem::solver::ImplicitNewmarkSolver<Tags>::ImplicitNewmarkSolver(
       specfem::linear_system::StiffnessAssembler<Tags>::default_batch_size,
       specfem::linear_system::StiffnessScope::with_stacey);
   stiffness_ = stiffness_assembler.assemble();
-  dof_map_ = std::make_unique<specfem::linear_system::DofMap>(
-      stiffness_assembler.dof_map());
+  layout_ = std::make_unique<specfem::linear_system::SystemLayout<Tags>>(
+      stiffness_assembler.layout());
 
   specfem::linear_system::DampingAssembler<Tags> damping_assembler(assembly_,
-                                                                   *dof_map_);
+                                                                   *layout_);
   damping_ = damping_assembler.assemble();
 
   mass_ =
-      specfem::linear_system::assemble_mass_vector<Tags>(assembly_, *dof_map_);
+      specfem::linear_system::assemble_mass_vector<Tags>(assembly_, *layout_);
 
-  const auto map = dof_map_->owned_map();
-  u_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
-  v_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
-  a_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
-  u_new_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
-  v_new_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
-  a_new_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
-  rhs_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
-  tmp_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
-  tmp2_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
+  u_ = layout_->create_vector();
+  v_ = layout_->create_vector();
+  a_ = layout_->create_vector();
+  u_new_ = layout_->create_vector();
+  v_new_ = layout_->create_vector();
+  a_new_ = layout_->create_vector();
+  rhs_ = layout_->create_vector();
+  tmp_ = layout_->create_vector();
+  tmp2_ = layout_->create_vector();
 
   form_operator(time_scheme_->get_timestep());
 }
@@ -80,11 +79,12 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::form_operator(
   const scalar_type damping_coefficient =
       static_cast<scalar_type>(gamma / (beta * dt));
 
-  // A on K's static graph: every C block entry is a same-element pair and
-  // the M diagonal is a self-pair, so both sumInto below always hit.
-  auto system = Teuchos::rcp(new crs_matrix_type(stiffness_->getCrsGraph()));
+  // A on the layout's full graph -- the same graph K was built on. Every C
+  // block entry is a same-element pair and the M diagonal is a self-pair, so
+  // both sumInto below always hit.
+  auto system = layout_->full_matrix();
 
-  const global_ordinal_type num_rows = dof_map_->num_global_dofs();
+  const global_ordinal_type num_rows = layout_->num_global_dofs();
   typename crs_matrix_type::nonconst_global_inds_host_view_type columns(
       "specfem::solver::implicit_operator_columns",
       stiffness_->getGlobalMaxNumRowEntries());
@@ -147,7 +147,7 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::form_operator(
     }
   }
 
-  system->fillComplete(dof_map_->owned_map(), dof_map_->owned_map());
+  system->fillComplete(layout_->owned_map(), layout_->owned_map());
   system_operator_ = system;
 
   // MueLu (AMG) deferred: the float-only TROMP Trilinos installs do not
@@ -209,13 +209,7 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::extract_source_vector(
                                                                   istep);
   Kokkos::deep_copy(host_acceleration, device_acceleration);
 
-  auto view = f.getLocalViewHost(Tpetra::Access::OverwriteAll);
-  for (int iglob = 0; iglob < dof_map_->nglob(); ++iglob) {
-    for (int icomp = 0; icomp < dof_map_->ncomp(); ++icomp) {
-      view(static_cast<std::size_t>(dof_map_->gid(iglob, icomp)), 0) =
-          host_acceleration(iglob, icomp);
-    }
-  }
+  layout_->scatter(host_acceleration, f);
 }
 
 template <typename Tags>
@@ -228,19 +222,9 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::write_state_to_fields() {
   const auto h_v = field_impl.get_host_field_dot();
   const auto h_a = field_impl.get_host_field_dot_dot();
 
-  {
-    const auto u_view = u_->getLocalViewHost(Tpetra::Access::ReadOnly);
-    const auto v_view = v_->getLocalViewHost(Tpetra::Access::ReadOnly);
-    const auto a_view = a_->getLocalViewHost(Tpetra::Access::ReadOnly);
-    for (int iglob = 0; iglob < dof_map_->nglob(); ++iglob) {
-      for (int icomp = 0; icomp < dof_map_->ncomp(); ++icomp) {
-        const auto dof = static_cast<std::size_t>(dof_map_->gid(iglob, icomp));
-        h_u(iglob, icomp) = u_view(dof, 0);
-        h_v(iglob, icomp) = v_view(dof, 0);
-        h_a(iglob, icomp) = a_view(dof, 0);
-      }
-    }
-  }
+  layout_->gather(*u_, h_u);
+  layout_->gather(*v_, h_v);
+  layout_->gather(*a_, h_a);
 
   // Copy only the three state views (not fields.copy_to_device(), which
   // would also touch the mass storage the assemblers treat as scratch).

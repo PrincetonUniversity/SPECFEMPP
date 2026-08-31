@@ -3,7 +3,7 @@
 #ifdef SPECFEM_ENABLE_TRILINOS
 
 #include "specfem/enums.hpp"
-#include "specfem/linear_system/dof_map.hpp"
+#include "specfem/linear_system/system_layout.hpp"
 #include <Teuchos_RCP.hpp>
 
 namespace specfem {
@@ -55,32 +55,33 @@ public:
       specfem::element::attributes<dimension_tag, medium_tag>::components;
 
   using AssemblyType = specfem::assembly::assembly<dimension_tag>;
+  using LayoutType = SystemLayout<Tags>;
 
   /**
    * @brief Validate scope and store the probe target.
    *
    * Throws `std::runtime_error` if any element of the medium is outside the
    * Stacey-tolerant stiffness scope (see @ref validate_stiffness_scope with
-   * `StiffnessScope::with_stacey`) or if `dof_map` does not match the
-   * assembly's forward field.
+   * `StiffnessScope::with_stacey`).
    *
    * @param assembly Assembled mesh, material properties, and fields; the
    *        forward field's displacement/velocity/acceleration storage is
    *        used as probe scratch and zeroed afterwards. Must outlive the
    *        assembler.
-   * @param dof_map Dof numbering shared with the stiffness matrix (same
+   * @param layout Dof numbering shared with the stiffness matrix (same
    *        instance the `StiffnessAssembler` exposes)
    */
-  DampingAssembler(AssemblyType &assembly, const DofMap &dof_map);
+  DampingAssembler(AssemblyType &assembly, const LayoutType &layout);
 
   /**
    * @brief Probe the velocity path and assemble the damping matrix.
    *
-   * The matrix lives on a compact graph: at most `ncomp` entries per row at
-   * damping (boundary) points, empty rows at interior points. Every entry's
-   * `(row, column)` pair also exists in the stiffness matrix's graph
-   * (same-point pairs are same-element pairs), so the implicit Newmark
-   * operator can `sumInto` \f$ C \f$ on the stiffness graph.
+   * The matrix comes from @ref SystemLayout::block_diagonal_matrix with the
+   * damping-point mask: at most `ncomp` entries per row at damping
+   * (boundary) points, empty rows at interior points. Because both graphs
+   * come from one layout, every entry's `(row, column)` pair also exists in
+   * the stiffness matrix's graph, so the implicit Newmark operator can
+   * `sumInto` \f$ C \f$ on the stiffness graph.
    *
    * All probe fields (displacement, velocity, acceleration) are zeroed on
    * host and device before returning.
@@ -89,12 +90,12 @@ public:
    */
   Teuchos::RCP<crs_matrix_type> assemble() const;
 
-  /// Dof map shared by the matrix and any right-hand-side/solution vectors
-  const DofMap &dof_map() const { return dof_map_; }
+  /// Layout shared by the matrix and any right-hand-side/solution vectors
+  const LayoutType &layout() const { return layout_; }
 
 private:
   AssemblyType &assembly_; ///< Borrowed assembly (probe scratch, not owned)
-  DofMap dof_map_;         ///< Per-medium dof numbering and maps
+  LayoutType layout_;      ///< Per-medium numbering, maps and graphs
 };
 
 } // namespace linear_system

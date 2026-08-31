@@ -30,6 +30,9 @@ constexpr int ncomp = 3;
 constexpr bool single_precision = sizeof(type_real) == sizeof(float);
 
 using AssemblyType = specfem::assembly::assembly<dim3_tag>;
+using HostFieldView = specfem::linear_system::SystemLayout<specfem::tags::Tags<
+    dim3_tag, elastic_tag, specfem::element::property_tag::isotropic,
+    specfem::element::attenuation_tag::none>>::host_field_view_type;
 using StiffnessTags =
     specfem::tags::Tags<dim3_tag, elastic_tag,
                         specfem::element::property_tag::isotropic,
@@ -130,14 +133,14 @@ type_real max_abs_entry(
   return scale;
 }
 
-TEST_F(StiffnessAssembler3D, GlobalDimensionsMatchDofMap) {
+TEST_F(StiffnessAssembler3D, GlobalDimensionsMatchLayout) {
   const auto matrix = this->matrix();
-  const auto &dof_map = assembler().dof_map();
+  const auto &layout = assembler().layout();
 
   const auto num_dofs =
-      static_cast<Tpetra::global_size_t>(dof_map.num_global_dofs());
+      static_cast<Tpetra::global_size_t>(layout.num_global_dofs());
   EXPECT_EQ(num_dofs,
-            static_cast<Tpetra::global_size_t>(ncomp) * dof_map.nglob());
+            static_cast<Tpetra::global_size_t>(ncomp) * layout.nglob());
   EXPECT_EQ(matrix->getGlobalNumRows(), num_dofs);
   EXPECT_EQ(matrix->getGlobalNumCols(), num_dofs);
   EXPECT_TRUE(matrix->isFillComplete());
@@ -147,7 +150,7 @@ TEST_F(StiffnessAssembler3D, GlobalDimensionsMatchDofMap) {
 
 TEST_F(StiffnessAssembler3D, SymmetricBilinearForm) {
   const auto matrix = this->matrix();
-  const auto map = assembler().dof_map().owned_map();
+  const auto map = assembler().layout().owned_map();
 
   // K is symmetric, so x' K z == z' K x for any x, z. The bilinear form
   // probes symmetry of the whole assembled matrix at matrix-vector cost.
@@ -180,8 +183,8 @@ TEST_F(StiffnessAssembler3D, SymmetricBilinearForm) {
 
 TEST_F(StiffnessAssembler3D, RigidBodyTranslationNullspace) {
   const auto matrix = this->matrix();
-  const auto &dof_map = assembler().dof_map();
-  const auto map = dof_map.owned_map();
+  const auto &layout = assembler().layout();
+  const auto map = layout.owned_map();
 
   const type_real scale = max_abs_entry(matrix);
   ASSERT_GT(scale, static_cast<type_real>(0));
@@ -193,14 +196,16 @@ TEST_F(StiffnessAssembler3D, RigidBodyTranslationNullspace) {
                                           : static_cast<type_real>(1e-10)) *
                         scale;
 
+  HostFieldView translation_field("stiffness_assembler_test::translation",
+                                  layout.nglob(), ncomp);
   for (int icomp = 0; icomp < ncomp; ++icomp) {
-    VectorType translation(map), response(map);
-    {
-      auto view = translation.getLocalViewHost(Tpetra::Access::OverwriteAll);
-      for (int iglob = 0; iglob < dof_map.nglob(); ++iglob) {
-        view(static_cast<std::size_t>(dof_map.gid(iglob, icomp)), 0) = 1;
-      }
+    Kokkos::deep_copy(translation_field, 0);
+    for (int iglob = 0; iglob < layout.nglob(); ++iglob) {
+      translation_field(iglob, icomp) = 1;
     }
+
+    VectorType translation(map), response(map);
+    layout.scatter(translation_field, translation);
 
     matrix->apply(translation, response);
     EXPECT_LE(response.normInf(), tol)
@@ -210,7 +215,7 @@ TEST_F(StiffnessAssembler3D, RigidBodyTranslationNullspace) {
 
 TEST_F(StiffnessAssembler3D, MatchesMatrixFreeOperatorGlobally) {
   const auto matrix = this->matrix();
-  const auto &dof_map = assembler().dof_map();
+  const auto &layout = assembler().layout();
 
   auto &field = assembly().fields.template get_simulation_field<forward_tag>();
   const auto &field_impl = field.template get_field<elastic_tag>();
@@ -218,7 +223,7 @@ TEST_F(StiffnessAssembler3D, MatchesMatrixFreeOperatorGlobally) {
   const auto h_v = field_impl.get_host_field_dot();
   const auto h_a = field_impl.get_host_field_dot_dot();
   const int nglob = field_impl.nglob;
-  ASSERT_EQ(nglob, dof_map.nglob());
+  ASSERT_EQ(nglob, layout.nglob());
 
   // Random displacement over the whole mesh; velocity and acceleration zero.
   std::mt19937 generator(54321);
@@ -243,27 +248,19 @@ TEST_F(StiffnessAssembler3D, MatchesMatrixFreeOperatorGlobally) {
   assembly().fields.copy_to_host();
 
   // Assembled operator applied to the same displacement.
-  VectorType u(dof_map.owned_map()), k_u(dof_map.owned_map());
-  {
-    auto view = u.getLocalViewHost(Tpetra::Access::OverwriteAll);
-    for (int iglob = 0; iglob < nglob; ++iglob) {
-      for (int icomp = 0; icomp < ncomp; ++icomp) {
-        view(static_cast<std::size_t>(dof_map.gid(iglob, icomp)), 0) =
-            h_u(iglob, icomp);
-      }
-    }
-  }
+  VectorType u(layout.owned_map()), k_u(layout.owned_map());
+  layout.scatter(h_u, u);
   matrix->apply(u, k_u);
 
   type_real scale = 0;
   type_real max_diff = 0;
   {
-    auto view = k_u.getLocalViewHost(Tpetra::Access::ReadOnly);
+    HostFieldView k_u_field("stiffness_assembler_test::k_u", nglob, ncomp);
+    layout.gather(k_u, k_u_field);
     for (int iglob = 0; iglob < nglob; ++iglob) {
       for (int icomp = 0; icomp < ncomp; ++icomp) {
         const type_real expected = -h_a(iglob, icomp);
-        const type_real actual =
-            view(static_cast<std::size_t>(dof_map.gid(iglob, icomp)), 0);
+        const type_real actual = k_u_field(iglob, icomp);
         scale = std::max(scale, std::abs(expected));
         max_diff = std::max(max_diff, std::abs(expected - actual));
       }

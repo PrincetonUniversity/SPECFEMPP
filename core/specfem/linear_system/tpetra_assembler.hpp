@@ -3,8 +3,8 @@
 #ifdef SPECFEM_ENABLE_TRILINOS
 
 #include "specfem/enums.hpp"
-#include "specfem/linear_system/dof_map.hpp"
 #include "specfem/linear_system/element_stiffness.hpp"
+#include "specfem/linear_system/system_layout.hpp"
 #include <Teuchos_RCP.hpp>
 #include <Tpetra_CrsGraph.hpp>
 #include <Tpetra_CrsMatrix.hpp>
@@ -29,7 +29,7 @@ namespace linear_system {
  * (`Tags::medium_tag`); a future multi-medium system holds one assembler and
  * one matrix per medium. This milestone additionally requires the mesh to be
  * single-medium (fluid-solid coupling blocks are deferred) and serial (see
- * @ref DofMap).
+ * @ref SystemLayout).
  *
  * @tparam Tags Compile-time tags (dimension, medium, property, attenuation);
  *              only `dim3, elastic, isotropic, none` is instantiated
@@ -57,13 +57,13 @@ public:
   using AssemblyType = specfem::assembly::assembly<dimension_tag>;
 
   /**
-   * @brief Validate scope and set up the dof map.
+   * @brief Validate scope and set up the system layout.
    *
    * Throws `std::runtime_error` if any element is outside the supported
    * scope (see @ref validate_stiffness_scope), if the mesh contains elements
    * of a medium other than `Tags::medium_tag` (single-medium milestone;
    * coupling blocks are deferred), or if the communicator has more than one
-   * rank (see @ref DofMap).
+   * rank (see @ref SystemLayout).
    *
    * @param assembly Assembled mesh, jacobian matrix, material properties,
    *        and fields; must outlive the assembler
@@ -79,38 +79,24 @@ public:
   /**
    * @brief Assemble the stiffness matrix.
    *
-   * Pipeline: build the `Tpetra::CrsGraph` from element connectivity (two
-   * host passes over the index mapping), construct the matrix on the static
-   * graph, fill it batch-by-batch with `sumIntoGlobalValues` row updates
-   * from the probed element blocks, and `fillComplete()`. Row/column ids
-   * follow @ref DofMap::gid.
+   * Pipeline: take the fully-connected matrix from the layout, fill it
+   * batch-by-batch with `sumIntoGlobalValues` row updates from the probed
+   * element blocks, and `fillComplete()`. Row/column ids follow
+   * @ref SystemLayout::gid.
    *
    * @return Fill-complete stiffness matrix on the owned map
    */
   Teuchos::RCP<crs_matrix_type> assemble() const;
 
-  /// Dof map shared by the matrix and any right-hand-side/solution vectors
-  const DofMap &dof_map() const { return dof_map_; }
+  /// Layout shared by the matrix and any right-hand-side/solution vectors
+  const SystemLayout<Tags> &layout() const { return layout_; }
 
 private:
-  /// Build and fill-complete the sparsity graph from element connectivity
-  Teuchos::RCP<const crs_graph_type> build_graph() const;
-
   /// Probe element blocks in batches and scatter them into the matrix
   void fill_matrix(crs_matrix_type &matrix) const;
 
-  /**
-   * @brief Global column ids of one element in element-local dof order.
-   *
-   * Single source of truth for the ldof <-> gid correspondence used by both
-   * the graph build and the block scatter; entry `ldof` (see
-   * @ref local_dof_index) holds `dof_map_.gid(iglob(ispec, iz, iy, ix),
-   * icomp)`.
-   */
-  std::vector<global_ordinal_type> element_column_gids(const int ispec) const;
-
   const AssemblyType &assembly_; ///< Borrowed assembly (not owned)
-  DofMap dof_map_;               ///< Per-medium dof numbering and maps
+  SystemLayout<Tags> layout_;    ///< Per-medium numbering, maps and graphs
   int batch_size_;               ///< Elements per probe-kernel launch
 };
 

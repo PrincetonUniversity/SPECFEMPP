@@ -7,7 +7,6 @@
 #include "specfem/linear_system/element_stiffness.hpp"
 #include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
-#include <Teuchos_ArrayView.hpp>
 #include <array>
 #include <cstddef>
 #include <sstream>
@@ -16,23 +15,14 @@
 
 template <typename Tags>
 specfem::linear_system::DampingAssembler<Tags>::DampingAssembler(
-    AssemblyType &assembly, const DofMap &dof_map)
-    : assembly_(assembly), dof_map_(dof_map) {
+    AssemblyType &assembly, const LayoutType &layout)
+    : assembly_(assembly), layout_(layout) {
 
   // The probe shares the stiffness probe's scope (NGLL = 5, matching
   // property tag, no attenuation) but tolerates Stacey boundaries -- they
   // are exactly what it measures.
   specfem::linear_system::validate_stiffness_scope<Tags>(
       assembly_, specfem::linear_system::StiffnessScope::with_stacey);
-
-  const auto &field = assembly_.fields.template get_simulation_field<
-      specfem::simulation::field_type::forward>();
-  const auto &field_impl = field.template get_field<medium_tag>();
-  if (field_impl.nglob != dof_map_.nglob()) {
-    throw std::runtime_error(
-        "specfem::linear_system::DampingAssembler: the dof map does not "
-        "match the assembly's forward field.");
-  }
 }
 
 template <typename Tags>
@@ -48,7 +38,7 @@ specfem::linear_system::DampingAssembler<Tags>::assemble() const {
   const auto h_u = field_impl.get_host_field();
   const auto h_v = field_impl.get_host_field_dot();
   const auto h_a = field_impl.get_host_field_dot_dot();
-  const int nglob = dof_map_.nglob();
+  const int nglob = layout_.nglob();
 
   // Probed blocks: block(p, r, c) = C_p(r, c). Interior points stay exactly
   // zero -- the u = 0 stiffness path adds exact zeros everywhere and the
@@ -99,65 +89,31 @@ specfem::linear_system::DampingAssembler<Tags>::assemble() const {
     }
   }
 
-  // Compact graph: ncomp entries per row at damping points, empty rows
-  // elsewhere -- a K-sized graph would waste a full matrix of memory on a
-  // block-diagonal operator.
-  std::vector<std::size_t> entries_per_row(
-      static_cast<std::size_t>(dof_map_.num_global_dofs()), 0);
+  // Compact structure from the layout: ncomp entries per row at damping
+  // points, empty rows elsewhere -- a K-sized graph would waste a full
+  // matrix of memory on a block-diagonal operator. Sharing the layout with
+  // the stiffness matrix is what guarantees every entry below also exists in
+  // K's graph, which the implicit Newmark operator relies on.
+  auto matrix = layout_.block_diagonal_matrix(
+      [&is_damping_point](const int iglob) { return is_damping_point[iglob]; });
+
+  // scatter_point_block wants a contiguous (ncomp, ncomp) view, and a
+  // subview of `block` at one point is LayoutStride -- copy through a small
+  // scratch block instead.
+  typename LayoutType::host_field_view_type point_block(
+      "specfem::linear_system::damping_point_block", ncomp, ncomp);
   for (int iglob = 0; iglob < nglob; ++iglob) {
     if (!is_damping_point[iglob]) {
       continue;
-    }
-    for (int r = 0; r < ncomp; ++r) {
-      entries_per_row[static_cast<std::size_t>(dof_map_.gid(iglob, r))] = ncomp;
-    }
-  }
-
-  auto graph = Teuchos::rcp(
-      new crs_graph_type(dof_map_.overlap_map(),
-                         Teuchos::ArrayView<const std::size_t>(
-                             entries_per_row.data(), entries_per_row.size())));
-
-  std::vector<global_ordinal_type> cols(ncomp);
-  for (int iglob = 0; iglob < nglob; ++iglob) {
-    if (!is_damping_point[iglob]) {
-      continue;
-    }
-    for (int c = 0; c < ncomp; ++c) {
-      cols[c] = dof_map_.gid(iglob, c);
-    }
-    for (int r = 0; r < ncomp; ++r) {
-      graph->insertGlobalIndices(dof_map_.gid(iglob, r), ncomp, cols.data());
-    }
-  }
-  graph->fillComplete(dof_map_.owned_map(), dof_map_.owned_map());
-
-  auto matrix = Teuchos::rcp(new crs_matrix_type(graph));
-  std::vector<scalar_type> values(ncomp);
-  for (int iglob = 0; iglob < nglob; ++iglob) {
-    if (!is_damping_point[iglob]) {
-      continue;
-    }
-    for (int c = 0; c < ncomp; ++c) {
-      cols[c] = dof_map_.gid(iglob, c);
     }
     for (int r = 0; r < ncomp; ++r) {
       for (int c = 0; c < ncomp; ++c) {
-        values[c] = block(iglob, r, c);
-      }
-      const int updated = matrix->sumIntoGlobalValues(
-          dof_map_.gid(iglob, r), ncomp, values.data(), cols.data());
-      if (updated != ncomp) {
-        std::ostringstream message;
-        message << "specfem::linear_system::DampingAssembler: block scatter "
-                   "at point "
-                << iglob << " updated " << updated << " of " << ncomp
-                << " entries; the graph does not match the damping mask.";
-        throw std::runtime_error(message.str());
+        point_block(r, c) = block(iglob, r, c);
       }
     }
+    layout_.scatter_point_block(*matrix, iglob, point_block);
   }
-  matrix->fillComplete(dof_map_.owned_map(), dof_map_.owned_map());
+  matrix->fillComplete(layout_.owned_map(), layout_.owned_map());
 
   return matrix;
 }

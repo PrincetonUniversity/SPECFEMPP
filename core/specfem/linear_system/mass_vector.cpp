@@ -14,7 +14,7 @@ template <typename Tags>
 Teuchos::RCP<specfem::linear_system::vector_type>
 specfem::linear_system::assemble_mass_vector(
     specfem::assembly::assembly<Tags::dimension_tag> &assembly,
-    const DofMap &dof_map) {
+    const SystemLayout<Tags> &layout) {
 
   static_assert(Tags::dimension_tag == specfem::element::dimension_tag::dim3,
                 "assemble_mass_vector takes a dim3 assembly; Tags must be a "
@@ -35,12 +35,6 @@ specfem::linear_system::assemble_mass_vector(
   const auto mass = field_impl.get_mass_inverse();
   const auto h_mass = field_impl.get_host_mass_inverse();
 
-  if (field_impl.nglob != dof_map.nglob()) {
-    throw std::runtime_error(
-        "specfem::linear_system::assemble_mass_vector: the dof map does not "
-        "match the assembly's forward field.");
-  }
-
   // The forward field's (not-yet-inverted) mass storage is the accumulation
   // target of the production path; treat it strictly as scratch.
   Kokkos::deep_copy(mass, 0);
@@ -58,16 +52,7 @@ specfem::linear_system::assemble_mass_vector(
 
   Kokkos::deep_copy(h_mass, mass);
 
-  auto mass_vector = Teuchos::rcp(new vector_type(dof_map.owned_map()));
-  {
-    auto view = mass_vector->getLocalViewHost(Tpetra::Access::OverwriteAll);
-    for (int iglob = 0; iglob < dof_map.nglob(); ++iglob) {
-      for (int icomp = 0; icomp < dof_map.ncomp(); ++icomp) {
-        view(static_cast<std::size_t>(dof_map.gid(iglob, icomp)), 0) =
-            h_mass(iglob, icomp);
-      }
-    }
-  }
+  auto mass_vector = layout.scatter(h_mass);
 
   // Leave the assembly as found for the explicit solver's own mass init.
   Kokkos::deep_copy(mass, 0);
@@ -91,6 +76,7 @@ template Teuchos::RCP<specfem::linear_system::vector_type>
 specfem::linear_system::assemble_mass_vector<
     specfem::linear_system_impl::elastic_isotropic_tags>(
     specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &,
-    const specfem::linear_system::DofMap &);
+    const specfem::linear_system::SystemLayout<
+        specfem::linear_system_impl::elastic_isotropic_tags> &);
 
 #endif // SPECFEM_ENABLE_TRILINOS
