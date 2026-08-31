@@ -22,7 +22,7 @@ pipeline {
                     }
                     axis{
                         name 'MPIEnabled'
-                        values 'MPI_GCC416;-DSPECFEM_ENABLE_MPI=ON;openmpi/gcc/4.1.6;--ntasks=8 --ntasks-per-node=4 --nodes=2'
+                        values 'MPI_GCC416;-DSPECFEM_ENABLE_MPI=ON;openmpi/gcc/4.1.6;--ntasks=8  --nodes=2-8'
                     }
                 }
                 stages {
