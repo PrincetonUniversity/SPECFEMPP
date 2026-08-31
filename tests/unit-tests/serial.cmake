@@ -700,6 +700,24 @@ specfem_add_test(mass_vector_tests
             -lpthread -lm
 )
 
+specfem_add_test(implicit_solver_tests
+  SOURCES solver/implicit_solver_tests.cpp
+  LIBRARIES specfem::linear_system
+            specfem::quadrature
+            specfem::mesh
+            yaml-cpp
+            specfem_environment
+            specfem::assembly
+            specfem::runtime_configuration
+            timescheme
+            point
+            specfem::algorithms
+            specfem::solver
+            specfem::periodic_tasks
+            ${BOOST_LIBS}
+            -lpthread -lm
+)
+
 specfem_add_test(damping_assembler_tests
   SOURCES linear_system/damping_assembler_tests.cpp
   LIBRARIES specfem::linear_system

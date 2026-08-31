@@ -24,3 +24,9 @@ specfem_add_test(displacement_newmark_3d_tests
   SOURCES   displacement_tests/Newmark/dim3/newmark_tests.cpp
   LIBRARIES ${DISPLACEMENT_TEST_LIBS}
 )
+
+specfem_add_test(implicit_newmark_3d_tests
+  SOURCES   displacement_tests/ImplicitNewmark/dim3/implicit_newmark_tests.cpp
+  LIBRARIES ${DISPLACEMENT_TEST_LIBS} specfem::linear_system
+  TIMEOUT   1800
+)
