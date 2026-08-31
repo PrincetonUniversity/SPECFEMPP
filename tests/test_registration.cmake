@@ -125,6 +125,7 @@ endmacro()
 #     INCLUDES    <dir>...             # target_include_directories, PRIVATE
 #     PROPERTIES  <key> <value>...     # raw set_target_properties escape hatch
 #     LABELS      <label>...           # ctest -L
+#     PARAM_CASES <Suite>.<Case>/<instance>...   # expand a TEST_P, MPI only
 #     MPI_RANKS   <n>                  # run under `mpirun -n <n>`
 #     TIMEOUT     <seconds>            # per-test TIMEOUT property
 #     NO_UNITY                         # UNITY_BUILD OFF for this target
@@ -139,7 +140,7 @@ endmacro()
 function(specfem_add_test name)
     set(_options NO_UNITY NO_CTEST)
     set(_one_value MPI_RANKS TIMEOUT)
-    set(_multi_value SOURCES LIBRARIES DEFINITIONS INCLUDES PROPERTIES LABELS)
+    set(_multi_value SOURCES LIBRARIES DEFINITIONS INCLUDES PROPERTIES LABELS PARAM_CASES)
     cmake_parse_arguments(PARSE_ARGV 1 T "${_options}" "${_one_value}" "${_multi_value}")
 
     if(T_UNPARSED_ARGUMENTS)
@@ -150,6 +151,14 @@ function(specfem_add_test name)
     endif()
     if(NOT SPECFEM_TEST_OUTPUT_DIR)
         message(FATAL_ERROR "specfem_add_test(${name}): specfem_init_tests() has not run")
+    endif()
+    # PARAM_CASES only means something for the filter-based MPI registration below.
+    # Ordinary targets are handled by gtest_discover_tests(), which lists the real
+    # instance names itself, so accepting it there would silently do nothing.
+    if(T_PARAM_CASES AND NOT T_MPI_RANKS)
+        message(FATAL_ERROR
+            "specfem_add_test(${name}): PARAM_CASES requires MPI_RANKS. Non-MPI tests are "
+            "registered by gtest_discover_tests(), which already expands TEST_P instances.")
     endif()
 
     add_executable(${name} ${T_SOURCES})
@@ -228,6 +237,48 @@ function(specfem_add_test name)
                 "moved or the extraction regex stopped matching them; registering nothing "
                 "would make this target silently stop being tested.")
         endif()
+
+        # Expand the TEST_P declarations named in PARAM_CASES into one entry per instance.
+        #
+        # specfem_gtest_case_names() collapses a TEST_P to a single "*<Suite>.<Case>/*"
+        # entry because the values are invisible in the declaration. That is correct for
+        # every MPI TEST_P that instantiates a single value, but it hides the whole set
+        # when the values come from a data file read at runtime -- the caller knows them
+        # (it reads the same file at configure time) and passes them here.
+        #
+        # The per-instance filter deliberately carries no trailing "*": GoogleTest matches
+        # a filter against the whole test name, so "*Newmark.3D/ForceSource" does not also
+        # select ".../ForceSourceLong". Both names exist in the serial dim3 test list, so
+        # the exactness matters if this is ever reused there.
+        #
+        # Validate against the declarations as grepped, not against _cases: the collapsed
+        # entry is removed by the first instance of a suite, and every later instance of
+        # the same suite would otherwise look like a rename.
+        set(_declared_cases "${_cases}")
+        foreach(_param_case IN LISTS T_PARAM_CASES)
+            string(REGEX MATCH "^([A-Za-z0-9_]+\\.[A-Za-z0-9_]+)/(.+)$" _matched "${_param_case}")
+            if(NOT _matched)
+                message(FATAL_ERROR
+                    "specfem_add_test(${name}): PARAM_CASES entry '${_param_case}' is not of "
+                    "the form <Suite>.<Case>/<instance>.")
+            endif()
+            set(_param_suite "${CMAKE_MATCH_1}")
+            set(_param_instance "${CMAKE_MATCH_2}")
+
+            # The collapsed entry must still be there, i.e. the TEST_P is still declared
+            # under that name in SOURCES. Without this check a renamed fixture would leave
+            # PARAM_CASES pointing at a suite that no longer exists, and every registered
+            # entry would match nothing.
+            if(NOT "${_param_suite}|*${_param_suite}/*" IN_LIST _declared_cases)
+                message(FATAL_ERROR
+                    "specfem_add_test(${name}): PARAM_CASES names '${_param_suite}', but no "
+                    "TEST_P(${_param_suite}) was found in SOURCES. Either the fixture or the "
+                    "case was renamed, or PARAM_CASES is stale.")
+            endif()
+            list(REMOVE_ITEM _cases "${_param_suite}|*${_param_suite}/*")
+            list(APPEND _cases
+                "${_param_suite}/${_param_instance}|*${_param_suite}/${_param_instance}")
+        endforeach()
 
         # FAIL_REGULAR_EXPRESSION guards the one way filter-based registration can pass
         # while running nothing: GoogleTest treats a filter matching no test as a warning
