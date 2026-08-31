@@ -88,6 +88,7 @@ pipeline {
                                           ${CMAKE_HOST_FLAGS} ${SIMD_FLAGS} ${MPI_FLAGS} \
                                           -D SPECFEM_BUILD_TESTS=ON \
                                           -D SPECFEM_BUILD_BENCHMARKS=OFF \
+                                          -D SPECFEM_MPI_TEST_COMMAND=srun \
                                           -D SPECFEMPP_TEST_DIR=/scratch/gpfs/TROMP/specfempp/jenkins/test_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
                                         cmake3 --build build_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
                                     """
@@ -110,7 +111,7 @@ pipeline {
                                             export OMP_NUM_THREADS=20; \
                                             hostname; \
                                             echo "ranks run on: \$SLURM_JOB_NODELIST"; \
-                                            ctest -R MPI --output-on-failure --no-tests=error;'
+                                            ctest -L MPI --output-on-failure --no-tests=error;'
                                     """
                                     echo ' Testing completed '
                                 }

@@ -48,6 +48,11 @@ else()
     message(STATUS "Compiling SPECFEM without MPI")
 endif()
 
+set(SPECFEM_MPI_TEST_COMMAND "" CACHE STRING
+    "MPI launcher command for tests (e.g. mpirun, srun, aprun); empty = MPIEXEC_EXECUTABLE")
+set(SPECFEM_MPI_TEST_NUMPROC_FLAG "" CACHE STRING
+    "Flag introducing the rank count for SPECFEM_MPI_TEST_COMMAND, e.g. '-n'; empty = MPIEXEC_NUMPROC_FLAG")
+
 # set(CMAKE_BUILD_TYPE Release)
 set(CHUNK_SIZE 32)
 set(NUM_CHUNKS 1)

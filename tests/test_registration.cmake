@@ -23,12 +23,72 @@
 #     discovery files holding absolute paths to them, so nothing needs copying.
 # ==============================================================================
 
-# Wrapper that runs gtest's discovery pass on one process and the tests themselves under
-# mpiexec; see the header of the script for why that split cannot be expressed with target
-# properties. Resolved here, at file scope, so it does not depend on which listfile is
-# being processed when specfem_add_test() is called.
-set(SPECFEM_MPI_TEST_LAUNCHER "${CMAKE_CURRENT_LIST_DIR}/mpi_test_launcher.sh"
-    CACHE INTERNAL "launcher wrapper for MPI gtest executables")
+# Launcher every multi-rank MPI test runs under, resolved once here at file scope so it
+# does not depend on which listfile is being processed when specfem_add_test() is called.
+# The rank count is appended per test. This file is included from tests/CMakeLists.txt,
+# which is added after find_package(MPI), so the FindMPI results are available.
+#
+# It is used only by ctest, never during a build -- see the rank-count note in
+# specfem_add_test() for why that matters when the launcher is `srun`.
+#
+# SPECFEM_MPI_TEST_COMMAND / _NUMPROC_FLAG (declared in the top-level CMakeLists.txt) are
+# empty by default, meaning "use what FindMPI located" -- an absolute path to the loaded
+# module's mpiexec, rather than a bare `mpirun` resolved off PATH at test time. Both are
+# lists, so a launcher needing arguments works: -DSPECFEM_MPI_TEST_COMMAND="srun;--mpi=pmix".
+if(SPECFEM_ENABLE_MPI)
+    if(SPECFEM_MPI_TEST_COMMAND)
+        set(_specfem_mpi_launch ${SPECFEM_MPI_TEST_COMMAND})
+    else()
+        set(_specfem_mpi_launch ${MPIEXEC_EXECUTABLE})
+    endif()
+    if(SPECFEM_MPI_TEST_NUMPROC_FLAG)
+        list(APPEND _specfem_mpi_launch ${SPECFEM_MPI_TEST_NUMPROC_FLAG})
+    else()
+        list(APPEND _specfem_mpi_launch ${MPIEXEC_NUMPROC_FLAG})
+    endif()
+    set(SPECFEM_MPI_LAUNCH_COMMAND "${_specfem_mpi_launch}"
+        CACHE INTERNAL "MPI launcher + numproc flag; the rank count is appended per test")
+endif()
+
+# Extract the GoogleTest cases declared in <source>... as "<display>|<filter>" pairs.
+#
+# Multi-rank tests are registered from these names instead of by gtest_discover_tests(),
+# which cannot be used there: it runs the binary with --gtest_list_tests through the same
+# executor it puts in front of the real test command (CMake merges TEST_LAUNCHER and
+# CROSSCOMPILING_EMULATOR into one `test_executor`, used for both), so listing under
+# `mpiexec -n <ranks>` makes every rank print to one merged stdout and registers each case
+# once per rank. No target property can tell the two invocations apart.
+#
+# Every source is marked as a configure dependency, so adding or renaming a TEST re-runs
+# CMake rather than silently leaving the case unregistered.
+function(specfem_gtest_case_names out_var)
+    set(_names "")
+    foreach(_src IN LISTS ARGN)
+        get_filename_component(_abs "${_src}" ABSOLUTE
+            BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+        if(NOT EXISTS "${_abs}")
+            continue()
+        endif()
+        set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${_abs}")
+        file(STRINGS "${_abs}" _lines
+            REGEX "^TEST(_F|_P)?\\([A-Za-z0-9_]+,[ \t]*[A-Za-z0-9_]+\\)")
+        foreach(_line IN LISTS _lines)
+            string(REGEX MATCH "^TEST(_F|_P)?\\(([A-Za-z0-9_]+),[ \t]*([A-Za-z0-9_]+)\\)"
+                _matched "${_line}")
+            set(_case "${CMAKE_MATCH_2}.${CMAKE_MATCH_3}")
+            if(CMAKE_MATCH_1 STREQUAL "_P")
+                # A parametrized case is really <Prefix>/<Suite>.<Case>/<index>. Neither
+                # the INSTANTIATE_TEST_SUITE_P prefix nor the number of values is visible
+                # from this declaration, so one entry covers all of them.
+                list(APPEND _names "${_case}|*${_case}/*")
+            else()
+                list(APPEND _names "${_case}|${_case}")
+            endif()
+        endforeach()
+    endforeach()
+    list(REMOVE_DUPLICATES _names)
+    set(${out_var} "${_names}" PARENT_SCOPE)
+endfunction()
 
 # Initialize the test tree. Call once, from tests/CMakeLists.txt, before adding
 # any test suite. This is the only place SPECFEMPP_TEST_DIR is read.
@@ -124,62 +184,120 @@ function(specfem_add_test name)
             RUNTIME_OUTPUT_DIRECTORY "${SPECFEM_TEST_OUTPUT_DIR}")
     endif()
 
-    # Launcher. MPI_RANKS runs the test under `mpirun -n <ranks>`; in an MPI build
-    # even the serial tests run under `mpirun -n 1` so that MPI_Init() succeeds.
-    # This must precede gtest_discover_tests(): the GoogleTest module reads
-    # CROSSCOMPILING_EMULATOR off the target at call time.
+    # Declaring MPI_RANKS is what makes a target part of the MPI test suite: it runs under
+    # `<launcher> -n <ranks>`, at one rank as much as at four. A test that does not declare
+    # it is an ordinary test that merely happens to be built in an MPI configuration, and
+    # runs bare on singleton MPI_Init (supported by OpenMPI, MPICH and Intel MPI alike).
     #
-    # The emulator goes through mpi_test_launcher.sh rather than straight to mpiexec.
-    # gtest_discover_tests() reuses this same executor to *list* the binary's tests, and
-    # listing under `mpiexec -n <ranks>` makes every rank print the listing to one merged
-    # stdout -- registering each test once per rank. The wrapper routes the listing pass
-    # to a single process and everything else to mpiexec.
+    # That split is also what keeps the launcher out of the build. gtest_discover_tests()
+    # executes each binary at link time (DISCOVERY_MODE POST_BUILD) through
+    # CROSSCOMPILING_EMULATOR, and .jenkins/mpi_compiler_checks.gvy builds on a login node
+    # outside any Slurm allocation -- putting `srun` in front of the ~50 ordinary test
+    # binaries there would submit ~50 jobs during `cmake --build`. Every MPI-suite target
+    # skips discovery entirely (add_test below), so the launcher is only ever invoked by
+    # ctest, which that job runs inside `salloc`.
     if(T_MPI_RANKS)
         set(_ranks ${T_MPI_RANKS})
-    elseif(SPECFEM_ENABLE_MPI)
-        set(_ranks 1)
-    else()
-        set(_ranks "")
-    endif()
-    if(_ranks)
-        set_target_properties(${name} PROPERTIES
-            CROSSCOMPILING_EMULATOR
-                "${SPECFEM_MPI_TEST_LAUNCHER};${MPIEXEC_EXECUTABLE};${MPIEXEC_NUMPROC_FLAG};${_ranks}")
-    endif()
-
-    # CTest properties. Multi-rank tests reserve their ranks and do not overlap
-    # with each other. Serial tests keep CTest's default timeout.
-    set(_properties "")
-    if(T_MPI_RANKS)
-        list(APPEND _properties PROCESSORS ${T_MPI_RANKS} RUN_SERIAL ON)
         if(NOT T_TIMEOUT)
             set(T_TIMEOUT 300)
         endif()
-        if(T_MPI_RANKS GREATER 1)
-            # Neutralize the SKIP_REGULAR_EXPRESSION that gtest_discover_tests() sets to
-            # "[  SKIPPED ]". Under `mpirun -n <ranks>` every rank writes to one merged
-            # stdout, so a GTEST_SKIP() on any *excluded* rank makes CTest mark the whole
-            # test skipped even though the active ranks ran it and asserted. Worse,
-            # SKIP_REGULAR_EXPRESSION is evaluated ahead of the return code, so a genuine
-            # failure on an active rank was also reported as "Skipped" -- eight cases
-            # across mpi_subset_{1of4,2of4} could not fail. GoogleTestAddTests.cmake emits
-            # its default before ${arg_TEST_PROPERTIES}, and set_tests_properties is
-            # last-wins, so ours takes effect.
-            #
-            # The value is a sentinel rather than "": _discover_args is expanded unquoted
-            # into gtest_discover_tests(), which drops empty list elements and would leave
-            # the property name with no value.
-            list(APPEND _properties
-                SKIP_REGULAR_EXPRESSION "SPECFEM_MPI_TEST_NEVER_SKIPS")
+    else()
+        set(_ranks 0)
+    endif()
+
+    # Every MPI-suite test carries the MPI label, which is how CI selects them
+    # (.jenkins/mpi_compiler_checks.gvy runs `ctest -L MPI`). Names cannot be used for
+    # that: the entries registered below are prefixed with the target, which is lower case.
+    set(_labels "")
+    if(T_MPI_RANKS)
+        set(_labels MPI)
+    endif()
+    if(T_LABELS)
+        list(APPEND _labels ${T_LABELS})
+    endif()
+
+    # MPI-suite tests are registered case by case from names grepped out of the sources,
+    # because gtest_discover_tests() cannot list a binary that has to run under a launcher
+    # -- see specfem_gtest_case_names() above. Ordinary tests keep discovery.
+    if(T_MPI_RANKS)
+        specfem_gtest_case_names(_cases ${T_SOURCES})
+        if(NOT _cases)
+            message(FATAL_ERROR
+                "specfem_add_test(${name}): MPI_RANKS ${_ranks} is set but no "
+                "TEST/TEST_F/TEST_P declaration was found in SOURCES. Either the sources "
+                "moved or the extraction regex stopped matching them; registering nothing "
+                "would make this target silently stop being tested.")
         endif()
-    elseif(SPECFEM_ENABLE_MPI)
+
+        # FAIL_REGULAR_EXPRESSION guards the one way filter-based registration can pass
+        # while running nothing: GoogleTest treats a filter matching no test as a warning
+        # and still exits 0 (ShouldWarnIfNoTestsMatchFilter in gtest.cc), so a case renamed
+        # between configures would otherwise stay green. There is deliberately no
+        # SKIP_REGULAR_EXPRESSION -- that only ever existed to neutralize the "[  SKIPPED ]"
+        # default gtest_discover_tests() sets, which under merged rank stdout let a
+        # GTEST_SKIP() on an excluded rank mask a real failure on an active one.
+        set(_mpi_properties
+            WORKING_DIRECTORY "${SPECFEM_TEST_OUTPUT_DIR}"
+            PROCESSORS ${_ranks}
+            RUN_SERIAL ON
+            TIMEOUT ${T_TIMEOUT}
+            LABELS "${_labels}"
+            FAIL_REGULAR_EXPRESSION "did not match any test")
+
+        # The same registrations are also written into SPECFEM_TEST_OUTPUT_DIR so that
+        # directory stands on its own (see specfem_finalize_tests). file(GENERATE) rather
+        # than the POST_BUILD copy used below, because there is no discovery file to copy;
+        # it expands $<TARGET_FILE:> so the generated commands name the binary absolutely.
+        set(_standalone_props "")
+        foreach(_prop IN LISTS _mpi_properties)
+            string(APPEND _standalone_props " [==[${_prop}]==]")
+        endforeach()
+        set(_standalone_launch "")
+        foreach(_arg IN LISTS SPECFEM_MPI_LAUNCH_COMMAND)
+            string(APPEND _standalone_launch " [==[${_arg}]==]")
+        endforeach()
+        set(_standalone "# Generated by specfem_add_test(${name}). Do not edit.\n")
+
+        foreach(_entry IN LISTS _cases)
+            string(REGEX REPLACE "\\|.*$" "" _display "${_entry}")
+            string(REGEX REPLACE "^[^|]*\\|" "" _filter "${_entry}")
+            # Prefixed with the target because two targets can compile the same source,
+            # and do: assembly_mpi_dim3_tests and assembly_mpi_dim3_8proc_tests share
+            # three TEST_P declarations, which would collide as bare <Suite>.<Case>.
+            set(_test ${name}.${_display})
+
+            add_test(NAME ${_test}
+                COMMAND ${SPECFEM_MPI_LAUNCH_COMMAND} ${_ranks}
+                        $<TARGET_FILE:${name}> --gtest_filter=${_filter})
+            set_tests_properties(${_test} PROPERTIES ${_mpi_properties})
+
+            string(APPEND _standalone
+                "add_test([==[${_test}]==]${_standalone_launch} [==[${_ranks}]==]"
+                " [==[$<TARGET_FILE:${name}>]==] [==[--gtest_filter=${_filter}]==])\n"
+                "set_tests_properties([==[${_test}]==] PROPERTIES${_standalone_props})\n")
+        endforeach()
+
+        file(GENERATE
+            OUTPUT "${SPECFEM_TEST_OUTPUT_DIR}/${name}_tests.cmake"
+            CONTENT "${_standalone}")
+
+        set_property(GLOBAL APPEND PROPERTY SPECFEM_TEST_TARGETS ${name})
+        return()
+    endif()
+
+    # Ordinary tests are discovered and run bare -- deliberately no
+    # CROSSCOMPILING_EMULATOR, see the note on MPI_RANKS above.
+
+    # CTest properties. These tests keep CTest's default timeout.
+    set(_properties "")
+    if(SPECFEM_ENABLE_MPI)
         list(APPEND _properties PROCESSORS 1)
     endif()
     if(T_TIMEOUT)
         list(APPEND _properties TIMEOUT ${T_TIMEOUT})
     endif()
-    if(T_LABELS)
-        list(APPEND _properties LABELS "${T_LABELS}")
+    if(_labels)
+        list(APPEND _properties LABELS "${_labels}")
     endif()
 
     set(_discover_args
