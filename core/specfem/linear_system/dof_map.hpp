@@ -9,7 +9,10 @@
 #include <Teuchos_Comm.hpp>
 #include <Teuchos_RCP.hpp>
 #include <Tpetra_Core.hpp>
+#include <Tpetra_CrsGraph.hpp>
+#include <Tpetra_CrsMatrix.hpp>
 #include <Tpetra_Map.hpp>
+#include <Tpetra_Vector.hpp>
 #include <stdexcept>
 #include <string>
 
@@ -31,6 +34,15 @@ using map_type = Tpetra::Map<>;
 
 /// Global ordinal used for degree-of-freedom ids
 using global_ordinal_type = map_type::global_ordinal_type;
+
+/// Tpetra vector shared by mass, state, and right-hand-side vectors
+using vector_type = Tpetra::Vector<scalar_type>;
+
+/// Tpetra sparsity graph with the default ordinals and node type
+using crs_graph_type = Tpetra::CrsGraph<>;
+
+/// Assembled sparse matrix type (see @ref scalar_type for the precision)
+using crs_matrix_type = Tpetra::CrsMatrix<scalar_type>;
 
 /**
  * @brief Maps SPECFEM++ (iglob, icomp) degrees of freedom of one medium to

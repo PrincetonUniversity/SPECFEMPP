@@ -681,3 +681,39 @@ specfem_add_test(stiffness_assembler_tests
             ${BOOST_LIBS}
             -lpthread -lm
 )
+
+specfem_add_test(mass_vector_tests
+  SOURCES linear_system/mass_vector_tests.cpp
+  LIBRARIES specfem::linear_system
+            specfem::quadrature
+            specfem::mesh
+            yaml-cpp
+            specfem_environment
+            specfem::assembly
+            specfem::runtime_configuration
+            timescheme
+            point
+            specfem::algorithms
+            specfem::solver
+            specfem::periodic_tasks
+            ${BOOST_LIBS}
+            -lpthread -lm
+)
+
+specfem_add_test(damping_assembler_tests
+  SOURCES linear_system/damping_assembler_tests.cpp
+  LIBRARIES specfem::linear_system
+            specfem::quadrature
+            specfem::mesh
+            yaml-cpp
+            specfem_environment
+            specfem::assembly
+            specfem::runtime_configuration
+            timescheme
+            point
+            specfem::algorithms
+            specfem::solver
+            specfem::periodic_tasks
+            ${BOOST_LIBS}
+            -lpthread -lm
+)

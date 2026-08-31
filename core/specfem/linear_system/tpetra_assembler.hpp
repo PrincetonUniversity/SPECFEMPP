@@ -4,6 +4,7 @@
 
 #include "specfem/enums.hpp"
 #include "specfem/linear_system/dof_map.hpp"
+#include "specfem/linear_system/element_stiffness.hpp"
 #include <Teuchos_RCP.hpp>
 #include <Tpetra_CrsGraph.hpp>
 #include <Tpetra_CrsMatrix.hpp>
@@ -11,12 +12,6 @@
 
 namespace specfem {
 namespace linear_system {
-
-/// Tpetra sparsity graph with the default ordinals and node type
-using crs_graph_type = Tpetra::CrsGraph<>;
-
-/// Assembled sparse matrix type (see @ref scalar_type for the precision)
-using crs_matrix_type = Tpetra::CrsMatrix<scalar_type>;
 
 /**
  * @brief Assembles the global stiffness matrix \f$ K \f$ of one medium as a
@@ -73,9 +68,13 @@ public:
    * @param assembly Assembled mesh, jacobian matrix, material properties,
    *        and fields; must outlive the assembler
    * @param batch_size Elements per probe-kernel launch (>= 1)
+   * @param scope Boundary conditions the caller can represent (see
+   *        @ref StiffnessScope); pass `with_stacey` only when the Stacey
+   *        damping matrix is assembled separately
    */
-  StiffnessAssembler(const AssemblyType &assembly,
-                     const int batch_size = default_batch_size);
+  StiffnessAssembler(
+      const AssemblyType &assembly, const int batch_size = default_batch_size,
+      const StiffnessScope scope = StiffnessScope::natural_boundaries);
 
   /**
    * @brief Assemble the stiffness matrix.
