@@ -31,21 +31,13 @@
 # It is used only by ctest, never during a build -- see the rank-count note in
 # specfem_add_test() for why that matters when the launcher is `srun`.
 #
-# SPECFEM_MPI_TEST_COMMAND / _NUMPROC_FLAG (declared in the top-level CMakeLists.txt) are
-# empty by default, meaning "use what FindMPI located" -- an absolute path to the loaded
-# module's mpiexec, rather than a bare `mpirun` resolved off PATH at test time. Both are
-# lists, so a launcher needing arguments works: -DSPECFEM_MPI_TEST_COMMAND="srun;--mpi=pmix".
+# SPECFEM_MPI_TEST_COMMAND / _NUMPROC_FLAG (declared in the top-level CMakeLists.txt)
+# default to what FindMPI located -- an absolute path to the loaded module's mpiexec,
+# rather than a bare `mpirun` resolved off PATH at test time. Both are lists, so a
+# launcher needing arguments works: -DSPECFEM_MPI_TEST_COMMAND="srun;--mpi=pmix".
 if(SPECFEM_ENABLE_MPI)
-    if(SPECFEM_MPI_TEST_COMMAND)
-        set(_specfem_mpi_launch ${SPECFEM_MPI_TEST_COMMAND})
-    else()
-        set(_specfem_mpi_launch ${MPIEXEC_EXECUTABLE})
-    endif()
-    if(SPECFEM_MPI_TEST_NUMPROC_FLAG)
-        list(APPEND _specfem_mpi_launch ${SPECFEM_MPI_TEST_NUMPROC_FLAG})
-    else()
-        list(APPEND _specfem_mpi_launch ${MPIEXEC_NUMPROC_FLAG})
-    endif()
+    set(_specfem_mpi_launch ${SPECFEM_MPI_TEST_COMMAND})
+    list(APPEND _specfem_mpi_launch ${SPECFEM_MPI_TEST_NUMPROC_FLAG})
     set(SPECFEM_MPI_LAUNCH_COMMAND "${_specfem_mpi_launch}"
         CACHE INTERNAL "MPI launcher + numproc flag; the rank count is appended per test")
 endif()
