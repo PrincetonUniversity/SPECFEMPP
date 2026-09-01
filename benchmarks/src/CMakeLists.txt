@@ -26,6 +26,7 @@ add_subdirectory(dim2/marmousi)
 # 3D
 add_subdirectory(dim3/homogeneous_viscoelastic_kernel)
 add_subdirectory(dim3/homogeneous_halfspace)
+add_subdirectory(dim3/homogeneous_halfspace_cosserat)
 add_subdirectory(dim3/homogeneous_acoustic_kernel)
 add_subdirectory(dim3/homogeneous_elastic_kernel)
 add_subdirectory(dim3/acoustic_elastic_force)
