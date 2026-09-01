@@ -74,8 +74,8 @@ TestCase build_case_3d(const std::string &test_name) {
       setup.get_t0(), dt, nsteps, setup.get_max_seismogram_step(),
       setup.get_nstep_between_samples(), setup.get_simulation_type(),
       setup.allocate_boundary_values(), setup.instantiate_property_reader());
-  test_case.time_scheme =
-      setup.instantiate_timescheme(test_case.assembly->fields);
+  test_case.time_scheme = setup.instantiate_timescheme(
+      test_case.assembly->fields, setup.get_simulation_type());
   return test_case;
 }
 

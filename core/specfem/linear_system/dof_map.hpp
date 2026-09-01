@@ -5,71 +5,61 @@
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/element.hpp"
 #include "specfem/enums.hpp"
-#include "specfem/setup.hpp"
+#include "specfem/linear_system/dof_numbering.hpp"
+#include "specfem/linear_system/tpetra_connections.hpp"
+#include "specfem/linear_system/tpetra_types.hpp"
 #include <Teuchos_Comm.hpp>
 #include <Teuchos_RCP.hpp>
 #include <Tpetra_Core.hpp>
-#include <Tpetra_CrsGraph.hpp>
-#include <Tpetra_CrsMatrix.hpp>
-#include <Tpetra_Map.hpp>
-#include <Tpetra_Vector.hpp>
-#include <stdexcept>
-#include <string>
 
 namespace specfem {
 namespace linear_system {
 
 /**
- * @brief Scalar used for assembled matrices and vectors.
- *
- * Aliased to `type_real` so the linear system follows the build's precision:
- * `float` by default (matching the float-only Tpetra installs on the
- * clusters), `double` with `SPECFEM_ENABLE_DOUBLE_PRECISION`. Single switch
- * point if the two ever need to diverge.
- */
-using scalar_type = type_real;
-
-/// Tpetra map with the default local/global ordinals and node type
-using map_type = Tpetra::Map<>;
-
-/// Global ordinal used for degree-of-freedom ids
-using global_ordinal_type = map_type::global_ordinal_type;
-
-/// Tpetra vector shared by mass, state, and right-hand-side vectors
-using vector_type = Tpetra::Vector<scalar_type>;
-
-/// Tpetra sparsity graph with the default ordinals and node type
-using crs_graph_type = Tpetra::CrsGraph<>;
-
-/// Assembled sparse matrix type (see @ref scalar_type for the precision)
-using crs_matrix_type = Tpetra::CrsMatrix<scalar_type>;
-
-/**
  * @brief Maps SPECFEM++ (iglob, icomp) degrees of freedom of one medium to
- * Tpetra global ids and owns the row (owned) and column (overlap) maps.
+ * solver global ids, and owns the row (owned) and column (overlap) maps.
+ *
+ * Composition of two independent halves, which is what keeps the linear
+ * system portable across solver libraries:
+ *
+ * - `Numbering` (@ref DofNumbering) holds the SPECFEM++ quantities --
+ *   `nglob`, `ncomp`, and the `gid` layout -- and names no library type.
+ * - `Connections` (@ref TpetraConnections) holds everything the linear
+ *   algebra library needs: the communicator, the maps, and sparsity-graph
+ *   construction.
+ *
+ * Moving to another library that builds compressed-row matrices from a graph
+ * is therefore a matter of writing a second `Connections` class and naming a
+ * different alias; the numbering, the assemblers, and the solver are
+ * untouched.
  *
  * The GID layout is component-blocked: `gid = icomp * nglob + iglob`,
- * deliberately matching SPECFEM++ field storage
- * (`Kokkos::View<type_real **, Kokkos::LayoutLeft>` of shape
- * `(nglob, ncomp)`), so a Tpetra vector maps 1:1 onto field memory with no
- * permutation at solve time. It also matches the element-local ordering
- * `specfem::linear_system::local_dof_index`. The layout lives ONLY in
- * @ref gid -- change it there to swap the ordering.
+ * deliberately matching SPECFEM++ field storage, so a solver vector maps 1:1
+ * onto field memory with no permutation at solve time. It lives in
+ * @ref DofNumbering::gid -- change it there to swap the ordering.
  *
- * One DofMap instance describes one medium: `nglob` and `ncomp` are
- * per-medium quantities (a future multi-medium system holds one DofMap and
- * one matrix block per medium).
+ * One instance describes one medium: `nglob` and `ncomp` are per-medium
+ * quantities (a future multi-medium system holds one map and one matrix
+ * block per medium).
  *
- * Serial-only in this milestone: SPECFEM++ numbers global points per rank
- * with no globally consistent numbering across ranks, so the constructor
- * throws for communicators with more than one rank. The owned and overlap
- * maps are kept separate in the API so distributed assembly (owned iglob ->
- * owned GIDs, shared-interface points -> overlap map, Export(ADD) into the
- * owned matrix) can be added without changing callers; at one rank they are
- * the same map.
+ * @tparam Numbering Dof numbering half (see @ref DofNumbering)
+ * @tparam Connections Linear-algebra-library half (see
+ *                     @ref TpetraConnections)
  */
-class DofMap {
+template <typename Numbering, typename Connections> class BasicDofMap {
 public:
+  /// Dof numbering half
+  using numbering_type = Numbering;
+
+  /// Linear-algebra-library half
+  using connections_type = Connections;
+
+  /// Integer type of the global dof ids
+  using global_ordinal_type = typename Numbering::global_ordinal_type;
+
+  /// Empty map: zero dofs, no communicator
+  BasicDofMap() = default;
+
   /**
    * @brief Construct the map for `nglob` mesh points with `ncomp` components
    * per point.
@@ -78,78 +68,60 @@ public:
    * @param ncomp Number of field components per point (3 for 3D elastic)
    * @param comm Teuchos communicator; must have exactly one rank
    */
-  DofMap(const int nglob, const int ncomp,
-         const Teuchos::RCP<const Teuchos::Comm<int>> &comm)
-      : nglob_(nglob), ncomp_(ncomp), comm_(comm) {
-    if (comm_->getSize() > 1) {
-      throw std::runtime_error(
-          "specfem::linear_system::DofMap: distributed assembly on " +
-          std::to_string(comm_->getSize()) +
-          " ranks is not implemented yet. SPECFEM++ numbers global points "
-          "per rank, and the cross-rank GID negotiation is a follow-up of "
-          "issue #1982. Run on a single rank.");
-    }
-    const Tpetra::global_size_t num_entries =
-        static_cast<Tpetra::global_size_t>(num_global_dofs());
-    const global_ordinal_type index_base = 0;
-    owned_map_ = Teuchos::rcp(new map_type(num_entries, index_base, comm_));
-    // At one rank every dof is owned; a distributed build replaces this with
-    // a map that additionally holds the shared-interface dofs of neighbor
-    // ranks.
-    overlap_map_ = owned_map_;
-  }
+  BasicDofMap(const int nglob, const int ncomp,
+              const Teuchos::RCP<const Teuchos::Comm<int>> &comm)
+      : numbering_(nglob, ncomp), connections_(numbering_, comm) {}
 
   /**
-   * @brief Build the DofMap of one medium from an assembled 3D simulation.
+   * @brief Build the map of one medium from an assembled simulation.
    *
    * Reads `nglob` from the forward simulation field and the component count
    * from the element attributes, using `Tpetra::getDefaultComm()`.
    *
-   * @tparam MediumTag Medium whose degrees of freedom the map describes
+   * The tag bundle is a value argument rather than an explicit template
+   * argument because a constructor cannot be given explicit template
+   * arguments, and the medium is not deducible from `assembly`: an assembly
+   * is templated on the dimension alone and holds the elements of every
+   * medium, while one map describes one medium.
+   *
+   * @tparam Tags Compile-time tags (dimension, medium, property,
+   *              attenuation); dimension must be `dim3`
    * @param assembly Assembly with constructed fields
-   * @return DofMap for the medium
+   * @param tags Tag bundle selecting the medium; pass `Tags{}`
    */
-  template <specfem::element::medium_tag MediumTag>
-  static DofMap from_assembly(
-      const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
-          &assembly) {
-    const auto &field =
-        assembly.fields
-            .get_simulation_field<specfem::simulation::field_type::forward>();
-    const int nglob = field.get_nglob<MediumTag>();
-    constexpr int ncomp =
-        specfem::element::attributes<specfem::element::dimension_tag::dim3,
-                                     MediumTag>::components;
-    return DofMap(nglob, ncomp, Tpetra::getDefaultComm());
-  }
+  template <typename Tags>
+    requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
+  BasicDofMap(const specfem::assembly::assembly<Tags::dimension_tag> &assembly,
+              Tags tags)
+      : numbering_(assembly, tags),
+        connections_(numbering_, Tpetra::getDefaultComm()) {}
 
   /**
    * @brief Global id of component `icomp` at mesh point `iglob`.
    *
-   * Component-blocked layout `gid = icomp * nglob + iglob` -- the single
-   * source of truth for the global dof ordering (see the class docs).
-   *
    * @param iglob Per-medium global point index in `[0, nglob())`
    * @param icomp Field component in `[0, ncomp())`
-   * @return Tpetra global dof id in `[0, num_global_dofs())`
+   * @return Global dof id in `[0, num_global_dofs())`
    */
   inline global_ordinal_type gid(const int iglob, const int icomp) const {
-    return static_cast<global_ordinal_type>(icomp) * nglob_ + iglob;
+    return numbering_.gid(iglob, icomp);
   }
 
   /// Number of unique global mesh points of the medium
-  inline int nglob() const { return nglob_; }
+  inline int nglob() const { return numbering_.nglob(); }
 
   /// Number of field components per mesh point
-  inline int ncomp() const { return ncomp_; }
+  inline int ncomp() const { return numbering_.ncomp(); }
 
   /// Total number of degrees of freedom: `ncomp * nglob`
   inline global_ordinal_type num_global_dofs() const {
-    return static_cast<global_ordinal_type>(ncomp_) * nglob_;
+    return numbering_.num_global_dofs();
   }
 
   /// Uniquely-owned row map: contiguous `[0, num_global_dofs())`
-  inline Teuchos::RCP<const map_type> owned_map() const { return owned_map_; }
+  inline Teuchos::RCP<const map_type> owned_map() const {
+    return connections_.owned_map();
+  }
 
   /**
    * @brief Overlap (column) map: owned dofs plus, in a future distributed
@@ -157,19 +129,46 @@ public:
    * @ref owned_map at one rank.
    */
   inline Teuchos::RCP<const map_type> overlap_map() const {
-    return overlap_map_;
+    return connections_.overlap_map();
   }
 
   /// Communicator the maps are defined on
-  inline Teuchos::RCP<const Teuchos::Comm<int>> comm() const { return comm_; }
+  inline Teuchos::RCP<const Teuchos::Comm<int>> comm() const {
+    return connections_.comm();
+  }
+
+  /**
+   * @brief Build a fill-complete sparsity graph from a coupling pattern.
+   *
+   * Forwards to the library half; see
+   * @ref TpetraConnections::build_graph for what a pattern is and how it is
+   * replayed. Callers describe *which dofs couple* and never touch a Tpetra
+   * type to do so.
+   *
+   * @tparam Pattern Callable invocable as `pattern(visitor)`
+   * @param pattern Coupling blocks of the matrix
+   * @return Fill-complete graph on the owned map
+   */
+  template <typename Pattern>
+  Teuchos::RCP<const crs_graph_type> build_graph(const Pattern &pattern) const {
+    return connections_.build_graph(numbering_, pattern);
+  }
+
+  /// Dof numbering half
+  inline const Numbering &numbering() const { return numbering_; }
+
+  /// Linear-algebra-library half
+  inline const Connections &connections() const { return connections_; }
 
 private:
-  int nglob_ = 0;                               ///< Points of the medium
-  int ncomp_ = 0;                               ///< Components per point
-  Teuchos::RCP<const Teuchos::Comm<int>> comm_; ///< Communicator
-  Teuchos::RCP<const map_type> owned_map_;      ///< Uniquely-owned rows
-  Teuchos::RCP<const map_type> overlap_map_;    ///< Owned + shared dofs
+  // numbering_ is declared first: the connections are built from it.
+  Numbering numbering_;     ///< SPECFEM++ dof numbering
+  Connections connections_; ///< Maps and graphs of the solver library
 };
+
+/// Dof map of the Tpetra-backed linear system
+using DofMap =
+    BasicDofMap<DofNumbering<global_ordinal_type>, TpetraConnections>;
 
 } // namespace linear_system
 } // namespace specfem

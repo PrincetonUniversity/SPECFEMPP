@@ -79,7 +79,7 @@
     {
       "name": "release-cuda-trilinos",
       "displayName": "Release -- CUDA + Trilinos implicit solvers (no MPI)",
-      "description": "Inherits 'release-cuda' and enables Trilinos. Load trilinos/16.1.0-cuda-ampere80-nompi first so Trilinos_ROOT and Kokkos_ROOT are set in the environment.",
+      "description": "Inherits 'release-cuda' and enables Trilinos. Load trilinos/17.1.1-cpu-native-nompi first so Trilinos_ROOT and Kokkos_ROOT are set in the environment.",
       "inherits": "release-cuda",
       "binaryDir": "build/release-cuda-trilinos",
       "cacheVariables": {

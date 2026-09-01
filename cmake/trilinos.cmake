@@ -13,7 +13,7 @@ if(SPECFEM_ENABLE_TRILINOS)
     if(NOT Trilinos_ROOT AND NOT DEFINED ENV{Trilinos_ROOT})
         message(FATAL_ERROR
             "Trilinos_ROOT must be set when SPECFEM_ENABLE_TRILINOS is ON.\n"
-            "  Load a TROMP module (e.g. `module load trilinos/16.1.0-cuda-ampere80-mpi`)\n"
+            "  Load a TROMP module (e.g. `module load trilinos/17.1.1-cpu-native-nompi`)\n"
             "  or pass -DTrilinos_ROOT=<install-prefix> to cmake.")
     endif()
 

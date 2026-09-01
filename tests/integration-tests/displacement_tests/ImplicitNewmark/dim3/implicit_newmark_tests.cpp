@@ -79,7 +79,8 @@ TestCase build_case_3d(const std::string &test_name,
       setup.get_t0(), dt, nsteps, setup.get_max_seismogram_step(),
       setup.get_nstep_between_samples(), setup.get_simulation_type(),
       setup.allocate_boundary_values(), setup.instantiate_property_reader());
-  auto time_scheme = setup.instantiate_timescheme(assembly->fields);
+  auto time_scheme = setup.instantiate_timescheme(assembly->fields,
+                                                  setup.get_simulation_type());
   return TestCase{ std::move(assembly), time_scheme, std::move(setup) };
 }
 
@@ -122,7 +123,7 @@ TEST(ImplicitNewmark3D, MatchesExplicitRunOnNaturalBoundaryMesh) {
     auto test_case = build_case_3d(fixture);
     auto solver = test_case.setup.instantiate_solver<5>(
         test_case.setup.get_dt(), *test_case.assembly, test_case.time_scheme,
-        {});
+        test_case.setup.get_simulation_type(), {});
     solver->run();
     explicit_traces = collect_traces(*test_case.assembly);
   }
@@ -276,7 +277,7 @@ TEST(ImplicitNewmark3D, RecreatesExplicitSteadyStateWithLargeSteps) {
     auto test_case = build_case_3d(fixture, "specfem_config.yaml");
     auto solver = test_case.setup.instantiate_solver<5>(
         test_case.setup.get_dt(), *test_case.assembly, test_case.time_scheme,
-        {});
+        test_case.setup.get_simulation_type(), {});
     solver->run();
     explicit_fields = collect_final_fields(*test_case.assembly);
   }

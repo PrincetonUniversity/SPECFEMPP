@@ -21,6 +21,7 @@
 #include <utility>
 
 template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 specfem::solver::ImplicitNewmarkSolver<Tags>::ImplicitNewmarkSolver(
     const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
     const std::vector<
@@ -67,6 +68,7 @@ specfem::solver::ImplicitNewmarkSolver<Tags>::ImplicitNewmarkSolver(
 }
 
 template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 void specfem::solver::ImplicitNewmarkSolver<Tags>::form_operator(
     const type_real dt) {
   using scalar_type = specfem::linear_system::scalar_type;
@@ -191,6 +193,7 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::form_operator(
 }
 
 template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 void specfem::solver::ImplicitNewmarkSolver<Tags>::extract_source_vector(
     const int istep, specfem::linear_system::vector_type &f) {
   constexpr auto forward = specfem::simulation::field_type::forward;
@@ -219,6 +222,7 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::extract_source_vector(
 }
 
 template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 void specfem::solver::ImplicitNewmarkSolver<Tags>::write_state_to_fields() {
   constexpr auto forward = specfem::simulation::field_type::forward;
 
@@ -250,6 +254,7 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::write_state_to_fields() {
 }
 
 template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 void specfem::solver::ImplicitNewmarkSolver<Tags>::run() {
   constexpr auto forward = specfem::simulation::field_type::forward;
   using scalar_type = specfem::linear_system::scalar_type;

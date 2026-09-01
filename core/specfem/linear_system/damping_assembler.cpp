@@ -7,14 +7,13 @@
 #include "specfem/linear_system/element_stiffness.hpp"
 #include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
-#include <Teuchos_ArrayView.hpp>
 #include <array>
-#include <cstddef>
 #include <sstream>
 #include <stdexcept>
 #include <vector>
 
 template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 specfem::linear_system::DampingAssembler<Tags>::DampingAssembler(
     AssemblyType &assembly, const DofMap &dof_map)
     : assembly_(assembly), dof_map_(dof_map) {
@@ -36,6 +35,7 @@ specfem::linear_system::DampingAssembler<Tags>::DampingAssembler(
 }
 
 template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 Teuchos::RCP<specfem::linear_system::crs_matrix_type>
 specfem::linear_system::DampingAssembler<Tags>::assemble() const {
   constexpr auto forward = specfem::simulation::field_type::forward;
@@ -99,38 +99,22 @@ specfem::linear_system::DampingAssembler<Tags>::assemble() const {
     }
   }
 
-  // Compact graph: ncomp entries per row at damping points, empty rows
-  // elsewhere -- a K-sized graph would waste a full matrix of memory on a
+  // Compact graph: C is block-diagonal, so the sparsity is one ncomp-sized
+  // coupling block per damping point and interior points contribute no rows
+  // at all -- a K-sized graph would waste a full matrix of memory on a
   // block-diagonal operator.
-  std::vector<std::size_t> entries_per_row(
-      static_cast<std::size_t>(dof_map_.num_global_dofs()), 0);
-  for (int iglob = 0; iglob < nglob; ++iglob) {
-    if (!is_damping_point[iglob]) {
-      continue;
-    }
-    for (int r = 0; r < ncomp; ++r) {
-      entries_per_row[static_cast<std::size_t>(dof_map_.gid(iglob, r))] = ncomp;
-    }
-  }
-
-  auto graph = Teuchos::rcp(
-      new crs_graph_type(dof_map_.overlap_map(),
-                         Teuchos::ArrayView<const std::size_t>(
-                             entries_per_row.data(), entries_per_row.size())));
-
   std::vector<global_ordinal_type> cols(ncomp);
-  for (int iglob = 0; iglob < nglob; ++iglob) {
-    if (!is_damping_point[iglob]) {
-      continue;
+  const auto graph = dof_map_.build_graph([&](const auto &visit) {
+    for (int iglob = 0; iglob < nglob; ++iglob) {
+      if (!is_damping_point[iglob]) {
+        continue;
+      }
+      for (int c = 0; c < ncomp; ++c) {
+        cols[c] = dof_map_.gid(iglob, c);
+      }
+      visit(cols);
     }
-    for (int c = 0; c < ncomp; ++c) {
-      cols[c] = dof_map_.gid(iglob, c);
-    }
-    for (int r = 0; r < ncomp; ++r) {
-      graph->insertGlobalIndices(dof_map_.gid(iglob, r), ncomp, cols.data());
-    }
-  }
-  graph->fillComplete(dof_map_.owned_map(), dof_map_.owned_map());
+  });
 
   auto matrix = Teuchos::rcp(new crs_matrix_type(graph));
   std::vector<scalar_type> values(ncomp);

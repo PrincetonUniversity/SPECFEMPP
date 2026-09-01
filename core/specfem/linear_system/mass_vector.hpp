@@ -29,13 +29,15 @@ namespace linear_system {
  * mass of component `icomp` at mesh point `iglob`.
  *
  * @tparam Tags Compile-time tags (dimension, medium, property, attenuation);
- *              only `dim3, elastic, isotropic, none` is instantiated
+ *              dimension must be `dim3`; only `dim3, elastic, isotropic,
+ *              none` is instantiated
  * @param assembly Assembled mesh, material properties, and fields; the
  *        forward field's mass storage is used as scratch
  * @param dof_map Dof numbering shared with the stiffness/damping matrices
  * @return Lumped mass vector on the owned map
  */
 template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 Teuchos::RCP<vector_type>
 assemble_mass_vector(specfem::assembly::assembly<Tags::dimension_tag> &assembly,
                      const DofMap &dof_map);

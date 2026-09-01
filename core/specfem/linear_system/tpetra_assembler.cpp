@@ -8,7 +8,6 @@
 #include "specfem/linear_system/element_stiffness.hpp"
 #include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
-#include <Teuchos_ArrayView.hpp>
 #include <algorithm>
 #include <cstddef>
 #include <sstream>
@@ -16,12 +15,11 @@
 #include <vector>
 
 template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 specfem::linear_system::StiffnessAssembler<Tags>::StiffnessAssembler(
     const AssemblyType &assembly, const int batch_size,
     const specfem::linear_system::StiffnessScope scope)
-    : assembly_(assembly),
-      dof_map_(DofMap::from_assembly<Tags::medium_tag>(assembly)),
-      batch_size_(batch_size) {
+    : assembly_(assembly), dof_map_(assembly, Tags{}), batch_size_(batch_size) {
 
   if (batch_size_ < 1) {
     throw std::runtime_error(
@@ -51,6 +49,7 @@ specfem::linear_system::StiffnessAssembler<Tags>::StiffnessAssembler(
 }
 
 template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 std::vector<specfem::linear_system::global_ordinal_type>
 specfem::linear_system::StiffnessAssembler<Tags>::element_column_gids(
     const int ispec) const {
@@ -81,65 +80,27 @@ specfem::linear_system::StiffnessAssembler<Tags>::element_column_gids(
 }
 
 template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 Teuchos::RCP<const specfem::linear_system::crs_graph_type>
 specfem::linear_system::StiffnessAssembler<Tags>::build_graph() const {
-  const auto &field = assembly_.fields.template get_simulation_field<
-      specfem::simulation::field_type::forward>();
-  const int ngllz = field.ngllz;
-  const int nglly = field.nglly;
-  const int ngllx = field.ngllx;
-  const int npoints = ngllz * nglly * ngllx;
-  const int ndof_e = ncomp * npoints;
-
   const auto elements =
       assembly_.element_types.get_elements_on_host(medium_tag);
 
-  // Pass 1: per-row allocation upper bound. A row interacts with every dof
-  // of every element sharing its mesh point; per-element duplicates are
-  // inserted raw in pass 2 (fillComplete merges them), so the bound must --
-  // and does exactly -- cover the raw insert count.
-  std::vector<std::size_t> adjacent(dof_map_.nglob(), 0);
-  for (int i = 0; i < elements.size(); ++i) {
-    const int ispec = elements(i);
-    for (int iz = 0; iz < ngllz; ++iz) {
-      for (int iy = 0; iy < nglly; ++iy) {
-        for (int ix = 0; ix < ngllx; ++ix) {
-          ++adjacent[field.template get_iglob<false, medium_tag>(ispec, iz, iy,
-                                                                 ix)];
-        }
-      }
+  // Every dof of an element couples to every other dof of that element, so
+  // the stiffness sparsity is one dense coupling block per element. The dof
+  // map turns that description into the library's graph; per-element
+  // duplicates at shared mesh points are inserted raw and merged by
+  // fillComplete, and the allocation bound it derives (block size per block
+  // a row appears in) covers the raw insert count exactly.
+  return dof_map_.build_graph([&](const auto &visit) {
+    for (int i = 0; i < elements.size(); ++i) {
+      visit(element_column_gids(elements(i)));
     }
-  }
-
-  std::vector<std::size_t> entries_per_row(
-      static_cast<std::size_t>(dof_map_.num_global_dofs()), 0);
-  for (int iglob = 0; iglob < dof_map_.nglob(); ++iglob) {
-    for (int icomp = 0; icomp < ncomp; ++icomp) {
-      entries_per_row[static_cast<std::size_t>(dof_map_.gid(iglob, icomp))] =
-          adjacent[iglob] * static_cast<std::size_t>(ndof_e);
-    }
-  }
-
-  auto graph = Teuchos::rcp(
-      new crs_graph_type(dof_map_.overlap_map(),
-                         Teuchos::ArrayView<const std::size_t>(
-                             entries_per_row.data(), entries_per_row.size())));
-
-  // Pass 2: every dof of an element couples to every other dof of that
-  // element, so each element contributes its full column list to each of its
-  // rows.
-  for (int i = 0; i < elements.size(); ++i) {
-    const auto cols = element_column_gids(elements(i));
-    for (int r = 0; r < ndof_e; ++r) {
-      graph->insertGlobalIndices(cols[r], ndof_e, cols.data());
-    }
-  }
-
-  graph->fillComplete(dof_map_.owned_map(), dof_map_.owned_map());
-  return graph;
+  });
 }
 
 template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 void specfem::linear_system::StiffnessAssembler<Tags>::fill_matrix(
     crs_matrix_type &matrix) const {
   const auto &field = assembly_.fields.template get_simulation_field<
@@ -189,6 +150,7 @@ void specfem::linear_system::StiffnessAssembler<Tags>::fill_matrix(
 }
 
 template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 Teuchos::RCP<specfem::linear_system::crs_matrix_type>
 specfem::linear_system::StiffnessAssembler<Tags>::assemble() const {
   const auto graph = build_graph();

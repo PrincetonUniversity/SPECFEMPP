@@ -130,16 +130,15 @@ struct ImplicitSolverConfig {
  * `stacey`.
  *
  * @tparam Tags Compile-time tags (dimension, medium, property, attenuation);
- *              only `dim3, elastic, isotropic, none` is instantiated
+ *              dimension must be `dim3`; only `dim3, elastic, isotropic,
+ *              none` is instantiated
  */
-template <typename Tags> class ImplicitNewmarkSolver : public solver {
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
+class ImplicitNewmarkSolver : public solver {
 public:
   constexpr static auto dimension_tag = Tags::dimension_tag;
   constexpr static auto medium_tag = Tags::medium_tag;
-
-  static_assert(dimension_tag == specfem::element::dimension_tag::dim3,
-                "ImplicitNewmarkSolver takes a dim3 assembly; Tags must be a "
-                "dim3 bundle.");
 
   using AssemblyType = specfem::assembly::assembly<dimension_tag>;
   using multivector_type =

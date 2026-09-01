@@ -11,14 +11,11 @@
 #include <stdexcept>
 
 template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 Teuchos::RCP<specfem::linear_system::vector_type>
 specfem::linear_system::assemble_mass_vector(
     specfem::assembly::assembly<Tags::dimension_tag> &assembly,
     const DofMap &dof_map) {
-
-  static_assert(Tags::dimension_tag == specfem::element::dimension_tag::dim3,
-                "assemble_mass_vector takes a dim3 assembly; Tags must be a "
-                "dim3 bundle.");
 
   if (assembly.mesh.element_grid != 5) {
     throw std::runtime_error(

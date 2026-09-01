@@ -104,8 +104,7 @@ protected:
   static const specfem::linear_system::DofMap &dof_map() {
     if (!dof_map_) {
       dof_map_ = std::make_unique<specfem::linear_system::DofMap>(
-          specfem::linear_system::DofMap::from_assembly<elastic_tag>(
-              assembly()));
+          assembly(), DampingTags{});
     }
     return *dof_map_;
   }
@@ -142,8 +141,7 @@ type_real max_abs_entry(
 TEST(DampingAssemblerScope3D, EmptyOnNaturalBoundaryMesh) {
   const auto assembly =
       build_assembly_3d("HomogeneousHalfspaceSmallNoABCForceSource");
-  const auto dof_map =
-      specfem::linear_system::DofMap::from_assembly<elastic_tag>(*assembly);
+  const auto dof_map = specfem::linear_system::DofMap(*assembly, DampingTags{});
   DampingAssemblerType assembler(*assembly, dof_map);
   const auto matrix = assembler.assemble();
   EXPECT_EQ(matrix->getGlobalNumEntries(), 0u)

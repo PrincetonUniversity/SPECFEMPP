@@ -4,7 +4,7 @@
 ==========================
 
 Utilities for assembling the spectral-element operator into an explicit
-linear system (issues #1982, #1984). Provides dense element stiffness
+linear system. Provides dense element stiffness
 extraction -- probing the matrix-free element operator with local unit
 vectors -- for the 3D elastic isotropic medium, plus a scope validator that
 rejects meshes outside the supported tag combination. The validator has two
@@ -16,16 +16,35 @@ assemble the damping matrix separately.
 
 When SPECFEM++ is built with Trilinos (``SPECFEM_ENABLE_TRILINOS=ON``), the
 module additionally provides ``DofMap`` -- the per-medium mapping from
-SPECFEM++ ``(iglob, icomp)`` degrees of freedom to Tpetra global ids, with
+SPECFEM++ ``(iglob, icomp)`` degrees of freedom to solver global ids, with
 component-blocked layout ``gid = icomp * nglob + iglob`` matching field
-storage -- and ``StiffnessAssembler``, which assembles the global stiffness
-matrix :math:`K` of one medium as a ``Tpetra::CrsMatrix`` by scattering
-batched dense element blocks into a ``Tpetra::CrsGraph`` built from element
-connectivity. The assembled operator satisfies :math:`K u =` internal force
-:math:`= -\mathrm{accel}` of the matrix-free
-``compute_stiffness_interaction`` kernel (before mass division). Assembly is
-serial-only in this milestone; the owned/overlap map split in ``DofMap``
-keeps the API ready for distributed Export(ADD) assembly.
+storage.
+
+``DofMap`` is a composition of two independent halves
+(``BasicDofMap<Numbering, Connections>``), split so the linear system is not
+welded to one solver library. ``DofNumbering`` holds the SPECFEM++
+quantities -- ``nglob``, ``ncomp``, and the ``gid`` layout -- and names no
+library type at all, so it compiles without Trilinos. ``TpetraConnections``
+holds everything Teuchos/Tpetra: the communicator, the owned (row) and
+overlap (column) maps, and sparsity-graph construction. Callers describe a
+matrix's structure as a *coupling pattern* -- a replayable sequence of dense
+blocks of global dof ids that all couple to one another -- and
+``DofMap::build_graph`` turns it into the library's graph; deriving the
+per-row allocation bound and inserting the indices are the library's
+business, not the assembler's. Moving to another library that builds
+compressed-row matrices from a graph therefore means writing a second
+``Connections`` class, leaving the numbering, the assemblers, and the solver
+untouched.
+
+``StiffnessAssembler`` assembles the global stiffness matrix :math:`K` of one
+medium as a ``Tpetra::CrsMatrix`` by scattering batched dense element blocks
+into the graph of its coupling pattern (one block per spectral element, since
+every dof of an element couples to every other). The assembled operator
+satisfies :math:`K u =` internal force :math:`= -\mathrm{accel}` of the
+matrix-free ``compute_stiffness_interaction`` kernel (before mass division).
+Assembly is serial-only in this milestone; the owned/overlap map split in
+``TpetraConnections`` keeps the API ready for distributed Export(ADD)
+assembly.
 
 Toward the implicit Newmark solver (issue #1984), the module also assembles
 the remaining operators of the equation of motion

@@ -69,8 +69,7 @@ std::unique_ptr<AssemblyType> build_assembly_3d(const std::string &test_name) {
 
 void check_mass_vector(const std::string &fixture) {
   const auto assembly = build_assembly_3d(fixture);
-  const auto dof_map =
-      specfem::linear_system::DofMap::from_assembly<elastic_tag>(*assembly);
+  const auto dof_map = specfem::linear_system::DofMap(*assembly, MassTags{});
   const auto mass = specfem::linear_system::assemble_mass_vector<MassTags>(
       *assembly, dof_map);
 
