@@ -172,6 +172,19 @@ specfem_add_test(assembly_mpi_dim3_8proc_tests
 # This is the only test target that links a Fortran archive, which is half of
 # what it is here to verify.
 if(SPECFEM_BUILD_MESHFEM3D_GLOBE)
+  specfem_add_test(io_mesh_dim3_globe_tests
+    MPI_RANKS 6
+    TIMEOUT 300
+    LABELS unit io mesh globe
+    SOURCES   io/mesh/dim3_globe/read_mesh.cpp
+              io/mesh/dim3_globe/runner.cpp
+    LIBRARIES specfem::io
+              specfem::mesh
+              specfem_environment
+              MPI::MPI_CXX
+              -lpthread -lm
+  )
+
   specfem_add_test(globe_model_prem_tests
     MPI_RANKS 1
     SOURCES   models/prem.cpp
