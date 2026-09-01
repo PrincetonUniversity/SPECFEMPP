@@ -59,9 +59,10 @@ public:
    *        acoustic_free_surface index (-1 if element has no free surface)
    * @param boundary_tag Per-element boundary tag containers to update
    */
+  template <specfem::simulation::model ModelTag>
   acoustic_free_surface(
       const int nspec, const int ngllz, const int nglly, const int ngllx,
-      const specfem::mesh::mesh<dimension_tag> &mesh,
+      const specfem::mesh::mesh<ModelTag> &mesh,
       const specfem::assembly::mesh<dimension_tag> &mesh_assembly,
       const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,
       std::vector<specfem::element::boundary_tag_container> &boundary_tag);

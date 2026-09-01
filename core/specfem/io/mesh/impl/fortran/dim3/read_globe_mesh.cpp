@@ -256,16 +256,15 @@ bool same_interface_entity(const mpi_element_description &left,
   return true;
 }
 
-void build_mpi_adjacency(
-    specfem::mesh::mesh<specfem::element::dimension_tag::dim3> &mesh) {
-  if (!mesh.globe.has_value() || mesh.globe->mpi_interfaces.empty()) {
+void build_mpi_adjacency(specfem::mesh::globe3d_mesh &mesh) {
+  if (mesh.globe.mpi_interfaces.empty()) {
     return;
   }
 #ifndef SPECFEM_ENABLE_MPI
   throw std::runtime_error(
       "A partitioned globe database requires an MPI-enabled build");
 #else
-  auto &interfaces = mesh.globe->mpi_interfaces;
+  auto &interfaces = mesh.globe.mpi_interfaces;
   const int ninterfaces = static_cast<int>(interfaces.size());
   std::vector<std::vector<mpi_element_description>> local(ninterfaces);
   std::vector<std::vector<mpi_element_description>> remote(ninterfaces);
@@ -409,7 +408,7 @@ make_materials(const std::vector<int> &medium_tags,
 
 } // namespace specfem::io::mesh::impl::fortran::dim3_impl
 
-specfem::mesh::mesh<specfem::element::dimension_tag::dim3>
+specfem::mesh::globe3d_mesh
 specfem::io::mesh::impl::fortran::dim3::read_globe_mesh(
     const std::string &database_file,
     const specfem::attenuation::Setup &attenuation_setup) {
@@ -433,9 +432,8 @@ specfem::io::mesh::impl::fortran::dim3::read_globe_mesh(
                              std::to_string(version));
   }
 
-  specfem::mesh::mesh<Dimension::dim3> mesh;
-  mesh.globe.emplace();
-  auto &globe = *mesh.globe;
+  specfem::mesh::globe3d_mesh mesh;
+  auto &globe = mesh.globe;
   globe.format_version = version;
 
   specfem::io::fortran_read_line(stream, &globe.model_config.planet_type,
@@ -634,7 +632,6 @@ specfem::io::mesh::impl::fortran::dim3::read_globe_mesh(
   mesh.tags = specfem::mesh::tags<Dimension::dim3>(
       mesh.nspec, mesh.materials, mesh.adjacency_graph, mesh.boundaries);
 
-  mesh.suppress_utm_projection = true;
   mesh.setup_coupled_interfaces();
   if (attenuation_enabled) {
     if (!attenuation_setup.f0.has_value()) {
@@ -652,8 +649,7 @@ specfem::io::mesh::impl::fortran::dim3::read_globe_mesh(
   return mesh;
 }
 
-specfem::mesh::mesh<specfem::element::dimension_tag::dim3>
-specfem::io::read_globe_mesh(
+specfem::mesh::globe3d_mesh specfem::io::read_globe_mesh(
     const std::string &database_file,
     const specfem::attenuation::Setup &attenuation_setup) {
   return specfem::io::mesh::impl::fortran::dim3::read_globe_mesh(

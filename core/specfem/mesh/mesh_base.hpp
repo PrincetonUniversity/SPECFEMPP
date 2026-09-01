@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/element.hpp"
+#include "specfem/simulation.hpp"
 
 namespace specfem {
 
@@ -10,7 +11,11 @@ namespace mesh {
  *
  * @tparam DimensionTag Dimension type
  */
-template <specfem::element::dimension_tag DimensionTag> struct mesh;
+template <specfem::simulation::model ModelTag> struct mesh;
+
+using cartesian2d_mesh = mesh<specfem::simulation::model::Cartesian2D>;
+using cartesian3d_mesh = mesh<specfem::simulation::model::Cartesian3D>;
+using globe3d_mesh = mesh<specfem::simulation::model::Globe3D>;
 
 /**
  * @brief Struct to store general parameters for the mesh

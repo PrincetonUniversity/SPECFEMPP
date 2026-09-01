@@ -1,29 +1,28 @@
 #include "globe_properties.hpp"
 
-#ifdef SPECFEM_HAS_GLOBE_MODEL
+#include <stdexcept>
+
+#if SPECFEM_HAS_GLOBE_MODEL
 #include "specfem/globe_model.hpp"
 #include "specfem/point.hpp"
 #include "specfem/tags.hpp"
 #include "specfem/utilities/logarithmic_center.hpp"
 #include <cmath>
-#include <stdexcept>
 #include <vector>
+#endif
 
 namespace specfem::assembly::dim3_impl {
 
-void build_globe_properties(
-    const specfem::mesh::mesh<specfem::element::dimension_tag::dim3>
-        &input_mesh,
+#if SPECFEM_HAS_GLOBE_MODEL
+void read_globe_properties(
+    const specfem::mesh::globe3d_mesh &input_mesh,
     specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
         &assembly) {
   using Dimension = specfem::element::dimension_tag;
   using Medium = specfem::element::medium_tag;
   using Property = specfem::element::property_tag;
 
-  if (!input_mesh.globe.has_value()) {
-    return;
-  }
-  const auto &globe = *input_mesh.globe;
+  const auto &globe = input_mesh.globe;
   specfem::globe_model::Evaluator evaluator(globe.model_config);
   const auto evaluator_dims = evaluator.dims();
   if (evaluator_dims.ngllx != assembly.mesh.element_grid.ngllx ||
@@ -150,6 +149,14 @@ void build_globe_properties(
   }
   assembly.properties.copy_to_device();
 }
+#else
+void read_globe_properties(
+    const specfem::mesh::globe3d_mesh &,
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &) {
+  throw std::runtime_error(
+      "This build cannot consume globe meshes; configure with "
+      "SPECFEM_BUILD_MESHFEM3D_GLOBE=ON");
+}
+#endif
 
 } // namespace specfem::assembly::dim3_impl
-#endif

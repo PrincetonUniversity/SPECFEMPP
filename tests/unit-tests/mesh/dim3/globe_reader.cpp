@@ -128,20 +128,19 @@ TEST(GlobeMeshReader, ReadsThinDatabaseAndPreservesReferenceContext) {
                                                  specfem::attenuation::Setup{});
   std::filesystem::remove(path);
 
-  ASSERT_TRUE(mesh.globe.has_value());
   EXPECT_EQ(mesh.nspec, 1);
   EXPECT_EQ(mesh.control_nodes.ngnod, 27);
   EXPECT_EQ(mesh.control_nodes.nnodes, 27);
-  EXPECT_EQ(mesh.globe->model_config.model_name, "PREM");
-  EXPECT_EQ(mesh.globe->model_verification.codes,
+  EXPECT_EQ(mesh.globe.model_config.model_name, "PREM");
+  EXPECT_EQ(mesh.globe.model_verification.codes,
             (std::vector<int>{ 1, 0, 0, 0, 0 }));
-  EXPECT_EQ(mesh.globe->model_config.nchunks, 6);
-  ASSERT_EQ(mesh.globe->element_context.size(), 1);
-  EXPECT_EQ(mesh.globe->element_context[0].region, 1);
-  EXPECT_EQ(mesh.globe->element_context[0].idoubling, 4);
-  EXPECT_FALSE(mesh.globe->element_context[0].element_in_crust);
-  EXPECT_TRUE(mesh.globe->element_context[0].element_in_mantle);
-  EXPECT_DOUBLE_EQ(mesh.globe->reference_coordinates(26, 2), 3026.0);
+  EXPECT_EQ(mesh.globe.model_config.nchunks, 6);
+  ASSERT_EQ(mesh.globe.element_context.size(), 1);
+  EXPECT_EQ(mesh.globe.element_context[0].region, 1);
+  EXPECT_EQ(mesh.globe.element_context[0].idoubling, 4);
+  EXPECT_FALSE(mesh.globe.element_context[0].element_in_crust);
+  EXPECT_TRUE(mesh.globe.element_context[0].element_in_mantle);
+  EXPECT_DOUBLE_EQ(mesh.globe.reference_coordinates(26, 2), 3026.0);
   EXPECT_EQ(mesh.control_nodes.control_node_index(0, 26), 26);
   EXPECT_EQ(mesh.boundaries.acoustic_free_surface.nelem_acoustic_surface, 1);
 }

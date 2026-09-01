@@ -20,10 +20,13 @@ namespace specfem {
 
 namespace mesh {
 
-template <> struct mesh<specfem::element::dimension_tag::dim2> {
+template <> struct mesh<specfem::simulation::model::Cartesian2D> {
 
+  constexpr static auto model_tag =
+      specfem::simulation::model::Cartesian2D; ///< Simulation model
   constexpr static auto dimension =
-      specfem::element::dimension_tag::dim2; ///< Dimension
+      specfem::simulation::dimension_for_model<model_tag>; ///< Dimension
+  constexpr static auto dimension_tag = dimension;         ///< Dimension tag
 
   int npgeo; ///< Total number of spectral element control nodes
   int nspec; ///< Total number of spectral elements
@@ -84,9 +87,9 @@ template <> struct mesh<specfem::element::dimension_tag::dim2> {
    *
    * @code{.cpp}
    * // Example of how to use this constructor
-   * specfem::mesh::mesh<dimension> mesh(
-   *    npgeo, nspec, nproc, control_nodes, parameters, coupled_interfaces,
-   *    boundaries, tags, tangential_nodes, axial_nodes, materials);
+   * specfem::mesh::cartesian2d_mesh mesh(
+   *    npgeo, nspec, nproc, control_nodes, parameters, boundaries, tags,
+   *    tangential_nodes, axial_nodes, materials);
    * @endcode
    */
   mesh(const int npgeo, const int nspec, const int nproc,
@@ -143,7 +146,7 @@ template <> struct mesh<specfem::element::dimension_tag::dim2> {
    * have been populated from MESHFEM2D database files.
    */
   void setup_coupled_interfaces(
-      const std::set<std::pair<int, int> > &coupled_interfaces);
+      const std::set<std::pair<int, int>> &coupled_interfaces);
 };
 } // namespace mesh
 } // namespace specfem

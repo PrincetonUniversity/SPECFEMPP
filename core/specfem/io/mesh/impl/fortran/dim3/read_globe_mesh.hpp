@@ -7,7 +7,7 @@
 namespace specfem::io::mesh::impl::fortran::dim3 {
 
 /** @brief Read a thin SPECFEM3D_GLOBE database. */
-specfem::mesh::mesh<specfem::element::dimension_tag::dim3>
+specfem::mesh::globe3d_mesh
 read_globe_mesh(const std::string &database_file,
                 const specfem::attenuation::Setup &attenuation_setup);
 

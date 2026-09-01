@@ -174,7 +174,7 @@ void check_adjacency_graph(
 }
 
 std::string
-specfem::mesh::mesh<specfem::element::dimension_tag::dim2>::print() const {
+specfem::mesh::mesh<specfem::simulation::model::Cartesian2D>::print() const {
 
   int n_elastic;
   int n_acoustic;
@@ -221,7 +221,7 @@ specfem::mesh::mesh<specfem::element::dimension_tag::dim2>::print() const {
 }
 
 void specfem::mesh::mesh<
-    specfem::element::dimension_tag::dim2>::check_consistency() const {
+    specfem::simulation::model::Cartesian2D>::check_consistency() const {
   if (this->npgeo <= 0) {
     throw std::runtime_error(
         "Number of geometric points must be greater than 0.");
@@ -235,9 +235,9 @@ void specfem::mesh::mesh<
   check_adjacency_graph(this->adjacency_graph, this->control_nodes);
 }
 
-void specfem::mesh::mesh<specfem::element::dimension_tag::dim2>::
+void specfem::mesh::mesh<specfem::simulation::model::Cartesian2D>::
     setup_coupled_interfaces(
-        const std::set<std::pair<int, int> > &coupled_interfaces) {
+        const std::set<std::pair<int, int>> &coupled_interfaces) {
   auto &graph = this->adjacency_graph.local_connections();
   auto &materials = this->materials;
 

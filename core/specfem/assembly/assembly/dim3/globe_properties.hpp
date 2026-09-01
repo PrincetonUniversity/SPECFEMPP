@@ -6,8 +6,8 @@
 namespace specfem::assembly::dim3_impl {
 
 /** @brief Populate GLL properties by querying the globe model evaluator. */
-void build_globe_properties(
-    const specfem::mesh::mesh<specfem::element::dimension_tag::dim3> &mesh,
+void read_globe_properties(
+    const specfem::mesh::globe3d_mesh &mesh,
     specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
         &assembly);
 

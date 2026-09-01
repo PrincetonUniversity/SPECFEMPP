@@ -65,7 +65,7 @@ namespace io {
  * @endcode
  *
  */
-specfem::mesh::mesh<specfem::element::dimension_tag::dim2>
+specfem::mesh::cartesian2d_mesh
 read_2d_mesh(const std::string &filename,
              const specfem::enums::elastic_wave wave,
              const specfem::enums::electromagnetic_wave electromagnetic_wave,
@@ -78,19 +78,19 @@ read_2d_mesh(const std::string &filename,
  *
  * @param database_file Path to the binary mesh database
  * @param attenuation_setup Attenuation configuration
- * @return specfem::mesh::mesh<specfem::element::dimension_tag::dim3>
+ * @return specfem::mesh::mesh<specfem::simulation::model::Cartesian3D>
  *
  * @code
  * auto mesh = specfem::io::read_3d_mesh("database.bin",
  *                                        specfem::attenuation::Setup{});
  * @endcode
  */
-specfem::mesh::mesh<specfem::element::dimension_tag::dim3>
+specfem::mesh::cartesian3d_mesh
 read_3d_mesh(const std::string &database_file,
              const specfem::attenuation::Setup &attenuation_setup);
 
 /** @brief Read a thin SPECFEM3D_GLOBE mesh database. */
-specfem::mesh::mesh<specfem::element::dimension_tag::dim3>
+specfem::mesh::globe3d_mesh
 read_globe_mesh(const std::string &database_file,
                 const specfem::attenuation::Setup &attenuation_setup);
 
