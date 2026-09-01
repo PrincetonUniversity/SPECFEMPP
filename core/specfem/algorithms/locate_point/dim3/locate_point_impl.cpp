@@ -591,9 +591,9 @@ std::pair<std::pair<type_real, type_real>, bool> locate_point(
                      Kokkos::HostSpace>
       coorg("coorg", mesh.ngnod);
   for (int i = 0; i < mesh.ngnod; i++) {
-    coorg(i).x = mesh.h_control_node_coordinates(0, ispec, i);
-    coorg(i).y = mesh.h_control_node_coordinates(1, ispec, i);
-    coorg(i).z = mesh.h_control_node_coordinates(2, ispec, i);
+    coorg(i).x = mesh.h_control_node_coordinates(ispec, i, 0);
+    coorg(i).y = mesh.h_control_node_coordinates(ispec, i, 1);
+    coorg(i).z = mesh.h_control_node_coordinates(ispec, i, 2);
   }
 
   // initial guess of 0 (center of edge)
