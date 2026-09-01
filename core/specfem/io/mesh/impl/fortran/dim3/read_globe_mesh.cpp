@@ -8,6 +8,7 @@
 #include "specfem/mpi.hpp"
 #include "specfem/units.hpp"
 #include "specfem/utilities/band.hpp"
+#include <Kokkos_Core.hpp>
 #include <algorithm>
 #include <array>
 #include <boost/graph/adjacency_list.hpp>
@@ -130,14 +131,30 @@ specfem::mesh::globe_boundary_surface read_surface(std::ifstream &stream,
     specfem::io::fortran_read_line(stream, &result.elements, &faces);
   }
   result.faces.resize(nfaces);
-  for (int iface = 0; iface < nfaces; ++iface) {
-    if (result.elements[iface] < 1 || result.elements[iface] > nspec ||
-        faces[iface] < 1 || faces[iface] > 6) {
-      throw std::runtime_error("Invalid boundary entry in globe mesh database");
-    }
-    --result.elements[iface];
-    result.faces[iface] =
-        static_cast<specfem::mesh_entity::dim3::type>(faces[iface]);
+  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace,
+               Kokkos::MemoryTraits<Kokkos::Unmanaged>>
+      element_view(result.elements.data(), nfaces),
+      faces_view(faces.data(), nfaces);
+  Kokkos::View<specfem::mesh_entity::dim3::type *, Kokkos::LayoutLeft,
+               Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>
+      surface_face_view(result.faces.data(), nfaces);
+  int invalid_boundary_count = 0;
+  Kokkos::parallel_reduce(
+      "specfem::io::mesh::dim3::read_globe_mesh::read_surface",
+      Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0, nfaces),
+      [=](const int iface, int &local_invalid_boundary_count) {
+        if (element_view(iface) < 1 || element_view(iface) > nspec ||
+            faces_view(iface) < 1 || faces_view(iface) > 6) {
+          ++local_invalid_boundary_count;
+          return;
+        }
+        --element_view(iface);
+        surface_face_view(iface) =
+            static_cast<specfem::mesh_entity::dim3::type>(faces_view(iface));
+      },
+      invalid_boundary_count);
+  if (invalid_boundary_count > 0) {
+    throw std::runtime_error("Invalid boundary entry in globe mesh database");
   }
   return result;
 }
@@ -495,11 +512,19 @@ specfem::io::mesh::impl::fortran::dim3::read_globe_mesh(
   mesh.control_nodes = { ngnod, nnode };
   std::vector<double> x(nnode), y(nnode), z(nnode);
   specfem::io::fortran_read_line(stream, &x, &y, &z);
-  for (int inode = 0; inode < nnode; ++inode) {
-    mesh.control_nodes.coordinates(inode, 0) = x[inode];
-    mesh.control_nodes.coordinates(inode, 1) = y[inode];
-    mesh.control_nodes.coordinates(inode, 2) = z[inode];
-  }
+  auto coordinates = mesh.control_nodes.coordinates;
+  Kokkos::View<double *, Kokkos::LayoutLeft, Kokkos::HostSpace,
+               Kokkos::MemoryTraits<Kokkos::Unmanaged>>
+      x_view(x.data(), nnode), y_view(y.data(), nnode), z_view(z.data(), nnode);
+  Kokkos::parallel_for(
+      "specfem::io::mesh::dim3::read_globe_mesh::copy_coordinates",
+      Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0, nnode),
+      [=](const int inode) {
+        coordinates(inode, 0) = x_view(inode);
+        coordinates(inode, 1) = y_view(inode);
+        coordinates(inode, 2) = z_view(inode);
+      });
+  Kokkos::fence();
   reader_impl::set_coordinate_bounds(mesh.control_nodes);
 
   globe.reference_coordinates =
@@ -508,17 +533,20 @@ specfem::io::mesh::impl::fortran::dim3::read_globe_mesh(
   if (globe.has_reference_geometry) {
     specfem::io::fortran_read_line(stream, &x, &y, &z);
   }
-  for (int inode = 0; inode < nnode; ++inode) {
-    globe.reference_coordinates(inode, 0) =
-        globe.has_reference_geometry ? x[inode]
-                                     : mesh.control_nodes.coordinates(inode, 0);
-    globe.reference_coordinates(inode, 1) =
-        globe.has_reference_geometry ? y[inode]
-                                     : mesh.control_nodes.coordinates(inode, 1);
-    globe.reference_coordinates(inode, 2) =
-        globe.has_reference_geometry ? z[inode]
-                                     : mesh.control_nodes.coordinates(inode, 2);
-  }
+  const bool has_reference_geometry = globe.has_reference_geometry;
+  auto reference_coordinates = globe.reference_coordinates;
+  Kokkos::parallel_for(
+      "specfem::io::mesh::dim3::read_globe_mesh::copy_reference_coordinates",
+      Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0, nnode),
+      [=](const int inode) {
+        reference_coordinates(inode, 0) =
+            has_reference_geometry ? x_view(inode) : coordinates(inode, 0);
+        reference_coordinates(inode, 1) =
+            has_reference_geometry ? y_view(inode) : coordinates(inode, 1);
+        reference_coordinates(inode, 2) =
+            has_reference_geometry ? z_view(inode) : coordinates(inode, 2);
+      });
+  Kokkos::fence();
 
   specfem::io::fortran_read_line(stream, &mesh.nspec);
   if (mesh.nspec <= 0) {
@@ -533,27 +561,62 @@ specfem::io::mesh::impl::fortran::dim3::read_globe_mesh(
   specfem::io::fortran_read_line(stream, &rmin, &rmax);
   std::vector<bool> in_crust(mesh.nspec), in_mantle(mesh.nspec);
   specfem::io::fortran_read_line(stream, &in_crust, &in_mantle);
-  globe.element_context.resize(mesh.nspec);
+  std::vector<int> in_crust_values(mesh.nspec), in_mantle_values(mesh.nspec);
   for (int ispec = 0; ispec < mesh.nspec; ++ispec) {
-    globe.element_context[ispec] = { regions[ispec],  idoubling[ispec],
-                                     rmin[ispec],     rmax[ispec],
-                                     in_crust[ispec], in_mantle[ispec] };
+    in_crust_values[ispec] = in_crust[ispec] ? 1 : 0;
+    in_mantle_values[ispec] = in_mantle[ispec] ? 1 : 0;
   }
+  globe.element_context.resize(mesh.nspec);
+  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace,
+               Kokkos::MemoryTraits<Kokkos::Unmanaged>>
+      regions_view(regions.data(), mesh.nspec),
+      idoubling_view(idoubling.data(), mesh.nspec),
+      in_crust_view(in_crust_values.data(), mesh.nspec),
+      in_mantle_view(in_mantle_values.data(), mesh.nspec);
+  Kokkos::View<double *, Kokkos::LayoutLeft, Kokkos::HostSpace,
+               Kokkos::MemoryTraits<Kokkos::Unmanaged>>
+      rmin_view(rmin.data(), mesh.nspec), rmax_view(rmax.data(), mesh.nspec);
+  Kokkos::View<specfem::mesh::globe_element_context *, Kokkos::LayoutLeft,
+               Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>
+      element_context_view(globe.element_context.data(), mesh.nspec);
+  Kokkos::parallel_for(
+      "specfem::io::mesh::dim3::read_globe_mesh::element_context",
+      Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0, mesh.nspec),
+      [=](const int ispec) {
+        element_context_view(
+            ispec) = { regions_view(ispec),       idoubling_view(ispec),
+                       rmin_view(ispec),          rmax_view(ispec),
+                       in_crust_view(ispec) != 0, in_mantle_view(ispec) != 0 };
+      });
+  Kokkos::fence();
 
   std::vector<int> node_ids(static_cast<std::size_t>(ngnod) * mesh.nspec);
   specfem::io::fortran_read_line(stream, &node_ids);
   mesh.control_nodes.control_node_index =
       Kokkos::View<int **, Kokkos::LayoutLeft, Kokkos::HostSpace>(
           "specfem::mesh::globe_control_node_index", mesh.nspec, ngnod);
-  for (int ispec = 0; ispec < mesh.nspec; ++ispec) {
-    for (int globe_anchor = 0; globe_anchor < ngnod; ++globe_anchor) {
-      const int inode = node_ids[ispec * ngnod + globe_anchor] - 1;
-      if (inode < 0 || inode >= nnode) {
-        throw std::runtime_error("Invalid anchor node ID in globe database");
-      }
-      const int specfem_anchor = globe_to_specfem_hex27[globe_anchor];
-      mesh.control_nodes.control_node_index(ispec, specfem_anchor) = inode;
-    }
+  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace,
+               Kokkos::MemoryTraits<Kokkos::Unmanaged>>
+      node_ids_view(node_ids.data(), node_ids.size());
+  auto control_node_index = mesh.control_nodes.control_node_index;
+  int invalid_anchor_count = 0;
+  Kokkos::parallel_reduce(
+      "specfem::io::mesh::dim3::read_globe_mesh::control_node_index",
+      Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace, Kokkos::Rank<2>>(
+          { 0, 0 }, { mesh.nspec, ngnod }),
+      [=](const int ispec, const int globe_anchor,
+          int &local_invalid_anchor_count) {
+        const int inode = node_ids_view(ispec * ngnod + globe_anchor) - 1;
+        if (inode < 0 || inode >= nnode) {
+          ++local_invalid_anchor_count;
+          return;
+        }
+        const int specfem_anchor = globe_to_specfem_hex27[globe_anchor];
+        control_node_index(ispec, specfem_anchor) = inode;
+      },
+      invalid_anchor_count);
+  if (invalid_anchor_count > 0) {
+    throw std::runtime_error("Invalid anchor node ID in globe database");
   }
 
   globe.free_surface = reader_impl::read_surface(stream, mesh.nspec);
@@ -564,11 +627,25 @@ specfem::io::mesh::impl::fortran::dim3::read_globe_mesh(
   specfem::mesh::absorbing_boundary<Dimension::dim3> absorbing(0);
   specfem::mesh::acoustic_free_surface<Dimension::dim3> free_surface(
       static_cast<int>(globe.free_surface.elements.size()));
-  for (int iface = 0;
-       iface < static_cast<int>(globe.free_surface.elements.size()); ++iface) {
-    free_surface.index_mapping(iface) = globe.free_surface.elements[iface];
-    free_surface.type(iface) = globe.free_surface.faces[iface];
-  }
+  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace,
+               Kokkos::MemoryTraits<Kokkos::Unmanaged>>
+      free_surface_elements_view(globe.free_surface.elements.data(),
+                                 globe.free_surface.elements.size());
+  Kokkos::View<specfem::mesh_entity::dim3::type *, Kokkos::LayoutLeft,
+               Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>
+      free_surface_faces_view(globe.free_surface.faces.data(),
+                              globe.free_surface.faces.size());
+  auto free_surface_index_mapping = free_surface.index_mapping;
+  auto free_surface_type = free_surface.type;
+  Kokkos::parallel_for(
+      "specfem::io::mesh::dim3::read_globe_mesh::free_surface",
+      Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(
+          0, static_cast<int>(globe.free_surface.elements.size())),
+      [=](const int iface) {
+        free_surface_index_mapping(iface) = free_surface_elements_view(iface);
+        free_surface_type(iface) = free_surface_faces_view(iface);
+      });
+  Kokkos::fence();
   mesh.boundaries = { absorbing, free_surface };
 
   int nadjacencies = 0;

@@ -64,11 +64,9 @@ add_subdirectory(algorithms)
 add_subdirectory(element_coupling)
 add_subdirectory(ellipticity)
 
-# C++ binding for the SPECFEM3D_GLOBE model evaluator. Requires the globe
-# Fortran tree, so it is only available when that is built.
-if(SPECFEM_BUILD_MESHFEM3D_GLOBE)
-    add_subdirectory(globe_model)
-endif()
+# C++ binding for the SPECFEM3D_GLOBE model evaluator. In non-globe builds this
+# provides a throwing stub so callers can compile without the Fortran catalog.
+add_subdirectory(globe_model)
 
 add_subdirectory(assembly)
 add_subdirectory(compute)
