@@ -79,13 +79,60 @@ TestCase build_case_3d(const std::string &test_name) {
   return test_case;
 }
 
-TEST(ImplicitSolverScope3D, RejectsExplicitBeta) {
+// beta = 0 has no displacement-form operator: at beta = 0, u_{n+1} does not
+// depend on a_{n+1}, so the map the form must invert is singular. This is a
+// property of the form, not of the solver -- see the acceleration-form test
+// below, which accepts the same beta.
+TEST(ImplicitSolverScope3D, RejectsExplicitBetaInDisplacementForm) {
   auto test_case = build_case_3d("HomogeneousHalfspaceSmallNoABCForceSource");
   specfem::solver::ImplicitSolverConfig config;
+  config.form = specfem::solver::NewmarkForm::displacement;
   config.newmark.beta = 0;
   EXPECT_THROW(
       SolverType solver(test_case.time_scheme, {}, *test_case.assembly, config),
       std::runtime_error);
+}
+
+// The acceleration form's operator is M + gamma dt C + beta dt^2 K, which is
+// regular at beta = 0. On a mesh without Stacey boundaries C is empty, so the
+// operator collapses to the lumped mass -- the explicit scheme's effective
+// mass, which is what makes the beta = 0 run reproduce the explicit solver.
+TEST(ImplicitSolver3D, AcceptsExplicitBetaInAccelerationForm) {
+  auto test_case = build_case_3d("HomogeneousHalfspaceSmallNoABCForceSource");
+  specfem::solver::ImplicitSolverConfig config;
+  config.form = specfem::solver::NewmarkForm::acceleration;
+  config.newmark.beta = 0;
+  config.newmark.gamma = static_cast<type_real>(0.5);
+  SolverType solver(test_case.time_scheme, {}, *test_case.assembly, config);
+
+  EXPECT_EQ(solver.damping()->getGlobalNumEntries(), 0u)
+      << "the no-ABC fixture must produce an empty damping matrix";
+
+  // A x == M x exactly: beta dt^2 K vanishes and C is empty.
+  const auto &dof_map = solver.dof_map();
+  VectorType x(dof_map.owned_map());
+  x.randomize();
+
+  VectorType a_x(dof_map.owned_map()), reference(dof_map.owned_map());
+  solver.system_operator()->apply(x, a_x);
+  reference.elementWiseMultiply(static_cast<type_real>(1), *solver.mass(), x,
+                                static_cast<type_real>(0));
+
+  type_real scale = 0;
+  type_real max_diff = 0;
+  {
+    const auto a_view = a_x.getLocalViewHost(Tpetra::Access::ReadOnly);
+    const auto ref_view = reference.getLocalViewHost(Tpetra::Access::ReadOnly);
+    for (std::size_t dof = 0;
+         dof < static_cast<std::size_t>(dof_map.num_global_dofs()); ++dof) {
+      scale = std::max(scale, std::abs(ref_view(dof, 0)));
+      max_diff =
+          std::max(max_diff, std::abs(a_view(dof, 0) - ref_view(dof, 0)));
+    }
+  }
+  ASSERT_GT(scale, static_cast<type_real>(0));
+  EXPECT_LE(max_diff, rel_tol * scale)
+      << "at beta = 0 with no damping the operator must be the lumped mass";
 }
 
 TEST(ImplicitSolverScope3D, RejectsMixedMediumMesh) {
@@ -97,15 +144,22 @@ TEST(ImplicitSolverScope3D, RejectsMixedMediumMesh) {
 
 // One test covers construction and the operator identity: ctest runs every
 // test case in its own process, and the solver construction (stiffness
-// probe + preconditioner setup, ~25 s serial) dominates -- splitting the
+// probe + preconditioner setup, ~20 s serial) dominates -- splitting the
 // assertions would pay it once per case.
 //
-// A x must equal M/(beta dt^2) x + gamma/(beta dt) C x + K x entry by entry
-// -- validates the value plumbing of form_operator (K copy, scaled C sum,
-// mass diagonal) through independent applies of the constituent operators.
-TEST(ImplicitSolver3D, ConstructsAndOperatorMatchesOnStaceyMesh) {
+// A x must equal (k K + c C + m M) x entry by entry, with the coefficient
+// triple of the configured form -- this validates the value plumbing of
+// form_operator (scaled K copy, scaled C sum, mass diagonal) through
+// independent applies of the constituent operators. Parameterized over the
+// form because the two share that plumbing and differ only in the triple.
+class ImplicitSolverFormTest
+    : public ::testing::TestWithParam<specfem::solver::NewmarkForm> {};
+
+TEST_P(ImplicitSolverFormTest, ConstructsAndOperatorMatchesOnStaceyMesh) {
   auto test_case = build_case_3d("HomogeneousHalfSpaceStacey");
-  SolverType solver(test_case.time_scheme, {}, *test_case.assembly);
+  specfem::solver::ImplicitSolverConfig config;
+  config.form = GetParam();
+  SolverType solver(test_case.time_scheme, {}, *test_case.assembly, config);
 
   EXPECT_GT(solver.stiffness()->getGlobalNumEntries(), 0u);
   EXPECT_GT(solver.damping()->getGlobalNumEntries(), 0u)
@@ -117,12 +171,17 @@ TEST(ImplicitSolver3D, ConstructsAndOperatorMatchesOnStaceyMesh) {
   const auto &dof_map = solver.dof_map();
 
   const type_real dt = test_case.time_scheme->get_timestep();
-  const specfem::solver::ImplicitSolverConfig config; // defaults the solver
-                                                      // used
   const type_real beta = config.newmark.beta;
   const type_real gamma = config.newmark.gamma;
-  const type_real mass_coefficient = 1 / (beta * dt * dt);
-  const type_real damping_coefficient = gamma / (beta * dt);
+
+  const bool acceleration_form =
+      config.form == specfem::solver::NewmarkForm::acceleration;
+  const type_real stiffness_coefficient =
+      acceleration_form ? beta * dt * dt : static_cast<type_real>(1);
+  const type_real damping_coefficient =
+      acceleration_form ? gamma * dt : gamma / (beta * dt);
+  const type_real mass_coefficient =
+      acceleration_form ? static_cast<type_real>(1) : 1 / (beta * dt * dt);
 
   VectorType x(dof_map.owned_map());
   x.randomize();
@@ -131,7 +190,8 @@ TEST(ImplicitSolver3D, ConstructsAndOperatorMatchesOnStaceyMesh) {
       scratch(dof_map.owned_map());
   solver.system_operator()->apply(x, a_x);
 
-  solver.stiffness()->apply(x, reference);
+  solver.stiffness()->apply(x, scratch);
+  reference.update(stiffness_coefficient, scratch, 0);
   solver.damping()->apply(x, scratch);
   reference.update(damping_coefficient, scratch, 1);
   reference.elementWiseMultiply(mass_coefficient, *solver.mass(), x, 1);
@@ -150,8 +210,18 @@ TEST(ImplicitSolver3D, ConstructsAndOperatorMatchesOnStaceyMesh) {
   }
   ASSERT_GT(scale, static_cast<type_real>(0));
   EXPECT_LE(max_diff, rel_tol * scale)
-      << "A x disagrees with M/(beta dt^2) x + gamma/(beta dt) C x + K x";
+      << "A x disagrees with the configured form's k K x + c C x + m M x";
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    ImplicitSolver3D, ImplicitSolverFormTest,
+    ::testing::Values(specfem::solver::NewmarkForm::displacement,
+                      specfem::solver::NewmarkForm::acceleration),
+    [](const ::testing::TestParamInfo<specfem::solver::NewmarkForm> &info) {
+      return info.param == specfem::solver::NewmarkForm::displacement
+                 ? "DisplacementForm"
+                 : "AccelerationForm";
+    });
 
 } // namespace implicit_solver_test
 
