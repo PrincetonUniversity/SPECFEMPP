@@ -5,10 +5,11 @@
 #include "specfem/enums.hpp"
 #include "specfem/linear_system/dof_map.hpp"
 #include "specfem/linear_system/element_stiffness.hpp"
+#include "specfem/linear_system/sparse_matrix_view/fe_assembly.hpp"
+#include "specfem/linear_system/sparse_matrix_view/matrix_view.hpp"
 #include <Teuchos_RCP.hpp>
 #include <Tpetra_CrsGraph.hpp>
 #include <Tpetra_CrsMatrix.hpp>
-#include <vector>
 
 namespace specfem {
 namespace linear_system {
@@ -55,6 +56,12 @@ public:
 
   using AssemblyType = specfem::assembly::assembly<dimension_tag>;
 
+  /// Dof numbering and connectivity of the medium
+  using MappingType = FEMapping<dimension_tag, medium_tag>;
+
+  /// Maps and sparsity graphs built over @ref MappingType
+  using FEAssemblyType = FEAssembly<MappingType>;
+
   /**
    * @brief Validate scope and set up the dof map.
    *
@@ -76,13 +83,35 @@ public:
       const StiffnessScope scope = StiffnessScope::natural_boundaries);
 
   /**
+   * @brief Assemble over a caller-supplied @ref FEAssembly.
+   *
+   * Same validation as the constructor above, but reuses `fe` rather than
+   * building maps and sparsity graphs of its own. Use this when more than one
+   * operator is assembled over the same mesh -- the graphs cost two host
+   * passes over the connectivity each, and there is no reason to pay for them
+   * per assembler.
+   *
+   * @param assembly Assembled mesh, jacobian matrix, material properties, and
+   *        fields; must outlive the assembler
+   * @param fe Dof maps and sparsity graphs of the medium; borrowed, and must
+   *        outlive the assembler
+   * @param batch_size Elements per probe-kernel launch (>= 1)
+   * @param scope Boundary conditions the caller can represent (see
+   *        @ref StiffnessScope)
+   */
+  StiffnessAssembler(
+      const AssemblyType &assembly, const FEAssemblyType &fe,
+      const int batch_size = default_batch_size,
+      const StiffnessScope scope = StiffnessScope::natural_boundaries);
+
+  /**
    * @brief Assemble the stiffness matrix.
    *
-   * Pipeline: build the `Tpetra::CrsGraph` from element connectivity (two
-   * host passes over the index mapping), construct the matrix on the static
-   * graph, fill it batch-by-batch with `sumIntoGlobalValues` row updates
-   * from the probed element blocks, and `fillComplete()`. Row/column ids
-   * follow @ref DofMap::gid.
+   * Pipeline: build an @ref FEAssembly over the medium (dof maps plus the
+   * element-dense sparsity graph), then fill the matrix batch-by-batch through
+   * a @ref SparseMatrixView -- one block-diagonal update per probe batch --
+   * and close it. Row/column ids follow @ref Mapping, which agrees with
+   * @ref DofMap::gid.
    *
    * @return Fill-complete stiffness matrix on the owned map
    */
@@ -92,25 +121,18 @@ public:
   const DofMap &dof_map() const { return dof_map_; }
 
 private:
-  /// Build and fill-complete the sparsity graph from element connectivity
-  Teuchos::RCP<const crs_graph_type> build_graph() const;
-
   /// Probe element blocks in batches and scatter them into the matrix
-  void fill_matrix(crs_matrix_type &matrix) const;
+  void fill_matrix(SparseMatrixView<MappingType> &matrix) const;
 
-  /**
-   * @brief Global column ids of one element in element-local dof order.
-   *
-   * Single source of truth for the ldof <-> gid correspondence used by both
-   * the graph build and the block scatter; entry `ldof` (see
-   * @ref local_dof_index) holds `dof_map_.gid(iglob(ispec, iz, iy, ix),
-   * icomp)`.
-   */
-  std::vector<global_ordinal_type> element_column_gids(const int ispec) const;
+  /// Validation shared by both constructors
+  void validate(const StiffnessScope scope) const;
 
   const AssemblyType &assembly_; ///< Borrowed assembly (not owned)
   DofMap dof_map_;               ///< Per-medium dof numbering and maps
   int batch_size_;               ///< Elements per probe-kernel launch
+
+  /// Caller-supplied maps and graphs; null when this assembler builds its own
+  const FEAssemblyType *fe_ = nullptr;
 };
 
 } // namespace linear_system

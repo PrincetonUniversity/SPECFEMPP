@@ -4,18 +4,33 @@
 
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/compute/initialize_mass_matrix.hpp"
+#include "specfem/linear_system/sparse_matrix_view/field_vector.hpp"
 #include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
 #include <Tpetra_Vector.hpp>
 #include <cstddef>
 #include <stdexcept>
 
-template <typename Tags>
-  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
-Teuchos::RCP<specfem::linear_system::vector_type>
-specfem::linear_system::assemble_mass_vector(
+namespace specfem::linear_system_impl {
+
+/**
+ * @brief Drive the production mass accumulation and gather it into a vector.
+ *
+ * Shared body of both `assemble_mass_vector` overloads; the two differ only in
+ * where the dof numbering and the owned map come from.
+ *
+ * @tparam Tags Compile-time tags
+ * @tparam MappingType Dof numbering
+ * @param assembly Assembly whose forward mass storage is used as scratch
+ * @param mapping Dof numbering of the medium
+ * @param owned_map Row map of the returned vector
+ * @return Lumped mass vector
+ */
+template <typename Tags, typename MappingType>
+Teuchos::RCP<specfem::linear_system::vector_type> assemble_mass_vector_impl(
     specfem::assembly::assembly<Tags::dimension_tag> &assembly,
-    const DofMap &dof_map) {
+    const MappingType &mapping,
+    const Teuchos::RCP<const specfem::linear_system::map_type> &owned_map) {
 
   if (assembly.mesh.element_grid != 5) {
     throw std::runtime_error(
@@ -32,7 +47,7 @@ specfem::linear_system::assemble_mass_vector(
   const auto mass = field_impl.get_mass_inverse();
   const auto h_mass = field_impl.get_host_mass_inverse();
 
-  if (field_impl.nglob != dof_map.nglob()) {
+  if (field_impl.nglob != mapping.nglob()) {
     throw std::runtime_error(
         "specfem::linear_system::assemble_mass_vector: the dof map does not "
         "match the assembly's forward field.");
@@ -55,22 +70,41 @@ specfem::linear_system::assemble_mass_vector(
 
   Kokkos::deep_copy(h_mass, mass);
 
-  auto mass_vector = Teuchos::rcp(new vector_type(dof_map.owned_map()));
-  {
-    auto view = mass_vector->getLocalViewHost(Tpetra::Access::OverwriteAll);
-    for (int iglob = 0; iglob < dof_map.nglob(); ++iglob) {
-      for (int icomp = 0; icomp < dof_map.ncomp(); ++icomp) {
-        view(static_cast<std::size_t>(dof_map.gid(iglob, icomp)), 0) =
-            h_mass(iglob, icomp);
-      }
-    }
-  }
+  auto mass_vector =
+      Teuchos::rcp(new specfem::linear_system::vector_type(owned_map));
+  specfem::linear_system::copy_field_to_vector(mapping, h_mass, *mass_vector);
 
   // Leave the assembly as found for the explicit solver's own mass init.
   Kokkos::deep_copy(mass, 0);
   Kokkos::deep_copy(h_mass, 0);
 
   return mass_vector;
+}
+
+} // namespace specfem::linear_system_impl
+
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
+Teuchos::RCP<specfem::linear_system::vector_type>
+specfem::linear_system::assemble_mass_vector(
+    specfem::assembly::assembly<Tags::dimension_tag> &assembly,
+    const DofMap &dof_map) {
+  // The DofMap and the Mapping number dofs identically (asserted by the
+  // DofIdsMatchDofMap test); the Mapping is what the gather is written
+  // against, so build one here rather than duplicating the gid layout.
+  const FEMapping<Tags::dimension_tag, Tags::medium_tag> mapping(assembly);
+  return specfem::linear_system_impl::assemble_mass_vector_impl<Tags>(
+      assembly, mapping, dof_map.owned_map());
+}
+
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
+Teuchos::RCP<specfem::linear_system::vector_type>
+specfem::linear_system::assemble_mass_vector(
+    specfem::assembly::assembly<Tags::dimension_tag> &assembly,
+    const FEAssembly<FEMapping<Tags::dimension_tag, Tags::medium_tag>> &fe) {
+  return specfem::linear_system_impl::assemble_mass_vector_impl<Tags>(
+      assembly, fe.mapping(), fe.owned_map());
 }
 
 namespace specfem::linear_system_impl {
@@ -89,5 +123,13 @@ specfem::linear_system::assemble_mass_vector<
     specfem::linear_system_impl::elastic_isotropic_tags>(
     specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &,
     const specfem::linear_system::DofMap &);
+
+template Teuchos::RCP<specfem::linear_system::vector_type>
+specfem::linear_system::assemble_mass_vector<
+    specfem::linear_system_impl::elastic_isotropic_tags>(
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &,
+    const specfem::linear_system::FEAssembly<specfem::linear_system::FEMapping<
+        specfem::element::dimension_tag::dim3,
+        specfem::element::medium_tag::elastic>> &);
 
 #endif // SPECFEM_ENABLE_TRILINOS

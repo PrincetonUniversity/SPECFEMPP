@@ -6,6 +6,7 @@
 #include <Tpetra_CrsGraph.hpp>
 #include <Tpetra_CrsMatrix.hpp>
 #include <Tpetra_FECrsGraph.hpp>
+#include <Tpetra_FECrsMatrix.hpp>
 #include <Tpetra_Map.hpp>
 #include <Tpetra_Vector.hpp>
 
@@ -36,6 +37,25 @@ using crs_graph_type = Tpetra::CrsGraph<>;
 
 /// Assembled sparse matrix type (see @ref scalar_type for the precision)
 using crs_matrix_type = Tpetra::CrsMatrix<scalar_type>;
+
+/**
+ * @brief Finite-element sparsity graph: assembled over an owned+shared dof map
+ * and migrated to an owned map by `endAssembly()`.
+ *
+ * Derives from @ref crs_graph_type, so an `fe_crs_graph_type` is accepted
+ * anywhere a `crs_graph_type` is.
+ */
+using fe_crs_graph_type = Tpetra::FECrsGraph<>;
+
+/**
+ * @brief Finite-element matrix built on an @ref fe_crs_graph_type.
+ *
+ * `beginAssembly()`/`endAssembly()` bracket the value fill and perform the
+ * owned+shared to owned migration -- the distributed `Export(ADD)` that
+ * reproduces the matrix-free assembly sum across ranks. Derives from
+ * @ref crs_matrix_type.
+ */
+using fe_crs_matrix_type = Tpetra::FECrsMatrix<scalar_type>;
 
 } // namespace linear_system
 } // namespace specfem

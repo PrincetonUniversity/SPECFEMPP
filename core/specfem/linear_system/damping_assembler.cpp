@@ -7,16 +7,29 @@
 #include "specfem/linear_system/element_stiffness.hpp"
 #include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
-#include <array>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
-#include <vector>
 
 template <typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 specfem::linear_system::DampingAssembler<Tags>::DampingAssembler(
     AssemblyType &assembly, const DofMap &dof_map)
     : assembly_(assembly), dof_map_(dof_map) {
+  validate();
+}
+
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
+specfem::linear_system::DampingAssembler<Tags>::DampingAssembler(
+    AssemblyType &assembly, const FEAssemblyType &fe)
+    : assembly_(assembly), dof_map_(assembly, Tags{}), fe_(&fe) {
+  validate();
+}
+
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
+void specfem::linear_system::DampingAssembler<Tags>::validate() const {
 
   // The probe shares the stiffness probe's scope (NGLL = 5, matching
   // property tag, no attenuation) but tolerates Stacey boundaries -- they
@@ -48,12 +61,24 @@ specfem::linear_system::DampingAssembler<Tags>::assemble() const {
   const auto h_u = field_impl.get_host_field();
   const auto h_v = field_impl.get_host_field_dot();
   const auto h_a = field_impl.get_host_field_dot_dot();
-  const int nglob = dof_map_.nglob();
+  // Built up front so that the dof numbering, the sparsity graph and the
+  // absorbing-boundary mask all come from one description of the mesh. Built
+  // here only when the caller did not supply one to share.
+  const FEAssemblyType *fe = fe_;
+  const std::optional<FEAssemblyType> owned_fe =
+      fe_ ? std::nullopt
+          : std::optional<FEAssemblyType>(MappingType(assembly_));
+  if (fe == nullptr) {
+    fe = &owned_fe.value();
+  }
+
+  const auto &mapping = fe->mapping();
+  const int nglob = mapping.nglob();
 
   // Probed blocks: block(p, r, c) = C_p(r, c). Interior points stay exactly
   // zero -- the u = 0 stiffness path adds exact zeros everywhere and the
-  // Stacey traction touches boundary points only -- so a nonzero test is an
-  // exact damping-point mask, not a tolerance.
+  // Stacey traction touches boundary points only -- which is what the mask
+  // check below relies on, as an exact test rather than a tolerance.
   Kokkos::View<type_real ***, Kokkos::HostSpace> block(
       "specfem::linear_system::damping_blocks", nglob, ncomp, ncomp);
 
@@ -87,63 +112,62 @@ specfem::linear_system::DampingAssembler<Tags>::assemble() const {
   Kokkos::deep_copy(h_a, 0);
   assembly_.fields.copy_to_device();
 
-  std::vector<bool> is_damping_point(nglob, false);
+  // The sparsity comes from the mesh's absorbing-boundary tags, not from the
+  // probe's own nonzero pattern. The two must agree: a block the probe
+  // produces at an untagged point has no row to land in and would be dropped
+  // silently, so check rather than trust.
+  int ndamping = 0;
   for (int iglob = 0; iglob < nglob; ++iglob) {
-    for (int r = 0; r < ncomp && !is_damping_point[iglob]; ++r) {
+    if (mapping.is_damping_point(iglob)) {
+      ++ndamping;
+      continue;
+    }
+    for (int r = 0; r < ncomp; ++r) {
       for (int c = 0; c < ncomp; ++c) {
         if (block(iglob, r, c) != 0) {
-          is_damping_point[iglob] = true;
-          break;
+          std::ostringstream message;
+          message << "specfem::linear_system::DampingAssembler: the velocity "
+                     "probe produced a nonzero damping block at point "
+                  << iglob
+                  << ", which the mesh does not tag as an absorbing boundary. "
+                     "The boundary tags and the Stacey traction disagree.";
+          throw std::runtime_error(message.str());
         }
       }
     }
   }
 
-  // Compact graph: C is block-diagonal, so the sparsity is one ncomp-sized
-  // coupling block per damping point and interior points contribute no rows
-  // at all -- a K-sized graph would waste a full matrix of memory on a
-  // block-diagonal operator.
-  std::vector<global_ordinal_type> cols(ncomp);
-  const auto graph = dof_map_.build_graph([&](const auto &visit) {
-    for (int iglob = 0; iglob < nglob; ++iglob) {
-      if (!is_damping_point[iglob]) {
-        continue;
-      }
-      for (int c = 0; c < ncomp; ++c) {
-        cols[c] = dof_map_.gid(iglob, c);
-      }
-      visit(cols);
-    }
-  });
+  // Compact to the damping points, so that the update's leading index runs
+  // over the same set the dof selection names. C is block-diagonal, so this is
+  // one ncomp x ncomp block per boundary point and interior points contribute
+  // no rows at all.
+  Kokkos::View<int *, Kokkos::HostSpace> damping_points(
+      "specfem::linear_system::damping_points", ndamping);
+  Kokkos::View<type_real ***, Kokkos::LayoutRight, Kokkos::HostSpace> blocks(
+      "specfem::linear_system::damping_point_blocks", ndamping, ncomp, ncomp);
 
-  auto matrix = Teuchos::rcp(new crs_matrix_type(graph));
-  std::vector<scalar_type> values(ncomp);
-  for (int iglob = 0; iglob < nglob; ++iglob) {
-    if (!is_damping_point[iglob]) {
+  for (int iglob = 0, p = 0; iglob < nglob; ++iglob) {
+    if (!mapping.is_damping_point(iglob)) {
       continue;
     }
-    for (int c = 0; c < ncomp; ++c) {
-      cols[c] = dof_map_.gid(iglob, c);
-    }
+    damping_points(p) = iglob;
     for (int r = 0; r < ncomp; ++r) {
       for (int c = 0; c < ncomp; ++c) {
-        values[c] = block(iglob, r, c);
-      }
-      const int updated = matrix->sumIntoGlobalValues(
-          dof_map_.gid(iglob, r), ncomp, values.data(), cols.data());
-      if (updated != ncomp) {
-        std::ostringstream message;
-        message << "specfem::linear_system::DampingAssembler: block scatter "
-                   "at point "
-                << iglob << " updated " << updated << " of " << ncomp
-                << " entries; the graph does not match the damping mask.";
-        throw std::runtime_error(message.str());
+        blocks(p, r, c) = block(iglob, r, c);
       }
     }
+    ++p;
   }
-  matrix->fillComplete(dof_map_.owned_map(), dof_map_.owned_map());
 
-  return matrix;
+  SparseMatrixView<MappingType> matrix(fe->damping_matrix_graph(), mapping);
+  matrix.begin_fill();
+  // One update for the whole operator: the dof set names every damping point's
+  // components, and the rank-3 block carries that point's ncomp x ncomp block.
+  const auto dofs = mapping(damping_points, Kokkos::ALL);
+  matrix(dofs, dofs) += blocks;
+  matrix.finalize();
+
+  return matrix.matrix();
 }
 
 namespace specfem::linear_system_impl {
