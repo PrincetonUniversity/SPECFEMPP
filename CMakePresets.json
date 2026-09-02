@@ -65,30 +65,6 @@
       }
     },
     {
-      "name": "release-trilinos-mpi",
-      "displayName": "Release -- Trilinos implicit solvers (CPU, MPI)",
-      "description": "Inherits 'release-trilinos' and enables MPI. Load trilinos/16.1.0-cpu-native-mpi first so Trilinos_ROOT and Kokkos_ROOT are set in the environment.",
-      "inherits": "release-trilinos",
-      "binaryDir": "build/release-trilinos-mpi",
-      "cacheVariables": {
-        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-trilinos-mpi",
-        "SPECFEM_ENABLE_MPI": "ON",
-        "SPECFEM_BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-trilinos-mpi"
-      }
-    },
-    {
-      "name": "release-cuda-trilinos",
-      "displayName": "Release -- CUDA + Trilinos implicit solvers (no MPI)",
-      "description": "Inherits 'release-cuda' and enables Trilinos. Load trilinos/17.1.1-cpu-native-nompi first so Trilinos_ROOT and Kokkos_ROOT are set in the environment.",
-      "inherits": "release-cuda",
-      "binaryDir": "build/release-cuda-trilinos",
-      "cacheVariables": {
-        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-cuda-trilinos",
-        "SPECFEM_ENABLE_TRILINOS": "ON",
-        "SPECFEM_BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-cuda-trilinos"
-      }
-    },
-    {
       "name": "release-hip",
       "displayName": "Release -- HIP enabled",
       "binaryDir": "build/release-hip",
@@ -391,20 +367,6 @@
     {
       "name": "release-trilinos",
       "configurePreset": "release-trilinos",
-      "targets": [
-        "all"
-      ]
-    },
-    {
-      "name": "release-trilinos-mpi",
-      "configurePreset": "release-trilinos-mpi",
-      "targets": [
-        "all"
-      ]
-    },
-    {
-      "name": "release-cuda-trilinos",
-      "configurePreset": "release-cuda-trilinos",
       "targets": [
         "all"
       ]
