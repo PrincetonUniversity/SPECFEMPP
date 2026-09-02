@@ -92,6 +92,42 @@ public:
       const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,
       std::vector<specfem::element::boundary_tag_container> &boundary_tag);
 
+  // ── Boundary tag accessors ───────────────────────────────────────────────
+
+  /**
+   * @brief Boundary tag container at a quadrature point of a Stacey element
+   * (device)
+   *
+   * @param ispec Local Stacey element index (see
+   *        specfem::assembly::boundaries::stacey_index_mapping)
+   * @param iz GLL point index in z direction
+   * @param iy GLL point index in y direction
+   * @param ix GLL point index in x direction
+   * @return Boundary tag container at the quadrature point
+   */
+  KOKKOS_FORCEINLINE_FUNCTION specfem::element::boundary_tag_container
+  get_boundary_tag_on_device(const int ispec, const int iz, const int iy,
+                             const int ix) const {
+    return quadrature_point_boundary_tag(ispec, iz, iy, ix);
+  }
+
+  /**
+   * @brief Boundary tag container at a quadrature point of a Stacey element
+   * (host)
+   *
+   * @param ispec Local Stacey element index (see
+   *        specfem::assembly::boundaries::h_stacey_index_mapping)
+   * @param iz GLL point index in z direction
+   * @param iy GLL point index in y direction
+   * @param ix GLL point index in x direction
+   * @return Boundary tag container at the quadrature point
+   */
+  inline specfem::element::boundary_tag_container
+  get_boundary_tag_on_host(const int ispec, const int iz, const int iy,
+                           const int ix) const {
+    return h_quadrature_point_boundary_tag(ispec, iz, iy, ix);
+  }
+
   // ── Device load methods ──────────────────────────────────────────────────
 
   template <typename IndexType,
