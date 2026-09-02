@@ -45,6 +45,10 @@ Pre-built Trilinos installs are provided as Lmod modules. Loading one exports bo
       - Backend
       - Kokkos arch
       - MPI
+    * - ``trilinos/17.1.1-cpu-native-nompi``
+      - Serial
+      - ``NATIVE``
+      - no
     * - ``trilinos/16.1.0-cuda-ampere80-mpi``
       - CUDA
       - ``AMPERE80`` + ``NATIVE``
@@ -65,6 +69,42 @@ Pre-built Trilinos installs are provided as Lmod modules. Loading one exports bo
 Choose the variant that matches how you build SPECFEM++ (GPU vs CPU, with or
 without MPI).
 
+.. warning::
+
+    Only ``trilinos/17.1.1-cpu-native-nompi`` is currently installed. The four
+    ``trilinos/16.1.0-*`` modulefiles still load, but the prefixes they point at under
+    ``/home/TROMP/source/Trilinos/install/`` have been removed, so ``find_package(Trilinos)``
+    will fail. Until they are rebuilt, only the ``release-trilinos`` preset can be
+    configured -- ``release-trilinos-mpi``, ``release-cuda-trilinos`` and
+    ``release-cuda-trilinos-mpi`` have no backing install.
+
+    This install is also built ``Tpetra_INST_FLOAT`` only, so SPECFEM++ must be built in
+    single precision (``SPECFEM_ENABLE_DOUBLE_PRECISION=OFF``, the default). A double
+    build finds no Belos/Ifpack2 instantiation for ``type_real`` and fails to link.
+
+.. important::
+
+    **Load the compiler module after the Trilinos module.** The ``trilinos`` modulefiles
+    auto-load ``openblas/0.3.x``, whose only effect is to prepend ``/usr/lib64`` to
+    ``LD_LIBRARY_PATH``. That places it ahead of the ``gcc-toolset-14`` tree, so the
+    toolset linker picks up the system ``libctf.so.0`` and every link fails with
+    ``version `LIBCTF_1.1' not found``. CMake reports this as
+    ``The C++ compiler ... is not able to compile a simple test program``, which points at
+    the compiler rather than at the module environment.
+
+    Loading ``gcc-toolset/14`` last restores the correct ordering:
+
+    .. code-block:: bash
+
+        module load trilinos/17.1.1-cpu-native-nompi
+        module load gcc-toolset/14
+
+    Equivalently, if the compiler must be loaded first, fix the path explicitly:
+
+    .. code-block:: bash
+
+        export LD_LIBRARY_PATH=/opt/rh/gcc-toolset-14/root/usr/lib64:$LD_LIBRARY_PATH
+
 Configure and build
 -------------------
 
@@ -81,11 +121,12 @@ GPU (NVIDIA Ampere / A100):
     cmake --preset release-cuda-trilinos
     cmake --build build/release-cuda-trilinos
 
-CPU:
+CPU (the only variant currently installed):
 
 .. code-block:: bash
 
-    module load trilinos/16.1.0-cpu-native-mpi
+    module load trilinos/17.1.1-cpu-native-nompi
+    module load gcc-toolset/14
     cmake --preset release-trilinos
     cmake --build build/release-trilinos
 
