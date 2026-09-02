@@ -1,0 +1,54 @@
+from pathlib import Path
+
+example_dir = Path("@CURRENT_BENCHMARK_BUILD_DIR@")
+xmeshfem3d_globe = Path("@CMAKE_BINARY_DIR@") / "bin" / "xmeshfem3D_globe"
+mpiexec = "@MPIEXEC_EXECUTABLE@"
+mpiexec_numproc_flag = "@MPIEXEC_NUMPROC_FLAG@"
+
+
+nproc = 6
+
+
+rule all:
+    input:
+        example_dir / "OUTPUT_FILES" / "check_database.txt"
+
+
+rule mesh:
+    input:
+        par_file=example_dir / "DATA" / "Par_file",
+        stations=example_dir / "DATA" / "STATIONS",
+        cmt=example_dir / "DATA" / "CMTSOLUTION",
+        xmeshfem3d_globe=xmeshfem3d_globe,
+    output:
+        expand(
+            str(example_dir / "DATABASES_MPI" / "proc{rank:06d}_specfempp_database.bin"),
+            rank=range(nproc),
+        ),
+    log:
+        example_dir / "OUTPUT_FILES" / "output_mesher.txt"
+    shell:
+        "cd {example_dir} && {mpiexec} {mpiexec_numproc_flag} 6 "
+        "{input.xmeshfem3d_globe} > {log} 2>&1"
+
+
+# validates the thin SPECFEM++ mesh database: record framing, node/element
+# consistency, CSR symmetry, CMB/ICB welding, boundary face counts and cross-rank
+# MPI interface agreement
+rule check_database:
+    input:
+        expand(
+            str(example_dir / "DATABASES_MPI" / "proc{rank:06d}_specfempp_database.bin"),
+            rank=range(nproc),
+        ),
+        script=example_dir / "check_database.py",
+    output:
+        example_dir / "OUTPUT_FILES" / "check_database.txt"
+    shell:
+        "cd {example_dir} && uv run --project @PROJECT_SOURCE_DIR@ --group examples "
+        "python check_database.py DATABASES_MPI > {output}"
+
+
+rule clean:
+    shell:
+        "rm -rf {example_dir}/DATABASES_MPI/* {example_dir}/OUTPUT_FILES/*"

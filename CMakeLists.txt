@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.17.5)
 
-project(SPECFEMPP VERSION 0.5.0 LANGUAGES CXX Fortran)
+# C is needed so MPI-enabled distro VTK packages can resolve MPI::MPI_C
+project(SPECFEMPP VERSION 0.6.0 LANGUAGES C CXX Fortran)
 
 # Extract Git version metadata
 include("${CMAKE_SOURCE_DIR}/cmake/version.cmake")
@@ -26,6 +27,7 @@ option(SPECFEM_INSTALL "Creates clean executable directory. Location Controlled 
 option(SPECFEM_ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
 option(SPECFEM_ENABLE_METIS "Enable METIS partitioning support in xdecompose_mesh" OFF)
 option(SPECFEM_ENABLE_TRILINOS "Enable Trilinos implicit solvers (Tpetra/Belos/Ifpack2/MueLu/Amesos2)" OFF)
+option(SPECFEM_BUILD_MESHFEM3D_GLOBE "Build the SPECFEM3D_GLOBE meshfem3D executable" OFF)
 option(SPECFEM_BUILD_BENCHMARKS "Benchmarks included" ON)
 option(SPECFEM_NIGHTLY_BENCHMARKS "Include nightly benchmarks" OFF)
 option(SPECFEM_ENABLE_UNITY_BUILD "Enable unity build to speed up compilation" ON)
@@ -36,6 +38,11 @@ if (SPECFEM_ENABLE_MPI)
     message(STATUS "Compiling SPECFEM with MPI")
     find_package(MPI REQUIRED)
     add_compile_definitions(SPECFEM_ENABLE_MPI)
+    # SPECFEM_ENABLE_MPI is defined for every target in the tree, so
+    # <specfem/mpi.hpp> pulls in <mpi.h> (and the inline MPI calls in
+    # specfem::mpi::Context) everywhere -- not just in targets that happen to
+    # link specfem::mpi. Make MPI usage requirements global to match.
+    link_libraries(MPI::MPI_CXX)
     message(STATUS "MPI enabled - found MPI::MPI_CXX")
 else()
     message(STATUS "Compiling SPECFEM without MPI")
@@ -229,6 +236,39 @@ set(_saved_CMAKE_MESSAGE_LOG_LEVEL ${CMAKE_MESSAGE_LOG_LEVEL})
 set(CMAKE_MESSAGE_LOG_LEVEL ${SUBDIR_LOG_LEVEL})
 add_subdirectory(fortran/meshfem3d)
 set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
+# =================================
+
+# ========== MESHFEM3D_GLOBE =============
+if(SPECFEM_BUILD_MESHFEM3D_GLOBE)
+  if(NOT SPECFEM_ENABLE_MPI)
+    message(FATAL_ERROR
+      "SPECFEM_BUILD_MESHFEM3D_GLOBE requires SPECFEM_ENABLE_MPI=ON because "
+      "SPECFEM3D_GLOBE meshfem sources require Fortran MPI.")
+  endif()
+  if(NOT TARGET MPI::MPI_Fortran)
+    find_package(MPI REQUIRED COMPONENTS Fortran)
+  endif()
+  if(NOT TARGET MPI::MPI_Fortran)
+    message(FATAL_ERROR
+      "SPECFEM_BUILD_MESHFEM3D_GLOBE requires MPI::MPI_Fortran, but Fortran MPI "
+      "was not found.")
+  endif()
+  message(STATUS "Configuring xmeshfem3D_globe")
+  set(_saved_CMAKE_MESSAGE_LOG_LEVEL ${CMAKE_MESSAGE_LOG_LEVEL})
+  set(CMAKE_MESSAGE_LOG_LEVEL ${SUBDIR_LOG_LEVEL})
+  add_subdirectory(fortran/meshfem3d_globe)
+  set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
+
+  # ISO_C_BINDING wrappers exposing the globe model catalog to C/C++ (issue
+  # #2001). Kept in a sibling directory so fortran/meshfem3d_globe/ stays a
+  # clean mirror of upstream specfem3d_globe. Must come after the globe
+  # subdirectory above: it consumes the meshfem3D_globe::* targets and the .mod
+  # files they generate.
+  message(STATUS "Configuring globe_evaluator")
+  add_subdirectory(fortran/globe_evaluator)
+else()
+  message(STATUS "Skipping xmeshfem3D_globe (SPECFEM_BUILD_MESHFEM3D_GLOBE=OFF)")
+endif()
 # =================================
 
 # ========== DECOMPOSE_MESH =========
