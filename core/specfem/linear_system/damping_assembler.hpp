@@ -4,6 +4,8 @@
 
 #include "specfem/enums.hpp"
 #include "specfem/linear_system/dof_map.hpp"
+#include "specfem/linear_system/sparse_matrix_view/fe_assembly.hpp"
+#include "specfem/linear_system/sparse_matrix_view/matrix_view.hpp"
 #include <Teuchos_RCP.hpp>
 
 namespace specfem {
@@ -55,6 +57,12 @@ public:
 
   using AssemblyType = specfem::assembly::assembly<dimension_tag>;
 
+  /// Dof numbering and connectivity of the medium
+  using MappingType = FEMapping<dimension_tag, medium_tag>;
+
+  /// Maps and sparsity graphs built over @ref MappingType
+  using FEAssemblyType = FEAssembly<MappingType>;
+
   /**
    * @brief Validate scope and store the probe target.
    *
@@ -75,16 +83,21 @@ public:
   /**
    * @brief Probe the velocity path and assemble the damping matrix.
    *
-   * The matrix lives on a compact graph: at most `ncomp` entries per row at
-   * damping (boundary) points, empty rows at interior points. Every entry's
-   * `(row, column)` pair also exists in the stiffness matrix's graph
-   * (same-point pairs are same-element pairs), so the implicit Newmark
-   * operator can `sumInto` \f$ C \f$ on the stiffness graph.
+   * The matrix lives on @ref FEAssembly::damping_matrix_graph: a compact,
+   * block-diagonal pattern with `ncomp` entries per row at damping (boundary)
+   * points and empty rows at interior points. Every entry's `(row, column)`
+   * pair also exists in the stiffness matrix's graph (same-point pairs are
+   * same-element pairs), so the implicit Newmark operator can `sumInto`
+   * \f$ C \f$ on the stiffness graph.
    *
    * All probe fields (displacement, velocity, acceleration) are zeroed on
    * host and device before returning.
    *
    * @return Fill-complete damping matrix on the owned map
+   *
+   * @throws std::runtime_error if the probe produces a nonzero block at a
+   *         point the mesh does not tag as absorbing -- see
+   *         @ref Mapping::is_damping_point
    */
   Teuchos::RCP<crs_matrix_type> assemble() const;
 

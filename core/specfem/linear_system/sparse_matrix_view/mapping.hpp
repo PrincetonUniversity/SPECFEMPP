@@ -4,9 +4,12 @@
 #include "specfem/datatype/element_index_range.hpp"
 #include "specfem/element.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/linear_system/sparse_matrix_view/dof_set.hpp"
 #include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
+#include <concepts>
 #include <cstddef>
+#include <type_traits>
 #include <vector>
 
 namespace specfem {
@@ -146,6 +149,74 @@ public:
   }
 
   /**
+   * @brief Name a *set* of dofs by GLL coordinate.
+   *
+   * The five-slot selector form of @ref operator(): each slot is an integral,
+   * `Kokkos::ALL`, or a container of indices (see @ref IndexSelector), and the
+   * result is a lazily-expanded @ref DofSet rather than a single id. The
+   * all-integral case is handled by the scalar overload above.
+   *
+   * `Kokkos::ALL` in the element slot means every element *of this medium*, so
+   * it is normalized here to @ref elements rather than to `[0, nspec)` -- the
+   * mapping is per-medium and a mesh may hold elements of others.
+   *
+   * @code
+   * // the 375 dofs of one element, in local_dof_index order
+   * mapping(ispec, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
+   * // the dofs of a batch of elements, element-major
+   * mapping(batch, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
+   * @endcode
+   *
+   * @tparam ISpec Element slot selector
+   * @tparam IZ Quadrature-z slot selector
+   * @tparam IY Quadrature-y slot selector
+   * @tparam IX Quadrature-x slot selector
+   * @tparam IComp Component slot selector
+   * @param ispec Element(s)
+   * @param iz Quadrature index/indices in z
+   * @param iy Quadrature index/indices in y
+   * @param ix Quadrature index/indices in x
+   * @param icomp Field component(s)
+   * @return Dof set; borrows this mapping and must not outlive it
+   */
+  template <typename ISpec, typename IZ, typename IY, typename IX,
+            typename IComp>
+    requires(IndexSelector<ISpec> && IndexSelector<IZ> && IndexSelector<IY> &&
+             IndexSelector<IX> && IndexSelector<IComp> &&
+             !(std::integral<ISpec> && std::integral<IZ> && std::integral<IY> &&
+               std::integral<IX> && std::integral<IComp>))
+  auto operator()(ISpec ispec, IZ iz, IY iy, IX ix, IComp icomp) const {
+    auto elements = normalize_element_selector(ispec);
+    return DofSet<Mapping, decltype(elements), IZ, IY, IX, IComp>(
+        *this, elements, iz, iy, ix, icomp);
+  }
+
+  /**
+   * @brief Name a *set* of dofs by mesh point.
+   *
+   * The two-slot selector form of @ref operator(); see the five-slot overload
+   * above. `Kokkos::ALL` in the point slot means every point of the medium,
+   * `[0, nglob())`.
+   *
+   * @code
+   * // the ncomp dofs at one mesh point -- a damping block's rows
+   * mapping(iglob, Kokkos::ALL);
+   * @endcode
+   *
+   * @tparam IGlob Point slot selector
+   * @tparam IComp Component slot selector
+   * @param iglob Mesh point(s)
+   * @param icomp Field component(s)
+   * @return Dof set; borrows this mapping and must not outlive it
+   */
+  template <typename IGlob, typename IComp>
+    requires(IndexSelector<IGlob> && IndexSelector<IComp> &&
+             !(std::integral<IGlob> && std::integral<IComp>))
+  auto operator()(IGlob iglob, IComp icomp) const {
+    return DofSet<Mapping, IGlob, IComp>(*this, iglob, icomp);
+  }
+
+  /**
    * @brief Global dof ids of one element, in element-local dof order.
    *
    * Entry `ldof` holds the id of the dof that @ref local_dof_index numbers
@@ -235,6 +306,29 @@ private:
   inline int iglob(const int ispec, const int iz, const int iy,
                    const int ix) const {
     return mapping_(ispec, iz, iy, ix) - dof_base_;
+  }
+
+  /**
+   * @brief Resolve `Kokkos::ALL` in the element slot to this medium's elements.
+   *
+   * Every other slot indexes a dense range, so `Kokkos::ALL` there is the
+   * identity. The element slot is the exception: a mesh may hold elements of
+   * other media, so "all elements" means @ref elements, not `[0, nspec)`.
+   * Doing the substitution here keeps @ref DofSet free of any slot-specific
+   * special case.
+   *
+   * @tparam Selector Element slot selector
+   * @param selector Element slot value
+   * @return @ref elements if `selector` is `Kokkos::ALL`, otherwise `selector`
+   */
+  template <typename Selector>
+  auto normalize_element_selector(Selector selector) const {
+    if constexpr (std::is_same_v<std::remove_cvref_t<Selector>,
+                                 Kokkos::ALL_t>) {
+      return elements_;
+    } else {
+      return selector;
+    }
   }
 
   /**

@@ -9,10 +9,8 @@
 #include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
 #include <algorithm>
-#include <cstddef>
 #include <sstream>
 #include <stdexcept>
-#include <vector>
 
 template <typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
@@ -50,66 +48,13 @@ specfem::linear_system::StiffnessAssembler<Tags>::StiffnessAssembler(
 
 template <typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
-std::vector<specfem::linear_system::global_ordinal_type>
-specfem::linear_system::StiffnessAssembler<Tags>::element_column_gids(
-    const int ispec) const {
-  const auto &field = assembly_.fields.template get_simulation_field<
-      specfem::simulation::field_type::forward>();
-  const int ngllz = field.ngllz;
-  const int nglly = field.nglly;
-  const int ngllx = field.ngllx;
-  const int npoints = ngllz * nglly * ngllx;
-
-  std::vector<global_ordinal_type> cols(static_cast<std::size_t>(ncomp) *
-                                        npoints);
-  for (int iz = 0; iz < ngllz; ++iz) {
-    for (int iy = 0; iy < nglly; ++iy) {
-      for (int ix = 0; ix < ngllx; ++ix) {
-        const int iglob =
-            field.template get_iglob<false, medium_tag>(ispec, iz, iy, ix);
-        // Same ordering as local_dof_index<NGLL> on the cubic GLL grid.
-        const int point = (iz * nglly + iy) * ngllx + ix;
-        for (int icomp = 0; icomp < ncomp; ++icomp) {
-          cols[static_cast<std::size_t>(icomp) * npoints + point] =
-              dof_map_.gid(iglob, icomp);
-        }
-      }
-    }
-  }
-  return cols;
-}
-
-template <typename Tags>
-  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
-Teuchos::RCP<const specfem::linear_system::crs_graph_type>
-specfem::linear_system::StiffnessAssembler<Tags>::build_graph() const {
-  const auto elements =
-      assembly_.element_types.get_elements_on_host(medium_tag);
-
-  // Every dof of an element couples to every other dof of that element, so
-  // the stiffness sparsity is one dense coupling block per element. The dof
-  // map turns that description into the library's graph; per-element
-  // duplicates at shared mesh points are inserted raw and merged by
-  // fillComplete, and the allocation bound it derives (block size per block
-  // a row appears in) covers the raw insert count exactly.
-  return dof_map_.build_graph([&](const auto &visit) {
-    for (int i = 0; i < elements.size(); ++i) {
-      visit(element_column_gids(elements(i)));
-    }
-  });
-}
-
-template <typename Tags>
-  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 void specfem::linear_system::StiffnessAssembler<Tags>::fill_matrix(
-    crs_matrix_type &matrix) const {
-  const auto &field = assembly_.fields.template get_simulation_field<
-      specfem::simulation::field_type::forward>();
-  const int npoints = field.ngllz * field.nglly * field.ngllx;
+    SparseMatrixView<MappingType> &matrix) const {
+  const auto &mapping = matrix.mapping();
+  const int npoints = mapping.ngllz() * mapping.nglly() * mapping.ngllx();
   const int ndof_e = ncomp * npoints;
 
-  const auto elements =
-      assembly_.element_types.get_elements_on_host(medium_tag);
+  const auto elements = mapping.elements();
   const int nelements = elements.size();
 
   // One block buffer reused across batches; only batch_size_ dense element
@@ -129,23 +74,14 @@ void specfem::linear_system::StiffnessAssembler<Tags>::fill_matrix(
                                                             k_e);
     Kokkos::deep_copy(h_k_e, k_e);
 
-    for (int e = 0; e < batch_count; ++e) {
-      const int ispec = batch(e);
-      const auto cols = element_column_gids(ispec);
-      for (int r = 0; r < ndof_e; ++r) {
-        const int updated = matrix.sumIntoGlobalValues(
-            cols[r], ndof_e, &h_k_e(e, r, 0), cols.data());
-        if (updated != ndof_e) {
-          std::ostringstream message;
-          message << "specfem::linear_system::StiffnessAssembler: row "
-                     "scatter of element "
-                  << ispec << " updated " << updated << " of " << ndof_e
-                  << " entries; the graph does not match the element "
-                     "connectivity.";
-          throw std::runtime_error(message.str());
-        }
-      }
-    }
+    // One block-diagonal update for the whole batch: the dof set names this
+    // batch's elements, and the rank-3 block carries one dense element block
+    // each. h_k_e is allocated once at the full batch size and reused, so on a
+    // partial final batch it is longer than the dof set -- the view consumes
+    // the leading batch_count blocks that the probe just wrote.
+    const auto dofs =
+        mapping(batch, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
+    matrix(dofs, dofs) += h_k_e;
   }
 }
 
@@ -153,28 +89,21 @@ template <typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 Teuchos::RCP<specfem::linear_system::crs_matrix_type>
 specfem::linear_system::StiffnessAssembler<Tags>::assemble() const {
-  const auto graph = build_graph();
+  // Every dof of an element couples to every other dof of that element, so
+  // the stiffness sparsity is one dense block per element -- which is the
+  // graph FEAssembly builds. It also owns the owned/owned+shared dof maps and
+  // rejects communicators it cannot yet handle.
+  const FEAssemblyType fe{ MappingType(assembly_) };
 
-  // Matrix on the fill-complete static graph: values start at zero and only
-  // sumIntoGlobalValues is allowed, which is exactly what the scatter uses.
-  auto matrix = Teuchos::rcp(new crs_matrix_type(graph));
+  SparseMatrixView<MappingType> matrix(fe.full_matrix_graph(), fe.mapping());
+  matrix.begin_fill();
+  fill_matrix(matrix);
+  // Migrates owned+shared contributions into the owned map -- the Export(ADD)
+  // that reproduces the matrix-free assembly sum across ranks -- and
+  // fill-completes.
+  matrix.finalize();
 
-  fill_matrix(*matrix);
-
-  matrix->fillComplete(dof_map_.owned_map(), dof_map_.owned_map());
-
-  // MPI-ready seam: a distributed build fills the matrix on the overlap map
-  // and Export(ADD)s into the owned map here, reproducing the matrix-free
-  // assembly sum across ranks. Unreachable at one rank (DofMap rejects
-  // larger communicators), where overlap == owned and the matrix is final.
-  if (!dof_map_.overlap_map()->isSameAs(*dof_map_.owned_map())) {
-    throw std::runtime_error(
-        "specfem::linear_system::StiffnessAssembler: overlap map differs "
-        "from owned map, but the distributed Export(ADD) step is not "
-        "implemented yet (follow-up of issue #1982).");
-  }
-
-  return matrix;
+  return matrix.matrix();
 }
 
 namespace specfem::linear_system_impl {
