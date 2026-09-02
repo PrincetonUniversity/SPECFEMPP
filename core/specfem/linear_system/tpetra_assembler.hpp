@@ -83,6 +83,28 @@ public:
       const StiffnessScope scope = StiffnessScope::natural_boundaries);
 
   /**
+   * @brief Assemble over a caller-supplied @ref FEAssembly.
+   *
+   * Same validation as the constructor above, but reuses `fe` rather than
+   * building maps and sparsity graphs of its own. Use this when more than one
+   * operator is assembled over the same mesh -- the graphs cost two host
+   * passes over the connectivity each, and there is no reason to pay for them
+   * per assembler.
+   *
+   * @param assembly Assembled mesh, jacobian matrix, material properties, and
+   *        fields; must outlive the assembler
+   * @param fe Dof maps and sparsity graphs of the medium; borrowed, and must
+   *        outlive the assembler
+   * @param batch_size Elements per probe-kernel launch (>= 1)
+   * @param scope Boundary conditions the caller can represent (see
+   *        @ref StiffnessScope)
+   */
+  StiffnessAssembler(
+      const AssemblyType &assembly, const FEAssemblyType &fe,
+      const int batch_size = default_batch_size,
+      const StiffnessScope scope = StiffnessScope::natural_boundaries);
+
+  /**
    * @brief Assemble the stiffness matrix.
    *
    * Pipeline: build an @ref FEAssembly over the medium (dof maps plus the
@@ -102,9 +124,15 @@ private:
   /// Probe element blocks in batches and scatter them into the matrix
   void fill_matrix(SparseMatrixView<MappingType> &matrix) const;
 
+  /// Validation shared by both constructors
+  void validate(const StiffnessScope scope) const;
+
   const AssemblyType &assembly_; ///< Borrowed assembly (not owned)
   DofMap dof_map_;               ///< Per-medium dof numbering and maps
   int batch_size_;               ///< Elements per probe-kernel launch
+
+  /// Caller-supplied maps and graphs; null when this assembler builds its own
+  const FEAssemblyType *fe_ = nullptr;
 };
 
 } // namespace linear_system

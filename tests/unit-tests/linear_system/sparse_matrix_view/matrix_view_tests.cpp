@@ -15,6 +15,7 @@
 #include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <memory>
 #include <stdexcept>
@@ -476,6 +477,166 @@ TEST_F(SparseMatrixView3D, ColumnsOutsideTheGraphThrow) {
   MatrixViewType matrix(fe().damping_matrix_graph(), mapping);
   matrix.begin_fill();
   EXPECT_THROW(matrix(dofs, dofs) += ones, std::runtime_error);
+}
+
+// ── Matrix and diagonal sums ────────────────────────────────────────────────
+
+// Fill a fresh view on the full graph with one element block, and return it.
+Teuchos::RCP<specfem::linear_system::fe_crs_matrix_type>
+filled_matrix(FEAssemblyType &fe, const scalar_type scale) {
+  const auto &mapping = fe.mapping();
+  const int ndof_e =
+      mapping.ncomp() * mapping.ngllz() * mapping.nglly() * mapping.ngllx();
+  const int ispec = mapping.elements()(0);
+
+  Kokkos::View<scalar_type **, Kokkos::LayoutRight, Kokkos::HostSpace> block(
+      "block", ndof_e, ndof_e);
+  for (int r = 0; r < ndof_e; ++r) {
+    for (int c = 0; c < ndof_e; ++c) {
+      block(r, c) = scale * block_value(0, r, c);
+    }
+  }
+
+  MatrixViewType view(fe.full_matrix_graph(), mapping);
+  view.begin_fill();
+  const auto dofs =
+      mapping(ispec, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
+  view(dofs, dofs) += block;
+  view.finalize();
+  return view.matrix();
+}
+
+// A += B on the same graph reproduces B exactly.
+TEST_F(SparseMatrixView3D, AddingAMatrixReproducesIt) {
+  const auto &mapping = fe().mapping();
+  const auto source = filled_matrix(fe(), 1);
+
+  MatrixViewType sum(fe().full_matrix_graph(), mapping);
+  sum.begin_fill();
+  sum += *source;
+  sum.finalize();
+
+  const auto n = mapping.num_global_dofs();
+  for (global_ordinal_type row = 0; row < n; ++row) {
+    ASSERT_EQ(row_entries(*sum.matrix(), row), row_entries(*source, row))
+        << "row " << row;
+  }
+}
+
+// A += alpha * B scales every entry, and agrees with a matrix built at that
+// scale in the first place.
+TEST_F(SparseMatrixView3D, AddingAScaledMatrixScalesEveryEntry) {
+  using specfem::linear_system::operator*;
+  const auto &mapping = fe().mapping();
+  const scalar_type alpha = 3;
+
+  const auto source = filled_matrix(fe(), 1);
+  const auto prescaled = filled_matrix(fe(), alpha);
+
+  MatrixViewType sum(fe().full_matrix_graph(), mapping);
+  sum.begin_fill();
+  sum += alpha * (*source);
+  sum.finalize();
+
+  const auto n = mapping.num_global_dofs();
+  for (global_ordinal_type row = 0; row < n; ++row) {
+    const auto scaled = row_entries(*sum.matrix(), row);
+    const auto expected = row_entries(*prescaled, row);
+    ASSERT_EQ(scaled.size(), expected.size()) << "row " << row;
+    for (std::size_t k = 0; k < scaled.size(); ++k) {
+      EXPECT_EQ(scaled[k].first, expected[k].first);
+      EXPECT_NEAR(scaled[k].second, expected[k].second,
+                  1e-3 * std::abs(expected[k].second) + 1e-5)
+          << "row " << row << ", entry " << k;
+    }
+  }
+}
+
+// A += alpha * diag(v) touches the diagonal and nothing else.
+TEST_F(SparseMatrixView3D, AddingAScaledDiagonalTouchesOnlyTheDiagonal) {
+  using specfem::linear_system::diag;
+  using specfem::linear_system::operator*;
+  const auto &mapping = fe().mapping();
+  const scalar_type alpha = 2;
+
+  specfem::linear_system::vector_type v(fe().owned_map());
+  {
+    auto view = v.getLocalViewHost(Tpetra::Access::OverwriteAll);
+    for (std::size_t dof = 0; dof < view.extent(0); ++dof) {
+      view(dof, 0) = static_cast<scalar_type>(1 + dof);
+    }
+  }
+
+  MatrixViewType sum(fe().full_matrix_graph(), mapping);
+  sum.begin_fill();
+  sum += alpha * diag(v);
+  sum.finalize();
+
+  const auto n = mapping.num_global_dofs();
+  for (global_ordinal_type row = 0; row < n; ++row) {
+    for (const auto &[column, value] : row_entries(*sum.matrix(), row)) {
+      if (column == row) {
+        EXPECT_NEAR(value, alpha * static_cast<scalar_type>(1 + row),
+                    1e-3 * std::abs(value) + 1e-5)
+            << "diagonal entry of row " << row;
+      } else {
+        EXPECT_EQ(value, 0)
+            << "off-diagonal (" << row << ", " << column << ") was touched";
+      }
+    }
+  }
+}
+
+// The three terms of K + c1 C + c2 M are an accumulation, so their order must
+// not matter.
+TEST_F(SparseMatrixView3D, TermsAccumulateInAnyOrder) {
+  using specfem::linear_system::diag;
+  using specfem::linear_system::operator*;
+  const auto &mapping = fe().mapping();
+
+  const auto k = filled_matrix(fe(), 1);
+  const auto c = filled_matrix(fe(), 2);
+  specfem::linear_system::vector_type m(fe().owned_map());
+  m.putScalar(static_cast<scalar_type>(0.5));
+
+  MatrixViewType forward(fe().full_matrix_graph(), mapping);
+  forward.begin_fill();
+  forward += *k;
+  forward += static_cast<scalar_type>(4) * (*c);
+  forward += static_cast<scalar_type>(7) * diag(m);
+  forward.finalize();
+
+  MatrixViewType reversed(fe().full_matrix_graph(), mapping);
+  reversed.begin_fill();
+  reversed += static_cast<scalar_type>(7) * diag(m);
+  reversed += static_cast<scalar_type>(4) * (*c);
+  reversed += *k;
+  reversed.finalize();
+
+  const auto n = mapping.num_global_dofs();
+  for (global_ordinal_type row = 0; row < n; ++row) {
+    const auto a = row_entries(*forward.matrix(), row);
+    const auto b = row_entries(*reversed.matrix(), row);
+    ASSERT_EQ(a.size(), b.size()) << "row " << row;
+    for (std::size_t j = 0; j < a.size(); ++j) {
+      EXPECT_EQ(a[j].first, b[j].first);
+      EXPECT_NEAR(a[j].second, b[j].second, 1e-3 * std::abs(a[j].second) + 1e-5)
+          << "row " << row << ", entry " << j;
+    }
+  }
+}
+
+// Adding a matrix whose sparsity is not contained in the target's must not be
+// silently truncated -- that is what the raw Tpetra call would do.
+TEST_F(SparseMatrixView3D, AddingAMatrixOutsideTheGraphThrows) {
+  const auto &mapping = fe().mapping();
+  const auto source = filled_matrix(fe(), 1);
+
+  // The damping graph is block-diagonal and empty on this no-ABC mesh, so an
+  // element-dense matrix cannot fit inside it.
+  MatrixViewType narrow(fe().damping_matrix_graph(), mapping);
+  narrow.begin_fill();
+  EXPECT_THROW(narrow += *source, std::runtime_error);
 }
 
 } // namespace sparse_matrix_view_matrix_view_test

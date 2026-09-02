@@ -6,6 +6,7 @@
 #include "specfem/linear_system/tpetra_types.hpp"
 #include <Kokkos_Core.hpp>
 #include <Teuchos_RCP.hpp>
+#include <Tpetra_Access.hpp>
 #include <cstddef>
 #include <sstream>
 #include <stdexcept>
@@ -15,6 +16,66 @@
 
 namespace specfem {
 namespace linear_system {
+
+/**
+ * @brief A matrix scaled by a coefficient, for `A += alpha * B`.
+ *
+ * Produced by @ref operator*(scalar_type, const crs_matrix_type &); holds its
+ * matrix by reference and is meant to be consumed in the same expression.
+ */
+struct ScaledMatrix {
+  scalar_type alpha;             ///< Coefficient
+  const crs_matrix_type &matrix; ///< Borrowed matrix
+};
+
+/**
+ * @brief A diagonal matrix whose entries are a vector -- MATLAB's `diag(v)`.
+ *
+ * A lumped mass matrix is diagonal but stored as a `Tpetra::Vector`; wrapping
+ * it lets `A += c * diag(m)` say what the operator is, instead of exposing the
+ * storage choice through a `diagonal()` accessor on the matrix being built.
+ */
+struct Diagonal {
+  const vector_type &vector; ///< Borrowed diagonal entries
+};
+
+/// A @ref Diagonal scaled by a coefficient, for `A += alpha * diag(v)`
+struct ScaledDiagonal {
+  scalar_type alpha;         ///< Coefficient
+  const vector_type &vector; ///< Borrowed diagonal entries
+};
+
+/**
+ * @brief View a vector as the diagonal of a matrix.
+ *
+ * @param vector Diagonal entries; must outlive the expression
+ * @return Wrapper accepted by `SparseMatrixView::operator+=`
+ */
+inline Diagonal diag(const vector_type &vector) { return Diagonal{ vector }; }
+
+/**
+ * @brief Scale a matrix for a pending sum.
+ *
+ * @param alpha Coefficient
+ * @param matrix Matrix to scale; must outlive the expression
+ * @return Wrapper accepted by `SparseMatrixView::operator+=`
+ */
+inline ScaledMatrix operator*(const scalar_type alpha,
+                              const crs_matrix_type &matrix) {
+  return ScaledMatrix{ alpha, matrix };
+}
+
+/**
+ * @brief Scale a diagonal for a pending sum.
+ *
+ * @param alpha Coefficient
+ * @param diagonal Diagonal to scale
+ * @return Wrapper accepted by `SparseMatrixView::operator+=`
+ */
+inline ScaledDiagonal operator*(const scalar_type alpha,
+                                const Diagonal diagonal) {
+  return ScaledDiagonal{ alpha, diagonal.vector };
+}
 
 /**
  * @brief Writable view over a sparse matrix, indexed by @ref DofSet.
@@ -188,15 +249,139 @@ public:
    */
   template <typename Rows, typename Cols>
   BlockRef<Rows, Cols> operator()(const Rows &rows, const Cols &cols) {
+    require_fill_active();
+    return BlockRef<Rows, Cols>(*this, rows, cols);
+  }
+
+  /**
+   * @brief Add another matrix: `A += B`.
+   *
+   * `B`'s sparsity must be contained in this matrix's, which is checked per
+   * row rather than assumed.
+   *
+   * @param other Matrix to add; must be fill-complete
+   */
+  void operator+=(const crs_matrix_type &other) {
+    add_matrix(static_cast<scalar_type>(1), other);
+  }
+
+  /**
+   * @brief Add a scaled matrix: `A += alpha * B`.
+   *
+   * @param scaled Matrix and coefficient; see @ref ScaledMatrix
+   */
+  void operator+=(const ScaledMatrix scaled) {
+    add_matrix(scaled.alpha, scaled.matrix);
+  }
+
+  /**
+   * @brief Add a diagonal matrix: `A += diag(v)`.
+   *
+   * @param diagonal Diagonal entries; see @ref Diagonal
+   */
+  void operator+=(const Diagonal diagonal) {
+    add_diagonal(static_cast<scalar_type>(1), diagonal.vector);
+  }
+
+  /**
+   * @brief Add a scaled diagonal matrix: `A += alpha * diag(v)`.
+   *
+   * @param scaled Diagonal entries and coefficient; see @ref ScaledDiagonal
+   */
+  void operator+=(const ScaledDiagonal scaled) {
+    add_diagonal(scaled.alpha, scaled.vector);
+  }
+
+private:
+  /// What an update is being read from; only used to compose an error message
+  enum class UpdateSource {
+    block,   ///< A dense element block through @ref BlockRef
+    matrix,  ///< Another matrix, through `operator+=`
+    diagonal ///< A vector on the diagonal, through `operator+=`
+  };
+
+  /// Throw unless the matrix currently accepts value updates
+  void require_fill_active() const {
     if (!fill_active_) {
       throw std::runtime_error(
           "specfem::linear_system::SparseMatrixView: the matrix is not "
           "fill-active; call begin_fill() before updating values.");
     }
-    return BlockRef<Rows, Cols>(*this, rows, cols);
   }
 
-private:
+  /**
+   * @brief Accumulate `alpha * other` into this matrix.
+   *
+   * One row at a time through @ref apply_row, so the containment of `other`'s
+   * sparsity in this matrix's graph is enforced rather than assumed. Empty
+   * rows are skipped, which is what makes adding an empty damping matrix free.
+   *
+   * @param alpha Coefficient applied to every entry
+   * @param other Source matrix; must be fill-complete
+   */
+  void add_matrix(const scalar_type alpha, const crs_matrix_type &other) {
+    require_fill_active();
+
+    const auto num_rows = mapping_.num_global_dofs();
+    const auto max_entries = other.getGlobalMaxNumRowEntries();
+    typename crs_matrix_type::nonconst_global_inds_host_view_type columns(
+        "specfem::linear_system::SparseMatrixView::add_matrix_columns",
+        max_entries);
+    typename crs_matrix_type::nonconst_values_host_view_type values(
+        "specfem::linear_system::SparseMatrixView::add_matrix_values",
+        max_entries);
+
+    for (global_ordinal_type row = 0; row < num_rows; ++row) {
+      std::size_t row_entries = 0;
+      other.getGlobalRowCopy(row, columns, values, row_entries);
+      if (row_entries == 0) {
+        continue;
+      }
+
+      const auto count = static_cast<int>(row_entries);
+      column_buffer_.resize(row_entries);
+      value_buffer_.resize(row_entries);
+      for (std::size_t k = 0; k < row_entries; ++k) {
+        column_buffer_[k] = columns(k);
+        value_buffer_[k] = alpha * values(k);
+      }
+
+      apply_row(row, value_buffer_.data(), count, UpdateMode::sum,
+                UpdateSource::matrix);
+    }
+  }
+
+  /**
+   * @brief Accumulate `alpha * diag(vector)` into this matrix.
+   *
+   * Every diagonal entry is a self-pair, so it exists in any graph assembled
+   * from coupling blocks; the per-row check still runs.
+   *
+   * @param alpha Coefficient applied to every entry
+   * @param vector Diagonal entries, one per global dof
+   */
+  void add_diagonal(const scalar_type alpha, const vector_type &vector) {
+    require_fill_active();
+
+    const auto local = vector.getLocalViewHost(Tpetra::Access::ReadOnly);
+    const auto num_rows = mapping_.num_global_dofs();
+
+    if (static_cast<global_ordinal_type>(local.extent(0)) != num_rows) {
+      std::ostringstream message;
+      message << "specfem::linear_system::SparseMatrixView: the matrix has "
+              << num_rows << " rows but the diagonal holds " << local.extent(0)
+              << " entries.";
+      throw std::runtime_error(message.str());
+    }
+
+    column_buffer_.resize(1);
+    for (global_ordinal_type row = 0; row < num_rows; ++row) {
+      const scalar_type value = alpha * local(static_cast<std::size_t>(row), 0);
+      column_buffer_[0] = row;
+      apply_row(row, &value, 1, UpdateMode::sum, UpdateSource::diagonal);
+    }
+  }
+
   /**
    * @brief Scatter a dense or block-diagonal update into the matrix.
    *
@@ -301,7 +486,7 @@ private:
 
     for (int r = 0; r < rows.size(); ++r) {
       apply_row(rows[r], value_buffer_.data(), cols.size(), UpdateMode::replace,
-                rows.size());
+                UpdateSource::block, rows.size());
     }
   }
 
@@ -314,13 +499,14 @@ private:
                                  Kokkos::LayoutRight>) {
       // LayoutRight rows are contiguous, so the block's own storage is already
       // the array Tpetra wants.
-      apply_row(row, &block(r, 0), ncols, mode, nrows);
+      apply_row(row, &block(r, 0), ncols, mode, UpdateSource::block, nrows);
     } else {
       value_buffer_.resize(ncols);
       for (int c = 0; c < ncols; ++c) {
         value_buffer_[c] = block(r, c);
       }
-      apply_row(row, value_buffer_.data(), ncols, mode, nrows);
+      apply_row(row, value_buffer_.data(), ncols, mode, UpdateSource::block,
+                nrows);
     }
   }
 
@@ -331,13 +517,14 @@ private:
                    const UpdateMode mode, const int nrows) {
     if constexpr (std::is_same_v<typename Block::array_layout,
                                  Kokkos::LayoutRight>) {
-      apply_row(row, &block(e, r, 0), ncols, mode, nrows);
+      apply_row(row, &block(e, r, 0), ncols, mode, UpdateSource::block, nrows);
     } else {
       value_buffer_.resize(ncols);
       for (int c = 0; c < ncols; ++c) {
         value_buffer_[c] = block(e, r, c);
       }
-      apply_row(row, value_buffer_.data(), ncols, mode, nrows);
+      apply_row(row, value_buffer_.data(), ncols, mode, UpdateSource::block,
+                nrows);
     }
   }
 
@@ -352,12 +539,14 @@ private:
    * @param values Row values, `ncols` of them
    * @param ncols Number of columns being updated
    * @param mode Accumulate or overwrite
-   * @param nrows Rows in the block, for the error message
+   * @param source What the values came from, for the error message
+   * @param nrows Rows in the block, for the error message; block sources only
    *
    * @throws std::runtime_error if any column fell outside the graph
    */
   void apply_row(const global_ordinal_type row, const scalar_type *values,
-                 const int ncols, const UpdateMode mode, const int nrows) {
+                 const int ncols, const UpdateMode mode,
+                 const UpdateSource source, const int nrows = 0) {
     const int updated = (mode == UpdateMode::sum)
                             ? matrix_->sumIntoGlobalValues(
                                   row, ncols, values, column_buffer_.data())
@@ -366,11 +555,21 @@ private:
 
     if (updated != ncols) {
       std::ostringstream message;
-      message << "specfem::linear_system::SparseMatrixView: row " << row
-              << " of a " << nrows << "x" << ncols
-              << " block: " << (ncols - updated) << " of " << ncols
+      message << "specfem::linear_system::SparseMatrixView: row " << row;
+      switch (source) {
+      case UpdateSource::block:
+        message << " of a " << nrows << "x" << ncols << " block";
+        break;
+      case UpdateSource::matrix:
+        message << ", adding another matrix";
+        break;
+      case UpdateSource::diagonal:
+        message << ", adding a diagonal";
+        break;
+      }
+      message << ": " << (ncols - updated) << " of " << ncols
               << " columns fell outside the graph. The matrix's sparsity does "
-                 "not match the connectivity being assembled.";
+                 "not contain the values being added.";
       throw std::runtime_error(message.str());
     }
   }

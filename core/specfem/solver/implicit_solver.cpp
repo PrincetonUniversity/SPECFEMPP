@@ -7,6 +7,8 @@
 #include "specfem/compute/impl/compute_source_interaction.hpp"
 #include "specfem/linear_system/damping_assembler.hpp"
 #include "specfem/linear_system/mass_vector.hpp"
+#include "specfem/linear_system/sparse_matrix_view/field_vector.hpp"
+#include "specfem/linear_system/sparse_matrix_view/matrix_view.hpp"
 #include "specfem/linear_system/tpetra_assembler.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/tags.hpp"
@@ -38,22 +40,25 @@ specfem::solver::ImplicitNewmarkSolver<Tags>::ImplicitNewmarkSolver(
         "use the explicit time_marching solver instead.");
   }
 
+  // One description of the mesh -- dof maps, the element-dense stiffness
+  // graph, the block-diagonal damping graph -- shared by every operator
+  // assembled below. Each graph costs two host passes over the connectivity,
+  // so letting the assemblers each build their own would pay for them twice.
+  fe_ = std::make_unique<FEAssemblyType>(MappingType(assembly_));
+
   specfem::linear_system::StiffnessAssembler<Tags> stiffness_assembler(
-      assembly_,
+      assembly_, *fe_,
       specfem::linear_system::StiffnessAssembler<Tags>::default_batch_size,
       specfem::linear_system::StiffnessScope::with_stacey);
   stiffness_ = stiffness_assembler.assemble();
-  dof_map_ = std::make_unique<specfem::linear_system::DofMap>(
-      stiffness_assembler.dof_map());
 
   specfem::linear_system::DampingAssembler<Tags> damping_assembler(assembly_,
-                                                                   *dof_map_);
+                                                                   *fe_);
   damping_ = damping_assembler.assemble();
 
-  mass_ =
-      specfem::linear_system::assemble_mass_vector<Tags>(assembly_, *dof_map_);
+  mass_ = specfem::linear_system::assemble_mass_vector<Tags>(assembly_, *fe_);
 
-  const auto map = dof_map_->owned_map();
+  const auto map = fe_->owned_map();
   u_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
   v_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
   a_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
@@ -73,7 +78,6 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::form_operator(
     const type_real dt) {
   using scalar_type = specfem::linear_system::scalar_type;
   using crs_matrix_type = specfem::linear_system::crs_matrix_type;
-  using global_ordinal_type = specfem::linear_system::global_ordinal_type;
 
   const type_real beta = config_.newmark.beta;
   const type_real gamma = config_.newmark.gamma;
@@ -82,75 +86,24 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::form_operator(
   const scalar_type damping_coefficient =
       static_cast<scalar_type>(gamma / (beta * dt));
 
-  // A on K's static graph: every C block entry is a same-element pair and
-  // the M diagonal is a self-pair, so both sumInto below always hit.
-  auto system = Teuchos::rcp(new crs_matrix_type(stiffness_->getCrsGraph()));
+  // ADL cannot reach an operator in specfem::linear_system when both operands
+  // are a scalar and a Tpetra type, so the scaled-matrix spelling below needs
+  // this declaration. diag() returns one of our own types and needs none.
+  using specfem::linear_system::operator*;
 
-  const global_ordinal_type num_rows = dof_map_->num_global_dofs();
-  typename crs_matrix_type::nonconst_global_inds_host_view_type columns(
-      "specfem::solver::implicit_operator_columns",
-      stiffness_->getGlobalMaxNumRowEntries());
-  typename crs_matrix_type::nonconst_values_host_view_type values(
-      "specfem::solver::implicit_operator_values",
-      stiffness_->getGlobalMaxNumRowEntries());
+  // A lives on K's graph: every C entry is a same-point pair, which is a
+  // same-element pair, and every M entry is a self-pair -- so both additions
+  // are contained in it. The view checks that per row rather than trusting it.
+  specfem::linear_system::SparseMatrixView<MappingType> system(
+      fe_->full_matrix_graph(), fe_->mapping());
 
-  for (global_ordinal_type row = 0; row < num_rows; ++row) {
-    std::size_t row_entries = 0;
-    stiffness_->getGlobalRowCopy(row, columns, values, row_entries);
-    const int replaced = system->replaceGlobalValues(
-        row, static_cast<int>(row_entries), values.data(), columns.data());
-    if (replaced != static_cast<int>(row_entries)) {
-      throw std::runtime_error(
-          "specfem::solver::ImplicitNewmarkSolver: copying K into the "
-          "system operator failed; the graphs disagree.");
-    }
-  }
+  system.begin_fill();
+  system += *stiffness_;                                             // K
+  system += damping_coefficient * (*damping_);                       // + c1 C
+  system += mass_coefficient * specfem::linear_system::diag(*mass_); // + c2 M
+  system.finalize();
 
-  if (damping_->getGlobalNumEntries() > 0) {
-    typename crs_matrix_type::nonconst_global_inds_host_view_type
-        damping_columns("specfem::solver::implicit_damping_columns",
-                        damping_->getGlobalMaxNumRowEntries());
-    typename crs_matrix_type::nonconst_values_host_view_type damping_values(
-        "specfem::solver::implicit_damping_values",
-        damping_->getGlobalMaxNumRowEntries());
-    for (global_ordinal_type row = 0; row < num_rows; ++row) {
-      std::size_t row_entries = 0;
-      damping_->getGlobalRowCopy(row, damping_columns, damping_values,
-                                 row_entries);
-      if (row_entries == 0) {
-        continue;
-      }
-      for (std::size_t k = 0; k < row_entries; ++k) {
-        damping_values(k) *= damping_coefficient;
-      }
-      const int updated = system->sumIntoGlobalValues(
-          row, static_cast<int>(row_entries), damping_values.data(),
-          damping_columns.data());
-      if (updated != static_cast<int>(row_entries)) {
-        throw std::runtime_error(
-            "specfem::solver::ImplicitNewmarkSolver: summing C into the "
-            "system operator failed; a damping entry is outside K's graph.");
-      }
-    }
-  }
-
-  {
-    const auto mass_view = mass_->getLocalViewHost(Tpetra::Access::ReadOnly);
-    for (global_ordinal_type row = 0; row < num_rows; ++row) {
-      const scalar_type diagonal_term =
-          mass_view(static_cast<std::size_t>(row), 0) * mass_coefficient;
-      const int updated =
-          system->sumIntoGlobalValues(row, 1, &diagonal_term, &row);
-      if (updated != 1) {
-        throw std::runtime_error(
-            "specfem::solver::ImplicitNewmarkSolver: the system operator's "
-            "graph is missing a diagonal entry.");
-      }
-    }
-  }
-
-  system->fillComplete(dof_map_->owned_map(), dof_map_->owned_map());
-  system_operator_ = system;
+  system_operator_ = system.matrix();
 
   // MueLu (AMG) deferred: the float-only TROMP Trilinos installs do not
   // link it (MueLu references Xpetra::Matrix<double> unconditionally);
@@ -212,13 +165,8 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::extract_source_vector(
                                                                   istep);
   Kokkos::deep_copy(host_acceleration, device_acceleration);
 
-  auto view = f.getLocalViewHost(Tpetra::Access::OverwriteAll);
-  for (int iglob = 0; iglob < dof_map_->nglob(); ++iglob) {
-    for (int icomp = 0; icomp < dof_map_->ncomp(); ++icomp) {
-      view(static_cast<std::size_t>(dof_map_->gid(iglob, icomp)), 0) =
-          host_acceleration(iglob, icomp);
-    }
-  }
+  specfem::linear_system::copy_field_to_vector(fe_->mapping(),
+                                               host_acceleration, f);
 }
 
 template <typename Tags>
@@ -232,19 +180,10 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::write_state_to_fields() {
   const auto h_v = field_impl.get_host_field_dot();
   const auto h_a = field_impl.get_host_field_dot_dot();
 
-  {
-    const auto u_view = u_->getLocalViewHost(Tpetra::Access::ReadOnly);
-    const auto v_view = v_->getLocalViewHost(Tpetra::Access::ReadOnly);
-    const auto a_view = a_->getLocalViewHost(Tpetra::Access::ReadOnly);
-    for (int iglob = 0; iglob < dof_map_->nglob(); ++iglob) {
-      for (int icomp = 0; icomp < dof_map_->ncomp(); ++icomp) {
-        const auto dof = static_cast<std::size_t>(dof_map_->gid(iglob, icomp));
-        h_u(iglob, icomp) = u_view(dof, 0);
-        h_v(iglob, icomp) = v_view(dof, 0);
-        h_a(iglob, icomp) = a_view(dof, 0);
-      }
-    }
-  }
+  const auto &mapping = fe_->mapping();
+  specfem::linear_system::copy_vector_to_field(mapping, *u_, h_u);
+  specfem::linear_system::copy_vector_to_field(mapping, *v_, h_v);
+  specfem::linear_system::copy_vector_to_field(mapping, *a_, h_a);
 
   // Copy only the three state views (not fields.copy_to_device(), which
   // would also touch the mass storage the assemblers treat as scratch).

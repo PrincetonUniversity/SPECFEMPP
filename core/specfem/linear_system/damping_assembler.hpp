@@ -81,6 +81,20 @@ public:
   DampingAssembler(AssemblyType &assembly, const DofMap &dof_map);
 
   /**
+   * @brief Assemble over a caller-supplied @ref FEAssembly.
+   *
+   * Same validation as the constructor above, but reuses `fe` -- its dof
+   * numbering, its absorbing-boundary mask and its damping sparsity graph --
+   * rather than building its own.
+   *
+   * @param assembly Assembled mesh, material properties, and fields; used as
+   *        probe scratch and zeroed afterwards. Must outlive the assembler.
+   * @param fe Dof maps and sparsity graphs of the medium; borrowed, and must
+   *        outlive the assembler
+   */
+  DampingAssembler(AssemblyType &assembly, const FEAssemblyType &fe);
+
+  /**
    * @brief Probe the velocity path and assemble the damping matrix.
    *
    * The matrix lives on @ref FEAssembly::damping_matrix_graph: a compact,
@@ -105,8 +119,14 @@ public:
   const DofMap &dof_map() const { return dof_map_; }
 
 private:
+  /// Validation shared by both constructors
+  void validate() const;
+
   AssemblyType &assembly_; ///< Borrowed assembly (probe scratch, not owned)
   DofMap dof_map_;         ///< Per-medium dof numbering and maps
+
+  /// Caller-supplied maps and graphs; null when this assembler builds its own
+  const FEAssemblyType *fe_ = nullptr;
 };
 
 } // namespace linear_system
