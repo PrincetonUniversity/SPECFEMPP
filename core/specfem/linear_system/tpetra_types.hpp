@@ -5,6 +5,7 @@
 #include "specfem/setup.hpp"
 #include <Tpetra_CrsGraph.hpp>
 #include <Tpetra_CrsMatrix.hpp>
+#include <Tpetra_FECrsGraph.hpp>
 #include <Tpetra_Map.hpp>
 #include <Tpetra_Vector.hpp>
 
