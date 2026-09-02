@@ -154,7 +154,14 @@ struct mesh<specfem::simulation::model::Cartesian3D> : public mesh_dim3_base {
   ~mesh() = default;
 };
 
-/** @brief 3D globe mesh data container. */
+/**
+ * @brief 3-D globe raw mesh data container.
+ *
+ * Common 3-D topology, control-node, material-classification, boundary, and
+ * adjacency fields are inherited from @c mesh_dim3_base. The @ref globe payload
+ * stores the additional thin-database metadata required to evaluate final GLL
+ * material properties through the globe model oracle during assembly setup.
+ */
 template <>
 struct mesh<specfem::simulation::model::Globe3D> : public mesh_dim3_base {
 
