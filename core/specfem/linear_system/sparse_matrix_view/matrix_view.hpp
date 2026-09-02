@@ -112,9 +112,6 @@ inline ScaledDiagonal operator*(const scalar_type alpha,
  */
 template <typename MappingType> class SparseMatrixView {
 public:
-  /// Dof numbering the matrix is built over
-  using mapping_type = MappingType;
-
   /// Integer type of the global dof ids
   using global_ordinal_type = typename MappingType::global_ordinal_type;
 

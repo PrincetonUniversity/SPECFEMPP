@@ -142,10 +142,6 @@ public:
   /// Integer type of the global dof ids
   using global_ordinal_type = typename MappingType::global_ordinal_type;
 
-  /// Number of index slots: 5 for `(ispec, iz, iy, ix, icomp)`, 2 for
-  /// `(iglob, icomp)`
-  constexpr static std::size_t num_slots = sizeof...(Selectors);
-
   /**
    * @brief Bind selectors to a mapping.
    *
@@ -248,10 +244,11 @@ public:
     }
   }
 
-  /// Dof numbering the ids are drawn from
-  constexpr const MappingType &mapping() const { return mapping_; }
-
 private:
+  /// Number of index slots: 5 for `(ispec, iz, iy, ix, icomp)`, 2 for
+  /// `(iglob, icomp)`
+  constexpr static std::size_t num_slots = sizeof...(Selectors);
+
   /// Full extent of slot `Slot`, used when that slot is `Kokkos::ALL`
   template <std::size_t Slot> constexpr int slot_extent() const {
     if constexpr (num_slots == 5) {

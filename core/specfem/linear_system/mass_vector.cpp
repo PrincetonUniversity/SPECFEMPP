@@ -11,26 +11,12 @@
 #include <cstddef>
 #include <stdexcept>
 
-namespace specfem::linear_system_impl {
-
-/**
- * @brief Drive the production mass accumulation and gather it into a vector.
- *
- * Shared body of both `assemble_mass_vector` overloads; the two differ only in
- * where the dof numbering and the owned map come from.
- *
- * @tparam Tags Compile-time tags
- * @tparam MappingType Dof numbering
- * @param assembly Assembly whose forward mass storage is used as scratch
- * @param mapping Dof numbering of the medium
- * @param owned_map Row map of the returned vector
- * @return Lumped mass vector
- */
-template <typename Tags, typename MappingType>
-Teuchos::RCP<specfem::linear_system::vector_type> assemble_mass_vector_impl(
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
+Teuchos::RCP<specfem::linear_system::vector_type>
+specfem::linear_system::assemble_mass_vector(
     specfem::assembly::assembly<Tags::dimension_tag> &assembly,
-    const MappingType &mapping,
-    const Teuchos::RCP<const specfem::linear_system::map_type> &owned_map) {
+    const FEAssembly<FEMapping<Tags::dimension_tag, Tags::medium_tag>> &fe) {
 
   if (assembly.mesh.element_grid != 5) {
     throw std::runtime_error(
@@ -41,6 +27,8 @@ Teuchos::RCP<specfem::linear_system::vector_type> assemble_mass_vector_impl(
   constexpr auto forward = specfem::simulation::field_type::forward;
   constexpr auto outer = specfem::element::mpi_tag::outer;
   constexpr auto inner = specfem::element::mpi_tag::inner;
+
+  const auto &mapping = fe.mapping();
 
   auto &field = assembly.fields.template get_simulation_field<forward>();
   const auto &field_impl = field.template get_field<Tags::medium_tag>();
@@ -71,7 +59,7 @@ Teuchos::RCP<specfem::linear_system::vector_type> assemble_mass_vector_impl(
   Kokkos::deep_copy(h_mass, mass);
 
   auto mass_vector =
-      Teuchos::rcp(new specfem::linear_system::vector_type(owned_map));
+      Teuchos::rcp(new specfem::linear_system::vector_type(fe.owned_map()));
   specfem::linear_system::copy_field_to_vector(mapping, h_mass, *mass_vector);
 
   // Leave the assembly as found for the explicit solver's own mass init.
@@ -79,32 +67,6 @@ Teuchos::RCP<specfem::linear_system::vector_type> assemble_mass_vector_impl(
   Kokkos::deep_copy(h_mass, 0);
 
   return mass_vector;
-}
-
-} // namespace specfem::linear_system_impl
-
-template <typename Tags>
-  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
-Teuchos::RCP<specfem::linear_system::vector_type>
-specfem::linear_system::assemble_mass_vector(
-    specfem::assembly::assembly<Tags::dimension_tag> &assembly,
-    const DofMap &dof_map) {
-  // The DofMap and the Mapping number dofs identically (asserted by the
-  // DofIdsMatchDofMap test); the Mapping is what the gather is written
-  // against, so build one here rather than duplicating the gid layout.
-  const FEMapping<Tags::dimension_tag, Tags::medium_tag> mapping(assembly);
-  return specfem::linear_system_impl::assemble_mass_vector_impl<Tags>(
-      assembly, mapping, dof_map.owned_map());
-}
-
-template <typename Tags>
-  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
-Teuchos::RCP<specfem::linear_system::vector_type>
-specfem::linear_system::assemble_mass_vector(
-    specfem::assembly::assembly<Tags::dimension_tag> &assembly,
-    const FEAssembly<FEMapping<Tags::dimension_tag, Tags::medium_tag>> &fe) {
-  return specfem::linear_system_impl::assemble_mass_vector_impl<Tags>(
-      assembly, fe.mapping(), fe.owned_map());
 }
 
 namespace specfem::linear_system_impl {
@@ -118,12 +80,6 @@ using elastic_isotropic_tags =
 } // namespace specfem::linear_system_impl
 
 // Explicit instantiation: 3D elastic isotropic
-template Teuchos::RCP<specfem::linear_system::vector_type>
-specfem::linear_system::assemble_mass_vector<
-    specfem::linear_system_impl::elastic_isotropic_tags>(
-    specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &,
-    const specfem::linear_system::DofMap &);
-
 template Teuchos::RCP<specfem::linear_system::vector_type>
 specfem::linear_system::assemble_mass_vector<
     specfem::linear_system_impl::elastic_isotropic_tags>(
