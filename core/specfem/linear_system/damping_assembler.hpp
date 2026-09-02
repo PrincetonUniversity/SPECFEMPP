@@ -3,7 +3,6 @@
 #ifdef SPECFEM_ENABLE_TRILINOS
 
 #include "specfem/enums.hpp"
-#include "specfem/linear_system/dof_map.hpp"
 #include "specfem/linear_system/sparse_matrix_view/fe_assembly.hpp"
 #include "specfem/linear_system/sparse_matrix_view/matrix_view.hpp"
 #include <Teuchos_RCP.hpp>
@@ -68,29 +67,15 @@ public:
    *
    * Throws `std::runtime_error` if any element of the medium is outside the
    * Stacey-tolerant stiffness scope (see @ref validate_stiffness_scope with
-   * `StiffnessScope::with_stacey`) or if `dof_map` does not match the
-   * assembly's forward field.
+   * `StiffnessScope::with_stacey`) or if `fe` does not match the assembly's
+   * forward field.
    *
    * @param assembly Assembled mesh, material properties, and fields; the
    *        forward field's displacement/velocity/acceleration storage is
    *        used as probe scratch and zeroed afterwards. Must outlive the
    *        assembler.
-   * @param dof_map Dof numbering shared with the stiffness matrix (same
-   *        instance the `StiffnessAssembler` exposes)
-   */
-  DampingAssembler(AssemblyType &assembly, const DofMap &dof_map);
-
-  /**
-   * @brief Assemble over a caller-supplied @ref FEAssembly.
-   *
-   * Same validation as the constructor above, but reuses `fe` -- its dof
-   * numbering, its absorbing-boundary mask and its damping sparsity graph --
-   * rather than building its own.
-   *
-   * @param assembly Assembled mesh, material properties, and fields; used as
-   *        probe scratch and zeroed afterwards. Must outlive the assembler.
-   * @param fe Dof maps and sparsity graphs of the medium; borrowed, and must
-   *        outlive the assembler
+   * @param fe Dof maps, the absorbing-boundary mask and the damping sparsity
+   *        graph of the medium; borrowed, and must outlive the assembler
    */
   DampingAssembler(AssemblyType &assembly, const FEAssemblyType &fe);
 
@@ -115,18 +100,9 @@ public:
    */
   Teuchos::RCP<crs_matrix_type> assemble() const;
 
-  /// Dof map shared by the matrix and any right-hand-side/solution vectors
-  const DofMap &dof_map() const { return dof_map_; }
-
 private:
-  /// Validation shared by both constructors
-  void validate() const;
-
-  AssemblyType &assembly_; ///< Borrowed assembly (probe scratch, not owned)
-  DofMap dof_map_;         ///< Per-medium dof numbering and maps
-
-  /// Caller-supplied maps and graphs; null when this assembler builds its own
-  const FEAssemblyType *fe_ = nullptr;
+  AssemblyType &assembly_;   ///< Borrowed assembly (probe scratch, not owned)
+  const FEAssemblyType &fe_; ///< Borrowed maps, mask and sparsity graph
 };
 
 } // namespace linear_system

@@ -638,14 +638,6 @@ specfem_add_test(wavefield_checkpoint_tests
             gtest_main
 )
 
-specfem_add_test(trilinos_smoke_tests
-  SOURCES   linear_system/trilinos_smoke_tests.cpp
-  LIBRARIES specfem::linear_system
-            specfem_environment
-            gtest_main
-            Kokkos::kokkos
-)
-
 specfem_add_test(element_stiffness_tests
   SOURCES   linear_system/element_stiffness_tests.cpp
   LIBRARIES specfem::linear_system

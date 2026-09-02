@@ -21,8 +21,8 @@ namespace linear_system {
  *
  * Answers "given `(ispec, iz, iy, ix, icomp)`, which global dof is that?", and
  * carries the connectivity a sparse matrix over those dofs is built from: the
- * element range of the medium, the dof ids of each element
- * (@ref element_dofs), and the mesh points an absorbing boundary acts at
+ * element range of the medium, the dof sets its selector overloads name (see
+ * @ref DofSet), and the mesh points an absorbing boundary acts at
  * (@ref is_damping_point).
  *
  * The global dof id is the `Kokkos::layout_left` offset of `(iglob, icomp)`
@@ -55,20 +55,8 @@ public:
   constexpr static int ncomponents =
       specfem::element::attributes<DimensionTag, MediumTag>::components;
 
-  /// `(ispec, iz, iy, ix)` to global point index, on the host; the host
-  /// mirror of the simulation field's `index_mapping`
-  using index_view_type =
-      Kokkos::View<int ****, Kokkos::LayoutLeft,
-                   Kokkos::DefaultExecutionSpace>::host_mirror_type;
-
   /// Half-open index range of the medium's elements; `View`-compatible
   using element_range_type = specfem::datatype::ElementIndexRange;
-
-  /// Extents of the dof grid: `(nglob, ncomponents)`
-  using extents_type = Kokkos::dextents<std::size_t, 2>;
-
-  /// Layout that turns `(iglob, icomp)` into a global dof id
-  using component_layout_type = Kokkos::layout_left::mapping<extents_type>;
 
   /**
    * @brief Number the degrees of freedom of one medium of an assembled
@@ -185,32 +173,6 @@ public:
   }
 
   /**
-   * @brief Global dof ids of one element, in @ref local_dof_index order.
-   *
-   * @param ispec Element index
-   * @return `ncomp * ngllz * nglly * ngllx` global dof ids
-   */
-  std::vector<global_ordinal_type> element_dofs(const int ispec) const {
-    const int npoints = ngllz_ * nglly_ * ngllx_;
-    std::vector<global_ordinal_type> dofs(
-        static_cast<std::size_t>(ncomponents) * npoints);
-
-    for (int iz = 0; iz < ngllz_; ++iz) {
-      for (int iy = 0; iy < nglly_; ++iy) {
-        for (int ix = 0; ix < ngllx_; ++ix) {
-          const int point = (iz * nglly_ + iy) * ngllx_ + ix;
-          const int point_iglob = iglob(ispec, iz, iy, ix);
-          for (int icomp = 0; icomp < ncomponents; ++icomp) {
-            dofs[static_cast<std::size_t>(icomp) * npoints + point] =
-                (*this)(point_iglob, icomp);
-          }
-        }
-      }
-    }
-    return dofs;
-  }
-
-  /**
    * @brief Whether an absorbing boundary traction acts at a mesh point.
    *
    * True where any GLL point mapping to `iglob` carries
@@ -251,6 +213,24 @@ public:
   }
 
 private:
+  /**
+   * @brief `(ispec, iz, iy, ix)` to global point index, on the host.
+   *
+   * The host mirror of the simulation field's `index_mapping`: connectivity is
+   * walked in host loops, so the device view itself is not addressable here.
+   * Spelled out rather than named through the field because the field's own
+   * `IndexViewType` alias is private.
+   */
+  using index_view_type =
+      Kokkos::View<int ****, Kokkos::LayoutLeft,
+                   Kokkos::DefaultExecutionSpace>::host_mirror_type;
+
+  /// Extents of the dof grid: `(nglob, ncomponents)`
+  using extents_type = Kokkos::dextents<std::size_t, 2>;
+
+  /// Layout that turns `(iglob, icomp)` into a global dof id
+  using component_layout_type = Kokkos::layout_left::mapping<extents_type>;
+
   /// Forward simulation field of `assembly`
   static const auto &forward_field(const AssemblyType &assembly) {
     return assembly.fields.template get_simulation_field<
