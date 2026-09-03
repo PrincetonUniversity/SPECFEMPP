@@ -14,16 +14,13 @@ namespace linear_system {
  * a `Tpetra::Vector`.
  *
  * Drives the production `initialize_mass_matrix` accumulation path with
- * `dt = 0`: the Stacey boundary contribution to the lumped mass is exactly
- * \f$ (\Delta t / 2) \, C \, \mathbf{1} \f$ (linear in `dt`), so it vanishes
- * identically and the result is the pure mass \f$ M \f$ on any mesh,
- * including meshes with Stacey boundaries. The damping matrix \f$ C \f$ is
- * assembled separately (see @ref DampingAssembler).
+ * `dt = 0`, at which the Stacey contribution
+ * \f$ (\Delta t / 2) \, C \, \mathbf{1} \f$ vanishes and the result is the
+ * pure mass \f$ M \f$ on any mesh. \f$ C \f$ is assembled separately (see
+ * @ref DampingAssembler).
  *
- * The forward simulation field's mass storage is used as accumulation
- * scratch: it is zeroed before the accumulation, read back through the host
- * mirror, and zeroed again on exit, so the assembly is left as found. The
- * inversion step of the explicit solver (`invert_mass`) is never called.
+ * The forward field's mass storage is used as accumulation scratch and left
+ * zeroed on exit.
  *
  * Entry `Mapping::operator()(iglob, icomp)` of the returned vector holds the
  * lumped mass of component `icomp` at mesh point `iglob`.

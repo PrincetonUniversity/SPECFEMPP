@@ -69,11 +69,6 @@ public:
    * of a medium other than `Tags::medium_tag` (single-medium milestone;
    * coupling blocks are deferred).
    *
-   * `fe` is supplied rather than built here so that several operators over the
-   * same mesh share one description of it -- each sparsity graph costs two host
-   * passes over the connectivity, and there is no reason to pay for them per
-   * assembler.
-   *
    * @param assembly Assembled mesh, jacobian matrix, material properties,
    *        and fields; must outlive the assembler
    * @param fe Dof maps and sparsity graphs of the medium; borrowed, and must

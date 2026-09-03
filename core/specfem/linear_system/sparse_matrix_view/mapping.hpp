@@ -213,14 +213,8 @@ public:
   }
 
 private:
-  /**
-   * @brief `(ispec, iz, iy, ix)` to global point index, on the host.
-   *
-   * The host mirror of the simulation field's `index_mapping`: connectivity is
-   * walked in host loops, so the device view itself is not addressable here.
-   * Spelled out rather than named through the field because the field's own
-   * `IndexViewType` alias is private.
-   */
+  /// `(ispec, iz, iy, ix)` to global point index, on the host; the host
+  /// mirror of the simulation field's `index_mapping`
   using index_view_type =
       Kokkos::View<int ****, Kokkos::LayoutLeft,
                    Kokkos::DefaultExecutionSpace>::host_mirror_type;

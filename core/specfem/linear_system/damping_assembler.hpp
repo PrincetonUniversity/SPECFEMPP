@@ -23,21 +23,14 @@ namespace linear_system {
  * containing the point; interior points contribute exactly nothing.
  *
  * Probing runs the matrix-free `compute_stiffness_interaction` kernel --
- * which computes `accel += -K u - C v` -- with displacement \f$ \equiv 0 \f$
- * (the stiffness path contributes exact zeros) and unit velocity
- * \f$ v = e_c \f$ at every mesh point simultaneously; block-diagonality
- * means columns never mix, so `ncomp` kernel launches recover all blocks:
- * \f$ C(\cdot, c) = -\mathrm{accel} \f$. Probing the production kernel (not
- * a re-derivation of the traction) keeps the assembled \f$ C \f$ consistent
- * with the explicit solver by construction.
+ * which computes `accel += -K u - C v` -- at displacement
+ * \f$ \equiv 0 \f$ and unit velocity \f$ v = e_c \f$ at every mesh point at
+ * once. Block-diagonality means columns never mix, so `ncomp` launches
+ * recover every block: \f$ C(\cdot, c) = -\mathrm{accel} \f$.
  *
- * The assembled operator satisfies \f$ C v = \f$ damping force
- * \f$ = -\mathrm{accel} \f$ of the matrix-free kernel at zero displacement
- * (before mass division), matching the equation of motion
- * \f$ M \ddot{u} + C \dot{u} + K u = f \f$.
- *
- * On meshes without Stacey boundaries the result is an empty (zero-entry)
- * matrix whose `apply()` is a no-op, so callers can use one code path.
+ * The result satisfies \f$ M \ddot{u} + C \dot{u} + K u = f \f$ against the
+ * matrix-free kernel, before mass division. On meshes without Stacey
+ * boundaries it is an empty matrix whose `apply()` is a no-op.
  *
  * @tparam Tags Compile-time tags (dimension, medium, property, attenuation);
  *              dimension must be `dim3`; only `dim3, elastic, isotropic,
@@ -82,12 +75,10 @@ public:
   /**
    * @brief Probe the velocity path and assemble the damping matrix.
    *
-   * The matrix lives on @ref FEAssembly::damping_matrix_graph: a compact,
-   * block-diagonal pattern with `ncomp` entries per row at damping (boundary)
-   * points and empty rows at interior points. Every entry's `(row, column)`
-   * pair also exists in the stiffness matrix's graph (same-point pairs are
-   * same-element pairs), so the implicit Newmark operator can `sumInto`
-   * \f$ C \f$ on the stiffness graph.
+   * The matrix lives on @ref FEAssembly::damping_matrix_graph: `ncomp`
+   * entries per row at damping (boundary) points, empty rows at interior
+   * points. Every entry's `(row, column)` pair also exists in the stiffness
+   * graph, so the implicit Newmark operator can `sumInto` \f$ C \f$ there.
    *
    * All probe fields (displacement, velocity, acceleration) are zeroed on
    * host and device before returning.
