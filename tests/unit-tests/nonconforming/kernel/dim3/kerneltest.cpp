@@ -1,4 +1,4 @@
-#include "acoustic_elastic.hpp"
+#include "../acoustic_elastic.hpp"
 #include "specfem/io.hpp"
 #include <gtest/gtest.h>
 
