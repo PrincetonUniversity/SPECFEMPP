@@ -107,11 +107,11 @@ TEST(ImplicitSolver3D, ConstructsAndOperatorMatchesOnStaceyMesh) {
   auto test_case = build_case_3d("HomogeneousHalfSpaceStacey");
   SolverType solver(test_case.time_scheme, {}, *test_case.assembly);
 
-  EXPECT_GT(solver.stiffness()->getGlobalNumEntries(), 0u);
-  EXPECT_GT(solver.damping()->getGlobalNumEntries(), 0u)
+  EXPECT_GT(solver.stiffness().getGlobalNumEntries(), 0u);
+  EXPECT_GT(solver.damping().getGlobalNumEntries(), 0u)
       << "the Stacey fixture must produce a nonempty damping matrix";
-  EXPECT_EQ(solver.system_operator()->getGlobalNumEntries(),
-            solver.stiffness()->getGlobalNumEntries())
+  EXPECT_EQ(solver.system_operator().getGlobalNumEntries(),
+            solver.stiffness().getGlobalNumEntries())
       << "A must live on K's graph";
 
   const auto &fe = solver.fe();
@@ -129,12 +129,12 @@ TEST(ImplicitSolver3D, ConstructsAndOperatorMatchesOnStaceyMesh) {
 
   VectorType a_x(fe.owned_map()), reference(fe.owned_map()),
       scratch(fe.owned_map());
-  solver.system_operator()->apply(x, a_x);
+  solver.system_operator().apply(x, a_x);
 
-  solver.stiffness()->apply(x, reference);
-  solver.damping()->apply(x, scratch);
+  solver.stiffness().apply(x, reference);
+  solver.damping().apply(x, scratch);
   reference.update(damping_coefficient, scratch, 1);
-  reference.elementWiseMultiply(mass_coefficient, *solver.mass(), x, 1);
+  reference.elementWiseMultiply(mass_coefficient, solver.mass(), x, 1);
 
   type_real scale = 0;
   type_real max_diff = 0;

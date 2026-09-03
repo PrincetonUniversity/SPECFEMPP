@@ -193,22 +193,18 @@ public:
   /// Dof maps and sparsity graphs shared by every assembled operator
   const FEAssemblyType &fe() const { return *fe_; }
   /// Assembled stiffness matrix \f$ K \f$
-  Teuchos::RCP<const specfem::linear_system::crs_matrix_type>
-  stiffness() const {
-    return stiffness_;
+  const specfem::linear_system::crs_matrix_type &stiffness() const {
+    return *stiffness_;
   }
   /// Assembled Stacey damping matrix \f$ C \f$ (empty without Stacey)
-  Teuchos::RCP<const specfem::linear_system::crs_matrix_type> damping() const {
-    return damping_;
+  const specfem::linear_system::crs_matrix_type &damping() const {
+    return *damping_;
   }
   /// Lumped mass vector \f$ M \f$
-  Teuchos::RCP<const specfem::linear_system::vector_type> mass() const {
-    return mass_;
-  }
+  const specfem::linear_system::vector_type &mass() const { return *mass_; }
   /// Implicit Newmark operator \f$ A \f$ for the configured time step
-  Teuchos::RCP<const specfem::linear_system::crs_matrix_type>
-  system_operator() const {
-    return system_operator_;
+  const specfem::linear_system::crs_matrix_type &system_operator() const {
+    return *system_operator_;
   }
   /// Steps actually executed by the last run() (equals the step count unless
   /// the steady-state criterion stopped the run early)

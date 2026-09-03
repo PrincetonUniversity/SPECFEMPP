@@ -98,9 +98,9 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::form_operator(
       fe_->full_matrix_graph(), fe_->mapping());
 
   system.begin_fill();
-  system += *stiffness_;                                             // K
-  system += damping_coefficient * (*damping_);                       // + c1 C
-  system += mass_coefficient * specfem::linear_system::diag(*mass_); // + c2 M
+  system += stiffness();                                             // K
+  system += damping_coefficient * damping();                         // + c1 C
+  system += mass_coefficient * specfem::linear_system::diag(mass()); // + c2 M
   system.finalize();
 
   system_operator_ = system.matrix();
@@ -219,7 +219,7 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::run() {
   a_->putScalar(0);
   last_step_ = 0;
 
-  const bool has_damping = damping_->getGlobalNumEntries() > 0;
+  const bool has_damping = damping().getGlobalNumEntries() > 0;
   const bool check_steady_state = config_.steady_state_tolerance > 0;
   type_real velocity_scale = 0;
   type_real acceleration_scale = 0;
@@ -238,14 +238,14 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::run() {
     if (has_damping) {
       tmp_->update(c_c0, *u_, c_c1, *v_, 0);
       tmp_->update(c_c2, *a_, static_cast<scalar_type>(1));
-      damping_->apply(*tmp_, *tmp2_);
+      damping().apply(*tmp_, *tmp2_);
       rhs_->update(static_cast<scalar_type>(1), *tmp2_,
                    static_cast<scalar_type>(1));
     }
 
     tmp_->update(c_a0, *u_, c_a1, *v_, 0);
     tmp_->update(c_a2, *a_, static_cast<scalar_type>(1));
-    rhs_->elementWiseMultiply(static_cast<scalar_type>(1), *mass_, *tmp_,
+    rhs_->elementWiseMultiply(static_cast<scalar_type>(1), mass(), *tmp_,
                               static_cast<scalar_type>(1));
 
     // Warm start from u_n: near steady state GMRES converges in a few
@@ -256,7 +256,7 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::run() {
       // Single-precision PseudoBlockGmres can abort with a
       // "loss of accuracy" flag while the solution is fine; trust only the
       // true residual b - A u.
-      system_operator_->apply(*u_new_, *tmp_);
+      system_operator().apply(*u_new_, *tmp_);
       tmp_->update(static_cast<scalar_type>(1), *rhs_,
                    static_cast<scalar_type>(-1));
       const type_real residual_norm = tmp_->norm2();
