@@ -20,8 +20,7 @@ namespace linear_system {
 /**
  * @brief A matrix scaled by a coefficient, for `A += alpha * B`.
  *
- * Produced by @ref operator*(scalar_type, const crs_matrix_type &); holds its
- * matrix by reference and is meant to be consumed in the same expression.
+ * Borrows its matrix; consume it in the same expression.
  */
 struct ScaledMatrix {
   scalar_type alpha;             ///< Coefficient
@@ -31,9 +30,7 @@ struct ScaledMatrix {
 /**
  * @brief A diagonal matrix whose entries are a vector -- MATLAB's `diag(v)`.
  *
- * A lumped mass matrix is diagonal but stored as a `Tpetra::Vector`; wrapping
- * it lets `A += c * diag(m)` say what the operator is, instead of exposing the
- * storage choice through a `diagonal()` accessor on the matrix being built.
+ * Lets a lumped mass vector be added as an operator: `A += c * diag(m)`.
  */
 struct Diagonal {
   const vector_type &vector; ///< Borrowed diagonal entries
@@ -78,10 +75,8 @@ inline ScaledDiagonal operator*(const scalar_type alpha,
 }
 
 /**
- * @brief Writable view over a sparse matrix, indexed by @ref DofSet.
- *
- * Turns a scatter into the statement it actually is -- the finite-element
- * assembly line, with rows and columns named in mesh coordinates:
+ * @brief Writable view over a sparse matrix, with rows and columns named in
+ * mesh coordinates by a @ref DofSet.
  *
  * @code
  * SparseMatrixView K(fe.full_matrix_graph(), fe.mapping());
@@ -92,20 +87,9 @@ inline ScaledDiagonal operator*(const scalar_type alpha,
  * K.finalize();
  * @endcode
  *
- * Rows and columns are always written out. A symmetric element block is two dof
- * sets that happen to be equal, which is both the honest description and the
- * form a rectangular block (a future fluid-solid coupling block) already fits
- * without a second grammar.
- *
- * The view owns the three things the raw Tpetra calls left to the caller:
- *
- * - **The graph invariant.** `sumIntoGlobalValues` silently drops entries
- *   outside the sparsity pattern and merely returns a count; @ref BlockRef
- *   checks that count on every row and throws naming the row.
- * - **Column expansion.** One scratch buffer for the whole assembly, rather
- *   than a `std::vector` per element.
- * - **Block layout.** Updates take a rank-2 or rank-3 `Kokkos::View`, so layout
- *   is a type rather than an assumption about a raw pointer.
+ * Rows and columns are always written out, so a rectangular block is the same
+ * grammar as a symmetric one. Every update is checked against the sparsity
+ * graph and throws on an entry that falls outside it.
  *
  * @tparam MappingType Dof numbering the matrix is built over; see
  *                     specfem::linear_system::FEMapping
@@ -118,9 +102,7 @@ public:
   /// Integer type of the global dof ids
   using global_ordinal_type = typename MappingType::global_ordinal_type;
 
-  /**
-   * @brief How a block update combines with what the matrix already holds.
-   */
+  /// How a block update combines with what the matrix already holds
   enum class UpdateMode {
     sum,    ///< Accumulate (`+=`); `sumIntoGlobalValues`
     replace ///< Overwrite (`=`); `replaceGlobalValues`
@@ -129,9 +111,8 @@ public:
   /**
    * @brief Pending update to one rectangular region of the matrix.
    *
-   * Not constructed directly -- @ref SparseMatrixView::operator() returns one,
-   * and it is consumed immediately by `+=` or `=`. It borrows the view and both
-   * dof sets, so it must not outlive the full expression.
+   * Returned by @ref SparseMatrixView::operator() and consumed immediately by
+   * `+=` or `=`; borrows the view and both dof sets.
    *
    * @tparam Rows Row dof set
    * @tparam Cols Column dof set
@@ -190,9 +171,7 @@ public:
   };
 
   /**
-   * @brief Build a matrix on a sparsity graph.
-   *
-   * Values start at zero. The view is not fill-active until @ref begin_fill.
+   * @brief Build a matrix on a sparsity graph, with values zero.
    *
    * @param graph Fill-complete sparsity pattern; typically
    *        specfem::linear_system::FEAssembly::full_matrix_graph
@@ -207,12 +186,7 @@ public:
   /// Dof numbering the matrix is built over
   const MappingType &mapping() const { return mapping_; }
 
-  /**
-   * @brief Open the matrix for value updates.
-   *
-   * On more than one rank this begins assembly on the owned+shared map; see
-   * @ref finalize.
-   */
+  /// Open the matrix for value updates
   void begin_fill() {
     matrix_->beginAssembly();
     fill_active_ = true;
@@ -221,9 +195,8 @@ public:
   /**
    * @brief Close the matrix to value updates.
    *
-   * Migrates owned+shared contributions to the owned map -- the `Export(ADD)`
-   * that reproduces the matrix-free assembly sum across ranks -- and
-   * fill-completes. A no-op migration at one rank.
+   * Migrates owned+shared contributions to the owned map and fill-completes;
+   * the migration is a no-op at one rank.
    */
   void finalize() {
     matrix_->endAssembly();
@@ -256,10 +229,8 @@ public:
   /**
    * @brief Add another matrix: `A += B`.
    *
-   * `B`'s sparsity must be contained in this matrix's, which is checked per
-   * row rather than assumed.
-   *
-   * @param other Matrix to add; must be fill-complete
+   * @param other Matrix to add; must be fill-complete, and its sparsity must
+   *        be contained in this matrix's
    */
   void operator+=(const crs_matrix_type &other) {
     add_matrix(static_cast<scalar_type>(1), other);
@@ -310,11 +281,7 @@ private:
   }
 
   /**
-   * @brief Accumulate `alpha * other` into this matrix.
-   *
-   * One row at a time through @ref apply_row, so the containment of `other`'s
-   * sparsity in this matrix's graph is enforced rather than assumed. Empty
-   * rows are skipped, which is what makes adding an empty damping matrix free.
+   * @brief Accumulate `alpha * other` into this matrix, one row at a time.
    *
    * @param alpha Coefficient applied to every entry
    * @param other Source matrix; must be fill-complete
@@ -354,9 +321,6 @@ private:
   /**
    * @brief Accumulate `alpha * diag(vector)` into this matrix.
    *
-   * Every diagonal entry is a self-pair, so it exists in any graph assembled
-   * from coupling blocks; the per-row check still runs.
-   *
    * @param alpha Coefficient applied to every entry
    * @param vector Diagonal entries, one per global dof
    */
@@ -385,23 +349,16 @@ private:
   /**
    * @brief Scatter a dense or block-diagonal update into the matrix.
    *
-   * The block's rank chooses the meaning, since a multi-element dof set is
-   * ambiguous on its own:
+   * The block's rank chooses the meaning:
    *
-   * - **Rank 2** -- one dense block of exactly
-   *   `rows.size() x cols.size()`.
+   * - **Rank 2** -- one dense block of exactly `rows.size() x cols.size()`.
    * - **Rank 3** -- `rows.outer_extent()` diagonal blocks, block `e` scattered
-   *   to the dofs contributed by the `e`-th leading index. Each block is
+   *   to the dofs of the `e`-th leading index. Each is
    *   `rows.inner_size() x cols.inner_size()`.
    *
-   * The dof sets are the authority on how much of the block is read, so a
-   * rank-3 block may carry *more* leading blocks than the row set names: the
-   * leading `outer_extent()` are used and the rest ignored. That is what admits
-   * a reused, fixed-size batch scratch buffer, which is the dominant Kokkos
-   * idiom and exactly how the stiffness probe allocates. Too few blocks throws.
-   * The trailing extents must match exactly -- an oversized inner extent is not
-   * a scratch buffer, it is a block from a different NGLL or component count,
-   * and must not be silently truncated.
+   * A rank-3 block may carry more leading blocks than the row set names, so a
+   * fixed-size batch scratch buffer works; the leading `outer_extent()` are
+   * used and the rest ignored. The trailing extents must match exactly.
    *
    * @tparam Rows Row dof set
    * @tparam Cols Column dof set
@@ -530,10 +487,6 @@ private:
 
   /**
    * @brief Apply one row update and verify it landed in full.
-   *
-   * Tpetra reports how many of the requested columns were in the graph and
-   * silently drops the rest, so a short count means the matrix's sparsity
-   * disagrees with the connectivity being assembled.
    *
    * @param row Global row id
    * @param values Row values, `ncols` of them

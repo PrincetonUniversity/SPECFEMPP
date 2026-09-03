@@ -190,7 +190,6 @@ public:
    */
   void run() override;
 
-  /// Dof numbering shared by all assembled operators
   /// Dof maps and sparsity graphs shared by every assembled operator
   const FEAssemblyType &fe() const { return *fe_; }
   /// Assembled stiffness matrix \f$ K \f$

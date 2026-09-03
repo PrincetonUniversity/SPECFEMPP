@@ -51,9 +51,7 @@ using fe_crs_graph_type = Tpetra::FECrsGraph<>;
  * @brief Finite-element matrix built on an @ref fe_crs_graph_type.
  *
  * `beginAssembly()`/`endAssembly()` bracket the value fill and perform the
- * owned+shared to owned migration -- the distributed `Export(ADD)` that
- * reproduces the matrix-free assembly sum across ranks. Derives from
- * @ref crs_matrix_type.
+ * owned+shared to owned migration. Derives from @ref crs_matrix_type.
  */
 using fe_crs_matrix_type = Tpetra::FECrsMatrix<scalar_type>;
 

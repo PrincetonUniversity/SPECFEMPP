@@ -12,21 +12,9 @@ namespace linear_system {
 /**
  * @brief What one index slot of a dof selection may be.
  *
- * Three kinds, which together let a selection name one dof, one element, or an
- * arbitrary set of either:
- *
- * - an integral: that single index;
- * - `Kokkos::ALL`: the whole extent of the slot;
- * - an index container: the listed indices.
- *
- * "Index container" is stated structurally rather than by naming types, so that
- * `Kokkos::View<int *>` and specfem::datatype::ElementIndexRange -- which is
- * what specfem::linear_system::Mapping::elements already returns -- both
- * qualify without conversion.
- *
- * The container requirements are written on the *decayed* result types: a
- * `Kokkos::View` subscript yields `int &`, and a reference is not itself an
- * integral type.
+ * An integral (that single index), `Kokkos::ALL` (the whole extent of the
+ * slot), or an index container such as `Kokkos::View<int *>` or
+ * specfem::datatype::ElementIndexRange (the listed indices).
  */
 template <typename T>
 concept IndexSelector =
@@ -87,10 +75,10 @@ namespace linear_system {
 /**
  * @brief An ordered set of global dof ids, named in mesh coordinates.
  *
- * Produced by specfem::linear_system::Mapping::operator() when any index slot
- * is a non-integral selector, and consumed by
- * specfem::linear_system::SparseMatrixView as the row or column set of a matrix
- * update:
+ * Produced by specfem::linear_system::Mapping::operator() and consumed by
+ * specfem::linear_system::SparseMatrixView as the row or column set of a
+ * matrix update. Ids are decoded on demand; nothing is expanded at
+ * construction.
  *
  * @code
  * const auto edof = mapping(ispec, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL,
@@ -98,37 +86,16 @@ namespace linear_system {
  * K(edof, edof) += k_e;
  * @endcode
  *
- * Nothing is allocated or expanded at construction: the set holds its selectors
- * and decodes an id on demand, so naming the dofs of an element costs no more
- * than the loop that consumes them.
- *
- * ### Ordering
- *
- * The sequence is ordered, slowest-varying index first:
+ * Ids are ordered slowest-varying index first:
  *
  * ```
  * ispec -> icomp -> iz -> iy -> ix     (five slots)
  * iglob -> icomp                       (two slots)
  * ```
  *
- * Two consequences are worth stating outright, because neither follows from
- * reading the argument list left to right:
- *
- * - `icomp` varies *more slowly* than `iz`, `iy` and `ix`, so the written slot
- *   order `(ispec, iz, iy, ix, icomp)` deliberately does not imply C-order.
- *   This is forced by @ref local_dof_index, which defines the row and column
- *   ordering of the element stiffness blocks; with a scalar `ispec` the
- *   sequence reduces to `local_dof_index` exactly.
- * - `ispec` is the slowest of all, so a multi-element set is the concatenation
- *   of the per-element sets rather than an interleaving of them. That is what
- *   makes @ref expand_block well defined, and what lets one dense block per
- *   element be scattered from a single rank-3 update.
- *
- * ### Lifetime
- *
- * The mapping is borrowed, not owned: a `DofSet` must not outlive it. The
- * reference member also deletes copy-assignment, so the intended loop-local use
- * is what the type permits.
+ * Note that `icomp` varies more slowly than `iz`, `iy` and `ix`, so the slot
+ * order is not C-order; with a scalar `ispec` the sequence is exactly
+ * @ref local_dof_index. The mapping is borrowed and must outlive the set.
  *
  * @tparam MappingType Dof numbering the ids are drawn from; see
  *                     specfem::linear_system::Mapping
@@ -149,9 +116,9 @@ public:
   /**
    * @brief Bind selectors to a mapping.
    *
-   * Prefer specfem::linear_system::Mapping::operator() over constructing this
-   * directly -- it normalizes a `Kokkos::ALL` element slot to the medium's
-   * element list, which this constructor assumes has already happened.
+   * Prefer specfem::linear_system::Mapping::operator(), which normalizes a
+   * `Kokkos::ALL` element slot to the medium's element list; this constructor
+   * assumes that has already happened.
    *
    * @param mapping Dof numbering to draw ids from; must outlive the set
    * @param selectors Slot values
@@ -162,12 +129,7 @@ public:
   /// Number of dof ids in the set
   constexpr int size() const { return outer_extent() * inner_size(); }
 
-  /**
-   * @brief Number of indices the leading slot names.
-   *
-   * The element count of a multi-element set, or the point count of a
-   * multi-point one; 1 when the leading slot is a scalar.
-   */
+  /// Number of indices the leading slot names; 1 when it is a scalar
   constexpr int outer_extent() const {
     return specfem::linear_system_impl::selector_extent(std::get<0>(selectors_),
                                                         leading_slot_extent());
@@ -184,7 +146,7 @@ public:
   }
 
   /**
-   * @brief The `k`-th global dof id, in the order documented above.
+   * @brief The `k`-th global dof id.
    *
    * @param k Offset in `[0, size())`
    * @return Global dof id
@@ -230,10 +192,6 @@ public:
 
   /**
    * @brief Write the ids contributed by one leading index.
-   *
-   * `expand_block(e, out)` writes the same @ref inner_size ids, in the same
-   * order, that @ref expand would write for a set whose leading slot were the
-   * scalar `e`-th index.
    *
    * @tparam OutputIt Output iterator over @ref global_ordinal_type
    * @param e Offset in `[0, outer_extent())`

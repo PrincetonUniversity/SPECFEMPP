@@ -25,27 +25,15 @@ namespace linear_system {
  * (@ref element_dofs), and the mesh points an absorbing boundary acts at
  * (@ref is_damping_point).
  *
- * The global dof id is the offset a `Kokkos::layout_left` mapping over the
- * extents `(nglob, ncomponents)` gives to `(iglob, icomp)`, which is exactly
- * how SPECFEM++ stores a field (`Kokkos::View<type_real **,
- * Kokkos::LayoutLeft>` of the same shape). A solver vector therefore maps 1:1
- * onto field memory with no permutation at solve time. Holding the layout
- * mapping rather than open-coding the offset means the ordering is stated once,
- * by the layout type: swap @ref component_layout_type for
- * `Kokkos::layout_right` to block by point instead of by component.
- *
- * One instance describes one medium: `nglob` and `ncomp` are per-medium
- * quantities (a future multi-medium system holds one mapping per medium).
- *
- * This class holds SPECFEM++ quantities only and names no linear-algebra
- * library type, so it compiles in a build without Trilinos and can be reused
- * unchanged if the solver backend is swapped. The maps and sparsity graphs
- * built from it live in @ref FEAssembly.
+ * The global dof id is the `Kokkos::layout_left` offset of `(iglob, icomp)`
+ * over the extents `(nglob, ncomponents)`, which is exactly how SPECFEM++
+ * stores a field, so a solver vector maps 1:1 onto field memory. One instance
+ * describes one medium. Names no linear-algebra library type; the maps and
+ * sparsity graphs built from it live in @ref FEAssembly.
  *
  * @tparam DimensionTag Spatial dimension; must be `dim3`
  * @tparam MediumTag Medium whose degrees of freedom are numbered
- * @tparam GlobalOrdinal Integer type of the global dof ids; supplied by the
- *                       linear-algebra backend (see
+ * @tparam GlobalOrdinal Integer type of the global dof ids (see
  *                       specfem::linear_system::FEMapping for the Tpetra
  *                       binding)
  */
@@ -67,14 +55,8 @@ public:
   constexpr static int ncomponents =
       specfem::element::attributes<DimensionTag, MediumTag>::components;
 
-  /**
-   * @brief `(ispec, iz, iy, ix)` to global point index, on the host.
-   *
-   * The host mirror of the simulation field's `index_mapping`: connectivity is
-   * walked in host loops, so the device view itself is not addressable here.
-   * Spelled out rather than named through the field because the field's own
-   * `IndexViewType` alias is private.
-   */
+  /// `(ispec, iz, iy, ix)` to global point index, on the host; the host
+  /// mirror of the simulation field's `index_mapping`
   using index_view_type =
       Kokkos::View<int ****, Kokkos::LayoutLeft,
                    Kokkos::DefaultExecutionSpace>::host_mirror_type;
@@ -92,12 +74,8 @@ public:
    * @brief Number the degrees of freedom of one medium of an assembled
    * simulation.
    *
-   * Reads the index mapping, the per-medium point count and dof base offset
-   * from the forward simulation field, the element range and grid from the
-   * element types, and the absorbing-boundary mask from the boundaries.
-   *
-   * The assembly is not retained: everything the mapping needs is copied or
-   * view-shared at construction.
+   * The assembly is not retained; everything needed is copied or view-shared
+   * at construction.
    *
    * @param assembly Assembly with constructed fields
    */
@@ -118,10 +96,6 @@ public:
 
   /**
    * @brief Global dof id of component `icomp` at mesh point `iglob`.
-   *
-   * The component-blocked offset of `(iglob, icomp)` under
-   * @ref component_layout_type -- the single source of truth for the global
-   * dof ordering (see the class docs).
    *
    * @param iglob Per-medium global point index in `[0, nglob())`
    * @param icomp Field component in `[0, ncomp())`
@@ -151,14 +125,9 @@ public:
   /**
    * @brief Name a *set* of dofs by GLL coordinate.
    *
-   * The five-slot selector form of @ref operator(): each slot is an integral,
-   * `Kokkos::ALL`, or a container of indices (see @ref IndexSelector), and the
-   * result is a lazily-expanded @ref DofSet rather than a single id. The
-   * all-integral case is handled by the scalar overload above.
-   *
-   * `Kokkos::ALL` in the element slot means every element *of this medium*, so
-   * it is normalized here to @ref elements rather than to `[0, nspec)` -- the
-   * mapping is per-medium and a mesh may hold elements of others.
+   * The five-slot selector form of @ref operator(): each slot is an
+   * @ref IndexSelector and the result is a lazily-expanded @ref DofSet.
+   * `Kokkos::ALL` in the element slot means every element *of this medium*.
    *
    * @code
    * // the 375 dofs of one element, in local_dof_index order
@@ -194,9 +163,8 @@ public:
   /**
    * @brief Name a *set* of dofs by mesh point.
    *
-   * The two-slot selector form of @ref operator(); see the five-slot overload
-   * above. `Kokkos::ALL` in the point slot means every point of the medium,
-   * `[0, nglob())`.
+   * The two-slot selector form of @ref operator(). `Kokkos::ALL` in the point
+   * slot means every point of the medium, `[0, nglob())`.
    *
    * @code
    * // the ncomp dofs at one mesh point -- a damping block's rows
@@ -217,11 +185,7 @@ public:
   }
 
   /**
-   * @brief Global dof ids of one element, in element-local dof order.
-   *
-   * Entry `ldof` holds the id of the dof that @ref local_dof_index numbers
-   * `ldof`, so the same vector orders both a sparsity-graph insert and a dense
-   * element-block scatter.
+   * @brief Global dof ids of one element, in @ref local_dof_index order.
    *
    * @param ispec Element index
    * @return `ncomp * ngllz * nglly * ngllx` global dof ids
@@ -252,10 +216,6 @@ public:
    * True where any GLL point mapping to `iglob` carries
    * specfem::element::boundary_tag::stacey or
    * specfem::element::boundary_tag::composite_stacey_dirichlet.
-   *
-   * Shared with whatever fills a damping matrix over this numbering: a scatter
-   * that disagrees with this mask would update fewer entries than the block
-   * size and leave the matrix inconsistent with its own sparsity.
    *
    * @param iglob Per-medium global point index in `[0, nglob())`
    * @return `true` if the point contributes a damping block
@@ -297,25 +257,16 @@ private:
         specfem::simulation::field_type::forward>();
   }
 
-  /**
-   * @brief Per-medium global point index of a GLL point.
-   *
-   * `index_mapping` numbers points across all media; subtracting the medium's
-   * `dof_ranges` base compacts that to `[0, nglob())`.
-   */
+  /// Per-medium global point index of a GLL point: the all-media
+  /// `index_mapping` value less this medium's `dof_ranges` base
   inline int iglob(const int ispec, const int iz, const int iy,
                    const int ix) const {
     return mapping_(ispec, iz, iy, ix) - dof_base_;
   }
 
   /**
-   * @brief Resolve `Kokkos::ALL` in the element slot to this medium's elements.
-   *
-   * Every other slot indexes a dense range, so `Kokkos::ALL` there is the
-   * identity. The element slot is the exception: a mesh may hold elements of
-   * other media, so "all elements" means @ref elements, not `[0, nspec)`.
-   * Doing the substitution here keeps @ref DofSet free of any slot-specific
-   * special case.
+   * @brief Resolve `Kokkos::ALL` in the element slot to this medium's
+   * elements, since a mesh may hold elements of other media.
    *
    * @tparam Selector Element slot selector
    * @param selector Element slot value
@@ -332,14 +283,8 @@ private:
   }
 
   /**
-   * @brief Mark the mesh points an absorbing boundary traction acts at.
-   *
-   * A construction-time extractor: the boundary data is read here and not
-   * retained, so the mapping holds the mask rather than the boundary views.
-   *
-   * A mesh point is shared by several elements, so the mask is accumulated
-   * over every element touching it and is indexed by `iglob` rather than by
-   * `(ispec, iz, iy, ix)`.
+   * @brief Mark the mesh points an absorbing boundary traction acts at,
+   * accumulated over every element touching a point.
    *
    * @param assembly Assembly whose boundaries are queried
    * @return Mask of length `nglob()`

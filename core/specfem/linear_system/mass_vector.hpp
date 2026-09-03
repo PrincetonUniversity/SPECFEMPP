@@ -47,9 +47,8 @@ assemble_mass_vector(specfem::assembly::assembly<Tags::dimension_tag> &assembly,
  * @brief Assemble the lumped mass vector over a caller-supplied
  * @ref FEAssembly.
  *
- * Identical to the overload above; takes its dof numbering and owned map from
- * `fe` rather than from a @ref DofMap, so a caller that already has one need
- * not build a second description of the same mesh.
+ * Identical to the overload above, but takes its dof numbering and owned map
+ * from `fe` rather than from a @ref DofMap.
  *
  * @tparam Tags Compile-time tags (dimension, medium, property, attenuation);
  *              dimension must be `dim3`

@@ -86,10 +86,7 @@ public:
    * @brief Assemble over a caller-supplied @ref FEAssembly.
    *
    * Same validation as the constructor above, but reuses `fe` rather than
-   * building maps and sparsity graphs of its own. Use this when more than one
-   * operator is assembled over the same mesh -- the graphs cost two host
-   * passes over the connectivity each, and there is no reason to pay for them
-   * per assembler.
+   * building maps and sparsity graphs of its own.
    *
    * @param assembly Assembled mesh, jacobian matrix, material properties, and
    *        fields; must outlive the assembler

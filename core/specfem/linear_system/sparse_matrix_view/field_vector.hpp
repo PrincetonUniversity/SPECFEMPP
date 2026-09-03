@@ -17,12 +17,8 @@ namespace linear_system_impl {
  * @brief Whether a field and a solver vector are the same bytes in the same
  * order, so that the copy between them is one `deep_copy`.
  *
- * Three things have to hold, and the third is the interesting one: rather than
- * re-deriving the dof ordering, this asks the mapping itself whether it is
- * component-blocked. specfem::linear_system::Mapping names the ordering exactly
- * once, in its layout type; a later switch to `layout_right` would make these
- * probes disagree and send the copy down the indexed path instead of silently
- * transposing the data.
+ * Both must be contiguous, and the mapping is probed -- not assumed -- to be
+ * component-blocked with unit stride in `iglob`.
  *
  * @tparam MappingType Dof numbering
  * @tparam FieldView Rank-2 host field view, `(nglob, ncomp)`
@@ -94,17 +90,10 @@ namespace linear_system {
 /**
  * @brief Copy a SPECFEM++ field into a solver vector.
  *
- * A field and a solver vector hold the same values in the same order:
  * specfem::linear_system::Mapping numbers dofs so that `gid(iglob, icomp)` is
- * exactly the `Kokkos::LayoutLeft` offset of `(iglob, icomp)`, which is how a
- * field is stored. The copy is therefore a single `deep_copy` rather than a
- * per-dof scatter -- the point of the numbering, made explicit.
- *
- * When the layout contract cannot be confirmed at run time (a padded
- * allocation, a strided view, a mapping that is no longer component-blocked)
- * the copy falls back to an indexed loop, which is exact for any ordering. The
- * fallback runs `iglob` innermost so that both sides are traversed with unit
- * stride, unlike the hand-written loops this replaces.
+ * the `Kokkos::LayoutLeft` offset of `(iglob, icomp)`, which is how a field is
+ * stored, so the copy is a single `deep_copy`. Falls back to an indexed loop
+ * when that layout cannot be confirmed at run time.
  *
  * @tparam MappingType Dof numbering; see specfem::linear_system::Mapping
  * @tparam FieldView Rank-2 host field view, `(nglob, ncomp)`
@@ -150,8 +139,8 @@ void copy_field_to_vector(const MappingType &mapping, const FieldView &field,
 /**
  * @brief Copy a solver vector back into a SPECFEM++ field.
  *
- * The inverse of @ref copy_field_to_vector, with the same fast path, the same
- * fallback and the same contract.
+ * The inverse of @ref copy_field_to_vector, with the same fast path and
+ * fallback.
  *
  * @tparam MappingType Dof numbering; see specfem::linear_system::Mapping
  * @tparam FieldView Rank-2 host field view, `(nglob, ncomp)`

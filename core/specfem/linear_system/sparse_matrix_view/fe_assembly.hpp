@@ -24,12 +24,6 @@ namespace linear_system {
  * @brief A @ref Mapping whose global dof ids are Tpetra's global ordinal for
  * this build.
  *
- * The one place the ordinal is decided. `Mapping` deliberately leaves its
- * `GlobalOrdinal` parameter defaulted-less, because Tpetra's own default is
- * build-configuration dependent (`long long`, `int`, `long`, `unsigned long`
- * or `unsigned`, whichever `HAVE_TPETRA_INST_*` is set), so no fixed default
- * baked into the SPECFEM++ half could be guaranteed to match it.
- *
  * @tparam DimensionTag Spatial dimension; must be `dim3`
  * @tparam MediumTag Medium whose degrees of freedom are numbered
  */
@@ -42,31 +36,17 @@ using FEMapping = Mapping<DimensionTag, MediumTag,
  * @brief The Tpetra objects of a finite-element linear system: the dof maps
  * and the sparsity graphs of the operators assembled over them.
  *
- * Built from a @ref Mapping, which supplies every SPECFEM++ quantity involved
- * -- the dof numbering, the element connectivity, and the absorbing-boundary
- * mask -- and which is held by value, so an `FEAssembly` is safe to outlive
- * the mapping it was constructed from.
+ * Built from a @ref Mapping, held by value. Two graphs are assembled once at
+ * construction:
  *
- * Two graphs are assembled once at construction:
+ * - @ref full_matrix_graph, element-dense: the union over elements of one
+ *   dense block each.
+ * - @ref damping_matrix_graph, block-diagonal: the components at one mesh
+ *   point coupled to each other and to nothing else.
  *
- * - @ref full_matrix_graph, element-dense: every degree of freedom of a
- *   spectral element couples to every other degree of freedom of that element,
- *   so the pattern is the union over elements of one dense block each.
- * - @ref damping_matrix_graph, block-diagonal: Stacey damping is a boundary
- *   traction, coupling the components at one mesh point to each other and to
- *   nothing else.
- *
- * Each is a `Tpetra::FECrsGraph` assembled over an owned+shared dof map and
- * migrated to an owned dof map by `endAssembly()`. At one rank the two maps
- * are the same and the migration is a no-op, but keeping the distinction in
- * the API means distributed assembly changes @ref build_maps alone: the
- * element loops and every consumer of the graphs stay as they are.
- * `FECrsGraph` derives from `Tpetra::CrsGraph`, so either graph is accepted
- * anywhere @ref crs_graph_type is.
- *
- * Serial-only in this milestone: SPECFEM++ numbers global points per rank with
- * no globally consistent numbering across ranks, so the constructor throws for
- * communicators with more than one rank (follow-up of issue #1982).
+ * Serial-only: SPECFEM++ has no globally consistent point numbering across
+ * ranks, so the constructor throws for a communicator with more than one rank
+ * (follow-up of issue #1982).
  *
  * @tparam MappingType Dof numbering and connectivity; see @ref FEMapping
  */
@@ -108,11 +88,8 @@ public:
   /// Uniquely-owned row map: contiguous `[0, num_global_dofs())`
   inline Teuchos::RCP<const map_type> owned_map() const { return owned_map_; }
 
-  /**
-   * @brief Assembly map: owned dofs plus, in a future distributed build, the
-   * shared-interface dofs of neighbor ranks. Equal to @ref owned_map at one
-   * rank.
-   */
+  /// Assembly map: owned dofs plus shared-interface dofs of neighbor ranks;
+  /// equal to @ref owned_map at one rank
   inline Teuchos::RCP<const map_type> owned_plus_shared_map() const {
     return owned_plus_shared_map_;
   }
@@ -131,9 +108,8 @@ public:
    * @brief Fill-complete block-diagonal sparsity graph of the damping matrix,
    * on the owned map.
    *
-   * One dense `ncomp` block per absorbing-boundary point; every interior row
-   * is empty. Empty on a mesh with no absorbing boundaries -- that is the
-   * correct description of a zero damping operator, not an error.
+   * One dense `ncomp` block per absorbing-boundary point; interior rows are
+   * empty, as is the whole graph on a mesh with no absorbing boundaries.
    *
    * @return Graph built at construction; never null
    */
@@ -148,13 +124,7 @@ private:
   /// Field components per mesh point, from the mapping
   constexpr static int ncomponents = MappingType::ncomponents;
 
-  /**
-   * @brief Build the owned and owned+shared dof maps on `comm`.
-   *
-   * The single function a distributed build has to change: it would give the
-   * owned+shared map the shared-interface dofs of neighbor ranks, leaving the
-   * graph builders and every consumer of the graphs untouched.
-   */
+  /// Build the owned and owned+shared dof maps on `comm`
   void build_maps(const Teuchos::RCP<const Teuchos::Comm<int>> &comm) {
     comm_ = comm;
     if (comm_->getSize() > 1) {
@@ -177,12 +147,9 @@ private:
   /**
    * @brief Assemble the element-dense sparsity graph.
    *
-   * Two host passes over the element connectivity. The first bounds the
-   * allocation: a row gains `dofs.size()` entries for every element it belongs
-   * to, which is exactly the number of raw inserts the second pass makes.
-   * `FECrsGraph` will not grow a row past its bound, so the count has to be
-   * exact rather than a guess. The second pass inserts; duplicates at mesh
-   * points shared between elements are merged by Tpetra.
+   * Two host passes over the element connectivity: the first bounds each row's
+   * allocation exactly (`FECrsGraph` will not grow a row past its bound), the
+   * second inserts. Duplicates at shared mesh points are merged by Tpetra.
    */
   Teuchos::RCP<const fe_crs_graph_type> build_full_matrix_graph() const {
     using device_type = fe_crs_graph_type::device_type;
@@ -211,12 +178,8 @@ private:
     entries_per_row.modify_host();
     entries_per_row.sync_device();
 
-    // Globally-indexed assembly: element_dofs already yields global ids, so
-    // no local/global conversion appears in the element loop and Tpetra builds
-    // the column map at endAssembly(). A future locally-indexed matrix
-    // assembly would instead need the overload taking an explicit
-    // ownedPlusSharedDomainMap, so that the owned+shared map is locally fitted
-    // to the column map (Trilinos issue #7455).
+    // Globally-indexed assembly: element_dofs yields global ids and Tpetra
+    // builds the column map at endAssembly().
     auto graph = Teuchos::rcp(
         new fe_crs_graph_type(owned_map_, owned_plus_shared_map_,
                               const_dual_view_type(entries_per_row)));
@@ -237,11 +200,9 @@ private:
   /**
    * @brief Assemble the block-diagonal damping sparsity graph.
    *
-   * Same two host passes as @ref build_full_matrix_graph, over damping points
-   * rather than elements. Each of a damping point's `ncomp` dofs is inserted
-   * into each of those same `ncomp` rows, so the bound is `ncomp` entries per
-   * participating row and zero everywhere else; no point is visited twice, so
-   * unlike the element-dense pass there are no duplicates to merge.
+   * Same two passes as @ref build_full_matrix_graph, over damping points
+   * rather than elements: `ncomp` entries per participating row, zero
+   * everywhere else.
    */
   Teuchos::RCP<const fe_crs_graph_type> build_damping_matrix_graph() const {
     using device_type = fe_crs_graph_type::device_type;
