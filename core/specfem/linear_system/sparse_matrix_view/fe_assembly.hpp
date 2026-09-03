@@ -88,12 +88,6 @@ public:
   /// Uniquely-owned row map: contiguous `[0, num_global_dofs())`
   inline Teuchos::RCP<const map_type> owned_map() const { return owned_map_; }
 
-  /// Assembly map: owned dofs plus shared-interface dofs of neighbor ranks;
-  /// equal to @ref owned_map at one rank
-  inline Teuchos::RCP<const map_type> owned_plus_shared_map() const {
-    return owned_plus_shared_map_;
-  }
-
   /**
    * @brief Fill-complete element-dense sparsity graph of the stiffness matrix,
    * on the owned map.
@@ -116,9 +110,6 @@ public:
   inline Teuchos::RCP<const fe_crs_graph_type> damping_matrix_graph() const {
     return damping_matrix_graph_;
   }
-
-  /// Communicator the maps are defined on
-  inline Teuchos::RCP<const Teuchos::Comm<int>> comm() const { return comm_; }
 
 private:
   /// Field components per mesh point, from the mapping
@@ -165,12 +156,19 @@ private:
         "specfem::linear_system::FEAssembly::entries_per_row",
         static_cast<std::size_t>(mapping_.num_global_dofs()));
 
+    // One buffer for the whole pass: a dof set is lazy, and
+    // insertGlobalIndices below wants a contiguous array.
+    const int ndof_e =
+        ncomponents * mapping_.ngllz() * mapping_.nglly() * mapping_.ngllx();
+    std::vector<global_ordinal_type> dofs(static_cast<std::size_t>(ndof_e));
+
     // Indexed by local row of owned_plus_shared_map_, which equals the global
     // id while assembly is single-rank (see the comm-size check in
     // build_maps).
     auto h_entries_per_row = entries_per_row.view_host();
     for (int i = 0; i < elements.size(); ++i) {
-      const auto dofs = mapping_.element_dofs(elements(i));
+      mapping_(elements(i), Kokkos::ALL, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL)
+          .expand(dofs.begin());
       for (const auto dof : dofs) {
         h_entries_per_row(static_cast<std::size_t>(dof)) += dofs.size();
       }
@@ -178,18 +176,18 @@ private:
     entries_per_row.modify_host();
     entries_per_row.sync_device();
 
-    // Globally-indexed assembly: element_dofs yields global ids and Tpetra
-    // builds the column map at endAssembly().
+    // Globally-indexed assembly: a dof set already yields global ids and
+    // Tpetra builds the column map at endAssembly().
     auto graph = Teuchos::rcp(
         new fe_crs_graph_type(owned_map_, owned_plus_shared_map_,
                               const_dual_view_type(entries_per_row)));
 
     graph->beginAssembly();
     for (int i = 0; i < elements.size(); ++i) {
-      const auto dofs = mapping_.element_dofs(elements(i));
-      const auto num_columns = static_cast<int>(dofs.size());
+      mapping_(elements(i), Kokkos::ALL, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL)
+          .expand(dofs.begin());
       for (const auto row : dofs) {
-        graph->insertGlobalIndices(row, num_columns, dofs.data());
+        graph->insertGlobalIndices(row, ndof_e, dofs.data());
       }
     }
     graph->endAssembly(); // migrates owned+shared -> owned, fill-completes

@@ -34,6 +34,8 @@ using StiffnessTags =
     specfem::tags::Tags<dim3_tag, elastic_tag,
                         specfem::element::property_tag::isotropic,
                         specfem::element::attenuation_tag::none>;
+using MappingType = specfem::linear_system::FEMapping<dim3_tag, elastic_tag>;
+using FEAssemblyType = specfem::linear_system::FEAssembly<MappingType>;
 using AssemblerType = specfem::linear_system::StiffnessAssembler<StiffnessTags>;
 using VectorType =
     Tpetra::Vector<specfem::linear_system::scalar_type,
@@ -83,6 +85,7 @@ protected:
   static void TearDownTestSuite() {
     matrix_ = Teuchos::null;
     assembler_.reset();
+    fe_.reset();
     delete assembly_;
     assembly_ = nullptr;
   }
@@ -95,9 +98,16 @@ protected:
     return *assembly_;
   }
 
+  static const FEAssemblyType &fe() {
+    if (!fe_) {
+      fe_ = std::make_unique<FEAssemblyType>(MappingType(assembly()));
+    }
+    return *fe_;
+  }
+
   static AssemblerType &assembler() {
     if (!assembler_) {
-      assembler_ = std::make_unique<AssemblerType>(assembly());
+      assembler_ = std::make_unique<AssemblerType>(assembly(), fe());
     }
     return *assembler_;
   }
@@ -110,11 +120,13 @@ protected:
   }
 
   static AssemblyType *assembly_;
+  static std::unique_ptr<FEAssemblyType> fe_;
   static std::unique_ptr<AssemblerType> assembler_;
   static Teuchos::RCP<specfem::linear_system::crs_matrix_type> matrix_;
 };
 
 AssemblyType *StiffnessAssembler3D::assembly_ = nullptr;
+std::unique_ptr<FEAssemblyType> StiffnessAssembler3D::fe_;
 std::unique_ptr<AssemblerType> StiffnessAssembler3D::assembler_;
 Teuchos::RCP<specfem::linear_system::crs_matrix_type>
     StiffnessAssembler3D::matrix_;
@@ -130,14 +142,14 @@ type_real max_abs_entry(
   return scale;
 }
 
-TEST_F(StiffnessAssembler3D, GlobalDimensionsMatchDofMap) {
+TEST_F(StiffnessAssembler3D, GlobalDimensionsMatchDofCount) {
   const auto matrix = this->matrix();
-  const auto &dof_map = assembler().dof_map();
+  const auto &mapping = fe().mapping();
 
   const auto num_dofs =
-      static_cast<Tpetra::global_size_t>(dof_map.num_global_dofs());
+      static_cast<Tpetra::global_size_t>(mapping.num_global_dofs());
   EXPECT_EQ(num_dofs,
-            static_cast<Tpetra::global_size_t>(ncomp) * dof_map.nglob());
+            static_cast<Tpetra::global_size_t>(ncomp) * mapping.nglob());
   EXPECT_EQ(matrix->getGlobalNumRows(), num_dofs);
   EXPECT_EQ(matrix->getGlobalNumCols(), num_dofs);
   EXPECT_TRUE(matrix->isFillComplete());
@@ -147,7 +159,7 @@ TEST_F(StiffnessAssembler3D, GlobalDimensionsMatchDofMap) {
 
 TEST_F(StiffnessAssembler3D, SymmetricBilinearForm) {
   const auto matrix = this->matrix();
-  const auto map = assembler().dof_map().owned_map();
+  const auto map = fe().owned_map();
 
   // K is symmetric, so x' K z == z' K x for any x, z. The bilinear form
   // probes symmetry of the whole assembled matrix at matrix-vector cost.
@@ -180,8 +192,8 @@ TEST_F(StiffnessAssembler3D, SymmetricBilinearForm) {
 
 TEST_F(StiffnessAssembler3D, RigidBodyTranslationNullspace) {
   const auto matrix = this->matrix();
-  const auto &dof_map = assembler().dof_map();
-  const auto map = dof_map.owned_map();
+  const auto &mapping = fe().mapping();
+  const auto map = fe().owned_map();
 
   const type_real scale = max_abs_entry(matrix);
   ASSERT_GT(scale, static_cast<type_real>(0));
@@ -197,8 +209,8 @@ TEST_F(StiffnessAssembler3D, RigidBodyTranslationNullspace) {
     VectorType translation(map), response(map);
     {
       auto view = translation.getLocalViewHost(Tpetra::Access::OverwriteAll);
-      for (int iglob = 0; iglob < dof_map.nglob(); ++iglob) {
-        view(static_cast<std::size_t>(dof_map.gid(iglob, icomp)), 0) = 1;
+      for (int iglob = 0; iglob < mapping.nglob(); ++iglob) {
+        view(static_cast<std::size_t>(mapping(iglob, icomp)), 0) = 1;
       }
     }
 
@@ -210,7 +222,7 @@ TEST_F(StiffnessAssembler3D, RigidBodyTranslationNullspace) {
 
 TEST_F(StiffnessAssembler3D, MatchesMatrixFreeOperatorGlobally) {
   const auto matrix = this->matrix();
-  const auto &dof_map = assembler().dof_map();
+  const auto &mapping = fe().mapping();
 
   auto &field = assembly().fields.template get_simulation_field<forward_tag>();
   const auto &field_impl = field.template get_field<elastic_tag>();
@@ -218,7 +230,7 @@ TEST_F(StiffnessAssembler3D, MatchesMatrixFreeOperatorGlobally) {
   const auto h_v = field_impl.get_host_field_dot();
   const auto h_a = field_impl.get_host_field_dot_dot();
   const int nglob = field_impl.nglob;
-  ASSERT_EQ(nglob, dof_map.nglob());
+  ASSERT_EQ(nglob, mapping.nglob());
 
   // Random displacement over the whole mesh; velocity and acceleration zero.
   std::mt19937 generator(54321);
@@ -243,12 +255,12 @@ TEST_F(StiffnessAssembler3D, MatchesMatrixFreeOperatorGlobally) {
   assembly().fields.copy_to_host();
 
   // Assembled operator applied to the same displacement.
-  VectorType u(dof_map.owned_map()), k_u(dof_map.owned_map());
+  VectorType u(fe().owned_map()), k_u(fe().owned_map());
   {
     auto view = u.getLocalViewHost(Tpetra::Access::OverwriteAll);
     for (int iglob = 0; iglob < nglob; ++iglob) {
       for (int icomp = 0; icomp < ncomp; ++icomp) {
-        view(static_cast<std::size_t>(dof_map.gid(iglob, icomp)), 0) =
+        view(static_cast<std::size_t>(mapping(iglob, icomp)), 0) =
             h_u(iglob, icomp);
       }
     }
@@ -263,7 +275,7 @@ TEST_F(StiffnessAssembler3D, MatchesMatrixFreeOperatorGlobally) {
       for (int icomp = 0; icomp < ncomp; ++icomp) {
         const type_real expected = -h_a(iglob, icomp);
         const type_real actual =
-            view(static_cast<std::size_t>(dof_map.gid(iglob, icomp)), 0);
+            view(static_cast<std::size_t>(mapping(iglob, icomp)), 0);
         scale = std::max(scale, std::abs(expected));
         max_diff = std::max(max_diff, std::abs(expected - actual));
       }
@@ -279,12 +291,16 @@ TEST_F(StiffnessAssembler3D, MatchesMatrixFreeOperatorGlobally) {
 
 TEST(StiffnessAssemblerScope3D, RejectsMultiMediumMeshes) {
   const auto mixed_assembly = build_assembly_3d("AcousticElasticForce");
-  EXPECT_THROW(AssemblerType assembler(*mixed_assembly), std::runtime_error);
+  const FEAssemblyType mixed_fe{ MappingType(*mixed_assembly) };
+  EXPECT_THROW(AssemblerType assembler(*mixed_assembly, mixed_fe),
+               std::runtime_error);
 }
 
 TEST(StiffnessAssemblerScope3D, RejectsStaceyBoundaries) {
   const auto stacey_assembly = build_assembly_3d("HomogeneousHalfSpaceStacey");
-  EXPECT_THROW(AssemblerType assembler(*stacey_assembly), std::runtime_error);
+  const FEAssemblyType stacey_fe{ MappingType(*stacey_assembly) };
+  EXPECT_THROW(AssemblerType assembler(*stacey_assembly, stacey_fe),
+               std::runtime_error);
 }
 
 } // namespace stiffness_assembler_test

@@ -43,6 +43,8 @@ using DampingTags =
                         specfem::element::attenuation_tag::none>;
 using DampingAssemblerType =
     specfem::linear_system::DampingAssembler<DampingTags>;
+using MappingType = specfem::linear_system::FEMapping<dim3_tag, elastic_tag>;
+using FEAssemblyType = specfem::linear_system::FEAssembly<MappingType>;
 using StiffnessAssemblerType =
     specfem::linear_system::StiffnessAssembler<DampingTags>;
 using VectorType = specfem::linear_system::vector_type;
@@ -89,7 +91,7 @@ class DampingAssembler3D : public ::testing::Test {
 protected:
   static void TearDownTestSuite() {
     matrix_ = Teuchos::null;
-    dof_map_.reset();
+    fe_.reset();
     delete assembly_;
     assembly_ = nullptr;
   }
@@ -101,29 +103,28 @@ protected:
     return *assembly_;
   }
 
-  static const specfem::linear_system::DofMap &dof_map() {
-    if (!dof_map_) {
-      dof_map_ = std::make_unique<specfem::linear_system::DofMap>(
-          assembly(), DampingTags{});
+  static const FEAssemblyType &fe() {
+    if (!fe_) {
+      fe_ = std::make_unique<FEAssemblyType>(MappingType(assembly()));
     }
-    return *dof_map_;
+    return *fe_;
   }
 
   static Teuchos::RCP<specfem::linear_system::crs_matrix_type> matrix() {
     if (matrix_.is_null()) {
-      DampingAssemblerType assembler(assembly(), dof_map());
+      DampingAssemblerType assembler(assembly(), fe());
       matrix_ = assembler.assemble();
     }
     return matrix_;
   }
 
   static AssemblyType *assembly_;
-  static std::unique_ptr<specfem::linear_system::DofMap> dof_map_;
+  static std::unique_ptr<FEAssemblyType> fe_;
   static Teuchos::RCP<specfem::linear_system::crs_matrix_type> matrix_;
 };
 
 AssemblyType *DampingAssembler3D::assembly_ = nullptr;
-std::unique_ptr<specfem::linear_system::DofMap> DampingAssembler3D::dof_map_;
+std::unique_ptr<FEAssemblyType> DampingAssembler3D::fe_;
 Teuchos::RCP<specfem::linear_system::crs_matrix_type>
     DampingAssembler3D::matrix_;
 
@@ -141,8 +142,8 @@ type_real max_abs_entry(
 TEST(DampingAssemblerScope3D, EmptyOnNaturalBoundaryMesh) {
   const auto assembly =
       build_assembly_3d("HomogeneousHalfspaceSmallNoABCForceSource");
-  const auto dof_map = specfem::linear_system::DofMap(*assembly, DampingTags{});
-  DampingAssemblerType assembler(*assembly, dof_map);
+  const FEAssemblyType fe{ MappingType(*assembly) };
+  DampingAssemblerType assembler(*assembly, fe);
   const auto matrix = assembler.assemble();
   EXPECT_EQ(matrix->getGlobalNumEntries(), 0u)
       << "a mesh without Stacey boundaries must yield an empty damping "
@@ -161,12 +162,12 @@ TEST(DampingAssemblerScope3D, WithStaceyScopeAcceptsStaceyMesh) {
 
 TEST_F(DampingAssembler3D, BlockDiagonalWithEmptyInteriorRows) {
   const auto matrix = this->matrix();
-  const auto &dof_map = this->dof_map();
+  const auto &mapping = fe().mapping();
 
   const auto graph = matrix->getCrsGraph();
   std::size_t nonempty_rows = 0;
   for (std::size_t row = 0;
-       row < static_cast<std::size_t>(dof_map.num_global_dofs()); ++row) {
+       row < static_cast<std::size_t>(mapping.num_global_dofs()); ++row) {
     const auto row_entries = graph->getNumEntriesInGlobalRow(
         static_cast<specfem::linear_system::global_ordinal_type>(row));
     if (row_entries == 0) {
@@ -180,19 +181,19 @@ TEST_F(DampingAssembler3D, BlockDiagonalWithEmptyInteriorRows) {
   // The Stacey fixture has boundary points (nonempty rows) and interior
   // points (empty rows); all components of a damping point carry a block.
   EXPECT_GT(nonempty_rows, 0u);
-  EXPECT_LT(nonempty_rows, static_cast<std::size_t>(dof_map.num_global_dofs()));
+  EXPECT_LT(nonempty_rows, static_cast<std::size_t>(mapping.num_global_dofs()));
   EXPECT_EQ(nonempty_rows % ncomp, 0u);
 }
 
 TEST_F(DampingAssembler3D, SymmetricPositiveSemidefinite) {
   const auto matrix = this->matrix();
-  const auto &dof_map = this->dof_map();
+  const auto &mapping = fe().mapping();
 
-  VectorType x(dof_map.owned_map()), z(dof_map.owned_map());
+  VectorType x(fe().owned_map()), z(fe().owned_map());
   x.randomize();
   z.randomize();
 
-  VectorType c_x(dof_map.owned_map()), c_z(dof_map.owned_map());
+  VectorType c_x(fe().owned_map()), c_z(fe().owned_map());
   matrix->apply(x, c_x);
   matrix->apply(z, c_z);
 
@@ -213,14 +214,14 @@ TEST_F(DampingAssembler3D, SymmetricPositiveSemidefinite) {
 
 TEST_F(DampingAssembler3D, MatchesProductionKernelForRandomVelocity) {
   const auto matrix = this->matrix();
-  const auto &dof_map = this->dof_map();
+  const auto &mapping = fe().mapping();
 
   auto &field = assembly().fields.template get_simulation_field<forward_tag>();
   const auto &field_impl = field.template get_field<elastic_tag>();
   const auto h_u = field_impl.get_host_field();
   const auto h_v = field_impl.get_host_field_dot();
   const auto h_a = field_impl.get_host_field_dot_dot();
-  const int nglob = dof_map.nglob();
+  const int nglob = mapping.nglob();
 
   // Random velocity over the whole mesh; displacement and acceleration zero,
   // so the production kernel computes accel = -C v exactly.
@@ -244,12 +245,12 @@ TEST_F(DampingAssembler3D, MatchesProductionKernelForRandomVelocity) {
       assembly(), 0);
   assembly().fields.copy_to_host();
 
-  VectorType v(dof_map.owned_map()), c_v(dof_map.owned_map());
+  VectorType v(fe().owned_map()), c_v(fe().owned_map());
   {
     auto view = v.getLocalViewHost(Tpetra::Access::OverwriteAll);
     for (int iglob = 0; iglob < nglob; ++iglob) {
       for (int icomp = 0; icomp < ncomp; ++icomp) {
-        view(static_cast<std::size_t>(dof_map.gid(iglob, icomp)), 0) =
+        view(static_cast<std::size_t>(mapping(iglob, icomp)), 0) =
             h_v(iglob, icomp);
       }
     }
@@ -264,7 +265,7 @@ TEST_F(DampingAssembler3D, MatchesProductionKernelForRandomVelocity) {
       for (int icomp = 0; icomp < ncomp; ++icomp) {
         const type_real expected = -h_a(iglob, icomp);
         const type_real actual =
-            view(static_cast<std::size_t>(dof_map.gid(iglob, icomp)), 0);
+            view(static_cast<std::size_t>(mapping(iglob, icomp)), 0);
         scale = std::max(scale, std::abs(expected));
         max_diff = std::max(max_diff, std::abs(expected - actual));
       }
@@ -288,8 +289,8 @@ TEST_F(DampingAssembler3D, MatchesProductionKernelForRandomVelocity) {
 // probe). The assembled C must reproduce that difference exactly.
 TEST_F(DampingAssembler3D, MassPathCrossCheck) {
   const auto matrix = this->matrix();
-  const auto &dof_map = this->dof_map();
-  const int nglob = dof_map.nglob();
+  const auto &mapping = fe().mapping();
+  const int nglob = mapping.nglob();
 
   // dt large enough that the Stacey term is well separated from float
   // cancellation in M(dt) - M(0).
@@ -297,7 +298,7 @@ TEST_F(DampingAssembler3D, MassPathCrossCheck) {
 
   const auto mass_zero =
       specfem::linear_system::assemble_mass_vector<DampingTags>(assembly(),
-                                                                dof_map);
+                                                                fe());
 
   // Manual M(dt) accumulation through the production path, using the same
   // scratch discipline as assemble_mass_vector.
@@ -317,10 +318,10 @@ TEST_F(DampingAssembler3D, MassPathCrossCheck) {
   Kokkos::deep_copy(h_mass, mass);
 
   std::vector<type_real> mass_dt(
-      static_cast<std::size_t>(dof_map.num_global_dofs()));
+      static_cast<std::size_t>(mapping.num_global_dofs()));
   for (int iglob = 0; iglob < nglob; ++iglob) {
     for (int icomp = 0; icomp < ncomp; ++icomp) {
-      mass_dt[static_cast<std::size_t>(dof_map.gid(iglob, icomp))] =
+      mass_dt[static_cast<std::size_t>(mapping(iglob, icomp))] =
           h_mass(iglob, icomp);
     }
   }
@@ -328,7 +329,7 @@ TEST_F(DampingAssembler3D, MassPathCrossCheck) {
   Kokkos::deep_copy(h_mass, 0);
 
   // (dt/2) C 1: row sums of the damping matrix.
-  VectorType ones(dof_map.owned_map()), row_sums(dof_map.owned_map());
+  VectorType ones(fe().owned_map()), row_sums(fe().owned_map());
   ones.putScalar(static_cast<type_real>(1));
   matrix->apply(ones, row_sums);
 
@@ -338,7 +339,7 @@ TEST_F(DampingAssembler3D, MassPathCrossCheck) {
     const auto m0 = mass_zero->getLocalViewHost(Tpetra::Access::ReadOnly);
     const auto sums = row_sums.getLocalViewHost(Tpetra::Access::ReadOnly);
     for (std::size_t dof = 0;
-         dof < static_cast<std::size_t>(dof_map.num_global_dofs()); ++dof) {
+         dof < static_cast<std::size_t>(mapping.num_global_dofs()); ++dof) {
       const type_real expected = dt / 2 * sums(dof, 0);
       const type_real actual = mass_dt[dof] - m0(dof, 0);
       scale = std::max(scale, std::abs(expected));

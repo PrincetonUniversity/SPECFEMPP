@@ -3,7 +3,6 @@
 
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/io.hpp"
-#include "specfem/linear_system/dof_numbering.hpp"
 #include "specfem/linear_system/element_stiffness.hpp"
 #include "specfem/linear_system/sparse_matrix_view/mapping.hpp"
 #include "specfem/mesh.hpp"
@@ -27,7 +26,6 @@ using global_ordinal_type = long long;
 using AssemblyType = specfem::assembly::assembly<dim3_tag>;
 using MappingType =
     specfem::linear_system::Mapping<dim3_tag, elastic_tag, global_ordinal_type>;
-using NumberingType = specfem::linear_system::DofNumbering<global_ordinal_type>;
 using MediumTags =
     specfem::tags::Tags<dim3_tag, elastic_tag,
                         specfem::element::property_tag::isotropic,
@@ -99,30 +97,28 @@ protected:
 AssemblyType *MappingNaturalBoundary3D::assembly_ = nullptr;
 std::unique_ptr<MappingType> MappingNaturalBoundary3D::mapping_;
 
-TEST_F(MappingNaturalBoundary3D, DofIdsMatchDofNumbering) {
+// The layout contract, asserted directly rather than against a second
+// implementation: gid must be the layout_left offset of (iglob, icomp), or a
+// solver vector stops aliasing field memory and copy_field_to_vector's flat
+// copy silently transposes.
+TEST_F(MappingNaturalBoundary3D, DofIdsAreComponentBlocked) {
   const auto &map = mapping();
-  const NumberingType numbering(assembly(), MediumTags{});
 
-  ASSERT_EQ(map.nglob(), numbering.nglob());
-  ASSERT_EQ(map.ncomp(), numbering.ncomp());
-  ASSERT_EQ(map.num_global_dofs(), numbering.num_global_dofs());
+  ASSERT_EQ(map.num_global_dofs(),
+            static_cast<global_ordinal_type>(map.ncomp()) * map.nglob());
 
-  // The layout_left mapping must reproduce DofNumbering::gid exactly, or a
-  // solver vector stops aliasing field memory.
   for (int iglob = 0; iglob < map.nglob(); ++iglob) {
     for (int icomp = 0; icomp < map.ncomp(); ++icomp) {
-      ASSERT_EQ(map(iglob, icomp), numbering.gid(iglob, icomp))
+      ASSERT_EQ(map(iglob, icomp),
+                static_cast<global_ordinal_type>(icomp) * map.nglob() + iglob)
           << "dof id layout diverged at (iglob=" << iglob << ", icomp=" << icomp
           << ")";
     }
   }
 }
 
-// The five-argument operator must agree with the field's own get_iglob path,
-// which is what the stiffness assembler uses to place element blocks.
 TEST_F(MappingNaturalBoundary3D, ElementDofIdsMatchFieldIndexMapping) {
   const auto &map = mapping();
-  const NumberingType numbering(assembly(), MediumTags{});
   const auto &field =
       assembly()
           .fields
@@ -138,8 +134,7 @@ TEST_F(MappingNaturalBoundary3D, ElementDofIdsMatchFieldIndexMapping) {
           const int iglob =
               field.get_iglob<false, elastic_tag>(ispec, iz, iy, ix);
           for (int icomp = 0; icomp < map.ncomp(); ++icomp) {
-            ASSERT_EQ(map(ispec, iz, iy, ix, icomp),
-                      numbering.gid(iglob, icomp))
+            ASSERT_EQ(map(ispec, iz, iy, ix, icomp), map(iglob, icomp))
                 << "dof id diverged at (ispec=" << ispec << ", iz=" << iz
                 << ", iy=" << iy << ", ix=" << ix << ", icomp=" << icomp << ")";
           }
@@ -149,9 +144,9 @@ TEST_F(MappingNaturalBoundary3D, ElementDofIdsMatchFieldIndexMapping) {
   }
 }
 
-// element_dofs is the shared ldof <-> gid ordering: a dense element block is
-// scattered through it, so entry local_dof_index(ldof) must be that dof.
-TEST_F(MappingNaturalBoundary3D, ElementDofsFollowLocalDofIndexOrder) {
+// A dense element block is scattered through an element's dof set, so entry
+// local_dof_index(ldof) of that set must be the dof local_dof_index numbers.
+TEST_F(MappingNaturalBoundary3D, ElementDofSetFollowsLocalDofIndexOrder) {
   const auto &map = mapping();
 
   ASSERT_EQ(map.ngllz(), NGLL);
@@ -163,9 +158,9 @@ TEST_F(MappingNaturalBoundary3D, ElementDofsFollowLocalDofIndexOrder) {
 
   for (int i = 0; i < elements.size(); ++i) {
     const int ispec = elements(i);
-    const auto dofs = map.element_dofs(ispec);
-    ASSERT_EQ(dofs.size(),
-              static_cast<std::size_t>(map.ncomp()) * NGLL * NGLL * NGLL);
+    const auto dofs =
+        map(ispec, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
+    ASSERT_EQ(dofs.size(), map.ncomp() * NGLL * NGLL * NGLL);
 
     for (int iz = 0; iz < NGLL; ++iz) {
       for (int iy = 0; iy < NGLL; ++iy) {

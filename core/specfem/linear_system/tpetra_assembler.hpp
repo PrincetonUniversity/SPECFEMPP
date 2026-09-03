@@ -3,7 +3,6 @@
 #ifdef SPECFEM_ENABLE_TRILINOS
 
 #include "specfem/enums.hpp"
-#include "specfem/linear_system/dof_map.hpp"
 #include "specfem/linear_system/element_stiffness.hpp"
 #include "specfem/linear_system/sparse_matrix_view/fe_assembly.hpp"
 #include "specfem/linear_system/sparse_matrix_view/matrix_view.hpp"
@@ -30,7 +29,7 @@ namespace linear_system {
  * (`Tags::medium_tag`); a future multi-medium system holds one assembler and
  * one matrix per medium. This milestone additionally requires the mesh to be
  * single-medium (fluid-solid coupling blocks are deferred) and serial (see
- * @ref DofMap).
+ * @ref FEAssembly).
  *
  * @tparam Tags Compile-time tags (dimension, medium, property, attenuation);
  *              dimension must be `dim3`; only `dim3, elastic, isotropic,
@@ -63,38 +62,21 @@ public:
   using FEAssemblyType = FEAssembly<MappingType>;
 
   /**
-   * @brief Validate scope and set up the dof map.
+   * @brief Validate scope and bind the dof maps and sparsity graphs.
    *
    * Throws `std::runtime_error` if any element is outside the supported
-   * scope (see @ref validate_stiffness_scope), if the mesh contains elements
+   * scope (see @ref validate_stiffness_scope) or if the mesh contains elements
    * of a medium other than `Tags::medium_tag` (single-medium milestone;
-   * coupling blocks are deferred), or if the communicator has more than one
-   * rank (see @ref DofMap).
+   * coupling blocks are deferred).
    *
    * @param assembly Assembled mesh, jacobian matrix, material properties,
    *        and fields; must outlive the assembler
-   * @param batch_size Elements per probe-kernel launch (>= 1)
-   * @param scope Boundary conditions the caller can represent (see
-   *        @ref StiffnessScope); pass `with_stacey` only when the Stacey
-   *        damping matrix is assembled separately
-   */
-  StiffnessAssembler(
-      const AssemblyType &assembly, const int batch_size = default_batch_size,
-      const StiffnessScope scope = StiffnessScope::natural_boundaries);
-
-  /**
-   * @brief Assemble over a caller-supplied @ref FEAssembly.
-   *
-   * Same validation as the constructor above, but reuses `fe` rather than
-   * building maps and sparsity graphs of its own.
-   *
-   * @param assembly Assembled mesh, jacobian matrix, material properties, and
-   *        fields; must outlive the assembler
    * @param fe Dof maps and sparsity graphs of the medium; borrowed, and must
    *        outlive the assembler
    * @param batch_size Elements per probe-kernel launch (>= 1)
    * @param scope Boundary conditions the caller can represent (see
-   *        @ref StiffnessScope)
+   *        @ref StiffnessScope); pass `with_stacey` only when the Stacey
+   *        damping matrix is assembled separately
    */
   StiffnessAssembler(
       const AssemblyType &assembly, const FEAssemblyType &fe,
@@ -104,32 +86,21 @@ public:
   /**
    * @brief Assemble the stiffness matrix.
    *
-   * Pipeline: build an @ref FEAssembly over the medium (dof maps plus the
-   * element-dense sparsity graph), then fill the matrix batch-by-batch through
-   * a @ref SparseMatrixView -- one block-diagonal update per probe batch --
-   * and close it. Row/column ids follow @ref Mapping, which agrees with
-   * @ref DofMap::gid.
+   * Fills the matrix batch-by-batch through a @ref SparseMatrixView -- one
+   * block-diagonal update per probe batch -- on the element-dense graph of
+   * `fe`, then closes it. Row/column ids follow @ref Mapping.
    *
    * @return Fill-complete stiffness matrix on the owned map
    */
   Teuchos::RCP<crs_matrix_type> assemble() const;
 
-  /// Dof map shared by the matrix and any right-hand-side/solution vectors
-  const DofMap &dof_map() const { return dof_map_; }
-
 private:
   /// Probe element blocks in batches and scatter them into the matrix
   void fill_matrix(SparseMatrixView<MappingType> &matrix) const;
 
-  /// Validation shared by both constructors
-  void validate(const StiffnessScope scope) const;
-
   const AssemblyType &assembly_; ///< Borrowed assembly (not owned)
-  DofMap dof_map_;               ///< Per-medium dof numbering and maps
+  const FEAssemblyType &fe_;     ///< Borrowed maps and sparsity graphs
   int batch_size_;               ///< Elements per probe-kernel launch
-
-  /// Caller-supplied maps and graphs; null when this assembler builds its own
-  const FEAssemblyType *fe_ = nullptr;
 };
 
 } // namespace linear_system
