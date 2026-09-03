@@ -1,8 +1,62 @@
-nproc = 6
+import os
 
-include: "../../meshfem3d_globe.smk"
+
+envvars:
+    "SPECFEMPP_BINDIR",
+
+
+nproc = 6
+mesher = os.path.join(os.environ["SPECFEMPP_BINDIR"], "xmeshfem3D_globe")
+databases = expand(
+    "DATABASES_MPI/proc{rank:06d}_specfempp_database.bin", rank=range(nproc)
+)
+
 
 rule all:
     input:
         databases,
-    localrule: True
+
+
+rule check_executable:
+    output:
+        executable_checked="executable_checked.txt",
+    shell:
+        """
+        if ! test -x {mesher}; then
+            echo "Error: {mesher} not found or not executable."
+            exit 1
+        fi
+        touch {output}
+        """
+
+
+rule generate_database:
+    input:
+        executable_checked=rules.check_executable.output.executable_checked,
+        par_file="provenance/DATA/Par_file",
+        stations="provenance/DATA/STATIONS",
+        source="provenance/DATA/CMTSOLUTION",
+    output:
+        databases=databases,
+        log="OUTPUT_FILES/output_mesher.txt",
+    resources:
+        mpi="mpirun",
+        tasks=nproc,
+        cpus_per_task=1,
+        runtime=1,
+    shell:
+        """
+        mkdir -p DATABASES_MPI OUTPUT_FILES
+        rm -rf DATA
+        cp -R provenance/DATA DATA
+        {resources.mpi} -np {resources.tasks} {mesher} > {output.log} 2>&1
+        rm -rf DATA
+        """
+
+
+rule clean:
+    shell:
+        """
+        rm -rf DATABASES_MPI OUTPUT_FILES DATA .snakemake
+        rm -f executable_checked.txt
+        """
