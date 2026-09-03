@@ -44,6 +44,12 @@ if (SPECFEM_ENABLE_MPI)
     # link specfem::mpi. Make MPI usage requirements global to match.
     link_libraries(MPI::MPI_CXX)
     message(STATUS "MPI enabled - found MPI::MPI_CXX")
+
+    # For handling mpi test execution on a cluster.
+    set(SPECFEM_MPI_TEST_COMMAND "${MPIEXEC_EXECUTABLE}" CACHE STRING
+        "MPI launcher command for tests (e.g. mpirun, srun, aprun); empty = MPIEXEC_EXECUTABLE")
+    set(SPECFEM_MPI_TEST_NUMPROC_FLAG "${MPIEXEC_NUMPROC_FLAG}" CACHE STRING
+        "Flag introducing the rank count for SPECFEM_MPI_TEST_COMMAND, e.g. '-n'; empty = MPIEXEC_NUMPROC_FLAG")
 else()
     message(STATUS "Compiling SPECFEM without MPI")
 endif()
