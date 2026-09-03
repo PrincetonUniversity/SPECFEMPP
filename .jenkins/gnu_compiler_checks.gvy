@@ -18,7 +18,7 @@ pipeline{
                     }
                     axis{
                         name 'HostSpace'
-                        values 'SERIAL;-DKokkos_ENABLE_SERIAL=ON -DKokkos_ENABLE_ATOMICS_BYPASS=ON;-n 1 -c 20;-j', 'OPENMP;-DKokkos_ENABLE_OPENMP=ON;-n 1 -c 20;-j 1'
+                        values 'SERIAL;-DKokkos_ENABLE_SERIAL=ON -DKokkos_ENABLE_ATOMICS_BYPASS=ON;-n 1 -c 4;-j', 'OPENMP;-DKokkos_ENABLE_OPENMP=ON;-n 1 -c 4;-j 1'
                     }
                 }
                 stages {
@@ -86,7 +86,7 @@ pipeline{
                                         module load boost/1.85.0
                                         module load ${GNU_COMPILER_MODULE}
                                         cd /scratch/gpfs/TROMP/specfempp/jenkins/test_cpu_${GNU_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG} && \
-                                        srun -N 1 -t 00:30:00 --account rse ${HOST_RUN_FLAGS} \
+                                        srun -t 00:15:00 --account rse ${HOST_RUN_FLAGS} \
                                             --constraint="intel" \
                                             bash -c 'export OMP_PROC_BIND=spread; \
                                             export OMP_PLACES=threads; \

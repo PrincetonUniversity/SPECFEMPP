@@ -17,7 +17,7 @@ import sys
 
 NGNOD = 27
 MAGIC = "SPECFEMPP_GLOBE_DB"
-VERSION = 1
+VERSION = 2
 
 REGION_CRUST_MANTLE = 1
 REGION_OUTER_CORE = 2
@@ -138,6 +138,14 @@ def read_database(path):
     (n_flags,) = struct.unpack_from("<i", blob, 0)
     db["model_flags"] = unpack(blob, [("i", 1), ("l", n_flags)])[1]
 
+    # the parameters the catalog cannot re-derive from MODEL (format_version 2)
+    db["nchunks"], db["nex_xi"], db["nex_eta"] = unpack(reader.record(), [("i", 3)])[0]
+    (
+        db["min_attenuation_period"],
+        db["max_attenuation_period"],
+        db["att_f_c_source"],
+    ) = unpack(reader.record(), [("d", 3)])[0]
+
     nnode = unpack(reader.record(), [("i", 1)])[0]
     db["nnode"] = nnode
     coords = unpack(reader.record(), [("d", 3 * nnode)])[0]
@@ -221,6 +229,29 @@ def check_one(db, problems):
         bad(f"material_mode is {db['material_mode']}, expected 1 (ORACLE)")
     if not 1 <= db["nregions"] <= 3:
         bad(f"nregions is {db['nregions']}")
+
+    # model config: the parameters SPECFEM++ cannot re-derive from MODEL. A stale
+    # default here is the failure this block exists to catch -- it would produce
+    # plausible but wrong crustal smoothing and attenuation rather than an error.
+    if db["nchunks"] not in (1, 2, 3, 6):
+        bad(f"NCHUNKS is {db['nchunks']}, expected one of 1, 2, 3, 6")
+    if db["nex_xi"] <= 0 or db["nex_eta"] <= 0:
+        bad(f"non-positive NEX {db['nex_xi']}x{db['nex_eta']}")
+    if db["nchunks"] == 6 and db["nex_xi"] != db["nex_eta"]:
+        bad(
+            f"NCHUNKS is 6 but NEX_XI {db['nex_xi']} /= NEX_ETA {db['nex_eta']};"
+            " a full globe requires square chunks"
+        )
+
+    if db["attenuation"]:
+        tmin, tmax = db["min_attenuation_period"], db["max_attenuation_period"]
+        if not 0.0 < tmin < tmax:
+            bad(
+                f"attenuation is on but the period band is [{tmin}, {tmax}];"
+                " globe_evaluator_init rejects a non-positive or inverted band"
+            )
+        if db["att_f_c_source"] <= 0.0:
+            bad(f"attenuation is on but ATT_F_C_SOURCE is {db['att_f_c_source']}")
 
     nspec, nnode = db["nspec"], db["nnode"]
 
@@ -355,12 +386,49 @@ def check_one(db, problems):
     return db
 
 
+# The model configuration is global data broadcast to every rank, so every rank's
+# database must carry an identical copy. A disagreement means a broadcast bug in
+# the mesher, and SPECFEM++ would configure a different model on different ranks.
+MODEL_CONFIG_KEYS = (
+    "planet_type",
+    "r_planet",
+    "rhoav",
+    "model",
+    "codes",
+    "model_flags",
+    "nchunks",
+    "nex_xi",
+    "nex_eta",
+    "min_attenuation_period",
+    "max_attenuation_period",
+    "att_f_c_source",
+    "ellipticity",
+    "topography",
+    "gravity",
+    "full_gravity",
+    "rotation",
+    "attenuation",
+    "oceans",
+)
+
+
 def check_cross_rank(dbs, problems):
     """The two ranks of every neighbor pair must share the same nodes, in the same order."""
     by_rank = {}
     for path, db in dbs.items():
         rank = int(os.path.basename(path)[4:10])
         by_rank[rank] = db
+
+    ranks = sorted(by_rank)
+    if ranks:
+        reference = by_rank[ranks[0]]
+        for rank in ranks[1:]:
+            for key in MODEL_CONFIG_KEYS:
+                if by_rank[rank][key] != reference[key]:
+                    problems.append(
+                        f"ranks {ranks[0]}<->{rank} disagree on model config"
+                        f" {key}: {reference[key]!r} vs {by_rank[rank][key]!r}"
+                    )
 
     for rank, db in sorted(by_rank.items()):
         for entry in db["neighbors"]:
@@ -416,6 +484,20 @@ def main():
 
     if len(dbs) == len(paths):
         check_cross_rank(dbs, problems)
+
+    # Echo the model config once. These are the values SPECFEM++ replays into
+    # globe_evaluator_init(), so printing them makes it visible at a glance that
+    # they came from the Par_file rather than from a built-in default.
+    if dbs:
+        first = dbs[paths[0]]
+        print(
+            f"model config: MODEL={first['model']!r},"
+            f" NCHUNKS={first['nchunks']},"
+            f" NEX_XI={first['nex_xi']}, NEX_ETA={first['nex_eta']},"
+            f" attenuation band=[{first['min_attenuation_period']:g},"
+            f" {first['max_attenuation_period']:g}] s,"
+            f" f_c_source={first['att_f_c_source']:g}\n"
+        )
 
     for path in paths:
         db = dbs.get(path)

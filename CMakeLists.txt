@@ -44,6 +44,12 @@ if (SPECFEM_ENABLE_MPI)
     # link specfem::mpi. Make MPI usage requirements global to match.
     link_libraries(MPI::MPI_CXX)
     message(STATUS "MPI enabled - found MPI::MPI_CXX")
+
+    # For handling mpi test execution on a cluster.
+    set(SPECFEM_MPI_TEST_COMMAND "${MPIEXEC_EXECUTABLE}" CACHE STRING
+        "MPI launcher command for tests (e.g. mpirun, srun, aprun); empty = MPIEXEC_EXECUTABLE")
+    set(SPECFEM_MPI_TEST_NUMPROC_FLAG "${MPIEXEC_NUMPROC_FLAG}" CACHE STRING
+        "Flag introducing the rank count for SPECFEM_MPI_TEST_COMMAND, e.g. '-n'; empty = MPIEXEC_NUMPROC_FLAG")
 else()
     message(STATUS "Compiling SPECFEM without MPI")
 endif()
@@ -262,7 +268,7 @@ if(SPECFEM_BUILD_MESHFEM3D_GLOBE)
   # ISO_C_BINDING wrappers exposing the globe model catalog to C/C++ (issue
   # #2001). Kept in a sibling directory so fortran/meshfem3d_globe/ stays a
   # clean mirror of upstream specfem3d_globe. Must come after the globe
-  # subdirectory above: it consumes the meshfem3Dg::* targets and the .mod
+  # subdirectory above: it consumes the meshfem3D_globe::* targets and the .mod
   # files they generate.
   message(STATUS "Configuring globe_evaluator")
   add_subdirectory(fortran/globe_evaluator)
