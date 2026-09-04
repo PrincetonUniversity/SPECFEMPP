@@ -130,7 +130,7 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::print()
   int total_elements = 0;
 
   specfem::tag_dispatch::for_each(
-      DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic),
+      DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic, elastic_spin),
       [&]<typename TagsType>() {
         constexpr auto medium_tag = TagsType::medium_tag;
         // Getting the number of elements per medium

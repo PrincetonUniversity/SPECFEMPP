@@ -187,18 +187,33 @@ using namespace specfem::test_configuration;
 // face, so they all receive the stacey tag.
 std::unordered_map<std::string, ExpectedTags3D> expected_tags_map = {
   { "EightNodeElastic",
-    ExpectedTags3D(8, { ElementTags(0, specfem::element::medium_tag::elastic,
-                                    specfem::element::property_tag::isotropic,
-                                    specfem::element::attenuation_tag::none,
-                                    specfem::element::boundary_tag::stacey),
-                        ElementTags(1, specfem::element::medium_tag::elastic,
-                                    specfem::element::property_tag::isotropic,
-                                    specfem::element::attenuation_tag::none,
-                                    specfem::element::boundary_tag::stacey),
-                        ElementTags(5, specfem::element::medium_tag::elastic,
-                                    specfem::element::property_tag::isotropic,
-                                    specfem::element::attenuation_tag::none,
-                                    specfem::element::boundary_tag::stacey) }) }
+    ExpectedTags3D(8,
+                   { ElementTags(0, specfem::element::medium_tag::elastic,
+                                 specfem::element::property_tag::isotropic,
+                                 specfem::element::attenuation_tag::none,
+                                 specfem::element::boundary_tag::stacey),
+                     ElementTags(1, specfem::element::medium_tag::elastic,
+                                 specfem::element::property_tag::isotropic,
+                                 specfem::element::attenuation_tag::none,
+                                 specfem::element::boundary_tag::stacey),
+                     ElementTags(5, specfem::element::medium_tag::elastic,
+                                 specfem::element::property_tag::isotropic,
+                                 specfem::element::attenuation_tag::none,
+                                 specfem::element::boundary_tag::stacey) }) },
+  { "EightNodeElasticCosserat",
+    ExpectedTags3D(
+        8, { ElementTags(0, specfem::element::medium_tag::elastic_spin,
+                         specfem::element::property_tag::isotropic_cosserat,
+                         specfem::element::attenuation_tag::none,
+                         specfem::element::boundary_tag::none),
+             ElementTags(1, specfem::element::medium_tag::elastic_spin,
+                         specfem::element::property_tag::isotropic_cosserat,
+                         specfem::element::attenuation_tag::none,
+                         specfem::element::boundary_tag::none),
+             ElementTags(5, specfem::element::medium_tag::elastic_spin,
+                         specfem::element::property_tag::isotropic_cosserat,
+                         specfem::element::attenuation_tag::none,
+                         specfem::element::boundary_tag::none) }) }
   // Add more test cases as needed
 };
 

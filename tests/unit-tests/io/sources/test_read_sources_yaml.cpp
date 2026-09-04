@@ -237,7 +237,7 @@ const static YAML::Node multiple_sources_yaml_2d = []() {
 
 const static YAML::Node multiple_sources_yaml_3d = []() {
   YAML::Node node;
-  node["number-of-sources"] = 2;
+  node["number-of-sources"] = 3;
 
   // First source - force
   YAML::Node source1;
@@ -272,8 +272,49 @@ const static YAML::Node multiple_sources_yaml_3d = []() {
   moment_tensor["Ricker"]["f0"] = 1.0;
   source2["moment-tensor"] = moment_tensor;
 
+  YAML::Node source3;
+  YAML::Node cosserat_force;
+  cosserat_force["x"] = 2500.0;
+  cosserat_force["y"] = 2500.0;
+  cosserat_force["z"] = 2500.0;
+  cosserat_force["source_surf"] = false;
+  cosserat_force["fx"] = 1.0;
+  cosserat_force["fy"] = 0.0;
+  cosserat_force["fz"] = 2.0;
+  cosserat_force["fc_x"] = 4.0;
+  cosserat_force["fc_y"] = 1.0;
+  cosserat_force["fc_z"] = 2.0;
+  cosserat_force["Ricker"]["factor"] = 1.0e10;
+  cosserat_force["Ricker"]["tshift"] = 0.0;
+  cosserat_force["Ricker"]["f0"] = 10.0;
+  source3["cosserat-force"] = cosserat_force;
+
   node["sources"].push_back(source1);
   node["sources"].push_back(source2);
+  node["sources"].push_back(source3);
+  return node;
+}();
+
+const static YAML::Node single_cosserat_source_yaml_3d = []() {
+  YAML::Node node;
+  node["number-of-sources"] = 1;
+  YAML::Node source;
+  YAML::Node cosserat_force;
+  cosserat_force["x"] = 2500.0;
+  cosserat_force["y"] = 2500.0;
+  cosserat_force["z"] = 2500.0;
+  cosserat_force["source_surf"] = false;
+  cosserat_force["fx"] = 1.0;
+  cosserat_force["fy"] = 0.0;
+  cosserat_force["fz"] = 2.0;
+  cosserat_force["fc_x"] = 4.0;
+  cosserat_force["fc_y"] = 1.0;
+  cosserat_force["fc_z"] = 2.0;
+  cosserat_force["Ricker"]["factor"] = 1.0e10;
+  cosserat_force["Ricker"]["tshift"] = 0.0;
+  cosserat_force["Ricker"]["f0"] = 10.0;
+  source["cosserat-force"] = cosserat_force;
+  node["sources"].push_back(source);
   return node;
 }();
 
@@ -365,5 +406,7 @@ INSTANTIATE_TEST_SUITE_P(
                                single_moment_tensor_depth_yaml_3d_node,
                                single_moment_tensor_depth_yaml_3d },
         SourceYAMLTestParam3D{ "3D YAML Multiple Sources",
-                               multiple_sources_yaml_3d,
-                               multiple_sources_3d }));
+                               multiple_sources_yaml_3d, multiple_sources_3d },
+        SourceYAMLTestParam3D{ "3D YAML Single Cosserat Force",
+                               single_cosserat_source_yaml_3d,
+                               single_cosserat_force_3d }));

@@ -136,7 +136,7 @@ int apply_corrector_phase(
   specfem::tag_dispatch::for_each(
       specfem::tag_dispatch::dimension_set<AssemblyFields::dimension_tag>{} *
           MEDIUM_SET(elastic, elastic_psv, elastic_sh, acoustic, poroelastic,
-                     elastic_psv_t),
+                     elastic_psv_t, elastic_spin),
       [&]<typename ElementTags>() {
         if (tag == ElementTags::medium_tag) {
           result = specfem::time_scheme::newmark_impl::corrector_phase_impl<
@@ -160,7 +160,7 @@ int apply_predictor_phase(
   specfem::tag_dispatch::for_each(
       specfem::tag_dispatch::dimension_set<AssemblyFields::dimension_tag>{} *
           MEDIUM_SET(elastic, elastic_psv, elastic_sh, acoustic, poroelastic,
-                     elastic_psv_t),
+                     elastic_psv_t, elastic_spin),
       [&]<typename ElementTags>() {
         if (tag == ElementTags::medium_tag) {
           result = specfem::time_scheme::newmark_impl::predictor_phase_impl<

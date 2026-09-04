@@ -31,8 +31,8 @@ subroutine save_databases(nspec,nglob, &
   nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
   ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top)
 
-  use constants, only: MAX_STRING_LEN,IDOMAIN_ACOUSTIC,IDOMAIN_ELASTIC,IDOMAIN_POROELASTIC, &
-    NDIM,IMAIN,IIN_DB,myrank,NGLLZ,NGLLY,NGLLX
+  use constants, only: MAX_STRING_LEN,IDOMAIN_ACOUSTIC,IDOMAIN_ELASTIC,IDOMAIN_COSSERAT, &
+    IDOMAIN_POROELASTIC, NDIM,IMAIN,IIN_DB,myrank,NGLLZ,NGLLY,NGLLX
 
   use constants_meshfem, only: NGLLX_M,NGLLY_M,NGLLZ_M
 
@@ -227,6 +227,15 @@ subroutine save_databases(nspec,nglob, &
         matpropl(1:7) = material_properties(i,1:7)
         ! skipping mat_id, not needed
         matpropl(8:17) = material_properties(i,9:18)
+      case (IDOMAIN_COSSERAT)
+        ! material properties format:
+        !#(1)rho #(2)kappa #(3)mu #(4)nu #(5)j #(6)lambda_c #(7)domain_id #(8)mat_id #(9)mu_c #(10)nu_c
+        !
+        ! output format for xgenerate_database:
+        !   rho,kappa,mu,nu,j,lambda_c,material_domain_id,mu_c,nu_c
+        matpropl(1:7) = material_properties(i,1:7)
+        ! skipping mat_id, not needed
+        matpropl(8:9) = material_properties(i,9:10)
       end select
       ! writes to database
       write(IIN_database) matpropl(:)
@@ -256,6 +265,8 @@ subroutine save_databases(nspec,nglob, &
         if (trim(undef_mat_prop(3,1)) /= 'elastic')  stop 'Error in undef_mat_prop elastic domain'
        case (IDOMAIN_POROELASTIC)
         if (trim(undef_mat_prop(3,1)) /= 'poroelastic')  stop 'Error in undef_mat_prop poroelastic domain'
+      case (IDOMAIN_COSSERAT)
+        if (trim(undef_mat_prop(3,1)) /= 'cosserat')  stop 'Error in undef_mat_prop isotropic cosserat domain'
       end select
       ! default name if none given
       if (trim(undef_mat_prop(4,1)) == "") undef_mat_prop(4,1) = 'tomography_model.xyz'

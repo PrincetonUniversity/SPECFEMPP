@@ -70,10 +70,11 @@ template <> struct materials<specfem::element::dimension_tag::dim3> {
    * - Local indices within type-specific material containers
    */
   struct material_specification {
-    /** @brief Physical medium type (acoustic, elastic, etc.) */
+    /** @brief Physical medium type (acoustic, elastic, elastic_spin, etc.) */
     specfem::element::medium_tag type;
 
-    /** @brief Material property type (isotropic, anisotropic) */
+    /** @brief Material property type (isotropic, anisotropic,
+     * isotropic_cosserat) */
     specfem::element::property_tag property;
 
     /** @brief Attenuation type (none, constant_isotropic, etc.) */
@@ -174,7 +175,8 @@ private:
 
   static constexpr auto combinations =
       specfem::tag_dispatch::dimension_set<dimension_tag>{} *
-      MEDIUM_SET(acoustic, elastic) * PROPERTY_SET(isotropic) *
+      MEDIUM_SET(acoustic, elastic, elastic_spin) *
+      PROPERTY_SET(isotropic, isotropic_cosserat) *
       ATTENUATION_SET(none, constant_isotropic);
   template <typename TagsType>
   using MaterialContainerTemplate =
@@ -220,8 +222,9 @@ public:
    * compile-time template parameters for the specified medium and property
    * types.
    *
-   * @tparam MediumTag Medium type (acoustic, elastic)
-   * @tparam PropertyTag Property type (isotropic, anisotropic)
+   * @tparam MediumTag Medium type (acoustic, elastic, elastic_spin)
+   * @tparam PropertyTag Property type (isotropic, anisotropic,
+   * isotropic_cosserat)
    * @param index Element index to retrieve material for
    * @return Material object with specified medium and property types
    *
@@ -313,8 +316,9 @@ public:
    * specified type combination for direct access by material management
    * functions.
    *
-   * @tparam MediumTag Medium type (acoustic, elastic)
-   * @tparam PropertyTag Property type (isotropic, anisotropic)
+   * @tparam MediumTag Medium type (acoustic, elastic, elastic_spin)
+   * @tparam PropertyTag Property type (isotropic, anisotropic,
+   * isotropic_cosserat)
    * @return Reference to the material container for specified types
    *
    * @code
@@ -349,8 +353,9 @@ public:
    * Adds a material to the appropriate container based on its type, updates
    * counts, and creates mapping to the original MESHFEM3D database index.
    *
-   * @tparam MediumTag Medium type (acoustic, elastic)
-   * @tparam PropertyTag Property type (isotropic, anisotropic)
+   * @tparam MediumTag Medium type (acoustic, elastic, elastic_spin)
+   * @tparam PropertyTag Property type (isotropic, anisotropic,
+   * isotropic_cosserat)
    * @param new_material Material object to add
    * @param database_index Original MESHFEM3D database index
    * @return Local index of the added material within its container

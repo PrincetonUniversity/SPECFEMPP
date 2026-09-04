@@ -20,6 +20,7 @@ constexpr auto elastic_psv = specfem::element::medium_tag::elastic_psv;
 constexpr auto elastic_sh = specfem::element::medium_tag::elastic_sh;
 constexpr auto poroelastic = specfem::element::medium_tag::poroelastic;
 constexpr auto elastic_psv_t = specfem::element::medium_tag::elastic_psv_t;
+constexpr auto elastic_spin = specfem::element::medium_tag::elastic_spin;
 
 /**
  * @brief Log periodic time-marching progress.
@@ -104,11 +105,13 @@ apply_forward_step(specfem::time_scheme::time_scheme &time_scheme,
   dofs_updated += time_scheme.apply_predictor_phase_forward(elastic_sh);
   dofs_updated += time_scheme.apply_predictor_phase_forward(poroelastic);
   dofs_updated += time_scheme.apply_predictor_phase_forward(elastic_psv_t);
+  dofs_updated += time_scheme.apply_predictor_phase_forward(elastic_spin);
 
   elements_updated +=
       update_medium<NGLL,
                     specfem::tags::Tags<DimensionTag, FieldType, acoustic>>(
           assembly, mpi_buffers, istep);
+
   dofs_updated += time_scheme.apply_corrector_phase_forward(acoustic);
 
   elements_updated +=
@@ -126,10 +129,16 @@ apply_forward_step(specfem::time_scheme::time_scheme &time_scheme,
   elements_updated += update_medium<
       NGLL, specfem::tags::Tags<DimensionTag, FieldType, elastic_psv_t>>(
       assembly, mpi_buffers, istep);
+  elements_updated +=
+      update_medium<NGLL,
+                    specfem::tags::Tags<DimensionTag, FieldType, elastic_spin>>(
+          assembly, mpi_buffers, istep);
+
   dofs_updated += time_scheme.apply_corrector_phase_forward(elastic);
   dofs_updated += time_scheme.apply_corrector_phase_forward(elastic_psv);
   dofs_updated += time_scheme.apply_corrector_phase_forward(elastic_sh);
   dofs_updated += time_scheme.apply_corrector_phase_forward(elastic_psv_t);
+  dofs_updated += time_scheme.apply_corrector_phase_forward(elastic_spin);
 
   elements_updated +=
       update_medium<NGLL,

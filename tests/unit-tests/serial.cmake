@@ -155,6 +155,14 @@ specfem_add_test(simd_tests
             -lpthread -lm
 )
 
+specfem_add_test(datatype_operators_tests
+  SOURCES   datatype/tensor_point_view_operators_tests.cpp
+  LIBRARIES gtest_main
+            gmock_main
+            Kokkos::kokkos
+            -lpthread -lm
+)
+
 specfem_add_test(fortranio_test
   SOURCES   fortran_io/fortranio_tests.cpp
   LIBRARIES gtest_main
@@ -518,6 +526,7 @@ specfem_add_test(mass_matrix_tests
             medium/mass_matrix/dim2/acoustic.cpp
             medium/mass_matrix/dim2/poroelastic.cpp
             medium/mass_matrix/dim3/elastic_isotropic.cpp
+            medium/mass_matrix/dim3/elastic_isotropic_cosserat.cpp
             medium/mass_matrix/dim3/acoustic.cpp
   LIBRARIES point
             gtest_main
@@ -531,6 +540,7 @@ specfem_add_test(stress_tests
             medium/stress/dim2/elastic_isotropic_cosserat.cpp
             medium/stress/dim2/poroelastic_isotropic.cpp
             medium/stress/dim3/elastic_isotropic.cpp
+            medium/stress/dim3/elastic_isotropic_cosserat.cpp
             medium/stress/dim3/acoustic.cpp
   LIBRARIES point
             gtest_main
@@ -583,6 +593,7 @@ specfem_add_test(source_tests
             medium/source/dim2/elastic_isotropic_cosserat.cpp
             medium/source/dim2/poroelastic.cpp
             medium/source/dim3/elastic_isotropic.cpp
+            medium/source/dim3/elastic_isotropic_cosserat.cpp
             medium/source/dim3/acoustic.cpp
   LIBRARIES point
             gtest_main

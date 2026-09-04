@@ -226,8 +226,8 @@ specfem::assembly::Info<DimensionTag>::Info(
   } else {
     specfem::tag_dispatch::for_each(
         DIMENSION_SET(dim3) *
-        MEDIUM_SET(elastic, acoustic) *
-        PROPERTY_SET(isotropic) *
+        MEDIUM_SET(elastic, acoustic, elastic_spin) *
+        PROPERTY_SET(isotropic, isotropic_cosserat) *
         ATTENUATION_SET(none),
         [&]<typename ElementTags>() {
           info::impl::process_medium_elements<ElementTags::dimension_tag,

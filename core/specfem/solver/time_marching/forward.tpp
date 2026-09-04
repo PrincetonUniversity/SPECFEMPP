@@ -19,7 +19,7 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
   specfem::tag_dispatch::for_each(
       specfem::tag_dispatch::dimension_set<DimensionTag>{} *
           MEDIUM_SET(acoustic, elastic, elastic_psv, elastic_sh, poroelastic,
-                     elastic_psv_t),
+                     elastic_psv_t, elastic_spin),
       [&]<typename ElementTags>() {
         specfem::solver::impl::init_medium_mass<
             NGLL, specfem::tags::expand<ElementTags, forward>>(

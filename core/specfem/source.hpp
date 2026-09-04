@@ -109,4 +109,5 @@ template <specfem::element::dimension_tag DimensionTag> class external;
 #include "source/dim3/source.tpp"
 #include "source/dim3/tensor_source/moment_tensor_source.hpp"
 #include "source/dim3/vector_source/adjoint_source.hpp"
+#include "source/dim3/vector_source/cosserat_force_source.hpp"
 #include "source/dim3/vector_source/force_source.hpp"

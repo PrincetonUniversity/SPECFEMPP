@@ -183,11 +183,8 @@ float specfem::periodic_tasks::plot_wavefield<
         const specfem::enums::display_component &component, const int ispec,
         const int iz, const int iy, const int ix) {
 
-  if (wavefield_type == specfem::enums::wavefield::pressure ||
-      wavefield_type == specfem::enums::wavefield::rotation ||
-      wavefield_type == specfem::enums::wavefield::intrinsic_rotation ||
-      wavefield_type == specfem::enums::wavefield::curl) {
-    return std::abs(wavefield_data(ispec, iz, iy, ix, 0));
+  if (wavefield_type == specfem::enums::wavefield::pressure) {
+    return wavefield_data(ispec, iz, iy, ix, 0);
   }
 
   // Computing the component or magnitude for vector fields
@@ -768,7 +765,6 @@ void specfem::periodic_tasks::plot_wavefield<
 
   SPECFEM_H5_CHECK(H5Dclose(ds));
 }
-#endif // NO_HDF5
 
 #ifndef NO_HDF5
 void specfem::periodic_tasks::plot_wavefield<
@@ -841,7 +837,6 @@ void specfem::periodic_tasks::plot_wavefield<
 }
 #endif // NO_HDF5
 
-#ifndef NO_HDF5
 hid_t specfem::periodic_tasks::plot_wavefield<
     specfem::element::dimension_tag::dim3>::create_file_access_plist() const {
   hid_t fapl = SPECFEM_H5_CHECK_ID(H5Pcreate(H5P_FILE_ACCESS));
