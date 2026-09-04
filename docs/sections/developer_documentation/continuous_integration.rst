@@ -192,3 +192,79 @@ The resulting test combinations are:
    * - 12.8
      - OpenMP
      - Off
+
+Trilinos implicit solvers
++++++++++++++++++++++++++
+
+This is defined in :repo-file:`.jenkins/trilinos_compiler_checks.gvy`. It is the only
+job that builds with ``SPECFEM_ENABLE_TRILINOS=ON``, and therefore the only one that
+actually compiles and runs the implicit Newmark solver and the
+:doc:`linear system </sections/api/specfem/linear_system/index>` assemblers. In every
+other job that code is behind ``#ifdef SPECFEM_ENABLE_TRILINOS`` and its tests
+``GTEST_SKIP()``.
+
+The build configuration is almost entirely pinned by the Trilinos install it links
+against, so this job has only one real axis:
+
+- Trilinos module: ``trilinos/17.1.1-cpu-native-nompi``
+- Compiler: GNU 14.2.1 (``gcc-toolset/14``) -- must match the compiler Trilinos was
+  built with
+- Host space: Serial only -- Kokkos comes from the Trilinos module via
+  ``find_package``, so it cannot be rebuilt with a different backend here
+- Precision: single -- the cluster Trilinos is built ``Tpetra_INST_FLOAT`` only
+- SIMD options: On, Off
+
+The resulting test combinations are:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 20 20 15
+
+   * - Trilinos Version
+     - Compilation Mode
+     - Precision
+     - SIMD Option
+   * - 17.1.1 (CPU, no MPI)
+     - Serial
+     - Single
+     - On
+   * - 17.1.1 (CPU, no MPI)
+     - Serial
+     - Single
+     - Off
+
+Selecting the Trilinos tests
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Tests that require a Trilinos build carry the ``TRILINOS`` `CTest label
+<https://cmake.org/cmake/help/latest/prop_test/LABELS.html>`_, set through
+``specfem_add_test(... LABELS TRILINOS)``. The job selects them with:
+
+.. code-block:: bash
+
+    ctest -L TRILINOS --output-on-failure --no-tests=error
+
+Locally, the inverse is useful: the implicit-solver integration test runs full explicit
+reference simulations and takes several minutes, so
+
+.. code-block:: bash
+
+    ctest -LE TRILINOS
+
+skips everything that needs Trilinos, including that test.
+
+Note that ``element_stiffness_tests`` is deliberately **not** labelled. The element
+stiffness kernel is Trilinos-free by design, so it already runs for real in every other
+job and should not be excluded by ``-LE TRILINOS``.
+
+.. note::
+
+    ``specfem_add_test`` accepts only a **single** label in practice.
+    ``gtest_discover_tests()`` flattens a list-valued test property when it generates its
+    discovery file, so ``LABELS a b`` reaches ``set_tests_properties()`` as two key/value
+    pairs: ``LABELS`` binds to ``a`` and ``b`` is treated as a property name of its own.
+    The second label is dropped with no CMake or CTest diagnostic.
+
+Results are published to Jenkins as JUnit XML (``ctest --output-junit``) and archived as
+build artifacts, so individual test failures are visible in the Jenkins UI rather than
+only in the console log.
