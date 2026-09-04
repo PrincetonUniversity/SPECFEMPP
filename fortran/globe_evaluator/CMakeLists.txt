@@ -8,7 +8,7 @@ project(GLOBE_EVALUATOR LANGUAGES Fortran C)
 set(CMAKE_Fortran_STANDARD 2003)
 set(CMAKE_Fortran_STANDARD_REQUIRED ON)
 
-if(NOT TARGET MPI::MPI_Fortran)
+if(SPECFEM_ENABLE_MPI AND NOT TARGET MPI::MPI_Fortran)
   find_package(MPI REQUIRED COMPONENTS Fortran)
 endif()
 
@@ -45,8 +45,11 @@ target_link_libraries(globe_evaluator PUBLIC
   # needs them too.
   meshfem3D_globe::adios_methods_stubs
   meshfem3D_globe::asdf_methods_stubs
-  MPI::MPI_Fortran
 )
+
+if(SPECFEM_ENABLE_MPI)
+  target_link_libraries(globe_evaluator PUBLIC MPI::MPI_Fortran)
+endif()
 
 if(SPECFEM_INSTALL)
   install(TARGETS globe_evaluator

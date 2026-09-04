@@ -2,7 +2,7 @@
 
 **Files:** `core/specfem/mesh/`
 
-The `mesh<DimensionTag>` struct stores everything read from the **external mesher database** (a Fortran binary file produced by MESHFEM2D/MESHFEM3D). It is a passive data container — no computation happens here. The goal is to have an interface that is as close as possible to the original Fortran data structures, to have a clear representation of the mesh as it is written by the mesher. This helps us to isolate the Fortran binary reading logic in `io::read_2d_mesh` / `io::read_3d_mesh` and keep the rest of the codebase independent of the Fortran data layout.
+The `mesh<ModelTag>` struct stores everything read from the **external mesher database** (a Fortran binary file produced by MESHFEM2D/MESHFEM3D or SPECFEM3D_GLOBE). It is a passive data container — no computation happens here. The goal is to have an interface that is as close as possible to the original Fortran data structures, to have a clear representation of the mesh as it is written by the mesher. This helps us to isolate the Fortran binary reading logic in `io::read_2d_mesh`, `io::read_3d_mesh`, and `io::read_globe_mesh` and keep the rest of the codebase independent of the Fortran data layout.
 
 ## Sub-structs
 
@@ -21,7 +21,7 @@ The `mesh<DimensionTag>` struct stores everything read from the **external meshe
 | `mesh::adjacency` | Element adjacency graph |
 | `mesh::mpi` | Shared DOFs between MPI ranks |
 
-The mesh is **read once** from disk by `io::read_2d_mesh` / `io::read_3d_mesh` (Fortran binary format) and then consumed by the [`assembly`](assembly.md) constructor.
+The mesh is **read once** from disk by `io::read_2d_mesh`, `io::read_3d_mesh`, or `io::read_globe_mesh` (Fortran binary format) and then consumed by the [`assembly`](assembly.md) constructor.
 
 ---
 

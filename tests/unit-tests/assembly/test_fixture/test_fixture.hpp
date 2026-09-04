@@ -366,11 +366,16 @@ template <specfem::element::dimension_tag DimensionType>
 class Assembly : public ::testing::Test {
 
 protected:
+  static constexpr auto model_tag =
+      DimensionType == specfem::element::dimension_tag::dim2
+          ? specfem::simulation::model::Cartesian2D
+          : specfem::simulation::model::Cartesian3D;
+  using mesh_type = specfem::mesh::mesh<model_tag>;
+
   class Iterator {
   public:
     Iterator(
-        test_configuration::Test<DimensionType> *p_Test,
-        specfem::mesh::mesh<DimensionType> *p_mesh,
+        test_configuration::Test<DimensionType> *p_Test, mesh_type *p_mesh,
         std::vector<std::shared_ptr<specfem::sources::source<DimensionType>>>
             *p_sources,
         std::vector<
@@ -383,8 +388,7 @@ protected:
           p_assembly(p_assembly) {}
 
     std::tuple<
-        test_configuration::Test<DimensionType>,
-        specfem::mesh::mesh<DimensionType>,
+        test_configuration::Test<DimensionType>, mesh_type,
         std::vector<std::shared_ptr<specfem::sources::source<DimensionType>>>,
         std::vector<
             std::shared_ptr<specfem::receivers::receiver<DimensionType>>>,
@@ -414,7 +418,7 @@ protected:
 
   private:
     test_configuration::Test<DimensionType> *p_Test;
-    specfem::mesh::mesh<DimensionType> *p_mesh;
+    mesh_type *p_mesh;
     std::vector<std::shared_ptr<specfem::sources::source<DimensionType>>>
         *p_sources;
     std::vector<std::shared_ptr<specfem::receivers::receiver<DimensionType>>>
@@ -437,7 +441,7 @@ protected:
   }
 
   std::vector<test_configuration::Test<DimensionType>> Tests;
-  std::vector<specfem::mesh::mesh<DimensionType>> Meshes;
+  std::vector<mesh_type> Meshes;
   std::vector<
       std::vector<std::shared_ptr<specfem::sources::source<DimensionType>>>>
       Sources;

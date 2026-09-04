@@ -240,19 +240,6 @@ set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
 
 # ========== MESHFEM3D_GLOBE =============
 if(SPECFEM_BUILD_MESHFEM3D_GLOBE)
-  if(NOT SPECFEM_ENABLE_MPI)
-    message(FATAL_ERROR
-      "SPECFEM_BUILD_MESHFEM3D_GLOBE requires SPECFEM_ENABLE_MPI=ON because "
-      "SPECFEM3D_GLOBE meshfem sources require Fortran MPI.")
-  endif()
-  if(NOT TARGET MPI::MPI_Fortran)
-    find_package(MPI REQUIRED COMPONENTS Fortran)
-  endif()
-  if(NOT TARGET MPI::MPI_Fortran)
-    message(FATAL_ERROR
-      "SPECFEM_BUILD_MESHFEM3D_GLOBE requires MPI::MPI_Fortran, but Fortran MPI "
-      "was not found.")
-  endif()
   message(STATUS "Configuring xmeshfem3D_globe")
   set(_saved_CMAKE_MESSAGE_LOG_LEVEL ${CMAKE_MESSAGE_LOG_LEVEL})
   set(CMAKE_MESSAGE_LOG_LEVEL ${SUBDIR_LOG_LEVEL})

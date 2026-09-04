@@ -33,7 +33,7 @@ struct AssemblyMPI3D {
 
   AssemblyMPI3D() = default;
 
-  AssemblyMPI3D(const specfem::mesh::mesh<dimension> &mesh);
+  AssemblyMPI3D(const specfem::mesh::cartesian3d_mesh &mesh);
 };
 } // namespace specfem::test_configuration
 
@@ -43,7 +43,7 @@ protected:
   constexpr static specfem::element::dimension_tag dimension =
       specfem::element::dimension_tag::dim3;
   specfem::test_configuration::AssemblyMPI3D assembly;
-  specfem::mesh::mesh<dimension> mesh;
+  specfem::mesh::cartesian3d_mesh mesh;
 
   AssemblyMPI3DTest() = default;
 

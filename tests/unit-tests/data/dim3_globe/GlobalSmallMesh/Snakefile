@@ -5,7 +5,7 @@ envvars:
     "SPECFEMPP_BINDIR",
 
 
-nproc = 6
+nproc = 1
 mesher = os.path.join(os.environ["SPECFEMPP_BINDIR"], "xmeshfem3D_globe")
 databases = expand(
     "DATABASES_MPI/proc{rank:06d}_specfempp_database.bin", rank=range(nproc)
@@ -39,17 +39,12 @@ rule generate_database:
     output:
         databases=databases,
         log="OUTPUT_FILES/output_mesher.txt",
-    resources:
-        mpi="mpirun",
-        tasks=nproc,
-        cpus_per_task=1,
-        runtime=1,
     shell:
         """
         mkdir -p DATABASES_MPI OUTPUT_FILES
         rm -rf DATA
         cp -R provenance/DATA DATA
-        {resources.mpi} -np {resources.tasks} {mesher} > {output.log} 2>&1
+        {mesher} > {output.log} 2>&1
         rm -rf DATA
         """
 

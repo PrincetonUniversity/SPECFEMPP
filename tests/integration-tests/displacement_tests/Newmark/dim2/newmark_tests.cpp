@@ -114,10 +114,9 @@ TEST_P(Newmark, 2D) {
   const auto quadratures = setup.instantiate_quadrature();
 
   // Read mesh generated MESHFEM
-  specfem::mesh::mesh<specfem::element::dimension_tag::dim2> mesh =
-      specfem::io::read_2d_mesh(database_file, elastic_wave,
-                                electromagnetic_wave,
-                                setup.get_attenuation_setup());
+  specfem::mesh::cartesian2d_mesh mesh = specfem::io::read_2d_mesh(
+      database_file, elastic_wave, electromagnetic_wave,
+      setup.get_attenuation_setup());
   const specfem::simulation::type simulation_type =
       setup.get_simulation_type(mesh.materials.has_attenuation());
   const type_real dt = setup.get_dt();

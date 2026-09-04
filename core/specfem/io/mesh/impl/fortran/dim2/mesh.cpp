@@ -30,7 +30,7 @@
 #include <tuple>
 #include <vector>
 
-specfem::mesh::mesh<specfem::element::dimension_tag::dim2>
+specfem::mesh::mesh<specfem::simulation::model::Cartesian2D>
 specfem::io::read_2d_mesh(
     const std::string &filename,
     const specfem::enums::elastic_wave elastic_wave,
@@ -42,7 +42,7 @@ specfem::io::read_2d_mesh(
   const auto &band = attenuation_setup.band;
 
   // Declaring empty mesh objects
-  specfem::mesh::mesh<specfem::element::dimension_tag::dim2> mesh;
+  specfem::mesh::mesh<specfem::simulation::model::Cartesian2D> mesh;
 
   // Open the database file
   std::ifstream stream;
@@ -149,7 +149,7 @@ specfem::io::read_2d_mesh(
     throw;
   }
 
-  std::set<std::pair<int, int> > coupled_interfaces;
+  std::set<std::pair<int, int>> coupled_interfaces;
   try {
     for (const auto &num_interfaces :
          { mesh.parameters.num_fluid_solid_edges,

@@ -18,6 +18,7 @@ target_link_libraries(
         specfem::mesh
         specfem::mpi
         specfem::program_abort
+        specfem::globe_model
         source_class
         jacobian
         point
@@ -39,11 +40,6 @@ target_compile_definitions(
     PUBLIC
     $<$<NOT:$<BOOL:${SPECFEM_ENABLE_VTK}>>:-DNO_VTK>
 )
-
-if(SPECFEM_BUILD_MESHFEM3D_GLOBE)
-    target_compile_definitions(assembly PRIVATE SPECFEM_HAS_GLOBE_MODEL)
-    target_link_libraries(assembly PRIVATE specfem::globe_model)
-endif()
 
 if (SPECFEM_ENABLE_VTK)
     # check_jacobian renders PNGs; assembly links into test binaries without

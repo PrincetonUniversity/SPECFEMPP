@@ -1,6 +1,6 @@
 # GlobalSmallMesh fixture
 
-Six-partition MPI test fixture for SPECFEM3D_GLOBE mesh-reader coverage. The
+Single-partition serial fixture for SPECFEM3D_GLOBE mesh-reader coverage. The
 fixture is generated with `xmeshfem3D_globe` and read by SPECFEM++'s production
 globe-mesh reader.
 
@@ -8,9 +8,9 @@ globe-mesh reader.
 
 This is intentionally mesher-only:
 
-- `NCHUNKS = 6`
+- `NCHUNKS = 1`
 - `NEX_XI = NEX_ETA = 32`
-- `NPROC_XI = NPROC_ETA = 1` so the run uses 6 MPI ranks, one per chunk
+- `NPROC_XI = NPROC_ETA = 1` so the run uses one process without MPI
 - `MODEL = 1D_isotropic_prem`
 - ellipticity is enabled to exercise reference-anchor output
 - surface topography is disabled because its external ETOPO dataset is not part
@@ -23,8 +23,6 @@ fixture is:
 
 ```text
 DATABASES_MPI/proc000000_specfempp_database.bin
-...
-DATABASES_MPI/proc000005_specfempp_database.bin
 ```
 
 The generation inputs are kept under `provenance/DATA/`.
