@@ -128,11 +128,14 @@ specfem::globe_model::Evaluator::Evaluator(
   // model the mesher never used.
   config.validate();
 
+#ifdef SPECFEM_ENABLE_MPI
   // The catalog broadcasts through a Fortran communicator handle, so the C
-  // handle has to be translated. specfem::MPI::communicator() is a real
-  // MPI_Comm here: the globe path requires SPECFEM_ENABLE_MPI.
+  // handle has to be translated.
   const int comm_f =
       static_cast<int>(MPI_Comm_c2f(specfem::MPI::communicator()));
+#else
+  constexpr int comm_f = 0;
+#endif
 
   const int status = globe_evaluator_init(
       config.model_name.data(), static_cast<int>(config.model_name.size()),

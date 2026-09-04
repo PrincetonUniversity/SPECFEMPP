@@ -35,6 +35,16 @@ specfem_add_test(io_framework_tests
               $<$<NOT:$<BOOL:${SPECFEM_ENABLE_ADIOS2}>>:NO_ADIOS2>
 )
 
+specfem_add_test(io_mesh_dim3_globe_tests
+  LABELS unit io mesh globe
+  SOURCES   io/mesh/dim3_globe/read_mesh.cpp
+            io/mesh/dim3_globe/runner.cpp
+  LIBRARIES specfem::io
+            specfem::mesh
+            specfem_environment
+            -lpthread -lm
+)
+
 # Asserts on MPI-less abort behaviour, so it is meaningless in an MPI build.
 if(NOT SPECFEM_ENABLE_MPI)
   specfem_add_test(abort_tests
