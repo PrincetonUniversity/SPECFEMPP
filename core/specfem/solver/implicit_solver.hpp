@@ -4,7 +4,7 @@
 
 #include "solver.hpp"
 #include "specfem/enums.hpp"
-#include "specfem/linear_system/dof_map.hpp"
+#include "specfem/linear_system/sparse_matrix_view/fe_assembly.hpp"
 #include "specfem/periodic_tasks.hpp"
 #include "specfem/timescheme.hpp"
 #include <BelosLinearProblem.hpp>
@@ -141,6 +141,13 @@ public:
   constexpr static auto medium_tag = Tags::medium_tag;
 
   using AssemblyType = specfem::assembly::assembly<dimension_tag>;
+
+  /// Dof numbering and connectivity of the medium
+  using MappingType =
+      specfem::linear_system::FEMapping<dimension_tag, medium_tag>;
+
+  /// Maps and sparsity graphs built over @ref MappingType
+  using FEAssemblyType = specfem::linear_system::FEAssembly<MappingType>;
   using multivector_type =
       Tpetra::MultiVector<specfem::linear_system::scalar_type>;
   using operator_type = Tpetra::Operator<specfem::linear_system::scalar_type>;
@@ -183,25 +190,21 @@ public:
    */
   void run() override;
 
-  /// Dof numbering shared by all assembled operators
-  const specfem::linear_system::DofMap &dof_map() const { return *dof_map_; }
+  /// Dof maps and sparsity graphs shared by every assembled operator
+  const FEAssemblyType &fe() const { return *fe_; }
   /// Assembled stiffness matrix \f$ K \f$
-  Teuchos::RCP<const specfem::linear_system::crs_matrix_type>
-  stiffness() const {
-    return stiffness_;
+  const specfem::linear_system::crs_matrix_type &stiffness() const {
+    return *stiffness_;
   }
   /// Assembled Stacey damping matrix \f$ C \f$ (empty without Stacey)
-  Teuchos::RCP<const specfem::linear_system::crs_matrix_type> damping() const {
-    return damping_;
+  const specfem::linear_system::crs_matrix_type &damping() const {
+    return *damping_;
   }
   /// Lumped mass vector \f$ M \f$
-  Teuchos::RCP<const specfem::linear_system::vector_type> mass() const {
-    return mass_;
-  }
+  const specfem::linear_system::vector_type &mass() const { return *mass_; }
   /// Implicit Newmark operator \f$ A \f$ for the configured time step
-  Teuchos::RCP<const specfem::linear_system::crs_matrix_type>
-  system_operator() const {
-    return system_operator_;
+  const specfem::linear_system::crs_matrix_type &system_operator() const {
+    return *system_operator_;
   }
   /// Steps actually executed by the last run() (equals the step count unless
   /// the steady-state criterion stopped the run early)
@@ -242,7 +245,8 @@ private:
   AssemblyType assembly_;       ///< Assembly (probe scratch + output mirror)
   ImplicitSolverConfig config_; ///< Solver configuration
 
-  std::unique_ptr<specfem::linear_system::DofMap> dof_map_; ///< Dof numbering
+  /// Dof maps and sparsity graphs, built once and shared by the assemblers
+  std::unique_ptr<FEAssemblyType> fe_;
   Teuchos::RCP<specfem::linear_system::crs_matrix_type> stiffness_;       ///< K
   Teuchos::RCP<specfem::linear_system::crs_matrix_type> damping_;         ///< C
   Teuchos::RCP<specfem::linear_system::vector_type> mass_;                ///< M

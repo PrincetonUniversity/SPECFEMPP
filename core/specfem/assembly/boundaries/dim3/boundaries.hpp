@@ -73,6 +73,81 @@ public:
       const specfem::assembly::mesh<dimension_tag> &mesh_assembly,
       const specfem::assembly::jacobian_matrix<dimension_tag> &jacobian_matrix);
   ///@}
+
+  /**
+   * @name Boundary tag accessors
+   */
+  ///@{
+  /**
+   * @brief Boundary tag at a quadrature point of a compute element (device)
+   *
+   * Resolves the boundary condition that applies at a single GLL point. An
+   * element carrying both an acoustic free surface and a Stacey boundary at
+   * this point yields
+   * specfem::element::boundary_tag::composite_stacey_dirichlet.
+   *
+   * @param ispec Compute-domain element index
+   * @param iz GLL point index in z direction
+   * @param iy GLL point index in y direction
+   * @param ix GLL point index in x direction
+   * @return Boundary tag at the quadrature point,
+   *         specfem::element::boundary_tag::none if unconstrained
+   */
+  KOKKOS_INLINE_FUNCTION specfem::element::boundary_tag
+  get_boundary_tag_on_device(const int ispec, const int iz, const int iy,
+                             const int ix) const {
+    specfem::element::boundary_tag_container container;
+
+    const int iacoustic_free_surface =
+        acoustic_free_surface_index_mapping(ispec);
+    if (iacoustic_free_surface >= 0) {
+      container += acoustic_free_surface.get_boundary_tag_on_device(
+          iacoustic_free_surface, iz, iy, ix);
+    }
+
+    const int istacey = stacey_index_mapping(ispec);
+    if (istacey >= 0) {
+      container += stacey.get_boundary_tag_on_device(istacey, iz, iy, ix);
+    }
+
+    return container.get_tag();
+  }
+
+  /**
+   * @brief Boundary tag at a quadrature point of a compute element (host)
+   *
+   * Resolves the boundary condition that applies at a single GLL point. An
+   * element carrying both an acoustic free surface and a Stacey boundary at
+   * this point yields
+   * specfem::element::boundary_tag::composite_stacey_dirichlet.
+   *
+   * @param ispec Compute-domain element index
+   * @param iz GLL point index in z direction
+   * @param iy GLL point index in y direction
+   * @param ix GLL point index in x direction
+   * @return Boundary tag at the quadrature point,
+   *         specfem::element::boundary_tag::none if unconstrained
+   */
+  inline specfem::element::boundary_tag
+  get_boundary_tag_on_host(const int ispec, const int iz, const int iy,
+                           const int ix) const {
+    specfem::element::boundary_tag_container container;
+
+    const int iacoustic_free_surface =
+        h_acoustic_free_surface_index_mapping(ispec);
+    if (iacoustic_free_surface >= 0) {
+      container += acoustic_free_surface.get_boundary_tag_on_host(
+          iacoustic_free_surface, iz, iy, ix);
+    }
+
+    const int istacey = h_stacey_index_mapping(ispec);
+    if (istacey >= 0) {
+      container += stacey.get_boundary_tag_on_host(istacey, iz, iy, ix);
+    }
+
+    return container.get_tag();
+  }
+  ///@}
 };
 
 /**

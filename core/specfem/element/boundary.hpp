@@ -22,7 +22,7 @@ public:
    *
    * @return std::vector<boundary_tag> vector of boundary tags
    */
-  inline boundary_tag get_tag() const { return tag; }
+  KOKKOS_INLINE_FUNCTION boundary_tag get_tag() const { return tag; }
 
   /**
    * @brief Construct a new boundary tag container object

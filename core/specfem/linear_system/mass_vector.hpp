@@ -4,6 +4,7 @@
 
 #include "specfem/enums.hpp"
 #include "specfem/linear_system/dof_map.hpp"
+#include "specfem/linear_system/sparse_matrix_view/fe_assembly.hpp"
 #include <Teuchos_RCP.hpp>
 
 namespace specfem {
@@ -41,6 +42,26 @@ template <typename Tags>
 Teuchos::RCP<vector_type>
 assemble_mass_vector(specfem::assembly::assembly<Tags::dimension_tag> &assembly,
                      const DofMap &dof_map);
+
+/**
+ * @brief Assemble the lumped mass vector over a caller-supplied
+ * @ref FEAssembly.
+ *
+ * Identical to the overload above, but takes its dof numbering and owned map
+ * from `fe` rather than from a @ref DofMap.
+ *
+ * @tparam Tags Compile-time tags (dimension, medium, property, attenuation);
+ *              dimension must be `dim3`
+ * @param assembly Assembled mesh, material properties, and fields; the
+ *        forward field's mass storage is used as scratch
+ * @param fe Dof maps of the medium
+ * @return Lumped mass vector on the owned map
+ */
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
+Teuchos::RCP<vector_type> assemble_mass_vector(
+    specfem::assembly::assembly<Tags::dimension_tag> &assembly,
+    const FEAssembly<FEMapping<Tags::dimension_tag, Tags::medium_tag>> &fe);
 
 } // namespace linear_system
 } // namespace specfem
