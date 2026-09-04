@@ -47,7 +47,7 @@ struct ModelConfig {
 
   /// @name Database record 4: the physics flags
   /// @{
-  /// All seven arrive in one record, so a partial read fails the Fortran
+  /// All six arrive in one record, so a partial read fails the Fortran
   /// record-length check rather than silently leaving these false.
   bool ellipticity = false;
   bool topography = false;

@@ -1,4 +1,5 @@
 #pragma once
+#include "specfem/element/dimension.hpp"
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -45,10 +46,28 @@ enum class field_type {
  */
 enum class model {
   Cartesian2D,
-  Cartesian3D
+  Cartesian3D,
+  Globe3D
   // Axisem2D,   // Not yet implemented - axisymmetric 2D
-  // Globe3D     // Not yet implemented - global 3D spherical
 };
+
+template <specfem::simulation::model ModelTag> struct model_traits;
+
+template <> struct model_traits<specfem::simulation::model::Cartesian2D> {
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim2;
+};
+
+template <> struct model_traits<specfem::simulation::model::Cartesian3D> {
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
+};
+
+template <> struct model_traits<specfem::simulation::model::Globe3D> {
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
+};
+
+template <specfem::simulation::model ModelTag>
+constexpr auto dimension_for_model =
+    specfem::simulation::model_traits<ModelTag>::dimension_tag;
 
 /**
  * @brief Convert string to simulation model
@@ -65,7 +84,9 @@ inline model from_string(const std::string &str) {
         { "cartesian2d", specfem::simulation::model::Cartesian2D },
         { "3d", specfem::simulation::model::Cartesian3D },
         { "dim3", specfem::simulation::model::Cartesian3D },
-        { "cartesian3d", specfem::simulation::model::Cartesian3D }
+        { "cartesian3d", specfem::simulation::model::Cartesian3D },
+        { "globe3d", specfem::simulation::model::Globe3D },
+        { "globe", specfem::simulation::model::Globe3D }
         // { "axisem2d", specfem::simulation::model::Axisem2D },  // Not yet
         // implemented { "globe3d", specfem::simulation::model::Globe3D }     //
         // Not yet implemented
@@ -74,7 +95,8 @@ inline model from_string(const std::string &str) {
   auto it = models.find(str);
   if (it == models.end()) {
     throw std::invalid_argument("Invalid simulation model: " + str +
-                                ". Use '2d', 'dim2', '3d', or 'dim3'.");
+                                ". Use '2d', 'dim2', '3d', 'dim3', or "
+                                "'globe3d'.");
   }
   return it->second;
 }
@@ -91,6 +113,8 @@ inline std::string to_string(specfem::simulation::model mdl) {
     return "Cartesian 2D";
   case specfem::simulation::model::Cartesian3D:
     return "Cartesian 3D";
+  case specfem::simulation::model::Globe3D:
+    return "Global 3D";
   // case specfem::simulation::model::Axisem2D:    // Not yet implemented
   //   return "Axisymmetric 2D";
   // case specfem::simulation::model::Globe3D:     // Not yet implemented

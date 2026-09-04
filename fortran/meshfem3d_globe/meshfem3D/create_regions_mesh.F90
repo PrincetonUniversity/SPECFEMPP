@@ -101,7 +101,7 @@
     iMPIcut_xi,iMPIcut_eta, &
     ispec_is_tiso, &
     xelm_ref_store,yelm_ref_store,zelm_ref_store, &
-    rmin_store,rmax_store,elem_in_crust_store
+    rmin_store,rmax_store,elem_in_crust_store,elem_in_mantle_store
 
   ! absorb
   use regions_mesh_par2, only: iboun, nimin, nimax, njmin, njmax, nkmin_xi,nkmin_eta, &
@@ -539,7 +539,7 @@
     deallocate(xelm_ref_store,yelm_ref_store,zelm_ref_store)
   endif
   if (allocated(rmin_store)) then
-    deallocate(rmin_store,rmax_store,elem_in_crust_store)
+    deallocate(rmin_store,rmax_store,elem_in_crust_store,elem_in_mantle_store)
   endif
 
   deallocate(c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
@@ -651,12 +651,14 @@
   if (ipass == 2 .and. SPECFEMPP_DATABASE) then
     allocate(rmin_store(nspec), &
              rmax_store(nspec), &
-             elem_in_crust_store(nspec),stat=ier)
+             elem_in_crust_store(nspec), &
+             elem_in_mantle_store(nspec),stat=ier)
     if (ier /= 0) stop 'Error in allocate 7b'
 
     rmin_store(:) = 0.d0
     rmax_store(:) = 0.d0
     elem_in_crust_store(:) = .false.
+    elem_in_mantle_store(:) = .false.
 
     if (SPECFEMPP_HAS_REFERENCE_GEOMETRY()) then
       allocate(xelm_ref_store(NGNOD,nspec), &

@@ -12,7 +12,7 @@ namespace specfem::test_configuration {
 struct ActualMesh3D {
   constexpr static specfem::element::dimension_tag dimension =
       specfem::element::dimension_tag::dim3;
-  specfem::mesh::mesh<dimension> mesh;
+  specfem::mesh::cartesian3d_mesh mesh;
 
   ActualMesh3D() = default;
 

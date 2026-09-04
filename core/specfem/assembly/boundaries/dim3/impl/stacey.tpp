@@ -12,16 +12,17 @@
 #include "utilities.hpp"
 #include <Kokkos_Core.hpp>
 
-specfem::assembly::boundaries_impl::stacey<
-    specfem::element::dimension_tag::dim3>::
-    stacey(const int nspec, const int ngllz, const int nglly, const int ngllx,
-           const specfem::mesh::mesh<dimension_tag> &mesh,
-           const specfem::assembly::mesh<dimension_tag> &mesh_assembly,
-           const specfem::assembly::jacobian_matrix<dimension_tag>
-               &jacobian_matrix,
-           const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,
-           std::vector<specfem::element::boundary_tag_container>
-               &element_boundary_tags) {
+template <specfem::simulation::model ModelTag>
+specfem::assembly::boundaries_impl::
+    stacey<specfem::element::dimension_tag::dim3>::stacey(
+        const int nspec, const int ngllz, const int nglly, const int ngllx,
+        const specfem::mesh::mesh<ModelTag> &mesh,
+        const specfem::assembly::mesh<dimension_tag> &mesh_assembly,
+        const specfem::assembly::jacobian_matrix<dimension_tag>
+            &jacobian_matrix,
+        const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,
+        std::vector<specfem::element::boundary_tag_container>
+            &element_boundary_tags) {
 
   // Stacey boundary faces are all faces in the absorbing_boundary sub-struct
   // (X_MIN/X_MAX/Y_MIN/Y_MAX/Z_MIN directions).
@@ -51,7 +52,8 @@ specfem::assembly::boundaries_impl::stacey<
   }
 
   if (total_indices != total_stacey_elements) {
-    KOKKOS_ABORT_WITH_LOCATION("Error: Mismatch in total Stacey surface elements");
+    KOKKOS_ABORT_WITH_LOCATION(
+        "Error: Mismatch in total Stacey surface elements");
   }
 
   // Verify contiguous mapping
@@ -102,19 +104,19 @@ specfem::assembly::boundaries_impl::stacey<
                 specfem::element::boundary_tag::stacey;
 
             // Compute face normal and weight using Jacobian matrix
-            const std::array<type_real, 3> weights = { mesh_assembly.h_weights(iz),
-                                                       mesh_assembly.h_weights(iy),
-                                                       mesh_assembly.h_weights(ix) };
+            const std::array<type_real, 3> weights = {
+              mesh_assembly.h_weights(iz), mesh_assembly.h_weights(iy),
+              mesh_assembly.h_weights(ix)
+            };
             specfem::point::index<dimension_tag> point_index(ispec_compute, iz,
-                                                              iy, ix);
+                                                             iy, ix);
             specfem::point::jacobian_matrix<dimension_tag, true, false>
                 point_jacobian_matrix;
             specfem::assembly::load_on_host(point_index, jacobian_matrix,
                                             point_jacobian_matrix);
 
-            auto [fnormal, fweight] =
-                get_boundary_face_and_weight(face_type, weights,
-                                             point_jacobian_matrix);
+            auto [fnormal, fweight] = get_boundary_face_and_weight(
+                face_type, weights, point_jacobian_matrix);
 
             this->h_face_weight(local_index, iz, iy, ix) = fweight;
             this->h_face_normal(local_index, iz, iy, ix, 0) = fnormal[0];

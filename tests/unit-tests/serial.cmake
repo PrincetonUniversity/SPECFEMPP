@@ -232,6 +232,7 @@ specfem_add_test(mesh_dim3_tests
             mesh/dim3/boundaries.cpp
             mesh/dim3/adjacency_graph.cpp
             mesh/dim3/tags.cpp
+            mesh/dim3/globe_reader.cpp
             mesh/dim3/test.cpp
   LIBRARIES gtest_main
             specfem::mesh

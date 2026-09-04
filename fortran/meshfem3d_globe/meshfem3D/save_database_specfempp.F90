@@ -89,7 +89,7 @@
 !   15  region(nspec), medium_tag(nspec), property_tag(nspec), idoubling(nspec)
 !       (4 integer arrays)
 !   16  rmin(nspec), rmax(nspec) (2 dp arrays)
-!   17  elem_in_crust(nspec) (logical array)
+!   17  elem_in_crust(nspec), elem_in_mantle(nspec) (2 logical arrays)
 !   18  node_ids(NGNOD,nspec) (integer array)
 !
 !    -- BOUNDARY SURFACES: four blocks, in the order
@@ -150,7 +150,7 @@
   ! per-element context, dimensioned to the maximum database element count
   integer, dimension(:), allocatable :: db_region,db_medium_tag,db_property_tag,db_idoubling
   double precision, dimension(:), allocatable :: db_rmin,db_rmax
-  logical, dimension(:), allocatable :: db_elem_in_crust
+  logical, dimension(:), allocatable :: db_elem_in_crust,db_elem_in_mantle
 
   ! staged anchor coordinates, non-dimensional, laid out as (ispec-1)*NGNOD + ia.
   ! *_final is the deformed mesh; *_ref is spherical + Moho-stretched geometry.
@@ -229,7 +229,7 @@
 
   use regions_mesh_par2, only: ibelm_top,ibelm_bottom,ispec_is_tiso, &
     xelm_ref_store,yelm_ref_store,zelm_ref_store, &
-    rmin_store,rmax_store,elem_in_crust_store
+    rmin_store,rmax_store,elem_in_crust_store,elem_in_mantle_store
 
 
   implicit none
@@ -301,6 +301,7 @@
     db_rmin(ispec_db) = rmin_store(ispec)
     db_rmax(ispec_db) = rmax_store(ispec)
     db_elem_in_crust(ispec_db) = elem_in_crust_store(ispec)
+    db_elem_in_mantle(ispec_db) = elem_in_mantle_store(ispec)
 
     do ia = 1,NGNOD
       i = anchor_iax(ia)
@@ -385,7 +386,8 @@
            db_idoubling(nspec_total), &
            db_rmin(nspec_total), &
            db_rmax(nspec_total), &
-           db_elem_in_crust(nspec_total),stat=ier)
+           db_elem_in_crust(nspec_total), &
+           db_elem_in_mantle(nspec_total),stat=ier)
   if (ier /= 0) call exit_MPI(myrank,'Error allocating element arrays in save_database_specfempp')
 
   allocate(db_x(NGNOD*nspec_total), &
@@ -407,6 +409,7 @@
   db_rmin(:) = 0.d0
   db_rmax(:) = 0.d0
   db_elem_in_crust(:) = .false.
+  db_elem_in_mantle(:) = .false.
 
   db_x(:) = 0.d0; db_y(:) = 0.d0; db_z(:) = 0.d0
   if (allocated(db_xref)) then
@@ -789,7 +792,6 @@
   write(IOUT) MODEL
   write(IOUT) N_CODES,codes
   write(IOUT) N_FLAGS,flags
-
   ! the model parameters that get_model_parameters() cannot re-derive from MODEL, so
   ! SPECFEM++ has no way to obtain them other than from here. Written unconditionally
   ! (even with ATTENUATION off) to keep the record layout fixed.
@@ -809,7 +811,7 @@
   write(IOUT) db_region(1:nspec_total),db_medium_tag(1:nspec_total), &
               db_property_tag(1:nspec_total),db_idoubling(1:nspec_total)
   write(IOUT) db_rmin(1:nspec_total)*R_PLANET,db_rmax(1:nspec_total)*R_PLANET
-  write(IOUT) db_elem_in_crust(1:nspec_total)
+  write(IOUT) db_elem_in_crust(1:nspec_total),db_elem_in_mantle(1:nspec_total)
   write(IOUT) node_ids
 
   ! boundary surfaces
@@ -1046,7 +1048,7 @@
 
   if (allocated(db_region)) deallocate(db_region,db_medium_tag,db_property_tag,db_idoubling)
   if (allocated(db_rmin)) deallocate(db_rmin,db_rmax)
-  if (allocated(db_elem_in_crust)) deallocate(db_elem_in_crust)
+  if (allocated(db_elem_in_crust)) deallocate(db_elem_in_crust,db_elem_in_mantle)
   if (allocated(db_x)) deallocate(db_x,db_y,db_z)
   if (allocated(db_xref)) deallocate(db_xref,db_yref,db_zref)
 
