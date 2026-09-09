@@ -55,6 +55,66 @@ struct mpi_element_description {
   std::array<double, 12> coordinates{};
 };
 
+#ifdef SPECFEM_ENABLE_MPI
+inline constexpr int mpi_description_metadata_count = 4;
+inline constexpr int mpi_description_coordinate_count = 12;
+inline constexpr int max_mpi_descriptions =
+    std::numeric_limits<int>::max() / mpi_description_coordinate_count;
+
+struct PackedMpiDescriptions {
+  std::vector<int> metadata;
+  std::vector<double> coordinates;
+};
+
+PackedMpiDescriptions pack_mpi_descriptions(
+    const std::vector<mpi_element_description> &descriptions) {
+  if (descriptions.size() > static_cast<std::size_t>(max_mpi_descriptions)) {
+    throw std::runtime_error("Globe MPI interface description is too large");
+  }
+
+  PackedMpiDescriptions packed;
+  packed.metadata.resize(mpi_description_metadata_count * descriptions.size());
+  packed.coordinates.resize(mpi_description_coordinate_count *
+                            descriptions.size());
+  for (std::size_t i = 0; i < descriptions.size(); ++i) {
+    const auto &description = descriptions[i];
+    packed.metadata[mpi_description_metadata_count * i] =
+        description.local_index;
+    packed.metadata[mpi_description_metadata_count * i + 1] =
+        description.orientation;
+    packed.metadata[mpi_description_metadata_count * i + 2] =
+        description.nshared;
+    packed.metadata[mpi_description_metadata_count * i + 3] =
+        description.anchor;
+    std::copy(description.coordinates.begin(), description.coordinates.end(),
+              packed.coordinates.begin() +
+                  mpi_description_coordinate_count * i);
+  }
+  return packed;
+}
+
+std::vector<mpi_element_description>
+unpack_mpi_descriptions(const PackedMpiDescriptions &packed, const int count) {
+  std::vector<mpi_element_description> descriptions(count);
+  for (int i = 0; i < count; ++i) {
+    auto &description = descriptions[i];
+    const std::size_t index = static_cast<std::size_t>(i);
+    description.local_index =
+        packed.metadata[mpi_description_metadata_count * index];
+    description.orientation =
+        packed.metadata[mpi_description_metadata_count * index + 1];
+    description.nshared =
+        packed.metadata[mpi_description_metadata_count * index + 2];
+    description.anchor =
+        packed.metadata[mpi_description_metadata_count * index + 3];
+    std::copy_n(
+        packed.coordinates.begin() + mpi_description_coordinate_count * index,
+        mpi_description_coordinate_count, description.coordinates.begin());
+  }
+  return descriptions;
+}
+#endif
+
 std::vector<mpi_element_description> describe_mpi_interface(
     const MpiNodeInterface &interface,
     const specfem::mesh::control_nodes<specfem::element::dimension_tag::dim3>
@@ -131,12 +191,15 @@ void build_mpi_adjacency(specfem::mesh::globe3d_mesh &mesh,
   const int ninterfaces = static_cast<int>(interfaces.size());
   std::vector<std::vector<mpi_element_description>> local(ninterfaces);
   std::vector<std::vector<mpi_element_description>> remote(ninterfaces);
+  std::vector<PackedMpiDescriptions> send_buffers(ninterfaces);
+  std::vector<PackedMpiDescriptions> receive_buffers(ninterfaces);
   std::vector<int> send_counts(ninterfaces), receive_counts(ninterfaces);
   std::vector<MPI_Request> requests(2 * ninterfaces, MPI_REQUEST_NULL);
   const auto comm = specfem::MPI::communicator();
 
   for (int i = 0; i < ninterfaces; ++i) {
     local[i] = describe_mpi_interface(interfaces[i], mesh.control_nodes);
+    send_buffers[i] = pack_mpi_descriptions(local[i]);
     send_counts[i] = static_cast<int>(local[i].size());
     SPECFEM_MPI_SAFECALL(MPI_Irecv(&receive_counts[i], 1, MPI_INT,
                                    interfaces[i].neighbor_rank, 29001, comm,
@@ -148,28 +211,37 @@ void build_mpi_adjacency(specfem::mesh::globe3d_mesh &mesh,
   SPECFEM_MPI_SAFECALL(MPI_Waitall(static_cast<int>(requests.size()),
                                    requests.data(), MPI_STATUSES_IGNORE));
 
-  std::fill(requests.begin(), requests.end(), MPI_REQUEST_NULL);
+  requests.assign(4 * ninterfaces, MPI_REQUEST_NULL);
   for (int i = 0; i < ninterfaces; ++i) {
-    remote[i].resize(receive_counts[i]);
-    const std::size_t send_bytes =
-        local[i].size() * sizeof(mpi_element_description);
-    const std::size_t receive_bytes =
-        remote[i].size() * sizeof(mpi_element_description);
-    if (send_bytes > std::numeric_limits<int>::max() ||
-        receive_bytes > std::numeric_limits<int>::max()) {
+    if (receive_counts[i] < 0 || receive_counts[i] > max_mpi_descriptions) {
       throw std::runtime_error("Globe MPI interface description is too large");
     }
+    receive_buffers[i].metadata.resize(mpi_description_metadata_count *
+                                       receive_counts[i]);
+    receive_buffers[i].coordinates.resize(mpi_description_coordinate_count *
+                                          receive_counts[i]);
     SPECFEM_MPI_SAFECALL(
-        MPI_Irecv(remote[i].data(), static_cast<int>(receive_bytes), MPI_BYTE,
-                  interfaces[i].neighbor_rank, 29002, comm, &requests[2 * i]));
+        MPI_Irecv(receive_buffers[i].metadata.data(),
+                  mpi_description_metadata_count * receive_counts[i], MPI_INT,
+                  interfaces[i].neighbor_rank, 29002, comm, &requests[4 * i]));
+    SPECFEM_MPI_SAFECALL(MPI_Irecv(
+        receive_buffers[i].coordinates.data(),
+        mpi_description_coordinate_count * receive_counts[i], MPI_DOUBLE,
+        interfaces[i].neighbor_rank, 29003, comm, &requests[4 * i + 1]));
     SPECFEM_MPI_SAFECALL(MPI_Isend(
-        local[i].data(), static_cast<int>(send_bytes), MPI_BYTE,
-        interfaces[i].neighbor_rank, 29002, comm, &requests[2 * i + 1]));
+        send_buffers[i].metadata.data(),
+        mpi_description_metadata_count * send_counts[i], MPI_INT,
+        interfaces[i].neighbor_rank, 29002, comm, &requests[4 * i + 2]));
+    SPECFEM_MPI_SAFECALL(MPI_Isend(
+        send_buffers[i].coordinates.data(),
+        mpi_description_coordinate_count * send_counts[i], MPI_DOUBLE,
+        interfaces[i].neighbor_rank, 29003, comm, &requests[4 * i + 3]));
   }
   SPECFEM_MPI_SAFECALL(MPI_Waitall(static_cast<int>(requests.size()),
                                    requests.data(), MPI_STATUSES_IGNORE));
 
   for (int i = 0; i < ninterfaces; ++i) {
+    remote[i] = unpack_mpi_descriptions(receive_buffers[i], receive_counts[i]);
     std::vector<bool> matched(remote[i].size(), false);
     for (const auto &local_element : local[i]) {
       int match = -1;
