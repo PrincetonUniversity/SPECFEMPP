@@ -44,7 +44,9 @@ std::vector<int> read_counted_ints(std::ifstream &stream,
   int count = 0;
   stream.read(reinterpret_cast<char *>(&record_size), sizeof(record_size));
   stream.read(reinterpret_cast<char *>(&count), sizeof(count));
-  if (count < 0 || record_size != static_cast<int>((count + 1) * sizeof(int))) {
+  constexpr int max_count = 1'000'000;
+  if (count < 0 || count > max_count ||
+      record_size != static_cast<int>((count + 1) * sizeof(int))) {
     throw std::runtime_error("Invalid " + section +
                              " record in globe mesh database");
   }
