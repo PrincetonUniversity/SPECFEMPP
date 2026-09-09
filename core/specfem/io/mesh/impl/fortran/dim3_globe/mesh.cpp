@@ -97,7 +97,7 @@ specfem::mesh::globe3d_mesh specfem::io::read_globe_mesh(
   const auto material_tags = reader::read_material_tags(stream, mesh);
   reader::read_control_node_indices(stream, mesh, ngnod, nnode);
   reader::read_boundaries(stream, mesh);
-  reader::read_adjacency_graph(stream, mesh, nnode);
+  reader::read_adjacency_graph(stream, mesh);
   reader_impl::check_stream(stream, "end of file");
 
   const bool attenuation_enabled =

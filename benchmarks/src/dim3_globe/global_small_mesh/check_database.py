@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """Validate the thin SPECFEM++ mesh database written by xmeshfem3D_globe.
 
-There is no C++ reader for this format yet (issue #1995), so this script is the
-verification harness for the writer added in issue #2000. It parses the Fortran
-sequential-unformatted records and asserts the invariants the future reader will
-depend on.
+It parses the Fortran sequential-unformatted records and checks the invariants
+shared by the writer and the C++ reader.
 
 Usage:
     python3 check_database.py [DATABASES_MPI_DIR]
@@ -17,7 +15,7 @@ import sys
 
 NGNOD = 27
 MAGIC = "SPECFEMPP_GLOBE_DB"
-VERSION = 2
+VERSION = 3
 
 REGION_CRUST_MANTLE = 1
 REGION_OUTER_CORE = 2
@@ -138,7 +136,7 @@ def read_database(path):
     (n_flags,) = struct.unpack_from("<i", blob, 0)
     db["model_flags"] = unpack(blob, [("i", 1), ("l", n_flags)])[1]
 
-    # the parameters the catalog cannot re-derive from MODEL (format_version 2)
+    # the parameters the catalog cannot re-derive from MODEL (format_version >= 2)
     db["nchunks"], db["nex_xi"], db["nex_eta"] = unpack(reader.record(), [("i", 3)])[0]
     (
         db["min_attenuation_period"],
@@ -174,7 +172,9 @@ def read_database(path):
     db["rmin"] = radii[0:nspec]
     db["rmax"] = radii[nspec : 2 * nspec]
 
-    db["elem_in_crust"] = unpack(reader.record(), [("l", nspec)])[0]
+    element_flags = unpack(reader.record(), [("l", 2 * nspec)])[0]
+    db["elem_in_crust"] = element_flags[0:nspec]
+    db["elem_in_mantle"] = element_flags[nspec : 2 * nspec]
 
     # node_ids is written as a (NGNOD,nspec) Fortran array, so it arrives
     # element-major with the anchor index varying fastest
@@ -197,14 +197,11 @@ def read_database(path):
     db["adjncy"] = unpack(reader.record(), [("i", nb_adj)])[0]
     db["adj_type"] = unpack(reader.record(), [("i", nb_adj)])[0]
 
-    num_neighbors = unpack(reader.record(), [("i", 1)])[0]
-    db["neighbors"] = []
-    for _ in range(num_neighbors):
-        rank, count = unpack(reader.record(), [("i", 1), ("i", 1)])
-        nodes = unpack(reader.record(), [("i", count)])[0] if count > 0 else []
-        if count == 1:
-            nodes = [nodes] if not isinstance(nodes, list) else nodes
-        db["neighbors"].append({"rank": rank, "count": count, "nodes": nodes})
+    num_mpi_adjacencies = unpack(reader.record(), [("i", 1)])[0]
+    db["mpi_adjacencies"] = []
+    for _ in range(num_mpi_adjacencies):
+        values = unpack(reader.record(), [("i", 7)])[0]
+        db["mpi_adjacencies"].append(values)
 
     if not reader.at_eof():
         raise Failure(
@@ -383,6 +380,21 @@ def check_one(db, problems):
     if not db["oceans"] and db["ocean_ispec"]:
         bad("OCEANS is off but the ocean-load block is not empty")
 
+    mpi_adjacencies = db["mpi_adjacencies"]
+    if len({tuple(entry) for entry in mpi_adjacencies}) != len(mpi_adjacencies):
+        bad("duplicate resolved MPI adjacency rows")
+    for entry in mpi_adjacencies:
+        local_element, neighbor_rank, remote_element = entry[0:3]
+        local_entity, remote_entity, local_anchor, remote_anchor = entry[3:7]
+        if not 1 <= local_element <= nspec:
+            bad(f"MPI adjacency references local element {local_element}")
+        if neighbor_rank < 0 or remote_element < 1:
+            bad(f"invalid MPI neighbor fields {entry[1:3]}")
+        if not 1 <= local_entity <= 26 or not 1 <= remote_entity <= 26:
+            bad(f"invalid MPI entity fields {entry[3:5]}")
+        if not 19 <= local_anchor <= 26 or not 19 <= remote_anchor <= 26:
+            bad(f"invalid MPI anchor fields {entry[5:7]}")
+
     return db
 
 
@@ -420,6 +432,10 @@ def check_cross_rank(dbs, problems):
         by_rank[rank] = db
 
     ranks = sorted(by_rank)
+    adjacency_sets = {
+        rank: {tuple(entry) for entry in db["mpi_adjacencies"]}
+        for rank, db in by_rank.items()
+    }
     if ranks:
         reference = by_rank[ranks[0]]
         for rank in ranks[1:]:
@@ -431,37 +447,24 @@ def check_cross_rank(dbs, problems):
                     )
 
     for rank, db in sorted(by_rank.items()):
-        for entry in db["neighbors"]:
-            other = entry["rank"]
+        for entry in db["mpi_adjacencies"]:
+            local_element, other, remote_element = entry[0:3]
             if other not in by_rank:
                 problems.append(f"rank {rank}: neighbor {other} has no database file")
                 continue
-            back = [e for e in by_rank[other]["neighbors"] if e["rank"] == rank]
-            if not back:
+            expected = [
+                remote_element,
+                rank,
+                local_element,
+                entry[4],
+                entry[3],
+                entry[6],
+                entry[5],
+            ]
+            if tuple(expected) not in adjacency_sets[other]:
                 problems.append(
-                    f"rank {rank} lists {other} but not the other way round"
+                    f"rank {rank} MPI adjacency {entry} has no reverse on rank {other}"
                 )
-                continue
-            if back[0]["count"] != entry["count"]:
-                problems.append(
-                    f"ranks {rank}<->{other} disagree on the shared node count:"
-                    f" {entry['count']} vs {back[0]['count']}"
-                )
-                continue
-            # same physical points, in the same order
-            here = by_rank[rank]
-            there = by_rank[other]
-            for k, (na, nb) in enumerate(zip(entry["nodes"], back[0]["nodes"])):
-                dx = here["x"][na - 1] - there["x"][nb - 1]
-                dy = here["y"][na - 1] - there["y"][nb - 1]
-                dz = here["z"][na - 1] - there["z"][nb - 1]
-                if (dx * dx + dy * dy + dz * dz) ** 0.5 > 1.0:
-                    problems.append(
-                        f"ranks {rank}<->{other} shared node {k} differs by"
-                        f" {(dx * dx + dy * dy + dz * dz) ** 0.5:.3f} m"
-                        " -- the anchor filter produced different orderings"
-                    )
-                    break
 
 
 def main():
@@ -507,7 +510,7 @@ def main():
             f"{os.path.basename(path)}: {db['nspec']} elements, {db['nnode']} nodes,"
             f" {db['nb_adj_edges']} adjacency edges,"
             f" {len(db['free_ispec'])}/{len(db['cmb_ispec'])}/{len(db['icb_ispec'])}"
-            f" free/CMB/ICB faces, {len(db['neighbors'])} MPI neighbors,"
+            f" free/CMB/ICB faces, {len(db['mpi_adjacencies'])} MPI adjacencies,"
             f" {db['nrecords']} records"
         )
 

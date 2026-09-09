@@ -59,7 +59,8 @@ void write_surface(std::ofstream &stream, const std::vector<int> &elements,
 }
 
 std::filesystem::path write_database(const bool attenuation = false,
-                                     const double source_frequency = 0.0) {
+                                     const double source_frequency = 0.0,
+                                     const bool include_mpi = false) {
   const auto suffix =
       std::chrono::steady_clock::now().time_since_epoch().count();
   const auto path =
@@ -69,7 +70,7 @@ std::filesystem::path write_database(const bool attenuation = false,
 
   Record header;
   header.append_fixed("SPECFEMPP_GLOBE_DB", 32);
-  header.append(2);
+  header.append(3);
   header.write(stream);
 
   write_values(stream, 1, 6371000.0, 5514.3);
@@ -115,7 +116,10 @@ std::filesystem::path write_database(const bool attenuation = false,
   write_values(stream, std::vector<int>{ 1, 1 });
   write_values(stream, std::vector<int>{});
   write_values(stream, std::vector<int>{});
-  write_values(stream, 0);
+  write_values(stream, include_mpi ? 1 : 0);
+  if (include_mpi) {
+    write_values(stream, 1, 1, 1, 1, 3, 19, 23);
+  }
   stream.close();
   return path;
 }
@@ -151,4 +155,25 @@ TEST(GlobeMeshReader, RejectsAnInconsistentAttenuationSourceFrequency) {
                                             specfem::attenuation::Setup{}),
                std::runtime_error);
   std::filesystem::remove(path);
+}
+
+TEST(GlobeMeshReader, ReadsResolvedMpiAdjacency) {
+  const auto path = globe_reader_test_impl::write_database(false, 0.0, true);
+  const auto mesh = specfem::io::read_globe_mesh(path.string(),
+                                                 specfem::attenuation::Setup{});
+  std::filesystem::remove(path);
+
+  const auto &connections = mesh.adjacency_graph.mpi_connections();
+  ASSERT_EQ(connections.size(), 1);
+  EXPECT_EQ(connections[0].orientation,
+            specfem::mesh_entity::dim3::type::bottom);
+  EXPECT_EQ(connections[0].neighbor_partition, 1);
+  EXPECT_EQ(connections[0].neighbor_orientation,
+            specfem::mesh_entity::dim3::type::top);
+  EXPECT_EQ(connections[0].local_index, 0);
+  EXPECT_EQ(connections[0].neighbor_local_index, 0);
+  EXPECT_EQ(connections[0].local_anchor_point,
+            specfem::mesh_entity::dim3::type::bottom_front_left);
+  EXPECT_EQ(connections[0].neighbor_anchor_point,
+            specfem::mesh_entity::dim3::type::top_front_left);
 }
