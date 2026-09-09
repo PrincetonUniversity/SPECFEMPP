@@ -24,9 +24,9 @@ template <> struct mesh<specfem::simulation::model::Cartesian2D> {
 
   constexpr static auto model_tag =
       specfem::simulation::model::Cartesian2D; ///< Simulation model
-  constexpr static auto dimension =
-      specfem::simulation::dimension_for_model<model_tag>; ///< Dimension
-  constexpr static auto dimension_tag = dimension;         ///< Dimension tag
+  constexpr static auto dimension = specfem::simulation::model_traits<
+      model_tag>::dimension_tag;                   ///< Dimension
+  constexpr static auto dimension_tag = dimension; ///< Dimension tag
 
   int npgeo; ///< Total number of spectral element control nodes
   int nspec; ///< Total number of spectral elements

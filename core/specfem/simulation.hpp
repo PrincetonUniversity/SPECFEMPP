@@ -65,10 +65,6 @@ template <> struct model_traits<specfem::simulation::model::Globe3D> {
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
 };
 
-template <specfem::simulation::model ModelTag>
-constexpr auto dimension_for_model =
-    specfem::simulation::model_traits<ModelTag>::dimension_tag;
-
 /**
  * @brief Convert string to simulation model
  *
