@@ -50,7 +50,6 @@ void check() {
   EXPECT_FALSE(globe.free_surface.elements.empty());
   EXPECT_FALSE(globe.cmb.elements.empty());
   EXPECT_FALSE(globe.icb.elements.empty());
-  EXPECT_TRUE(globe.mpi_interfaces.empty());
   EXPECT_TRUE(mesh.adjacency_graph.mpi_connections().empty());
 }
 

@@ -113,22 +113,6 @@ struct globe_boundary_surface {
 };
 
 /**
- * @brief Raw anchor-node interface to one neighboring MPI rank.
- *
- * SPECFEM3D_GLOBE stores MPI interfaces as the set of shared anchor nodes with
- * a neighbor rank. The reader reconstructs element-level MPI adjacency from
- * these node sets after the control-node connectivity has been read.
- */
-struct globe_mpi_interface {
-  /** @brief Neighbor MPI rank sharing this interface. */
-  int neighbor_rank = -1;
-
-  /** @brief Zero-based global anchor-node ids shared with @ref neighbor_rank.
-   */
-  std::vector<int> node_ids;
-};
-
-/**
  * @brief Globe-specific raw mesh payload retained for assembly setup.
  *
  * @c specfem::mesh::globe3d_mesh shares the standard 3-D raw mesh fields
@@ -195,9 +179,6 @@ struct globe_mesh_data {
 
   /** @brief Surface entries used for ocean-load metadata. */
   globe_boundary_surface ocean_load;
-
-  /** @brief Raw MPI node-interface descriptions from the globe database. */
-  std::vector<globe_mpi_interface> mpi_interfaces;
 };
 
 } // namespace specfem::mesh

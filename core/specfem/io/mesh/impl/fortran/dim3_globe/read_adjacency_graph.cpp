@@ -15,6 +15,12 @@
 
 namespace specfem::io::mesh::impl::fortran::dim3_globe_impl {
 
+/** @brief Raw anchor-node interface read from the globe database. */
+struct MpiNodeInterface {
+  int neighbor_rank = -1;
+  std::vector<int> node_ids;
+};
+
 int corner_entity(const int local_corner) {
   constexpr std::array<int, 8> entities = { 19, 20, 22, 21, 23, 24, 26, 25 };
   return entities.at(local_corner);
@@ -50,7 +56,7 @@ struct mpi_element_description {
 };
 
 std::vector<mpi_element_description> describe_mpi_interface(
-    const specfem::mesh::globe_mpi_interface &interface,
+    const MpiNodeInterface &interface,
     const specfem::mesh::control_nodes<specfem::element::dimension_tag::dim3>
         &nodes) {
   std::set<int> shared_nodes(interface.node_ids.begin(),
@@ -113,15 +119,15 @@ bool same_interface_entity(const mpi_element_description &left,
   return true;
 }
 
-void build_mpi_adjacency(specfem::mesh::globe3d_mesh &mesh) {
-  if (mesh.globe.mpi_interfaces.empty()) {
+void build_mpi_adjacency(specfem::mesh::globe3d_mesh &mesh,
+                         const std::vector<MpiNodeInterface> &interfaces) {
+  if (interfaces.empty()) {
     return;
   }
 #ifndef SPECFEM_ENABLE_MPI
   throw std::runtime_error(
       "A partitioned globe database requires an MPI-enabled build");
 #else
-  auto &interfaces = mesh.globe.mpi_interfaces;
   const int ninterfaces = static_cast<int>(interfaces.size());
   std::vector<std::vector<mpi_element_description>> local(ninterfaces);
   std::vector<std::vector<mpi_element_description>> remote(ninterfaces);
@@ -207,6 +213,7 @@ void build_mpi_adjacency(specfem::mesh::globe3d_mesh &mesh) {
 
 void specfem::io::mesh::impl::fortran::dim3_globe::read_adjacency_graph(
     std::ifstream &stream, specfem::mesh::globe3d_mesh &mesh, const int nnode) {
+  namespace reader_impl = specfem::io::mesh::impl::fortran::dim3_globe_impl;
   using Dimension = specfem::element::dimension_tag;
 
   int nadjacencies = 0;
@@ -245,8 +252,8 @@ void specfem::io::mesh::impl::fortran::dim3_globe::read_adjacency_graph(
 
   int nneighbors = 0;
   specfem::io::fortran_read_line(stream, &nneighbors);
-  mesh.globe.mpi_interfaces.resize(nneighbors);
-  for (auto &interface : mesh.globe.mpi_interfaces) {
+  std::vector<reader_impl::MpiNodeInterface> mpi_interfaces(nneighbors);
+  for (auto &interface : mpi_interfaces) {
     int nshared = 0;
     specfem::io::fortran_read_line(stream, &interface.neighbor_rank, &nshared);
     interface.node_ids.resize(nshared);
@@ -261,5 +268,5 @@ void specfem::io::mesh::impl::fortran::dim3_globe::read_adjacency_graph(
       }
     }
   }
-  specfem::io::mesh::impl::fortran::dim3_globe_impl::build_mpi_adjacency(mesh);
+  reader_impl::build_mpi_adjacency(mesh, mpi_interfaces);
 }
