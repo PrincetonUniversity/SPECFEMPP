@@ -1,16 +1,52 @@
 #include "specfem/assembly/assembly.hpp"
+#include "globe_properties.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/io.hpp"
 #include "specfem/macros/tag_dispatch.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/tag_dispatch/for_each.hpp"
-#ifdef SPECFEM_HAS_GLOBE_MODEL
-#include "globe_properties.hpp"
-#endif
 
+namespace specfem::assembly::dim3_impl {
+
+bool has_deferred_properties(
+    const specfem::mesh::cartesian3d_mesh &,
+    const std::shared_ptr<specfem::io::reader> &property_reader) {
+  return property_reader != nullptr;
+}
+
+bool has_deferred_properties(const specfem::mesh::globe3d_mesh &,
+                             const std::shared_ptr<specfem::io::reader> &) {
+  return true;
+}
+
+void read_deferred_properties(
+    const specfem::mesh::cartesian3d_mesh &,
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
+        &assembly,
+    const std::shared_ptr<specfem::io::reader> &property_reader) {
+  if (property_reader != nullptr) {
+    property_reader->read(assembly);
+  }
+}
+
+void read_deferred_properties(
+    const specfem::mesh::globe3d_mesh &mesh,
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
+        &assembly,
+    const std::shared_ptr<specfem::io::reader> &property_reader) {
+  if (property_reader != nullptr) {
+    property_reader->read(assembly);
+    return;
+  }
+  specfem::assembly::dim3_impl::read_globe_properties(mesh, assembly);
+}
+
+} // namespace specfem::assembly::dim3_impl
+
+template <specfem::simulation::model ModelTag>
 specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
-    const specfem::mesh::mesh<dimension_tag> &mesh,
+    const specfem::mesh::mesh<ModelTag> &mesh,
     const specfem::quadrature::quadratures &quadratures,
     std::vector<std::shared_ptr<specfem::sources::source<dimension_tag>>>
         &sources,
@@ -100,29 +136,59 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
   this->attenuation = { mesh.attenuation, dt, this->mesh, this->element_types,
                         mesh.materials };
 
+  const bool has_deferred_properties =
+      specfem::assembly::dim3_impl::has_deferred_properties(mesh,
+                                                            property_reader);
   this->properties = { this->element_types, this->mesh, mesh.materials,
-                       property_reader != nullptr || mesh.globe.has_value() };
+                       has_deferred_properties };
 
-  if (mesh.globe.has_value()) {
-#ifdef SPECFEM_HAS_GLOBE_MODEL
-    specfem::assembly::dim3_impl::build_globe_properties(mesh, *this);
-#else
-    throw std::runtime_error(
-        "This build cannot consume globe meshes; configure with "
-        "SPECFEM_BUILD_MESHFEM3D_GLOBE=ON");
-#endif
-  }
-
-  // GLL model: when a property reader is configured, read properties (and
+  // GLL model: when properties are deferred, read/fill properties (and
   // recompute attenuation state) before dependent containers are built.
-  if (property_reader != nullptr) {
-    property_reader->read(*this);
+  if (has_deferred_properties) {
+    specfem::assembly::dim3_impl::read_deferred_properties(mesh, *this,
+                                                           property_reader);
   }
 
   this->info = { this->mesh, this->properties, this->element_types };
 
   return;
 }
+
+template specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::
+    assembly(
+        const specfem::mesh::cartesian3d_mesh &mesh,
+        const specfem::quadrature::quadratures &quadratures,
+        std::vector<std::shared_ptr<specfem::sources::source<dimension_tag>>>
+            &sources,
+        const std::vector<
+            std::shared_ptr<specfem::receivers::receiver<dimension_tag>>>
+            &receivers,
+        const std::vector<specfem::enums::wavefield> &stypes,
+        const type_real t0, const type_real dt, const int max_timesteps,
+        const int max_sig_step, const int nsteps_between_samples,
+        const specfem::simulation::type simulation,
+        const bool allocate_boundary_values,
+        const std::shared_ptr<specfem::io::reader> &property_reader,
+        const specfem::element_coupling::flux_scheme_configuration
+            &flux_scheme_config);
+
+template specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::
+    assembly(
+        const specfem::mesh::globe3d_mesh &mesh,
+        const specfem::quadrature::quadratures &quadratures,
+        std::vector<std::shared_ptr<specfem::sources::source<dimension_tag>>>
+            &sources,
+        const std::vector<
+            std::shared_ptr<specfem::receivers::receiver<dimension_tag>>>
+            &receivers,
+        const std::vector<specfem::enums::wavefield> &stypes,
+        const type_real t0, const type_real dt, const int max_timesteps,
+        const int max_sig_step, const int nsteps_between_samples,
+        const specfem::simulation::type simulation,
+        const bool allocate_boundary_values,
+        const std::shared_ptr<specfem::io::reader> &property_reader,
+        const specfem::element_coupling::flux_scheme_configuration
+            &flux_scheme_config);
 
 std::string
 specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::print()

@@ -7,7 +7,7 @@
 #include "specfem/tag_dispatch.hpp"
 
 specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
-    const specfem::mesh::mesh<dimension_tag> &mesh,
+    const specfem::mesh::cartesian2d_mesh &mesh,
     const specfem::quadrature::quadratures &quadratures,
     std::vector<std::shared_ptr<specfem::sources::source<dimension_tag>>>
         &sources,

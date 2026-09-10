@@ -67,9 +67,10 @@ public:
    * @param mesh_assembly Assembly mesh with coordinate and mapping info
    * @param jacobian_matrix Jacobian matrix at every quadrature point
    */
+  template <specfem::simulation::model ModelTag>
   boundaries(
       const int nspec, const int ngllz, const int nglly, const int ngllx,
-      const specfem::mesh::mesh<dimension_tag> &mesh,
+      const specfem::mesh::mesh<ModelTag> &mesh,
       const specfem::assembly::mesh<dimension_tag> &mesh_assembly,
       const specfem::assembly::jacobian_matrix<dimension_tag> &jacobian_matrix);
   ///@}

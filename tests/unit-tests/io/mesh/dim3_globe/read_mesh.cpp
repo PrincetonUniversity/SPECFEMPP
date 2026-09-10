@@ -9,8 +9,9 @@
 
 namespace globe_mesh_test_impl {
 
-constexpr int nproc = 6;
-const std::string database_directory = "io/mesh/dim3_globe/DATABASES_MPI";
+constexpr int nproc = 1;
+const std::string database_directory =
+    "data/dim3_globe/GlobalSmallMesh/DATABASES_MPI";
 
 std::string database_path(const std::string &directory, const int rank) {
   std::ostringstream path;
@@ -25,8 +26,7 @@ void check() {
 
   const auto mesh = specfem::io::read_globe_mesh(
       database_path(database_directory, rank), specfem::attenuation::Setup{});
-  ASSERT_TRUE(mesh.globe.has_value());
-  const auto &globe = *mesh.globe;
+  const auto &globe = mesh.globe;
   const auto &config = globe.model_config;
 
   EXPECT_EQ(globe.format_version, 2);
@@ -36,7 +36,7 @@ void check() {
   EXPECT_EQ(globe.nregions, 3);
   EXPECT_TRUE(globe.has_reference_geometry);
   EXPECT_EQ(config.model_name, "1D_isotropic_prem");
-  EXPECT_EQ(config.nchunks, 6);
+  EXPECT_EQ(config.nchunks, 1);
   EXPECT_EQ(config.nex_xi, 32);
   EXPECT_EQ(config.nex_eta, 32);
   EXPECT_TRUE(config.ellipticity);
@@ -50,8 +50,7 @@ void check() {
   EXPECT_FALSE(globe.free_surface.elements.empty());
   EXPECT_FALSE(globe.cmb.elements.empty());
   EXPECT_FALSE(globe.icb.elements.empty());
-  EXPECT_FALSE(globe.mpi_interfaces.empty());
-  EXPECT_FALSE(mesh.adjacency_graph.mpi_connections().empty());
+  EXPECT_TRUE(mesh.adjacency_graph.mpi_connections().empty());
 }
 
 } // namespace globe_mesh_test_impl

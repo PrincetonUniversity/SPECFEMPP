@@ -137,11 +137,12 @@ public:
    * @param dt Time step size
    * @param nsteps Total number of time steps
    */
+  template <specfem::simulation::model ModelTag>
   sources(
       std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
           &sources,
       const specfem::assembly::mesh<DimensionTag> &mesh,
-      const specfem::mesh::mesh<DimensionTag> &raw_mesh,
+      const specfem::mesh::mesh<ModelTag> &raw_mesh,
       const specfem::assembly::jacobian_matrix<DimensionTag> &jacobian_matrix,
       const specfem::assembly::element_types<DimensionTag> &element_types,
       const type_real t0, const type_real dt, const int nsteps);

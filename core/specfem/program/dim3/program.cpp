@@ -15,12 +15,21 @@
 
 namespace specfem::program {
 
-void program_3d(
+template <specfem::simulation::model ModelTag>
+bool use_geographic_coordinates(const specfem::mesh::mesh<ModelTag> &mesh) {
+  if constexpr (ModelTag == specfem::simulation::model::Cartesian3D) {
+    return !mesh.suppress_utm_projection;
+  } else {
+    return false;
+  }
+}
+
+template <specfem::simulation::model ModelTag>
+void run_program_3d(
     const YAML::Node &parameter_dict,
     std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task<
         specfem::element::dimension_tag::dim3>>>
-        tasks,
-    const bool globe) {
+        tasks) {
 
   // --------------------------------------------------------------
   //                    Read parameter file
@@ -44,11 +53,15 @@ void program_3d(
   // --------------------------------------------------------------
   specfem::Logger::info("Reading the mesh...\n===================");
   auto mesh_start_time = std::chrono::system_clock::now();
-  const auto mesh =
-      globe ? specfem::io::read_globe_mesh(database_filename,
-                                           setup.get_attenuation_setup())
-            : specfem::io::read_3d_mesh(database_filename,
-                                        setup.get_attenuation_setup());
+  const auto mesh = [&]() {
+    if constexpr (ModelTag == specfem::simulation::model::Globe3D) {
+      return specfem::io::read_globe_mesh(database_filename,
+                                          setup.get_attenuation_setup());
+    } else {
+      return specfem::io::read_3d_mesh(database_filename,
+                                       setup.get_attenuation_setup());
+    }
+  }();
   const specfem::simulation::type simulation_type =
       setup.get_simulation_type(mesh.materials.has_attenuation());
   const std::chrono::duration<double> mesh_read_time =
@@ -83,9 +96,9 @@ void program_3d(
   // --------------------------------------------------------------
   //                   Get receivers
   // --------------------------------------------------------------
-  // A UTM-projected mesh implies geographic STATIONS coordinates.
+  // A UTM-projected Cartesian mesh implies geographic STATIONS coordinates.
   auto receivers = specfem::io::read_3d_receivers(
-      setup.get_stations(), !mesh.suppress_utm_projection);
+      setup.get_stations(), use_geographic_coordinates(mesh));
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
@@ -246,9 +259,9 @@ void program_3d(
   // --------------------------------------------------------------
   //                   Write Seismograms
   // --------------------------------------------------------------
-  // A UTM-projected mesh uses geographic E/N/Z seismogram channels.
+  // A UTM-projected Cartesian mesh uses geographic E/N/Z seismogram channels.
   const auto seismogram_writer =
-      setup.instantiate_seismogram_writer(!mesh.suppress_utm_projection);
+      setup.instantiate_seismogram_writer(use_geographic_coordinates(mesh));
   if (seismogram_writer) {
     specfem::Logger::info("Writing seismogram files.");
     seismogram_writer->write(assembly);
@@ -275,6 +288,20 @@ void program_3d(
   // --------------------------------------------------------------
 
   return;
+}
+
+void program_3d(
+    const YAML::Node &parameter_dict,
+    std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task<
+        specfem::element::dimension_tag::dim3>>>
+        tasks,
+    const bool globe) {
+  if (globe) {
+    run_program_3d<specfem::simulation::model::Globe3D>(parameter_dict, tasks);
+  } else {
+    run_program_3d<specfem::simulation::model::Cartesian3D>(parameter_dict,
+                                                            tasks);
+  }
 }
 
 } // namespace specfem::program

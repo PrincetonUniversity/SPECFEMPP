@@ -1,4 +1,5 @@
 #pragma once
+#include "specfem/element/dimension.hpp"
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -48,7 +49,20 @@ enum class model {
   Cartesian3D,
   Globe3D
   // Axisem2D,   // Not yet implemented - axisymmetric 2D
-  // Globe3D     // Not yet implemented - global 3D spherical
+};
+
+template <specfem::simulation::model ModelTag> struct model_traits;
+
+template <> struct model_traits<specfem::simulation::model::Cartesian2D> {
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim2;
+};
+
+template <> struct model_traits<specfem::simulation::model::Cartesian3D> {
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
+};
+
+template <> struct model_traits<specfem::simulation::model::Globe3D> {
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
 };
 
 /**

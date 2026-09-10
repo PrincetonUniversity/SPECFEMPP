@@ -210,7 +210,7 @@ public:
    */
   boundaries(
       const int nspec, const int ngllz, const int ngllx,
-      const specfem::mesh::mesh<dimension_tag> &mesh,
+      const specfem::mesh::cartesian2d_mesh &mesh,
       const specfem::assembly::mesh<dimension_tag> &mesh_assembly,
       const specfem::assembly::jacobian_matrix<dimension_tag> &jacobian_matrix);
   ///@}
