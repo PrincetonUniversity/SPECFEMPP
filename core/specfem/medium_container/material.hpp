@@ -59,4 +59,5 @@ class material;
 #include "specfem/medium/dim2/electromagnetic/isotropic/material.hpp"
 #include "specfem/medium/dim2/poroelastic/isotropic/material.hpp"
 #include "specfem/medium/dim3/acoustic/isotropic/material.hpp"
+#include "specfem/medium/dim3/elastic/anisotropic/material.hpp"
 #include "specfem/medium/dim3/elastic/isotropic/material.hpp"

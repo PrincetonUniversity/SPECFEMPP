@@ -12,9 +12,9 @@ namespace specfem::assembly::impl {
 /**
  * @brief Tag-set specifications for value_containers per dimension.
  *
- * Mirrors the ElementSets pattern from element_types.hpp, enumerating
- * only the valid (medium, property) combinations for which
- * value containers (kernels, properties) are instantiated.
+ * Mirrors the ElementSets pattern from element_types.hpp, enumerating the
+ * valid (medium, property) combinations for which value containers are
+ * instantiated.
  */
 template <specfem::element::dimension_tag DimensionTag> struct ContainerSets;
 
@@ -31,7 +31,7 @@ template <> struct ContainerSets<specfem::element::dimension_tag::dim3> {
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
   constexpr static auto combinations = DIMENSION_SET(dim3) *
                                        MEDIUM_SET(elastic, acoustic) *
-                                       PROPERTY_SET(isotropic);
+                                       PROPERTY_SET(isotropic, anisotropic);
 };
 
 /**
