@@ -190,6 +190,7 @@ specfem_add_test(point_tests
             # point/kernels/dim2/poroelastic_isotropic.cpp
             # Dim 3
             point/kernels/dim3/elastic_isotropic.cpp
+            point/kernels/dim3/elastic_anisotropic.cpp
             # Properties
             # Dim 2
             point/properties/dim2/elastic_isotropic.cpp
@@ -555,6 +556,7 @@ specfem_add_test(frechet_derivatives_tests
             medium/frechet_derivatives/dim2/elastic_isotropic.cpp
             medium/frechet_derivatives/dim2/elastic_anisotropic.cpp
             medium/frechet_derivatives/dim3/acoustic.cpp
+            medium/frechet_derivatives/dim3/elastic_anisotropic.cpp
   LIBRARIES point
             gtest_main
 )
