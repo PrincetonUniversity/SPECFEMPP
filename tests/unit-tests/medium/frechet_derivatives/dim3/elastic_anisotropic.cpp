@@ -13,7 +13,11 @@ TEST(FrechetDerivatives, ElasticAnisotropic3D) {
   using Acceleration = specfem::point::acceleration<Tags>;
   using Displacement = specfem::point::displacement<Tags>;
   using Derivatives = specfem::point::field_derivatives<Tags>;
+  using Properties = specfem::point::properties<Tags>;
+  using Velocity = specfem::point::velocity<Tags>;
 
+  Properties properties;
+  Velocity adjoint_velocity;
   Acceleration adjoint_acceleration;
   Displacement backward_displacement;
   for (int i = 0; i < 3; ++i) {
@@ -33,10 +37,10 @@ TEST(FrechetDerivatives, ElasticAnisotropic3D) {
   }
 
   const type_real dt = 0.25;
-  const auto kernels = specfem::medium_physics::frechet_derivative_impl::
-      compute_anisotropic_frechet_derivatives<Tags>(
-          adjoint_acceleration, backward_displacement, adjoint_derivatives,
-          backward_derivatives, dt);
+  const auto kernels =
+      specfem::medium_physics::compute_frechet_derivatives<Tags>(
+          properties, adjoint_velocity, adjoint_acceleration,
+          backward_displacement, adjoint_derivatives, backward_derivatives, dt);
 
   const type_real ad[] = { 1.0, 5.0, 9.0, 7.0, 5.0, 3.0 };
   const type_real backward[] = { 0.5, 2.5, 4.5, 3.5, 2.5, 1.5 };
