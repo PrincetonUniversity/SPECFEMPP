@@ -6,17 +6,15 @@
 #include "specfem/mesh_entity.hpp"
 #include "specfem/tag_dispatch.hpp"
 #include <Kokkos_Core.hpp>
-#include <array>
-#include <type_traits>
 
 namespace specfem::assembly::impl {
 
 /**
  * @brief Tag-set specifications for value_containers per dimension.
  *
- * Mirrors the ElementSets pattern from element_types.hpp and describes the
- * valid material taxonomy. Each value-container family automatically retains
- * the combinations for which it provides a concrete specialization.
+ * Mirrors the ElementSets pattern from element_types.hpp, enumerating the
+ * valid (medium, property) combinations for which value containers are
+ * instantiated.
  */
 template <specfem::element::dimension_tag DimensionTag> struct ContainerSets;
 
@@ -37,73 +35,6 @@ template <> struct ContainerSets<specfem::element::dimension_tag::dim3> {
 };
 
 /**
- * @brief Detect whether a container specialization is implemented.
- *
- * @tparam Container Value-container family to inspect.
- * @tparam Tags Dimension, medium, and property tags.
- */
-template <
-    template <specfem::element::dimension_tag, specfem::element::medium_tag,
-              specfem::element::property_tag> class Container,
-    typename Tags, typename = void>
-struct has_container : std::false_type {};
-
-template <
-    template <specfem::element::dimension_tag, specfem::element::medium_tag,
-              specfem::element::property_tag> class Container,
-    typename Tags>
-struct has_container<
-    Container, Tags,
-    std::void_t<decltype(sizeof(
-        Container<Tags::dimension_tag, Tags::medium_tag, Tags::property_tag>))>>
-    : std::true_type {};
-
-/**
- * @brief Select combinations for which a concrete container exists.
- *
- * This keeps all value-container families on the same material taxonomy while
- * allowing their implementations to land independently. Adding a new concrete
- * specialization makes it participate automatically.
- *
- * @tparam Combinations Candidate material combinations.
- * @tparam Container Value-container family to inspect.
- */
-template <
-    typename Combinations,
-    template <specfem::element::dimension_tag, specfem::element::medium_tag,
-              specfem::element::property_tag> class Container>
-struct available_container_combinations {
-  using combo_type = typename Combinations::combo_type;
-
-  template <std::size_t I>
-  using tags_type =
-      specfem::tag_dispatch::impl::combo_to_tags_t<Combinations, I,
-                                                   combo_type::arity>;
-
-  static constexpr std::size_t size =
-      []<std::size_t... Is>(std::index_sequence<Is...>) {
-        return (std::size_t{ 0 } + ... +
-                static_cast<std::size_t>(
-                    has_container<Container, tags_type<Is>>::value));
-      }(std::make_index_sequence<Combinations::size>{});
-
-  static constexpr std::array<combo_type, size> combos = []() {
-    std::array<combo_type, size> result{};
-    std::size_t index = 0;
-    [&]<std::size_t... Is>(std::index_sequence<Is...>) {
-      (
-          [&]() {
-            if constexpr (has_container<Container, tags_type<Is>>::value) {
-              result[index++] = Combinations::combos[Is];
-            }
-          }(),
-          ...);
-    }(std::make_index_sequence<Combinations::size>{});
-    return result;
-  }();
-};
-
-/**
  * @brief Values for every quadrature point in the finite element mesh
  *
  * @tparam DimensionTag       Dimension tag selecting the ContainerSets
@@ -117,16 +48,14 @@ template <
               specfem::element::property_tag> class containers_type>
 struct value_containers_base {
 
-  using RequestedContainerSetsType = ContainerSets<DimensionTag>;
-  using ContainerSetsType = available_container_combinations<
-      decltype(RequestedContainerSetsType::combinations), containers_type>;
+  using ContainerSetsType = ContainerSets<DimensionTag>;
 
   int nspec; ///< Total number of spectral elements
   specfem::mesh_entity::element_grid<DimensionTag> element_grid; ///< GLL grid
                                                                  ///< layout
 
   constexpr static auto dimension_tag = DimensionTag;
-  constexpr static auto combinations = ContainerSetsType{};
+  constexpr static auto combinations = ContainerSetsType::combinations;
 
   /// Per-(medium,property) element index range; enables arithmetic index
   /// mapping without a device View.
