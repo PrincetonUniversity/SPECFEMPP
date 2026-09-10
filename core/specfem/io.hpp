@@ -65,7 +65,7 @@ namespace io {
  * @endcode
  *
  */
-specfem::mesh::mesh<specfem::element::dimension_tag::dim2>
+specfem::mesh::cartesian2d_mesh
 read_2d_mesh(const std::string &filename,
              const specfem::enums::elastic_wave wave,
              const specfem::enums::electromagnetic_wave electromagnetic_wave,
@@ -78,16 +78,35 @@ read_2d_mesh(const std::string &filename,
  *
  * @param database_file Path to the binary mesh database
  * @param attenuation_setup Attenuation configuration
- * @return specfem::mesh::mesh<specfem::element::dimension_tag::dim3>
+ * @return specfem::mesh::mesh<specfem::simulation::model::Cartesian3D>
  *
  * @code
  * auto mesh = specfem::io::read_3d_mesh("database.bin",
  *                                        specfem::attenuation::Setup{});
  * @endcode
  */
-specfem::mesh::mesh<specfem::element::dimension_tag::dim3>
+specfem::mesh::cartesian3d_mesh
 read_3d_mesh(const std::string &database_file,
              const specfem::attenuation::Setup &attenuation_setup);
+
+/**
+ * @brief Construct a Globe3D mesh object from a thin SPECFEM3D_GLOBE database.
+ *
+ * The thin database stores geometry, element classification, boundary surfaces,
+ * adjacency, and globe-model metadata, but not final pointwise GLL material
+ * properties. Those properties are evaluated later during assembly setup from
+ * the retained reference geometry and model-oracle context.
+ *
+ * @param database_file Path to the thin SPECFEM3D_GLOBE binary database
+ * @param attenuation_setup Attenuation configuration used to decide whether
+ *        attenuation-capable globe elements are marked attenuating
+ * @return Globe3D raw mesh with generic 3-D fields and globe-specific payload
+ * @throws std::runtime_error if the file is not a supported globe database or
+ *         contains unsupported material/property tags
+ */
+specfem::mesh::globe3d_mesh
+read_globe_mesh(const std::string &database_file,
+                const specfem::attenuation::Setup &attenuation_setup);
 
 /**
  * @brief Read station file

@@ -5,14 +5,15 @@
 #include <vector>
 
 #include "acoustic_free_surface.hpp"
-#include "utilities.hpp"
 #include "specfem/macros.hpp"
+#include "utilities.hpp"
 
+template <specfem::simulation::model ModelTag>
 specfem::assembly::boundaries_impl::acoustic_free_surface<
     specfem::element::dimension_tag::dim3>::
     acoustic_free_surface(
         const int nspec, const int ngllz, const int nglly, const int ngllx,
-        const specfem::mesh::mesh<dimension_tag> &mesh,
+        const specfem::mesh::mesh<ModelTag> &mesh,
         const specfem::assembly::mesh<dimension_tag> &mesh_assembly,
         const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,
         std::vector<specfem::element::boundary_tag_container>
