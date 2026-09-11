@@ -37,6 +37,29 @@ local_dof_index(const int icomp, const int iz, const int iy, const int ix) {
 }
 
 /**
+ * @brief Selects the kernel that fills the dense element stiffness blocks.
+ *
+ * `probe` applies the production matrix-free operator to 375 local unit
+ * vectors per element (\f$ O(N_{GLL}^7) \f$; correct by construction, the
+ * reference implementation). `sum_factored` evaluates the closed-form weak
+ * form directly via TensorOperations contractions
+ * (\f$ O(N_{GLL}^5) \f$); it is only available when SPECFEM++ is built with
+ * `SPECFEM_ENABLE_TENSOROPS` and requesting it otherwise throws
+ * `std::runtime_error`. Both produce identical blocks up to roundoff (the
+ * A/B test in `stiffness_sum_factored_tests` holds them together).
+ */
+enum class StiffnessKernelImpl { probe, sum_factored };
+
+/**
+ * @brief Default element stiffness kernel.
+ *
+ * `probe` for now in every build; flipping TensorOps builds to
+ * `sum_factored` is wired at the assembler in a follow-up commit.
+ */
+inline constexpr StiffnessKernelImpl default_stiffness_kernel_impl =
+    StiffnessKernelImpl::probe;
+
+/**
  * @brief Boundary conditions the caller's probe/assembly can represent.
  *
  * `natural_boundaries` keeps the historical strict check: only `none` and
@@ -110,6 +133,8 @@ void validate_stiffness_scope(
  *            elastic with NGLL = 5). LayoutRight keeps each block row
  *            contiguous on the host mirror so rows can be handed directly to
  *            batched sparse-matrix row inserts.
+ * @param impl Kernel that fills the blocks (see @ref StiffnessKernelImpl);
+ *             every implementation honors the contracts above
  */
 template <int NGLL, typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
@@ -118,7 +143,8 @@ void compute_element_stiffness(
         &assembly,
     const specfem::datatype::ElementIndexRange &batch,
     const Kokkos::View<type_real ***, Kokkos::LayoutRight,
-                       Kokkos::DefaultExecutionSpace> &k_e);
+                       Kokkos::DefaultExecutionSpace> &k_e,
+    const StiffnessKernelImpl impl = default_stiffness_kernel_impl);
 
 /**
  * @brief Runtime NGLL dispatcher for @ref compute_element_stiffness.
@@ -132,6 +158,7 @@ void compute_element_stiffness(
  * @param assembly Assembled mesh, jacobian matrix, and material properties
  * @param batch Contiguous element sub-range [begin, end)
  * @param k_e Preallocated device buffer (see the NGLL overload)
+ * @param impl Kernel that fills the blocks (see @ref StiffnessKernelImpl)
  */
 template <typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
@@ -140,7 +167,8 @@ void compute_element_stiffness(
         &assembly,
     const specfem::datatype::ElementIndexRange &batch,
     const Kokkos::View<type_real ***, Kokkos::LayoutRight,
-                       Kokkos::DefaultExecutionSpace> &k_e);
+                       Kokkos::DefaultExecutionSpace> &k_e,
+    const StiffnessKernelImpl impl = default_stiffness_kernel_impl);
 
 } // namespace linear_system
 } // namespace specfem
