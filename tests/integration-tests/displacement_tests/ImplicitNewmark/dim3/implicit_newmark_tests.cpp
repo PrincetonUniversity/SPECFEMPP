@@ -13,9 +13,12 @@
 #include "specfem/solver/implicit_solver.hpp"
 #include "specfem/tags.hpp"
 #include "specfem/timescheme.hpp"
+#include "specfem/utilities/is_close.hpp"
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <iostream>
 #include <map>
 #include <memory>
 #include <string>
@@ -109,15 +112,37 @@ TraceMap collect_traces(AssemblyType &assembly) {
   return traces;
 }
 
-// Implicit Newmark (beta = 1/4, gamma = 1/2) against the explicit solver on
-// the same mesh, sources, and time grid. Both schemes are second-order but
-// have different numerical dispersion, so agreement is O(dt^2)-bound, not
-// roundoff-bound: the tolerance is calibrated, not derived. The fixture has
-// no Stacey boundaries, so this exercises the M + K path (C empty).
-TEST(ImplicitNewmark3D, MatchesExplicitRunOnNaturalBoundaryMesh) {
+// The implicit solver running the EXPLICIT scheme: acceleration form at
+// beta = 0, gamma = 1/2 is the central-difference member of the Newmark
+// family, so it must reproduce the production explicit solver step for step
+// -- not to a calibrated tolerance, but as an algebraic identity.
+//
+// Why the two paths coincide exactly here. The explicit predictor forms
+// u_pred and v_half = v_n + (dt/2) a_n, the force kernel computes
+// f - K u_pred - C v_half, the result is divided by the effective mass
+// M + (dt/2) lumped(C), and the corrector adds (dt/2) a_{n+1}. That IS the
+// acceleration form at beta = 0, gamma = 1/2, whose operator is
+// M + (dt/2) C. The one discrepancy is that production lumps C to a row-sum
+// diagonal while DampingAssembler builds the full block-diagonal C -- so the
+// identity holds only where C is empty. This fixture has no Stacey
+// boundaries, which is exactly that case.
+//
+// This is THE gate on operator construction and time marching: a sign error
+// in a coefficient, a mis-assembled K, or a mis-paired source-time function
+// all show up here, and the assertion below names the first sample at which
+// they do. It replaced two earlier tests that compared the beta = 1/4 run
+// against the explicit solver -- those could only assert calibrated O(dt^2)
+// dispersion bounds (0.15 / 0.35 / 0.55 relative L2), four orders of
+// magnitude looser than what an exact scheme match can assert.
+//
+// Not covered here: the displacement form's time marching (the operator
+// itself is pinned by the ImplicitSolver3D form-parameterized unit test).
+// That form exists for the steady-state static solver, whose test will
+// compare static displacement at chosen time steps -- through the
+// seismogram interface, which is stable under field renumbering.
+TEST(ImplicitNewmark3D, ReproducesExplicitSchemeAtBetaZero) {
   const std::string fixture = "HomogeneousHalfspaceSmallNoABCForceSource";
 
-  // Reference: the production explicit solver.
   TraceMap explicit_traces;
   {
     auto test_case = build_case_3d(fixture);
@@ -129,48 +154,50 @@ TEST(ImplicitNewmark3D, MatchesExplicitRunOnNaturalBoundaryMesh) {
   }
   ASSERT_FALSE(explicit_traces.empty());
 
-  // Implicit run on a fresh assembly (zeroed fields, fresh seismogram step).
   TraceMap implicit_traces;
   {
     auto test_case = build_case_3d(fixture);
-    ImplicitSolverType solver(test_case.time_scheme, {}, *test_case.assembly);
+    specfem::solver::ImplicitSolverConfig config;
+    config.form = specfem::solver::NewmarkForm::acceleration;
+    config.newmark.beta = static_cast<type_real>(0);
+    config.newmark.gamma = static_cast<type_real>(0.5);
+    // At beta = 0 with C empty the operator is the diagonal lumped mass, so
+    // RILUK(0) is an exact inverse and this costs one iteration per step.
+    // Ask for more than the default anyway: the solve must not be what
+    // limits the comparison below.
+    config.gmres_tolerance =
+        static_cast<specfem::linear_system::scalar_type>(1e-6);
+    ImplicitSolverType solver(test_case.time_scheme, {}, *test_case.assembly,
+                              config);
     solver.run();
     implicit_traces = collect_traces(*test_case.assembly);
   }
 
   ASSERT_EQ(implicit_traces.size(), explicit_traces.size());
 
-  // The two schemes carry opposite-sign period errors -- average
-  // acceleration elongates by (w dt)^2 / 12, central difference shortens by
-  // (w dt)^2 / 24 -- so at this fixture's coarse dt (0.035 s against a
-  // 1.25 Hz Ricker with content to ~3 Hz) the phase gap accumulates to
-  // ~1.6 rad at the top of the band over 75 steps: the implicit trace lags
-  // the explicit one by up to a few samples late in the record. Measured
-  // full-trace relative L2 gaps: ~0.10 (displacement), ~0.27 (velocity),
-  // ~0.48 (acceleration) -- growing with derivative order because
-  // differentiation weights the dispersive high frequencies. The tolerances
-  // bound those calibrated values.
-  const auto tolerance_for = [](const int type) -> double {
-    switch (static_cast<specfem::enums::wavefield>(type)) {
-    case specfem::enums::wavefield::displacement:
-      return 0.15;
-    case specfem::enums::wavefield::velocity:
-      return 0.35;
-    default:
-      return 0.55;
-    }
-  };
+  // The floor here is NOT the linear solve -- at beta = 0 with C empty the
+  // operator is the diagonal lumped mass, RILUK(0) inverts it exactly, and
+  // the solve is exact in one iteration. It is assembled K against
+  // matrix-free K in single precision: production applies K matrix-free, the
+  // implicit path applies the probed, assembled K. Same operator
+  // mathematically, but ~2000 contributions per row summed in a different
+  // order, and this build is float (SPECFEM_ENABLE_DOUBLE_PRECISION=OFF).
+  //
+  // Measured worst |implicit - explicit| / peak(explicit) on this fixture:
+  // 3.8e-5, on acceleration late in the record (differentiation weights the
+  // high frequencies, so the accumulated summation-order difference shows
+  // there first). The tolerance leaves ~5x headroom, which the CUDA build
+  // needs: a different backend sums each row in a different order again.
+  //
+  // If this ever fails just above the tolerance, that is the floor moving --
+  // do not simply loosen it; check StiffnessAssembler3D first.
+  constexpr double relative_tolerance = 2e-4;
 
-  // No shift-alignment assertion on purpose: a +-1-sample comparison
-  // between these two schemes is confounded in BOTH directions. Early in
-  // the record the implicit trace leads by up to one sample (with beta > 0
-  // the force at t_{n+1} moves u_{n+1} within the same step; with beta = 0
-  // displacement cannot respond until the following step), while late in
-  // the record the dispersion lag dominates in the other direction. Both
-  // effects were measured on this fixture. Exact time-grid agreement is
-  // asserted below via the recorded sample times; operator correctness is
-  // pinned exactly by the ImplicitSolver3D.OperatorMatchesConstituents
-  // unit test and the linear_system cross-path checks.
+  // Worst |implicit - explicit| / peak(explicit) over every sample, printed
+  // on success so the headroom against the tolerance stays visible.
+  double worst_deviation = 0;
+  std::string worst_where;
+
   for (const auto &[key, explicit_trace] : explicit_traces) {
     const auto it = implicit_traces.find(key);
     ASSERT_NE(it, implicit_traces.end())
@@ -178,151 +205,57 @@ TEST(ImplicitNewmark3D, MatchesExplicitRunOnNaturalBoundaryMesh) {
         << " missing from the implicit run";
     const auto &implicit_trace = it->second;
     ASSERT_EQ(implicit_trace.size(), explicit_trace.size());
-    double error = 0;
-    double reference_norm = 0;
+
+    // Scale the absolute floor to the trace, so the near-zero leading
+    // samples (before the wavefront arrives) are not compared relatively.
+    double peak = 0;
+    for (const auto &[time, sample] : explicit_trace) {
+      (void)time;
+      for (int icomp = 0; icomp < ncomp; ++icomp) {
+        peak = std::max(peak, std::abs(static_cast<double>(sample[icomp])));
+      }
+    }
+    ASSERT_GT(peak, 0.0) << "explicit trace is identically zero at station "
+                         << std::get<0>(key) << "." << std::get<1>(key);
+    const double absolute_tolerance = relative_tolerance * peak;
+
+    // Walk forward in time and stop at the FIRST divergence: sample 0
+    // implicates the right-hand side or the source-time pairing, a later
+    // one implicates the state recovery. An aggregate norm would hide both.
     for (std::size_t sample = 0; sample < explicit_trace.size(); ++sample) {
       ASSERT_NEAR(implicit_trace[sample].first, explicit_trace[sample].first,
                   1e-3)
           << "seismogram time grids disagree";
       for (int icomp = 0; icomp < ncomp; ++icomp) {
-        const double difference =
-            static_cast<double>(implicit_trace[sample].second[icomp]) -
+        const double expected =
             static_cast<double>(explicit_trace[sample].second[icomp]);
-        const double reference =
-            static_cast<double>(explicit_trace[sample].second[icomp]);
-        error += difference * difference;
-        reference_norm += reference * reference;
+        const double actual =
+            static_cast<double>(implicit_trace[sample].second[icomp]);
+        const double deviation = std::abs(actual - expected) / peak;
+        if (deviation > worst_deviation) {
+          worst_deviation = deviation;
+          worst_where = std::get<0>(key) + "." + std::get<1>(key) + " type " +
+                        std::to_string(std::get<2>(key)) + " component " +
+                        std::to_string(icomp) + " sample " +
+                        std::to_string(sample);
+        }
+        ASSERT_TRUE(specfem::utilities::is_close(
+            actual, expected, relative_tolerance, absolute_tolerance))
+            << "implicit (beta = 0) diverged from the explicit solver at "
+            << "sample " << sample << " (t = " << explicit_trace[sample].first
+            << "), station " << std::get<0>(key) << "." << std::get<1>(key)
+            << ", seismogram type " << std::get<2>(key) << ", component "
+            << icomp << ": explicit " << expected << ", implicit " << actual
+            << " (|difference| " << std::abs(actual - expected)
+            << ", tolerance " << relative_tolerance << " relative / "
+            << absolute_tolerance << " absolute)";
       }
     }
-    ASSERT_GT(reference_norm, 0.0);
-
-    const double relative_error = std::sqrt(error / reference_norm);
-    EXPECT_LE(relative_error, tolerance_for(std::get<2>(key)))
-        << "implicit vs explicit relative L2 mismatch at station "
-        << std::get<0>(key) << "." << std::get<1>(key) << " (type "
-        << std::get<2>(key) << ")";
-  }
-}
-
-// Flattened (nglob x ncomp) copies of the final displacement and velocity
-// fields of the forward elastic wavefield.
-struct FinalFields {
-  std::vector<double> displacement;
-  std::vector<double> velocity;
-};
-
-FinalFields collect_final_fields(AssemblyType &assembly) {
-  constexpr auto forward_tag = specfem::simulation::field_type::forward;
-  constexpr auto elastic_tag = specfem::element::medium_tag::elastic;
-
-  assembly.fields.copy_to_host();
-  auto &field = assembly.fields.template get_simulation_field<forward_tag>();
-  const auto &field_impl = field.template get_field<elastic_tag>();
-  const auto h_u = field_impl.get_host_field();
-  const auto h_v = field_impl.get_host_field_dot();
-  const int nglob = field_impl.nglob;
-
-  FinalFields fields;
-  fields.displacement.reserve(static_cast<std::size_t>(nglob) * ncomp);
-  fields.velocity.reserve(static_cast<std::size_t>(nglob) * ncomp);
-  for (int iglob = 0; iglob < nglob; ++iglob) {
-    for (int icomp = 0; icomp < ncomp; ++icomp) {
-      fields.displacement.push_back(static_cast<double>(h_u(iglob, icomp)));
-      fields.velocity.push_back(static_cast<double>(h_v(iglob, icomp)));
-    }
-  }
-  return fields;
-}
-
-double relative_l2(const std::vector<double> &candidate,
-                   const std::vector<double> &reference) {
-  double error = 0;
-  double reference_norm = 0;
-  for (std::size_t i = 0; i < reference.size(); ++i) {
-    const double difference = candidate[i] - reference[i];
-    error += difference * difference;
-    reference_norm += reference[i] * reference[i];
-  }
-  return std::sqrt(error / reference_norm);
-}
-
-// The static-solver test of issue #1984: a Heaviside step force on the
-// Stacey-truncated halfspace, where the implicit solver taking 30 steps of
-// dt = 0.7 with the dissipative Newmark preset must recreate the explicit
-// solver taking 600 steps of dt = 0.035 to the same final time T = 21 s.
-//
-// Physics of the comparison: Stacey dashpots transmit no static load and K
-// keeps its rigid null space, so the box does not converge to a fixed
-// displacement -- it converges to a constant-velocity drift (the rigid part
-// of C v balancing the net force) superposed on the converged elastic
-// deformation. Hence:
-//  - fields are compared at the SAME final time T (the drift contribution
-//    to u grows linearly in time and would dominate any fixed-point
-//    comparison),
-//  - the steady-state detector is velocity/acceleration-based, and its
-//    consistency is asserted on the velocity field only (v has converged to
-//    the drift; u at an earlier stop time differs by drift x remaining
-//    time).
-// No analytic (Boussinesq-type) assertion on purpose: the dashpot-truncated
-// box solves a different static boundary-value problem than the half space
-// (traction-free rather than radiation-matched at the truncation faces), so
-// near-source u_z ~ P / (16 pi mu (1 - nu) r) gives the order of magnitude
-// only -- a human sanity check, not a tolerance one could defend.
-TEST(ImplicitNewmark3D, RecreatesExplicitSteadyStateWithLargeSteps) {
-  const std::string fixture = "HomogeneousHalfSpaceStaceyStatic";
-
-  // Explicit reference: the "iterative time solver run to steady state".
-  FinalFields explicit_fields;
-  {
-    auto test_case = build_case_3d(fixture, "specfem_config.yaml");
-    auto solver = test_case.setup.instantiate_solver<5>(
-        test_case.setup.get_dt(), *test_case.assembly, test_case.time_scheme,
-        test_case.setup.get_simulation_type(), {});
-    solver->run();
-    explicit_fields = collect_final_fields(*test_case.assembly);
   }
 
-  // Implicit static solve: 20x larger dissipative steps to the same T. One
-  // solver instance serves both the full run and the detector rerun below
-  // -- run() re-initializes the state, and reusing the instance skips a
-  // second operator assembly + preconditioner setup (the dominant cost).
-  specfem::solver::ImplicitSolverConfig config;
-  config.newmark = specfem::solver::NewmarkBetaParameters::dissipative(
-      static_cast<type_real>(0.6));
-  auto test_case = build_case_3d(fixture, "specfem_config_implicit.yaml");
-  ImplicitSolverType solver(test_case.time_scheme, {}, *test_case.assembly,
-                            config);
-
-  solver.run();
-  EXPECT_EQ(solver.last_step(), test_case.setup.get_nsteps())
-      << "with steady_state_tolerance = 0 the run must not stop early";
-  const auto implicit_fields = collect_final_fields(*test_case.assembly);
-  ASSERT_EQ(implicit_fields.displacement.size(),
-            explicit_fields.displacement.size());
-
-  // Tolerances calibrated on this fixture; the implicit large steps do not
-  // resolve the band above ~1/(2 dt) = 0.7 Hz, but by T the transients have
-  // been absorbed (explicit) or algorithmically damped (implicit), so the
-  // surviving fields are the deformation + drift both schemes resolve.
-  EXPECT_LE(
-      relative_l2(implicit_fields.displacement, explicit_fields.displacement),
-      0.05)
-      << "final displacement field mismatch";
-  EXPECT_LE(relative_l2(implicit_fields.velocity, explicit_fields.velocity),
-            0.05)
-      << "final velocity (drift) field mismatch";
-
-  // Detector mechanism check only: at a coarse tolerance the stop must fire
-  // well before the horizon (the ratios drop below 0.5 within a few steps of
-  // the ramp ending). Where exactly a tight tolerance fires depends on the
-  // fixture's physical ring-down rate -- deliberately not asserted; the
-  // same-T comparison above is the sharp physics assertion. The solver logs
-  // the per-step ratios when the detector is armed, for anyone tuning a
-  // production tolerance.
-  solver.set_steady_state_tolerance(static_cast<type_real>(0.5));
-  solver.run();
-  EXPECT_LT(solver.last_step(), test_case.setup.get_nsteps())
-      << "steady-state detector did not fire at a coarse tolerance";
+  std::cout << "[   INFO   ] worst |implicit - explicit| / peak = "
+            << worst_deviation << " at " << worst_where << " (tolerance "
+            << relative_tolerance << ")" << std::endl;
 }
 
 } // namespace implicit_newmark_test

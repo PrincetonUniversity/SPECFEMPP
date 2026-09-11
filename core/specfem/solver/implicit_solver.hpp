@@ -21,17 +21,41 @@ namespace specfem {
 namespace solver {
 
 /**
+ * @brief Algebraic form in which the Newmark update is solved.
+ *
+ * Both forms integrate the same scheme and, for \f$ \beta > 0 \f$, their
+ * operators are the same matrix up to the positive scalar
+ * \f$ 1 / (\beta \Delta t^2) \f$ -- so sparsity, conditioning, and GMRES
+ * behaviour are identical. They differ in which state variable is the
+ * unknown, and hence in the admissible range of \f$ \beta \f$.
+ */
+enum class NewmarkForm {
+  /// Solve for \f$ u_{n+1} \f$ on
+  /// \f$ M / (\beta \Delta t^2) + \gamma / (\beta \Delta t) C + K \f$.
+  /// Requires \f$ \beta > 0 \f$; the path for static / steady-state work.
+  displacement,
+  /// Solve for \f$ a_{n+1} \f$ on
+  /// \f$ M + \gamma \Delta t \, C + \beta \Delta t^2 K \f$. Valid for
+  /// \f$ \beta \ge 0 \f$, so it admits the explicit
+  /// (\f$ \beta = 0, \gamma = 1/2 \f$) limit and reproduces the explicit
+  /// time_marching solver exactly.
+  acceleration
+};
+
+/**
  * @brief Newmark-beta parameters of the implicit update.
  *
  * The defaults (\f$ \beta = 1/4, \gamma = 1/2 \f$, average acceleration) are
  * unconditionally stable and non-dissipative. For steady-state driving use
- * @ref dissipative: \f$ \gamma > 1/2 \f$ introduces algorithmic damping of
+ * @ref dissipative -- \f$ \gamma > 1/2 \f$ introduces algorithmic damping of
  * the modes a large time step cannot resolve, and
  * \f$ \beta = (\gamma + 1/2)^2 / 4 \f$ keeps the scheme unconditionally
  * stable and second-order in the resolved modes.
  */
 struct NewmarkBetaParameters {
-  type_real beta = static_cast<type_real>(0.25); ///< Newmark \f$ \beta > 0 \f$
+  /// Newmark \f$ \beta \ge 0 \f$. NewmarkForm::displacement additionally
+  /// requires \f$ \beta > 0 \f$.
+  type_real beta = static_cast<type_real>(0.25);
   type_real gamma = static_cast<type_real>(0.5); ///< Newmark \f$ \gamma \f$
 
   /**
@@ -56,6 +80,11 @@ struct NewmarkBetaParameters {
  */
 struct ImplicitSolverConfig {
   NewmarkBetaParameters newmark{}; ///< Newmark update parameters
+
+  /// Algebraic form of the update. Defaults to `displacement`, the form the
+  /// static / steady-state work uses; `acceleration` additionally admits
+  /// \f$ \beta = 0 \f$.
+  NewmarkForm form = NewmarkForm::displacement;
 
   /// GMRES relative residual tolerance. Floor ~1e-6 in single precision.
   specfem::linear_system::scalar_type gmres_tolerance =
@@ -84,36 +113,56 @@ struct ImplicitSolverConfig {
 };
 
 /**
- * @brief Implicit Newmark solver: one Belos GMRES solve per time step on the
- * assembled operator \f$ A = M / (\beta \Delta t^2) + \gamma / (\beta \Delta
- * t) \, C + K \f$.
+ * @brief Implicit Newmark solver: one Belos GMRES solve per time step on an
+ * assembled operator built from \f$ K \f$, \f$ C \f$, and \f$ M \f$.
  *
  * Solves the semi-discrete equation of motion
  * \f$ M \ddot{u} + C \dot{u} + K u = f \f$ with the Newmark-beta update
- * \f[ u_{n+1} = u_n + \Delta t \, v_n + \Delta t^2 \left[ (1/2 - \beta) a_n
- * + \beta \, a_{n+1} \right], \quad
- * v_{n+1} = v_n + \Delta t \left[ (1 - \gamma) a_n + \gamma \, a_{n+1}
- * \right] \f]
- * in displacement form: \f$ A u_{n+1} = b \f$ with
+ * \f[ u_{n+1} = u_{\mathrm{pred}} + \beta \Delta t^2 a_{n+1}, \quad
+ * v_{n+1} = v_{\mathrm{pred}} + \gamma \Delta t \, a_{n+1} \f]
+ * \f[ u_{\mathrm{pred}} = u_n + \Delta t \, v_n
+ *   + \Delta t^2 (1/2 - \beta) a_n, \quad
+ * v_{\mathrm{pred}} = v_n + \Delta t (1 - \gamma) a_n. \f]
+ *
+ * Two algebraic forms of that update are available (see
+ * @ref specfem::solver::NewmarkForm); for \f$ \beta > 0 \f$ their operators
+ * are the same matrix up to the positive scalar
+ * \f$ 1/(\beta \Delta t^2) \f$, so sparsity, conditioning, and GMRES
+ * behaviour are identical.
+ *
+ * `NewmarkForm::displacement` solves \f$ A u_{n+1} = b \f$ with
+ * \f$ A = M / (\beta \Delta t^2) + \gamma / (\beta \Delta t) \, C + K \f$ and
  * \f[ b = f_{n+1}
  * + M \circ \left[ \frac{u_n}{\beta \Delta t^2} + \frac{v_n}{\beta \Delta t}
  *   + \left( \frac{1}{2\beta} - 1 \right) a_n \right]
  * + C \left[ \frac{\gamma}{\beta \Delta t} u_n
  *   + \left( \frac{\gamma}{\beta} - 1 \right) v_n
- *   + \Delta t \left( \frac{\gamma}{2\beta} - 1 \right) a_n \right]. \f]
- * Acceleration and velocity then follow as
+ *   + \Delta t \left( \frac{\gamma}{2\beta} - 1 \right) a_n \right], \f]
+ * recovering
  * \f$ a_{n+1} = (u_{n+1} - u_n - \Delta t \, v_n) / (\beta \Delta t^2) -
- * (1/(2\beta) - 1) a_n \f$ and the update above.
+ * (1/(2\beta) - 1) a_n \f$. Every coefficient carries \f$ 1/\beta \f$, so
+ * this form requires \f$ \beta > 0 \f$: at \f$ \beta = 0 \f$,
+ * \f$ u_{n+1} \f$ does not depend on \f$ a_{n+1} \f$ at all and the map is
+ * not invertible.
+ *
+ * `NewmarkForm::acceleration` solves \f$ A a_{n+1} = b \f$ with
+ * \f$ A = M + \gamma \Delta t \, C + \beta \Delta t^2 K \f$ and
+ * \f[ b = f_{n+1} - C v_{\mathrm{pred}} - K u_{\mathrm{pred}}, \f]
+ * recovering \f$ u_{n+1} \f$ and \f$ v_{n+1} \f$ from the update above. No
+ * coefficient divides by \f$ \beta \f$, so \f$ \beta = 0 \f$ is a regular
+ * member: at \f$ \beta = 0, \gamma = 1/2 \f$ the operator reduces to
+ * \f$ M + (\Delta t/2) C \f$ and the scheme is the explicit central-difference
+ * update of the production `time_marching` solver.
  *
  * The operators come from `specfem::linear_system`: \f$ K \f$ from the
  * `StiffnessAssembler` (Stacey-tolerant scope), \f$ C \f$ from the
  * `DampingAssembler` (empty on Stacey-free meshes), \f$ M \f$ from
  * `assemble_mass_vector`. \f$ A \f$ is constant for a fixed \f$ \Delta t \f$
  * and is assembled, fill-completed, and preconditioned once; each step is
- * one GMRES solve warm-started from \f$ u_n \f$ with an Ifpack2 right
- * preconditioner (true-residual convergence test). Without fluid-solid
- * coupling \f$ A \f$ is symmetric positive definite; GMRES is used so the
- * solver survives the non-symmetric coupling blocks planned next.
+ * one GMRES solve warm-started from the previous step's unknown with an
+ * Ifpack2 right preconditioner (true-residual convergence test). Without
+ * fluid-solid coupling \f$ A \f$ is symmetric positive definite; GMRES is
+ * used so the solver survives the non-symmetric coupling blocks planned next.
  * MueLu (AMG) is deferred: the float-only cluster Trilinos installs do not
  * link it (issue #1984).
  *
@@ -222,9 +271,26 @@ public:
   }
 
 private:
-  /// (Re)build A from K, C, M for time step `dt`, then preconditioner and
-  /// Belos problem. Idempotent; exact for any dt since K, C, M are kept.
+  /// (Re)build A from K, C, M for time step `dt` in the configured form,
+  /// then preconditioner and Belos problem. Idempotent; exact for any dt
+  /// since K, C, M are kept.
   void form_operator(const type_real dt);
+
+  /// Solve A `unknown` = rhs_ warm-started from `unknown`'s current value.
+  /// Throws if the true relative residual misses `gmres_tolerance`; a Belos
+  /// "loss of accuracy" flag whose true residual is fine is logged and
+  /// tolerated (single-precision PseudoBlockGmres reports it spuriously).
+  void
+  solve_into(const Teuchos::RCP<specfem::linear_system::vector_type> &unknown,
+             const int istep);
+
+  /// One displacement-form step: build b, solve for u_{n+1}, recover
+  /// a_{n+1} and v_{n+1} into a_new_ / v_new_. Requires beta > 0.
+  void step_displacement_form(const int istep);
+
+  /// One acceleration-form step: build b, solve for a_{n+1}, recover
+  /// u_{n+1} and v_{n+1} into u_new_ / v_new_. Valid for beta >= 0.
+  void step_acceleration_form(const int istep);
 
   /// Zero the acceleration field, run the production source kernel at
   /// `istep`, and gather the result: f = source vector at t_{n+1}
