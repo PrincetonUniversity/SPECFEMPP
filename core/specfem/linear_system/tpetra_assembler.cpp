@@ -16,14 +16,8 @@ template <typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 specfem::linear_system::StiffnessAssembler<Tags>::StiffnessAssembler(
     const AssemblyType &assembly, const FEAssemblyType &fe,
-    const int batch_size, const specfem::linear_system::StiffnessScope scope)
-    : assembly_(assembly), fe_(fe), batch_size_(batch_size) {
-
-  if (batch_size_ < 1) {
-    throw std::runtime_error(
-        "specfem::linear_system::StiffnessAssembler: batch_size must be at "
-        "least 1.");
-  }
+    const specfem::linear_system::StiffnessScope scope)
+    : assembly_(assembly), fe_(fe) {
 
   specfem::linear_system::validate_stiffness_scope<Tags>(assembly_, scope);
 
@@ -57,16 +51,18 @@ void specfem::linear_system::StiffnessAssembler<Tags>::fill_matrix(
   const auto elements = mapping.elements();
   const int nelements = elements.size();
 
-  // One block buffer reused across batches; only batch_size_ dense element
-  // blocks ever exist at a time -- no global dense matrix.
+  // One block buffer reused across the internal batches; only
+  // element_batch_size_ dense element blocks ever exist at a time -- no
+  // global dense matrix.
   Kokkos::View<type_real ***, Kokkos::LayoutRight,
                Kokkos::DefaultExecutionSpace>
       k_e("specfem::linear_system::element_stiffness_blocks",
-          std::min(batch_size_, std::max(nelements, 1)), ndof_e, ndof_e);
+          std::min(element_batch_size_, std::max(nelements, 1)), ndof_e,
+          ndof_e);
   auto h_k_e = Kokkos::create_mirror_view(k_e);
 
-  for (int offset = 0; offset < nelements; offset += batch_size_) {
-    const int batch_count = std::min(batch_size_, nelements - offset);
+  for (int offset = 0; offset < nelements; offset += element_batch_size_) {
+    const int batch_count = std::min(element_batch_size_, nelements - offset);
     const auto batch = specfem::datatype::subview(
         elements, Kokkos::pair<int, int>(offset, offset + batch_count));
 

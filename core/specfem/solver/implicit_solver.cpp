@@ -47,9 +47,7 @@ specfem::solver::ImplicitNewmarkSolver<Tags>::ImplicitNewmarkSolver(
   fe_ = std::make_unique<FEAssemblyType>(MappingType(assembly_));
 
   specfem::linear_system::StiffnessAssembler<Tags> stiffness_assembler(
-      assembly_, *fe_,
-      specfem::linear_system::StiffnessAssembler<Tags>::default_batch_size,
-      specfem::linear_system::StiffnessScope::with_stacey);
+      assembly_, *fe_, specfem::linear_system::StiffnessScope::with_stacey);
   stiffness_ = stiffness_assembler.assemble();
 
   specfem::linear_system::DampingAssembler<Tags> damping_assembler(assembly_,

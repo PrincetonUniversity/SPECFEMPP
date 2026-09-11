@@ -21,9 +21,11 @@ namespace linear_system {
  * \f$ = -\mathrm{accel} \f$ of the matrix-free
  * `compute_stiffness_interaction` kernel (before mass division) -- see
  * @ref compute_element_stiffness for the sign convention. Assembly never
- * materializes a global dense matrix: element blocks are computed in batches
- * on the (Kokkos) device by the stiffness probe kernel, mirrored to the
- * host, and scattered into the sparse matrix with batched row updates.
+ * materializes a global dense matrix: element blocks are computed on the
+ * (Kokkos) device by the stiffness probe kernel, mirrored to the host,
+ * and scattered into the sparse matrix with batched row updates. The
+ * element batching that bounds the block buffer is an implementation
+ * detail, not part of the API.
  *
  * One assembler produces the matrix block of one medium
  * (`Tags::medium_tag`); a future multi-medium system holds one assembler and
@@ -46,13 +48,6 @@ public:
   constexpr static int ncomp =
       specfem::element::attributes<dimension_tag, medium_tag>::components;
 
-  /**
-   * @brief Elements whose stiffness blocks are formed per probe-kernel
-   * launch. Bounds the block buffer: `batch * ndof_e^2` scalars (~36 MB for
-   * 64 elastic NGLL = 5 elements in single precision).
-   */
-  constexpr static int default_batch_size = 64;
-
   using AssemblyType = specfem::assembly::assembly<dimension_tag>;
 
   /// Dof numbering and connectivity of the medium
@@ -73,34 +68,39 @@ public:
    *        and fields; must outlive the assembler
    * @param fe Dof maps and sparsity graphs of the medium; borrowed, and must
    *        outlive the assembler
-   * @param batch_size Elements per probe-kernel launch (>= 1)
    * @param scope Boundary conditions the caller can represent (see
    *        @ref StiffnessScope); pass `with_stacey` only when the Stacey
    *        damping matrix is assembled separately
    */
   StiffnessAssembler(
       const AssemblyType &assembly, const FEAssemblyType &fe,
-      const int batch_size = default_batch_size,
       const StiffnessScope scope = StiffnessScope::natural_boundaries);
 
   /**
    * @brief Assemble the stiffness matrix.
    *
-   * Fills the matrix batch-by-batch through a @ref SparseMatrixView -- one
-   * block-diagonal update per probe batch -- on the element-dense graph of
-   * `fe`, then closes it. Row/column ids follow @ref Mapping.
+   * Fills the matrix through a @ref SparseMatrixView -- one block-diagonal
+   * update per internal element batch -- on the element-dense graph of `fe`,
+   * then closes it. Row/column ids follow @ref Mapping.
    *
    * @return Fill-complete stiffness matrix on the owned map
    */
   Teuchos::RCP<crs_matrix_type> assemble() const;
 
 private:
-  /// Probe element blocks in batches and scatter them into the matrix
+  /**
+   * @brief Elements whose stiffness blocks are formed per kernel launch.
+   * Bounds the transient buffers: the `batch * ndof_e^2` block buffer plus
+   * its host mirror (~36 MB each for 64 elastic NGLL = 5 elements in single
+   * precision).
+   */
+  constexpr static int element_batch_size_ = 64;
+
+  /// Fill element blocks in internal batches and scatter them into the matrix
   void fill_matrix(SparseMatrixView<MappingType> &matrix) const;
 
   const AssemblyType &assembly_; ///< Borrowed assembly (not owned)
   const FEAssemblyType &fe_;     ///< Borrowed maps and sparsity graphs
-  int batch_size_;               ///< Elements per probe-kernel launch
 };
 
 } // namespace linear_system
