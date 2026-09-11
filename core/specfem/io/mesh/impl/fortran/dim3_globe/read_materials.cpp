@@ -77,6 +77,16 @@ specfem::io::mesh::impl::fortran::dim3_globe::make_materials(
       elastic(1.0, 1.0, 2.0, 0.0);
   const int elastic_index = materials.add_material(elastic);
 
+  // Isotropic-equivalent placeholder (lambda = mu = 1); the oracle overwrites
+  // every GLL point at assembly setup.
+  specfem::medium_container::material<Dimension::dim3, Medium::elastic,
+                                      Property::anisotropic, Attenuation::none>
+      anisotropic_elastic(1.0, 3.0, 1.0, 1.0, 0.0, 0.0, 0.0, 3.0, 1.0, 0.0, 0.0,
+                          0.0, 3.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
+                          1.0);
+  const int anisotropic_elastic_index =
+      materials.add_material(anisotropic_elastic);
+
   std::optional<int> attenuating_elastic_index;
   if (attenuation_enabled) {
     specfem::medium_container::material<Dimension::dim3, Medium::elastic,
@@ -87,12 +97,19 @@ specfem::io::mesh::impl::fortran::dim3_globe::make_materials(
   }
 
   for (int ispec = 0; ispec < materials.nspec; ++ispec) {
-    if (property_tags[ispec] != Property::isotropic) {
-      throw std::runtime_error(
-          "The globe database contains anisotropic/TISO elements, but "
-          "SPECFEM++ has no 3-D anisotropic property container or kernel yet");
-    }
-    if (medium_tags[ispec] == Medium::acoustic) {
+    if (property_tags[ispec] == Property::anisotropic) {
+      if (medium_tags[ispec] != Medium::elastic) {
+        throw std::runtime_error("Anisotropic globe elements must be elastic");
+      }
+      if (attenuation_enabled) {
+        throw std::runtime_error("Attenuation is not implemented for 3-D "
+                                 "anisotropic elastic elements");
+      }
+      materials.material_index_mapping[ispec] = {
+        Medium::elastic, Property::anisotropic, Attenuation::none,
+        anisotropic_elastic_index, ispec
+      };
+    } else if (medium_tags[ispec] == Medium::acoustic) {
       materials.material_index_mapping[ispec] = { Medium::acoustic,
                                                   Property::isotropic,
                                                   Attenuation::none,
