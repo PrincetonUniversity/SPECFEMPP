@@ -1,6 +1,8 @@
 #include "specfem/mesh_entity.hpp"
+#include <algorithm>
 #include <list>
 #include <stdexcept>
+#include <string>
 
 const std::list<specfem::mesh_entity::dim3::type>
 specfem::mesh_entity::dim3::faces_of_edge(
@@ -225,6 +227,46 @@ const std::string specfem::mesh_entity::dim3::to_string(
         std::to_string(static_cast<int>(entity)));
     return "!ERR";
   }
+}
+
+specfem::mesh_entity::dim3::type
+specfem::mesh_entity::dim3::from_code(const int code) {
+  if (code < static_cast<int>(specfem::mesh_entity::dim3::type::bottom) ||
+      code >
+          static_cast<int>(specfem::mesh_entity::dim3::type::top_back_right)) {
+    throw std::runtime_error("Unknown 3-D mesh entity code " +
+                             std::to_string(code));
+  }
+  return static_cast<specfem::mesh_entity::dim3::type>(code);
+}
+
+specfem::mesh_entity::dim3::type
+specfem::mesh_entity::dim3::face_from_code(const int code) {
+  const auto entity = specfem::mesh_entity::dim3::from_code(code);
+  if (std::find(specfem::mesh_entity::dim3::faces.begin(),
+                specfem::mesh_entity::dim3::faces.end(),
+                entity) == specfem::mesh_entity::dim3::faces.end()) {
+    throw std::runtime_error("3-D mesh entity code " + std::to_string(code) +
+                             " is not a face");
+  }
+  return entity;
+}
+
+specfem::mesh_entity::dim3::type
+specfem::mesh_entity::dim3::corner_from_code(const int code) {
+  const auto entity = specfem::mesh_entity::dim3::from_code(code);
+  if (std::find(specfem::mesh_entity::dim3::corners.begin(),
+                specfem::mesh_entity::dim3::corners.end(),
+                entity) == specfem::mesh_entity::dim3::corners.end()) {
+    throw std::runtime_error("3-D mesh entity code " + std::to_string(code) +
+                             " is not a corner");
+  }
+  return entity;
+}
+
+int specfem::mesh_entity::dim3::to_code(
+    const specfem::mesh_entity::dim3::type &entity) {
+  return static_cast<int>(entity);
 }
 
 specfem::mesh_entity::element<specfem::element::dimension_tag::dim3>::element(

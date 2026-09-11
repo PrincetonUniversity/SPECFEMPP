@@ -151,6 +151,7 @@ specfem_add_test(enumerations_tests
             enumerations/runner.cpp
   LIBRARIES specfem::enums
             specfem::element
+            specfem::mesh_entity
             specfem::quadrature
             shape_functions
             gtest_main

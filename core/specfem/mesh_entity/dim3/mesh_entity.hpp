@@ -65,6 +65,41 @@ enum class type : int {
  */
 const std::string to_string(const specfem::mesh_entity::dim3::type &entity);
 
+/**
+ * @brief Entity type for a mesh database entity code.
+ *
+ * The 3-D mesh databases number entities as faces 1-6, edges 7-18 and
+ * corners 19-26, matching the enumerator values of @ref type.
+ *
+ * @param code Database entity code
+ * @return Corresponding entity type
+ * @throws std::runtime_error if the code is outside 1-26
+ */
+type from_code(int code);
+
+/**
+ * @brief Face type for a mesh database face code.
+ * @param code Database entity code
+ * @return Corresponding face type
+ * @throws std::runtime_error if the code is not a face
+ */
+type face_from_code(int code);
+
+/**
+ * @brief Corner type for a mesh database corner code.
+ * @param code Database entity code
+ * @return Corresponding corner type
+ * @throws std::runtime_error if the code is not a corner
+ */
+type corner_from_code(int code);
+
+/**
+ * @brief Mesh database entity code of an entity type.
+ * @param entity Entity type
+ * @return Database entity code
+ */
+int to_code(const type &entity);
+
 /// All face types (6 boundary surfaces)
 const std::list<specfem::mesh_entity::dim3::type> faces = {
   type::bottom, type::right, type::top, type::left, type::front, type::back

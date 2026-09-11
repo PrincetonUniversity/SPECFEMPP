@@ -28,6 +28,7 @@
 #include <array>
 #include <functional>
 #include <gtest/gtest.h>
+#include <stdexcept>
 #include <vector>
 
 namespace specfem::mesh_entity_test {
@@ -689,3 +690,24 @@ INSTANTIATE_TEST_SUITE_P(
             specfem::mesh_entity::dim3::type::top_back_right,
             "TopBackRightCorner",
             specfem::mesh_entity_test::Coordinate3D(1.0, 1.0, 1.0))));
+
+TEST(MeshEntity3D, EntityCodes) {
+  using specfem::mesh_entity::dim3::type;
+  EXPECT_EQ(specfem::mesh_entity::dim3::from_code(1), type::bottom);
+  EXPECT_EQ(specfem::mesh_entity::dim3::from_code(7), type::bottom_left);
+  EXPECT_EQ(specfem::mesh_entity::dim3::from_code(26), type::top_back_right);
+  EXPECT_EQ(specfem::mesh_entity::dim3::face_from_code(3), type::top);
+  EXPECT_EQ(specfem::mesh_entity::dim3::corner_from_code(19),
+            type::bottom_front_left);
+  for (int code = 1; code <= 26; ++code) {
+    EXPECT_EQ(specfem::mesh_entity::dim3::to_code(
+                  specfem::mesh_entity::dim3::from_code(code)),
+              code);
+  }
+  EXPECT_THROW(specfem::mesh_entity::dim3::from_code(0), std::runtime_error);
+  EXPECT_THROW(specfem::mesh_entity::dim3::from_code(27), std::runtime_error);
+  EXPECT_THROW(specfem::mesh_entity::dim3::face_from_code(7),
+               std::runtime_error);
+  EXPECT_THROW(specfem::mesh_entity::dim3::corner_from_code(18),
+               std::runtime_error);
+}
