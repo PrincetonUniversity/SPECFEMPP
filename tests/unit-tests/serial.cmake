@@ -330,6 +330,7 @@ specfem_add_test(assembly_tests
             assembly/dim3/mesh/control_nodes.cpp
             assembly/dim3/jacobian_matrix/jacobian_matrix.cpp
             assembly/dim3/properties/properties.cpp
+            assembly/dim3/element_types/element_context.cpp
   LIBRARIES specfem::mesh
             specfem::assembly
             specfem::quadrature
@@ -366,8 +367,12 @@ specfem_add_test(element_types_tests
   SOURCES   assembly/element_types/runner.cpp
             assembly/element_types/dim2/element_types_tests.cpp
             assembly/element_types/dim3/element_types_tests.cpp
+            assembly/element_types/dim3/globe_context_tests.cpp
   LIBRARIES specfem::assembly
             specfem::element
+            specfem::io
+            specfem::mesh
+            specfem::quadrature
             specfem_environment
             Kokkos::kokkos
             gtest_main

@@ -10,6 +10,9 @@
 #include "specfem/tag_dispatch.hpp"
 #include <Kokkos_Core.hpp>
 #include <sstream>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 namespace specfem::assembly::element_types_impl {
 
@@ -81,6 +84,22 @@ public:
   TagViewType<specfem::element::attenuation_tag> attenuation_tags;
   /** Host view of per-element MPI partition tags (size: nspec). */
   TagViewType<specfem::element::mpi_tag> mpi_tags;
+
+  // ── Globe element context (host; extent 0 unless built from a globe mesh)
+
+  /** Radial region of each element. */
+  TagViewType<specfem::element::region_tag> regions;
+  /** Mesher radial-zone flag (IFLAG_*) of each element. */
+  TagViewType<int> idoubling;
+  /** Lower radius of each element's radial shell, in metres. Double, not
+   *  type_real: setup-only data handed to the double-precision globe model. */
+  TagViewType<double> rmin;
+  /** Upper radius of each element's radial shell, in metres. */
+  TagViewType<double> rmax;
+  /** Whether each element is in the crust, as decided by Moho stretching. */
+  TagViewType<bool> elem_in_crust;
+  /** Whether each element is in the mantle. */
+  TagViewType<bool> elem_in_mantle;
 
 protected:
   // ── Index stores ─────────────────────────────────────────────────────────
@@ -222,6 +241,54 @@ public:
       mpi_tags(ispec) = tags.tags_container(ispec_mesh).mpi_tag;
     }
     build_index_stores();
+  }
+
+  /**
+   * @brief Construct from mesh objects plus globe per-element context.
+   *
+   * Delegates to the mesh constructor, then fills the globe context views in
+   * compute-domain order.
+   *
+   * @param nspec           Number of spectral elements in the compute domain.
+   * @param element_grid    GLL grid layout.
+   * @param mesh            Compute-to-mesh index mapping.
+   * @param tags            Per-element tag data from the mesh.
+   * @param element_context Per-element globe context in mesh-domain order.
+   * @throws std::runtime_error if @p element_context does not have @p nspec
+   *         entries.
+   */
+  element_types_base(
+      int nspec,
+      const specfem::mesh_entity::element_grid<dimension_tag> &element_grid,
+      const specfem::assembly::mesh<dimension_tag> &mesh,
+      const specfem::mesh::tags<dimension_tag> &tags,
+      const std::vector<specfem::mesh::globe_element_context> &element_context)
+      : element_types_base(nspec, element_grid, mesh, tags) {
+    if (static_cast<int>(element_context.size()) != nspec) {
+      throw std::runtime_error("element_types: globe element context has " +
+                               std::to_string(element_context.size()) +
+                               " entries for " + std::to_string(nspec) +
+                               " elements");
+    }
+    regions = TagViewType<specfem::element::region_tag>(
+        "specfem::assembly::element_types::regions", nspec);
+    idoubling =
+        TagViewType<int>("specfem::assembly::element_types::idoubling", nspec);
+    rmin = TagViewType<double>("specfem::assembly::element_types::rmin", nspec);
+    rmax = TagViewType<double>("specfem::assembly::element_types::rmax", nspec);
+    elem_in_crust = TagViewType<bool>(
+        "specfem::assembly::element_types::elem_in_crust", nspec);
+    elem_in_mantle = TagViewType<bool>(
+        "specfem::assembly::element_types::elem_in_mantle", nspec);
+    for (int ispec = 0; ispec < nspec; ispec++) {
+      const auto &context = element_context[mesh.h_compute_to_mesh(ispec)];
+      regions(ispec) = context.region;
+      idoubling(ispec) = context.idoubling;
+      rmin(ispec) = context.rmin;
+      rmax(ispec) = context.rmax;
+      elem_in_crust(ispec) = context.element_in_crust;
+      elem_in_mantle(ispec) = context.element_in_mantle;
+    }
   }
 
 private:
@@ -545,6 +612,40 @@ public:
     if (mpi_tags.extent(0) == 0)
       return specfem::element::mpi_tag::inner;
     return mpi_tags(ispec);
+  }
+
+  // ── Globe element context accessors ─────────────────────────────────────
+
+  /** @brief Whether the globe per-element context views are populated. */
+  bool has_element_context() const { return regions.extent(0) > 0; }
+
+  /**
+   * @brief Radial region of element @p ispec in the compute domain.
+   * @param ispec Compute-domain element index.
+   * @throws std::runtime_error if no globe element context is present.
+   */
+  specfem::element::region_tag get_region_tag(const int ispec) const {
+    if (!has_element_context()) {
+      throw std::runtime_error("element_types: no globe element context; "
+                               "check has_element_context() first");
+    }
+    return regions(ispec);
+  }
+
+  /**
+   * @brief Number of elements in the given globe region.
+   * @param region_tag Region to query.
+   * @return Element count; 0 when no globe element context is present.
+   */
+  int get_number_of_elements(
+      const specfem::element::region_tag region_tag) const {
+    int count = 0;
+    for (int ispec = 0; ispec < static_cast<int>(regions.extent(0)); ++ispec) {
+      if (regions(ispec) == region_tag) {
+        ++count;
+      }
+    }
+    return count;
   }
 };
 
