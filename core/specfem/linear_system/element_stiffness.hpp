@@ -53,11 +53,18 @@ enum class StiffnessKernelImpl { probe, sum_factored };
 /**
  * @brief Default element stiffness kernel.
  *
- * `probe` for now in every build; flipping TensorOps builds to
- * `sum_factored` is wired at the assembler in a follow-up commit.
+ * `sum_factored` when SPECFEM++ is built with TensorOperations -- enabling
+ * the dependency is the opt-in -- and `probe` otherwise, so builds without
+ * the flag are bit-identical to before the enum existed. Callers pin a
+ * kernel explicitly (as the A/B test does) to override.
  */
+#ifdef SPECFEM_ENABLE_TENSOROPS
+inline constexpr StiffnessKernelImpl default_stiffness_kernel_impl =
+    StiffnessKernelImpl::sum_factored;
+#else
 inline constexpr StiffnessKernelImpl default_stiffness_kernel_impl =
     StiffnessKernelImpl::probe;
+#endif
 
 /**
  * @brief Boundary conditions the caller's probe/assembly can represent.

@@ -77,11 +77,15 @@ public:
    * @param scope Boundary conditions the caller can represent (see
    *        @ref StiffnessScope); pass `with_stacey` only when the Stacey
    *        damping matrix is assembled separately
+   * @param kernel_impl Kernel that fills the element blocks (see
+   *        @ref StiffnessKernelImpl); the default follows the build
+   *        (`sum_factored` with TensorOperations, `probe` otherwise)
    */
   StiffnessAssembler(
       const AssemblyType &assembly, const FEAssemblyType &fe,
       const int batch_size = default_batch_size,
-      const StiffnessScope scope = StiffnessScope::natural_boundaries);
+      const StiffnessScope scope = StiffnessScope::natural_boundaries,
+      const StiffnessKernelImpl kernel_impl = default_stiffness_kernel_impl);
 
   /**
    * @brief Assemble the stiffness matrix.
@@ -98,9 +102,10 @@ private:
   /// Probe element blocks in batches and scatter them into the matrix
   void fill_matrix(SparseMatrixView<MappingType> &matrix) const;
 
-  const AssemblyType &assembly_; ///< Borrowed assembly (not owned)
-  const FEAssemblyType &fe_;     ///< Borrowed maps and sparsity graphs
-  int batch_size_;               ///< Elements per probe-kernel launch
+  const AssemblyType &assembly_;    ///< Borrowed assembly (not owned)
+  const FEAssemblyType &fe_;        ///< Borrowed maps and sparsity graphs
+  int batch_size_;                  ///< Elements per probe-kernel launch
+  StiffnessKernelImpl kernel_impl_; ///< Element block producer
 };
 
 } // namespace linear_system

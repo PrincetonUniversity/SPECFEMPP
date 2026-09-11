@@ -16,8 +16,10 @@ template <typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 specfem::linear_system::StiffnessAssembler<Tags>::StiffnessAssembler(
     const AssemblyType &assembly, const FEAssemblyType &fe,
-    const int batch_size, const specfem::linear_system::StiffnessScope scope)
-    : assembly_(assembly), fe_(fe), batch_size_(batch_size) {
+    const int batch_size, const specfem::linear_system::StiffnessScope scope,
+    const specfem::linear_system::StiffnessKernelImpl kernel_impl)
+    : assembly_(assembly), fe_(fe), batch_size_(batch_size),
+      kernel_impl_(kernel_impl) {
 
   if (batch_size_ < 1) {
     throw std::runtime_error(
@@ -71,7 +73,7 @@ void specfem::linear_system::StiffnessAssembler<Tags>::fill_matrix(
         elements, Kokkos::pair<int, int>(offset, offset + batch_count));
 
     specfem::linear_system::compute_element_stiffness<Tags>(assembly_, batch,
-                                                            k_e);
+                                                            k_e, kernel_impl_);
     Kokkos::deep_copy(h_k_e, k_e);
 
     // One block-diagonal update for the whole batch: the dof set names this
