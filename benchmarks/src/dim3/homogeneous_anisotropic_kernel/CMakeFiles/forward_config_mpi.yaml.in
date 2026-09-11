@@ -6,7 +6,7 @@ parameters:
       Material systems : Elastic domain (1)
       Interfaces : None
       Sources : Force source (1)
-      Boundary conditions : Neumann BCs on all edges
+      Boundary conditions : Stacey absorbing boundaries
       Output : Wavefield saved for adjoint simulation
 
   simulation-setup:
