@@ -674,6 +674,14 @@ specfem_add_test(stiffness_assembler_tests
             -lpthread -lm
 )
 
+# Pure TensorOperations + Kokkos: no fixtures, no assembly. Compiles to a
+# GTEST_SKIP stub when SPECFEM_ENABLE_TENSOROPS is OFF.
+specfem_add_test(tensorops_smoke_tests
+  SOURCES linear_system/tensorops_smoke_tests.cpp
+  LIBRARIES specfem::linear_system
+            specfem_environment
+)
+
 specfem_add_test(sparse_matrix_view_mapping_tests
   SOURCES linear_system/sparse_matrix_view/mapping_tests.cpp
   LIBRARIES specfem::linear_system
