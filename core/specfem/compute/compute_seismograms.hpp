@@ -23,20 +23,11 @@ template <int NGLL, typename Tags>
 void compute_seismograms(
     specfem::assembly::assembly<Tags::dimension_tag> &assembly,
     const int &isig_step) {
-  constexpr auto property_set = []() {
-    if constexpr (Tags::dimension_tag ==
-                  specfem::element::dimension_tag::dim3) {
-      return PROPERTY_SET(isotropic, anisotropic);
-    } else {
-      return PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat);
-    }
-  }();
-
   specfem::tag_dispatch::for_each(
       specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
           MEDIUM_SET(elastic, elastic_psv, elastic_sh, acoustic, poroelastic,
-                     elastic_psv_t) *
-          property_set,
+                     elastic_psv_t, elastic_spin) *
+          PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
       [&]<typename ElementTags>() {
         impl::compute_seismograms<
             NGLL, specfem::tags::expand<ElementTags, Tags::wavefield_tag>>(

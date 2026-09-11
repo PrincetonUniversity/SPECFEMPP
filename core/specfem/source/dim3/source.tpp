@@ -63,6 +63,10 @@ specfem::sources::source<DimensionTag>::source(
     this->source_time_function =
         std::make_unique<specfem::source_time_functions::Ricker>(Ricker, nsteps,
                                                                  dt, false);
+  } else if (YAML::Node Heaviside = Node["Heaviside"]) {
+    this->source_time_function =
+        std::make_unique<specfem::source_time_functions::Heaviside>(
+            Heaviside, nsteps, dt, false);
   } else if (YAML::Node dGaussian = Node["dGaussian"]) {
     this->source_time_function =
         std::make_unique<specfem::source_time_functions::dGaussian>(

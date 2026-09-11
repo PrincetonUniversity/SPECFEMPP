@@ -18,4 +18,7 @@ target_link_libraries(
         specfem::io
         specfem::assembly
         specfem::compute
+        # Assembled operators (K, C, M) for the implicit solver; carries the
+        # Tpetra/Belos/Ifpack2 links when SPECFEM_ENABLE_TRILINOS is ON.
+        specfem::linear_system
 )

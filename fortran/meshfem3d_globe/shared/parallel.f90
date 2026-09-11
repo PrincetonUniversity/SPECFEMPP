@@ -1118,8 +1118,20 @@ end module my_mpi
 !-------------------------------------------------------------------------------------------------
 !
 
-!  subroutine isend_i(sendbuf, sendcount, dest, sendtag, req)
-!  end subroutine isend_i
+  subroutine isend_i(sendbuf, sendcount, dest, sendtag, req)
+
+  use my_mpi
+
+  implicit none
+
+  integer :: sendcount, dest, sendtag, req
+  integer, dimension(sendcount) :: sendbuf
+
+  integer :: ier
+
+  call MPI_ISEND(sendbuf,sendcount,MPI_INTEGER,dest,sendtag,my_local_mpi_comm_world,req,ier)
+
+  end subroutine isend_i
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -1178,6 +1190,25 @@ end module my_mpi
   call MPI_IRECV(recvbuf,recvcount,MPI_DOUBLE_PRECISION,dest,recvtag,my_local_mpi_comm_world,req,ier)
 
   end subroutine irecv_dp
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine irecv_i(recvbuf, recvcount, dest, recvtag, req)
+
+  use my_mpi
+
+  implicit none
+
+  integer :: recvcount, dest, recvtag, req
+  integer, dimension(recvcount) :: recvbuf
+
+  integer :: ier
+
+  call MPI_IRECV(recvbuf,recvcount,MPI_INTEGER,dest,recvtag,my_local_mpi_comm_world,req,ier)
+
+  end subroutine irecv_i
 
 !
 !-------------------------------------------------------------------------------------------------

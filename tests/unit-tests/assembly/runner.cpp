@@ -3,7 +3,8 @@
 #include "gtest/gtest.h"
 
 INSTANTIATE_TEST_SUITE_P(Assembly3DTests, Assembly3DTest,
-                         ::testing::Values("EightNodeElastic"));
+                         ::testing::Values("EightNodeElastic",
+                                           "EightNodeElasticCosserat"));
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

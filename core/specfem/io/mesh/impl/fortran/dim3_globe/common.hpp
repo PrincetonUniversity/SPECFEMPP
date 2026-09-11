@@ -8,10 +8,10 @@
 namespace specfem::io::mesh::impl::fortran::dim3_globe_impl {
 
 /** @brief Oldest thin globe database format this reader accepts. */
-inline constexpr int globe_database_version_min = 2;
+inline constexpr int globe_database_version_min = 3;
 
 /** @brief Newest thin globe database format this reader accepts. */
-inline constexpr int globe_database_version_max = 2;
+inline constexpr int globe_database_version_max = 3;
 
 /** @brief Database material mode indicating properties come from the oracle. */
 inline constexpr int material_oracle = 1;
