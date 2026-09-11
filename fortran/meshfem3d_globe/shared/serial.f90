@@ -588,6 +588,21 @@ end module my_mpi
 
   end subroutine isend_cr
 
+  subroutine isend_i(sendbuf, sendcount, dest, sendtag, req)
+
+  implicit none
+
+  integer :: sendcount, dest, sendtag, req
+  integer, dimension(sendcount) :: sendbuf
+  integer :: unused_i
+
+  unused_i = sendbuf(1)
+  unused_i = dest
+  unused_i = sendtag
+  req = 0
+
+  end subroutine isend_i
+
   subroutine isend_dp(sendbuf, sendcount, dest, sendtag, req)
 
   implicit none
@@ -637,6 +652,21 @@ end module my_mpi
   req = 0
 
   end subroutine irecv_dp
+
+  subroutine irecv_i(recvbuf, recvcount, dest, recvtag, req)
+
+  implicit none
+
+  integer :: recvcount, dest, recvtag, req
+  integer, dimension(recvcount) :: recvbuf
+  integer :: unused_i
+
+  unused_i = recvbuf(1)
+  unused_i = dest
+  unused_i = recvtag
+  req = 0
+
+  end subroutine irecv_i
 
   subroutine recv_i(recvbuf, recvcount, dest, recvtag)
 
