@@ -38,8 +38,7 @@ void specfem::io::mesh::impl::fortran::dim3_globe::read_adjacency_graph(
           ispec, neighbor,
           AdjacencyGraph::EdgeProperties(
               specfem::element_connections::type::strongly_conforming,
-              static_cast<specfem::mesh_entity::dim3::type>(
-                  adjacency_types[offset])),
+              specfem::mesh_entity::dim3::from_code(adjacency_types[offset])),
           graph);
     }
   }
@@ -68,21 +67,18 @@ void specfem::io::mesh::impl::fortran::dim3_globe::read_adjacency_graph(
     --local_element;
     --neighbor_element;
     if (local_element < 0 || local_element >= mesh.nspec ||
-        neighbor_element < 0 || neighbor_rank < 0 || local_entity < 1 ||
-        local_entity > 26 || neighbor_entity < 1 || neighbor_entity > 26 ||
-        local_anchor < 19 || local_anchor > 26 || neighbor_anchor < 19 ||
-        neighbor_anchor > 26) {
+        neighbor_element < 0 || neighbor_rank < 0) {
       throw std::runtime_error("Invalid MPI adjacency in globe database");
     }
 
     mpi_connections.emplace_back(
         specfem::element_connections::type::strongly_conforming,
-        static_cast<specfem::mesh_entity::dim3::type>(local_entity),
+        specfem::mesh_entity::dim3::from_code(local_entity),
         static_cast<std::size_t>(neighbor_rank),
-        static_cast<specfem::mesh_entity::dim3::type>(neighbor_entity),
+        specfem::mesh_entity::dim3::from_code(neighbor_entity),
         static_cast<std::size_t>(local_element),
         static_cast<std::size_t>(neighbor_element),
-        static_cast<specfem::mesh_entity::dim3::type>(local_anchor),
-        static_cast<specfem::mesh_entity::dim3::type>(neighbor_anchor));
+        specfem::mesh_entity::dim3::corner_from_code(local_anchor),
+        specfem::mesh_entity::dim3::corner_from_code(neighbor_anchor));
   }
 }

@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 
+#include "specfem/element.hpp"
 #include "specfem/globe_model.hpp"
 #include "specfem/point.hpp"
 #include "specfem/tags.hpp"
@@ -100,8 +101,9 @@ void read_globe_properties(
       }
 
       const auto values = evaluator.evaluate_element(
-          context.region, context.idoubling, context.rmin, context.rmax,
-          context.element_in_crust, context.element_in_mantle, xyz);
+          specfem::element::to_code(context.region), context.idoubling,
+          context.rmin, context.rmax, context.element_in_crust,
+          context.element_in_mantle, xyz);
       if (values.is_anisotropic) {
         // The 3-D anisotropic property container, stress and kernels now
         // exist, but element property tags are fixed from

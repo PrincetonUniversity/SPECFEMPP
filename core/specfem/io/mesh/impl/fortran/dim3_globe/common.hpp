@@ -16,12 +16,6 @@ inline constexpr int globe_database_version_max = 3;
 /** @brief Database material mode indicating properties come from the oracle. */
 inline constexpr int material_oracle = 1;
 
-/** @brief Globe database medium tag for acoustic elements. */
-inline constexpr int medium_acoustic = 1;
-
-/** @brief Globe database medium tag for elastic elements. */
-inline constexpr int medium_elastic = 2;
-
 /**
  * @brief Check that a globe database stream is still readable.
  *
