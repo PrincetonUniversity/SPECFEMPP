@@ -22,7 +22,7 @@ namespace linear_system {
  * `compute_stiffness_interaction` kernel (before mass division) -- see
  * @ref compute_element_stiffness for the sign convention. Assembly never
  * materializes a global dense matrix: element blocks are computed on the
- * (Kokkos) device by the stiffness probe kernel, mirrored to the host,
+ * (Kokkos) device by the selected stiffness kernel, mirrored to the host,
  * and scattered into the sparse matrix with batched row updates. The
  * element batching that bounds the block buffer is an implementation
  * detail, not part of the API.
@@ -71,10 +71,14 @@ public:
    * @param scope Boundary conditions the caller can represent (see
    *        @ref StiffnessScope); pass `with_stacey` only when the Stacey
    *        damping matrix is assembled separately
+   * @param kernel_impl Kernel that fills the element blocks (see
+   *        @ref StiffnessKernelImpl); the default follows the build
+   *        (`tensor_graph` with TensorOperations, `probe` otherwise)
    */
   StiffnessAssembler(
       const AssemblyType &assembly, const FEAssemblyType &fe,
-      const StiffnessScope scope = StiffnessScope::natural_boundaries);
+      const StiffnessScope scope = StiffnessScope::natural_boundaries,
+      const StiffnessKernelImpl kernel_impl = default_stiffness_kernel_impl);
 
   /**
    * @brief Assemble the stiffness matrix.
@@ -92,15 +96,17 @@ private:
    * @brief Elements whose stiffness blocks are formed per kernel launch.
    * Bounds the transient buffers: the `batch * ndof_e^2` block buffer plus
    * its host mirror (~36 MB each for 64 elastic NGLL = 5 elements in single
-   * precision).
+   * precision), and the tensor-graph kernel's identity/force workspaces of
+   * the same footprint.
    */
   constexpr static int element_batch_size_ = 64;
 
   /// Fill element blocks in internal batches and scatter them into the matrix
   void fill_matrix(SparseMatrixView<MappingType> &matrix) const;
 
-  const AssemblyType &assembly_; ///< Borrowed assembly (not owned)
-  const FEAssemblyType &fe_;     ///< Borrowed maps and sparsity graphs
+  const AssemblyType &assembly_;    ///< Borrowed assembly (not owned)
+  const FEAssemblyType &fe_;        ///< Borrowed maps and sparsity graphs
+  StiffnessKernelImpl kernel_impl_; ///< Element block producer
 };
 
 } // namespace linear_system

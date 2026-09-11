@@ -91,10 +91,11 @@ void specfem::linear_system::compute_element_stiffness(
         &assembly,
     const specfem::datatype::ElementIndexRange &batch,
     const Kokkos::View<type_real ***, Kokkos::LayoutRight,
-                       Kokkos::DefaultExecutionSpace> &k_e) {
+                       Kokkos::DefaultExecutionSpace> &k_e,
+    const specfem::linear_system::StiffnessKernelImpl impl) {
   if (assembly.mesh.element_grid == 5) {
     specfem::linear_system::compute_element_stiffness<5, Tags>(assembly, batch,
-                                                               k_e);
+                                                               k_e, impl);
     return;
   }
   throw std::runtime_error(
@@ -113,11 +114,13 @@ template void specfem::linear_system::compute_element_stiffness<
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &,
     const specfem::datatype::ElementIndexRange &,
     const Kokkos::View<type_real ***, Kokkos::LayoutRight,
-                       Kokkos::DefaultExecutionSpace> &);
+                       Kokkos::DefaultExecutionSpace> &,
+    const specfem::linear_system::StiffnessKernelImpl);
 
 template void specfem::linear_system::compute_element_stiffness<
     specfem::linear_system_impl::elastic_isotropic_tags>(
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &,
     const specfem::datatype::ElementIndexRange &,
     const Kokkos::View<type_real ***, Kokkos::LayoutRight,
-                       Kokkos::DefaultExecutionSpace> &);
+                       Kokkos::DefaultExecutionSpace> &,
+    const specfem::linear_system::StiffnessKernelImpl);

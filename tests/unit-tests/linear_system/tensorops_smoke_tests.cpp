@@ -15,11 +15,13 @@
 
 // Compile-and-compare spike for the TensorOperations dependency (issue #2066),
 // kept as a permanent smoke test. It proves, against the Kokkos SPECFEM++
-// actually builds with, the exact library features the sum-factored stiffness
-// kernel needs -- a LevelGraph staged contraction on the TeamPolicyTag2 path,
-// including the production-shaped rank-7 output -- before any kernel code
-// exists. If a Kokkos or TensorOperations bump breaks the integration, this
-// test fails first and in isolation.
+// actually builds with, the exact library features the tensor-graph stiffness
+// kernel needs -- LevelGraph staged contractions on the TeamPolicyTag2 path,
+// a contraction -> combine -> contraction chain across levels, a second
+// blocked label (the kernel's identity-column axis), and a combine functor
+// that reads a captured view at its GLOBAL output coordinate -- with no
+// fixtures and no assembly. If a Kokkos or TensorOperations bump breaks the
+// integration, this test fails first and in isolation.
 namespace tensorops_smoke_test {
 
 constexpr int NGLL = 5;
@@ -99,90 +101,116 @@ TEST(TensorOpsSmoke, ToyContractionMatchesHostLoop) {
     }
 }
 
-// The exact contraction shape the sum-factored stiffness kernel issues for
-// each of its three diagonal (r == s) blocks: the rank-7 per-element block
+// A pointwise stage that captures a per-element view and reads it at the
+// GLOBAL output coordinate, ignoring the column label -- the load-bearing
+// combine semantics the stiffness kernel's constitutive functor stands on
+// (material data does not depend on which column is pushed through).
+struct ScalePointwise {
+  Kokkos::View<type_real *[NGLL], Kokkos::LayoutRight,
+               Kokkos::DefaultExecutionSpace>
+      scale;
+
+  KOKKOS_FUNCTION type_real operator()(const int e, const int /* column */,
+                                       const int i, const type_real v) const {
+    return scale(e, i) * v;
+  }
+};
+
+// The structure the tensor-graph stiffness kernel issues, at toy extents: a
+// contraction -> pointwise combine -> contraction chain over TWO blocked
+// labels ('e' element, 'J' identity column),
 //
-//   T(e,c,b,k,j,i,x) = sum_p HH(p,i,x) * G(e,c,b,k,j,p)
+//   grad(e,J,i) = sum_p A(i,p) U(e,J,p)
+//   F(e,J,i)    = M(e,i) grad(e,J,i)        (combine, M read at global coords)
+//   out(e,J,i)  = sum_p B(p,i) F(e,J,p)
 //
-// with HH(p,i,x) = h'_i(xi_p) h'_x(xi_p) and G the weighted material-metric
-// tensor. Every output mode appears in exactly one operand and the single
-// shared mode 'p' is summed, which is what make_contraction_node requires;
-// this test is the proof that a rank-7 declared output and a 3-extent
-// LabelWhole are accepted in practice, not just by reading NodeHandle.hpp.
-TEST(TensorOpsSmoke, ProductionShapedRank7ContractionMatchesHostLoop) {
+// This is the proof that a second blocked label is accepted, that
+// intermediates chain across levels, and that the combine functor receives
+// global (not tile-local) coordinates -- in practice, not just by reading
+// Evaluator/Team2.hpp.
+TEST(TensorOpsSmoke, ActionGraphPipelineMatchesHostLoop) {
   namespace tenops = TensorOperations;
   using ExecSpace = Kokkos::DefaultExecutionSpace;
+  constexpr int ncolumns = 6;
+  constexpr int column_tile = 2;
   using TileMap = tenops::LabelTiles<
-      tenops::LabelTile<'e', 1>, tenops::LabelWhole<'c', ncomp>,
-      tenops::LabelWhole<'b', ncomp>, tenops::LabelWhole<'k', NGLL>,
-      tenops::LabelWhole<'j', NGLL>, tenops::LabelWhole<'i', NGLL>,
-      tenops::LabelWhole<'x', NGLL>, tenops::LabelWhole<'p', NGLL>>;
+      tenops::LabelTile<'e', 1>, tenops::LabelTile<'J', column_tile>,
+      tenops::LabelWhole<'i', NGLL>, tenops::LabelWhole<'p', NGLL>,
+      tenops::LabelWhole<'r', NGLL>>;
 
-  Kokkos::View<type_real[NGLL][NGLL][NGLL], Kokkos::LayoutRight, ExecSpace> HH(
-      "HH");
-  Kokkos::View<type_real *[ncomp][ncomp][NGLL][NGLL][NGLL], Kokkos::LayoutRight,
-               ExecSpace>
-      G("G", nelem);
-  Kokkos::View<type_real *[ncomp][ncomp][NGLL][NGLL][NGLL][NGLL],
-               Kokkos::LayoutRight, ExecSpace>
-      T("T", nelem);
+  Kokkos::View<type_real[NGLL][NGLL], Kokkos::LayoutRight, ExecSpace> A("A");
+  Kokkos::View<type_real[NGLL][NGLL], Kokkos::LayoutRight, ExecSpace> B("B");
+  Kokkos::View<type_real *[NGLL], Kokkos::LayoutRight, ExecSpace> M("M", nelem);
+  Kokkos::View<type_real *[ncolumns][NGLL], Kokkos::LayoutRight, ExecSpace> U(
+      "U", nelem);
+  Kokkos::View<type_real *[ncolumns][NGLL], Kokkos::LayoutRight, ExecSpace> out(
+      "out", nelem);
 
-  auto h_HH = Kokkos::create_mirror_view(HH);
-  auto h_G = Kokkos::create_mirror_view(G);
+  auto h_A = Kokkos::create_mirror_view(A);
+  auto h_B = Kokkos::create_mirror_view(B);
+  auto h_M = Kokkos::create_mirror_view(M);
+  auto h_U = Kokkos::create_mirror_view(U);
   std::size_t flat = 0;
-  for (int p = 0; p < NGLL; ++p)
-    for (int i = 0; i < NGLL; ++i)
-      for (int x = 0; x < NGLL; ++x)
-        h_HH(p, i, x) = fill_value(flat++);
-  flat = 5000;
+  for (int i = 0; i < NGLL; ++i)
+    for (int p = 0; p < NGLL; ++p) {
+      h_A(i, p) = fill_value(flat++);
+      h_B(i, p) = fill_value(flat++);
+    }
   for (int e = 0; e < nelem; ++e)
-    for (int c = 0; c < ncomp; ++c)
-      for (int b = 0; b < ncomp; ++b)
-        for (int k = 0; k < NGLL; ++k)
-          for (int j = 0; j < NGLL; ++j)
-            for (int p = 0; p < NGLL; ++p)
-              h_G(e, c, b, k, j, p) = fill_value(flat++);
-  Kokkos::deep_copy(HH, h_HH);
-  Kokkos::deep_copy(G, h_G);
+    for (int i = 0; i < NGLL; ++i)
+      h_M(e, i) = fill_value(flat++);
+  for (int e = 0; e < nelem; ++e)
+    for (int J = 0; J < ncolumns; ++J)
+      for (int p = 0; p < NGLL; ++p)
+        h_U(e, J, p) = fill_value(flat++);
+  Kokkos::deep_copy(A, h_A);
+  Kokkos::deep_copy(B, h_B);
+  Kokkos::deep_copy(M, h_M);
+  Kokkos::deep_copy(U, h_U);
 
   auto g0 = tenops::make_level_graph<type_real, ExecSpace>(TileMap{});
-  auto [g1, hh] = g0.add(tenops::make_stage_node(
-      tenops::make_input_node(tenops::make_handle<'p', 'i', 'x'>(HH))));
-  auto [g2, g] = g1.add(tenops::make_stage_node(tenops::make_input_node(
-      tenops::make_handle<'e', 'c', 'b', 'k', 'j', 'p'>(G))));
-  auto [g3, t] = g2.add(
-      tenops::make_contraction_node<'e', 'c', 'b', 'k', 'j', 'i', 'x'>(hh, g));
+  auto [g1, a, b] =
+      g0.add(tenops::make_stage_node(
+                 tenops::make_input_node(tenops::make_handle<'r', 'p'>(A))),
+             tenops::make_stage_node(
+                 tenops::make_input_node(tenops::make_handle<'p', 'r'>(B))));
+  auto [g2, u] = g1.add(tenops::make_stage_node(
+      tenops::make_input_node(tenops::make_handle<'e', 'J', 'p'>(U))));
+  auto [g3, grad] = g2.add(tenops::make_contraction_node<'e', 'J', 'i'>(
+      a.template as<'i', 'p'>(), u));
+  auto [g4, f] = g3.add(
+      tenops::make_combine_node<'e', 'J', 'i'>(grad, ScalePointwise{ M }));
+  auto [g5, result] = g4.add(tenops::make_contraction_node<'e', 'J', 'i'>(
+      b.template as<'p', 'i'>(), f.template as<'e', 'J', 'p'>()));
 
-  const auto out = g3.outputs(t);
-  const std::size_t scratch = out.scratch_bytes();
-  std::printf("[ scratch  ] rank-7 diagonal-block graph: %zu bytes "
-              "(cap %zu)\n",
+  const auto graph_out = g5.outputs(result);
+  const std::size_t scratch = graph_out.scratch_bytes();
+  std::printf("[ scratch  ] action-graph pipeline: %zu bytes (cap %zu)\n",
               scratch, scratch_cap);
   EXPECT_LE(scratch, scratch_cap);
 
-  out.execute(tenops::TeamPolicyTag2<ExecSpace>{}, T);
+  graph_out.execute(tenops::TeamPolicyTag2<ExecSpace>{}, out);
   Kokkos::fence();
 
-  auto h_T = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, T);
+  auto h_out = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, out);
   type_real max_abs_diff = 0;
   type_real max_abs_ref = 0;
   for (int e = 0; e < nelem; ++e)
-    for (int c = 0; c < ncomp; ++c)
-      for (int b = 0; b < ncomp; ++b)
-        for (int k = 0; k < NGLL; ++k)
-          for (int j = 0; j < NGLL; ++j)
-            for (int i = 0; i < NGLL; ++i)
-              for (int x = 0; x < NGLL; ++x) {
-                type_real ref = 0;
-                for (int p = 0; p < NGLL; ++p)
-                  ref += h_HH(p, i, x) * h_G(e, c, b, k, j, p);
-                max_abs_ref = std::max(max_abs_ref, std::abs(ref));
-                max_abs_diff = std::max(
-                    max_abs_diff, std::abs(h_T(e, c, b, k, j, i, x) - ref));
-              }
+    for (int J = 0; J < ncolumns; ++J)
+      for (int i = 0; i < NGLL; ++i) {
+        type_real ref = 0;
+        for (int p = 0; p < NGLL; ++p) {
+          type_real grad_ep = 0;
+          for (int q = 0; q < NGLL; ++q)
+            grad_ep += h_A(p, q) * h_U(e, J, q);
+          ref += h_B(p, i) * h_M(e, p) * grad_ep;
+        }
+        max_abs_ref = std::max(max_abs_ref, std::abs(ref));
+        max_abs_diff = std::max(max_abs_diff, std::abs(h_out(e, J, i) - ref));
+      }
   EXPECT_LE(max_abs_diff, tolerance * std::max<type_real>(1, max_abs_ref))
-      << "max |T_lib - T_ref| = " << max_abs_diff
-      << " against max |T_ref| = " << max_abs_ref;
+      << "max |out_lib - out_ref| = " << max_abs_diff
+      << " against max |out_ref| = " << max_abs_ref;
 }
 
 } // namespace tensorops_smoke_test
