@@ -27,6 +27,7 @@ option(SPECFEM_INSTALL "Creates clean executable directory. Location Controlled 
 option(SPECFEM_ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
 option(SPECFEM_ENABLE_METIS "Enable METIS partitioning support in xdecompose_mesh" OFF)
 option(SPECFEM_ENABLE_TRILINOS "Enable Trilinos implicit solvers (Tpetra/Belos/Ifpack2/MueLu/Amesos2)" OFF)
+option(SPECFEM_ENABLE_TENSOROPS "Enable TensorOperations sum-factored element stiffness kernels" OFF)
 option(SPECFEM_BUILD_MESHFEM3D_GLOBE "Build the SPECFEM3D_GLOBE meshfem3D executable" OFF)
 option(SPECFEM_BUILD_BENCHMARKS "Benchmarks included" ON)
 option(SPECFEM_NIGHTLY_BENCHMARKS "Include nightly benchmarks" OFF)
@@ -185,6 +186,10 @@ include("${CMAKE_SOURCE_DIR}/cmake/metis.cmake")
 # Find Trilinos (implicit solvers). MUST be after cmake/kokkos.cmake so Kokkos is
 # resolved first and Trilinos validates against the same Kokkos.
 include("${CMAKE_SOURCE_DIR}/cmake/trilinos.cmake")
+
+# TensorOperations (sum-factored element stiffness). MUST be after
+# cmake/kokkos.cmake: the interface target links SPECFEM++'s Kokkos.
+include("${CMAKE_SOURCE_DIR}/cmake/tensorops.cmake")
 
 if (SPECFEM_ENABLE_SIMD)
     message(STATUS "Enabling SIMD")
