@@ -245,6 +245,7 @@ specfem_add_test(mesh_dim3_tests
             mesh/dim3/adjacency_graph.cpp
             mesh/dim3/tags.cpp
             mesh/dim3/globe_reader.cpp
+            mesh/dim3/model_aniso.cpp
             mesh/dim3/test.cpp
   LIBRARIES gtest_main
             specfem::mesh
@@ -545,6 +546,7 @@ specfem_add_test(stress_tests
             medium/stress/dim2/elastic_isotropic_cosserat.cpp
             medium/stress/dim2/poroelastic_isotropic.cpp
             medium/stress/dim3/elastic_isotropic.cpp
+            medium/stress/dim3/elastic_anisotropic.cpp
             medium/stress/dim3/acoustic.cpp
   LIBRARIES point
             gtest_main
