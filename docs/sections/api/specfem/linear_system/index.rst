@@ -4,9 +4,16 @@
 ==========================
 
 Utilities for assembling the spectral-element operator into an explicit
-linear system. Provides dense element stiffness
-extraction -- probing the matrix-free element operator with local unit
-vectors -- for the 3D elastic isotropic medium, plus a scope validator that
+linear system. Provides dense element stiffness extraction for the 3D
+elastic isotropic medium through two selectable kernels
+(``StiffnessKernelImpl``): ``probe`` pushes local unit vectors through the
+matrix-free element operator (:math:`O(N_{GLL}^7)` per element; correct by
+construction, always available), while ``sum_factored`` evaluates the
+closed-form weak form directly via TensorOperations contractions,
+exploiting GLL collocation to collapse the quadrature sum
+(:math:`O(N_{GLL}^5)`; requires ``SPECFEM_ENABLE_TENSOROPS=ON``, and is
+then the default -- the probe stays the correctness oracle, held to it by
+an A/B test). The module also ships a scope validator that
 rejects meshes outside the supported tag combination. The validator has two
 scopes (``StiffnessScope``): the strict default admits natural boundary
 conditions only, while ``with_stacey`` additionally admits Stacey boundaries
