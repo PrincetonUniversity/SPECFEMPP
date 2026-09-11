@@ -147,8 +147,10 @@ specfem_add_test(enumerations_tests
             enumerations/dim2/connections.cpp
             enumerations/dim3/mesh_entity.cpp
             enumerations/dim3/connections.cpp
+            enumerations/element_codes.cpp
             enumerations/runner.cpp
   LIBRARIES specfem::enums
+            specfem::element
             specfem::quadrature
             shape_functions
             gtest_main

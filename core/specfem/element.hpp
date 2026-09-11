@@ -13,6 +13,7 @@ namespace specfem::element {}
 
 #include "element/attributes.hpp"
 #include "element/boundary.hpp"
+#include "element/codes.hpp"
 #include "element/dimension.hpp"
 #include "element/tags.hpp"
 #include "element/to_string.hpp"
