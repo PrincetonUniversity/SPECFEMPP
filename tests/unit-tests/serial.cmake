@@ -660,12 +660,18 @@ specfem_add_test(wavefield_checkpoint_tests
             gtest_main
 )
 
+# The TRILINOS label selects the tests whose bodies are compiled out without
+# Trilinos and only GTEST_SKIP() -- .jenkins/trilinos_compiler_checks.gvy is the
+# one job that builds with SPECFEM_ENABLE_TRILINOS=ON and runs `ctest -L TRILINOS`.
+# element_stiffness_tests below is deliberately unlabelled: it is Trilinos-free by
+# design, so it already runs for real in every other pipeline.
 specfem_add_test(trilinos_smoke_tests
   SOURCES   linear_system/trilinos_smoke_tests.cpp
   LIBRARIES specfem::linear_system
             specfem_environment
             gtest_main
             Kokkos::kokkos
+  LABELS    TRILINOS
 )
 
 specfem_add_test(element_stiffness_tests
@@ -702,6 +708,7 @@ specfem_add_test(stiffness_assembler_tests
             specfem::periodic_tasks
             ${BOOST_LIBS}
             -lpthread -lm
+  LABELS    TRILINOS
 )
 
 specfem_add_test(mass_vector_tests
@@ -720,6 +727,7 @@ specfem_add_test(mass_vector_tests
             specfem::periodic_tasks
             ${BOOST_LIBS}
             -lpthread -lm
+  LABELS    TRILINOS
 )
 
 specfem_add_test(implicit_solver_tests
@@ -738,6 +746,7 @@ specfem_add_test(implicit_solver_tests
             specfem::periodic_tasks
             ${BOOST_LIBS}
             -lpthread -lm
+  LABELS    TRILINOS
 )
 
 specfem_add_test(damping_assembler_tests
@@ -756,4 +765,5 @@ specfem_add_test(damping_assembler_tests
             specfem::periodic_tasks
             ${BOOST_LIBS}
             -lpthread -lm
+  LABELS    TRILINOS
 )
