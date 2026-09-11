@@ -17,6 +17,83 @@
 
 namespace specfem {
 namespace algorithms {
+
+/**
+ * @brief Transform reference-frame derivatives of a vector field into
+ * physical-frame derivatives at one quadrature point (the chain rule).
+ *
+ * \f$ \partial f_c / \partial x_d = \sum_r (\partial f_c / \partial \xi_r)
+ * (\partial \xi_r / \partial x_d) \f$ with the inverse-jacobian entries taken
+ * from the point jacobian matrix. Overloaded by arity: two derivative arrays
+ * for 2D (\f$ \xi, \gamma \f$), three for 3D (\f$ \xi, \eta, \gamma \f$).
+ * This is the single owner of the reference-to-physical gradient transform:
+ * the gradient algorithm's closing step and any kernel that produces
+ * reference-frame derivatives by other means (e.g. the tensor-graph
+ * stiffness kernel's contractions) both delegate here.
+ *
+ * @ingroup AlgorithmsGradient
+ *
+ * @tparam PointJacobianMatrixType Point jacobian matrix of the matching
+ *         dimension (with or without the stored determinant; only the
+ *         inverse-jacobian entries are read)
+ * @tparam Datatype Scalar or SIMD datatype of the derivatives
+ * @tparam Components Field components
+ * @param point_jacobian_matrix Jacobian matrix at the point
+ * @param df_dxi Derivatives with respect to \f$ \xi \f$, one per component
+ * @param df_deta Derivatives with respect to \f$ \eta \f$, one per component
+ * @param df_dgamma Derivatives with respect to \f$ \gamma \f$, one per
+ *        component
+ * @return TensorPointViewType `df` with `df(c, d)` \f$ = \partial f_c /
+ *         \partial x_d \f$
+ */
+template <typename PointJacobianMatrixType, typename Datatype, int Components>
+KOKKOS_FORCEINLINE_FUNCTION auto
+chain_rule(const PointJacobianMatrixType &point_jacobian_matrix,
+           const Datatype (&df_dxi)[Components],
+           const Datatype (&df_deta)[Components],
+           const Datatype (&df_dgamma)[Components]) {
+  specfem::datatype::TensorPointViewType<
+      type_real, Components, 3, PointJacobianMatrixType::simd::using_simd>
+      df;
+
+  for (int icomponent = 0; icomponent < Components; ++icomponent) {
+    df(icomponent, 0) = point_jacobian_matrix.xix * df_dxi[icomponent] +
+                        point_jacobian_matrix.etax * df_deta[icomponent] +
+                        point_jacobian_matrix.gammax * df_dgamma[icomponent];
+
+    df(icomponent, 1) = point_jacobian_matrix.xiy * df_dxi[icomponent] +
+                        point_jacobian_matrix.etay * df_deta[icomponent] +
+                        point_jacobian_matrix.gammay * df_dgamma[icomponent];
+
+    df(icomponent, 2) = point_jacobian_matrix.xiz * df_dxi[icomponent] +
+                        point_jacobian_matrix.etaz * df_deta[icomponent] +
+                        point_jacobian_matrix.gammaz * df_dgamma[icomponent];
+  }
+  return df;
+}
+
+/// @brief 2D overload of @ref chain_rule (\f$ \xi, \gamma \f$ derivatives;
+/// `df(c, 0)` is \f$ \partial f_c / \partial x \f$, `df(c, 1)` is
+/// \f$ \partial f_c / \partial z \f$)
+template <typename PointJacobianMatrixType, typename Datatype, int Components>
+KOKKOS_FORCEINLINE_FUNCTION auto
+chain_rule(const PointJacobianMatrixType &point_jacobian_matrix,
+           const Datatype (&df_dxi)[Components],
+           const Datatype (&df_dgamma)[Components]) {
+  specfem::datatype::TensorPointViewType<
+      type_real, Components, 2, PointJacobianMatrixType::simd::using_simd>
+      df;
+
+  for (int icomponent = 0; icomponent < Components; ++icomponent) {
+    df(icomponent, 0) = point_jacobian_matrix.xix * df_dxi[icomponent] +
+                        point_jacobian_matrix.gammax * df_dgamma[icomponent];
+
+    df(icomponent, 1) = point_jacobian_matrix.xiz * df_dxi[icomponent] +
+                        point_jacobian_matrix.gammaz * df_dgamma[icomponent];
+  }
+  return df;
+}
+
 /// @brief Implementation details
 namespace impl {
 /**
@@ -51,12 +128,8 @@ KOKKOS_FORCEINLINE_FUNCTION auto element_gradient(
     typename VectorFieldType::simd::datatype (
         &df_dgamma)[VectorFieldType::components]) {
 
-  constexpr int dimension = 2;
   constexpr int components = VectorFieldType::components;
   constexpr int ngll = VectorFieldType::ngll;
-  using TensorPointViewType = specfem::datatype::TensorPointViewType<
-      type_real, VectorFieldType::components, dimension,
-      VectorFieldType::simd::using_simd>;
   const int ielement = local_index.ispec;
   const int iz = local_index.iz;
   const int ix = local_index.ix;
@@ -70,16 +143,8 @@ KOKKOS_FORCEINLINE_FUNCTION auto element_gradient(
     }
   }
 
-  TensorPointViewType df;
-
-  for (int icomponent = 0; icomponent < components; ++icomponent) {
-    df(icomponent, 0) = point_jacobian_matrix.xix * df_dxi[icomponent] +
-                        point_jacobian_matrix.gammax * df_dgamma[icomponent];
-
-    df(icomponent, 1) = point_jacobian_matrix.xiz * df_dxi[icomponent] +
-                        point_jacobian_matrix.gammaz * df_dgamma[icomponent];
-  }
-  return df;
+  return specfem::algorithms::chain_rule(point_jacobian_matrix, df_dxi,
+                                         df_dgamma);
 }
 /**
  * @brief Compute the gradient of a vector field at a specific point in a 3D
@@ -116,12 +181,8 @@ KOKKOS_FORCEINLINE_FUNCTION auto element_gradient(
     typename VectorFieldType::simd::datatype (
         &df_dgamma)[VectorFieldType::components]) {
 
-  constexpr int dimension = 3;
   constexpr int components = VectorFieldType::components;
   constexpr int ngll = VectorFieldType::ngll;
-  using TensorPointViewType = specfem::datatype::TensorPointViewType<
-      type_real, VectorFieldType::components, dimension,
-      VectorFieldType::simd::using_simd>;
   const int ielement = local_index.ispec;
   const int iz = local_index.iz;
   const int iy = local_index.iy;
@@ -138,22 +199,8 @@ KOKKOS_FORCEINLINE_FUNCTION auto element_gradient(
     }
   }
 
-  TensorPointViewType df;
-
-  for (int icomponent = 0; icomponent < components; ++icomponent) {
-    df(icomponent, 0) = point_jacobian_matrix.xix * df_dxi[icomponent] +
-                        point_jacobian_matrix.etax * df_deta[icomponent] +
-                        point_jacobian_matrix.gammax * df_dgamma[icomponent];
-
-    df(icomponent, 1) = point_jacobian_matrix.xiy * df_dxi[icomponent] +
-                        point_jacobian_matrix.etay * df_deta[icomponent] +
-                        point_jacobian_matrix.gammay * df_dgamma[icomponent];
-
-    df(icomponent, 2) = point_jacobian_matrix.xiz * df_dxi[icomponent] +
-                        point_jacobian_matrix.etaz * df_deta[icomponent] +
-                        point_jacobian_matrix.gammaz * df_dgamma[icomponent];
-  }
-  return df;
+  return specfem::algorithms::chain_rule(point_jacobian_matrix, df_dxi, df_deta,
+                                         df_dgamma);
 }
 } // namespace impl
 
