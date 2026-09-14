@@ -4,13 +4,14 @@
 // branches.
 #include "specfem/linear_system/impl/stiffness_tensor_graph_kernel.hpp"
 
+#include "specfem/linear_system/element_stiffness.hpp"
+
 #ifdef SPECFEM_ENABLE_TENSOROPS
 
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/datatype.hpp"
 #include "specfem/element.hpp"
-#include "specfem/linear_system/element_stiffness.hpp"
 #include "specfem/medium_physics.hpp"
 #include "specfem/point.hpp"
 #include "specfem/tags.hpp"
@@ -429,17 +430,11 @@ void specfem::linear_system_impl::compute_element_stiffness_tensor_graph(
 // element_stiffness.cpp). Instantiates the real kernel or the throwing
 // stubs, whichever the build selected above.
 template class specfem::linear_system_impl::StiffnessTensorGraphKernel<
-    5, specfem::tags::Tags<specfem::element::dimension_tag::dim3,
-                           specfem::element::medium_tag::elastic,
-                           specfem::element::property_tag::isotropic,
-                           specfem::element::attenuation_tag::none>>;
+    5, specfem::linear_system_impl::elastic_isotropic_tags>;
 
 template void
 specfem::linear_system_impl::compute_element_stiffness_tensor_graph<
-    5, specfem::tags::Tags<specfem::element::dimension_tag::dim3,
-                           specfem::element::medium_tag::elastic,
-                           specfem::element::property_tag::isotropic,
-                           specfem::element::attenuation_tag::none>>(
+    5, specfem::linear_system_impl::elastic_isotropic_tags>(
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &,
     const specfem::datatype::ElementIndexRange &,
     const Kokkos::View<type_real ***, Kokkos::LayoutRight,

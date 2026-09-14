@@ -5,16 +5,6 @@
 #include <sstream>
 #include <stdexcept>
 
-namespace specfem::linear_system_impl {
-/// Tag bundle for the only combination explicitly instantiated for the
-/// linear system (issue #1982).
-using elastic_isotropic_tags =
-    specfem::tags::Tags<specfem::element::dimension_tag::dim3,
-                        specfem::element::medium_tag::elastic,
-                        specfem::element::property_tag::isotropic,
-                        specfem::element::attenuation_tag::none>;
-} // namespace specfem::linear_system_impl
-
 template <typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 void specfem::linear_system::validate_stiffness_scope(

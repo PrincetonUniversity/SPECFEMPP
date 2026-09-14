@@ -32,6 +32,13 @@ constexpr int ndof = ncomp * NGLL * NGLL * NGLL;
 
 constexpr bool single_precision = sizeof(type_real) == sizeof(float);
 
+// Roundoff tolerance relative to the largest entry, per build precision.
+type_real scaled_tolerance(const double single_tol, const double double_tol,
+                           const type_real scale) {
+  return static_cast<type_real>(single_precision ? single_tol : double_tol) *
+         scale;
+}
+
 using AssemblyType = specfem::assembly::assembly<dim3_tag>;
 using StiffnessTags =
     specfem::tags::Tags<dim3_tag, elastic_tag,
@@ -122,9 +129,12 @@ TEST_F(TensorGraphStiffness3D, AgreesWithProbeKernelWithTiming) {
   StiffnessView k_probe("k_probe", nelements, ndof, ndof);
   StiffnessView k_graph("k_graph", nelements, ndof, ndof);
 
-  // Warm-up runs first (view allocations, first-touch); the timed pair after.
-  fill_blocks(k_probe, KernelImpl::probe, range);
-  fill_blocks(k_graph, KernelImpl::tensor_graph, range);
+  // Warm-up on a 1-element sub-range (view allocations, first-touch, kernel
+  // instantiation); the timed full-range pair after overwrites every block.
+  const specfem::datatype::ElementIndexRange warmup(range.begin_index(),
+                                                    range.begin_index() + 1);
+  fill_blocks(k_probe, KernelImpl::probe, warmup);
+  fill_blocks(k_graph, KernelImpl::tensor_graph, warmup);
   const double probe_ms = fill_blocks(k_probe, KernelImpl::probe, range);
   const double graph_ms = fill_blocks(k_graph, KernelImpl::tensor_graph, range);
 
@@ -138,20 +148,12 @@ TEST_F(TensorGraphStiffness3D, AgreesWithProbeKernelWithTiming) {
       Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, k_graph);
 
   type_real scale = 0;
-  for (int e = 0; e < nelements; ++e) {
-    for (int i = 0; i < ndof; ++i) {
-      for (int j = 0; j < ndof; ++j) {
-        scale = std::max(scale, std::abs(h_probe(e, i, j)));
-      }
-    }
-  }
-  ASSERT_GT(scale, static_cast<type_real>(0));
-
   type_real max_diff = 0;
   int worst_e = 0, worst_i = 0, worst_j = 0;
   for (int e = 0; e < nelements; ++e) {
     for (int i = 0; i < ndof; ++i) {
       for (int j = 0; j < ndof; ++j) {
+        scale = std::max(scale, std::abs(h_probe(e, i, j)));
         const type_real diff = std::abs(h_probe(e, i, j) - h_graph(e, i, j));
         if (diff > max_diff) {
           max_diff = diff;
@@ -162,13 +164,12 @@ TEST_F(TensorGraphStiffness3D, AgreesWithProbeKernelWithTiming) {
       }
     }
   }
+  ASSERT_GT(scale, static_cast<type_real>(0));
 
   // The two kernels evaluate the same action through different operation
   // orders (serialized probes against fused level contractions), so they
   // agree only to roundoff of the largest entry.
-  const type_real tol = (single_precision ? static_cast<type_real>(1e-4)
-                                          : static_cast<type_real>(1e-12)) *
-                        scale;
+  const type_real tol = scaled_tolerance(1e-4, 1e-12, scale);
   EXPECT_LE(max_diff, tol) << "worst entry at (e=" << worst_e
                            << ", i=" << worst_i << ", j=" << worst_j
                            << "): probe=" << h_probe(worst_e, worst_i, worst_j)
@@ -204,11 +205,7 @@ TEST_F(TensorGraphStiffness3D, SymmetricWithRigidBodyNullSpace) {
           std::max(max_asymmetry, std::abs(h_k(0, i, j) - h_k(0, j, i)));
     }
   }
-  const type_real symmetry_tol =
-      (single_precision ? static_cast<type_real>(1e-4)
-                        : static_cast<type_real>(1e-12)) *
-      scale;
-  EXPECT_LE(max_asymmetry, symmetry_tol);
+  EXPECT_LE(max_asymmetry, scaled_tolerance(1e-4, 1e-12, scale));
 
   // Rigid translations produce zero strain, so every row of K must sum to
   // zero over the columns of each component block.
@@ -222,11 +219,7 @@ TEST_F(TensorGraphStiffness3D, SymmetricWithRigidBodyNullSpace) {
       max_null = std::max(max_null, std::abs(row_sum));
     }
   }
-  const type_real null_tol =
-      (single_precision ? static_cast<type_real>(5e-3)
-                        : static_cast<type_real>(1e-10)) *
-      scale;
-  EXPECT_LE(max_null, null_tol);
+  EXPECT_LE(max_null, scaled_tolerance(5e-3, 1e-10, scale));
 }
 
 } // namespace stiffness_tensor_graph_test

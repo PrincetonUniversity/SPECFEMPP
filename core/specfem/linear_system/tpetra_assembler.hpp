@@ -96,8 +96,9 @@ private:
    * @brief Elements whose stiffness blocks are formed per kernel launch.
    * Bounds the transient buffers: the `batch * ndof_e^2` block buffer plus
    * its host mirror (~36 MB each for 64 elastic NGLL = 5 elements in single
-   * precision), and the tensor-graph kernel's identity/force workspaces of
-   * the same footprint.
+   * precision), and -- on the tensor-graph path -- that kernel's identity
+   * and force workspaces, two more device views of the block buffer's
+   * footprint each (~144 MB total device memory at the defaults).
    */
   constexpr static int element_batch_size_ = 64;
 

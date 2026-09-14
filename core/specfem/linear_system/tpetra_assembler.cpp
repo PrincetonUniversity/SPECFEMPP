@@ -104,17 +104,8 @@ specfem::linear_system::StiffnessAssembler<Tags>::assemble() const {
   return matrix.matrix();
 }
 
-namespace specfem::linear_system_impl {
-/// Tag bundle for the only combination explicitly instantiated for the
-/// linear system (issue #1982).
-using elastic_isotropic_tags =
-    specfem::tags::Tags<specfem::element::dimension_tag::dim3,
-                        specfem::element::medium_tag::elastic,
-                        specfem::element::property_tag::isotropic,
-                        specfem::element::attenuation_tag::none>;
-} // namespace specfem::linear_system_impl
-
-// Explicit instantiation: 3D elastic isotropic
+// Explicit instantiation: 3D elastic isotropic (the alias lives in
+// element_stiffness.hpp).
 template class specfem::linear_system::StiffnessAssembler<
     specfem::linear_system_impl::elastic_isotropic_tags>;
 

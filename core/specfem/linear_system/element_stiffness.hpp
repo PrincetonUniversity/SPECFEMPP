@@ -3,6 +3,7 @@
 #include "specfem/datatype/element_index_range.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
 #include <functional>
 
@@ -40,17 +41,14 @@ local_dof_index(const int icomp, const int iz, const int iy, const int ix) {
 /**
  * @brief Selects the kernel that fills the dense element stiffness blocks.
  *
- * `probe` applies the production matrix-free operator to 375 local unit
- * vectors per element, one serialized probe at a time (correct by
- * construction, the reference implementation). `tensor_graph` evaluates the
- * same action on all unit columns at once through one declarative
- * TensorOperations level graph (gradient contractions, a pointwise
- * constitutive combine, weighted divergence contractions) -- the same
- * operation count expressed as batched regular contractions instead of
- * serialized probes with team barriers. It is only available when SPECFEM++
- * is built with `SPECFEM_ENABLE_TENSOROPS` and requesting it otherwise
- * throws `std::runtime_error`. Both produce identical blocks up to roundoff
- * (the A/B test in `stiffness_tensor_graph_tests` holds them together).
+ * `probe` applies the production matrix-free operator to every local unit
+ * vector, one serialized probe at a time (correct by construction, the
+ * reference implementation). `tensor_graph` evaluates the same action on all
+ * unit columns at once through one declarative TensorOperations level graph
+ * -- see @ref specfem::linear_system_impl::StiffnessTensorGraphKernel for
+ * the pipeline; requesting it without `SPECFEM_ENABLE_TENSOROPS` throws
+ * `std::runtime_error`. Both produce identical blocks up to roundoff (the
+ * A/B test in `stiffness_tensor_graph_tests` holds them together).
  */
 enum class StiffnessKernelImpl { probe, tensor_graph };
 
@@ -226,3 +224,13 @@ ElementStiffnessKernel make_element_stiffness_kernel(
 
 } // namespace linear_system
 } // namespace specfem
+
+namespace specfem::linear_system_impl {
+/// Tag bundle for the only combination explicitly instantiated for the
+/// linear system (issue #1982); shared by every instantiating TU.
+using elastic_isotropic_tags =
+    specfem::tags::Tags<specfem::element::dimension_tag::dim3,
+                        specfem::element::medium_tag::elastic,
+                        specfem::element::property_tag::isotropic,
+                        specfem::element::attenuation_tag::none>;
+} // namespace specfem::linear_system_impl
