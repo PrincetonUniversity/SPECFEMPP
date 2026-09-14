@@ -9,33 +9,15 @@
 #include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
 #include <algorithm>
-#include <optional>
 #include <sstream>
 #include <stdexcept>
 
 template <typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 specfem::linear_system::StiffnessAssembler<Tags>::StiffnessAssembler(
-    const AssemblyType &assembly, const int batch_size,
-    const specfem::linear_system::StiffnessScope scope)
-    : assembly_(assembly), dof_map_(assembly, Tags{}), batch_size_(batch_size) {
-  validate(scope);
-}
-
-template <typename Tags>
-  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
-specfem::linear_system::StiffnessAssembler<Tags>::StiffnessAssembler(
     const AssemblyType &assembly, const FEAssemblyType &fe,
     const int batch_size, const specfem::linear_system::StiffnessScope scope)
-    : assembly_(assembly), dof_map_(assembly, Tags{}), batch_size_(batch_size),
-      fe_(&fe) {
-  validate(scope);
-}
-
-template <typename Tags>
-  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
-void specfem::linear_system::StiffnessAssembler<Tags>::validate(
-    const specfem::linear_system::StiffnessScope scope) const {
+    : assembly_(assembly), fe_(fe), batch_size_(batch_size) {
 
   if (batch_size_ < 1) {
     throw std::runtime_error(
@@ -107,20 +89,7 @@ template <typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 Teuchos::RCP<specfem::linear_system::crs_matrix_type>
 specfem::linear_system::StiffnessAssembler<Tags>::assemble() const {
-  // Every dof of an element couples to every other dof of that element, so
-  // the stiffness sparsity is one dense block per element -- which is the
-  // graph FEAssembly builds. It also owns the owned/owned+shared dof maps and
-  // rejects communicators it cannot yet handle. Built here only when the
-  // caller did not supply one to share.
-  const FEAssemblyType *fe = fe_;
-  const std::optional<FEAssemblyType> owned_fe =
-      fe_ ? std::nullopt
-          : std::optional<FEAssemblyType>(MappingType(assembly_));
-  if (fe == nullptr) {
-    fe = &owned_fe.value();
-  }
-
-  SparseMatrixView<MappingType> matrix(fe->full_matrix_graph(), fe->mapping());
+  SparseMatrixView<MappingType> matrix(fe_.full_matrix_graph(), fe_.mapping());
   matrix.begin_fill();
   fill_matrix(matrix);
   // Migrates owned+shared contributions into the owned map -- the Export(ADD)

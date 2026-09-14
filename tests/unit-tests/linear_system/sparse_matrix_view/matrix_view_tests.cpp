@@ -170,19 +170,6 @@ TEST_F(SparseMatrixView3D, DofSetOrderMatchesLocalDofIndex) {
   }
 }
 
-// element_dofs is the pre-existing source of truth for the same ordering.
-TEST_F(SparseMatrixView3D, DofSetExpandMatchesElementDofs) {
-  const auto &mapping = fe().mapping();
-  const int ispec = mapping.elements()(0);
-
-  const auto dofs =
-      mapping(ispec, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
-  std::vector<global_ordinal_type> expanded(dofs.size());
-  dofs.expand(expanded.begin());
-
-  EXPECT_EQ(expanded, mapping.element_dofs(ispec));
-}
-
 // ── DofSet: selectors ───────────────────────────────────────────────────────
 
 // A multi-element set is the concatenation of the per-element sets, not an
@@ -204,7 +191,13 @@ TEST_F(SparseMatrixView3D, MultiElementDofSetConcatenatesPerElementSets) {
   for (int e = 0; e < 3; ++e) {
     std::vector<global_ordinal_type> block(dofs.inner_size());
     dofs.expand_block(e, block.begin());
-    EXPECT_EQ(block, mapping.element_dofs(batch(e)))
+
+    const auto single =
+        mapping(batch(e), Kokkos::ALL, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
+    std::vector<global_ordinal_type> expected(single.size());
+    single.expand(expected.begin());
+
+    EXPECT_EQ(block, expected)
         << "block " << e << " of a multi-element set is not element "
         << batch(e) << "'s dof set";
   }
@@ -477,6 +470,75 @@ TEST_F(SparseMatrixView3D, ColumnsOutsideTheGraphThrow) {
   MatrixViewType matrix(fe().damping_matrix_graph(), mapping);
   matrix.begin_fill();
   EXPECT_THROW(matrix(dofs, dofs) += ones, std::runtime_error);
+}
+
+// ── Replace and broadcast ──────────────────────────────────────────────────
+
+// `=` overwrites where `+=` accumulates: applying it twice must leave the
+// single-block result, not double it.
+TEST_F(SparseMatrixView3D, AssigningABlockReplacesRatherThanAccumulates) {
+  const auto &mapping = fe().mapping();
+  const int ndof_e =
+      mapping.ncomp() * mapping.ngllz() * mapping.nglly() * mapping.ngllx();
+  const int ispec = mapping.elements()(0);
+
+  Kokkos::View<scalar_type **, Kokkos::LayoutRight, Kokkos::HostSpace> block(
+      "block", ndof_e, ndof_e);
+  for (int r = 0; r < ndof_e; ++r) {
+    for (int c = 0; c < ndof_e; ++c) {
+      block(r, c) = block_value(0, r, c);
+    }
+  }
+
+  MatrixViewType once(fe().full_matrix_graph(), mapping);
+  once.begin_fill();
+  const auto dofs_once =
+      mapping(ispec, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
+  once(dofs_once, dofs_once) = block;
+  once.finalize();
+
+  MatrixViewType twice(fe().full_matrix_graph(), mapping);
+  twice.begin_fill();
+  const auto dofs_twice =
+      mapping(ispec, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
+  twice(dofs_twice, dofs_twice) = block;
+  twice(dofs_twice, dofs_twice) = block;
+  twice.finalize();
+
+  const auto n = mapping.num_global_dofs();
+  for (global_ordinal_type row = 0; row < n; ++row) {
+    ASSERT_EQ(row_entries(*once.matrix(), row),
+              row_entries(*twice.matrix(), row))
+        << "row " << row << ": assignment accumulated instead of replacing";
+  }
+}
+
+// Scalar assignment zeroes a region -- the form Dirichlet rows need.
+TEST_F(SparseMatrixView3D, AssigningAScalarOverwritesTheRegion) {
+  const auto &mapping = fe().mapping();
+  const int ndof_e =
+      mapping.ncomp() * mapping.ngllz() * mapping.nglly() * mapping.ngllx();
+  const int ispec = mapping.elements()(0);
+
+  Kokkos::View<scalar_type **, Kokkos::LayoutRight, Kokkos::HostSpace> ones(
+      "ones", ndof_e, ndof_e);
+  Kokkos::deep_copy(ones, static_cast<scalar_type>(1));
+
+  MatrixViewType matrix(fe().full_matrix_graph(), mapping);
+  matrix.begin_fill();
+  const auto dofs =
+      mapping(ispec, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
+  matrix(dofs, dofs) += ones;
+  matrix(dofs, dofs) = static_cast<scalar_type>(0);
+  matrix.finalize();
+
+  for (int r = 0; r < dofs.size(); ++r) {
+    for (const auto &[column, value] : row_entries(*matrix.matrix(), dofs[r])) {
+      (void)column;
+      EXPECT_EQ(value, 0) << "row " << dofs[r]
+                          << " was not zeroed by scalar assignment";
+    }
+  }
 }
 
 // ── Matrix and diagonal sums ────────────────────────────────────────────────

@@ -3,7 +3,6 @@
 #ifdef SPECFEM_ENABLE_TRILINOS
 
 #include "specfem/enums.hpp"
-#include "specfem/linear_system/dof_map.hpp"
 #include "specfem/linear_system/sparse_matrix_view/fe_assembly.hpp"
 #include "specfem/linear_system/sparse_matrix_view/matrix_view.hpp"
 #include <Teuchos_RCP.hpp>
@@ -24,21 +23,14 @@ namespace linear_system {
  * containing the point; interior points contribute exactly nothing.
  *
  * Probing runs the matrix-free `compute_stiffness_interaction` kernel --
- * which computes `accel += -K u - C v` -- with displacement \f$ \equiv 0 \f$
- * (the stiffness path contributes exact zeros) and unit velocity
- * \f$ v = e_c \f$ at every mesh point simultaneously; block-diagonality
- * means columns never mix, so `ncomp` kernel launches recover all blocks:
- * \f$ C(\cdot, c) = -\mathrm{accel} \f$. Probing the production kernel (not
- * a re-derivation of the traction) keeps the assembled \f$ C \f$ consistent
- * with the explicit solver by construction.
+ * which computes `accel += -K u - C v` -- at displacement
+ * \f$ \equiv 0 \f$ and unit velocity \f$ v = e_c \f$ at every mesh point at
+ * once. Block-diagonality means columns never mix, so `ncomp` launches
+ * recover every block: \f$ C(\cdot, c) = -\mathrm{accel} \f$.
  *
- * The assembled operator satisfies \f$ C v = \f$ damping force
- * \f$ = -\mathrm{accel} \f$ of the matrix-free kernel at zero displacement
- * (before mass division), matching the equation of motion
- * \f$ M \ddot{u} + C \dot{u} + K u = f \f$.
- *
- * On meshes without Stacey boundaries the result is an empty (zero-entry)
- * matrix whose `apply()` is a no-op, so callers can use one code path.
+ * The result satisfies \f$ M \ddot{u} + C \dot{u} + K u = f \f$ against the
+ * matrix-free kernel, before mass division. On meshes without Stacey
+ * boundaries it is an empty matrix whose `apply()` is a no-op.
  *
  * @tparam Tags Compile-time tags (dimension, medium, property, attenuation);
  *              dimension must be `dim3`; only `dim3, elastic, isotropic,
@@ -68,41 +60,25 @@ public:
    *
    * Throws `std::runtime_error` if any element of the medium is outside the
    * Stacey-tolerant stiffness scope (see @ref validate_stiffness_scope with
-   * `StiffnessScope::with_stacey`) or if `dof_map` does not match the
-   * assembly's forward field.
+   * `StiffnessScope::with_stacey`) or if `fe` does not match the assembly's
+   * forward field.
    *
    * @param assembly Assembled mesh, material properties, and fields; the
    *        forward field's displacement/velocity/acceleration storage is
    *        used as probe scratch and zeroed afterwards. Must outlive the
    *        assembler.
-   * @param dof_map Dof numbering shared with the stiffness matrix (same
-   *        instance the `StiffnessAssembler` exposes)
-   */
-  DampingAssembler(AssemblyType &assembly, const DofMap &dof_map);
-
-  /**
-   * @brief Assemble over a caller-supplied @ref FEAssembly.
-   *
-   * Same validation as the constructor above, but reuses `fe` -- its dof
-   * numbering, its absorbing-boundary mask and its damping sparsity graph --
-   * rather than building its own.
-   *
-   * @param assembly Assembled mesh, material properties, and fields; used as
-   *        probe scratch and zeroed afterwards. Must outlive the assembler.
-   * @param fe Dof maps and sparsity graphs of the medium; borrowed, and must
-   *        outlive the assembler
+   * @param fe Dof maps, the absorbing-boundary mask and the damping sparsity
+   *        graph of the medium; borrowed, and must outlive the assembler
    */
   DampingAssembler(AssemblyType &assembly, const FEAssemblyType &fe);
 
   /**
    * @brief Probe the velocity path and assemble the damping matrix.
    *
-   * The matrix lives on @ref FEAssembly::damping_matrix_graph: a compact,
-   * block-diagonal pattern with `ncomp` entries per row at damping (boundary)
-   * points and empty rows at interior points. Every entry's `(row, column)`
-   * pair also exists in the stiffness matrix's graph (same-point pairs are
-   * same-element pairs), so the implicit Newmark operator can `sumInto`
-   * \f$ C \f$ on the stiffness graph.
+   * The matrix lives on @ref FEAssembly::damping_matrix_graph: `ncomp`
+   * entries per row at damping (boundary) points, empty rows at interior
+   * points. Every entry's `(row, column)` pair also exists in the stiffness
+   * graph, so the implicit Newmark operator can `sumInto` \f$ C \f$ there.
    *
    * All probe fields (displacement, velocity, acceleration) are zeroed on
    * host and device before returning.
@@ -115,18 +91,9 @@ public:
    */
   Teuchos::RCP<crs_matrix_type> assemble() const;
 
-  /// Dof map shared by the matrix and any right-hand-side/solution vectors
-  const DofMap &dof_map() const { return dof_map_; }
-
 private:
-  /// Validation shared by both constructors
-  void validate() const;
-
-  AssemblyType &assembly_; ///< Borrowed assembly (probe scratch, not owned)
-  DofMap dof_map_;         ///< Per-medium dof numbering and maps
-
-  /// Caller-supplied maps and graphs; null when this assembler builds its own
-  const FEAssemblyType *fe_ = nullptr;
+  AssemblyType &assembly_;   ///< Borrowed assembly (probe scratch, not owned)
+  const FEAssemblyType &fe_; ///< Borrowed maps, mask and sparsity graph
 };
 
 } // namespace linear_system

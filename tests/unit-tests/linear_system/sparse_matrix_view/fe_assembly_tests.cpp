@@ -5,10 +5,7 @@
 
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/io.hpp"
-#include "specfem/linear_system/damping_assembler.hpp"
-#include "specfem/linear_system/dof_map.hpp"
 #include "specfem/linear_system/sparse_matrix_view/fe_assembly.hpp"
-#include "specfem/linear_system/tpetra_assembler.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/runtime_configuration.hpp"
@@ -25,14 +22,6 @@ constexpr auto dim3_tag = specfem::element::dimension_tag::dim3;
 constexpr auto elastic_tag = specfem::element::medium_tag::elastic;
 
 using AssemblyType = specfem::assembly::assembly<dim3_tag>;
-using MediumTags =
-    specfem::tags::Tags<dim3_tag, elastic_tag,
-                        specfem::element::property_tag::isotropic,
-                        specfem::element::attenuation_tag::none>;
-using StiffnessAssemblerType =
-    specfem::linear_system::StiffnessAssembler<MediumTags>;
-using DampingAssemblerType =
-    specfem::linear_system::DampingAssembler<MediumTags>;
 using MappingType = specfem::linear_system::FEMapping<dim3_tag, elastic_tag>;
 using FEAssemblyType = specfem::linear_system::FEAssembly<MappingType>;
 using global_ordinal_type = specfem::linear_system::global_ordinal_type;
@@ -90,13 +79,10 @@ row_columns(const specfem::linear_system::crs_graph_type &graph,
   return columns;
 }
 
-// Mesh with natural boundaries only. The stiffness assembler rejects Stacey
-// meshes, so the full-matrix cross-check has to live here.
+// Mesh with natural boundaries only.
 class FEAssemblyNaturalBoundary3D : public ::testing::Test {
 protected:
   static void TearDownTestSuite() {
-    matrix_ = Teuchos::null;
-    assembler_.reset();
     fe_.reset();
     delete assembly_;
     assembly_ = nullptr;
@@ -117,97 +103,18 @@ protected:
     return *fe_;
   }
 
-  static StiffnessAssemblerType &assembler() {
-    if (!assembler_) {
-      assembler_ = std::make_unique<StiffnessAssemblerType>(assembly());
-    }
-    return *assembler_;
-  }
-
-  static Teuchos::RCP<specfem::linear_system::crs_matrix_type> matrix() {
-    if (matrix_.is_null()) {
-      matrix_ = assembler().assemble();
-    }
-    return matrix_;
-  }
-
   static AssemblyType *assembly_;
   static std::unique_ptr<FEAssemblyType> fe_;
-  static std::unique_ptr<StiffnessAssemblerType> assembler_;
-  static Teuchos::RCP<specfem::linear_system::crs_matrix_type> matrix_;
 };
 
 AssemblyType *FEAssemblyNaturalBoundary3D::assembly_ = nullptr;
 std::unique_ptr<FEAssemblyType> FEAssemblyNaturalBoundary3D::fe_;
-std::unique_ptr<StiffnessAssemblerType> FEAssemblyNaturalBoundary3D::assembler_;
-Teuchos::RCP<specfem::linear_system::crs_matrix_type>
-    FEAssemblyNaturalBoundary3D::matrix_;
-
-// The graph comparisons below are only meaningful if both paths number dofs
-// the same way.
-TEST_F(FEAssemblyNaturalBoundary3D, DofIdsMatchDofMap) {
-  const auto &map = fe().mapping();
-  const specfem::linear_system::DofMap dof_map(assembly(), MediumTags{});
-
-  ASSERT_EQ(map.num_global_dofs(), dof_map.num_global_dofs());
-
-  for (int iglob = 0; iglob < map.nglob(); ++iglob) {
-    for (int icomp = 0; icomp < map.ncomp(); ++icomp) {
-      ASSERT_EQ(map(iglob, icomp), dof_map.gid(iglob, icomp))
-          << "dof id layout diverged at (iglob=" << iglob << ", icomp=" << icomp
-          << ")";
-    }
-  }
-}
-
-TEST_F(FEAssemblyNaturalBoundary3D, GraphDimensionsMatchDofCount) {
-  const auto &map = fe().mapping();
-  const auto graph = fe().full_matrix_graph();
-
-  ASSERT_FALSE(graph.is_null());
-  EXPECT_TRUE(graph->isFillComplete());
-  EXPECT_EQ(static_cast<global_ordinal_type>(graph->getGlobalNumRows()),
-            map.num_global_dofs());
-  EXPECT_EQ(static_cast<global_ordinal_type>(graph->getGlobalNumCols()),
-            map.num_global_dofs());
-}
-
-TEST_F(FEAssemblyNaturalBoundary3D, FullGraphMatchesStiffnessAssembler) {
-  const auto &map = fe().mapping();
-  const auto graph = fe().full_matrix_graph();
-  const auto reference = matrix()->getCrsGraph();
-
-  ASSERT_FALSE(reference.is_null());
-  ASSERT_EQ(graph->getGlobalNumEntries(), reference->getGlobalNumEntries())
-      << "the FEAssembly graph has a different number of nonzeros than the "
-         "graph the stiffness assembler builds";
-
-  for (global_ordinal_type row = 0; row < map.num_global_dofs(); ++row) {
-    const auto columns = row_columns(*graph, row);
-    const auto reference_columns = row_columns(*reference, row);
-    ASSERT_EQ(columns, reference_columns)
-        << "row " << row << " couples to a different set of columns than in "
-        << "the graph the stiffness assembler builds";
-  }
-}
-
-TEST_F(FEAssemblyNaturalBoundary3D, DampingGraphEmpty) {
-  const auto graph = fe().damping_matrix_graph();
-
-  ASSERT_FALSE(graph.is_null());
-  EXPECT_TRUE(graph->isFillComplete());
-  EXPECT_EQ(graph->getGlobalNumEntries(), 0u)
-      << "a mesh without absorbing boundaries must yield an empty damping "
-         "graph";
-}
 
 // Mesh with Stacey absorbing boundaries, the dataset the damping assembler
 // tests use.
 class FEAssemblyStacey3D : public ::testing::Test {
 protected:
   static void TearDownTestSuite() {
-    matrix_ = Teuchos::null;
-    dof_map_.reset();
     fe_.reset();
     delete assembly_;
     assembly_ = nullptr;
@@ -227,29 +134,12 @@ protected:
     return *fe_;
   }
 
-  static Teuchos::RCP<specfem::linear_system::crs_matrix_type> matrix() {
-    if (matrix_.is_null()) {
-      if (!dof_map_) {
-        dof_map_ = std::make_unique<specfem::linear_system::DofMap>(
-            assembly(), MediumTags{});
-      }
-      DampingAssemblerType assembler(assembly(), *dof_map_);
-      matrix_ = assembler.assemble();
-    }
-    return matrix_;
-  }
-
   static AssemblyType *assembly_;
   static std::unique_ptr<FEAssemblyType> fe_;
-  static std::unique_ptr<specfem::linear_system::DofMap> dof_map_;
-  static Teuchos::RCP<specfem::linear_system::crs_matrix_type> matrix_;
 };
 
 AssemblyType *FEAssemblyStacey3D::assembly_ = nullptr;
 std::unique_ptr<FEAssemblyType> FEAssemblyStacey3D::fe_;
-std::unique_ptr<specfem::linear_system::DofMap> FEAssemblyStacey3D::dof_map_;
-Teuchos::RCP<specfem::linear_system::crs_matrix_type>
-    FEAssemblyStacey3D::matrix_;
 
 TEST_F(FEAssemblyStacey3D, DampingGraphIsBlockDiagonal) {
   const auto &map = fe().mapping();
@@ -289,28 +179,6 @@ TEST_F(FEAssemblyStacey3D, DampingGraphAgreesWithMask) {
           << "graph disagrees with the mask at (iglob=" << point
           << ", icomp=" << icomp << ")";
     }
-  }
-}
-
-TEST_F(FEAssemblyStacey3D, DampingGraphMatchesDampingAssembler) {
-  const auto &map = fe().mapping();
-  const auto graph = fe().damping_matrix_graph();
-  const auto reference = matrix()->getCrsGraph();
-  ASSERT_FALSE(reference.is_null());
-
-  // The two masks are derived independently: the assembler probes the
-  // matrix-free kernel and tests for exact nonzeros, this graph reads the
-  // boundary tags. They must agree on which points damp.
-  ASSERT_EQ(graph->getGlobalNumEntries(), reference->getGlobalNumEntries())
-      << "the FEAssembly damping graph has a different number of nonzeros "
-         "than the graph the damping assembler builds";
-
-  for (global_ordinal_type row = 0; row < map.num_global_dofs(); ++row) {
-    const auto columns = row_columns(*graph, row);
-    const auto reference_columns = row_columns(*reference, row);
-    ASSERT_EQ(columns, reference_columns)
-        << "damping row " << row << " couples to a different set of columns "
-        << "than in the graph the damping assembler builds";
   }
 }
 

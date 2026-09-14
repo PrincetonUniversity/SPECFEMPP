@@ -7,29 +7,14 @@
 #include "specfem/linear_system/element_stiffness.hpp"
 #include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
-#include <optional>
 #include <sstream>
 #include <stdexcept>
 
 template <typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 specfem::linear_system::DampingAssembler<Tags>::DampingAssembler(
-    AssemblyType &assembly, const DofMap &dof_map)
-    : assembly_(assembly), dof_map_(dof_map) {
-  validate();
-}
-
-template <typename Tags>
-  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
-specfem::linear_system::DampingAssembler<Tags>::DampingAssembler(
     AssemblyType &assembly, const FEAssemblyType &fe)
-    : assembly_(assembly), dof_map_(assembly, Tags{}), fe_(&fe) {
-  validate();
-}
-
-template <typename Tags>
-  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
-void specfem::linear_system::DampingAssembler<Tags>::validate() const {
+    : assembly_(assembly), fe_(fe) {
 
   // The probe shares the stiffness probe's scope (NGLL = 5, matching
   // property tag, no attenuation) but tolerates Stacey boundaries -- they
@@ -40,7 +25,7 @@ void specfem::linear_system::DampingAssembler<Tags>::validate() const {
   const auto &field = assembly_.fields.template get_simulation_field<
       specfem::simulation::field_type::forward>();
   const auto &field_impl = field.template get_field<medium_tag>();
-  if (field_impl.nglob != dof_map_.nglob()) {
+  if (field_impl.nglob != fe_.mapping().nglob()) {
     throw std::runtime_error(
         "specfem::linear_system::DampingAssembler: the dof map does not "
         "match the assembly's forward field.");
@@ -61,18 +46,9 @@ specfem::linear_system::DampingAssembler<Tags>::assemble() const {
   const auto h_u = field_impl.get_host_field();
   const auto h_v = field_impl.get_host_field_dot();
   const auto h_a = field_impl.get_host_field_dot_dot();
-  // Built up front so that the dof numbering, the sparsity graph and the
-  // absorbing-boundary mask all come from one description of the mesh. Built
-  // here only when the caller did not supply one to share.
-  const FEAssemblyType *fe = fe_;
-  const std::optional<FEAssemblyType> owned_fe =
-      fe_ ? std::nullopt
-          : std::optional<FEAssemblyType>(MappingType(assembly_));
-  if (fe == nullptr) {
-    fe = &owned_fe.value();
-  }
-
-  const auto &mapping = fe->mapping();
+  // The dof numbering, the sparsity graph and the absorbing-boundary mask all
+  // come from one description of the mesh.
+  const auto &mapping = fe_.mapping();
   const int nglob = mapping.nglob();
 
   // Probed blocks: block(p, r, c) = C_p(r, c). Interior points stay exactly
@@ -159,7 +135,7 @@ specfem::linear_system::DampingAssembler<Tags>::assemble() const {
     ++p;
   }
 
-  SparseMatrixView<MappingType> matrix(fe->damping_matrix_graph(), mapping);
+  SparseMatrixView<MappingType> matrix(fe_.damping_matrix_graph(), mapping);
   matrix.begin_fill();
   // One update for the whole operator: the dof set names every damping point's
   // components, and the rank-3 block carries that point's ncomp x ncomp block.
