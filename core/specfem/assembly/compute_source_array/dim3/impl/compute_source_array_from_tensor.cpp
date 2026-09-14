@@ -77,26 +77,26 @@ void compute_source_array_from_tensor_and_element_jacobian(
 
         // Compute the derivatives at the source location
         type_real dsrc_dx =
-            (hpxi_source(ix) * derivatives_source.xix) * heta_source(iy) *
+            (hpxi_source(ix) * derivatives_source.xix()) * heta_source(iy) *
                 hgamma_source(iz) +
-            hxi_source(ix) * (hpeta_source(iy) * derivatives_source.etax) *
+            hxi_source(ix) * (hpeta_source(iy) * derivatives_source.etax()) *
                 hgamma_source(iz) +
             hxi_source(ix) * heta_source(iy) *
-                (hpgamma_source(iz) * derivatives_source.gammax);
+                (hpgamma_source(iz) * derivatives_source.gammax());
         type_real dsrc_dy =
-            (hpxi_source(ix) * derivatives_source.xiy) * heta_source(iy) *
+            (hpxi_source(ix) * derivatives_source.xiy()) * heta_source(iy) *
                 hgamma_source(iz) +
-            hxi_source(ix) * (hpeta_source(iy) * derivatives_source.etay) *
+            hxi_source(ix) * (hpeta_source(iy) * derivatives_source.etay()) *
                 hgamma_source(iz) +
             hxi_source(ix) * heta_source(iy) *
-                (hpgamma_source(iz) * derivatives_source.gammay);
+                (hpgamma_source(iz) * derivatives_source.gammay());
         type_real dsrc_dz =
-            (hpxi_source(ix) * derivatives_source.xiz) * heta_source(iy) *
+            (hpxi_source(ix) * derivatives_source.xiz()) * heta_source(iy) *
                 hgamma_source(iz) +
-            hxi_source(ix) * (hpeta_source(iy) * derivatives_source.etaz) *
+            hxi_source(ix) * (hpeta_source(iy) * derivatives_source.etaz()) *
                 hgamma_source(iz) +
             hxi_source(ix) * heta_source(iy) *
-                (hpgamma_source(iz) * derivatives_source.gammaz);
+                (hpgamma_source(iz) * derivatives_source.gammaz());
 
         for (int i = 0; i < ncomponents; ++i) {
           source_array(i, iz, iy, ix) = source_tensor(i, 0) * dsrc_dx +

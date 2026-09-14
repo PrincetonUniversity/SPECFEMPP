@@ -74,6 +74,7 @@ operator==(const specfem::sources::source<specfem::element::dimension_tag::dim2>
 
   bool internal =
       coords_equal && specfem::utilities::is_close(this->f, other_source->f) &&
+      specfem::utilities::is_close(this->fc, other_source->fc) &&
       specfem::utilities::is_close(this->angle, other_source->angle);
 
   if (!internal) {

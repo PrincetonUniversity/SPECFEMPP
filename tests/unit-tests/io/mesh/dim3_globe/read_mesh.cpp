@@ -29,7 +29,7 @@ void check() {
   const auto &globe = mesh.globe;
   const auto &config = globe.model_config;
 
-  EXPECT_EQ(globe.format_version, 2);
+  EXPECT_EQ(globe.format_version, 3);
   EXPECT_EQ(mesh.control_nodes.ngnod, 27);
   EXPECT_GT(mesh.nspec, 0);
   EXPECT_GT(mesh.control_nodes.nnodes, 0);

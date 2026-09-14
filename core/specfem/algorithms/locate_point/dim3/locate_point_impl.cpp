@@ -148,11 +148,12 @@ std::tuple<type_real, type_real, type_real> get_local_coordinates(
     }
 
     // Compute the change in local coordinates using the Jacobian
-    type_real dxi = jacobian.xix * dx + jacobian.xiy * dy + jacobian.xiz * dz;
+    type_real dxi =
+        jacobian.xix() * dx + jacobian.xiy() * dy + jacobian.xiz() * dz;
     type_real deta =
-        jacobian.etax * dx + jacobian.etay * dy + jacobian.etaz * dz;
-    type_real dgamma =
-        jacobian.gammax * dx + jacobian.gammay * dy + jacobian.gammaz * dz;
+        jacobian.etax() * dx + jacobian.etay() * dy + jacobian.etaz() * dz;
+    type_real dgamma = jacobian.gammax() * dx + jacobian.gammay() * dy +
+                       jacobian.gammaz() * dz;
 
     // decreases step length if step is large
     if ((dxi * dxi + deta * deta + dgamma * dgamma) >
@@ -218,11 +219,11 @@ std::tuple<type_real, type_real, type_real> get_local_coordinates(
 
         // Compute the change in local coordinates using the Jacobian
         type_real dxi =
-            jacobian.xix * dx + jacobian.xiy * dy + jacobian.xiz * dz;
+            jacobian.xix() * dx + jacobian.xiy() * dy + jacobian.xiz() * dz;
         type_real deta =
-            jacobian.etax * dx + jacobian.etay * dy + jacobian.etaz * dz;
-        type_real dgamma =
-            jacobian.gammax * dx + jacobian.gammay * dy + jacobian.gammaz * dz;
+            jacobian.etax() * dx + jacobian.etay() * dy + jacobian.etaz() * dz;
+        type_real dgamma = jacobian.gammax() * dx + jacobian.gammay() * dy +
+                           jacobian.gammaz() * dz;
 
         // decreases step length if step is large
         if ((dxi * dxi + deta * deta + dgamma * dgamma) >
@@ -447,38 +448,41 @@ std::pair<std::pair<type_real, type_real>, bool> get_local_face_coordinate(
         jacobian_facecoord2z] = [&xi, &gamma, &eta, &mesh_entity, &jacobian]()
       -> std::tuple<type_real &, type_real &, type_real &, type_real &,
                     type_real &, type_real &, type_real &, type_real &> {
-    if (mesh_entity == specfem::mesh_entity::dim3::type::bottom) {
-      gamma = -1;
-      return { xi,           eta,           jacobian.xix,  jacobian.xiy,
-               jacobian.xiz, jacobian.etax, jacobian.etay, jacobian.etaz };
-    } else if (mesh_entity == specfem::mesh_entity::dim3::type::top) {
-      gamma = 1;
-      return { xi,           eta,           jacobian.xix,  jacobian.xiy,
-               jacobian.xiz, jacobian.etax, jacobian.etay, jacobian.etaz };
-    } else if (mesh_entity == specfem::mesh_entity::dim3::type::left) {
-      xi = -1;
-      return {
-        eta,           gamma,           jacobian.etax,   jacobian.etay,
-        jacobian.etaz, jacobian.gammax, jacobian.gammay, jacobian.gammaz
-      };
-    } else if (mesh_entity == specfem::mesh_entity::dim3::type::right) {
-      xi = 1;
-      return {
-        eta,           gamma,           jacobian.etax,   jacobian.etay,
-        jacobian.etaz, jacobian.gammax, jacobian.gammay, jacobian.gammaz
-      };
-    } else if (mesh_entity == specfem::mesh_entity::dim3::type::front) {
-      eta = -1;
-      return {
-        xi,           gamma,           jacobian.xix,    jacobian.xiy,
-        jacobian.xiz, jacobian.gammax, jacobian.gammay, jacobian.gammaz
-      };
-    } else { // back
-      eta = 1;
-      return {
-        xi,           gamma,           jacobian.xix,    jacobian.xiy,
-        jacobian.xiz, jacobian.gammax, jacobian.gammay, jacobian.gammaz
-      };
+    // Each face pair (bottom/top, left/right, front/back) frees the same two
+    // reference coordinates and constrains the third to -1 or +1; only that
+    // sign differs within a pair.
+    if (mesh_entity == specfem::mesh_entity::dim3::type::bottom ||
+        mesh_entity == specfem::mesh_entity::dim3::type::top) {
+      gamma = (mesh_entity == specfem::mesh_entity::dim3::type::top) ? 1 : -1;
+      return { xi,
+               eta,
+               jacobian.xix(),
+               jacobian.xiy(),
+               jacobian.xiz(),
+               jacobian.etax(),
+               jacobian.etay(),
+               jacobian.etaz() };
+    } else if (mesh_entity == specfem::mesh_entity::dim3::type::left ||
+               mesh_entity == specfem::mesh_entity::dim3::type::right) {
+      xi = (mesh_entity == specfem::mesh_entity::dim3::type::right) ? 1 : -1;
+      return { eta,
+               gamma,
+               jacobian.etax(),
+               jacobian.etay(),
+               jacobian.etaz(),
+               jacobian.gammax(),
+               jacobian.gammay(),
+               jacobian.gammaz() };
+    } else { // front / back
+      eta = (mesh_entity == specfem::mesh_entity::dim3::type::back) ? 1 : -1;
+      return { xi,
+               gamma,
+               jacobian.xix(),
+               jacobian.xiy(),
+               jacobian.xiz(),
+               jacobian.gammax(),
+               jacobian.gammay(),
+               jacobian.gammaz() };
     }
   }();
   facecoord1 = coord.first;
