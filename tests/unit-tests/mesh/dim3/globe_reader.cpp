@@ -60,6 +60,7 @@ void write_surface(std::ofstream &stream, const std::vector<int> &elements,
 
 std::filesystem::path write_database(const bool attenuation = false,
                                      const double source_frequency = 0.0,
+                                     const int property_tag = 0,
                                      const bool include_mpi = false) {
   const auto suffix =
       std::chrono::steady_clock::now().time_since_epoch().count();
@@ -97,7 +98,7 @@ std::filesystem::path write_database(const bool attenuation = false,
 
   write_values(stream, 1);
   write_values(stream, std::vector<int>{ 1 }, std::vector<int>{ 2 },
-               std::vector<int>{ 0 }, std::vector<int>{ 4 });
+               std::vector<int>{ property_tag }, std::vector<int>{ 4 });
   write_values(stream, std::vector<double>{ 3000000.0 },
                std::vector<double>{ 3100000.0 });
   write_values(stream, std::vector<int>{ 0 }, std::vector<int>{ 1 });
@@ -157,8 +158,20 @@ TEST(GlobeMeshReader, RejectsAnInconsistentAttenuationSourceFrequency) {
   std::filesystem::remove(path);
 }
 
+TEST(GlobeMeshReader, PreservesAnisotropicElasticPropertyTag) {
+  const auto path = globe_reader_test_impl::write_database(false, 0.0, 1);
+  const auto mesh = specfem::io::read_globe_mesh(path.string(),
+                                                 specfem::attenuation::Setup{});
+  std::filesystem::remove(path);
+
+  const auto &mapping = mesh.materials.material_index_mapping.front();
+  EXPECT_EQ(mapping.type, specfem::element::medium_tag::elastic);
+  EXPECT_EQ(mapping.property, specfem::element::property_tag::anisotropic);
+  EXPECT_EQ(mapping.attenuation, specfem::element::attenuation_tag::none);
+}
+
 TEST(GlobeMeshReader, ReadsResolvedMpiAdjacency) {
-  const auto path = globe_reader_test_impl::write_database(false, 0.0, true);
+  const auto path = globe_reader_test_impl::write_database(false, 0.0, 0, true);
   const auto mesh = specfem::io::read_globe_mesh(path.string(),
                                                  specfem::attenuation::Setup{});
   std::filesystem::remove(path);

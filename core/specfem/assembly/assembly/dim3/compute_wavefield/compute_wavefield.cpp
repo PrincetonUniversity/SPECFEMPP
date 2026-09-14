@@ -92,7 +92,7 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::
 
   specfem::tag_dispatch::for_each(
       DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic, elastic_spin) *
-          PROPERTY_SET(isotropic, isotropic_cosserat),
+          PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
       [&]<typename TagsType>() {
         get_wavefield_on_entire_grid<TagsType>(component, *this,
                                                wavefield_on_entire_grid);
