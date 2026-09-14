@@ -240,18 +240,15 @@ void compute_coupling_core_nonconforming(
         specfem::assembly::load_on_device(coupled_chunk_index, field,
                                           coupled_field);
 
-
-
-
         const auto &nonconforming_interfaces =
             assembly.nonconforming_interfaces;
-        const auto& assembly_mesh_xi = assembly.mesh.xi;
-        const auto& boundaries = assembly.boundaries;
-
+        const auto &assembly_mesh_xi = assembly.mesh.xi;
+        const auto &boundaries = assembly.boundaries;
 
         // internal to lambda, since nvcc could not compile otherwise
         constexpr bool is_pointwise_coupling_ = is_pointwise_coupling;
         if constexpr (is_pointwise_coupling_) {
+          team.team_barrier();
           specfem::execution::for_each_level(
               self_chunk_index.get_iterator(),
               [&](const typename std::decay_t<decltype(self_chunk_index)>::

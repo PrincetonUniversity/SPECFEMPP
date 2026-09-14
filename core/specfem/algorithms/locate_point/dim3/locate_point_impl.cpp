@@ -426,7 +426,7 @@ std::pair<std::pair<type_real, type_real>, bool> get_local_face_coordinate(
                            specfem::element::dimension_tag::dim3> *,
                        Kokkos::HostSpace> &coorg,
     const specfem::mesh_entity::dim3::type &mesh_entity,
-    std::pair<type_real, type_real> coord) {
+    std::pair<type_real, type_real> coord, const bool &require_hit) {
   constexpr type_real local_deriv_eps = 1e-12;
   constexpr type_real global_coord_eps = 5e-2;
   const int ngnod = coorg.extent(0);
@@ -441,10 +441,12 @@ std::pair<std::pair<type_real, type_real>, bool> get_local_face_coordinate(
    * edge-constrained.
    *
    * Additionally, we can reference the coordinate of the jacobian matrix.
+   * Note the flip of facecoord2 and facecoord1. This is because of the index
+   * flip between local-face and local-element coordinates.
    */
-  auto [facecoord1, facecoord2, jacobian_facecoord1x, jacobian_facecoord1y,
-        jacobian_facecoord1z, jacobian_facecoord2x, jacobian_facecoord2y,
-        jacobian_facecoord2z] = [&xi, &gamma, &eta, &mesh_entity, &jacobian]()
+  auto [facecoord2, facecoord1, jacobian_facecoord2x, jacobian_facecoord2y,
+        jacobian_facecoord2z, jacobian_facecoord1x, jacobian_facecoord1y,
+        jacobian_facecoord1z] = [&xi, &gamma, &eta, &mesh_entity, &jacobian]()
       -> std::tuple<type_real &, type_real &, type_real &, type_real &,
                     type_real &, type_real &, type_real &, type_real &> {
     if (mesh_entity == specfem::mesh_entity::dim3::type::bottom) {
@@ -552,7 +554,12 @@ std::pair<std::pair<type_real, type_real>, bool> get_local_face_coordinate(
                std::max(specfem::point::distance(coorg(1), coorg(7)),
                         specfem::point::distance(coorg(3), coorg(5)))));
 
-  if (distance > mesh_charlen * global_coord_eps) {
+  const bool hit = distance < mesh_charlen * global_coord_eps;
+  if (!require_hit) {
+    // no checking requested.
+    return { { facecoord1, facecoord2 }, hit };
+  }
+  if (!hit) {
     std::ostringstream oss;
     oss << "\nFailed to locate point along face:\n"
         << "  (xi, eta, gamma)   = (" << xi << ", " << eta << ", " << gamma
@@ -578,7 +585,8 @@ std::pair<std::pair<type_real, type_real>, bool> locate_point(
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
     const int &ispec,
     const specfem::mesh_entity::type<specfem::element::dimension_tag::dim3>
-        &constraint) {
+        &constraint,
+    const bool &require_hit) {
 
   if (!specfem::mesh_entity::contains(specfem::mesh_entity::dim3::faces,
                                       constraint)) {
@@ -596,9 +604,9 @@ std::pair<std::pair<type_real, type_real>, bool> locate_point(
     coorg(i).z = mesh.h_control_node_coordinates(ispec, i, 2);
   }
 
-  // initial guess of 0 (center of edge)
+  // initial guess of 0 (center of face)
   return specfem::algorithms::locate_point_impl::get_local_face_coordinate(
-      coordinates, coorg, constraint, { 0, 0 });
+      coordinates, coorg, constraint, { 0, 0 }, require_hit);
 }
 
 specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
@@ -614,20 +622,20 @@ locate_point(
                              "(edges are currently unsupported).");
     return { 0, 0, 0 };
   }
-  const auto [xi, gamma,
-              eta] = [&]() -> std::tuple<type_real, type_real, type_real> {
+  const auto [xi, eta,
+              gamma] = [&]() -> std::tuple<type_real, type_real, type_real> {
     if (constraint == specfem::mesh_entity::dim3::type::bottom) {
-      return { coordinates.first, coordinates.second, -1 };
+      return { coordinates.second, coordinates.first, -1 };
     } else if (constraint == specfem::mesh_entity::dim3::type::right) {
-      return { 1, coordinates.first, coordinates.second };
+      return { 1, coordinates.second, coordinates.first };
     } else if (constraint == specfem::mesh_entity::dim3::type::top) {
-      return { coordinates.first, coordinates.second, 1 };
+      return { coordinates.second, coordinates.first, 1 };
     } else if (constraint == specfem::mesh_entity::dim3::type::left) {
-      return { -1, coordinates.first, coordinates.second };
+      return { -1, coordinates.second, coordinates.first };
     } else if (constraint == specfem::mesh_entity::dim3::type::front) {
-      return { coordinates.first, -1, coordinates.second };
+      return { coordinates.second, -1, coordinates.first };
     } else { // back
-      return { coordinates.first, 1, coordinates.second };
+      return { coordinates.second, 1, coordinates.first };
     }
   }();
 
