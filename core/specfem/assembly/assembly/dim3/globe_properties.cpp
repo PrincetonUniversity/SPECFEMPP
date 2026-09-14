@@ -103,10 +103,15 @@ void read_globe_properties(
           context.region, context.idoubling, context.rmin, context.rmax,
           context.element_in_crust, context.element_in_mantle, xyz);
       if (values.is_anisotropic) {
+        // The 3-D anisotropic property container, stress and kernels now
+        // exist, but element property tags are fixed from
+        // input_mesh.materials.material_index_mapping before this evaluator
+        // runs. Supporting this needs per-element re-tagging from
+        // values.is_anisotropic, which is not implemented.
         throw std::runtime_error(
-            "The globe evaluator returned anisotropic cij, but SPECFEM++ has "
-            "no "
-            "3-D anisotropic property container or kernel yet");
+            "The globe evaluator returned anisotropic cij, but SPECFEM++ "
+            "cannot yet re-tag globe elements as anisotropic after the mesh "
+            "material mapping has been built");
       }
 
       const auto medium =

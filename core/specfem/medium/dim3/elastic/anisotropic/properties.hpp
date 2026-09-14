@@ -75,6 +75,30 @@ public:
   }
 
   /**
+   * @brief Return the isotropic-equivalent bulk modulus.
+   *
+   * Alias for the Voigt average \f$K_V\f$, provided so that code shared with
+   * the isotropic parameterization (wavefield output, reporting) can query an
+   * elastic point container without branching on its property tag.
+   *
+   * @return Voigt-average bulk modulus \f$K_V\f$.
+   */
+  KOKKOS_INLINE_FUNCTION const value_type kappa() const {
+    return voigt_bulk_modulus();
+  }
+
+  /**
+   * @brief Return the isotropic-equivalent shear modulus.
+   *
+   * Alias for the Voigt average \f$G_V\f$. See kappa().
+   *
+   * @return Voigt-average shear modulus \f$G_V\f$.
+   */
+  KOKKOS_INLINE_FUNCTION const value_type mu() const {
+    return voigt_shear_modulus();
+  }
+
+  /**
    * @brief Return density times the Voigt-average P-wave speed.
    * @return Product \f$\rho v_p\f$.
    */

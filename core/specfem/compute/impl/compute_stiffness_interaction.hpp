@@ -146,7 +146,7 @@ int compute_stiffness_interaction(
   constexpr auto property_set = []() {
     if constexpr (Tags::dimension_tag ==
                   specfem::element::dimension_tag::dim3) {
-      return PROPERTY_SET(isotropic);
+      return PROPERTY_SET(isotropic, anisotropic);
     } else {
       return PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat);
     }
