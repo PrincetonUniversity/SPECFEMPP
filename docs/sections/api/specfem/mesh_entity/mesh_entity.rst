@@ -86,14 +86,3 @@ Dimension-Specific Implementations
 =====================================
 
 .. doxygenvariable:: specfem::mesh_entity::dim3::faces
-
-``specfem::mesh_entity::dim3`` database codes
-=============================================
-
-.. doxygenfunction:: specfem::mesh_entity::dim3::from_code
-
-.. doxygenfunction:: specfem::mesh_entity::dim3::face_from_code
-
-.. doxygenfunction:: specfem::mesh_entity::dim3::corner_from_code
-
-.. doxygenfunction:: specfem::mesh_entity::dim3::to_code

@@ -1,13 +1,38 @@
 #pragma once
 
+#include "specfem/element/tags.hpp"
 #include "specfem/globe_model/model_config.hpp"
 
 #include <cstddef>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
 namespace specfem {
 namespace globe_model {
+
+/**
+ * @brief SPECFEM3D_GLOBE @c IREGION_* code of a radial region.
+ *
+ * The catalog identifies regions by integer: 1 = crust/mantle, 2 = outer
+ * core, 3 = inner core.
+ *
+ * @param region Radial region tag
+ * @return Catalog region code
+ * @throws std::runtime_error for an unknown tag
+ */
+inline int iregion_code(const specfem::element::region_tag region) {
+  switch (region) {
+  case specfem::element::region_tag::crust_mantle:
+    return 1;
+  case specfem::element::region_tag::outer_core:
+    return 2;
+  case specfem::element::region_tag::inner_core:
+    return 3;
+  default:
+    throw std::runtime_error("Unknown region tag for the globe evaluator");
+  }
+}
 
 /**
  * @brief Quadrature sizes the SPECFEM3D_GLOBE model catalog was compiled with.
@@ -193,6 +218,21 @@ public:
                                      double rmin_si, double rmax_si,
                                      bool elem_in_crust, bool elem_in_mantle,
                                      const std::vector<double> &xyz_si) const;
+
+  /**
+   * @brief Same as above, taking the region as a tag.
+   * @param region Radial region of the element; translated with
+   *        @ref iregion_code.
+   */
+  ElementProperties evaluate_element(specfem::element::region_tag region,
+                                     int idoubling, double rmin_si,
+                                     double rmax_si, bool elem_in_crust,
+                                     bool elem_in_mantle,
+                                     const std::vector<double> &xyz_si) const {
+    return evaluate_element(specfem::globe_model::iregion_code(region),
+                            idoubling, rmin_si, rmax_si, elem_in_crust,
+                            elem_in_mantle, xyz_si);
+  }
 
   /** @brief Quadrature sizes the catalog was compiled with. */
   static Dims dims();

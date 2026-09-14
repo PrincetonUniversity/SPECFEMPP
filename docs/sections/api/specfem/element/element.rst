@@ -63,21 +63,6 @@ Dimension-Specific Implementations
 
 .. doxygenfunction:: specfem::element::from_string
 
-``specfem::element`` database codes
-===================================
-
-.. doxygenfunction:: specfem::element::region_tag_from_code
-
-.. doxygenfunction:: specfem::element::medium_tag_from_code
-
-.. doxygenfunction:: specfem::element::property_tag_from_code
-
-.. doxygenfunction:: specfem::element::to_code(const region_tag &region)
-
-.. doxygenfunction:: specfem::element::to_code(const medium_tag &medium)
-
-.. doxygenfunction:: specfem::element::to_code(const property_tag &property)
-
 
 ``specfem::element::attributes``
 ================================

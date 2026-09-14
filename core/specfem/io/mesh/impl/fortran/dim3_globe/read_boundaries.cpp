@@ -2,6 +2,7 @@
 
 #include "specfem/io.hpp"
 #include "specfem/io/fortranio/interface.hpp"
+#include "specfem/io/mesh/impl/fortran/dim3_globe/globe_codes.hpp"
 
 #include <Kokkos_Core.hpp>
 #include <stdexcept>
@@ -31,7 +32,8 @@ specfem::io::mesh::impl::fortran::dim3_globe::read_surface(
     }
     --result.elements[iface];
     result.faces[iface] =
-        specfem::mesh_entity::dim3::face_from_code(faces[iface]);
+        specfem::io::mesh::impl::fortran::dim3_globe_impl::to_face(
+            faces[iface]);
   }
 
   return result;

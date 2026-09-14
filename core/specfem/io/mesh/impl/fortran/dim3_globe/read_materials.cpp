@@ -2,6 +2,7 @@
 
 #include "specfem/io.hpp"
 #include "specfem/io/fortranio/interface.hpp"
+#include "specfem/io/mesh/impl/fortran/dim3_globe/globe_codes.hpp"
 #include "specfem/medium_container.hpp"
 
 #include <optional>
@@ -37,16 +38,20 @@ specfem::io::mesh::impl::fortran::dim3_globe::read_material_tags(
   // Kokkos host parallel region cannot propagate.
   for (int ispec = 0; ispec < mesh.nspec; ++ispec) {
     tags.medium_tags[ispec] =
-        specfem::element::medium_tag_from_code(medium_codes[ispec]);
+        specfem::io::mesh::impl::fortran::dim3_globe_impl::to_medium_tag(
+            medium_codes[ispec]);
     tags.property_tags[ispec] =
-        specfem::element::property_tag_from_code(property_codes[ispec]);
-    element_context[ispec] = { specfem::element::region_tag_from_code(
-                                   region_codes[ispec]),
-                               idoubling[ispec],
-                               rmin[ispec],
-                               rmax[ispec],
-                               in_crust[ispec],
-                               in_mantle[ispec] };
+        specfem::io::mesh::impl::fortran::dim3_globe_impl::to_property_tag(
+            property_codes[ispec]);
+    element_context[ispec] = {
+      specfem::io::mesh::impl::fortran::dim3_globe_impl::to_region_tag(
+          region_codes[ispec]),
+      idoubling[ispec],
+      rmin[ispec],
+      rmax[ispec],
+      in_crust[ispec],
+      in_mantle[ispec]
+    };
   }
 
   return tags;

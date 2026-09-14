@@ -1,6 +1,7 @@
 #include "specfem/io/mesh/impl/fortran/dim3_globe/read_adjacency_graph.hpp"
 
 #include "specfem/io/fortranio/interface.hpp"
+#include "specfem/io/mesh/impl/fortran/dim3_globe/globe_codes.hpp"
 
 #include <boost/graph/adjacency_list.hpp>
 #include <stdexcept>
@@ -38,7 +39,8 @@ void specfem::io::mesh::impl::fortran::dim3_globe::read_adjacency_graph(
           ispec, neighbor,
           AdjacencyGraph::EdgeProperties(
               specfem::element_connections::type::strongly_conforming,
-              specfem::mesh_entity::dim3::from_code(adjacency_types[offset])),
+              specfem::io::mesh::impl::fortran::dim3_globe_impl::to_entity(
+                  adjacency_types[offset])),
           graph);
     }
   }
@@ -73,12 +75,16 @@ void specfem::io::mesh::impl::fortran::dim3_globe::read_adjacency_graph(
 
     mpi_connections.emplace_back(
         specfem::element_connections::type::strongly_conforming,
-        specfem::mesh_entity::dim3::from_code(local_entity),
+        specfem::io::mesh::impl::fortran::dim3_globe_impl::to_entity(
+            local_entity),
         static_cast<std::size_t>(neighbor_rank),
-        specfem::mesh_entity::dim3::from_code(neighbor_entity),
+        specfem::io::mesh::impl::fortran::dim3_globe_impl::to_entity(
+            neighbor_entity),
         static_cast<std::size_t>(local_element),
         static_cast<std::size_t>(neighbor_element),
-        specfem::mesh_entity::dim3::corner_from_code(local_anchor),
-        specfem::mesh_entity::dim3::corner_from_code(neighbor_anchor));
+        specfem::io::mesh::impl::fortran::dim3_globe_impl::to_anchor(
+            local_anchor),
+        specfem::io::mesh::impl::fortran::dim3_globe_impl::to_anchor(
+            neighbor_anchor));
   }
 }

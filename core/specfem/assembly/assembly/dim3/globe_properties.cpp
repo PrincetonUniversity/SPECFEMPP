@@ -2,7 +2,6 @@
 
 #include <stdexcept>
 
-#include "specfem/element.hpp"
 #include "specfem/globe_model.hpp"
 #include "specfem/point.hpp"
 #include "specfem/tags.hpp"
@@ -106,8 +105,7 @@ void read_globe_properties(
       }
 
       const auto values = evaluator.evaluate_element(
-          specfem::element::to_code(
-              element_types.get_region_tag(compute_ispec)),
+          element_types.get_region_tag(compute_ispec),
           element_types.idoubling(compute_ispec),
           element_types.rmin(compute_ispec), element_types.rmax(compute_ispec),
           element_types.elem_in_crust(compute_ispec),
