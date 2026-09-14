@@ -1,8 +1,10 @@
-// The only translation unit that includes TensorOperations headers; exists
-// solely in SPECFEM_ENABLE_TENSOROPS builds (see the header).
-#ifdef SPECFEM_ENABLE_TENSOROPS
-
+// The only translation unit that includes TensorOperations headers. Without
+// SPECFEM_ENABLE_TENSOROPS the entry points are defined as throwing stubs
+// (see the bottom of the file), so callers dispatch without preprocessor
+// branches.
 #include "specfem/linear_system/impl/stiffness_tensor_graph_kernel.hpp"
+
+#ifdef SPECFEM_ENABLE_TENSOROPS
 
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly/assembly.hpp"
@@ -323,8 +325,32 @@ void specfem::linear_system_impl::compute_element_stiffness_tensor_graph(
   Kokkos::fence();
 }
 
+#else // !SPECFEM_ENABLE_TENSOROPS
+
+#include <stdexcept>
+
+// Throwing stub so OFF builds link and fail at the moment a tensor-graph
+// kernel is actually requested, not at compile time in every caller.
+template <int NGLL, typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
+           Tags::attenuation_tag == specfem::element::attenuation_tag::none)
+void specfem::linear_system_impl::compute_element_stiffness_tensor_graph(
+    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &,
+    const specfem::datatype::ElementIndexRange &,
+    const Kokkos::View<type_real ***, Kokkos::LayoutRight,
+                       Kokkos::DefaultExecutionSpace> &) {
+  throw std::runtime_error(
+      "specfem::linear_system::compute_element_stiffness: the tensor_graph "
+      "kernel requires SPECFEM++ built with SPECFEM_ENABLE_TENSOROPS=ON "
+      "(and SPECFEM_TENSOROPS_ROOT pointing at a TensorOperations "
+      "checkout).");
+}
+
+#endif // SPECFEM_ENABLE_TENSOROPS
+
 // Explicit instantiation: 3D elastic isotropic, NGLL = 5 (mirrors
-// element_stiffness.cpp).
+// element_stiffness.cpp). Instantiates the real kernel or the throwing stub,
+// whichever the build selected above.
 template void
 specfem::linear_system_impl::compute_element_stiffness_tensor_graph<
     5, specfem::tags::Tags<specfem::element::dimension_tag::dim3,
@@ -335,5 +361,3 @@ specfem::linear_system_impl::compute_element_stiffness_tensor_graph<
     const specfem::datatype::ElementIndexRange &,
     const Kokkos::View<type_real ***, Kokkos::LayoutRight,
                        Kokkos::DefaultExecutionSpace> &);
-
-#endif // SPECFEM_ENABLE_TENSOROPS

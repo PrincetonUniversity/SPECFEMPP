@@ -42,18 +42,11 @@ void specfem::linear_system::compute_element_stiffness(
   }
 
   if (impl == specfem::linear_system::StiffnessKernelImpl::tensor_graph) {
-#ifdef SPECFEM_ENABLE_TENSOROPS
+    // Throws in builds without SPECFEM_ENABLE_TENSOROPS (see the impl header).
     specfem::linear_system_impl::compute_element_stiffness_tensor_graph<NGLL,
                                                                         Tags>(
         assembly, batch, k_e);
     return;
-#else
-    throw std::runtime_error(
-        "specfem::linear_system::compute_element_stiffness: the tensor_graph "
-        "kernel requires SPECFEM++ built with SPECFEM_ENABLE_TENSOROPS=ON "
-        "(and SPECFEM_TENSOROPS_ROOT pointing at a TensorOperations "
-        "checkout).");
-#endif
   }
 
   specfem::mesh_entity::element_grid<specfem::element::dimension_tag::dim3,

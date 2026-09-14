@@ -1,10 +1,9 @@
 #pragma once
 
-// Declares the TensorOperations-backed K_e producer. The whole file is guarded
-// so that translation units may include it unconditionally; only the .cpp
-// sibling (the sole TU that includes TensorOperations headers) exists in
-// SPECFEM_ENABLE_TENSOROPS builds.
-#ifdef SPECFEM_ENABLE_TENSOROPS
+// Declares the TensorOperations-backed K_e producer, unconditionally: callers
+// dispatch on it without preprocessor branches. The .cpp sibling is the sole
+// TU that includes TensorOperations headers; without SPECFEM_ENABLE_TENSOROPS
+// it defines these entry points as throwing stubs instead.
 
 #include "specfem/datatype/element_index_range.hpp"
 #include "specfem/enums.hpp"
@@ -80,5 +79,3 @@ void compute_element_stiffness_tensor_graph(
                        Kokkos::DefaultExecutionSpace> &k_e);
 
 } // namespace specfem::linear_system_impl
-
-#endif // SPECFEM_ENABLE_TENSOROPS
