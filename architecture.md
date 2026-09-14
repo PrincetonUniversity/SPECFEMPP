@@ -271,7 +271,7 @@ mesh + quadrature + sources + receivers
     ├── kernels          (storage for Fréchet derivative accumulators)
     ├── conforming_interfaces     (coupled-medium continuity data)
     ├── nonconforming_interfaces  (non-conforming mesh interface data)
-    ├── element_types    (per-element physics classification)
+    ├── element_types    (per-element physics classification, plus globe region context for Globe3D)
     └── boundary_values  (stored boundary data for adjoint reconstructions)
 ```
 

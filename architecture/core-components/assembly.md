@@ -22,7 +22,7 @@ mesh + quadrature + sources + receivers
     ├── conforming_interfaces     (coupled-medium continuity data)
     ├── nonconforming_interfaces  (non-conforming mesh interface data)
     ├── mpi_interfaces   (MPI face communication patterns)
-    ├── element_types    (per-element physics classification)
+    ├── element_types    (per-element physics classification, plus globe region context for Globe3D)
     └── boundary_values  (stored boundary data for adjoint reconstructions)
 ```
 
