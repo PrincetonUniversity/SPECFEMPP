@@ -143,12 +143,20 @@ int compute_stiffness_interaction(
 
   int elements_updated = 0;
 
+  constexpr auto property_set = []() {
+    if constexpr (Tags::dimension_tag ==
+                  specfem::element::dimension_tag::dim3) {
+      return PROPERTY_SET(isotropic);
+    } else {
+      return PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat);
+    }
+  }();
+
   constexpr auto element_combinations =
       specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
       specfem::tag_dispatch::medium_set<Tags::medium_tag>{} *
       specfem::tag_dispatch::wavefield_set<Tags::wavefield_tag>{} *
-      specfem::tag_dispatch::mpi_set<Tags::mpi_tag>{} *
-      PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
+      specfem::tag_dispatch::mpi_set<Tags::mpi_tag>{} * property_set *
       ATTENUATION_SET(none, constant_isotropic) *
       BOUNDARY_SET(none, stacey, acoustic_free_surface,
                    composite_stacey_dirichlet);
