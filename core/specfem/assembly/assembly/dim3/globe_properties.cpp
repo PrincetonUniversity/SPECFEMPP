@@ -9,6 +9,7 @@
 #include "specfem/utilities/logarithmic_center.hpp"
 #include <algorithm>
 #include <cmath>
+#include <string>
 #include <vector>
 
 namespace specfem::assembly::dim3_impl {
@@ -20,6 +21,12 @@ void read_globe_properties(
   using Dimension = specfem::element::dimension_tag;
   using Medium = specfem::element::medium_tag;
   using Property = specfem::element::property_tag;
+
+  const auto &element_types = assembly.element_types;
+  if (!element_types.has_element_context()) {
+    throw std::runtime_error("read_globe_properties: element_types carries no "
+                             "globe element context");
+  }
 
   const auto &globe = input_mesh.globe;
   specfem::globe_model::Evaluator evaluator(globe.model_config);
@@ -93,31 +100,37 @@ void read_globe_properties(
 
     for (int batch_ispec = 0; batch_ispec < batch_size; ++batch_ispec) {
       const int compute_ispec = batch_begin + batch_ispec;
-      const int mesh_ispec = assembly.mesh.h_compute_to_mesh(compute_ispec);
-      const auto &context = globe.element_context[mesh_ispec];
       for (std::size_t icoordinate = 0; icoordinate < ncoordinates;
            ++icoordinate) {
         xyz[icoordinate] = xyz_batch(batch_ispec, icoordinate);
       }
 
       const auto values = evaluator.evaluate_element(
-          specfem::element::to_code(context.region), context.idoubling,
-          context.rmin, context.rmax, context.element_in_crust,
-          context.element_in_mantle, xyz);
-      if (values.is_anisotropic) {
-        // The 3-D anisotropic property container, stress and kernels now
-        // exist, but element property tags are fixed from
-        // input_mesh.materials.material_index_mapping before this evaluator
-        // runs. Supporting this needs per-element re-tagging from
-        // values.is_anisotropic, which is not implemented.
+          specfem::element::to_code(
+              element_types.get_region_tag(compute_ispec)),
+          element_types.idoubling(compute_ispec),
+          element_types.rmin(compute_ispec), element_types.rmax(compute_ispec),
+          element_types.elem_in_crust(compute_ispec),
+          element_types.elem_in_mantle(compute_ispec), xyz);
+
+      const bool tagged_anisotropic =
+          element_types.get_property_tag(compute_ispec) ==
+          Property::anisotropic;
+      if (values.is_anisotropic != tagged_anisotropic) {
         throw std::runtime_error(
-            "The globe evaluator returned anisotropic cij, but SPECFEM++ "
-            "cannot yet re-tag globe elements as anisotropic after the mesh "
-            "material mapping has been built");
+            "Globe evaluator anisotropy disagrees with the database property "
+            "tag for compute element " +
+            std::to_string(compute_ispec));
+      }
+      if (tagged_anisotropic) {
+        // Storing the oracle's 21 cij in the anisotropic container is issue
+        // #2043; the evaluator's Voigt order matches the container's.
+        throw std::runtime_error(
+            "Storing anisotropic globe properties from the evaluator is not "
+            "implemented yet");
       }
 
-      const auto medium =
-          input_mesh.materials.material_index_mapping[mesh_ispec].type;
+      const auto medium = element_types.get_medium_tag(compute_ispec);
       std::size_t ipoint = 0;
       for (int iz = 0; iz < ngllz; ++iz) {
         for (int iy = 0; iy < nglly; ++iy) {
