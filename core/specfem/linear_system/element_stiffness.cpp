@@ -124,3 +124,9 @@ template void specfem::linear_system::compute_element_stiffness<
     const Kokkos::View<type_real ***, Kokkos::LayoutRight,
                        Kokkos::DefaultExecutionSpace> &,
     const specfem::linear_system::StiffnessKernelImpl);
+
+template specfem::linear_system::ElementStiffnessKernel
+specfem::linear_system::make_element_stiffness_kernel<
+    specfem::linear_system_impl::elastic_isotropic_tags>(
+    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &,
+    const int, const specfem::linear_system::StiffnessKernelImpl);

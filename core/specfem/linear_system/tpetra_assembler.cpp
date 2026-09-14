@@ -62,13 +62,20 @@ void specfem::linear_system::StiffnessAssembler<Tags>::fill_matrix(
           ndof_e);
   auto h_k_e = Kokkos::create_mirror_view(k_e);
 
+  // Kernel bound once, next to the buffers it fills: per-construction costs
+  // (the tensor-graph kernel's workspace allocation and identity fill) are
+  // paid here, not per batch.
+  const auto fill_blocks =
+      specfem::linear_system::make_element_stiffness_kernel<Tags>(
+          assembly_, static_cast<int>(k_e.extent(0)), kernel_impl_);
+
   for (int offset = 0; offset < nelements; offset += element_batch_size_) {
     const int batch_count = std::min(element_batch_size_, nelements - offset);
     const auto batch = specfem::datatype::subview(
         elements, Kokkos::pair<int, int>(offset, offset + batch_count));
 
-    specfem::linear_system::compute_element_stiffness<Tags>(assembly_, batch,
-                                                            k_e, kernel_impl_);
+    fill_blocks(batch, k_e);
+    // Synchronizes the asynchronous kernel besides staging the blocks.
     Kokkos::deep_copy(h_k_e, k_e);
 
     // One block-diagonal update for the whole batch: the dof set names this

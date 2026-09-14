@@ -19,6 +19,8 @@
 #include <TensorOperations/LevelGraph.hpp>
 #include <TensorOperations/LevelPlan.hpp>
 #include <TensorOperations/Tiling.hpp>
+#include <sstream>
+#include <stdexcept>
 
 namespace specfem::linear_system_impl {
 
@@ -32,7 +34,8 @@ namespace specfem::linear_system_impl {
  * `specfem::medium_physics::compute_stress`, and returns the nine
  * stress-integrand values
  * \f$ F(c, r) = J \, \sigma_{cd} \, \partial r / \partial x_d \f$ grouped by
- * reference direction. The only medium-specific node in the graph.
+ * reference direction. The medium-specific node in the graph (see the kernel
+ * class doxygen).
  *
  * TensorOperations invokes the functor with the GLOBAL output coordinate
  * (element slot, column, iz, iy, ix); the column index is ignored because
@@ -115,56 +118,52 @@ template <typename WeightsViewType> struct StiffnessGraphWeightedSum {
 template <int NGLL, typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
            Tags::attenuation_tag == specfem::element::attenuation_tag::none)
-void specfem::linear_system_impl::compute_element_stiffness_tensor_graph(
-    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
-        &assembly,
-    const specfem::datatype::ElementIndexRange &batch,
-    const Kokkos::View<type_real ***, Kokkos::LayoutRight,
-                       Kokkos::DefaultExecutionSpace> &k_e) {
+specfem::linear_system_impl::StiffnessTensorGraphKernel<
+    NGLL, Tags>::StiffnessTensorGraphKernel(const AssemblyType &assembly,
+                                            const int batch_capacity)
+    : assembly_(assembly), batch_capacity_(batch_capacity),
+      // Every workspace view is fully written before it is read -- the
+      // operators and identity right below, the forces by each graph
+      // execution -- so none pays the allocation-time memset.
+      derivative_(Kokkos::view_alloc(
+          Kokkos::WithoutInitializing,
+          "specfem::linear_system::tensor_graph::derivative")),
+      weighted_transpose_(Kokkos::view_alloc(
+          Kokkos::WithoutInitializing,
+          "specfem::linear_system::tensor_graph::weighted_transpose")),
+      unit_columns_(Kokkos::view_alloc(
+                        Kokkos::WithoutInitializing,
+                        "specfem::linear_system::tensor_graph::unit_columns"),
+                    ncomp, batch_capacity, ndof),
+      forces_(
+          Kokkos::view_alloc(Kokkos::WithoutInitializing,
+                             "specfem::linear_system::tensor_graph::forces"),
+          ncomp, batch_capacity, ndof) {
 
-  constexpr auto dimension_tag = Tags::dimension_tag;
-  constexpr auto medium_tag = Tags::medium_tag;
-  constexpr int ncomp =
-      specfem::element::attributes<dimension_tag, medium_tag>::components;
-  // The graph arity below (three staged component fields, nine gradients,
-  // nine integrand outputs) is written for 3-component media; other media
-  // swap the constitutive functor and the arity.
-  static_assert(ncomp == 3, "tensor-graph kernel is written for 3-component "
-                            "elastic media");
-  constexpr int ndof = ncomp * NGLL * NGLL * NGLL;
-
-  using ExecSpace = Kokkos::DefaultExecutionSpace;
-  using JacobianMatrixType = std::decay_t<decltype(assembly.jacobian_matrix)>;
-  using PropertiesType = std::decay_t<decltype(assembly.properties)>;
-
-  if (batch.empty()) {
-    return;
+  if (batch_capacity < 1) {
+    std::ostringstream message;
+    message << "specfem::linear_system_impl::StiffnessTensorGraphKernel: the "
+               "batch capacity must be positive, got "
+            << batch_capacity << ".";
+    throw std::runtime_error(message.str());
+  }
+  if (assembly.mesh.element_grid != NGLL) {
+    throw std::runtime_error(
+        "specfem::linear_system_impl::StiffnessTensorGraphKernel: the number "
+        "of GLL points in the mesh elements must match the template "
+        "parameter NGLL.");
   }
 
-  const int nbatch = batch.size();
-  const int batch_begin_ispec = batch.begin_index();
   const auto hprime = assembly.mesh.hprime;
   const auto weights = assembly.mesh.weights;
-
-  // Column tile: scratch scales linearly in the tile (~9.5 KB per column at
-  // NGLL = 5, measured by tensorops_smoke_tests) and the tile must divide
-  // ndof = 375. 15 fits the ~227 KB GPU opt-in team scratch, 3 the 32 KB
-  // host-serial cap.
-  constexpr bool on_gpu =
-      !Kokkos::SpaceAccessibility<ExecSpace, Kokkos::HostSpace>::accessible;
-  constexpr int column_tile = on_gpu ? 15 : 3;
-  static_assert(ndof % column_tile == 0,
-                "the column tile must divide the dof count");
+  const auto derivative = derivative_;
+  const auto weighted_transpose = weighted_transpose_;
+  const auto unit_columns = unit_columns_;
 
   // The two 1D derivative operators the contractions stage: the gradient's
   // hprime(point, function) and the divergence's transposed
   // hprime(summed, point) with the summed point's quadrature weight folded in
   // (element_divergence keeps weights(l) inside the sum).
-  Kokkos::View<type_real[NGLL][NGLL], Kokkos::LayoutRight, ExecSpace>
-      derivative("specfem::linear_system::tensor_graph::derivative");
-  Kokkos::View<type_real[NGLL][NGLL], Kokkos::LayoutRight, ExecSpace>
-      weighted_transpose(
-          "specfem::linear_system::tensor_graph::weighted_transpose");
   Kokkos::parallel_for(
       "specfem::linear_system::tensor_graph::stage_operators",
       Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<2>>({ 0, 0 },
@@ -177,14 +176,13 @@ void specfem::linear_system_impl::compute_element_stiffness_tensor_graph(
   // Identity input: unit_columns(c, e, col, iz, iy, ix) = 1 exactly when col
   // is the local dof (c, iz, iy, ix). Constant data replicated over the
   // element axis because every graph operand must carry the labels of the
-  // stage it feeds (broadcast labels are a TensorOperations follow-up).
-  Kokkos::View<type_real ***[NGLL][NGLL][NGLL], Kokkos::LayoutRight, ExecSpace>
-      unit_columns("specfem::linear_system::tensor_graph::unit_columns", ncomp,
-                   nbatch, ndof);
+  // stage it feeds (broadcast labels are a TensorOperations follow-up);
+  // filled once over the full capacity, so every leading sub-batch is valid.
   Kokkos::parallel_for(
       "specfem::linear_system::tensor_graph::fill_unit_columns",
       Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<6>>(
-          { 0, 0, 0, 0, 0, 0 }, { ncomp, nbatch, ndof, NGLL, NGLL, NGLL }),
+          { 0, 0, 0, 0, 0, 0 },
+          { ncomp, batch_capacity, ndof, NGLL, NGLL, NGLL }),
       KOKKOS_LAMBDA(const int c, const int e, const int col, const int iz,
                     const int iy, const int ix) {
         unit_columns(c, e, col, iz, iy, ix) =
@@ -193,25 +191,75 @@ void specfem::linear_system_impl::compute_element_stiffness_tensor_graph(
                 ? static_cast<type_real>(1.0)
                 : static_cast<type_real>(0.0);
       });
+}
 
-  // Graph output: forces(c, e, col, iz, iy, ix) = component c of the internal
-  // force at (iz, iy, ix) from the unit displacement at local dof `col` --
-  // i.e. K_e's column `col` before the reshape.
-  Kokkos::View<type_real ***[NGLL][NGLL][NGLL], Kokkos::LayoutRight, ExecSpace>
-      forces("specfem::linear_system::tensor_graph::forces", ncomp, nbatch,
-             ndof);
+template <int NGLL, typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
+           Tags::attenuation_tag == specfem::element::attenuation_tag::none)
+void specfem::linear_system_impl::StiffnessTensorGraphKernel<
+    NGLL, Tags>::operator()(const specfem::datatype::ElementIndexRange &batch,
+                            const StiffnessViewType &k_e) const {
 
+  // The graph arity below (three staged component fields, nine gradients,
+  // nine integrand outputs) is written for 3-component media; other media
+  // swap the constitutive functor and the arity.
+  static_assert(ncomp == 3, "tensor-graph kernel is written for 3-component "
+                            "elastic media");
+
+  using JacobianMatrixType = std::decay_t<decltype(assembly_.jacobian_matrix)>;
+  using PropertiesType = std::decay_t<decltype(assembly_.properties)>;
+
+  if (batch.empty()) {
+    return;
+  }
+
+  const int nbatch = batch.size();
+  const int batch_begin_ispec = batch.begin_index();
+
+  if (nbatch > batch_capacity_) {
+    std::ostringstream message;
+    message << "specfem::linear_system_impl::StiffnessTensorGraphKernel: the "
+               "batch holds "
+            << nbatch << " elements but the workspace was sized for "
+            << batch_capacity_ << ".";
+    throw std::runtime_error(message.str());
+  }
+  if (static_cast<int>(k_e.extent(0)) < nbatch ||
+      static_cast<int>(k_e.extent(1)) != ndof ||
+      static_cast<int>(k_e.extent(2)) != ndof) {
+    throw std::runtime_error(
+        "specfem::linear_system_impl::StiffnessTensorGraphKernel: the element "
+        "stiffness buffer must have extents (>= batch size, ndof, ndof) "
+        "with ndof = ncomp * NGLL^3.");
+  }
+
+  const auto weights = assembly_.mesh.weights;
+  const auto forces = forces_;
+
+  // Column tile: scratch scales linearly in the tile (~9.5 KB per column at
+  // NGLL = 5, measured by tensorops_smoke_tests) and the tile must divide
+  // ndof = 375. 15 fits the ~227 KB GPU opt-in team scratch, 3 the 32 KB
+  // host-serial cap.
+  constexpr bool on_gpu =
+      !Kokkos::SpaceAccessibility<ExecSpace, Kokkos::HostSpace>::accessible;
+  constexpr int column_tile = on_gpu ? 15 : 3;
+  static_assert(ndof % column_tile == 0,
+                "the column tile must divide the dof count");
+
+  // Leading nbatch element slots of the persistent workspace; a scalar
+  // component index then a leading range keeps LayoutRight.
   const auto all = Kokkos::ALL;
-  const auto u0 = Kokkos::subview(unit_columns, 0, all, all, all, all, all);
-  const auto u1 = Kokkos::subview(unit_columns, 1, all, all, all, all, all);
-  const auto u2 = Kokkos::subview(unit_columns, 2, all, all, all, all, all);
-  const auto f0 = Kokkos::subview(forces, 0, all, all, all, all, all);
-  const auto f1 = Kokkos::subview(forces, 1, all, all, all, all, all);
-  const auto f2 = Kokkos::subview(forces, 2, all, all, all, all, all);
+  const auto slots = Kokkos::pair<int, int>(0, nbatch);
+  const auto u0 = Kokkos::subview(unit_columns_, 0, slots, all, all, all, all);
+  const auto u1 = Kokkos::subview(unit_columns_, 1, slots, all, all, all, all);
+  const auto u2 = Kokkos::subview(unit_columns_, 2, slots, all, all, all, all);
+  const auto f0 = Kokkos::subview(forces_, 0, slots, all, all, all, all);
+  const auto f1 = Kokkos::subview(forces_, 1, slots, all, all, all, all);
+  const auto f2 = Kokkos::subview(forces_, 2, slots, all, all, all, all);
 
   const specfem::linear_system_impl::StiffnessGraphIntegrand<
       NGLL, Tags, JacobianMatrixType, PropertiesType>
-      integrand{ assembly.jacobian_matrix, assembly.properties,
+      integrand{ assembly_.jacobian_matrix, assembly_.properties,
                  batch_begin_ispec };
   const specfem::linear_system_impl::StiffnessGraphWeightedSum<
       std::decay_t<decltype(weights)>>
@@ -230,9 +278,9 @@ void specfem::linear_system_impl::compute_element_stiffness_tensor_graph(
   auto g0 = tenops::make_level_graph<type_real, ExecSpace>(TileMap{});
   auto [g1, h, hw] =
       g0.add(tenops::make_stage_node(tenops::make_input_node(
-                 tenops::make_handle<'r', 'p'>(derivative))),
+                 tenops::make_handle<'r', 'p'>(derivative_))),
              tenops::make_stage_node(tenops::make_input_node(
-                 tenops::make_handle<'p', 'r'>(weighted_transpose))));
+                 tenops::make_handle<'p', 'r'>(weighted_transpose_))));
   auto [g2, u0n, u1n, u2n] =
       g1.add(tenops::make_stage_node(tenops::make_input_node(
                  tenops::make_handle<'e', 'J', 'k', 'j', 'i'>(u0))),
@@ -321,36 +369,71 @@ void specfem::linear_system_impl::compute_element_stiffness_tensor_graph(
         k_e(e, specfem::linear_system::local_dof_index<NGLL>(c, iz, iy, ix),
             col) = forces(c, e, col, iz, iy, ix);
       });
-
-  Kokkos::fence();
+  // No fence: see the call operator's contract in the header.
 }
 
 #else // !SPECFEM_ENABLE_TENSOROPS
 
 #include <stdexcept>
 
-// Throwing stub so OFF builds link and fail at the moment a tensor-graph
-// kernel is actually requested, not at compile time in every caller.
+namespace specfem::linear_system_impl {
+/// Single throw message for every stub of the OFF build.
+inline constexpr const char *tensorops_unavailable_message =
+    "specfem::linear_system::compute_element_stiffness: the tensor_graph "
+    "kernel requires SPECFEM++ built with SPECFEM_ENABLE_TENSOROPS=ON "
+    "(and SPECFEM_TENSOROPS_ROOT pointing at a TensorOperations "
+    "checkout).";
+} // namespace specfem::linear_system_impl
+
 template <int NGLL, typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
            Tags::attenuation_tag == specfem::element::attenuation_tag::none)
-void specfem::linear_system_impl::compute_element_stiffness_tensor_graph(
-    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &,
-    const specfem::datatype::ElementIndexRange &,
-    const Kokkos::View<type_real ***, Kokkos::LayoutRight,
-                       Kokkos::DefaultExecutionSpace> &) {
+specfem::linear_system_impl::StiffnessTensorGraphKernel<
+    NGLL, Tags>::StiffnessTensorGraphKernel(const AssemblyType &assembly,
+                                            const int /* batch_capacity */)
+    : assembly_(assembly), batch_capacity_(0) {
   throw std::runtime_error(
-      "specfem::linear_system::compute_element_stiffness: the tensor_graph "
-      "kernel requires SPECFEM++ built with SPECFEM_ENABLE_TENSOROPS=ON "
-      "(and SPECFEM_TENSOROPS_ROOT pointing at a TensorOperations "
-      "checkout).");
+      specfem::linear_system_impl::tensorops_unavailable_message);
+}
+
+template <int NGLL, typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
+           Tags::attenuation_tag == specfem::element::attenuation_tag::none)
+void specfem::linear_system_impl::StiffnessTensorGraphKernel<NGLL, Tags>::
+operator()(const specfem::datatype::ElementIndexRange & /* batch */,
+           const StiffnessViewType & /* k_e */) const {
+  throw std::runtime_error(
+      specfem::linear_system_impl::tensorops_unavailable_message);
 }
 
 #endif // SPECFEM_ENABLE_TENSOROPS
 
-// Explicit instantiation: 3D elastic isotropic, NGLL = 5 (mirrors
-// element_stiffness.cpp). Instantiates the real kernel or the throwing stub,
-// whichever the build selected above.
+// The one-shot wrapper and the explicit instantiations are shared by both
+// builds: without TensorOperations the constructor above throws.
+template <int NGLL, typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
+           Tags::attenuation_tag == specfem::element::attenuation_tag::none)
+void specfem::linear_system_impl::compute_element_stiffness_tensor_graph(
+    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
+        &assembly,
+    const specfem::datatype::ElementIndexRange &batch,
+    const Kokkos::View<type_real ***, Kokkos::LayoutRight,
+                       Kokkos::DefaultExecutionSpace> &k_e) {
+  const specfem::linear_system_impl::StiffnessTensorGraphKernel<NGLL, Tags>
+      kernel(assembly, batch.size());
+  kernel(batch, k_e);
+  Kokkos::fence();
+}
+
+// Explicit instantiations: 3D elastic isotropic, NGLL = 5 (mirrors
+// element_stiffness.cpp). Instantiates the real kernel or the throwing
+// stubs, whichever the build selected above.
+template class specfem::linear_system_impl::StiffnessTensorGraphKernel<
+    5, specfem::tags::Tags<specfem::element::dimension_tag::dim3,
+                           specfem::element::medium_tag::elastic,
+                           specfem::element::property_tag::isotropic,
+                           specfem::element::attenuation_tag::none>>;
+
 template void
 specfem::linear_system_impl::compute_element_stiffness_tensor_graph<
     5, specfem::tags::Tags<specfem::element::dimension_tag::dim3,

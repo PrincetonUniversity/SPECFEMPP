@@ -4,6 +4,7 @@
 #include "specfem/enums.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
+#include <functional>
 
 namespace specfem::assembly {
 template <specfem::element::dimension_tag DimensionTag> struct assembly;
@@ -178,6 +179,49 @@ void compute_element_stiffness(
     const specfem::datatype::ElementIndexRange &batch,
     const Kokkos::View<type_real ***, Kokkos::LayoutRight,
                        Kokkos::DefaultExecutionSpace> &k_e,
+    const StiffnessKernelImpl impl = default_stiffness_kernel_impl);
+
+/**
+ * @brief Batched element-stiffness kernel bound to one assembly.
+ *
+ * Each call fills the leading `batch.size()` blocks of `k_e` under the
+ * contract of @ref compute_element_stiffness, but may return before the
+ * device work completes: a consumer reading `k_e` on the device must fence
+ * first (a host mirror copy synchronizes by itself).
+ */
+using ElementStiffnessKernel =
+    std::function<void(const specfem::datatype::ElementIndexRange &,
+                       const Kokkos::View<type_real ***, Kokkos::LayoutRight,
+                                          Kokkos::DefaultExecutionSpace> &)>;
+
+/**
+ * @brief Bind a stiffness kernel to an assembly for repeated batched calls.
+ *
+ * The one place a repeated caller (e.g. `StiffnessAssembler::fill_matrix`)
+ * selects a kernel: per-construction costs are paid here once, not per
+ * batch. For `tensor_graph` this constructs the workspace-owning
+ * @ref specfem::linear_system_impl::StiffnessTensorGraphKernel (throwing
+ * without `SPECFEM_ENABLE_TENSOROPS`); the probe kernel has no cross-batch
+ * state and delegates to @ref compute_element_stiffness per call.
+ *
+ * Throws `std::runtime_error` for grids other than NGLL = 5 (the only 3D
+ * instantiation).
+ *
+ * @tparam Tags Compile-time tags (dimension, medium, property, attenuation);
+ *              dimension must be `dim3`
+ * @param assembly Assembled mesh, jacobian matrix, and material properties;
+ *        borrowed by the returned callable, and must outlive it
+ * @param batch_capacity Largest batch a call may pass; sizes the
+ *        tensor-graph workspace
+ * @param impl Kernel that fills the blocks (see @ref StiffnessKernelImpl)
+ * @return Callable filling `k_e` element blocks per contiguous batch
+ */
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
+ElementStiffnessKernel make_element_stiffness_kernel(
+    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
+        &assembly,
+    const int batch_capacity,
     const StiffnessKernelImpl impl = default_stiffness_kernel_impl);
 
 } // namespace linear_system
