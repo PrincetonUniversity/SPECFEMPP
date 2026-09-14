@@ -15,6 +15,39 @@
 namespace specfem {
 namespace algorithms {
 
+/**
+ * @brief Combine the three directional quadrature sums of a 3D divergence at
+ * one quadrature point with the transverse weights.
+ *
+ * \f$ w_{iz} w_{iy} t_\xi + w_{iz} w_{ix} t_\eta + w_{iy} w_{ix} t_\gamma \f$
+ * -- each direction's sum carries the two weights transverse to it (the
+ * summed direction's own weight already rides inside the sum). This is the
+ * single owner of the transverse-weight combine:
+ * `specfem::algorithms::impl::element_divergence`'s result stage and any
+ * kernel that produces the directional sums by other means (e.g. the
+ * tensor-graph stiffness kernel's contractions) both delegate here.
+ *
+ * @ingroup AlgorithmsDivergence
+ *
+ * @tparam WeightsType Quadrature weights view
+ * @tparam Datatype Scalar or SIMD datatype of the directional sums
+ * @param weights Quadrature weights, one per GLL index
+ * @param iz Quadrature index in z
+ * @param iy Quadrature index in y
+ * @param ix Quadrature index in x
+ * @param t_xi Directional sum over \f$ \xi \f$
+ * @param t_eta Directional sum over \f$ \eta \f$
+ * @param t_gamma Directional sum over \f$ \gamma \f$
+ * @return The weighted divergence value at the point
+ */
+template <typename WeightsType, typename Datatype>
+KOKKOS_FORCEINLINE_FUNCTION Datatype transverse_weighted_sum(
+    const WeightsType &weights, const int iz, const int iy, const int ix,
+    const Datatype &t_xi, const Datatype &t_eta, const Datatype &t_gamma) {
+  return weights(iz) * weights(iy) * t_xi + weights(iz) * weights(ix) * t_eta +
+         weights(iy) * weights(ix) * t_gamma;
+}
+
 /// @brief Implementation details
 namespace impl {
 /**
@@ -128,9 +161,8 @@ element_divergence(const TensorFieldType &f,
   }
   VectorPointViewType result;
   for (int icomp = 0; icomp < components; ++icomp) {
-    result(icomp) = weights(iz) * weights(iy) * temp1l[icomp] +
-                    weights(iz) * weights(ix) * temp2l[icomp] +
-                    weights(iy) * weights(ix) * temp3l[icomp];
+    result(icomp) = specfem::algorithms::transverse_weighted_sum(
+        weights, iz, iy, ix, temp1l[icomp], temp2l[icomp], temp3l[icomp]);
   }
   return result;
 }

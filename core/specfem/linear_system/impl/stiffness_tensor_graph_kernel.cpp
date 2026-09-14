@@ -94,8 +94,9 @@ struct StiffnessGraphIntegrand {
 };
 
 /**
- * @brief Transverse-weight sum closing the divergence, matching
- * `specfem::algorithms::impl::element_divergence`'s result stage (the summed
+ * @brief Transverse-weight sum closing the divergence: delegates to
+ * `specfem::algorithms::transverse_weighted_sum`, the same combine
+ * `specfem::algorithms::impl::element_divergence` results with (the summed
  * direction's weight already rides in the staged weighted derivative matrix).
  */
 template <typename WeightsViewType> struct StiffnessGraphWeightedSum {
@@ -107,9 +108,8 @@ template <typename WeightsViewType> struct StiffnessGraphWeightedSum {
                                        const type_real t_xi,
                                        const type_real t_eta,
                                        const type_real t_gamma) const {
-    return weights(iz) * weights(iy) * t_xi +
-           weights(iz) * weights(ix) * t_eta +
-           weights(iy) * weights(ix) * t_gamma;
+    return specfem::algorithms::transverse_weighted_sum(weights, iz, iy, ix,
+                                                        t_xi, t_eta, t_gamma);
   }
 };
 
