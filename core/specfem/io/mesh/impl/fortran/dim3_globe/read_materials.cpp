@@ -102,10 +102,8 @@ specfem::io::mesh::impl::fortran::dim3_globe::make_materials(
   }
 
   for (int ispec = 0; ispec < materials.nspec; ++ispec) {
-    if (property_tags[ispec] == specfem::io::mesh::impl::fortran::
-                                    dim3_globe_impl::property_anisotropic) {
-      if (medium_tags[ispec] !=
-          specfem::io::mesh::impl::fortran::dim3_globe_impl::medium_elastic) {
+    if (property_tags[ispec] == Property::anisotropic) {
+      if (medium_tags[ispec] != Medium::elastic) {
         throw std::runtime_error("Anisotropic globe elements must be elastic");
       }
       if (attenuation_enabled) {
@@ -116,12 +114,9 @@ specfem::io::mesh::impl::fortran::dim3_globe::make_materials(
         Medium::elastic, Property::anisotropic, Attenuation::none,
         anisotropic_elastic_index, ispec
       };
-    } else if (property_tags[ispec] !=
-               specfem::io::mesh::impl::fortran::dim3_globe_impl::
-                   property_isotropic) {
+    } else if (property_tags[ispec] != Property::isotropic) {
       throw std::runtime_error("Unknown property tag in globe mesh database");
-    } else if (medium_tags[ispec] == specfem::io::mesh::impl::fortran::
-                                         dim3_globe_impl::medium_acoustic) {
+    } else if (medium_tags[ispec] == Medium::acoustic) {
       materials.material_index_mapping[ispec] = { Medium::acoustic,
                                                   Property::isotropic,
                                                   Attenuation::none,
