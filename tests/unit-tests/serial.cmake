@@ -35,6 +35,16 @@ specfem_add_test(io_framework_tests
               $<$<NOT:$<BOOL:${SPECFEM_ENABLE_ADIOS2}>>:NO_ADIOS2>
 )
 
+specfem_add_test(io_mesh_dim3_globe_tests
+  LABELS unit io mesh globe
+  SOURCES   io/mesh/dim3_globe/read_mesh.cpp
+            io/mesh/dim3_globe/runner.cpp
+  LIBRARIES specfem::io
+            specfem::mesh
+            specfem_environment
+            -lpthread -lm
+)
+
 # Asserts on MPI-less abort behaviour, so it is meaningless in an MPI build.
 if(NOT SPECFEM_ENABLE_MPI)
   specfem_add_test(abort_tests
@@ -155,6 +165,14 @@ specfem_add_test(simd_tests
             -lpthread -lm
 )
 
+specfem_add_test(datatype_operators_tests
+  SOURCES   datatype/tensor_point_view_operators_tests.cpp
+  LIBRARIES gtest_main
+            gmock_main
+            Kokkos::kokkos
+            -lpthread -lm
+)
+
 specfem_add_test(fortranio_test
   SOURCES   fortran_io/fortranio_tests.cpp
   LIBRARIES gtest_main
@@ -232,6 +250,7 @@ specfem_add_test(mesh_dim3_tests
             mesh/dim3/boundaries.cpp
             mesh/dim3/adjacency_graph.cpp
             mesh/dim3/tags.cpp
+            mesh/dim3/globe_reader.cpp
             mesh/dim3/test.cpp
   LIBRARIES gtest_main
             specfem::mesh
@@ -518,6 +537,7 @@ specfem_add_test(mass_matrix_tests
             medium/mass_matrix/dim2/acoustic.cpp
             medium/mass_matrix/dim2/poroelastic.cpp
             medium/mass_matrix/dim3/elastic_isotropic.cpp
+            medium/mass_matrix/dim3/elastic_isotropic_cosserat.cpp
             medium/mass_matrix/dim3/acoustic.cpp
   LIBRARIES point
             gtest_main
@@ -531,6 +551,7 @@ specfem_add_test(stress_tests
             medium/stress/dim2/elastic_isotropic_cosserat.cpp
             medium/stress/dim2/poroelastic_isotropic.cpp
             medium/stress/dim3/elastic_isotropic.cpp
+            medium/stress/dim3/elastic_isotropic_cosserat.cpp
             medium/stress/dim3/acoustic.cpp
   LIBRARIES point
             gtest_main
@@ -583,6 +604,7 @@ specfem_add_test(source_tests
             medium/source/dim2/elastic_isotropic_cosserat.cpp
             medium/source/dim2/poroelastic.cpp
             medium/source/dim3/elastic_isotropic.cpp
+            medium/source/dim3/elastic_isotropic_cosserat.cpp
             medium/source/dim3/acoustic.cpp
   LIBRARIES point
             gtest_main
@@ -638,6 +660,20 @@ specfem_add_test(wavefield_checkpoint_tests
             gtest_main
 )
 
+# The TRILINOS label selects the tests whose bodies are compiled out without
+# Trilinos and only GTEST_SKIP() -- .jenkins/trilinos_compiler_checks.gvy is the
+# one job that builds with SPECFEM_ENABLE_TRILINOS=ON and runs `ctest -L TRILINOS`.
+# element_stiffness_tests below is deliberately unlabelled: it is Trilinos-free by
+# design, so it already runs for real in every other pipeline.
+specfem_add_test(trilinos_smoke_tests
+  SOURCES   linear_system/trilinos_smoke_tests.cpp
+  LIBRARIES specfem::linear_system
+            specfem_environment
+            gtest_main
+            Kokkos::kokkos
+  LABELS    TRILINOS
+)
+
 specfem_add_test(element_stiffness_tests
   SOURCES   linear_system/element_stiffness_tests.cpp
   LIBRARIES specfem::linear_system
@@ -672,6 +708,7 @@ specfem_add_test(stiffness_assembler_tests
             specfem::periodic_tasks
             ${BOOST_LIBS}
             -lpthread -lm
+  LABELS    TRILINOS
 )
 
 specfem_add_test(sparse_matrix_view_mapping_tests
@@ -762,6 +799,7 @@ specfem_add_test(mass_vector_tests
             specfem::periodic_tasks
             ${BOOST_LIBS}
             -lpthread -lm
+  LABELS    TRILINOS
 )
 
 specfem_add_test(implicit_solver_tests
@@ -780,6 +818,7 @@ specfem_add_test(implicit_solver_tests
             specfem::periodic_tasks
             ${BOOST_LIBS}
             -lpthread -lm
+  LABELS    TRILINOS
 )
 
 specfem_add_test(damping_assembler_tests
@@ -798,4 +837,5 @@ specfem_add_test(damping_assembler_tests
             specfem::periodic_tasks
             ${BOOST_LIBS}
             -lpthread -lm
+  LABELS    TRILINOS
 )

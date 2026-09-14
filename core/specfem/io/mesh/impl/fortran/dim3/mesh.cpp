@@ -14,7 +14,7 @@
 #include <stdexcept>
 #include <string>
 
-specfem::mesh::mesh<specfem::element::dimension_tag::dim3>
+specfem::mesh::mesh<specfem::simulation::model::Cartesian3D>
 specfem::io::read_3d_mesh(
     const std::string &database_file,
     const specfem::attenuation::Setup &attenuation_setup) {
@@ -38,7 +38,7 @@ specfem::io::read_3d_mesh(
         "Mesh of earth chunk is not supported in SPECFEM++ yet.");
   }
 
-  specfem::mesh::mesh<specfem::element::dimension_tag::dim3> mesh;
+  specfem::mesh::mesh<specfem::simulation::model::Cartesian3D> mesh;
 
   specfem::io::fortran_read_line(param_stream, &mesh.utm_projection_zone);
   specfem::io::fortran_read_line(param_stream, &mesh.suppress_utm_projection);

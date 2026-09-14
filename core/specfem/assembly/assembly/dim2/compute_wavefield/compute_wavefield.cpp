@@ -57,11 +57,12 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::
     } else if (component == specfem::enums::wavefield::pressure) {
       return 1;
     } else if (component == specfem::enums::wavefield::rotation) {
-      return 2;
+      // Rotation, intrinsic rotation, and curl are out-of-plane (y) in 2D
+      return 1;
     } else if (component == specfem::enums::wavefield::intrinsic_rotation) {
-      return 2;
+      return 1;
     } else if (component == specfem::enums::wavefield::curl) {
-      return 2;
+      return 1;
     } else {
       throw std::runtime_error("Wavefield component not supported");
     }

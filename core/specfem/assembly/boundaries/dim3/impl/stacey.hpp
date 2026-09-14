@@ -84,9 +84,10 @@ public:
    *        stacey index (-1 if element has no stacey boundary)
    * @param boundary_tag Per-element boundary tag containers to update
    */
+  template <specfem::simulation::model ModelTag>
   stacey(
       const int nspec, const int ngllz, const int nglly, const int ngllx,
-      const specfem::mesh::mesh<dimension_tag> &mesh,
+      const specfem::mesh::mesh<ModelTag> &mesh,
       const specfem::assembly::mesh<dimension_tag> &mesh_assembly,
       const specfem::assembly::jacobian_matrix<dimension_tag> &jacobian_matrix,
       const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,

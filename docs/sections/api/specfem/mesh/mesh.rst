@@ -7,13 +7,17 @@
     :members:
     :private-members:
 
-Dimension-Specific Specializations
-----------------------------------
+Model-Specific Specializations
+------------------------------
 
-.. doxygenstruct:: specfem::mesh::mesh< specfem::element::dimension_tag::dim2 >
+.. doxygenstruct:: specfem::mesh::mesh< specfem::simulation::model::Cartesian2D >
     :members:
     :private-members:
 
-.. doxygenstruct:: specfem::mesh::mesh< specfem::element::dimension_tag::dim3 >
+.. doxygenstruct:: specfem::mesh::mesh< specfem::simulation::model::Cartesian3D >
+    :members:
+    :private-members:
+
+.. doxygenstruct:: specfem::mesh::mesh< specfem::simulation::model::Globe3D >
     :members:
     :private-members:

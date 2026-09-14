@@ -12,7 +12,7 @@ namespace specfem::test_configuration {
 struct Read3DMesh {
   constexpr static specfem::element::dimension_tag dimension =
       specfem::element::dimension_tag::dim3;
-  specfem::mesh::mesh<dimension> mesh;
+  specfem::mesh::cartesian3d_mesh mesh;
 
   Read3DMesh() = default;
 

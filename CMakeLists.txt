@@ -44,6 +44,12 @@ if (SPECFEM_ENABLE_MPI)
     # link specfem::mpi. Make MPI usage requirements global to match.
     link_libraries(MPI::MPI_CXX)
     message(STATUS "MPI enabled - found MPI::MPI_CXX")
+
+    # For handling mpi test execution on a cluster.
+    set(SPECFEM_MPI_TEST_COMMAND "${MPIEXEC_EXECUTABLE}" CACHE STRING
+        "MPI launcher command for tests (e.g. mpirun, srun, aprun); empty = MPIEXEC_EXECUTABLE")
+    set(SPECFEM_MPI_TEST_NUMPROC_FLAG "${MPIEXEC_NUMPROC_FLAG}" CACHE STRING
+        "Flag introducing the rank count for SPECFEM_MPI_TEST_COMMAND, e.g. '-n'; empty = MPIEXEC_NUMPROC_FLAG")
 else()
     message(STATUS "Compiling SPECFEM without MPI")
 endif()
@@ -240,19 +246,6 @@ set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
 
 # ========== MESHFEM3D_GLOBE =============
 if(SPECFEM_BUILD_MESHFEM3D_GLOBE)
-  if(NOT SPECFEM_ENABLE_MPI)
-    message(FATAL_ERROR
-      "SPECFEM_BUILD_MESHFEM3D_GLOBE requires SPECFEM_ENABLE_MPI=ON because "
-      "SPECFEM3D_GLOBE meshfem sources require Fortran MPI.")
-  endif()
-  if(NOT TARGET MPI::MPI_Fortran)
-    find_package(MPI REQUIRED COMPONENTS Fortran)
-  endif()
-  if(NOT TARGET MPI::MPI_Fortran)
-    message(FATAL_ERROR
-      "SPECFEM_BUILD_MESHFEM3D_GLOBE requires MPI::MPI_Fortran, but Fortran MPI "
-      "was not found.")
-  endif()
   message(STATUS "Configuring xmeshfem3D_globe")
   set(_saved_CMAKE_MESSAGE_LOG_LEVEL ${CMAKE_MESSAGE_LOG_LEVEL})
   set(CMAKE_MESSAGE_LOG_LEVEL ${SUBDIR_LOG_LEVEL})
