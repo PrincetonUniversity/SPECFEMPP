@@ -175,6 +175,21 @@ specfem::element::to_string(const specfem::element::mpi_tag &mpi) {
   }
 }
 
+const std::string
+specfem::element::to_string(const specfem::element::region_tag &region) {
+
+  switch (region) {
+  case specfem::element::region_tag::crust_mantle:
+    return "crust_mantle";
+  case specfem::element::region_tag::outer_core:
+    return "outer_core";
+  case specfem::element::region_tag::inner_core:
+    return "inner_core";
+  default:
+    return "unknown";
+  }
+}
+
 specfem::element::medium_tag
 specfem::element::from_string(const std::string &medium_tag) {
   if (medium_tag == "elastic_psv") {
