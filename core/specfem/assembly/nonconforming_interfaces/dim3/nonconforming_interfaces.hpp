@@ -14,17 +14,21 @@
 
 namespace specfem::assembly {
 
+/**
+ * @brief Information on coupled interfaces between two mediums
+ * @tparam DimensionTag Dimension of spectral elements
+ */
 template <specfem::element::dimension_tag DimensionTag>
 struct nonconforming_interfaces;
 
 template <>
-class nonconforming_interfaces<specfem::element::dimension_tag::dim2>
+class nonconforming_interfaces<specfem::element::dimension_tag::dim3>
     : public specfem::data_access::Container<
-          specfem::data_access::ContainerType::edge,
+          specfem::data_access::ContainerType::face,
           specfem::data_access::DataClassType::nonconforming_interface,
-          specfem::element::dimension_tag::dim2> {
+          specfem::element::dimension_tag::dim3> {
 public:
-  static constexpr auto dimension_tag = specfem::element::dimension_tag::dim2;
+  static constexpr auto dimension_tag = specfem::element::dimension_tag::dim3;
 
 protected:
   template <specfem::element_coupling::interface_tag InterfaceTag,
@@ -43,7 +47,7 @@ protected:
                              TagsType::flux_scheme_tag>;
 
   static constexpr auto combinations =
-      DIMENSION_SET(dim2) * CONNECTION_SET(nonconforming) *
+      DIMENSION_SET(dim3) * CONNECTION_SET(nonconforming) *
       INTERFACE_SET(elastic_acoustic, acoustic_elastic) *
       BOUNDARY_SET(none, acoustic_free_surface, stacey,
                    composite_stacey_dirichlet) *
@@ -55,9 +59,10 @@ protected:
 
 public:
   nonconforming_interfaces(
-      const int ngllz, const int ngllx,
+      const int &ngllz, const int &nglly, const int &ngllx,
       const specfem::assembly::element_intersections<dimension_tag>
           &element_intersections,
+      const specfem::assembly::jacobian_matrix<dimension_tag> &jacobian_matrix,
       const specfem::assembly::mesh<dimension_tag> &mesh,
       const specfem::element_coupling::flux_scheme_configuration
           &flux_scheme_config = {});
@@ -72,7 +77,7 @@ public:
       InterfaceContainerType<InterfaceTag, BoundaryTag, ConnectionTag,
                              FluxSchemeTag> &
       get_interface_container() const {
-    using TagsType = specfem::tags::Tags<specfem::element::dimension_tag::dim2,
+    using TagsType = specfem::tags::Tags<specfem::element::dimension_tag::dim3,
                                          ConnectionTag, InterfaceTag,
                                          BoundaryTag, FluxSchemeTag>;
     return interface_container.template get<TagsType>();

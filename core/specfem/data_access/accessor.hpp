@@ -54,6 +54,25 @@ struct is_codim1_chunk<
             T::dimension_tag == specfem::element::dimension_tag::dim3)>>
     : std::true_type {};
 
+/**
+ * @brief A data accessor that holds no data, and contains null shmem info, etc.
+ *
+ * This container can be used as a placeholder when one kernel needs some data
+ * type (say in a scratch view) only for certain template arguments.
+ */
+struct EmptyAccessor {
+
+  /**
+   * @brief Capture any constructor configuration. Should do nothing.
+   */
+  template <typename... Args> EmptyAccessor(Args...){};
+  /**
+   * @brief Get shared memory size requirement
+   * @return Size in bytes needed for scratch memory
+   */
+  constexpr static int shmem_size() { return 0; }
+};
+
 } // namespace specfem::data_access
 
 #include "accessor/chunk_edge.hpp"
