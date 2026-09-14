@@ -1,5 +1,7 @@
 #pragma once
 
+#include "specfem/globe_model/model_config.hpp"
+
 #include <cstddef>
 #include <string>
 #include <vector>
@@ -25,46 +27,6 @@ struct Dims {
     return static_cast<std::size_t>(ngllx) * static_cast<std::size_t>(nglly) *
            static_cast<std::size_t>(ngllz);
   }
-};
-
-/**
- * @brief Resolved model selection, replayed into the Fortran catalog.
- *
- * The model is identified by @ref model_name alone; the catalog re-derives
- * every model flag and every discontinuity radius from it. SPECFEM++ therefore
- * never parses the globe `Par_file`, and there is exactly one place a model is
- * chosen (the mesher, which writes this name into the database).
- */
-struct ModelConfig {
-  std::string model_name;
-
-  /** @brief Path for the catalog's own log output. Empty sends it to
-   * /dev/null. */
-  std::string log_path;
-
-  int planet_type = 1; ///< IPLANET_EARTH
-  int nchunks = 6;
-  int nex_xi = 64;
-  int nex_eta = 64;
-
-  bool ellipticity = false;
-  bool topography = false;
-  bool oceans = false;
-  bool attenuation = false;
-  bool gravity = false;
-  bool rotation = false;
-
-  /// @name Attenuation period band, in seconds
-  /// @{
-  /// Consulted only when @ref attenuation is set. Unlike everything else here,
-  /// this is *not* derivable from @ref model_name: the mesher computes it in
-  /// `rcp_set_compute_parameters`, which the evaluator deliberately does not
-  /// call, so the database has to carry it. The defaults below are typical
-  /// global values and a placeholder -- production must take them from the
-  /// mesher.
-  double min_attenuation_period = 20.0;
-  double max_attenuation_period = 1000.0;
-  /// @}
 };
 
 /**
@@ -170,6 +132,12 @@ public:
    * @brief Configures the catalog. Collective over the active communicator.
    *
    * @param config Resolved model selection, from the database header.
+   * @param log_path Path for the catalog's own log output; empty sends it to
+   *        /dev/null. This is a runtime choice of the calling process, not
+   *        something the mesher decided, which is why it is not part of
+   *        @ref ModelConfig.
+   * @throws std::invalid_argument if @p config was not fully populated; see
+   *         @ref ModelConfig::validate.
    * @throws std::runtime_error if the catalog rejects the configuration --
    *         notably for models needing per-GLL indexing the evaluator cannot
    *         provide (`MODEL_GLL`, CEM, `HETEROGEN_3D_MANTLE`,
@@ -178,7 +146,8 @@ public:
    * @warning An unrecognized model name cannot be reported as an exception:
    *          the Fortran catalog terminates the process with a bare `stop`.
    */
-  explicit Evaluator(const ModelConfig &config);
+  explicit Evaluator(const ModelConfig &config,
+                     const std::string &log_path = "");
 
   /**
    * @brief Releases the catalog's configuration so another model may be built.

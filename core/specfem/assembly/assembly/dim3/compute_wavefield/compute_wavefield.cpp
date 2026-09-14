@@ -91,8 +91,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::
       Kokkos::create_mirror_view(wavefield_on_entire_grid);
 
   specfem::tag_dispatch::for_each(
-      DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic) *
-          PROPERTY_SET(isotropic),
+      DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic, elastic_spin) *
+          PROPERTY_SET(isotropic, isotropic_cosserat),
       [&]<typename TagsType>() {
         get_wavefield_on_entire_grid<TagsType>(component, *this,
                                                wavefield_on_entire_grid);

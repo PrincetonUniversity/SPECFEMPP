@@ -112,7 +112,7 @@ specfem::assembly::jacobian_matrix<
               const auto jacobian = [&]() {
                 PointJacobianMatrixType jacobian_matrix;
                 specfem::assembly::load_on_host(index, *this, jacobian_matrix);
-                return jacobian_matrix.jacobian;
+                return jacobian_matrix.jacobian();
               }();
 
               // Check if below threshold

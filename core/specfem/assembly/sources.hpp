@@ -58,8 +58,10 @@ template <> struct SourceSets<specfem::element::dimension_tag::dim2> {
  */
 template <> struct SourceSets<specfem::element::dimension_tag::dim3> {
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
-  constexpr static auto medium_set = MEDIUM_SET(elastic, acoustic);
-  constexpr static auto property_set = PROPERTY_SET(isotropic);
+  constexpr static auto medium_set =
+      MEDIUM_SET(elastic, acoustic, elastic_spin);
+  constexpr static auto property_set =
+      PROPERTY_SET(isotropic, isotropic_cosserat);
   constexpr static auto boundary_set = BOUNDARY_SET(
       none, stacey, acoustic_free_surface, composite_stacey_dirichlet);
   constexpr static auto wavefield_set =
@@ -137,11 +139,12 @@ public:
    * @param dt Time step size
    * @param nsteps Total number of time steps
    */
+  template <specfem::simulation::model ModelTag>
   sources(
       std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
           &sources,
       const specfem::assembly::mesh<DimensionTag> &mesh,
-      const specfem::mesh::mesh<DimensionTag> &raw_mesh,
+      const specfem::mesh::mesh<ModelTag> &raw_mesh,
       const specfem::assembly::jacobian_matrix<DimensionTag> &jacobian_matrix,
       const specfem::assembly::element_types<DimensionTag> &element_types,
       const type_real t0, const type_real dt, const int nsteps);

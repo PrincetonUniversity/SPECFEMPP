@@ -400,6 +400,21 @@ static const std::unordered_map<std::string, ExpectedJacobian3D>
                   { 50000.0, 0.0, -30000.0 },     // Node 5: top-front-right
                   { 50000.0, 40000.0, -30000.0 }, // Node 6: top-back-right
                   { 0.0, 40000.0, -30000.0 }      // Node 7: top-back-left
+              } } } } },
+      { "EightNodeElasticCosserat",
+        { { 5, 5, 5, 8 }, // GLL configuration: ngllx, nglly, ngllz, nelements
+          { { 0,          // Element ID
+              8,          // Control nodes per element (hexahedral)
+              {
+                  // Control node coordinates {x, y, z} in SPECFEM++ ordering
+                  { 0.0, 0.0, -60000.0 },         // Node 0: bottom-front-left
+                  { 50000.0, 0.0, -60000.0 },     // Node 1: bottom-front-right
+                  { 50000.0, 40000.0, -60000.0 }, // Node 2: bottom-back-right
+                  { 0.0, 40000.0, -60000.0 },     // Node 3: bottom-back-left
+                  { 0.0, 0.0, -30000.0 },         // Node 4: top-front-left
+                  { 50000.0, 0.0, -30000.0 },     // Node 5: top-front-right
+                  { 50000.0, 40000.0, -30000.0 }, // Node 6: top-back-right
+                  { 0.0, 40000.0, -30000.0 }      // Node 7: top-back-left
               } } } } }
     };
 
