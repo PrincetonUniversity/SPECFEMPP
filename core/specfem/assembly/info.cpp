@@ -1,5 +1,7 @@
 #include "specfem/assembly/info.hpp"
 #include "specfem/assembly/info.tpp"
+#include <iomanip>
+#include <sstream>
 
 template <>
 std::string
@@ -44,6 +46,13 @@ specfem::assembly::Info<specfem::element::dimension_tag::dim3>::string() const {
       << gll_distance.max << "]\n";
   oss << " Minimum Period: . " << largest_minimum_period << "\n";
   oss << " Suggested Time Step: .... " << suggested_time_step << "\n";
+  if (!elements_per_region.empty()) {
+    oss << " Elements per region:\n";
+    for (const auto &[region, count] : elements_per_region) {
+      oss << "   " << std::left << std::setw(22)
+          << (specfem::element::to_string(region) + ":") << count << "\n";
+    }
+  }
   return oss.str();
 }
 

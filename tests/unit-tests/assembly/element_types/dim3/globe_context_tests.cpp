@@ -1,4 +1,5 @@
 #include "specfem/assembly/element_types.hpp"
+#include "specfem/assembly/info/impl/region_counts.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/attenuation.hpp"
 #include "specfem/element.hpp"
@@ -98,6 +99,14 @@ TEST(GlobeElementContext, CarriesMesherContext) {
       total += count;
     }
     EXPECT_EQ(total, nspec);
+
+    const auto counts =
+        specfem::assembly::info::impl::count_elements_per_region(element_types);
+    ASSERT_EQ(counts.size(), 3);
+    for (const auto &[region, count] : counts) {
+      EXPECT_EQ(count, element_types.get_number_of_elements(region))
+          << specfem::element::to_string(region);
+    }
   }
 
   {
