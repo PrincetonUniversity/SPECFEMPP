@@ -1,0 +1,19 @@
+source_file = "FORCESOLUTION"
+fortran_mesh_files = ["meshfem3D_files/interface1.txt", "meshfem3D_files/interfaces.txt", "meshfem3D_files/Mesh_Par_file"]
+specfempp_mesh_files = ["interface1.txt", "interfaces.txt", "Mesh_Par_file"]
+
+# Shared rule modules live in the Newmark suite; hoisting them to the
+# displacement_tests level is a planned cleanup (issue #1984 follow-up).
+include: "../../../../Newmark/specfem3d.smk"
+
+
+# Database only: this is not a trace-regression fixture (no traces/ and no
+# tests.yaml entry) -- the reference is the explicit run computed live by
+# implicit_newmark_tests.cpp. The mesh is identical to
+# Newmark/serial/dim3/HomogeneousHalfSpaceStacey, so the committed
+# database.bin is byte-identical to that fixture's; this Snakefile
+# regenerates it independently from the provenance here.
+rule all:
+    input:
+        database="<cwd>/database.bin",
+    localrule: True

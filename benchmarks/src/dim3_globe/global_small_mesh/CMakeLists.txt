@@ -35,7 +35,8 @@ if(SPECFEM_BUILD_MESHFEM3D_GLOBE)
             $<TARGET_FILE:xmeshfem3D_globe>
     # validates the thin SPECFEM++ mesh database (SPECFEMPP_DATABASE = .true. in the
     # Par_file): record framing, node/element consistency, CSR symmetry, CMB/ICB
-    # welding, boundary face counts and cross-rank MPI interface agreement
+    # welding, boundary face counts, cross-rank MPI interface agreement, and that
+    # the model config block is present and identical on every rank
     COMMAND ${CMAKE_COMMAND} -E chdir ${CURRENT_BENCHMARK_BUILD_DIR}
             uv run --project ${PROJECT_SOURCE_DIR} --group examples
             python check_database.py DATABASES_MPI

@@ -1,5 +1,5 @@
 
-#include "acoustic_elastic.hpp"
+#include "../acoustic_elastic.hpp"
 #include "integrate_against_shape_on_face.hpp"
 #include "specfem/compute/impl/compute_coupling.hpp"
 #include "specfem/compute/impl/compute_coupling.tpp" // so that we don't need to load the entire solver

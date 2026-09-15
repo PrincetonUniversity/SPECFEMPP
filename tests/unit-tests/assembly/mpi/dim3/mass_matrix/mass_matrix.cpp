@@ -35,7 +35,7 @@ class MassMatrixMPI3DTest : public ::testing::TestWithParam<std::string> {
 protected:
   static constexpr auto dimension = specfem::element::dimension_tag::dim3;
 
-  specfem::mesh::mesh<dimension> mesh;
+  specfem::mesh::cartesian3d_mesh mesh;
   specfem::assembly::assembly<dimension> assembly;
 
   void SetUp() override {

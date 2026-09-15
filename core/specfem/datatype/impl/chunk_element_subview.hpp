@@ -282,6 +282,34 @@ template <typename ViewType> struct TensorChunkElementSubview {
     }
     return *this;
   }
+
+  /**
+   * @brief Tensor contraction operator
+   *
+   * Multiplies this tensor subview by another tensor, performing a contraction
+   * over the appropriate indices. The resulting view is transformed according
+   * to the rules of tensor algebra.
+   *
+   * @tparam T Type of the tensor to multiply with
+   * @param tensor The tensor to contract with
+   * @return The result of the contraction
+   */
+  template <typename T>
+  KOKKOS_INLINE_FUNCTION auto operator*(const T &tensor) const {
+    point_view_type temp;
+    point_view_type transformed;
+
+    for (int icomp = 0; icomp < point_view_type::components; ++icomp) {
+      for (int idim = 0; idim < point_view_type::dimensions; ++idim) {
+        temp(icomp, idim) = (*this)(icomp, idim);
+      }
+    }
+
+    // Delegate to point view operator* for transformation
+    transformed = temp * tensor;
+
+    return transformed;
+  }
 };
 
 } // namespace specfem::datatype::impl

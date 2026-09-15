@@ -50,8 +50,8 @@ void globe_evaluator_dims(int *ngllx, int *nglly, int *ngllz, int *n_sls);
  * are explicit. Pass imain_path_len == 0 to send the catalog's log output to
  * /dev/null.
  *
- * comm_f must be a *Fortran* MPI communicator handle, i.e. the result of
- * MPI_Comm_c2f() applied to the caller's communicator.
+ * In MPI builds, comm_f must be a Fortran communicator handle returned by
+ * MPI_Comm_c2f(). Serial builds pass the serial communicator value zero.
  *
  * Boolean toggles are 0 (false) / nonzero (true).
  *

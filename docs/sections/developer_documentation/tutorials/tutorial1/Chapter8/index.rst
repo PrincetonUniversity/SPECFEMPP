@@ -128,17 +128,17 @@ Next, lets implement ``compute_stiffness_interaction`` kernel.
                 properties.mu * (du(0, 1) + du(1, 0));
 
             F(0, 0) =
-                sigma_xx * jacobian_matrix.xix +
-                sigma_xz * jacobian_matrix.xiz;
+                sigma_xx * jacobian_matrix.xix() +
+                sigma_xz * jacobian_matrix.xiz();
             F(0, 1) =
-                sigma_xz * jacobian_matrix.xix +
-                sigma_zz * jacobian_matrix.xiz;
+                sigma_xz * jacobian_matrix.xix() +
+                sigma_zz * jacobian_matrix.xiz();
             F(1, 0) =
-                sigma_xx * jacobian_matrix.gammax +
-                sigma_xz * jacobian_matrix.gammaz;
+                sigma_xx * jacobian_matrix.gammax() +
+                sigma_xz * jacobian_matrix.gammaz();
             F(1, 1) =
-                sigma_xz * jacobian_matrix.gammax +
-                sigma_zz * jacobian_matrix.gammaz;
+                sigma_xz * jacobian_matrix.gammax() +
+                sigma_zz * jacobian_matrix.gammaz();
         };
 
     void domain::compute_stiffness_interaction() {
