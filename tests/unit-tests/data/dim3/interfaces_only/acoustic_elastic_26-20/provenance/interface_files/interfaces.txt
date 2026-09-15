@@ -1,0 +1,12 @@
+# number of interfaces
+ 2
+
+# SUPPRESS_UTM_PROJECTION  NXI  NETA  LONG_MIN  LAT_MIN  SPACING_XI  SPACING_ETA
+ .true. 2 2 -1000.0 -1000.0 2000.0 2000.0
+ mid.txt
+ .true. 2 2 -1000.0 -1000.0 2000.0 2000.0
+ top.txt
+#
+# for each layer, we give the number of spectral elements in the vertical direction
+ 2
+ 2

@@ -1,5 +1,5 @@
 #pragma once
-#include "acoustic_elastic.hpp"
+#include "../acoustic_elastic.hpp"
 #include "specfem/assembly/element_intersections/dim3/element_intersections.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/mesh_entity/dim3/mesh_entity.hpp"

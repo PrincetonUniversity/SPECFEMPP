@@ -263,6 +263,8 @@ specfem_add_test(mesh_dim3_tests
 specfem_add_test(nonconforming_tests
   SOURCES   nonconforming/reparameterizations/compute_intersection_test.cpp
             nonconforming/reparameterizations/set_transfer_functions_test.cpp
+            nonconforming/kernel/dim3/kerneltest.cpp
+            nonconforming/kernel/dim3/acoustic_elastic.cpp
             nonconforming/runner.cpp
   LIBRARIES specfem::mesh
             specfem::assembly

@@ -1,0 +1,30 @@
+
+title                           = acoustic_elastic_22-14
+
+NPROC                            = 1
+NGNOD                            = 27
+PARTITIONING_TYPE                = 3
+LTS_MODE                         = .false.
+ATTENUATION                      = .false.
+PML_CONDITIONS                   = .false.
+SAVE_MESH_FILES                  = .false.
+ADIOS_FOR_DATABASES = .false.
+COUPLE_WITH_INJECTION_TECHNIQUE  = .false.
+LOCAL_PATH                       = ./OUTPUT_FILES/
+NODES_COORDS_FILE                = meshfiles/node_coords
+MESH_FILE                        = meshfiles/mesh
+MATERIALS_FILE                   = meshfiles/materials
+NUMMATERIAL_VELOCITY_FILE        = materials_config_file
+
+NONCONFORMING_ADJACENCIES_FILE = meshfiles/nc_adjacencies
+ABSORBING_SURFACE_FILE_XMIN     = meshfiles/absorbing_surface_file_xmin
+ABSORBING_SURFACE_FILE_XMAX     = meshfiles/absorbing_surface_file_xmax
+ABSORBING_SURFACE_FILE_YMIN     = meshfiles/absorbing_surface_file_ymin
+ABSORBING_SURFACE_FILE_YMAX     = meshfiles/absorbing_surface_file_ymax
+ABSORBING_SURFACE_FILE_BOTTOM   = meshfiles/absorbing_surface_file_bottom
+FREE_OR_ABSORBING_SURFACE_FILE_ZMAX = meshfiles/free_or_absorbing_surface_file_zmax
+
+
+STACEY_ABSORBING_CONDITIONS    = .false.
+TOP_FREE_SURFACE               = .false.
+BOTTOM_FREE_SURFACE            = .false.
