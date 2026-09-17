@@ -839,3 +839,10 @@ specfem_add_test(damping_assembler_tests
             -lpthread -lm
   LABELS    TRILINOS
 )
+
+specfem_add_test(seismogram_sampling_tests
+  SOURCES   timescheme/seismogram_sampling_tests.cpp
+  LIBRARIES specfem::runtime_configuration
+            specfem_environment
+            gtest_main
+)
