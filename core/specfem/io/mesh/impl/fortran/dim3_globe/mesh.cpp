@@ -1,4 +1,5 @@
 #include "specfem/attenuation.hpp"
+#include "specfem/constants/globe.hpp"
 #include "specfem/io.hpp"
 #include "specfem/io/fortranio/interface.hpp"
 #include "specfem/io/mesh/impl/fortran/dim3_globe/common.hpp"
@@ -42,8 +43,14 @@ specfem::mesh::globe3d_mesh specfem::io::read_globe_mesh(
   auto &globe = mesh.globe;
   globe.format_version = version;
 
+  double database_r_planet = 0.0;
+  double database_rhoav = 0.0;
   specfem::io::fortran_read_line(stream, &globe.model_config.planet_type,
-                                 &globe.planet_radius, &globe.average_density);
+                                 &database_r_planet, &database_rhoav);
+  mesh.planet_constants = specfem::constants::PlanetConstants(
+      specfem::constants::planet_from_type(globe.model_config.planet_type));
+  specfem::constants::check_database_values(mesh.planet_constants,
+                                            database_r_planet, database_rhoav);
 
   int ngnod = 0;
   specfem::io::fortran_read_line(stream, &ngnod, &mesh.element_grid.ngllx,

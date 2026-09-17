@@ -4,8 +4,8 @@
  * Implemented by globe_model_evaluator.F90. See issue #2001.
  *
  * Contracts:
- *   - INPUT coordinates and radii are SI metres. The Fortran side
- *     non-dimensionalizes by R_PLANET.
+ *   - INPUT coordinates and radii are non-dimensional. The public C++ oracle
+ *     wrapper is the only layer that converts its SI interface to this ABI.
  *   - OUTPUT material is in the globe's NON-DIMENSIONAL units, not SI:
  *     density is near 1 and velocities near 2. This is deliberate -- returning
  *     the catalog's own numbers untouched is what makes them bit-for-bit the
@@ -93,6 +93,11 @@ int globe_evaluator_init(const char *model_name, int name_len,
 int globe_evaluator_scales(double *length_scale, double *density_scale,
                         double *velocity_scale);
 
+/* Reports model-dependent radii in SI metres. */
+int globe_evaluator_radii(double *r_icb, double *r_cmb, double *r_moho,
+                          double *r_80, double *r_220, double *r_400,
+                          double *r_670, double *r_771, double *r_ocean);
+
 /*
  * Releases what the evaluator owns (its log unit and the topo/bathy array) and
  * clears the initialization guard so a different model may be configured.
@@ -116,8 +121,8 @@ int globe_evaluator_finalize(void);
  *
  *   iregion_code    IREGION_CRUST_MANTLE=1, OUTER_CORE=2, INNER_CORE=3
  *   idoubling       the element's radial-zone IFLAG_* value
- *   rmin_si/rmax_si the element's radial shell bounds, SI metres
- *   xyz_si          [3 * npoints], point-major: {x0,y0,z0, x1,y1,z1, ...}
+ *   rmin/rmax       non-dimensional element radial shell bounds
+ *   xyz             non-dimensional point-major coordinates
  *   cij             [21 * npoints], point-major, Voigt order
  *                   c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,
  *                   c33,c34,c35,c36,c44,c45,c46,c55,c56,c66
@@ -131,9 +136,9 @@ int globe_evaluator_finalize(void);
  * (get_model_check_idoubling); converting that to a status code is a tracked
  * follow-up.
  */
-int globe_evaluator_get_element(int iregion_code, int idoubling, double rmin_si,
-                             double rmax_si, int elem_in_crust,
-                             int elem_in_mantle, const double *xyz_si,
+int globe_evaluator_get_element(int iregion_code, int idoubling, double rmin,
+                             double rmax, int elem_in_crust,
+                             int elem_in_mantle, const double *xyz,
                              double *rho, double *vpv, double *vph, double *vsv,
                              double *vsh, double *eta, double *vp_iso,
                              double *vs_iso, double *qmu, double *qkappa,
@@ -149,7 +154,7 @@ int globe_evaluator_get_element(int iregion_code, int idoubling, double rmin_si,
  * tests can check the evaluator against the catalog's own reference routine rather
  * than against a hand-written table of expected values.
  */
-int globe_evaluator_prem_reference(double r_si, int idoubling, int iregion_code,
+int globe_evaluator_prem_reference(double r, int idoubling, int iregion_code,
                                 double *rho, double *vpv, double *vph,
                                 double *vsv, double *vsh, double *eta,
                                 double *vp_iso, double *vs_iso, double *qkappa,

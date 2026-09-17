@@ -63,10 +63,11 @@ target_link_libraries(specfem_program_abort
 add_subdirectory(algorithms)
 add_subdirectory(element_coupling)
 add_subdirectory(ellipticity)
+add_subdirectory(utilities)
 
 # C++ binding for the SPECFEM3D_GLOBE model evaluator. In non-globe builds this
 # provides a throwing stub so callers can compile without the Fortran catalog.
-add_subdirectory(globe_model)
+add_subdirectory(io/globe_model)
 
 add_subdirectory(assembly)
 add_subdirectory(compute)
@@ -93,7 +94,6 @@ add_subdirectory(solver)
 add_subdirectory(source)
 add_subdirectory(source_time_functions)
 add_subdirectory(timescheme)
-add_subdirectory(utilities)
 add_subdirectory(coordinate_systems)
 
 # Create specfem::core interface library that ties everything together

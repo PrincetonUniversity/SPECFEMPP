@@ -2,12 +2,12 @@
 
 #include <stdexcept>
 
-#include "specfem/globe_model.hpp"
+#include "specfem/io/globe_model.hpp"
 #include "specfem/point.hpp"
 #include "specfem/tags.hpp"
+#include "specfem/units.hpp"
 #include "specfem/utilities/logarithmic_center.hpp"
 #include <algorithm>
-#include <cmath>
 #include <vector>
 
 namespace specfem::assembly::dim3_impl {
@@ -21,20 +21,17 @@ void read_globe_properties(
   using Property = specfem::element::property_tag;
 
   const auto &globe = input_mesh.globe;
-  specfem::globe_model::Evaluator evaluator(globe.model_config);
-  const auto evaluator_dims = evaluator.dims();
+  specfem::io::globe_model evaluator(globe.model_config,
+                                     assembly.planet_constants);
+  const auto evaluator_dims = evaluator.dimensions();
   if (evaluator_dims.ngllx != assembly.mesh.element_grid.ngllx ||
       evaluator_dims.nglly != assembly.mesh.element_grid.nglly ||
       evaluator_dims.ngllz != assembly.mesh.element_grid.ngllz) {
     throw std::runtime_error(
         "Globe model evaluator and mesh use different GLL dimensions");
   }
-  const auto scales = evaluator.scales();
-  if (std::abs(scales.length - globe.planet_radius) >
-      1.0e-10 * globe.planet_radius) {
-    throw std::runtime_error(
-        "Globe model evaluator and mesh database use different planet radii");
-  }
+  const auto radii = evaluator.radii();
+  assembly.planet_constants.set_radii(radii);
 
   const int ngllz = assembly.mesh.element_grid.ngllz;
   const int nglly = assembly.mesh.element_grid.nglly;
@@ -102,27 +99,21 @@ void read_globe_properties(
       const auto values = evaluator.evaluate_element(
           context.region, context.idoubling, context.rmin, context.rmax,
           context.element_in_crust, context.element_in_mantle, xyz);
-      if (values.is_anisotropic) {
-        // The 3-D anisotropic property container, stress and kernels now
-        // exist, but element property tags are fixed from
-        // input_mesh.materials.material_index_mapping before this evaluator
-        // runs. Supporting this needs per-element re-tagging from
-        // values.is_anisotropic, which is not implemented.
+      const auto material =
+          input_mesh.materials.material_index_mapping[mesh_ispec];
+      const auto medium = material.type;
+      const auto property = material.property;
+      if (values.is_anisotropic != (property == Property::anisotropic)) {
         throw std::runtime_error(
-            "The globe evaluator returned anisotropic cij, but SPECFEM++ "
-            "cannot yet re-tag globe elements as anisotropic after the mesh "
-            "material mapping has been built");
+            "Globe mesh anisotropy tag does not match evaluator response");
       }
-
-      const auto medium =
-          input_mesh.materials.material_index_mapping[mesh_ispec].type;
       std::size_t ipoint = 0;
       for (int iz = 0; iz < ngllz; ++iz) {
         for (int iy = 0; iy < nglly; ++iy) {
           for (int ix = 0; ix < ngllx; ++ix, ++ipoint) {
-            const type_real rho = values.rho[ipoint] * scales.density;
-            const type_real vp = values.vp_iso[ipoint] * scales.velocity;
-            const type_real vs = values.vs_iso[ipoint] * scales.velocity;
+            const type_real rho = values.rho[ipoint];
+            const type_real vp = values.vp_iso[ipoint];
+            const type_real vs = values.vs_iso[ipoint];
             const specfem::point::index<Dimension::dim3, false> index(
                 compute_ispec, iz, iy, ix);
             if (medium == Medium::acoustic) {
@@ -135,6 +126,29 @@ void read_globe_properties(
                   specfem::tags::Tags<Dimension::dim3, Medium::acoustic,
                                       Property::isotropic, false>>
                   point_property(1.0 / rho, kappa);
+              specfem::assembly::store_on_host(index, point_property,
+                                               assembly.properties);
+            } else if (property == Property::anisotropic) {
+              if (vs == 0.0) {
+                throw std::runtime_error(
+                    "Globe evaluator returned zero Vs for an elastic element");
+              }
+              const std::size_t cij_offset = 21 * ipoint;
+              specfem::point::properties<
+                  specfem::tags::Tags<Dimension::dim3, Medium::elastic,
+                                      Property::anisotropic, false>>
+                  point_property(
+                      values.cij[cij_offset + 0], values.cij[cij_offset + 1],
+                      values.cij[cij_offset + 2], values.cij[cij_offset + 3],
+                      values.cij[cij_offset + 4], values.cij[cij_offset + 5],
+                      values.cij[cij_offset + 6], values.cij[cij_offset + 7],
+                      values.cij[cij_offset + 8], values.cij[cij_offset + 9],
+                      values.cij[cij_offset + 10], values.cij[cij_offset + 11],
+                      values.cij[cij_offset + 12], values.cij[cij_offset + 13],
+                      values.cij[cij_offset + 14], values.cij[cij_offset + 15],
+                      values.cij[cij_offset + 16], values.cij[cij_offset + 17],
+                      values.cij[cij_offset + 18], values.cij[cij_offset + 19],
+                      values.cij[cij_offset + 20], rho);
               specfem::assembly::store_on_host(index, point_property,
                                                assembly.properties);
             } else {

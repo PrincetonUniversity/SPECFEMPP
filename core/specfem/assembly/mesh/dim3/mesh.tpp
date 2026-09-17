@@ -8,6 +8,9 @@
 #include <stdexcept>
 #include <string>
 
+#include <stdexcept>
+#include <string>
+
 specfem::assembly::mesh<specfem::element::dimension_tag::dim3>::mesh(
     const int nspec, const int ngnod, const int ngllz, const int nglly,
     const int ngllx, const specfem::mesh::tags<dimension_tag> &tags,

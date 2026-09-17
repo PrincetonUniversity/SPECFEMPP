@@ -1,5 +1,6 @@
 #include "specfem/attenuation.hpp"
 #include "specfem/io.hpp"
+#include "specfem/io/globe_model.hpp"
 #include "specfem/mpi.hpp"
 
 #include <gtest/gtest.h>
@@ -51,6 +52,18 @@ void check() {
   EXPECT_FALSE(globe.cmb.elements.empty());
   EXPECT_FALSE(globe.icb.elements.empty());
   EXPECT_TRUE(mesh.adjacency_graph.mpi_connections().empty());
+
+  EXPECT_EQ(mesh.planet_constants.planet(), specfem::constants::Planet::earth);
+  EXPECT_DOUBLE_EQ(mesh.planet_constants.values().hours_per_day, 24.0);
+  EXPECT_FALSE(mesh.planet_constants.has_radii());
+
+  specfem::constants::PlanetConstants constants = mesh.planet_constants;
+  specfem::io::globe_model evaluator(config, constants);
+  const auto radii = evaluator.radii();
+  constants.set_radii(radii);
+  ASSERT_TRUE(constants.has_radii());
+  EXPECT_NEAR(constants.radii().r_cmb / constants.values().r_planet,
+              3480000.0 / 6371000.0, 1.0e-6);
 }
 
 } // namespace globe_mesh_test_impl

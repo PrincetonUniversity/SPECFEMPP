@@ -15,6 +15,16 @@ bool has_deferred_properties(
   return property_reader != nullptr;
 }
 
+specfem::constants::PlanetConstants
+planet_constants(const specfem::mesh::cartesian3d_mesh &) {
+  return {};
+}
+
+specfem::constants::PlanetConstants
+planet_constants(const specfem::mesh::globe3d_mesh &mesh) {
+  return mesh.planet_constants;
+}
+
 bool has_deferred_properties(const specfem::mesh::globe3d_mesh &,
                              const std::shared_ptr<specfem::io::reader> &) {
   return true;
@@ -64,6 +74,7 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
 
   this->t0 = t0;
   this->dt = dt;
+  this->planet_constants = specfem::assembly::dim3_impl::planet_constants(mesh);
 
   const int nspec = mesh.nspec;
   const int ngllz = mesh.element_grid.ngllz;

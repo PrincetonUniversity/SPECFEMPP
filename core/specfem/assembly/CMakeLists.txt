@@ -18,7 +18,7 @@ target_link_libraries(
         specfem::mesh
         specfem::mpi
         specfem::program_abort
-        specfem::globe_model
+        specfem::io_globe_model
         source_class
         jacobian
         point
