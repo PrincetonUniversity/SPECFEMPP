@@ -6,6 +6,9 @@
 #include "specfem/assembly/mesh/impl/quadrature.hpp"
 #include "specfem/mesh.hpp"
 
+#include <stdexcept>
+#include <string>
+
 specfem::assembly::mesh<specfem::element::dimension_tag::dim3>::mesh(
     const int nspec, const int ngnod, const int ngllz, const int nglly,
     const int ngllx, const specfem::mesh::tags<dimension_tag> &tags,
@@ -13,6 +16,16 @@ specfem::assembly::mesh<specfem::element::dimension_tag::dim3>::mesh(
     const specfem::mesh::control_nodes<dimension_tag> &control_nodes,
     const specfem::quadrature::quadratures &quadrature)
     : nspec(nspec), element_grid(ngllz, nglly, ngllx), ngnod(ngnod) {
+  const int quadrature_ngll = quadrature.gll.get_N();
+  if (ngllz != quadrature_ngll || nglly != quadrature_ngll ||
+      ngllx != quadrature_ngll) {
+    throw std::runtime_error(
+        "3D mesh GLL dimensions (ngllz=" + std::to_string(ngllz) + ", nglly=" +
+        std::to_string(nglly) + ", ngllx=" + std::to_string(ngllx) +
+        ") do not match the quadrature GLL count (" +
+        std::to_string(quadrature_ngll) + ").");
+  }
+
   // Initialize base classes
   static_cast<
       specfem::assembly::mesh_impl::mesh_to_compute_mapping<dimension_tag> &>(
@@ -44,11 +57,11 @@ specfem::assembly::mesh<specfem::element::dimension_tag::dim3>::mesh(
                     &>(*this)
   };
   Kokkos::View<specfem::element::medium_tag *, Kokkos::HostSpace>
-      h_element_medium_tags(
-          "specfem::assembly::mesh::element_medium_tags", nspec);
+      h_element_medium_tags("specfem::assembly::mesh::element_medium_tags",
+                            nspec);
   {
-    const auto &mapping = static_cast<
-        const specfem::assembly::mesh_impl::mesh_to_compute_mapping<
+    const auto &mapping =
+        static_cast<const specfem::assembly::mesh_impl::mesh_to_compute_mapping<
             dimension_tag> &>(*this);
     for (int compute_ispec = 0; compute_ispec < nspec; compute_ispec++) {
       const int mesh_ispec = mapping.h_compute_to_mesh(compute_ispec);

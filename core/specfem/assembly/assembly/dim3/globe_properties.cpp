@@ -99,20 +99,14 @@ void read_globe_properties(
       const auto values = evaluator.evaluate_element(
           context.region, context.idoubling, context.rmin, context.rmax,
           context.element_in_crust, context.element_in_mantle, xyz);
-      if (values.is_anisotropic) {
-        // The 3-D anisotropic property container, stress and kernels now
-        // exist, but element property tags are fixed from
-        // input_mesh.materials.material_index_mapping before this evaluator
-        // runs. Supporting this needs per-element re-tagging from
-        // values.is_anisotropic, which is not implemented.
+      const auto material =
+          input_mesh.materials.material_index_mapping[mesh_ispec];
+      const auto medium = material.type;
+      const auto property = material.property;
+      if (values.is_anisotropic != (property == Property::anisotropic)) {
         throw std::runtime_error(
-            "The globe evaluator returned anisotropic cij, but SPECFEM++ "
-            "cannot yet re-tag globe elements as anisotropic after the mesh "
-            "material mapping has been built");
+            "Globe mesh anisotropy tag does not match evaluator response");
       }
-
-      const auto medium =
-          input_mesh.materials.material_index_mapping[mesh_ispec].type;
       std::size_t ipoint = 0;
       for (int iz = 0; iz < ngllz; ++iz) {
         for (int iy = 0; iy < nglly; ++iy) {
@@ -132,6 +126,29 @@ void read_globe_properties(
                   specfem::tags::Tags<Dimension::dim3, Medium::acoustic,
                                       Property::isotropic, false>>
                   point_property(1.0 / rho, kappa);
+              specfem::assembly::store_on_host(index, point_property,
+                                               assembly.properties);
+            } else if (property == Property::anisotropic) {
+              if (vs == 0.0) {
+                throw std::runtime_error(
+                    "Globe evaluator returned zero Vs for an elastic element");
+              }
+              const std::size_t cij_offset = 21 * ipoint;
+              specfem::point::properties<
+                  specfem::tags::Tags<Dimension::dim3, Medium::elastic,
+                                      Property::anisotropic, false>>
+                  point_property(
+                      values.cij[cij_offset + 0], values.cij[cij_offset + 1],
+                      values.cij[cij_offset + 2], values.cij[cij_offset + 3],
+                      values.cij[cij_offset + 4], values.cij[cij_offset + 5],
+                      values.cij[cij_offset + 6], values.cij[cij_offset + 7],
+                      values.cij[cij_offset + 8], values.cij[cij_offset + 9],
+                      values.cij[cij_offset + 10], values.cij[cij_offset + 11],
+                      values.cij[cij_offset + 12], values.cij[cij_offset + 13],
+                      values.cij[cij_offset + 14], values.cij[cij_offset + 15],
+                      values.cij[cij_offset + 16], values.cij[cij_offset + 17],
+                      values.cij[cij_offset + 18], values.cij[cij_offset + 19],
+                      values.cij[cij_offset + 20], rho);
               specfem::assembly::store_on_host(index, point_property,
                                                assembly.properties);
             } else {
