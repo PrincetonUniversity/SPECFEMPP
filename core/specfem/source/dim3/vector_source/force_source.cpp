@@ -9,8 +9,11 @@
 
 std::vector<specfem::element::medium_tag> specfem::sources::force<
     specfem::element::dimension_tag::dim3>::get_supported_media() const {
-  return { specfem::element::medium_tag::acoustic,
-           specfem::element::medium_tag::elastic };
+  return {
+    specfem::element::medium_tag::acoustic,
+    specfem::element::medium_tag::elastic,
+    specfem::element::medium_tag::elastic_spin,
+  };
 }
 
 Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
@@ -36,6 +39,16 @@ specfem::sources::force<
     force_vector(0) = fx;
     force_vector(1) = fy;
     force_vector(2) = fz;
+  }
+  // Elastic Spin
+  else if (medium_tag == specfem::element::medium_tag::elastic_spin) {
+    force_vector = ViewType("force_vector", 6);
+    force_vector(0) = fx;
+    force_vector(1) = fy;
+    force_vector(2) = fz;
+    force_vector(3) = 0.0; // rotational dofs for pure force source are zero
+    force_vector(4) = 0.0;
+    force_vector(5) = 0.0;
   } else {
     KOKKOS_ABORT_WITH_LOCATION("3-D force source array computation not "
                                "implemented for requested element type.");

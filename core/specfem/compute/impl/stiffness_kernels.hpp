@@ -198,7 +198,7 @@ public:
                                                   point_jacobian_matrix);
 
                 const auto factor =
-                    point_weights.product() * point_jacobian_matrix.jacobian;
+                    point_weights.product() * point_jacobian_matrix.jacobian();
 
                 specfem::medium_physics::compute_damping_force<decltype(factor),
                                                                PointTags>(
@@ -210,19 +210,14 @@ public:
                 // Inverting: T[i][0] = F[i][0]*gammaz - F[i][1]*xiz
                 //            T[i][1] = -F[i][0]*gammax + F[i][1]*xix
                 if constexpr (has_cosserat_couple_stress) {
-                  PointStressType T_recovered;
-                  for (int icomp = 0; icomp < ncomp; ++icomp) {
-                    T_recovered.T(icomp, 0) =
-                        stress_integrand.F(local_index, icomp, 0) *
-                            point_jacobian_matrix.gammaz -
-                        stress_integrand.F(local_index, icomp, 1) *
-                            point_jacobian_matrix.xiz;
-                    T_recovered.T(icomp, 1) =
-                        -stress_integrand.F(local_index, icomp, 0) *
-                            point_jacobian_matrix.gammax +
-                        stress_integrand.F(local_index, icomp, 1) *
-                            point_jacobian_matrix.xix;
-                  }
+                  PointStressType T_recovered =
+                      stress_integrand.F(local_index) *
+                      specfem::algorithms::inverse(
+                          point_jacobian_matrix.tensor()) /
+                      point_jacobian_matrix.jacobian();
+                  // divide by jacobian to match the behavior of multiplication
+                  // by a PointJacobianMatrixType
+
                   // acceleration is already negated;
                   // compute_cosserat_couple_stress accumulates positively, so
                   // subtract delta to stay consistent.
@@ -420,7 +415,8 @@ public:
 
                   specfem::medium_physics::compute_cosserat_couple_stress(
                       point_property,
-                      point_weights.product() * point_jacobian_matrix.jacobian,
+                      point_weights.product() *
+                          point_jacobian_matrix.jacobian(),
                       point_stress, cosserat_delta);
 
                   for (int icomp = 0; icomp < ncomp; ++icomp)
@@ -461,7 +457,7 @@ public:
                                                   point_jacobian_matrix);
 
                 const auto factor =
-                    point_weights.product() * point_jacobian_matrix.jacobian;
+                    point_weights.product() * point_jacobian_matrix.jacobian();
 
                 specfem::medium_physics::compute_damping_force<decltype(factor),
                                                                PointTags>(

@@ -20,6 +20,9 @@ namespace specfem::assembly {
  * The 3D implementation currently focuses on elastic media with displacement,
  * velocity, and acceleration field components (ux, uy, uz and derivatives).
  *
+ * It also implements elastic Cosserat media with spin field components
+ * (phix, phiy, phiz) and their derivatives.
+ *
  * @tparam SimulationWavefieldType Type of simulation field (forward, adjoint,
  * backward, buffer)
  */
@@ -44,7 +47,7 @@ public:
       SimulationWavefieldType; ///< Simulation wavefield type
 
   static constexpr auto combinations =
-      DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic);
+      DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic, elastic_spin);
 
   template <typename TagsType>
   using FieldImplTemplateType =
@@ -122,7 +125,8 @@ public:
   }
 
   /**
-   * @brief Get number of global points for 3D elastic medium.
+   * @brief Get number of global points for 3D elastic or elastic Cosserat
+   * medium.
    *
    * Returns the total number of global degrees of freedom for the elastic
    * medium type in the 3D simulation field.
@@ -149,6 +153,9 @@ public:
    * Provides access to the underlying 3D field storage for the elastic medium,
    * containing displacement, velocity, and acceleration components (ux, uy, uz
    * and their time derivatives) appropriate for 3D wave propagation.
+   *
+   * For elastic Cosserat media, also provides access to spin field components
+   * phix, phiy, phiz, and their time derivatives.
    *
    * @tparam MediumTag Medium type to access (elastic for 3D applications)
    * @return Const reference to the 3D field implementation for elastic medium

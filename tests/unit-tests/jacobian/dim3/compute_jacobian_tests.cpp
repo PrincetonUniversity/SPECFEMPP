@@ -143,39 +143,39 @@ TEST_F(ComputeJacobianDim3Test, UnitCubeIdentityMapping) {
   auto result = compute_jacobian(coorg, ngnod, 0.0, 0.0, 0.0);
 
   // For unit cube, jacobian should be 0.125 (volume = 1, reference volume = 8)
-  EXPECT_TRUE(specfem::utilities::is_close(result.jacobian,
+  EXPECT_TRUE(specfem::utilities::is_close(result.jacobian(),
                                            static_cast<type_real>(0.125)))
-      << expected_got(0.125, result.jacobian);
+      << expected_got(0.125, result.jacobian());
 
   // For unit cube mapping, the inverse jacobian matrix elements should be:
   // Each direction scaled by factor of 2
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.xix, static_cast<type_real>(2.0)))
-      << expected_got(2.0, result.xix);
+      specfem::utilities::is_close(result.xix(), static_cast<type_real>(2.0)))
+      << expected_got(2.0, result.xix());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.etax, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.etax);
+      specfem::utilities::is_close(result.etax(), static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.etax());
+  EXPECT_TRUE(specfem::utilities::is_close(result.gammax(),
+                                           static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.gammax());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.gammax, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.gammax);
+      specfem::utilities::is_close(result.xiy(), static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.xiy());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.xiy, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.xiy);
+      specfem::utilities::is_close(result.etay(), static_cast<type_real>(2.0)))
+      << expected_got(2.0, result.etay());
+  EXPECT_TRUE(specfem::utilities::is_close(result.gammay(),
+                                           static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.gammay());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.etay, static_cast<type_real>(2.0)))
-      << expected_got(2.0, result.etay);
+      specfem::utilities::is_close(result.xiz(), static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.xiz());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.gammay, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.gammay);
-  EXPECT_TRUE(
-      specfem::utilities::is_close(result.xiz, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.xiz);
-  EXPECT_TRUE(
-      specfem::utilities::is_close(result.etaz, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.etaz);
-  EXPECT_TRUE(
-      specfem::utilities::is_close(result.gammaz, static_cast<type_real>(2.0)))
-      << expected_got(2.0, result.gammaz);
+      specfem::utilities::is_close(result.etaz(), static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.etaz());
+  EXPECT_TRUE(specfem::utilities::is_close(result.gammaz(),
+                                           static_cast<type_real>(2.0)))
+      << expected_got(2.0, result.gammaz());
 }
 
 TEST_F(ComputeJacobianDim3Test, ScaledCubeMapping) {
@@ -200,38 +200,38 @@ TEST_F(ComputeJacobianDim3Test, ScaledCubeMapping) {
   auto result = compute_jacobian(coorg, ngnod, 0.0, 0.0, 0.0);
 
   // For 2x2x2 cube, jacobian should be 1.0 (volume = 8, reference volume = 8)
-  EXPECT_TRUE(specfem::utilities::is_close(result.jacobian,
+  EXPECT_TRUE(specfem::utilities::is_close(result.jacobian(),
                                            static_cast<type_real>(1.0)))
-      << expected_got(1.0, result.jacobian);
+      << expected_got(1.0, result.jacobian());
 
   // For 2x2x2 cube mapping, each direction scaled by factor of 1
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.xix, static_cast<type_real>(1.0)))
-      << expected_got(1.0, result.xix);
+      specfem::utilities::is_close(result.xix(), static_cast<type_real>(1.0)))
+      << expected_got(1.0, result.xix());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.etax, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.etax);
+      specfem::utilities::is_close(result.etax(), static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.etax());
+  EXPECT_TRUE(specfem::utilities::is_close(result.gammax(),
+                                           static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.gammax());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.gammax, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.gammax);
+      specfem::utilities::is_close(result.xiy(), static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.xiy());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.xiy, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.xiy);
+      specfem::utilities::is_close(result.etay(), static_cast<type_real>(1.0)))
+      << expected_got(1.0, result.etay());
+  EXPECT_TRUE(specfem::utilities::is_close(result.gammay(),
+                                           static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.gammay());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.etay, static_cast<type_real>(1.0)))
-      << expected_got(1.0, result.etay);
+      specfem::utilities::is_close(result.xiz(), static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.xiz());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.gammay, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.gammay);
-  EXPECT_TRUE(
-      specfem::utilities::is_close(result.xiz, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.xiz);
-  EXPECT_TRUE(
-      specfem::utilities::is_close(result.etaz, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.etaz);
-  EXPECT_TRUE(
-      specfem::utilities::is_close(result.gammaz, static_cast<type_real>(1.0)))
-      << expected_got(1.0, result.gammaz);
+      specfem::utilities::is_close(result.etaz(), static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.etaz());
+  EXPECT_TRUE(specfem::utilities::is_close(result.gammaz(),
+                                           static_cast<type_real>(1.0)))
+      << expected_got(1.0, result.gammaz());
 }
 
 TEST_F(ComputeJacobianDim3Test, TranslatedCubeMapping) {
@@ -256,37 +256,37 @@ TEST_F(ComputeJacobianDim3Test, TranslatedCubeMapping) {
   auto result = compute_jacobian(coorg, ngnod, 0.0, 0.0, 0.0);
 
   // Translation shouldn't change jacobian values
-  EXPECT_TRUE(specfem::utilities::is_close(result.jacobian,
+  EXPECT_TRUE(specfem::utilities::is_close(result.jacobian(),
                                            static_cast<type_real>(0.125)))
-      << expected_got(0.125, result.jacobian);
+      << expected_got(0.125, result.jacobian());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.xix, static_cast<type_real>(2.0)))
-      << expected_got(2.0, result.xix);
+      specfem::utilities::is_close(result.xix(), static_cast<type_real>(2.0)))
+      << expected_got(2.0, result.xix());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.etay, static_cast<type_real>(2.0)))
-      << expected_got(2.0, result.etay);
-  EXPECT_TRUE(
-      specfem::utilities::is_close(result.gammaz, static_cast<type_real>(2.0)))
-      << expected_got(2.0, result.gammaz);
+      specfem::utilities::is_close(result.etay(), static_cast<type_real>(2.0)))
+      << expected_got(2.0, result.etay());
+  EXPECT_TRUE(specfem::utilities::is_close(result.gammaz(),
+                                           static_cast<type_real>(2.0)))
+      << expected_got(2.0, result.gammaz());
   // Off-diagonal terms should be zero
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.etax, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.etax);
+      specfem::utilities::is_close(result.etax(), static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.etax());
+  EXPECT_TRUE(specfem::utilities::is_close(result.gammax(),
+                                           static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.gammax());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.gammax, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.gammax);
+      specfem::utilities::is_close(result.xiy(), static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.xiy());
+  EXPECT_TRUE(specfem::utilities::is_close(result.gammay(),
+                                           static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.gammay());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.xiy, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.xiy);
+      specfem::utilities::is_close(result.xiz(), static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.xiz());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.gammay, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.gammay);
-  EXPECT_TRUE(
-      specfem::utilities::is_close(result.xiz, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.xiz);
-  EXPECT_TRUE(
-      specfem::utilities::is_close(result.etaz, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.etaz);
+      specfem::utilities::is_close(result.etaz(), static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.etaz());
 }
 
 TEST_F(ComputeJacobianDim3Test, RectangularPrismMapping) {
@@ -311,41 +311,41 @@ TEST_F(ComputeJacobianDim3Test, RectangularPrismMapping) {
   auto result = compute_jacobian(coorg, ngnod, 0.0, 0.0, 0.0);
 
   // For 4x2x3 prism, jacobian should be 3.0 (volume = 24, reference volume = 8)
-  EXPECT_TRUE(specfem::utilities::is_close(result.jacobian,
+  EXPECT_TRUE(specfem::utilities::is_close(result.jacobian(),
                                            static_cast<type_real>(3.0)))
-      << expected_got(3.0, result.jacobian);
+      << expected_got(3.0, result.jacobian());
 
   // For 4x2x3 prism mapping:
   // dx/dxi = 2, dy/deta = 1, dz/dgamma = 1.5
   // Inverse jacobian: xi_x = 0.5, eta_y = 1.0, gamma_z = 2/3
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.xix, static_cast<type_real>(0.5)))
-      << expected_got(0.5, result.xix);
+      specfem::utilities::is_close(result.xix(), static_cast<type_real>(0.5)))
+      << expected_got(0.5, result.xix());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.etay, static_cast<type_real>(1.0)))
-      << expected_got(1.0, result.etay);
-  EXPECT_TRUE(specfem::utilities::is_close(result.gammaz,
+      specfem::utilities::is_close(result.etay(), static_cast<type_real>(1.0)))
+      << expected_got(1.0, result.etay());
+  EXPECT_TRUE(specfem::utilities::is_close(result.gammaz(),
                                            static_cast<type_real>(2.0 / 3.0)))
-      << expected_got(2.0 / 3.0, result.gammaz);
+      << expected_got(2.0 / 3.0, result.gammaz());
   // Off-diagonal terms should be zero
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.etax, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.etax);
+      specfem::utilities::is_close(result.etax(), static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.etax());
+  EXPECT_TRUE(specfem::utilities::is_close(result.gammax(),
+                                           static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.gammax());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.gammax, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.gammax);
+      specfem::utilities::is_close(result.xiy(), static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.xiy());
+  EXPECT_TRUE(specfem::utilities::is_close(result.gammay(),
+                                           static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.gammay());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.xiy, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.xiy);
+      specfem::utilities::is_close(result.xiz(), static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.xiz());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.gammay, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.gammay);
-  EXPECT_TRUE(
-      specfem::utilities::is_close(result.xiz, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.xiz);
-  EXPECT_TRUE(
-      specfem::utilities::is_close(result.etaz, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.etaz);
+      specfem::utilities::is_close(result.etaz(), static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.etaz());
 }
 
 TEST_F(ComputeJacobianDim3Test, ShearMapping) {
@@ -370,9 +370,9 @@ TEST_F(ComputeJacobianDim3Test, ShearMapping) {
   auto result = compute_jacobian(coorg, ngnod, 0.0, 0.0, 0.0);
 
   // Volume should be preserved under shear, so jacobian should be 0.125
-  EXPECT_TRUE(specfem::utilities::is_close(result.jacobian,
+  EXPECT_TRUE(specfem::utilities::is_close(result.jacobian(),
                                            static_cast<type_real>(0.125)))
-      << expected_got(0.125, result.jacobian);
+      << expected_got(0.125, result.jacobian());
 
   // Check that jacobian matrix elements account for shear
   // For this shear mapping: dx/dxi = 0.5, dx/deta = 0, dx/dgamma = 0.25
@@ -380,32 +380,32 @@ TEST_F(ComputeJacobianDim3Test, ShearMapping) {
   //                        dz/dxi = 0,   dz/deta = 0,   dz/dgamma = 0.5
   // The shear introduces coupling in the xiz term (∂ξ/∂z)
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.xix, static_cast<type_real>(2.0)))
-      << expected_got(2.0, result.xix);
+      specfem::utilities::is_close(result.xix(), static_cast<type_real>(2.0)))
+      << expected_got(2.0, result.xix());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.etax, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.etax);
+      specfem::utilities::is_close(result.etax(), static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.etax());
+  EXPECT_TRUE(specfem::utilities::is_close(result.gammax(),
+                                           static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.gammax());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.gammax, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.gammax);
+      specfem::utilities::is_close(result.xiy(), static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.xiy());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.xiy, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.xiy);
+      specfem::utilities::is_close(result.etay(), static_cast<type_real>(2.0)))
+      << expected_got(2.0, result.etay());
+  EXPECT_TRUE(specfem::utilities::is_close(result.gammay(),
+                                           static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.gammay());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.etay, static_cast<type_real>(2.0)))
-      << expected_got(2.0, result.etay);
+      specfem::utilities::is_close(result.xiz(), static_cast<type_real>(-1.0)))
+      << expected_got(-1.0, result.xiz()); // Shear coupling
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.gammay, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.gammay);
-  EXPECT_TRUE(
-      specfem::utilities::is_close(result.xiz, static_cast<type_real>(-1.0)))
-      << expected_got(-1.0, result.xiz); // Shear coupling
-  EXPECT_TRUE(
-      specfem::utilities::is_close(result.etaz, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.etaz);
-  EXPECT_TRUE(
-      specfem::utilities::is_close(result.gammaz, static_cast<type_real>(2.0)))
-      << expected_got(2.0, result.gammaz);
+      specfem::utilities::is_close(result.etaz(), static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.etaz());
+  EXPECT_TRUE(specfem::utilities::is_close(result.gammaz(),
+                                           static_cast<type_real>(2.0)))
+      << expected_got(2.0, result.gammaz());
 }
 
 TEST_F(ComputeJacobianDim3Test, JacobianConsistencyAcrossElement) {
@@ -434,31 +434,33 @@ TEST_F(ComputeJacobianDim3Test, JacobianConsistencyAcrossElement) {
 
   // Jacobian should be constant across element
   EXPECT_TRUE(specfem::utilities::is_close(
-      result_center.jacobian, static_cast<type_real>(result_corner1.jacobian)))
-      << expected_got(result_corner1.jacobian, result_center.jacobian);
+      result_center.jacobian(),
+      static_cast<type_real>(result_corner1.jacobian())))
+      << expected_got(result_corner1.jacobian(), result_center.jacobian());
   EXPECT_TRUE(specfem::utilities::is_close(
-      result_center.jacobian, static_cast<type_real>(result_corner2.jacobian)))
-      << expected_got(result_corner2.jacobian, result_center.jacobian);
+      result_center.jacobian(),
+      static_cast<type_real>(result_corner2.jacobian())))
+      << expected_got(result_corner2.jacobian(), result_center.jacobian());
 
   // Inverse jacobian matrix elements should also be constant
   EXPECT_TRUE(specfem::utilities::is_close(
-      result_center.xix, static_cast<type_real>(result_corner1.xix)))
-      << expected_got(result_corner1.xix, result_center.xix);
+      result_center.xix(), static_cast<type_real>(result_corner1.xix())))
+      << expected_got(result_corner1.xix(), result_center.xix());
   EXPECT_TRUE(specfem::utilities::is_close(
-      result_center.xix, static_cast<type_real>(result_corner2.xix)))
-      << expected_got(result_corner2.xix, result_center.xix);
+      result_center.xix(), static_cast<type_real>(result_corner2.xix())))
+      << expected_got(result_corner2.xix(), result_center.xix());
   EXPECT_TRUE(specfem::utilities::is_close(
-      result_center.etax, static_cast<type_real>(result_corner1.etax)))
-      << expected_got(result_corner1.etax, result_center.etax);
+      result_center.etax(), static_cast<type_real>(result_corner1.etax())))
+      << expected_got(result_corner1.etax(), result_center.etax());
   EXPECT_TRUE(specfem::utilities::is_close(
-      result_center.etax, static_cast<type_real>(result_corner2.etax)))
-      << expected_got(result_corner2.etax, result_center.etax);
+      result_center.etax(), static_cast<type_real>(result_corner2.etax())))
+      << expected_got(result_corner2.etax(), result_center.etax());
   EXPECT_TRUE(specfem::utilities::is_close(
-      result_center.gammax, static_cast<type_real>(result_corner1.gammax)))
-      << expected_got(result_corner1.gammax, result_center.gammax);
+      result_center.gammax(), static_cast<type_real>(result_corner1.gammax())))
+      << expected_got(result_corner1.gammax(), result_center.gammax());
   EXPECT_TRUE(specfem::utilities::is_close(
-      result_center.gammax, static_cast<type_real>(result_corner2.gammax)))
-      << expected_got(result_corner2.gammax, result_center.gammax);
+      result_center.gammax(), static_cast<type_real>(result_corner2.gammax())))
+      << expected_got(result_corner2.gammax(), result_center.gammax());
 }
 
 TEST_F(ComputeJacobianDim3Test, PositiveJacobianCheck) {
@@ -470,7 +472,7 @@ TEST_F(ComputeJacobianDim3Test, PositiveJacobianCheck) {
       coorg("coorg", ngnod);
 
   // Various properly oriented hexahedra
-  std::vector<std::array<std::array<type_real, 3>, 8> > test_elements = {
+  std::vector<std::array<std::array<type_real, 3>, 8>> test_elements = {
     // Unit cube
     { { { 0.0, 0.0, 0.0 },
         { 1.0, 0.0, 0.0 },
@@ -497,7 +499,7 @@ TEST_F(ComputeJacobianDim3Test, PositiveJacobianCheck) {
     }
 
     auto result = compute_jacobian(coorg, ngnod, 0.0, 0.0, 0.0);
-    EXPECT_GT(result.jacobian, 0.0)
+    EXPECT_GT(result.jacobian(), 0.0)
         << "Jacobian should be positive for properly oriented element";
   }
 }
@@ -521,7 +523,7 @@ TEST_F(ComputeJacobianDim3Test, NegativeJacobianCheck) {
   coorg(7) = { 1.0, 0.0, 1.0 }; // Swapped with node 5
 
   auto result = compute_jacobian(coorg, ngnod, 0.0, 0.0, 0.0);
-  EXPECT_LT(result.jacobian, 0.0)
+  EXPECT_LT(result.jacobian(), 0.0)
       << "Jacobian should be negative for improperly oriented element";
 }
 
@@ -546,20 +548,20 @@ TEST_F(ComputeJacobianDim3Test, JacobianDeterminantFormula) {
   auto result = compute_jacobian(coorg, ngnod, 0.0, 0.0, 0.0);
 
   // For this prism: jacobian determinant = 1.5 * 1.0 * 2.0 = 3.0
-  EXPECT_TRUE(specfem::utilities::is_close(result.jacobian,
+  EXPECT_TRUE(specfem::utilities::is_close(result.jacobian(),
                                            static_cast<type_real>(3.0)))
-      << expected_got(3.0, result.jacobian);
+      << expected_got(3.0, result.jacobian());
 
   // Check specific inverse jacobian elements
-  EXPECT_TRUE(specfem::utilities::is_close(result.xix,
+  EXPECT_TRUE(specfem::utilities::is_close(result.xix(),
                                            static_cast<type_real>(1.0 / 1.5)))
-      << expected_got(1.0 / 1.5, result.xix); // 1/(dx/dxi)
-  EXPECT_TRUE(specfem::utilities::is_close(result.etay,
+      << expected_got(1.0 / 1.5, result.xix()); // 1/(dx/dxi)
+  EXPECT_TRUE(specfem::utilities::is_close(result.etay(),
                                            static_cast<type_real>(1.0 / 1.0)))
-      << expected_got(1.0 / 1.0, result.etay); // 1/(dy/deta)
-  EXPECT_TRUE(specfem::utilities::is_close(result.gammaz,
+      << expected_got(1.0 / 1.0, result.etay()); // 1/(dy/deta)
+  EXPECT_TRUE(specfem::utilities::is_close(result.gammaz(),
                                            static_cast<type_real>(1.0 / 2.0)))
-      << expected_got(1.0 / 2.0, result.gammaz); // 1/(dz/dgamma)
+      << expected_got(1.0 / 2.0, result.gammaz()); // 1/(dz/dgamma)
 }
 
 TEST_F(ComputeJacobianDim3Test, SmallElementStability) {
@@ -586,19 +588,19 @@ TEST_F(ComputeJacobianDim3Test, SmallElementStability) {
   // Expected jacobian for small cube
   type_real expected_jacobian = (scale * scale * scale) / 8.0;
   EXPECT_TRUE(specfem::utilities::is_close(
-      result.jacobian, static_cast<type_real>(expected_jacobian)))
-      << expected_got(expected_jacobian, result.jacobian);
+      result.jacobian(), static_cast<type_real>(expected_jacobian)))
+      << expected_got(expected_jacobian, result.jacobian());
 
   // Inverse jacobian elements should scale appropriately
-  EXPECT_TRUE(specfem::utilities::is_close(result.xix,
+  EXPECT_TRUE(specfem::utilities::is_close(result.xix(),
                                            static_cast<type_real>(2.0 / scale)))
-      << expected_got(2.0 / scale, result.xix);
-  EXPECT_TRUE(specfem::utilities::is_close(result.etay,
+      << expected_got(2.0 / scale, result.xix());
+  EXPECT_TRUE(specfem::utilities::is_close(result.etay(),
                                            static_cast<type_real>(2.0 / scale)))
-      << expected_got(2.0 / scale, result.etay);
-  EXPECT_TRUE(specfem::utilities::is_close(result.gammaz,
+      << expected_got(2.0 / scale, result.etay());
+  EXPECT_TRUE(specfem::utilities::is_close(result.gammaz(),
                                            static_cast<type_real>(2.0 / scale)))
-      << expected_got(2.0 / scale, result.gammaz);
+      << expected_got(2.0 / scale, result.gammaz());
 }
 
 TEST_F(ComputeJacobianDim3Test, TwentySevenNodeUnitCubeMapping) {
@@ -649,39 +651,39 @@ TEST_F(ComputeJacobianDim3Test, TwentySevenNodeUnitCubeMapping) {
   auto result = compute_jacobian(coorg, ngnod, 0.0, 0.0, 0.0);
 
   // For unit cube, jacobian should be 0.125 (volume = 1, reference volume = 8)
-  EXPECT_TRUE(specfem::utilities::is_close(result.jacobian,
+  EXPECT_TRUE(specfem::utilities::is_close(result.jacobian(),
                                            static_cast<type_real>(0.125)))
-      << expected_got(0.125, result.jacobian);
+      << expected_got(0.125, result.jacobian());
 
   // For unit cube mapping, the inverse jacobian matrix elements should be:
   // Each direction scaled by factor of 2
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.xix, static_cast<type_real>(2.0)))
-      << expected_got(2.0, result.xix);
+      specfem::utilities::is_close(result.xix(), static_cast<type_real>(2.0)))
+      << expected_got(2.0, result.xix());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.etax, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.etax);
+      specfem::utilities::is_close(result.etax(), static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.etax());
+  EXPECT_TRUE(specfem::utilities::is_close(result.gammax(),
+                                           static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.gammax());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.gammax, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.gammax);
+      specfem::utilities::is_close(result.xiy(), static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.xiy());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.xiy, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.xiy);
+      specfem::utilities::is_close(result.etay(), static_cast<type_real>(2.0)))
+      << expected_got(2.0, result.etay());
+  EXPECT_TRUE(specfem::utilities::is_close(result.gammay(),
+                                           static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.gammay());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.etay, static_cast<type_real>(2.0)))
-      << expected_got(2.0, result.etay);
+      specfem::utilities::is_close(result.xiz(), static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.xiz());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.gammay, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.gammay);
-  EXPECT_TRUE(
-      specfem::utilities::is_close(result.xiz, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.xiz);
-  EXPECT_TRUE(
-      specfem::utilities::is_close(result.etaz, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.etaz);
-  EXPECT_TRUE(
-      specfem::utilities::is_close(result.gammaz, static_cast<type_real>(2.0)))
-      << expected_got(2.0, result.gammaz);
+      specfem::utilities::is_close(result.etaz(), static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.etaz());
+  EXPECT_TRUE(specfem::utilities::is_close(result.gammaz(),
+                                           static_cast<type_real>(2.0)))
+      << expected_got(2.0, result.gammaz());
 }
 
 TEST_F(ComputeJacobianDim3Test, TwentySevenNodeScaledCubeMapping) {
@@ -732,36 +734,36 @@ TEST_F(ComputeJacobianDim3Test, TwentySevenNodeScaledCubeMapping) {
   auto result = compute_jacobian(coorg, ngnod, 0.0, 0.0, 0.0);
 
   // For 2x2x2 cube, jacobian should be 1.0 (volume = 8, reference volume = 8)
-  EXPECT_TRUE(specfem::utilities::is_close(result.jacobian,
+  EXPECT_TRUE(specfem::utilities::is_close(result.jacobian(),
                                            static_cast<type_real>(1.0)))
-      << expected_got(1.0, result.jacobian);
+      << expected_got(1.0, result.jacobian());
 
   // For 2x2x2 cube mapping, each direction scaled by factor of 1
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.xix, static_cast<type_real>(1.0)))
-      << expected_got(1.0, result.xix);
+      specfem::utilities::is_close(result.xix(), static_cast<type_real>(1.0)))
+      << expected_got(1.0, result.xix());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.etax, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.etax);
+      specfem::utilities::is_close(result.etax(), static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.etax());
+  EXPECT_TRUE(specfem::utilities::is_close(result.gammax(),
+                                           static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.gammax());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.gammax, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.gammax);
+      specfem::utilities::is_close(result.xiy(), static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.xiy());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.xiy, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.xiy);
+      specfem::utilities::is_close(result.etay(), static_cast<type_real>(1.0)))
+      << expected_got(1.0, result.etay());
+  EXPECT_TRUE(specfem::utilities::is_close(result.gammay(),
+                                           static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.gammay());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.etay, static_cast<type_real>(1.0)))
-      << expected_got(1.0, result.etay);
+      specfem::utilities::is_close(result.xiz(), static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.xiz());
   EXPECT_TRUE(
-      specfem::utilities::is_close(result.gammay, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.gammay);
-  EXPECT_TRUE(
-      specfem::utilities::is_close(result.xiz, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.xiz);
-  EXPECT_TRUE(
-      specfem::utilities::is_close(result.etaz, static_cast<type_real>(0.0)))
-      << expected_got(0.0, result.etaz);
-  EXPECT_TRUE(
-      specfem::utilities::is_close(result.gammaz, static_cast<type_real>(1.0)))
-      << expected_got(1.0, result.gammaz);
+      specfem::utilities::is_close(result.etaz(), static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.etaz());
+  EXPECT_TRUE(specfem::utilities::is_close(result.gammaz(),
+                                           static_cast<type_real>(1.0)))
+      << expected_got(1.0, result.gammaz());
 }

@@ -69,11 +69,11 @@ void compute_source_array_from_tensor_and_element_jacobian(
 
       // Compute the derivatives at the source location
       type_real dsrc_dx =
-          (hpxi_source(ix) * derivatives_source.xix) * hgamma_source(iz) +
-          hxi_source(ix) * (hpgamma_source(iz) * derivatives_source.gammax);
+          (hpxi_source(ix) * derivatives_source.xix()) * hgamma_source(iz) +
+          hxi_source(ix) * (hpgamma_source(iz) * derivatives_source.gammax());
       type_real dsrc_dz =
-          (hpxi_source(ix) * derivatives_source.xiz) * hgamma_source(iz) +
-          hxi_source(ix) * (hpgamma_source(iz) * derivatives_source.gammaz);
+          (hpxi_source(ix) * derivatives_source.xiz()) * hgamma_source(iz) +
+          hxi_source(ix) * (hpgamma_source(iz) * derivatives_source.gammaz());
 
       for (int i = 0; i < ncomponents; ++i) {
         source_array(i, iz, ix) =

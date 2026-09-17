@@ -57,17 +57,17 @@ chain_rule(const PointJacobianMatrixType &point_jacobian_matrix,
       df;
 
   for (int icomponent = 0; icomponent < Components; ++icomponent) {
-    df(icomponent, 0) = point_jacobian_matrix.xix * df_dxi[icomponent] +
-                        point_jacobian_matrix.etax * df_deta[icomponent] +
-                        point_jacobian_matrix.gammax * df_dgamma[icomponent];
+    df(icomponent, 0) = point_jacobian_matrix.xix() * df_dxi[icomponent] +
+                        point_jacobian_matrix.etax() * df_deta[icomponent] +
+                        point_jacobian_matrix.gammax() * df_dgamma[icomponent];
 
-    df(icomponent, 1) = point_jacobian_matrix.xiy * df_dxi[icomponent] +
-                        point_jacobian_matrix.etay * df_deta[icomponent] +
-                        point_jacobian_matrix.gammay * df_dgamma[icomponent];
+    df(icomponent, 1) = point_jacobian_matrix.xiy() * df_dxi[icomponent] +
+                        point_jacobian_matrix.etay() * df_deta[icomponent] +
+                        point_jacobian_matrix.gammay() * df_dgamma[icomponent];
 
-    df(icomponent, 2) = point_jacobian_matrix.xiz * df_dxi[icomponent] +
-                        point_jacobian_matrix.etaz * df_deta[icomponent] +
-                        point_jacobian_matrix.gammaz * df_dgamma[icomponent];
+    df(icomponent, 2) = point_jacobian_matrix.xiz() * df_dxi[icomponent] +
+                        point_jacobian_matrix.etaz() * df_deta[icomponent] +
+                        point_jacobian_matrix.gammaz() * df_dgamma[icomponent];
   }
   return df;
 }
@@ -85,11 +85,11 @@ chain_rule(const PointJacobianMatrixType &point_jacobian_matrix,
       df;
 
   for (int icomponent = 0; icomponent < Components; ++icomponent) {
-    df(icomponent, 0) = point_jacobian_matrix.xix * df_dxi[icomponent] +
-                        point_jacobian_matrix.gammax * df_dgamma[icomponent];
+    df(icomponent, 0) = point_jacobian_matrix.xix() * df_dxi[icomponent] +
+                        point_jacobian_matrix.gammax() * df_dgamma[icomponent];
 
-    df(icomponent, 1) = point_jacobian_matrix.xiz * df_dxi[icomponent] +
-                        point_jacobian_matrix.gammaz * df_dgamma[icomponent];
+    df(icomponent, 1) = point_jacobian_matrix.xiz() * df_dxi[icomponent] +
+                        point_jacobian_matrix.gammaz() * df_dgamma[icomponent];
   }
   return df;
 }
