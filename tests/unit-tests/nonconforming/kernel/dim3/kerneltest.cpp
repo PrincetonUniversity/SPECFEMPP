@@ -27,12 +27,12 @@ void test_nonconforming_mesh(const std::string &database_file) {
       assembly, database_file);
 }
 
-TEST(NonconformingKernel3D, acoustic_elastic_22_14) {
+TEST(NonconformingKernel3D, acoustic_elastic_11_7) {
   test_nonconforming_mesh(
-      "data/dim3/interfaces_only/acoustic_elastic_22-14/database.bin");
+      "data/dim3/interfaces_only/acoustic_elastic_11-7/database.bin");
 }
 
-TEST(NonconformingKernel3D, acoustic_elastic_26_20) {
+TEST(NonconformingKernel3D, acoustic_elastic_13_10) {
   test_nonconforming_mesh(
-      "data/dim3/interfaces_only/acoustic_elastic_26-20/database.bin");
+      "data/dim3/interfaces_only/acoustic_elastic_13-10/database.bin");
 }
