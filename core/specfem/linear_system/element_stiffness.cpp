@@ -5,16 +5,6 @@
 #include <sstream>
 #include <stdexcept>
 
-namespace specfem::linear_system_impl {
-/// Tag bundle for the only combination explicitly instantiated for the
-/// linear system (issue #1982).
-using elastic_isotropic_tags =
-    specfem::tags::Tags<specfem::element::dimension_tag::dim3,
-                        specfem::element::medium_tag::elastic,
-                        specfem::element::property_tag::isotropic,
-                        specfem::element::attenuation_tag::none>;
-} // namespace specfem::linear_system_impl
-
 template <typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 void specfem::linear_system::validate_stiffness_scope(
@@ -91,10 +81,11 @@ void specfem::linear_system::compute_element_stiffness(
         &assembly,
     const specfem::datatype::ElementIndexRange &batch,
     const Kokkos::View<type_real ***, Kokkos::LayoutRight,
-                       Kokkos::DefaultExecutionSpace> &k_e) {
+                       Kokkos::DefaultExecutionSpace> &k_e,
+    const specfem::linear_system::StiffnessKernelImpl impl) {
   if (assembly.mesh.element_grid == 5) {
     specfem::linear_system::compute_element_stiffness<5, Tags>(assembly, batch,
-                                                               k_e);
+                                                               k_e, impl);
     return;
   }
   throw std::runtime_error(
@@ -113,11 +104,19 @@ template void specfem::linear_system::compute_element_stiffness<
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &,
     const specfem::datatype::ElementIndexRange &,
     const Kokkos::View<type_real ***, Kokkos::LayoutRight,
-                       Kokkos::DefaultExecutionSpace> &);
+                       Kokkos::DefaultExecutionSpace> &,
+    const specfem::linear_system::StiffnessKernelImpl);
 
 template void specfem::linear_system::compute_element_stiffness<
     specfem::linear_system_impl::elastic_isotropic_tags>(
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &,
     const specfem::datatype::ElementIndexRange &,
     const Kokkos::View<type_real ***, Kokkos::LayoutRight,
-                       Kokkos::DefaultExecutionSpace> &);
+                       Kokkos::DefaultExecutionSpace> &,
+    const specfem::linear_system::StiffnessKernelImpl);
+
+template specfem::linear_system::ElementStiffnessKernel
+specfem::linear_system::make_element_stiffness_kernel<
+    specfem::linear_system_impl::elastic_isotropic_tags>(
+    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &,
+    const int, const specfem::linear_system::StiffnessKernelImpl);

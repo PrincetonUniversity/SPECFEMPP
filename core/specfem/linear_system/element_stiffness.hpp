@@ -3,7 +3,9 @@
 #include "specfem/datatype/element_index_range.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
+#include <functional>
 
 namespace specfem::assembly {
 template <specfem::element::dimension_tag DimensionTag> struct assembly;
@@ -35,6 +37,36 @@ KOKKOS_INLINE_FUNCTION constexpr int
 local_dof_index(const int icomp, const int iz, const int iy, const int ix) {
   return icomp * NGLL * NGLL * NGLL + (iz * NGLL + iy) * NGLL + ix;
 }
+
+/**
+ * @brief Selects the kernel that fills the dense element stiffness blocks.
+ *
+ * `probe` applies the production matrix-free operator to every local unit
+ * vector, one serialized probe at a time (correct by construction, the
+ * reference implementation). `tensor_graph` evaluates the same action on all
+ * unit columns at once through one declarative TensorOperations level graph
+ * -- see @ref specfem::linear_system_impl::StiffnessTensorGraphKernel for
+ * the pipeline; requesting it without `SPECFEM_ENABLE_TENSOROPS` throws
+ * `std::runtime_error`. Both produce identical blocks up to roundoff (the
+ * A/B test in `stiffness_tensor_graph_tests` holds them together).
+ */
+enum class StiffnessKernelImpl { probe, tensor_graph };
+
+/**
+ * @brief Default element stiffness kernel.
+ *
+ * `tensor_graph` when SPECFEM++ is built with TensorOperations -- enabling
+ * the dependency is the opt-in -- and `probe` otherwise, so builds without
+ * the flag are bit-identical to before the enum existed. Callers pin a
+ * kernel explicitly (as the A/B test does) to override.
+ */
+#ifdef SPECFEM_ENABLE_TENSOROPS
+inline constexpr StiffnessKernelImpl default_stiffness_kernel_impl =
+    StiffnessKernelImpl::tensor_graph;
+#else
+inline constexpr StiffnessKernelImpl default_stiffness_kernel_impl =
+    StiffnessKernelImpl::probe;
+#endif
 
 /**
  * @brief Boundary conditions the caller's probe/assembly can represent.
@@ -110,6 +142,8 @@ void validate_stiffness_scope(
  *            elastic with NGLL = 5). LayoutRight keeps each block row
  *            contiguous on the host mirror so rows can be handed directly to
  *            batched sparse-matrix row inserts.
+ * @param impl Kernel that fills the blocks (see @ref StiffnessKernelImpl);
+ *             every implementation honors the contracts above
  */
 template <int NGLL, typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
@@ -118,7 +152,8 @@ void compute_element_stiffness(
         &assembly,
     const specfem::datatype::ElementIndexRange &batch,
     const Kokkos::View<type_real ***, Kokkos::LayoutRight,
-                       Kokkos::DefaultExecutionSpace> &k_e);
+                       Kokkos::DefaultExecutionSpace> &k_e,
+    const StiffnessKernelImpl impl = default_stiffness_kernel_impl);
 
 /**
  * @brief Runtime NGLL dispatcher for @ref compute_element_stiffness.
@@ -132,6 +167,7 @@ void compute_element_stiffness(
  * @param assembly Assembled mesh, jacobian matrix, and material properties
  * @param batch Contiguous element sub-range [begin, end)
  * @param k_e Preallocated device buffer (see the NGLL overload)
+ * @param impl Kernel that fills the blocks (see @ref StiffnessKernelImpl)
  */
 template <typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
@@ -140,7 +176,61 @@ void compute_element_stiffness(
         &assembly,
     const specfem::datatype::ElementIndexRange &batch,
     const Kokkos::View<type_real ***, Kokkos::LayoutRight,
-                       Kokkos::DefaultExecutionSpace> &k_e);
+                       Kokkos::DefaultExecutionSpace> &k_e,
+    const StiffnessKernelImpl impl = default_stiffness_kernel_impl);
+
+/**
+ * @brief Batched element-stiffness kernel bound to one assembly.
+ *
+ * Each call fills the leading `batch.size()` blocks of `k_e` under the
+ * contract of @ref compute_element_stiffness, but may return before the
+ * device work completes: a consumer reading `k_e` on the device must fence
+ * first (a host mirror copy synchronizes by itself).
+ */
+using ElementStiffnessKernel =
+    std::function<void(const specfem::datatype::ElementIndexRange &,
+                       const Kokkos::View<type_real ***, Kokkos::LayoutRight,
+                                          Kokkos::DefaultExecutionSpace> &)>;
+
+/**
+ * @brief Bind a stiffness kernel to an assembly for repeated batched calls.
+ *
+ * The one place a repeated caller (e.g. `StiffnessAssembler::fill_matrix`)
+ * selects a kernel: per-construction costs are paid here once, not per
+ * batch. For `tensor_graph` this constructs the workspace-owning
+ * @ref specfem::linear_system_impl::StiffnessTensorGraphKernel (throwing
+ * without `SPECFEM_ENABLE_TENSOROPS`); the probe kernel has no cross-batch
+ * state and delegates to @ref compute_element_stiffness per call.
+ *
+ * Throws `std::runtime_error` for grids other than NGLL = 5 (the only 3D
+ * instantiation).
+ *
+ * @tparam Tags Compile-time tags (dimension, medium, property, attenuation);
+ *              dimension must be `dim3`
+ * @param assembly Assembled mesh, jacobian matrix, and material properties;
+ *        borrowed by the returned callable, and must outlive it
+ * @param batch_capacity Largest batch a call may pass; sizes the
+ *        tensor-graph workspace
+ * @param impl Kernel that fills the blocks (see @ref StiffnessKernelImpl)
+ * @return Callable filling `k_e` element blocks per contiguous batch
+ */
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
+ElementStiffnessKernel make_element_stiffness_kernel(
+    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
+        &assembly,
+    const int batch_capacity,
+    const StiffnessKernelImpl impl = default_stiffness_kernel_impl);
 
 } // namespace linear_system
 } // namespace specfem
+
+namespace specfem::linear_system_impl {
+/// Tag bundle for the only combination explicitly instantiated for the
+/// linear system (issue #1982); shared by every instantiating TU.
+using elastic_isotropic_tags =
+    specfem::tags::Tags<specfem::element::dimension_tag::dim3,
+                        specfem::element::medium_tag::elastic,
+                        specfem::element::property_tag::isotropic,
+                        specfem::element::attenuation_tag::none>;
+} // namespace specfem::linear_system_impl
