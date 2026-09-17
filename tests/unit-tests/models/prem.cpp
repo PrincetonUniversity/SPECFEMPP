@@ -1,4 +1,4 @@
-#include "specfem/globe_model.hpp"
+#include "specfem/io/globe_model.hpp"
 
 #include <gtest/gtest.h>
 
@@ -7,6 +7,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -22,7 +23,7 @@
 //   2. Does the Fortran archive link into a C++ target here? If this file
 //      builds and runs at all, it does.
 //
-// Ground truth comes from specfem::globe_model::prem_reference, which calls the
+// Ground truth comes from globe_model::prem_reference, which calls the
 // catalog's own PREM routines. Comparing against a hand-written table would
 // only confirm that the table agrees with itself.
 //
@@ -35,7 +36,12 @@
 // appears once, for the outer-core acoustic tag, where zero is a flag rather
 // than a computed quantity.
 
-namespace specfem::globe_model_test {
+namespace specfem::io_globe_model_test {
+
+static_assert(!std::is_copy_constructible_v<specfem::io::globe_model>);
+static_assert(!std::is_copy_assignable_v<specfem::io::globe_model>);
+static_assert(std::is_move_constructible_v<specfem::io::globe_model>);
+static_assert(std::is_move_assignable_v<specfem::io::globe_model>);
 
 // From fortran/meshfem3d_globe/setup/constants.h.in:890-908
 constexpr int iregion_crust_mantle = 1;
@@ -101,8 +107,8 @@ const std::vector<RadialShell> &shells() {
  * default: with `attenuation` off it is never consulted, and a test that wants
  * it must say so.
  */
-specfem::globe_model::ModelConfig bare_config(const std::string &model_name) {
-  specfem::globe_model::ModelConfig config;
+specfem::io::GlobeModelConfig bare_config(const std::string &model_name) {
+  specfem::io::GlobeModelConfig config;
   config.model_name = model_name;
   config.planet_type = 1; // IPLANET_EARTH
   config.nchunks = 6;
@@ -190,13 +196,14 @@ std::vector<double> oblique_column(const std::vector<double> &radii) {
 class PremEvaluatorTest : public ::testing::Test {
 protected:
   void configure(const std::string &model_name) {
-    evaluator_ = std::make_unique<specfem::globe_model::Evaluator>(
-        bare_config(model_name));
+    evaluator_ = std::make_unique<specfem::io::globe_model>(
+        bare_config(model_name), planet_constants_);
   }
 
   void TearDown() override { evaluator_.reset(); }
 
-  std::unique_ptr<specfem::globe_model::Evaluator> evaluator_;
+  specfem::constants::PlanetConstants planet_constants_;
+  std::unique_ptr<specfem::io::globe_model> evaluator_;
 };
 
 // -----------------------------------------------------------------------------
@@ -207,7 +214,7 @@ protected:
 // that disagrees with SPECFEM++'s, every returned value is silently attributed
 // to the wrong point, so the contract has to be asserted rather than assumed.
 TEST(PremEvaluatorDims, MatchesTheCatalogQuadrature) {
-  const auto dims = specfem::globe_model::Evaluator::dims();
+  const auto dims = specfem::io::globe_model::dimensions();
 
   EXPECT_EQ(dims.ngllx, 5);
   EXPECT_EQ(dims.nglly, 5);
@@ -222,12 +229,12 @@ TEST(PremEvaluatorDims, MatchesTheCatalogQuadrature) {
 
 TEST_F(PremEvaluatorTest, ConfiguresIsotropicPremFromNameAlone) {
   EXPECT_NO_THROW(configure("1d_isotropic_prem"));
-  EXPECT_TRUE(specfem::globe_model::Evaluator::is_active());
+  EXPECT_TRUE(specfem::io::globe_model::is_active());
 }
 
 TEST_F(PremEvaluatorTest, ConfiguresTransverselyIsotropicPremFromNameAlone) {
   EXPECT_NO_THROW(configure("1d_transversely_isotropic_prem"));
-  EXPECT_TRUE(specfem::globe_model::Evaluator::is_active());
+  EXPECT_TRUE(specfem::io::globe_model::is_active());
 }
 
 // The catalog lowercases the model name before dispatching
@@ -246,20 +253,30 @@ TEST_F(PremEvaluatorTest, ModelNameIsCaseInsensitive) {
 TEST_F(PremEvaluatorTest, RefusesASecondInstance) {
   configure("1d_isotropic_prem");
 
-  EXPECT_THROW(
-      specfem::globe_model::Evaluator{ bare_config("1d_isotropic_prem") },
-      std::runtime_error);
+  EXPECT_THROW((specfem::io::globe_model{ bare_config("1d_isotropic_prem"),
+                                          planet_constants_ }),
+               std::runtime_error);
 }
 
 TEST_F(PremEvaluatorTest, IsInactiveAfterDestruction) {
   configure("1d_isotropic_prem");
-  ASSERT_TRUE(specfem::globe_model::Evaluator::is_active());
+  ASSERT_TRUE(specfem::io::globe_model::is_active());
 
   evaluator_.reset();
 
-  EXPECT_FALSE(specfem::globe_model::Evaluator::is_active());
+  EXPECT_FALSE(specfem::io::globe_model::is_active());
   // ... and a fresh Evaluator can then be built.
   EXPECT_NO_THROW(configure("1d_transversely_isotropic_prem"));
+}
+
+TEST_F(PremEvaluatorTest, MoveTransfersCatalogOwnership) {
+  configure("1d_isotropic_prem");
+
+  specfem::io::globe_model moved(std::move(*evaluator_));
+  evaluator_.reset();
+
+  EXPECT_TRUE(specfem::io::globe_model::is_active());
+  EXPECT_NEAR(moved.radii().r_cmb, prem_rcmb, 1.0);
 }
 
 // Models whose values are read out of a per-GLL array belonging to the mesher's
@@ -277,27 +294,27 @@ TEST_F(PremEvaluatorTest, IsInactiveAfterDestruction) {
 TEST_F(PremEvaluatorTest, RejectsModelsNeedingPerPointIndexing) {
   // HETEROGEN_3D_MANTLE -> model_heterogen_mantle(ispec,i,j,k,...)
   EXPECT_THROW(configure("heterogen"), std::runtime_error);
-  EXPECT_FALSE(specfem::globe_model::Evaluator::is_active());
+  EXPECT_FALSE(specfem::io::globe_model::is_active());
 
   EXPECT_THROW(configure("heterogen_prem"), std::runtime_error);
-  EXPECT_FALSE(specfem::globe_model::Evaluator::is_active());
+  EXPECT_FALSE(specfem::io::globe_model::is_active());
 
   // MODEL_GLL -> model_gll_impose_val(...,ispec,i,j,k,...)
   EXPECT_THROW(configure("gll_iso"), std::runtime_error);
-  EXPECT_FALSE(specfem::globe_model::Evaluator::is_active());
+  EXPECT_FALSE(specfem::io::globe_model::is_active());
 
   // MODEL_GLL + ATTENUATION_GLL -> model_attenuation_gll(ispec,i,j,k,Qmu)
   EXPECT_THROW(configure("gll_qmu"), std::runtime_error);
-  EXPECT_FALSE(specfem::globe_model::Evaluator::is_active());
+  EXPECT_FALSE(specfem::io::globe_model::is_active());
 }
 
 TEST_F(PremEvaluatorTest, RejectsMalformedCoordinateArrays) {
   configure("1d_isotropic_prem");
 
   const std::vector<double> too_short(3 * 124, 0.0);
-  EXPECT_THROW(evaluator_->evaluate_element(iregion_crust_mantle,
-                                            iflag_mantle_normal, prem_rcmb,
-                                            prem_r670, false, false, too_short),
+  EXPECT_THROW(static_cast<void>(evaluator_->evaluate_element(
+                   iregion_crust_mantle, iflag_mantle_normal, prem_rcmb,
+                   prem_r670, false, false, too_short)),
                std::invalid_argument);
 }
 
@@ -317,7 +334,7 @@ TEST_P(PremProfileTest, MatchesTheReferenceEverywhere) {
   configure(model_name);
 
   const std::size_t npoints =
-      specfem::globe_model::Evaluator::dims().points_per_element();
+      specfem::io::globe_model::dimensions().points_per_element();
   const std::vector<double> radii = radii_within(shell, npoints);
 
   const auto properties = evaluator_->evaluate_element(
@@ -329,8 +346,8 @@ TEST_P(PremProfileTest, MatchesTheReferenceEverywhere) {
     SCOPED_TRACE("shell=" + std::string(shell.name) + " point=" +
                  std::to_string(i) + " radius=" + std::to_string(radii[i]));
 
-    const auto expected = specfem::globe_model::prem_reference(
-        radii[i], shell.idoubling, shell.iregion_code);
+    const auto expected = evaluator_->prem_reference(radii[i], shell.idoubling,
+                                                     shell.iregion_code);
 
     // Exact: these pass through meshfem3D_models_get1D_val untouched for a 1D
     // model, so anything but bit-equality means the evaluator diverged from the
@@ -382,7 +399,7 @@ TEST_F(PremEvaluatorTest, OuterCoreIsExactlyAcoustic) {
   configure("1d_transversely_isotropic_prem");
 
   const std::size_t npoints =
-      specfem::globe_model::Evaluator::dims().points_per_element();
+      specfem::io::globe_model::dimensions().points_per_element();
   const RadialShell &shell = shells()[1];
   ASSERT_STREQ(shell.name, "outer_core");
 
@@ -404,7 +421,7 @@ TEST_F(PremEvaluatorTest, SolidRegionsHaveNonZeroShearSpeed) {
   configure("1d_transversely_isotropic_prem");
 
   const std::size_t npoints =
-      specfem::globe_model::Evaluator::dims().points_per_element();
+      specfem::io::globe_model::dimensions().points_per_element();
 
   for (const RadialShell &shell : shells()) {
     if (shell.iregion_code == iregion_outer_core) {
@@ -462,12 +479,11 @@ TEST_F(PremEvaluatorTest, HonorsDiscontinuitiesBetweenAdjacentShells) {
     const double rho_below = below.rho.back();
     const double rho_above = above.rho.front();
 
-    // Values are non-dimensional (density ~ 1), so the threshold is a fraction
-    // of RHOAV rather than a value in kg/m^3. Every one of these boundaries
-    // jumps by far more than 5%.
-    EXPECT_GT(std::abs(rho_below - rho_above), 0.05)
+    // Public oracle values are SI. Every one of these boundaries jumps by
+    // substantially more than 250 kg/m^3.
+    EXPECT_GT(std::abs(rho_below - rho_above), 250.0)
         << "expected a density jump across " << boundary.name << " but got "
-        << rho_below << " vs " << rho_above << " (non-dimensional)";
+        << rho_below << " vs " << rho_above << " kg/m^3";
     // Density decreases outward across every one of these boundaries.
     EXPECT_GT(rho_below, rho_above);
   }
@@ -484,7 +500,7 @@ TEST_F(PremEvaluatorTest, ClampsPointsIntoTheirOwnShell) {
   ASSERT_STREQ(shell.name, "lower_mantle");
 
   const std::size_t npoints =
-      specfem::globe_model::Evaluator::dims().points_per_element();
+      specfem::io::globe_model::dimensions().points_per_element();
 
   // Every point sits below rmin, so all of them clamp up to rmin * (1 + 1e-6).
   std::vector<double> radii(npoints, shell.rmin_si - 5000.0);
@@ -492,13 +508,15 @@ TEST_F(PremEvaluatorTest, ClampsPointsIntoTheirOwnShell) {
       shell.iregion_code, shell.idoubling, shell.rmin_si, shell.rmax_si, false,
       false, radial_column(radii));
 
-  const auto expected = specfem::globe_model::prem_reference(
+  const auto expected = evaluator_->prem_reference(
       shell.rmin_si * 1.000001, shell.idoubling, shell.iregion_code);
 
   for (std::size_t i = 0; i < npoints; ++i) {
     SCOPED_TRACE("point=" + std::to_string(i));
-    EXPECT_DOUBLE_EQ(properties.rho[i], expected.rho);
-    EXPECT_DOUBLE_EQ(properties.vpv[i], expected.vpv);
+    EXPECT_NEAR(properties.rho[i], expected.rho,
+                1.0e-8 * std::abs(expected.rho));
+    EXPECT_NEAR(properties.vpv[i], expected.vpv,
+                1.0e-8 * std::abs(expected.vpv));
   }
 }
 
@@ -506,25 +524,13 @@ TEST_F(PremEvaluatorTest, ClampsPointsIntoTheirOwnShell) {
 // Units
 // -----------------------------------------------------------------------------
 
-// The evaluator returns the catalog's non-dimensional values, so a caller that
-// forgets to re-dimensionalize gets densities near 1 and velocities near 2 --
-// numbers that look plausible and are wrong by three orders of magnitude. This
-// test pins the scaling contract by checking that re-dimensionalized PREM lands
-// on the textbook values, which no amount of exact-equality testing against the
-// reference shim can catch (both sides would be wrong together).
-TEST_F(PremEvaluatorTest, ScalesToPhysicalSiValues) {
+// Non-dimensional catalog values must not escape the oracle boundary. This
+// test checks the public result directly against physical SI values.
+TEST_F(PremEvaluatorTest, ReturnsPhysicalSiValues) {
   configure("1d_isotropic_prem");
 
-  const auto scales = specfem::globe_model::Evaluator::scales();
-
-  // Earth radius and mean density.
-  EXPECT_NEAR(scales.length, 6371000.0, 1.0);
-  EXPECT_NEAR(scales.density, 5514.0, 5.0);
-  // R * sqrt(pi G rho) works out to roughly 6.9 km/s.
-  EXPECT_NEAR(scales.velocity, 6850.0, 50.0);
-
   const std::size_t npoints =
-      specfem::globe_model::Evaluator::dims().points_per_element();
+      specfem::io::globe_model::dimensions().points_per_element();
   const RadialShell &shell = shells()[2]; // lower mantle
   ASSERT_STREQ(shell.name, "lower_mantle");
 
@@ -535,14 +541,17 @@ TEST_F(PremEvaluatorTest, ScalesToPhysicalSiValues) {
       shell.iregion_code, shell.idoubling, shell.rmin_si, shell.rmax_si, false,
       false, radial_column(radii));
 
-  EXPECT_NEAR(properties.rho[0] * scales.density, 5566.0, 20.0);
-  EXPECT_NEAR(properties.vpv[0] * scales.velocity, 13716.0, 50.0);
-  EXPECT_NEAR(properties.vsv[0] * scales.velocity, 7264.0, 50.0);
+  EXPECT_NEAR(properties.rho[0], 5566.0, 20.0);
+  EXPECT_NEAR(properties.vpv[0], 13716.0, 50.0);
+  EXPECT_NEAR(properties.vsv[0], 7264.0, 50.0);
 }
 
-TEST(PremEvaluatorScales, RequireAConfiguredEvaluator) {
-  ASSERT_FALSE(specfem::globe_model::Evaluator::is_active());
-  EXPECT_THROW(specfem::globe_model::Evaluator::scales(), std::runtime_error);
+TEST_F(PremEvaluatorTest, ReportsPremDiscontinuityRadii) {
+  configure("1d_isotropic_prem");
+  const auto radii = evaluator_->radii();
+  // PREM's 3480 km CMB is approximately 0.546 planet radii.
+  EXPECT_NEAR(radii.r_cmb / planet_constants_.values().r_planet,
+              3480000.0 / 6371000.0, 1.0e-6);
 }
 
 // The exact-value tests sample along the polar axis so the recovered radius is
@@ -554,7 +563,7 @@ TEST_F(PremEvaluatorTest, IsDirectionIndependentForOneDimensionalModels) {
   configure("1d_transversely_isotropic_prem");
 
   const std::size_t npoints =
-      specfem::globe_model::Evaluator::dims().points_per_element();
+      specfem::io::globe_model::dimensions().points_per_element();
 
   for (const RadialShell &shell : shells()) {
     SCOPED_TRACE(std::string("shell=") + shell.name);
@@ -568,9 +577,15 @@ TEST_F(PremEvaluatorTest, IsDirectionIndependentForOneDimensionalModels) {
         false, false, oblique_column(radii));
 
     for (std::size_t i = 0; i < npoints; ++i) {
-      EXPECT_NEAR(along_axis.rho[i], oblique.rho[i], 1.0e-12) << "point " << i;
-      EXPECT_NEAR(along_axis.vpv[i], oblique.vpv[i], 1.0e-12) << "point " << i;
-      EXPECT_NEAR(along_axis.vsv[i], oblique.vsv[i], 1.0e-12) << "point " << i;
+      EXPECT_NEAR(along_axis.rho[i], oblique.rho[i],
+                  1.0e-6 * std::abs(along_axis.rho[i]))
+          << "point " << i;
+      EXPECT_NEAR(along_axis.vpv[i], oblique.vpv[i],
+                  1.0e-6 * std::abs(along_axis.vpv[i]))
+          << "point " << i;
+      EXPECT_NEAR(along_axis.vsv[i], oblique.vsv[i],
+                  1.0e-6 * std::abs(along_axis.vsv[i]))
+          << "point " << i;
     }
   }
 }
@@ -590,18 +605,18 @@ TEST_F(PremEvaluatorTest, RejectsAnInvalidAttenuationBand) {
   config.attenuation = true;
 
   // left at the default, i.e. never read from a database
-  EXPECT_THROW(specfem::globe_model::Evaluator{ config },
+  EXPECT_THROW((specfem::io::globe_model{ config, planet_constants_ }),
                std::invalid_argument);
 
   config.min_attenuation_period = 1000.0;
   config.max_attenuation_period = 20.0; // inverted
-  EXPECT_THROW(specfem::globe_model::Evaluator{ config },
+  EXPECT_THROW((specfem::io::globe_model{ config, planet_constants_ }),
                std::invalid_argument);
 
   // ... and the band is not consulted at all when attenuation is off.
   config.attenuation = false;
-  EXPECT_NO_THROW(
-      evaluator_ = std::make_unique<specfem::globe_model::Evaluator>(config));
+  EXPECT_NO_THROW(evaluator_ = std::make_unique<specfem::io::globe_model>(
+                      config, planet_constants_));
 }
 
 // With ATTENUATION off the catalog never calls getatten_val, so Q must come
@@ -611,7 +626,7 @@ TEST_F(PremEvaluatorTest, LeavesQZeroWhenAttenuationIsOff) {
   configure("1d_isotropic_prem");
 
   const std::size_t npoints =
-      specfem::globe_model::Evaluator::dims().points_per_element();
+      specfem::io::globe_model::dimensions().points_per_element();
   const RadialShell &shell = shells()[2];
 
   const auto properties = evaluator_->evaluate_element(
@@ -634,10 +649,11 @@ TEST_F(PremEvaluatorTest, ReturnsPositiveQmuInSolidsWhenAttenuationIsOn) {
   // typical global values; in production these come from the mesh database
   config.min_attenuation_period = 20.0;
   config.max_attenuation_period = 1000.0;
-  evaluator_ = std::make_unique<specfem::globe_model::Evaluator>(config);
+  evaluator_ =
+      std::make_unique<specfem::io::globe_model>(config, planet_constants_);
 
   const std::size_t npoints =
-      specfem::globe_model::Evaluator::dims().points_per_element();
+      specfem::io::globe_model::dimensions().points_per_element();
   const RadialShell &shell = shells()[2]; // lower mantle
 
   const auto properties = evaluator_->evaluate_element(
@@ -662,10 +678,10 @@ TEST_F(PremEvaluatorTest, ReturnsPositiveQmuInSolidsWhenAttenuationIsOn) {
 // error. No Evaluator is constructed here, so these do not contend for the
 // catalog's single-instance guard.
 TEST(ModelConfigValidation, RejectsAnUnpopulatedConfig) {
-  const specfem::globe_model::ModelConfig empty;
+  const specfem::io::GlobeModelConfig empty;
   EXPECT_THROW(empty.validate(), std::invalid_argument);
 
-  specfem::globe_model::ModelConfig named;
+  specfem::io::GlobeModelConfig named;
   named.model_name = "1d_isotropic_prem";
   EXPECT_THROW(named.validate(), std::invalid_argument);
 }
@@ -674,12 +690,12 @@ TEST(ModelConfigValidation, RejectsEachMissingScalarByName) {
   const auto complete = bare_config("1d_isotropic_prem");
   ASSERT_NO_THROW(complete.validate());
 
-  using ScalarField = int specfem::globe_model::ModelConfig::*;
+  using ScalarField = int specfem::io::GlobeModelConfig::*;
   const std::vector<std::pair<std::string, ScalarField>> fields = {
-    { "planet_type", &specfem::globe_model::ModelConfig::planet_type },
-    { "nchunks", &specfem::globe_model::ModelConfig::nchunks },
-    { "nex_xi", &specfem::globe_model::ModelConfig::nex_xi },
-    { "nex_eta", &specfem::globe_model::ModelConfig::nex_eta }
+    { "planet_type", &specfem::io::GlobeModelConfig::planet_type },
+    { "nchunks", &specfem::io::GlobeModelConfig::nchunks },
+    { "nex_xi", &specfem::io::GlobeModelConfig::nex_xi },
+    { "nex_eta", &specfem::io::GlobeModelConfig::nex_eta }
   };
 
   for (const auto &[name, member] : fields) {
@@ -721,4 +737,4 @@ TEST(ModelConfigValidation, ChecksThePeriodBandOnlyWhenAttenuationIsOn) {
   EXPECT_NO_THROW(config.validate());
 }
 
-} // namespace specfem::globe_model_test
+} // namespace specfem::io_globe_model_test

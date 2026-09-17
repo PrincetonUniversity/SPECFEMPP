@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/globe_model/model_config.hpp"
+#include "specfem/io/globe_model/model_config.hpp"
 #include "specfem/mesh_entity.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -84,10 +84,10 @@ struct globe_element_context {
   /** @brief SPECFEM3D_GLOBE radial doubling flag for the element. */
   int idoubling = 0;
 
-  /** @brief Minimum nondimensional radius represented by the element. */
+  /** @brief Minimum SI radius represented by the element, in metres. */
   double rmin = 0.0;
 
-  /** @brief Maximum nondimensional radius represented by the element. */
+  /** @brief Maximum SI radius represented by the element, in metres. */
   double rmax = 0.0;
 
   /** @brief True when the element intersects the crustal model region. */
@@ -128,12 +128,6 @@ struct globe_mesh_data {
   /** @brief Thin globe database format version. */
   int format_version = 0;
 
-  /** @brief Planet radius used by the mesher and evaluator length scale. */
-  double planet_radius = 0.0;
-
-  /** @brief Average density used by the mesher and evaluator density scale. */
-  double average_density = 0.0;
-
   /** @brief Number of radial/material regions in the globe model. */
   int nregions = 0;
 
@@ -152,7 +146,7 @@ struct globe_mesh_data {
   int material_mode = 0;
 
   /** @brief Configuration used to initialize the globe model evaluator. */
-  specfem::globe_model::ModelConfig model_config;
+  specfem::io::GlobeModelConfig model_config;
 
   /** @brief Mesher-side model identifiers used for consistency checks. */
   globe_model_verification model_verification;

@@ -2,12 +2,12 @@
 
 #include <stdexcept>
 
-#include "specfem/globe_model.hpp"
+#include "specfem/io/globe_model.hpp"
 #include "specfem/point.hpp"
 #include "specfem/tags.hpp"
+#include "specfem/units.hpp"
 #include "specfem/utilities/logarithmic_center.hpp"
 #include <algorithm>
-#include <cmath>
 #include <vector>
 
 namespace specfem::assembly::dim3_impl {
@@ -21,20 +21,17 @@ void read_globe_properties(
   using Property = specfem::element::property_tag;
 
   const auto &globe = input_mesh.globe;
-  specfem::globe_model::Evaluator evaluator(globe.model_config);
-  const auto evaluator_dims = evaluator.dims();
+  specfem::io::globe_model evaluator(globe.model_config,
+                                     assembly.planet_constants);
+  const auto evaluator_dims = evaluator.dimensions();
   if (evaluator_dims.ngllx != assembly.mesh.element_grid.ngllx ||
       evaluator_dims.nglly != assembly.mesh.element_grid.nglly ||
       evaluator_dims.ngllz != assembly.mesh.element_grid.ngllz) {
     throw std::runtime_error(
         "Globe model evaluator and mesh use different GLL dimensions");
   }
-  const auto scales = evaluator.scales();
-  if (std::abs(scales.length - globe.planet_radius) >
-      1.0e-10 * globe.planet_radius) {
-    throw std::runtime_error(
-        "Globe model evaluator and mesh database use different planet radii");
-  }
+  const auto radii = evaluator.radii();
+  assembly.planet_constants.set_radii(radii);
 
   const int ngllz = assembly.mesh.element_grid.ngllz;
   const int nglly = assembly.mesh.element_grid.nglly;
@@ -120,9 +117,9 @@ void read_globe_properties(
       for (int iz = 0; iz < ngllz; ++iz) {
         for (int iy = 0; iy < nglly; ++iy) {
           for (int ix = 0; ix < ngllx; ++ix, ++ipoint) {
-            const type_real rho = values.rho[ipoint] * scales.density;
-            const type_real vp = values.vp_iso[ipoint] * scales.velocity;
-            const type_real vs = values.vs_iso[ipoint] * scales.velocity;
+            const type_real rho = values.rho[ipoint];
+            const type_real vp = values.vp_iso[ipoint];
+            const type_real vs = values.vs_iso[ipoint];
             const specfem::point::index<Dimension::dim3, false> index(
                 compute_ispec, iz, iy, ix);
             if (medium == Medium::acoustic) {

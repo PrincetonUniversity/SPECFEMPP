@@ -176,7 +176,7 @@ if(SPECFEM_BUILD_MESHFEM3D_GLOBE)
     MPI_RANKS 1
     SOURCES   models/prem.cpp
               models/runner.cpp
-    LIBRARIES specfem::globe_model
+    LIBRARIES specfem::io_globe_model
               specfem_environment
               MPI::MPI_CXX
               gtest
