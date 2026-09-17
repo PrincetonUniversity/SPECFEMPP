@@ -112,6 +112,7 @@ specfem_add_test(optimization_tests
 
 specfem_add_test(gll_tests
   SOURCES   gll/gll_tests.cpp
+            gll/compiled_gll.cpp
   LIBRARIES gtest_main
             specfem::quadrature
             specfem_environment
