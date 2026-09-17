@@ -152,11 +152,12 @@ TEST(DampingAssemblerScope3D, EmptyOnNaturalBoundaryMesh) {
 
 TEST(DampingAssemblerScope3D, WithStaceyScopeAcceptsStaceyMesh) {
   const auto assembly = build_assembly_3d("HomogeneousHalfSpaceStacey");
+  const FEAssemblyType fe{ MappingType(*assembly) };
   // The default (natural-boundaries) scope rejects this mesh -- covered by
   // StiffnessAssemblerScope3D.RejectsStaceyBoundaries -- while the opt-in
   // admits it because the displacement probe runs at zero velocity.
   EXPECT_NO_THROW(StiffnessAssemblerType assembler(
-      *assembly, StiffnessAssemblerType::default_batch_size,
+      *assembly, fe, StiffnessAssemblerType::default_batch_size,
       specfem::linear_system::StiffnessScope::with_stacey));
 }
 
