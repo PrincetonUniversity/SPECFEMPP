@@ -15,7 +15,7 @@ import sys
 
 NGNOD = 27
 MAGIC = "SPECFEMPP_GLOBE_DB"
-VERSION = 3
+VERSION = 4
 
 REGION_CRUST_MANTLE = 1
 REGION_OUTER_CORE = 2
@@ -105,9 +105,25 @@ def read_database(path):
     if version != VERSION:
         raise Failure(f"{path}: unsupported format_version {version}")
 
-    db["planet_type"], db["r_planet"], db["rhoav"] = unpack(
-        reader.record(), [("i", 1), ("d", 1), ("d", 1)]
-    )
+    planet = unpack(reader.record(), [("i", 1), ("d", 15)])
+    db["planet_type"] = planet[0]
+    (
+        db["r_planet"],
+        db["rhoav"],
+        db["one_minus_f_squared"],
+        db["hours_per_day"],
+        db["seconds_per_hour"],
+        db["topo_maximum"],
+        db["r_icb"],
+        db["r_cmb"],
+        db["r_moho"],
+        db["r_80"],
+        db["r_220"],
+        db["r_400"],
+        db["r_670"],
+        db["r_771"],
+        db["r_ocean"],
+    ) = planet[1]
 
     header = unpack(reader.record(), [("i", 5)])[0]
     db["ngnod"], db["ngllx"], db["nglly"], db["ngllz"], db["nregions"] = header
@@ -226,6 +242,8 @@ def check_one(db, problems):
         bad(f"material_mode is {db['material_mode']}, expected 1 (ORACLE)")
     if not 1 <= db["nregions"] <= 3:
         bad(f"nregions is {db['nregions']}")
+    if not 0.0 < db["r_icb"] < db["r_cmb"] < db["r_moho"] < db["r_planet"]:
+        bad("invalid resolved ICB/CMB/Moho/planet radius ordering")
 
     # model config: the parameters SPECFEM++ cannot re-derive from MODEL. A stale
     # default here is the failure this block exists to catch -- it would produce
@@ -405,6 +423,19 @@ MODEL_CONFIG_KEYS = (
     "planet_type",
     "r_planet",
     "rhoav",
+    "one_minus_f_squared",
+    "hours_per_day",
+    "seconds_per_hour",
+    "topo_maximum",
+    "r_icb",
+    "r_cmb",
+    "r_moho",
+    "r_80",
+    "r_220",
+    "r_400",
+    "r_670",
+    "r_771",
+    "r_ocean",
     "model",
     "codes",
     "model_flags",

@@ -99,7 +99,7 @@ specfem::io::globe_model::Scales specfem::io::globe_model::query_scales() {
 
 specfem::io::globe_model::globe_model(
     const specfem::io::GlobeModelConfig &config,
-    const specfem::constants::PlanetConstants &constants,
+    const specfem::globe::PlanetConstants &constants,
     const std::string &log_path)
     : constants_(constants) {
   if (is_active_) {
@@ -110,7 +110,7 @@ specfem::io::globe_model::globe_model(
   }
 
   config.validate();
-  if (specfem::constants::planet_from_type(config.planet_type) !=
+  if (specfem::globe::planet_from_type(config.planet_type) !=
       constants_.planet()) {
     throw std::invalid_argument(
         "specfem::io::globe_model: MODEL_CONFIG PLANET_TYPE disagrees with "
@@ -144,8 +144,8 @@ specfem::io::globe_model::globe_model(
   is_active_ = true;
   try {
     scales_ = query_scales();
-    specfem::constants::check_database_values(constants_, scales_.length,
-                                              scales_.density);
+    specfem::globe::check_database_values(constants_, scales_.length,
+                                          scales_.density);
   } catch (...) {
     release();
     throw;
@@ -177,9 +177,8 @@ void specfem::io::globe_model::release() noexcept {
   }
 }
 
-specfem::constants::PlanetConstants::Radii
-specfem::io::globe_model::radii() const {
-  specfem::constants::PlanetConstants::Radii result;
+specfem::globe::PlanetConstants::Radii specfem::io::globe_model::radii() const {
+  specfem::globe::PlanetConstants::Radii result;
   const int status = globe_evaluator_radii(
       &result.r_icb, &result.r_cmb, &result.r_moho, &result.r_80, &result.r_220,
       &result.r_400, &result.r_670, &result.r_771, &result.r_ocean);

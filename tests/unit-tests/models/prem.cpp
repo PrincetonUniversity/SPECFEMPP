@@ -65,6 +65,20 @@ constexpr double prem_r220 = 6151000.0;
 constexpr double prem_rmoho = 6371000.0 - 24400.0;
 constexpr double prem_rsurface = 6371000.0;
 
+specfem::globe::PlanetConstants earth_constants() {
+  return {
+    specfem::globe::Planet::earth,
+    {
+        .r_planet = prem_rsurface,
+        .rhoav = 5514.3,
+        .one_minus_f_squared = (1.0 - 1.0 / 299.8) * (1.0 - 1.0 / 299.8),
+        .hours_per_day = 24.0,
+        .seconds_per_hour = 3600.0,
+        .topo_maximum = 9000.0,
+    },
+  };
+}
+
 /**
  * @brief One synthetic element: a radial shell with a known region and flag.
  *
@@ -202,7 +216,7 @@ protected:
 
   void TearDown() override { evaluator_.reset(); }
 
-  specfem::constants::PlanetConstants planet_constants_;
+  specfem::globe::PlanetConstants planet_constants_ = earth_constants();
   std::unique_ptr<specfem::io::globe_model> evaluator_;
 };
 

@@ -15,12 +15,12 @@ bool has_deferred_properties(
   return property_reader != nullptr;
 }
 
-specfem::constants::PlanetConstants
+specfem::globe::PlanetConstants
 planet_constants(const specfem::mesh::cartesian3d_mesh &) {
   return {};
 }
 
-specfem::constants::PlanetConstants
+specfem::globe::PlanetConstants
 planet_constants(const specfem::mesh::globe3d_mesh &mesh) {
   return mesh.planet_constants;
 }

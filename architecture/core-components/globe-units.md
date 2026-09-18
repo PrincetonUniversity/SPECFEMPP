@@ -11,16 +11,14 @@ SPECFEM++ has one units boundary for globe models:
   globe-model oracle wrapper. Code outside that wrapper must not call
   `utilities::nondimensionalize` or `utilities::dimensionalize`.
 
-`constants::PlanetConstants` is selected from the database `PLANET_TYPE`. Its
-planet-wide values come from the immutable `constants/globe.hpp` table. The
-reader cross-checks the redundant database `R_PLANET` and `RHOAV` fields against
-that table, catching a database associated with the wrong planet.
+`globe::PlanetConstants` is populated from the resolved values in the mesh
+database. This preserves the exact scales and planet metadata used by the
+mesher, including model-specific overrides. After replaying `MODEL_CONFIG`, the
+globe-model oracle cross-checks its `R_PLANET` and `RHOAV` against the database.
 
-Discontinuity radii are model values, not planet constants and not database
-fields. `io::globe_model` derives them after replaying `MODEL_CONFIG`; the
-assembly then stores their SI values in its copy of `PlanetConstants`.
-Consumers can check `has_radii()` before using them; the guarded `radii()`
-accessor throws if they are unavailable. Population also validates
+Discontinuity radii are model values stored beside the planet metadata in the
+database. `io::globe_model` independently derives them after replaying
+`MODEL_CONFIG` and checks them against the stored values. Population validates
 `0 < r_icb < r_cmb < r_moho < r_planet`.
 
 ---

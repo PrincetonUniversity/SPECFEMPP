@@ -5,8 +5,8 @@
 #include "control_nodes/control_nodes.hpp"
 #include "globe.hpp"
 #include "materials/materials.hpp"
-#include "specfem/constants/globe.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/globe/metadata.hpp"
 #include "specfem/mesh/attenuation_config.hpp"
 #include "tags/tags.hpp"
 
@@ -173,7 +173,7 @@ struct mesh<specfem::simulation::model::Globe3D> : public mesh_dim3_base {
   specfem::mesh::globe_mesh_data globe;
 
   /** @brief Selected planet constants; radii are filled by the model oracle. */
-  specfem::constants::PlanetConstants planet_constants;
+  specfem::globe::PlanetConstants planet_constants;
 
   mesh() = default;
   ~mesh() = default;

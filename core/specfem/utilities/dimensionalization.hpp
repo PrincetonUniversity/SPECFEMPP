@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/constants/globe.hpp"
+#include "specfem/globe/metadata.hpp"
 #include "specfem/units.hpp"
 
 #include <type_traits>
@@ -21,7 +21,7 @@ template <typename Dimension, typename Scale>
            std::is_same_v<Dimension, specfem::units::SI::DimDensity>)
 specfem::units::Dimensionless
 nondimensionalize(const specfem::units::Quantity<Dimension, Scale> value,
-                  const specfem::constants::PlanetConstants &constants) {
+                  const specfem::globe::PlanetConstants &constants) {
   const double value_si = value.raw() * specfem::units::ratio_value<Scale>;
   const auto &values = constants.values();
   if constexpr (std::is_same_v<Dimension, specfem::units::SI::DimLength>) {
@@ -49,9 +49,8 @@ template <typename QuantityType>
                           specfem::units::SI::DimLength> ||
            std::is_same_v<typename QuantityType::dimension_type,
                           specfem::units::SI::DimDensity>)
-QuantityType
-dimensionalize(const specfem::units::Dimensionless value,
-               const specfem::constants::PlanetConstants &constants) {
+QuantityType dimensionalize(const specfem::units::Dimensionless value,
+                            const specfem::globe::PlanetConstants &constants) {
   using Dimension = typename QuantityType::dimension_type;
   using Scale = typename QuantityType::scale_type;
   const auto &values = constants.values();

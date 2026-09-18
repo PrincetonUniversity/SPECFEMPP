@@ -22,7 +22,7 @@ globe_model::Scales globe_model::query_scales() {
 bool globe_model::is_active() noexcept { return is_active_; }
 
 globe_model::globe_model(const GlobeModelConfig &,
-                         const specfem::constants::PlanetConstants &,
+                         const specfem::globe::PlanetConstants &,
                          const std::string &) {
   throw std::runtime_error(
       "This build cannot consume globe meshes; configure with "
@@ -49,7 +49,7 @@ globe_model &globe_model::operator=(globe_model &&other) noexcept {
 
 void globe_model::release() noexcept {}
 
-specfem::constants::PlanetConstants::Radii globe_model::radii() const {
+specfem::globe::PlanetConstants::Radii globe_model::radii() const {
   throw std::runtime_error(
       "This build cannot query globe model radii; configure with "
       "SPECFEM_BUILD_MESHFEM3D_GLOBE=ON");

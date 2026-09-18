@@ -30,7 +30,7 @@ void check() {
   const auto &globe = mesh.globe;
   const auto &config = globe.model_config;
 
-  EXPECT_EQ(globe.format_version, 3);
+  EXPECT_EQ(globe.format_version, 4);
   EXPECT_EQ(mesh.control_nodes.ngnod, 27);
   EXPECT_GT(mesh.nspec, 0);
   EXPECT_GT(mesh.control_nodes.nnodes, 0);
@@ -53,15 +53,14 @@ void check() {
   EXPECT_FALSE(globe.icb.elements.empty());
   EXPECT_TRUE(mesh.adjacency_graph.mpi_connections().empty());
 
-  EXPECT_EQ(mesh.planet_constants.planet(), specfem::constants::Planet::earth);
+  EXPECT_EQ(mesh.planet_constants.planet(), specfem::globe::Planet::earth);
   EXPECT_DOUBLE_EQ(mesh.planet_constants.values().hours_per_day, 24.0);
-  EXPECT_FALSE(mesh.planet_constants.has_radii());
+  ASSERT_TRUE(mesh.planet_constants.has_radii());
 
-  specfem::constants::PlanetConstants constants = mesh.planet_constants;
+  specfem::globe::PlanetConstants constants = mesh.planet_constants;
   specfem::io::globe_model evaluator(config, constants);
   const auto radii = evaluator.radii();
   constants.set_radii(radii);
-  ASSERT_TRUE(constants.has_radii());
   EXPECT_NEAR(constants.radii().r_cmb / constants.values().r_planet,
               3480000.0 / 6371000.0, 1.0e-6);
 }

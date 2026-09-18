@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/constants/globe.hpp"
+#include "specfem/globe/metadata.hpp"
 #include "specfem/io/globe_model/model_config.hpp"
 
 #include <cstddef>
@@ -80,7 +80,7 @@ public:
    * @param log_path Optional catalog log path; empty redirects to `/dev/null`.
    */
   explicit globe_model(const GlobeModelConfig &config,
-                       const specfem::constants::PlanetConstants &constants,
+                       const specfem::globe::PlanetConstants &constants,
                        const std::string &log_path = "");
 
   ~globe_model();
@@ -109,7 +109,7 @@ public:
   [[nodiscard]] static Dimensions dimensions();
 
   /** @brief Model-dependent discontinuity radii in SI metres. */
-  [[nodiscard]] specfem::constants::PlanetConstants::Radii radii() const;
+  [[nodiscard]] specfem::globe::PlanetConstants::Radii radii() const;
 
   /** @brief Whether any wrapper currently owns the Fortran catalog. */
   [[nodiscard]] static bool is_active() noexcept;
@@ -132,7 +132,7 @@ private:
   [[nodiscard]] static Scales query_scales();
   void release() noexcept;
 
-  specfem::constants::PlanetConstants constants_;
+  specfem::globe::PlanetConstants constants_;
   Scales scales_;
   bool owns_state_ = false;
 

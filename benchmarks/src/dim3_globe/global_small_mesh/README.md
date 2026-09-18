@@ -17,8 +17,8 @@ mesh database (`DATABASES_MPI/proc??????_specfempp_database.bin`) and skips its
 native full-mesh databases. `check_database.py` validates those files: record framing,
 node/element consistency, CSR adjacency symmetry, CMB/ICB node welding, boundary face
 counts, cross-rank agreement on the MPI interfaces, and the model config block --
-including that every rank carries an identical copy of it. Both the snakemake workflow
-and the CMake target run it.
+including the resolved planet constants and model radii, and that every rank carries
+an identical copy of it. Both the snakemake workflow and the CMake target run it.
 
 Because attenuation is disabled here, the run does not exercise the validator's
 checks on the attenuation period band; those need a Par_file with

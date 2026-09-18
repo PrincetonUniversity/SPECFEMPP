@@ -1,4 +1,4 @@
-#include "specfem/constants/globe.hpp"
+#include "specfem/globe/metadata.hpp"
 #include "specfem/utilities/dimensionalization.hpp"
 
 #include <cmath>
@@ -7,11 +7,23 @@
 
 namespace {
 
-using specfem::constants::Planet;
-using specfem::constants::PlanetConstants;
+using specfem::globe::Planet;
+using specfem::globe::PlanetConstants;
+using specfem::globe::PlanetConstantSet;
+
+PlanetConstantSet earth_values() {
+  return {
+    .r_planet = 6371000.0,
+    .rhoav = 5514.3,
+    .one_minus_f_squared = (1.0 - 1.0 / 299.8) * (1.0 - 1.0 / 299.8),
+    .hours_per_day = 24.0,
+    .seconds_per_hour = 3600.0,
+    .topo_maximum = 9000.0,
+  };
+}
 
 TEST(GlobeConstants, EarthRotationConstants) {
-  const PlanetConstants earth(Planet::earth);
+  const PlanetConstants earth(Planet::earth, earth_values());
   EXPECT_DOUBLE_EQ(earth.values().hours_per_day, 24.0);
   const double two_omega =
       4.0 * std::acos(-1.0) /
@@ -19,18 +31,16 @@ TEST(GlobeConstants, EarthRotationConstants) {
   EXPECT_NEAR(two_omega, 1.454441043328608e-4, 1.0e-18);
 }
 
-TEST(GlobeConstants, PlanetTablesAreSelectableAndDistinct) {
-  const PlanetConstants earth(Planet::earth);
-  const PlanetConstants mars(Planet::mars);
-  const PlanetConstants moon(Planet::moon);
-  EXPECT_NE(mars.values().r_planet, earth.values().r_planet);
-  EXPECT_NE(moon.values().r_planet, earth.values().r_planet);
-  EXPECT_NE(mars.values().hours_per_day, earth.values().hours_per_day);
-  EXPECT_NE(moon.values().rhoav, earth.values().rhoav);
+TEST(GlobeConstants, PreservesResolvedDatabaseValues) {
+  auto values = earth_values();
+  values.r_planet = 3389500.0;
+  const PlanetConstants mars(Planet::mars, values);
+  EXPECT_EQ(mars.planet(), Planet::mars);
+  EXPECT_DOUBLE_EQ(mars.values().r_planet, 3389500.0);
 }
 
 TEST(GlobeConstants, LengthAndDensityRoundTrip) {
-  const PlanetConstants earth(Planet::earth);
+  const PlanetConstants earth(Planet::earth, earth_values());
   const specfem::units::Meters length(1234567.25);
   const auto length_nd = specfem::utilities::nondimensionalize(length, earth);
   const auto recovered_length =
@@ -49,23 +59,23 @@ TEST(GlobeConstants, LengthAndDensityRoundTrip) {
 }
 
 TEST(GlobeConstants, DatabaseScaleMismatchThrows) {
-  const PlanetConstants earth(Planet::earth);
-  EXPECT_THROW(specfem::constants::check_database_values(earth, 3390000.0,
-                                                         earth.values().rhoav),
+  const PlanetConstants earth(Planet::earth, earth_values());
+  EXPECT_THROW(specfem::globe::check_database_values(earth, 3390000.0,
+                                                     earth.values().rhoav),
                std::runtime_error);
-  EXPECT_THROW(specfem::constants::check_database_values(
+  EXPECT_THROW(specfem::globe::check_database_values(
                    earth, earth.values().r_planet, 3393.0),
                std::runtime_error);
 }
 
 TEST(GlobeConstants, UnpopulatedRadiiAreReported) {
-  const PlanetConstants earth(Planet::earth);
+  const PlanetConstants earth(Planet::earth, earth_values());
   EXPECT_FALSE(earth.has_radii());
   EXPECT_THROW(static_cast<void>(earth.radii()), std::logic_error);
 }
 
 TEST(GlobeConstants, InconsistentRadiiAreRejected) {
-  PlanetConstants earth(Planet::earth);
+  PlanetConstants earth(Planet::earth, earth_values());
   PlanetConstants::Radii radii{
     .r_icb = 1221500.0,
     .r_cmb = 3480000.0,
@@ -79,6 +89,24 @@ TEST(GlobeConstants, InconsistentRadiiAreRejected) {
   };
   EXPECT_THROW(earth.set_radii(radii), std::runtime_error);
   EXPECT_FALSE(earth.has_radii());
+}
+
+TEST(GlobeConstants, EvaluatorRadiusMismatchIsRejected) {
+  PlanetConstants earth(Planet::earth, earth_values());
+  PlanetConstants::Radii radii{
+    .r_icb = 1221500.0,
+    .r_cmb = 3480000.0,
+    .r_moho = 6346600.0,
+    .r_80 = 6291000.0,
+    .r_220 = 6151000.0,
+    .r_400 = 5971000.0,
+    .r_670 = 5701000.0,
+    .r_771 = 5600000.0,
+    .r_ocean = 6368000.0,
+  };
+  earth.set_radii(radii);
+  radii.r_cmb += 1.0;
+  EXPECT_THROW(earth.set_radii(radii), std::runtime_error);
 }
 
 } // namespace
