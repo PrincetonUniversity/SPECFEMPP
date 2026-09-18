@@ -48,6 +48,12 @@ specfem_add_test(my_tests
   (only included when `SPECFEM_ENABLE_MPI` is ON).
 - An MPI test declares its process count inline: `MPI_RANKS 4`.
 - Other options: `NO_UNITY`, `TIMEOUT`, `DEFINITIONS`, `INCLUDES`, `PROPERTIES`, `LABELS`.
+- MPI tests are registered one CTest entry per `TEST`/`TEST_F`/`TEST_P` declaration grepped
+  out of `SOURCES`, because `gtest_discover_tests()` cannot list a binary that runs under a
+  launcher. A `TEST_P` therefore collapses to a single entry covering all its instances. When
+  the instances come from a data file read at runtime, list them with
+  `PARAM_CASES <Suite>.<Case>/<instance>...` to get one entry each (MPI targets only; see
+  `tests/integration-tests/mpi.cmake` for the pattern).
 - Test data directories are exposed to the tests' working directory with
   `specfem_add_test_data(<dir>...)`.
 

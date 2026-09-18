@@ -201,7 +201,7 @@ template <specfem::element::medium_tag MediumTag,
 void check_compute_to_mesh(
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
         &assembly,
-    const specfem::mesh::mesh<specfem::element::dimension_tag::dim2> &mesh) {
+    const specfem::mesh::cartesian2d_mesh &mesh) {
 
   const auto &properties = assembly.properties;
   const auto &element_types = assembly.element_types;

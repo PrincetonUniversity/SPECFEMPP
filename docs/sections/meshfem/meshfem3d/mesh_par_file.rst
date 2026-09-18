@@ -468,6 +468,30 @@ For acoustic or elastic materials, use the following format:
 
     2   1020.0   1500.0   0.0   0   0   0   1
 
+Elastic Isotropic Cosserat Materials
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For elastic isotropic Cosserat materials, use the following format:
+
+- ``material_id``: integer number to reference the material
+- ``rho``: density (kg/m³)
+- ``kappa``: bulk modulus (Pa)
+- ``mu``: shear modulus (Pa)
+- ``nu``: Cosserat coupling parameter (Pa)
+- ``j``: Isotropic moment of inertia (kg/m)
+- ``lambda_c``: Cosserat Lamé parameter (N)
+- ``mu_c``: Cosserat shear modulus (N)
+- ``nu_c``: Second Cosserat coupling parameter (N)
+- ``domain_id``: must be 4 for elastic isotropic Cosserat
+
+:Type: ``string``
+:Format: ``material_id  rho  kappa  mu  nu  j  lambda_c  mu_c  nu_c  domain_id``
+
+.. code-block::
+    :caption: Example
+
+    1   2300.0   1500.0   2800.0   1e6 1e4 300.0 25.0 500.0 4
+
 
 Poroelastic Materials
 ^^^^^^^^^^^^^^^^^^^^^

@@ -44,8 +44,8 @@ namespace specfem::assembly {
  * computed_jac;
  *
  * // Compute Jacobian values (simplified)
- * computed_jac.xix = compute_xix(mesh_coords);
- * computed_jac.jacobian = compute_jacobian_determinant(mesh_coords);
+ * computed_jac.xix() = compute_xix(mesh_coords);
+ * computed_jac.jacobian() = compute_jacobian_determinant(mesh_coords);
  *
  * // Store back to global container
  * specfem::assembly::store_on_device(idx, jacobian_container, computed_jac);

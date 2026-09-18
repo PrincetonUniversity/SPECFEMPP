@@ -29,9 +29,9 @@ template <> struct ContainerSets<specfem::element::dimension_tag::dim2> {
 
 template <> struct ContainerSets<specfem::element::dimension_tag::dim3> {
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
-  constexpr static auto combinations = DIMENSION_SET(dim3) *
-                                       MEDIUM_SET(elastic, acoustic) *
-                                       PROPERTY_SET(isotropic);
+  constexpr static auto combinations =
+      DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic, elastic_spin) *
+      PROPERTY_SET(isotropic, isotropic_cosserat);
 };
 
 /**

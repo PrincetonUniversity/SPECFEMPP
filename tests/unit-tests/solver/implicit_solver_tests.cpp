@@ -105,17 +105,17 @@ TEST(ImplicitSolver3D, AcceptsExplicitBetaInAccelerationForm) {
   config.newmark.gamma = static_cast<type_real>(0.5);
   SolverType solver(test_case.time_scheme, {}, *test_case.assembly, config);
 
-  EXPECT_EQ(solver.damping()->getGlobalNumEntries(), 0u)
+  EXPECT_EQ(solver.damping().getGlobalNumEntries(), 0u)
       << "the no-ABC fixture must produce an empty damping matrix";
 
   // A x == M x exactly: beta dt^2 K vanishes and C is empty.
-  const auto &dof_map = solver.dof_map();
-  VectorType x(dof_map.owned_map());
+  const auto &fe = solver.fe();
+  VectorType x(fe.owned_map());
   x.randomize();
 
-  VectorType a_x(dof_map.owned_map()), reference(dof_map.owned_map());
-  solver.system_operator()->apply(x, a_x);
-  reference.elementWiseMultiply(static_cast<type_real>(1), *solver.mass(), x,
+  VectorType a_x(fe.owned_map()), reference(fe.owned_map());
+  solver.system_operator().apply(x, a_x);
+  reference.elementWiseMultiply(static_cast<type_real>(1), solver.mass(), x,
                                 static_cast<type_real>(0));
 
   type_real scale = 0;
@@ -124,7 +124,7 @@ TEST(ImplicitSolver3D, AcceptsExplicitBetaInAccelerationForm) {
     const auto a_view = a_x.getLocalViewHost(Tpetra::Access::ReadOnly);
     const auto ref_view = reference.getLocalViewHost(Tpetra::Access::ReadOnly);
     for (std::size_t dof = 0;
-         dof < static_cast<std::size_t>(dof_map.num_global_dofs()); ++dof) {
+         dof < static_cast<std::size_t>(fe.mapping().num_global_dofs()); ++dof) {
       scale = std::max(scale, std::abs(ref_view(dof, 0)));
       max_diff =
           std::max(max_diff, std::abs(a_view(dof, 0) - ref_view(dof, 0)));
@@ -161,14 +161,14 @@ TEST_P(ImplicitSolverFormTest, ConstructsAndOperatorMatchesOnStaceyMesh) {
   config.form = GetParam();
   SolverType solver(test_case.time_scheme, {}, *test_case.assembly, config);
 
-  EXPECT_GT(solver.stiffness()->getGlobalNumEntries(), 0u);
-  EXPECT_GT(solver.damping()->getGlobalNumEntries(), 0u)
+  EXPECT_GT(solver.stiffness().getGlobalNumEntries(), 0u);
+  EXPECT_GT(solver.damping().getGlobalNumEntries(), 0u)
       << "the Stacey fixture must produce a nonempty damping matrix";
-  EXPECT_EQ(solver.system_operator()->getGlobalNumEntries(),
-            solver.stiffness()->getGlobalNumEntries())
+  EXPECT_EQ(solver.system_operator().getGlobalNumEntries(),
+            solver.stiffness().getGlobalNumEntries())
       << "A must live on K's graph";
 
-  const auto &dof_map = solver.dof_map();
+  const auto &fe = solver.fe();
 
   const type_real dt = test_case.time_scheme->get_timestep();
   const type_real beta = config.newmark.beta;
@@ -183,18 +183,18 @@ TEST_P(ImplicitSolverFormTest, ConstructsAndOperatorMatchesOnStaceyMesh) {
   const type_real mass_coefficient =
       acceleration_form ? static_cast<type_real>(1) : 1 / (beta * dt * dt);
 
-  VectorType x(dof_map.owned_map());
+  VectorType x(fe.owned_map());
   x.randomize();
 
-  VectorType a_x(dof_map.owned_map()), reference(dof_map.owned_map()),
-      scratch(dof_map.owned_map());
-  solver.system_operator()->apply(x, a_x);
+  VectorType a_x(fe.owned_map()), reference(fe.owned_map()),
+      scratch(fe.owned_map());
+  solver.system_operator().apply(x, a_x);
 
-  solver.stiffness()->apply(x, scratch);
+  solver.stiffness().apply(x, scratch);
   reference.update(stiffness_coefficient, scratch, 0);
-  solver.damping()->apply(x, scratch);
+  solver.damping().apply(x, scratch);
   reference.update(damping_coefficient, scratch, 1);
-  reference.elementWiseMultiply(mass_coefficient, *solver.mass(), x, 1);
+  reference.elementWiseMultiply(mass_coefficient, solver.mass(), x, 1);
 
   type_real scale = 0;
   type_real max_diff = 0;
@@ -202,7 +202,8 @@ TEST_P(ImplicitSolverFormTest, ConstructsAndOperatorMatchesOnStaceyMesh) {
     const auto a_view = a_x.getLocalViewHost(Tpetra::Access::ReadOnly);
     const auto ref_view = reference.getLocalViewHost(Tpetra::Access::ReadOnly);
     for (std::size_t dof = 0;
-         dof < static_cast<std::size_t>(dof_map.num_global_dofs()); ++dof) {
+         dof < static_cast<std::size_t>(fe.mapping().num_global_dofs());
+         ++dof) {
       scale = std::max(scale, std::abs(ref_view(dof, 0)));
       max_diff =
           std::max(max_diff, std::abs(a_view(dof, 0) - ref_view(dof, 0)));
