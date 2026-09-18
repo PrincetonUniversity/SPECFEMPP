@@ -1,12 +1,13 @@
-
 #include "../acoustic_elastic.hpp"
 #include "integrate_against_shape_on_face.hpp"
 #include "specfem/compute/impl/compute_coupling.hpp"
 #include "specfem/compute/impl/compute_coupling.tpp" // so that we don't need to load the entire solver
+#include "specfem/compute/impl/compute_coupling_subkernel/conjugate_integral.hpp"
+#include "specfem/compute/impl/compute_coupling_subkernel/conjugate_integral.tpp"
 #include "specfem/element/attributes.hpp"
 #include "specfem/element/dimension.hpp"
 #include "specfem/element/tags.hpp"
-#include "specfem/element_coupling/TMP_extra_kernel/extra_kernel.cpp"
+// #include "specfem/element_coupling/TMP_extra_kernel/extra_kernel.cpp"
 #include "utilities/include/fieldmanip/fieldgetter.hpp"
 #include "utilities/include/fieldmanip/fieldsetter.hpp"
 #include <Kokkos_Core.hpp>
@@ -14,33 +15,9 @@
 #include <sstream>
 #include <stdexcept>
 
-// helper: hides away the specfem::compute::impl stuff.
-template <int NGLL>
-void acoustic_compute_update(
-    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
-        &assembly) {
-  constexpr auto dimension_tag = specfem::element::dimension_tag::dim3;
-
-  specfem::compute::impl::compute_coupling<
-      NGLL, specfem::tags::Tags<dimension_tag,
-                                specfem::simulation::field_type::forward,
-                                specfem::element::medium_tag::acoustic>>(
-      assembly);
-}
-
-// helper: hides away the specfem::compute::impl stuff.
-template <int NGLL>
-void elastic_compute_update(
-    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
-        &assembly) {
-  constexpr auto dimension_tag = specfem::element::dimension_tag::dim3;
-
-  specfem::compute::impl::compute_coupling<
-      NGLL, specfem::tags::Tags<dimension_tag,
-                                specfem::simulation::field_type::forward,
-                                specfem::element::medium_tag::elastic>>(
-      assembly);
-}
+// ======================================================================
+// TODO (Hanson): field initializers are the same as in acoustic_elastic3d.cpp.
+// Combine them.
 
 /**
  * @brief Sets the acoustic acceleration field to power function.
@@ -108,21 +85,22 @@ struct elastic_field_initializer_pow
         inv_xscale(1 / xscale), inv_yscale(1 / yscale) {};
 };
 
+// ======================================================================
+
 /**
- * @brief verifies that the acoustic-elastic coupling is exact for fields of a
- * certain power.
+ * @brief verifies that the conjugate natural acoustic-elastic coupling
  *
- * Given the field on the interface as f(x,y) = (x/xscale)^{xpow}
- * (y/yscale)^{ypow} (or f multiplied by a constant vector {0,0,1} for elastic),
- * verifies that setting field on source_medium to f and calling the
- * compute_coupling routines produces the same acceleration field (on
- * target_medium) as if we computed the integral of the shape function times f
- * there.
+ * The conjugate kernel computes the coupling integral on the coupling side.
+ * We can verify correctness by taking linear combinations of test functions
+ * that are exact for both coupling-sided and self-sided integration (i.e.
+ * powers). pow_x and pow_y determine the source field (the linear combinations
+ * of columns are chosen), while this function iterates over linear combinations
+ * of rows (varies test functions).
  */
 template <specfem::element::medium_tag target_medium,
           specfem::element::medium_tag source_medium, int NGLL, int pow_x,
           int pow_y>
-void test_nonconforming_acoustic_elastic(
+void test_nonconforming_acoustic_elastic_conj(
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
         &assembly,
     const std::string &meshname,
@@ -131,21 +109,18 @@ void test_nonconforming_acoustic_elastic(
     const specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace>::
         host_mirror_type &h_target_intersection_faces,
     const Kokkos::View<type_real *[3]> &target_medium_normal_per_dof,
-    std::integral_constant<int, NGLL>, std::integral_constant<int, pow_x>,
-    std::integral_constant<int, pow_y>) {
+    const int &max_pow_test, std::integral_constant<int, NGLL>,
+    std::integral_constant<int, pow_x>, std::integral_constant<int, pow_y>) {
   static_assert((target_medium == specfem::element::medium_tag::acoustic &&
                  source_medium == specfem::element::medium_tag::elastic) ||
                     (source_medium == specfem::element::medium_tag::acoustic &&
                      target_medium == specfem::element::medium_tag::elastic),
                 "test_nonconforming_acoustic_elastic -- target_medium and "
                 "source_medium must be acoustic and elastic (or vice versa)!");
+
   constexpr type_real reltol = 1e-5;
   constexpr type_real abstol = 1e-7;
   constexpr int fail_num_verbose = 5;
-
-  constexpr auto dimension_tag = specfem::element::dimension_tag::dim3;
-  const auto simfield = assembly.fields.template get_simulation_field<
-      specfem::simulation::field_type::forward>();
 
   using target_initializer_type =
       std::conditional_t<target_medium ==
@@ -157,82 +132,20 @@ void test_nonconforming_acoustic_elastic(
                              specfem::element::medium_tag::acoustic,
                          acoustic_field_initializer_pow<pow_x, pow_y>,
                          elastic_field_initializer_pow<pow_x, pow_y>>;
-
-  // target_initializer sets disp or accel, based on medium. Which is it?
-  constexpr specfem::data_access::DataClassType
-      target_initialized_component_dataclass =
-          (target_medium == specfem::element::medium_tag::acoustic)
-              ? specfem::data_access::DataClassType::acceleration
-              : specfem::data_access::DataClassType::displacement;
+  constexpr auto dimension_tag = specfem::element::dimension_tag::dim3;
   constexpr int ncomp_target =
       specfem::element::attributes<dimension_tag, target_medium>::components;
   static constexpr int ndim = specfem::element::dimension<dimension_tag>::dim;
-
-  // ================================================================================
 
   const type_real xscale =
       std::max(std::abs(assembly.mesh.xmax), std::abs(assembly.mesh.xmin));
   const type_real yscale =
       std::max(std::abs(assembly.mesh.ymax), std::abs(assembly.mesh.ymin));
+  ;
 
   target_initializer_type target_initializer(xscale, yscale);
   source_initializer_type source_initializer(xscale, yscale);
 
-  // set and integrate function on target side exclusively.
-  specfem::test_fieldmanip::set_field_values<
-      specfem::simulation::field_type::forward>(assembly, target_initializer);
-  const auto target_set_fieldvals = specfem::test_fieldmanip::get_field_values<
-      specfem::simulation::field_type::forward, dimension_tag, target_medium,
-      target_initialized_component_dataclass>(assembly);
-
-  const int nglob = target_set_fieldvals.extent(0);
-
-  if constexpr (target_medium == specfem::element::medium_tag::acoustic) {
-    // elastic set to constant direction. dot it with normal
-    Kokkos::parallel_for(
-        "target_set_fieldvals times normal", nglob,
-        KOKKOS_LAMBDA(const int &iglob) {
-          type_real dot = 0;
-          for (int idim = 0; idim < ndim; idim++) {
-            dot += source_initializer.setdir[idim] *
-                   target_medium_normal_per_dof(iglob, idim);
-          }
-          target_set_fieldvals(iglob, 0) *= dot;
-        });
-  } else if constexpr (source_medium ==
-                       specfem::element::medium_tag::acoustic) {
-    // elastic set to constant direction. replace it it with proper normal
-    type_real conormal[ndim];
-    type_real normal_mag2 = 0;
-    for (int idim = 0; idim < ndim; idim++) {
-      normal_mag2 +=
-          target_initializer.setdir[idim] * target_initializer.setdir[idim];
-    }
-    for (int idim = 0; idim < ndim; idim++) {
-      conormal[idim] = target_initializer.setdir[idim] / normal_mag2;
-    }
-
-    Kokkos::parallel_for(
-        "target_set_fieldvals times normal", nglob,
-        KOKKOS_LAMBDA(const int &iglob) {
-          type_real fieldval = 0;
-          for (int idim = 0; idim < ndim; idim++) {
-            fieldval += conormal[idim] * target_set_fieldvals(iglob, idim);
-          }
-          for (int idim = 0; idim < ndim; idim++) {
-            target_set_fieldvals(iglob, idim) =
-                target_medium_normal_per_dof(iglob, idim) * fieldval;
-          }
-        });
-  }
-  Kokkos::fence();
-
-  const auto expected_accel_vals =
-      specfem::nonconforming_test::kernel::integrate_against_shape_on_faces<
-          target_medium>(assembly, target_intersection_faces,
-                         h_target_intersection_faces, target_set_fieldvals);
-
-  // ================================================================================
   // initialize source
   specfem::test_fieldmanip::set_field_values<
       specfem::simulation::field_type::forward>(assembly, source_initializer);
@@ -245,133 +158,127 @@ void test_nonconforming_acoustic_elastic(
       specfem::test_fieldmanip::PointSetter<
           specfem::element::dimension_tag::dim3, target_medium>(
           true, true, true) /* default point setter zeroes everything out. */);
-
   specfem::compute::impl::compute_coupling<
       NGLL, specfem::tags::Tags<dimension_tag,
                                 specfem::simulation::field_type::forward,
                                 target_medium>>(assembly);
-
-  const auto computed_integrated_values =
+  const auto integrated_base_values =
       specfem::test_fieldmanip::get_field_values<
           specfem::simulation::field_type::forward, dimension_tag,
           target_medium,
           specfem::data_access::DataClassType::
               acceleration /* always accel: values from compute_coupling */>(
           assembly);
-  // ================================================================================
 
-  int iglob_fails = 0;
+  // zero out target medium (since compute_coupling accumulates) and compute
+  // through kernel
+  specfem::test_fieldmanip::set_field_values<
+      specfem::simulation::field_type::forward>(
+      assembly,
+      specfem::test_fieldmanip::PointSetter<
+          specfem::element::dimension_tag::dim3, target_medium>(
+          true, true, true) /* default point setter zeroes everything out. */);
 
-  const auto h_expected_accel_vals = Kokkos::create_mirror_view_and_copy(
-      Kokkos::HostSpace(), expected_accel_vals);
-  const auto h_target_set_fieldvals = Kokkos::create_mirror_view_and_copy(
-      Kokkos::HostSpace(), target_set_fieldvals);
-  const auto h_computed_integrated_values = Kokkos::create_mirror_view_and_copy(
-      Kokkos::HostSpace(), computed_integrated_values);
+  specfem::tag_dispatch::for_each(
+      specfem::tag_dispatch::dimension_set<dimension_tag>{} *
+          CONNECTION_SET(weakly_conforming, nonconforming) *
+          INTERFACE_SET(elastic_acoustic, acoustic_elastic) *
+          BOUNDARY_SET(none, acoustic_free_surface, stacey,
+                       composite_stacey_dirichlet) *
+          FLUX_SCHEME_SET(natural),
+      [&]<typename ElementTags>() {
+        constexpr auto self_medium = specfem::element_coupling::attributes<
+            ElementTags::dimension_tag,
+            ElementTags::interface_tag>::self_medium();
+        if constexpr (self_medium == target_medium) {
+          specfem::compute::impl::
+              compute_coupling_conjugate_integral_nonconforming<
+                  NGLL,
+                  specfem::tags::Tags<
+                      dimension_tag, ElementTags::connection_tag,
+                      specfem::simulation::field_type::forward,
+                      ElementTags::interface_tag, ElementTags::boundary_tag,
+                      ElementTags::flux_scheme_tag>>(assembly);
+        }
+      });
+  const auto integrated_conjugate_values =
+      specfem::test_fieldmanip::get_field_values<
+          specfem::simulation::field_type::forward, dimension_tag,
+          target_medium,
+          specfem::data_access::DataClassType::
+              acceleration /* always accel: values from compute_coupling */>(
+          assembly);
 
-  std::ostringstream failstream;
-  type_real maxerr_rel = 0;
-  type_real maxerr_abs = 0;
-  for (int iglob = 0; iglob < nglob; iglob++) {
-    // flip expected for opposite normal. (the [0,0,1] was static-constexpr'd)
-    type_real expected[ncomp_target];
-    type_real got[ncomp_target];
-    type_real resid[ncomp_target];
+  Kokkos::View<specfem::point::global_coordinates<dimension_tag> *> dof_coords =
+      specfem::test_fieldmanip::get_coords_per_dof<
+          specfem::simulation::field_type::forward, target_medium>(assembly);
 
-    type_real expected_mag = 0;
-    for (int icomp = 0; icomp < ncomp_target; icomp++) {
-      expected[icomp] = h_expected_accel_vals(iglob, icomp);
-      expected_mag += expected[icomp] * expected[icomp];
-      got[icomp] = h_computed_integrated_values(iglob, icomp);
-      resid[icomp] = got[icomp] - expected[icomp];
-    }
-    expected_mag = std::sqrt(expected_mag);
+  const int nglob_target = dof_coords.extent(0);
 
-    type_real l2err = 0;
-    for (int icomp = 0; icomp < ncomp_target; icomp++) {
-      l2err += resid[icomp] * resid[icomp];
-    }
-    l2err = std::sqrt(l2err);
+  for (int test_pow_x = 0; test_pow_x < max_pow_test; test_pow_x++) {
+    for (int test_pow_y = 0; test_pow_y < max_pow_test; test_pow_y++) {
 
-    const type_real tolparam = reltol * expected_mag + abstol;
-    if (expected_mag > abstol) {
-      maxerr_rel = std::max(l2err / expected_mag, maxerr_rel);
-    }
-    maxerr_abs = std::max(l2err, maxerr_abs);
-    if (l2err > tolparam) {
-      if (iglob_fails < fail_num_verbose) {
+      Kokkos::Array<type_real, ncomp_target> result_base;
+      Kokkos::Array<type_real, ncomp_target> result_conjugate;
 
-        // find local nodes that contribute to this DoF
-        std::ostringstream collected_locals;
-        for (int iface = 0; iface < target_intersection_faces.N; iface++) {
-          const auto face = h_target_intersection_faces(iface);
-          for (int ipoint = 0; ipoint < NGLL; ipoint++) {
-            for (int jpoint = 0; jpoint < NGLL; jpoint++) {
-              const auto index = face(ipoint, jpoint);
-              const int iglob_of_point =
-                  simfield.template get_iglob<false, target_medium>(index);
-              if (iglob == iglob_of_point) {
-
-                specfem::point::jacobian_matrix<
-                    dimension_tag, true /*StoreJacobian*/, false /*UseSIMD*/>
-                    jac;
-
-                specfem::assembly::load_on_host(index, assembly.jacobian_matrix,
-                                                jac);
-
-                const auto normal = jac.compute_normal(index.face_type);
-                type_real jac2d = std::sqrt(normal(0) * normal(0) + normal(1) +
-                                            normal(1) + normal(2) * normal(2));
-                type_real contrib = jac2d *
-                                    assembly.mesh.h_weights(index.ipoint_i) *
-                                    assembly.mesh.h_weights(index.ipoint_j);
-                collected_locals
-                    << "    (" << index.ispec << "," << index.ipoint_i << ","
-                    << index.ipoint_j << ") field value * " << contrib << ": "
-                    << "  jac(" << jac2d << ") * gll_weight("
-                    << assembly.mesh.h_weights(index.ipoint_i)
-                    << ") * gll_weight("
-                    << assembly.mesh.h_weights(index.ipoint_j) << ")\n";
-              }
+      Kokkos::parallel_reduce(
+          "reduce base", nglob_target,
+          KOKKOS_LAMBDA(const int &iglob,
+                        Kokkos::Array<type_real, ncomp_target> &lsum) {
+            const type_real location_factor =
+                std::pow(dof_coords(iglob).x, test_pow_x) *
+                std::pow(dof_coords(iglob).y, test_pow_y);
+            for (int i = 0; i < ncomp_target; i++) {
+              lsum[i] += integrated_base_values(iglob, i) * location_factor;
             }
-          }
-        }
-        failstream << "- iglob = " << iglob << ":\n";
-        failstream << "    [ " << std::setw(15) << got[0];
-        for (int icomp = 1; icomp < ncomp_target; icomp++) {
-          failstream << ", " << std::setw(15) << got[icomp];
-        }
-        failstream << " ]";
-        failstream << "\n != [ " << std::setw(15) << expected[0];
-        for (int icomp = 1; icomp < ncomp_target; icomp++) {
-          failstream << ", " << std::setw(15) << expected[icomp];
-        }
-        failstream << " ]";
-        failstream << "\n        (rel err: " << l2err / expected_mag
-                   << ")\n  local points:\n"
-                   << collected_locals.str();
-        failstream << "   field value: [ " << std::setw(15)
-                   << h_target_set_fieldvals(iglob, 0);
-        for (int icomp = 1; icomp < ncomp_target; icomp++) {
-          failstream << ", " << std::setw(15)
-                     << h_target_set_fieldvals(iglob, icomp);
-        }
-        failstream << " ]\n";
-      }
+          },
+          result_base);
+      Kokkos::parallel_reduce(
+          "reduce conjugate", nglob_target,
+          KOKKOS_LAMBDA(const int &iglob,
+                        Kokkos::Array<type_real, ncomp_target> &lsum) {
+            const type_real location_factor =
+                std::pow(dof_coords(iglob).x, test_pow_x) *
+                std::pow(dof_coords(iglob).y, test_pow_y);
+            for (int i = 0; i < ncomp_target; i++) {
+              lsum[i] +=
+                  integrated_conjugate_values(iglob, i) * location_factor;
+            }
+          },
+          result_conjugate);
 
-      iglob_fails++;
+      // TODO (Hanson) START HERE: verify conjugate == base
+      type_real err = 0;
+      type_real base_mag = 0;
+      for (int icomp = 0; icomp < ncomp_target; icomp++) {
+        base_mag += result_base[icomp] * result_base[icomp];
+        err += (result_base[icomp] - result_conjugate[icomp]) *
+               (result_base[icomp] - result_conjugate[icomp]);
+      }
+      err = std::sqrt(err);
+      base_mag = std::sqrt(base_mag);
+      if (err > base_mag * reltol + abstol) {
+        std::ostringstream oss;
+        oss << meshname << std::endl
+            << specfem::element::to_string(target_medium) << " <- "
+            << specfem::element::to_string(source_medium) << ": x^{" << pow_x
+            << "} y^{" << pow_y
+            << "}\nconjugate kernel disagreement for test function x^{"
+            << test_pow_x << "} y^{" << test_pow_y << "}\n";
+
+        oss << "    [ " << std::setw(15) << result_conjugate[0];
+        for (int icomp = 1; icomp < ncomp_target; icomp++) {
+          oss << ", " << std::setw(15) << result_conjugate[icomp];
+        }
+        oss << " ]";
+        oss << "\n != [ " << std::setw(15) << result_base[0];
+        for (int icomp = 1; icomp < ncomp_target; icomp++) {
+          oss << ", " << std::setw(15) << result_base[icomp];
+        }
+        oss << " ]";
+        FAIL() << oss.str();
+      }
     }
-  }
-  if (iglob_fails > 0) {
-    FAIL() << meshname << std::endl
-           << specfem::element::to_string(target_medium) << " <- "
-           << specfem::element::to_string(source_medium) << ": x^{" << pow_x
-           << "} y^{" << pow_y
-           << "}\nFailed Degrees of Freedom: " << iglob_fails << " / " << nglob
-           << "\n    Largest relative error: " << maxerr_rel
-           << "\n    Largest absolute error: " << maxerr_abs
-           << "\n Showing first " << fail_num_verbose << ":\n"
-           << failstream.str();
   }
 }
 
@@ -446,7 +353,7 @@ Kokkos::View<type_real *[3]> get_target_medium_normal_per_dof(
  * This should only be called by expand_test_pows(assembly).
  */
 template <int NGLL, int MAXPOW, int... Is>
-void expand_test_pows(
+void expand_test_pows_conj(
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
         &assembly,
     const std::string &meshname, std::integer_sequence<int, Is...>) {
@@ -457,10 +364,11 @@ void expand_test_pows(
   const auto acoustic_norms =
       get_target_medium_normal_per_dof<specfem::element::medium_tag::acoustic>(
           assembly, h_acoustic_intersection_faces);
-  (test_nonconforming_acoustic_elastic<specfem::element::medium_tag::acoustic,
-                                       specfem::element::medium_tag::elastic>(
+  (test_nonconforming_acoustic_elastic_conj<
+       specfem::element::medium_tag::acoustic,
+       specfem::element::medium_tag::elastic>(
        assembly, meshname, acoustic_intersection_faces,
-       h_acoustic_intersection_faces, acoustic_norms,
+       h_acoustic_intersection_faces, acoustic_norms, MAXPOW,
        std::integral_constant<int, 5>(),
        std::integral_constant<int, Is % (MAXPOW + 1) /*pow_x*/>(),
        std::integral_constant<int, Is / (MAXPOW + 1) /*pow y*/>()),
@@ -472,10 +380,11 @@ void expand_test_pows(
   const auto elastic_norms =
       get_target_medium_normal_per_dof<specfem::element::medium_tag::elastic>(
           assembly, h_elastic_intersection_faces);
-  (test_nonconforming_acoustic_elastic<specfem::element::medium_tag::elastic,
-                                       specfem::element::medium_tag::acoustic>(
+  (test_nonconforming_acoustic_elastic_conj<
+       specfem::element::medium_tag::elastic,
+       specfem::element::medium_tag::acoustic>(
        assembly, meshname, elastic_intersection_faces,
-       h_elastic_intersection_faces, elastic_norms,
+       h_elastic_intersection_faces, elastic_norms, MAXPOW,
        std::integral_constant<int, 5>(),
        std::integral_constant<int, Is % (MAXPOW + 1) /*pow_x*/>(),
        std::integral_constant<int, Is / (MAXPOW + 1) /*pow y*/>()),
@@ -490,26 +399,27 @@ void expand_test_pows(
  *          0 <= pow_x, pow_y <= MAXPOW
  */
 template <int NGLL, int MAXPOW>
-void expand_test_pows(
+void expand_test_pows_conj(
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
         &assembly,
     const std::string &meshname) {
-  expand_test_pows<NGLL, MAXPOW>(
+  expand_test_pows_conj<NGLL, MAXPOW>(
       assembly, meshname,
       std::make_integer_sequence<int, (MAXPOW + 1) * (MAXPOW + 1)>());
 }
 
-void specfem::nonconforming_test::kernel::test_nonconforming_acoustic_elastic(
-    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
-        &assembly,
-    const std::string &meshname) {
+void specfem::nonconforming_test::kernel::
+    test_nonconforming_acoustic_elastic_conjugate(
+        const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
+            &assembly,
+        const std::string &meshname) {
   const int ngll = assembly.mesh.specfem::assembly::mesh_impl::points<
       specfem::element::dimension_tag::dim3>::ngllz;
 
   if (ngll == 5) {
-    expand_test_pows<5, 3>(assembly, meshname);
+    expand_test_pows_conj<5, 3>(assembly, meshname);
   } else if (ngll == 8) {
-    expand_test_pows<8, 4>(assembly, meshname);
+    expand_test_pows_conj<8, 4>(assembly, meshname);
   } else {
     std::ostringstream oss;
     oss << "specfem::nonconforming_test::kernel::test_nonconforming_acoustic_"

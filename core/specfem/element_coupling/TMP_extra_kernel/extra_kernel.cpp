@@ -1,3 +1,4 @@
+#pragma once
 
 #include "specfem/element_coupling/TMP_extra_kernel/extra_kernel.hpp"
 #include "specfem/element.hpp"

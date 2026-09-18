@@ -113,7 +113,46 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
             mesh.h_coord(ispec, iz, iy, ix, 1),
             mesh.h_coord(ispec, iz, iy, ix, 2));
 
-        const auto [local_coords, point_found] =
+        // ==============
+        // TEMPORARY TEST
+        // ==============
+        {
+          auto [local_coords, point_found] =
+              specfem::algorithms::locate_point_impl::locate_point(
+                  global_coord, mesh, ispec, iface_type, true);
+
+          specfem::point::global_coordinates<dimension_tag> matched_point =
+              specfem::algorithms::locate_point_impl::locate_point(
+                  local_coords, mesh, ispec, iface_type);
+
+          if (specfem::point::distance(global_coord, matched_point) > 1e-3 ||
+              std::abs(mesh.h_xi(ipoint_i) - local_coords.first) > 1e-3 ||
+              std::abs(mesh.h_xi(ipoint_j) - local_coords.second) > 1e-3) {
+
+            std::ostringstream oss;
+            oss << "SELF MATCHING FAIL\n"
+                << "    (" << ipoint_i << ", " << ipoint_j << ")\n"
+                << "on mesh_entity "
+                << specfem::mesh_entity::dim3::to_string(iface_type)
+                << " of element ispec = " << ispec << " (mesher element "
+                << mesh.h_compute_to_mesh(ispec) + 1 << ")\n"
+                << "    (ix = " << ix << ", iy = " << iy << ", iz = " << iz
+                << ")\n";
+            oss << "local (" << local_coords.first << ", "
+                << local_coords.second << ")\n";
+            oss << "    (x = " << global_coord.x << ", y = " << global_coord.y
+                << ", z = " << global_coord.z << ")\n";
+            oss << "    (x = " << matched_point.x << ", y = " << matched_point.y
+                << ", z = " << matched_point.z << ")\n"
+                << "Smallest distance found: "
+                << specfem::point::distance(global_coord, matched_point);
+            throw std::runtime_error(oss.str());
+          }
+        }
+
+        // ==============
+
+        auto [local_coords, point_found] =
             specfem::algorithms::locate_point_impl::locate_point(
                 global_coord, mesh, jspec, jface_type, false);
 
@@ -245,7 +284,7 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
           const int &ispec = self_face_ispec_and_type.first;
           const type_real charlen = compute_characteristic_length(ispec);
           // node hit: verify closeness
-          if (hit_face_distance(isf, ipoint, jpoint) > 2e-2 * charlen) {
+          if (hit_face_distance(isf, ipoint, jpoint) > 1e-1 * charlen) {
             const specfem::mesh_entity::dim3::type &iface_type =
                 self_face_ispec_and_type.second;
             int iz, iy, ix;

@@ -149,8 +149,6 @@ void compute_coupling_core_nonconforming(
   if (self_intersections.N == 0 && coupled_intersections.N == 0)
     return;
 
-  specfem::element_coupling::TMP_extra_kernel::execute<NGLL, Tags>(assembly);
-
   const auto field = assembly.fields.template get_simulation_field<wavefield>();
 
   const auto num_points = assembly.mesh.element_grid.ngllx;
@@ -338,6 +336,8 @@ void compute_coupling_core(
                 specfem::element_connections::type::nonconforming) {
     compute_coupling_core_nonconforming<NGLL, NQuad_intersection, Tags>(
         assembly);
+
+    specfem::element_coupling::TMP_extra_kernel::execute<NGLL, Tags>(assembly);
   } else {
     compute_coupling_core_weakly_conforming<NGLL, NQuad_intersection, Tags>(
         assembly);

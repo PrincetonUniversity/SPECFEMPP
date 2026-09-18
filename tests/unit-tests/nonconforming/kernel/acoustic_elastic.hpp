@@ -16,4 +16,9 @@ void test_nonconforming_acoustic_elastic(
         &assembly,
     const std::string &meshname);
 
+void test_nonconforming_acoustic_elastic_conjugate(
+    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
+        &assembly,
+    const std::string &meshname);
+
 } // namespace specfem::nonconforming_test::kernel
