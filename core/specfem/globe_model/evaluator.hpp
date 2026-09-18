@@ -15,7 +15,10 @@ namespace globe_model {
  * @brief SPECFEM3D_GLOBE @c IREGION_* code of a radial region.
  *
  * The catalog identifies regions by integer: 1 = crust/mantle, 2 = outer
- * core, 3 = inner core.
+ * core, 3 = inner core. These are the same numbers the thin database uses
+ * (see the reader's @c globe_codes.hpp), by common descent from upstream's
+ * @c IREGION_* constants; the mapping is kept separate here because the
+ * reader's translation layer is private to the io module.
  *
  * @param region Radial region tag
  * @return Catalog region code

@@ -19,8 +19,11 @@
  * - entity:   faces 1-6, edges 7-18, corners 19-26 (the SPECFEM++ hexahedron
  *   numbering, so the values equal @c mesh_entity::dim3::type)
  *
- * This is the only place those numbers appear; nothing outside the reader
- * sees a raw code. Every function throws
+ * This is the only place the database's raw codes appear; nothing outside the
+ * reader sees one. The region values are upstream SPECFEM3D_GLOBE's
+ * @c IREGION_* constants, which @c specfem::globe_model::iregion_code
+ * re-derives independently on the evaluator/catalog boundary -- both mirror
+ * upstream and change only if upstream does. Every function throws
  * @c std::runtime_error naming the offending value.
  */
 namespace specfem::io::mesh::impl::fortran::dim3_globe_impl {
