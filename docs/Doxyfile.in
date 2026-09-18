@@ -2292,7 +2292,8 @@ INCLUDE_FILE_PATTERNS  =
 
 PREDEFINED             = KOKKOS_INLINE_FUNCTION= \
                          KOKKOS_FORCEINLINE_FUNCTION= \
-                         KOKKOS_FUNCTION=
+                         KOKKOS_FUNCTION= \
+                         SPECFEM_ENABLE_TRILINOS
 
 
 

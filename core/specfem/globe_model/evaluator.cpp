@@ -112,7 +112,8 @@ specfem::globe_model::Scales specfem::globe_model::Evaluator::scales() {
 }
 
 specfem::globe_model::Evaluator::Evaluator(
-    const specfem::globe_model::ModelConfig &config) {
+    const specfem::globe_model::ModelConfig &config,
+    const std::string &log_path) {
 
   if (is_active_) {
     throw std::runtime_error(
@@ -121,18 +122,27 @@ specfem::globe_model::Evaluator::Evaluator(
             specfem::globe_model_impl::status_already_initialized));
   }
 
+  // Catch an incompletely populated config here, where the offending field can
+  // be named, rather than letting it through as a bare status code -- or, for
+  // the fields the catalog does not range-check, as a successful run against a
+  // model the mesher never used.
+  config.validate();
+
+#ifdef SPECFEM_ENABLE_MPI
   // The catalog broadcasts through a Fortran communicator handle, so the C
-  // handle has to be translated. specfem::MPI::communicator() is a real
-  // MPI_Comm here: the globe path requires SPECFEM_ENABLE_MPI.
+  // handle has to be translated.
   const int comm_f =
       static_cast<int>(MPI_Comm_c2f(specfem::MPI::communicator()));
+#else
+  constexpr int comm_f = 0;
+#endif
 
   const int status = globe_evaluator_init(
       config.model_name.data(), static_cast<int>(config.model_name.size()),
-      config.log_path.data(), static_cast<int>(config.log_path.size()),
-      config.planet_type, config.nchunks, config.nex_xi, config.nex_eta,
-      config.ellipticity ? 1 : 0, config.topography ? 1 : 0,
-      config.oceans ? 1 : 0, config.attenuation ? 1 : 0, config.gravity ? 1 : 0,
+      log_path.data(), static_cast<int>(log_path.size()), config.planet_type,
+      config.nchunks, config.nex_xi, config.nex_eta, config.ellipticity ? 1 : 0,
+      config.topography ? 1 : 0, config.oceans ? 1 : 0,
+      config.attenuation ? 1 : 0, config.gravity ? 1 : 0,
       config.rotation ? 1 : 0, config.min_attenuation_period,
       config.max_attenuation_period, comm_f);
 

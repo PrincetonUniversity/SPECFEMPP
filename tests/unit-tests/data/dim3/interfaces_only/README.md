@@ -6,7 +6,7 @@ used to test couplings.
 ## acoustic_elastic_M-N
 
 A flat, square in `x`-`y`, thin in `z` block of NxNx2 acoustic elements are laid on top of a block
-of MxMx2 elastic elements, all with aspect ratio 1. These blocks fill $[-1000,1000]^2$ in
+of MxMx2 elastic elements, all with aspect ratio 1. These blocks fill $[-500,500]^2$ in
 $x$ and $y$, with the bottom of the elastic block starting at $z = 0$.
 
 Two elements (50 x 50) are placed above a larger element (100 x 100), as below:

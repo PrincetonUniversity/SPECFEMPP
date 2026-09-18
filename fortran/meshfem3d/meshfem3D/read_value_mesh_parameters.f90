@@ -252,7 +252,8 @@
 
   subroutine read_material_parameters(iunit,material_properties,material_properties_undef,imat,NMATERIALS,ier)
 
-  use constants, only: MAX_STRING_LEN,DONT_IGNORE_JUNK,IDOMAIN_ACOUSTIC,IDOMAIN_ELASTIC,IDOMAIN_POROELASTIC
+  use constants, only: MAX_STRING_LEN,DONT_IGNORE_JUNK,IDOMAIN_ACOUSTIC,IDOMAIN_ELASTIC,IDOMAIN_POROELASTIC, &
+    IDOMAIN_COSSERAT
   use constants_meshfem, only: NUMBER_OF_MATERIAL_PROPERTIES
   implicit none
 
@@ -266,6 +267,7 @@
   double precision :: rho,vp,vs,Q_Kappa,Q_mu,anisotropy_flag
   double precision :: kxx,kxy,kxz,kyy,kyz,kzz
   double precision :: phi,tort,rho_s,rho_f,kappa_s,kappa_f,mu_fr,kappa_fr,eta
+  double precision :: kappa,mu,nu,j,lambda_c,mu_c,nu_c
   integer :: domain_id
   integer :: i,counter,idummy
   character(len=MAX_STRING_LEN) :: string_read
@@ -301,6 +303,14 @@
   kyz = 0.d0
   kzz = 0.d0
 
+  kappa = 0.d0
+  mu = 0.d0
+  nu = 0.d0
+  j = 0.d0
+  lambda_c = 0.d0
+  mu_c = 0.d0
+  nu_c = 0.d0
+
   mat_id = 0
 
   call read_next_line(iunit,DONT_IGNORE_JUNK,string_read,ier)
@@ -316,6 +326,9 @@
   ! example: tomographic
   !   -1 tomography elastic tomography_model.xyz 0 2
   !   -> 3 numbers (note that tomography_model_1.xyz 0 2 would count 4)
+  ! example: isotropic cosserat
+  !   1 #rho #kappa #mu #nu #j #lambda_c #mu_c #nu_c #domain_id
+  !   -> 10 numbers
   counter = 0
   new_number = .true.
   do i = 1,len_trim(string_read)
@@ -388,6 +401,14 @@
       stop 'Error in tomography material domain definition'
     endif
 
+  case (10)
+    ! isotropic cosserat line
+    ! format: #material_id #rho #kappa #mu #nu #j #lambda_c #mu_c #nu_c #domain_id
+    read(string_read,*,iostat=ier) mat_id,rho,kappa,mu,nu,j,lambda_c, &
+                                   mu_c,nu_c,domain_id
+    if (domain_id /= IDOMAIN_COSSERAT) &
+      stop 'Error material parameters for cosserat domains must have domain_id == 4'
+
   case default
     print *,'Error: material parameter line format not recognized:'
     print *,'  line: ',trim(string_read)
@@ -410,6 +431,9 @@
     print *,'For poroelastic materials, we use the input format:'
     print *,'  mat_id,rho_s,rho_f,phi,tort,kxx,kxy,kxz,kyy,kyz,kzz,kappa_s,kappa_f,kappa_fr,eta,mu_fr,domain_id'
     print *
+    print *,'For isotropic cosserat materials, we use the input format:'
+    print *,'  mat_id,rho,kappa,mu,nu,j,lambda_c,mu_c,nu_c,domain_id'
+    print *
     print *,'It is likely that your input file still uses the old convention and needs to be updated.'
     print *,'If you do not know what value to add for Q_Kappa, add 9999., i.e negligible Q_Kappa attenuation'
     print *,'and then your results will be unchanged compared to older versions of the code.'
@@ -418,8 +442,10 @@
   endif
 
   ! checks domain
-  if (domain_id /= IDOMAIN_ACOUSTIC .and. domain_id /= IDOMAIN_ELASTIC .and. domain_id /= IDOMAIN_POROELASTIC) then
-    print *,'Error: material has invalid domain_id, must be either 1 == acoustic,2 == elastic or 3 == poroelastic'
+  if (domain_id /= IDOMAIN_ACOUSTIC .and. domain_id /= IDOMAIN_ELASTIC .and. domain_id /= IDOMAIN_POROELASTIC &
+                                                              .and. domain_id /= IDOMAIN_COSSERAT) then
+    print *,'Error: material has invalid domain_id, must be either 1 == acoustic,2 == elastic, 3 == poroelastic &
+    or 4 == cosserat'
     print *,'  line : ',trim(string_read)
     stop 'Invalid domain_id in material parameters'
   endif
@@ -461,6 +487,20 @@
     material_properties(imat,16) = kappa_f
     material_properties(imat,17) = kappa_fr
     material_properties(imat,18) = mu_fr      ! anisotropy_flag - not implemented yet
+  case (IDOMAIN_COSSERAT)
+    ! isotropic cosserat
+    ! input format: #material_id #rho #kappa #mu #nu #j #lambda_c #mu_c #nu_c #domain_id
+    material_properties(imat,1) = rho
+    material_properties(imat,2) = kappa
+    material_properties(imat,3) = mu
+    material_properties(imat,4) = nu
+    material_properties(imat,5) = j
+    material_properties(imat,6) = lambda_c
+    material_properties(imat,7) = domain_id   ! must be position 7
+    material_properties(imat,8) = mat_id      ! must be position 8
+    material_properties(imat,9) = mu_c
+    material_properties(imat,10) = nu_c
+
   end select
 
   ! undefined/tomography materials
