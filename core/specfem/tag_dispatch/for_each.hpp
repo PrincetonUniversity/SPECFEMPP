@@ -51,7 +51,7 @@ void for_each_impl(Func &f, std::index_sequence<Is...>) {
  * @brief Iterate over all valid element combinations in `ET`, calling
  *        `f.operator()<TagsType>()` for each.
  *
- * @tparam Sets  Tag-set types of the `element_combinations`.
+ * @tparam Sets Tag-set types of the `element_combinations`.
  * @tparam Func  Generic callable; must provide
  *               `template <typename TagsType> void operator()()`.
  *

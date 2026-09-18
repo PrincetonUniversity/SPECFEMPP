@@ -38,6 +38,7 @@ specfem_add_test(io_framework_tests
 specfem_add_test(io_mesh_dim3_globe_tests
   LABELS unit io mesh globe
   SOURCES   io/mesh/dim3_globe/read_mesh.cpp
+            io/mesh/dim3_globe/globe_codes.cpp
             io/mesh/dim3_globe/runner.cpp
   LIBRARIES specfem::io
             specfem::mesh
@@ -198,6 +199,7 @@ specfem_add_test(point_tests
             # point/kernels/dim2/poroelastic_isotropic.cpp
             # Dim 3
             point/kernels/dim3/elastic_isotropic.cpp
+            point/kernels/dim3/elastic_anisotropic.cpp
             # Properties
             # Dim 2
             point/properties/dim2/elastic_isotropic.cpp
@@ -208,6 +210,7 @@ specfem_add_test(point_tests
             point/properties/dim2/poroelastic_isotropic.cpp
             # Dim 3
             point/properties/dim3/elastic_isotropic.cpp
+            point/properties/dim3/elastic_anisotropic.cpp
             point/properties/dim3/elastic_isotropic_cosserat.cpp
   LIBRARIES point
             specfem_environment
@@ -251,6 +254,7 @@ specfem_add_test(mesh_dim3_tests
             mesh/dim3/adjacency_graph.cpp
             mesh/dim3/tags.cpp
             mesh/dim3/globe_reader.cpp
+            mesh/dim3/model_aniso.cpp
             mesh/dim3/test.cpp
   LIBRARIES gtest_main
             specfem::mesh
@@ -324,6 +328,7 @@ specfem_add_test(assembly_tests
             assembly/dim3/mesh/control_nodes.cpp
             assembly/dim3/jacobian_matrix/jacobian_matrix.cpp
             assembly/dim3/properties/properties.cpp
+            assembly/dim3/element_types/element_context.cpp
   LIBRARIES specfem::mesh
             specfem::assembly
             specfem::quadrature
@@ -360,8 +365,12 @@ specfem_add_test(element_types_tests
   SOURCES   assembly/element_types/runner.cpp
             assembly/element_types/dim2/element_types_tests.cpp
             assembly/element_types/dim3/element_types_tests.cpp
+            assembly/element_types/dim3/globe_context_tests.cpp
   LIBRARIES specfem::assembly
             specfem::element
+            specfem::io
+            specfem::mesh
+            specfem::quadrature
             specfem_environment
             Kokkos::kokkos
             gtest_main
@@ -537,6 +546,7 @@ specfem_add_test(mass_matrix_tests
             medium/mass_matrix/dim2/acoustic.cpp
             medium/mass_matrix/dim2/poroelastic.cpp
             medium/mass_matrix/dim3/elastic_isotropic.cpp
+            medium/mass_matrix/dim3/elastic_anisotropic.cpp
             medium/mass_matrix/dim3/elastic_isotropic_cosserat.cpp
             medium/mass_matrix/dim3/acoustic.cpp
   LIBRARIES point
@@ -551,6 +561,7 @@ specfem_add_test(stress_tests
             medium/stress/dim2/elastic_isotropic_cosserat.cpp
             medium/stress/dim2/poroelastic_isotropic.cpp
             medium/stress/dim3/elastic_isotropic.cpp
+            medium/stress/dim3/elastic_anisotropic.cpp
             medium/stress/dim3/elastic_isotropic_cosserat.cpp
             medium/stress/dim3/acoustic.cpp
   LIBRARIES point
@@ -563,6 +574,7 @@ specfem_add_test(frechet_derivatives_tests
             medium/frechet_derivatives/dim2/elastic_isotropic.cpp
             medium/frechet_derivatives/dim2/elastic_anisotropic.cpp
             medium/frechet_derivatives/dim3/acoustic.cpp
+            medium/frechet_derivatives/dim3/elastic_anisotropic.cpp
   LIBRARIES point
             gtest_main
 )

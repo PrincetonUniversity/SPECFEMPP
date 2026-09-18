@@ -165,7 +165,8 @@ void specfem::io::property_writer<OutputLibrary>::write(
 
   specfem::tag_dispatch::for_each(
       DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic) *
-          PROPERTY_SET(isotropic) * ATTENUATION_SET(none, constant_isotropic),
+          PROPERTY_SET(isotropic, anisotropic) *
+          ATTENUATION_SET(none, constant_isotropic),
       [&]<typename TagsType>() {
         constexpr auto medium_tag = TagsType::medium_tag;
         constexpr auto property_tag = TagsType::property_tag;

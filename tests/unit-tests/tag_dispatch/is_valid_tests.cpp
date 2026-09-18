@@ -76,10 +76,9 @@ TEST(IsValidProperty, ElasticPSV_SH_IsotropicOrAnisotropic) {
       { D::dim2, M::elastic_sh, P::isotropic_cosserat }));
 }
 
-TEST(IsValidProperty, ElasticDim3_IsotropicOnly) {
+TEST(IsValidProperty, ElasticDim3_IsotropicOrAnisotropic) {
   EXPECT_TRUE(is_valid_property_combo({ D::dim3, M::elastic, P::isotropic }));
-  EXPECT_FALSE(
-      is_valid_property_combo({ D::dim3, M::elastic, P::anisotropic }));
+  EXPECT_TRUE(is_valid_property_combo({ D::dim3, M::elastic, P::anisotropic }));
   EXPECT_FALSE(
       is_valid_property_combo({ D::dim3, M::elastic, P::isotropic_cosserat }));
 }
@@ -154,6 +153,10 @@ TEST(IsValidMaterial, OthersAllowBothAttenuation) {
       is_valid_material_combo({ D::dim3, M::elastic, P::isotropic, A::none }));
   EXPECT_TRUE(is_valid_material_combo(
       { D::dim3, M::elastic, P::isotropic, A::constant_isotropic }));
+  EXPECT_TRUE(is_valid_material_combo(
+      { D::dim3, M::elastic, P::anisotropic, A::none }));
+  EXPECT_FALSE(is_valid_material_combo(
+      { D::dim3, M::elastic, P::anisotropic, A::constant_isotropic }));
 }
 
 // ── is_valid_boundary_combo ───────────────────────────────────────────
@@ -297,6 +300,7 @@ static_assert(is_valid_property_combo({ D::dim2, M::elastic_psv,
                                         P::anisotropic }));
 static_assert(!is_valid_property_combo({ D::dim2, M::elastic_psv,
                                          P::isotropic_cosserat }));
+static_assert(is_valid_property_combo({ D::dim3, M::elastic, P::anisotropic }));
 
 static_assert(is_valid_material_combo({ D::dim2, M::elastic_psv, P::isotropic,
                                         A::none }));
