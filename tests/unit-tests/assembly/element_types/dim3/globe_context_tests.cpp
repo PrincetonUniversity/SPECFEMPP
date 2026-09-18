@@ -74,8 +74,10 @@ TEST(GlobeElementContext, CarriesMesherContext) {
           context[fixture.assembly_mesh.h_compute_to_mesh(ispec)];
       EXPECT_EQ(element_types.get_region_tag(ispec), expected.region);
       EXPECT_EQ(element_types.idoubling(ispec), expected.idoubling);
-      EXPECT_EQ(element_types.rmin(ispec), expected.rmin);
-      EXPECT_EQ(element_types.rmax(ispec), expected.rmax);
+      EXPECT_EQ(element_types.rmin(ispec),
+                static_cast<type_real>(expected.rmin));
+      EXPECT_EQ(element_types.rmax(ispec),
+                static_cast<type_real>(expected.rmax));
       EXPECT_EQ(element_types.elem_in_crust(ispec), expected.element_in_crust);
       EXPECT_EQ(element_types.elem_in_mantle(ispec),
                 expected.element_in_mantle);

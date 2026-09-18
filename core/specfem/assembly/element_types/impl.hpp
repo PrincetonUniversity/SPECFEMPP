@@ -91,11 +91,10 @@ public:
   TagViewType<specfem::element::region_tag> regions;
   /** Mesher radial-zone flag (IFLAG_*) of each element. */
   TagViewType<int> idoubling;
-  /** Lower radius of each element's radial shell, in metres. Double, not
-   *  type_real: setup-only data handed to the double-precision globe model. */
-  TagViewType<double> rmin;
+  /** Lower radius of each element's radial shell, in metres. */
+  TagViewType<type_real> rmin;
   /** Upper radius of each element's radial shell, in metres. */
-  TagViewType<double> rmax;
+  TagViewType<type_real> rmax;
   /** Whether each element is in the crust, as decided by Moho stretching. */
   TagViewType<bool> elem_in_crust;
   /** Whether each element is in the mantle. */
@@ -274,8 +273,10 @@ public:
         "specfem::assembly::element_types::regions", nspec);
     idoubling =
         TagViewType<int>("specfem::assembly::element_types::idoubling", nspec);
-    rmin = TagViewType<double>("specfem::assembly::element_types::rmin", nspec);
-    rmax = TagViewType<double>("specfem::assembly::element_types::rmax", nspec);
+    rmin =
+        TagViewType<type_real>("specfem::assembly::element_types::rmin", nspec);
+    rmax =
+        TagViewType<type_real>("specfem::assembly::element_types::rmax", nspec);
     elem_in_crust = TagViewType<bool>(
         "specfem::assembly::element_types::elem_in_crust", nspec);
     elem_in_mantle = TagViewType<bool>(
@@ -284,8 +285,8 @@ public:
       const auto &context = element_context[mesh.h_compute_to_mesh(ispec)];
       regions(ispec) = context.region;
       idoubling(ispec) = context.idoubling;
-      rmin(ispec) = context.rmin;
-      rmax(ispec) = context.rmax;
+      rmin(ispec) = static_cast<type_real>(context.rmin);
+      rmax(ispec) = static_cast<type_real>(context.rmax);
       elem_in_crust(ispec) = context.element_in_crust;
       elem_in_mantle(ispec) = context.element_in_mantle;
     }
