@@ -141,7 +141,8 @@ TEST(GlobeMeshReader, ReadsThinDatabaseAndPreservesReferenceContext) {
             (std::vector<int>{ 1, 0, 0, 0, 0 }));
   EXPECT_EQ(mesh.globe.model_config.nchunks, 6);
   ASSERT_EQ(mesh.globe.element_context.size(), 1);
-  EXPECT_EQ(mesh.globe.element_context[0].region, 1);
+  EXPECT_EQ(mesh.globe.element_context[0].region,
+            specfem::element::region_tag::crust_mantle);
   EXPECT_EQ(mesh.globe.element_context[0].idoubling, 4);
   EXPECT_FALSE(mesh.globe.element_context[0].element_in_crust);
   EXPECT_TRUE(mesh.globe.element_context[0].element_in_mantle);
