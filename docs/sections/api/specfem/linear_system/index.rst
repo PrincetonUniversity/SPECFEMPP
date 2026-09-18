@@ -64,8 +64,12 @@ the remaining operators of the equation of motion
   symmetric positive-semidefinite ``ncomp x ncomp`` block per boundary GLL
   point) and ``ncomp`` kernel launches recover all blocks. The matrix lives
   on a compact graph whose entries all exist in the stiffness graph, so an
-  implicit Newmark operator :math:`M/(\beta \Delta t^2) + \gamma/(\beta
-  \Delta t)\, C + K` can be summed on :math:`K`'s graph.
+  implicit Newmark operator can be summed on :math:`K`'s graph -- in either
+  algebraic form: :math:`M/(\beta \Delta t^2) + \gamma/(\beta \Delta t)\, C +
+  K` when solving for :math:`u_{n+1}` (displacement form, :math:`\beta > 0`),
+  or :math:`M + \gamma \Delta t\, C + \beta \Delta t^2 K` when solving for
+  :math:`a_{n+1}` (acceleration form, :math:`\beta \ge 0`). The two differ by
+  the positive factor :math:`1/(\beta \Delta t^2)` wherever both are defined.
 
 ``linear_solver_smoke_test`` gates the Belos + Ifpack2 toolchain (GMRES with
 a RILUK right preconditioner on ``type_real``) ahead of the implicit solver;
