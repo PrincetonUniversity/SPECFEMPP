@@ -567,6 +567,19 @@ inline VectorView &VectorView::operator+=(const VectorView &other) {
   return *this;
 }
 
+/**
+ * @brief View a vector as the diagonal of a matrix.
+ *
+ * The @ref VectorView overload of specfem::linear_system::diag, so that
+ * `diag(mass)` resolves without qualification when `mass` is a view.
+ *
+ * @param vector Diagonal entries; must outlive the expression
+ * @return Wrapper accepted by the product operators
+ */
+inline Diagonal diag(const VectorView &vector) {
+  return Diagonal{ vector.vector() };
+}
+
 // ── Norms ──────────────────────────────────────────────────────────────────
 
 /// Euclidean norm of a vector

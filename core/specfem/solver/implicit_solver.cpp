@@ -10,6 +10,7 @@
 #include "specfem/linear_system/sparse_matrix_view/field_vector.hpp"
 #include "specfem/linear_system/sparse_matrix_view/matrix_view.hpp"
 #include "specfem/linear_system/tpetra_assembler.hpp"
+#include "specfem/linear_system/vector_view/vector_view.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/tags.hpp"
 #include <BelosPseudoBlockGmresSolMgr.hpp>
@@ -58,16 +59,16 @@ specfem::solver::ImplicitNewmarkSolver<Tags>::ImplicitNewmarkSolver(
 
   mass_ = specfem::linear_system::assemble_mass_vector<Tags>(assembly_, *fe_);
 
-  const auto map = fe_->owned_map();
-  u_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
-  v_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
-  a_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
-  u_new_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
-  v_new_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
-  a_new_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
-  rhs_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
-  tmp_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
-  tmp2_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
+  vectors_ =
+      std::make_unique<specfem::linear_system::VectorSpace>(fe_->owned_map());
+  using VectorView = specfem::linear_system::VectorView;
+  u_ = std::make_unique<VectorView>(vectors_->vector());
+  v_ = std::make_unique<VectorView>(vectors_->vector());
+  a_ = std::make_unique<VectorView>(vectors_->vector());
+  u_new_ = std::make_unique<VectorView>(vectors_->vector());
+  v_new_ = std::make_unique<VectorView>(vectors_->vector());
+  a_new_ = std::make_unique<VectorView>(vectors_->vector());
+  rhs_ = std::make_unique<VectorView>(vectors_->vector());
 
   form_operator(time_scheme_->get_timestep());
 }
@@ -131,7 +132,7 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::form_operator(
 
   problem_ = Teuchos::rcp(
       new Belos::LinearProblem<scalar_type, multivector_type, operator_type>(
-          system_operator_, u_new_, rhs_));
+          system_operator_, u_new_->rcp(), rhs_->rcp()));
   // Right preconditioning keeps the convergence test on the true residual.
   problem_->setRightPrec(preconditioner_);
 
@@ -148,7 +149,7 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::form_operator(
 template <typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 void specfem::solver::ImplicitNewmarkSolver<Tags>::extract_source_vector(
-    const int istep, specfem::linear_system::vector_type &f) {
+    const int istep, specfem::linear_system::VectorView &f) {
   constexpr auto forward = specfem::simulation::field_type::forward;
 
   auto &field = assembly_.fields.template get_simulation_field<forward>();
@@ -166,7 +167,7 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::extract_source_vector(
   Kokkos::deep_copy(host_acceleration, device_acceleration);
 
   specfem::linear_system::copy_field_to_vector(fe_->mapping(),
-                                               host_acceleration, f);
+                                               host_acceleration, f.vector());
 }
 
 template <typename Tags>
@@ -181,9 +182,9 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::write_state_to_fields() {
   const auto h_a = field_impl.get_host_field_dot_dot();
 
   const auto &mapping = fe_->mapping();
-  specfem::linear_system::copy_vector_to_field(mapping, *u_, h_u);
-  specfem::linear_system::copy_vector_to_field(mapping, *v_, h_v);
-  specfem::linear_system::copy_vector_to_field(mapping, *a_, h_a);
+  specfem::linear_system::copy_vector_to_field(mapping, u_->vector(), h_u);
+  specfem::linear_system::copy_vector_to_field(mapping, v_->vector(), h_v);
+  specfem::linear_system::copy_vector_to_field(mapping, a_->vector(), h_a);
 
   // Copy only the three state views (not fields.copy_to_device(), which
   // would also touch the mass storage the assemblers treat as scratch).
@@ -214,9 +215,18 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::run() {
   const scalar_type c_v0 = static_cast<scalar_type>(dt * (1 - gamma));
   const scalar_type c_v1 = static_cast<scalar_type>(dt * gamma);
 
-  u_->putScalar(0);
-  v_->putScalar(0);
-  a_->putScalar(0);
+  // Named locally so that the updates below read as the equations they are.
+  auto &u = *u_;
+  auto &v = *v_;
+  auto &a = *a_;
+  auto &u_new = *u_new_;
+  auto &v_new = *v_new_;
+  auto &a_new = *a_new_;
+  auto &b = *rhs_;
+
+  u = static_cast<scalar_type>(0);
+  v = static_cast<scalar_type>(0);
+  a = static_cast<scalar_type>(0);
   last_step_ = 0;
 
   const bool has_damping = damping().getGlobalNumEntries() > 0;
@@ -233,34 +243,25 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::run() {
 
     // b = f_{n+1}: the explicit loop pairs STF(istep = n) with the state at
     // t_{n+1}; the implicit loop must match.
-    extract_source_vector(istep, *rhs_);
+    extract_source_vector(istep, b);
 
+    b +=
+        specfem::linear_system::diag(mass()) * (c_a0 * u + c_a1 * v + c_a2 * a);
     if (has_damping) {
-      tmp_->update(c_c0, *u_, c_c1, *v_, 0);
-      tmp_->update(c_c2, *a_, static_cast<scalar_type>(1));
-      damping().apply(*tmp_, *tmp2_);
-      rhs_->update(static_cast<scalar_type>(1), *tmp2_,
-                   static_cast<scalar_type>(1));
+      b += damping() * (c_c0 * u + c_c1 * v + c_c2 * a);
     }
-
-    tmp_->update(c_a0, *u_, c_a1, *v_, 0);
-    tmp_->update(c_a2, *a_, static_cast<scalar_type>(1));
-    rhs_->elementWiseMultiply(static_cast<scalar_type>(1), mass(), *tmp_,
-                              static_cast<scalar_type>(1));
 
     // Warm start from u_n: near steady state GMRES converges in a few
     // iterations.
-    u_new_->update(static_cast<scalar_type>(1), *u_, 0);
-    problem_->setProblem(u_new_, rhs_);
+    u_new = u;
+    problem_->setProblem(u_new.rcp(), b.rcp());
     if (gmres_->solve() != Belos::Converged) {
       // Single-precision PseudoBlockGmres can abort with a
       // "loss of accuracy" flag while the solution is fine; trust only the
       // true residual b - A u.
-      system_operator().apply(*u_new_, *tmp_);
-      tmp_->update(static_cast<scalar_type>(1), *rhs_,
-                   static_cast<scalar_type>(-1));
-      const type_real residual_norm = tmp_->norm2();
-      const type_real rhs_norm = rhs_->norm2();
+      const type_real residual_norm =
+          specfem::linear_system::norm2(b - system_operator() * u_new);
+      const type_real rhs_norm = specfem::linear_system::norm2(b);
       if (!(residual_norm <= config_.gmres_tolerance * rhs_norm)) {
         std::ostringstream message;
         message << "specfem::solver::ImplicitNewmarkSolver: GMRES did not "
@@ -280,29 +281,23 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::run() {
     }
 
     // a_{n+1} = c_a0 (u_{n+1} - u_n - dt v_n) - c_a2 a_n
-    a_new_->update(c_a0, *u_new_, -c_a0, *u_, 0);
-    a_new_->update(static_cast<scalar_type>(-c_a0 * dt), *v_,
-                   static_cast<scalar_type>(1));
-    a_new_->update(-c_a2, *a_, static_cast<scalar_type>(1));
+    a_new = c_a0 * (u_new - u - static_cast<scalar_type>(dt) * v) - c_a2 * a;
     // v_{n+1} = v_n + dt (1 - gamma) a_n + dt gamma a_{n+1}
-    v_new_->update(static_cast<scalar_type>(1), *v_, c_v0, *a_, 0);
-    v_new_->update(c_v1, *a_new_, static_cast<scalar_type>(1));
+    v_new = v + c_v0 * a + c_v1 * a_new;
 
     bool steady = false;
     if (check_steady_state) {
-      tmp_->update(static_cast<scalar_type>(1), *v_new_,
-                   static_cast<scalar_type>(-1), *v_, 0);
-      const type_real velocity_increment = tmp_->norm2();
-      tmp_->update(static_cast<scalar_type>(1), *a_new_,
-                   static_cast<scalar_type>(-1), *a_, 0);
-      const type_real acceleration_increment = tmp_->norm2();
+      const type_real velocity_increment =
+          specfem::linear_system::norm2(v_new - v);
+      const type_real acceleration_increment =
+          specfem::linear_system::norm2(a_new - a);
       // Increments relative to the running maxima -- the natural problem
       // scales; a displacement criterion would never fire on the
       // constant-velocity drift asymptote (see ImplicitSolverConfig).
       velocity_scale =
-          std::max(velocity_scale, static_cast<type_real>(v_new_->norm2()));
+          std::max(velocity_scale, specfem::linear_system::norm2(v_new));
       acceleration_scale =
-          std::max(acceleration_scale, static_cast<type_real>(a_new_->norm2()));
+          std::max(acceleration_scale, specfem::linear_system::norm2(a_new));
       steady = velocity_scale > 0 && acceleration_scale > 0 &&
                velocity_increment <=
                    config_.steady_state_tolerance * velocity_scale &&
@@ -319,9 +314,9 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::run() {
       specfem::Logger::info(message.str());
     }
 
-    std::swap(u_, u_new_);
-    std::swap(v_, v_new_);
-    std::swap(a_, a_new_);
+    swap(u, u_new);
+    swap(v, v_new);
+    swap(a, a_new);
 
     write_state_to_fields();
 
