@@ -8,6 +8,7 @@
 #include "specfem/units.hpp"
 #include "specfem/utilities/logarithmic_center.hpp"
 #include <algorithm>
+#include <string>
 #include <vector>
 
 namespace specfem::assembly::dim3_impl {
@@ -19,6 +20,25 @@ void read_globe_properties(
   using Dimension = specfem::element::dimension_tag;
   using Medium = specfem::element::medium_tag;
   using Property = specfem::element::property_tag;
+
+  const auto iregion_code = [](const specfem::element::region_tag region) {
+    switch (region) {
+    case specfem::element::region_tag::crust_mantle:
+      return 1;
+    case specfem::element::region_tag::outer_core:
+      return 2;
+    case specfem::element::region_tag::inner_core:
+      return 3;
+    default:
+      throw std::runtime_error("Unknown region tag for the globe evaluator");
+    }
+  };
+
+  const auto &element_types = assembly.element_types;
+  if (!element_types.has_element_context()) {
+    throw std::runtime_error("read_globe_properties: element_types carries no "
+                             "globe element context");
+  }
 
   const auto &globe = input_mesh.globe;
   specfem::globe::ModelEvaluator evaluator(globe.model_config,
@@ -88,24 +108,28 @@ void read_globe_properties(
 
     for (int batch_ispec = 0; batch_ispec < batch_size; ++batch_ispec) {
       const int compute_ispec = batch_begin + batch_ispec;
-      const int mesh_ispec = assembly.mesh.h_compute_to_mesh(compute_ispec);
-      const auto &context = globe.element_context[mesh_ispec];
       for (std::size_t icoordinate = 0; icoordinate < ncoordinates;
            ++icoordinate) {
         xyz[icoordinate] = xyz_batch(batch_ispec, icoordinate);
       }
 
+      const auto property = element_types.get_property_tag(compute_ispec);
       const auto values = evaluator.evaluate_element(
-          context.region, context.idoubling, context.rmin, context.rmax,
-          context.element_in_crust, context.element_in_mantle, xyz);
-      const auto material =
-          input_mesh.materials.material_index_mapping[mesh_ispec];
-      const auto medium = material.type;
-      const auto property = material.property;
-      if (values.is_anisotropic != (property == Property::anisotropic)) {
+          iregion_code(element_types.get_region_tag(compute_ispec)),
+          element_types.idoubling(compute_ispec),
+          element_types.rmin(compute_ispec), element_types.rmax(compute_ispec),
+          element_types.elem_in_crust(compute_ispec),
+          element_types.elem_in_mantle(compute_ispec), xyz);
+
+      const bool tagged_anisotropic = property == Property::anisotropic;
+      if (values.is_anisotropic != tagged_anisotropic) {
         throw std::runtime_error(
-            "Globe mesh anisotropy tag does not match evaluator response");
+            "Globe evaluator anisotropy disagrees with the database property "
+            "tag for compute element " +
+            std::to_string(compute_ispec));
       }
+
+      const auto medium = element_types.get_medium_tag(compute_ispec);
       std::size_t ipoint = 0;
       for (int iz = 0; iz < ngllz; ++iz) {
         for (int iy = 0; iy < nglly; ++iy) {

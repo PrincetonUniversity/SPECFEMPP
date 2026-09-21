@@ -148,7 +148,8 @@ TEST(GlobeMeshReader, ReadsThinDatabaseAndPreservesReferenceContext) {
   ASSERT_TRUE(mesh.globe.planet_constants.has_radii());
   EXPECT_DOUBLE_EQ(mesh.globe.planet_constants.radii().r_cmb, 3480000.0);
   ASSERT_EQ(mesh.globe.element_context.size(), 1);
-  EXPECT_EQ(mesh.globe.element_context[0].region, 1);
+  EXPECT_EQ(mesh.globe.element_context[0].region,
+            specfem::element::region_tag::crust_mantle);
   EXPECT_EQ(mesh.globe.element_context[0].idoubling, 4);
   EXPECT_FALSE(mesh.globe.element_context[0].element_in_crust);
   EXPECT_TRUE(mesh.globe.element_context[0].element_in_mantle);

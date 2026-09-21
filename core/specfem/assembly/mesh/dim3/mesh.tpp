@@ -5,6 +5,8 @@
 #include "mesh.hpp"
 #include "specfem/assembly/mesh/impl/quadrature.hpp"
 #include "specfem/mesh.hpp"
+#include <stdexcept>
+#include <string>
 
 #include <stdexcept>
 #include <string>

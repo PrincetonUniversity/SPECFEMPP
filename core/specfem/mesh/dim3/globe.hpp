@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/element/tags.hpp"
 #include "specfem/globe/model_config.hpp"
 #include "specfem/globe/planet_constants.hpp"
 #include "specfem/mesh_entity.hpp"
@@ -79,16 +80,17 @@ struct globe_model_verification {
  * each spectral element together with the element's reference coordinates.
  */
 struct globe_element_context {
-  /** @brief Globe radial region index for the element. */
-  int region = 0;
+  /** @brief Radial region of the element; always set by the reader. */
+  specfem::element::region_tag region =
+      specfem::element::region_tag::crust_mantle;
 
   /** @brief SPECFEM3D_GLOBE radial doubling flag for the element. */
   int idoubling = 0;
 
-  /** @brief Minimum SI radius represented by the element, in metres. */
+  /** @brief Lower radius of the element's radial shell, in metres. */
   double rmin = 0.0;
 
-  /** @brief Maximum SI radius represented by the element, in metres. */
+  /** @brief Upper radius of the element's radial shell, in metres. */
   double rmax = 0.0;
 
   /** @brief True when the element intersects the crustal model region. */

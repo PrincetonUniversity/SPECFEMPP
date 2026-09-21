@@ -42,6 +42,23 @@ void read_deferred_properties(
   specfem::assembly::dim3_impl::read_globe_properties(mesh, assembly);
 }
 
+specfem::assembly::element_types<specfem::element::dimension_tag::dim3>
+make_element_types(
+    const specfem::mesh::cartesian3d_mesh &mesh,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
+        &assembly_mesh) {
+  return { mesh.nspec, assembly_mesh.element_grid, assembly_mesh, mesh.tags };
+}
+
+specfem::assembly::element_types<specfem::element::dimension_tag::dim3>
+make_element_types(
+    const specfem::mesh::globe3d_mesh &mesh,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
+        &assembly_mesh) {
+  return { mesh.nspec, assembly_mesh.element_grid, assembly_mesh, mesh.tags,
+           mesh.globe.element_context };
+}
+
 } // namespace specfem::assembly::dim3_impl
 
 template <specfem::simulation::model ModelTag>
@@ -80,8 +97,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
                  mesh.control_nodes,
                  quadratures };
 
-  this->element_types = { nspec, this->mesh.element_grid, this->mesh,
-                          mesh.tags };
+  this->element_types =
+      specfem::assembly::dim3_impl::make_element_types(mesh, this->mesh);
 
   this->element_intersections = { ngllz, nglly, ngllx, this->mesh,
                                   this->element_types };

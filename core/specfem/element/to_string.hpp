@@ -92,6 +92,14 @@ const std::string to_string(const attenuation_tag &attenuation);
 const std::string to_string(const mpi_tag &mpi);
 
 /**
+ * @brief Convert globe region tag to string.
+ *
+ * @param region Radial region of a global mesh element
+ * @return String representation
+ */
+const std::string to_string(const region_tag &region);
+
+/**
  * @brief Parse medium tag from string representation.
  *
  * @param medium_tag String representation of medium type
