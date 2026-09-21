@@ -2,12 +2,12 @@
 
 #include <stdexcept>
 
-#include "specfem/globe_model.hpp"
+#include "specfem/globe/model_evaluator.hpp"
 #include "specfem/point.hpp"
 #include "specfem/tags.hpp"
+#include "specfem/units.hpp"
 #include "specfem/utilities/logarithmic_center.hpp"
 #include <algorithm>
-#include <cmath>
 #include <string>
 #include <vector>
 
@@ -21,6 +21,19 @@ void read_globe_properties(
   using Medium = specfem::element::medium_tag;
   using Property = specfem::element::property_tag;
 
+  const auto iregion_code = [](const specfem::element::region_tag region) {
+    switch (region) {
+    case specfem::element::region_tag::crust_mantle:
+      return 1;
+    case specfem::element::region_tag::outer_core:
+      return 2;
+    case specfem::element::region_tag::inner_core:
+      return 3;
+    default:
+      throw std::runtime_error("Unknown region tag for the globe evaluator");
+    }
+  };
+
   const auto &element_types = assembly.element_types;
   if (!element_types.has_element_context()) {
     throw std::runtime_error("read_globe_properties: element_types carries no "
@@ -28,20 +41,16 @@ void read_globe_properties(
   }
 
   const auto &globe = input_mesh.globe;
-  specfem::globe_model::Evaluator evaluator(globe.model_config);
-  const auto evaluator_dims = evaluator.dims();
+  specfem::globe::ModelEvaluator evaluator(globe.model_config,
+                                           globe.planet_constants);
+  const auto evaluator_dims = evaluator.dimensions();
   if (evaluator_dims.ngllx != assembly.mesh.element_grid.ngllx ||
       evaluator_dims.nglly != assembly.mesh.element_grid.nglly ||
       evaluator_dims.ngllz != assembly.mesh.element_grid.ngllz) {
     throw std::runtime_error(
         "Globe model evaluator and mesh use different GLL dimensions");
   }
-  const auto scales = evaluator.scales();
-  if (std::abs(scales.length - globe.planet_radius) >
-      1.0e-10 * globe.planet_radius) {
-    throw std::runtime_error(
-        "Globe model evaluator and mesh database use different planet radii");
-  }
+  globe.planet_constants.check_radii(evaluator.radii());
 
   const int ngllz = assembly.mesh.element_grid.ngllz;
   const int nglly = assembly.mesh.element_grid.nglly;
@@ -104,28 +113,20 @@ void read_globe_properties(
         xyz[icoordinate] = xyz_batch(batch_ispec, icoordinate);
       }
 
+      const auto property = element_types.get_property_tag(compute_ispec);
       const auto values = evaluator.evaluate_element(
-          element_types.get_region_tag(compute_ispec),
+          iregion_code(element_types.get_region_tag(compute_ispec)),
           element_types.idoubling(compute_ispec),
           element_types.rmin(compute_ispec), element_types.rmax(compute_ispec),
           element_types.elem_in_crust(compute_ispec),
           element_types.elem_in_mantle(compute_ispec), xyz);
 
-      const bool tagged_anisotropic =
-          element_types.get_property_tag(compute_ispec) ==
-          Property::anisotropic;
+      const bool tagged_anisotropic = property == Property::anisotropic;
       if (values.is_anisotropic != tagged_anisotropic) {
         throw std::runtime_error(
             "Globe evaluator anisotropy disagrees with the database property "
             "tag for compute element " +
             std::to_string(compute_ispec));
-      }
-      if (tagged_anisotropic) {
-        // Storing the oracle's 21 cij in the anisotropic container is issue
-        // #2043; the evaluator's Voigt order matches the container's.
-        throw std::runtime_error(
-            "Storing anisotropic globe properties from the evaluator is not "
-            "implemented yet");
       }
 
       const auto medium = element_types.get_medium_tag(compute_ispec);
@@ -133,9 +134,9 @@ void read_globe_properties(
       for (int iz = 0; iz < ngllz; ++iz) {
         for (int iy = 0; iy < nglly; ++iy) {
           for (int ix = 0; ix < ngllx; ++ix, ++ipoint) {
-            const type_real rho = values.rho[ipoint] * scales.density;
-            const type_real vp = values.vp_iso[ipoint] * scales.velocity;
-            const type_real vs = values.vs_iso[ipoint] * scales.velocity;
+            const type_real rho = values.rho[ipoint];
+            const type_real vp = values.vp_iso[ipoint];
+            const type_real vs = values.vs_iso[ipoint];
             const specfem::point::index<Dimension::dim3, false> index(
                 compute_ispec, iz, iy, ix);
             if (medium == Medium::acoustic) {
@@ -148,6 +149,29 @@ void read_globe_properties(
                   specfem::tags::Tags<Dimension::dim3, Medium::acoustic,
                                       Property::isotropic, false>>
                   point_property(1.0 / rho, kappa);
+              specfem::assembly::store_on_host(index, point_property,
+                                               assembly.properties);
+            } else if (property == Property::anisotropic) {
+              if (vs == 0.0) {
+                throw std::runtime_error(
+                    "Globe evaluator returned zero Vs for an elastic element");
+              }
+              const std::size_t cij_offset = 21 * ipoint;
+              specfem::point::properties<
+                  specfem::tags::Tags<Dimension::dim3, Medium::elastic,
+                                      Property::anisotropic, false>>
+                  point_property(
+                      values.cij[cij_offset + 0], values.cij[cij_offset + 1],
+                      values.cij[cij_offset + 2], values.cij[cij_offset + 3],
+                      values.cij[cij_offset + 4], values.cij[cij_offset + 5],
+                      values.cij[cij_offset + 6], values.cij[cij_offset + 7],
+                      values.cij[cij_offset + 8], values.cij[cij_offset + 9],
+                      values.cij[cij_offset + 10], values.cij[cij_offset + 11],
+                      values.cij[cij_offset + 12], values.cij[cij_offset + 13],
+                      values.cij[cij_offset + 14], values.cij[cij_offset + 15],
+                      values.cij[cij_offset + 16], values.cij[cij_offset + 17],
+                      values.cij[cij_offset + 18], values.cij[cij_offset + 19],
+                      values.cij[cij_offset + 20], rho);
               specfem::assembly::store_on_host(index, point_property,
                                                assembly.properties);
             } else {
