@@ -2,10 +2,9 @@
 
 #include "specfem/io.hpp"
 #include "specfem/io/fortranio/interface.hpp"
-#include "specfem/io/mesh/impl/fortran/dim3_globe/common.hpp"
+#include "specfem/io/mesh/impl/fortran/dim3_globe/globe_codes.hpp"
 #include "specfem/medium_container.hpp"
 
-#include <Kokkos_Core.hpp>
 #include <optional>
 #include <stdexcept>
 #include <vector>
@@ -19,55 +18,49 @@ specfem::io::mesh::impl::fortran::dim3_globe::read_material_tags(
   }
   mesh.control_nodes.nspec = mesh.nspec;
 
-  material_tags tags;
-  std::vector<int> regions(mesh.nspec), idoubling(mesh.nspec);
-  tags.medium_tags.resize(mesh.nspec);
-  tags.property_tags.resize(mesh.nspec);
-  specfem::io::fortran_read_line(stream, &regions, &tags.medium_tags,
-                                 &tags.property_tags, &idoubling);
+  std::vector<int> region_codes(mesh.nspec), medium_codes(mesh.nspec),
+      property_codes(mesh.nspec), idoubling(mesh.nspec);
+  specfem::io::fortran_read_line(stream, &region_codes, &medium_codes,
+                                 &property_codes, &idoubling);
 
   std::vector<double> rmin(mesh.nspec), rmax(mesh.nspec);
   specfem::io::fortran_read_line(stream, &rmin, &rmax);
 
   std::vector<bool> in_crust(mesh.nspec), in_mantle(mesh.nspec);
   specfem::io::fortran_read_line(stream, &in_crust, &in_mantle);
-  std::vector<int> in_crust_values(mesh.nspec), in_mantle_values(mesh.nspec);
-  for (int ispec = 0; ispec < mesh.nspec; ++ispec) {
-    in_crust_values[ispec] = in_crust[ispec] ? 1 : 0;
-    in_mantle_values[ispec] = in_mantle[ispec] ? 1 : 0;
-  }
 
-  auto &globe = mesh.globe;
-  globe.element_context.resize(mesh.nspec);
-  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace,
-               Kokkos::MemoryTraits<Kokkos::Unmanaged>>
-      regions_view(regions.data(), mesh.nspec),
-      idoubling_view(idoubling.data(), mesh.nspec),
-      in_crust_view(in_crust_values.data(), mesh.nspec),
-      in_mantle_view(in_mantle_values.data(), mesh.nspec);
-  Kokkos::View<double *, Kokkos::LayoutLeft, Kokkos::HostSpace,
-               Kokkos::MemoryTraits<Kokkos::Unmanaged>>
-      rmin_view(rmin.data(), mesh.nspec), rmax_view(rmax.data(), mesh.nspec);
-  Kokkos::View<specfem::mesh::globe_element_context *, Kokkos::LayoutLeft,
-               Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>
-      element_context_view(globe.element_context.data(), mesh.nspec);
-  Kokkos::parallel_for(
-      "specfem::io::mesh::dim3_globe::read_material_tags::element_context",
-      Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0, mesh.nspec),
-      [=](const int ispec) {
-        element_context_view(
-            ispec) = { regions_view(ispec),       idoubling_view(ispec),
-                       rmin_view(ispec),          rmax_view(ispec),
-                       in_crust_view(ispec) != 0, in_mantle_view(ispec) != 0 };
-      });
-  Kokkos::fence();
+  material_tags tags;
+  tags.medium_tags.resize(mesh.nspec);
+  tags.property_tags.resize(mesh.nspec);
+  auto &element_context = mesh.globe.element_context;
+  element_context.resize(mesh.nspec);
+  // Serial on purpose: the code translators throw on bad input, which a
+  // Kokkos host parallel region cannot propagate.
+  for (int ispec = 0; ispec < mesh.nspec; ++ispec) {
+    tags.medium_tags[ispec] =
+        specfem::io::mesh::impl::fortran::dim3_globe_impl::to_medium_tag(
+            medium_codes[ispec]);
+    tags.property_tags[ispec] =
+        specfem::io::mesh::impl::fortran::dim3_globe_impl::to_property_tag(
+            property_codes[ispec]);
+    element_context[ispec] = {
+      specfem::io::mesh::impl::fortran::dim3_globe_impl::to_region_tag(
+          region_codes[ispec]),
+      idoubling[ispec],
+      rmin[ispec],
+      rmax[ispec],
+      in_crust[ispec],
+      in_mantle[ispec]
+    };
+  }
 
   return tags;
 }
 
 specfem::mesh::materials<specfem::element::dimension_tag::dim3>
 specfem::io::mesh::impl::fortran::dim3_globe::make_materials(
-    const std::vector<int> &medium_tags, const std::vector<int> &property_tags,
+    const std::vector<specfem::element::medium_tag> &medium_tags,
+    const std::vector<specfem::element::property_tag> &property_tags,
     const bool attenuation_enabled) {
   using Dimension = specfem::element::dimension_tag;
   using Medium = specfem::element::medium_tag;
@@ -89,6 +82,16 @@ specfem::io::mesh::impl::fortran::dim3_globe::make_materials(
       elastic(1.0, 1.0, 2.0, 0.0);
   const int elastic_index = materials.add_material(elastic);
 
+  // Isotropic-equivalent placeholder (lambda = mu = 1); the oracle overwrites
+  // every GLL point at assembly setup.
+  specfem::medium_container::material<Dimension::dim3, Medium::elastic,
+                                      Property::anisotropic, Attenuation::none>
+      anisotropic_elastic(1.0, 3.0, 1.0, 1.0, 0.0, 0.0, 0.0, 3.0, 1.0, 0.0, 0.0,
+                          0.0, 3.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
+                          1.0);
+  const int anisotropic_elastic_index =
+      materials.add_material(anisotropic_elastic);
+
   std::optional<int> attenuating_elastic_index;
   if (attenuation_enabled) {
     specfem::medium_container::material<Dimension::dim3, Medium::elastic,
@@ -99,19 +102,26 @@ specfem::io::mesh::impl::fortran::dim3_globe::make_materials(
   }
 
   for (int ispec = 0; ispec < materials.nspec; ++ispec) {
-    if (property_tags[ispec] != 0) {
-      throw std::runtime_error(
-          "The globe database contains anisotropic/TISO elements, but "
-          "SPECFEM++ has no 3-D anisotropic property container or kernel yet");
-    }
-    if (medium_tags[ispec] ==
-        specfem::io::mesh::impl::fortran::dim3_globe_impl::medium_acoustic) {
+    if (property_tags[ispec] == Property::anisotropic) {
+      if (medium_tags[ispec] != Medium::elastic) {
+        throw std::runtime_error("Anisotropic globe elements must be elastic");
+      }
+      if (attenuation_enabled) {
+        throw std::runtime_error("Attenuation is not implemented for 3-D "
+                                 "anisotropic elastic elements");
+      }
+      materials.material_index_mapping[ispec] = {
+        Medium::elastic, Property::anisotropic, Attenuation::none,
+        anisotropic_elastic_index, ispec
+      };
+    } else if (property_tags[ispec] != Property::isotropic) {
+      throw std::runtime_error("Unknown property tag in globe mesh database");
+    } else if (medium_tags[ispec] == Medium::acoustic) {
       materials.material_index_mapping[ispec] = { Medium::acoustic,
                                                   Property::isotropic,
                                                   Attenuation::none,
                                                   acoustic_index, ispec };
-    } else if (medium_tags[ispec] == specfem::io::mesh::impl::fortran::
-                                         dim3_globe_impl::medium_elastic) {
+    } else if (medium_tags[ispec] == Medium::elastic) {
       const auto attenuation = attenuation_enabled
                                    ? Attenuation::constant_isotropic
                                    : Attenuation::none;

@@ -4,6 +4,7 @@
 #include "specfem/assembly/info/impl/compute.hpp"
 #include "specfem/assembly/info/impl/scatter_minmax.hpp"
 #include "specfem/assembly/info/impl/distances.hpp"
+#include "specfem/assembly/info/impl/region_counts.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/point.hpp"
 #include "specfem/setup.hpp"
@@ -227,7 +228,7 @@ specfem::assembly::Info<DimensionTag>::Info(
     specfem::tag_dispatch::for_each(
         DIMENSION_SET(dim3) *
         MEDIUM_SET(elastic, acoustic, elastic_spin) *
-        PROPERTY_SET(isotropic, isotropic_cosserat) *
+        PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
         ATTENUATION_SET(none),
         [&]<typename ElementTags>() {
           info::impl::process_medium_elements<ElementTags::dimension_tag,
@@ -298,4 +299,11 @@ specfem::assembly::Info<DimensionTag>::Info(
                                      SPECFEM_MPI_TYPE_REAL, MPI_MAX, comm));
   SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->suggested_time_step,
                                      1, SPECFEM_MPI_TYPE_REAL, MPI_MIN, comm));
+
+  this->elements_per_region =
+      info::impl::count_elements_per_region(element_types);
+  for (auto &[region, count] : this->elements_per_region) {
+    SPECFEM_MPI_SAFECALL(
+        MPI_Allreduce(MPI_IN_PLACE, &count, 1, MPI_INT, MPI_SUM, comm));
+  }
 }
