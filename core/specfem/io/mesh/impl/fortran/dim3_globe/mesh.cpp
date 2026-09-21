@@ -1,4 +1,5 @@
 #include "specfem/attenuation.hpp"
+#include "specfem/globe/planet_constants.hpp"
 #include "specfem/io.hpp"
 #include "specfem/io/fortranio/interface.hpp"
 #include "specfem/io/mesh/impl/fortran/dim3_globe/common.hpp"
@@ -42,8 +43,17 @@ specfem::mesh::globe3d_mesh specfem::io::read_globe_mesh(
   auto &globe = mesh.globe;
   globe.format_version = version;
 
-  specfem::io::fortran_read_line(stream, &globe.model_config.planet_type,
-                                 &globe.planet_radius, &globe.average_density);
+  specfem::globe::PlanetConstantSet values;
+  specfem::globe::PlanetConstants::Radii radii;
+  specfem::io::fortran_read_line(
+      stream, &globe.model_config.planet_type, &values.r_planet, &values.rhoav,
+      &values.one_minus_f_squared, &values.hours_per_day,
+      &values.seconds_per_hour, &values.topo_maximum, &radii.r_icb,
+      &radii.r_cmb, &radii.r_moho, &radii.r_80, &radii.r_220, &radii.r_400,
+      &radii.r_670, &radii.r_771, &radii.r_ocean);
+  globe.planet_constants = specfem::globe::PlanetConstants(
+      specfem::globe::planet_from_type(globe.model_config.planet_type), values);
+  globe.planet_constants.set_radii(radii);
 
   int ngnod = 0;
   specfem::io::fortran_read_line(stream, &ngnod, &mesh.element_grid.ngllx,
