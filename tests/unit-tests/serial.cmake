@@ -763,6 +763,24 @@ specfem_add_test(sparse_matrix_view_matrix_view_tests
             -lpthread -lm
 )
 
+specfem_add_test(vector_view_expression_tests
+  SOURCES linear_system/vector_view/expression_tests.cpp
+  LIBRARIES specfem::linear_system
+            specfem::quadrature
+            specfem::mesh
+            yaml-cpp
+            specfem_environment
+            specfem::assembly
+            specfem::runtime_configuration
+            timescheme
+            point
+            specfem::algorithms
+            specfem::solver
+            specfem::periodic_tasks
+            ${BOOST_LIBS}
+            -lpthread -lm
+)
+
 specfem_add_test(sparse_matrix_view_field_vector_tests
   SOURCES linear_system/sparse_matrix_view/field_vector_tests.cpp
   LIBRARIES specfem::linear_system
