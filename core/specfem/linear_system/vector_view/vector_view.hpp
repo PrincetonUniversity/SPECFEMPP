@@ -8,6 +8,7 @@
 #include <Teuchos_BLAS_types.hpp>
 #include <Teuchos_RCP.hpp>
 #include <cstddef>
+#include <stdexcept>
 #include <type_traits>
 #include <utility>
 #include <vector>
