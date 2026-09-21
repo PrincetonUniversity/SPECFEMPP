@@ -372,16 +372,168 @@ TEST_F(VectorExpression, ScratchIsPooledAcrossStatements) {
   EXPECT_LE(space_->scratch_size(), std::size_t{ 1 });
 }
 
-// The grammar rejects these at compile time; each is kept here so the intent
-// is recorded next to the cases that must keep working.
+/**
+ * @brief Every form the one-product grammar used to turn away.
+ *
+ * An expression is a term list plus any number of products, so a product
+ * composes like any other operand. Each case is checked against its closed
+ * form on a scaled-identity operator.
+ */
+TEST_F(VectorExpression, ProductsComposeLikeAnyOtherOperand) {
+  auto u = space_->vector();
+  auto v = space_->vector();
+  auto f = space_->vector();
+  auto m = space_->vector();
+  auto b = space_->vector();
+  const auto a_matrix = scaled_identity(static_cast<scalar_type>(2));
+  const auto b_matrix = scaled_identity(static_cast<scalar_type>(3));
+  const auto &A = *a_matrix;
+  const auto &B = *b_matrix;
+
+  const auto reset = [&]() {
+    fill(u.vector(), [](int i) { return i + 1; });
+    fill(v.vector(), [](int i) { return 10 * (i + 1); });
+    fill(f.vector(), [](int i) { return 100 * (i + 1); });
+    fill(m.vector(), [](int) { return 2; });
+  };
+  const auto expect = [&](const scalar_type per_dof) {
+    std::vector<scalar_type> expected(num_dofs);
+    for (int i = 0; i < num_dofs; ++i) {
+      expected[i] = per_dof * static_cast<scalar_type>(i + 1);
+    }
+    expect_entries(b.vector(), expected);
+  };
+
+  // An expression carrying a product is itself an operand: scalable,
+  // negatable, and addable -- none of which the one-product form allowed.
+  reset();
+  b = static_cast<scalar_type>(2) * (f - A * u);
+  expect(196); // 2 * (100n - 2n)
+
+  reset();
+  b = -(f - A * u);
+  expect(-98);
+
+  reset();
+  b = (f - A * u) + f;
+  expect(198);
+
+  // More than one product, of either kind, in one expression.
+  reset();
+  b = A * u + B * v;
+  expect(32); // 2n + 30n
+
+  reset();
+  b = A * u + specfem::linear_system::diag(m) * v;
+  expect(22); // 2n + 2 * 10n
+
+  reset();
+  b = f - A * u - B * v;
+  expect(68); // 100n - 2n - 30n
+
+  // Products over multi-term operands, and products scaled from outside.
+  reset();
+  b = A * (u + v) + B * (u - v);
+  expect(-5); // 2 * 11n - 3 * 9n
+
+  reset();
+  b = static_cast<scalar_type>(2) * (A * u) +
+      static_cast<scalar_type>(3) * (B * v);
+  expect(94); // 4n + 90n
+
+  // A nested product: the inner product is materialised, the outer applied.
+  reset();
+  b = A * (B * u);
+  expect(6);
+}
+
+TEST_F(VectorExpression, AScaledOperatorFoldsIntoTheOperand) {
+  using specfem::linear_system::operator*;
+
+  auto u = space_->vector();
+  auto m = space_->vector();
+  auto b = space_->vector();
+  const auto matrix = scaled_identity(static_cast<scalar_type>(2));
+
+  fill(u.vector(), [](int i) { return i + 1; });
+  fill(m.vector(), [](int) { return 2; });
+
+  std::vector<scalar_type> expected(num_dofs);
+  for (int i = 0; i < num_dofs; ++i) {
+    expected[i] = static_cast<scalar_type>(6 * (i + 1));
+  }
+
+  // The coefficient reaches the alpha that apply() and elementWiseMultiply()
+  // already take, so neither spelling costs a scaling pass.
+  b = static_cast<scalar_type>(3) * (*matrix) * u;
+  expect_entries(b.vector(), expected);
+
+  b = static_cast<scalar_type>(3) * specfem::linear_system::diag(m) * u;
+  expect_entries(b.vector(), expected);
+}
+
+TEST_F(VectorExpression, ANormOfAResidualWithASourceTerm) {
+  auto u = space_->vector();
+  auto f = space_->vector();
+  const auto matrix = scaled_identity(static_cast<scalar_type>(2));
+
+  // The expression that motivated generalising the grammar: an ordinary
+  // residual with a source term, which the one-product form could not spell.
+  fill(u.vector(), [](int i) { return i + 1; });
+  fill(f.vector(), [](int i) { return i + 1; });
+
+  // (f - A u + f) = (n - 2n + n) = 0
+  EXPECT_NEAR(specfem::linear_system::norm2(f - *matrix * u + f), 0.0, 1e-4);
+}
+
+TEST_F(VectorExpression, ScratchIsBoundedByNestingNotByUse) {
+  auto u = space_->vector();
+  auto v = space_->vector();
+  auto b = space_->vector();
+  const auto a_matrix = scaled_identity(static_cast<scalar_type>(2));
+  const auto b_matrix = scaled_identity(static_cast<scalar_type>(3));
+
+  fill(u.vector(), [](int i) { return i + 1; });
+  fill(v.vector(), [](int i) { return 10 * (i + 1); });
+
+  // Two products side by side still need only one scratch vector at a time:
+  // each is materialised, applied, and released before the next begins.
+  for (int repeat = 0; repeat < 10; ++repeat) {
+    b = *a_matrix * (u + v) + *b_matrix * (u - v);
+  }
+  EXPECT_EQ(space_->scratch_size(), std::size_t{ 1 });
+
+  // A nested product is the one shape that borrows twice, because the inner
+  // product must exist somewhere before the outer can be applied to it.
+  for (int repeat = 0; repeat < 10; ++repeat) {
+    const auto norm =
+        specfem::linear_system::norm2(b - *a_matrix * (*b_matrix * u));
+    (void)norm;
+  }
+  EXPECT_EQ(space_->scratch_size(), std::size_t{ 2 });
+
+  // Either way the pool is sized by the deepest expression, never by how many
+  // times it is evaluated -- nothing allocates per statement.
+  const auto settled = space_->scratch_size();
+  for (int repeat = 0; repeat < 50; ++repeat) {
+    b = *a_matrix * (u + v) + *b_matrix * (u - v);
+    const auto norm =
+        specfem::linear_system::norm2(b - *a_matrix * (*b_matrix * u));
+    (void)norm;
+  }
+  EXPECT_EQ(space_->scratch_size(), settled);
+}
+
+// Forms outside vector algebra remain ill-formed, enforced by the operand
+// concept rather than by any rejection overload:
 //
-//   b = 2.0f * (*matrix) * u;   // scaled matrix: scale the operand instead
-//   b = *matrix * (*matrix * u); // nested product
-//   b = *matrix * u + *matrix * v; // two products in one expression
-//   b = *matrix * u - *matrix * v; // likewise, via the shared operator-
-//   VectorView c = u;              // copy construction is deleted: `b = u`
-//                                  // copies values, so a handle-sharing copy
-//                                  // constructor would mean the opposite
+//   b = (*a_matrix) * (*b_matrix);  // matrix times matrix
+//   b = diag(m) * (*a_matrix);      // diagonal times matrix
+//   b = u + 1.0f;                   // vector plus scalar
+//   b = u * v;                      // vector times vector
+//   VectorView c = u;               // copy construction is deleted: `b = u`
+//                                   // copies values, so a handle-sharing copy
+//                                   // constructor would mean the opposite
 
 } // namespace vector_view_expression_test
 

@@ -166,10 +166,12 @@ public:
   VectorView &operator=(const VectorView &other);
 
   /// Assign an expression
-  template <VectorExpression Expr> VectorView &operator=(const Expr &expr);
+  template <VectorOperand Operand>
+  VectorView &operator=(const Operand &operand);
 
   /// Accumulate an expression
-  template <VectorExpression Expr> VectorView &operator+=(const Expr &expr);
+  template <VectorOperand Operand>
+  VectorView &operator+=(const Operand &operand);
 
   /// Accumulate another vector
   VectorView &operator+=(const VectorView &other);
@@ -192,149 +194,163 @@ inline VectorView VectorSpace::vector() const {
 
 namespace linear_system_impl {
 
-/// A single vector as a one-term sum
-inline specfem::linear_system::Sum<1>
-to_sum(const specfem::linear_system::VectorView &vector) {
-  return specfem::linear_system::Sum<1>{
-    { { static_cast<specfem::linear_system::scalar_type>(1), &vector.vector(),
-        &vector.space() } }
-  };
+/// A view as a one-term expression
+inline specfem::linear_system::Expression<1>
+as_expression(const specfem::linear_system::VectorView &vector) {
+  return { { specfem::linear_system::VectorTerm{
+               static_cast<specfem::linear_system::scalar_type>(1),
+               &vector.vector(), &vector.space() } },
+           {} };
 }
 
-/// A raw Tpetra vector as a one-term sum; carries no space
-inline specfem::linear_system::Sum<1>
-to_sum(const specfem::linear_system::vector_type &vector) {
-  return specfem::linear_system::Sum<1>{
-    { { static_cast<specfem::linear_system::scalar_type>(1), &vector,
-        nullptr } }
-  };
+/// A raw Tpetra vector as a one-term expression; carries no space
+inline specfem::linear_system::Expression<1>
+as_expression(const specfem::linear_system::vector_type &vector) {
+  return { { specfem::linear_system::VectorTerm{
+               static_cast<specfem::linear_system::scalar_type>(1), &vector,
+               nullptr } },
+           {} };
 }
 
-/// A sum is already a sum
-template <std::size_t N>
-constexpr specfem::linear_system::Sum<N>
-to_sum(const specfem::linear_system::Sum<N> &sum) {
-  return sum;
+/// A product as an expression of no plain terms
+template <typename Inner>
+constexpr auto
+as_expression(const specfem::linear_system::MatrixProduct<Inner> &product) {
+  return specfem::linear_system::Expression<
+      0, specfem::linear_system::MatrixProduct<Inner>>{ {}, { product } };
 }
 
-/// The operand a scaling or negation applies to: a sum stays a sum, a product
-/// stays a product, a vector becomes a one-term sum
-template <typename T> constexpr auto as_operand(const T &operand) {
-  if constexpr (is_product<T>::value) {
-    return operand;
-  } else {
-    return to_sum(operand);
-  }
+template <typename Inner>
+constexpr auto
+as_expression(const specfem::linear_system::DiagProduct<Inner> &product) {
+  return specfem::linear_system::Expression<
+      0, specfem::linear_system::DiagProduct<Inner>>{ {}, { product } };
 }
 
-/// The sum type `to_sum` produces for `T`
+/// An expression is already an expression
+template <std::size_t N, typename... Products>
+constexpr auto as_expression(
+    const specfem::linear_system::Expression<N, Products...> &expression) {
+  return expression;
+}
+
+/// The expression type `as_expression` produces for `T`
 template <typename T>
-using sum_type_t = decltype(to_sum(std::declval<const T &>()));
+using expression_type_t = decltype(as_expression(std::declval<const T &>()));
 
-/**
- * @brief Write a sum into `target`.
- *
- * Emits terms two at a time, which is what `Tpetra`'s three- and five-argument
- * `update` take. `overwrite` is true while `target`'s current contents are
- * still to be discarded, and is cleared by the first emission.
- */
-template <std::size_t N>
+template <std::size_t N, typename... Products>
 void emit(specfem::linear_system::vector_type &target,
-          const specfem::linear_system::Sum<N> &sum, bool &overwrite,
-          const specfem::linear_system::VectorSpace & /* space */) {
-  using scalar_type = specfem::linear_system::scalar_type;
-
-  std::size_t i = 0;
-  while (i + 1 < N) {
-    target.update(sum.terms[i].alpha, *sum.terms[i].vector,
-                  sum.terms[i + 1].alpha, *sum.terms[i + 1].vector,
-                  overwrite ? static_cast<scalar_type>(0)
-                            : static_cast<scalar_type>(1));
-    overwrite = false;
-    i += 2;
-  }
-  if (i < N) {
-    target.update(sum.terms[i].alpha, *sum.terms[i].vector,
-                  overwrite ? static_cast<scalar_type>(0)
-                            : static_cast<scalar_type>(1));
-    overwrite = false;
-  }
-}
+          const specfem::linear_system::Expression<N, Products...> &expression,
+          bool &overwrite, const specfem::linear_system::VectorSpace &space);
 
 /**
- * @brief Write a matrix product into `target`.
+ * @brief Apply one matrix product into `target`.
  *
- * `Tpetra::CrsMatrix::apply` computes `Y = beta * Y + alpha * A * X`, so the
- * product accumulates without a second scratch vector. A single unscaled
- * operand is applied directly; anything longer is materialised first.
+ * `Tpetra::CrsMatrix::apply` computes `Y = beta * Y + alpha * A * X`, so both
+ * the product's own coefficient and the accumulation ride the call. A single
+ * unscaled-or-scaled plain operand is applied straight from its vector;
+ * anything longer is materialised into scratch first.
  */
 template <typename Inner>
-void emit(specfem::linear_system::vector_type &target,
-          const specfem::linear_system::MatrixProduct<Inner> &product,
-          bool &overwrite, const specfem::linear_system::VectorSpace &space) {
+void emit_product(specfem::linear_system::vector_type &target,
+                  const specfem::linear_system::MatrixProduct<Inner> &product,
+                  bool &overwrite,
+                  const specfem::linear_system::VectorSpace &space) {
   using scalar_type = specfem::linear_system::scalar_type;
 
   const scalar_type beta =
       overwrite ? static_cast<scalar_type>(0) : static_cast<scalar_type>(1);
 
-  if constexpr (Inner::size == 1) {
+  if constexpr (Inner::size == 1 && Inner::num_products == 0) {
     product.matrix->apply(*product.inner.terms[0].vector, target,
                           Teuchos::NO_TRANS, product.inner.terms[0].alpha,
                           beta);
-    overwrite = false;
-    return;
+  } else {
+    const auto scratch = space.borrow();
+    bool scratch_overwrite = true;
+    emit(scratch.vector(), product.inner, scratch_overwrite, space);
+    product.matrix->apply(scratch.vector(), target, Teuchos::NO_TRANS,
+                          static_cast<scalar_type>(1), beta);
   }
-
-  const auto scratch = space.borrow();
-  bool scratch_overwrite = true;
-  emit(scratch.vector(), product.inner, scratch_overwrite, space);
-  product.matrix->apply(scratch.vector(), target, Teuchos::NO_TRANS,
-                        static_cast<scalar_type>(1), beta);
   overwrite = false;
 }
 
 /**
- * @brief Write a diagonal product into `target`.
+ * @brief Apply one diagonal product into `target`.
  *
  * `elementWiseMultiply` computes `this = gamma * this + alpha * (d .* x)`, so
- * the product accumulates in place. The operand is always materialised: it
- * may not alias the target, and a scratch vector is the cheapest guarantee.
+ * it carries the coefficient and the accumulation the same way.
  */
 template <typename Inner>
-void emit(specfem::linear_system::vector_type &target,
-          const specfem::linear_system::DiagProduct<Inner> &product,
-          bool &overwrite, const specfem::linear_system::VectorSpace &space) {
+void emit_product(specfem::linear_system::vector_type &target,
+                  const specfem::linear_system::DiagProduct<Inner> &product,
+                  bool &overwrite,
+                  const specfem::linear_system::VectorSpace &space) {
   using scalar_type = specfem::linear_system::scalar_type;
 
   const scalar_type gamma =
       overwrite ? static_cast<scalar_type>(0) : static_cast<scalar_type>(1);
 
-  if constexpr (Inner::size == 1) {
+  if constexpr (Inner::size == 1 && Inner::num_products == 0) {
     target.elementWiseMultiply(product.inner.terms[0].alpha, *product.diagonal,
                                *product.inner.terms[0].vector, gamma);
-    overwrite = false;
-    return;
+  } else {
+    const auto scratch = space.borrow();
+    bool scratch_overwrite = true;
+    emit(scratch.vector(), product.inner, scratch_overwrite, space);
+    target.elementWiseMultiply(static_cast<scalar_type>(1), *product.diagonal,
+                               scratch.vector(), gamma);
   }
-
-  const auto scratch = space.borrow();
-  bool scratch_overwrite = true;
-  emit(scratch.vector(), product.inner, scratch_overwrite, space);
-  target.elementWiseMultiply(static_cast<scalar_type>(1), *product.diagonal,
-                             scratch.vector(), gamma);
   overwrite = false;
 }
 
-/// Write a sum-plus-product into `target`, plain part first
-template <std::size_t N, typename Product>
+/**
+ * @brief Write an expression into `target`.
+ *
+ * Plain terms go two at a time, which is what `Tpetra`'s three- and
+ * five-argument `update` take, then each product accumulates in written order.
+ * `overwrite` is true while `target`'s current contents are still to be
+ * discarded, and is cleared by the first write.
+ */
+template <std::size_t N, typename... Products>
 void emit(specfem::linear_system::vector_type &target,
-          const specfem::linear_system::Expression<N, Product> &expression,
+          const specfem::linear_system::Expression<N, Products...> &expression,
           bool &overwrite, const specfem::linear_system::VectorSpace &space) {
-  emit(target, expression.sum, overwrite, space);
-  emit(target, expression.product, overwrite, space);
+  using scalar_type = specfem::linear_system::scalar_type;
+
+  std::size_t i = 0;
+  while (i + 1 < N) {
+    target.update(
+        expression.terms[i].alpha, *expression.terms[i].vector,
+        expression.terms[i + 1].alpha, *expression.terms[i + 1].vector,
+        overwrite ? static_cast<scalar_type>(0) : static_cast<scalar_type>(1));
+    overwrite = false;
+    i += 2;
+  }
+  if (i < N) {
+    target.update(expression.terms[i].alpha, *expression.terms[i].vector,
+                  overwrite ? static_cast<scalar_type>(0)
+                            : static_cast<scalar_type>(1));
+    overwrite = false;
+  }
+
+  std::apply(
+      [&](const auto &...product) {
+        (emit_product(target, product, overwrite, space), ...);
+      },
+      expression.products);
+
+  // An expression with no terms and no products -- which the grammar cannot
+  // build, but the type admits -- still has to leave an assignment target
+  // defined.
+  if (overwrite) {
+    target.putScalar(static_cast<scalar_type>(0));
+    overwrite = false;
+  }
 }
 
 /**
- * @brief Evaluate any expression into `target`.
+ * @brief Evaluate an expression into `target`.
  *
  * An expression that reads `target` is evaluated in scratch and copied back,
  * so `x = 2 * x + y` is correct rather than order-dependent, and so a product
@@ -345,10 +361,11 @@ void emit(specfem::linear_system::vector_type &target,
  * @param overwrite Whether `target`'s current contents are discarded
  * @param space Space scratch is borrowed from
  */
-template <typename Expr>
-void evaluate(specfem::linear_system::vector_type &target,
-              const Expr &expression, const bool overwrite,
-              const specfem::linear_system::VectorSpace &space) {
+template <std::size_t N, typename... Products>
+void evaluate(
+    specfem::linear_system::vector_type &target,
+    const specfem::linear_system::Expression<N, Products...> &expression,
+    const bool overwrite, const specfem::linear_system::VectorSpace &space) {
   using scalar_type = specfem::linear_system::scalar_type;
 
   if (aliases(expression, &target)) {
@@ -369,159 +386,107 @@ void evaluate(specfem::linear_system::vector_type &target,
 
 namespace linear_system {
 
-// ── Scaling and negation ───────────────────────────────────────────────────
+// ── Building expressions ───────────────────────────────────────────────────
 
-/// Scale a vector, sum or product: `alpha * x`
+/**
+ * @brief Add any two operands: `x + y`.
+ *
+ * The whole additive grammar. Both sides are normalised to expressions and
+ * concatenated, so a vector, a sum, a product and a sum-plus-products all
+ * compose with each other and with themselves.
+ */
+template <VectorOperand Left, VectorOperand Right>
+constexpr auto operator+(const Left &left, const Right &right) {
+  return specfem::linear_system_impl::join(
+      specfem::linear_system_impl::as_expression(left),
+      specfem::linear_system_impl::as_expression(right));
+}
+
+/// Scale any operand: `alpha * x`
 template <VectorOperand Operand>
 constexpr auto operator*(const scalar_type alpha, const Operand &operand) {
   return specfem::linear_system_impl::scale(
-      specfem::linear_system_impl::as_operand(operand), alpha);
+      specfem::linear_system_impl::as_expression(operand), alpha);
 }
 
-/// Scale a vector, sum or product: `x * alpha`
+/// Scale any operand: `x * alpha`
 template <VectorOperand Operand>
 constexpr auto operator*(const Operand &operand, const scalar_type alpha) {
   return alpha * operand;
 }
 
-/// Negate a vector, sum or product: `-x`
+/// Negate any operand: `-x`
 template <VectorOperand Operand>
 constexpr auto operator-(const Operand &operand) {
   return static_cast<scalar_type>(-1) * operand;
 }
 
-// ── Sums ───────────────────────────────────────────────────────────────────
-
-/// Add two vectors or sums
-template <SumLike Left, SumLike Right>
-constexpr auto operator+(const Left &left, const Right &right) {
-  return specfem::linear_system_impl::concat(
-      specfem::linear_system_impl::to_sum(left),
-      specfem::linear_system_impl::to_sum(right));
-}
-
-// ── Products ───────────────────────────────────────────────────────────────
-
-/// Apply a matrix: `A * x`
-template <SumLike Operand>
-constexpr auto operator*(const crs_matrix_type &matrix,
-                         const Operand &operand) {
-  return specfem::linear_system::MatrixProduct<
-      specfem::linear_system_impl::sum_type_t<Operand>>{
-    &matrix, specfem::linear_system_impl::to_sum(operand)
-  };
-}
-
-/// Apply a diagonal matrix: `diag(m) * x`
-template <SumLike Operand>
-constexpr auto operator*(const Diagonal diagonal, const Operand &operand) {
-  return specfem::linear_system::DiagProduct<
-      specfem::linear_system_impl::sum_type_t<Operand>>{
-    &diagonal.vector, specfem::linear_system_impl::to_sum(operand)
-  };
-}
-
-// ── Sum plus product ───────────────────────────────────────────────────────
-
-/// `x + A * y`
-template <SumLike Left, VectorProduct Product>
-constexpr auto operator+(const Left &left, const Product &product) {
-  return specfem::linear_system::Expression<
-      specfem::linear_system_impl::sum_type_t<Left>::size, Product>{
-    specfem::linear_system_impl::to_sum(left), product
-  };
-}
-
-/// `A * y + x`
-template <VectorProduct Product, SumLike Right>
-constexpr auto operator+(const Product &product, const Right &right) {
-  return right + product;
-}
-
-// ── Subtraction ────────────────────────────────────────────────────────────
-
-/**
- * @brief Subtract any two operands: `x - y`.
- *
- * Every difference in the grammar is `left + (-right)`, and negation is
- * defined for both operand kinds, so one definition covers sum minus sum, sum
- * minus product, and product minus sum.
- */
+/// Subtract any two operands: `x - y`
 template <VectorOperand Left, VectorOperand Right>
 constexpr auto operator-(const Left &left, const Right &right) {
   return left + (-right);
 }
 
-// ── Rejected forms ─────────────────────────────────────────────────────────
+// ── Products ───────────────────────────────────────────────────────────────
+
+/// Apply a matrix: `A * x`
+template <VectorOperand Operand>
+constexpr auto operator*(const crs_matrix_type &matrix,
+                         const Operand &operand) {
+  return MatrixProduct<specfem::linear_system_impl::expression_type_t<Operand>>{
+    &matrix, specfem::linear_system_impl::as_expression(operand)
+  };
+}
+
+/// Apply a diagonal matrix: `diag(m) * x`
+template <VectorOperand Operand>
+constexpr auto operator*(const Diagonal diagonal, const Operand &operand) {
+  return DiagProduct<specfem::linear_system_impl::expression_type_t<Operand>>{
+    &diagonal.vector, specfem::linear_system_impl::as_expression(operand)
+  };
+}
 
 /**
- * @brief Rejects `alpha * A * x`; scale the operand instead.
+ * @brief Apply a scaled matrix: `alpha * A * x`.
  *
- * Returns a grammar type rather than `void` so the `static_assert` is the only
- * diagnostic the caller sees.
+ * The coefficient folds into the operand, where it reaches the `alpha` that
+ * `apply` already takes -- so this costs nothing over the unscaled spelling.
  */
 template <VectorOperand Operand>
-specfem::linear_system::Sum<1> operator*(const ScaledMatrix, const Operand &) {
-  static_assert(
-      specfem::linear_system_impl::always_false_v<Operand>,
-      "specfem::linear_system: a scaled matrix cannot be applied to a vector "
-      "expression. Scale the operand instead -- A * (alpha * x) -- which is "
-      "the same arithmetic in one fewer pass.");
-  return {};
+constexpr auto operator*(const ScaledMatrix scaled, const Operand &operand) {
+  return scaled.matrix * (scaled.alpha * operand);
 }
 
-/// Rejects `alpha * diag(m) * x`; scale the operand instead
+/// Apply a scaled diagonal matrix: `alpha * diag(m) * x`
 template <VectorOperand Operand>
-specfem::linear_system::Sum<1> operator*(const ScaledDiagonal,
-                                         const Operand &) {
-  static_assert(
-      specfem::linear_system_impl::always_false_v<Operand>,
-      "specfem::linear_system: a scaled diagonal cannot be applied to a "
-      "vector expression. Scale the operand instead: diag(m) * (alpha * x).");
-  return {};
-}
-
-/// Rejects a nested product such as `A * (B * x)`
-template <typename Outer, VectorProduct Inner>
-  requires(VectorOperand<Outer> || std::is_same_v<Outer, crs_matrix_type> ||
-           std::is_same_v<Outer, Diagonal>)
-specfem::linear_system::Sum<1> operator*(const Outer &, const Inner &) {
-  static_assert(specfem::linear_system_impl::always_false_v<Outer, Inner>,
-                "specfem::linear_system: nested matrix products are not "
-                "supported. Evaluate the inner product into a vector first.");
-  return {};
-}
-
-/// Rejects two products in one expression, such as `A * x + B * y`
-template <VectorProduct Left, VectorProduct Right>
-specfem::linear_system::Sum<1> operator+(const Left &, const Right &) {
-  static_assert(specfem::linear_system_impl::always_false_v<Left, Right>,
-                "specfem::linear_system: an expression carries at most one "
-                "matrix product. Accumulate the second one separately: "
-                "x = A * u; x += B * v;");
-  return {};
+constexpr auto operator*(const ScaledDiagonal scaled, const Operand &operand) {
+  return Diagonal{ scaled.vector } * (scaled.alpha * operand);
 }
 
 // ── Assignment ─────────────────────────────────────────────────────────────
 
 inline VectorView &VectorView::operator=(const VectorView &other) {
-  return *this = specfem::linear_system_impl::to_sum(other);
+  return *this = specfem::linear_system_impl::as_expression(other);
 }
 
-template <VectorExpression Expr>
-VectorView &VectorView::operator=(const Expr &expr) {
-  specfem::linear_system_impl::evaluate(*vector_, expr, true, *space_);
+template <VectorOperand Operand>
+VectorView &VectorView::operator=(const Operand &operand) {
+  specfem::linear_system_impl::evaluate(
+      *vector_, specfem::linear_system_impl::as_expression(operand), true,
+      *space_);
   return *this;
 }
 
-template <VectorExpression Expr>
-VectorView &VectorView::operator+=(const Expr &expr) {
-  specfem::linear_system_impl::evaluate(*vector_, expr, false, *space_);
+template <VectorOperand Operand>
+VectorView &VectorView::operator+=(const Operand &operand) {
+  specfem::linear_system_impl::evaluate(
+      *vector_, specfem::linear_system_impl::as_expression(operand), false,
+      *space_);
   return *this;
 }
 
 inline VectorView &VectorView::operator+=(const VectorView &other) {
-  return *this += specfem::linear_system_impl::to_sum(other);
+  return *this += specfem::linear_system_impl::as_expression(other);
 }
 
 /**
@@ -553,7 +518,10 @@ inline type_real norm2(const VectorView &vector) {
  * @param expression Expression to evaluate
  * @return \f$ \| \mathrm{expression} \|_2 \f$
  */
-template <VectorExpression Expr> type_real norm2(const Expr &expression) {
+template <VectorOperand Operand>
+  requires(!std::is_same_v<std::remove_cvref_t<Operand>, VectorView>)
+type_real norm2(const Operand &operand) {
+  const auto expression = specfem::linear_system_impl::as_expression(operand);
   const auto *space = specfem::linear_system_impl::space_of(expression);
   if (space == nullptr) {
     throw std::runtime_error(
