@@ -1,6 +1,7 @@
 #pragma once
 
-#include "specfem/io/globe_model/model_config.hpp"
+#include "specfem/globe/model_config.hpp"
+#include "specfem/globe/planet_constants.hpp"
 #include "specfem/mesh_entity.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -14,7 +15,7 @@ namespace specfem::mesh {
  * checks.
  *
  * SPECFEM3D_GLOBE material properties are evaluated later through the globe
- * model oracle rather than stored directly in the thin mesh database. These
+ * model evaluator rather than stored directly in the thin mesh database. These
  * values identify the model catalog state used by the mesher so the C++ reader
  * can detect obvious mismatches with the linked evaluator implementation.
  */
@@ -71,7 +72,7 @@ struct globe_model_verification {
 };
 
 /**
- * @brief Per-element context required by the SPECFEM3D_GLOBE model oracle.
+ * @brief Per-element context required by the SPECFEM3D_GLOBE model evaluator.
  *
  * The thin globe mesh stores enough metadata to re-evaluate material properties
  * at assembly time. These fields are passed to the Fortran-backed evaluator for
@@ -118,7 +119,8 @@ struct globe_boundary_surface {
  * @c specfem::mesh::globe3d_mesh shares the standard 3-D raw mesh fields
  * through @c mesh_dim3_base, but the thin globe database also carries metadata
  * needed to evaluate pointwise material properties through the
- * SPECFEM3D_GLOBE model oracle. This structure stores that globe-only payload.
+ * SPECFEM3D_GLOBE model evaluator. This structure stores that globe-only
+ * payload.
  */
 struct globe_mesh_data {
   /** @brief Host view of xyz coordinates indexed by global anchor node. */
@@ -145,8 +147,11 @@ struct globe_mesh_data {
   /** @brief Encoded globe material mode; currently only oracle mode is read. */
   int material_mode = 0;
 
+  /** @brief Resolved planet metadata written by the globe mesher. */
+  specfem::globe::PlanetConstants planet_constants;
+
   /** @brief Configuration used to initialize the globe model evaluator. */
-  specfem::io::GlobeModelConfig model_config;
+  specfem::globe::ModelConfig model_config;
 
   /** @brief Mesher-side model identifiers used for consistency checks. */
   globe_model_verification model_verification;

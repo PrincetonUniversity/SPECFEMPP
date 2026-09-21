@@ -1,5 +1,5 @@
-#include "specfem/globe/metadata.hpp"
-#include "specfem/utilities/dimensionalization.hpp"
+#include "specfem/globe/dimensionalization.hpp"
+#include "specfem/globe/planet_constants.hpp"
 
 #include <cmath>
 #include <gtest/gtest.h>
@@ -42,30 +42,19 @@ TEST(GlobeConstants, PreservesResolvedDatabaseValues) {
 TEST(GlobeConstants, LengthAndDensityRoundTrip) {
   const PlanetConstants earth(Planet::earth, earth_values());
   const specfem::units::Meters length(1234567.25);
-  const auto length_nd = specfem::utilities::nondimensionalize(length, earth);
+  const auto length_nd = specfem::globe::nondimensionalize(length, earth);
   const auto recovered_length =
-      specfem::utilities::dimensionalize<specfem::units::Meters>(length_nd,
-                                                                 earth);
+      specfem::globe::dimensionalize<specfem::units::Meters>(length_nd, earth);
   EXPECT_NEAR(recovered_length.raw(), length.raw(),
               2.0 * std::numeric_limits<double>::epsilon() * length.raw());
 
   const specfem::units::KilogramPerCubicMeter density(4876.5);
-  const auto density_nd = specfem::utilities::nondimensionalize(density, earth);
+  const auto density_nd = specfem::globe::nondimensionalize(density, earth);
   const auto recovered_density =
-      specfem::utilities::dimensionalize<specfem::units::KilogramPerCubicMeter>(
+      specfem::globe::dimensionalize<specfem::units::KilogramPerCubicMeter>(
           density_nd, earth);
   EXPECT_NEAR(recovered_density.raw(), density.raw(),
               2.0 * std::numeric_limits<double>::epsilon() * density.raw());
-}
-
-TEST(GlobeConstants, DatabaseScaleMismatchThrows) {
-  const PlanetConstants earth(Planet::earth, earth_values());
-  EXPECT_THROW(specfem::globe::check_database_values(earth, 3390000.0,
-                                                     earth.values().rhoav),
-               std::runtime_error);
-  EXPECT_THROW(specfem::globe::check_database_values(
-                   earth, earth.values().r_planet, 3393.0),
-               std::runtime_error);
 }
 
 TEST(GlobeConstants, UnpopulatedRadiiAreReported) {

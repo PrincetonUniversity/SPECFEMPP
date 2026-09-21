@@ -1,16 +1,16 @@
 #pragma once
 
-#include "specfem/globe/metadata.hpp"
-#include "specfem/io/globe_model/model_config.hpp"
+#include "specfem/globe/model_config.hpp"
+#include "specfem/globe/planet_constants.hpp"
 
 #include <cstddef>
 #include <string>
 #include <vector>
 
-namespace specfem::io {
+namespace specfem::globe {
 
 /**
- * @brief Move-only RAII boundary around the SPECFEM3D_GLOBE model oracle.
+ * @brief Move-only RAII boundary around the SPECFEM3D_GLOBE model catalog.
  *
  * Construction replays the database's model configuration into the Fortran
  * catalog. All public coordinates and material values are SI; conversion to
@@ -21,7 +21,7 @@ namespace specfem::io {
  * evaluation is setup-only and single-threaded because catalog routines retain
  * module and `save` state.
  */
-class globe_model {
+class ModelEvaluator {
 public:
   /** @brief Quadrature dimensions compiled into the model catalog. */
   struct Dimensions {
@@ -79,16 +79,16 @@ public:
    * @param constants Selected planet's SI constants.
    * @param log_path Optional catalog log path; empty redirects to `/dev/null`.
    */
-  explicit globe_model(const GlobeModelConfig &config,
-                       const specfem::globe::PlanetConstants &constants,
-                       const std::string &log_path = "");
+  explicit ModelEvaluator(const ModelConfig &config,
+                          const PlanetConstants &constants,
+                          const std::string &log_path = "");
 
-  ~globe_model();
+  ~ModelEvaluator();
 
-  globe_model(const globe_model &) = delete;
-  globe_model &operator=(const globe_model &) = delete;
-  globe_model(globe_model &&other) noexcept;
-  globe_model &operator=(globe_model &&other) noexcept;
+  ModelEvaluator(const ModelEvaluator &) = delete;
+  ModelEvaluator &operator=(const ModelEvaluator &) = delete;
+  ModelEvaluator(ModelEvaluator &&other) noexcept;
+  ModelEvaluator &operator=(ModelEvaluator &&other) noexcept;
 
   /**
    * @brief Evaluate one element and return only SI material values.
@@ -109,7 +109,7 @@ public:
   [[nodiscard]] static Dimensions dimensions();
 
   /** @brief Model-dependent discontinuity radii in SI metres. */
-  [[nodiscard]] specfem::globe::PlanetConstants::Radii radii() const;
+  [[nodiscard]] PlanetConstants::Radii radii() const;
 
   /** @brief Whether any wrapper currently owns the Fortran catalog. */
   [[nodiscard]] static bool is_active() noexcept;
@@ -132,11 +132,11 @@ private:
   [[nodiscard]] static Scales query_scales();
   void release() noexcept;
 
-  specfem::globe::PlanetConstants constants_;
+  PlanetConstants constants_;
   Scales scales_;
   bool owns_state_ = false;
 
   static bool is_active_;
 };
 
-} // namespace specfem::io
+} // namespace specfem::globe

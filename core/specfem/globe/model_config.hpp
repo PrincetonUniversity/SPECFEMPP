@@ -3,16 +3,16 @@
 #include <stdexcept>
 #include <string>
 
-namespace specfem::io {
+namespace specfem::globe {
 
 /**
- * @brief Mesher-resolved model selection replayed verbatim by the globe oracle.
+ * @brief Mesher-resolved model selection replayed by the globe evaluator.
  *
  * Every field is read from the database's `MODEL_CONFIG` records. Defaults are
  * deliberately invalid so an incomplete read cannot silently select a
  * plausible but different model.
  */
-struct GlobeModelConfig {
+struct ModelConfig {
   std::string model_name; ///< Database `MODEL` value.
 
   int planet_type = 0; ///< Database `PLANET_TYPE` value.
@@ -34,7 +34,7 @@ struct GlobeModelConfig {
   void validate() const {
     if (model_name.empty()) {
       throw std::invalid_argument(
-          "specfem::io::GlobeModelConfig: model_name is empty; it must come "
+          "specfem::globe::ModelConfig: model_name is empty; it must come "
           "from the MODEL record of the mesh database");
     }
     require_positive(planet_type, "planet_type");
@@ -45,7 +45,7 @@ struct GlobeModelConfig {
     if (attenuation && (min_attenuation_period <= 0.0 ||
                         max_attenuation_period <= min_attenuation_period)) {
       throw std::invalid_argument(
-          "specfem::io::GlobeModelConfig: attenuation is enabled but the "
+          "specfem::globe::ModelConfig: attenuation is enabled but the "
           "period band [" +
           std::to_string(min_attenuation_period) + ", " +
           std::to_string(max_attenuation_period) +
@@ -57,7 +57,7 @@ private:
   static void require_positive(const int value, const std::string &field) {
     if (value <= 0) {
       throw std::invalid_argument(
-          "specfem::io::GlobeModelConfig: " + field + " is " +
+          "specfem::globe::ModelConfig: " + field + " is " +
           std::to_string(value) +
           "; it must be read from the mesh database, which is the only place "
           "the mesher's value exists");
@@ -65,4 +65,4 @@ private:
   }
 };
 
-} // namespace specfem::io
+} // namespace specfem::globe

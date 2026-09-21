@@ -5,7 +5,7 @@
 #include <fstream>
 #include <vector>
 
-namespace specfem::io::mesh::impl::fortran::dim3_globe {
+namespace specfem::io::dim3_globe {
 
 /**
  * @brief Raw material-classification tags from the globe element section.
@@ -13,7 +13,7 @@ namespace specfem::io::mesh::impl::fortran::dim3_globe {
  * These tags classify each element well enough to build SPECFEM++ raw mesh
  * material mappings. They are not the final pointwise GLL material properties;
  * those are evaluated later from @c globe_element_context and reference
- * coordinates by the globe model oracle.
+ * coordinates by the globe model evaluator.
  */
 struct material_tags {
   /** @brief Globe medium tag for each element, e.g. acoustic or elastic. */
@@ -62,4 +62,4 @@ make_materials(const std::vector<int> &medium_tags,
                const std::vector<int> &property_tags,
                const bool attenuation_enabled);
 
-} // namespace specfem::io::mesh::impl::fortran::dim3_globe
+} // namespace specfem::io::dim3_globe

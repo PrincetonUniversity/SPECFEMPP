@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <vector>
 
-void specfem::io::mesh::impl::fortran::dim3_globe::read_adjacency_graph(
+void specfem::io::dim3_globe::read_adjacency_graph(
     std::ifstream &stream, specfem::mesh::globe3d_mesh &mesh) {
   using Dimension = specfem::element::dimension_tag;
   using AdjacencyGraph = specfem::mesh::adjacency_graph<Dimension::dim3>;

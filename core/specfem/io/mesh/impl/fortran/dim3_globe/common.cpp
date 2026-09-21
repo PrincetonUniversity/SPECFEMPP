@@ -3,7 +3,7 @@
 #include <array>
 #include <stdexcept>
 
-namespace specfem::io::mesh::impl::fortran::dim3_globe_impl {
+namespace specfem::io::dim3_globe_impl {
 
 void check_stream(const std::ifstream &stream, const std::string &section) {
   if (!stream) {
@@ -95,4 +95,4 @@ std::string read_fixed_string(std::ifstream &stream,
   return value;
 }
 
-} // namespace specfem::io::mesh::impl::fortran::dim3_globe_impl
+} // namespace specfem::io::dim3_globe_impl

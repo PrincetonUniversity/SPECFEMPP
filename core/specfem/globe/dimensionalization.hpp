@@ -1,11 +1,11 @@
 #pragma once
 
-#include "specfem/globe/metadata.hpp"
+#include "specfem/globe/planet_constants.hpp"
 #include "specfem/units.hpp"
 
 #include <type_traits>
 
-namespace specfem::utilities {
+namespace specfem::globe {
 
 /**
  * @brief Convert an SI length or density to globe non-dimensional units.
@@ -13,7 +13,7 @@ namespace specfem::utilities {
  * @param constants Explicit planet scales.
  * @return The non-dimensional value.
  *
- * @warning Calling this outside the `specfem::io::globe_model` oracle wrapper
+ * @warning Calling this outside the globe model evaluator
  * is a units-contract bug. The database and assembly both store SI values.
  */
 template <typename Dimension, typename Scale>
@@ -41,7 +41,7 @@ nondimensionalize(const specfem::units::Quantity<Dimension, Scale> value,
  * @param constants Explicit planet scales.
  * @return The requested physical quantity.
  *
- * @warning Calling this outside the `specfem::io::globe_model` oracle wrapper
+ * @warning Calling this outside the globe model evaluator
  * is a units-contract bug. The database and assembly both store SI values.
  */
 template <typename QuantityType>
@@ -61,4 +61,4 @@ QuantityType dimensionalize(const specfem::units::Dimensionless value,
   return QuantityType(value_base / specfem::units::ratio_value<Scale>);
 }
 
-} // namespace specfem::utilities
+} // namespace specfem::globe

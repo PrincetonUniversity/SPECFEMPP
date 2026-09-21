@@ -143,10 +143,10 @@ TEST(GlobeMeshReader, ReadsThinDatabaseAndPreservesReferenceContext) {
   EXPECT_EQ(mesh.globe.model_verification.codes,
             (std::vector<int>{ 1, 0, 0, 0, 0 }));
   EXPECT_EQ(mesh.globe.model_config.nchunks, 6);
-  EXPECT_DOUBLE_EQ(mesh.planet_constants.values().r_planet, 6371000.0);
-  EXPECT_DOUBLE_EQ(mesh.planet_constants.values().rhoav, 5514.3);
-  ASSERT_TRUE(mesh.planet_constants.has_radii());
-  EXPECT_DOUBLE_EQ(mesh.planet_constants.radii().r_cmb, 3480000.0);
+  EXPECT_DOUBLE_EQ(mesh.globe.planet_constants.values().r_planet, 6371000.0);
+  EXPECT_DOUBLE_EQ(mesh.globe.planet_constants.values().rhoav, 5514.3);
+  ASSERT_TRUE(mesh.globe.planet_constants.has_radii());
+  EXPECT_DOUBLE_EQ(mesh.globe.planet_constants.radii().r_cmb, 3480000.0);
   ASSERT_EQ(mesh.globe.element_context.size(), 1);
   EXPECT_EQ(mesh.globe.element_context[0].region, 1);
   EXPECT_EQ(mesh.globe.element_context[0].idoubling, 4);

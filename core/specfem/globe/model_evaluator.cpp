@@ -1,10 +1,11 @@
-#include "specfem/io/globe_model.hpp"
+#include "specfem/globe/model_evaluator.hpp"
 
+#include "specfem/globe/dimensionalization.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/units.hpp"
-#include "specfem/utilities/dimensionalization.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <sstream>
 #include <stdexcept>
 #include <utility>
@@ -39,7 +40,7 @@ int globe_evaluator_prem_reference(double r, int idoubling, int iregion_code,
                                    double *qkappa, double *qmu);
 }
 
-namespace specfem::io::globe_model_impl {
+namespace specfem::globe::evaluator_impl {
 
 constexpr int status_ok = 0;
 constexpr int status_already_initialized = 1;
@@ -54,7 +55,7 @@ std::string describe_status(const int status) {
     return "success";
   case status_already_initialized:
     return "the globe model catalog is already configured; only one "
-           "specfem::io::globe_model may own its Fortran module state";
+           "specfem::globe::ModelEvaluator may own its Fortran module state";
   case status_not_initialized:
     return "the globe model catalog has not been configured";
   case status_unsupported_model:
@@ -71,50 +72,76 @@ std::string describe_status(const int status) {
 
 void require_ok(const int status, const std::string &operation) {
   if (status != status_ok) {
-    throw std::runtime_error("specfem::io::globe_model::" + operation + ": " +
-                             describe_status(status));
+    throw std::runtime_error("specfem::globe::ModelEvaluator::" + operation +
+                             ": " + describe_status(status));
   }
 }
 
-} // namespace specfem::io::globe_model_impl
+void check_scales(const PlanetConstants &constants,
+                  const double evaluator_r_planet,
+                  const double evaluator_rhoav) {
+  constexpr double relative_tolerance = 1.0e-12;
+  const auto &values = constants.values();
+  if (!std::isfinite(evaluator_r_planet) ||
+      std::abs(evaluator_r_planet - values.r_planet) >
+          relative_tolerance * values.r_planet) {
+    std::ostringstream message;
+    message << "Globe database R_PLANET=" << values.r_planet
+            << " disagrees with model evaluator R_PLANET="
+            << evaluator_r_planet;
+    throw std::runtime_error(message.str());
+  }
+  if (!std::isfinite(evaluator_rhoav) ||
+      std::abs(evaluator_rhoav - values.rhoav) >
+          relative_tolerance * values.rhoav) {
+    std::ostringstream message;
+    message << "Globe database RHOAV=" << values.rhoav
+            << " disagrees with model evaluator RHOAV=" << evaluator_rhoav;
+    throw std::runtime_error(message.str());
+  }
+}
 
-bool specfem::io::globe_model::is_active_ = false;
+} // namespace specfem::globe::evaluator_impl
 
-specfem::io::globe_model::Dimensions specfem::io::globe_model::dimensions() {
+bool specfem::globe::ModelEvaluator::is_active_ = false;
+
+specfem::globe::ModelEvaluator::Dimensions
+specfem::globe::ModelEvaluator::dimensions() {
   Dimensions result;
   globe_evaluator_dims(&result.ngllx, &result.nglly, &result.ngllz,
                        &result.n_sls);
   return result;
 }
 
-bool specfem::io::globe_model::is_active() noexcept { return is_active_; }
+bool specfem::globe::ModelEvaluator::is_active() noexcept { return is_active_; }
 
-specfem::io::globe_model::Scales specfem::io::globe_model::query_scales() {
+specfem::globe::ModelEvaluator::Scales
+specfem::globe::ModelEvaluator::query_scales() {
   Scales result;
   const int status =
       globe_evaluator_scales(&result.length, &result.density, &result.velocity);
-  specfem::io::globe_model_impl::require_ok(status, "query_scales");
+  specfem::globe::evaluator_impl::require_ok(status, "query_scales");
   return result;
 }
 
-specfem::io::globe_model::globe_model(
-    const specfem::io::GlobeModelConfig &config,
+specfem::globe::ModelEvaluator::ModelEvaluator(
+    const specfem::globe::ModelConfig &config,
     const specfem::globe::PlanetConstants &constants,
     const std::string &log_path)
     : constants_(constants) {
   if (is_active_) {
     throw std::runtime_error(
-        "specfem::io::globe_model: " +
-        specfem::io::globe_model_impl::describe_status(
-            specfem::io::globe_model_impl::status_already_initialized));
+        "specfem::globe::ModelEvaluator: " +
+        specfem::globe::evaluator_impl::describe_status(
+            specfem::globe::evaluator_impl::status_already_initialized));
   }
 
   config.validate();
   if (specfem::globe::planet_from_type(config.planet_type) !=
       constants_.planet()) {
-    throw std::invalid_argument(
-        "specfem::io::globe_model: MODEL_CONFIG PLANET_TYPE disagrees with "
-        "the supplied PlanetConstants selection");
+    throw std::invalid_argument("specfem::globe::ModelEvaluator: MODEL_CONFIG "
+                                "PLANET_TYPE disagrees with "
+                                "the supplied PlanetConstants selection");
   }
 
 #ifdef SPECFEM_ENABLE_MPI
@@ -133,33 +160,33 @@ specfem::io::globe_model::globe_model(
       config.rotation ? 1 : 0, config.min_attenuation_period,
       config.max_attenuation_period, comm_f);
 
-  if (status != specfem::io::globe_model_impl::status_ok) {
+  if (status != specfem::globe::evaluator_impl::status_ok) {
     throw std::runtime_error(
-        "specfem::io::globe_model: failed to configure model '" +
+        "specfem::globe::ModelEvaluator: failed to configure model '" +
         config.model_name +
-        "': " + specfem::io::globe_model_impl::describe_status(status));
+        "': " + specfem::globe::evaluator_impl::describe_status(status));
   }
 
   owns_state_ = true;
   is_active_ = true;
   try {
     scales_ = query_scales();
-    specfem::globe::check_database_values(constants_, scales_.length,
-                                          scales_.density);
+    specfem::globe::evaluator_impl::check_scales(constants_, scales_.length,
+                                                 scales_.density);
   } catch (...) {
     release();
     throw;
   }
 }
 
-specfem::io::globe_model::~globe_model() { release(); }
+specfem::globe::ModelEvaluator::~ModelEvaluator() { release(); }
 
-specfem::io::globe_model::globe_model(globe_model &&other) noexcept
+specfem::globe::ModelEvaluator::ModelEvaluator(ModelEvaluator &&other) noexcept
     : constants_(std::move(other.constants_)), scales_(other.scales_),
       owns_state_(std::exchange(other.owns_state_, false)) {}
 
-specfem::io::globe_model &
-specfem::io::globe_model::operator=(globe_model &&other) noexcept {
+specfem::globe::ModelEvaluator &
+specfem::globe::ModelEvaluator::operator=(ModelEvaluator &&other) noexcept {
   if (this != &other) {
     release();
     constants_ = std::move(other.constants_);
@@ -169,7 +196,7 @@ specfem::io::globe_model::operator=(globe_model &&other) noexcept {
   return *this;
 }
 
-void specfem::io::globe_model::release() noexcept {
+void specfem::globe::ModelEvaluator::release() noexcept {
   if (owns_state_) {
     globe_evaluator_finalize();
     owns_state_ = false;
@@ -177,32 +204,33 @@ void specfem::io::globe_model::release() noexcept {
   }
 }
 
-specfem::globe::PlanetConstants::Radii specfem::io::globe_model::radii() const {
+specfem::globe::PlanetConstants::Radii
+specfem::globe::ModelEvaluator::radii() const {
   specfem::globe::PlanetConstants::Radii result;
   const int status = globe_evaluator_radii(
       &result.r_icb, &result.r_cmb, &result.r_moho, &result.r_80, &result.r_220,
       &result.r_400, &result.r_670, &result.r_771, &result.r_ocean);
-  specfem::io::globe_model_impl::require_ok(status, "radii");
+  specfem::globe::evaluator_impl::require_ok(status, "radii");
   result.validate(constants_.values().r_planet);
   return result;
 }
 
-specfem::io::globe_model::ElementProperties
-specfem::io::globe_model::evaluate_element(
+specfem::globe::ModelEvaluator::ElementProperties
+specfem::globe::ModelEvaluator::evaluate_element(
     const int iregion_code, const int idoubling, const double rmin_si,
     const double rmax_si, const bool elem_in_crust, const bool elem_in_mantle,
     const std::vector<double> &xyz_si) const {
   const std::size_t npoints = dimensions().points_per_element();
   if (xyz_si.size() != 3 * npoints) {
     std::ostringstream message;
-    message << "specfem::io::globe_model::evaluate_element: expected "
+    message << "specfem::globe::ModelEvaluator::evaluate_element: expected "
             << 3 * npoints << " coordinates but received " << xyz_si.size();
     throw std::invalid_argument(message.str());
   }
 
   const auto to_catalog_length = [this](const double value_si) {
-    return specfem::utilities::nondimensionalize(
-               specfem::units::Meters(value_si), constants_)
+    return specfem::globe::nondimensionalize(specfem::units::Meters(value_si),
+                                             constants_)
         .raw();
   };
   const double rmin = to_catalog_length(rmin_si);
@@ -234,11 +262,10 @@ specfem::io::globe_model::evaluate_element(
       properties.vs_iso.data(), properties.qmu.data(), properties.qkappa.data(),
       properties.cij.data(), properties.gc_prime.data(),
       properties.gs_prime.data(), &is_anisotropic);
-  specfem::io::globe_model_impl::require_ok(status, "evaluate_element");
+  specfem::globe::evaluator_impl::require_ok(status, "evaluate_element");
 
   for (double &rho : properties.rho) {
-    rho = specfem::utilities::dimensionalize<
-              specfem::units::KilogramPerCubicMeter>(
+    rho = specfem::globe::dimensionalize<specfem::units::KilogramPerCubicMeter>(
               specfem::units::Dimensionless(rho), constants_)
               .raw();
   }
@@ -257,21 +284,22 @@ specfem::io::globe_model::evaluate_element(
   return properties;
 }
 
-specfem::io::globe_model::ReferencePoint
-specfem::io::globe_model::prem_reference(const double r_si, const int idoubling,
-                                         const int iregion_code) const {
+specfem::globe::ModelEvaluator::ReferencePoint
+specfem::globe::ModelEvaluator::prem_reference(const double r_si,
+                                               const int idoubling,
+                                               const int iregion_code) const {
   ReferencePoint point;
-  const double r = specfem::utilities::nondimensionalize(
+  const double r = specfem::globe::nondimensionalize(
                        specfem::units::Meters(r_si), constants_)
                        .raw();
   const int status = globe_evaluator_prem_reference(
       r, idoubling, iregion_code, &point.rho, &point.vpv, &point.vph,
       &point.vsv, &point.vsh, &point.eta, &point.vp_iso, &point.vs_iso,
       &point.qkappa, &point.qmu);
-  specfem::io::globe_model_impl::require_ok(status, "prem_reference");
+  specfem::globe::evaluator_impl::require_ok(status, "prem_reference");
 
   point.rho =
-      specfem::utilities::dimensionalize<specfem::units::KilogramPerCubicMeter>(
+      specfem::globe::dimensionalize<specfem::units::KilogramPerCubicMeter>(
           specfem::units::Dimensionless(point.rho), constants_)
           .raw();
   point.vpv *= scales_.velocity;

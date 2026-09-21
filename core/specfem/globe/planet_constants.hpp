@@ -44,7 +44,7 @@ inline constexpr Planet planet_from_type(const int planet_type) {
  * @brief Selected planet constants and guarded model-dependent radii in SI.
  *
  * All values are available immediately after database-header parsing. The
- * model oracle later verifies the scales and radii after replaying
+ * model evaluator later verifies the scales and radii after replaying
  * `MODEL_CONFIG`.
  */
 class PlanetConstants {
@@ -65,7 +65,7 @@ public:
     void validate(double r_planet) const;
   };
 
-  /** @brief Construct an empty placeholder for a non-globe mesh. */
+  /** @brief Construct an empty placeholder for database deserialization. */
   PlanetConstants() = default;
 
   /** @brief Construct constants resolved and written by the globe mesher. */
@@ -97,8 +97,8 @@ public:
     return *radii_;
   }
 
-  /** @brief Validate radii and check an existing database value. */
-  void set_radii(Radii radii) {
+  /** @brief Validate radii against the stored database value, when present. */
+  void check_radii(const Radii &radii) const {
     radii.validate(values_.r_planet);
     if (radii_) {
       constexpr double relative_tolerance = 1.0e-12;
@@ -120,6 +120,11 @@ public:
             "Globe database radii disagree with the model evaluator");
       }
     }
+  }
+
+  /** @brief Validate and store radii. */
+  void set_radii(Radii radii) {
+    check_radii(radii);
     radii_ = radii;
   }
 
@@ -146,34 +151,6 @@ inline void PlanetConstants::Radii::validate(const double r_planet) const {
     message << "Invalid planet radii ordering: r_icb=" << r_icb
             << ", r_cmb=" << r_cmb << ", r_moho=" << r_moho
             << ", r_planet=" << r_planet;
-    throw std::runtime_error(message.str());
-  }
-}
-
-/**
- * @brief Check database scales against the initialized model evaluator.
- * @throws std::runtime_error naming both values on disagreement.
- */
-inline void check_database_values(const PlanetConstants &constants,
-                                  const double evaluator_r_planet,
-                                  const double evaluator_rhoav) {
-  constexpr double relative_tolerance = 1.0e-12;
-  const auto &values = constants.values();
-  if (!std::isfinite(evaluator_r_planet) ||
-      std::abs(evaluator_r_planet - values.r_planet) >
-          relative_tolerance * values.r_planet) {
-    std::ostringstream message;
-    message << "Globe database R_PLANET=" << values.r_planet
-            << " disagrees with model evaluator R_PLANET="
-            << evaluator_r_planet;
-    throw std::runtime_error(message.str());
-  }
-  if (!std::isfinite(evaluator_rhoav) ||
-      std::abs(evaluator_rhoav - values.rhoav) >
-          relative_tolerance * values.rhoav) {
-    std::ostringstream message;
-    message << "Globe database RHOAV=" << values.rhoav
-            << " disagrees with model evaluator RHOAV=" << evaluator_rhoav;
     throw std::runtime_error(message.str());
   }
 }

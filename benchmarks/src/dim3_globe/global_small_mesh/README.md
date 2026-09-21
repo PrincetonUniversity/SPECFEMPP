@@ -24,12 +24,11 @@ Because attenuation is disabled here, the run does not exercise the validator's
 checks on the attenuation period band; those need a Par_file with
 `ATTENUATION = .true.`.
 
-Configure SPECFEM++ with the globe mesher enabled:
+Configure an MPI build for this six-rank benchmark:
 
 ```bash
 cmake -S . -B build/dim3_globe \
-  -DSPECFEM_ENABLE_MPI=ON \
-  -DSPECFEM_BUILD_MESHFEM3D_GLOBE=ON
+  -DSPECFEM_ENABLE_MPI=ON
 cmake --build build/dim3_globe --target xmeshfem3D_globe
 ```
 

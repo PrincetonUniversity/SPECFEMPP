@@ -16,7 +16,6 @@
 #include "specfem/assembly/receivers.hpp"
 #include "specfem/assembly/sources.hpp"
 #include "specfem/enums.hpp"
-#include "specfem/globe/metadata.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/receivers.hpp"
 #include "specfem/source.hpp"
@@ -57,9 +56,6 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
    *
    */
   specfem::assembly::mesh<dimension_tag> mesh;
-
-  /** @brief Per-planet SI constants and oracle-provided discontinuity radii. */
-  specfem::globe::PlanetConstants planet_constants;
 
   /**
    * @brief Element types for every spectral element in the mesh

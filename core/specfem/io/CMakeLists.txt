@@ -1,5 +1,4 @@
 file(GLOB_RECURSE IO_SOURCE_FILES "./*.cpp" "./**/*.cpp")
-list(FILTER IO_SOURCE_FILES EXCLUDE REGEX ".*/globe_model/.*\\.cpp$")
 
 add_library(specfem_io ${IO_SOURCE_FILES})
 add_library(specfem::io ALIAS specfem_io)

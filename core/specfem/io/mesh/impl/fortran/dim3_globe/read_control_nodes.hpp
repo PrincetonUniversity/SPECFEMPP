@@ -4,7 +4,7 @@
 
 #include <fstream>
 
-namespace specfem::io::mesh::impl::fortran::dim3_globe {
+namespace specfem::io::dim3_globe {
 
 /**
  * @brief Read globe control-node and reference-coordinate arrays.
@@ -42,4 +42,4 @@ void read_control_node_indices(std::ifstream &stream,
                                specfem::mesh::globe3d_mesh &mesh,
                                const int ngnod, const int nnode);
 
-} // namespace specfem::io::mesh::impl::fortran::dim3_globe
+} // namespace specfem::io::dim3_globe

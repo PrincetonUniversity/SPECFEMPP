@@ -4,7 +4,7 @@
 
 #include <fstream>
 
-namespace specfem::io::mesh::impl::fortran::dim3_globe {
+namespace specfem::io::dim3_globe {
 
 /**
  * @brief Read local and MPI adjacency sections from a thin globe database.
@@ -22,4 +22,4 @@ namespace specfem::io::mesh::impl::fortran::dim3_globe {
 void read_adjacency_graph(std::ifstream &stream,
                           specfem::mesh::globe3d_mesh &mesh);
 
-} // namespace specfem::io::mesh::impl::fortran::dim3_globe
+} // namespace specfem::io::dim3_globe

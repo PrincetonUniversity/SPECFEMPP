@@ -5,7 +5,7 @@
 #include <utility>
 #include <vector>
 
-namespace specfem::io::mesh::impl::fortran::dim3_globe_impl {
+namespace specfem::io::dim3_globe_impl {
 
 /** @brief Oldest thin globe database format this reader accepts. */
 inline constexpr int globe_database_version_min = 4;
@@ -85,4 +85,4 @@ std::vector<bool> read_counted_logicals(std::ifstream &stream,
 std::string read_fixed_string(std::ifstream &stream,
                               const std::string &section);
 
-} // namespace specfem::io::mesh::impl::fortran::dim3_globe_impl
+} // namespace specfem::io::dim3_globe_impl

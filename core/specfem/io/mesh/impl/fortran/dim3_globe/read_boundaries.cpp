@@ -8,8 +8,7 @@
 #include <vector>
 
 specfem::mesh::globe_boundary_surface
-specfem::io::mesh::impl::fortran::dim3_globe::read_surface(
-    std::ifstream &stream, const int nspec) {
+specfem::io::dim3_globe::read_surface(std::ifstream &stream, const int nspec) {
   specfem::mesh::globe_boundary_surface result;
   int nfaces = 0;
   specfem::io::fortran_read_line(stream, &nfaces);
@@ -33,7 +32,7 @@ specfem::io::mesh::impl::fortran::dim3_globe::read_surface(
       surface_face_view(result.faces.data(), nfaces);
   int invalid_boundary_count = 0;
   Kokkos::parallel_reduce(
-      "specfem::io::mesh::dim3_globe::read_boundaries::surface",
+      "specfem::io::dim3_globe::read_boundaries::surface",
       Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0, nfaces),
       [=](const int iface, int &local_invalid_boundary_count) {
         if (element_view(iface) < 1 || element_view(iface) > nspec ||
@@ -53,7 +52,7 @@ specfem::io::mesh::impl::fortran::dim3_globe::read_surface(
   return result;
 }
 
-void specfem::io::mesh::impl::fortran::dim3_globe::read_boundaries(
+void specfem::io::dim3_globe::read_boundaries(
     std::ifstream &stream, specfem::mesh::globe3d_mesh &mesh) {
   using Dimension = specfem::element::dimension_tag;
 
@@ -78,7 +77,7 @@ void specfem::io::mesh::impl::fortran::dim3_globe::read_boundaries(
   auto free_surface_index_mapping = free_surface.index_mapping;
   auto free_surface_type = free_surface.type;
   Kokkos::parallel_for(
-      "specfem::io::mesh::dim3_globe::read_boundaries::free_surface",
+      "specfem::io::dim3_globe::read_boundaries::free_surface",
       Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(
           0, static_cast<int>(globe.free_surface.elements.size())),
       [=](const int iface) {

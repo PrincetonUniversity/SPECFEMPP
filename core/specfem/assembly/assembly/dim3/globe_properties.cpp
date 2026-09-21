@@ -2,7 +2,7 @@
 
 #include <stdexcept>
 
-#include "specfem/io/globe_model.hpp"
+#include "specfem/globe/model_evaluator.hpp"
 #include "specfem/point.hpp"
 #include "specfem/tags.hpp"
 #include "specfem/units.hpp"
@@ -21,8 +21,8 @@ void read_globe_properties(
   using Property = specfem::element::property_tag;
 
   const auto &globe = input_mesh.globe;
-  specfem::io::globe_model evaluator(globe.model_config,
-                                     assembly.planet_constants);
+  specfem::globe::ModelEvaluator evaluator(globe.model_config,
+                                           globe.planet_constants);
   const auto evaluator_dims = evaluator.dimensions();
   if (evaluator_dims.ngllx != assembly.mesh.element_grid.ngllx ||
       evaluator_dims.nglly != assembly.mesh.element_grid.nglly ||
@@ -30,8 +30,7 @@ void read_globe_properties(
     throw std::runtime_error(
         "Globe model evaluator and mesh use different GLL dimensions");
   }
-  const auto radii = evaluator.radii();
-  assembly.planet_constants.set_radii(radii);
+  globe.planet_constants.check_radii(evaluator.radii());
 
   const int ngllz = assembly.mesh.element_grid.ngllz;
   const int nglly = assembly.mesh.element_grid.nglly;

@@ -4,7 +4,7 @@
 
 #include <fstream>
 
-namespace specfem::io::mesh::impl::fortran::dim3_globe {
+namespace specfem::io::dim3_globe {
 
 /**
  * @brief Read one named boundary surface from a thin globe database.
@@ -38,4 +38,4 @@ specfem::mesh::globe_boundary_surface read_surface(std::ifstream &stream,
  */
 void read_boundaries(std::ifstream &stream, specfem::mesh::globe3d_mesh &mesh);
 
-} // namespace specfem::io::mesh::impl::fortran::dim3_globe
+} // namespace specfem::io::dim3_globe
