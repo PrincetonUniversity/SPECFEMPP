@@ -9,8 +9,7 @@
 #include <vector>
 
 specfem::mesh::globe_boundary_surface
-specfem::io::mesh::impl::fortran::dim3_globe::read_surface(
-    std::ifstream &stream, const int nspec) {
+specfem::io::mesh::impl::fortran::dim3_globe::read_surface(std::ifstream &stream, const int nspec) {
   specfem::mesh::globe_boundary_surface result;
   int nfaces = 0;
   specfem::io::fortran_read_line(stream, &nfaces);
@@ -63,7 +62,7 @@ void specfem::io::mesh::impl::fortran::dim3_globe::read_boundaries(
   auto free_surface_index_mapping = free_surface.index_mapping;
   auto free_surface_type = free_surface.type;
   Kokkos::parallel_for(
-      "specfem::io::mesh::dim3_globe::read_boundaries::free_surface",
+      "specfem::io::mesh::impl::fortran::dim3_globe::read_boundaries::free_surface",
       Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(
           0, static_cast<int>(globe.free_surface.elements.size())),
       [=](const int iface) {

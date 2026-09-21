@@ -10,8 +10,8 @@
 #include <vector>
 
 specfem::io::mesh::impl::fortran::dim3_globe::material_tags
-specfem::io::mesh::impl::fortran::dim3_globe::read_material_tags(
-    std::ifstream &stream, specfem::mesh::globe3d_mesh &mesh) {
+specfem::io::mesh::impl::fortran::dim3_globe::read_material_tags(std::ifstream &stream,
+                                            specfem::mesh::globe3d_mesh &mesh) {
   specfem::io::fortran_read_line(stream, &mesh.nspec);
   if (mesh.nspec <= 0) {
     throw std::runtime_error("Globe mesh database contains no elements");
@@ -82,7 +82,7 @@ specfem::io::mesh::impl::fortran::dim3_globe::make_materials(
       elastic(1.0, 1.0, 2.0, 0.0);
   const int elastic_index = materials.add_material(elastic);
 
-  // Isotropic-equivalent placeholder (lambda = mu = 1); the oracle overwrites
+  // Isotropic-equivalent placeholder (lambda = mu = 1); the evaluator replaces
   // every GLL point at assembly setup.
   specfem::medium_container::material<Dimension::dim3, Medium::elastic,
                                       Property::anisotropic, Attenuation::none>
