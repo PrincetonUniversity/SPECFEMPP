@@ -18,7 +18,7 @@ specfem::mesh::globe3d_mesh specfem::io::read_globe_mesh(
     const std::string &database_file,
     const specfem::attenuation::Setup &attenuation_setup) {
   namespace reader = specfem::io::mesh::impl::fortran::dim3_globe;
-  namespace reader_impl = specfem::io::mesh::impl::fortran::dim3_globe_impl;
+  namespace reader_impl = specfem::io::mesh::impl::fortran::dim3_globe;
   using Dimension = specfem::element::dimension_tag;
 
   std::ifstream stream(database_file, std::ios::in | std::ios::binary);

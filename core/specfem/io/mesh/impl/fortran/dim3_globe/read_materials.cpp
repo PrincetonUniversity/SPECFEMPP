@@ -38,13 +38,13 @@ specfem::io::mesh::impl::fortran::dim3_globe::read_material_tags(
   // Kokkos host parallel region cannot propagate.
   for (int ispec = 0; ispec < mesh.nspec; ++ispec) {
     tags.medium_tags[ispec] =
-        specfem::io::mesh::impl::fortran::dim3_globe_impl::to_medium_tag(
+        specfem::io::mesh::impl::fortran::dim3_globe::to_medium_tag(
             medium_codes[ispec]);
     tags.property_tags[ispec] =
-        specfem::io::mesh::impl::fortran::dim3_globe_impl::to_property_tag(
+        specfem::io::mesh::impl::fortran::dim3_globe::to_property_tag(
             property_codes[ispec]);
     element_context[ispec] = {
-      specfem::io::mesh::impl::fortran::dim3_globe_impl::to_region_tag(
+      specfem::io::mesh::impl::fortran::dim3_globe::to_region_tag(
           region_codes[ispec]),
       idoubling[ispec],
       rmin[ispec],

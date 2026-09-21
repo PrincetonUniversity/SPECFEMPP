@@ -21,12 +21,11 @@
  *
  * This is the only place the database's raw codes appear; nothing outside the
  * reader sees one. The region values are upstream SPECFEM3D_GLOBE's
- * @c IREGION_* constants, which @c specfem::globe_model::iregion_code
- * re-derives independently on the evaluator/catalog boundary -- both mirror
- * upstream and change only if upstream does. Every function throws
+ * @c IREGION_* constants; keep them in sync with the evaluator boundary that
+ * still consumes raw globe region codes. Every function throws
  * @c std::runtime_error naming the offending value.
  */
-namespace specfem::io::mesh::impl::fortran::dim3_globe_impl {
+namespace specfem::io::mesh::impl::fortran::dim3_globe {
 
 /** @brief Region tag for a database region code. */
 inline specfem::element::region_tag to_region_tag(const int code) {
@@ -102,4 +101,4 @@ inline specfem::mesh_entity::dim3::type to_anchor(const int code) {
   return entity;
 }
 
-} // namespace specfem::io::mesh::impl::fortran::dim3_globe_impl
+} // namespace specfem::io::mesh::impl::fortran::dim3_globe

@@ -32,8 +32,7 @@ specfem::io::mesh::impl::fortran::dim3_globe::read_surface(
     }
     --result.elements[iface];
     result.faces[iface] =
-        specfem::io::mesh::impl::fortran::dim3_globe_impl::to_face(
-            faces[iface]);
+        specfem::io::mesh::impl::fortran::dim3_globe::to_face(faces[iface]);
   }
 
   return result;
