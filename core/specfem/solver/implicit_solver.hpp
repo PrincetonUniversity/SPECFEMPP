@@ -15,6 +15,7 @@
 #include <Tpetra_MultiVector.hpp>
 #include <Tpetra_Operator.hpp>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -264,13 +265,13 @@ private:
   /// Dof map and expression scratch shared by every state vector below
   std::unique_ptr<specfem::linear_system::VectorSpace> vectors_;
 
-  std::unique_ptr<specfem::linear_system::VectorView> u_;     ///< u_n
-  std::unique_ptr<specfem::linear_system::VectorView> v_;     ///< v_n
-  std::unique_ptr<specfem::linear_system::VectorView> a_;     ///< a_n
-  std::unique_ptr<specfem::linear_system::VectorView> u_new_; ///< u_{n+1}
-  std::unique_ptr<specfem::linear_system::VectorView> a_new_; ///< a_{n+1}
-  std::unique_ptr<specfem::linear_system::VectorView> v_new_; ///< v_{n+1}
-  std::unique_ptr<specfem::linear_system::VectorView> rhs_;   ///< b
+  std::optional<specfem::linear_system::VectorView> u_;     ///< u_n
+  std::optional<specfem::linear_system::VectorView> v_;     ///< v_n
+  std::optional<specfem::linear_system::VectorView> a_;     ///< a_n
+  std::optional<specfem::linear_system::VectorView> u_new_; ///< u_{n+1}
+  std::optional<specfem::linear_system::VectorView> a_new_; ///< a_{n+1}
+  std::optional<specfem::linear_system::VectorView> v_new_; ///< v_{n+1}
+  std::optional<specfem::linear_system::VectorView> rhs_;   ///< b
 
   int last_step_ = 0; ///< Steps executed by the last run()
 };

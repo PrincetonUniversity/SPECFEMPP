@@ -10,6 +10,7 @@ namespace specfem {
 namespace linear_system {
 
 class VectorSpace;
+class VectorView;
 
 /**
  * @brief One scaled vector of a sum: `alpha * vector`.
@@ -27,7 +28,7 @@ struct VectorTerm {
 
 /// An ordered sum of @ref VectorTerm
 template <std::size_t N> struct Sum {
-  VectorTerm terms[N == 0 ? 1 : N];      ///< Summands, in written order
+  VectorTerm terms[N];                   ///< Summands, in written order
   constexpr static std::size_t size = N; ///< Number of summands
 };
 
@@ -60,6 +61,10 @@ template <std::size_t N, typename Product> struct Expression {
 } // namespace linear_system
 
 namespace linear_system_impl {
+
+/// Always false, but only once `T` is known -- what a rejected overload
+/// asserts on so the message survives to the caller
+template <typename... T> constexpr bool always_false_v = false;
 
 /// Whether `T` is a @ref Sum
 template <typename T> struct is_sum : std::false_type {};
@@ -189,6 +194,36 @@ aliases(const specfem::linear_system::Expression<N, Product> &expression,
 }
 
 } // namespace linear_system_impl
+
+namespace linear_system {
+
+/**
+ * @brief An expression the vector grammar can evaluate.
+ *
+ * A scaled sum, a matrix or diagonal product, or a sum plus one product.
+ *
+ * @tparam T Candidate expression type
+ */
+template <typename T>
+concept VectorExpression = specfem::linear_system_impl::is_sum<T>::value ||
+                           specfem::linear_system_impl::is_product<T>::value ||
+                           specfem::linear_system_impl::is_expression<T>::value;
+
+/// An operand that can stand where a sum is expected: a vector or a sum
+template <typename T>
+concept SumLike = specfem::linear_system_impl::is_sum<T>::value ||
+                  std::is_same_v<std::remove_cvref_t<T>, VectorView> ||
+                  std::is_same_v<std::remove_cvref_t<T>, vector_type>;
+
+/// A matrix or diagonal applied to a sum
+template <typename T>
+concept VectorProduct = specfem::linear_system_impl::is_product<T>::value;
+
+/// Either operand kind the grammar's `+` and `-` accept
+template <typename T>
+concept VectorOperand = SumLike<T> || VectorProduct<T>;
+
+} // namespace linear_system
 } // namespace specfem
 
 #endif // SPECFEM_ENABLE_TRILINOS

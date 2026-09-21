@@ -293,6 +293,26 @@ TEST_F(VectorExpression, AnAliasedTargetIsEvaluatedThroughScratch) {
   expect_entries(u.vector(), expected);
 }
 
+TEST_F(VectorExpression, AccumulatingAnExpressionThatReadsTheTargetIsCorrect) {
+  auto b = space_->vector();
+  const auto matrix = scaled_identity(static_cast<scalar_type>(2));
+
+  // Tpetra's apply() forbids its input aliasing its output, so this has to be
+  // routed through scratch rather than handed straight to the operator.
+  fill(b.vector(), [](int i) { return i + 1; });
+  b += *matrix * b;
+
+  std::vector<scalar_type> expected(num_dofs);
+  for (int i = 0; i < num_dofs; ++i) {
+    expected[i] = static_cast<scalar_type>(3 * (i + 1));
+  }
+  expect_entries(b.vector(), expected);
+
+  fill(b.vector(), [](int i) { return i + 1; });
+  b += static_cast<scalar_type>(2) * b;
+  expect_entries(b.vector(), expected);
+}
+
 TEST_F(VectorExpression, Norm2OfAnExpressionLeavesItsOperandsAlone) {
   auto u = space_->vector();
   auto v = space_->vector();
@@ -347,9 +367,9 @@ TEST_F(VectorExpression, ScratchIsPooledAcrossStatements) {
     (void)norm;
   }
 
-  // The deepest expression borrows one scratch vector at a time; repeating it
-  // must not grow the pool.
-  EXPECT_LE(space_->scratch_size(), std::size_t{ 2 });
+  // Borrows never interleave, so the pool holds exactly what the deepest
+  // expression needs -- one vector -- however many times it is evaluated.
+  EXPECT_LE(space_->scratch_size(), std::size_t{ 1 });
 }
 
 // The grammar rejects these at compile time; each is kept here so the intent
@@ -358,6 +378,10 @@ TEST_F(VectorExpression, ScratchIsPooledAcrossStatements) {
 //   b = 2.0f * (*matrix) * u;   // scaled matrix: scale the operand instead
 //   b = *matrix * (*matrix * u); // nested product
 //   b = *matrix * u + *matrix * v; // two products in one expression
+//   b = *matrix * u - *matrix * v; // likewise, via the shared operator-
+//   VectorView c = u;              // copy construction is deleted: `b = u`
+//                                  // copies values, so a handle-sharing copy
+//                                  // constructor would mean the opposite
 
 } // namespace vector_view_expression_test
 

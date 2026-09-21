@@ -61,14 +61,13 @@ specfem::solver::ImplicitNewmarkSolver<Tags>::ImplicitNewmarkSolver(
 
   vectors_ =
       std::make_unique<specfem::linear_system::VectorSpace>(fe_->owned_map());
-  using VectorView = specfem::linear_system::VectorView;
-  u_ = std::make_unique<VectorView>(vectors_->vector());
-  v_ = std::make_unique<VectorView>(vectors_->vector());
-  a_ = std::make_unique<VectorView>(vectors_->vector());
-  u_new_ = std::make_unique<VectorView>(vectors_->vector());
-  v_new_ = std::make_unique<VectorView>(vectors_->vector());
-  a_new_ = std::make_unique<VectorView>(vectors_->vector());
-  rhs_ = std::make_unique<VectorView>(vectors_->vector());
+  u_.emplace(vectors_->vector());
+  v_.emplace(vectors_->vector());
+  a_.emplace(vectors_->vector());
+  u_new_.emplace(vectors_->vector());
+  v_new_.emplace(vectors_->vector());
+  a_new_.emplace(vectors_->vector());
+  rhs_.emplace(vectors_->vector());
 
   form_operator(time_scheme_->get_timestep());
 }
@@ -224,9 +223,9 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::run() {
   auto &a_new = *a_new_;
   auto &b = *rhs_;
 
-  u = static_cast<scalar_type>(0);
-  v = static_cast<scalar_type>(0);
-  a = static_cast<scalar_type>(0);
+  u = 0;
+  v = 0;
+  a = 0;
   last_step_ = 0;
 
   const bool has_damping = damping().getGlobalNumEntries() > 0;
@@ -281,7 +280,7 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::run() {
     }
 
     // a_{n+1} = c_a0 (u_{n+1} - u_n - dt v_n) - c_a2 a_n
-    a_new = c_a0 * (u_new - u - static_cast<scalar_type>(dt) * v) - c_a2 * a;
+    a_new = c_a0 * (u_new - u - dt * v) - c_a2 * a;
     // v_{n+1} = v_n + dt (1 - gamma) a_n + dt gamma a_{n+1}
     v_new = v + c_v0 * a + c_v1 * a_new;
 
