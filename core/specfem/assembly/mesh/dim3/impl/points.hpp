@@ -94,6 +94,35 @@ public:
              &control_nodes,
          const specfem::assembly::mesh_impl::shape_functions<dimension_tag>
              &shape_functions);
+
+  /**
+   * @brief Constructor reusing the global numbering of an existing point set.
+   *
+   * Shares the index mapping and global point count with @p numbering (the
+   * mesh topology is identical) and recomputes only the physical coordinates
+   * by contracting @p shape_functions against @p control_nodes. Used to build
+   * the reference (undeformed) coordinate set with the exact same
+   * interpolation as the final geometry.
+   *
+   * @param numbering Existing point set whose numbering views are shared
+   * @param control_nodes Control nodes providing the coordinates to
+   * interpolate
+   * @param shape_functions Shape function values at GLL points
+   */
+  points(const points &numbering,
+         const specfem::assembly::mesh_impl::control_nodes<dimension_tag>
+             &control_nodes,
+         const specfem::assembly::mesh_impl::shape_functions<dimension_tag>
+             &shape_functions);
+
+private:
+  /**
+   * @brief Compute coordinate bounds over all quadrature points.
+   *
+   * Fills the min/max members from the device coordinate view and reduces
+   * them across MPI ranks.
+   */
+  void compute_coordinate_bounds();
 };
 
 } // namespace specfem::assembly::mesh_impl

@@ -13,7 +13,9 @@ specfem::assembly::mesh<specfem::element::dimension_tag::dim3>::mesh(
     const int ngllx, const specfem::mesh::tags<dimension_tag> &tags,
     const specfem::mesh::adjacency_graph<dimension_tag> &adjacency_graph,
     const specfem::mesh::control_nodes<dimension_tag> &control_nodes,
-    const specfem::quadrature::quadratures &quadrature)
+    const specfem::quadrature::quadratures &quadrature,
+    const specfem::mesh::control_nodes<dimension_tag>::CoordinatesViewType
+        &reference_anchor_coordinates)
     : nspec(nspec), element_grid(ngllz, nglly, ngllx), ngnod(ngnod) {
   const int quadrature_ngll = quadrature.gll.get_N();
   if (ngllz != quadrature_ngll || nglly != quadrature_ngll ||
@@ -84,6 +86,21 @@ specfem::assembly::mesh<specfem::element::dimension_tag::dim3>::mesh(
         const specfem::assembly::mesh_impl::shape_functions<dimension_tag> &>(
         *this)
   };
+
+  if (reference_anchor_coordinates.extent(0) > 0) {
+    static_cast<specfem::assembly::mesh_impl::reference_points<dimension_tag>
+                    &>(*this) = {
+      static_cast<const specfem::assembly::mesh_impl::points<dimension_tag> &>(
+          *this),
+      static_cast<const specfem::assembly::mesh_impl::mesh_to_compute_mapping<
+          dimension_tag> &>(*this),
+      static_cast<
+          const specfem::assembly::mesh_impl::shape_functions<dimension_tag>
+              &>(*this),
+      control_nodes,
+      reference_anchor_coordinates
+    };
+  }
 
   return;
 }

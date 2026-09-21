@@ -8,5 +8,6 @@
 #include "mesh/dim3/impl/control_nodes.tpp"
 #include "mesh/dim3/impl/mesh_to_compute_mapping.tpp"
 #include "mesh/dim3/impl/points.tpp"
+#include "mesh/dim3/impl/reference_points.tpp"
 #include "mesh/dim3/impl/shape_functions.tpp"
 #include "mesh/dim3/mesh.tpp"

@@ -331,10 +331,6 @@ specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::
 
   Kokkos::deep_copy(this->index_mapping, this->h_index_mapping);
 
-  this->coord = CoordViewType("specfem::assembly::mesh::points::coord", nspec,
-                              ngllz, nglly, ngllx, ndim);
-  this->h_coord = Kokkos::create_mirror_view(this->coord);
-
   const int ngnod = control_nodes.ngnod;
 
   initialize_coordinates(nspec, ngllz, nglly, ngllx, ngnod, this->coord,
@@ -343,6 +339,36 @@ specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::
 
   Kokkos::deep_copy(this->h_coord, this->coord);
 
+  compute_coordinate_bounds();
+
+  return;
+}
+
+specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::
+    points(const points &numbering,
+           const specfem::assembly::mesh_impl::control_nodes<dimension_tag>
+               &control_nodes,
+           const specfem::assembly::mesh_impl::shape_functions<dimension_tag>
+               &shape_functions)
+    : nspec(numbering.nspec), ngllz(numbering.ngllz), nglly(numbering.nglly),
+      ngllx(numbering.ngllx), nglob(numbering.nglob),
+      index_mapping(numbering.index_mapping),
+      h_index_mapping(numbering.h_index_mapping),
+      coord("specfem::assembly::mesh::points::coord", numbering.nspec,
+            numbering.ngllz, numbering.nglly, numbering.ngllx, ndim),
+      h_coord(Kokkos::create_mirror_view(coord)) {
+
+  initialize_coordinates(nspec, ngllz, nglly, ngllx, control_nodes.ngnod,
+                         this->coord, shape_functions.shape3D,
+                         control_nodes.control_node_coordinates);
+
+  Kokkos::deep_copy(this->h_coord, this->coord);
+
+  compute_coordinate_bounds();
+}
+
+void specfem::assembly::mesh_impl::points<
+    specfem::element::dimension_tag::dim3>::compute_coordinate_bounds() {
   const auto coord = this->coord;
 
   const auto x_result =
@@ -380,6 +406,4 @@ specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::
   SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->zmax, 1,
                                      SPECFEM_MPI_TYPE_REAL, MPI_MAX,
                                      specfem::MPI::communicator()));
-
-  return;
 }
