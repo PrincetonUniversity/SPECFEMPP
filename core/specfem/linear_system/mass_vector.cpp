@@ -4,6 +4,7 @@
 
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/compute/initialize_mass_matrix.hpp"
+#include "specfem/linear_system/sparse_matrix_view/field_vector.hpp"
 #include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
 #include <Tpetra_Vector.hpp>
@@ -15,7 +16,7 @@ template <typename Tags>
 Teuchos::RCP<specfem::linear_system::vector_type>
 specfem::linear_system::assemble_mass_vector(
     specfem::assembly::assembly<Tags::dimension_tag> &assembly,
-    const DofMap &dof_map) {
+    const FEAssembly<FEMapping<Tags::dimension_tag, Tags::medium_tag>> &fe) {
 
   if (assembly.mesh.element_grid != 5) {
     throw std::runtime_error(
@@ -27,12 +28,14 @@ specfem::linear_system::assemble_mass_vector(
   constexpr auto outer = specfem::element::mpi_tag::outer;
   constexpr auto inner = specfem::element::mpi_tag::inner;
 
+  const auto &mapping = fe.mapping();
+
   auto &field = assembly.fields.template get_simulation_field<forward>();
   const auto &field_impl = field.template get_field<Tags::medium_tag>();
   const auto mass = field_impl.get_mass_inverse();
   const auto h_mass = field_impl.get_host_mass_inverse();
 
-  if (field_impl.nglob != dof_map.nglob()) {
+  if (field_impl.nglob != mapping.nglob()) {
     throw std::runtime_error(
         "specfem::linear_system::assemble_mass_vector: the dof map does not "
         "match the assembly's forward field.");
@@ -55,16 +58,9 @@ specfem::linear_system::assemble_mass_vector(
 
   Kokkos::deep_copy(h_mass, mass);
 
-  auto mass_vector = Teuchos::rcp(new vector_type(dof_map.owned_map()));
-  {
-    auto view = mass_vector->getLocalViewHost(Tpetra::Access::OverwriteAll);
-    for (int iglob = 0; iglob < dof_map.nglob(); ++iglob) {
-      for (int icomp = 0; icomp < dof_map.ncomp(); ++icomp) {
-        view(static_cast<std::size_t>(dof_map.gid(iglob, icomp)), 0) =
-            h_mass(iglob, icomp);
-      }
-    }
-  }
+  auto mass_vector =
+      Teuchos::rcp(new specfem::linear_system::vector_type(fe.owned_map()));
+  specfem::linear_system::copy_field_to_vector(mapping, h_mass, *mass_vector);
 
   // Leave the assembly as found for the explicit solver's own mass init.
   Kokkos::deep_copy(mass, 0);
@@ -88,6 +84,8 @@ template Teuchos::RCP<specfem::linear_system::vector_type>
 specfem::linear_system::assemble_mass_vector<
     specfem::linear_system_impl::elastic_isotropic_tags>(
     specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &,
-    const specfem::linear_system::DofMap &);
+    const specfem::linear_system::FEAssembly<specfem::linear_system::FEMapping<
+        specfem::element::dimension_tag::dim3,
+        specfem::element::medium_tag::elastic>> &);
 
 #endif // SPECFEM_ENABLE_TRILINOS
