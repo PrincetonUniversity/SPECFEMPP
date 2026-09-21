@@ -19,4 +19,5 @@ specific functionality:
 
    impl/control_nodes
    impl/points
+   impl/reference_points
    impl/shape_functions
