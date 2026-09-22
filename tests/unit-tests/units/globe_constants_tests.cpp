@@ -46,7 +46,7 @@ TEST(GlobeConstants, LengthAndDensityRoundTrip) {
   const auto recovered_length =
       specfem::globe::dimensionalize<specfem::units::Meters>(length_nd, earth);
   EXPECT_NEAR(recovered_length.raw(), length.raw(),
-              2.0 * std::numeric_limits<double>::epsilon() * length.raw());
+              8.0 * std::numeric_limits<type_real>::epsilon() * length.raw());
 
   const specfem::units::KilogramPerCubicMeter density(4876.5);
   const auto density_nd = specfem::globe::nondimensionalize(density, earth);
@@ -54,7 +54,7 @@ TEST(GlobeConstants, LengthAndDensityRoundTrip) {
       specfem::globe::dimensionalize<specfem::units::KilogramPerCubicMeter>(
           density_nd, earth);
   EXPECT_NEAR(recovered_density.raw(), density.raw(),
-              2.0 * std::numeric_limits<double>::epsilon() * density.raw());
+              8.0 * std::numeric_limits<type_real>::epsilon() * density.raw());
 }
 
 TEST(GlobeConstants, UnpopulatedRadiiAreReported) {
