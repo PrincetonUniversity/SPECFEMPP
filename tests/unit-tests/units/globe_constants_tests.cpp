@@ -80,7 +80,7 @@ TEST(GlobeConstants, InconsistentRadiiAreRejected) {
   EXPECT_FALSE(earth.has_radii());
 }
 
-TEST(GlobeConstants, EvaluatorRadiusMismatchIsRejected) {
+TEST(GlobeConstants, ReplacingStoredRadiiWithMismatchIsRejected) {
   PlanetConstants earth(Planet::earth, earth_values());
   PlanetConstants::Radii radii{
     .r_icb = 1221500.0,
