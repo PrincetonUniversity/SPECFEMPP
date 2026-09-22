@@ -50,7 +50,6 @@ void read_globe_properties(
     throw std::runtime_error(
         "Globe model evaluator and mesh use different GLL dimensions");
   }
-  globe.planet_constants.check_radii(evaluator.radii());
 
   const int ngllz = assembly.mesh.element_grid.ngllz;
   const int nglly = assembly.mesh.element_grid.nglly;

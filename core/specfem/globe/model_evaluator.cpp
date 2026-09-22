@@ -173,6 +173,7 @@ specfem::globe::ModelEvaluator::ModelEvaluator(
     scales_ = query_scales();
     specfem::globe::evaluator_impl::check_scales(constants_, scales_.length,
                                                  scales_.density);
+    constants_.check_radii(radii());
   } catch (...) {
     release();
     throw;

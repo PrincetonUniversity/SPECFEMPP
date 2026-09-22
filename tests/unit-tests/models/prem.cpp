@@ -277,6 +277,23 @@ TEST_F(PremEvaluatorTest, RejectsDatabaseScaleMismatches) {
   EXPECT_FALSE(specfem::globe::ModelEvaluator::is_active());
 }
 
+TEST_F(PremEvaluatorTest, RejectsDatabaseRadiusMismatches) {
+  auto constants = earth_constants();
+  specfem::globe::PlanetConstants::Radii radii;
+  {
+    const specfem::globe::ModelEvaluator evaluator(
+        bare_config("1d_isotropic_prem"), constants);
+    radii = evaluator.radii();
+  }
+
+  radii.r_cmb += 1.0;
+  constants.set_radii(radii);
+  EXPECT_THROW((specfem::globe::ModelEvaluator{
+                   bare_config("1d_isotropic_prem"), constants }),
+               std::runtime_error);
+  EXPECT_FALSE(specfem::globe::ModelEvaluator::is_active());
+}
+
 // -----------------------------------------------------------------------------
 // Guard rails
 // -----------------------------------------------------------------------------
