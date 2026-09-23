@@ -13,6 +13,10 @@
 !    globe_evaluator_init            -- one-time model setup
 !    globe_evaluator_scales          -- planet-dependent SI scales
 !    globe_evaluator_planet_values   -- schema-versioned resolved planet values
+!    globe_evaluator_model_config    -- resolved raw catalog codes and flags
+!    globe_evaluator_reference_size  -- reference-profile/spline capacity
+!    globe_evaluator_reference_density -- planet reference density profile
+!    globe_evaluator_ellipticity_spline -- model ellipticity spline
 !    globe_evaluator_get_element     -- material for one element's GLL points
 !    globe_evaluator_prem_reference  -- TEST ONLY, see note at its definition
 !
@@ -436,6 +440,176 @@
   globe_evaluator_planet_values = GLOBE_EVALUATOR_OK
 
   end function globe_evaluator_planet_values
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  integer(c_int) function globe_evaluator_model_config(codes, flags) &
+    bind(C, name="globe_evaluator_model_config")
+
+! Returns the raw model-selection codes and flags derived by the linked catalog.
+! The database stores the same arrays, allowing the C++ boundary to detect skew
+! without interpreting or duplicating any Fortran enum values.
+
+  use iso_c_binding, only: c_int
+  use globe_evaluator_par, only: is_initialized, &
+    GLOBE_EVALUATOR_OK, GLOBE_EVALUATOR_NOT_INITIALIZED
+  use shared_parameters, only: REFERENCE_1D_MODEL, THREE_D_MODEL, &
+    THREE_D_MODEL_IC, REFERENCE_CRUSTAL_MODEL, MODEL_GLL_TYPE, &
+    TRANSVERSE_ISOTROPY, CRUSTAL, ONE_CRUST, CASE_3D, &
+    ANISOTROPIC_3D_MANTLE, ANISOTROPIC_INNER_CORE, &
+    MODEL_3D_MANTLE_PERTUBATIONS, HETEROGEN_3D_MANTLE, &
+    ATTENUATION_3D, ATTENUATION_3D_BERKELEY, ATTENUATION_GLL, &
+    HONOR_1D_SPHERICAL_MOHO, MODEL_GLL, USE_FULL_TISO_MANTLE, &
+    REGIONAL_MOHO_MESH, EMC_MODEL
+
+  implicit none
+
+  integer(c_int), dimension(5), intent(out) :: codes
+  integer(c_int), dimension(16), intent(out) :: flags
+
+  codes(:) = 0_c_int
+  flags(:) = 0_c_int
+  if (.not. is_initialized) then
+    globe_evaluator_model_config = GLOBE_EVALUATOR_NOT_INITIALIZED
+    return
+  endif
+
+  codes = int((/ REFERENCE_1D_MODEL, THREE_D_MODEL, THREE_D_MODEL_IC, &
+                 REFERENCE_CRUSTAL_MODEL, MODEL_GLL_TYPE /), kind=c_int)
+  flags = merge(1_c_int, 0_c_int, &
+                (/ TRANSVERSE_ISOTROPY, CRUSTAL, ONE_CRUST, CASE_3D, &
+                   ANISOTROPIC_3D_MANTLE, ANISOTROPIC_INNER_CORE, &
+                   MODEL_3D_MANTLE_PERTUBATIONS, HETEROGEN_3D_MANTLE, &
+                   ATTENUATION_3D, ATTENUATION_3D_BERKELEY, ATTENUATION_GLL, &
+                   HONOR_1D_SPHERICAL_MOHO, MODEL_GLL, USE_FULL_TISO_MANTLE, &
+                   REGIONAL_MOHO_MESH, EMC_MODEL /))
+  globe_evaluator_model_config = GLOBE_EVALUATOR_OK
+
+  end function globe_evaluator_model_config
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine globe_evaluator_reference_size(size_out) &
+    bind(C, name="globe_evaluator_reference_size")
+
+  use iso_c_binding, only: c_int
+  use constants, only: NR_DENSITY
+
+  implicit none
+
+  integer(c_int), intent(out) :: size_out
+
+  size_out = int(NR_DENSITY, kind=c_int)
+
+  end subroutine globe_evaluator_reference_size
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  integer(c_int) function globe_evaluator_reference_density(r, rho) &
+    bind(C, name="globe_evaluator_reference_density")
+
+! Evaluates the pure 1-D density profile used by gravity and ellipticity. This
+! deliberately bypasses get_model, whose value may contain 3-D perturbations.
+
+  use iso_c_binding, only: c_int, c_double
+  use globe_evaluator_par, only: is_initialized, &
+    GLOBE_EVALUATOR_OK, GLOBE_EVALUATOR_NOT_INITIALIZED, &
+    GLOBE_EVALUATOR_BAD_ARGUMENT
+  use shared_parameters, only: PLANET_TYPE, IPLANET_EARTH, IPLANET_MARS, &
+    IPLANET_MOON
+
+  implicit none
+
+  real(c_double), value, intent(in) :: r
+  real(c_double), intent(out) :: rho
+
+  rho = 0.d0
+  if (.not. is_initialized) then
+    globe_evaluator_reference_density = GLOBE_EVALUATOR_NOT_INITIALIZED
+    return
+  endif
+  if (r < 0.d0 .or. r > 1.d0) then
+    globe_evaluator_reference_density = GLOBE_EVALUATOR_BAD_ARGUMENT
+    return
+  endif
+
+  select case (PLANET_TYPE)
+  case (IPLANET_EARTH)
+    call prem_density(r, rho)
+  case (IPLANET_MARS)
+    call Sohl_density(r, rho)
+  case (IPLANET_MOON)
+    call model_vpremoon_density(r, rho)
+  case default
+    globe_evaluator_reference_density = GLOBE_EVALUATOR_BAD_ARGUMENT
+    return
+  end select
+
+  globe_evaluator_reference_density = GLOBE_EVALUATOR_OK
+
+  end function globe_evaluator_reference_density
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  integer(c_int) function globe_evaluator_ellipticity_spline( &
+      capacity, size_out, radii, values, second_derivatives) &
+    bind(C, name="globe_evaluator_ellipticity_spline")
+
+! Constructs the exact Clairaut/Radau spline used by the mesher. Returning its
+! knots keeps density integration and rotation-rate handling in the catalog.
+
+  use iso_c_binding, only: c_int, c_double
+  use constants, only: NR_DENSITY
+  use globe_evaluator_par, only: is_initialized, &
+    GLOBE_EVALUATOR_OK, GLOBE_EVALUATOR_NOT_INITIALIZED, &
+    GLOBE_EVALUATOR_BAD_ARGUMENT
+
+  implicit none
+
+  integer(c_int), value, intent(in) :: capacity
+  integer(c_int), intent(out) :: size_out
+  real(c_double), dimension(NR_DENSITY), intent(out) :: radii, values
+  real(c_double), dimension(NR_DENSITY), intent(out) :: second_derivatives
+
+  integer :: nspl
+  double precision, dimension(NR_DENSITY) :: eta, eta2
+
+  size_out = 0_c_int
+  radii(:) = 0.d0
+  values(:) = 0.d0
+  second_derivatives(:) = 0.d0
+  if (.not. is_initialized) then
+    globe_evaluator_ellipticity_spline = GLOBE_EVALUATOR_NOT_INITIALIZED
+    return
+  endif
+  if (capacity < NR_DENSITY) then
+    globe_evaluator_ellipticity_spline = GLOBE_EVALUATOR_BAD_ARGUMENT
+    return
+  endif
+
+  nspl = 0
+  call make_ellipticity_epsilon_eta(nspl, radii, values, &
+                                    second_derivatives, eta, eta2)
+  size_out = int(nspl, kind=c_int)
+  globe_evaluator_ellipticity_spline = GLOBE_EVALUATOR_OK
+
+  end function globe_evaluator_ellipticity_spline
 
 
 !

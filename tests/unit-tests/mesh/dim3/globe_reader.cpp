@@ -91,8 +91,10 @@ std::filesystem::path write_database(const bool attenuation = false,
   Record model;
   model.append_fixed("1D_isotropic_prem", 512);
   model.write(stream);
-  write_values(stream, 5, std::vector<int>{ 1, 0, 0, 0, 0 });
-  write_values(stream, 16, std::vector<int>(16, 0));
+  write_values(stream, 5, std::vector<int>{ 1, 0, 0, 2, 0 });
+  std::vector<int> model_flags(16, 0);
+  model_flags[11] = 1;
+  write_values(stream, 16, model_flags);
   write_values(stream, 6, 8, 8);
   write_values(stream, 20.0, 1000.0, source_frequency);
 
@@ -147,7 +149,7 @@ TEST(GlobeMeshReader, ReadsThinDatabaseAndPreservesReferenceContext) {
   EXPECT_EQ(mesh.control_nodes.nnodes, 27);
   EXPECT_EQ(mesh.globe.model_config.model_name, "1D_isotropic_prem");
   EXPECT_EQ(mesh.globe.model_verification.codes,
-            (std::vector<int>{ 1, 0, 0, 0, 0 }));
+            (std::vector<int>{ 1, 0, 0, 2, 0 }));
   EXPECT_EQ(mesh.globe.model_config.nchunks, 6);
   ASSERT_EQ(mesh.globe.element_context.size(), 1);
   EXPECT_EQ(mesh.globe.element_context[0].region,

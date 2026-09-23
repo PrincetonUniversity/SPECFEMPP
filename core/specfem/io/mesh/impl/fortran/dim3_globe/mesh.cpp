@@ -111,8 +111,9 @@ specfem::mesh::globe3d_mesh specfem::io::read_globe_mesh(
   }
 
   // Database constants are verification records, not retained mesh state.
-  specfem::globe::ModelEvaluator::validate_database_constants(model_config,
-                                                              planet_constants);
+  specfem::globe::ModelEvaluator::validate_database_constants(
+      model_config, planet_constants, globe.model_verification.codes,
+      globe.model_verification.flags);
 
   const int nnode = reader::read_control_node_coordinates(stream, mesh, ngnod);
   const auto material_tags = reader::read_material_tags(stream, mesh);
