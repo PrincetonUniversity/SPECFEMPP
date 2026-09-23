@@ -12,6 +12,7 @@
 #include "specfem/assembly/kernels.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/mpi/dim3/mpi.hpp"
+#include "specfem/assembly/nonconforming_interfaces/dim3/nonconforming_interfaces.hpp"
 #include "specfem/assembly/properties.hpp"
 #include "specfem/assembly/receivers.hpp"
 #include "specfem/assembly/sources.hpp"
@@ -125,6 +126,9 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
   specfem::assembly::conforming_interfaces<dimension_tag>
       conforming_interfaces; ///< Conforming interfaces between different media
                              ///< (e.g., fluid-solid interface)
+  specfem::assembly::nonconforming_interfaces<dimension_tag>
+      nonconforming_interfaces; ///< Nonconforming interfaces between different
+                                ///< media (e.g., fluid-solid interface)
 
   specfem::assembly::boundary_values<dimension_tag>
       boundary_values; ///< Field
