@@ -15,7 +15,9 @@
 #include <cmath>
 #include <cstdio>
 #include <gtest/gtest.h>
+#include <limits>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -391,6 +393,149 @@ TEST_F(DirectStiffness3D, ClosedFormReferenceMatchesProbe) {
                            << "): probe=" << h_probe(worst_e, worst_i, worst_j)
                            << " scale=" << scale;
 }
+
+#ifdef SPECFEM_ENABLE_TENSOROPS
+
+// A/B: the direct kernel's blocks equal the probe's over every element, with
+// a timing line for all three kernels.
+TEST_F(DirectStiffness3D, AgreesWithProbeKernelWithTiming) {
+  const auto range = elastic_range();
+  const int nelements = range.size();
+
+  StiffnessView k_probe("k_probe", nelements, ndof, ndof);
+  StiffnessView k_graph("k_graph", nelements, ndof, ndof);
+  StiffnessView k_direct("k_direct", nelements, ndof, ndof);
+
+  // Warm-up on a 1-element sub-range; the timed full-range calls after
+  // overwrite every block.
+  const specfem::datatype::ElementIndexRange warmup(range.begin_index(),
+                                                    range.begin_index() + 1);
+  fill_blocks(k_probe, KernelImpl::probe, warmup);
+  fill_blocks(k_graph, KernelImpl::tensor_graph, warmup);
+  fill_blocks(k_direct, KernelImpl::direct, warmup);
+  const double probe_ms = fill_blocks(k_probe, KernelImpl::probe, range);
+  const double graph_ms = fill_blocks(k_graph, KernelImpl::tensor_graph, range);
+  const double direct_ms = fill_blocks(k_direct, KernelImpl::direct, range);
+
+  std::printf("[ timing   ] probe: %.2f ms, tensor_graph: %.2f ms, direct: "
+              "%.2f ms (%d elements; direct speedup vs probe %.1fx, vs "
+              "tensor_graph %.1fx)\n",
+              probe_ms, graph_ms, direct_ms, nelements, probe_ms / direct_ms,
+              graph_ms / direct_ms);
+
+  auto h_probe =
+      Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, k_probe);
+  auto h_direct =
+      Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, k_direct);
+
+  type_real scale = 0;
+  type_real max_diff = 0;
+  int worst_e = 0, worst_i = 0, worst_j = 0;
+  for (int e = 0; e < nelements; ++e) {
+    for (int i = 0; i < ndof; ++i) {
+      for (int j = 0; j < ndof; ++j) {
+        scale = std::max(scale, std::abs(h_probe(e, i, j)));
+        const type_real diff = std::abs(h_probe(e, i, j) - h_direct(e, i, j));
+        if (diff > max_diff) {
+          max_diff = diff;
+          worst_e = e;
+          worst_i = i;
+          worst_j = j;
+        }
+      }
+    }
+  }
+  ASSERT_GT(scale, static_cast<type_real>(0));
+  const type_real tol = scaled_tolerance(1e-4, 1e-12, scale);
+  EXPECT_LE(max_diff, tol) << "worst entry at (e=" << worst_e
+                           << ", i=" << worst_i << ", j=" << worst_j
+                           << "): probe=" << h_probe(worst_e, worst_i, worst_j)
+                           << " direct=" << h_direct(worst_e, worst_i, worst_j)
+                           << " scale=" << scale;
+}
+
+TEST_F(DirectStiffness3D, SymmetricWithRigidBodyNullSpace) {
+  const auto range = elastic_range();
+  const specfem::datatype::ElementIndexRange first(range.begin_index(),
+                                                   range.begin_index() + 1);
+  StiffnessView k_e("k_e", 1, ndof, ndof);
+  specfem::linear_system::compute_element_stiffness<StiffnessTags>(
+      *assembly_, first, k_e, KernelImpl::direct);
+  auto h_k = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, k_e);
+
+  type_real scale = 0;
+  for (int i = 0; i < ndof; ++i) {
+    for (int j = 0; j < ndof; ++j) {
+      scale = std::max(scale, std::abs(h_k(0, i, j)));
+    }
+  }
+  ASSERT_GT(scale, static_cast<type_real>(0));
+
+  type_real max_asymmetry = 0;
+  for (int i = 0; i < ndof; ++i) {
+    for (int j = i + 1; j < ndof; ++j) {
+      max_asymmetry =
+          std::max(max_asymmetry, std::abs(h_k(0, i, j) - h_k(0, j, i)));
+    }
+  }
+  EXPECT_LE(max_asymmetry, scaled_tolerance(1e-4, 1e-12, scale));
+
+  type_real max_null = 0;
+  for (int icomp = 0; icomp < ncomp; ++icomp) {
+    for (int i = 0; i < ndof; ++i) {
+      type_real row_sum = 0;
+      for (int p = 0; p < npoints; ++p) {
+        row_sum += h_k(0, i, icomp * npoints + p);
+      }
+      max_null = std::max(max_null, std::abs(row_sum));
+    }
+  }
+  EXPECT_LE(max_null, scaled_tolerance(5e-3, 1e-10, scale));
+}
+
+// k_e is not pre-zeroed by contract, so the structurally zero half of every
+// block must be written by the kernel, not left behind.
+TEST_F(DirectStiffness3D, WritesEveryEntry) {
+  const auto range = elastic_range();
+  const specfem::datatype::ElementIndexRange two(range.begin_index(),
+                                                 range.begin_index() + 2);
+  StiffnessView k_e("k_e", 2, ndof, ndof);
+  Kokkos::deep_copy(k_e, std::numeric_limits<type_real>::quiet_NaN());
+  specfem::linear_system::compute_element_stiffness<StiffnessTags>(
+      *assembly_, two, k_e, KernelImpl::direct);
+  auto h_k = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, k_e);
+  int nans = 0;
+  for (int e = 0; e < 2; ++e) {
+    for (int i = 0; i < ndof; ++i) {
+      for (int j = 0; j < ndof; ++j) {
+        if (std::isnan(h_k(e, i, j))) {
+          ++nans;
+        }
+      }
+    }
+  }
+  EXPECT_EQ(nans, 0);
+}
+
+TEST_F(DirectStiffness3D, RejectsMisshapedBuffer) {
+  const auto range = elastic_range();
+  const specfem::datatype::ElementIndexRange first(range.begin_index(),
+                                                   range.begin_index() + 1);
+  StiffnessView k_e("k_e", 1, ndof - 1, ndof);
+  EXPECT_THROW(specfem::linear_system::compute_element_stiffness<StiffnessTags>(
+                   *assembly_, first, k_e, KernelImpl::direct),
+               std::runtime_error);
+}
+
+#else // !SPECFEM_ENABLE_TENSOROPS
+
+TEST(DirectStiffness3DGraph, SkippedWithoutTensorOps) {
+  GTEST_SKIP() << "SPECFEM++ was built without TensorOperations "
+                  "(SPECFEM_ENABLE_TENSOROPS=OFF); the direct stiffness "
+                  "kernel is unavailable, only its host reference runs.";
+}
+
+#endif // SPECFEM_ENABLE_TENSOROPS
 
 } // namespace stiffness_direct_kernel_test
 

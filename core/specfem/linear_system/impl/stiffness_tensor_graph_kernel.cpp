@@ -1,7 +1,7 @@
-// The only translation unit that includes TensorOperations headers. Without
-// SPECFEM_ENABLE_TENSOROPS the entry points are defined as throwing stubs
-// (see the bottom of the file), so callers dispatch without preprocessor
-// branches.
+// One of the two translation units that include TensorOperations headers
+// (the other is stiffness_direct_kernel.cpp). Without SPECFEM_ENABLE_TENSOROPS
+// the entry points are defined as throwing stubs (see the bottom of the
+// file), so callers dispatch without preprocessor branches.
 #include "specfem/linear_system/impl/stiffness_tensor_graph_kernel.hpp"
 
 #include "specfem/linear_system/element_stiffness.hpp"
