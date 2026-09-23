@@ -277,6 +277,16 @@ TEST_F(PremEvaluatorTest, RejectsDatabaseScaleMismatches) {
   EXPECT_FALSE(specfem::globe::ModelEvaluator::is_active());
 }
 
+TEST_F(PremEvaluatorTest, RejectsOpaqueModelConfigMismatches) {
+  auto config = bare_config("1d_isotropic_prem");
+  config.catalog_codes = { 999, 0, 0, 0, 0 };
+  config.catalog_flags.assign(16, false);
+
+  EXPECT_THROW((specfem::globe::ModelEvaluator{ config, planet_constants_ }),
+               std::runtime_error);
+  EXPECT_FALSE(specfem::globe::ModelEvaluator::is_active());
+}
+
 TEST_F(PremEvaluatorTest, RejectsDatabaseRadiusMismatches) {
   auto constants = earth_constants();
   specfem::globe::PlanetConstants::Radii radii;
@@ -605,6 +615,28 @@ TEST_F(PremEvaluatorTest, ReportsPremDiscontinuityRadii) {
               3480000.0 / 6371000.0, 1.0e-6);
 }
 
+TEST_F(PremEvaluatorTest, ExposesReferenceDensityInSi) {
+  configure("1d_isotropic_prem");
+  const double radius = 0.75 * prem_rsurface;
+  const double density = evaluator_->reference_density(radius);
+
+  EXPECT_GT(density, 3000.0);
+  EXPECT_LT(density, 7000.0);
+}
+
+TEST_F(PremEvaluatorTest, ExposesMesherEllipticitySpline) {
+  configure("1d_isotropic_prem");
+  const auto spline = evaluator_->ellipticity_spline();
+
+  ASSERT_EQ(spline.radii.size(), spline.values.size());
+  ASSERT_EQ(spline.radii.size(), spline.second_derivatives.size());
+  ASSERT_GT(spline.radii.size(), 600u);
+  EXPECT_DOUBLE_EQ(spline.radii.front(), 0.0);
+  EXPECT_NEAR(spline.radii.back(), prem_rsurface, 1.0e-8);
+  EXPECT_NEAR(spline.values.back(), 1.0 / 299.8, 0.01 / 299.8);
+  EXPECT_LT(spline.values[spline.values.size() / 2], spline.values.back());
+}
+
 // The exact-value tests sample along the polar axis so the recovered radius is
 // bit-exact. That is only legitimate if a 1D model really does ignore
 // direction, which this checks rather than assumes. The tolerance covers the
@@ -764,6 +796,20 @@ TEST(ModelConfigValidation, RejectsEachMissingScalarByName) {
           << "message does not name the field: " << error.what();
     }
   }
+}
+
+TEST(ModelConfigValidation, RejectsPartialOpaqueCatalogMetadata) {
+  auto config = bare_config("1d_isotropic_prem");
+
+  config.catalog_codes.assign(5, 0);
+  EXPECT_THROW(config.validate(), std::invalid_argument);
+
+  config.catalog_codes.clear();
+  config.catalog_flags.assign(16, false);
+  EXPECT_THROW(config.validate(), std::invalid_argument);
+
+  config.catalog_codes.assign(5, 0);
+  EXPECT_NO_THROW(config.validate());
 }
 
 TEST(ModelConfigValidation, ChecksThePeriodBandOnlyWhenAttenuationIsOn) {

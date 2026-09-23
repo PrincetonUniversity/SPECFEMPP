@@ -29,6 +29,20 @@ database. `globe::ModelEvaluator` independently derives them after replaying
 `MODEL_CONFIG` and checks them against the stored values. Population validates
 `0 < r_icb < r_cmb < r_moho < r_planet`.
 
+The evaluator also compares the database's opaque model codes and flags with the
+values derived by the linked Fortran catalog. C++ does not interpret those raw
+values; they only detect catalog/database version skew. Every catalog call is
+serialized because upstream routines retain module and `save` scratch state.
+File-backed models are rejected before Fortran initialization when the runtime
+`DATA/` directory is absent, avoiding an unrecoverable Fortran `STOP`.
+
+Reference-model consumers use dedicated evaluator accessors rather than the 3-D
+element path. `reference_density()` exposes the pure planet reference profile in
+SI for gravity setup, while `ellipticity_spline()` returns the exact
+Clairaut/Radau spline constructed by the mesher catalog. The density integration
+and rotation-rate physics therefore remain on the Fortran side of the units
+boundary.
+
 ---
 
 ← [Back to Core Components](index.md) | [Back to Index](../index.md)

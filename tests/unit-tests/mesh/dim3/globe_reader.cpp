@@ -140,7 +140,7 @@ TEST(GlobeMeshReader, ReadsThinDatabaseAndPreservesReferenceContext) {
   EXPECT_EQ(mesh.control_nodes.ngnod, 27);
   EXPECT_EQ(mesh.control_nodes.nnodes, 27);
   EXPECT_EQ(mesh.globe.model_config.model_name, "PREM");
-  EXPECT_EQ(mesh.globe.model_verification.codes,
+  EXPECT_EQ(mesh.globe.model_config.catalog_codes,
             (std::vector<int>{ 1, 0, 0, 0, 0 }));
   EXPECT_EQ(mesh.globe.model_config.nchunks, 6);
   EXPECT_DOUBLE_EQ(mesh.globe.planet_constants.values().r_planet, 6371000.0);
