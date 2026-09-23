@@ -15,6 +15,7 @@
 #include "specfem/point.hpp"
 #include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
+#include <TensorOperations/Einsum.hpp>
 #include <TensorOperations/Evaluator.hpp>
 #include <TensorOperations/LevelGraph.hpp>
 #include <TensorOperations/LevelPlan.hpp>
@@ -26,93 +27,80 @@
 namespace specfem::linear_system_impl {
 
 /**
- * @brief Leaf of the weighted reference-frame constitutive tensor
- * \f$ M_{rs}(a, b; q) = w(q) J(q) \sum_{c,d} \xi_{r,c} C_{acbd}
- * \xi_{s,d} \f$ at the global coordinate (element slot `e`, components `a`,
- * `b`, reference directions `r`, `s`, quadrature point `z, y, x`).
- *
- * \f$ \xi_{r,c} = \partial \xi_r / \partial x_c \f$ is
- * `jacobian_matrix.tensor()(c, r)` (row = spatial, column = reference);
- * \f$ C \f$ is @ref specfem::medium_physics::constitutive_tensor.
+ * @brief Leaf \f$ \xi_{r,c} = \partial \xi_r / \partial x_c \f$ at the
+ * global coordinate (element slot `e`, quadrature point `z, y, x`, reference
+ * direction `r`, spatial direction `c`): `jacobian_matrix.tensor()(c, r)`
+ * (row = spatial, column = reference).
  */
-template <typename Tags, typename JacobianMatrixType, typename PropertiesType,
-          typename WeightsViewType>
-struct WeightedReferenceConstitutiveLeaf {
-  using PointTags =
-      specfem::tags::Tags<Tags::dimension_tag, Tags::medium_tag,
-                          Tags::property_tag, Tags::attenuation_tag, false>;
+template <typename Tags, typename JacobianMatrixType>
+struct ReferenceGradientLeaf {
   using PointIndexType = specfem::point::index<Tags::dimension_tag, false>;
   using PointJacobianMatrixType =
       specfem::point::jacobian_matrix<Tags::dimension_tag, true, false>;
-  using PointPropertyType = specfem::point::properties<PointTags>;
 
   JacobianMatrixType jacobian_matrix;
-  PropertiesType properties;
-  WeightsViewType weights;
   int batch_begin_ispec;
 
-  KOKKOS_FUNCTION type_real operator()(const int e, const int a, const int b,
-                                       const int r, const int s, const int z,
-                                       const int y, const int x) const {
-    constexpr int ndim = 3;
+  KOKKOS_FUNCTION type_real operator()(const int e, const int z, const int y,
+                                       const int x, const int r,
+                                       const int c) const {
     const PointIndexType index(batch_begin_ispec + e, z, y, x);
-
     PointJacobianMatrixType point_jacobian_matrix;
     specfem::assembly::load_on_device(index, jacobian_matrix,
                                       point_jacobian_matrix);
-    PointPropertyType point_property;
-    specfem::assembly::load_on_device(index, properties, point_property);
-
-    const auto &xi = point_jacobian_matrix.tensor();
-    type_real sum = 0;
-    for (int c = 0; c < ndim; ++c) {
-      for (int d = 0; d < ndim; ++d) {
-        sum += xi(c, r) *
-               specfem::medium_physics::constitutive_tensor<PointTags>(
-                   point_property, a, c, b, d) *
-               xi(d, s);
-      }
-    }
-    return weights(x) * weights(y) * weights(z) *
-           point_jacobian_matrix.jacobian() * sum;
+    return point_jacobian_matrix.tensor()(c, r);
   }
 };
 
 /**
- * @brief The sum-factored element stiffness, one (r, s) term at a time.
- *
- * Output coordinate (element slot `e`, row component `a`, row point
- * `k, j, i` = z, y, x, column component `b`, column point `n, m, l`),
- * reduction coordinate `(r, s)`. `h(q, f)` is the Lagrange derivative matrix
- * (point, function), fully free; `M(z, y, x)` is the constitutive tensor
- * bound on `e, a, b, r, s`. The body is the closed form term for term:
- * the directions outside \f$ \{r, s\} \f$ must coincide; for \f$ r = s \f$
- * the quadrature index runs along direction \f$ r \f$; for \f$ r \ne s \f$
- * it is pinned to the column's \f$ r \f$ coordinate.
+ * @brief Leaf \f$ C_{acbd} \f$ at the global coordinate (element slot `e`,
+ * quadrature point `z, y, x`), from
+ * @ref specfem::medium_physics::constitutive_tensor.
  */
-template <int NGLL> struct SumFactoredStiffness {
-  template <typename H, typename M>
-  KOKKOS_FUNCTION void
-  operator()(int /* e */, int /* a */, const int k, const int j, const int i,
-             int /* b */, const int n, const int m, const int l, const int r,
-             const int s, const H &h, const M &M_rs, type_real &acc) const {
-    const int row[3] = { i, j, k }; // x, y, z
-    const int col[3] = { l, m, n };
-    for (int t = 0; t < 3; ++t) {
-      if (t != r && t != s && row[t] != col[t]) {
-        return;
-      }
-    }
-    int p[3] = { row[0], row[1], row[2] }; // quadrature point (x, y, z)
-    if (r == s) {
-      for (int q = 0; q < NGLL; ++q) {
-        p[r] = q;
-        acc += h(q, row[r]) * M_rs(p[2], p[1], p[0]) * h(q, col[r]);
-      }
-    } else {
-      p[r] = col[r];
-      acc += h(col[r], row[r]) * M_rs(p[2], p[1], p[0]) * h(row[s], col[s]);
-    }
+template <typename Tags, typename PropertiesType> struct ConstitutiveLeaf {
+  using PointTags =
+      specfem::tags::Tags<Tags::dimension_tag, Tags::medium_tag,
+                          Tags::property_tag, Tags::attenuation_tag, false>;
+  using PointIndexType = specfem::point::index<Tags::dimension_tag, false>;
+  using PointPropertyType = specfem::point::properties<PointTags>;
+
+  PropertiesType properties;
+  int batch_begin_ispec;
+
+  KOKKOS_FUNCTION type_real operator()(const int e, const int z, const int y,
+                                       const int x, const int a, const int c,
+                                       const int b, const int d) const {
+    const PointIndexType index(batch_begin_ispec + e, z, y, x);
+    PointPropertyType point_property;
+    specfem::assembly::load_on_device(index, properties, point_property);
+    return specfem::medium_physics::constitutive_tensor<PointTags>(
+        point_property, a, c, b, d);
+  }
+};
+
+/**
+ * @brief Leaf \f$ w(x) w(y) w(z) J \f$ (quadrature weight times Jacobian
+ * determinant) at the global coordinate (element slot `e`, quadrature point
+ * `z, y, x`).
+ */
+template <typename Tags, typename JacobianMatrixType, typename WeightsViewType>
+struct QuadratureWeightLeaf {
+  using PointIndexType = specfem::point::index<Tags::dimension_tag, false>;
+  using PointJacobianMatrixType =
+      specfem::point::jacobian_matrix<Tags::dimension_tag, true, false>;
+
+  JacobianMatrixType jacobian_matrix;
+  WeightsViewType weights;
+  int batch_begin_ispec;
+
+  KOKKOS_FUNCTION type_real operator()(const int e, const int z, const int y,
+                                       const int x) const {
+    const PointIndexType index(batch_begin_ispec + e, z, y, x);
+    PointJacobianMatrixType point_jacobian_matrix;
+    specfem::assembly::load_on_device(index, jacobian_matrix,
+                                      point_jacobian_matrix);
+    return weights(x) * weights(y) * weights(z) *
+           point_jacobian_matrix.jacobian();
   }
 };
 
@@ -171,56 +159,91 @@ void specfem::linear_system_impl::StiffnessDirectKernel<NGLL, Tags>::operator()(
       tenops::make_strided_alias<ExecSpace, ncomp, NGLL, NGLL, NGLL, ncomp,
                                  NGLL, NGLL, NGLL>(k_e.data(), nbatch);
 
-  const specfem::linear_system_impl::WeightedReferenceConstitutiveLeaf<
-      Tags, JacobianMatrixType, PropertiesType, WeightsViewType>
-      constitutive{ assembly_.jacobian_matrix, assembly_.properties,
-                    assembly_.mesh.weights, batch_begin_ispec };
-
   // Labels: e element slot, a/b row/column component (gridded: one team per
-  // (e, a, b)); k, j, i the row point and n, m, l the column point (z, y, x);
-  // r, s reference directions (the reduction); z, y, x the quadrature point
-  // of M; q, f the point and function axes of h.
+  // (e, a, b)); k, j, i the row node and n, m, l the column node (z, y, x);
+  // z, y, x the quadrature point; r, s reference directions; c, d spatial
+  // directions; u, f the point and function axes of h.
   using TileMap = tenops::LabelTiles<
       tenops::LabelTile<'e', 1>, tenops::LabelTile<'a', 1>,
       tenops::LabelTile<'b', 1>, tenops::LabelWhole<'k', NGLL>,
       tenops::LabelWhole<'j', NGLL>, tenops::LabelWhole<'i', NGLL>,
       tenops::LabelWhole<'n', NGLL>, tenops::LabelWhole<'m', NGLL>,
-      tenops::LabelWhole<'l', NGLL>, tenops::LabelWhole<'r', ndim>,
-      tenops::LabelWhole<'s', ndim>, tenops::LabelWhole<'z', NGLL>,
+      tenops::LabelWhole<'l', NGLL>, tenops::LabelWhole<'z', NGLL>,
       tenops::LabelWhole<'y', NGLL>, tenops::LabelWhole<'x', NGLL>,
-      tenops::LabelWhole<'q', NGLL>, tenops::LabelWhole<'f', NGLL>>;
+      tenops::LabelWhole<'r', ndim>, tenops::LabelWhole<'s', ndim>,
+      tenops::LabelWhole<'c', ndim>, tenops::LabelWhole<'d', ndim>,
+      tenops::LabelWhole<'u', NGLL>, tenops::LabelWhole<'f', NGLL>>;
+
+  const Kokkos::Array<int, 6> xi_extents{
+    nbatch, NGLL, NGLL, NGLL, ndim, ndim
+  };
+  const specfem::linear_system_impl::ReferenceGradientLeaf<Tags,
+                                                           JacobianMatrixType>
+      xi_leaf{ assembly_.jacobian_matrix, batch_begin_ispec };
+  const specfem::linear_system_impl::ConstitutiveLeaf<Tags, PropertiesType>
+      c_leaf{ assembly_.properties, batch_begin_ispec };
+  const specfem::linear_system_impl::QuadratureWeightLeaf<
+      Tags, JacobianMatrixType, WeightsViewType>
+      w_leaf{ assembly_.jacobian_matrix, assembly_.mesh.weights,
+              batch_begin_ispec };
+
+  const auto xi =
+      tenops::make_functional_input_node<'e', 'z', 'y', 'x', 'r', 'c'>(
+          xi_extents, xi_leaf);
+  const auto C = tenops::make_functional_input_node<'e', 'z', 'y', 'x', 'a',
+                                                    'c', 'b', 'd'>(
+      Kokkos::Array<int, 8>{ nbatch, NGLL, NGLL, NGLL, ncomp, ndim, ncomp,
+                             ndim },
+      c_leaf);
+  const auto wJ = tenops::make_functional_input_node<'e', 'z', 'y', 'x'>(
+      Kokkos::Array<int, 4>{ nbatch, NGLL, NGLL, NGLL }, w_leaf);
 
   auto g0 = tenops::make_level_graph<type_real, ExecSpace>(TileMap{});
 
-  // h(q, f): the Lagrange derivative matrix, hprime(point, function).
+  // h(u, f): the Lagrange derivative matrix, hprime(point, function).
   auto [g1, h] = g0.add(tenops::make_stage_node(tenops::make_input_node(
-      tenops::make_handle<'q', 'f'>(assembly_.mesh.hprime))));
+      tenops::make_handle<'u', 'f'>(assembly_.mesh.hprime))));
 
-  // M(e, a, b, r, s, z, y, x) = w J sum_{c,d} xi_{r,c} C_{acbd} xi_{s,d}.
-  auto [g2, M] = g1.add(tenops::make_stage_node(
-      tenops::make_functional_input_node<'e', 'a', 'b', 'r', 's', 'z', 'y',
-                                         'x'>(
-          Kokkos::Array<int, 8>{ nbatch, ncomp, ncomp, ndim, ndim, NGLL, NGLL,
-                                 NGLL },
-          constitutive)));
+  // The element's reference gradients and weights are read NGLL^3 * 9 times
+  // each by M, so they are staged once; C is read once per term and stays a
+  // functional leaf. One stage level per tile shape.
+  auto [g2, xi_rc] = g1.add(tenops::make_stage_node(xi));
+  auto [g3, w] = g2.add(tenops::make_stage_node(wJ));
 
-  // K(e, a, k, j, i, b, n, m, l) = sum_{r,s} (the closed form).
-  auto [g3, K] = g2.add(
-      tenops::make_reduce_node<'e', 'a', 'k', 'j', 'i', 'b', 'n', 'm', 'l'>(
-          tenops::over<'r', 's'>{}, h, M,
-          specfem::linear_system_impl::SumFactoredStiffness<NGLL>{}));
+  // M(e, a, b, r, s, z, y, x) = sum_{c,d} xi_{r,c} C_{acbd} xi_{s,d} w J
+  auto [g4, M] =
+      g3.add(tenops::make_einsum_node<'e', 'a', 'b', 'r', 's', 'z', 'y', 'x'>(
+          xi_rc, C, xi_rc.template as<'e', 'z', 'y', 'x', 's', 'd'>(), w));
+
+  // D(r, z, y, x, k, j, i) = d phi_{kji} / d xi_r at (z, y, x): h along r,
+  // Kronecker deltas along the other two directions.
+  const auto D = tenops::make_delta_operand<'r', 'z', 'y', 'x', 'k', 'j', 'i'>(
+      tenops::select<'r'>(
+          tenops::kase(h.template as<'x', 'i'>(), tenops::delta<'y', 'j'>{},
+                       tenops::delta<'z', 'k'>{}),
+          tenops::kase(h.template as<'y', 'j'>(), tenops::delta<'x', 'i'>{},
+                       tenops::delta<'z', 'k'>{}),
+          tenops::kase(h.template as<'z', 'k'>(), tenops::delta<'x', 'i'>{},
+                       tenops::delta<'y', 'j'>{})));
+
+  // K(e, a, k, j, i, b, n, m, l)
+  //   = sum_{r,s,z,y,x} D(r, z, y, x, k, j, i) M(e, a, b, r, s, z, y, x)
+  //                     D(s, z, y, x, n, m, l)
+  auto [g5, K] = g4.add(
+      tenops::make_einsum_node<'e', 'a', 'k', 'j', 'i', 'b', 'n', 'm', 'l'>(
+          D, M, D.template as<'s', 'z', 'y', 'x', 'n', 'm', 'l'>()));
 
   // Instantiating the plan runs LevelGraph's structural guards.
-  using Plan = tenops::LevelPlan<std::decay_t<decltype(g3.levels)>>;
-  static_assert(Plan::num_levels == 3, "two stage levels and one reduce");
+  using Plan = tenops::LevelPlan<std::decay_t<decltype(g5.levels)>>;
+  static_assert(Plan::num_levels == 5, "stage h, xi, w J; einsum M; einsum K");
 
   // Host backends cap level-0 team scratch at 32 KB, below the whole-tile
   // output block; level 1 allows tens of MB. On GPU level 0 is on-chip.
   constexpr bool on_gpu =
       !Kokkos::SpaceAccessibility<ExecSpace, Kokkos::HostSpace>::accessible;
-  g3.outputs(K)
+  g5.outputs(K)
       .scratch_level(on_gpu ? 0 : 1)
-      .execute(tenops::TeamPolicyTag2<ExecSpace>{}, k_alias);
+      .execute(tenops::TeamPolicyTag<ExecSpace>{}, k_alias);
   // No fence: see the call operator's contract in the header.
 }
 

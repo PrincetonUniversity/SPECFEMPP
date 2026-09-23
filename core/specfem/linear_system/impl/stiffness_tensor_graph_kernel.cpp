@@ -369,7 +369,7 @@ void specfem::linear_system_impl::StiffnessTensorGraphKernel<
                 "two stage levels and four compute levels");
 
   g6.outputs(r0, r1, r2)
-      .execute(tenops::TeamPolicyTag2<ExecSpace>{}, f0, f1, f2);
+      .execute(tenops::TeamPolicyTag<ExecSpace>{}, f0, f1, f2);
 
   // Physics-free reshape into the k_e contract. Forward mapping only: the row
   // is local_dof_index of the force's (component, point), the column is the

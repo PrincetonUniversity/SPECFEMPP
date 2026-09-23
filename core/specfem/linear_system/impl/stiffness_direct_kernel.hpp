@@ -20,44 +20,43 @@ namespace specfem::linear_system_impl {
 
 /**
  * @brief Producer of dense element stiffness blocks \f$ K_e \f$ that writes
- * every entry in closed form through one TensorOperations level graph whose
- * last node is a reduction over quadrature.
+ * every entry in closed form through one TensorOperations level graph of two
+ * contractions (`TensorOperations::make_einsum_node`: the labels decide what
+ * is summed).
  *
- * The block is the bilinear form \f$ K_e = \sum_q D_q^T (w J C)_q D_q \f$.
- * GLL derivatives are collocated, so the reference derivative of basis
- * \f$ i = (i_x, i_y, i_z) \f$ along direction \f$ r \f$ at quadrature point
- * \f$ q \f$ is \f$ h(q_r, i_r) \f$ times \f$ [q_t = i_t] \f$ for the two other
- * directions, and after sum factoring each entry is at most one length-NGLL
- * sum. With the weighted reference-frame constitutive tensor
+ * The block is the bilinear form
  * \f[
- *   M_{r s}(a, b; q) = w(q) J(q) \sum_{c,d} \xi_{r,c}(q) C_{a c b d}(q)
- *   \xi_{s,d}(q)
+ *   K_e(a, i; b, j) = \sum_q \frac{\partial \phi_i}{\partial x_c}(q)\,
+ *   C_{a c b d}(q)\, \frac{\partial \phi_j}{\partial x_d}(q)\, w(q) J(q),
+ *   \qquad
+ *   \frac{\partial \phi_i}{\partial x_c} = \sum_r \xi_{r,c}\, D_r,
  * \f]
  * (\f$ \xi_{r,c} = \partial \xi_r / \partial x_c \f$, \f$ C \f$ from
- * @ref specfem::medium_physics::constitutive_tensor), the entry at row
- * \f$ (a, i) \f$ and column \f$ (b, j) \f$ is
+ * @ref specfem::medium_physics::constitutive_tensor), written as
  * \f[
- *   K_e = \sum_{r,s} \sum_q h(q, i_r) \, M_{r s}(a, b; q \text{ in slot } r,
- *   i_t \text{ elsewhere}) \, S_{r s}, \quad
- *   S_{r s} = \begin{cases}
- *     h(q, j_r) \prod_{t \ne r} [i_t = j_t] & s = r \\
- *     [q = j_r] \, h(i_s, j_s) \prod_{t \ne r, s} [i_t = j_t] & s \ne r
- *   \end{cases}
+ *   M(a, b, r, s; q) = \sum_{c,d} \xi_{r,c}(q)\, C_{a c b d}(q)\,
+ *   \xi_{s,d}(q)\, w(q) J(q), \qquad
+ *   K_e(a, i; b, j) = \sum_{r, s, q} D(r, q, i)\, M(a, b, r, s; q)\,
+ *   D(s, q, j).
  * \f]
+ * \f$ D(r, q, i) = \partial \phi_i / \partial \xi_r \f$ at GLL point
+ * \f$ q \f$ is collocated: \f$ h(q_r, i_r) \f$ times Kronecker deltas
+ * \f$ \delta(q_t, i_t) \f$ along the two other directions. It is passed as
+ * a delta-structured operand, so TensorOperations eliminates the deltas at
+ * compile time and each entry costs at most one length-NGLL sum (the
+ * sum-factored form) -- the expression stays the one above.
  *
  * The graph, one team per (element, row component \f$ a \f$, column
  * component \f$ b \f$), three levels:
- * 1. **Stage** the Lagrange derivative matrix \f$ h(q, f) \f$.
- * 2. **Stage** \f$ M_{rs}(a, b; z, y, x) \f$ from one functional leaf whose
- *    functor is the formula above (Jacobian, material, weights at the global
- *    coordinate; the \f$ (c, d) \f$ sum as two loops).
- * 3. **Reduce** over \f$ (r, s) \f$ (`TensorOperations::make_reduce_node`, a
- *    parallel_reduce-shaped node): the functor receives `h` and `M` as
- *    accessors (`M` bound on \f$ e, a, b, r, s \f$) and adds the
- *    \f$ (r, s) \f$ term of the closed form, loading only what it uses. The
- *    output is a rank-9 alias of `k_e` with axes (\f$ e, a, k, j, i, b, n,
- *    m, l \f$) = (element, row component, row point \f$ z, y, x \f$, column
- *    component, column point \f$ z, y, x \f$) -- exactly the
+ * 1. **Stage** the Lagrange derivative matrix \f$ h(u, f) \f$ =
+ *    `hprime(point, function)`.
+ * 2. **Einsum** \f$ M \f$ over \f$ (c, d) \f$ from three single-entry
+ *    functional leaves (\f$ \xi \f$, \f$ C \f$, \f$ w J \f$), read at
+ *    the global coordinate and never staged.
+ * 3. **Einsum** \f$ K_e \f$ over \f$ (r, s, z, y, x) \f$. The output is a
+ *    rank-9 alias of `k_e` with axes (\f$ e, a, k, j, i, b, n, m, l \f$) =
+ *    (element, row component, row node \f$ z, y, x \f$, column component,
+ *    column node \f$ z, y, x \f$) -- exactly the
  *    @ref specfem::linear_system::local_dof_index ordering, so there is no
  *    reshape, no identity input and no workspace.
  *
