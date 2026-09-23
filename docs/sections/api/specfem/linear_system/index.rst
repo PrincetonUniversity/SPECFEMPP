@@ -5,17 +5,21 @@
 
 Utilities for assembling the spectral-element operator into an explicit
 linear system. Provides dense element stiffness extraction for the 3D
-elastic isotropic medium through two selectable kernels
+elastic isotropic medium through three selectable kernels
 (``StiffnessKernelImpl``): ``probe`` pushes local unit vectors through the
 matrix-free element operator one serialized probe at a time (correct by
-construction, always available), while ``tensor_graph`` evaluates the same
+construction, always available), ``tensor_graph`` evaluates the same
 action on all unit columns at once through one declarative TensorOperations
 level graph -- gradient contractions, a pointwise constitutive combine that
 delegates to ``medium_physics::compute_stress``, and weighted divergence
 contractions, so the kernel reads like the weak form and the constitutive
-step is the only medium-specific node (requires
-``SPECFEM_ENABLE_TENSOROPS=ON``, and is then the default -- the probe stays
-the correctness oracle, held to it by an A/B test). The module also ships a scope validator that
+step is the only medium-specific node, and ``direct`` writes every entry of
+:math:`K_e` in closed form as a sum-factored reduction over quadrature of
+the constitutive tensor through one TensorOperations level graph
+(:math:`O(N^5)` work per element, no workspace); default when built with
+TensorOperations. Both ``tensor_graph`` and ``direct`` require
+``SPECFEM_ENABLE_TENSOROPS=ON`` -- the probe stays the correctness oracle,
+held to it by an A/B test each. The module also ships a scope validator that
 rejects meshes outside the supported tag combination. The validator has two
 scopes (``StiffnessScope``): the strict default admits natural boundary
 conditions only, while ``with_stacey`` additionally admits Stacey boundaries
