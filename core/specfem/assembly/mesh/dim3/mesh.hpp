@@ -4,7 +4,6 @@
 #include "impl/control_nodes.hpp"
 #include "impl/mesh_to_compute_mapping.hpp"
 #include "impl/points.hpp"
-#include "impl/reference_points.hpp"
 #include "impl/shape_functions.hpp"
 
 #include "specfem/assembly/mesh/impl/quadrature.hpp"
@@ -44,8 +43,6 @@ struct mesh<specfem::element::dimension_tag::dim3>
       public specfem::assembly::mesh_impl::shape_functions<
           specfem::element::dimension_tag::dim3>,
       public specfem::assembly::mesh_impl::adjacency_graph<
-          specfem::element::dimension_tag::dim3>,
-      public specfem::assembly::mesh_impl::reference_points<
           specfem::element::dimension_tag::dim3> {
 
 public:
@@ -78,7 +75,8 @@ public:
    * @param quadrature GLL quadrature information
    * @param reference_anchor_coordinates Optional reference (undeformed)
    * anchor coordinates indexed by global anchor node; when non-empty, the
-   * reference GLL coordinate set is built for model sampling
+   * reference GLL coordinates are built for model sampling, otherwise
+   * `reference_coord` aliases the final coordinates
    */
   mesh(const int nspec, const int ngnod, const int ngllz, const int nglly,
        const int ngllx, const specfem::mesh::tags<dimension_tag> &tags,
@@ -87,27 +85,6 @@ public:
        const specfem::quadrature::quadratures &quadrature,
        const specfem::mesh::control_nodes<dimension_tag>::CoordinatesViewType
            &reference_anchor_coordinates = {});
-
-  /**
-   * @brief GLL coordinates at which the material model must be sampled.
-   *
-   * Returns the reference (undeformed, spherical + Moho-stretched) GLL
-   * coordinates when the database provides a reference geometry; otherwise
-   * the final mesh points, which are then identical by definition.
-   *
-   * @warning These coordinates are for model sampling only. They must never
-   * be used for the Jacobian, the mass matrix, or anything geometric — they
-   * do not describe the deformed mesh the solver runs on.
-   *
-   * @return Point set to evaluate the material model at
-   */
-  const specfem::assembly::mesh_impl::points<dimension_tag> &
-  model_sampling_coordinates() const {
-    return has_reference_geometry
-               ? reference_gll_points
-               : static_cast<const specfem::assembly::mesh_impl::points<
-                     dimension_tag> &>(*this);
-  }
 };
 
 } // namespace specfem::assembly

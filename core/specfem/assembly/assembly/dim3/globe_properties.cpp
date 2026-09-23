@@ -48,10 +48,9 @@ void read_globe_properties(
   const std::size_t npoints = static_cast<std::size_t>(ngllz) * nglly * ngllx;
   std::vector<double> xyz(3 * npoints);
 
-  // Reference (undeformed) coordinates when the database provides them; the
-  // final coordinates otherwise.
-  const auto &h_sampling_coord =
-      assembly.mesh.model_sampling_coordinates().h_coord;
+  // Reference (undeformed) coordinates when the database provides them;
+  // aliases the final coordinates otherwise.
+  const auto &h_sampling_coord = assembly.mesh.h_reference_coord;
 
   const bool has_attenuation = input_mesh.attenuation.enabled;
   auto *attenuation_container =

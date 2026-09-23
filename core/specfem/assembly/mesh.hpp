@@ -10,8 +10,6 @@ struct mesh_to_compute_mapping;
 
 template <specfem::element::dimension_tag Dimension> struct points;
 
-template <specfem::element::dimension_tag Dimension> struct reference_points;
-
 template <specfem::element::dimension_tag Dimension> struct shape_functions;
 
 template <specfem::element::dimension_tag Dimension> struct quadrature;

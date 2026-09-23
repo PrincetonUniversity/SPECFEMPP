@@ -88,18 +88,20 @@ specfem::assembly::mesh<specfem::element::dimension_tag::dim3>::mesh(
   };
 
   if (reference_anchor_coordinates.extent(0) > 0) {
-    static_cast<specfem::assembly::mesh_impl::reference_points<dimension_tag>
-                    &>(*this) = {
-      static_cast<const specfem::assembly::mesh_impl::points<dimension_tag> &>(
-          *this),
-      static_cast<const specfem::assembly::mesh_impl::mesh_to_compute_mapping<
-          dimension_tag> &>(*this),
-      static_cast<
-          const specfem::assembly::mesh_impl::shape_functions<dimension_tag>
-              &>(*this),
-      control_nodes,
-      reference_anchor_coordinates
-    };
+    // Same element-to-anchor connectivity and reordering as the final
+    // geometry, with the reference anchor coordinates swapped in.
+    auto reference_control_nodes = control_nodes;
+    reference_control_nodes.coordinates = reference_anchor_coordinates;
+    const specfem::assembly::mesh_impl::control_nodes<dimension_tag>
+        assembled_reference_nodes(
+            static_cast<const specfem::assembly::mesh_impl::
+                            mesh_to_compute_mapping<dimension_tag> &>(*this),
+            reference_control_nodes);
+    static_cast<specfem::assembly::mesh_impl::points<dimension_tag> &>(*this)
+        .set_reference_coordinates(
+            assembled_reference_nodes,
+            static_cast<const specfem::assembly::mesh_impl::shape_functions<
+                dimension_tag> &>(*this));
   }
 
   return;

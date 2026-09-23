@@ -13,8 +13,6 @@ namespace globe_reference_points_test_impl {
 
 constexpr auto dimension = specfem::element::dimension_tag::dim3;
 using PointsType = specfem::assembly::mesh_impl::points<dimension>;
-using ReferencePointsType =
-    specfem::assembly::mesh_impl::reference_points<dimension>;
 
 // GlobalSmallMesh is meshed with ellipticity on and topography off, so the
 // database carries reference anchors and the reference/final difference is
@@ -41,17 +39,18 @@ specfem::assembly::mesh<dimension> build_assembly_mesh(
            reference_anchors };
 }
 
-type_real max_absolute_coordinate_difference(const PointsType &a,
-                                             const PointsType &b) {
+// Maximum |reference - final| over all GLL coordinates of one point set.
+type_real max_absolute_coordinate_difference(const PointsType &points) {
   type_real max_diff = 0.0;
-  for (int ispec = 0; ispec < a.nspec; ++ispec) {
-    for (int iz = 0; iz < a.ngllz; ++iz) {
-      for (int iy = 0; iy < a.nglly; ++iy) {
-        for (int ix = 0; ix < a.ngllx; ++ix) {
+  for (int ispec = 0; ispec < points.nspec; ++ispec) {
+    for (int iz = 0; iz < points.ngllz; ++iz) {
+      for (int iy = 0; iy < points.nglly; ++iy) {
+        for (int ix = 0; ix < points.ngllx; ++ix) {
           for (int dim = 0; dim < 3; ++dim) {
-            max_diff =
-                std::max(max_diff, std::abs(a.h_coord(ispec, iz, iy, ix, dim) -
-                                            b.h_coord(ispec, iz, iy, ix, dim)));
+            max_diff = std::max(
+                max_diff,
+                std::abs(points.h_reference_coord(ispec, iz, iy, ix, dim) -
+                         points.h_coord(ispec, iz, iy, ix, dim)));
           }
         }
       }
@@ -60,18 +59,19 @@ type_real max_absolute_coordinate_difference(const PointsType &a,
   return max_diff;
 }
 
-type_real max_radial_difference(const PointsType &a, const PointsType &b) {
+// Maximum |r(reference) - r(final)| over all GLL points of one point set.
+type_real max_radial_difference(const PointsType &points) {
   type_real max_diff = 0.0;
-  for (int ispec = 0; ispec < a.nspec; ++ispec) {
-    for (int iz = 0; iz < a.ngllz; ++iz) {
-      for (int iy = 0; iy < a.nglly; ++iy) {
-        for (int ix = 0; ix < a.ngllx; ++ix) {
-          const type_real xa = a.h_coord(ispec, iz, iy, ix, 0);
-          const type_real ya = a.h_coord(ispec, iz, iy, ix, 1);
-          const type_real za = a.h_coord(ispec, iz, iy, ix, 2);
-          const type_real xb = b.h_coord(ispec, iz, iy, ix, 0);
-          const type_real yb = b.h_coord(ispec, iz, iy, ix, 1);
-          const type_real zb = b.h_coord(ispec, iz, iy, ix, 2);
+  for (int ispec = 0; ispec < points.nspec; ++ispec) {
+    for (int iz = 0; iz < points.ngllz; ++iz) {
+      for (int iy = 0; iy < points.nglly; ++iy) {
+        for (int ix = 0; ix < points.ngllx; ++ix) {
+          const type_real xa = points.h_reference_coord(ispec, iz, iy, ix, 0);
+          const type_real ya = points.h_reference_coord(ispec, iz, iy, ix, 1);
+          const type_real za = points.h_reference_coord(ispec, iz, iy, ix, 2);
+          const type_real xb = points.h_coord(ispec, iz, iy, ix, 0);
+          const type_real yb = points.h_coord(ispec, iz, iy, ix, 1);
+          const type_real zb = points.h_coord(ispec, iz, iy, ix, 2);
           const type_real ra = std::sqrt(xa * xa + ya * ya + za * za);
           const type_real rb = std::sqrt(xb * xb + yb * yb + zb * zb);
           max_diff = std::max(max_diff, std::abs(ra - rb));
@@ -104,57 +104,50 @@ TEST(GlobeReferencePoints, SamplesModelOnReferenceGeometry) {
       static_cast<const test_impl::PointsType &>(mesh_with_reference);
 
   {
-    SCOPED_TRACE("reference set is built and exposed through the accessor");
-    ASSERT_TRUE(mesh_with_reference.has_reference_geometry);
-    const auto &sampling = mesh_with_reference.model_sampling_coordinates();
-    EXPECT_NE(&sampling, &final_points);
-    EXPECT_EQ(&sampling, &mesh_with_reference.reference_gll_points);
-    EXPECT_EQ(sampling.nspec, final_points.nspec);
-    EXPECT_EQ(sampling.ngllz, final_points.ngllz);
-    EXPECT_EQ(sampling.nglly, final_points.nglly);
-    EXPECT_EQ(sampling.ngllx, final_points.ngllx);
-  }
-
-  {
-    SCOPED_TRACE("global numbering is shared with the final points");
-    const auto &sampling = mesh_with_reference.model_sampling_coordinates();
-    EXPECT_EQ(sampling.nglob, final_points.nglob);
-    EXPECT_EQ(sampling.h_index_mapping.data(),
-              final_points.h_index_mapping.data());
-    EXPECT_EQ(sampling.index_mapping.data(), final_points.index_mapping.data());
+    SCOPED_TRACE("reference coordinates are a fresh field");
+    EXPECT_NE(final_points.h_reference_coord.data(),
+              final_points.h_coord.data());
+    EXPECT_NE(final_points.reference_coord.data(), final_points.coord.data());
+    EXPECT_EQ(final_points.h_reference_coord.extent(0),
+              final_points.h_coord.extent(0));
   }
 
   {
     SCOPED_TRACE("ellipticity separates reference and final coordinates");
-    const auto max_radial_difference = test_impl::max_radial_difference(
-        mesh_with_reference.model_sampling_coordinates(), final_points);
+    const auto max_difference = test_impl::max_radial_difference(final_points);
     // The fixture has no topography, so the difference is the ellipticity
     // deformation: kilometre scale at the surface, bounded by the flattening.
-    EXPECT_GT(max_radial_difference, 500.0);
-    EXPECT_LT(max_radial_difference, 40000.0);
+    EXPECT_GT(max_difference, 500.0);
+    EXPECT_LT(max_difference, 40000.0);
   }
 
   {
-    SCOPED_TRACE("accessor falls back to the final points without anchors");
-    EXPECT_FALSE(mesh_without_reference.has_reference_geometry);
+    SCOPED_TRACE("reference coordinates alias the final ones without anchors");
     const auto &fallback_points =
         static_cast<const test_impl::PointsType &>(mesh_without_reference);
-    EXPECT_EQ(&mesh_without_reference.model_sampling_coordinates(),
-              &fallback_points);
+    EXPECT_EQ(fallback_points.h_reference_coord.data(),
+              fallback_points.h_coord.data());
+    EXPECT_EQ(fallback_points.reference_coord.data(),
+              fallback_points.coord.data());
   }
 
   {
     SCOPED_TRACE("identical anchors reproduce final coordinates to round-off");
-    const test_impl::ReferencePointsType identical(
-        final_points,
-        static_cast<const specfem::assembly::mesh_impl::mesh_to_compute_mapping<
-            dimension> &>(mesh_with_reference),
+    const specfem::assembly::mesh_impl::control_nodes<dimension>
+        assembled_final_nodes(
+            static_cast<const specfem::assembly::mesh_impl::
+                            mesh_to_compute_mapping<dimension> &>(
+                mesh_with_reference),
+            mesh.control_nodes);
+    test_impl::PointsType identical = final_points;
+    identical.set_reference_coordinates(
+        assembled_final_nodes,
         static_cast<
             const specfem::assembly::mesh_impl::shape_functions<dimension> &>(
-            mesh_with_reference),
-        mesh.control_nodes, mesh.control_nodes.coordinates);
-    const auto max_difference = test_impl::max_absolute_coordinate_difference(
-        identical.reference_gll_points, final_points);
+            mesh_with_reference));
+    EXPECT_NE(identical.h_reference_coord.data(), identical.h_coord.data());
+    const auto max_difference =
+        test_impl::max_absolute_coordinate_difference(identical);
     // Same anchors, same shape functions, same contraction: any difference
     // is pure round-off (1 m is ~1e-7 relative at Earth radius).
     EXPECT_LE(max_difference, 1.0);

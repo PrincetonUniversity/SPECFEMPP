@@ -52,6 +52,23 @@ public:
   CoordViewType coord;                     ///< Device coordinates
   CoordViewType::host_mirror_type h_coord; ///< Host coordinates
 
+  /**
+   * @brief Reference (undeformed) coordinates for model sampling.
+   *
+   * Interpolated from the database's reference (spherical + Moho-stretched)
+   * anchors with the same shape functions and element ordering as @ref coord.
+   * Aliases @ref coord when no reference geometry is given — the two
+   * geometries are then identical by definition.
+   *
+   * @warning Model sampling only. Never use these coordinates for the
+   * Jacobian, the mass matrix, or anything geometric — they do not describe
+   * the deformed mesh the solver runs on.
+   */
+  CoordViewType reference_coord;
+  CoordViewType::host_mirror_type h_reference_coord; ///< Host reference
+                                                     ///< coordinates (see
+                                                     ///< @ref reference_coord)
+
   type_real xmin; ///< Minimum x coordinate (for tolerance calculations)
   type_real xmax; ///< Maximum x coordinate (for tolerance calculations)
   type_real ymin; ///< Minimum y coordinate (for tolerance calculations)
@@ -96,24 +113,21 @@ public:
              &shape_functions);
 
   /**
-   * @brief Constructor reusing the global numbering of an existing point set.
+   * @brief Replace the aliased reference coordinates with a fresh field.
    *
-   * Shares the index mapping and global point count with @p numbering (the
-   * mesh topology is identical) and recomputes only the physical coordinates
-   * by contracting @p shape_functions against @p control_nodes. Used to build
-   * the reference (undeformed) coordinate set with the exact same
-   * interpolation as the final geometry.
+   * Allocates @ref reference_coord and fills it by contracting
+   * @p shape_functions against @p reference_control_nodes — the exact same
+   * interpolation that produced @ref coord from the final control nodes.
    *
-   * @param numbering Existing point set whose numbering views are shared
-   * @param control_nodes Control nodes providing the coordinates to
-   * interpolate
+   * @param reference_control_nodes Assembled control nodes carrying the
+   * reference anchor coordinates
    * @param shape_functions Shape function values at GLL points
    */
-  points(const points &numbering,
-         const specfem::assembly::mesh_impl::control_nodes<dimension_tag>
-             &control_nodes,
-         const specfem::assembly::mesh_impl::shape_functions<dimension_tag>
-             &shape_functions);
+  void set_reference_coordinates(
+      const specfem::assembly::mesh_impl::control_nodes<dimension_tag>
+          &reference_control_nodes,
+      const specfem::assembly::mesh_impl::shape_functions<dimension_tag>
+          &shape_functions);
 
 private:
   /**
