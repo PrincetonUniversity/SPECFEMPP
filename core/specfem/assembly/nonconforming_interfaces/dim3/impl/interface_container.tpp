@@ -6,6 +6,8 @@
 #include "specfem/point/global_coordinates.hpp"
 #include <cmath>
 
+#include "flux_scheme_data/flux_scheme_data.tpp"
+
 template <specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
           specfem::element_coupling::flux_scheme_tag FluxSchemeTag>
@@ -62,6 +64,16 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
       face_indices[key] = num_self_faces;
       num_self_faces++;
     }
+  }
+  if (flux_scheme_data.should_symmetrize_coupling) {
+    should_run_self_compute_coupling_kernel =
+        InterfaceTag ==
+        specfem::element_coupling::interface_tag::acoustic_elastic;
+    should_run_conjugate_compute_coupling_kernel =
+        !should_run_self_compute_coupling_kernel;
+  } else {
+    should_run_self_compute_coupling_kernel = true;
+    should_run_conjugate_compute_coupling_kernel = false;
   }
 
   // eventually, `hit_face_index(self_face_index, ipoint, jpoint) == iface`

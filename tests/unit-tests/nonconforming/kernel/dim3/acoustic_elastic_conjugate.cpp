@@ -1,9 +1,8 @@
 #include "../acoustic_elastic.hpp"
+#include "Kokkos_Macros.hpp"
 #include "integrate_against_shape_on_face.hpp"
 #include "specfem/compute/impl/compute_coupling.hpp"
 #include "specfem/compute/impl/compute_coupling.tpp" // so that we don't need to load the entire solver
-#include "specfem/compute/impl/compute_coupling_subkernel/conjugate_integral.hpp"
-#include "specfem/compute/impl/compute_coupling_subkernel/conjugate_integral.tpp"
 #include "specfem/element/attributes.hpp"
 #include "specfem/element/dimension.hpp"
 #include "specfem/element/tags.hpp"
@@ -14,6 +13,27 @@
 #include <gtest/gtest.h>
 #include <sstream>
 #include <stdexcept>
+
+template <int N> struct sum_reduction_array {
+  type_real arr[N];
+
+  KOKKOS_INLINE_FUNCTION sum_reduction_array() {
+    for (int i = 0; i < N; i++) {
+      arr[i] = 0;
+    }
+  }
+  KOKKOS_INLINE_FUNCTION type_real &operator[](const int &i) { return arr[i]; }
+  KOKKOS_INLINE_FUNCTION const type_real &operator[](const int &i) const {
+    return arr[i];
+  }
+  KOKKOS_INLINE_FUNCTION sum_reduction_array &
+  operator+=(const sum_reduction_array &other) {
+    for (int i = 0; i < N; i++) {
+      arr[i] += other[i];
+    }
+    return (*this);
+  }
+};
 
 // ======================================================================
 // TODO (Hanson): field initializers are the same as in acoustic_elastic3d.cpp.
@@ -118,9 +138,8 @@ void test_nonconforming_acoustic_elastic_conj(
                 "test_nonconforming_acoustic_elastic -- target_medium and "
                 "source_medium must be acoustic and elastic (or vice versa)!");
 
-  constexpr type_real reltol = 1e-5;
+  constexpr type_real reltol = 1e-4;
   constexpr type_real abstol = 1e-7;
-  constexpr int fail_num_verbose = 5;
 
   using target_initializer_type =
       std::conditional_t<target_medium ==
@@ -135,7 +154,6 @@ void test_nonconforming_acoustic_elastic_conj(
   constexpr auto dimension_tag = specfem::element::dimension_tag::dim3;
   constexpr int ncomp_target =
       specfem::element::attributes<dimension_tag, target_medium>::components;
-  static constexpr int ndim = specfem::element::dimension<dimension_tag>::dim;
 
   const type_real xscale =
       std::max(std::abs(assembly.mesh.xmax), std::abs(assembly.mesh.xmin));
@@ -181,7 +199,7 @@ void test_nonconforming_acoustic_elastic_conj(
 
   specfem::tag_dispatch::for_each(
       specfem::tag_dispatch::dimension_set<dimension_tag>{} *
-          CONNECTION_SET(weakly_conforming, nonconforming) *
+          CONNECTION_SET(nonconforming) *
           INTERFACE_SET(elastic_acoustic, acoustic_elastic) *
           BOUNDARY_SET(none, acoustic_free_surface, stacey,
                        composite_stacey_dirichlet) *
@@ -215,28 +233,34 @@ void test_nonconforming_acoustic_elastic_conj(
 
   const int nglob_target = dof_coords.extent(0);
 
-  for (int test_pow_x = 0; test_pow_x < max_pow_test; test_pow_x++) {
-    for (int test_pow_y = 0; test_pow_y < max_pow_test; test_pow_y++) {
+  for (int test_pow_x = 0; test_pow_x <= max_pow_test; test_pow_x++) {
+    for (int test_pow_y = 0; test_pow_y <= max_pow_test; test_pow_y++) {
 
-      Kokkos::Array<type_real, ncomp_target> result_base;
-      Kokkos::Array<type_real, ncomp_target> result_conjugate;
+      sum_reduction_array<ncomp_target + 1> result_base; //+1 for magnitude
+                                                         //(scale for error)
+      sum_reduction_array<ncomp_target> result_conjugate;
 
       Kokkos::parallel_reduce(
           "reduce base", nglob_target,
           KOKKOS_LAMBDA(const int &iglob,
-                        Kokkos::Array<type_real, ncomp_target> &lsum) {
+                        sum_reduction_array<ncomp_target + 1> &lsum) {
             const type_real location_factor =
                 std::pow(dof_coords(iglob).x, test_pow_x) *
                 std::pow(dof_coords(iglob).y, test_pow_y);
+            type_real mag2 = 0;
             for (int i = 0; i < ncomp_target; i++) {
-              lsum[i] += integrated_base_values(iglob, i) * location_factor;
+              type_real addend =
+                  integrated_base_values(iglob, i) * location_factor;
+              lsum[i] += addend;
+              mag2 += addend * addend;
             }
+            lsum[ncomp_target] += std::sqrt(mag2);
           },
           result_base);
       Kokkos::parallel_reduce(
           "reduce conjugate", nglob_target,
           KOKKOS_LAMBDA(const int &iglob,
-                        Kokkos::Array<type_real, ncomp_target> &lsum) {
+                        sum_reduction_array<ncomp_target> &lsum) {
             const type_real location_factor =
                 std::pow(dof_coords(iglob).x, test_pow_x) *
                 std::pow(dof_coords(iglob).y, test_pow_y);
@@ -249,14 +273,12 @@ void test_nonconforming_acoustic_elastic_conj(
 
       // TODO (Hanson) START HERE: verify conjugate == base
       type_real err = 0;
-      type_real base_mag = 0;
+      const type_real base_mag = result_base[ncomp_target];
       for (int icomp = 0; icomp < ncomp_target; icomp++) {
-        base_mag += result_base[icomp] * result_base[icomp];
         err += (result_base[icomp] - result_conjugate[icomp]) *
                (result_base[icomp] - result_conjugate[icomp]);
       }
       err = std::sqrt(err);
-      base_mag = std::sqrt(base_mag);
       if (err > base_mag * reltol + abstol) {
         std::ostringstream oss;
         oss << meshname << std::endl

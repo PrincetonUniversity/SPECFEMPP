@@ -6,7 +6,6 @@
 #include "specfem/element/attributes.hpp"
 #include "specfem/element/dimension.hpp"
 #include "specfem/element/tags.hpp"
-#include "specfem/element_coupling/TMP_extra_kernel/extra_kernel.cpp"
 #include "utilities/include/fieldmanip/fieldgetter.hpp"
 #include "utilities/include/fieldmanip/fieldsetter.hpp"
 #include <Kokkos_Core.hpp>

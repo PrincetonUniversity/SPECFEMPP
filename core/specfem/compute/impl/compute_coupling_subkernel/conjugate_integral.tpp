@@ -11,14 +11,24 @@
 #include "specfem/medium_physics.hpp"
 
 
+// empty for dim2 for now
+template <int NGLL, typename Tags>
+void specfem::compute::impl::compute_coupling_conjugate_integral_nonconforming(
+    const specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly)
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim2)
+{}
 
 template <int NGLL, typename Tags>
 void specfem::compute::impl::compute_coupling_conjugate_integral_nonconforming(
-    const specfem::assembly::assembly<Tags::dimension_tag> &assembly) {
+    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
+        &assembly)
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
+{
 
   constexpr static auto dimension_tag = Tags::dimension_tag;
   constexpr static auto connection_tag =
-      specfem::element_connections::type::weakly_conforming;
+      specfem::element_connections::type::nonconforming;
   constexpr static auto interface_tag = Tags::interface_tag;
   constexpr static auto boundary_tag = Tags::boundary_tag;
   constexpr static auto wavefield_tag = Tags::wavefield_tag;
@@ -28,18 +38,15 @@ void specfem::compute::impl::compute_coupling_conjugate_integral_nonconforming(
       specfem::element_coupling::attributes<
           dimension_tag, interface_tag>::conjugate_interface();
 
-  const auto [coupled_intersections, self_intersections] =
-      assembly.element_intersections.get_intersections_on_device(
-          connection_tag, interface_tag, boundary_tag, flux_scheme_tag);
-
   const auto [conjugate_coupled_intersections, conjugate_self_intersections] =
       assembly.element_intersections.get_intersections_on_device(
           connection_tag, conjugate_interface_tag, boundary_tag,
           flux_scheme_tag);
 
   if (conjugate_self_intersections.N == 0 &&
-      conjugate_coupled_intersections.N == 0)
+      conjugate_coupled_intersections.N == 0) {
     return;
+  }
 
   const auto field =
       assembly.fields.template get_simulation_field<wavefield_tag>();

@@ -23,8 +23,9 @@
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
-#include "specfem/element_coupling/TMP_extra_kernel/extra_kernel.hpp"
 #include "specfem/element_coupling/accessor.hpp"
+
+#include "compute_coupling_subkernel/conjugate_integral.tpp"
 
 namespace specfem::compute::impl {
 
@@ -334,10 +335,31 @@ void compute_coupling_core(
   constexpr auto connection_tag = Tags::connection_tag;
   if constexpr (connection_tag ==
                 specfem::element_connections::type::nonconforming) {
-    compute_coupling_core_nonconforming<NGLL, NQuad_intersection, Tags>(
-        assembly);
 
-    specfem::element_coupling::TMP_extra_kernel::execute<NGLL, Tags>(assembly);
+    if constexpr (Tags::dimension_tag ==
+                  specfem::element::dimension_tag::dim3) {
+      if (assembly.nonconforming_interfaces
+              .template get_interface_container<
+                  Tags::interface_tag, Tags::boundary_tag, connection_tag,
+                  Tags::flux_scheme_tag>()
+              .should_run_self_compute_coupling_kernel) {
+        compute_coupling_core_nonconforming<NGLL, NQuad_intersection, Tags>(
+            assembly);
+      }
+
+      if (assembly.nonconforming_interfaces
+              .template get_interface_container<
+                  Tags::interface_tag, Tags::boundary_tag, connection_tag,
+                  Tags::flux_scheme_tag>()
+              .should_run_conjugate_compute_coupling_kernel) {
+        compute_coupling_conjugate_integral_nonconforming<NGLL, Tags>(assembly);
+      }
+    } else {
+
+      compute_coupling_core_nonconforming<NGLL, NQuad_intersection, Tags>(
+          assembly);
+    }
+
   } else {
     compute_coupling_core_weakly_conforming<NGLL, NQuad_intersection, Tags>(
         assembly);
