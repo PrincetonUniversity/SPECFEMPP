@@ -46,18 +46,20 @@ namespace specfem::linear_system_impl {
  * \f]
  *
  * The graph, one team per (element, row component \f$ a \f$, column
- * component \f$ b \f$):
- * 1. **Stage** the Lagrange derivative matrix \f$ h \f$ (relabeled nine ways,
- *    zero-copy) and three functional leaves evaluated at the global
- *    coordinate: \f$ \xi_{r,c} \f$, \f$ C_{a c b d} \f$, and \f$ w J \f$.
- * 2. **Reduce** over \f$ (c, d) \f$: \f$ M \f$ with \f$ (r, s) \f$ as real
- *    labels, in team scratch only.
- * 3. **Reduce** over \f$ (q, s) \f$: the nine terms above, each \f$ r \f$
- *    reading \f$ M \f$ through a pinned-axis relabel, written straight into
- *    a rank-8 alias of `k_e` whose axes are (row block \f$ E = e \cdot
- *    n_{comp} + a \f$, \f$ i_z, i_y, i_x, b, j_z, j_y, j_x \f$) -- exactly
- *    the @ref specfem::linear_system::local_dof_index ordering, so there is
- *    no reshape, no identity input and no workspace.
+ * component \f$ b \f$), three levels:
+ * 1. **Stage** the Lagrange derivative matrix \f$ h(q, f) \f$.
+ * 2. **Stage** \f$ M_{rs}(a, b; z, y, x) \f$ from one functional leaf whose
+ *    functor is the formula above (Jacobian, material, weights at the global
+ *    coordinate; the \f$ (c, d) \f$ sum as two loops).
+ * 3. **Reduce** over \f$ (r, s) \f$ (`TensorOperations::make_reduce_node`, a
+ *    parallel_reduce-shaped node): the functor receives `h` and `M` as
+ *    accessors (`M` bound on \f$ e, a, b, r, s \f$) and adds the
+ *    \f$ (r, s) \f$ term of the closed form, loading only what it uses. The
+ *    output is a rank-9 alias of `k_e` with axes (\f$ e, a, k, j, i, b, n,
+ *    m, l \f$) = (element, row component, row point \f$ z, y, x \f$, column
+ *    component, column point \f$ z, y, x \f$) -- exactly the
+ *    @ref specfem::linear_system::local_dof_index ordering, so there is no
+ *    reshape, no identity input and no workspace.
  *
  * Cost per element is \f$ O(N_{GLL}^5) \f$ arithmetic against an
  * \f$ O(N_{GLL}^6) \f$ block write, so the kernel is write-bound. Sign

@@ -281,12 +281,12 @@ void specfem::linear_system_impl::StiffnessTensorGraphKernel<
       std::decay_t<decltype(weights)>>
       weighted_sum{ weights };
 
-  // Labels: e element slot, J identity column; k/j/i the point's z/y/x GLL
+  // Labels: e element slot, c identity column; k/j/i the point's z/y/x GLL
   // index; p the summed quadrature index; r the staged operators' point axis,
   // renamed per use to the axis each contraction reconstructs.
   namespace tenops = TensorOperations;
   using TileMap = tenops::LabelTiles<
-      tenops::LabelTile<'e', 1>, tenops::LabelTile<'J', column_tile>,
+      tenops::LabelTile<'e', 1>, tenops::LabelTile<'c', column_tile>,
       tenops::LabelWhole<'k', NGLL>, tenops::LabelWhole<'j', NGLL>,
       tenops::LabelWhole<'i', NGLL>, tenops::LabelWhole<'p', NGLL>,
       tenops::LabelWhole<'r', NGLL>>;
@@ -299,25 +299,25 @@ void specfem::linear_system_impl::StiffnessTensorGraphKernel<
                  tenops::make_handle<'p', 'r'>(weighted_transpose_))));
   auto [g2, u0n, u1n, u2n] =
       g1.add(tenops::make_stage_node(tenops::make_input_node(
-                 tenops::make_handle<'e', 'J', 'k', 'j', 'i'>(u0))),
+                 tenops::make_handle<'e', 'c', 'k', 'j', 'i'>(u0))),
              tenops::make_stage_node(tenops::make_input_node(
-                 tenops::make_handle<'e', 'J', 'k', 'j', 'i'>(u1))),
+                 tenops::make_handle<'e', 'c', 'k', 'j', 'i'>(u1))),
              tenops::make_stage_node(tenops::make_input_node(
-                 tenops::make_handle<'e', 'J', 'k', 'j', 'i'>(u2))));
+                 tenops::make_handle<'e', 'c', 'k', 'j', 'i'>(u2))));
 
   // Gradient level: du_c/dxi sums the x axis against hprime(ix, p), and so on
   // per direction (element_gradient's summation with the point index first).
   auto gradient_xi = [&](auto u) {
-    return tenops::make_contraction_node<'e', 'J', 'k', 'j', 'i'>(
-        h.template as<'i', 'p'>(), u.template as<'e', 'J', 'k', 'j', 'p'>());
+    return tenops::make_contraction_node<'e', 'c', 'k', 'j', 'i'>(
+        h.template as<'i', 'p'>(), u.template as<'e', 'c', 'k', 'j', 'p'>());
   };
   auto gradient_eta = [&](auto u) {
-    return tenops::make_contraction_node<'e', 'J', 'k', 'j', 'i'>(
-        h.template as<'j', 'p'>(), u.template as<'e', 'J', 'k', 'p', 'i'>());
+    return tenops::make_contraction_node<'e', 'c', 'k', 'j', 'i'>(
+        h.template as<'j', 'p'>(), u.template as<'e', 'c', 'k', 'p', 'i'>());
   };
   auto gradient_gamma = [&](auto u) {
-    return tenops::make_contraction_node<'e', 'J', 'k', 'j', 'i'>(
-        h.template as<'k', 'p'>(), u.template as<'e', 'J', 'p', 'j', 'i'>());
+    return tenops::make_contraction_node<'e', 'c', 'k', 'j', 'i'>(
+        h.template as<'k', 'p'>(), u.template as<'e', 'c', 'p', 'j', 'i'>());
   };
   auto [g3, gxi0, gxi1, gxi2, geta0, geta1, geta2, ggamma0, ggamma1, ggamma2] =
       g2.add(gradient_xi(u0n), gradient_xi(u1n), gradient_xi(u2n),
@@ -329,23 +329,23 @@ void specfem::linear_system_impl::StiffnessTensorGraphKernel<
   // the frame, and an explicit identity relabel could be mistyped silently
   // (every GLL axis has the same extent).
   auto [g4, fxi0, fxi1, fxi2, feta0, feta1, feta2, fgamma0, fgamma1, fgamma2] =
-      g3.add(tenops::make_combine_node<'e', 'J', 'k', 'j', 'i'>(
+      g3.add(tenops::make_combine_node<'e', 'c', 'k', 'j', 'i'>(
           gxi0, gxi1, gxi2, geta0, geta1, geta2, ggamma0, ggamma1, ggamma2,
           integrand));
 
   // Divergence level: structurally the gradient level with the weighted
   // transposed operator (element_divergence's hprime(l, point) * weights(l)).
   auto divergence_xi = [&](auto f) {
-    return tenops::make_contraction_node<'e', 'J', 'k', 'j', 'i'>(
-        hw.template as<'p', 'i'>(), f.template as<'e', 'J', 'k', 'j', 'p'>());
+    return tenops::make_contraction_node<'e', 'c', 'k', 'j', 'i'>(
+        hw.template as<'p', 'i'>(), f.template as<'e', 'c', 'k', 'j', 'p'>());
   };
   auto divergence_eta = [&](auto f) {
-    return tenops::make_contraction_node<'e', 'J', 'k', 'j', 'i'>(
-        hw.template as<'p', 'j'>(), f.template as<'e', 'J', 'k', 'p', 'i'>());
+    return tenops::make_contraction_node<'e', 'c', 'k', 'j', 'i'>(
+        hw.template as<'p', 'j'>(), f.template as<'e', 'c', 'k', 'p', 'i'>());
   };
   auto divergence_gamma = [&](auto f) {
-    return tenops::make_contraction_node<'e', 'J', 'k', 'j', 'i'>(
-        hw.template as<'p', 'k'>(), f.template as<'e', 'J', 'p', 'j', 'i'>());
+    return tenops::make_contraction_node<'e', 'c', 'k', 'j', 'i'>(
+        hw.template as<'p', 'k'>(), f.template as<'e', 'c', 'p', 'j', 'i'>());
   };
   auto [g5, txi0, txi1, txi2, teta0, teta1, teta2, tgamma0, tgamma1, tgamma2] =
       g4.add(divergence_xi(fxi0), divergence_xi(fxi1), divergence_xi(fxi2),
@@ -354,7 +354,7 @@ void specfem::linear_system_impl::StiffnessTensorGraphKernel<
              divergence_gamma(fgamma1), divergence_gamma(fgamma2));
 
   auto weighted = [&](auto t_xi, auto t_eta, auto t_gamma) {
-    return tenops::make_combine_node<'e', 'J', 'k', 'j', 'i'>(
+    return tenops::make_combine_node<'e', 'c', 'k', 'j', 'i'>(
         t_xi, t_eta, t_gamma, weighted_sum);
   };
   auto [g6, r0, r1, r2] =
