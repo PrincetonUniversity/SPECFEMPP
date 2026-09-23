@@ -543,6 +543,13 @@ specfem_add_test(mass_matrix_tests
             gtest_main
 )
 
+specfem_add_test(constitutive_tensor_tests
+  SOURCES   medium/constitutive_tensor/main.cpp
+            medium/constitutive_tensor/dim3/elastic_isotropic.cpp
+  LIBRARIES point
+            gtest_main
+)
+
 specfem_add_test(stress_tests
   SOURCES   medium/stress/main.cpp
             medium/stress/dim2/acoustic.cpp
