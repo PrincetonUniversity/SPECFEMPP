@@ -10,7 +10,6 @@
 #include "specfem/element/attributes.hpp"
 #include "specfem/medium_physics.hpp"
 
-
 // empty for dim2 for now
 template <int NGLL, typename Tags>
 void specfem::compute::impl::compute_coupling_conjugate_integral_nonconforming(
@@ -163,30 +162,13 @@ void specfem::compute::impl::compute_coupling_conjugate_integral_nonconforming(
               }
 
               // =====================
-              // init this point's (accumulated to self_accel) shape function
-              StackStoredChunkFaceArray<NGLL> self_shape_fcn;
-              for (int ipoint = 0; ipoint < NGLL; ipoint++) {
-                for (int jpoint = 0; jpoint < NGLL; jpoint++) {
-                  for (int icomp = 0; icomp < ncomp_self; icomp++) {
-                    // iface = 0 since only 1 is needed (accumulation only
-                    // occurs on own iface)
-                    //
-                    // icomp = 0 since we have a
-                    // vectorviewtype (ncomp = 1)
-                    self_shape_fcn(0, ipoint, jpoint, 0) = 0;
-                  }
-                }
-              }
-              self_shape_fcn(0, index.ipoint_i, index.ipoint_j, 0) = 1;
-
-              // =====================
               // interpolate this shape function onto the coupled
 
               for (int ipoint_coupled = 0; ipoint_coupled < NGLL;
                    ipoint_coupled++) {
                 for (int jpoint_coupled = 0; jpoint_coupled < NGLL;
                      jpoint_coupled++) {
-                  auto coupled_index = conjugate_coupled_intersections(
+                  const auto coupled_index = conjugate_coupled_intersections(
                       iface_global)(ipoint_coupled, jpoint_coupled);
 
                   ConjugateCouplingData point_interface_data;
@@ -203,13 +185,9 @@ void specfem::compute::impl::compute_coupling_conjugate_integral_nonconforming(
                                                     coupled_point_field);
 
                   // transfer self shape function to coupled side.
-                  specfem::datatype::VectorPointViewType<type_real, 1,
-                                                         false /*UseSIMD*/>
-                      interpolated_field;
-                  coupled_index.iface = 0;
-                  specfem::algorithms::transfer_interpolate(
-                      coupled_index, point_interface_data, self_shape_fcn,
-                      interpolated_field);
+                  const type_real interpolated_shape_function =
+                      point_interface_data.interpolants(index.ipoint_i, 0) *
+                      point_interface_data.interpolants(index.ipoint_j, 1);
 
                   // accumulate self_accel by medium_physics::compute_coupling
                   if constexpr (interface_tag ==
@@ -218,7 +196,7 @@ void specfem::compute::impl::compute_coupling_conjugate_integral_nonconforming(
                     // negative sign, since the normal is in the opposite
                     // direction.
                     self_accel(0) -=
-                        interpolated_field(0) *
+                        interpolated_shape_function *
                         point_interface_data.face_factor *
                         (point_interface_data.face_normal(0) *
                              coupled_field(iface_local, ipoint_coupled,
@@ -232,17 +210,17 @@ void specfem::compute::impl::compute_coupling_conjugate_integral_nonconforming(
                   } else {
                     // negative sign, since the normal is in the opposite
                     // direction.
-                    self_accel(0) -= interpolated_field(0) *
+                    self_accel(0) -= interpolated_shape_function *
                                      point_interface_data.face_factor *
                                      (point_interface_data.face_normal(0) *
                                       coupled_field(iface_local, ipoint_coupled,
                                                     jpoint_coupled, 0));
-                    self_accel(1) -= interpolated_field(0) *
+                    self_accel(1) -= interpolated_shape_function *
                                      point_interface_data.face_factor *
                                      (point_interface_data.face_normal(1) *
                                       coupled_field(iface_local, ipoint_coupled,
                                                     jpoint_coupled, 0));
-                    self_accel(2) -= interpolated_field(0) *
+                    self_accel(2) -= interpolated_shape_function *
                                      point_interface_data.face_factor *
                                      (point_interface_data.face_normal(2) *
                                       coupled_field(iface_local, ipoint_coupled,
