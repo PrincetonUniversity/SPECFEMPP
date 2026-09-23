@@ -2,11 +2,12 @@
 
 #include "interface_container.hpp"
 #include "specfem/algorithms/locate_point.hpp"
+#include "specfem/element_connections/to_string.hpp"
 #include "specfem/element_coupling/tags.hpp"
 #include "specfem/point/global_coordinates.hpp"
 #include <cmath>
-
-#include "flux_scheme_data/flux_scheme_data.tpp"
+#include <sstream>
+#include <stdexcept>
 
 template <specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
@@ -22,9 +23,7 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
             &jacobian_matrix,
         const specfem::assembly::mesh<dimension_tag> &mesh,
         const specfem::element_coupling::flux_scheme_configuration
-            &flux_scheme_config)
-    : flux_scheme_data(element_intersections, jacobian_matrix, mesh,
-                       flux_scheme_config) {
+            &flux_scheme_config) {
 
   if (ngllz <= 0 || nglly <= 0 || ngllx <= 0) {
     KOKKOS_ABORT_WITH_LOCATION("Invalid GLL grid size");
@@ -36,13 +35,50 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
   }
   const int ngll = std::max(std::max(ngllz, nglly), ngllx);
   constexpr int ndim = specfem::element::dimension<dimension_tag>::dim;
+  constexpr auto connection_tag =
+      specfem::element_connections::type::nonconforming;
 
   const auto [self_faces, coupled_faces] =
       element_intersections.get_intersections_on_host(
-          specfem::element_connections::type::nonconforming, InterfaceTag,
-          BoundaryTag, FluxSchemeTag);
+          connection_tag, InterfaceTag, BoundaryTag, FluxSchemeTag);
 
   const auto &num_faces = self_faces.N;
+
+  const auto interfacial_meshing_type =
+      flux_scheme_config.get_interfacial_meshing_type();
+  switch (interfacial_meshing_type) {
+  case element_coupling::interfacial_meshing_type::unspecified:
+  case element_coupling::interfacial_meshing_type::acoustic_host:
+    should_run_self_compute_coupling_kernel =
+        InterfaceTag ==
+        specfem::element_coupling::interface_tag::acoustic_elastic;
+    should_run_conjugate_compute_coupling_kernel =
+        !should_run_self_compute_coupling_kernel;
+    break;
+  case element_coupling::interfacial_meshing_type::elastic_host:
+    should_run_self_compute_coupling_kernel =
+        InterfaceTag !=
+        specfem::element_coupling::interface_tag::acoustic_elastic;
+    should_run_conjugate_compute_coupling_kernel =
+        !should_run_self_compute_coupling_kernel;
+    break;
+  case element_coupling::interfacial_meshing_type::self_host:
+    should_run_self_compute_coupling_kernel = true;
+    should_run_conjugate_compute_coupling_kernel = false;
+    break;
+  case element_coupling::interfacial_meshing_type::intersections:
+  default:
+    std::ostringstream oss;
+    oss << "Unsupported interface meshing type: " << interfacial_meshing_type
+        << "\n"
+        << "nonconforming interface: dim-" << ndim
+        << ", interface-tag = " << interface_tag
+        << ", boundary = " << specfem::element::to_string(boundary_tag)
+        << ", connection-tag = "
+        << specfem::element_connections::to_string(connection_tag)
+        << ", flux-scheme = " << flux_scheme_tag;
+    throw std::runtime_error(oss.str());
+  }
 
   // for every node (ipoint, jpoint) of every self-face (ispec, self_face_type),
   // we want exactly one coupled face (coupled_faces[iface]) node to match. We
@@ -64,16 +100,6 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
       face_indices[key] = num_self_faces;
       num_self_faces++;
     }
-  }
-  if (flux_scheme_data.should_symmetrize_coupling) {
-    should_run_self_compute_coupling_kernel =
-        InterfaceTag ==
-        specfem::element_coupling::interface_tag::acoustic_elastic;
-    should_run_conjugate_compute_coupling_kernel =
-        !should_run_self_compute_coupling_kernel;
-  } else {
-    should_run_self_compute_coupling_kernel = true;
-    should_run_conjugate_compute_coupling_kernel = false;
   }
 
   // eventually, `hit_face_index(self_face_index, ipoint, jpoint) == iface`
@@ -103,9 +129,6 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
       num_faces, ngll, ngll, ndim - 1);
   h_coupled_coordinates = Kokkos::create_mirror_view(coupled_coordinates);
 
-  const type_real coupled_neumann_merge_parameter =
-      1 - flux_scheme_data.self_neumann_merge_parameter;
-
   for (int iface = 0; iface < num_faces; ++iface) {
     const auto &self_face = self_faces(iface);
     const auto &coupled_face = coupled_faces(iface);
@@ -124,45 +147,6 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
             mesh.h_coord(ispec, iz, iy, ix, 0),
             mesh.h_coord(ispec, iz, iy, ix, 1),
             mesh.h_coord(ispec, iz, iy, ix, 2));
-
-        // ==============
-        // TEMPORARY TEST
-        // ==============
-        {
-          auto [local_coords, point_found] =
-              specfem::algorithms::locate_point_impl::locate_point(
-                  global_coord, mesh, ispec, iface_type, true);
-
-          specfem::point::global_coordinates<dimension_tag> matched_point =
-              specfem::algorithms::locate_point_impl::locate_point(
-                  local_coords, mesh, ispec, iface_type);
-
-          if (specfem::point::distance(global_coord, matched_point) > 1e-3 ||
-              std::abs(mesh.h_xi(ipoint_i) - local_coords.first) > 1e-3 ||
-              std::abs(mesh.h_xi(ipoint_j) - local_coords.second) > 1e-3) {
-
-            std::ostringstream oss;
-            oss << "SELF MATCHING FAIL\n"
-                << "    (" << ipoint_i << ", " << ipoint_j << ")\n"
-                << "on mesh_entity "
-                << specfem::mesh_entity::dim3::to_string(iface_type)
-                << " of element ispec = " << ispec << " (mesher element "
-                << mesh.h_compute_to_mesh(ispec) + 1 << ")\n"
-                << "    (ix = " << ix << ", iy = " << iy << ", iz = " << iz
-                << ")\n";
-            oss << "local (" << local_coords.first << ", "
-                << local_coords.second << ")\n";
-            oss << "    (x = " << global_coord.x << ", y = " << global_coord.y
-                << ", z = " << global_coord.z << ")\n";
-            oss << "    (x = " << matched_point.x << ", y = " << matched_point.y
-                << ", z = " << matched_point.z << ")\n"
-                << "Smallest distance found: "
-                << specfem::point::distance(global_coord, matched_point);
-            throw std::runtime_error(oss.str());
-          }
-        }
-
-        // ==============
 
         auto [local_coords, point_found] =
             specfem::algorithms::locate_point_impl::locate_point(
@@ -220,36 +204,25 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
         this->h_face_normal(iface, ipoint_i, ipoint_j, 0) = dn(0);
         this->h_face_normal(iface, ipoint_i, ipoint_j, 1) = dn(1);
         this->h_face_normal(iface, ipoint_i, ipoint_j, 2) = dn(2);
-        this->h_face_factor(iface, ipoint_i, ipoint_j) =
-            [&]() {
-              switch (iface_type) {
-              case specfem::mesh_entity::dim3::type::left:
-              case specfem::mesh_entity::dim3::type::right:
-                // Face in (iy, iz) plane; integrate over iy and iz
-                return mesh.h_weights(iy) * mesh.h_weights(iz);
-              case specfem::mesh_entity::dim3::type::bottom:
-              case specfem::mesh_entity::dim3::type::top:
-                // Face in (ix, iy) plane; integrate over ix and iy
-                return mesh.h_weights(ix) * mesh.h_weights(iy);
-              case specfem::mesh_entity::dim3::type::front:
-              case specfem::mesh_entity::dim3::type::back:
-                // Face in (ix, iz) plane; integrate over ix and iz
-                return mesh.h_weights(ix) * mesh.h_weights(iz);
-              default:
-                KOKKOS_ABORT_WITH_LOCATION("Invalid face type");
-                return static_cast<type_real>(0.0);
-              }
-            }() *
-            coupled_neumann_merge_parameter
-            // TODO (Hanson: This 1/2 factor is here, since we are symmetrizing
-            // with the TMP_extra_kernel routine. Remove when done.)
-            * (flux_scheme_data.should_symmetrize_coupling
-                   ? (type_real)(InterfaceTag ==
-                                         specfem::element_coupling::
-                                             interface_tag::acoustic_elastic
-                                     ? 1
-                                     : 0)
-                   : (type_real)1);
+        this->h_face_factor(iface, ipoint_i, ipoint_j) = [&]() {
+          switch (iface_type) {
+          case specfem::mesh_entity::dim3::type::left:
+          case specfem::mesh_entity::dim3::type::right:
+            // Face in (iy, iz) plane; integrate over iy and iz
+            return mesh.h_weights(iy) * mesh.h_weights(iz);
+          case specfem::mesh_entity::dim3::type::bottom:
+          case specfem::mesh_entity::dim3::type::top:
+            // Face in (ix, iy) plane; integrate over ix and iy
+            return mesh.h_weights(ix) * mesh.h_weights(iy);
+          case specfem::mesh_entity::dim3::type::front:
+          case specfem::mesh_entity::dim3::type::back:
+            // Face in (ix, iz) plane; integrate over ix and iz
+            return mesh.h_weights(ix) * mesh.h_weights(iz);
+          default:
+            KOKKOS_ABORT_WITH_LOCATION("Invalid face type");
+            return static_cast<type_real>(0.0);
+          }
+        }();
       }
     }
   }

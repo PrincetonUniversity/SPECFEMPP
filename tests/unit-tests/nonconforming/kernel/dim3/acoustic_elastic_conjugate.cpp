@@ -6,7 +6,6 @@
 #include "specfem/element/attributes.hpp"
 #include "specfem/element/dimension.hpp"
 #include "specfem/element/tags.hpp"
-// #include "specfem/element_coupling/TMP_extra_kernel/extra_kernel.cpp"
 #include "utilities/include/fieldmanip/fieldgetter.hpp"
 #include "utilities/include/fieldmanip/fieldsetter.hpp"
 #include <Kokkos_Core.hpp>
@@ -34,78 +33,6 @@ template <int N> struct sum_reduction_array {
     return (*this);
   }
 };
-
-// ======================================================================
-// TODO (Hanson): field initializers are the same as in acoustic_elastic3d.cpp.
-// Combine them.
-
-/**
- * @brief Sets the acoustic acceleration field to power function.
- *
- * when passed to specfem::test_fieldmanip::set_field_values(), sets
- * acceleration to (x/xscale)^{xpow} (y/yscale)^{ypow}. Zeroes out displacement
- * and velocity.
- */
-template <int xpow, int ypow>
-struct acoustic_field_initializer_pow
-    : public specfem::test_fieldmanip::PointSetter<
-          specfem::element::dimension_tag::dim3,
-          specfem::element::medium_tag::acoustic> {
-  type_real inv_xscale;
-  type_real inv_yscale;
-  KOKKOS_INLINE_FUNCTION PointAccelerationType
-  acceleration(const PointData &data) const {
-    PointAccelerationType val;
-    constexpr int ncomp =
-        specfem::element::attributes<dimension_tag, medium_tag>::components;
-    for (int icomp = 0; icomp < ncomp; icomp++) {
-      val(icomp) = std::pow(data.coords.x * inv_xscale, xpow) *
-                   std::pow(data.coords.y * inv_yscale, ypow);
-    }
-    return val;
-  }
-  acoustic_field_initializer_pow(const type_real &xscale,
-                                 const type_real &yscale)
-      : PointSetter(true, true, true), inv_xscale(1 / xscale),
-        inv_yscale(1 / yscale) {};
-};
-
-/**
- * @brief Sets the elastic displacement field to power.
- *
- * when passed to specfem::test_fieldmanip::set_field_values(), sets
- * displacement to dir * (x/xscale)^{xpow} (y/yscale)^{ypow}, where dir is a
- * constant vector. Zeroes out displacement and velocity.
- */
-template <int xpow, int ypow>
-struct elastic_field_initializer_pow
-    : public specfem::test_fieldmanip::PointSetter<
-          specfem::element::dimension_tag::dim3,
-          specfem::element::medium_tag::elastic> {
-  type_real setdir[ndim];
-  type_real inv_xscale;
-  type_real inv_yscale;
-
-  KOKKOS_INLINE_FUNCTION PointDisplacementType
-  displacement(const PointData &data) const {
-    PointDisplacementType val;
-    constexpr int ncomp =
-        specfem::element::attributes<dimension_tag, medium_tag>::components;
-    type_real powpos = std::pow(data.coords.x * inv_xscale, xpow) *
-                       std::pow(data.coords.y * inv_yscale, ypow);
-
-    for (int icomp = 0; icomp < ncomp; icomp++) {
-      val(icomp) = powpos * setdir[icomp];
-    }
-    return val;
-  }
-  elastic_field_initializer_pow(const type_real &xscale,
-                                const type_real &yscale)
-      : PointSetter(true, true, true), setdir{ 0, 0, 1 },
-        inv_xscale(1 / xscale), inv_yscale(1 / yscale) {};
-};
-
-// ======================================================================
 
 /**
  * @brief verifies that the conjugate natural acoustic-elastic coupling
@@ -138,19 +65,22 @@ void test_nonconforming_acoustic_elastic_conj(
                 "test_nonconforming_acoustic_elastic -- target_medium and "
                 "source_medium must be acoustic and elastic (or vice versa)!");
 
-  constexpr type_real reltol = 1e-4;
+  constexpr type_real reltol = 1e-5;
   constexpr type_real abstol = 1e-7;
+  constexpr int fail_num_verbose = 5;
 
-  using target_initializer_type =
-      std::conditional_t<target_medium ==
-                             specfem::element::medium_tag::acoustic,
-                         acoustic_field_initializer_pow<pow_x, pow_y>,
-                         elastic_field_initializer_pow<pow_x, pow_y>>;
-  using source_initializer_type =
-      std::conditional_t<source_medium ==
-                             specfem::element::medium_tag::acoustic,
-                         acoustic_field_initializer_pow<pow_x, pow_y>,
-                         elastic_field_initializer_pow<pow_x, pow_y>>;
+  using target_initializer_type = std::conditional_t<
+      target_medium == specfem::element::medium_tag::acoustic,
+      specfem::nonconforming_test::kernel::acoustic_field_initializer_pow<
+          pow_x, pow_y>,
+      specfem::nonconforming_test::kernel::elastic_field_initializer_pow<
+          pow_x, pow_y>>;
+  using source_initializer_type = std::conditional_t<
+      source_medium == specfem::element::medium_tag::acoustic,
+      specfem::nonconforming_test::kernel::acoustic_field_initializer_pow<
+          pow_x, pow_y>,
+      specfem::nonconforming_test::kernel::elastic_field_initializer_pow<
+          pow_x, pow_y>>;
   constexpr auto dimension_tag = specfem::element::dimension_tag::dim3;
   constexpr int ncomp_target =
       specfem::element::attributes<dimension_tag, target_medium>::components;
@@ -159,7 +89,8 @@ void test_nonconforming_acoustic_elastic_conj(
       std::max(std::abs(assembly.mesh.xmax), std::abs(assembly.mesh.xmin));
   const type_real yscale =
       std::max(std::abs(assembly.mesh.ymax), std::abs(assembly.mesh.ymin));
-  ;
+  const type_real inv_xscale = 1 / xscale;
+  const type_real inv_yscale = 1 / yscale;
 
   target_initializer_type target_initializer(xscale, yscale);
   source_initializer_type source_initializer(xscale, yscale);
@@ -233,6 +164,15 @@ void test_nonconforming_acoustic_elastic_conj(
 
   const int nglob_target = dof_coords.extent(0);
 
+  int num_fails = 0;
+  // error: vec2norm(integral(shape_poly . coupling_stress . field_poly))
+  // for relative, we divide by:
+  //        integral(vec2norm(shape_poly . coupling_stress . field_poly))
+  type_real maxerr_rel = 0;
+  type_real maxerr_abs = 0;
+  const int num_poly_checks = (max_pow_test + 1) * (max_pow_test + 1);
+  std::ostringstream failstream;
+
   for (int test_pow_x = 0; test_pow_x <= max_pow_test; test_pow_x++) {
     for (int test_pow_y = 0; test_pow_y <= max_pow_test; test_pow_y++) {
 
@@ -245,8 +185,8 @@ void test_nonconforming_acoustic_elastic_conj(
           KOKKOS_LAMBDA(const int &iglob,
                         sum_reduction_array<ncomp_target + 1> &lsum) {
             const type_real location_factor =
-                std::pow(dof_coords(iglob).x, test_pow_x) *
-                std::pow(dof_coords(iglob).y, test_pow_y);
+                std::pow(dof_coords(iglob).x * inv_xscale, test_pow_x) *
+                std::pow(dof_coords(iglob).y * inv_yscale, test_pow_y);
             type_real mag2 = 0;
             for (int i = 0; i < ncomp_target; i++) {
               type_real addend =
@@ -262,8 +202,8 @@ void test_nonconforming_acoustic_elastic_conj(
           KOKKOS_LAMBDA(const int &iglob,
                         sum_reduction_array<ncomp_target> &lsum) {
             const type_real location_factor =
-                std::pow(dof_coords(iglob).x, test_pow_x) *
-                std::pow(dof_coords(iglob).y, test_pow_y);
+                std::pow(dof_coords(iglob).x * inv_xscale, test_pow_x) *
+                std::pow(dof_coords(iglob).y * inv_yscale, test_pow_y);
             for (int i = 0; i < ncomp_target; i++) {
               lsum[i] +=
                   integrated_conjugate_values(iglob, i) * location_factor;
@@ -271,7 +211,6 @@ void test_nonconforming_acoustic_elastic_conj(
           },
           result_conjugate);
 
-      // TODO (Hanson) START HERE: verify conjugate == base
       type_real err = 0;
       const type_real base_mag = result_base[ncomp_target];
       for (int icomp = 0; icomp < ncomp_target; icomp++) {
@@ -279,28 +218,45 @@ void test_nonconforming_acoustic_elastic_conj(
                (result_base[icomp] - result_conjugate[icomp]);
       }
       err = std::sqrt(err);
-      if (err > base_mag * reltol + abstol) {
-        std::ostringstream oss;
-        oss << meshname << std::endl
-            << specfem::element::to_string(target_medium) << " <- "
-            << specfem::element::to_string(source_medium) << ": x^{" << pow_x
-            << "} y^{" << pow_y
-            << "}\nconjugate kernel disagreement for test function x^{"
-            << test_pow_x << "} y^{" << test_pow_y << "}\n";
+      maxerr_abs = std::max(err, maxerr_abs);
+      if (base_mag > abstol) {
+        maxerr_rel = std::max(err / base_mag, maxerr_rel);
+      }
 
-        oss << "    [ " << std::setw(15) << result_conjugate[0];
-        for (int icomp = 1; icomp < ncomp_target; icomp++) {
-          oss << ", " << std::setw(15) << result_conjugate[icomp];
+      if (err > base_mag * reltol + abstol) {
+
+        if (num_fails < fail_num_verbose) {
+          failstream << "- x^{" << test_pow_x << "} y^{" << test_pow_y << "}\n";
+          failstream << "    [ " << std::setw(15) << result_conjugate[0];
+          for (int icomp = 1; icomp < ncomp_target; icomp++) {
+            failstream << ", " << std::setw(15) << result_conjugate[icomp];
+          }
+          failstream << " ]";
+          failstream << "\n != [ " << std::setw(15) << result_base[0];
+          for (int icomp = 1; icomp < ncomp_target; icomp++) {
+            failstream << ", " << std::setw(15) << result_base[icomp];
+          }
+          failstream << " ]\n        (rel err: " << err / base_mag
+                     << ")\n        (rel-to : " << base_mag << ")\n";
         }
-        oss << " ]";
-        oss << "\n != [ " << std::setw(15) << result_base[0];
-        for (int icomp = 1; icomp < ncomp_target; icomp++) {
-          oss << ", " << std::setw(15) << result_base[icomp];
-        }
-        oss << " ]";
-        FAIL() << oss.str();
+        num_fails++;
       }
     }
+  }
+
+  if (num_fails > 0) {
+    FAIL() << meshname << std::endl
+           << specfem::element::to_string(target_medium) << " <- "
+           << specfem::element::to_string(source_medium) << ": x^{" << pow_x
+           << "} y^{" << pow_y << "} conjugate comparison"
+           << "\nFailed polynomial test functions: " << num_fails << " / "
+           << num_poly_checks
+           << "\n          Largest relative error: " << maxerr_rel
+           << "\n          Largest absolute error: " << maxerr_abs
+           << "\n (relative error is relative to integral of integrand "
+              "pointwise l2-norm)"
+           << "\n Showing first " << fail_num_verbose << ":\n"
+           << failstream.str();
   }
 }
 

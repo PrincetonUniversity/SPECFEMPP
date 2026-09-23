@@ -88,17 +88,5 @@ specfem::runtime_configuration::flux_schemes::get_flux_scheme(
         specfem::quadrature::gll::gll(0.0, 0.0, ngll));
   }
 
-  if (flux_schemes_node) {
-    const auto parameters_node = flux_schemes_node["parameters"];
-    if (parameters_node.IsMap()) {
-      for (const auto &kv : parameters_node) {
-        config.set_scheme_parameter(kv.first.as<std::string>(),
-                                    kv.second.as<type_real>());
-      }
-    } else {
-      throw std::runtime_error("Flux scheme: parameters: must be a map!");
-    }
-  }
-
   return config;
 }

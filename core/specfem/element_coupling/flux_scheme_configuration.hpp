@@ -18,11 +18,38 @@ namespace specfem::element_coupling {
  * these rules.
  */
 enum class interfacial_meshing_type {
+  unspecified,   ///< default: let specfem++ figure it out
   intersections, ///< integrals defined on intersections.
   acoustic_host, ///< integrals defined by element faces on acoustic side.
   elastic_host,  ///< integrals defined by element faces on elastic side.
   self_host      ///< integrals defined by element faces on self side.
 };
+
+inline std::string
+to_string(const interfacial_meshing_type &interfacial_meshing_type) {
+  switch (interfacial_meshing_type) {
+  case interfacial_meshing_type::unspecified:
+    return "unspecified";
+  case interfacial_meshing_type::intersections:
+    return "intersections";
+  case interfacial_meshing_type::acoustic_host:
+    return "acoustic-host";
+  case interfacial_meshing_type::elastic_host:
+    return "elastic-host";
+  case interfacial_meshing_type::self_host:
+    return "self-host";
+  default:
+    return "[interfacial_meshing_type to_string unpopulated]";
+  }
+}
+inline std::ostream &
+operator<<(std::ostream &stream,
+           const specfem::element_coupling::interfacial_meshing_type
+               &interfacial_meshing_type) {
+  stream << to_string(interfacial_meshing_type);
+  return stream;
+}
+
 struct flux_scheme_configuration {
 private:
   // ====== acoustic-elastic ======
@@ -32,17 +59,12 @@ private:
   bool was_quadrature_set;
   // ==== end acoustic-elastic ====
 
-  std::unordered_map<std::string, type_real> scheme_parameters;
-
 public:
   flux_scheme_configuration()
       : flux_scheme_tag(specfem::element_coupling::flux_scheme_tag::natural),
         was_quadrature_set(false),
         interfacial_meshing_type(
-            specfem::
-                element_coupling:: // this may differ from defaults in
-                                   // core/specfem/runtime_configuration/flux_schemes.hpp
-            interfacial_meshing_type::intersections) {}
+            specfem::element_coupling::interfacial_meshing_type::unspecified) {}
 
   /**
    * @brief Get the flux scheme tag for a given intersection. At the moment, the
@@ -109,36 +131,6 @@ public:
       specfem::element_coupling::interfacial_meshing_type
           interfacial_meshing_type) {
     this->interfacial_meshing_type = interfacial_meshing_type;
-  }
-
-  /**
-   * @brief Get the flux scheme parameter according to its name.
-   *
-   * @param parameter_name the name of the parameter
-   *
-   * @return type_real the value of the parameter
-   */
-  type_real get_scheme_parameter(const std::string &parameter_name) const {
-    auto search = scheme_parameters.find(parameter_name);
-    if (search == scheme_parameters.end()) {
-      throw std::runtime_error("Requested flux scheme parameter not found: \"" +
-                               parameter_name + "\"");
-    }
-    return search->second;
-  }
-  bool has_scheme_parameter(const std::string &parameter_name) const {
-    auto search = scheme_parameters.find(parameter_name);
-    return search != scheme_parameters.end();
-  }
-  /**
-   * @brief Set the given parameter according to its name.
-   *
-   * @param parameter_name the name of the parameter
-   * @param value the value to set it to
-   */
-  void set_scheme_parameter(const std::string &parameter_name,
-                            const type_real &value) {
-    this->scheme_parameters[parameter_name] = value;
   }
 };
 } // namespace specfem::element_coupling
