@@ -55,7 +55,6 @@ void test_nonconforming_acoustic_elastic_conj(
         &target_intersection_faces,
     const specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace>::
         host_mirror_type &h_target_intersection_faces,
-    const Kokkos::View<type_real *[3]> &target_medium_normal_per_dof,
     const int &max_pow_test, std::integral_constant<int, NGLL>,
     std::integral_constant<int, pow_x>, std::integral_constant<int, pow_y>) {
   static_assert((target_medium == specfem::element::medium_tag::acoustic &&
@@ -261,66 +260,6 @@ void test_nonconforming_acoustic_elastic_conj(
 }
 
 /**
- * @brief for each DoF, estimate the normal vector by averaging over all its
- * elements.
- */
-template <specfem::element::medium_tag medium_tag>
-Kokkos::View<type_real *[3]> get_target_medium_normal_per_dof(
-    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
-        &assembly,
-    const specfem::assembly::FaceView<
-        Kokkos::DefaultExecutionSpace>::host_mirror_type &h_faces) {
-
-  constexpr auto dimension_tag = specfem::element::dimension_tag::dim3;
-  constexpr int ndim = specfem::element::dimension<dimension_tag>::dim;
-
-  const auto field = assembly.fields.template get_simulation_field<
-      specfem::simulation::field_type::forward>();
-  const int nglob = field.template get_nglob<medium_tag>();
-
-  Kokkos::View<type_real *[ndim]> norms("norms", nglob);
-  Kokkos::View<type_real *[ndim]>::host_mirror_type h_norms =
-      Kokkos::create_mirror_view(norms);
-  Kokkos::deep_copy(h_norms, 0);
-
-  // accumulate norms (larger elements (so larger jacs) are weighted more)
-  for (int iface = 0; iface < h_faces.N; iface++) {
-    const auto face = h_faces(iface);
-    for (int ipoint = 0; ipoint < h_faces.n_points; ipoint++) {
-      for (int jpoint = 0; jpoint < h_faces.n_points; jpoint++) {
-        const auto index = face(ipoint, jpoint);
-        const int iglob = field.template get_iglob<false, medium_tag>(index);
-        specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim3,
-                                        true /*StoreJacobian*/,
-                                        false /*UseSIMD*/>
-            jac;
-
-        specfem::assembly::load_on_host(index, assembly.jacobian_matrix, jac);
-        const auto normal = jac.compute_normal(index.face_type);
-        for (int idim = 0; idim < ndim; idim++) {
-          h_norms(iglob, idim) += normal(idim);
-        }
-      }
-    }
-  }
-
-  // normalize each
-  for (int iglob = 0; iglob < nglob; iglob++) {
-    type_real inv_norm_mag = 0;
-    for (int idim = 0; idim < ndim; idim++) {
-      inv_norm_mag += h_norms(iglob, idim) * h_norms(iglob, idim);
-    }
-    inv_norm_mag = 1 / std::sqrt(inv_norm_mag);
-    for (int idim = 0; idim < ndim; idim++) {
-      h_norms(iglob, idim) *= inv_norm_mag;
-    }
-  }
-
-  Kokkos::deep_copy(norms, h_norms);
-  return norms;
-}
-
-/**
  * @brief Expanded call (Is = 0,..., (MAXPOW+1)^2 - 1) to run tests for all
  * powers <= MAXPOW
  *
@@ -339,15 +278,11 @@ void expand_test_pows_conj(
   const auto [acoustic_intersection_faces, h_acoustic_intersection_faces] =
       specfem::nonconforming_test::kernel::get_self_faces_on_intersection<
           specfem::element_coupling::interface_tag::acoustic_elastic>(assembly);
-  const auto acoustic_norms =
-      get_target_medium_normal_per_dof<specfem::element::medium_tag::acoustic>(
-          assembly, h_acoustic_intersection_faces);
   (test_nonconforming_acoustic_elastic_conj<
        specfem::element::medium_tag::acoustic,
        specfem::element::medium_tag::elastic>(
        assembly, meshname, acoustic_intersection_faces,
-       h_acoustic_intersection_faces, acoustic_norms, MAXPOW,
-       std::integral_constant<int, 5>(),
+       h_acoustic_intersection_faces, MAXPOW, std::integral_constant<int, 5>(),
        std::integral_constant<int, Is % (MAXPOW + 1) /*pow_x*/>(),
        std::integral_constant<int, Is / (MAXPOW + 1) /*pow y*/>()),
    ...);
@@ -355,15 +290,11 @@ void expand_test_pows_conj(
   const auto [elastic_intersection_faces, h_elastic_intersection_faces] =
       specfem::nonconforming_test::kernel::get_coupled_faces_on_intersection<
           specfem::element_coupling::interface_tag::acoustic_elastic>(assembly);
-  const auto elastic_norms =
-      get_target_medium_normal_per_dof<specfem::element::medium_tag::elastic>(
-          assembly, h_elastic_intersection_faces);
   (test_nonconforming_acoustic_elastic_conj<
        specfem::element::medium_tag::elastic,
        specfem::element::medium_tag::acoustic>(
        assembly, meshname, elastic_intersection_faces,
-       h_elastic_intersection_faces, elastic_norms, MAXPOW,
-       std::integral_constant<int, 5>(),
+       h_elastic_intersection_faces, MAXPOW, std::integral_constant<int, 5>(),
        std::integral_constant<int, Is % (MAXPOW + 1) /*pow_x*/>(),
        std::integral_constant<int, Is / (MAXPOW + 1) /*pow y*/>()),
    ...);
