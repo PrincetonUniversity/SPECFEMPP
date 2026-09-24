@@ -116,10 +116,13 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
     this->mesh
   };
 
-  this->nonconforming_interfaces = {
-    ngllz,     nglly, ngllx, this->element_intersections, this->jacobian_matrix,
-    this->mesh
-  };
+  this->nonconforming_interfaces = { ngllz,
+                                     nglly,
+                                     ngllx,
+                                     this->element_intersections,
+                                     this->jacobian_matrix,
+                                     this->mesh,
+                                     flux_scheme_config };
 
   this->fields = { this->mesh, this->element_types, simulation };
 

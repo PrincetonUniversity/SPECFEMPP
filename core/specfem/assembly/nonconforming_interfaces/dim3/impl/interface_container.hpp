@@ -89,6 +89,9 @@ public:
   /** @brief Device view for self nodes in coupled coordinates */
   CoupledCoordinatesView::host_mirror_type h_coupled_coordinates;
 
+  bool should_run_self_compute_coupling_kernel;
+  bool should_run_conjugate_compute_coupling_kernel;
+
 public:
   /**
    * @brief Constructs interface container with mesh and geometry data
@@ -127,8 +130,9 @@ public:
             num_faces, std::max(std::max(ngllz, nglly), ngllx),
             std::max(std::max(ngllz, nglly), ngllx),
             specfem::element::dimension<dimension_tag>::dim - 1),
-        h_coupled_coordinates(Kokkos::create_mirror_view(coupled_coordinates)) {
-        };
+        h_coupled_coordinates(Kokkos::create_mirror_view(coupled_coordinates)),
+        should_run_self_compute_coupling_kernel(true),
+        should_run_conjugate_compute_coupling_kernel(false) {};
 
   /**
    * @brief Loads interface data at specified index into point

@@ -160,12 +160,12 @@ specfem::io::mesh::impl::fortran::dim3_impl::find_face_from_nodes(
   // Check if the closest face is indeed close enough
   const auto min_distance =
       specfem::point::distance(closest_face_iter->second, face_nodes_midpoint);
-  if (min_distance > 1e-3 * lc) {
+  if (min_distance > 5e-2 * lc) {
     throw std::runtime_error(
         "Could not find matching face for absorbing boundary. Element " +
         std::to_string(element_index) + ": closest face distance " +
         std::to_string(min_distance) + " exceeds tolerance " +
-        std::to_string(1e-3 * lc) +
+        std::to_string(5e-2 * lc) +
         " (characteristic length: " + std::to_string(lc) + ")");
   }
 

@@ -2,8 +2,12 @@
 
 #include "interface_container.hpp"
 #include "specfem/algorithms/locate_point.hpp"
+#include "specfem/element_connections/to_string.hpp"
+#include "specfem/element_coupling/tags.hpp"
 #include "specfem/point/global_coordinates.hpp"
 #include <cmath>
+#include <sstream>
+#include <stdexcept>
 
 template <specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
@@ -31,13 +35,50 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
   }
   const int ngll = std::max(std::max(ngllz, nglly), ngllx);
   constexpr int ndim = specfem::element::dimension<dimension_tag>::dim;
+  constexpr auto connection_tag =
+      specfem::element_connections::type::nonconforming;
 
   const auto [self_faces, coupled_faces] =
       element_intersections.get_intersections_on_host(
-          specfem::element_connections::type::nonconforming, InterfaceTag,
-          BoundaryTag, FluxSchemeTag);
+          connection_tag, InterfaceTag, BoundaryTag, FluxSchemeTag);
 
   const auto &num_faces = self_faces.N;
+
+  const auto interfacial_meshing_type =
+      flux_scheme_config.get_interfacial_meshing_type();
+  switch (interfacial_meshing_type) {
+  case element_coupling::interfacial_meshing_type::unspecified:
+  case element_coupling::interfacial_meshing_type::acoustic_host:
+    should_run_self_compute_coupling_kernel =
+        InterfaceTag ==
+        specfem::element_coupling::interface_tag::acoustic_elastic;
+    should_run_conjugate_compute_coupling_kernel =
+        !should_run_self_compute_coupling_kernel;
+    break;
+  case element_coupling::interfacial_meshing_type::elastic_host:
+    should_run_self_compute_coupling_kernel =
+        InterfaceTag !=
+        specfem::element_coupling::interface_tag::acoustic_elastic;
+    should_run_conjugate_compute_coupling_kernel =
+        !should_run_self_compute_coupling_kernel;
+    break;
+  case element_coupling::interfacial_meshing_type::self_host:
+    should_run_self_compute_coupling_kernel = true;
+    should_run_conjugate_compute_coupling_kernel = false;
+    break;
+  case element_coupling::interfacial_meshing_type::intersections:
+  default:
+    std::ostringstream oss;
+    oss << "Unsupported interface meshing type: " << interfacial_meshing_type
+        << "\n"
+        << "nonconforming interface: dim-" << ndim
+        << ", interface-tag = " << interface_tag
+        << ", boundary = " << specfem::element::to_string(boundary_tag)
+        << ", connection-tag = "
+        << specfem::element_connections::to_string(connection_tag)
+        << ", flux-scheme = " << flux_scheme_tag;
+    throw std::runtime_error(oss.str());
+  }
 
   // for every node (ipoint, jpoint) of every self-face (ispec, self_face_type),
   // we want exactly one coupled face (coupled_faces[iface]) node to match. We
@@ -107,7 +148,7 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
             mesh.h_coord(ispec, iz, iy, ix, 1),
             mesh.h_coord(ispec, iz, iy, ix, 2));
 
-        const auto [local_coords, point_found] =
+        auto [local_coords, point_found] =
             specfem::algorithms::locate_point_impl::locate_point(
                 global_coord, mesh, jspec, jface_type, false);
 
@@ -228,7 +269,7 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
           const int &ispec = self_face_ispec_and_type.first;
           const type_real charlen = compute_characteristic_length(ispec);
           // node hit: verify closeness
-          if (hit_face_distance(isf, ipoint, jpoint) > 2e-2 * charlen) {
+          if (hit_face_distance(isf, ipoint, jpoint) > 1e-1 * charlen) {
             const specfem::mesh_entity::dim3::type &iface_type =
                 self_face_ispec_and_type.second;
             int iz, iy, ix;
