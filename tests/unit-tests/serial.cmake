@@ -330,6 +330,7 @@ specfem_add_test(assembly_tests
             assembly/dim3/jacobian_matrix/jacobian_matrix.cpp
             assembly/dim3/properties/properties.cpp
             assembly/dim3/element_types/element_context.cpp
+            assembly/dim3_globe/assembly.cpp
   LIBRARIES specfem::mesh
             specfem::assembly
             specfem::quadrature

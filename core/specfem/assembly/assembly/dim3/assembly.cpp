@@ -9,6 +9,16 @@
 
 namespace specfem::assembly::dim3_impl {
 
+std::optional<specfem::globe::PlanetConstants>
+get_planet_constants(const specfem::mesh::cartesian3d_mesh &) {
+  return std::nullopt;
+}
+
+std::optional<specfem::globe::PlanetConstants>
+get_planet_constants(const specfem::mesh::globe3d_mesh &mesh) {
+  return mesh.globe.planet_constants;
+}
+
 bool has_deferred_properties(
     const specfem::mesh::cartesian3d_mesh &,
     const std::shared_ptr<specfem::io::reader> &property_reader) {
@@ -81,6 +91,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
 
   this->t0 = t0;
   this->dt = dt;
+  this->planet_constants =
+      specfem::assembly::dim3_impl::get_planet_constants(mesh);
   const int nspec = mesh.nspec;
   const int ngllz = mesh.element_grid.ngllz;
   const int nglly = mesh.element_grid.nglly;
@@ -149,6 +161,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
   // Currently done in the mesher!
   this->check_jacobian_matrix();
 
+  // Attenuation intentionally precedes properties: the globe path first keeps
+  // its frequency-band/SLS setup, then fills pointwise Q and recomputes it.
   this->attenuation = { mesh.attenuation, dt, this->mesh, this->element_types,
                         mesh.materials };
 
@@ -158,8 +172,9 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
   this->properties = { this->element_types, this->mesh, mesh.materials,
                        has_deferred_properties };
 
-  // GLL model: when properties are deferred, read/fill properties (and
-  // recompute attenuation state) before dependent containers are built.
+  // A configured GLL reader takes precedence over the globe model evaluator.
+  // Globe evaluation samples reference coordinates, fills properties, and only
+  // then recomputes attenuation state from the pointwise Q values.
   if (has_deferred_properties) {
     specfem::assembly::dim3_impl::read_deferred_properties(mesh, *this,
                                                            property_reader);

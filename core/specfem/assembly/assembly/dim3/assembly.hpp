@@ -16,9 +16,11 @@
 #include "specfem/assembly/receivers.hpp"
 #include "specfem/assembly/sources.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/globe/planet_constants.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/receivers.hpp"
 #include "specfem/source.hpp"
+#include <optional>
 
 namespace specfem::io {
 class reader;
@@ -134,6 +136,9 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
 
   specfem::assembly::Info<dimension_tag> info; ///< Information about the mesh
                                                ///< and simulation
+
+  /** Planet constants for a globe assembly; empty for Cartesian meshes. */
+  std::optional<specfem::globe::PlanetConstants> planet_constants;
 
   specfem::assembly::mpi<dimension_tag> mpi_interfaces; ///< MPI communication
                                                         ///< groups for face

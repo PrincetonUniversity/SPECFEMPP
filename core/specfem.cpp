@@ -207,6 +207,12 @@ int main(int argc, char **argv) {
   auto *cmd_3d = app.add_subcommand("3d", "Run 3D simulation");
   add_simulation_options(cmd_3d, opts_3d, flags_3d);
 
+  // -- globe3d subcommand --
+  SimulationOptions opts_globe3d;
+  LoggerFlags flags_globe3d;
+  auto *cmd_globe3d = app.add_subcommand("globe3d", "Run global 3D simulation");
+  add_simulation_options(cmd_globe3d, opts_globe3d, flags_globe3d);
+
   // -- Qplots subcommand (placeholder) --
   Qoptions qplots_opts;
   auto *cmd_qplots =
@@ -222,6 +228,10 @@ int main(int argc, char **argv) {
 
   if (cmd_3d->parsed()) {
     return run_simulation("3d", argc, argv, opts_3d, flags_3d);
+  }
+
+  if (cmd_globe3d->parsed()) {
+    return run_simulation("globe3d", argc, argv, opts_globe3d, flags_globe3d);
   }
 
   if (cmd_qplots->parsed()) {
