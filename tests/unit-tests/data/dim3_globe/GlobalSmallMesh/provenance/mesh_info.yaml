@@ -1,0 +1,4 @@
+# Values reported by finalize_mesher in OUTPUT_FILES/output_mesher.txt.
+# Volume is nondimensionalized by R_PLANET^3.
+volume: 0.695527053601667
+chunks: 1

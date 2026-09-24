@@ -3,6 +3,7 @@
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/info/impl/bounding_box.hpp"
 #include "specfem/assembly/info/impl/bounds.hpp"
+#include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/properties.hpp"
 #include "specfem/element.hpp"
@@ -41,9 +42,11 @@ template <specfem::element::dimension_tag DimensionTag> struct Info {
    * @param properties Material properties at all mesh points
    * @param element_types Element classification by medium and property type
    */
-  Info(const specfem::assembly::mesh<dimension_tag> &mesh,
-       const specfem::assembly::properties<dimension_tag> &properties,
-       const specfem::assembly::element_types<dimension_tag> &element_types);
+  Info(
+      const specfem::assembly::mesh<dimension_tag> &mesh,
+      const specfem::assembly::properties<dimension_tag> &properties,
+      const specfem::assembly::element_types<dimension_tag> &element_types,
+      const specfem::assembly::jacobian_matrix<dimension_tag> &jacobian_matrix);
 
   info::impl::BoundingBox<dimension_tag> domain_bounds; ///< Spatial extent of
                                                         ///< the mesh domain
@@ -58,10 +61,30 @@ template <specfem::element::dimension_tag DimensionTag> struct Info {
   type_real suggested_time_step;    ///< Time step satisfying CFL condition
   type_real largest_minimum_period; ///< Maximum of minimum resolvable periods
 
-  /** Global element count per globe region; empty unless the element types
-   *  carry globe element context. */
+  /** Statistics for one globe region. */
+  struct RegionInfo {
+    int element_count{};             ///< Global number of elements
+    info::impl::Bounds radius;       ///< Element shell radius range
+    info::impl::Bounds gll_distance; ///< GLL spacing range
+    info::impl::Bounds v;            ///< Wave-speed range
+    type_real suggested_time_step{}; ///< Region-local CFL time step
+  };
+
+  /** Location of an element-level extremum in the distributed mesh. */
+  struct ExtremumLocation {
+    int rank{ -1 };            ///< Owning MPI rank
+    int element{ -1 };         ///< Rank-local compute element index
+    info::impl::Bounds radius; ///< Element shell radius range
+  };
+
+  /** Global element count per globe region; empty for Cartesian meshes. */
   std::map<specfem::element::region_tag, int> elements_per_region;
-  ///< across elements
+  /** Per-region globe statistics; empty for Cartesian meshes. */
+  std::map<specfem::element::region_tag, RegionInfo> regions;
+  ExtremumLocation minimum_gll_distance_location;
+  ExtremumLocation cfl_limit_location;
+  double total_volume{}; ///< Integrated mesh volume
+  double total_mass{};   ///< Integrated mesh mass
 
   /**
    * @brief Generate formatted string representation of mesh statistics.
@@ -77,10 +100,14 @@ extern template specfem::assembly::Info<specfem::element::dimension_tag::dim2>::
          const specfem::assembly::properties<
              specfem::element::dimension_tag::dim2> &,
          const specfem::assembly::element_types<
+             specfem::element::dimension_tag::dim2> &,
+         const specfem::assembly::jacobian_matrix<
              specfem::element::dimension_tag::dim2> &);
 extern template specfem::assembly::Info<specfem::element::dimension_tag::dim3>::
     Info(const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &,
          const specfem::assembly::properties<
              specfem::element::dimension_tag::dim3> &,
          const specfem::assembly::element_types<
+             specfem::element::dimension_tag::dim3> &,
+         const specfem::assembly::jacobian_matrix<
              specfem::element::dimension_tag::dim3> &);

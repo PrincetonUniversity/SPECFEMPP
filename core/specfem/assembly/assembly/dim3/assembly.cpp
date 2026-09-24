@@ -180,7 +180,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
                                                            property_reader);
   }
 
-  this->info = { this->mesh, this->properties, this->element_types };
+  this->info = { this->mesh, this->properties, this->element_types,
+                 this->jacobian_matrix };
 
   return;
 }

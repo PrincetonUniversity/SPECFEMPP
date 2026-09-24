@@ -82,7 +82,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
     property_reader->read(*this);
   }
 
-  this->info = { this->mesh, this->properties, this->element_types };
+  this->info = { this->mesh, this->properties, this->element_types,
+                 this->jacobian_matrix };
 
   if (allocate_boundary_values)
     this->boundary_values = { max_timesteps, this->mesh, this->element_types,
