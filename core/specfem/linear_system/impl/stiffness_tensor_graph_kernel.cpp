@@ -114,6 +114,28 @@ template <typename WeightsViewType> struct StiffnessGraphWeightedSum {
   }
 };
 
+/**
+ * @brief Identity input of the graph: `unit_columns(c, e, col, iz, iy, ix)` is
+ * 1 exactly when `col` is the local dof `(c, iz, iy, ix)`.
+ *
+ * Constant data replicated over the element axis because every graph operand
+ * must carry the labels of the stage it feeds (broadcast labels are a
+ * TensorOperations follow-up).
+ */
+template <int NGLL, typename WorkspaceViewType>
+struct StiffnessGraphUnitColumns {
+  WorkspaceViewType unit_columns;
+
+  KOKKOS_FUNCTION void operator()(const int c, const int e, const int col,
+                                  const int iz, const int iy,
+                                  const int ix) const {
+    unit_columns(c, e, col, iz, iy, ix) =
+        (col == specfem::linear_system::local_dof_index<NGLL>(c, iz, iy, ix))
+            ? static_cast<type_real>(1.0)
+            : static_cast<type_real>(0.0);
+  }
+};
+
 } // namespace specfem::linear_system_impl
 
 template <int NGLL, typename Tags>
@@ -155,43 +177,36 @@ specfem::linear_system_impl::StiffnessTensorGraphKernel<
         "parameter NGLL.");
   }
 
-  const auto hprime = assembly.mesh.hprime;
-  const auto weights = assembly.mesh.weights;
-  const auto derivative = derivative_;
-  const auto weighted_transpose = weighted_transpose_;
-  const auto unit_columns = unit_columns_;
-
   // The two 1D derivative operators the contractions stage: the gradient's
   // hprime(point, function) and the divergence's transposed
   // hprime(summed, point) with the summed point's quadrature weight folded in
-  // (element_divergence keeps weights(l) inside the sum).
-  Kokkos::parallel_for(
-      "specfem::linear_system::tensor_graph::stage_operators",
-      Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<2>>({ 0, 0 },
-                                                        { NGLL, NGLL }),
-      KOKKOS_LAMBDA(const int p, const int f) {
-        derivative(p, f) = hprime(p, f);
-        weighted_transpose(p, f) = hprime(p, f) * weights(p);
-      });
+  // (element_divergence keeps weights(l) inside the sum). Built on the host
+  // from the mesh's host quadrature, then copied.
+  const auto &h_hprime = assembly.mesh.h_hprime;
+  const auto &h_weights = assembly.mesh.h_weights;
+  const auto h_derivative = Kokkos::create_mirror_view(derivative_);
+  const auto h_weighted_transpose =
+      Kokkos::create_mirror_view(weighted_transpose_);
+  for (int p = 0; p < NGLL; ++p) {
+    for (int f = 0; f < NGLL; ++f) {
+      h_derivative(p, f) = h_hprime(p, f);
+      h_weighted_transpose(p, f) = h_hprime(p, f) * h_weights(p);
+    }
+  }
+  Kokkos::deep_copy(derivative_, h_derivative);
+  Kokkos::deep_copy(weighted_transpose_, h_weighted_transpose);
 
-  // Identity input: unit_columns(c, e, col, iz, iy, ix) = 1 exactly when col
-  // is the local dof (c, iz, iy, ix). Constant data replicated over the
-  // element axis because every graph operand must carry the labels of the
-  // stage it feeds (broadcast labels are a TensorOperations follow-up);
-  // filled once over the full capacity, so every leading sub-batch is valid.
+  // Identity input, filled once over the full capacity so every leading
+  // sub-batch is valid. A named functor, not a KOKKOS_LAMBDA: CUDA rejects
+  // extended lambdas whose enclosing function is a constructor.
   Kokkos::parallel_for(
       "specfem::linear_system::tensor_graph::fill_unit_columns",
       Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<6>>(
           { 0, 0, 0, 0, 0, 0 },
           { ncomp, batch_capacity, ndof, NGLL, NGLL, NGLL }),
-      KOKKOS_LAMBDA(const int c, const int e, const int col, const int iz,
-                    const int iy, const int ix) {
-        unit_columns(c, e, col, iz, iy, ix) =
-            (col ==
-             specfem::linear_system::local_dof_index<NGLL>(c, iz, iy, ix))
-                ? static_cast<type_real>(1.0)
-                : static_cast<type_real>(0.0);
-      });
+      specfem::linear_system_impl::StiffnessGraphUnitColumns<NGLL,
+                                                             WorkspaceViewType>{
+          unit_columns_ });
 }
 
 template <int NGLL, typename Tags>
