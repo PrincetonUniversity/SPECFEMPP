@@ -3,6 +3,7 @@
 #include <stdexcept>
 
 #include "specfem/globe/model_evaluator.hpp"
+#include "specfem/globe/region_codes.hpp"
 #include "specfem/point.hpp"
 #include "specfem/tags.hpp"
 #include "specfem/units.hpp"
@@ -20,19 +21,6 @@ void read_globe_properties(
   using Dimension = specfem::element::dimension_tag;
   using Medium = specfem::element::medium_tag;
   using Property = specfem::element::property_tag;
-
-  const auto iregion_code = [](const specfem::element::region_tag region) {
-    switch (region) {
-    case specfem::element::region_tag::crust_mantle:
-      return 1;
-    case specfem::element::region_tag::outer_core:
-      return 2;
-    case specfem::element::region_tag::inner_core:
-      return 3;
-    default:
-      throw std::runtime_error("Unknown region tag for the globe evaluator");
-    }
-  };
 
   const auto &element_types = assembly.element_types;
   if (!element_types.has_element_context()) {
@@ -114,7 +102,8 @@ void read_globe_properties(
 
       const auto property = element_types.get_property_tag(compute_ispec);
       const auto values = evaluator.evaluate_element(
-          iregion_code(element_types.get_region_tag(compute_ispec)),
+          specfem::globe::to_region_code(
+              element_types.get_region_tag(compute_ispec)),
           element_types.idoubling(compute_ispec),
           element_types.rmin(compute_ispec), element_types.rmax(compute_ispec),
           element_types.elem_in_crust(compute_ispec),
