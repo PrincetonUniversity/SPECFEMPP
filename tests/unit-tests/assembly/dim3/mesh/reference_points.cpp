@@ -133,23 +133,18 @@ TEST(GlobeReferencePoints, SamplesModelOnReferenceGeometry) {
 
   {
     SCOPED_TRACE("identical anchors reproduce final coordinates to round-off");
-    const specfem::assembly::mesh_impl::control_nodes<dimension>
-        assembled_final_nodes(
-            static_cast<const specfem::assembly::mesh_impl::
-                            mesh_to_compute_mapping<dimension> &>(
-                mesh_with_reference),
-            mesh.control_nodes);
-    test_impl::PointsType identical = final_points;
-    identical.set_reference_coordinates(
-        assembled_final_nodes,
-        static_cast<
-            const specfem::assembly::mesh_impl::shape_functions<dimension> &>(
-            mesh_with_reference));
+    // Feed the final anchors in as reference anchors: same anchors, same shape
+    // functions, same contraction, so the reference field must reproduce the
+    // final one. Costs a third fixture construction — worth it to exercise the
+    // production path (mesh ctor -> points ctor with reference nodes).
+    const auto mesh_identical =
+        test_impl::build_assembly_mesh(mesh, mesh.control_nodes.coordinates);
+    const auto &identical =
+        static_cast<const test_impl::PointsType &>(mesh_identical);
     EXPECT_NE(identical.h_reference_coord.data(), identical.h_coord.data());
     const auto max_difference =
         test_impl::max_absolute_coordinate_difference(identical);
-    // Same anchors, same shape functions, same contraction: any difference
-    // is pure round-off (1 m is ~1e-7 relative at Earth radius).
+    // Any difference is pure round-off (1 m is ~1e-7 relative at Earth radius).
     EXPECT_LE(max_difference, 1.0);
   }
 }

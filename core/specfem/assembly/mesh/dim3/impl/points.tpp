@@ -64,7 +64,9 @@ specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::
            const specfem::assembly::mesh_impl::control_nodes<dimension_tag>
                &control_nodes,
            const specfem::assembly::mesh_impl::shape_functions<dimension_tag>
-               &shape_functions)
+               &shape_functions,
+           const specfem::assembly::mesh_impl::control_nodes<dimension_tag>
+               &reference_control_nodes)
     : nspec(nspec), ngllz(ngllz), nglly(nglly), ngllx(ngllx),
       index_mapping("specfem::assembly::mesh::points::index_mapping", nspec,
                     ngllz, nglly, ngllx),
@@ -339,34 +341,27 @@ specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::
 
   Kokkos::deep_copy(this->h_coord, this->coord);
 
-  // Reference coordinates alias the final ones until a reference geometry is
-  // supplied via set_reference_coordinates().
-  this->reference_coord = this->coord;
-  this->h_reference_coord = this->h_coord;
+  if (reference_control_nodes.control_node_coordinates.extent(0) > 0) {
+    // Reference (undeformed) geometry: same shape functions and ordering as the
+    // final coordinates, contracted against the reference anchors.
+    this->reference_coord =
+        CoordViewType("specfem::assembly::mesh::points::reference_coord", nspec,
+                      ngllz, nglly, ngllx, ndim);
+    this->h_reference_coord = Kokkos::create_mirror_view(this->reference_coord);
+    initialize_coordinates(nspec, ngllz, nglly, ngllx,
+                           reference_control_nodes.ngnod, this->reference_coord,
+                           shape_functions.shape3D,
+                           reference_control_nodes.control_node_coordinates);
+    Kokkos::deep_copy(this->h_reference_coord, this->reference_coord);
+  } else {
+    // No reference geometry: alias the final coordinates.
+    this->reference_coord = this->coord;
+    this->h_reference_coord = this->h_coord;
+  }
 
   compute_coordinate_bounds();
 
   return;
-}
-
-void specfem::assembly::mesh_impl::points<
-    specfem::element::dimension_tag::dim3>::
-    set_reference_coordinates(
-        const specfem::assembly::mesh_impl::control_nodes<dimension_tag>
-            &reference_control_nodes,
-        const specfem::assembly::mesh_impl::shape_functions<dimension_tag>
-            &shape_functions) {
-  this->reference_coord =
-      CoordViewType("specfem::assembly::mesh::points::reference_coord", nspec,
-                    ngllz, nglly, ngllx, ndim);
-  this->h_reference_coord = Kokkos::create_mirror_view(this->reference_coord);
-
-  initialize_coordinates(nspec, ngllz, nglly, ngllx,
-                         reference_control_nodes.ngnod, this->reference_coord,
-                         shape_functions.shape3D,
-                         reference_control_nodes.control_node_coordinates);
-
-  Kokkos::deep_copy(this->h_reference_coord, this->reference_coord);
 }
 
 void specfem::assembly::mesh_impl::points<

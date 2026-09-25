@@ -101,6 +101,11 @@ public:
    * @param adjacency_graph Element adjacency information
    * @param control_nodes Element control node data
    * @param shape_functions Shape function values at GLL points
+   * @param reference_control_nodes Optional assembled control nodes carrying
+   * the reference (undeformed) anchor coordinates. When non-empty, @ref
+   * reference_coord is contracted from them with the same shape functions and
+   * ordering as @ref coord; when empty, @ref reference_coord aliases @ref
+   * coord.
    */
   points(const int &nspec, const int &ngllz, const int &nglly, const int &ngllx,
          const Kokkos::View<specfem::element::medium_tag *, Kokkos::HostSpace>
@@ -110,24 +115,9 @@ public:
          const specfem::assembly::mesh_impl::control_nodes<dimension_tag>
              &control_nodes,
          const specfem::assembly::mesh_impl::shape_functions<dimension_tag>
-             &shape_functions);
-
-  /**
-   * @brief Replace the aliased reference coordinates with a fresh field.
-   *
-   * Allocates @ref reference_coord and fills it by contracting
-   * @p shape_functions against @p reference_control_nodes — the exact same
-   * interpolation that produced @ref coord from the final control nodes.
-   *
-   * @param reference_control_nodes Assembled control nodes carrying the
-   * reference anchor coordinates
-   * @param shape_functions Shape function values at GLL points
-   */
-  void set_reference_coordinates(
-      const specfem::assembly::mesh_impl::control_nodes<dimension_tag>
-          &reference_control_nodes,
-      const specfem::assembly::mesh_impl::shape_functions<dimension_tag>
-          &shape_functions);
+             &shape_functions,
+         const specfem::assembly::mesh_impl::control_nodes<dimension_tag>
+             &reference_control_nodes = {});
 
 private:
   /**
