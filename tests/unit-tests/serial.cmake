@@ -710,6 +710,34 @@ specfem_add_test(stiffness_assembler_tests
   LABELS    TRILINOS
 )
 
+# A/B correctness + timing of the tensor-graph kernel against the probe;
+# GTEST_SKIP stub when SPECFEM_ENABLE_TENSOROPS is OFF.
+specfem_add_test(stiffness_tensor_graph_tests
+  SOURCES linear_system/stiffness_tensor_graph_tests.cpp
+  LIBRARIES specfem::linear_system
+            specfem::quadrature
+            specfem::mesh
+            yaml-cpp
+            specfem_environment
+            specfem::assembly
+            specfem::runtime_configuration
+            timescheme
+            point
+            specfem::algorithms
+            specfem::solver
+            specfem::periodic_tasks
+            ${BOOST_LIBS}
+            -lpthread -lm
+)
+
+# Pure TensorOperations + Kokkos: no fixtures, no assembly. Compiles to a
+# GTEST_SKIP stub when SPECFEM_ENABLE_TENSOROPS is OFF.
+specfem_add_test(tensorops_smoke_tests
+  SOURCES linear_system/tensorops_smoke_tests.cpp
+  LIBRARIES specfem::linear_system
+            specfem_environment
+)
+
 specfem_add_test(sparse_matrix_view_mapping_tests
   SOURCES linear_system/sparse_matrix_view/mapping_tests.cpp
   LIBRARIES specfem::linear_system
