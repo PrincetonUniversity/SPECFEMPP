@@ -71,10 +71,13 @@ std::filesystem::path write_database(const bool attenuation = false,
 
   Record header;
   header.append_fixed("SPECFEMPP_GLOBE_DB", 32);
-  header.append(3);
+  header.append(4);
   header.write(stream);
 
-  write_values(stream, 1, 6371000.0, 5514.3);
+  write_values(stream, 1, 6371000.0, 5514.3,
+               (1.0 - 1.0 / 299.8) * (1.0 - 1.0 / 299.8), 24.0, 3600.0, 9000.0,
+               1221500.0, 3480000.0, 6346600.0, 6291000.0, 6151000.0, 5971000.0,
+               5701000.0, 5600000.0, 6368000.0);
   write_values(stream, 27, 5, 5, 5, 1);
   write_values(stream, 0, 0, 0, 0, 0, attenuation ? 1 : 0, 0, 0);
   write_values(stream, 1);
@@ -140,6 +143,10 @@ TEST(GlobeMeshReader, ReadsThinDatabaseAndPreservesReferenceContext) {
   EXPECT_EQ(mesh.globe.model_verification.codes,
             (std::vector<int>{ 1, 0, 0, 0, 0 }));
   EXPECT_EQ(mesh.globe.model_config.nchunks, 6);
+  EXPECT_DOUBLE_EQ(mesh.globe.planet_constants.values().r_planet, 6371000.0);
+  EXPECT_DOUBLE_EQ(mesh.globe.planet_constants.values().rhoav, 5514.3);
+  ASSERT_TRUE(mesh.globe.planet_constants.has_radii());
+  EXPECT_DOUBLE_EQ(mesh.globe.planet_constants.radii().r_cmb, 3480000.0);
   ASSERT_EQ(mesh.globe.element_context.size(), 1);
   EXPECT_EQ(mesh.globe.element_context[0].region,
             specfem::element::region_tag::crust_mantle);

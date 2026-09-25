@@ -27,7 +27,6 @@ option(SPECFEM_INSTALL "Creates clean executable directory. Location Controlled 
 option(SPECFEM_ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
 option(SPECFEM_ENABLE_METIS "Enable METIS partitioning support in xdecompose_mesh" OFF)
 option(SPECFEM_ENABLE_TRILINOS "Enable Trilinos implicit solvers (Tpetra/Belos/Ifpack2/MueLu/Amesos2)" OFF)
-option(SPECFEM_BUILD_MESHFEM3D_GLOBE "Build the SPECFEM3D_GLOBE meshfem3D executable" OFF)
 option(SPECFEM_BUILD_BENCHMARKS "Benchmarks included" ON)
 option(SPECFEM_NIGHTLY_BENCHMARKS "Include nightly benchmarks" OFF)
 option(SPECFEM_ENABLE_UNITY_BUILD "Enable unity build to speed up compilation" ON)
@@ -245,23 +244,19 @@ set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
 # =================================
 
 # ========== MESHFEM3D_GLOBE =============
-if(SPECFEM_BUILD_MESHFEM3D_GLOBE)
-  message(STATUS "Configuring xmeshfem3D_globe")
-  set(_saved_CMAKE_MESSAGE_LOG_LEVEL ${CMAKE_MESSAGE_LOG_LEVEL})
-  set(CMAKE_MESSAGE_LOG_LEVEL ${SUBDIR_LOG_LEVEL})
-  add_subdirectory(fortran/meshfem3d_globe)
-  set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
+message(STATUS "Configuring xmeshfem3D_globe")
+set(_saved_CMAKE_MESSAGE_LOG_LEVEL ${CMAKE_MESSAGE_LOG_LEVEL})
+set(CMAKE_MESSAGE_LOG_LEVEL ${SUBDIR_LOG_LEVEL})
+add_subdirectory(fortran/meshfem3d_globe)
+set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
 
-  # ISO_C_BINDING wrappers exposing the globe model catalog to C/C++ (issue
-  # #2001). Kept in a sibling directory so fortran/meshfem3d_globe/ stays a
-  # clean mirror of upstream specfem3d_globe. Must come after the globe
-  # subdirectory above: it consumes the meshfem3D_globe::* targets and the .mod
-  # files they generate.
-  message(STATUS "Configuring globe_evaluator")
-  add_subdirectory(fortran/globe_evaluator)
-else()
-  message(STATUS "Skipping xmeshfem3D_globe (SPECFEM_BUILD_MESHFEM3D_GLOBE=OFF)")
-endif()
+# ISO_C_BINDING wrappers exposing the globe model catalog to C/C++ (issue
+# #2001). Kept in a sibling directory so fortran/meshfem3d_globe/ stays a
+# clean mirror of upstream specfem3d_globe. Must come after the globe
+# subdirectory above: it consumes the meshfem3D_globe::* targets and the .mod
+# files they generate.
+message(STATUS "Configuring globe_evaluator")
+add_subdirectory(fortran/globe_evaluator)
 # =================================
 
 # ========== DECOMPOSE_MESH =========

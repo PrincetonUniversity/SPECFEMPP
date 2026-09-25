@@ -19,7 +19,7 @@
 !  visualization outputs while leaving their writer implementations available.
 !
 !  ------------------------------------------------------------------------------
-!  Record layout (format_version = 3)
+!  Record layout (format_version = 4)
 !
 !  Fortran sequential unformatted, one record per write statement. Coordinates and
 !  radii are dimensionalized to SI metres on write (the mesher works in units of
@@ -27,7 +27,9 @@
 !
 !    -- HEADER
 !    1  magic (character(len=32)), format_version (integer)
-!    2  PLANET_TYPE (integer), R_PLANET (dp), RHOAV (dp)
+!    2  PLANET_TYPE (integer), followed by these resolved values (15 dp):
+!       R_PLANET, RHOAV, ONE_MINUS_F_SQUARED, HOURS_PER_DAY, SECONDS_PER_HOUR,
+!       TOPO_MAXIMUM, RICB, RCMB, RMOHO, R80, R220, R400, R670, R771, ROCEAN
 !    3  NGNOD, NGLLX, NGLLY, NGLLZ, nregions (5 integers)
 !    4  ELLIPTICITY, TOPOGRAPHY, GRAVITY, FULL_GRAVITY, ROTATION, ATTENUATION,
 !       OCEANS, HAS_REFERENCE_GEOMETRY (8 logicals)
@@ -125,9 +127,8 @@
 
   ! magic string and version of the on-disk format
   character(len=32), parameter :: SPECFEMPP_DB_MAGIC = 'SPECFEMPP_GLOBE_DB              '
-  ! version 3 stores resolved MPI element adjacencies using the same seven-field
-  ! representation as the Cartesian 3-D database
-  integer, parameter :: SPECFEMPP_DB_VERSION = 3
+  ! version 4 stores the resolved planet constants and model radii in record 2
+  integer, parameter :: SPECFEMPP_DB_VERSION = 4
 
   ! material_mode: material values are supplied by the model oracle at SPECFEM++ setup
   integer, parameter :: SPECFEMPP_MATERIAL_ORACLE = 1
@@ -628,6 +629,8 @@
     NGNOD_EIGHT_CORNERS
 
   use shared_parameters, only: LOCAL_PATH,PLANET_TYPE,R_PLANET,RHOAV, &
+    ONE_MINUS_F_SQUARED,HOURS_PER_DAY,SECONDS_PER_HOUR,TOPO_MAXIMUM, &
+    RICB,RCMB,RMOHO,R80,R220,R400,R670,R771,ROCEAN, &
     ELLIPTICITY,TOPOGRAPHY,GRAVITY,FULL_GRAVITY,ROTATION,ATTENUATION,OCEANS, &
     MODEL,REFERENCE_1D_MODEL,THREE_D_MODEL,THREE_D_MODEL_IC,REFERENCE_CRUSTAL_MODEL, &
     MODEL_GLL_TYPE,TRANSVERSE_ISOTROPY,CRUSTAL,ONE_CRUST,CASE_3D, &
@@ -785,7 +788,9 @@
 
   ! header
   write(IOUT) SPECFEMPP_DB_MAGIC,SPECFEMPP_DB_VERSION
-  write(IOUT) PLANET_TYPE,R_PLANET,RHOAV
+  write(IOUT) PLANET_TYPE,R_PLANET,RHOAV,ONE_MINUS_F_SQUARED, &
+              HOURS_PER_DAY,SECONDS_PER_HOUR,dble(TOPO_MAXIMUM), &
+              RICB,RCMB,RMOHO,R80,R220,R400,R670,R771,ROCEAN
   write(IOUT) NGNOD,NGLLX,NGLLY,NGLLZ,DB_NREGIONS
   write(IOUT) ELLIPTICITY,TOPOGRAPHY,GRAVITY,FULL_GRAVITY,ROTATION,ATTENUATION,OCEANS, &
               has_reference_geometry

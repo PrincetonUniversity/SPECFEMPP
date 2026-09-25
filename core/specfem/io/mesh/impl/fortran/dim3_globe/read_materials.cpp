@@ -1,4 +1,5 @@
 #include "specfem/io/mesh/impl/fortran/dim3_globe/read_materials.hpp"
+#include "specfem/globe/region_codes.hpp"
 
 #include "specfem/io.hpp"
 #include "specfem/io/fortranio/interface.hpp"
@@ -38,20 +39,18 @@ specfem::io::mesh::impl::fortran::dim3_globe::read_material_tags(
   // Kokkos host parallel region cannot propagate.
   for (int ispec = 0; ispec < mesh.nspec; ++ispec) {
     tags.medium_tags[ispec] =
-        specfem::io::mesh::impl::fortran::dim3_globe_impl::to_medium_tag(
+        specfem::io::mesh::impl::fortran::dim3_globe::to_medium_tag(
             medium_codes[ispec]);
     tags.property_tags[ispec] =
-        specfem::io::mesh::impl::fortran::dim3_globe_impl::to_property_tag(
+        specfem::io::mesh::impl::fortran::dim3_globe::to_property_tag(
             property_codes[ispec]);
-    element_context[ispec] = {
-      specfem::io::mesh::impl::fortran::dim3_globe_impl::to_region_tag(
-          region_codes[ispec]),
-      idoubling[ispec],
-      rmin[ispec],
-      rmax[ispec],
-      in_crust[ispec],
-      in_mantle[ispec]
-    };
+    element_context[ispec] = { specfem::globe::to_region_tag(
+                                   region_codes[ispec]),
+                               idoubling[ispec],
+                               rmin[ispec],
+                               rmax[ispec],
+                               in_crust[ispec],
+                               in_mantle[ispec] };
   }
 
   return tags;
@@ -82,7 +81,7 @@ specfem::io::mesh::impl::fortran::dim3_globe::make_materials(
       elastic(1.0, 1.0, 2.0, 0.0);
   const int elastic_index = materials.add_material(elastic);
 
-  // Isotropic-equivalent placeholder (lambda = mu = 1); the oracle overwrites
+  // Isotropic-equivalent placeholder (lambda = mu = 1); the evaluator replaces
   // every GLL point at assembly setup.
   specfem::medium_container::material<Dimension::dim3, Medium::elastic,
                                       Property::anisotropic, Attenuation::none>

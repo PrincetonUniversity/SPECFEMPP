@@ -26,7 +26,7 @@ configure_file(
 file(MAKE_DIRECTORY ${CURRENT_BENCHMARK_BUILD_DIR}/DATABASES_MPI)
 file(MAKE_DIRECTORY ${CURRENT_BENCHMARK_BUILD_DIR}/OUTPUT_FILES)
 
-if(SPECFEM_BUILD_MESHFEM3D_GLOBE)
+if(SPECFEM_ENABLE_MPI)
   add_custom_target(benchmark_dim3_globe_global_small_mesh
     COMMAND ${CMAKE_COMMAND} -E env
             PATH=$<TARGET_FILE_DIR:xmeshfem3D_globe>:$ENV{PATH}
