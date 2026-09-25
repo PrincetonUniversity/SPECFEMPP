@@ -74,14 +74,24 @@ public:
   };
 
   /**
-   * @brief Configure the catalog from the database's resolved model selection.
+   * @brief Configure the catalog from the resolved model selection.
    * @param config Opaque `MODEL_CONFIG` values read from the database.
-   * @param constants Selected planet's SI constants.
    * @param log_path Optional catalog log path; empty redirects to `/dev/null`.
    */
   explicit ModelEvaluator(const ModelConfig &config,
-                          const PlanetConstants &constants,
                           const std::string &log_path = "");
+
+  /**
+   * @brief Validate transient database constants against the model catalog.
+   * @param config Opaque `MODEL_CONFIG` values read from the database.
+   * @param planet_constants Selected planet's SI constants, discarded after
+   * validation.
+   * @param log_path Optional catalog log path; empty redirects to `/dev/null`.
+   */
+  static void
+  validate_database_constants(const ModelConfig &config,
+                              const PlanetConstants &planet_constants,
+                              const std::string &log_path = "");
 
   ~ModelEvaluator();
 
@@ -108,9 +118,6 @@ public:
   /** @brief Quadrature dimensions compiled into the catalog. */
   [[nodiscard]] static Dimensions dimensions();
 
-  /** @brief Model-dependent discontinuity radii in SI metres. */
-  [[nodiscard]] PlanetConstants::Radii radii() const;
-
   /** @brief Whether any wrapper currently owns the Fortran catalog. */
   [[nodiscard]] static bool is_active() noexcept;
 
@@ -124,15 +131,28 @@ private:
     double density = 0.0;
     double velocity = 0.0;
 
-    [[nodiscard]] double modulus() const {
-      return density * velocity * velocity;
+    [[nodiscard]] double to_catalog_length(double value_si) const {
+      return value_si / length;
+    }
+
+    [[nodiscard]] double to_si_density(double value) const {
+      return value * density;
+    }
+
+    [[nodiscard]] double to_si_velocity(double value) const {
+      return value * velocity;
+    }
+
+    [[nodiscard]] double to_si_modulus(double value) const {
+      return value * density * velocity * velocity;
     }
   };
 
   [[nodiscard]] static Scales query_scales();
+  [[nodiscard]] static std::vector<double>
+  query_planet_values(int schema_version, std::size_t number_of_values);
   void release() noexcept;
 
-  PlanetConstants constants_;
   Scales scales_;
   bool owns_state_ = false;
 

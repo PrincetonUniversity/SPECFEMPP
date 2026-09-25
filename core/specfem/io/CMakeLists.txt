@@ -9,6 +9,7 @@ target_link_libraries(
         source_class
         specfem::receivers
         specfem::assembly
+        specfem::globe
         yaml-cpp::yaml-cpp
         specfem::logger
         specfem::utilities

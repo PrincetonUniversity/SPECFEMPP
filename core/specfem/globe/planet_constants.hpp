@@ -2,28 +2,17 @@
 
 #include <algorithm>
 #include <cmath>
-#include <optional>
+#include <cstddef>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace specfem::globe {
 
 /** @brief Planet selection encoded by a globe database `PLANET_TYPE`. */
 enum class Planet { earth = 1, mars = 2, moon = 3 };
-
-/** @brief Resolved SI constants written by the globe mesher. */
-struct PlanetConstantSet {
-  double r_planet = 0.0;            ///< Mean planet radius, m.
-  double rhoav = 0.0;               ///< Mean density, kg/m^3.
-  double one_minus_f_squared = 0.0; ///< Geographic/geocentric datum.
-  double hours_per_day = 0.0;       ///< Rotation period, hours per day.
-  double seconds_per_hour = 0.0;    ///< Seconds per planet hour.
-  double topo_maximum = 0.0;        ///< Maximum supported topography, m.
-
-  /** @brief Validate values read from the globe database. */
-  void validate() const;
-};
 
 /** @brief Convert a database `PLANET_TYPE` to a checked planet. */
 inline constexpr Planet planet_from_type(const int planet_type) {
@@ -41,117 +30,132 @@ inline constexpr Planet planet_from_type(const int planet_type) {
 }
 
 /**
- * @brief Selected planet constants and guarded model-dependent radii in SI.
+ * @brief Planet-selected interpretation of an opaque database value array.
  *
- * All values are available immediately after database-header parsing. The
- * model evaluator later verifies the scales and radii after replaying
- * `MODEL_CONFIG`.
+ * The Globe database records the selected planet, a planet schema version, and
+ * a counted array of values. Field positions belong to that planet schema and
+ * are deliberately not part of the mesh-reader contract. The array is retained
+ * only long enough to verify that the model catalog derives identical values.
  */
 class PlanetConstants {
 public:
-  /** @brief Model-dependent discontinuity radii in SI metres. */
-  struct Radii {
-    double r_icb = 0.0;
-    double r_cmb = 0.0;
-    double r_moho = 0.0;
-    double r_80 = 0.0;
-    double r_220 = 0.0;
-    double r_400 = 0.0;
-    double r_670 = 0.0;
-    double r_771 = 0.0;
-    double r_ocean = 0.0;
-
-    /** @brief Validate the fundamental discontinuity ordering. */
-    void validate(double r_planet) const;
-  };
-
-  /** @brief Construct an empty placeholder for database deserialization. */
-  PlanetConstants() = default;
-
-  /** @brief Construct constants resolved and written by the globe mesher. */
-  PlanetConstants(const Planet planet, PlanetConstantSet values)
-      : planet_(planet), values_(values) {
-    values_.validate();
+  /** @brief Current database schema emitted for a selected planet. */
+  [[nodiscard]] static constexpr int current_schema_version(Planet planet) {
+    switch (planet) {
+    case Planet::earth:
+    case Planet::mars:
+    case Planet::moon:
+      return 1;
+    }
+    throw std::invalid_argument("Unknown Globe planet");
   }
+
+  /**
+   * @brief Decode and validate values selected by a database planet schema.
+   * @param planet Planet selected by `PLANET_TYPE`.
+   * @param schema_version Version of that planet's value schema.
+   * @param values Opaque schema-ordered values.
+   * @return Validated transient planet constants.
+   */
+  [[nodiscard]] static PlanetConstants
+  from_database(Planet planet, int schema_version, std::vector<double> values);
 
   /** @brief Selected planet. */
   [[nodiscard]] Planet planet() const noexcept { return planet_; }
 
-  /** @brief Resolved constants read from the globe database. */
-  [[nodiscard]] const PlanetConstantSet &values() const noexcept {
+  /** @brief Selected planet schema version. */
+  [[nodiscard]] int schema_version() const noexcept { return schema_version_; }
+
+  /** @brief Opaque values in the selected planet schema's canonical order. */
+  [[nodiscard]] const std::vector<double> &values() const noexcept {
     return values_;
   }
 
-  /** @brief True when the globe database has populated the radii. */
-  [[nodiscard]] bool has_radii() const noexcept { return radii_.has_value(); }
-
   /**
-   * @brief Return model-dependent radii.
-   * @throws std::logic_error before database initialization.
+   * @brief Validate database values against values derived by the model
+   * catalog.
+   * @param catalog_values Values in the same planet schema and canonical order.
    */
-  [[nodiscard]] const Radii &radii() const {
-    if (!radii_) {
-      throw std::logic_error("PlanetConstants radii are unavailable before "
-                             "database initialization");
-    }
-    return *radii_;
-  }
-
-  /** @brief Validate radii against the stored database value, when present. */
-  void check_radii(const Radii &radii) const {
-    radii.validate(values_.r_planet);
-    if (radii_) {
-      constexpr double relative_tolerance = 1.0e-12;
-      const auto agrees = [relative_tolerance](const double expected,
-                                               const double actual) {
-        return std::abs(expected - actual) <=
-               relative_tolerance * std::max(1.0, std::abs(expected));
-      };
-      if (!agrees(radii_->r_icb, radii.r_icb) ||
-          !agrees(radii_->r_cmb, radii.r_cmb) ||
-          !agrees(radii_->r_moho, radii.r_moho) ||
-          !agrees(radii_->r_80, radii.r_80) ||
-          !agrees(radii_->r_220, radii.r_220) ||
-          !agrees(radii_->r_400, radii.r_400) ||
-          !agrees(radii_->r_670, radii.r_670) ||
-          !agrees(radii_->r_771, radii.r_771) ||
-          !agrees(radii_->r_ocean, radii.r_ocean)) {
-        throw std::runtime_error(
-            "Globe database radii disagree with the model evaluator");
-      }
-    }
-  }
-
-  /** @brief Validate and store radii. */
-  void set_radii(Radii radii) {
-    check_radii(radii);
-    radii_ = radii;
-  }
+  void check_catalog_values(const std::vector<double> &catalog_values) const;
 
 private:
-  Planet planet_ = Planet::earth;
-  PlanetConstantSet values_;
-  std::optional<Radii> radii_;
+  PlanetConstants(const Planet planet, const int schema_version,
+                  std::vector<double> values)
+      : planet_(planet), schema_version_(schema_version),
+        values_(std::move(values)) {}
+
+  static void validate_schema(Planet planet, int schema_version,
+                              const std::vector<double> &values);
+
+  Planet planet_;
+  int schema_version_ = 0;
+  std::vector<double> values_;
 };
 
-inline void PlanetConstantSet::validate() const {
-  if (!std::isfinite(r_planet) || r_planet <= 0.0 || !std::isfinite(rhoav) ||
-      rhoav <= 0.0 || !std::isfinite(one_minus_f_squared) ||
-      one_minus_f_squared <= 0.0 || one_minus_f_squared > 1.0 ||
-      !std::isfinite(hours_per_day) || hours_per_day <= 0.0 ||
-      !std::isfinite(seconds_per_hour) || seconds_per_hour <= 0.0 ||
-      !std::isfinite(topo_maximum) || topo_maximum < 0.0) {
-    throw std::runtime_error("Invalid planet constants in globe database");
+inline PlanetConstants
+PlanetConstants::from_database(const Planet planet, const int schema_version,
+                               std::vector<double> values) {
+  validate_schema(planet, schema_version, values);
+  return PlanetConstants(planet, schema_version, std::move(values));
+}
+
+inline void
+PlanetConstants::validate_schema(const Planet planet, const int schema_version,
+                                 const std::vector<double> &values) {
+  if (schema_version != current_schema_version(planet)) {
+    throw std::runtime_error("Unsupported planet schema version " +
+                             std::to_string(schema_version));
+  }
+
+  std::size_t expected_value_count = 0;
+  switch (planet) {
+  case Planet::earth:
+  case Planet::mars:
+  case Planet::moon:
+    expected_value_count = 15;
+    break;
+  }
+  if (values.size() != expected_value_count) {
+    throw std::runtime_error(
+        "Planet schema " + std::to_string(schema_version) + " requires " +
+        std::to_string(expected_value_count) +
+        " values, but the database contains " + std::to_string(values.size()));
+  }
+
+  if (!std::all_of(values.begin(), values.end(),
+                   [](const double value) { return std::isfinite(value); })) {
+    throw std::runtime_error("Planet schema contains a non-finite value");
+  }
+
+  // The first six quantities are common to the current schemas. Remaining
+  // positions are planet-owned catalog verification values with no global
+  // geological meaning.
+  if (values[0] <= 0.0 || values[1] <= 0.0 || values[2] <= 0.0 ||
+      values[2] > 1.0 || values[3] <= 0.0 || values[4] <= 0.0 ||
+      values[5] < 0.0) {
+    throw std::runtime_error("Invalid values in planet schema");
   }
 }
 
-inline void PlanetConstants::Radii::validate(const double r_planet) const {
-  if (!(0.0 < r_icb && r_icb < r_cmb && r_cmb < r_moho && r_moho < r_planet)) {
-    std::ostringstream message;
-    message << "Invalid planet radii ordering: r_icb=" << r_icb
-            << ", r_cmb=" << r_cmb << ", r_moho=" << r_moho
-            << ", r_planet=" << r_planet;
-    throw std::runtime_error(message.str());
+inline void PlanetConstants::check_catalog_values(
+    const std::vector<double> &catalog_values) const {
+  if (catalog_values.size() != values_.size()) {
+    throw std::runtime_error(
+        "Globe database planet value count disagrees with the model catalog");
+  }
+
+  constexpr double relative_tolerance = 1.0e-12;
+  for (std::size_t index = 0; index < values_.size(); ++index) {
+    const double expected = values_[index];
+    const double actual = catalog_values[index];
+    if (!std::isfinite(actual) ||
+        std::abs(expected - actual) >
+            relative_tolerance * std::max(1.0, std::abs(expected))) {
+      std::ostringstream message;
+      message << "Globe database planet value " << index << '=' << expected
+              << " disagrees with model catalog value " << actual;
+      throw std::runtime_error(message.str());
+    }
   }
 }
 

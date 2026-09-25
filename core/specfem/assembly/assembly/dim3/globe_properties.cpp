@@ -29,8 +29,7 @@ void read_globe_properties(
   }
 
   const auto &globe = input_mesh.globe;
-  specfem::globe::ModelEvaluator evaluator(globe.model_config,
-                                           globe.planet_constants);
+  specfem::globe::ModelEvaluator evaluator(globe.model_config);
   const auto evaluator_dims = evaluator.dimensions();
   if (evaluator_dims.ngllx != assembly.mesh.element_grid.ngllx ||
       evaluator_dims.nglly != assembly.mesh.element_grid.nglly ||
