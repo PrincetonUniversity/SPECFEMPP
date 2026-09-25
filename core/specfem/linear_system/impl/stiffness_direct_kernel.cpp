@@ -15,11 +15,12 @@
 #include "specfem/point.hpp"
 #include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
-#include <TensorOperations/Einsum.hpp>
 #include <TensorOperations/Evaluator.hpp>
+#include <TensorOperations/GeneralContraction.hpp>
 #include <TensorOperations/LevelGraph.hpp>
 #include <TensorOperations/LevelPlan.hpp>
 #include <TensorOperations/StridedAlias.hpp>
+#include <TensorOperations/Structured.hpp>
 #include <TensorOperations/Tiling.hpp>
 #include <sstream>
 #include <stdexcept>
@@ -159,13 +160,16 @@ void specfem::linear_system_impl::StiffnessDirectKernel<NGLL, Tags>::operator()(
       tenops::make_strided_alias<ExecSpace, ncomp, NGLL, NGLL, NGLL, ncomp,
                                  NGLL, NGLL, NGLL>(k_e.data(), nbatch);
 
-  // Labels: e element slot, a/b row/column component (gridded: one team per
-  // (e, a, b)); k, j, i the row node and n, m, l the column node (z, y, x);
-  // z, y, x the quadrature point; r, s reference directions; c, d spatial
-  // directions; u, f the point and function axes of h.
+  // Labels: e element slot (gridded: one team per element); a/b row/column
+  // component are whole (value) labels, so one team holds the full ncomp x
+  // ncomp block of (a, b) pairs in registers and streams K straight to
+  // global rather than looping teams over (a, b); k, j, i the row node and
+  // n, m, l the column node (z, y, x); z, y, x the quadrature point; r, s
+  // reference directions; c, d spatial directions; u, f the point and
+  // function axes of h.
   using TileMap = tenops::LabelTiles<
-      tenops::LabelTile<'e', 1>, tenops::LabelTile<'a', 1>,
-      tenops::LabelTile<'b', 1>, tenops::LabelWhole<'k', NGLL>,
+      tenops::LabelTile<'e', 1>, tenops::LabelWhole<'a', ncomp>,
+      tenops::LabelWhole<'b', ncomp>, tenops::LabelWhole<'k', NGLL>,
       tenops::LabelWhole<'j', NGLL>, tenops::LabelWhole<'i', NGLL>,
       tenops::LabelWhole<'n', NGLL>, tenops::LabelWhole<'m', NGLL>,
       tenops::LabelWhole<'l', NGLL>, tenops::LabelWhole<'z', NGLL>,
@@ -211,31 +215,39 @@ void specfem::linear_system_impl::StiffnessDirectKernel<NGLL, Tags>::operator()(
   auto [g3, w] = g2.add(tenops::make_stage_node(wJ));
 
   // M(e, a, b, r, s, z, y, x) = sum_{c,d} xi_{r,c} C_{acbd} xi_{s,d} w J
-  auto [g4, M] =
-      g3.add(tenops::make_einsum_node<'e', 'a', 'b', 'r', 's', 'z', 'y', 'x'>(
+  auto [g4, M] = g3.add(
+      tenops::make_contraction_node<'e', 'a', 'b', 'r', 's', 'z', 'y', 'x'>(
           xi_rc, C, xi_rc.template as<'e', 'z', 'y', 'x', 's', 'd'>(), w));
 
-  // D(r, z, y, x, k, j, i) = d phi_{kji} / d xi_r at (z, y, x): h along r,
-  // Kronecker deltas along the other two directions.
-  const auto D = tenops::make_delta_operand<'r', 'z', 'y', 'x', 'k', 'j', 'i'>(
-      tenops::select<'r'>(
-          tenops::kase(h.template as<'x', 'i'>(), tenops::delta<'y', 'j'>{},
-                       tenops::delta<'z', 'k'>{}),
-          tenops::kase(h.template as<'y', 'j'>(), tenops::delta<'x', 'i'>{},
-                       tenops::delta<'z', 'k'>{}),
-          tenops::kase(h.template as<'z', 'k'>(), tenops::delta<'x', 'i'>{},
-                       tenops::delta<'y', 'j'>{})));
+  // B(r; x,i, y,j, z,k) = d phi_{kji} / d xi_r at (z, y, x): the reference
+  // gradient grad_xi phi, stacked over the reference direction r. Branch r
+  // is h along direction r times the Kronecker delta (identity) along the
+  // other two directions; TensorOperations eliminates the deltas at compile
+  // time, so each branch costs at most one length-NGLL sum. stack/outer fix
+  // B's label order to (r, x, i, y, j, z, k)
+  // (see TensorOperations/Structured.hpp).
+  const auto B = tenops::stack<'r'>(
+      tenops::outer(h.template as<'x', 'i'>(), tenops::delta<'y', 'j'>(),
+                    tenops::delta<'z', 'k'>()), // d/dxi
+      tenops::outer(tenops::delta<'x', 'i'>(), h.template as<'y', 'j'>(),
+                    tenops::delta<'z', 'k'>()), // d/deta
+      tenops::outer(tenops::delta<'x', 'i'>(), tenops::delta<'y', 'j'>(),
+                    h.template as<'z', 'k'>())); // d/dzeta
 
-  // K(e, a, k, j, i, b, n, m, l)
-  //   = sum_{r,s,z,y,x} D(r, z, y, x, k, j, i) M(e, a, b, r, s, z, y, x)
-  //                     D(s, z, y, x, n, m, l)
-  auto [g5, K] = g4.add(
-      tenops::make_einsum_node<'e', 'a', 'k', 'j', 'i', 'b', 'n', 'm', 'l'>(
-          D, M, D.template as<'s', 'z', 'y', 'x', 'n', 'm', 'l'>()));
+  // K_e = B^T M_hat B:
+  //   K(e, a, k, j, i, b, n, m, l)
+  //     = sum_{r,s,z,y,x} B(r, z, y, x, k, j, i) M(e, a, b, r, s, z, y, x)
+  //                       B(s, z, y, x, n, m, l)
+  // The second B is B relabelled positionally over its own label order
+  // (r, x, i, y, j, z, k) -> (s, x, l, y, m, z, n).
+  auto [g5, K] = g4.add(tenops::make_contraction_node<'e', 'a', 'k', 'j', 'i',
+                                                      'b', 'n', 'm', 'l'>(
+      B, M, B.template as<'s', 'x', 'l', 'y', 'm', 'z', 'n'>()));
 
   // Instantiating the plan runs LevelGraph's structural guards.
   using Plan = tenops::LevelPlan<std::decay_t<decltype(g5.levels)>>;
-  static_assert(Plan::num_levels == 5, "stage h, xi, w J; einsum M; einsum K");
+  static_assert(Plan::num_levels == 5,
+                "stage h, xi, w J; contraction M; contraction K");
 
   // Host backends cap level-0 team scratch at 32 KB, below the whole-tile
   // output block; level 1 allows tens of MB. On GPU level 0 is on-chip.

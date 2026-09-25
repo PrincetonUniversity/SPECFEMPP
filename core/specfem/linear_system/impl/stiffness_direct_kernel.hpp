@@ -20,43 +20,53 @@ namespace specfem::linear_system_impl {
 
 /**
  * @brief Producer of dense element stiffness blocks \f$ K_e \f$ that writes
- * every entry in closed form through one TensorOperations level graph of two
- * contractions (`TensorOperations::make_einsum_node`: the labels decide what
- * is summed).
+ * every entry in closed form through one TensorOperations level graph built
+ * from `TensorOperations::make_contraction_node` (the labels decide what is
+ * summed) and the structured reference gradient assembled from
+ * `TensorOperations::stack`, `outer` and `delta`.
  *
- * The block is the bilinear form
+ * The block is the bilinear form \f$ K_e = B^\top \hat{M} B \f$, where
+ * \f$ B \f$ is the reference gradient \f$ \nabla_\xi \f$ evaluated at the
+ * GLL points,
  * \f[
- *   K_e(a, i; b, j) = \sum_q \frac{\partial \phi_i}{\partial x_c}(q)\,
- *   C_{a c b d}(q)\, \frac{\partial \phi_j}{\partial x_d}(q)\, w(q) J(q),
- *   \qquad
- *   \frac{\partial \phi_i}{\partial x_c} = \sum_r \xi_{r,c}\, D_r,
+ *   B_r(q, i) = \frac{\partial \phi_i}{\partial \xi_r}(q),
  * \f]
- * (\f$ \xi_{r,c} = \partial \xi_r / \partial x_c \f$, \f$ C \f$ from
- * @ref specfem::medium_physics::constitutive_tensor), written as
+ * built as `stack` over the reference direction \f$ r \f$ of three `outer`
+ * products, each the Lagrange derivative matrix \f$ h \f$ = `hprime` along
+ * direction \f$ r \f$ times the identity (Kronecker \f$ \delta \f$) along
+ * the other two directions, and \f$ \hat{M} \f$ folds in the constitutive
+ * tensor and the quadrature weight,
  * \f[
  *   M(a, b, r, s; q) = \sum_{c,d} \xi_{r,c}(q)\, C_{a c b d}(q)\,
- *   \xi_{s,d}(q)\, w(q) J(q), \qquad
- *   K_e(a, i; b, j) = \sum_{r, s, q} D(r, q, i)\, M(a, b, r, s; q)\,
- *   D(s, q, j).
+ *   \xi_{s,d}(q)\, w(q) J(q),
  * \f]
- * \f$ D(r, q, i) = \partial \phi_i / \partial \xi_r \f$ at GLL point
- * \f$ q \f$ is collocated: \f$ h(q_r, i_r) \f$ times Kronecker deltas
- * \f$ \delta(q_t, i_t) \f$ along the two other directions. It is passed as
- * a delta-structured operand, so TensorOperations eliminates the deltas at
- * compile time and each entry costs at most one length-NGLL sum (the
- * sum-factored form) -- the expression stays the one above.
+ * (\f$ \xi_{r,c} = \partial \xi_r / \partial x_c \f$, \f$ C \f$ from
+ * @ref specfem::medium_physics::constitutive_tensor). TensorOperations
+ * lowers \f$ B^\top \hat{M} B \f$ at compile time to the nine sum-factored
+ * terms of
+ * \f[
+ *   K_e(a, i; b, j) = \sum_{r, s, q} B(r, q, i)\, M(a, b, r, s; q)\,
+ *   B(s, q, j),
+ * \f]
+ * (\f$ \delta \f$ eliminated at compile time, each term costing at most one
+ * length-\f$ N_{GLL} \f$ sum), so the block is never written as the dense
+ * \f$ O(N_{GLL}^9) \f$ sum.
  *
  * The graph, one team per (element, row component \f$ a \f$, column
- * component \f$ b \f$), three levels:
+ * component \f$ b \f$), five levels:
  * 1. **Stage** the Lagrange derivative matrix \f$ h(u, f) \f$ =
  *    `hprime(point, function)`.
- * 2. **Einsum** \f$ M \f$ over \f$ (c, d) \f$ from three single-entry
- *    functional leaves (\f$ \xi \f$, \f$ C \f$, \f$ w J \f$), read at
+ * 2. **Stage** \f$ \xi \f$, the reference-to-global Jacobian.
+ * 3. **Stage** \f$ w J \f$, the quadrature weight times the Jacobian
+ *    determinant.
+ * 4. **Contraction** \f$ M \f$ over \f$ (c, d) \f$ from the staged
+ *    \f$ \xi \f$ and \f$ w J \f$ and a functional \f$ C \f$ leaf, read at
  *    the global coordinate and never staged.
- * 3. **Einsum** \f$ K_e \f$ over \f$ (r, s, z, y, x) \f$. The output is a
- *    rank-9 alias of `k_e` with axes (\f$ e, a, k, j, i, b, n, m, l \f$) =
- *    (element, row component, row node \f$ z, y, x \f$, column component,
- *    column node \f$ z, y, x \f$) -- exactly the
+ * 5. **Contraction** \f$ K_e = B^\top \hat{M} B \f$ over
+ *    \f$ (r, s, z, y, x) \f$. The output is a rank-9 alias of `k_e` with
+ *    axes (\f$ e, a, k, j, i, b, n, m, l \f$) = (element, row component,
+ *    row node \f$ z, y, x \f$, column component, column node
+ *    \f$ z, y, x \f$) -- exactly the
  *    @ref specfem::linear_system::local_dof_index ordering, so there is no
  *    reshape, no identity input and no workspace.
  *
