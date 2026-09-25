@@ -45,8 +45,6 @@ void check() {
   EXPECT_FALSE(config.rotation);
   EXPECT_FALSE(config.attenuation);
   EXPECT_FALSE(config.oceans);
-  EXPECT_EQ(globe.model_verification.codes.size(), 5);
-  EXPECT_EQ(globe.model_verification.flags.size(), 16);
   EXPECT_FALSE(globe.free_surface.elements.empty());
   EXPECT_FALSE(globe.cmb.elements.empty());
   EXPECT_FALSE(globe.icb.elements.empty());

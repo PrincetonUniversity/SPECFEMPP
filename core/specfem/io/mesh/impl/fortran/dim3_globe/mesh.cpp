@@ -42,9 +42,16 @@ specfem::mesh::globe3d_mesh specfem::io::read_globe_mesh(
                              std::to_string(version));
   }
 
+  struct GlobeDatabaseVerification {
+    std::vector<int> model_codes;
+    std::vector<bool> model_flags;
+    double attenuation_source_frequency = 0.0;
+  };
+
   specfem::mesh::globe3d_mesh mesh;
   auto &globe = mesh.globe;
   globe.format_version = version;
+  GlobeDatabaseVerification database_verification;
 
   int planet_schema_version = 0;
   int number_of_planet_values = 0;
@@ -84,23 +91,23 @@ specfem::mesh::globe3d_mesh specfem::io::read_globe_mesh(
 
   model_config.model_name =
       reader_impl::read_fixed_string(stream, "model name");
-  globe.model_verification.codes =
+  database_verification.model_codes =
       reader_impl::read_counted_ints(stream, "model codes");
-  globe.model_verification.flags =
+  database_verification.model_flags =
       reader_impl::read_counted_logicals(stream, "model flags");
   specfem::io::fortran_read_line(stream, &model_config.nchunks,
                                  &model_config.nex_xi, &model_config.nex_eta);
   specfem::io::fortran_read_line(
       stream, &model_config.min_attenuation_period,
       &model_config.max_attenuation_period,
-      &globe.model_verification.attenuation_source_frequency);
+      &database_verification.attenuation_source_frequency);
   model_config.validate();
   if (model_config.attenuation) {
     const double expected_source_frequency =
         1.0 / std::sqrt(model_config.min_attenuation_period *
                         model_config.max_attenuation_period);
     const double source_frequency_error =
-        std::abs(globe.model_verification.attenuation_source_frequency -
+        std::abs(database_verification.attenuation_source_frequency -
                  expected_source_frequency);
     if (source_frequency_error >
         1.0e-12 * std::abs(expected_source_frequency)) {
@@ -110,10 +117,9 @@ specfem::mesh::globe3d_mesh specfem::io::read_globe_mesh(
     }
   }
 
-  // Database constants are verification records, not retained mesh state.
   specfem::globe::ModelEvaluator::validate_database_constants(
-      model_config, planet_constants, globe.model_verification.codes,
-      globe.model_verification.flags);
+      model_config, planet_constants, database_verification.model_codes,
+      database_verification.model_flags);
 
   const int nnode = reader::read_control_node_coordinates(stream, mesh, ngnod);
   const auto material_tags = reader::read_material_tags(stream, mesh);

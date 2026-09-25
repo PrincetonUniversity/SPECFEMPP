@@ -148,8 +148,6 @@ TEST(GlobeMeshReader, ReadsThinDatabaseAndPreservesReferenceContext) {
   EXPECT_EQ(mesh.control_nodes.ngnod, 27);
   EXPECT_EQ(mesh.control_nodes.nnodes, 27);
   EXPECT_EQ(mesh.globe.model_config.model_name, "1D_isotropic_prem");
-  EXPECT_EQ(mesh.globe.model_verification.codes,
-            (std::vector<int>{ 1, 0, 0, 2, 0 }));
   EXPECT_EQ(mesh.globe.model_config.nchunks, 6);
   ASSERT_EQ(mesh.globe.element_context.size(), 1);
   EXPECT_EQ(mesh.globe.element_context[0].region,

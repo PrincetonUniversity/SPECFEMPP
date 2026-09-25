@@ -11,67 +11,6 @@
 namespace specfem::mesh {
 
 /**
- * @brief Model-catalog values written by the globe mesher for consistency
- * checks.
- *
- * SPECFEM3D_GLOBE material properties are evaluated later through the globe
- * model evaluator rather than stored directly in the thin mesh database. These
- * values identify the model catalog state used by the mesher so the C++ reader
- * can detect obvious mismatches with the linked evaluator implementation.
- */
-struct globe_model_verification {
-  /**
-   * @brief Verification-only Fortran model codes derived from @c MODEL.
-   *
-   * Entries are written by SPECFEM3D_GLOBE in this order:
-   * - @c REFERENCE_1D_MODEL
-   * - @c THREE_D_MODEL
-   * - @c THREE_D_MODEL_IC
-   * - @c REFERENCE_CRUSTAL_MODEL
-   * - @c MODEL_GLL_TYPE
-   *
-   * These are raw SPECFEM3D_GLOBE setup/constants values, not stable
-   * SPECFEM++ encodings. They are retained to detect mesher/evaluator catalog
-   * skew, not replayed into the evaluator.
-   */
-  std::vector<int> codes;
-
-  /**
-   * @brief Verification-only Fortran model flags derived from @c MODEL.
-   *
-   * Entries are written by SPECFEM3D_GLOBE in this order:
-   * - @c TRANSVERSE_ISOTROPY
-   * - @c CRUSTAL
-   * - @c ONE_CRUST
-   * - @c CASE_3D
-   * - @c ANISOTROPIC_3D_MANTLE
-   * - @c ANISOTROPIC_INNER_CORE
-   * - @c MODEL_3D_MANTLE_PERTUBATIONS
-   * - @c HETEROGEN_3D_MANTLE
-   * - @c ATTENUATION_3D
-   * - @c ATTENUATION_3D_BERKELEY
-   * - @c ATTENUATION_GLL
-   * - @c HONOR_1D_SPHERICAL_MOHO
-   * - @c MODEL_GLL
-   * - @c USE_FULL_TISO_MANTLE
-   * - @c REGIONAL_MOHO_MESH
-   * - @c EMC_MODEL
-   *
-   * The linked evaluator derives its own flags from @c model_config.model_name;
-   * these stored values are only for consistency checking.
-   */
-  std::vector<bool> flags;
-
-  /**
-   * @brief Attenuation source frequency used by the mesher.
-   *
-   * This is checked against the logarithmic center of the stored attenuation
-   * period band when attenuation is enabled.
-   */
-  double attenuation_source_frequency = 0.0;
-};
-
-/**
  * @brief Per-element context required by the SPECFEM3D_GLOBE model evaluator.
  *
  * The thin globe mesh stores enough metadata to re-evaluate material properties
@@ -150,9 +89,6 @@ struct globe_mesh_data {
 
   /** @brief Configuration used to initialize the globe model evaluator. */
   specfem::globe::ModelConfig model_config;
-
-  /** @brief Mesher-side model identifiers used for consistency checks. */
-  globe_model_verification model_verification;
 
   /**
    * @brief Reference xyz coordinates indexed by global anchor node.
