@@ -73,7 +73,7 @@ public:
    *        damping matrix is assembled separately
    * @param kernel_impl Kernel that fills the element blocks (see
    *        @ref StiffnessKernelImpl); the default follows the build
-   *        (`tensor_graph` with TensorOperations, `probe` otherwise)
+   *        (`direct` with TensorOperations, `probe` otherwise)
    */
   StiffnessAssembler(
       const AssemblyType &assembly, const FEAssemblyType &fe,
@@ -98,7 +98,8 @@ private:
    * its host mirror (~36 MB each for 64 elastic NGLL = 5 elements in single
    * precision), and -- on the tensor-graph path -- that kernel's identity
    * and force workspaces, two more device views of the block buffer's
-   * footprint each (~144 MB total device memory at the defaults).
+   * footprint each (~144 MB total device memory at the defaults). The direct
+   * kernel allocates no workspace; its graph lives entirely in team scratch.
    */
   constexpr static int element_batch_size_ = 64;
 

@@ -2,6 +2,7 @@
 
 #include "specfem/execution.hpp"
 #include "specfem/linear_system/element_stiffness.hpp"
+#include "specfem/linear_system/impl/stiffness_direct_kernel.hpp"
 #include "specfem/linear_system/impl/stiffness_probe_kernel.hpp"
 #include "specfem/linear_system/impl/stiffness_tensor_graph_kernel.hpp"
 #include "specfem/mesh_entity.hpp"
@@ -55,6 +56,13 @@ void specfem::linear_system::compute_element_stiffness(
     return;
   }
 
+  if (impl == specfem::linear_system::StiffnessKernelImpl::direct) {
+    // Throws in builds without SPECFEM_ENABLE_TENSOROPS (see the impl header).
+    specfem::linear_system_impl::compute_element_stiffness_direct<NGLL, Tags>(
+        assembly, batch, k_e);
+    return;
+  }
+
   specfem::mesh_entity::element_grid<specfem::element::dimension_tag::dim3,
                                      specfem::mesh_entity::Grid<NGLL>>
       element_grid{};
@@ -103,6 +111,15 @@ specfem::linear_system::make_element_stiffness_kernel(
     const auto kernel = std::make_shared<
         specfem::linear_system_impl::StiffnessTensorGraphKernel<5, Tags>>(
         assembly, batch_capacity);
+    return [kernel](const specfem::datatype::ElementIndexRange &batch,
+                    const auto &k_e) { (*kernel)(batch, k_e); };
+  }
+
+  if (impl == specfem::linear_system::StiffnessKernelImpl::direct) {
+    // Stateless (the graph lives in team scratch), but bound once so the
+    // mesh-grid validation runs here rather than per batch.
+    const auto kernel = std::make_shared<
+        specfem::linear_system_impl::StiffnessDirectKernel<5, Tags>>(assembly);
     return [kernel](const specfem::datatype::ElementIndexRange &batch,
                     const auto &k_e) { (*kernel)(batch, k_e); };
   }
