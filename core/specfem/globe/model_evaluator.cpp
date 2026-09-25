@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <sstream>
 #include <stdexcept>
 #include <utility>
@@ -19,9 +20,8 @@ int globe_evaluator_init(const char *model_name, int name_len,
                          double max_attenuation_period, int comm_f);
 int globe_evaluator_scales(double *length_scale, double *density_scale,
                            double *velocity_scale);
-int globe_evaluator_radii(double *r_icb, double *r_cmb, double *r_moho,
-                          double *r_80, double *r_220, double *r_400,
-                          double *r_670, double *r_771, double *r_ocean);
+int globe_evaluator_planet_values(int schema_version, int number_of_values,
+                                  double *values);
 int globe_evaluator_finalize(void);
 int globe_evaluator_get_element(int iregion_code, int idoubling, double rmin,
                                 double rmax, int elem_in_crust,
@@ -72,30 +72,6 @@ void require_ok(const int status, const std::string &operation) {
   if (status != status_ok) {
     throw std::runtime_error("specfem::globe::ModelEvaluator::" + operation +
                              ": " + describe_status(status));
-  }
-}
-
-void check_scales(const PlanetConstants &constants,
-                  const double evaluator_r_planet,
-                  const double evaluator_rhoav) {
-  constexpr double relative_tolerance = 1.0e-12;
-  const auto &values = constants.values();
-  if (!std::isfinite(evaluator_r_planet) ||
-      std::abs(evaluator_r_planet - values.r_planet) >
-          relative_tolerance * values.r_planet) {
-    std::ostringstream message;
-    message << "Globe database R_PLANET=" << values.r_planet
-            << " disagrees with model evaluator R_PLANET="
-            << evaluator_r_planet;
-    throw std::runtime_error(message.str());
-  }
-  if (!std::isfinite(evaluator_rhoav) ||
-      std::abs(evaluator_rhoav - values.rhoav) >
-          relative_tolerance * values.rhoav) {
-    std::ostringstream message;
-    message << "Globe database RHOAV=" << values.rhoav
-            << " disagrees with model evaluator RHOAV=" << evaluator_rhoav;
-    throw std::runtime_error(message.str());
   }
 }
 
@@ -185,9 +161,8 @@ void specfem::globe::ModelEvaluator::validate_database_constants(
         "with the supplied PlanetConstants selection");
   }
 
-  specfem::globe::evaluator_impl::check_scales(
-      planet_constants, evaluator.scales_.length, evaluator.scales_.density);
-  planet_constants.check_radii(evaluator.radii());
+  planet_constants.check_catalog_values(query_planet_values(
+      planet_constants.schema_version(), planet_constants.values().size()));
 }
 
 specfem::globe::ModelEvaluator::~ModelEvaluator() { release(); }
@@ -214,15 +189,19 @@ void specfem::globe::ModelEvaluator::release() noexcept {
   }
 }
 
-specfem::globe::PlanetConstants::Radii
-specfem::globe::ModelEvaluator::radii() const {
-  specfem::globe::PlanetConstants::Radii result;
-  const int status = globe_evaluator_radii(
-      &result.r_icb, &result.r_cmb, &result.r_moho, &result.r_80, &result.r_220,
-      &result.r_400, &result.r_670, &result.r_771, &result.r_ocean);
-  specfem::globe::evaluator_impl::require_ok(status, "radii");
-  result.validate(scales_.length);
-  return result;
+std::vector<double> specfem::globe::ModelEvaluator::query_planet_values(
+    const int schema_version, const std::size_t number_of_values) {
+  if (number_of_values >
+      static_cast<std::size_t>(std::numeric_limits<int>::max())) {
+    throw std::overflow_error(
+        "Planet schema value count exceeds Fortran integer range");
+  }
+
+  std::vector<double> values(number_of_values);
+  const int status = globe_evaluator_planet_values(
+      schema_version, static_cast<int>(number_of_values), values.data());
+  specfem::globe::evaluator_impl::require_ok(status, "query_planet_values");
+  return values;
 }
 
 specfem::globe::ModelEvaluator::ElementProperties

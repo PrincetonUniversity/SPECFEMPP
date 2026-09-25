@@ -61,7 +61,8 @@ void write_surface(std::ofstream &stream, const std::vector<int> &elements,
 std::filesystem::path write_database(const bool attenuation = false,
                                      const double source_frequency = 0.0,
                                      const int property_tag = 0,
-                                     const bool include_mpi = false) {
+                                     const bool include_mpi = false,
+                                     const double planet_radius = 6371000.0) {
   const auto suffix =
       std::chrono::steady_clock::now().time_since_epoch().count();
   const auto path =
@@ -71,19 +72,24 @@ std::filesystem::path write_database(const bool attenuation = false,
 
   Record header;
   header.append_fixed("SPECFEMPP_GLOBE_DB", 32);
-  header.append(4);
+  header.append(5);
   header.write(stream);
 
-  write_values(stream, 1, 6371000.0, 5514.3,
-               (1.0 - 1.0 / 299.8) * (1.0 - 1.0 / 299.8), 24.0, 3600.0, 9000.0,
-               1221500.0, 3480000.0, 6346600.0, 6291000.0, 6151000.0, 5971000.0,
-               5701000.0, 5600000.0, 6368000.0);
+  const std::vector<double> planet_values = {
+    planet_radius, 5514.3,    (1.0 - 1.0 / 299.8) * (1.0 - 1.0 / 299.8),
+    24.0,          3600.0,    9000.0,
+    1221500.0,     3480000.0, 6346600.0,
+    6291000.0,     6151000.0, 5971000.0,
+    5701000.0,     5600000.0, 6368000.0,
+  };
+  write_values(stream, 1, 1, static_cast<int>(planet_values.size()));
+  write_values(stream, planet_values);
   write_values(stream, 27, 5, 5, 5, 1);
   write_values(stream, 0, 0, 0, 0, 0, attenuation ? 1 : 0, 0, 0);
   write_values(stream, 1);
 
   Record model;
-  model.append_fixed("PREM", 512);
+  model.append_fixed("1D_isotropic_prem", 512);
   model.write(stream);
   write_values(stream, 5, std::vector<int>{ 1, 0, 0, 0, 0 });
   write_values(stream, 16, std::vector<int>(16, 0));
@@ -139,14 +145,10 @@ TEST(GlobeMeshReader, ReadsThinDatabaseAndPreservesReferenceContext) {
   EXPECT_EQ(mesh.nspec, 1);
   EXPECT_EQ(mesh.control_nodes.ngnod, 27);
   EXPECT_EQ(mesh.control_nodes.nnodes, 27);
-  EXPECT_EQ(mesh.globe.model_config.model_name, "PREM");
+  EXPECT_EQ(mesh.globe.model_config.model_name, "1D_isotropic_prem");
   EXPECT_EQ(mesh.globe.model_verification.codes,
             (std::vector<int>{ 1, 0, 0, 0, 0 }));
   EXPECT_EQ(mesh.globe.model_config.nchunks, 6);
-  EXPECT_DOUBLE_EQ(mesh.globe.planet_constants.values().r_planet, 6371000.0);
-  EXPECT_DOUBLE_EQ(mesh.globe.planet_constants.values().rhoav, 5514.3);
-  ASSERT_TRUE(mesh.globe.planet_constants.has_radii());
-  EXPECT_DOUBLE_EQ(mesh.globe.planet_constants.radii().r_cmb, 3480000.0);
   ASSERT_EQ(mesh.globe.element_context.size(), 1);
   EXPECT_EQ(mesh.globe.element_context[0].region,
             specfem::element::region_tag::crust_mantle);
@@ -156,6 +158,15 @@ TEST(GlobeMeshReader, ReadsThinDatabaseAndPreservesReferenceContext) {
   EXPECT_DOUBLE_EQ(mesh.globe.reference_coordinates(26, 2), 3026.0);
   EXPECT_EQ(mesh.control_nodes.control_node_index(0, 26), 26);
   EXPECT_EQ(mesh.boundaries.acoustic_free_surface.nelem_acoustic_surface, 1);
+}
+
+TEST(GlobeMeshReader, RejectsPlanetConstantsThatDisagreeWithEvaluator) {
+  const auto path =
+      globe_reader_test_impl::write_database(false, 0.0, 0, false, 7000000.0);
+  EXPECT_THROW(specfem::io::read_globe_mesh(path.string(),
+                                            specfem::attenuation::Setup{}),
+               std::runtime_error);
+  std::filesystem::remove(path);
 }
 
 TEST(GlobeMeshReader, RejectsAnInconsistentAttenuationSourceFrequency) {

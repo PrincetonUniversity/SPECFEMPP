@@ -12,7 +12,7 @@
 !    globe_evaluator_dims            -- compile-time NGLL / N_SLS query
 !    globe_evaluator_init            -- one-time model setup
 !    globe_evaluator_scales          -- planet-dependent SI scales
-!    globe_evaluator_radii           -- model-dependent radii in SI metres
+!    globe_evaluator_planet_values   -- schema-versioned resolved planet values
 !    globe_evaluator_get_element     -- material for one element's GLL points
 !    globe_evaluator_prem_reference  -- TEST ONLY, see note at its definition
 !
@@ -387,48 +387,55 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  integer(c_int) function globe_evaluator_radii(r_icb, r_cmb, r_moho, &
-                                                 r_80, r_220, r_400, &
-                                                 r_670, r_771, r_ocean) &
-    bind(C, name="globe_evaluator_radii")
+  integer(c_int) function globe_evaluator_planet_values(schema_version, &
+                                                         number_of_values, &
+                                                         values) &
+    bind(C, name="globe_evaluator_planet_values")
+
+! Returns the selected planet schema's opaque values in canonical database order.
+! Schema 1 contains 15 values and matches record 3 of Globe DB format version 5.
 
   use iso_c_binding, only: c_int, c_double
   use globe_evaluator_par, only: is_initialized, &
-    GLOBE_EVALUATOR_OK, GLOBE_EVALUATOR_NOT_INITIALIZED
-  use shared_parameters, only: RICB, RCMB, RMOHO, R80, R220, R400, R670, &
-    R771, ROCEAN
+    GLOBE_EVALUATOR_OK, GLOBE_EVALUATOR_NOT_INITIALIZED, &
+    GLOBE_EVALUATOR_BAD_ARGUMENT
+  use shared_parameters, only: R_PLANET, RHOAV, ONE_MINUS_F_SQUARED, &
+    HOURS_PER_DAY, SECONDS_PER_HOUR, TOPO_MAXIMUM, RICB, RCMB, RMOHO, &
+    R80, R220, R400, R670, R771, ROCEAN
 
   implicit none
 
-  real(c_double), intent(out) :: r_icb, r_cmb, r_moho, r_80, r_220
-  real(c_double), intent(out) :: r_400, r_670, r_771, r_ocean
+  integer(c_int), value, intent(in) :: schema_version, number_of_values
+  real(c_double), dimension(*), intent(out) :: values
 
-  if (.not. is_initialized) then
-    r_icb = 0.d0
-    r_cmb = 0.d0
-    r_moho = 0.d0
-    r_80 = 0.d0
-    r_220 = 0.d0
-    r_400 = 0.d0
-    r_670 = 0.d0
-    r_771 = 0.d0
-    r_ocean = 0.d0
-    globe_evaluator_radii = GLOBE_EVALUATOR_NOT_INITIALIZED
+  if (schema_version /= 1 .or. number_of_values /= 15) then
+    globe_evaluator_planet_values = GLOBE_EVALUATOR_BAD_ARGUMENT
     return
   endif
 
-  r_icb = RICB
-  r_cmb = RCMB
-  r_moho = RMOHO
-  r_80 = R80
-  r_220 = R220
-  r_400 = R400
-  r_670 = R670
-  r_771 = R771
-  r_ocean = ROCEAN
-  globe_evaluator_radii = GLOBE_EVALUATOR_OK
+  if (.not. is_initialized) then
+    globe_evaluator_planet_values = GLOBE_EVALUATOR_NOT_INITIALIZED
+    return
+  endif
 
-  end function globe_evaluator_radii
+  values(1) = R_PLANET
+  values(2) = RHOAV
+  values(3) = ONE_MINUS_F_SQUARED
+  values(4) = HOURS_PER_DAY
+  values(5) = SECONDS_PER_HOUR
+  values(6) = dble(TOPO_MAXIMUM)
+  values(7) = RICB
+  values(8) = RCMB
+  values(9) = RMOHO
+  values(10) = R80
+  values(11) = R220
+  values(12) = R400
+  values(13) = R670
+  values(14) = R771
+  values(15) = ROCEAN
+  globe_evaluator_planet_values = GLOBE_EVALUATOR_OK
+
+  end function globe_evaluator_planet_values
 
 
 !

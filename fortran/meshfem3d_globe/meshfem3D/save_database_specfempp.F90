@@ -19,7 +19,7 @@
 !  visualization outputs while leaving their writer implementations available.
 !
 !  ------------------------------------------------------------------------------
-!  Record layout (format_version = 4)
+!  Record layout (format_version = 5)
 !
 !  Fortran sequential unformatted, one record per write statement. Coordinates and
 !  radii are dimensionalized to SI metres on write (the mesher works in units of
@@ -27,22 +27,24 @@
 !
 !    -- HEADER
 !    1  magic (character(len=32)), format_version (integer)
-!    2  PLANET_TYPE (integer), followed by these resolved values (15 dp):
-!       R_PLANET, RHOAV, ONE_MINUS_F_SQUARED, HOURS_PER_DAY, SECONDS_PER_HOUR,
-!       TOPO_MAXIMUM, RICB, RCMB, RMOHO, R80, R220, R400, R670, R771, ROCEAN
-!    3  NGNOD, NGLLX, NGLLY, NGLLZ, nregions (5 integers)
-!    4  ELLIPTICITY, TOPOGRAPHY, GRAVITY, FULL_GRAVITY, ROTATION, ATTENUATION,
+!    2  PLANET_TYPE, PLANET_SCHEMA_VERSION, N_PLANET_VALUES (3 integers)
+!       PLANET_SCHEMA_VERSION = 1 and N_PLANET_VALUES = 15.
+!    3  planet_values(N_PLANET_VALUES) (dp). The payload order belongs to the
+!       selected planet schema and is intentionally opaque to the mesh reader.
+!       The mesher and model evaluator must emit the same canonical order.
+!    4  NGNOD, NGLLX, NGLLY, NGLLZ, nregions (5 integers)
+!    5  ELLIPTICITY, TOPOGRAPHY, GRAVITY, FULL_GRAVITY, ROTATION, ATTENUATION,
 !       OCEANS, HAS_REFERENCE_GEOMETRY (8 logicals)
-!    5  material_mode (integer: 1 = ORACLE, 2 = BAKED)
+!    6  material_mode (integer: 1 = ORACLE, 2 = BAKED)
 !
 !    -- MODEL_CONFIG (the resolved model selection, so that SPECFEM++ never has to
 !       read the globe Par_file)
 !
-!       Within this block, records 6, 9 and 10 are the *configuration*: SPECFEM++
+!       Within this block, records 7, 10 and 11 are the *configuration*: SPECFEM++
 !       replays them into globe_evaluator_init(), together with PLANET_TYPE from
-!       record 2 and the physics flags from record 4.
+!       record 2 and the physics flags from record 5.
 !
-!       Records 7 and 8 are *verification only*. They are every flag
+!       Records 8 and 9 are *verification only*. They are every flag
 !       get_model_parameters() derives from MODEL, and the evaluator re-derives all
 !       of them from the name alone -- so a reader must NOT attempt to replay them
 !       (there is nowhere to put them; get_model_parameters() would overwrite them
@@ -51,8 +53,8 @@
 !       the mesher's catalog did, turning a version skew between the two trees into
 !       an error instead of silently different material.
 !
-!    6  MODEL (character(len=MAX_STRING_LEN))
-!    7  n_codes (integer), codes(n_codes) (integers), in this order:
+!    7  MODEL (character(len=MAX_STRING_LEN))
+!    8  n_codes (integer), codes(n_codes) (integers), in this order:
 !         REFERENCE_1D_MODEL, THREE_D_MODEL, THREE_D_MODEL_IC,
 !         REFERENCE_CRUSTAL_MODEL, MODEL_GLL_TYPE
 !       NOTE: unlike the tag codes listed at the bottom of this comment, these are
@@ -60,16 +62,16 @@
 !       THREE_D_MODEL_S20RTS = 101, ...), not a format-owned encoding. They are
 !       only meaningful against a matching constants.h -- which is exactly the
 !       skew the comparison above is meant to detect.
-!    8  n_flags (integer), flags(n_flags) (logicals), in this order:
+!    9  n_flags (integer), flags(n_flags) (logicals), in this order:
 !         TRANSVERSE_ISOTROPY, CRUSTAL, ONE_CRUST, CASE_3D, ANISOTROPIC_3D_MANTLE,
 !         ANISOTROPIC_INNER_CORE, MODEL_3D_MANTLE_PERTUBATIONS, HETEROGEN_3D_MANTLE,
 !         ATTENUATION_3D, ATTENUATION_3D_BERKELEY, ATTENUATION_GLL,
 !         HONOR_1D_SPHERICAL_MOHO, MODEL_GLL, USE_FULL_TISO_MANTLE,
 !         REGIONAL_MOHO_MESH, EMC_MODEL
-!    9  NCHUNKS, NEX_XI, NEX_ETA (3 integers)
-!   10  MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD, ATT_F_C_SOURCE (3 dp)
+!   10  NCHUNKS, NEX_XI, NEX_ETA (3 integers)
+!   11  MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD, ATT_F_C_SOURCE (3 dp)
 !
-!       Records 9 and 10 exist because these are the only model parameters NOT
+!       Records 10 and 11 exist because these are the only model parameters NOT
 !       derivable from MODEL: the mesher computes them in rcp_set_compute_parameters
 !       / get_timestep_and_layers, which the evaluator deliberately does not call.
 !       Both are written unconditionally, including when ATTENUATION is false, so
@@ -78,21 +80,21 @@
 !       is carried purely as a numerical check that the period band round-tripped.
 !
 !    -- NODES (final, deformed geometry: what the Jacobian must be built from)
-!   11  nnode (integer)
-!   12  x(nnode), y(nnode), z(nnode) (3 dp arrays)
+!   12  nnode (integer)
+!   13  x(nnode), y(nnode), z(nnode) (3 dp arrays)
 !
 !    -- NODES_REFERENCE (written when HAS_REFERENCE_GEOMETRY; these are spherical
 !       + Moho-stretched anchors captured before external/internal topography and
 !       ellipticity deformation)
-!   13  xref(nnode), yref(nnode), zref(nnode) (3 dp arrays)
+!   14  xref(nnode), yref(nnode), zref(nnode) (3 dp arrays)
 !
 !    -- ELEMENTS
-!   14  nspec (integer)
-!   15  region(nspec), medium_tag(nspec), property_tag(nspec), idoubling(nspec)
+!   15  nspec (integer)
+!   16  region(nspec), medium_tag(nspec), property_tag(nspec), idoubling(nspec)
 !       (4 integer arrays)
-!   16  rmin(nspec), rmax(nspec) (2 dp arrays)
-!   17  elem_in_crust(nspec), elem_in_mantle(nspec) (2 logical arrays)
-!   18  node_ids(NGNOD,nspec) (integer array)
+!   17  rmin(nspec), rmax(nspec) (2 dp arrays)
+!   18  elem_in_crust(nspec), elem_in_mantle(nspec) (2 logical arrays)
+!   19  node_ids(NGNOD,nspec) (integer array)
 !
 !    -- BOUNDARY SURFACES: four blocks, in the order
 !       free surface, CMB, ICB, ocean load. Each block is two records:
@@ -109,7 +111,7 @@
 !    -- MATERIAL: omitted entirely when material_mode == ORACLE.
 !
 !  Per-element and per-face tag codes (deliberately explicit, not enum ordinals of
-!  either code base -- unlike the MODEL_CONFIG `codes` of record 7, see there):
+!  either code base -- unlike the MODEL_CONFIG `codes` of record 8, see there):
 !    region       1 = crust/mantle, 2 = outer core, 3 = inner core
 !    medium_tag   1 = acoustic, 2 = elastic  (same convention as the Cartesian
 !                 SPECFEM++ database domain_id)
@@ -127,8 +129,10 @@
 
   ! magic string and version of the on-disk format
   character(len=32), parameter :: SPECFEMPP_DB_MAGIC = 'SPECFEMPP_GLOBE_DB              '
-  ! version 4 stores the resolved planet constants and model radii in record 2
-  integer, parameter :: SPECFEMPP_DB_VERSION = 4
+  ! version 5 separates planet metadata from the schema-versioned values
+  integer, parameter :: SPECFEMPP_DB_VERSION = 5
+  integer, parameter :: PLANET_SCHEMA_VERSION = 1
+  integer, parameter :: N_PLANET_VALUES = 15
 
   ! material_mode: material values are supplied by the model oracle at SPECFEM++ setup
   integer, parameter :: SPECFEMPP_MATERIAL_ORACLE = 1
@@ -671,6 +675,7 @@
 
   integer, dimension(N_CODES) :: codes
   logical, dimension(N_FLAGS) :: flags
+  double precision, dimension(N_PLANET_VALUES) :: planet_values
   logical :: has_reference_geometry
 
   ! nothing meshed on this rank
@@ -787,10 +792,13 @@
   if (ier /= 0) call exit_MPI(myrank,'Error opening '//trim(filename))
 
   ! header
+  planet_values = (/ R_PLANET,RHOAV,ONE_MINUS_F_SQUARED,HOURS_PER_DAY, &
+                     SECONDS_PER_HOUR,dble(TOPO_MAXIMUM),RICB,RCMB,RMOHO, &
+                     R80,R220,R400,R670,R771,ROCEAN /)
+
   write(IOUT) SPECFEMPP_DB_MAGIC,SPECFEMPP_DB_VERSION
-  write(IOUT) PLANET_TYPE,R_PLANET,RHOAV,ONE_MINUS_F_SQUARED, &
-              HOURS_PER_DAY,SECONDS_PER_HOUR,dble(TOPO_MAXIMUM), &
-              RICB,RCMB,RMOHO,R80,R220,R400,R670,R771,ROCEAN
+  write(IOUT) PLANET_TYPE,PLANET_SCHEMA_VERSION,N_PLANET_VALUES
+  write(IOUT) planet_values
   write(IOUT) NGNOD,NGLLX,NGLLY,NGLLZ,DB_NREGIONS
   write(IOUT) ELLIPTICITY,TOPOGRAPHY,GRAVITY,FULL_GRAVITY,ROTATION,ATTENUATION,OCEANS, &
               has_reference_geometry

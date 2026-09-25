@@ -118,9 +118,6 @@ public:
   /** @brief Quadrature dimensions compiled into the catalog. */
   [[nodiscard]] static Dimensions dimensions();
 
-  /** @brief Model-dependent discontinuity radii in SI metres. */
-  [[nodiscard]] PlanetConstants::Radii radii() const;
-
   /** @brief Whether any wrapper currently owns the Fortran catalog. */
   [[nodiscard]] static bool is_active() noexcept;
 
@@ -152,6 +149,8 @@ private:
   };
 
   [[nodiscard]] static Scales query_scales();
+  [[nodiscard]] static std::vector<double>
+  query_planet_values(int schema_version, std::size_t number_of_values);
   void release() noexcept;
 
   Scales scales_;

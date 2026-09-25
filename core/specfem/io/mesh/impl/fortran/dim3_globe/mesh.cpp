@@ -15,6 +15,8 @@
 #include <fstream>
 #include <stdexcept>
 #include <string>
+#include <utility>
+#include <vector>
 
 specfem::mesh::globe3d_mesh specfem::io::read_globe_mesh(
     const std::string &database_file,
@@ -44,17 +46,21 @@ specfem::mesh::globe3d_mesh specfem::io::read_globe_mesh(
   auto &globe = mesh.globe;
   globe.format_version = version;
 
-  specfem::globe::PlanetConstantSet values;
-  specfem::globe::PlanetConstants::Radii radii;
-  specfem::io::fortran_read_line(
-      stream, &globe.model_config.planet_type, &values.r_planet, &values.rhoav,
-      &values.one_minus_f_squared, &values.hours_per_day,
-      &values.seconds_per_hour, &values.topo_maximum, &radii.r_icb,
-      &radii.r_cmb, &radii.r_moho, &radii.r_80, &radii.r_220, &radii.r_400,
-      &radii.r_670, &radii.r_771, &radii.r_ocean);
-  specfem::globe::PlanetConstants planet_constants(
-      specfem::globe::planet_from_type(globe.model_config.planet_type), values);
-  planet_constants.set_radii(radii);
+  int planet_schema_version = 0;
+  int number_of_planet_values = 0;
+  specfem::io::fortran_read_line(stream, &globe.model_config.planet_type,
+                                 &planet_schema_version,
+                                 &number_of_planet_values);
+  if (number_of_planet_values <= 0 || number_of_planet_values > 1024) {
+    throw std::runtime_error("Invalid globe planet value count " +
+                             std::to_string(number_of_planet_values));
+  }
+  std::vector<double> planet_values(number_of_planet_values);
+  specfem::io::fortran_read_line(stream, &planet_values);
+  const specfem::globe::PlanetConstants planet_constants =
+      specfem::globe::PlanetConstants::from_database(
+          specfem::globe::planet_from_type(globe.model_config.planet_type),
+          planet_schema_version, std::move(planet_values));
 
   int ngnod = 0;
   specfem::io::fortran_read_line(stream, &ngnod, &mesh.element_grid.ngllx,
