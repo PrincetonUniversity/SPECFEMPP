@@ -19,28 +19,12 @@
  * - entity:   faces 1-6, edges 7-18, corners 19-26 (the SPECFEM++ hexahedron
  *   numbering, so the values equal @c mesh_entity::dim3::type)
  *
- * This is the only place the database's raw codes appear; nothing outside the
- * reader sees one. The region values are upstream SPECFEM3D_GLOBE's
- * @c IREGION_* constants; keep them in sync with the evaluator boundary that
- * still consumes raw globe region codes. Every function throws
- * @c std::runtime_error naming the offending value.
+ * Region conversions are shared with the evaluator boundary in
+ * @c specfem/globe/region_codes.hpp. The remaining codes are private to the
+ * database reader. Every function throws @c std::runtime_error naming the
+ * offending value.
  */
 namespace specfem::io::mesh::impl::fortran::dim3_globe {
-
-/** @brief Region tag for a database region code. */
-inline specfem::element::region_tag to_region_tag(const int code) {
-  switch (code) {
-  case 1:
-    return specfem::element::region_tag::crust_mantle;
-  case 2:
-    return specfem::element::region_tag::outer_core;
-  case 3:
-    return specfem::element::region_tag::inner_core;
-  default:
-    throw std::runtime_error("Unknown globe region code " +
-                             std::to_string(code));
-  }
-}
 
 /** @brief Medium tag for a database medium code. */
 inline specfem::element::medium_tag to_medium_tag(const int code) {

@@ -1,4 +1,5 @@
 #include "specfem/io/mesh/impl/fortran/dim3_globe/read_materials.hpp"
+#include "specfem/globe/region_codes.hpp"
 
 #include "specfem/io.hpp"
 #include "specfem/io/fortranio/interface.hpp"
@@ -10,8 +11,8 @@
 #include <vector>
 
 specfem::io::mesh::impl::fortran::dim3_globe::material_tags
-specfem::io::mesh::impl::fortran::dim3_globe::read_material_tags(std::ifstream &stream,
-                                            specfem::mesh::globe3d_mesh &mesh) {
+specfem::io::mesh::impl::fortran::dim3_globe::read_material_tags(
+    std::ifstream &stream, specfem::mesh::globe3d_mesh &mesh) {
   specfem::io::fortran_read_line(stream, &mesh.nspec);
   if (mesh.nspec <= 0) {
     throw std::runtime_error("Globe mesh database contains no elements");
@@ -43,15 +44,13 @@ specfem::io::mesh::impl::fortran::dim3_globe::read_material_tags(std::ifstream &
     tags.property_tags[ispec] =
         specfem::io::mesh::impl::fortran::dim3_globe::to_property_tag(
             property_codes[ispec]);
-    element_context[ispec] = {
-      specfem::io::mesh::impl::fortran::dim3_globe::to_region_tag(
-          region_codes[ispec]),
-      idoubling[ispec],
-      rmin[ispec],
-      rmax[ispec],
-      in_crust[ispec],
-      in_mantle[ispec]
-    };
+    element_context[ispec] = { specfem::globe::to_region_tag(
+                                   region_codes[ispec]),
+                               idoubling[ispec],
+                               rmin[ispec],
+                               rmax[ispec],
+                               in_crust[ispec],
+                               in_mantle[ispec] };
   }
 
   return tags;
