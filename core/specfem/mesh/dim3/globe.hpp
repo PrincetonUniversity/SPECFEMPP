@@ -2,7 +2,6 @@
 
 #include "specfem/element/tags.hpp"
 #include "specfem/globe/model_config.hpp"
-#include "specfem/globe/planet_constants.hpp"
 #include "specfem/mesh_entity.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -148,9 +147,6 @@ struct globe_mesh_data {
 
   /** @brief Encoded globe material mode; currently only oracle mode is read. */
   int material_mode = 0;
-
-  /** @brief Resolved planet metadata written by the globe mesher. */
-  specfem::globe::PlanetConstants planet_constants;
 
   /** @brief Configuration used to initialize the globe model evaluator. */
   specfem::globe::ModelConfig model_config;

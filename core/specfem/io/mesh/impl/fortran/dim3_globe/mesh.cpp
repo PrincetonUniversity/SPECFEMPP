@@ -1,4 +1,5 @@
 #include "specfem/attenuation.hpp"
+#include "specfem/globe/model_evaluator.hpp"
 #include "specfem/globe/planet_constants.hpp"
 #include "specfem/io.hpp"
 #include "specfem/io/fortranio/interface.hpp"
@@ -51,9 +52,9 @@ specfem::mesh::globe3d_mesh specfem::io::read_globe_mesh(
       &values.seconds_per_hour, &values.topo_maximum, &radii.r_icb,
       &radii.r_cmb, &radii.r_moho, &radii.r_80, &radii.r_220, &radii.r_400,
       &radii.r_670, &radii.r_771, &radii.r_ocean);
-  globe.planet_constants = specfem::globe::PlanetConstants(
+  specfem::globe::PlanetConstants planet_constants(
       specfem::globe::planet_from_type(globe.model_config.planet_type), values);
-  globe.planet_constants.set_radii(radii);
+  planet_constants.set_radii(radii);
 
   int ngnod = 0;
   specfem::io::fortran_read_line(stream, &ngnod, &mesh.element_grid.ngllx,
@@ -102,6 +103,10 @@ specfem::mesh::globe3d_mesh specfem::io::read_globe_mesh(
           "frequency check");
     }
   }
+
+  // Database constants are verification records, not retained mesh state.
+  specfem::globe::ModelEvaluator::validate_database_constants(model_config,
+                                                              planet_constants);
 
   const int nnode = reader::read_control_node_coordinates(stream, mesh, ngnod);
   const auto material_tags = reader::read_material_tags(stream, mesh);
