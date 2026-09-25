@@ -13,7 +13,9 @@ specfem::assembly::mesh<specfem::element::dimension_tag::dim3>::mesh(
     const int ngllx, const specfem::mesh::tags<dimension_tag> &tags,
     const specfem::mesh::adjacency_graph<dimension_tag> &adjacency_graph,
     const specfem::mesh::control_nodes<dimension_tag> &control_nodes,
-    const specfem::quadrature::quadratures &quadrature)
+    const specfem::quadrature::quadratures &quadrature,
+    const specfem::mesh::control_nodes<dimension_tag>::CoordinatesViewType
+        &reference_anchor_coordinates)
     : nspec(nspec), element_grid(ngllz, nglly, ngllx), ngnod(ngnod) {
   const int quadrature_ngll = quadrature.gll.get_N();
   if (ngllz != quadrature_ngll || nglly != quadrature_ngll ||
@@ -69,6 +71,22 @@ specfem::assembly::mesh<specfem::element::dimension_tag::dim3>::mesh(
     }
   }
 
+  // Assemble the reference (undeformed) control nodes when the database
+  // provides them: same element-to-anchor connectivity and reordering as the
+  // final geometry, with the reference anchor coordinates swapped in. Stays
+  // empty otherwise, so the points constructor aliases the final coordinates.
+  specfem::assembly::mesh_impl::control_nodes<dimension_tag>
+      assembled_reference_nodes;
+  if (reference_anchor_coordinates.extent(0) > 0) {
+    auto reference_control_nodes = control_nodes;
+    reference_control_nodes.coordinates = reference_anchor_coordinates;
+    assembled_reference_nodes = {
+      static_cast<const specfem::assembly::mesh_impl::mesh_to_compute_mapping<
+          dimension_tag> &>(*this),
+      reference_control_nodes
+    };
+  }
+
   static_cast<specfem::assembly::mesh_impl::points<dimension_tag> &>(*this) = {
     nspec,
     ngllz,
@@ -82,7 +100,8 @@ specfem::assembly::mesh<specfem::element::dimension_tag::dim3>::mesh(
                     &>(*this),
     static_cast<
         const specfem::assembly::mesh_impl::shape_functions<dimension_tag> &>(
-        *this)
+        *this),
+    assembled_reference_nodes
   };
 
   return;

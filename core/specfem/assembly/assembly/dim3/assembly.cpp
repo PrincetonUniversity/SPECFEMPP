@@ -59,6 +59,21 @@ make_element_types(
            mesh.globe.element_context };
 }
 
+specfem::mesh::control_nodes<
+    specfem::element::dimension_tag::dim3>::CoordinatesViewType
+reference_anchor_coordinates(const specfem::mesh::cartesian3d_mesh &) {
+  return {};
+}
+
+specfem::mesh::control_nodes<
+    specfem::element::dimension_tag::dim3>::CoordinatesViewType
+reference_anchor_coordinates(const specfem::mesh::globe3d_mesh &mesh) {
+  if (!mesh.globe.has_reference_geometry) {
+    return {};
+  }
+  return mesh.globe.reference_coordinates;
+}
+
 } // namespace specfem::assembly::dim3_impl
 
 template <specfem::simulation::model ModelTag>
@@ -96,7 +111,9 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
                  mesh.tags,
                  mesh.adjacency_graph,
                  mesh.control_nodes,
-                 quadratures };
+                 quadratures,
+                 specfem::assembly::dim3_impl::reference_anchor_coordinates(
+                     mesh) };
 
   this->element_types =
       specfem::assembly::dim3_impl::make_element_types(mesh, this->mesh);

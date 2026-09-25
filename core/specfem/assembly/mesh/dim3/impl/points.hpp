@@ -52,6 +52,23 @@ public:
   CoordViewType coord;                     ///< Device coordinates
   CoordViewType::host_mirror_type h_coord; ///< Host coordinates
 
+  /**
+   * @brief Reference (undeformed) coordinates for model sampling.
+   *
+   * Interpolated from the database's reference (spherical + Moho-stretched)
+   * anchors with the same shape functions and element ordering as @ref coord.
+   * Aliases @ref coord when no reference geometry is given — the two
+   * geometries are then identical by definition.
+   *
+   * @warning Model sampling only. Never use these coordinates for the
+   * Jacobian, the mass matrix, or anything geometric — they do not describe
+   * the deformed mesh the solver runs on.
+   */
+  CoordViewType reference_coord;
+  CoordViewType::host_mirror_type h_reference_coord; ///< Host reference
+                                                     ///< coordinates (see
+                                                     ///< @ref reference_coord)
+
   type_real xmin; ///< Minimum x coordinate (for tolerance calculations)
   type_real xmax; ///< Maximum x coordinate (for tolerance calculations)
   type_real ymin; ///< Minimum y coordinate (for tolerance calculations)
@@ -84,6 +101,11 @@ public:
    * @param adjacency_graph Element adjacency information
    * @param control_nodes Element control node data
    * @param shape_functions Shape function values at GLL points
+   * @param reference_control_nodes Optional assembled control nodes carrying
+   * the reference (undeformed) anchor coordinates. When non-empty, @ref
+   * reference_coord is contracted from them with the same shape functions and
+   * ordering as @ref coord; when empty, @ref reference_coord aliases @ref
+   * coord.
    */
   points(const int &nspec, const int &ngllz, const int &nglly, const int &ngllx,
          const Kokkos::View<specfem::element::medium_tag *, Kokkos::HostSpace>
@@ -93,7 +115,18 @@ public:
          const specfem::assembly::mesh_impl::control_nodes<dimension_tag>
              &control_nodes,
          const specfem::assembly::mesh_impl::shape_functions<dimension_tag>
-             &shape_functions);
+             &shape_functions,
+         const specfem::assembly::mesh_impl::control_nodes<dimension_tag>
+             &reference_control_nodes = {});
+
+private:
+  /**
+   * @brief Compute coordinate bounds over all quadrature points.
+   *
+   * Fills the min/max members from the device coordinate view and reduces
+   * them across MPI ranks.
+   */
+  void compute_coordinate_bounds();
 };
 
 } // namespace specfem::assembly::mesh_impl

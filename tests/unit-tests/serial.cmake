@@ -325,6 +325,7 @@ specfem_add_test(assembly_tests
             assembly/element_intersections/face_types_tests.cpp
             assembly/dim3/mesh/shape_functions.cpp
             assembly/dim3/mesh/points.cpp
+            assembly/dim3/mesh/reference_points.cpp
             assembly/dim3/mesh/control_nodes.cpp
             assembly/dim3/jacobian_matrix/jacobian_matrix.cpp
             assembly/dim3/properties/properties.cpp
