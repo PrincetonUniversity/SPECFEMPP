@@ -7,10 +7,13 @@
 namespace specfem {
 namespace linear_system {
 
+template <typename MappingType> class SparseMatrixView;
+
 /**
  * @brief A matrix scaled by a coefficient, for `A += alpha * B`.
  *
- * Borrows its matrix; consume it in the same expression.
+ * Built from a raw @ref crs_matrix_type or a @ref SparseMatrixView. Borrows
+ * its matrix; consume it in the same expression.
  */
 struct ScaledMatrix {
   scalar_type alpha;             ///< Coefficient
@@ -50,6 +53,21 @@ inline Diagonal diag(const vector_type &vector) { return Diagonal{ vector }; }
 inline ScaledMatrix operator*(const scalar_type alpha,
                               const crs_matrix_type &matrix) {
   return ScaledMatrix{ alpha, matrix };
+}
+
+/**
+ * @brief Scale a matrix view for a pending sum.
+ *
+ * @tparam MappingType Dof numbering of the view
+ * @param alpha Coefficient
+ * @param matrix Fill-complete view; must outlive the expression
+ * @return Wrapper accepted by `SparseMatrixView::operator+=` and by the vector
+ *         grammar's products
+ */
+template <typename MappingType>
+ScaledMatrix operator*(const scalar_type alpha,
+                       const SparseMatrixView<MappingType> &matrix) {
+  return ScaledMatrix{ alpha, *matrix.matrix() };
 }
 
 /**

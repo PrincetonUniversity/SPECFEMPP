@@ -178,6 +178,18 @@ public:
   }
 
   /**
+   * @brief Add another matrix view: `A += B`.
+   *
+   * @tparam OtherMapping Dof numbering of `other`
+   * @param other View to add; must be finalized, and its sparsity must be
+   *        contained in this matrix's
+   */
+  template <typename OtherMapping>
+  void operator+=(const SparseMatrixView<OtherMapping> &other) {
+    add_matrix(static_cast<scalar_type>(1), *other.matrix());
+  }
+
+  /**
    * @brief Add a scaled matrix: `A += alpha * B`.
    *
    * @param scaled Matrix and coefficient; see @ref ScaledMatrix
