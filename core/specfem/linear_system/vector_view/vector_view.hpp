@@ -121,10 +121,13 @@ private:
  * const type_real residual = norm2(b - system * u_new);
  * @endcode
  *
- * The supported grammar is a scaled sum of any length, optionally plus one
- * matrix or diagonal product. Anything outside it -- a scaled operator, a
- * nested product, two products in one expression -- is a compile error naming
- * the fix rather than a silent allocation.
+ * An expression is any mix of scaled vectors and matrix or diagonal products,
+ * side by side or nested, and composes like ordinary algebra: `2 * (f - A *
+ * u) + f` and `A * (B * u)` both work. Vectors may be a @ref VectorView or a
+ * raw `vector_type`; matrices a @ref SparseMatrixView or a raw
+ * `crs_matrix_type`. Scratch is bounded by product nesting depth, not by how
+ * often a statement runs. Only non-algebraic spellings -- `A * B`, `u * v`,
+ * `u + 1.0f` -- fail to compile.
  *
  * A view borrows its @ref VectorSpace and must not outlive it.
  */
@@ -436,6 +439,19 @@ constexpr auto operator*(const crs_matrix_type &matrix,
   return MatrixProduct<specfem::linear_system_impl::expression_type_t<Operand>>{
     &matrix, specfem::linear_system_impl::as_expression(operand)
   };
+}
+
+/**
+ * @brief Apply a matrix view: `A * x`.
+ *
+ * Borrows the matrix the view owns, so the view must outlive the statement.
+ *
+ * @tparam MappingType Dof numbering of the view
+ */
+template <typename MappingType, VectorOperand Operand>
+constexpr auto operator*(const SparseMatrixView<MappingType> &matrix,
+                         const Operand &operand) {
+  return *matrix.matrix() * operand;
 }
 
 /// Apply a diagonal matrix: `diag(m) * x`
