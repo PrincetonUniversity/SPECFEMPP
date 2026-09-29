@@ -84,6 +84,11 @@ void MPI::finalize() {
       MPI_Comm_free(&comm_);
       comm_ = MPI_COMM_NULL;
     }
+    // Enter MPI_Finalize together. With Open MPI + UCX, a rank that reaches
+    // finalize while its peers are still busy stalls in the endpoint
+    // disconnect (ucp_disconnect_nb) for 30-60+ s, long enough for srun to
+    // kill the job once the first rank exits.
+    MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
   }
 #endif

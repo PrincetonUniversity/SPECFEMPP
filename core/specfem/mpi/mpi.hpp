@@ -280,7 +280,8 @@ private:
    * @brief Finalize MPI and reset rank/size to -1
    *
    * Called by Context destructor. Only calls MPI_Finalize if MPI
-   * was initialized by this wrapper (not externally).
+   * was initialized by this wrapper (not externally). Synchronizes all ranks
+   * of `MPI_COMM_WORLD` first, so every rank must call it.
    */
   static void finalize();
 
