@@ -223,16 +223,22 @@ void specfem::linear_system_impl::StiffnessDirectKernel<NGLL, Tags>::operator()(
   // gradient grad_xi phi, stacked over the reference direction r. Branch r
   // is h along direction r times the Kronecker delta (identity) along the
   // other two directions; TensorOperations eliminates the deltas at compile
-  // time, so each branch costs at most one length-NGLL sum. stack/outer fix
-  // B's label order to (r, x, i, y, j, z, k)
-  // (see TensorOperations/Structured.hpp).
-  const auto B = tenops::stack<'r'>(
-      tenops::outer(h.template as<'x', 'i'>(), tenops::delta<'y', 'j'>(),
-                    tenops::delta<'z', 'k'>()), // d/dxi
-      tenops::outer(tenops::delta<'x', 'i'>(), h.template as<'y', 'j'>(),
-                    tenops::delta<'z', 'k'>()), // d/deta
-      tenops::outer(tenops::delta<'x', 'i'>(), tenops::delta<'y', 'j'>(),
-                    h.template as<'z', 'k'>())); // d/dzeta
+  // time, so each branch costs at most one length-NGLL sum.
+  // make_stack_node / make_outer_product_node fix B's label order to
+  // (r, x, i, y, j, z, k) (see TensorOperations/Structured.hpp).
+  const auto B = tenops::make_stack_node<'r'>(
+      // d/dxi
+      tenops::make_outer_product_node(h.template as<'x', 'i'>(),
+                                      tenops::make_delta_node<'y', 'j'>(),
+                                      tenops::make_delta_node<'z', 'k'>()),
+      // d/deta
+      tenops::make_outer_product_node(tenops::make_delta_node<'x', 'i'>(),
+                                      h.template as<'y', 'j'>(),
+                                      tenops::make_delta_node<'z', 'k'>()),
+      // d/dzeta
+      tenops::make_outer_product_node(tenops::make_delta_node<'x', 'i'>(),
+                                      tenops::make_delta_node<'y', 'j'>(),
+                                      h.template as<'z', 'k'>()));
 
   // K_e = B^T M_hat B:
   //   K(e, a, k, j, i, b, n, m, l)

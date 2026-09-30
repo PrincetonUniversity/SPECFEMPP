@@ -23,7 +23,8 @@ namespace specfem::linear_system_impl {
  * every entry in closed form through one TensorOperations level graph built
  * from `TensorOperations::make_contraction_node` (the labels decide what is
  * summed) and the structured reference gradient assembled from
- * `TensorOperations::stack`, `outer` and `delta`.
+ * `TensorOperations::make_stack_node`, `make_outer_product_node` and
+ * `make_delta_node`.
  *
  * The block is the bilinear form \f$ K_e = B^\top \hat{M} B \f$, where
  * \f$ B \f$ is the reference gradient \f$ \nabla_\xi \f$ evaluated at the
@@ -31,11 +32,11 @@ namespace specfem::linear_system_impl {
  * \f[
  *   B_r(q, i) = \frac{\partial \phi_i}{\partial \xi_r}(q),
  * \f]
- * built as `stack` over the reference direction \f$ r \f$ of three `outer`
- * products, each the Lagrange derivative matrix \f$ h \f$ = `hprime` along
- * direction \f$ r \f$ times the identity (Kronecker \f$ \delta \f$) along
- * the other two directions, and \f$ \hat{M} \f$ folds in the constitutive
- * tensor and the quadrature weight,
+ * built as `make_stack_node` over the reference direction \f$ r \f$ of three
+ * `make_outer_product_node` products, each the Lagrange derivative matrix
+ * \f$ h \f$ = `hprime` along direction \f$ r \f$ times the identity
+ * (Kronecker \f$ \delta \f$) along the other two directions, and \f$ \hat{M}
+ * \f$ folds in the constitutive tensor and the quadrature weight,
  * \f[
  *   M(a, b, r, s; q) = \sum_{c,d} \xi_{r,c}(q)\, C_{a c b d}(q)\,
  *   \xi_{s,d}(q)\, w(q) J(q),
