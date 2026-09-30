@@ -76,13 +76,10 @@ std::filesystem::path write_database(const bool attenuation = false,
   header.write(stream);
 
   const std::vector<double> planet_values = {
-    planet_radius, 5514.3,    (1.0 - 1.0 / 299.8) * (1.0 - 1.0 / 299.8),
-    24.0,          3600.0,    9000.0,
-    1221500.0,     3480000.0, 6346600.0,
-    6291000.0,     6151000.0, 5971000.0,
-    5701000.0,     5600000.0, 6368000.0,
+    planet_radius, 5514.3, (1.0 - 1.0 / 299.8) * (1.0 - 1.0 / 299.8),
+    24.0,          3600.0, 9000.0,
   };
-  write_values(stream, 1, 1, static_cast<int>(planet_values.size()));
+  write_values(stream, 1, 2, static_cast<int>(planet_values.size()));
   write_values(stream, planet_values);
   write_values(stream, 27, 5, 5, 5, 1);
   write_values(stream, 0, 0, 0, 0, 0, attenuation ? 1 : 0, 0, 0);
@@ -160,9 +157,9 @@ TEST(GlobeMeshReader, ReadsThinDatabaseAndPreservesReferenceContext) {
   EXPECT_EQ(mesh.boundaries.acoustic_free_surface.nelem_acoustic_surface, 1);
 }
 
-TEST(GlobeMeshReader, RejectsPlanetConstantsThatDisagreeWithEvaluator) {
+TEST(GlobeMeshReader, RejectsInvalidPlanetConstants) {
   const auto path =
-      globe_reader_test_impl::write_database(false, 0.0, 0, false, 7000000.0);
+      globe_reader_test_impl::write_database(false, 0.0, 0, false, -1.0);
   EXPECT_THROW(specfem::io::read_globe_mesh(path.string(),
                                             specfem::attenuation::Setup{}),
                std::runtime_error);

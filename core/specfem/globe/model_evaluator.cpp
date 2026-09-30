@@ -4,8 +4,8 @@
 #include "specfem/mpi.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
-#include <limits>
 #include <sstream>
 #include <stdexcept>
 #include <utility>
@@ -115,6 +115,7 @@ specfem::globe::ModelEvaluator::ModelEvaluator(
       throw std::runtime_error(
           "Globe model evaluator returned invalid dimensional scales");
     }
+    validate_radii();
   } catch (...) {
     release();
     throw;
@@ -129,8 +130,21 @@ void specfem::globe::ModelEvaluator::validate_database_constants(
         "with the supplied PlanetConstants selection");
   }
 
-  planet_constants.check_catalog_values(query_planet_values(
-      planet_constants.schema_version(), planet_constants.values().size()));
+  constexpr double relative_tolerance = 1.0e-12;
+  const auto require_close = [&](const char *name, const double database_value,
+                                 const double catalog_value) {
+    if (!std::isfinite(catalog_value) ||
+        std::abs(database_value - catalog_value) >
+            relative_tolerance * std::max(1.0, std::abs(database_value))) {
+      std::ostringstream message;
+      message << "specfem::globe::ModelEvaluator: database " << name << '='
+              << database_value << " disagrees with model catalog value "
+              << catalog_value;
+      throw std::runtime_error(message.str());
+    }
+  };
+  require_close("R_PLANET", planet_constants.r_planet(), scales_.length);
+  require_close("RHOAV", planet_constants.rhoav(), scales_.density);
 }
 
 specfem::globe::ModelEvaluator::~ModelEvaluator() { release(); }
@@ -158,19 +172,27 @@ void specfem::globe::ModelEvaluator::release() noexcept {
   }
 }
 
-std::vector<double> specfem::globe::ModelEvaluator::query_planet_values(
-    const int schema_version, const std::size_t number_of_values) {
-  if (number_of_values >
-      static_cast<std::size_t>(std::numeric_limits<int>::max())) {
-    throw std::overflow_error(
-        "Planet schema value count exceeds Fortran integer range");
-  }
+void specfem::globe::ModelEvaluator::validate_radii() const {
+  std::array<double, 9> radii{};
+  const int status = globe_evaluator_radii(&radii[0], &radii[1], &radii[2],
+                                           &radii[3], &radii[4], &radii[5],
+                                           &radii[6], &radii[7], &radii[8]);
+  specfem::globe::evaluator_impl::require_ok(status, "validate_radii");
 
-  std::vector<double> values(number_of_values);
-  const int status = globe_evaluator_planet_values(
-      schema_version, static_cast<int>(number_of_values), values.data());
-  specfem::globe::evaluator_impl::require_ok(status, "query_planet_values");
-  return values;
+  if (!std::all_of(radii.begin(), radii.end(), [](const double radius) {
+        return std::isfinite(radius) && radius > 0.0;
+      })) {
+    throw std::runtime_error(
+        "Globe model evaluator returned invalid discontinuity radii");
+  }
+  if (!(radii[0] < radii[1] && radii[1] < radii[2] &&
+        radii[2] < scales_.length)) {
+    std::ostringstream message;
+    message << "Invalid globe radius ordering: RICB=" << radii[0]
+            << ", RCMB=" << radii[1] << ", RMOHO=" << radii[2]
+            << ", R_PLANET=" << scales_.length;
+    throw std::runtime_error(message.str());
+  }
 }
 
 specfem::globe::ModelEvaluator::ElementProperties

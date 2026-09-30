@@ -145,8 +145,7 @@ private:
   };
 
   [[nodiscard]] static Scales query_scales();
-  [[nodiscard]] static std::vector<double>
-  query_planet_values(int schema_version, std::size_t number_of_values);
+  void validate_radii() const;
   void release() noexcept;
 
   Scales scales_;
