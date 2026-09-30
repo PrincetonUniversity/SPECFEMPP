@@ -14,6 +14,26 @@ namespace specfem {
 namespace linear_system {
 
 /**
+ * @brief Verify that every element of the mesh belongs to `Tags::medium_tag`.
+ *
+ * Throws `std::runtime_error` naming the first element of another medium.
+ * This is the whole-mesh restriction of the single-medium milestone
+ * (fluid-solid coupling blocks are deferred, issue #1982), complementing the
+ * per-medium @ref validate_stiffness_scope. It reads only the element types,
+ * so callers run it before building the (costly) @ref FEAssembly of a mesh
+ * they would reject.
+ *
+ * @tparam Tags Compile-time tags (dimension, medium, property, attenuation);
+ *              dimension must be `dim3`
+ * @param assembly Assembled mesh and element types
+ */
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
+void validate_single_medium(
+    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
+        &assembly);
+
+/**
  * @brief Assembles the global stiffness matrix \f$ K \f$ of one medium as a
  * `Tpetra::CrsMatrix` from dense element blocks.
  *
@@ -66,8 +86,8 @@ public:
    *
    * Throws `std::runtime_error` if any element is outside the supported
    * scope (see @ref validate_stiffness_scope) or if the mesh contains elements
-   * of a medium other than `Tags::medium_tag` (single-medium milestone;
-   * coupling blocks are deferred).
+   * of a medium other than `Tags::medium_tag` (see
+   * @ref validate_single_medium).
    *
    * @param assembly Assembled mesh, jacobian matrix, material properties,
    *        and fields; must outlive the assembler
