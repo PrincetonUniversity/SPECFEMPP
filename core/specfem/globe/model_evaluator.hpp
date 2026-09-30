@@ -82,16 +82,12 @@ public:
                           const std::string &log_path = "");
 
   /**
-   * @brief Validate transient database constants against the model catalog.
-   * @param config Opaque `MODEL_CONFIG` values read from the database.
-   * @param planet_constants Selected planet's SI constants, discarded after
-   * validation.
-   * @param log_path Optional catalog log path; empty redirects to `/dev/null`.
+   * @brief Validate database constants against the configured model catalog.
+   * @param planet_constants Selected planet's SI constants read from the
+   * database.
    */
-  static void
-  validate_database_constants(const ModelConfig &config,
-                              const PlanetConstants &planet_constants,
-                              const std::string &log_path = "");
+  void
+  validate_database_constants(const PlanetConstants &planet_constants) const;
 
   ~ModelEvaluator();
 
@@ -154,6 +150,7 @@ private:
   void release() noexcept;
 
   Scales scales_;
+  Planet planet_ = Planet::earth;
   bool owns_state_ = false;
 
   static bool is_active_;

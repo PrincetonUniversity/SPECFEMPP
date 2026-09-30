@@ -80,6 +80,7 @@ specfem::globe::ModelEvaluator::ModelEvaluator(
   }
 
   config.validate();
+  planet_ = specfem::globe::planet_from_type(config.planet_type);
 
 #ifdef SPECFEM_ENABLE_MPI
   const int comm_f =
@@ -121,13 +122,8 @@ specfem::globe::ModelEvaluator::ModelEvaluator(
 }
 
 void specfem::globe::ModelEvaluator::validate_database_constants(
-    const specfem::globe::ModelConfig &config,
-    const specfem::globe::PlanetConstants &planet_constants,
-    const std::string &log_path) {
-  const ModelEvaluator evaluator(config, log_path);
-
-  if (specfem::globe::planet_from_type(config.planet_type) !=
-      planet_constants.planet()) {
+    const specfem::globe::PlanetConstants &planet_constants) const {
+  if (planet_ != planet_constants.planet()) {
     throw std::invalid_argument(
         "specfem::globe::ModelEvaluator: MODEL_CONFIG PLANET_TYPE disagrees "
         "with the supplied PlanetConstants selection");
@@ -140,7 +136,7 @@ void specfem::globe::ModelEvaluator::validate_database_constants(
 specfem::globe::ModelEvaluator::~ModelEvaluator() { release(); }
 
 specfem::globe::ModelEvaluator::ModelEvaluator(ModelEvaluator &&other) noexcept
-    : scales_(other.scales_),
+    : scales_(other.scales_), planet_(other.planet_),
       owns_state_(std::exchange(other.owns_state_, false)) {}
 
 specfem::globe::ModelEvaluator &
@@ -148,6 +144,7 @@ specfem::globe::ModelEvaluator::operator=(ModelEvaluator &&other) noexcept {
   if (this != &other) {
     release();
     scales_ = other.scales_;
+    planet_ = other.planet_;
     owns_state_ = std::exchange(other.owns_state_, false);
   }
   return *this;

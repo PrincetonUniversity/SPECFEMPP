@@ -1,5 +1,4 @@
 #include "specfem/attenuation.hpp"
-#include "specfem/globe/model_evaluator.hpp"
 #include "specfem/globe/planet_constants.hpp"
 #include "specfem/io.hpp"
 #include "specfem/io/fortranio/interface.hpp"
@@ -57,10 +56,9 @@ specfem::mesh::globe3d_mesh specfem::io::read_globe_mesh(
   }
   std::vector<double> planet_values(number_of_planet_values);
   specfem::io::fortran_read_line(stream, &planet_values);
-  const specfem::globe::PlanetConstants planet_constants =
-      specfem::globe::PlanetConstants::from_database(
-          specfem::globe::planet_from_type(globe.model_config.planet_type),
-          planet_schema_version, std::move(planet_values));
+  globe.planet_constants = specfem::globe::PlanetConstants::from_database(
+      specfem::globe::planet_from_type(globe.model_config.planet_type),
+      planet_schema_version, std::move(planet_values));
 
   int ngnod = 0;
   specfem::io::fortran_read_line(stream, &ngnod, &mesh.element_grid.ngllx,
@@ -109,10 +107,6 @@ specfem::mesh::globe3d_mesh specfem::io::read_globe_mesh(
           "frequency check");
     }
   }
-
-  // Database constants are verification records, not retained mesh state.
-  specfem::globe::ModelEvaluator::validate_database_constants(model_config,
-                                                              planet_constants);
 
   const int nnode = reader::read_control_node_coordinates(stream, mesh, ngnod);
   const auto material_tags = reader::read_material_tags(stream, mesh);

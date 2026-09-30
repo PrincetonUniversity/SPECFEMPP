@@ -268,6 +268,8 @@ TEST_F(PremEvaluatorTest, ModelNameIsCaseInsensitive) {
 }
 
 TEST_F(PremEvaluatorTest, RejectsDatabaseScaleMismatches) {
+  configure("1d_isotropic_prem");
+
   auto values = planet_constants_.values();
   values[0] = 3390000.0;
   const specfem::globe::PlanetConstants wrong_radius =
@@ -276,10 +278,9 @@ TEST_F(PremEvaluatorTest, RejectsDatabaseScaleMismatches) {
           specfem::globe::PlanetConstants::current_schema_version(
               specfem::globe::Planet::earth),
           values);
-  EXPECT_THROW(specfem::globe::ModelEvaluator::validate_database_constants(
-                   bare_config("1d_isotropic_prem"), wrong_radius),
+  EXPECT_THROW(evaluator_->validate_database_constants(wrong_radius),
                std::runtime_error);
-  EXPECT_FALSE(specfem::globe::ModelEvaluator::is_active());
+  EXPECT_TRUE(specfem::globe::ModelEvaluator::is_active());
 
   values = planet_constants_.values();
   values[1] = 3393.0;
@@ -289,13 +290,14 @@ TEST_F(PremEvaluatorTest, RejectsDatabaseScaleMismatches) {
           specfem::globe::PlanetConstants::current_schema_version(
               specfem::globe::Planet::earth),
           values);
-  EXPECT_THROW(specfem::globe::ModelEvaluator::validate_database_constants(
-                   bare_config("1d_isotropic_prem"), wrong_density),
+  EXPECT_THROW(evaluator_->validate_database_constants(wrong_density),
                std::runtime_error);
-  EXPECT_FALSE(specfem::globe::ModelEvaluator::is_active());
+  EXPECT_TRUE(specfem::globe::ModelEvaluator::is_active());
 }
 
 TEST_F(PremEvaluatorTest, RejectsDatabaseModelValueMismatches) {
+  configure("1d_isotropic_prem");
+
   auto values = planet_constants_.values();
   values[7] += 1.0;
   const auto constants = specfem::globe::PlanetConstants::from_database(
@@ -304,10 +306,9 @@ TEST_F(PremEvaluatorTest, RejectsDatabaseModelValueMismatches) {
           specfem::globe::Planet::earth),
       std::move(values));
 
-  EXPECT_THROW(specfem::globe::ModelEvaluator::validate_database_constants(
-                   bare_config("1d_isotropic_prem"), constants),
+  EXPECT_THROW(evaluator_->validate_database_constants(constants),
                std::runtime_error);
-  EXPECT_FALSE(specfem::globe::ModelEvaluator::is_active());
+  EXPECT_TRUE(specfem::globe::ModelEvaluator::is_active());
 }
 
 // -----------------------------------------------------------------------------
