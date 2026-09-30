@@ -1,5 +1,6 @@
 #include "specfem/globe/model_evaluator.hpp"
 
+#include "globe_model_evaluator.h"
 #include "specfem/mpi.hpp"
 
 #include <algorithm>
@@ -8,35 +9,6 @@
 #include <sstream>
 #include <stdexcept>
 #include <utility>
-
-extern "C" {
-void globe_evaluator_dims(int *ngllx, int *nglly, int *ngllz, int *n_sls);
-int globe_evaluator_init(const char *model_name, int name_len,
-                         const char *imain_path, int imain_path_len,
-                         int planet_type, int nchunks, int nex_xi, int nex_eta,
-                         int ellipticity, int topography, int oceans,
-                         int attenuation, int gravity, int rotation,
-                         double min_attenuation_period,
-                         double max_attenuation_period, int comm_f);
-int globe_evaluator_scales(double *length_scale, double *density_scale,
-                           double *velocity_scale);
-int globe_evaluator_planet_values(int schema_version, int number_of_values,
-                                  double *values);
-int globe_evaluator_finalize(void);
-int globe_evaluator_get_element(int iregion_code, int idoubling, double rmin,
-                                double rmax, int elem_in_crust,
-                                int elem_in_mantle, const double *xyz,
-                                double *rho, double *vpv, double *vph,
-                                double *vsv, double *vsh, double *eta,
-                                double *vp_iso, double *vs_iso, double *qmu,
-                                double *qkappa, double *cij, double *gc_prime,
-                                double *gs_prime, int *is_anisotropic);
-int globe_evaluator_prem_reference(double r, int idoubling, int iregion_code,
-                                   double *rho, double *vpv, double *vph,
-                                   double *vsv, double *vsh, double *eta,
-                                   double *vp_iso, double *vs_iso,
-                                   double *qkappa, double *qmu);
-}
 
 namespace specfem::globe::evaluator_impl {
 

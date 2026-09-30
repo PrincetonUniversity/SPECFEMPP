@@ -93,10 +93,17 @@ int globe_evaluator_init(const char *model_name, int name_len,
 int globe_evaluator_scales(double *length_scale, double *density_scale,
                         double *velocity_scale);
 
-/* Reports model-dependent radii in SI metres. */
-int globe_evaluator_radii(double *r_icb, double *r_cmb, double *r_moho,
-                          double *r_80, double *r_220, double *r_400,
-                          double *r_670, double *r_771, double *r_ocean);
+/*
+ * Returns the selected planet schema's values in canonical database order.
+ * Schema 1 contains 15 values and matches record 3 of Globe DB format version
+ * 5. The values array must contain at least number_of_values entries.
+ *
+ * Requires a configured evaluator. Returns GLOBE_EVALUATOR_BAD_ARGUMENT for an
+ * unsupported schema or value count and GLOBE_EVALUATOR_NOT_INITIALIZED if the
+ * evaluator has not been configured.
+ */
+int globe_evaluator_planet_values(int schema_version, int number_of_values,
+                                  double *values);
 
 /*
  * Releases what the evaluator owns (its log unit and the topo/bathy array) and
