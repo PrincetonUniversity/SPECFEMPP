@@ -66,17 +66,12 @@ constexpr double prem_rmoho = 6371000.0 - 24400.0;
 constexpr double prem_rsurface = 6371000.0;
 
 specfem::globe::PlanetConstants earth_constants() {
-  return {
-    specfem::globe::Planet::earth,
-    {
-        .r_planet = prem_rsurface,
-        .rhoav = 5514.3,
-        .one_minus_f_squared = (1.0 - 1.0 / 299.8) * (1.0 - 1.0 / 299.8),
-        .hours_per_day = 24.0,
-        .seconds_per_hour = 3600.0,
-        .topo_maximum = 9000.0,
-    },
-  };
+  return specfem::globe::PlanetConstants::from_database(
+      specfem::globe::Planet::earth,
+      specfem::globe::PlanetConstants::current_schema_version(
+          specfem::globe::Planet::earth),
+      { prem_rsurface, 5514.3, (1.0 - 1.0 / 299.8) * (1.0 - 1.0 / 299.8), 24.0,
+        3600.0, 9000.0 });
 }
 
 /**
@@ -211,7 +206,7 @@ class PremEvaluatorTest : public ::testing::Test {
 protected:
   void configure(const std::string &model_name) {
     evaluator_ = std::make_unique<specfem::globe::ModelEvaluator>(
-        bare_config(model_name), planet_constants_);
+        bare_config(model_name));
   }
 
   void TearDown() override { evaluator_.reset(); }
@@ -257,41 +252,33 @@ TEST_F(PremEvaluatorTest, ModelNameIsCaseInsensitive) {
   EXPECT_NO_THROW(configure("1D_ISOTROPIC_PREM"));
 }
 
-TEST_F(PremEvaluatorTest, RejectsDatabaseScaleMismatches) {
-  auto values = planet_constants_.values();
-  values.r_planet = 3390000.0;
-  const specfem::globe::PlanetConstants wrong_radius(
-      specfem::globe::Planet::earth, values);
-  EXPECT_THROW((specfem::globe::ModelEvaluator{
-                   bare_config("1d_isotropic_prem"), wrong_radius }),
-               std::runtime_error);
-  EXPECT_FALSE(specfem::globe::ModelEvaluator::is_active());
+TEST_F(PremEvaluatorTest, ValidatesDatabaseScales) {
+  configure("1d_isotropic_prem");
 
-  values = planet_constants_.values();
-  values.rhoav = 3393.0;
-  const specfem::globe::PlanetConstants wrong_density(
-      specfem::globe::Planet::earth, values);
-  EXPECT_THROW((specfem::globe::ModelEvaluator{
-                   bare_config("1d_isotropic_prem"), wrong_density }),
-               std::runtime_error);
-  EXPECT_FALSE(specfem::globe::ModelEvaluator::is_active());
+  EXPECT_NO_THROW(evaluator_->validate_database_constants(planet_constants_));
+  EXPECT_TRUE(specfem::globe::ModelEvaluator::is_active());
 }
 
-TEST_F(PremEvaluatorTest, RejectsDatabaseRadiusMismatches) {
-  auto constants = earth_constants();
-  specfem::globe::PlanetConstants::Radii radii;
-  {
-    const specfem::globe::ModelEvaluator evaluator(
-        bare_config("1d_isotropic_prem"), constants);
-    radii = evaluator.radii();
-  }
+TEST_F(PremEvaluatorTest, RejectsDatabaseScaleMismatches) {
+  configure("1d_isotropic_prem");
 
-  radii.r_cmb += 1.0;
-  constants.set_radii(radii);
-  EXPECT_THROW((specfem::globe::ModelEvaluator{
-                   bare_config("1d_isotropic_prem"), constants }),
+  const auto wrong_radius = specfem::globe::PlanetConstants::from_database(
+      specfem::globe::Planet::earth,
+      specfem::globe::PlanetConstants::current_schema_version(
+          specfem::globe::Planet::earth),
+      { 3390000.0, 5514.3, (1.0 - 1.0 / 299.8) * (1.0 - 1.0 / 299.8), 24.0,
+        3600.0, 9000.0 });
+  EXPECT_THROW(evaluator_->validate_database_constants(wrong_radius),
                std::runtime_error);
-  EXPECT_FALSE(specfem::globe::ModelEvaluator::is_active());
+
+  const auto wrong_density = specfem::globe::PlanetConstants::from_database(
+      specfem::globe::Planet::earth,
+      specfem::globe::PlanetConstants::current_schema_version(
+          specfem::globe::Planet::earth),
+      { prem_rsurface, 3344.0, (1.0 - 1.0 / 299.8) * (1.0 - 1.0 / 299.8), 24.0,
+        3600.0, 9000.0 });
+  EXPECT_THROW(evaluator_->validate_database_constants(wrong_density),
+               std::runtime_error);
 }
 
 // -----------------------------------------------------------------------------
@@ -304,9 +291,9 @@ TEST_F(PremEvaluatorTest, RejectsDatabaseRadiusMismatches) {
 TEST_F(PremEvaluatorTest, RefusesASecondInstance) {
   configure("1d_isotropic_prem");
 
-  EXPECT_THROW((specfem::globe::ModelEvaluator{
-                   bare_config("1d_isotropic_prem"), planet_constants_ }),
-               std::runtime_error);
+  EXPECT_THROW(
+      (specfem::globe::ModelEvaluator{ bare_config("1d_isotropic_prem") }),
+      std::runtime_error);
 }
 
 TEST_F(PremEvaluatorTest, IsInactiveAfterDestruction) {
@@ -327,7 +314,11 @@ TEST_F(PremEvaluatorTest, MoveTransfersCatalogOwnership) {
   evaluator_.reset();
 
   EXPECT_TRUE(specfem::globe::ModelEvaluator::is_active());
-  EXPECT_NEAR(moved.radii().r_cmb, prem_rcmb, 1.0);
+  EXPECT_GT(moved
+                .prem_reference(0.5 * prem_ricb, iflag_inner_core_normal,
+                                iregion_inner_core)
+                .rho,
+            0.0);
 }
 
 // Models whose values are read out of a per-GLL array belonging to the mesher's
@@ -597,14 +588,6 @@ TEST_F(PremEvaluatorTest, ReturnsPhysicalSiValues) {
   EXPECT_NEAR(properties.vsv[0], 7264.0, 50.0);
 }
 
-TEST_F(PremEvaluatorTest, ReportsPremDiscontinuityRadii) {
-  configure("1d_isotropic_prem");
-  const auto radii = evaluator_->radii();
-  // PREM's 3480 km CMB is approximately 0.546 planet radii.
-  EXPECT_NEAR(radii.r_cmb / planet_constants_.values().r_planet,
-              3480000.0 / 6371000.0, 1.0e-6);
-}
-
 // The exact-value tests sample along the polar axis so the recovered radius is
 // bit-exact. That is only legitimate if a 1D model really does ignore
 // direction, which this checks rather than assumes. The tolerance covers the
@@ -656,18 +639,18 @@ TEST_F(PremEvaluatorTest, RejectsAnInvalidAttenuationBand) {
   config.attenuation = true;
 
   // left at the default, i.e. never read from a database
-  EXPECT_THROW((specfem::globe::ModelEvaluator{ config, planet_constants_ }),
+  EXPECT_THROW((specfem::globe::ModelEvaluator{ config }),
                std::invalid_argument);
 
   config.min_attenuation_period = 1000.0;
   config.max_attenuation_period = 20.0; // inverted
-  EXPECT_THROW((specfem::globe::ModelEvaluator{ config, planet_constants_ }),
+  EXPECT_THROW((specfem::globe::ModelEvaluator{ config }),
                std::invalid_argument);
 
   // ... and the band is not consulted at all when attenuation is off.
   config.attenuation = false;
-  EXPECT_NO_THROW(evaluator_ = std::make_unique<specfem::globe::ModelEvaluator>(
-                      config, planet_constants_));
+  EXPECT_NO_THROW(evaluator_ =
+                      std::make_unique<specfem::globe::ModelEvaluator>(config));
 }
 
 // With ATTENUATION off the catalog never calls getatten_val, so Q must come
@@ -700,8 +683,7 @@ TEST_F(PremEvaluatorTest, ReturnsPositiveQmuInSolidsWhenAttenuationIsOn) {
   // typical global values; in production these come from the mesh database
   config.min_attenuation_period = 20.0;
   config.max_attenuation_period = 1000.0;
-  evaluator_ = std::make_unique<specfem::globe::ModelEvaluator>(
-      config, planet_constants_);
+  evaluator_ = std::make_unique<specfem::globe::ModelEvaluator>(config);
 
   const std::size_t npoints =
       specfem::globe::ModelEvaluator::dimensions().points_per_element();

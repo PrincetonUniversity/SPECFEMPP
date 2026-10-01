@@ -93,7 +93,11 @@ int globe_evaluator_init(const char *model_name, int name_len,
 int globe_evaluator_scales(double *length_scale, double *density_scale,
                         double *velocity_scale);
 
-/* Reports model-dependent radii in SI metres. */
+/*
+ * Returns model-resolved discontinuity radii in SI metres. Requires a
+ * configured evaluator; otherwise writes zeros and returns
+ * GLOBE_EVALUATOR_NOT_INITIALIZED.
+ */
 int globe_evaluator_radii(double *r_icb, double *r_cmb, double *r_moho,
                           double *r_80, double *r_220, double *r_400,
                           double *r_670, double *r_771, double *r_ocean);

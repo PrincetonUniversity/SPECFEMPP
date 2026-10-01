@@ -6,6 +6,7 @@
 #include "specfem/mesh_entity.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -149,11 +150,11 @@ struct globe_mesh_data {
   /** @brief Encoded globe material mode; currently only oracle mode is read. */
   int material_mode = 0;
 
-  /** @brief Resolved planet metadata written by the globe mesher. */
-  specfem::globe::PlanetConstants planet_constants;
-
   /** @brief Configuration used to initialize the globe model evaluator. */
   specfem::globe::ModelConfig model_config;
+
+  /** @brief Database constants retained for model-catalog validation. */
+  std::optional<specfem::globe::PlanetConstants> planet_constants;
 
   /** @brief Mesher-side model identifiers used for consistency checks. */
   globe_model_verification model_verification;

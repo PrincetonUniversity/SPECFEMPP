@@ -29,8 +29,13 @@ void read_globe_properties(
   }
 
   const auto &globe = input_mesh.globe;
-  specfem::globe::ModelEvaluator evaluator(globe.model_config,
-                                           globe.planet_constants);
+  if (!globe.planet_constants.has_value()) {
+    throw std::runtime_error(
+        "read_globe_properties: mesh carries no planet constants");
+  }
+
+  specfem::globe::ModelEvaluator evaluator(globe.model_config);
+  evaluator.validate_database_constants(*globe.planet_constants);
   const auto evaluator_dims = evaluator.dimensions();
   if (evaluator_dims.ngllx != assembly.mesh.element_grid.ngllx ||
       evaluator_dims.nglly != assembly.mesh.element_grid.nglly ||

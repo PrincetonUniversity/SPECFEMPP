@@ -12,7 +12,7 @@
 !    globe_evaluator_dims            -- compile-time NGLL / N_SLS query
 !    globe_evaluator_init            -- one-time model setup
 !    globe_evaluator_scales          -- planet-dependent SI scales
-!    globe_evaluator_radii           -- model-dependent radii in SI metres
+!    globe_evaluator_radii           -- model-resolved discontinuity radii
 !    globe_evaluator_get_element     -- material for one element's GLL points
 !    globe_evaluator_prem_reference  -- TEST ONLY, see note at its definition
 !
@@ -392,11 +392,13 @@
                                                  r_670, r_771, r_ocean) &
     bind(C, name="globe_evaluator_radii")
 
+! Returns model-resolved discontinuity radii in SI metres.
+
   use iso_c_binding, only: c_int, c_double
   use globe_evaluator_par, only: is_initialized, &
     GLOBE_EVALUATOR_OK, GLOBE_EVALUATOR_NOT_INITIALIZED
-  use shared_parameters, only: RICB, RCMB, RMOHO, R80, R220, R400, R670, &
-    R771, ROCEAN
+  use shared_parameters, only: RICB, RCMB, RMOHO, R80, R220, R400, &
+    R670, R771, ROCEAN
 
   implicit none
 

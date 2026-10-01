@@ -1,44 +1,14 @@
 #include "specfem/globe/model_evaluator.hpp"
 
-#include "specfem/globe/dimensionalization.hpp"
+#include "globe_model_evaluator.h"
 #include "specfem/mpi.hpp"
-#include "specfem/units.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <sstream>
 #include <stdexcept>
 #include <utility>
-
-extern "C" {
-void globe_evaluator_dims(int *ngllx, int *nglly, int *ngllz, int *n_sls);
-int globe_evaluator_init(const char *model_name, int name_len,
-                         const char *imain_path, int imain_path_len,
-                         int planet_type, int nchunks, int nex_xi, int nex_eta,
-                         int ellipticity, int topography, int oceans,
-                         int attenuation, int gravity, int rotation,
-                         double min_attenuation_period,
-                         double max_attenuation_period, int comm_f);
-int globe_evaluator_scales(double *length_scale, double *density_scale,
-                           double *velocity_scale);
-int globe_evaluator_radii(double *r_icb, double *r_cmb, double *r_moho,
-                          double *r_80, double *r_220, double *r_400,
-                          double *r_670, double *r_771, double *r_ocean);
-int globe_evaluator_finalize(void);
-int globe_evaluator_get_element(int iregion_code, int idoubling, double rmin,
-                                double rmax, int elem_in_crust,
-                                int elem_in_mantle, const double *xyz,
-                                double *rho, double *vpv, double *vph,
-                                double *vsv, double *vsh, double *eta,
-                                double *vp_iso, double *vs_iso, double *qmu,
-                                double *qkappa, double *cij, double *gc_prime,
-                                double *gs_prime, int *is_anisotropic);
-int globe_evaluator_prem_reference(double r, int idoubling, int iregion_code,
-                                   double *rho, double *vpv, double *vph,
-                                   double *vsv, double *vsh, double *eta,
-                                   double *vp_iso, double *vs_iso,
-                                   double *qkappa, double *qmu);
-}
 
 namespace specfem::globe::evaluator_impl {
 
@@ -77,30 +47,6 @@ void require_ok(const int status, const std::string &operation) {
   }
 }
 
-void check_scales(const PlanetConstants &constants,
-                  const double evaluator_r_planet,
-                  const double evaluator_rhoav) {
-  constexpr double relative_tolerance = 1.0e-12;
-  const auto &values = constants.values();
-  if (!std::isfinite(evaluator_r_planet) ||
-      std::abs(evaluator_r_planet - values.r_planet) >
-          relative_tolerance * values.r_planet) {
-    std::ostringstream message;
-    message << "Globe database R_PLANET=" << values.r_planet
-            << " disagrees with model evaluator R_PLANET="
-            << evaluator_r_planet;
-    throw std::runtime_error(message.str());
-  }
-  if (!std::isfinite(evaluator_rhoav) ||
-      std::abs(evaluator_rhoav - values.rhoav) >
-          relative_tolerance * values.rhoav) {
-    std::ostringstream message;
-    message << "Globe database RHOAV=" << values.rhoav
-            << " disagrees with model evaluator RHOAV=" << evaluator_rhoav;
-    throw std::runtime_error(message.str());
-  }
-}
-
 } // namespace specfem::globe::evaluator_impl
 
 bool specfem::globe::ModelEvaluator::is_active_ = false;
@@ -125,10 +71,7 @@ specfem::globe::ModelEvaluator::query_scales() {
 }
 
 specfem::globe::ModelEvaluator::ModelEvaluator(
-    const specfem::globe::ModelConfig &config,
-    const specfem::globe::PlanetConstants &constants,
-    const std::string &log_path)
-    : constants_(constants) {
+    const specfem::globe::ModelConfig &config, const std::string &log_path) {
   if (is_active_) {
     throw std::runtime_error(
         "specfem::globe::ModelEvaluator: " +
@@ -137,12 +80,7 @@ specfem::globe::ModelEvaluator::ModelEvaluator(
   }
 
   config.validate();
-  if (specfem::globe::planet_from_type(config.planet_type) !=
-      constants_.planet()) {
-    throw std::invalid_argument("specfem::globe::ModelEvaluator: MODEL_CONFIG "
-                                "PLANET_TYPE disagrees with "
-                                "the supplied PlanetConstants selection");
-  }
+  planet_ = specfem::globe::planet_from_type(config.planet_type);
 
 #ifdef SPECFEM_ENABLE_MPI
   const int comm_f =
@@ -171,27 +109,56 @@ specfem::globe::ModelEvaluator::ModelEvaluator(
   is_active_ = true;
   try {
     scales_ = query_scales();
-    specfem::globe::evaluator_impl::check_scales(constants_, scales_.length,
-                                                 scales_.density);
-    constants_.check_radii(radii());
+    if (!std::isfinite(scales_.length) || scales_.length <= 0.0 ||
+        !std::isfinite(scales_.density) || scales_.density <= 0.0 ||
+        !std::isfinite(scales_.velocity) || scales_.velocity <= 0.0) {
+      throw std::runtime_error(
+          "Globe model evaluator returned invalid dimensional scales");
+    }
+    validate_radii();
   } catch (...) {
     release();
     throw;
   }
 }
 
+void specfem::globe::ModelEvaluator::validate_database_constants(
+    const specfem::globe::PlanetConstants &planet_constants) const {
+  if (planet_ != planet_constants.planet()) {
+    throw std::invalid_argument(
+        "specfem::globe::ModelEvaluator: MODEL_CONFIG PLANET_TYPE disagrees "
+        "with the supplied PlanetConstants selection");
+  }
+
+  constexpr double relative_tolerance = 1.0e-12;
+  const auto require_close = [&](const char *name, const double database_value,
+                                 const double catalog_value) {
+    if (!std::isfinite(catalog_value) ||
+        std::abs(database_value - catalog_value) >
+            relative_tolerance * std::max(1.0, std::abs(database_value))) {
+      std::ostringstream message;
+      message << "specfem::globe::ModelEvaluator: database " << name << '='
+              << database_value << " disagrees with model catalog value "
+              << catalog_value;
+      throw std::runtime_error(message.str());
+    }
+  };
+  require_close("R_PLANET", planet_constants.r_planet(), scales_.length);
+  require_close("RHOAV", planet_constants.rhoav(), scales_.density);
+}
+
 specfem::globe::ModelEvaluator::~ModelEvaluator() { release(); }
 
 specfem::globe::ModelEvaluator::ModelEvaluator(ModelEvaluator &&other) noexcept
-    : constants_(std::move(other.constants_)), scales_(other.scales_),
+    : scales_(other.scales_), planet_(other.planet_),
       owns_state_(std::exchange(other.owns_state_, false)) {}
 
 specfem::globe::ModelEvaluator &
 specfem::globe::ModelEvaluator::operator=(ModelEvaluator &&other) noexcept {
   if (this != &other) {
     release();
-    constants_ = std::move(other.constants_);
     scales_ = other.scales_;
+    planet_ = other.planet_;
     owns_state_ = std::exchange(other.owns_state_, false);
   }
   return *this;
@@ -205,15 +172,27 @@ void specfem::globe::ModelEvaluator::release() noexcept {
   }
 }
 
-specfem::globe::PlanetConstants::Radii
-specfem::globe::ModelEvaluator::radii() const {
-  specfem::globe::PlanetConstants::Radii result;
-  const int status = globe_evaluator_radii(
-      &result.r_icb, &result.r_cmb, &result.r_moho, &result.r_80, &result.r_220,
-      &result.r_400, &result.r_670, &result.r_771, &result.r_ocean);
-  specfem::globe::evaluator_impl::require_ok(status, "radii");
-  result.validate(constants_.values().r_planet);
-  return result;
+void specfem::globe::ModelEvaluator::validate_radii() const {
+  std::array<double, 9> radii{};
+  const int status = globe_evaluator_radii(&radii[0], &radii[1], &radii[2],
+                                           &radii[3], &radii[4], &radii[5],
+                                           &radii[6], &radii[7], &radii[8]);
+  specfem::globe::evaluator_impl::require_ok(status, "validate_radii");
+
+  if (!std::all_of(radii.begin(), radii.end(), [](const double radius) {
+        return std::isfinite(radius) && radius > 0.0;
+      })) {
+    throw std::runtime_error(
+        "Globe model evaluator returned invalid discontinuity radii");
+  }
+  if (!(radii[0] < radii[1] && radii[1] < radii[2] &&
+        radii[2] < scales_.length)) {
+    std::ostringstream message;
+    message << "Invalid globe radius ordering: RICB=" << radii[0]
+            << ", RCMB=" << radii[1] << ", RMOHO=" << radii[2]
+            << ", R_PLANET=" << scales_.length;
+    throw std::runtime_error(message.str());
+  }
 }
 
 specfem::globe::ModelEvaluator::ElementProperties
@@ -229,15 +208,13 @@ specfem::globe::ModelEvaluator::evaluate_element(
     throw std::invalid_argument(message.str());
   }
 
-  const auto to_catalog_length = [this](const double value_si) {
-    return specfem::globe::nondimensionalize(specfem::units::Meters(value_si),
-                                             constants_)
-        .raw();
-  };
-  const double rmin = to_catalog_length(rmin_si);
-  const double rmax = to_catalog_length(rmax_si);
+  const double rmin = scales_.to_catalog_length(rmin_si);
+  const double rmax = scales_.to_catalog_length(rmax_si);
   std::vector<double> xyz(xyz_si.size());
-  std::transform(xyz_si.begin(), xyz_si.end(), xyz.begin(), to_catalog_length);
+  std::transform(xyz_si.begin(), xyz_si.end(), xyz.begin(),
+                 [this](const double value_si) {
+                   return scales_.to_catalog_length(value_si);
+                 });
 
   ElementProperties properties;
   properties.rho.resize(npoints);
@@ -266,12 +243,10 @@ specfem::globe::ModelEvaluator::evaluate_element(
   specfem::globe::evaluator_impl::require_ok(status, "evaluate_element");
 
   for (double &rho : properties.rho) {
-    rho = specfem::globe::dimensionalize<specfem::units::KilogramPerCubicMeter>(
-              specfem::units::Dimensionless(rho), constants_)
-              .raw();
+    rho = scales_.to_si_density(rho);
   }
   const auto scale_velocity = [this](double &value) {
-    value *= scales_.velocity;
+    value = scales_.to_si_velocity(value);
   };
   for (auto *values :
        { &properties.vpv, &properties.vph, &properties.vsv, &properties.vsh,
@@ -279,7 +254,7 @@ specfem::globe::ModelEvaluator::evaluate_element(
     std::for_each(values->begin(), values->end(), scale_velocity);
   }
   for (double &value : properties.cij) {
-    value *= scales_.modulus();
+    value = scales_.to_si_modulus(value);
   }
   properties.is_anisotropic = (is_anisotropic != 0);
   return properties;
@@ -290,24 +265,19 @@ specfem::globe::ModelEvaluator::prem_reference(const double r_si,
                                                const int idoubling,
                                                const int iregion_code) const {
   ReferencePoint point;
-  const double r = specfem::globe::nondimensionalize(
-                       specfem::units::Meters(r_si), constants_)
-                       .raw();
+  const double r = scales_.to_catalog_length(r_si);
   const int status = globe_evaluator_prem_reference(
       r, idoubling, iregion_code, &point.rho, &point.vpv, &point.vph,
       &point.vsv, &point.vsh, &point.eta, &point.vp_iso, &point.vs_iso,
       &point.qkappa, &point.qmu);
   specfem::globe::evaluator_impl::require_ok(status, "prem_reference");
 
-  point.rho =
-      specfem::globe::dimensionalize<specfem::units::KilogramPerCubicMeter>(
-          specfem::units::Dimensionless(point.rho), constants_)
-          .raw();
-  point.vpv *= scales_.velocity;
-  point.vph *= scales_.velocity;
-  point.vsv *= scales_.velocity;
-  point.vsh *= scales_.velocity;
-  point.vp_iso *= scales_.velocity;
-  point.vs_iso *= scales_.velocity;
+  point.rho = scales_.to_si_density(point.rho);
+  point.vpv = scales_.to_si_velocity(point.vpv);
+  point.vph = scales_.to_si_velocity(point.vph);
+  point.vsv = scales_.to_si_velocity(point.vsv);
+  point.vsh = scales_.to_si_velocity(point.vsh);
+  point.vp_iso = scales_.to_si_velocity(point.vp_iso);
+  point.vs_iso = scales_.to_si_velocity(point.vs_iso);
   return point;
 }

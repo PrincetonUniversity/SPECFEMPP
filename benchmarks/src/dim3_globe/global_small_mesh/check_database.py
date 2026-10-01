@@ -9,13 +9,16 @@ Usage:
 """
 
 import glob
+import math
 import os
 import struct
 import sys
 
 NGNOD = 27
 MAGIC = "SPECFEMPP_GLOBE_DB"
-VERSION = 4
+VERSION = 5
+PLANET_SCHEMA_VERSION = 2
+N_PLANET_VALUES = 6
 
 REGION_CRUST_MANTLE = 1
 REGION_OUTER_CORE = 2
@@ -105,8 +108,24 @@ def read_database(path):
     if version != VERSION:
         raise Failure(f"{path}: unsupported format_version {version}")
 
-    planet = unpack(reader.record(), [("i", 1), ("d", 15)])
-    db["planet_type"] = planet[0]
+    planet_metadata = unpack(reader.record(), [("i", 3)])[0]
+    (
+        db["planet_type"],
+        db["planet_schema_version"],
+        db["number_of_planet_values"],
+    ) = planet_metadata
+    if db["planet_schema_version"] != PLANET_SCHEMA_VERSION:
+        raise Failure(
+            f"{path}: unsupported planet schema version {db['planet_schema_version']}"
+        )
+    if db["number_of_planet_values"] != N_PLANET_VALUES:
+        raise Failure(
+            f"{path}: planet schema {db['planet_schema_version']} contains "
+            f"{db['number_of_planet_values']} values, expected {N_PLANET_VALUES}"
+        )
+
+    planet_values = unpack(reader.record(), [("d", db["number_of_planet_values"])])[0]
+    db["planet_values"] = planet_values
     (
         db["r_planet"],
         db["rhoav"],
@@ -114,16 +133,7 @@ def read_database(path):
         db["hours_per_day"],
         db["seconds_per_hour"],
         db["topo_maximum"],
-        db["r_icb"],
-        db["r_cmb"],
-        db["r_moho"],
-        db["r_80"],
-        db["r_220"],
-        db["r_400"],
-        db["r_670"],
-        db["r_771"],
-        db["r_ocean"],
-    ) = planet[1]
+    ) = planet_values
 
     header = unpack(reader.record(), [("i", 5)])[0]
     db["ngnod"], db["ngllx"], db["nglly"], db["ngllz"], db["nregions"] = header
@@ -242,8 +252,20 @@ def check_one(db, problems):
         bad(f"material_mode is {db['material_mode']}, expected 1 (ORACLE)")
     if not 1 <= db["nregions"] <= 3:
         bad(f"nregions is {db['nregions']}")
-    if not 0.0 < db["r_icb"] < db["r_cmb"] < db["r_moho"] < db["r_planet"]:
-        bad("invalid resolved ICB/CMB/Moho/planet radius ordering")
+    if not all(math.isfinite(value) for value in db["planet_values"]):
+        bad("planet schema contains a non-finite value")
+    if db["r_planet"] <= 0.0:
+        bad(f"R_PLANET is {db['r_planet']}, expected a positive SI length scale")
+    if db["rhoav"] <= 0.0:
+        bad(f"RHOAV is {db['rhoav']}, expected a positive SI density scale")
+    if not 0.0 < db["one_minus_f_squared"] <= 1.0:
+        bad(
+            "ONE_MINUS_F_SQUARED is "
+            f"{db['one_minus_f_squared']}, expected a value in (0, 1]"
+        )
+    for name in ("hours_per_day", "seconds_per_hour", "topo_maximum"):
+        if db[name] <= 0.0:
+            bad(f"{name.upper()} is {db[name]}, expected a positive value")
 
     # model config: the parameters SPECFEM++ cannot re-derive from MODEL. A stale
     # default here is the failure this block exists to catch -- it would produce
@@ -421,21 +443,15 @@ def check_one(db, problems):
 # the mesher, and SPECFEM++ would configure a different model on different ranks.
 MODEL_CONFIG_KEYS = (
     "planet_type",
+    "planet_schema_version",
+    "number_of_planet_values",
+    "planet_values",
     "r_planet",
     "rhoav",
     "one_minus_f_squared",
     "hours_per_day",
     "seconds_per_hour",
     "topo_maximum",
-    "r_icb",
-    "r_cmb",
-    "r_moho",
-    "r_80",
-    "r_220",
-    "r_400",
-    "r_670",
-    "r_771",
-    "r_ocean",
     "model",
     "codes",
     "model_flags",
