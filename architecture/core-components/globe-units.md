@@ -7,15 +7,18 @@ SPECFEM++ has one units boundary for globe models:
 - The raw mesh and the assembled simulation state remain in SI units.
 - The SPECFEM3D_GLOBE model catalog works internally with length divided by
   `R_PLANET` and density divided by `RHOAV`.
-- Conversion to and from those non-dimensional values is confined to the C++
-  globe model evaluator. Code outside that evaluator must not call
-  `globe::nondimensionalize` or `globe::dimensionalize`.
+- Conversion to and from those non-dimensional values is a private
+  implementation detail of `globe::ModelEvaluator`. Code outside the evaluator
+  remains in SI units; no public catalog-unit conversion API is provided.
 
-`globe::PlanetConstants` temporarily owns the database's opaque,
-schema-versioned planet-value array. After replaying `MODEL_CONFIG`, the globe
-model evaluator derives the selected planet's values and compares the complete
-array with the database. The reader then discards `PlanetConstants`; neither the
-raw mesh nor assembly retains a second source of planet data.
+The mesh database is authoritative for the fixed planet values resolved by the
+mesher: `R_PLANET`, `RHOAV`, `ONE_MINUS_F_SQUARED`, `HOURS_PER_DAY`,
+`SECONDS_PER_HOUR`, and `TOPO_MAXIMUM`. This preserves model-specific scale
+overrides without maintaining a second Earth/Mars/Moon table in C++. The raw
+mesh retains `globe::PlanetConstants` until assembly, when the configured model
+evaluator cross-checks its selected planet, `R_PLANET`, and `RHOAV` against the
+database. The assembled simulation does not retain a second source of planet
+data.
 
 The `specfem::globe` component owns the planet schema, replayable model
 configuration, unit conversion at the Fortran boundary, and model evaluator
@@ -24,12 +27,15 @@ time, while the I/O layer deserializes and validates database records. This keep
 mesh data independent of I/O implementation types and avoids retaining
 verification-only state in Cartesian assemblies.
 
-The evaluator also compares the database's opaque model codes and flags with the
-values derived by the linked Fortran catalog. C++ does not interpret those raw
-values; they only detect catalog/database version skew. Every catalog call is
-serialized because upstream routines retain module and `save` scratch state.
-File-backed models are rejected before Fortran initialization when the runtime
-`DATA/` directory is absent, avoiding an unrecoverable Fortran `STOP`.
+The raw mesh also retains the database's opaque model codes and flags until
+assembly. The evaluator compares them with values derived by the linked Fortran
+catalog; C++ does not interpret those values because they exist only to detect
+catalog/database version skew. Validation uses the same evaluator instance that
+populates material properties, so the process-global Fortran catalog is
+initialized only once. Every catalog call is serialized because upstream
+routines retain module and `save` scratch state. File-backed models are rejected
+before Fortran initialization when the runtime `DATA/` directory is absent,
+avoiding an unrecoverable Fortran `STOP`.
 
 Reference-model consumers use dedicated evaluator accessors rather than the 3-D
 element path. `reference_density()` exposes the pure planet reference profile in
@@ -37,6 +43,13 @@ SI for gravity setup, while `ellipticity_spline()` returns the exact
 Clairaut/Radau spline constructed by the mesher catalog. The density integration
 and rotation-rate physics therefore remain on the Fortran side of the units
 boundary.
+
+Discontinuity radii belong exclusively to the selected reference model and are
+not stored in the mesh database or assembly. During its single initialization,
+`globe::ModelEvaluator` queries the model oracle and validates the radii locally
+before using that same evaluator instance to populate material properties. The
+radii are then discarded. Validation requires every radius to be finite and
+positive, with `r_icb < r_cmb < r_moho < R_PLANET` from the model catalog.
 
 ---
 

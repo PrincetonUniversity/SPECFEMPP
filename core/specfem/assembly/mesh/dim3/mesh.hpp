@@ -73,12 +73,18 @@ public:
    * @param adjacency_graph Element connectivity
    * @param control_nodes Element control node data
    * @param quadrature GLL quadrature information
+   * @param reference_anchor_coordinates Optional reference (undeformed)
+   * anchor coordinates indexed by global anchor node; when non-empty, the
+   * reference GLL coordinates are built for model sampling, otherwise
+   * `reference_coord` aliases the final coordinates
    */
   mesh(const int nspec, const int ngnod, const int ngllz, const int nglly,
        const int ngllx, const specfem::mesh::tags<dimension_tag> &tags,
        const specfem::mesh::adjacency_graph<dimension_tag> &adjacency_graph,
        const specfem::mesh::control_nodes<dimension_tag> &control_nodes,
-       const specfem::quadrature::quadratures &quadrature);
+       const specfem::quadrature::quadratures &quadrature,
+       const specfem::mesh::control_nodes<dimension_tag>::CoordinatesViewType
+           &reference_anchor_coordinates = {});
 };
 
 } // namespace specfem::assembly

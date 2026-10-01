@@ -2,16 +2,13 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstddef>
-#include <sstream>
 #include <stdexcept>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace specfem::globe {
 
-/** @brief Planet selection encoded by a globe database `PLANET_TYPE`. */
+/** @brief Planet selection encoded by SPECFEM3D_GLOBE `PLANET_TYPE`. */
 enum class Planet { earth = 1, mars = 2, moon = 3 };
 
 /** @brief Convert a database `PLANET_TYPE` to a checked planet. */
@@ -30,32 +27,25 @@ inline constexpr Planet planet_from_type(const int planet_type) {
 }
 
 /**
- * @brief Planet-selected interpretation of an opaque database value array.
+ * @brief Fixed planet constants read from the mesh database.
  *
- * The Globe database records the selected planet, a planet schema version, and
- * a counted array of values. Field positions belong to that planet schema and
- * are deliberately not part of the mesh-reader contract. The array is retained
- * only long enough to verify that the model catalog derives identical values.
+ * The database preserves the fixed planet values and dimensional scales used by
+ * the mesher. Model-dependent discontinuity radii are not stored here.
  */
 class PlanetConstants {
 public:
   /** @brief Current database schema emitted for a selected planet. */
-  [[nodiscard]] static constexpr int current_schema_version(Planet planet) {
-    switch (planet) {
-    case Planet::earth:
-    case Planet::mars:
-    case Planet::moon:
-      return 1;
-    }
-    throw std::invalid_argument("Unknown Globe planet");
+  [[nodiscard]] static constexpr int current_schema_version(Planet) {
+    return 2;
   }
 
   /**
-   * @brief Decode and validate values selected by a database planet schema.
+   * @brief Decode and validate planet constants from a globe database.
    * @param planet Planet selected by `PLANET_TYPE`.
-   * @param schema_version Version of that planet's value schema.
-   * @param values Opaque schema-ordered values.
-   * @return Validated transient planet constants.
+   * @param schema_version Version of the planet value schema.
+   * @param values Values in the order `R_PLANET`, `RHOAV`,
+   * `ONE_MINUS_F_SQUARED`, `HOURS_PER_DAY`, `SECONDS_PER_HOUR`,
+   * `TOPO_MAXIMUM`.
    */
   [[nodiscard]] static PlanetConstants
   from_database(Planet planet, int schema_version, std::vector<double> values);
@@ -66,97 +56,71 @@ public:
   /** @brief Selected planet schema version. */
   [[nodiscard]] int schema_version() const noexcept { return schema_version_; }
 
-  /** @brief Opaque values in the selected planet schema's canonical order. */
-  [[nodiscard]] const std::vector<double> &values() const noexcept {
-    return values_;
+  /** @brief Resolved model radius used to dimensionalize the database, m. */
+  [[nodiscard]] double r_planet() const noexcept { return r_planet_; }
+
+  /** @brief Average density used by the model catalog, kg/m^3. */
+  [[nodiscard]] double rhoav() const noexcept { return rhoav_; }
+
+  /** @brief Planet figure parameter \f$(1-f)^2\f$. */
+  [[nodiscard]] double one_minus_f_squared() const noexcept {
+    return one_minus_f_squared_;
   }
 
-  /**
-   * @brief Validate database values against values derived by the model
-   * catalog.
-   * @param catalog_values Values in the same planet schema and canonical order.
-   */
-  void check_catalog_values(const std::vector<double> &catalog_values) const;
+  /** @brief Rotation period component in hours per day. */
+  [[nodiscard]] double hours_per_day() const noexcept { return hours_per_day_; }
+
+  /** @brief Rotation period component in seconds per hour. */
+  [[nodiscard]] double seconds_per_hour() const noexcept {
+    return seconds_per_hour_;
+  }
+
+  /** @brief Maximum topographic elevation represented by the planet, m. */
+  [[nodiscard]] double topo_maximum() const noexcept { return topo_maximum_; }
 
 private:
-  PlanetConstants(const Planet planet, const int schema_version,
-                  std::vector<double> values)
-      : planet_(planet), schema_version_(schema_version),
-        values_(std::move(values)) {}
-
-  static void validate_schema(Planet planet, int schema_version,
-                              const std::vector<double> &values);
+  PlanetConstants(Planet planet, int schema_version, double r_planet,
+                  double rhoav, double one_minus_f_squared,
+                  double hours_per_day, double seconds_per_hour,
+                  double topo_maximum)
+      : planet_(planet), schema_version_(schema_version), r_planet_(r_planet),
+        rhoav_(rhoav), one_minus_f_squared_(one_minus_f_squared),
+        hours_per_day_(hours_per_day), seconds_per_hour_(seconds_per_hour),
+        topo_maximum_(topo_maximum) {}
 
   Planet planet_;
   int schema_version_ = 0;
-  std::vector<double> values_;
+  double r_planet_ = 0.0;
+  double rhoav_ = 0.0;
+  double one_minus_f_squared_ = 0.0;
+  double hours_per_day_ = 0.0;
+  double seconds_per_hour_ = 0.0;
+  double topo_maximum_ = 0.0;
 };
 
 inline PlanetConstants
 PlanetConstants::from_database(const Planet planet, const int schema_version,
                                std::vector<double> values) {
-  validate_schema(planet, schema_version, values);
-  return PlanetConstants(planet, schema_version, std::move(values));
-}
-
-inline void
-PlanetConstants::validate_schema(const Planet planet, const int schema_version,
-                                 const std::vector<double> &values) {
   if (schema_version != current_schema_version(planet)) {
     throw std::runtime_error("Unsupported planet schema version " +
                              std::to_string(schema_version));
   }
-
-  std::size_t expected_value_count = 0;
-  switch (planet) {
-  case Planet::earth:
-  case Planet::mars:
-  case Planet::moon:
-    expected_value_count = 15;
-    break;
+  if (values.size() != 6) {
+    throw std::runtime_error("Planet schema " + std::to_string(schema_version) +
+                             " requires 6 values, but the database contains " +
+                             std::to_string(values.size()));
   }
-  if (values.size() != expected_value_count) {
-    throw std::runtime_error(
-        "Planet schema " + std::to_string(schema_version) + " requires " +
-        std::to_string(expected_value_count) +
-        " values, but the database contains " + std::to_string(values.size()));
+  if (!std::all_of(values.begin(), values.end(), [](const double value) {
+        return std::isfinite(value) && value > 0.0;
+      })) {
+    throw std::runtime_error("Invalid constants in planet schema");
+  }
+  if (values[2] > 1.0) {
+    throw std::runtime_error("Invalid ONE_MINUS_F_SQUARED in planet schema");
   }
 
-  if (!std::all_of(values.begin(), values.end(),
-                   [](const double value) { return std::isfinite(value); })) {
-    throw std::runtime_error("Planet schema contains a non-finite value");
-  }
-
-  // The first six quantities are common to the current schemas. Remaining
-  // positions are planet-owned catalog verification values with no global
-  // geological meaning.
-  if (values[0] <= 0.0 || values[1] <= 0.0 || values[2] <= 0.0 ||
-      values[2] > 1.0 || values[3] <= 0.0 || values[4] <= 0.0 ||
-      values[5] < 0.0) {
-    throw std::runtime_error("Invalid values in planet schema");
-  }
-}
-
-inline void PlanetConstants::check_catalog_values(
-    const std::vector<double> &catalog_values) const {
-  if (catalog_values.size() != values_.size()) {
-    throw std::runtime_error(
-        "Globe database planet value count disagrees with the model catalog");
-  }
-
-  constexpr double relative_tolerance = 1.0e-12;
-  for (std::size_t index = 0; index < values_.size(); ++index) {
-    const double expected = values_[index];
-    const double actual = catalog_values[index];
-    if (!std::isfinite(actual) ||
-        std::abs(expected - actual) >
-            relative_tolerance * std::max(1.0, std::abs(expected))) {
-      std::ostringstream message;
-      message << "Globe database planet value " << index << '=' << expected
-              << " disagrees with model catalog value " << actual;
-      throw std::runtime_error(message.str());
-    }
-  }
+  return PlanetConstants(planet, schema_version, values[0], values[1],
+                         values[2], values[3], values[4], values[5]);
 }
 
 } // namespace specfem::globe

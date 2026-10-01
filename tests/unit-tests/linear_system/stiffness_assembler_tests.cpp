@@ -289,10 +289,13 @@ TEST_F(StiffnessAssembler3D, MatchesMatrixFreeOperatorGlobally) {
       << "assembled K u disagrees with the matrix-free operator";
 }
 
+// Exercises the check the assembler constructor delegates to, not the
+// constructor itself: the constructor needs an FEAssembly, whose elastic
+// stiffness graph on this mesh peaks at ~9 GB and OOMs CI allocations.
 TEST(StiffnessAssemblerScope3D, RejectsMultiMediumMeshes) {
   const auto mixed_assembly = build_assembly_3d("AcousticElasticForce");
-  const FEAssemblyType mixed_fe{ MappingType(*mixed_assembly) };
-  EXPECT_THROW(AssemblerType assembler(*mixed_assembly, mixed_fe),
+  EXPECT_THROW(specfem::linear_system::validate_single_medium<StiffnessTags>(
+                   *mixed_assembly),
                std::runtime_error);
 }
 

@@ -1,14 +1,26 @@
 #pragma once
 
+#include "control_nodes/control_nodes.hpp"
 #include "specfem/element/tags.hpp"
 #include "specfem/globe/model_config.hpp"
+#include "specfem/globe/planet_constants.hpp"
 #include "specfem/mesh_entity.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
+#include <optional>
 #include <string>
 #include <vector>
 
 namespace specfem::mesh {
+
+/** @brief Mesher-side model identifiers retained for catalog-skew detection. */
+struct globe_model_verification {
+  /** @brief Raw model codes derived by the mesher's Fortran catalog. */
+  std::vector<int> codes;
+
+  /** @brief Raw model flags derived by the mesher's Fortran catalog. */
+  std::vector<bool> flags;
+};
 
 /**
  * @brief Per-element context required by the SPECFEM3D_GLOBE model evaluator.
@@ -64,8 +76,8 @@ struct globe_boundary_surface {
  */
 struct globe_mesh_data {
   /** @brief Host view of xyz coordinates indexed by global anchor node. */
-  using CoordinatesViewType =
-      Kokkos::View<type_real *[3], Kokkos::LayoutLeft, Kokkos::HostSpace>;
+  using CoordinatesViewType = specfem::mesh::control_nodes<
+      specfem::element::dimension_tag::dim3>::CoordinatesViewType;
 
   /** @brief Thin globe database format version. */
   int format_version = 0;
@@ -89,6 +101,12 @@ struct globe_mesh_data {
 
   /** @brief Configuration used to initialize the globe model evaluator. */
   specfem::globe::ModelConfig model_config;
+
+  /** @brief Database constants retained for model-catalog validation. */
+  std::optional<specfem::globe::PlanetConstants> planet_constants;
+
+  /** @brief Mesher-side model identifiers used for consistency checks. */
+  globe_model_verification model_verification;
 
   /**
    * @brief Reference xyz coordinates indexed by global anchor node.
