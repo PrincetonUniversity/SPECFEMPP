@@ -62,6 +62,7 @@ std::filesystem::path write_database(const bool attenuation = false,
                                      const double source_frequency = 0.0,
                                      const int property_tag = 0,
                                      const bool include_mpi = false,
+                                     const bool has_reference_geometry = false,
                                      const double planet_radius = 6371000.0) {
   const auto suffix =
       std::chrono::steady_clock::now().time_since_epoch().count();
@@ -82,7 +83,8 @@ std::filesystem::path write_database(const bool attenuation = false,
   write_values(stream, 1, 2, static_cast<int>(planet_values.size()));
   write_values(stream, planet_values);
   write_values(stream, 27, 5, 5, 5, 1);
-  write_values(stream, 0, 0, 0, 0, 0, attenuation ? 1 : 0, 0, 0);
+  write_values(stream, 0, 0, 0, 0, 0, attenuation ? 1 : 0, 0,
+               has_reference_geometry ? 1 : 0);
   write_values(stream, 1);
 
   Record model;
@@ -101,6 +103,15 @@ std::filesystem::path write_database(const bool attenuation = false,
     z[inode] = 3000.0 + inode;
   }
   write_values(stream, x, y, z);
+  if (has_reference_geometry) {
+    std::vector<double> x_ref(27), y_ref(27), z_ref(27);
+    for (int inode = 0; inode < 27; ++inode) {
+      x_ref[inode] = 10000.0 + inode;
+      y_ref[inode] = 20000.0 + inode;
+      z_ref[inode] = 30000.0 + inode;
+    }
+    write_values(stream, x_ref, y_ref, z_ref);
+  }
 
   write_values(stream, 1);
   write_values(stream, std::vector<int>{ 1 }, std::vector<int>{ 2 },
@@ -159,11 +170,25 @@ TEST(GlobeMeshReader, ReadsThinDatabaseAndPreservesReferenceContext) {
 
 TEST(GlobeMeshReader, RejectsInvalidPlanetConstants) {
   const auto path =
-      globe_reader_test_impl::write_database(false, 0.0, 0, false, -1.0);
+      globe_reader_test_impl::write_database(false, 0.0, 0, false, false, -1.0);
   EXPECT_THROW(specfem::io::read_globe_mesh(path.string(),
                                             specfem::attenuation::Setup{}),
                std::runtime_error);
   std::filesystem::remove(path);
+}
+
+TEST(GlobeMeshReader, ReadsSeparateReferenceGeometry) {
+  const auto path =
+      globe_reader_test_impl::write_database(false, 0.0, 0, false, true);
+  const auto mesh = specfem::io::read_globe_mesh(path.string(),
+                                                 specfem::attenuation::Setup{});
+  std::filesystem::remove(path);
+
+  EXPECT_TRUE(mesh.globe.has_reference_geometry);
+  EXPECT_DOUBLE_EQ(mesh.control_nodes.coordinates(26, 2), 3026.0);
+  EXPECT_DOUBLE_EQ(mesh.globe.reference_coordinates(26, 0), 10026.0);
+  EXPECT_DOUBLE_EQ(mesh.globe.reference_coordinates(26, 1), 20026.0);
+  EXPECT_DOUBLE_EQ(mesh.globe.reference_coordinates(26, 2), 30026.0);
 }
 
 TEST(GlobeMeshReader, RejectsAnInconsistentAttenuationSourceFrequency) {

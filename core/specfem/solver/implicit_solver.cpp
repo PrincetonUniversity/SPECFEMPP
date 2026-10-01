@@ -40,6 +40,13 @@ specfem::solver::ImplicitNewmarkSolver<Tags>::ImplicitNewmarkSolver(
         "use the explicit time_marching solver instead.");
   }
 
+  // Reject out-of-scope meshes before building the dof maps and graphs: the
+  // element-dense stiffness graph costs gigabytes on a moderately sized mesh,
+  // and the assemblers below would only discard it and throw.
+  specfem::linear_system::validate_single_medium<Tags>(assembly_);
+  specfem::linear_system::validate_stiffness_scope<Tags>(
+      assembly_, specfem::linear_system::StiffnessScope::with_stacey);
+
   // One description of the mesh -- dof maps, the element-dense stiffness
   // graph, the block-diagonal damping graph -- shared by every operator
   // assembled below. Each graph costs two host passes over the connectivity,
