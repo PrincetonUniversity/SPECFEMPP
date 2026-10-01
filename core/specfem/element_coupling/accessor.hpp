@@ -1,7 +1,8 @@
 #pragma once
 
 #include "specfem/chunk_edge/nonconforming_interface.hpp"
-#include "specfem/chunk_face/nonconforming_interface.hpp"
+#include "specfem/data_access/accessor.hpp"
+#include "specfem/point/nonconforming_interface3d.hpp"
 
 #include <tuple>
 #include <type_traits>
@@ -61,13 +62,8 @@ struct coupling_terms_pack<
     DimensionTag, InterfaceTag, BoundaryTag, FluxSchemeTag, NumberElements,
     NQuadIntersection, NQuadElement, std::tuple<KokkosViewArgs...>,
     std::enable_if_t<DimensionTag == specfem::element::dimension_tag::dim3>> {
-  using type = specfem::chunk_face::NonconformingAccessorPack<
-      specfem::chunk_face::coupled_coordinates<
-          DimensionTag, NumberElements, NQuadElement, InterfaceTag, BoundaryTag,
-          FluxSchemeTag, KokkosViewArgs...>,
-      specfem::chunk_face::intersection_normal<
-          DimensionTag, InterfaceTag, BoundaryTag, FluxSchemeTag,
-          NumberElements, NQuadElement, KokkosViewArgs...>>;
+  using type = specfem::point::nonconforming_interface<
+      DimensionTag, NQuadElement, InterfaceTag, BoundaryTag, FluxSchemeTag>;
 };
 
 // ===========================================================================
@@ -89,6 +85,21 @@ struct intersection_factor<
   using type = specfem::chunk_edge::intersection_factor<
       DimensionTag, InterfaceTag, BoundaryTag, FluxSchemeTag, NumberElements,
       NQuadIntersection>;
+};
+
+template <specfem::element::dimension_tag DimensionTag,
+          specfem::element_coupling::interface_tag InterfaceTag,
+          specfem::element::boundary_tag BoundaryTag,
+          specfem::element_coupling::flux_scheme_tag FluxSchemeTag,
+          int NumberElements, int NQuadIntersection, typename... KokkosViewArgs>
+struct intersection_factor<
+    DimensionTag, InterfaceTag, BoundaryTag, FluxSchemeTag, NumberElements,
+    NQuadIntersection, std::tuple<KokkosViewArgs...>,
+    std::enable_if_t<DimensionTag == specfem::element::dimension_tag::dim3>> {
+  static_assert(sizeof...(KokkosViewArgs) == 0,
+                "This coupling_terms_pack does not have Kokkos-view-argument "
+                "passthrough implemented!");
+  using type = specfem::data_access::EmptyAccessor;
 };
 
 // ===========================================================================
