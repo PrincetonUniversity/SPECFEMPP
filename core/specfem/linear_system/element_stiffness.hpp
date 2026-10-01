@@ -46,23 +46,29 @@ local_dof_index(const int icomp, const int iz, const int iy, const int ix) {
  * reference implementation). `tensor_graph` evaluates the same action on all
  * unit columns at once through one declarative TensorOperations level graph
  * -- see @ref specfem::linear_system_impl::StiffnessTensorGraphKernel for
- * the pipeline; requesting it without `SPECFEM_ENABLE_TENSOROPS` throws
- * `std::runtime_error`. Both produce identical blocks up to roundoff (the
- * A/B test in `stiffness_tensor_graph_tests` holds them together).
+ * the pipeline. `direct` writes every entry in closed form, as a
+ * sum-factored reduction over quadrature of the constitutive tensor
+ * (@ref specfem::linear_system_impl::StiffnessDirectKernel): $ O(N^5) $
+ * work per element against the other two kernels' $ O(N^7) $, no
+ * workspace, no identity input. Requesting `tensor_graph` or `direct`
+ * without `SPECFEM_ENABLE_TENSOROPS` throws `std::runtime_error`. All three
+ * produce identical blocks up to roundoff (the A/B tests in
+ * `stiffness_tensor_graph_tests` and `stiffness_direct_kernel_tests` hold
+ * them to the probe).
  */
-enum class StiffnessKernelImpl { probe, tensor_graph };
+enum class StiffnessKernelImpl { probe, tensor_graph, direct };
 
 /**
  * @brief Default element stiffness kernel.
  *
- * `tensor_graph` when SPECFEM++ is built with TensorOperations -- enabling
- * the dependency is the opt-in -- and `probe` otherwise, so builds without
- * the flag are bit-identical to before the enum existed. Callers pin a
- * kernel explicitly (as the A/B test does) to override.
+ * `direct` when SPECFEM++ is built with TensorOperations -- enabling the
+ * dependency is the opt-in -- and `probe` otherwise, so builds without the
+ * flag are bit-identical to before the enum existed. Callers pin a kernel
+ * explicitly (as the A/B tests do) to override.
  */
 #ifdef SPECFEM_ENABLE_TENSOROPS
 inline constexpr StiffnessKernelImpl default_stiffness_kernel_impl =
-    StiffnessKernelImpl::tensor_graph;
+    StiffnessKernelImpl::direct;
 #else
 inline constexpr StiffnessKernelImpl default_stiffness_kernel_impl =
     StiffnessKernelImpl::probe;
@@ -198,7 +204,9 @@ using ElementStiffnessKernel =
  * The one place a repeated caller (e.g. `StiffnessAssembler::fill_matrix`)
  * selects a kernel: per-construction costs are paid here once, not per
  * batch. For `tensor_graph` this constructs the workspace-owning
- * @ref specfem::linear_system_impl::StiffnessTensorGraphKernel (throwing
+ * @ref specfem::linear_system_impl::StiffnessTensorGraphKernel, for
+ * `direct` the stateless
+ * @ref specfem::linear_system_impl::StiffnessDirectKernel (both throwing
  * without `SPECFEM_ENABLE_TENSOROPS`); the probe kernel has no cross-batch
  * state and delegates to @ref compute_element_stiffness per call.
  *

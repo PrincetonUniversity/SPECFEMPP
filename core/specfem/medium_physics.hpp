@@ -12,6 +12,8 @@
  * - `compute_wavefield()`: Wavefield from intrinsic fields
  * - `compute_source_contribution()`: Source terms
  * - `compute_frechet_derivatives()`: Sensitivity kernels
+ * - `constitutive_tensor()`: Fourth-order constitutive tensor entries \f$
+ * C_{akbl} \f$ from point properties
  * management
  */
 namespace specfem::medium_physics {}
@@ -26,4 +28,5 @@ namespace specfem::medium_physics {}
 #include "medium_physics/compute_strain.hpp"
 #include "medium_physics/compute_stress.hpp"
 #include "medium_physics/compute_wavefield.hpp"
+#include "medium_physics/constitutive_tensor.hpp"
 #include "medium_physics/mass_matrix_component.hpp"

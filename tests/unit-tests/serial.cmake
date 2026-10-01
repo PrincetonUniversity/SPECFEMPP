@@ -543,6 +543,13 @@ specfem_add_test(mass_matrix_tests
             gtest_main
 )
 
+specfem_add_test(constitutive_tensor_tests
+  SOURCES   medium/constitutive_tensor/main.cpp
+            medium/constitutive_tensor/dim3/elastic_isotropic.cpp
+  LIBRARIES point
+            gtest_main
+)
+
 specfem_add_test(stress_tests
   SOURCES   medium/stress/main.cpp
             medium/stress/dim2/acoustic.cpp
@@ -701,6 +708,26 @@ specfem_add_test(stiffness_assembler_tests
 # GTEST_SKIP stub when SPECFEM_ENABLE_TENSOROPS is OFF.
 specfem_add_test(stiffness_tensor_graph_tests
   SOURCES linear_system/stiffness_tensor_graph_tests.cpp
+  LIBRARIES specfem::linear_system
+            specfem::quadrature
+            specfem::mesh
+            yaml-cpp
+            specfem_environment
+            specfem::assembly
+            specfem::runtime_configuration
+            timescheme
+            point
+            specfem::algorithms
+            specfem::solver
+            specfem::periodic_tasks
+            ${BOOST_LIBS}
+            -lpthread -lm
+)
+
+# Direct (sum-factored) element stiffness: host closed-form reference held to
+# the probe kernel; runs in every build (no optional dependency).
+specfem_add_test(stiffness_direct_kernel_tests
+  SOURCES linear_system/stiffness_direct_kernel_tests.cpp
   LIBRARIES specfem::linear_system
             specfem::quadrature
             specfem::mesh

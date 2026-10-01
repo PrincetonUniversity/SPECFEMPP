@@ -16,7 +16,7 @@
 // Compile-and-compare spike for the TensorOperations dependency (issue #2066),
 // kept as a permanent smoke test. It proves, against the Kokkos SPECFEM++
 // actually builds with, the exact library features the tensor-graph stiffness
-// kernel needs -- LevelGraph staged contractions on the TeamPolicyTag2 path,
+// kernel needs -- LevelGraph staged contractions on the TeamPolicyTag path,
 // a contraction -> combine -> contraction chain across levels, a second
 // blocked label (the kernel's identity-column axis), and a combine functor
 // that reads a captured view at its GLOBAL output coordinate -- with no
@@ -85,7 +85,7 @@ TEST(TensorOpsSmoke, ToyContractionMatchesHostLoop) {
   std::printf("[ scratch  ] toy contraction graph: %zu bytes\n", scratch);
   EXPECT_LE(scratch, scratch_cap);
 
-  out.execute(tenops::TeamPolicyTag2<ExecSpace>{}, C);
+  out.execute(tenops::TeamPolicyTag<ExecSpace>{}, C);
   Kokkos::fence();
 
   auto h_C = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, C);
@@ -127,7 +127,7 @@ struct ScalePointwise {
 // This is the proof that a second blocked label is accepted, that
 // intermediates chain across levels, and that the combine functor receives
 // global (not tile-local) coordinates -- in practice, not just by reading
-// Evaluator/Team2.hpp.
+// Evaluator/Team.hpp.
 TEST(TensorOpsSmoke, ActionGraphPipelineMatchesHostLoop) {
   namespace tenops = TensorOperations;
   using ExecSpace = Kokkos::DefaultExecutionSpace;
@@ -189,7 +189,7 @@ TEST(TensorOpsSmoke, ActionGraphPipelineMatchesHostLoop) {
               scratch, scratch_cap);
   EXPECT_LE(scratch, scratch_cap);
 
-  graph_out.execute(tenops::TeamPolicyTag2<ExecSpace>{}, out);
+  graph_out.execute(tenops::TeamPolicyTag<ExecSpace>{}, out);
   Kokkos::fence();
 
   auto h_out = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, out);

@@ -104,8 +104,11 @@ protected:
   static StiffnessView::host_mirror_type element_block(const int ispec) {
     const specfem::datatype::ElementIndexRange batch(ispec, ispec + 1);
     StiffnessView k_e("k_e", 1, ndof, ndof);
+    // Pinned to the probe: this suite is the probe's matrix-free oracle; the
+    // other kernels are held to the probe by their own A/B suites.
     specfem::linear_system::compute_element_stiffness<StiffnessTags>(
-        *assembly_, batch, k_e);
+        *assembly_, batch, k_e,
+        specfem::linear_system::StiffnessKernelImpl::probe);
     auto h_k = Kokkos::create_mirror_view(k_e);
     Kokkos::deep_copy(h_k, k_e);
     return h_k;

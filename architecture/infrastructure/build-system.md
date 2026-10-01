@@ -13,7 +13,7 @@ SPECFEM++ uses CMake with [CMakePresets](../../CMakePresets.json).
 | `SPECFEM_ENABLE_VTK` | `ON` | Enable VTK visualization output |
 | `SPECFEM_ENABLE_SIMD` | `OFF` | Enable Kokkos SIMD vectorization |
 | `SPECFEM_ENABLE_DOUBLE_PRECISION` | `OFF` | Use double instead of float |
-| `SPECFEM_ENABLE_TENSOROPS` | `OFF` | TensorOperations tensor-graph element stiffness kernels; requires `SPECFEM_TENSOROPS_ROOT` pointing at a checkout |
+| `SPECFEM_ENABLE_TENSOROPS` | `OFF` | TensorOperations element stiffness kernels (`direct`, the sum-factored reduce graph, and `tensor_graph`); requires `SPECFEM_TENSOROPS_ROOT` pointing at a checkout with `make_reduce_node` |
 | `SPECFEM_BUILD_TESTS` | `OFF` | Build unit tests |
 | `SPECFEM_BINDING_PYTHON` | `OFF` | Build Python bindings |
 | `SPECFEM_ENABLE_UNITY_BUILD` | `ON` | Unity build for faster compilation |
