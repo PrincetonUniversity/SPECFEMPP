@@ -223,28 +223,27 @@ void specfem::linear_system_impl::StiffnessDirectKernel<NGLL, Tags>::operator()(
   // gradient grad_xi phi, stacked over the reference direction r. Branch r
   // is h along direction r times the Kronecker delta (identity) along the
   // other two directions; TensorOperations eliminates the deltas at compile
-  // time, so each branch costs at most one length-NGLL sum.
-  // make_stack_node / make_outer_product_node fix B's label order to
-  // (r, x, i, y, j, z, k) (see TensorOperations/Structured.hpp).
-  const auto B = tenops::make_stack_node<'r'>(
+  // time, so each branch costs at most one length-NGLL sum. Every label is
+  // declared, positionally (see TensorOperations/Structured.hpp).
+  const auto B = tenops::make_stack_node<'r', 'x', 'i', 'y', 'j', 'z', 'k'>(
       // d/dxi
-      tenops::make_outer_product_node(h.template as<'x', 'i'>(),
-                                      tenops::make_delta_node<'y', 'j'>(),
-                                      tenops::make_delta_node<'z', 'k'>()),
+      tenops::make_outer_product_node<'x', 'i', 'y', 'j', 'z', 'k'>(
+          h.template as<'x', 'i'>(), tenops::make_delta_node<'y', 'j'>(),
+          tenops::make_delta_node<'z', 'k'>()),
       // d/deta
-      tenops::make_outer_product_node(tenops::make_delta_node<'x', 'i'>(),
-                                      h.template as<'y', 'j'>(),
-                                      tenops::make_delta_node<'z', 'k'>()),
+      tenops::make_outer_product_node<'x', 'i', 'y', 'j', 'z', 'k'>(
+          tenops::make_delta_node<'x', 'i'>(), h.template as<'y', 'j'>(),
+          tenops::make_delta_node<'z', 'k'>()),
       // d/dzeta
-      tenops::make_outer_product_node(tenops::make_delta_node<'x', 'i'>(),
-                                      tenops::make_delta_node<'y', 'j'>(),
-                                      h.template as<'z', 'k'>()));
+      tenops::make_outer_product_node<'x', 'i', 'y', 'j', 'z', 'k'>(
+          tenops::make_delta_node<'x', 'i'>(),
+          tenops::make_delta_node<'y', 'j'>(), h.template as<'z', 'k'>()));
 
   // K_e = B^T M_hat B:
   //   K(e, a, k, j, i, b, n, m, l)
-  //     = sum_{r,s,z,y,x} B(r, z, y, x, k, j, i) M(e, a, b, r, s, z, y, x)
-  //                       B(s, z, y, x, n, m, l)
-  // The second B is B relabelled positionally over its own label order
+  //     = sum_{r,s,z,y,x} B(r, x, i, y, j, z, k) M(e, a, b, r, s, z, y, x)
+  //                       B(s, x, l, y, m, z, n)
+  // The second B is B relabelled positionally over its declared label order
   // (r, x, i, y, j, z, k) -> (s, x, l, y, m, z, n).
   auto [g5, K] = g4.add(tenops::make_contraction_node<'e', 'a', 'k', 'j', 'i',
                                                       'b', 'n', 'm', 'l'>(

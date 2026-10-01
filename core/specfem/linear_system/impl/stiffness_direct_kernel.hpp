@@ -32,11 +32,12 @@ namespace specfem::linear_system_impl {
  * \f[
  *   B_r(q, i) = \frac{\partial \phi_i}{\partial \xi_r}(q),
  * \f]
- * built as `make_stack_node` over the reference direction \f$ r \f$ of three
- * `make_outer_product_node` products, each the Lagrange derivative matrix
- * \f$ h \f$ = `hprime` along direction \f$ r \f$ times the identity
- * (Kronecker \f$ \delta \f$) along the other two directions, and \f$ \hat{M}
- * \f$ folds in the constitutive tensor and the quadrature weight,
+ * built as `make_stack_node<'r', 'x', 'i', 'y', 'j', 'z', 'k'>` over the
+ * reference direction \f$ r \f$ of three `make_outer_product_node` products
+ * (every label declared, so the order is explicit), each the Lagrange
+ * derivative matrix \f$ h \f$ = `hprime` along direction \f$ r \f$ times the
+ * identity (Kronecker \f$ \delta \f$) along the other two directions, and
+ * \f$ \hat{M} \f$ folds in the constitutive tensor and the quadrature weight,
  * \f[
  *   M(a, b, r, s; q) = \sum_{c,d} \xi_{r,c}(q)\, C_{a c b d}(q)\,
  *   \xi_{s,d}(q)\, w(q) J(q),
