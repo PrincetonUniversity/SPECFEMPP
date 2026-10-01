@@ -7,9 +7,9 @@ SPECFEM++ has one units boundary for globe models:
 - The raw mesh and the assembled simulation state remain in SI units.
 - The SPECFEM3D_GLOBE model catalog works internally with length divided by
   `R_PLANET` and density divided by `RHOAV`.
-- Conversion to and from those non-dimensional values is confined to the C++
-  globe model evaluator. Code outside that evaluator must not call
-  `globe::nondimensionalize` or `globe::dimensionalize`.
+- Conversion to and from those non-dimensional values is a private
+  implementation detail of `globe::ModelEvaluator`. Code outside the evaluator
+  remains in SI units; no public catalog-unit conversion API is provided.
 
 The mesh database is authoritative for the fixed planet values resolved by the
 mesher: `R_PLANET`, `RHOAV`, `ONE_MINUS_F_SQUARED`, `HOURS_PER_DAY`,
