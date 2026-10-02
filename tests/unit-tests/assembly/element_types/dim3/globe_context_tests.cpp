@@ -126,7 +126,8 @@ TEST(GlobeElementContext, CarriesMesherContext) {
 
   {
     SCOPED_TRACE("radial shells are ordered and inside the planet");
-    const double r_planet = fixture.mesh.globe.planet_radius;
+    ASSERT_TRUE(fixture.mesh.globe.planet_constants.has_value());
+    const double r_planet = fixture.mesh.globe.planet_constants->r_planet();
     ASSERT_GT(r_planet, 0.0);
     for (int ispec = 0; ispec < nspec; ++ispec) {
       const double rmin = element_types.rmin(ispec);

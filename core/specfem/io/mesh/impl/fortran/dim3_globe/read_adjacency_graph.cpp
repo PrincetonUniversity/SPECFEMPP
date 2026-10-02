@@ -39,7 +39,7 @@ void specfem::io::mesh::impl::fortran::dim3_globe::read_adjacency_graph(
           ispec, neighbor,
           AdjacencyGraph::EdgeProperties(
               specfem::element_connections::type::strongly_conforming,
-              specfem::io::mesh::impl::fortran::dim3_globe_impl::to_entity(
+              specfem::io::mesh::impl::fortran::dim3_globe::to_entity(
                   adjacency_types[offset])),
           graph);
     }
@@ -78,16 +78,14 @@ void specfem::io::mesh::impl::fortran::dim3_globe::read_adjacency_graph(
 
     mpi_connections.emplace_back(
         specfem::element_connections::type::strongly_conforming,
-        specfem::io::mesh::impl::fortran::dim3_globe_impl::to_entity(
-            local_entity),
+        specfem::io::mesh::impl::fortran::dim3_globe::to_entity(local_entity),
         static_cast<std::size_t>(neighbor_rank),
-        specfem::io::mesh::impl::fortran::dim3_globe_impl::to_entity(
+        specfem::io::mesh::impl::fortran::dim3_globe::to_entity(
             neighbor_entity),
         static_cast<std::size_t>(local_element),
         static_cast<std::size_t>(neighbor_element),
-        specfem::io::mesh::impl::fortran::dim3_globe_impl::to_anchor(
-            local_anchor),
-        specfem::io::mesh::impl::fortran::dim3_globe_impl::to_anchor(
+        specfem::io::mesh::impl::fortran::dim3_globe::to_anchor(local_anchor),
+        specfem::io::mesh::impl::fortran::dim3_globe::to_anchor(
             neighbor_anchor));
   }
 }

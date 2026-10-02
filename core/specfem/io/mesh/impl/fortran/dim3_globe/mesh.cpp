@@ -1,4 +1,5 @@
 #include "specfem/attenuation.hpp"
+#include "specfem/globe/planet_constants.hpp"
 #include "specfem/io.hpp"
 #include "specfem/io/fortranio/interface.hpp"
 #include "specfem/io/mesh/impl/fortran/dim3_globe/common.hpp"
@@ -13,12 +14,14 @@
 #include <fstream>
 #include <stdexcept>
 #include <string>
+#include <utility>
+#include <vector>
 
 specfem::mesh::globe3d_mesh specfem::io::read_globe_mesh(
     const std::string &database_file,
     const specfem::attenuation::Setup &attenuation_setup) {
   namespace reader = specfem::io::mesh::impl::fortran::dim3_globe;
-  namespace reader_impl = specfem::io::mesh::impl::fortran::dim3_globe_impl;
+  namespace reader_impl = specfem::io::mesh::impl::fortran::dim3_globe;
   using Dimension = specfem::element::dimension_tag;
 
   std::ifstream stream(database_file, std::ios::in | std::ios::binary);
@@ -42,8 +45,20 @@ specfem::mesh::globe3d_mesh specfem::io::read_globe_mesh(
   auto &globe = mesh.globe;
   globe.format_version = version;
 
+  int planet_schema_version = 0;
+  int number_of_planet_values = 0;
   specfem::io::fortran_read_line(stream, &globe.model_config.planet_type,
-                                 &globe.planet_radius, &globe.average_density);
+                                 &planet_schema_version,
+                                 &number_of_planet_values);
+  if (number_of_planet_values <= 0 || number_of_planet_values > 1024) {
+    throw std::runtime_error("Invalid globe planet value count " +
+                             std::to_string(number_of_planet_values));
+  }
+  std::vector<double> planet_values(number_of_planet_values);
+  specfem::io::fortran_read_line(stream, &planet_values);
+  globe.planet_constants = specfem::globe::PlanetConstants::from_database(
+      specfem::globe::planet_from_type(globe.model_config.planet_type),
+      planet_schema_version, std::move(planet_values));
 
   int ngnod = 0;
   specfem::io::fortran_read_line(stream, &ngnod, &mesh.element_grid.ngllx,

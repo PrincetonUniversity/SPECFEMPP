@@ -1,24 +1,29 @@
 #include "specfem/io/mesh/impl/fortran/dim3_globe/globe_codes.hpp"
 #include "specfem/element.hpp"
-#include "specfem/globe_model/evaluator.hpp"
+#include "specfem/globe/region_codes.hpp"
 #include <gtest/gtest.h>
 #include <stdexcept>
 
-namespace globe_codes = specfem::io::mesh::impl::fortran::dim3_globe_impl;
+namespace globe_codes = specfem::io::mesh::impl::fortran::dim3_globe;
 
 TEST(GlobeCodes, RegionRoundTrip) {
   using specfem::element::region_tag;
-  EXPECT_EQ(globe_codes::to_region_tag(1), region_tag::crust_mantle);
-  EXPECT_EQ(globe_codes::to_region_tag(2), region_tag::outer_core);
-  EXPECT_EQ(globe_codes::to_region_tag(3), region_tag::inner_core);
-  // The database region code equals the catalog's IREGION_* code.
+  EXPECT_EQ(specfem::globe::to_region_tag(1), region_tag::crust_mantle);
+  EXPECT_EQ(specfem::globe::to_region_tag(2), region_tag::outer_core);
+  EXPECT_EQ(specfem::globe::to_region_tag(3), region_tag::inner_core);
+  EXPECT_THROW(specfem::globe::to_region_tag(0), std::runtime_error);
+  EXPECT_THROW(specfem::globe::to_region_tag(4), std::runtime_error);
+
+  EXPECT_EQ(specfem::globe::to_region_code(region_tag::crust_mantle), 1);
+  EXPECT_EQ(specfem::globe::to_region_code(region_tag::outer_core), 2);
+  EXPECT_EQ(specfem::globe::to_region_code(region_tag::inner_core), 3);
   for (int code = 1; code <= 3; ++code) {
     EXPECT_EQ(
-        specfem::globe_model::iregion_code(globe_codes::to_region_tag(code)),
+        specfem::globe::to_region_code(specfem::globe::to_region_tag(code)),
         code);
   }
-  EXPECT_THROW(globe_codes::to_region_tag(0), std::runtime_error);
-  EXPECT_THROW(globe_codes::to_region_tag(4), std::runtime_error);
+  EXPECT_THROW(specfem::globe::to_region_code(static_cast<region_tag>(-1)),
+               std::runtime_error);
 
   EXPECT_EQ(specfem::element::to_string(region_tag::crust_mantle),
             "crust_mantle");

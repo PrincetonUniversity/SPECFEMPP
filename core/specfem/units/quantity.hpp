@@ -92,6 +92,9 @@ template <typename D, typename Scale = std::ratio<1, 1>> class Quantity {
   type_real value_;
 
 public:
+  using dimension_type = D; ///< Compile-time physical dimension.
+  using scale_type = Scale; ///< Scale relative to the units package base.
+
   /**
    * @brief Construct a quantity from a raw value.
    *
