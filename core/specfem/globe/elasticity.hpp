@@ -2,31 +2,7 @@
 
 #include "specfem/medium/dim3/elastic/anisotropic/elasticity_tensor.hpp"
 
-#include <cmath>
-#include <stdexcept>
-
 namespace specfem::globe {
-
-/**
- * @brief Reject azimuthal anisotropy until its storage convention is supported.
- * @param gc_prime Normalized cosine azimuthal coefficient.
- * @param gs_prime Normalized sine azimuthal coefficient.
- * @throws std::runtime_error if either coefficient exceeds numerical noise.
- *
- * Full tensors synthesized through CUSTOM_REAL and rotated back to recover the
- * azimuthal coefficients can leave dimensionless residuals near single-
- * precision roundoff. Values at or below 1e-6 are therefore treated as zero.
- */
-inline void ensure_supported_azimuthal_anisotropy(const double gc_prime,
-                                                  const double gs_prime) {
-  constexpr double numerical_noise = 1.e-6;
-  if (std::abs(gc_prime) > numerical_noise ||
-      std::abs(gs_prime) > numerical_noise) {
-    throw std::runtime_error(
-        "Globe model returned non-zero Gc_prime/Gs_prime above numerical "
-        "noise; azimuthal anisotropy is deferred and cannot yet be stored");
-  }
-}
 
 /**
  * @brief Select or construct a globe model's Cartesian elasticity tensor.

@@ -9,7 +9,6 @@
 #include "specfem/point.hpp"
 #include "specfem/tags.hpp"
 #include "specfem/units.hpp"
-
 #include "specfem/utilities/logarithmic_center.hpp"
 
 #include <chrono>
@@ -122,6 +121,12 @@ void specfem::assembly::dim3_impl::read_globe_properties(
           "without the anisotropic property tag: compute element " +
           std::to_string(compute_ispec));
     }
+    const auto &spherical = assembly.mesh.spherical_coordinates.h_coord;
+    if (tagged_anisotropic && !values.is_anisotropic &&
+        spherical.data() == nullptr) {
+      throw std::runtime_error(
+          "Globe anisotropic property build requires spherical coordinates");
+    }
 
     std::size_t ipoint = 0;
     for (int iz = 0; iz < ngllz; ++iz) {
@@ -148,15 +153,6 @@ void specfem::assembly::dim3_impl::read_globe_properties(
               throw std::runtime_error(
                   "Globe evaluator returned zero Vs for an elastic element");
             }
-            specfem::globe::ensure_supported_azimuthal_anisotropy(
-                values.gc_prime[ipoint], values.gs_prime[ipoint]);
-            const auto &spherical = assembly.mesh.spherical_coordinates.h_coord;
-            if (!values.is_anisotropic && spherical.data() == nullptr) {
-              throw std::runtime_error(
-                  "Globe anisotropic property build requires spherical "
-                  "coordinates");
-            }
-
             specfem::medium_physics::elasticity_tensor<double> model_cij{};
             const std::size_t cij_offset = 21 * ipoint;
             for (int component = 0; component < 21; ++component) {

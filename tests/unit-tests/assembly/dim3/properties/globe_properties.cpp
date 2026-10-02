@@ -249,17 +249,17 @@ TEST(GlobeElasticity, FullAnisotropyRemainsInGlobalFrame) {
   }
 }
 
-TEST(GlobeElasticity, RejectsUnsupportedAzimuthalAnisotropy) {
-  EXPECT_NO_THROW(
-      specfem::globe::ensure_supported_azimuthal_anisotropy(0.0, 0.0));
-  EXPECT_NO_THROW(
-      specfem::globe::ensure_supported_azimuthal_anisotropy(1.e-7, -1.e-7));
-  EXPECT_THROW(
-      specfem::globe::ensure_supported_azimuthal_anisotropy(1.e-4, 0.0),
-      std::runtime_error);
-  EXPECT_THROW(
-      specfem::globe::ensure_supported_azimuthal_anisotropy(0.0, -1.e-4),
-      std::runtime_error);
+TEST(GlobeElasticity, IsotropicLoveParametersPopulateAnisotropicStorage) {
+  const specfem::medium_physics::elasticity_tensor<double> unused{};
+  const auto stiffness = specfem::globe::elasticity_from_model(
+      false, unused, 4.0, 3.0, 3.0, 2.0, 2.0, 1.0, 1.2, 2.3);
+  const specfem::medium_physics::elasticity_tensor<double> expected = {
+    36.0, 4.0, 4.0, 0.0, 0.0,  0.0, 36.0, 4.0,  0.0, 0.0, 0.0,
+    36.0, 0.0, 0.0, 0.0, 16.0, 0.0, 0.0,  16.0, 0.0, 16.0
+  };
+  for (int component = 0; component < 21; ++component) {
+    EXPECT_NEAR(stiffness[component], expected[component], 1.e-12);
+  }
 }
 
 TEST_P(GlobeProperties, MatchesOracleOnHostAndDevice) {

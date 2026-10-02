@@ -1,5 +1,7 @@
 #include "specfem/medium/dim3/elastic/anisotropic/elasticity_tensor.hpp"
 
+#include "globe_model_evaluator.h"
+
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -29,6 +31,20 @@ void expect_tensor_near(const Tensor &actual, const Tensor &expected,
   }
 }
 
+Tensor rotate_on_device() {
+  Kokkos::View<Tensor *> result("rotated_elasticity", 1);
+  Kokkos::parallel_for(
+      "rotate_elasticity_on_device", 1, KOKKOS_LAMBDA(const int) {
+        const auto radial = specfem::medium_physics::love_to_radial_elasticity(
+            4.0, 3.0, 5.0, 2.0, 2.5, 0.8);
+        result(0) = specfem::medium_physics::rotate_elasticity_radial_to_global(
+            radial, 0.7, 1.1);
+      });
+  const auto host =
+      Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, result);
+  return host(0);
+}
+
 TEST(ElasticityTensor, LoveParametersConstructRadialTensor) {
   constexpr double rho = 4.0;
   constexpr double vpv = 3.0;
@@ -50,23 +66,39 @@ TEST(ElasticityTensor, LoveParametersConstructRadialTensor) {
   expect_tensor_near(tensor, expected, 0.0);
 }
 
-TEST(ElasticityTensor, LoveRotationMatchesIndependentReference) {
-  const auto radial = specfem::medium_physics::love_to_radial_elasticity(
-      4.0, 3.0, 5.0, 2.0, 2.5, 0.8);
-  const auto global =
-      specfem::medium_physics::rotate_elasticity_radial_to_global(radial, 0.7,
-                                                                  1.1);
-  // Independently evaluated as C_ijkl = R_ip R_jq R_kr R_ls D_pqrs.
-  const Tensor expected = {
-    97.409086709298677,  50.790275426336144,  51.111429723630465,
-    0.55226814535471225, -3.7418787069187522, -2.8088547369406829,
-    87.035678349151596,  46.92827522367427,   -11.298678904814622,
-    -1.7277016154442508, -4.3167590542834375, 71.49527419426812,
-    -15.425142800160938, -7.8509057040399073, -2.8734570510329767,
-    9.6724931613562362,  -5.1215702940907812, -4.7225759905079929,
-    17.128431928516854,  -5.3319402052983005, 20.229055283767746
-  };
-  expect_tensor_near(global, expected, 2.e-15);
+TEST(ElasticityTensor, LoveRotationMatchesGlobeReference) {
+  constexpr double pi = 3.141592653589793238462643383279502884;
+  const std::array<std::array<double, 2>, 8> angles = { {
+      { 0.0, 0.0 },
+      { 0.0, 1.7 },
+      { pi, 0.0 },
+      { pi, 5.2 },
+      { pi / 2.0, 0.0 },
+      { pi / 2.0, pi / 2.0 },
+      { 0.37, 2.91 },
+      { 2.63, 6.1 },
+  } };
+
+  for (int sample = 0; sample < 8; ++sample) {
+    const double rho = 2.5 + 0.2 * sample;
+    const double vpv = 3.0 + 0.11 * sample;
+    const double vph = 4.2 + 0.17 * sample;
+    const double vsv = 1.7 + 0.07 * sample;
+    const double vsh = 2.1 + 0.09 * sample;
+    const double eta = 0.7 + 0.04 * sample;
+    const auto radial = specfem::medium_physics::love_to_radial_elasticity(
+        rho, vpv, vph, vsv, vsh, eta);
+
+    for (const auto &[theta, phi] : angles) {
+      Tensor globe{};
+      globe_evaluator_rotate_tiso_to_cij(theta, phi, rho, vpv, vph, vsv, vsh,
+                                         eta, globe.data());
+      const auto actual =
+          specfem::medium_physics::rotate_elasticity_radial_to_global(
+              radial, theta, phi);
+      expect_tensor_near(actual, globe, 1.e-10);
+    }
+  }
 }
 
 TEST(ElasticityTensor, GlobalRadialRoundTrip) {
@@ -96,29 +128,9 @@ TEST(ElasticityTensor, GlobalRadialRoundTrip) {
 }
 
 TEST(ElasticityTensor, RotationIsDeviceCallable) {
-  const bool initialize_here = !Kokkos::is_initialized();
-  if (initialize_here) {
-    Kokkos::initialize();
-  }
-  {
-    Kokkos::View<Tensor *> result("rotated_elasticity", 1);
-    Kokkos::parallel_for(
-        "rotate_elasticity_on_device", 1, KOKKOS_LAMBDA(const int) {
-          const auto radial =
-              specfem::medium_physics::love_to_radial_elasticity(4.0, 3.0, 5.0,
-                                                                 2.0, 2.5, 0.8);
-          result(0) =
-              specfem::medium_physics::rotate_elasticity_radial_to_global(
-                  radial, 0.7, 1.1);
-        });
-    const auto host =
-        Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, result);
-    EXPECT_NEAR(host(0)[3], 0.55226814535471225, 2.e-13);
-    EXPECT_NEAR(host(0)[13], -7.8509057040399073, 2.e-13);
-  }
-  if (initialize_here) {
-    Kokkos::finalize();
-  }
+  const auto result = rotate_on_device();
+  EXPECT_NEAR(result[3], 0.55226814535471225, 2.e-13);
+  EXPECT_NEAR(result[13], -7.8509057040399073, 2.e-13);
 }
 
 TEST(ElasticityTensor, IsotropicLoveTensorIsRotationInvariant) {

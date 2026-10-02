@@ -73,7 +73,10 @@ specfem_add_test(is_close_tests
 
 specfem_add_test(elasticity_tensor_tests
   SOURCES   medium/dim3/elastic/anisotropic/elasticity_tensor_tests.cpp
-  LIBRARIES gtest_main
+            medium/dim3/elastic/anisotropic/runner.cpp
+  LIBRARIES globe_evaluator::globe_evaluator
+            specfem_environment
+            gtest_main
             Kokkos::kokkos
 )
 
