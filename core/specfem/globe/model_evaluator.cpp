@@ -88,7 +88,6 @@ void preflight_model_data(const ModelConfig &config) {
 
 void check_model_config(const std::vector<int> &catalog_codes,
                         const std::vector<bool> &catalog_flags) {
-  const std::lock_guard<std::recursive_mutex> lock(catalog_mutex);
   if (catalog_codes.empty() && catalog_flags.empty()) {
     return;
   }
@@ -200,6 +199,8 @@ void specfem::globe::ModelEvaluator::validate_database_constants(
     const specfem::globe::PlanetConstants &planet_constants,
     const std::vector<int> &catalog_codes,
     const std::vector<bool> &catalog_flags) const {
+  const std::lock_guard<std::recursive_mutex> lock(
+      specfem::globe::evaluator_impl::catalog_mutex);
   if (planet_ != planet_constants.planet()) {
     throw std::invalid_argument(
         "specfem::globe::ModelEvaluator: MODEL_CONFIG PLANET_TYPE disagrees "
@@ -227,19 +228,12 @@ void specfem::globe::ModelEvaluator::validate_database_constants(
 
 specfem::globe::ModelEvaluator::~ModelEvaluator() { release(); }
 
-specfem::globe::ModelEvaluator::ModelEvaluator(
-    ModelEvaluator &&other) noexcept {
-  const std::lock_guard<std::recursive_mutex> lock(
-      specfem::globe::evaluator_impl::catalog_mutex);
-  scales_ = other.scales_;
-  planet_ = other.planet_;
-  owns_state_ = std::exchange(other.owns_state_, false);
-}
+specfem::globe::ModelEvaluator::ModelEvaluator(ModelEvaluator &&other) noexcept
+    : scales_(other.scales_), planet_(other.planet_),
+      owns_state_(std::exchange(other.owns_state_, false)) {}
 
 specfem::globe::ModelEvaluator &
 specfem::globe::ModelEvaluator::operator=(ModelEvaluator &&other) noexcept {
-  const std::lock_guard<std::recursive_mutex> lock(
-      specfem::globe::evaluator_impl::catalog_mutex);
   if (this != &other) {
     release();
     scales_ = other.scales_;

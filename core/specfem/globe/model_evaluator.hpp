@@ -95,6 +95,8 @@ public:
    * @param planet_constants Selected planet's SI constants read from the
    * database.
    * @param catalog_codes Mesher-side model codes used for skew detection.
+   * The skew check is skipped when both @p catalog_codes and
+   * @p catalog_flags are empty.
    * @param catalog_flags Mesher-side model flags used for skew detection.
    */
   void validate_database_constants(

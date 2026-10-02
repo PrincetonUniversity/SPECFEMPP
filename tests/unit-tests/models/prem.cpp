@@ -281,6 +281,16 @@ TEST_F(PremEvaluatorTest, RejectsDatabaseScaleMismatches) {
                std::runtime_error);
 }
 
+TEST_F(PremEvaluatorTest, AcceptsMatchingModelConfig) {
+  configure("1d_isotropic_prem");
+  const std::vector<int> codes = { 1, 0, 0, 2, 0 };
+  std::vector<bool> flags(16, false);
+  flags[11] = true;
+
+  EXPECT_NO_THROW(
+      evaluator_->validate_database_constants(planet_constants_, codes, flags));
+}
+
 TEST_F(PremEvaluatorTest, RejectsOpaqueModelConfigMismatches) {
   configure("1d_isotropic_prem");
   const std::vector<int> codes = { 999, 0, 0, 2, 0 };

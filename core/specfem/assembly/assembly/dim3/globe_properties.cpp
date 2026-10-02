@@ -63,7 +63,7 @@ void read_globe_properties(
                  .get_container<Medium::elastic, Property::isotropic>()
           : nullptr;
 
-  // The Fortran-backed globe evaluator is explicitly single-threaded.
+  // Catalog calls are serialized and setup-only, so this loop stays serial.
   for (int compute_ispec = 0; compute_ispec < assembly.mesh.nspec;
        ++compute_ispec) {
     for (int iz = 0; iz < ngllz; ++iz) {
