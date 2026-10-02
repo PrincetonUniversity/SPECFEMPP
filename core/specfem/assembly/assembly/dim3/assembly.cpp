@@ -114,6 +114,11 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
                  specfem::assembly::dim3_impl::reference_anchor_coordinates(
                      mesh) };
 
+  if constexpr (ModelTag == specfem::simulation::model::Globe3D) {
+    this->mesh.spherical_coordinates =
+        specfem::assembly::mesh_impl::SphericalCoordinates(this->mesh);
+  }
+
   this->element_types =
       specfem::assembly::dim3_impl::make_element_types(mesh, this->mesh);
 
@@ -183,6 +188,9 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
   }
 
   this->info = { this->mesh, this->properties, this->element_types };
+
+  // All geometry-dependent setup consumers must run before this release.
+  this->mesh.spherical_coordinates.release();
 
   return;
 }

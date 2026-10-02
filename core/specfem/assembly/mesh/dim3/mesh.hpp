@@ -5,6 +5,7 @@
 #include "impl/mesh_to_compute_mapping.hpp"
 #include "impl/points.hpp"
 #include "impl/shape_functions.hpp"
+#include "impl/spherical_coordinates.hpp"
 
 #include "specfem/assembly/mesh/impl/quadrature.hpp"
 #include "specfem/mesh.hpp"
@@ -51,6 +52,8 @@ public:
 
   int nspec; ///< Number of spectral elements
   int ngnod; ///< Number of control nodes per element
+
+  mesh_impl::SphericalCoordinates spherical_coordinates; ///< Globe setup cache
 
   specfem::mesh_entity::element<dimension_tag> element_grid; ///< 3D GLL grid
                                                              ///< info
