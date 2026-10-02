@@ -847,3 +847,12 @@ specfem_add_test(seismogram_sampling_tests
             specfem_environment
             gtest_main
 )
+
+# Globe oracle setup is serial even when the solver uses a parallel backend.
+specfem_add_test(globe_properties_tests
+  LABELS unit assembly globe
+  SOURCES assembly/dim3/properties/globe_properties.cpp
+          assembly/element_types/runner.cpp
+  LIBRARIES specfem::assembly specfem::globe specfem::io
+            specfem::mesh specfem::quadrature specfem_environment gtest_main
+)
