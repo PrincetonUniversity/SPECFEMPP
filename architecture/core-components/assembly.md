@@ -11,7 +11,7 @@ mesh + quadrature + sources + receivers
          │
          ▼
   assembly<DimensionTag>
-    ├── mesh             (GLL coords, Jacobians, mass matrices)
+    ├── mesh             (GLL coords, Jacobians, mass matrices, plus reference GLL coords for Globe3D model sampling)
     ├── properties       (ρ, vp, vs, κ, μ, … at every GLL point)
     ├── fields           (simulation_field for forward/adjoint/backward/buffer)
     ├── jacobian_matrix  (element Jacobians for coordinate transforms)

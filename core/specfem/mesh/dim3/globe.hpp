@@ -1,5 +1,6 @@
 #pragma once
 
+#include "control_nodes/control_nodes.hpp"
 #include "specfem/element/tags.hpp"
 #include "specfem/globe_model/model_config.hpp"
 #include "specfem/mesh_entity.hpp"
@@ -124,8 +125,8 @@ struct globe_boundary_surface {
  */
 struct globe_mesh_data {
   /** @brief Host view of xyz coordinates indexed by global anchor node. */
-  using CoordinatesViewType =
-      Kokkos::View<type_real *[3], Kokkos::LayoutLeft, Kokkos::HostSpace>;
+  using CoordinatesViewType = specfem::mesh::control_nodes<
+      specfem::element::dimension_tag::dim3>::CoordinatesViewType;
 
   /** @brief Thin globe database format version. */
   int format_version = 0;

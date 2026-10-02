@@ -14,6 +14,31 @@
 
 template <typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
+void specfem::linear_system::validate_single_medium(
+    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
+        &assembly) {
+  // Single-medium milestone: matrix blocks coupling different media
+  // (fluid-solid) are deferred, so reject mixed meshes outright rather than
+  // silently assembling an operator that ignores the coupling.
+  const int nspec = assembly.element_types.nspec;
+  for (int ispec = 0; ispec < nspec; ++ispec) {
+    const auto element_medium = assembly.element_types.get_medium_tag(ispec);
+    if (element_medium != Tags::medium_tag) {
+      std::ostringstream message;
+      message << "specfem::linear_system::validate_single_medium: element "
+              << ispec << " has medium '"
+              << specfem::element::to_string(element_medium)
+              << "'; only single-medium '"
+              << specfem::element::to_string(Tags::medium_tag)
+              << "' meshes are supported. Fluid-solid coupling blocks are "
+                 "deferred (issue #1982).";
+      throw std::runtime_error(message.str());
+    }
+  }
+}
+
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 specfem::linear_system::StiffnessAssembler<Tags>::StiffnessAssembler(
     const AssemblyType &assembly, const FEAssemblyType &fe,
     const int batch_size, const specfem::linear_system::StiffnessScope scope)
@@ -26,24 +51,7 @@ specfem::linear_system::StiffnessAssembler<Tags>::StiffnessAssembler(
   }
 
   specfem::linear_system::validate_stiffness_scope<Tags>(assembly_, scope);
-
-  // Single-medium milestone: matrix blocks coupling different media
-  // (fluid-solid) are deferred, so reject mixed meshes outright rather than
-  // silently assembling an operator that ignores the coupling.
-  const int nspec = assembly_.element_types.nspec;
-  for (int ispec = 0; ispec < nspec; ++ispec) {
-    const auto element_medium = assembly_.element_types.get_medium_tag(ispec);
-    if (element_medium != medium_tag) {
-      std::ostringstream message;
-      message << "specfem::linear_system::StiffnessAssembler: element " << ispec
-              << " has medium '" << specfem::element::to_string(element_medium)
-              << "'; only single-medium '"
-              << specfem::element::to_string(medium_tag)
-              << "' meshes are supported. Fluid-solid coupling blocks are "
-                 "deferred (issue #1982).";
-      throw std::runtime_error(message.str());
-    }
-  }
+  specfem::linear_system::validate_single_medium<Tags>(assembly_);
 }
 
 template <typename Tags>
@@ -111,6 +119,10 @@ using elastic_isotropic_tags =
 } // namespace specfem::linear_system_impl
 
 // Explicit instantiation: 3D elastic isotropic
+template void specfem::linear_system::validate_single_medium<
+    specfem::linear_system_impl::elastic_isotropic_tags>(
+    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &);
+
 template class specfem::linear_system::StiffnessAssembler<
     specfem::linear_system_impl::elastic_isotropic_tags>;
 
