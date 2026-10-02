@@ -5,6 +5,7 @@
 #include "solver.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/linear_system/sparse_matrix_view/fe_assembly.hpp"
+#include "specfem/linear_system/vector_view/vector_view.hpp"
 #include "specfem/periodic_tasks.hpp"
 #include "specfem/timescheme.hpp"
 #include <BelosLinearProblem.hpp>
@@ -14,6 +15,7 @@
 #include <Tpetra_MultiVector.hpp>
 #include <Tpetra_Operator.hpp>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -232,7 +234,7 @@ private:
   /// Zero the acceleration field, run the production source kernel at
   /// `istep`, and gather the result: f = source vector at t_{n+1}
   void extract_source_vector(const int istep,
-                             specfem::linear_system::vector_type &f);
+                             specfem::linear_system::VectorView &f);
 
   /// Scatter (u, v, a) into the assembly's forward field (host views, then
   /// device) so seismograms and periodic tasks see the current state
@@ -260,15 +262,16 @@ private:
                                     multivector_type, operator_type>>
       gmres_; ///< Belos GMRES solver manager
 
-  Teuchos::RCP<specfem::linear_system::vector_type> u_;     ///< u_n
-  Teuchos::RCP<specfem::linear_system::vector_type> v_;     ///< v_n
-  Teuchos::RCP<specfem::linear_system::vector_type> a_;     ///< a_n
-  Teuchos::RCP<specfem::linear_system::vector_type> u_new_; ///< u_{n+1}
-  Teuchos::RCP<specfem::linear_system::vector_type> a_new_; ///< a_{n+1}
-  Teuchos::RCP<specfem::linear_system::vector_type> v_new_; ///< v_{n+1}
-  Teuchos::RCP<specfem::linear_system::vector_type> rhs_;   ///< b
-  Teuchos::RCP<specfem::linear_system::vector_type> tmp_;   ///< scratch
-  Teuchos::RCP<specfem::linear_system::vector_type> tmp2_;  ///< scratch
+  /// Dof map and expression scratch shared by every state vector below
+  std::unique_ptr<specfem::linear_system::VectorSpace> vectors_;
+
+  std::optional<specfem::linear_system::VectorView> u_;     ///< u_n
+  std::optional<specfem::linear_system::VectorView> v_;     ///< v_n
+  std::optional<specfem::linear_system::VectorView> a_;     ///< a_n
+  std::optional<specfem::linear_system::VectorView> u_new_; ///< u_{n+1}
+  std::optional<specfem::linear_system::VectorView> a_new_; ///< a_{n+1}
+  std::optional<specfem::linear_system::VectorView> v_new_; ///< v_{n+1}
+  std::optional<specfem::linear_system::VectorView> rhs_;   ///< b
 
   int last_step_ = 0; ///< Steps executed by the last run()
 };
