@@ -189,6 +189,10 @@ void specfem::compute::impl::compute_coupling_conjugate_integral_nonconforming(
                       point_interface_data.interpolants(index.ipoint_i, 0) *
                       point_interface_data.interpolants(index.ipoint_j, 1);
 
+                      if(std::isnan(interpolated_shape_function)){
+                        continue;
+                      }
+
                   // accumulate self_accel by medium_physics::compute_coupling
                   if constexpr (interface_tag ==
                                 specfem::element_coupling::interface_tag::
