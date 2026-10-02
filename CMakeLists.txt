@@ -374,8 +374,9 @@ if (SPECFEM_INSTALL AND NOT SPECFEM_USE_SKBUILD)
         COMMAND ${CMAKE_COMMAND} --install . --prefix ${CMAKE_INSTALL_PREFIX} --component executables
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Organizing specfem++ executables into: ${CMAKE_INSTALL_PREFIX}"
-        # Make this run after your main targets
-        DEPENDS specfem xmeshfem2D xmeshfem3D xadj_seismogram xdecompose_mesh # list all your targets here
+        # Wait for every executable installed by the executables component.
+        DEPENDS specfem xmeshfem2D xmeshfem3D xmeshfem3D_globe
+                xadj_seismogram xdecompose_mesh
     )
 
     # Add the prefix directory to the clean target
