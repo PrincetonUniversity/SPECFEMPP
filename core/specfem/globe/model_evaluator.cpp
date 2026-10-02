@@ -282,6 +282,11 @@ void specfem::globe::ModelEvaluator::validate_radii() const {
 
 double
 specfem::globe::ModelEvaluator::reference_density(const double r_si) const {
+  if (!std::isfinite(r_si)) {
+    throw std::invalid_argument(
+        "specfem::globe::ModelEvaluator::reference_density: radius must be "
+        "finite");
+  }
   const std::lock_guard<std::recursive_mutex> lock(
       specfem::globe::evaluator_impl::catalog_mutex);
   const double r = scales_.to_catalog_length(r_si);
@@ -402,6 +407,11 @@ specfem::globe::ModelEvaluator::ReferencePoint
 specfem::globe::ModelEvaluator::prem_reference(const double r_si,
                                                const int idoubling,
                                                const int iregion_code) const {
+  if (!std::isfinite(r_si)) {
+    throw std::invalid_argument(
+        "specfem::globe::ModelEvaluator::prem_reference: radius must be "
+        "finite");
+  }
   const std::lock_guard<std::recursive_mutex> lock(
       specfem::globe::evaluator_impl::catalog_mutex);
   ReferencePoint point;
