@@ -1,23 +1,26 @@
 #include "globe_properties.hpp"
 
-#include <stdexcept>
-
 #include "specfem/globe/model_evaluator.hpp"
 #include "specfem/globe/region_codes.hpp"
+#include "specfem/mpi.hpp"
 #include "specfem/point.hpp"
 #include "specfem/tags.hpp"
 #include "specfem/units.hpp"
 #include "specfem/utilities/logarithmic_center.hpp"
 
+#include <chrono>
+#include <iostream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
-namespace specfem::assembly::dim3_impl {
-
-void read_globe_properties(
+void specfem::assembly::dim3_impl::read_globe_properties(
     const specfem::mesh::globe3d_mesh &input_mesh,
     specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
         &assembly) {
+  const auto start = std::chrono::steady_clock::now();
+  std::size_t oracle_calls = 0;
+
   using Dimension = specfem::element::dimension_tag;
   using Medium = specfem::element::medium_tag;
   using Property = specfem::element::property_tag;
@@ -63,9 +66,20 @@ void read_globe_properties(
                  .get_container<Medium::elastic, Property::isotropic>()
           : nullptr;
 
+  // Each batch evaluates every GLL point serially inside the Fortran wrapper.
+  // Keep batches: the catalog retains element-scoped Moho/sediment state.
   // Catalog calls are serialized and setup-only, so this loop stays serial.
   for (int compute_ispec = 0; compute_ispec < assembly.mesh.nspec;
        ++compute_ispec) {
+    const auto medium = element_types.get_medium_tag(compute_ispec);
+    const auto property = element_types.get_property_tag(compute_ispec);
+    if (!((medium == Medium::elastic && (property == Property::isotropic ||
+                                         property == Property::anisotropic)) ||
+          (medium == Medium::acoustic && property == Property::isotropic))) {
+      throw std::runtime_error(
+          "Unsupported globe material tags for compute element " +
+          std::to_string(compute_ispec));
+    }
     for (int iz = 0; iz < ngllz; ++iz) {
       for (int iy = 0; iy < nglly; ++iy) {
         for (int ix = 0; ix < ngllx; ++ix) {
@@ -78,7 +92,6 @@ void read_globe_properties(
       }
     }
 
-    const auto property = element_types.get_property_tag(compute_ispec);
     const auto values = evaluator.evaluate_element(
         specfem::globe::to_region_code(
             element_types.get_region_tag(compute_ispec)),
@@ -86,6 +99,8 @@ void read_globe_properties(
         element_types.rmin(compute_ispec), element_types.rmax(compute_ispec),
         element_types.elem_in_crust(compute_ispec),
         element_types.elem_in_mantle(compute_ispec), xyz);
+
+    ++oracle_calls;
 
     const bool tagged_anisotropic = property == Property::anisotropic;
     if (values.is_anisotropic != tagged_anisotropic) {
@@ -95,7 +110,6 @@ void read_globe_properties(
           std::to_string(compute_ispec));
     }
 
-    const auto medium = element_types.get_medium_tag(compute_ispec);
     std::size_t ipoint = 0;
     for (int iz = 0; iz < ngllz; ++iz) {
       for (int iy = 0; iy < nglly; ++iy) {
@@ -144,7 +158,7 @@ void read_globe_properties(
                   "Globe evaluator returned zero Vs for an elastic element");
             }
             const type_real mu = rho * vs * vs;
-            const type_real kappa = rho * (vp * vp - (4.0 / 3.0) * vs * vs);
+            const type_real kappa = rho * vp * vp - (4.0 / 3.0) * mu;
             specfem::point::properties<specfem::tags::Tags<
                 Dimension::dim3, Medium::elastic, Property::isotropic, false>>
                 point_property(kappa, mu, rho);
@@ -180,6 +194,11 @@ void read_globe_properties(
         input_mesh.attenuation.band, input_mesh.attenuation.tau_sigma);
   }
   assembly.properties.copy_to_device();
+  Kokkos::fence();
+  const double elapsed =
+      std::chrono::duration<double>(std::chrono::steady_clock::now() - start)
+          .count();
+  std::cout << "Globe property build [rank " << specfem::MPI::get_rank()
+            << "]: " << oracle_calls << " oracle element calls, "
+            << oracle_calls * npoints << " GLL points, " << elapsed << " s\n";
 }
-
-} // namespace specfem::assembly::dim3_impl

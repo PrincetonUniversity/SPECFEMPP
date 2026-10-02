@@ -66,6 +66,11 @@ bool is_data_independent_model(std::string model_name) {
   if (option != std::string::npos) {
     model_name.resize(option);
   }
+  // ACM selects full stiffness storage for the same analytic 1-D model;
+  // it does not introduce an external model-data dependency.
+  if (model_name.ends_with("_acm")) {
+    model_name.resize(model_name.size() - 4);
+  }
   return model_name == "prem" || model_name == "1d_isotropic_prem" ||
          model_name == "1d_transversely_isotropic_prem";
 }
