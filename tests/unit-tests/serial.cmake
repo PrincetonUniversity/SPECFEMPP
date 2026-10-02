@@ -651,7 +651,7 @@ specfem_add_test(coordinate_systems_tests
 )
 
 specfem_add_test(coordinate_resolver_tests
-  SOURCES   assembly/coordinate_resolver/test_coordinate_resolver.cpp
+  SOURCES   assembly/coordinate_resolver/coordinate_resolver_tests.cpp
   LIBRARIES specfem::assembly
             specfem::coordinate_systems
             specfem_environment
