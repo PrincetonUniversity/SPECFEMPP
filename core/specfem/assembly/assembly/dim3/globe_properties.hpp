@@ -1,7 +1,10 @@
 #pragma once
 
 #include "specfem/assembly/assembly.hpp"
+#include "specfem/io/reader.hpp"
 #include "specfem/mesh.hpp"
+
+#include <memory>
 
 namespace specfem::assembly::dim3_impl {
 
@@ -16,17 +19,20 @@ namespace specfem::assembly::dim3_impl {
  * values into the 3-D assembly properties container. Elastic isotropic values
  * use the oracle's Voigt average; acoustic values store inverse density.
  * Anisotropic elements receive all 21 Cartesian stiffness coefficients and
- * density, with no isotropic fallback.
+ * density, with no isotropic fallback. Attenuation is not yet supported for
+ * anisotropic elements.
  *
  * Evaluation is serial, in element batches (each batch evaluates all GLL
  * points). Properties are copied to device once after filling. Wall time,
- * element-call count and GLL-point count are logged per MPI rank.
+ * element-call count and GLL-point count are logged per MPI rank at debug
+ * level.
  *
  * @param mesh Raw Globe3D mesh containing reference geometry and evaluator
  *        context
  * @param assembly 3-D assembly object whose property container is populated
  * @throws std::runtime_error if @c assembly.element_types carries no globe
- *         element context, or if the globe evaluator is unavailable or rejects
+ *         element context, if attenuation is enabled while any element is
+ *         anisotropic, or if the globe evaluator is unavailable or rejects
  *         a model/context combination
  */
 void read_globe_properties(

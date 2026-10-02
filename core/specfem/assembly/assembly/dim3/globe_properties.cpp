@@ -2,6 +2,7 @@
 
 #include "specfem/globe/model_evaluator.hpp"
 #include "specfem/globe/region_codes.hpp"
+#include "specfem/logger.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/point.hpp"
 #include "specfem/tags.hpp"
@@ -9,7 +10,7 @@
 #include "specfem/utilities/logarithmic_center.hpp"
 
 #include <chrono>
-#include <iostream>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -29,6 +30,16 @@ void specfem::assembly::dim3_impl::read_globe_properties(
   if (!element_types.has_element_context()) {
     throw std::runtime_error("read_globe_properties: element_types carries no "
                              "globe element context");
+  }
+
+  // Only elastic isotropic elements have an attenuation container. Fail rather
+  // than silently run anisotropic elements elastically (see issue #2059).
+  if (input_mesh.attenuation.enabled &&
+      element_types.get_elements_on_host(Medium::elastic, Property::anisotropic)
+              .extent(0) > 0) {
+    throw std::runtime_error(
+        "read_globe_properties: attenuation is not supported for anisotropic "
+        "elements");
   }
 
   const auto &globe = input_mesh.globe;
@@ -66,9 +77,8 @@ void specfem::assembly::dim3_impl::read_globe_properties(
                  .get_container<Medium::elastic, Property::isotropic>()
           : nullptr;
 
-  // Each batch evaluates every GLL point serially inside the Fortran wrapper.
-  // Keep batches: the catalog retains element-scoped Moho/sediment state.
-  // Catalog calls are serialized and setup-only, so this loop stays serial.
+  // One serial catalog call per element: the catalog retains element-scoped
+  // Moho/sediment state, so batches must stay element-sized.
   for (int compute_ispec = 0; compute_ispec < assembly.mesh.nspec;
        ++compute_ispec) {
     const auto medium = element_types.get_medium_tag(compute_ispec);
@@ -198,7 +208,11 @@ void specfem::assembly::dim3_impl::read_globe_properties(
   const double elapsed =
       std::chrono::duration<double>(std::chrono::steady_clock::now() - start)
           .count();
-  std::cout << "Globe property build [rank " << specfem::MPI::get_rank()
-            << "]: " << oracle_calls << " oracle element calls, "
-            << oracle_calls * npoints << " GLL points, " << elapsed << " s\n";
+  specfem::Logger::debug(
+      [&](std::ostringstream &message) {
+        message << "Globe property build [rank " << specfem::MPI::get_rank()
+                << "]: " << oracle_calls << " oracle element calls, "
+                << oracle_calls * npoints << " GLL points, " << elapsed << " s";
+      },
+      false);
 }
