@@ -67,7 +67,9 @@ bool is_data_independent_model(std::string model_name) {
     model_name.resize(option);
   }
   return model_name == "prem" || model_name == "1d_isotropic_prem" ||
-         model_name == "1d_transversely_isotropic_prem";
+         model_name == "1d_transversely_isotropic_prem" ||
+         model_name == "1d_isotropic_prem2" ||
+         model_name == "1d_transversely_isotropic_prem2";
 }
 
 void preflight_model_data(const ModelConfig &config) {
