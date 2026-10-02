@@ -11,6 +11,7 @@
 #include "coordinate_systems/coordinate_resolution_result.hpp"
 #include "coordinate_systems/coordinates.hpp"
 #include "coordinate_systems/geocentric.hpp"
+#include "coordinate_systems/geocentric_projection.hpp"
 #include "coordinate_systems/geographic.hpp"
 #include "coordinate_systems/transform.hpp"
-#include "coordinate_systems/utm.hpp"
+#include "coordinate_systems/utm_projection.hpp"

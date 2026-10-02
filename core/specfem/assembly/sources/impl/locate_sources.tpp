@@ -1,9 +1,9 @@
 
 #include "specfem/assembly/sources/impl/locate_sources.hpp"
 #include "specfem/algorithms.hpp"
+#include "specfem/assembly/coordinate_resolver.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/mesh.hpp"
-#include "specfem/assembly/resolve_coordinates.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/source.hpp"
@@ -20,8 +20,7 @@ void specfem::assembly::sources_impl::locate_sources(
     std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
         &sources,
     const specfem::mesh::acoustic_free_surface<DimensionTag> &surface,
-    const std::optional<specfem::coordinate_systems::utm_projection_config>
-        &utm_config) {
+    const specfem::assembly::coordinate_resolver<DimensionTag> &resolver) {
 
   const int nsources = static_cast<int>(sources.size());
   const int myrank = specfem::MPI::get_rank();
@@ -32,8 +31,7 @@ void specfem::assembly::sources_impl::locate_sources(
   // coordinates unchanged.
   for (int isrc = 0; isrc < nsources; ++isrc) {
     if (auto *coords = sources[isrc]->get_read_coordinates()) {
-      auto resolution = specfem::assembly::resolve_coordinates(
-          *coords, mesh, surface, utm_config);
+      auto resolution = resolver.resolve(*coords, mesh, surface);
       sources[isrc]->set_resolution_result(resolution);
       sources[isrc]->set_global_coordinates(resolution.global);
     }

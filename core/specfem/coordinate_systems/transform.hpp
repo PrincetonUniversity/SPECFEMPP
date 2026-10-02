@@ -10,7 +10,8 @@ namespace coordinate_systems {
  * Source and config types are deduced from the arguments. Unimplemented
  * source/target/config combinations produce a linker error.
  *
- * Projection-specific headers (e.g., utm.hpp) declare explicit specializations.
+ * Projection-specific headers (e.g., utm_projection.hpp,
+ * geocentric_projection.hpp) declare explicit specializations.
  *
  * @tparam Target Target coordinate type (e.g., cartesian_coordinates)
  * @tparam Source Source coordinate type (deduced)
