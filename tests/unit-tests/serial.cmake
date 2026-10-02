@@ -71,6 +71,12 @@ specfem_add_test(is_close_tests
             Kokkos::kokkos
 )
 
+specfem_add_test(elasticity_tensor_tests
+  SOURCES   medium/dim3/elastic/anisotropic/elasticity_tensor_tests.cpp
+  LIBRARIES gtest_main
+            Kokkos::kokkos
+)
+
 specfem_add_test(logspace_tests
   SOURCES   utilities/logspace_tests.cpp
             utilities/logarithmic_center_tests.cpp

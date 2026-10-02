@@ -18,9 +18,12 @@ namespace specfem::assembly::dim3_impl {
  * evaluator, and writes the resulting density, wave speeds, and attenuation
  * values into the 3-D assembly properties container. Elastic isotropic values
  * use the oracle's Voigt average; acoustic values store inverse density.
- * Anisotropic elements receive all 21 Cartesian stiffness coefficients and
- * density, with no isotropic fallback. Attenuation is not yet supported for
- * anisotropic elements.
+ * For anisotropic elements, radial transverse-isotropic Love parameters are
+ * converted to 21 Cartesian stiffness coefficients using the final GLL-point
+ * orientation. Full-anisotropy coefficients from the evaluator are already in
+ * Cartesian axes and are stored without another rotation. Azimuthal anisotropy
+ * above numerical noise is rejected until its storage convention is
+ * implemented. Attenuation is not yet supported for anisotropic elements.
  *
  * Evaluation is serial, in element batches (each batch evaluates all GLL
  * points). Properties are copied to device once after filling. Wall time,
@@ -32,8 +35,9 @@ namespace specfem::assembly::dim3_impl {
  * @param assembly 3-D assembly object whose property container is populated
  * @throws std::runtime_error if @c assembly.element_types carries no globe
  *         element context, if attenuation is enabled while any element is
- *         anisotropic, or if the globe evaluator is unavailable or rejects
- *         a model/context combination
+ *         anisotropic, if azimuthal anisotropy exceeds numerical noise, or if
+ *         the globe
+ *         evaluator is unavailable or rejects a model/context combination
  */
 void read_globe_properties(
     const specfem::mesh::globe3d_mesh &mesh,

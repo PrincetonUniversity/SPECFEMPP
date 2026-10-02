@@ -1,12 +1,15 @@
 #include "globe_properties.hpp"
 
+#include "specfem/globe/elasticity.hpp"
 #include "specfem/globe/model_evaluator.hpp"
 #include "specfem/globe/region_codes.hpp"
 #include "specfem/logger.hpp"
+#include "specfem/medium/dim3/elastic/anisotropic/elasticity_tensor.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/point.hpp"
 #include "specfem/tags.hpp"
 #include "specfem/units.hpp"
+
 #include "specfem/utilities/logarithmic_center.hpp"
 
 #include <chrono>
@@ -113,10 +116,10 @@ void specfem::assembly::dim3_impl::read_globe_properties(
     ++oracle_calls;
 
     const bool tagged_anisotropic = property == Property::anisotropic;
-    if (values.is_anisotropic != tagged_anisotropic) {
+    if (values.is_anisotropic && !tagged_anisotropic) {
       throw std::runtime_error(
-          "Globe evaluator anisotropy disagrees with the database property "
-          "tag for compute element " +
+          "Globe evaluator returned full anisotropy for a database element "
+          "without the anisotropic property tag: compute element " +
           std::to_string(compute_ispec));
     }
 
@@ -145,21 +148,44 @@ void specfem::assembly::dim3_impl::read_globe_properties(
               throw std::runtime_error(
                   "Globe evaluator returned zero Vs for an elastic element");
             }
+            specfem::globe::ensure_supported_azimuthal_anisotropy(
+                values.gc_prime[ipoint], values.gs_prime[ipoint]);
+            const auto &spherical = assembly.mesh.spherical_coordinates.h_coord;
+            if (!values.is_anisotropic && spherical.data() == nullptr) {
+              throw std::runtime_error(
+                  "Globe anisotropic property build requires spherical "
+                  "coordinates");
+            }
+
+            specfem::medium_physics::elasticity_tensor<double> model_cij{};
             const std::size_t cij_offset = 21 * ipoint;
+            for (int component = 0; component < 21; ++component) {
+              model_cij[component] = values.cij[cij_offset + component];
+            }
+            // Love parameters describe radial transverse isotropy. Convert
+            // before any future attenuation shift: that shift must rotate
+            // global -> radial, alter A/C/N/L, then rotate radial -> global.
+            // Full anisotropy is already Cartesian and passes through
+            // unchanged.
+            const auto stiffness = specfem::globe::elasticity_from_model(
+                values.is_anisotropic, model_cij, values.rho[ipoint],
+                values.vpv[ipoint], values.vph[ipoint], values.vsv[ipoint],
+                values.vsh[ipoint], values.eta[ipoint],
+                values.is_anisotropic ? 0.0
+                                      : spherical(compute_ispec, iz, iy, ix, 1),
+                values.is_anisotropic
+                    ? 0.0
+                    : spherical(compute_ispec, iz, iy, ix, 2));
+
             specfem::point::properties<specfem::tags::Tags<
                 Dimension::dim3, Medium::elastic, Property::anisotropic, false>>
                 point_property(
-                    values.cij[cij_offset + 0], values.cij[cij_offset + 1],
-                    values.cij[cij_offset + 2], values.cij[cij_offset + 3],
-                    values.cij[cij_offset + 4], values.cij[cij_offset + 5],
-                    values.cij[cij_offset + 6], values.cij[cij_offset + 7],
-                    values.cij[cij_offset + 8], values.cij[cij_offset + 9],
-                    values.cij[cij_offset + 10], values.cij[cij_offset + 11],
-                    values.cij[cij_offset + 12], values.cij[cij_offset + 13],
-                    values.cij[cij_offset + 14], values.cij[cij_offset + 15],
-                    values.cij[cij_offset + 16], values.cij[cij_offset + 17],
-                    values.cij[cij_offset + 18], values.cij[cij_offset + 19],
-                    values.cij[cij_offset + 20], rho);
+                    stiffness[0], stiffness[1], stiffness[2], stiffness[3],
+                    stiffness[4], stiffness[5], stiffness[6], stiffness[7],
+                    stiffness[8], stiffness[9], stiffness[10], stiffness[11],
+                    stiffness[12], stiffness[13], stiffness[14], stiffness[15],
+                    stiffness[16], stiffness[17], stiffness[18], stiffness[19],
+                    stiffness[20], rho);
             specfem::assembly::store_on_host(index, point_property,
                                              assembly.properties);
           } else {
