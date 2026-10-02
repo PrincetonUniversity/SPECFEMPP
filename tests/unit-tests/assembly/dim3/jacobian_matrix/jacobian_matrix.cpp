@@ -30,13 +30,20 @@
 #include "../test_fixture.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/globe/radial_flags.hpp"
+#include "specfem/io.hpp"
 #include "specfem/jacobian.hpp"
 #include "specfem/point.hpp"
 #include "specfem/quadrature.hpp"
 #include "gtest/gtest.h"
 #include <Kokkos_Core.hpp>
 #include <array>
+#include <cmath>
+#include <numbers>
+#include <stdexcept>
+#include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 /**
@@ -126,8 +133,8 @@ struct Element3D {
                                  ///< hex elements)
 
 private:
-  std::vector<std::array<type_real, 3> > _coordinates; ///< Private storage for
-                                                       ///< 3D coordinates
+  std::vector<std::array<type_real, 3>> _coordinates; ///< Private storage for
+                                                      ///< 3D coordinates
 
 public:
   /**
@@ -141,7 +148,7 @@ public:
    *       element convention used in SPECFEM++.
    */
   Element3D(int element_id, int control_nodes_per_element,
-            const std::initializer_list<std::array<type_real, 3> > &coords)
+            const std::initializer_list<std::array<type_real, 3>> &coords)
       : element_id(element_id),
         control_nodes_per_element(control_nodes_per_element),
         _coordinates(coords) {
@@ -344,8 +351,8 @@ struct ExpectedJacobian3D {
       }
     }
 
-    const auto [small_jacobian, dummy] = jacobian_matrix.check_small_jacobian();
-    EXPECT_FALSE(small_jacobian)
+    const auto result = jacobian_matrix.check_small_jacobian();
+    EXPECT_FALSE(result.found)
         << "Small Jacobian determinant detected in the computed matrix.";
 
     SUCCEED()
@@ -462,4 +469,140 @@ TEST_P(Assembly3DTest, JacobianMatrix) {
   const auto &jacobian_matrix = assembly.jacobian_matrix;
   const auto &expected_jacobian = expected_jacobians_3d.at(param_name);
   expected_jacobian.check(jacobian_matrix);
+}
+
+TEST(JacobianMatrixConditioning, UsesAnElementLocalScale) {
+  specfem::assembly::jacobian_matrix<specfem::element::dimension_tag::dim3>
+      jacobian(1, 2, 2, 2);
+  for (int iz = 0; iz < 2; ++iz) {
+    for (int iy = 0; iy < 2; ++iy) {
+      for (int ix = 0; ix < 2; ++ix) {
+        jacobian.h_jacobian(0, iz, iy, ix) = 1.0e-20;
+      }
+    }
+  }
+  EXPECT_FALSE(jacobian.check_small_jacobian().found)
+      << "a small absolute determinant is valid at a consistent element scale";
+
+  jacobian.h_jacobian(0, 0, 0, 0) = 1.0e-30;
+  const auto result = jacobian.check_small_jacobian();
+  ASSERT_TRUE(result.found);
+  ASSERT_EQ(result.diagnostics.size(), 1);
+  EXPECT_EQ(result.diagnostics.front().element_index, 0);
+  EXPECT_EQ(result.diagnostics.front().ix, 0);
+  EXPECT_LT(result.diagnostics.front().relative_jacobian(), 1.0e-6);
+}
+
+namespace globe_jacobian_test_impl {
+
+constexpr auto dimension = specfem::element::dimension_tag::dim3;
+const std::string database_path =
+    "data/dim3_globe/GlobalSmallMesh/DATABASES_MPI/"
+    "proc000000_specfempp_database.bin";
+
+struct GlobeAssemblyFixture {
+  specfem::assembly::assembly<dimension> assembly;
+  double expected_volume = 0;
+};
+
+GlobeAssemblyFixture make_assembly() {
+  const auto raw_mesh = specfem::io::read_globe_mesh(
+      database_path, specfem::attenuation::Setup{});
+  const auto &planet = raw_mesh.globe.planet_constants.value();
+  const double equatorial_radius = planet.r_planet();
+  const double polar_radius =
+      equatorial_radius * std::sqrt(planet.one_minus_f_squared());
+  const double expected_volume = (4.0 / 3.0) * std::numbers::pi *
+                                 equatorial_radius * equatorial_radius *
+                                 polar_radius / 6.0;
+
+  specfem::quadrature::gll::gll gll{};
+  const specfem::quadrature::quadratures quadrature(gll);
+
+  specfem::assembly::assembly<dimension> assembly;
+  assembly.mesh = { raw_mesh.nspec,
+                    raw_mesh.control_nodes.ngnod,
+                    raw_mesh.element_grid.ngllz,
+                    raw_mesh.element_grid.nglly,
+                    raw_mesh.element_grid.ngllx,
+                    raw_mesh.tags,
+                    raw_mesh.adjacency_graph,
+                    raw_mesh.control_nodes,
+                    quadrature,
+                    raw_mesh.globe.reference_coordinates };
+  assembly.element_types = { raw_mesh.nspec, assembly.mesh.element_grid,
+                             assembly.mesh, raw_mesh.tags,
+                             raw_mesh.globe.element_context };
+  assembly.jacobian_matrix = { assembly.mesh };
+  return { std::move(assembly), expected_volume };
+}
+
+} // namespace globe_jacobian_test_impl
+
+TEST(GlobeJacobianMatrix, ValidatesCurvedAndCentralCubeElements) {
+  auto fixture = globe_jacobian_test_impl::make_assembly();
+  auto &assembly = fixture.assembly;
+  const auto result = assembly.jacobian_matrix.check_small_jacobian();
+  ASSERT_FALSE(result.found);
+  ASSERT_TRUE(result.diagnostics.empty());
+
+  double volume = 0;
+
+  const int fictitious_flag =
+      static_cast<int>(specfem::globe::radial_flag::fictitious_cube);
+  for (int ispec = 0; ispec < assembly.mesh.nspec; ++ispec) {
+    const int idoubling = assembly.element_types.idoubling(ispec);
+    ASSERT_NE(idoubling, fictitious_flag) << "element " << ispec;
+
+    for (int iz = 0; iz < assembly.mesh.element_grid.ngllz; ++iz) {
+      for (int iy = 0; iy < assembly.mesh.element_grid.nglly; ++iy) {
+        for (int ix = 0; ix < assembly.mesh.element_grid.ngllx; ++ix) {
+          const type_real jacobian =
+              assembly.jacobian_matrix.h_jacobian(ispec, iz, iy, ix);
+          ASSERT_TRUE(std::isfinite(jacobian)) << "element " << ispec;
+          ASSERT_GT(jacobian, 0) << "element " << ispec;
+          volume += jacobian * assembly.mesh.h_weights(ix) *
+                    assembly.mesh.h_weights(iy) * assembly.mesh.h_weights(iz);
+        }
+      }
+    }
+  }
+
+  EXPECT_TRUE(std::isfinite(volume));
+  EXPECT_GT(volume, 0);
+  EXPECT_LT(std::abs(volume - fixture.expected_volume) /
+                fixture.expected_volume,
+            1.0e-3);
+
+  constexpr int permuted_element = 0;
+  for (int component = 0; component < 3; ++component) {
+    std::swap(assembly.mesh.h_control_node_coordinates(permuted_element, 0,
+                                                       component),
+              assembly.mesh.h_control_node_coordinates(permuted_element, 1,
+                                                       component));
+  }
+  Kokkos::deep_copy(assembly.mesh.control_node_coordinates,
+                    assembly.mesh.h_control_node_coordinates);
+  assembly.jacobian_matrix = { assembly.mesh };
+
+  const auto permuted_result = assembly.jacobian_matrix.check_small_jacobian();
+  ASSERT_TRUE(permuted_result.found);
+  ASSERT_TRUE(permuted_result.elements(permuted_element));
+  ASSERT_FALSE(permuted_result.diagnostics.empty());
+
+  assembly.element_types.idoubling(permuted_element) =
+      static_cast<int>(specfem::globe::radial_flag::middle_central_cube);
+  try {
+    assembly.check_jacobian_matrix();
+    FAIL() << "permuted hex27 anchors must fail Jacobian validation";
+  } catch (const std::runtime_error &error) {
+    const std::string message = error.what();
+    EXPECT_NE(message.find("element=0"), std::string::npos);
+    EXPECT_NE(message.find("region="), std::string::npos);
+    EXPECT_NE(message.find("radius="), std::string::npos);
+    EXPECT_NE(message.find("idoubling="), std::string::npos);
+    EXPECT_NE(message.find("jacobian="), std::string::npos);
+    EXPECT_NE(message.find("Central-cube mapping check failed"),
+              std::string::npos);
+  }
 }

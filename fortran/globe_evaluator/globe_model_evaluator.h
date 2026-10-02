@@ -93,6 +93,24 @@ int globe_evaluator_init(const char *model_name, int name_len,
 int globe_evaluator_scales(double *length_scale, double *density_scale,
                         double *velocity_scale);
 
+/* Returns the five raw model codes and sixteen raw model flags. */
+int globe_evaluator_model_config(int *codes, int *flags);
+
+/* Reports the capacity required by reference-profile and spline arrays. */
+void globe_evaluator_reference_size(int *size);
+
+/* Returns the non-dimensional pure 1-D reference density at radius r. */
+int globe_evaluator_reference_density(double r, double *rho);
+
+/*
+ * Constructs the mesher's non-dimensional ellipticity spline. Arrays must have
+ * at least `capacity` entries; query the required capacity first. Only the first
+ * `size` entries are populated spline knots.
+ */
+int globe_evaluator_ellipticity_spline(int capacity, int *size, double *radii,
+                                       double *values,
+                                       double *second_derivatives);
+
 /*
  * Returns model-resolved discontinuity radii in SI metres. Requires a
  * configured evaluator; otherwise writes zeros and returns

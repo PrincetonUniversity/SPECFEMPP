@@ -226,13 +226,11 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
   std::string print() const;
 
   /**
-   * @brief Check if Jacobian for any spectral element in the mesh is smaller
-   * than some threshold
+   * @brief Validate every spectral-element coordinate mapping.
    *
-   * This function throws a runtime error if the Jacobian is smaller than 1e-10
-   * If VTK is enabled, it also generates a plot of the spectral elements with
-   * small Jacobian
-   *
+   * Throws when a Jacobian determinant is non-finite, non-positive, or
+   * degenerate relative to the element's own determinant scale. Globe-mesh
+   * diagnostics include the region, radial shell, and radial-zone flag.
    */
   void check_jacobian_matrix() const;
 };

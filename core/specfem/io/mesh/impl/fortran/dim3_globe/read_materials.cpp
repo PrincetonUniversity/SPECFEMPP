@@ -1,4 +1,5 @@
 #include "specfem/io/mesh/impl/fortran/dim3_globe/read_materials.hpp"
+#include "specfem/globe/radial_flags.hpp"
 #include "specfem/globe/region_codes.hpp"
 
 #include "specfem/io.hpp"
@@ -37,7 +38,16 @@ specfem::io::mesh::impl::fortran::dim3_globe::read_material_tags(
   element_context.resize(mesh.nspec);
   // Serial on purpose: the code translators throw on bad input, which a
   // Kokkos host parallel region cannot propagate.
+  const int fictitious_flag =
+      static_cast<int>(specfem::globe::radial_flag::fictitious_cube);
   for (int ispec = 0; ispec < mesh.nspec; ++ispec) {
+    if (idoubling[ispec] == fictitious_flag) {
+      throw std::runtime_error(
+          "Globe mesh database contains fictitious central-cube element " +
+          std::to_string(ispec) +
+          " (idoubling=" + std::to_string(fictitious_flag) +
+          "); the database writer must exclude fictitious elements");
+    }
     tags.medium_tags[ispec] =
         specfem::io::mesh::impl::fortran::dim3_globe::to_medium_tag(
             medium_codes[ispec]);
