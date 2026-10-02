@@ -1,7 +1,9 @@
 #include "specfem/assembly/assembly/dim3/globe_properties.hpp"
+#include "specfem/globe/elasticity.hpp"
 #include "specfem/globe/model_evaluator.hpp"
 #include "specfem/globe/region_codes.hpp"
 #include "specfem/io.hpp"
+#include "specfem/medium/dim3/elastic/anisotropic/elasticity_tensor.hpp"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -37,7 +39,7 @@ struct GlobeFixture {
             "proc000000_specfempp_database.bin",
             specfem::attenuation::Setup{})) {
     if (anisotropic) {
-      mesh.globe.model_config.model_name = "1D_transversely_isotropic_prem_ACM";
+      mesh.globe.model_config.model_name = "1D_transversely_isotropic_prem";
       // This variant intentionally changes the fixture's resolved model.
       mesh.globe.model_verification.codes.clear();
       mesh.globe.model_verification.flags.clear();
@@ -59,6 +61,8 @@ struct GlobeFixture {
                       mesh.control_nodes,
                       quadrature,
                       mesh.globe.reference_coordinates };
+    assembly.mesh.spherical_coordinates =
+        specfem::assembly::mesh_impl::SphericalCoordinates(assembly.mesh);
     assembly.element_types = { mesh.nspec, assembly.mesh.element_grid,
                                assembly.mesh, mesh.tags,
                                mesh.globe.element_context };
@@ -150,10 +154,27 @@ void check_properties(const GlobeFixture &fixture,
       const double vs = expected.vs_iso[p];
       EXPECT_NEAR(point.rho(), rho, tolerance * rho);
       if constexpr (PropertyTag == Property::anisotropic) {
+        specfem::medium_physics::elasticity_tensor<double> expected_stiffness{};
+        if (expected.is_anisotropic) {
+          for (int c = 0; c < 21; ++c) {
+            expected_stiffness[c] = expected.cij[21 * p + c];
+          }
+        } else {
+          const auto radial =
+              specfem::medium_physics::love_to_radial_elasticity(
+                  expected.rho[p], expected.vpv[p], expected.vph[p],
+                  expected.vsv[p], expected.vsh[p], expected.eta[p]);
+          const auto &spherical = assembly.mesh.spherical_coordinates.h_coord;
+          expected_stiffness =
+              specfem::medium_physics::rotate_elasticity_radial_to_global(
+                  radial,
+                  spherical(ispec, p / (nx * ny), (p / nx) % ny, p % nx, 1),
+                  spherical(ispec, p / (nx * ny), (p / nx) % ny, p % nx, 2));
+        }
         for (int c = 0; c < 21; ++c) {
-          EXPECT_NEAR(point[c], expected.cij[21 * p + c],
+          EXPECT_NEAR(point[c], expected_stiffness[c],
                       tolerance *
-                          std::max(1.0, std::abs(expected.cij[21 * p + c])));
+                          std::max(1.0, std::abs(expected_stiffness[c])));
         }
       } else {
         const double mu = rho * vs * vs;
@@ -216,6 +237,31 @@ public:
 
 using specfem::assembly::globe_properties_test_impl::GlobeProperties;
 
+TEST(GlobeElasticity, FullAnisotropyRemainsInGlobalFrame) {
+  const specfem::medium_physics::elasticity_tensor<double> global = {
+    31.0, 2.0,  3.0,  4.0,  5.0,  6.0,  37.0, 8.0,  9.0,  10.0, 11.0,
+    41.0, 13.0, 14.0, 15.0, 43.0, 17.0, 18.0, 47.0, 20.0, 53.0
+  };
+  const auto selected = specfem::globe::elasticity_from_model(
+      true, global, 4.0, 3.0, 5.0, 2.0, 2.5, 0.8, 1.2, 2.3);
+  for (int component = 0; component < 21; ++component) {
+    EXPECT_DOUBLE_EQ(selected[component], global[component]);
+  }
+}
+
+TEST(GlobeElasticity, IsotropicLoveParametersPopulateAnisotropicStorage) {
+  const specfem::medium_physics::elasticity_tensor<double> unused{};
+  const auto stiffness = specfem::globe::elasticity_from_model(
+      false, unused, 4.0, 3.0, 3.0, 2.0, 2.0, 1.0, 1.2, 2.3);
+  const specfem::medium_physics::elasticity_tensor<double> expected = {
+    36.0, 4.0, 4.0, 0.0, 0.0,  0.0, 36.0, 4.0,  0.0, 0.0, 0.0,
+    36.0, 0.0, 0.0, 0.0, 16.0, 0.0, 0.0,  16.0, 0.0, 16.0
+  };
+  for (int component = 0; component < 21; ++component) {
+    EXPECT_NEAR(stiffness[component], expected[component], 1.e-12);
+  }
+}
+
 TEST_P(GlobeProperties, MatchesOracleOnHostAndDevice) {
   using specfem::assembly::globe_properties_test_impl::Medium;
   using specfem::assembly::globe_properties_test_impl::Property;
@@ -249,11 +295,10 @@ TEST_P(GlobeProperties, MatchesOracleOnHostAndDevice) {
     }
   }
   if (anisotropic) {
-    // An isotropic oracle must never silently populate anisotropic storage.
-    fixture.mesh.globe.model_config.model_name = "1D_isotropic_prem";
-    EXPECT_THROW(specfem::assembly::dim3_impl::read_globe_properties(
-                     fixture.mesh, fixture.assembly),
-                 std::runtime_error);
+    fixture.mesh.globe.model_config.model_name =
+        "1D_transversely_isotropic_prem_ACM";
+    EXPECT_NO_THROW(specfem::assembly::dim3_impl::read_globe_properties(
+        fixture.mesh, fixture.assembly));
   }
 }
 

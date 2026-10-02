@@ -19,6 +19,7 @@
 !    globe_evaluator_radii           -- model-resolved discontinuity radii
 !    globe_evaluator_get_element     -- material for one element's GLL points
 !    globe_evaluator_prem_reference  -- TEST ONLY, see note at its definition
+!    globe_evaluator_rotate_tiso_to_cij -- TEST ONLY rotation reference
 !
 !  Contracts (see the plan for provenance):
 !    * Coordinates and radii arrive from the C++ oracle wrapper already
@@ -1089,3 +1090,39 @@
   globe_evaluator_prem_reference = GLOBE_EVALUATOR_OK
 
   end function globe_evaluator_prem_reference
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine globe_evaluator_rotate_tiso_to_cij(theta, phi, rho, vpv, vph, vsv, vsh, eta, cij) &
+    bind(C, name="globe_evaluator_rotate_tiso_to_cij")
+
+! TEST-ONLY access to globe's double-precision Love-tensor rotation. This calls
+! the same reference routine used by rotate_tensor_tiso_to_cij without its
+! CUSTOM_REAL input/output conversion.
+
+  use iso_c_binding, only: c_double
+
+  implicit none
+
+  real(c_double), value, intent(in) :: theta, phi, rho, vpv, vph, vsv, vsh, eta
+  real(c_double), intent(out) :: cij(21)
+
+  real(c_double) :: A, C, N, L, F
+
+  A = rho * vph * vph
+  C = rho * vpv * vpv
+  N = rho * vsh * vsh
+  L = rho * vsv * vsv
+  F = eta * (A - 2.d0 * L)
+
+  call rotate_tensor_Love_to_global(theta, phi, A, C, N, L, F, &
+                                    cij(1), cij(2), cij(3), cij(4), cij(5), cij(6), &
+                                    cij(7), cij(8), cij(9), cij(10), cij(11), &
+                                    cij(12), cij(13), cij(14), cij(15), cij(16), &
+                                    cij(17), cij(18), cij(19), cij(20), cij(21))
+
+  end subroutine globe_evaluator_rotate_tiso_to_cij
