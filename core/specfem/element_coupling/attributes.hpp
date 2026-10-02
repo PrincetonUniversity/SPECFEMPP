@@ -51,6 +51,15 @@ public:
   }
 
   /**
+   * @brief Conjugate interface.
+   * @return acoustic_elastic interface tag
+   */
+  static constexpr specfem::element_coupling::interface_tag
+  conjugate_interface() {
+    return specfem::element_coupling::interface_tag::acoustic_elastic;
+  }
+
+  /**
    * @brief Self field type for connection types.
    * @tparam ConnectionTag Connection type (weakly_conforming, etc.)
    */
@@ -64,23 +73,23 @@ public:
   template <specfem::element_connections::type ConnectionTag>
   struct self_field<
       ConnectionTag, specfem::element::dimension_tag::dim2,
-      std::enable_if_t<ConnectionTag == specfem::element_connections::type::
-                                            weakly_conforming> > {
+      std::enable_if_t<ConnectionTag ==
+                       specfem::element_connections::type::weakly_conforming>> {
     using type = specfem::point::acceleration<
         specfem::tags::Tags<specfem::element::dimension_tag::dim2,
                             specfem::element::medium_tag::elastic_psv,
-                            false> >; ///< vector acceleration
+                            false>>; ///< vector acceleration
   };
 
   template <specfem::element_connections::type ConnectionTag>
   struct self_field<
       ConnectionTag, specfem::element::dimension_tag::dim3,
-      std::enable_if_t<ConnectionTag == specfem::element_connections::type::
-                                            weakly_conforming> > {
+      std::enable_if_t<ConnectionTag ==
+                       specfem::element_connections::type::weakly_conforming>> {
     using type = specfem::point::acceleration<
         specfem::tags::Tags<specfem::element::dimension_tag::dim3,
                             specfem::element::medium_tag::elastic,
-                            false> >; ///< vector acceleration
+                            false>>; ///< vector acceleration
   };
 
   /**
@@ -97,11 +106,11 @@ public:
   template <specfem::element_connections::type ConnectionTag>
   struct coupled_field<
       ConnectionTag, DimensionTag,
-      std::enable_if_t<ConnectionTag == specfem::element_connections::type::
-                                            weakly_conforming> > {
+      std::enable_if_t<ConnectionTag ==
+                       specfem::element_connections::type::weakly_conforming>> {
     using type = specfem::point::acceleration<specfem::tags::Tags<
         DimensionTag, specfem::element::medium_tag::acoustic,
-        false> >; ///< scalar acceleration
+        false>>; ///< scalar acceleration
   };
 
   /// Type alias for self field
@@ -144,6 +153,15 @@ public:
   }
 
   /**
+   * @brief Conjugate interface.
+   * @return elastic_acoustic interface tag
+   */
+  static constexpr specfem::element_coupling::interface_tag
+  conjugate_interface() {
+    return specfem::element_coupling::interface_tag::elastic_acoustic;
+  }
+
+  /**
    * @brief Self field type for connection types.
    * @tparam ConnectionTag Connection type (weakly_conforming, etc.)
    */
@@ -157,11 +175,11 @@ public:
   template <specfem::element_connections::type ConnectionTag>
   struct self_field<
       ConnectionTag, DimensionTag,
-      std::enable_if_t<ConnectionTag == specfem::element_connections::type::
-                                            weakly_conforming> > {
+      std::enable_if_t<ConnectionTag ==
+                       specfem::element_connections::type::weakly_conforming>> {
     using type = specfem::point::acceleration<specfem::tags::Tags<
         DimensionTag, specfem::element::medium_tag::acoustic,
-        false> >; ///< scalar acceleration
+        false>>; ///< scalar acceleration
   };
 
   template <specfem::element_connections::type ConnectionTag,
@@ -174,23 +192,23 @@ public:
   template <specfem::element_connections::type ConnectionTag>
   struct coupled_field<
       ConnectionTag, specfem::element::dimension_tag::dim2,
-      std::enable_if_t<ConnectionTag == specfem::element_connections::type::
-                                            weakly_conforming> > {
+      std::enable_if_t<ConnectionTag ==
+                       specfem::element_connections::type::weakly_conforming>> {
     using type = specfem::point::displacement<
         specfem::tags::Tags<specfem::element::dimension_tag::dim2,
                             specfem::element::medium_tag::elastic_psv,
-                            false> >; ///< vector displacement
+                            false>>; ///< vector displacement
   };
 
   template <specfem::element_connections::type ConnectionTag>
   struct coupled_field<
       ConnectionTag, specfem::element::dimension_tag::dim3,
-      std::enable_if_t<ConnectionTag == specfem::element_connections::type::
-                                            weakly_conforming> > {
+      std::enable_if_t<ConnectionTag ==
+                       specfem::element_connections::type::weakly_conforming>> {
     using type = specfem::point::displacement<
         specfem::tags::Tags<specfem::element::dimension_tag::dim3,
                             specfem::element::medium_tag::elastic,
-                            false> >; ///< vector displacement
+                            false>>; ///< vector displacement
   };
 
   /// Type alias for self field

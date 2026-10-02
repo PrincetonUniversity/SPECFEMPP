@@ -25,6 +25,9 @@ void test_nonconforming_mesh(const std::string &database_file) {
   //   test_nonconforming_container_transfers(assembly);
   specfem::nonconforming_test::kernel::test_nonconforming_acoustic_elastic(
       assembly, database_file);
+
+  specfem::nonconforming_test::kernel::
+      test_nonconforming_acoustic_elastic_conjugate(assembly, database_file);
 }
 
 TEST(NonconformingKernel3D, acoustic_elastic_11_7) {
