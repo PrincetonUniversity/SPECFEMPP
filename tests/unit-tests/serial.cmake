@@ -645,12 +645,13 @@ specfem_add_test(source_time_function_tests
 
 specfem_add_test(coordinate_systems_tests
   SOURCES   coordinate_systems/utm_tests.cpp
+            coordinate_systems/geocentric_tests.cpp
   LIBRARIES specfem::coordinate_systems
             gtest_main
 )
 
-specfem_add_test(resolve_coordinates_tests
-  SOURCES   assembly/resolve_coordinates/test_resolve_coordinates.cpp
+specfem_add_test(coordinate_resolver_tests
+  SOURCES   assembly/coordinate_resolver/test_coordinate_resolver.cpp
   LIBRARIES specfem::assembly
             specfem::coordinate_systems
             specfem_environment

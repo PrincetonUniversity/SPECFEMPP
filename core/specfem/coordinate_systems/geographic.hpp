@@ -14,7 +14,7 @@ namespace coordinate_systems {
  *
  * Conversion to @ref specfem::point::global_coordinates requires a UTM
  * projection configuration (regional) or geocentric conversion (global),
- * handled by @ref specfem::assembly::resolve_coordinates at assembly time.
+ * handled by @ref specfem::assembly::coordinate_resolver at assembly time.
  */
 class geographic_coordinates final
     : public coordinates<specfem::element::dimension_tag::dim3> {

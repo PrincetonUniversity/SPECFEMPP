@@ -157,7 +157,7 @@ public:
    * function.
    *
    * The coordinates are stored for later resolution to global_coordinates
-   * at assembly time (via @ref specfem::assembly::resolve_coordinates).
+   * at assembly time (via @ref specfem::assembly::coordinate_resolver).
    *
    * @param coordinates Generic coordinate object
    * @param source_time_function pointer to source time function
@@ -400,7 +400,7 @@ public:
   /**
    * @brief Get the generic coordinates (mutable), or nullptr if not set.
    *
-   * Used by resolve_coordinates to set the origin on cartesian coordinates.
+   * Used by the coordinate resolver to set the origin on cartesian coordinates.
    */
   specfem::coordinate_systems::coordinates<dimension_tag> *
   get_read_coordinates() {
