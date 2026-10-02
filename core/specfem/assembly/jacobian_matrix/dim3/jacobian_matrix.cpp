@@ -3,6 +3,9 @@
 #include "specfem/jacobian.hpp"
 #include "specfem/mesh.hpp"
 
+#include <cmath>
+#include <limits>
+
 specfem::assembly::jacobian_matrix<
     specfem::element::dimension_tag::dim3>::jacobian_matrix(const int nspec,
                                                             const int ngllx,
@@ -83,51 +86,63 @@ void specfem::assembly::jacobian_matrix<
   specfem::datatype::deep_copy(jacobian, h_jacobian);
 }
 
-std::tuple<bool, Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace>>
-specfem::assembly::jacobian_matrix<
+specfem::assembly::small_jacobian_result specfem::assembly::jacobian_matrix<
     specfem::element::dimension_tag::dim3>::check_small_jacobian() const {
-  Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace> small_jacobian(
-      "specfem::assembly::jacobian_matrix::negative", nspec);
+  constexpr type_real relative_tolerance = 1.0e-6;
+  const int points_per_element = ngllx * nglly * ngllz;
 
-  Kokkos::deep_copy(small_jacobian, false);
+  specfem::assembly::small_jacobian_result result;
+  result.elements = Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace>(
+      "specfem::assembly::jacobian_matrix::small", nspec);
+  Kokkos::deep_copy(result.elements, false);
 
-  const type_real threshold = 1e-10;
+  for (int ispec = 0; ispec < nspec; ++ispec) {
+    type_real minimum = std::numeric_limits<type_real>::max();
+    type_real absolute_sum = 0;
+    int minimum_ix = 0;
+    int minimum_iy = 0;
+    int minimum_iz = 0;
+    bool finite = true;
 
-  using PointJacobianMatrixType =
-      specfem::point::jacobian_matrix<dimension_tag, true, false>;
-
-  bool found = false;
-  Kokkos::parallel_reduce(
-      "specfem::assembly::jacobian_matrix::check_small_jacobian",
-      Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0, nspec),
-      [=, *this](const int &ispec, bool &l_found) {
-        for (int iz = 0; iz < ngllz; ++iz) {
-          for (int iy = 0; iy < nglly; ++iy) {
-            for (int ix = 0; ix < ngllx; ++ix) {
-              // Define the local_index
-              const specfem::point::index<dimension_tag, false> index(ispec, iz,
-                                                                      iy, ix);
-
-              // Get the Jacobian determinant
-              const auto jacobian = [&]() {
-                PointJacobianMatrixType jacobian_matrix;
-                specfem::assembly::load_on_host(index, *this, jacobian_matrix);
-                return jacobian_matrix.jacobian();
-              }();
-
-              // Check if below threshold
-              if (jacobian < threshold) {
-                small_jacobian(ispec) = true;
-                l_found = true;
-                break;
-              }
+    for (int iz = 0; iz < ngllz; ++iz) {
+      for (int iy = 0; iy < nglly; ++iy) {
+        for (int ix = 0; ix < ngllx; ++ix) {
+          const type_real value = h_jacobian(ispec, iz, iy, ix);
+          if (!std::isfinite(value)) {
+            if (finite) {
+              minimum = value;
+              minimum_ix = ix;
+              minimum_iy = iy;
+              minimum_iz = iz;
             }
+            finite = false;
+            continue;
+          }
+          absolute_sum += std::abs(value);
+          if (value < minimum) {
+            minimum = value;
+            minimum_ix = ix;
+            minimum_iy = iy;
+            minimum_iz = iz;
           }
         }
-      },
-      found);
+      }
+    }
 
-  return std::make_tuple(found, small_jacobian);
+    const type_real scale = absolute_sum / points_per_element;
+    const bool invalid = !finite || scale <= 0 || minimum <= 0 ||
+                         minimum < relative_tolerance * scale;
+    if (!invalid) {
+      continue;
+    }
+
+    result.found = true;
+    result.elements(ispec) = true;
+    result.diagnostics.push_back(
+        { ispec, minimum_ix, minimum_iy, minimum_iz, minimum, scale });
+  }
+
+  return result;
 }
 
 specfem::assembly::jacobian_matrix<specfem::element::dimension_tag::dim3>::
