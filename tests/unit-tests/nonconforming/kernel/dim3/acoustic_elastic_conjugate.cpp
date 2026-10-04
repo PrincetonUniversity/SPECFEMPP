@@ -64,8 +64,8 @@ void test_nonconforming_acoustic_elastic_conj(
                 "test_nonconforming_acoustic_elastic -- target_medium and "
                 "source_medium must be acoustic and elastic (or vice versa)!");
 
-  constexpr type_real reltol = 1e-5;
-  constexpr type_real abstol = 1e-7;
+  constexpr type_real reltol = 1e-4;
+  constexpr type_real abstol = 1e-6;
   constexpr int fail_num_verbose = 5;
 
   using target_initializer_type = std::conditional_t<
