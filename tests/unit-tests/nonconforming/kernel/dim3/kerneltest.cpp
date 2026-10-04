@@ -18,9 +18,14 @@ void test_nonconforming_mesh(const std::string &database_file) {
   std::vector<std::shared_ptr<
       specfem::receivers::receiver<specfem::element::dimension_tag::dim3>>>
       receivers;
+
+  specfem::element_coupling::flux_scheme_configuration flux_scheme_config;
+  flux_scheme_config.set_interfacial_meshing_type(
+      specfem::element_coupling::interfacial_meshing_type::self_host);
+
   specfem::assembly::assembly<specfem::element::dimension_tag::dim3> assembly(
       mesh, quadrature, sources, receivers, {}, 1.0, 0.0, 1, 1, 1,
-      specfem::simulation::type::forward, false, nullptr);
+      specfem::simulation::type::forward, false, nullptr, flux_scheme_config);
 
   //   test_nonconforming_container_transfers(assembly);
   specfem::nonconforming_test::kernel::test_nonconforming_acoustic_elastic(
