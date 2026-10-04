@@ -2,6 +2,7 @@
 #include "specfem/assembly.hpp"
 #include "specfem/element/attributes.hpp"
 #include "specfem/element/dimension.hpp"
+#include "specfem/element/tags.hpp"
 #include "specfem/execution.hpp"
 #include <type_traits>
 
@@ -88,6 +89,51 @@ public:
   }
 };
 
+template <specfem::simulation::field_type field_type,
+          specfem::element::medium_tag medium_tag,
+          specfem::element::dimension_tag dimension_tag>
+Kokkos::View<specfem::point::global_coordinates<dimension_tag> *>
+get_coords_per_dof(const specfem::assembly::assembly<dimension_tag> &assembly,
+                   const type_real &same_dof_disagreement_tol = -1) {
+  const auto field =
+      assembly.fields.template get_simulation_field<field_type>();
+  const int nglob = field.template get_nglob<medium_tag>();
+
+  if (nglob <= 0) {
+    return Kokkos::View<specfem::point::global_coordinates<dimension_tag> *>(
+        "dof_coords", nglob);
+  }
+  constexpr bool using_simd = false;
+  using simd = specfem::datatype::simd<type_real, using_simd>;
+  using parallel_config = specfem::parallel_configuration::default_range_config<
+      simd, Kokkos::DefaultExecutionSpace>;
+
+  // use coords struct so that this works for both dim2 and dim3
+  Kokkos::View<specfem::point::global_coordinates<dimension_tag> *> dof_coords(
+      "dof_coords", nglob);
+
+  const auto elements =
+      assembly.element_types.get_elements_on_device(medium_tag);
+  const auto &element_grid = assembly.mesh.element_grid;
+  specfem::execution::ChunkedDomainIterator chunk(parallel_config(), elements,
+                                                  element_grid);
+  specfem::execution::for_all(
+      "specfem::nonconforming_test::kernel::acoustic_elastic3d::set_field_"
+      "values load dof_coords",
+      chunk,
+      KOKKOS_LAMBDA(
+          const typename decltype(chunk)::base_index_type &iterator_index) {
+        const auto index = iterator_index.get_index();
+        specfem::point::global_coordinates<dimension_tag> coords;
+        specfem::assembly::load_on_device(index, assembly.mesh, coords);
+
+        const int iglob = field.template get_iglob<true, medium_tag>(index);
+        dof_coords(iglob) = coords;
+      });
+  Kokkos::fence();
+  return dof_coords;
+}
+
 /**
  * @brief Sets field values (by iglob) of a simfield using a PointSetter.
  */
@@ -124,28 +170,8 @@ void set_field_values(
       simd, Kokkos::DefaultExecutionSpace>;
 
   // use coords struct so that this works for both dim2 and dim3
-  Kokkos::View<specfem::point::global_coordinates<dimension_tag> *> dof_coords(
-      "dof_coords", nglob);
-
-  const auto elements =
-      assembly.element_types.get_elements_on_device(medium_tag);
-  const auto &element_grid = assembly.mesh.element_grid;
-  specfem::execution::ChunkedDomainIterator chunk(parallel_config(), elements,
-                                                  element_grid);
-  specfem::execution::for_all(
-      "specfem::nonconforming_test::kernel::acoustic_elastic3d::set_field_"
-      "values load dof_coords",
-      chunk,
-      KOKKOS_LAMBDA(
-          const typename decltype(chunk)::base_index_type &iterator_index) {
-        const auto index = iterator_index.get_index();
-        specfem::point::global_coordinates<dimension_tag> coords;
-        specfem::assembly::load_on_device(index, assembly.mesh, coords);
-        const int iglob = field.template get_iglob<true, medium_tag>(index);
-        dof_coords(iglob) = coords;
-      });
-
-  Kokkos::fence();
+  Kokkos::View<specfem::point::global_coordinates<dimension_tag> *> dof_coords =
+      get_coords_per_dof<field_type, medium_tag>(assembly);
   specfem::execution::RangeIterator dof_range(parallel_config(), nglob);
   specfem::execution::for_all(
       "specfem::nonconforming_test::kernel::acoustic_elastic3d::set_field_"
