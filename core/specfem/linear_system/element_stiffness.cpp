@@ -63,11 +63,12 @@ void specfem::linear_system::validate_stiffness_scope(
                    "supported in the with_stacey scope. Dirichlet masks "
                    "('composite_stacey_dirichlet') are not representable yet.";
       } else {
-        message << "only natural boundary conditions ('none', "
-                   "'acoustic_free_surface') are supported. Stacey boundaries "
-                   "add a velocity-dependent term the stiffness probe does "
-                   "not capture; opt in with StiffnessScope::with_stacey and "
-                   "assemble the damping matrix separately.";
+        message
+            << "only natural boundary conditions ('none', "
+               "'acoustic_free_surface') are supported. Stacey boundaries "
+               "add a velocity-dependent term the stiffness matrix "
+               "does not capture; opt in with StiffnessScope::with_stacey and "
+               "assemble the damping matrix separately.";
       }
       throw std::runtime_error(message.str());
     }
@@ -81,11 +82,10 @@ void specfem::linear_system::compute_element_stiffness(
         &assembly,
     const specfem::datatype::ElementIndexRange &batch,
     const Kokkos::View<type_real ***, Kokkos::LayoutRight,
-                       Kokkos::DefaultExecutionSpace> &k_e,
-    const specfem::linear_system::StiffnessKernelImpl impl) {
+                       Kokkos::DefaultExecutionSpace> &k_e) {
   if (assembly.mesh.element_grid == 5) {
     specfem::linear_system::compute_element_stiffness<5, Tags>(assembly, batch,
-                                                               k_e, impl);
+                                                               k_e);
     return;
   }
   throw std::runtime_error(
@@ -104,19 +104,16 @@ template void specfem::linear_system::compute_element_stiffness<
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &,
     const specfem::datatype::ElementIndexRange &,
     const Kokkos::View<type_real ***, Kokkos::LayoutRight,
-                       Kokkos::DefaultExecutionSpace> &,
-    const specfem::linear_system::StiffnessKernelImpl);
+                       Kokkos::DefaultExecutionSpace> &);
 
 template void specfem::linear_system::compute_element_stiffness<
     specfem::linear_system_impl::elastic_isotropic_tags>(
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &,
     const specfem::datatype::ElementIndexRange &,
     const Kokkos::View<type_real ***, Kokkos::LayoutRight,
-                       Kokkos::DefaultExecutionSpace> &,
-    const specfem::linear_system::StiffnessKernelImpl);
+                       Kokkos::DefaultExecutionSpace> &);
 
 template specfem::linear_system::ElementStiffnessKernel
 specfem::linear_system::make_element_stiffness_kernel<
     specfem::linear_system_impl::elastic_isotropic_tags>(
-    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &,
-    const int, const specfem::linear_system::StiffnessKernelImpl);
+    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &);

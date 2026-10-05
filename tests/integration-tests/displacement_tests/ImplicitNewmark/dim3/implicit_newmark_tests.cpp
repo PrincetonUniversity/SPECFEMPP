@@ -115,6 +115,11 @@ TraceMap collect_traces(AssemblyType &assembly) {
 // roundoff-bound: the tolerance is calibrated, not derived. The fixture has
 // no Stacey boundaries, so this exercises the M + K path (C empty).
 TEST(ImplicitNewmark3D, MatchesExplicitRunOnNaturalBoundaryMesh) {
+#ifndef SPECFEM_ENABLE_TENSOROPS
+  GTEST_SKIP() << "SPECFEM++ was built without TensorOperations "
+                  "(SPECFEM_ENABLE_TENSOROPS=OFF); the implicit solver needs "
+                  "the element stiffness kernel.";
+#endif
   const std::string fixture = "HomogeneousHalfspaceSmallNoABCForceSource";
 
   // Reference: the production explicit solver.
@@ -269,6 +274,11 @@ double relative_l2(const std::vector<double> &candidate,
 // near-source u_z ~ P / (16 pi mu (1 - nu) r) gives the order of magnitude
 // only -- a human sanity check, not a tolerance one could defend.
 TEST(ImplicitNewmark3D, RecreatesExplicitSteadyStateWithLargeSteps) {
+#ifndef SPECFEM_ENABLE_TENSOROPS
+  GTEST_SKIP() << "SPECFEM++ was built without TensorOperations "
+                  "(SPECFEM_ENABLE_TENSOROPS=OFF); the implicit solver needs "
+                  "the element stiffness kernel.";
+#endif
   const std::string fixture = "HomogeneousHalfSpaceStaceyStatic";
 
   // Explicit reference: the "iterative time solver run to steady state".

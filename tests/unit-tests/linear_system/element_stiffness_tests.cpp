@@ -104,11 +104,10 @@ protected:
   static StiffnessView::host_mirror_type element_block(const int ispec) {
     const specfem::datatype::ElementIndexRange batch(ispec, ispec + 1);
     StiffnessView k_e("k_e", 1, ndof, ndof);
-    // Pinned to the probe: this suite is the probe's matrix-free oracle; the
-    // other kernels are held to the probe by their own A/B suites.
+    // This suite is the kernel's matrix-free oracle; stiffness_kernel_tests
+    // holds it to a host closed-form reference.
     specfem::linear_system::compute_element_stiffness<StiffnessTags>(
-        *assembly_, batch, k_e,
-        specfem::linear_system::StiffnessKernelImpl::probe);
+        *assembly_, batch, k_e);
     auto h_k = Kokkos::create_mirror_view(k_e);
     Kokkos::deep_copy(h_k, k_e);
     return h_k;
@@ -124,6 +123,8 @@ TEST_F(ElementStiffness3D, ValidatesScopeOnCleanMesh) {
       specfem::linear_system::validate_stiffness_scope<StiffnessTags>(
           *assembly_));
 }
+
+#ifdef SPECFEM_ENABLE_TENSOROPS
 
 TEST_F(ElementStiffness3D, SymmetricWithRigidBodyNullSpace) {
   const auto elements =
@@ -141,8 +142,8 @@ TEST_F(ElementStiffness3D, SymmetricWithRigidBodyNullSpace) {
   ASSERT_GT(scale, static_cast<type_real>(0));
 
   // K = integral of grad(phi_i) : C : grad(phi_j) is symmetric for elastic
-  // isotropic media; the probe computes K(i, j) and K(j, i) through
-  // independent operator applications, so they match only up to roundoff.
+  // isotropic media; K(i, j) and K(j, i) are computed independently, so they
+  // match only up to roundoff.
   type_real max_asymmetry = 0;
   for (int i = 0; i < ndof; ++i) {
     for (int j = i + 1; j < ndof; ++j) {
@@ -315,6 +316,16 @@ TEST_F(ElementStiffness3D, MatchesMatrixFreeOperator) {
         << "K_e columns disagree with the matrix-free operator";
   }
 }
+
+#else // !SPECFEM_ENABLE_TENSOROPS
+
+TEST(ElementStiffnessKernel3D, SkippedWithoutTensorOps) {
+  GTEST_SKIP() << "SPECFEM++ was built without TensorOperations "
+                  "(SPECFEM_ENABLE_TENSOROPS=OFF); the element stiffness "
+                  "kernel is unavailable, only the scope checks run.";
+}
+
+#endif // SPECFEM_ENABLE_TENSOROPS
 
 TEST(ElementStiffnessScope3D, RejectsStaceyBoundaries) {
   const auto stacey_assembly = build_assembly_3d("HomogeneousHalfSpaceStacey");

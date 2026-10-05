@@ -704,30 +704,11 @@ specfem_add_test(stiffness_assembler_tests
   LABELS    TRILINOS
 )
 
-# A/B correctness + timing of the tensor-graph kernel against the probe;
-# GTEST_SKIP stub when SPECFEM_ENABLE_TENSOROPS is OFF.
-specfem_add_test(stiffness_tensor_graph_tests
-  SOURCES linear_system/stiffness_tensor_graph_tests.cpp
-  LIBRARIES specfem::linear_system
-            specfem::quadrature
-            specfem::mesh
-            yaml-cpp
-            specfem_environment
-            specfem::assembly
-            specfem::runtime_configuration
-            timescheme
-            point
-            specfem::algorithms
-            specfem::solver
-            specfem::periodic_tasks
-            ${BOOST_LIBS}
-            -lpthread -lm
-)
-
-# Direct (sum-factored) element stiffness: host closed-form reference held to
-# the probe kernel; runs in every build (no optional dependency).
-specfem_add_test(stiffness_direct_kernel_tests
-  SOURCES linear_system/stiffness_direct_kernel_tests.cpp
+# Sum-factored element stiffness kernel held to a host closed-form reference.
+# Without SPECFEM_ENABLE_TENSOROPS only the reference checks and the
+# run-time-error check run.
+specfem_add_test(stiffness_kernel_tests
+  SOURCES linear_system/stiffness_kernel_tests.cpp
   LIBRARIES specfem::linear_system
             specfem::quadrature
             specfem::mesh

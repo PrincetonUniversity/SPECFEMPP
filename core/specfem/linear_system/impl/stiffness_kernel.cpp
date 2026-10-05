@@ -1,8 +1,8 @@
-// One of the two translation units that include TensorOperations headers
-// (the other is stiffness_tensor_graph_kernel.cpp). Without
-// SPECFEM_ENABLE_TENSOROPS the entry points are throwing stubs (bottom of the
-// file), so callers dispatch without preprocessor branches.
-#include "specfem/linear_system/impl/stiffness_direct_kernel.hpp"
+// The only translation unit of the library that includes TensorOperations
+// headers. Without SPECFEM_ENABLE_TENSOROPS the entry points are throwing
+// stubs (bottom of the file), so the code base compiles and callers fail at
+// run time instead.
+#include "specfem/linear_system/impl/stiffness_kernel.hpp"
 
 #include "specfem/linear_system/element_stiffness.hpp"
 
@@ -110,12 +110,12 @@ struct QuadratureWeightLeaf {
 template <int NGLL, typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
            Tags::attenuation_tag == specfem::element::attenuation_tag::none)
-specfem::linear_system_impl::StiffnessDirectKernel<
-    NGLL, Tags>::StiffnessDirectKernel(const AssemblyType &assembly)
+specfem::linear_system_impl::StiffnessKernel<NGLL, Tags>::StiffnessKernel(
+    const AssemblyType &assembly)
     : assembly_(assembly) {
   if (assembly.mesh.element_grid != NGLL) {
     throw std::runtime_error(
-        "specfem::linear_system_impl::StiffnessDirectKernel: the number of "
+        "specfem::linear_system_impl::StiffnessKernel: the number of "
         "GLL points in the mesh elements must match the template parameter "
         "NGLL.");
   }
@@ -124,7 +124,7 @@ specfem::linear_system_impl::StiffnessDirectKernel<
 template <int NGLL, typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
            Tags::attenuation_tag == specfem::element::attenuation_tag::none)
-void specfem::linear_system_impl::StiffnessDirectKernel<NGLL, Tags>::operator()(
+void specfem::linear_system_impl::StiffnessKernel<NGLL, Tags>::operator()(
     const specfem::datatype::ElementIndexRange &batch,
     const StiffnessViewType &k_e) const {
   using ExecSpace = Kokkos::DefaultExecutionSpace;
@@ -143,7 +143,7 @@ void specfem::linear_system_impl::StiffnessDirectKernel<NGLL, Tags>::operator()(
       static_cast<int>(k_e.extent(1)) != ndof ||
       static_cast<int>(k_e.extent(2)) != ndof) {
     throw std::runtime_error(
-        "specfem::linear_system_impl::StiffnessDirectKernel: the element "
+        "specfem::linear_system_impl::StiffnessKernel: the element "
         "stiffness buffer must have extents (>= batch size, ndof, ndof) "
         "with ndof = ncomp * NGLL^3.");
   }
@@ -270,59 +270,36 @@ void specfem::linear_system_impl::StiffnessDirectKernel<NGLL, Tags>::operator()(
 
 namespace specfem::linear_system_impl {
 /// Single throw message for every stub of the OFF build.
-inline constexpr const char *direct_kernel_unavailable_message =
-    "specfem::linear_system::compute_element_stiffness: the direct kernel "
-    "requires SPECFEM++ built with SPECFEM_ENABLE_TENSOROPS=ON (and "
-    "SPECFEM_TENSOROPS_ROOT pointing at a TensorOperations checkout).";
+inline constexpr const char *stiffness_kernel_unavailable_message =
+    "specfem::linear_system: element stiffness blocks require SPECFEM++ "
+    "built with SPECFEM_ENABLE_TENSOROPS=ON (and SPECFEM_TENSOROPS_ROOT "
+    "pointing at a TensorOperations checkout).";
 } // namespace specfem::linear_system_impl
 
 template <int NGLL, typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
            Tags::attenuation_tag == specfem::element::attenuation_tag::none)
-specfem::linear_system_impl::StiffnessDirectKernel<
-    NGLL, Tags>::StiffnessDirectKernel(const AssemblyType &assembly)
+specfem::linear_system_impl::StiffnessKernel<NGLL, Tags>::StiffnessKernel(
+    const AssemblyType &assembly)
     : assembly_(assembly) {
   throw std::runtime_error(
-      specfem::linear_system_impl::direct_kernel_unavailable_message);
+      specfem::linear_system_impl::stiffness_kernel_unavailable_message);
 }
 
 template <int NGLL, typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
            Tags::attenuation_tag == specfem::element::attenuation_tag::none)
-void specfem::linear_system_impl::StiffnessDirectKernel<NGLL, Tags>::operator()(
+void specfem::linear_system_impl::StiffnessKernel<NGLL, Tags>::operator()(
     const specfem::datatype::ElementIndexRange & /* batch */,
     const StiffnessViewType & /* k_e */) const {
   throw std::runtime_error(
-      specfem::linear_system_impl::direct_kernel_unavailable_message);
+      specfem::linear_system_impl::stiffness_kernel_unavailable_message);
 }
 
 #endif // SPECFEM_ENABLE_TENSOROPS
 
-// The one-shot wrapper and the explicit instantiations are shared by both
-// builds: without TensorOperations the constructor above throws.
-template <int NGLL, typename Tags>
-  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
-           Tags::attenuation_tag == specfem::element::attenuation_tag::none)
-void specfem::linear_system_impl::compute_element_stiffness_direct(
-    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
-        &assembly,
-    const specfem::datatype::ElementIndexRange &batch,
-    const Kokkos::View<type_real ***, Kokkos::LayoutRight,
-                       Kokkos::DefaultExecutionSpace> &k_e) {
-  const specfem::linear_system_impl::StiffnessDirectKernel<NGLL, Tags> kernel(
-      assembly);
-  kernel(batch, k_e);
-  Kokkos::fence();
-}
-
-// Explicit instantiations: 3D elastic isotropic, NGLL = 5 (mirrors
+// Explicit instantiation, shared by both builds (without TensorOperations
+// the constructor above throws): 3D elastic isotropic, NGLL = 5 (mirrors
 // element_stiffness.cpp).
-template class specfem::linear_system_impl::StiffnessDirectKernel<
+template class specfem::linear_system_impl::StiffnessKernel<
     5, specfem::linear_system_impl::elastic_isotropic_tags>;
-
-template void specfem::linear_system_impl::compute_element_stiffness_direct<
-    5, specfem::linear_system_impl::elastic_isotropic_tags>(
-    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &,
-    const specfem::datatype::ElementIndexRange &,
-    const Kokkos::View<type_real ***, Kokkos::LayoutRight,
-                       Kokkos::DefaultExecutionSpace> &);

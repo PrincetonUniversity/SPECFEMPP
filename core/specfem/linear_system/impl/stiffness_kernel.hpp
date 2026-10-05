@@ -1,9 +1,9 @@
 #pragma once
 
-// Declares the direct (sum-factored) TensorOperations K_e producer,
-// unconditionally: callers dispatch on it without preprocessor branches. The
-// .cpp sibling includes TensorOperations headers; without
-// SPECFEM_ENABLE_TENSOROPS it defines these entry points as throwing stubs.
+// Declares the (sum-factored) TensorOperations K_e producer, unconditionally:
+// callers use it without preprocessor branches. The .cpp sibling includes
+// TensorOperations headers; without SPECFEM_ENABLE_TENSOROPS it defines these
+// entry points as throwing stubs.
 
 #include "specfem/datatype/element_index_range.hpp"
 #include "specfem/element.hpp"
@@ -74,7 +74,7 @@ namespace specfem::linear_system_impl {
  *
  * Cost per element is \f$ O(N_{GLL}^5) \f$ arithmetic against an
  * \f$ O(N_{GLL}^6) \f$ block write, so the kernel is write-bound. Sign
- * convention as the probe kernel: \f$ K u \f$ is the internal force.
+ * convention: \f$ K u \f$ is the internal force.
  * Medium-generic: \f$ a, b \f$ are single labels of extent `ncomp`; the
  * only medium-specific code is the constitutive accessor.
  *
@@ -86,12 +86,12 @@ namespace specfem::linear_system_impl {
  *
  * @tparam NGLL Number of GLL points per element edge (only 5 instantiated)
  * @tparam Tags Compile-time tags; dimension must be `dim3` and attenuation
- *              `none` (same scope as the probe kernel)
+ *              `none`
  */
 template <int NGLL, typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
            Tags::attenuation_tag == specfem::element::attenuation_tag::none)
-class StiffnessDirectKernel {
+class StiffnessKernel {
 public:
   constexpr static auto dimension_tag = Tags::dimension_tag;
   constexpr static auto medium_tag = Tags::medium_tag;
@@ -116,7 +116,7 @@ public:
    * @param assembly Assembled mesh, jacobian matrix, and material properties;
    *        borrowed, must outlive the kernel
    */
-  explicit StiffnessDirectKernel(const AssemblyType &assembly);
+  explicit StiffnessKernel(const AssemblyType &assembly);
 
   /**
    * @brief Fill the leading `batch.size()` blocks of `k_e`.
@@ -137,20 +137,5 @@ public:
 private:
   const AssemblyType &assembly_; ///< Borrowed assembly (not owned)
 };
-
-/**
- * @brief One-shot wrapper over @ref StiffnessDirectKernel:
- * construct-and-call, then fence, matching
- * @ref specfem::linear_system::compute_element_stiffness.
- */
-template <int NGLL, typename Tags>
-  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
-           Tags::attenuation_tag == specfem::element::attenuation_tag::none)
-void compute_element_stiffness_direct(
-    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
-        &assembly,
-    const specfem::datatype::ElementIndexRange &batch,
-    const Kokkos::View<type_real ***, Kokkos::LayoutRight,
-                       Kokkos::DefaultExecutionSpace> &k_e);
 
 } // namespace specfem::linear_system_impl

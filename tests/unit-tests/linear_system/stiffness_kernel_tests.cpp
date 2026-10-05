@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-// Tests of the direct (sum-factored) element stiffness formulation.
+// Tests of the (sum-factored) element stiffness kernel.
 //
 // The closed form is
 //   K_e(a,i; b,j) = sum_{r,s} sum_q h(q, i_r) M(a,b,r,s; q in slot r, i
@@ -33,9 +33,11 @@
 //   S_{r,s} = [q == j_r] h(i_s, j_s) prod_{t != r,s} [i_t == j_t]   (s != r)
 //
 // The host reference below implements exactly that from the host mirrors of
-// the mesh and the constitutive_tensor accessor, independently of every
-// device kernel. The probe kernel is the oracle it is held to.
-namespace stiffness_direct_kernel_test {
+// the mesh and the constitutive_tensor accessor, independently of the device
+// kernel, and is the oracle the kernel is held to. The reference itself is
+// pinned to the production stress pipeline; element_stiffness_tests holds the
+// kernel to the matrix-free operator.
+namespace stiffness_kernel_test {
 
 constexpr auto dim3_tag = specfem::element::dimension_tag::dim3;
 constexpr auto elastic_tag = specfem::element::medium_tag::elastic;
@@ -64,14 +66,13 @@ using PointTags =
                         specfem::element::attenuation_tag::none, false>;
 using StiffnessView = Kokkos::View<type_real ***, Kokkos::LayoutRight,
                                    Kokkos::DefaultExecutionSpace>;
-using KernelImpl = specfem::linear_system::StiffnessKernelImpl;
 using PointIndexType = specfem::point::index<dim3_tag, false>;
 using PointJacobianMatrixType =
     specfem::point::jacobian_matrix<dim3_tag, true, false>;
 using PointPropertyType = specfem::point::properties<PointTags>;
 using PointFieldDerivativesType = specfem::point::field_derivatives<PointTags>;
 
-// Same fixture as element_stiffness_tests.cpp / stiffness_tensor_graph_tests.
+// Same fixture as element_stiffness_tests.cpp.
 std::unique_ptr<AssemblyType> build_assembly_3d(const std::string &test_name) {
   const std::string test_path =
       "displacement_tests/Newmark/serial/dim3/" + test_name;
@@ -247,7 +248,7 @@ std::vector<double> reference_stiffness(const AssemblyType &assembly,
   return k;
 }
 
-class DirectStiffness3D : public ::testing::Test {
+class StiffnessKernel3D : public ::testing::Test {
 protected:
   static void SetUpTestSuite() {
     assembly_ = build_assembly_3d("HomogeneousHalfspaceSmallNoABCForceSource")
@@ -270,26 +271,26 @@ protected:
     return { elements(0), elements(0) + nelements };
   }
 
-  static double fill_blocks(const StiffnessView &k_e, const KernelImpl impl,
+  static double fill_blocks(const StiffnessView &k_e,
                             const specfem::datatype::ElementIndexRange &range) {
     Kokkos::fence();
     Kokkos::Timer timer;
     specfem::linear_system::compute_element_stiffness<StiffnessTags>(
-        *assembly_, range, k_e, impl);
+        *assembly_, range, k_e);
     return timer.seconds() * 1e3;
   }
 
   static AssemblyType *assembly_;
 };
 
-AssemblyType *DirectStiffness3D::assembly_ = nullptr;
+AssemblyType *StiffnessKernel3D::assembly_ = nullptr;
 
 // The reference-frame constitutive tensor built from the accessor equals the
 // one obtained by pushing a unit reference gradient through the production
 // chain_rule -> compute_stress -> stress * jacobian pipeline at every point
 // of one element. Pins constitutive_tensor to compute_stress inside the
 // exact index conventions the kernel relies on.
-TEST_F(DirectStiffness3D, ReferenceConstitutiveMatchesStressPipeline) {
+TEST_F(StiffnessKernel3D, ReferenceConstitutiveMatchesStressPipeline) {
   const auto range = elastic_range();
   const int ispec = range.begin_index();
   const auto M = reference_constitutive(*assembly_, ispec);
@@ -342,16 +343,22 @@ TEST_F(DirectStiffness3D, ReferenceConstitutiveMatchesStressPipeline) {
                           1e-5, 1e-12, static_cast<type_real>(scale))));
 }
 
+#ifdef SPECFEM_ENABLE_TENSOROPS
+
 // The closed form, evaluated on the host from the accessor and the host
-// quadrature/Jacobian data, reproduces the probe kernel's blocks.
-TEST_F(DirectStiffness3D, ClosedFormReferenceMatchesProbe) {
+// quadrature/Jacobian data, reproduces the device kernel's blocks.
+TEST_F(StiffnessKernel3D, ClosedFormReferenceMatchesKernel) {
   const auto range = elastic_range();
   const int nelements = range.size();
 
-  StiffnessView k_probe("k_probe", nelements, ndof, ndof);
-  const double probe_ms = fill_blocks(k_probe, KernelImpl::probe, range);
-  auto h_probe =
-      Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, k_probe);
+  StiffnessView k_e("k_e", nelements, ndof, ndof);
+  // Warm-up on a 1-element sub-range; the timed full-range call after
+  // overwrites every block.
+  const specfem::datatype::ElementIndexRange warmup(range.begin_index(),
+                                                    range.begin_index() + 1);
+  fill_blocks(k_e, warmup);
+  const double kernel_ms = fill_blocks(k_e, range);
+  auto h_k = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, k_e);
 
   // The host reference is O(ndof^2 * 45) per element; a stride keeps the
   // test quick while still covering elements across the whole mesh.
@@ -367,11 +374,11 @@ TEST_F(DirectStiffness3D, ClosedFormReferenceMatchesProbe) {
     ++checked;
     for (int i = 0; i < ndof; ++i) {
       for (int j = 0; j < ndof; ++j) {
-        const type_real probe = h_probe(e, i, j);
+        const type_real kernel = h_k(e, i, j);
         const type_real ref = static_cast<type_real>(
             k_ref[static_cast<std::size_t>(i) * ndof + j]);
-        scale = std::max(scale, std::abs(probe));
-        const type_real diff = std::abs(probe - ref);
+        scale = std::max(scale, std::abs(ref));
+        const type_real diff = std::abs(kernel - ref);
         if (diff > max_diff) {
           max_diff = diff;
           worst_e = e;
@@ -382,85 +389,25 @@ TEST_F(DirectStiffness3D, ClosedFormReferenceMatchesProbe) {
     }
   }
   const double reference_ms = timer.seconds() * 1e3;
-  std::printf("[ timing   ] probe: %.2f ms (%d elements); host closed-form "
+  std::printf("[ timing   ] kernel: %.2f ms (%d elements); host closed-form "
               "reference: %.2f ms (%d elements)\n",
-              probe_ms, nelements, reference_ms, checked);
+              kernel_ms, nelements, reference_ms, checked);
 
   ASSERT_GT(scale, static_cast<type_real>(0));
   const type_real tol = scaled_tolerance(1e-4, 1e-12, scale);
   EXPECT_LE(max_diff, tol) << "worst entry at (e=" << worst_e
                            << ", i=" << worst_i << ", j=" << worst_j
-                           << "): probe=" << h_probe(worst_e, worst_i, worst_j)
+                           << "): kernel=" << h_k(worst_e, worst_i, worst_j)
                            << " scale=" << scale;
 }
 
-#ifdef SPECFEM_ENABLE_TENSOROPS
-
-// A/B: the direct kernel's blocks equal the probe's over every element, with
-// a timing line for all three kernels.
-TEST_F(DirectStiffness3D, AgreesWithProbeKernelWithTiming) {
-  const auto range = elastic_range();
-  const int nelements = range.size();
-
-  StiffnessView k_probe("k_probe", nelements, ndof, ndof);
-  StiffnessView k_graph("k_graph", nelements, ndof, ndof);
-  StiffnessView k_direct("k_direct", nelements, ndof, ndof);
-
-  // Warm-up on a 1-element sub-range; the timed full-range calls after
-  // overwrite every block.
-  const specfem::datatype::ElementIndexRange warmup(range.begin_index(),
-                                                    range.begin_index() + 1);
-  fill_blocks(k_probe, KernelImpl::probe, warmup);
-  fill_blocks(k_graph, KernelImpl::tensor_graph, warmup);
-  fill_blocks(k_direct, KernelImpl::direct, warmup);
-  const double probe_ms = fill_blocks(k_probe, KernelImpl::probe, range);
-  const double graph_ms = fill_blocks(k_graph, KernelImpl::tensor_graph, range);
-  const double direct_ms = fill_blocks(k_direct, KernelImpl::direct, range);
-
-  std::printf("[ timing   ] probe: %.2f ms, tensor_graph: %.2f ms, direct: "
-              "%.2f ms (%d elements; direct speedup vs probe %.1fx, vs "
-              "tensor_graph %.1fx)\n",
-              probe_ms, graph_ms, direct_ms, nelements, probe_ms / direct_ms,
-              graph_ms / direct_ms);
-
-  auto h_probe =
-      Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, k_probe);
-  auto h_direct =
-      Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, k_direct);
-
-  type_real scale = 0;
-  type_real max_diff = 0;
-  int worst_e = 0, worst_i = 0, worst_j = 0;
-  for (int e = 0; e < nelements; ++e) {
-    for (int i = 0; i < ndof; ++i) {
-      for (int j = 0; j < ndof; ++j) {
-        scale = std::max(scale, std::abs(h_probe(e, i, j)));
-        const type_real diff = std::abs(h_probe(e, i, j) - h_direct(e, i, j));
-        if (diff > max_diff) {
-          max_diff = diff;
-          worst_e = e;
-          worst_i = i;
-          worst_j = j;
-        }
-      }
-    }
-  }
-  ASSERT_GT(scale, static_cast<type_real>(0));
-  const type_real tol = scaled_tolerance(1e-4, 1e-12, scale);
-  EXPECT_LE(max_diff, tol) << "worst entry at (e=" << worst_e
-                           << ", i=" << worst_i << ", j=" << worst_j
-                           << "): probe=" << h_probe(worst_e, worst_i, worst_j)
-                           << " direct=" << h_direct(worst_e, worst_i, worst_j)
-                           << " scale=" << scale;
-}
-
-TEST_F(DirectStiffness3D, SymmetricWithRigidBodyNullSpace) {
+TEST_F(StiffnessKernel3D, SymmetricWithRigidBodyNullSpace) {
   const auto range = elastic_range();
   const specfem::datatype::ElementIndexRange first(range.begin_index(),
                                                    range.begin_index() + 1);
   StiffnessView k_e("k_e", 1, ndof, ndof);
-  specfem::linear_system::compute_element_stiffness<StiffnessTags>(
-      *assembly_, first, k_e, KernelImpl::direct);
+  specfem::linear_system::compute_element_stiffness<StiffnessTags>(*assembly_,
+                                                                   first, k_e);
   auto h_k = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, k_e);
 
   type_real scale = 0;
@@ -495,14 +442,14 @@ TEST_F(DirectStiffness3D, SymmetricWithRigidBodyNullSpace) {
 
 // k_e is not pre-zeroed by contract, so the structurally zero half of every
 // block must be written by the kernel, not left behind.
-TEST_F(DirectStiffness3D, WritesEveryEntry) {
+TEST_F(StiffnessKernel3D, WritesEveryEntry) {
   const auto range = elastic_range();
   const specfem::datatype::ElementIndexRange two(range.begin_index(),
                                                  range.begin_index() + 2);
   StiffnessView k_e("k_e", 2, ndof, ndof);
   Kokkos::deep_copy(k_e, std::numeric_limits<type_real>::quiet_NaN());
-  specfem::linear_system::compute_element_stiffness<StiffnessTags>(
-      *assembly_, two, k_e, KernelImpl::direct);
+  specfem::linear_system::compute_element_stiffness<StiffnessTags>(*assembly_,
+                                                                   two, k_e);
   auto h_k = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, k_e);
   int nans = 0;
   for (int e = 0; e < 2; ++e) {
@@ -517,27 +464,38 @@ TEST_F(DirectStiffness3D, WritesEveryEntry) {
   EXPECT_EQ(nans, 0);
 }
 
-TEST_F(DirectStiffness3D, RejectsMisshapedBuffer) {
+#else // !SPECFEM_ENABLE_TENSOROPS
+
+// Without TensorOperations the kernel is a stub: the code base compiles, and
+// requesting blocks is a run-time error.
+TEST_F(StiffnessKernel3D, ThrowsWithoutTensorOps) {
+  const auto range = elastic_range();
+  const specfem::datatype::ElementIndexRange first(range.begin_index(),
+                                                   range.begin_index() + 1);
+  StiffnessView k_e("k_e", 1, ndof, ndof);
+  EXPECT_THROW(specfem::linear_system::compute_element_stiffness<StiffnessTags>(
+                   *assembly_, first, k_e),
+               std::runtime_error);
+  EXPECT_THROW(
+      specfem::linear_system::make_element_stiffness_kernel<StiffnessTags>(
+          *assembly_),
+      std::runtime_error);
+}
+
+#endif // SPECFEM_ENABLE_TENSOROPS
+
+// The buffer check precedes the kernel, so this holds in every build.
+TEST_F(StiffnessKernel3D, RejectsMisshapedBuffer) {
   const auto range = elastic_range();
   const specfem::datatype::ElementIndexRange first(range.begin_index(),
                                                    range.begin_index() + 1);
   StiffnessView k_e("k_e", 1, ndof - 1, ndof);
   EXPECT_THROW(specfem::linear_system::compute_element_stiffness<StiffnessTags>(
-                   *assembly_, first, k_e, KernelImpl::direct),
+                   *assembly_, first, k_e),
                std::runtime_error);
 }
 
-#else // !SPECFEM_ENABLE_TENSOROPS
-
-TEST(DirectStiffness3DGraph, SkippedWithoutTensorOps) {
-  GTEST_SKIP() << "SPECFEM++ was built without TensorOperations "
-                  "(SPECFEM_ENABLE_TENSOROPS=OFF); the direct stiffness "
-                  "kernel is unavailable, only its host reference runs.";
-}
-
-#endif // SPECFEM_ENABLE_TENSOROPS
-
-} // namespace stiffness_direct_kernel_test
+} // namespace stiffness_kernel_test
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

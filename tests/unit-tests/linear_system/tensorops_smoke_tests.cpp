@@ -15,13 +15,14 @@
 
 // Compile-and-compare spike for the TensorOperations dependency (issue #2066),
 // kept as a permanent smoke test. It proves, against the Kokkos SPECFEM++
-// actually builds with, the exact library features the tensor-graph stiffness
-// kernel needs -- LevelGraph staged contractions on the TeamPolicyTag path,
-// a contraction -> combine -> contraction chain across levels, a second
-// blocked label (the kernel's identity-column axis), and a combine functor
-// that reads a captured view at its GLOBAL output coordinate -- with no
-// fixtures and no assembly. If a Kokkos or TensorOperations bump breaks the
-// integration, this test fails first and in isolation.
+// actually builds with, a representative set of library features (those of
+// the since-removed tensor-graph stiffness kernel) -- LevelGraph staged
+// contractions on the TeamPolicyTag path, a contraction -> combine ->
+// contraction chain across levels, a second blocked label (the kernel's
+// identity-column axis), and a combine functor that reads a captured view at
+// its GLOBAL output coordinate -- with no fixtures and no assembly. If a Kokkos
+// or TensorOperations bump breaks the integration, this test fails first and in
+// isolation.
 namespace tensorops_smoke_test {
 
 constexpr int NGLL = 5;
@@ -116,9 +117,9 @@ struct ScalePointwise {
   }
 };
 
-// The structure the tensor-graph stiffness kernel issues, at toy extents: a
-// contraction -> pointwise combine -> contraction chain over TWO blocked
-// labels ('e' element, 'J' identity column),
+// The structure the (removed) tensor-graph stiffness kernel issued, at toy
+// extents: a contraction -> pointwise combine -> contraction chain over TWO
+// blocked labels ('e' element, 'J' identity column),
 //
 //   grad(e,J,i) = sum_p A(i,p) U(e,J,p)
 //   F(e,J,i)    = M(e,i) grad(e,J,i)        (combine, M read at global coords)

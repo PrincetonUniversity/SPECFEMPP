@@ -28,8 +28,7 @@ namespace algorithms {
  * for 2D (\f$ \xi, \gamma \f$), three for 3D (\f$ \xi, \eta, \gamma \f$).
  * This is the single owner of the reference-to-physical gradient transform:
  * the gradient algorithm's closing step and any kernel that produces
- * reference-frame derivatives by other means (e.g. the tensor-graph
- * stiffness kernel's contractions) both delegate here.
+ * reference-frame derivatives by other means both delegate here.
  *
  * @ingroup AlgorithmsGradient
  *
