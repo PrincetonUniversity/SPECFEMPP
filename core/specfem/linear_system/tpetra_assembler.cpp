@@ -16,9 +16,8 @@ template <typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 specfem::linear_system::StiffnessAssembler<Tags>::StiffnessAssembler(
     const AssemblyType &assembly, const FEAssemblyType &fe,
-    const specfem::linear_system::StiffnessScope scope,
-    const specfem::linear_system::StiffnessKernelImpl kernel_impl)
-    : assembly_(assembly), fe_(fe), kernel_impl_(kernel_impl) {
+    const specfem::linear_system::StiffnessScope scope)
+    : assembly_(assembly), fe_(fe) {
 
   specfem::linear_system::validate_stiffness_scope<Tags>(assembly_, scope);
 
@@ -62,12 +61,10 @@ void specfem::linear_system::StiffnessAssembler<Tags>::fill_matrix(
           ndof_e);
   auto h_k_e = Kokkos::create_mirror_view(k_e);
 
-  // Kernel bound once, next to the buffers it fills: per-construction costs
-  // (the tensor-graph kernel's workspace allocation and identity fill) are
-  // paid here, not per batch.
+  // Kernel bound once, next to the buffers it fills: its validation runs
+  // here, not per batch. Throws without SPECFEM_ENABLE_TENSOROPS.
   const auto fill_blocks =
-      specfem::linear_system::make_element_stiffness_kernel<Tags>(
-          assembly_, static_cast<int>(k_e.extent(0)), kernel_impl_);
+      specfem::linear_system::make_element_stiffness_kernel<Tags>(assembly_);
 
   for (int offset = 0; offset < nelements; offset += element_batch_size_) {
     const int batch_count = std::min(element_batch_size_, nelements - offset);

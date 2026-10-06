@@ -71,14 +71,10 @@ public:
    * @param scope Boundary conditions the caller can represent (see
    *        @ref StiffnessScope); pass `with_stacey` only when the Stacey
    *        damping matrix is assembled separately
-   * @param kernel_impl Kernel that fills the element blocks (see
-   *        @ref StiffnessKernelImpl); the default follows the build
-   *        (`tensor_graph` with TensorOperations, `probe` otherwise)
    */
   StiffnessAssembler(
       const AssemblyType &assembly, const FEAssemblyType &fe,
-      const StiffnessScope scope = StiffnessScope::natural_boundaries,
-      const StiffnessKernelImpl kernel_impl = default_stiffness_kernel_impl);
+      const StiffnessScope scope = StiffnessScope::natural_boundaries);
 
   /**
    * @brief Assemble the stiffness matrix.
@@ -96,18 +92,16 @@ private:
    * @brief Elements whose stiffness blocks are formed per kernel launch.
    * Bounds the transient buffers: the `batch * ndof_e^2` block buffer plus
    * its host mirror (~36 MB each for 64 elastic NGLL = 5 elements in single
-   * precision), and -- on the tensor-graph path -- that kernel's identity
-   * and force workspaces, two more device views of the block buffer's
-   * footprint each (~144 MB total device memory at the defaults).
+   * precision). The kernel allocates no workspace; its graph lives entirely
+   * in team scratch.
    */
   constexpr static int element_batch_size_ = 64;
 
   /// Fill element blocks in internal batches and scatter them into the matrix
   void fill_matrix(SparseMatrixView<MappingType> &matrix) const;
 
-  const AssemblyType &assembly_;    ///< Borrowed assembly (not owned)
-  const FEAssemblyType &fe_;        ///< Borrowed maps and sparsity graphs
-  StiffnessKernelImpl kernel_impl_; ///< Element block producer
+  const AssemblyType &assembly_; ///< Borrowed assembly (not owned)
+  const FEAssemblyType &fe_;     ///< Borrowed maps and sparsity graphs
 };
 
 } // namespace linear_system

@@ -543,6 +543,13 @@ specfem_add_test(mass_matrix_tests
             gtest_main
 )
 
+specfem_add_test(constitutive_tensor_tests
+  SOURCES   medium/constitutive_tensor/main.cpp
+            medium/constitutive_tensor/dim3/elastic_isotropic.cpp
+  LIBRARIES point
+            gtest_main
+)
+
 specfem_add_test(stress_tests
   SOURCES   medium/stress/main.cpp
             medium/stress/dim2/acoustic.cpp
@@ -697,10 +704,11 @@ specfem_add_test(stiffness_assembler_tests
   LABELS    TRILINOS
 )
 
-# A/B correctness + timing of the tensor-graph kernel against the probe;
-# GTEST_SKIP stub when SPECFEM_ENABLE_TENSOROPS is OFF.
-specfem_add_test(stiffness_tensor_graph_tests
-  SOURCES linear_system/stiffness_tensor_graph_tests.cpp
+# Sum-factored element stiffness kernel held to a host closed-form reference.
+# Without SPECFEM_ENABLE_TENSOROPS only the reference checks and the
+# run-time-error check run.
+specfem_add_test(stiffness_kernel_tests
+  SOURCES linear_system/stiffness_kernel_tests.cpp
   LIBRARIES specfem::linear_system
             specfem::quadrature
             specfem::mesh

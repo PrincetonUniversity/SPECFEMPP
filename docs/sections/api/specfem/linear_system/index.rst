@@ -5,23 +5,21 @@
 
 Utilities for assembling the spectral-element operator into an explicit
 linear system. Provides dense element stiffness extraction for the 3D
-elastic isotropic medium through two selectable kernels
-(``StiffnessKernelImpl``): ``probe`` pushes local unit vectors through the
-matrix-free element operator one serialized probe at a time (correct by
-construction, always available), while ``tensor_graph`` evaluates the same
-action on all unit columns at once through one declarative TensorOperations
-level graph -- gradient contractions, a pointwise constitutive combine that
-delegates to ``medium_physics::compute_stress``, and weighted divergence
-contractions, so the kernel reads like the weak form and the constitutive
-step is the only medium-specific node (requires
-``SPECFEM_ENABLE_TENSOROPS=ON``, and is then the default -- the probe stays
-the correctness oracle, held to it by an A/B test). The module also ships a scope validator that
-rejects meshes outside the supported tag combination. The validator has two
-scopes (``StiffnessScope``): the strict default admits natural boundary
-conditions only, while ``with_stacey`` additionally admits Stacey boundaries
--- valid because the displacement probe runs at zero velocity, where the
-Stacey dashpot contributes nothing to :math:`K`; callers opting in must
-assemble the damping matrix separately.
+elastic isotropic medium: one kernel writes every entry of :math:`K_e` in
+closed form as a sum-factored reduction over quadrature of the constitutive
+tensor through one TensorOperations level graph (:math:`O(N^5)` work per
+element, no workspace). It requires ``SPECFEM_ENABLE_TENSOROPS=ON``; without
+it the code base still compiles, but requesting element stiffness blocks
+(and therefore assembling :math:`K` or constructing the implicit solver)
+throws ``std::runtime_error``. The kernel is held to a host closed-form
+reference and to the matrix-free ``compute_stiffness_interaction`` operator
+by its unit tests. The module also ships a scope validator that rejects
+meshes outside the supported tag combination. The validator has two scopes
+(``StiffnessScope``): the strict default admits natural boundary conditions
+only, while ``with_stacey`` additionally admits Stacey boundaries -- valid
+because :math:`K` is the operator at zero velocity, where the Stacey dashpot
+contributes nothing; callers opting in must assemble the damping matrix
+separately.
 
 When SPECFEM++ is built with Trilinos (``SPECFEM_ENABLE_TRILINOS=ON``), the
 module additionally provides ``DofMap`` -- the per-medium mapping from

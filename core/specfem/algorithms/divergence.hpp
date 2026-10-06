@@ -24,8 +24,8 @@ namespace algorithms {
  * summed direction's own weight already rides inside the sum). This is the
  * single owner of the transverse-weight combine:
  * `specfem::algorithms::impl::element_divergence`'s result stage and any
- * kernel that produces the directional sums by other means (e.g. the
- * tensor-graph stiffness kernel's contractions) both delegate here.
+ * kernel that produces the directional sums by other means both delegate
+ * here.
  *
  * @ingroup AlgorithmsDivergence
  *
