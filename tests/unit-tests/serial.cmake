@@ -866,7 +866,7 @@ specfem_add_test(seismogram_sampling_tests
 )
 
 specfem_add_test(injection_math_tests
-  LABELS unit injection
+  LABELS unit
   SOURCES injection/runner.cpp
           injection/complex_matrix_tests.cpp
           injection/fft_tests.cpp
@@ -877,7 +877,7 @@ specfem_add_test(injection_math_tests
 )
 
 specfem_add_test(injection_types_tests
-  LABELS unit injection
+  LABELS unit
   SOURCES injection/runner.cpp
           injection/layered_model_tests.cpp
           injection/time_window_tests.cpp
@@ -890,36 +890,43 @@ specfem_add_test(injection_types_tests
 )
 
 specfem_add_test(injection_operators_tests
-  LABELS unit injection
+  LABELS unit
   SOURCES injection/runner.cpp
           injection/layer_operators_tests.cpp
   LIBRARIES specfem::injection specfem::utilities Kokkos::kokkos gtest_main
 )
 
 specfem_add_test(injection_halfspace_tests
-  LABELS unit injection
+  LABELS unit
   SOURCES injection/runner.cpp
           injection/halfspace_solve_tests.cpp
   LIBRARIES specfem::injection specfem::utilities Kokkos::kokkos gtest_main
 )
 
 specfem_add_test(injection_field_recovery_tests
-  LABELS unit injection
+  LABELS unit
   SOURCES injection/runner.cpp
           injection/field_recovery_tests.cpp
   LIBRARIES specfem::injection specfem::utilities Kokkos::kokkos gtest_main
 )
 
 specfem_add_test(injection_driver_tests
-  LABELS unit injection
+  LABELS unit
   SOURCES injection/runner.cpp
           injection/driver_tests.cpp
   LIBRARIES specfem::injection specfem::utilities Kokkos::kokkos gtest_main
 )
 
 specfem_add_test(injection_provider_tests
-  LABELS unit injection
+  LABELS unit
   SOURCES injection/runner.cpp
           injection/provider_tests.cpp
   LIBRARIES specfem::injection specfem::utilities Kokkos::kokkos gtest_main
+)
+
+specfem_add_test(injection_config_tests
+  LABELS unit
+  SOURCES injection/runner.cpp
+          injection/config_tests.cpp
+  LIBRARIES specfem::injection specfem::runtime_configuration yaml-cpp Kokkos::kokkos gtest_main
 )
