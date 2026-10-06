@@ -59,6 +59,18 @@ void write_surface(std::ofstream &stream, const std::vector<int> &elements,
   }
 }
 
+/** @brief Write a surface given as (one-based element, face code) pairs. */
+void write_surface(std::ofstream &stream,
+                   const std::vector<std::pair<int, int>> &entries) {
+  std::vector<int> elements;
+  std::vector<int> faces;
+  for (const auto &[element, face] : entries) {
+    elements.push_back(element);
+    faces.push_back(face);
+  }
+  write_surface(stream, elements, faces);
+}
+
 /**
  * @brief Contents of a synthetic globe database.
  *
@@ -76,6 +88,10 @@ struct DatabaseOptions {
   std::vector<int> region_codes = { 1 };
   /// CMB entries as (one-based element, face code).
   std::vector<std::pair<int, int>> cmb_faces = {};
+  int nchunks = 6;
+  bool oceans = false;
+  /// Ocean-load entries as (one-based element, face code).
+  std::vector<std::pair<int, int>> ocean_faces = {};
 };
 
 std::filesystem::path write_database(const DatabaseOptions &options = {}) {
@@ -106,8 +122,8 @@ std::filesystem::path write_database(const DatabaseOptions &options = {}) {
   write_values(stream, 1, 2, static_cast<int>(planet_values.size()));
   write_values(stream, planet_values);
   write_values(stream, 27, 5, 5, 5, 1);
-  write_values(stream, 0, 0, 0, 0, 0, options.attenuation ? 1 : 0, 0,
-               options.has_reference_geometry ? 1 : 0);
+  write_values(stream, 0, 0, 0, 0, 0, options.attenuation ? 1 : 0,
+               options.oceans ? 1 : 0, options.has_reference_geometry ? 1 : 0);
   write_values(stream, 1);
 
   Record model;
@@ -115,7 +131,7 @@ std::filesystem::path write_database(const DatabaseOptions &options = {}) {
   model.write(stream);
   write_values(stream, 5, std::vector<int>{ 1, 0, 0, 0, 0 });
   write_values(stream, 16, std::vector<int>(16, 0));
-  write_values(stream, 6, 8, 8);
+  write_values(stream, options.nchunks, 8, 8);
   write_values(stream, 20.0, 1000.0, options.source_frequency);
 
   write_values(stream, 27);
@@ -158,15 +174,9 @@ std::filesystem::path write_database(const DatabaseOptions &options = {}) {
   write_values(stream, node_ids);
 
   write_surface(stream, { nspec }, { face_top });
-  std::vector<int> cmb_elements;
-  std::vector<int> cmb_face_codes;
-  for (const auto &[element, face] : options.cmb_faces) {
-    cmb_elements.push_back(element);
-    cmb_face_codes.push_back(face);
-  }
-  write_surface(stream, cmb_elements, cmb_face_codes);
+  write_surface(stream, options.cmb_faces);
   write_surface(stream, {}, {});
-  write_surface(stream, {}, {});
+  write_surface(stream, options.ocean_faces);
 
   // One-based CSR adjacency of the radial column.
   std::vector<int> xadj = { 1 };
@@ -352,5 +362,37 @@ TEST(GlobeMeshReader, RejectsCmbRecordedOnOneSideOnly) {
       { .region_codes = { 2, 1 }, .cmb_faces = { { 1, 3 } } });
   globe_reader_test_impl::expect_read_throws_with(path,
                                                   "Implied but not recorded");
+  std::filesystem::remove(path);
+}
+
+TEST(GlobeMeshReader, RejectsUnmeshableChunkCount) {
+  const auto path = globe_reader_test_impl::write_database({ .nchunks = 4 });
+  globe_reader_test_impl::expect_read_throws_with(path, "1, 2, 3 or 6");
+  std::filesystem::remove(path);
+}
+
+// The free surface of the single-element database is the top face (code 3) of
+// element 1, so these place the ocean load on or off it.
+
+TEST(GlobeMeshReader, AcceptsOceanLoadOnFreeSurface) {
+  const auto path = globe_reader_test_impl::write_database(
+      { .oceans = true, .ocean_faces = { { 1, 3 } } });
+  EXPECT_NO_THROW(specfem::io::read_globe_mesh(path.string(),
+                                               specfem::attenuation::Setup{}));
+  std::filesystem::remove(path);
+}
+
+TEST(GlobeMeshReader, RejectsOceanLoadOffFreeSurface) {
+  const auto path = globe_reader_test_impl::write_database(
+      { .oceans = true, .ocean_faces = { { 1, 1 } } });
+  globe_reader_test_impl::expect_read_throws_with(path,
+                                                  "not on the free surface");
+  std::filesystem::remove(path);
+}
+
+TEST(GlobeMeshReader, RejectsOceanLoadWithoutOceans) {
+  const auto path =
+      globe_reader_test_impl::write_database({ .ocean_faces = { { 1, 3 } } });
+  globe_reader_test_impl::expect_read_throws_with(path, "oceans are disabled");
   std::filesystem::remove(path);
 }

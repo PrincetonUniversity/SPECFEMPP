@@ -15,13 +15,27 @@
 #include <utility>
 #include <vector>
 
+std::string specfem::mesh::globe_impl::describe_faces(
+    const std::set<specfem::mesh::globe_impl::face_key> &faces,
+    const std::size_t limit) {
+  std::ostringstream text;
+  std::size_t shown = 0;
+  for (const auto &[ispec, face] : faces) {
+    if (shown++ == limit) {
+      text << " ... (" << (faces.size() - limit) << " more)";
+      break;
+    }
+    text << " (element " << (ispec + 1)
+         << ", face=" << specfem::mesh_entity::dim3::to_string(face) << ")";
+  }
+  return text.str();
+}
+
 void specfem::mesh::globe_impl::check_interfaces_match_medium_contrast(
     const specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim3>
         &adjacency_graph,
     const std::vector<specfem::mesh::globe_impl::named_surface> &surfaces) {
-
-  // A face identified by its mesh element and orientation.
-  using FaceKey = std::pair<int, specfem::mesh_entity::dim3::type>;
+  using FaceKey = specfem::mesh::globe_impl::face_key;
 
   std::set<FaceKey> implied;
   const auto &graph = adjacency_graph.local_connections();
@@ -57,21 +71,6 @@ void specfem::mesh::globe_impl::check_interfaces_match_medium_contrast(
     return;
   }
 
-  const auto describe = [](const std::set<FaceKey> &faces,
-                           const std::size_t limit) {
-    std::ostringstream text;
-    std::size_t shown = 0;
-    for (const auto &[ispec, face] : faces) {
-      if (shown++ == limit) {
-        text << " ... (" << (faces.size() - limit) << " more)";
-        break;
-      }
-      text << " (element " << (ispec + 1)
-           << ", face=" << specfem::mesh_entity::dim3::to_string(face) << ")";
-    }
-    return text.str();
-  };
-
   std::ostringstream message;
   message << "Globe mesh database is inconsistent: the interface faces implied "
              "by medium tags and adjacency differ from the recorded interface "
@@ -86,13 +85,95 @@ void specfem::mesh::globe_impl::check_interfaces_match_medium_contrast(
   message << ")\n";
   if (!missing.empty()) {
     message << "  Recorded but not implied (" << missing.size()
-            << "):" << describe(missing, 10) << "\n";
+            << "):" << specfem::mesh::globe_impl::describe_faces(missing, 10)
+            << "\n";
   }
   if (!unexpected.empty()) {
     message << "  Implied but not recorded (" << unexpected.size()
-            << "):" << describe(unexpected, 10) << "\n";
+            << "):" << specfem::mesh::globe_impl::describe_faces(unexpected, 10)
+            << "\n";
   }
   message << "  Element numbers are one-based, as in the database.";
+  throw std::runtime_error(message.str());
+}
+
+void specfem::mesh::globe_impl::check_chunk_count(const int nchunks) {
+  if (nchunks != 1 && nchunks != 2 && nchunks != 3 && nchunks != 6) {
+    throw std::runtime_error(
+        "Globe mesh database is inconsistent: it records " +
+        std::to_string(nchunks) +
+        " chunks, but the mesher only produces 1, 2, 3 or 6.");
+  }
+}
+
+void specfem::mesh::globe_impl::check_absorbing_matches_chunk_count(
+    const int nchunks,
+    const specfem::mesh::absorbing_boundary<
+        specfem::element::dimension_tag::dim3> &absorbing_boundary,
+    const std::vector<specfem::mesh::globe_element_context> &element_context) {
+  const int nfaces = absorbing_boundary.nelements;
+  if (nfaces == 0) {
+    return;
+  }
+
+  if (nchunks == 6 || nchunks == 3) {
+    throw std::runtime_error(
+        "Globe mesh database is inconsistent: it has " +
+        std::to_string(nfaces) + " absorbing (Stacey) faces with " +
+        std::to_string(nchunks) + " chunks. The mesher " +
+        (nchunks == 6 ? "cannot place absorbing conditions on the full Earth."
+                      : "does not support absorbing conditions for 3 "
+                        "chunks."));
+  }
+
+  for (int iface = 0; iface < nfaces; ++iface) {
+    const int ispec = absorbing_boundary.index_mapping(iface);
+    if (element_context.at(ispec).region ==
+        specfem::element::region_tag::inner_core) {
+      throw std::runtime_error(
+          "Globe mesh database is inconsistent: absorbing (Stacey) face on "
+          "inner-core element " +
+          std::to_string(ispec + 1) +
+          ". The mesher places Stacey faces on the crust/mantle and outer "
+          "core only.");
+    }
+  }
+}
+
+void specfem::mesh::globe_impl::check_surface_is_subset(
+    const specfem::mesh::globe_impl::named_surface &subset,
+    const specfem::mesh::globe_impl::named_surface &superset) {
+  using FaceKey = specfem::mesh::globe_impl::face_key;
+
+  std::set<FaceKey> contained;
+  const auto &[superset_name, superset_surface] = superset;
+  for (std::size_t iface = 0; iface < superset_surface->elements.size();
+       ++iface) {
+    contained.insert(
+        { superset_surface->elements[iface], superset_surface->faces[iface] });
+  }
+
+  std::set<FaceKey> outside;
+  const auto &[subset_name, subset_surface] = subset;
+  for (std::size_t iface = 0; iface < subset_surface->elements.size();
+       ++iface) {
+    const FaceKey face{ subset_surface->elements[iface],
+                        subset_surface->faces[iface] };
+    if (contained.count(face) == 0) {
+      outside.insert(face);
+    }
+  }
+
+  if (outside.empty()) {
+    return;
+  }
+
+  std::ostringstream message;
+  message << "Globe mesh database is inconsistent: " << outside.size() << " of "
+          << subset_surface->elements.size() << " " << subset_name
+          << " faces are not on the " << superset_name << ":"
+          << specfem::mesh::globe_impl::describe_faces(outside, 10)
+          << "\n  Element numbers are one-based, as in the database.";
   throw std::runtime_error(message.str());
 }
 
@@ -128,10 +209,30 @@ void specfem::mesh::globe_impl::check_no_cross_rank_fluid_solid_faces(
 
 void specfem::mesh::mesh<
     specfem::simulation::model::Globe3D>::check_consistency() const {
-  // Each check compares two database sections that record the same fact.
+  // Each check holds the database to a rule the mesher guarantees: either two
+  // sections record the same fact, or a section respects a meshing restriction.
+  const auto &model_config = this->globe.model_config;
+  specfem::mesh::globe_impl::check_chunk_count(model_config.nchunks);
+
   specfem::mesh::globe_impl::check_interfaces_match_medium_contrast(
       this->adjacency_graph,
       { { "CMB", &this->globe.cmb }, { "ICB", &this->globe.icb } });
+
+  specfem::mesh::globe_impl::check_absorbing_matches_chunk_count(
+      model_config.nchunks, this->boundaries.absorbing_boundary,
+      this->globe.element_context);
+
+  // The mesher writes the ocean load only when oceans are enabled, and then
+  // on the free surface of the crust/mantle.
+  if (!model_config.oceans && !this->globe.ocean_load.elements.empty()) {
+    throw std::runtime_error(
+        "Globe mesh database is inconsistent: oceans are disabled but " +
+        std::to_string(this->globe.ocean_load.elements.size()) +
+        " ocean-load faces are recorded.");
+  }
+  specfem::mesh::globe_impl::check_surface_is_subset(
+      { "ocean-load", &this->globe.ocean_load },
+      { "free surface", &this->globe.free_surface });
 }
 
 void specfem::mesh::mesh<specfem::simulation::model::Globe3D>::check_supported()

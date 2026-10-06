@@ -54,6 +54,10 @@ void check() {
   EXPECT_FALSE(globe.free_surface.elements.empty());
   EXPECT_FALSE(globe.cmb.elements.empty());
   EXPECT_FALSE(globe.icb.elements.empty());
+  // Oceans are off and the single chunk was meshed without absorbing
+  // conditions, so neither surface carries faces.
+  EXPECT_TRUE(globe.ocean_load.elements.empty());
+  EXPECT_EQ(mesh.boundaries.absorbing_boundary.nelements, 0);
   EXPECT_TRUE(mesh.adjacency_graph.mpi_connections().empty());
 }
 
