@@ -75,6 +75,7 @@ add_subdirectory(attenuation)
 add_subdirectory(element)
 add_subdirectory(element_connections)
 add_subdirectory(enums)
+add_subdirectory(injection)
 add_subdirectory(jacobian)
 add_subdirectory(linear_system)
 add_subdirectory(io)
@@ -115,6 +116,7 @@ target_link_libraries(specfem_core_interface
         specfem::ellipticity
         specfem::enums
         specfem::globe
+        specfem::injection
         specfem::io
         specfem::io_backends
         specfem::logger
