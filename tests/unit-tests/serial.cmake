@@ -875,3 +875,16 @@ specfem_add_test(injection_math_tests
             Kokkos::kokkos
             gtest_main
 )
+
+specfem_add_test(injection_types_tests
+  LABELS unit injection
+  SOURCES injection/runner.cpp
+          injection/layered_model_tests.cpp
+          injection/time_window_tests.cpp
+          injection/incident_wave_tests.cpp
+          injection/fk_result_tests.cpp
+  LIBRARIES specfem::injection
+            specfem::utilities
+            Kokkos::kokkos
+            gtest_main
+)
