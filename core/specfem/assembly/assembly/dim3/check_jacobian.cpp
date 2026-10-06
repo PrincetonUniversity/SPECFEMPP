@@ -10,22 +10,6 @@
 
 void specfem::assembly::assembly<
     specfem::element::dimension_tag::dim3>::check_jacobian_matrix() const {
-  if (this->element_types.has_element_context()) {
-    const int fictitious_flag =
-        static_cast<int>(specfem::globe::radial_flag::fictitious_cube);
-    for (int ispec = 0; ispec < this->mesh.nspec; ++ispec) {
-      if (this->element_types.idoubling(ispec) == fictitious_flag) {
-        std::ostringstream message;
-        message << "Globe mesh contains fictitious central-cube element "
-                << ispec << " (mesh element "
-                << this->mesh.h_compute_to_mesh(ispec)
-                << ", idoubling=" << fictitious_flag
-                << "). The globe database writer must exclude these elements.";
-        throw std::runtime_error(message.str());
-      }
-    }
-  }
-
   const auto result = this->jacobian_matrix.check_small_jacobian();
   if (!result.found) {
     return;
