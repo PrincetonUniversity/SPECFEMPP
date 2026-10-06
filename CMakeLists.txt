@@ -250,23 +250,19 @@ set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
 # =================================
 
 # ========== MESHFEM3D_GLOBE =============
-if(SPECFEM_BUILD_MESHFEM3D_GLOBE)
-  message(STATUS "Configuring xmeshfem3D_globe")
-  set(_saved_CMAKE_MESSAGE_LOG_LEVEL ${CMAKE_MESSAGE_LOG_LEVEL})
-  set(CMAKE_MESSAGE_LOG_LEVEL ${SUBDIR_LOG_LEVEL})
-  add_subdirectory(fortran/meshfem3d_globe)
-  set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
+message(STATUS "Configuring xmeshfem3D_globe")
+set(_saved_CMAKE_MESSAGE_LOG_LEVEL ${CMAKE_MESSAGE_LOG_LEVEL})
+set(CMAKE_MESSAGE_LOG_LEVEL ${SUBDIR_LOG_LEVEL})
+add_subdirectory(fortran/meshfem3d_globe)
+set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
 
-  # ISO_C_BINDING wrappers exposing the globe model catalog to C/C++ (issue
-  # #2001). Kept in a sibling directory so fortran/meshfem3d_globe/ stays a
-  # clean mirror of upstream specfem3d_globe. Must come after the globe
-  # subdirectory above: it consumes the meshfem3D_globe::* targets and the .mod
-  # files they generate.
-  message(STATUS "Configuring globe_evaluator")
-  add_subdirectory(fortran/globe_evaluator)
-else()
-  message(STATUS "Skipping xmeshfem3D_globe (SPECFEM_BUILD_MESHFEM3D_GLOBE=OFF)")
-endif()
+# ISO_C_BINDING wrappers exposing the globe model catalog to C/C++ (issue
+# #2001). Kept in a sibling directory so fortran/meshfem3d_globe/ stays a
+# clean mirror of upstream specfem3d_globe. Must come after the globe
+# subdirectory above: it consumes the meshfem3D_globe::* targets and the .mod
+# files they generate.
+message(STATUS "Configuring globe_evaluator")
+add_subdirectory(fortran/globe_evaluator)
 # =================================
 
 # ========== DECOMPOSE_MESH =========
@@ -384,8 +380,9 @@ if (SPECFEM_INSTALL AND NOT SPECFEM_USE_SKBUILD)
         COMMAND ${CMAKE_COMMAND} --install . --prefix ${CMAKE_INSTALL_PREFIX} --component executables
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Organizing specfem++ executables into: ${CMAKE_INSTALL_PREFIX}"
-        # Make this run after your main targets
-        DEPENDS specfem xmeshfem2D xmeshfem3D xadj_seismogram xdecompose_mesh # list all your targets here
+        # Wait for every executable installed by the executables component.
+        DEPENDS specfem xmeshfem2D xmeshfem3D xmeshfem3D_globe
+                xadj_seismogram xdecompose_mesh
     )
 
     # Add the prefix directory to the clean target

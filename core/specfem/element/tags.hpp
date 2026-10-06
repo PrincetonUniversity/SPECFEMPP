@@ -78,5 +78,17 @@ enum class mpi_tag {
   outer  ///< Elements sharing a face, edge, or corner with another MPI rank
 };
 
+/**
+ * @brief Radial region of a global (spherical) mesh element.
+ *
+ * Per-element value carried from the globe mesher; not a tag-dispatch
+ * dimension, since kernels are organised by medium and property only.
+ */
+enum class region_tag {
+  crust_mantle, ///< Crust and mantle (elastic)
+  outer_core,   ///< Fluid outer core (acoustic)
+  inner_core    ///< Solid inner core (elastic)
+};
+
 } // namespace element
 } // namespace specfem

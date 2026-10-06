@@ -10,15 +10,14 @@
 namespace specfem {
 namespace medium_physics {
 
-template <
-    typename Tags, typename ChunkIndexType, typename DisplacementFieldType,
-    typename VelocityFieldType, typename AccelerationFieldType,
-    typename QuadratureType, typename WavefieldViewType,
-    std::enable_if_t<
-        Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
-            Tags::medium_tag == specfem::element::medium_tag::elastic &&
-            Tags::property_tag == specfem::element::property_tag::isotropic,
-        int> = 0>
+template <typename Tags, typename ChunkIndexType,
+          typename DisplacementFieldType, typename VelocityFieldType,
+          typename AccelerationFieldType, typename QuadratureType,
+          typename WavefieldViewType,
+          std::enable_if_t<
+              Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
+                  Tags::medium_tag == specfem::element::medium_tag::elastic,
+              int> = 0>
 KOKKOS_FUNCTION void impl_compute_wavefield(
     const ChunkIndexType &chunk_index,
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
@@ -46,7 +45,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
       return displacement.get_data();
     } else {
       KOKKOS_ABORT_WITH_LOCATION("Unsupported wavefield component for 3D "
-                                 "elastic isotropic media.");
+                                 "elastic media.");
     }
   }();
 
@@ -66,8 +65,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
 
           wavefield(ielement, index.iz, index.iy, index.ix, 0) =
               -1.0 *
-              ((point_property.lambda() + (2.0 / 3.0) * point_property.mu()) *
-               (du(0, 0) + du(1, 1) + du(2, 2)));
+              (point_property.kappa() * (du(0, 0) + du(1, 1) + du(2, 2)));
         });
 
     return;

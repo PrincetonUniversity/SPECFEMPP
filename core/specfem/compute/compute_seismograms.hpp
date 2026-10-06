@@ -30,7 +30,7 @@ void compute_seismograms(
           PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
       [&]<typename ElementTags>() {
         impl::compute_seismograms<
-            NGLL, specfem::tags::expand<ElementTags, Tags::wavefield_tag> >(
+            NGLL, specfem::tags::expand<ElementTags, Tags::wavefield_tag>>(
             assembly, isig_step);
       });
 }

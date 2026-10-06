@@ -8,6 +8,7 @@ This section covers the major C++ components that make up SPECFEM++. Each compon
 | [Runtime Configuration](runtime-configuration.md) | YAML parsing and component factory |
 | [Mesh](mesh.md) | Passive mesh data structures read from external mesher |
 | [Assembly](assembly.md) | Central GLL-point data hub for a running simulation |
+| [Globe Units and Planet Constants](globe-units.md) | SI boundary and model-oracle non-dimensionalization contract |
 | [Medium Physics](medium-physics.md) | Stateless physics kernels, algorithms, compute orchestration |
 | [Solver](solver.md) | Time-marching solver loop and time integration scheme |
 | [I/O](io.md) | File I/O backends, mesh readers, periodic tasks |

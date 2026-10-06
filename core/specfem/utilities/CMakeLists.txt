@@ -6,5 +6,6 @@ add_library(specfem::utilities ALIAS specfem_utilities)
 target_link_libraries(
         specfem_utilities
         Kokkos::kokkos
+        specfem::constants
         ${BOOST_LIBS}
 )

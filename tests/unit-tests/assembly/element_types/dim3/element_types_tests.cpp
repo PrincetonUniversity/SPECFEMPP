@@ -1,7 +1,9 @@
 #include "specfem/assembly/element_types.hpp"
+#include "specfem/assembly/info/impl/region_counts.hpp"
 #include "specfem/element.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
+#include <stdexcept>
 
 namespace {
 
@@ -79,6 +81,18 @@ TEST(ElementTypes3D, HomogeneousMesh) {
     EXPECT_EQ(element_types.get_boundary_tag(i),
               specfem::element::boundary_tag::none);
   }
+
+  // No globe context: views stay unallocated, not zero-filled
+  EXPECT_FALSE(element_types.has_element_context());
+  EXPECT_EQ(element_types.regions.extent(0), 0);
+  EXPECT_EQ(element_types.rmin.extent(0), 0);
+  EXPECT_EQ(element_types.get_number_of_elements(
+                specfem::element::region_tag::outer_core),
+            0);
+  EXPECT_THROW(element_types.get_region_tag(0), std::runtime_error);
+  EXPECT_TRUE(
+      specfem::assembly::info::impl::count_elements_per_region(element_types)
+          .empty());
 }
 
 // Test 2: Mixed media - elastic and acoustic

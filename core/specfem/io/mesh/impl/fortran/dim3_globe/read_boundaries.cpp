@@ -2,14 +2,14 @@
 
 #include "specfem/io.hpp"
 #include "specfem/io/fortranio/interface.hpp"
+#include "specfem/io/mesh/impl/fortran/dim3_globe/globe_codes.hpp"
 
 #include <Kokkos_Core.hpp>
 #include <stdexcept>
 #include <vector>
 
 specfem::mesh::globe_boundary_surface
-specfem::io::mesh::impl::fortran::dim3_globe::read_surface(
-    std::ifstream &stream, const int nspec) {
+specfem::io::mesh::impl::fortran::dim3_globe::read_surface(std::ifstream &stream, const int nspec) {
   specfem::mesh::globe_boundary_surface result;
   int nfaces = 0;
   specfem::io::fortran_read_line(stream, &nfaces);
@@ -24,30 +24,14 @@ specfem::io::mesh::impl::fortran::dim3_globe::read_surface(
   }
 
   result.faces.resize(nfaces);
-  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace,
-               Kokkos::MemoryTraits<Kokkos::Unmanaged>>
-      element_view(result.elements.data(), nfaces),
-      faces_view(faces.data(), nfaces);
-  Kokkos::View<specfem::mesh_entity::dim3::type *, Kokkos::LayoutLeft,
-               Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>
-      surface_face_view(result.faces.data(), nfaces);
-  int invalid_boundary_count = 0;
-  Kokkos::parallel_reduce(
-      "specfem::io::mesh::dim3_globe::read_boundaries::surface",
-      Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0, nfaces),
-      [=](const int iface, int &local_invalid_boundary_count) {
-        if (element_view(iface) < 1 || element_view(iface) > nspec ||
-            faces_view(iface) < 1 || faces_view(iface) > 6) {
-          ++local_invalid_boundary_count;
-          return;
-        }
-        --element_view(iface);
-        surface_face_view(iface) =
-            static_cast<specfem::mesh_entity::dim3::type>(faces_view(iface));
-      },
-      invalid_boundary_count);
-  if (invalid_boundary_count > 0) {
-    throw std::runtime_error("Invalid boundary entry in globe mesh database");
+  for (int iface = 0; iface < nfaces; ++iface) {
+    if (result.elements[iface] < 1 || result.elements[iface] > nspec) {
+      throw std::runtime_error(
+          "Invalid boundary element in globe mesh database");
+    }
+    --result.elements[iface];
+    result.faces[iface] =
+        specfem::io::mesh::impl::fortran::dim3_globe::to_face(faces[iface]);
   }
 
   return result;
@@ -78,7 +62,7 @@ void specfem::io::mesh::impl::fortran::dim3_globe::read_boundaries(
   auto free_surface_index_mapping = free_surface.index_mapping;
   auto free_surface_type = free_surface.type;
   Kokkos::parallel_for(
-      "specfem::io::mesh::dim3_globe::read_boundaries::free_surface",
+      "specfem::io::mesh::impl::fortran::dim3_globe::read_boundaries::free_surface",
       Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(
           0, static_cast<int>(globe.free_surface.elements.size())),
       [=](const int iface) {
