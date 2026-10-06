@@ -172,16 +172,25 @@ struct mesh<specfem::simulation::model::Globe3D> : public mesh_dim3_base {
   specfem::mesh::globe_mesh_data globe;
 
   /**
-   * @brief Check that database sections recording the same fact agree.
+   * @brief Check that the database holds to the rules the mesher guarantees.
    *
-   * The globe database states some facts more than once -- for example, the
-   * fluid-solid interfaces are implied by medium tags and adjacency, and also
-   * recorded as the CMB and ICB face lists. This verifies each such pair.
+   * Two kinds of rule are checked. Some facts are stated more than once --
+   * for example, the fluid-solid interfaces are implied by medium tags and
+   * adjacency, and also recorded as the CMB and ICB face lists -- and each such
+   * pair must agree. Other sections must respect the mesher's meshing
+   * restrictions:
+   * - the chunk count is 1, 2, 3 or 6;
+   * - there are no absorbing (Stacey) faces with 3 or 6 chunks, and none on
+   *   inner-core elements otherwise;
+   * - the ocean load is empty without oceans, and on the free surface with
+   *   them.
+   *
+   * Any database the mesher writes passes, whatever its chunk count.
    *
    * @note Call after @c setup_coupled_interfaces, which derives the
    * medium-contrast connections this compares against.
    *
-   * @throws std::runtime_error if any two sections disagree
+   * @throws std::runtime_error if any rule is broken
    */
   void check_consistency() const;
 

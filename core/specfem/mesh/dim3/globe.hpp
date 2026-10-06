@@ -199,7 +199,13 @@ struct globe_mesh_data {
    */
   globe_boundary_surface icb;
 
-  /** @brief Surface entries used for ocean-load metadata. */
+  /**
+   * @brief Surface entries carrying the ocean load.
+   *
+   * Empty unless the model has oceans; otherwise a subset of
+   * @ref free_surface (the mesher currently writes the whole free surface).
+   * @c mesh<Globe3D>::check_consistency enforces both.
+   */
   globe_boundary_surface ocean_load;
 };
 
