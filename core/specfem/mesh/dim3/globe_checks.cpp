@@ -177,6 +177,37 @@ void specfem::mesh::globe_impl::check_surface_is_subset(
   throw std::runtime_error(message.str());
 }
 
+void specfem::mesh::globe_impl::check_surface_faces(
+    const specfem::mesh::globe_impl::named_surface &surface,
+    const specfem::element::region_tag region,
+    const specfem::mesh_entity::dim3::type face,
+    const std::vector<specfem::mesh::globe_element_context> &element_context) {
+  const auto &[name, entries] = surface;
+
+  std::set<specfem::mesh::globe_impl::face_key> misplaced;
+  for (std::size_t iface = 0; iface < entries->elements.size(); ++iface) {
+    const int ispec = entries->elements[iface];
+    if (entries->faces[iface] != face ||
+        element_context.at(ispec).region != region) {
+      misplaced.insert({ ispec, entries->faces[iface] });
+    }
+  }
+
+  if (misplaced.empty()) {
+    return;
+  }
+
+  std::ostringstream message;
+  message << "Globe mesh database is inconsistent: " << misplaced.size()
+          << " of " << entries->elements.size() << " " << name
+          << " faces are not the "
+          << specfem::mesh_entity::dim3::to_string(face) << " face of a "
+          << specfem::element::to_string(region) << " element:"
+          << specfem::mesh::globe_impl::describe_faces(misplaced, 10)
+          << "\n  Element numbers are one-based, as in the database.";
+  throw std::runtime_error(message.str());
+}
+
 void specfem::mesh::globe_impl::check_no_cross_rank_fluid_solid_faces(
     const specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim3>
         &adjacency_graph,
@@ -221,6 +252,12 @@ void specfem::mesh::mesh<
   specfem::mesh::globe_impl::check_absorbing_matches_chunk_count(
       model_config.nchunks, this->boundaries.absorbing_boundary,
       this->globe.element_context);
+
+  // The mesher writes the top faces of the crust/mantle as the free surface.
+  specfem::mesh::globe_impl::check_surface_faces(
+      { "free surface", &this->globe.free_surface },
+      specfem::element::region_tag::crust_mantle,
+      specfem::mesh_entity::dim3::type::top, this->globe.element_context);
 
   // The mesher writes the ocean load only when oceans are enabled, and then
   // on the free surface of the crust/mantle.

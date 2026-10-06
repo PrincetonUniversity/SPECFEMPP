@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <fstream>
 #include <gtest/gtest.h>
+#include <optional>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -92,6 +93,8 @@ struct DatabaseOptions {
   bool oceans = false;
   /// Ocean-load entries as (one-based element, face code).
   std::vector<std::pair<int, int>> ocean_faces = {};
+  /// Free-surface entries; defaults to the top face of the last element.
+  std::optional<std::vector<std::pair<int, int>>> free_surface_faces = {};
 };
 
 std::filesystem::path write_database(const DatabaseOptions &options = {}) {
@@ -173,7 +176,9 @@ std::filesystem::path write_database(const DatabaseOptions &options = {}) {
   }
   write_values(stream, node_ids);
 
-  write_surface(stream, { nspec }, { face_top });
+  write_surface(stream,
+                options.free_surface_faces.value_or(
+                    std::vector<std::pair<int, int>>{ { nspec, face_top } }));
   write_surface(stream, options.cmb_faces);
   write_surface(stream, {}, {});
   write_surface(stream, options.ocean_faces);
@@ -243,7 +248,12 @@ TEST(GlobeMeshReader, ReadsThinDatabaseAndPreservesReferenceContext) {
   EXPECT_TRUE(mesh.globe.element_context[0].element_in_mantle);
   EXPECT_DOUBLE_EQ(mesh.globe.reference_coordinates(26, 2), 3026.0);
   EXPECT_EQ(mesh.control_nodes.control_node_index(0, 26), 26);
-  EXPECT_EQ(mesh.boundaries.acoustic_free_surface.nelem_acoustic_surface, 1);
+  // The free surface is kept as geometry, not as a boundary condition.
+  EXPECT_EQ(mesh.boundaries.acoustic_free_surface.nelem_acoustic_surface, 0);
+  ASSERT_EQ(mesh.globe.free_surface.elements.size(), 1);
+  EXPECT_EQ(mesh.globe.free_surface.elements[0], 0);
+  EXPECT_EQ(mesh.globe.free_surface.faces[0],
+            specfem::mesh_entity::dim3::type::top);
 }
 
 TEST(GlobeMeshReader, RejectsInvalidPlanetConstants) {
@@ -319,8 +329,12 @@ TEST(GlobeMeshReader, ReadsResolvedMpiAdjacency) {
 // outer-core element owning a radial face on an MPI boundary. A solid element
 // with the same connection is fine -- that is the case above.
 TEST(GlobeMeshReader, RejectsRadialMpiFaceOnFluidElement) {
+  // Outer core (element 1) below crust/mantle (element 2), with element 1's
+  // bottom face on an MPI boundary.
   const auto path = globe_reader_test_impl::write_database(
-      { .include_mpi = true, .region_codes = { 2 } });
+      { .include_mpi = true,
+        .region_codes = { 2, 1 },
+        .cmb_faces = { { 1, 3 }, { 2, 1 } } });
   globe_reader_test_impl::expect_read_throws_with(path,
                                                   "Unsupported globe mesh");
   std::filesystem::remove(path);
@@ -394,5 +408,23 @@ TEST(GlobeMeshReader, RejectsOceanLoadWithoutOceans) {
   const auto path =
       globe_reader_test_impl::write_database({ .ocean_faces = { { 1, 3 } } });
   globe_reader_test_impl::expect_read_throws_with(path, "oceans are disabled");
+  std::filesystem::remove(path);
+}
+
+// The mesher writes the top faces of the crust/mantle as the free surface.
+
+TEST(GlobeMeshReader, RejectsFreeSurfaceOnNonCrustMantleElement) {
+  const auto path =
+      globe_reader_test_impl::write_database({ .region_codes = { 2 } });
+  globe_reader_test_impl::expect_read_throws_with(path,
+                                                  "free surface faces are not");
+  std::filesystem::remove(path);
+}
+
+TEST(GlobeMeshReader, RejectsFreeSurfaceOnNonTopFace) {
+  const auto path = globe_reader_test_impl::write_database(
+      { .free_surface_faces = std::vector<std::pair<int, int>>{ { 1, 1 } } });
+  globe_reader_test_impl::expect_read_throws_with(path,
+                                                  "free surface faces are not");
   std::filesystem::remove(path);
 }
