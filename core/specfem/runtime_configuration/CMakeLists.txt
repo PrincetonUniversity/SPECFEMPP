@@ -12,5 +12,6 @@ target_link_libraries(
         specfem::periodic_tasks
         specfem::io
         specfem::solver
+        specfem::injection
         ${BOOST_LIBS}
 )
