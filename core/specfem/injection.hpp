@@ -9,3 +9,6 @@
  */
 
 #include "specfem/injection/fk.hpp"
+#include "specfem/injection/fk_provider.hpp"
+#include "specfem/injection/injection_frame_buffer.hpp"
+#include "specfem/injection/injection_provider.hpp"

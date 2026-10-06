@@ -916,3 +916,10 @@ specfem_add_test(injection_driver_tests
           injection/driver_tests.cpp
   LIBRARIES specfem::injection specfem::utilities Kokkos::kokkos gtest_main
 )
+
+specfem_add_test(injection_provider_tests
+  LABELS unit injection
+  SOURCES injection/runner.cpp
+          injection/provider_tests.cpp
+  LIBRARIES specfem::injection specfem::utilities Kokkos::kokkos gtest_main
+)
