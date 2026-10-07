@@ -87,6 +87,23 @@ const static YAML::Node single_asymmetric_moment_tensor_yaml_2d = []() {
   return node;
 }();
 
+const static YAML::Node single_spin_tensor_yaml_2d = []() {
+  YAML::Node node;
+  node["number-of-sources"] = 1;
+  YAML::Node source;
+  YAML::Node spin_tensor;
+  spin_tensor["x"] = 2000.0;
+  spin_tensor["z"] = 3000.0;
+  spin_tensor["Mcyx"] = 1.0;
+  spin_tensor["Mcyz"] = -0.5;
+  spin_tensor["Ricker"]["factor"] = 1.0e10;
+  spin_tensor["Ricker"]["tshift"] = 30.0;
+  spin_tensor["Ricker"]["f0"] = 1.0;
+  source["spin-tensor"] = spin_tensor;
+  node["sources"].push_back(source);
+  return node;
+}();
+
 const static YAML::Node single_force_yaml_2d = []() {
   YAML::Node node;
   node["number-of-sources"] = 1;
@@ -334,6 +351,9 @@ INSTANTIATE_TEST_SUITE_P(
         SourceYAMLTestParam2D{ "2D YAML Asymmetric Moment Tensor",
                                single_asymmetric_moment_tensor_yaml_2d,
                                single_asymmetric_moment_tensor_2d },
+        SourceYAMLTestParam2D{ "2D YAML Spin Tensor",
+                               single_spin_tensor_yaml_2d,
+                               single_spin_tensor_2d },
         SourceYAMLTestParam2D{ "2D YAML Force", single_force_yaml_2d,
                                single_force_2d },
         SourceYAMLTestParam2D{ "2D YAML Cosserat Force",

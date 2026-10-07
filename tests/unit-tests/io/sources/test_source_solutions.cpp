@@ -35,6 +35,13 @@ const SourceVector2DType single_asymmetric_moment_tensor_2d = {
       wavefield_type)
 };
 
+const SourceVector2DType single_spin_tensor_2d = { std::make_shared<
+    specfem::sources::spin_tensor<specfem::element::dimension_tag::dim2>>(
+    2000.0, 3000.0, 1.0, -0.5,
+    std::make_unique<specfem::source_time_functions::Ricker>(
+        nsteps, dt, 1.0, 30.0, 1.0e10, false),
+    wavefield_type) };
+
 const SourceVector2DType single_force_2d = { std::make_shared<
     specfem::sources::force<specfem::element::dimension_tag::dim2>>(
     2500.0, 2500.0, 0.0,

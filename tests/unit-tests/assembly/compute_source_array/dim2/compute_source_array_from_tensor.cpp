@@ -382,6 +382,102 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_tensor) {
   }
 }
 
+// A spin tensor populates only the rotation row of the source array, with the
+// gradient contraction Mcyx * dL/dx + Mcyz * dL/dz; the displacement rows stay
+// identically zero and no monopole term is added (issue #2112).
+TEST(ASSEMBLY_NO_LOAD, spin_tensor_fills_only_rotation_row) {
+
+  const int ngll = 5;
+
+  specfem::quadrature::gll::gll gll_quad(0.0, 0.0, ngll);
+  specfem::quadrature::quadratures quadratures(gll_quad);
+  specfem::assembly::mesh_impl::quadrature<
+      specfem::element::dimension_tag::dim2>
+      quadrature(quadratures);
+  auto xi_gamma_points = quadrature.h_xi;
+
+  using PointJacobianMatrix =
+      specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2,
+                                      false, false>;
+  Kokkos::View<PointJacobianMatrix **, Kokkos::LayoutRight, Kokkos::HostSpace>
+      element_jacobian("element_jacobian", ngll, ngll);
+  for (int iz = 0; iz < ngll; ++iz) {
+    for (int ix = 0; ix < ngll; ++ix) {
+      element_jacobian(iz, ix) = PointJacobianMatrix(1.0, 1.0, 1.0, 1.0);
+    }
+  }
+
+  const type_real Mcyx = 0.8;
+  const type_real Mcyz = -0.3;
+  specfem::sources::spin_tensor<specfem::element::dimension_tag::dim2> source(
+      0.0, 0.0, Mcyx, Mcyz,
+      std::make_unique<specfem::source_time_functions::Ricker>(10, 0.01, 1.0,
+                                                               0.0, 1.0, false),
+      specfem::simulation::field_type::forward);
+  source.set_medium_tag(specfem::element::medium_tag::elastic_psv_t);
+
+  // The spin tensor has no monopole contribution by design.
+  EXPECT_FALSE(source.has_monopole_contribution());
+  EXPECT_EQ(source.get_body_couple_vector().extent(0), 0u);
+
+  // Exercise the generic contraction helpers as well (verifies the full 3x2
+  // tensor contraction at GLL and off-GLL points).
+  test_tensor_source("Spin Tensor (Mcyx=0.8, Mcyz=-0.3)", source, ngll);
+  test_tensor_source_off_gll("Spin Tensor (Mcyx=0.8, Mcyz=-0.3)", source, ngll);
+
+  const int ncomponents = source.get_source_tensor().extent(0);
+  ASSERT_EQ(ncomponents, 3);
+  Kokkos::View<type_real ***, Kokkos::LayoutRight, Kokkos::HostSpace>
+      source_array("source_array", ncomponents, ngll, ngll);
+
+  // On-GLL and off-GLL source positions.
+  std::vector<type_real> test_points = { xi_gamma_points(0), -0.5, 0.0, 0.5,
+                                         xi_gamma_points(ngll - 1) };
+
+  for (type_real xi_source : test_points) {
+    for (type_real gamma_source : test_points) {
+      SCOPED_TRACE("source at (xi=" + std::to_string(xi_source) +
+                   ", gamma=" + std::to_string(gamma_source) + ")");
+      source.set_local_coordinates(specfem::point::local_coordinates<
+                                   specfem::element::dimension_tag::dim2>(
+          0, xi_source, gamma_source));
+
+      for (int ic = 0; ic < ncomponents; ++ic) {
+        for (int jz = 0; jz < ngll; ++jz) {
+          for (int jx = 0; jx < ngll; ++jx) {
+            source_array(ic, jz, jx) = 0.0;
+          }
+        }
+      }
+
+      specfem::assembly::compute_source_array_impl::
+          compute_source_array_from_tensor_and_element_jacobian(
+              source, element_jacobian, quadrature, source_array);
+
+      auto [hxi_source, hpxi_source] =
+          specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
+              xi_source, ngll, xi_gamma_points);
+      auto [hgamma_source, hpgamma_source] =
+          specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
+              gamma_source, ngll, xi_gamma_points);
+
+      for (int jz = 0; jz < ngll; ++jz) {
+        for (int jx = 0; jx < ngll; ++jx) {
+          // Simplified jacobian (all derivatives 1.0) => dsrc_dx == dsrc_dz.
+          const type_real dsrc = hpxi_source(jx) * hgamma_source(jz) +
+                                 hxi_source(jx) * hpgamma_source(jz);
+
+          // Displacement rows are identically zero.
+          EXPECT_NEAR(source_array(0, jz, jx), 0.0, 1e-12);
+          EXPECT_NEAR(source_array(1, jz, jx), 0.0, 1e-12);
+          // Rotation row carries the Mc contraction.
+          EXPECT_NEAR(source_array(2, jz, jx), (Mcyx + Mcyz) * dsrc, 1e-5);
+        }
+      }
+    }
+  }
+}
+
 // Verify accumulate_vector_contribution adds the body-couple term
 // L * body_couple(c) on top of the dipole contribution computed by the inner
 // helper (issue #2111).

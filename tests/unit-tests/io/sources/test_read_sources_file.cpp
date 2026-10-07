@@ -91,6 +91,10 @@ INSTANTIATE_TEST_SUITE_P(
             "io/sources/data/dim2/single_asymmetric_moment_tensor.yaml",
             specfem::enums::source_format::YAML,
             single_asymmetric_moment_tensor_2d },
+        SourceTestParam2D{ "2D Single Spin Tensor",
+                           "io/sources/data/dim2/single_spin_tensor.yaml",
+                           specfem::enums::source_format::YAML,
+                           single_spin_tensor_2d },
         SourceTestParam2D{
             "2D Single Force", "io/sources/data/dim2/single_force.yaml",
             specfem::enums::source_format::YAML, single_force_2d },

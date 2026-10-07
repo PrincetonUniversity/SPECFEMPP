@@ -1,5 +1,6 @@
 #include "source.hpp"
 #include "source/dim2/tensor_sources/moment_tensor_source.hpp"
+#include "source/dim2/tensor_sources/spin_tensor_source.hpp"
 #include "source/dim2/vector_sources/adjoint_source.hpp"
 #include "source/dim2/vector_sources/cosserat_force_source.hpp"
 #include "source/dim2/vector_sources/external_source.hpp"
@@ -15,8 +16,9 @@ using SourceTypes = ::testing::Types<
     specfem::sources::cosserat_force<specfem::element::dimension_tag::dim2>,
     specfem::sources::adjoint_source<specfem::element::dimension_tag::dim2>,
     specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2>,
+    specfem::sources::spin_tensor<specfem::element::dimension_tag::dim2>,
     specfem::sources::force<specfem::element::dimension_tag::dim3>,
-    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3> >;
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3>>;
 
 // Template test fixture for all sources
 template <typename T> class SourceTest : public ::testing::Test {
