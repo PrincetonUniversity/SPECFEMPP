@@ -1,16 +1,31 @@
 #pragma once
 
 #include "specfem/element.hpp"
+#include "specfem/simulation.hpp"
 
 namespace specfem {
 
 namespace mesh {
 /**
- * @brief Struct to store information about the mesh read from the database
+ * @brief Raw mesh data read from a model-specific mesh database.
  *
- * @tparam DimensionTag Dimension type
+ * The raw mesh is keyed by simulation model rather than only by dimension so
+ * model-specific database payloads, such as Cartesian UTM metadata or Globe3D
+ * reference geometry and evaluator context, can live beside the common mesh
+ * fields without runtime optionals in every mesh instance.
+ *
+ * @tparam ModelTag Simulation model represented by this raw mesh
  */
-template <specfem::element::dimension_tag DimensionTag> struct mesh;
+template <specfem::simulation::model ModelTag> struct mesh;
+
+/** @brief Raw mesh read from a 2-D Cartesian SPECFEM database. */
+using cartesian2d_mesh = mesh<specfem::simulation::model::Cartesian2D>;
+
+/** @brief Raw mesh read from a 3-D Cartesian SPECFEM database. */
+using cartesian3d_mesh = mesh<specfem::simulation::model::Cartesian3D>;
+
+/** @brief Raw mesh read from a thin SPECFEM3D_GLOBE database. */
+using globe3d_mesh = mesh<specfem::simulation::model::Globe3D>;
 
 /**
  * @brief Struct to store general parameters for the mesh

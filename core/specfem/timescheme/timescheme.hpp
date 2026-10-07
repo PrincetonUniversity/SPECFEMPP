@@ -108,11 +108,13 @@ public:
   int get_seismogram_step() const { return seismogram_timestep; }
 
   /**
-   * @brief Get the maximum seismogram step
+   * @brief Get the number of seismogram samples, including step zero
    *
-   * @return int Maximum seismogram step
+   * @return int Number of seismogram samples
    */
-  int get_max_seismogram_step() const { return nstep / nstep_between_samples; }
+  int get_max_seismogram_step() const {
+    return nstep / nstep_between_samples + (nstep % nstep_between_samples != 0);
+  }
 
   /**
    * @brief Get the number of timesteps between seismogram samples

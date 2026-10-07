@@ -88,6 +88,7 @@ set(MESHFEM3D_GLOBE_MESH_SOURCES
   moho_stretching.f90
   save_arrays_solver.f90
   save_arrays_solver_hdf5.F90
+  save_database_specfempp.F90
   save_model_meshfiles.f90
   save_model_meshfiles_hdf5.F90
   setup_color_perm.f90
@@ -138,8 +139,10 @@ target_link_libraries(xmeshfem3D_globe PRIVATE
   specfem::version
 )
 
-target_link_libraries(meshfem3D_globe_mesh PRIVATE MPI::MPI_Fortran)
-target_link_libraries(xmeshfem3D_globe PRIVATE MPI::MPI_Fortran)
+if(SPECFEM_ENABLE_MPI)
+  target_link_libraries(meshfem3D_globe_mesh PRIVATE MPI::MPI_Fortran)
+  target_link_libraries(xmeshfem3D_globe PRIVATE MPI::MPI_Fortran)
+endif()
 
 if(SPECFEM_INSTALL)
   install(TARGETS xmeshfem3D_globe

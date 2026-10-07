@@ -14,11 +14,10 @@ namespace medium_physics {
 
 /**
  * @ingroup specfem_medium_dim3_compute_source_contribution_elastic_isotropic
- * @brief Compute source contribution for 3D elastic isotropic media.
+ * @brief Compute source contribution for 3D elastic media.
  *
  * Implements force source contribution for 3D elastic wave propagation
- * in isotropic media. Sources inject body forces that generate both
- * P and S waves with uniform propagation in all directions.
+ * Sources inject body forces independently of the material parameterization.
  *
  * **Source equations:**
  * - \f$ \ddot{u}_x = S_x(t) \cdot L_x(\mathbf{x}) \f$
@@ -29,21 +28,21 @@ namespace medium_physics {
  * @param point_properties Material properties (unused for force sources)
  * @return Acceleration contributions [\f$\ddot{u}_x, \ddot{u}_y, \ddot{u}_z\f$]
  */
-template <typename PointSourceType, typename PointPropertiesType>
+template <specfem::element::property_tag PropertyTag, typename PointSourceType,
+          typename PointPropertiesType>
 KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
     const std::integral_constant<specfem::element::dimension_tag,
                                  specfem::element::dimension_tag::dim3>,
     const std::integral_constant<specfem::element::medium_tag,
                                  specfem::element::medium_tag::elastic>,
-    const std::integral_constant<specfem::element::property_tag,
-                                 specfem::element::property_tag::isotropic>,
+    const std::integral_constant<specfem::element::property_tag, PropertyTag>,
     const PointSourceType &point_source,
     const PointPropertiesType &point_properties) {
   constexpr bool using_simd = PointPropertiesType::simd::using_simd;
 
   using PointAccelerationType = specfem::point::acceleration<
       specfem::tags::Tags<specfem::element::dimension_tag::dim3,
-                          specfem::element::medium_tag::elastic, using_simd> >;
+                          specfem::element::medium_tag::elastic, using_simd>>;
 
   PointAccelerationType result;
 

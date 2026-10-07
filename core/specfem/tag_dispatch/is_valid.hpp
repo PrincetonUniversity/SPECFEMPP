@@ -174,8 +174,8 @@ constexpr bool is_valid_medium_combo(MediumTagTuple t) {
  *
  * Calls `is_valid_medium_combo` first, then applies medium-specific rules:
  * - `elastic_psv` / `elastic_sh` → `isotropic` or `anisotropic`.
- * - `elastic` (dim3), `acoustic`, `poroelastic`, `electromagnetic_te`
- *   → `isotropic`.
+ * - `elastic` (dim3) → `isotropic` or `anisotropic`.
+ * - `acoustic`, `poroelastic`, `electromagnetic_te` → `isotropic`.
  * - Cosserat types (`elastic_psv_t`, `elastic_spin`) → `isotropic_cosserat`.
  *
  * @param t  A `PropertyComboTuple` holding (dimension, medium, property).
@@ -195,8 +195,8 @@ constexpr bool is_valid_property_combo(PropertyComboTuple t) {
   case M::elastic_psv:
   case M::elastic_sh:
     return p == P::isotropic || p == P::anisotropic;
-  case M::elastic: // dim3 elastic: isotropic only
-    return p == P::isotropic;
+  case M::elastic: // dim3 elastic
+    return p == P::isotropic || p == P::anisotropic;
   case M::elastic_psv_t:
   case M::elastic_spin: // Cosserat elastic: isotropic_cosserat
     return p == P::isotropic_cosserat;
@@ -236,7 +236,7 @@ constexpr bool is_valid_material_combo(MaterialTagTuple t) {
   switch (m) {
   case M::elastic_psv: // dim2: isotropic and anisotropic
     return a == A::none || a == A::constant_isotropic;
-  case M::elastic: // dim3: isotropic only
+  case M::elastic: // dim3: anisotropic attenuation is not implemented
     return a == A::none || (a == A::constant_isotropic &&
                             p == specfem::element::property_tag::isotropic);
   case M::elastic_psv_t:
@@ -252,7 +252,8 @@ constexpr bool is_valid_material_combo(MaterialTagTuple t) {
  * @brief Check whether a (dimension, medium, property, boundary) quad is valid.
  *
  * dim3 acoustic elements accept all boundary types; dim3 elastic elements
- * accept `none` or `stacey`.  For dim2:
+ * accept `none` or `stacey`; dim3 `elastic_spin` only accepts `none`.
+ * For dim2:
  * - `acoustic` accepts all boundary types.
  * - `electromagnetic_te` only accepts `none`.
  * - All other dim2 media accept `none` or `stacey`.
@@ -277,6 +278,8 @@ constexpr bool is_valid_boundary_combo(BoundaryComboTuple t) {
     if (m == M::acoustic)
       return b == B::none || b == B::acoustic_free_surface || b == B::stacey ||
              b == B::composite_stacey_dirichlet;
+    if (m == M::elastic_spin) // no Stacey impl for dim3 Cosserat yet
+      return b == B::none;
     return b == B::none || b == B::stacey;
   }
 
@@ -322,7 +325,8 @@ constexpr bool is_valid_element_attenuation_combo(MaterialTagTuple t) {
     return true;
 
   // constant_isotropic only valid for mediums with an attenuation impl
-  return (m == M::elastic_psv) || (m == M::elastic);
+  return (m == M::elastic_psv) ||
+         (m == M::elastic && p == specfem::element::property_tag::isotropic);
 }
 
 constexpr bool is_valid_full_combo(ElementTagTuple t) {

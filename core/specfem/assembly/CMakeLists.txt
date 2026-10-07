@@ -18,6 +18,7 @@ target_link_libraries(
         specfem::mesh
         specfem::mpi
         specfem::program_abort
+        specfem::globe_model
         source_class
         jacobian
         point
@@ -45,7 +46,6 @@ if (SPECFEM_ENABLE_VTK)
     # periodic_tasks, so it needs its own factory registration
     vtk_module_autoinit(TARGETS assembly MODULES ${VTK_LIBRARIES})
 endif()
-
 target_include_directories(
         assembly
         INTERFACE

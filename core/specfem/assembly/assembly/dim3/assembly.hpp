@@ -166,7 +166,8 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
    * assignment if exists)
    * @param flux_scheme_config Flux scheme rules for nonconforming interfaces
    */
-  assembly(const specfem::mesh::mesh<dimension_tag> &mesh,
+  template <specfem::simulation::model ModelTag>
+  assembly(const specfem::mesh::mesh<ModelTag> &mesh,
            const specfem::quadrature::quadratures &quadratures,
            std::vector<std::shared_ptr<specfem::sources::source<dimension_tag>>>
                &sources,

@@ -27,7 +27,7 @@ public:
   constexpr static auto boundary_tag = BoundaryTag;
 
   static constexpr auto combinations_by_medium =
-      DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic);
+      DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic, elastic_spin);
 
   IndexViewType property_index_mapping;
   IndexViewType::host_mirror_type h_property_index_mapping;

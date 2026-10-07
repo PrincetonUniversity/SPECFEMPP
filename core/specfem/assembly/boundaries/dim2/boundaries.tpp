@@ -7,11 +7,12 @@
 #include <Kokkos_Core.hpp>
 #include <vector>
 
-specfem::assembly::boundaries<specfem::element::dimension_tag::dim2>::boundaries(
-    const int nspec, const int ngllz, const int ngllx,
-    const specfem::mesh::mesh<dimension_tag> &mesh,
-    const specfem::assembly::mesh<dimension_tag> &mesh_assembly,
-    const specfem::assembly::jacobian_matrix<dimension_tag> &jacobian_matrix)
+specfem::assembly::boundaries<specfem::element::dimension_tag::dim2>::
+    boundaries(const int nspec, const int ngllz, const int ngllx,
+               const specfem::mesh::cartesian2d_mesh &mesh,
+               const specfem::assembly::mesh<dimension_tag> &mesh_assembly,
+               const specfem::assembly::jacobian_matrix<dimension_tag>
+                   &jacobian_matrix)
     : boundary_tags("specfem::assembly::boundaries::boundary_tags", nspec),
       h_boundary_tags(Kokkos::create_mirror_view(boundary_tags)),
       acoustic_free_surface_index_mapping(

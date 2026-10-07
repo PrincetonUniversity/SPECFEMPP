@@ -1,0 +1,46 @@
+parameters:
+
+  header:
+    title: Static elastic deformation, implicit large-step configuration
+    description: |
+      Same physics as specfem_config.yaml (Heaviside force, Stacey ABCs)
+      on the same 21 s window, but sampled with 20x larger steps for the
+      implicit solver driven to steady state. The time-scheme type is
+      Newmark for the runtime-configuration parser; the test constructs
+      the implicit solver directly with dissipative Newmark parameters.
+
+  simulation-setup:
+    quadrature:
+      quadrature-type: GLL4
+
+    solver:
+      time-marching:
+        type-of-simulation: forward
+        time-scheme:
+          type: Newmark
+          dt: 0.7
+          nstep: 30
+
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:
+            format: ascii
+            directory: "./"
+
+  receivers:
+    stations: "displacement_tests/ImplicitNewmark/serial/dim3/HomogeneousHalfSpaceStaceyStatic/STATIONS"
+    angle: 0.0
+    seismogram-type:
+      - displacement
+      - velocity
+    nstep_between_samples: 1
+
+  run-setup:
+    number-of-processors: 1
+    number-of-runs: 1
+
+  databases:
+    mesh-database: "displacement_tests/ImplicitNewmark/serial/dim3/HomogeneousHalfSpaceStaceyStatic/database.bin"
+
+  sources: "displacement_tests/ImplicitNewmark/serial/dim3/HomogeneousHalfSpaceStaceyStatic/force.yaml"

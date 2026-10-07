@@ -45,47 +45,26 @@ Pre-built Trilinos installs are provided as Lmod modules. Loading one exports bo
       - Backend
       - Kokkos arch
       - MPI
-    * - ``trilinos/16.1.0-cuda-ampere80-mpi``
-      - CUDA
-      - ``AMPERE80`` + ``NATIVE``
-      - yes
-    * - ``trilinos/16.1.0-cuda-ampere80-nompi``
-      - CUDA
-      - ``AMPERE80`` + ``NATIVE``
-      - no
-    * - ``trilinos/16.1.0-cpu-native-mpi``
-      - Serial
-      - ``NATIVE``
-      - yes
-    * - ``trilinos/16.1.0-cpu-native-nompi``
+    * - ``trilinos/17.1.1-cpu-native-nompi``
       - Serial
       - ``NATIVE``
       - no
 
-Choose the variant that matches how you build SPECFEM++ (GPU vs CPU, with or
-without MPI).
 
 Configure and build
 -------------------
 
-The ``release-trilinos`` and ``release-cuda-trilinos`` :doc:`presets </sections/getting_started/presets>`
-inherit the standard ``release`` / ``release-cuda`` presets and only set
+The ``release-trilinos`` :doc:`preset </sections/getting_started/presets>`
+inherits the standard ``release`` presets and only set
 ``SPECFEM_ENABLE_TRILINOS=ON``. ``Trilinos_ROOT`` and ``Kokkos_ROOT`` are taken from
 the loaded module's environment, so the presets stay machine-independent.
 
-GPU (NVIDIA Ampere / A100):
+CPU (the only variant currently installed):
 
 .. code-block:: bash
 
-    module load trilinos/16.1.0-cuda-ampere80-mpi
-    cmake --preset release-cuda-trilinos
-    cmake --build build/release-cuda-trilinos
-
-CPU:
-
-.. code-block:: bash
-
-    module load trilinos/16.1.0-cpu-native-mpi
+    module load trilinos/17.1.1-cpu-native-nompi
+    module load gcc-toolset/14
     cmake --preset release-trilinos
     cmake --build build/release-trilinos
 

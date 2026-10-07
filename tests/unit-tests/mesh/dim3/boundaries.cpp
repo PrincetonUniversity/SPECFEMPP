@@ -92,6 +92,15 @@ static const std::unordered_map<std::string, ExpectedBoundaries3D>
                 { 0, true, specfem::mesh_entity::dim3::type::bottom },
                 // Top (free-surface) face
                 { 4, false, specfem::mesh_entity::dim3::type::top },
+            }) },
+      // Generated with STACEY_ABSORBING_CONDITIONS = .false. (no Stacey impl
+      // for Cosserat media): no absorbing faces, only the 4 top faces.
+      { "EightNodeElasticCosserat",
+        ExpectedBoundaries3D(
+            0, 4,
+            {
+                // Top (free-surface) face
+                { 4, false, specfem::mesh_entity::dim3::type::top },
             }) }
     };
 

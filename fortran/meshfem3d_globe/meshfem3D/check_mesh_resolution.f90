@@ -31,7 +31,7 @@
 
   use constants
 
-  use shared_parameters, only: T_min_period,ADIOS_ENABLED
+  use shared_parameters, only: T_min_period,ADIOS_ENABLED,SPECFEMPP_DATABASE
 
   use meshfem_par, only: &
     nspec,nglob, &
@@ -99,7 +99,7 @@
   if (NGLLX < 1 .or. NGLLX > 15) stop 'Invalid NGLLX value in routine check_mesh_resolution'
 
   ! check if we want to output files
-  if (SAVE_MESH_FILES) then
+  if (SAVE_MESH_FILES .and. .not. SPECFEMPP_DATABASE) then
     ! by default, lets the SAVE_MESH_FILES flag determine about the file output
     do_output = .true.
     ! ADIOS case

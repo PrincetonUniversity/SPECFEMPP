@@ -104,7 +104,7 @@ pipeline{
                                         module load boost/1.85.0
                                         module load ${CUDA_MODULE}
                                         cd /scratch/gpfs/TROMP/specfempp/jenkins/test_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.BUILD_TAG} && \
-                                        srun -N 1 -t 00:30:00 --account rse ${HOST_RUN_FLAGS} ${DEVICE_RUN_FLAGS} \
+                                        srun -N 1 -t 00:35:00 --account rse ${HOST_RUN_FLAGS} ${DEVICE_RUN_FLAGS} \
                                             bash -c 'export OMP_PROC_BIND=spread; \
                                             export OMP_PLACES=threads; \
                                             export OMP_NUM_THREADS=20; \

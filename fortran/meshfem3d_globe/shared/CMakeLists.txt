@@ -7,11 +7,18 @@ set(CMAKE_Fortran_STANDARD_REQUIRED ON)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/../setup)
 
+if(SPECFEM_ENABLE_MPI)
+  set(MESHFEM3D_GLOBE_PARALLEL_SOURCE parallel.f90)
+else()
+  set(MESHFEM3D_GLOBE_PARALLEL_SOURCE serial.f90)
+endif()
+
 set(MESHFEM3D_GLOBE_SHARED_MODULE
   shared_par.f90
 )
 
 set(MESHFEM3D_GLOBE_SHARED_SOURCES
+  adjacency_graph.f90
   assemble_MPI_scalar.f90
   assemble_MPI_vector.f90
   auto_ner.f90
@@ -47,7 +54,7 @@ set(MESHFEM3D_GLOBE_SHARED_SOURCES
   model_Sohl.f90
   model_topo_bathy.f90
   model_vpremoon.f90
-  parallel.f90
+  ${MESHFEM3D_GLOBE_PARALLEL_SOURCE}
   param_reader.c
   read_compute_parameters.f90
   read_parameter_file.F90
@@ -106,4 +113,6 @@ target_link_libraries(meshfem3D_globe_shared PRIVATE
   meshfem3D_globe::constants
 )
 
-target_link_libraries(meshfem3D_globe_shared PRIVATE MPI::MPI_Fortran)
+if(SPECFEM_ENABLE_MPI)
+  target_link_libraries(meshfem3D_globe_shared PRIVATE MPI::MPI_Fortran)
+endif()

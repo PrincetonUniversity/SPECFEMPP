@@ -163,6 +163,38 @@ function(specfem_print_configuration_summary)
   string(APPEND SUMMARY_STRING "\n")
 
   # ============================================================================
+  # MPI CONFIGURATION
+  # ============================================================================
+  if(SPECFEM_ENABLE_MPI)
+    string(APPEND SUMMARY_STRING "MPI CONFIGURATION\n")
+    string(APPEND SUMMARY_STRING "-----------------\n")
+
+    # Both default to FindMPI's results (top-level CMakeLists.txt) and are CMake lists;
+    # render them as they appear on the command line.
+    string(REPLACE ";" " " MPI_TEST_COMMAND_DISPLAY "${SPECFEM_MPI_TEST_COMMAND}")
+    string(REPLACE ";" " " MPI_TEST_NUMPROC_FLAG_DISPLAY "${SPECFEM_MPI_TEST_NUMPROC_FLAG}")
+
+    string(APPEND SUMMARY_STRING "  MPI_CXX_COMPILER                         | ${MPI_CXX_COMPILER}\n")
+    string(APPEND SUMMARY_STRING "  MPI Standard Version                     | ${MPI_CXX_VERSION}\n")
+
+    # FindMPI only sets MPI_CXX_LIBRARY_VERSION_STRING when it could run an MPI program,
+    # so the vendor banner is often unavailable; skip the row rather than print a
+    # placeholder. When present it is multi-line -- keep the first line so the table holds.
+    if(MPI_CXX_LIBRARY_VERSION_STRING)
+      string(REGEX REPLACE "\n.*" "" MPI_LIBRARY_DISPLAY "${MPI_CXX_LIBRARY_VERSION_STRING}")
+      string(APPEND SUMMARY_STRING "  MPI Library                              | ${MPI_LIBRARY_DISPLAY}\n")
+    endif()
+
+    string(APPEND SUMMARY_STRING "  MPIEXEC_EXECUTABLE                       | ${MPIEXEC_EXECUTABLE}\n")
+    string(APPEND SUMMARY_STRING "  MPIEXEC_NUMPROC_FLAG                     | ${MPIEXEC_NUMPROC_FLAG}\n")
+    string(APPEND SUMMARY_STRING "  MPIEXEC_MAX_NUMPROCS                     | ${MPIEXEC_MAX_NUMPROCS}\n")
+    string(APPEND SUMMARY_STRING "  SPECFEM_MPI_TEST_COMMAND                 | ${MPI_TEST_COMMAND_DISPLAY}\n")
+    string(APPEND SUMMARY_STRING "  SPECFEM_MPI_TEST_NUMPROC_FLAG            | ${MPI_TEST_NUMPROC_FLAG_DISPLAY}\n")
+    string(APPEND SUMMARY_STRING "  CTest MPI launcher                       | ${MPI_TEST_COMMAND_DISPLAY} ${MPI_TEST_NUMPROC_FLAG_DISPLAY} <ranks> <test>\n")
+    string(APPEND SUMMARY_STRING "\n")
+  endif()
+
+  # ============================================================================
   # TRILINOS CONFIGURATION
   # ============================================================================
   string(APPEND SUMMARY_STRING "TRILINOS CONFIGURATION\n")

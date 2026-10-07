@@ -22,6 +22,7 @@ using namespace specfem::test_configuration;
 
 std::unordered_map<std::string, ExpectedMeshSize> expected_mesh_sizes = {
   { "EightNodeElastic", ExpectedMeshSize(8, 5, 5, 5) },
+  { "EightNodeElasticCosserat", ExpectedMeshSize(8, 5, 5, 5) },
   // Additional test cases can be added here
 };
 

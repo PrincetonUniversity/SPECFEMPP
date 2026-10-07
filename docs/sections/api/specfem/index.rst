@@ -27,6 +27,7 @@
     execution/index
     io/index
     jacobian/index
+    linear_system/index
     macros/index
     medium_containers/index
     medium_physics/index

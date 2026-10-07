@@ -103,10 +103,10 @@ specfem::algorithms::project_onto_surface(
 
       // Select the two free reference coordinates for this face and the inverse
       // Jacobian rows that map a horizontal (x, y) residual into their updates.
-      // free1/free2 alias xi/eta/gamma and j1x..j2y alias members of
-      // `jacobian`; because `jacobian` is reassigned in place below (same
-      // object, members updated), those references stay valid across
-      // iterations.
+      // free1/free2 alias xi/eta/gamma and j1x..j2y alias components of
+      // `jacobian`'s tensor; because `jacobian` is reassigned in place below
+      // (same object, components overwritten), those references stay valid
+      // across iterations.
       auto [free1, free2, j1x, j1y, j2x, j2y] =
           [&xi, &eta, &gamma, &face,
            &jacobian]() -> std::tuple<type_real &, type_real &, type_real &,
@@ -114,16 +114,28 @@ specfem::algorithms::project_onto_surface(
         using specfem::mesh_entity::dim3::type;
         if (face == type::bottom || face == type::top) {
           gamma = (face == type::top) ? type_real(1) : type_real(-1);
-          return { xi,           eta,           jacobian.xix,
-                   jacobian.xiy, jacobian.etax, jacobian.etay };
+          return { xi,
+                   eta,
+                   jacobian.xix(),
+                   jacobian.xiy(),
+                   jacobian.etax(),
+                   jacobian.etay() };
         } else if (face == type::left || face == type::right) {
           xi = (face == type::right) ? type_real(1) : type_real(-1);
-          return { eta,           gamma,           jacobian.etax,
-                   jacobian.etay, jacobian.gammax, jacobian.gammay };
+          return { eta,
+                   gamma,
+                   jacobian.etax(),
+                   jacobian.etay(),
+                   jacobian.gammax(),
+                   jacobian.gammay() };
         } else { // front or back
           eta = (face == type::back) ? type_real(1) : type_real(-1);
-          return { xi,           gamma,           jacobian.xix,
-                   jacobian.xiy, jacobian.gammax, jacobian.gammay };
+          return { xi,
+                   gamma,
+                   jacobian.xix(),
+                   jacobian.xiy(),
+                   jacobian.gammax(),
+                   jacobian.gammay() };
         }
       }();
 

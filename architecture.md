@@ -227,7 +227,7 @@ Key configuration sections and their corresponding classes:
 
 **Files:** `core/specfem/mesh/`
 
-The `mesh<DimensionTag>` struct stores everything read from the **external mesher database** (a Fortran binary file produced by MESHFEM2D/MESHFEM3D). It is a passive data container — no computation happens here.
+The `mesh<ModelTag>` struct stores everything read from the **external mesher database** (a Fortran binary file produced by MESHFEM2D/MESHFEM3D or SPECFEM3D_GLOBE). It is a passive data container — no computation happens here.
 
 Key sub-structs:
 
@@ -261,7 +261,7 @@ mesh + quadrature + sources + receivers
          │
          ▼
   assembly<DimensionTag>
-    ├── mesh             (GLL coords, Jacobians, mass matrices)
+    ├── mesh             (GLL coords, Jacobians, mass matrices, plus reference GLL coords for Globe3D model sampling)
     ├── properties       (ρ, vp, vs, κ, μ, … at every GLL point)
     ├── fields           (simulation_field for forward/adjoint/backward/buffer)
     ├── jacobian_matrix  (element Jacobians for coordinate transforms)
@@ -271,7 +271,7 @@ mesh + quadrature + sources + receivers
     ├── kernels          (storage for Fréchet derivative accumulators)
     ├── conforming_interfaces     (coupled-medium continuity data)
     ├── nonconforming_interfaces  (non-conforming mesh interface data)
-    ├── element_types    (per-element physics classification)
+    ├── element_types    (per-element physics classification, plus globe region context for Globe3D)
     └── boundary_values  (stored boundary data for adjoint reconstructions)
 ```
 

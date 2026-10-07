@@ -1,0 +1,40 @@
+specfempp_mesh_files = ["interface1.txt", "interfaces.txt", "Mesh_Par_file"]
+fortran_mesh_files= [] # so that meshfem3d.smk doesn't complain, but we don't need any of these files
+source_file = "" # same here
+include: "../../../cosserat_solver.smk"
+
+rule all:
+    input:
+        trace_list="<cwd>/traces/trace_list.txt",
+        database="<cwd>/database.bin",
+    localrule: True
+
+rule move_traces:
+    input:
+        log="<cwd>/provenance/analytic/output/cosserat_solver.log",
+        outdir=rules.run_cosserat_solver.output.outdir,
+    output:
+        trace_list="<cwd>/traces_analytic/trace_list.txt",
+    localrule: True,
+    run:
+        import os
+        from pathlib import Path
+        trace_dir = os.path.join(input.outdir, "../../../traces_analytic")
+        solver_outdir = input.outdir
+        os.makedirs(trace_dir, exist_ok=True)
+
+        trace_list = []
+
+        for trace_file in os.listdir(solver_outdir):
+            trace_file_split = trace_file.split(".")
+            if len(trace_file_split) == 5 and trace_file_split[-1].startswith("sem"):
+                trace_list.append(trace_file + "\n")
+                infile = os.path.join(solver_outdir, trace_file)
+                outfile = os.path.join(trace_dir, trace_file)
+                shell(f"mv {infile} {outfile}")
+
+        with open(output.trace_list, "w") as f:
+            f.writelines(trace_list)
+
+        output_solver = Path(solver_outdir) / "cosserat_solver.log"
+        output_solver.rename(output_solver.parent / "cosserat_solver_store.log")

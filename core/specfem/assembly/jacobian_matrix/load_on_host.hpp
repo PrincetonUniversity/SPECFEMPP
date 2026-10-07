@@ -46,8 +46,8 @@ namespace specfem::assembly {
  * point_jac);
  *
  * // Process loaded transformation data
- * type_real volume_element = point_jac.jacobian;
- * type_real dxi_dx = point_jac.xix;
+ * type_real volume_element = point_jac.jacobian();
+ * type_real dxi_dx = point_jac.xix();
  * @endcode
  */
 template <

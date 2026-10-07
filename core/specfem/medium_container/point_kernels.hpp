@@ -6,3 +6,4 @@
 #include "specfem/medium/dim2/elastic/isotropic_cosserat/kernels.hpp"
 #include "specfem/medium/dim2/electromagnetic/isotropic/kernels.hpp"
 #include "specfem/medium/dim2/poroelastic/isotropic/kernels.hpp"
+#include "specfem/medium/dim3/elastic/anisotropic/kernels.hpp"

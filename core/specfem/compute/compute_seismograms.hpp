@@ -26,11 +26,11 @@ void compute_seismograms(
   specfem::tag_dispatch::for_each(
       specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
           MEDIUM_SET(elastic, elastic_psv, elastic_sh, acoustic, poroelastic,
-                     elastic_psv_t) *
+                     elastic_psv_t, elastic_spin) *
           PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat),
       [&]<typename ElementTags>() {
         impl::compute_seismograms<
-            NGLL, specfem::tags::expand<ElementTags, Tags::wavefield_tag> >(
+            NGLL, specfem::tags::expand<ElementTags, Tags::wavefield_tag>>(
             assembly, isig_step);
       });
 }

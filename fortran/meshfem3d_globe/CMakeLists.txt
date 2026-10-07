@@ -14,22 +14,14 @@ option(WITH_ADIOS "Build with ADIOS support" OFF)
 option(BEOWULF_CLUSTER "Build for Beowulf cluster" OFF)
 option(SPECFEM_INSTALL "Install SPECFEM" ON)
 
-if(NOT SPECFEM_ENABLE_MPI)
-  message(FATAL_ERROR
-    "meshfem3D_globe requires SPECFEM_ENABLE_MPI=ON because the "
-    "SPECFEM3D_GLOBE mesher sources use Fortran MPI.")
+if(SPECFEM_ENABLE_MPI)
+  if(NOT TARGET MPI::MPI_Fortran)
+    find_package(MPI REQUIRED COMPONENTS Fortran)
+  endif()
+  message(STATUS "-- Building meshfem3D_globe with Fortran MPI support")
+else()
+  message(STATUS "-- Building serial meshfem3D_globe")
 endif()
-
-if(NOT TARGET MPI::MPI_Fortran)
-  find_package(MPI REQUIRED COMPONENTS Fortran)
-endif()
-
-if(NOT TARGET MPI::MPI_Fortran)
-  message(FATAL_ERROR
-    "meshfem3D_globe requires MPI::MPI_Fortran, but Fortran MPI was not found.")
-endif()
-
-message(STATUS "-- Building meshfem3D_globe with Fortran MPI support")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/modules)

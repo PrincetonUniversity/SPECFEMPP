@@ -8,6 +8,7 @@
 #include "specfem/medium/dim2/elastic/isotropic_cosserat/mass_matrix.hpp"
 #include "specfem/medium/dim2/poroelastic/isotropic/mass_matrix.hpp"
 #include "specfem/medium/dim3/elastic/isotropic/mass_matrix.hpp"
+#include "specfem/medium/dim3/elastic/isotropic_cosserat/mass_matrix.hpp"
 #include "specfem/point.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>

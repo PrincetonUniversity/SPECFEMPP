@@ -26,8 +26,7 @@ void specfem::compute::impl::compute_mass_matrix(
   constexpr auto attenuation_tag = Tags::attenuation_tag;
 
   const auto elements = assembly.element_types.get_elements_on_device(
-          medium_tag, property_tag, attenuation_tag, boundary_tag,
-          Tags::mpi_tag);
+      medium_tag, property_tag, attenuation_tag, boundary_tag, Tags::mpi_tag);
 
   // Get number of elements matching the tag combinations
   const int nelements = elements.extent(0);
@@ -102,7 +101,8 @@ void specfem::compute::impl::compute_mass_matrix(
             specfem::medium_physics::mass_matrix_component<PointTags>(
                 point_property);
 
-        mass_matrix *= point_weights.product() * point_jacobian_matrix.jacobian;
+        mass_matrix *=
+            point_weights.product() * point_jacobian_matrix.jacobian();
 
         PointBoundaryType point_boundary;
         specfem::assembly::load_on_device(index, boundaries, point_boundary);

@@ -41,7 +41,7 @@
     STACEY_ABSORBING_CONDITIONS, TOP_FREE_SURFACE, BOTTOM_FREE_SURFACE
 
   use constants, only: IIN,MAX_STRING_LEN,IMAIN, &
-    IDOMAIN_ACOUSTIC,IDOMAIN_ELASTIC,IDOMAIN_POROELASTIC, &
+    IDOMAIN_ACOUSTIC,IDOMAIN_ELASTIC,IDOMAIN_POROELASTIC, IDOMAIN_COSSERAT, &
     ILONGLAT2UTM,IGNORE_JUNK,DONT_IGNORE_JUNK
 
   use shared_input_parameters, only: NGNOD, MESH_PAR_FILE
@@ -246,6 +246,8 @@
         write(IMAIN,*) '    material ',mat_id,' acoustic'
       case(IDOMAIN_ELASTIC)
         write(IMAIN,*) '    material ',mat_id,' elastic'
+      case(IDOMAIN_COSSERAT)
+        write(IMAIN,*) '   material ',mat_id,' elastic Cosserat'
       case (IDOMAIN_POROELASTIC)
         write(IMAIN,*) '    material ',mat_id,' poroelastic'
       end select
@@ -392,24 +394,26 @@
 
   ! checks given material properties
   do imat = 1,NMATERIALS
-    ! material properties
-    rho = material_properties(imat,1)
-    vp = material_properties(imat,2)
-    vs = material_properties(imat,3)
-    Q_Kappa = material_properties(imat,4)
-    Q_mu = material_properties(imat,5)
-    anisotropy_flag = material_properties(imat,6)
     domain_id = material_properties(imat,7)
-    mat_id = material_properties(imat,8)
+    if (domain_id == IDOMAIN_ACOUSTIC .or. domain_id == IDOMAIN_ELASTIC) then
+      ! material properties
+      rho = material_properties(imat,1)
+      vp = material_properties(imat,2)
+      vs = material_properties(imat,3)
+      Q_Kappa = material_properties(imat,4)
+      Q_mu = material_properties(imat,5)
+      anisotropy_flag = material_properties(imat,6)
+      mat_id = material_properties(imat,8)
 
-    ! checks material parameters
-    if (rho <= 0.d0 .or. vp <= 0.d0 .or. vs < 0.d0) stop 'Error material with negative value of velocity or density found'
-    if (Q_Kappa < 0.d0) stop 'Error material with negative Q_Kappa value found'
-    if (Q_mu < 0.d0) stop 'Error material with negative Q_mu value found'
+      ! checks material parameters
+      if (rho <= 0.d0 .or. vp <= 0.d0 .or. vs < 0.d0) stop 'Error material with negative value of velocity or density found'
+      if (Q_Kappa < 0.d0) stop 'Error material with negative Q_Kappa value found'
+      if (Q_mu < 0.d0) stop 'Error material with negative Q_mu value found'
+    endif
 
-    ! checks domain id (1 = acoustic / 2 = elastic / 3 = poroelastic)
+    ! checks domain id (1 = acoustic / 2 = elastic / 3 = poroelastic / 4 = Cosserat)
     select case (domain_id)
-    case (IDOMAIN_ACOUSTIC,IDOMAIN_ELASTIC,IDOMAIN_POROELASTIC)
+    case (IDOMAIN_ACOUSTIC,IDOMAIN_ELASTIC,IDOMAIN_POROELASTIC,IDOMAIN_COSSERAT)
       continue
     case default
       stop 'Error invalid domain ID in materials'

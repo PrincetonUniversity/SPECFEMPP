@@ -34,6 +34,7 @@ shared_TARGETS = \
 shared_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/adios_manager.shared_adios_module.o \
+	$O/adjacency_graph.shared.o \
 	$O/assemble_MPI_scalar.shared.o \
 	$O/assemble_MPI_vector.shared.o \
 	$O/auto_ner.shared.o \
@@ -91,6 +92,7 @@ shared_OBJECTS = \
 	$(EMPTY_MACRO)
 
 shared_MODULES = \
+	$(FC_MODDIR)/adjacency_graph_shared.$(FC_MODEXT) \
 	$(FC_MODDIR)/constants.$(FC_MODEXT) \
 	$(FC_MODDIR)/manager_adios.$(FC_MODEXT) \
 	$(FC_MODDIR)/manager_hdf5.$(FC_MODEXT) \

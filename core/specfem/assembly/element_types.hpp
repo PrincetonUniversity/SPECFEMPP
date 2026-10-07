@@ -24,7 +24,8 @@ template <> struct ElementSets<specfem::element::dimension_tag::dim2> {
 
 template <> struct ElementSets<specfem::element::dimension_tag::dim3> {
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
-  constexpr static auto medium_set = MEDIUM_SET(elastic, acoustic);
+  constexpr static auto medium_set =
+      MEDIUM_SET(elastic, acoustic, elastic_spin);
   constexpr static auto property_set =
       PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat);
   constexpr static auto boundary_set = BOUNDARY_SET(

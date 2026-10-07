@@ -13,7 +13,7 @@ if(SPECFEM_ENABLE_TRILINOS)
     if(NOT Trilinos_ROOT AND NOT DEFINED ENV{Trilinos_ROOT})
         message(FATAL_ERROR
             "Trilinos_ROOT must be set when SPECFEM_ENABLE_TRILINOS is ON.\n"
-            "  Load a TROMP module (e.g. `module load trilinos/16.1.0-cuda-ampere80-mpi`)\n"
+            "  Load a TROMP module (e.g. `module load trilinos/17.1.1-cpu-native-nompi`)\n"
             "  or pass -DTrilinos_ROOT=<install-prefix> to cmake.")
     endif()
 
@@ -37,6 +37,20 @@ if(SPECFEM_ENABLE_TRILINOS)
             ENV Trilinos_ROOT)
 
     add_compile_definitions(SPECFEM_ENABLE_TRILINOS)
+
+    # Trilinos dylibs carry "@rpath/..." install names. On macOS, dyld ignores
+    # LD_LIBRARY_PATH (all the TROMP modulefiles set) and SIP strips DYLD_*
+    # under make/cmake; unlike ELF platforms, CMake also does not add imported
+    # libraries' directories to the build rpath automatically. Embed the
+    # Trilinos library directory so binaries run without environment setup.
+    # Trilinos_DIR is <prefix>/<libdir>/cmake/Trilinos, so <libdir> is two
+    # levels up.
+    if(APPLE)
+        get_filename_component(SPECFEM_TRILINOS_LIBRARY_DIR
+            "${Trilinos_DIR}/../.." ABSOLUTE)
+        list(APPEND CMAKE_BUILD_RPATH "${SPECFEM_TRILINOS_LIBRARY_DIR}")
+        list(APPEND CMAKE_INSTALL_RPATH "${SPECFEM_TRILINOS_LIBRARY_DIR}")
+    endif()
 
     message(STATUS "Found Trilinos ${Trilinos_VERSION}")
     message(STATUS "    DIR : ${Trilinos_DIR}")

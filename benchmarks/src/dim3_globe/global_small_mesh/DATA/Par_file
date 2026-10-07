@@ -69,7 +69,8 @@ MODEL                           = 1D_isotropic_prem
 
 # parameters describing the Earth model
 OCEANS                          = .false.
-ELLIPTICITY                     = .false.
+# Ellipticity exercises the reference-geometry database path.
+ELLIPTICITY                     = .true.
 TOPOGRAPHY                      = .false.
 GRAVITY                         = .false.
 ROTATION                        = .false.
@@ -437,3 +438,7 @@ ADIOS_FOR_UNDO_ATTENUATION      = .true.
 # HDF5 Database I/O
 # (note the flags for HDF5 and ADIOS are mutually exclusive, only one can be used)
 HDF5_ENABLED                    = .false.
+
+# writes an additional thin mesh database for SPECFEM++
+# (one merged single-mesh file per rank: proc??????_specfempp_database.bin)
+SPECFEMPP_DATABASE              = .true.
