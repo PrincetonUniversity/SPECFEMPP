@@ -6,6 +6,7 @@
 #include "electromagnetic_wave.hpp"
 #include "flux_schemes.hpp"
 #include "header.hpp"
+#include "injection.hpp"
 #include "quadrature.hpp"
 #include "receivers.hpp"
 #include "run_setup.hpp"
@@ -294,6 +295,15 @@ public:
   };
 
   /**
+   * @brief Get the injection configuration (nullptr when no @c injection:
+   * section is present).
+   * @return raw pointer to the Injection config, or nullptr
+   */
+  const specfem::runtime_configuration::Injection *get_injection() const {
+    return this->injection.get();
+  }
+
+  /**
    * @brief Create wavefield writer for periodic output.
    *
    * @tparam DimensionTag Spatial dimension (2D/3D)
@@ -505,6 +515,8 @@ private:
       header; ///< Simulation header configuration
   std::unique_ptr<specfem::runtime_configuration::Attenuation>
       attenuation; ///< Attenuation configuration
+  std::unique_ptr<specfem::runtime_configuration::Injection>
+      injection; ///< Injection configuration
   std::unique_ptr<specfem::runtime_configuration::elastic_wave>
       elastic_wave; ///< Elastic wave type configuration
   std::unique_ptr<specfem::runtime_configuration::electromagnetic_wave>

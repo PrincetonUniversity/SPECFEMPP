@@ -328,6 +328,15 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict) {
     // Default is attenuation disabled
     this->attenuation = nullptr;
   }
+
+  // Get injection configuration
+  if (const YAML::Node &injection_node = runtime_config["injection"]) {
+    this->injection =
+        std::make_unique<specfem::runtime_configuration::Injection>(
+            injection_node);
+  } else {
+    this->injection = nullptr;
+  }
 };
 
 // Explicit template instantiations for instantiate_timescheme
