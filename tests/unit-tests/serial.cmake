@@ -909,3 +909,10 @@ specfem_add_test(injection_field_recovery_tests
           injection/field_recovery_tests.cpp
   LIBRARIES specfem::injection specfem::utilities Kokkos::kokkos gtest_main
 )
+
+specfem_add_test(injection_driver_tests
+  LABELS unit injection
+  SOURCES injection/runner.cpp
+          injection/driver_tests.cpp
+  LIBRARIES specfem::injection specfem::utilities Kokkos::kokkos gtest_main
+)
