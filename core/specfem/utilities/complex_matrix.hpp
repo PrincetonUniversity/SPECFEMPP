@@ -15,6 +15,10 @@ namespace utilities {
  * All member functions are @c KOKKOS_INLINE_FUNCTION and therefore callable
  * from inside a Kokkos kernel.
  *
+ * Intended for small fixed-size matrices created per thread inside a kernel
+ * (e.g. the 4×4 FK layer propagators). A @c Kokkos::View is heap-allocated
+ * and reference-counted, so it cannot be allocated per thread in a kernel.
+ *
  * @tparam N Matrix dimension (rows == columns == N).
  * @tparam Scalar Element type; defaults to @c Kokkos::complex<double>.
  */

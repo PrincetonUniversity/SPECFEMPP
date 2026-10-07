@@ -7,6 +7,11 @@ namespace specfem {
 namespace utilities {
 namespace cubic_bspline {
 
+// Device-callable (raw-pointer, KOKKOS_INLINE_FUNCTION) cubic B-spline
+// prefilter and evaluation, used per point inside Kokkos kernels. Host-only
+// alternatives such as Boost.Math splines cannot run in device code, and Boost
+// is an optional dependency.
+
 /**
  * @brief Evaluate the piecewise cubic B-spline basis function @f$ B_3(x) @f$.
  *
