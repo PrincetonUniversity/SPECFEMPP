@@ -76,6 +76,22 @@ Example parameter file
                 - 0.01 Hz
                 - 10.0 Hz
 
+          ## injection (optional) -- drive the simulation with an incident wavefield
+          injection:
+            method: fk
+            layers:
+              - acoustic: { rho: 1025.0, vp: 1500.0, thickness: 4500.0 }
+              - elastic:  { rho: 2600.0, vp: 5800.0, vs: 3200.0, thickness: 20000.0 }
+              - elastic:  { rho: 3380.0, vp: 8100.0, vs: 4500.0, thickness: 0.0 }
+            incidence:
+              type: P
+              back-azimuth: 30.0
+              take-off: 25.0
+            time-window:
+              frequency-max: 1.0
+              frequency-sampling: 10.0
+              length: 128.0
+
 
 
 Parameter definitions
@@ -1048,3 +1064,132 @@ Parameter definitions
                 attenuation-frequency-band:
                     - 0.1 Hz
                     - 10.0 Hz
+
+    .. dropdown:: ``injection``
+
+        Drive the simulation with an externally computed incident wavefield.
+        Injection is a pluggable method; the frequency-wavenumber (FK) solver is
+        the method available today.
+
+        :default value: None
+
+        :possible values: [YAML Node]
+
+        .. code-block:: yaml
+            :caption: Example injection section (inline layers)
+
+            injection:
+                method: fk
+                layers:
+                    - acoustic: { rho: 1025.0, vp: 1500.0, thickness: 4500.0 }
+                    - elastic:  { rho: 2600.0, vp: 5800.0, vs: 3200.0, thickness: 20000.0 }
+                    - elastic:  { rho: 3380.0, vp: 8100.0, vs: 4500.0, thickness: 0.0 }
+                incidence:
+                    type: P
+                    back-azimuth: 30.0
+                    take-off: 25.0
+                time-window:
+                    frequency-max: 1.0
+                    frequency-sampling: 10.0
+                    length: 128.0
+
+        .. note::
+
+            The parameters below are only relevant if the injection section is
+            defined. Exactly one of ``layers`` or ``model-file`` must be given.
+
+        .. dropdown:: ``enabled``
+
+            Flag to indicate whether injection should be included in the
+            simulation.
+
+            :default value: True
+
+            :possible values: [bool]
+
+        .. dropdown:: ``method``
+
+            Injection method. Only the frequency-wavenumber solver is available
+            today; an unknown method raises an error naming the supported
+            methods.
+
+            :default value: fk
+
+            :possible values: [fk]
+
+        .. dropdown:: ``layers``
+
+            Inline 1-D layered velocity model, top to bottom. Each entry is a
+            single-key map tagged by medium: ``acoustic`` (``rho``, ``vp``,
+            ``thickness``) or ``elastic`` (``rho``, ``vp``, ``vs``,
+            ``thickness``). Acoustic entries must not specify ``vs``. The last
+            elastic entry is the half-space (``thickness: 0``). Fluid (acoustic)
+            layers must form a contiguous block on top. Mutually exclusive with
+            ``model-file``.
+
+            :default value: None
+
+            :possible values: [YAML list]
+
+            .. code-block:: yaml
+                :caption: Example
+
+                layers:
+                    - acoustic: { rho: 1025.0, vp: 1500.0, thickness: 4500.0 }
+                    - elastic:  { rho: 2600.0, vp: 5800.0, vs: 3200.0, thickness: 20000.0 }
+                    - elastic:  { rho: 3380.0, vp: 8100.0, vs: 4500.0, thickness: 0.0 }
+
+        .. dropdown:: ``model-file``
+
+            Path to an external FK model file (keyword format) providing the
+            layer table, and optionally the incidence and time-window. An
+            explicit ``incidence`` / ``time-window`` block overrides the file.
+            Mutually exclusive with ``layers``.
+
+            :default value: None
+
+            :possible values: [string]
+
+        .. dropdown:: ``incidence``
+
+            Incident plane-wave descriptor. Required for the inline ``layers``
+            form; optional override for the ``model-file`` form. ``type`` is
+            ``P`` or ``SV``. The horizontal azimuth is set from ``back-azimuth``
+            (:math:`\phi = -\mathrm{baz} - 90^\circ`) or ``azimuth``
+            (:math:`\phi = 90^\circ - \mathrm{az}`); ``take-off`` is measured
+            from the vertical. Angles are in degrees.
+
+            :default value: None
+
+            :possible values: [YAML Node]
+
+            .. code-block:: yaml
+                :caption: Example
+
+                incidence:
+                    type: P
+                    back-azimuth: 30.0
+                    take-off: 25.0
+                    origin: [0.0, 0.0, 0.0]
+                    origin-time: 0.0
+                    amplitude: 1.0
+                    half-duration: 0.0
+
+        .. dropdown:: ``time-window``
+
+            FK storage time-window parameters. Required for the inline
+            ``layers`` form; optional override for the ``model-file`` form. The
+            simulation time step and step count are supplied by the time scheme,
+            not here.
+
+            :default value: None
+
+            :possible values: [YAML Node]
+
+            .. code-block:: yaml
+                :caption: Example
+
+                time-window:
+                    frequency-max: 1.0
+                    frequency-sampling: 10.0
+                    length: 128.0

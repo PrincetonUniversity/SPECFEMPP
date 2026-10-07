@@ -25,6 +25,7 @@
     ellipticity/index
     enums/index
     execution/index
+    injection/index
     io/index
     jacobian/index
     linear_system/index
