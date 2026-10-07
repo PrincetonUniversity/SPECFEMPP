@@ -1,28 +1,70 @@
 #include "specfem/coordinate_systems/geocentric_projection.hpp"
+#include "specfem/coordinate_systems/projection_constants.hpp"
 
-#include <algorithm>
 #include <cmath>
-#include <numbers>
 
 namespace specfem {
 namespace coordinate_systems {
 namespace geocentric_impl {
 
-constexpr double pi = std::numbers::pi;
-constexpr double degrees_to_radians = pi / 180.0;
-constexpr double radians_to_degrees = 180.0 / pi;
-
-/// Wrap a longitude in radians to [0, 2*pi), matching globe's reduce().
-double normalize_longitude(double radians) {
-  radians = std::fmod(radians, 2.0 * pi);
-  if (radians < 0.0)
-    radians += 2.0 * pi;
-  return radians;
-}
+/// Port of specfem3d_globe's `reduce()`: bring colatitude @p theta into
+/// @f$ [0,\pi] @f$ and longitude @p phi into @f$ [0,2\pi) @f$. Matches globe so
+/// that a tiny-negative input maps toward 0 rather than wrapping up to
+/// @f$ 2\pi @f$.
+void reduce(double &theta, double &phi);
 
 } // namespace geocentric_impl
 } // namespace coordinate_systems
 } // namespace specfem
+
+void specfem::coordinate_systems::geocentric_impl::reduce(double &theta,
+                                                          double &phi) {
+  const double pi = specfem::coordinate_systems::pi;
+  const double two_pi = 2.0 * pi;
+  constexpr double tiny = 1.0e-9;
+  constexpr double nudge = 1.0e-7;
+
+  // Nudge points off the exact polar axis to avoid roundoff ambiguity.
+  if (std::abs(theta) < tiny)
+    theta += nudge;
+  if (std::abs(phi) < tiny)
+    phi += nudge;
+
+  double th = theta;
+  double ph = phi;
+
+  // Longitude into [0, 2*pi).
+  if (ph < 0.0 || ph > two_pi) {
+    const int i = std::abs(static_cast<int>(ph / two_pi));
+    if (ph < 0.0)
+      ph += (i + 1) * two_pi;
+    else if (ph > two_pi)
+      ph -= i * two_pi;
+    phi = ph;
+  }
+
+  // Colatitude into [0, pi], switching hemisphere when it wraps.
+  if (th < 0.0 || th > pi) {
+    const int i = static_cast<int>(th / pi);
+    if (th > 0.0) {
+      if (i % 2 != 0) {
+        th = (i + 1) * pi - th;
+        ph = (ph < pi) ? ph + pi : ph - pi;
+      } else {
+        th -= i * pi;
+      }
+    } else {
+      if (i % 2 == 0) {
+        th = -th + i * pi;
+        ph = (ph < pi) ? ph + pi : ph - pi;
+      } else {
+        th -= i * pi;
+      }
+    }
+    theta = th;
+    phi = ph;
+  }
+}
 
 template <>
 specfem::coordinate_systems::cartesian_coordinates<
@@ -55,13 +97,13 @@ specfem::coordinate_systems::transform<
 
   const double r =
       std::sqrt(cart.x * cart.x + cart.y * cart.y + cart.z * cart.z);
-  if (r == 0.0)
-    return { 0.0, 0.0, 0.0 };
 
-  // acos argument clamped against round-off at the poles.
-  const double theta = std::acos(std::clamp(cart.z / r, -1.0, 1.0));
-  const double phi =
-      geocentric_impl::normalize_longitude(std::atan2(cart.y, cart.x));
+  // theta via atan2 (matches globe's xyz_2_rthetaphi) rather than acos(z/r),
+  // which loses precision at the poles.
+  double theta =
+      std::atan2(std::sqrt(cart.x * cart.x + cart.y * cart.y), cart.z);
+  double phi = std::atan2(cart.y, cart.x);
+  geocentric_impl::reduce(theta, phi);
 
   return { r, theta, phi };
 }
@@ -79,15 +121,16 @@ specfem::coordinate_systems::transform<
 
   // Perfect sphere: geographic latitude is the geocentric colatitude directly
   // (no (1-f)^2 flattening — that enters with the elliptical case).
-  const double colatitude =
-      geocentric_impl::pi / 2.0 -
-      geographic.latitude * geocentric_impl::degrees_to_radians;
-  const double longitude = geocentric_impl::normalize_longitude(
-      geographic.longitude * geocentric_impl::degrees_to_radians);
+  double theta =
+      specfem::coordinate_systems::pi / 2.0 -
+      geographic.latitude * specfem::coordinate_systems::degrees_to_radians;
+  double phi =
+      geographic.longitude * specfem::coordinate_systems::degrees_to_radians;
+  geocentric_impl::reduce(theta, phi);
 
   const double radius = config.r_planet - geographic.depth;
 
-  return { radius, colatitude, longitude };
+  return { radius, theta, phi };
 }
 
 template <>
@@ -101,9 +144,14 @@ specfem::coordinate_systems::transform<
 
   namespace geocentric_impl = specfem::coordinate_systems::geocentric_impl;
 
+  double theta = geocentric.theta;
+  double phi = geocentric.phi;
+  geocentric_impl::reduce(theta, phi);
+
   const double latitude =
-      90.0 - geocentric.theta * geocentric_impl::radians_to_degrees;
-  const double longitude = geocentric.phi * geocentric_impl::radians_to_degrees;
+      90.0 - theta * specfem::coordinate_systems::radians_to_degrees;
+  const double longitude =
+      phi * specfem::coordinate_systems::radians_to_degrees;
   const double depth = config.r_planet - geocentric.r;
 
   return { longitude, latitude, depth };

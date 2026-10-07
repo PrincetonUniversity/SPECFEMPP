@@ -5,6 +5,8 @@
 
 using specfem::coordinate_systems::cartesian_coordinates;
 using specfem::coordinate_systems::geocentric_coordinates;
+using specfem::coordinate_systems::geocentric_projection_config;
+using specfem::coordinate_systems::geographic_coordinates;
 using specfem::coordinate_systems::transform;
 
 namespace {
@@ -13,8 +15,6 @@ using cartesian3d =
     cartesian_coordinates<specfem::element::dimension_tag::dim3>;
 
 constexpr double pi = std::numbers::pi;
-constexpr double degrees_to_radians = pi / 180.0;
-constexpr double radians_to_degrees = 180.0 / pi;
 constexpr double r_planet = 6371000.0; // m (arbitrary for the chain tests)
 
 cartesian3d to_cartesian(const geocentric_coordinates &g) {
@@ -68,7 +68,9 @@ TEST(CoordinateSystemsGeocentric, ForwardSouthPole) {
 TEST(CoordinateSystemsGeocentric, InversePolesFinite) {
   const auto north = to_geocentric({ 0.0, 0.0, r_planet });
   EXPECT_NEAR(north.r, r_planet, 1e-6);
-  EXPECT_NEAR(north.theta, 0.0, 1e-9);
+  // reduce() nudges points off the exact polar axis by ~1e-7 rad (matches
+  // globe).
+  EXPECT_NEAR(north.theta, 0.0, 1e-6);
   EXPECT_TRUE(std::isfinite(north.phi));
 
   const auto south = to_geocentric({ 0.0, 0.0, -r_planet });
@@ -105,11 +107,13 @@ TEST(CoordinateSystemsGeocentric, RoundTripAntimeridian) {
   EXPECT_NEAR(recovered.phi, original.phi, 1e-9);
 }
 
-// ── Full (lat, lon, depth) -> Cartesian -> (lat, lon, depth) ─────────────────
-// Mirrors the perfect-sphere path of resolve_coordinates: colatitude from
-// latitude (no flattening), r = r_planet - depth.
+// ── Full (lat, lon, depth) -> geocentric -> (lat, lon, depth) ────────────────
+// Exercises the geographic <-> geocentric specializations directly (perfect
+// sphere): colatitude from latitude (no flattening), r = r_planet - depth.
 
 TEST(CoordinateSystemsGeocentric, GeographicChainRoundTrip) {
+  const geocentric_projection_config config{ r_planet };
+
   struct Case {
     double lat, lon, depth;
   };
@@ -122,27 +126,22 @@ TEST(CoordinateSystemsGeocentric, GeographicChainRoundTrip) {
   };
 
   for (const auto &k : cases) {
-    const double theta = pi / 2.0 - k.lat * degrees_to_radians;
-    const double phi = k.lon * degrees_to_radians;
-    const double r = r_planet - k.depth;
+    const geographic_coordinates input(k.lon, k.lat, k.depth);
 
-    const auto cart = to_cartesian({ r, theta, phi });
+    const auto geocentric = transform<geocentric_coordinates>(input, config);
 
     // Defining property of the spherical case.
-    const double radius =
-        std::sqrt(cart.x * cart.x + cart.y * cart.y + cart.z * cart.z);
-    EXPECT_NEAR(radius, r_planet - k.depth, 1.0)
+    EXPECT_NEAR(geocentric.r, r_planet - k.depth, 1.0)
         << "radius != r_planet - depth for lat=" << k.lat;
 
-    const auto g = to_geocentric(cart);
-    const double lat_out = 90.0 - g.theta * radians_to_degrees;
-    const double lon_out = g.phi * radians_to_degrees;
-    const double depth_out = r_planet - g.r;
+    const auto back = transform<geographic_coordinates>(geocentric, config);
 
-    EXPECT_NEAR(lat_out, k.lat, 1e-6) << "latitude round trip";
-    EXPECT_NEAR(depth_out, k.depth, 1.0) << "depth round trip";
+    // Tolerance accommodates globe reduce()'s ~1e-7 rad axis nudge (~6e-6 deg)
+    // at points on the poles / prime meridian.
+    EXPECT_NEAR(back.latitude, k.lat, 1e-4) << "latitude round trip";
+    EXPECT_NEAR(back.depth, k.depth, 1.0) << "depth round trip";
     if (std::abs(k.lat) < 90.0) // longitude is undefined at the poles
-      EXPECT_NEAR(longitude_error_deg(lon_out, k.lon), 0.0, 1e-6)
+      EXPECT_NEAR(longitude_error_deg(back.longitude, k.lon), 0.0, 1e-4)
           << "longitude round trip";
   }
 }

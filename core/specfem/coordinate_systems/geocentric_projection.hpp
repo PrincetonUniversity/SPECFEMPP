@@ -49,10 +49,11 @@ specfem::coordinate_systems::transform<
 /**
  * @brief Cartesian to geocentric spherical (inverse).
  *
- * @f$ r = \lVert v \rVert,\; \theta = \arccos(z/r) \in [0,\pi],\;
- * \phi = \operatorname{atan2}(y,x) @f$ normalized to @f$ [0, 2\pi) @f$ to match
- * globe's `reduce()` convention. @f$ \theta = 0 @f$ (and @f$ \phi = 0 @f$) when
- * @f$ r = 0 @f$.
+ * @f$ r = \lVert v \rVert,\;
+ * \theta = \operatorname{atan2}(\sqrt{x^2+y^2}, z) \in [0,\pi],\;
+ * \phi = \operatorname{atan2}(y,x) @f$. Both angles are passed through globe's
+ * `reduce()`, which wraps them into @f$ [0,\pi] @f$ and @f$ [0,2\pi) @f$ and
+ * nudges points off the exact polar axis by @f$ \sim 10^{-7} @f$ rad.
  *
  * @param cart Cartesian coordinates (meters).
  * @return Geocentric coordinates (r in meters, theta/phi in radians).
@@ -73,8 +74,9 @@ specfem::coordinate_systems::transform<
  * geocentric colatitude (no @f$ (1-f)^2 @f$ flattening), and depth is measured
  * from the reference surface radius.
  * @f$ \theta = \pi/2 - \text{lat}\cdot\pi/180 @f$,
- * @f$ \phi = \text{lon}\cdot\pi/180 @f$ normalized to @f$ [0, 2\pi) @f$,
- * @f$ r = r_\text{planet} - \text{depth} @f$.
+ * @f$ \phi = \text{lon}\cdot\pi/180 @f$,
+ * @f$ r = r_\text{planet} - \text{depth} @f$. Both angles are passed through
+ * globe's `reduce()` (wrapping @p phi into @f$ [0, 2\pi) @f$).
  *
  * @param geo Geographic coordinates (degrees, meters; depth positive down).
  * @param config Reference surface radius.
