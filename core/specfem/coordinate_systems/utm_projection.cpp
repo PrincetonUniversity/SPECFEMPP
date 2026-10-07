@@ -2,7 +2,6 @@
 
 #include "specfem/coordinate_systems/utm_projection.hpp"
 #include "specfem/constants.hpp"
-#include "specfem/coordinate_systems/projection_constants.hpp"
 #include "specfem/ellipticity/ellipticity.hpp"
 #include <algorithm>
 #include <cmath>
@@ -60,7 +59,7 @@ specfem::coordinate_systems::transform<
   const double central_meridian = zone * 6.0 - 183.0;
 
   // Convert to radians
-  const double rlat = specfem::coordinate_systems::degrees_to_radians * dlat;
+  const double rlat = specfem::constants::degrees_to_radians_double * dlat;
 
   // Longitude difference from central meridian, wrapped to [-180, 180]
   double delam = dlon - central_meridian;
@@ -68,7 +67,7 @@ specfem::coordinate_systems::transform<
     delam = delam + 360.0;
   if (delam > 180.0)
     delam = delam - 360.0;
-  delam = delam * specfem::coordinate_systems::degrees_to_radians;
+  delam = delam * specfem::constants::degrees_to_radians_double;
 
   // Meridional arc length M (Snyder eq. 3-21)
   const double f1 = (1.0 - utm_impl::e2 / 4.0 - 3.0 * utm_impl::e4 / 64.0 -
@@ -155,7 +154,7 @@ specfem::coordinate_systems::transform<
   const bool lsouth = (config.zone < 0);
   const double central_meridian = zone * 6.0 - 183.0;
   const double cmr =
-      central_meridian * specfem::coordinate_systems::degrees_to_radians;
+      central_meridian * specfem::constants::degrees_to_radians_double;
 
   // Remove false easting/northing and southern hemisphere offset
   double xx = cart.x - utm_impl::false_easting;
@@ -183,7 +182,7 @@ specfem::coordinate_systems::transform<
       (21.0 * e1_2 / 16.0 - 55.0 * e1_4 / 32.0) * std::sin(4.0 * mu);
   const double fp_f3 = (151.0 * e1_3 / 96.0) * std::sin(6.0 * mu);
   const double rlat1 = mu + fp_f1 + fp_f2 + fp_f3;
-  double dlat1 = rlat1 * specfem::coordinate_systems::radians_to_degrees;
+  double dlat1 = rlat1 * specfem::constants::radians_to_degrees_double;
 
   double dlat, dlon;
 
@@ -225,7 +224,7 @@ specfem::coordinate_systems::transform<
                            252.0 * utm_impl::ep2 - 3.0 * c1 * c1) *
                           d6 / 720.0;
     const double rlat = rlat1 - lat_f1 * (lat_f2 - lat_f3 + lat_f4);
-    dlat = rlat * specfem::coordinate_systems::radians_to_degrees;
+    dlat = rlat * specfem::constants::radians_to_degrees_double;
 
     // Snyder eq. 8-18 for longitude (lambda)
     const double lon_f1 = (1.0 + 2.0 * t1 + c1) * d3 / 6.0;
@@ -233,7 +232,7 @@ specfem::coordinate_systems::transform<
                            8.0 * utm_impl::ep2 + 24.0 * t1 * t1) *
                           d5 / 120.0;
     const double rlon = cmr + (d - lon_f1 + lon_f2) / cos_rlat1;
-    dlon = rlon * specfem::coordinate_systems::radians_to_degrees;
+    dlon = rlon * specfem::constants::radians_to_degrees_double;
 
     // Wrap longitude to [-180, 180]
     if (dlon < -180.0)

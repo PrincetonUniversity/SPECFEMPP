@@ -17,6 +17,17 @@ namespace specfem::constants {
 constexpr type_real pi = std::numbers::pi_v<type_real>;
 
 /**
+ * @brief Double-precision math constants for code that always computes in
+ * double precision (e.g. coordinate projections), independent of `type_real`.
+ *
+ * Distinct from @ref pi above, which follows `type_real` and may be single
+ * precision.
+ */
+constexpr double pi_double = std::numbers::pi;
+constexpr double degrees_to_radians_double = pi_double / 180.0;
+constexpr double radians_to_degrees_double = 180.0 / pi_double;
+
+/**
  * @brief Source decay rate to mimic a triangle source time function
  *
  * We mimic a triangle of half duration equal to half_duration_triangle using a

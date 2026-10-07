@@ -1,5 +1,5 @@
 #include "specfem/coordinate_systems/geocentric_projection.hpp"
-#include "specfem/coordinate_systems/projection_constants.hpp"
+#include "specfem/constants.hpp"
 
 #include <cmath>
 
@@ -19,7 +19,7 @@ void reduce(double &theta, double &phi);
 
 void specfem::coordinate_systems::geocentric_impl::reduce(double &theta,
                                                           double &phi) {
-  const double pi = specfem::coordinate_systems::pi;
+  const double pi = specfem::constants::pi_double;
   const double two_pi = 2.0 * pi;
   constexpr double tiny = 1.0e-9;
   constexpr double nudge = 1.0e-7;
@@ -122,10 +122,10 @@ specfem::coordinate_systems::transform<
   // Perfect sphere: geographic latitude is the geocentric colatitude directly
   // (no (1-f)^2 flattening — that enters with the elliptical case).
   double theta =
-      specfem::coordinate_systems::pi / 2.0 -
-      geographic.latitude * specfem::coordinate_systems::degrees_to_radians;
+      specfem::constants::pi_double / 2.0 -
+      geographic.latitude * specfem::constants::degrees_to_radians_double;
   double phi =
-      geographic.longitude * specfem::coordinate_systems::degrees_to_radians;
+      geographic.longitude * specfem::constants::degrees_to_radians_double;
   geocentric_impl::reduce(theta, phi);
 
   const double radius = config.r_planet - geographic.depth;
@@ -149,9 +149,8 @@ specfem::coordinate_systems::transform<
   geocentric_impl::reduce(theta, phi);
 
   const double latitude =
-      90.0 - theta * specfem::coordinate_systems::radians_to_degrees;
-  const double longitude =
-      phi * specfem::coordinate_systems::radians_to_degrees;
+      90.0 - theta * specfem::constants::radians_to_degrees_double;
+  const double longitude = phi * specfem::constants::radians_to_degrees_double;
   const double depth = config.r_planet - geocentric.r;
 
   return { longitude, latitude, depth };
