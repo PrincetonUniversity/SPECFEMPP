@@ -219,10 +219,12 @@ std::vector<double> reference_stiffness(const AssemblyType &assembly,
                         continue;
                       }
                       for (int q = 0; q < NGLL; ++q) {
-                        std::array<int, ndim> p = i;
-                        p[r] = q;
+                        // Point i with slot r replaced by q. Indexed directly
+                        // rather than through a copy of i: icpx 2024.2 crashes
+                        // (HIRLowerSmallMemsetMemcpy) on the small array copy.
                         const int point = ReferenceConstitutive::point_index(
-                            p[2], p[1], p[0]);
+                            r == 2 ? q : i[2], r == 1 ? q : i[1],
+                            r == 0 ? q : i[0]);
                         const double m = M(a, b, r, s, point);
                         const double row_factor =
                             static_cast<double>(h(q, i[r]));
