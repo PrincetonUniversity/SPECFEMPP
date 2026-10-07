@@ -154,6 +154,11 @@ INSTANTIATE_TEST_SUITE_P(
                            specfem::enums::source_format::YAML,
                            single_moment_tensor_3d },
         SourceTestParam3D{
+            "3D Single Asymmetric Moment Tensor",
+            "io/sources/data/dim3/single_asymmetric_moment_tensor.yaml",
+            specfem::enums::source_format::YAML,
+            single_asymmetric_moment_tensor_3d },
+        SourceTestParam3D{
             "3D Multiple Sources", "io/sources/data/dim3/multiple_sources.yaml",
             specfem::enums::source_format::YAML, multiple_sources_3d },
         SourceTestParam3D{ "3D Single Cosserat Force",

@@ -92,6 +92,18 @@ const SourceVector3DType single_moment_tensor_3d = { std::make_shared<
         nsteps, dt, 1.0, 30.0, 1.0e10, false),
     wavefield_type) };
 
+// Asymmetric moment tensor: (Mxx, Myy, Mzz, Mxy, Mxz, Myz, Myx, Mzx, Mzy).
+const SourceVector3DType single_asymmetric_moment_tensor_3d = {
+  std::make_shared<
+      specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3>>(
+      std::make_unique<specfem::coordinate_systems::cartesian_coordinates<
+          specfem::element::dimension_tag::dim3>>(2000.0, 3000.0, 2000.0),
+      1.0, 2.0, 3.0, 0.5, 0.6, 0.7, -0.5, -0.6, -0.7,
+      std::make_unique<specfem::source_time_functions::Ricker>(
+          nsteps, dt, 1.0, 30.0, 1.0e10, false),
+      wavefield_type)
+};
+
 // Depth-based cartesian (x/y/depth, no z): z = -depth, origin nullopt so it is
 // resolved against topography at assembly time.
 const SourceVector3DType single_moment_tensor_depth_yaml_3d = {

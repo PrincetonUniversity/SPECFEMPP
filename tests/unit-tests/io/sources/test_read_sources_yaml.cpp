@@ -188,6 +188,33 @@ const static YAML::Node single_moment_tensor_yaml_3d = []() {
   return node;
 }();
 
+// Asymmetric moment tensor: the lower-triangle keys (Myx, Mzx, Mzy) differ
+// from their transposes, giving a non-zero body couple on elastic_spin media.
+const static YAML::Node single_asymmetric_moment_tensor_yaml_3d = []() {
+  YAML::Node node;
+  node["number-of-sources"] = 1;
+  YAML::Node source;
+  YAML::Node moment_tensor;
+  moment_tensor["x"] = 2000.0;
+  moment_tensor["y"] = 3000.0;
+  moment_tensor["z"] = 2000.0;
+  moment_tensor["Mxx"] = 1.0;
+  moment_tensor["Myy"] = 2.0;
+  moment_tensor["Mzz"] = 3.0;
+  moment_tensor["Mxy"] = 0.5;
+  moment_tensor["Mxz"] = 0.6;
+  moment_tensor["Myz"] = 0.7;
+  moment_tensor["Myx"] = -0.5;
+  moment_tensor["Mzx"] = -0.6;
+  moment_tensor["Mzy"] = -0.7;
+  moment_tensor["Ricker"]["factor"] = 1.0e10;
+  moment_tensor["Ricker"]["tshift"] = 30.0;
+  moment_tensor["Ricker"]["f0"] = 1.0;
+  source["moment-tensor"] = moment_tensor;
+  node["sources"].push_back(source);
+  return node;
+}();
+
 // Geographic moment tensor: latitude/longitude/depth (meters) instead of x/y/z
 const static YAML::Node single_moment_tensor_geographic_yaml_3d_node = []() {
   YAML::Node node;
@@ -441,6 +468,9 @@ INSTANTIATE_TEST_SUITE_P(
         SourceYAMLTestParam3D{ "3D YAML Moment Tensor",
                                single_moment_tensor_yaml_3d,
                                single_moment_tensor_3d },
+        SourceYAMLTestParam3D{ "3D YAML Asymmetric Moment Tensor",
+                               single_asymmetric_moment_tensor_yaml_3d,
+                               single_asymmetric_moment_tensor_3d },
         SourceYAMLTestParam3D{ "3D YAML Geographic Moment Tensor",
                                single_moment_tensor_geographic_yaml_3d_node,
                                single_moment_tensor_geographic_yaml_3d },

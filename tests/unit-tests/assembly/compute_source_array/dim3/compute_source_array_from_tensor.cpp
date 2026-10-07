@@ -783,3 +783,202 @@ TEST(ASSEMBLY_NO_LOAD, accumulate_monopole_zero_body_couple_adds_nothing_3d) {
     }
   }
 }
+
+// An asymmetric moment tensor on elastic_spin drives both the displacement rows
+// (dipole M*grad L) and the rotation rows (monopole L*(eps:M)). Verifies the
+// full combined result, confirms elastic_spin no longer aborts, and pins the
+// couple sign convention (issue #2113).
+TEST(ASSEMBLY_NO_LOAD, asymmetric_moment_tensor_dipole_plus_monopole_3d) {
+
+  const int ngll = 5;
+
+  specfem::quadrature::gll::gll gll_quad(0.0, 0.0, ngll);
+  specfem::quadrature::quadratures quadratures(gll_quad);
+  specfem::assembly::mesh_impl::quadrature<
+      specfem::element::dimension_tag::dim3>
+      quadrature(quadratures);
+  auto xi_eta_gamma_points = quadrature.h_xi;
+
+  using PointJacobianMatrix =
+      specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim3,
+                                      false, false>;
+  Kokkos::View<PointJacobianMatrix ***, Kokkos::LayoutRight, Kokkos::HostSpace>
+      element_jacobian("element_jacobian", ngll, ngll, ngll);
+  for (int iz = 0; iz < ngll; ++iz) {
+    for (int iy = 0; iy < ngll; ++iy) {
+      for (int ix = 0; ix < ngll; ++ix) {
+        element_jacobian(iz, iy, ix) =
+            PointJacobianMatrix(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0);
+      }
+    }
+  }
+
+  // (Mxx, Myy, Mzz, Mxy, Mxz, Myz, Myx, Mzx, Mzy). The second case is
+  // antisymmetric in a single pair at a time, to pin each couple component.
+  struct Params {
+    type_real Mxx, Myy, Mzz, Mxy, Mxz, Myz, Myx, Mzx, Mzy;
+  };
+  std::vector<Params> cases = {
+    { 1.0, 2.0, 3.0, 0.5, 0.6, 0.7, -0.5, -0.6, -0.7 },
+    { 0.0, 0.0, 0.0, 0.3, 0.0, 0.0, -0.3, 0.0, 0.0 }, // only (eps:M)_z =
+                                                      // Mxy-Myx
+    { 0.0, 0.0, 0.0, 0.0, 0.4, 0.0, 0.0, -0.4, 0.0 }, // only (eps:M)_y =
+                                                      // Mzx-Mxz
+    { 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, -0.5 } // only (eps:M)_x = Myz-Mzy
+  };
+
+  for (const auto &p : cases) {
+    SCOPED_TRACE("asymmetric case");
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3>
+        source(0.0, 0.0, 0.0, p.Mxx, p.Myy, p.Mzz, p.Mxy, p.Mxz, p.Myz, p.Myx,
+               p.Mzx, p.Mzy,
+               std::make_unique<specfem::source_time_functions::Ricker>(
+                   10, 0.01, 1.0, 0.0, 1.0, false),
+               specfem::simulation::field_type::forward);
+    source.set_medium_tag(specfem::element::medium_tag::elastic_spin);
+
+    const auto source_tensor = source.get_source_tensor();
+    const int ncomponents = source_tensor.extent(0);
+    ASSERT_EQ(ncomponents, 6);
+
+    // Expected body couple, by the issue's sign convention.
+    const type_real couple_x = p.Myz - p.Mzy;
+    const type_real couple_y = p.Mzx - p.Mxz;
+    const type_real couple_z = p.Mxy - p.Myx;
+
+    Kokkos::View<type_real ****, Kokkos::LayoutRight, Kokkos::HostSpace>
+        source_array("source_array", ncomponents, ngll, ngll, ngll);
+
+    std::vector<type_real> test_points = { xi_eta_gamma_points(0), 0.0, 0.5,
+                                           xi_eta_gamma_points(ngll - 1) };
+
+    for (type_real xi_source : test_points) {
+      for (type_real eta_source : test_points) {
+        for (type_real gamma_source : test_points) {
+          source.set_local_coordinates(specfem::point::local_coordinates<
+                                       specfem::element::dimension_tag::dim3>(
+              0, xi_source, eta_source, gamma_source));
+
+          Kokkos::deep_copy(source_array, 0.0);
+
+          specfem::assembly::compute_source_array_impl::
+              compute_source_array_from_tensor_and_element_jacobian(
+                  source, element_jacobian, quadrature, source_array);
+          specfem::assembly::compute_source_array_impl::
+              accumulate_vector_contribution(source.get_local_coordinates(),
+                                             source.get_body_couple_vector(),
+                                             source_array);
+
+          auto [hxi_source, hpxi_source] =
+              specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
+                  xi_source, ngll, xi_eta_gamma_points);
+          auto [heta_source, hpeta_source] =
+              specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
+                  eta_source, ngll, xi_eta_gamma_points);
+          auto [hgamma_source, hpgamma_source] =
+              specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
+                  gamma_source, ngll, xi_eta_gamma_points);
+
+          for (int jz = 0; jz < ngll; ++jz) {
+            for (int jy = 0; jy < ngll; ++jy) {
+              for (int jx = 0; jx < ngll; ++jx) {
+                const type_real dsrc =
+                    hpxi_source(jx) * heta_source(jy) * hgamma_source(jz) +
+                    hxi_source(jx) * hpeta_source(jy) * hgamma_source(jz) +
+                    hxi_source(jx) * heta_source(jy) * hpgamma_source(jz);
+                const type_real hlagrange =
+                    hxi_source(jx) * heta_source(jy) * hgamma_source(jz);
+
+                // Displacement rows 0-2: dipole only.
+                for (int ic = 0; ic < 3; ++ic) {
+                  const type_real expected = source_tensor(ic, 0) * dsrc +
+                                             source_tensor(ic, 1) * dsrc +
+                                             source_tensor(ic, 2) * dsrc;
+                  EXPECT_NEAR(source_array(ic, jz, jy, jx), expected, 1e-5);
+                }
+                // Rotation rows 3-5: monopole body couple only (the tensor's
+                // rotation rows are zero).
+                EXPECT_NEAR(source_array(3, jz, jy, jx), hlagrange * couple_x,
+                            1e-5);
+                EXPECT_NEAR(source_array(4, jz, jy, jx), hlagrange * couple_y,
+                            1e-5);
+                EXPECT_NEAR(source_array(5, jz, jy, jx), hlagrange * couple_z,
+                            1e-5);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Regression: a symmetric moment tensor produces zero rotational coupling
+// through the full tensor path on elastic_spin (issue #2113).
+TEST(ASSEMBLY_NO_LOAD,
+     symmetric_moment_tensor_has_zero_rotational_coupling_3d) {
+
+  const int ngll = 5;
+
+  specfem::quadrature::gll::gll gll_quad(0.0, 0.0, ngll);
+  specfem::quadrature::quadratures quadratures(gll_quad);
+  specfem::assembly::mesh_impl::quadrature<
+      specfem::element::dimension_tag::dim3>
+      quadrature(quadratures);
+  auto xi_eta_gamma_points = quadrature.h_xi;
+
+  using PointJacobianMatrix =
+      specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim3,
+                                      false, false>;
+  Kokkos::View<PointJacobianMatrix ***, Kokkos::LayoutRight, Kokkos::HostSpace>
+      element_jacobian("element_jacobian", ngll, ngll, ngll);
+  for (int iz = 0; iz < ngll; ++iz) {
+    for (int iy = 0; iy < ngll; ++iy) {
+      for (int ix = 0; ix < ngll; ++ix) {
+        element_jacobian(iz, iy, ix) =
+            PointJacobianMatrix(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0);
+      }
+    }
+  }
+
+  // Symmetric tensor (9-arg ctor sets the lower triangle equal to the upper).
+  specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3> source(
+      0.0, 0.0, 0.0, 1.0, 2.0, 3.0, 0.5, 0.6, 0.7,
+      std::make_unique<specfem::source_time_functions::Ricker>(10, 0.01, 1.0,
+                                                               0.0, 1.0, false),
+      specfem::simulation::field_type::forward);
+  source.set_medium_tag(specfem::element::medium_tag::elastic_spin);
+
+  auto body_couple = source.get_body_couple_vector();
+  ASSERT_EQ(body_couple.extent(0), 6u);
+  EXPECT_NEAR(body_couple(3), 0.0, 1e-6);
+  EXPECT_NEAR(body_couple(4), 0.0, 1e-6);
+  EXPECT_NEAR(body_couple(5), 0.0, 1e-6);
+
+  const int ncomponents = source.get_source_tensor().extent(0);
+  Kokkos::View<type_real ****, Kokkos::LayoutRight, Kokkos::HostSpace>
+      source_array("source_array", ncomponents, ngll, ngll, ngll);
+
+  source.set_local_coordinates(
+      specfem::point::local_coordinates<specfem::element::dimension_tag::dim3>(
+          0, 0.3, -0.4, 0.2));
+  Kokkos::deep_copy(source_array, 0.0);
+
+  specfem::assembly::compute_source_array_impl::
+      compute_source_array_from_tensor_and_element_jacobian(
+          source, element_jacobian, quadrature, source_array);
+  specfem::assembly::compute_source_array_impl::accumulate_vector_contribution(
+      source.get_local_coordinates(), source.get_body_couple_vector(),
+      source_array);
+
+  // Rotation rows must be identically zero.
+  for (int ic = 3; ic < 6; ++ic) {
+    for (int jz = 0; jz < ngll; ++jz) {
+      for (int jy = 0; jy < ngll; ++jy) {
+        for (int jx = 0; jx < ngll; ++jx) {
+          EXPECT_NEAR(source_array(ic, jz, jy, jx), 0.0, 1e-12);
+        }
+      }
+    }
+  }
+}
