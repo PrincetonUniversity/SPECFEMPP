@@ -982,3 +982,106 @@ TEST(ASSEMBLY_NO_LOAD,
     }
   }
 }
+
+// A spin tensor populates only the three rotation rows of the source array,
+// with the gradient contraction Mc*grad L; the three displacement rows stay
+// identically zero and no monopole term is added (issue #2113).
+TEST(ASSEMBLY_NO_LOAD, spin_tensor_fills_only_rotation_rows_3d) {
+
+  const int ngll = 5;
+
+  specfem::quadrature::gll::gll gll_quad(0.0, 0.0, ngll);
+  specfem::quadrature::quadratures quadratures(gll_quad);
+  specfem::assembly::mesh_impl::quadrature<
+      specfem::element::dimension_tag::dim3>
+      quadrature(quadratures);
+  auto xi_eta_gamma_points = quadrature.h_xi;
+
+  using PointJacobianMatrix =
+      specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim3,
+                                      false, false>;
+  Kokkos::View<PointJacobianMatrix ***, Kokkos::LayoutRight, Kokkos::HostSpace>
+      element_jacobian("element_jacobian", ngll, ngll, ngll);
+  for (int iz = 0; iz < ngll; ++iz) {
+    for (int iy = 0; iy < ngll; ++iy) {
+      for (int ix = 0; ix < ngll; ++ix) {
+        element_jacobian(iz, iy, ix) =
+            PointJacobianMatrix(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0);
+      }
+    }
+  }
+
+  specfem::sources::spin_tensor<specfem::element::dimension_tag::dim3> source(
+      0.0, 0.0, 0.0, 1.0, 2.0, 3.0, 0.5, 0.6, 0.7, -0.5, -0.6, -0.7,
+      std::make_unique<specfem::source_time_functions::Ricker>(10, 0.01, 1.0,
+                                                               0.0, 1.0, false),
+      specfem::simulation::field_type::forward);
+  source.set_medium_tag(specfem::element::medium_tag::elastic_spin);
+
+  // The spin tensor has no monopole contribution by design.
+  EXPECT_FALSE(source.has_monopole_contribution());
+  EXPECT_EQ(source.get_body_couple_vector().extent(0), 0u);
+
+  // Exercise the generic contraction helpers (verifies the full 6x3 tensor
+  // contraction at GLL and off-GLL points).
+  test_tensor_source_3d("Spin Tensor 3D", source, ngll);
+  test_tensor_source_3d_off_gll("Spin Tensor 3D", source, ngll);
+
+  const auto source_tensor = source.get_source_tensor();
+  const int ncomponents = source_tensor.extent(0);
+  ASSERT_EQ(ncomponents, 6);
+  Kokkos::View<type_real ****, Kokkos::LayoutRight, Kokkos::HostSpace>
+      source_array("source_array", ncomponents, ngll, ngll, ngll);
+
+  std::vector<type_real> test_points = { xi_eta_gamma_points(0), -0.5, 0.0, 0.5,
+                                         xi_eta_gamma_points(ngll - 1) };
+
+  for (type_real xi_source : test_points) {
+    for (type_real eta_source : test_points) {
+      for (type_real gamma_source : test_points) {
+        source.set_local_coordinates(specfem::point::local_coordinates<
+                                     specfem::element::dimension_tag::dim3>(
+            0, xi_source, eta_source, gamma_source));
+
+        Kokkos::deep_copy(source_array, 0.0);
+
+        specfem::assembly::compute_source_array_impl::
+            compute_source_array_from_tensor_and_element_jacobian(
+                source, element_jacobian, quadrature, source_array);
+
+        auto [hxi_source, hpxi_source] =
+            specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
+                xi_source, ngll, xi_eta_gamma_points);
+        auto [heta_source, hpeta_source] =
+            specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
+                eta_source, ngll, xi_eta_gamma_points);
+        auto [hgamma_source, hpgamma_source] =
+            specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
+                gamma_source, ngll, xi_eta_gamma_points);
+
+        for (int jz = 0; jz < ngll; ++jz) {
+          for (int jy = 0; jy < ngll; ++jy) {
+            for (int jx = 0; jx < ngll; ++jx) {
+              const type_real dsrc =
+                  hpxi_source(jx) * heta_source(jy) * hgamma_source(jz) +
+                  hxi_source(jx) * hpeta_source(jy) * hgamma_source(jz) +
+                  hxi_source(jx) * heta_source(jy) * hpgamma_source(jz);
+
+              // Displacement rows 0-2 are identically zero.
+              EXPECT_NEAR(source_array(0, jz, jy, jx), 0.0, 1e-12);
+              EXPECT_NEAR(source_array(1, jz, jy, jx), 0.0, 1e-12);
+              EXPECT_NEAR(source_array(2, jz, jy, jx), 0.0, 1e-12);
+              // Rotation rows 3-5 carry the Mc contraction.
+              for (int ic = 3; ic < 6; ++ic) {
+                const type_real expected = source_tensor(ic, 0) * dsrc +
+                                           source_tensor(ic, 1) * dsrc +
+                                           source_tensor(ic, 2) * dsrc;
+                EXPECT_NEAR(source_array(ic, jz, jy, jx), expected, 1e-5);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
