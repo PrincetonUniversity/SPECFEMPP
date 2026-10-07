@@ -3,21 +3,25 @@
 #include <Kokkos_MathematicalFunctions.hpp>
 #include <gtest/gtest.h>
 
+#include <stdexcept>
 #include <vector>
 
 // ---------------------------------------------------------------------------
 // Normalization note (documented from analytical derivation)
 //
-// Both transform() (zign=-1) and inverse() apply the same direction DFT
-// (e^{+2pi*i*n*k/lx} exponent) with scale factor 1/(lx*dt).
+// zign = +1 is the forward transform (kernel e^{-2pi*i*n*k/lx}, scale dt);
+// zign = -1 is the inverse (kernel e^{+2pi*i*n*k/lx}, scale 1/(lx*dt)).
 //
-// For a real signal r[n] with no energy at the Nyquist bin (k = lx/2):
-//   inverse( forward(r) )[n]  =  r[n] / lx   (with dt=1)
+// RoundTripCosine applies the zign = -1 transform twice (transform() then
+// inverse()).  For a real signal r[n] with no energy at the Nyquist bin
+// (k = lx/2) this gives the time-reversed signal r[-n] / lx (with dt=1);
+// a cosine is time-reversal invariant, so the expected output is r[n] / lx.
+// RoundTripAsymmetric covers the proper forward (+1) / inverse (-1) pair on
+// a signal that is not time-reversal invariant.
 //
 // restructure_spectrum is a no-op when the spectrum already satisfies
-// Hermitian symmetry and zero Nyquist — which is the case for the forward
-// transform of a band-limited real signal.  We use a cosine at k0=1 for
-// the round-trip test to ensure this property holds exactly.
+// Hermitian symmetry and zero Nyquist — which is the case for the
+// transform of a band-limited real signal.
 // ---------------------------------------------------------------------------
 
 // Device kernels are expressed as named functors rather than extended
@@ -41,7 +45,7 @@ struct RoundTrip {
       d_buf(n) = Kokkos::complex<double>(d_r(n), 0.0);
     }
 
-    // Forward transform (zign=-1, dt=1).
+    // zign=-1 transform (inverse kernel), dt=1.
     specfem::utilities::fft::transform(power, d_buf.data(), -1.0, dt,
                                        bit_reversal_view.data(),
                                        twiddles_view.data());
@@ -110,6 +114,50 @@ struct Restructure {
     double diff_r3 = d_s(nhalf + 2).real() - d_s(nhalf - 2).real();
     double diff_i3 = d_s(nhalf + 2).imag() + d_s(nhalf - 2).imag();
     d_checks(5) = Kokkos::fabs(diff_r3) + Kokkos::fabs(diff_i3);
+  }
+};
+
+// Forward (+1 tables) then inverse (-1 tables): recovers the input exactly.
+struct RoundTripForwardInverse {
+  Kokkos::View<Kokkos::complex<double> *> d_buf;
+  Kokkos::View<double *> d_r;
+  Kokkos::View<double *> d_out;
+  Kokkos::View<int *> fwd_bit_reversal;
+  Kokkos::View<Kokkos::complex<double> *> fwd_twiddles;
+  Kokkos::View<int *> inv_bit_reversal;
+  Kokkos::View<Kokkos::complex<double> *> inv_twiddles;
+  int power;
+  double dt;
+  KOKKOS_FUNCTION void operator()(const int) const {
+    const int lx = static_cast<int>(d_r.extent(0));
+    for (int n = 0; n < lx; ++n) {
+      d_buf(n) = Kokkos::complex<double>(d_r(n), 0.0);
+    }
+    specfem::utilities::fft::transform(power, d_buf.data(), 1.0, dt,
+                                       fwd_bit_reversal.data(),
+                                       fwd_twiddles.data());
+    specfem::utilities::fft::inverse(power, d_buf.data(), -1.0, dt,
+                                     d_out.data(), inv_bit_reversal.data(),
+                                     inv_twiddles.data());
+  }
+};
+
+// Forward transform only (+1 tables).
+struct Forward {
+  Kokkos::View<Kokkos::complex<double> *> d_buf;
+  Kokkos::View<double *> d_r;
+  Kokkos::View<int *> bit_reversal_view;
+  Kokkos::View<Kokkos::complex<double> *> twiddles_view;
+  int power;
+  double dt;
+  KOKKOS_FUNCTION void operator()(const int) const {
+    const int lx = static_cast<int>(d_r.extent(0));
+    for (int n = 0; n < lx; ++n) {
+      d_buf(n) = Kokkos::complex<double>(d_r(n), 0.0);
+    }
+    specfem::utilities::fft::transform(power, d_buf.data(), 1.0, dt,
+                                       bit_reversal_view.data(),
+                                       twiddles_view.data());
   }
 };
 
@@ -252,4 +300,97 @@ TEST(Fft, RestructureSpectrum) {
       << "Hermitian imag: s[nhalf+1].im == -s[nhalf-1].im";
   EXPECT_NEAR(h(5), 0.0, 1.0e-14)
       << "Hermitian: s[nhalf+2] == conj(s[nhalf-2])";
+}
+
+// ---------------------------------------------------------------------------
+// Forward (+1) → inverse (-1) on an asymmetric signal recovers r[n] exactly
+// ---------------------------------------------------------------------------
+
+TEST(Fft, RoundTripAsymmetric) {
+  constexpr int kPower = 6; // lx = 64
+  constexpr int kLx = 1 << kPower;
+  constexpr double kDt = 0.01;
+  constexpr double kTol = 1.0e-10;
+  constexpr double two_pi = 2.0 * 3.141592653589793;
+
+  const auto fwd = specfem::utilities::fft::make_fft_tables(kPower, 1.0);
+  const auto inv = specfem::utilities::fft::make_fft_tables(kPower, -1.0);
+
+  // Real, band-limited (no Nyquist energy), not time-reversal invariant.
+  Kokkos::View<double *> d_r("signal_asym", kLx);
+  auto h_r = Kokkos::create_mirror_view(d_r);
+  for (int n = 0; n < kLx; ++n) {
+    const double x = two_pi * static_cast<double>(n) / kLx;
+    h_r(n) = 0.3 + Kokkos::cos(x) + 0.5 * Kokkos::sin(3.0 * x + 0.7) +
+             0.2 * Kokkos::sin(5.0 * x);
+  }
+  Kokkos::deep_copy(d_r, h_r);
+
+  Kokkos::View<Kokkos::complex<double> *> d_buf("fft_buf_asym", kLx);
+  Kokkos::View<double *> d_out("fft_out_asym", kLx);
+
+  Kokkos::parallel_for("fft_roundtrip_asym", Kokkos::RangePolicy<>(0, 1),
+                       fft_tests_impl::RoundTripForwardInverse{
+                           d_buf, d_r, d_out, fwd.bit_reversal, fwd.twiddles,
+                           inv.bit_reversal, inv.twiddles, kPower, kDt });
+  Kokkos::fence();
+
+  auto h_out = Kokkos::create_mirror_view(d_out);
+  Kokkos::deep_copy(h_out, d_out);
+
+  for (int n = 0; n < kLx; ++n) {
+    EXPECT_NEAR(h_out(n), h_r(n), kTol) << "mismatch at n=" << n;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Forward kernel sign: sin(2π k0 n / lx) → X[k0] = -i lx/2, X[lx-k0] = +i lx/2
+// ---------------------------------------------------------------------------
+
+TEST(Fft, ForwardSineBinSign) {
+  constexpr int kPower = 5; // lx = 32
+  constexpr int kLx = 1 << kPower;
+  constexpr int k0 = 3;
+  constexpr double kTol = 1.0e-10;
+  constexpr double two_pi = 2.0 * 3.141592653589793;
+
+  const auto fwd = specfem::utilities::fft::make_fft_tables(kPower, 1.0);
+
+  Kokkos::View<double *> d_r("signal_sin", kLx);
+  auto h_r = Kokkos::create_mirror_view(d_r);
+  for (int n = 0; n < kLx; ++n) {
+    h_r(n) = Kokkos::sin(two_pi * k0 * static_cast<double>(n) / kLx);
+  }
+  Kokkos::deep_copy(d_r, h_r);
+
+  Kokkos::View<Kokkos::complex<double> *> d_buf("fft_sin", kLx);
+  Kokkos::parallel_for("fft_sin_sign", Kokkos::RangePolicy<>(0, 1),
+                       fft_tests_impl::Forward{ d_buf, d_r, fwd.bit_reversal,
+                                                fwd.twiddles, kPower, 1.0 });
+  Kokkos::fence();
+
+  auto h_buf = Kokkos::create_mirror_view(d_buf);
+  Kokkos::deep_copy(h_buf, d_buf);
+
+  const double half = 0.5 * kLx;
+  for (int k = 0; k < kLx; ++k) {
+    const double expected_imag = (k == k0)         ? -half
+                                 : (k == kLx - k0) ? half
+                                                   : 0.0;
+    EXPECT_NEAR(h_buf(k).real(), 0.0, kTol) << "real part at k=" << k;
+    EXPECT_NEAR(h_buf(k).imag(), expected_imag, kTol) << "imag part at k=" << k;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// make_fft_tables rejects powers outside [1, 30]
+// ---------------------------------------------------------------------------
+
+TEST(Fft, MakeTablesRejectsBadPower) {
+  EXPECT_THROW(specfem::utilities::fft::make_fft_tables(0, -1.0),
+               std::runtime_error);
+  EXPECT_THROW(specfem::utilities::fft::make_fft_tables(-1, -1.0),
+               std::runtime_error);
+  EXPECT_THROW(specfem::utilities::fft::make_fft_tables(31, -1.0),
+               std::runtime_error);
 }

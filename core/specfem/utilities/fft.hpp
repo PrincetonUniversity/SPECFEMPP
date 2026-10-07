@@ -15,6 +15,11 @@ namespace fft {
  * Build with @c make_fft_tables on the host; the resulting Views can be
  * passed (by their raw @c .data() pointers) into the device-callable
  * @c transform / @c inverse functions.
+ *
+ * The transforms are deliberately inline and per-thread: callers (e.g. the FK
+ * injection kernels) run one transform per boundary point on per-thread
+ * scratch from inside a Kokkos kernel. Host-launched batched libraries such as
+ * KokkosFFT cannot be invoked from device code (and are not a dependency).
  */
 struct FftTables {
   Kokkos::View<int *> bit_reversal; ///< Bit-reversal recurrence table, size
@@ -32,16 +37,17 @@ struct FftTables {
  * The twiddle factor for level @p l (1-based) and block @p iblock (1-based)
  * is stored at index @c ((1<<(l-1)) - 1) + (iblock-1).
  *
- * @param power Transform length is @c lx = 2^power.
- * @param zign  Sign convention: use @c -1.0 for the forward transform
- *              (@c e^{-iωt}) and @c +1.0 for the inverse.
+ * @param power Transform length is @c lx = 2^power; must be in [1, 30].
+ * @param zign  Transform direction: @c +1.0 for the forward transform
+ *              (kernel @f$ e^{-2\pi i n k / l_x} @f$) and @c -1.0 for the
+ *              inverse (kernel @f$ e^{+2\pi i n k / l_x} @f$).
  * @return Fully populated @c FftTables with device-resident Views.
- * @throws std::runtime_error if @p power > 30.
+ * @throws std::runtime_error if @p power < 1 or @p power > 30.
  */
 inline FftTables make_fft_tables(int power, double zign) {
-  if (power > 30) {
+  if (power < 1 || power > 30) {
     throw std::runtime_error("specfem::utilities::fft::make_fft_tables: power "
-                             "> 30 is not supported");
+                             "must be in [1, 30]");
   }
 
   constexpr double two_pi = 2.0 * 3.141592653589793;
@@ -102,7 +108,11 @@ inline FftTables make_fft_tables(int power, double zign) {
 }
 
 /**
- * @brief In-place radix-2 Cooley–Tukey FFT (Fortran @c e^{-iωt} convention).
+ * @brief In-place radix-2 Cooley–Tukey FFT.
+ *
+ * The kernel direction is fixed by the @c zign the @p twiddles were built
+ * with (see @c make_fft_tables); the @p zign passed here only selects the
+ * scaling. The two must match, otherwise the result is silently wrong.
  *
  * Operates on a raw pointer to @p lx = 2^power complex samples.  Safe to call
  * from inside a Kokkos kernel when @p data points to per-thread scratch.
@@ -112,9 +122,10 @@ inline FftTables make_fft_tables(int power, double zign) {
  *
  * @param power       log2 of transform length.
  * @param data        Pointer to @c 2^power in-place samples.
- * @param zign        Sign used when tables were built (+1 or -1).
- * @param dt          Time-step for scaling: forward multiplies by @c dt,
- *                    inverse multiplies by @c 1/(lx*dt).
+ * @param zign        Sign used when the twiddles were built: @c +1.0
+ *                    (forward) or @c -1.0 (inverse).
+ * @param dt          Time-step for scaling: forward (@c zign > 0) multiplies
+ *                    by @c dt, inverse multiplies by @c 1/(lx*dt).
  * @param bit_reversal Bit-reversal table from @c
  * FftTables::bit_reversal.data().
  * @param twiddles    Twiddle table from @c FftTables::twiddles.data().
@@ -221,9 +232,8 @@ KOKKOS_INLINE_FUNCTION void restructure_spectrum(Kokkos::complex<double> *s,
  * @param power       log2 of transform length @c lx = 2^power.
  * @param s           In/out complex spectrum of length @c lx (modified in
  * place).
- * @param zign        Sign convention (should match the sign used during the
- *                    forward transform; pass @c -1.0 for the @c e^{-iωt}
- * convention).
+ * @param zign        Pass @c -1.0 (inverse), with @p twiddles built by
+ *                    @c make_fft_tables(power, -1.0).
  * @param dt          Time-step used in the corresponding forward transform.
  * @param out         Output buffer of length @c lx; receives the real part of
  * each transformed sample.
