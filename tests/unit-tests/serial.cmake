@@ -888,3 +888,24 @@ specfem_add_test(injection_types_tests
             Kokkos::kokkos
             gtest_main
 )
+
+specfem_add_test(injection_operators_tests
+  LABELS unit injection
+  SOURCES injection/runner.cpp
+          injection/layer_operators_tests.cpp
+  LIBRARIES specfem::injection specfem::utilities Kokkos::kokkos gtest_main
+)
+
+specfem_add_test(injection_halfspace_tests
+  LABELS unit injection
+  SOURCES injection/runner.cpp
+          injection/halfspace_solve_tests.cpp
+  LIBRARIES specfem::injection specfem::utilities Kokkos::kokkos gtest_main
+)
+
+specfem_add_test(injection_field_recovery_tests
+  LABELS unit injection
+  SOURCES injection/runner.cpp
+          injection/field_recovery_tests.cpp
+  LIBRARIES specfem::injection specfem::utilities Kokkos::kokkos gtest_main
+)
