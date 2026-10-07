@@ -171,6 +171,18 @@ values for each source type is given below.
 
                 :Possible values: [float]
 
+            .. dropdown:: ``Mzx``
+
+                Mzx moment tensor component. Setting ``Mzx`` different from
+                ``Mxz`` defines an asymmetric moment tensor. In 2D Cosserat
+                media (``elastic_psv_t``) the antisymmetric part ``Mxz - Mzx``
+                drives the micro-rotation field; a symmetric tensor produces no
+                rotational coupling.
+
+                :Default value: value of ``Mxz`` (symmetric tensor)
+
+                :Possible values: [float]
+
             .. dropdown:: ``Dirac``
 
                 Definition of Dirac source :ref:`dirac_source_description`

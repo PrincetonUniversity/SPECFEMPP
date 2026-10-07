@@ -68,6 +68,25 @@ const static YAML::Node single_moment_tensor_yaml_2d = []() {
   return node;
 }();
 
+const static YAML::Node single_asymmetric_moment_tensor_yaml_2d = []() {
+  YAML::Node node;
+  node["number-of-sources"] = 1;
+  YAML::Node source;
+  YAML::Node moment_tensor;
+  moment_tensor["x"] = 2000.0;
+  moment_tensor["z"] = 3000.0;
+  moment_tensor["Mxx"] = 1.0;
+  moment_tensor["Mzz"] = 1.0;
+  moment_tensor["Mxz"] = 0.5;
+  moment_tensor["Mzx"] = -0.5;
+  moment_tensor["Ricker"]["factor"] = 1.0e10;
+  moment_tensor["Ricker"]["tshift"] = 30.0;
+  moment_tensor["Ricker"]["f0"] = 1.0;
+  source["moment-tensor"] = moment_tensor;
+  node["sources"].push_back(source);
+  return node;
+}();
+
 const static YAML::Node single_force_yaml_2d = []() {
   YAML::Node node;
   node["number-of-sources"] = 1;
@@ -308,18 +327,21 @@ TEST_P(Read2DSourcesYAMLTest, ReadYAMLnode) {
 
 INSTANTIATE_TEST_SUITE_P(
     IO_TESTS, Read2DSourcesYAMLTest,
-    ::testing::Values(SourceYAMLTestParam2D{ "2D YAML Moment Tensor",
-                                             single_moment_tensor_yaml_2d,
-                                             single_moment_tensor_2d },
-                      SourceYAMLTestParam2D{ "2D YAML Force",
-                                             single_force_yaml_2d,
-                                             single_force_2d },
-                      SourceYAMLTestParam2D{ "2D YAML Cosserat Force",
-                                             single_cosserat_force_yaml_2d,
-                                             single_cosserat_force_2d },
-                      SourceYAMLTestParam2D{ "2D YAML Multiple Sources",
-                                             multiple_sources_yaml_2d,
-                                             multiple_sources_2d }));
+    ::testing::Values(
+        SourceYAMLTestParam2D{ "2D YAML Moment Tensor",
+                               single_moment_tensor_yaml_2d,
+                               single_moment_tensor_2d },
+        SourceYAMLTestParam2D{ "2D YAML Asymmetric Moment Tensor",
+                               single_asymmetric_moment_tensor_yaml_2d,
+                               single_asymmetric_moment_tensor_2d },
+        SourceYAMLTestParam2D{ "2D YAML Force", single_force_yaml_2d,
+                               single_force_2d },
+        SourceYAMLTestParam2D{ "2D YAML Cosserat Force",
+                               single_cosserat_force_yaml_2d,
+                               single_cosserat_force_2d },
+        SourceYAMLTestParam2D{ "2D YAML Multiple Sources",
+                               multiple_sources_yaml_2d,
+                               multiple_sources_2d }));
 
 class Read3DSourcesYAMLTest
     : public ::testing::TestWithParam<SourceYAMLTestParam3D> {};
