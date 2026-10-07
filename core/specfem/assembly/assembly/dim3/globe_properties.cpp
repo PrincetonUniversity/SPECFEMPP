@@ -35,7 +35,9 @@ void read_globe_properties(
   }
 
   specfem::globe::ModelEvaluator evaluator(globe.model_config);
-  evaluator.validate_database_constants(*globe.planet_constants);
+  evaluator.validate_database_constants(*globe.planet_constants,
+                                        globe.model_verification.codes,
+                                        globe.model_verification.flags);
   const auto evaluator_dims = evaluator.dimensions();
   if (evaluator_dims.ngllx != assembly.mesh.element_grid.ngllx ||
       evaluator_dims.nglly != assembly.mesh.element_grid.nglly ||
@@ -61,7 +63,7 @@ void read_globe_properties(
                  .get_container<Medium::elastic, Property::isotropic>()
           : nullptr;
 
-  // The Fortran-backed globe evaluator is explicitly single-threaded.
+  // Catalog calls are serialized and setup-only, so this loop stays serial.
   for (int compute_ispec = 0; compute_ispec < assembly.mesh.nspec;
        ++compute_ispec) {
     for (int iz = 0; iz < ngllz; ++iz) {
