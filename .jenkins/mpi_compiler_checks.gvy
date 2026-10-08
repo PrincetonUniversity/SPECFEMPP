@@ -104,14 +104,16 @@ pipeline {
                                         module load ${GNU_COMPILER_MODULE}
                                         module load ${MPI_MODULE}
                                         cd /scratch/gpfs/TROMP/specfempp/jenkins/test_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
-                                        # Excludes the della-r3c* racks: there, MPI_Finalize
-                                        # (Open MPI 4.1.6 + UCX) intermittently stalls ~52 s
-                                        # after any communication, which runs the allocation
-                                        # out of time. Reproducer and report with the
-                                        # sysadmins; drop the exclude once that is fixed.
+                                        # Excluded nodes (reported to the sysadmins; drop
+                                        # each one once it is fixed):
+                                        #  - della-r3c* racks: MPI_Finalize (Open MPI 4.1.6
+                                        #    + UCX) intermittently stalls ~52 s after any
+                                        #    communication, running the allocation out of time.
+                                        #  - della-h17n1 (optane node): every multi-node job
+                                        #    including it hangs in MPI start-up until killed.
                                         salloc ${MPI_RUN_FLAGS} -t 00:15:00 --account rse \
                                             --constraint="intel" \
-                                            --exclude="della-r3c[1-4]n[1-16]" \
+                                            --exclude="della-r3c[1-4]n[1-16],della-h17n1" \
                                             bash -c 'export OMP_PROC_BIND=spread; \
                                             export OMP_PLACES=threads; \
                                             export OMP_NUM_THREADS=20; \
