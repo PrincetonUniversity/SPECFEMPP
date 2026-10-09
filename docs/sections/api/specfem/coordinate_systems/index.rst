@@ -17,17 +17,13 @@ Coordinate types
 *  :doc:`cartesian_coordinates <cartesian>`: x/y/z in meters (easting/northing/depth for UTM).
 *  :doc:`geocentric_coordinates <geocentric>`: Spherical :math:`(r, \theta, \phi)` coordinates.
 
-Resolution
-----------
-
-*  :doc:`CoordinateResolutionResult <coordinate_resolution_result>`: Outcome of
-   resolving a generic coordinate to mesh space (resolved global + topography).
-
 Transforms
 ----------
 
-*  :doc:`transform`: Generic ``transform<Target>(source, config)`` interface for
-   converting between coordinate systems.
+*  :doc:`transform`: Generic ``transform<Target>(source[, config])`` interface for
+   converting between coordinate systems. Resolution to mesh-space global
+   coordinates (which needs the mesh and projection configuration) is handled by
+   ``specfem::assembly::to`` in the assembly layer.
 
 Projections
 -----------
@@ -40,6 +36,5 @@ Projections
     geographic
     cartesian
     geocentric
-    coordinate_resolution_result
     transform
     utm

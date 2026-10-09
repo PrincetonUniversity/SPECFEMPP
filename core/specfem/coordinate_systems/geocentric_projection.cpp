@@ -112,8 +112,7 @@ template <>
 specfem::coordinate_systems::geocentric_coordinates
 specfem::coordinate_systems::transform<
     specfem::coordinate_systems::geocentric_coordinates,
-    specfem::coordinate_systems::geographic_coordinates,
-    specfem::coordinate_systems::geocentric_projection_config>(
+    specfem::coordinate_systems::geographic_coordinates>(
     const specfem::coordinate_systems::geographic_coordinates &geographic,
     const specfem::coordinate_systems::geocentric_projection_config &config) {
 
@@ -137,8 +136,7 @@ template <>
 specfem::coordinate_systems::geographic_coordinates
 specfem::coordinate_systems::transform<
     specfem::coordinate_systems::geographic_coordinates,
-    specfem::coordinate_systems::geocentric_coordinates,
-    specfem::coordinate_systems::geocentric_projection_config>(
+    specfem::coordinate_systems::geocentric_coordinates>(
     const specfem::coordinate_systems::geocentric_coordinates &geocentric,
     const specfem::coordinate_systems::geocentric_projection_config &config) {
 

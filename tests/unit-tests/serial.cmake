@@ -650,8 +650,8 @@ specfem_add_test(coordinate_systems_tests
             gtest_main
 )
 
-specfem_add_test(coordinate_resolver_tests
-  SOURCES   assembly/coordinate_resolver/coordinate_resolver_tests.cpp
+specfem_add_test(coordinate_conversion_tests
+  SOURCES   assembly/coordinate_conversion/coordinate_conversion_tests.cpp
   LIBRARIES specfem::assembly
             specfem::coordinate_systems
             specfem_environment

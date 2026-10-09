@@ -66,6 +66,21 @@ struct utm_projection_config {
   bool suppress = false; ///< If true, coordinates pass through unchanged
 };
 
+/**
+ * @brief Transform coordinates through the UTM projection.
+ *
+ * The config is an ordinary overloaded parameter (not a template parameter);
+ * explicit specializations below provide the geographic <-> Cartesian pair.
+ *
+ * @tparam Target Target coordinate type
+ * @tparam Source Source coordinate type (deduced)
+ * @param source Input coordinates
+ * @param config UTM projection configuration (zone, suppress flag)
+ * @return Transformed coordinates of type Target
+ */
+template <typename Target, typename Source>
+Target transform(const Source &source, const utm_projection_config &config);
+
 } // namespace coordinate_systems
 } // namespace specfem
 
@@ -86,8 +101,7 @@ specfem::coordinate_systems::cartesian_coordinates<
 specfem::coordinate_systems::transform<
     specfem::coordinate_systems::cartesian_coordinates<
         specfem::element::dimension_tag::dim3>,
-    specfem::coordinate_systems::geographic_coordinates,
-    specfem::coordinate_systems::utm_projection_config>(
+    specfem::coordinate_systems::geographic_coordinates>(
     const specfem::coordinate_systems::geographic_coordinates &geo,
     const specfem::coordinate_systems::utm_projection_config &config);
 
@@ -103,8 +117,7 @@ specfem::coordinate_systems::geographic_coordinates
 specfem::coordinate_systems::transform<
     specfem::coordinate_systems::geographic_coordinates,
     specfem::coordinate_systems::cartesian_coordinates<
-        specfem::element::dimension_tag::dim3>,
-    specfem::coordinate_systems::utm_projection_config>(
+        specfem::element::dimension_tag::dim3>>(
     const specfem::coordinate_systems::cartesian_coordinates<
         specfem::element::dimension_tag::dim3> &cart,
     const specfem::coordinate_systems::utm_projection_config &config);

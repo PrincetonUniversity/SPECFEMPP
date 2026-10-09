@@ -24,6 +24,24 @@ struct geocentric_projection_config {
   double r_planet; ///< reference surface radius in meters
 };
 
+/**
+ * @brief Transform coordinates through the geographic <-> geocentric
+ * projection.
+ *
+ * The config is an ordinary overloaded parameter (not a template parameter);
+ * explicit specializations below provide the geographic <-> geocentric pair.
+ * (The geocentric <-> Cartesian pair is config-free; see transform.hpp.)
+ *
+ * @tparam Target Target coordinate type
+ * @tparam Source Source coordinate type (deduced)
+ * @param source Input coordinates
+ * @param config Reference surface radius
+ * @return Transformed coordinates of type Target
+ */
+template <typename Target, typename Source>
+Target transform(const Source &source,
+                 const geocentric_projection_config &config);
+
 } // namespace coordinate_systems
 } // namespace specfem
 
@@ -86,8 +104,7 @@ template <>
 specfem::coordinate_systems::geocentric_coordinates
 specfem::coordinate_systems::transform<
     specfem::coordinate_systems::geocentric_coordinates,
-    specfem::coordinate_systems::geographic_coordinates,
-    specfem::coordinate_systems::geocentric_projection_config>(
+    specfem::coordinate_systems::geographic_coordinates>(
     const specfem::coordinate_systems::geographic_coordinates &geo,
     const specfem::coordinate_systems::geocentric_projection_config &config);
 
@@ -106,7 +123,6 @@ template <>
 specfem::coordinate_systems::geographic_coordinates
 specfem::coordinate_systems::transform<
     specfem::coordinate_systems::geographic_coordinates,
-    specfem::coordinate_systems::geocentric_coordinates,
-    specfem::coordinate_systems::geocentric_projection_config>(
+    specfem::coordinate_systems::geocentric_coordinates>(
     const specfem::coordinate_systems::geocentric_coordinates &geo,
     const specfem::coordinate_systems::geocentric_projection_config &config);

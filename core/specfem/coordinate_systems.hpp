@@ -8,7 +8,6 @@
  */
 
 #include "coordinate_systems/cartesian.hpp"
-#include "coordinate_systems/coordinate_resolution_result.hpp"
 #include "coordinate_systems/coordinates.hpp"
 #include "coordinate_systems/geocentric.hpp"
 #include "coordinate_systems/geocentric_projection.hpp"

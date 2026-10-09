@@ -1,7 +1,6 @@
 #pragma once
 
 #include "specfem/constants.hpp"
-#include "specfem/coordinate_systems/coordinate_resolution_result.hpp"
 #include "specfem/coordinate_systems/coordinates.hpp"
 
 #include "specfem/enums.hpp"
@@ -92,27 +91,6 @@ public:
   void set_partition_index(int rank) { partition_index_ = rank; }
 
   /**
-   * @brief Set the coordinate resolution result (resolved global + topography).
-   *
-   * dim2 receivers are specified directly, so this is normally left unset; the
-   * accessor exists for a uniform interface with dim3.
-   */
-  void set_resolution_result(
-      const specfem::coordinate_systems::CoordinateResolutionResult<
-          dimension_tag> &resolution) {
-    resolution_ = resolution;
-  }
-
-  /**
-   * @brief Get the coordinate resolution result, or nullopt if not resolved.
-   */
-  const std::optional<
-      specfem::coordinate_systems::CoordinateResolutionResult<dimension_tag>> &
-  get_resolution_result() const {
-    return resolution_;
-  }
-
-  /**
    * @brief Set the location error (target-to-found distance) in metres.
    */
   void set_location_error(type_real error) { location_error_ = error; }
@@ -151,10 +129,7 @@ private:
   specfem::point::global_coordinates<dimension_tag>
       global_coordinates; ///< Global coordinates of the receiver
   std::unique_ptr<specfem::coordinate_systems::coordinates<dimension_tag>>
-      read_coordinates_; ///< Generic coordinates (resolved at assembly time)
-  std::optional<
-      specfem::coordinate_systems::CoordinateResolutionResult<dimension_tag>>
-      resolution_;          ///< Resolved global + topography (generic coords)
+      read_coordinates_;    ///< Generic coordinates (resolved at assembly time)
   type_real angle;          ///< Angle to rotate components at receivers
   std::string network_name; ///< Name of the network where this station lies
   std::string station_name; ///< Name of the station

@@ -1,7 +1,6 @@
 
 #include "specfem/assembly/sources/impl/locate_sources.hpp"
 #include "specfem/algorithms.hpp"
-#include "specfem/assembly/coordinate_resolver.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/logger.hpp"
@@ -18,26 +17,14 @@ void specfem::assembly::sources_impl::locate_sources(
     const specfem::assembly::element_types<DimensionTag> &element_types,
     const specfem::assembly::mesh<DimensionTag> &mesh,
     std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
-        &sources,
-    const specfem::mesh::acoustic_free_surface<DimensionTag> &surface,
-    const specfem::assembly::coordinate_resolver<DimensionTag> &resolver) {
+        &sources) {
 
   const int nsources = static_cast<int>(sources.size());
   const int myrank = specfem::MPI::get_rank();
 
-  // Resolve any generic coordinates to global coordinates using mesh context,
-  // storing the resolution result on the source. Sources constructed with
-  // (x,y,z) directly have no read_coordinates_ set and keep their global
-  // coordinates unchanged.
-  for (int isrc = 0; isrc < nsources; ++isrc) {
-    if (auto *coords = sources[isrc]->get_read_coordinates()) {
-      auto resolution = resolver.resolve(*coords, mesh, surface);
-      sources[isrc]->set_resolution_result(resolution);
-      sources[isrc]->set_global_coordinates(resolution.global);
-    }
-  }
-
-  // Collect global coordinates for all sources.
+  // Collect global coordinates for all sources. Sources given generic
+  // coordinates were resolved to global coordinates before this call; sources
+  // constructed with (x,y,z) directly already carry their global coordinates.
   std::vector<specfem::point::global_coordinates<DimensionTag>> coords;
   coords.reserve(nsources);
   for (int isrc = 0; isrc < nsources; ++isrc)
