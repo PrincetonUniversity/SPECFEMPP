@@ -8,51 +8,62 @@ namespace injection {
 namespace fk {
 
 /**
+ * @brief Which medium a point's field is recovered in.
+ *
+ * from_depth resolves by the layer table; elastic / acoustic force the medium
+ * (used when a point sits exactly on the fluid-solid interface).
+ */
+enum class point_medium { from_depth, elastic, acoustic };
+
+/**
  * @brief Evaluation points at which the FK solver computes displacement,
  *        traction, and pressure.
  *
- * All coordinate and material-factor Views live on the default Kokkos memory
- * space so that Kernel 2 can read them on-device without an extra deep_copy.
- * Views are constructed from a host mirror + @c Kokkos::deep_copy in the
- * caller; the Views here are the device-resident copies.
+ * All Views are host-resident: the FK driver (grouping, spectra, IFFTs) runs on
+ * the host, and only the final grouped @c FkResult is copied to device for
+ * sampling. Optional Views (@c normal_*, @c lame_ratio_*, @c medium) have
+ * extent 0 when the corresponding feature is not requested; the driver checks
+ * @c extent(0) > 0 before dereferencing.
  *
- * Optional Views (@c normal_*, @c lame_ratio_*, @c elastic_override,
- * @c layer_override) have extent 0 when the corresponding feature is not
- * requested.  The driver checks @c extent(0) > 0 before dereferencing.
+ * @c z is depth, positive downward from the model top.
  */
 struct EvalPoints {
-  Kokkos::View<type_real *> x{}; ///< x-coordinates of evaluation points in m
-  Kokkos::View<type_real *> y{}; ///< y-coordinates of evaluation points in m
-  Kokkos::View<type_real *> z{}; ///< z-coordinates of evaluation points in m
+  Kokkos::View<type_real *, Kokkos::HostSpace> x{}; ///< x-coordinates in m
+  Kokkos::View<type_real *, Kokkos::HostSpace> y{}; ///< y-coordinates in m
+  Kokkos::View<type_real *, Kokkos::HostSpace> z{}; ///< depth (positive down),
+                                                    ///< m
 
-  Kokkos::View<type_real *> normal_x{}; ///< x-component of outward unit normal
-                                        ///< (traction only; empty if unused)
-  Kokkos::View<type_real *> normal_y{}; ///< y-component of outward unit normal
-                                        ///< (traction only; empty if unused)
-  Kokkos::View<type_real *> normal_z{}; ///< z-component of outward unit normal
-                                        ///< (traction only; empty if unused)
+  Kokkos::View<type_real *, Kokkos::HostSpace> normal_x{}; ///< x-component of
+                                                           ///< outward unit
+                                                           ///< normal (traction
+                                                           ///< only; empty if
+                                                           ///< unused)
+  Kokkos::View<type_real *, Kokkos::HostSpace> normal_y{}; ///< y-component of
+                                                           ///< outward unit
+                                                           ///< normal (traction
+                                                           ///< only; empty if
+                                                           ///< unused)
+  Kokkos::View<type_real *, Kokkos::HostSpace> normal_z{}; ///< z-component of
+                                                           ///< outward unit
+                                                           ///< normal (traction
+                                                           ///< only; empty if
+                                                           ///< unused)
 
-  Kokkos::View<type_real *> lame_ratio_xi1{};  ///< First Lame-ratio factor
-                                               ///< \f$\xi_1\f$ at each point
-                                               ///< (traction only; empty if
-                                               ///< unused)
-  Kokkos::View<type_real *> lame_ratio_xim{};  ///< Lame-ratio factor
-                                               ///< \f$\xi_\mu\f$ at each point
-                                               ///< (traction only; empty if
-                                               ///< unused)
-  Kokkos::View<type_real *> lame_ratio_bulk{}; ///< Bulk Lame-ratio factor at
-                                               ///< each point (traction only;
-                                               ///< empty if unused)
+  Kokkos::View<type_real *, Kokkos::HostSpace>
+      lame_ratio_xi1{}; ///< First Lame-ratio factor \f$\xi_1\f$ at each point
+                        ///< (traction only; empty if unused)
+  Kokkos::View<type_real *, Kokkos::HostSpace>
+      lame_ratio_xim{}; ///< Lame-ratio factor \f$\xi_\mu\f$ at each point
+                        ///< (traction only; empty if unused)
+  Kokkos::View<type_real *, Kokkos::HostSpace>
+      lame_ratio_bulk{}; ///< Bulk Lame-ratio factor at each point
+                         ///< (traction only; empty if unused)
 
-  /** @brief Per-point medium override: 'E' = elastic, 'A' = acoustic, 0 = use
-   *         layer table.  Size 0 when unused (all points follow layer table).
+  /** @brief Per-point medium selection. Size 0 means every point follows the
+   *         layer table (@c point_medium::from_depth). A forced value selects
+   *         the medium for a point sitting on the fluid-solid interface.
    */
-  Kokkos::View<char *> elastic_override{};
-
-  /** @brief Per-point layer-index override (0-based).  Negative value or size 0
-   *         means no override; the depth-lookup from @c LayeredModel is used.
-   */
-  Kokkos::View<int *> layer_override{};
+  Kokkos::View<point_medium *, Kokkos::HostSpace> medium{};
 
   /**
    * @brief Return the number of evaluation points.

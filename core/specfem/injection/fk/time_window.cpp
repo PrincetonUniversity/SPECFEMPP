@@ -1,8 +1,15 @@
 #include "specfem/injection/fk/time_window.hpp"
 #include <cmath>
+#include <stdexcept>
 
 specfem::injection::fk::FkSizes
-specfem::injection::fk::compute_fk_sizes(const TimeWindow &window) {
+specfem::injection::fk::compute_fk_sizes(const TimeWindow &window,
+                                         double time_delay_span) {
+  if (window.frequency_sampling <= 0) {
+    throw std::runtime_error(
+        "compute_fk_sizes: frequency_sampling must be positive");
+  }
+
   FkSizes sizes;
 
   // Resampling rate and minimum resampled time step.
@@ -19,7 +26,8 @@ specfem::injection::fk::compute_fk_sizes(const TimeWindow &window) {
   // reference).
   const type_real tmax_samp =
       static_cast<type_real>(2 * window.nstep / NP_RESAMP + 1) * dt_min;
-  type_real tmax_use = window.time_window_length;
+  type_real tmax_use =
+      window.time_window_length + static_cast<type_real>(time_delay_span);
   if (tmax_use > tmax_samp) {
     tmax_use = tmax_samp;
   }
@@ -42,7 +50,6 @@ specfem::injection::fk::compute_fk_sizes(const TimeWindow &window) {
   sizes.number_of_fft_samples = NF_FOR_FFT;
   sizes.interpolation_power = NPOW_FOR_INTERP;
   sizes.resampling_rate = NP_RESAMP;
-  sizes.fft_power = 0; // set by the driver
   sizes.frequency_step = DF_FK;
   sizes.effective_time_window = tmax_fk;
 

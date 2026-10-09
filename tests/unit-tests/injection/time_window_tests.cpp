@@ -94,3 +94,49 @@ TEST(TimeWindow, SizesArePositive) {
   // interpolation_power == log2(NF_FOR_FFT).
   EXPECT_EQ(1 << sizes.interpolation_power, sizes.number_of_fft_samples);
 }
+
+// ---------------------------------------------------------------------------
+// SpanExtendsWindow: adding a time_delay_span large enough to cross a
+// power-of-two boundary increases number_of_stored_frequencies.
+//
+// Reuse the GoldenCase1 parameters (NP_RESAMP=10, dt_min=0.1) to make the
+// arithmetic concrete.  Without a span tmax_use = 20.1, NF_FOR_STORING = 256.
+// Adding span = 32 s gives tmax_use = 52.1 (capped by tmax_samp only if
+// tmax_samp < 52.1; tmax_samp = 20.1 for nstep=1000, but we raise nstep to
+// 5000 so tmax_samp = (2*5000/10+1)*0.1 = 1001*0.1 = 100.1 — no cap).
+//   ceil(52.1/0.1) = 521 → ceil(log2(521)) = ceil(9.024) = 10
+//   NF_FOR_STORING = 1<<10 = 1024 > 256 (no-span case)
+// ---------------------------------------------------------------------------
+
+TEST(TimeWindow, SpanExtendsWindow) {
+  TimeWindow window;
+  window.dt = 0.01;
+  window.nstep = 5000; // tmax_samp = 100.1 — no cap for either call
+  window.frequency_max = 1.0;
+  window.frequency_sampling = 10.0;
+  window.time_window_length = 20.0;
+
+  FkSizes no_span = compute_fk_sizes(window);
+  FkSizes with_span = compute_fk_sizes(window, 32.0);
+
+  EXPECT_GE(with_span.number_of_stored_frequencies,
+            no_span.number_of_stored_frequencies);
+  // The span is large enough to push us past a power-of-two boundary.
+  EXPECT_GT(with_span.number_of_stored_frequencies,
+            no_span.number_of_stored_frequencies);
+}
+
+// ---------------------------------------------------------------------------
+// RejectsNonPositiveSampling: frequency_sampling == 0 must throw.
+// ---------------------------------------------------------------------------
+
+TEST(TimeWindow, RejectsNonPositiveSampling) {
+  TimeWindow window;
+  window.dt = 0.01;
+  window.nstep = 1000;
+  window.frequency_max = 1.0;
+  window.frequency_sampling = 0.0; // invalid
+  window.time_window_length = 40.0;
+
+  EXPECT_THROW(compute_fk_sizes(window), std::runtime_error);
+}

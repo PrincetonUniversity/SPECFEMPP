@@ -26,7 +26,7 @@ struct TimeWindow {
  * @brief Working-array sizes derived from a @c TimeWindow.
  *
  * Returned by @c compute_fk_sizes(); all integer sizes are exact powers of two
- * where applicable.  @c fft_power is left as 0 and must be set by the driver.
+ * where applicable.
  */
 struct FkSizes {
   int number_of_stored_frequencies =
@@ -39,10 +39,10 @@ struct FkSizes {
          ///< (\f$\log_2 N_\text{FFT}\f$)
   int resampling_rate = 0; ///< \f$N_{P,\text{resamp}}\f$ — ratio of resampled
                            ///< to simulation time step
-  int fft_power = 0; ///< Power-of-2 exponent for the FFT (set by the driver,
-                     ///< not compute_fk_sizes)
   type_real frequency_step =
-      0; ///< \f$\Delta f\f$ in Hz (\f$1 / T_\text{FK}\f$)
+      0; ///< \f$\Delta f\f$ in Hz (\f$= 1/((N_\text{FFT}-1)\Delta
+         ///< t_\text{min})\f$; follows the SPECFEM3D reference, which stretches
+         ///< frequency-domain delays by a factor \f$N/(N-1)\f$)
   type_real effective_time_window =
       0; ///< Effective FK time window \f$T_\text{FK} = \Delta
          ///< t_\text{min}(N_\text{FFT}-1)\f$ in s
@@ -59,15 +59,20 @@ struct FkSizes {
  * -# Compute the minimum resampled time step
  *    \f$ \Delta t_\text{min} = N_{P,\text{resamp}} \, \Delta t \f$.
  * -# Compute the usable time window
- *    \f$ T_\text{use} = \min(T_\text{max,samp},\, T_\text{window}) \f$.
+ *    \f$ T_\text{use} = \min(T_\text{max,samp},\, T_\text{window} +
+ *    T_\text{delay\_span}) \f$.
  * -# Round up to the next power of two for the stored-frequency count.
  * -# Set FFT length to twice that count; frequency step to
  *    \f$ \Delta f = 1 / T_\text{FK} \f$.
  *
- * @param window Simulation time and windowing parameters.
- * @return Populated @c FkSizes (fft_power is 0; caller fills it).
+ * @param window           Simulation time and windowing parameters.
+ * @param time_delay_span  Extra time in seconds added to the requested window
+ *                         before the power-of-two rounding; used to accommodate
+ *                         FK plane-wave time delays (default 0).
+ * @return Populated @c FkSizes.
+ * @throws std::runtime_error if @c window.frequency_sampling is not positive.
  */
-FkSizes compute_fk_sizes(const TimeWindow &window);
+FkSizes compute_fk_sizes(const TimeWindow &window, double time_delay_span = 0);
 
 } // namespace fk
 } // namespace injection

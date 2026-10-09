@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/injection/fk/eval_points.hpp"
 #include "specfem/setup.hpp"
 #include <stdexcept>
 #include <vector>
@@ -31,6 +32,24 @@ struct ElasticIsotropicLayer {
   type_real p_velocity = 0; ///< vp (m/s)
   type_real s_velocity = 0; ///< vs (m/s)
   type_real thickness = 0;  ///< H (m); ignored for the half-space (last entry)
+};
+
+/**
+ * @brief Result of @c LayeredModel::locate(): the resolved layer and geometry.
+ *
+ * All depth arithmetic is in metres, positive-downward.
+ */
+struct LayerLocation {
+  point_medium medium; ///< resolved medium (never from_depth)
+  int layer;           ///< 0-based index within the fluid block (acoustic) or
+                       ///< elastic block (elastic)
+  double height;       ///< height above the bottom of @c layer, m (>= 0; 0 at
+                       ///< the layer's lower interface)
+  bool in_halfspace;   ///< true iff elastic and @c layer is the last elastic
+                       ///< layer (the half-space)
+  double depth_below_halfspace_top; ///< half-space top depth minus @c depth, m
+                                    ///< (<= 0 at/below the half-space top)
+  bool at_free_surface; ///< acoustic layer 0 with depth within tolerance of 0
 };
 
 /**
@@ -119,6 +138,40 @@ public:
    * @return const reference to the top-depth vector
    */
   const std::vector<type_real> &layer_top_depths() const;
+
+  /**
+   * @brief Locate a depth in the model and return full layer geometry.
+   *
+   * Points exactly on an interface are assigned to the shallower layer
+   * (tie-goes-upper), ensuring continuity of the field state across interior
+   * interfaces.
+   *
+   * @param depth      Depth in metres, positive-downward from the model top.
+   * @param requested  Medium selection; @c from_depth resolves automatically.
+   * @param tolerance  Snap/match tolerance in metres (>= 0).
+   * @return Populated @c LayerLocation.
+   * @throws std::runtime_error if @c depth is above the free surface, or if a
+   *         forced medium is inconsistent with the model (e.g. acoustic
+   *         requested on a model with no fluid layers).
+   */
+  LayerLocation locate(double depth, point_medium requested,
+                       double tolerance) const;
+
+  /**
+   * @brief Return the total thickness of the fluid column in metres.
+   * @return Sum of fluid-layer thicknesses; 0 if there are no fluid layers.
+   */
+  double fluid_thickness() const;
+
+  /**
+   * @brief Return the minimum propagation velocity in the model.
+   *
+   * Takes the minimum over all fluid @c p_velocity values and all elastic
+   * @c s_velocity values.
+   *
+   * @return Minimum velocity in m/s.
+   */
+  double minimum_velocity() const;
 
   /**
    * @brief Validate the model.

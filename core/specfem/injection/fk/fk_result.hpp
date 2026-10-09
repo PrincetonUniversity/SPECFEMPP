@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/setup.hpp"
+#include "specfem/utilities/cubic_bspline.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -8,30 +9,19 @@ namespace injection {
 namespace fk {
 
 /**
- * @brief Cartesian component index for FK displacement and traction arrays.
- */
-enum class fk_component {
-  x = 0, ///< x-component
-  y = 1, ///< y-component
-  z = 2  ///< z-component
-};
-
-/**
- * @brief Cubic-B-spline coefficient arrays produced by the FK solver.
+ * @brief Depth-grouped FK result with on-device sampling.
  *
- * This is the hand-off type consumed by sub-plan 1.2 (the Stacey injection
- * assembly container).  Sub-plan 1.2 reads the device Views directly — no
- * intermediate host deep_copy is required at injection time.
+ * The FK field factorises as @f$u(x,y,z,t) = U(z, t - \tau(x,y))@f$, so the
+ * depth-only series @f$U(z,\cdot)@f$ are stored once per (medium, depth) group
+ * as cubic-B-spline coefficients, and each evaluation point carries only its
+ * group index, an abscissa offset @f$\text{pad} - \tau/\Delta t_\text{min}@f$,
+ * the traction material factors, and a medium flag. The only device kernel in
+ * the FK path is @c sample, which reconstructs @f$u(t-\tau)@f$ per point by
+ * evaluating the group's splines at the shifted abscissa and applying the
+ * azimuth and traction rotations.
  *
- * Layout of the displacement and traction Views:
- *   @c (point_index, component, coefficient_index)
- *
- * where @c component follows @c fk_component (0 = x, 1 = y, 2 = z).
- * The pressure View is @c (point_index, coefficient_index).
- *
- * All Views live on the default Kokkos memory space.  Kernel 2 writes into
- * them on-device; for unit tests create a host mirror via
- * @c Kokkos::create_mirror_view + @c Kokkos::deep_copy.
+ * Built by @c specfem::injection::fk_impl::make_result; consumed by the
+ * injection provider.
  */
 class FkResult {
 public:
@@ -39,177 +29,66 @@ public:
   FkResult() = default;
 
   /**
-   * @brief Allocate coefficient storage.
+   * @brief Construct from device-resident arrays.
    *
-   * @param number_of_points  Number of evaluation points.
-   * @param coefficient_count Number of cubic-B-spline coefficients per
-   * component per point.
-   * @param has_traction      If true, allocate the traction coefficient View.
-   * @param has_pressure      If true, allocate the scalar pressure coefficient
-   * View.
+   * @param series_coefficients (group, series, coefficient), LayoutRight.
+   * @param point_group         (point) group index.
+   * @param point_offset        (point) abscissa offset pad - tau/dt_min.
+   * @param point_material      (point, 6) xi1, xim, bulk, nx, ny, nz.
+   * @param point_is_acoustic   (point) 1 for acoustic, 0 for elastic.
+   * @param cos_phi, sin_phi    Azimuth rotation (shared by all points).
+   * @param resampling_rate     N_P (SEM-step to resampled-grid ratio).
+   * @param has_traction        Whether traction components are meaningful.
    */
-  FkResult(int number_of_points, int coefficient_count, bool has_traction,
-           bool has_pressure);
+  FkResult(Kokkos::View<type_real ***, Kokkos::LayoutRight> series_coefficients,
+           Kokkos::View<int *> point_group, Kokkos::View<double *> point_offset,
+           Kokkos::View<type_real **, Kokkos::LayoutRight> point_material,
+           Kokkos::View<int *> point_is_acoustic, type_real cos_phi,
+           type_real sin_phi, int resampling_rate, bool has_traction);
+
+  int number_of_points() const { return number_of_points_; }
+  int number_of_groups() const { return number_of_groups_; }
+  int coefficient_count() const { return coefficient_count_; }
+  int resampling_rate() const { return resampling_rate_; }
+  bool has_traction() const { return has_traction_; }
+  type_real cos_phi() const { return cos_phi_; }
+  type_real sin_phi() const { return sin_phi_; }
+
+  const Kokkos::View<type_real ***, Kokkos::LayoutRight> &
+  series_coefficients() const {
+    return series_coefficients_;
+  }
+  const Kokkos::View<int *> &point_group() const { return point_group_; }
+  const Kokkos::View<double *> &point_offset() const { return point_offset_; }
 
   /**
-   * @brief Return the number of evaluation points.
-   * @return number of evaluation points
+   * @brief Reconstruct the field for a window of SEM steps, on device.
+   *
+   * Fills @p out(point, component, k) for SEM steps
+   * @c [first_step, first_step + number_of_steps). Components:
+   * 0..2 displacement/velocity (cos_phi*S0, sin_phi*S0, S1); 3..5 traction
+   * (when @c out.extent(1) >= 6); 6 pressure (when @c out.extent(1) >= 7).
+   *
+   * @param first_step      First SEM step in the window.
+   * @param number_of_steps Window length in SEM steps.
+   * @param out             Output view (point, component, step-in-window).
    */
-  int number_of_points() const;
-
-  /**
-   * @brief Return the number of cubic-B-spline coefficients per component.
-   * @return coefficient count
-   */
-  int coefficient_count() const;
-
-  /**
-   * @brief Return the resampling rate \f$N_{P,\text{resamp}}\f$.
-   *
-   * Set via @c set_sampling(); 0 until the driver calls it.
-   *
-   * @return resampling rate
-   */
-  int resampling_rate() const;
-
-  /**
-   * @brief Return the resampled time step \f$\Delta t_\text{min}\f$ in s.
-   *
-   * Set via @c set_sampling(); 0 until the driver calls it.
-   *
-   * @return resampled time step in s
-   */
-  type_real resampled_dt() const;
-
-  /**
-   * @brief Return the reference time used for t0 alignment in s.
-   *
-   * Set via @c set_sampling(); 0 until the driver calls it.
-   *
-   * @return reference time in s
-   */
-  type_real reference_time() const;
-
-  /**
-   * @brief Return whether traction coefficients were allocated.
-   * @return true if traction View has nonzero extent
-   */
-  bool has_traction() const;
-
-  /**
-   * @brief Return whether pressure coefficients were allocated.
-   * @return true if pressure View has nonzero extent
-   */
-  bool has_pressure() const;
-
-  /**
-   * @brief Displacement cubic-B-spline coefficients (const access).
-   *
-   * Layout: @c (point_index, component, coefficient_index).
-   *
-   * @return const reference to the displacement View
-   */
-  const Kokkos::View<type_real ***> &displacement() const;
-
-  /**
-   * @brief Displacement cubic-B-spline coefficients (mutable access for Kernel
-   * 2).
-   *
-   * Layout: @c (point_index, component, coefficient_index).
-   *
-   * @return non-const reference to the displacement View
-   */
-  Kokkos::View<type_real ***> &displacement();
-
-  /**
-   * @brief Traction cubic-B-spline coefficients (const access).
-   *
-   * Layout: @c (point_index, component, coefficient_index).
-   * The View has zero extent when @c has_traction() is false.
-   *
-   * @return const reference to the traction View
-   */
-  const Kokkos::View<type_real ***> &traction() const;
-
-  /**
-   * @brief Traction cubic-B-spline coefficients (mutable access for Kernel 2).
-   *
-   * Layout: @c (point_index, component, coefficient_index).
-   * The View has zero extent when @c has_traction() is false.
-   *
-   * @return non-const reference to the traction View
-   */
-  Kokkos::View<type_real ***> &traction();
-
-  /**
-   * @brief Pressure cubic-B-spline coefficients (const access).
-   *
-   * Layout: @c (point_index, coefficient_index).
-   * The View has zero extent when @c has_pressure() is false.
-   *
-   * @return const reference to the pressure View
-   */
-  const Kokkos::View<type_real **> &pressure() const;
-
-  /**
-   * @brief Pressure cubic-B-spline coefficients (mutable access for Kernel 2).
-   *
-   * Layout: @c (point_index, coefficient_index).
-   * The View has zero extent when @c has_pressure() is false.
-   *
-   * @return non-const reference to the pressure View
-   */
-  Kokkos::View<type_real **> &pressure();
-
-  /**
-   * @brief Per-point time delays used for t0 alignment (const access).
-   *
-   * Layout: @c (point_index).
-   *
-   * @return const reference to the time-delay View
-   */
-  const Kokkos::View<type_real *> &time_delays() const;
-
-  /**
-   * @brief Per-point time delays used for t0 alignment (mutable access for
-   * Kernel 2).
-   *
-   * Layout: @c (point_index).
-   *
-   * @return non-const reference to the time-delay View
-   */
-  Kokkos::View<type_real *> &time_delays();
-
-  /**
-   * @brief Store the sampling metadata written by the driver after allocation.
-   *
-   * @param resampling_rate Ratio of resampled to simulation time step.
-   * @param resampled_dt    Resampled time step in s.
-   * @param reference_time  Reference t0 for time alignment in s.
-   */
-  void set_sampling(int resampling_rate, type_real resampled_dt,
-                    type_real reference_time);
+  void sample(int first_step, int number_of_steps,
+              const Kokkos::View<type_real ***> &out) const;
 
 private:
-  Kokkos::View<type_real ***> displacement_{}; ///< (npts, 3, ncoef)
-                                               ///< displacement B-spline
-                                               ///< coefficients
-  Kokkos::View<type_real ***> traction_{};     ///< (npts, 3, ncoef) traction
-                                           ///< B-spline coefficients; empty if
-                                           ///< not requested
-  Kokkos::View<type_real **> pressure_{};   ///< (npts, ncoef) pressure B-spline
-                                            ///< coefficients; empty if not
-                                            ///< requested
-  Kokkos::View<type_real *> time_delays_{}; ///< (npts) per-point t0 time delays
-                                            ///< in s
-
-  int number_of_points_ = 0;  ///< Number of evaluation points
-  int coefficient_count_ = 0; ///< Number of B-spline coefficients per component
-  int resampling_rate_ = 0;   ///< Resampling rate set by the driver
-  type_real resampled_dt_ = 0;   ///< Resampled time step in s
-  type_real reference_time_ = 0; ///< Reference time for t0 alignment in s
-  bool has_traction_ = false;    ///< True if traction was allocated
-  bool has_pressure_ = false;    ///< True if pressure was allocated
+  Kokkos::View<type_real ***, Kokkos::LayoutRight> series_coefficients_{};
+  Kokkos::View<int *> point_group_{};
+  Kokkos::View<double *> point_offset_{};
+  Kokkos::View<type_real **, Kokkos::LayoutRight> point_material_{};
+  Kokkos::View<int *> point_is_acoustic_{};
+  type_real cos_phi_ = 0;
+  type_real sin_phi_ = 0;
+  int resampling_rate_ = 0;
+  int number_of_points_ = 0;
+  int number_of_groups_ = 0;
+  int coefficient_count_ = 0;
+  bool has_traction_ = false;
 };
 
 } // namespace fk
