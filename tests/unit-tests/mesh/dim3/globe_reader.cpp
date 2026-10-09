@@ -7,6 +7,7 @@
 #include <gtest/gtest.h>
 #include <string>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace globe_reader_test_impl {
@@ -58,12 +59,30 @@ void write_surface(std::ofstream &stream, const std::vector<int> &elements,
   }
 }
 
-std::filesystem::path write_database(const bool attenuation = false,
-                                     const double source_frequency = 0.0,
-                                     const int property_tag = 0,
-                                     const bool include_mpi = false,
-                                     const bool has_reference_geometry = false,
-                                     const double planet_radius = 6371000.0) {
+/**
+ * @brief Contents of a synthetic globe database.
+ *
+ * Elements form a radial column, bottom to top: element k's top face touches
+ * element k + 1's bottom face.
+ */
+struct DatabaseOptions {
+  bool attenuation = false;
+  double source_frequency = 0.0;
+  int property_tag = 0;
+  bool include_mpi = false;
+  bool has_reference_geometry = false;
+  double planet_radius = 6371000.0;
+  /// One globe region code per element, bottom to top (2 = outer core).
+  std::vector<int> region_codes = { 1 };
+  /// CMB entries as (one-based element, face code).
+  std::vector<std::pair<int, int>> cmb_faces = {};
+};
+
+std::filesystem::path write_database(const DatabaseOptions &options = {}) {
+  constexpr int face_bottom = 1;
+  constexpr int face_top = 3;
+  const int nspec = static_cast<int>(options.region_codes.size());
+
   const auto suffix =
       std::chrono::steady_clock::now().time_since_epoch().count();
   const auto path =
@@ -77,14 +96,18 @@ std::filesystem::path write_database(const bool attenuation = false,
   header.write(stream);
 
   const std::vector<double> planet_values = {
-    planet_radius, 5514.3, (1.0 - 1.0 / 299.8) * (1.0 - 1.0 / 299.8),
-    24.0,          3600.0, 9000.0,
+    options.planet_radius,
+    5514.3,
+    (1.0 - 1.0 / 299.8) * (1.0 - 1.0 / 299.8),
+    24.0,
+    3600.0,
+    9000.0,
   };
   write_values(stream, 1, 2, static_cast<int>(planet_values.size()));
   write_values(stream, planet_values);
   write_values(stream, 27, 5, 5, 5, 1);
-  write_values(stream, 0, 0, 0, 0, 0, attenuation ? 1 : 0, 0,
-               has_reference_geometry ? 1 : 0);
+  write_values(stream, 0, 0, 0, 0, 0, options.attenuation ? 1 : 0, 0,
+               options.has_reference_geometry ? 1 : 0);
   write_values(stream, 1);
 
   Record model;
@@ -95,7 +118,7 @@ std::filesystem::path write_database(const bool attenuation = false,
   model_flags[11] = 1;
   write_values(stream, 16, model_flags);
   write_values(stream, 6, 8, 8);
-  write_values(stream, 20.0, 1000.0, source_frequency);
+  write_values(stream, 20.0, 1000.0, options.source_frequency);
 
   write_values(stream, 27);
   std::vector<double> x(27), y(27), z(27);
@@ -105,7 +128,7 @@ std::filesystem::path write_database(const bool attenuation = false,
     z[inode] = 3000.0 + inode;
   }
   write_values(stream, x, y, z);
-  if (has_reference_geometry) {
+  if (options.has_reference_geometry) {
     std::vector<double> x_ref(27), y_ref(27), z_ref(27);
     for (int inode = 0; inode < 27; ++inode) {
       x_ref[inode] = 10000.0 + inode;
@@ -115,33 +138,78 @@ std::filesystem::path write_database(const bool attenuation = false,
     write_values(stream, x_ref, y_ref, z_ref);
   }
 
-  write_values(stream, 1);
-  write_values(stream, std::vector<int>{ 1 }, std::vector<int>{ 2 },
-               std::vector<int>{ property_tag }, std::vector<int>{ 4 });
-  write_values(stream, std::vector<double>{ 3000000.0 },
-               std::vector<double>{ 3100000.0 });
-  write_values(stream, std::vector<int>{ 0 }, std::vector<int>{ 1 });
-  std::vector<int> node_ids(27);
-  for (int inode = 0; inode < 27; ++inode) {
-    node_ids[inode] = inode + 1;
+  write_values(stream, nspec);
+  // Region 2 is the fluid outer core, so it carries the acoustic medium code;
+  // every other region is solid and elastic.
+  std::vector<int> medium_codes(nspec);
+  std::transform(options.region_codes.begin(), options.region_codes.end(),
+                 medium_codes.begin(),
+                 [](const int region) { return (region == 2) ? 1 : 2; });
+  write_values(stream, options.region_codes, medium_codes,
+               std::vector<int>(nspec, options.property_tag),
+               std::vector<int>(nspec, 4));
+  write_values(stream, std::vector<double>(nspec, 3000000.0),
+               std::vector<double>(nspec, 3100000.0));
+  write_values(stream, std::vector<int>(nspec, 0), std::vector<int>(nspec, 1));
+  // Every element reuses the same 27 anchors. The reader bounds-checks node
+  // ids but never inspects geometry, and the face checks need none.
+  std::vector<int> node_ids(27 * nspec);
+  for (int inode = 0; inode < 27 * nspec; ++inode) {
+    node_ids[inode] = (inode % 27) + 1;
   }
   write_values(stream, node_ids);
 
-  write_surface(stream, { 1 }, { 3 });
-  write_surface(stream, {}, {});
+  write_surface(stream, { nspec }, { face_top });
+  std::vector<int> cmb_elements;
+  std::vector<int> cmb_face_codes;
+  for (const auto &[element, face] : options.cmb_faces) {
+    cmb_elements.push_back(element);
+    cmb_face_codes.push_back(face);
+  }
+  write_surface(stream, cmb_elements, cmb_face_codes);
   write_surface(stream, {}, {});
   write_surface(stream, {}, {});
 
-  write_values(stream, 0);
-  write_values(stream, std::vector<int>{ 1, 1 });
-  write_values(stream, std::vector<int>{});
-  write_values(stream, std::vector<int>{});
-  write_values(stream, include_mpi ? 1 : 0);
-  if (include_mpi) {
+  // One-based CSR adjacency of the radial column.
+  std::vector<int> xadj = { 1 };
+  std::vector<int> adjncy;
+  std::vector<int> adjacency_types;
+  for (int ispec = 1; ispec <= nspec; ++ispec) {
+    if (ispec > 1) {
+      adjncy.push_back(ispec - 1);
+      adjacency_types.push_back(face_bottom);
+    }
+    if (ispec < nspec) {
+      adjncy.push_back(ispec + 1);
+      adjacency_types.push_back(face_top);
+    }
+    xadj.push_back(static_cast<int>(adjncy.size()) + 1);
+  }
+  write_values(stream, static_cast<int>(adjncy.size()));
+  write_values(stream, xadj);
+  write_values(stream, adjncy);
+  write_values(stream, adjacency_types);
+  write_values(stream, options.include_mpi ? 1 : 0);
+  if (options.include_mpi) {
     write_values(stream, 1, 1, 1, 1, 3, 19, 23);
   }
   stream.close();
   return path;
+}
+
+/**
+ * @brief Expect reading @p path to throw a @c std::runtime_error whose message
+ * contains @p reason, so that a failure for an unrelated cause does not pass.
+ */
+void expect_read_throws_with(const std::filesystem::path &path,
+                             const std::string &reason) {
+  try {
+    specfem::io::read_globe_mesh(path.string(), specfem::attenuation::Setup{});
+    ADD_FAILURE() << "expected a throw containing \"" << reason << "\"";
+  } catch (const std::runtime_error &error) {
+    EXPECT_NE(std::string(error.what()).find(reason), std::string::npos)
+        << "expected \"" << reason << "\" in: " << error.what();
+  }
 }
 
 } // namespace globe_reader_test_impl
@@ -175,7 +243,7 @@ TEST(GlobeMeshReader, ReadsThinDatabaseAndPreservesReferenceContext) {
 
 TEST(GlobeMeshReader, RejectsInvalidPlanetConstants) {
   const auto path =
-      globe_reader_test_impl::write_database(false, 0.0, 0, false, false, -1.0);
+      globe_reader_test_impl::write_database({ .planet_radius = -1.0 });
   EXPECT_THROW(specfem::io::read_globe_mesh(path.string(),
                                             specfem::attenuation::Setup{}),
                std::runtime_error);
@@ -183,8 +251,8 @@ TEST(GlobeMeshReader, RejectsInvalidPlanetConstants) {
 }
 
 TEST(GlobeMeshReader, ReadsSeparateReferenceGeometry) {
-  const auto path =
-      globe_reader_test_impl::write_database(false, 0.0, 0, false, true);
+  const auto path = globe_reader_test_impl::write_database(
+      { .has_reference_geometry = true });
   const auto mesh = specfem::io::read_globe_mesh(path.string(),
                                                  specfem::attenuation::Setup{});
   std::filesystem::remove(path);
@@ -197,7 +265,8 @@ TEST(GlobeMeshReader, ReadsSeparateReferenceGeometry) {
 }
 
 TEST(GlobeMeshReader, RejectsAnInconsistentAttenuationSourceFrequency) {
-  const auto path = globe_reader_test_impl::write_database(true, 1.0);
+  const auto path = globe_reader_test_impl::write_database(
+      { .attenuation = true, .source_frequency = 1.0 });
   EXPECT_THROW(specfem::io::read_globe_mesh(path.string(),
                                             specfem::attenuation::Setup{}),
                std::runtime_error);
@@ -205,7 +274,8 @@ TEST(GlobeMeshReader, RejectsAnInconsistentAttenuationSourceFrequency) {
 }
 
 TEST(GlobeMeshReader, PreservesAnisotropicElasticPropertyTag) {
-  const auto path = globe_reader_test_impl::write_database(false, 0.0, 1);
+  const auto path =
+      globe_reader_test_impl::write_database({ .property_tag = 1 });
   const auto mesh = specfem::io::read_globe_mesh(path.string(),
                                                  specfem::attenuation::Setup{});
   std::filesystem::remove(path);
@@ -217,7 +287,8 @@ TEST(GlobeMeshReader, PreservesAnisotropicElasticPropertyTag) {
 }
 
 TEST(GlobeMeshReader, ReadsResolvedMpiAdjacency) {
-  const auto path = globe_reader_test_impl::write_database(false, 0.0, 0, true);
+  const auto path =
+      globe_reader_test_impl::write_database({ .include_mpi = true });
   const auto mesh = specfem::io::read_globe_mesh(path.string(),
                                                  specfem::attenuation::Setup{});
   std::filesystem::remove(path);
@@ -235,4 +306,56 @@ TEST(GlobeMeshReader, ReadsResolvedMpiAdjacency) {
             specfem::mesh_entity::dim3::type::bottom_front_left);
   EXPECT_EQ(connections[0].neighbor_anchor_point,
             specfem::mesh_entity::dim3::type::top_front_left);
+}
+
+// The CMB and ICB are assembled from local connections only, so a fluid-solid
+// face split across ranks would be dropped from the coupling with no error.
+// check_supported rejects the only locally detectable form of that: an
+// outer-core element owning a radial face on an MPI boundary. A solid element
+// with the same connection is fine -- that is the case above.
+TEST(GlobeMeshReader, RejectsRadialMpiFaceOnFluidElement) {
+  const auto path = globe_reader_test_impl::write_database(
+      { .include_mpi = true, .region_codes = { 2 } });
+  globe_reader_test_impl::expect_read_throws_with(path,
+                                                  "Unsupported globe mesh");
+  std::filesystem::remove(path);
+}
+
+// A single element has no neighbor, so medium contrast implies no interface
+// faces. Recording one as CMB makes the database contradict itself, which
+// check_consistency must catch.
+TEST(GlobeMeshReader, RejectsCmbFaceWithoutMediumContrast) {
+  const auto path =
+      globe_reader_test_impl::write_database({ .cmb_faces = { { 1, 3 } } });
+  globe_reader_test_impl::expect_read_throws_with(path,
+                                                  "Recorded but not implied");
+  std::filesystem::remove(path);
+}
+
+// The fluid-solid tests below use a two-element column: outer core (element 1)
+// below crust/mantle (element 2), so their shared face is a CMB face. The
+// mesher records both sides of it: the outer-core top and the mantle bottom.
+
+TEST(GlobeMeshReader, AcceptsCmbRecordedOnBothSides) {
+  const auto path = globe_reader_test_impl::write_database(
+      { .region_codes = { 2, 1 }, .cmb_faces = { { 1, 3 }, { 2, 1 } } });
+  EXPECT_NO_THROW(specfem::io::read_globe_mesh(path.string(),
+                                               specfem::attenuation::Setup{}));
+  std::filesystem::remove(path);
+}
+
+TEST(GlobeMeshReader, RejectsFluidSolidFaceMissingFromCmb) {
+  const auto path =
+      globe_reader_test_impl::write_database({ .region_codes = { 2, 1 } });
+  globe_reader_test_impl::expect_read_throws_with(path,
+                                                  "Implied but not recorded");
+  std::filesystem::remove(path);
+}
+
+TEST(GlobeMeshReader, RejectsCmbRecordedOnOneSideOnly) {
+  const auto path = globe_reader_test_impl::write_database(
+      { .region_codes = { 2, 1 }, .cmb_faces = { { 1, 3 } } });
+  globe_reader_test_impl::expect_read_throws_with(path,
+                                                  "Implied but not recorded");
+  std::filesystem::remove(path);
 }
