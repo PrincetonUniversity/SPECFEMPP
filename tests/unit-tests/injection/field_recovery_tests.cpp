@@ -7,334 +7,156 @@
 #include "specfem/setup.hpp"
 #include "specfem/utilities/complex_matrix.hpp"
 #include <Kokkos_Core.hpp>
+#include <cmath>
 #include <gtest/gtest.h>
 
-// Device kernels are expressed as named functors rather than extended
-// __device__ lambdas: nvcc forbids an extended lambda in gtest's private
-// TestBody().  File-unique namespace (not anonymous) keeps the unity build
-// ODR-safe.  All material constants are inlined at the call site.
+// ============================================================================
+// Helper: build a standard elastic half-space + one finite layer setup.
+//
+//   hs   : rho=3300, vp=8100, vs=4500 (half-space)
+//   layer: rho=2800, vp=6000, vs=3500, H=10000 m
+//   p    : sin(20 deg) / 8100 s/m
+//   omega: 2*pi*0.5 rad/s, incident P wave
+// ============================================================================
 namespace field_recovery_tests_impl {
 
-struct TractionSpectrumP {
-  Kokkos::View<double *> d_out;
-  KOKKOS_FUNCTION void operator()(const int) const {
-    // Half-space material (mantle-like).
-    specfem::injection::fk::ElasticIsotropicLayer hs;
-    hs.density = static_cast<type_real>(3380.0);
-    hs.p_velocity = static_cast<type_real>(8100.0);
-    hs.s_velocity = static_cast<type_real>(4500.0);
-    hs.thickness = static_cast<type_real>(0.0);
+inline void
+make_elastic_model(specfem::injection::fk::ElasticIsotropicLayer &hs,
+                   specfem::injection::fk::ElasticIsotropicLayer &layer,
+                   type_real &p, Kokkos::complex<double> &omega,
+                   specfem::utilities::ComplexMatrix<4> &e_mat,
+                   specfem::utilities::ComplexVector<4> &modes) {
+  hs.density = static_cast<type_real>(3300.0);
+  hs.p_velocity = static_cast<type_real>(8100.0);
+  hs.s_velocity = static_cast<type_real>(4500.0);
+  hs.thickness = static_cast<type_real>(0.0);
 
-    const type_real p = static_cast<type_real>(1.0e-4);
+  layer.density = static_cast<type_real>(2800.0);
+  layer.p_velocity = static_cast<type_real>(6000.0);
+  layer.s_velocity = static_cast<type_real>(3500.0);
+  layer.thickness = static_cast<type_real>(10000.0);
 
-    // Incident P wave.
-    const specfem::injection::fk::incident_wave_type wave_type =
-        specfem::injection::fk::incident_wave_type::p;
-    const auto amp = specfem::injection::fk_impl::incident_amplitude(
-        hs, wave_type, static_cast<type_real>(1.0), p);
+  constexpr double deg20_rad = 20.0 * 3.141592653589793 / 180.0;
+  p = static_cast<type_real>(Kokkos::sin(deg20_rad) / 8100.0);
 
-    const auto e_mat =
-        specfem::injection::fk_impl::elastic_halfspace_eigenmatrix(hs, p);
+  omega = Kokkos::complex<double>(2.0 * 3.141592653589793 * 0.5, 0.0);
 
-    specfem::utilities::ComplexMatrix<4> qmat_zero; // unused (no fluid)
-    const auto coeffs = specfem::injection::fk_impl::halfspace_coefficients(
-        e_mat, false, qmat_zero, wave_type, amp.c1, amp.c3);
+  e_mat = specfem::injection::fk_impl::elastic_halfspace_eigenmatrix(hs, p);
 
-    const auto bot = specfem::injection::fk_impl::build_bottom_vector(
-        wave_type, amp.c1, amp.c3, coeffs);
+  const specfem::injection::fk::incident_wave_type wave_type =
+      specfem::injection::fk::incident_wave_type::p;
+  const auto amp = specfem::injection::fk_impl::incident_amplitude(
+      hs, wave_type, static_cast<type_real>(1.0), p);
 
-    // omega = 2*pi * 1 Hz (arbitrary non-zero; must be same scale as p).
-    const Kokkos::complex<double> omega(2.0 * 3.141592653589793, 0.0);
+  specfem::utilities::ComplexMatrix<4> qmat_zero;
+  const auto coeffs = specfem::injection::fk_impl::halfspace_coefficients(
+      e_mat, false, qmat_zero, wave_type, amp.c1, amp.c3);
 
-    // chain_above = identity (no layers above; ignored for in_halfspace)
-    specfem::utilities::ComplexMatrix<4> identity =
-        specfem::utilities::ComplexMatrix<4>::identity();
-
-    const auto spectrum = specfem::injection::fk_impl::recover_elastic_point(
-        e_mat,
-        identity, // chain_above (unused: in_halfspace=true)
-        hs,       // point_layer (unused: in_halfspace=true)
-        hs,       // halfspace (for vertical slownesses)
-        omega, p,
-        /*in_halfspace=*/true,
-        /*above_all_layers=*/false,
-        /*zz=*/static_cast<type_real>(0.0),
-        /*height=*/static_cast<type_real>(0.0), bot,
-        Kokkos::complex<double>(1.0, 0.0), // stf_coeff
-        static_cast<type_real>(0.0),       // xi1
-        static_cast<type_real>(0.0),       // xim
-        /*compute_stress=*/true);
-
-    d_out(0) = Kokkos::abs(spectrum.values[3]);
-    d_out(1) = Kokkos::abs(spectrum.values[4]);
-
-    // Scale each traction residual by |omega*p| times the PRE-cancellation
-    // term magnitude of that row of E*bot: sum_k |E(row,k)| * |bot[k]|
-    // (~1e11). Normalizing by the cancelled working[2]/[3] (which are ~0)
-    // would be meaningless.
-    const double op = Kokkos::abs(omega) * static_cast<double>(p);
-    double term2 = 0.0;
-    double term3 = 0.0;
-    for (int k = 0; k < 4; ++k) {
-      term2 += Kokkos::abs(e_mat(2, k)) * Kokkos::abs(bot[k]);
-      term3 += Kokkos::abs(e_mat(3, k)) * Kokkos::abs(bot[k]);
-    }
-    double scale2 = op * term2;
-    double scale3 = op * term3;
-    if (scale2 < 1.0e-30)
-      scale2 = 1.0;
-    if (scale3 < 1.0e-30)
-      scale3 = 1.0;
-    d_out(2) = scale2;
-    d_out(3) = scale3;
-  }
-};
-
-struct TractionSpectrumSV {
-  Kokkos::View<double *> d_out;
-  KOKKOS_FUNCTION void operator()(const int) const {
-    specfem::injection::fk::ElasticIsotropicLayer hs;
-    hs.density = static_cast<type_real>(3380.0);
-    hs.p_velocity = static_cast<type_real>(8100.0);
-    hs.s_velocity = static_cast<type_real>(4500.0);
-    hs.thickness = static_cast<type_real>(0.0);
-
-    const type_real p = static_cast<type_real>(1.0e-4);
-
-    const specfem::injection::fk::incident_wave_type wave_type =
-        specfem::injection::fk::incident_wave_type::sv;
-    const auto amp = specfem::injection::fk_impl::incident_amplitude(
-        hs, wave_type, static_cast<type_real>(1.0), p);
-
-    const auto e_mat =
-        specfem::injection::fk_impl::elastic_halfspace_eigenmatrix(hs, p);
-
-    specfem::utilities::ComplexMatrix<4> qmat_zero;
-    const auto coeffs = specfem::injection::fk_impl::halfspace_coefficients(
-        e_mat, false, qmat_zero, wave_type, amp.c1, amp.c3);
-
-    const auto bot = specfem::injection::fk_impl::build_bottom_vector(
-        wave_type, amp.c1, amp.c3, coeffs);
-
-    const Kokkos::complex<double> omega(2.0 * 3.141592653589793, 0.0);
-
-    specfem::utilities::ComplexMatrix<4> identity =
-        specfem::utilities::ComplexMatrix<4>::identity();
-
-    const auto spectrum = specfem::injection::fk_impl::recover_elastic_point(
-        e_mat, identity, hs, hs, omega, p,
-        /*in_halfspace=*/true,
-        /*above_all_layers=*/false,
-        /*zz=*/static_cast<type_real>(0.0),
-        /*height=*/static_cast<type_real>(0.0), bot,
-        Kokkos::complex<double>(1.0, 0.0), static_cast<type_real>(0.0),
-        static_cast<type_real>(0.0),
-        /*compute_stress=*/true);
-
-    d_out(0) = Kokkos::abs(spectrum.values[3]);
-    d_out(1) = Kokkos::abs(spectrum.values[4]);
-
-    const double op = Kokkos::abs(omega) * static_cast<double>(p);
-    double term2 = 0.0;
-    double term3 = 0.0;
-    for (int k = 0; k < 4; ++k) {
-      term2 += Kokkos::abs(e_mat(2, k)) * Kokkos::abs(bot[k]);
-      term3 += Kokkos::abs(e_mat(3, k)) * Kokkos::abs(bot[k]);
-    }
-    double scale2 = op * term2;
-    double scale3 = op * term3;
-    if (scale2 < 1.0e-30)
-      scale2 = 1.0;
-    if (scale3 < 1.0e-30)
-      scale3 = 1.0;
-    d_out(2) = scale2;
-    d_out(3) = scale3;
-  }
-};
-
-struct DisplacementNonzeroP {
-  Kokkos::View<double *> d_out;
-  KOKKOS_FUNCTION void operator()(const int) const {
-    specfem::injection::fk::ElasticIsotropicLayer hs;
-    hs.density = static_cast<type_real>(3380.0);
-    hs.p_velocity = static_cast<type_real>(8100.0);
-    hs.s_velocity = static_cast<type_real>(4500.0);
-    hs.thickness = static_cast<type_real>(0.0);
-
-    const type_real p = static_cast<type_real>(1.0e-4);
-
-    const specfem::injection::fk::incident_wave_type wave_type =
-        specfem::injection::fk::incident_wave_type::p;
-    const auto amp = specfem::injection::fk_impl::incident_amplitude(
-        hs, wave_type, static_cast<type_real>(1.0), p);
-
-    const auto e_mat =
-        specfem::injection::fk_impl::elastic_halfspace_eigenmatrix(hs, p);
-
-    specfem::utilities::ComplexMatrix<4> qmat_zero;
-    const auto coeffs = specfem::injection::fk_impl::halfspace_coefficients(
-        e_mat, false, qmat_zero, wave_type, amp.c1, amp.c3);
-
-    const auto bot = specfem::injection::fk_impl::build_bottom_vector(
-        wave_type, amp.c1, amp.c3, coeffs);
-
-    const Kokkos::complex<double> omega(2.0 * 3.141592653589793, 0.0);
-
-    specfem::utilities::ComplexMatrix<4> identity =
-        specfem::utilities::ComplexMatrix<4>::identity();
-
-    const auto spectrum = specfem::injection::fk_impl::recover_elastic_point(
-        e_mat, identity, hs, hs, omega, p,
-        /*in_halfspace=*/true,
-        /*above_all_layers=*/false,
-        /*zz=*/static_cast<type_real>(0.0),
-        /*height=*/static_cast<type_real>(0.0), bot,
-        Kokkos::complex<double>(1.0, 0.0), static_cast<type_real>(0.0),
-        static_cast<type_real>(0.0),
-        /*compute_stress=*/false);
-
-    d_out(0) = Kokkos::abs(spectrum.values[0]);
-    d_out(1) = Kokkos::abs(spectrum.values[1]);
-  }
-};
-
-struct DisplacementNonzeroSV {
-  Kokkos::View<double *> d_out;
-  KOKKOS_FUNCTION void operator()(const int) const {
-    specfem::injection::fk::ElasticIsotropicLayer hs;
-    hs.density = static_cast<type_real>(3380.0);
-    hs.p_velocity = static_cast<type_real>(8100.0);
-    hs.s_velocity = static_cast<type_real>(4500.0);
-    hs.thickness = static_cast<type_real>(0.0);
-
-    const type_real p = static_cast<type_real>(1.0e-4);
-
-    const specfem::injection::fk::incident_wave_type wave_type =
-        specfem::injection::fk::incident_wave_type::sv;
-    const auto amp = specfem::injection::fk_impl::incident_amplitude(
-        hs, wave_type, static_cast<type_real>(1.0), p);
-
-    const auto e_mat =
-        specfem::injection::fk_impl::elastic_halfspace_eigenmatrix(hs, p);
-
-    specfem::utilities::ComplexMatrix<4> qmat_zero;
-    const auto coeffs = specfem::injection::fk_impl::halfspace_coefficients(
-        e_mat, false, qmat_zero, wave_type, amp.c1, amp.c3);
-
-    const auto bot = specfem::injection::fk_impl::build_bottom_vector(
-        wave_type, amp.c1, amp.c3, coeffs);
-
-    const Kokkos::complex<double> omega(2.0 * 3.141592653589793, 0.0);
-
-    specfem::utilities::ComplexMatrix<4> identity =
-        specfem::utilities::ComplexMatrix<4>::identity();
-
-    const auto spectrum = specfem::injection::fk_impl::recover_elastic_point(
-        e_mat, identity, hs, hs, omega, p,
-        /*in_halfspace=*/true,
-        /*above_all_layers=*/false,
-        /*zz=*/static_cast<type_real>(0.0),
-        /*height=*/static_cast<type_real>(0.0), bot,
-        Kokkos::complex<double>(1.0, 0.0), static_cast<type_real>(0.0),
-        static_cast<type_real>(0.0),
-        /*compute_stress=*/false);
-
-    d_out(0) = Kokkos::abs(spectrum.values[0]);
-    d_out(1) = Kokkos::abs(spectrum.values[1]);
-  }
-};
+  modes = specfem::injection::fk_impl::build_bottom_vector(wave_type, amp.c1,
+                                                           amp.c3, coeffs);
+}
 
 } // namespace field_recovery_tests_impl
 
 // ============================================================================
-// Test 1: ElasticHalfSpaceFreeSurfaceTractionSpectrum (P incidence)
+// Test 5: HalfspaceZeroDepthEqualsModesProjection
 //
-// Single elastic half-space: rho=3380 kg/m^3, vp=8100 m/s, vs=4500 m/s.
-// Point is at zz=0 (top of the half-space / free surface), in_halfspace=true.
-// At zz=0 the exponential diagonal G is the identity, so working = E * bot_vec.
-// The half-space solve already set (E*bot)[2] == (E*bot)[3] == 0, so
-//   values[3] = stf * om * p * working[2] * (-i) should vanish,
-//   values[4] = stf * om * p * working[3] should vanish.
-// We verify relative to the term-magnitude scale of those traction rows.
+// At zz=0, G(0)=I so elastic_state_in_halfspace == E * modes component-wise.
 // ============================================================================
 
-TEST(FieldRecovery, ElasticHalfSpaceFreeSurfaceTractionSpectrumP) {
-  // 4 real outputs: |values[3]|, |values[4]|, scale_txz, scale_tzz.
-  Kokkos::View<double *> d_out("out_traction_p", 4);
-  Kokkos::deep_copy(d_out, 0.0);
+TEST(FieldRecovery, HalfspaceZeroDepthEqualsModesProjection) {
+  specfem::injection::fk::ElasticIsotropicLayer hs;
+  specfem::injection::fk::ElasticIsotropicLayer layer;
+  type_real p;
+  Kokkos::complex<double> omega;
+  specfem::utilities::ComplexMatrix<4> e_mat;
+  specfem::utilities::ComplexVector<4> modes;
+  field_recovery_tests_impl::make_elastic_model(hs, layer, p, omega, e_mat,
+                                                modes);
 
-  Kokkos::parallel_for("field_recovery_traction_p", Kokkos::RangePolicy<>(0, 1),
-                       field_recovery_tests_impl::TractionSpectrumP{ d_out });
-  Kokkos::fence();
+  const auto state = specfem::injection::fk_impl::elastic_state_in_halfspace(
+      e_mat, hs, omega, p, /*zz=*/0.0, modes);
 
-  auto h = Kokkos::create_mirror_view(d_out);
-  Kokkos::deep_copy(h, d_out);
+  const auto expected = e_mat * modes;
 
-  // At zz=0 the traction components must vanish to machine precision relative
-  // to the term-magnitude scale (the halfspace solve zeros exactly those rows).
-  EXPECT_LT(h(0) / h(2), 1.0e-10);
-  EXPECT_LT(h(1) / h(3), 1.0e-10);
+  constexpr double kTol = 1.0e-8;
+  for (int i = 0; i < 4; ++i) {
+    EXPECT_NEAR(state[i].real(), expected[i].real(), kTol)
+        << "component " << i << " real";
+    EXPECT_NEAR(state[i].imag(), expected[i].imag(), kTol)
+        << "component " << i << " imag";
+  }
 }
 
 // ============================================================================
-// Test 2: ElasticHalfSpaceFreeSurfaceTractionSpectrum (SV incidence)
-// ============================================================================
-
-TEST(FieldRecovery, ElasticHalfSpaceFreeSurfaceTractionSpectrumSV) {
-  Kokkos::View<double *> d_out("out_traction_sv", 4);
-  Kokkos::deep_copy(d_out, 0.0);
-
-  Kokkos::parallel_for("field_recovery_traction_sv",
-                       Kokkos::RangePolicy<>(0, 1),
-                       field_recovery_tests_impl::TractionSpectrumSV{ d_out });
-  Kokkos::fence();
-
-  auto h = Kokkos::create_mirror_view(d_out);
-  Kokkos::deep_copy(h, d_out);
-
-  EXPECT_LT(h(0) / h(2), 1.0e-10);
-  EXPECT_LT(h(1) / h(3), 1.0e-10);
-}
-
-// ============================================================================
-// Test 3: ElasticHalfSpaceDisplacementNonzeroP
+// Test 6: ElasticInterfaceContinuity
 //
-// Sanity check: a P-incident free-surface solution must produce at least one
-// non-zero displacement component at the surface.  If both values[0] and
-// values[1] are zero, the solver produced a degenerate (all-zero) wavefield.
+// elastic_state_in_layer at height=0 returns state_at_bottom unchanged,
+// because gamma0 * Pbar(0) = I.
 // ============================================================================
 
-TEST(FieldRecovery, ElasticHalfSpaceDisplacementNonzeroP) {
-  Kokkos::View<double *> d_out("out_displ_p", 2);
-  Kokkos::deep_copy(d_out, 0.0);
+TEST(FieldRecovery, ElasticInterfaceContinuity) {
+  specfem::injection::fk::ElasticIsotropicLayer hs;
+  specfem::injection::fk::ElasticIsotropicLayer layer;
+  type_real p;
+  Kokkos::complex<double> omega;
+  specfem::utilities::ComplexMatrix<4> e_mat;
+  specfem::utilities::ComplexVector<4> modes;
+  field_recovery_tests_impl::make_elastic_model(hs, layer, p, omega, e_mat,
+                                                modes);
 
-  Kokkos::parallel_for(
-      "field_recovery_displ_p", Kokkos::RangePolicy<>(0, 1),
-      field_recovery_tests_impl::DisplacementNonzeroP{ d_out });
-  Kokkos::fence();
+  specfem::utilities::ComplexVector<4> state_at_bottom;
+  state_at_bottom[0] = Kokkos::complex<double>(1.0, 0.5);
+  state_at_bottom[1] = Kokkos::complex<double>(-0.3, 0.2);
+  state_at_bottom[2] = Kokkos::complex<double>(0.1, -0.4);
+  state_at_bottom[3] = Kokkos::complex<double>(0.7, 0.0);
 
-  auto h = Kokkos::create_mirror_view(d_out);
-  Kokkos::deep_copy(h, d_out);
+  const auto result = specfem::injection::fk_impl::elastic_state_in_layer(
+      layer, omega, /*height=*/static_cast<type_real>(0.0), p, state_at_bottom);
 
-  // At least one displacement component must be non-trivially nonzero.
-  EXPECT_GT(h(0) + h(1), 1.0e-20);
+  constexpr double kTol = 1.0e-9;
+  for (int i = 0; i < 4; ++i) {
+    EXPECT_NEAR(result[i].real(), state_at_bottom[i].real(), kTol)
+        << "component " << i << " real";
+    EXPECT_NEAR(result[i].imag(), state_at_bottom[i].imag(), kTol)
+        << "component " << i << " imag";
+  }
 }
 
 // ============================================================================
-// Test 4: ElasticHalfSpaceDisplacementNonzeroSV
+// Test 9: AcousticFreeSurfacePressureSmall
+//
+// Sanity check: project_acoustic at height=500 m produces a finite pressure.
 // ============================================================================
 
-TEST(FieldRecovery, ElasticHalfSpaceDisplacementNonzeroSV) {
-  Kokkos::View<double *> d_out("out_displ_sv", 2);
-  Kokkos::deep_copy(d_out, 0.0);
+TEST(FieldRecovery, AcousticFreeSurfacePressureSmall) {
+  specfem::injection::fk::ElasticIsotropicLayer hs;
+  specfem::injection::fk::ElasticIsotropicLayer layer;
+  type_real p;
+  Kokkos::complex<double> omega;
+  specfem::utilities::ComplexMatrix<4> e_mat;
+  specfem::utilities::ComplexVector<4> modes;
+  field_recovery_tests_impl::make_elastic_model(hs, layer, p, omega, e_mat,
+                                                modes);
 
-  Kokkos::parallel_for(
-      "field_recovery_displ_sv", Kokkos::RangePolicy<>(0, 1),
-      field_recovery_tests_impl::DisplacementNonzeroSV{ d_out });
-  Kokkos::fence();
+  specfem::injection::fk::AcousticLayer fluid;
+  fluid.density = static_cast<type_real>(1020.0);
+  fluid.p_velocity = static_cast<type_real>(1500.0);
+  fluid.thickness = static_cast<type_real>(2000.0);
 
-  auto h = Kokkos::create_mirror_view(d_out);
-  Kokkos::deep_copy(h, d_out);
+  const auto solid_interface_state = e_mat * modes;
+  const specfem::injection::fk_impl::AcousticState base =
+      specfem::injection::fk_impl::acoustic_from_solid(solid_interface_state);
 
-  EXPECT_GT(h(0) + h(1), 1.0e-20);
+  const specfem::injection::fk_impl::AcousticState at =
+      specfem::injection::fk_impl::acoustic_state_in_layer(
+          fluid, omega, static_cast<type_real>(500.0), p, base);
+
+  const specfem::injection::fk_impl::SeriesSpectrum s =
+      specfem::injection::fk_impl::project_acoustic(at, fluid, omega, p);
+
+  const Kokkos::complex<double> pres =
+      s.values[specfem::injection::fk_impl::series_sigma_zz];
+  EXPECT_TRUE(std::isfinite(pres.real())) << "pressure real part is not finite";
+  EXPECT_TRUE(std::isfinite(pres.imag())) << "pressure imag part is not finite";
 }

@@ -4,40 +4,17 @@
 #include "specfem/setup.hpp"
 #include "specfem/utilities/complex_matrix.hpp"
 #include <Kokkos_Core.hpp>
+#include <numbers>
 
 namespace specfem {
 namespace injection {
 namespace fk_impl {
 
 /// @brief Mathematical constant pi.
-inline constexpr double pi = 3.141592653589793;
-
-/// @brief Shear velocity threshold below which a layer is treated as fluid.
-inline constexpr double threshold_vs = 1.0e-6;
+inline constexpr double pi = std::numbers::pi_v<double>;
 
 /// @brief Near-zero guard used for singular-denominator checks.
 inline constexpr double tinyval = 1.0e-9;
-
-/**
- * @brief Per-point field sample assembled during FK evaluation.
- *
- * Carries the complex-frequency displacement, traction, and pressure values
- * for a single evaluation point before inverse-FFT.  Fluid points populate
- * only @c displacement_vertical and @c pressure; @c is_fluid flags the medium.
- */
-struct FieldSample {
-  Kokkos::complex<double> displacement_horizontal =
-      Kokkos::complex<double>(0.0, 0.0); ///< Horizontal displacement u_x.
-  Kokkos::complex<double> displacement_vertical =
-      Kokkos::complex<double>(0.0, 0.0); ///< Vertical displacement u_z.
-  Kokkos::complex<double> traction_xz =
-      Kokkos::complex<double>(0.0, 0.0); ///< Shear traction sigma_xz.
-  Kokkos::complex<double> traction_zz =
-      Kokkos::complex<double>(0.0, 0.0); ///< Normal traction sigma_zz.
-  Kokkos::complex<double> pressure =
-      Kokkos::complex<double>(0.0, 0.0); ///< Acoustic pressure P.
-  bool is_fluid = false;                 ///< True for acoustic (fluid) points.
-};
 
 /**
  * @brief Compute the vertical P- and S-wave slownesses for an elastic layer.
