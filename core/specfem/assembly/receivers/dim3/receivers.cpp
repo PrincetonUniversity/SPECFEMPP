@@ -1,11 +1,10 @@
 #include "specfem/receivers.hpp"
 
 #include "specfem/algorithms.hpp"
+#include "specfem/assembly/coordinate_conversion.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/receivers.hpp"
-#include "specfem/assembly/resolve_coordinates.hpp"
-#include "specfem/coordinate_systems/utm.hpp"
 #include "specfem/element.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/mpi.hpp"
@@ -78,26 +77,18 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
   const int nreceivers = static_cast<int>(receivers.size());
   const int myrank = specfem::MPI::get_rank();
 
-  // UTM config for projecting geographic coordinates; nullopt when suppressed.
-  std::optional<specfem::coordinate_systems::utm_projection_config> utm_config;
-  if constexpr (ModelTag == specfem::simulation::model::Cartesian3D) {
-    if (!raw_mesh.suppress_utm_projection)
-      utm_config = specfem::coordinate_systems::utm_projection_config{
-        raw_mesh.utm_projection_zone, false
-      };
-  }
-
-  // Resolve any generic coordinates to global coordinates using mesh context,
-  // storing the resolution result on the receiver. Receivers constructed with
-  // direct coordinates have no read_coordinates_ set and keep their global
-  // coordinates unchanged.
+  // Resolve any generic coordinates to global coordinates using mesh context.
+  // The conversion (UTM for a regional mesh, spherical for a globe mesh,
+  // pass-through otherwise) is selected from the mesh model. Receivers
+  // constructed with direct coordinates have no read_coordinates_ set and keep
+  // their global coordinates unchanged.
   for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
-    if (auto *coords = receivers[ireceiver]->get_read_coordinates()) {
-      auto resolution = specfem::assembly::resolve_coordinates(
-          *coords, mesh, raw_mesh.boundaries.acoustic_free_surface, utm_config);
-      receivers[ireceiver]->set_resolution_result(resolution);
-      receivers[ireceiver]->set_global_coordinates(resolution.global);
-    }
+    if (const auto *coords = receivers[ireceiver]->get_read_coordinates())
+      receivers[ireceiver]->set_global_coordinates(
+          specfem::assembly::to<
+              specfem::coordinate_systems::cartesian_coordinates<
+                  specfem::element::dimension_tag::dim3>>(*coords, mesh,
+                                                          raw_mesh));
   }
 
   std::vector<

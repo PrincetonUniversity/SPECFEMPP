@@ -3,8 +3,8 @@
 #include "specfem/assembly/sources/impl/locate_sources.tpp"
 
 #include "specfem/algorithms.hpp"
+#include "specfem/assembly/coordinate_conversion.hpp"
 #include "specfem/assembly/mesh.hpp"
-#include "specfem/coordinate_systems/utm.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/setup.hpp"
@@ -46,21 +46,22 @@ specfem::assembly::sources<DimensionTag>::sources(
   int nsources = 0;
   int nsource_indices = 0;
 
-  // UTM config for projecting geographic coordinates. Only dim3 carries it;
-  // a suppressed (Cartesian) mesh leaves it nullopt.
-  std::optional<specfem::coordinate_systems::utm_projection_config> utm_config;
-  if constexpr (ModelTag == specfem::simulation::model::Cartesian3D) {
-    if (!raw_mesh.suppress_utm_projection)
-      utm_config = specfem::coordinate_systems::utm_projection_config{
-        raw_mesh.utm_projection_zone, false
-      };
+  // Resolve any generic coordinates to global coordinates using mesh context.
+  // The conversion (UTM for a regional mesh, spherical for a globe mesh,
+  // pass-through otherwise) is selected from the mesh model. Sources
+  // constructed with (x,y,z) directly have no read_coordinates_ set and keep
+  // their global coordinates unchanged.
+  for (auto &source : sources) {
+    if (const auto *coords = source->get_read_coordinates())
+      source->set_global_coordinates(
+          specfem::assembly::to<
+              specfem::coordinate_systems::cartesian_coordinates<DimensionTag>>(
+              *coords, mesh, raw_mesh));
   }
 
   // Locate all sources in the mesh and set their local coordinates,
   // global element index, and medium that the source is located in
-  specfem::assembly::sources_impl::locate_sources(
-      element_types, mesh, sources, raw_mesh.boundaries.acoustic_free_surface,
-      utm_config);
+  specfem::assembly::sources_impl::locate_sources(element_types, mesh, sources);
 
   // Create vector of MPI slice indices for each source (host memory)
   source_partition_index_.resize(sources.size());

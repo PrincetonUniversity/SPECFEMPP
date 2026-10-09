@@ -11,8 +11,6 @@ specfem::receivers::receiver<specfem::element::dimension_tag::dim3>::print()
   if (this->read_coordinates_) {
     message << ", Coordinates: " << this->read_coordinates_->print();
   }
-  if (this->resolution_.has_value())
-    message << ", Resolved: " << this->resolution_->print();
   if (this->partition_index_ >= 0)
     message << ", Location error: "
             << specfem::utilities::format_distance(this->location_error_);

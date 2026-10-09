@@ -12,8 +12,8 @@ namespace coordinate_systems {
  * Concrete types (cartesian, geographic, geocentric) inherit from this base
  * and provide printing and equality comparison. Conversion to
  * @ref specfem::point::global_coordinates is handled by
- * @ref specfem::assembly::resolve_coordinates, which lives in the assembly
- * layer and has access to the mesh and projection configuration.
+ * @ref specfem::assembly::to, which lives in the assembly layer and has access
+ * to the mesh and projection configuration.
  *
  * @tparam DimensionTag The dimension specification (dim2 or dim3)
  */

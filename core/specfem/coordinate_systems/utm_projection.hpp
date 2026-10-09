@@ -20,18 +20,18 @@
  *
  * // Forward: lon/lat -> UTM easting/northing
  * auto cart =
- *     specfem::coordinate_systems::transform<
+ *     specfem::coordinate_systems::to<
  *         specfem::coordinate_systems::cartesian_coordinates<
  *             specfem::element::dimension_tag::dim3>>(geo, cfg);
  *
  * // Inverse: UTM -> lon/lat
  * auto recovered =
- *     specfem::coordinate_systems::transform<
+ *     specfem::coordinate_systems::to<
  *         specfem::coordinate_systems::geographic_coordinates>(cart, cfg);
  *
  * // Southern hemisphere: use negative zone
  * auto cart_south =
- *     specfem::coordinate_systems::transform<
+ *     specfem::coordinate_systems::to<
  *         specfem::coordinate_systems::cartesian_coordinates<
  *             specfem::element::dimension_tag::dim3>>(
  *         specfem::coordinate_systems::geographic_coordinates{
@@ -40,7 +40,7 @@
  *
  * // Suppress projection (pass-through: x=lon, y=lat, z=depth)
  * auto passthrough =
- *     specfem::coordinate_systems::transform<
+ *     specfem::coordinate_systems::to<
  *         specfem::coordinate_systems::cartesian_coordinates<
  *             specfem::element::dimension_tag::dim3>>(
  *         geo, specfem::coordinate_systems::utm_projection_config{ 31, true });
@@ -49,7 +49,7 @@
 
 #include "specfem/coordinate_systems/cartesian.hpp"
 #include "specfem/coordinate_systems/geographic.hpp"
-#include "specfem/coordinate_systems/transform.hpp"
+#include "specfem/coordinate_systems/to.hpp"
 
 namespace specfem {
 namespace coordinate_systems {
@@ -65,6 +65,21 @@ struct utm_projection_config {
   int zone;              ///< UTM zone: +1..+60 (north), -1..-60 (south)
   bool suppress = false; ///< If true, coordinates pass through unchanged
 };
+
+/**
+ * @brief Convert coordinates through the UTM projection.
+ *
+ * The config is an ordinary overloaded parameter (not a template parameter);
+ * explicit specializations below provide the geographic <-> Cartesian pair.
+ *
+ * @tparam Target Target coordinate type
+ * @tparam Source Source coordinate type (deduced)
+ * @param source Input coordinates
+ * @param config UTM projection configuration (zone, suppress flag)
+ * @return Converted coordinates of type Target
+ */
+template <typename Target, typename Source>
+Target to(const Source &source, const utm_projection_config &config);
 
 } // namespace coordinate_systems
 } // namespace specfem
@@ -83,11 +98,9 @@ struct utm_projection_config {
 template <>
 specfem::coordinate_systems::cartesian_coordinates<
     specfem::element::dimension_tag::dim3>
-specfem::coordinate_systems::transform<
+specfem::coordinate_systems::to<
     specfem::coordinate_systems::cartesian_coordinates<
-        specfem::element::dimension_tag::dim3>,
-    specfem::coordinate_systems::geographic_coordinates,
-    specfem::coordinate_systems::utm_projection_config>(
+        specfem::element::dimension_tag::dim3>>(
     const specfem::coordinate_systems::geographic_coordinates &geo,
     const specfem::coordinate_systems::utm_projection_config &config);
 
@@ -100,11 +113,8 @@ specfem::coordinate_systems::transform<
  */
 template <>
 specfem::coordinate_systems::geographic_coordinates
-specfem::coordinate_systems::transform<
-    specfem::coordinate_systems::geographic_coordinates,
-    specfem::coordinate_systems::cartesian_coordinates<
-        specfem::element::dimension_tag::dim3>,
-    specfem::coordinate_systems::utm_projection_config>(
+specfem::coordinate_systems::to<
+    specfem::coordinate_systems::geographic_coordinates>(
     const specfem::coordinate_systems::cartesian_coordinates<
         specfem::element::dimension_tag::dim3> &cart,
     const specfem::coordinate_systems::utm_projection_config &config);
