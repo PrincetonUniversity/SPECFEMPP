@@ -30,6 +30,21 @@
 // ODR-safe.
 namespace fft_tests_impl {
 
+// Functor for HostSpaceInverseMatchesDevice: runs inverse() on the device.
+struct InverseDevice {
+  Kokkos::View<Kokkos::complex<double> *> d_s;
+  Kokkos::View<double *> d_out;
+  Kokkos::View<int *> bit_reversal_view;
+  Kokkos::View<Kokkos::complex<double> *> twiddles_view;
+  int power;
+  double dt;
+  KOKKOS_FUNCTION void operator()(const int) const {
+    specfem::utilities::fft::inverse(power, d_s.data(), -1.0, dt, d_out.data(),
+                                     bit_reversal_view.data(),
+                                     twiddles_view.data());
+  }
+};
+
 struct RoundTrip {
   Kokkos::View<Kokkos::complex<double> *> d_buf;
   Kokkos::View<double *> d_r;
@@ -393,4 +408,73 @@ TEST(Fft, MakeTablesRejectsBadPower) {
                std::runtime_error);
   EXPECT_THROW(specfem::utilities::fft::make_fft_tables(31, -1.0),
                std::runtime_error);
+}
+
+// ---------------------------------------------------------------------------
+// HostSpace inverse matches DefaultExecutionSpace inverse
+//
+// Builds a deterministic half-spectrum, runs inverse() on the host directly
+// (no kernel) using HostSpace tables, then runs the same inverse() on the
+// device using default-space tables, and compares each output sample.
+// ---------------------------------------------------------------------------
+
+TEST(FftTables, HostSpaceInverseMatchesDevice) {
+  constexpr int kPower = 6; // lx = 64
+  constexpr int kLx = 1 << kPower;
+  constexpr int kNhalf = kLx / 2;
+  constexpr double kDt = 0.005;
+  constexpr double kTol = 1.0e-10;
+  constexpr double two_pi = 2.0 * 3.141592653589793;
+
+  // Build host-side tables (HostSpace — no upload needed).
+  const auto host_tables =
+      specfem::utilities::fft::make_fft_tables<Kokkos::HostSpace>(kPower, -1.0);
+
+  // Build default-space tables (device or host depending on the backend).
+  const auto dev_tables =
+      specfem::utilities::fft::make_fft_tables(kPower, -1.0);
+
+  // Deterministic half-spectrum: bin k gets amplitude (k+1) at angle
+  // 2pi*k/nhalf. Only bins [0, nhalf] are filled; restructure_spectrum fills
+  // the rest.
+  std::vector<Kokkos::complex<double>> h_spec_host(kLx,
+                                                   Kokkos::complex<double>{});
+  for (int k = 0; k <= kNhalf; ++k) {
+    const double amp = static_cast<double>(k + 1);
+    const double phi = two_pi * static_cast<double>(k) / kNhalf;
+    h_spec_host[k] =
+        Kokkos::complex<double>(amp * Kokkos::cos(phi), amp * Kokkos::sin(phi));
+  }
+
+  // ---- Host path: call inverse() directly without a kernel ----
+  std::vector<Kokkos::complex<double>> s_host(h_spec_host);
+  std::vector<double> out_host(kLx, 0.0);
+  specfem::utilities::fft::inverse(
+      kPower, s_host.data(), -1.0, kDt, out_host.data(),
+      host_tables.bit_reversal.data(), host_tables.twiddles.data());
+
+  // ---- Device path: load spectrum into a device View and run via functor ----
+  Kokkos::View<Kokkos::complex<double> *> d_s("inv_spec", kLx);
+  Kokkos::View<double *> d_out("inv_out", kLx);
+
+  {
+    auto h_s = Kokkos::create_mirror_view(d_s);
+    for (int k = 0; k < kLx; ++k)
+      h_s(k) = h_spec_host[k];
+    Kokkos::deep_copy(d_s, h_s);
+  }
+
+  Kokkos::parallel_for(
+      "fft_host_vs_device", Kokkos::RangePolicy<>(0, 1),
+      fft_tests_impl::InverseDevice{ d_s, d_out, dev_tables.bit_reversal,
+                                     dev_tables.twiddles, kPower, kDt });
+  Kokkos::fence();
+
+  auto h_out = Kokkos::create_mirror_view(d_out);
+  Kokkos::deep_copy(h_out, d_out);
+
+  for (int i = 0; i < kLx; ++i) {
+    EXPECT_NEAR(h_out(i), out_host[i], kTol)
+        << "host/device inverse mismatch at i=" << i;
+  }
 }

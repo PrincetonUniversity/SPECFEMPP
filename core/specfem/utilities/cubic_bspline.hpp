@@ -8,9 +8,9 @@ namespace utilities {
 namespace cubic_bspline {
 
 // Device-callable (raw-pointer, KOKKOS_INLINE_FUNCTION) cubic B-spline
-// prefilter and evaluation, used per point inside Kokkos kernels. Host-only
-// alternatives such as Boost.Math splines cannot run in device code, and Boost
-// is an optional dependency.
+// prefilter and evaluation. No external spline dependency is required:
+// coefficients are evaluated both on host during synthesis and on device
+// sampling, so the function stays device-callable.
 
 /**
  * @brief Evaluate the piecewise cubic B-spline basis function @f$ B_3(x) @f$.
@@ -112,15 +112,20 @@ KOKKOS_INLINE_FUNCTION void compute_coefficients(const double *signal, int n,
  *   s(t) = \sum_{j} c_j \, B_3(t - j)
  * @f]
  * where the sum runs over the (at most 4) neighbouring integer knots and
- * indices are clamped to @f$ [0, n-1] @f$.
+ * indices are clamped to @f$ [0, n-1] @f$.  The accumulation is always in
+ * @c double regardless of @p Scalar.
  *
+ * @tparam Scalar Coefficient element type (e.g. @c double, @c float).
+ *                @p coefficients must be a contiguous array (LayoutRight row
+ *                or a raw array).
  * @param coefficients B-spline coefficients (length @p n), produced by
  *                     @c compute_coefficients.
  * @param n            Number of coefficients / samples.
  * @param t            Continuous evaluation abscissa in sample units.
- * @return Interpolated value.
+ * @return Interpolated value (in @c double).
  */
-KOKKOS_INLINE_FUNCTION double evaluate(const double *coefficients, int n,
+template <typename Scalar>
+KOKKOS_INLINE_FUNCTION double evaluate(const Scalar *coefficients, int n,
                                        double t) {
   // Nearest integer knot below t.
   const int j0 = static_cast<int>(Kokkos::floor(t));

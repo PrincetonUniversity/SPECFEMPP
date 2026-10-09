@@ -3,6 +3,7 @@
 #include <Kokkos_Complex.hpp>
 #include <Kokkos_Core.hpp>
 #include <Kokkos_MathematicalFunctions.hpp>
+#include <numbers>
 #include <stdexcept>
 
 namespace specfem {
@@ -12,45 +13,51 @@ namespace fft {
 /**
  * @brief Precomputed tables required by the radix-2 Cooley–Tukey FFT.
  *
- * Build with @c make_fft_tables on the host; the resulting Views can be
- * passed (by their raw @c .data() pointers) into the device-callable
- * @c transform / @c inverse functions.
+ * No external FFT dependency is required: the small power-of-two transforms
+ * run per depth group on host threads during synthesis and remain
+ * device-callable for use inside Kokkos kernels.
  *
- * The transforms are deliberately inline and per-thread: callers (e.g. the FK
- * injection kernels) run one transform per boundary point on per-thread
- * scratch from inside a Kokkos kernel. Host-launched batched libraries such as
- * KokkosFFT cannot be invoked from device code (and are not a dependency).
+ * @tparam MemorySpace Kokkos memory space for the Views (default:
+ *                     DefaultExecutionSpace::memory_space).
  */
+template <typename MemorySpace = Kokkos::DefaultExecutionSpace::memory_space>
 struct FftTables {
-  Kokkos::View<int *> bit_reversal; ///< Bit-reversal recurrence table, size
-                                    ///< power+1 (index 1..power used).
-  Kokkos::View<Kokkos::complex<double> *> twiddles; ///< Flattened twiddle
-                                                    ///< factors, size 2^power
-                                                    ///< - 1.
-  int power; ///< log2 of transform length.
+  Kokkos::View<int *, MemorySpace> bit_reversal; ///< Bit-reversal recurrence
+                                                 ///< table, size power+1
+                                                 ///< (index 1..power used).
+  Kokkos::View<Kokkos::complex<double> *, MemorySpace>
+      twiddles; ///< Flattened twiddle factors, size 2^power - 1.
+  int power;    ///< log2 of transform length.
 };
 
 /**
  * @brief Build FFT twiddle-factor and bit-reversal tables on the host, then
- * copy them to device Views.
+ * copy them to Views in @p MemorySpace.
+ *
+ * Construction is always host-side; for a device @p MemorySpace the tables
+ * are uploaded via @c Kokkos::create_mirror_view_and_copy.  For
+ * @c Kokkos::HostSpace the copy is a no-op.
  *
  * The twiddle factor for level @p l (1-based) and block @p iblock (1-based)
  * is stored at index @c ((1<<(l-1)) - 1) + (iblock-1).
  *
+ * @tparam MemorySpace Target Kokkos memory space (default:
+ *                     DefaultExecutionSpace::memory_space).
  * @param power Transform length is @c lx = 2^power; must be in [1, 30].
  * @param zign  Transform direction: @c +1.0 for the forward transform
  *              (kernel @f$ e^{-2\pi i n k / l_x} @f$) and @c -1.0 for the
  *              inverse (kernel @f$ e^{+2\pi i n k / l_x} @f$).
- * @return Fully populated @c FftTables with device-resident Views.
+ * @return Fully populated @c FftTables<MemorySpace>.
  * @throws std::runtime_error if @p power < 1 or @p power > 30.
  */
-inline FftTables make_fft_tables(int power, double zign) {
+template <typename MemorySpace = Kokkos::DefaultExecutionSpace::memory_space>
+inline FftTables<MemorySpace> make_fft_tables(int power, double zign) {
   if (power < 1 || power > 30) {
     throw std::runtime_error("specfem::utilities::fft::make_fft_tables: power "
                              "must be in [1, 30]");
   }
 
-  constexpr double two_pi = 2.0 * 3.141592653589793;
+  constexpr double two_pi = 2.0 * std::numbers::pi_v<double>;
 
   const int lx = 1 << power; // transform length
 
@@ -94,15 +101,14 @@ inline FftTables make_fft_tables(int power, double zign) {
     }
   }
 
-  // ---- deep-copy to device ----
-  FftTables tables;
+  // ---- copy to target memory space ----
+  // create_mirror_view_and_copy is a no-op when MemorySpace == HostSpace.
+  FftTables<MemorySpace> tables;
   tables.power = power;
-  tables.bit_reversal = Kokkos::View<int *>("bit_reversal", power + 1);
+  tables.bit_reversal =
+      Kokkos::create_mirror_view_and_copy(MemorySpace{}, h_bit_reversal);
   tables.twiddles =
-      Kokkos::View<Kokkos::complex<double> *>("twiddles", n_twiddles);
-
-  Kokkos::deep_copy(tables.bit_reversal, h_bit_reversal);
-  Kokkos::deep_copy(tables.twiddles, h_twiddles);
+      Kokkos::create_mirror_view_and_copy(MemorySpace{}, h_twiddles);
 
   return tables;
 }
@@ -228,6 +234,11 @@ KOKKOS_INLINE_FUNCTION void restructure_spectrum(Kokkos::complex<double> *s,
  *
  * Applies @c restructure_spectrum, then @c transform, then extracts the real
  * parts into @p out.
+ *
+ * @note @c restructure_spectrum overwrites bins @c [nhalf, 2*nhalf): it zeros
+ *       the Nyquist bin, forces DC real, and re-mirrors the Hermitian second
+ *       half.  Callers only need to fill bins @c [0, nhalf] before calling
+ *       this function.
  *
  * @param power       log2 of transform length @c lx = 2^power.
  * @param s           In/out complex spectrum of length @c lx (modified in

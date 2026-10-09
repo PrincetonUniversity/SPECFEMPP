@@ -69,6 +69,43 @@ struct ConstantSignal {
 } // namespace cubic_bspline_tests_impl
 
 // ---------------------------------------------------------------------------
+// EvaluateFloatCoefficientsMatchesDouble helpers
+// ---------------------------------------------------------------------------
+namespace cubic_bspline_tests_impl {
+
+// Compare evaluate<float> against evaluate<double> for several abscissae.
+// Accumulates relative errors (with an absolute floor) into d_max_err.
+struct FloatVsDouble {
+  Kokkos::View<double *> d_coeff_dbl;
+  Kokkos::View<float *> d_coeff_flt;
+  Kokkos::View<double *> d_max_err;
+  int n;
+  KOKKOS_FUNCTION void operator()(const int) const {
+    constexpr double abs_floor = 1.0e-10;
+    double max_err = 0.0;
+
+    // Non-integer abscissae spread across the interior.
+    constexpr double abscissae[5] = { 10.3, 15.7, 20.1, 25.5, 30.9 };
+    for (int a = 0; a < 5; ++a) {
+      const double t = abscissae[a];
+      const double val_dbl =
+          specfem::utilities::cubic_bspline::evaluate(d_coeff_dbl.data(), n, t);
+      const double val_flt =
+          specfem::utilities::cubic_bspline::evaluate(d_coeff_flt.data(), n, t);
+      const double denom = (Kokkos::fabs(val_dbl) > abs_floor)
+                               ? Kokkos::fabs(val_dbl)
+                               : abs_floor;
+      const double rel_err = Kokkos::fabs(val_flt - val_dbl) / denom;
+      if (rel_err > max_err)
+        max_err = rel_err;
+    }
+    d_max_err(0) = max_err;
+  }
+};
+
+} // namespace cubic_bspline_tests_impl
+
+// ---------------------------------------------------------------------------
 // cubic_bspline_basis: known values at integer and half-integer points
 // ---------------------------------------------------------------------------
 
@@ -162,4 +199,60 @@ TEST(CubicBspline, ConstantSignal) {
   EXPECT_LT(h_err(0), kConstTol)
       << "Constant signal should be recovered in interior to within "
       << kConstTol;
+}
+
+// ---------------------------------------------------------------------------
+// evaluate<float> matches evaluate<double> to a relative tolerance of 1e-6
+//
+// float coefficients introduce ~1e-7 relative rounding vs. double; 1e-6
+// gives a safe margin without hiding actual template bugs.
+// ---------------------------------------------------------------------------
+
+TEST(CubicBspline, EvaluateFloatCoefficientsMatchesDouble) {
+  constexpr int kN = 64;
+  constexpr double kRelTol = 1.0e-6;
+
+  // Build signal on host and compute double coefficients.
+  std::vector<double> signal_h(kN);
+  for (int i = 0; i < kN; ++i) {
+    signal_h[i] = Kokkos::sin(0.3 * static_cast<double>(i)) +
+                  0.5 * Kokkos::cos(0.11 * static_cast<double>(i));
+  }
+
+  std::vector<double> coeff_dbl_h(kN);
+  specfem::utilities::cubic_bspline::compute_coefficients(signal_h.data(), kN,
+                                                          coeff_dbl_h.data());
+
+  // Narrow-cast to float.
+  std::vector<float> coeff_flt_h(kN);
+  for (int i = 0; i < kN; ++i)
+    coeff_flt_h[i] = static_cast<float>(coeff_dbl_h[i]);
+
+  // Upload both coefficient arrays to device.
+  Kokkos::View<double *> d_coeff_dbl("coeff_dbl", kN);
+  Kokkos::View<float *> d_coeff_flt("coeff_flt", kN);
+  Kokkos::View<double *> d_max_err("flt_max_err", 1);
+
+  {
+    auto h_dbl = Kokkos::create_mirror_view(d_coeff_dbl);
+    auto h_flt = Kokkos::create_mirror_view(d_coeff_flt);
+    for (int i = 0; i < kN; ++i) {
+      h_dbl(i) = coeff_dbl_h[i];
+      h_flt(i) = coeff_flt_h[i];
+    }
+    Kokkos::deep_copy(d_coeff_dbl, h_dbl);
+    Kokkos::deep_copy(d_coeff_flt, h_flt);
+  }
+
+  Kokkos::parallel_for("bspline_float_vs_double", Kokkos::RangePolicy<>(0, 1),
+                       cubic_bspline_tests_impl::FloatVsDouble{
+                           d_coeff_dbl, d_coeff_flt, d_max_err, kN });
+  Kokkos::fence();
+
+  auto h_max_err = Kokkos::create_mirror_view(d_max_err);
+  Kokkos::deep_copy(h_max_err, d_max_err);
+
+  EXPECT_LT(h_max_err(0), kRelTol)
+      << "evaluate<float> vs evaluate<double> relative error exceeds "
+      << kRelTol;
 }
