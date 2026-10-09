@@ -27,6 +27,7 @@ option(SPECFEM_INSTALL "Creates clean executable directory. Location Controlled 
 option(SPECFEM_ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
 option(SPECFEM_ENABLE_METIS "Enable METIS partitioning support in xdecompose_mesh" OFF)
 option(SPECFEM_ENABLE_TRILINOS "Enable Trilinos implicit solvers (Tpetra/Belos/Ifpack2/MueLu/Amesos2)" OFF)
+option(SPECFEM_ENABLE_TENSOROPS "Enable TensorOperations sum-factored element stiffness kernels" OFF)
 option(SPECFEM_BUILD_MESHFEM3D_GLOBE "Build the SPECFEM3D_GLOBE meshfem3D executable" OFF)
 option(SPECFEM_BUILD_BENCHMARKS "Benchmarks included" ON)
 option(SPECFEM_NIGHTLY_BENCHMARKS "Include nightly benchmarks" OFF)
@@ -44,6 +45,12 @@ if (SPECFEM_ENABLE_MPI)
     # link specfem::mpi. Make MPI usage requirements global to match.
     link_libraries(MPI::MPI_CXX)
     message(STATUS "MPI enabled - found MPI::MPI_CXX")
+
+    # For handling mpi test execution on a cluster.
+    set(SPECFEM_MPI_TEST_COMMAND "${MPIEXEC_EXECUTABLE}" CACHE STRING
+        "MPI launcher command for tests (e.g. mpirun, srun, aprun); empty = MPIEXEC_EXECUTABLE")
+    set(SPECFEM_MPI_TEST_NUMPROC_FLAG "${MPIEXEC_NUMPROC_FLAG}" CACHE STRING
+        "Flag introducing the rank count for SPECFEM_MPI_TEST_COMMAND, e.g. '-n'; empty = MPIEXEC_NUMPROC_FLAG")
 else()
     message(STATUS "Compiling SPECFEM without MPI")
 endif()
@@ -186,6 +193,10 @@ include("${CMAKE_SOURCE_DIR}/cmake/metis.cmake")
 # resolved first and Trilinos validates against the same Kokkos.
 include("${CMAKE_SOURCE_DIR}/cmake/trilinos.cmake")
 
+# TensorOperations (sum-factored element stiffness). MUST be after
+# cmake/kokkos.cmake: the interface target links SPECFEM++'s Kokkos.
+include("${CMAKE_SOURCE_DIR}/cmake/tensorops.cmake")
+
 if (SPECFEM_ENABLE_SIMD)
     message(STATUS "Enabling SIMD")
     add_compile_definitions(SPECFEM_ENABLE_SIMD)
@@ -239,36 +250,19 @@ set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
 # =================================
 
 # ========== MESHFEM3D_GLOBE =============
-if(SPECFEM_BUILD_MESHFEM3D_GLOBE)
-  if(NOT SPECFEM_ENABLE_MPI)
-    message(FATAL_ERROR
-      "SPECFEM_BUILD_MESHFEM3D_GLOBE requires SPECFEM_ENABLE_MPI=ON because "
-      "SPECFEM3D_GLOBE meshfem sources require Fortran MPI.")
-  endif()
-  if(NOT TARGET MPI::MPI_Fortran)
-    find_package(MPI REQUIRED COMPONENTS Fortran)
-  endif()
-  if(NOT TARGET MPI::MPI_Fortran)
-    message(FATAL_ERROR
-      "SPECFEM_BUILD_MESHFEM3D_GLOBE requires MPI::MPI_Fortran, but Fortran MPI "
-      "was not found.")
-  endif()
-  message(STATUS "Configuring xmeshfem3D_globe")
-  set(_saved_CMAKE_MESSAGE_LOG_LEVEL ${CMAKE_MESSAGE_LOG_LEVEL})
-  set(CMAKE_MESSAGE_LOG_LEVEL ${SUBDIR_LOG_LEVEL})
-  add_subdirectory(fortran/meshfem3d_globe)
-  set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
+message(STATUS "Configuring xmeshfem3D_globe")
+set(_saved_CMAKE_MESSAGE_LOG_LEVEL ${CMAKE_MESSAGE_LOG_LEVEL})
+set(CMAKE_MESSAGE_LOG_LEVEL ${SUBDIR_LOG_LEVEL})
+add_subdirectory(fortran/meshfem3d_globe)
+set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
 
-  # ISO_C_BINDING wrappers exposing the globe model catalog to C/C++ (issue
-  # #2001). Kept in a sibling directory so fortran/meshfem3d_globe/ stays a
-  # clean mirror of upstream specfem3d_globe. Must come after the globe
-  # subdirectory above: it consumes the meshfem3D_globe::* targets and the .mod
-  # files they generate.
-  message(STATUS "Configuring globe_evaluator")
-  add_subdirectory(fortran/globe_evaluator)
-else()
-  message(STATUS "Skipping xmeshfem3D_globe (SPECFEM_BUILD_MESHFEM3D_GLOBE=OFF)")
-endif()
+# ISO_C_BINDING wrappers exposing the globe model catalog to C/C++ (issue
+# #2001). Kept in a sibling directory so fortran/meshfem3d_globe/ stays a
+# clean mirror of upstream specfem3d_globe. Must come after the globe
+# subdirectory above: it consumes the meshfem3D_globe::* targets and the .mod
+# files they generate.
+message(STATUS "Configuring globe_evaluator")
+add_subdirectory(fortran/globe_evaluator)
 # =================================
 
 # ========== DECOMPOSE_MESH =========
@@ -386,8 +380,9 @@ if (SPECFEM_INSTALL AND NOT SPECFEM_USE_SKBUILD)
         COMMAND ${CMAKE_COMMAND} --install . --prefix ${CMAKE_INSTALL_PREFIX} --component executables
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Organizing specfem++ executables into: ${CMAKE_INSTALL_PREFIX}"
-        # Make this run after your main targets
-        DEPENDS specfem xmeshfem2D xmeshfem3D xadj_seismogram xdecompose_mesh # list all your targets here
+        # Wait for every executable installed by the executables component.
+        DEPENDS specfem xmeshfem2D xmeshfem3D xmeshfem3D_globe
+                xadj_seismogram xdecompose_mesh
     )
 
     # Add the prefix directory to the clean target

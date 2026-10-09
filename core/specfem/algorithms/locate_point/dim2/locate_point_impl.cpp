@@ -106,8 +106,8 @@ std::tuple<type_real, type_real> get_local_coordinates(
     type_real dx = -(loc.x - global.x);
     type_real dz = -(loc.z - global.z);
 
-    type_real dxi = jacobian.xix * dx + jacobian.xiz * dz;
-    type_real dgamma = jacobian.gammax * dx + jacobian.gammaz * dz;
+    type_real dxi = jacobian.xix() * dx + jacobian.xiz() * dz;
+    type_real dgamma = jacobian.gammax() * dx + jacobian.gammaz() * dz;
 
     xi += dxi;
     gamma += dgamma;
@@ -156,16 +156,16 @@ std::pair<type_real, bool> get_local_edge_coordinate(
        &jacobian]() -> std::tuple<type_real &, type_real &, type_real &> {
     if (mesh_entity == specfem::mesh_entity::dim2::type::bottom) {
       gamma = -1;
-      return { xi, jacobian.xix, jacobian.xiz };
+      return { xi, jacobian.xix(), jacobian.xiz() };
     } else if (mesh_entity == specfem::mesh_entity::dim2::type::right) {
       xi = 1;
-      return { gamma, jacobian.gammax, jacobian.gammaz };
+      return { gamma, jacobian.gammax(), jacobian.gammaz() };
     } else if (mesh_entity == specfem::mesh_entity::dim2::type::top) {
       gamma = 1;
-      return { xi, jacobian.xix, jacobian.xiz };
+      return { xi, jacobian.xix(), jacobian.xiz() };
     } else {
       xi = -1;
-      return { gamma, jacobian.gammax, jacobian.gammaz };
+      return { gamma, jacobian.gammax(), jacobian.gammaz() };
     }
   }();
   edgecoord = coord;
@@ -249,8 +249,8 @@ std::tuple<type_real, type_real> get_best_location(
     type_real dx = -(loc.x - global.x);
     type_real dz = -(loc.z - global.z);
 
-    type_real dxi = jacobian.xix * dx + jacobian.xiz * dz;
-    type_real dgamma = jacobian.gammax * dx + jacobian.gammaz * dz;
+    type_real dxi = jacobian.xix() * dx + jacobian.xiz() * dz;
+    type_real dgamma = jacobian.gammax() * dx + jacobian.gammaz() * dz;
 
     xi += dxi;
     gamma += dgamma;

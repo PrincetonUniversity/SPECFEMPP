@@ -116,20 +116,20 @@ void estimate_verify_normal(
                                   type_real &, type_real &> {
     if (iedge == specfem::mesh_entity::dim2::type::bottom) {
       gamma = -1;
-      return { gamma, jacobian.xix, jacobian.xiz, jacobian.gammax,
-               jacobian.gammaz };
+      return { gamma, jacobian.xix(), jacobian.xiz(), jacobian.gammax(),
+               jacobian.gammaz() };
     } else if (iedge == specfem::mesh_entity::dim2::type::right) {
       xi = 1;
-      return { xi, jacobian.gammax, jacobian.gammaz, jacobian.xix,
-               jacobian.xiz };
+      return { xi, jacobian.gammax(), jacobian.gammaz(), jacobian.xix(),
+               jacobian.xiz() };
     } else if (iedge == specfem::mesh_entity::dim2::type::top) {
       gamma = 1;
-      return { gamma, jacobian.xix, jacobian.xiz, jacobian.gammax,
-               jacobian.gammaz };
+      return { gamma, jacobian.xix(), jacobian.xiz(), jacobian.gammax(),
+               jacobian.gammaz() };
     } else {
       xi = -1;
-      return { xi, jacobian.gammax, jacobian.gammaz, jacobian.xix,
-               jacobian.xiz };
+      return { xi, jacobian.gammax(), jacobian.gammaz(), jacobian.xix(),
+               jacobian.xiz() };
     }
   }();
   jacobian = specfem::jacobian::compute_jacobian(coorg, ngnod, xi, gamma);

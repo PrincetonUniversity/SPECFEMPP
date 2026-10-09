@@ -46,8 +46,8 @@ namespace specfem::assembly {
  * point_jac);
  *
  * // Access loaded values
- * type_real xix_val = point_jac.xix;          // ∂ξ/∂x
- * type_real det_jac = point_jac.jacobian;     // |J|
+ * type_real xix_val = point_jac.xix();        // ∂ξ/∂x
+ * type_real det_jac = point_jac.jacobian();   // |J|
  * @endcode
  */
 template <

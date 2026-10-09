@@ -4,7 +4,8 @@
 
 #include "solver.hpp"
 #include "specfem/enums.hpp"
-#include "specfem/linear_system/dof_map.hpp"
+#include "specfem/linear_system/sparse_matrix_view/fe_assembly.hpp"
+#include "specfem/linear_system/vector_view/vector_view.hpp"
 #include "specfem/periodic_tasks.hpp"
 #include "specfem/timescheme.hpp"
 #include <BelosLinearProblem.hpp>
@@ -14,6 +15,7 @@
 #include <Tpetra_MultiVector.hpp>
 #include <Tpetra_Operator.hpp>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -190,6 +192,13 @@ public:
   constexpr static auto medium_tag = Tags::medium_tag;
 
   using AssemblyType = specfem::assembly::assembly<dimension_tag>;
+
+  /// Dof numbering and connectivity of the medium
+  using MappingType =
+      specfem::linear_system::FEMapping<dimension_tag, medium_tag>;
+
+  /// Maps and sparsity graphs built over @ref MappingType
+  using FEAssemblyType = specfem::linear_system::FEAssembly<MappingType>;
   using multivector_type =
       Tpetra::MultiVector<specfem::linear_system::scalar_type>;
   using operator_type = Tpetra::Operator<specfem::linear_system::scalar_type>;
@@ -200,8 +209,11 @@ public:
    * Assembles \f$ K \f$, \f$ C \f$, and \f$ M \f$, forms \f$ A \f$ for
    * `time_scheme->get_timestep()`, computes the Ifpack2 preconditioner, and
    * builds the Belos GMRES problem. Throws `std::runtime_error` outside the
-   * supported scope (see the class docs) or for `beta <= 0` (the explicit
-   * limit has no displacement-form operator).
+   * supported scope (see the class docs), for `beta < 0`, for `gamma`
+   * outside \f$ [0, 1] \f$, for `beta = 0` in NewmarkForm::displacement (the
+   * explicit limit has no displacement-form operator), or when SPECFEM++ is
+   * built without `SPECFEM_ENABLE_TENSOROPS` (required by the element
+   * stiffness kernel).
    *
    * @param time_scheme Supplies the time step, step count, and seismogram
    *        cadence. Its predictor/corrector phases are NOT used -- the
@@ -232,25 +244,21 @@ public:
    */
   void run() override;
 
-  /// Dof numbering shared by all assembled operators
-  const specfem::linear_system::DofMap &dof_map() const { return *dof_map_; }
+  /// Dof maps and sparsity graphs shared by every assembled operator
+  const FEAssemblyType &fe() const { return *fe_; }
   /// Assembled stiffness matrix \f$ K \f$
-  Teuchos::RCP<const specfem::linear_system::crs_matrix_type>
-  stiffness() const {
-    return stiffness_;
+  const specfem::linear_system::crs_matrix_type &stiffness() const {
+    return *stiffness_;
   }
   /// Assembled Stacey damping matrix \f$ C \f$ (empty without Stacey)
-  Teuchos::RCP<const specfem::linear_system::crs_matrix_type> damping() const {
-    return damping_;
+  const specfem::linear_system::crs_matrix_type &damping() const {
+    return *damping_;
   }
   /// Lumped mass vector \f$ M \f$
-  Teuchos::RCP<const specfem::linear_system::vector_type> mass() const {
-    return mass_;
-  }
+  const specfem::linear_system::vector_type &mass() const { return *mass_; }
   /// Implicit Newmark operator \f$ A \f$ for the configured time step
-  Teuchos::RCP<const specfem::linear_system::crs_matrix_type>
-  system_operator() const {
-    return system_operator_;
+  const specfem::linear_system::crs_matrix_type &system_operator() const {
+    return *system_operator_;
   }
   /// Steps actually executed by the last run() (equals the step count unless
   /// the steady-state criterion stopped the run early)
@@ -280,9 +288,7 @@ private:
   /// Throws if the true relative residual misses `gmres_tolerance`; a Belos
   /// "loss of accuracy" flag whose true residual is fine is logged and
   /// tolerated (single-precision PseudoBlockGmres reports it spuriously).
-  void
-  solve_into(const Teuchos::RCP<specfem::linear_system::vector_type> &unknown,
-             const int istep);
+  void solve_into(specfem::linear_system::VectorView &unknown, const int istep);
 
   /// One displacement-form step: build b, solve for u_{n+1}, recover
   /// a_{n+1} and v_{n+1} into a_new_ / v_new_. Requires beta > 0.
@@ -295,7 +301,7 @@ private:
   /// Zero the acceleration field, run the production source kernel at
   /// `istep`, and gather the result: f = source vector at t_{n+1}
   void extract_source_vector(const int istep,
-                             specfem::linear_system::vector_type &f);
+                             specfem::linear_system::VectorView &f);
 
   /// Scatter (u, v, a) into the assembly's forward field (host views, then
   /// device) so seismograms and periodic tasks see the current state
@@ -308,7 +314,8 @@ private:
   AssemblyType assembly_;       ///< Assembly (probe scratch + output mirror)
   ImplicitSolverConfig config_; ///< Solver configuration
 
-  std::unique_ptr<specfem::linear_system::DofMap> dof_map_; ///< Dof numbering
+  /// Dof maps and sparsity graphs, built once and shared by the assemblers
+  std::unique_ptr<FEAssemblyType> fe_;
   Teuchos::RCP<specfem::linear_system::crs_matrix_type> stiffness_;       ///< K
   Teuchos::RCP<specfem::linear_system::crs_matrix_type> damping_;         ///< C
   Teuchos::RCP<specfem::linear_system::vector_type> mass_;                ///< M
@@ -322,15 +329,16 @@ private:
                                     multivector_type, operator_type>>
       gmres_; ///< Belos GMRES solver manager
 
-  Teuchos::RCP<specfem::linear_system::vector_type> u_;     ///< u_n
-  Teuchos::RCP<specfem::linear_system::vector_type> v_;     ///< v_n
-  Teuchos::RCP<specfem::linear_system::vector_type> a_;     ///< a_n
-  Teuchos::RCP<specfem::linear_system::vector_type> u_new_; ///< u_{n+1}
-  Teuchos::RCP<specfem::linear_system::vector_type> a_new_; ///< a_{n+1}
-  Teuchos::RCP<specfem::linear_system::vector_type> v_new_; ///< v_{n+1}
-  Teuchos::RCP<specfem::linear_system::vector_type> rhs_;   ///< b
-  Teuchos::RCP<specfem::linear_system::vector_type> tmp_;   ///< scratch
-  Teuchos::RCP<specfem::linear_system::vector_type> tmp2_;  ///< scratch
+  /// Dof map and expression scratch shared by every state vector below
+  std::unique_ptr<specfem::linear_system::VectorSpace> vectors_;
+
+  std::optional<specfem::linear_system::VectorView> u_;     ///< u_n
+  std::optional<specfem::linear_system::VectorView> v_;     ///< v_n
+  std::optional<specfem::linear_system::VectorView> a_;     ///< a_n
+  std::optional<specfem::linear_system::VectorView> u_new_; ///< u_{n+1}
+  std::optional<specfem::linear_system::VectorView> a_new_; ///< a_{n+1}
+  std::optional<specfem::linear_system::VectorView> v_new_; ///< v_{n+1}
+  std::optional<specfem::linear_system::VectorView> rhs_;   ///< b
 
   int last_step_ = 0; ///< Steps executed by the last run()
 };

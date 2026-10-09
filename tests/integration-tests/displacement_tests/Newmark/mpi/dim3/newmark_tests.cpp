@@ -95,8 +95,8 @@ parse_3D_test_directories(const std::string &tests_file, int target_nproc) {
 }
 
 // Parameterized test fixture for the MPI Newmark tests. Named distinctly from
-// the serial fixture so the discovered gtest/ctest names carry "MPI" (e.g.
-// DisplacementMPITests/NewmarkMPI.3D/"<case>") and never collide with serial.
+// the serial fixture so the registered gtest/ctest names carry "MPI" (e.g.
+// DisplacementMPITests/NewmarkMPI.3D/<case>) and never collide with serial.
 class NewmarkMPI : public ::testing::TestWithParam<std::string> {
 protected:
   void SetUp() override {
@@ -126,7 +126,9 @@ TEST_P(NewmarkMPI, 3D) {
   TestConfig3D Test = TestConfig3D::load_from_directory(test_path);
 
   // The per-test process count must match the size this executable was
-  // launched with (tests are grouped into tests_mpi<N>.yaml by size).
+  // launched with (GetTestDirectories() keeps only the tests_mpi.yaml entries
+  // declaring SPECFEM_MPI_TEST_NPROC, so a mismatch here means the case's
+  // config.yaml and its yaml entry disagree).
   EXPECT_EQ(Test.number_of_processors, SPECFEM_MPI_TEST_NPROC)
       << "Test " << Test.name << " declares nproc=" << Test.number_of_processors
       << " but executable runs with " << SPECFEM_MPI_TEST_NPROC
@@ -353,9 +355,20 @@ std::vector<std::string> GetTestDirectories() {
   return parse_3D_test_directories(tests_filename, SPECFEM_MPI_TEST_NPROC);
 }
 
-// Instantiate the parameterized test with all configurations
+// Instantiate the parameterized test with all configurations.
+//
+// The name generator is not cosmetic: CMake registers one CTest entry per case
+// here (PARAM_CASES in tests/integration-tests/mpi.cmake), keyed on the
+// generated instance name. gtest's default generator emits the index, which
+// silently shifts as soon as a case is added to tests_mpi.yaml, so the name has
+// to be the test directory itself. ::testing::PrintToStringParamName would
+// quote the std::string, and gtest rejects instance names that are not valid
+// identifiers -- return the parameter unquoted.
 INSTANTIATE_TEST_SUITE_P(DisplacementMPITests, NewmarkMPI,
-                         ::testing::ValuesIn(GetTestDirectories()));
+                         ::testing::ValuesIn(GetTestDirectories()),
+                         [](const ::testing::TestParamInfo<std::string> &info) {
+                           return info.param;
+                         });
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

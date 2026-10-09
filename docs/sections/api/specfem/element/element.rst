@@ -35,6 +35,11 @@ Dimension-Specific Implementations
 
 .. doxygenenum:: specfem::element::boundary_tag
 
+``specfem::element::region_tag``
+================================
+
+.. doxygenenum:: specfem::element::region_tag
+
 ``specfem::element::to_string``
 ===============================
 
@@ -45,6 +50,8 @@ Dimension-Specific Implementations
 .. doxygenfunction:: specfem::element::to_string(const boundary_tag &boundary)
 
 .. doxygenfunction:: specfem::element::to_string(const attenuation_tag &attenuation)
+
+.. doxygenfunction:: specfem::element::to_string(const region_tag &region)
 
 .. doxygenfunction:: specfem::element::to_string(const medium_tag &medium, const property_tag &property_tag, const boundary_tag &boundary_tag)
 

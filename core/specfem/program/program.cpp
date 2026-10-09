@@ -52,10 +52,10 @@ bool execute(const std::string &dimension, const YAML::Node &parameter_dict) {
       // Setup periodic tasks (signal checking)
       const auto dimension_tag = specfem::element::dimension_tag::dim2;
       std::vector<std::shared_ptr<
-          specfem::periodic_tasks::periodic_task<dimension_tag> > >
+          specfem::periodic_tasks::periodic_task<dimension_tag>>>
           tasks;
       const auto signal_task = std::make_shared<
-          specfem::periodic_tasks::check_signal<dimension_tag> >(10);
+          specfem::periodic_tasks::check_signal<dimension_tag>>(10);
       tasks.push_back(signal_task);
 
       // Run 2D Cartesian program
@@ -67,15 +67,26 @@ bool execute(const std::string &dimension, const YAML::Node &parameter_dict) {
       // Setup periodic tasks (signal checking)
       const auto dimension_tag = specfem::element::dimension_tag::dim3;
       std::vector<std::shared_ptr<
-          specfem::periodic_tasks::periodic_task<dimension_tag> > >
+          specfem::periodic_tasks::periodic_task<dimension_tag>>>
           tasks;
       const auto signal_task = std::make_shared<
-          specfem::periodic_tasks::check_signal<dimension_tag> >(10);
+          specfem::periodic_tasks::check_signal<dimension_tag>>(10);
       tasks.push_back(signal_task);
 
       // Run 3D Cartesian program
       program_3d(parameter_dict, tasks);
 
+      return true;
+    }
+    case specfem::simulation::model::Globe3D: {
+      const auto dimension_tag = specfem::element::dimension_tag::dim3;
+      std::vector<std::shared_ptr<
+          specfem::periodic_tasks::periodic_task<dimension_tag>>>
+          tasks;
+      tasks.push_back(
+          std::make_shared<
+              specfem::periodic_tasks::check_signal<dimension_tag>>(10));
+      program_3d(parameter_dict, tasks, true);
       return true;
     }
     default: {

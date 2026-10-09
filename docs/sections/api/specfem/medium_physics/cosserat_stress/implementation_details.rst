@@ -5,3 +5,9 @@
 
 .. doxygengroup:: specfem_cosserat_stress_computation_dim2_elastic_isotropic_cosserat
     :content-only:
+
+3D Elastic Isotropic Cosserat Stress Computation
+================================================
+
+.. doxygengroup:: specfem_cosserat_stress_computation_dim3_elastic_isotropic_cosserat
+    :content-only:

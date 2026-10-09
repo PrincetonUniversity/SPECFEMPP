@@ -8,6 +8,7 @@
 #include "specfem/medium/dim2/poroelastic/isotropic/source.hpp"
 #include "specfem/medium/dim3/acoustic/isotropic/source.hpp"
 #include "specfem/medium/dim3/elastic/isotropic/source.hpp"
+#include "specfem/medium/dim3/elastic/isotropic_cosserat/source.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

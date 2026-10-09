@@ -1,0 +1,82 @@
+Starting Cosserat Solver
+Log file: OUTPUT_FILES/fourier_results/cosserat_solver.log
+Reading configuration from YAML file: fourier_solver/params.yaml
+YAML file read successfully from fourier_solver/params.yaml.
+Validating YAML file contents...
+Configuration read successfully from YAML file.
+Parameters:
+========================================
+Dimension: 3D
+Material type: Cosserat
+Backend: Auto (Fortran if available, otherwise Python)
+Material parameters:
+   Rho: 2300.0
+   Lambda: 7682000000.0
+   Mu: 5175000000.0
+   Nu: 30.0
+   J: 2300.0
+   Lambda (coupled): 6000000000.0
+   Mu (coupled): 2000000000.0
+   Nu (coupled): 0.0
+Sources:
+   Source 1:
+      Location: [0. 0. 0.]
+      Type: Ricker
+      Type: 0
+      Central Frequency f0 (Hz): 0.1
+      Factor: 1.0
+      Tshift: 0.0
+      f: [1.e+08 2.e+08 4.e+07]
+      fc: [2.e+11 5.e+11 1.e+12]
+Digits precision: 30 (only relevant for 2D Python backend)
+Receivers:
+   Network: DB
+   Receiver 1: X55
+      Location: [    0. 10000.     0.]
+      Seismograms to output:
+         - Displacement
+         - Rotation
+   Receiver 2: X60
+      Location: [10000.     0.     0.]
+      Seismograms to output:
+         - Displacement
+         - Rotation
+   Receiver 3: X65
+      Location: [    0.     0. 10000.]
+      Seismograms to output:
+         - Displacement
+         - Rotation
+   Receiver 4: X70
+      Location: [10000. 10000. 10000.]
+      Seismograms to output:
+         - Displacement
+         - Rotation
+   Receiver 5: X75
+      Location: [-10000. -10000. -10000.]
+      Seismograms to output:
+         - Displacement
+         - Rotation
+Using Fortran backend
+General simulation parameters:
+   dt: 0.075
+   N: 550
+   t0: None (will be set to the earliest source start time: -11.999999999999998)
+   Refinement factor: 1
+   Extension factor: 128
+   Estimated array size: 70400 (N * refinement_factor * extension_factor)
+Getting OpenMP information
+   OpenMP runtime library found: libgomp.so.1
+   OpenMP max threads: 1
+   OpenMP number of processors: 192
+========================================
+Beginning trace generation step at 2026-08-26 12:44:49.914299
+========================================
+Generating traces for seismogram X55 at location [    0. 10000.     0.] (1 of 5)
+Generating traces for seismogram X60 at location [10000.     0.     0.] (2 of 5)
+Generating traces for seismogram X65 at location [    0.     0. 10000.] (3 of 5)
+Generating traces for seismogram X70 at location [10000. 10000. 10000.] (4 of 5)
+Generating traces for seismogram X75 at location [-10000. -10000. -10000.] (5 of 5)
+========================================
+Finished trace generation step at 2026-08-26 12:45:10.000136
+Generated 5 traces in 20.09 seconds
+========================================

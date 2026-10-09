@@ -22,7 +22,7 @@ pipeline {
                     }
                     axis{
                         name 'MPIEnabled'
-                        values 'MPI_GCC416;-DSPECFEM_ENABLE_MPI=ON;openmpi/gcc/4.1.6;-N 1 --ntasks-per-node=8'
+                        values 'MPI_GCC416;-DSPECFEM_ENABLE_MPI=ON;openmpi/gcc/4.1.6;--ntasks=8  --nodes=2-8'
                     }
                 }
                 stages {
@@ -88,6 +88,7 @@ pipeline {
                                           ${CMAKE_HOST_FLAGS} ${SIMD_FLAGS} ${MPI_FLAGS} \
                                           -D SPECFEM_BUILD_TESTS=ON \
                                           -D SPECFEM_BUILD_BENCHMARKS=OFF \
+                                          -D SPECFEM_MPI_TEST_COMMAND=srun \
                                           -D SPECFEMPP_TEST_DIR=/scratch/gpfs/TROMP/specfempp/jenkins/test_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
                                         cmake3 --build build_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
                                     """
@@ -103,13 +104,22 @@ pipeline {
                                         module load ${GNU_COMPILER_MODULE}
                                         module load ${MPI_MODULE}
                                         cd /scratch/gpfs/TROMP/specfempp/jenkins/test_mpi_${GNU_COMPILER_NAME}_${MPI_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
-                                        srun ${MPI_RUN_FLAGS} -t 00:59:00 --account rse \
+                                        # Excluded nodes (reported to the sysadmins; drop
+                                        # each one once it is fixed):
+                                        #  - della-r3c* racks: MPI_Finalize (Open MPI 4.1.6
+                                        #    + UCX) intermittently stalls ~52 s after any
+                                        #    communication, running the allocation out of time.
+                                        #  - della-h17n1 (optane node): every multi-node job
+                                        #    including it hangs in MPI start-up until killed.
+                                        salloc ${MPI_RUN_FLAGS} -t 00:15:00 --account rse \
                                             --constraint="intel" \
+                                            --exclude="della-r3c[1-4]n[1-16],della-h17n1" \
                                             bash -c 'export OMP_PROC_BIND=spread; \
                                             export OMP_PLACES=threads; \
                                             export OMP_NUM_THREADS=20; \
                                             hostname; \
-                                            ctest -R MPI --output-on-failure --no-tests=error;'
+                                            echo "ranks run on: \$SLURM_JOB_NODELIST"; \
+                                            ctest -L MPI --output-on-failure --no-tests=error;'
                                     """
                                     echo ' Testing completed '
                                 }

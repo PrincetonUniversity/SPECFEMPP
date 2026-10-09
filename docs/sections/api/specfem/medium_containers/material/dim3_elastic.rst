@@ -7,3 +7,11 @@
     :content-only:
     :members:
     :private-members:
+
+``specfem::medium_container::material< dim3, elastic, anisotropic >``
+=====================================================================
+
+.. doxygengroup:: specfem_medium_material_dim3_elastic_anisotropic
+    :content-only:
+    :members:
+    :private-members:

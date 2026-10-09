@@ -497,26 +497,34 @@ Parameter definitions
 
                             Component of the wavefield to be plotted.
 
-                            :default value: None
+                            :default value: magnitude
 
                             :possible values: [x, y, z, magnitude]
 
-                            the ``component`` parameter is ignored if the
-                            requested field is a scalar field, such as
-                            ``pressure``. ``magnitude`` option plots the
-                            magnitude of the vector field, and if the domain has
-                            acoustic elements the potential is plotted. ``y`` is
-                            only available in 2D SH simulations and 3D
-                            simulations.
+                            The ``component`` parameter is ignored if the
+                            requested field is ``pressure`` (the only scalar
+                            field). ``magnitude`` option plots the magnitude of
+                            the vector field, and if the domain has acoustic
+                            elements the potential is plotted. For
+                            ``displacement``, ``velocity``, and
+                            ``acceleration``, ``y`` is only available in 2D SH
+                            simulations and 3D simulations. ``rotation``,
+                            ``intrinsic_rotation``, and ``curl`` are
+                            out-of-plane fields in 2D, so only ``y`` (signed
+                            value) and ``magnitude`` are valid; in 3D all of
+                            ``x``, ``y``, ``z``, and ``magnitude`` are valid.
 
 
                         .. dropdown:: ``field``
 
                             Component of the wavefield to be plotted.
+                            ``rotation`` and ``intrinsic_rotation`` are only
+                            available for Cosserat media, and ``curl`` is
+                            currently only computed for Cosserat media as well.
 
                             :default value: None
 
-                            :possible values: [displacement, velocity, acceleration, pressure]
+                            :possible values: [displacement, velocity, acceleration, pressure, rotation, intrinsic_rotation, curl]
 
 
                         .. dropdown:: ``simulation-field``

@@ -388,7 +388,7 @@
   double precision, dimension(:,:), allocatable :: xelm_ref_store,yelm_ref_store,zelm_ref_store
   ! radial shell bounds of each element (non-dimensional) and Moho-stretching crust flag
   double precision, dimension(:), allocatable :: rmin_store,rmax_store
-  logical, dimension(:), allocatable :: elem_in_crust_store
+  logical, dimension(:), allocatable :: elem_in_crust_store,elem_in_mantle_store
 
   ! name of the database file
   character(len=MAX_STRING_LEN) :: prname, prname_adios

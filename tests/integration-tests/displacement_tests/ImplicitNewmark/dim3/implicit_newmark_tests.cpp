@@ -141,6 +141,11 @@ TraceMap collect_traces(AssemblyType &assembly) {
 // compare static displacement at chosen time steps -- through the
 // seismogram interface, which is stable under field renumbering.
 TEST(ImplicitNewmark3D, ReproducesExplicitSchemeAtBetaZero) {
+#ifndef SPECFEM_ENABLE_TENSOROPS
+  GTEST_SKIP() << "SPECFEM++ was built without TensorOperations "
+                  "(SPECFEM_ENABLE_TENSOROPS=OFF); the implicit solver needs "
+                  "the element stiffness kernel.";
+#endif
   const std::string fixture = "HomogeneousHalfspaceSmallNoABCForceSource";
 
   TraceMap explicit_traces;
@@ -179,18 +184,20 @@ TEST(ImplicitNewmark3D, ReproducesExplicitSchemeAtBetaZero) {
   // operator is the diagonal lumped mass, RILUK(0) inverts it exactly, and
   // the solve is exact in one iteration. It is assembled K against
   // matrix-free K in single precision: production applies K matrix-free, the
-  // implicit path applies the probed, assembled K. Same operator
-  // mathematically, but ~2000 contributions per row summed in a different
-  // order, and this build is float (SPECFEM_ENABLE_DOUBLE_PRECISION=OFF).
+  // implicit path applies K assembled from the TensorOperations element
+  // stiffness kernel. Same operator mathematically, but ~2000 contributions
+  // per row summed in a different order, and this build is float
+  // (SPECFEM_ENABLE_DOUBLE_PRECISION=OFF).
   //
   // Measured worst |implicit - explicit| / peak(explicit) on this fixture:
-  // 3.8e-5, on acceleration late in the record (differentiation weights the
-  // high frequencies, so the accumulated summation-order difference shows
-  // there first). The tolerance leaves ~5x headroom, which the CUDA build
-  // needs: a different backend sums each row in a different order again.
+  // 2.7e-5 (serial CPU build), on acceleration late in the record
+  // (differentiation weights the high frequencies, so the accumulated
+  // summation-order difference shows there first). The tolerance leaves ~7x
+  // headroom, which the CUDA build needs: a different backend sums each row
+  // in a different order again.
   //
   // If this ever fails just above the tolerance, that is the floor moving --
-  // do not simply loosen it; check StiffnessAssembler3D first.
+  // do not simply loosen it; check the StiffnessAssembler first.
   constexpr double relative_tolerance = 2e-4;
 
   // Worst |implicit - explicit| / peak(explicit) over every sample, printed

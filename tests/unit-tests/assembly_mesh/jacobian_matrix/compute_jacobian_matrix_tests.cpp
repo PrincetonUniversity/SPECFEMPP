@@ -107,13 +107,13 @@ TEST(ASSEMBLY_MESH, compute_jacobian_matrix) {
         }();
         const int ispec_mesh = compute_mesh.h_compute_to_mesh(ispec);
 
-        EXPECT_NEAR(point_jacobian_matrix.xix, xix_ref.data(ispec_mesh, iz, ix),
-                    xix_ref.tol);
-        EXPECT_NEAR(point_jacobian_matrix.gammax,
+        EXPECT_NEAR(point_jacobian_matrix.xix(),
+                    xix_ref.data(ispec_mesh, iz, ix), xix_ref.tol);
+        EXPECT_NEAR(point_jacobian_matrix.gammax(),
                     gammax_ref.data(ispec_mesh, iz, ix), gammax_ref.tol);
-        EXPECT_NEAR(point_jacobian_matrix.gammaz,
+        EXPECT_NEAR(point_jacobian_matrix.gammaz(),
                     gammaz_ref.data(ispec_mesh, iz, ix), gammaz_ref.tol);
-        EXPECT_NEAR(point_jacobian_matrix.jacobian,
+        EXPECT_NEAR(point_jacobian_matrix.jacobian(),
                     jacobian_ref.data(ispec_mesh, iz, ix), jacobian_ref.tol);
       }
     }
@@ -140,13 +140,13 @@ TEST(ASSEMBLY_MESH, compute_jacobian_matrix) {
 
         for (int i = 0; i < num_elements; ++i) {
           const int ispec_mesh = compute_mesh.h_compute_to_mesh(ispec + i);
-          EXPECT_NEAR(point_jacobian_matrix.xix[i],
+          EXPECT_NEAR(point_jacobian_matrix.xix()[i],
                       xix_ref.data(ispec_mesh, iz, ix), xix_ref.tol);
-          EXPECT_NEAR(point_jacobian_matrix.gammax[i],
+          EXPECT_NEAR(point_jacobian_matrix.gammax()[i],
                       gammax_ref.data(ispec_mesh, iz, ix), gammax_ref.tol);
-          EXPECT_NEAR(point_jacobian_matrix.gammaz[i],
+          EXPECT_NEAR(point_jacobian_matrix.gammaz()[i],
                       gammaz_ref.data(ispec_mesh, iz, ix), gammaz_ref.tol);
-          EXPECT_NEAR(point_jacobian_matrix.jacobian[i],
+          EXPECT_NEAR(point_jacobian_matrix.jacobian()[i],
                       jacobian_ref.data(ispec_mesh, iz, ix), jacobian_ref.tol);
         }
       }

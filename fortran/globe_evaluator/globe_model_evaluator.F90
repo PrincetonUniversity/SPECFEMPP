@@ -8,18 +8,24 @@
 !  tree under fortran/meshfem3d_globe/ is deliberately left untouched
 !  so it stays a clean upstream mirror.
 !
-!  Three production entry points plus one test-only shim:
+!  Production entry points plus one test-only shim:
 !    globe_evaluator_dims            -- compile-time NGLL / N_SLS query
 !    globe_evaluator_init            -- one-time model setup
+!    globe_evaluator_scales          -- planet-dependent SI scales
+!    globe_evaluator_model_config    -- resolved raw catalog codes and flags
+!    globe_evaluator_reference_size  -- reference-profile/spline capacity
+!    globe_evaluator_reference_density -- planet reference density profile
+!    globe_evaluator_ellipticity_spline -- model ellipticity spline
+!    globe_evaluator_radii           -- model-resolved discontinuity radii
 !    globe_evaluator_get_element     -- material for one element's GLL points
 !    globe_evaluator_prem_reference  -- TEST ONLY, see note at its definition
 !
 !  Contracts (see the plan for provenance):
-!    * Coordinates and radii cross the boundary in SI metres. This module
-!      non-dimensionalizes by R_PLANET, because the catalog works in
-!      non-dimensional radius internally (get_model.F90:164-165 compares
-!      against non-dimensional rmin/rmax, and get_model_check_idoubling
-!      re-dimensionalizes at get_model.F90:381).
+!    * Coordinates and radii arrive from the C++ oracle wrapper already
+!      non-dimensionalized. The catalog works in non-dimensional radius
+!      internally (get_model.F90:164-165 compares against non-dimensional
+!      rmin/rmax, and get_model_check_idoubling re-dimensionalizes at
+!      get_model.F90:381).
 !    * Call single-threaded, at setup only. The catalog holds global module
 !      state and a handful of `save` variables.
 !    * GLL point ordering is the mesher's: k outermost, i innermost.
@@ -385,6 +391,228 @@
 !-------------------------------------------------------------------------------------------------
 !
 
+  integer(c_int) function globe_evaluator_radii(r_icb, r_cmb, r_moho, &
+                                                 r_80, r_220, r_400, &
+                                                 r_670, r_771, r_ocean) &
+    bind(C, name="globe_evaluator_radii")
+
+! Returns model-resolved discontinuity radii in SI metres.
+
+  use iso_c_binding, only: c_int, c_double
+  use globe_evaluator_par, only: is_initialized, &
+    GLOBE_EVALUATOR_OK, GLOBE_EVALUATOR_NOT_INITIALIZED
+  use shared_parameters, only: RICB, RCMB, RMOHO, R80, R220, R400, &
+    R670, R771, ROCEAN
+
+  implicit none
+
+  real(c_double), intent(out) :: r_icb, r_cmb, r_moho, r_80, r_220
+  real(c_double), intent(out) :: r_400, r_670, r_771, r_ocean
+
+  if (.not. is_initialized) then
+    r_icb = 0.d0
+    r_cmb = 0.d0
+    r_moho = 0.d0
+    r_80 = 0.d0
+    r_220 = 0.d0
+    r_400 = 0.d0
+    r_670 = 0.d0
+    r_771 = 0.d0
+    r_ocean = 0.d0
+    globe_evaluator_radii = GLOBE_EVALUATOR_NOT_INITIALIZED
+    return
+  endif
+
+  r_icb = RICB
+  r_cmb = RCMB
+  r_moho = RMOHO
+  r_80 = R80
+  r_220 = R220
+  r_400 = R400
+  r_670 = R670
+  r_771 = R771
+  r_ocean = ROCEAN
+  globe_evaluator_radii = GLOBE_EVALUATOR_OK
+
+  end function globe_evaluator_radii
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  integer(c_int) function globe_evaluator_model_config(codes, flags) &
+    bind(C, name="globe_evaluator_model_config")
+
+! Returns the raw model-selection codes and flags derived by the linked catalog.
+! The database stores the same arrays, allowing the C++ boundary to detect skew
+! without interpreting or duplicating any Fortran enum values.
+
+  use iso_c_binding, only: c_int
+  use globe_evaluator_par, only: is_initialized, &
+    GLOBE_EVALUATOR_OK, GLOBE_EVALUATOR_NOT_INITIALIZED
+  use shared_parameters, only: REFERENCE_1D_MODEL, THREE_D_MODEL, &
+    THREE_D_MODEL_IC, REFERENCE_CRUSTAL_MODEL, MODEL_GLL_TYPE, &
+    TRANSVERSE_ISOTROPY, CRUSTAL, ONE_CRUST, CASE_3D, &
+    ANISOTROPIC_3D_MANTLE, ANISOTROPIC_INNER_CORE, &
+    MODEL_3D_MANTLE_PERTUBATIONS, HETEROGEN_3D_MANTLE, &
+    ATTENUATION_3D, ATTENUATION_3D_BERKELEY, ATTENUATION_GLL, &
+    HONOR_1D_SPHERICAL_MOHO, MODEL_GLL, USE_FULL_TISO_MANTLE, &
+    REGIONAL_MOHO_MESH, EMC_MODEL
+
+  implicit none
+
+  integer(c_int), dimension(5), intent(out) :: codes
+  integer(c_int), dimension(16), intent(out) :: flags
+
+  codes(:) = 0_c_int
+  flags(:) = 0_c_int
+  if (.not. is_initialized) then
+    globe_evaluator_model_config = GLOBE_EVALUATOR_NOT_INITIALIZED
+    return
+  endif
+
+  codes = int((/ REFERENCE_1D_MODEL, THREE_D_MODEL, THREE_D_MODEL_IC, &
+                 REFERENCE_CRUSTAL_MODEL, MODEL_GLL_TYPE /), kind=c_int)
+  flags = merge(1_c_int, 0_c_int, &
+                (/ TRANSVERSE_ISOTROPY, CRUSTAL, ONE_CRUST, CASE_3D, &
+                   ANISOTROPIC_3D_MANTLE, ANISOTROPIC_INNER_CORE, &
+                   MODEL_3D_MANTLE_PERTUBATIONS, HETEROGEN_3D_MANTLE, &
+                   ATTENUATION_3D, ATTENUATION_3D_BERKELEY, ATTENUATION_GLL, &
+                   HONOR_1D_SPHERICAL_MOHO, MODEL_GLL, USE_FULL_TISO_MANTLE, &
+                   REGIONAL_MOHO_MESH, EMC_MODEL /))
+  globe_evaluator_model_config = GLOBE_EVALUATOR_OK
+
+  end function globe_evaluator_model_config
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine globe_evaluator_reference_size(size_out) &
+    bind(C, name="globe_evaluator_reference_size")
+
+  use iso_c_binding, only: c_int
+  use constants, only: NR_DENSITY
+
+  implicit none
+
+  integer(c_int), intent(out) :: size_out
+
+  size_out = int(NR_DENSITY, kind=c_int)
+
+  end subroutine globe_evaluator_reference_size
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  integer(c_int) function globe_evaluator_reference_density(r, rho) &
+    bind(C, name="globe_evaluator_reference_density")
+
+! Evaluates the pure 1-D density profile used by gravity and ellipticity. This
+! deliberately bypasses get_model, whose value may contain 3-D perturbations.
+
+  use iso_c_binding, only: c_int, c_double
+  use globe_evaluator_par, only: is_initialized, &
+    GLOBE_EVALUATOR_OK, GLOBE_EVALUATOR_NOT_INITIALIZED, &
+    GLOBE_EVALUATOR_BAD_ARGUMENT
+  use shared_parameters, only: PLANET_TYPE, IPLANET_EARTH, IPLANET_MARS, &
+    IPLANET_MOON
+
+  implicit none
+
+  real(c_double), value, intent(in) :: r
+  real(c_double), intent(out) :: rho
+
+  rho = 0.d0
+  if (.not. is_initialized) then
+    globe_evaluator_reference_density = GLOBE_EVALUATOR_NOT_INITIALIZED
+    return
+  endif
+  if (r < 0.d0 .or. r > 1.d0) then
+    globe_evaluator_reference_density = GLOBE_EVALUATOR_BAD_ARGUMENT
+    return
+  endif
+
+  select case (PLANET_TYPE)
+  case (IPLANET_EARTH)
+    call prem_density(r, rho)
+  case (IPLANET_MARS)
+    call Sohl_density(r, rho)
+  case (IPLANET_MOON)
+    call model_vpremoon_density(r, rho)
+  case default
+    globe_evaluator_reference_density = GLOBE_EVALUATOR_BAD_ARGUMENT
+    return
+  end select
+
+  globe_evaluator_reference_density = GLOBE_EVALUATOR_OK
+
+  end function globe_evaluator_reference_density
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  integer(c_int) function globe_evaluator_ellipticity_spline( &
+      capacity, size_out, radii, values, second_derivatives) &
+    bind(C, name="globe_evaluator_ellipticity_spline")
+
+! Constructs the exact Clairaut/Radau spline used by the mesher. Returning its
+! knots keeps density integration and rotation-rate handling in the catalog.
+
+  use iso_c_binding, only: c_int, c_double
+  use constants, only: NR_DENSITY
+  use globe_evaluator_par, only: is_initialized, &
+    GLOBE_EVALUATOR_OK, GLOBE_EVALUATOR_NOT_INITIALIZED, &
+    GLOBE_EVALUATOR_BAD_ARGUMENT
+
+  implicit none
+
+  integer(c_int), value, intent(in) :: capacity
+  integer(c_int), intent(out) :: size_out
+  real(c_double), dimension(NR_DENSITY), intent(out) :: radii, values
+  real(c_double), dimension(NR_DENSITY), intent(out) :: second_derivatives
+
+  integer :: nspl
+  double precision, dimension(NR_DENSITY) :: eta, eta2
+
+  size_out = 0_c_int
+  ! Validate capacity before touching the NR_DENSITY-sized output arrays so a
+  ! caller with smaller buffers is never written past their end.
+  if (capacity < NR_DENSITY) then
+    globe_evaluator_ellipticity_spline = GLOBE_EVALUATOR_BAD_ARGUMENT
+    return
+  endif
+  radii(:) = 0.d0
+  values(:) = 0.d0
+  second_derivatives(:) = 0.d0
+  if (.not. is_initialized) then
+    globe_evaluator_ellipticity_spline = GLOBE_EVALUATOR_NOT_INITIALIZED
+    return
+  endif
+
+  nspl = 0
+  call make_ellipticity_epsilon_eta(nspl, radii, values, &
+                                    second_derivatives, eta, eta2)
+  size_out = int(nspl, kind=c_int)
+  globe_evaluator_ellipticity_spline = GLOBE_EVALUATOR_OK
+
+  end function globe_evaluator_ellipticity_spline
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
 
   integer(c_int) function globe_evaluator_finalize() &
     bind(C, name="globe_evaluator_finalize")
@@ -434,9 +662,9 @@
 
 
   integer(c_int) function globe_evaluator_get_element(iregion_code, idoubling, &
-                                                   rmin_si, rmax_si, &
+                                                   rmin, rmax, &
                                                    elem_in_crust, elem_in_mantle, &
-                                                   xyz_si, &
+                                                   xyz, &
                                                    rho_out, vpv_out, vph_out, &
                                                    vsv_out, vsh_out, eta_out, &
                                                    vp_iso_out, vs_iso_out, &
@@ -471,7 +699,7 @@
   use constants, only: NGLLX, NGLLY, NGLLZ, N_SLS, CUSTOM_REAL, &
     TINYVAL, IREGION_CRUST_MANTLE, IREGION_INNER_CORE, IREGION_OUTER_CORE
 
-  use shared_parameters, only: R_PLANET, ADD_SCATTERING_PERTURBATIONS, &
+  use shared_parameters, only: ADD_SCATTERING_PERTURBATIONS, &
     RCMB, RICB, R670, RMOHO, RTOPDDOUBLEPRIME, R220, R771, R400, R120, R80, &
     RMIDDLE_CRUST, &
     ANISOTROPIC_3D_MANTLE, ANISOTROPIC_INNER_CORE, ATTENUATION, CRUSTAL, &
@@ -484,10 +712,10 @@
   integer, parameter :: NGLL_CUBE = NGLLX * NGLLY * NGLLZ
 
   integer(c_int), value, intent(in) :: iregion_code, idoubling
-  real(c_double), value, intent(in) :: rmin_si, rmax_si
+  real(c_double), value, intent(in) :: rmin, rmax
   integer(c_int), value, intent(in) :: elem_in_crust, elem_in_mantle
 
-  real(c_double), dimension(3, NGLL_CUBE), intent(in) :: xyz_si
+  real(c_double), dimension(3, NGLL_CUBE), intent(in) :: xyz
 
   real(c_double), dimension(NGLL_CUBE), intent(out) :: rho_out, vpv_out, vph_out
   real(c_double), dimension(NGLL_CUBE), intent(out) :: vsv_out, vsh_out, eta_out
@@ -508,7 +736,6 @@
   double precision :: vpv, vph, vsv, vsh, eta_aniso
   double precision :: r, r_prem, moho, sediment
   double precision :: theta, phi
-  double precision :: rmin, rmax
   logical :: in_crust, in_mantle
 
   integer :: ipoint
@@ -517,11 +744,6 @@
     globe_evaluator_get_element = GLOBE_EVALUATOR_NOT_INITIALIZED
     return
   endif
-
-  ! SI -> non-dimensional. The catalog compares radii against non-dimensional
-  ! rmin/rmax and re-dimensionalizes internally where it needs metres.
-  rmin = rmin_si / R_PLANET
-  rmax = rmax_si / R_PLANET
 
   in_crust = (elem_in_crust /= 0)
   in_mantle = (elem_in_mantle /= 0)
@@ -551,7 +773,7 @@
   tau_s(:) = tau_s_store(:)
 
   ! loops over the element's GLL points in the mesher's order (k,j,i with i
-  ! innermost); the caller packs xyz_si the same way.
+  ! innermost); the caller packs xyz the same way.
   do ipoint = 1, NGLL_CUBE
 
     ! initializes values -- get_model.F90:108-148
@@ -595,10 +817,10 @@
     Qkappa = 0.d0
     tau_e(:) = 0.d0
 
-    ! non-dimensionalized GLL point position
-    xmesh = xyz_si(1, ipoint) / R_PLANET
-    ymesh = xyz_si(2, ipoint) / R_PLANET
-    zmesh = xyz_si(3, ipoint) / R_PLANET
+    ! non-dimensional GLL point position supplied by the C++ oracle boundary
+    xmesh = xyz(1, ipoint)
+    ymesh = xyz(2, ipoint)
+    zmesh = xyz(3, ipoint)
 
     ! gets point's (geocentric) position theta/phi, and exact point radius
     call xyz_2_rthetaphi_dble(xmesh, ymesh, zmesh, r, theta, phi)
@@ -767,7 +989,7 @@
 !
 
 
-  integer(c_int) function globe_evaluator_prem_reference(r_si, idoubling, iregion_code, &
+  integer(c_int) function globe_evaluator_prem_reference(r, idoubling, iregion_code, &
                                                       rho_out, vpv_out, vph_out, &
                                                       vsv_out, vsh_out, eta_out, &
                                                       vp_iso_out, vs_iso_out, &
@@ -790,18 +1012,18 @@
 
   use constants, only: IREGION_OUTER_CORE
 
-  use shared_parameters, only: R_PLANET, TRANSVERSE_ISOTROPY, CRUSTAL, &
+  use shared_parameters, only: TRANSVERSE_ISOTROPY, CRUSTAL, &
     REGIONAL_MESH_CUTOFF
 
   implicit none
 
-  real(c_double), value, intent(in) :: r_si
+  real(c_double), value, intent(in) :: r
   integer(c_int), value, intent(in) :: idoubling, iregion_code
   real(c_double), intent(out) :: rho_out, vpv_out, vph_out, vsv_out, vsh_out, eta_out
   real(c_double), intent(out) :: vp_iso_out, vs_iso_out, qkappa_out, qmu_out
 
   ! local parameters
-  double precision :: x, rho, drhodr, vp, vs, vpv, vph, vsv, vsh, eta_aniso
+  double precision :: rho, drhodr, vp, vs, vpv, vph, vsv, vsh, eta_aniso
   double precision :: Qkappa, Qmu
   logical :: check_doubling_flag
 
@@ -809,8 +1031,6 @@
     globe_evaluator_prem_reference = GLOBE_EVALUATOR_NOT_INITIALIZED
     return
   endif
-
-  x = r_si / R_PLANET
 
   ! mirrors meshfem3D_models_get1D_val:411-418
   check_doubling_flag = .not. REGIONAL_MESH_CUTOFF
@@ -831,10 +1051,10 @@
   ! on the TRANSVERSE_ISOTROPY flag, not on radius
   ! (meshfem3D_models.F90:439-486)
   if (TRANSVERSE_ISOTROPY) then
-    call model_prem_aniso(x, rho, vpv, vph, vsv, vsh, eta_aniso, Qkappa, Qmu, &
+    call model_prem_aniso(r, rho, vpv, vph, vsv, vsh, eta_aniso, Qkappa, Qmu, &
                           int(idoubling), CRUSTAL, check_doubling_flag)
   else
-    call model_prem_iso(x, rho, drhodr, vp, vs, Qkappa, Qmu, &
+    call model_prem_iso(r, rho, drhodr, vp, vs, Qkappa, Qmu, &
                         int(idoubling), CRUSTAL, check_doubling_flag)
     vpv = vp
     vph = vp

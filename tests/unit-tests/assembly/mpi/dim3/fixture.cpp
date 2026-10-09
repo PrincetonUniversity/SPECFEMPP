@@ -7,8 +7,7 @@
 
 namespace specfem::test_configuration {
 
-AssemblyMPI3D::AssemblyMPI3D(
-    const specfem::mesh::mesh<specfem::element::dimension_tag::dim3> &mesh)
+AssemblyMPI3D::AssemblyMPI3D(const specfem::mesh::cartesian3d_mesh &mesh)
     : assembly_mesh([&mesh]() {
         const auto quadratures = []() {
           specfem::quadrature::gll::gll gll{};

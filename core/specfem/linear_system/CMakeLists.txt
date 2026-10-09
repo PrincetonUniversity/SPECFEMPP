@@ -19,6 +19,9 @@ target_link_libraries(
         $<$<BOOL:${SPECFEM_ENABLE_TRILINOS}>:Tpetra::all_libs>
         $<$<BOOL:${SPECFEM_ENABLE_TRILINOS}>:Belos::all_libs>
         $<$<BOOL:${SPECFEM_ENABLE_TRILINOS}>:Ifpack2::all_libs>
+        # Header-only interface over the TensorOperations checkout (sum-factored
+        # element stiffness kernel); orthogonal to the Trilinos guard above.
+        $<$<BOOL:${SPECFEM_ENABLE_TENSOROPS}>:specfem::tensorops>
 )
 
 target_compile_definitions(

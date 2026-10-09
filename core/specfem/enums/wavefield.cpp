@@ -13,7 +13,7 @@ const std::string specfem::enums::to_string(
     component_string = "velocity";
     break;
   case specfem::enums::wavefield::acceleration:
-    component_string = "elastic_psv_t";
+    component_string = "acceleration";
     break;
   case specfem::enums::wavefield::pressure:
     component_string = "pressure";

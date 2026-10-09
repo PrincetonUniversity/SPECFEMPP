@@ -62,7 +62,7 @@
   ! per-element context for the thin SPECFEM++ database
   use regions_mesh_par2, only: &
     xelm_ref_store,yelm_ref_store,zelm_ref_store, &
-    rmin_store,rmax_store,elem_in_crust_store
+    rmin_store,rmax_store,elem_in_crust_store,elem_in_mantle_store
 
   implicit none
 
@@ -215,6 +215,7 @@
     rmin_store(ispec) = rmin
     rmax_store(ispec) = rmax
     elem_in_crust_store(ispec) = elem_in_crust
+    elem_in_mantle_store(ispec) = elem_in_mantle
 
     if (SPECFEMPP_HAS_REFERENCE_GEOMETRY()) then
       xelm_ref_store(:,ispec) = xelm(:)

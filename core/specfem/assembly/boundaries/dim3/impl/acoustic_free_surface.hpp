@@ -59,12 +59,49 @@ public:
    *        acoustic_free_surface index (-1 if element has no free surface)
    * @param boundary_tag Per-element boundary tag containers to update
    */
+  template <specfem::simulation::model ModelTag>
   acoustic_free_surface(
       const int nspec, const int ngllz, const int nglly, const int ngllx,
-      const specfem::mesh::mesh<dimension_tag> &mesh,
+      const specfem::mesh::mesh<ModelTag> &mesh,
       const specfem::assembly::mesh<dimension_tag> &mesh_assembly,
       const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,
       std::vector<specfem::element::boundary_tag_container> &boundary_tag);
+
+  // ── Boundary tag accessors ───────────────────────────────────────────────
+
+  /**
+   * @brief Boundary tag container at a quadrature point of an acoustic free
+   * surface element (device)
+   *
+   * @param ispec Local acoustic free surface element index (see
+   *        specfem::assembly::boundaries::acoustic_free_surface_index_mapping)
+   * @param iz GLL point index in z direction
+   * @param iy GLL point index in y direction
+   * @param ix GLL point index in x direction
+   * @return Boundary tag container at the quadrature point
+   */
+  KOKKOS_FORCEINLINE_FUNCTION specfem::element::boundary_tag_container
+  get_boundary_tag_on_device(const int ispec, const int iz, const int iy,
+                             const int ix) const {
+    return quadrature_point_boundary_tag(ispec, iz, iy, ix);
+  }
+
+  /**
+   * @brief Boundary tag container at a quadrature point of an acoustic free
+   * surface element (host)
+   *
+   * @param ispec Local acoustic free surface element index (see
+   *        specfem::assembly::boundaries::h_acoustic_free_surface_index_mapping)
+   * @param iz GLL point index in z direction
+   * @param iy GLL point index in y direction
+   * @param ix GLL point index in x direction
+   * @return Boundary tag container at the quadrature point
+   */
+  inline specfem::element::boundary_tag_container
+  get_boundary_tag_on_host(const int ispec, const int iz, const int iy,
+                           const int ix) const {
+    return h_quadrature_point_boundary_tag(ispec, iz, iy, ix);
+  }
 
   // ── Device load methods ──────────────────────────────────────────────────
 

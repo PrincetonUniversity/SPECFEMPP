@@ -7,6 +7,7 @@
 #include "specfem/assembly/properties.hpp"
 #include "specfem/element.hpp"
 #include "specfem/setup.hpp"
+#include <map>
 
 namespace specfem::assembly {
 
@@ -56,7 +57,11 @@ template <specfem::element::dimension_tag DimensionTag> struct Info {
 
   type_real suggested_time_step;    ///< Time step satisfying CFL condition
   type_real largest_minimum_period; ///< Maximum of minimum resolvable periods
-                                    ///< across elements
+
+  /** Global element count per globe region; empty unless the element types
+   *  carry globe element context. */
+  std::map<specfem::element::region_tag, int> elements_per_region;
+  ///< across elements
 
   /**
    * @brief Generate formatted string representation of mesh statistics.

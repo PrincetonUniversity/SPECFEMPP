@@ -1,0 +1,45 @@
+dimension: 3
+material_type: cosserat
+backend: fortran # defaults to fortran. either fortran, python, or auto (auto will choose fortran if available, otherwise python)
+
+material_params:
+  rho: 2300
+  lam: 7.682e9
+  mu: 5.175e9
+  nu: 30
+  J: 2300
+  lam_c: 6e9
+  mu_c: 2e9
+  nu_c: 0
+
+sources:
+  - type: Ricker
+    location: [0.0, 0.0, 0.0]
+    f0: 0.1
+    factor: 1
+    tshift: 0.0
+    f: [1.0e8, 2.0e8, 4.0e7]
+    fc: [2.0e11, 5.0e11, 1.0e12]
+
+simulation_params:
+  dt: 0.1
+  N: 225
+  refinement_factor: 1
+  extension_factor: 128
+
+receivers:
+  network: "DB" # optional, defaults to AA
+  receiver_list:
+  - location: [0, 7500, 0]
+    name: "X55" # optional, defaults to S0001, S0002, etc.
+    seismogram_type: # defaults to both displacement and rotation for Cosserat, only displacement for elastic
+      - displacement
+      - rotation
+  - location: [7500, 0, 0]
+    name: "X60"
+  - location: [0, 0, 7500]
+    name: "X65"
+  - location: [7500, 7500, 7500]
+    name: "X70"
+  - location: [-7500, -7500, -7500]
+    name: "X75"

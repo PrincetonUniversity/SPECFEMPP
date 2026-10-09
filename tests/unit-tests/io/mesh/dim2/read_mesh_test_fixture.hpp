@@ -12,7 +12,7 @@ namespace specfem::test_configuration {
 struct Read2DMesh {
   constexpr static specfem::element::dimension_tag dimension =
       specfem::element::dimension_tag::dim2;
-  specfem::mesh::mesh<dimension> mesh;
+  specfem::mesh::cartesian2d_mesh mesh;
 
   Read2DMesh() = default;
 

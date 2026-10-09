@@ -3,13 +3,15 @@
 
 Implicit Newmark solver (issue #1984): one Belos GMRES solve per time step
 on an assembled operator, with :math:`K`, :math:`C`, and :math:`M` assembled
-by :ref:`specfem::linear_system <linear_system_api>` (stiffness probe, Stacey
-velocity-path probe, and the :math:`\Delta t = 0` lumped-mass path).
-:math:`A` is constant for a fixed time step, so it is assembled and
-preconditioned once (Ifpack2 RILUK with zero fill by default, applied as a
-right preconditioner); each step is a single warm-started GMRES solve. MueLu
-(algebraic multigrid) stays deferred until the float-only cluster Trilinos
-installs are revisited.
+by :ref:`specfem::linear_system <linear_system_api>` (the sum-factored
+TensorOperations element stiffness kernel, which requires
+``SPECFEM_ENABLE_TENSOROPS=ON`` -- without it the solver throws at
+construction -- plus the Stacey velocity-path probe and the
+:math:`\Delta t = 0` lumped-mass path). :math:`A` is constant for a fixed
+time step, so it is assembled and preconditioned once (Ifpack2 RILUK with
+zero fill by default, applied as a right preconditioner); each step is a
+single warm-started GMRES solve. MueLu (algebraic multigrid) stays deferred
+until the float-only cluster Trilinos installs are revisited.
 
 Two algebraic forms of the update are available, selected by
 :cpp:enum:`specfem::solver::NewmarkForm`:
