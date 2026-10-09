@@ -25,6 +25,8 @@
  * <b>2D @ref specfem::sources::tensor_source implementations</b>
  * - @ref specfem::sources::moment_tensor< specfem::element::dimension_tag::dim2
  * >
+ * - @ref specfem::sources::spin_tensor< specfem::element::dimension_tag::dim2
+ * >
  *
  * See also
  * - @ref specfem::sources::source
@@ -58,6 +60,17 @@ namespace specfem::sources {
  * @tparam DimensionTag The dimension tag (`dim2` or `dim3`)
  */
 template <specfem::element::dimension_tag DimensionTag> class moment_tensor;
+
+/**
+ * @brief Spin tensor source
+ *
+ * This class represents a spin tensor source in the specified dimension: a
+ * moment tensor that drives the micro-rotation degrees of freedom of Cosserat
+ * media instead of the displacement ones.
+ *
+ * @tparam DimensionTag The dimension tag (`dim2` or `dim3`)
+ */
+template <specfem::element::dimension_tag DimensionTag> class spin_tensor;
 
 /**
  * @brief Force source
@@ -100,6 +113,7 @@ template <specfem::element::dimension_tag DimensionTag> class external;
 // dim2 specializations
 #include "source/dim2/source.tpp"
 #include "source/dim2/tensor_source/moment_tensor_source.hpp"
+#include "source/dim2/tensor_source/spin_tensor_source.hpp"
 #include "source/dim2/vector_source/adjoint_source.hpp"
 #include "source/dim2/vector_source/cosserat_force_source.hpp"
 #include "source/dim2/vector_source/external.hpp"
@@ -108,6 +122,7 @@ template <specfem::element::dimension_tag DimensionTag> class external;
 // dim3 specializations
 #include "source/dim3/source.tpp"
 #include "source/dim3/tensor_source/moment_tensor_source.hpp"
+#include "source/dim3/tensor_source/spin_tensor_source.hpp"
 #include "source/dim3/vector_source/adjoint_source.hpp"
 #include "source/dim3/vector_source/cosserat_force_source.hpp"
 #include "source/dim3/vector_source/force_source.hpp"
