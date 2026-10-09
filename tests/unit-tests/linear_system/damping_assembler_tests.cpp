@@ -157,8 +157,7 @@ TEST(DampingAssemblerScope3D, WithStaceyScopeAcceptsStaceyMesh) {
   // StiffnessAssemblerScope3D.RejectsStaceyBoundaries -- while the opt-in
   // admits it because the displacement probe runs at zero velocity.
   EXPECT_NO_THROW(StiffnessAssemblerType assembler(
-      *assembly, fe, StiffnessAssemblerType::default_batch_size,
-      specfem::linear_system::StiffnessScope::with_stacey));
+      *assembly, fe, specfem::linear_system::StiffnessScope::with_stacey));
 }
 
 TEST_F(DampingAssembler3D, BlockDiagonalWithEmptyInteriorRows) {
