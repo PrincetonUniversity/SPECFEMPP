@@ -164,7 +164,7 @@ TEST(SurfaceElevation, GeographicResolvesViaUtmFlatFallback) {
   const specfem::coordinate_systems::utm_projection_config cfg{ 31, false };
 
   // Expected easting/northing from the same forward projection.
-  const auto cart = specfem::coordinate_systems::transform<
+  const auto cart = specfem::coordinate_systems::to<
       specfem::coordinate_systems::cartesian_coordinates<
           surface_elevation_test::dimension>>(
       specfem::coordinate_systems::geographic_coordinates{ lon, lat, depth },
@@ -193,7 +193,7 @@ TEST(SurfaceElevation, GeographicResolvesAgainstTopography) {
   const double surface_z = 200.0;
   const specfem::coordinate_systems::utm_projection_config cfg{ 31, false };
 
-  const auto cart = specfem::coordinate_systems::transform<
+  const auto cart = specfem::coordinate_systems::to<
       specfem::coordinate_systems::cartesian_coordinates<
           surface_elevation_test::dimension>>(
       specfem::coordinate_systems::geographic_coordinates{ lon, lat, depth },

@@ -7,7 +7,7 @@ using specfem::coordinate_systems::cartesian_coordinates;
 using specfem::coordinate_systems::geocentric_coordinates;
 using specfem::coordinate_systems::geocentric_projection_config;
 using specfem::coordinate_systems::geographic_coordinates;
-using specfem::coordinate_systems::transform;
+using specfem::coordinate_systems::to;
 
 namespace {
 
@@ -18,10 +18,10 @@ constexpr double pi = std::numbers::pi;
 constexpr double r_planet = 6371000.0; // m (arbitrary for the chain tests)
 
 cartesian3d to_cartesian(const geocentric_coordinates &g) {
-  return transform<cartesian3d>(g);
+  return to<cartesian3d>(g);
 }
 geocentric_coordinates to_geocentric(const cartesian3d &c) {
-  return transform<geocentric_coordinates>(c);
+  return to<geocentric_coordinates>(c);
 }
 
 // Smallest absolute angular difference in degrees, accounting for the 360 wrap
@@ -128,13 +128,13 @@ TEST(CoordinateSystemsGeocentric, GeographicChainRoundTrip) {
   for (const auto &k : cases) {
     const geographic_coordinates input(k.lon, k.lat, k.depth);
 
-    const auto geocentric = transform<geocentric_coordinates>(input, config);
+    const auto geocentric = to<geocentric_coordinates>(input, config);
 
     // Defining property of the spherical case.
     EXPECT_NEAR(geocentric.r, r_planet - k.depth, 1.0)
         << "radius != r_planet - depth for lat=" << k.lat;
 
-    const auto back = transform<geographic_coordinates>(geocentric, config);
+    const auto back = to<geographic_coordinates>(geocentric, config);
 
     // Tolerance accommodates globe reduce()'s ~1e-7 rad axis nudge (~6e-6 deg)
     // at points on the poles / prime meridian.

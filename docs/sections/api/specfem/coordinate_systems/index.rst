@@ -20,7 +20,7 @@ Coordinate types
 Transforms
 ----------
 
-*  :doc:`transform`: Generic ``transform<Target>(source[, config])`` interface for
+*  :doc:`to`: Generic ``to<Target>(source[, config])`` interface for
    converting between coordinate systems. Resolution to mesh-space global
    coordinates (which needs the mesh and projection configuration) is handled by
    ``specfem::assembly::to`` in the assembly layer.
@@ -36,5 +36,5 @@ Projections
     geographic
     cartesian
     geocentric
-    transform
+    to
     utm

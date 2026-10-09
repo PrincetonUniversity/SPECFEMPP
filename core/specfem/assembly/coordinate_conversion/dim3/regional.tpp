@@ -3,7 +3,7 @@
 #include "specfem/assembly/coordinate_conversion.hpp"
 #include "specfem/coordinate_systems/cartesian.hpp"
 #include "specfem/coordinate_systems/geographic.hpp"
-#include "specfem/coordinate_systems/transform.hpp"
+#include "specfem/coordinate_systems/to.hpp"
 #include "specfem/coordinate_systems/utm_projection.hpp"
 
 #include <stdexcept>
@@ -37,7 +37,7 @@ specfem::assembly::coordinate_conversion_impl::convert_regional(
     if (const auto *geographic =
             as<specfem::coordinate_systems::geographic_coordinates>(input))
       return resolve_cartesian(
-          specfem::coordinate_systems::transform<cartesian>(*geographic, utm),
+          specfem::coordinate_systems::to<cartesian>(*geographic, utm),
           mesh, surface);
     throw std::runtime_error("specfem::assembly::to: unknown coordinate type");
 
@@ -50,7 +50,7 @@ specfem::assembly::coordinate_conversion_impl::convert_regional(
           "specfem::assembly::to<geographic>: mesh has no projection");
 
     if (const auto *point = as<cartesian>(input))
-      return specfem::coordinate_systems::transform<
+      return specfem::coordinate_systems::to<
           specfem::coordinate_systems::geographic_coordinates>(*point, utm);
     throw std::runtime_error(
         "specfem::assembly::to<geographic>: expected a Cartesian input");

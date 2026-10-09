@@ -35,10 +35,9 @@ constexpr double ep2 = e2 / (1.0 - e2); ///< Second eccentricity squared
 template <>
 specfem::coordinate_systems::cartesian_coordinates<
     specfem::element::dimension_tag::dim3>
-specfem::coordinate_systems::transform<
+specfem::coordinate_systems::to<
     specfem::coordinate_systems::cartesian_coordinates<
-        specfem::element::dimension_tag::dim3>,
-    specfem::coordinate_systems::geographic_coordinates>(
+        specfem::element::dimension_tag::dim3>>(
     const specfem::coordinate_systems::geographic_coordinates &geo,
     const specfem::coordinate_systems::utm_projection_config &config) {
 
@@ -134,10 +133,8 @@ specfem::coordinate_systems::transform<
 
 template <>
 specfem::coordinate_systems::geographic_coordinates
-specfem::coordinate_systems::transform<
-    specfem::coordinate_systems::geographic_coordinates,
-    specfem::coordinate_systems::cartesian_coordinates<
-        specfem::element::dimension_tag::dim3>>(
+specfem::coordinate_systems::to<
+    specfem::coordinate_systems::geographic_coordinates>(
     const specfem::coordinate_systems::cartesian_coordinates<
         specfem::element::dimension_tag::dim3> &cart,
     const specfem::coordinate_systems::utm_projection_config &config) {

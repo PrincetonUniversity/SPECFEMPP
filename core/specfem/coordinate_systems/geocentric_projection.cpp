@@ -69,10 +69,9 @@ void specfem::coordinate_systems::geocentric_impl::reduce(double &theta,
 template <>
 specfem::coordinate_systems::cartesian_coordinates<
     specfem::element::dimension_tag::dim3>
-specfem::coordinate_systems::transform<
+specfem::coordinate_systems::to<
     specfem::coordinate_systems::cartesian_coordinates<
-        specfem::element::dimension_tag::dim3>,
-    specfem::coordinate_systems::geocentric_coordinates>(
+        specfem::element::dimension_tag::dim3>>(
     const specfem::coordinate_systems::geocentric_coordinates &geo) {
 
   const double sin_theta = std::sin(geo.theta);
@@ -86,10 +85,8 @@ specfem::coordinate_systems::transform<
 
 template <>
 specfem::coordinate_systems::geocentric_coordinates
-specfem::coordinate_systems::transform<
-    specfem::coordinate_systems::geocentric_coordinates,
-    specfem::coordinate_systems::cartesian_coordinates<
-        specfem::element::dimension_tag::dim3>>(
+specfem::coordinate_systems::to<
+    specfem::coordinate_systems::geocentric_coordinates>(
     const specfem::coordinate_systems::cartesian_coordinates<
         specfem::element::dimension_tag::dim3> &cart) {
 
@@ -110,9 +107,8 @@ specfem::coordinate_systems::transform<
 
 template <>
 specfem::coordinate_systems::geocentric_coordinates
-specfem::coordinate_systems::transform<
-    specfem::coordinate_systems::geocentric_coordinates,
-    specfem::coordinate_systems::geographic_coordinates>(
+specfem::coordinate_systems::to<
+    specfem::coordinate_systems::geocentric_coordinates>(
     const specfem::coordinate_systems::geographic_coordinates &geographic,
     const specfem::coordinate_systems::geocentric_projection_config &config) {
 
@@ -134,9 +130,8 @@ specfem::coordinate_systems::transform<
 
 template <>
 specfem::coordinate_systems::geographic_coordinates
-specfem::coordinate_systems::transform<
-    specfem::coordinate_systems::geographic_coordinates,
-    specfem::coordinate_systems::geocentric_coordinates>(
+specfem::coordinate_systems::to<
+    specfem::coordinate_systems::geographic_coordinates>(
     const specfem::coordinate_systems::geocentric_coordinates &geocentric,
     const specfem::coordinate_systems::geocentric_projection_config &config) {
 

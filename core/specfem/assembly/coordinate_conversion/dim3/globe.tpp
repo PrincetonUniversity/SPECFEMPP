@@ -5,7 +5,7 @@
 #include "specfem/coordinate_systems/geocentric.hpp"
 #include "specfem/coordinate_systems/geocentric_projection.hpp"
 #include "specfem/coordinate_systems/geographic.hpp"
-#include "specfem/coordinate_systems/transform.hpp"
+#include "specfem/coordinate_systems/to.hpp"
 
 #include <stdexcept>
 #include <type_traits>
@@ -47,19 +47,19 @@ specfem::assembly::coordinate_conversion_impl::convert_globe(
 
     if (const auto *geographic =
             as<specfem::coordinate_systems::geographic_coordinates>(input)) {
-      const auto geocentric = specfem::coordinate_systems::transform<
+      const auto geocentric = specfem::coordinate_systems::to<
           specfem::coordinate_systems::geocentric_coordinates>(
           *geographic,
           specfem::coordinate_systems::geocentric_projection_config{ r_planet });
       return resolve_cartesian(
-          specfem::coordinate_systems::transform<cartesian>(geocentric), mesh,
+          specfem::coordinate_systems::to<cartesian>(geocentric), mesh,
           surface);
     }
 
     if (const auto *geocentric =
             as<specfem::coordinate_systems::geocentric_coordinates>(input))
       return resolve_cartesian(
-          specfem::coordinate_systems::transform<cartesian>(*geocentric), mesh,
+          specfem::coordinate_systems::to<cartesian>(*geocentric), mesh,
           surface);
     throw std::runtime_error("specfem::assembly::to: unknown coordinate type");
 
@@ -70,7 +70,7 @@ specfem::assembly::coordinate_conversion_impl::convert_globe(
     guard_unsupported();
 
     if (const auto *point = as<cartesian>(input))
-      return specfem::coordinate_systems::transform<
+      return specfem::coordinate_systems::to<
           specfem::coordinate_systems::geocentric_coordinates>(*point);
     throw std::runtime_error(
         "specfem::assembly::to<geocentric>: expected a Cartesian input");
@@ -84,10 +84,10 @@ specfem::assembly::coordinate_conversion_impl::convert_globe(
 
     if (const auto *point = as<cartesian>(input)) {
 
-      const auto geocentric = specfem::coordinate_systems::transform<
+      const auto geocentric = specfem::coordinate_systems::to<
           specfem::coordinate_systems::geocentric_coordinates>(*point);
 
-      return specfem::coordinate_systems::transform<
+      return specfem::coordinate_systems::to<
           specfem::coordinate_systems::geographic_coordinates>(
           geocentric,
           specfem::coordinate_systems::geocentric_projection_config{

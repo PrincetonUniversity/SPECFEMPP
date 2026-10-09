@@ -3,7 +3,7 @@
 #include "specfem/coordinate_systems/cartesian.hpp"
 #include "specfem/coordinate_systems/geocentric.hpp"
 #include "specfem/coordinate_systems/geographic.hpp"
-#include "specfem/coordinate_systems/transform.hpp"
+#include "specfem/coordinate_systems/to.hpp"
 
 namespace specfem {
 namespace coordinate_systems {
@@ -25,22 +25,21 @@ struct geocentric_projection_config {
 };
 
 /**
- * @brief Transform coordinates through the geographic <-> geocentric
+ * @brief Convert coordinates through the geographic <-> geocentric
  * projection.
  *
  * The config is an ordinary overloaded parameter (not a template parameter);
  * explicit specializations below provide the geographic <-> geocentric pair.
- * (The geocentric <-> Cartesian pair is config-free; see transform.hpp.)
+ * (The geocentric <-> Cartesian pair is config-free; see to.hpp.)
  *
  * @tparam Target Target coordinate type
  * @tparam Source Source coordinate type (deduced)
  * @param source Input coordinates
  * @param config Reference surface radius
- * @return Transformed coordinates of type Target
+ * @return Converted coordinates of type Target
  */
 template <typename Target, typename Source>
-Target transform(const Source &source,
-                 const geocentric_projection_config &config);
+Target to(const Source &source, const geocentric_projection_config &config);
 
 } // namespace coordinate_systems
 } // namespace specfem
@@ -58,10 +57,9 @@ Target transform(const Source &source,
 template <>
 specfem::coordinate_systems::cartesian_coordinates<
     specfem::element::dimension_tag::dim3>
-specfem::coordinate_systems::transform<
+specfem::coordinate_systems::to<
     specfem::coordinate_systems::cartesian_coordinates<
-        specfem::element::dimension_tag::dim3>,
-    specfem::coordinate_systems::geocentric_coordinates>(
+        specfem::element::dimension_tag::dim3>>(
     const specfem::coordinate_systems::geocentric_coordinates &geo);
 
 /**
@@ -78,10 +76,8 @@ specfem::coordinate_systems::transform<
  */
 template <>
 specfem::coordinate_systems::geocentric_coordinates
-specfem::coordinate_systems::transform<
-    specfem::coordinate_systems::geocentric_coordinates,
-    specfem::coordinate_systems::cartesian_coordinates<
-        specfem::element::dimension_tag::dim3>>(
+specfem::coordinate_systems::to<
+    specfem::coordinate_systems::geocentric_coordinates>(
     const specfem::coordinate_systems::cartesian_coordinates<
         specfem::element::dimension_tag::dim3> &cart);
 
@@ -102,9 +98,8 @@ specfem::coordinate_systems::transform<
  */
 template <>
 specfem::coordinate_systems::geocentric_coordinates
-specfem::coordinate_systems::transform<
-    specfem::coordinate_systems::geocentric_coordinates,
-    specfem::coordinate_systems::geographic_coordinates>(
+specfem::coordinate_systems::to<
+    specfem::coordinate_systems::geocentric_coordinates>(
     const specfem::coordinate_systems::geographic_coordinates &geo,
     const specfem::coordinate_systems::geocentric_projection_config &config);
 
@@ -121,8 +116,7 @@ specfem::coordinate_systems::transform<
  */
 template <>
 specfem::coordinate_systems::geographic_coordinates
-specfem::coordinate_systems::transform<
-    specfem::coordinate_systems::geographic_coordinates,
-    specfem::coordinate_systems::geocentric_coordinates>(
+specfem::coordinate_systems::to<
+    specfem::coordinate_systems::geographic_coordinates>(
     const specfem::coordinate_systems::geocentric_coordinates &geo,
     const specfem::coordinate_systems::geocentric_projection_config &config);
