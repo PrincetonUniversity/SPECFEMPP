@@ -11,13 +11,13 @@ namespace specfem::assembly {
 /** @brief Numerical condition record for one invalid 3-D element mapping. */
 struct small_jacobian_diagnostic {
   int element_index = -1; ///< Compute-domain element index.
-  int ix = -1;            ///< GLL x index of the minimum determinant.
-  int iy = -1;            ///< GLL y index of the minimum determinant.
-  int iz = -1;            ///< GLL z index of the minimum determinant.
-  type_real jacobian = 0; ///< Minimum determinant in the element.
+  int ix = -1;            ///< GLL x index of the reported determinant.
+  int iy = -1;            ///< GLL y index of the reported determinant.
+  int iz = -1;            ///< GLL z index of the reported determinant.
+  type_real jacobian = 0; ///< First nonfinite determinant, otherwise minimum.
   type_real scale = 0;    ///< Mean absolute determinant in the element.
 
-  /** @brief Minimum determinant normalized by the element-local scale. */
+  /** @brief Reported determinant normalized by the element-local scale. */
   type_real relative_jacobian() const {
     return scale > 0 ? jacobian / scale : 0;
   }

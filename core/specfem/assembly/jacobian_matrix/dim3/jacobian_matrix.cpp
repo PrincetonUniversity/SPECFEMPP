@@ -119,7 +119,7 @@ specfem::assembly::small_jacobian_result specfem::assembly::jacobian_matrix<
             continue;
           }
           absolute_sum += std::abs(value);
-          if (value < minimum) {
+          if (finite && value < minimum) {
             minimum = value;
             minimum_ix = ix;
             minimum_iy = iy;

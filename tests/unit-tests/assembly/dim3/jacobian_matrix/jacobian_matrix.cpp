@@ -39,6 +39,7 @@
 #include <Kokkos_Core.hpp>
 #include <array>
 #include <cmath>
+#include <limits>
 #include <numbers>
 #include <stdexcept>
 #include <string>
@@ -493,6 +494,33 @@ TEST(JacobianMatrixConditioning, UsesAnElementLocalScale) {
   EXPECT_LT(result.diagnostics.front().relative_jacobian(), 1.0e-6);
 }
 
+TEST(JacobianMatrixConditioning, PreservesFirstNonfiniteLocation) {
+  for (const type_real invalid :
+       { std::numeric_limits<type_real>::infinity(),
+         -std::numeric_limits<type_real>::infinity(),
+         std::numeric_limits<type_real>::quiet_NaN() }) {
+    specfem::assembly::jacobian_matrix<specfem::element::dimension_tag::dim3>
+        jacobian(1, 2, 2, 2);
+    for (int iz = 0; iz < 2; ++iz) {
+      for (int iy = 0; iy < 2; ++iy) {
+        for (int ix = 0; ix < 2; ++ix) {
+          jacobian.h_jacobian(0, iz, iy, ix) = 1;
+        }
+      }
+    }
+    jacobian.h_jacobian(0, 0, 0, 1) = invalid;
+    jacobian.h_jacobian(0, 1, 1, 1) = 0.5;
+    const auto result = jacobian.check_small_jacobian();
+    ASSERT_TRUE(result.found);
+    ASSERT_EQ(result.diagnostics.size(), 1);
+    const auto &diagnostic = result.diagnostics.front();
+    EXPECT_FALSE(std::isfinite(diagnostic.jacobian));
+    EXPECT_EQ(diagnostic.ix, 1);
+    EXPECT_EQ(diagnostic.iy, 0);
+    EXPECT_EQ(diagnostic.iz, 0);
+  }
+}
+
 namespace globe_jacobian_test_impl {
 
 constexpr auto dimension = specfem::element::dimension_tag::dim3;
@@ -599,10 +627,42 @@ TEST(GlobeJacobianMatrix, ValidatesCurvedAndCentralCubeElements) {
     const std::string message = error.what();
     EXPECT_NE(message.find("element=0"), std::string::npos);
     EXPECT_NE(message.find("region="), std::string::npos);
-    EXPECT_NE(message.find("radius="), std::string::npos);
+    EXPECT_NE(message.find("radius_km="), std::string::npos);
     EXPECT_NE(message.find("idoubling="), std::string::npos);
     EXPECT_NE(message.find("jacobian="), std::string::npos);
-    EXPECT_NE(message.find("Central-cube mapping check failed"),
-              std::string::npos);
+    EXPECT_NE(message.find("central_cube=true"), std::string::npos);
+  }
+}
+
+TEST(GlobeJacobianMatrix, ReportsFailingPointLocation) {
+  auto fixture = globe_jacobian_test_impl::make_assembly();
+  auto &assembly = fixture.assembly;
+  assembly.jacobian_matrix.h_jacobian(0, 0, 0, 0) =
+      std::numeric_limits<type_real>::infinity();
+  for (int location = 0; location < 3; ++location) {
+    // Equator at 90 degrees east, north pole, and the origin.
+    assembly.mesh.h_coord(0, 0, 0, 0, 0) = 0;
+    assembly.mesh.h_coord(0, 0, 0, 0, 1) = location == 0 ? 1000 : 0;
+    assembly.mesh.h_coord(0, 0, 0, 0, 2) = location == 1 ? 1000 : 0;
+    try {
+      assembly.check_jacobian_matrix();
+      FAIL() << "nonfinite determinant must fail validation";
+    } catch (const std::runtime_error &error) {
+      const std::string message = error.what();
+      EXPECT_NE(message.find("reason=nonfinite_determinant"),
+                std::string::npos);
+      EXPECT_NE(message.find("gll=(0,0,0)"), std::string::npos);
+      if (location == 0) {
+        EXPECT_NE(message.find("radius_km=1 geocentric_lat_deg=0 lon_deg=90"),
+                  std::string::npos);
+      } else if (location == 1) {
+        EXPECT_NE(message.find("geocentric_lat_deg=90 lon_deg=undefined"),
+                  std::string::npos);
+      } else {
+        EXPECT_NE(message.find("radius_km=0 geocentric_lat_deg=undefined "
+                               "lon_deg=undefined"),
+                  std::string::npos);
+      }
+    }
   }
 }
