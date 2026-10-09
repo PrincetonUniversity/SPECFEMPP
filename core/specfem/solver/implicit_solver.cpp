@@ -398,7 +398,6 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::run() {
     } else {
       step_displacement_form(istep);
     }
-
     bool steady = false;
     if (check_steady_state) {
       const type_real velocity_increment =
