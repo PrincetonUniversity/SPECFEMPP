@@ -900,3 +900,14 @@ specfem_add_test(seismogram_sampling_tests
             specfem_environment
             gtest_main
 )
+
+specfem_add_test(injection_math_tests
+  LABELS unit injection
+  SOURCES injection/runner.cpp
+          injection/complex_matrix_tests.cpp
+          injection/fft_tests.cpp
+          injection/cubic_bspline_tests.cpp
+  LIBRARIES specfem::utilities
+            Kokkos::kokkos
+            gtest_main
+)
