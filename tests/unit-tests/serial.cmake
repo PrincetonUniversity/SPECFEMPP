@@ -952,3 +952,31 @@ specfem_add_test(injection_driver_tests
           injection/driver_tests.cpp
   LIBRARIES specfem::injection specfem::utilities Kokkos::kokkos gtest_main
 )
+
+specfem_add_test(injection_depth_groups_tests
+  LABELS unit
+  SOURCES injection/runner.cpp
+          injection/depth_groups_tests.cpp
+  LIBRARIES specfem::injection specfem::utilities Kokkos::kokkos gtest_main
+)
+
+specfem_add_test(injection_layer_stack_tests
+  LABELS unit
+  SOURCES injection/runner.cpp
+          injection/layer_stack_tests.cpp
+  LIBRARIES specfem::injection specfem::utilities Kokkos::kokkos gtest_main
+)
+
+specfem_add_test(injection_depth_series_tests
+  LABELS unit
+  SOURCES injection/runner.cpp
+          injection/depth_series_tests.cpp
+  LIBRARIES specfem::injection specfem::utilities Kokkos::kokkos gtest_main
+)
+
+specfem_add_test(injection_driver_golden_tests
+  LABELS unit
+  SOURCES injection/runner.cpp
+          injection/driver_golden_tests.cpp
+  LIBRARIES specfem::injection specfem::utilities Kokkos::kokkos gtest_main
+)

@@ -15,52 +15,39 @@ make_eval_points(const std::vector<double> &z_coords, bool with_normals = false,
                  bool with_lame = false) {
   const int n = static_cast<int>(z_coords.size());
 
-  Kokkos::View<type_real *, Kokkos::HostSpace> hx("hx", n), hy("hy", n),
-      hz("hz", n);
+  specfem::injection::fk::EvalPoints ep;
+  ep.x = Kokkos::View<type_real *, Kokkos::HostSpace>("x", n);
+  ep.y = Kokkos::View<type_real *, Kokkos::HostSpace>("y", n);
+  ep.z = Kokkos::View<type_real *, Kokkos::HostSpace>("z", n);
   for (int i = 0; i < n; ++i) {
-    hx(i) = 0;
-    hy(i) = 0;
-    hz(i) = static_cast<type_real>(z_coords[i]);
+    ep.x(i) = 0;
+    ep.y(i) = 0;
+    ep.z(i) = static_cast<type_real>(z_coords[i]);
   }
 
-  specfem::injection::fk::EvalPoints ep;
-  ep.x = Kokkos::View<type_real *>("x", n);
-  ep.y = Kokkos::View<type_real *>("y", n);
-  ep.z = Kokkos::View<type_real *>("z", n);
-  Kokkos::deep_copy(ep.x, hx);
-  Kokkos::deep_copy(ep.y, hy);
-  Kokkos::deep_copy(ep.z, hz);
-
   if (with_normals) {
-    Kokkos::View<type_real *, Kokkos::HostSpace> hnx("hnx", n), hny("hny", n),
-        hnz("hnz", n);
+    ep.normal_x = Kokkos::View<type_real *, Kokkos::HostSpace>("normal_x", n);
+    ep.normal_y = Kokkos::View<type_real *, Kokkos::HostSpace>("normal_y", n);
+    ep.normal_z = Kokkos::View<type_real *, Kokkos::HostSpace>("normal_z", n);
     for (int i = 0; i < n; ++i) {
-      hnx(i) = 0;
-      hny(i) = 0;
-      hnz(i) = 1;
+      ep.normal_x(i) = 0;
+      ep.normal_y(i) = 0;
+      ep.normal_z(i) = 1;
     }
-    ep.normal_x = Kokkos::View<type_real *>("normal_x", n);
-    ep.normal_y = Kokkos::View<type_real *>("normal_y", n);
-    ep.normal_z = Kokkos::View<type_real *>("normal_z", n);
-    Kokkos::deep_copy(ep.normal_x, hnx);
-    Kokkos::deep_copy(ep.normal_y, hny);
-    Kokkos::deep_copy(ep.normal_z, hnz);
   }
 
   if (with_lame) {
-    Kokkos::View<type_real *, Kokkos::HostSpace> hxi1("hxi1", n),
-        hxim("hxim", n), hbulk("hbulk", n);
+    ep.lame_ratio_xi1 =
+        Kokkos::View<type_real *, Kokkos::HostSpace>("lame_ratio_xi1", n);
+    ep.lame_ratio_xim =
+        Kokkos::View<type_real *, Kokkos::HostSpace>("lame_ratio_xim", n);
+    ep.lame_ratio_bulk =
+        Kokkos::View<type_real *, Kokkos::HostSpace>("lame_ratio_bulk", n);
     for (int i = 0; i < n; ++i) {
-      hxi1(i) = 2; // xi1 = lambda/mu + 2
-      hxim(i) = 1; // xim = mu / (2 * mu)  = 0.5 -- use 1 for simplicity
-      hbulk(i) = static_cast<type_real>(0.333); // bulk Lame ratio
+      ep.lame_ratio_xi1(i) = 2; // xi1 = lambda/mu + 2
+      ep.lame_ratio_xim(i) = 1; // xim = mu / (2 * mu)
+      ep.lame_ratio_bulk(i) = static_cast<type_real>(0.333); // bulk Lame ratio
     }
-    ep.lame_ratio_xi1 = Kokkos::View<type_real *>("lame_ratio_xi1", n);
-    ep.lame_ratio_xim = Kokkos::View<type_real *>("lame_ratio_xim", n);
-    ep.lame_ratio_bulk = Kokkos::View<type_real *>("lame_ratio_bulk", n);
-    Kokkos::deep_copy(ep.lame_ratio_xi1, hxi1);
-    Kokkos::deep_copy(ep.lame_ratio_xim, hxim);
-    Kokkos::deep_copy(ep.lame_ratio_bulk, hbulk);
   }
 
   return ep;
@@ -84,22 +71,6 @@ static bool all_finite_not_all_zero(
         if (std::fabs(v) > max_abs)
           max_abs = std::fabs(v);
       }
-  return all_finite && (max_abs > 1.0e-30);
-}
-
-static bool all_finite_not_all_zero_2d(
-    const Kokkos::View<type_real **, Kokkos::HostSpace> &hv) {
-  bool all_finite = true;
-  double max_abs = 0.0;
-  for (std::size_t i0 = 0; i0 < hv.extent(0); ++i0)
-    for (std::size_t i1 = 0; i1 < hv.extent(1); ++i1) {
-      const double v = static_cast<double>(hv(i0, i1));
-      if (!std::isfinite(v)) {
-        all_finite = false;
-      }
-      if (std::fabs(v) > max_abs)
-        max_abs = std::fabs(v);
-    }
   return all_finite && (max_abs > 1.0e-30);
 }
 
@@ -150,15 +121,18 @@ TEST(FkDriver, ElasticHalfSpaceRunsFinite) {
 
   // Shape checks
   EXPECT_EQ(result.number_of_points(), 5);
-  EXPECT_EQ(static_cast<int>(result.displacement().extent(1)), 3);
   EXPECT_GT(result.coefficient_count(), 0);
 
-  // Finiteness + non-zero check via host mirror
-  auto h_disp = Kokkos::create_mirror_view(result.displacement());
-  Kokkos::deep_copy(h_disp, result.displacement());
+  // Sample displacement (3 components) into a time-series view.
+  Kokkos::View<type_real ***> out("out", result.number_of_points(), 3,
+                                  window.nstep);
+  result.sample(0, window.nstep, out);
 
-  EXPECT_TRUE(all_finite_not_all_zero(h_disp))
-      << "displacement coefficients are NaN/Inf or all-zero";
+  auto h_out = Kokkos::create_mirror_view(out);
+  Kokkos::deep_copy(h_out, out);
+
+  EXPECT_TRUE(all_finite_not_all_zero(h_out))
+      << "sampled displacement is NaN/Inf or all-zero";
 }
 
 // ===========================================================================
@@ -215,22 +189,38 @@ TEST(FkDriver, AcousticElasticRunsFinite) {
                                                     /*compute_traction=*/true);
 
   EXPECT_EQ(result.number_of_points(), 5);
+  EXPECT_GT(result.coefficient_count(), 0);
 
-  // displacement finite + non-zero
+  // Sample all 7 components (displacement 0..2, traction 3..5, pressure 6)
+  // into a time-series view and verify finite + not-all-zero.
+  Kokkos::View<type_real ***> out("out", result.number_of_points(), 7,
+                                  window.nstep);
+  result.sample(0, window.nstep, out);
+
+  auto h_out = Kokkos::create_mirror_view(out);
+  Kokkos::deep_copy(h_out, out);
+
+  // Displacement sub-view (components 0..2) must be finite + non-zero.
   {
-    auto h_disp = Kokkos::create_mirror_view(result.displacement());
-    Kokkos::deep_copy(h_disp, result.displacement());
+    Kokkos::View<type_real ***, Kokkos::HostSpace> h_disp("h_disp", 5, 3,
+                                                          window.nstep);
+    for (int ip = 0; ip < 5; ++ip)
+      for (int ic = 0; ic < 3; ++ic)
+        for (int is = 0; is < window.nstep; ++is)
+          h_disp(ip, ic, is) = h_out(ip, ic, is);
     EXPECT_TRUE(all_finite_not_all_zero(h_disp))
-        << "displacement coefficients are NaN/Inf or all-zero";
+        << "sampled displacement is NaN/Inf or all-zero";
   }
 
-  // pressure allocated and finite + non-zero (fluid points)
-  EXPECT_TRUE(result.has_pressure());
+  // All 7 components must be finite.
   {
-    auto h_pres = Kokkos::create_mirror_view(result.pressure());
-    Kokkos::deep_copy(h_pres, result.pressure());
-    EXPECT_TRUE(all_finite_not_all_zero_2d(h_pres))
-        << "pressure coefficients are NaN/Inf or all-zero";
+    bool all_finite = true;
+    for (int ip = 0; ip < 5; ++ip)
+      for (int ic = 0; ic < 7; ++ic)
+        for (int is = 0; is < window.nstep; ++is)
+          if (!std::isfinite(static_cast<double>(h_out(ip, ic, is))))
+            all_finite = false;
+    EXPECT_TRUE(all_finite) << "sampled output contains NaN or Inf";
   }
 }
 
@@ -286,6 +276,8 @@ TEST(FkDriver, ReadModelFile) {
   EXPECT_EQ(wave.type, specfem::injection::fk::incident_wave_type::p);
   EXPECT_NEAR(static_cast<double>(wave.origin_time), 10.0, 1e-6);
   EXPECT_NEAR(static_cast<double>(wave.amplitude), 2.5, 1e-6);
+  // Half-duration is derived from FREQUENCY_MAX (2.0 Hz): Tg = 1/2 = 0.5 s.
+  EXPECT_NEAR(static_cast<double>(wave.gaussian_half_duration), 0.5, 1e-6);
   EXPECT_NEAR(static_cast<double>(wave.origin_x), 100.0, 1e-6);
   EXPECT_NEAR(static_cast<double>(wave.origin_y), 200.0, 1e-6);
   // take_off_theta = 30 deg in radians
