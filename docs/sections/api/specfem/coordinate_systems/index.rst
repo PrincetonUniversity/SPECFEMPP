@@ -23,7 +23,8 @@ Transforms
 *  :doc:`to`: Generic ``to<Target>(source[, config])`` interface for
    converting between coordinate systems. Resolution to mesh-space global
    coordinates (which needs the mesh and projection configuration) is handled by
-   ``specfem::assembly::to`` in the assembly layer.
+   ``specfem::assembly::to_cartesian`` (and the reverse ``to_geographic`` /
+   ``to_geocentric``) in the assembly layer.
 
 Projections
 -----------

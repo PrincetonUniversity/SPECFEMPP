@@ -147,9 +147,7 @@ TEST(SurfaceElevation, DepthResolvedAgainstTopography) {
       surface_elevation_test::dimension>
       coords(5.0, 10.0, -1000.0, std::nullopt);
 
-  const auto gc =
-      specfem::assembly::to<specfem::coordinate_systems::cartesian_coordinates<
-          surface_elevation_test::dimension>>(coords, mesh, raw);
+  const auto gc = specfem::assembly::to_cartesian(coords, mesh, raw);
 
   EXPECT_FLOAT_EQ(gc.x, 5.0);
   EXPECT_FLOAT_EQ(gc.y, 10.0);
@@ -177,9 +175,7 @@ TEST(SurfaceElevation, GeographicResolvesViaUtmFlatFallback) {
   raw.utm_projection_zone = cfg.zone;
   raw.suppress_utm_projection = cfg.suppress;
   specfem::coordinate_systems::geographic_coordinates geo(lon, lat, depth);
-  const auto gc =
-      specfem::assembly::to<specfem::coordinate_systems::cartesian_coordinates<
-          surface_elevation_test::dimension>>(geo, mesh, raw);
+  const auto gc = specfem::assembly::to_cartesian(geo, mesh, raw);
 
   EXPECT_NEAR(gc.x, static_cast<type_real>(cart.x), 1.0);
   EXPECT_NEAR(gc.y, static_cast<type_real>(cart.y), 1.0);
@@ -208,9 +204,7 @@ TEST(SurfaceElevation, GeographicResolvesAgainstTopography) {
   raw.boundaries.acoustic_free_surface =
       surface_elevation_test::make_top_surface();
   specfem::coordinate_systems::geographic_coordinates geo(lon, lat, depth);
-  const auto gc =
-      specfem::assembly::to<specfem::coordinate_systems::cartesian_coordinates<
-          surface_elevation_test::dimension>>(geo, mesh, raw);
+  const auto gc = specfem::assembly::to_cartesian(geo, mesh, raw);
 
   EXPECT_NEAR(gc.x, static_cast<type_real>(cart.x), 1.0);
   EXPECT_NEAR(gc.y, static_cast<type_real>(cart.y), 1.0);
@@ -224,10 +218,8 @@ TEST(SurfaceElevation, GeographicWithoutProjectionThrows) {
   raw.suppress_utm_projection = true;
   specfem::coordinate_systems::geographic_coordinates geo(2.674, 51.561,
                                                           2000.0);
-  EXPECT_THROW(
-      (specfem::assembly::to<specfem::coordinate_systems::cartesian_coordinates<
-           surface_elevation_test::dimension>>(geo, mesh, raw)),
-      std::runtime_error);
+  EXPECT_THROW((specfem::assembly::to_cartesian(geo, mesh, raw)),
+               std::runtime_error);
 }
 
 int main(int argc, char *argv[]) {

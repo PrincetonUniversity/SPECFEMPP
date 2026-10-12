@@ -85,10 +85,7 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
   for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
     if (const auto *coords = receivers[ireceiver]->get_read_coordinates())
       receivers[ireceiver]->set_global_coordinates(
-          specfem::assembly::to<
-              specfem::coordinate_systems::cartesian_coordinates<
-                  specfem::element::dimension_tag::dim3>>(*coords, mesh,
-                                                          raw_mesh));
+          specfem::assembly::to_cartesian(*coords, mesh, raw_mesh));
   }
 
   std::vector<

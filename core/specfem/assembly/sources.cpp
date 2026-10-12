@@ -54,9 +54,7 @@ specfem::assembly::sources<DimensionTag>::sources(
   for (auto &source : sources) {
     if (const auto *coords = source->get_read_coordinates())
       source->set_global_coordinates(
-          specfem::assembly::to<
-              specfem::coordinate_systems::cartesian_coordinates<DimensionTag>>(
-              *coords, mesh, raw_mesh));
+          specfem::assembly::to_cartesian(*coords, mesh, raw_mesh));
   }
 
   // Locate all sources in the mesh and set their local coordinates,
