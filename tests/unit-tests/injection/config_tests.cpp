@@ -12,9 +12,9 @@
 // ---------------------------------------------------------------------------
 static specfem::injection::fk::EvalPoints make_one_point_eval_points() {
   specfem::injection::fk::EvalPoints ep;
-  ep.x = Kokkos::View<type_real *>("x", 1);
-  ep.y = Kokkos::View<type_real *>("y", 1);
-  ep.z = Kokkos::View<type_real *>("z", 1);
+  ep.x = Kokkos::View<type_real *, Kokkos::HostSpace>("x", 1);
+  ep.y = Kokkos::View<type_real *, Kokkos::HostSpace>("y", 1);
+  ep.z = Kokkos::View<type_real *, Kokkos::HostSpace>("z", 1);
   return ep;
 }
 
@@ -203,4 +203,117 @@ time-window:
   EXPECT_THROW((cfg.instantiate<specfem::element::dimension_tag::dim3>(
                    ep, static_cast<type_real>(0.05), 256, false)),
                std::runtime_error);
+}
+
+// ===========================================================================
+// TEST 8: HalfDurationDefaultsFromFrequencyMax
+// Omitting half-duration derives it as 1 / frequency-max.
+// ===========================================================================
+TEST(InjectionConfig, HalfDurationDefaultsFromFrequencyMax) {
+  const char *yaml_str = R"yaml(
+layers:
+  - elastic: { rho: 2800, vp: 6000, vs: 3500, thickness: 35000 }
+  - elastic: { rho: 3300, vp: 8100, vs: 4500, thickness: 0 }
+incidence:
+  type: P
+  take-off: 20.0
+time-window:
+  frequency-max: 2.0
+  frequency-sampling: 10.0
+  length: 128.0
+)yaml";
+
+  const YAML::Node node = YAML::Load(yaml_str);
+  const specfem::runtime_configuration::Injection cfg(node);
+
+  const auto wave = cfg.to_incident_wave();
+  // half-duration = 1 / frequency-max = 1 / 2.0 = 0.5
+  EXPECT_NEAR(static_cast<double>(wave.gaussian_half_duration), 0.5, 1.0e-5);
+}
+
+// ===========================================================================
+// TEST 9: SamplingDefaultsFromHalfDuration
+// Omitting frequency-sampling derives it as 10 / half-duration.
+// ===========================================================================
+TEST(InjectionConfig, SamplingDefaultsFromHalfDuration) {
+  const char *yaml_str = R"yaml(
+layers:
+  - elastic: { rho: 2800, vp: 6000, vs: 3500, thickness: 35000 }
+  - elastic: { rho: 3300, vp: 8100, vs: 4500, thickness: 0 }
+incidence:
+  type: P
+  take-off: 20.0
+  half-duration: 2.0
+time-window:
+  frequency-max: 1.0
+  length: 128.0
+)yaml";
+
+  const YAML::Node node = YAML::Load(yaml_str);
+  const specfem::runtime_configuration::Injection cfg(node);
+
+  const auto window = cfg.to_time_window(static_cast<type_real>(0.05), 256);
+  // frequency-sampling = 10 / half-duration = 10 / 2.0 = 5.0
+  EXPECT_NEAR(static_cast<double>(window.frequency_sampling), 5.0, 1.0e-5);
+}
+
+// ===========================================================================
+// TEST 10: RejectsNoBandLimit
+// Neither frequency-max nor half-duration available => construction throws.
+// ===========================================================================
+TEST(InjectionConfig, RejectsNoBandLimit) {
+  const char *yaml_str = R"yaml(
+layers:
+  - elastic: { rho: 2800, vp: 6000, vs: 3500, thickness: 35000 }
+  - elastic: { rho: 3300, vp: 8100, vs: 4500, thickness: 0 }
+incidence:
+  type: P
+  take-off: 20.0
+time-window:
+  length: 128.0
+)yaml";
+
+  const YAML::Node node = YAML::Load(yaml_str);
+  EXPECT_THROW(specfem::runtime_configuration::Injection cfg(node),
+               std::runtime_error);
+}
+
+// ===========================================================================
+// TEST 11: WindowStepsParsed
+// window-steps flows through to the provider's frame-buffer window size.
+// ===========================================================================
+TEST(InjectionConfig, WindowStepsParsed) {
+  const char *yaml_str = R"yaml(
+layers:
+  - elastic: { rho: 2800, vp: 6000, vs: 3500, thickness: 35000 }
+  - elastic: { rho: 3300, vp: 8100, vs: 4500, thickness: 0 }
+incidence:
+  type: P
+  take-off: 20.0
+time-window:
+  frequency-max: 1.0
+  frequency-sampling: 10.0
+  length: 128.0
+  window-steps: 7
+)yaml";
+
+  const YAML::Node node = YAML::Load(yaml_str);
+  const specfem::runtime_configuration::Injection cfg(node);
+
+  // One interior point so the FK solve is well-posed.
+  specfem::injection::fk::EvalPoints ep;
+  ep.x = Kokkos::View<type_real *, Kokkos::HostSpace>("x", 1);
+  ep.y = Kokkos::View<type_real *, Kokkos::HostSpace>("y", 1);
+  ep.z = Kokkos::View<type_real *, Kokkos::HostSpace>("z", 1);
+  ep.x(0) = static_cast<type_real>(0);
+  ep.y(0) = static_cast<type_real>(0);
+  ep.z(0) = static_cast<type_real>(5000);
+
+  const auto provider = cfg.instantiate<specfem::element::dimension_tag::dim3>(
+      ep, static_cast<type_real>(0.05), 256, /*compute_traction=*/false);
+  ASSERT_NE(provider, nullptr);
+
+  provider->initialize();
+  provider->ensure_window(0);
+  EXPECT_EQ(provider->frame_buffer().number_of_steps(), 7);
 }

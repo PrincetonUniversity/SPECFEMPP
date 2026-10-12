@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/element/tags.hpp"
+#include "specfem/injection/fk/field_derivative.hpp"
 #include "specfem/injection/fk/incident_wave.hpp"
 #include "specfem/injection/fk/layered_model.hpp"
 #include "specfem/injection/fk/time_window.hpp"
@@ -38,6 +39,7 @@ namespace runtime_configuration {
  *     - acoustic: { rho: 1000, vp: 1500, thickness: 2000 }
  *     - elastic:  { rho: 2800, vp: 6000, vs: 3500, thickness: 35000 }
  *     - elastic:  { rho: 3300, vp: 8100, vs: 4500, thickness: 0 }
+ *   derivative: displacement   # optional
  *   incidence:
  *     type: P
  *     back-azimuth: 30.0
@@ -45,12 +47,19 @@ namespace runtime_configuration {
  *     origin: [0, 0, 0]
  *     origin-time: 0.0
  *     amplitude: 1.0
- *     half-duration: 0.0
+ *     half-duration: 0.0       # optional
  *   time-window:
  *     frequency-max: 1.0
- *     frequency-sampling: 10.0
+ *     frequency-sampling: 10.0 # optional
  *     length: 128.0
+ *     window-steps: 0          # optional
  * @endcode
+ *
+ * Defaults are physically derived and follow the precedence
+ * explicit YAML value > model-file value > derived default:
+ * - @c half-duration defaults to @c 1/frequency-max,
+ * - @c frequency-sampling defaults to @c 10/half-duration.
+ * At least one of @c frequency-max or @c half-duration must be available.
  *
  * **File form** — all parameters read from a keyword-format FK model file:
  * @code{.yaml}
@@ -139,7 +148,7 @@ public:
    *
    * @tparam DimensionTag Spatial dimension of the target simulation
    *                      (@c dim2 or @c dim3).
-   * @param points          Device-resident evaluation-point coordinates and
+   * @param points          Host-resident evaluation-point coordinates and
    *                        optional normals / Lamé ratios.
    * @param dt              Simulation time step in seconds.
    * @param nstep           Total number of simulation time steps.
@@ -162,6 +171,10 @@ private:
   type_real frequency_max_ = 0;      ///< FK storage max frequency in Hz
   type_real frequency_sampling_ = 0; ///< FK storage sampling frequency in Hz
   type_real time_window_length_ = 0; ///< FK time-window length in s
+  specfem::injection::fk::field_derivative derivative_ =
+      specfem::injection::fk::field_derivative::displacement; ///< Vector
+                                                              ///< quantity
+  int window_steps_ = 0; ///< Frame-buffer window size (0 = automatic)
 };
 
 } // namespace runtime_configuration

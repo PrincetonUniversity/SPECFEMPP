@@ -124,6 +124,10 @@ specfem::runtime_configuration::Injection::Injection(const YAML::Node &node) {
     }
   }
 
+  // Track whether the user set the half-duration explicitly, so the derived
+  // default (1/frequency-max) does not overwrite an explicit value.
+  bool half_duration_explicit = false;
+
   // -----------------------------------------------------------------------
   // `incidence:` block.  Required for the inline form; optional override for
   // the file form.
@@ -186,6 +190,7 @@ specfem::runtime_configuration::Injection::Injection(const YAML::Node &node) {
       if (inc["half-duration"]) {
         wave_.gaussian_half_duration =
             static_cast<type_real>(inc["half-duration"].as<double>());
+        half_duration_explicit = true;
       }
 
     } catch (const std::runtime_error &) {
@@ -207,9 +212,18 @@ specfem::runtime_configuration::Injection::Injection(const YAML::Node &node) {
   if (node["time-window"]) {
     try {
       const YAML::Node &tw = node["time-window"];
-      frequency_max_ = tw["frequency-max"].as<type_real>();
-      frequency_sampling_ = tw["frequency-sampling"].as<type_real>();
+      // frequency-max and frequency-sampling are optional (defaulted below);
+      // length is required when the block is present.
+      if (tw["frequency-max"]) {
+        frequency_max_ = tw["frequency-max"].as<type_real>();
+      }
+      if (tw["frequency-sampling"]) {
+        frequency_sampling_ = tw["frequency-sampling"].as<type_real>();
+      }
       time_window_length_ = tw["length"].as<type_real>();
+      if (tw["window-steps"]) {
+        window_steps_ = tw["window-steps"].as<int>();
+      }
     } catch (const std::runtime_error &) {
       throw;
     } catch (const YAML::Exception &e) {
@@ -219,6 +233,58 @@ specfem::runtime_configuration::Injection::Injection(const YAML::Node &node) {
   } else if (has_layers) {
     throw std::runtime_error(
         "injection: inline 'layers' form requires a 'time-window' block");
+  }
+
+  // -----------------------------------------------------------------------
+  // Optional field derivative (provider-level):
+  // displacement | velocity | acceleration.
+  // -----------------------------------------------------------------------
+  if (node["derivative"]) {
+    try {
+      const std::string d =
+          specfem::utilities::to_lower(node["derivative"].as<std::string>());
+      if (d == "displacement") {
+        derivative_ = specfem::injection::fk::field_derivative::displacement;
+      } else if (d == "velocity") {
+        derivative_ = specfem::injection::fk::field_derivative::velocity;
+      } else if (d == "acceleration") {
+        derivative_ = specfem::injection::fk::field_derivative::acceleration;
+      } else {
+        throw std::runtime_error("injection: 'derivative' must be "
+                                 "'displacement', 'velocity', or "
+                                 "'acceleration'");
+      }
+    } catch (const std::runtime_error &) {
+      throw;
+    } catch (const YAML::Exception &e) {
+      throw std::runtime_error(
+          std::string("Error parsing injection configuration: ") + e.what());
+    }
+  }
+
+  // -----------------------------------------------------------------------
+  // Resolve physically-derived defaults. Half-duration Tg and frequency_max
+  // are linked by Tg = 1/frequency_max (matching the model-file reader); fill
+  // whichever the user left unspecified. Precedence: explicit > model-file >
+  // derived.
+  // -----------------------------------------------------------------------
+  if (!half_duration_explicit && wave_.gaussian_half_duration <= 0 &&
+      frequency_max_ > 0) {
+    wave_.gaussian_half_duration =
+        static_cast<type_real>(1.0 / static_cast<double>(frequency_max_));
+  }
+  if (frequency_max_ <= 0 && wave_.gaussian_half_duration > 0) {
+    frequency_max_ = static_cast<type_real>(
+        1.0 / static_cast<double>(wave_.gaussian_half_duration));
+  }
+  if (frequency_max_ <= 0 && wave_.gaussian_half_duration <= 0) {
+    throw std::runtime_error("injection: no band limit — specify "
+                             "'frequency-max' or 'half-duration'");
+  }
+  // Storage sampling frequency defaults to 10/Tg (dt_min ~ Tg/10).
+  if (frequency_sampling_ <= 0 && wave_.gaussian_half_duration > 0) {
+    frequency_sampling_ = static_cast<type_real>(
+        10.0 / static_cast<double>(wave_.gaussian_half_duration));
   }
 }
 
@@ -242,7 +308,8 @@ specfem::runtime_configuration::Injection::instantiate(
   if (method_ == "fk") {
     const auto window = this->to_time_window(dt, nstep);
     return std::make_shared<specfem::injection::fk_provider<DimensionTag>>(
-        model_, wave_, window, points, compute_traction);
+        model_, wave_, window, points, compute_traction, derivative_,
+        window_steps_);
   }
   throw std::runtime_error("injection: unknown method '" + method_ +
                            "'. Supported methods: fk");
