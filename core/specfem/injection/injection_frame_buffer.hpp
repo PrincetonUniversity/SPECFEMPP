@@ -45,17 +45,44 @@ public:
                        int number_of_steps);
 
   /**
-   * @brief Device hot-path read: value at (point, component) for time step
+   * @brief Device hot-path read: value at (point, component) for SEM step
    * @p istep.
    *
-   * @param istep     Time step index.
+   * The buffer holds only the current window of steps, so @p istep is mapped to
+   * the window-relative index @c istep - window_start(). The step must lie in
+   * the buffered window (see @c contains); the provider refreshes the window
+   * via @c ensure_window before the kernel runs.
+   *
+   * @param istep     SEM time step index (absolute, not window-relative).
    * @param point     Evaluation point index.
    * @param component Component index.
    * @return Field value at the requested (point, component, step).
    */
   KOKKOS_INLINE_FUNCTION type_real load_on_device(int istep, int point,
                                                   int component) const {
-    return values_(point, component, istep);
+    KOKKOS_ASSERT(contains(istep));
+    return values_(point, component, istep - window_start_);
+  }
+
+  /**
+   * @brief First SEM step currently held in the buffer.
+   * @return window start step
+   */
+  KOKKOS_INLINE_FUNCTION int window_start() const { return window_start_; }
+
+  /**
+   * @brief Set the first SEM step the buffer represents (host-side).
+   * @param window_start first SEM step of the window
+   */
+  void set_window_start(int window_start) { window_start_ = window_start; }
+
+  /**
+   * @brief Whether SEM step @p istep lies in the currently buffered window.
+   * @param istep absolute SEM step index
+   * @return true when @p istep is in @c [window_start, window_start + steps)
+   */
+  KOKKOS_INLINE_FUNCTION bool contains(int istep) const {
+    return istep >= window_start_ && istep < window_start_ + number_of_steps_;
   }
 
   /**
@@ -93,7 +120,8 @@ private:
   Kokkos::View<type_real ***> values_{}; ///< [point][component][step] buffer
   int number_of_points_ = 0;             ///< Number of evaluation points
   int number_of_components_ = 0;         ///< Number of field components
-  int number_of_steps_ = 0;              ///< Number of time steps
+  int number_of_steps_ = 0;              ///< Number of time steps in the window
+  int window_start_ = 0;                 ///< First SEM step held in the window
 };
 
 } // namespace injection

@@ -1,8 +1,9 @@
 #include "specfem/injection/fk_provider.hpp"
 
 #include "specfem/injection/fk/solver.hpp"
-#include "specfem/utilities/cubic_bspline.hpp"
 #include <Kokkos_Core.hpp>
+#include <algorithm>
+#include <cstddef>
 
 // ---------------------------------------------------------------------------
 // Constructor
@@ -13,10 +14,12 @@ specfem::injection::fk_provider<DimensionTag>::fk_provider(
     specfem::injection::fk::LayeredModel model,
     specfem::injection::fk::IncidentWave wave,
     specfem::injection::fk::TimeWindow window,
-    specfem::injection::fk::EvalPoints points, bool compute_traction)
+    specfem::injection::fk::EvalPoints points, bool compute_traction,
+    specfem::injection::fk::field_derivative derivative, int window_steps)
     : model_(std::move(model)), wave_(std::move(wave)),
       window_(std::move(window)), points_(std::move(points)),
-      compute_traction_(compute_traction) {}
+      compute_traction_(compute_traction), derivative_(derivative),
+      window_steps_(window_steps) {}
 
 // ---------------------------------------------------------------------------
 // initialize(): run FK solve and allocate the frame buffer
@@ -25,13 +28,29 @@ specfem::injection::fk_provider<DimensionTag>::fk_provider(
 template <specfem::element::dimension_tag DimensionTag>
 void specfem::injection::fk_provider<DimensionTag>::initialize() {
   result_ = specfem::injection::fk::solve(model_, wave_, window_, points_,
-                                          compute_traction_);
+                                          compute_traction_, derivative_);
 
   const int nstep = window_.nstep;
   const int ncomp = compute_traction_ ? 6 : 3;
   const int npoints = points_.size();
 
-  buffer_ = InjectionFrameBuffer(npoints, ncomp, nstep);
+  // Window length: honor an explicit request, else fit within a fixed memory
+  // budget (a fixed 64-step window would be ~1.5 GB at 1e6 points).
+  int window_steps;
+  if (window_steps_ > 0) {
+    window_steps = std::min(nstep, window_steps_);
+  } else {
+    constexpr std::size_t budget_bytes = std::size_t(256) << 20; // 256 MiB
+    const std::size_t per_step =
+        static_cast<std::size_t>(npoints) * ncomp * sizeof(type_real);
+    const int fit = (per_step > 0) ? static_cast<int>(std::max<std::size_t>(
+                                         1, budget_bytes / per_step))
+                                   : nstep;
+    window_steps = std::min(nstep, fit);
+  }
+
+  buffer_ = InjectionFrameBuffer(npoints, ncomp, window_steps);
+  window_loaded_ = false;
 }
 
 // ---------------------------------------------------------------------------
@@ -39,103 +58,17 @@ void specfem::injection::fk_provider<DimensionTag>::initialize() {
 // ---------------------------------------------------------------------------
 
 template <specfem::element::dimension_tag DimensionTag>
-void specfem::injection::fk_provider<DimensionTag>::ensure_window(
-    int /*istep*/) {
-  if (reconstructed_) {
+void specfem::injection::fk_provider<DimensionTag>::ensure_window(int istep) {
+  if (window_loaded_ && buffer_.contains(istep)) {
     return;
   }
-
   const int nstep = window_.nstep;
-  const int npoints = result_.number_of_points();
-  const int ncoef = result_.coefficient_count();
-  const int np_resamp = result_.resampling_rate();
-
-  // Capture Views by value for the device lambda (Kokkos reference semantics).
-  const auto disp_view = result_.displacement(); // [npoints][3][ncoef]
-  const auto trac_view =
-      result_.traction(); // [npoints][3][ncoef]; empty if no traction
-  auto buf_values = buffer_.values(); // [npoints][ncomp][nstep]
-
-  const bool do_traction = compute_traction_;
-
-  // Per-thread double scratch for the coefficient row passed to evaluate().
-  // We use a 1-D scratch View sized to ncoef, allocated once on host and
-  // broadcast to threads via a TeamPolicy scratch level.  However, to avoid
-  // TeamPolicy complexity on the first-cut, we allocate a 2-D host-side
-  // scratch buffer (npoints × ncoef), deep-copy the float coefficients to
-  // double, and run the reconstruction in a RangePolicy over
-  // (npoints × ncomp × nstep).
-  //
-  // Float→double copy: the FkResult Views are type_real (float when default
-  // precision).  evaluate() requires double*.  We build a full double mirror
-  // of the coefficient arrays on the host, then upload to a device double View
-  // for use inside the kernel.
-
-  // Build host double mirrors of the coefficient arrays.
-  auto h_disp = Kokkos::create_mirror_view(disp_view);
-  Kokkos::deep_copy(h_disp, disp_view);
-
-  // Allocate device double Views for the coefficient data.
-  Kokkos::View<double ***, Kokkos::DefaultExecutionSpace> disp_d(
-      "fk_disp_double", npoints, 3, ncoef);
-  {
-    auto h_disp_d = Kokkos::create_mirror_view(disp_d);
-    for (int ip = 0; ip < npoints; ++ip)
-      for (int ic = 0; ic < 3; ++ic)
-        for (int k = 0; k < ncoef; ++k)
-          h_disp_d(ip, ic, k) = static_cast<double>(h_disp(ip, ic, k));
-    Kokkos::deep_copy(disp_d, h_disp_d);
-  }
-
-  Kokkos::View<double ***, Kokkos::DefaultExecutionSpace> trac_d(
-      "fk_trac_double", 0, 0, 0);
-  if (do_traction) {
-    auto h_trac = Kokkos::create_mirror_view(trac_view);
-    Kokkos::deep_copy(h_trac, trac_view);
-    trac_d = Kokkos::View<double ***, Kokkos::DefaultExecutionSpace>(
-        "fk_trac_double", npoints, 3, ncoef);
-    auto h_trac_d = Kokkos::create_mirror_view(trac_d);
-    for (int ip = 0; ip < npoints; ++ip)
-      for (int ic = 0; ic < 3; ++ic)
-        for (int k = 0; k < ncoef; ++k)
-          h_trac_d(ip, ic, k) = static_cast<double>(h_trac(ip, ic, k));
-    Kokkos::deep_copy(trac_d, h_trac_d);
-  }
-
-  // Reconstruct: for each (point, component, step), evaluate the B-spline at
-  // abscissa = istep / np_resamp (maps SEM step to resampled-grid coordinate).
-  const int ncomp = do_traction ? 6 : 3;
-  const int total = npoints * ncomp * nstep;
-
-  Kokkos::parallel_for(
-      "fk_provider_reconstruct",
-      Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, total),
-      KOKKOS_LAMBDA(int idx) {
-        const int istep_idx = idx % nstep;
-        const int tmp = idx / nstep;
-        const int icomp = tmp % ncomp;
-        const int ipoint = tmp / ncomp;
-
-        const double abscissa =
-            static_cast<double>(istep_idx) / static_cast<double>(np_resamp);
-
-        double val = 0.0;
-        if (icomp < 3) {
-          // Displacement component icomp.
-          val = specfem::utilities::cubic_bspline::evaluate(
-              &disp_d(ipoint, icomp, 0), ncoef, abscissa);
-        } else {
-          // Traction component (icomp - 3).
-          const int tcomp = icomp - 3;
-          val = specfem::utilities::cubic_bspline::evaluate(
-              &trac_d(ipoint, tcomp, 0), ncoef, abscissa);
-        }
-
-        buf_values(ipoint, icomp, istep_idx) = static_cast<type_real>(val);
-      });
-
-  Kokkos::fence();
-  reconstructed_ = true;
+  const int window_steps = buffer_.number_of_steps();
+  const int start = (istep / window_steps) * window_steps;
+  const int count = std::min(window_steps, nstep - start);
+  result_.sample(start, count, buffer_.values());
+  buffer_.set_window_start(start);
+  window_loaded_ = true;
 }
 
 // ---------------------------------------------------------------------------

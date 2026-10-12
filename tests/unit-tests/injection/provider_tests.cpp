@@ -18,45 +18,69 @@ static specfem::injection::fk::EvalPoints
 make_eval_points_with_normals(const std::vector<double> &z_coords) {
   const int n = static_cast<int>(z_coords.size());
 
-  Kokkos::View<type_real *, Kokkos::HostSpace> hx("hx", n), hy("hy", n),
-      hz("hz", n);
-  Kokkos::View<type_real *, Kokkos::HostSpace> hnx("hnx", n), hny("hny", n),
-      hnz("hnz", n);
-  Kokkos::View<type_real *, Kokkos::HostSpace> hxi1("hxi1", n), hxim("hxim", n),
-      hbulk("hbulk", n);
+  specfem::injection::fk::EvalPoints ep;
+  ep.x = Kokkos::View<type_real *, Kokkos::HostSpace>("x", n);
+  ep.y = Kokkos::View<type_real *, Kokkos::HostSpace>("y", n);
+  ep.z = Kokkos::View<type_real *, Kokkos::HostSpace>("z", n);
+  ep.normal_x = Kokkos::View<type_real *, Kokkos::HostSpace>("normal_x", n);
+  ep.normal_y = Kokkos::View<type_real *, Kokkos::HostSpace>("normal_y", n);
+  ep.normal_z = Kokkos::View<type_real *, Kokkos::HostSpace>("normal_z", n);
+  ep.lame_ratio_xi1 =
+      Kokkos::View<type_real *, Kokkos::HostSpace>("lame_ratio_xi1", n);
+  ep.lame_ratio_xim =
+      Kokkos::View<type_real *, Kokkos::HostSpace>("lame_ratio_xim", n);
+  ep.lame_ratio_bulk =
+      Kokkos::View<type_real *, Kokkos::HostSpace>("lame_ratio_bulk", n);
 
   for (int i = 0; i < n; ++i) {
-    hx(i) = static_cast<type_real>(0);
-    hy(i) = static_cast<type_real>(0);
-    hz(i) = static_cast<type_real>(z_coords[i]);
-    hnx(i) = static_cast<type_real>(0);
-    hny(i) = static_cast<type_real>(0);
-    hnz(i) = static_cast<type_real>(1);
-    hxi1(i) = static_cast<type_real>(2.0); // xi1 = (lambda + 2*mu) / mu
-    hxim(i) = static_cast<type_real>(1.0); // xim = mu / (2*mu)
-    hbulk(i) = static_cast<type_real>(0.333);
+    ep.x(i) = static_cast<type_real>(0);
+    ep.y(i) = static_cast<type_real>(0);
+    ep.z(i) = static_cast<type_real>(z_coords[i]);
+    ep.normal_x(i) = static_cast<type_real>(0);
+    ep.normal_y(i) = static_cast<type_real>(0);
+    ep.normal_z(i) = static_cast<type_real>(1);
+    ep.lame_ratio_xi1(i) = static_cast<type_real>(2.0); // (lambda + 2*mu) / mu
+    ep.lame_ratio_xim(i) = static_cast<type_real>(1.0); // mu / (2*mu)
+    ep.lame_ratio_bulk(i) = static_cast<type_real>(0.333);
   }
 
-  specfem::injection::fk::EvalPoints ep;
-  ep.x = Kokkos::View<type_real *>("x", n);
-  ep.y = Kokkos::View<type_real *>("y", n);
-  ep.z = Kokkos::View<type_real *>("z", n);
-  ep.normal_x = Kokkos::View<type_real *>("normal_x", n);
-  ep.normal_y = Kokkos::View<type_real *>("normal_y", n);
-  ep.normal_z = Kokkos::View<type_real *>("normal_z", n);
-  ep.lame_ratio_xi1 = Kokkos::View<type_real *>("lame_ratio_xi1", n);
-  ep.lame_ratio_xim = Kokkos::View<type_real *>("lame_ratio_xim", n);
-  ep.lame_ratio_bulk = Kokkos::View<type_real *>("lame_ratio_bulk", n);
+  return ep;
+}
 
-  Kokkos::deep_copy(ep.x, hx);
-  Kokkos::deep_copy(ep.y, hy);
-  Kokkos::deep_copy(ep.z, hz);
-  Kokkos::deep_copy(ep.normal_x, hnx);
-  Kokkos::deep_copy(ep.normal_y, hny);
-  Kokkos::deep_copy(ep.normal_z, hnz);
-  Kokkos::deep_copy(ep.lame_ratio_xi1, hxi1);
-  Kokkos::deep_copy(ep.lame_ratio_xim, hxim);
-  Kokkos::deep_copy(ep.lame_ratio_bulk, hbulk);
+// ---------------------------------------------------------------------------
+// Helper: build an EvalPoints at the given (x, z) coordinates with normals and
+// Lamé ratios.  A non-zero x gives a non-zero FK time delay tau.
+// ---------------------------------------------------------------------------
+static specfem::injection::fk::EvalPoints
+make_eval_points_xz(const std::vector<double> &xs,
+                    const std::vector<double> &zs) {
+  const int n = static_cast<int>(xs.size());
+
+  specfem::injection::fk::EvalPoints ep;
+  ep.x = Kokkos::View<type_real *, Kokkos::HostSpace>("x", n);
+  ep.y = Kokkos::View<type_real *, Kokkos::HostSpace>("y", n);
+  ep.z = Kokkos::View<type_real *, Kokkos::HostSpace>("z", n);
+  ep.normal_x = Kokkos::View<type_real *, Kokkos::HostSpace>("normal_x", n);
+  ep.normal_y = Kokkos::View<type_real *, Kokkos::HostSpace>("normal_y", n);
+  ep.normal_z = Kokkos::View<type_real *, Kokkos::HostSpace>("normal_z", n);
+  ep.lame_ratio_xi1 =
+      Kokkos::View<type_real *, Kokkos::HostSpace>("lame_ratio_xi1", n);
+  ep.lame_ratio_xim =
+      Kokkos::View<type_real *, Kokkos::HostSpace>("lame_ratio_xim", n);
+  ep.lame_ratio_bulk =
+      Kokkos::View<type_real *, Kokkos::HostSpace>("lame_ratio_bulk", n);
+
+  for (int i = 0; i < n; ++i) {
+    ep.x(i) = static_cast<type_real>(xs[i]);
+    ep.y(i) = static_cast<type_real>(0);
+    ep.z(i) = static_cast<type_real>(zs[i]);
+    ep.normal_x(i) = static_cast<type_real>(0);
+    ep.normal_y(i) = static_cast<type_real>(0);
+    ep.normal_z(i) = static_cast<type_real>(1);
+    ep.lame_ratio_xi1(i) = static_cast<type_real>(2.0);
+    ep.lame_ratio_xim(i) = static_cast<type_real>(1.0);
+    ep.lame_ratio_bulk(i) = static_cast<type_real>(0.333);
+  }
 
   return ep;
 }
@@ -137,10 +161,12 @@ TEST(FkProvider, FkProviderReconstructsFinite) {
 
   const specfem::injection::InjectionFrameBuffer &buf = provider.frame_buffer();
 
-  // Shape checks
+  // Shape checks: the buffer holds a window of W <= nstep steps.
+  const int W = buf.number_of_steps();
   EXPECT_EQ(buf.number_of_points(), npoints);
   EXPECT_EQ(buf.number_of_components(), 6); // disp (3) + traction (3)
-  EXPECT_EQ(buf.number_of_steps(), nstep);
+  EXPECT_GT(W, 0);
+  EXPECT_LE(W, nstep);
 
   // Copy to host for value checks.
   auto h_vals = Kokkos::create_mirror_view(buf.values());
@@ -151,7 +177,7 @@ TEST(FkProvider, FkProviderReconstructsFinite) {
 
   for (int ip = 0; ip < npoints; ++ip) {
     for (int ic = 0; ic < 6; ++ic) {
-      for (int is = 0; is < nstep; ++is) {
+      for (int is = 0; is < W; ++is) {
         const double v = static_cast<double>(h_vals(ip, ic, is));
         if (!std::isfinite(v)) {
           all_finite = false;
@@ -201,66 +227,169 @@ TEST(FkProvider, FkProviderEnsureWindowIsIdempotent) {
 }
 
 // ===========================================================================
-// Test 3: FkProviderConsistency
+// Test 3: LoadMatchesFkResultSample
 //
-// At a SEM time step that is an exact multiple of NP_RESAMP (the resampling
-// rate), say step = k * NP_RESAMP, the B-spline abscissa is the integer k.
-// The reconstructed value load_on_device(k*NP_RESAMP, point, comp) must equal
-// cubic_bspline::evaluate(coeffs_double, ncoef, k) within a float tolerance.
-//
-// This verifies the abscissa mapping  abscissa = istep / NP_RESAMP.
+// load_on_device maps an absolute SEM step to the windowed buffer index
+// istep - window_start.  With a small window (so the window start is non-zero)
+// and a point with tau != 0 (lateral offset) and NP > 1, the values read back
+// through load_on_device must match an independent full FkResult::sample at the
+// same absolute steps.
 // ===========================================================================
-TEST(FkProvider, FkProviderConsistency) {
+TEST(FkProvider, LoadMatchesFkResultSample) {
   const auto model = make_crust_mantle_model();
   const auto wave = make_incident_p_wave();
   const auto window = make_small_time_window();
-  // Single point at the surface for simplicity.
-  const auto points = make_eval_points_with_normals({ 0 });
+  // Point 0 at the origin (tau = 0); point 1 laterally offset (tau != 0).
+  const auto points = make_eval_points_xz({ 0.0, 30000.0 }, { 5000.0, 5000.0 });
+  const int npoints = points.size();
+  const int nstep = window.nstep;
 
   specfem::injection::fk_provider<specfem::element::dimension_tag::dim3>
-      provider(model, wave, window, points, /*compute_traction=*/false);
+      provider(model, wave, window, points, /*compute_traction=*/false,
+               specfem::injection::fk::field_derivative::displacement,
+               /*window_steps=*/32);
 
   provider.initialize();
-  provider.ensure_window(window.nstep - 1);
+  const int W = provider.frame_buffer().number_of_steps();
+  ASSERT_LT(W, nstep) << "test needs a window smaller than the full series";
 
-  // Retrieve raw FK result to read coefficient data.
-  // We run the FK solve independently (same inputs) to get the resampling rate
-  // and coefficient array for comparison.
+  // Request a step beyond the first window so the window start is non-zero.
+  const int probe = W + 3;
+  provider.ensure_window(probe);
+  const int start = (probe / W) * W;
+  const int count = std::min(W, nstep - start);
+  ASSERT_GT(start, 0);
+
+  // Independent full sample on the same inputs.
   const auto result = specfem::injection::fk::solve(model, wave, window, points,
                                                     /*compute_traction=*/false);
+  ASSERT_GT(result.resampling_rate(), 0);
+  const int ncomp = provider.frame_buffer().number_of_components();
+  Kokkos::View<type_real ***> full("full", npoints, ncomp, nstep);
+  result.sample(0, nstep, full);
+  auto h_full = Kokkos::create_mirror_view(full);
+  Kokkos::deep_copy(h_full, full);
 
-  const int np_resamp = result.resampling_rate();
-  const int ncoef = result.coefficient_count();
-  ASSERT_GT(np_resamp, 0) << "resampling rate must be positive";
-  ASSERT_GT(ncoef, 0) << "coefficient count must be positive";
+  // Read the window back through the device accessor load_on_device.
+  const specfem::injection::InjectionFrameBuffer buffer =
+      provider.frame_buffer();
+  Kokkos::View<type_real ***> loaded("loaded", npoints, ncomp, count);
+  Kokkos::parallel_for(
+      "load_window",
+      Kokkos::MDRangePolicy<Kokkos::Rank<3>>({ 0, 0, 0 },
+                                             { npoints, ncomp, count }),
+      KOKKOS_LAMBDA(int ip, int ic, int k) {
+        loaded(ip, ic, k) = buffer.load_on_device(start + k, ip, ic);
+      });
+  auto h_loaded = Kokkos::create_mirror_view(loaded);
+  Kokkos::deep_copy(h_loaded, loaded);
 
-  // Choose k = 2 (abscissa = 2) so we are well inside the coefficient range.
-  const int k = 2;
-  const int sem_step = k * np_resamp;
-  ASSERT_LT(sem_step, window.nstep)
-      << "chosen step out of range for this window";
-
-  // Displacement component 0, point 0.
-  const int ipoint = 0;
-  const int icomp = 0;
-
-  // Build double coefficient array from the FkResult.
-  auto h_disp = Kokkos::create_mirror_view(result.displacement());
-  Kokkos::deep_copy(h_disp, result.displacement());
-  std::vector<double> coeff_d(ncoef);
-  for (int i = 0; i < ncoef; ++i) {
-    coeff_d[i] = static_cast<double>(h_disp(ipoint, icomp, i));
+  for (int ip = 0; ip < npoints; ++ip) {
+    for (int ic = 0; ic < ncomp; ++ic) {
+      for (int k = 0; k < count; ++k) {
+        EXPECT_DOUBLE_EQ(static_cast<double>(h_loaded(ip, ic, k)),
+                         static_cast<double>(h_full(ip, ic, start + k)))
+            << "mismatch at point=" << ip << " comp=" << ic
+            << " step=" << start + k;
+      }
+    }
   }
+}
 
-  const double expected = specfem::utilities::cubic_bspline::evaluate(
-      coeff_d.data(), ncoef, static_cast<double>(k));
+// ===========================================================================
+// Test 4: WindowRolloverMatchesFreshProvider
+//
+// Rolling a provider forward (ensure_window(0) then ensure_window(W+3)) yields
+// the same buffer contents as a fresh provider asked only for W+3, because
+// aligned window starts make the result independent of call order.
+// ===========================================================================
+TEST(FkProvider, WindowRolloverMatchesFreshProvider) {
+  const auto model = make_crust_mantle_model();
+  const auto wave = make_incident_p_wave();
+  const auto window = make_small_time_window();
+  const auto points = make_eval_points_xz({ 0.0, 30000.0 }, { 5000.0, 5000.0 });
 
-  // Read the reconstructed value from the buffer.
+  auto make_provider = [&]() {
+    return specfem::injection::fk_provider<
+        specfem::element::dimension_tag::dim3>(
+        model, wave, window, points, /*compute_traction=*/false,
+        specfem::injection::fk::field_derivative::displacement,
+        /*window_steps=*/32);
+  };
+
+  auto rolled = make_provider();
+  rolled.initialize();
+  const int W = rolled.frame_buffer().number_of_steps();
+  const int probe = W + 3;
+  rolled.ensure_window(0);
+  rolled.ensure_window(probe);
+
+  auto fresh = make_provider();
+  fresh.initialize();
+  fresh.ensure_window(probe);
+
+  EXPECT_EQ(rolled.frame_buffer().window_start(),
+            fresh.frame_buffer().window_start());
+
+  auto h_rolled = Kokkos::create_mirror_view(rolled.frame_buffer().values());
+  Kokkos::deep_copy(h_rolled, rolled.frame_buffer().values());
+  auto h_fresh = Kokkos::create_mirror_view(fresh.frame_buffer().values());
+  Kokkos::deep_copy(h_fresh, fresh.frame_buffer().values());
+
+  const int npoints = points.size();
+  const int ncomp = rolled.frame_buffer().number_of_components();
+  for (int ip = 0; ip < npoints; ++ip) {
+    for (int ic = 0; ic < ncomp; ++ic) {
+      for (int k = 0; k < W; ++k) {
+        EXPECT_DOUBLE_EQ(static_cast<double>(h_rolled(ip, ic, k)),
+                         static_cast<double>(h_fresh(ip, ic, k)))
+            << "mismatch at point=" << ip << " comp=" << ic << " k=" << k;
+      }
+    }
+  }
+}
+
+// ===========================================================================
+// Test 5: SmallWindowStepsHonored
+//
+// An explicit window_steps request sets the buffer extent exactly, and its
+// values match a full independent sample over the same leading steps.
+// ===========================================================================
+TEST(FkProvider, SmallWindowStepsHonored) {
+  const auto model = make_crust_mantle_model();
+  const auto wave = make_incident_p_wave();
+  const auto window = make_small_time_window();
+  const auto points = make_eval_points_with_normals({ 0, 5000 });
+  const int npoints = points.size();
+
+  specfem::injection::fk_provider<specfem::element::dimension_tag::dim3>
+      provider(model, wave, window, points, /*compute_traction=*/false,
+               specfem::injection::fk::field_derivative::displacement,
+               /*window_steps=*/7);
+
+  provider.initialize();
+  EXPECT_EQ(provider.frame_buffer().number_of_steps(), 7);
+
+  provider.ensure_window(0);
+
+  const auto result = specfem::injection::fk::solve(model, wave, window, points,
+                                                    /*compute_traction=*/false);
+  const int ncomp = provider.frame_buffer().number_of_components();
+  Kokkos::View<type_real ***> full("full", npoints, ncomp, window.nstep);
+  result.sample(0, window.nstep, full);
+  auto h_full = Kokkos::create_mirror_view(full);
+  Kokkos::deep_copy(h_full, full);
+
   auto h_buf = Kokkos::create_mirror_view(provider.frame_buffer().values());
   Kokkos::deep_copy(h_buf, provider.frame_buffer().values());
-  const double actual = static_cast<double>(h_buf(ipoint, icomp, sem_step));
 
-  // Float precision: allow 1e-5 relative tolerance.
-  EXPECT_NEAR(actual, expected, 1.0e-5 * std::max(std::fabs(expected), 1.0e-30))
-      << "buffer value at exact B-spline knot does not match direct evaluate()";
+  for (int ip = 0; ip < npoints; ++ip) {
+    for (int ic = 0; ic < ncomp; ++ic) {
+      for (int k = 0; k < 7; ++k) {
+        EXPECT_DOUBLE_EQ(static_cast<double>(h_buf(ip, ic, k)),
+                         static_cast<double>(h_full(ip, ic, k)))
+            << "mismatch at point=" << ip << " comp=" << ic << " k=" << k;
+      }
+    }
+  }
 }
