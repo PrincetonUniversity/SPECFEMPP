@@ -1,0 +1,37 @@
+MESH_A_CHUNK_OF_THE_EARTH        = .false.
+CHUNK_MESH_PAR_FILE              = dummy.txt
+LATITUDE_MIN                     = 0.0
+LATITUDE_MAX                     = 4000.0
+LONGITUDE_MIN                    = 0.0
+LONGITUDE_MAX                    = 4000.0
+DEPTH_BLOCK_KM                   = 4.0d0
+UTM_PROJECTION_ZONE              = 11
+SUPPRESS_UTM_PROJECTION          = .true.
+INTERFACES_FILE                  = ./interfaces.txt
+CAVITY_FILE                      = no_cavity.dat
+NGNOD                            = 8
+NEX_XI                           = 4
+NEX_ETA                          = 4
+NPROC_XI                         = 1
+NPROC_ETA                        = 1
+USE_REGULAR_MESH                 = .true.
+NDOUBLINGS                       = 0
+NZ_DOUBLING_1                    = 40
+NZ_DOUBLING_2                    = 48
+CREATE_ABAQUS_FILES              = .false.
+CREATE_DX_FILES                  = .false.
+CREATE_VTK_FILES                 = .false.
+SAVE_MESH_AS_CUBIT               = .false.
+LOCAL_PATH                       = ./OUTPUT_FILES/
+THICKNESS_OF_X_PML               = 12.3d0
+THICKNESS_OF_Y_PML               = 12.3d0
+THICKNESS_OF_Z_PML               = 12.3d0
+NMATERIALS                       = 2
+1   1020.0   1500.0      0.0 0 0 0 1
+2   2700.0   3000.0   1732.051 0 0 0 2
+NREGIONS                         = 2
+1              4            1               4             1         2        2
+1              4            1               4             3         4        1
+STACEY_ABSORBING_CONDITIONS    = .true.
+TOP_FREE_SURFACE               = .true.
+BOTTOM_FREE_SURFACE            = .false.

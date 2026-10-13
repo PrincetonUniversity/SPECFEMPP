@@ -1,0 +1,7 @@
+# number of interfaces
+ 1
+# interface number 1 (topography, top of the mesh)
+ .true. 2 2 0.0 0.0 2000.0 2000.0
+ ./interface1.txt
+# number of spectral elements in the vertical direction for the single layer
+ 4

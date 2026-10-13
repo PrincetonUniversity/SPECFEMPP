@@ -20,8 +20,9 @@ namespace injection {
  * @brief Uniform device buffer of injected field values for one time window.
  *
  * The layout is @c [point][component][step], stored in the default Kokkos
- * memory space.  Typical component count is 3 (displacement x/y/z) or 6
- * (displacement x/y/z followed by traction x/y/z).
+ * memory space.  The component ordering and count follow
+ * @c specfem::injection::frame_component (see @c frame_layout.hpp): 3
+ * (displacement), 6 (+ traction), or 7 (+ pressure).
  *
  * The stiffness kernel reads values through @c load_on_device, which is a
  * plain index into this buffer.  The provider (FK, AxiSEM3D, …) is solely
@@ -36,9 +37,9 @@ public:
    * @brief Allocate the buffer for the given dimensions.
    *
    * @param number_of_points     Number of injection evaluation points.
-   * @param number_of_components Number of field components per point (e.g.
-   *                             3 for displacement-only, 6 for
-   *                             displacement + traction).
+   * @param number_of_components Number of field components per point (3
+   *                             displacement, 6 + traction, 7 + pressure; see
+   *                             @c frame_layout.hpp).
    * @param number_of_steps      Number of time steps in the window.
    */
   InjectionFrameBuffer(int number_of_points, int number_of_components,

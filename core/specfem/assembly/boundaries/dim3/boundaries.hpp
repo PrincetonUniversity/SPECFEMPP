@@ -1,10 +1,14 @@
 #pragma once
 
 #include "impl/acoustic_free_surface.hpp"
+#include "impl/injection/injection_boundary.hpp"
 #include "impl/stacey.hpp"
+#include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/assembly/properties.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/injection/injection_inputs.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/point.hpp"
@@ -50,6 +54,10 @@ public:
               ///< absorbing
               ///< BC data
 
+  specfem::assembly::boundaries_impl::injection_boundary<dimension_tag>
+      injection; ///< Incident injection field at the Stacey points (empty when
+                 ///< injection is disabled)
+
   /**
    * @name Constructors
    */
@@ -74,6 +82,27 @@ public:
       const specfem::assembly::mesh<dimension_tag> &mesh_assembly,
       const specfem::assembly::jacobian_matrix<dimension_tag> &jacobian_matrix);
   ///@}
+
+  /**
+   * @brief Build the incident injection field at the Stacey boundary points.
+   *
+   * Populates @ref injection using the Stacey geometry and the local mesh
+   * material. Must be called after the material @p properties are available.
+   * A no-op when @c inputs.enabled is false.
+   *
+   * @param inputs Injection domain inputs (method-specific payload).
+   * @param mesh_assembly Assembly mesh.
+   * @param properties Material properties (local mesh moduli).
+   * @param element_types Per-element medium/property classification.
+   * @param dt Simulation time step in seconds.
+   * @param nstep Total number of simulation time steps.
+   */
+  void initialize_injection(
+      const specfem::injection::injection_inputs &inputs,
+      const specfem::assembly::mesh<dimension_tag> &mesh_assembly,
+      const specfem::assembly::properties<dimension_tag> &properties,
+      const specfem::assembly::element_types<dimension_tag> &element_types,
+      type_real dt, int nstep);
 
   /**
    * @name Boundary tag accessors

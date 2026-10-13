@@ -14,6 +14,7 @@
 #include "sources.hpp"
 #include "specfem/attenuation.hpp"
 #include "specfem/datetime.hpp"
+#include "specfem/injection/injection_inputs.hpp"
 #include "specfem/io.hpp"
 #include "specfem/setup.hpp"
 #include "time_scheme.hpp"
@@ -301,6 +302,18 @@ public:
    */
   const specfem::runtime_configuration::Injection *get_injection() const {
     return this->injection.get();
+  }
+
+  /**
+   * @brief Get the wavefield-injection inputs for the assembly.
+   *
+   * Returns the parsed injection inputs, or a disabled default when no
+   * @c injection: section is present.
+   * @return injection inputs (disabled when absent)
+   */
+  specfem::injection::injection_inputs get_injection_configuration() const {
+    return this->injection ? this->injection->to_injection_inputs()
+                           : specfem::injection::injection_inputs();
   }
 
   /**

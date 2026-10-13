@@ -14,6 +14,7 @@ target_link_libraries(
         specfem::attenuation
         specfem::element
         specfem::element_coupling
+        specfem::injection
         specfem::quadrature
         specfem::mesh
         specfem::mpi

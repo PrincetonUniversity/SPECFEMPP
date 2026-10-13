@@ -13,11 +13,7 @@
 // unit.
 namespace specfem {
 namespace injection {
-template <specfem::element::dimension_tag DimensionTag>
-class injection_provider;
-namespace fk {
-struct EvalPoints;
-} // namespace fk
+struct injection_inputs;
 } // namespace injection
 } // namespace specfem
 
@@ -140,28 +136,17 @@ public:
                                                     int nstep) const;
 
   /**
-   * @brief Factory: map the @c method string to a concrete injection provider.
+   * @brief Assemble the dimension-independent injection domain inputs.
    *
-   * Currently only @c "fk" is recognised; any other method string causes a
-   * @c std::runtime_error naming the supported methods.  The provider is
-   * constructed but @c initialize() is NOT called.
+   * Packs the parsed @c injection: section into a @c injection_inputs POD so
+   * the assembly can build its boundary provider without depending on
+   * @c runtime_configuration. Simulation time parameters (@c dt, @c nstep) are
+   * supplied separately at provider-construction time.
    *
-   * @tparam DimensionTag Spatial dimension of the target simulation
-   *                      (@c dim2 or @c dim3).
-   * @param points          Host-resident evaluation-point coordinates and
-   *                        optional normals / Lamé ratios.
-   * @param dt              Simulation time step in seconds.
-   * @param nstep           Total number of simulation time steps.
-   * @param compute_traction When @c true, traction components are stored in the
-   *                         frame buffer (requires non-empty normals/Lamé in
-   *                         @p points).
-   * @return Shared pointer to the constructed @c injection_provider.
-   * @throws std::runtime_error if @c method() is not @c "fk".
+   * @return Populated @c injection_inputs (with @c compute_traction left at its
+   *         default; callers override it when needed).
    */
-  template <specfem::element::dimension_tag DimensionTag>
-  std::shared_ptr<specfem::injection::injection_provider<DimensionTag>>
-  instantiate(const specfem::injection::fk::EvalPoints &points, type_real dt,
-              int nstep, bool compute_traction = true) const;
+  specfem::injection::injection_inputs to_injection_inputs() const;
 
 private:
   bool enabled_ = true;       ///< Whether injection is enabled

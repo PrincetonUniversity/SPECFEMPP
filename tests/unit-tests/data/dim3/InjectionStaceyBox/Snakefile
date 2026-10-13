@@ -1,0 +1,43 @@
+# Provenance for the InjectionStaceyBox unit-test fixture.
+#
+# A small homogeneous elastic box (4 x 4 x 3 = 48 spectral elements), with a
+# free surface on top (Z_MAX = 0) and Stacey absorbing boundaries on the four
+# lateral faces and the bottom. Material rho = 2700, vp = 3000, vs = 1732.051
+# (a Poisson solid), matching a single-layer elastic half-space LayeredModel.
+#
+# Regenerate database.bin with the SPECFEM++ mesher:
+#     SPECFEMPP_BINDIR=<build>/bin snakemake -c1
+#
+# The fixture exercises the FK wavefield-injection extraction at the Stacey
+# boundary GLL points (issue #2123). No Fortran reference is needed: the unit
+# test validates the extractor and provider against a self-consistent FK solve,
+# not against an external oracle.
+
+envvars:
+    "SPECFEMPP_BINDIR",
+
+mesh_inputs = ["Mesh_Par_file", "interfaces.txt", "interface1.txt"]
+
+
+rule all:
+    input:
+        database="database.bin",
+    localrule: True
+
+
+rule mesher:
+    input:
+        mesh_inputs=[f"provenance/specfempp/{f}" for f in mesh_inputs],
+    output:
+        database="database.bin",
+    shell:
+        """
+            rm -rf mesher_workdir
+            mkdir -p mesher_workdir/OUTPUT_FILES
+            for file in {input.mesh_inputs}; do cp "$file" mesher_workdir/; done
+            cd mesher_workdir
+            $SPECFEMPP_BINDIR/xmeshfem3D -p Mesh_Par_file
+            cd ..
+            mv mesher_workdir/OUTPUT_FILES/Database.bin database.bin
+            rm -rf mesher_workdir
+        """

@@ -92,7 +92,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
     const bool allocate_boundary_values,
     const std::shared_ptr<specfem::io::reader> &property_reader,
     const specfem::element_coupling::flux_scheme_configuration
-        &flux_scheme_config) {
+        &flux_scheme_config,
+    const specfem::injection::injection_inputs &injection_inputs) {
 
   this->t0 = t0;
   this->dt = dt;
@@ -184,6 +185,12 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
 
   this->info = { this->mesh, this->properties, this->element_types };
 
+  // Injection is a Stacey-boundary condition: build it after properties exist
+  // (it needs the local mesh material) and store it in the boundary container.
+  this->boundaries.initialize_injection(injection_inputs, this->mesh,
+                                        this->properties, this->element_types,
+                                        dt, max_timesteps);
+
   return;
 }
 
@@ -203,7 +210,8 @@ template specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::
         const bool allocate_boundary_values,
         const std::shared_ptr<specfem::io::reader> &property_reader,
         const specfem::element_coupling::flux_scheme_configuration
-            &flux_scheme_config);
+            &flux_scheme_config,
+        const specfem::injection::injection_inputs &injection_inputs);
 
 template specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::
     assembly(
@@ -221,7 +229,8 @@ template specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::
         const bool allocate_boundary_values,
         const std::shared_ptr<specfem::io::reader> &property_reader,
         const specfem::element_coupling::flux_scheme_configuration
-            &flux_scheme_config);
+            &flux_scheme_config,
+        const specfem::injection::injection_inputs &injection_inputs);
 
 std::string
 specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::print()

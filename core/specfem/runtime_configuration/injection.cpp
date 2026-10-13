@@ -1,8 +1,6 @@
 #include "injection.hpp"
-#include "specfem/injection/fk/eval_points.hpp"
 #include "specfem/injection/fk/model_file_reader.hpp"
-#include "specfem/injection/fk_provider.hpp"
-#include "specfem/injection/injection_provider.hpp"
+#include "specfem/injection/injection_inputs.hpp"
 #include "specfem/utilities/strings.hpp"
 #include <stdexcept>
 #include <tuple>
@@ -308,30 +306,17 @@ specfem::runtime_configuration::Injection::to_time_window(type_real dt,
   return window;
 }
 
-template <specfem::element::dimension_tag DimensionTag>
-std::shared_ptr<specfem::injection::injection_provider<DimensionTag>>
-specfem::runtime_configuration::Injection::instantiate(
-    const specfem::injection::fk::EvalPoints &points, type_real dt, int nstep,
-    bool compute_traction) const {
-  if (method_ == "fk") {
-    const auto window = this->to_time_window(dt, nstep);
-    return std::make_shared<specfem::injection::fk_provider<DimensionTag>>(
-        model_, wave_, window, points, compute_traction, derivative_,
-        window_steps_);
-  }
-  throw std::runtime_error("injection: unknown method '" + method_ +
-                           "'. Supported methods: fk");
+specfem::injection::injection_inputs
+specfem::runtime_configuration::Injection::to_injection_inputs() const {
+  specfem::injection::injection_inputs inputs;
+  inputs.enabled = enabled_;
+  inputs.method = method_;
+  inputs.model = model_;
+  inputs.wave = wave_;
+  inputs.derivative = derivative_;
+  inputs.frequency_max = frequency_max_;
+  inputs.frequency_sampling = frequency_sampling_;
+  inputs.time_window_length = time_window_length_;
+  inputs.window_steps = window_steps_;
+  return inputs;
 }
-
-// Explicit instantiations for both spatial dimensions.
-template std::shared_ptr<specfem::injection::injection_provider<
-    specfem::element::dimension_tag::dim2>>
-specfem::runtime_configuration::Injection::instantiate<
-    specfem::element::dimension_tag::dim2>(
-    const specfem::injection::fk::EvalPoints &, type_real, int, bool) const;
-
-template std::shared_ptr<specfem::injection::injection_provider<
-    specfem::element::dimension_tag::dim3>>
-specfem::runtime_configuration::Injection::instantiate<
-    specfem::element::dimension_tag::dim3>(
-    const specfem::injection::fk::EvalPoints &, type_real, int, bool) const;
