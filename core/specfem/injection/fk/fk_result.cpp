@@ -1,6 +1,7 @@
 #include "specfem/injection/fk/fk_result.hpp"
 
 #include "specfem/injection/fk/series_layout.hpp" // series slot indices
+#include "specfem/injection/frame_layout.hpp"     // frame-buffer components
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
@@ -32,11 +33,16 @@ void specfem::injection::fk::FkResult::sample(
       "evaluation");
 
   namespace cubic = specfem::utilities::cubic_bspline;
+  namespace frame = specfem::injection::frame_component;
   constexpr int s0 = specfem::injection::fk_impl::series_horizontal;
   constexpr int s1 = specfem::injection::fk_impl::series_vertical;
   constexpr int s2 = specfem::injection::fk_impl::series_sigma_zz;
   constexpr int s3 = specfem::injection::fk_impl::series_sigma_rz;
   constexpr int s4 = specfem::injection::fk_impl::series_dx;
+  constexpr int with_traction =
+      specfem::injection::displacement_traction_component_count;
+  constexpr int with_pressure =
+      specfem::injection::displacement_traction_pressure_component_count;
 
   // Local copies (a device lambda cannot capture `this`).
   const auto coefficients = series_coefficients_;
@@ -66,11 +72,13 @@ void specfem::injection::fk::FkResult::sample(
         const double vertical = cubic::evaluate<type_real>(
             &coefficients(g, s1, 0), ncoef, abscissa);
 
-        out(ipt, 0, k) = static_cast<type_real>(cos_phi * horizontal);
-        out(ipt, 1, k) = static_cast<type_real>(sin_phi * horizontal);
-        out(ipt, 2, k) = static_cast<type_real>(vertical);
+        out(ipt, frame::displacement_x, k) =
+            static_cast<type_real>(cos_phi * horizontal);
+        out(ipt, frame::displacement_y, k) =
+            static_cast<type_real>(sin_phi * horizontal);
+        out(ipt, frame::displacement_z, k) = static_cast<type_real>(vertical);
 
-        if (ncomp > 3) {
+        if (ncomp >= with_traction) {
           double tx = 0.0;
           double ty = 0.0;
           double tz = 0.0;
@@ -102,18 +110,18 @@ void specfem::injection::fk::FkResult::sample(
             ty = txy * nx + tyy * ny + tyz * nz;
             tz = txz * nx + tyz * ny + tzz * nz;
           }
-          out(ipt, 3, k) = static_cast<type_real>(tx);
-          out(ipt, 4, k) = static_cast<type_real>(ty);
-          out(ipt, 5, k) = static_cast<type_real>(tz);
+          out(ipt, frame::traction_x, k) = static_cast<type_real>(tx);
+          out(ipt, frame::traction_y, k) = static_cast<type_real>(ty);
+          out(ipt, frame::traction_z, k) = static_cast<type_real>(tz);
         }
 
-        if (ncomp > 6) {
+        if (ncomp >= with_pressure) {
           double pressure = 0.0;
           if (is_acoustic(ipt)) {
             pressure = cubic::evaluate<type_real>(&coefficients(g, s2, 0),
                                                   ncoef, abscissa);
           }
-          out(ipt, 6, k) = static_cast<type_real>(pressure);
+          out(ipt, frame::pressure, k) = static_cast<type_real>(pressure);
         }
       });
   Kokkos::fence();

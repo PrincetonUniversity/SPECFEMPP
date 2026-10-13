@@ -2,6 +2,7 @@
 #include "specfem/injection/fk/boundary_coupling.hpp"
 #include "specfem/injection/fk/solver.hpp"
 #include "specfem/injection/fk_provider.hpp"
+#include "specfem/injection/frame_layout.hpp"
 #include "specfem/injection/injection_frame_buffer.hpp"
 #include "specfem/injection/injection_points.hpp"
 #include "specfem/utilities/cubic_bspline.hpp"
@@ -184,7 +185,8 @@ TEST(FkProvider, FkProviderReconstructsFinite) {
   // Shape checks: the buffer holds a window of W <= nstep steps.
   const int W = buf.number_of_steps();
   EXPECT_EQ(buf.number_of_points(), npoints);
-  EXPECT_EQ(buf.number_of_components(), 6); // disp (3) + traction (3)
+  EXPECT_EQ(buf.number_of_components(),
+            specfem::injection::displacement_traction_component_count);
   EXPECT_GT(W, 0);
   EXPECT_LE(W, nstep);
 
@@ -202,7 +204,8 @@ TEST(FkProvider, FkProviderReconstructsFinite) {
         if (!std::isfinite(v)) {
           all_finite = false;
         }
-        if (ic < 3 && std::fabs(v) > max_abs_disp) {
+        if (ic < specfem::injection::displacement_component_count &&
+            std::fabs(v) > max_abs_disp) {
           max_abs_disp = std::fabs(v);
         }
       }

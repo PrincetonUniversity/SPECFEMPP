@@ -35,11 +35,10 @@ namespace injection {
  *    window of steps containing @p istep into the @c InjectionFrameBuffer.
  * -# The stiffness kernel reads values via @c frame_buffer().load_on_device.
  *
- * Component layout in the frame buffer:
- * - components 0–2: displacement (x, y, z)
- * - components 3–5: traction (x, y, z) — only when @p compute_traction is true
- * - component 6: pressure — only when @p compute_traction is true and the model
- *   has a fluid layer (acoustic faces; zero at elastic points)
+ * Frame-buffer component layout follows @c specfem::injection::frame_component
+ * (see @c specfem/injection/frame_layout.hpp): 0-2 displacement, 3-5 traction
+ * (only when @p compute_traction), 6 pressure (only when @p compute_traction
+ * and the model has a fluid layer; zero at elastic points).
  */
 template <specfem::element::dimension_tag DimensionTag>
 class fk_provider : public injection_provider<DimensionTag> {

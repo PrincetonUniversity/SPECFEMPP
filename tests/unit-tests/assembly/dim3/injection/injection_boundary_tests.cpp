@@ -5,6 +5,7 @@
 #include "specfem/injection/fk/layered_model.hpp"
 #include "specfem/injection/fk/solver.hpp"
 #include "specfem/injection/fk/time_window.hpp"
+#include "specfem/injection/frame_layout.hpp"
 #include "specfem/injection/injection_inputs.hpp"
 #include "specfem/injection/injection_points.hpp"
 #include "specfem/io.hpp"
@@ -16,6 +17,7 @@
 #include <cmath>
 #include <gtest/gtest.h>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace {
@@ -71,11 +73,12 @@ specfem::injection::injection_inputs make_inputs() {
   return inputs;
 }
 
-// Build the InjectionStaceyBox assembly with injection enabled.
-specfem::assembly::assembly<dim3_tag> make_assembly() {
+// Build an injection-enabled dim3 assembly from a mesh database and inputs.
+specfem::assembly::assembly<dim3_tag>
+make_injection_assembly(const std::string &database,
+                        const specfem::injection::injection_inputs &inputs) {
   auto mesh =
-      specfem::io::read_3d_mesh("data/dim3/InjectionStaceyBox/database.bin",
-                                specfem::attenuation::Setup{ false });
+      specfem::io::read_3d_mesh(database, specfem::attenuation::Setup{ false });
 
   const auto quadrature = []() {
     specfem::quadrature::gll::gll gll{};
@@ -93,7 +96,13 @@ specfem::assembly::assembly<dim3_tag> make_assembly() {
       mesh, quadrature, sources, receivers, seismogram_types,
       static_cast<type_real>(0), k_dt, k_nstep, 1, 1,
       specfem::simulation::type::forward, false, nullptr,
-      specfem::element_coupling::flux_scheme_configuration(), make_inputs());
+      specfem::element_coupling::flux_scheme_configuration(), inputs);
+}
+
+// Build the InjectionStaceyBox assembly with injection enabled.
+specfem::assembly::assembly<dim3_tag> make_assembly() {
+  return make_injection_assembly("data/dim3/InjectionStaceyBox/database.bin",
+                                 make_inputs());
 }
 
 // Re-extract the injection points from a built assembly (same code path the
@@ -217,7 +226,7 @@ TEST(InjectionStaceyBox, EndToEndMatchesDirectSolve) {
   const auto &buffer = provider->frame_buffer();
   const int ncomp = buffer.number_of_components();
   const int W = buffer.number_of_steps();
-  ASSERT_EQ(ncomp, 6);
+  ASSERT_EQ(ncomp, specfem::injection::displacement_traction_component_count);
 
   Kokkos::View<type_real ***> reference("reference", npoints, ncomp, W);
   result.sample(0, W, reference);
@@ -238,7 +247,7 @@ TEST(InjectionStaceyBox, EndToEndMatchesDirectSolve) {
         EXPECT_TRUE(std::isfinite(got));
         max_difference = std::max(max_difference, std::fabs(got - ref));
         max_reference = std::max(max_reference, std::fabs(ref));
-        if (ic < 3) {
+        if (ic < specfem::injection::displacement_component_count) {
           max_displacement = std::max(max_displacement, std::fabs(got));
         }
       }
@@ -278,27 +287,8 @@ specfem::injection::injection_inputs make_acoustic_elastic_inputs() {
 }
 
 specfem::assembly::assembly<dim3_tag> make_acoustic_elastic_assembly() {
-  auto mesh = specfem::io::read_3d_mesh(
+  return make_injection_assembly(
       "data/dim3/InjectionAcousticElasticBox/database.bin",
-      specfem::attenuation::Setup{ false });
-
-  const auto quadrature = []() {
-    specfem::quadrature::gll::gll gll{};
-    return specfem::quadrature::quadratures(gll);
-  }();
-
-  std::vector<std::shared_ptr<specfem::sources::source<dim3_tag>>> sources;
-  std::vector<std::shared_ptr<specfem::receivers::receiver<dim3_tag>>>
-      receivers;
-  std::vector<specfem::enums::wavefield> seismogram_types = {
-    specfem::enums::wavefield::displacement
-  };
-
-  return specfem::assembly::assembly<dim3_tag>(
-      mesh, quadrature, sources, receivers, seismogram_types,
-      static_cast<type_real>(0), k_dt, k_nstep, 1, 1,
-      specfem::simulation::type::forward, false, nullptr,
-      specfem::element_coupling::flux_scheme_configuration(),
       make_acoustic_elastic_inputs());
 }
 
@@ -376,7 +366,8 @@ TEST(InjectionAcousticElasticBox, EndToEndMatchesDirectSolve) {
   const auto &buffer = provider->frame_buffer();
   const int ncomp = buffer.number_of_components();
   const int W = buffer.number_of_steps();
-  ASSERT_EQ(ncomp, 7); // displacement + traction + pressure
+  ASSERT_EQ(ncomp,
+            specfem::injection::displacement_traction_pressure_component_count);
 
   Kokkos::View<type_real ***> reference("reference", npoints, ncomp, W);
   result.sample(0, W, reference);
@@ -399,7 +390,7 @@ TEST(InjectionAcousticElasticBox, EndToEndMatchesDirectSolve) {
         EXPECT_TRUE(std::isfinite(got));
         max_difference = std::max(max_difference, std::fabs(got - ref));
         max_reference = std::max(max_reference, std::fabs(ref));
-        if (acoustic && ic == 6) {
+        if (acoustic && ic == specfem::injection::frame_component::pressure) {
           max_pressure = std::max(max_pressure, std::fabs(got));
         }
       }

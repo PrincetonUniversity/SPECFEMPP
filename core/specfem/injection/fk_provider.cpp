@@ -3,6 +3,7 @@
 #include "specfem/injection/fk/boundary_coupling.hpp"
 #include "specfem/injection/fk/eval_points.hpp"
 #include "specfem/injection/fk/solver.hpp"
+#include "specfem/injection/frame_layout.hpp"
 #include <Kokkos_Core.hpp>
 #include <algorithm>
 #include <cstddef>
@@ -41,17 +42,8 @@ void specfem::injection::fk_provider<DimensionTag>::initialize() {
                                           compute_traction_, derivative_);
 
   const int nstep = window_.nstep;
-  // Component layout: 0-2 displacement, 3-5 traction (elastic faces), 6
-  // pressure (acoustic faces). The pressure slot is only allocated when the
-  // model has a fluid layer, i.e. when acoustic injection points are possible.
-  int ncomp;
-  if (!compute_traction_) {
-    ncomp = 3;
-  } else if (model_.has_fluid_layer()) {
-    ncomp = 7;
-  } else {
-    ncomp = 6;
-  }
+  const int ncomp = specfem::injection::injection_component_count(
+      compute_traction_, model_.has_fluid_layer());
   const int npoints = points_.size();
 
   // Window length: honor an explicit request, else fit within a fixed memory
