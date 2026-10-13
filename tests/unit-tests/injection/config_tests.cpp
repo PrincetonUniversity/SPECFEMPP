@@ -1,5 +1,7 @@
-#include "specfem/injection/fk/eval_points.hpp"
+#include "specfem/element/tags.hpp"
+#include "specfem/injection/injection_points.hpp"
 #include "specfem/injection/injection_provider.hpp"
+#include "specfem/injection/make_provider.hpp"
 #include "specfem/runtime_configuration/injection.hpp"
 
 #include <Kokkos_Core.hpp>
@@ -8,14 +10,30 @@
 #include <cmath>
 
 // ---------------------------------------------------------------------------
-// Helper: build a minimal 1-point EvalPoints (no traction views).
+// Helper: build a minimal 1-point injection_points at depth z with elastic
+// crust material (rho, vp, vs) so the FK consistency check at initialize()
+// passes for a point inside the crust layer.
 // ---------------------------------------------------------------------------
-static specfem::injection::fk::EvalPoints make_one_point_eval_points() {
-  specfem::injection::fk::EvalPoints ep;
-  ep.x = Kokkos::View<type_real *, Kokkos::HostSpace>("x", 1);
-  ep.y = Kokkos::View<type_real *, Kokkos::HostSpace>("y", 1);
-  ep.z = Kokkos::View<type_real *, Kokkos::HostSpace>("z", 1);
-  return ep;
+static specfem::injection::injection_points
+make_one_point_injection_points(double z = 0.0) {
+  specfem::injection::injection_points points;
+  points.x = Kokkos::View<type_real *, Kokkos::HostSpace>("x", 1);
+  points.y = Kokkos::View<type_real *, Kokkos::HostSpace>("y", 1);
+  points.z = Kokkos::View<type_real *, Kokkos::HostSpace>("z", 1);
+  points.medium =
+      Kokkos::View<specfem::element::medium_tag *, Kokkos::HostSpace>("medium",
+                                                                      1);
+  points.rho = Kokkos::View<type_real *, Kokkos::HostSpace>("rho", 1);
+  points.vp = Kokkos::View<type_real *, Kokkos::HostSpace>("vp", 1);
+  points.vs = Kokkos::View<type_real *, Kokkos::HostSpace>("vs", 1);
+  points.x(0) = static_cast<type_real>(0);
+  points.y(0) = static_cast<type_real>(0);
+  points.z(0) = static_cast<type_real>(z);
+  points.medium(0) = specfem::element::medium_tag::elastic;
+  points.rho(0) = static_cast<type_real>(2800);
+  points.vp(0) = static_cast<type_real>(6000);
+  points.vs(0) = static_cast<type_real>(3500);
+  return points;
 }
 
 // ---------------------------------------------------------------------------
@@ -83,9 +101,12 @@ TEST(InjectionConfig, InstantiateReturnsFkProvider) {
   const YAML::Node node = YAML::Load(k_inline_yaml);
   const specfem::runtime_configuration::Injection cfg(node);
 
-  const auto ep = make_one_point_eval_points();
-  const auto provider = cfg.instantiate<specfem::element::dimension_tag::dim3>(
-      ep, static_cast<type_real>(0.05), 256, /*compute_traction=*/false);
+  const auto points = make_one_point_injection_points();
+  auto inputs = cfg.to_injection_inputs();
+  inputs.compute_traction = false;
+  const auto provider =
+      specfem::injection::make_provider<specfem::element::dimension_tag::dim3>(
+          inputs, points, static_cast<type_real>(0.05), 256);
 
   EXPECT_NE(provider, nullptr);
 }
@@ -224,10 +245,12 @@ time-window:
   const specfem::runtime_configuration::Injection cfg(node);
   EXPECT_EQ(cfg.method(), "axisem");
 
-  const auto ep = make_one_point_eval_points();
-  EXPECT_THROW((cfg.instantiate<specfem::element::dimension_tag::dim3>(
-                   ep, static_cast<type_real>(0.05), 256, false)),
-               std::runtime_error);
+  const auto points = make_one_point_injection_points();
+  const auto inputs = cfg.to_injection_inputs();
+  EXPECT_THROW(
+      (specfem::injection::make_provider<specfem::element::dimension_tag::dim3>(
+          inputs, points, static_cast<type_real>(0.05), 256)),
+      std::runtime_error);
 }
 
 // ===========================================================================
@@ -326,16 +349,13 @@ time-window:
   const specfem::runtime_configuration::Injection cfg(node);
 
   // One interior point so the FK solve is well-posed.
-  specfem::injection::fk::EvalPoints ep;
-  ep.x = Kokkos::View<type_real *, Kokkos::HostSpace>("x", 1);
-  ep.y = Kokkos::View<type_real *, Kokkos::HostSpace>("y", 1);
-  ep.z = Kokkos::View<type_real *, Kokkos::HostSpace>("z", 1);
-  ep.x(0) = static_cast<type_real>(0);
-  ep.y(0) = static_cast<type_real>(0);
-  ep.z(0) = static_cast<type_real>(5000);
+  const auto points = make_one_point_injection_points(5000.0);
+  auto inputs = cfg.to_injection_inputs();
+  inputs.compute_traction = false;
 
-  const auto provider = cfg.instantiate<specfem::element::dimension_tag::dim3>(
-      ep, static_cast<type_real>(0.05), 256, /*compute_traction=*/false);
+  const auto provider =
+      specfem::injection::make_provider<specfem::element::dimension_tag::dim3>(
+          inputs, points, static_cast<type_real>(0.05), 256);
   ASSERT_NE(provider, nullptr);
 
   provider->initialize();

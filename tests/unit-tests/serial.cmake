@@ -994,3 +994,20 @@ specfem_add_test(injection_config_tests
           injection/config_tests.cpp
   LIBRARIES specfem::injection specfem::runtime_configuration yaml-cpp Kokkos::kokkos gtest_main
 )
+
+specfem_add_test(assembly_dim3_injection_tests
+  LABELS unit
+  SOURCES assembly/dim3/injection/runner.cpp
+          assembly/dim3/injection/injection_boundary_tests.cpp
+  LIBRARIES specfem::io
+            specfem::mesh
+            specfem::assembly
+            specfem::injection
+            specfem::quadrature
+            specfem_environment
+            yaml-cpp
+            specfem::utilities
+            ${BOOST_LIBS}
+            -lpthread -lm
+            gtest
+)

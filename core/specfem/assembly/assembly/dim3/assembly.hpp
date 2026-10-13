@@ -165,6 +165,8 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
    * @param property_reader Reader for GLL model (skip material property
    * assignment if exists)
    * @param flux_scheme_config Flux scheme rules for nonconforming interfaces
+   * @param injection_inputs Wavefield-injection inputs; disabled by default, in
+   * which case no injection field is built
    */
   template <specfem::simulation::model ModelTag>
   assembly(const specfem::mesh::mesh<ModelTag> &mesh,
@@ -182,7 +184,9 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
            const std::shared_ptr<specfem::io::reader> &property_reader,
            const specfem::element_coupling::flux_scheme_configuration
                &flux_scheme_config =
-                   specfem::element_coupling::flux_scheme_configuration());
+                   specfem::element_coupling::flux_scheme_configuration(),
+           const specfem::injection::injection_inputs &injection_inputs =
+               specfem::injection::injection_inputs());
 
   assembly() = default;
 

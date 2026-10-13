@@ -1,5 +1,7 @@
 #include "specfem/injection/fk_provider.hpp"
 
+#include "specfem/injection/fk/boundary_coupling.hpp"
+#include "specfem/injection/fk/eval_points.hpp"
 #include "specfem/injection/fk/solver.hpp"
 #include <Kokkos_Core.hpp>
 #include <algorithm>
@@ -14,12 +16,14 @@ specfem::injection::fk_provider<DimensionTag>::fk_provider(
     specfem::injection::fk::LayeredModel model,
     specfem::injection::fk::IncidentWave wave,
     specfem::injection::fk::TimeWindow window,
-    specfem::injection::fk::EvalPoints points, bool compute_traction,
-    specfem::injection::fk::field_derivative derivative, int window_steps)
+    specfem::injection::injection_points points, bool compute_traction,
+    specfem::injection::fk::field_derivative derivative, int window_steps,
+    double consistency_tolerance)
     : model_(std::move(model)), wave_(std::move(wave)),
       window_(std::move(window)), points_(std::move(points)),
       compute_traction_(compute_traction), derivative_(derivative),
-      window_steps_(window_steps) {}
+      window_steps_(window_steps),
+      consistency_tolerance_(consistency_tolerance) {}
 
 // ---------------------------------------------------------------------------
 // initialize(): run FK solve and allocate the frame buffer
@@ -27,7 +31,13 @@ specfem::injection::fk_provider<DimensionTag>::fk_provider(
 
 template <specfem::element::dimension_tag DimensionTag>
 void specfem::injection::fk_provider<DimensionTag>::initialize() {
-  result_ = specfem::injection::fk::solve(model_, wave_, window_, points_,
+  // Derive the FK evaluation points (Lamé ratios from the local material) and
+  // assert the mesh material matches the 1-D model at every point.
+  const specfem::injection::fk::EvalPoints eval_points =
+      specfem::injection::fk::eval_points_from_points(
+          points_, model_, compute_traction_, consistency_tolerance_);
+
+  result_ = specfem::injection::fk::solve(model_, wave_, window_, eval_points,
                                           compute_traction_, derivative_);
 
   const int nstep = window_.nstep;

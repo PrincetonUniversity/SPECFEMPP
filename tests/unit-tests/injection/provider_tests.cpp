@@ -1,88 +1,95 @@
+#include "specfem/element/tags.hpp"
+#include "specfem/injection/fk/boundary_coupling.hpp"
 #include "specfem/injection/fk/solver.hpp"
 #include "specfem/injection/fk_provider.hpp"
 #include "specfem/injection/injection_frame_buffer.hpp"
+#include "specfem/injection/injection_points.hpp"
 #include "specfem/utilities/cubic_bspline.hpp"
 
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 
 #include <cmath>
+#include <stdexcept>
 #include <vector>
 
 // ---------------------------------------------------------------------------
-// Helper: build an EvalPoints with n points at the given z-coords.
-// Normal vectors point in +z direction; Lamé ratios set to representative
-// elastic values.
+// Helper: fill the local material of injection point i from the crust+mantle
+// model below (so the FK provider's model-vs-mesh consistency check passes).
 // ---------------------------------------------------------------------------
-static specfem::injection::fk::EvalPoints
-make_eval_points_with_normals(const std::vector<double> &z_coords) {
-  const int n = static_cast<int>(z_coords.size());
-
-  specfem::injection::fk::EvalPoints ep;
-  ep.x = Kokkos::View<type_real *, Kokkos::HostSpace>("x", n);
-  ep.y = Kokkos::View<type_real *, Kokkos::HostSpace>("y", n);
-  ep.z = Kokkos::View<type_real *, Kokkos::HostSpace>("z", n);
-  ep.normal_x = Kokkos::View<type_real *, Kokkos::HostSpace>("normal_x", n);
-  ep.normal_y = Kokkos::View<type_real *, Kokkos::HostSpace>("normal_y", n);
-  ep.normal_z = Kokkos::View<type_real *, Kokkos::HostSpace>("normal_z", n);
-  ep.lame_ratio_xi1 =
-      Kokkos::View<type_real *, Kokkos::HostSpace>("lame_ratio_xi1", n);
-  ep.lame_ratio_xim =
-      Kokkos::View<type_real *, Kokkos::HostSpace>("lame_ratio_xim", n);
-  ep.lame_ratio_bulk =
-      Kokkos::View<type_real *, Kokkos::HostSpace>("lame_ratio_bulk", n);
-
-  for (int i = 0; i < n; ++i) {
-    ep.x(i) = static_cast<type_real>(0);
-    ep.y(i) = static_cast<type_real>(0);
-    ep.z(i) = static_cast<type_real>(z_coords[i]);
-    ep.normal_x(i) = static_cast<type_real>(0);
-    ep.normal_y(i) = static_cast<type_real>(0);
-    ep.normal_z(i) = static_cast<type_real>(1);
-    ep.lame_ratio_xi1(i) = static_cast<type_real>(2.0); // (lambda + 2*mu) / mu
-    ep.lame_ratio_xim(i) = static_cast<type_real>(1.0); // mu / (2*mu)
-    ep.lame_ratio_bulk(i) = static_cast<type_real>(0.333);
+static void
+set_crust_mantle_material(specfem::injection::injection_points &points, int i,
+                          double z) {
+  if (z < 35000.0) { // crust
+    points.rho(i) = static_cast<type_real>(2800);
+    points.vp(i) = static_cast<type_real>(6000);
+    points.vs(i) = static_cast<type_real>(3500);
+  } else { // mantle half-space
+    points.rho(i) = static_cast<type_real>(3300);
+    points.vp(i) = static_cast<type_real>(8100);
+    points.vs(i) = static_cast<type_real>(4500);
   }
-
-  return ep;
 }
 
 // ---------------------------------------------------------------------------
-// Helper: build an EvalPoints at the given (x, z) coordinates with normals and
-// Lamé ratios.  A non-zero x gives a non-zero FK time delay tau.
+// Helper: allocate the Views of an injection_points for n points, with outward
+// normals in +z and elastic medium.
 // ---------------------------------------------------------------------------
-static specfem::injection::fk::EvalPoints
-make_eval_points_xz(const std::vector<double> &xs,
-                    const std::vector<double> &zs) {
-  const int n = static_cast<int>(xs.size());
-
-  specfem::injection::fk::EvalPoints ep;
-  ep.x = Kokkos::View<type_real *, Kokkos::HostSpace>("x", n);
-  ep.y = Kokkos::View<type_real *, Kokkos::HostSpace>("y", n);
-  ep.z = Kokkos::View<type_real *, Kokkos::HostSpace>("z", n);
-  ep.normal_x = Kokkos::View<type_real *, Kokkos::HostSpace>("normal_x", n);
-  ep.normal_y = Kokkos::View<type_real *, Kokkos::HostSpace>("normal_y", n);
-  ep.normal_z = Kokkos::View<type_real *, Kokkos::HostSpace>("normal_z", n);
-  ep.lame_ratio_xi1 =
-      Kokkos::View<type_real *, Kokkos::HostSpace>("lame_ratio_xi1", n);
-  ep.lame_ratio_xim =
-      Kokkos::View<type_real *, Kokkos::HostSpace>("lame_ratio_xim", n);
-  ep.lame_ratio_bulk =
-      Kokkos::View<type_real *, Kokkos::HostSpace>("lame_ratio_bulk", n);
-
+static specfem::injection::injection_points allocate_points(int n) {
+  specfem::injection::injection_points points;
+  points.x = Kokkos::View<type_real *, Kokkos::HostSpace>("x", n);
+  points.y = Kokkos::View<type_real *, Kokkos::HostSpace>("y", n);
+  points.z = Kokkos::View<type_real *, Kokkos::HostSpace>("z", n);
+  points.normal_x = Kokkos::View<type_real *, Kokkos::HostSpace>("normal_x", n);
+  points.normal_y = Kokkos::View<type_real *, Kokkos::HostSpace>("normal_y", n);
+  points.normal_z = Kokkos::View<type_real *, Kokkos::HostSpace>("normal_z", n);
+  points.medium =
+      Kokkos::View<specfem::element::medium_tag *, Kokkos::HostSpace>("medium",
+                                                                      n);
+  points.rho = Kokkos::View<type_real *, Kokkos::HostSpace>("rho", n);
+  points.vp = Kokkos::View<type_real *, Kokkos::HostSpace>("vp", n);
+  points.vs = Kokkos::View<type_real *, Kokkos::HostSpace>("vs", n);
   for (int i = 0; i < n; ++i) {
-    ep.x(i) = static_cast<type_real>(xs[i]);
-    ep.y(i) = static_cast<type_real>(0);
-    ep.z(i) = static_cast<type_real>(zs[i]);
-    ep.normal_x(i) = static_cast<type_real>(0);
-    ep.normal_y(i) = static_cast<type_real>(0);
-    ep.normal_z(i) = static_cast<type_real>(1);
-    ep.lame_ratio_xi1(i) = static_cast<type_real>(2.0);
-    ep.lame_ratio_xim(i) = static_cast<type_real>(1.0);
-    ep.lame_ratio_bulk(i) = static_cast<type_real>(0.333);
+    points.normal_x(i) = static_cast<type_real>(0);
+    points.normal_y(i) = static_cast<type_real>(0);
+    points.normal_z(i) = static_cast<type_real>(1);
+    points.medium(i) = specfem::element::medium_tag::elastic;
   }
+  return points;
+}
 
-  return ep;
+// ---------------------------------------------------------------------------
+// Helper: build injection points at the given z-coords (x = 0).
+// ---------------------------------------------------------------------------
+static specfem::injection::injection_points
+make_injection_points_z(const std::vector<double> &z_coords) {
+  const int n = static_cast<int>(z_coords.size());
+  specfem::injection::injection_points points = allocate_points(n);
+  for (int i = 0; i < n; ++i) {
+    points.x(i) = static_cast<type_real>(0);
+    points.y(i) = static_cast<type_real>(0);
+    points.z(i) = static_cast<type_real>(z_coords[i]);
+    set_crust_mantle_material(points, i, z_coords[i]);
+  }
+  return points;
+}
+
+// ---------------------------------------------------------------------------
+// Helper: build injection points at the given (x, z) coordinates. A non-zero x
+// gives a non-zero FK time delay tau.
+// ---------------------------------------------------------------------------
+static specfem::injection::injection_points
+make_injection_points_xz(const std::vector<double> &xs,
+                         const std::vector<double> &zs) {
+  const int n = static_cast<int>(xs.size());
+  specfem::injection::injection_points points = allocate_points(n);
+  for (int i = 0; i < n; ++i) {
+    points.x(i) = static_cast<type_real>(xs[i]);
+    points.y(i) = static_cast<type_real>(0);
+    points.z(i) = static_cast<type_real>(zs[i]);
+    set_crust_mantle_material(points, i, zs[i]);
+  }
+  return points;
 }
 
 // ---------------------------------------------------------------------------
@@ -135,6 +142,20 @@ static specfem::injection::fk::TimeWindow make_small_time_window() {
   return window;
 }
 
+// Independent reference sample: reproduce exactly what the provider does
+// (convert the generic points to FK evaluation points, then solve).
+static specfem::injection::fk::FkResult
+reference_result(const specfem::injection::fk::LayeredModel &model,
+                 const specfem::injection::fk::IncidentWave &wave,
+                 const specfem::injection::fk::TimeWindow &window,
+                 const specfem::injection::injection_points &points,
+                 bool compute_traction) {
+  const auto eval = specfem::injection::fk::eval_points_from_points(
+      points, model, compute_traction, /*tolerance=*/1e-3);
+  return specfem::injection::fk::solve(model, wave, window, eval,
+                                       compute_traction);
+}
+
 // ===========================================================================
 // Test 1: FkProviderReconstructsFinite
 //
@@ -148,8 +169,7 @@ TEST(FkProvider, FkProviderReconstructsFinite) {
   const auto model = make_crust_mantle_model();
   const auto wave = make_incident_p_wave();
   const auto window = make_small_time_window();
-  const auto points =
-      make_eval_points_with_normals({ 0, 5000, 15000, 30000, 40000 });
+  const auto points = make_injection_points_z({ 0, 5000, 15000, 30000, 40000 });
   const int npoints = points.size();
   const int nstep = window.nstep;
 
@@ -203,7 +223,7 @@ TEST(FkProvider, FkProviderEnsureWindowIsIdempotent) {
   const auto model = make_crust_mantle_model();
   const auto wave = make_incident_p_wave();
   const auto window = make_small_time_window();
-  const auto points = make_eval_points_with_normals({ 0, 10000 });
+  const auto points = make_injection_points_z({ 0, 10000 });
 
   specfem::injection::fk_provider<specfem::element::dimension_tag::dim3>
       provider(model, wave, window, points, /*compute_traction=*/false);
@@ -240,7 +260,8 @@ TEST(FkProvider, LoadMatchesFkResultSample) {
   const auto wave = make_incident_p_wave();
   const auto window = make_small_time_window();
   // Point 0 at the origin (tau = 0); point 1 laterally offset (tau != 0).
-  const auto points = make_eval_points_xz({ 0.0, 30000.0 }, { 5000.0, 5000.0 });
+  const auto points =
+      make_injection_points_xz({ 0.0, 30000.0 }, { 5000.0, 5000.0 });
   const int npoints = points.size();
   const int nstep = window.nstep;
 
@@ -261,8 +282,8 @@ TEST(FkProvider, LoadMatchesFkResultSample) {
   ASSERT_GT(start, 0);
 
   // Independent full sample on the same inputs.
-  const auto result = specfem::injection::fk::solve(model, wave, window, points,
-                                                    /*compute_traction=*/false);
+  const auto result =
+      reference_result(model, wave, window, points, /*compute_traction=*/false);
   ASSERT_GT(result.resampling_rate(), 0);
   const int ncomp = provider.frame_buffer().number_of_components();
   Kokkos::View<type_real ***> full("full", npoints, ncomp, nstep);
@@ -307,7 +328,8 @@ TEST(FkProvider, WindowRolloverMatchesFreshProvider) {
   const auto model = make_crust_mantle_model();
   const auto wave = make_incident_p_wave();
   const auto window = make_small_time_window();
-  const auto points = make_eval_points_xz({ 0.0, 30000.0 }, { 5000.0, 5000.0 });
+  const auto points =
+      make_injection_points_xz({ 0.0, 30000.0 }, { 5000.0, 5000.0 });
 
   auto make_provider = [&]() {
     return specfem::injection::fk_provider<
@@ -359,7 +381,7 @@ TEST(FkProvider, SmallWindowStepsHonored) {
   const auto model = make_crust_mantle_model();
   const auto wave = make_incident_p_wave();
   const auto window = make_small_time_window();
-  const auto points = make_eval_points_with_normals({ 0, 5000 });
+  const auto points = make_injection_points_z({ 0, 5000 });
   const int npoints = points.size();
 
   specfem::injection::fk_provider<specfem::element::dimension_tag::dim3>
@@ -372,8 +394,8 @@ TEST(FkProvider, SmallWindowStepsHonored) {
 
   provider.ensure_window(0);
 
-  const auto result = specfem::injection::fk::solve(model, wave, window, points,
-                                                    /*compute_traction=*/false);
+  const auto result =
+      reference_result(model, wave, window, points, /*compute_traction=*/false);
   const int ncomp = provider.frame_buffer().number_of_components();
   Kokkos::View<type_real ***> full("full", npoints, ncomp, window.nstep);
   result.sample(0, window.nstep, full);
@@ -392,4 +414,26 @@ TEST(FkProvider, SmallWindowStepsHonored) {
       }
     }
   }
+}
+
+// ===========================================================================
+// Test 6: RejectsInconsistentMaterial
+//
+// The FK provider owns a model-vs-mesh consistency check: initialize() throws
+// when a point's local material disagrees with the 1-D model layer at its
+// depth. Here a crust-depth point carries mantle material.
+// ===========================================================================
+TEST(FkProvider, RejectsInconsistentMaterial) {
+  const auto model = make_crust_mantle_model();
+  const auto wave = make_incident_p_wave();
+  const auto window = make_small_time_window();
+  auto points = make_injection_points_z({ 5000 }); // crust depth
+  points.rho(0) = static_cast<type_real>(3300);    // mantle material (wrong)
+  points.vp(0) = static_cast<type_real>(8100);
+  points.vs(0) = static_cast<type_real>(4500);
+
+  specfem::injection::fk_provider<specfem::element::dimension_tag::dim3>
+      provider(model, wave, window, points, /*compute_traction=*/false);
+
+  EXPECT_THROW(provider.initialize(), std::runtime_error);
 }

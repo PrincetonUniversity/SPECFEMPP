@@ -8,13 +8,13 @@
  * @c InjectionFrameBuffer via cubic-B-spline interpolation.
  */
 
-#include "specfem/injection/fk/eval_points.hpp"
 #include "specfem/injection/fk/field_derivative.hpp"
 #include "specfem/injection/fk/fk_result.hpp"
 #include "specfem/injection/fk/incident_wave.hpp"
 #include "specfem/injection/fk/layered_model.hpp"
 #include "specfem/injection/fk/time_window.hpp"
 #include "specfem/injection/injection_frame_buffer.hpp"
+#include "specfem/injection/injection_points.hpp"
 #include "specfem/injection/injection_provider.hpp"
 
 namespace specfem {
@@ -48,26 +48,30 @@ public:
    * @param model            1-D horizontally-layered velocity model.
    * @param wave             Incident plane-wave descriptor.
    * @param window           Simulation time-step and windowing parameters.
-   * @param points           Host-resident evaluation-point coordinates and
-   *                         optional normals / Lamé ratios.
+   * @param points           Method-agnostic injection points (geometry, medium,
+   *                         local material). The FK Lamé ratios are derived
+   *                         internally from @c points.vp / @c points.vs in
+   *                         @c initialize().
    * @param compute_traction When true, compute and store traction components
-   *                         in the frame buffer (components 3–5).  Requires
-   *                         @p points to have non-zero normal and Lamé Views.
+   *                         in the frame buffer (components 3–5). Requires
+   *                         @p points to carry outward normals.
    * @param derivative       Kinematic quantity for the vector components
    *                         (displacement / velocity / acceleration); the
    *                         Stacey absorbing method requires velocity.
    * @param window_steps     Number of SEM steps held in the frame buffer at
    *                         once; 0 picks an automatic size within a memory
    *                         budget. Clamped to the total step count.
+   * @param consistency_tolerance Relative tolerance for the model-vs-mesh
+   *                         material check performed in @c initialize().
    */
   fk_provider(specfem::injection::fk::LayeredModel model,
               specfem::injection::fk::IncidentWave wave,
               specfem::injection::fk::TimeWindow window,
-              specfem::injection::fk::EvalPoints points,
+              specfem::injection::injection_points points,
               bool compute_traction = true,
               specfem::injection::fk::field_derivative derivative =
                   specfem::injection::fk::field_derivative::displacement,
-              int window_steps = 0);
+              int window_steps = 0, double consistency_tolerance = 1e-3);
 
   /**
    * @brief Run the FK solve; allocates B-spline coefficient Views on device.
@@ -98,15 +102,16 @@ public:
   const InjectionFrameBuffer &frame_buffer() const override;
 
 private:
-  specfem::injection::fk::LayeredModel model_; ///< Velocity model
-  specfem::injection::fk::IncidentWave wave_;  ///< Incident wave descriptor
-  specfem::injection::fk::TimeWindow window_;  ///< Time-window parameters
-  specfem::injection::fk::EvalPoints points_;  ///< Evaluation points
-  bool compute_traction_ = true;               ///< Whether to store traction
+  specfem::injection::fk::LayeredModel model_;  ///< Velocity model
+  specfem::injection::fk::IncidentWave wave_;   ///< Incident wave descriptor
+  specfem::injection::fk::TimeWindow window_;   ///< Time-window parameters
+  specfem::injection::injection_points points_; ///< Injection points (generic)
+  bool compute_traction_ = true;                ///< Whether to store traction
   specfem::injection::fk::field_derivative derivative_ =
       specfem::injection::fk::field_derivative::displacement; ///< Vector
                                                               ///< quantity
-  int window_steps_ = 0; ///< Requested window size (0=auto)
+  int window_steps_ = 0;                ///< Requested window size (0=auto)
+  double consistency_tolerance_ = 1e-3; ///< Model-vs-mesh material tolerance
   specfem::injection::fk::FkResult result_{}; ///< B-spline coefficient result
   InjectionFrameBuffer buffer_{};             ///< Current reconstructed window
   bool window_loaded_ = false; ///< True once a window has been sampled
