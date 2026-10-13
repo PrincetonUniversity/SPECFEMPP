@@ -177,6 +177,31 @@ time-window:
 }
 
 // ===========================================================================
+// TEST 12: RejectsAcousticBelowElastic
+// A fluid layer below an elastic layer must be rejected at parse time, not
+// silently reordered into the fluid block.
+// ===========================================================================
+TEST(InjectionConfig, RejectsAcousticBelowElastic) {
+  const char *yaml_str = R"yaml(
+layers:
+  - elastic:  { rho: 2800, vp: 6000, vs: 3500, thickness: 35000 }
+  - acoustic: { rho: 1025, vp: 1500, thickness: 2000 }
+  - elastic:  { rho: 3300, vp: 8100, vs: 4500, thickness: 0 }
+incidence:
+  type: P
+  take-off: 20.0
+time-window:
+  frequency-max: 1.0
+  frequency-sampling: 10.0
+  length: 128.0
+)yaml";
+
+  const YAML::Node node = YAML::Load(yaml_str);
+  EXPECT_THROW(specfem::runtime_configuration::Injection cfg(node),
+               std::runtime_error);
+}
+
+// ===========================================================================
 // TEST 7: RejectsUnknownMethod
 // Construction succeeds; instantiate() throws.
 // ===========================================================================

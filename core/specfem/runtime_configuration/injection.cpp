@@ -55,11 +55,18 @@ specfem::runtime_configuration::Injection::Injection(const YAML::Node &node) {
 
       std::vector<specfem::injection::fk::AcousticLayer> fluid_layers;
       std::vector<specfem::injection::fk::ElasticIsotropicLayer> elastic_layers;
+      bool seen_elastic_layer = false;
 
       for (std::size_t i = 0; i < layers_node.size(); ++i) {
         const YAML::Node &entry = layers_node[i];
 
         if (entry["acoustic"]) {
+          if (seen_elastic_layer) {
+            throw std::runtime_error(
+                "injection: acoustic (fluid) layers must form a contiguous "
+                "block above the elastic layers; found an acoustic layer "
+                "below an elastic one");
+          }
           const YAML::Node &ac = entry["acoustic"];
           if (ac["vs"]) {
             throw std::runtime_error(
@@ -72,6 +79,7 @@ specfem::runtime_configuration::Injection::Injection(const YAML::Node &node) {
           fluid_layers.push_back(fl);
 
         } else if (entry["elastic"]) {
+          seen_elastic_layer = true;
           const YAML::Node &el = entry["elastic"];
           if (!el["vs"]) {
             throw std::runtime_error(
@@ -150,16 +158,16 @@ specfem::runtime_configuration::Injection::Injection(const YAML::Node &node) {
             "injection: incidence type must be 'P' or 'SV'");
       }
 
-      // Azimuth-phi convention (matches model_file_reader.cpp).
-      double phi_deg = 0.0;
+      // Azimuth-phi convention (matches model_file_reader.cpp). Only assign
+      // when a key is present, so an incidence override that omits the azimuth
+      // does not reset a value loaded from the model file.
       if (inc["back-azimuth"]) {
         const double baz = inc["back-azimuth"].as<double>();
-        phi_deg = -baz - 90.0;
+        wave_.azimuth_phi = static_cast<type_real>((-baz - 90.0) * deg_to_rad);
       } else if (inc["azimuth"]) {
         const double az = inc["azimuth"].as<double>();
-        phi_deg = 90.0 - az;
+        wave_.azimuth_phi = static_cast<type_real>((90.0 - az) * deg_to_rad);
       }
-      wave_.azimuth_phi = static_cast<type_real>(phi_deg * deg_to_rad);
 
       // Take-off angle (degrees -> radians).
       if (inc["take-off"]) {
