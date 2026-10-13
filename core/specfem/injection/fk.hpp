@@ -13,4 +13,6 @@
 #include "specfem/injection/fk/fk_result.hpp"
 #include "specfem/injection/fk/incident_wave.hpp"
 #include "specfem/injection/fk/layered_model.hpp"
+#include "specfem/injection/fk/model_file_reader.hpp"
+#include "specfem/injection/fk/solver.hpp"
 #include "specfem/injection/fk/time_window.hpp"
