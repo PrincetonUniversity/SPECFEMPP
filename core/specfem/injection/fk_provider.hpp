@@ -38,6 +38,8 @@ namespace injection {
  * Component layout in the frame buffer:
  * - components 0–2: displacement (x, y, z)
  * - components 3–5: traction (x, y, z) — only when @p compute_traction is true
+ * - component 6: pressure — only when @p compute_traction is true and the model
+ *   has a fluid layer (acoustic faces; zero at elastic points)
  */
 template <specfem::element::dimension_tag DimensionTag>
 class fk_provider : public injection_provider<DimensionTag> {

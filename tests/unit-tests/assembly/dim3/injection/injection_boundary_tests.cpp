@@ -249,3 +249,164 @@ TEST(InjectionStaceyBox, EndToEndMatchesDirectSolve) {
   EXPECT_LE(max_difference, 1e-5 * (1.0 + max_reference))
       << "frame buffer disagrees with the direct FK solve";
 }
+
+namespace {
+
+// Acoustic (fluid) column material of the InjectionAcousticElasticBox fixture.
+constexpr type_real k_fluid_rho = 1020;
+constexpr type_real k_fluid_vp = 1500;
+constexpr double k_fluid_thickness = 2000.0; // fluid-solid interface depth
+
+// A 2000 m acoustic column over an elastic half-space, matching the fixture.
+specfem::injection::fk::LayeredModel make_acoustic_elastic_model() {
+  specfem::injection::fk::AcousticLayer fluid;
+  fluid.density = k_fluid_rho;
+  fluid.p_velocity = k_fluid_vp;
+  fluid.thickness = static_cast<type_real>(k_fluid_thickness);
+  specfem::injection::fk::ElasticIsotropicLayer half_space;
+  half_space.density = k_rho;
+  half_space.p_velocity = k_vp;
+  half_space.s_velocity = k_vs;
+  half_space.thickness = static_cast<type_real>(0);
+  return specfem::injection::fk::LayeredModel({ fluid }, { half_space });
+}
+
+specfem::injection::injection_inputs make_acoustic_elastic_inputs() {
+  specfem::injection::injection_inputs inputs = make_inputs();
+  inputs.model = make_acoustic_elastic_model();
+  return inputs;
+}
+
+specfem::assembly::assembly<dim3_tag> make_acoustic_elastic_assembly() {
+  auto mesh = specfem::io::read_3d_mesh(
+      "data/dim3/InjectionAcousticElasticBox/database.bin",
+      specfem::attenuation::Setup{ false });
+
+  const auto quadrature = []() {
+    specfem::quadrature::gll::gll gll{};
+    return specfem::quadrature::quadratures(gll);
+  }();
+
+  std::vector<std::shared_ptr<specfem::sources::source<dim3_tag>>> sources;
+  std::vector<std::shared_ptr<specfem::receivers::receiver<dim3_tag>>>
+      receivers;
+  std::vector<specfem::enums::wavefield> seismogram_types = {
+    specfem::enums::wavefield::displacement
+  };
+
+  return specfem::assembly::assembly<dim3_tag>(
+      mesh, quadrature, sources, receivers, seismogram_types,
+      static_cast<type_real>(0), k_dt, k_nstep, 1, 1,
+      specfem::simulation::type::forward, false, nullptr,
+      specfem::element_coupling::flux_scheme_configuration(),
+      make_acoustic_elastic_inputs());
+}
+
+} // namespace
+
+// ===========================================================================
+// Fluid-solid extractor: the Stacey points of the acoustic column and the
+// elastic block are each classified and materialized correctly.
+// ===========================================================================
+TEST(InjectionAcousticElasticBox, ExtractorGeometry) {
+  const auto assembly = make_acoustic_elastic_assembly();
+  const auto points = extract(assembly);
+  ASSERT_GT(points.size(), 0);
+
+  int acoustic_count = 0;
+  int elastic_count = 0;
+  for (int i = 0; i < points.size(); ++i) {
+    const double depth = static_cast<double>(points.z(i));
+    const double nx = static_cast<double>(points.normal_x(i));
+    const double ny = static_cast<double>(points.normal_y(i));
+    const double nz = static_cast<double>(points.normal_z(i));
+    EXPECT_NEAR(std::sqrt(nx * nx + ny * ny + nz * nz), 1.0, 1e-5);
+
+    if (points.medium(i) == specfem::element::medium_tag::acoustic) {
+      ++acoustic_count;
+      EXPECT_NEAR(static_cast<double>(points.rho(i)), k_fluid_rho, 1.0);
+      EXPECT_NEAR(static_cast<double>(points.vp(i)), k_fluid_vp, 1.0);
+      EXPECT_NEAR(static_cast<double>(points.vs(i)), 0.0, 1e-6);
+      EXPECT_LE(depth, k_fluid_thickness + 1e-3);
+    } else {
+      EXPECT_EQ(points.medium(i), specfem::element::medium_tag::elastic);
+      ++elastic_count;
+      EXPECT_NEAR(static_cast<double>(points.rho(i)), k_rho, 1.0);
+      EXPECT_NEAR(static_cast<double>(points.vp(i)), k_vp, 1.0);
+      EXPECT_NEAR(static_cast<double>(points.vs(i)), k_vs, 1.0);
+      EXPECT_GE(depth, k_fluid_thickness - 1e-3);
+    }
+  }
+
+  // Both media are exercised (lateral Stacey faces cross the interface).
+  EXPECT_GT(acoustic_count, 0);
+  EXPECT_GT(elastic_count, 0);
+}
+
+// ===========================================================================
+// Fluid-solid end-to-end: the provider allocates the pressure component (7),
+// the frame buffer matches a direct FK solve, and acoustic points carry a
+// non-zero pressure.
+// ===========================================================================
+TEST(InjectionAcousticElasticBox, EndToEndMatchesDirectSolve) {
+  const auto assembly = make_acoustic_elastic_assembly();
+  const auto &injection = assembly.boundaries.injection;
+  ASSERT_TRUE(injection.enabled());
+
+  const auto points = extract(assembly);
+  const int npoints = points.size();
+  ASSERT_GT(npoints, 0);
+
+  const auto model = make_acoustic_elastic_model();
+  const auto wave = make_wave();
+  specfem::injection::fk::TimeWindow window;
+  window.dt = k_dt;
+  window.nstep = k_nstep;
+  window.frequency_max = static_cast<type_real>(1);
+  window.frequency_sampling = static_cast<type_real>(2);
+  window.time_window_length = static_cast<type_real>(40);
+
+  const auto eval_points = specfem::injection::fk::eval_points_from_points(
+      points, model, /*compute_traction=*/true, /*tolerance=*/1e-3);
+  const auto result = specfem::injection::fk::solve(
+      model, wave, window, eval_points, /*compute_traction=*/true);
+
+  const auto &provider = injection.provider;
+  provider->ensure_window(0);
+  const auto &buffer = provider->frame_buffer();
+  const int ncomp = buffer.number_of_components();
+  const int W = buffer.number_of_steps();
+  ASSERT_EQ(ncomp, 7); // displacement + traction + pressure
+
+  Kokkos::View<type_real ***> reference("reference", npoints, ncomp, W);
+  result.sample(0, W, reference);
+  auto h_reference = Kokkos::create_mirror_view(reference);
+  Kokkos::deep_copy(h_reference, reference);
+
+  auto h_buffer = Kokkos::create_mirror_view(buffer.values());
+  Kokkos::deep_copy(h_buffer, buffer.values());
+
+  double max_difference = 0.0;
+  double max_reference = 0.0;
+  double max_pressure = 0.0;
+  for (int ip = 0; ip < npoints; ++ip) {
+    const bool acoustic =
+        points.medium(ip) == specfem::element::medium_tag::acoustic;
+    for (int ic = 0; ic < ncomp; ++ic) {
+      for (int k = 0; k < W; ++k) {
+        const double got = static_cast<double>(h_buffer(ip, ic, k));
+        const double ref = static_cast<double>(h_reference(ip, ic, k));
+        EXPECT_TRUE(std::isfinite(got));
+        max_difference = std::max(max_difference, std::fabs(got - ref));
+        max_reference = std::max(max_reference, std::fabs(ref));
+        if (acoustic && ic == 6) {
+          max_pressure = std::max(max_pressure, std::fabs(got));
+        }
+      }
+    }
+  }
+
+  EXPECT_LE(max_difference, 1e-5 * (1.0 + max_reference))
+      << "frame buffer disagrees with the direct FK solve";
+  EXPECT_GT(max_pressure, 1e-30) << "acoustic points carry no pressure";
+}

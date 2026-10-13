@@ -41,7 +41,17 @@ void specfem::injection::fk_provider<DimensionTag>::initialize() {
                                           compute_traction_, derivative_);
 
   const int nstep = window_.nstep;
-  const int ncomp = compute_traction_ ? 6 : 3;
+  // Component layout: 0-2 displacement, 3-5 traction (elastic faces), 6
+  // pressure (acoustic faces). The pressure slot is only allocated when the
+  // model has a fluid layer, i.e. when acoustic injection points are possible.
+  int ncomp;
+  if (!compute_traction_) {
+    ncomp = 3;
+  } else if (model_.has_fluid_layer()) {
+    ncomp = 7;
+  } else {
+    ncomp = 6;
+  }
   const int npoints = points_.size();
 
   // Window length: honor an explicit request, else fit within a fixed memory
