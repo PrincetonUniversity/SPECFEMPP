@@ -25,7 +25,10 @@ specfem::injection::fk::LayeredModel::LayeredModel(
       (n_fluid > 0)
           ? top_depths_[n_fluid - 1] + fluid_layers_[n_fluid - 1].thickness
           : static_cast<type_real>(0);
-  if (n_fluid > 0) {
+  // Only the fluid-over-elastic case has an elastic-base entry at index
+  // n_fluid; a fluid-only model has no such slot (validate() rejects it, but
+  // the depth table must not be written out of bounds first).
+  if (n_fluid > 0 && n_elastic > 0) {
     top_depths_[n_fluid] = elastic_base;
   }
   for (int i = 1; i < n_elastic; ++i) {

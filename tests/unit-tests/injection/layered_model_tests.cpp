@@ -99,6 +99,20 @@ TEST(LayeredModel, ValidateThrowsEmptyElastic) {
 }
 
 // ---------------------------------------------------------------------------
+// Fluid-only model: construction must not write the depth table out of bounds
+// before validate() rejects the missing elastic block.
+// ---------------------------------------------------------------------------
+
+TEST(LayeredModel, ValidateThrowsFluidOnly) {
+  specfem::injection::fk::AcousticLayer fluid;
+  fluid.density = static_cast<type_real>(1000);
+  fluid.p_velocity = static_cast<type_real>(1500);
+  fluid.thickness = static_cast<type_real>(2000);
+  EXPECT_THROW(specfem::injection::fk::LayeredModel({ fluid }, {}),
+               std::runtime_error);
+}
+
+// ---------------------------------------------------------------------------
 // validate() throws: fluid layer density <= 0
 // ---------------------------------------------------------------------------
 
