@@ -980,3 +980,10 @@ specfem_add_test(injection_driver_golden_tests
           injection/driver_golden_tests.cpp
   LIBRARIES specfem::injection specfem::utilities Kokkos::kokkos gtest_main
 )
+
+specfem_add_test(injection_provider_tests
+  LABELS unit injection
+  SOURCES injection/runner.cpp
+          injection/provider_tests.cpp
+  LIBRARIES specfem::injection specfem::utilities Kokkos::kokkos gtest_main
+)
