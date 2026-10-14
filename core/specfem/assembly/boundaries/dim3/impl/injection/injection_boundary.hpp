@@ -1,20 +1,24 @@
 #pragma once
 
 #include "specfem/element/tags.hpp"
-#include "specfem/injection/injection_provider.hpp"
+#include "specfem/injection/injection_frame_buffer.hpp"
 #include <Kokkos_Core.hpp>
-#include <memory>
 
 namespace specfem::assembly::boundaries_impl {
 
 /**
- * @brief Incident injection field evaluated at the Stacey boundary points.
+ * @brief Device-resident incident injection field at the Stacey boundary
+ * points.
  *
- * Owns the method-agnostic injection provider and the map from a Stacey
- * quadrature point @c (ispec_local, iz, iy, ix) to its row in the provider
- * frame buffer. Empty (@c provider == nullptr, @c number_of_points == 0) when
- * injection is disabled. The container carries no method-specific knowledge:
- * the provider alone decides how the field and traction are produced.
+ * Holds only device-capturable state: the map from a Stacey quadrature point
+ * @c (ispec_local, iz, iy, ix) to its row in the provider frame buffer, a copy
+ * of the compute→local Stacey element map, and the current @c
+ * InjectionFrameBuffer window. This struct is captured by value into the
+ * stiffness device kernel, so it must stay free of host-only members (the
+ * owning provider @c shared_ptr lives on the assembly, not here). Empty (@c
+ * number_of_points == 0) when injection is disabled. Carries no method-specific
+ * knowledge: the provider alone decides how the field and traction are
+ * produced.
  *
  * @tparam DimensionTag Spatial dimension of the owning assembly.
  */
@@ -32,22 +36,29 @@ struct injection_boundary {
   using PointIndexView =
       Kokkos::View<int ****, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>;
 
-  std::shared_ptr<specfem::injection::injection_provider<DimensionTag>>
-      provider{};                                   ///< Injection provider
+  /** @brief Compute→local Stacey element map (shallow copy of the boundaries').
+   */
+  using IndexView = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
+
   PointIndexView point_index{};                     ///< Device point-index map
   PointIndexView::host_mirror_type h_point_index{}; ///< Host mirror
+  IndexView stacey_index_mapping{}; ///< Compute→local Stacey map
+  specfem::injection::InjectionFrameBuffer frame{}; ///< Current incident-field
+                                                    ///< window (device;
+                                                    ///< refreshed per step by
+                                                    ///< the solver)
   int number_of_points = 0;                         ///< Injection point count
 
   injection_boundary() = default;
 
-  /** @brief Whether an injection provider is present. */
-  bool enabled() const { return static_cast<bool>(provider); }
+  /** @brief Whether an injection field is present at the Stacey points. */
+  KOKKOS_INLINE_FUNCTION bool enabled() const { return number_of_points > 0; }
 
   /**
    * @brief Frame-buffer row for a Stacey quadrature point (device hot path).
    * @param ispec_local Local Stacey element index.
    * @param iz,iy,ix GLL indices.
-   * @return row in @c provider->frame_buffer(), or @c -1 if not injected.
+   * @return row in @c frame, or @c -1 if not injected.
    */
   KOKKOS_INLINE_FUNCTION int point_of(int ispec_local, int iz, int iy,
                                       int ix) const {

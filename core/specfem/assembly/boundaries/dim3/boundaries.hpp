@@ -9,6 +9,7 @@
 #include "specfem/assembly/properties.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/injection/injection_inputs.hpp"
+#include "specfem/injection/injection_provider.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/point.hpp"
@@ -86,9 +87,9 @@ public:
   /**
    * @brief Build the incident injection field at the Stacey boundary points.
    *
-   * Populates @ref injection using the Stacey geometry and the local mesh
-   * material. Must be called after the material @p properties are available.
-   * A no-op when @c inputs.enabled is false.
+   * Populates the device @ref injection state using the Stacey geometry and the
+   * local mesh material. Must be called after the material @p properties are
+   * available. A no-op (returns @c nullptr) when @c inputs.enabled is false.
    *
    * @param inputs Injection domain inputs (method-specific payload).
    * @param mesh_assembly Assembly mesh.
@@ -96,8 +97,12 @@ public:
    * @param element_types Per-element medium/property classification.
    * @param dt Simulation time step in seconds.
    * @param nstep Total number of simulation time steps.
+   * @return The owning injection provider (host-side), or @c nullptr when
+   *         injection is disabled. The caller keeps it apart from this
+   *         device-captured container.
    */
-  void initialize_injection(
+  std::shared_ptr<specfem::injection::injection_provider<dimension_tag>>
+  initialize_injection(
       const specfem::injection::injection_inputs &inputs,
       const specfem::assembly::mesh<dimension_tag> &mesh_assembly,
       const specfem::assembly::properties<dimension_tag> &properties,

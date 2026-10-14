@@ -16,9 +16,11 @@
 #include "specfem/assembly/receivers.hpp"
 #include "specfem/assembly/sources.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/injection/injection_provider.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/receivers.hpp"
 #include "specfem/source.hpp"
+#include <memory>
 
 namespace specfem::io {
 class reader;
@@ -139,6 +141,16 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
                                                         ///< groups for face
                                                         ///< data exchange
                                                         ///< between partitions
+
+  /**
+   * @brief Host-side injection solver engine (null when injection is disabled).
+   *
+   * Owns the provider that produces the incident field whose device window
+   * lives in @c boundaries.injection. Kept here, apart from the device-captured
+   * boundary container, because a @c shared_ptr is not device-capturable.
+   */
+  std::shared_ptr<specfem::injection::injection_provider<dimension_tag>>
+      injection_provider;
 
   type_real t0; ///< Simulation start time
 
