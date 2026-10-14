@@ -16,7 +16,6 @@
 #include <string>
 #include <vector>
 
-template <specfem::simulation::model ModelTag>
 specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
     const int max_sig_step, const type_real dt, const type_real t0,
     const int nsteps_between_samples,
@@ -25,7 +24,6 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
         &receivers,
     const std::vector<specfem::enums::wavefield> &stypes,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
-    const specfem::mesh::mesh<ModelTag> &raw_mesh,
     const specfem::assembly::element_types<
         specfem::element::dimension_tag::dim3> &element_types)
     : lagrange_interpolant("specfem::assembly::receivers::lagrange_interpolant",
@@ -85,7 +83,7 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
   for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
     if (const auto *coords = receivers[ireceiver]->get_read_coordinates())
       receivers[ireceiver]->set_global_coordinates(
-          specfem::assembly::to_cartesian(*coords, mesh, raw_mesh));
+          specfem::assembly::to_cartesian(*coords, mesh));
   }
 
   std::vector<
@@ -179,29 +177,3 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
 
   return;
 }
-
-template specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::
-    receivers(
-        const int max_sig_step, const type_real dt, const type_real t0,
-        const int nsteps_between_samples,
-        const std::vector<std::shared_ptr<specfem::receivers::receiver<
-            specfem::element::dimension_tag::dim3>>> &receivers,
-        const std::vector<specfem::enums::wavefield> &stypes,
-        const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
-            &mesh,
-        const specfem::mesh::cartesian3d_mesh &raw_mesh,
-        const specfem::assembly::element_types<
-            specfem::element::dimension_tag::dim3> &element_types);
-
-template specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::
-    receivers(
-        const int max_sig_step, const type_real dt, const type_real t0,
-        const int nsteps_between_samples,
-        const std::vector<std::shared_ptr<specfem::receivers::receiver<
-            specfem::element::dimension_tag::dim3>>> &receivers,
-        const std::vector<specfem::enums::wavefield> &stypes,
-        const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
-            &mesh,
-        const specfem::mesh::globe3d_mesh &raw_mesh,
-        const specfem::assembly::element_types<
-            specfem::element::dimension_tag::dim3> &element_types);

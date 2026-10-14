@@ -5,7 +5,6 @@
 #include "specfem/coordinate_systems/cartesian.hpp"
 #include "specfem/coordinate_systems/geographic.hpp"
 #include "specfem/coordinate_systems/utm_projection.hpp"
-#include "specfem/mesh.hpp"
 #include "specfem/mesh_entity.hpp"
 
 #include <Kokkos_Core.hpp>
@@ -14,13 +13,19 @@
 
 namespace surface_elevation_test {
 
+namespace mesh_impl = specfem::assembly::mesh_impl;
 constexpr auto dimension = specfem::element::dimension_tag::dim3;
 
-// Single top (Z_MAX) face for the single-element test meshes below.
-specfem::mesh::acoustic_free_surface<dimension> make_top_surface() {
-  specfem::mesh::acoustic_free_surface<dimension> surface(1);
-  surface.index_mapping(0) = 0;
-  surface.type(0) = specfem::mesh_entity::dim3::type::top;
+// Single top (Z_MAX) face for the single-element test meshes below. The test
+// meshes use an identity mesh-to-compute mapping, so the compute-element index
+// is the same as the mesh element index (0).
+mesh_impl::free_surface_geometry make_top_surface() {
+  mesh_impl::free_surface_geometry surface;
+  surface.nfaces = 1;
+  surface.element_index = decltype(surface.element_index)("element_index", 1);
+  surface.face_type = decltype(surface.face_type)("face_type", 1);
+  surface.element_index(0) = 0;
+  surface.face_type(0) = specfem::mesh_entity::dim3::type::top;
   return surface;
 }
 
@@ -127,7 +132,7 @@ TEST(SurfaceElevation, ExactOnNode) {
 
 TEST(SurfaceElevation, NoFreeSurfaceReturnsFlat) {
   const specfem::assembly::mesh<surface_elevation_test::dimension> mesh{};
-  const specfem::mesh::acoustic_free_surface<surface_elevation_test::dimension>
+  const surface_elevation_test::mesh_impl::free_surface_geometry
       surface{}; // no free-surface faces
   const type_real elevation = specfem::algorithms::project_onto_surface(
                                   mesh, surface, { 1.0, 2.0, 0.0 })
@@ -136,18 +141,17 @@ TEST(SurfaceElevation, NoFreeSurfaceReturnsFlat) {
 }
 
 TEST(SurfaceElevation, DepthResolvedAgainstTopography) {
-  const auto mesh = surface_elevation_test::make_sloped_mesh();
-  // Plain Cartesian mesh (no projection) carrying the free surface.
-  specfem::mesh::cartesian3d_mesh raw;
-  raw.suppress_utm_projection = true;
-  raw.boundaries.acoustic_free_surface =
-      surface_elevation_test::make_top_surface();
+  auto mesh = surface_elevation_test::make_sloped_mesh();
+  // Plain Cartesian mesh (no projection) carrying the free surface geometry.
+  mesh.projection.value =
+      surface_elevation_test::mesh_impl::cartesian_projection{};
+  mesh.free_surface = surface_elevation_test::make_top_surface();
   // Depth-based cartesian: z = -depth, origin unset -> resolve against topo.
   specfem::coordinate_systems::cartesian_coordinates<
       surface_elevation_test::dimension>
       coords(5.0, 10.0, -1000.0, std::nullopt);
 
-  const auto gc = specfem::assembly::to_cartesian(coords, mesh, raw);
+  const auto gc = specfem::assembly::to_cartesian(coords, mesh);
 
   EXPECT_FLOAT_EQ(gc.x, 5.0);
   EXPECT_FLOAT_EQ(gc.y, 10.0);
@@ -168,14 +172,11 @@ TEST(SurfaceElevation, GeographicResolvesViaUtmFlatFallback) {
       specfem::coordinate_systems::geographic_coordinates{ lon, lat, depth },
       cfg);
 
-  const specfem::assembly::mesh<surface_elevation_test::dimension>
-      mesh{}; // no free surface -> flat
   // Regional UTM mesh with no free surface (flat fallback).
-  specfem::mesh::cartesian3d_mesh raw;
-  raw.utm_projection_zone = cfg.zone;
-  raw.suppress_utm_projection = cfg.suppress;
+  specfem::assembly::mesh<surface_elevation_test::dimension> mesh{};
+  mesh.projection.value = cfg;
   specfem::coordinate_systems::geographic_coordinates geo(lon, lat, depth);
-  const auto gc = specfem::assembly::to_cartesian(geo, mesh, raw);
+  const auto gc = specfem::assembly::to_cartesian(geo, mesh);
 
   EXPECT_NEAR(gc.x, static_cast<type_real>(cart.x), 1.0);
   EXPECT_NEAR(gc.y, static_cast<type_real>(cart.y), 1.0);
@@ -195,16 +196,13 @@ TEST(SurfaceElevation, GeographicResolvesAgainstTopography) {
       specfem::coordinate_systems::geographic_coordinates{ lon, lat, depth },
       cfg);
 
-  const auto mesh = surface_elevation_test::make_flat_surface_mesh(
-      cart.x, cart.y, surface_z, 5000.0);
+  auto mesh = surface_elevation_test::make_flat_surface_mesh(cart.x, cart.y,
+                                                             surface_z, 5000.0);
   // Regional UTM mesh carrying the flat topographic surface.
-  specfem::mesh::cartesian3d_mesh raw;
-  raw.utm_projection_zone = cfg.zone;
-  raw.suppress_utm_projection = cfg.suppress;
-  raw.boundaries.acoustic_free_surface =
-      surface_elevation_test::make_top_surface();
+  mesh.projection.value = cfg;
+  mesh.free_surface = surface_elevation_test::make_top_surface();
   specfem::coordinate_systems::geographic_coordinates geo(lon, lat, depth);
-  const auto gc = specfem::assembly::to_cartesian(geo, mesh, raw);
+  const auto gc = specfem::assembly::to_cartesian(geo, mesh);
 
   EXPECT_NEAR(gc.x, static_cast<type_real>(cart.x), 1.0);
   EXPECT_NEAR(gc.y, static_cast<type_real>(cart.y), 1.0);
@@ -213,12 +211,12 @@ TEST(SurfaceElevation, GeographicResolvesAgainstTopography) {
 
 // Geographic coordinates on a mesh with no projection cannot be resolved.
 TEST(SurfaceElevation, GeographicWithoutProjectionThrows) {
-  const specfem::assembly::mesh<surface_elevation_test::dimension> mesh{};
-  specfem::mesh::cartesian3d_mesh raw;
-  raw.suppress_utm_projection = true;
+  specfem::assembly::mesh<surface_elevation_test::dimension> mesh{};
+  mesh.projection.value =
+      surface_elevation_test::mesh_impl::cartesian_projection{};
   specfem::coordinate_systems::geographic_coordinates geo(2.674, 51.561,
                                                           2000.0);
-  EXPECT_THROW((specfem::assembly::to_cartesian(geo, mesh, raw)),
+  EXPECT_THROW((specfem::assembly::to_cartesian(geo, mesh)),
                std::runtime_error);
 }
 

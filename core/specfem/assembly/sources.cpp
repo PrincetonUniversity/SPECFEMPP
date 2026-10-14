@@ -17,12 +17,10 @@
 // ── Constructor template definition ─────────────────────────────────────────
 
 template <specfem::element::dimension_tag DimensionTag>
-template <specfem::simulation::model ModelTag>
 specfem::assembly::sources<DimensionTag>::sources(
     std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>
         &sources,
     const specfem::assembly::mesh<DimensionTag> &mesh,
-    const specfem::mesh::mesh<ModelTag> &raw_mesh,
     const specfem::assembly::jacobian_matrix<DimensionTag> &jacobian_matrix,
     const specfem::assembly::element_types<DimensionTag> &element_types,
     const type_real t0, const type_real dt, const int nsteps)
@@ -54,7 +52,7 @@ specfem::assembly::sources<DimensionTag>::sources(
   for (auto &source : sources) {
     if (const auto *coords = source->get_read_coordinates())
       source->set_global_coordinates(
-          specfem::assembly::to_cartesian(*coords, mesh, raw_mesh));
+          specfem::assembly::to_cartesian(*coords, mesh));
   }
 
   // Locate all sources in the mesh and set their local coordinates,
@@ -159,42 +157,6 @@ specfem::assembly::sources<DimensionTag>::sources(
   Kokkos::deep_copy(element_indices, h_element_indices);
   Kokkos::deep_copy(source_indices, h_source_indices);
 }
-
-template specfem::assembly::sources<specfem::element::dimension_tag::dim2>::
-    sources(std::vector<std::shared_ptr<specfem::sources::source<
-                specfem::element::dimension_tag::dim2>>> &sources,
-            const specfem::assembly::mesh<specfem::element::dimension_tag::dim2>
-                &mesh,
-            const specfem::mesh::cartesian2d_mesh &raw_mesh,
-            const specfem::assembly::jacobian_matrix<
-                specfem::element::dimension_tag::dim2> &jacobian_matrix,
-            const specfem::assembly::element_types<
-                specfem::element::dimension_tag::dim2> &element_types,
-            const type_real t0, const type_real dt, const int nsteps);
-
-template specfem::assembly::sources<specfem::element::dimension_tag::dim3>::
-    sources(std::vector<std::shared_ptr<specfem::sources::source<
-                specfem::element::dimension_tag::dim3>>> &sources,
-            const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
-                &mesh,
-            const specfem::mesh::cartesian3d_mesh &raw_mesh,
-            const specfem::assembly::jacobian_matrix<
-                specfem::element::dimension_tag::dim3> &jacobian_matrix,
-            const specfem::assembly::element_types<
-                specfem::element::dimension_tag::dim3> &element_types,
-            const type_real t0, const type_real dt, const int nsteps);
-
-template specfem::assembly::sources<specfem::element::dimension_tag::dim3>::
-    sources(std::vector<std::shared_ptr<specfem::sources::source<
-                specfem::element::dimension_tag::dim3>>> &sources,
-            const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
-                &mesh,
-            const specfem::mesh::globe3d_mesh &raw_mesh,
-            const specfem::assembly::jacobian_matrix<
-                specfem::element::dimension_tag::dim3> &jacobian_matrix,
-            const specfem::assembly::element_types<
-                specfem::element::dimension_tag::dim3> &element_types,
-            const type_real t0, const type_real dt, const int nsteps);
 
 // ── get_sources_on_host / get_sources_on_device template definitions ─────────
 

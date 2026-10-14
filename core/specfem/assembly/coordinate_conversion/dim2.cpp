@@ -1,6 +1,5 @@
 #include "specfem/assembly/coordinate_conversion.hpp"
 
-#include "specfem/assembly/coordinate_conversion/impl.hpp"
 #include "specfem/setup.hpp"
 
 #include <array>
@@ -13,15 +12,14 @@ specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
 specfem::assembly::to_cartesian(
     const specfem::coordinate_systems::coordinates<
         specfem::element::dimension_tag::dim2> &input,
-    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
-    const specfem::mesh::cartesian2d_mesh &raw_mesh) {
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2>
+        &mesh) {
 
   (void)mesh;
-  (void)raw_mesh;
 
-  const auto *cartesian = coordinate_conversion_impl::as<
-      specfem::coordinate_systems::cartesian_coordinates<
-          specfem::element::dimension_tag::dim2>>(input);
+  const auto *cartesian =
+      dynamic_cast<const specfem::coordinate_systems::cartesian_coordinates<
+          specfem::element::dimension_tag::dim2> *>(&input);
   if (cartesian == nullptr)
     throw std::runtime_error("specfem::assembly::to_cartesian: a dim2 mesh "
                              "resolves only Cartesian coordinates");
