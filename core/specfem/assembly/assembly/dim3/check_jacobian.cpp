@@ -37,31 +37,42 @@ void append_globe_location(std::ostream &message, const type_real x,
 
 void specfem::assembly::assembly<
     specfem::element::dimension_tag::dim3>::check_jacobian_matrix() const {
-  const auto result = this->jacobian_matrix.check_small_jacobian();
-  if (!result.found) {
+  const auto [found, bad_points] = this->jacobian_matrix.check_small_jacobian();
+  if (!found) {
     return;
   }
 
-  const auto &diagnostics = result.diagnostics;
+  std::size_t invalid_count = 0;
+  for (int ispec = 0; ispec < this->mesh.nspec; ++ispec) {
+    if (bad_points(ispec)) {
+      ++invalid_count;
+    }
+  }
   constexpr std::size_t maximum_reported_elements = 10;
   std::ostringstream message;
   message << std::setprecision(std::numeric_limits<type_real>::max_digits10);
-  message << "Invalid Jacobian mapping in " << diagnostics.size()
+  message << "Invalid Jacobian mapping in " << invalid_count
           << " element(s): determinants must be finite, strictly positive, and "
              "at least 1e-6 of the element-local mean absolute determinant.\n";
   message << "Invalid elements (compute order, up to 10):\n";
 
   const std::size_t report_count =
-      std::min(maximum_reported_elements, diagnostics.size());
-  for (std::size_t i = 0; i < report_count; ++i) {
-    const auto &diagnostic = diagnostics[i];
-    const int ispec = diagnostic.element_index;
+      std::min(maximum_reported_elements, invalid_count);
+  std::size_t reported = 0;
+  for (int ispec = 0; ispec < this->mesh.nspec && reported < report_count;
+       ++ispec) {
+    if (!bad_points(ispec)) {
+      continue;
+    }
+    const auto &diagnostic = *bad_points(ispec);
+    ++reported;
     message << "  element=" << ispec
             << " mesh_element=" << this->mesh.h_compute_to_mesh(ispec)
             << " gll=(" << diagnostic.ix << ',' << diagnostic.iy << ','
             << diagnostic.iz << ") jacobian=" << diagnostic.jacobian
-            << " scale=" << diagnostic.scale
-            << " relative=" << diagnostic.relative_jacobian();
+            << " scale=" << diagnostic.scale << " relative="
+            << (diagnostic.scale > 0 ? diagnostic.jacobian / diagnostic.scale
+                                     : 0);
     if (!std::isfinite(diagnostic.jacobian)) {
       message << " reason=nonfinite_determinant";
     } else if (diagnostic.jacobian <= 0) {
@@ -93,8 +104,8 @@ void specfem::assembly::assembly<
     }
     message << '\n';
   }
-  if (diagnostics.size() > report_count) {
-    message << "  ... " << diagnostics.size() - report_count
+  if (invalid_count > report_count) {
+    message << "  ... " << invalid_count - report_count
             << " additional invalid element(s) omitted\n";
   }
 
