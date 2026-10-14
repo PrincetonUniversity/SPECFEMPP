@@ -8,6 +8,7 @@
 #include "specfem/element.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
+#include "specfem/injection/apply_injection.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/medium_physics.hpp"
 #include "specfem/parallel_configuration.hpp"
@@ -232,6 +233,10 @@ public:
 
                 specfem::boundary_conditions::apply_boundary_conditions(
                     point_boundary, point_property, velocity, acceleration);
+
+                specfem::injection::apply_injection<Tags::wavefield_tag>(
+                    index, istep, boundaries, point_boundary, point_property,
+                    acceleration);
 
                 if (Tags::wavefield_tag ==
                     specfem::simulation::field_type::forward) {
@@ -465,6 +470,10 @@ public:
 
                 specfem::boundary_conditions::apply_boundary_conditions(
                     point_boundary, point_property, velocity, acceleration);
+
+                specfem::injection::apply_injection<Tags::wavefield_tag>(
+                    index, istep, boundaries, point_boundary, point_property,
+                    acceleration);
 
                 if (Tags::wavefield_tag ==
                     specfem::simulation::field_type::forward) {

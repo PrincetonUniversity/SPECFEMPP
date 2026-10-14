@@ -42,6 +42,19 @@ int update_medium(specfem::assembly::assembly<Tags::dimension_tag> &assembly,
   specfem::compute::impl::compute_source_interaction<NGLL, Tags>(assembly,
                                                                  source_istep);
 
+  // Injection is a forward-only, dim3-only boundary source: refresh the
+  // incident-field window for this step before the Stacey apply reads it. The
+  // refresh is idempotent across the per-medium calls of a step (aligned
+  // windows).
+  if constexpr (Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
+                wavefield == specfem::simulation::field_type::forward) {
+    if (assembly.injection_provider) {
+      assembly.injection_provider->ensure_window(istep);
+      assembly.boundaries.injection.frame =
+          assembly.injection_provider->frame_buffer();
+    }
+  }
+
   auto &field =
       assembly.fields.template get_simulation_field<Tags::wavefield_tag>();
 
