@@ -175,7 +175,7 @@ TEST(GlobeFluidSolidInterfaces, CollectsPromotedMeshFaces) {
       const auto interface = test_impl::directions[idirection];
       const auto [self, coupled] = fixture.intersections(interface);
       SCOPED_TRACE(specfem::element_coupling::to_string(interface));
-      // The CMB and ICB are the only medium contrasts in the globe, so an
+      // The CMB and ICB are the only fluid-solid interfaces in the globe, so an
       // empty set means the weakly-conforming promotion never reached the
       // assembly.
       EXPECT_GT(self.N, 0);

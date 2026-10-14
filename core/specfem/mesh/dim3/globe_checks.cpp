@@ -15,46 +15,46 @@
 #include <utility>
 #include <vector>
 
-void specfem::mesh::globe_impl::check_interfaces_match_medium_contrast(
+void specfem::mesh::globe_impl::check_interface_surfaces_match_medium_tags(
     const specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim3>
         &adjacency_graph,
-    const std::vector<specfem::mesh::globe_impl::named_surface> &surfaces) {
+    const std::vector<specfem::mesh::globe_element_context> &element_context,
+    const std::vector<specfem::mesh::globe_impl::InterfaceSurface> &surfaces) {
 
   // A face identified by its mesh element and orientation.
   using FaceKey = std::pair<int, specfem::mesh_entity::dim3::type>;
 
-  std::set<FaceKey> implied;
+  // Attribute every implied face to the surface separating its two regions.
+  std::vector<std::set<FaceKey>> implied(surfaces.size());
+  std::set<FaceKey> unattributed;
   const auto &graph = adjacency_graph.local_connections();
   for (const auto v : boost::make_iterator_range(boost::vertices(graph))) {
     for (const auto e :
          boost::make_iterator_range(boost::out_edges(v, graph))) {
       const auto &edge = graph[e];
-      if (edge.connection ==
-              specfem::element_connections::type::weakly_conforming &&
-          specfem::mesh_entity::contains(specfem::mesh_entity::dim3::faces,
-                                         edge.orientation)) {
-        implied.insert({ static_cast<int>(v), edge.orientation });
+      if (edge.connection !=
+              specfem::element_connections::type::weakly_conforming ||
+          !specfem::mesh_entity::contains(specfem::mesh_entity::dim3::faces,
+                                          edge.orientation)) {
+        continue;
+      }
+      const FaceKey key = { static_cast<int>(v), edge.orientation };
+      const auto source_region = element_context.at(v).region;
+      const auto target_region =
+          element_context.at(boost::target(e, graph)).region;
+      const auto surface = std::find_if(
+          surfaces.begin(), surfaces.end(),
+          [&](const specfem::mesh::globe_impl::InterfaceSurface &candidate) {
+            const auto &[first, second] = candidate.regions;
+            return (first == source_region && second == target_region) ||
+                   (first == target_region && second == source_region);
+          });
+      if (surface == surfaces.end()) {
+        unattributed.insert(key);
+      } else {
+        implied[std::distance(surfaces.begin(), surface)].insert(key);
       }
     }
-  }
-
-  std::set<FaceKey> recorded;
-  for (const auto &[name, surface] : surfaces) {
-    for (std::size_t iface = 0; iface < surface->elements.size(); ++iface) {
-      recorded.insert({ surface->elements[iface], surface->faces[iface] });
-    }
-  }
-
-  std::set<FaceKey> missing;
-  std::set<FaceKey> unexpected;
-  std::set_difference(recorded.begin(), recorded.end(), implied.begin(),
-                      implied.end(), std::inserter(missing, missing.begin()));
-  std::set_difference(implied.begin(), implied.end(), recorded.begin(),
-                      recorded.end(),
-                      std::inserter(unexpected, unexpected.begin()));
-
-  if (missing.empty() && unexpected.empty()) {
-    return;
   }
 
   const auto describe = [](const std::set<FaceKey> &faces,
@@ -72,28 +72,56 @@ void specfem::mesh::globe_impl::check_interfaces_match_medium_contrast(
     return text.str();
   };
 
-  std::ostringstream message;
-  message << "Globe mesh database is inconsistent: the interface faces implied "
-             "by medium tags and adjacency differ from the recorded interface "
-             "surfaces.\n"
-          << "  Implied by medium contrast: " << implied.size() << " faces\n"
-          << "  Recorded:                   " << recorded.size() << " faces (";
+  std::ostringstream mismatches;
   for (std::size_t isurface = 0; isurface < surfaces.size(); ++isurface) {
-    message << (isurface == 0 ? "" : " + ")
-            << surfaces[isurface].second->elements.size() << " "
-            << surfaces[isurface].first;
+    const auto &[name, surface, regions] = surfaces[isurface];
+    std::set<FaceKey> recorded;
+    for (std::size_t iface = 0; iface < surface->elements.size(); ++iface) {
+      recorded.insert({ surface->elements[iface], surface->faces[iface] });
+    }
+
+    std::set<FaceKey> missing;
+    std::set<FaceKey> unexpected;
+    std::set_difference(recorded.begin(), recorded.end(),
+                        implied[isurface].begin(), implied[isurface].end(),
+                        std::inserter(missing, missing.begin()));
+    std::set_difference(implied[isurface].begin(), implied[isurface].end(),
+                        recorded.begin(), recorded.end(),
+                        std::inserter(unexpected, unexpected.begin()));
+    if (missing.empty() && unexpected.empty()) {
+      continue;
+    }
+
+    mismatches << "  " << name << " ("
+               << specfem::element::to_string(regions.first) << " / "
+               << specfem::element::to_string(regions.second)
+               << "): " << implied[isurface].size() << " faces implied, "
+               << recorded.size() << " recorded\n";
+    if (!missing.empty()) {
+      mismatches << "    Recorded but not implied (" << missing.size()
+                 << "):" << describe(missing, 10) << "\n";
+    }
+    if (!unexpected.empty()) {
+      mismatches << "    Implied but not recorded (" << unexpected.size()
+                 << "):" << describe(unexpected, 10) << "\n";
+    }
   }
-  message << ")\n";
-  if (!missing.empty()) {
-    message << "  Recorded but not implied (" << missing.size()
-            << "):" << describe(missing, 10) << "\n";
+  if (!unattributed.empty()) {
+    mismatches << "  Implied between regions no surface separates ("
+               << unattributed.size() << "):" << describe(unattributed, 10)
+               << "\n";
   }
-  if (!unexpected.empty()) {
-    message << "  Implied but not recorded (" << unexpected.size()
-            << "):" << describe(unexpected, 10) << "\n";
+
+  if (mismatches.str().empty()) {
+    return;
   }
-  message << "  Element numbers are one-based, as in the database.";
-  throw std::runtime_error(message.str());
+
+  throw std::runtime_error(
+      "Globe mesh database is inconsistent: the interface faces implied by "
+      "medium tags and adjacency differ from the recorded interface "
+      "surfaces.\n" +
+      mismatches.str() +
+      "  Element numbers are one-based, as in the database.");
 }
 
 void specfem::mesh::globe_impl::check_no_cross_rank_fluid_solid_faces(
@@ -128,10 +156,17 @@ void specfem::mesh::globe_impl::check_no_cross_rank_fluid_solid_faces(
 
 void specfem::mesh::mesh<
     specfem::simulation::model::Globe3D>::check_consistency() const {
+  using specfem::element::region_tag;
+
   // Each check compares two database sections that record the same fact.
-  specfem::mesh::globe_impl::check_interfaces_match_medium_contrast(
-      this->adjacency_graph,
-      { { "CMB", &this->globe.cmb }, { "ICB", &this->globe.icb } });
+  specfem::mesh::globe_impl::check_interface_surfaces_match_medium_tags(
+      this->adjacency_graph, this->globe.element_context,
+      { { "CMB",
+          &this->globe.cmb,
+          { region_tag::crust_mantle, region_tag::outer_core } },
+        { "ICB",
+          &this->globe.icb,
+          { region_tag::outer_core, region_tag::inner_core } } });
 }
 
 void specfem::mesh::mesh<specfem::simulation::model::Globe3D>::check_supported()

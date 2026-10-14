@@ -176,10 +176,13 @@ struct mesh<specfem::simulation::model::Globe3D> : public mesh_dim3_base {
    *
    * The globe database states some facts more than once -- for example, the
    * fluid-solid interfaces are implied by medium tags and adjacency, and also
-   * recorded as the CMB and ICB face lists. This verifies each such pair.
+   * recorded as the CMB and ICB face lists. This verifies each such pair; the
+   * CMB and ICB lists are checked separately, each against the faces between
+   * the two regions it separates.
    *
    * @note Call after @c setup_coupled_interfaces, which derives the
-   * medium-contrast connections this compares against.
+   * connections between elements of different medium tags that this compares
+   * against.
    *
    * @throws std::runtime_error if any two sections disagree
    */

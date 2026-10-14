@@ -183,7 +183,8 @@ struct globe_mesh_data {
    * edge whose two elements differ in medium tag to @c weakly_conforming. So
    * nothing consumes this list to build the coupling --
    * @c mesh<Globe3D>::check_consistency compares it against the promoted faces
-   * and throws on disagreement. Without that, these fields read as dead code.
+   * between crust/mantle and outer-core elements, and throws on disagreement.
+   * Without that, these fields read as dead code.
    *
    * Note the mesher writes **both** sides of each interface into one list:
    * crust/mantle bottom and outer-core top here, outer-core bottom and
@@ -195,7 +196,9 @@ struct globe_mesh_data {
    * @brief Surface entries on the inner-core boundary.
    *
    * A cross-check on the derived fluid-solid interfaces, carrying both sides of
-   * the interface. See @ref cmb.
+   * the interface. It is compared only against the promoted faces between
+   * outer-core and inner-core elements, so CMB faces recorded here are
+   * rejected. See @ref cmb.
    */
   globe_boundary_surface icb;
 

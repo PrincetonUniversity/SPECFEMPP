@@ -72,10 +72,13 @@ struct DatabaseOptions {
   bool include_mpi = false;
   bool has_reference_geometry = false;
   double planet_radius = 6371000.0;
-  /// One globe region code per element, bottom to top (2 = outer core).
+  /// One globe region code per element, bottom to top (1 = crust/mantle,
+  /// 2 = outer core, 3 = inner core).
   std::vector<int> region_codes = { 1 };
   /// CMB entries as (one-based element, face code).
   std::vector<std::pair<int, int>> cmb_faces = {};
+  /// ICB entries as (one-based element, face code).
+  std::vector<std::pair<int, int>> icb_faces = {};
 };
 
 std::filesystem::path write_database(const DatabaseOptions &options = {}) {
@@ -158,14 +161,15 @@ std::filesystem::path write_database(const DatabaseOptions &options = {}) {
   write_values(stream, node_ids);
 
   write_surface(stream, { nspec }, { face_top });
-  std::vector<int> cmb_elements;
-  std::vector<int> cmb_face_codes;
-  for (const auto &[element, face] : options.cmb_faces) {
-    cmb_elements.push_back(element);
-    cmb_face_codes.push_back(face);
+  for (const auto *entries : { &options.cmb_faces, &options.icb_faces }) {
+    std::vector<int> elements;
+    std::vector<int> face_codes;
+    for (const auto &[element, face] : *entries) {
+      elements.push_back(element);
+      face_codes.push_back(face);
+    }
+    write_surface(stream, elements, face_codes);
   }
-  write_surface(stream, cmb_elements, cmb_face_codes);
-  write_surface(stream, {}, {});
   write_surface(stream, {}, {});
 
   // One-based CSR adjacency of the radial column.
@@ -316,10 +320,10 @@ TEST(GlobeMeshReader, RejectsRadialMpiFaceOnFluidElement) {
   std::filesystem::remove(path);
 }
 
-// A single element has no neighbor, so medium contrast implies no interface
+// A single element has no neighbor, so its medium tag implies no interface
 // faces. Recording one as CMB makes the database contradict itself, which
 // check_consistency must catch.
-TEST(GlobeMeshReader, RejectsCmbFaceWithoutMediumContrast) {
+TEST(GlobeMeshReader, RejectsCmbFaceWithoutMediumChange) {
   const auto path =
       globe_reader_test_impl::write_database({ .cmb_faces = { { 1, 3 } } });
   globe_reader_test_impl::expect_read_throws_with(path,
@@ -352,5 +356,26 @@ TEST(GlobeMeshReader, RejectsCmbRecordedOnOneSideOnly) {
       { .region_codes = { 2, 1 }, .cmb_faces = { { 1, 3 } } });
   globe_reader_test_impl::expect_read_throws_with(path,
                                                   "Implied but not recorded");
+  std::filesystem::remove(path);
+}
+
+// An inner-core element below an outer-core element shares an ICB face.
+TEST(GlobeMeshReader, AcceptsIcbRecordedOnBothSides) {
+  const auto path = globe_reader_test_impl::write_database(
+      { .region_codes = { 3, 2 }, .icb_faces = { { 1, 3 }, { 2, 1 } } });
+  EXPECT_NO_THROW(specfem::io::read_globe_mesh(path.string(),
+                                               specfem::attenuation::Setup{}));
+  std::filesystem::remove(path);
+}
+
+// The CMB and ICB lists are checked separately, so a CMB face filed under the
+// ICB is rejected even though the union of both lists is complete.
+TEST(GlobeMeshReader, RejectsCmbFacesRecordedAsIcb) {
+  const auto path = globe_reader_test_impl::write_database(
+      { .region_codes = { 2, 1 }, .icb_faces = { { 1, 3 }, { 2, 1 } } });
+  globe_reader_test_impl::expect_read_throws_with(
+      path, "CMB (crust_mantle / outer_core): 2 faces implied, 0 recorded");
+  globe_reader_test_impl::expect_read_throws_with(
+      path, "ICB (outer_core / inner_core): 0 faces implied, 2 recorded");
   std::filesystem::remove(path);
 }
