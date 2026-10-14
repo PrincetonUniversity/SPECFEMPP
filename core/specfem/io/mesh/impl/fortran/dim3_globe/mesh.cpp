@@ -2,6 +2,7 @@
 #include "specfem/globe/planet_constants.hpp"
 #include "specfem/io.hpp"
 #include "specfem/io/fortranio/interface.hpp"
+#include "specfem/io/mesh/impl/fortran/dim3_globe/attenuation_config.hpp"
 #include "specfem/io/mesh/impl/fortran/dim3_globe/common.hpp"
 #include "specfem/io/mesh/impl/fortran/dim3_globe/read_adjacency_graph.hpp"
 #include "specfem/io/mesh/impl/fortran/dim3_globe/read_boundaries.hpp"
@@ -112,27 +113,22 @@ specfem::mesh::globe3d_mesh specfem::io::read_globe_mesh(
   reader::read_adjacency_graph(stream, mesh);
   reader::check_stream(stream, "end of file");
 
-  const bool attenuation_enabled =
-      model_config.attenuation && attenuation_setup.enabled;
-  mesh.materials =
-      reader::make_materials(material_tags.medium_tags,
-                             material_tags.property_tags, attenuation_enabled);
+  mesh.attenuation = reader::make_attenuation_config(
+      model_config, globe.model_verification.flags, attenuation_setup);
+
+  // Unlike the Cartesian reader (io/mesh/impl/fortran/dim3/read_materials.cpp),
+  // which tags an element non-attenuating when its Q is 9999, globe elements
+  // are tagged from the attenuation flag and their medium: Q is only known
+  // per GLL point once the oracle is sampled at assembly setup, after the
+  // element types are built.
+  mesh.materials = reader::make_materials(material_tags.medium_tags,
+                                          material_tags.property_tags,
+                                          mesh.attenuation.enabled);
   mesh.tags = specfem::mesh::tags<Dimension::dim3>(
       mesh.nspec, mesh.materials, mesh.adjacency_graph, mesh.boundaries);
 
   mesh.setup_coupled_interfaces();
-  if (attenuation_enabled) {
-    if (!attenuation_setup.f0.has_value()) {
-      throw std::runtime_error(
-          "Globe attenuation requires an explicit reference frequency");
-    }
-    mesh.attenuation = {
-      true, attenuation_setup.f0.value(), attenuation_setup.band,
-      specfem::attenuation::compute_tau_sigma<specfem::constants::N_SLS>(
-          attenuation_setup.band)
-    };
-    mesh.materials.apply_attenuation(mesh.attenuation);
-  }
+  mesh.materials.apply_attenuation(mesh.attenuation);
 
   return mesh;
 }
