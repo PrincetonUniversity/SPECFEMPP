@@ -171,6 +171,34 @@ struct mesh<specfem::simulation::model::Globe3D> : public mesh_dim3_base {
   /** @brief Globe-specific reference geometry and model-oracle context. */
   specfem::mesh::globe_mesh_data globe;
 
+  /**
+   * @brief Check that database sections recording the same fact agree.
+   *
+   * The globe database states some facts more than once -- for example, the
+   * fluid-solid interfaces are implied by medium tags and adjacency, and also
+   * recorded as the CMB and ICB face lists. This verifies each such pair; the
+   * CMB and ICB lists are checked separately, each against the faces between
+   * the two regions it separates.
+   *
+   * @note Call after @c setup_coupled_interfaces, which derives the
+   * connections between elements of different medium tags that this compares
+   * against.
+   *
+   * @throws std::runtime_error if any two sections disagree
+   */
+  void check_consistency() const;
+
+  /**
+   * @brief Check that the mesh is within what the solver supports.
+   *
+   * Distinct from @ref check_consistency: a self-consistent database can still
+   * describe a configuration the solver cannot handle, such as a fluid-solid
+   * interface split across MPI ranks.
+   *
+   * @throws std::runtime_error if the mesh uses an unsupported configuration
+   */
+  void check_supported() const;
+
   mesh() = default;
   ~mesh() = default;
 };
