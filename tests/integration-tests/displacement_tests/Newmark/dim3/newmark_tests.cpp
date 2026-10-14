@@ -178,7 +178,9 @@ TEST_P(Newmark, 3D) {
       mesh, quadratures, sources, receivers, setup.get_seismogram_types(),
       setup.get_t0(), dt, nsteps, max_sig_step, nstep_between_samples,
       simulation_type, setup.allocate_boundary_values(),
-      setup.instantiate_property_reader());
+      setup.instantiate_property_reader(),
+      setup.get_flux_scheme_configuration(),
+      setup.get_injection_configuration());
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;
 
