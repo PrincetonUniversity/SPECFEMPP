@@ -17,21 +17,21 @@ parameters:
         time-scheme:
           type: Newmark
           dt: 0.3
-          nstep: 300
+          nstep: 600
 
     simulation-mode:
       forward:
         writer:
           seismogram:
             format: ascii
-            directory: "./displacement_tests/Newmark/serial/dim3/FKInjectionElastic/seismograms"
+            directory: "./"
 
-          display:
-            format: VTKHDF
-            directory: displacement_tests/Newmark/serial/dim3/FKInjectionElastic/display
-            field: displacement
-            simulation-field: forward
-            time-interval: 5
+          # display:
+          #   format: VTKHDF
+          #   directory: displacement_tests/Newmark/serial/dim3/FKInjectionElastic/display
+          #   field: displacement
+          #   simulation-field: forward
+          #   time-interval: 5
 
   receivers:
     stations: "displacement_tests/Newmark/serial/dim3/FKInjectionElastic/STATIONS"
