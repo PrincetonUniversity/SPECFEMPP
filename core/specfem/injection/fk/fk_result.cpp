@@ -41,8 +41,8 @@ void specfem::injection::fk::FkResult::sample(
   constexpr int s4 = specfem::injection::fk_impl::series_dx;
   constexpr int with_traction =
       specfem::injection::displacement_traction_component_count;
-  constexpr int with_pressure =
-      specfem::injection::displacement_traction_pressure_component_count;
+  constexpr int with_potential =
+      specfem::injection::displacement_traction_potential_component_count;
 
   // Local copies (a device lambda cannot capture `this`).
   const auto coefficients = series_coefficients_;
@@ -115,13 +115,15 @@ void specfem::injection::fk::FkResult::sample(
           out(ipt, frame::traction_z, k) = static_cast<type_real>(tz);
         }
 
-        if (ncomp >= with_pressure) {
-          double pressure = 0.0;
+        if (ncomp >= with_potential) {
+          // Acoustic points carry the incident potential-rate χ̇ (series S2);
+          // zero for elastic points (no fluid potential).
+          double chi_dot = 0.0;
           if (is_acoustic(ipt)) {
-            pressure = cubic::evaluate<type_real>(&coefficients(g, s2, 0),
-                                                  ncoef, abscissa);
+            chi_dot = cubic::evaluate<type_real>(&coefficients(g, s2, 0), ncoef,
+                                                 abscissa);
           }
-          out(ipt, frame::pressure, k) = static_cast<type_real>(pressure);
+          out(ipt, frame::potential_rate, k) = static_cast<type_real>(chi_dot);
         }
       });
   Kokkos::fence();

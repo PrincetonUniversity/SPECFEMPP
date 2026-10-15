@@ -172,29 +172,36 @@ project_elastic(const specfem::utilities::ComplexVector<4> &state,
 /**
  * @brief Project an acoustic state onto the depth-only series (S0, S1, S2).
  *
- * S0 = u_x, S1 = u_z, S2 = pressure. S3/S4 stay zero (no shear in a fluid).
+ * S0 = u_x, S1 = u_z (displacement), S2 = potential-rate χ̇. S3/S4 stay zero
+ * (no shear in a fluid). The acoustic Stacey injection consumes the incident
+ * displacement and χ̇ (SPECFEM3D's acoustic FK coupling), not pressure.
  *
  * @param state          Acoustic state @f$(u_z, P/k)@f$ at the point.
- * @param layer          Fluid layer containing the point (supplies density).
+ * @param horizontal_density Density used in the horizontal recovery
+ *        @f$u_x = -i p^2/\rho\,(P/k)@f$. SPECFEM3D's layer resolution sends a
+ *        point at a layer's BOTTOM boundary into the layer below, so at the
+ *        fluid-solid interface this is the UNDERLYING (solid) density, not the
+ *        fluid's — pass the caller-resolved value.
  * @param omega          Complex angular frequency (rad/s).
  * @param ray_parameter  Horizontal slowness p (s/m).
  * @return SeriesSpectrum with S0, S1, S2 populated.
  */
 KOKKOS_INLINE_FUNCTION SeriesSpectrum
-project_acoustic(const AcousticState &state,
-                 const specfem::injection::fk::AcousticLayer &layer,
+project_acoustic(const AcousticState &state, double horizontal_density,
                  Kokkos::complex<double> omega, type_real ray_parameter) {
   using Cplx = Kokkos::complex<double>;
   const double p = static_cast<double>(ray_parameter);
-  const double rho = static_cast<double>(layer.density);
+  const double rho = horizontal_density;
   const Cplx neg_i(0.0, -1.0);
+  (void)omega; // χ̇ needs no (iω) factor; the kinematic derivative is elsewhere
 
   SeriesSpectrum out;
   out.values[series_horizontal] =
       neg_i * Cplx(p * p / rho, 0.0) * state.pressure_over_k; // u_x
   out.values[series_vertical] = state.u_z;                    // u_z
+  // Potential-rate χ̇ = i·p·(P/k), matching SPECFEM3D dχ = i·ray_p·bot_vec(2).
   out.values[series_sigma_zz] =
-      state.pressure_over_k * omega * Cplx(p, 0.0); // pressure
+      Cplx(0.0, 1.0) * Cplx(p, 0.0) * state.pressure_over_k; // chi_dot
   return out;
 }
 

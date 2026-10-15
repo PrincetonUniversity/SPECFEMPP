@@ -18,9 +18,13 @@ void specfem::injection::fk_impl::depth_spectrum(
 
   const int nf2 = static_cast<int>(setup.omega.size()); // nf_stored + 1
   const type_real p = static_cast<type_real>(setup.p);
-  const int n = setup.derivative_order;
   const bool is_acoustic =
       (group.medium == specfem::injection::fk::point_medium::acoustic);
+  // Acoustic Stacey injection consumes the incident DISPLACEMENT (u*·n) and the
+  // potential-rate (series S2), matching SPECFEM3D's acoustic FK coupling, so
+  // the (iω)^n kinematic derivative applies only to elastic (velocity) points;
+  // acoustic kinematic slots stay displacement (n = 0).
+  const int n = is_acoustic ? 0 : setup.derivative_order;
 
   for (int f = 0; f < nf2; ++f) {
     const Cplx omega(setup.omega[f], 0.0);
@@ -38,8 +42,25 @@ void specfem::injection::fk_impl::depth_spectrum(
       if (group.free_surface) {
         state.pressure_over_k = Cplx(0.0, 0.0);
       }
-      series =
-          specfem::injection::fk_impl::project_acoustic(state, layer, omega, p);
+      // SPECFEM3D resolves an acoustic point at a layer's BOTTOM boundary into
+      // the layer BELOW (couple_with_injection's zz <= sum(H) tie-break), so
+      // u_x = -i p^2/rho (P/k) at the fluid-solid interface row uses the
+      // UNDERLYING layer's density (the elastic one beneath the last fluid
+      // layer). The state itself is the zero-height interface state either
+      // way; only this density differs. Match the convention, or the injected
+      // u*.n along the interface perimeter disagrees with SPECFEM3D by the
+      // density ratio and pumps the water column over the multiples.
+      double horizontal_density = static_cast<double>(layer.density);
+      if (group.height <=
+          1.0e-6 * static_cast<double>(layer.thickness)) { // bottom boundary
+        const int below = group.layer + 1;
+        horizontal_density =
+            (below < model.number_of_fluid_layers())
+                ? static_cast<double>(model.fluid_layers()[below].density)
+                : static_cast<double>(model.elastic_layers().front().density);
+      }
+      series = specfem::injection::fk_impl::project_acoustic(
+          state, horizontal_density, omega, p);
     } else {
       specfem::utilities::ComplexVector<4> state;
       if (group.in_halfspace) {
