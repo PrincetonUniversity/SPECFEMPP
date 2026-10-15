@@ -1,0 +1,10 @@
+# FK model: fluid layer (1000/1500, 30 km) over the elastic half-space
+# (2700/3000/1732.051), split at the mesh interface (-30 km).
+NLAYER   2
+LAYER 1 1000. 1500. 0.       0.
+LAYER 2 2700. 3000. 1732.051 -30000.
+INCIDENT_WAVE   p
+BACK_AZIMUTH    30.
+TAKE_OFF        20.
+FREQUENCY_MAX   0.2
+TIME_WINDOW     180.

@@ -1,0 +1,16 @@
+id : "FKInjectionAcousticElastic"
+name : "FK wavefield injection - fluid over elastic"
+description: >
+  Testing the Newmark time-marching solver with FK plane-wave injection on the
+  Stacey boundary of a fluid layer over an elastic half-space. A P wave is injected; the
+  reference seismograms come from SPECFEM3D's FK coupling. Single MPI process.
+config:
+  nproc : 1
+  # The fluid-solid run carries a ~3% transmitted-field residual vs SPECFEM3D
+  # at the elastic-side stations (fluid-solid interface discretization and
+  # boundary edge/corner quadrature differences); water-column and
+  # displacement channels agree at correlation 0.999+.
+  tolerance : 5e-2
+databases:
+  specfem_config: "specfem_config.yaml"
+  traces: "traces"
