@@ -61,13 +61,21 @@ rule specfem3d_setup:
         mesh_files=[f"<cwd>/specfem3d_workdir/fortran/DATA/{f}" for f in fortran_mesh_files],
         cwd=directory("<cwd>/specfem3d_workdir/fortran"),
     localrule: True,
-    shell:
-        """
-            mkdir -p {output.cwd}/fortran/DATA/meshfem3D_files
-            mkdir -p {output.cwd}/fortran/OUTPUT_FILES
-            cp {input.par_file} {output.par_file}
-            for file in {input.mesh_files}; do cp "$file" {output.cwd}/DATA/meshfem3D_files/$(basename "$file"); done
-        """
+    run:
+        import os
+        import shutil
+
+        os.makedirs(os.path.join(output.cwd, "OUTPUT_FILES"), exist_ok=True)
+        os.makedirs(os.path.dirname(output.par_file), exist_ok=True)
+        shutil.copy(input.par_file, output.par_file)
+        # Copy each mesh file to its declared output path. input.mesh_files and
+        # output.mesh_files are both built from fortran_mesh_files in the same
+        # order, so entries line up. This preserves any relative subdirectory
+        # (e.g. meshfem3D_files/) and places DATA-level files (e.g. FKmodel)
+        # directly under DATA/, unlike a flat basename copy.
+        for src, dst in zip(input.mesh_files, output.mesh_files):
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            shutil.copy(src, dst)
 
 
 rule specfem3d_mesher:
