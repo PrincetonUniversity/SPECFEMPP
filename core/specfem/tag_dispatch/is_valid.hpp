@@ -383,11 +383,15 @@ constexpr bool is_valid_edge(EdgeTuple t) {
   if (i != I::elastic_acoustic && i != I::acoustic_elastic)
     return false;
 
-  // dim3: only weakly_conforming + none
-  if (d == D::dim3)
-    return c == C::weakly_conforming && b == B::none;
+  // dim3: weakly_conforming only (nonconforming interfaces are dim2-only)
+  if (d == D::dim3 && c != C::weakly_conforming)
+    return false;
 
-  // dim2: boundary rules depend on interface direction
+  // Boundary rules depend on the interface direction (the SELF element's
+  // medium): an elastic self element only carries none/stacey, an acoustic
+  // one any acoustic boundary tag. Interface faces of boundary-tagged
+  // elements (e.g. the Stacey-adjacent ring of a fluid-solid interface) are
+  // classified under that tag and must be coupled like any other face.
   if (i == I::elastic_acoustic)
     return b == B::none || b == B::stacey;
   else // acoustic_elastic
