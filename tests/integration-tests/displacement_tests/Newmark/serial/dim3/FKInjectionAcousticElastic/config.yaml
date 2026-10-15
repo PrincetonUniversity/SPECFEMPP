@@ -6,11 +6,12 @@ description: >
   reference seismograms come from SPECFEM3D's FK coupling. Single MPI process.
 config:
   nproc : 1
-  # The fluid-solid run carries a ~3% transmitted-field residual vs SPECFEM3D
-  # at the elastic-side stations (fluid-solid interface discretization and
-  # boundary edge/corner quadrature differences); water-column and
-  # displacement channels agree at correlation 0.999+.
-  tolerance : 5e-2
+  # All channels agree with SPECFEM3D at correlation 0.9997+ over the full
+  # 180 s window (four water-column multiple round trips); the residual floor
+  # is single-precision accumulation over the long run. This window length is
+  # load-bearing: it is what detects a fluid-solid interface left uncoupled
+  # along the Stacey-adjacent boundary ring.
+  tolerance : 3e-2
 databases:
   specfem_config: "specfem_config.yaml"
   traces: "traces"
