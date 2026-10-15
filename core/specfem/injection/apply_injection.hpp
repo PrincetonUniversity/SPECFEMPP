@@ -207,18 +207,104 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_injection(
 }
 
 // ---------------------------------------------------------------------------
-// Acoustic: fluid / fluid-solid incident term. Added with the water-box test.
+// Acoustic: potential_dot_dot += Jw·(u*·n̂) + Jw·(1/ρvp)·χ̇*, injecting the
+// incident fluid displacement and potential-rate (SPECFEM3D
+// compute_stacey_acoustic).
 // ---------------------------------------------------------------------------
 
-template <typename IndexType, typename InjectionBoundaryType,
-          typename PointBoundaryType, typename PointPropertyType,
-          typename PointAccelerationType>
+template <
+    typename IndexType, typename InjectionBoundaryType,
+    typename PointBoundaryType, typename PointPropertyType,
+    typename PointAccelerationType,
+    typename std::enable_if_t<!PointBoundaryType::simd::using_simd, int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
-impl_injection(const acoustic_type &, const isotropic_type &, const IndexType &,
-               const int, const InjectionBoundaryType &,
-               const PointBoundaryType &, const PointPropertyType &,
-               PointAccelerationType &) {
-  // Acoustic / fluid-solid incident term: implemented with the water-box test.
+impl_injection(const acoustic_type &, const isotropic_type &,
+               const IndexType &index, const int istep,
+               const InjectionBoundaryType &injection,
+               const PointBoundaryType &point_boundary,
+               const PointPropertyType &point_property,
+               PointAccelerationType &acceleration) {
+
+  const int row = injection_row(injection, index);
+  if (row < 0)
+    return;
+
+  namespace frame = specfem::injection::frame_component;
+  const auto &fb = injection.frame;
+  const auto &face_normal = point_boundary.face_normal;
+  const type_real jacobian2d = face_normal.l2_norm();
+  const type_real inv_jacobian2d = static_cast<type_real>(1) / jacobian2d;
+  const type_real jw = jacobian2d * point_boundary.face_weight;
+
+  // Incident normal displacement u*·n̂ and potential-rate χ̇*.
+  const type_real un =
+      (fb.load_on_device(istep, row, frame::displacement_x) * face_normal(0) +
+       fb.load_on_device(istep, row, frame::displacement_y) * face_normal(1) +
+       fb.load_on_device(istep, row, frame::displacement_z) * face_normal(2)) *
+      inv_jacobian2d;
+  const type_real chi_dot =
+      fb.load_on_device(istep, row, frame::potential_rate);
+
+  acceleration(0) += jw * (un + point_property.rho_vpinverse() * chi_dot);
+}
+
+template <
+    typename IndexType, typename InjectionBoundaryType,
+    typename PointBoundaryType, typename PointPropertyType,
+    typename PointAccelerationType,
+    typename std::enable_if_t<PointBoundaryType::simd::using_simd, int> = 0>
+KOKKOS_FORCEINLINE_FUNCTION void
+impl_injection(const acoustic_type &, const isotropic_type &,
+               const IndexType &index, const int istep,
+               const InjectionBoundaryType &injection,
+               const PointBoundaryType &point_boundary,
+               const PointPropertyType &point_property,
+               PointAccelerationType &acceleration) {
+
+  using datatype = typename PointBoundaryType::simd::datatype;
+  using mask_type = typename PointBoundaryType::simd::mask_type;
+  constexpr int lanes = static_cast<int>(mask_type::size());
+
+  int row[lanes];
+  injection_rows(injection, index, row, lanes);
+  const mask_type inject_mask([&](std::size_t lane) { return row[lane] >= 0; });
+  if (Kokkos::Experimental::none_of(inject_mask))
+    return;
+
+  namespace frame = specfem::injection::frame_component;
+  const auto &fb = injection.frame;
+  const auto &face_normal = point_boundary.face_normal;
+  const auto jacobian2d = face_normal.l2_norm();
+  const auto inv_jacobian2d = static_cast<type_real>(1) / jacobian2d;
+  const auto jw = jacobian2d * point_boundary.face_weight;
+
+  const datatype ux([&](std::size_t lane) {
+    return row[lane] >= 0
+               ? fb.load_on_device(istep, row[lane], frame::displacement_x)
+               : static_cast<type_real>(0);
+  });
+  const datatype uy([&](std::size_t lane) {
+    return row[lane] >= 0
+               ? fb.load_on_device(istep, row[lane], frame::displacement_y)
+               : static_cast<type_real>(0);
+  });
+  const datatype uz([&](std::size_t lane) {
+    return row[lane] >= 0
+               ? fb.load_on_device(istep, row[lane], frame::displacement_z)
+               : static_cast<type_real>(0);
+  });
+  const datatype chi_dot([&](std::size_t lane) {
+    return row[lane] >= 0
+               ? fb.load_on_device(istep, row[lane], frame::potential_rate)
+               : static_cast<type_real>(0);
+  });
+
+  const datatype un =
+      (ux * face_normal(0) + uy * face_normal(1) + uz * face_normal(2)) *
+      inv_jacobian2d;
+  const datatype delta = jw * (un + point_property.rho_vpinverse() * chi_dot);
+  acceleration(0) = Kokkos::Experimental::condition(
+      inject_mask, acceleration(0) + delta, acceleration(0));
 }
 
 } // namespace impl

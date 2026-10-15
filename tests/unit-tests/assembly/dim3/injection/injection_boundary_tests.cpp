@@ -374,8 +374,9 @@ TEST(InjectionAcousticElasticBox, EndToEndMatchesDirectSolve) {
   const auto &buffer = provider->frame_buffer();
   const int ncomp = buffer.number_of_components();
   const int W = buffer.number_of_steps();
-  ASSERT_EQ(ncomp,
-            specfem::injection::displacement_traction_pressure_component_count);
+  ASSERT_EQ(
+      ncomp,
+      specfem::injection::displacement_traction_potential_component_count);
 
   Kokkos::View<type_real ***> reference("reference", npoints, ncomp, W);
   result.sample(0, W, reference);
@@ -387,7 +388,7 @@ TEST(InjectionAcousticElasticBox, EndToEndMatchesDirectSolve) {
 
   double max_difference = 0.0;
   double max_reference = 0.0;
-  double max_pressure = 0.0;
+  double max_potential_rate = 0.0;
   for (int ip = 0; ip < npoints; ++ip) {
     const bool acoustic =
         points.medium(ip) == specfem::element::medium_tag::acoustic;
@@ -398,8 +399,9 @@ TEST(InjectionAcousticElasticBox, EndToEndMatchesDirectSolve) {
         EXPECT_TRUE(std::isfinite(got));
         max_difference = std::max(max_difference, std::fabs(got - ref));
         max_reference = std::max(max_reference, std::fabs(ref));
-        if (acoustic && ic == specfem::injection::frame_component::pressure) {
-          max_pressure = std::max(max_pressure, std::fabs(got));
+        if (acoustic &&
+            ic == specfem::injection::frame_component::potential_rate) {
+          max_potential_rate = std::max(max_potential_rate, std::fabs(got));
         }
       }
     }
@@ -407,5 +409,6 @@ TEST(InjectionAcousticElasticBox, EndToEndMatchesDirectSolve) {
 
   EXPECT_LE(max_difference, 1e-5 * (1.0 + max_reference))
       << "frame buffer disagrees with the direct FK solve";
-  EXPECT_GT(max_pressure, 1e-30) << "acoustic points carry no pressure";
+  EXPECT_GT(max_potential_rate, 1e-30)
+      << "acoustic points carry no potential-rate";
 }

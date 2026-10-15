@@ -18,9 +18,13 @@ void specfem::injection::fk_impl::depth_spectrum(
 
   const int nf2 = static_cast<int>(setup.omega.size()); // nf_stored + 1
   const type_real p = static_cast<type_real>(setup.p);
-  const int n = setup.derivative_order;
   const bool is_acoustic =
       (group.medium == specfem::injection::fk::point_medium::acoustic);
+  // Acoustic Stacey injection consumes the incident DISPLACEMENT (u*·n) and the
+  // potential-rate (series S2), matching SPECFEM3D's acoustic FK coupling, so
+  // the (iω)^n kinematic derivative applies only to elastic (velocity) points;
+  // acoustic kinematic slots stay displacement (n = 0).
+  const int n = is_acoustic ? 0 : setup.derivative_order;
 
   for (int f = 0; f < nf2; ++f) {
     const Cplx omega(setup.omega[f], 0.0);
