@@ -1,0 +1,75 @@
+parameters:
+
+  header:
+    title: FK injection, two-layer elastic
+    description: |
+      Material systems : Slow elastic layer (30 km) over elastic half-space
+      Source : FK plane-wave injection (P) on the Stacey boundary
+      Boundary conditions : Stacey absorbing (sides + bottom), free surface top
+
+  simulation-setup:
+    quadrature:
+      quadrature-type: GLL4
+
+    solver:
+      time-marching:
+        type-of-simulation: forward
+        time-scheme:
+          type: Newmark
+          dt: 0.3
+          nstep: 600
+
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:
+            format: ascii
+            directory: "./"
+
+          # display:
+          #   format: VTKHDF
+          #   directory: displacement_tests/Newmark/serial/dim3/FKInjectionElastic/display
+          #   field: displacement
+          #   simulation-field: forward
+          #   time-interval: 5
+
+  receivers:
+    stations: "displacement_tests/Newmark/serial/dim3/FKInjectionElastic/STATIONS"
+    angle: 0.0
+    seismogram-type:
+      - displacement
+      - velocity
+      - acceleration
+    nstep_between_samples: 1
+
+  run-setup:
+    number-of-processors: 1
+    number-of-runs: 1
+
+  databases:
+    mesh-database: "displacement_tests/Newmark/serial/dim3/FKInjectionElastic/database.bin"
+
+  sources: "displacement_tests/Newmark/serial/dim3/FKInjectionElastic/source.yaml"
+
+  injection:
+    enabled: true
+    method: fk
+    # Two identical elastic layers split at the mesh interface (-30,000 km):
+    # physically a homogeneous half-space, but exercises the finite-layer
+    # propagator + interface path of the FK solve.
+    layers:
+      - elastic: { rho: 2500.0, vp: 2500.0, vs: 1250.000, thickness: 30000.0 }
+      - elastic: { rho: 2700.0, vp: 3000.0, vs: 1732.051, thickness: 0.0 }
+    incidence:
+      type: P
+      back-azimuth: 0.0
+      take-off: 20.0
+      # SPECFEM3D auto-derived wavefront origin for this box (printed in its
+      # solver log): box center horizontally, below the bottom by
+      # Radius*sin(take-off) + 3*wavelength*cos(take-off).
+      origin: [0.0, 0.0, -223944.719]
+      amplitude: 1.0
+    time-window:
+      frequency-max: 0.2
+      frequency-sampling: 10.0
+      length: 180.0
