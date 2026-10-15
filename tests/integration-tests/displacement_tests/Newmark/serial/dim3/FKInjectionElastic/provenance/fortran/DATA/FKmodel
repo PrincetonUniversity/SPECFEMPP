@@ -1,6 +1,8 @@
-# FK model: homogeneous elastic half-space (2700/3000/1732)
-NLAYER   1
-LAYER 1 2700. 3000. 1732.051 0.
+# FK model: slow elastic layer (2500/2500/1250, 30 km) over the elastic
+# half-space (2700/3000/1732.051), split at the mesh interface (-30 km).
+NLAYER   2
+LAYER 1 2500. 2500. 1250.000 0.
+LAYER 2 2700. 3000. 1732.051 -30000.
 INCIDENT_WAVE   p
 BACK_AZIMUTH    0.
 TAKE_OFF        20.

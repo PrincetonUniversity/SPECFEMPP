@@ -8,7 +8,7 @@ networks = ["TEST"]
 stations = "ABCDEF"
 locations = ["S3"]
 channels = ["MXX", "MXY", "MXZ"]
-extensions = ["semd"]
+extensions = ["semd", "semv", "sema"]
 
 traces = [
     f"traces/{network}.{station}.{location}.{channel}.{extension}"

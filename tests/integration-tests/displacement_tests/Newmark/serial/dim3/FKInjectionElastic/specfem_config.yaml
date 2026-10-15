@@ -1,9 +1,9 @@
 parameters:
 
   header:
-    title: FK injection, homogeneous elastic
+    title: FK injection, two-layer elastic
     description: |
-      Material systems : Homogeneous elastic half-space
+      Material systems : Slow elastic layer (30 km) over elastic half-space
       Source : FK plane-wave injection (P) on the Stacey boundary
       Boundary conditions : Stacey absorbing (sides + bottom), free surface top
 
@@ -16,22 +16,22 @@ parameters:
         type-of-simulation: forward
         time-scheme:
           type: Newmark
-          dt: 0.15
-          nstep: 1200
+          dt: 0.3
+          nstep: 300
 
     simulation-mode:
       forward:
         writer:
           seismogram:
             format: ascii
-            directory: "./"
+            directory: "./displacement_tests/Newmark/serial/dim3/FKInjectionElastic/seismograms"
 
-          # display:
-          #   format: VTKHDF
-          #   directory: displacement_tests/Newmark/serial/dim3/FKInjectionElastic/display
-          #   field: displacement
-          #   simulation-field: forward
-          #   time-interval: 5
+          display:
+            format: VTKHDF
+            directory: displacement_tests/Newmark/serial/dim3/FKInjectionElastic/display
+            field: displacement
+            simulation-field: forward
+            time-interval: 5
 
   receivers:
     stations: "displacement_tests/Newmark/serial/dim3/FKInjectionElastic/STATIONS"
@@ -39,6 +39,7 @@ parameters:
     seismogram-type:
       - displacement
       - velocity
+      - acceleration
     nstep_between_samples: 1
 
   run-setup:
@@ -53,7 +54,11 @@ parameters:
   injection:
     enabled: true
     method: fk
+    # Two identical elastic layers split at the mesh interface (-30,000 km):
+    # physically a homogeneous half-space, but exercises the finite-layer
+    # propagator + interface path of the FK solve.
     layers:
+      - elastic: { rho: 2500.0, vp: 2500.0, vs: 1250.000, thickness: 30000.0 }
       - elastic: { rho: 2700.0, vp: 3000.0, vs: 1732.051, thickness: 0.0 }
     incidence:
       type: P
