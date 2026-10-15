@@ -177,18 +177,21 @@ project_elastic(const specfem::utilities::ComplexVector<4> &state,
  * displacement and χ̇ (SPECFEM3D's acoustic FK coupling), not pressure.
  *
  * @param state          Acoustic state @f$(u_z, P/k)@f$ at the point.
- * @param layer          Fluid layer containing the point (supplies density).
+ * @param horizontal_density Density used in the horizontal recovery
+ *        @f$u_x = -i p^2/\rho\,(P/k)@f$. SPECFEM3D's layer resolution sends a
+ *        point at a layer's BOTTOM boundary into the layer below, so at the
+ *        fluid-solid interface this is the UNDERLYING (solid) density, not the
+ *        fluid's — pass the caller-resolved value.
  * @param omega          Complex angular frequency (rad/s).
  * @param ray_parameter  Horizontal slowness p (s/m).
  * @return SeriesSpectrum with S0, S1, S2 populated.
  */
 KOKKOS_INLINE_FUNCTION SeriesSpectrum
-project_acoustic(const AcousticState &state,
-                 const specfem::injection::fk::AcousticLayer &layer,
+project_acoustic(const AcousticState &state, double horizontal_density,
                  Kokkos::complex<double> omega, type_real ray_parameter) {
   using Cplx = Kokkos::complex<double>;
   const double p = static_cast<double>(ray_parameter);
-  const double rho = static_cast<double>(layer.density);
+  const double rho = horizontal_density;
   const Cplx neg_i(0.0, -1.0);
   (void)omega; // χ̇ needs no (iω) factor; the kinematic derivative is elsewhere
 

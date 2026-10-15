@@ -153,7 +153,8 @@ TEST(FieldRecovery, AcousticFreeSurfacePressureSmall) {
           fluid, omega, static_cast<type_real>(500.0), p, base);
 
   const specfem::injection::fk_impl::SeriesSpectrum s =
-      specfem::injection::fk_impl::project_acoustic(at, fluid, omega, p);
+      specfem::injection::fk_impl::project_acoustic(
+          at, static_cast<double>(fluid.density), omega, p);
 
   const Kokkos::complex<double> pres =
       s.values[specfem::injection::fk_impl::series_sigma_zz];
