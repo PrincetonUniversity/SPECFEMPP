@@ -178,11 +178,19 @@ TEST(DepthGroups, LateralPositionsShareOneGroup) {
     EXPECT_EQ(dg.point_group[i], 0);
   }
 
-  // tau = p*(x*cos(phi) + y*sin(phi)) because x0=y0=z0=0 and eta_p*(0-0)=0.
+  // tau = p*(x*cos(phi) + y*sin(phi)) + eta_p*(z_ref - z0) with x0=y0=z0=0.
+  // The vertical anchor z_ref is the HALF-SPACE TOP (the FK frame's time
+  // zero; SPECFEM3D's Z_REF_for_FK), expressed in the SEM frame (z up,
+  // model top 0).
   const double phi = static_cast<double>(wave.azimuth_phi);
+  const double vp_hs =
+      static_cast<double>(model.elastic_layers().back().p_velocity);
+  const double eta_p = std::sqrt(1.0 / (vp_hs * vp_hs) - p * p);
+  const double z_ref = -static_cast<double>(model.layer_top_depths().back());
   for (int i = 0; i < m; ++i) {
     const double expected_tau =
-        p * (xs_list[i] * std::cos(phi) + ys_list[i] * std::sin(phi));
+        p * (xs_list[i] * std::cos(phi) + ys_list[i] * std::sin(phi)) +
+        eta_p * z_ref;
     EXPECT_NEAR(dg.time_delay[i], expected_tau, 1e-9);
   }
 }

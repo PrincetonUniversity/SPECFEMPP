@@ -186,10 +186,11 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
   this->info = { this->mesh, this->properties, this->element_types };
 
   // Injection is a Stacey-boundary condition: build it after properties exist
-  // (it needs the local mesh material) and store it in the boundary container.
-  this->boundaries.initialize_injection(injection_inputs, this->mesh,
-                                        this->properties, this->element_types,
-                                        dt, max_timesteps);
+  // (it needs the local mesh material). The device state lives in the boundary
+  // container; the owning provider stays host-side on the assembly.
+  this->injection_provider = this->boundaries.initialize_injection(
+      injection_inputs, this->mesh, this->properties, this->element_types, dt,
+      max_timesteps);
 
   return;
 }

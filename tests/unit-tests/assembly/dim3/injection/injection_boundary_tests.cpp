@@ -63,7 +63,9 @@ specfem::injection::injection_inputs make_inputs() {
   inputs.method = "fk";
   inputs.model = make_half_space_model();
   inputs.wave = make_wave();
-  inputs.derivative = specfem::injection::fk::field_derivative::displacement;
+  // Stacey injection requires velocity; make_injection_boundary enforces it
+  // regardless, this just keeps the test inputs consistent with that.
+  inputs.derivative = specfem::injection::fk::field_derivative::velocity;
   inputs.frequency_max = static_cast<type_real>(1);
   inputs.frequency_sampling = static_cast<type_real>(2);
   inputs.time_window_length = static_cast<type_real>(40);
@@ -218,10 +220,13 @@ TEST(InjectionStaceyBox, EndToEndMatchesDirectSolve) {
 
   const auto eval_points = specfem::injection::fk::eval_points_from_points(
       points, model, /*compute_traction=*/true, /*tolerance=*/1e-3);
+  // The Stacey injection boundary stores velocity (the provider enforces it),
+  // so the reference solve must use the same derivative.
   const auto result = specfem::injection::fk::solve(
-      model, wave, window, eval_points, /*compute_traction=*/true);
+      model, wave, window, eval_points, /*compute_traction=*/true,
+      specfem::injection::fk::field_derivative::velocity);
 
-  const auto &provider = injection.provider;
+  const auto &provider = assembly.injection_provider;
   provider->ensure_window(0);
   const auto &buffer = provider->frame_buffer();
   const int ncomp = buffer.number_of_components();
@@ -358,10 +363,13 @@ TEST(InjectionAcousticElasticBox, EndToEndMatchesDirectSolve) {
 
   const auto eval_points = specfem::injection::fk::eval_points_from_points(
       points, model, /*compute_traction=*/true, /*tolerance=*/1e-3);
+  // The Stacey injection boundary stores velocity (the provider enforces it),
+  // so the reference solve must use the same derivative.
   const auto result = specfem::injection::fk::solve(
-      model, wave, window, eval_points, /*compute_traction=*/true);
+      model, wave, window, eval_points, /*compute_traction=*/true,
+      specfem::injection::fk::field_derivative::velocity);
 
-  const auto &provider = injection.provider;
+  const auto &provider = assembly.injection_provider;
   provider->ensure_window(0);
   const auto &buffer = provider->frame_buffer();
   const int ncomp = buffer.number_of_components();
