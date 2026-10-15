@@ -47,12 +47,21 @@ specfem::injection::fk_impl::group_by_depth(
   }
 
   // --- Per-point time delay tau ---
-  // tau = p*[(x-x0)*cos(phi) + (y-y0)*sin(phi)] + eta_p*(0 - z0)
+  // tau = p*[(x-x0)*cos(phi) + (y-y0)*sin(phi)] + eta_p*(z_ref - z0)
   // eta_p uses the half-space P velocity regardless of wave type.
+  //
+  // The vertical anchor z_ref is the HALF-SPACE TOP, not the model top: the
+  // FK solve's time zero is where the incident wave crosses the half-space
+  // top (SPECFEM3D's Z_REF_for_FK; couple_with_injection.f90 shifts both the
+  // points and the origin into that frame). The two coincide only when the
+  // model has no finite layers.
   const double phi = static_cast<double>(wave.azimuth_phi);
   const double x0 = static_cast<double>(wave.origin_x);
   const double y0 = static_cast<double>(wave.origin_y);
   const double z0 = static_cast<double>(wave.origin_z);
+  // Half-space top in the origin's frame (z up, model top 0): depth below the
+  // model top, negated.
+  const double z_ref = -static_cast<double>(model.layer_top_depths().back());
   const double vp_hs =
       static_cast<double>(model.elastic_layers().back().p_velocity);
   const double eta_p = std::sqrt(std::max(0.0, 1.0 / (vp_hs * vp_hs) - p * p));
@@ -67,7 +76,7 @@ specfem::injection::fk_impl::group_by_depth(
       const double yi = static_cast<double>(points.y(i));
       time_delay[i] =
           p * ((xi - x0) * std::cos(phi) + (yi - y0) * std::sin(phi)) +
-          eta_p * (0.0 - z0);
+          eta_p * (z_ref - z0);
     }
     time_delay_min = *std::min_element(time_delay.begin(), time_delay.end());
     time_delay_max = *std::max_element(time_delay.begin(), time_delay.end());
