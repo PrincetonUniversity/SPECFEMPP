@@ -100,6 +100,12 @@ specfem::injection::fk::eval_points_from_points(
   const bool have_normals = points.normal_x.extent(0) > 0;
   const bool fill_traction = compute_traction && have_normals;
   if (fill_traction) {
+    // The synthesized traction is the textbook sigma.n of the OUTWARD face
+    // normal (same as SPECFEM3D's abs_boundary_normal convention): incoming
+    // field components then pair constructively with the Stacey impedance
+    // Z(v*) while outgoing components cancel — exactly the split the injected
+    // boundary needs. See fortran-oracle
+    // InjectedTractionConsistentWithImpedance.
     eval_points.normal_x = points.normal_x;
     eval_points.normal_y = points.normal_y;
     eval_points.normal_z = points.normal_z;
@@ -124,9 +130,12 @@ specfem::injection::fk::eval_points_from_points(
         const double rho = static_cast<double>(points.rho(i));
         const double mu = rho * vs * vs;
         const double lambda = rho * vp * vp - 2.0 * mu;
-        eval_points.lame_ratio_xi1(i) =
-            static_cast<type_real>((vp * vp) / (vs * vs));
-        eval_points.lame_ratio_xim(i) = static_cast<type_real>(0.5);
+        // Matches SPECFEM3D couple_with_injection.f90: xi = mu/(kappa+4/3 mu) =
+        // vs^2/vp^2; the stress series uses sigma_rr = xi1*sigma_zz - 4*xim*dx
+        // with xim carrying the shear modulus (dx is a strain-like term).
+        const double xi = (vs * vs) / (vp * vp);
+        eval_points.lame_ratio_xi1(i) = static_cast<type_real>(1.0 - 2.0 * xi);
+        eval_points.lame_ratio_xim(i) = static_cast<type_real>((1.0 - xi) * mu);
         eval_points.lame_ratio_bulk(i) =
             static_cast<type_real>(lambda / (2.0 * (lambda + mu)));
       } else {
