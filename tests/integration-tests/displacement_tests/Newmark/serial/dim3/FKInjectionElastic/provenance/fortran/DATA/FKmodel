@@ -1,0 +1,8 @@
+# FK model: homogeneous elastic half-space (2700/3000/1732)
+NLAYER   1
+LAYER 1 2700. 3000. 1732.051 0.
+INCIDENT_WAVE   p
+BACK_AZIMUTH    0.
+TAKE_OFF        20.
+FREQUENCY_MAX   0.2
+TIME_WINDOW     180.

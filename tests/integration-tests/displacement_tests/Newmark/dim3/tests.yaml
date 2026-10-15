@@ -9,3 +9,4 @@ tests3d:
   - "HomogeneousHalfSpaceStacey"
   - "HomogeneousHalfSpaceAcousticStacey"
   - "HomogeneousIsotropicCosseratDomain"
+  - "FKInjectionElastic"

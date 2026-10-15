@@ -1,0 +1,12 @@
+id : "FKInjectionElastic"
+name : "FK wavefield injection - homogeneous elastic"
+description: >
+  Testing the Newmark time-marching solver with FK plane-wave injection on the
+  Stacey boundary of a homogeneous elastic half-space. A P wave is injected; the
+  reference seismograms come from SPECFEM3D's FK coupling. Single MPI process.
+config:
+  nproc : 1
+  tolerance : 1e-2
+databases:
+  specfem_config: "specfem_config.yaml"
+  traces: "traces"
