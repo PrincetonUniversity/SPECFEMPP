@@ -182,6 +182,7 @@ struct mesh<specfem::simulation::model::Globe3D> : public mesh_dim3_base {
    * - the chunk count is 1, 2, 3 or 6;
    * - there are no absorbing (Stacey) faces with 3 or 6 chunks, and none on
    *   inner-core elements otherwise;
+   * - every free-surface face is the top face of a crust/mantle element;
    * - the ocean load is empty without oceans, and on the free surface with
    *   them.
    *

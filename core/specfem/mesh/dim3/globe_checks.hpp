@@ -102,6 +102,21 @@ void check_surface_is_subset(const named_surface &subset,
                              const named_surface &superset);
 
 /**
+ * @brief Check that every face of a surface is a given face of an element in a
+ * given region.
+ *
+ * @param surface Surface to check
+ * @param region Region every owning element must belong to
+ * @param face Face every entry must be
+ * @param element_context Per-element region context
+ * @throws std::runtime_error listing the entries that break either condition
+ */
+void check_surface_faces(
+    const named_surface &surface, const specfem::element::region_tag region,
+    const specfem::mesh_entity::dim3::type face,
+    const std::vector<specfem::mesh::globe_element_context> &element_context);
+
+/**
  * @brief Reject meshes that split a fluid-solid interface across MPI ranks.
  *
  * Coupling is assembled from local connections only, so an interface face

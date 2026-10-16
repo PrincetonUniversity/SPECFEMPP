@@ -58,6 +58,8 @@ void check() {
   // conditions, so neither surface carries faces.
   EXPECT_TRUE(globe.ocean_load.elements.empty());
   EXPECT_EQ(mesh.boundaries.absorbing_boundary.nelements, 0);
+  // The free surface is geometry only, never an acoustic boundary condition.
+  EXPECT_EQ(mesh.boundaries.acoustic_free_surface.nelem_acoustic_surface, 0);
   EXPECT_TRUE(mesh.adjacency_graph.mpi_connections().empty());
 }
 
