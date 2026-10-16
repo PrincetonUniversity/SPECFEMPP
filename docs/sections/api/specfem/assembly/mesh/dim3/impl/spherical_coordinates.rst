@@ -16,9 +16,8 @@ used by the model evaluator. Radius remains in metres: the thin database already
 applies its planet's radius scale, so no additional ``PlanetConstants`` conversion
 is needed. Each GLL point is indexed in compute-element order.
 
-The shared ``geocentric_coordinates::from_cartesian`` conversion returns
-colatitude in [0, pi] and longitude in [0, 2*pi). Globe's ``reduce`` also nudges
-zero angles by 1e-7; this cache intentionally preserves them. ``atan2`` handles
-the axes without perturbing coordinates, allowing accurate Cartesian round trips.
-Longitude is conventionally zero at the poles, and both angles are zero at the
-origin. Geographic source/receiver resolution remains a separate concern.
+The shared ``to<geocentric_coordinates>`` projection returns colatitude in
+[0, pi] and wraps longitude using globe's ``reduce()`` convention. This includes
+nudging near-zero angles by 1e-7 radians, so Cartesian round trips near the axes
+have a corresponding angular tolerance. Geographic source/receiver resolution
+remains a separate concern.

@@ -39,6 +39,7 @@
 #include <Kokkos_Core.hpp>
 #include <array>
 #include <cmath>
+#include <limits>
 #include <numbers>
 #include <stdexcept>
 #include <string>
@@ -351,8 +352,8 @@ struct ExpectedJacobian3D {
       }
     }
 
-    const auto result = jacobian_matrix.check_small_jacobian();
-    EXPECT_FALSE(result.found)
+    const auto [found, bad_points] = jacobian_matrix.check_small_jacobian();
+    EXPECT_FALSE(found)
         << "Small Jacobian determinant detected in the computed matrix.";
 
     SUCCEED()
@@ -481,16 +482,83 @@ TEST(JacobianMatrixConditioning, UsesAnElementLocalScale) {
       }
     }
   }
-  EXPECT_FALSE(jacobian.check_small_jacobian().found)
+  EXPECT_FALSE(std::get<0>(jacobian.check_small_jacobian()))
       << "a small absolute determinant is valid at a consistent element scale";
 
   jacobian.h_jacobian(0, 0, 0, 0) = 1.0e-30;
-  const auto result = jacobian.check_small_jacobian();
-  ASSERT_TRUE(result.found);
-  ASSERT_EQ(result.diagnostics.size(), 1);
-  EXPECT_EQ(result.diagnostics.front().element_index, 0);
-  EXPECT_EQ(result.diagnostics.front().ix, 0);
-  EXPECT_LT(result.diagnostics.front().relative_jacobian(), 1.0e-6);
+  const auto [found, bad_points] = jacobian.check_small_jacobian();
+  ASSERT_TRUE(found);
+  ASSERT_TRUE(bad_points(0).has_value());
+  EXPECT_EQ(bad_points(0)->ix, 0);
+  EXPECT_LT(bad_points(0)->jacobian / bad_points(0)->scale, 1.0e-6);
+}
+
+TEST(JacobianMatrixConditioning, ReturnsOneOptionalPerElement) {
+  specfem::assembly::jacobian_matrix<specfem::element::dimension_tag::dim3>
+      jacobian(5, 2, 2, 2);
+  Kokkos::deep_copy(jacobian.h_jacobian, type_real(1));
+  jacobian.h_jacobian(1, 1, 0, 1) = -2;
+  jacobian.h_jacobian(2, 0, 1, 0) = 0;
+  jacobian.h_jacobian(3, 1, 1, 1) = 1.0e-8;
+
+  const auto [found, bad_points] = jacobian.check_small_jacobian();
+  ASSERT_TRUE(found);
+  ASSERT_EQ(bad_points.extent(0), 5);
+  EXPECT_FALSE(bad_points(0).has_value());
+  EXPECT_FALSE(bad_points(4).has_value());
+  ASSERT_TRUE(bad_points(1).has_value());
+  EXPECT_EQ(bad_points(1)->jacobian, -2);
+  EXPECT_EQ(bad_points(1)->ix, 1);
+  EXPECT_EQ(bad_points(1)->iy, 0);
+  EXPECT_EQ(bad_points(1)->iz, 1);
+  ASSERT_TRUE(bad_points(2).has_value());
+  EXPECT_EQ(bad_points(2)->jacobian, 0);
+  ASSERT_TRUE(bad_points(3).has_value());
+  EXPECT_LT(bad_points(3)->jacobian / bad_points(3)->scale, 1.0e-6);
+
+  Kokkos::deep_copy(jacobian.h_jacobian, type_real(1));
+  const auto [valid_found, valid_points] = jacobian.check_small_jacobian();
+  EXPECT_FALSE(valid_found);
+  for (int ispec = 0; ispec < 5; ++ispec) {
+    EXPECT_FALSE(valid_points(ispec).has_value());
+  }
+}
+
+TEST(JacobianMatrixConditioning, EmptyMeshHasNoBadPoints) {
+  specfem::assembly::jacobian_matrix<specfem::element::dimension_tag::dim3>
+      jacobian(0, 2, 2, 2);
+  const auto [found, bad_points] = jacobian.check_small_jacobian();
+  EXPECT_FALSE(found);
+  EXPECT_EQ(bad_points.extent(0), 0);
+}
+
+TEST(JacobianMatrixConditioning, PreservesFirstNonfiniteLocation) {
+  for (const type_real invalid :
+       { std::numeric_limits<type_real>::infinity(),
+         -std::numeric_limits<type_real>::infinity(),
+         std::numeric_limits<type_real>::quiet_NaN() }) {
+    specfem::assembly::jacobian_matrix<specfem::element::dimension_tag::dim3>
+        jacobian(1, 2, 2, 2);
+    for (int iz = 0; iz < 2; ++iz) {
+      for (int iy = 0; iy < 2; ++iy) {
+        for (int ix = 0; ix < 2; ++ix) {
+          jacobian.h_jacobian(0, iz, iy, ix) = 1;
+        }
+      }
+    }
+    jacobian.h_jacobian(0, 0, 0, 1) = invalid;
+    jacobian.h_jacobian(0, 1, 1, 0) =
+        std::numeric_limits<type_real>::quiet_NaN();
+    jacobian.h_jacobian(0, 1, 1, 1) = -0.5;
+    const auto [found, bad_points] = jacobian.check_small_jacobian();
+    ASSERT_TRUE(found);
+    ASSERT_TRUE(bad_points(0).has_value());
+    const auto &diagnostic = *bad_points(0);
+    EXPECT_FALSE(std::isfinite(diagnostic.jacobian));
+    EXPECT_EQ(diagnostic.ix, 1);
+    EXPECT_EQ(diagnostic.iy, 0);
+    EXPECT_EQ(diagnostic.iz, 0);
+  }
 }
 
 namespace globe_jacobian_test_impl {
@@ -542,9 +610,12 @@ GlobeAssemblyFixture make_assembly() {
 TEST(GlobeJacobianMatrix, ValidatesCurvedAndCentralCubeElements) {
   auto fixture = globe_jacobian_test_impl::make_assembly();
   auto &assembly = fixture.assembly;
-  const auto result = assembly.jacobian_matrix.check_small_jacobian();
-  ASSERT_FALSE(result.found);
-  ASSERT_TRUE(result.diagnostics.empty());
+  const auto [found, bad_points] =
+      assembly.jacobian_matrix.check_small_jacobian();
+  ASSERT_FALSE(found);
+  for (int ispec = 0; ispec < assembly.mesh.nspec; ++ispec) {
+    EXPECT_FALSE(bad_points(ispec).has_value());
+  }
 
   double volume = 0;
 
@@ -585,10 +656,10 @@ TEST(GlobeJacobianMatrix, ValidatesCurvedAndCentralCubeElements) {
                     assembly.mesh.h_control_node_coordinates);
   assembly.jacobian_matrix = { assembly.mesh };
 
-  const auto permuted_result = assembly.jacobian_matrix.check_small_jacobian();
-  ASSERT_TRUE(permuted_result.found);
-  ASSERT_TRUE(permuted_result.elements(permuted_element));
-  ASSERT_FALSE(permuted_result.diagnostics.empty());
+  const auto [permuted_found, permuted_points] =
+      assembly.jacobian_matrix.check_small_jacobian();
+  ASSERT_TRUE(permuted_found);
+  ASSERT_TRUE(permuted_points(permuted_element).has_value());
 
   assembly.element_types.idoubling(permuted_element) =
       static_cast<int>(specfem::globe::radial_flag::middle_central_cube);
@@ -599,10 +670,42 @@ TEST(GlobeJacobianMatrix, ValidatesCurvedAndCentralCubeElements) {
     const std::string message = error.what();
     EXPECT_NE(message.find("element=0"), std::string::npos);
     EXPECT_NE(message.find("region="), std::string::npos);
-    EXPECT_NE(message.find("radius="), std::string::npos);
+    EXPECT_NE(message.find("radius_km="), std::string::npos);
     EXPECT_NE(message.find("idoubling="), std::string::npos);
     EXPECT_NE(message.find("jacobian="), std::string::npos);
-    EXPECT_NE(message.find("Central-cube mapping check failed"),
-              std::string::npos);
+    EXPECT_NE(message.find("central_cube=true"), std::string::npos);
+  }
+}
+
+TEST(GlobeJacobianMatrix, ReportsFailingPointLocation) {
+  auto fixture = globe_jacobian_test_impl::make_assembly();
+  auto &assembly = fixture.assembly;
+  assembly.jacobian_matrix.h_jacobian(0, 0, 0, 0) =
+      std::numeric_limits<type_real>::infinity();
+  for (int location = 0; location < 3; ++location) {
+    // Equator at 90 degrees east, north pole, and the origin.
+    assembly.mesh.h_coord(0, 0, 0, 0, 0) = 0;
+    assembly.mesh.h_coord(0, 0, 0, 0, 1) = location == 0 ? 1000 : 0;
+    assembly.mesh.h_coord(0, 0, 0, 0, 2) = location == 1 ? 1000 : 0;
+    try {
+      assembly.check_jacobian_matrix();
+      FAIL() << "nonfinite determinant must fail validation";
+    } catch (const std::runtime_error &error) {
+      const std::string message = error.what();
+      EXPECT_NE(message.find("reason=nonfinite_determinant"),
+                std::string::npos);
+      EXPECT_NE(message.find("gll=(0,0,0)"), std::string::npos);
+      if (location == 0) {
+        EXPECT_NE(message.find("radius_km=1 geocentric_lat_deg=0 lon_deg=90"),
+                  std::string::npos);
+      } else if (location == 1) {
+        EXPECT_NE(message.find("geocentric_lat_deg=90 lon_deg=undefined"),
+                  std::string::npos);
+      } else {
+        EXPECT_NE(message.find("radius_km=0 geocentric_lat_deg=undefined "
+                               "lon_deg=undefined"),
+                  std::string::npos);
+      }
+    }
   }
 }

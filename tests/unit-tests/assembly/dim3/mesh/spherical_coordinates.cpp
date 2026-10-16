@@ -1,13 +1,10 @@
 #include "../test_fixture.hpp"
 #include "specfem/assembly/mesh.hpp"
-#include "specfem/coordinate_systems/geocentric.hpp"
+#include "specfem/coordinate_systems/geocentric_projection.hpp"
 #include <algorithm>
 #include <array>
 #include <cmath>
 #include <fstream>
-#include <limits>
-#include <numbers>
-#include <stdexcept>
 
 namespace spherical_coordinates_test_impl {
 using Geocentric = specfem::coordinate_systems::geocentric_coordinates;
@@ -15,48 +12,6 @@ constexpr auto dimension = specfem::element::dimension_tag::dim3;
 using Cache = specfem::assembly::mesh_impl::SphericalCoordinates;
 const std::string fixture_path = "data/dim3_globe/GlobalSmallMesh/";
 } // namespace spherical_coordinates_test_impl
-
-TEST(GeocentricCoordinates, AxesAndBranchCuts) {
-  using spherical_coordinates_test_impl::Geocentric;
-  constexpr double pi = std::numbers::pi;
-  const std::array<std::array<double, 3>, 11> xyz = { { { 0, 0, 6371000 },
-                                                        { 0, 0, -6371000 },
-                                                        { -6371000, 0, 0 },
-                                                        { -6371000, -0.0, 0 },
-                                                        { -6371000, 1e-6, 0 },
-                                                        { -6371000, -1e-6, 0 },
-                                                        { 6371000, 0, 0 },
-                                                        { 6371000, -1e-20, 0 },
-                                                        { 0, 6371000, 0 },
-                                                        { 0, -6371000, 0 },
-                                                        { 0, 0, 0 } } };
-  for (const auto &point : xyz) {
-    const auto spherical =
-        Geocentric::from_cartesian(point[0], point[1], point[2]);
-    EXPECT_TRUE(std::isfinite(spherical.r));
-    EXPECT_GE(spherical.theta, 0);
-    EXPECT_LE(spherical.theta, pi);
-    EXPECT_GE(spherical.phi, 0);
-    EXPECT_LT(spherical.phi, 2 * pi);
-    const auto actual = spherical.to_cartesian();
-    for (int dim = 0; dim < 3; ++dim) {
-      EXPECT_NEAR(actual[dim], point[dim], 1e-9 * std::max(1.0, spherical.r));
-    }
-  }
-  EXPECT_DOUBLE_EQ(Geocentric::from_cartesian(0, 0, 1).theta, 0);
-  EXPECT_DOUBLE_EQ(Geocentric::from_cartesian(0, 0, -1).theta, pi);
-  EXPECT_DOUBLE_EQ(Geocentric::from_cartesian(0, 0, -1).phi, 0);
-  EXPECT_DOUBLE_EQ(Geocentric::from_cartesian(-1, -0.0, 0).phi, pi);
-  EXPECT_DOUBLE_EQ(Geocentric::from_cartesian(0, -1, 0).phi, 1.5 * pi);
-  EXPECT_DOUBLE_EQ(Geocentric::from_cartesian(0, 0, 0).r, 0);
-  EXPECT_DOUBLE_EQ(Geocentric::from_cartesian(0, 0, 0).theta, 0);
-  EXPECT_THROW(
-      Geocentric::from_cartesian(std::numeric_limits<double>::infinity(), 0, 0),
-      std::invalid_argument);
-  EXPECT_THROW(Geocentric::from_cartesian(
-                   0, std::numeric_limits<double>::quiet_NaN(), 0),
-               std::invalid_argument);
-}
 
 TEST_P(Assembly3DTest, CartesianSphericalCacheIsEmpty) {
   const auto &cache = getAssembly().mesh.spherical_coordinates;
@@ -102,7 +57,11 @@ TEST(SphericalCoordinates, GlobeRoundTripAndRelease) {
           ASSERT_TRUE(std::isfinite(spherical.r));
           ASSERT_TRUE(std::isfinite(spherical.theta));
           ASSERT_TRUE(std::isfinite(spherical.phi));
-          const auto xyz = spherical.to_cartesian();
+          const auto cartesian = specfem::coordinate_systems::to<
+              specfem::coordinate_systems::cartesian_coordinates<
+                  test_impl::dimension>>(spherical);
+          const std::array<double, 3> xyz{ cartesian.x, cartesian.y,
+                                           cartesian.z };
           for (int dim = 0; dim < 3; ++dim) {
             max_relative_error = std::max(
                 max_relative_error,
@@ -120,7 +79,8 @@ TEST(SphericalCoordinates, GlobeRoundTripAndRelease) {
       }
     }
   }
-  EXPECT_LT(max_relative_error, 1e-9);
+  // The shared projection nudges axis angles by 1e-7 radians.
+  EXPECT_LT(max_relative_error, 3e-7);
   EXPECT_GT(max_reference_difference, 500.0);
 
   // Dumped by globe's xyz_2_rthetaphi_dble + reduce for corner GLL points.
@@ -192,6 +152,10 @@ TEST(SphericalCoordinates, AssemblyReleasesAfterPropertySetup) {
   specfem::mesh::globe3d_mesh globe_mesh;
   static_cast<specfem::mesh::mesh_dim3_base &>(globe_mesh) = raw_mesh;
   globe_mesh.globe.element_context.resize(raw_mesh.nspec);
+  globe_mesh.globe.planet_constants =
+      specfem::globe::PlanetConstants::from_database(
+          specfem::globe::Planet::earth, 2,
+          { 6371000.0, 5514.3, 0.99330562, 24.0, 3600.0, 9000.0 });
   const specfem::quadrature::quadratures quadrature(
       specfem::quadrature::gll::gll{});
   std::vector<std::shared_ptr<specfem::sources::source<test_impl::dimension>>>

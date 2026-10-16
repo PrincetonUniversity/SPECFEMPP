@@ -119,6 +119,15 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
         specfem::assembly::mesh_impl::SphericalCoordinates(this->mesh);
   }
 
+  // Populate the coordinate projection and free-surface geometry on the
+  // assembled mesh BEFORE sources/receivers are built: their constructors call
+  // specfem::assembly::to_cartesian(coords, this->mesh), which reads these. The
+  // constructor overload is selected by the raw mesh model (regional/globe).
+  this->mesh.projection =
+      specfem::assembly::mesh_impl::coordinate_projection(mesh);
+  this->mesh.free_surface =
+      specfem::assembly::mesh_impl::free_surface_geometry(mesh, this->mesh);
+
   this->element_types =
       specfem::assembly::dim3_impl::make_element_types(mesh, this->mesh);
 
@@ -135,13 +144,11 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
   this->kernels = { this->element_types };
 
   this->sources = {
-    sources, this->mesh,   mesh, this->jacobian_matrix, this->element_types, t0,
-    dt,      max_timesteps
+    sources, this->mesh, this->jacobian_matrix, this->element_types,
+    t0,      dt,         max_timesteps
   };
-  this->receivers = {
-    max_sig_step, dt,         t0,   nsteps_between_samples, receivers,
-    stypes,       this->mesh, mesh, this->element_types
-  };
+  this->receivers = { max_sig_step, dt,     t0,         nsteps_between_samples,
+                      receivers,    stypes, this->mesh, this->element_types };
   this->boundaries = { this->mesh.nspec,
                        this->mesh.element_grid.ngllz,
                        this->mesh.element_grid.nglly,

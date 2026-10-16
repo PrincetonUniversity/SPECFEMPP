@@ -1,7 +1,7 @@
 #pragma once
 
 #include "points.hpp"
-#include "specfem/coordinate_systems/geocentric.hpp"
+#include "specfem/coordinate_systems/geocentric_projection.hpp"
 
 namespace specfem::assembly::mesh_impl {
 
@@ -10,7 +10,8 @@ namespace specfem::assembly::mesh_impl {
  *
  * Host storage in compute-element order [ispec, iz, iy, ix, component], with
  * components (radius in metres, colatitude, longitude in radians). Double
- * precision preserves Cartesian round trips even when type_real is float.
+ * precision is retained even when type_real is float. The shared projection
+ * applies globe's reduce() convention, including its axis-angle nudges.
  * The database has already applied PlanetConstants::r_planet() to coordinates;
  * neither radius normalization nor further ellipticity corrections belong here.
  * Model sampling must continue to use the separate reference coordinates.
@@ -42,11 +43,13 @@ struct SphericalCoordinates {
       for (std::size_t iz = 0; iz < h_coord.extent(1); ++iz) {
         for (std::size_t iy = 0; iy < h_coord.extent(2); ++iy) {
           for (std::size_t ix = 0; ix < h_coord.extent(3); ++ix) {
-            const auto spherical =
-                specfem::coordinate_systems::geocentric_coordinates::
-                    from_cartesian(points.h_coord(ispec, iz, iy, ix, 0),
-                                   points.h_coord(ispec, iz, iy, ix, 1),
-                                   points.h_coord(ispec, iz, iy, ix, 2));
+            const specfem::coordinate_systems::cartesian_coordinates<
+                specfem::element::dimension_tag::dim3>
+                cartesian{ points.h_coord(ispec, iz, iy, ix, 0),
+                           points.h_coord(ispec, iz, iy, ix, 1),
+                           points.h_coord(ispec, iz, iy, ix, 2) };
+            const auto spherical = specfem::coordinate_systems::to<
+                specfem::coordinate_systems::geocentric_coordinates>(cartesian);
             h_coord(ispec, iz, iy, ix, 0) = spherical.r;
             h_coord(ispec, iz, iy, ix, 1) = spherical.theta;
             h_coord(ispec, iz, iy, ix, 2) = spherical.phi;
