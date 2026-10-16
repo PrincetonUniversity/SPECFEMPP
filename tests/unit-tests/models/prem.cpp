@@ -281,6 +281,28 @@ TEST_F(PremEvaluatorTest, RejectsDatabaseScaleMismatches) {
                std::runtime_error);
 }
 
+TEST_F(PremEvaluatorTest, AcceptsMatchingModelConfig) {
+  configure("1d_isotropic_prem");
+  const std::vector<int> codes = { 1, 0, 0, 2, 0 };
+  std::vector<bool> flags(16, false);
+  flags[11] = true;
+
+  EXPECT_NO_THROW(
+      evaluator_->validate_database_constants(planet_constants_, codes, flags));
+}
+
+TEST_F(PremEvaluatorTest, RejectsOpaqueModelConfigMismatches) {
+  configure("1d_isotropic_prem");
+  const std::vector<int> codes = { 999, 0, 0, 2, 0 };
+  std::vector<bool> flags(16, false);
+  flags[11] = true;
+
+  EXPECT_THROW(
+      evaluator_->validate_database_constants(planet_constants_, codes, flags),
+      std::runtime_error);
+  EXPECT_TRUE(specfem::globe::ModelEvaluator::is_active());
+}
+
 // -----------------------------------------------------------------------------
 // Guard rails
 // -----------------------------------------------------------------------------
@@ -586,6 +608,28 @@ TEST_F(PremEvaluatorTest, ReturnsPhysicalSiValues) {
   EXPECT_NEAR(properties.rho[0], 5566.0, 20.0);
   EXPECT_NEAR(properties.vpv[0], 13716.0, 50.0);
   EXPECT_NEAR(properties.vsv[0], 7264.0, 50.0);
+}
+
+TEST_F(PremEvaluatorTest, ExposesReferenceDensityInSi) {
+  configure("1d_isotropic_prem");
+  const double radius = 0.75 * prem_rsurface;
+  const double density = evaluator_->reference_density(radius);
+
+  EXPECT_GT(density, 3000.0);
+  EXPECT_LT(density, 7000.0);
+}
+
+TEST_F(PremEvaluatorTest, ExposesMesherEllipticitySpline) {
+  configure("1d_isotropic_prem");
+  const auto spline = evaluator_->ellipticity_spline();
+
+  ASSERT_EQ(spline.radii.size(), spline.values.size());
+  ASSERT_EQ(spline.radii.size(), spline.second_derivatives.size());
+  ASSERT_GT(spline.radii.size(), 600u);
+  EXPECT_DOUBLE_EQ(spline.radii.front(), 0.0);
+  EXPECT_NEAR(spline.radii.back(), prem_rsurface, 1.0e-8);
+  EXPECT_NEAR(spline.values.back(), 1.0 / 299.8, 0.01 / 299.8);
+  EXPECT_LT(spline.values[spline.values.size() / 2], spline.values.back());
 }
 
 // The exact-value tests sample along the polar axis so the recovered radius is

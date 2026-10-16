@@ -544,8 +544,7 @@ TEST_F(SparseMatrixView3D, AssigningAScalarOverwritesTheRegion) {
 // ── Matrix and diagonal sums ────────────────────────────────────────────────
 
 // Fill a fresh view on the full graph with one element block, and return it.
-Teuchos::RCP<specfem::linear_system::fe_crs_matrix_type>
-filled_matrix(FEAssemblyType &fe, const scalar_type scale) {
+MatrixViewType filled_view(FEAssemblyType &fe, const scalar_type scale) {
   const auto &mapping = fe.mapping();
   const int ndof_e =
       mapping.ncomp() * mapping.ngllz() * mapping.nglly() * mapping.ngllx();
@@ -565,7 +564,13 @@ filled_matrix(FEAssemblyType &fe, const scalar_type scale) {
       mapping(ispec, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
   view(dofs, dofs) += block;
   view.finalize();
-  return view.matrix();
+  return view;
+}
+
+// The same, as the raw Tpetra matrix the view owns.
+Teuchos::RCP<specfem::linear_system::fe_crs_matrix_type>
+filled_matrix(FEAssemblyType &fe, const scalar_type scale) {
+  return filled_view(fe, scale).matrix();
 }
 
 // A += B on the same graph reproduces B exactly.
@@ -650,29 +655,31 @@ TEST_F(SparseMatrixView3D, AddingAScaledDiagonalTouchesOnlyTheDiagonal) {
 }
 
 // The three terms of K + c1 C + c2 M are an accumulation, so their order must
-// not matter.
+// not matter. The forward sum spells its matrices as raw Tpetra matrices and
+// the reversed one as views, so the two entry points are checked against each
+// other too.
 TEST_F(SparseMatrixView3D, TermsAccumulateInAnyOrder) {
   using specfem::linear_system::diag;
   using specfem::linear_system::operator*;
   const auto &mapping = fe().mapping();
 
-  const auto k = filled_matrix(fe(), 1);
-  const auto c = filled_matrix(fe(), 2);
+  const auto k = filled_view(fe(), 1);
+  const auto c = filled_view(fe(), 2);
   specfem::linear_system::vector_type m(fe().owned_map());
   m.putScalar(static_cast<scalar_type>(0.5));
 
   MatrixViewType forward(fe().full_matrix_graph(), mapping);
   forward.begin_fill();
-  forward += *k;
-  forward += static_cast<scalar_type>(4) * (*c);
+  forward += *k.matrix();
+  forward += static_cast<scalar_type>(4) * (*c.matrix());
   forward += static_cast<scalar_type>(7) * diag(m);
   forward.finalize();
 
   MatrixViewType reversed(fe().full_matrix_graph(), mapping);
   reversed.begin_fill();
   reversed += static_cast<scalar_type>(7) * diag(m);
-  reversed += static_cast<scalar_type>(4) * (*c);
-  reversed += *k;
+  reversed += static_cast<scalar_type>(4) * c;
+  reversed += k;
   reversed.finalize();
 
   const auto n = mapping.num_global_dofs();
@@ -711,3 +718,9 @@ TEST(SparseMatrixView3D, SkippedWithoutTrilinos) {
 }
 
 #endif // SPECFEM_ENABLE_TRILINOS
+
+int main(int argc, char *argv[]) {
+  ::testing::InitGoogleTest(&argc, argv);
+  ::testing::AddGlobalTestEnvironment(new SPECFEMEnvironment);
+  return RUN_ALL_TESTS();
+}

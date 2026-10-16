@@ -104,6 +104,8 @@ protected:
   static StiffnessView::host_mirror_type element_block(const int ispec) {
     const specfem::datatype::ElementIndexRange batch(ispec, ispec + 1);
     StiffnessView k_e("k_e", 1, ndof, ndof);
+    // This suite is the kernel's matrix-free oracle; stiffness_kernel_tests
+    // holds it to a host closed-form reference.
     specfem::linear_system::compute_element_stiffness<StiffnessTags>(
         *assembly_, batch, k_e);
     auto h_k = Kokkos::create_mirror_view(k_e);
@@ -122,6 +124,8 @@ TEST_F(ElementStiffness3D, ValidatesScopeOnCleanMesh) {
           *assembly_));
 }
 
+#ifdef SPECFEM_ENABLE_TENSOROPS
+
 TEST_F(ElementStiffness3D, SymmetricWithRigidBodyNullSpace) {
   const auto elements =
       assembly_->element_types.get_elements_on_host(elastic_tag);
@@ -138,8 +142,8 @@ TEST_F(ElementStiffness3D, SymmetricWithRigidBodyNullSpace) {
   ASSERT_GT(scale, static_cast<type_real>(0));
 
   // K = integral of grad(phi_i) : C : grad(phi_j) is symmetric for elastic
-  // isotropic media; the probe computes K(i, j) and K(j, i) through
-  // independent operator applications, so they match only up to roundoff.
+  // isotropic media; K(i, j) and K(j, i) are computed independently, so they
+  // match only up to roundoff.
   type_real max_asymmetry = 0;
   for (int i = 0; i < ndof; ++i) {
     for (int j = i + 1; j < ndof; ++j) {
@@ -312,6 +316,16 @@ TEST_F(ElementStiffness3D, MatchesMatrixFreeOperator) {
         << "K_e columns disagree with the matrix-free operator";
   }
 }
+
+#else // !SPECFEM_ENABLE_TENSOROPS
+
+TEST(ElementStiffnessKernel3D, SkippedWithoutTensorOps) {
+  GTEST_SKIP() << "SPECFEM++ was built without TensorOperations "
+                  "(SPECFEM_ENABLE_TENSOROPS=OFF); the element stiffness "
+                  "kernel is unavailable, only the scope checks run.";
+}
+
+#endif // SPECFEM_ENABLE_TENSOROPS
 
 TEST(ElementStiffnessScope3D, RejectsStaceyBoundaries) {
   const auto stacey_assembly = build_assembly_3d("HomogeneousHalfSpaceStacey");

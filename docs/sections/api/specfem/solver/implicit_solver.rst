@@ -5,7 +5,9 @@ Implicit Newmark solver (issue #1984): one Belos GMRES solve per time step
 on the assembled operator
 :math:`A = M / (\beta \Delta t^2) + \gamma / (\beta \Delta t)\, C + K`,
 with the operators assembled by :ref:`specfem::linear_system
-<linear_system_api>` (stiffness probe, Stacey velocity-path probe, and the
+<linear_system_api>` (the sum-factored TensorOperations element stiffness
+kernel, which requires ``SPECFEM_ENABLE_TENSOROPS=ON`` -- without it the
+solver throws at construction -- plus the Stacey velocity-path probe and the
 :math:`\Delta t = 0` lumped-mass path). :math:`A` is constant for a fixed
 time step, so it is assembled and preconditioned once (Ifpack2 RILUK with
 zero fill by default, applied as a right preconditioner); each step is a

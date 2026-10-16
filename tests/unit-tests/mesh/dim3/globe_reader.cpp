@@ -58,12 +58,12 @@ void write_surface(std::ofstream &stream, const std::vector<int> &elements,
   }
 }
 
-std::filesystem::path write_database(const bool attenuation = false,
-                                     const double source_frequency = 0.0,
-                                     const int property_tag = 0,
-                                     const bool include_mpi = false,
-                                     const bool has_reference_geometry = false,
-                                     const double planet_radius = 6371000.0) {
+std::filesystem::path write_database(
+    const bool attenuation = false, const double source_frequency = 0.0,
+    const int property_tag = 0, const bool include_mpi = false,
+    const bool has_reference_geometry = false,
+    const double planet_radius = 6371000.0, const int region_code = 1,
+    const int idoubling = 4, const bool stop_after_element_tags = false) {
   const auto suffix =
       std::chrono::steady_clock::now().time_since_epoch().count();
   const auto path =
@@ -90,8 +90,10 @@ std::filesystem::path write_database(const bool attenuation = false,
   Record model;
   model.append_fixed("1D_isotropic_prem", 512);
   model.write(stream);
-  write_values(stream, 5, std::vector<int>{ 1, 0, 0, 0, 0 });
-  write_values(stream, 16, std::vector<int>(16, 0));
+  write_values(stream, 5, std::vector<int>{ 1, 0, 0, 2, 0 });
+  std::vector<int> model_flags(16, 0);
+  model_flags[11] = 1;
+  write_values(stream, 16, model_flags);
   write_values(stream, 6, 8, 8);
   write_values(stream, 20.0, 1000.0, source_frequency);
 
@@ -114,8 +116,11 @@ std::filesystem::path write_database(const bool attenuation = false,
   }
 
   write_values(stream, 1);
-  write_values(stream, std::vector<int>{ 1 }, std::vector<int>{ 2 },
-               std::vector<int>{ property_tag }, std::vector<int>{ 4 });
+  write_values(stream, std::vector<int>{ region_code }, std::vector<int>{ 2 },
+               std::vector<int>{ property_tag }, std::vector<int>{ idoubling });
+  if (stop_after_element_tags) {
+    return path;
+  }
   write_values(stream, std::vector<double>{ 3000000.0 },
                std::vector<double>{ 3100000.0 });
   write_values(stream, std::vector<int>{ 0 }, std::vector<int>{ 1 });
@@ -155,7 +160,10 @@ TEST(GlobeMeshReader, ReadsThinDatabaseAndPreservesReferenceContext) {
   EXPECT_EQ(mesh.control_nodes.nnodes, 27);
   EXPECT_EQ(mesh.globe.model_config.model_name, "1D_isotropic_prem");
   EXPECT_EQ(mesh.globe.model_verification.codes,
-            (std::vector<int>{ 1, 0, 0, 0, 0 }));
+            (std::vector<int>{ 1, 0, 0, 2, 0 }));
+  std::vector<bool> expected_flags(16, false);
+  expected_flags[11] = true;
+  EXPECT_EQ(mesh.globe.model_verification.flags, expected_flags);
   EXPECT_EQ(mesh.globe.model_config.nchunks, 6);
   ASSERT_EQ(mesh.globe.element_context.size(), 1);
   EXPECT_EQ(mesh.globe.element_context[0].region,
@@ -175,6 +183,39 @@ TEST(GlobeMeshReader, RejectsInvalidPlanetConstants) {
                                             specfem::attenuation::Setup{}),
                std::runtime_error);
   std::filesystem::remove(path);
+}
+
+TEST(GlobeMeshReader, RejectsFictitiousElementsBeforeReadingRemainingRecords) {
+  // The database deliberately ends after the element tags: rejection must not
+  // depend on reading geometry or constructing an assembly.
+  const auto path = globe_reader_test_impl::write_database(
+      false, 0.0, 0, false, false, 6371000.0, 3, 11, true);
+  try {
+    specfem::io::read_globe_mesh(path.string(), specfem::attenuation::Setup{});
+    ADD_FAILURE() << "Expected fictitious central-cube element rejection";
+  } catch (const std::runtime_error &error) {
+    const std::string message = error.what();
+    EXPECT_NE(message.find("fictitious central-cube element 0"),
+              std::string::npos);
+    EXPECT_NE(message.find("idoubling=11"), std::string::npos);
+  }
+  std::filesystem::remove(path);
+}
+
+TEST(GlobeMeshReader, AcceptsPhysicalInnerCoreElements) {
+  // Normal inner-core elements and all three physical central-cube flags.
+  for (const int idoubling : { 7, 8, 9, 10 }) {
+    SCOPED_TRACE(idoubling);
+    const auto path = globe_reader_test_impl::write_database(
+        false, 0.0, 0, false, false, 6371000.0, 3, idoubling);
+    const auto mesh = specfem::io::read_globe_mesh(
+        path.string(), specfem::attenuation::Setup{});
+    std::filesystem::remove(path);
+    ASSERT_EQ(mesh.globe.element_context.size(), 1);
+    EXPECT_EQ(mesh.globe.element_context[0].region,
+              specfem::element::region_tag::inner_core);
+    EXPECT_EQ(mesh.globe.element_context[0].idoubling, idoubling);
+  }
 }
 
 TEST(GlobeMeshReader, ReadsSeparateReferenceGeometry) {
