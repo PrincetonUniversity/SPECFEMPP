@@ -10,14 +10,13 @@
 namespace spherical_coordinates_test_impl {
 using Geocentric = specfem::coordinate_systems::geocentric_coordinates;
 constexpr auto dimension = specfem::element::dimension_tag::dim3;
-using Cache = specfem::assembly::mesh_impl::SphericalCoordinates;
 const std::string fixture_path = "data/dim3_globe/GlobalSmallMesh/";
 } // namespace spherical_coordinates_test_impl
 
 TEST_P(Assembly3DTest, CartesianSphericalCacheIsEmpty) {
-  const auto &cache = getAssembly().mesh.spherical_coordinates;
-  EXPECT_EQ(cache.h_coord.size(), 0);
-  EXPECT_EQ(cache.h_coord.data(), nullptr);
+  const auto &cache = getAssembly().mesh.h_spherical_coord;
+  EXPECT_EQ(cache.size(), 0);
+  EXPECT_EQ(cache.data(), nullptr);
 }
 
 TEST(SphericalCoordinates, GlobeRoundTripAndRelease) {
@@ -40,21 +39,19 @@ TEST(SphericalCoordinates, GlobeRoundTripAndRelease) {
     quadrature,
     raw_mesh.globe.reference_coordinates
   };
-  mesh.spherical_coordinates = test_impl::Cache(mesh);
-  auto &cache = mesh.spherical_coordinates;
-  ASSERT_EQ(cache.h_coord.size(), mesh.h_coord.size());
-  ASSERT_NE(cache.h_coord.data(), nullptr);
+  mesh.compute_spherical_coordinates();
+  auto &cache = mesh.h_spherical_coord;
+  ASSERT_EQ(cache.size(), mesh.h_coord.size());
+  ASSERT_NE(cache.data(), nullptr);
   double max_relative_error = 0;
   double max_reference_difference = 0;
   for (int ispec = 0; ispec < mesh.nspec; ++ispec) {
     for (int iz = 0; iz < mesh.element_grid.ngllz; ++iz) {
       for (int iy = 0; iy < mesh.element_grid.nglly; ++iy) {
         for (int ix = 0; ix < mesh.element_grid.ngllx; ++ix) {
-          const test_impl::Geocentric spherical{
-            cache.h_coord(ispec, iz, iy, ix, 0),
-            cache.h_coord(ispec, iz, iy, ix, 1),
-            cache.h_coord(ispec, iz, iy, ix, 2)
-          };
+          const test_impl::Geocentric spherical{ cache(ispec, iz, iy, ix, 0),
+                                                 cache(ispec, iz, iy, ix, 1),
+                                                 cache(ispec, iz, iy, ix, 2) };
           ASSERT_TRUE(std::isfinite(spherical.r));
           ASSERT_TRUE(std::isfinite(spherical.theta));
           ASSERT_TRUE(std::isfinite(spherical.phi));
@@ -78,8 +75,8 @@ TEST(SphericalCoordinates, GlobeRoundTripAndRelease) {
       }
     }
   }
-  // The shared projection nudges axis angles by 1e-7 radians.
-  EXPECT_LT(max_relative_error, 3e-7);
+  // Allow for the projection's 1e-7 axis nudges and type_real angle storage.
+  EXPECT_LT(max_relative_error, 1e-6);
   EXPECT_GT(max_reference_difference, 500.0);
 
   // Dumped by globe's xyz_2_rthetaphi_dble + reduce for corner GLL points.
@@ -93,20 +90,20 @@ TEST(SphericalCoordinates, GlobeRoundTripAndRelease) {
   const double r_planet = raw_mesh.globe.planet_constants->r_planet();
   while (reference >> raw_ispec >> radius >> theta >> phi) {
     const int ispec = mesh.h_mesh_to_compute(raw_ispec);
-    EXPECT_NEAR(cache.h_coord(ispec, 0, 0, 0, 0) / r_planet, radius, 1e-6);
-    EXPECT_NEAR(cache.h_coord(ispec, 0, 0, 0, 1), theta, 1e-6);
-    EXPECT_NEAR(cache.h_coord(ispec, 0, 0, 0, 2), phi, 1e-6);
+    EXPECT_NEAR(cache(ispec, 0, 0, 0, 0) / r_planet, radius, 1e-6);
+    EXPECT_NEAR(cache(ispec, 0, 0, 0, 1), theta, 1e-6);
+    EXPECT_NEAR(cache(ispec, 0, 0, 0, 2), phi, 1e-6);
     ++count;
   }
   EXPECT_EQ(count, 6);
-  EXPECT_EQ(cache.h_coord.use_count(), 1);
-  cache.release();
-  EXPECT_EQ(cache.h_coord.data(), nullptr);
-  EXPECT_EQ(cache.h_coord.size(), 0);
+  EXPECT_EQ(cache.use_count(), 1);
+  mesh.h_spherical_coord = {};
+  EXPECT_EQ(cache.data(), nullptr);
+  EXPECT_EQ(cache.size(), 0);
   for (int dim = 0; dim < 5; ++dim)
-    EXPECT_EQ(cache.h_coord.extent(dim), 0);
-  cache.release();
-  EXPECT_EQ(cache.h_coord.data(), nullptr);
+    EXPECT_EQ(cache.extent(dim), 0);
+  mesh.h_spherical_coord = {};
+  EXPECT_EQ(cache.data(), nullptr);
 }
 
 namespace spherical_coordinates_test_impl {
@@ -129,11 +126,10 @@ public:
 
   void read(specfem::assembly::assembly<dimension> &assembly) override {
     called = true;
-    const auto &cache = assembly.mesh.spherical_coordinates;
-    EXPECT_EQ(cache.h_coord.size(),
-              expect_cache ? assembly.mesh.h_coord.size() : 0);
+    const auto &cache = assembly.mesh.h_spherical_coord;
+    EXPECT_EQ(cache.size(), expect_cache ? assembly.mesh.h_coord.size() : 0);
     if (expect_cache) {
-      EXPECT_EQ(cache.h_coord.use_count(), 1);
+      EXPECT_EQ(cache.use_count(), 1);
     }
     assembly.properties = { assembly.element_types, assembly.mesh,
                             raw_mesh.materials, false };
@@ -178,8 +174,8 @@ TEST(SphericalCoordinates, AssemblyReleasesAfterPropertySetup) {
       reader
     };
     EXPECT_TRUE(reader->called);
-    EXPECT_EQ(assembly.mesh.spherical_coordinates.h_coord.size(), 0);
-    EXPECT_EQ(assembly.mesh.spherical_coordinates.h_coord.data(), nullptr);
+    EXPECT_EQ(assembly.mesh.h_spherical_coord.size(), 0);
+    EXPECT_EQ(assembly.mesh.h_spherical_coord.data(), nullptr);
   };
   construct(globe_mesh, true);
   construct(raw_mesh, false);

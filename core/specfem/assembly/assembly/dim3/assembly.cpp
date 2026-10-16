@@ -115,8 +115,7 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
                      mesh) };
 
   if constexpr (ModelTag == specfem::simulation::model::Globe3D) {
-    this->mesh.spherical_coordinates =
-        specfem::assembly::mesh_impl::SphericalCoordinates(this->mesh);
+    this->mesh.compute_spherical_coordinates();
   }
 
   // Populate the coordinate projection and free-surface geometry on the
@@ -197,7 +196,7 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
   this->info = { this->mesh, this->properties, this->element_types };
 
   // All geometry-dependent setup consumers must run before this release.
-  this->mesh.spherical_coordinates.release();
+  this->mesh.h_spherical_coord = {};
 
   return;
 }
