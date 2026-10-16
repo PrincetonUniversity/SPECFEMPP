@@ -8,6 +8,10 @@
 namespace specfem {
 namespace coordinate_systems {
 
+class geocentric_coordinates;
+class geographic_coordinates;
+struct utm_projection_config;
+
 /**
  * @brief Cartesian coordinates in meters, templated by dimension.
  *
@@ -83,6 +87,29 @@ public:
       : x(x), y(y), z(z), origin(origin) {}
 
   cartesian_coordinates() = default;
+
+  /**
+   * @brief Convert planet-centered XYZ to geocentric spherical coordinates.
+   *
+   * Stored components must be absolute XYZ in meters with the planet center
+   * as origin, not UTM or unresolved mesh coordinates. The optional origin is
+   * not applied. Angles use globe's wrapping and polar nudging conventions.
+   *
+   * @return Geocentric coordinates (radius in meters, angles in radians).
+   */
+  geocentric_coordinates to_geocentric() const;
+
+  /**
+   * @brief Convert UTM easting/northing to geographic coordinates.
+   *
+   * Uses the stored components without applying the optional origin. The z
+   * component is passed through as depth; no topographic resolution is done.
+   *
+   * @param config UTM zone, hemisphere, and projection suppression flag.
+   * @return Geographic coordinates (degrees, meters).
+   */
+  geographic_coordinates
+  to_geographic(const utm_projection_config &config) const;
 
   bool operator==(const coordinates<specfem::element::dimension_tag::dim3>
                       &other) const override;

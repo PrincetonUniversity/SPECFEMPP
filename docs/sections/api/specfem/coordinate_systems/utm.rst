@@ -7,9 +7,10 @@ UTM projection
 .. doxygenstruct:: specfem::coordinate_systems::utm_projection_config
     :members:
 
-``to`` (UTM specializations)
-+++++++++++++++++++++++++++++++++++
+UTM conversions
++++++++++++++++
 
-.. doxygenfunction:: specfem::coordinate_systems::to< specfem::coordinate_systems::cartesian_coordinates, specfem::coordinate_systems::geographic_coordinates, specfem::coordinate_systems::utm_projection_config >
-
-.. doxygenfunction:: specfem::coordinate_systems::to< specfem::coordinate_systems::geographic_coordinates, specfem::coordinate_systems::cartesian_coordinates, specfem::coordinate_systems::utm_projection_config >
+Call ``geographic.to_cartesian(config)`` for the forward projection or
+``cartesian3.to_geographic(config)`` for the inverse projection. Both are const
+members of the concrete coordinate types and require a
+``utm_projection_config``. See :doc:`to` for examples.

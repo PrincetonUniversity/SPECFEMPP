@@ -6,7 +6,6 @@
 #include "specfem/coordinate_systems/geocentric.hpp"
 #include "specfem/coordinate_systems/geocentric_projection.hpp"
 #include "specfem/coordinate_systems/geographic.hpp"
-#include "specfem/coordinate_systems/to.hpp"
 #include "specfem/coordinate_systems/utm_projection.hpp"
 #include "specfem/setup.hpp"
 
@@ -80,7 +79,7 @@ specfem::assembly::to_cartesian(
             const specfem::coordinate_systems::geographic_coordinates *>(
             &input))
       return coordinate_conversion_impl::resolve_cartesian(
-          specfem::coordinate_systems::to<cartesian>(*geographic, *utm), mesh);
+          geographic->to_cartesian(*utm), mesh);
     throw std::runtime_error(
         "specfem::assembly::to_cartesian: unknown coordinate type");
   }
@@ -94,18 +93,17 @@ specfem::assembly::to_cartesian(
   if (const auto *geographic = dynamic_cast<
           const specfem::coordinate_systems::geographic_coordinates *>(
           &input)) {
-    const auto geocentric = specfem::coordinate_systems::to<
-        specfem::coordinate_systems::geocentric_coordinates>(
-        *geographic, specfem::coordinate_systems::geocentric_projection_config{
-                         globe.r_planet });
+    const auto geocentric = geographic->to_geocentric(
+        specfem::coordinate_systems::geocentric_projection_config{
+            globe.r_planet });
     return coordinate_conversion_impl::resolve_cartesian(
-        specfem::coordinate_systems::to<cartesian>(geocentric), mesh);
+        geocentric.to_cartesian(), mesh);
   }
 
   if (const auto *geocentric = dynamic_cast<
           const specfem::coordinate_systems::geocentric_coordinates *>(&input))
     return coordinate_conversion_impl::resolve_cartesian(
-        specfem::coordinate_systems::to<cartesian>(*geocentric), mesh);
+        geocentric->to_cartesian(), mesh);
   throw std::runtime_error(
       "specfem::assembly::to_cartesian: unknown coordinate type");
 }
@@ -128,8 +126,7 @@ specfem::assembly::to_geographic(
           std::get_if<specfem::coordinate_systems::utm_projection_config>(
               &projection)) {
     if (const auto *point = dynamic_cast<const cartesian *>(&input))
-      return specfem::coordinate_systems::to<
-          specfem::coordinate_systems::geographic_coordinates>(*point, *utm);
+      return point->to_geographic(*utm);
     throw std::runtime_error(
         "specfem::assembly::to_geographic: expected a Cartesian input");
   }
@@ -141,12 +138,10 @@ specfem::assembly::to_geographic(
       throw std::runtime_error("elliptical/topographic globe coordinate "
                                "resolution not yet implemented (issue #2058)");
     if (const auto *point = dynamic_cast<const cartesian *>(&input)) {
-      const auto geocentric = specfem::coordinate_systems::to<
-          specfem::coordinate_systems::geocentric_coordinates>(*point);
-      return specfem::coordinate_systems::to<
-          specfem::coordinate_systems::geographic_coordinates>(
-          geocentric, specfem::coordinate_systems::geocentric_projection_config{
-                          globe->r_planet });
+      const auto geocentric = point->to_geocentric();
+      return geocentric.to_geographic(
+          specfem::coordinate_systems::geocentric_projection_config{
+              globe->r_planet });
     }
     throw std::runtime_error(
         "specfem::assembly::to_geographic: expected a Cartesian input");
@@ -179,8 +174,7 @@ specfem::assembly::to_geocentric(
                              "resolution not yet implemented (issue #2058)");
 
   if (const auto *point = dynamic_cast<const cartesian *>(&input))
-    return specfem::coordinate_systems::to<
-        specfem::coordinate_systems::geocentric_coordinates>(*point);
+    return point->to_geocentric();
   throw std::runtime_error(
       "specfem::assembly::to_geocentric: expected a Cartesian input");
 }

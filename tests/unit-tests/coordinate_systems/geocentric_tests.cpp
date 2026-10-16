@@ -1,5 +1,6 @@
 #include "specfem/coordinate_systems.hpp"
 #include <cmath>
+#include <concepts>
 #include <gtest/gtest.h>
 #include <numbers>
 
@@ -7,21 +8,66 @@ using specfem::coordinate_systems::cartesian_coordinates;
 using specfem::coordinate_systems::geocentric_coordinates;
 using specfem::coordinate_systems::geocentric_projection_config;
 using specfem::coordinate_systems::geographic_coordinates;
-using specfem::coordinate_systems::to;
 
-namespace {
+namespace geocentric_tests_impl {
 
 using cartesian3d =
     cartesian_coordinates<specfem::element::dimension_tag::dim3>;
+
+template <typename Source, typename... Config>
+concept ToCartesian = requires(const Source &source, const Config &...config) {
+  { source.to_cartesian(config...) } -> std::same_as<cartesian3d>;
+};
+
+template <typename Source, typename... Config>
+concept ToGeocentric = requires(const Source &source, const Config &...config) {
+  { source.to_geocentric(config...) } -> std::same_as<geocentric_coordinates>;
+};
+
+template <typename Source, typename... Config>
+concept ToGeographic = requires(const Source &source, const Config &...config) {
+  { source.to_geographic(config...) } -> std::same_as<geographic_coordinates>;
+};
+
+using specfem::coordinate_systems::utm_projection_config;
+using cartesian2d =
+    cartesian_coordinates<specfem::element::dimension_tag::dim2>;
+using coordinates3d = specfem::coordinate_systems::coordinates<
+    specfem::element::dimension_tag::dim3>;
+
+static_assert(ToCartesian<geocentric_coordinates>);
+static_assert(ToGeocentric<cartesian3d>);
+static_assert(
+    ToGeocentric<geographic_coordinates, geocentric_projection_config>);
+static_assert(
+    ToGeographic<geocentric_coordinates, geocentric_projection_config>);
+static_assert(ToCartesian<geographic_coordinates, utm_projection_config>);
+static_assert(ToGeographic<cartesian3d, utm_projection_config>);
+
+// Configuration is explicit and only meaningful for the matching projection.
+static_assert(!ToCartesian<geographic_coordinates>);
+static_assert(!ToGeocentric<geographic_coordinates>);
+static_assert(!ToGeographic<geocentric_coordinates>);
+static_assert(!ToGeographic<cartesian3d>);
+static_assert(
+    !ToCartesian<geographic_coordinates, geocentric_projection_config>);
+static_assert(!ToGeocentric<geographic_coordinates, utm_projection_config>);
+static_assert(!ToGeographic<geocentric_coordinates, utm_projection_config>);
+static_assert(!ToGeographic<cartesian3d, geocentric_projection_config>);
+static_assert(!ToGeocentric<cartesian2d>);
+static_assert(!ToGeographic<cartesian2d, utm_projection_config>);
+static_assert(!ToCartesian<coordinates3d, utm_projection_config>);
+static_assert(!ToGeocentric<coordinates3d>);
+static_assert(!ToGeographic<coordinates3d, utm_projection_config>);
 
 constexpr double pi = std::numbers::pi;
 constexpr double r_planet = 6371000.0; // m (arbitrary for the chain tests)
 
 cartesian3d to_cartesian(const geocentric_coordinates &g) {
-  return to<cartesian3d>(g);
+  return g.to_cartesian();
 }
 geocentric_coordinates to_geocentric(const cartesian3d &c) {
-  return to<geocentric_coordinates>(c);
+  return c.to_geocentric();
 }
 
 // Smallest absolute angular difference in degrees, accounting for the 360 wrap
@@ -35,7 +81,13 @@ double longitude_error_deg(double a, double b) {
   return std::abs(d);
 }
 
-} // namespace
+} // namespace geocentric_tests_impl
+
+using geocentric_tests_impl::longitude_error_deg;
+using geocentric_tests_impl::pi;
+using geocentric_tests_impl::r_planet;
+using geocentric_tests_impl::to_cartesian;
+using geocentric_tests_impl::to_geocentric;
 
 // ── Known values (forward r,theta,phi -> x,y,z) ──────────────────────────────
 
@@ -108,7 +160,7 @@ TEST(CoordinateSystemsGeocentric, RoundTripAntimeridian) {
 }
 
 // ── Full (lat, lon, depth) -> geocentric -> (lat, lon, depth) ────────────────
-// Exercises the geographic <-> geocentric specializations directly (perfect
+// Exercises the geographic <-> geocentric members directly (perfect
 // sphere): colatitude from latitude (no flattening), r = r_planet - depth.
 
 TEST(CoordinateSystemsGeocentric, GeographicChainRoundTrip) {
@@ -128,13 +180,13 @@ TEST(CoordinateSystemsGeocentric, GeographicChainRoundTrip) {
   for (const auto &k : cases) {
     const geographic_coordinates input(k.lon, k.lat, k.depth);
 
-    const auto geocentric = to<geocentric_coordinates>(input, config);
+    const auto geocentric = input.to_geocentric(config);
 
     // Defining property of the spherical case.
     EXPECT_NEAR(geocentric.r, r_planet - k.depth, 1.0)
         << "radius != r_planet - depth for lat=" << k.lat;
 
-    const auto back = to<geographic_coordinates>(geocentric, config);
+    const auto back = geocentric.to_geographic(config);
 
     // Tolerance accommodates globe reduce()'s ~1e-7 rad axis nudge (~6e-6 deg)
     // at points on the poles / prime meridian.

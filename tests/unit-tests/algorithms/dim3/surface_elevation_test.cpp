@@ -166,11 +166,9 @@ TEST(SurfaceElevation, GeographicResolvesViaUtmFlatFallback) {
   const specfem::coordinate_systems::utm_projection_config cfg{ 31, false };
 
   // Expected easting/northing from the same forward projection.
-  const auto cart = specfem::coordinate_systems::to<
-      specfem::coordinate_systems::cartesian_coordinates<
-          surface_elevation_test::dimension>>(
-      specfem::coordinate_systems::geographic_coordinates{ lon, lat, depth },
-      cfg);
+  const auto cart =
+      specfem::coordinate_systems::geographic_coordinates{ lon, lat, depth }
+          .to_cartesian(cfg);
 
   // Regional UTM mesh with no free surface (flat fallback).
   specfem::assembly::mesh<surface_elevation_test::dimension> mesh{};
@@ -190,11 +188,9 @@ TEST(SurfaceElevation, GeographicResolvesAgainstTopography) {
   const double surface_z = 200.0;
   const specfem::coordinate_systems::utm_projection_config cfg{ 31, false };
 
-  const auto cart = specfem::coordinate_systems::to<
-      specfem::coordinate_systems::cartesian_coordinates<
-          surface_elevation_test::dimension>>(
-      specfem::coordinate_systems::geographic_coordinates{ lon, lat, depth },
-      cfg);
+  const auto cart =
+      specfem::coordinate_systems::geographic_coordinates{ lon, lat, depth }
+          .to_cartesian(cfg);
 
   auto mesh = surface_elevation_test::make_flat_surface_mesh(cart.x, cart.y,
                                                              surface_z, 5000.0);

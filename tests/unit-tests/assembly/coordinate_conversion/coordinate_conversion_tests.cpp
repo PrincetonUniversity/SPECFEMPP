@@ -6,7 +6,7 @@
 #include "specfem/coordinate_systems/geographic.hpp"
 #include "specfem/coordinate_systems/utm_projection.hpp"
 
-// to<> resolves depth/geographic coordinates via
+// specfem::assembly::to_cartesian resolves depth/geographic coordinates via
 // specfem::algorithms::project_onto_surface, which uses specfem::MPI. That
 // requires an initialized MPI Context, so this test installs a
 // SPECFEMEnvironment (rather than relying on gtest_main).

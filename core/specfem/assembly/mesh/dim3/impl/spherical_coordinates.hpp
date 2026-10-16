@@ -1,7 +1,8 @@
 #pragma once
 
 #include "points.hpp"
-#include "specfem/coordinate_systems/geocentric_projection.hpp"
+#include "specfem/coordinate_systems/cartesian.hpp"
+#include "specfem/coordinate_systems/geocentric.hpp"
 
 namespace specfem::assembly::mesh_impl {
 
@@ -48,8 +49,7 @@ struct SphericalCoordinates {
                 cartesian{ points.h_coord(ispec, iz, iy, ix, 0),
                            points.h_coord(ispec, iz, iy, ix, 1),
                            points.h_coord(ispec, iz, iy, ix, 2) };
-            const auto spherical = specfem::coordinate_systems::to<
-                specfem::coordinate_systems::geocentric_coordinates>(cartesian);
+            const auto spherical = cartesian.to_geocentric();
             h_coord(ispec, iz, iy, ix, 0) = spherical.r;
             h_coord(ispec, iz, iy, ix, 1) = spherical.theta;
             h_coord(ispec, iz, iy, ix, 2) = spherical.phi;
