@@ -17,7 +17,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace {
+namespace coordinate_conversion_tests_impl {
 
 namespace cs = specfem::coordinate_systems;
 namespace mesh_impl = specfem::assembly::mesh_impl;
@@ -61,8 +61,6 @@ double radius_of(const specfem::point::global_coordinates<dim3> &point) {
                    static_cast<double>(point.y) * point.y +
                    static_cast<double>(point.z) * point.z);
 }
-
-} // namespace
 
 // ---- Cartesian target, dim2 (plain Cartesian mesh) ------------------------
 
@@ -214,6 +212,8 @@ TEST(ToGeographic, FromCartesianRoundTripUtm) {
   EXPECT_NEAR(recovered.longitude, original.longitude, 1e-4);
   EXPECT_NEAR(recovered.latitude, original.latitude, 1e-4);
 }
+
+} // namespace coordinate_conversion_tests_impl
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
