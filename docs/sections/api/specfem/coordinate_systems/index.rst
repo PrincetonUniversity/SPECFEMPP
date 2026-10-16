@@ -20,8 +20,11 @@ Coordinate types
 Transforms
 ----------
 
-*  :doc:`to`: Generic ``to<Target>(source[, config])`` interface for
-   converting between coordinate systems. Resolution to mesh-space global
+*  :doc:`Coordinate conversions <to>`: Const concrete members
+   ``source.to_cartesian([utm_config])``,
+   ``source.to_geocentric([geocentric_config])``, and
+   ``source.to_geographic(config)`` convert between coordinate systems.
+   Resolution to mesh-space global
    coordinates (which needs the mesh and projection configuration) is handled by
    ``specfem::assembly::to_cartesian`` (and the reverse ``to_geographic`` /
    ``to_geocentric``) in the assembly layer.

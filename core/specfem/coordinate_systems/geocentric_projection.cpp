@@ -66,85 +66,70 @@ void specfem::coordinate_systems::geocentric_impl::reduce(double &theta,
   }
 }
 
-template <>
 specfem::coordinate_systems::cartesian_coordinates<
     specfem::element::dimension_tag::dim3>
-specfem::coordinate_systems::to<
-    specfem::coordinate_systems::cartesian_coordinates<
-        specfem::element::dimension_tag::dim3>>(
-    const specfem::coordinate_systems::geocentric_coordinates &geo) {
+specfem::coordinate_systems::geocentric_coordinates::to_cartesian() const {
 
-  const double sin_theta = std::sin(geo.theta);
-  const double x = geo.r * sin_theta * std::cos(geo.phi);
-  const double y = geo.r * sin_theta * std::sin(geo.phi);
-  const double z = geo.r * std::cos(geo.theta);
+  const double sin_theta = std::sin(theta);
+  const double x = r * sin_theta * std::cos(phi);
+  const double y = r * sin_theta * std::sin(phi);
+  const double z = r * std::cos(theta);
 
   // Absolute coordinates: the planet center is the Cartesian origin.
   return { x, y, z };
 }
 
-template <>
 specfem::coordinate_systems::geocentric_coordinates
-specfem::coordinate_systems::to<
-    specfem::coordinate_systems::geocentric_coordinates>(
-    const specfem::coordinate_systems::cartesian_coordinates<
-        specfem::element::dimension_tag::dim3> &cart) {
+specfem::coordinate_systems::cartesian_coordinates<
+    specfem::element::dimension_tag::dim3>::to_geocentric() const {
 
   namespace geocentric_impl = specfem::coordinate_systems::geocentric_impl;
 
-  const double r =
-      std::sqrt(cart.x * cart.x + cart.y * cart.y + cart.z * cart.z);
+  const double r = std::sqrt(x * x + y * y + z * z);
 
   // theta via atan2 (matches globe's xyz_2_rthetaphi) rather than acos(z/r),
   // which loses precision at the poles.
-  double theta =
-      std::atan2(std::sqrt(cart.x * cart.x + cart.y * cart.y), cart.z);
-  double phi = std::atan2(cart.y, cart.x);
+  double theta = std::atan2(std::sqrt(x * x + y * y), z);
+  double phi = std::atan2(y, x);
   geocentric_impl::reduce(theta, phi);
 
   return { r, theta, phi };
 }
 
-template <>
 specfem::coordinate_systems::geocentric_coordinates
-specfem::coordinate_systems::to<
-    specfem::coordinate_systems::geocentric_coordinates>(
-    const specfem::coordinate_systems::geographic_coordinates &geographic,
-    const specfem::coordinate_systems::geocentric_projection_config &config) {
+specfem::coordinate_systems::geographic_coordinates::to_geocentric(
+    const specfem::coordinate_systems::geocentric_projection_config &config)
+    const {
 
   namespace geocentric_impl = specfem::coordinate_systems::geocentric_impl;
 
   // Perfect sphere: geographic latitude is the geocentric colatitude directly
   // (no (1-f)^2 flattening — that enters with the elliptical case).
-  double theta =
-      specfem::constants::pi_double / 2.0 -
-      geographic.latitude * specfem::constants::degrees_to_radians_double;
-  double phi =
-      geographic.longitude * specfem::constants::degrees_to_radians_double;
+  double theta = specfem::constants::pi_double / 2.0 -
+                 latitude * specfem::constants::degrees_to_radians_double;
+  double phi = longitude * specfem::constants::degrees_to_radians_double;
   geocentric_impl::reduce(theta, phi);
 
-  const double radius = config.r_planet - geographic.depth;
+  const double radius = config.r_planet - depth;
 
   return { radius, theta, phi };
 }
 
-template <>
 specfem::coordinate_systems::geographic_coordinates
-specfem::coordinate_systems::to<
-    specfem::coordinate_systems::geographic_coordinates>(
-    const specfem::coordinate_systems::geocentric_coordinates &geocentric,
-    const specfem::coordinate_systems::geocentric_projection_config &config) {
+specfem::coordinate_systems::geocentric_coordinates::to_geographic(
+    const specfem::coordinate_systems::geocentric_projection_config &config)
+    const {
 
   namespace geocentric_impl = specfem::coordinate_systems::geocentric_impl;
 
-  double theta = geocentric.theta;
-  double phi = geocentric.phi;
+  double theta = this->theta;
+  double phi = this->phi;
   geocentric_impl::reduce(theta, phi);
 
   const double latitude =
       90.0 - theta * specfem::constants::radians_to_degrees_double;
   const double longitude = phi * specfem::constants::radians_to_degrees_double;
-  const double depth = config.r_planet - geocentric.r;
+  const double depth = config.r_planet - r;
 
   return { longitude, latitude, depth };
 }

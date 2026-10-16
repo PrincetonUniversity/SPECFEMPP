@@ -1,6 +1,7 @@
 #include "../test_fixture.hpp"
 #include "specfem/assembly/mesh.hpp"
-#include "specfem/coordinate_systems/geocentric_projection.hpp"
+#include "specfem/coordinate_systems/cartesian.hpp"
+#include "specfem/coordinate_systems/geocentric.hpp"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -54,9 +55,7 @@ TEST(SphericalCoordinates, GlobeRoundTripAndRelease) {
           ASSERT_TRUE(std::isfinite(spherical.r));
           ASSERT_TRUE(std::isfinite(spherical.theta));
           ASSERT_TRUE(std::isfinite(spherical.phi));
-          const auto cartesian = specfem::coordinate_systems::to<
-              specfem::coordinate_systems::cartesian_coordinates<
-                  test_impl::dimension>>(spherical);
+          const auto cartesian = spherical.to_cartesian();
           const std::array<double, 3> xyz{ cartesian.x, cartesian.y,
                                            cartesian.z };
           for (int dim = 0; dim < 3; ++dim) {

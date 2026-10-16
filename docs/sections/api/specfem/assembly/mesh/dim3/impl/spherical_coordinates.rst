@@ -18,7 +18,7 @@ used by the model evaluator. Radius remains in metres: the thin database already
 applies its planet's radius scale, so no additional ``PlanetConstants`` conversion
 is needed. Each GLL point is indexed in compute-element order.
 
-The shared ``to<geocentric_coordinates>`` projection returns colatitude in
+The shared ``cartesian.to_geocentric()`` projection returns colatitude in
 [0, pi] and wraps longitude using globe's ``reduce()`` convention. This includes
 nudging near-zero angles by 1e-7 radians, so Cartesian round trips near the axes
 have a corresponding angular tolerance. Geographic source/receiver resolution

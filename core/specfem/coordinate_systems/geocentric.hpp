@@ -6,6 +6,11 @@
 namespace specfem {
 namespace coordinate_systems {
 
+template <specfem::element::dimension_tag DimensionTag>
+class cartesian_coordinates;
+class geographic_coordinates;
+struct geocentric_projection_config;
+
 /**
  * @brief Geocentric spherical coordinates (physics/SPECFEM convention).
  *
@@ -14,9 +19,8 @@ namespace coordinate_systems {
  * angular conventions (`src/shared/rthetaphi_xyz.f90`).
  *
  * @f$ r @f$ is a physical radius in meters. The transforms to and from this
- * representation (geocentric @f$ \leftrightarrow @f$ Cartesian and
- * geographic @f$ \leftrightarrow @f$ geocentric) live in
- * @ref geocentric_projection.hpp.
+ * representation are exposed as named methods on the coordinate classes.
+ * Geographic conversions require @ref geocentric_projection_config.
  */
 class geocentric_coordinates final
     : public coordinates<specfem::element::dimension_tag::dim3> {
@@ -37,6 +41,29 @@ public:
       : r(r), theta(theta), phi(phi) {}
 
   geocentric_coordinates() = default;
+
+  /**
+   * @brief Convert to planet-centered Cartesian XYZ.
+   *
+   * \f$ x=r\sin\theta\cos\phi,\; y=r\sin\theta\sin\phi,
+   * \; z=r\cos\theta \f$.
+   *
+   * @return Absolute Cartesian coordinates in meters with origin {0,0,0}.
+   */
+  cartesian_coordinates<specfem::element::dimension_tag::dim3>
+  to_cartesian() const;
+
+  /**
+   * @brief Convert to geographic coordinates using a spherical reference.
+   *
+   * Latitude is 90 degrees minus colatitude; depth is the reference surface
+   * radius minus r. Angles use globe's wrapping and polar nudging conventions.
+   *
+   * @param config Reference surface radius in meters.
+   * @return Geographic coordinates (degrees, depth in meters positive down).
+   */
+  geographic_coordinates
+  to_geographic(const geocentric_projection_config &config) const;
 
   bool operator==(const coordinates<specfem::element::dimension_tag::dim3>
                       &other) const override;

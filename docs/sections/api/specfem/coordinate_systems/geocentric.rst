@@ -10,16 +10,16 @@
 .. doxygenstruct:: specfem::coordinate_systems::geocentric_projection_config
     :members:
 
-``to`` (geocentric :math:`\leftrightarrow` Cartesian)
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Geocentric and Cartesian conversions
+++++++++++++++++++++++++++++++++++++
 
-.. doxygenfunction:: specfem::coordinate_systems::to< specfem::coordinate_systems::cartesian_coordinates, specfem::coordinate_systems::geocentric_coordinates >
+Call ``geocentric.to_cartesian()`` or ``cartesian3.to_geocentric()`` on a const
+concrete coordinate. These conversions do not require projection configuration.
 
-.. doxygenfunction:: specfem::coordinate_systems::to< specfem::coordinate_systems::geocentric_coordinates, specfem::coordinate_systems::cartesian_coordinates >
+Geographic and geocentric conversions
+++++++++++++++++++++++++++++++++++++
 
-``to`` (geographic :math:`\leftrightarrow` geocentric)
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-.. doxygenfunction:: specfem::coordinate_systems::to< specfem::coordinate_systems::geocentric_coordinates, specfem::coordinate_systems::geographic_coordinates, specfem::coordinate_systems::geocentric_projection_config >
-
-.. doxygenfunction:: specfem::coordinate_systems::to< specfem::coordinate_systems::geographic_coordinates, specfem::coordinate_systems::geocentric_coordinates, specfem::coordinate_systems::geocentric_projection_config >
+Call ``geographic.to_geocentric(config)`` or
+``geocentric.to_geographic(config)`` with a
+``geocentric_projection_config`` specifying the planet radius.
+See :doc:`to` for examples.

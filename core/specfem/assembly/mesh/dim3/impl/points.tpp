@@ -1,5 +1,6 @@
 #include "specfem/assembly/mesh.hpp"
-#include "specfem/coordinate_systems/geocentric_projection.hpp"
+#include "specfem/coordinate_systems/cartesian.hpp"
+#include "specfem/coordinate_systems/geocentric.hpp"
 #include "specfem/mpi/mpi.hpp"
 #include <limits>
 
@@ -379,8 +380,7 @@ void specfem::assembly::mesh_impl::points<
               cartesian{ this->h_coord(ispec, iz, iy, ix, 0),
                          this->h_coord(ispec, iz, iy, ix, 1),
                          this->h_coord(ispec, iz, iy, ix, 2) };
-          const auto spherical = specfem::coordinate_systems::to<
-              specfem::coordinate_systems::geocentric_coordinates>(cartesian);
+          const auto spherical = cartesian.to_geocentric();
           this->h_spherical_coord(ispec, iz, iy, ix, 0) = spherical.r;
           this->h_spherical_coord(ispec, iz, iy, ix, 1) = spherical.theta;
           this->h_spherical_coord(ispec, iz, iy, ix, 2) = spherical.phi;

@@ -32,24 +32,20 @@ constexpr double ep2 = e2 / (1.0 - e2); ///< Second eccentricity squared
 } // namespace coordinate_systems
 } // namespace specfem
 
-template <>
 specfem::coordinate_systems::cartesian_coordinates<
     specfem::element::dimension_tag::dim3>
-specfem::coordinate_systems::to<
-    specfem::coordinate_systems::cartesian_coordinates<
-        specfem::element::dimension_tag::dim3>>(
-    const specfem::coordinate_systems::geographic_coordinates &geo,
-    const specfem::coordinate_systems::utm_projection_config &config) {
+specfem::coordinate_systems::geographic_coordinates::to_cartesian(
+    const specfem::coordinate_systems::utm_projection_config &config) const {
 
   // Kept this one since it would make the code unwieldy for the reader.
   namespace utm_impl = specfem::coordinate_systems::utm_impl;
 
   if (config.suppress) {
-    return { geo.longitude, geo.latitude, geo.depth, std::nullopt };
+    return { longitude, latitude, depth, std::nullopt };
   }
 
-  const double dlat = geo.latitude;
-  const double dlon = geo.longitude;
+  const double dlat = latitude;
+  const double dlon = longitude;
 
   // Zone parameters
   const int zone = std::abs(config.zone);
@@ -128,20 +124,18 @@ specfem::coordinate_systems::to<
     yy = yy + 1.0e7;
 
   // Depth is negated to z; origin is nullopt (needs topographic resolution)
-  return { xx, yy, -geo.depth, std::nullopt };
+  return { xx, yy, -depth, std::nullopt };
 }
 
-template <>
 specfem::coordinate_systems::geographic_coordinates
-specfem::coordinate_systems::to<
-    specfem::coordinate_systems::geographic_coordinates>(
-    const specfem::coordinate_systems::cartesian_coordinates<
-        specfem::element::dimension_tag::dim3> &cart,
-    const specfem::coordinate_systems::utm_projection_config &config) {
+specfem::coordinate_systems::
+    cartesian_coordinates<specfem::element::dimension_tag::dim3>::to_geographic(
+        const specfem::coordinate_systems::utm_projection_config &config)
+        const {
   namespace utm_impl = specfem::coordinate_systems::utm_impl;
 
   if (config.suppress) {
-    return { cart.x, cart.y, cart.z };
+    return { x, y, z };
   }
 
   // Zone parameters
@@ -152,8 +146,8 @@ specfem::coordinate_systems::to<
       central_meridian * specfem::constants::degrees_to_radians_double;
 
   // Remove false easting/northing and southern hemisphere offset
-  double xx = cart.x - utm_impl::false_easting;
-  double yy = cart.y - utm_impl::false_northing;
+  double xx = x - utm_impl::false_easting;
+  double yy = y - utm_impl::false_northing;
   if (lsouth)
     yy = yy - 1.0e7;
 
@@ -236,5 +230,5 @@ specfem::coordinate_systems::to<
       dlon = dlon - 360.0;
   }
 
-  return { dlon, dlat, cart.z };
+  return { dlon, dlat, z };
 }
