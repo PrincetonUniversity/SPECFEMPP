@@ -40,6 +40,7 @@ enum class source_type {
 
 }
 
+#include "source/local_frame_quantity.hpp"
 #include "source/moment_tensor_rotation.hpp"
 #include "source/source.tpp"
 #include "source/tensor_source.hpp"

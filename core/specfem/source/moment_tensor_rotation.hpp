@@ -7,12 +7,15 @@ namespace specfem {
 namespace sources {
 
 /**
- * @brief Moment tensor in the spherical @f$ (r, \theta, \phi) @f$ basis.
+ * @brief Moment tensor in the geographic spherical @f$ (r, \theta, \phi) @f$
+ * basis.
  *
- * Component ordering and sign follow the CMTSOLUTION / Harvard-CMT
- * convention: @f$ \theta @f$ is geocentric colatitude (0 at the North Pole)
- * and @f$ \phi @f$ is longitude. The tensor is symmetric, so the six stored
- * components fully describe it:
+ * This is the as-read CMTSOLUTION / Harvard-CMT frame: @f$ \theta @f$ is
+ * geocentric colatitude (0 at the North Pole) and @f$ \phi @f$ is longitude.
+ * On a globe it is rotated into the Cartesian mesh frame at the source
+ * location (assuming a perfect sphere, i.e. geographic latitude taken as the
+ * geocentric colatitude; ellipticity is deferred). The tensor is symmetric, so
+ * the six stored components fully describe it:
  *
  * \f[
  * \mathbf{M}_{(r\theta\phi)} = \begin{pmatrix}
@@ -22,7 +25,7 @@ namespace sources {
  * \end{pmatrix}
  * \f]
  */
-struct SphericalMomentTensor {
+struct GeographicMomentTensor {
   type_real Mrr; ///< radial-radial
   type_real Mtt; ///< colatitude-colatitude
   type_real Mpp; ///< longitude-longitude
@@ -68,8 +71,8 @@ struct CartesianMomentTensor {
  * @return The same tensor expressed in the global Cartesian basis.
  */
 CartesianMomentTensor
-rotate_moment_tensor_spherical_to_cartesian(double theta, double phi,
-                                            const SphericalMomentTensor &m);
+rotate_moment_tensor_geographic_to_cartesian(double theta, double phi,
+                                             const GeographicMomentTensor &m);
 
 /**
  * @brief Relabel a spherical moment tensor into a local East-North-Up frame.
@@ -83,13 +86,13 @@ rotate_moment_tensor_spherical_to_cartesian(double theta, double phi,
  *   M_{xy} = -M_{tp},\ M_{xz} = M_{rp},\ M_{yz} = -M_{rt}.
  * \f]
  * This is the convention used by regional CMTSOLUTION sources; it is the flat
- * limit of @ref rotate_moment_tensor_spherical_to_cartesian, kept as a separate
- * entry point so the sign convention lives in one place.
+ * limit of @ref rotate_moment_tensor_geographic_to_cartesian, kept as a
+ * separate entry point so the sign convention lives in one place.
  *
  * @param m Moment tensor in the spherical basis.
  * @return The tensor in the local East-North-Up Cartesian frame.
  */
-CartesianMomentTensor spherical_to_enu(const SphericalMomentTensor &m);
+CartesianMomentTensor geographic_to_enu(const GeographicMomentTensor &m);
 
 } // namespace sources
 } // namespace specfem

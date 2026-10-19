@@ -8,9 +8,9 @@
 
 using specfem::coordinate_systems::local_spherical_basis;
 using specfem::sources::CartesianMomentTensor;
-using specfem::sources::rotate_moment_tensor_spherical_to_cartesian;
-using specfem::sources::spherical_to_enu;
-using specfem::sources::SphericalMomentTensor;
+using specfem::sources::geographic_to_enu;
+using specfem::sources::GeographicMomentTensor;
+using specfem::sources::rotate_moment_tensor_geographic_to_cartesian;
 
 namespace {
 
@@ -21,10 +21,10 @@ std::pair<double, double> colat_lon(double lat_deg, double lon_deg) {
   return { M_PI / 2.0 - lat_deg * deg2rad, lon_deg * deg2rad };
 }
 
-// Build a spherical moment tensor from double literals (type_real is float in
+// Build a geographic moment tensor from double literals (type_real is float in
 // single-precision builds, so brace-init would narrow; cast once here).
-SphericalMomentTensor make_spherical(double rr, double tt, double pp, double rt,
-                                     double rp, double tp) {
+GeographicMomentTensor make_geographic(double rr, double tt, double pp,
+                                       double rt, double rp, double tp) {
   return { static_cast<type_real>(rr), static_cast<type_real>(tt),
            static_cast<type_real>(pp), static_cast<type_real>(rt),
            static_cast<type_real>(rp), static_cast<type_real>(tp) };
@@ -51,7 +51,7 @@ Invariants cartesian_invariants(const CartesianMomentTensor &m) {
   return { trace, second, det };
 }
 
-Invariants spherical_invariants(const SphericalMomentTensor &m) {
+Invariants spherical_invariants(const GeographicMomentTensor &m) {
   const double trace = m.Mrr + m.Mtt + m.Mpp;
   const double second = m.Mrr * m.Mtt + m.Mtt * m.Mpp + m.Mpp * m.Mrr -
                         m.Mrt * m.Mrt - m.Mtp * m.Mtp - m.Mrp * m.Mrp;
@@ -63,8 +63,8 @@ Invariants spherical_invariants(const SphericalMomentTensor &m) {
 
 // Inverse rotation R^T M_cart R, done in the test from the public basis, to
 // check the forward map round-trips and the basis is orthonormal.
-SphericalMomentTensor cartesian_to_spherical(double theta, double phi,
-                                             const CartesianMomentTensor &c) {
+GeographicMomentTensor cartesian_to_spherical(double theta, double phi,
+                                              const CartesianMomentTensor &c) {
   const auto b = local_spherical_basis(theta, phi);
   const std::array<std::array<double, 3>, 3> r = {
     { { b.e_r[0], b.e_theta[0], b.e_phi[0] },
@@ -87,8 +87,8 @@ SphericalMomentTensor cartesian_to_spherical(double theta, double phi,
         out[i][j] += tmp[i][k] * r[k][j];
   // (Mrr, Mtt, Mpp, Mrt, Mrp, Mtp) = diagonal, then (r,theta), (r,phi),
   // (theta,phi).
-  return make_spherical(out[0][0], out[1][1], out[2][2], out[0][1], out[0][2],
-                        out[1][2]);
+  return make_geographic(out[0][0], out[1][1], out[2][2], out[0][1], out[0][2],
+                         out[1][2]);
 }
 
 constexpr double tol = 1e-5;
@@ -100,13 +100,13 @@ constexpr double tol = 1e-5;
 // invariance test that catches most basis/sign errors.
 TEST(MomentTensorRotation, ExplosionIsotropicEverywhere) {
   const double M0 = 2.5;
-  const auto iso = make_spherical(M0, M0, M0, 0.0, 0.0, 0.0);
+  const auto iso = make_geographic(M0, M0, M0, 0.0, 0.0, 0.0);
 
   for (double lat = -80.0; lat <= 80.0; lat += 20.0) {
     for (double lon = 0.0; lon <= 360.0; lon += 30.0) {
       const auto [theta, phi] = colat_lon(lat, lon);
       const auto c =
-          rotate_moment_tensor_spherical_to_cartesian(theta, phi, iso);
+          rotate_moment_tensor_geographic_to_cartesian(theta, phi, iso);
       SCOPED_TRACE("lat=" + std::to_string(lat) +
                    " lon=" + std::to_string(lon));
       EXPECT_NEAR(c.Mxx, M0, tol);
@@ -123,8 +123,8 @@ TEST(MomentTensorRotation, ExplosionIsotropicEverywhere) {
 // Mxz = Mrt with every other Cartesian component zero (derived from R M R^T
 // with e_r=z, e_theta=x, e_phi=y).
 TEST(MomentTensorRotation, PureMrtAtNorthPole) {
-  const auto m = make_spherical(0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
-  const auto c = rotate_moment_tensor_spherical_to_cartesian(0.0, 0.0, m);
+  const auto m = make_geographic(0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+  const auto c = rotate_moment_tensor_geographic_to_cartesian(0.0, 0.0, m);
   EXPECT_NEAR(c.Mxx, 0.0, tol);
   EXPECT_NEAR(c.Myy, 0.0, tol);
   EXPECT_NEAR(c.Mzz, 0.0, tol);
@@ -135,11 +135,12 @@ TEST(MomentTensorRotation, PureMrtAtNorthPole) {
 
 // Spherical -> Cartesian -> spherical recovers the input to round-off.
 TEST(MomentTensorRotation, RoundTripRecoversInput) {
-  const auto m = make_spherical(1.0, -2.0, 3.0, 0.5, -1.5, 2.5);
+  const auto m = make_geographic(1.0, -2.0, 3.0, 0.5, -1.5, 2.5);
   for (double lat = -70.0; lat <= 70.0; lat += 35.0) {
     for (double lon = 15.0; lon <= 345.0; lon += 55.0) {
       const auto [theta, phi] = colat_lon(lat, lon);
-      const auto c = rotate_moment_tensor_spherical_to_cartesian(theta, phi, m);
+      const auto c =
+          rotate_moment_tensor_geographic_to_cartesian(theta, phi, m);
       const auto back = cartesian_to_spherical(theta, phi, c);
       SCOPED_TRACE("lat=" + std::to_string(lat) +
                    " lon=" + std::to_string(lon));
@@ -156,12 +157,13 @@ TEST(MomentTensorRotation, RoundTripRecoversInput) {
 // Trace, second invariant, and determinant are preserved by the rotation
 // (orthogonal similarity preserves eigenvalues).
 TEST(MomentTensorRotation, InvariantsPreserved) {
-  const auto m = make_spherical(4.0, -1.0, 2.0, 0.7, 1.3, -0.4);
+  const auto m = make_geographic(4.0, -1.0, 2.0, 0.7, 1.3, -0.4);
   const auto in = spherical_invariants(m);
   for (double lat = -60.0; lat <= 60.0; lat += 30.0) {
     for (double lon = 10.0; lon <= 350.0; lon += 85.0) {
       const auto [theta, phi] = colat_lon(lat, lon);
-      const auto c = rotate_moment_tensor_spherical_to_cartesian(theta, phi, m);
+      const auto c =
+          rotate_moment_tensor_geographic_to_cartesian(theta, phi, m);
       const auto out = cartesian_invariants(c);
       SCOPED_TRACE("lat=" + std::to_string(lat) +
                    " lon=" + std::to_string(lon));
@@ -186,8 +188,8 @@ TEST(MomentTensorRotation, BasisOrthonormal) {
 
 // The flat East-North-Up relabel matches the documented regional convention.
 TEST(MomentTensorRotation, EnuRelabel) {
-  const auto m = make_spherical(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
-  const auto c = spherical_to_enu(m);
+  const auto m = make_geographic(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
+  const auto c = geographic_to_enu(m);
   EXPECT_NEAR(c.Mxx, m.Mpp, tol);  // 3
   EXPECT_NEAR(c.Myy, m.Mtt, tol);  // 2
   EXPECT_NEAR(c.Mzz, m.Mrr, tol);  // 1

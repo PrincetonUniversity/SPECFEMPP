@@ -42,9 +42,9 @@ specfem::sources_impl::Matrix3 specfem::sources_impl::rotate_symmetric(
 }
 
 specfem::sources::CartesianMomentTensor
-specfem::sources::rotate_moment_tensor_spherical_to_cartesian(
+specfem::sources::rotate_moment_tensor_geographic_to_cartesian(
     double theta, double phi,
-    const specfem::sources::SphericalMomentTensor &m) {
+    const specfem::sources::GeographicMomentTensor &m) {
 
   const auto basis =
       specfem::coordinate_systems::local_spherical_basis(theta, phi);
@@ -69,7 +69,7 @@ specfem::sources::rotate_moment_tensor_spherical_to_cartesian(
            static_cast<type_real>(c[0][2]), static_cast<type_real>(c[1][2]) };
 }
 
-specfem::sources::CartesianMomentTensor specfem::sources::spherical_to_enu(
-    const specfem::sources::SphericalMomentTensor &m) {
+specfem::sources::CartesianMomentTensor specfem::sources::geographic_to_enu(
+    const specfem::sources::GeographicMomentTensor &m) {
   return { m.Mpp, m.Mtt, m.Mrr, -m.Mtp, m.Mrp, -m.Mrt };
 }

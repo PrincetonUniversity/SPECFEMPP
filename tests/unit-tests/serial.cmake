@@ -643,6 +643,7 @@ specfem_add_test(source_class_tests
   SOURCES   source/source.cpp
             source/base_source_tests.cpp
             source/typed_source_tests.cpp
+            source/moment_tensor_resolution_tests.cpp
   LIBRARIES source_class
             source_time_functions
             specfem_environment
