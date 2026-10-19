@@ -14,4 +14,4 @@ frame from :doc:`../coordinate_systems/spherical_basis`.
 
 .. doxygenfunction:: specfem::sources::rotate_moment_tensor_geographic_to_cartesian
 
-.. doxygenfunction:: specfem::sources::geographic_to_enu
+.. doxygenfunction:: specfem::sources::geographic_to_enu(const specfem::sources::GeographicMomentTensor&)

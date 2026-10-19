@@ -1,42 +1,25 @@
-#include "specfem/coordinate_systems/cartesian.hpp"
+#include "resolution_test_helpers.hpp"
 #include "specfem/setup.hpp"
 #include "specfem/source.hpp"
-#include "specfem/source_time_functions.hpp"
 #include "test_macros.hpp"
 
 #include <gtest/gtest.h>
-#include <memory>
 #include <stdexcept>
 #include <variant>
-
-namespace {
-
-constexpr auto dim3 = specfem::element::dimension_tag::dim3;
-
-std::unique_ptr<specfem::source_time_functions::stf> make_stf() {
-  return std::make_unique<specfem::source_time_functions::Ricker>(
-      10, 0.01, 1.0, 0.0, 1.0, false);
-}
-
-std::unique_ptr<specfem::coordinate_systems::coordinates<dim3>>
-origin_coords() {
-  return std::make_unique<
-      specfem::coordinate_systems::cartesian_coordinates<dim3>>(0.0, 0.0, 0.0);
-}
-
-} // namespace
 
 // A moment tensor constructed in the geographic frame is unresolved until the
 // assembly stage installs the Cartesian components. get_source_tensor must
 // throw while unresolved rather than returning a silently-wrong tensor, and the
 // as-read geographic tensor must survive resolution (provenance).
 TEST(MomentTensorResolution, GeographicIsUnresolvedUntilSet) {
+  constexpr auto dim3 = specfem::element::dimension_tag::dim3;
   specfem::sources::moment_tensor<dim3> src(
-      origin_coords(),
+      source_resolution_test::origin_coords(),
       specfem::sources::GeographicMomentTensor{ type_real(1), type_real(2),
                                                 type_real(3), type_real(4),
                                                 type_real(5), type_real(6) },
-      make_stf(), specfem::simulation::field_type::forward);
+      source_resolution_test::make_stf(),
+      specfem::simulation::field_type::forward);
   src.set_medium_tag(specfem::element::medium_tag::elastic);
 
   ASSERT_FALSE(src.moment().is_resolved());
@@ -76,9 +59,9 @@ TEST(MomentTensorResolution, GeographicIsUnresolvedUntilSet) {
 // A moment tensor constructed directly from Cartesian components is resolved
 // from the start: get_source_tensor works and the as-read value is Cartesian.
 TEST(MomentTensorResolution, CartesianCtorIsResolved) {
-  specfem::sources::moment_tensor<dim3> src(
+  specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3> src(
       0.0, 0.0, 0.0, type_real(1), type_real(2), type_real(3), type_real(4),
-      type_real(5), type_real(6), make_stf(),
+      type_real(5), type_real(6), source_resolution_test::make_stf(),
       specfem::simulation::field_type::forward);
   src.set_medium_tag(specfem::element::medium_tag::elastic);
 

@@ -89,6 +89,14 @@ specfem_add_test(moment_tensor_rotation_tests
             Kokkos::kokkos
 )
 
+specfem_add_test(force_rotation_tests
+  SOURCES   source/force_rotation_tests.cpp
+  LIBRARIES specfem::source
+            specfem::coordinate_systems
+            gtest_main
+            Kokkos::kokkos
+)
+
 specfem_add_test(units_tests
   SOURCES   units/quantity_tests.cpp
             units/unit_cast_tests.cpp
@@ -644,6 +652,7 @@ specfem_add_test(source_class_tests
             source/base_source_tests.cpp
             source/typed_source_tests.cpp
             source/moment_tensor_resolution_tests.cpp
+            source/force_resolution_tests.cpp
   LIBRARIES source_class
             source_time_functions
             specfem_environment

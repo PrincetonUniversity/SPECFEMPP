@@ -6,6 +6,8 @@
 #include "specfem/utilities.hpp"
 #include "yaml-cpp/yaml.h"
 #include <cmath>
+#include <type_traits>
+#include <variant>
 
 std::vector<specfem::element::medium_tag> specfem::sources::force<
     specfem::element::dimension_tag::dim3>::get_supported_media() const {
@@ -20,6 +22,10 @@ Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
 specfem::sources::force<
     specfem::element::dimension_tag::dim3>::get_force_vector() const {
 
+  // The resolved Cartesian force; throws if the source is still in its as-read
+  // local frame (assembly-time resolution must run first).
+  const auto &f = this->force_.cartesian();
+
   // Get the medium tag that the source is located in
   specfem::element::medium_tag medium_tag = this->get_medium_tag();
 
@@ -31,21 +37,21 @@ specfem::sources::force<
   // Acoustic
   if (medium_tag == specfem::element::medium_tag::acoustic) {
     force_vector = ViewType("force_vector", 1);
-    force_vector(0) = fx;
+    force_vector(0) = f.fx;
   }
   // Elastic P-SV
   else if (medium_tag == specfem::element::medium_tag::elastic) {
     force_vector = ViewType("force_vector", 3);
-    force_vector(0) = fx;
-    force_vector(1) = fy;
-    force_vector(2) = fz;
+    force_vector(0) = f.fx;
+    force_vector(1) = f.fy;
+    force_vector(2) = f.fz;
   }
   // Elastic Spin
   else if (medium_tag == specfem::element::medium_tag::elastic_spin) {
     force_vector = ViewType("force_vector", 6);
-    force_vector(0) = fx;
-    force_vector(1) = fy;
-    force_vector(2) = fz;
+    force_vector(0) = f.fx;
+    force_vector(1) = f.fy;
+    force_vector(2) = f.fz;
     force_vector(3) = 0.0; // rotational dofs for pure force source are zero
     force_vector(4) = 0.0;
     force_vector(5) = 0.0;
@@ -61,10 +67,25 @@ std::string
 specfem::sources::force<specfem::element::dimension_tag::dim3>::print_details()
     const {
   std::ostringstream message;
-  message << "(fx, fy, fz) = ("
-          << specfem::utilities::format_scientific(this->fx, 6) << ", "
-          << specfem::utilities::format_scientific(this->fy, 6) << ", "
-          << specfem::utilities::format_scientific(this->fz, 6) << ")";
+  // Echo the force in the frame it was read in (provenance).
+  std::visit(
+      [&message](const auto &force) {
+        using T = std::decay_t<decltype(force)>;
+        if constexpr (std::is_same_v<T, specfem::sources::GeographicForce>) {
+          message << "(east, north, up) = ("
+                  << specfem::utilities::format_scientific(force.east, 6)
+                  << ", "
+                  << specfem::utilities::format_scientific(force.north, 6)
+                  << ", " << specfem::utilities::format_scientific(force.up, 6)
+                  << ")";
+        } else {
+          message << "(fx, fy, fz) = ("
+                  << specfem::utilities::format_scientific(force.fx, 6) << ", "
+                  << specfem::utilities::format_scientific(force.fy, 6) << ", "
+                  << specfem::utilities::format_scientific(force.fz, 6) << ")";
+        }
+      },
+      this->force_.as_read());
   return message.str();
 }
 
@@ -88,10 +109,28 @@ bool specfem::sources::force<specfem::element::dimension_tag::dim3>::operator==(
   const auto *c2 = other_source->get_read_coordinates();
   bool coords_equal = (c1 && c2) ? (*c1 == *c2) : (!c1 && !c2);
 
-  return coords_equal &&
-         specfem::utilities::is_close(this->fx, other_source->fx) &&
-         specfem::utilities::is_close(this->fy, other_source->fy) &&
-         specfem::utilities::is_close(this->fz, other_source->fz) &&
+  // Compare the as-read forces: same frame and close components. Identity
+  // depends on the input, not the resolved Cartesian value.
+  const auto &a = this->force_.as_read();
+  const auto &b = other_source->force_.as_read();
+  bool force_equal = false;
+  if (std::holds_alternative<specfem::sources::GeographicForce>(a) &&
+      std::holds_alternative<specfem::sources::GeographicForce>(b)) {
+    const auto &fa = std::get<specfem::sources::GeographicForce>(a);
+    const auto &fb = std::get<specfem::sources::GeographicForce>(b);
+    force_equal = specfem::utilities::is_close(fa.east, fb.east) &&
+                  specfem::utilities::is_close(fa.north, fb.north) &&
+                  specfem::utilities::is_close(fa.up, fb.up);
+  } else if (std::holds_alternative<specfem::sources::CartesianForce>(a) &&
+             std::holds_alternative<specfem::sources::CartesianForce>(b)) {
+    const auto &fa = std::get<specfem::sources::CartesianForce>(a);
+    const auto &fb = std::get<specfem::sources::CartesianForce>(b);
+    force_equal = specfem::utilities::is_close(fa.fx, fb.fx) &&
+                  specfem::utilities::is_close(fa.fy, fb.fy) &&
+                  specfem::utilities::is_close(fa.fz, fb.fz);
+  }
+
+  return coords_equal && force_equal &&
          *(this->source_time_function) == *(other_source->source_time_function);
 }
 bool specfem::sources::force<specfem::element::dimension_tag::dim3>::operator!=(
