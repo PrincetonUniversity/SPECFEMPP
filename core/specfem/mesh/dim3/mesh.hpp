@@ -177,8 +177,9 @@ struct mesh<specfem::simulation::model::Globe3D> : public mesh_dim3_base {
    * Two kinds of rule are checked. Some facts are stated more than once --
    * for example, the fluid-solid interfaces are implied by medium tags and
    * adjacency, and also recorded as the CMB and ICB face lists -- and each such
-   * pair must agree. Other sections must respect the mesher's meshing
-   * restrictions:
+   * pair must agree; the CMB and ICB lists are checked separately, each against
+   * the faces between the two regions it separates. Other sections must
+   * respect the mesher's meshing restrictions:
    * - the chunk count is 1, 2, 3 or 6;
    * - there are no absorbing (Stacey) faces with 3 or 6 chunks, and none on
    *   inner-core elements otherwise;
@@ -189,7 +190,8 @@ struct mesh<specfem::simulation::model::Globe3D> : public mesh_dim3_base {
    * Any database the mesher writes passes, whatever its chunk count.
    *
    * @note Call after @c setup_coupled_interfaces, which derives the
-   * medium-contrast connections this compares against.
+   * connections between elements of different medium tags that this compares
+   * against.
    *
    * @throws std::runtime_error if any rule is broken
    */

@@ -25,6 +25,21 @@ only deserializes that payload, and assembly consumes it while populating GLL
 properties. This keeps mesh data independent of I/O implementation types and
 avoids retaining globe-only state in Cartesian assemblies.
 
+The raw mesh also carries the database's opaque model codes and flags to
+assembly, where the evaluator compares them with the values derived by the
+linked Fortran catalog. C++ does not interpret those values; they exist only to
+detect catalog/database version skew. Every catalog call is serialized because
+upstream routines retain module and `save` scratch state. File-backed models are
+rejected before Fortran initialization when the runtime `DATA/` directory is
+absent, avoiding an unrecoverable Fortran `STOP`.
+
+Reference-model consumers use dedicated evaluator accessors rather than the 3-D
+element path. `reference_density()` exposes the pure planet reference profile in
+SI for gravity setup, while `ellipticity_spline()` returns the exact
+Clairaut/Radau spline constructed by the mesher catalog. The density integration
+and rotation-rate physics therefore remain on the Fortran side of the units
+boundary.
+
 Discontinuity radii belong exclusively to the selected reference model and are
 not stored in the mesh database or assembly. During its single initialization,
 `globe::ModelEvaluator` queries the model oracle and validates the radii locally

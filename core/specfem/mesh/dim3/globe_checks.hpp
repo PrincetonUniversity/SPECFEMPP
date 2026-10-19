@@ -21,36 +21,57 @@ using named_surface =
     std::pair<std::string, const specfem::mesh::globe_boundary_surface *>;
 
 /**
- * @brief Check that the interface faces implied by medium contrast are exactly
- * the faces recorded in the given surface lists.
+ * @brief A face identified by its zero-based mesh element and orientation.
+ */
+using face_key = std::pair<int, specfem::mesh_entity::dim3::type>;
+
+/**
+ * @brief A database interface face list, together with the pair of regions it
+ * separates.
+ */
+struct InterfaceSurface {
+  /** @brief Name of the face list, used in error messages. */
+  std::string name;
+
+  /** @brief Face list read from the database. */
+  const specfem::mesh::globe_boundary_surface *surface = nullptr;
+
+  /** @brief Regions on the two sides of the interface, in either order. */
+  std::pair<specfem::element::region_tag, specfem::element::region_tag>
+      regions = { specfem::element::region_tag::crust_mantle,
+                  specfem::element::region_tag::crust_mantle };
+};
+
+/**
+ * @brief Check that each interface face list records exactly the faces where
+ * the medium tag changes between its two regions.
  *
  * The database states where the medium changes twice: once implicitly, through
  * per-element medium tags and the adjacency graph, and once explicitly, as
  * interface face lists. After @c mesh_dim3_base::setup_coupled_interfaces has
- * promoted every medium-contrast edge to
- * @c element_connections::type::weakly_conforming, the implied set is every
- * such edge's (source element, @c orientation) pair. Only faces are compared;
- * fluid and solid elements also meet at edges and corners, but the database
- * does not record those.
+ * promoted every edge between elements of different medium tags to
+ * @c element_connections::type::weakly_conforming, the implied faces are every
+ * such edge's (source element, @c orientation) pair. Each implied face is
+ * attributed to the surface whose region pair matches the regions of its two
+ * elements, so a face filed under the wrong surface is rejected. Only faces are
+ * compared; fluid and solid elements also meet at edges and corners, but the
+ * database does not record those.
  *
- * The surface lists must carry both sides of each interface, so that their
- * union is comparable with the implied set, which sees every face from both of
- * its elements.
+ * Each surface list must carry both sides of its interface, so that it is
+ * comparable with the implied faces, which see every face from both of its
+ * elements.
  *
  * @param adjacency_graph Adjacency graph after coupled-interface setup
+ * @param element_context Per-element region context
  * @param surfaces Database face lists that together cover every interface
  * @throws std::runtime_error naming the counts and the first few differing
  *         faces, with one-based database element numbers
  */
-void check_interfaces_match_medium_contrast(
+void check_interface_surfaces_match_medium_tags(
     const specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim3>
         &adjacency_graph,
-    const std::vector<named_surface> &surfaces);
-
-/**
- * @brief A face identified by its zero-based mesh element and orientation.
- */
-using face_key = std::pair<int, specfem::mesh_entity::dim3::type>;
+    const std::vector<specfem::mesh::globe_element_context> &element_context,
+    const std::vector<InterfaceSurface> &surfaces);
 
 /**
  * @brief Render a set of faces for an error message.

@@ -160,8 +160,10 @@ public:
    * Assembles \f$ K \f$, \f$ C \f$, and \f$ M \f$, forms \f$ A \f$ for
    * `time_scheme->get_timestep()`, computes the Ifpack2 preconditioner, and
    * builds the Belos GMRES problem. Throws `std::runtime_error` outside the
-   * supported scope (see the class docs) or for `beta <= 0` (the explicit
-   * limit has no displacement-form operator).
+   * supported scope (see the class docs), for `beta <= 0` (the explicit
+   * limit has no displacement-form operator), or when SPECFEM++ is built
+   * without `SPECFEM_ENABLE_TENSOROPS` (required by the element stiffness
+   * kernel).
    *
    * @param time_scheme Supplies the time step, step count, and seismogram
    *        cadence. Its predictor/corrector phases are NOT used -- the

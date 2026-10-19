@@ -3,6 +3,7 @@
 #include "specfem/globe/model_config.hpp"
 #include "specfem/globe/planet_constants.hpp"
 
+#include <atomic>
 #include <cstddef>
 #include <string>
 #include <vector>
@@ -17,9 +18,9 @@ namespace specfem::globe {
  * and from the catalog's non-dimensional convention is confined to this
  * wrapper.
  *
- * Only one instance may own the process-global Fortran catalog at a time, and
- * evaluation is setup-only and single-threaded because catalog routines retain
- * module and `save` state.
+ * Only one instance may own the process-global Fortran catalog at a time.
+ * Catalog calls are serialized process-wide because upstream routines retain
+ * module and `save` state; evaluation remains intended for setup only.
  */
 class ModelEvaluator {
 public:
@@ -59,6 +60,14 @@ public:
     bool is_anisotropic = false;
   };
 
+  /** @brief Ellipticity spline constructed by the reference-model catalog. */
+  struct EllipticitySpline {
+    std::vector<double> radii;  ///< Spline knots, m.
+    std::vector<double> values; ///< Dimensionless ellipticity at each knot.
+    /** @brief Second derivatives with respect to SI radius, 1/m^2. */
+    std::vector<double> second_derivatives;
+  };
+
   /** @brief SI values from the catalog's direct PREM reference path. */
   struct ReferencePoint {
     double rho = 0.0;
@@ -85,9 +94,15 @@ public:
    * @brief Validate database constants against the configured model catalog.
    * @param planet_constants Selected planet's SI constants read from the
    * database.
+   * @param catalog_codes Mesher-side model codes used for skew detection.
+   * The skew check is skipped when both @p catalog_codes and
+   * @p catalog_flags are empty.
+   * @param catalog_flags Mesher-side model flags used for skew detection.
    */
-  void
-  validate_database_constants(const PlanetConstants &planet_constants) const;
+  void validate_database_constants(
+      const PlanetConstants &planet_constants,
+      const std::vector<int> &catalog_codes = {},
+      const std::vector<bool> &catalog_flags = {}) const;
 
   ~ModelEvaluator();
 
@@ -113,6 +128,16 @@ public:
 
   /** @brief Quadrature dimensions compiled into the catalog. */
   [[nodiscard]] static Dimensions dimensions();
+
+  /**
+   * @brief Evaluate the pure 1-D reference density used by gravity.
+   * @param r_si Radius in metres, in the closed interval [0, planet radius].
+   * @return Density in kg/m^3.
+   */
+  [[nodiscard]] double reference_density(double r_si) const;
+
+  /** @brief Return the catalog's Clairaut/Radau ellipticity spline in SI. */
+  [[nodiscard]] EllipticitySpline ellipticity_spline() const;
 
   /** @brief Whether any wrapper currently owns the Fortran catalog. */
   [[nodiscard]] static bool is_active() noexcept;
@@ -152,7 +177,7 @@ private:
   Planet planet_ = Planet::earth;
   bool owns_state_ = false;
 
-  static bool is_active_;
+  static std::atomic_bool is_active_;
 };
 
 } // namespace specfem::globe

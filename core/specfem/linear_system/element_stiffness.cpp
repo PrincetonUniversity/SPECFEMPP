@@ -5,16 +5,6 @@
 #include <sstream>
 #include <stdexcept>
 
-namespace specfem::linear_system_impl {
-/// Tag bundle for the only combination explicitly instantiated for the
-/// linear system (issue #1982).
-using elastic_isotropic_tags =
-    specfem::tags::Tags<specfem::element::dimension_tag::dim3,
-                        specfem::element::medium_tag::elastic,
-                        specfem::element::property_tag::isotropic,
-                        specfem::element::attenuation_tag::none>;
-} // namespace specfem::linear_system_impl
-
 template <typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 void specfem::linear_system::validate_stiffness_scope(
@@ -73,11 +63,12 @@ void specfem::linear_system::validate_stiffness_scope(
                    "supported in the with_stacey scope. Dirichlet masks "
                    "('composite_stacey_dirichlet') are not representable yet.";
       } else {
-        message << "only natural boundary conditions ('none', "
-                   "'acoustic_free_surface') are supported. Stacey boundaries "
-                   "add a velocity-dependent term the stiffness probe does "
-                   "not capture; opt in with StiffnessScope::with_stacey and "
-                   "assemble the damping matrix separately.";
+        message
+            << "only natural boundary conditions ('none', "
+               "'acoustic_free_surface') are supported. Stacey boundaries "
+               "add a velocity-dependent term the stiffness matrix "
+               "does not capture; opt in with StiffnessScope::with_stacey and "
+               "assemble the damping matrix separately.";
       }
       throw std::runtime_error(message.str());
     }
@@ -121,3 +112,8 @@ template void specfem::linear_system::compute_element_stiffness<
     const specfem::datatype::ElementIndexRange &,
     const Kokkos::View<type_real ***, Kokkos::LayoutRight,
                        Kokkos::DefaultExecutionSpace> &);
+
+template specfem::linear_system::ElementStiffnessKernel
+specfem::linear_system::make_element_stiffness_kernel<
+    specfem::linear_system_impl::elastic_isotropic_tags>(
+    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &);
