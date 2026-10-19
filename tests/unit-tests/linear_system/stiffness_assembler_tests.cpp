@@ -82,6 +82,16 @@ std::unique_ptr<AssemblyType> build_assembly_3d(const std::string &test_name) {
 // throwing constructor fails inside a test body, not in SetUpTestSuite.
 class StiffnessAssembler3D : public ::testing::Test {
 protected:
+  // Every test of this fixture assembles K, which needs the element stiffness
+  // kernel; the scope tests below throw before reaching it and always run.
+  void SetUp() override {
+#ifndef SPECFEM_ENABLE_TENSOROPS
+    GTEST_SKIP() << "SPECFEM++ was built without TensorOperations "
+                    "(SPECFEM_ENABLE_TENSOROPS=OFF); the element stiffness "
+                    "kernel is unavailable.";
+#endif
+  }
+
   static void TearDownTestSuite() {
     matrix_ = Teuchos::null;
     assembler_.reset();

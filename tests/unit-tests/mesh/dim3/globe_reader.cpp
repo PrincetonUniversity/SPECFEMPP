@@ -75,10 +75,14 @@ struct DatabaseOptions {
   /// One globe region code per element, bottom to top (1 = crust/mantle,
   /// 2 = outer core, 3 = inner core).
   std::vector<int> region_codes = { 1 };
+  /// idoubling flag shared by every element.
+  int idoubling = 4;
   /// CMB entries as (one-based element, face code).
   std::vector<std::pair<int, int>> cmb_faces = {};
   /// ICB entries as (one-based element, face code).
   std::vector<std::pair<int, int>> icb_faces = {};
+  /// End the database after the element tags record.
+  bool stop_after_element_tags = false;
 };
 
 std::filesystem::path write_database(const DatabaseOptions &options = {}) {
@@ -116,8 +120,10 @@ std::filesystem::path write_database(const DatabaseOptions &options = {}) {
   Record model;
   model.append_fixed("1D_isotropic_prem", 512);
   model.write(stream);
-  write_values(stream, 5, std::vector<int>{ 1, 0, 0, 0, 0 });
-  write_values(stream, 16, std::vector<int>(16, 0));
+  write_values(stream, 5, std::vector<int>{ 1, 0, 0, 2, 0 });
+  std::vector<int> model_flags(16, 0);
+  model_flags[11] = 1;
+  write_values(stream, 16, model_flags);
   write_values(stream, 6, 8, 8);
   write_values(stream, 20.0, 1000.0, options.source_frequency);
 
@@ -148,7 +154,10 @@ std::filesystem::path write_database(const DatabaseOptions &options = {}) {
                  [](const int region) { return (region == 2) ? 1 : 2; });
   write_values(stream, options.region_codes, medium_codes,
                std::vector<int>(nspec, options.property_tag),
-               std::vector<int>(nspec, 4));
+               std::vector<int>(nspec, options.idoubling));
+  if (options.stop_after_element_tags) {
+    return path;
+  }
   write_values(stream, std::vector<double>(nspec, 3000000.0),
                std::vector<double>(nspec, 3100000.0));
   write_values(stream, std::vector<int>(nspec, 0), std::vector<int>(nspec, 1));
@@ -227,7 +236,10 @@ TEST(GlobeMeshReader, ReadsThinDatabaseAndPreservesReferenceContext) {
   EXPECT_EQ(mesh.control_nodes.nnodes, 27);
   EXPECT_EQ(mesh.globe.model_config.model_name, "1D_isotropic_prem");
   EXPECT_EQ(mesh.globe.model_verification.codes,
-            (std::vector<int>{ 1, 0, 0, 0, 0 }));
+            (std::vector<int>{ 1, 0, 0, 2, 0 }));
+  std::vector<bool> expected_flags(16, false);
+  expected_flags[11] = true;
+  EXPECT_EQ(mesh.globe.model_verification.flags, expected_flags);
   EXPECT_EQ(mesh.globe.model_config.nchunks, 6);
   ASSERT_EQ(mesh.globe.element_context.size(), 1);
   EXPECT_EQ(mesh.globe.element_context[0].region,
@@ -247,6 +259,41 @@ TEST(GlobeMeshReader, RejectsInvalidPlanetConstants) {
                                             specfem::attenuation::Setup{}),
                std::runtime_error);
   std::filesystem::remove(path);
+}
+
+TEST(GlobeMeshReader, RejectsFictitiousElementsBeforeReadingRemainingRecords) {
+  // The database deliberately ends after the element tags: rejection must not
+  // depend on reading geometry or constructing an assembly.
+  const auto path = globe_reader_test_impl::write_database(
+      { .region_codes = { 3 },
+        .idoubling = 11,
+        .stop_after_element_tags = true });
+  try {
+    specfem::io::read_globe_mesh(path.string(), specfem::attenuation::Setup{});
+    ADD_FAILURE() << "Expected fictitious central-cube element rejection";
+  } catch (const std::runtime_error &error) {
+    const std::string message = error.what();
+    EXPECT_NE(message.find("fictitious central-cube element 0"),
+              std::string::npos);
+    EXPECT_NE(message.find("idoubling=11"), std::string::npos);
+  }
+  std::filesystem::remove(path);
+}
+
+TEST(GlobeMeshReader, AcceptsPhysicalInnerCoreElements) {
+  // Normal inner-core elements and all three physical central-cube flags.
+  for (const int idoubling : { 7, 8, 9, 10 }) {
+    SCOPED_TRACE(idoubling);
+    const auto path = globe_reader_test_impl::write_database(
+        { .region_codes = { 3 }, .idoubling = idoubling });
+    const auto mesh = specfem::io::read_globe_mesh(
+        path.string(), specfem::attenuation::Setup{});
+    std::filesystem::remove(path);
+    ASSERT_EQ(mesh.globe.element_context.size(), 1);
+    EXPECT_EQ(mesh.globe.element_context[0].region,
+              specfem::element::region_tag::inner_core);
+    EXPECT_EQ(mesh.globe.element_context[0].idoubling, idoubling);
+  }
 }
 
 TEST(GlobeMeshReader, ReadsSeparateReferenceGeometry) {
