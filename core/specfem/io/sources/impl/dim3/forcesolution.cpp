@@ -46,7 +46,12 @@ specfem::io::sources_impl::read<specfem::element::dimension_tag::dim3,
 
     // Time shift and half-duration / frequency
     auto tshift = specfem::io::sources_impl::get_real(fields, "time shift");
-    auto hdurorf0 = specfem::io::sources_impl::get_real(fields, "hdurorf0");
+    // Half-duration / Ricker f0. SPECFEM3D_GLOBE labels this "half duration";
+    // regional SPECFEM3D uses "hdurorf0". Accept either.
+    auto hdurorf0 =
+        fields.contains("half duration")
+            ? specfem::io::sources_impl::get_real(fields, "half duration")
+            : specfem::io::sources_impl::get_real(fields, "hdurorf0");
 
     // Coordinates are resolved to global (x,y,z) at assembly time. Depth is
     // in km here.
@@ -82,17 +87,23 @@ specfem::io::sources_impl::read<specfem::element::dimension_tag::dim3,
         specfem::io::sources_impl::get_int(fields, "source time function");
     auto factor =
         specfem::io::sources_impl::get_real(fields, "factor force source");
-    auto comp_X = specfem::io::sources_impl::get_real(
-        fields, "component dir vect source x");
-    auto comp_Y = specfem::io::sources_impl::get_real(
-        fields, "component dir vect source y");
-    auto comp_Z = specfem::io::sources_impl::get_real(
+    // Direction components in the local East-North-Up frame, matching the
+    // SPECFEM3D/SPECFEM3D_GLOBE FORCESOLUTION convention. The direction is used
+    // as given (not normalised) and scaled by the factor.
+    auto comp_east = specfem::io::sources_impl::get_real(
+        fields, "component dir vect source e");
+    auto comp_north = specfem::io::sources_impl::get_real(
+        fields, "component dir vect source n");
+    auto comp_up = specfem::io::sources_impl::get_real(
         fields, "component dir vect source z_up");
 
-    // Compute force components
-    type_real fx = factor * comp_X;
-    type_real fy = factor * comp_Y;
-    type_real fz = factor * comp_Z;
+    // Force in the local East-North-Up frame. Kept as-read; it is rotated into
+    // the Cartesian mesh frame at assembly, once the source location is placed
+    // (a globe rotates by the local spherical frame; a regional mesh takes the
+    // components as the mesh axes).
+    const specfem::sources::GeographicForce geographic{ factor * comp_east,
+                                                        factor * comp_north,
+                                                        factor * comp_up };
 
     // Construct STF based on type
     std::unique_ptr<specfem::source_time_functions::stf> stf_ptr;
@@ -118,7 +129,7 @@ specfem::io::sources_impl::read<specfem::element::dimension_tag::dim3,
 
     // Construct source (no datetime for FORCESOLUTION)
     sources.push_back(std::make_shared<specfem::sources::force<dim3>>(
-        std::move(coords), fx, fy, fz, std::move(stf_ptr), wavefield_type));
+        std::move(coords), geographic, std::move(stf_ptr), wavefield_type));
   }
 
   return sources;
