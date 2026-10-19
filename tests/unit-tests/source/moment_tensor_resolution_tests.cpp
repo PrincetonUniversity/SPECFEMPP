@@ -12,8 +12,8 @@
 // throw while unresolved rather than returning a silently-wrong tensor, and the
 // as-read geographic tensor must survive resolution (provenance).
 TEST(MomentTensorResolution, GeographicIsUnresolvedUntilSet) {
-  constexpr auto dim3 = specfem::element::dimension_tag::dim3;
-  specfem::sources::moment_tensor<dim3> src(
+  using specfem::element::dimension_tag;
+  specfem::sources::moment_tensor<dimension_tag::dim3> src(
       source_resolution_test::origin_coords(),
       specfem::sources::GeographicMomentTensor{ type_real(1), type_real(2),
                                                 type_real(3), type_real(4),

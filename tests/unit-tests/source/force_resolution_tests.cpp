@@ -11,8 +11,8 @@
 // assembly stage installs the Cartesian components. get_force_vector must throw
 // while unresolved, and the as-read geographic force must survive resolution.
 TEST(ForceResolution, GeographicIsUnresolvedUntilSet) {
-  constexpr auto dim3 = specfem::element::dimension_tag::dim3;
-  specfem::sources::force<dim3> src(
+  using specfem::element::dimension_tag;
+  specfem::sources::force<dimension_tag::dim3> src(
       source_resolution_test::origin_coords(),
       specfem::sources::GeographicForce{ type_real(1), type_real(2),
                                          type_real(3) },
