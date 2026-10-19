@@ -81,6 +81,14 @@ specfem_add_test(logspace_tests
             Kokkos::kokkos
 )
 
+specfem_add_test(moment_tensor_rotation_tests
+  SOURCES   source/moment_tensor_rotation_tests.cpp
+  LIBRARIES specfem::source
+            specfem::coordinate_systems
+            gtest_main
+            Kokkos::kokkos
+)
+
 specfem_add_test(units_tests
   SOURCES   units/quantity_tests.cpp
             units/unit_cast_tests.cpp

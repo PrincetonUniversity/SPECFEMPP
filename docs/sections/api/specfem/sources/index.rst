@@ -22,3 +22,4 @@
 
    vector_sources/index
    tensor_sources/index
+   moment_tensor_rotation

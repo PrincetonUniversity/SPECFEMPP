@@ -31,6 +31,13 @@ Projections
 
 *  :doc:`utm`: UTM (Universal Transverse Mercator) forward and inverse projection.
 
+Local basis
+-----------
+
+*  :doc:`spherical_basis`: Local spherical orthonormal basis
+   :math:`(\mathbf{e}_r, \mathbf{e}_\theta, \mathbf{e}_\phi)` at a point, used
+   to build rotation matrices for source and receiver quantities.
+
 .. toctree::
     :maxdepth: 1
 
@@ -39,3 +46,4 @@ Projections
     geocentric
     to
     utm
+    spherical_basis
