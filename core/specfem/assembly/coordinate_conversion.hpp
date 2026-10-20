@@ -4,6 +4,7 @@
 #include "specfem/coordinate_systems/coordinates.hpp"
 #include "specfem/coordinate_systems/geocentric.hpp"
 #include "specfem/coordinate_systems/geographic.hpp"
+#include "specfem/coordinate_systems/spherical_basis.hpp"
 #include "specfem/element/tags.hpp"
 #include "specfem/point/global_coordinates.hpp"
 
@@ -75,6 +76,27 @@ specfem::coordinate_systems::geographic_coordinates to_geographic(
 specfem::coordinate_systems::geocentric_coordinates to_geocentric(
     const specfem::coordinate_systems::coordinates<
         specfem::element::dimension_tag::dim3> &input,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh);
+
+/**
+ * @brief Local East/North/Up basis at a mesh-space point, in mesh Cartesian
+ * components.
+ *
+ * The receiver-side counterpart of the source frame resolution: on a globe mesh
+ * the basis is the local geographic frame at the point's colatitude/longitude
+ * (recovered from its planet-centred Cartesian position through
+ * @ref to_geocentric, so the ellipticity/topography guard is owned there); on a
+ * regional UTM or plain Cartesian mesh the local axes coincide with the mesh
+ * axes (x = East, y = North, z = Up), so the basis is the identity. UTM
+ * meridian convergence is deliberately ignored, as for sources.
+ *
+ * @param point Mesh-space Cartesian point
+ * @param mesh Assembled mesh (carries the projection)
+ * @return The East, North and Up unit vectors in mesh Cartesian components
+ */
+specfem::coordinate_systems::GeographicBasis local_geographic_basis(
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim3> &point,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh);
 
 } // namespace assembly
