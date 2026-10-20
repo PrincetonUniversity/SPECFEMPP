@@ -82,18 +82,6 @@ public:
     return seismogram_types_;
   }
 
-  /**
-   * @brief Set rotation matrix for a receiver
-   * @param irec Receiver index
-   * @param rotation_matrix 3x3 rotation matrix (nrec, 3, 3) layout
-   */
-  void set_rotation_matrix(
-      int irec,
-      const std::array<std::array<type_real, 3>, 3> &rotation_matrix) {
-    static_cast<receivers_impl::SeismogramIterator<dimension_tag> &>(*this)
-        .set_rotation_matrix(irec, rotation_matrix);
-  }
-
 private:
   int nspec;              ///< Total number of spectral elements
   IndexViewType elements; ///< View to store the elements associated with the

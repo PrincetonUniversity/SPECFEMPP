@@ -1,10 +1,12 @@
 #pragma once
 
+#include "specfem/assembly/receivers/impl/rotate_components.hpp"
 #include "specfem/element/dimension.hpp"
 #include "specfem/element/tags.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/setup.hpp"
+#include <Kokkos_Core.hpp>
 #include <array>
 #include <string>
 #include <tuple>
@@ -17,7 +19,9 @@ namespace specfem::assembly::receivers_impl {
  * @brief Unified seismogram iterator for 2D and 3D simulations.
  *
  * Both dimensions use a rotation matrix (nrec x ncomponents x ncomponents)
- * to transform raw field components into output seismogram components.
+ * mapping Cartesian mesh components (columns) to output seismogram components
+ * (rows). It is currently applied on the host at write time; it is mirrored on
+ * the device so the seismogram kernel can apply it instead.
  *
  * - dim2: 2x2 rotation matrix built from the receiver angle (cos/sin)
  * - dim3: 3x3 rotation matrix set explicitly per receiver
@@ -98,8 +102,9 @@ public:
       : nreceivers(nreceivers), nseismograms(nseismograms), irec(0), iseis(0),
         nstep_between_samples(nstep_between_samples),
         max_sig_step(max_sig_step), dt(dt), t0(t0),
-        h_rotation_matrices("specfem::assembly::receivers::rotation_matrices",
-                            nreceivers, ncomponents, ncomponents),
+        rotation_matrices("specfem::assembly::receivers::rotation_matrices",
+                          nreceivers, ncomponents, ncomponents),
+        h_rotation_matrices(Kokkos::create_mirror_view(rotation_matrices)),
         seismogram_components(
             "specfem::assembly::receivers::seismogram_components", max_sig_step,
             nseismograms, nreceivers, ncomponents),
@@ -113,6 +118,7 @@ public:
         }
       }
     }
+    Kokkos::deep_copy(rotation_matrices, h_rotation_matrices);
   }
 
   Iterator begin() {
@@ -161,15 +167,50 @@ public:
 #endif
   }
 
-  // Set rotation matrix for a receiver (ncomponents x ncomponents)
-  void set_rotation_matrix(int irec_local,
-                           const std::array<std::array<type_real, ncomponents>,
-                                            ncomponents> &rotation_matrix) {
+  /**
+   * @brief Set the rotation matrix of a receiver on the host
+   *
+   * Rows are output components, columns are mesh components. Takes effect on
+   * the device after sync_rotation_matrices().
+   *
+   * @tparam ElementType Element type of the input matrix (narrowed to
+   * type_real)
+   * @param irec_local Local receiver index
+   * @param rotation_matrix ncomponents x ncomponents rotation matrix
+   */
+  template <typename ElementType>
+  void
+  set_rotation_matrix(const int irec_local,
+                      const std::array<std::array<ElementType, ncomponents>,
+                                       ncomponents> &rotation_matrix) {
     for (int i = 0; i < ncomponents; ++i) {
       for (int j = 0; j < ncomponents; ++j) {
-        h_rotation_matrices(irec_local, i, j) = rotation_matrix[i][j];
+        h_rotation_matrices(irec_local, i, j) =
+            static_cast<type_real>(rotation_matrix[i][j]);
       }
     }
+  }
+
+  /**
+   * @brief Get the host rotation matrix of a receiver
+   *
+   * @param irec_local Local receiver index
+   * @return ncomponents x ncomponents matrix (rows: output components)
+   */
+  std::array<std::array<type_real, ncomponents>, ncomponents>
+  get_rotation_matrix(const int irec_local) const {
+    std::array<std::array<type_real, ncomponents>, ncomponents> matrix;
+    for (int i = 0; i < ncomponents; ++i) {
+      for (int j = 0; j < ncomponents; ++j) {
+        matrix[i][j] = h_rotation_matrices(irec_local, i, j);
+      }
+    }
+    return matrix;
+  }
+
+  /// Copy the host rotation matrices to the device.
+  void sync_rotation_matrices() {
+    Kokkos::deep_copy(rotation_matrices, h_rotation_matrices);
   }
 
 private:
@@ -184,7 +225,10 @@ private:
   type_real t0;
 
 protected:
-  Kokkos::View<type_real ***, Kokkos::DefaultHostExecutionSpace>
+  Kokkos::View<type_real ***, Kokkos::DefaultExecutionSpace>
+      rotation_matrices; ///< (nrec, ncomp, ncomp) rotation applied on the
+                         ///< device at sampling time
+  Kokkos::View<type_real ***, Kokkos::DefaultExecutionSpace>::host_mirror_type
       h_rotation_matrices;
 
   Kokkos::View<type_real ***[ncomponents], Kokkos::LayoutLeft,

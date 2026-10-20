@@ -174,6 +174,7 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
 
   Kokkos::deep_copy(lagrange_interpolant, h_lagrange_interpolant);
   Kokkos::deep_copy(elements, h_elements);
+  this->sync_rotation_matrices();
 
   return;
 }

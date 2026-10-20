@@ -375,6 +375,7 @@ specfem_add_test(assembly_receivers_tests
             assembly/receivers/dim2/receivers_tests.cpp
             assembly/receivers/impl/receiver_iterator_tests.cpp
             assembly/receivers/impl/dim2/seismogram_iterator_tests.cpp
+            assembly/receivers/impl/rotate_components_tests.cpp
   LIBRARIES specfem::mesh
             specfem::assembly
             specfem::quadrature
