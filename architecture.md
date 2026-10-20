@@ -721,7 +721,7 @@ The following is the canonical execution sequence for a forward simulation (both
         ├── compute_derivatives + update_medium (poroelastic)
         ├── time_scheme.apply_corrector(poroelastic)
         ├── apply boundary conditions
-        ├── accumulate seismograms (every nstep_between_samples)
+        ├── accumulate seismograms (every nstep_between_samples; rotated into the receiver frame on the device)
         └── run periodic tasks
         │
         ▼
