@@ -46,7 +46,7 @@ TEST(IsVectorSeismogram, KinematicTypesAreVectorsExceptSh) {
   }
 }
 
-TEST(IsVectorSeismogram, AxialTypesAreVectorsOnlyIn3d) {
+TEST(IsVectorSeismogram, AxialTypesAreScalarsInPsvAndVectorsInSh) {
   using specfem::element::dimension_tag;
   using specfem::element::medium_tag;
   using specfem::enums::is_vector_seismogram;
@@ -62,6 +62,10 @@ TEST(IsVectorSeismogram, AxialTypesAreVectorsOnlyIn3d) {
                                       medium_tag::elastic_psv_t));
     EXPECT_FALSE(is_vector_seismogram(type, dimension_tag::dim2,
                                       medium_tag::elastic_psv));
+    // SH displacement is out of plane, so its curl and any microrotation lie
+    // in plane and rotate with the receiver.
+    EXPECT_TRUE(is_vector_seismogram(type, dimension_tag::dim2,
+                                     medium_tag::elastic_sh));
   }
 }
 
