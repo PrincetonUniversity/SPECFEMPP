@@ -72,7 +72,10 @@ TEST(RotateComponents, Rotation2d) {
 TEST(RotateComponents, SeismogramIteratorRoundTripsMatrix) {
   constexpr auto dim3 = specfem::element::dimension_tag::dim3;
   specfem::assembly::receivers_impl::SeismogramIterator<dim3> iterator(
-      2, 1, 10, 0.01, 0.0, 1);
+      2,
+      specfem::assembly::receivers_impl::SeismogramTypes(
+          { specfem::enums::wavefield::displacement }),
+      10, 0.01, 0.0, 1);
   const std::array<std::array<double, 3>, 3> permutation = {
     { { 0, 1, 0 }, { 0, 0, 1 }, { 1, 0, 0 } }
   };

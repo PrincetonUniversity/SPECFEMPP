@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/assembly/receivers/impl/rotate_components.hpp"
+#include "specfem/assembly/receivers/impl/seismogram_types.hpp"
 #include "specfem/element/dimension.hpp"
 #include "specfem/element/tags.hpp"
 #include "specfem/enums.hpp"
@@ -88,18 +89,19 @@ private:
 public:
   SeismogramIterator() = default;
 
-  SeismogramIterator(const int nreceivers, const int nseismograms,
+  SeismogramIterator(const int nreceivers,
+                     const SeismogramTypes &seismogram_types,
                      const int max_sig_step, type_real dt, type_real t0,
                      int nstep_between_samples)
-      : nreceivers(nreceivers), nseismograms(nseismograms), irec(0), iseis(0),
-        nstep_between_samples(nstep_between_samples),
+      : nreceivers(nreceivers), seismogram_type_set_(seismogram_types), irec(0),
+        iseis(0), nstep_between_samples(nstep_between_samples),
         max_sig_step(max_sig_step), dt(dt), t0(t0),
         rotation_matrices("specfem::assembly::receivers::rotation_matrices",
                           nreceivers, ncomponents, ncomponents),
         h_rotation_matrices(Kokkos::create_mirror_view(rotation_matrices)),
         seismogram_components(
             "specfem::assembly::receivers::seismogram_components", max_sig_step,
-            nseismograms, nreceivers, ncomponents),
+            seismogram_type_set_.size(), nreceivers, ncomponents),
         h_seismogram_components(
             Kokkos::create_mirror_view(seismogram_components)) {
     // Initialize rotation matrices to identity
@@ -127,7 +129,7 @@ public:
                                      const std::string &network_name,
                                      const specfem::enums::wavefield type) {
     this->irec = station_network_map[station_name][network_name];
-    this->iseis = seismogram_type_map[type];
+    this->iseis = seismogram_type_set_.index_of(type);
     return *this;
   }
 
@@ -207,7 +209,7 @@ public:
 
 private:
   int nreceivers;
-  int nseismograms;
+  SeismogramTypes seismogram_type_set_;
   int irec;
   int iseis;
   int nstep_between_samples;
@@ -232,7 +234,6 @@ protected:
 
   std::unordered_map<std::string, std::unordered_map<std::string, int>>
       station_network_map;
-  std::unordered_map<specfem::enums::wavefield, int> seismogram_type_map;
 };
 
 } // namespace specfem::assembly::receivers_impl
