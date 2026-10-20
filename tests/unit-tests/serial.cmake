@@ -97,6 +97,13 @@ specfem_add_test(force_rotation_tests
             Kokkos::kokkos
 )
 
+specfem_add_test(enums_tests
+  SOURCES   enums/wavefield_tests.cpp
+  LIBRARIES specfem::enums
+            gtest_main
+            Kokkos::kokkos
+)
+
 specfem_add_test(units_tests
   SOURCES   units/quantity_tests.cpp
             units/unit_cast_tests.cpp
