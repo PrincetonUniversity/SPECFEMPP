@@ -20,8 +20,9 @@ namespace specfem::assembly::receivers_impl {
  *
  * Both dimensions use a rotation matrix (nrec x ncomponents x ncomponents)
  * mapping Cartesian mesh components (columns) to output seismogram components
- * (rows). It is currently applied on the host at write time; it is mirrored on
- * the device so the seismogram kernel can apply it instead.
+ * (rows). It is applied on the device at sampling time by @c store_on_device,
+ * so the stored components, and what the writer reads through this iterator,
+ * are already rotated.
  *
  * - dim2: 2x2 rotation matrix built from the receiver angle (cos/sin)
  * - dim3: 3x3 rotation matrix set explicitly per receiver
@@ -39,14 +40,11 @@ private:
     Iterator(const int irec, const int iseis, const int seis_step,
              const type_real dt, const type_real t0,
              const int nstep_between_samples,
-             Kokkos::View<type_real ***, Kokkos::DefaultHostExecutionSpace>
-                 h_rotation_matrices,
              Kokkos::View<type_real ***[ncomponents], Kokkos::LayoutLeft,
                           Kokkos::DefaultHostExecutionSpace>
                  seismogram_components)
         : irec(irec), iseis(iseis), seis_step(seis_step), dt(dt), t0(t0),
           nstep_between_samples(nstep_between_samples),
-          h_rotation_matrices(h_rotation_matrices),
           seismo_components(seismogram_components) {}
 
     std::tuple<type_real, std::array<type_real, ncomponents>> operator*() {
@@ -54,12 +52,8 @@ private:
 
       std::array<type_real, ncomponents> seismograms;
 
-      for (int i = 0; i < ncomponents; ++i) {
-        seismograms[i] = 0.0;
-        for (int j = 0; j < ncomponents; ++j) {
-          seismograms[i] += h_rotation_matrices(irec, i, j) *
-                            seismo_components(seis_step, iseis, irec, j);
-        }
+      for (int icomp = 0; icomp < ncomponents; ++icomp) {
+        seismograms[icomp] = seismo_components(seis_step, iseis, irec, icomp);
       }
 
       return std::make_tuple(time, seismograms);
@@ -89,8 +83,6 @@ private:
     Kokkos::View<type_real ***[ncomponents], Kokkos::LayoutLeft,
                  Kokkos::DefaultHostExecutionSpace>
         seismo_components;
-    Kokkos::View<type_real ***, Kokkos::DefaultHostExecutionSpace>
-        h_rotation_matrices;
   };
 
 public:
@@ -123,12 +115,12 @@ public:
 
   Iterator begin() {
     return Iterator(irec, iseis, 0, dt, t0, nstep_between_samples,
-                    h_rotation_matrices, h_seismogram_components);
+                    h_seismogram_components);
   }
 
   Iterator end() {
     return Iterator(irec, iseis, max_sig_step, dt, t0, nstep_between_samples,
-                    h_rotation_matrices, h_seismogram_components);
+                    h_seismogram_components);
   }
 
   SeismogramIterator &get_seismogram(const std::string &station_name,

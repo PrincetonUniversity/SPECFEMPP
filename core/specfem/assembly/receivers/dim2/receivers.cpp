@@ -10,6 +10,7 @@
 #include "specfem/quadrature.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
+#include <array>
 #include <map>
 #include <string>
 #include <vector>
@@ -90,6 +91,17 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim2>::receivers(
     stations_.push_back({ network_name, station_name, 0, seismogram_types_ });
     station_network_map[station_name][network_name] = ireceiver;
 
+    // Position-only information: every rank stores every receiver's matrix.
+    const type_real angle_rad =
+        Kokkos::numbers::pi_v<type_real> / 180 * receiver->get_angle();
+    const type_real cos_a = std::cos(angle_rad);
+    const type_real sin_a = std::sin(angle_rad);
+    // 2D rotation matrix: R = [[cos, -sin], [sin, cos]]
+    const std::array<std::array<type_real, 2>, 2> rotation_matrix = {
+      { { { cos_a, -sin_a } }, { { sin_a, cos_a } } }
+    };
+    this->set_rotation_matrix(ireceiver, rotation_matrix);
+
     if (partition_index_selected[ireceiver] != myrank) {
       h_elements(ireceiver) = -1;
       continue;
@@ -124,16 +136,6 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim2>::receivers(
 
         h_lagrange_interpolant(ireceiver, iz, ix, 0) = hlagrange;
         h_lagrange_interpolant(ireceiver, iz, ix, 1) = hlagrange;
-
-        const type_real angle_rad =
-            Kokkos::numbers::pi_v<type_real> / 180 * receiver->get_angle();
-        const type_real cos_a = std::cos(angle_rad);
-        const type_real sin_a = std::sin(angle_rad);
-        // 2D rotation matrix: R = [[cos, -sin], [sin, cos]]
-        h_rotation_matrices(ireceiver, 0, 0) = cos_a;
-        h_rotation_matrices(ireceiver, 0, 1) = -sin_a;
-        h_rotation_matrices(ireceiver, 1, 0) = sin_a;
-        h_rotation_matrices(ireceiver, 1, 1) = cos_a;
       }
     }
   }

@@ -195,8 +195,8 @@ TEST_F(SeismogramIterator2DTest, MultipleTimeSteps) {
   EXPECT_EQ(iter, iterator.end());
 }
 
-TEST_F(SeismogramIterator2DTest, IdentityRotationProducesZeroForZeroData) {
-  auto iterator = createInitializedIterator(); // rotation matrix = identity
+TEST_F(SeismogramIterator2DTest, ZeroStoredDataProducesZero) {
+  auto iterator = createInitializedIterator();
 
   iterator.set_seismogram_step(0);
   iterator.set_seismogram_type(0);
@@ -214,9 +214,10 @@ TEST_F(SeismogramIterator2DTest, IdentityRotationProducesZeroForZeroData) {
   }
 }
 
-TEST_F(SeismogramIterator2DTest, RotationMatrixAppliedCorrectly) {
-  // 90-degree rotation: R = [[0, -1], [1, 0]]
-  // Expected: output[0] = -raw[1], output[1] = raw[0]
+TEST_F(SeismogramIterator2DTest, IteratorReturnsStoredComponentsUnrotated) {
+  // Rotation is applied by the seismogram kernel at sampling time; the host
+  // iterator must return stored components unchanged even with a 90-degree
+  // matrix set.
   TestSeismogramIterator2D iterator(nreceivers, nseismograms, max_sig_step, dt,
                                     t0, nstep_between_samples);
 
@@ -224,15 +225,14 @@ TEST_F(SeismogramIterator2DTest, RotationMatrixAppliedCorrectly) {
   // Raw values are set afterward so they are not overwritten.
   iterator.sync_seismograms();
 
-  // Inject raw[0] = 1, raw[1] = 2 for receiver 0, step 0, seismogram type 0.
   iterator.set_raw_component(/*seis_step=*/0, /*iseis=*/0, /*irec=*/0,
                              /*comp=*/0, 1.0);
   iterator.set_raw_component(/*seis_step=*/0, /*iseis=*/0, /*irec=*/0,
                              /*comp=*/1, 2.0);
 
-  const type_real angle = Kokkos::numbers::pi_v<type_real> / 2.0; // 90 deg
-  const type_real cos_a = std::cos(angle);                        // ≈ 0
-  const type_real sin_a = std::sin(angle);                        // ≈ 1
+  const type_real angle = Kokkos::numbers::pi_v<type_real> / 2.0;
+  const type_real cos_a = std::cos(angle);
+  const type_real sin_a = std::sin(angle);
   std::array<std::array<type_real, 2>, 2> R = { { { { cos_a, -sin_a } },
                                                   { { sin_a, cos_a } } } };
   iterator.set_rotation_matrix(0, R);
@@ -244,10 +244,8 @@ TEST_F(SeismogramIterator2DTest, RotationMatrixAppliedCorrectly) {
   auto [time, seismograms] = *iter;
 
   EXPECT_EQ(seismograms.size(), 2);
-  // output[0] = cos_a*1 + (-sin_a)*2 = 0*1 + (-1)*2 = -2
-  EXPECT_NEAR(seismograms[0], -2.0, 1e-5);
-  // output[1] = sin_a*1 + cos_a*2   = 1*1 +   0*2  =  1
-  EXPECT_NEAR(seismograms[1], 1.0, 1e-5);
+  EXPECT_DOUBLE_EQ(seismograms[0], 1.0);
+  EXPECT_DOUBLE_EQ(seismograms[1], 2.0);
 }
 
 TEST_F(SeismogramIterator2DTest, GetSeismogramMethod) {

@@ -104,7 +104,7 @@ private:
   friend KOKKOS_FUNCTION void
   store_on_device(const ChunkIndexType &chunk_index,
                   const SiesmogramViewType &seismogram_components,
-                  const receivers &receivers);
+                  const receivers &receivers, const bool rotate);
 };
 
 /**
@@ -186,12 +186,18 @@ KOKKOS_FUNCTION void load_on_device(
  * @tparam ChunkIndexType Chunk index type
  * @tparam SeismogramViewType View of the seismogram components
  * @param receivers Receivers object containing the receiver information
+ * @param rotate Apply the receiver's stored rotation; false for scalar
+ * seismograms that occupy component 0 only
  */
 template <typename ChunkIndexType, typename SeismogramViewType>
 KOKKOS_FUNCTION void store_on_device(
     const ChunkIndexType &chunk_index,
     const SeismogramViewType &seismogram_components,
-    const receivers<specfem::element::dimension_tag::dim3> &receivers) {
+    const receivers<specfem::element::dimension_tag::dim3> &receivers,
+    const bool rotate) {
+
+  constexpr int ncomponents =
+      specfem::element::dimension<specfem::element::dimension_tag::dim3>::dim;
 
   const int isig_step = receivers.get_seismogram_step();
   const int iseis = receivers.get_seis_type();
@@ -215,13 +221,25 @@ KOKKOS_FUNCTION void store_on_device(
 
 #endif
 
-        // Store all three components for 3D
-        receivers.seismogram_components(isig_step, iseis, irec, 0) =
-            seismogram_components(ielement, 0);
-        receivers.seismogram_components(isig_step, iseis, irec, 1) =
-            seismogram_components(ielement, 1);
-        receivers.seismogram_components(isig_step, iseis, irec, 2) =
-            seismogram_components(ielement, 2);
+        type_real mesh_frame[ncomponents];
+        for (int icomp = 0; icomp < ncomponents; ++icomp) {
+          mesh_frame[icomp] = seismogram_components(ielement, icomp);
+        }
+
+        type_real output[ncomponents];
+        if (rotate) {
+          specfem::assembly::receivers_impl::rotate_components<ncomponents>(
+              receivers.rotation_matrices, irec, mesh_frame, output);
+        } else {
+          for (int icomp = 0; icomp < ncomponents; ++icomp) {
+            output[icomp] = mesh_frame[icomp];
+          }
+        }
+
+        for (int icomp = 0; icomp < ncomponents; ++icomp) {
+          receivers.seismogram_components(isig_step, iseis, irec, icomp) =
+              output[icomp];
+        }
       });
   return;
 }
