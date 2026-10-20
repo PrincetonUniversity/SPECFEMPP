@@ -352,6 +352,7 @@ specfem_add_test(assembly_tests
             assembly/dim3/mesh/reference_points.cpp
             assembly/dim3/mesh/control_nodes.cpp
             assembly/dim3/globe_source_placement.cpp
+            assembly/dim3/globe_receiver_rotation.cpp
             assembly/dim3/jacobian_matrix/jacobian_matrix.cpp
             assembly/dim3/properties/properties.cpp
             assembly/dim3/element_types/element_context.cpp

@@ -11,6 +11,7 @@
 #include "specfem/quadrature.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
+#include <array>
 #include <map>
 #include <optional>
 #include <string>
@@ -80,6 +81,14 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
     stations_.push_back({ network_name, station_name, 0, seismogram_types_ });
     station_network_map[station_name][network_name] = ireceiver;
 
+    // Cartesian mesh frame -> local (East, North, Up) rows. Identity on a flat
+    // regional mesh; the spherical frame at the receiver on a globe.
+    const auto basis = specfem::assembly::local_geographic_basis(
+        receiver->get_global_coordinates(), mesh);
+    this->set_rotation_matrix(ireceiver,
+                              std::array<std::array<double, 3>, 3>{
+                                  basis.east, basis.north, basis.up });
+
     if (partition_index_selected[ireceiver] != myrank) {
       h_elements(ireceiver) = -1;
       continue;
@@ -125,14 +134,6 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
         }
       }
     }
-
-    // Initialize rotation matrix to identity for this receiver
-    // In the future, this could be set based on surface normal or user
-    // specification
-    std::array<std::array<type_real, 3>, 3> identity_matrix = {
-      { { { 1.0, 0.0, 0.0 } }, { { 0.0, 1.0, 0.0 } }, { { 0.0, 0.0, 1.0 } } }
-    };
-    this->set_rotation_matrix(ireceiver, identity_matrix);
   }
 
   // Build per-material receiver index stores using tag_dispatch::Storage.

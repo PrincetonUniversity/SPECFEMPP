@@ -10,24 +10,14 @@
 namespace specfem::assembly {
 
 /**
- * @brief 3D assembly receiver specialization for seismic simulations
+ * @brief 3D assembly receivers: element location, Lagrange interpolants and
+ * per-receiver rotation matrices.
  *
- * Specialized implementation of receivers for 3D spectral element simulations.
- * This class manages seismic receivers located within 3D finite element meshes,
- * handling Lagrange interpolation for accurate field sampling and coordinate
- * transformations using full 3x3 rotation matrices for proper seismogram
- * orientation in three-dimensional space.
- *
- * Key features for 3D:
- * - Currently supports elastic medium type only
- * - Uses full 3x3 rotation matrices for coordinate transformations
- * - Records 3-component seismograms (X, Y, Z or North, East, Up)
- * - Advanced rotation capabilities for arbitrary receiver orientations
- * - Efficient Kokkos-based data structures for GPU computations
- *
- * The class inherits from both StationIterator (for station metadata) and
- * SeismogramIterator (for time-series data access), providing a unified
- * interface for receiver management and seismogram recording.
+ * Each receiver holds a 3x3 matrix from mesh Cartesian components to the local
+ * (East, North, Up) frame: the spherical frame at the station on a globe mesh,
+ * the identity on a UTM/Cartesian mesh. It is applied on the device at
+ * sampling time to vector seismograms. Output slots are (East, North, Up),
+ * which the writer labels E/N/Z (X/Y/Z on a Cartesian mesh).
  */
 template <>
 struct receivers<specfem::element::dimension_tag::dim3>
