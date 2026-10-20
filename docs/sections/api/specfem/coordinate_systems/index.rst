@@ -36,7 +36,9 @@ Local basis
 
 *  :doc:`spherical_basis`: Local spherical orthonormal basis
    :math:`(\mathbf{e}_r, \mathbf{e}_\theta, \mathbf{e}_\phi)` at a point, used
-   to build rotation matrices for source and receiver quantities.
+   to build rotation matrices for source and receiver quantities, and the
+   derived geographic East-North-Up basis that owns the sign convention for
+   forces and receiver components.
 
 .. toctree::
     :maxdepth: 1

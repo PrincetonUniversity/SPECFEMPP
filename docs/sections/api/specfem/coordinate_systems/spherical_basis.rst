@@ -11,3 +11,17 @@ rotation (rank-1) each build their rotation matrix from it.
     :members:
 
 .. doxygenfunction:: specfem::coordinate_systems::local_spherical_basis
+
+``specfem::coordinate_systems::local_geographic_basis``
+-------------------------------------------------------
+
+The local geographic (East, North, Up) basis, built from the spherical basis
+with East :math:`= \mathbf{e}_\phi`, North :math:`= -\mathbf{e}_\theta` and
+Up :math:`= \mathbf{e}_r`. It is right-handed, and it is the single owner of
+this sign convention: force sources rotate from it into the mesh and receivers
+rotate seismograms from the mesh into it.
+
+.. doxygenstruct:: specfem::coordinate_systems::GeographicBasis
+    :members:
+
+.. doxygenfunction:: specfem::coordinate_systems::local_geographic_basis
