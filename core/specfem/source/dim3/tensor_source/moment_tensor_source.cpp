@@ -55,35 +55,20 @@ std::string specfem::sources::moment_tensor<
   std::visit(
       [&message](const auto &tensor) {
         using T = std::decay_t<decltype(tensor)>;
+        const auto fmt = [](type_real v) {
+          return specfem::utilities::format_scientific(v, 6);
+        };
         if constexpr (std::is_same_v<
                           T, specfem::sources::GeographicMomentTensor>) {
-          message << "(Mrr, Mtt, Mpp, Mrt, Mrp, Mtp) = ("
-                  << specfem::utilities::format_scientific(tensor.Mrr, 6)
-                  << ", "
-                  << specfem::utilities::format_scientific(tensor.Mtt, 6)
-                  << ", "
-                  << specfem::utilities::format_scientific(tensor.Mpp, 6)
-                  << ", "
-                  << specfem::utilities::format_scientific(tensor.Mrt, 6)
-                  << ", "
-                  << specfem::utilities::format_scientific(tensor.Mrp, 6)
-                  << ", "
-                  << specfem::utilities::format_scientific(tensor.Mtp, 6)
-                  << ")";
+          message << "(Mrr, Mtt, Mpp, Mrt, Mrp, Mtp) = (" << fmt(tensor.Mrr)
+                  << ", " << fmt(tensor.Mtt) << ", " << fmt(tensor.Mpp) << ", "
+                  << fmt(tensor.Mrt) << ", " << fmt(tensor.Mrp) << ", "
+                  << fmt(tensor.Mtp) << ")";
         } else {
-          message << "(Mxx, Myy, Mzz, Mxy, Mxz, Myz) = ("
-                  << specfem::utilities::format_scientific(tensor.Mxx, 6)
-                  << ", "
-                  << specfem::utilities::format_scientific(tensor.Myy, 6)
-                  << ", "
-                  << specfem::utilities::format_scientific(tensor.Mzz, 6)
-                  << ", "
-                  << specfem::utilities::format_scientific(tensor.Mxy, 6)
-                  << ", "
-                  << specfem::utilities::format_scientific(tensor.Mxz, 6)
-                  << ", "
-                  << specfem::utilities::format_scientific(tensor.Myz, 6)
-                  << ")";
+          message << "(Mxx, Myy, Mzz, Mxy, Mxz, Myz) = (" << fmt(tensor.Mxx)
+                  << ", " << fmt(tensor.Myy) << ", " << fmt(tensor.Mzz) << ", "
+                  << fmt(tensor.Mxy) << ", " << fmt(tensor.Mxz) << ", "
+                  << fmt(tensor.Myz) << ")";
         }
       },
       this->moment_.as_read());

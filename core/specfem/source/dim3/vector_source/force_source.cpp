@@ -71,18 +71,15 @@ specfem::sources::force<specfem::element::dimension_tag::dim3>::print_details()
   std::visit(
       [&message](const auto &force) {
         using T = std::decay_t<decltype(force)>;
+        const auto fmt = [](type_real v) {
+          return specfem::utilities::format_scientific(v, 6);
+        };
         if constexpr (std::is_same_v<T, specfem::sources::GeographicForce>) {
-          message << "(east, north, up) = ("
-                  << specfem::utilities::format_scientific(force.east, 6)
-                  << ", "
-                  << specfem::utilities::format_scientific(force.north, 6)
-                  << ", " << specfem::utilities::format_scientific(force.up, 6)
-                  << ")";
+          message << "(east, north, up) = (" << fmt(force.east) << ", "
+                  << fmt(force.north) << ", " << fmt(force.up) << ")";
         } else {
-          message << "(fx, fy, fz) = ("
-                  << specfem::utilities::format_scientific(force.fx, 6) << ", "
-                  << specfem::utilities::format_scientific(force.fy, 6) << ", "
-                  << specfem::utilities::format_scientific(force.fz, 6) << ")";
+          message << "(fx, fy, fz) = (" << fmt(force.fx) << ", "
+                  << fmt(force.fy) << ", " << fmt(force.fz) << ")";
         }
       },
       this->force_.as_read());

@@ -57,10 +57,6 @@ double planet_radius(const specfem::assembly::mesh<dimension_tag::dim3> &mesh) {
       .r_planet;
 }
 
-double norm(const specfem::point::global_coordinates<dimension_tag::dim3> &g) {
-  return std::sqrt(g.x * g.x + g.y * g.y + g.z * g.z);
-}
-
 specfem::assembly::mesh<dimension_tag::dim3> load() {
   return build_globe_assembly_mesh(specfem::io::read_globe_mesh(
       database_path, specfem::attenuation::Setup{}));
@@ -102,7 +98,12 @@ TEST(GlobeSourcePlacement, DepthResolvesToRadius) {
       10.0, 40.0, depth);
   const auto global = specfem::assembly::to_cartesian(geographic, mesh);
 
-  EXPECT_NEAR(impl::norm(global), r_planet - depth, 1.0); // metre tolerance
+  // Distance from the planet centre (origin).
+  EXPECT_NEAR(specfem::point::distance(
+                  global,
+                  specfem::point::global_coordinates<impl::dimension_tag::dim3>{
+                      0.0, 0.0, 0.0 }),
+              r_planet - depth, 1.0); // metre tolerance
 }
 
 // Round-trip: an element's centre GLL point maps back to its own element with
