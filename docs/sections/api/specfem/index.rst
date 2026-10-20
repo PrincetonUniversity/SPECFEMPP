@@ -37,6 +37,7 @@
     optimization/index
     parallel_configuration/index
     periodic_tasks/index
+    plugin/index
     point/index
     program/index
     quadrature/index
