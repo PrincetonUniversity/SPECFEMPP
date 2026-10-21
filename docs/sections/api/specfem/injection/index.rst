@@ -71,3 +71,43 @@ Options
 .. doxygenfunction:: specfem::injection::resolve_plugin_options
 
 .. doxygenfunction:: specfem::injection::check_injection_consistency
+
+Request
+-------
+
+.. doxygenstruct:: specfem::injection::Request
+    :members:
+
+.. doxygenfunction:: specfem::injection::component_count
+
+.. doxygenfunction:: specfem::injection::count_components
+
+.. doxygenvariable:: specfem::injection::media
+
+Provider session
+----------------
+
+The provider session is the SPECFEM++ side of the plugin ABI: it drives a
+loaded plugin through its lifecycle and serves the incident field on the
+device, one aligned window of time steps at a time. It uses Kokkos and MPI;
+plugins never see it, and receive only plain C arrays and a Fortran
+communicator handle.
+
+.. doxygenclass:: specfem::injection::ProviderSession
+    :members:
+
+.. doxygenstruct:: specfem::injection::SimulationParameters
+    :members:
+
+.. doxygenstruct:: specfem::injection::SessionOptions
+    :members:
+
+.. doxygenstruct:: specfem::injection::InjectionPoints
+    :members:
+
+.. doxygenstruct:: specfem::injection::FrameBuffer
+    :members:
+
+.. doxygenfunction:: specfem::injection::window_start
+
+.. doxygenfunction:: specfem::injection::window_steps_for_budget
