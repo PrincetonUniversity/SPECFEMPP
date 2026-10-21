@@ -143,8 +143,10 @@ void run_program_3d(
   //                   CFL Condition Check
   // --------------------------------------------------------------
   {
-    const type_real cfl =
-        dt * assembly.info.v.max / assembly.info.gll_distance.min;
+    // Element-wise Courant number: pairing the global maximum velocity with
+    // the global minimum spacing mixes unrelated elements on a layered mesh.
+    const type_real cfl = dt * specfem::constants::COURANT_NUMBER_SUGGESTED /
+                          assembly.info.suggested_time_step;
     specfem::Logger::info([&](std::ostringstream &oss) {
       oss << "CFL Condition Check:\n"
           << "-------------------------------\n"
