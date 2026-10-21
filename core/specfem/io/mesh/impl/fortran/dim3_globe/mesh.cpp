@@ -30,7 +30,7 @@ specfem::mesh::globe3d_mesh specfem::io::read_globe_mesh(
   }
 
   const auto [magic, version] = reader::read_magic(stream);
-  if (magic != "SPECFEMPP_GLOBE_DB") {
+  if (magic != reader::globe_database_magic) {
     throw std::runtime_error("Not a SPECFEM++ globe mesh database: " +
                              database_file);
   }
