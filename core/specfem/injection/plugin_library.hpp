@@ -33,19 +33,19 @@ public:
    * @brief Plugin-side state, to pass to the other table functions.
    * @return The opaque handle returned by the plugin's @c create
    */
-  void *get() const { return self_; }
+  [[nodiscard]] void *get() const { return self_; }
 
   /**
    * @brief Function table of the plugin that created this instance.
    * @return The plugin's function table
    */
-  const spfp_injection_plugin &table() const { return *table_; }
+  [[nodiscard]] const spfp_injection_plugin &table() const { return *table_; }
 
   /**
    * @brief Last error reported by this instance.
    * @return The plugin's error message, or an empty string
    */
-  std::string last_error() const;
+  [[nodiscard]] std::string last_error() const;
 
 private:
   friend class PluginLibrary;
@@ -85,7 +85,7 @@ public:
    * @throws std::runtime_error if the plugin cannot be found, fails a check,
    * or cannot be loaded
    */
-  static PluginLibrary open(const std::string &spec);
+  [[nodiscard]] static PluginLibrary open(const std::string &spec);
 
   /**
    * @brief Verify and load a plugin shared library.
@@ -100,7 +100,7 @@ public:
    * @throws std::runtime_error if a check fails or the library cannot be
    * loaded
    */
-  static PluginLibrary open_file(const std::string &path);
+  [[nodiscard]] static PluginLibrary open_file(const std::string &path);
 
   /**
    * @brief Look up a statically registered plugin.
@@ -109,38 +109,40 @@ public:
    * @return The plugin
    * @throws std::runtime_error if no plugin is registered under @p name
    */
-  static PluginLibrary open_static(const std::string &name);
+  [[nodiscard]] static PluginLibrary open_static(const std::string &name);
 
   /**
    * @brief The plugin's function table.
    * @return Function table, valid while this object (or an instance it
    * created) is alive
    */
-  const spfp_injection_plugin &table() const { return *table_; }
+  [[nodiscard]] const spfp_injection_plugin &table() const { return *table_; }
 
   /**
    * @brief Plugin name, as reported by the plugin.
    * @return Plugin name
    */
-  std::string name() const { return table_->name; }
+  [[nodiscard]] std::string name() const { return table_->name; }
 
   /**
    * @brief Plugin version string, as reported by the plugin.
    * @return Plugin version
    */
-  std::string version() const { return table_->version; }
+  [[nodiscard]] std::string version() const { return table_->version; }
 
   /**
    * @brief ABI version the plugin was built against.
    * @return ABI version
    */
-  std::uint32_t abi_version() const { return table_->abi_version; }
+  [[nodiscard]] std::uint32_t abi_version() const {
+    return table_->abi_version;
+  }
 
   /**
    * @brief Where the plugin came from.
    * @return Resolved path of the shared library, or @c "static:<name>"
    */
-  const std::string &source() const { return source_; }
+  [[nodiscard]] const std::string &source() const { return source_; }
 
   /**
    * @brief Create a plugin instance.
@@ -152,9 +154,9 @@ public:
    * @throws std::runtime_error with the plugin's error message if @c create
    * fails
    */
-  PluginInstance create(const std::string &config_path,
-                        const spfp_simulation_info &info,
-                        const spfp_communicator &communicator) const;
+  [[nodiscard]] PluginInstance
+  create(const std::string &config_path, const spfp_simulation_info &info,
+         const spfp_communicator &communicator) const;
 
 private:
   PluginLibrary(std::shared_ptr<void> handle,

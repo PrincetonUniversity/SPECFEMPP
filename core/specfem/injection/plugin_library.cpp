@@ -4,17 +4,21 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <array>
 #include <cerrno>
 #include <climits>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <iterator>
 #include <map>
+#include <span>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -60,9 +64,12 @@ void specfem::injection_impl::validate_table(const spfp_injection_plugin *table,
     fail("the plugin name is empty.");
   if (table->version == nullptr)
     fail("the plugin version is null.");
-  if (table->create == nullptr || table->supports == nullptr ||
-      table->setup == nullptr || table->fill == nullptr ||
-      table->last_error == nullptr || table->destroy == nullptr)
+  const std::array has_function = {
+    table->create != nullptr,     table->supports != nullptr,
+    table->setup != nullptr,      table->fill != nullptr,
+    table->last_error != nullptr, table->destroy != nullptr
+  };
+  if (!std::ranges::all_of(has_function, std::identity{}))
     fail("a required function pointer is null.");
 }
 
@@ -100,16 +107,19 @@ spfp_manifest specfem::injection_impl::read_manifest(const std::string &path) {
   const char magic[16] = SPFP_MANIFEST_MAGIC_INITIALIZER;
   spfp_manifest manifest{};
   int count = 0;
-  for (auto it = std::search(bytes.begin(), bytes.end(), std::begin(magic),
-                             std::end(magic));
-       it != bytes.end();
-       it = std::search(it + 1, bytes.end(), std::begin(magic),
-                        std::end(magic))) {
-    if (static_cast<std::size_t>(bytes.end() - it) < sizeof(spfp_manifest))
+  // Scan for every occurrence of the magic; the rest of the file after each
+  // match must hold a whole manifest.
+  for (std::span<const char> rest(bytes);;) {
+    const auto match = std::ranges::search(rest, magic);
+    if (match.empty())
+      break;
+    const auto found = rest.subspan(match.begin() - rest.begin());
+    if (found.size() < sizeof(spfp_manifest))
       throw std::runtime_error("Injection plugin '" + path +
                                "' has a truncated manifest.");
-    std::memcpy(&manifest, &*it, sizeof(spfp_manifest));
+    std::memcpy(&manifest, found.data(), sizeof(spfp_manifest));
     ++count;
+    rest = found.subspan(1);
   }
 
   const auto fail = [&](const std::string &reason) {
@@ -185,8 +195,8 @@ specfem::injection::PluginLibrary::PluginLibrary(
 
 specfem::injection::PluginLibrary
 specfem::injection::PluginLibrary::open(const std::string &spec) {
-  const std::string prefix = specfem::injection::static_plugin_prefix;
-  if (spec.compare(0, prefix.size(), prefix) == 0)
+  constexpr std::string_view prefix = specfem::injection::static_plugin_prefix;
+  if (spec.starts_with(prefix))
     return open_static(spec.substr(prefix.size()));
   return open_file(spec);
 }
