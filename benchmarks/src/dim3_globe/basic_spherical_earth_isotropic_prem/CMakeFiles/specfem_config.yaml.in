@@ -17,8 +17,8 @@ parameters:
         type-of-simulation: forward
         time-scheme:
           type: Newmark
-          dt: 0.11
-          nstep: 17500
+          dt: 0.1
+          nstep: 18000
 
     simulation-mode:
       forward:
@@ -32,7 +32,7 @@ parameters:
     angle: 0.0
     seismogram-type:
       - displacement
-    nstep_between_samples: 9
+    nstep_between_samples: 10
 
   run-setup:
     number-of-processors: 1

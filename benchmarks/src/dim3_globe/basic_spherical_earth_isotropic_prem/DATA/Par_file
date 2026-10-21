@@ -15,14 +15,14 @@ NCHUNKS                         = 1
 # angular width of the first chunk (not used if full sphere with six chunks)
 ANGULAR_WIDTH_XI_IN_DEGREES     = 90.d0   # angular size of a chunk
 ANGULAR_WIDTH_ETA_IN_DEGREES    = 90.d0
-CENTER_LATITUDE_IN_DEGREES      = -13.82d0
-CENTER_LONGITUDE_IN_DEGREES     = -67.25d0
+CENTER_LATITUDE_IN_DEGREES      = -12.41375d0
+CENTER_LONGITUDE_IN_DEGREES     = -65.8018d0
 GAMMA_ROTATION_AZIMUTH          = 0.d0
 
 # number of elements at the surface along the two sides of the first chunk
 # (must be multiple of 16 and 8 * multiple of NPROC below)
-NEX_XI                          = 64
-NEX_ETA                         = 64
+NEX_XI                          = 32
+NEX_ETA                         = 32
 
 # number of MPI processors along the two sides of the first chunk
 NPROC_XI                        = 1
@@ -90,8 +90,8 @@ RECORD_LENGTH_IN_MINUTES        = 30.d0
 
 # time step and step count pinned so that SPECFEM++ and SPECFEM3D_GLOBE use identical
 # time stepping; 0.19 s is the mesher's own choice for two-layer-crust PREM at NEX <= 160
-DT                              = 0.11d0
-NSTEP                           = 17500
+DT                              = 0.1d0
+NSTEP                           = 18000
 
 #-----------------------------------------------------------
 #
@@ -102,11 +102,11 @@ NSTEP                           = 17500
 ## regional mesh cut-off
 # using this flag will cut-off the mesh in the mantle at a layer matching to the given cut-off depth.
 # this flag only has an effect for regional simulations, i.e., for NCHUNKS values less than 6.
-REGIONAL_MESH_CUTOFF            = .false.
+REGIONAL_MESH_CUTOFF            = .true.
 
 # regional mesh cut-off depth (in km)
 # possible selections are: 24.4d0, 80.d0, 220.d0, 400.d0, 600.d0, 670.d0, 771.d0
-REGIONAL_MESH_CUTOFF_DEPTH      = 400.d0
+REGIONAL_MESH_CUTOFF_DEPTH      = 770.d0
 
 # regional mesh cut-off w/ a second doubling layer below 220km interface
 # (by default, a first doubling layer will be added below the Moho, and a second one below the 771km-depth layer.
@@ -291,7 +291,7 @@ NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 5000000
 
 # set to n to reduce the sampling rate of output seismograms by a factor of n
 # defaults to 1, which means no down-sampling
-NTSTEP_BETWEEN_OUTPUT_SAMPLE    = 9
+NTSTEP_BETWEEN_OUTPUT_SAMPLE    = 10
 
 # option to save strain seismograms
 # this option is useful for strain Green's tensor

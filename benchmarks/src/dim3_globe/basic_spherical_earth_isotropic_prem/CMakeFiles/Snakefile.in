@@ -61,7 +61,7 @@ rule solver:
         config=example_dir / "specfem_config.yaml",
     output:
         traces=expand(
-            str(example_dir / "OUTPUT_FILES" / "results" / "{net}.{sta}.S3.MX{comp}.sac"),
+            str(example_dir / "OUTPUT_FILES" / "results" / "{net}.{sta}.S3.BX{comp}.sac"),
             zip,
             net=[n for n in networks for _ in "ENZ"],
             sta=[s for s in stations for _ in "ENZ"],
