@@ -25,6 +25,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/plugin_sdk/plugin_sdk.cmake)
 
 # Injection plugin loader tests (core/specfem/injection)
 include(${CMAKE_CURRENT_SOURCE_DIR}/injection/loader/loader.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/injection/session/session.cmake)
 
 if(SPECFEM_ENABLE_MPI)
   include(${CMAKE_CURRENT_SOURCE_DIR}/mpi.cmake)
