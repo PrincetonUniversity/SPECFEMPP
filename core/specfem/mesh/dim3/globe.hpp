@@ -119,7 +119,19 @@ struct globe_mesh_data {
   /** @brief Per-element metadata required by the globe material evaluator. */
   std::vector<globe_element_context> element_context;
 
-  /** @brief Surface entries belonging to the exterior acoustic free surface. */
+  /**
+   * @brief Surface entries on the free surface: the top faces of the
+   * crust/mantle elements.
+   *
+   * A **geometric surface, not a boundary condition**. The crust/mantle is
+   * elastic, and for an elastic medium traction-free is the natural condition
+   * of the weak form, so nothing needs to be applied. The list is deliberately
+   * not routed into @c mesh_dim3_base::boundaries: as an
+   * @c acoustic_free_surface it would put a zero-pressure constraint on any
+   * acoustic element that owned one of its faces. It is kept for source and
+   * receiver depth resolution, the ocean load (@ref ocean_load) and surface
+   * output. @c mesh<Globe3D>::check_consistency enforces its placement.
+   */
   globe_boundary_surface free_surface;
 
   /**
@@ -150,7 +162,13 @@ struct globe_mesh_data {
    */
   globe_boundary_surface icb;
 
-  /** @brief Surface entries used for ocean-load metadata. */
+  /**
+   * @brief Surface entries carrying the ocean load.
+   *
+   * Empty unless the model has oceans; otherwise a subset of
+   * @ref free_surface (the mesher currently writes the whole free surface).
+   * @c mesh<Globe3D>::check_consistency enforces both.
+   */
   globe_boundary_surface ocean_load;
 };
 

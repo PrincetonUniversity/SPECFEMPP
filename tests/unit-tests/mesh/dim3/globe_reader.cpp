@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <fstream>
 #include <gtest/gtest.h>
+#include <optional>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -59,6 +60,18 @@ void write_surface(std::ofstream &stream, const std::vector<int> &elements,
   }
 }
 
+/** @brief Write a surface given as (one-based element, face code) pairs. */
+void write_surface(std::ofstream &stream,
+                   const std::vector<std::pair<int, int>> &entries) {
+  std::vector<int> elements;
+  std::vector<int> faces;
+  for (const auto &[element, face] : entries) {
+    elements.push_back(element);
+    faces.push_back(face);
+  }
+  write_surface(stream, elements, faces);
+}
+
 /**
  * @brief Contents of a synthetic globe database.
  *
@@ -81,6 +94,12 @@ struct DatabaseOptions {
   std::vector<std::pair<int, int>> cmb_faces = {};
   /// ICB entries as (one-based element, face code).
   std::vector<std::pair<int, int>> icb_faces = {};
+  int nchunks = 6;
+  bool oceans = false;
+  /// Ocean-load entries as (one-based element, face code).
+  std::vector<std::pair<int, int>> ocean_faces = {};
+  /// Free-surface entries; defaults to the top face of the last element.
+  std::optional<std::vector<std::pair<int, int>>> free_surface_faces = {};
   /// End the database after the element tags record.
   bool stop_after_element_tags = false;
 };
@@ -113,8 +132,8 @@ std::filesystem::path write_database(const DatabaseOptions &options = {}) {
   write_values(stream, 1, 2, static_cast<int>(planet_values.size()));
   write_values(stream, planet_values);
   write_values(stream, 27, 5, 5, 5, 1);
-  write_values(stream, 0, 0, 0, 0, 0, options.attenuation ? 1 : 0, 0,
-               options.has_reference_geometry ? 1 : 0);
+  write_values(stream, 0, 0, 0, 0, 0, options.attenuation ? 1 : 0,
+               options.oceans ? 1 : 0, options.has_reference_geometry ? 1 : 0);
   write_values(stream, 1);
 
   Record model;
@@ -124,7 +143,7 @@ std::filesystem::path write_database(const DatabaseOptions &options = {}) {
   std::vector<int> model_flags(16, 0);
   model_flags[11] = 1;
   write_values(stream, 16, model_flags);
-  write_values(stream, 6, 8, 8);
+  write_values(stream, options.nchunks, 8, 8);
   write_values(stream, 20.0, 1000.0, options.source_frequency);
 
   write_values(stream, 27);
@@ -169,17 +188,12 @@ std::filesystem::path write_database(const DatabaseOptions &options = {}) {
   }
   write_values(stream, node_ids);
 
-  write_surface(stream, { nspec }, { face_top });
-  for (const auto *entries : { &options.cmb_faces, &options.icb_faces }) {
-    std::vector<int> elements;
-    std::vector<int> face_codes;
-    for (const auto &[element, face] : *entries) {
-      elements.push_back(element);
-      face_codes.push_back(face);
-    }
-    write_surface(stream, elements, face_codes);
-  }
-  write_surface(stream, {}, {});
+  write_surface(stream,
+                options.free_surface_faces.value_or(
+                    std::vector<std::pair<int, int>>{ { nspec, face_top } }));
+  write_surface(stream, options.cmb_faces);
+  write_surface(stream, options.icb_faces);
+  write_surface(stream, options.ocean_faces);
 
   // One-based CSR adjacency of the radial column.
   std::vector<int> xadj = { 1 };
@@ -249,7 +263,12 @@ TEST(GlobeMeshReader, ReadsThinDatabaseAndPreservesReferenceContext) {
   EXPECT_TRUE(mesh.globe.element_context[0].element_in_mantle);
   EXPECT_DOUBLE_EQ(mesh.globe.reference_coordinates(26, 2), 3026.0);
   EXPECT_EQ(mesh.control_nodes.control_node_index(0, 26), 26);
-  EXPECT_EQ(mesh.boundaries.acoustic_free_surface.nelem_acoustic_surface, 1);
+  // The free surface is kept as geometry, not as a boundary condition.
+  EXPECT_EQ(mesh.boundaries.acoustic_free_surface.nelem_acoustic_surface, 0);
+  ASSERT_EQ(mesh.globe.free_surface.elements.size(), 1);
+  EXPECT_EQ(mesh.globe.free_surface.elements[0], 0);
+  EXPECT_EQ(mesh.globe.free_surface.faces[0],
+            specfem::mesh_entity::dim3::type::top);
 }
 
 TEST(GlobeMeshReader, RejectsInvalidPlanetConstants) {
@@ -284,8 +303,12 @@ TEST(GlobeMeshReader, AcceptsPhysicalInnerCoreElements) {
   // Normal inner-core elements and all three physical central-cube flags.
   for (const int idoubling : { 7, 8, 9, 10 }) {
     SCOPED_TRACE(idoubling);
+    // A lone inner-core element cannot carry the free surface, which the
+    // mesher places on the crust/mantle, so this database records none.
     const auto path = globe_reader_test_impl::write_database(
-        { .region_codes = { 3 }, .idoubling = idoubling });
+        { .region_codes = { 3 },
+          .idoubling = idoubling,
+          .free_surface_faces = std::vector<std::pair<int, int>>{} });
     const auto mesh = specfem::io::read_globe_mesh(
         path.string(), specfem::attenuation::Setup{});
     std::filesystem::remove(path);
@@ -360,8 +383,12 @@ TEST(GlobeMeshReader, ReadsResolvedMpiAdjacency) {
 // outer-core element owning a radial face on an MPI boundary. A solid element
 // with the same connection is fine -- that is the case above.
 TEST(GlobeMeshReader, RejectsRadialMpiFaceOnFluidElement) {
+  // Outer core (element 1) below crust/mantle (element 2), with element 1's
+  // bottom face on an MPI boundary.
   const auto path = globe_reader_test_impl::write_database(
-      { .include_mpi = true, .region_codes = { 2 } });
+      { .include_mpi = true,
+        .region_codes = { 2, 1 },
+        .cmb_faces = { { 1, 3 }, { 2, 1 } } });
   globe_reader_test_impl::expect_read_throws_with(path,
                                                   "Unsupported globe mesh");
   std::filesystem::remove(path);
@@ -406,10 +433,13 @@ TEST(GlobeMeshReader, RejectsCmbRecordedOnOneSideOnly) {
   std::filesystem::remove(path);
 }
 
-// An inner-core element below an outer-core element shares an ICB face.
+// Inner core (element 1) below outer core (element 2) shares an ICB face; the
+// crust/mantle (element 3) on top carries the free surface and a CMB face.
 TEST(GlobeMeshReader, AcceptsIcbRecordedOnBothSides) {
   const auto path = globe_reader_test_impl::write_database(
-      { .region_codes = { 3, 2 }, .icb_faces = { { 1, 3 }, { 2, 1 } } });
+      { .region_codes = { 3, 2, 1 },
+        .cmb_faces = { { 2, 3 }, { 3, 1 } },
+        .icb_faces = { { 1, 3 }, { 2, 1 } } });
   EXPECT_NO_THROW(specfem::io::read_globe_mesh(path.string(),
                                                specfem::attenuation::Setup{}));
   std::filesystem::remove(path);
@@ -424,5 +454,55 @@ TEST(GlobeMeshReader, RejectsCmbFacesRecordedAsIcb) {
       path, "CMB (crust_mantle / outer_core): 2 faces implied, 0 recorded");
   globe_reader_test_impl::expect_read_throws_with(
       path, "ICB (outer_core / inner_core): 0 faces implied, 2 recorded");
+  std::filesystem::remove(path);
+}
+
+TEST(GlobeMeshReader, RejectsUnmeshableChunkCount) {
+  const auto path = globe_reader_test_impl::write_database({ .nchunks = 4 });
+  globe_reader_test_impl::expect_read_throws_with(path, "1, 2, 3 or 6");
+  std::filesystem::remove(path);
+}
+
+// The free surface of the single-element database is the top face (code 3) of
+// element 1, so these place the ocean load on or off it.
+
+TEST(GlobeMeshReader, AcceptsOceanLoadOnFreeSurface) {
+  const auto path = globe_reader_test_impl::write_database(
+      { .oceans = true, .ocean_faces = { { 1, 3 } } });
+  EXPECT_NO_THROW(specfem::io::read_globe_mesh(path.string(),
+                                               specfem::attenuation::Setup{}));
+  std::filesystem::remove(path);
+}
+
+TEST(GlobeMeshReader, RejectsOceanLoadOffFreeSurface) {
+  const auto path = globe_reader_test_impl::write_database(
+      { .oceans = true, .ocean_faces = { { 1, 1 } } });
+  globe_reader_test_impl::expect_read_throws_with(path,
+                                                  "not on the free surface");
+  std::filesystem::remove(path);
+}
+
+TEST(GlobeMeshReader, RejectsOceanLoadWithoutOceans) {
+  const auto path =
+      globe_reader_test_impl::write_database({ .ocean_faces = { { 1, 3 } } });
+  globe_reader_test_impl::expect_read_throws_with(path, "oceans are disabled");
+  std::filesystem::remove(path);
+}
+
+// The mesher writes the top faces of the crust/mantle as the free surface.
+
+TEST(GlobeMeshReader, RejectsFreeSurfaceOnNonCrustMantleElement) {
+  const auto path =
+      globe_reader_test_impl::write_database({ .region_codes = { 2 } });
+  globe_reader_test_impl::expect_read_throws_with(path,
+                                                  "free surface faces are not");
+  std::filesystem::remove(path);
+}
+
+TEST(GlobeMeshReader, RejectsFreeSurfaceOnNonTopFace) {
+  const auto path = globe_reader_test_impl::write_database(
+      { .free_surface_faces = std::vector<std::pair<int, int>>{ { 1, 1 } } });
+  globe_reader_test_impl::expect_read_throws_with(path,
+                                                  "free surface faces are not");
   std::filesystem::remove(path);
 }

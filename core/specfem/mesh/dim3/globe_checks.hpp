@@ -1,14 +1,29 @@
 #pragma once
 
 #include "adjacency_graph/adjacency_graph.hpp"
+#include "boundaries/absorbing_boundary.hpp"
 #include "globe.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/mesh_entity.hpp"
 
+#include <cstddef>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
 
 namespace specfem::mesh::globe_impl {
+
+/**
+ * @brief A named face list from the database, used in error messages.
+ */
+using named_surface =
+    std::pair<std::string, const specfem::mesh::globe_boundary_surface *>;
+
+/**
+ * @brief A face identified by its zero-based mesh element and orientation.
+ */
+using face_key = std::pair<int, specfem::mesh_entity::dim3::type>;
 
 /**
  * @brief A database interface face list, together with the pair of regions it
@@ -57,6 +72,70 @@ void check_interface_surfaces_match_medium_tags(
         &adjacency_graph,
     const std::vector<specfem::mesh::globe_element_context> &element_context,
     const std::vector<InterfaceSurface> &surfaces);
+
+/**
+ * @brief Render a set of faces for an error message.
+ *
+ * @param faces Faces to list
+ * @param limit Maximum number of faces to list before summarizing the rest
+ * @return Space-separated list with one-based element numbers
+ */
+std::string describe_faces(const std::set<face_key> &faces,
+                           const std::size_t limit);
+
+/**
+ * @brief Check that the chunk count is one the mesher can produce.
+ *
+ * SPECFEM3D_GLOBE meshes 1, 2, 3 or 6 chunks (@c read_compute_parameters).
+ *
+ * @param nchunks Chunk count recorded in the database
+ * @throws std::runtime_error for any other value
+ */
+void check_chunk_count(const int nchunks);
+
+/**
+ * @brief Check that absorbing faces obey the mesher's Stacey rules.
+ *
+ * The mesher refuses absorbing conditions for the full Earth (6 chunks) and
+ * does not support them for 3 chunks. For 1 or 2 chunks it places Stacey faces
+ * on the crust/mantle and outer core only, never on the inner core.
+ *
+ * @param nchunks Chunk count recorded in the database
+ * @param absorbing_boundary Absorbing faces of the mesh
+ * @param element_context Per-element region context
+ * @throws std::runtime_error if any rule is broken
+ */
+void check_absorbing_matches_chunk_count(
+    const int nchunks,
+    const specfem::mesh::absorbing_boundary<
+        specfem::element::dimension_tag::dim3> &absorbing_boundary,
+    const std::vector<specfem::mesh::globe_element_context> &element_context);
+
+/**
+ * @brief Check that every face of one surface also belongs to another.
+ *
+ * @param subset Surface whose faces must all be in @p superset
+ * @param superset Surface that must contain every face of @p subset
+ * @throws std::runtime_error listing the faces of @p subset missing from
+ *         @p superset
+ */
+void check_surface_is_subset(const named_surface &subset,
+                             const named_surface &superset);
+
+/**
+ * @brief Check that every face of a surface is a given face of an element in a
+ * given region.
+ *
+ * @param surface Surface to check
+ * @param region Region every owning element must belong to
+ * @param face Face every entry must be
+ * @param element_context Per-element region context
+ * @throws std::runtime_error listing the entries that break either condition
+ */
+void check_surface_faces(
+    const named_surface &surface, const specfem::element::region_tag region,
+    const specfem::mesh_entity::dim3::type face,
+    const std::vector<specfem::mesh::globe_element_context> &element_context);
 
 /**
  * @brief Reject meshes that split a fluid-solid interface across MPI ranks.
