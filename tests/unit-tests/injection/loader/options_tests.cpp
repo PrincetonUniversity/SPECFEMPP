@@ -18,7 +18,8 @@ std::string resolve_error(const std::optional<std::string> &plugin,
                           const std::optional<std::string> &config,
                           const char *environment) {
   try {
-    specfem::injection::resolve_plugin_options(plugin, config, environment);
+    [[maybe_unused]] const auto options =
+        specfem::injection::resolve_plugin_options(plugin, config, environment);
   } catch (const std::runtime_error &error) {
     return error.what();
   }

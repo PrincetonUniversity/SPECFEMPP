@@ -36,7 +36,7 @@ struct PluginOptions {
  * @return The selected plugin, or @c std::nullopt when none is selected
  * @throws std::runtime_error if the options are inconsistent
  */
-std::optional<PluginOptions>
+[[nodiscard]] std::optional<PluginOptions>
 resolve_plugin_options(const std::optional<std::string> &cli_plugin,
                        const std::optional<std::string> &cli_config,
                        const char *environment_plugin);

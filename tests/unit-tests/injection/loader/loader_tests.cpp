@@ -59,7 +59,8 @@ private:
 // Message of the std::runtime_error thrown by open(spec).
 std::string open_error(const std::string &spec) {
   try {
-    specfem::injection::PluginLibrary::open(spec);
+    [[maybe_unused]] const auto plugin =
+        specfem::injection::PluginLibrary::open(spec);
   } catch (const std::runtime_error &error) {
     return error.what();
   }
@@ -123,7 +124,8 @@ TEST(InjectionLoader, CreateFailureReportsPluginError) {
   const auto plugin = specfem::injection::PluginLibrary::open(
       dir.install(SPFP_TEST_GOOD_PLUGIN));
   try {
-    plugin.create("fail-create", simulation_info(), communicator());
+    [[maybe_unused]] const auto instance =
+        plugin.create("fail-create", simulation_info(), communicator());
     FAIL() << "create should have thrown";
   } catch (const std::runtime_error &error) {
     EXPECT_THAT(error.what(), HasSubstr("'loader-good' failed to create"));
@@ -227,17 +229,15 @@ const char *static_last_error(const void *self) {
 void static_destroy([[maybe_unused]] void *self) { --static_instances; }
 
 spfp_injection_plugin static_table(const char *name) {
-  return spfp_injection_plugin{ SPFP_INJECTION_ABI_VERSION,
-                                0u,
-                                0u,
-                                name,
-                                "3.0.0",
-                                static_create,
-                                static_supports,
-                                static_setup,
-                                static_fill,
-                                static_last_error,
-                                static_destroy };
+  return spfp_injection_plugin{ .abi_version = SPFP_INJECTION_ABI_VERSION,
+                                .name = name,
+                                .version = "3.0.0",
+                                .create = static_create,
+                                .supports = static_supports,
+                                .setup = static_setup,
+                                .fill = static_fill,
+                                .last_error = static_last_error,
+                                .destroy = static_destroy };
 }
 
 TEST(InjectionLoader, StaticPluginEndToEnd) {
@@ -257,7 +257,8 @@ TEST(InjectionLoader, StaticPluginEndToEnd) {
   EXPECT_EQ(static_instances, 0);
 
   try {
-    plugin.create("fail-create", simulation_info(), communicator());
+    [[maybe_unused]] const auto instance =
+        plugin.create("fail-create", simulation_info(), communicator());
     FAIL() << "create should have thrown";
   } catch (const std::runtime_error &error) {
     EXPECT_THAT(error.what(), HasSubstr("static create failed"));
