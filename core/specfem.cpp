@@ -1,9 +1,11 @@
 #include "specfem/constants.hpp"
+#include "specfem/injection.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/program.hpp"
 #include "specfem/program/context.hpp"
 #include "specfem/version.hpp"
 #include <CLI/CLI.hpp>
+#include <cstdlib>
 #include <iostream>
 #include <optional>
 #include <string>
@@ -15,6 +17,8 @@ struct SimulationOptions {
   bool log_per_rank = false;
   bool log_auto_flush = false;
   std::string log_level;
+  std::optional<std::string> injection_plugin;
+  std::optional<std::string> injection_config;
 };
 
 // Flags tracking which logger options were explicitly set on the CLI
@@ -47,12 +51,39 @@ void add_logger_options(CLI::App *cmd, SimulationOptions &opts,
       ->each([&](const std::string &) { flags.log_level_set = true; });
 }
 
+void add_injection_options(CLI::App *cmd, SimulationOptions &opts) {
+  cmd->add_option(
+      "--injection-plugin", opts.injection_plugin,
+      "Wavefield-injection plugin: absolute path to a shared "
+      "library, or static:<name> (3D only). Defaults to $" +
+          std::string(specfem::injection::plugin_environment_variable));
+  cmd->add_option("--injection-config", opts.injection_config,
+                  "Configuration file passed to the injection plugin");
+}
+
 void add_simulation_options(CLI::App *cmd, SimulationOptions &opts,
                             LoggerFlags &flags) {
   cmd->add_option("-p,--parameters-file", opts.parameters_file,
                   "Location to parameters file")
       ->required();
   add_logger_options(cmd, opts, flags);
+  add_injection_options(cmd, opts);
+}
+
+// The 2d subcommand accepts the injection flags only to reject them with a
+// clear message; the environment variable is ignored there.
+std::optional<specfem::injection::PluginOptions>
+resolve_injection_options(const std::string &dimension,
+                          const SimulationOptions &opts) {
+  if (dimension == "2d") {
+    if (opts.injection_plugin || opts.injection_config)
+      throw std::runtime_error("--injection-plugin and --injection-config are "
+                               "not supported for 2D simulations in v1.");
+    return std::nullopt;
+  }
+  return specfem::injection::resolve_plugin_options(
+      opts.injection_plugin, opts.injection_config,
+      std::getenv(specfem::injection::plugin_environment_variable));
 }
 
 int run_simulation(const std::string &dimension, int argc, char **argv,
@@ -97,7 +128,16 @@ int run_simulation(const std::string &dimension, int argc, char **argv,
         specfem::Logger::set_log_file(log_file);
       }
 
-      const auto success = specfem::program::execute(dimension, parameter_dict);
+      const auto success = [&]() {
+        std::optional<specfem::injection::PluginOptions> injection;
+        try {
+          injection = resolve_injection_options(dimension, opts);
+        } catch (const std::exception &e) {
+          specfem::Logger::error(e.what());
+          return false;
+        }
+        return specfem::program::execute(dimension, parameter_dict, injection);
+      }();
 
       if (!success) {
         std::cerr << "Execution failed. See logs for details." << std::endl;
