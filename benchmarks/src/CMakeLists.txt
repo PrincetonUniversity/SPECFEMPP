@@ -37,4 +37,4 @@ add_subdirectory(dim3/mount_st_helens)
 
 # 3D global
 add_subdirectory(dim3_globe/global_small_mesh)
-add_subdirectory(dim3_globe/basic_spherical_earth_isotropic_prem)
+add_subdirectory(dim3_globe/basic_spherical_earth_chunk_isotropic_prem)

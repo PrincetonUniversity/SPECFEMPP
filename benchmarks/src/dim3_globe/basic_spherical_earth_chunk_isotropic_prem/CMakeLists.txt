@@ -42,7 +42,7 @@ file(MAKE_DIRECTORY ${CURRENT_BENCHMARK_BUILD_DIR}/OUTPUT_FILES)
 file(MAKE_DIRECTORY ${CURRENT_BENCHMARK_BUILD_DIR}/OUTPUT_FILES/results)
 
 # single chunk, single rank: the serial mesher is run directly
-add_custom_target(benchmark_dim3_globe_basic_spherical_earth_isotropic_prem
+add_custom_target(benchmark_dim3_globe_basic_spherical_earth_chunk_isotropic_prem
   COMMAND ${CMAKE_COMMAND} -E chdir ${CURRENT_BENCHMARK_BUILD_DIR}
           $<TARGET_FILE:xmeshfem3D_globe>
   # validates the thin SPECFEM++ mesh database (SPECFEMPP_DATABASE = .true. in the Par_file)
@@ -51,6 +51,6 @@ add_custom_target(benchmark_dim3_globe_basic_spherical_earth_isotropic_prem
           python check_database.py DATABASES_MPI
   DEPENDS xmeshfem3D_globe
   WORKING_DIRECTORY ${CURRENT_BENCHMARK_BUILD_DIR}
-  COMMENT "Generating dim3_globe basic_spherical_earth_isotropic_prem with xmeshfem3D_globe"
+  COMMENT "Generating dim3_globe basic_spherical_earth_chunk_isotropic_prem with xmeshfem3D_globe"
   VERBATIM
 )

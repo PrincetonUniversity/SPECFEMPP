@@ -79,11 +79,11 @@ pinned 0.10 s.
 ```bash
 cmake --preset release
 cmake --build build/release --target specfem xmeshfem3D_globe
-cd benchmarks/build/release/dim3_globe/basic_spherical_earth_isotropic_prem
+cd benchmarks/build/release/dim3_globe/basic_spherical_earth_chunk_isotropic_prem
 uv run snakemake -j 1                # mesh, database check, SPECFEM++ solver, comparison
 ```
 
-Alternatively, run the CMake target `benchmark_dim3_globe_basic_spherical_earth_isotropic_prem`
+Alternatively, run the CMake target `benchmark_dim3_globe_basic_spherical_earth_chunk_isotropic_prem`
 (serial mesher followed by `check_database.py`).
 
 ## Reference seismograms
