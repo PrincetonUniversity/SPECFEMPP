@@ -1,0 +1,113 @@
+from pathlib import Path
+
+example_dir = Path("@CURRENT_BENCHMARK_BUILD_DIR@")
+bin_dir = Path("@CMAKE_BINARY_DIR@") / "bin"
+mesher = bin_dir / "xmeshfem3D_globe"
+specfem = bin_dir / "specfem"
+uv_python = "uv run --project @PROJECT_SOURCE_DIR@ --group examples python"
+
+stations = ['FDF', 'HDC', 'KOG', 'PEL', 'SPB', 'UNM', 'EFI', 'JTS', 'NNA', 'RPN', 'BOCO', 'LCO', 'LVC', 'OTAV', 'PAYG', 'PTGA', 'RCBR', 'SAML', 'SDV', 'SJG', 'TEIG', 'TRQA']
+networks = ['G', 'G', 'G', 'G', 'G', 'G', 'II', 'II', 'II', 'II', 'IU', 'IU', 'IU', 'IU', 'IU', 'IU', 'IU', 'IU', 'IU', 'IU', 'IU', 'IU']
+
+comparison_outputs = [
+    example_dir / "OUTPUT_FILES" / "comparison.txt",
+    example_dir / "OUTPUT_FILES" / "E_record_section.png",
+    example_dir / "OUTPUT_FILES" / "N_record_section.png",
+    example_dir / "OUTPUT_FILES" / "Z_record_section.png",
+    example_dir / "OUTPUT_FILES" / "geometry.png",
+]
+
+
+# full pipeline: mesh -> database check -> SPECFEM++ solver -> comparison
+rule all:
+    input:
+        example_dir / "OUTPUT_FILES" / "check_database.txt",
+        comparison_outputs,
+    localrule: True
+
+
+rule mesh:
+    input:
+        par_file=example_dir / "DATA" / "Par_file",
+        stations=example_dir / "DATA" / "STATIONS",
+        cmt=example_dir / "DATA" / "CMTSOLUTION",
+        mesher=mesher,
+    output:
+        example_dir / "DATABASES_MPI" / "proc000000_specfempp_database.bin",
+    log:
+        example_dir / "OUTPUT_FILES" / "output_mesher.txt",
+    shell:
+        "cd {example_dir} && mkdir -p DATABASES_MPI OUTPUT_FILES && "
+        "{input.mesher} > {log} 2>&1"
+
+
+# validates the thin SPECFEM++ mesh database
+rule check_database:
+    input:
+        database=example_dir / "DATABASES_MPI" / "proc000000_specfempp_database.bin",
+        script=example_dir / "check_database.py",
+    output:
+        example_dir / "OUTPUT_FILES" / "check_database.txt",
+    localrule: True
+    shell:
+        "cd {example_dir} && {uv_python} check_database.py DATABASES_MPI > {output}"
+
+
+rule solver:
+    input:
+        database=example_dir / "DATABASES_MPI" / "proc000000_specfempp_database.bin",
+        stations=example_dir / "DATA" / "STATIONS",
+        cmt=example_dir / "DATA" / "CMTSOLUTION",
+        config=example_dir / "specfem_config.yaml",
+    output:
+        traces=expand(
+            str(example_dir / "OUTPUT_FILES" / "results" / "{net}.{sta}.S3.MX{comp}.sac"),
+            zip,
+            net=[n for n in networks for _ in "ENZ"],
+            sta=[s for s in stations for _ in "ENZ"],
+            comp=list("ENZ") * len(stations),
+        ),
+        log=example_dir / "OUTPUT_FILES" / "output.log",
+    shell:
+        "cd {example_dir} && mkdir -p OUTPUT_FILES/results && "
+        "{specfem} globe -p specfem_config.yaml > {output.log} 2>&1"
+
+
+# the script also runs reference-only (`python plot_seismograms.py` by hand)
+rule compare:
+    input:
+        script=example_dir / "plot_seismograms.py",
+        traces=rules.solver.output.traces,
+    output:
+        comparison_outputs,
+    localrule: True
+    shell:
+        "cd {example_dir} && {uv_python} plot_seismograms.py"
+
+
+# Writes the reference data: `reference_seismograms` in the build directory is a
+# symlink into the source tree, so this updates the committed files.
+rule generate_reference:
+    output:
+        example_dir / "reference_seismograms" / "provenance" / "VERSION.txt",
+    shell:
+        r"""
+        set -euo pipefail
+        : "${{SPECFEM3D_GLOBE_ROOT:?export SPECFEM3D_GLOBE_ROOT=/path/to/a/built/specfem3d_globe checkout}}"
+        test -x "$SPECFEM3D_GLOBE_ROOT/bin/xmeshfem3D" || {{ echo "xmeshfem3D not found under $SPECFEM3D_GLOBE_ROOT/bin"; exit 1; }}
+        test -x "$SPECFEM3D_GLOBE_ROOT/bin/xspecfem3D" || {{ echo "xspecfem3D not found under $SPECFEM3D_GLOBE_ROOT/bin"; exit 1; }}
+        cd {example_dir}; rm -rf reference_run; mkdir -p reference_run/OUTPUT_FILES reference_run/DATABASES_MPI; cp -R DATA reference_run/DATA; cd reference_run
+        mpirun -np 1 "$SPECFEM3D_GLOBE_ROOT/bin/xmeshfem3D" > OUTPUT_FILES/output_mesher_stdout.txt 2>&1
+        cp OUTPUT_FILES/*.txt DATABASES_MPI/
+        mpirun -np 1 "$SPECFEM3D_GLOBE_ROOT/bin/xspecfem3D" > OUTPUT_FILES/output_solver_stdout.txt 2>&1
+        mkdir -p ../reference_seismograms/provenance
+        cp OUTPUT_FILES/*.sem.sac ../reference_seismograms/
+        cp DATA/Par_file DATA/CMTSOLUTION DATA/STATIONS OUTPUT_FILES/output_mesher.txt OUTPUT_FILES/output_solver.txt ../reference_seismograms/provenance/
+        {{ echo "specfem3d_globe commit: $(git -C "$SPECFEM3D_GLOBE_ROOT" rev-parse HEAD)"; echo "describe: $(git -C "$SPECFEM3D_GLOBE_ROOT" describe --always --dirty)"; echo "configure: $(grep -m1 '^\s*\$ ./configure' "$SPECFEM3D_GLOBE_ROOT/config.log" || true)"; echo "generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)"; echo "ranks: 1"; }} > ../reference_seismograms/provenance/VERSION.txt
+        """
+
+
+rule clean:
+    localrule: True
+    shell:
+        "rm -rf {example_dir}/OUTPUT_FILES/* {example_dir}/DATABASES_MPI/* {example_dir}/reference_run"

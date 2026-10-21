@@ -1,0 +1,4 @@
+OUTPUT_FILES/
+DATABASES_MPI/
+.snakemake/
+reference_run/
