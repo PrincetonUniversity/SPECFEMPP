@@ -98,11 +98,9 @@ std::vector<int> get_best_candidates(
         index_mapping);
 
 std::tuple<type_real, type_real, type_real> get_local_coordinates(
-    const specfem::point::global_coordinates<
-        specfem::element::dimension_tag::dim3> &global,
     const Kokkos::View<specfem::point::global_coordinates<
                            specfem::element::dimension_tag::dim3> *,
-                       Kokkos::HostSpace> &coorg,
+                       Kokkos::HostSpace> &coorg_shifted,
     type_real xi, type_real eta, type_real gamma);
 
 // Core locate_point logic that can be tested with raw data arrays
@@ -115,6 +113,7 @@ locate_point_core(
         &index_mapping,
     const Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
         &control_node_coordinates,
+    const Kokkos::View<type_real *, Kokkos::HostSpace> &gll_points,
     const int ngnod, const int ngllx);
 
 // Public API (previously in specfem::algorithms)

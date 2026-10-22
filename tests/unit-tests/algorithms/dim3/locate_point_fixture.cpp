@@ -11,7 +11,7 @@ TEST_F(LocatePoint3D, CoreUnitCube) {
 
   auto result = specfem::algorithms::locate_point_impl::locate_point_core(
       target, geom.global_coords, geom.index_mapping, geom.control_nodes,
-      geom.ngnod, geom.ngllx);
+      gll_points(geom.ngllx), geom.ngnod, geom.ngllx);
 
   // Should find element 0 with local coordinates near (0, 0, 0) for center
   // point
@@ -27,7 +27,7 @@ TEST_F(LocatePoint3D, CoreUnitCube) {
   target = { 0.0, 0.0, 0.0 };
   result = specfem::algorithms::locate_point_impl::locate_point_core(
       target, geom.global_coords, geom.index_mapping, geom.control_nodes,
-      geom.ngnod, geom.ngllx);
+      gll_points(geom.ngllx), geom.ngnod, geom.ngllx);
 
   EXPECT_EQ(result.ispec, 0);
   EXPECT_TRUE(is_close(result.xi, type_real{ -1.0 }))
@@ -41,7 +41,7 @@ TEST_F(LocatePoint3D, CoreUnitCube) {
   target = { 1.0, 1.0, 1.0 };
   result = specfem::algorithms::locate_point_impl::locate_point_core(
       target, geom.global_coords, geom.index_mapping, geom.control_nodes,
-      geom.ngnod, geom.ngllx);
+      gll_points(geom.ngllx), geom.ngnod, geom.ngllx);
 
   EXPECT_EQ(result.ispec, 0);
   EXPECT_TRUE(is_close(result.xi, type_real{ 1.0 }))
@@ -62,7 +62,7 @@ TEST_F(LocatePoint3D, LocatePoint3DCoreTwoAdjacentElements) {
 
   auto result = specfem::algorithms::locate_point_impl::locate_point_core(
       target, geom.global_coords, geom.index_mapping, geom.control_nodes,
-      geom.ngnod, geom.ngllx);
+      gll_points(geom.ngllx), geom.ngnod, geom.ngllx);
 
   EXPECT_EQ(result.ispec, 0);
   EXPECT_TRUE(is_close(result.xi, type_real{ 0.0 }))
@@ -76,7 +76,7 @@ TEST_F(LocatePoint3D, LocatePoint3DCoreTwoAdjacentElements) {
   target = { 0.75, 0.25, 0.25 };
   result = specfem::algorithms::locate_point_impl::locate_point_core(
       target, geom.global_coords, geom.index_mapping, geom.control_nodes,
-      geom.ngnod, geom.ngllx);
+      gll_points(geom.ngllx), geom.ngnod, geom.ngllx);
 
   EXPECT_EQ(result.ispec, 1);
   EXPECT_TRUE(is_close(result.xi, type_real{ 0.0 }))
@@ -90,7 +90,7 @@ TEST_F(LocatePoint3D, LocatePoint3DCoreTwoAdjacentElements) {
   target = { 0.5, 0.25, 0.25 };
   result = specfem::algorithms::locate_point_impl::locate_point_core(
       target, geom.global_coords, geom.index_mapping, geom.control_nodes,
-      geom.ngnod, geom.ngllx);
+      gll_points(geom.ngllx), geom.ngnod, geom.ngllx);
 
   EXPECT_TRUE(result.ispec == 0 ||
               result.ispec == 1); // Either element is valid
@@ -109,28 +109,28 @@ TEST_F(LocatePoint3D, Core2x2x2Grid) {
       target = { 0.5, 0.5, 0.5 };
   auto result = specfem::algorithms::locate_point_impl::locate_point_core(
       target, geom.global_coords, geom.index_mapping, geom.control_nodes,
-      geom.ngnod, geom.ngllx);
+      gll_points(geom.ngllx), geom.ngnod, geom.ngllx);
   EXPECT_EQ(result.ispec, 0);
 
   // Element 1: (1.5, 0.5, 0.5)
   target = { 1.5, 0.5, 0.5 };
   result = specfem::algorithms::locate_point_impl::locate_point_core(
       target, geom.global_coords, geom.index_mapping, geom.control_nodes,
-      geom.ngnod, geom.ngllx);
+      gll_points(geom.ngllx), geom.ngnod, geom.ngllx);
   EXPECT_EQ(result.ispec, 1);
 
   // Element 4: (0.5, 0.5, 1.5) - first element in upper layer
   target = { 0.5, 0.5, 1.5 };
   result = specfem::algorithms::locate_point_impl::locate_point_core(
       target, geom.global_coords, geom.index_mapping, geom.control_nodes,
-      geom.ngnod, geom.ngllx);
+      gll_points(geom.ngllx), geom.ngnod, geom.ngllx);
   EXPECT_EQ(result.ispec, 4);
 
   // Test shared corner point (1, 1, 1) - should find one of the elements
   target = { 1.0, 1.0, 1.0 };
   result = specfem::algorithms::locate_point_impl::locate_point_core(
       target, geom.global_coords, geom.index_mapping, geom.control_nodes,
-      geom.ngnod, geom.ngllx);
+      gll_points(geom.ngllx), geom.ngnod, geom.ngllx);
 
   EXPECT_TRUE(result.ispec >= 0 && result.ispec <= 7); // Should find one of the
                                                        // 8 elements
@@ -153,7 +153,7 @@ TEST_F(LocatePoint3D, CoreOutsideMesh) {
     try {
       specfem::algorithms::locate_point_impl::locate_point_core(
           target, geom.global_coords, geom.index_mapping, geom.control_nodes,
-          geom.ngnod, geom.ngllx);
+          gll_points(geom.ngllx), geom.ngnod, geom.ngllx);
     } catch (const std::runtime_error &) {
       captured = true;
     }
@@ -240,7 +240,7 @@ TEST_F(LocatePoint3D, GetLocalCoordinatesUnitCube) {
 
   auto [xi_final, eta_final, gamma_final] =
       specfem::algorithms::locate_point_impl::get_local_coordinates(
-          target, coorg, xi_initial, eta_initial, gamma_initial);
+          shift_anchors(coorg, target), xi_initial, eta_initial, gamma_initial);
 
   // For a unit cube, center point (0.5, 0.5, 0.5) should map to (0, 0, 0) in
   // reference coords
@@ -255,7 +255,7 @@ TEST_F(LocatePoint3D, GetLocalCoordinatesUnitCube) {
   target = { 0.0, 0.0, 0.0 };
   std::tie(xi_final, eta_final, gamma_final) =
       specfem::algorithms::locate_point_impl::get_local_coordinates(
-          target, coorg, 0.0, 0.0, 0.0);
+          shift_anchors(coorg, target), 0.0, 0.0, 0.0);
 
   EXPECT_TRUE(is_close(xi_final, type_real{ -1.0 }))
       << expected_got(-1.0, xi_final);
@@ -268,7 +268,7 @@ TEST_F(LocatePoint3D, GetLocalCoordinatesUnitCube) {
   target = { 1.0, 1.0, 1.0 };
   std::tie(xi_final, eta_final, gamma_final) =
       specfem::algorithms::locate_point_impl::get_local_coordinates(
-          target, coorg, 0.0, 0.0, 0.0);
+          shift_anchors(coorg, target), 0.0, 0.0, 0.0);
 
   EXPECT_TRUE(is_close(xi_final, type_real{ 1.0 }))
       << expected_got(1.0, xi_final);
@@ -290,7 +290,7 @@ TEST_F(LocatePoint3D, Core3x3x3UnitCube) {
 
   auto result = specfem::algorithms::locate_point_impl::locate_point_core(
       target, geom.global_coords, geom.index_mapping, geom.control_nodes,
-      geom.ngnod, geom.ngllx);
+      gll_points(geom.ngllx), geom.ngnod, geom.ngllx);
 
   // Should find element 0 with local coordinates near (0, 0, 0) for center
   // point
@@ -306,7 +306,7 @@ TEST_F(LocatePoint3D, Core3x3x3UnitCube) {
   target = { 0.0, 0.0, 0.0 };
   result = specfem::algorithms::locate_point_impl::locate_point_core(
       target, geom.global_coords, geom.index_mapping, geom.control_nodes,
-      geom.ngnod, geom.ngllx);
+      gll_points(geom.ngllx), geom.ngnod, geom.ngllx);
 
   EXPECT_EQ(result.ispec, 0);
   EXPECT_TRUE(is_close(result.xi, type_real{ -1.0 }))
@@ -328,7 +328,7 @@ TEST_F(LocatePoint3D, Core27NodeElement) {
 
   auto result = specfem::algorithms::locate_point_impl::locate_point_core(
       target, geom.global_coords, geom.index_mapping, geom.control_nodes,
-      geom.ngnod, geom.ngllx);
+      gll_points(geom.ngllx), geom.ngnod, geom.ngllx);
 
   // Should find element 0 with local coordinates near (0, 0, 0) for center
   // point
@@ -353,7 +353,7 @@ TEST_F(LocatePoint3D, Core3x3x3With27Node) {
 
   auto result = specfem::algorithms::locate_point_impl::locate_point_core(
       target, geom.global_coords, geom.index_mapping, geom.control_nodes,
-      geom.ngnod, geom.ngllx);
+      gll_points(geom.ngllx), geom.ngnod, geom.ngllx);
 
   // Should find element 0 with local coordinates near (0, 0, 0) for center
   // point
@@ -369,7 +369,7 @@ TEST_F(LocatePoint3D, Core3x3x3With27Node) {
   target = { 0.25, 0.25, 0.25 };
   result = specfem::algorithms::locate_point_impl::locate_point_core(
       target, geom.global_coords, geom.index_mapping, geom.control_nodes,
-      geom.ngnod, geom.ngllx);
+      gll_points(geom.ngllx), geom.ngnod, geom.ngllx);
 
   EXPECT_EQ(result.ispec, 0);
   EXPECT_TRUE(is_close(result.xi, type_real{ -0.5 }))
@@ -378,6 +378,90 @@ TEST_F(LocatePoint3D, Core3x3x3With27Node) {
       << expected_got(-0.5, result.eta);
   EXPECT_TRUE(is_close(result.gamma, type_real{ -0.5 }))
       << expected_got(-0.5, result.gamma);
+}
+
+TEST_F(LocatePoint3D, EarthScaleOffsetRoundTrip) {
+  constexpr double element_size = 1.0e4;
+  constexpr double offset = 5.0e6;
+  constexpr int grid = 3;
+
+  std::vector<std::vector<std::tuple<double, double, double>>> element_coords;
+  std::vector<std::vector<std::tuple<double, double, double>>> control_coords;
+  for (int ez = 0; ez < grid; ez++) {
+    for (int ey = 0; ey < grid; ey++) {
+      for (int ex = 0; ex < grid; ex++) {
+        const double x0 = offset + ex * element_size;
+        const double y0 = offset + ey * element_size;
+        const double z0 = offset + ez * element_size;
+        element_coords.push_back(create_unit_cube(3, x0, x0 + element_size, y0,
+                                                  y0 + element_size, z0,
+                                                  z0 + element_size)[0]);
+        control_coords.push_back(create_control_nodes(8, x0, x0 + element_size,
+                                                      y0, y0 + element_size, z0,
+                                                      z0 + element_size)[0]);
+      }
+    }
+  }
+  auto geom = create_element_geometry(element_coords, control_coords);
+
+  struct Case {
+    int ex, ey, ez;
+    double xi, eta, gamma;
+  };
+  const std::vector<Case> cases = { { 0, 0, 0, 0.3, -0.2, 0.6 },
+                                    { 1, 1, 1, -0.4, 0.5, -0.7 },
+                                    { 2, 0, 1, 0.3, -0.2, 0.6 },
+                                    { 1, 2, 2, 0.1, 0.8, -0.3 },
+                                    { 0, 2, 0, -0.6, 0.3, 0.2 } };
+
+  const auto points = gll_points(geom.ngllx);
+  for (const auto &test_case : cases) {
+    const int expected_ispec =
+        test_case.ex + grid * test_case.ey + grid * grid * test_case.ez;
+    SCOPED_TRACE("ispec " + std::to_string(expected_ispec));
+    const double lower_x = offset + test_case.ex * element_size;
+    const double lower_y = offset + test_case.ey * element_size;
+    const double lower_z = offset + test_case.ez * element_size;
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim3>
+        target = { static_cast<type_real>(lower_x + 0.5 * (test_case.xi + 1.0) *
+                                                        element_size),
+                   static_cast<type_real>(
+                       lower_y + 0.5 * (test_case.eta + 1.0) * element_size),
+                   static_cast<type_real>(lower_z +
+                                          0.5 * (test_case.gamma + 1.0) *
+                                              element_size) };
+
+    const auto result =
+        specfem::algorithms::locate_point_impl::locate_point_core(
+            target, geom.global_coords, geom.index_mapping, geom.control_nodes,
+            points, geom.ngnod, geom.ngllx);
+
+    EXPECT_EQ(result.ispec, expected_ispec);
+
+    Kokkos::View<specfem::point::global_coordinates<
+                     specfem::element::dimension_tag::dim3> *,
+                 Kokkos::HostSpace>
+        anchors("anchors", geom.ngnod);
+    for (int inode = 0; inode < geom.ngnod; inode++) {
+      anchors(inode) = { geom.control_nodes(result.ispec, inode, 0),
+                         geom.control_nodes(result.ispec, inode, 1),
+                         geom.control_nodes(result.ispec, inode, 2) };
+    }
+    // Back-project in the target-shifted frame to avoid the float floor of
+    // absolute coordinates at the offset.
+    const auto back_projected = specfem::jacobian::compute_locations(
+        shift_anchors(anchors, target), geom.ngnod, result.xi, result.eta,
+        result.gamma);
+    const type_real distance = std::sqrt(back_projected.x * back_projected.x +
+                                         back_projected.y * back_projected.y +
+                                         back_projected.z * back_projected.z);
+
+    EXPECT_LT(distance, 5e-3);
+    EXPECT_NEAR(result.xi, test_case.xi, 1e-4);
+    EXPECT_NEAR(result.eta, test_case.eta, 1e-4);
+    EXPECT_NEAR(result.gamma, test_case.gamma, 1e-4);
+  }
 }
 
 int main(int argc, char *argv[]) {
