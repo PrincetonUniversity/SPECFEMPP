@@ -1,5 +1,5 @@
 Spherical coordinates for globe setup
-====================================
+=====================================
 
 Spherical coordinates are stored directly in the 3D ``points`` struct as
 ``CoordViewType::host_mirror_type h_spherical_coord``, using ``type_real`` like
