@@ -464,6 +464,38 @@ TEST_F(LocatePoint3D, EarthScaleOffsetRoundTrip) {
   }
 }
 
+TEST_F(LocatePoint3D, SharedFacePrefersInsideElement) {
+  auto geom = create_two_adjacent_elements_3d_2x2x2();
+  const auto points = gll_points(geom.ngllx);
+  using Coordinates =
+      specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>;
+
+  const auto locate = [&](const Coordinates &target) {
+    return specfem::algorithms::locate_point_impl::locate_point_core(
+        target, geom.global_coords, geom.index_mapping, geom.control_nodes,
+        points, geom.ngnod, geom.ngllx);
+  };
+  const auto all_inside = [](const auto &result) {
+    return std::abs(result.xi) <= 1 && std::abs(result.eta) <= 1 &&
+           std::abs(result.gamma) <= 1;
+  };
+
+  const auto left = locate({ 0.5f - 1e-3f, 0.25f, 0.25f });
+  EXPECT_EQ(left.ispec, 0);
+  EXPECT_TRUE(all_inside(left));
+
+  const auto right = locate({ 0.5f + 1e-3f, 0.25f, 0.25f });
+  EXPECT_EQ(right.ispec, 1);
+  EXPECT_TRUE(all_inside(right));
+
+  const Coordinates on_face = { 0.5f, 0.25f, 0.25f };
+  const auto first = locate(on_face);
+  const auto second = locate(on_face);
+  EXPECT_TRUE(all_inside(first));
+  EXPECT_EQ(first.ispec, second.ispec);
+  EXPECT_EQ(first.ispec, 0);
+}
+
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
   ::testing::AddGlobalTestEnvironment(new SPECFEMEnvironment);

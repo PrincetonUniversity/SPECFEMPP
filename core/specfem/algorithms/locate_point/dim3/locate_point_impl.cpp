@@ -1,4 +1,5 @@
 #include "specfem/algorithms/locate_point/locate_point_impl.hpp"
+#include "specfem/algorithms/inside_outside.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/jacobian.hpp"
 #include "specfem/point.hpp"
@@ -211,6 +212,7 @@ locate_point_core(
   const auto best_candidates = get_best_candidates(ispec_guess, index_mapping);
 
   type_real final_dist = std::numeric_limits<type_real>::max();
+  bool best_inside = false;
 
   int ispec_selected_point = -1;
   type_real xi_selected = -9999.0;
@@ -281,13 +283,32 @@ locate_point_core(
                                      loc_shifted.y * loc_shifted.y +
                                      loc_shifted.z * loc_shifted.z);
 
-    if (dist < final_dist) {
+    const type_real diagonal =
+        specfem::point::distance(coorg_shifted(0), coorg_shifted(6));
+    const type_real equal_tolerance = 1e-5 * diagonal;
+    const type_real close_tolerance = 1e-3 * diagonal;
+    const bool new_inside =
+        specfem::algorithms::inside(specfem::point::local_coordinates<
+                                    specfem::element::dimension_tag::dim3>(
+            ispec, xi_guess, eta_guess, gamma_guess));
+
+    bool better =
+        ispec_selected_point < 0 || dist < final_dist - equal_tolerance;
+    if (ispec_selected_point >= 0) {
+      if (new_inside && !best_inside && dist < close_tolerance)
+        better = true;
+      if (!new_inside && best_inside && dist > final_dist - equal_tolerance)
+        better = false;
+    }
+
+    if (better) {
       ispec_selected_point = ispec;
       xi_selected = xi_guess;
       eta_selected = eta_guess;
       gamma_selected = gamma_guess;
       coord_point = cart_coord;
       final_dist = dist;
+      best_inside = new_inside;
     }
   }
 
