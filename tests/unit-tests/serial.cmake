@@ -271,6 +271,7 @@ specfem_add_test(mesh_dim3_tests
             mesh/dim3/adjacency_graph.cpp
             mesh/dim3/tags.cpp
             mesh/dim3/globe_reader.cpp
+            mesh/dim3/globe_checks.cpp
             mesh/dim3/model_aniso.cpp
             mesh/dim3/test.cpp
   LIBRARIES gtest_main
@@ -348,6 +349,7 @@ specfem_add_test(assembly_tests
             assembly/dim3/jacobian_matrix/jacobian_matrix.cpp
             assembly/dim3/properties/properties.cpp
             assembly/dim3/element_types/element_context.cpp
+            assembly/dim3/element_intersections/globe_fluid_solid.cpp
   LIBRARIES specfem::mesh
             specfem::assembly
             specfem::quadrature
@@ -625,6 +627,8 @@ specfem_add_test(medium_attenuation_tests
 specfem_add_test(compute_coupling_tests
   SOURCES   compute_coupling/acoustic_elastic.cpp
             compute_coupling/elastic_acoustic.cpp
+            compute_coupling/dim3/acoustic_elastic.cpp
+            compute_coupling/dim3/elastic_acoustic.cpp
             compute_coupling/nonconforming/acoustic_elastic.cpp
             compute_coupling/nonconforming/elastic_acoustic.cpp
             compute_coupling/runner.cpp

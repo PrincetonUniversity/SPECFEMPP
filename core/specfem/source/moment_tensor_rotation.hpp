@@ -40,18 +40,26 @@ struct GeographicMomentTensor {
  * \f[
  * \mathbf{M}_{(xyz)} = \begin{pmatrix}
  *   M_{xx} & M_{xy} & M_{xz} \\
- *   M_{xy} & M_{yy} & M_{yz} \\
- *   M_{xz} & M_{yz} & M_{zz}
+ *   M_{yx} & M_{yy} & M_{yz} \\
+ *   M_{zx} & M_{zy} & M_{zz}
  * \end{pmatrix}
  * \f]
+ *
+ * The lower-triangle components default to their transposes, so initializing
+ * only the first six yields a symmetric (seismic) tensor. An asymmetric tensor
+ * sets them explicitly; its antisymmetric part drives the micro-rotation field
+ * in Cosserat media.
  */
 struct CartesianMomentTensor {
-  type_real Mxx; ///< x-x
-  type_real Myy; ///< y-y
-  type_real Mzz; ///< z-z
-  type_real Mxy; ///< x-y
-  type_real Mxz; ///< x-z
-  type_real Myz; ///< y-z
+  type_real Mxx;       ///< x-x
+  type_real Myy;       ///< y-y
+  type_real Mzz;       ///< z-z
+  type_real Mxy;       ///< x-y
+  type_real Mxz;       ///< x-z
+  type_real Myz;       ///< y-z
+  type_real Myx = Mxy; ///< y-x (defaults to Mxy: symmetric tensor)
+  type_real Mzx = Mxz; ///< z-x (defaults to Mxz: symmetric tensor)
+  type_real Mzy = Myz; ///< z-y (defaults to Myz: symmetric tensor)
 };
 
 /**
