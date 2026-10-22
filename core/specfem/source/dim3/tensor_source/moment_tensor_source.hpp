@@ -20,9 +20,11 @@ namespace sources {
  * @brief Moment-tensor source
  *
  * This class implements a moment tensor source in 3D, which represents
- * seismic sources like earthquakes through a symmetric 3x3 stress tensor.
- * The six independent components (Mxx, Myy, Mzz, Mxy, Mxz, Myz) fully
- * characterize the source mechanism.
+ * seismic sources like earthquakes through a 3x3 moment tensor. A seismic
+ * tensor is symmetric and fully characterized by its six independent
+ * components (Mxx, Myy, Mzz, Mxy, Mxz, Myz); the optional lower-triangle
+ * components (Myx, Mzx, Mzy) describe an asymmetric tensor whose antisymmetric
+ * part drives the micro-rotation field in Cosserat (`elastic_spin`) media.
  *
  * The tensor is held in a @ref specfem::sources::LocalFrameQuantity: it may be
  * supplied directly in the global Cartesian frame, or in the geographic
@@ -145,6 +147,35 @@ public:
   const MomentTensorQuantity &moment() const { return moment_; }
 
   /**
+   * @brief Get the Myx component of the (resolved) Cartesian moment tensor
+   *
+   * For a symmetric (seismic) moment tensor this equals Mxy. An asymmetric
+   * tensor drives the micro-rotation field in 3D Cosserat media via the body
+   * couple.
+   *
+   * @return type_real Myx moment tensor component
+   */
+  type_real get_Myx() const { return moment_.cartesian().Myx; }
+
+  /**
+   * @brief Get the Mzx component of the (resolved) Cartesian moment tensor
+   *
+   * For a symmetric (seismic) moment tensor this equals Mxz.
+   *
+   * @return type_real Mzx moment tensor component
+   */
+  type_real get_Mzx() const { return moment_.cartesian().Mzx; }
+
+  /**
+   * @brief Get the Mzy component of the (resolved) Cartesian moment tensor
+   *
+   * For a symmetric (seismic) moment tensor this equals Myz.
+   *
+   * @return type_real Mzy moment tensor component
+   */
+  type_real get_Mzy() const { return moment_.cartesian().Mzy; }
+
+  /**
    * @brief Construct a new moment tensor force object
    *
    * @param moment_tensor a moment_tensor data holder read from source file
@@ -152,11 +183,8 @@ public:
    */
   moment_tensor(YAML::Node &Node, const int nsteps, const type_real dt,
                 const specfem::simulation::field_type wavefield_type)
-      : moment_(specfem::sources::CartesianMomentTensor{
-            Node["Mxx"].as<type_real>(), Node["Myy"].as<type_real>(),
-            Node["Mzz"].as<type_real>(), Node["Mxy"].as<type_real>(),
-            Node["Mxz"].as<type_real>(), Node["Myz"].as<type_real>() }),
-        wavefield_type(wavefield_type), tensor_source(Node, nsteps, dt) {};
+      : moment_(read_cartesian_tensor(Node)), wavefield_type(wavefield_type),
+        tensor_source(Node, nsteps, dt) {};
 
   /**
    * @brief Costruct new moment tensor source using forcing function
@@ -184,6 +212,35 @@ public:
         tensor_source(x, y, z, std::move(source_time_function)) {};
 
   /**
+   * @brief Construct a new (possibly asymmetric) moment tensor source
+   *
+   * @param x x-coordinate of source
+   * @param y y-coordinate of source
+   * @param z z-coordinate of source
+   * @param Mxx Mxx component of moment tensor
+   * @param Myy Myy component of moment tensor
+   * @param Mzz Mzz component of moment tensor
+   * @param Mxy Mxy component of moment tensor
+   * @param Mxz Mxz component of moment tensor
+   * @param Myz Myz component of moment tensor
+   * @param Myx Myx component (equals Mxy for a symmetric tensor)
+   * @param Mzx Mzx component (equals Mxz for a symmetric tensor)
+   * @param Mzy Mzy component (equals Myz for a symmetric tensor)
+   * @param source_time_function pointer to source time function
+   * @param wavefield_type type of wavefield
+   */
+  moment_tensor(
+      type_real x, type_real y, type_real z, type_real Mxx, type_real Myy,
+      type_real Mzz, type_real Mxy, type_real Mxz, type_real Myz, type_real Myx,
+      type_real Mzx, type_real Mzy,
+      std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
+      const specfem::simulation::field_type wavefield_type)
+      : moment_(specfem::sources::CartesianMomentTensor{
+            Mxx, Myy, Mzz, Mxy, Mxz, Myz, Myx, Mzx, Mzy }),
+        wavefield_type(wavefield_type),
+        tensor_source(x, y, z, std::move(source_time_function)) {};
+
+  /**
    * @brief Construct a new moment tensor source from generic coordinates
    *
    * @param coordinates Generic coordinate object
@@ -206,6 +263,37 @@ public:
       const specfem::simulation::field_type wavefield_type)
       : moment_(specfem::sources::CartesianMomentTensor{ Mxx, Myy, Mzz, Mxy,
                                                          Mxz, Myz }),
+        wavefield_type(wavefield_type),
+        tensor_source(std::move(coordinates), std::move(source_time_function)) {
+        };
+
+  /**
+   * @brief Construct a new (possibly asymmetric) moment tensor source from
+   * generic coordinates
+   *
+   * @param coordinates Generic coordinate object
+   * @param Mxx Mxx component of moment tensor
+   * @param Myy Myy component of moment tensor
+   * @param Mzz Mzz component of moment tensor
+   * @param Mxy Mxy component of moment tensor
+   * @param Mxz Mxz component of moment tensor
+   * @param Myz Myz component of moment tensor
+   * @param Myx Myx component (equals Mxy for a symmetric tensor)
+   * @param Mzx Mzx component (equals Mxz for a symmetric tensor)
+   * @param Mzy Mzy component (equals Myz for a symmetric tensor)
+   * @param source_time_function pointer to source time function
+   * @param wavefield_type type of wavefield
+   */
+  moment_tensor(
+      std::unique_ptr<specfem::coordinate_systems::coordinates<
+          specfem::element::dimension_tag::dim3>>
+          coordinates,
+      type_real Mxx, type_real Myy, type_real Mzz, type_real Mxy, type_real Mxz,
+      type_real Myz, type_real Myx, type_real Mzx, type_real Mzy,
+      std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
+      const specfem::simulation::field_type wavefield_type)
+      : moment_(specfem::sources::CartesianMomentTensor{
+            Mxx, Myy, Mzz, Mxy, Mxz, Myz, Myx, Mzx, Mzy }),
         wavefield_type(wavefield_type),
         tensor_source(std::move(coordinates), std::move(source_time_function)) {
         };
@@ -282,6 +370,32 @@ public:
   get_source_tensor() const override;
 
   /**
+   * @brief Get the body-couple vector for the monopole source term
+   *
+   * The antisymmetric part of the moment tensor contracts (via the 3D
+   * Levi-Civita symbol) to the axial vector
+   * \f$ [M_{yz} - M_{zy}, M_{zx} - M_{xz}, M_{xy} - M_{yx}] \f$, which drives
+   * the micro-rotation degrees of freedom in Cosserat media. For `elastic_spin`
+   * this returns the 6-component vector
+   * \f$ [0, 0, 0, M_{yz} - M_{zy}, M_{zx} - M_{xz}, M_{xy} - M_{yx}] \f$; a
+   * symmetric tensor therefore produces no rotational coupling. For all other
+   * media (which have no rotational degree of freedom) an empty view is
+   * returned.
+   *
+   * @return Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+   * Body-couple vector for `elastic_spin`, otherwise an empty view
+   */
+  Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+  get_body_couple_vector() const override;
+
+  /**
+   * @brief Whether this source contributes a monopole (body-couple) term
+   *
+   * @return true for `elastic_spin` media, false otherwise
+   */
+  bool has_monopole_contribution() const override;
+
+  /**
    * @brief Get the list of supported media for this source type
    *
    * @return std::vector<specfem::element::medium_tag> list of supported media
@@ -290,6 +404,18 @@ public:
   get_supported_media() const override;
 
 private:
+  /**
+   * @brief Read a Cartesian moment tensor from a YAML source node.
+   *
+   * The lower-triangle components (Myx, Mzx, Mzy) are optional; when absent
+   * they default to their transposes, giving a symmetric tensor.
+   *
+   * @param Node YAML node holding the moment tensor components
+   * @return The moment tensor in the global Cartesian basis
+   */
+  static specfem::sources::CartesianMomentTensor
+  read_cartesian_tensor(const YAML::Node &Node);
+
   MomentTensorQuantity moment_; ///< As-read tensor + resolved Cartesian tensor
   specfem::simulation::field_type wavefield_type; ///< Type of wavefield on
                                                   ///< which the source

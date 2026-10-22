@@ -42,7 +42,6 @@ void expect_orthonormal_right_handed(
   EXPECT_NEAR(determinant(basis), 1.0, tolerance);
 }
 
-constexpr double pi = std::numbers::pi;
 constexpr double planet_radius = 6371000.0;
 
 } // namespace spherical_basis_test_impl
@@ -50,8 +49,9 @@ constexpr double planet_radius = 6371000.0;
 TEST(GeographicBasisTest, OrthonormalAndRightHanded) {
   for (int latitude = -80; latitude <= 80; latitude += 20) {
     for (int longitude = 0; longitude < 360; longitude += 45) {
-      const double theta = pi / 2.0 - latitude * pi / 180.0;
-      const double phi = longitude * pi / 180.0;
+      const double theta =
+          std::numbers::pi / 2.0 - latitude * std::numbers::pi / 180.0;
+      const double phi = longitude * std::numbers::pi / 180.0;
       const auto basis =
           specfem::coordinate_systems::local_geographic_basis(theta, phi);
       spherical_basis_test_impl::expect_orthonormal_right_handed(basis, 1e-12);
@@ -60,8 +60,8 @@ TEST(GeographicBasisTest, OrthonormalAndRightHanded) {
 }
 
 TEST(GeographicBasisTest, EquatorLongitudeZeroAxes) {
-  const auto basis =
-      specfem::coordinate_systems::local_geographic_basis(pi / 2.0, 0.0);
+  const auto basis = specfem::coordinate_systems::local_geographic_basis(
+      std::numbers::pi / 2.0, 0.0);
   spherical_basis_test_impl::expect_vec_near(basis.east, { 0.0, 1.0, 0.0 },
                                              1e-12);
   spherical_basis_test_impl::expect_vec_near(basis.north, { 0.0, 0.0, 1.0 },
@@ -124,7 +124,7 @@ TEST(GeographicBasisTest, PoleThroughCartesianInverseIsFinite) {
 TEST(GeographicBasisTest, RoundTrip) {
   const spherical_basis_test_impl::Vec3 vector = { 0.3, -1.2, 2.5 };
   const double angles[][2] = {
-    { 0.4, 0.7 }, { pi / 2.0, 0.0 }, { 2.1, 4.5 }, { 2.9, 6.0 }
+    { 0.4, 0.7 }, { std::numbers::pi / 2.0, 0.0 }, { 2.1, 4.5 }, { 2.9, 6.0 }
   };
   for (const auto &angle : angles) {
     const auto basis =
