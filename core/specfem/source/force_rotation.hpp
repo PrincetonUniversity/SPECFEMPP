@@ -32,10 +32,8 @@ struct CartesianForce {
 /**
  * @brief Rotate a force from the local East-North-Up frame to global Cartesian.
  *
- * Applies the rank-1 rotation
- * @f$ \mathbf{f} = f_E\,\mathbf{e}_\phi + f_N\,(-\mathbf{e}_\theta)
- * + f_U\,\mathbf{e}_r @f$, with the local basis from
- * @ref specfem::coordinate_systems::local_spherical_basis at @p theta, @p phi.
+ * Applies the rank-1 rotation whose columns are the basis vectors of
+ * @ref specfem::coordinate_systems::local_geographic_basis at @p theta, @p phi.
  *
  * @param theta Geocentric colatitude in radians (0 at the North Pole).
  * @param phi Longitude in radians.

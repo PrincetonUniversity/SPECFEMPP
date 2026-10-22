@@ -13,3 +13,13 @@ specfem::coordinate_systems::local_spherical_basis(double theta, double phi) {
            { cos_theta * cos_phi, cos_theta * sin_phi, -sin_theta },
            { -sin_phi, cos_phi, 0.0 } };
 }
+
+specfem::coordinate_systems::GeographicBasis
+specfem::coordinate_systems::local_geographic_basis(double theta, double phi) {
+  const auto basis =
+      specfem::coordinate_systems::local_spherical_basis(theta, phi);
+
+  return { basis.e_phi,
+           { -basis.e_theta[0], -basis.e_theta[1], -basis.e_theta[2] },
+           basis.e_r };
+}

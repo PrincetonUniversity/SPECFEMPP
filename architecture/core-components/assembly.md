@@ -28,6 +28,14 @@ mesh + quadrature + sources + receivers
 
 All heavy arrays (`Kokkos::View`) are managed here. The assembly struct is passed by value into the solver — Kokkos views are reference-counted, so this is cheap.
 
+## Coordinate Frames
+
+**Files:** `core/specfem/coordinate_systems/`, `core/specfem/assembly/coordinate_conversion.hpp`
+
+`coordinate_systems` is pure math: `GeographicBasis` (East = +e_phi, North = -e_theta, Up = +e_r) comes from `local_geographic_basis(theta, phi)`. `assembly::coordinate_conversion` dispatches on the mesh projection through `to_cartesian` and `local_geographic_basis(point, mesh)`, and sources and receivers consume it. Each 3-D receiver stores a 3x3 matrix (rows East, North, Up, in mesh components), applied in the seismogram kernel on the owning rank for vector seismograms only.
+
+---
+
 ## MPI Interfaces
 
 **Files:** `core/specfem/assembly/mpi/dim3/`

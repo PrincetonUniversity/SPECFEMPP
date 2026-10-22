@@ -6,6 +6,7 @@
 #include "specfem/coordinate_systems/geocentric.hpp"
 #include "specfem/coordinate_systems/geocentric_projection.hpp"
 #include "specfem/coordinate_systems/geographic.hpp"
+#include "specfem/coordinate_systems/spherical_basis.hpp"
 #include "specfem/coordinate_systems/to.hpp"
 #include "specfem/coordinate_systems/utm_projection.hpp"
 #include "specfem/setup.hpp"
@@ -183,4 +184,24 @@ specfem::assembly::to_geocentric(
         specfem::coordinate_systems::geocentric_coordinates>(*point);
   throw std::runtime_error(
       "specfem::assembly::to_geocentric: expected a Cartesian input");
+}
+
+specfem::coordinate_systems::GeographicBasis
+specfem::assembly::local_geographic_basis(
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim3> &point,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
+        &mesh) {
+
+  if (std::holds_alternative<specfem::assembly::mesh_impl::globe_projection>(
+          mesh.projection.value)) {
+    const specfem::coordinate_systems::cartesian_coordinates<
+        specfem::element::dimension_tag::dim3>
+        cartesian(point.x, point.y, point.z);
+    const auto geocentric = specfem::assembly::to_geocentric(cartesian, mesh);
+    return specfem::coordinate_systems::local_geographic_basis(geocentric.theta,
+                                                               geocentric.phi);
+  }
+
+  return { { 1.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 }, { 0.0, 0.0, 1.0 } };
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "enums/coordinate_frame.hpp"
 #include "enums/display.hpp"
 #include "enums/source_format.hpp"
 #include "enums/wavefield.hpp"

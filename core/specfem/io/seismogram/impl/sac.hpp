@@ -32,7 +32,8 @@ static constexpr float UNDEF_F = -12345.0f;
 static constexpr int32_t UNDEF_I = -12345;
 
 // ---------------------------------------------------------------------------
-// Component orientation: (CMPAZ [deg], CMPINC [deg]) for X/Y/Z indices.
+// Component orientation: (CMPAZ [deg], CMPINC [deg]) for component indices
+// (X/E = East, Y/N = North, Z = Up).
 // Convention: CMPAZ = azimuth from North clockwise; CMPINC = 0 → vertical up,
 // 90 → horizontal.  Matches the Fortran write_output_SAC.f90 convention.
 // ---------------------------------------------------------------------------
@@ -41,8 +42,8 @@ struct Orientation {
 };
 
 constexpr std::array<Orientation, 3> kComponentOrientations = { {
-    { 90.0f, 90.0f }, // X – East,  horizontal
-    { 0.0f, 90.0f },  // Y – North, horizontal
+    { 90.0f, 90.0f }, // X/E – East,  horizontal
+    { 0.0f, 90.0f },  // Y/N – North, horizontal
     { 0.0f, 0.0f },   // Z – Up,    vertical
 } };
 
@@ -95,8 +96,10 @@ inline Orientation orientation_for_channel(const std::string &channel_code) {
     return kOrientationUndef;
   switch (channel_code.back()) {
   case 'X':
+  case 'E':
     return kComponentOrientations[0];
   case 'Y':
+  case 'N':
     return kComponentOrientations[1];
   case 'Z':
     return kComponentOrientations[2];

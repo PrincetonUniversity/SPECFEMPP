@@ -7,15 +7,14 @@ specfem::sources::rotate_force_geographic_to_cartesian(
     double theta, double phi, const specfem::sources::GeographicForce &f) {
 
   const auto basis =
-      specfem::coordinate_systems::local_spherical_basis(theta, phi);
+      specfem::coordinate_systems::local_geographic_basis(theta, phi);
 
-  // East = e_phi, North = -e_theta, Up = e_r.
-  const double fx = f.east * basis.e_phi[0] - f.north * basis.e_theta[0] +
-                    f.up * basis.e_r[0];
-  const double fy = f.east * basis.e_phi[1] - f.north * basis.e_theta[1] +
-                    f.up * basis.e_r[1];
-  const double fz = f.east * basis.e_phi[2] - f.north * basis.e_theta[2] +
-                    f.up * basis.e_r[2];
+  const double fx =
+      f.east * basis.east[0] + f.north * basis.north[0] + f.up * basis.up[0];
+  const double fy =
+      f.east * basis.east[1] + f.north * basis.north[1] + f.up * basis.up[1];
+  const double fz =
+      f.east * basis.east[2] + f.north * basis.north[2] + f.up * basis.up[2];
 
   return { static_cast<type_real>(fx), static_cast<type_real>(fy),
            static_cast<type_real>(fz) };
