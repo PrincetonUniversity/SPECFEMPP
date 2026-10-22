@@ -107,7 +107,7 @@ TEST(GlobeReceiverRotation, KonoIsPlacedAndRotated) {
     SCOPED_TRACE("placement");
     EXPECT_EQ(receiver->get_partition_index(), 0);
     EXPECT_GE(receiver->get_location_error(), 0.0);
-    EXPECT_LT(receiver->get_location_error(), 1.0);
+    EXPECT_LT(receiver->get_location_error(), 0.05);
 
     const auto lcoord = specfem::algorithms::locate_point_impl::locate_point(
         receiver->get_global_coordinates(), assembly_mesh);

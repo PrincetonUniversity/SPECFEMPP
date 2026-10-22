@@ -124,6 +124,23 @@ locate_point(
         specfem::element::dimension_tag::dim2> &coordinates,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh);
 
+/**
+ * @brief Distance from target to the back-projected local coordinates,
+ * evaluated with anchors shifted by the target so single precision resolves it
+ * to a fraction of the element size.
+ *
+ * @param target Global coordinates of the located point
+ * @param lcoord Located local coordinates
+ * @param mesh Mesh the point was located in
+ * @return Back-projection distance
+ */
+type_real back_projection_distance(
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim2> &target,
+    const specfem::point::local_coordinates<
+        specfem::element::dimension_tag::dim2> &lcoord,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh);
+
 specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
 locate_point(
     const specfem::point::local_coordinates<
@@ -142,6 +159,23 @@ specfem::point::local_coordinates<specfem::element::dimension_tag::dim3>
 locate_point(
     const specfem::point::global_coordinates<
         specfem::element::dimension_tag::dim3> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh);
+
+/**
+ * @brief Distance from target to the back-projected local coordinates,
+ * evaluated with anchors shifted by the target so single precision resolves it
+ * to a fraction of the element size.
+ *
+ * @param target Global coordinates of the located point
+ * @param lcoord Located local coordinates
+ * @param mesh Mesh the point was located in
+ * @return Back-projection distance
+ */
+type_real back_projection_distance(
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim3> &target,
+    const specfem::point::local_coordinates<
+        specfem::element::dimension_tag::dim3> &lcoord,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh);
 
 specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
