@@ -97,13 +97,18 @@ TEST(ImplicitSolverScope3D, RejectsMixedMediumMesh) {
 
 // One test covers construction and the operator identity: ctest runs every
 // test case in its own process, and the solver construction (stiffness
-// probe + preconditioner setup, ~25 s serial) dominates -- splitting the
+// assembly + preconditioner setup) dominates -- splitting the
 // assertions would pay it once per case.
 //
 // A x must equal M/(beta dt^2) x + gamma/(beta dt) C x + K x entry by entry
 // -- validates the value plumbing of form_operator (K copy, scaled C sum,
 // mass diagonal) through independent applies of the constituent operators.
 TEST(ImplicitSolver3D, ConstructsAndOperatorMatchesOnStaceyMesh) {
+#ifndef SPECFEM_ENABLE_TENSOROPS
+  GTEST_SKIP() << "SPECFEM++ was built without TensorOperations "
+                  "(SPECFEM_ENABLE_TENSOROPS=OFF); the implicit solver needs "
+                  "the element stiffness kernel.";
+#endif
   auto test_case = build_case_3d("HomogeneousHalfSpaceStacey");
   SolverType solver(test_case.time_scheme, {}, *test_case.assembly);
 

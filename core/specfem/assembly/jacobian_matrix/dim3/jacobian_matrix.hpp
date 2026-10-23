@@ -4,32 +4,18 @@
 #include "specfem/enums.hpp"
 #include "specfem/mesh.hpp"
 #include <Kokkos_Core.hpp>
-#include <vector>
+#include <optional>
+#include <tuple>
 
 namespace specfem::assembly {
 
 /** @brief Numerical condition record for one invalid 3-D element mapping. */
-struct small_jacobian_diagnostic {
-  int element_index = -1; ///< Compute-domain element index.
-  int ix = -1;            ///< GLL x index of the minimum determinant.
-  int iy = -1;            ///< GLL y index of the minimum determinant.
-  int iz = -1;            ///< GLL z index of the minimum determinant.
-  type_real jacobian = 0; ///< Minimum determinant in the element.
-  type_real scale = 0;    ///< Mean absolute determinant in the element.
-
-  /** @brief Minimum determinant normalized by the element-local scale. */
-  type_real relative_jacobian() const {
-    return scale > 0 ? jacobian / scale : 0;
-  }
-};
-
-/** @brief Result of checking every 3-D element mapping. */
-struct small_jacobian_result {
-  bool found = false; ///< Whether any invalid element was found.
-  Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace>
-      elements; ///< Element mask retained for visualization.
-  std::vector<small_jacobian_diagnostic> diagnostics; ///< One numerical record
-                                                      ///< per invalid element.
+struct BadJacobianPoint {
+  type_real jacobian = 0; ///< First nonfinite determinant, otherwise minimum.
+  type_real scale = 0;    ///< Mean absolute finite determinant contribution.
+  int ix = -1;            ///< GLL x index of the reported determinant.
+  int iy = -1;            ///< GLL y index of the reported determinant.
+  int iz = -1;            ///< GLL z index of the reported determinant.
 };
 
 // clang-format off
@@ -206,19 +192,19 @@ struct jacobian_matrix<specfem::element::dimension_tag::dim3>
    * instability during computation. Small or negative Jacobians indicate
    * degenerate or inverted elements.
    *
-   * @return Validation result containing an element mask and one numerical
-   *         diagnostic for every invalid element.
+   * @return Whether any element is invalid, and one optional record per
+   *         element. Valid elements contain std::nullopt.
    *
    * @note An element is invalid when a determinant is non-finite, non-positive,
    *       or less than the relative tolerance times that element's mean
    *       absolute determinant.
    *
    * @code
-   * const auto result = jacobian.check_small_jacobian();
-   * if (result.found) {
+   * const auto [found, bad_points] = jacobian.check_small_jacobian();
+   * if (found) {
    *     // Handle problematic elements
    *     for (int i = 0; i < nspec; ++i) {
-   *         if (result.elements(i)) {
+   *         if (bad_points(i)) {
    *             std::cout << "Element " << i << " has small Jacobian" <<
    * std::endl;
    *         }
@@ -226,6 +212,8 @@ struct jacobian_matrix<specfem::element::dimension_tag::dim3>
    * }
    * @endcode
    */
-  small_jacobian_result check_small_jacobian() const;
+  std::tuple<bool, Kokkos::View<std::optional<BadJacobianPoint> *,
+                                Kokkos::DefaultHostExecutionSpace>>
+  check_small_jacobian() const;
 };
 } // namespace specfem::assembly

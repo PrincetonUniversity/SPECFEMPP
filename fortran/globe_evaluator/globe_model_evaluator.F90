@@ -586,15 +586,17 @@
   double precision, dimension(NR_DENSITY) :: eta, eta2
 
   size_out = 0_c_int
+  ! Validate capacity before touching the NR_DENSITY-sized output arrays so a
+  ! caller with smaller buffers is never written past their end.
+  if (capacity < NR_DENSITY) then
+    globe_evaluator_ellipticity_spline = GLOBE_EVALUATOR_BAD_ARGUMENT
+    return
+  endif
   radii(:) = 0.d0
   values(:) = 0.d0
   second_derivatives(:) = 0.d0
   if (.not. is_initialized) then
     globe_evaluator_ellipticity_spline = GLOBE_EVALUATOR_NOT_INITIALIZED
-    return
-  endif
-  if (capacity < NR_DENSITY) then
-    globe_evaluator_ellipticity_spline = GLOBE_EVALUATOR_BAD_ARGUMENT
     return
   endif
 

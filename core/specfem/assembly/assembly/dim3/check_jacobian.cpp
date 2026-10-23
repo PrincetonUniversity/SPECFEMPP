@@ -4,94 +4,108 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iomanip>
+#include <limits>
+#include <numbers>
 #include <sstream>
 #include <stdexcept>
-#include <vector>
+
+namespace specfem::assembly::check_jacobian_impl {
+
+// Coordinates are in metres; latitude is geocentric, longitude is
+// east-positive.
+void append_globe_location(std::ostream &message, const type_real x,
+                           const type_real y, const type_real z) {
+  const type_real radius = std::hypot(x, y, z);
+  const type_real horizontal_radius = std::hypot(x, y);
+  constexpr type_real radians_to_degrees = 180 / std::numbers::pi_v<type_real>;
+  message << " (m) radius_km=" << radius / 1000;
+  if (std::isfinite(radius) && radius > 0) {
+    message << " geocentric_lat_deg="
+            << std::atan2(z, horizontal_radius) * radians_to_degrees;
+  } else {
+    message << " geocentric_lat_deg=undefined";
+  }
+  if (std::isfinite(radius) && horizontal_radius > 0) {
+    message << " lon_deg=" << std::atan2(y, x) * radians_to_degrees;
+  } else {
+    message << " lon_deg=undefined";
+  }
+}
+
+} // namespace specfem::assembly::check_jacobian_impl
 
 void specfem::assembly::assembly<
     specfem::element::dimension_tag::dim3>::check_jacobian_matrix() const {
-  if (this->element_types.has_element_context()) {
-    const int fictitious_flag =
-        static_cast<int>(specfem::globe::radial_flag::fictitious_cube);
-    for (int ispec = 0; ispec < this->mesh.nspec; ++ispec) {
-      if (this->element_types.idoubling(ispec) == fictitious_flag) {
-        std::ostringstream message;
-        message << "Globe mesh contains fictitious central-cube element "
-                << ispec << " (mesh element "
-                << this->mesh.h_compute_to_mesh(ispec)
-                << ", idoubling=" << fictitious_flag
-                << "). The globe database writer must exclude these elements.";
-        throw std::runtime_error(message.str());
-      }
-    }
-  }
-
-  const auto result = this->jacobian_matrix.check_small_jacobian();
-  if (!result.found) {
+  const auto [found, bad_points] = this->jacobian_matrix.check_small_jacobian();
+  if (!found) {
     return;
   }
 
-  std::vector<specfem::assembly::small_jacobian_diagnostic> diagnostics =
-      result.diagnostics;
-  std::sort(diagnostics.begin(), diagnostics.end(),
-            [](const auto &left, const auto &right) {
-              const type_real left_relative = left.relative_jacobian();
-              const type_real right_relative = right.relative_jacobian();
-              if (!std::isfinite(left_relative)) {
-                return std::isfinite(right_relative);
-              }
-              if (!std::isfinite(right_relative)) {
-                return false;
-              }
-              return left_relative < right_relative;
-            });
-
-  int central_cube_failures = 0;
-  if (this->element_types.has_element_context()) {
-    for (const auto &diagnostic : diagnostics) {
-      if (specfem::globe::is_central_cube(
-              this->element_types.idoubling(diagnostic.element_index))) {
-        ++central_cube_failures;
-      }
+  std::size_t invalid_count = 0;
+  for (int ispec = 0; ispec < this->mesh.nspec; ++ispec) {
+    if (bad_points(ispec)) {
+      ++invalid_count;
     }
   }
-
   constexpr std::size_t maximum_reported_elements = 10;
   std::ostringstream message;
-  message << "Invalid Jacobian mapping in " << diagnostics.size()
+  message << std::setprecision(std::numeric_limits<type_real>::max_digits10);
+  message << "Invalid Jacobian mapping in " << invalid_count
           << " element(s): determinants must be finite, strictly positive, and "
              "at least 1e-6 of the element-local mean absolute determinant.\n";
-  if (central_cube_failures > 0) {
-    message << "Central-cube mapping check failed for " << central_cube_failures
-            << " element(s) containing or adjacent to r=0.\n";
-  }
-  message << "Worst elements:\n";
+  message << "Invalid elements (compute order, up to 10):\n";
 
   const std::size_t report_count =
-      std::min(maximum_reported_elements, diagnostics.size());
-  for (std::size_t i = 0; i < report_count; ++i) {
-    const auto &diagnostic = diagnostics[i];
-    const int ispec = diagnostic.element_index;
+      std::min(maximum_reported_elements, invalid_count);
+  std::size_t reported = 0;
+  for (int ispec = 0; ispec < this->mesh.nspec && reported < report_count;
+       ++ispec) {
+    if (!bad_points(ispec)) {
+      continue;
+    }
+    const auto &diagnostic = *bad_points(ispec);
+    ++reported;
     message << "  element=" << ispec
             << " mesh_element=" << this->mesh.h_compute_to_mesh(ispec)
             << " gll=(" << diagnostic.ix << ',' << diagnostic.iy << ','
             << diagnostic.iz << ") jacobian=" << diagnostic.jacobian
-            << " scale=" << diagnostic.scale
-            << " relative=" << diagnostic.relative_jacobian();
+            << " scale=" << diagnostic.scale << " relative="
+            << (diagnostic.scale > 0 ? diagnostic.jacobian / diagnostic.scale
+                                     : 0);
+    if (!std::isfinite(diagnostic.jacobian)) {
+      message << " reason=nonfinite_determinant";
+    } else if (diagnostic.jacobian <= 0) {
+      message << " reason=nonpositive_determinant";
+    } else {
+      message << " reason=small_relative_determinant";
+    }
+    const type_real x = this->mesh.h_coord(ispec, diagnostic.iz, diagnostic.iy,
+                                           diagnostic.ix, 0);
+    const type_real y = this->mesh.h_coord(ispec, diagnostic.iz, diagnostic.iy,
+                                           diagnostic.ix, 1);
+    const type_real z = this->mesh.h_coord(ispec, diagnostic.iz, diagnostic.iy,
+                                           diagnostic.ix, 2);
+    message << "\n    x=" << x << " y=" << y << " z=" << z;
     if (this->element_types.has_element_context()) {
+      specfem::assembly::check_jacobian_impl::append_globe_location(message, x,
+                                                                    y, z);
       const type_real rmin = this->element_types.rmin(ispec);
       const type_real rmax = this->element_types.rmax(ispec);
-      message << " region="
+      message << "\n    region="
               << specfem::element::to_string(
                      this->element_types.get_region_tag(ispec))
-              << " radius=" << type_real(0.5) * (rmin + rmax)
-              << " radial_range=[" << rmin << ',' << rmax << ']'
-              << " idoubling=" << this->element_types.idoubling(ispec);
+              << " radial_range_km=[" << rmin / 1000 << ',' << rmax / 1000
+              << ']' << " idoubling=" << this->element_types.idoubling(ispec);
+      if (specfem::globe::is_central_cube(
+              this->element_types.idoubling(ispec))) {
+        message << " central_cube=true";
+      }
     }
     message << '\n';
   }
-  if (diagnostics.size() > report_count) {
-    message << "  ... " << diagnostics.size() - report_count
+  if (invalid_count > report_count) {
+    message << "  ... " << invalid_count - report_count
             << " additional invalid element(s) omitted\n";
   }
 

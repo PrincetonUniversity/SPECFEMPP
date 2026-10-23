@@ -2,10 +2,11 @@
 
 #include "impl/adjacency_graph.hpp"
 #include "impl/control_nodes.hpp"
+#include "impl/coordinate_projection.hpp"
+#include "impl/free_surface_geometry.hpp"
 #include "impl/mesh_to_compute_mapping.hpp"
 #include "impl/points.hpp"
 #include "impl/shape_functions.hpp"
-#include "impl/spherical_coordinates.hpp"
 
 #include "specfem/assembly/mesh/impl/quadrature.hpp"
 #include "specfem/mesh.hpp"
@@ -28,6 +29,9 @@ namespace specfem::assembly {
  * - quadrature: GLL quadrature points and weights
  * - control_nodes: Element control node data
  * - shape_functions: Shape function values and derivatives
+ *
+ * Also carries the coordinate @ref projection and the @ref free_surface
+ * geometry, so source/receiver placement resolves without the raw mesh.
  *
  * @see specfem::mesh::mesh
  */
@@ -53,10 +57,15 @@ public:
   int nspec; ///< Number of spectral elements
   int ngnod; ///< Number of control nodes per element
 
-  mesh_impl::SphericalCoordinates spherical_coordinates; ///< Globe setup cache
-
   specfem::mesh_entity::element<dimension_tag> element_grid; ///< 3D GLL grid
                                                              ///< info
+
+  specfem::assembly::mesh_impl::coordinate_projection
+      projection; ///< Coordinate projection the mesh was built with (UTM,
+                  ///< globe, or pass-through); drives source/receiver placement
+
+  specfem::assembly::mesh_impl::free_surface_geometry
+      free_surface; ///< Outer free surface as geometry, for depth placement
 
   /**
    * @brief Default constructor.
