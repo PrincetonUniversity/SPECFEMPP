@@ -581,7 +581,52 @@
 
 !--------------------
 
+  subroutine read_value_logical_mesh_optional(iunit,ignore_junk,value_to_read, name, ier)
+
+  use constants, only: MAX_STRING_LEN
+
+  implicit none
+
+  logical :: ignore_junk
+  logical :: value_to_read
+  integer :: iunit
+  integer :: ier
+  character(len=*) :: name
+  character(len=MAX_STRING_LEN) :: string_read
+
+  call unused_string(name)
+  ier = 0
+
+  call read_next_line_allow_eof(iunit,ignore_junk,string_read,ier)
+  if (ier /= 0) return
+
+  read(string_read,*,iostat=ier) value_to_read
+
+  end subroutine read_value_logical_mesh_optional
+
+!--------------------
+
   subroutine read_next_line(iunit,suppress_junk,string_read, ier)
+
+  use constants, only: MAX_STRING_LEN
+
+  implicit none
+
+  integer :: iunit,ier
+  logical :: suppress_junk
+  character(len=MAX_STRING_LEN) :: string_read
+
+  call read_next_line_allow_eof(iunit,suppress_junk,string_read,ier)
+  if (ier /= 0) then
+    print *,'Error reading parameter file Mesh_Par_file: missing next line. Please check file...'
+    stop 'Error while reading parameter file Mesh_Par_file'
+  endif
+
+  end subroutine read_next_line
+
+!--------------------
+
+  subroutine read_next_line_allow_eof(iunit,suppress_junk,string_read, ier)
 
   use constants, only: MAX_STRING_LEN
 
@@ -595,10 +640,7 @@
   ier = 0
   do
     read(unit=iunit,fmt="(a)",iostat=ier) string_read
-    if (ier /= 0) then
-      print *,'Error reading parameter file Mesh_Par_file: missing next line. Please check file...'
-      stop 'Error while reading parameter file Mesh_Par_file'
-    endif
+    if (ier /= 0) return
 
 ! suppress leading white spaces, if any
     string_read = adjustl(string_read)
@@ -632,7 +674,7 @@
   string_read = adjustl(string_read)
   string_read = string_read(1:len_trim(string_read))
 
-  end subroutine read_next_line
+  end subroutine read_next_line_allow_eof
 
 !--------------------
 
