@@ -230,7 +230,8 @@
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
     IFLAG_IN_FICTITIOUS_CUBE
 
-  use shared_parameters, only: NSPEC_REGIONS,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE
+  use shared_parameters, only: NSPEC_REGIONS,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
+    REGIONAL_MESH_CUTOFF
 
   use meshfem_par, only: nspec,nglob,iregion_code,ibool,idoubling,xstore,ystore,zstore
 
@@ -342,6 +343,7 @@
   ! Region adjacency then names the interfaces:
   !   crust/mantle top    -> free surface (and the ocean load acts on the same faces)
   !   crust/mantle bottom -> CMB, solid side
+  !   (on a regional cut-off mesh the crust/mantle bottom is the mesh bottom and, like the chunk sides, is not recorded)
   !   outer core top      -> CMB, fluid side
   !   outer core bottom   -> ICB, fluid side
   !   inner core top      -> ICB, solid side
@@ -349,8 +351,10 @@
   case (IREGION_CRUST_MANTLE)
     call save_database_specfempp_add_faces(ibelm_top,NSPEC2D_TOP_REG,SPECFEMPP_FACE_TOP, &
                                            ispec_map,nspec,db_free_ispec,db_free_face,DB_N_FREE)
-    call save_database_specfempp_add_faces(ibelm_bottom,NSPEC2D_BOTTOM_REG,SPECFEMPP_FACE_BOTTOM, &
-                                           ispec_map,nspec,db_cmb_ispec,db_cmb_face,DB_N_CMB)
+    if (.not. REGIONAL_MESH_CUTOFF) then
+      call save_database_specfempp_add_faces(ibelm_bottom,NSPEC2D_BOTTOM_REG,SPECFEMPP_FACE_BOTTOM, &
+                                             ispec_map,nspec,db_cmb_ispec,db_cmb_face,DB_N_CMB)
+    endif
   case (IREGION_OUTER_CORE)
     call save_database_specfempp_add_faces(ibelm_top,NSPEC2D_TOP_REG,SPECFEMPP_FACE_TOP, &
                                            ispec_map,nspec,db_cmb_ispec,db_cmb_face,DB_N_CMB)

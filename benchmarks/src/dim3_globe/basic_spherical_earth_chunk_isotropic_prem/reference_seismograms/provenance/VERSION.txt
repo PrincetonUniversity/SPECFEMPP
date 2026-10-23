@@ -1,0 +1,5 @@
+specfem3d_globe commit: 688967d8b50fbfd3d525508af4aace69b08ffc03
+describe: v8.1.0-438-g688967d8b
+configure:   $ ./configure FC=h5fc CC=h5cc MPIFC=h5pfc --with-mpi --with-hdf5
+generated: 2026-10-21T15:16:49Z
+ranks: 1
