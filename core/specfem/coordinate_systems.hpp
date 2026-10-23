@@ -12,5 +12,6 @@
 #include "coordinate_systems/geocentric.hpp"
 #include "coordinate_systems/geocentric_projection.hpp"
 #include "coordinate_systems/geographic.hpp"
+#include "coordinate_systems/spherical_basis.hpp"
 #include "coordinate_systems/to.hpp"
 #include "coordinate_systems/utm_projection.hpp"
