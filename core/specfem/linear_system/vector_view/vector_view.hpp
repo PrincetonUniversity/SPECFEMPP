@@ -117,6 +117,7 @@ private:
  * b  = f;
  * b += diag(mass) * (c0 * u + c1 * v + c2 * a);
  * b += damping * (c3 * u + c4 * v + c5 * a);
+ * b -= stiffness * u_pred;
  * a_new = c0 * (u_new - u - dt * v) - c2 * a;
  * const type_real residual = norm2(b - system * u_new);
  * @endcode
@@ -178,6 +179,13 @@ public:
 
   /// Accumulate another vector
   VectorView &operator+=(const VectorView &other);
+
+  /// Subtract an expression
+  template <VectorOperand Operand>
+  VectorView &operator-=(const Operand &operand);
+
+  /// Subtract another vector
+  VectorView &operator-=(const VectorView &other);
 
 private:
   const VectorSpace *space_;         ///< Borrowed space
@@ -503,6 +511,15 @@ VectorView &VectorView::operator+=(const Operand &operand) {
 
 inline VectorView &VectorView::operator+=(const VectorView &other) {
   return *this += specfem::linear_system_impl::as_expression(other);
+}
+
+template <VectorOperand Operand>
+VectorView &VectorView::operator-=(const Operand &operand) {
+  return *this += -operand;
+}
+
+inline VectorView &VectorView::operator-=(const VectorView &other) {
+  return *this += -other;
 }
 
 /**
