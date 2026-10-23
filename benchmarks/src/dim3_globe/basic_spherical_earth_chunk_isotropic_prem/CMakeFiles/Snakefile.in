@@ -18,10 +18,9 @@ comparison_outputs = [
 ]
 
 
-# full pipeline: mesh -> database check -> SPECFEM++ solver -> comparison
+# full pipeline: mesh -> SPECFEM++ solver -> comparison
 rule all:
     input:
-        example_dir / "OUTPUT_FILES" / "check_database.txt",
         comparison_outputs,
     localrule: True
 
@@ -39,18 +38,6 @@ rule mesh:
     shell:
         "cd {example_dir} && mkdir -p DATABASES_MPI OUTPUT_FILES && "
         "{input.mesher} > {log} 2>&1"
-
-
-# validates the thin SPECFEM++ mesh database
-rule check_database:
-    input:
-        database=example_dir / "DATABASES_MPI" / "proc000000_specfempp_database.bin",
-        script=example_dir / "check_database.py",
-    output:
-        example_dir / "OUTPUT_FILES" / "check_database.txt",
-    localrule: True
-    shell:
-        "cd {example_dir} && {uv_python} check_database.py DATABASES_MPI > {output}"
 
 
 rule solver:

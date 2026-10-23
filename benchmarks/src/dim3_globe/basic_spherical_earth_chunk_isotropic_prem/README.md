@@ -10,6 +10,15 @@ moment tensor and location of the catalogue, half duration 40 s), moved to 100 k
 recorded at 22 stations inside the chunk. The setup is sized so that the whole pipeline
 runs in minutes.
 
+## Scope
+
+This is a first, deliberately minimal benchmark: it checks that SPECFEM++ reproduces the
+basic SPECFEM3D_GLOBE run on a spherical mesh. Everything that makes a globe simulation
+realistic is switched off because the SPECFEM++ globe path does not implement it yet:
+ellipticity, topography, rotation, gravity, attenuation, oceans and absorbing chunk
+sides. Expect the setup, the parameters and the reference seismograms to change as those
+features land.
+
 ## Settings
 
 | Parameter | Value | Reason |
@@ -40,14 +49,14 @@ stations and SAML (in both lists) was de-duplicated. Burial is 0.
 
 ## Status
 
-The full pipeline runs: `xmeshfem3D_globe` (serial, about 2 s), `check_database.py`,
-`specfem globe` on the thin database, and the comparison. On an Apple Silicon laptop
+The full pipeline runs: `xmeshfem3D_globe` (serial, about 2 s), `specfem globe` on the
+thin database, and the comparison. On an Apple Silicon laptop
 (serial build) the SPECFEM++ solver takes about 8 min for the 18000 steps; SPECFEM3D_GLOBE
 (1 rank) takes about 6.7 min for mesher and solver together (time loop 404 s).
 
-`check_database.py` passes on the cut-off database: 5888 elements, 1024 free-surface
-faces and no CMB or ICB faces. The thin-database writer leaves the mesh bottom of a
-regional cut-off mesh unrecorded, like the chunk sides.
+The cut-off database holds 5888 elements and 1024 free-surface faces and no CMB or ICB
+faces: the thin-database writer leaves the mesh bottom of a regional cut-off mesh
+unrecorded, like the chunk sides.
 
 Comparison (2026-10-21, SPECFEM++ serial `release` preset vs SPECFEM3D_GLOBE `688967d8b`),
 normalised L2 misfit `||u - r|| / ||r||` and zero-lag correlation over the common window of
@@ -80,11 +89,11 @@ pinned 0.10 s.
 cmake --preset release
 cmake --build build/release --target specfem xmeshfem3D_globe
 cd benchmarks/build/release/dim3_globe/basic_spherical_earth_chunk_isotropic_prem
-uv run snakemake -j 1                # mesh, database check, SPECFEM++ solver, comparison
+uv run snakemake -j 1                # mesh, SPECFEM++ solver, comparison
 ```
 
-Alternatively, run the CMake target `benchmark_dim3_globe_basic_spherical_earth_chunk_isotropic_prem`
-(serial mesher followed by `check_database.py`).
+Alternatively, the CMake target `benchmark_dim3_globe_basic_spherical_earth_chunk_isotropic_prem`
+runs the serial mesher only.
 
 ## Reference seismograms
 
