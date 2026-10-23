@@ -61,8 +61,7 @@ struct GlobeFixture {
                       mesh.control_nodes,
                       quadrature,
                       mesh.globe.reference_coordinates };
-    assembly.mesh.spherical_coordinates =
-        specfem::assembly::mesh_impl::SphericalCoordinates(assembly.mesh);
+    assembly.mesh.compute_spherical_coordinates();
     assembly.element_types = { mesh.nspec, assembly.mesh.element_grid,
                                assembly.mesh, mesh.tags,
                                mesh.globe.element_context };
@@ -164,12 +163,14 @@ void check_properties(const GlobeFixture &fixture,
               specfem::medium_physics::love_to_radial_elasticity(
                   expected.rho[p], expected.vpv[p], expected.vph[p],
                   expected.vsv[p], expected.vsh[p], expected.eta[p]);
-          const auto &spherical = assembly.mesh.spherical_coordinates.h_coord;
+          const auto &spherical = assembly.mesh.h_spherical_coord;
           expected_stiffness =
               specfem::medium_physics::rotate_elasticity_radial_to_global(
                   radial,
-                  spherical(ispec, p / (nx * ny), (p / nx) % ny, p % nx, 1),
-                  spherical(ispec, p / (nx * ny), (p / nx) % ny, p % nx, 2));
+                  static_cast<double>(spherical(ispec, p / (nx * ny),
+                                                (p / nx) % ny, p % nx, 1)),
+                  static_cast<double>(spherical(ispec, p / (nx * ny),
+                                                (p / nx) % ny, p % nx, 2)));
         }
         for (int c = 0; c < 21; ++c) {
           EXPECT_NEAR(point[c], expected_stiffness[c],

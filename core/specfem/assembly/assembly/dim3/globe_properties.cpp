@@ -121,7 +121,7 @@ void specfem::assembly::dim3_impl::read_globe_properties(
           "without the anisotropic property tag: compute element " +
           std::to_string(compute_ispec));
     }
-    const auto &spherical = assembly.mesh.spherical_coordinates.h_coord;
+    const auto &spherical = assembly.mesh.h_spherical_coord;
     if (tagged_anisotropic && !values.is_anisotropic &&
         spherical.data() == nullptr) {
       throw std::runtime_error(
