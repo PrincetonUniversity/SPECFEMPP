@@ -63,7 +63,6 @@ public:
    */
   receivers() = default;
 
-  template <specfem::simulation::model ModelTag>
   receivers(
       const int max_sig_step, const type_real dt, const type_real t0,
       const int nsteps_between_samples,
@@ -72,7 +71,6 @@ public:
           &receivers,
       const std::vector<specfem::enums::wavefield> &stypes,
       const specfem::assembly::mesh<dimension_tag> &mesh,
-      const specfem::mesh::mesh<ModelTag> &raw_mesh,
       const specfem::assembly::element_types<dimension_tag> &element_types);
 
   /**

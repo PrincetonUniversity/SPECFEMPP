@@ -9,6 +9,7 @@
 
 #include <optional>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 specfem::io::mesh::impl::fortran::dim3_globe::material_tags
@@ -25,6 +26,19 @@ specfem::io::mesh::impl::fortran::dim3_globe::read_material_tags(
   specfem::io::fortran_read_line(stream, &region_codes, &medium_codes,
                                  &property_codes, &idoubling);
 
+  // Reject duplicate central-cube elements before reading further records.
+  const int fictitious_flag =
+      static_cast<int>(specfem::globe::radial_flag::fictitious_cube);
+  for (int ispec = 0; ispec < mesh.nspec; ++ispec) {
+    if (idoubling[ispec] == fictitious_flag) {
+      throw std::runtime_error(
+          "Globe mesh database contains fictitious central-cube element " +
+          std::to_string(ispec) +
+          " (idoubling=" + std::to_string(fictitious_flag) +
+          "); the database writer must exclude fictitious elements");
+    }
+  }
+
   std::vector<double> rmin(mesh.nspec), rmax(mesh.nspec);
   specfem::io::fortran_read_line(stream, &rmin, &rmax);
 
@@ -38,16 +52,7 @@ specfem::io::mesh::impl::fortran::dim3_globe::read_material_tags(
   element_context.resize(mesh.nspec);
   // Serial on purpose: the code translators throw on bad input, which a
   // Kokkos host parallel region cannot propagate.
-  const int fictitious_flag =
-      static_cast<int>(specfem::globe::radial_flag::fictitious_cube);
   for (int ispec = 0; ispec < mesh.nspec; ++ispec) {
-    if (idoubling[ispec] == fictitious_flag) {
-      throw std::runtime_error(
-          "Globe mesh database contains fictitious central-cube element " +
-          std::to_string(ispec) +
-          " (idoubling=" + std::to_string(fictitious_flag) +
-          "); the database writer must exclude fictitious elements");
-    }
     tags.medium_tags[ispec] =
         specfem::io::mesh::impl::fortran::dim3_globe::to_medium_tag(
             medium_codes[ispec]);

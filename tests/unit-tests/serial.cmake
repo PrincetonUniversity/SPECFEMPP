@@ -264,6 +264,7 @@ specfem_add_test(mesh_dim3_tests
             mesh/dim3/adjacency_graph.cpp
             mesh/dim3/tags.cpp
             mesh/dim3/globe_reader.cpp
+            mesh/dim3/globe_checks.cpp
             mesh/dim3/model_aniso.cpp
             mesh/dim3/test.cpp
   LIBRARIES gtest_main
@@ -341,6 +342,7 @@ specfem_add_test(assembly_tests
             assembly/dim3/jacobian_matrix/jacobian_matrix.cpp
             assembly/dim3/properties/properties.cpp
             assembly/dim3/element_types/element_context.cpp
+            assembly/dim3/element_intersections/globe_fluid_solid.cpp
   LIBRARIES specfem::mesh
             specfem::assembly
             specfem::quadrature
@@ -565,6 +567,13 @@ specfem_add_test(mass_matrix_tests
             gtest_main
 )
 
+specfem_add_test(constitutive_tensor_tests
+  SOURCES   medium/constitutive_tensor/main.cpp
+            medium/constitutive_tensor/dim3/elastic_isotropic.cpp
+  LIBRARIES point
+            gtest_main
+)
+
 specfem_add_test(stress_tests
   SOURCES   medium/stress/main.cpp
             medium/stress/dim2/acoustic.cpp
@@ -611,6 +620,8 @@ specfem_add_test(medium_attenuation_tests
 specfem_add_test(compute_coupling_tests
   SOURCES   compute_coupling/acoustic_elastic.cpp
             compute_coupling/elastic_acoustic.cpp
+            compute_coupling/dim3/acoustic_elastic.cpp
+            compute_coupling/dim3/elastic_acoustic.cpp
             compute_coupling/nonconforming/acoustic_elastic.cpp
             compute_coupling/nonconforming/elastic_acoustic.cpp
             compute_coupling/runner.cpp
@@ -655,12 +666,13 @@ specfem_add_test(source_time_function_tests
 
 specfem_add_test(coordinate_systems_tests
   SOURCES   coordinate_systems/utm_tests.cpp
+            coordinate_systems/geocentric_tests.cpp
   LIBRARIES specfem::coordinate_systems
             gtest_main
 )
 
-specfem_add_test(resolve_coordinates_tests
-  SOURCES   assembly/resolve_coordinates/test_resolve_coordinates.cpp
+specfem_add_test(coordinate_conversion_tests
+  SOURCES   assembly/coordinate_conversion/coordinate_conversion_tests.cpp
   LIBRARIES specfem::assembly
             specfem::coordinate_systems
             specfem_environment
@@ -721,6 +733,35 @@ specfem_add_test(stiffness_assembler_tests
   LABELS    TRILINOS
 )
 
+# Sum-factored element stiffness kernel held to a host closed-form reference.
+# Without SPECFEM_ENABLE_TENSOROPS only the reference checks and the
+# run-time-error check run.
+specfem_add_test(stiffness_kernel_tests
+  SOURCES linear_system/stiffness_kernel_tests.cpp
+  LIBRARIES specfem::linear_system
+            specfem::quadrature
+            specfem::mesh
+            yaml-cpp
+            specfem_environment
+            specfem::assembly
+            specfem::runtime_configuration
+            timescheme
+            point
+            specfem::algorithms
+            specfem::solver
+            specfem::periodic_tasks
+            ${BOOST_LIBS}
+            -lpthread -lm
+)
+
+# Pure TensorOperations + Kokkos: no fixtures, no assembly. Compiles to a
+# GTEST_SKIP stub when SPECFEM_ENABLE_TENSOROPS is OFF.
+specfem_add_test(tensorops_smoke_tests
+  SOURCES linear_system/tensorops_smoke_tests.cpp
+  LIBRARIES specfem::linear_system
+            specfem_environment
+)
+
 specfem_add_test(sparse_matrix_view_mapping_tests
   SOURCES linear_system/sparse_matrix_view/mapping_tests.cpp
   LIBRARIES specfem::linear_system
@@ -759,6 +800,24 @@ specfem_add_test(sparse_matrix_view_fe_assembly_tests
 
 specfem_add_test(sparse_matrix_view_matrix_view_tests
   SOURCES linear_system/sparse_matrix_view/matrix_view_tests.cpp
+  LIBRARIES specfem::linear_system
+            specfem::quadrature
+            specfem::mesh
+            yaml-cpp
+            specfem_environment
+            specfem::assembly
+            specfem::runtime_configuration
+            timescheme
+            point
+            specfem::algorithms
+            specfem::solver
+            specfem::periodic_tasks
+            ${BOOST_LIBS}
+            -lpthread -lm
+)
+
+specfem_add_test(vector_view_expression_tests
+  SOURCES linear_system/vector_view/expression_tests.cpp
   LIBRARIES specfem::linear_system
             specfem::quadrature
             specfem::mesh

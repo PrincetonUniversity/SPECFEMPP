@@ -3,8 +3,8 @@
 #include "specfem/assembly/sources/impl/locate_sources.tpp"
 
 #include "specfem/algorithms.hpp"
+#include "specfem/assembly/coordinate_conversion.hpp"
 #include "specfem/assembly/mesh.hpp"
-#include "specfem/coordinate_systems/utm.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/setup.hpp"
@@ -17,12 +17,10 @@
 // ── Constructor template definition ─────────────────────────────────────────
 
 template <specfem::element::dimension_tag DimensionTag>
-template <specfem::simulation::model ModelTag>
 specfem::assembly::sources<DimensionTag>::sources(
     std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>
         &sources,
     const specfem::assembly::mesh<DimensionTag> &mesh,
-    const specfem::mesh::mesh<ModelTag> &raw_mesh,
     const specfem::assembly::jacobian_matrix<DimensionTag> &jacobian_matrix,
     const specfem::assembly::element_types<DimensionTag> &element_types,
     const type_real t0, const type_real dt, const int nsteps)
@@ -46,21 +44,20 @@ specfem::assembly::sources<DimensionTag>::sources(
   int nsources = 0;
   int nsource_indices = 0;
 
-  // UTM config for projecting geographic coordinates. Only dim3 carries it;
-  // a suppressed (Cartesian) mesh leaves it nullopt.
-  std::optional<specfem::coordinate_systems::utm_projection_config> utm_config;
-  if constexpr (ModelTag == specfem::simulation::model::Cartesian3D) {
-    if (!raw_mesh.suppress_utm_projection)
-      utm_config = specfem::coordinate_systems::utm_projection_config{
-        raw_mesh.utm_projection_zone, false
-      };
+  // Resolve any generic coordinates to global coordinates using mesh context.
+  // The conversion (UTM for a regional mesh, spherical for a globe mesh,
+  // pass-through otherwise) is selected from the mesh model. Sources
+  // constructed with (x,y,z) directly have no read_coordinates_ set and keep
+  // their global coordinates unchanged.
+  for (auto &source : sources) {
+    if (const auto *coords = source->get_read_coordinates())
+      source->set_global_coordinates(
+          specfem::assembly::to_cartesian(*coords, mesh));
   }
 
   // Locate all sources in the mesh and set their local coordinates,
   // global element index, and medium that the source is located in
-  specfem::assembly::sources_impl::locate_sources(
-      element_types, mesh, sources, raw_mesh.boundaries.acoustic_free_surface,
-      utm_config);
+  specfem::assembly::sources_impl::locate_sources(element_types, mesh, sources);
 
   // Create vector of MPI slice indices for each source (host memory)
   source_partition_index_.resize(sources.size());
@@ -160,42 +157,6 @@ specfem::assembly::sources<DimensionTag>::sources(
   Kokkos::deep_copy(element_indices, h_element_indices);
   Kokkos::deep_copy(source_indices, h_source_indices);
 }
-
-template specfem::assembly::sources<specfem::element::dimension_tag::dim2>::
-    sources(std::vector<std::shared_ptr<specfem::sources::source<
-                specfem::element::dimension_tag::dim2>>> &sources,
-            const specfem::assembly::mesh<specfem::element::dimension_tag::dim2>
-                &mesh,
-            const specfem::mesh::cartesian2d_mesh &raw_mesh,
-            const specfem::assembly::jacobian_matrix<
-                specfem::element::dimension_tag::dim2> &jacobian_matrix,
-            const specfem::assembly::element_types<
-                specfem::element::dimension_tag::dim2> &element_types,
-            const type_real t0, const type_real dt, const int nsteps);
-
-template specfem::assembly::sources<specfem::element::dimension_tag::dim3>::
-    sources(std::vector<std::shared_ptr<specfem::sources::source<
-                specfem::element::dimension_tag::dim3>>> &sources,
-            const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
-                &mesh,
-            const specfem::mesh::cartesian3d_mesh &raw_mesh,
-            const specfem::assembly::jacobian_matrix<
-                specfem::element::dimension_tag::dim3> &jacobian_matrix,
-            const specfem::assembly::element_types<
-                specfem::element::dimension_tag::dim3> &element_types,
-            const type_real t0, const type_real dt, const int nsteps);
-
-template specfem::assembly::sources<specfem::element::dimension_tag::dim3>::
-    sources(std::vector<std::shared_ptr<specfem::sources::source<
-                specfem::element::dimension_tag::dim3>>> &sources,
-            const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
-                &mesh,
-            const specfem::mesh::globe3d_mesh &raw_mesh,
-            const specfem::assembly::jacobian_matrix<
-                specfem::element::dimension_tag::dim3> &jacobian_matrix,
-            const specfem::assembly::element_types<
-                specfem::element::dimension_tag::dim3> &element_types,
-            const type_real t0, const type_real dt, const int nsteps);
 
 // ── get_sources_on_host / get_sources_on_device template definitions ─────────
 

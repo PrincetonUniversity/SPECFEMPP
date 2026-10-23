@@ -1,7 +1,6 @@
 #pragma once
 
 #include "specfem/coordinate_systems/coordinates.hpp"
-#include <array>
 #include <string>
 
 namespace specfem {
@@ -10,16 +9,19 @@ namespace coordinate_systems {
 /**
  * @brief Geocentric spherical coordinates (physics/SPECFEM convention).
  *
- * @f$ \theta @f$ is colatitude (0 at North Pole, @f$ \pi @f$ at South Pole).
+ * @f$ \theta @f$ is colatitude (0 at North Pole, @f$ \pi @f$ at South Pole),
+ * @f$ \phi @f$ is longitude (0 at the prime meridian). This matches globe's
+ * angular conventions (`src/shared/rthetaphi_xyz.f90`).
  *
- * Pure Cartesian conversion describes the supplied physical position; it does
- * not apply ellipticity or topography a second time. Source/receiver geographic
- * coordinate resolution is a separate operation.
+ * @f$ r @f$ is a physical radius in meters. The transforms to and from this
+ * representation (geocentric @f$ \leftrightarrow @f$ Cartesian and
+ * geographic @f$ \leftrightarrow @f$ geocentric) live in
+ * @ref geocentric_projection.hpp.
  */
 class geocentric_coordinates final
     : public coordinates<specfem::element::dimension_tag::dim3> {
 public:
-  double r;     ///< meters (radius from Earth center)
+  double r;     ///< meters (radius from the planet center)
   double theta; ///< radians (colatitude: 0 at North Pole, pi at South
                 ///< Pole)
   double phi;   ///< radians (longitude: 0 at prime meridian)
@@ -35,24 +37,6 @@ public:
       : r(r), theta(theta), phi(phi) {}
 
   geocentric_coordinates() = default;
-
-  /**
-   * @brief Convert physical Cartesian coordinates in metres to geocentric SI.
-   * @param x Cartesian x in metres.
-   * @param y Cartesian y in metres.
-   * @param z Cartesian z in metres.
-   * @return Radius in metres, colatitude in [0, pi], longitude in [0, 2*pi).
-   *
-   * Longitude is zero on the polar axis; both angles are zero at the origin.
-   * Unlike globe's reduce(), exact zero angles are not perturbed by 1e-7:
-   * atan2 already supplies a valid colatitude, and wrapping longitude suffices.
-   * No pole perturbation is needed because this conversion divides by neither
-   * radius nor sin(theta). This preserves Cartesian round trips at the axes.
-   */
-  static geocentric_coordinates from_cartesian(double x, double y, double z);
-
-  /** @brief Return physical Cartesian coordinates in metres, in x/y/z order. */
-  std::array<double, 3> to_cartesian() const;
 
   bool operator==(const coordinates<specfem::element::dimension_tag::dim3>
                       &other) const override;
