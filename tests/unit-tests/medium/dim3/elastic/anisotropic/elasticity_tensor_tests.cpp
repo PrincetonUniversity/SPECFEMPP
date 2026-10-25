@@ -31,18 +31,28 @@ void expect_tensor_near(const Tensor &actual, const Tensor &expected,
   }
 }
 
-Tensor rotate_on_device() {
-  Kokkos::View<Tensor *> result("rotated_elasticity", 1);
+Kokkos::Array<Tensor, 3> rotate_on_device() {
+  Kokkos::View<Tensor *> result("rotated_elasticity", 3);
   Kokkos::parallel_for(
       "rotate_elasticity_on_device", 1, KOKKOS_LAMBDA(const int) {
         const auto radial = specfem::medium_physics::love_to_radial_elasticity(
             4.0, 3.0, 5.0, 2.0, 2.5, 0.8);
         result(0) = specfem::medium_physics::rotate_elasticity_radial_to_global(
             radial, 0.7, 1.1);
+        const auto rotation = specfem::coordinate_systems::basis_rotation<
+            specfem::coordinate_systems::CartesianFrame,
+            specfem::coordinate_systems::GeocentricFrame>(0.7, 1.1);
+        result(1) =
+            specfem::medium_physics::rotate_elasticity(radial, rotation);
+        const auto inverse = specfem::coordinate_systems::basis_rotation<
+            specfem::coordinate_systems::GeocentricFrame,
+            specfem::coordinate_systems::CartesianFrame>(0.7, 1.1);
+        result(2) =
+            specfem::medium_physics::rotate_elasticity(result(0), inverse);
       });
   const auto host =
       Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, result);
-  return host(0);
+  return { host(0), host(1), host(2) };
 }
 
 TEST(ElasticityTensor, LoveParametersConstructRadialTensor) {
@@ -117,9 +127,10 @@ TEST(ElasticityTensor, GlobalRadialRoundTrip) {
   } };
 
   for (const auto &[theta, phi] : angles) {
-    const auto radial =
-        specfem::medium_physics::rotate_elasticity_global_to_radial(input,
-                                                                    theta, phi);
+    const auto radial = specfem::medium_physics::rotate_elasticity(
+        input, specfem::coordinate_systems::basis_rotation<
+                   specfem::coordinate_systems::GeocentricFrame,
+                   specfem::coordinate_systems::CartesianFrame>(theta, phi));
     const auto round_trip =
         specfem::medium_physics::rotate_elasticity_radial_to_global(radial,
                                                                     theta, phi);
@@ -127,10 +138,74 @@ TEST(ElasticityTensor, GlobalRadialRoundTrip) {
   }
 }
 
+TEST(ElasticityTensor, ArbitraryRotationMatchesFourthOrderReference) {
+  const Tensor input = { 31.0, 2.0,  3.0,  4.0,  5.0,  6.0,  37.0,
+                         8.0,  9.0,  10.0, 11.0, 41.0, 13.0, 14.0,
+                         15.0, 43.0, 17.0, 18.0, 47.0, 20.0, 53.0 };
+  // Rodrigues rotation about (2, -1, 2)/3 includes an independent third angle.
+  const double axis[3] = { 2.0 / 3.0, -1.0 / 3.0, 2.0 / 3.0 };
+  const double skew[3][3] = { { 0.0, -axis[2], axis[1] },
+                              { axis[2], 0.0, -axis[0] },
+                              { -axis[1], axis[0], 0.0 } };
+  specfem::coordinate_systems::rotation_matrix<double> rotation{};
+  const double cosine = std::cos(0.63);
+  const double sine = std::sin(0.63);
+  for (int row = 0; row < 3; ++row) {
+    for (int column = 0; column < 3; ++column) {
+      rotation[row][column] = (row == column ? cosine : 0.0) +
+                              (1.0 - cosine) * axis[row] * axis[column] +
+                              sine * skew[row][column];
+    }
+  }
+
+  double stiffness[6][6] = {};
+  for (int component = 0; component < 21; ++component) {
+    const auto [row, column] = component_indices[component];
+    stiffness[row][column] = input[component];
+    stiffness[column][row] = input[component];
+  }
+  // Expand using tensor symmetries and contract all four indices directly.
+  constexpr int voigt[3][3] = { { 0, 5, 4 }, { 5, 1, 3 }, { 4, 3, 2 } };
+  double expected[3][3][3][3] = {};
+  for (int i = 0; i < 3; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      for (int k = 0; k < 3; ++k) {
+        for (int l = 0; l < 3; ++l) {
+          for (int a = 0; a < 3; ++a) {
+            for (int b = 0; b < 3; ++b) {
+              for (int c = 0; c < 3; ++c) {
+                for (int d = 0; d < 3; ++d) {
+                  expected[i][j][k][l] += rotation[i][a] * rotation[j][b] *
+                                          rotation[k][c] * rotation[l][d] *
+                                          stiffness[voigt[a][b]][voigt[c][d]];
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  constexpr int pairs[6][2] = { { 0, 0 }, { 1, 1 }, { 2, 2 },
+                                { 1, 2 }, { 0, 2 }, { 0, 1 } };
+  Tensor reference{};
+  for (int component = 0; component < 21; ++component) {
+    const auto [row, column] = component_indices[component];
+    reference[component] = expected[pairs[row][0]][pairs[row][1]]
+                                   [pairs[column][0]][pairs[column][1]];
+  }
+  expect_tensor_near(
+      specfem::medium_physics::rotate_elasticity(input, rotation), reference);
+}
+
 TEST(ElasticityTensor, RotationIsDeviceCallable) {
   const auto result = rotate_on_device();
-  EXPECT_NEAR(result[3], 0.55226814535471225, 2.e-13);
-  EXPECT_NEAR(result[13], -7.8509057040399073, 2.e-13);
+  EXPECT_NEAR(result[0][3], 0.55226814535471225, 2.e-13);
+  EXPECT_NEAR(result[0][13], -7.8509057040399073, 2.e-13);
+  expect_tensor_near(result[1], result[0]);
+  const auto radial = specfem::medium_physics::love_to_radial_elasticity(
+      4.0, 3.0, 5.0, 2.0, 2.5, 0.8);
+  expect_tensor_near(result[2], radial);
 }
 
 TEST(ElasticityTensor, IsotropicLoveTensorIsRotationInvariant) {

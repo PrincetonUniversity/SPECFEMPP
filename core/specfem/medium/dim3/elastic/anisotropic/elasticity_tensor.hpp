@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/coordinate_systems/basis_rotation.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::medium_physics {
@@ -27,14 +28,30 @@ constexpr int component_index(int row, int column) {
   return row * 6 - row * (row - 1) / 2 + column - row;
 }
 
+} // namespace elasticity_tensor_impl
+
+/**
+ * @brief Rotate an elasticity tensor between orthonormal bases.
+ *
+ * Applies \f$C'_{ijkl} = R_{ia}R_{jb}R_{kc}R_{ld}C_{abcd}\f$ using
+ * the Bond matrix for Voigt order (xx, yy, zz, yz, xz, xy). The 21-component
+ * upper-triangular storage and engineering-shear convention are preserved.
+ *
+ * @tparam ValueType Scalar value type.
+ * @param input Elasticity tensor in the source basis.
+ * @param rotation Orthonormal matrix with target axes as rows and source axes
+ * as columns, so vector components transform as \f$v' = Rv\f$.
+ * @return Elasticity tensor in the target basis.
+ */
 template <typename ValueType>
-KOKKOS_INLINE_FUNCTION elasticity_tensor<ValueType>
-rotate(const elasticity_tensor<ValueType> &input,
-       const ValueType rotation[3][3]) {
+KOKKOS_INLINE_FUNCTION elasticity_tensor<ValueType> rotate_elasticity(
+    const elasticity_tensor<ValueType> &input,
+    const specfem::coordinate_systems::rotation_matrix<ValueType> &rotation) {
   ValueType stiffness[6][6];
   for (int row = 0; row < 6; ++row) {
     for (int column = 0; column < 6; ++column) {
-      stiffness[row][column] = input[component_index(row, column)];
+      stiffness[row][column] =
+          input[elasticity_tensor_impl::component_index(row, column)];
     }
   }
 
@@ -80,15 +97,13 @@ rotate(const elasticity_tensor<ValueType> &input,
   for (int column = 0; column < 6; ++column) {
     for (int inner = 0; inner < 6; ++inner) {
       for (int row = 0; row <= column; ++row) {
-        output[component_index(row, column)] +=
+        output[elasticity_tensor_impl::component_index(row, column)] +=
             bond[row][inner] * temporary[inner][column];
       }
     }
   }
   return output;
 }
-
-} // namespace elasticity_tensor_impl
 
 /**
  * @brief Construct a radial-frame transversely isotropic elasticity tensor.
@@ -162,42 +177,11 @@ KOKKOS_INLINE_FUNCTION elasticity_tensor<ValueType>
 rotate_elasticity_radial_to_global(
     const elasticity_tensor<ValueType> &radial_tensor, const ValueType theta,
     const ValueType phi) {
-  const ValueType cos_theta = Kokkos::cos(theta);
-  const ValueType sin_theta = Kokkos::sin(theta);
-  const ValueType cos_phi = Kokkos::cos(phi);
-  const ValueType sin_phi = Kokkos::sin(phi);
-  const ValueType zero = static_cast<ValueType>(0);
-  const ValueType rotation[3][3] = {
-    { cos_phi * cos_theta, -sin_phi, cos_phi * sin_theta },
-    { sin_phi * cos_theta, cos_phi, sin_phi * sin_theta },
-    { -sin_theta, zero, cos_theta }
-  };
-  return elasticity_tensor_impl::rotate(radial_tensor, rotation);
-}
-
-/**
- * @brief Rotate an elasticity tensor from Cartesian to the local radial frame.
- * @param global_tensor Tensor in the global Cartesian frame.
- * @param theta Geocentric colatitude in radians.
- * @param phi Geocentric longitude in radians.
- * @return Tensor whose axes are (theta, phi, radial).
- */
-template <typename ValueType>
-KOKKOS_INLINE_FUNCTION elasticity_tensor<ValueType>
-rotate_elasticity_global_to_radial(
-    const elasticity_tensor<ValueType> &global_tensor, const ValueType theta,
-    const ValueType phi) {
-  const ValueType cos_theta = Kokkos::cos(theta);
-  const ValueType sin_theta = Kokkos::sin(theta);
-  const ValueType cos_phi = Kokkos::cos(phi);
-  const ValueType sin_phi = Kokkos::sin(phi);
-  const ValueType zero = static_cast<ValueType>(0);
-  const ValueType rotation[3][3] = {
-    { cos_phi * cos_theta, sin_phi * cos_theta, -sin_theta },
-    { -sin_phi, cos_phi, zero },
-    { cos_phi * sin_theta, sin_phi * sin_theta, cos_theta }
-  };
-  return elasticity_tensor_impl::rotate(global_tensor, rotation);
+  return rotate_elasticity(
+      radial_tensor,
+      specfem::coordinate_systems::basis_rotation<
+          specfem::coordinate_systems::CartesianFrame,
+          specfem::coordinate_systems::GeocentricFrame>(theta, phi));
 }
 
 } // namespace specfem::medium_physics
