@@ -4,8 +4,19 @@
 #include "specfem/enums.hpp"
 #include "specfem/mesh.hpp"
 #include <Kokkos_Core.hpp>
+#include <optional>
+#include <tuple>
 
 namespace specfem::assembly {
+
+/** @brief Numerical condition record for one invalid 3-D element mapping. */
+struct BadJacobianPoint {
+  type_real jacobian = 0; ///< First nonfinite determinant, otherwise minimum.
+  type_real scale = 0;    ///< Mean absolute finite determinant contribution.
+  int ix = -1;            ///< GLL x index of the reported determinant.
+  int iy = -1;            ///< GLL y index of the reported determinant.
+  int iz = -1;            ///< GLL z index of the reported determinant.
+};
 
 // clang-format off
 /**
@@ -181,20 +192,19 @@ struct jacobian_matrix<specfem::element::dimension_tag::dim3>
    * instability during computation. Small or negative Jacobians indicate
    * degenerate or inverted elements.
    *
-   * @return std::tuple containing:
-   *         - Boolean flag indicating if any small Jacobians were found
-   *         - Boolean array flagging elements with small Jacobian values
+   * @return Whether any element is invalid, and one optional record per
+   *         element. Valid elements contain std::nullopt.
    *
-   * @note Small Jacobians are typically defined as values below a threshold
-   *       that could cause numerical instability in the finite element
-   * computation.
+   * @note An element is invalid when a determinant is non-finite, non-positive,
+   *       or less than the relative tolerance times that element's mean
+   *       absolute determinant.
    *
    * @code
-   * auto [has_small_jac, element_flags] = jacobian.check_small_jacobian();
-   * if (has_small_jac) {
+   * const auto [found, bad_points] = jacobian.check_small_jacobian();
+   * if (found) {
    *     // Handle problematic elements
    *     for (int i = 0; i < nspec; ++i) {
-   *         if (element_flags(i)) {
+   *         if (bad_points(i)) {
    *             std::cout << "Element " << i << " has small Jacobian" <<
    * std::endl;
    *         }
@@ -202,7 +212,8 @@ struct jacobian_matrix<specfem::element::dimension_tag::dim3>
    * }
    * @endcode
    */
-  std::tuple<bool, Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace> >
+  std::tuple<bool, Kokkos::View<std::optional<BadJacobianPoint> *,
+                                Kokkos::DefaultHostExecutionSpace>>
   check_small_jacobian() const;
 };
 } // namespace specfem::assembly
