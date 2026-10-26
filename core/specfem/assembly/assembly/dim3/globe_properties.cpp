@@ -1,6 +1,5 @@
 #include "globe_properties.hpp"
 
-#include "specfem/globe/elasticity.hpp"
 #include "specfem/globe/model_evaluator.hpp"
 #include "specfem/globe/region_codes.hpp"
 #include "specfem/logger.hpp"
@@ -153,25 +152,26 @@ void specfem::assembly::dim3_impl::read_globe_properties(
               throw std::runtime_error(
                   "Globe evaluator returned zero Vs for an elastic element");
             }
-            specfem::medium_physics::elasticity_tensor<double> model_cij{};
-            const std::size_t cij_offset = 21 * ipoint;
-            for (int component = 0; component < 21; ++component) {
-              model_cij[component] = values.cij[cij_offset + component];
+            using Global = specfem::medium_physics::ElasticityTensor<
+                specfem::coordinate_systems::CartesianFrame, double>;
+            using Radial = specfem::medium_physics::ElasticityTensor<
+                specfem::coordinate_systems::GeocentricFrame, double>;
+            Global stiffness;
+            if (values.is_anisotropic) {
+              // Full anisotropy is already expressed in Cartesian axes.
+              stiffness = Global(&values.cij[21 * ipoint]);
+            } else {
+              const double theta = spherical(compute_ispec, iz, iy, ix, 1);
+              const double phi = spherical(compute_ispec, iz, iy, ix, 2);
+              const Radial radial(values.rho[ipoint], values.vpv[ipoint],
+                                  values.vph[ipoint], values.vsv[ipoint],
+                                  values.vsh[ipoint], values.eta[ipoint]);
+              stiffness = specfem::medium_physics::rotate(
+                  radial, specfem::coordinate_systems::rotation_matrix<
+                              specfem::coordinate_systems::CartesianFrame,
+                              specfem::coordinate_systems::GeocentricFrame>(
+                              theta, phi));
             }
-            // Love parameters describe radial transverse isotropy. Convert
-            // before any future attenuation shift: that shift must rotate
-            // global -> radial, alter A/C/N/L, then rotate radial -> global.
-            // Full anisotropy is already Cartesian and passes through
-            // unchanged.
-            const auto stiffness = specfem::globe::elasticity_from_model(
-                values.is_anisotropic, model_cij, values.rho[ipoint],
-                values.vpv[ipoint], values.vph[ipoint], values.vsv[ipoint],
-                values.vsh[ipoint], values.eta[ipoint],
-                values.is_anisotropic ? 0.0
-                                      : spherical(compute_ispec, iz, iy, ix, 1),
-                values.is_anisotropic
-                    ? 0.0
-                    : spherical(compute_ispec, iz, iy, ix, 2));
 
             specfem::point::properties<specfem::tags::Tags<
                 Dimension::dim3, Medium::elastic, Property::anisotropic, false>>

@@ -3,16 +3,18 @@ Basis rotations
 
 Include ``specfem/coordinate_systems/basis_rotation.hpp`` to construct a
 device-callable change of basis. The target frame is the first template
-argument; the source frame is the second. Both are explicit because vector
-and tensor storage does not identify a frame.
+argument; the source frame is the second. The returned
+``BasisMatrix<TargetFrame, SourceFrame, ValueType>`` retains both frames,
+so tensor rotations can check that the source frame matches. Equal source
+and target frames are rejected.
 
 .. code-block:: cpp
 
-    const auto rotation = specfem::coordinate_systems::basis_rotation<
+    const auto rotation = specfem::coordinate_systems::rotation_matrix<
         specfem::coordinate_systems::CartesianFrame,
         specfem::coordinate_systems::GeocentricFrame>(theta, phi);
     const auto global =
-        specfem::medium_physics::rotate_elasticity(radial, rotation);
+        specfem::medium_physics::rotate(radial, rotation);
 
 The matrix maps source vector components to target components as
 :math:`v'_i = R_{ij}v_j`. Cartesian axes are ordered :math:`(x,y,z)`;
@@ -30,6 +32,7 @@ coordinate conversions use :doc:`to`.
 
 .. doxygenstruct:: specfem::coordinate_systems::GeocentricFrame
 
-.. doxygentypedef:: specfem::coordinate_systems::rotation_matrix
+.. doxygenstruct:: specfem::coordinate_systems::BasisMatrix
+   :members:
 
-.. doxygenfunction:: specfem::coordinate_systems::basis_rotation
+.. doxygenfunction:: specfem::coordinate_systems::rotation_matrix

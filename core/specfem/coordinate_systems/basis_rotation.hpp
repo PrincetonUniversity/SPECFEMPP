@@ -17,11 +17,24 @@ struct CartesianFrame {};
  */
 struct GeocentricFrame {};
 
-/** @brief Rotation matrix with target axes as rows and source axes as columns.
+/**
+ * @brief Orthonormal matrix mapping source components to target components.
+ * @tparam TargetFrame Frame of the rows.
+ * @tparam SourceFrame Frame of the columns; must differ from TargetFrame.
  * @tparam ValueType Scalar value type.
  */
-template <typename ValueType>
-using rotation_matrix = Kokkos::Array<Kokkos::Array<ValueType, 3>, 3>;
+template <typename TargetFrame, typename SourceFrame, typename ValueType>
+  requires(!std::is_same_v<TargetFrame, SourceFrame>)
+struct BasisMatrix {
+  ValueType coefficients[3][3] = {};
+
+  KOKKOS_INLINE_FUNCTION ValueType *operator[](int row) {
+    return coefficients[row];
+  }
+  KOKKOS_INLINE_FUNCTION const ValueType *operator[](int row) const {
+    return coefficients[row];
+  }
+};
 
 /**
  * @brief Construct the change of basis between geocentric and Cartesian frames.
@@ -40,14 +53,12 @@ using rotation_matrix = Kokkos::Array<Kokkos::Array<ValueType, 3>, 3>;
  * @return Orthonormal rotation mapping source components to target components.
  */
 template <typename TargetFrame, typename SourceFrame, typename ValueType>
-KOKKOS_INLINE_FUNCTION rotation_matrix<ValueType>
-basis_rotation(const ValueType theta, const ValueType phi) {
-  static_assert((std::is_same_v<TargetFrame, CartesianFrame> &&
-                 std::is_same_v<SourceFrame, GeocentricFrame>) ||
-                    (std::is_same_v<TargetFrame, GeocentricFrame> &&
-                     std::is_same_v<SourceFrame, CartesianFrame>),
-                "Unsupported source/target frame combination");
-
+  requires((std::is_same_v<TargetFrame, CartesianFrame> &&
+            std::is_same_v<SourceFrame, GeocentricFrame>) ||
+           (std::is_same_v<TargetFrame, GeocentricFrame> &&
+            std::is_same_v<SourceFrame, CartesianFrame>))
+KOKKOS_INLINE_FUNCTION BasisMatrix<TargetFrame, SourceFrame, ValueType>
+rotation_matrix(const ValueType theta, const ValueType phi) {
   const ValueType cos_theta = Kokkos::cos(theta);
   const ValueType sin_theta = Kokkos::sin(theta);
   const ValueType cos_phi = Kokkos::cos(phi);
