@@ -109,6 +109,35 @@ public:
   type_real get_Myz() const { return Myz; }
 
   /**
+   * @brief Get the Myx component of the moment tensor
+   *
+   * For a symmetric (seismic) moment tensor this equals Mxy. An asymmetric
+   * tensor drives the micro-rotation field in 3D Cosserat media via the body
+   * couple.
+   *
+   * @return type_real Myx moment tensor component
+   */
+  type_real get_Myx() const { return Myx; }
+
+  /**
+   * @brief Get the Mzx component of the moment tensor
+   *
+   * For a symmetric (seismic) moment tensor this equals Mxz.
+   *
+   * @return type_real Mzx moment tensor component
+   */
+  type_real get_Mzx() const { return Mzx; }
+
+  /**
+   * @brief Get the Mzy component of the moment tensor
+   *
+   * For a symmetric (seismic) moment tensor this equals Myz.
+   *
+   * @return type_real Mzy moment tensor component
+   */
+  type_real get_Mzy() const { return Mzy; }
+
+  /**
    * @brief Construct a new moment tensor force object
    *
    * @param moment_tensor a moment_tensor data holder read from source file
@@ -119,6 +148,26 @@ public:
       : Mxx(Node["Mxx"].as<type_real>()), Myy(Node["Myy"].as<type_real>()),
         Mzz(Node["Mzz"].as<type_real>()), Mxy(Node["Mxy"].as<type_real>()),
         Mxz(Node["Mxz"].as<type_real>()), Myz(Node["Myz"].as<type_real>()),
+        // Optional: asymmetric tensors set the lower-triangle components;
+        // default to their transpose (symmetric) when absent.
+        Myx([&Node]() -> type_real {
+          if (Node["Myx"]) {
+            return Node["Myx"].as<type_real>();
+          }
+          return Node["Mxy"].as<type_real>();
+        }()),
+        Mzx([&Node]() -> type_real {
+          if (Node["Mzx"]) {
+            return Node["Mzx"].as<type_real>();
+          }
+          return Node["Mxz"].as<type_real>();
+        }()),
+        Mzy([&Node]() -> type_real {
+          if (Node["Mzy"]) {
+            return Node["Mzy"].as<type_real>();
+          }
+          return Node["Myz"].as<type_real>();
+        }()),
         wavefield_type(wavefield_type), tensor_source(Node, nsteps, dt) {};
 
   /**
@@ -141,8 +190,36 @@ public:
       type_real Mzz, type_real Mxy, type_real Mxz, type_real Myz,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
       const specfem::simulation::field_type wavefield_type)
-      : Mxx(Mxx), Myy(Myy), Mzz(Mzz), Mxy(Mxy), Mxz(Mxz), Myz(Myz),
-        wavefield_type(wavefield_type),
+      : Mxx(Mxx), Myy(Myy), Mzz(Mzz), Mxy(Mxy), Mxz(Mxz), Myz(Myz), Myx(Mxy),
+        Mzx(Mxz), Mzy(Myz), wavefield_type(wavefield_type),
+        tensor_source(x, y, z, std::move(source_time_function)) {};
+
+  /**
+   * @brief Construct a new (possibly asymmetric) moment tensor source
+   *
+   * @param x x-coordinate of source
+   * @param y y-coordinate of source
+   * @param z z-coordinate of source
+   * @param Mxx Mxx component of moment tensor
+   * @param Myy Myy component of moment tensor
+   * @param Mzz Mzz component of moment tensor
+   * @param Mxy Mxy component of moment tensor
+   * @param Mxz Mxz component of moment tensor
+   * @param Myz Myz component of moment tensor
+   * @param Myx Myx component (equals Mxy for a symmetric tensor)
+   * @param Mzx Mzx component (equals Mxz for a symmetric tensor)
+   * @param Mzy Mzy component (equals Myz for a symmetric tensor)
+   * @param source_time_function pointer to source time function
+   * @param wavefield_type type of wavefield
+   */
+  moment_tensor(
+      type_real x, type_real y, type_real z, type_real Mxx, type_real Myy,
+      type_real Mzz, type_real Mxy, type_real Mxz, type_real Myz, type_real Myx,
+      type_real Mzx, type_real Mzy,
+      std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
+      const specfem::simulation::field_type wavefield_type)
+      : Mxx(Mxx), Myy(Myy), Mzz(Mzz), Mxy(Mxy), Mxz(Mxz), Myz(Myz), Myx(Myx),
+        Mzx(Mzx), Mzy(Mzy), wavefield_type(wavefield_type),
         tensor_source(x, y, z, std::move(source_time_function)) {};
 
   /**
@@ -166,8 +243,38 @@ public:
       type_real Myz,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
       const specfem::simulation::field_type wavefield_type)
-      : Mxx(Mxx), Myy(Myy), Mzz(Mzz), Mxy(Mxy), Mxz(Mxz), Myz(Myz),
-        wavefield_type(wavefield_type),
+      : Mxx(Mxx), Myy(Myy), Mzz(Mzz), Mxy(Mxy), Mxz(Mxz), Myz(Myz), Myx(Mxy),
+        Mzx(Mxz), Mzy(Myz), wavefield_type(wavefield_type),
+        tensor_source(std::move(coordinates), std::move(source_time_function)) {
+        };
+
+  /**
+   * @brief Construct a new (possibly asymmetric) moment tensor source from
+   * generic coordinates
+   *
+   * @param coordinates Generic coordinate object
+   * @param Mxx Mxx component of moment tensor
+   * @param Myy Myy component of moment tensor
+   * @param Mzz Mzz component of moment tensor
+   * @param Mxy Mxy component of moment tensor
+   * @param Mxz Mxz component of moment tensor
+   * @param Myz Myz component of moment tensor
+   * @param Myx Myx component (equals Mxy for a symmetric tensor)
+   * @param Mzx Mzx component (equals Mxz for a symmetric tensor)
+   * @param Mzy Mzy component (equals Myz for a symmetric tensor)
+   * @param source_time_function pointer to source time function
+   * @param wavefield_type type of wavefield
+   */
+  moment_tensor(
+      std::unique_ptr<specfem::coordinate_systems::coordinates<
+          specfem::element::dimension_tag::dim3>>
+          coordinates,
+      type_real Mxx, type_real Myy, type_real Mzz, type_real Mxy, type_real Mxz,
+      type_real Myz, type_real Myx, type_real Mzx, type_real Mzy,
+      std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
+      const specfem::simulation::field_type wavefield_type)
+      : Mxx(Mxx), Myy(Myy), Mzz(Mzz), Mxy(Mxy), Mxz(Mxz), Myz(Myz), Myx(Myx),
+        Mzx(Mzx), Mzy(Mzy), wavefield_type(wavefield_type),
         tensor_source(std::move(coordinates), std::move(source_time_function)) {
         };
 
@@ -218,6 +325,32 @@ public:
   get_source_tensor() const override;
 
   /**
+   * @brief Get the body-couple vector for the monopole source term
+   *
+   * The antisymmetric part of the moment tensor contracts (via the 3D
+   * Levi-Civita symbol) to the axial vector
+   * \f$ [M_{yz} - M_{zy}, M_{zx} - M_{xz}, M_{xy} - M_{yx}] \f$, which drives
+   * the micro-rotation degrees of freedom in Cosserat media. For `elastic_spin`
+   * this returns the 6-component vector
+   * \f$ [0, 0, 0, M_{yz} - M_{zy}, M_{zx} - M_{xz}, M_{xy} - M_{yx}] \f$; a
+   * symmetric tensor therefore produces no rotational coupling. For all other
+   * media (which have no rotational degree of freedom) an empty view is
+   * returned.
+   *
+   * @return Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+   * Body-couple vector for `elastic_spin`, otherwise an empty view
+   */
+  Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+  get_body_couple_vector() const override;
+
+  /**
+   * @brief Whether this source contributes a monopole (body-couple) term
+   *
+   * @return true for `elastic_spin` media, false otherwise
+   */
+  bool has_monopole_contribution() const override;
+
+  /**
    * @brief Get the list of supported media for this source type
    *
    * @return std::vector<specfem::element::medium_tag> list of supported media
@@ -226,12 +359,15 @@ public:
   get_supported_media() const override;
 
 private:
-  type_real Mxx;                                  ///< Mxx for the source
-  type_real Myy;                                  ///< Myy for the source
-  type_real Mzz;                                  ///< Mzz for the source
-  type_real Mxy;                                  ///< Mxy for the source
-  type_real Mxz;                                  ///< Mxz for the source
-  type_real Myz;                                  ///< Myz for the source
+  type_real Mxx; ///< Mxx for the source
+  type_real Myy; ///< Myy for the source
+  type_real Mzz; ///< Mzz for the source
+  type_real Mxy; ///< Mxy for the source
+  type_real Mxz; ///< Mxz for the source
+  type_real Myz; ///< Myz for the source
+  type_real Myx; ///< Myx for the source (defaults to Mxy: symmetric tensor)
+  type_real Mzx; ///< Mzx for the source (defaults to Mxz: symmetric tensor)
+  type_real Mzy; ///< Mzy for the source (defaults to Myz: symmetric tensor)
   specfem::simulation::field_type wavefield_type; ///< Type of wavefield on
                                                   ///< which the source
                                                   ///< acts

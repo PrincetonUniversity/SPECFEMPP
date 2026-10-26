@@ -128,6 +128,8 @@ specfem::mesh::globe3d_mesh specfem::io::read_globe_mesh(
       mesh.nspec, mesh.materials, mesh.adjacency_graph, mesh.boundaries);
 
   mesh.setup_coupled_interfaces();
+  mesh.check_consistency();
+  mesh.check_supported();
   mesh.materials.apply_attenuation(mesh.attenuation);
 
   return mesh;
