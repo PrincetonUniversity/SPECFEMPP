@@ -47,7 +47,10 @@ foreach(_line IN LISTS _lines)
     if(FORMAT STREQUAL "macho")
         string(REGEX REPLACE "^_" "" _symbol "${_symbol}")
     endif()
-    if(_symbol IN_LIST _ignored)
+    # list(FIND) rather than IN_LIST: this script runs under `cmake -P`, where
+    # policy CMP0057 is unset.
+    list(FIND _ignored "${_symbol}" _index)
+    if(NOT _index EQUAL -1)
         continue()
     endif()
     list(APPEND _exported "${_symbol}")

@@ -15,27 +15,45 @@ C ABI
 -----
 
 Everything that crosses the library boundary is defined in
-``specfem/plugin/injection_abi.h``.
+``specfem/plugin/injection_abi.h``. All C names use the ``specfempp_`` /
+``SPECFEMPP_`` prefix, matching the exported entry point
+``specfempp_injection_plugin``.
 
-.. doxygenstruct:: spfp_injection_plugin
+Points are delivered in groups, one per material system (medium and property
+pair) of SPECFEM++, so a plugin sees the same medium x property structure as
+the solver. Each group carries its material properties under the names used by
+the SPECFEM++ point property containers (for example ``kappa``, ``mu`` and
+``rho`` for elastic/isotropic, or ``c11`` ... ``c66`` and ``rho`` for
+elastic/anisotropic), and the buffer layout of every requested quantity. All
+values are in the units of the SPECFEM++ mesh and model; no unit conversion is
+performed. ABI version 1 is three-dimensional only.
+
+Every struct passed by pointer starts with ``struct_size``, so fields can be
+appended without a new ABI version; use ``SPECFEMPP_HAS_FIELD`` before reading
+a field added after version 1.
+
+.. doxygenstruct:: specfempp_injection_plugin_table
     :members:
 
-.. doxygenstruct:: spfp_simulation_info
+.. doxygenstruct:: specfempp_simulation_info
     :members:
 
-.. doxygenstruct:: spfp_communicator
+.. doxygenstruct:: specfempp_communicator
     :members:
 
-.. doxygenstruct:: spfp_points
+.. doxygenstruct:: specfempp_points
     :members:
 
-.. doxygenstruct:: spfp_request
+.. doxygenstruct:: specfempp_point_group
     :members:
 
-.. doxygenstruct:: spfp_buffer
+.. doxygenstruct:: specfempp_quantity_slot
     :members:
 
-.. doxygenstruct:: spfp_manifest
+.. doxygenstruct:: specfempp_buffer
+    :members:
+
+.. doxygenstruct:: specfempp_manifest
     :members:
 
 C++ layer
@@ -47,7 +65,10 @@ C++ layer
 .. doxygenclass:: specfem::plugin::Points
     :members:
 
-.. doxygenclass:: specfem::plugin::Request
+.. doxygenclass:: specfem::plugin::PointGroup
+    :members:
+
+.. doxygenstruct:: specfem::plugin::QuantitySlot
     :members:
 
 .. doxygenclass:: specfem::plugin::Buffer
@@ -58,5 +79,7 @@ C++ layer
 
 .. doxygenclass:: specfem::plugin::Communicator
     :members:
+
+.. doxygenclass:: specfem::plugin::Unsupported
 
 .. doxygendefine:: SPECFEMPP_DEFINE_INJECTION_PLUGIN

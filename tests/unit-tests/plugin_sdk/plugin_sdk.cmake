@@ -2,16 +2,20 @@
 # tests/unit-tests/CMakeLists.txt.
 #
 # The test plugins are real loadable modules, built the way plugin authors build
-# them, and loaded with dlopen by the tests.
+# them, and loaded with dlopen by the tests. specfempp_add_injection_plugin
+# already checks their exported symbols after every build.
 
 specfempp_add_injection_plugin(plugin_sdk_test_good_plugin
   SOURCES ${CMAKE_CURRENT_LIST_DIR}/good_plugin.cpp)
 specfempp_add_injection_plugin(plugin_sdk_test_c_plugin
   SOURCES ${CMAKE_CURRENT_LIST_DIR}/c_plugin.c)
-# Deliberately bypasses specfempp_add_injection_plugin so it leaks a symbol.
-add_library(plugin_sdk_test_leaky_plugin MODULE
-  ${CMAKE_CURRENT_LIST_DIR}/leaky_plugin.cpp)
-target_link_libraries(plugin_sdk_test_leaky_plugin PRIVATE specfem::plugin_sdk)
+
+# plugin_sdk_tests embeds the module paths, so with an external test directory
+# the modules have to live there too (see specfem_add_test).
+if(SPECFEM_TEST_DATA_MODE STREQUAL "INSTALL")
+  set_target_properties(plugin_sdk_test_good_plugin plugin_sdk_test_c_plugin
+    PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${SPECFEM_TEST_OUTPUT_DIR}")
+endif()
 
 specfem_add_test(plugin_sdk_tests
   LABELS      plugin_sdk
@@ -19,24 +23,38 @@ specfem_add_test(plugin_sdk_tests
   LIBRARIES   specfem::plugin_sdk
               gtest_main
               ${CMAKE_DL_LIBS}
-  DEFINITIONS "SPFP_TEST_GOOD_PLUGIN=\"$<TARGET_FILE:plugin_sdk_test_good_plugin>\""
-              "SPFP_TEST_C_PLUGIN=\"$<TARGET_FILE:plugin_sdk_test_c_plugin>\""
+  DEFINITIONS "SPECFEMPP_TEST_GOOD_PLUGIN=\"$<TARGET_FILE:plugin_sdk_test_good_plugin>\""
+              "SPECFEMPP_TEST_C_PLUGIN=\"$<TARGET_FILE:plugin_sdk_test_c_plugin>\""
 )
 add_dependencies(plugin_sdk_tests
   plugin_sdk_test_good_plugin plugin_sdk_test_c_plugin)
 
-foreach(_plugin good c leaky)
-  add_test(NAME plugin_sdk_exports_${_plugin}
-    COMMAND ${CMAKE_COMMAND}
-      "-DPLUGIN_FILE=$<TARGET_FILE:plugin_sdk_test_${_plugin}_plugin>"
-      "-DFORMAT=$<IF:$<PLATFORM_ID:Darwin>,macho,elf>"
-      "-DNM=${CMAKE_NM}"
-      -P "${CMAKE_SOURCE_DIR}/sdk/cmake/check_plugin_exports.cmake")
-  set_tests_properties(plugin_sdk_exports_${_plugin} PROPERTIES
-    LABELS plugin_sdk)
-endforeach()
-# The checker must reject the leaky plugin and name the extra symbol.
+# The ABI medium and property identifiers must equal the SPECFEM++ tag ids.
+specfem_add_test(plugin_sdk_tag_ids_tests
+  LABELS      plugin_sdk
+  SOURCES     ${CMAKE_CURRENT_LIST_DIR}/tag_ids_tests.cpp
+  LIBRARIES   specfem::plugin_sdk
+              specfem::macros
+              Kokkos::kokkos
+              gtest_main
+)
+
+# The tests below need the source and build trees, so they are registered only
+# there and do not run from an external test directory (SPECFEMPP_TEST_DIR).
+
+# Deliberately bypasses specfempp_add_injection_plugin so it leaks a symbol; the
+# checker must reject it and name the extra symbol.
+add_library(plugin_sdk_test_leaky_plugin MODULE
+  ${CMAKE_CURRENT_LIST_DIR}/leaky_plugin.cpp)
+target_link_libraries(plugin_sdk_test_leaky_plugin PRIVATE specfem::plugin_sdk)
+add_test(NAME plugin_sdk_exports_leaky
+  COMMAND ${CMAKE_COMMAND}
+    "-DPLUGIN_FILE=$<TARGET_FILE:plugin_sdk_test_leaky_plugin>"
+    "-DFORMAT=$<IF:$<PLATFORM_ID:Darwin>,macho,elf>"
+    "-DNM=${CMAKE_NM}"
+    -P "${CMAKE_SOURCE_DIR}/sdk/cmake/check_plugin_exports.cmake")
 set_tests_properties(plugin_sdk_exports_leaky PROPERTIES
+  LABELS plugin_sdk
   PASS_REGULAR_EXPRESSION "must export exactly specfempp_injection_plugin, but exports:.*specfempp_leaked_symbol")
 
 # Builds a plugin against the installed SDK only, as an external author would.

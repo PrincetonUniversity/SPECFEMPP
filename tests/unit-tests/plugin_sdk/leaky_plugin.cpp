@@ -3,11 +3,11 @@
 
 #include "specfem/plugin/injection_abi.h"
 
-extern "C" SPFP_EXPORT int specfempp_leaked_symbol() { return 1; }
+extern "C" SPECFEMPP_EXPORT int specfempp_leaked_symbol() { return 1; }
 
-static const spfp_injection_plugin leaky_table{};
+static const specfempp_injection_plugin_table leaky_table{};
 
-extern "C" SPFP_EXPORT const spfp_injection_plugin *
+extern "C" SPECFEMPP_EXPORT const specfempp_injection_plugin_table *
 specfempp_injection_plugin(void) {
   return &leaky_table;
 }

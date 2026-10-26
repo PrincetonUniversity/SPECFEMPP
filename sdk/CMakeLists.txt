@@ -24,7 +24,7 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/SpecfemppPluginSDKFunctions.cmake")
 # The package version is the ABI version, read from the header so there is a
 # single source of truth.
 file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/include/specfem/plugin/injection_abi.h"
-     _abi_line REGEX "^#define SPFP_INJECTION_ABI_VERSION [0-9]+")
+     _abi_line REGEX "^#define SPECFEMPP_INJECTION_ABI_VERSION [0-9]+")
 string(REGEX REPLACE ".* ([0-9]+)$" "\\1" SPECFEMPP_PLUGIN_ABI_VERSION "${_abi_line}")
 
 set(_config_dir "${CMAKE_INSTALL_LIBDIR}/cmake/SpecfemppPluginSDK")
