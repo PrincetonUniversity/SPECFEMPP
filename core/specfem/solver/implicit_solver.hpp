@@ -23,28 +23,6 @@ namespace specfem {
 namespace solver {
 
 /**
- * @brief Algebraic form in which the Newmark update is solved.
- *
- * Both forms integrate the same scheme and, for \f$ \beta > 0 \f$, their
- * operators are the same matrix up to the positive scalar
- * \f$ 1 / (\beta \Delta t^2) \f$ -- so sparsity, conditioning, and GMRES
- * behaviour are identical. They differ in which state variable is the
- * unknown, and hence in the admissible range of \f$ \beta \f$.
- */
-enum class NewmarkForm {
-  /// Solve for \f$ u_{n+1} \f$ on
-  /// \f$ M / (\beta \Delta t^2) + \gamma / (\beta \Delta t) C + K \f$.
-  /// Requires \f$ \beta > 0 \f$; the path for static / steady-state work.
-  displacement,
-  /// Solve for \f$ a_{n+1} \f$ on
-  /// \f$ M + \gamma \Delta t \, C + \beta \Delta t^2 K \f$. Valid for
-  /// \f$ \beta \ge 0 \f$, so it admits the explicit
-  /// (\f$ \beta = 0, \gamma = 1/2 \f$) limit and reproduces the explicit
-  /// time_marching solver exactly.
-  acceleration
-};
-
-/**
  * @brief Newmark-beta parameters of the implicit update.
  *
  * The defaults (\f$ \beta = 1/4, \gamma = 1/2 \f$, average acceleration) are
@@ -55,8 +33,7 @@ enum class NewmarkForm {
  * stable and second-order in the resolved modes.
  */
 struct NewmarkBetaParameters {
-  /// Newmark \f$ \beta \ge 0 \f$. NewmarkForm::displacement additionally
-  /// requires \f$ \beta > 0 \f$.
+  /// Newmark \f$ \beta \ge 0 \f$; 0 is the explicit limit
   type_real beta = static_cast<type_real>(0.25);
   type_real gamma = static_cast<type_real>(0.5); ///< Newmark \f$ \gamma \f$
 
@@ -82,11 +59,6 @@ struct NewmarkBetaParameters {
  */
 struct ImplicitSolverConfig {
   NewmarkBetaParameters newmark{}; ///< Newmark update parameters
-
-  /// Algebraic form of the update. Defaults to `displacement`, the form the
-  /// static / steady-state work uses; `acceleration` additionally admits
-  /// \f$ \beta = 0 \f$.
-  NewmarkForm form = NewmarkForm::displacement;
 
   /// GMRES relative residual tolerance. Floor ~1e-6 in single precision.
   specfem::linear_system::scalar_type gmres_tolerance =
@@ -126,32 +98,11 @@ struct ImplicitSolverConfig {
  *   + \Delta t^2 (1/2 - \beta) a_n, \quad
  * v_{\mathrm{pred}} = v_n + \Delta t (1 - \gamma) a_n. \f]
  *
- * Two algebraic forms of that update are available (see
- * @ref specfem::solver::NewmarkForm); for \f$ \beta > 0 \f$ their operators
- * are the same matrix up to the positive scalar
- * \f$ 1/(\beta \Delta t^2) \f$, so sparsity, conditioning, and GMRES
- * behaviour are identical.
- *
- * `NewmarkForm::displacement` solves \f$ A u_{n+1} = b \f$ with
- * \f$ A = M / (\beta \Delta t^2) + \gamma / (\beta \Delta t) \, C + K \f$ and
- * \f[ b = f_{n+1}
- * + M \circ \left[ \frac{u_n}{\beta \Delta t^2} + \frac{v_n}{\beta \Delta t}
- *   + \left( \frac{1}{2\beta} - 1 \right) a_n \right]
- * + C \left[ \frac{\gamma}{\beta \Delta t} u_n
- *   + \left( \frac{\gamma}{\beta} - 1 \right) v_n
- *   + \Delta t \left( \frac{\gamma}{2\beta} - 1 \right) a_n \right], \f]
- * recovering
- * \f$ a_{n+1} = (u_{n+1} - u_n - \Delta t \, v_n) / (\beta \Delta t^2) -
- * (1/(2\beta) - 1) a_n \f$. Every coefficient carries \f$ 1/\beta \f$, so
- * this form requires \f$ \beta > 0 \f$: at \f$ \beta = 0 \f$,
- * \f$ u_{n+1} \f$ does not depend on \f$ a_{n+1} \f$ at all and the map is
- * not invertible.
- *
- * `NewmarkForm::acceleration` solves \f$ A a_{n+1} = b \f$ with
+ * Each step solves \f$ A a_{n+1} = b \f$ with
  * \f$ A = M + \gamma \Delta t \, C + \beta \Delta t^2 K \f$ and
  * \f[ b = f_{n+1} - C v_{\mathrm{pred}} - K u_{\mathrm{pred}}, \f]
- * recovering \f$ u_{n+1} \f$ and \f$ v_{n+1} \f$ from the update above. No
- * coefficient divides by \f$ \beta \f$, so \f$ \beta = 0 \f$ is a regular
+ * then recovers \f$ u_{n+1} \f$ and \f$ v_{n+1} \f$ from the update above.
+ * No coefficient divides by \f$ \beta \f$, so \f$ \beta = 0 \f$ is a regular
  * member: at \f$ \beta = 0, \gamma = 1/2 \f$ the operator reduces to
  * \f$ M + (\Delta t/2) C \f$ and the scheme is the explicit central-difference
  * update of the production `time_marching` solver.
@@ -210,10 +161,8 @@ public:
    * `time_scheme->get_timestep()`, computes the Ifpack2 preconditioner, and
    * builds the Belos GMRES problem. Throws `std::runtime_error` outside the
    * supported scope (see the class docs), for `beta < 0`, for `gamma`
-   * outside \f$ [0, 1] \f$, for `beta = 0` in NewmarkForm::displacement (the
-   * explicit limit has no displacement-form operator), or when SPECFEM++ is
-   * built without `SPECFEM_ENABLE_TENSOROPS` (required by the element
-   * stiffness kernel).
+   * outside \f$ [0, 1] \f$, or when SPECFEM++ is built without
+   * `SPECFEM_ENABLE_TENSOROPS` (required by the element stiffness kernel).
    *
    * @param time_scheme Supplies the time step, step count, and seismogram
    *        cadence. Its predictor/corrector phases are NOT used -- the
@@ -235,12 +184,11 @@ public:
   /**
    * @brief Execute the implicit time loop.
    *
-   * Per step: extract the source vector, form the right-hand side from the
-   * previous state, solve \f$ A u_{n+1} = b \f$ (throws on GMRES
-   * non-convergence), recover \f$ a_{n+1}, v_{n+1} \f$, write the state back
-   * to the assembly fields, and run seismogram computation and periodic
-   * tasks on the explicit solver's cadence. Stops early when the
-   * steady-state criterion fires (if enabled).
+   * Per step, in the explicit solver's phase order: predictor, forces,
+   * solve \f$ A a_{n+1} = b \f$ (throws on GMRES non-convergence),
+   * corrector; then write the state back to the assembly fields, and run
+   * seismogram computation and periodic tasks on the explicit solver's cadence.
+   * Stops early when the steady-state criterion fires (if enabled).
    */
   void run() override;
 
@@ -279,24 +227,25 @@ public:
   }
 
 private:
-  /// (Re)build A from K, C, M for time step `dt` in the configured form,
-  /// then preconditioner and Belos problem. Idempotent; exact for any dt
-  /// since K, C, M are kept.
+  /// (Re)build A from K, C, M for time step `dt`, then preconditioner and
+  /// Belos problem. Idempotent; exact for any dt since K, C, M are kept.
   void form_operator(const type_real dt);
 
-  /// Solve A `unknown` = rhs_ warm-started from `unknown`'s current value.
-  /// Throws if the true relative residual misses `gmres_tolerance`; a Belos
-  /// "loss of accuracy" flag whose true residual is fine is logged and
-  /// tolerated (single-precision PseudoBlockGmres reports it spuriously).
-  void solve_into(specfem::linear_system::VectorView &unknown, const int istep);
+  /// u_new_ = u_pred, v_new_ = v_pred
+  void apply_predictor_phase();
 
-  /// One displacement-form step: build b, solve for u_{n+1}, recover
-  /// a_{n+1} and v_{n+1} into a_new_ / v_new_. Requires beta > 0.
-  void step_displacement_form(const int istep);
+  /// rhs_ = f_{n+1} - K u_pred - C v_pred; the analogue of update_medium
+  void compute_forces(const int istep);
 
-  /// One acceleration-form step: build b, solve for a_{n+1}, recover
-  /// u_{n+1} and v_{n+1} into u_new_ / v_new_. Valid for beta >= 0.
-  void step_acceleration_form(const int istep);
+  /// a_new_ = A^{-1} rhs_, warm-started from a_n; the analogue of the mass
+  /// division. Throws if the true relative residual misses
+  /// `gmres_tolerance`; a Belos "loss of accuracy" flag whose true residual
+  /// is fine is logged and tolerated (single-precision PseudoBlockGmres
+  /// reports it spuriously).
+  void solve(const int istep);
+
+  /// u_new_ += beta dt^2 a_new_, v_new_ += gamma dt a_new_
+  void apply_corrector_phase();
 
   /// Zero the acceleration field, run the production source kernel at
   /// `istep`, and gather the result: f = source vector at t_{n+1}
@@ -324,7 +273,7 @@ private:
   Teuchos::RCP<operator_type> preconditioner_; ///< Ifpack2 right prec
   Teuchos::RCP<Belos::LinearProblem<specfem::linear_system::scalar_type,
                                     multivector_type, operator_type>>
-      problem_; ///< Belos linear problem A u_new = b
+      problem_; ///< Belos linear problem A a_new = b
   Teuchos::RCP<Belos::SolverManager<specfem::linear_system::scalar_type,
                                     multivector_type, operator_type>>
       gmres_; ///< Belos GMRES solver manager

@@ -112,16 +112,16 @@ TraceMap collect_traces(AssemblyType &assembly) {
   return traces;
 }
 
-// The implicit solver running the EXPLICIT scheme: acceleration form at
-// beta = 0, gamma = 1/2 is the central-difference member of the Newmark
-// family, so it must reproduce the production explicit solver step for step
+// The implicit solver running the EXPLICIT scheme: beta = 0, gamma = 1/2 is the
+// central-difference member of the Newmark family, so it must reproduce the
+// production explicit solver step for step
 // -- not to a calibrated tolerance, but as an algebraic identity.
 //
 // Why the two paths coincide exactly here. The explicit predictor forms
 // u_pred and v_half = v_n + (dt/2) a_n, the force kernel computes
 // f - K u_pred - C v_half, the result is divided by the effective mass
 // M + (dt/2) lumped(C), and the corrector adds (dt/2) a_{n+1}. That IS the
-// acceleration form at beta = 0, gamma = 1/2, whose operator is
+// implicit update at beta = 0, gamma = 1/2, whose operator is
 // M + (dt/2) C. The one discrepancy is that production lumps C to a row-sum
 // diagonal while DampingAssembler builds the full block-diagonal C -- so the
 // identity holds only where C is empty. This fixture has no Stacey
@@ -134,12 +134,6 @@ TraceMap collect_traces(AssemblyType &assembly) {
 // against the explicit solver -- those could only assert calibrated O(dt^2)
 // dispersion bounds (0.15 / 0.35 / 0.55 relative L2), four orders of
 // magnitude looser than what an exact scheme match can assert.
-//
-// Not covered here: the displacement form's time marching (the operator
-// itself is pinned by the ImplicitSolver3D form-parameterized unit test).
-// That form exists for the steady-state static solver, whose test will
-// compare static displacement at chosen time steps -- through the
-// seismogram interface, which is stable under field renumbering.
 TEST(ImplicitNewmark3D, ReproducesExplicitSchemeAtBetaZero) {
 #ifndef SPECFEM_ENABLE_TENSOROPS
   GTEST_SKIP() << "SPECFEM++ was built without TensorOperations "
@@ -163,7 +157,6 @@ TEST(ImplicitNewmark3D, ReproducesExplicitSchemeAtBetaZero) {
   {
     auto test_case = build_case_3d(fixture);
     specfem::solver::ImplicitSolverConfig config;
-    config.form = specfem::solver::NewmarkForm::acceleration;
     config.newmark.beta = static_cast<type_real>(0);
     config.newmark.gamma = static_cast<type_real>(0.5);
     // At beta = 0 with C empty the operator is the diagonal lumped mass, so
