@@ -20,7 +20,7 @@ namespace specfem {
  *
  * Plugin authors derive from @c InjectionPlugin and register the class with
  * @c SPECFEMPP_DEFINE_INJECTION_PLUGIN; the macro implements the C ABI in
- * @c specfem/plugin/injection_abi.h on top of it.
+ * @c %specfem/plugin/injection_abi.h on top of it.
  */
 namespace plugin {
 
