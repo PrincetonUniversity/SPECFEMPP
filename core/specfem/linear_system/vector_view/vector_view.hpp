@@ -329,20 +329,25 @@ void emit(specfem::linear_system::vector_type &target,
           bool &overwrite, const specfem::linear_system::VectorSpace &space) {
   using scalar_type = specfem::linear_system::scalar_type;
 
-  std::size_t i = 0;
-  while (i + 1 < N) {
-    target.update(
-        expression.terms[i].alpha, *expression.terms[i].vector,
-        expression.terms[i + 1].alpha, *expression.terms[i + 1].vector,
-        overwrite ? static_cast<scalar_type>(0) : static_cast<scalar_type>(1));
-    overwrite = false;
-    i += 2;
-  }
-  if (i < N) {
-    target.update(expression.terms[i].alpha, *expression.terms[i].vector,
-                  overwrite ? static_cast<scalar_type>(0)
-                            : static_cast<scalar_type>(1));
-    overwrite = false;
+  // Guarded so nvcc does not warn on the always-false `i < N` when an
+  // operator-only expression has N == 0
+  if constexpr (N > 0) {
+    std::size_t i = 0;
+    while (i + 1 < N) {
+      target.update(expression.terms[i].alpha, *expression.terms[i].vector,
+                    expression.terms[i + 1].alpha,
+                    *expression.terms[i + 1].vector,
+                    overwrite ? static_cast<scalar_type>(0)
+                              : static_cast<scalar_type>(1));
+      overwrite = false;
+      i += 2;
+    }
+    if (i < N) {
+      target.update(expression.terms[i].alpha, *expression.terms[i].vector,
+                    overwrite ? static_cast<scalar_type>(0)
+                              : static_cast<scalar_type>(1));
+      overwrite = false;
+    }
   }
 
   std::apply(
