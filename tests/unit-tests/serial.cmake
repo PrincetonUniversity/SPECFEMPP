@@ -333,6 +333,8 @@ specfem_add_test(assembly_tests
             assembly/dim3/jacobian_matrix/jacobian_matrix.cpp
             assembly/dim3/properties/properties.cpp
             assembly/dim3/element_types/element_context.cpp
+            assembly/dim3/attenuation/recompute.cpp
+            assembly/dim3/attenuation/globe_attenuation.cpp
             assembly/dim3/element_intersections/globe_fluid_solid.cpp
   LIBRARIES specfem::mesh
             specfem::assembly

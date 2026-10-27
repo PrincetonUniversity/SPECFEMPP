@@ -14,7 +14,8 @@ void specfem::assembly::Attenuation<specfem::element::dimension_tag::dim3>::
         const specfem::units::Hertz fc, const specfem::units::Hertz f0,
         const specfem::utilities::Band<specfem::units::Hertz> &band,
         const Kokkos::View<type_real[N_SLS], Kokkos::DefaultHostExecutionSpace>
-            &tau_sigma) {
+            &tau_sigma,
+        const bool bulk_attenuation) {
 
   specfem::tag_dispatch::for_each(
       attenuation_medium_combinations, [&]<typename TagsType>() {
@@ -22,8 +23,8 @@ void specfem::assembly::Attenuation<specfem::element::dimension_tag::dim3>::
             TagsType::medium_tag, TagsType::property_tag,
             TagsType::attenuation_tag);
         attenuation_storage.template get<TagsType>() = {
-          elements, mesh, materials, ngllz, nglly,
-          ngllx,    fc,   f0,        band,  tau_sigma
+          elements, mesh, materials, ngllz,     nglly,           ngllx,
+          fc,       f0,   band,      tau_sigma, bulk_attenuation
         };
       });
 }
@@ -57,6 +58,7 @@ specfem::assembly::Attenuation<specfem::element::dimension_tag::dim3>::
   this->fc = fc;
   this->band = config.band;
   this->tau_sigma = config.tau_sigma;
+  this->bulk_attenuation = config.bulk_attenuation;
 
   // Compute Runge-Kutta memory-variable update coefficients from the
   // precomputed tau_sigma stored in the mesh attenuation_config.
@@ -79,5 +81,5 @@ specfem::assembly::Attenuation<specfem::element::dimension_tag::dim3>::
   Kokkos::deep_copy(this->d_gamma_rk, this->gamma_rk);
 
   init_memory_variables(element_types, mesh, materials, fc, config.f0,
-                        config.band, config.tau_sigma);
+                        config.band, config.tau_sigma, config.bulk_attenuation);
 }
