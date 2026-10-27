@@ -5,6 +5,7 @@
 #include "specfem/compute.hpp"
 #include "specfem/element.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/injection/method/coupling_method.hpp"
 #include "specfem/periodic_tasks.hpp"
 #include "specfem/timescheme.hpp"
 
@@ -47,15 +48,19 @@ public:
    * @param tasks Periodic tasks executed during simulation (e.g., output,
    * plotting)
    * @param assembly Spectral element assembly containing mesh and field data
+   * @param injection Wavefield-injection method, if any
    */
   time_marching(
       const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
       const std::vector<
           std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag>>>
           &tasks,
-      specfem::assembly::assembly<dimension_tag> assembly)
+      specfem::assembly::assembly<dimension_tag> assembly,
+      std::shared_ptr<specfem::injection::CouplingMethod<DimensionTag>>
+          injection = nullptr)
       : time_scheme(time_scheme), tasks(tasks), assembly(assembly),
-        mpi_buffers(specfem::solver::make_mpi_buffers(this->assembly)) {}
+        mpi_buffers(specfem::solver::make_mpi_buffers(this->assembly)),
+        injection(std::move(injection)) {}
 
   ///@}
 
@@ -93,6 +98,8 @@ private:
   specfem::solver::MPIBuffers<dimension_tag>
       mpi_buffers; ///< Solver-owned MPI buffers for acceleration and
                    ///< mass-matrix exchange (inner/outer overlap)
+  std::shared_ptr<specfem::injection::CouplingMethod<DimensionTag>>
+      injection; ///< Wavefield-injection method, if any
 };
 
 /**

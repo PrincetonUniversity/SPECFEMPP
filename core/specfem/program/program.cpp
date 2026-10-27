@@ -41,9 +41,9 @@ print_end_message(std::chrono::time_point<std::chrono::system_clock> start_time,
   return message.str();
 }
 
-bool execute(
-    const std::string &dimension, const YAML::Node &parameter_dict,
-    const std::optional<specfem::injection::PluginOptions> &injection) {
+bool execute(const std::string &dimension, const YAML::Node &parameter_dict,
+             const std::optional<specfem::injection::PluginOptions> &injection,
+             const specfem::injection::MethodRegistry &registry) {
   try {
     // Use simulation model enumeration for validation
     specfem::simulation::model simulation_model =
@@ -85,7 +85,7 @@ bool execute(
       tasks.push_back(signal_task);
 
       // Run 3D Cartesian program
-      program_3d(parameter_dict, tasks, false, injection);
+      program_3d(parameter_dict, tasks, false, injection, registry);
 
       return true;
     }
@@ -97,7 +97,7 @@ bool execute(
       tasks.push_back(
           std::make_shared<
               specfem::periodic_tasks::check_signal<dimension_tag>>(10));
-      program_3d(parameter_dict, tasks, true, injection);
+      program_3d(parameter_dict, tasks, true, injection, registry);
       return true;
     }
     default: {
