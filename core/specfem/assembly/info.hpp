@@ -3,6 +3,7 @@
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/info/impl/bounding_box.hpp"
 #include "specfem/assembly/info/impl/bounds.hpp"
+#include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/properties.hpp"
 #include "specfem/element.hpp"
@@ -10,6 +11,25 @@
 #include <map>
 
 namespace specfem::assembly {
+
+/** @brief Global statistics for one globe region, in SI units. */
+struct RegionInfo {
+  int element_count = 0;             ///< Number of elements across all ranks.
+  info::impl::Bounds radius;         ///< GLL radius range in metres.
+  info::impl::Bounds wave_speed;     ///< Propagating wave speed range in m/s.
+  type_real minimum_gll_spacing = 0; ///< Minimum adjacent GLL distance, m.
+  type_real suggested_time_step = 0; ///< Minimum element CFL estimate, s.
+};
+
+/** @brief Location of an extremum; element indices are local to @c rank. */
+struct InfoLocation {
+  int rank = -1;            ///< Owning MPI rank (lowest rank wins ties).
+  int compute_element = -1; ///< Element index in the sorted assembly.
+  int mesh_element = -1;    ///< Element index in the input database.
+  specfem::element::region_tag region =
+      specfem::element::region_tag::crust_mantle;
+  double radius = 0; ///< Radius of the minimum-spacing edge's first GLL point.
+};
 
 /**
  * @brief Computes and stores mesh statistics and numerical stability
@@ -40,10 +60,14 @@ template <specfem::element::dimension_tag DimensionTag> struct Info {
    * @param mesh Assembled mesh containing element geometry and GLL points
    * @param properties Material properties at all mesh points
    * @param element_types Element classification by medium and property type
+   * @param jacobian_matrix Optional existing Jacobians for globe integration.
+   *        When omitted, they are computed from the mesh only for globe runs.
    */
   Info(const specfem::assembly::mesh<dimension_tag> &mesh,
        const specfem::assembly::properties<dimension_tag> &properties,
-       const specfem::assembly::element_types<dimension_tag> &element_types);
+       const specfem::assembly::element_types<dimension_tag> &element_types,
+       const specfem::assembly::jacobian_matrix<dimension_tag>
+           *jacobian_matrix = nullptr);
 
   info::impl::BoundingBox<dimension_tag> domain_bounds; ///< Spatial extent of
                                                         ///< the mesh domain
@@ -61,7 +85,12 @@ template <specfem::element::dimension_tag DimensionTag> struct Info {
   /** Global element count per globe region; empty unless the element types
    *  carry globe element context. */
   std::map<specfem::element::region_tag, int> elements_per_region;
-  ///< across elements
+
+  std::map<specfem::element::region_tag, RegionInfo> regions;
+  InfoLocation minimum_spacing_location; ///< Global minimum GLL spacing.
+  InfoLocation cfl_location; ///< Element imposing the global CFL limit.
+  double total_volume = 0; ///< Global integral of Jacobian times weights, m^3.
+  double total_mass = 0;   ///< Global integral of density times volume, kg.
 
   /**
    * @brief Generate formatted string representation of mesh statistics.
@@ -77,10 +106,14 @@ extern template specfem::assembly::Info<specfem::element::dimension_tag::dim2>::
          const specfem::assembly::properties<
              specfem::element::dimension_tag::dim2> &,
          const specfem::assembly::element_types<
-             specfem::element::dimension_tag::dim2> &);
+             specfem::element::dimension_tag::dim2> &,
+         const specfem::assembly::jacobian_matrix<
+             specfem::element::dimension_tag::dim2> *);
 extern template specfem::assembly::Info<specfem::element::dimension_tag::dim3>::
     Info(const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &,
          const specfem::assembly::properties<
              specfem::element::dimension_tag::dim3> &,
          const specfem::assembly::element_types<
-             specfem::element::dimension_tag::dim3> &);
+             specfem::element::dimension_tag::dim3> &,
+         const specfem::assembly::jacobian_matrix<
+             specfem::element::dimension_tag::dim3> *);

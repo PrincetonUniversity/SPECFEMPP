@@ -1,0 +1,39 @@
+ calculated volume:    4.1887900919118657
+      exact volume:    4.1887902047863905
+
+ computed total Earth mass for this density model and mesh:
+       5.97553797E+24  kg
+    (should be not too far from 5.974E+24 kg)
+
+ average density for this density model and mesh:
+       5516.52490      kg/m3
+    (should be not too far from 5514 kg/m3)
+
+ position of the center of mass of the globe for this density model and mesh:
+    x =  -0.606220663      km
+    y =  -0.433103979      km
+    z =  -0.520078659      km
+    distance to center =   0.908605695      km
+
+ Repartition of elements in regions:
+ ----------------------------------
+
+ number of elements in each slice      :         9424
+ total number of elements in all slices:        56544
+
+  - crust and mantle       :    91.6808167      %
+  - outer core             :    7.30050945      %
+  - inner core             :    1.01867568      %
+
+ Load balancing = 100 % by definition
+
+
+ the time step of the solver will be DT =   0.189999998
+
+ using single precision for the calculations
+
+ smallest and largest possible floating-point numbers are:    1.17549435E-38   3.40282347E+38
+
+
+ Elapsed time for mesh generation and buffer creation in seconds =    7.07286596
+ Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 07 s

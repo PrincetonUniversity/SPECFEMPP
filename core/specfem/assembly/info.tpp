@@ -1,16 +1,17 @@
 #include "info.hpp"
+#include "specfem/assembly/info/impl/bounding_box.hpp"
 #include "specfem/assembly/info/impl/bounds.hpp"
-#include "specfem/mpi.hpp"
 #include "specfem/assembly/info/impl/compute.hpp"
-#include "specfem/assembly/info/impl/scatter_minmax.hpp"
 #include "specfem/assembly/info/impl/distances.hpp"
+#include "specfem/assembly/info/impl/globe.hpp"
 #include "specfem/assembly/info/impl/region_counts.hpp"
+#include "specfem/assembly/info/impl/scatter_minmax.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/execution.hpp"
+#include "specfem/mpi.hpp"
+#include "specfem/parallel_configuration.hpp"
 #include "specfem/point.hpp"
 #include "specfem/setup.hpp"
-#include "specfem/assembly/info/impl/bounding_box.hpp"
-#include "specfem/execution.hpp"
-#include "specfem/parallel_configuration.hpp"
 #include "specfem/tag_dispatch.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -20,32 +21,31 @@ namespace specfem::assembly::info::impl {
 
 /// @brief Container for all scatter min/max reducers used in Info computation
 /// @tparam ndim Number of spatial dimensions for bounding box
-template <specfem::element::dimension_tag DimensionTag>
-struct InfoScatters {
+template <specfem::element::dimension_tag DimensionTag> struct InfoScatters {
 
-  constexpr static int ndim =
-      specfem::element::dimension<DimensionTag>::dim;
+  constexpr static int ndim = specfem::element::dimension<DimensionTag>::dim;
 
   using ScatterT = ScatterMinMax<type_real>;
   using ScatterBoundsT = ScatterMinMax<type_real, ndim>;
 
   // Global property bounds
-  ScatterT vp{"vp"};
-  ScatterT vs{"vs"};
-  ScatterT v{"v"};
-  ScatterT rho{"rho"};
+  ScatterT vp{ "vp" };
+  ScatterT vs{ "vs" };
+  ScatterT v{ "v" };
+  ScatterT rho{ "rho" };
 
   // Distance bounds
-  ScatterT distance{"distance"};
-  ScatterT gll_distance{"gll_distance"};
+  ScatterT distance{ "distance" };
+  ScatterT gll_distance{ "gll_distance" };
 
   // Derived quantities
-  ScatterT minimum_period{"minimum_period"};
-  ScatterT dt{"dt"};
+  ScatterT minimum_period{ "minimum_period" };
+  ScatterT dt{ "dt" };
 
   // Domain bounding box
-  ScatterBoundsT domain_bounds{"specfem::assembly::info::domain_bounds_scatter",
-                               ndim};
+  ScatterBoundsT domain_bounds{
+    "specfem::assembly::info::domain_bounds_scatter", ndim
+  };
 
   // Per-element scatter views
   ScatterT element_v;
@@ -93,7 +93,8 @@ void process_medium_elements(
         const auto point_index = iterator_index.get_index();
 
         // Create point property object
-        specfem::point::properties<specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false>>
+        specfem::point::properties<
+            specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false>>
             point_property;
         specfem::assembly::load_on_device(point_index, properties,
                                           point_property);
@@ -183,8 +184,7 @@ void finalize_element_minmax(const specfem::assembly::mesh<DimensionTag> &mesh,
         int fgll = mesh.element_grid.ngll - 1;
         type_real avg_distance =
             compute_average_gll_spacing(distance_max, fgll);
-        type_real min_period =
-            compute_minimum_period(avg_distance, vmin);
+        type_real min_period = compute_minimum_period(avg_distance, vmin);
 
         // Update minimum period scatter
         minimum_period_acc.update(min_period);
@@ -205,7 +205,8 @@ template <specfem::element::dimension_tag DimensionTag>
 specfem::assembly::Info<DimensionTag>::Info(
     const specfem::assembly::mesh<dimension_tag> &mesh,
     const specfem::assembly::properties<dimension_tag> &properties,
-    const specfem::assembly::element_types<dimension_tag> &element_types) {
+    const specfem::assembly::element_types<dimension_tag> &element_types,
+    const specfem::assembly::jacobian_matrix<dimension_tag> *jacobian_matrix) {
 
   // Create all scatter reducers in a single struct
   info::impl::InfoScatters<dimension_tag> scatters(mesh.nspec);
@@ -214,10 +215,10 @@ specfem::assembly::Info<DimensionTag>::Info(
   if constexpr (specfem::element::dimension_tag::dim2 == dimension_tag) {
     specfem::tag_dispatch::for_each(
         DIMENSION_SET(dim2) *
-        MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
-                   elastic_psv_t) *
-        PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
-        ATTENUATION_SET(none),
+            MEDIUM_SET(elastic_psv, elastic_sh, acoustic, poroelastic,
+                       elastic_psv_t) *
+            PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
+            ATTENUATION_SET(none),
         [&]<typename ElementTags>() {
           info::impl::process_medium_elements<ElementTags::dimension_tag,
                                               ElementTags::medium_tag,
@@ -226,10 +227,9 @@ specfem::assembly::Info<DimensionTag>::Info(
         });
   } else {
     specfem::tag_dispatch::for_each(
-        DIMENSION_SET(dim3) *
-        MEDIUM_SET(elastic, acoustic, elastic_spin) *
-        PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
-        ATTENUATION_SET(none),
+        DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic, elastic_spin) *
+            PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat) *
+            ATTENUATION_SET(none),
         [&]<typename ElementTags>() {
           info::impl::process_medium_elements<ElementTags::dimension_tag,
                                               ElementTags::medium_tag,
@@ -248,8 +248,8 @@ specfem::assembly::Info<DimensionTag>::Info(
   this->rho = scatters.rho.get_bounds();
   this->element_size = scatters.distance.get_bounds();
   this->gll_distance = scatters.gll_distance.get_bounds();
-  this->domain_bounds =
-      info::impl::BoundingBox<dimension_tag>(scatters.domain_bounds.get_all_bounds());
+  this->domain_bounds = info::impl::BoundingBox<dimension_tag>(
+      scatters.domain_bounds.get_all_bounds());
 
   auto period_bounds = scatters.minimum_period.get_bounds();
   this->largest_minimum_period = period_bounds.max;
@@ -286,12 +286,10 @@ specfem::assembly::Info<DimensionTag>::Info(
   constexpr int ndim = info::impl::InfoScatters<dimension_tag>::ndim;
   for (int i = 0; i < ndim; ++i) {
     SPECFEM_MPI_SAFECALL(
-        MPI_Allreduce(MPI_IN_PLACE,
-                      &this->domain_bounds.bounds_array(i).min, 1,
+        MPI_Allreduce(MPI_IN_PLACE, &this->domain_bounds.bounds_array(i).min, 1,
                       SPECFEM_MPI_TYPE_REAL, MPI_MIN, comm));
     SPECFEM_MPI_SAFECALL(
-        MPI_Allreduce(MPI_IN_PLACE,
-                      &this->domain_bounds.bounds_array(i).max, 1,
+        MPI_Allreduce(MPI_IN_PLACE, &this->domain_bounds.bounds_array(i).max, 1,
                       SPECFEM_MPI_TYPE_REAL, MPI_MAX, comm));
   }
   SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE,
@@ -299,6 +297,23 @@ specfem::assembly::Info<DimensionTag>::Info(
                                      SPECFEM_MPI_TYPE_REAL, MPI_MAX, comm));
   SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &this->suggested_time_step,
                                      1, SPECFEM_MPI_TYPE_REAL, MPI_MIN, comm));
+
+  if constexpr (dimension_tag == specfem::element::dimension_tag::dim3) {
+    int has_context = element_types.has_element_context();
+    SPECFEM_MPI_SAFECALL(
+        MPI_Allreduce(MPI_IN_PLACE, &has_context, 1, MPI_INT, MPI_MAX, comm));
+    if (has_context) {
+      if (jacobian_matrix) {
+        info_impl::compute_globe_info(mesh, properties, element_types,
+                                      *jacobian_matrix, scatters, *this);
+      } else {
+        const specfem::assembly::jacobian_matrix<dimension_tag> jacobians(mesh);
+        info_impl::compute_globe_info(mesh, properties, element_types,
+                                      jacobians, scatters, *this);
+      }
+      return;
+    }
+  }
 
   this->elements_per_region =
       info::impl::count_elements_per_region(element_types);

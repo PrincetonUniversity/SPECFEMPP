@@ -1,0 +1,6 @@
+# Extracted from finalize_mesher in OUTPUT_FILES/output_mesher.txt.
+# The reported volume is nondimensional; multiply by r_planet**3.
+volume_unit_sphere: 4.1887900919118657
+mass_kg: 5.97553797E+24
+dt_seconds: 0.19000000000000000
+mesher_element_count: 56544
