@@ -17,6 +17,21 @@ namespace specfem::assembly::conforming_interfaces_impl {
  * with specific boundary conditions. Stores face factors and normal vectors
  * for interface computations in 3D spectral element simulations.
  *
+ * At each face GLL point, @c face_normal is the outward normal of the
+ * **self** element multiplied by the surface Jacobian, \f$J_s n_s\f$.
+ * @c face_factor contains only the two tangential GLL weights. Thus
+ * @c face_factor times @c face_normal is the oriented integration measure;
+ * multiplying by another surface Jacobian would count it twice.
+ *
+ * On the CMB the fluid self normal points radially outwards, while on the
+ * ICB it points inwards. The solid self normal has the opposite sense at
+ * each interface. Both coupling kernels use their own self normal with a
+ * positive coefficient: the acoustic variable satisfies
+ * \f$p=-\ddot{\chi}\f$, so the solid traction
+ * \f$-p n_s=\ddot{\chi} n_s\f$ needs no extra sign flip.
+ * Face order and GLL order on the two sides need not match; the transfer
+ * function handles that correspondence.
+ *
  * @tparam InterfaceTag Type of interface (ELASTIC_ACOUSTIC or ACOUSTIC_ELASTIC)
  * @tparam BoundaryTag Boundary condition type (NONE, STACEY, etc.)
  */

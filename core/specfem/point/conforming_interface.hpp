@@ -148,12 +148,12 @@ public:
   static constexpr auto boundary_tag = BoundaryTag;
 
   /**
-   * @brief Face scaling factor for interface computations.
+   * @brief Product of the two tangential GLL weights (no surface Jacobian).
    */
   scalar_type<type_real> face_factor;
 
   /**
-   * @brief Face normal vector (3D).
+   * @brief Self-outward normal multiplied by the surface Jacobian (3D).
    */
   vector_type<type_real, 3> face_normal;
 
