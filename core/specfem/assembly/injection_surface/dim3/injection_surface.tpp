@@ -7,6 +7,7 @@
 #include <cmath>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <vector>
 
 namespace specfem::assembly::injection_surface_impl {
@@ -20,6 +21,27 @@ struct Face {
 
 /** @brief Whether @p type is one of the six faces of an element. */
 bool is_face(specfem::mesh_entity::dim3::type type);
+
+/**
+ * @brief Whether a face may inject at a GLL point without breaking the pairing
+ * with Stacey absorption.
+ *
+ * Stacey stores one face per (element, GLL point). Where it absorbs, only that
+ * face may inject; it is recognized by its normal, which Stacey computes with
+ * the same function and inputs, so the values are identical.
+ *
+ * @param boundaries Boundary conditions holding the Stacey faces
+ * @param ispec Compute element
+ * @param iz GLL index in z
+ * @param iy GLL index in y
+ * @param ix GLL index in x
+ * @param normal Area-scaled normal of the face at the point
+ * @return True if Stacey does not absorb at the point or keeps this face
+ */
+bool stacey_keeps_face(
+    const specfem::assembly::boundaries<specfem::element::dimension_tag::dim3>
+        &boundaries,
+    int ispec, int iz, int iy, int ix, const std::array<type_real, 3> &normal);
 
 } // namespace specfem::assembly::injection_surface_impl
 
@@ -48,13 +70,32 @@ specfem::assembly::InjectionSurface<specfem::element::dimension_tag::dim3>::
                       type, surface.side(i) });
   }
 
+  // Area-scaled normal and GLL weight of a face at one of its points.
+  const auto face_geometry = [&](const Face &face, const int jz, const int jy,
+                                 const int jx) {
+    specfem::point::index<dimension_tag> index(face.ispec, jz, jy, jx);
+    specfem::point::jacobian_matrix<dimension_tag, true, false> jacobian;
+    specfem::assembly::load_on_host(index, jacobian_matrix, jacobian);
+    const std::array<type_real, 3> gll_weights = {
+      mesh_assembly.h_weights(jz), mesh_assembly.h_weights(jy),
+      mesh_assembly.h_weights(jx)
+    };
+    return specfem::assembly::boundaries_impl::get_boundary_face_and_weight(
+        face.type, gll_weights, jacobian);
+  };
+
+  // Points of a face that inject: where Stacey absorbs, only the face Stacey
+  // keeps, so absorbing and injected terms always pair up.
   const auto points_on = [&](const Face &face) {
     std::vector<std::array<int, 3>> points;
     for (int iz = 0; iz < ngllz; ++iz)
       for (int iy = 0; iy < nglly; ++iy)
         for (int ix = 0; ix < ngllx; ++ix)
           if (specfem::assembly::boundaries_impl::is_on_boundary(
-                  face.type, iz, iy, ix, ngllz, nglly, ngllx))
+                  face.type, iz, iy, ix, ngllz, nglly, ngllx) &&
+              specfem::assembly::injection_surface_impl::stacey_keeps_face(
+                  boundaries, face.ispec, iz, iy, ix,
+                  std::get<0>(face_geometry(face, iz, iy, ix))))
             points.push_back({ iz, iy, ix });
     return points;
   };
@@ -107,16 +148,7 @@ specfem::assembly::InjectionSurface<specfem::element::dimension_tag::dim3>::
     const int first = entry;
     for (const auto &face : faces_by_system[system])
       for (const auto &[jz, jy, jx] : points_on(face)) {
-        specfem::point::index<dimension_tag> index(face.ispec, jz, jy, jx);
-        specfem::point::jacobian_matrix<dimension_tag, true, false> jacobian;
-        specfem::assembly::load_on_host(index, jacobian_matrix, jacobian);
-        const std::array<type_real, 3> gll_weights = {
-          mesh_assembly.h_weights(jz), mesh_assembly.h_weights(jy),
-          mesh_assembly.h_weights(jx)
-        };
-        const auto [n, w] =
-            specfem::assembly::boundaries_impl::get_boundary_face_and_weight(
-                face.type, gll_weights, jacobian);
+        const auto [n, w] = face_geometry(face, jz, jy, jx);
         const type_real length =
             std::sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
         if (!(length > 0))

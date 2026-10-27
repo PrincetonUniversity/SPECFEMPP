@@ -15,8 +15,8 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <map>
 #include <optional>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -35,9 +35,10 @@ constexpr type_real tolerance = 1e-4;
 constexpr double relative_tolerance = 1e-5;
 constexpr int ngll = 5;
 
+// A box side is keyed by 2 * axis + (normal points to +axis).
 struct Case {
-  std::string folder; ///< Directory under data/dim3
-  int nfaces;         ///< Injection faces declared by the mesher
+  std::string folder;  ///< Directory under data/dim3
+  std::set<int> sides; ///< Box sides declared as injection sides
 };
 
 std::ostream &operator<<(std::ostream &stream, const Case &test_case) {
@@ -94,8 +95,46 @@ TEST_P(InjectionSurface3DTest, DomainBoundsAreValid) {
   expect_valid_bounds(fixture);
 }
 
-TEST_P(InjectionSurface3DTest, OneEntryAndRowPerFacePoint) {
-  EXPECT_EQ(surface().nentries, GetParam().nfaces * ngll * ngll);
+// Box side of a normal: the axis of its largest component, and its sign.
+int side_of(const std::array<double, 3> &normal) {
+  int axis = 0;
+  for (int d = 1; d < 3; ++d)
+    if (std::abs(normal[d]) > std::abs(normal[axis]))
+      axis = d;
+  return 2 * axis + (normal[axis] > 0);
+}
+
+// The entries are exactly the Stacey points whose stored face lies on an
+// injection side: one per (element, GLL point), with Stacey's face.
+TEST_P(InjectionSurface3DTest, EntriesAreStaceyPointsOnInjectionSides) {
+  const auto &boundaries = assembly().boundaries;
+  using Point = std::array<int, 4>;
+  std::set<Point> expected;
+  for (int ispec = 0; ispec < assembly().mesh.nspec; ++ispec) {
+    const int local = boundaries.h_stacey_index_mapping(ispec);
+    if (local < 0)
+      continue;
+    for (int iz = 0; iz < ngll; ++iz)
+      for (int iy = 0; iy < ngll; ++iy)
+        for (int ix = 0; ix < ngll; ++ix) {
+          if (boundaries.stacey.h_face_weight(local, iz, iy, ix) == 0)
+            continue;
+          std::array<double, 3> normal{};
+          for (int d = 0; d < 3; ++d)
+            normal[d] = boundaries.stacey.h_face_normal(local, iz, iy, ix, d);
+          if (GetParam().sides.count(side_of(normal)))
+            expected.insert({ ispec, iz, iy, ix });
+        }
+  }
+
+  std::set<Point> actual;
+  for (int e = 0; e < surface().nentries; ++e)
+    actual.insert({ surface().h_ispec(e), surface().h_iz(e), surface().h_iy(e),
+                    surface().h_ix(e) });
+  EXPECT_EQ(static_cast<int>(actual.size()), surface().nentries)
+      << "an (element, GLL point) has more than one entry";
+  EXPECT_EQ(actual, expected);
+
   EXPECT_EQ(surface().nrows, surface().nentries);
   for (int entry = 0; entry < surface().nentries; ++entry) {
     EXPECT_EQ(surface().h_row(entry), entry);
@@ -144,41 +183,14 @@ TEST_P(InjectionSurface3DTest, NormalsPointOutOfTheBox) {
   }
 }
 
-TEST_P(InjectionSurface3DTest, WeightsIntegrateSideAreas) {
-  expect_valid_bounds(fixture);
-  const auto &bounds = assembly().info.domain_bounds.bounds_array;
-  std::map<int, double> area;
-  for (int e = 0; e < surface().nentries; ++e)
-    for (int d = 0; d < 3; ++d)
-      if (std::abs(surface().h_normal(e, d)) > 0.5)
-        area[2 * d + (surface().h_normal(e, d) > 0)] += surface().h_weight(e);
-
-  EXPECT_EQ(static_cast<int>(area.size()) * 4, GetParam().nfaces);
-  for (const auto &[side, integral] : area) {
-    const int axis = side / 2;
-    double expected = 1;
-    for (int d = 0; d < 3; ++d)
-      if (d != axis)
-        expected *= bounds(d).max - bounds(d).min;
-    EXPECT_NEAR(integral, expected, 1e-4 * expected) << "side " << side;
-  }
-}
-
-// On points inside a single face, normal * dS equals Stacey's area-scaled
-// normal times its GLL weight (Stacey keeps one normal per GLL point, so
-// points on element edges are skipped).
+// At every entry, normal * dS equals Stacey's area-scaled normal times its
+// GLL weight, so the absorbing and injected terms use the same face.
 TEST_P(InjectionSurface3DTest, MatchesStaceyGeometry) {
   const auto &boundaries = assembly().boundaries;
-  const auto interior = [](const int i) { return i > 0 && i < ngll - 1; };
   int compared = 0;
   for (int e = 0; e < surface().nentries; ++e) {
     const int iz = surface().h_iz(e), iy = surface().h_iy(e),
               ix = surface().h_ix(e);
-    const int on_faces = (iz == 0 || iz == ngll - 1) +
-                         (iy == 0 || iy == ngll - 1) +
-                         (ix == 0 || ix == ngll - 1);
-    if (on_faces != 1 || !(interior(iz) || interior(iy) || interior(ix)))
-      continue;
     const int istacey = boundaries.h_stacey_index_mapping(surface().h_ispec(e));
     ASSERT_GE(istacey, 0);
     for (int d = 0; d < 3; ++d) {
@@ -191,7 +203,7 @@ TEST_P(InjectionSurface3DTest, MatchesStaceyGeometry) {
     }
     ++compared;
   }
-  EXPECT_EQ(compared, GetParam().nfaces * (ngll - 2) * (ngll - 2));
+  EXPECT_EQ(compared, surface().nentries);
 }
 
 TEST_P(InjectionSurface3DTest, RangesPartitionEntriesByGroup) {
@@ -377,9 +389,10 @@ TEST_P(InjectionSurface3DTest, DrivesProviderSession) {
 
 INSTANTIATE_TEST_SUITE_P(
     InjectionSurface3D, InjectionSurface3DTest,
-    ::testing::Values(Case{ "EightNodeElasticInjectionStacey", 20 },
-                      Case{ "EightNodeElasticInjectionSides", 8 },
-                      Case{ "EightNodeElastic", 0 }),
+    ::testing::Values(Case{ "EightNodeElasticInjectionStacey",
+                            { 0, 1, 2, 3, 4 } },
+                      Case{ "EightNodeElasticInjectionSides", { 0, 4 } },
+                      Case{ "EightNodeElastic", {} }),
     [](const ::testing::TestParamInfo<Case> &info) {
       return info.param.folder;
     });

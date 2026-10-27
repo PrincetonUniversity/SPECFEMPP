@@ -16,11 +16,16 @@ namespace specfem::assembly {
 /**
  * @brief Quadrature points of the wavefield-injection surface (3D)
  *
- * One @e entry per (element, injection face, GLL point on that face). A GLL
- * point on two injection faces of the same element gives two entries, each
- * with its own face normal and weight. Every entry maps to a @e row, a point
- * handed to the injection plugin; in this version each entry has its own row.
- * Kernels read the plugin's values for an entry through row().
+ * One @e entry per (element, injection face, GLL point on that face), with
+ * one exception that keeps injection consistent with Stacey absorption. The
+ * Stacey boundary stores a single face per (element, GLL point), so at a point
+ * where Stacey absorbs, only that face injects: the entry takes Stacey's face,
+ * and the point has no entry if that face is not an injection face. Absorbing
+ * and injected terms then use the same normal and weight at every point.
+ *
+ * Every entry maps to a @e row, a point handed to the injection plugin; in
+ * this version each entry has its own row. Kernels read the plugin's values
+ * for an entry through row().
  *
  * Entries and rows are ordered by material system, in the order of
  * specfem::assembly::impl::ContainerSets<dim3>::combinations, so the entries
