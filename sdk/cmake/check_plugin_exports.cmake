@@ -1,4 +1,4 @@
-# Verify that an injection plugin exports exactly specfempp_injection_plugin.
+# Verify that an injection plugin exports exactly specfem_injection_plugin.
 #
 # Usage:
 #   cmake -DPLUGIN_FILE=<path> -DFORMAT=<elf|macho> [-DNM=<nm>] \
@@ -47,15 +47,18 @@ foreach(_line IN LISTS _lines)
     if(FORMAT STREQUAL "macho")
         string(REGEX REPLACE "^_" "" _symbol "${_symbol}")
     endif()
-    if(_symbol IN_LIST _ignored)
+    # list(FIND) rather than IN_LIST: this script runs under `cmake -P`, where
+    # policy CMP0057 is unset.
+    list(FIND _ignored "${_symbol}" _index)
+    if(NOT _index EQUAL -1)
         continue()
     endif()
     list(APPEND _exported "${_symbol}")
 endforeach()
 
-if(NOT _exported STREQUAL "specfempp_injection_plugin")
+if(NOT _exported STREQUAL "specfem_injection_plugin")
     list(JOIN _exported ", " _listed)
     message(FATAL_ERROR
         "check_plugin_exports: ${PLUGIN_FILE} must export exactly "
-        "specfempp_injection_plugin, but exports: ${_listed}")
+        "specfem_injection_plugin, but exports: ${_listed}")
 endif()

@@ -4,7 +4,7 @@
  * C ABI (version 1) between SPECFEM++ and wavefield-injection plugins.
  *
  * A plugin is a shared library that exports exactly one symbol,
- * specfempp_injection_plugin(), returning a table of plain C function
+ * specfem_injection_plugin(), returning a table of plain C function
  * pointers. Everything that crosses the library boundary is a C struct or a
  * flat host array, so a plugin can be built with any compiler and standard
  * library, and may link its own copies of third-party libraries.
@@ -12,22 +12,39 @@
  * Lifecycle (every call is collective on all MPI ranks, including ranks that
  * own no injection points):
  *
- *   create -> supports (per requested medium/quantity) -> setup (once)
+ *   create -> supports (per medium, property and quantity) -> setup (once)
  *          -> fill (once per window of time steps) -> destroy
  *
  * Conventions:
- *  - SI units; coordinates in the SPECFEM++ mesh frame (z up).
- *  - Step k corresponds to time t0 + k * dt (see spfp_simulation_info).
- *  - spfp_points is only valid during setup; spfp_buffer only during fill.
+ *  - ABI v1 is three-dimensional only (specfem_simulation_info::dimension
+ *    is 3).
+ *  - Units: every value (coordinates, bounds, times, material properties,
+ *    injected fields) is in the units of the SPECFEM++ mesh and model.
+ *    SPECFEM++ performs no unit conversion; configure the plugin to match.
+ *  - Coordinates are in the SPECFEM++ mesh frame (z up).
+ *  - Step k corresponds to time t0 + k * dt (see specfem_simulation_info).
+ *  - Points are grouped by material system, i.e. by (medium, property) pair,
+ *    mirroring the medium x property framework of SPECFEM++. Every rank sees
+ *    the same list of groups; groups without local points have count 0.
+ *  - specfem_points is only valid during setup; the buffers only during
+ *    fill.
  *  - fill must produce the same values regardless of window order or size.
  *  - Errors are reported through status codes and last_error; exceptions must
  *    never cross the boundary, and plugins must not call exit, abort,
  *    MPI_Init, or MPI_Finalize.
  *
+ * Extensibility: every struct passed by pointer starts with a struct_size
+ * field that its writer sets to sizeof(struct). Fields are only ever appended,
+ * so a reader built against an older header ignores the tail, and a reader
+ * built against a newer header checks SPECFEM_HAS_FIELD before reading a
+ * field the writer may not know. Arrays of extensible structs are passed as
+ * arrays of pointers so that their stride never depends on struct_size.
+ *
  * Plugin authors writing C++ should use specfem/plugin/injection_plugin.hpp,
  * which implements this table on top of an abstract base class.
  */
 
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -35,63 +52,103 @@ extern "C" {
 #endif
 
 /** @brief Version of the injection plugin ABI defined by this header. */
-#define SPFP_INJECTION_ABI_VERSION 1
+#define SPECFEM_INJECTION_ABI_VERSION 1
 
-/** @brief Version of the @ref spfp_manifest layout. */
-#define SPFP_MANIFEST_VERSION 1
+/** @brief Version of the @ref specfem_manifest layout. */
+#define SPECFEM_MANIFEST_VERSION 1
 
 /** @brief Manifest @c plugin_kind value for wavefield-injection plugins. */
-#define SPFP_PLUGIN_KIND_INJECTION 1
+#define SPECFEM_PLUGIN_KIND_INJECTION 1
 
 /** @brief Name of the single symbol every injection plugin exports. */
-#define SPFP_INJECTION_PLUGIN_ENTRY_NAME "specfempp_injection_plugin"
+#define SPECFEM_INJECTION_PLUGIN_ENTRY_NAME "specfem_injection_plugin"
 
 #if defined(_WIN32)
-#define SPFP_EXPORT __declspec(dllexport)
+#define SPECFEM_EXPORT __declspec(dllexport)
 #else
 /** @brief Marks the plugin entry point as visible from outside the library. */
-#define SPFP_EXPORT __attribute__((visibility("default")))
+#define SPECFEM_EXPORT __attribute__((visibility("default")))
 #endif
 
-/** @brief Status code returned by plugin functions (see spfp_status_values). */
-typedef int32_t spfp_status;
+/**
+ * @brief Whether an extensible struct contains a field.
+ *
+ * @param PTR Pointer to the struct
+ * @param TYPE Struct type
+ * @param FIELD Field name
+ */
+#define SPECFEM_HAS_FIELD(PTR, TYPE, FIELD)                                    \
+  ((PTR)->struct_size >= offsetof(TYPE, FIELD) + sizeof(((TYPE *)0)->FIELD))
 
-/** @brief Values of @c spfp_status. */
-enum spfp_status_values {
-  spfp_status_ok = 0,         /**< Success */
-  spfp_status_error = 1,      /**< Failure; details via last_error */
-  spfp_status_unsupported = 2 /**< Request not supported by the plugin */
+/** @brief Status code returned by plugin functions (see
+ * specfem_status_values). */
+typedef int32_t specfem_status;
+
+/** @brief Values of @c specfem_status. */
+enum specfem_status_values {
+  specfem_status_ok = 0,         /**< Success */
+  specfem_status_error = 1,      /**< Failure; details via last_error */
+  specfem_status_unsupported = 2 /**< The plugin cannot serve this run;
+                                        details via last_error. SPECFEM++
+                                        stops with that message and does not
+                                        retry. */
 };
 
-/** @brief Scalar type of a buffer (see spfp_dtype_values). */
-typedef int32_t spfp_dtype;
+/** @brief Scalar type of a buffer (see specfem_dtype_values). */
+typedef int32_t specfem_dtype;
 
-/** @brief Values of @c spfp_dtype. */
-enum spfp_dtype_values {
-  spfp_dtype_float32 = 0, /**< 32-bit IEEE float */
-  spfp_dtype_float64 = 1  /**< 64-bit IEEE float */
+/** @brief Values of @c specfem_dtype. */
+enum specfem_dtype_values {
+  specfem_dtype_float32 = 0, /**< 32-bit IEEE float */
+  specfem_dtype_float64 = 1  /**< 64-bit IEEE float */
 };
 
-/** @brief Medium of an injection point (see spfp_medium_values). */
-typedef int32_t spfp_medium;
+/**
+ * @brief Medium of a point group (see specfem_medium_values).
+ *
+ * Values are the medium tag identifiers of SPECFEM++ and never change.
+ */
+typedef int32_t specfem_medium;
 
-/** @brief Values of @c spfp_medium. */
-enum spfp_medium_values {
-  spfp_medium_elastic = 0, /**< Elastic solid */
-  spfp_medium_acoustic = 1 /**< Acoustic fluid */
+/** @brief Values of @c specfem_medium available in three dimensions. */
+enum specfem_medium_values {
+  specfem_medium_acoustic = 3,    /**< Acoustic fluid */
+  specfem_medium_elastic = 6,     /**< Elastic solid */
+  specfem_medium_elastic_spin = 7 /**< Elastic solid with spin (Cosserat) */
+};
+
+/**
+ * @brief Material parameterization of a point group (see
+ * specfem_property_values).
+ *
+ * Values are the property tag identifiers of SPECFEM++ and never change.
+ */
+typedef int32_t specfem_property;
+
+/** @brief Values of @c specfem_property. */
+enum specfem_property_values {
+  specfem_property_isotropic = 0,         /**< Isotropic */
+  specfem_property_anisotropic = 1,       /**< Anisotropic (full tensor) */
+  specfem_property_isotropic_cosserat = 2 /**< Isotropic Cosserat */
 };
 
 /** @brief Physical quantity requested from a plugin (see
- * spfp_quantity_values). */
-typedef int32_t spfp_quantity;
+ * specfem_quantity_values). */
+typedef int32_t specfem_quantity;
 
-/** @brief Values of @c spfp_quantity. */
-enum spfp_quantity_values {
-  spfp_quantity_displacement = 0,  /**< Displacement (3 components) */
-  spfp_quantity_velocity = 1,      /**< Velocity (3 components) */
-  spfp_quantity_acceleration = 2,  /**< Acceleration (3 components) */
-  spfp_quantity_traction = 3,      /**< Traction on the point's normal (3) */
-  spfp_quantity_potential_rate = 4 /**< Fluid potential rate (1 component) */
+/**
+ * @brief Values of @c specfem_quantity.
+ *
+ * The number of buffer components a quantity occupies depends on the medium
+ * and is sent by SPECFEM++ in @ref specfem_quantity_slot; plugins never
+ * derive it.
+ */
+enum specfem_quantity_values {
+  specfem_quantity_displacement = 0,  /**< Displacement */
+  specfem_quantity_velocity = 1,      /**< Velocity */
+  specfem_quantity_acceleration = 2,  /**< Acceleration */
+  specfem_quantity_traction = 3,      /**< Traction on the point's normal */
+  specfem_quantity_potential_rate = 4 /**< Fluid potential rate */
 };
 
 /**
@@ -101,115 +158,144 @@ enum spfp_quantity_values {
  * header does not depend on @c mpi.h. A plugin that uses MPI converts it back
  * with @c MPI_Comm_f2c and must use the same MPI implementation as SPECFEM++.
  */
-typedef struct spfp_communicator {
+typedef struct specfem_communicator {
+  uint32_t struct_size;   /**< sizeof(specfem_communicator) */
   int32_t has_mpi;        /**< 0 when SPECFEM++ runs without MPI */
   int32_t rank;           /**< Rank of this process in the communicator */
   int32_t size;           /**< Number of ranks in the communicator */
   int32_t fortran_handle; /**< MPI_Comm_c2f(comm); unused when has_mpi == 0 */
-} spfp_communicator;
+} specfem_communicator;
 
 /** @brief Simulation parameters shared with the plugin at creation. */
-typedef struct spfp_simulation_info {
-  int32_t dimension; /**< Spatial dimension (2 or 3) */
-  int32_t nstep;     /**< Total number of time steps */
-  double t0;         /**< Time of step 0 in s */
-  double dt;         /**< Time step in s */
-  double bounds[6];  /**< Domain box: xmin, xmax, ymin, ymax, zmin, zmax */
-} spfp_simulation_info;
+typedef struct specfem_simulation_info {
+  uint32_t struct_size; /**< sizeof(specfem_simulation_info) */
+  int32_t dimension;    /**< Spatial dimension; 3 in ABI v1 */
+  int32_t nstep;        /**< Total number of time steps */
+  int32_t reserved;     /**< Must be 0 */
+  double t0;            /**< Time of step 0 */
+  double dt;            /**< Time step */
+  /** Bounding box of the global domain (the whole mesh, not the rank-local
+   *  part), identical on every rank: xmin, xmax, ymin, ymax, zmin, zmax. */
+  double bounds[6];
+} specfem_simulation_info;
+
+/**
+ * @brief Layout of one requested quantity in a group's buffer.
+ *
+ * Fixed layout (not extensible): passed as a plain array.
+ */
+typedef struct specfem_quantity_slot {
+  specfem_quantity quantity; /**< Requested quantity */
+  int32_t offset;            /**< First buffer component of the quantity */
+  int32_t count;             /**< Number of components of the quantity */
+  int32_t reserved;          /**< Must be 0 */
+} specfem_quantity_slot;
+
+/**
+ * @brief Points of one material system and the quantities requested there.
+ *
+ * The group covers points [begin, begin + count) of @ref specfem_points.
+ * Material properties are named after the fields of the SPECFEM++ point
+ * property container of the system and stored point-major:
+ * property k of local point p is @c properties[p * nproperties + k]. For
+ * example, elastic/isotropic provides @c kappa, @c mu and @c rho; plugins
+ * should look properties up by name rather than by position.
+ */
+typedef struct specfem_point_group {
+  uint32_t struct_size;              /**< sizeof(specfem_point_group) */
+  specfem_medium medium;             /**< Medium of the group */
+  specfem_property property;         /**< Material parameterization */
+  int32_t nproperties;               /**< Number of material properties */
+  int64_t begin;                     /**< First point of the group */
+  int64_t count;                     /**< Number of points (may be 0) */
+  const char *const *property_names; /**< [nproperties] property names */
+  const double *properties; /**< [count * nproperties] property values */
+  int32_t ncomponents;      /**< Buffer components per point */
+  int32_t nslots;           /**< Number of requested quantities */
+  const specfem_quantity_slot *slots; /**< [nslots] requested quantities */
+} specfem_point_group;
 
 /**
  * @brief Points at which the incident field is requested.
  *
- * Host arrays of length @c n, read-only, valid only during @c setup. Normals
- * are outward unit normals of the boundary the point lies on. Material values
- * are the local mesh values, so a plugin can check them against its own
- * model.
+ * Host arrays, read-only, valid only during @c setup. Normals are outward unit
+ * normals of the boundary the point lies on. Points are ordered by group, and
+ * the groups partition [0, n) in order.
  */
-typedef struct spfp_points {
-  int64_t n;             /**< Number of points */
-  const double *x;       /**< x-coordinates in m */
-  const double *y;       /**< y-coordinates in m */
-  const double *z;       /**< z-coordinates in m (up) */
-  const double *nx;      /**< Unit normal, x-component */
-  const double *ny;      /**< Unit normal, y-component */
-  const double *nz;      /**< Unit normal, z-component */
-  const int32_t *medium; /**< Medium of each point (spfp_medium) */
-  const double *rho;     /**< Local density in kg/m^3 */
-  const double *vp;      /**< Local P-wave speed in m/s */
-  const double *vs;      /**< Local S-wave speed in m/s (0 for fluids) */
-} spfp_points;
+typedef struct specfem_points {
+  uint32_t struct_size; /**< sizeof(specfem_points) */
+  int32_t ngroups;      /**< Number of groups (same on every rank) */
+  int64_t n;            /**< Number of points */
+  const double *x;      /**< x-coordinates */
+  const double *y;      /**< y-coordinates */
+  const double *z;      /**< z-coordinates (up) */
+  const double *nx;     /**< Unit normal, x-component */
+  const double *ny;     /**< Unit normal, y-component */
+  const double *nz;     /**< Unit normal, z-component */
+  const specfem_point_group *const *groups; /**< [ngroups] point groups */
+} specfem_points;
 
 /**
- * @brief Quantities requested per medium.
- *
- * For a point of a given medium, the buffer components are the requested
- * quantities in list order, each expanded to its component count (3 for
- * vector quantities, 1 for @c spfp_quantity_potential_rate).
- */
-typedef struct spfp_request {
-  int32_t n_elastic;             /**< Number of elastic quantities */
-  const spfp_quantity *elastic;  /**< Quantities for elastic points */
-  int32_t n_acoustic;            /**< Number of acoustic quantities */
-  const spfp_quantity *acoustic; /**< Quantities for acoustic points */
-} spfp_request;
-
-/**
- * @brief Host buffer the plugin fills for one window of time steps.
+ * @brief Host buffer the plugin fills for one group and window of time steps.
  *
  * Element (point p, component c, step s) of the window lives at
  * @c data[p * stride_point + c * stride_component + s * stride_step], with
- * strides counted in elements of @c dtype. Step s of the window corresponds
- * to simulation step @c first_step + s of the @c fill call.
+ * strides counted in elements of @c dtype. Point p is point p of the group;
+ * step s is simulation step @c first_step + s of the @c fill call.
  */
-typedef struct spfp_buffer {
+typedef struct specfem_buffer {
+  uint32_t struct_size;     /**< sizeof(specfem_buffer) */
+  specfem_dtype dtype;      /**< Element type */
   void *data;               /**< Host memory to write */
-  spfp_dtype dtype;         /**< Element type */
-  int32_t ncomponents;      /**< Components per point */
-  int64_t npoints;          /**< Number of points */
+  int64_t npoints;          /**< Points; equals the group's count */
+  int32_t ncomponents;      /**< Components; equals the group's ncomponents */
   int32_t nsteps;           /**< Steps in this window */
-  int32_t reserved;         /**< Must be 0 */
   int64_t stride_point;     /**< Stride between points */
   int64_t stride_component; /**< Stride between components */
   int64_t stride_step;      /**< Stride between steps */
-} spfp_buffer;
+} specfem_buffer;
 
 /**
  * @brief Function table describing an injection plugin.
  *
- * Returned by the plugin's exported @c specfempp_injection_plugin(). All
+ * Returned by the plugin's exported @c specfem_injection_plugin(). All
  * function pointers are required.
  */
-typedef struct spfp_injection_plugin {
-  uint32_t abi_version;  /**< Must equal SPFP_INJECTION_ABI_VERSION */
-  uint32_t reserved;     /**< Must be 0 */
+typedef struct specfem_injection_plugin_table {
+  uint32_t struct_size;  /**< sizeof(specfem_injection_plugin_table) */
+  uint32_t abi_version;  /**< Must equal SPECFEM_INJECTION_ABI_VERSION */
   uint64_t capabilities; /**< Capability flags; 0 in ABI v1 */
   const char *name;      /**< Plugin name */
   const char *version;   /**< Plugin version string */
 
   /** Create a plugin instance; returns NULL on failure (see last_error). */
-  void *(*create)(const char *config_path, const spfp_simulation_info *info,
-                  const spfp_communicator *communicator);
+  void *(*create)(const char *config_path, const specfem_simulation_info *info,
+                  const specfem_communicator *communicator);
 
-  /** Return 1 if the plugin can provide @p quantity for @p medium, else 0. */
-  int32_t (*supports)(void *self, spfp_medium medium, spfp_quantity quantity);
+  /** Return 1 if the plugin can provide @p quantity for points of the given
+   *  medium and property, else 0. SPECFEM++ queries the global set of
+   *  systems, so the calls are the same on every rank. */
+  int32_t (*supports)(void *self, specfem_medium medium,
+                      specfem_property property, specfem_quantity quantity);
 
-  /** Receive the injection points and the per-medium request (once). */
-  spfp_status (*setup)(void *self, const spfp_points *points,
-                       const spfp_request *request);
+  /** Receive the injection points, their groups and the request (once). */
+  specfem_status (*setup)(void *self, const specfem_points *points);
 
-  /** Fill steps [first_step, first_step + buffer->nsteps) into @p buffer. */
-  spfp_status (*fill)(void *self, int32_t first_step,
-                      const spfp_buffer *buffer);
+  /** Fill steps [first_step, first_step + nsteps) of every group: buffer g
+   *  belongs to group g, and nbuffers equals the number of groups. */
+  specfem_status (*fill)(void *self, int32_t first_step, int32_t nbuffers,
+                         const specfem_buffer *const *buffers);
 
   /** Last error message of @p self; with NULL, the last failed create. */
   const char *(*last_error)(const void *self);
 
   /** Destroy an instance returned by create (NULL is a no-op). */
   void (*destroy)(void *self);
-} spfp_injection_plugin;
+} specfem_injection_plugin_table;
 
 /** @brief Signature of the exported plugin entry point. */
-typedef const spfp_injection_plugin *(*spfp_injection_plugin_entry)(void);
+typedef const specfem_injection_plugin_table *(*specfem_injection_plugin_entry)(
+    void);
 
 /**
  * @brief Manifest embedded in every plugin, readable without loading it.
@@ -218,37 +304,37 @@ typedef const spfp_injection_plugin *(*spfp_injection_plugin_entry)(void);
  * version before calling @c dlopen, so a mismatched plugin never runs code in
  * the simulation process.
  */
-typedef struct spfp_manifest {
-  char magic[16];            /**< SPFP_MANIFEST_MAGIC_INITIALIZER bytes */
-  uint32_t manifest_version; /**< SPFP_MANIFEST_VERSION */
-  uint32_t abi_version;      /**< SPFP_INJECTION_ABI_VERSION */
-  uint32_t plugin_kind;      /**< SPFP_PLUGIN_KIND_INJECTION */
+typedef struct specfem_manifest {
+  char magic[16];            /**< SPECFEM_MANIFEST_MAGIC_INITIALIZER bytes */
+  uint32_t manifest_version; /**< SPECFEM_MANIFEST_VERSION */
+  uint32_t abi_version;      /**< SPECFEM_INJECTION_ABI_VERSION */
+  uint32_t plugin_kind;      /**< SPECFEM_PLUGIN_KIND_INJECTION */
   uint32_t reserved;         /**< Must be 0 */
   char name[64];             /**< NUL-terminated plugin name */
   char version[32];          /**< NUL-terminated plugin version */
-} spfp_manifest;
+} specfem_manifest;
 
 /*
  * The magic is spelled out byte by byte so that it never appears in a plugin
  * as a string literal: the manifest must be the only place a scanner finds it.
  */
-#define SPFP_MANIFEST_MAGIC_INITIALIZER                                        \
+#define SPECFEM_MANIFEST_MAGIC_INITIALIZER                                     \
   { 'S', 'P', 'E', 'C', 'F', 'E', 'M', 'P',                                    \
     'P', '_', 'P', 'L', 'U', 'G', 'I', 'N' }
 
 #if defined(__APPLE__)
-#define SPFP_MANIFEST_SECTION "__DATA,__specfempp"
+#define SPECFEM_MANIFEST_SECTION "__DATA,__specfem"
 #else
-#define SPFP_MANIFEST_SECTION ".specfempp_plugin"
+#define SPECFEM_MANIFEST_SECTION ".specfem_plugin"
 #endif
 
 #if defined(__has_attribute) && !defined(__APPLE__)
 #if __has_attribute(retain)
-#define SPFP_MANIFEST_RETAIN __attribute__((retain))
+#define SPECFEM_MANIFEST_RETAIN __attribute__((retain))
 #endif
 #endif
-#ifndef SPFP_MANIFEST_RETAIN
-#define SPFP_MANIFEST_RETAIN
+#ifndef SPECFEM_MANIFEST_RETAIN
+#define SPECFEM_MANIFEST_RETAIN
 #endif
 
 /**
@@ -257,20 +343,20 @@ typedef struct spfp_manifest {
  * @param NAME    String literal, at most 63 characters.
  * @param VERSION String literal, at most 31 characters.
  */
-#define SPFP_DEFINE_INJECTION_MANIFEST(NAME, VERSION)                          \
-  __attribute__((used, section(SPFP_MANIFEST_SECTION)))                        \
-  SPFP_MANIFEST_RETAIN static const spfp_manifest spfp_injection_manifest = {  \
-    SPFP_MANIFEST_MAGIC_INITIALIZER,                                           \
-    SPFP_MANIFEST_VERSION,                                                     \
-    SPFP_INJECTION_ABI_VERSION,                                                \
-    SPFP_PLUGIN_KIND_INJECTION,                                                \
-    0u,                                                                        \
-    NAME,                                                                      \
-    VERSION                                                                    \
-  }
+#define SPECFEM_DEFINE_INJECTION_MANIFEST(NAME, VERSION)                       \
+  __attribute__((used, section(SPECFEM_MANIFEST_SECTION)))                     \
+  SPECFEM_MANIFEST_RETAIN static const specfem_manifest                        \
+      specfem_injection_manifest = { SPECFEM_MANIFEST_MAGIC_INITIALIZER,       \
+                                     SPECFEM_MANIFEST_VERSION,                 \
+                                     SPECFEM_INJECTION_ABI_VERSION,            \
+                                     SPECFEM_PLUGIN_KIND_INJECTION,            \
+                                     0u,                                       \
+                                     NAME,                                     \
+                                     VERSION }
 
 /** @brief The plugin entry point; every injection plugin defines it. */
-SPFP_EXPORT const spfp_injection_plugin *specfempp_injection_plugin(void);
+SPECFEM_EXPORT const specfem_injection_plugin_table *
+specfem_injection_plugin(void);
 
 #ifdef __cplusplus
 } /* extern "C" */
