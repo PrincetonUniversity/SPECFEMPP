@@ -21,7 +21,7 @@ if(SPECFEM_ENABLE_MPI)
     LABELS      injection
     SOURCES     ${CMAKE_CURRENT_LIST_DIR}/mpi_session_tests.cpp
                 ${CMAKE_CURRENT_LIST_DIR}/mock_plugin.cpp
-                ${CMAKE_CURRENT_LIST_DIR}/runner.cpp
+                ${CMAKE_CURRENT_LIST_DIR}/mpi_runner.cpp
     LIBRARIES   specfem::injection_session
                 specfem_environment
                 gmock
