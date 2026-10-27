@@ -8,6 +8,8 @@ with ``cmake --install <build> --component plugin_sdk --prefix <dir>`` and use
 it from a plugin project with ``find_package(SpecfemPluginSDK)`` and
 ``specfem_add_injection_plugin(<target> SOURCES ...)``.
 
+Plugins can be built and loaded on Linux and macOS only.
+
 .. doxygennamespace:: specfem::plugin
     :desc-only:
 
