@@ -61,3 +61,28 @@ jobs:
       - name: Run all tests
         run: cd build/release-io/tests/
           && ctest --verbose
+  # The FK injection plugin is a standalone project: build it against the
+  # installed plugin SDK only. Installing the header-only SDK needs a
+  # configured core tree, not a built one.
+  build-and-test-fk-plugin:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check GNU and Cmake versions
+        run: gcc --version && cmake --version
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Configure core
+        run: cmake -S . -B build/core-sdk -DCMAKE_BUILD_TYPE=Release
+          -DSPECFEM_BUILD_TESTS=OFF -DSPECFEM_BUILD_BENCHMARKS=OFF
+      - name: Install plugin SDK
+        run: cmake --install build/core-sdk --component plugin_sdk
+          --prefix "$RUNNER_TEMP/plugin-sdk"
+      - name: Configure plugin
+        run: cmake -S plugins/injection/fk -B build/fk-plugin
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/plugin-sdk"
+      # Building runs the SDK's exported-symbol check.
+      - name: Build plugin
+        run: cmake --build build/fk-plugin -j 2
+      - name: Run plugin tests
+        run: ctest --test-dir build/fk-plugin --output-on-failure
