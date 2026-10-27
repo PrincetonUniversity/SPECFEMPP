@@ -133,3 +133,31 @@ copied, and material properties are passed by name.
 .. doxygenfunction:: specfem::injection::make_injection_points
 
 .. doxygenfunction:: specfem::injection::make_simulation_parameters
+
+Methods
+-------
+
+An injection method defines how the solver applies the incident field. The
+time-marching solver sees only :cpp:class:`specfem::injection::CouplingMethod`:
+each step it calls ``prepare_step(istep)`` once, then ``apply`` for every
+medium right after the source interaction, before the stiffness kernels, the
+MPI exchange and the mass-matrix division. Step ``istep`` holds the incident
+field at simulation time :math:`t_0 + \text{istep}\,\Delta t`.
+
+The program builds the method named in ``parameters.injection.method`` from a
+:cpp:class:`specfem::injection::MethodRegistry`, starts the plugin's provider
+session, sets it up with the method's injection points, and hands the session
+to the method (:cpp:class:`specfem::injection::InjectionMethod`). Methods built
+into SPECFEM++ are listed in ``default_method_registry()``; tests register their
+own.
+
+.. doxygenclass:: specfem::injection::CouplingMethod
+    :members:
+
+.. doxygenclass:: specfem::injection::InjectionMethod
+    :members:
+
+.. doxygenclass:: specfem::injection::MethodRegistry
+    :members:
+
+.. doxygenfunction:: specfem::injection::default_method_registry

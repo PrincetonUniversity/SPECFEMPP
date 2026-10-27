@@ -6,6 +6,7 @@
 #include "electromagnetic_wave.hpp"
 #include "flux_schemes.hpp"
 #include "header.hpp"
+#include "injection.hpp"
 #include "quadrature.hpp"
 #include "receivers.hpp"
 #include "run_setup.hpp"
@@ -444,6 +445,8 @@ public:
    * @param assembly Assembly containing mesh and field data
    * @param time_scheme Time integration scheme
    * @param tasks Periodic tasks to execute during simulation
+   * @param checkpoint_reader Checkpoint reader for undo-attenuation runs
+   * @param injection Wavefield-injection method; forward simulations only
    * @return Shared pointer to configured solver
    */
   template <int NGLL, specfem::element::dimension_tag DimensionTag>
@@ -457,9 +460,12 @@ public:
           &tasks,
       const std::shared_ptr<
           specfem::periodic_tasks::periodic_task<DimensionTag>>
-          checkpoint_reader = nullptr) const {
+          checkpoint_reader = nullptr,
+      const std::shared_ptr<specfem::injection::CouplingMethod<DimensionTag>>
+          injection = nullptr) const {
     return this->solver->instantiate<NGLL, DimensionTag>(
-        dt, assembly, time_scheme, simulation_type, tasks, checkpoint_reader);
+        dt, assembly, time_scheme, simulation_type, tasks, checkpoint_reader,
+        injection);
   }
 
   auto get_flux_scheme_configuration() const {
@@ -500,9 +506,22 @@ public:
     return *(this->header);
   }
 
+  /**
+   * @brief Get the wavefield-injection configuration.
+   * @return The @c parameters.injection section, or null if absent
+   */
+  const specfem::runtime_configuration::Injection *get_injection() const {
+    return this->injection.get();
+  }
+
 private:
   std::unique_ptr<specfem::runtime_configuration::header>
       header; ///< Simulation header configuration
+  std::unique_ptr<specfem::runtime_configuration::Injection>
+      injection; ///< Wavefield-injection
+                 ///< configuration,
+                 ///< if
+                 ///< any
   std::unique_ptr<specfem::runtime_configuration::Attenuation>
       attenuation; ///< Attenuation configuration
   std::unique_ptr<specfem::runtime_configuration::elastic_wave>

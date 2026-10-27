@@ -17,3 +17,4 @@ target_link_libraries(specfem_injection
 
 add_subdirectory(session)
 add_subdirectory(points)
+add_subdirectory(method)

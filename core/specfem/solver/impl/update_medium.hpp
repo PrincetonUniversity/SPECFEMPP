@@ -8,6 +8,7 @@
 #include "specfem/compute/initialize_mass_matrix.hpp"
 #include "specfem/data_access/data_class.hpp"
 #include "specfem/element.hpp"
+#include "specfem/injection/method/coupling_method.hpp"
 #include "specfem/solver/mpi_buffers.hpp"
 #include "specfem/tags.hpp"
 
@@ -21,12 +22,15 @@ namespace specfem::solver::impl {
  * @param assembly The assembly object containing the mesh and fields
  * @param mpi_buffers Solver-owned MPI buffers
  * @param istep Current time step
+ * @param injection Injection method applied after the sources, if any
  * @return Number of elements updated
  */
 template <int NGLL, typename Tags>
 int update_medium(specfem::assembly::assembly<Tags::dimension_tag> &assembly,
                   specfem::solver::MPIBuffers<Tags::dimension_tag> &mpi_buffers,
-                  const int istep) {
+                  const int istep,
+                  specfem::injection::CouplingMethod<Tags::dimension_tag>
+                      *injection = nullptr) {
   constexpr auto outer = specfem::element::mpi_tag::outer;
   constexpr auto inner = specfem::element::mpi_tag::inner;
   constexpr auto acceleration =
@@ -41,6 +45,8 @@ int update_medium(specfem::assembly::assembly<Tags::dimension_tag> &assembly,
       (wavefield == backward && istep > 0) ? istep - 1 : istep;
   specfem::compute::impl::compute_source_interaction<NGLL, Tags>(assembly,
                                                                  source_istep);
+  if (injection)
+    injection->apply(assembly, Tags::medium_tag, wavefield, istep);
 
   auto &field =
       assembly.fields.template get_simulation_field<Tags::wavefield_tag>();

@@ -11,6 +11,8 @@ specfem::runtime_configuration::solver::instantiate<
     const std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task<
         specfem::element::dimension_tag::dim2>>> &,
     const std::shared_ptr<specfem::periodic_tasks::periodic_task<
+        specfem::element::dimension_tag::dim2>>,
+    const std::shared_ptr<specfem::injection::CouplingMethod<
         specfem::element::dimension_tag::dim2>>) const;
 
 template std::shared_ptr<specfem::solver::solver>
@@ -23,4 +25,6 @@ specfem::runtime_configuration::solver::instantiate<
     const std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task<
         specfem::element::dimension_tag::dim3>>> &,
     const std::shared_ptr<specfem::periodic_tasks::periodic_task<
+        specfem::element::dimension_tag::dim3>>,
+    const std::shared_ptr<specfem::injection::CouplingMethod<
         specfem::element::dimension_tag::dim3>>) const;
