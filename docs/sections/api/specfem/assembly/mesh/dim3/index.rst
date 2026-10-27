@@ -20,3 +20,4 @@ specific functionality:
    impl/control_nodes
    impl/points
    impl/shape_functions
+   impl/spherical_coordinates
