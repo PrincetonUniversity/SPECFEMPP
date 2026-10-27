@@ -32,7 +32,6 @@ specfem_add_test(injection_loader_tests
   LABELS      injection
   SOURCES     ${CMAKE_CURRENT_LIST_DIR}/loader_tests.cpp
               ${CMAKE_CURRENT_LIST_DIR}/options_tests.cpp
-              ${CMAKE_CURRENT_LIST_DIR}/request_tests.cpp
   LIBRARIES   specfem::injection
               gmock_main
   DEFINITIONS ${_injection_loader_definitions}

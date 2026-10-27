@@ -2,7 +2,6 @@
 
 #include "injection/options.hpp"
 #include "injection/plugin_library.hpp"
-#include "injection/request.hpp"
 
 /**
  * @namespace specfem::injection

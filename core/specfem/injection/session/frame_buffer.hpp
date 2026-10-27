@@ -26,7 +26,8 @@ struct FrameBuffer {
    *
    * @param istep Simulation step; must lie in the current window
    * @param row Injection point (row of the point list)
-   * @param slot Component slot (see specfem::injection::Request)
+   * @param slot Component slot within the row's group (see
+   * specfem::injection::PointGroup::quantities)
    * @return The value provided by the plugin
    */
   [[nodiscard]] KOKKOS_INLINE_FUNCTION type_real load(const int istep,

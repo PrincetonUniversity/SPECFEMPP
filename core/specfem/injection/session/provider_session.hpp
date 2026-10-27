@@ -1,7 +1,6 @@
 #pragma once
 
 #include "specfem/injection/plugin_library.hpp"
-#include "specfem/injection/request.hpp"
 #include "specfem/injection/session/frame_buffer.hpp"
 #include "specfem/injection/session/points.hpp"
 #include "specfem/injection/session/window.hpp"
@@ -57,7 +56,7 @@ struct SessionOptions {
  * @code
  * specfem::injection::ProviderSession session(std::move(plugin), config,
  *                                             parameters);
- * session.setup(points, request);
+ * session.setup(points);
  * for (int istep = 0; istep < nstep; ++istep) {
  *   session.ensure_window(istep);
  *   const auto frame = session.frame(); // read with frame.load(istep, ...)
@@ -81,18 +80,19 @@ public:
                   const SessionOptions &options = {});
 
   /**
-   * @brief Hand the injection points and the request to the plugin, and
+   * @brief Hand the injection points and their groups to the plugin, and
    * allocate the buffers.
    *
-   * Checks that the plugin supports every requested quantity first, and lists
-   * all unsupported ones if it does not.
+   * Checks that the groups partition the points and are the same on every
+   * rank, then that the plugin supports every requested (medium, property,
+   * quantity), listing all unsupported ones if it does not.
    *
-   * @param points Injection points on this rank (may be empty)
-   * @param request Quantities requested per medium
-   * @throws std::runtime_error on every rank if the check or the plugin's
-   * setup fails on any rank
+   * @param points Injection points on this rank (may be empty), with the
+   * groups shared by all ranks
+   * @throws std::runtime_error on every rank if a check or the plugin's setup
+   * fails on any rank
    */
-  void setup(const InjectionPoints &points, const Request &request);
+  void setup(const InjectionPoints &points);
 
   /**
    * @brief Make sure the device window contains a step, filling it if needed.
@@ -133,6 +133,13 @@ private:
   using staging_view = Kokkos::View<type_real ***, Kokkos::LayoutRight,
                                     staging_space>; ///< [row][slot][step]
 
+  /** @brief Rows and buffer components of one point group on this rank. */
+  struct GroupLayout {
+    std::int64_t begin = 0; ///< First row
+    std::int64_t count = 0; ///< Number of rows
+    int components = 0;     ///< Buffer components per row
+  };
+
   void choose_window_steps();
   std::optional<std::string> fill_window(const int start, const int nsteps);
   std::optional<std::string> validate_window(const int start,
@@ -141,15 +148,14 @@ private:
   specfem::injection::PluginLibrary library_; ///< Loaded plugin
   std::optional<specfem::injection::PluginInstance> instance_; ///< Plugin
                                                                ///< instance
-  SimulationParameters parameters_;  ///< Simulation parameters
-  SessionOptions options_;           ///< Windowing and validation options
-  Request request_;                  ///< Requested quantities
-  std::vector<std::int32_t> medium_; ///< Medium of each row
-  std::int64_t nrows_ = 0;           ///< Injection points on this rank
-  int nslots_ = 0;                   ///< Slots per row
-  int window_steps_ = 0;             ///< Steps per window
-  staging_view staging_;             ///< Host buffer filled by the plugin
-  FrameBuffer frame_;                ///< Device copy of the current window
+  SimulationParameters parameters_; ///< Simulation parameters
+  SessionOptions options_;          ///< Windowing and validation options
+  std::vector<GroupLayout> groups_; ///< Layout of each point group
+  std::int64_t nrows_ = 0;          ///< Injection points on this rank
+  int nslots_ = 0;                  ///< Slots per row (largest group)
+  int window_steps_ = 0;            ///< Steps per window
+  staging_view staging_;            ///< Host buffer filled by the plugin
+  FrameBuffer frame_;               ///< Device copy of the current window
 };
 
 } // namespace injection

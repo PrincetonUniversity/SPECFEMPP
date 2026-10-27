@@ -18,14 +18,22 @@ using ::testing::HasSubstr;
 
 constexpr int nstep = 10;
 
-// Rank 0 holds four elastic points; every other rank holds none.
-specfem::injection::InjectionPoints rank_points() {
+// Rank 0 holds four elastic points; every other rank holds the same group
+// with no points.
+specfem::injection::InjectionPoints
+rank_points(const specfem_property property = specfem_property_isotropic) {
   const int nrows = specfem::MPI::get_rank() == 0 ? 4 : 0;
   specfem::injection::InjectionPoints points(nrows);
-  for (int row = 0; row < nrows; ++row) {
+  for (int row = 0; row < nrows; ++row)
     points.x(row) = static_cast<type_real>(row);
-    points.medium(row) = spfp_medium_elastic;
-  }
+  specfem::injection::PointGroup group;
+  group.medium = specfem_medium_elastic;
+  group.property = property;
+  group.count = nrows;
+  group.properties =
+      specfem::injection::PointGroup::properties_view("properties", nrows, 0);
+  group.quantities = { { specfem_quantity_velocity, 3 } };
+  points.groups.push_back(group);
   return points;
 }
 
@@ -43,7 +51,7 @@ TEST(ProviderSessionMPI, RanksAgreeOnWindowSize) {
   // Rank 0 alone would choose 2 steps; ranks without points would choose all.
   options.memory_budget = 2 * (2 * 4 * 3 * sizeof(type_real));
   auto session = make_session("ok", options);
-  session.setup(rank_points(), { { spfp_quantity_velocity }, {} });
+  session.setup(rank_points());
   EXPECT_EQ(session.window_steps(), 2);
 
   session.ensure_window(5);
@@ -56,7 +64,7 @@ TEST(ProviderSessionMPI, FailureOnOneRankFailsAll) {
   specfem::injection::SessionOptions options;
   options.window_steps = 5;
   auto session = make_session("fail-fill-rank0", options);
-  session.setup(rank_points(), { { spfp_quantity_velocity }, {} });
+  session.setup(rank_points());
   try {
     session.ensure_window(0);
     FAIL() << "every rank should throw";
@@ -66,6 +74,24 @@ TEST(ProviderSessionMPI, FailureOnOneRankFailsAll) {
     else
       EXPECT_THAT(error.what(), HasSubstr("failed on another rank"));
   }
+}
+
+TEST(ProviderSessionMPI, RanksMustHoldSameGroups) {
+  reset_mock_calls();
+  specfem::injection::SessionOptions options;
+  options.window_steps = 5;
+  auto session = make_session("ok", options);
+  const auto property = specfem::MPI::get_rank() == 0
+                            ? specfem_property_isotropic
+                            : specfem_property_anisotropic;
+  try {
+    session.setup(rank_points(property));
+    FAIL() << "every rank should throw";
+  } catch (const std::runtime_error &error) {
+    EXPECT_THAT(error.what(),
+                HasSubstr("every rank must hold the same groups"));
+  }
+  EXPECT_EQ(mock_calls().setup, 0);
 }
 
 } // namespace specfem::injection_session_test

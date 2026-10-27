@@ -9,9 +9,11 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <cstdint>
 #include <functional>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace specfem::injection_session_test {
@@ -35,21 +37,44 @@ static_assert(specfem::injection::window_steps_for_budget(1, 0, 6, nstep) ==
 static_assert(specfem::injection::window_steps_for_budget(
                   std::size_t{ 1 } << 30, 5, 6, nstep) == nstep);
 
+// A group with property value(point, k) = 100 * (begin + point) + k.
+specfem::injection::PointGroup
+make_group(const specfem_medium medium, const std::int64_t begin,
+           const std::int64_t count, std::vector<std::string> names,
+           std::vector<specfem::injection::QuantityRequest> quantities) {
+  specfem::injection::PointGroup group;
+  group.medium = medium;
+  group.property = specfem_property_isotropic;
+  group.begin = begin;
+  group.count = count;
+  group.properties = specfem::injection::PointGroup::properties_view(
+      "properties", count, names.size());
+  for (std::int64_t point = 0; point < count; ++point)
+    for (std::size_t k = 0; k < names.size(); ++k)
+      group.properties(point, k) =
+          static_cast<type_real>(100 * (begin + point) + k);
+  group.property_names = std::move(names);
+  group.quantities = std::move(quantities);
+  return group;
+}
+
 // Three elastic points (x = 1, 2, 3) followed by two acoustic ones (x = 4, 5).
+// Elastic: velocity + traction (6 slots); acoustic: potential_rate (1 slot).
+// With nrows = 0 both groups are present but empty.
 specfem::injection::InjectionPoints test_points(const int nrows = 5) {
   specfem::injection::InjectionPoints points(nrows);
   for (int row = 0; row < nrows; ++row) {
     points.x(row) = static_cast<type_real>(row + 1);
     points.nz(row) = 1;
-    points.medium(row) = row < 3 ? spfp_medium_elastic : spfp_medium_acoustic;
   }
+  const std::int64_t nelastic = nrows == 0 ? 0 : 3;
+  points.groups.push_back(make_group(
+      specfem_medium_elastic, 0, nelastic, { "kappa", "mu", "rho" },
+      { { specfem_quantity_velocity, 3 }, { specfem_quantity_traction, 3 } }));
+  points.groups.push_back(make_group(
+      specfem_medium_acoustic, nelastic, nrows - nelastic,
+      { "rho_inverse", "kappa" }, { { specfem_quantity_potential_rate, 1 } }));
   return points;
-}
-
-// Elastic: velocity + traction (6 slots); acoustic: potential_rate (1 slot).
-specfem::injection::Request test_request() {
-  return { { spfp_quantity_velocity, spfp_quantity_traction },
-           { spfp_quantity_potential_rate } };
 }
 
 specfem::injection::SimulationParameters test_parameters() {
@@ -132,7 +157,7 @@ TEST(ProviderSession, PassesSimulationInfoToCreate) {
 TEST(ProviderSession, WindowMatchesPluginValues) {
   reset_mock_calls();
   auto session = make_session("ok", window_of(4));
-  session.setup(test_points(), test_request());
+  session.setup(test_points());
   EXPECT_EQ(mock_calls().setup_points, 5);
 
   session.ensure_window(0);
@@ -141,10 +166,72 @@ TEST(ProviderSession, WindowMatchesPluginValues) {
   expect_window_matches(session.frame());
 }
 
+TEST(ProviderSession, GroupsReachPlugin) {
+  reset_mock_calls();
+  auto session = make_session("ok", window_of(4));
+  session.setup(test_points());
+  const auto &groups = mock_calls().groups;
+  ASSERT_EQ(groups.size(), 2);
+
+  EXPECT_EQ(groups[0].medium, specfem_medium_elastic);
+  EXPECT_EQ(groups[0].property, specfem_property_isotropic);
+  EXPECT_EQ(groups[0].begin, 0);
+  EXPECT_EQ(groups[0].count, 3);
+  EXPECT_EQ(groups[0].ncomponents, 6);
+  EXPECT_THAT(groups[0].property_names, ElementsAre("kappa", "mu", "rho"));
+  // Point-major: property k of point p is properties[p * nproperties + k].
+  ASSERT_EQ(groups[0].properties.size(), 9);
+  EXPECT_NEAR(groups[0].properties[1 * 3 + 2], 102.0, tolerance);
+  ASSERT_EQ(groups[0].slots.size(), 2);
+  EXPECT_EQ(groups[0].slots[1].quantity, specfem_quantity_traction);
+  EXPECT_EQ(groups[0].slots[1].offset, 3);
+  EXPECT_EQ(groups[0].slots[1].count, 3);
+
+  EXPECT_EQ(groups[1].medium, specfem_medium_acoustic);
+  EXPECT_EQ(groups[1].begin, 3);
+  EXPECT_EQ(groups[1].count, 2);
+  EXPECT_EQ(groups[1].ncomponents, 1);
+  EXPECT_THAT(groups[1].property_names, ElementsAre("rho_inverse", "kappa"));
+  EXPECT_NEAR(groups[1].properties[1 * 2 + 0], 400.0, tolerance);
+}
+
+TEST(ProviderSession, MalformedGroupsAreRejected) {
+  const auto setup_error =
+      [](const std::function<void(specfem::injection::InjectionPoints &)>
+             &change) {
+        reset_mock_calls();
+        auto session = make_session("ok");
+        auto points = test_points();
+        change(points);
+        return error_of([&] { session.setup(points); });
+      };
+  using Points = specfem::injection::InjectionPoints;
+
+  EXPECT_THAT(setup_error([](Points &points) { points.groups[1].begin = 4; }),
+              HasSubstr("groups must partition the 5 points in order"));
+  EXPECT_THAT(setup_error([](Points &points) { points.groups.pop_back(); }),
+              HasSubstr("the point groups cover 3 of the 5 points"));
+  EXPECT_THAT(setup_error([](Points &points) { points.groups[0].medium = 99; }),
+              HasSubstr("point group 0 has an unknown medium 99"));
+  EXPECT_THAT(
+      setup_error([](Points &points) { points.groups[1].property = 99; }),
+      HasSubstr("point group 1 has an unknown property 99"));
+  EXPECT_THAT(setup_error([](Points &points) {
+                points.groups[0].property_names.pop_back();
+              }),
+              HasSubstr("property array that does not match"));
+  EXPECT_THAT(setup_error([](Points &points) {
+                points.groups[1].quantities[0].components = 0;
+              }),
+              HasSubstr("requests potential_rate with 0 components"));
+  // The plugin's setup is not called when a check fails.
+  EXPECT_EQ(mock_calls().setup, 0);
+}
+
 TEST(ProviderSession, WindowsAreAlignedAndLastIsPartial) {
   reset_mock_calls();
   auto session = make_session("ok", window_of(4));
-  session.setup(test_points(), test_request());
+  session.setup(test_points());
 
   session.ensure_window(7);
   EXPECT_EQ(session.frame().window_start, 4);
@@ -159,7 +246,7 @@ TEST(ProviderSession, WindowsAreAlignedAndLastIsPartial) {
 TEST(ProviderSession, ResultsDoNotDependOnOrder) {
   reset_mock_calls();
   auto session = make_session("ok", window_of(3));
-  session.setup(test_points(), test_request());
+  session.setup(test_points());
 
   for (const int istep : { 9, 0, 5, 3 }) {
     session.ensure_window(istep);
@@ -177,10 +264,12 @@ TEST(ProviderSession, ZeroPointsStillRunsLifecycle) {
   reset_mock_calls();
   {
     auto session = make_session("ok");
-    session.setup(test_points(0), test_request());
+    session.setup(test_points(0));
     EXPECT_EQ(session.window_steps(), nstep);
     session.ensure_window(0);
     EXPECT_EQ(mock_calls().setup_points, 0);
+    ASSERT_EQ(mock_calls().groups.size(), 2);
+    EXPECT_EQ(mock_calls().groups[1].count, 0);
   }
   EXPECT_EQ(mock_calls().create, 1);
   EXPECT_EQ(mock_calls().setup, 1);
@@ -195,18 +284,18 @@ TEST(ProviderSession, AutomaticWindowRespectsBudget) {
   specfem::injection::SessionOptions options;
   options.memory_budget = 4 * bytes_per_step + 1;
   auto session = make_session("ok", options);
-  session.setup(test_points(), test_request());
+  session.setup(test_points());
   EXPECT_EQ(session.window_steps(), 4);
 
   // A budget below one step still gives one step; a large one caps at nstep.
   options.memory_budget = 1;
   auto tiny = make_session("ok", options);
-  tiny.setup(test_points(), test_request());
+  tiny.setup(test_points());
   EXPECT_EQ(tiny.window_steps(), 1);
 
   options.memory_budget = std::size_t{ 1 } << 30;
   auto large = make_session("ok", options);
-  large.setup(test_points(), test_request());
+  large.setup(test_points());
   EXPECT_EQ(large.window_steps(), nstep);
 }
 
@@ -215,11 +304,11 @@ TEST(ProviderSession, ExplicitWindowOverridesBudget) {
   specfem::injection::SessionOptions options = window_of(6);
   options.memory_budget = 1;
   auto session = make_session("ok", options);
-  session.setup(test_points(), test_request());
+  session.setup(test_points());
   EXPECT_EQ(session.window_steps(), 6);
 
   auto invalid = make_session("ok", window_of(0));
-  EXPECT_THAT(error_of([&] { invalid.setup(test_points(), test_request()); }),
+  EXPECT_THAT(error_of([&] { invalid.setup(test_points()); }),
               HasSubstr("window-steps must be at least 1"));
 }
 
@@ -233,8 +322,7 @@ TEST(ProviderSession, CreateFailureCarriesPluginError) {
 TEST(ProviderSession, SetupFailureCarriesPluginError) {
   reset_mock_calls();
   auto session = make_session("fail-setup");
-  const auto error =
-      error_of([&] { session.setup(test_points(), test_request()); });
+  const auto error = error_of([&] { session.setup(test_points()); });
   EXPECT_THAT(error, HasSubstr("'session-mock' setup failed on rank"));
   EXPECT_THAT(error, HasSubstr("mock setup failed"));
 }
@@ -242,10 +330,9 @@ TEST(ProviderSession, SetupFailureCarriesPluginError) {
 TEST(ProviderSession, UnsupportedQuantitiesAreAllListed) {
   reset_mock_calls();
   auto session = make_session("no-traction");
-  const auto error =
-      error_of([&] { session.setup(test_points(), test_request()); });
-  EXPECT_THAT(error, HasSubstr("does not support elastic/traction, "
-                               "acoustic/potential_rate"));
+  const auto error = error_of([&] { session.setup(test_points()); });
+  EXPECT_THAT(error, HasSubstr("does not support elastic/isotropic/traction, "
+                               "acoustic/isotropic/potential_rate"));
   // The plugin's setup is not called when the check fails.
   EXPECT_EQ(mock_calls().setup, 0);
 }
@@ -253,7 +340,7 @@ TEST(ProviderSession, UnsupportedQuantitiesAreAllListed) {
 TEST(ProviderSession, FillFailureCarriesPluginError) {
   reset_mock_calls();
   auto session = make_session("fail-fill", window_of(4));
-  session.setup(test_points(), test_request());
+  session.setup(test_points());
   const auto error = error_of([&] { session.ensure_window(0); });
   EXPECT_THAT(error, HasSubstr("'session-mock' fill failed on rank"));
   EXPECT_THAT(error, HasSubstr("mock fill failed"));
@@ -264,7 +351,7 @@ TEST(ProviderSession, ValidationReportsNonFiniteValue) {
   specfem::injection::SessionOptions options = window_of(4);
   options.validate = true;
   auto session = make_session("nan-fill", options);
-  session.setup(test_points(), test_request());
+  session.setup(test_points());
   session.ensure_window(0); // the NaN is in step 5
   const auto error = error_of([&] { session.ensure_window(5); });
   EXPECT_THAT(error, HasSubstr("non-finite value"));
@@ -272,7 +359,7 @@ TEST(ProviderSession, ValidationReportsNonFiniteValue) {
 
   options.validate = false;
   auto unchecked = make_session("nan-fill", options);
-  unchecked.setup(test_points(), test_request());
+  unchecked.setup(test_points());
   EXPECT_NO_THROW(unchecked.ensure_window(5));
 }
 
@@ -280,7 +367,7 @@ TEST(ProviderSession, RejectsStepsOutsideSimulation) {
   reset_mock_calls();
   auto session = make_session("ok", window_of(4));
   EXPECT_THROW(session.ensure_window(0), std::logic_error);
-  session.setup(test_points(), test_request());
+  session.setup(test_points());
   EXPECT_THROW(session.ensure_window(-1), std::out_of_range);
   EXPECT_THROW(session.ensure_window(nstep), std::out_of_range);
 }

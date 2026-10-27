@@ -72,18 +72,6 @@ Options
 
 .. doxygenfunction:: specfem::injection::check_injection_consistency
 
-Request
--------
-
-.. doxygenstruct:: specfem::injection::Request
-    :members:
-
-.. doxygenfunction:: specfem::injection::component_count
-
-.. doxygenfunction:: specfem::injection::count_components
-
-.. doxygenvariable:: specfem::injection::media
-
 Provider session
 ----------------
 
@@ -92,6 +80,15 @@ loaded plugin through its lifecycle and serves the incident field on the
 device, one aligned window of time steps at a time. It uses Kokkos and MPI;
 plugins never see it, and receive only plain C arrays and a Fortran
 communicator handle.
+
+Injection points are ordered by point group, one group per material system
+(medium and property, e.g. elastic/isotropic). Each group carries its
+material properties by name and the quantities requested there, with the
+number of buffer components each occupies. Every rank holds the same groups in
+the same order, including groups with no points on that rank. The plugin fills
+one buffer per group, each a strided view of the group's rows in the frame
+buffer, so ``FrameBuffer::load(istep, row, slot)`` reads any point the same
+way.
 
 .. doxygenclass:: specfem::injection::ProviderSession
     :members:
@@ -103,6 +100,12 @@ communicator handle.
     :members:
 
 .. doxygenstruct:: specfem::injection::InjectionPoints
+    :members:
+
+.. doxygenstruct:: specfem::injection::PointGroup
+    :members:
+
+.. doxygenstruct:: specfem::injection::QuantityRequest
     :members:
 
 .. doxygenstruct:: specfem::injection::FrameBuffer
