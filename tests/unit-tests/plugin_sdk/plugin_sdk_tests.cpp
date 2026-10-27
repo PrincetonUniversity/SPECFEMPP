@@ -27,8 +27,8 @@ public:
       error_ = dlerror();
       return;
     }
-    const auto entry = reinterpret_cast<specfempp_injection_plugin_entry>(
-        dlsym(handle_, SPECFEMPP_INJECTION_PLUGIN_ENTRY_NAME));
+    const auto entry = reinterpret_cast<specfem_injection_plugin_entry>(
+        dlsym(handle_, SPECFEM_INJECTION_PLUGIN_ENTRY_NAME));
     if (entry == nullptr) {
       error_ = "entry point not found";
       return;
@@ -42,12 +42,12 @@ public:
   LoadedPlugin(const LoadedPlugin &) = delete;
   LoadedPlugin &operator=(const LoadedPlugin &) = delete;
 
-  const specfempp_injection_plugin_table *table() const { return table_; }
+  const specfem_injection_plugin_table *table() const { return table_; }
   const std::string &error() const { return error_; }
 
 private:
   void *handle_ = nullptr;
-  const specfempp_injection_plugin_table *table_ = nullptr;
+  const specfem_injection_plugin_table *table_ = nullptr;
   std::string error_;
 };
 
@@ -60,9 +60,9 @@ private:
 // Members are public so tests can break individual fields.
 struct TestScene {
   TestScene() {
-    elastic.struct_size = sizeof(specfempp_point_group);
-    elastic.medium = specfempp_medium_elastic;
-    elastic.property = specfempp_property_isotropic;
+    elastic.struct_size = sizeof(specfem_point_group);
+    elastic.medium = specfem_medium_elastic;
+    elastic.property = specfem_property_isotropic;
     elastic.nproperties = 3;
     elastic.begin = 0;
     elastic.count = 3;
@@ -72,9 +72,9 @@ struct TestScene {
     elastic.nslots = 2;
     elastic.slots = elastic_slots.data();
 
-    anisotropic.struct_size = sizeof(specfempp_point_group);
-    anisotropic.medium = specfempp_medium_elastic;
-    anisotropic.property = specfempp_property_anisotropic;
+    anisotropic.struct_size = sizeof(specfem_point_group);
+    anisotropic.medium = specfem_medium_elastic;
+    anisotropic.property = specfem_property_anisotropic;
     anisotropic.nproperties = 2;
     anisotropic.begin = 3;
     anisotropic.count = 0;
@@ -83,9 +83,9 @@ struct TestScene {
     anisotropic.nslots = 1;
     anisotropic.slots = elastic_slots.data();
 
-    acoustic.struct_size = sizeof(specfempp_point_group);
-    acoustic.medium = specfempp_medium_acoustic;
-    acoustic.property = specfempp_property_isotropic;
+    acoustic.struct_size = sizeof(specfem_point_group);
+    acoustic.medium = specfem_medium_acoustic;
+    acoustic.property = specfem_property_isotropic;
     acoustic.nproperties = 2;
     acoustic.begin = 3;
     acoustic.count = 2;
@@ -95,7 +95,7 @@ struct TestScene {
     acoustic.nslots = 2;
     acoustic.slots = acoustic_slots.data();
 
-    points.struct_size = sizeof(specfempp_points);
+    points.struct_size = sizeof(specfem_points);
     points.ngroups = 3;
     points.n = 5;
     points.x = x.data();
@@ -116,24 +116,24 @@ struct TestScene {
   std::vector<const char *> elastic_names{ "kappa", "mu", "rho" };
   std::vector<double> elastic_values{ 10.0, 1.0,  2.0, 20.0, 1.0,
                                       2.0,  30.0, 1.0, 2.0 };
-  std::vector<specfempp_quantity_slot> elastic_slots{
-    { specfempp_quantity_velocity, 0, 3, 0 },
-    { specfempp_quantity_traction, 3, 3, 0 }
+  std::vector<specfem_quantity_slot> elastic_slots{
+    { specfem_quantity_velocity, 0, 3, 0 },
+    { specfem_quantity_traction, 3, 3, 0 }
   };
   std::vector<const char *> anisotropic_names{ "c11", "rho" };
   std::vector<const char *> acoustic_names{ "rho_inverse", "kappa" };
   std::vector<double> acoustic_values{ 0.5, 40.0, 0.5, 50.0 };
-  std::vector<specfempp_quantity_slot> acoustic_slots{
-    { specfempp_quantity_displacement, 0, 3, 0 },
-    { specfempp_quantity_potential_rate, 3, 1, 0 }
+  std::vector<specfem_quantity_slot> acoustic_slots{
+    { specfem_quantity_displacement, 0, 3, 0 },
+    { specfem_quantity_potential_rate, 3, 1, 0 }
   };
 
-  specfempp_point_group elastic{};
-  specfempp_point_group anisotropic{};
-  specfempp_point_group acoustic{};
-  std::vector<const specfempp_point_group *> groups{ &elastic, &anisotropic,
-                                                     &acoustic };
-  specfempp_points points{};
+  specfem_point_group elastic{};
+  specfem_point_group anisotropic{};
+  specfem_point_group acoustic{};
+  std::vector<const specfem_point_group *> groups{ &elastic, &anisotropic,
+                                                   &acoustic };
+  specfem_points points{};
 };
 
 // Scene with a single elastic/isotropic displacement group of three points.
@@ -145,14 +145,14 @@ struct ElasticOnlyScene : TestScene {
     points.n = 3;
     points.ngroups = 1;
   }
-  std::vector<specfempp_quantity_slot> displacement{
-    { specfempp_quantity_displacement, 0, 3, 0 }
+  std::vector<specfem_quantity_slot> displacement{
+    { specfem_quantity_displacement, 0, 3, 0 }
   };
 };
 
-specfempp_simulation_info make_info() {
-  specfempp_simulation_info info{};
-  info.struct_size = sizeof(specfempp_simulation_info);
+specfem_simulation_info make_info() {
+  specfem_simulation_info info{};
+  info.struct_size = sizeof(specfem_simulation_info);
   info.dimension = 3;
   info.nstep = 100;
   info.t0 = 0.0;
@@ -160,19 +160,19 @@ specfempp_simulation_info make_info() {
   return info;
 }
 
-specfempp_communicator make_communicator() {
-  specfempp_communicator communicator{};
-  communicator.struct_size = sizeof(specfempp_communicator);
+specfem_communicator make_communicator() {
+  specfem_communicator communicator{};
+  communicator.struct_size = sizeof(specfem_communicator);
   communicator.size = 1;
   return communicator;
 }
 
 // Contiguous [point][component][step] buffer descriptor over data.
-specfempp_buffer make_buffer(void *data, const specfempp_dtype dtype,
-                             const std::int64_t npoints, const int ncomponents,
-                             const int nsteps) {
-  specfempp_buffer buffer{};
-  buffer.struct_size = sizeof(specfempp_buffer);
+specfem_buffer make_buffer(void *data, const specfem_dtype dtype,
+                           const std::int64_t npoints, const int ncomponents,
+                           const int nsteps) {
+  specfem_buffer buffer{};
+  buffer.struct_size = sizeof(specfem_buffer);
   buffer.data = data;
   buffer.dtype = dtype;
   buffer.npoints = npoints;
@@ -186,7 +186,7 @@ specfempp_buffer make_buffer(void *data, const specfempp_dtype dtype,
 
 // Host storage and descriptors for one window of every group of a TestScene.
 template <typename T> struct SceneBuffers {
-  SceneBuffers(const specfempp_dtype dtype, const int nsteps)
+  SceneBuffers(const specfem_dtype dtype, const int nsteps)
       : elastic(3 * 6 * nsteps, T(-1)), anisotropic(1, T(-1)),
         acoustic(2 * 4 * nsteps, T(-1)),
         descriptors{ make_buffer(elastic.data(), dtype, 3, 6, nsteps),
@@ -197,23 +197,22 @@ template <typename T> struct SceneBuffers {
   std::vector<T> elastic;
   std::vector<T> anisotropic;
   std::vector<T> acoustic;
-  std::vector<specfempp_buffer> descriptors;
-  std::vector<const specfempp_buffer *> pointers;
+  std::vector<specfem_buffer> descriptors;
+  std::vector<const specfem_buffer *> pointers;
 };
 
 // Number of manifests in a file, and the last one found.
-int find_manifests(const std::string &path, specfempp_manifest &manifest) {
+int find_manifests(const std::string &path, specfem_manifest &manifest) {
   std::ifstream file(path, std::ios::binary);
   const std::vector<char> bytes((std::istreambuf_iterator<char>(file)),
                                 std::istreambuf_iterator<char>());
-  const char magic[16] = SPECFEMPP_MANIFEST_MAGIC_INITIALIZER;
+  const char magic[16] = SPECFEM_MANIFEST_MAGIC_INITIALIZER;
   int count = 0;
   auto it = bytes.begin();
   while ((it = std::search(it, bytes.end(), magic, magic + sizeof(magic))) !=
          bytes.end()) {
-    if (static_cast<std::size_t>(bytes.end() - it) >=
-        sizeof(specfempp_manifest))
-      std::memcpy(&manifest, &*it, sizeof(specfempp_manifest));
+    if (static_cast<std::size_t>(bytes.end() - it) >= sizeof(specfem_manifest))
+      std::memcpy(&manifest, &*it, sizeof(specfem_manifest));
     ++count;
     ++it;
   }
@@ -339,8 +338,8 @@ TEST(PluginSdkSimulationInfo, RejectsUnsupportedOrTruncatedInput) {
 TEST(PluginSdkBuffer, HonoursStridesAndDtype) {
   // Step-major layout: [step][point][component], 2 points x 3 components.
   std::vector<double> values(2 * 3 * 4, -1.0);
-  specfempp_buffer raw =
-      make_buffer(values.data(), specfempp_dtype_float64, 2, 3, 4);
+  specfem_buffer raw =
+      make_buffer(values.data(), specfem_dtype_float64, 2, 3, 4);
   raw.stride_component = 1;
   raw.stride_point = 3;
   raw.stride_step = 6;
@@ -352,7 +351,7 @@ TEST(PluginSdkBuffer, HonoursStridesAndDtype) {
 
   std::vector<float> floats(2 * 3 * 4, 0.0f);
   const specfem::plugin::Buffer float_buffer(
-      make_buffer(floats.data(), specfempp_dtype_float32, 2, 3, 4));
+      make_buffer(floats.data(), specfem_dtype_float32, 2, 3, 4));
   float_buffer.set(1, 0, 2, 0.25);
   EXPECT_NEAR(floats[1 * 12 + 0 * 4 + 2], 0.25f, 1e-7f);
 }
@@ -360,7 +359,7 @@ TEST(PluginSdkBuffer, HonoursStridesAndDtype) {
 TEST(PluginSdkBuffer, SetRejectsOutOfRangeIndices) {
   std::vector<double> values(2 * 3 * 4, -1.0);
   const specfem::plugin::Buffer buffer(
-      make_buffer(values.data(), specfempp_dtype_float64, 2, 3, 4));
+      make_buffer(values.data(), specfem_dtype_float64, 2, 3, 4));
   EXPECT_THROW(buffer.set(2, 0, 0, 1.0), std::out_of_range);
   EXPECT_THROW(buffer.set(-1, 0, 0, 1.0), std::out_of_range);
   EXPECT_THROW(buffer.set(0, 3, 0, 1.0), std::out_of_range);
@@ -374,20 +373,20 @@ TEST(PluginSdkBuffer, RejectsInvalidDescriptors) {
   EXPECT_THROW(specfem::plugin::Buffer{ make_buffer(&value, 7, 1, 1, 1) },
                std::invalid_argument);
   EXPECT_THROW(specfem::plugin::Buffer{ make_buffer(
-                   nullptr, specfempp_dtype_float64, 1, 1, 1) },
+                   nullptr, specfem_dtype_float64, 1, 1, 1) },
                std::invalid_argument);
-  auto truncated = make_buffer(&value, specfempp_dtype_float64, 1, 1, 1);
+  auto truncated = make_buffer(&value, specfem_dtype_float64, 1, 1, 1);
   truncated.struct_size = 8;
   EXPECT_THROW(specfem::plugin::Buffer{ truncated }, std::invalid_argument);
 }
 
 TEST(PluginSdkModule, CppPluginTableAndCapabilities) {
-  const LoadedPlugin plugin(SPECFEMPP_TEST_GOOD_PLUGIN);
+  const LoadedPlugin plugin(SPECFEM_TEST_GOOD_PLUGIN);
   ASSERT_NE(plugin.table(), nullptr) << plugin.error();
   const auto &table = *plugin.table();
-  EXPECT_EQ(table.struct_size, sizeof(specfempp_injection_plugin_table));
+  EXPECT_EQ(table.struct_size, sizeof(specfem_injection_plugin_table));
   EXPECT_EQ(table.abi_version,
-            static_cast<uint32_t>(SPECFEMPP_INJECTION_ABI_VERSION));
+            static_cast<uint32_t>(SPECFEM_INJECTION_ABI_VERSION));
   EXPECT_EQ(table.capabilities, 0u);
   EXPECT_STREQ(table.name, "test-good");
   EXPECT_STREQ(table.version, "1.2.3");
@@ -396,36 +395,36 @@ TEST(PluginSdkModule, CppPluginTableAndCapabilities) {
   const auto communicator = make_communicator();
   void *self = table.create("ok", &info, &communicator);
   ASSERT_NE(self, nullptr) << table.last_error(nullptr);
-  EXPECT_EQ(table.supports(self, specfempp_medium_elastic,
-                           specfempp_property_anisotropic,
-                           specfempp_quantity_velocity),
+  EXPECT_EQ(table.supports(self, specfem_medium_elastic,
+                           specfem_property_anisotropic,
+                           specfem_quantity_velocity),
             1);
-  EXPECT_EQ(table.supports(self, specfempp_medium_elastic,
-                           specfempp_property_isotropic,
-                           specfempp_quantity_potential_rate),
+  EXPECT_EQ(table.supports(self, specfem_medium_elastic,
+                           specfem_property_isotropic,
+                           specfem_quantity_potential_rate),
             0);
-  EXPECT_EQ(table.supports(self, specfempp_medium_acoustic,
-                           specfempp_property_isotropic,
-                           specfempp_quantity_potential_rate),
+  EXPECT_EQ(table.supports(self, specfem_medium_acoustic,
+                           specfem_property_isotropic,
+                           specfem_quantity_potential_rate),
             1);
-  EXPECT_EQ(table.supports(self, specfempp_medium_elastic_spin,
-                           specfempp_property_isotropic_cosserat,
-                           specfempp_quantity_displacement),
+  EXPECT_EQ(table.supports(self, specfem_medium_elastic_spin,
+                           specfem_property_isotropic_cosserat,
+                           specfem_quantity_displacement),
             0);
-  EXPECT_EQ(table.supports(self, 0, specfempp_property_isotropic,
-                           specfempp_quantity_velocity),
+  EXPECT_EQ(table.supports(self, 0, specfem_property_isotropic,
+                           specfem_quantity_velocity),
             0);
-  EXPECT_EQ(table.supports(self, specfempp_medium_elastic, 9,
-                           specfempp_quantity_velocity),
+  EXPECT_EQ(table.supports(self, specfem_medium_elastic, 9,
+                           specfem_quantity_velocity),
             0);
-  EXPECT_EQ(table.supports(self, specfempp_medium_elastic,
-                           specfempp_property_isotropic, 99),
+  EXPECT_EQ(table.supports(self, specfem_medium_elastic,
+                           specfem_property_isotropic, 99),
             0);
   table.destroy(self);
 }
 
 TEST(PluginSdkModule, CppPluginFillsEveryGroup) {
-  const LoadedPlugin plugin(SPECFEMPP_TEST_GOOD_PLUGIN);
+  const LoadedPlugin plugin(SPECFEM_TEST_GOOD_PLUGIN);
   ASSERT_NE(plugin.table(), nullptr) << plugin.error();
   const auto &table = *plugin.table();
   const auto info = make_info();
@@ -434,14 +433,14 @@ TEST(PluginSdkModule, CppPluginFillsEveryGroup) {
   ASSERT_NE(self, nullptr) << table.last_error(nullptr);
 
   const TestScene scene;
-  ASSERT_EQ(table.setup(self, &scene.points), specfempp_status_ok)
+  ASSERT_EQ(table.setup(self, &scene.points), specfem_status_ok)
       << table.last_error(self);
 
   constexpr int nsteps = 4;
   constexpr int first_step = 5;
-  SceneBuffers<double> buffers(specfempp_dtype_float64, nsteps);
+  SceneBuffers<double> buffers(specfem_dtype_float64, nsteps);
   ASSERT_EQ(table.fill(self, first_step, 3, buffers.pointers.data()),
-            specfempp_status_ok)
+            specfem_status_ok)
       << table.last_error(self);
 
   // base = x + kappa, per group.
@@ -461,16 +460,15 @@ TEST(PluginSdkModule, CppPluginFillsEveryGroup) {
                     1000.0 * (first_step + s) + 10.0 * c + acoustic_base[p],
                     1e-12);
 
-  SceneBuffers<float> floats(specfempp_dtype_float32, nsteps);
-  ASSERT_EQ(table.fill(self, 0, 3, floats.pointers.data()),
-            specfempp_status_ok);
+  SceneBuffers<float> floats(specfem_dtype_float32, nsteps);
+  ASSERT_EQ(table.fill(self, 0, 3, floats.pointers.data()), specfem_status_ok);
   EXPECT_NEAR(floats.acoustic[(1 * 4 + 3) * nsteps + 3],
               3000.0f + 30.0f + 55.0f, 1e-3f);
   table.destroy(self);
 }
 
 TEST(PluginSdkModule, FillChecksBuffersAgainstSetup) {
-  const LoadedPlugin plugin(SPECFEMPP_TEST_GOOD_PLUGIN);
+  const LoadedPlugin plugin(SPECFEM_TEST_GOOD_PLUGIN);
   ASSERT_NE(plugin.table(), nullptr) << plugin.error();
   const auto &table = *plugin.table();
   const auto info = make_info();
@@ -478,50 +476,49 @@ TEST(PluginSdkModule, FillChecksBuffersAgainstSetup) {
   void *self = table.create("ok", &info, &communicator);
   ASSERT_NE(self, nullptr) << table.last_error(nullptr);
 
-  SceneBuffers<double> buffers(specfempp_dtype_float64, 2);
+  SceneBuffers<double> buffers(specfem_dtype_float64, 2);
   EXPECT_EQ(table.fill(self, 0, 3, buffers.pointers.data()),
-            specfempp_status_error);
+            specfem_status_error);
   EXPECT_STREQ(table.last_error(self), "fill: setup has not succeeded");
 
   const TestScene scene;
-  ASSERT_EQ(table.setup(self, &scene.points), specfempp_status_ok);
+  ASSERT_EQ(table.setup(self, &scene.points), specfem_status_ok);
 
   EXPECT_EQ(table.fill(self, 0, 2, buffers.pointers.data()),
-            specfempp_status_error);
+            specfem_status_error);
   EXPECT_STREQ(table.last_error(self), "fill: expected one buffer per group");
 
   buffers.descriptors[2].npoints = 3;
   EXPECT_EQ(table.fill(self, 0, 3, buffers.pointers.data()),
-            specfempp_status_error);
+            specfem_status_error);
   EXPECT_STREQ(table.last_error(self),
                "fill: buffer 2 does not match its group");
   buffers.descriptors[2].npoints = 2;
 
   buffers.descriptors[0].ncomponents = 5;
   EXPECT_EQ(table.fill(self, 0, 3, buffers.pointers.data()),
-            specfempp_status_error);
+            specfem_status_error);
   buffers.descriptors[0].ncomponents = 6;
 
   buffers.descriptors[1].nsteps = 1;
   EXPECT_EQ(table.fill(self, 0, 3, buffers.pointers.data()),
-            specfempp_status_error);
+            specfem_status_error);
   EXPECT_STREQ(table.last_error(self), "fill: buffers differ in step count");
   buffers.descriptors[1].nsteps = 2;
 
   EXPECT_EQ(table.fill(self, 99, 3, buffers.pointers.data()),
-            specfempp_status_error);
+            specfem_status_error);
   EXPECT_STREQ(table.last_error(self),
                "fill: window outside the simulation steps");
 
-  EXPECT_EQ(table.fill(self, 98, 3, buffers.pointers.data()),
-            specfempp_status_ok)
+  EXPECT_EQ(table.fill(self, 98, 3, buffers.pointers.data()), specfem_status_ok)
       << table.last_error(self);
   EXPECT_STREQ(table.last_error(self), "");
   table.destroy(self);
 }
 
 TEST(PluginSdkModule, ExceptionsBecomeStatusAndMessage) {
-  const LoadedPlugin plugin(SPECFEMPP_TEST_GOOD_PLUGIN);
+  const LoadedPlugin plugin(SPECFEM_TEST_GOOD_PLUGIN);
   ASSERT_NE(plugin.table(), nullptr) << plugin.error();
   const auto &table = *plugin.table();
   const auto info = make_info();
@@ -542,9 +539,9 @@ TEST(PluginSdkModule, ExceptionsBecomeStatusAndMessage) {
 
   void *setup_fails = table.create("throw-in-setup", &info, &communicator);
   ASSERT_NE(setup_fails, nullptr);
-  EXPECT_EQ(table.setup(setup_fails, &scene.points), specfempp_status_error);
+  EXPECT_EQ(table.setup(setup_fails, &scene.points), specfem_status_error);
   EXPECT_STREQ(table.last_error(setup_fails), "setup failed on purpose");
-  EXPECT_EQ(table.setup(setup_fails, nullptr), specfempp_status_error);
+  EXPECT_EQ(table.setup(setup_fails, nullptr), specfem_status_error);
   EXPECT_STREQ(table.last_error(setup_fails), "setup: null argument");
   table.destroy(setup_fails);
 
@@ -552,24 +549,24 @@ TEST(PluginSdkModule, ExceptionsBecomeStatusAndMessage) {
       table.create("unsupported-in-setup", &info, &communicator);
   ASSERT_NE(unsupported, nullptr);
   EXPECT_EQ(table.setup(unsupported, &scene.points),
-            specfempp_status_unsupported);
+            specfem_status_unsupported);
   EXPECT_STREQ(table.last_error(unsupported), "setup cannot serve this run");
   table.destroy(unsupported);
 
   void *fill_fails = table.create("throw-in-fill", &info, &communicator);
   ASSERT_NE(fill_fails, nullptr);
-  ASSERT_EQ(table.setup(fill_fails, &scene.points), specfempp_status_ok);
-  SceneBuffers<double> buffers(specfempp_dtype_float64, 1);
+  ASSERT_EQ(table.setup(fill_fails, &scene.points), specfem_status_ok);
+  SceneBuffers<double> buffers(specfem_dtype_float64, 1);
   EXPECT_EQ(table.fill(fill_fails, 0, 3, buffers.pointers.data()),
-            specfempp_status_error);
+            specfem_status_error);
   EXPECT_STREQ(table.last_error(fill_fails), "fill failed on purpose");
   table.destroy(fill_fails);
 
   void *out_of_range = table.create("write-out-of-range", &info, &communicator);
   ASSERT_NE(out_of_range, nullptr);
-  ASSERT_EQ(table.setup(out_of_range, &scene.points), specfempp_status_ok);
+  ASSERT_EQ(table.setup(out_of_range, &scene.points), specfem_status_ok);
   EXPECT_EQ(table.fill(out_of_range, 0, 3, buffers.pointers.data()),
-            specfempp_status_error);
+            specfem_status_error);
   EXPECT_STREQ(table.last_error(out_of_range), "buffer: index out of range");
   table.destroy(out_of_range);
 
@@ -579,7 +576,7 @@ TEST(PluginSdkModule, ExceptionsBecomeStatusAndMessage) {
 // Reporting an error must not allocate: out-of-memory and oversized messages
 // still produce a status and a (possibly truncated) message.
 TEST(PluginSdkModule, ErrorReportingSurvivesAllocationFailure) {
-  const LoadedPlugin plugin(SPECFEMPP_TEST_GOOD_PLUGIN);
+  const LoadedPlugin plugin(SPECFEM_TEST_GOOD_PLUGIN);
   ASSERT_NE(plugin.table(), nullptr) << plugin.error();
   const auto &table = *plugin.table();
   const auto info = make_info();
@@ -589,28 +586,28 @@ TEST(PluginSdkModule, ErrorReportingSurvivesAllocationFailure) {
   EXPECT_STRNE(table.last_error(nullptr), "");
 
   const TestScene scene;
-  SceneBuffers<double> buffers(specfempp_dtype_float64, 1);
+  SceneBuffers<double> buffers(specfem_dtype_float64, 1);
 
   void *bad_alloc = table.create("bad-alloc-in-fill", &info, &communicator);
   ASSERT_NE(bad_alloc, nullptr);
-  ASSERT_EQ(table.setup(bad_alloc, &scene.points), specfempp_status_ok);
+  ASSERT_EQ(table.setup(bad_alloc, &scene.points), specfem_status_ok);
   EXPECT_EQ(table.fill(bad_alloc, 0, 3, buffers.pointers.data()),
-            specfempp_status_error);
+            specfem_status_error);
   EXPECT_STRNE(table.last_error(bad_alloc), "");
   table.destroy(bad_alloc);
 
   void *long_error = table.create("long-error-in-fill", &info, &communicator);
   ASSERT_NE(long_error, nullptr);
-  ASSERT_EQ(table.setup(long_error, &scene.points), specfempp_status_ok);
+  ASSERT_EQ(table.setup(long_error, &scene.points), specfem_status_ok);
   EXPECT_EQ(table.fill(long_error, 0, 3, buffers.pointers.data()),
-            specfempp_status_error);
+            specfem_status_error);
   EXPECT_EQ(std::string(table.last_error(long_error)),
             std::string(specfem::plugin_impl::error_capacity - 1, 'e'));
   table.destroy(long_error);
 }
 
 TEST(PluginSdkModule, PureCPlugin) {
-  const LoadedPlugin plugin(SPECFEMPP_TEST_C_PLUGIN);
+  const LoadedPlugin plugin(SPECFEM_TEST_C_PLUGIN);
   ASSERT_NE(plugin.table(), nullptr) << plugin.error();
   const auto &table = *plugin.table();
   EXPECT_STREQ(table.name, "test-c");
@@ -619,27 +616,27 @@ TEST(PluginSdkModule, PureCPlugin) {
   const auto communicator = make_communicator();
   void *self = table.create("unused", &info, &communicator);
   ASSERT_NE(self, nullptr);
-  EXPECT_EQ(table.supports(self, specfempp_medium_elastic,
-                           specfempp_property_isotropic,
-                           specfempp_quantity_displacement),
+  EXPECT_EQ(table.supports(self, specfem_medium_elastic,
+                           specfem_property_isotropic,
+                           specfem_quantity_displacement),
             1);
-  EXPECT_EQ(table.supports(self, specfempp_medium_elastic,
-                           specfempp_property_anisotropic,
-                           specfempp_quantity_displacement),
+  EXPECT_EQ(table.supports(self, specfem_medium_elastic,
+                           specfem_property_anisotropic,
+                           specfem_quantity_displacement),
             0);
 
   const TestScene mixed;
-  EXPECT_EQ(table.setup(self, &mixed.points), specfempp_status_unsupported);
+  EXPECT_EQ(table.setup(self, &mixed.points), specfem_status_unsupported);
   EXPECT_STREQ(table.last_error(self), "only elastic isotropic displacement");
 
   const ElasticOnlyScene scene;
-  ASSERT_EQ(table.setup(self, &scene.points), specfempp_status_ok);
+  ASSERT_EQ(table.setup(self, &scene.points), specfem_status_ok);
 
   std::vector<double> values(3 * 3 * 2, 0.0);
   const auto buffer =
-      make_buffer(values.data(), specfempp_dtype_float64, 3, 3, 2);
-  const specfempp_buffer *buffers[] = { &buffer };
-  ASSERT_EQ(table.fill(self, 10, 1, buffers), specfempp_status_ok);
+      make_buffer(values.data(), specfem_dtype_float64, 3, 3, 2);
+  const specfem_buffer *buffers[] = { &buffer };
+  ASSERT_EQ(table.fill(self, 10, 1, buffers), specfem_status_ok);
   EXPECT_NEAR(values[0], 52.0, 1e-12);
   EXPECT_NEAR(values[values.size() - 1], 53.0, 1e-12);
   table.destroy(self);
@@ -648,17 +645,17 @@ TEST(PluginSdkModule, PureCPlugin) {
 TEST(PluginSdkManifest, ReadableWithoutLoading) {
   for (const auto &[path, name, version] :
        { std::tuple<std::string, std::string, std::string>{
-             SPECFEMPP_TEST_GOOD_PLUGIN, "test-good", "1.2.3" },
+             SPECFEM_TEST_GOOD_PLUGIN, "test-good", "1.2.3" },
          std::tuple<std::string, std::string, std::string>{
-             SPECFEMPP_TEST_C_PLUGIN, "test-c", "0.1.0" } }) {
-    specfempp_manifest manifest{};
+             SPECFEM_TEST_C_PLUGIN, "test-c", "0.1.0" } }) {
+    specfem_manifest manifest{};
     EXPECT_EQ(find_manifests(path, manifest), 1) << path;
     EXPECT_EQ(manifest.manifest_version,
-              static_cast<uint32_t>(SPECFEMPP_MANIFEST_VERSION));
+              static_cast<uint32_t>(SPECFEM_MANIFEST_VERSION));
     EXPECT_EQ(manifest.abi_version,
-              static_cast<uint32_t>(SPECFEMPP_INJECTION_ABI_VERSION));
+              static_cast<uint32_t>(SPECFEM_INJECTION_ABI_VERSION));
     EXPECT_EQ(manifest.plugin_kind,
-              static_cast<uint32_t>(SPECFEMPP_PLUGIN_KIND_INJECTION));
+              static_cast<uint32_t>(SPECFEM_PLUGIN_KIND_INJECTION));
     EXPECT_EQ(std::string(manifest.name), name);
     EXPECT_EQ(std::string(manifest.version), version);
   }

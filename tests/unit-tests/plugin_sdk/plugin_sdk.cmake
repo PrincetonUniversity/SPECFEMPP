@@ -2,12 +2,12 @@
 # tests/unit-tests/CMakeLists.txt.
 #
 # The test plugins are real loadable modules, built the way plugin authors build
-# them, and loaded with dlopen by the tests. specfempp_add_injection_plugin
+# them, and loaded with dlopen by the tests. specfem_add_injection_plugin
 # already checks their exported symbols after every build.
 
-specfempp_add_injection_plugin(plugin_sdk_test_good_plugin
+specfem_add_injection_plugin(plugin_sdk_test_good_plugin
   SOURCES ${CMAKE_CURRENT_LIST_DIR}/good_plugin.cpp)
-specfempp_add_injection_plugin(plugin_sdk_test_c_plugin
+specfem_add_injection_plugin(plugin_sdk_test_c_plugin
   SOURCES ${CMAKE_CURRENT_LIST_DIR}/c_plugin.c)
 
 # plugin_sdk_tests embeds the module paths, so with an external test directory
@@ -23,8 +23,8 @@ specfem_add_test(plugin_sdk_tests
   LIBRARIES   specfem::plugin_sdk
               gtest_main
               ${CMAKE_DL_LIBS}
-  DEFINITIONS "SPECFEMPP_TEST_GOOD_PLUGIN=\"$<TARGET_FILE:plugin_sdk_test_good_plugin>\""
-              "SPECFEMPP_TEST_C_PLUGIN=\"$<TARGET_FILE:plugin_sdk_test_c_plugin>\""
+  DEFINITIONS "SPECFEM_TEST_GOOD_PLUGIN=\"$<TARGET_FILE:plugin_sdk_test_good_plugin>\""
+              "SPECFEM_TEST_C_PLUGIN=\"$<TARGET_FILE:plugin_sdk_test_c_plugin>\""
 )
 add_dependencies(plugin_sdk_tests
   plugin_sdk_test_good_plugin plugin_sdk_test_c_plugin)
@@ -42,7 +42,7 @@ specfem_add_test(plugin_sdk_tag_ids_tests
 # The tests below need the source and build trees, so they are registered only
 # there and do not run from an external test directory (SPECFEMPP_TEST_DIR).
 
-# Deliberately bypasses specfempp_add_injection_plugin so it leaks a symbol; the
+# Deliberately bypasses specfem_add_injection_plugin so it leaks a symbol; the
 # checker must reject it and name the extra symbol.
 add_library(plugin_sdk_test_leaky_plugin MODULE
   ${CMAKE_CURRENT_LIST_DIR}/leaky_plugin.cpp)
@@ -55,7 +55,7 @@ add_test(NAME plugin_sdk_exports_leaky
     -P "${CMAKE_SOURCE_DIR}/sdk/cmake/check_plugin_exports.cmake")
 set_tests_properties(plugin_sdk_exports_leaky PROPERTIES
   LABELS plugin_sdk
-  PASS_REGULAR_EXPRESSION "must export exactly specfempp_injection_plugin, but exports:.*specfempp_leaked_symbol")
+  PASS_REGULAR_EXPRESSION "must export exactly specfem_injection_plugin, but exports:.*specfem_leaked_symbol")
 
 # Builds a plugin against the installed SDK only, as an external author would.
 add_test(NAME plugin_sdk_consumer

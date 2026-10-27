@@ -31,5 +31,5 @@ public:
 
 } // namespace specfem::plugin_sdk_consumer
 
-SPECFEMPP_DEFINE_INJECTION_PLUGIN("consumer", "0.0.1",
-                                  specfem::plugin_sdk_consumer::ZeroPlugin)
+SPECFEM_DEFINE_INJECTION_PLUGIN("consumer", "0.0.1",
+                                specfem::plugin_sdk_consumer::ZeroPlugin)

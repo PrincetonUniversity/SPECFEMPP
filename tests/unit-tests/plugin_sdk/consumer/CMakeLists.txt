@@ -2,8 +2,8 @@
 # an external plugin author would. Driven by run_consumer.cmake.
 
 cmake_minimum_required(VERSION 3.17)
-project(specfempp_plugin_sdk_consumer LANGUAGES CXX)
+project(specfem_plugin_sdk_consumer LANGUAGES CXX)
 
-find_package(SpecfemppPluginSDK 1 REQUIRED)
+find_package(SpecfemPluginSDK 1 REQUIRED)
 
-specfempp_add_injection_plugin(consumer_plugin SOURCES consumer_plugin.cpp)
+specfem_add_injection_plugin(consumer_plugin SOURCES consumer_plugin.cpp)

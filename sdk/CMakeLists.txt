@@ -19,30 +19,30 @@ target_include_directories(specfem_plugin_sdk INTERFACE
 )
 target_compile_features(specfem_plugin_sdk INTERFACE cxx_std_20)
 
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/SpecfemppPluginSDKFunctions.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/SpecfemPluginSDKFunctions.cmake")
 
 # The package version is the ABI version, read from the header so there is a
 # single source of truth.
 file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/include/specfem/plugin/injection_abi.h"
-     _abi_line REGEX "^#define SPECFEMPP_INJECTION_ABI_VERSION [0-9]+")
-string(REGEX REPLACE ".* ([0-9]+)$" "\\1" SPECFEMPP_PLUGIN_ABI_VERSION "${_abi_line}")
+     _abi_line REGEX "^#define SPECFEM_INJECTION_ABI_VERSION [0-9]+")
+string(REGEX REPLACE ".* ([0-9]+)$" "\\1" SPECFEM_PLUGIN_ABI_VERSION "${_abi_line}")
 
-set(_config_dir "${CMAKE_INSTALL_LIBDIR}/cmake/SpecfemppPluginSDK")
+set(_config_dir "${CMAKE_INSTALL_LIBDIR}/cmake/SpecfemPluginSDK")
 
 configure_package_config_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/SpecfemppPluginSDKConfig.cmake.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/SpecfemppPluginSDKConfig.cmake"
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/SpecfemPluginSDKConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/SpecfemPluginSDKConfig.cmake"
     INSTALL_DESTINATION "${_config_dir}"
 )
 write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/SpecfemppPluginSDKConfigVersion.cmake"
-    VERSION ${SPECFEMPP_PLUGIN_ABI_VERSION}
+    "${CMAKE_CURRENT_BINARY_DIR}/SpecfemPluginSDKConfigVersion.cmake"
+    VERSION ${SPECFEM_PLUGIN_ABI_VERSION}
     COMPATIBILITY SameMajorVersion
     ARCH_INDEPENDENT
 )
 
 install(TARGETS specfem_plugin_sdk
-    EXPORT SpecfemppPluginSDKTargets
+    EXPORT SpecfemPluginSDKTargets
     COMPONENT plugin_sdk
     EXCLUDE_FROM_ALL
 )
@@ -51,16 +51,16 @@ install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
     COMPONENT plugin_sdk
     EXCLUDE_FROM_ALL
 )
-install(EXPORT SpecfemppPluginSDKTargets
+install(EXPORT SpecfemPluginSDKTargets
     NAMESPACE specfem::
     DESTINATION "${_config_dir}"
     COMPONENT plugin_sdk
     EXCLUDE_FROM_ALL
 )
 install(FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/SpecfemppPluginSDKConfig.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/SpecfemppPluginSDKConfigVersion.cmake"
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/SpecfemppPluginSDKFunctions.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/SpecfemPluginSDKConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/SpecfemPluginSDKConfigVersion.cmake"
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/SpecfemPluginSDKFunctions.cmake"
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_plugin_exports.cmake"
     DESTINATION "${_config_dir}"
     COMPONENT plugin_sdk

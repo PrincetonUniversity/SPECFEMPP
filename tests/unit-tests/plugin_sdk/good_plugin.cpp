@@ -86,5 +86,5 @@ private:
 
 } // namespace specfem::plugin_sdk_test
 
-SPECFEMPP_DEFINE_INJECTION_PLUGIN("test-good", "1.2.3",
-                                  specfem::plugin_sdk_test::GoodPlugin)
+SPECFEM_DEFINE_INJECTION_PLUGIN("test-good", "1.2.3",
+                                specfem::plugin_sdk_test::GoodPlugin)

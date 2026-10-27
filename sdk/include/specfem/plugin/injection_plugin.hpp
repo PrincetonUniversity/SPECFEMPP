@@ -19,33 +19,33 @@ namespace specfem {
  * @brief C++ layer of the injection plugin SDK.
  *
  * Plugin authors derive from @c InjectionPlugin and register the class with
- * @c SPECFEMPP_DEFINE_INJECTION_PLUGIN; the macro implements the C ABI in
+ * @c SPECFEM_DEFINE_INJECTION_PLUGIN; the macro implements the C ABI in
  * @c %specfem/plugin/injection_abi.h on top of it.
  */
 namespace plugin {
 
 /** @brief Medium of a point group (SPECFEM++ medium tag identifiers). */
 enum class Medium : std::int32_t {
-  acoustic = specfempp_medium_acoustic,        ///< Acoustic fluid
-  elastic = specfempp_medium_elastic,          ///< Elastic solid
-  elastic_spin = specfempp_medium_elastic_spin ///< Elastic solid with spin
+  acoustic = specfem_medium_acoustic,        ///< Acoustic fluid
+  elastic = specfem_medium_elastic,          ///< Elastic solid
+  elastic_spin = specfem_medium_elastic_spin ///< Elastic solid with spin
 };
 
 /** @brief Material parameterization (SPECFEM++ property tag identifiers). */
 enum class Property : std::int32_t {
-  isotropic = specfempp_property_isotropic,     ///< Isotropic
-  anisotropic = specfempp_property_anisotropic, ///< Anisotropic
+  isotropic = specfem_property_isotropic,     ///< Isotropic
+  anisotropic = specfem_property_anisotropic, ///< Anisotropic
   isotropic_cosserat =
-      specfempp_property_isotropic_cosserat ///< Isotropic Cosserat
+      specfem_property_isotropic_cosserat ///< Isotropic Cosserat
 };
 
 /** @brief Physical quantity SPECFEM++ can request from a plugin. */
 enum class Quantity : std::int32_t {
-  displacement = specfempp_quantity_displacement,    ///< Displacement
-  velocity = specfempp_quantity_velocity,            ///< Velocity
-  acceleration = specfempp_quantity_acceleration,    ///< Acceleration
-  traction = specfempp_quantity_traction,            ///< Traction on the normal
-  potential_rate = specfempp_quantity_potential_rate ///< Fluid potential rate
+  displacement = specfem_quantity_displacement,    ///< Displacement
+  velocity = specfem_quantity_velocity,            ///< Velocity
+  acceleration = specfem_quantity_acceleration,    ///< Acceleration
+  traction = specfem_quantity_traction,            ///< Traction on the normal
+  potential_rate = specfem_quantity_potential_rate ///< Fluid potential rate
 };
 
 /**
@@ -54,10 +54,10 @@ enum class Quantity : std::int32_t {
  * @param medium Raw medium value
  * @return true for every medium defined in ABI v1
  */
-constexpr bool is_valid_medium(const specfempp_medium medium) {
-  return medium == specfempp_medium_acoustic ||
-         medium == specfempp_medium_elastic ||
-         medium == specfempp_medium_elastic_spin;
+constexpr bool is_valid_medium(const specfem_medium medium) {
+  return medium == specfem_medium_acoustic ||
+         medium == specfem_medium_elastic ||
+         medium == specfem_medium_elastic_spin;
 }
 
 /**
@@ -66,9 +66,9 @@ constexpr bool is_valid_medium(const specfempp_medium medium) {
  * @param property Raw property value
  * @return true for every property defined in ABI v1
  */
-constexpr bool is_valid_property(const specfempp_property property) {
-  return property >= specfempp_property_isotropic &&
-         property <= specfempp_property_isotropic_cosserat;
+constexpr bool is_valid_property(const specfem_property property) {
+  return property >= specfem_property_isotropic &&
+         property <= specfem_property_isotropic_cosserat;
 }
 
 /**
@@ -77,16 +77,16 @@ constexpr bool is_valid_property(const specfempp_property property) {
  * @param quantity Raw quantity value
  * @return true for every quantity defined in ABI v1
  */
-constexpr bool is_valid_quantity(const specfempp_quantity quantity) {
-  return quantity >= specfempp_quantity_displacement &&
-         quantity <= specfempp_quantity_potential_rate;
+constexpr bool is_valid_quantity(const specfem_quantity quantity) {
+  return quantity >= specfem_quantity_displacement &&
+         quantity <= specfem_quantity_potential_rate;
 }
 
 /**
  * @brief Thrown by a plugin that cannot serve the run.
  *
- * The SDK reports it as @c specfempp_status_unsupported; any other exception
- * becomes @c specfempp_status_error.
+ * The SDK reports it as @c specfem_status_unsupported; any other exception
+ * becomes @c specfem_status_error.
  */
 class Unsupported : public std::runtime_error {
 public:
@@ -114,22 +114,22 @@ void require_size(const T &value, const std::size_t v1_size, const char *what) {
                                 std::to_string(v1_size));
 }
 
-/** @brief Size of specfempp_simulation_info in ABI v1. */
+/** @brief Size of specfem_simulation_info in ABI v1. */
 inline constexpr std::size_t simulation_info_v1_size =
-    offsetof(specfempp_simulation_info, bounds) +
-    sizeof(specfempp_simulation_info::bounds);
-/** @brief Size of specfempp_communicator in ABI v1. */
+    offsetof(specfem_simulation_info, bounds) +
+    sizeof(specfem_simulation_info::bounds);
+/** @brief Size of specfem_communicator in ABI v1. */
 inline constexpr std::size_t communicator_v1_size =
-    offsetof(specfempp_communicator, fortran_handle) + sizeof(std::int32_t);
-/** @brief Size of specfempp_point_group in ABI v1. */
+    offsetof(specfem_communicator, fortran_handle) + sizeof(std::int32_t);
+/** @brief Size of specfem_point_group in ABI v1. */
 inline constexpr std::size_t point_group_v1_size =
-    offsetof(specfempp_point_group, slots) + sizeof(void *);
-/** @brief Size of specfempp_points in ABI v1. */
+    offsetof(specfem_point_group, slots) + sizeof(void *);
+/** @brief Size of specfem_points in ABI v1. */
 inline constexpr std::size_t points_v1_size =
-    offsetof(specfempp_points, groups) + sizeof(void *);
-/** @brief Size of specfempp_buffer in ABI v1. */
+    offsetof(specfem_points, groups) + sizeof(void *);
+/** @brief Size of specfem_buffer in ABI v1. */
 inline constexpr std::size_t buffer_v1_size =
-    offsetof(specfempp_buffer, stride_step) + sizeof(std::int64_t);
+    offsetof(specfem_buffer, stride_step) + sizeof(std::int64_t);
 
 } // namespace plugin_impl
 
@@ -144,7 +144,7 @@ public:
    * @throws std::invalid_argument if the struct is too small
    * @throws Unsupported if the dimension is not 3
    */
-  explicit SimulationInfo(const specfempp_simulation_info &info) : info_(info) {
+  explicit SimulationInfo(const specfem_simulation_info &info) : info_(info) {
     specfem::plugin_impl::require_size(
         info, specfem::plugin_impl::simulation_info_v1_size, "simulation_info");
     if (info_.dimension != 3)
@@ -184,7 +184,7 @@ public:
   }
 
 private:
-  specfempp_simulation_info info_; ///< Copy of the ABI struct
+  specfem_simulation_info info_; ///< Copy of the ABI struct
 };
 
 /** @brief MPI communicator passed to the plugin at creation. */
@@ -195,7 +195,7 @@ public:
    * @param communicator Communicator description from SPECFEM++
    * @throws std::invalid_argument if the struct is too small
    */
-  explicit Communicator(const specfempp_communicator &communicator)
+  explicit Communicator(const specfem_communicator &communicator)
       : communicator_(communicator) {
     specfem::plugin_impl::require_size(
         communicator, specfem::plugin_impl::communicator_v1_size,
@@ -218,7 +218,7 @@ public:
   std::int32_t fortran_handle() const { return communicator_.fortran_handle; }
 
 private:
-  specfempp_communicator communicator_; ///< Copy of the ABI struct
+  specfem_communicator communicator_; ///< Copy of the ABI struct
 };
 
 /** @brief Layout of one requested quantity in a group's buffer. */
@@ -243,7 +243,7 @@ public:
    * @param npoints Total number of points, to check the group's range
    * @throws std::invalid_argument on any inconsistent field
    */
-  PointGroup(const specfempp_point_group &group, const std::int64_t npoints) {
+  PointGroup(const specfem_point_group &group, const std::int64_t npoints) {
     specfem::plugin_impl::require_size(
         group, specfem::plugin_impl::point_group_v1_size, "point_group");
     if (!is_valid_medium(group.medium))
@@ -392,7 +392,7 @@ public:
    * @param points Points from SPECFEM++
    * @throws std::invalid_argument on any inconsistent field
    */
-  explicit Points(const specfempp_points &points) : points_(points) {
+  explicit Points(const specfem_points &points) : points_(points) {
     specfem::plugin_impl::require_size(
         points, specfem::plugin_impl::points_v1_size, "points");
     if (points_.n < 0)
@@ -440,7 +440,7 @@ public:
   double nz(const std::int64_t i) const { return points_.nz[i]; }
 
 private:
-  specfempp_points points_;        ///< Copy of the ABI struct (not owned)
+  specfem_points points_;          ///< Copy of the ABI struct (not owned)
   std::vector<PointGroup> groups_; ///< Validated groups
 };
 
@@ -458,7 +458,7 @@ public:
    * @throws std::invalid_argument on a too small struct, negative sizes, null
    * data or an unknown dtype
    */
-  explicit Buffer(const specfempp_buffer &buffer) : buffer_(buffer) {
+  explicit Buffer(const specfem_buffer &buffer) : buffer_(buffer) {
     specfem::plugin_impl::require_size(
         buffer, specfem::plugin_impl::buffer_v1_size, "buffer");
     if (buffer_.npoints < 0 || buffer_.ncomponents < 0 || buffer_.nsteps < 0)
@@ -466,8 +466,8 @@ public:
     if (buffer_.data == nullptr && buffer_.npoints > 0 &&
         buffer_.ncomponents > 0 && buffer_.nsteps > 0)
       throw std::invalid_argument("buffer: null data");
-    if (buffer_.dtype != specfempp_dtype_float32 &&
-        buffer_.dtype != specfempp_dtype_float64)
+    if (buffer_.dtype != specfem_dtype_float32 &&
+        buffer_.dtype != specfem_dtype_float64)
       throw std::invalid_argument("buffer: unknown dtype " +
                                   std::to_string(buffer_.dtype));
   }
@@ -497,14 +497,14 @@ public:
     const std::int64_t offset = point * buffer_.stride_point +
                                 component * buffer_.stride_component +
                                 step * buffer_.stride_step;
-    if (buffer_.dtype == specfempp_dtype_float32)
+    if (buffer_.dtype == specfem_dtype_float32)
       static_cast<float *>(buffer_.data)[offset] = static_cast<float>(value);
     else
       static_cast<double *>(buffer_.data)[offset] = value;
   }
 
 private:
-  specfempp_buffer buffer_; ///< Copy of the ABI struct (data not owned)
+  specfem_buffer buffer_; ///< Copy of the ABI struct (data not owned)
 };
 
 /**
@@ -513,7 +513,7 @@ private:
  * Derive from this class, add a constructor taking
  * @c (const std::string &config_path, const SimulationInfo &, const
  * Communicator &), and register it with
- * @c SPECFEMPP_DEFINE_INJECTION_PLUGIN. Exceptions thrown from the constructor
+ * @c SPECFEM_DEFINE_INJECTION_PLUGIN. Exceptions thrown from the constructor
  * or any member are converted to ABI status codes and error messages; throw
  * @c Unsupported when the plugin cannot serve the run.
  *
@@ -530,7 +530,7 @@ private:
  *   void fill(int first_step,
  *             const std::vector<specfem::plugin::Buffer> &buffers) override;
  * };
- * SPECFEMPP_DEFINE_INJECTION_PLUGIN("my-plugin", "1.0.0", MyPlugin)
+ * SPECFEM_DEFINE_INJECTION_PLUGIN("my-plugin", "1.0.0", MyPlugin)
  * @endcode
  */
 class InjectionPlugin {
@@ -625,24 +625,24 @@ inline ErrorMessage &create_error() noexcept {
  * @tparam Body Callable returning nothing
  * @param message Error message to update
  * @param body Work to run
- * @return specfempp_status_ok; specfempp_status_unsupported for
- * specfem::plugin::Unsupported; otherwise specfempp_status_error
+ * @return specfem_status_ok; specfem_status_unsupported for
+ * specfem::plugin::Unsupported; otherwise specfem_status_error
  */
 template <typename Body>
-specfempp_status guarded(ErrorMessage &message, const Body &body) noexcept {
+specfem_status guarded(ErrorMessage &message, const Body &body) noexcept {
   try {
     body();
     set_error(message, "");
-    return specfempp_status_ok;
+    return specfem_status_ok;
   } catch (const specfem::plugin::Unsupported &error) {
     set_error(message, error.what());
-    return specfempp_status_unsupported;
+    return specfem_status_unsupported;
   } catch (const std::exception &error) {
     set_error(message, error.what());
   } catch (...) {
     set_error(message, "unknown exception");
   }
-  return specfempp_status_error;
+  return specfem_status_error;
 }
 
 /**
@@ -654,8 +654,8 @@ specfempp_status guarded(ErrorMessage &message, const Body &body) noexcept {
  * @return new handle, or nullptr on failure (see create_error)
  */
 template <typename PluginType>
-void *create(const char *config_path, const specfempp_simulation_info *info,
-             const specfempp_communicator *communicator) noexcept {
+void *create(const char *config_path, const specfem_simulation_info *info,
+             const specfem_communicator *communicator) noexcept {
   Handle *result = nullptr;
   guarded(create_error(), [&] {
     if (config_path == nullptr || info == nullptr || communicator == nullptr)
@@ -679,9 +679,9 @@ void *create(const char *config_path, const specfempp_simulation_info *info,
  * @param quantity Raw quantity
  * @return 1 if supported, else 0 (also for invalid arguments or exceptions)
  */
-inline std::int32_t supports(void *self, const specfempp_medium medium,
-                             const specfempp_property property,
-                             const specfempp_quantity quantity) noexcept {
+inline std::int32_t supports(void *self, const specfem_medium medium,
+                             const specfem_property property,
+                             const specfem_quantity quantity) noexcept {
   if (self == nullptr || !specfem::plugin::is_valid_medium(medium) ||
       !specfem::plugin::is_valid_property(property) ||
       !specfem::plugin::is_valid_quantity(quantity))
@@ -694,7 +694,7 @@ inline std::int32_t supports(void *self, const specfempp_medium medium,
         static_cast<specfem::plugin::Property>(property),
         static_cast<specfem::plugin::Quantity>(quantity));
   });
-  return (status == specfempp_status_ok && result) ? 1 : 0;
+  return (status == specfem_status_ok && result) ? 1 : 0;
 }
 
 /**
@@ -703,10 +703,9 @@ inline std::int32_t supports(void *self, const specfempp_medium medium,
  * @param points Injection points and their groups
  * @return status
  */
-inline specfempp_status setup(void *self,
-                              const specfempp_points *points) noexcept {
+inline specfem_status setup(void *self, const specfem_points *points) noexcept {
   if (self == nullptr)
-    return specfempp_status_error;
+    return specfem_status_error;
   auto &handle = *static_cast<Handle *>(self);
   return guarded(handle.last_error, [&] {
     if (points == nullptr)
@@ -731,11 +730,11 @@ inline specfempp_status setup(void *self,
  * @param buffers Buffers to fill
  * @return status
  */
-inline specfempp_status fill(void *self, const std::int32_t first_step,
-                             const std::int32_t nbuffers,
-                             const specfempp_buffer *const *buffers) noexcept {
+inline specfem_status fill(void *self, const std::int32_t first_step,
+                           const std::int32_t nbuffers,
+                           const specfem_buffer *const *buffers) noexcept {
   if (self == nullptr)
-    return specfempp_status_error;
+    return specfem_status_error;
   auto &handle = *static_cast<Handle *>(self);
   return guarded(handle.last_error, [&] {
     if (!handle.is_setup)
@@ -791,13 +790,13 @@ inline void destroy(void *self) noexcept { delete static_cast<Handle *>(self); }
  * @brief Register a C++ plugin class as this library's injection plugin.
  *
  * Use once per plugin, at global scope. Emits the manifest, the ABI function
- * table, and the exported @c specfempp_injection_plugin entry point.
+ * table, and the exported @c specfem_injection_plugin entry point.
  *
  * @param NAME String literal, at most 63 characters
  * @param VERSION String literal, at most 31 characters
  * @param PLUGIN_TYPE Class derived from specfem::plugin::InjectionPlugin
  */
-#define SPECFEMPP_DEFINE_INJECTION_PLUGIN(NAME, VERSION, PLUGIN_TYPE)          \
+#define SPECFEM_DEFINE_INJECTION_PLUGIN(NAME, VERSION, PLUGIN_TYPE)            \
   static_assert(                                                               \
       std::is_base_of_v<specfem::plugin::InjectionPlugin, PLUGIN_TYPE>,        \
       #PLUGIN_TYPE " must derive from specfem::plugin::InjectionPlugin");      \
@@ -808,11 +807,11 @@ inline void destroy(void *self) noexcept { delete static_cast<Handle *>(self); }
       #PLUGIN_TYPE " must be constructible from (const std::string "           \
                    "&config_path, const specfem::plugin::SimulationInfo &, "   \
                    "const specfem::plugin::Communicator &)");                  \
-  SPECFEMPP_DEFINE_INJECTION_MANIFEST(NAME, VERSION);                          \
-  static const specfempp_injection_plugin_table                                \
-      specfempp_injection_plugin_table_instance = {                            \
-        sizeof(specfempp_injection_plugin_table),                              \
-        SPECFEMPP_INJECTION_ABI_VERSION,                                       \
+  SPECFEM_DEFINE_INJECTION_MANIFEST(NAME, VERSION);                            \
+  static const specfem_injection_plugin_table                                  \
+      specfem_injection_plugin_table_instance = {                              \
+        sizeof(specfem_injection_plugin_table),                                \
+        SPECFEM_INJECTION_ABI_VERSION,                                         \
         0u,                                                                    \
         NAME,                                                                  \
         VERSION,                                                               \
@@ -823,7 +822,7 @@ inline void destroy(void *self) noexcept { delete static_cast<Handle *>(self); }
         &specfem::plugin_impl::last_error,                                     \
         &specfem::plugin_impl::destroy                                         \
       };                                                                       \
-  extern "C" SPECFEMPP_EXPORT const specfempp_injection_plugin_table *         \
-  specfempp_injection_plugin(void) {                                           \
-    return &specfempp_injection_plugin_table_instance;                         \
+  extern "C" SPECFEM_EXPORT const specfem_injection_plugin_table *             \
+  specfem_injection_plugin(void) {                                             \
+    return &specfem_injection_plugin_table_instance;                           \
   }

@@ -5,8 +5,8 @@ Header-only SDK for wavefield-injection plugins: shared libraries that provide
 an incident wavefield to SPECFEM++ at runtime. The SDK lives in ``sdk/`` and is
 independent of the SPECFEM++ core (no Kokkos, MPI, or yaml-cpp). Install it
 with ``cmake --install <build> --component plugin_sdk --prefix <dir>`` and use
-it from a plugin project with ``find_package(SpecfemppPluginSDK)`` and
-``specfempp_add_injection_plugin(<target> SOURCES ...)``.
+it from a plugin project with ``find_package(SpecfemPluginSDK)`` and
+``specfem_add_injection_plugin(<target> SOURCES ...)``.
 
 .. doxygennamespace:: specfem::plugin
     :desc-only:
@@ -15,11 +15,11 @@ Lifecycle and conventions
 -------------------------
 
 A plugin is a shared library that exports exactly one symbol,
-``specfempp_injection_plugin()``, returning a table of plain C function
-pointers (:cpp:struct:`specfempp_injection_plugin_table`). Everything that
+``specfem_injection_plugin()``, returning a table of plain C function
+pointers (:cpp:struct:`specfem_injection_plugin_table`). Everything that
 crosses the library boundary is a C struct or a flat host array, so a plugin
 can be built with any compiler and standard library, and may link its own
-copies of third-party libraries. ``specfempp_add_injection_plugin`` hides every
+copies of third-party libraries. ``specfem_add_injection_plugin`` hides every
 other symbol and checks the exported set after each build.
 
 SPECFEM++ drives a plugin through the following calls::
@@ -34,14 +34,14 @@ SPECFEM++ drives a plugin through the following calls::
   every group. A plugin may therefore use collective MPI operations in any
   call.
 - **Dimension.** ABI version 1 is three-dimensional only;
-  ``specfempp_simulation_info::dimension`` is 3.
+  ``specfem_simulation_info::dimension`` is 3.
 - **Units.** Every value (coordinates, bounds, times, material properties,
   injected fields) is in the units of the SPECFEM++ mesh and model. SPECFEM++
   performs no unit conversion; configure the plugin to match.
 - **Frame and time.** Coordinates are in the SPECFEM++ mesh frame (z up).
   Simulation step ``k`` is at time ``t0 + k * dt``. The bounds are those of the
   global domain, identical on every rank.
-- **Lifetimes.** :cpp:struct:`specfempp_points` and everything it points to is
+- **Lifetimes.** :cpp:struct:`specfem_points` and everything it points to is
   valid only during ``setup``; the buffers only during ``fill``. Copy what is
   needed.
 - **Determinism.** ``fill`` must produce the same values regardless of window
@@ -49,10 +49,10 @@ SPECFEM++ drives a plugin through the following calls::
 - **Errors.** Errors are reported through status codes and ``last_error``.
   Exceptions must never cross the boundary, and plugins must not call
   ``exit``, ``abort``, ``MPI_Init`` or ``MPI_Finalize``. A plugin that cannot
-  serve the run returns ``specfempp_status_unsupported`` (in C++: throws
+  serve the run returns ``specfem_status_unsupported`` (in C++: throws
   :cpp:class:`specfem::plugin::Unsupported`); SPECFEM++ then stops with the
   plugin's message.
-- **Manifest.** Every plugin embeds a :cpp:struct:`specfempp_manifest` that
+- **Manifest.** Every plugin embeds a :cpp:struct:`specfem_manifest` that
   SPECFEM++ reads from the file before loading it, so a plugin built for
   another ABI version never runs code in the simulation process.
 
@@ -62,7 +62,7 @@ Extending the ABI
 Every struct passed by pointer starts with ``struct_size``, which its writer
 sets to ``sizeof(struct)``. Fields are only ever appended, so a reader built
 against an older header ignores the tail, and a reader built against a newer
-header checks ``SPECFEMPP_HAS_FIELD(ptr, type, field)`` before reading a field
+header checks ``SPECFEM_HAS_FIELD(ptr, type, field)`` before reading a field
 the writer may not know. Arrays of extensible structs are passed as arrays of
 pointers so their stride never depends on ``struct_size``. The C++ layer
 rejects structs smaller than their version-1 size.
@@ -74,7 +74,7 @@ Points are delivered in groups, one per material system of SPECFEM++, i.e. one
 per (medium, property) pair such as elastic/isotropic or elastic/anisotropic.
 A plugin therefore sees the same medium x property structure as the solver.
 The groups partition the points in order: group ``g`` covers points
-``[begin, begin + count)`` of :cpp:struct:`specfempp_points`.
+``[begin, begin + count)`` of :cpp:struct:`specfem_points`.
 
 Each group carries
 
@@ -84,7 +84,7 @@ Each group carries
   property container of that system and stored point-major: property ``k`` of
   local point ``p`` is ``properties[p * nproperties + k]``.
 - the requested quantities and their buffer layout, as
-  :cpp:struct:`specfempp_quantity_slot` entries ``{quantity, offset, count}``
+  :cpp:struct:`specfem_quantity_slot` entries ``{quantity, offset, count}``
   set by SPECFEM++. Component counts depend on the medium, so plugins read
   them instead of deriving them.
 
@@ -171,7 +171,7 @@ Reading properties in C
 
 .. code-block:: c
 
-    static int find_property(const specfempp_point_group *group,
+    static int find_property(const specfem_point_group *group,
                              const char *name) {
       for (int32_t k = 0; k < group->nproperties; ++k)
         if (strcmp(group->property_names[k], name) == 0)
@@ -179,9 +179,9 @@ Reading properties in C
       return -1;
     }
 
-    static specfempp_status setup(void *self, const specfempp_points *points) {
+    static specfem_status setup(void *self, const specfem_points *points) {
       for (int32_t g = 0; g < points->ngroups; ++g) {
-        const specfempp_point_group *group = points->groups[g];
+        const specfem_point_group *group = points->groups[g];
         const int k_rho = find_property(group, "rho");
         for (int64_t p = 0; p < group->count; ++p) {
           const int64_t i = group->begin + p; /* index into coordinates */
@@ -191,7 +191,7 @@ Reading properties in C
           /* points->x[i], points->nz[i], ... */
         }
       }
-      return specfempp_status_ok;
+      return specfem_status_ok;
     }
 
 Filling buffers
@@ -223,35 +223,35 @@ C ABI
 -----
 
 Everything that crosses the library boundary is defined in
-``specfem/plugin/injection_abi.h``. All C names use the ``specfempp_`` /
-``SPECFEMPP_`` prefix, matching the exported entry point
-``specfempp_injection_plugin``.
+``specfem/plugin/injection_abi.h``. All C names use the ``specfem_`` /
+``SPECFEM_`` prefix, matching the exported entry point
+``specfem_injection_plugin``.
 
 Function table and data
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. doxygenstruct:: specfempp_injection_plugin_table
+.. doxygenstruct:: specfem_injection_plugin_table
     :members:
 
-.. doxygenstruct:: specfempp_simulation_info
+.. doxygenstruct:: specfem_simulation_info
     :members:
 
-.. doxygenstruct:: specfempp_communicator
+.. doxygenstruct:: specfem_communicator
     :members:
 
-.. doxygenstruct:: specfempp_points
+.. doxygenstruct:: specfem_points
     :members:
 
-.. doxygenstruct:: specfempp_point_group
+.. doxygenstruct:: specfem_point_group
     :members:
 
-.. doxygenstruct:: specfempp_quantity_slot
+.. doxygenstruct:: specfem_quantity_slot
     :members:
 
-.. doxygenstruct:: specfempp_buffer
+.. doxygenstruct:: specfem_buffer
     :members:
 
-.. doxygenstruct:: specfempp_manifest
+.. doxygenstruct:: specfem_manifest
     :members:
 
 Types and values
@@ -260,43 +260,43 @@ Types and values
 The enumerated ABI types are fixed-width integers; their values are listed
 below.
 
-.. doxygentypedef:: specfempp_medium
+.. doxygentypedef:: specfem_medium
 
-.. doxygenenum:: specfempp_medium_values
+.. doxygenenum:: specfem_medium_values
 
-.. doxygentypedef:: specfempp_property
+.. doxygentypedef:: specfem_property
 
-.. doxygenenum:: specfempp_property_values
+.. doxygenenum:: specfem_property_values
 
-.. doxygentypedef:: specfempp_quantity
+.. doxygentypedef:: specfem_quantity
 
-.. doxygenenum:: specfempp_quantity_values
+.. doxygenenum:: specfem_quantity_values
 
-.. doxygentypedef:: specfempp_status
+.. doxygentypedef:: specfem_status
 
-.. doxygenenum:: specfempp_status_values
+.. doxygenenum:: specfem_status_values
 
-.. doxygentypedef:: specfempp_dtype
+.. doxygentypedef:: specfem_dtype
 
-.. doxygenenum:: specfempp_dtype_values
+.. doxygenenum:: specfem_dtype_values
 
-.. doxygentypedef:: specfempp_injection_plugin_entry
+.. doxygentypedef:: specfem_injection_plugin_entry
 
-.. doxygendefine:: SPECFEMPP_INJECTION_ABI_VERSION
+.. doxygendefine:: SPECFEM_INJECTION_ABI_VERSION
 
-.. doxygendefine:: SPECFEMPP_INJECTION_PLUGIN_ENTRY_NAME
+.. doxygendefine:: SPECFEM_INJECTION_PLUGIN_ENTRY_NAME
 
 Macros
 ~~~~~~
 
-.. doxygendefine:: SPECFEMPP_HAS_FIELD
+.. doxygendefine:: SPECFEM_HAS_FIELD
 
-.. doxygendefine:: SPECFEMPP_DEFINE_INJECTION_MANIFEST
+.. doxygendefine:: SPECFEM_DEFINE_INJECTION_MANIFEST
 
 C++ layer
 ---------
 
-.. doxygendefine:: SPECFEMPP_DEFINE_INJECTION_PLUGIN
+.. doxygendefine:: SPECFEM_DEFINE_INJECTION_PLUGIN
 
 .. doxygenclass:: specfem::plugin::InjectionPlugin
     :members:
