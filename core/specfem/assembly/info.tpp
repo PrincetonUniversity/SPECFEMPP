@@ -14,6 +14,7 @@
 #include "specfem/setup.hpp"
 #include "specfem/tag_dispatch.hpp"
 #include <Kokkos_Core.hpp>
+#include <stdexcept>
 
 #include <limits>
 
@@ -51,12 +52,14 @@ template <specfem::element::dimension_tag DimensionTag> struct InfoScatters {
   ScatterT element_v;
   ScatterT element_distance;
   ScatterT element_gll_distance;
+  Kokkos::View<type_real *> element_dt;
 
   explicit InfoScatters(int nspec)
       : element_v("specfem::assembly::info::element_v", nspec),
         element_distance("specfem::assembly::info::element_distance", nspec),
         element_gll_distance("specfem::assembly::info::element_gll_distance",
-                             nspec) {}
+                             nspec),
+        element_dt("specfem::assembly::info::element_dt", nspec) {}
 };
 
 /// @brief Process elements of a specific medium/property type to gather info
@@ -193,6 +196,7 @@ void finalize_element_minmax(const specfem::assembly::mesh<DimensionTag> &mesh,
         type_real element_dt =
             compute_suggested_timestep(gll_distance_min, vmax);
         dt_acc.update(element_dt);
+        scatters.element_dt(ispec) = element_dt;
       });
   scatters.minimum_period.contribute();
   scatters.dt.contribute();
@@ -299,10 +303,19 @@ specfem::assembly::Info<DimensionTag>::Info(
                                      1, SPECFEM_MPI_TYPE_REAL, MPI_MIN, comm));
 
   if constexpr (dimension_tag == specfem::element::dimension_tag::dim3) {
-    int has_context = element_types.has_element_context();
+    // Globe statistics are collective, so every rank must take the same path.
+    int any_context = element_types.has_element_context();
+    int all_context = any_context;
     SPECFEM_MPI_SAFECALL(
-        MPI_Allreduce(MPI_IN_PLACE, &has_context, 1, MPI_INT, MPI_MAX, comm));
-    if (has_context) {
+        MPI_Allreduce(MPI_IN_PLACE, &any_context, 1, MPI_INT, MPI_MAX, comm));
+    SPECFEM_MPI_SAFECALL(
+        MPI_Allreduce(MPI_IN_PLACE, &all_context, 1, MPI_INT, MPI_MIN, comm));
+    if (any_context != all_context) {
+      throw std::runtime_error(
+          "specfem::assembly::Info: globe element context must be present on "
+          "all MPI ranks or none");
+    }
+    if (any_context) {
       if (jacobian_matrix) {
         info_impl::compute_globe_info(mesh, properties, element_types,
                                       *jacobian_matrix, scatters, *this);

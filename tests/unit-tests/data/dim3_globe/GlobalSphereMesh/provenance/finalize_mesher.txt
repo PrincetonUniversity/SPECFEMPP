@@ -35,5 +35,5 @@
  smallest and largest possible floating-point numbers are:    1.17549435E-38   3.40282347E+38
 
 
- Elapsed time for mesh generation and buffer creation in seconds =    7.07286596
- Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 07 s
+ Elapsed time for mesh generation and buffer creation in seconds =    1.34670401
+ Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 01 s

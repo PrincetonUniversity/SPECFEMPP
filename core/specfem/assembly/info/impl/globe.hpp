@@ -2,6 +2,7 @@
 
 #include "specfem/assembly/info.hpp"
 #include "specfem/assembly/info/impl/compute.hpp"
+#include "specfem/assembly/info/impl/distances.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/point.hpp"
 #include "specfem/tag_dispatch.hpp"
@@ -11,6 +12,28 @@
 namespace specfem::assembly::info_impl {
 
 using GlobeElementIntegrals = Kokkos::View<double *[5]>;
+
+/**
+ * @brief Single-element accumulator for @c info::impl::compute_gll_distances.
+ *
+ * Satisfies both the global and per-element accumulator interfaces, keeping
+ * only the shortest adjacent GLL edge seen so far.
+ */
+struct MinimumEdge {
+  type_real distance =
+      Kokkos::Experimental::finite_max_v<type_real>; ///< Shortest edge, m.
+
+  /** @brief Record an edge length. @param value Edge length. */
+  KOKKOS_INLINE_FUNCTION void update(const type_real value) {
+    distance = Kokkos::min(distance, value);
+  }
+
+  /** @brief Record an edge length; the element index is implied.
+   *  @param value Edge length. */
+  KOKKOS_INLINE_FUNCTION void update(const int, const type_real value) {
+    update(value);
+  }
+};
 
 /**
  * @brief Integrate each element in double precision, independently on device.
@@ -37,7 +60,6 @@ void integrate_globe_elements(
   constexpr auto dimension = ElementTags::dimension_tag;
   const auto elements = element_types.get_elements_on_device(
       ElementTags::medium_tag, ElementTags::property_tag);
-  const auto coordinates = mesh.coord;
   const auto weights = mesh.weights;
   const auto jacobian = jacobians.jacobian;
   const auto grid = mesh.element_grid;
@@ -49,8 +71,7 @@ void integrate_globe_elements(
         double volume = 0, mass = 0, radius_at_minimum = 0;
         double minimum_radius = Kokkos::Experimental::finite_max_v<double>;
         double maximum_radius = 0;
-        type_real minimum_spacing =
-            Kokkos::Experimental::finite_max_v<type_real>;
+        MinimumEdge edge;
         for (int iz = 0; iz < grid.ngllz; ++iz) {
           for (int iy = 0; iy < grid.nglly; ++iy) {
             for (int ix = 0; ix < grid.ngllx; ++ix) {
@@ -67,33 +88,21 @@ void integrate_globe_elements(
                   weights(iz) * weights(iy) * weights(ix);
               volume += dv;
               mass += static_cast<double>(point_property.rho()) * dv;
-              double squared_radius = 0;
-              for (int component = 0; component < 3; ++component) {
-                const double x = coordinates(ispec, iz, iy, ix, component);
-                squared_radius += x * x;
-              }
-              const double radius = Kokkos::sqrt(squared_radius);
+              specfem::point::global_coordinates<dimension> point;
+              specfem::assembly::load_on_device(index, mesh, point);
+              const double radius =
+                  Kokkos::sqrt(static_cast<double>(point.x) * point.x +
+                               static_cast<double>(point.y) * point.y +
+                               static_cast<double>(point.z) * point.z);
               minimum_radius = Kokkos::fmin(minimum_radius, radius);
               maximum_radius = Kokkos::fmax(maximum_radius, radius);
-              // Use the same adjacent edges as the existing CFL reduction.
-              for (int direction = 0; direction < 3; ++direction) {
-                const int jx = ix + (direction == 0);
-                const int jy = iy + (direction == 1);
-                const int jz = iz + (direction == 2);
-                if (jx >= grid.ngllx || jy >= grid.nglly || jz >= grid.ngllz)
-                  continue;
-                type_real squared_distance = 0;
-                for (int component = 0; component < 3; ++component) {
-                  const type_real delta =
-                      coordinates(ispec, iz, iy, ix, component) -
-                      coordinates(ispec, jz, jy, jx, component);
-                  squared_distance += delta * delta;
-                }
-                const type_real distance = Kokkos::sqrt(squared_distance);
-                if (distance < minimum_spacing) {
-                  minimum_spacing = distance;
-                  radius_at_minimum = radius;
-                }
+              // Reuse the Info edge kernel so this radius belongs to the edge
+              // whose length the element_gll_distance scatter reports.
+              const type_real previous = edge.distance;
+              info::impl::compute_gll_distances<dimension>(index, mesh, point,
+                                                           edge, edge);
+              if (edge.distance < previous) {
+                radius_at_minimum = radius;
               }
             }
           }
@@ -108,20 +117,29 @@ void integrate_globe_elements(
 
 /**
  * @brief Reduce an extremum's location; break ties by rank then element.
- * @param local_value This rank's extremum.
- * @param global_value Previously reduced global extremum.
+ *
+ * The owner is found by comparing @p local_value with the minimum of the same
+ * values across ranks, so exact equality holds on the owning rank regardless
+ * of where (host or device) the values were computed. If no rank owns an
+ * element, @p location is reset on every rank.
+ * @param local_value This rank's minimum; ranks without elements pass the
+ *        largest representable value.
  * @param location Local winner on input, global winner on output.
  */
-inline void reduce_location(type_real local_value, type_real global_value,
-                            InfoLocation &location) {
+inline void reduce_location(type_real local_value, InfoLocation &location) {
   const auto comm = specfem::MPI::communicator();
+  type_real global_value = local_value;
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &global_value, 1,
+                                     SPECFEM_MPI_TYPE_REAL, MPI_MIN, comm));
   int owner = local_value == global_value && location.compute_element >= 0
                   ? specfem::MPI::get_rank()
                   : std::numeric_limits<int>::max();
   SPECFEM_MPI_SAFECALL(
       MPI_Allreduce(MPI_IN_PLACE, &owner, 1, MPI_INT, MPI_MIN, comm));
-  if (owner == std::numeric_limits<int>::max())
+  if (owner == std::numeric_limits<int>::max()) {
+    location = InfoLocation{};
     return;
+  }
   location.rank = owner;
   int indices[] = { location.compute_element, location.mesh_element,
                     static_cast<int>(location.region) };
@@ -166,6 +184,10 @@ void compute_globe_info(
       Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), integrals);
   const auto velocities = scatters.element_v.get_all_bounds();
   const auto distances = scatters.element_gll_distance.get_all_bounds();
+  // Use the very same device results as the global CFL reduction, including
+  // its rounding, so the limiting location describes the reported time step.
+  const auto time_steps = Kokkos::create_mirror_view_and_copy(
+      Kokkos::HostSpace(), scatters.element_dt);
   constexpr auto maximum = std::numeric_limits<type_real>::max();
   type_real local_spacing = maximum, local_dt = maximum;
   for (const auto region : { specfem::element::region_tag::crust_mantle,
@@ -193,8 +215,7 @@ void compute_globe_info(
     statistics.wave_speed.max =
         std::max(statistics.wave_speed.max, velocities[ispec].max);
     const auto spacing = distances[ispec].min;
-    const auto dt =
-        info::impl::compute_suggested_timestep(spacing, velocities[ispec].max);
+    const auto dt = time_steps(ispec);
     statistics.minimum_gll_spacing =
         std::min(statistics.minimum_gll_spacing, spacing);
     statistics.suggested_time_step =
@@ -236,9 +257,8 @@ void compute_globe_info(
                                      MPI_DOUBLE, MPI_SUM, comm));
   SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &result.total_mass, 1,
                                      MPI_DOUBLE, MPI_SUM, comm));
-  reduce_location(local_spacing, result.gll_distance.min,
-                  result.minimum_spacing_location);
-  reduce_location(local_dt, result.suggested_time_step, result.cfl_location);
+  reduce_location(local_spacing, result.minimum_spacing_location);
+  reduce_location(local_dt, result.cfl_location);
 }
 
 } // namespace specfem::assembly::info_impl

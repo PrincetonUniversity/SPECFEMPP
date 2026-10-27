@@ -4,3 +4,6 @@ volume_unit_sphere: 4.1887900919118657
 mass_kg: 5.97553797E+24
 dt_seconds: 0.19000000000000000
 mesher_element_count: 56544
+# PREM_RCMB and PREM_RICB from shared/model_prem.f90.
+r_cmb_m: 3480000.0
+r_icb_m: 1221500.0

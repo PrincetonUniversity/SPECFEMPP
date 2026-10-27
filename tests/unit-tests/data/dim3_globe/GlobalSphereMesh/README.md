@@ -12,7 +12,7 @@ the independent `finalize_mesher` volume, mass, solver DT, and element count;
 reports volume on the unit sphere and mass in kg. Its element count includes
 fictitious central-cube elements; the thin databases exclude these duplicates. Tests dimensionalize volume
 using the database's `PlanetConstants`, and compare region radii against the
-model's discontinuity radii.
+PREM discontinuity radii retained in the fixture provenance.
 
 Regenerate with an MPI-enabled `xmeshfem3D_globe`:
 
@@ -29,5 +29,5 @@ precision), and 0.1% against the sphere; mass allows 0.1%.
 
 The 27-node geometry approximates spherical interfaces between anchors. GLL
 radius ranges therefore allow 0.2% interpolation error. A separate 1 m check
-compares the mesher's exact per-region shell context with `PlanetConstants`,
+compares the mesher's exact per-region shell context with the PREM reference radii,
 so region tagging is checked independently of geometric interpolation.

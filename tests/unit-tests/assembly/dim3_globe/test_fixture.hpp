@@ -18,11 +18,12 @@ namespace specfem::test_configuration {
 struct GlobeAssembly3D {
   constexpr static auto dimension = specfem::element::dimension_tag::dim3;
 
+  specfem::mesh::globe3d_mesh mesh;
   specfem::assembly::assembly<dimension> assembly;
 
-  explicit GlobeAssembly3D(const std::string &database_file) {
-    const auto mesh = specfem::io::read_globe_mesh(
-        database_file, specfem::attenuation::Setup{});
+  explicit GlobeAssembly3D(const std::string &database_file)
+      : mesh(specfem::io::read_globe_mesh(database_file,
+                                          specfem::attenuation::Setup{})) {
     const specfem::quadrature::quadratures quadratures(
         specfem::quadrature::gll::gll{});
     std::vector<std::shared_ptr<specfem::sources::source<dimension>>> sources;

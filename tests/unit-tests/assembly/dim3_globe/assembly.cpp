@@ -10,8 +10,8 @@ TEST_F(GlobeAssembly3DTest, ConstructsCompleteAssembly) {
   auto &globe_assembly = assembly->assembly;
 
   EXPECT_TRUE(globe_assembly.element_types.has_element_context());
-  ASSERT_TRUE(globe_assembly.planet_constants.has_value());
-  EXPECT_EQ(globe_assembly.planet_constants->planet(),
+  ASSERT_TRUE(assembly->mesh.globe.planet_constants.has_value());
+  EXPECT_EQ(assembly->mesh.globe.planet_constants->planet(),
             specfem::globe::Planet::earth);
 
   const int nelements = globe_assembly.get_total_number_of_elements();
