@@ -5,7 +5,6 @@
 #include "specfem/program/context.hpp"
 #include "specfem/version.hpp"
 #include <CLI/CLI.hpp>
-#include <cstdlib>
 #include <iostream>
 #include <optional>
 #include <string>
@@ -52,11 +51,9 @@ void add_logger_options(CLI::App *cmd, SimulationOptions &opts,
 }
 
 void add_injection_options(CLI::App *cmd, SimulationOptions &opts) {
-  cmd->add_option(
-      "--injection-plugin", opts.injection_plugin,
-      "Wavefield-injection plugin: absolute path to a shared "
-      "library, or static:<name> (3D only). Defaults to $" +
-          std::string(specfem::injection::plugin_environment_variable));
+  cmd->add_option("--injection-plugin", opts.injection_plugin,
+                  "Wavefield-injection plugin: path to a shared library, or "
+                  "static:<name> (3D only)");
   cmd->add_option("--injection-config", opts.injection_config,
                   "Configuration file passed to the injection plugin");
 }
@@ -71,7 +68,7 @@ void add_simulation_options(CLI::App *cmd, SimulationOptions &opts,
 }
 
 // The 2d subcommand accepts the injection flags only to reject them with a
-// clear message; the environment variable is ignored there.
+// clear message.
 std::optional<specfem::injection::PluginOptions>
 resolve_injection_options(const std::string &dimension,
                           const SimulationOptions &opts) {
@@ -81,9 +78,8 @@ resolve_injection_options(const std::string &dimension,
                                "not supported for 2D simulations in v1.");
     return std::nullopt;
   }
-  return specfem::injection::resolve_plugin_options(
-      opts.injection_plugin, opts.injection_config,
-      std::getenv(specfem::injection::plugin_environment_variable));
+  return specfem::injection::resolve_plugin_options(opts.injection_plugin,
+                                                    opts.injection_config);
 }
 
 int run_simulation(const std::string &dimension, int argc, char **argv,

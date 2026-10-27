@@ -1,4 +1,4 @@
-// Tests for the injection option rules: command line versus environment, and
+// Tests for the injection option rules: the command-line flags, and
 // consistency with the parameter file's injection section.
 
 #include "specfem/injection.hpp"
@@ -15,11 +15,10 @@ using ::testing::HasSubstr;
 
 // Message of the std::runtime_error thrown by resolve_plugin_options.
 std::string resolve_error(const std::optional<std::string> &plugin,
-                          const std::optional<std::string> &config,
-                          const char *environment) {
+                          const std::optional<std::string> &config) {
   try {
     [[maybe_unused]] const auto options =
-        specfem::injection::resolve_plugin_options(plugin, config, environment);
+        specfem::injection::resolve_plugin_options(plugin, config);
   } catch (const std::runtime_error &error) {
     return error.what();
   }
@@ -27,39 +26,33 @@ std::string resolve_error(const std::optional<std::string> &plugin,
 }
 
 TEST(InjectionOptions, NothingSelected) {
-  EXPECT_FALSE(specfem::injection::resolve_plugin_options(std::nullopt,
-                                                          std::nullopt, nullptr)
-                   .has_value());
-  // An empty environment variable counts as unset.
   EXPECT_FALSE(
-      specfem::injection::resolve_plugin_options(std::nullopt, std::nullopt, "")
+      specfem::injection::resolve_plugin_options(std::nullopt, std::nullopt)
           .has_value());
 }
 
-TEST(InjectionOptions, FlagWinsOverEnvironment) {
+TEST(InjectionOptions, PluginAndConfig) {
   const auto options = specfem::injection::resolve_plugin_options(
-      "/flag/plugin.so", "plugin.yaml", "/env/plugin.so");
+      "/flag/plugin.so", "plugin.yaml");
   ASSERT_TRUE(options.has_value());
   EXPECT_EQ(options->plugin, "/flag/plugin.so");
   EXPECT_EQ(options->config, "plugin.yaml");
 }
 
-TEST(InjectionOptions, EnvironmentFallback) {
-  const auto options = specfem::injection::resolve_plugin_options(
-      std::nullopt, "plugin.yaml", "/env/plugin.so");
-  ASSERT_TRUE(options.has_value());
-  EXPECT_EQ(options->plugin, "/env/plugin.so");
+TEST(InjectionOptions, EmptyPlugin) {
+  EXPECT_THAT(resolve_error("", "plugin.yaml"),
+              HasSubstr("--injection-plugin must not be empty"));
 }
 
 TEST(InjectionOptions, ConfigRequiredWithPlugin) {
-  EXPECT_THAT(resolve_error("/flag/plugin.so", std::nullopt, nullptr),
+  EXPECT_THAT(resolve_error("/flag/plugin.so", std::nullopt),
               HasSubstr("without a plugin configuration"));
-  EXPECT_THAT(resolve_error(std::nullopt, std::nullopt, "/env/plugin.so"),
+  EXPECT_THAT(resolve_error("/flag/plugin.so", ""),
               HasSubstr("without a plugin configuration"));
 }
 
 TEST(InjectionOptions, ConfigWithoutPlugin) {
-  EXPECT_THAT(resolve_error(std::nullopt, "plugin.yaml", nullptr),
+  EXPECT_THAT(resolve_error(std::nullopt, "plugin.yaml"),
               HasSubstr("--injection-config was given without an injection "
                         "plugin"));
 }

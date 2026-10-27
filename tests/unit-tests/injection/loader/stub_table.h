@@ -7,8 +7,8 @@
 #include "specfem/plugin/injection_abi.h"
 
 static void *stub_create(const char *config_path,
-                         const spfp_simulation_info *info,
-                         const spfp_communicator *communicator) {
+                         const specfempp_simulation_info *info,
+                         const specfempp_communicator *communicator) {
   static int state;
   (void)config_path;
   (void)info;
@@ -16,28 +16,28 @@ static void *stub_create(const char *config_path,
   return &state;
 }
 
-static int32_t stub_supports(void *self, spfp_medium medium,
-                             spfp_quantity quantity) {
+static int32_t stub_supports(void *self, specfempp_medium medium,
+                             specfempp_quantity quantity) {
   (void)self;
   (void)medium;
   (void)quantity;
   return 0;
 }
 
-static spfp_status stub_setup(void *self, const spfp_points *points,
-                              const spfp_request *request) {
+static specfempp_status stub_setup(void *self, const specfempp_points *points,
+                                   const specfempp_request *request) {
   (void)self;
   (void)points;
   (void)request;
-  return spfp_status_ok;
+  return specfempp_status_ok;
 }
 
-static spfp_status stub_fill(void *self, int32_t first_step,
-                             const spfp_buffer *buffer) {
+static specfempp_status stub_fill(void *self, int32_t first_step,
+                                  const specfempp_buffer *buffer) {
   (void)self;
   (void)first_step;
   (void)buffer;
-  return spfp_status_ok;
+  return specfempp_status_ok;
 }
 
 static const char *stub_last_error(const void *self) {
@@ -49,14 +49,14 @@ static void stub_destroy(void *self) { (void)self; }
 
 /* Defines `stub_table` with the given ABI version and name. */
 #define STUB_TABLE(ABI_VERSION, NAME)                                          \
-  static const spfp_injection_plugin stub_table = { ABI_VERSION,               \
-                                                    0u,                        \
-                                                    0u,                        \
-                                                    NAME,                      \
-                                                    "0.0.0",                   \
-                                                    stub_create,               \
-                                                    stub_supports,             \
-                                                    stub_setup,                \
-                                                    stub_fill,                 \
-                                                    stub_last_error,           \
-                                                    stub_destroy }
+  static const specfempp_injection_table stub_table = { ABI_VERSION,           \
+                                                        0u,                    \
+                                                        0u,                    \
+                                                        NAME,                  \
+                                                        "0.0.0",               \
+                                                        stub_create,           \
+                                                        stub_supports,         \
+                                                        stub_setup,            \
+                                                        stub_fill,             \
+                                                        stub_last_error,       \
+                                                        stub_destroy }

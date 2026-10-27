@@ -1,7 +1,12 @@
 #include "specfem/injection/plugin_library.hpp"
+#include "specfem/utilities/sha256.hpp"
+// Shared-library plugins need POSIX dlopen and file modes; on Windows only
+// statically registered plugins are available.
+#if !defined(_WIN32)
 #include <dlfcn.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#endif
 
 #include <algorithm>
 #include <array>
@@ -25,38 +30,43 @@
 namespace specfem::injection_impl {
 
 /** @brief Plugins registered with register_static_plugin, by name. */
-std::map<std::string, const spfp_injection_plugin *> &static_registry();
+std::map<std::string, const specfempp_injection_table *> &static_registry();
 
 /** @brief Throw unless @p table is a complete table for this ABI version. */
-void validate_table(const spfp_injection_plugin *table,
+void validate_table(const specfempp_injection_table *table,
                     const std::string &source);
 
-/** @brief Throw unless @p path and its directory are safe to load from. */
-void check_permissions(const std::string &path);
+/** @brief Error for a shared-library plugin on a platform without them. */
+[[noreturn]] void throw_unsupported_platform(const std::string &path);
 
-/** @brief Read and validate the single manifest embedded in @p path. */
-spfp_manifest read_manifest(const std::string &path);
+/** @brief Read the whole of @p path. */
+std::vector<char> read_file(const std::string &path);
+
+/** @brief Find and validate the single manifest in @p bytes, read from
+ * @p path. */
+specfempp_manifest read_manifest(std::span<const char> bytes,
+                                 const std::string &path);
 
 } // namespace specfem::injection_impl
 
-std::map<std::string, const spfp_injection_plugin *> &
+std::map<std::string, const specfempp_injection_table *> &
 specfem::injection_impl::static_registry() {
-  static std::map<std::string, const spfp_injection_plugin *> registry;
+  static std::map<std::string, const specfempp_injection_table *> registry;
   return registry;
 }
 
-void specfem::injection_impl::validate_table(const spfp_injection_plugin *table,
-                                             const std::string &source) {
+void specfem::injection_impl::validate_table(
+    const specfempp_injection_table *table, const std::string &source) {
   const auto fail = [&](const std::string &reason) {
     throw std::runtime_error("Injection plugin " + source +
                              " has an invalid function table: " + reason);
   };
   if (table == nullptr)
     fail("the entry point returned a null table.");
-  if (table->abi_version != SPFP_INJECTION_ABI_VERSION)
+  if (table->abi_version != SPECFEMPP_INJECTION_ABI_VERSION)
     fail("it was built for ABI version " + std::to_string(table->abi_version) +
          ", but SPECFEM++ supports version " +
-         std::to_string(SPFP_INJECTION_ABI_VERSION) +
+         std::to_string(SPECFEMPP_INJECTION_ABI_VERSION) +
          ". Rebuild the plugin against a matching plugin SDK.");
   if (table->reserved != 0)
     fail("the reserved field is not 0.");
@@ -73,51 +83,140 @@ void specfem::injection_impl::validate_table(const spfp_injection_plugin *table,
     fail("a required function pointer is null.");
 }
 
-void specfem::injection_impl::check_permissions(const std::string &path) {
-  const auto check = [](const std::string &target, const std::string &what) {
+void specfem::injection_impl::throw_unsupported_platform(
+    const std::string &path) {
+  throw std::runtime_error(
+      "Cannot load injection plugin '" + path +
+      "': shared-library injection plugins are supported on Linux and macOS "
+      "only. Use " +
+      std::string(specfem::injection::static_plugin_prefix) +
+      "<name> for a statically registered plugin.");
+}
+
+#if defined(_WIN32)
+
+bool specfem::injection_impl::running_privileged() { return false; }
+
+void specfem::injection_impl::check_permissions(
+    const std::string &path, [[maybe_unused]] const bool privileged) {
+  specfem::injection_impl::throw_unsupported_platform(path);
+}
+
+#else
+
+bool specfem::injection_impl::running_privileged() {
+  return ::geteuid() == 0 || ::getuid() != ::geteuid();
+}
+
+void specfem::injection_impl::check_permissions(const std::string &path,
+                                                const bool privileged) {
+  const auto status_of = [](const std::filesystem::path &target,
+                            const std::string &what) {
     struct stat status{};
     if (::stat(target.c_str(), &status) != 0)
       throw std::runtime_error("Cannot inspect injection plugin " + what +
-                               " '" + target + "': " + std::strerror(errno));
-    if (status.st_uid != ::geteuid() && status.st_uid != 0)
-      throw std::runtime_error(
-          "Refusing to load injection plugin: " + what + " '" + target +
-          "' is owned by another user (uid " + std::to_string(status.st_uid) +
-          "). It must be owned by you or by root.");
-    if ((status.st_mode & (S_IWGRP | S_IWOTH)) != 0) {
-      std::ostringstream message;
-      message << "Refusing to load injection plugin: " << what << " '" << target
-              << "' is group- or world-writable (mode " << std::oct
-              << (status.st_mode & 07777) << "). Run 'chmod go-w " << target
-              << "' to fix it.";
-      throw std::runtime_error(message.str());
-    }
+                               " '" + target.string() +
+                               "': " + std::strerror(errno));
+    return status;
   };
-  check(path, "file");
-  check(std::filesystem::path(path).parent_path().string(), "directory");
+  const auto refuse = [](const std::string &what,
+                         const std::filesystem::path &target,
+                         const std::string &reason) {
+    throw std::runtime_error("Refusing to load injection plugin: " + what +
+                             " '" + target.string() + "' " + reason);
+  };
+  const auto mode_of = [](const struct stat &status) {
+    std::ostringstream mode;
+    mode << std::oct << (status.st_mode & 07777);
+    return mode.str();
+  };
+  // A sticky directory only lets an entry's owner rename or remove it.
+  const auto others_can_replace = [](const struct stat &status,
+                                     const mode_t write_bits) {
+    return (status.st_mode & write_bits) != 0 &&
+           (status.st_mode & S_ISVTX) == 0;
+  };
+
+  const std::filesystem::path file(path);
+  if (!privileged) {
+    // The plugin runs with the user's own rights, so only users outside the
+    // group, who could not otherwise run code as this user, are a threat.
+    const auto file_status = status_of(file, "file");
+    if ((file_status.st_mode & S_IWOTH) != 0)
+      refuse("file", file,
+             "is world-writable (mode " + mode_of(file_status) +
+                 "). Run 'chmod o-w " + path + "' to fix it.");
+    const auto directory = file.parent_path();
+    const auto directory_status = status_of(directory, "directory");
+    if (others_can_replace(directory_status, S_IWOTH))
+      refuse("directory", directory,
+             "is world-writable without the sticky bit (mode " +
+                 mode_of(directory_status) + ").");
+    return;
+  }
+
+  // Running as root or setuid: anyone who can change the plugin, or any
+  // directory above it, gains these elevated rights.
+  const auto euid = ::geteuid();
+  const auto trusted_owner = [&](const struct stat &status) {
+    return status.st_uid == 0 || status.st_uid == euid;
+  };
+  const auto file_status = status_of(file, "file");
+  if (!trusted_owner(file_status))
+    refuse("file", file,
+           "is owned by uid " + std::to_string(file_status.st_uid) +
+               "; a privileged run only loads plugins owned by root or the "
+               "effective user.");
+  if ((file_status.st_mode & (S_IWGRP | S_IWOTH)) != 0)
+    refuse("file", file,
+           "is group- or world-writable (mode " + mode_of(file_status) +
+               "); a privileged run requires 'chmod go-w'.");
+  for (auto directory = file.parent_path();;
+       directory = directory.parent_path()) {
+    const auto status = status_of(directory, "directory");
+    if (!trusted_owner(status))
+      refuse("directory", directory,
+             "is owned by uid " + std::to_string(status.st_uid) +
+                 "; a privileged run requires every directory above the "
+                 "plugin to be owned by root or the effective user.");
+    if (others_can_replace(status, S_IWGRP | S_IWOTH))
+      refuse("directory", directory,
+             "is group- or world-writable without the sticky bit (mode " +
+                 mode_of(status) +
+                 "); a privileged run requires every directory above the "
+                 "plugin to be writable only by its owner.");
+    if (directory == directory.root_path())
+      break;
+  }
 }
 
-spfp_manifest specfem::injection_impl::read_manifest(const std::string &path) {
+#endif
+
+std::vector<char> specfem::injection_impl::read_file(const std::string &path) {
   std::ifstream file(path, std::ios::binary);
   if (!file)
     throw std::runtime_error("Cannot read injection plugin '" + path + "'.");
-  const std::vector<char> bytes((std::istreambuf_iterator<char>(file)),
-                                std::istreambuf_iterator<char>());
+  return { std::istreambuf_iterator<char>(file),
+           std::istreambuf_iterator<char>() };
+}
 
-  const char magic[16] = SPFP_MANIFEST_MAGIC_INITIALIZER;
-  spfp_manifest manifest{};
+specfempp_manifest
+specfem::injection_impl::read_manifest(std::span<const char> bytes,
+                                       const std::string &path) {
+  const char magic[16] = SPECFEMPP_MANIFEST_MAGIC_INITIALIZER;
+  specfempp_manifest manifest{};
   int count = 0;
   // Scan for every occurrence of the magic; the rest of the file after each
   // match must hold a whole manifest.
-  for (std::span<const char> rest(bytes);;) {
+  for (std::span<const char> rest = bytes;;) {
     const auto match = std::ranges::search(rest, magic);
     if (match.empty())
       break;
     const auto found = rest.subspan(match.begin() - rest.begin());
-    if (found.size() < sizeof(spfp_manifest))
+    if (found.size() < sizeof(specfempp_manifest))
       throw std::runtime_error("Injection plugin '" + path +
                                "' has a truncated manifest.");
-    std::memcpy(&manifest, found.data(), sizeof(spfp_manifest));
+    std::memcpy(&manifest, found.data(), sizeof(specfempp_manifest));
     ++count;
     rest = found.subspan(1);
   }
@@ -130,22 +229,22 @@ spfp_manifest specfem::injection_impl::read_manifest(const std::string &path) {
     fail("it has no plugin manifest. Build it with "
          "specfempp_add_injection_plugin() and declare it with "
          "SPECFEMPP_DEFINE_INJECTION_PLUGIN or "
-         "SPFP_DEFINE_INJECTION_MANIFEST.");
+         "SPECFEMPP_DEFINE_INJECTION_MANIFEST.");
   if (count > 1)
     fail("it has " + std::to_string(count) +
          " plugin manifests; a plugin must define exactly one.");
-  if (manifest.manifest_version != SPFP_MANIFEST_VERSION)
+  if (manifest.manifest_version != SPECFEMPP_MANIFEST_VERSION)
     fail("unsupported manifest version " +
          std::to_string(manifest.manifest_version) + " (expected " +
-         std::to_string(SPFP_MANIFEST_VERSION) + ").");
-  if (manifest.plugin_kind != SPFP_PLUGIN_KIND_INJECTION)
+         std::to_string(SPECFEMPP_MANIFEST_VERSION) + ").");
+  if (manifest.plugin_kind != SPECFEMPP_PLUGIN_KIND_INJECTION)
     fail("it is not an injection plugin (plugin kind " +
          std::to_string(manifest.plugin_kind) + ").");
-  if (manifest.abi_version != SPFP_INJECTION_ABI_VERSION)
+  if (manifest.abi_version != SPECFEMPP_INJECTION_ABI_VERSION)
     fail("it was built for ABI version " +
          std::to_string(manifest.abi_version) +
          ", but SPECFEM++ supports version " +
-         std::to_string(SPFP_INJECTION_ABI_VERSION) +
+         std::to_string(SPECFEMPP_INJECTION_ABI_VERSION) +
          ". Rebuild the plugin against a matching plugin SDK.");
   if (std::memchr(manifest.name, '\0', sizeof(manifest.name)) == nullptr ||
       std::memchr(manifest.version, '\0', sizeof(manifest.version)) == nullptr)
@@ -154,7 +253,7 @@ spfp_manifest specfem::injection_impl::read_manifest(const std::string &path) {
 }
 
 specfem::injection::PluginInstance::PluginInstance(
-    std::shared_ptr<void> library, const spfp_injection_plugin *table,
+    std::shared_ptr<void> library, const specfempp_injection_table *table,
     void *self)
     : library_(std::move(library)), table_(table), self_(self) {}
 
@@ -189,9 +288,10 @@ std::string specfem::injection::PluginInstance::last_error() const {
 }
 
 specfem::injection::PluginLibrary::PluginLibrary(
-    std::shared_ptr<void> handle, const spfp_injection_plugin *table,
-    std::string source)
-    : handle_(std::move(handle)), table_(table), source_(std::move(source)) {}
+    std::shared_ptr<void> handle, const specfempp_injection_table *table,
+    std::string source, std::string sha256)
+    : handle_(std::move(handle)), table_(table), source_(std::move(source)),
+      sha256_(std::move(sha256)) {}
 
 specfem::injection::PluginLibrary
 specfem::injection::PluginLibrary::open(const std::string &spec) {
@@ -203,14 +303,11 @@ specfem::injection::PluginLibrary::open(const std::string &spec) {
 
 specfem::injection::PluginLibrary
 specfem::injection::PluginLibrary::open_file(const std::string &path) {
-  if (!std::filesystem::path(path).is_absolute())
-    throw std::runtime_error(
-        "Injection plugin '" + path +
-        "' is not an absolute path. Pass an absolute path, or " +
-        std::string(specfem::injection::static_plugin_prefix) +
-        "<name> for a statically registered plugin; library search paths are "
-        "never used.");
-
+#if defined(_WIN32)
+  specfem::injection_impl::throw_unsupported_platform(path);
+#else
+  // Only the resolved absolute path reaches dlopen, so library search paths
+  // are never used, even for a bare file name.
   char resolved_buffer[PATH_MAX];
   if (::realpath(path.c_str(), resolved_buffer) == nullptr)
     throw std::runtime_error("Cannot resolve injection plugin '" + path +
@@ -220,9 +317,13 @@ specfem::injection::PluginLibrary::open_file(const std::string &path) {
     throw std::runtime_error("Injection plugin '" + path + "' (resolved to '" +
                              resolved + "') is not a regular file.");
 
-  specfem::injection_impl::check_permissions(resolved);
-  const spfp_manifest manifest =
-      specfem::injection_impl::read_manifest(resolved);
+  specfem::injection_impl::check_permissions(
+      resolved, specfem::injection_impl::running_privileged());
+  const auto bytes = specfem::injection_impl::read_file(resolved);
+  const specfempp_manifest manifest =
+      specfem::injection_impl::read_manifest(bytes, resolved);
+  const auto sha256 =
+      specfem::utilities::sha256_hex(std::as_bytes(std::span(bytes)));
 
   void *raw_handle = ::dlopen(resolved.c_str(), RTLD_NOW | RTLD_LOCAL);
   if (raw_handle == nullptr) {
@@ -233,23 +334,24 @@ specfem::injection::PluginLibrary::open_file(const std::string &path) {
   std::shared_ptr<void> handle(raw_handle,
                                [](void *handle) { ::dlclose(handle); });
 
-  const auto entry = reinterpret_cast<spfp_injection_plugin_entry>(
-      ::dlsym(handle.get(), SPFP_INJECTION_PLUGIN_ENTRY_NAME));
+  const auto entry = reinterpret_cast<specfempp_injection_entry>(
+      ::dlsym(handle.get(), SPECFEMPP_INJECTION_PLUGIN_ENTRY_NAME));
   if (entry == nullptr)
     throw std::runtime_error(
         "Injection plugin '" + resolved + "' does not export " +
-        SPFP_INJECTION_PLUGIN_ENTRY_NAME +
+        SPECFEMPP_INJECTION_PLUGIN_ENTRY_NAME +
         "(). Was it built with specfempp_add_injection_plugin() and "
         "SPECFEMPP_DEFINE_INJECTION_PLUGIN?");
 
-  const spfp_injection_plugin *table = entry();
+  const specfempp_injection_table *table = entry();
   specfem::injection_impl::validate_table(table, "'" + resolved + "'");
   if (std::string(table->name) != manifest.name)
     throw std::runtime_error(
         "Injection plugin '" + resolved + "' reports the name '" + table->name +
         "', but its manifest says '" + manifest.name + "'.");
 
-  return PluginLibrary(std::move(handle), table, resolved);
+  return PluginLibrary(std::move(handle), table, resolved, sha256);
+#endif
 }
 
 specfem::injection::PluginLibrary
@@ -268,12 +370,12 @@ specfem::injection::PluginLibrary::open_static(const std::string &name) {
     throw std::runtime_error(message.str());
   }
   return PluginLibrary(nullptr, found->second,
-                       specfem::injection::static_plugin_prefix + name);
+                       specfem::injection::static_plugin_prefix + name, "");
 }
 
 specfem::injection::PluginInstance specfem::injection::PluginLibrary::create(
-    const std::string &config_path, const spfp_simulation_info &info,
-    const spfp_communicator &communicator) const {
+    const std::string &config_path, const specfempp_simulation_info &info,
+    const specfempp_communicator &communicator) const {
   void *self = table_->create(config_path.c_str(), &info, &communicator);
   if (self == nullptr) {
     const char *error = table_->last_error(nullptr);
@@ -285,7 +387,7 @@ specfem::injection::PluginInstance specfem::injection::PluginLibrary::create(
 }
 
 void specfem::injection::register_static_plugin(
-    const spfp_injection_plugin *table) {
+    const specfempp_injection_table *table) {
   specfem::injection_impl::validate_table(table, "(static)");
   auto &registry = specfem::injection_impl::static_registry();
   if (!registry.emplace(table->name, table).second)

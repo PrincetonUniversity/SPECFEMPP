@@ -33,8 +33,10 @@ specfem::injection::PluginLibrary specfem::program_impl::load_injection_plugin(
           << "  Name         : " << plugin->name() << "\n"
           << "  Version      : " << plugin->version() << "\n"
           << "  ABI version  : " << plugin->abi_version() << "\n"
-          << "  Source       : " << plugin->source() << "\n"
-          << "  Configuration: " << options.config << "\n";
+          << "  Source       : " << plugin->source() << "\n";
+  if (!plugin->sha256().empty())
+    message << "  SHA-256      : " << plugin->sha256() << "\n";
+  message << "  Configuration: " << options.config << "\n";
   specfem::Logger::info(message.str(), true);
   specfem::Logger::warning(
       "Injection plugin loaded, but injection methods are not implemented "

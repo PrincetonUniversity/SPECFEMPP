@@ -25,7 +25,7 @@ set(_injection_loader_definitions)
 foreach(_plugin ${_injection_loader_plugins})
   string(TOUPPER ${_plugin} _upper)
   list(APPEND _injection_loader_definitions
-    "SPFP_TEST_${_upper}_PLUGIN=\"$<TARGET_FILE:injection_loader_test_${_plugin}_plugin>\"")
+    "SPECFEMPP_TEST_${_upper}_PLUGIN=\"$<TARGET_FILE:injection_loader_test_${_plugin}_plugin>\"")
 endforeach()
 
 specfem_add_test(injection_loader_tests

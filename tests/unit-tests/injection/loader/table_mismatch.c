@@ -3,10 +3,10 @@
 
 #include "stub_table.h"
 
-SPFP_DEFINE_INJECTION_MANIFEST("loader-table-mismatch", "0.0.0");
+SPECFEMPP_DEFINE_INJECTION_MANIFEST("loader-table-mismatch", "0.0.0");
 
 STUB_TABLE(2u, "loader-table-mismatch");
 
-SPFP_EXPORT const spfp_injection_plugin *specfempp_injection_plugin(void) {
+SPECFEMPP_EXPORT const specfempp_injection_table *specfempp_injection_plugin(void) {
   return &stub_table;
 }
