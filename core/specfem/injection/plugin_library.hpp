@@ -39,7 +39,7 @@ public:
    * @brief Function table of the plugin that created this instance.
    * @return The plugin's function table
    */
-  [[nodiscard]] const specfempp_injection_table &table() const {
+  [[nodiscard]] const specfem_injection_plugin_table &table() const {
     return *table_;
   }
 
@@ -52,13 +52,14 @@ public:
 private:
   friend class PluginLibrary;
   PluginInstance(std::shared_ptr<void> library,
-                 const specfempp_injection_table *table, void *self);
+                 const specfem_injection_plugin_table *table, void *self);
 
   void release();
 
   std::shared_ptr<void> library_; ///< Keeps the library loaded
-  const specfempp_injection_table *table_ = nullptr; ///< Plugin function table
-  void *self_ = nullptr;                             ///< Plugin-side state
+  const specfem_injection_plugin_table *table_ =
+      nullptr;           ///< Plugin function table
+  void *self_ = nullptr; ///< Plugin-side state
 };
 
 /**
@@ -121,7 +122,7 @@ public:
    * @return Function table, valid while this object (or an instance it
    * created) is alive
    */
-  [[nodiscard]] const specfempp_injection_table &table() const {
+  [[nodiscard]] const specfem_injection_plugin_table &table() const {
     return *table_;
   }
 
@@ -168,16 +169,17 @@ public:
    * fails
    */
   [[nodiscard]] PluginInstance
-  create(const std::string &config_path, const specfempp_simulation_info &info,
-         const specfempp_communicator &communicator) const;
+  create(const std::string &config_path, const specfem_simulation_info &info,
+         const specfem_communicator &communicator) const;
 
 private:
   PluginLibrary(std::shared_ptr<void> handle,
-                const specfempp_injection_table *table, std::string source,
+                const specfem_injection_plugin_table *table, std::string source,
                 std::string sha256);
 
   std::shared_ptr<void> handle_; ///< dlopen handle; null for static plugins
-  const specfempp_injection_table *table_ = nullptr; ///< Plugin function table
+  const specfem_injection_plugin_table *table_ =
+      nullptr;         ///< Plugin function table
   std::string source_; ///< Resolved path or "static:<name>"
   std::string sha256_; ///< Digest of the library; empty for static plugins
 };
@@ -193,7 +195,7 @@ private:
  * @throws std::runtime_error if the table is invalid or a plugin with the same
  * name is already registered
  */
-void register_static_plugin(const specfempp_injection_table *table);
+void register_static_plugin(const specfem_injection_plugin_table *table);
 
 } // namespace injection
 

@@ -5,6 +5,7 @@
 #include "specfem/plugin/injection_plugin.hpp"
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 namespace specfem::injection_loader_test {
 
@@ -19,20 +20,20 @@ public:
   }
 
   bool supports([[maybe_unused]] const specfem::plugin::Medium medium,
+                [[maybe_unused]] const specfem::plugin::Property property,
                 [[maybe_unused]] const specfem::plugin::Quantity quantity)
       const override {
     return false;
   }
 
-  void
-  setup([[maybe_unused]] const specfem::plugin::Points &points,
-        [[maybe_unused]] const specfem::plugin::Request &request) override {}
+  void setup([[maybe_unused]] const specfem::plugin::Points &points) override {}
 
   void fill([[maybe_unused]] const int first_step,
-            [[maybe_unused]] specfem::plugin::Buffer &buffer) override {}
+            [[maybe_unused]] const std::vector<specfem::plugin::Buffer>
+                &buffers) override {}
 };
 
 } // namespace specfem::injection_loader_test
 
-SPECFEMPP_DEFINE_INJECTION_PLUGIN("loader-good", "2.0.1",
-                                  specfem::injection_loader_test::GoodPlugin)
+SPECFEM_DEFINE_INJECTION_PLUGIN("loader-good", "2.0.1",
+                                specfem::injection_loader_test::GoodPlugin)

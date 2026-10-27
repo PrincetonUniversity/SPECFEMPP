@@ -12,6 +12,7 @@
 #include <array>
 #include <cerrno>
 #include <climits>
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
@@ -30,10 +31,11 @@
 namespace specfem::injection_impl {
 
 /** @brief Plugins registered with register_static_plugin, by name. */
-std::map<std::string, const specfempp_injection_table *> &static_registry();
+std::map<std::string, const specfem_injection_plugin_table *> &
+static_registry();
 
 /** @brief Throw unless @p table is a complete table for this ABI version. */
-void validate_table(const specfempp_injection_table *table,
+void validate_table(const specfem_injection_plugin_table *table,
                     const std::string &source);
 
 /** @brief Error for a shared-library plugin on a platform without them. */
@@ -44,32 +46,33 @@ std::vector<char> read_file(const std::string &path);
 
 /** @brief Find and validate the single manifest in @p bytes, read from
  * @p path. */
-specfempp_manifest read_manifest(std::span<const char> bytes,
-                                 const std::string &path);
+specfem_manifest read_manifest(std::span<const char> bytes,
+                               const std::string &path);
 
 } // namespace specfem::injection_impl
 
-std::map<std::string, const specfempp_injection_table *> &
+std::map<std::string, const specfem_injection_plugin_table *> &
 specfem::injection_impl::static_registry() {
-  static std::map<std::string, const specfempp_injection_table *> registry;
+  static std::map<std::string, const specfem_injection_plugin_table *> registry;
   return registry;
 }
 
 void specfem::injection_impl::validate_table(
-    const specfempp_injection_table *table, const std::string &source) {
+    const specfem_injection_plugin_table *table, const std::string &source) {
   const auto fail = [&](const std::string &reason) {
     throw std::runtime_error("Injection plugin " + source +
                              " has an invalid function table: " + reason);
   };
   if (table == nullptr)
     fail("the entry point returned a null table.");
-  if (table->abi_version != SPECFEMPP_INJECTION_ABI_VERSION)
+  if (!SPECFEM_HAS_FIELD(table, specfem_injection_plugin_table, destroy))
+    fail("struct_size " + std::to_string(table->struct_size) +
+         " is smaller than an ABI version 1 table.");
+  if (table->abi_version != SPECFEM_INJECTION_ABI_VERSION)
     fail("it was built for ABI version " + std::to_string(table->abi_version) +
          ", but SPECFEM++ supports version " +
-         std::to_string(SPECFEMPP_INJECTION_ABI_VERSION) +
+         std::to_string(SPECFEM_INJECTION_ABI_VERSION) +
          ". Rebuild the plugin against a matching plugin SDK.");
-  if (table->reserved != 0)
-    fail("the reserved field is not 0.");
   if (table->name == nullptr || table->name[0] == '\0')
     fail("the plugin name is empty.");
   if (table->version == nullptr)
@@ -200,11 +203,11 @@ std::vector<char> specfem::injection_impl::read_file(const std::string &path) {
            std::istreambuf_iterator<char>() };
 }
 
-specfempp_manifest
+specfem_manifest
 specfem::injection_impl::read_manifest(std::span<const char> bytes,
                                        const std::string &path) {
-  const char magic[16] = SPECFEMPP_MANIFEST_MAGIC_INITIALIZER;
-  specfempp_manifest manifest{};
+  const char magic[16] = SPECFEM_MANIFEST_MAGIC_INITIALIZER;
+  specfem_manifest manifest{};
   int count = 0;
   // Scan for every occurrence of the magic; the rest of the file after each
   // match must hold a whole manifest.
@@ -213,10 +216,10 @@ specfem::injection_impl::read_manifest(std::span<const char> bytes,
     if (match.empty())
       break;
     const auto found = rest.subspan(match.begin() - rest.begin());
-    if (found.size() < sizeof(specfempp_manifest))
+    if (found.size() < sizeof(specfem_manifest))
       throw std::runtime_error("Injection plugin '" + path +
                                "' has a truncated manifest.");
-    std::memcpy(&manifest, found.data(), sizeof(specfempp_manifest));
+    std::memcpy(&manifest, found.data(), sizeof(specfem_manifest));
     ++count;
     rest = found.subspan(1);
   }
@@ -227,24 +230,24 @@ specfem::injection_impl::read_manifest(std::span<const char> bytes,
   };
   if (count == 0)
     fail("it has no plugin manifest. Build it with "
-         "specfempp_add_injection_plugin() and declare it with "
-         "SPECFEMPP_DEFINE_INJECTION_PLUGIN or "
-         "SPECFEMPP_DEFINE_INJECTION_MANIFEST.");
+         "specfem_add_injection_plugin() and declare it with "
+         "SPECFEM_DEFINE_INJECTION_PLUGIN or "
+         "SPECFEM_DEFINE_INJECTION_MANIFEST.");
   if (count > 1)
     fail("it has " + std::to_string(count) +
          " plugin manifests; a plugin must define exactly one.");
-  if (manifest.manifest_version != SPECFEMPP_MANIFEST_VERSION)
+  if (manifest.manifest_version != SPECFEM_MANIFEST_VERSION)
     fail("unsupported manifest version " +
          std::to_string(manifest.manifest_version) + " (expected " +
-         std::to_string(SPECFEMPP_MANIFEST_VERSION) + ").");
-  if (manifest.plugin_kind != SPECFEMPP_PLUGIN_KIND_INJECTION)
+         std::to_string(SPECFEM_MANIFEST_VERSION) + ").");
+  if (manifest.plugin_kind != SPECFEM_PLUGIN_KIND_INJECTION)
     fail("it is not an injection plugin (plugin kind " +
          std::to_string(manifest.plugin_kind) + ").");
-  if (manifest.abi_version != SPECFEMPP_INJECTION_ABI_VERSION)
+  if (manifest.abi_version != SPECFEM_INJECTION_ABI_VERSION)
     fail("it was built for ABI version " +
          std::to_string(manifest.abi_version) +
          ", but SPECFEM++ supports version " +
-         std::to_string(SPECFEMPP_INJECTION_ABI_VERSION) +
+         std::to_string(SPECFEM_INJECTION_ABI_VERSION) +
          ". Rebuild the plugin against a matching plugin SDK.");
   if (std::memchr(manifest.name, '\0', sizeof(manifest.name)) == nullptr ||
       std::memchr(manifest.version, '\0', sizeof(manifest.version)) == nullptr)
@@ -253,7 +256,7 @@ specfem::injection_impl::read_manifest(std::span<const char> bytes,
 }
 
 specfem::injection::PluginInstance::PluginInstance(
-    std::shared_ptr<void> library, const specfempp_injection_table *table,
+    std::shared_ptr<void> library, const specfem_injection_plugin_table *table,
     void *self)
     : library_(std::move(library)), table_(table), self_(self) {}
 
@@ -288,7 +291,7 @@ std::string specfem::injection::PluginInstance::last_error() const {
 }
 
 specfem::injection::PluginLibrary::PluginLibrary(
-    std::shared_ptr<void> handle, const specfempp_injection_table *table,
+    std::shared_ptr<void> handle, const specfem_injection_plugin_table *table,
     std::string source, std::string sha256)
     : handle_(std::move(handle)), table_(table), source_(std::move(source)),
       sha256_(std::move(sha256)) {}
@@ -320,7 +323,7 @@ specfem::injection::PluginLibrary::open_file(const std::string &path) {
   specfem::injection_impl::check_permissions(
       resolved, specfem::injection_impl::running_privileged());
   const auto bytes = specfem::injection_impl::read_file(resolved);
-  const specfempp_manifest manifest =
+  const specfem_manifest manifest =
       specfem::injection_impl::read_manifest(bytes, resolved);
   const auto sha256 =
       specfem::utilities::sha256_hex(std::as_bytes(std::span(bytes)));
@@ -334,16 +337,16 @@ specfem::injection::PluginLibrary::open_file(const std::string &path) {
   std::shared_ptr<void> handle(raw_handle,
                                [](void *handle) { ::dlclose(handle); });
 
-  const auto entry = reinterpret_cast<specfempp_injection_entry>(
-      ::dlsym(handle.get(), SPECFEMPP_INJECTION_PLUGIN_ENTRY_NAME));
+  const auto entry = reinterpret_cast<specfem_injection_plugin_entry>(
+      ::dlsym(handle.get(), SPECFEM_INJECTION_PLUGIN_ENTRY_NAME));
   if (entry == nullptr)
     throw std::runtime_error(
         "Injection plugin '" + resolved + "' does not export " +
-        SPECFEMPP_INJECTION_PLUGIN_ENTRY_NAME +
-        "(). Was it built with specfempp_add_injection_plugin() and "
-        "SPECFEMPP_DEFINE_INJECTION_PLUGIN?");
+        SPECFEM_INJECTION_PLUGIN_ENTRY_NAME +
+        "(). Was it built with specfem_add_injection_plugin() and "
+        "SPECFEM_DEFINE_INJECTION_PLUGIN?");
 
-  const specfempp_injection_table *table = entry();
+  const specfem_injection_plugin_table *table = entry();
   specfem::injection_impl::validate_table(table, "'" + resolved + "'");
   if (std::string(table->name) != manifest.name)
     throw std::runtime_error(
@@ -374,8 +377,8 @@ specfem::injection::PluginLibrary::open_static(const std::string &name) {
 }
 
 specfem::injection::PluginInstance specfem::injection::PluginLibrary::create(
-    const std::string &config_path, const specfempp_simulation_info &info,
-    const specfempp_communicator &communicator) const {
+    const std::string &config_path, const specfem_simulation_info &info,
+    const specfem_communicator &communicator) const {
   void *self = table_->create(config_path.c_str(), &info, &communicator);
   if (self == nullptr) {
     const char *error = table_->last_error(nullptr);
@@ -387,7 +390,7 @@ specfem::injection::PluginInstance specfem::injection::PluginLibrary::create(
 }
 
 void specfem::injection::register_static_plugin(
-    const specfempp_injection_table *table) {
+    const specfem_injection_plugin_table *table) {
   specfem::injection_impl::validate_table(table, "(static)");
   auto &registry = specfem::injection_impl::static_registry();
   if (!registry.emplace(table->name, table).second)

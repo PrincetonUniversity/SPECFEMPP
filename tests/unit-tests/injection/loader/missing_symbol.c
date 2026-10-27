@@ -2,8 +2,8 @@
 
 #include "specfem/plugin/injection_abi.h"
 
-SPECFEMPP_DEFINE_INJECTION_MANIFEST("loader-missing-symbol", "0.0.0");
+SPECFEM_DEFINE_INJECTION_MANIFEST("loader-missing-symbol", "0.0.0");
 
-__attribute__((visibility("default"))) int specfempp_not_the_entry_point(void) {
+__attribute__((visibility("default"))) int specfem_not_the_entry_point(void) {
   return 0;
 }

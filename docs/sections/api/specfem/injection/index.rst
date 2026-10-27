@@ -20,7 +20,7 @@ Platforms
 Shared-library plugins are supported on Linux and macOS. On Windows, SPECFEM++
 builds and runs, but ``--injection-plugin`` accepts only ``static:<name>``; a
 path to a shared library is rejected with an error saying so, and
-``specfempp_add_injection_plugin()`` refuses to configure.
+``specfem_add_injection_plugin()`` refuses to configure.
 
 Security
 --------

@@ -3,8 +3,8 @@
 
 #include "stub_table.h"
 
-STUB_TABLE(SPECFEMPP_INJECTION_ABI_VERSION, "loader-no-manifest");
+STUB_TABLE(SPECFEM_INJECTION_ABI_VERSION, "loader-no-manifest");
 
-SPECFEMPP_EXPORT const specfempp_injection_table *specfempp_injection_plugin(void) {
+SPECFEM_EXPORT const specfem_injection_plugin_table *specfem_injection_plugin(void) {
   return &stub_table;
 }
