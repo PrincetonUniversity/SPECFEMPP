@@ -1,0 +1,12 @@
+# Plane-wave plugin configuration, passed with --injection-config.
+# Matches the material of tests/unit-tests/data/dim3/EightNodeElasticInjectionStacey.
+material: {rho: 2300, vp: 2800, vs: 1500}
+wave:
+  type: P              # P | SV
+  take-off: 20         # degrees from +z (0 travels straight up)
+  azimuth: 30          # degrees from +x toward +y
+  origin: [50000, 40000, -60000]
+  origin-time: 5.0     # time the wavefront crosses origin
+  amplitude: 1.0e-3    # displacement amplitude
+source-time-function: {type: ricker, f0: 0.05}   # or {type: gaussian, half-duration: 4.0}
+material-tolerance: 1.0e-4                        # relative
