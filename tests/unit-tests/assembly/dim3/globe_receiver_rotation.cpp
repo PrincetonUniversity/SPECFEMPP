@@ -3,8 +3,8 @@
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/receivers.hpp"
 #include "specfem/attenuation.hpp"
+#include "specfem/coordinate_systems/basis_rotation.hpp"
 #include "specfem/coordinate_systems/geographic.hpp"
-#include "specfem/coordinate_systems/spherical_basis.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
@@ -154,18 +154,26 @@ TEST(GlobeReceiverRotation, KonoIsPlacedAndRotated) {
   }
 
   {
-    SCOPED_TRACE("rows match the independently computed spherical basis");
-    // Ellipticity is off in this fixture, so geographic = geocentric.
+    SCOPED_TRACE("rows match the independently computed local frame");
+    // Ellipticity is off in this fixture, so geographic = geocentric. The
+    // columns of the Cartesian <- Geocentric rotation are e_theta, e_phi, e_r;
+    // East = e_phi, North = -e_theta, Up = e_r.
     constexpr double deg2rad = std::numbers::pi / 180.0;
     const double theta = std::numbers::pi / 2.0 - impl::kono_latitude * deg2rad;
     const double phi = impl::kono_longitude * deg2rad;
-    const auto basis =
-        specfem::coordinate_systems::local_spherical_basis(theta, phi);
-    impl::expect_vector_near(rows[0], basis.e_phi, 1e-5);
-    impl::expect_vector_near(
-        rows[1], { -basis.e_theta[0], -basis.e_theta[1], -basis.e_theta[2] },
-        1e-5);
-    impl::expect_vector_near(rows[2], basis.e_r, 1e-5);
+    const auto rotation = specfem::coordinate_systems::rotation_matrix<
+        specfem::coordinate_systems::CartesianFrame,
+        specfem::coordinate_systems::GeocentricFrame>(theta, phi);
+    const std::array<double, 3> e_theta = { rotation[0][0], rotation[1][0],
+                                            rotation[2][0] };
+    const std::array<double, 3> e_phi = { rotation[0][1], rotation[1][1],
+                                          rotation[2][1] };
+    const std::array<double, 3> e_r = { rotation[0][2], rotation[1][2],
+                                        rotation[2][2] };
+    impl::expect_vector_near(rows[0], e_phi, 1e-5);
+    impl::expect_vector_near(rows[1], { -e_theta[0], -e_theta[1], -e_theta[2] },
+                             1e-5);
+    impl::expect_vector_near(rows[2], e_r, 1e-5);
   }
 
   {

@@ -121,6 +121,8 @@ specfem::mesh::globe3d_mesh specfem::io::read_globe_mesh(
       mesh.nspec, mesh.materials, mesh.adjacency_graph, mesh.boundaries);
 
   mesh.setup_coupled_interfaces();
+  mesh.check_consistency();
+  mesh.check_supported();
   if (attenuation_enabled) {
     if (!attenuation_setup.f0.has_value()) {
       throw std::runtime_error(

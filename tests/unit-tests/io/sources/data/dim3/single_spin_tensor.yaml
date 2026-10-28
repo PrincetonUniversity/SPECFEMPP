@@ -1,0 +1,19 @@
+number-of-sources: 1
+sources:
+  - spin-tensor:
+      x: 2000.0
+      y: 3000.0
+      z: 2000.0
+      Mcxx: 1.0
+      Mcyy: 2.0
+      Mczz: 3.0
+      Mcxy: 0.5
+      Mcxz: 0.6
+      Mcyz: 0.7
+      Mcyx: -0.5
+      Mczx: -0.6
+      Mczy: -0.7
+      Ricker:
+          factor: 1.0e10
+          tshift: 30.0
+          f0: 1.0

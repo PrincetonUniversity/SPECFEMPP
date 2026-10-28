@@ -7,7 +7,7 @@
 .. doxygennamespace:: specfem::receivers
     :desc-only:
 
-3-D receivers given in geographic coordinates are placed through the mesh projection, and their seismograms are written in the local East/North/Up frame. See :doc:`../coordinate_systems/spherical_basis` for ``specfem::coordinate_systems::GeographicBasis`` and :doc:`../assembly/coordinate_conversion/coordinate_conversion` for ``specfem::assembly::local_geographic_basis``.
+3-D receivers given in geographic coordinates are placed through the mesh projection, and their seismograms are written in the local East/North/Up frame. The frame comes from :doc:`../coordinate_systems/basis_rotation` (the local ``(theta, phi, r)`` axes at the receiver) relabelled through :doc:`../coordinate_systems/east_north_up`; see :doc:`../assembly/coordinate_conversion/coordinate_conversion` for ``specfem::assembly::local_frame_rotation`` and ``specfem::assembly::local_east_north_up_basis``, which build the per-receiver rotation rows.
 
 
 ``specfem::receivers::receiver``

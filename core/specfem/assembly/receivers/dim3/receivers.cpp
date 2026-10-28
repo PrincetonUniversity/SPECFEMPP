@@ -82,12 +82,10 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
     station_network_map[station_name][network_name] = ireceiver;
 
     // Cartesian mesh frame -> local (East, North, Up) rows. Identity on a flat
-    // regional mesh; the spherical frame at the receiver on a globe.
-    const auto basis = specfem::assembly::local_geographic_basis(
-        receiver->get_global_coordinates(), mesh);
+    // regional mesh; the local frame at the receiver on a globe.
     this->set_rotation_matrix(ireceiver,
-                              std::array<std::array<double, 3>, 3>{
-                                  basis.east, basis.north, basis.up });
+                              specfem::assembly::local_east_north_up_basis(
+                                  receiver->get_global_coordinates(), mesh));
 
     if (partition_index_selected[ireceiver] != myrank) {
       h_elements(ireceiver) = -1;

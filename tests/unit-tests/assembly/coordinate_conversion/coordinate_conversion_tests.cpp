@@ -1,6 +1,7 @@
 #include "specfem/assembly/coordinate_conversion.hpp"
 
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/coordinate_systems/basis_rotation.hpp"
 #include "specfem/coordinate_systems/cartesian.hpp"
 #include "specfem/coordinate_systems/geocentric.hpp"
 #include "specfem/coordinate_systems/geographic.hpp"
@@ -15,6 +16,7 @@
 #include <array>
 #include <cmath>
 #include <gtest/gtest.h>
+#include <numbers>
 #include <stdexcept>
 #include <string>
 
@@ -75,16 +77,25 @@ std::array<double, 3> cross_product(const std::array<double, 3> &first,
            first[0] * second[1] - first[1] * second[0] };
 }
 
-void expect_basis_near(const cs::GeographicBasis &basis,
+// `rows` are the East, North, Up unit vectors in mesh components, as returned
+// by specfem::assembly::local_east_north_up_basis.
+void expect_basis_near(const std::array<std::array<double, 3>, 3> &rows,
                        const std::array<double, 3> &east,
                        const std::array<double, 3> &north,
                        const std::array<double, 3> &up,
                        const double tolerance) {
   for (int component = 0; component < 3; ++component) {
-    EXPECT_NEAR(basis.east[component], east[component], tolerance);
-    EXPECT_NEAR(basis.north[component], north[component], tolerance);
-    EXPECT_NEAR(basis.up[component], up[component], tolerance);
+    EXPECT_NEAR(rows[0][component], east[component], tolerance);
+    EXPECT_NEAR(rows[1][component], north[component], tolerance);
+    EXPECT_NEAR(rows[2][component], up[component], tolerance);
   }
+}
+
+// Column `index` of a local-frame rotation: the mesh components of the local
+// unit vector e_theta (0), e_phi (1) or e_r (2).
+std::array<double, 3> column_of(const specfem::assembly::LocalFrameRotation &r,
+                                const int index) {
+  return { r[0][index], r[1][index], r[2][index] };
 }
 
 // ---- Cartesian target, dim2 (plain Cartesian mesh) ------------------------
@@ -238,26 +249,78 @@ TEST(ToGeographic, FromCartesianRoundTripUtm) {
   EXPECT_NEAR(recovered.latitude, original.latitude, 1e-4);
 }
 
-// ---- Local geographic basis -------------------------------------------------
+// ---- Local frame rotation ---------------------------------------------------
 
-TEST(LocalGeographicBasis, CartesianMeshIsIdentity) {
-  const auto mesh = make_cartesian3d_no_projection();
-  const specfem::point::global_coordinates<dim3> point{ 1234.0, -567.0, 89.0 };
-  const auto basis = specfem::assembly::local_geographic_basis(point, mesh);
-  expect_basis_near(basis, { 1.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 },
-                    { 0.0, 0.0, 1.0 }, 0.0);
+// The exact flat-mesh matrix is the globe rotation at theta = 0, phi = -pi/2.
+TEST(LocalFrameRotation,
+     FlatMeshMatchesGlobeRotationAtThetaZeroPhiMinusHalfPi) {
+  const auto flat = specfem::assembly::flat_mesh_rotation();
+  const auto trig =
+      cs::rotation_matrix<cs::CartesianFrame, cs::GeocentricFrame>(
+          0.0, -std::numbers::pi / 2.0);
+  for (int row = 0; row < 3; ++row)
+    for (int col = 0; col < 3; ++col)
+      EXPECT_NEAR(flat[row][col], trig[row][col], 1e-15);
 }
 
-TEST(LocalGeographicBasis, UtmMeshIsIdentity) {
+// On a regional mesh the local axes are the mesh axes exactly:
+// e_theta = -y, e_phi = +x, e_r = +z.
+TEST(LocalFrameRotation, FlatMeshOnRegionalMesh) {
   const auto mesh = make_cartesian3d_utm(31);
   const specfem::point::global_coordinates<dim3> point{ 500000.0, 5700000.0,
                                                         -100.0 };
-  const auto basis = specfem::assembly::local_geographic_basis(point, mesh);
+  const auto rotation = specfem::assembly::local_frame_rotation(point, mesh);
+  const std::array<std::array<double, 3>, 3> expected_columns = {
+    { { 0.0, -1.0, 0.0 }, { 1.0, 0.0, 0.0 }, { 0.0, 0.0, 1.0 } }
+  };
+  for (int index = 0; index < 3; ++index) {
+    const auto column = column_of(rotation, index);
+    for (int component = 0; component < 3; ++component)
+      EXPECT_EQ(column[component], expected_columns[index][component]);
+  }
+}
+
+// On a globe the third column is the radial direction and the East/North/Up
+// rows are the relabelled columns (E = e_phi, N = -e_theta, U = e_r).
+TEST(LocalFrameRotation, GlobeColumnsAreLocalUnitVectors) {
+  const auto mesh = make_globe();
+  const auto point = specfem::assembly::to_cartesian(
+      cs::geographic_coordinates(9.6, 59.65, 0.0), mesh);
+  const auto rotation = specfem::assembly::local_frame_rotation(point, mesh);
+  const double radius = radius_of(point);
+  const std::array<double, 3> radial = { point.x / radius, point.y / radius,
+                                         point.z / radius };
+  const auto e_theta = column_of(rotation, 0);
+  const auto e_phi = column_of(rotation, 1);
+  const auto e_r = column_of(rotation, 2);
+  for (int component = 0; component < 3; ++component)
+    EXPECT_NEAR(e_r[component], radial[component], 1e-6);
+
+  const auto rows = specfem::assembly::local_east_north_up_basis(point, mesh);
+  expect_basis_near(rows, e_phi, { -e_theta[0], -e_theta[1], -e_theta[2] }, e_r,
+                    1e-12);
+}
+
+// ---- Local East/North/Up basis ----------------------------------------------
+
+TEST(LocalEastNorthUpBasis, CartesianMeshIsIdentity) {
+  const auto mesh = make_cartesian3d_no_projection();
+  const specfem::point::global_coordinates<dim3> point{ 1234.0, -567.0, 89.0 };
+  const auto basis = specfem::assembly::local_east_north_up_basis(point, mesh);
   expect_basis_near(basis, { 1.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 },
                     { 0.0, 0.0, 1.0 }, 0.0);
 }
 
-TEST(LocalGeographicBasis, GlobeUpIsRadial) {
+TEST(LocalEastNorthUpBasis, UtmMeshIsIdentity) {
+  const auto mesh = make_cartesian3d_utm(31);
+  const specfem::point::global_coordinates<dim3> point{ 500000.0, 5700000.0,
+                                                        -100.0 };
+  const auto basis = specfem::assembly::local_east_north_up_basis(point, mesh);
+  expect_basis_near(basis, { 1.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 },
+                    { 0.0, 0.0, 1.0 }, 0.0);
+}
+
+TEST(LocalEastNorthUpBasis, GlobeUpIsRadial) {
   const auto mesh = make_globe();
   const std::array<std::array<double, 2>, 5> longitude_latitude = {
     { { 0.0, 0.0 },
@@ -269,48 +332,52 @@ TEST(LocalGeographicBasis, GlobeUpIsRadial) {
   for (const auto &entry : longitude_latitude) {
     const auto point = specfem::assembly::to_cartesian(
         cs::geographic_coordinates(entry[0], entry[1], 0.0), mesh);
-    const auto basis = specfem::assembly::local_geographic_basis(point, mesh);
+    const auto basis =
+        specfem::assembly::local_east_north_up_basis(point, mesh);
+    const auto &east = basis[0];
+    const auto &north = basis[1];
+    const auto &up = basis[2];
     const double radius = radius_of(point);
     const std::array<double, 3> radial = { point.x / radius, point.y / radius,
                                            point.z / radius };
-    EXPECT_NEAR(dot_product(basis.up, radial), 1.0, 1e-6);
-    EXPECT_NEAR(dot_product(basis.east, basis.east), 1.0, 1e-6);
-    EXPECT_NEAR(dot_product(basis.north, basis.north), 1.0, 1e-6);
-    EXPECT_NEAR(dot_product(basis.up, basis.up), 1.0, 1e-6);
-    const auto east_cross_north = cross_product(basis.east, basis.north);
+    EXPECT_NEAR(dot_product(up, radial), 1.0, 1e-6);
+    EXPECT_NEAR(dot_product(east, east), 1.0, 1e-6);
+    EXPECT_NEAR(dot_product(north, north), 1.0, 1e-6);
+    EXPECT_NEAR(dot_product(up, up), 1.0, 1e-6);
+    const auto east_cross_north = cross_product(east, north);
     for (int component = 0; component < 3; ++component)
-      EXPECT_NEAR(east_cross_north[component], basis.up[component], 1e-6);
+      EXPECT_NEAR(east_cross_north[component], up[component], 1e-6);
   }
 }
 
-TEST(LocalGeographicBasis, GlobeEquatorPrimeMeridian) {
+TEST(LocalEastNorthUpBasis, GlobeEquatorPrimeMeridian) {
   const auto mesh = make_globe();
   const specfem::point::global_coordinates<dim3> point{ earth_radius, 0.0,
                                                         0.0 };
-  const auto basis = specfem::assembly::local_geographic_basis(point, mesh);
+  const auto basis = specfem::assembly::local_east_north_up_basis(point, mesh);
   expect_basis_near(basis, { 0.0, 1.0, 0.0 }, { 0.0, 0.0, 1.0 },
                     { 1.0, 0.0, 0.0 }, 1e-6);
 }
 
-TEST(LocalGeographicBasis, GlobeNorthPoleIsFinite) {
+TEST(LocalEastNorthUpBasis, GlobeNorthPoleIsFinite) {
   const auto mesh = make_globe();
   const specfem::point::global_coordinates<dim3> point{ 0.0, 0.0,
                                                         earth_radius };
-  const auto basis = specfem::assembly::local_geographic_basis(point, mesh);
-  for (int component = 0; component < 3; ++component) {
-    EXPECT_TRUE(std::isfinite(basis.east[component]));
-    EXPECT_TRUE(std::isfinite(basis.north[component]));
-    EXPECT_TRUE(std::isfinite(basis.up[component]));
-  }
+  const auto basis = specfem::assembly::local_east_north_up_basis(point, mesh);
+  for (const auto &row : basis)
+    for (int component = 0; component < 3; ++component)
+      EXPECT_TRUE(std::isfinite(row[component]));
   expect_basis_near(basis, { 0.0, 1.0, 0.0 }, { -1.0, 0.0, 0.0 },
                     { 0.0, 0.0, 1.0 }, 1e-6);
 }
 
-TEST(LocalGeographicBasis, GlobeEllipticityThrows) {
+TEST(LocalEastNorthUpBasis, GlobeEllipticityThrows) {
   const auto mesh = make_globe(/*ellipticity=*/true);
   const specfem::point::global_coordinates<dim3> point{ earth_radius, 0.0,
                                                         0.0 };
-  EXPECT_THROW(specfem::assembly::local_geographic_basis(point, mesh),
+  EXPECT_THROW(specfem::assembly::local_east_north_up_basis(point, mesh),
+               std::runtime_error);
+  EXPECT_THROW(specfem::assembly::local_frame_rotation(point, mesh),
                std::runtime_error);
 }
 

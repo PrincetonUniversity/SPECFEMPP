@@ -26,6 +26,22 @@ const SourceVector2DType single_moment_tensor_2d = { std::make_shared<
         nsteps, dt, 1.0, 30.0, 1.0e10, false),
     wavefield_type) };
 
+const SourceVector2DType single_asymmetric_moment_tensor_2d = {
+  std::make_shared<
+      specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2>>(
+      2000.0, 3000.0, 1.0, 1.0, 0.5, -0.5,
+      std::make_unique<specfem::source_time_functions::Ricker>(
+          nsteps, dt, 1.0, 30.0, 1.0e10, false),
+      wavefield_type)
+};
+
+const SourceVector2DType single_spin_tensor_2d = { std::make_shared<
+    specfem::sources::spin_tensor<specfem::element::dimension_tag::dim2>>(
+    2000.0, 3000.0, 1.0, -0.5,
+    std::make_unique<specfem::source_time_functions::Ricker>(
+        nsteps, dt, 1.0, 30.0, 1.0e10, false),
+    wavefield_type) };
+
 const SourceVector2DType single_force_2d = { std::make_shared<
     specfem::sources::force<specfem::element::dimension_tag::dim2>>(
     2500.0, 2500.0, 0.0,
@@ -72,6 +88,29 @@ const SourceVector3DType single_moment_tensor_3d = { std::make_shared<
     std::make_unique<specfem::coordinate_systems::cartesian_coordinates<
         specfem::element::dimension_tag::dim3>>(2000.0, 3000.0, 2000.0),
     1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
+    std::make_unique<specfem::source_time_functions::Ricker>(
+        nsteps, dt, 1.0, 30.0, 1.0e10, false),
+    wavefield_type) };
+
+// Asymmetric moment tensor: (Mxx, Myy, Mzz, Mxy, Mxz, Myz, Myx, Mzx, Mzy).
+const SourceVector3DType single_asymmetric_moment_tensor_3d = {
+  std::make_shared<
+      specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3>>(
+      std::make_unique<specfem::coordinate_systems::cartesian_coordinates<
+          specfem::element::dimension_tag::dim3>>(2000.0, 3000.0, 2000.0),
+      1.0, 2.0, 3.0, 0.5, 0.6, 0.7, -0.5, -0.6, -0.7,
+      std::make_unique<specfem::source_time_functions::Ricker>(
+          nsteps, dt, 1.0, 30.0, 1.0e10, false),
+      wavefield_type)
+};
+
+// Spin tensor: (Mcxx, Mcyy, Mczz, Mcxy, Mcxz, Mcyz, Mcyx, Mczx, Mczy). Uses the
+// generic-coordinates ctor so read_coordinates_ matches what the parser builds.
+const SourceVector3DType single_spin_tensor_3d = { std::make_shared<
+    specfem::sources::spin_tensor<specfem::element::dimension_tag::dim3>>(
+    std::make_unique<specfem::coordinate_systems::cartesian_coordinates<
+        specfem::element::dimension_tag::dim3>>(2000.0, 3000.0, 2000.0),
+    1.0, 2.0, 3.0, 0.5, 0.6, 0.7, -0.5, -0.6, -0.7,
     std::make_unique<specfem::source_time_functions::Ricker>(
         nsteps, dt, 1.0, 30.0, 1.0e10, false),
     wavefield_type) };
@@ -154,14 +193,17 @@ const SourceVector3DType single_moment_tensor_cmt_3d = []() {
   return SourceVector3DType{ std::move(src) };
 }();
 
-// Parsed from Mrr/Mtt/Mpp labels: kept in the geographic frame (rotated into
-// the mesh frame at assembly, not at read time).
+// Parsed from Mrr/Mtt/Mpp labels: kept in the local geocentric (theta, phi, r)
+// frame (rotated into the mesh frame at assembly, not at read time). Slots:
+// (Mtt, Mpp, Mrr, Mtp, Mrt, Mrp).
 const SourceVector3DType spherical_moment_tensor_cmt_3d = []() {
   auto src = std::make_shared<
       specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3>>(
       std::make_unique<specfem::coordinate_systems::cartesian_coordinates<
           specfem::element::dimension_tag::dim3>>(2000.0, 3000.0, 2000.0),
-      specfem::sources::GeographicMomentTensor{ 0.0, 1.0, 1.0, 0.0, 0.0, -1.0 },
+      specfem::sources::MomentTensor<
+          specfem::coordinate_systems::GeocentricFrame>(1.0, 1.0, 0.0, -1.0,
+                                                        0.0, 0.0),
       std::make_unique<specfem::source_time_functions::Heaviside>(
           nsteps, dt, 1.0, 30.0, 1.0, false),
       wavefield_type);
@@ -189,7 +231,8 @@ const SourceVector3DType single_force_forcesolution_3d = { std::make_shared<
     specfem::sources::force<specfem::element::dimension_tag::dim3>>(
     std::make_unique<specfem::coordinate_systems::cartesian_coordinates<
         specfem::element::dimension_tag::dim3>>(2500.0, 2500.0, 2500.0),
-    specfem::sources::GeographicForce{ 0.0, 0.0, 0.0 },
+    specfem::sources::ForceVector<specfem::coordinate_systems::GeocentricFrame>(
+        0.0, 0.0, 0.0),
     std::make_unique<specfem::source_time_functions::Ricker>(nsteps, dt, 10.0,
                                                              5.0, 1.0, false),
     wavefield_type) };
@@ -201,7 +244,8 @@ const SourceVector3DType single_force_geographic_forcesolution_3d = {
       specfem::sources::force<specfem::element::dimension_tag::dim3>>(
       std::make_unique<specfem::coordinate_systems::geographic_coordinates>(
           2.674, 51.561, 2000.0),
-      specfem::sources::GeographicForce{ 0.0, 0.0, 0.0 },
+      specfem::sources::ForceVector<
+          specfem::coordinate_systems::GeocentricFrame>(0.0, 0.0, 0.0),
       std::make_unique<specfem::source_time_functions::Ricker>(nsteps, dt, 10.0,
                                                                5.0, 1.0, false),
       wavefield_type)
@@ -227,7 +271,9 @@ const SourceVector3DType multiple_sources_cmt_3d = []() {
       specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3>>(
       std::make_unique<specfem::coordinate_systems::cartesian_coordinates<
           specfem::element::dimension_tag::dim3>>(5000.0, 6000.0, 1000.0),
-      specfem::sources::GeographicMomentTensor{ 0.0, 2.0, 2.0, 0.0, 0.0, -2.0 },
+      specfem::sources::MomentTensor<
+          specfem::coordinate_systems::GeocentricFrame>(2.0, 2.0, 0.0, -2.0,
+                                                        0.0, 0.0),
       std::make_unique<specfem::source_time_functions::Heaviside>(
           nsteps, dt, 2.0, 10.0, 1.0, false),
       wavefield_type);
@@ -247,7 +293,8 @@ const SourceVector3DType multiple_forces_forcesolution_3d = {
       specfem::sources::force<specfem::element::dimension_tag::dim3>>(
       std::make_unique<specfem::coordinate_systems::cartesian_coordinates<
           specfem::element::dimension_tag::dim3>>(2500.0, 2500.0, 2500.0),
-      specfem::sources::GeographicForce{ 0.0, 0.0, 0.0 },
+      specfem::sources::ForceVector<
+          specfem::coordinate_systems::GeocentricFrame>(0.0, 0.0, 0.0),
       std::make_unique<specfem::source_time_functions::Ricker>(nsteps, dt, 10.0,
                                                                5.0, 1.0, false),
       wavefield_type),
@@ -255,7 +302,10 @@ const SourceVector3DType multiple_forces_forcesolution_3d = {
       specfem::sources::force<specfem::element::dimension_tag::dim3>>(
       std::make_unique<specfem::coordinate_systems::cartesian_coordinates<
           specfem::element::dimension_tag::dim3>>(4000.0, 5000.0, 3000.0),
-      specfem::sources::GeographicForce{ 0.0, type_real(1.0e10), 0.0 },
+      // East/North/Up (0, 1e10, 0) -> geocentric (theta, phi, r) = (-N, E, Up)
+      specfem::sources::ForceVector<
+          specfem::coordinate_systems::GeocentricFrame>(type_real(-1.0e10), 0.0,
+                                                        0.0),
       std::make_unique<specfem::source_time_functions::GaussianHdur>(
           nsteps, dt, 5.0, 2.0, 1.0, false),
       wavefield_type)

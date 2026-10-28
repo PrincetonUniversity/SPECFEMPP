@@ -1,4 +1,5 @@
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/coordinate_systems/geocentric_projection.hpp"
 #include "specfem/mpi/mpi.hpp"
 #include <limits>
 
@@ -362,6 +363,31 @@ specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::
   compute_coordinate_bounds();
 
   return;
+}
+
+void specfem::assembly::mesh_impl::points<
+    specfem::element::dimension_tag::dim3>::compute_spherical_coordinates() {
+  this->h_spherical_coord = CoordViewType::host_mirror_type(
+      "specfem::assembly::mesh::points::h_spherical_coord", nspec, ngllz, nglly,
+      ngllx, ndim);
+  for (int ispec = 0; ispec < nspec; ++ispec) {
+    for (int iz = 0; iz < ngllz; ++iz) {
+      for (int iy = 0; iy < nglly; ++iy) {
+        for (int ix = 0; ix < ngllx; ++ix) {
+          const specfem::coordinate_systems::cartesian_coordinates<
+              dimension_tag>
+              cartesian{ this->h_coord(ispec, iz, iy, ix, 0),
+                         this->h_coord(ispec, iz, iy, ix, 1),
+                         this->h_coord(ispec, iz, iy, ix, 2) };
+          const auto spherical = specfem::coordinate_systems::to<
+              specfem::coordinate_systems::geocentric_coordinates>(cartesian);
+          this->h_spherical_coord(ispec, iz, iy, ix, 0) = spherical.r;
+          this->h_spherical_coord(ispec, iz, iy, ix, 1) = spherical.theta;
+          this->h_spherical_coord(ispec, iz, iy, ix, 2) = spherical.phi;
+        }
+      }
+    }
+  }
 }
 
 void specfem::assembly::mesh_impl::points<

@@ -5,7 +5,6 @@
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly/coordinate_conversion.hpp"
 #include "specfem/assembly/mesh.hpp"
-#include "specfem/coordinate_systems/geocentric_projection.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/setup.hpp"
@@ -13,19 +12,17 @@
 #include <Kokkos_Core.hpp>
 #include <memory>
 #include <optional>
-#include <utility>
 #include <variant>
 #include <vector>
 
 // ── Source directional-quantity resolution (dim3) ───────────────────────────
 //
-// A moment tensor or force read in its local geographic frame is rotated into
-// the Cartesian mesh frame here, once the source position is resolved. The
-// transform is selected from the mesh projection, exactly as to_cartesian
-// selects the position transform: a globe rotates by the local spherical frame
-// at the source colatitude/longitude; a regional (UTM or Cartesian) mesh
-// applies the flat East-North-Up relabel. A quantity already read in the
-// Cartesian frame is left untouched.
+// A moment tensor or force read in its local geocentric (theta, phi, r) frame
+// is rotated into the Cartesian mesh frame here, once the source position is
+// resolved. The rotation comes from assembly::local_frame_rotation, which
+// selects it from the mesh projection exactly as to_cartesian selects the
+// position transform. A quantity already read in the Cartesian frame is left
+// untouched.
 namespace specfem::assembly::sources_impl {
 
 void resolve_source_frame(
@@ -39,41 +36,30 @@ void specfem::assembly::sources_impl::resolve_source_frame(
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
         &mesh) {
 
-  // On a globe the local frame rotates with position: recover the source
-  // colatitude/longitude from its resolved (planet-centred) Cartesian position.
-  // A non-globe mesh leaves the angles empty and takes the flat relabel.
-  std::optional<std::pair<double, double>> angles;
-  if (std::holds_alternative<specfem::assembly::mesh_impl::globe_projection>(
-          mesh.projection.value)) {
-    const auto global = source.get_global_coordinates();
-    const auto geocentric = specfem::coordinate_systems::to<
-        specfem::coordinate_systems::geocentric_coordinates>(
-        specfem::coordinate_systems::cartesian_coordinates<
-            specfem::element::dimension_tag::dim3>(global.x, global.y,
-                                                   global.z));
-    angles = std::make_pair(geocentric.theta, geocentric.phi);
-  }
+  using MomentTensorSource =
+      specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3>;
+  using ForceSource =
+      specfem::sources::force<specfem::element::dimension_tag::dim3>;
+  using GeocentricFrame = specfem::coordinate_systems::GeocentricFrame;
 
-  if (auto *mt = dynamic_cast<specfem::sources::moment_tensor<
-          specfem::element::dimension_tag::dim3> *>(&source)) {
+  if (auto *mt = dynamic_cast<MomentTensorSource *>(&source)) {
     if (mt->moment().is_resolved())
       return;
-    const auto &geographic = std::get<specfem::sources::GeographicMomentTensor>(
-        mt->moment().as_read());
-    mt->set_cartesian_components(
-        angles ? specfem::sources::rotate_moment_tensor_geographic_to_cartesian(
-                     angles->first, angles->second, geographic)
-               : specfem::sources::geographic_to_enu(geographic));
-  } else if (auto *f = dynamic_cast<specfem::sources::force<
-                 specfem::element::dimension_tag::dim3> *>(&source)) {
+    const auto &local =
+        std::get<specfem::sources::MomentTensor<GeocentricFrame>>(
+            mt->moment().as_read());
+    mt->set_cartesian_components(specfem::sources::rotate(
+        local, specfem::assembly::local_frame_rotation(
+                   source.get_global_coordinates(), mesh)));
+  } else if (auto *f = dynamic_cast<ForceSource *>(&source)) {
     if (f->force_quantity().is_resolved())
       return;
-    const auto &geographic = std::get<specfem::sources::GeographicForce>(
-        f->force_quantity().as_read());
-    f->set_cartesian_components(
-        angles ? specfem::sources::rotate_force_geographic_to_cartesian(
-                     angles->first, angles->second, geographic)
-               : specfem::sources::geographic_to_enu(geographic));
+    const auto &local =
+        std::get<specfem::sources::ForceVector<GeocentricFrame>>(
+            f->force_quantity().as_read());
+    f->set_cartesian_components(specfem::sources::rotate(
+        local, specfem::assembly::local_frame_rotation(
+                   source.get_global_coordinates(), mesh)));
   }
 }
 
@@ -116,7 +102,7 @@ specfem::assembly::sources<DimensionTag>::sources(
     if (const auto *coords = source->get_read_coordinates())
       source->set_global_coordinates(
           specfem::assembly::to_cartesian(*coords, mesh));
-    // Rotate a moment tensor / force read in its local geographic frame into
+    // Rotate a moment tensor / force read in its local geocentric frame into
     // the Cartesian mesh frame now that the position is resolved. Only dim3
     // carries a resolvable local frame; dim2 sources are already Cartesian.
     if constexpr (DimensionTag == specfem::element::dimension_tag::dim3)

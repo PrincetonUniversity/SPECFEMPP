@@ -20,6 +20,8 @@ Coordinate types
 Transforms
 ----------
 
+*  :doc:`basis_rotation`: Device-callable orthonormal basis rotations for
+   vectors and tensors between global Cartesian and local radial axes.
 *  :doc:`to`: Generic ``to<Target>(source[, config])`` interface for
    converting between coordinate systems. Resolution to mesh-space global
    coordinates (which needs the mesh and projection configuration) is handled by
@@ -31,14 +33,14 @@ Projections
 
 *  :doc:`utm`: UTM (Universal Transverse Mercator) forward and inverse projection.
 
-Local basis
------------
+Local frames
+------------
 
-*  :doc:`spherical_basis`: Local spherical orthonormal basis
-   :math:`(\mathbf{e}_r, \mathbf{e}_\theta, \mathbf{e}_\phi)` at a point, used
-   to build rotation matrices for source and receiver quantities, and the
-   derived geographic East-North-Up basis that owns the sign convention for
-   forces and receiver components.
+*  :doc:`basis_rotation`: Frame tags and the change of basis between the global
+   Cartesian frame and the local geocentric :math:`(\theta, \phi, r)` frame at a
+   point. Source and receiver quantities build their rotations from it.
+*  :doc:`east_north_up`: The East/North/Up relabel of the local geocentric frame
+   used by FORCESOLUTION input and E/N/Z seismogram output.
 
 .. toctree::
     :maxdepth: 1
@@ -46,6 +48,7 @@ Local basis
     geographic
     cartesian
     geocentric
+    basis_rotation
     to
     utm
-    spherical_basis
+    east_north_up
