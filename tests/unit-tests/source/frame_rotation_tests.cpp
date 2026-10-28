@@ -38,8 +38,8 @@ auto to_geocentric(double theta, double phi) {
 }
 
 // Flat regional mesh: x = East = e_phi, y = North = -e_theta, z = Up = e_r,
-// i.e. the globe rotation at theta = 0, phi = -pi/2 (mirrors
-// assembly::sources_impl::flat_mesh_rotation).
+// i.e. the globe rotation at theta = 0, phi = -pi/2 (the trigonometric form of
+// assembly::flat_mesh_rotation, which this target does not link).
 auto flat_mesh_rotation() { return to_cartesian(0.0, -std::numbers::pi / 2.0); }
 
 // Build a geocentric tensor from CMTSOLUTION components. Slots are

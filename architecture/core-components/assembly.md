@@ -32,7 +32,7 @@ All heavy arrays (`Kokkos::View`) are managed here. The assembly struct is passe
 
 **Files:** `core/specfem/coordinate_systems/`, `core/specfem/assembly/coordinate_conversion.hpp`
 
-`coordinate_systems` is pure math: `GeographicBasis` (East = +e_phi, North = -e_theta, Up = +e_r) comes from `local_geographic_basis(theta, phi)`. `assembly::coordinate_conversion` dispatches on the mesh projection through `to_cartesian` and `local_geographic_basis(point, mesh)`, and sources and receivers consume it. Each 3-D receiver stores a 3x3 matrix (rows East, North, Up, in mesh components), applied in the seismogram kernel on the owning rank for vector seismograms only.
+`coordinate_systems` is pure math: `rotation_matrix<CartesianFrame, GeocentricFrame>(theta, phi)` gives the local `(theta, phi, r)` axes in mesh components (`basis_rotation.hpp`), and `east_north_up.hpp` is the single owner of the relabel East = +e_phi, North = -e_theta, Up = +e_r. `assembly::coordinate_conversion` dispatches on the mesh projection through `to_cartesian` and `local_frame_rotation(point, mesh)` (a globe evaluates the rotation at the point; a regional mesh uses the exact `flat_mesh_rotation`, x = East, y = North, z = Up). Sources rotate their moment tensor / force with that rotation; `local_east_north_up_basis(point, mesh)` turns it into the 3x3 matrix each 3-D receiver stores (rows East, North, Up, in mesh components), applied in the seismogram kernel on the owning rank for vector seismograms only.
 
 ---
 

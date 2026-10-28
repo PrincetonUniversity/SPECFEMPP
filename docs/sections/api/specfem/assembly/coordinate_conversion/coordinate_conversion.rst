@@ -14,26 +14,35 @@ conversions return their own coordinate type.
 Placement into mesh space (``to_cartesian``)
 --------------------------------------------
 
-.. doxygenfunction:: specfem::assembly::to_cartesian(const specfem::coordinate_systems::coordinates< specfem::element::dimension_tag::dim2 > &input, const specfem::assembly::mesh< specfem::element::dimension_tag::dim2 > &mesh, const specfem::mesh::cartesian2d_mesh &raw_mesh)
+.. doxygenfunction:: specfem::assembly::to_cartesian(const specfem::coordinate_systems::coordinates< specfem::element::dimension_tag::dim2 > &input, const specfem::assembly::mesh< specfem::element::dimension_tag::dim2 > &mesh)
 
-.. doxygenfunction:: specfem::assembly::to_cartesian(const specfem::coordinate_systems::coordinates< specfem::element::dimension_tag::dim3 > &input, const specfem::assembly::mesh< specfem::element::dimension_tag::dim3 > &mesh, const specfem::mesh::cartesian3d_mesh &raw_mesh)
-
-.. doxygenfunction:: specfem::assembly::to_cartesian(const specfem::coordinate_systems::coordinates< specfem::element::dimension_tag::dim3 > &input, const specfem::assembly::mesh< specfem::element::dimension_tag::dim3 > &mesh, const specfem::mesh::globe3d_mesh &raw_mesh)
+.. doxygenfunction:: specfem::assembly::to_cartesian(const specfem::coordinate_systems::coordinates< specfem::element::dimension_tag::dim3 > &input, const specfem::assembly::mesh< specfem::element::dimension_tag::dim3 > &mesh)
 
 Reverse conversions (``to_geographic`` / ``to_geocentric``)
 -----------------------------------------------------------
 
-.. doxygenfunction:: specfem::assembly::to_geographic(const specfem::coordinate_systems::coordinates< specfem::element::dimension_tag::dim3 > &input, const specfem::assembly::mesh< specfem::element::dimension_tag::dim3 > &mesh, const specfem::mesh::cartesian3d_mesh &raw_mesh)
+.. doxygenfunction:: specfem::assembly::to_geographic
 
-.. doxygenfunction:: specfem::assembly::to_geographic(const specfem::coordinate_systems::coordinates< specfem::element::dimension_tag::dim3 > &input, const specfem::assembly::mesh< specfem::element::dimension_tag::dim3 > &mesh, const specfem::mesh::globe3d_mesh &raw_mesh)
+.. doxygenfunction:: specfem::assembly::to_geocentric
 
-.. doxygenfunction:: specfem::assembly::to_geocentric(const specfem::coordinate_systems::coordinates< specfem::element::dimension_tag::dim3 > &input, const specfem::assembly::mesh< specfem::element::dimension_tag::dim3 > &mesh, const specfem::mesh::globe3d_mesh &raw_mesh)
+Local frame at a mesh point
+---------------------------
 
-Local geographic basis (``local_geographic_basis``)
----------------------------------------------------
+``local_frame_rotation`` is the single owner of which local frame a mesh-space
+point has: it returns the :doc:`frame-tagged rotation
+<../../coordinate_systems/basis_rotation>` from the local geocentric
+``(theta, phi, r)`` axes into mesh ``(x, y, z)`` components. On a globe mesh
+the frame rotates with the point's colatitude and longitude; on a UTM or plain
+Cartesian mesh it is the fixed ``flat_mesh_rotation`` (x = East, y = North,
+z = Up). Sources rotate their moment tensor or force with it;
+``local_east_north_up_basis`` turns it into the East/North/Up rows stored per
+receiver (see :doc:`east_north_up <../../coordinate_systems/east_north_up>` for
+the relabel), which is the identity on a flat mesh.
 
-Returns the local East/North/Up unit vectors at a mesh-space point in mesh
-Cartesian components. On a globe mesh the basis rotates with the point's
-colatitude and longitude; on a UTM or plain Cartesian mesh it is the identity.
+.. doxygentypedef:: specfem::assembly::LocalFrameRotation
 
-.. doxygenfunction:: specfem::assembly::local_geographic_basis
+.. doxygenfunction:: specfem::assembly::flat_mesh_rotation
+
+.. doxygenfunction:: specfem::assembly::local_frame_rotation
+
+.. doxygenfunction:: specfem::assembly::local_east_north_up_basis
