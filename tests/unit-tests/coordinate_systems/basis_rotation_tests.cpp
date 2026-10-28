@@ -44,6 +44,32 @@ static_assert(std::is_same_v<decltype(specfem::coordinate_systems::transpose(
                                  std::declval<Forward>())),
                              Inverse>);
 
+using FloatForward =
+    specfem::coordinate_systems::BasisMatrix<Cartesian, Geocentric, float>;
+
+template <typename MatrixType, typename... Values>
+concept CanConstructMatrix =
+    requires(const Values &...values) { MatrixType{ values... }; };
+
+static_assert(std::is_default_constructible_v<Forward>);
+static_assert(std::is_copy_constructible_v<Forward>);
+static_assert(!std::is_constructible_v<Forward, double>);
+static_assert(!std::is_constructible_v<Forward, const double *>);
+static_assert(!std::is_convertible_v<double, Forward>);
+static_assert(!std::is_convertible_v<const double *, Forward>);
+static_assert(!std::is_assignable_v<Forward &, double>);
+static_assert(!std::is_assignable_v<Forward &, const double *>);
+static_assert(CanConstructMatrix<Forward, double, double, double, double,
+                                 double, double, double, double, double>);
+static_assert(CanConstructMatrix<FloatForward, float, float, float, float,
+                                 float, float, float, float, float>);
+static_assert(!CanConstructMatrix<FloatForward, double, double, double, double,
+                                  double, double, double, double, double>);
+static_assert(!CanConstructMatrix<FloatForward, float, float, float, float,
+                                  float, float, float, float, double>);
+static_assert(!CanConstructMatrix<Forward, double, double, double, double,
+                                  double, double, double, double>);
+
 TEST(BasisRotation, LiteralUsesRowMajorOrderAndTransposeSwapsAxes) {
   const Forward matrix{ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0 };
   const auto inverse = specfem::coordinate_systems::transpose(matrix);

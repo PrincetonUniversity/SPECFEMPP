@@ -9,7 +9,10 @@ so tensor rotations can check that the source frame matches. Equal source
 and target frames are rejected. Matrix storage uses a rank-2
 ``RegisterArray`` with ``Kokkos::layout_right``: literal coefficients are
 listed row by row, and components are accessed as ``rotation(i, j)`` with
-debug bounds checks.
+debug bounds checks. Matrices support zero-initialized default construction
+and explicit construction from nine coefficients of exactly ``ValueType``.
+Scalar-fill and pointer conversions are not exposed, and coefficient
+construction rejects mixed scalar types, including double-to-float conversion.
 
 .. code-block:: cpp
 
