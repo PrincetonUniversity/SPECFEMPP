@@ -1,6 +1,5 @@
 // Loads the FK plugin module with dlopen and drives it through the ABI, as
-// SPECFEM++ does. The module owns a private Kokkos, so this also exercises its
-// initialize/finalize lifecycle.
+// SPECFEM++ does.
 
 #include "specfem/plugin/injection_abi.h"
 #include <gtest/gtest.h>
@@ -29,8 +28,6 @@ specfem_communicator make_communicator() {
 
 } // namespace specfem::fk_plugin_test
 
-// One test: the module's Kokkos state persists for the life of the process,
-// so the steps must run in this order.
 TEST(FkPluginModule, SkeletonLifecycleThroughAbi) {
   void *library = dlopen(FK_PLUGIN_MODULE, RTLD_NOW | RTLD_LOCAL);
   ASSERT_NE(library, nullptr) << dlerror();
@@ -58,10 +55,10 @@ TEST(FkPluginModule, SkeletonLifecycleThroughAbi) {
             std::string::npos);
   table.destroy(self);
 
-  // The last destroy finalized the module's Kokkos, which cannot restart.
-  EXPECT_EQ(table.create("unused.yaml", &info, &communicator), nullptr);
-  EXPECT_NE(std::string(table.last_error(nullptr)).find("already finalized"),
-            std::string::npos);
+  // No process-wide state: a second instance can be created after destroy.
+  void *second = table.create("unused.yaml", &info, &communicator);
+  ASSERT_NE(second, nullptr) << table.last_error(nullptr);
+  table.destroy(second);
 
   dlclose(library);
 }

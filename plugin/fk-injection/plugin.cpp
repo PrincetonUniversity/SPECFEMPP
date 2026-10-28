@@ -1,7 +1,6 @@
 // Entry point of the FK injection plugin module. Skeleton: serves nothing yet.
 
 #include "specfem/fk_plugin.hpp"
-#include "specfem/fk_plugin/impl/kokkos_lifetime.hpp"
 #include "specfem/plugin/injection_plugin.hpp"
 
 #include <string>
@@ -18,7 +17,7 @@ namespace fk_plugin {
 class FkInjectionPlugin : public specfem::plugin::InjectionPlugin {
 public:
   /**
-   * @brief Start the plugin's private Kokkos.
+   * @brief Construct the plugin.
    * @param config_path Path of the plugin configuration file (unused)
    * @param info Simulation parameters (unused)
    * @param communicator MPI communicator description (unused)
@@ -43,10 +42,6 @@ public:
     throw specfem::plugin::Unsupported(
         "FK plugin skeleton: physics not implemented yet");
   }
-
-private:
-  // First member: outlives every Kokkos object of the plugin.
-  specfem::fk_plugin_impl::KokkosLifetime kokkos_lifetime_;
 };
 
 } // namespace fk_plugin
