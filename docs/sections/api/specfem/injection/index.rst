@@ -161,3 +161,73 @@ own.
     :members:
 
 .. doxygenfunction:: specfem::injection::default_method_registry
+
+Pointwise surface methods
+-------------------------
+
+Most methods add a term computed independently at every injection point.
+:cpp:class:`specfem::injection::PointwiseSurfaceMethod` implements the whole
+method interface for them: the author writes a name, the quantities requested
+per medium, and a static ``compute`` per supported material system.
+
+.. code-block:: cpp
+
+    struct ConstantForce
+        : specfem::injection::PointwiseSurfaceMethod<ConstantForce> {
+      static constexpr std::string_view method_name = "constant-force";
+
+      struct Parameters {
+        type_real scale = 1.0;
+      };
+
+      using elastic_quantities =
+          specfem::injection::QuantityList<specfem_quantity_velocity>;
+
+      KOKKOS_INLINE_FUNCTION static specfem::point::acceleration<
+          specfem::tags::Tags<specfem::element::dimension_tag::dim3,
+                              specfem::element::medium_tag::elastic,
+                              specfem::element::property_tag::isotropic, false>>
+      compute(const Context<specfem::element::medium_tag::elastic,
+                            specfem::element::property_tag::isotropic> &ctx) {
+        const auto v = ctx.incident<specfem_quantity_velocity>();
+        const type_real factor = ctx.parameters().scale * ctx.weight();
+        return { factor * v(0), factor * v(1), factor * v(2) };
+      }
+    };
+
+The material systems a method supports are those it has a ``compute`` for; the
+plugin is asked for the quantities of those systems only, with the number of
+components each occupies taken from the same table that places them in the
+frame buffer. ``Parameters``, if present, must be trivially copyable; they are
+default-constructed.
+
+Each step, ``apply`` runs one kernel per supported material system over its
+entries of the injection surface. For each entry it loads the solver's
+material properties at the point, builds a
+:cpp:class:`specfem::injection::PointContext`, calls ``compute``, and adds the
+result to the forward acceleration atomically, since a GLL point can be shared
+by several elements and faces. Points where the acceleration is held at zero
+(an acoustic free surface) receive nothing. Only the forward wavefield is
+supported.
+
+:cpp:func:`specfem::injection::evaluate_point` runs ``compute`` at a single
+point described by explicit values, so a method's physics can be unit-tested
+without a mesh.
+
+.. doxygenclass:: specfem::injection::PointwiseSurfaceMethod
+    :members:
+
+.. doxygenclass:: specfem::injection::PointContext
+    :members:
+
+.. doxygenstruct:: specfem::injection::QuantityList
+
+.. doxygenfunction:: specfem::injection::quantity_components
+
+.. doxygenstruct:: specfem::injection::QuantitySlot
+
+.. doxygenstruct:: specfem::injection::QuantityListTraits
+
+.. doxygenfunction:: specfem::injection::to_requests
+
+.. doxygenfunction:: specfem::injection::evaluate_point
