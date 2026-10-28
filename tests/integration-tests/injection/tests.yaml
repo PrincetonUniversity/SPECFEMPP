@@ -1,0 +1,70 @@
+# End-to-end injection cases, run by injection_tests.cpp with the plane-wave
+# plugin. Every case runs specfem 3d on the 10 km all-Stacey box in mesh/ with
+# injection: {method: stacey}, recording velocity at the stations in STATIONS.
+#
+# compare:
+#   no-injection  bitwise equal to the same run without injection
+#   analytic      relative L2 error <= tolerance against the analytic traces in
+#                 reference, and |lag| < 0.25 dt
+#   serial        relative L2 error <= tolerance against the serial traces in
+#                 reference, and |lag| < 0.25 dt
+fixture:
+  dt: 0.01
+  t0: -3.0              # set by the sources' Ricker f0 = 0.4: t0 = -1.2 / f0
+  quadrature: GLL4
+  stations: STATIONS
+
+meshes:
+  serial: mesh/serial/database.bin
+  mpi2: mesh/mpi2/database.bin
+  mpi4: mesh/mpi4/database.bin
+
+cases:
+  - name: zero_field
+    plugin-config: zero.yaml
+    source: force.yaml
+    nstep: 400
+    compare: no-injection
+  - name: p_wave
+    plugin-config: p.yaml
+    source: silent_force.yaml
+    nstep: 1251
+    compare: analytic
+    reference: traces/p_wave
+    tolerance: 1.6e-2   # 1.5 x the error at this resolution (see README)
+  - name: sv_wave
+    plugin-config: sv.yaml
+    source: silent_force.yaml
+    nstep: 1751
+    compare: analytic
+    reference: traces/sv_wave
+    tolerance: 1.1e-2
+  # Partitioning reorders single-precision sums: 4.1e-5 relative L2 against the
+  # serial run, the same with and without injection (see README).
+  - name: p_wave_mpi2
+    mesh: mpi2
+    nproc: 2
+    plugin-config: p.yaml
+    source: silent_force.yaml
+    nstep: 1251
+    compare: serial
+    reference: traces_serial/p_wave
+    tolerance: 1.0e-4
+  - name: p_wave_mpi4
+    mesh: mpi4
+    nproc: 4
+    plugin-config: p.yaml
+    source: silent_force.yaml
+    nstep: 1251
+    compare: serial
+    reference: traces_serial/p_wave
+    tolerance: 1.0e-4
+  - name: sv_wave_mpi4
+    mesh: mpi4
+    nproc: 4
+    plugin-config: sv.yaml
+    source: silent_force.yaml
+    nstep: 1751
+    compare: serial
+    reference: traces_serial/sv_wave
+    tolerance: 1.0e-4
