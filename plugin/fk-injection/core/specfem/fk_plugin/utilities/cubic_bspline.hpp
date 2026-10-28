@@ -1,16 +1,13 @@
 #pragma once
 
-#include <Kokkos_Core.hpp>
-#include <Kokkos_MathematicalFunctions.hpp>
+#include <cmath>
 
 namespace specfem {
 namespace fk_plugin {
 namespace cubic_bspline {
 
-// Device-callable (raw-pointer, KOKKOS_INLINE_FUNCTION) cubic B-spline
-// prefilter and evaluation. No external spline dependency is required:
-// coefficients are evaluated both on host during synthesis and on device
-// sampling, so the function stays device-callable.
+// Raw-pointer cubic B-spline prefilter and evaluation, ported from the
+// SPECFEM3D reference so FK time series interpolate identically.
 
 /**
  * @brief Evaluate the piecewise cubic B-spline basis function @f$ B_3(x) @f$.
@@ -27,8 +24,8 @@ namespace cubic_bspline {
  * @param x Argument (continuous sample-unit distance from the knot).
  * @return Basis value @f$ B_3(x) @f$.
  */
-KOKKOS_INLINE_FUNCTION double cubic_bspline_basis(double x) {
-  const double ax = Kokkos::fabs(x);
+inline double cubic_bspline_basis(double x) {
+  const double ax = std::fabs(x);
   if (ax >= 2.0) {
     return 0.0;
   }
@@ -55,10 +52,10 @@ KOKKOS_INLINE_FUNCTION double cubic_bspline_basis(double x) {
  * @param n            Number of samples.
  * @param coefficients Output B-spline coefficients (length @p n).
  */
-KOKKOS_INLINE_FUNCTION void compute_coefficients(const double *signal, int n,
-                                                 double *coefficients) {
+inline void compute_coefficients(const double *signal, int n,
+                                 double *coefficients) {
   constexpr double error = 1.0e-24;
-  const double z1 = Kokkos::sqrt(3.0) - 2.0; // ≈ -0.2679
+  const double z1 = std::sqrt(3.0) - 2.0; // ≈ -0.2679
 
   // Pre-scale: each sample multiplied by (1 - z1) * (1 - 1/z1).
   const double scale = (1.0 - z1) * (1.0 - 1.0 / z1);
@@ -68,8 +65,8 @@ KOKKOS_INLINE_FUNCTION void compute_coefficients(const double *signal, int n,
 
   // Initial condition for the causal pass.
   // n_init = ceil( log(error) / log(|z1|) ), clamped to n.
-  int n_init = static_cast<int>(
-      Kokkos::ceil(Kokkos::log(error) / Kokkos::log(Kokkos::fabs(z1))));
+  int n_init =
+      static_cast<int>(std::ceil(std::log(error) / std::log(std::fabs(z1))));
   if (n_init > n)
     n_init = n;
 
@@ -125,10 +122,9 @@ KOKKOS_INLINE_FUNCTION void compute_coefficients(const double *signal, int n,
  * @return Interpolated value (in @c double).
  */
 template <typename Scalar>
-KOKKOS_INLINE_FUNCTION double evaluate(const Scalar *coefficients, int n,
-                                       double t) {
+inline double evaluate(const Scalar *coefficients, int n, double t) {
   // Nearest integer knot below t.
-  const int j0 = static_cast<int>(Kokkos::floor(t));
+  const int j0 = static_cast<int>(std::floor(t));
 
   double result = 0.0;
   // B_3 has support (-2, 2), so knots j0-1 .. j0+2 contribute.
