@@ -2,7 +2,7 @@
 #
 # A standalone project built against the installed plugin SDK only; it never
 # links SPECFEM++ core targets or includes core headers. Build it with:
-#   cmake -S plugins/injection/fk -B build/fk-plugin \
+#   cmake -S plugin/fk-injection -B build/fk-plugin \
 #         -DCMAKE_PREFIX_PATH=<plugin_sdk install prefix>
 #
 # Layout mirrors core: everything under core/ goes into the static library

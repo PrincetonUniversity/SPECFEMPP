@@ -78,7 +78,7 @@ jobs:
         run: cmake --install build/core-sdk --component plugin_sdk
           --prefix "$RUNNER_TEMP/plugin-sdk"
       - name: Configure plugin
-        run: cmake -S plugins/injection/fk -B build/fk-plugin
+        run: cmake -S plugin/fk-injection -B build/fk-plugin
           -DCMAKE_BUILD_TYPE=Release
           -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/plugin-sdk"
       # Building runs the SDK's exported-symbol check.
