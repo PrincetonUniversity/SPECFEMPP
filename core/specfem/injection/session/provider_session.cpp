@@ -96,6 +96,17 @@ std::optional<std::string>
 check_groups(const specfem::injection::InjectionPoints &points);
 
 /**
+ * @brief Find the first value that differs on another rank.
+ *
+ * Collective: every rank must pass the same number of values.
+ *
+ * @param values Values on this rank
+ * @return Index of the first value that differs across ranks, or nullopt
+ */
+std::optional<std::size_t>
+first_difference_across_ranks(std::vector<int> values);
+
+/**
  * @brief Check that every rank holds the same groups, in the same order.
  *
  * Collective: every rank makes the same MPI calls whatever its groups.
@@ -181,36 +192,56 @@ std::optional<std::string> specfem::injection_impl::check_groups(
   return std::nullopt;
 }
 
+std::optional<std::size_t>
+specfem::injection_impl::first_difference_across_ranks(
+    std::vector<int> values) {
+  std::vector<int> lowest = values;
+  const int size = static_cast<int>(values.size());
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, values.data(), size, MPI_INT,
+                                     MPI_MAX, specfem::MPI::communicator()));
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, lowest.data(), size, MPI_INT,
+                                     MPI_MIN, specfem::MPI::communicator()));
+  const auto mismatch = std::ranges::mismatch(values, lowest);
+  if (mismatch.in1 == values.end())
+    return std::nullopt;
+  return static_cast<std::size_t>(mismatch.in1 - values.begin());
+}
+
 std::optional<std::string> specfem::injection_impl::compare_groups_across_ranks(
     const std::vector<specfem::injection::PointGroup> &groups) {
   const int ngroups = static_cast<int>(groups.size());
-  std::array<int, 2> extremes = { ngroups, -ngroups };
-  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, extremes.data(), 2, MPI_INT,
-                                     MPI_MAX, specfem::MPI::communicator()));
-  if (extremes[0] != -extremes[1])
-    return "ranks hold between " + std::to_string(-extremes[1]) + " and " +
-           std::to_string(extremes[0]) +
-           " point groups; every rank must hold the same groups.";
+  if (specfem::injection_impl::first_difference_across_ranks({ ngroups }))
+    return "ranks hold different numbers of point groups; every rank must "
+           "hold the same groups.";
 
-  std::vector<int> highest;
-  highest.reserve(2 * groups.size());
+  // Each reduction needs the same length on every rank, so the quantity
+  // lists are compared only once their lengths agree.
+  std::vector<int> headers;
+  headers.reserve(3 * groups.size());
   for (const auto &group : groups) {
-    highest.push_back(group.medium);
-    highest.push_back(group.property);
+    headers.push_back(group.medium);
+    headers.push_back(group.property);
+    headers.push_back(static_cast<int>(group.quantities.size()));
   }
-  std::vector<int> lowest = highest;
-  const int size = static_cast<int>(highest.size());
-  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, highest.data(), size,
-                                     MPI_INT, MPI_MAX,
-                                     specfem::MPI::communicator()));
-  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, lowest.data(), size, MPI_INT,
-                                     MPI_MIN, specfem::MPI::communicator()));
-  for (int g = 0; g < ngroups; ++g)
-    if (highest[2 * g] != lowest[2 * g] ||
-        highest[2 * g + 1] != lowest[2 * g + 1])
-      return "point group " + std::to_string(g) +
-             " has a different medium or property on another rank; every "
-             "rank must hold the same groups.";
+  if (const auto index =
+          specfem::injection_impl::first_difference_across_ranks(headers))
+    return "point group " + std::to_string(*index / 3) +
+           " has a different medium, property or number of quantities on "
+           "another rank; every rank must hold the same groups.";
+
+  std::vector<int> requests;
+  std::vector<std::size_t> owners;
+  for (std::size_t g = 0; g < groups.size(); ++g)
+    for (const auto &request : groups[g].quantities) {
+      requests.push_back(request.quantity);
+      requests.push_back(request.components);
+      owners.push_back(g);
+    }
+  if (const auto index =
+          specfem::injection_impl::first_difference_across_ranks(requests))
+    return "point group " + std::to_string(owners[*index / 2]) +
+           " requests different quantities or components on another rank; "
+           "every rank must hold the same groups.";
   return std::nullopt;
 }
 
