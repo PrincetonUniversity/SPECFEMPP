@@ -20,6 +20,8 @@ Coordinate types
 Transforms
 ----------
 
+*  :doc:`basis_rotation`: Device-callable orthonormal basis rotations for
+   vectors and tensors between global Cartesian and local radial axes.
 *  :doc:`to`: Generic ``to<Target>(source[, config])`` interface for
    converting between coordinate systems. Resolution to mesh-space global
    coordinates (which needs the mesh and projection configuration) is handled by
@@ -44,6 +46,7 @@ Local basis
     geographic
     cartesian
     geocentric
+    basis_rotation
     to
     utm
     spherical_basis
