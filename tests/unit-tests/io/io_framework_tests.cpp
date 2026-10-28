@@ -420,6 +420,67 @@ TYPED_TEST(IOFrameworkTest, BoolDataOperations) {
   }
 }
 
+// Test: String round trip. The wavefield writer stores medium tags as strings
+// (issue #2120); a backend must not depend on the writer's memory.
+TYPED_TEST(IOFrameworkTest, StringDataOperations) {
+  using IOType = TypeParam;
+  using StringView = Kokkos::View<std::string *, Kokkos::HostSpace>;
+
+  // ADIOS2 has no support for arrays of strings
+  if constexpr (std::is_same_v<
+                    IOType, specfem::io_backends::ADIOS2<specfem::io::read>> ||
+                std::is_same_v<
+                    IOType, specfem::io_backends::ADIOS2<specfem::io::write>>) {
+    GTEST_SKIP() << "ADIOS2 does not support string arrays";
+  } else {
+    // Empty, short (inline in the SSO buffer) and long (heap-allocated)
+    const std::vector<std::string> string_data = {
+      "", "elastic_psv", "acoustic",
+      "a_medium_tag_longer_than_any_small_string_buffer"
+    };
+    const size_t data_size = string_data.size();
+    StringView string_view("test_string", data_size);
+    for (size_t i = 0; i < data_size; ++i) {
+      string_view(i) = string_data[i];
+    }
+
+    if constexpr (std::is_same_v<typename IOType::IO_OpType,
+                                 specfem::io::write>) {
+      typename IOType::File file(this->getTestFile());
+      auto string_dataset =
+          file.template createDataset<StringView>("string_data", string_view);
+      LOCAL_EXPECT_NO_THROW(string_dataset.write());
+      LOCAL_EXPECT_NO_THROW(file.flush());
+    } else {
+      {
+        using WriteIOType = typename GetWriteType<IOType>::type;
+        typename WriteIOType::File write_file(this->getTestFile());
+        auto string_dataset = write_file.template createDataset<StringView>(
+            "string_data", string_view);
+        string_dataset.write();
+        write_file.flush();
+      }
+
+      // Allocate the read view while the written one is still alive so the
+      // two never share an address, then overwrite the written strings: the
+      // file must hold the characters, not the writer's string objects.
+      StringView read_string_view("read_string", data_size);
+      for (size_t i = 0; i < data_size; ++i) {
+        string_view(i) = std::string(64, 'x');
+      }
+
+      typename IOType::File file(this->getTestFile());
+      auto string_dataset = file.template openDataset<StringView>(
+          "string_data", read_string_view);
+      LOCAL_EXPECT_NO_THROW(string_dataset.read());
+
+      for (size_t i = 0; i < data_size; ++i) {
+        EXPECT_EQ(read_string_view(i), string_data[i]) << "index " << i;
+      }
+    }
+  }
+}
+
 // Test 5: Complex workflow with groups and datasets
 TYPED_TEST(IOFrameworkTest, ComplexWorkflow) {
   using IOType = TypeParam;
