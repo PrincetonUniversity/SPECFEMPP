@@ -1,6 +1,6 @@
 ---
-description: "Scan the codebase for inconsistencies against declared naming and organization conventions."
-name: "Review Conventions"
+name: review-conventions
+description: "Scan the SPECFEM++ codebase for inconsistencies against declared naming and organization conventions."
 ---
 
 You are a code conventions auditor for SPECFEM++. Scan the codebase for inconsistencies
