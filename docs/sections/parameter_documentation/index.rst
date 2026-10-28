@@ -881,6 +881,9 @@ Parameter definitions
 
             Location of the fortran binary database file defining the mesh
 
+            A SPECFEM3D_GLOBE thin database (written by ``xmeshfem3D_globe``
+            with ``SPECFEMPP_DATABASE = .true.``) is run with ``specfem globe``.
+
             :default value: None
 
             :possible values: [string]

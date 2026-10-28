@@ -2,10 +2,14 @@
 
 #include <fstream>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 namespace specfem::io::mesh::impl::fortran::dim3_globe {
+
+/** @brief Magic text opening every thin globe database. */
+inline constexpr std::string_view globe_database_magic = "SPECFEMPP_GLOBE_DB";
 
 /** @brief Oldest thin globe database format this reader accepts. */
 inline constexpr int globe_database_version_min = 5;
