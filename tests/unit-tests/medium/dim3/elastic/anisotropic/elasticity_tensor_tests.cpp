@@ -93,8 +93,8 @@ DeviceResults rotate_on_device() {
                 0.7, 1.1);
         global(0) = specfem::medium_physics::rotate(from_packed, rotation);
         const auto inverse =
-            specfem::coordinate_systems::rotation_matrix<Geocentric, Cartesian>(
-                0.7, 1.1);
+            specfem::coordinate_systems::RotationMatrix<Geocentric,
+                                                        Cartesian>{}(0.7, 1.1);
         round_trip(0) = specfem::medium_physics::rotate(global(0), inverse);
       });
   const auto host_global =
@@ -228,7 +228,7 @@ TEST(ElasticityTensor, ArbitraryRotationMatchesFourthOrderReference) {
   const double sine = std::sin(0.63);
   for (int row = 0; row < 3; ++row) {
     for (int column = 0; column < 3; ++column) {
-      rotation[row][column] = (row == column ? cosine : 0.0) +
+      rotation(row, column) = (row == column ? cosine : 0.0) +
                               (1.0 - cosine) * axis[row] * axis[column] +
                               sine * skew[row][column];
     }
@@ -251,8 +251,8 @@ TEST(ElasticityTensor, ArbitraryRotationMatchesFourthOrderReference) {
             for (int b = 0; b < 3; ++b) {
               for (int c = 0; c < 3; ++c) {
                 for (int d = 0; d < 3; ++d) {
-                  expected[i][j][k][l] += rotation[i][a] * rotation[j][b] *
-                                          rotation[k][c] * rotation[l][d] *
+                  expected[i][j][k][l] += rotation(i, a) * rotation(j, b) *
+                                          rotation(k, c) * rotation(l, d) *
                                           stiffness[voigt[a][b]][voigt[c][d]];
                 }
               }
