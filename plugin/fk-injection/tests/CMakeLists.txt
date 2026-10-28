@@ -28,6 +28,18 @@ if(FK_PLUGIN_DOUBLE)
 endif()
 gtest_discover_tests(fk_plugin_skeleton_tests)
 
+add_executable(injection_math_tests
+  runner.cpp
+  complex_matrix_tests.cpp
+  cubic_bspline_tests.cpp
+  fft_tests.cpp
+)
+target_link_libraries(injection_math_tests PRIVATE
+  specfem_fk_core
+  GTest::gtest
+)
+gtest_discover_tests(injection_math_tests)
+
 # Loads the module only.
 add_executable(fk_plugin_module_tests module_tests.cpp)
 target_link_libraries(fk_plugin_module_tests PRIVATE
