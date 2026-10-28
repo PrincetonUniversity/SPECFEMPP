@@ -47,15 +47,15 @@ static_assert(
         medium_tag::acoustic, specfem::injection::QuantityList<>>::components ==
     0);
 
-using specfem::injection_impl::computes_at;
+using specfem::injection_impl::ComputesAt;
 static_assert(
-    computes_at<ConstantForce, medium_tag::elastic, property_tag::isotropic>);
+    ComputesAt<ConstantForce, medium_tag::elastic, property_tag::isotropic>);
 static_assert(
-    computes_at<ConstantForce, medium_tag::acoustic, property_tag::isotropic>);
-static_assert(!computes_at<ConstantForce, medium_tag::elastic,
-                           property_tag::anisotropic>);
-static_assert(!computes_at<ConstantForce, medium_tag::elastic_spin,
-                           property_tag::isotropic_cosserat>);
+    ComputesAt<ConstantForce, medium_tag::acoustic, property_tag::isotropic>);
+static_assert(
+    !ComputesAt<ConstantForce, medium_tag::elastic, property_tag::anisotropic>);
+static_assert(!ComputesAt<ConstantForce, medium_tag::elastic_spin,
+                          property_tag::isotropic_cosserat>);
 
 void expect_requests(
     const std::optional<std::vector<specfem::injection::QuantityRequest>>
@@ -70,7 +70,8 @@ void expect_requests(
 }
 
 TEST(InjectionQuantities, RequestsFollowTheQuantityLists) {
-  const auto policy = ConstantForce().quantities();
+  const auto policy =
+      specfem::injection::PointwiseSurfaceMethod<ConstantForce>().quantities();
   expect_requests(policy(medium_tag::elastic, property_tag::isotropic),
                   { { specfem_quantity_displacement, 3 },
                     { specfem_quantity_velocity, 3 } });
@@ -79,14 +80,16 @@ TEST(InjectionQuantities, RequestsFollowTheQuantityLists) {
 }
 
 TEST(InjectionQuantities, SystemsWithoutComputeAreUnsupported) {
-  const auto policy = ConstantForce().quantities();
+  const auto policy =
+      specfem::injection::PointwiseSurfaceMethod<ConstantForce>().quantities();
   EXPECT_FALSE(policy(medium_tag::elastic, property_tag::anisotropic));
   EXPECT_FALSE(
       policy(medium_tag::elastic_spin, property_tag::isotropic_cosserat));
 }
 
 TEST(InjectionQuantities, NameIsTheMethodName) {
-  EXPECT_EQ(ConstantForce().name(), "constant-force");
+  EXPECT_EQ(specfem::injection::PointwiseSurfaceMethod<ConstantForce>().name(),
+            "constant-force");
 }
 
 } // namespace specfem::injection_method_test

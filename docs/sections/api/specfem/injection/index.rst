@@ -167,13 +167,16 @@ Pointwise surface methods
 
 Most methods add a term computed independently at every injection point.
 :cpp:class:`specfem::injection::PointwiseSurfaceMethod` implements the whole
-method interface for them: the author writes a name, the quantities requested
-per medium, and a static ``compute`` per supported material system.
+method interface for them: the author writes a struct with a name, the
+quantities requested per medium, and a static ``compute`` per supported
+material system, and registers it wrapped in ``PointwiseSurfaceMethod``.
+Deriving the struct from :cpp:struct:`specfem::injection::PointwiseMethodBase`
+provides the shorthand ``Context<Medium, Property>`` for its point context.
 
 .. code-block:: cpp
 
     struct ConstantForce
-        : specfem::injection::PointwiseSurfaceMethod<ConstantForce> {
+        : specfem::injection::PointwiseMethodBase<ConstantForce> {
       static constexpr std::string_view method_name = "constant-force";
 
       struct Parameters {
@@ -195,11 +198,25 @@ per medium, and a static ``compute`` per supported material system.
       }
     };
 
+    registry.add<specfem::injection::PointwiseSurfaceMethod<ConstantForce>>();
+
 The material systems a method supports are those it has a ``compute`` for; the
 plugin is asked for the quantities of those systems only, with the number of
 components each occupies taken from the same table that places them in the
-frame buffer. ``Parameters``, if present, must be trivially copyable; they are
-default-constructed.
+frame buffer. ``Parameters``, if present, are default-constructed.
+
+``PointwiseSurfaceMethod`` constrains its template parameter with the concept
+``specfem::injection_impl::PointwiseInjectionMethod``; the compiler names the
+first requirement the method does not satisfy. A method must:
+
+- declare ``static constexpr std::string_view method_name``;
+- have at least one static ``compute`` taking a ``const PointContext<Method,
+  Medium, Property> &``, each returning the point acceleration of its material system;
+- declare a quantity list for a medium exactly when it has a ``compute`` for
+  that medium;
+- list each quantity at most once, and only quantities its medium provides;
+- make ``Parameters``, if present, trivially copyable and
+  default-constructible.
 
 Each step, ``apply`` runs one kernel per supported material system over its
 entries of the injection surface. For each entry it loads the solver's
@@ -219,6 +236,8 @@ without a mesh.
 
 .. doxygenclass:: specfem::injection::PointContext
     :members:
+
+.. doxygenstruct:: specfem::injection::PointwiseMethodBase
 
 .. doxygenstruct:: specfem::injection::QuantityList
 

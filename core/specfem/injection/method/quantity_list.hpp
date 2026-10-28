@@ -2,6 +2,8 @@
 
 #include "specfem/element.hpp"
 #include "specfem/injection/session/points.hpp"
+#include <array>
+#include <cstddef>
 #include <vector>
 
 namespace specfem {
@@ -99,6 +101,18 @@ struct QuantityListTraits<MediumTag, QuantityList<Quantities...>> {
   constexpr static bool supported =
       ((quantity_components<MediumTag>(Quantities) > 0) && ...);
 
+  /// Whether no quantity is listed twice
+  constexpr static bool unique = [] {
+    const std::array<specfem_quantity, sizeof...(Quantities)> quantities{
+      Quantities...
+    };
+    for (std::size_t i = 0; i < quantities.size(); ++i)
+      for (std::size_t j = i + 1; j < quantities.size(); ++j)
+        if (quantities[i] == quantities[j])
+          return false;
+    return true;
+  }();
+
   /// Buffer components of the whole list
   constexpr static int components =
       (0 + ... + quantity_components<MediumTag>(Quantities));
@@ -123,9 +137,23 @@ std::vector<QuantityRequest> to_requests(QuantityList<Quantities...>) {
 namespace injection_impl {
 
 /**
- * @brief The quantity list an injection method declares for a medium:
- * @c Method::elastic_quantities or @c Method::acoustic_quantities, empty if
- * absent.
+ * @brief Whether an injection method declares a quantity list for a medium:
+ * @c Method::elastic_quantities or @c Method::acoustic_quantities.
+ *
+ * @tparam Method Injection method
+ * @tparam MediumTag Medium
+ */
+template <typename Method, specfem::element::medium_tag MediumTag>
+concept DeclaresQuantities =
+    (MediumTag == specfem::element::medium_tag::elastic && requires {
+      typename Method::elastic_quantities;
+    }) || (MediumTag == specfem::element::medium_tag::acoustic && requires {
+      typename Method::acoustic_quantities;
+    });
+
+/**
+ * @brief The quantity list an injection method declares for a medium, empty
+ * if absent.
  *
  * @tparam Method Injection method
  * @tparam MediumTag Medium
@@ -136,13 +164,13 @@ struct MethodQuantities {
 };
 
 template <typename Method>
-  requires requires { typename Method::elastic_quantities; }
+  requires DeclaresQuantities<Method, specfem::element::medium_tag::elastic>
 struct MethodQuantities<Method, specfem::element::medium_tag::elastic> {
   using type = typename Method::elastic_quantities;
 };
 
 template <typename Method>
-  requires requires { typename Method::acoustic_quantities; }
+  requires DeclaresQuantities<Method, specfem::element::medium_tag::acoustic>
 struct MethodQuantities<Method, specfem::element::medium_tag::acoustic> {
   using type = typename Method::acoustic_quantities;
 };
