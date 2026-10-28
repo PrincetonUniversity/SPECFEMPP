@@ -71,6 +71,15 @@ specfem_add_test(is_close_tests
             Kokkos::kokkos
 )
 
+specfem_add_test(elasticity_tensor_tests
+  SOURCES   medium/dim3/elastic/anisotropic/elasticity_tensor_tests.cpp
+            medium/dim3/elastic/anisotropic/runner.cpp
+  LIBRARIES globe_evaluator::globe_evaluator
+            specfem_environment
+            gtest_main
+            Kokkos::kokkos
+)
+
 specfem_add_test(logspace_tests
   SOURCES   utilities/logspace_tests.cpp
             utilities/logarithmic_center_tests.cpp
@@ -81,16 +90,8 @@ specfem_add_test(logspace_tests
             Kokkos::kokkos
 )
 
-specfem_add_test(moment_tensor_rotation_tests
-  SOURCES   source/moment_tensor_rotation_tests.cpp
-  LIBRARIES specfem::source
-            specfem::coordinate_systems
-            gtest_main
-            Kokkos::kokkos
-)
-
-specfem_add_test(force_rotation_tests
-  SOURCES   source/force_rotation_tests.cpp
+specfem_add_test(source_frame_rotation_tests
+  SOURCES   source/frame_rotation_tests.cpp
   LIBRARIES specfem::source
             specfem::coordinate_systems
             gtest_main
@@ -351,6 +352,7 @@ specfem_add_test(assembly_tests
             assembly/dim3/mesh/shape_functions.cpp
             assembly/dim3/mesh/points.cpp
             assembly/dim3/mesh/reference_points.cpp
+            assembly/dim3/mesh/spherical_coordinates.cpp
             assembly/dim3/mesh/control_nodes.cpp
             assembly/dim3/globe_source_placement.cpp
             assembly/dim3/globe_receiver_rotation.cpp
@@ -686,7 +688,8 @@ specfem_add_test(source_time_function_tests
 specfem_add_test(coordinate_systems_tests
   SOURCES   coordinate_systems/utm_tests.cpp
             coordinate_systems/geocentric_tests.cpp
-            coordinate_systems/spherical_basis_tests.cpp
+            coordinate_systems/basis_rotation_tests.cpp
+            coordinate_systems/east_north_up_tests.cpp
   LIBRARIES specfem::coordinate_systems
             gtest_main
 )
@@ -934,4 +937,13 @@ specfem_add_test(seismogram_sampling_tests
   LIBRARIES specfem::runtime_configuration
             specfem_environment
             gtest_main
+)
+
+# Globe oracle setup is serial even when the solver uses a parallel backend.
+specfem_add_test(globe_properties_tests
+  LABELS unit assembly globe
+  SOURCES assembly/dim3/properties/globe_properties.cpp
+          assembly/element_types/runner.cpp
+  LIBRARIES specfem::assembly specfem::globe specfem::io
+            specfem::mesh specfem::quadrature specfem_environment gtest_main
 )

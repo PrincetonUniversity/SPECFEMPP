@@ -3,7 +3,7 @@
 #include "specfem/enums.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/source.hpp"
-#include "specfem/source/force_rotation.hpp"
+#include "specfem/source/force_vector.hpp"
 #include "specfem/source/local_frame_quantity.hpp"
 #include "specfem/source_time_functions.hpp"
 
@@ -22,9 +22,10 @@ namespace sources {
  * domain.
  *
  * The force is held in a @ref specfem::sources::LocalFrameQuantity: it may be
- * supplied directly in the global Cartesian frame, or in the local
- * East-North-Up (geographic) frame (FORCESOLUTION on a globe), in which case it
- * is kept as-read and rotated into the Cartesian mesh frame at assembly time.
+ * supplied directly in the global Cartesian frame, or in the local geocentric
+ * @f$ (\theta,\phi,r) @f$ frame (FORCESOLUTION, whose East/North/Up direction
+ * is reordered by the reader), in which case it is kept as-read and rotated
+ * into the Cartesian mesh frame at assembly time.
  *
  * @par Usage Example
  * @code
@@ -59,8 +60,9 @@ class force<specfem::element::dimension_tag::dim3>
     : public vector_source<specfem::element::dimension_tag::dim3> {
 
   using ForceQuantity =
-      specfem::sources::LocalFrameQuantity<specfem::sources::GeographicForce,
-                                           specfem::sources::CartesianForce>;
+      specfem::sources::LocalFrameQuantity<specfem::sources::ForceVector>;
+  using CartesianForce = ForceQuantity::CartesianT;
+  using GeocentricForce = ForceQuantity::GeocentricT;
 
 public:
   /**
@@ -77,9 +79,9 @@ public:
    */
   force(YAML::Node &Node, const int nsteps, const type_real dt,
         const specfem::simulation::field_type wavefield_type)
-      : force_(specfem::sources::CartesianForce{ Node["fx"].as<type_real>(),
-                                                 Node["fy"].as<type_real>(),
-                                                 Node["fz"].as<type_real>() }),
+      : force_(CartesianForce{ Node["fx"].as<type_real>(),
+                               Node["fy"].as<type_real>(),
+                               Node["fz"].as<type_real>() }),
         wavefield_type(wavefield_type), vector_source(Node, nsteps, dt) {};
 
   /**
@@ -96,8 +98,7 @@ public:
       type_real fz,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
       const specfem::simulation::field_type wavefield_type)
-      : force_(specfem::sources::CartesianForce{ fx, fy, fz }),
-        wavefield_type(wavefield_type),
+      : force_(CartesianForce{ fx, fy, fz }), wavefield_type(wavefield_type),
         vector_source(x, y, z, std::move(source_time_function)) {};
 
   /**
@@ -117,21 +118,20 @@ public:
       type_real fx, type_real fy, type_real fz,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
       const specfem::simulation::field_type wavefield_type)
-      : force_(specfem::sources::CartesianForce{ fx, fy, fz }),
-        wavefield_type(wavefield_type),
+      : force_(CartesianForce{ fx, fy, fz }), wavefield_type(wavefield_type),
         vector_source(std::move(coordinates), std::move(source_time_function)) {
         };
 
   /**
-   * @brief Construct a collocated force given in the local East-North-Up frame.
+   * @brief Construct a collocated force given in the local geocentric frame.
    *
    * The force is stored unresolved: the local frame that rotates it into the
    * Cartesian mesh basis is only known once the source location is placed, so
    * @ref get_force_vector throws until the assembly-time resolution calls
-   * @ref set_cartesian_components. Used by the FORCESOLUTION reader on a globe.
+   * @ref set_cartesian_components. Used by the FORCESOLUTION reader.
    *
    * @param coordinates Generic coordinate object
-   * @param geographic Force in the local East-North-Up frame
+   * @param geocentric Force in the local geocentric (theta, phi, r) frame
    * @param source_time_function Pointer to source time function
    * @param wavefield_type Type of wavefield
    */
@@ -139,10 +139,10 @@ public:
       std::unique_ptr<specfem::coordinate_systems::coordinates<
           specfem::element::dimension_tag::dim3>>
           coordinates,
-      const specfem::sources::GeographicForce &geographic,
+      const GeocentricForce &geocentric,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
       const specfem::simulation::field_type wavefield_type)
-      : force_(geographic), wavefield_type(wavefield_type),
+      : force_(geocentric), wavefield_type(wavefield_type),
         vector_source(std::move(coordinates), std::move(source_time_function)) {
         };
 
@@ -166,8 +166,7 @@ public:
    *
    * @param cartesian Force in the global Cartesian frame
    */
-  void
-  set_cartesian_components(const specfem::sources::CartesianForce &cartesian) {
+  void set_cartesian_components(const CartesianForce &cartesian) {
     force_.resolve(cartesian);
   }
 
@@ -175,7 +174,7 @@ public:
    * @brief The force as a resolvable local-frame quantity.
    *
    * Exposes the as-read force and whether it has been resolved, so the assembly
-   * stage can rotate an unresolved geographic force into the mesh frame.
+   * stage can rotate an unresolved geocentric force into the mesh frame.
    *
    * @return Reference to the held local-frame quantity
    */

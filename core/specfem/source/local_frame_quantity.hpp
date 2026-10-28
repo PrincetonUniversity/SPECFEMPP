@@ -1,5 +1,7 @@
 #pragma once
 
+#include "specfem/coordinate_systems/basis_rotation.hpp"
+
 #include <optional>
 #include <stdexcept>
 #include <variant>
@@ -11,20 +13,28 @@ namespace sources {
  * @brief A source quantity read in a local frame and resolved to the global
  * Cartesian mesh frame at assembly time.
  *
- * Moment tensors and force vectors are supplied in a local geographic frame
- * (the spherical @f$ (r,\theta,\phi) @f$ basis for a moment tensor, the
- * East-North-Up basis for a force) whose orientation in the global Cartesian
- * mesh depends on the source location. This type mirrors the source coordinate
- * lifecycle — the as-read value is kept for provenance/output (like
- * `read_coordinates_`) while the resolved Cartesian value is filled once the
- * location fixes the local frame (like `global_coordinates`). A quantity read
- * directly in the Cartesian frame is resolved from construction.
+ * Moment tensors and force vectors may be supplied in the local geocentric
+ * @f$ (\theta, \phi, r) @f$ frame (CMTSOLUTION, FORCESOLUTION), whose
+ * orientation in the global Cartesian mesh depends on the source location.
+ * This type mirrors the source coordinate lifecycle: the as-read value is kept
+ * for provenance/output (like `read_coordinates_`) while the resolved
+ * Cartesian value is filled once the location fixes the local frame (like
+ * `global_coordinates`). A quantity read directly in the Cartesian frame is
+ * resolved from construction.
  *
- * @tparam GeographicT The quantity in its as-read local (geographic) frame
- * @tparam CartesianT The quantity in the global Cartesian frame
+ * Only the Cartesian-frame instantiation of @p Quantity can be installed by
+ * @ref resolve, so a value in the wrong frame is rejected at compile time.
+ *
+ * @tparam Quantity Frame-templated quantity, e.g. @ref MomentTensor or
+ * @ref ForceVector
  */
-template <typename GeographicT, typename CartesianT> class LocalFrameQuantity {
+template <template <typename> class Quantity> class LocalFrameQuantity {
 public:
+  /// The quantity in its as-read local (geocentric) frame
+  using GeocentricT = Quantity<specfem::coordinate_systems::GeocentricFrame>;
+  /// The quantity in the global Cartesian frame
+  using CartesianT = Quantity<specfem::coordinate_systems::CartesianFrame>;
+
   LocalFrameQuantity() = default;
 
   /**
@@ -35,11 +45,11 @@ public:
       : input_(cartesian), cartesian_(cartesian) {}
 
   /**
-   * @brief Construct from a value in the local geographic frame (unresolved).
-   * @param geographic The quantity in its as-read local frame
+   * @brief Construct from a value in the local geocentric frame (unresolved).
+   * @param geocentric The quantity in its as-read local frame
    */
-  explicit LocalFrameQuantity(const GeographicT &geographic)
-      : input_(geographic), cartesian_(std::nullopt) {}
+  explicit LocalFrameQuantity(const GeocentricT &geocentric)
+      : input_(geocentric), cartesian_(std::nullopt) {}
 
   /**
    * @brief Whether the Cartesian value is available.
@@ -73,15 +83,15 @@ public:
   }
 
   /**
-   * @brief The as-read value in its input frame (geographic or Cartesian).
+   * @brief The as-read value in its input frame (geocentric or Cartesian).
    * @return Variant holding whichever frame the value was supplied in
    */
-  const std::variant<GeographicT, CartesianT> &as_read() const {
+  const std::variant<GeocentricT, CartesianT> &as_read() const {
     return input_;
   }
 
 private:
-  std::variant<GeographicT, CartesianT> input_; ///< As-read value (kept for
+  std::variant<GeocentricT, CartesianT> input_; ///< As-read value (kept for
                                                 ///< provenance)
   std::optional<CartesianT> cartesian_; ///< Resolved value; empty until set
 };

@@ -114,6 +114,10 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
                  specfem::assembly::dim3_impl::reference_anchor_coordinates(
                      mesh) };
 
+  if constexpr (ModelTag == specfem::simulation::model::Globe3D) {
+    this->mesh.compute_spherical_coordinates();
+  }
+
   // Populate the coordinate projection and free-surface geometry on the
   // assembled mesh BEFORE sources/receivers are built: their constructors call
   // specfem::assembly::to_cartesian(coords, this->mesh), which reads these. The
@@ -190,6 +194,9 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
   }
 
   this->info = { this->mesh, this->properties, this->element_types };
+
+  // All geometry-dependent setup consumers must run before this release.
+  this->mesh.h_spherical_coord = {};
 
   return;
 }
