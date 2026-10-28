@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/coordinate_systems/utm_projection.hpp"
+#include "specfem/enums/coordinate_frame.hpp"
 #include "specfem/mesh/mesh_base.hpp"
 
 #include <variant>
@@ -65,6 +66,14 @@ struct coordinate_projection {
    * @throws std::runtime_error if the mesh has no planet constants
    */
   explicit coordinate_projection(const specfem::mesh::globe3d_mesh &mesh);
+
+  /**
+   * @brief Frame in which stations are placed and seismogram channels labelled.
+   *
+   * @return `cartesian` for a pass-through projection; `geographic` for UTM or
+   * globe
+   */
+  specfem::enums::coordinate_frame frame() const;
 };
 
 } // namespace specfem::assembly::mesh_impl
