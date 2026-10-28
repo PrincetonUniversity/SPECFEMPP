@@ -94,7 +94,7 @@ specfem::io::sources_impl::read<specfem::element::dimension_tag::dim3,
           x, y, -depth_m, std::nullopt);
     }
 
-    // Moment tensor — parse as DyneCentimeter, detect Cartesian vs geographic
+    // Moment tensor — parse as DyneCentimeter, detect Cartesian vs geocentric
     using namespace specfem::units::unit_symbols;
     using specfem::units::DyneCentimeter;
     using specfem::units::NewtonMeter;
@@ -109,20 +109,23 @@ specfem::io::sources_impl::read<specfem::element::dimension_tag::dim3,
 
     std::shared_ptr<specfem::sources::moment_tensor<dim3>> src;
     if (fields.contains("mrr")) {
-      // Geographic (r, theta, phi) moment tensor. Kept as-read; it is rotated
-      // into the Cartesian mesh frame at assembly, once the source location is
-      // placed (a globe rotates by the local spherical frame, a regional mesh
-      // applies the flat East-North-Up relabel).
-      const specfem::sources::GeographicMomentTensor geographic{
-        to_Nm(specfem::io::sources_impl::get_real(fields, "mrr") * dyn_cm),
-        to_Nm(specfem::io::sources_impl::get_real(fields, "mtt") * dyn_cm),
-        to_Nm(specfem::io::sources_impl::get_real(fields, "mpp") * dyn_cm),
-        to_Nm(specfem::io::sources_impl::get_real(fields, "mrt") * dyn_cm),
-        to_Nm(specfem::io::sources_impl::get_real(fields, "mrp") * dyn_cm),
-        to_Nm(specfem::io::sources_impl::get_real(fields, "mtp") * dyn_cm)
-      };
+      // Harvard-CMT (r, theta, phi) components, stored in the local geocentric
+      // frame whose axes are ordered (theta, phi, r). Kept as-read; rotated
+      // into the Cartesian mesh frame at assembly once the source is placed.
+      const auto Mrr = specfem::io::sources_impl::get_real(fields, "mrr");
+      const auto Mtt = specfem::io::sources_impl::get_real(fields, "mtt");
+      const auto Mpp = specfem::io::sources_impl::get_real(fields, "mpp");
+      const auto Mrt = specfem::io::sources_impl::get_real(fields, "mrt");
+      const auto Mrp = specfem::io::sources_impl::get_real(fields, "mrp");
+      const auto Mtp = specfem::io::sources_impl::get_real(fields, "mtp");
+      // Slots: (0,0)=Mtt (1,1)=Mpp (2,2)=Mrr (0,1)=Mtp (0,2)=Mrt (1,2)=Mrp
+      const specfem::sources::MomentTensor<
+          specfem::coordinate_systems::GeocentricFrame>
+          geocentric(to_Nm(Mtt * dyn_cm), to_Nm(Mpp * dyn_cm),
+                     to_Nm(Mrr * dyn_cm), to_Nm(Mtp * dyn_cm),
+                     to_Nm(Mrt * dyn_cm), to_Nm(Mrp * dyn_cm));
       src = std::make_shared<specfem::sources::moment_tensor<dim3>>(
-          std::move(coords), geographic, std::move(stf_ptr), wavefield_type);
+          std::move(coords), geocentric, std::move(stf_ptr), wavefield_type);
     } else {
       auto Mxx = specfem::io::sources_impl::get_real(fields, "mxx") * dyn_cm;
       auto Myy = specfem::io::sources_impl::get_real(fields, "myy") * dyn_cm;

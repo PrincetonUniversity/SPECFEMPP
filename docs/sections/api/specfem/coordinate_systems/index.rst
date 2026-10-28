@@ -33,12 +33,14 @@ Projections
 
 *  :doc:`utm`: UTM (Universal Transverse Mercator) forward and inverse projection.
 
-Local basis
------------
+Local frames
+------------
 
-*  :doc:`spherical_basis`: Local spherical orthonormal basis
-   :math:`(\mathbf{e}_r, \mathbf{e}_\theta, \mathbf{e}_\phi)` at a point, used
-   to build rotation matrices for source and receiver quantities.
+*  :doc:`basis_rotation`: Frame tags and the change of basis between the global
+   Cartesian frame and the local geocentric :math:`(\theta, \phi, r)` frame at a
+   point. Source and receiver quantities build their rotations from it.
+*  :doc:`east_north_up`: The East/North/Up relabel of the local geocentric frame
+   used by FORCESOLUTION input and E/N/Z seismogram output.
 
 .. toctree::
     :maxdepth: 1
@@ -49,4 +51,4 @@ Local basis
     basis_rotation
     to
     utm
-    spherical_basis
+    east_north_up

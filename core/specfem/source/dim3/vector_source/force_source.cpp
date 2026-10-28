@@ -1,3 +1,4 @@
+#include "specfem/coordinate_systems/east_north_up.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/setup.hpp"
@@ -37,21 +38,21 @@ specfem::sources::force<
   // Acoustic
   if (medium_tag == specfem::element::medium_tag::acoustic) {
     force_vector = ViewType("force_vector", 1);
-    force_vector(0) = f.fx;
+    force_vector(0) = f[0];
   }
   // Elastic P-SV
   else if (medium_tag == specfem::element::medium_tag::elastic) {
     force_vector = ViewType("force_vector", 3);
-    force_vector(0) = f.fx;
-    force_vector(1) = f.fy;
-    force_vector(2) = f.fz;
+    force_vector(0) = f[0];
+    force_vector(1) = f[1];
+    force_vector(2) = f[2];
   }
   // Elastic Spin
   else if (medium_tag == specfem::element::medium_tag::elastic_spin) {
     force_vector = ViewType("force_vector", 6);
-    force_vector(0) = f.fx;
-    force_vector(1) = f.fy;
-    force_vector(2) = f.fz;
+    force_vector(0) = f[0];
+    force_vector(1) = f[1];
+    force_vector(2) = f[2];
     force_vector(3) = 0.0; // rotational dofs for pure force source are zero
     force_vector(4) = 0.0;
     force_vector(5) = 0.0;
@@ -74,12 +75,16 @@ specfem::sources::force<specfem::element::dimension_tag::dim3>::print_details()
         const auto fmt = [](type_real v) {
           return specfem::utilities::format_scientific(v, 6);
         };
-        if constexpr (std::is_same_v<T, specfem::sources::GeographicForce>) {
-          message << "(east, north, up) = (" << fmt(force.east) << ", "
-                  << fmt(force.north) << ", " << fmt(force.up) << ")";
+        if constexpr (std::is_same_v<T, GeocentricForce>) {
+          // Report in the FORCESOLUTION East/North/Up convention.
+          const auto enu =
+              specfem::coordinate_systems::to_east_north_up_components(
+                  Kokkos::Array<type_real, 3>{ force[0], force[1], force[2] });
+          message << "(east, north, up) = (" << fmt(enu.east) << ", "
+                  << fmt(enu.north) << ", " << fmt(enu.up) << ")";
         } else {
-          message << "(fx, fy, fz) = (" << fmt(force.fx) << ", "
-                  << fmt(force.fy) << ", " << fmt(force.fz) << ")";
+          message << "(fx, fy, fz) = (" << fmt(force[0]) << ", "
+                  << fmt(force[1]) << ", " << fmt(force[2]) << ")";
         }
       },
       this->force_.as_read());
@@ -108,24 +113,16 @@ bool specfem::sources::force<specfem::element::dimension_tag::dim3>::operator==(
 
   // Compare the as-read forces: same frame and close components. Identity
   // depends on the input, not the resolved Cartesian value.
-  const auto &a = this->force_.as_read();
-  const auto &b = other_source->force_.as_read();
-  bool force_equal = false;
-  if (std::holds_alternative<specfem::sources::GeographicForce>(a) &&
-      std::holds_alternative<specfem::sources::GeographicForce>(b)) {
-    const auto &fa = std::get<specfem::sources::GeographicForce>(a);
-    const auto &fb = std::get<specfem::sources::GeographicForce>(b);
-    force_equal = specfem::utilities::is_close(fa.east, fb.east) &&
-                  specfem::utilities::is_close(fa.north, fb.north) &&
-                  specfem::utilities::is_close(fa.up, fb.up);
-  } else if (std::holds_alternative<specfem::sources::CartesianForce>(a) &&
-             std::holds_alternative<specfem::sources::CartesianForce>(b)) {
-    const auto &fa = std::get<specfem::sources::CartesianForce>(a);
-    const auto &fb = std::get<specfem::sources::CartesianForce>(b);
-    force_equal = specfem::utilities::is_close(fa.fx, fb.fx) &&
-                  specfem::utilities::is_close(fa.fy, fb.fy) &&
-                  specfem::utilities::is_close(fa.fz, fb.fz);
-  }
+  const bool force_equal = std::visit(
+      [](const auto &a, const auto &b) {
+        if constexpr (std::is_same_v<std::decay_t<decltype(a)>,
+                                     std::decay_t<decltype(b)>>) {
+          return specfem::sources::is_close(a, b);
+        } else {
+          return false;
+        }
+      },
+      this->force_.as_read(), other_source->force_.as_read());
 
   return coords_equal && force_equal &&
          *(this->source_time_function) == *(other_source->source_time_function);
