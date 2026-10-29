@@ -120,7 +120,7 @@ protected:
   }
 
   specfem::assembly::assembly<dim3> assembly;
-  ConstantForce method;
+  specfem::injection::PointwiseSurfaceMethod<ConstantForce> method;
 };
 
 TEST_F(InjectionKernelTest, ForceLandsOnTheInjectionPoints) {

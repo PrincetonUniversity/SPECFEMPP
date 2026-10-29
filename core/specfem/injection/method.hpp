@@ -7,3 +7,4 @@
 #include "method/pointwise_surface_method.hpp"
 #include "method/quantity_list.hpp"
 #include "method/registry.hpp"
+#include "method/requirements.hpp"
