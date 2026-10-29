@@ -3,14 +3,16 @@
 # object library left out of the default build; its ctest recompiles it with
 # compile_fresh.cmake and passes when the compiler names the expected
 # unsatisfied concept. VALID is the control and must compile. Skip them with `ctest -LE compile_fail`.
+# Each message alternates the Clang wording with the GCC one ("required for
+# the satisfaction of ‘Concept<...>’ [with Method = ...]").
 # Included from tests/unit-tests/CMakeLists.txt.
 
 set(_injection_requirement_cases
   "VALID@"
-  "NO_NAME@does not satisfy 'NamedMethod'"
-  "NO_COMPUTE@does not satisfy 'ComputesSomewhere'"
-  "QUANTITIES_WITHOUT_COMPUTE@'QuantitiesHaveCompute<[^>]*QuantitiesWithoutCompute"
-  "WRONG_RETURN@does not satisfy 'ComputeReturnsAcceleration'"
+  "NO_NAME@does not satisfy 'NamedMethod'|satisfaction of [^ ]*NamedMethod<"
+  "NO_COMPUTE@does not satisfy 'ComputesSomewhere'|satisfaction of [^ ]*ComputesSomewhere<"
+  "QUANTITIES_WITHOUT_COMPUTE@'QuantitiesHaveCompute<[^>]*QuantitiesWithoutCompute|satisfaction of [^ ]*QuantitiesHaveCompute<[^ ]* [^ ]* .with Method = [^ ]*QuantitiesWithoutCompute"
+  "WRONG_RETURN@does not satisfy 'ComputeReturnsAcceleration'|satisfaction of [^ ]*ComputeReturnsAcceleration<"
 )
 
 foreach(_case IN LISTS _injection_requirement_cases)
