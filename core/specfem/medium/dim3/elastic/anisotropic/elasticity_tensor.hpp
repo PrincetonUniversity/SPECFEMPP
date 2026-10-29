@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/coordinate_systems/basis_rotation.hpp"
+#include "specfem/datatype/register_array.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::medium_physics_impl {
@@ -18,23 +19,20 @@ public:
    * @param coefficients Packed c11, c12, ..., c56, c66 coefficients.
    */
   KOKKOS_INLINE_FUNCTION explicit ElasticityTensorBase(
-      const ValueType *coefficients) {
-    for (int k = 0; k < 21; ++k) {
-      coefficients_[k] = coefficients[k];
-    }
-  }
+      const ValueType *coefficients)
+      : coefficients_(coefficients) {}
 
   /** @brief Symmetric Voigt access with zero-based indices. */
   KOKKOS_INLINE_FUNCTION ValueType &operator()(int row, int column) {
-    return coefficients_[component_index(row, column)];
+    return coefficients_(component_index(row, column));
   }
   /** @brief Symmetric Voigt access with zero-based indices. */
   KOKKOS_INLINE_FUNCTION ValueType operator()(int row, int column) const {
-    return coefficients_[component_index(row, column)];
+    return coefficients_(component_index(row, column));
   }
   /** @brief Packed access matching point properties' c11..c66 order. */
   KOKKOS_INLINE_FUNCTION ValueType operator[](int k) const {
-    return coefficients_[k];
+    return coefficients_(k);
   }
 
 private:
@@ -48,7 +46,9 @@ private:
     return row * 6 - row * (row - 1) / 2 + column - row;
   }
 
-  ValueType coefficients_[21] = {};
+  specfem::datatype::RegisterArray<ValueType, Kokkos::extents<std::size_t, 21>,
+                                   Kokkos::layout_right>
+      coefficients_;
 };
 
 } // namespace specfem::medium_physics_impl
@@ -151,28 +151,28 @@ rotate(const ElasticityTensor<SourceFrame, ValueType> &input,
   constexpr int shear_pairs[3][2] = { { 1, 2 }, { 2, 0 }, { 0, 1 } };
   for (int column = 0; column < 3; ++column) {
     for (int row = 0; row < 3; ++row) {
-      bond[row][column] = rotation[row][column] * rotation[row][column];
+      bond[row][column] = rotation(row, column) * rotation(row, column);
     }
     for (int row = 0; row < 3; ++row) {
       const int first = shear_pairs[row][0];
       const int second = shear_pairs[row][1];
       bond[row + 3][column] =
-          rotation[first][column] * rotation[second][column];
+          rotation(first, column) * rotation(second, column);
     }
   }
   for (int column = 0; column < 3; ++column) {
     const int first = shear_pairs[column][0];
     const int second = shear_pairs[column][1];
     for (int row = 0; row < 3; ++row) {
-      bond[row][column + 3] = static_cast<ValueType>(2) * rotation[row][first] *
-                              rotation[row][second];
+      bond[row][column + 3] = static_cast<ValueType>(2) * rotation(row, first) *
+                              rotation(row, second);
     }
     for (int row = 0; row < 3; ++row) {
       const int row_first = shear_pairs[row][0];
       const int row_second = shear_pairs[row][1];
       bond[row + 3][column + 3] =
-          rotation[row_first][first] * rotation[row_second][second] +
-          rotation[row_first][second] * rotation[row_second][first];
+          rotation(row_first, first) * rotation(row_second, second) +
+          rotation(row_first, second) * rotation(row_second, first);
     }
   }
 
