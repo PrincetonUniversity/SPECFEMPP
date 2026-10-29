@@ -250,3 +250,23 @@ without a mesh.
 .. doxygenfunction:: specfem::injection::to_requests
 
 .. doxygenfunction:: specfem::injection::evaluate_point
+
+Stacey injection
+~~~~~~~~~~~~~~~~
+
+``method: stacey`` selects :cpp:struct:`specfem::injection::StaceyInjection`,
+for elastic isotropic and anisotropic points. At a Stacey point the stiffness
+kernel adds :math:`-Z(v)\,dS`; the method adds
+
+.. math::
+
+    f = \left(t^* + Z(v^*)\right) dS, \qquad
+    Z(v) = (\rho v_p - \rho v_s)(v \cdot \hat{n})\,\hat{n} + \rho v_s\, v,
+
+so the boundary absorbs only the field scattered away from the incident one.
+It requests the incident velocity and traction from the plugin. Anisotropic
+points use the Voigt-averaged impedances, as Stacey's absorbing term does.
+The injection points must lie on Stacey boundaries; the method does not check
+this.
+
+.. doxygenstruct:: specfem::injection::StaceyInjection

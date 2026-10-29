@@ -82,8 +82,10 @@ TEST(InjectionRegistry, UnknownMethodListsRegistered) {
   }
 }
 
-TEST(InjectionRegistry, DefaultRegistryHasNoMethodsYet) {
-  EXPECT_TRUE(specfem::injection::default_method_registry().names().empty());
+TEST(InjectionRegistry, DefaultRegistryHasStacey) {
+  const auto &registry = specfem::injection::default_method_registry();
+  EXPECT_THAT(registry.names(), ElementsAre("stacey"));
+  EXPECT_EQ(registry.make("stacey")->name(), "stacey");
 }
 
 } // namespace specfem::injection_lifecycle_test
