@@ -1,6 +1,7 @@
 #pragma once
 
 #include "datasetbase.hpp"
+#include "storage_order.hpp"
 #include <boost/filesystem.hpp>
 #include <string>
 
@@ -24,6 +25,9 @@ public:
   using value_type =
       typename ViewType::non_const_value_type;      ///< Underlying type
   using MemSpace = typename ViewType::memory_space; ///< Memory space
+
+  /// Storage order declared in the file header (see is_fortran_order)
+  constexpr static bool fortran_order = is_fortran_order<ViewType>();
 
   /**
    * @name Constructors
