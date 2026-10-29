@@ -330,6 +330,7 @@ specfem_add_test(assembly_tests
             assembly/compute_source_array/dim2/compute_source_array_from_tensor.cpp
             assembly/compute_source_array/dim3/compute_source_array_from_vector.cpp
             assembly/compute_source_array/dim3/compute_source_array_from_tensor.cpp
+            assembly/info/cartesian_tests.cpp
             assembly/info/compute_tests.cpp
             assembly/info/scatter_minmax_tests.cpp
             assembly/element_intersections/edge_types_tests.cpp
@@ -342,6 +343,7 @@ specfem_add_test(assembly_tests
             assembly/dim3/jacobian_matrix/jacobian_matrix.cpp
             assembly/dim3/properties/properties.cpp
             assembly/dim3/element_types/element_context.cpp
+            assembly/dim3_globe/assembly.cpp
             assembly/dim3/attenuation/recompute.cpp
             assembly/dim3/attenuation/globe_attenuation.cpp
             assembly/dim3/element_intersections/globe_fluid_solid.cpp
