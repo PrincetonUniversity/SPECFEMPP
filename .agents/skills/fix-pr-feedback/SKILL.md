@@ -1,8 +1,11 @@
 ---
-argument-hint: <PR-number>
-description: "Fetch review comments and requested changes on your PR, summarize them, and produce an actionable fix plan."
-name: "Fix PR Feedback"
+name: fix-pr-feedback
+description: "Fetch review comments and requested changes on a SPECFEM++ PR, summarize them, and produce an actionable fix plan."
+argument-hint: "<PR-number>"
 ---
+
+> **Argument:** $ARGUMENTS (the PR number). If this shows a literal
+> placeholder instead of a value, take it from the user's request.
 
 You are helping the PR author address reviewer feedback on PR #$ARGUMENTS.
 

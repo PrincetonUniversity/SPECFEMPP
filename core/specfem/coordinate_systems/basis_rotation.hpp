@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/datatype/register_array.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
@@ -25,14 +26,96 @@ struct GeocentricFrame {};
  */
 template <typename TargetFrame, typename SourceFrame, typename ValueType>
   requires(!std::is_same_v<TargetFrame, SourceFrame>)
-struct BasisMatrix {
-  ValueType coefficients[3][3] = {};
+struct BasisMatrix
+    : public specfem::datatype::RegisterArray<
+          ValueType, Kokkos::extents<std::size_t, 3, 3>, Kokkos::layout_right> {
+  /** @brief Construct a zero-initialized matrix. */
+  KOKKOS_INLINE_FUNCTION BasisMatrix() = default;
 
-  KOKKOS_INLINE_FUNCTION ValueType *operator[](int row) {
-    return coefficients[row];
+  /**
+   * @brief Construct from nine coefficients in row-major order.
+   * @tparam Values Exactly nine scalar types, each identical to ValueType.
+   * @param values Matrix coefficients, listed row by row without conversions.
+   */
+  template <typename... Values>
+    requires(sizeof...(Values) == 9 &&
+             (std::is_same_v<Values, ValueType> && ...))
+  KOKKOS_INLINE_FUNCTION explicit BasisMatrix(const Values &...values)
+      : specfem::datatype::RegisterArray<ValueType,
+                                         Kokkos::extents<std::size_t, 3, 3>,
+                                         Kokkos::layout_right>(values...) {}
+};
+
+/**
+ * @brief Invert an orthonormal basis matrix and swap its frame tags.
+ * @tparam TargetFrame Frame of the input's rows and the result's columns.
+ * @tparam SourceFrame Frame of the input's columns and the result's rows;
+ * must differ from TargetFrame.
+ * @tparam ValueType Scalar value type, preserved by the transpose.
+ * @param rotation Matrix mapping source components to target components.
+ * @return Transposed matrix mapping target components to source components.
+ */
+template <typename TargetFrame, typename SourceFrame, typename ValueType>
+KOKKOS_INLINE_FUNCTION BasisMatrix<SourceFrame, TargetFrame, ValueType>
+transpose(const BasisMatrix<TargetFrame, SourceFrame, ValueType> &rotation) {
+  BasisMatrix<SourceFrame, TargetFrame, ValueType> inverse;
+  for (int row = 0; row < 3; ++row) {
+    for (int column = 0; column < 3; ++column) {
+      inverse(row, column) = rotation(column, row);
+    }
   }
-  KOKKOS_INLINE_FUNCTION const ValueType *operator[](int row) const {
-    return coefficients[row];
+  return inverse;
+}
+
+/**
+ * @brief Construct a change of basis for a supported pair of frames.
+ *
+ * Only the Cartesian/Geocentric specializations are defined.
+ * @tparam TargetFrame Frame of the result's rows.
+ * @tparam SourceFrame Frame of the result's columns.
+ */
+template <typename TargetFrame, typename SourceFrame> struct RotationMatrix;
+
+/** @brief Geocentric (theta, phi, r) to Cartesian (x, y, z). */
+template <> struct RotationMatrix<CartesianFrame, GeocentricFrame> {
+  /**
+   * @brief Construct the forward rotation from colatitude and longitude.
+   * @tparam ValueType Scalar value type of the angles and matrix coefficients.
+   * @param theta Geocentric colatitude in radians.
+   * @param phi Geocentric longitude in radians.
+   * @return Matrix mapping geocentric components to Cartesian components.
+   */
+  template <typename ValueType>
+  KOKKOS_INLINE_FUNCTION BasisMatrix<CartesianFrame, GeocentricFrame, ValueType>
+  operator()(const ValueType theta, const ValueType phi) const {
+    const ValueType cos_theta = Kokkos::cos(theta);
+    const ValueType sin_theta = Kokkos::sin(theta);
+    const ValueType cos_phi = Kokkos::cos(phi);
+    const ValueType sin_phi = Kokkos::sin(phi);
+    // Row-major storage: columns are the (theta, phi, r) Cartesian unit
+    // vectors.
+    return BasisMatrix<CartesianFrame, GeocentricFrame, ValueType>{
+      cos_phi * cos_theta, -sin_phi,       cos_phi * sin_theta,
+      sin_phi * cos_theta, cos_phi,        sin_phi * sin_theta,
+      -sin_theta,          ValueType{ 0 }, cos_theta
+    };
+  }
+};
+
+/** @brief Cartesian to geocentric, derived from the forward rotation. */
+template <> struct RotationMatrix<GeocentricFrame, CartesianFrame> {
+  /**
+   * @brief Construct the inverse rotation from colatitude and longitude.
+   * @tparam ValueType Scalar value type of the angles and matrix coefficients.
+   * @param theta Geocentric colatitude in radians.
+   * @param phi Geocentric longitude in radians.
+   * @return Matrix mapping Cartesian components to geocentric components.
+   */
+  template <typename ValueType>
+  KOKKOS_INLINE_FUNCTION BasisMatrix<GeocentricFrame, CartesianFrame, ValueType>
+  operator()(const ValueType theta, const ValueType phi) const {
+    return transpose(
+        RotationMatrix<CartesianFrame, GeocentricFrame>{}(theta, phi));
   }
 };
 
@@ -53,28 +136,13 @@ struct BasisMatrix {
  * @return Orthonormal rotation mapping source components to target components.
  */
 template <typename TargetFrame, typename SourceFrame, typename ValueType>
-  requires((std::is_same_v<TargetFrame, CartesianFrame> &&
-            std::is_same_v<SourceFrame, GeocentricFrame>) ||
-           (std::is_same_v<TargetFrame, GeocentricFrame> &&
-            std::is_same_v<SourceFrame, CartesianFrame>))
+  requires requires(const ValueType theta, const ValueType phi) {
+    RotationMatrix<TargetFrame, SourceFrame>{}(theta, phi);
+  }
 KOKKOS_INLINE_FUNCTION BasisMatrix<TargetFrame, SourceFrame, ValueType>
 rotation_matrix(const ValueType theta, const ValueType phi) {
-  const ValueType cos_theta = Kokkos::cos(theta);
-  const ValueType sin_theta = Kokkos::sin(theta);
-  const ValueType cos_phi = Kokkos::cos(phi);
-  const ValueType sin_phi = Kokkos::sin(phi);
-  const ValueType zero = static_cast<ValueType>(0);
-  if constexpr (std::is_same_v<TargetFrame, CartesianFrame>) {
-    // Columns are the (theta, phi, r) unit vectors in Cartesian components.
-    return { { { cos_phi * cos_theta, -sin_phi, cos_phi * sin_theta },
-               { sin_phi * cos_theta, cos_phi, sin_phi * sin_theta },
-               { -sin_theta, zero, cos_theta } } };
-  } else {
-    // Rows are the (theta, phi, r) unit vectors in Cartesian components.
-    return { { { cos_phi * cos_theta, sin_phi * cos_theta, -sin_theta },
-               { -sin_phi, cos_phi, zero },
-               { cos_phi * sin_theta, sin_phi * sin_theta, cos_theta } } };
-  }
+  // Construct the stateless callable locally, including in device code.
+  return RotationMatrix<TargetFrame, SourceFrame>{}(theta, phi);
 }
 
 } // namespace coordinate_systems

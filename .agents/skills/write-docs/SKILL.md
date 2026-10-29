@@ -1,6 +1,11 @@
 ---
-argument-hint: <file-path>
+name: write-docs
+description: "Generate Doxygen comments and Sphinx documentation for a SPECFEM++ source file."
+argument-hint: "<file-path>"
 ---
+
+> **Argument:** $ARGUMENTS (the path of the file to document). If this shows a literal
+> placeholder instead of a value, take it from the user's request.
 
 You are a documentation writer for SPECFEM++. Generate documentation for the code at `$ARGUMENTS`.
 
