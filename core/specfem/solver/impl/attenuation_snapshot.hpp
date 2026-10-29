@@ -185,7 +185,7 @@ void for_each_attenuation_view(MediumType &medium, Visitor &&visit) {
  */
 template <typename ViewType>
 ViewType clone_attenuation_view(const ViewType &view) {
-  ViewType clone(std::string(view.label()) + "_snapshot", view.get_mapping());
+  ViewType clone(std::string(view.label()) + "_snapshot", view.layout());
   specfem::datatype::deep_copy(clone, view);
   return clone;
 }

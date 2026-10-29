@@ -10,6 +10,14 @@ namespace specfem {
 namespace datatype {
 
 namespace impl {
+template <typename T, std::size_t Rank> struct DomainDataType {
+  using type = typename DomainDataType<T, Rank - 1>::type *;
+};
+
+template <typename T> struct DomainDataType<T, 0> {
+  using type = T;
+};
+
 template <int ElementChunkSize, typename Extents>
 KOKKOS_INLINE_FUNCTION constexpr std::size_t
 chunk_size(const Extents &extents) {
@@ -94,7 +102,8 @@ public:
     MDSPAN_CONDITIONAL_EXPLICIT(
         (!::std::is_convertible<OtherExtents, extents_type>::value))
     constexpr mapping(const mapping<OtherExtents> &input_mapping) noexcept
-        : extents_(input_mapping.extents()) {}
+        : extents_(input_mapping.extents()),
+          chunk_size(impl::chunk_size<ElementChunkSize>(extents_)) {}
     //------------------------------------------------------------
     // Required members
 
@@ -138,8 +147,8 @@ public:
     }
 
   private:
-    extents_type extents_; ///< Extents of the view
-    size_type chunk_size;
+    extents_type extents_{}; ///< Extents of the view
+    size_type chunk_size = 0;
 
     template <typename... IndexType>
     KOKKOS_INLINE_FUNCTION constexpr size_type
@@ -223,8 +232,17 @@ public:
     return static_cast<const base_type &>(*this);
   }
 
+  /// @brief Return the mapping from logical indices to flat storage offsets.
+  /// @return Mapping shared by all logical accesses to this view.
   KOKKOS_INLINE_FUNCTION
-  const mapping_type &get_mapping() const { return _mapping; }
+  const mapping_type &mapping() const { return _mapping; }
+
+  /**
+   * @brief Return the tiled layout descriptor for allocating a matching view.
+   * @return Mapping containing the logical extents and tile layout.
+   */
+  KOKKOS_INLINE_FUNCTION
+  const mapping_type &layout() const { return _mapping; }
 
   /// Returns the logical rank of this view (number of index dimensions).
   /// The Kokkos::View<T*> base always reports rank 1 because the underlying
@@ -244,51 +262,69 @@ private:
 template <std::size_t Rank>
 using chunked_tiled_layout2d = Kokkos::dextents<std::size_t, Rank>;
 
-template <typename T, std::size_t Rank, typename MemorySpace>
-using DomainView2d =
-    View<T, chunked_tiled_layout2d<Rank>,
-         DomainViewMapping<specfem::element::dimension_tag::dim2,
-                           specfem::parallel_configuration::storage_chunk_size>,
-         MemorySpace>;
-
-template <typename T, std::size_t Rank, typename MemorySpace>
-using DomainView3d =
-    View<T, Kokkos::dextents<std::size_t, Rank>,
-         DomainViewMapping<specfem::element::dimension_tag::dim3,
-                           specfem::parallel_configuration::storage_chunk_size>,
-         MemorySpace>;
-
+/**
+ * @brief Element-first domain storage, contiguous on CPU and tiled on GPU.
+ *
+ * CPU LayoutLeft storage permits SIMD vectors to start at any element index.
+ * GPU builds retain the tiled layout, including its host mirrors.
+ *
+ * @tparam DimensionTag Spatial dimension.
+ * @tparam T Stored scalar type.
+ * @tparam Rank Number of logical dimensions.
+ * @tparam MemorySpace Memory space owning the allocation.
+ */
 template <specfem::element::dimension_tag DimensionTag, typename T,
           std::size_t Rank, typename MemorySpace>
 using DomainView =
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
     View<T, Kokkos::dextents<std::size_t, Rank>,
          DomainViewMapping<DimensionTag,
                            specfem::parallel_configuration::storage_chunk_size>,
          MemorySpace>;
+#else
+    Kokkos::View<typename impl::DomainDataType<T, Rank>::type,
+                 Kokkos::LayoutLeft, MemorySpace>;
+#endif
 
-template <typename ViewType>
-specfem::datatype::View<typename ViewType::value_type,
-                        typename ViewType::extents_type,
-                        typename ViewType::layout_type, Kokkos::HostSpace>
-create_mirror_view(const ViewType view) {
-  if constexpr (std::is_same_v<typename ViewType::memory_space,
-                               Kokkos::HostSpace>) {
+template <typename T, std::size_t Rank, typename MemorySpace>
+using DomainView2d =
+    DomainView<specfem::element::dimension_tag::dim2, T, Rank, MemorySpace>;
+
+template <typename T, std::size_t Rank, typename MemorySpace>
+using DomainView3d =
+    DomainView<specfem::element::dimension_tag::dim3, T, Rank, MemorySpace>;
+
+template <typename T, typename Extents, typename Layout, typename MemorySpace>
+auto create_mirror_view(const View<T, Extents, Layout, MemorySpace> &view) {
+  if constexpr (std::is_same_v<MemorySpace, Kokkos::HostSpace>) {
     return view;
-  } else if constexpr (std::is_same_v<
-                           typename ViewType::memory_space,
-                           Kokkos::DefaultExecutionSpace::memory_space>) {
-    return specfem::datatype::View<
-        typename ViewType::value_type, typename ViewType::extents_type,
-        typename ViewType::layout_type, Kokkos::HostSpace>("mirror",
-                                                           view.get_mapping());
   } else {
-    Kokkos::abort("Unsupported memory space for create_mirror_view");
+    using mirror_type =
+        typename View<T, Extents, Layout, MemorySpace>::host_mirror_type;
+    return mirror_type("mirror", view.layout());
   }
 }
 
+/**
+ * @brief Create a host mirror of a native Kokkos domain view.
+ * @tparam DataType Kokkos view data type, including its rank.
+ * @tparam Properties Kokkos layout, memory space, and memory traits.
+ * @param view View whose layout is preserved in the host mirror.
+ * @return Host mirror, sharing storage when the view is already on the host.
+ */
+template <typename DataType, typename... Properties>
+auto create_mirror_view(const Kokkos::View<DataType, Properties...> &view) {
+  return Kokkos::create_mirror_view(view);
+}
+
 template <typename SrcViewType, typename DstViewType>
-void deep_copy(const DstViewType dst, const SrcViewType src) {
-  Kokkos::deep_copy(dst.get_base_view(), src.get_base_view());
+void deep_copy(const DstViewType &dst, const SrcViewType &src) {
+  if constexpr (Kokkos::is_view_v<DstViewType> &&
+                Kokkos::is_view_v<SrcViewType>) {
+    Kokkos::deep_copy(dst, src);
+  } else {
+    Kokkos::deep_copy(dst.get_base_view(), src.get_base_view());
+  }
 }
 } // namespace datatype
 } // namespace specfem
