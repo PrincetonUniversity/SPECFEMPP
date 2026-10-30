@@ -20,6 +20,9 @@ target_link_libraries(
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/serial.cmake)
 
+# Injection plugin SDK tests (sdk/)
+include(${CMAKE_CURRENT_SOURCE_DIR}/plugin_sdk/plugin_sdk.cmake)
+
 if(SPECFEM_ENABLE_MPI)
   include(${CMAKE_CURRENT_SOURCE_DIR}/mpi.cmake)
 endif()
