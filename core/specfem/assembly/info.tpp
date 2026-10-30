@@ -155,6 +155,7 @@ void process_medium_elements(
   scatters.element_v.contribute();
   scatters.element_distance.contribute();
   scatters.element_gll_distance.contribute();
+  scatters.domain_bounds.contribute();
   Kokkos::fence();
 }
 

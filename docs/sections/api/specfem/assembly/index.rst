@@ -21,6 +21,7 @@
     face_types/face_types
     fields/fields
     info/info
+    injection_surface/injection_surface
     jacobian_matrix/jacobian_matrix
     kernels/kernels
     mesh/index
