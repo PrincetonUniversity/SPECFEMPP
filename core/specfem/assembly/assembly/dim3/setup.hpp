@@ -57,6 +57,31 @@ void read_deferred_properties(
     const std::shared_ptr<specfem::io::reader> &property_reader);
 
 /**
+ * @brief Shift material-filled anisotropic properties to unrelaxed moduli.
+ *
+ * Isotropic materials already carry unrelaxed moduli. Anisotropic elastic
+ * elements are shifted here, shear-only and with Cartesian z as the radial
+ * axis, once the property container has been filled from the mesh materials.
+ * Does nothing when attenuation is disabled or no anisotropic element
+ * attenuates.
+ *
+ * @param mesh Raw Cartesian mesh
+ * @param assembly 3-D assembly whose properties and attenuation state are
+ * updated
+ */
+void apply_material_attenuation(
+    const specfem::mesh::cartesian3d_mesh &mesh,
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
+        &assembly);
+
+/**
+ * @brief No-op for globe meshes, whose properties are always deferred.
+ */
+void apply_material_attenuation(
+    const specfem::mesh::globe3d_mesh &,
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &);
+
+/**
  * @brief Build element types for a Cartesian mesh.
  *
  * @param mesh Raw Cartesian mesh

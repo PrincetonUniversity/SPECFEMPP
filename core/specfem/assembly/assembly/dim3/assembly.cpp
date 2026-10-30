@@ -30,6 +30,41 @@ void specfem::assembly::dim3_impl::read_deferred_properties(
   }
 }
 
+void specfem::assembly::dim3_impl::apply_material_attenuation(
+    const specfem::mesh::cartesian3d_mesh &mesh,
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
+        &assembly) {
+  // Isotropic materials already carry unrelaxed moduli; anisotropic ones are
+  // shifted here, in the Cartesian frame, once the properties are filled.
+  if (!mesh.attenuation.enabled)
+    return;
+  using Medium = specfem::element::medium_tag;
+  using Property = specfem::element::property_tag;
+  const auto &attenuation =
+      assembly.attenuation
+          .get_container<Medium::elastic, Property::anisotropic>();
+  if (attenuation.element_range.size() == 0)
+    return;
+  // Shallow copy: the views alias the assembly's anisotropic container, the
+  // only one recompute() modifies.
+  auto anisotropic_properties =
+      assembly.properties
+          .get_container<Medium::elastic, Property::anisotropic>();
+  attenuation.recompute(anisotropic_properties, assembly.attenuation.fc,
+                        assembly.attenuation.f0, assembly.attenuation.band,
+                        assembly.attenuation.tau_sigma,
+                        assembly.mesh.h_spherical_coord,
+                        specfem::assembly::impl::AssemblyAttenuationContext{
+                            assembly.element_types });
+  anisotropic_properties.copy_to_device();
+}
+
+void specfem::assembly::dim3_impl::apply_material_attenuation(
+    const specfem::mesh::globe3d_mesh &,
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &) {
+  // Globe properties are always deferred to the model oracle or reader.
+}
+
 void specfem::assembly::dim3_impl::read_deferred_properties(
     const specfem::mesh::globe3d_mesh &mesh,
     specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
@@ -191,6 +226,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
   if (has_deferred_properties) {
     specfem::assembly::dim3_impl::read_deferred_properties(mesh, *this,
                                                            property_reader);
+  } else {
+    specfem::assembly::dim3_impl::apply_material_attenuation(mesh, *this);
   }
 
   this->info = { this->mesh, this->properties, this->element_types,

@@ -271,32 +271,42 @@ specfem::io::mesh::impl::fortran::dim3::read_materials(
                                    "negative for any material.");
         }
 
-        if (attenuation_enabled && !(std::abs(Qkappa - 9999.0) < 1e-6 &&
-                                     std::abs(Qmu - 9999.0) < 1e-6)) {
-          std::ostringstream error_message;
-          error_message
-              << "Attenuation is not implemented for 3D anisotropic elastic "
-              << "materials. Set Q_Kappa and Q_mu to 9999 for material index "
-              << imat << ". " << "[" << __FILE__ << ":" << __LINE__ << "]\n";
-          throw std::runtime_error(error_message.str());
-        }
-
         const auto c = specfem::io::mesh::impl::fortran::dim3_impl::model_aniso(
             is_anisotropic, rho, vp, vs);
 
-        specfem::medium_container::material<
-            specfem::element::dimension_tag::dim3,
-            specfem::element::medium_tag::elastic,
-            specfem::element::property_tag::anisotropic,
-            specfem::element::attenuation_tag::none>
-            material(rho, c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7], c[8],
-                     c[9], c[10], c[11], c[12], c[13], c[14], c[15], c[16],
-                     c[17], c[18], c[19], c[20]);
-        const int index = materials.add_material(material);
-        mapping.push_back({ specfem::element::medium_tag::elastic,
-                            specfem::element::property_tag::anisotropic,
-                            specfem::element::attenuation_tag::none, index,
-                            imat });
+        if (!attenuation_enabled || (std::abs(Qkappa - 9999.0) < 1e-6 &&
+                                     std::abs(Qmu - 9999.0) < 1e-6)) {
+          specfem::medium_container::material<
+              specfem::element::dimension_tag::dim3,
+              specfem::element::medium_tag::elastic,
+              specfem::element::property_tag::anisotropic,
+              specfem::element::attenuation_tag::none>
+              material(rho, c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7],
+                       c[8], c[9], c[10], c[11], c[12], c[13], c[14], c[15],
+                       c[16], c[17], c[18], c[19], c[20]);
+          const int index = materials.add_material(material);
+          mapping.push_back({ specfem::element::medium_tag::elastic,
+                              specfem::element::property_tag::anisotropic,
+                              specfem::element::attenuation_tag::none, index,
+                              imat });
+        } else {
+          // Shear-only, as in SPECFEM3D_GLOBE: Qkappa does not attenuate
+          // anisotropic elements.
+          specfem::medium_container::material<
+              specfem::element::dimension_tag::dim3,
+              specfem::element::medium_tag::elastic,
+              specfem::element::property_tag::anisotropic,
+              specfem::element::attenuation_tag::constant_isotropic>
+              material(rho, c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7],
+                       c[8], c[9], c[10], c[11], c[12], c[13], c[14], c[15],
+                       c[16], c[17], c[18], c[19], c[20], Qkappa, Qmu);
+          const int index = materials.add_material(material);
+          mapping.push_back(
+              { specfem::element::medium_tag::elastic,
+                specfem::element::property_tag::anisotropic,
+                specfem::element::attenuation_tag::constant_isotropic, index,
+                imat });
+        }
       }
       break;
     }
