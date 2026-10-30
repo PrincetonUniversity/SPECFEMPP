@@ -108,6 +108,7 @@ specfem_add_test(attenuation_tests
             attenuation/compute_tau_eps_tests.cpp
             attenuation/compute_factors_tests.cpp
             attenuation/compute_integration_factors_tests.cpp
+            attenuation/globe_formulation_tests.cpp
   LIBRARIES gtest_main
             specfem::attenuation
             Kokkos::kokkos
@@ -116,6 +117,7 @@ specfem_add_test(attenuation_tests
 specfem_add_test(optimization_tests
   SOURCES   optimization/runner.cpp
             optimization/neldermead_tests.cpp
+            optimization/fminsearch_tests.cpp
             optimization/steepestdescent_tests.cpp
   LIBRARIES gtest_main
             Kokkos::kokkos
@@ -616,7 +618,9 @@ specfem_add_test(medium_attenuation_tests
   SOURCES   medium/attenuation/main.cpp
             medium/attenuation/dim2/elastic_isotropic.cpp
             medium/attenuation/dim3/elastic_isotropic.cpp
+            medium/attenuation/formulation.cpp
   LIBRARIES point
+            specfem::attenuation
             gtest_main
 )
 
@@ -925,7 +929,20 @@ specfem_add_test(seismogram_sampling_tests
 specfem_add_test(globe_properties_tests
   LABELS unit assembly globe
   SOURCES assembly/dim3/properties/globe_properties.cpp
+          assembly/dim3/attenuation/anisotropic.cpp
           assembly/element_types/runner.cpp
   LIBRARIES specfem::assembly specfem::globe specfem::io
             specfem::mesh specfem::quadrature specfem_environment gtest_main
+)
+
+specfem_add_test(tag_dispatch_tests
+  SOURCES tag_dispatch/is_valid_tests.cpp
+  LIBRARIES specfem::element gtest_main
+)
+
+
+specfem_add_test(globe_attenuation_reference_tests
+  SOURCES attenuation/runner.cpp attenuation/globe_reference.cpp
+  LIBRARIES specfem::attenuation globe_evaluator::globe_evaluator
+            gtest_main Kokkos::kokkos
 )

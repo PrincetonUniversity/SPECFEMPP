@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/assembly/attenuation/impl/attenuation_medium.hpp"
+#include "specfem/assembly/attenuation/impl/attenuation_medium/dim3/unrelaxed_tensor.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/attenuation/compute_factors.hpp"
 #include "specfem/attenuation/compute_tau_eps.hpp"
@@ -14,7 +15,9 @@
 #include "specfem/setup.hpp"
 #include "specfem/units.hpp"
 #include <Kokkos_Core.hpp>
+#include <algorithm>
 #include <array>
+#include <map>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -59,10 +62,15 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
   q_view_type h_kappa_scale;
   q_view_type h_mu_scale;
 
-  // Attenuate kappa as well as mu. When false (globe meshes), kappa stays
+  // Attenuate kappa as well as mu. When false (globe meshes, and always for
+  // anisotropic elements, which attenuate shear only as in globe), kappa stays
   // physical (scale 1) and its relaxation rates are zero, so the kappa memory
   // variables never leave zero.
   bool bulk_attenuation = true;
+
+  // Host-only shift increments let model I/O recover the physical cij without
+  // retaining the setup-only spherical coordinate cache.
+  std::array<q_view_type, 21> h_cij_correction;
 
   // Set once recompute() has run. A View so that copies of this container
   // share the flag.
@@ -103,7 +111,8 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
   scalar_view_type epsilon_yz_att;
   scalar_view_type::host_mirror_type h_epsilon_yz_att;
 
-  specfem::datatype::ElementIndexRange element_range; ///< Global element index range for this type
+  specfem::datatype::ElementIndexRange element_range; ///< Global element index
+                                                      ///< range for this type
 
   attenuation_medium() = default;
 
@@ -119,14 +128,15 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
       const Kokkos::View<type_real[N_SLS], Kokkos::DefaultHostExecutionSpace>
           &tau_sigma,
       const bool bulk_attenuation = true)
-      : bulk_attenuation(bulk_attenuation) {
+      : bulk_attenuation(bulk_attenuation &&
+                         PropertyTag ==
+                             specfem::element::property_tag::isotropic) {
 
     const int nspec_attn = elements.extent(0);
 
     // 1. Allocate all views
     h_recomputed = Kokkos::View<bool, Kokkos::HostSpace>("recomputed");
-    h_kappa_scale =
-        q_view_type("kappa_scale", nspec_attn, ngllz, nglly, ngllx);
+    h_kappa_scale = q_view_type("kappa_scale", nspec_attn, ngllz, nglly, ngllx);
     h_mu_scale = q_view_type("mu_scale", nspec_attn, ngllz, nglly, ngllx);
     h_Qkappa = q_view_type("h_Qkappa", nspec_attn, ngllz, nglly, ngllx);
     h_Qmu = q_view_type("h_Qmu", nspec_attn, ngllz, nglly, ngllx);
@@ -207,63 +217,88 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
           "Center frequency fc and reference frequency f0 must be positive.");
     }
 
-    // 3. Loop over elements
-    for (int i = 0; i < nspec_attn; ++i) {
-      const int ispec = elements(i);
-      const int mesh_ispec = mesh.h_compute_to_mesh(ispec);
-
-      auto material = materials.template get_material<
-          specfem::element::medium_tag::elastic, PropertyTag,
-          specfem::element::attenuation_tag::constant_isotropic>(mesh_ispec);
-
-      auto computed_values = material.compute_attenuation_properties(
-          f0.raw(), fc.raw(), band, tau_sigma);
-      auto kappa_props = computed_values.kappa_attenuation_properties;
-      auto mu_props = computed_values.mu_attenuation_properties;
-
-      // Scaled moduli: matches SPECFEM3D's kappastore/mustore after
-      // prepare_attenuation.f90 applies scale_factor in-place.
-      const auto scaled_props = material.get_properties();
-      const type_real kappa_sc = scaled_props.kappa();
-      const type_real mu_sc = scaled_props.mu();
-      // Without bulk attenuation kappa is not shifted and has no relaxation.
-      // Only globe meshes disable it, and they overwrite the placeholder
-      // material moduli from the model oracle before recompute().
-      const type_real kappa_scale =
-          bulk_attenuation ? computed_values.kappa_scale : 1.0;
-
-      // Quality factors and scale factors: element-constant at construction
-      // but stored per GLL point (see h_Qkappa above).
-      for (int iz = 0; iz < ngllz; ++iz) {
-        for (int iy = 0; iy < nglly; ++iy) {
-          for (int ix = 0; ix < ngllx; ++ix) {
-            h_Qkappa(i, iz, iy, ix) = material.Qkappa;
-            h_Qmu(i, iz, iy, ix) = material.Qmu;
-            h_kappa_scale(i, iz, iy, ix) = kappa_scale;
-            h_mu_scale(i, iz, iy, ix) = computed_values.mu_scale;
-          }
-        }
+    if constexpr (PropertyTag == specfem::element::property_tag::anisotropic) {
+      for (auto &correction : h_cij_correction) {
+        correction =
+            q_view_type("cij_correction", nspec_attn, ngllz, nglly, ngllx);
       }
-
-      // Per-GLL fill
-      for (int j = 0; j < N_SLS; ++j) {
-
-        // Compute per element relaxation rates (modulus included, matching
-        // SPECFEM3D's factor_loc = modulus * factor_common)
-        const type_real tauinv_j = 1.0 / tau_sigma(j);
-        auto kappa_rr_j = bulk_attenuation
-                              ? kappa_sc * kappa_props.beta(j) * tauinv_j /
-                                    kappa_props.one_minus_sum_beta
-                              : static_cast<type_real>(0);
-        auto mu_rr_j = mu_sc * 2.0 * mu_props.beta(j) * tauinv_j /
-                       mu_props.one_minus_sum_beta;
-
-        // Assigning relaxation rates to all GLL points
+      // Globe's oracle supplies the actual per-GLL moduli and Q, then calls
+      // recompute once all Love-to-cij conversions are complete.
+      for (int i = 0; i < nspec_attn; ++i) {
+        const auto &material = materials.template get_material<
+            specfem::element::medium_tag::elastic, PropertyTag,
+            specfem::element::attenuation_tag::constant_isotropic>(
+            mesh.h_compute_to_mesh(elements(i)));
         for (int iz = 0; iz < ngllz; ++iz) {
           for (int iy = 0; iy < nglly; ++iy) {
             for (int ix = 0; ix < ngllx; ++ix) {
-              h_kappa_relaxation_rate(i, iz, iy, ix, j) = kappa_rr_j;
-              h_mu_relaxation_rate(i, iz, iy, ix, j) = mu_rr_j;
+              h_Qkappa(i, iz, iy, ix) = material.Qkappa;
+              h_Qmu(i, iz, iy, ix) = material.Qmu;
+              h_kappa_scale(i, iz, iy, ix) = 1;
+              h_mu_scale(i, iz, iy, ix) = 1;
+            }
+          }
+        }
+      }
+    } else {
+      // 3. Loop over elements
+      for (int i = 0; i < nspec_attn; ++i) {
+        const int ispec = elements(i);
+        const int mesh_ispec = mesh.h_compute_to_mesh(ispec);
+
+        auto material = materials.template get_material<
+            specfem::element::medium_tag::elastic, PropertyTag,
+            specfem::element::attenuation_tag::constant_isotropic>(mesh_ispec);
+
+        auto computed_values = material.compute_attenuation_properties(
+            f0.raw(), fc.raw(), band, tau_sigma);
+        auto kappa_props = computed_values.kappa_attenuation_properties;
+        auto mu_props = computed_values.mu_attenuation_properties;
+
+        // Scaled moduli: matches SPECFEM3D's kappastore/mustore after
+        // prepare_attenuation.f90 applies scale_factor in-place.
+        const auto scaled_props = material.get_properties();
+        const type_real kappa_sc = scaled_props.kappa();
+        const type_real mu_sc = scaled_props.mu();
+        // Without bulk attenuation kappa is not shifted and has no relaxation.
+        // Only globe meshes disable it, and they overwrite the placeholder
+        // material moduli from the model oracle before recompute().
+        const type_real kappa_scale =
+            bulk_attenuation ? computed_values.kappa_scale : 1.0;
+
+        // Quality factors and scale factors: element-constant at construction
+        // but stored per GLL point (see h_Qkappa above).
+        for (int iz = 0; iz < ngllz; ++iz) {
+          for (int iy = 0; iy < nglly; ++iy) {
+            for (int ix = 0; ix < ngllx; ++ix) {
+              h_Qkappa(i, iz, iy, ix) = material.Qkappa;
+              h_Qmu(i, iz, iy, ix) = material.Qmu;
+              h_kappa_scale(i, iz, iy, ix) = kappa_scale;
+              h_mu_scale(i, iz, iy, ix) = computed_values.mu_scale;
+            }
+          }
+        }
+
+        // Per-GLL fill
+        for (int j = 0; j < N_SLS; ++j) {
+
+          // Compute per element relaxation rates (modulus included, matching
+          // SPECFEM3D's factor_loc = modulus * factor_common)
+          const type_real tauinv_j = 1.0 / tau_sigma(j);
+          auto kappa_rr_j = bulk_attenuation
+                                ? kappa_sc * kappa_props.beta(j) * tauinv_j /
+                                      kappa_props.one_minus_sum_beta
+                                : static_cast<type_real>(0);
+          auto mu_rr_j = mu_sc * 2.0 * mu_props.beta(j) * tauinv_j /
+                         mu_props.one_minus_sum_beta;
+
+          // Assigning relaxation rates to all GLL points
+          for (int iz = 0; iz < ngllz; ++iz) {
+            for (int iy = 0; iy < nglly; ++iy) {
+              for (int ix = 0; ix < ngllx; ++ix) {
+                h_kappa_relaxation_rate(i, iz, iy, ix, j) = kappa_rr_j;
+                h_mu_relaxation_rate(i, iz, iy, ix, j) = mu_rr_j;
+              }
             }
           }
         }
@@ -283,7 +318,9 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
    *
    * The property container holds unrelaxed moduli for attenuating elements;
    * the property file stores the physical model. Divides "kappa"/"mu" by the
-   * per-GLL scale factors; any other dataset name is left untouched.
+   * per-GLL scale factors. For anisotropic properties subtracts the stored
+   * Cartesian stiffness increments from each cij dataset. Other names are
+   * left untouched.
    *
    * Precondition: the element axis of @p scratch aligns 1:1 with this
    * container's element_range (one file group per (medium, property,
@@ -295,6 +332,23 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
    */
   template <typename ViewType>
   void to_physical(const ViewType &scratch, const std::string &name) const {
+    if constexpr (PropertyTag == specfem::element::property_tag::anisotropic) {
+      constexpr std::array<const char *, 21> names = {
+        "c11", "c12", "c13", "c14", "c15", "c16", "c22",
+        "c23", "c24", "c25", "c26", "c33", "c34", "c35",
+        "c36", "c44", "c45", "c46", "c55", "c56", "c66"
+      };
+      for (int k = 0; k < 21; ++k) {
+        if (name != names[k])
+          continue;
+        for (int i = 0; i < static_cast<int>(scratch.extent(0)); ++i)
+          for (int iz = 0; iz < static_cast<int>(scratch.extent(1)); ++iz)
+            for (int iy = 0; iy < static_cast<int>(scratch.extent(2)); ++iy)
+              for (int ix = 0; ix < static_cast<int>(scratch.extent(3)); ++ix)
+                scratch(i, iz, iy, ix) -= h_cij_correction[k](i, iz, iy, ix);
+      }
+      return;
+    }
     if (name != "kappa" && name != "mu") {
       return;
     }
@@ -333,10 +387,9 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
    * scaled to unrelaxed in place, and the relaxation rates are recomputed
    * from them (pushed to device). The per-GLL scale factors are refreshed so
    * a subsequent write stays consistent with the read model. Q is sampled at
-   * every GLL point, so a GLL-varying Q model is honoured; the (expensive,
-   * Nelder-Mead) tau_epsilon solve is memoized and only redone when Q changes
-   * from the previous point, so element-constant Q costs one solve per
-   * element. When @c bulk_attenuation is false only mu is shifted and
+   * every GLL point, so a GLL-varying Q model is honoured; the (expensive)
+   * tau_epsilon fit is memoized and only redone when Q moves
+   * to another bucket of globe's Q storage table. When @c bulk_attenuation is false only mu is shifted and
    * relaxed; kappa and its zero relaxation rates are left as they are. No-op
    * when there are no attenuating elements. Host-only; const because only
    * view data is mutated.
@@ -344,21 +397,34 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
    * @throws std::runtime_error if called a second time, since the moduli in
    *         @p props would then be scaled to unrelaxed twice.
    *
-   * @tparam PropsContainer Property data container type (exposes h_kappa,
-   *                        h_mu and element_range)
+   * For anisotropic containers, props instead exposes h_c11 through h_c66.
+   * A shear-only radial shift is applied after Love-to-cij conversion, using
+   * the same total mu scale as the isotropic path. The final radial c44
+   * gives the memory-variable relaxation rates, as globe's muvstore does.
+   *
+   * @tparam PropsContainer Property data container with host modulus views
+   *                        and element_range.
+   * @tparam SphericalView Host spherical coordinate cache type.
+   * @tparam ElementContext Callable returning region/radial-zone metadata.
    * @param props The just-read property container
    * @param fc Band-center frequency for modulus scaling
    * @param f0 Reference frequency
    * @param band Attenuation frequency band
    * @param tau_sigma Stress relaxation times
+   * @param spherical Setup-only spherical coordinate cache (mantle anisotropy
+   * only).
+   * @param context Global element index to region/radial-zone metadata.
    */
-  template <typename PropsContainer>
-  void recompute(
-      const PropsContainer &props, const specfem::units::Hertz fc,
-      const specfem::units::Hertz f0,
-      const specfem::utilities::Band<specfem::units::Hertz> &band,
-      const Kokkos::View<type_real[N_SLS], Kokkos::DefaultHostExecutionSpace>
-          &tau_sigma) const {
+  template <typename PropsContainer, typename SphericalView,
+            typename ElementContext>
+  void
+  recompute(const PropsContainer &props, const specfem::units::Hertz fc,
+            const specfem::units::Hertz f0,
+            const specfem::utilities::Band<specfem::units::Hertz> &band,
+            const Kokkos::View<type_real[N_SLS],
+                               Kokkos::DefaultHostExecutionSpace> &tau_sigma,
+            const SphericalView &spherical,
+            const ElementContext &context) const {
     if (element_range.size() == 0) {
       return;
     }
@@ -367,6 +433,19 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
           "attenuation_medium::recompute() called twice: the moduli are "
           "already unrelaxed and would be scaled a second time.");
     }
+    if constexpr (PropertyTag == specfem::element::property_tag::anisotropic) {
+      bool needs_radial_coordinates = false;
+      for (int i = 0; i < element_range.size(); ++i) {
+        const auto metadata = context(element_range(i));
+        needs_radial_coordinates |=
+            !metadata.fictitious() &&
+            metadata.region != specfem::element::region_tag::inner_core;
+      }
+      if (needs_radial_coordinates && spherical.data() == nullptr) {
+        throw std::runtime_error(
+            "Anisotropic attenuation requires spherical coordinates");
+      }
+    }
     h_recomputed() = true;
     const int nspec_attn = element_range.size();
     const int offset =
@@ -374,10 +453,44 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
     const int l_ngllz = h_Qkappa.extent(1);
     const int l_nglly = h_Qkappa.extent(2);
     const int l_ngllx = h_Qkappa.extent(3);
+    const auto cij_views = [&]() {
+      if constexpr (PropertyTag ==
+                    specfem::element::property_tag::anisotropic) {
+        return std::array{ props.h_c11, props.h_c12, props.h_c13, props.h_c14,
+                           props.h_c15, props.h_c16, props.h_c22, props.h_c23,
+                           props.h_c24, props.h_c25, props.h_c26, props.h_c33,
+                           props.h_c34, props.h_c35, props.h_c36, props.h_c44,
+                           props.h_c45, props.h_c46, props.h_c55, props.h_c56,
+                           props.h_c66 };
+      } else {
+        return std::array<q_view_type, 0>{};
+      }
+    }();
+    // Globe's storage table: Q values sharing a bucket use the first one,
+    // so there is one fit per bucket.
+    specfem::attenuation::globe::QualityFactorTable shear_table, bulk_table;
+    std::map<type_real,
+             specfem::attenuation::globe::QualityFactorFit<N_SLS> >
+        fits;
+    const auto fit = [&](const type_real q)
+        -> const specfem::attenuation::globe::QualityFactorFit<N_SLS> & {
+      if (const auto found = fits.find(q); found != fits.end())
+        return found->second;
+      return fits
+          .emplace(q, specfem::attenuation::globe::fit_quality_factor<N_SLS>(
+                          q, tau_sigma, band, fc.raw(), f0.raw()))
+          .first->second;
+    };
     for (int i = 0; i < nspec_attn; ++i) {
+      const auto metadata = context(element_range(i));
+      if (metadata.fictitious())
+        continue;
+      const bool inner_core =
+          metadata.region == specfem::element::region_tag::inner_core;
       // Without bulk attenuation kappa keeps scale 1 and zero relaxation
       // rates (kappa_props.beta stays zero), and Qkappa is never solved for.
-      type_real last_Qkappa = -1, last_Qmu = -1, kappa_scale = 1, mu_scale = 0;
+      type_real kappa_scale = 1, mu_scale = 1;
+      specfem::attenuation::globe::ModulusScales mu_scales;
       specfem::attenuation::AttenuationPropertyValues<N_SLS> kappa_props,
           mu_props;
       if (!bulk_attenuation) {
@@ -390,44 +503,96 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
           for (int ix = 0; ix < l_ngllx; ++ix) {
             const type_real Qkappa = h_Qkappa(i, iz, iy, ix);
             const type_real Qmu = h_Qmu(i, iz, iy, ix);
-            if (bulk_attenuation && Qkappa != last_Qkappa) {
-              const auto tau_eps = specfem::attenuation::compute_tau_eps<N_SLS>(
-                  Qkappa, tau_sigma, band);
-              kappa_scale =
-                  specfem::attenuation::get_attenuation_scale_factor<N_SLS>(
-                      fc.raw(), tau_eps, tau_sigma, Qkappa, f0.raw());
-              kappa_props =
-                  specfem::attenuation::get_attenuation_property_values<N_SLS>(
-                      tau_sigma, tau_eps);
-              last_Qkappa = Qkappa;
+            if (bulk_attenuation) {
+              const type_real q = bulk_table.representative(Qkappa);
+              const auto &kappa_fit = fit(q);
+              kappa_scale = kappa_fit.scales.unrelaxed();
+              kappa_props = kappa_fit.properties;
+              h_Qkappa(i, iz, iy, ix) = q;
             }
-            if (Qmu != last_Qmu) {
-              const auto tau_eps = specfem::attenuation::compute_tau_eps<N_SLS>(
-                  Qmu, tau_sigma, band);
-              mu_scale =
-                  specfem::attenuation::get_attenuation_scale_factor<N_SLS>(
-                      fc.raw(), tau_eps, tau_sigma, Qmu, f0.raw());
-              mu_props =
-                  specfem::attenuation::get_attenuation_property_values<N_SLS>(
-                      tau_sigma, tau_eps);
-              last_Qmu = Qmu;
-            }
-            const type_real kappa_unrelaxed =
-                props.h_kappa(offset + i, iz, iy, ix) * kappa_scale;
-            const type_real mu_unrelaxed =
-                props.h_mu(offset + i, iz, iy, ix) * mu_scale;
-            props.h_kappa(offset + i, iz, iy, ix) = kappa_unrelaxed;
-            props.h_mu(offset + i, iz, iy, ix) = mu_unrelaxed;
-            h_kappa_scale(i, iz, iy, ix) = kappa_scale;
-            h_mu_scale(i, iz, iy, ix) = mu_scale;
-            for (int j = 0; j < N_SLS; ++j) {
-              const type_real tauinv_j = 1.0 / tau_sigma(j);
-              h_kappa_relaxation_rate(i, iz, iy, ix, j) =
-                  kappa_unrelaxed * kappa_props.beta(j) * tauinv_j /
-                  kappa_props.one_minus_sum_beta;
-              h_mu_relaxation_rate(i, iz, iy, ix, j) =
-                  mu_unrelaxed * 2.0 * mu_props.beta(j) * tauinv_j /
-                  mu_props.one_minus_sum_beta;
+            const type_real q = shear_table.representative(Qmu);
+            const auto &mu_fit = fit(q);
+            mu_scales = mu_fit.scales;
+            mu_scale = mu_scales.unrelaxed();
+            mu_props = mu_fit.properties;
+            h_Qmu(i, iz, iy, ix) = q;
+            if constexpr (PropertyTag ==
+                          specfem::element::property_tag::anisotropic) {
+              const int iprop = offset + i;
+              const int ispec = element_range(i);
+              const double theta =
+                  inner_core ? 0 : spherical(ispec, iz, iy, ix, 1);
+              const double phi =
+                  inner_core ? 0 : spherical(ispec, iz, iy, ix, 2);
+              double coefficients[21];
+              for (int k = 0; k < 21; ++k) {
+                coefficients[k] = cij_views[k](iprop, iz, iy, ix);
+              }
+              using Cartesian = specfem::coordinate_systems::CartesianFrame;
+              using Geocentric = specfem::coordinate_systems::GeocentricFrame;
+              const specfem::medium_physics::ElasticityTensor<Cartesian, double>
+                  global(coefficients);
+              // Mirror globe's two setup stages: reference -> relaxed,
+              // followed by relaxed -> unrelaxed. Preserve the input exactly
+              // when both multipliers are one.
+              const double ratio = mu_props.one_minus_sum_beta;
+              const double relaxed_scale =
+                  static_cast<type_real>(mu_scales.relaxed);
+              const auto relaxed_double =
+                  inner_core ? shift_inner_core_tensor<type_real>(
+                                   global, relaxed_scale - 1.0, true)
+                             : shift_unrelaxed_tensor<type_real>(
+                                   global, theta, phi, relaxed_scale - 1.0);
+              // Globe stores CUSTOM_REAL cij between the two setup stages.
+              double relaxed_coefficients[21];
+              for (int k = 0; k < 21; ++k) {
+                relaxed_coefficients[k] =
+                    static_cast<type_real>(relaxed_double[k]);
+              }
+              const specfem::medium_physics::ElasticityTensor<Cartesian, double>
+                  relaxed(relaxed_coefficients);
+              double final_c44 = 0;
+              const auto shifted =
+                  inner_core
+                      ? shift_inner_core_tensor<type_real>(relaxed, ratio - 1.0,
+                                                           false)
+                      : shift_unrelaxed_tensor<type_real>(
+                            relaxed, theta, phi, ratio - 1.0, &final_c44);
+              if (inner_core)
+                final_c44 = shifted(3, 3);
+              for (int k = 0; k < 21; ++k) {
+                cij_views[k](iprop, iz, iy, ix) = shifted[k];
+                h_cij_correction[k](i, iz, iy, ix) =
+                    cij_views[k](iprop, iz, iy, ix) - coefficients[k];
+              }
+              h_mu_scale(i, iz, iy, ix) = mu_scale;
+              h_kappa_scale(i, iz, iy, ix) = 1;
+              // Globe's muvstore holds this c44 in storage precision.
+              const type_real mu_unrelaxed = final_c44;
+              for (int j = 0; j < N_SLS; ++j) {
+                h_kappa_relaxation_rate(i, iz, iy, ix, j) = 0;
+                h_mu_relaxation_rate(i, iz, iy, ix, j) =
+                    2 * mu_unrelaxed * mu_props.beta(j) /
+                    tau_sigma(j) / mu_props.one_minus_sum_beta;
+              }
+            } else {
+              const type_real kappa_unrelaxed =
+                  props.h_kappa(offset + i, iz, iy, ix) * kappa_scale;
+              const type_real mu_unrelaxed =
+                  props.h_mu(offset + i, iz, iy, ix) * mu_scale;
+              props.h_kappa(offset + i, iz, iy, ix) = kappa_unrelaxed;
+              props.h_mu(offset + i, iz, iy, ix) = mu_unrelaxed;
+              h_kappa_scale(i, iz, iy, ix) = kappa_scale;
+              h_mu_scale(i, iz, iy, ix) = mu_scale;
+              for (int j = 0; j < N_SLS; ++j) {
+                const type_real tauinv_j = 1.0 / tau_sigma(j);
+                h_kappa_relaxation_rate(i, iz, iy, ix, j) =
+                    kappa_unrelaxed * kappa_props.beta(j) * tauinv_j /
+                    kappa_props.one_minus_sum_beta;
+                h_mu_relaxation_rate(i, iz, iy, ix, j) =
+                    mu_unrelaxed * 2.0 * mu_props.beta(j) * tauinv_j /
+                    mu_props.one_minus_sum_beta;
+              }
             }
           }
         }

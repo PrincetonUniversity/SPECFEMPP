@@ -189,7 +189,10 @@ void specfem::io::property_reader<InputLibrary>::read(
           }
           att.recompute(container, assembly.attenuation.fc,
                         assembly.attenuation.f0, assembly.attenuation.band,
-                        assembly.attenuation.tau_sigma);
+                        assembly.attenuation.tau_sigma,
+                        assembly.mesh.h_spherical_coord,
+                        specfem::assembly::impl::AssemblyAttenuationContext{
+                            assembly.element_types });
         }
       });
 

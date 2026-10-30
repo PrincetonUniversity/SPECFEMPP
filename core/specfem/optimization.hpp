@@ -29,16 +29,18 @@ namespace optimization {
  * @brief Result structure returned by optimization algorithms
  *
  * @tparam N Number of optimization variables
+ * @tparam ValueType Scalar type used by the solver.
  */
-template <int N> struct OptimizationResult {
-  Kokkos::View<type_real[N], Kokkos::LayoutRight, Kokkos::HostSpace>
-      x;               ///< Optimal point found
-  type_real min_value; ///< Function value at x
-  int iterations;      ///< Number of iterations performed
-  bool converged;      ///< True if tolerances were met
+template <int N, typename ValueType = type_real> struct OptimizationResult {
+  Kokkos::View<ValueType[N], Kokkos::LayoutRight, Kokkos::HostSpace>
+      x;                        ///< Optimal point found
+  ValueType min_value;          ///< Function value at x
+  int iterations;               ///< Number of iterations performed
+  bool converged;               ///< True if tolerances were met
+  int function_evaluations = 0; ///< Objective evaluations performed
 
   /// @brief Accessor returning optimal point
-  Kokkos::View<type_real[N], Kokkos::LayoutRight, Kokkos::HostSpace>
+  Kokkos::View<ValueType[N], Kokkos::LayoutRight, Kokkos::HostSpace>
   operator()() const {
     return x;
   }
@@ -126,5 +128,6 @@ OptimizationResult<N> optimize(AlgorithmTag tag, Func &&objective,
 } // namespace specfem
 
 // Include algorithm implementations
+#include "optimization/fminsearch.hpp"
 #include "optimization/nelder_mead_simplex.hpp"
 #include "optimization/steepest_descent.hpp"
