@@ -24,11 +24,27 @@ option(FK_PLUGIN_BUILD_TESTS "Build the FK plugin tests" ON)
 
 find_package(SpecfemPluginSDK 1 REQUIRED)
 
+# Header-only FFT (BSD-3), pinned to a commit on its cpp branch.
+include(FetchContent)
+FetchContent_Declare(pocketfft
+  URL https://github.com/mreineck/pocketfft/archive/c90e55b3d529f8efa40ed01a20de22405f45fc65.tar.gz
+  URL_HASH SHA256=2d90016da31a8cc1dd0ac0c89c1f2fb55df8f4ccc3f0386dcfbad09ac6d1c3ba
+  DOWNLOAD_EXTRACT_TIMESTAMP FALSE
+)
+FetchContent_MakeAvailable(pocketfft)
+
 # Header-only until the first source file arrives; then STATIC with hidden
 # visibility.
 add_library(specfem_fk_core INTERFACE)
 target_include_directories(specfem_fk_core INTERFACE
   ${CMAKE_CURRENT_SOURCE_DIR}/core
+)
+target_include_directories(specfem_fk_core SYSTEM INTERFACE
+  ${pocketfft_SOURCE_DIR}
+)
+# Transforms run serially; parallelism, if any, is over depth groups.
+target_compile_definitions(specfem_fk_core INTERFACE
+  POCKETFFT_NO_MULTITHREADING
 )
 if(FK_PLUGIN_DOUBLE)
   target_compile_definitions(specfem_fk_core INTERFACE SPECFEM_FK_PLUGIN_DOUBLE)
