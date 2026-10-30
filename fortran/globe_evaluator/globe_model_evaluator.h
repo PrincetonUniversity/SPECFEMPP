@@ -191,6 +191,27 @@ void globe_evaluator_rotate_tiso_to_cij(double theta, double phi, double rho,
                                         double vpv, double vph, double vsv,
                                         double vsh, double eta, double *cij);
 
+/* TEST ONLY -- independent globe Q fit and physical-unit coefficients.
+ * Array lengths are N_SLS; rates are the modulus-free factor_common values.
+ */
+void globe_evaluator_attenuation_reference(double fmin, double fmax, double q,
+    double fc, double f0, double *tau_sigma, double *tau_epsilon,
+    double *relaxed_scale, double *unrelaxed_ratio, double *rates);
+
+/* TEST ONLY -- full independent globe attenuation setup for Cartesian cij. */
+void globe_evaluator_attenuate_cij(double theta, double phi, double fmin,
+    double fmax, double q, double fc, double f0, const double *input,
+    double *output, double *muvstore, double *rates);
+
+/* TEST ONLY -- unrotated five-coefficient inner-core attenuation setup. */
+void globe_evaluator_attenuate_inner_core(double fmin, double fmax, double q,
+    double fc, double f0, const double *input, double *output,
+    double *muvstore, double *rates);
+
+/* TEST ONLY -- globe's radial unrelaxed-moduli shift; 21 Voigt entries. */
+void globe_evaluator_shift_cij(double theta, double phi, double increment,
+                             const double *input, double *output);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

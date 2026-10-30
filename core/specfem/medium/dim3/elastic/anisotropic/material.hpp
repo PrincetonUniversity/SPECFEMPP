@@ -20,11 +20,11 @@ namespace specfem::medium_container {
  * @brief Material definition for a 3D anisotropic elastic solid.
  *
  * Stores density and the 21 independent stiffnesses of the symmetric
- * \f$6\times6\f$ Voigt matrix. Attenuating anisotropic constitutive physics is
- * intentionally outside this data-container implementation.
+ * \f$6\times6\f$ Voigt matrix. For attenuating globe elements these are
+ * relaxed placeholders; the GLL model builder applies the radial shift.
  *
  * @tparam MediumTag Physical medium type; must be elastic.
- * @tparam AttenuationTag Attenuation model; currently must be none.
+ * @tparam AttenuationTag Attenuation model.
  */
 template <specfem::element::medium_tag MediumTag,
           specfem::element::attenuation_tag AttenuationTag>
@@ -34,8 +34,6 @@ struct material<
     std::enable_if_t<specfem::element::is_elastic<MediumTag>::value>>
     : impl::AttenuationValues<specfem::element::dimension_tag::dim3, MediumTag,
                               AttenuationTag> {
-  static_assert(AttenuationTag == specfem::element::attenuation_tag::none,
-                "3D elastic anisotropic attenuation is not implemented");
 
 public:
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
@@ -83,7 +81,13 @@ public:
       : density(density), c11(c11), c12(c12), c13(c13), c14(c14), c15(c15),
         c16(c16), c22(c22), c23(c23), c24(c24), c25(c25), c26(c26), c33(c33),
         c34(c34), c35(c35), c36(c36), c44(c44), c45(c45), c46(c46), c55(c55),
-        c56(c56), c66(c66) {}
+        c56(c56), c66(c66) {
+    if constexpr (AttenuationTag ==
+                  specfem::element::attenuation_tag::constant_isotropic) {
+      this->Qkappa = 9999.0;
+      this->Qmu = 9999.0;
+    }
+  }
 
   /** @brief Construct an empty material. */
   material() = default;
