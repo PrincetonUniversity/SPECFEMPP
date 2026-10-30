@@ -3,6 +3,8 @@
 #include "specfem/enums.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/source.hpp"
+#include "specfem/source/force_vector.hpp"
+#include "specfem/source/local_frame_quantity.hpp"
 #include "specfem/source_time_functions.hpp"
 
 #include "specfem/setup.hpp"
@@ -18,6 +20,12 @@ namespace sources {
  * This class implements a collocated force source in 3D that applies forces
  * in the x, y, and z directions at a specific location in the simulation
  * domain.
+ *
+ * The force is held in a @ref specfem::sources::LocalFrameQuantity: it may be
+ * supplied directly in the global Cartesian frame, or in the local geocentric
+ * @f$ (\theta,\phi,r) @f$ frame (FORCESOLUTION, whose East/North/Up direction
+ * is reordered by the reader), in which case it is kept as-read and rotated
+ * into the Cartesian mesh frame at assembly time.
  *
  * @par Usage Example
  * @code
@@ -51,6 +59,11 @@ template <>
 class force<specfem::element::dimension_tag::dim3>
     : public vector_source<specfem::element::dimension_tag::dim3> {
 
+  using ForceQuantity =
+      specfem::sources::LocalFrameQuantity<specfem::sources::ForceVector>;
+  using CartesianForce = ForceQuantity::CartesianT;
+  using GeocentricForce = ForceQuantity::GeocentricT;
+
 public:
   /**
    * @brief Default source constructor
@@ -66,9 +79,10 @@ public:
    */
   force(YAML::Node &Node, const int nsteps, const type_real dt,
         const specfem::simulation::field_type wavefield_type)
-      : vector_source(Node, nsteps, dt), fx(Node["fx"].as<type_real>()),
-        fy(Node["fy"].as<type_real>()), fz(Node["fz"].as<type_real>()),
-        wavefield_type(wavefield_type) {};
+      : force_(CartesianForce{ Node["fx"].as<type_real>(),
+                               Node["fy"].as<type_real>(),
+                               Node["fz"].as<type_real>() }),
+        wavefield_type(wavefield_type), vector_source(Node, nsteps, dt) {};
 
   /**
    * @brief Construct a new collocated force object
@@ -84,9 +98,8 @@ public:
       type_real fz,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
       const specfem::simulation::field_type wavefield_type)
-      : wavefield_type(wavefield_type),
-        vector_source(x, y, z, std::move(source_time_function)), fx(fx), fy(fy),
-        fz(fz) {};
+      : force_(CartesianForce{ fx, fy, fz }), wavefield_type(wavefield_type),
+        vector_source(x, y, z, std::move(source_time_function)) {};
 
   /**
    * @brief Construct a new collocated force object from generic coordinates
@@ -105,9 +118,33 @@ public:
       type_real fx, type_real fy, type_real fz,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
       const specfem::simulation::field_type wavefield_type)
-      : wavefield_type(wavefield_type),
-        vector_source(std::move(coordinates), std::move(source_time_function)),
-        fx(fx), fy(fy), fz(fz) {};
+      : force_(CartesianForce{ fx, fy, fz }), wavefield_type(wavefield_type),
+        vector_source(std::move(coordinates), std::move(source_time_function)) {
+        };
+
+  /**
+   * @brief Construct a collocated force given in the local geocentric frame.
+   *
+   * The force is stored unresolved: the local frame that rotates it into the
+   * Cartesian mesh basis is only known once the source location is placed, so
+   * @ref get_force_vector throws until the assembly-time resolution calls
+   * @ref set_cartesian_components. Used by the FORCESOLUTION reader.
+   *
+   * @param coordinates Generic coordinate object
+   * @param geocentric Force in the local geocentric (theta, phi, r) frame
+   * @param source_time_function Pointer to source time function
+   * @param wavefield_type Type of wavefield
+   */
+  force(
+      std::unique_ptr<specfem::coordinate_systems::coordinates<
+          specfem::element::dimension_tag::dim3>>
+          coordinates,
+      const GeocentricForce &geocentric,
+      std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
+      const specfem::simulation::field_type wavefield_type)
+      : force_(geocentric), wavefield_type(wavefield_type),
+        vector_source(std::move(coordinates), std::move(source_time_function)) {
+        };
 
   /**
    * @brief User output
@@ -119,6 +156,29 @@ public:
   specfem::simulation::field_type get_wavefield_type() const override {
     return wavefield_type;
   }
+
+  /**
+   * @brief Install the Cartesian components resolved from the as-read frame.
+   *
+   * Marks the force resolved, after which @ref get_force_vector returns the
+   * Cartesian force. Called by the assembly-time resolution once the source
+   * location fixes the local frame. The as-read force is kept.
+   *
+   * @param cartesian Force in the global Cartesian frame
+   */
+  void set_cartesian_components(const CartesianForce &cartesian) {
+    force_.resolve(cartesian);
+  }
+
+  /**
+   * @brief The force as a resolvable local-frame quantity.
+   *
+   * Exposes the as-read force and whether it has been resolved, so the assembly
+   * stage can rotate an unresolved geocentric force into the mesh frame.
+   *
+   * @return Reference to the held local-frame quantity
+   */
+  const ForceQuantity &force_quantity() const { return force_; }
 
   /**
    * @brief Get the forcing function
@@ -134,7 +194,7 @@ public:
   /**
    * @brief Get the force vector
    *
-   * Returns the 3D force vector for this source:
+   * Returns the (resolved) 3D Cartesian force vector for this source:
    *
    * \f[
    * \mathbf{f}_{3D} = \begin{cases}
@@ -169,9 +229,7 @@ public:
 
 public:
 private:
-  type_real fx;                                   ///< Force in x-direction
-  type_real fy;                                   ///< Force in y-direction
-  type_real fz;                                   ///< Force in z-direction
+  ForceQuantity force_; ///< As-read force + resolved Cartesian force
   specfem::simulation::field_type wavefield_type; ///< Type of wavefield on
                                                   ///< which the source
                                                   ///< acts

@@ -94,49 +94,49 @@ specfem::io::sources_impl::read<specfem::element::dimension_tag::dim3,
           x, y, -depth_m, std::nullopt);
     }
 
-    // Moment tensor — parse as DyneCentimeter, detect Cartesian vs spherical
+    // Moment tensor — parse as DyneCentimeter, detect Cartesian vs geocentric
     using namespace specfem::units::unit_symbols;
     using specfem::units::DyneCentimeter;
     using specfem::units::NewtonMeter;
-
-    DyneCentimeter Mxx(0), Myy(0), Mzz(0), Mxy(0), Mxz(0), Myz(0);
-
-    if (fields.contains("mrr")) {
-      // Spherical labels: convert Mrr/Mtt/Mpp -> Mxx/Myy/Mzz
-      auto Mrr = specfem::io::sources_impl::get_real(fields, "mrr") * dyn_cm;
-      auto Mtt = specfem::io::sources_impl::get_real(fields, "mtt") * dyn_cm;
-      auto Mpp = specfem::io::sources_impl::get_real(fields, "mpp") * dyn_cm;
-      auto Mrt = specfem::io::sources_impl::get_real(fields, "mrt") * dyn_cm;
-      auto Mrp = specfem::io::sources_impl::get_real(fields, "mrp") * dyn_cm;
-      auto Mtp = specfem::io::sources_impl::get_real(fields, "mtp") * dyn_cm;
-
-      Mxx = Mpp;
-      Myy = Mtt;
-      Mzz = Mrr;
-      Mxy = -Mtp;
-      Mxz = Mrp;
-      Myz = -Mrt;
-    } else {
-      Mxx = specfem::io::sources_impl::get_real(fields, "mxx") * dyn_cm;
-      Myy = specfem::io::sources_impl::get_real(fields, "myy") * dyn_cm;
-      Mzz = specfem::io::sources_impl::get_real(fields, "mzz") * dyn_cm;
-      Mxy = specfem::io::sources_impl::get_real(fields, "mxy") * dyn_cm;
-      Mxz = specfem::io::sources_impl::get_real(fields, "mxz") * dyn_cm;
-      Myz = specfem::io::sources_impl::get_real(fields, "myz") * dyn_cm;
-    }
 
     // Unit conversion: dyne-cm to N-m
     auto to_Nm = [](DyneCentimeter v) {
       return specfem::units::unit_cast<NewtonMeter>(v).raw();
     };
 
-    // Construct STF and source
     auto stf_ptr = std::make_unique<specfem::source_time_functions::Heaviside>(
         nsteps, dt, hdur, tshift, 1.0, false);
 
-    auto src = std::make_shared<specfem::sources::moment_tensor<dim3>>(
-        std::move(coords), to_Nm(Mxx), to_Nm(Myy), to_Nm(Mzz), to_Nm(Mxy),
-        to_Nm(Mxz), to_Nm(Myz), std::move(stf_ptr), wavefield_type);
+    std::shared_ptr<specfem::sources::moment_tensor<dim3>> src;
+    if (fields.contains("mrr")) {
+      // Harvard-CMT (r, theta, phi) components, stored in the local geocentric
+      // frame whose axes are ordered (theta, phi, r). Kept as-read; rotated
+      // into the Cartesian mesh frame at assembly once the source is placed.
+      const auto Mrr = specfem::io::sources_impl::get_real(fields, "mrr");
+      const auto Mtt = specfem::io::sources_impl::get_real(fields, "mtt");
+      const auto Mpp = specfem::io::sources_impl::get_real(fields, "mpp");
+      const auto Mrt = specfem::io::sources_impl::get_real(fields, "mrt");
+      const auto Mrp = specfem::io::sources_impl::get_real(fields, "mrp");
+      const auto Mtp = specfem::io::sources_impl::get_real(fields, "mtp");
+      // Slots: (0,0)=Mtt (1,1)=Mpp (2,2)=Mrr (0,1)=Mtp (0,2)=Mrt (1,2)=Mrp
+      const specfem::sources::MomentTensor<
+          specfem::coordinate_systems::GeocentricFrame>
+          geocentric(to_Nm(Mtt * dyn_cm), to_Nm(Mpp * dyn_cm),
+                     to_Nm(Mrr * dyn_cm), to_Nm(Mtp * dyn_cm),
+                     to_Nm(Mrt * dyn_cm), to_Nm(Mrp * dyn_cm));
+      src = std::make_shared<specfem::sources::moment_tensor<dim3>>(
+          std::move(coords), geocentric, std::move(stf_ptr), wavefield_type);
+    } else {
+      auto Mxx = specfem::io::sources_impl::get_real(fields, "mxx") * dyn_cm;
+      auto Myy = specfem::io::sources_impl::get_real(fields, "myy") * dyn_cm;
+      auto Mzz = specfem::io::sources_impl::get_real(fields, "mzz") * dyn_cm;
+      auto Mxy = specfem::io::sources_impl::get_real(fields, "mxy") * dyn_cm;
+      auto Mxz = specfem::io::sources_impl::get_real(fields, "mxz") * dyn_cm;
+      auto Myz = specfem::io::sources_impl::get_real(fields, "myz") * dyn_cm;
+      src = std::make_shared<specfem::sources::moment_tensor<dim3>>(
+          std::move(coords), to_Nm(Mxx), to_Nm(Myy), to_Nm(Mzz), to_Nm(Mxy),
+          to_Nm(Mxz), to_Nm(Myz), std::move(stf_ptr), wavefield_type);
+    }
     src->set_starttime(starttime);
     sources.push_back(std::move(src));
   }

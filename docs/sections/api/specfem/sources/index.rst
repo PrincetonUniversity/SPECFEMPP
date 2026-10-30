@@ -22,3 +22,4 @@
 
    vector_sources/index
    tensor_sources/index
+   local_frame

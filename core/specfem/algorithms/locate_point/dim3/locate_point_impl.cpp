@@ -25,6 +25,12 @@ rough_location(const specfem::point::global_coordinates<
   type_real dist_min = std::numeric_limits<type_real>::max();
   int ispec_selected, ix_selected, iy_selected, iz_selected;
 
+  // Nearest-GLL-point search over the whole mesh: O(nspec * ngll^3) per point.
+  // This is a linear scan, wasteful on a large globe mesh, but sources and
+  // receivers are few and located once at setup, so the cost is tolerable. It
+  // only seeds the initial guess; the adjacency-restricted Newton search
+  // (get_best_candidates + get_local_coordinates) keeps the expensive inverse
+  // mapping to the handful of elements around this guess.
   for (int ispec = 0; ispec < nspec; ispec++) {
     for (int k = 0; k < ngllz; k++) {
       for (int j = 0; j < nglly; j++) {
@@ -118,7 +124,13 @@ std::tuple<type_real, type_real, type_real> get_local_coordinates(
 
   const int ngnod = coorg.extent(0);
 
-  // Initialize minimum distance squared
+  // Newton inverse mapping (physical -> reference) for a curved hex27 element:
+  // start from the nearest GLL node, take damped Newton steps built from the
+  // full ngnod-node Jacobian, clip to [-1.01, 1.01], and stop once the distance
+  // stops improving. A second refinement pass runs when the point is inside the
+  // element but still far (> 1 m). Convergence on strongly distorted elements
+  // (e.g. the globe central cube) is pinned by the globe placement tests; the
+  // 4 + 4 iteration caps are raised there only if that round-trip fails.
   type_real d_min_sq = std::numeric_limits<type_real>::max();
 
   for (int iter_loop = 0; iter_loop < 4; iter_loop++) {

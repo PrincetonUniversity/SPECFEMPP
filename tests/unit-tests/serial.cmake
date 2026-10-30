@@ -71,12 +71,29 @@ specfem_add_test(is_close_tests
             Kokkos::kokkos
 )
 
+specfem_add_test(elasticity_tensor_tests
+  SOURCES   medium/dim3/elastic/anisotropic/elasticity_tensor_tests.cpp
+            medium/dim3/elastic/anisotropic/runner.cpp
+  LIBRARIES globe_evaluator::globe_evaluator
+            specfem_environment
+            gtest_main
+            Kokkos::kokkos
+)
+
 specfem_add_test(logspace_tests
   SOURCES   utilities/logspace_tests.cpp
             utilities/logarithmic_center_tests.cpp
             utilities/band_tests.cpp
   LIBRARIES specfem::utilities
             specfem_environment
+            gtest_main
+            Kokkos::kokkos
+)
+
+specfem_add_test(source_frame_rotation_tests
+  SOURCES   source/frame_rotation_tests.cpp
+  LIBRARIES specfem::source
+            specfem::coordinate_systems
             gtest_main
             Kokkos::kokkos
 )
@@ -330,6 +347,7 @@ specfem_add_test(assembly_tests
             assembly/dim3/mesh/reference_points.cpp
             assembly/dim3/mesh/spherical_coordinates.cpp
             assembly/dim3/mesh/control_nodes.cpp
+            assembly/dim3/globe_source_placement.cpp
             assembly/dim3/jacobian_matrix/jacobian_matrix.cpp
             assembly/dim3/properties/properties.cpp
             assembly/dim3/element_types/element_context.cpp
@@ -642,6 +660,8 @@ specfem_add_test(source_class_tests
   SOURCES   source/source.cpp
             source/base_source_tests.cpp
             source/typed_source_tests.cpp
+            source/moment_tensor_resolution_tests.cpp
+            source/force_resolution_tests.cpp
   LIBRARIES source_class
             source_time_functions
             specfem_environment
@@ -660,6 +680,8 @@ specfem_add_test(source_time_function_tests
 specfem_add_test(coordinate_systems_tests
   SOURCES   coordinate_systems/utm_tests.cpp
             coordinate_systems/geocentric_tests.cpp
+            coordinate_systems/basis_rotation_tests.cpp
+            coordinate_systems/east_north_up_tests.cpp
   LIBRARIES specfem::coordinate_systems
             gtest_main
 )
