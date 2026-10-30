@@ -454,7 +454,7 @@ end module smooth_etopo5_par
       ! Berkeley smooth topography
       call read_etopo5_filtre(ibathy_topo)
     else
-      ! read/save *.dat/*.bin topo file on main proc
+      ! read/save .dat or .bin topo file on main proc
       if (ending == '.dat') then
         call read_topo_bathy_file_dat_text(ibathy_topo)
       else
