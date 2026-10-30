@@ -175,6 +175,12 @@ specfem_add_test(datatype_operators_tests
             -lpthread -lm
 )
 
+specfem_add_test(domain_view_tests
+  SOURCES   datatype/domain_view_tests.cpp
+  LIBRARIES gtest_main
+            Kokkos::kokkos
+)
+
 specfem_add_test(fortranio_test
   SOURCES   fortran_io/fortranio_tests.cpp
   LIBRARIES gtest_main
