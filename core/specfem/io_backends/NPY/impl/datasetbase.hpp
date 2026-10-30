@@ -20,7 +20,15 @@ protected:
       : data_path(folder_path / boost::filesystem::path(name + ".npy")),
         dims(dims) {}
 
-  template <typename value_type> void write(const value_type *data) const {
+  /**
+   * @brief Write a contiguous buffer as an NPY array
+   *
+   * @tparam value_type Element type
+   * @param data Buffer holding the dataset's elements
+   * @param fortran_order Whether the buffer is column-major
+   */
+  template <typename value_type>
+  void write(const value_type *data, const bool fortran_order) const {
     // Delete the file if it exists
     if (boost::filesystem::exists(data_path)) {
       std::ostringstream oss;
@@ -41,7 +49,7 @@ protected:
       total_elements *= dims[i];
     }
 
-    NPYString header = create_npy_header<value_type>(dims);
+    NPYString header = create_npy_header<value_type>(dims, fortran_order);
     file.write(&header[0], header.size());
     file.write(reinterpret_cast<const char *>(data),
                total_elements * sizeof(value_type));
@@ -56,8 +64,9 @@ protected:
    * which holds process-local pointers.
    *
    * @param data Strings to write
+   * @param fortran_order Whether the buffer is column-major
    */
-  void write(const std::string *data) const {
+  void write(const std::string *data, const bool fortran_order) const {
     if (boost::filesystem::exists(data_path)) {
       std::ostringstream oss;
       oss << "WARNING : File " << data_path << " already exists. Deleting it.";
@@ -81,8 +90,8 @@ protected:
     const std::vector<char> records =
         pack_string_records(data, total_elements, width);
 
-    NPYString header = create_npy_header(dims, map_type<std::string>(), width,
-                                         /*fortran_order=*/true);
+    NPYString header =
+        create_npy_header(dims, map_type<std::string>(), width, fortran_order);
     file.write(&header[0], header.size());
     file.write(records.data(), records.size());
 
@@ -103,7 +112,15 @@ protected:
       : data_path(folder_path / boost::filesystem::path(name + ".npy")),
         dims(dims) {}
 
-  template <typename value_type> void read(value_type *data) const {
+  /**
+   * @brief Read an NPY array into a contiguous buffer
+   *
+   * @tparam value_type Element type
+   * @param data Buffer receiving the dataset's elements
+   * @param fortran_order Whether the buffer is column-major
+   */
+  template <typename value_type>
+  void read(value_type *data, const bool fortran_order) const {
     std::ifstream file(data_path.string(), std::ios::in | std::ios::binary);
     if (!file.is_open()) {
       std::ostringstream oss;
@@ -118,7 +135,8 @@ protected:
       total_elements *= dims[i];
     }
 
-    std::vector<size_t> shape = parse_npy_header<value_type>(file);
+    const NPYHeader header = parse_npy_header<value_type>(file);
+    const std::vector<size_t> &shape = header.shape;
     if (rank != shape.size()) {
       std::ostringstream oss;
       oss << "ERROR : Rank mismatch between dataset and file";
@@ -132,6 +150,7 @@ protected:
         throw std::runtime_error(oss.str());
       }
     }
+    check_fortran_order(header, fortran_order, data_path.string());
 
     file.read(reinterpret_cast<char *>(data),
               total_elements * sizeof(value_type));
@@ -143,8 +162,9 @@ protected:
    * @brief Read a NumPy byte-string (`|S<n>`) array into strings
    *
    * @param data Output strings
+   * @param fortran_order Whether the buffer is column-major
    */
-  void read(std::string *data) const {
+  void read(std::string *data, const bool fortran_order) const {
     std::ifstream file(data_path.string(), std::ios::in | std::ios::binary);
     if (!file.is_open()) {
       std::ostringstream oss;
@@ -163,6 +183,7 @@ protected:
       oss << "ERROR : Dimension mismatch between dataset and file";
       throw std::runtime_error(oss.str());
     }
+    check_fortran_order(header, fortran_order, data_path.string());
 
     std::vector<char> records(total_elements * header.item_size);
     file.read(records.data(), records.size());

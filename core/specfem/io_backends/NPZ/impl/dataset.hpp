@@ -1,6 +1,7 @@
 #pragma once
 
 #include "file.hpp"
+#include "specfem/io_backends/NPY/impl/storage_order.hpp"
 #include <string>
 
 namespace specfem::io_backends::impl::NPZ {
@@ -40,6 +41,10 @@ public:
   using value_type =
       typename ViewType::non_const_value_type;      ///< Underlying type
   using MemSpace = typename ViewType::memory_space; ///< Memory space
+
+  /// Storage order declared in the file header (see NPY::is_fortran_order)
+  constexpr static bool fortran_order =
+      specfem::io_backends::impl::NPY::is_fortran_order<ViewType>();
 
   /**
    * @name Constructors

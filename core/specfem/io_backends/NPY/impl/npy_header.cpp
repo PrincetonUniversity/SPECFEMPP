@@ -104,11 +104,6 @@ NPYHeader read_npy_header(std::ifstream &file, const char type_char) {
   loc1 += 16;
   bool fortran_order = (header.substr(loc1, 4) == "True" ? true : false);
 
-  if (!fortran_order) {
-    throw std::runtime_error(
-        "parse_npy_header: only fortran_order=True is supported");
-  }
-
   // shape
   loc1 = header.find("(");
   loc2 = header.find(")");
@@ -147,16 +142,30 @@ NPYHeader read_npy_header(std::ifstream &file, const char type_char) {
   loc2 = str_ws.find("'");
   size_t byte_size = atoi(str_ws.substr(0, loc2).c_str());
 
-  return { shape, byte_size };
+  return { shape, byte_size, fortran_order };
 }
 
-std::vector<size_t> parse_npy_header(std::ifstream &file, const char type_char,
-                                     const size_t type_size) {
+NPYHeader parse_npy_header(std::ifstream &file, const char type_char,
+                           const size_t type_size) {
   const NPYHeader header = read_npy_header(file, type_char);
   if (header.item_size != type_size) {
     throw std::runtime_error("parse_npy_header: byte size mismatch");
   }
-  return header.shape;
+  return header;
+}
+
+void check_fortran_order(const NPYHeader &header, const bool fortran_order,
+                         const std::string &path) {
+  if (header.shape.size() > 1 && header.fortran_order != fortran_order) {
+
+    const auto order_name = [](const bool is_fortran) {
+      return is_fortran ? "Fortran (column-major)" : "C (row-major)";
+    };
+    throw std::runtime_error("ERROR : " + path + " is stored in " +
+                             order_name(header.fortran_order) +
+                             " order, but the view it is read into is " +
+                             order_name(fortran_order));
+  }
 }
 
 size_t string_record_width(const std::string *data, const size_t count) {
