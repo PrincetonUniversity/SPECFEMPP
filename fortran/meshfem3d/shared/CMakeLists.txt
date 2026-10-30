@@ -41,6 +41,7 @@ set(MESHFEM3D_SHARED_MODULE
   hex_nodes.f90
   heap_sort.f90
   init_openmp.F90
+  injection_sides.f90
   lagrange_poly.f90
   merge_sort.f90
   netlib_specfun_erf.f90
