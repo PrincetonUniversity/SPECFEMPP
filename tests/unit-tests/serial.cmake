@@ -268,6 +268,7 @@ specfem_add_test(mesh_dim3_tests
             mesh/dim3/globe_reader.cpp
             mesh/dim3/globe_checks.cpp
             mesh/dim3/model_aniso.cpp
+            mesh/dim3/anisotropic_materials.cpp
             mesh/dim3/test.cpp
   LIBRARIES gtest_main
             specfem::mesh
@@ -347,6 +348,7 @@ specfem_add_test(assembly_tests
             assembly/dim3/element_types/element_context.cpp
             assembly/dim3_globe/assembly.cpp
             assembly/dim3/attenuation/recompute.cpp
+            assembly/dim3/attenuation/cartesian_setup.cpp
             assembly/dim3/attenuation/globe_attenuation.cpp
             assembly/dim3/element_intersections/globe_fluid_solid.cpp
   LIBRARIES specfem::mesh

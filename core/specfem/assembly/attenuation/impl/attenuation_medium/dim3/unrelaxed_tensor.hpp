@@ -12,10 +12,19 @@ struct AttenuationElementContext {
   specfem::element::region_tag region =
       specfem::element::region_tag::crust_mantle;
   int idoubling = static_cast<int>(specfem::globe::radial_flag::mantle_normal);
+  /// Cartesian (non-globe) mesh: z is the radial direction, so the shift is
+  /// applied without rotation and region/idoubling are ignored.
+  bool cartesian = false;
   /** @brief Whether the element is a nonphysical central-cube placeholder. */
   bool fictitious() const {
-    return idoubling ==
-           static_cast<int>(specfem::globe::radial_flag::fictitious_cube);
+    return !cartesian &&
+           idoubling ==
+               static_cast<int>(specfem::globe::radial_flag::fictitious_cube);
+  }
+  /** @brief Whether the shift needs the element's spherical coordinates. */
+  bool needs_spherical_coordinates() const {
+    return !cartesian && !fictitious() &&
+           region != specfem::element::region_tag::inner_core;
   }
 };
 
@@ -31,12 +40,15 @@ template <typename ElementTypes> struct AssemblyAttenuationContext {
   /**
    * @brief Return the metadata of a global element index.
    * @param ispec Global element index.
-   * @return The element's region and radial zone, or the defaults when the
-   * mesh carries no globe element context.
+   * @return The element's region and radial zone, or Cartesian metadata when
+   * the mesh carries no globe element context.
    */
   AttenuationElementContext operator()(const int ispec) const {
-    if (!element_types.has_element_context())
-      return {};
+    if (!element_types.has_element_context()) {
+      AttenuationElementContext context;
+      context.cartesian = true;
+      return context;
+    }
     return { element_types.get_region_tag(ispec),
              element_types.idoubling(ispec) };
   }
@@ -47,42 +59,29 @@ AssemblyAttenuationContext(const ElementTypes &)
     -> AssemblyAttenuationContext<ElementTypes>;
 
 /**
- * @brief Shift radial shear moduli while preserving Love's eta.
+ * @brief Shift the shear moduli of a tensor given in a radial frame (third
+ *        axis radial) while preserving Love's eta.
  *
- * Implements the radial shift shared by globe's prepare_attenuation.f90
+ * Implements the Love-parameter update of globe's prepare_attenuation.f90
  * (reference-to-relaxed scale minus one) and prepare_elastic_elements.F90
- * (one_minus_sum_beta minus one). Call once for each stage.
- * An exactly zero shift returns the input without rotation round-off.
+ * (one_minus_sum_beta minus one), without the frame rotation. Cartesian
+ * meshes use it directly with z as the radial axis.
  *
  * @tparam StorageType Runtime storage precision (defaults to ValueType).
+ * @tparam Frame Coordinate frame of the tensor.
  * @tparam ValueType Scalar coefficient type.
- * @param global Cartesian stiffness tensor, after Love-to-cij conversion.
- * @param theta Geocentric colatitude in radians.
- * @param phi Geocentric longitude in radians.
+ * @param radial Stiffness tensor whose third axis is radial.
  * @param minus_sum_beta Relative shear modulus increment.
- * @param radial_c44 Optional final radial c44, before the return rotation.
- * @return Shifted Cartesian stiffness tensor.
+ * @return Shifted stiffness tensor in the same frame.
  */
-template <typename StorageType = void, typename ValueType>
-auto shift_unrelaxed_tensor(
-    const specfem::medium_physics::ElasticityTensor<
-        specfem::coordinate_systems::CartesianFrame, ValueType> &global,
-    const ValueType theta, const ValueType phi, const ValueType minus_sum_beta,
-    ValueType *radial_c44 = nullptr) {
+template <typename StorageType = void, typename Frame, typename ValueType>
+auto shift_radial_tensor(
+    specfem::medium_physics::ElasticityTensor<Frame, ValueType> radial,
+    const ValueType minus_sum_beta) {
   using Storage =
       std::conditional_t<std::is_void_v<StorageType>, ValueType, StorageType>;
-  if (minus_sum_beta == 0 && radial_c44 == nullptr) {
-    return global;
-  }
-  using Cartesian = specfem::coordinate_systems::CartesianFrame;
-  using Geocentric = specfem::coordinate_systems::GeocentricFrame;
-  auto radial = specfem::medium_physics::rotate(
-      global,
-      specfem::coordinate_systems::rotation_matrix<Geocentric, Cartesian>(theta,
-                                                                          phi));
   if (minus_sum_beta == 0) {
-    *radial_c44 = radial(3, 3);
-    return global;
+    return radial;
   }
   const auto a = (3 * radial(0, 0) + 3 * radial(1, 1) + 2 * radial(0, 1) +
                   4 * radial(5, 5)) /
@@ -105,8 +104,48 @@ auto shift_unrelaxed_tensor(
   radial(3, 3) += muv;
   radial(4, 4) += muv;
   radial(5, 5) += muh;
+  return radial;
+}
+
+/**
+ * @brief Shift radial shear moduli while preserving Love's eta.
+ *
+ * Rotates to the local radial frame, applies shift_radial_tensor() and
+ * rotates back, as globe's rotate_tensor_global_to_radial /
+ * rotate_tensor_radial_to_global round trip. Call once for each setup stage.
+ * An exactly zero shift returns the input without rotation round-off.
+ *
+ * @tparam StorageType Runtime storage precision (defaults to ValueType).
+ * @tparam ValueType Scalar coefficient type.
+ * @param global Cartesian stiffness tensor, after Love-to-cij conversion.
+ * @param theta Geocentric colatitude in radians.
+ * @param phi Geocentric longitude in radians.
+ * @param minus_sum_beta Relative shear modulus increment.
+ * @param radial_c44 Optional final radial c44, before the return rotation.
+ * @return Shifted Cartesian stiffness tensor.
+ */
+template <typename StorageType = void, typename ValueType>
+auto shift_unrelaxed_tensor(
+    const specfem::medium_physics::ElasticityTensor<
+        specfem::coordinate_systems::CartesianFrame, ValueType> &global,
+    const ValueType theta, const ValueType phi, const ValueType minus_sum_beta,
+    ValueType *radial_c44 = nullptr) {
+  if (minus_sum_beta == 0 && radial_c44 == nullptr) {
+    return global;
+  }
+  using Cartesian = specfem::coordinate_systems::CartesianFrame;
+  using Geocentric = specfem::coordinate_systems::GeocentricFrame;
+  const auto radial = shift_radial_tensor<StorageType>(
+      specfem::medium_physics::rotate(
+          global,
+          specfem::coordinate_systems::rotation_matrix<Geocentric, Cartesian>(
+              theta, phi)),
+      minus_sum_beta);
   if (radial_c44 != nullptr)
     *radial_c44 = radial(3, 3);
+  if (minus_sum_beta == 0) {
+    return global;
+  }
   return specfem::medium_physics::rotate(
       radial,
       specfem::coordinate_systems::rotation_matrix<Cartesian, Geocentric>(theta,

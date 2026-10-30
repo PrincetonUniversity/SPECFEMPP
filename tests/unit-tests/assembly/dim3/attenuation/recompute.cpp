@@ -32,6 +32,13 @@ const auto mantle = [](int) {
   return specfem::assembly::impl::AttenuationElementContext{};
 };
 
+/** @brief Cartesian (non-globe) metadata for every element. */
+const auto cartesian = [](int) {
+  specfem::assembly::impl::AttenuationElementContext context;
+  context.cartesian = true;
+  return context;
+};
+
 constexpr int nspec = 2;
 constexpr int ngll = 3;
 constexpr int N_SLS = specfem::constants::N_SLS;
@@ -563,4 +570,80 @@ TEST(AnisotropicAttenuationRecompute, SkipsFictitiousInnerCoreElements) {
   for (int j = 0; j < test::N_SLS; ++j)
     EXPECT_NEAR(medium.h_mu_relaxation_rate(0, 0, 0, 0, j), 0., 0.);
   EXPECT_GT(medium.h_mu_relaxation_rate(1, 0, 0, 0, 0), 0.);
+}
+
+TEST(AnisotropicAttenuationRecompute, CartesianMatchesGlobeAtNorthPole) {
+  namespace test = attenuation_recompute_test_impl;
+  const test::Inputs inputs;
+  const auto medium = test::make_anisotropic_medium();
+  const test::AnisotropicProps props;
+  const auto views = props.views();
+  test::Radial radial(3300., 8000., 8200., 4400., 4600., 0.9);
+  radial(4, 4) *= 1.2;
+  radial(0, 3) = 1.1e9;
+  radial(3, 4) = 0.4e9;
+  double original[21];
+  for (int k = 0; k < 21; ++k) {
+    const type_real value = radial[k];
+    original[k] = value;
+    Kokkos::deep_copy(views[k], value);
+  }
+  // No spherical coordinates: Cartesian z is the radial axis.
+  medium.recompute(props, inputs.fc, inputs.f0, inputs.band, inputs.tau_sigma,
+                   test::SphericalView{}, test::cartesian);
+  const double tolerance = std::is_same_v<type_real, double> ? 1.e-10 : 2.e-6;
+  const double rate_tolerance =
+      std::is_same_v<type_real, double> ? 1.e-10 : 2.e-3;
+  for (int i = 0; i < test::nspec; ++i)
+    for (int z = 0; z < test::ngll; ++z)
+      for (int y = 0; y < test::ngll; ++y)
+        for (int x = 0; x < test::ngll; ++x) {
+          // At the north pole globe's radial frame is the Cartesian frame.
+          double expected[21], muv, rates[test::N_SLS];
+          globe_evaluator_attenuate_cij(
+              0., 0., inputs.band.min.raw(), inputs.band.max.raw(),
+              medium.h_Qmu(i, z, y, x), inputs.fc.raw(), inputs.f0.raw(),
+              original, expected, &muv, rates);
+          for (int k = 0; k < 21; ++k)
+            EXPECT_NEAR(views[k](i, z, y, x), expected[k],
+                        tolerance * radial(0, 0));
+          EXPECT_NEAR(medium.h_kappa_scale(i, z, y, x), 1., 0.);
+          for (int j = 0; j < test::N_SLS; ++j) {
+            EXPECT_NEAR(medium.h_mu_relaxation_rate(i, z, y, x, j), rates[j],
+                        rate_tolerance * std::abs(rates[j]));
+            EXPECT_NEAR(medium.h_kappa_relaxation_rate(i, z, y, x, j), 0., 0.);
+          }
+        }
+}
+
+TEST(AttenuationRecompute, PerGllQ9999IsLimitedOnCartesianMeshes) {
+  namespace test = attenuation_recompute_test_impl;
+  const test::Inputs inputs;
+  const auto iso = test::make_medium(true);
+  const auto iso_props = test::make_props();
+  const auto aniso = test::make_anisotropic_medium();
+  const test::AnisotropicProps aniso_props;
+  const auto views = aniso_props.views();
+  for (int k = 0; k < 21; ++k)
+    Kokkos::deep_copy(views[k], static_cast<type_real>(1.e9 * (k + 1)));
+  // As in SPECFEM3D's get_attenuation_model, 9999 is not a per-GLL flag: it
+  // is limited to 9000 like any other Q above the maximum. Only materials
+  // with both Q at 9999 skip attenuation, in the mesh reader.
+  for (const auto &q : { iso.h_Qkappa, iso.h_Qmu, aniso.h_Qmu })
+    q(0, 0, 0, 0) = 9999.;
+  iso.recompute(iso_props, inputs.fc, inputs.f0, inputs.band, inputs.tau_sigma,
+                test::SphericalView{}, test::cartesian);
+  aniso.recompute(aniso_props, inputs.fc, inputs.f0, inputs.band,
+                  inputs.tau_sigma, test::SphericalView{}, test::cartesian);
+
+  EXPECT_NEAR(iso.h_Qkappa(0, 0, 0, 0), 9000., 0.);
+  EXPECT_NEAR(iso.h_Qmu(0, 0, 0, 0), 9000., 0.);
+  EXPECT_NEAR(aniso.h_Qmu(0, 0, 0, 0), 9000., 0.);
+  EXPECT_NE(iso.h_mu_scale(0, 0, 0, 0), 1.);
+  EXPECT_NE(views[0](0, 0, 0, 0), static_cast<type_real>(1.e9));
+  for (int j = 0; j < test::N_SLS; ++j) {
+    EXPECT_NE(iso.h_kappa_relaxation_rate(0, 0, 0, 0, j), 0.);
+    EXPECT_NE(iso.h_mu_relaxation_rate(0, 0, 0, 0, j), 0.);
+    EXPECT_NE(aniso.h_mu_relaxation_rate(0, 0, 0, 0, j), 0.);
+  }
 }

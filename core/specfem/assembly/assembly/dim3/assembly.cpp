@@ -1,5 +1,6 @@
 #include "specfem/assembly/assembly.hpp"
 #include "globe_properties.hpp"
+#include "setup.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/io.hpp"
 #include "specfem/macros/tag_dispatch.hpp"
@@ -7,20 +8,19 @@
 #include "specfem/mpi.hpp"
 #include "specfem/tag_dispatch/for_each.hpp"
 
-namespace specfem::assembly::dim3_impl {
-
-bool has_deferred_properties(
+bool specfem::assembly::dim3_impl::has_deferred_properties(
     const specfem::mesh::cartesian3d_mesh &,
     const std::shared_ptr<specfem::io::reader> &property_reader) {
   return property_reader != nullptr;
 }
 
-bool has_deferred_properties(const specfem::mesh::globe3d_mesh &,
-                             const std::shared_ptr<specfem::io::reader> &) {
+bool specfem::assembly::dim3_impl::has_deferred_properties(
+    const specfem::mesh::globe3d_mesh &,
+    const std::shared_ptr<specfem::io::reader> &) {
   return true;
 }
 
-void read_deferred_properties(
+void specfem::assembly::dim3_impl::read_deferred_properties(
     const specfem::mesh::cartesian3d_mesh &,
     specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
         &assembly,
@@ -30,7 +30,42 @@ void read_deferred_properties(
   }
 }
 
-void read_deferred_properties(
+void specfem::assembly::dim3_impl::apply_material_attenuation(
+    const specfem::mesh::cartesian3d_mesh &mesh,
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
+        &assembly) {
+  // Isotropic materials already carry unrelaxed moduli; anisotropic ones are
+  // shifted here, in the Cartesian frame, once the properties are filled.
+  if (!mesh.attenuation.enabled)
+    return;
+  using Medium = specfem::element::medium_tag;
+  using Property = specfem::element::property_tag;
+  const auto &attenuation =
+      assembly.attenuation
+          .get_container<Medium::elastic, Property::anisotropic>();
+  if (attenuation.element_range.size() == 0)
+    return;
+  // Shallow copy: the views alias the assembly's anisotropic container, the
+  // only one recompute() modifies.
+  auto anisotropic_properties =
+      assembly.properties
+          .get_container<Medium::elastic, Property::anisotropic>();
+  attenuation.recompute(anisotropic_properties, assembly.attenuation.fc,
+                        assembly.attenuation.f0, assembly.attenuation.band,
+                        assembly.attenuation.tau_sigma,
+                        assembly.mesh.h_spherical_coord,
+                        specfem::assembly::impl::AssemblyAttenuationContext{
+                            assembly.element_types });
+  anisotropic_properties.copy_to_device();
+}
+
+void specfem::assembly::dim3_impl::apply_material_attenuation(
+    const specfem::mesh::globe3d_mesh &,
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim3> &) {
+  // Globe properties are always deferred to the model oracle or reader.
+}
+
+void specfem::assembly::dim3_impl::read_deferred_properties(
     const specfem::mesh::globe3d_mesh &mesh,
     specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
         &assembly,
@@ -43,7 +78,7 @@ void read_deferred_properties(
 }
 
 specfem::assembly::element_types<specfem::element::dimension_tag::dim3>
-make_element_types(
+specfem::assembly::dim3_impl::make_element_types(
     const specfem::mesh::cartesian3d_mesh &mesh,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
         &assembly_mesh) {
@@ -51,7 +86,7 @@ make_element_types(
 }
 
 specfem::assembly::element_types<specfem::element::dimension_tag::dim3>
-make_element_types(
+specfem::assembly::dim3_impl::make_element_types(
     const specfem::mesh::globe3d_mesh &mesh,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
         &assembly_mesh) {
@@ -61,20 +96,20 @@ make_element_types(
 
 specfem::mesh::control_nodes<
     specfem::element::dimension_tag::dim3>::CoordinatesViewType
-reference_anchor_coordinates(const specfem::mesh::cartesian3d_mesh &) {
+specfem::assembly::dim3_impl::reference_anchor_coordinates(
+    const specfem::mesh::cartesian3d_mesh &) {
   return {};
 }
 
 specfem::mesh::control_nodes<
     specfem::element::dimension_tag::dim3>::CoordinatesViewType
-reference_anchor_coordinates(const specfem::mesh::globe3d_mesh &mesh) {
+specfem::assembly::dim3_impl::reference_anchor_coordinates(
+    const specfem::mesh::globe3d_mesh &mesh) {
   if (!mesh.globe.has_reference_geometry) {
     return {};
   }
   return mesh.globe.reference_coordinates;
 }
-
-} // namespace specfem::assembly::dim3_impl
 
 template <specfem::simulation::model ModelTag>
 specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
@@ -191,6 +226,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
   if (has_deferred_properties) {
     specfem::assembly::dim3_impl::read_deferred_properties(mesh, *this,
                                                            property_reader);
+  } else {
+    specfem::assembly::dim3_impl::apply_material_attenuation(mesh, *this);
   }
 
   this->info = { this->mesh, this->properties, this->element_types,
