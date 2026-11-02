@@ -25,7 +25,7 @@ dispersion factor, fitted with ``NelderMeadSimplex``.
 
 All 3D meshes, globe and non-globe, use ``specfem::attenuation::globe``
 (see :doc:`globe`), which follows SPECFEM3D_GLOBE: an unnormalized Maxwell model
-fitted in double precision with ``Fminsearch``,
+fitted in double precision with ``NelderMeadSimplex`` and ``NelderMeadOptions<N, double, true>``,
 ``one_minus_sum_beta = 1 + sum(tau_epsilon / tau_sigma - 1)``, Liu's
 reference-to-relaxed scale, and relaxation rates that divide the unrelaxed
 modulus by ``one_minus_sum_beta``. Globe has no bulk attenuation; non-globe 3D

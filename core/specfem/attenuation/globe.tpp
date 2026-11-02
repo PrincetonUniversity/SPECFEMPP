@@ -87,7 +87,7 @@ specfem::attenuation::globe::compute_tau_eps(
     objective.tau_sigma(i) = tau_sigma(i);
   }
 
-  specfem::optimization::FminsearchOptions<N_SLS> options;
+  specfem::optimization::NelderMeadOptions<N_SLS, double, true> options;
   options.x0 = decltype(options.x0)("tau_eps_init");
   for (int i = 0; i < N_SLS; ++i) {
     const double sigma = objective.tau_sigma(i);
@@ -95,7 +95,7 @@ specfem::attenuation::globe::compute_tau_eps(
   }
 
   const auto result = specfem::optimization::optimize(
-      specfem::optimization::Fminsearch{}, objective, options);
+      specfem::optimization::NelderMeadSimplex{}, objective, options);
   if (!result.converged) {
     std::ostringstream message;
     message << "Attenuation Q fit did not converge for Q = " << q

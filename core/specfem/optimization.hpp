@@ -128,6 +128,5 @@ OptimizationResult<N> optimize(AlgorithmTag tag, Func &&objective,
 } // namespace specfem
 
 // Include algorithm implementations
-#include "optimization/fminsearch.hpp"
 #include "optimization/nelder_mead_simplex.hpp"
 #include "optimization/steepest_descent.hpp"

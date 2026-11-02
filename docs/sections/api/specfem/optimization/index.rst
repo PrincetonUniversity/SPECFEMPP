@@ -23,8 +23,6 @@ Algorithms
 
 .. doxygenstruct:: specfem::optimization::NelderMeadSimplex
 
-.. doxygenstruct:: specfem::optimization::Fminsearch
-
 .. doxygenstruct:: specfem::optimization::SteepestDescent
 
 
@@ -32,5 +30,4 @@ Algorithms
     :maxdepth: 1
 
     neldermeadsimplex
-    fminsearch
     steepestdescent

@@ -21,8 +21,9 @@ namespace attenuation {
  *
  * Differences from those routines: the Maxwell real part is unnormalized,
  * \f$A=1-N+\sum_i\ldots\f$; the fit runs in double precision with
- * specfem::optimization::Fminsearch; Q is limited to 9000 and bucketed as in
- * globe's model_attenuation_storage; one_minus_sum_beta is
+ * specfem::optimization::NelderMeadSimplex with GLOBE compatibility; Q is
+ * limited to 9000 and bucketed as in globe's model_attenuation_storage;
+ * one_minus_sum_beta is
  * \f$1+\sum_i(\tau_{\epsilon_i}/\tau_{\sigma_i}-1)\f$; and the dispersion
  * factor is split into a reference-to-relaxed scale (Liu et al. 1976) and the
  * relaxed-to-unrelaxed ratio.
@@ -148,8 +149,8 @@ template <int N_SLS> struct AttenuationObjective {
  * attenuation_invert_by_simplex.
  *
  * Uses 100 log-spaced frequencies, the initial guess
- * \f$\tau_\sigma(1+2/Q)\f$ and specfem::optimization::Fminsearch, all in double
- * precision regardless of type_real.
+ * \f$\tau_\sigma(1+2/Q)\f$ and specfem::optimization::NelderMeadSimplex with
+ * GLOBE compatibility, all in double precision regardless of type_real.
  *
  * @tparam N_SLS Number of standard linear solids (> 1)
  * @tparam T Unit of the band (frequency or period)
