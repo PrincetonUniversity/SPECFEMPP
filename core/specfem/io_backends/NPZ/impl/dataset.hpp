@@ -1,7 +1,6 @@
 #pragma once
 
 #include "file.hpp"
-#include "specfem/io_backends/NPY/impl/storage_order.hpp"
 #include <string>
 
 namespace specfem::io_backends::impl::NPZ {

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "datasetbase.hpp"
-#include "storage_order.hpp"
 #include <boost/filesystem.hpp>
 #include <string>
 
