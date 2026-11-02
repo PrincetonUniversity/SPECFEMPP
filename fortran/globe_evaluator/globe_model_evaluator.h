@@ -182,6 +182,15 @@ int globe_evaluator_prem_reference(double r, int idoubling, int iregion_code,
                                 double *vp_iso, double *vs_iso, double *qkappa,
                                 double *qmu);
 
+/*
+ * TEST ONLY -- rotate radial TISO parameters with globe's double-precision
+ * reference routine. `cij` must provide 21 entries in the order documented for
+ * globe_evaluator_get_element.
+ */
+void globe_evaluator_rotate_tiso_to_cij(double theta, double phi, double rho,
+                                        double vpv, double vph, double vsv,
+                                        double vsh, double eta, double *cij);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
