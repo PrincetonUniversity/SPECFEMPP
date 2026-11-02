@@ -365,11 +365,18 @@ SurfaceIntegral check_surface(
         for (int d = 0; d < 3; ++d) {
           position[d] = mesh.h_coord(ispec, iz, iy, ix, d);
           normal[d] = point.face_normal(d);
+          // The derivative of a constant is zero. Subtract the local
+          // position in double precision before multiplying to avoid
+          // cancellation of Earth-scale coordinates in the reference metric.
           for (int k = 0; k < ngll; ++k) {
             tangent_xi[d] +=
-                mesh.h_hprime(ix, k) * mesh.h_coord(ispec, iz, iy, k, d);
+                static_cast<double>(mesh.h_hprime(ix, k)) *
+                (static_cast<double>(mesh.h_coord(ispec, iz, iy, k, d)) -
+                 position[d]);
             tangent_eta[d] +=
-                mesh.h_hprime(iy, k) * mesh.h_coord(ispec, iz, k, ix, d);
+                static_cast<double>(mesh.h_hprime(iy, k)) *
+                (static_cast<double>(mesh.h_coord(ispec, iz, k, ix, d)) -
+                 position[d]);
           }
         }
         const auto metric = cross(tangent_xi, tangent_eta);
