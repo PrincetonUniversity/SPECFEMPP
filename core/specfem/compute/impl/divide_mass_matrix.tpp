@@ -22,7 +22,7 @@ void divide_mass_matrix_core(
 
   const int nglob = field.template get_nglob<medium_tag>();
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
   constexpr bool using_simd = false;
 #else
   constexpr bool using_simd = true;

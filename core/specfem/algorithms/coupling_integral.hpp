@@ -82,7 +82,7 @@ KOKKOS_FUNCTION void coupling_integral(
                                           transfer_function_self);
 
         PointFieldType result;
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
 #pragma unroll
 #endif
         for (int icomp = 0; icomp < ncomp; icomp++) {
@@ -90,12 +90,12 @@ KOKKOS_FUNCTION void coupling_integral(
         }
         const int &iedge = self_index_local.iedge;
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
 #pragma unroll
 #endif
         for (int iquad = 0; iquad < nquad_intersection; iquad++) {
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
 #pragma unroll
 #endif
           for (int icomp = 0; icomp < ncomp; icomp++) {

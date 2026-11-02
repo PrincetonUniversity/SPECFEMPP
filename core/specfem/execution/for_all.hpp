@@ -20,7 +20,7 @@ impl_for_all(const IndexType &index, const ClosureType &closure) {
   closure(index);
 }
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
 
 /// Base level call when running on Device execution space
 template <typename IndexType, typename ClosureType>
@@ -55,7 +55,7 @@ impl_for_all(const IndexType &index, const ClosureType &closure) {
       });
 }
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
 /// Recursive call for iterators that are not top-level policies
 /// This could be Team ThreadRangePolicy or a Tile Policy
 /// Call runs on a Device execution space
@@ -78,7 +78,7 @@ impl_for_all(const IndexType &index, const ClosureType &closure) {
 
 #endif
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
 
 /// Recursive call for top-level policies that are based on Kokkos policies
 /// This could be a Team policy, Range policy, MDRange policy, etc.
@@ -121,7 +121,7 @@ impl_for_all(const IndexType &index, const ClosureType &closure) {
       });
 }
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
 
 /// Recursive call for top-level policies that are based on Kokkos policies
 /// This could be a Team policy, Range policy, MDRange policy, etc.

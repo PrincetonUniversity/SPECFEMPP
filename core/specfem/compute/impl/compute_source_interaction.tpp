@@ -67,7 +67,7 @@ void compute_source_interaction_core(
 
   using simd = specfem::datatype::simd<type_real, false>;
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
   constexpr int nthreads = 32;
   constexpr int lane_size = 1;
 #else

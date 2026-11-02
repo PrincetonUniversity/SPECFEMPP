@@ -9,10 +9,12 @@ set(SPECFEM_CPU_BUILD FALSE CACHE BOOL "SPECFEM++ CPU build flag")
 set(SPECFEM_GPU_BUILD FALSE CACHE BOOL "SPECFEM++ GPU build flag")
 
 # Determine build type based on Kokkos configuration
-# GPU build: if either CUDA or HIP is enabled
+# GPU build: if CUDA, HIP, or SYCL is enabled
 if(DEFINED Kokkos_ENABLE_CUDA AND Kokkos_ENABLE_CUDA)
     set(SPECFEM_GPU_BUILD TRUE CACHE BOOL "SPECFEM++ GPU build flag" FORCE)
 elseif(DEFINED Kokkos_ENABLE_HIP AND Kokkos_ENABLE_HIP)
+    set(SPECFEM_GPU_BUILD TRUE CACHE BOOL "SPECFEM++ GPU build flag" FORCE)
+elseif(DEFINED Kokkos_ENABLE_SYCL AND Kokkos_ENABLE_SYCL)
     set(SPECFEM_GPU_BUILD TRUE CACHE BOOL "SPECFEM++ GPU build flag" FORCE)
 else()
     # CPU build: when neither CUDA nor HIP is enabled (defaults to OpenMP/Serial)
@@ -40,6 +42,8 @@ if(SPECFEM_GPU_BUILD)
         message(STATUS "  Active GPU Backend: NVIDIA CUDA")
     elseif(DEFINED Kokkos_ENABLE_HIP AND Kokkos_ENABLE_HIP)
         message(STATUS "  Active GPU Backend: AMD ROCm/HIP")
+    elseif(DEFINED Kokkos_ENABLE_SYCL AND Kokkos_ENABLE_SYCL)
+        message(STATUS "  Active GPU Backend: Intel SYCL")
     endif()
 else()
     message(STATUS "  Active CPU Backend: OpenMP/Serial (Kokkos default)")

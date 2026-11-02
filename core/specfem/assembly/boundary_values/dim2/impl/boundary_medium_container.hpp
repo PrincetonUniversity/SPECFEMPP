@@ -62,7 +62,7 @@ public:
     const int iz = index.iz;
     const int ix = index.ix;
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
 #pragma unroll
 #endif
     for (int icomp = 0; icomp < components; ++icomp) {
@@ -87,7 +87,7 @@ public:
     const int iz = index.iz;
     const int ix = index.ix;
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
 #pragma unroll
 #endif
     for (int icomp = 0; icomp < components; ++icomp) {

@@ -27,6 +27,17 @@ if (DEFINED Kokkos_ENABLE_CUDA)
     endif()
 endif()
 
+# Kokkos enables oneDPL by default for SYCL, but oneDPL is optional for
+# SPECFEM++ and is not required by any of the kernels in this project. Keep it
+# opt-in so a SYCL build does not require a separate oneDPL installation. Users
+# can enable it explicitly with -DKokkos_ENABLE_ONEDPL=ON and provide
+# Kokkos_ONEDPL_DIR or CMAKE_PREFIX_PATH when needed.
+if (DEFINED Kokkos_ENABLE_SYCL AND Kokkos_ENABLE_SYCL AND
+    NOT DEFINED Kokkos_ENABLE_ONEDPL)
+    set(Kokkos_ENABLE_ONEDPL OFF CACHE BOOL
+        "Enable oneDPL for Kokkos SYCL algorithms" FORCE)
+endif()
+
 # Install Kokkos as a dependency
 # Set Kokkos options before fetching
 set(KOKKOS_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)

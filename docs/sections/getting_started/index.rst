@@ -169,6 +169,13 @@ Below are the recommended build recipes for different architectures:
 
     # cd into SPECFEM root directory
     cmake -S . -B build -D CMAKE_BUILD_TYPE=Release -D SPECFEM_BUILD_TESTS=ON -D Kokkos_ENABLE_CUDA=ON -D Kokkos_ARCH_<architecture>=ON
+
+For Intel GPUs, use an Intel oneAPI SYCL compiler and enable the Kokkos SYCL
+backend:
+
+.. code-block:: bash
+
+    cmake -S . -B build -D CMAKE_BUILD_TYPE=Release -D CMAKE_CXX_COMPILER=icpx -D SPECFEM_BUILD_TESTS=ON -D Kokkos_ENABLE_SYCL=ON -D Kokkos_ARCH_INTEL_GPU=ON
     cmake --build build
 
 .. note::
