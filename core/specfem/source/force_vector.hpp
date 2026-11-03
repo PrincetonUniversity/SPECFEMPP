@@ -87,7 +87,7 @@ rotate(const ForceVector<SourceFrame> &input,
   for (int row = 0; row < 3; ++row) {
     double sum = 0.0;
     for (int inner = 0; inner < 3; ++inner) {
-      sum += rotation[row][inner] * static_cast<double>(input[inner]);
+      sum += rotation(row, inner) * static_cast<double>(input[inner]);
     }
     output[row] = static_cast<type_real>(sum);
   }
