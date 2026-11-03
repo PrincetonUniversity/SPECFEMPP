@@ -21,13 +21,33 @@ void specfem::io_backends::impl::NPZ::File<specfem::io::write>::write(
 
   stream.seekp(global_header_offset, std::ios::beg);
 
-  NPYString npy_header =
-      specfem::io_backends::impl::NPY::create_npy_header<value_type>(dims);
-  size_t nbytes = nels * sizeof(value_type) + npy_header.size();
+  // Strings are stored as NumPy byte-string records; copying the std::string
+  // object representation would store process-local pointers.
+  NPYString npy_header;
+  std::vector<char> string_records;
+  const char *payload = nullptr;
+  size_t payload_size = 0;
+  if constexpr (std::is_same_v<value_type, std::string>) {
+    const size_t width =
+        specfem::io_backends::impl::NPY::string_record_width(data, nels);
+    string_records =
+        specfem::io_backends::impl::NPY::pack_string_records(data, nels, width);
+    npy_header = specfem::io_backends::impl::NPY::create_npy_header(
+        dims, specfem::io_backends::impl::NPY::map_type<std::string>(), width,
+        /*fortran_order=*/true);
+    payload = string_records.data();
+    payload_size = string_records.size();
+  } else {
+    npy_header =
+        specfem::io_backends::impl::NPY::create_npy_header<value_type>(dims);
+    payload = reinterpret_cast<const char *>(data);
+    payload_size = nels * sizeof(value_type);
+  }
+  size_t nbytes = payload_size + npy_header.size();
 
   // get the CRC of the data to be added
   uint32_t crc = crc32(0L, (uint8_t *)&npy_header[0], npy_header.size());
-  crc = crc32(crc, (uint8_t *)data, nels * sizeof(value_type));
+  crc = crc32(crc, (const uint8_t *)payload, payload_size);
 
   // build the local header
   NPYString local_header;
@@ -82,7 +102,7 @@ void specfem::io_backends::impl::NPZ::File<specfem::io::write>::write(
   // write everything
   stream.write(&local_header[0], local_header.size());
   stream.write(&npy_header[0], npy_header.size());
-  stream.write(reinterpret_cast<const char *>(data), sizeof(value_type) * nels);
+  stream.write(payload, payload_size);
   stream.write(&global_header[0], global_header.size());
   stream.write(&footer[0], footer.size());
 }
@@ -147,6 +167,21 @@ void specfem::io_backends::impl::NPZ::File<specfem::io::read>::read(
     }
 
     if (vname == path) {
+      if constexpr (std::is_same_v<value_type, std::string>) {
+        const auto header = specfem::io_backends::impl::NPY::read_npy_header(
+            stream, specfem::io_backends::impl::NPY::map_type<std::string>());
+        if (header.shape != dims) {
+          std::ostringstream oss;
+          oss << "ERROR : Dimension mismatch between dataset and file";
+          throw std::runtime_error(oss.str());
+        }
+        std::vector<char> records(total_elements * header.item_size);
+        stream.read(records.data(), records.size());
+        specfem::io_backends::impl::NPY::unpack_string_records(
+            records, total_elements, header.item_size, data);
+        break;
+      }
+
       std::vector<size_t> shape =
           specfem::io_backends::impl::NPY::parse_npy_header<value_type>(stream);
       if (rank != shape.size()) {

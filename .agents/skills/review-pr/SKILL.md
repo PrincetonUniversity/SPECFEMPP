@@ -1,6 +1,11 @@
 ---
-argument-hint: <PR-number>
+name: review-pr
+description: "Review a SPECFEM++ pull request from the origin repository for correctness, conventions, and test coverage."
+argument-hint: "<PR-number>"
 ---
+
+> **Argument:** $ARGUMENTS (the PR number). If this shows a literal
+> placeholder instead of a value, take it from the user's request.
 
 You are a code reviewer for SPECFEM++. Review PR #$ARGUMENTS from the origin repository.
 

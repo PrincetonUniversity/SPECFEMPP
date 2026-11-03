@@ -8,15 +8,15 @@
 #define _ACCESS_ELEMENT_ON_DEVICE_CONST(elem, index)                           \
   BOOST_PP_CAT(_, BOOST_PP_SEQ_ELEM(0, elem))(index)
 
-#define _ACCESS_ELEMENT_ON_DEVICE(elem, index) BOOST_PP_SEQ_ELEM(0, elem)[index]
+#define _ACCESS_ELEMENT_ON_DEVICE(elem, index)                                 \
+  BOOST_PP_SEQ_ELEM(0, elem).data()[index]
 
 #define _ACCESS_ELEMENT_ON_HOST(elem, index)                                   \
-  BOOST_PP_CAT(h_, BOOST_PP_SEQ_ELEM(0, elem))[index]
+  BOOST_PP_CAT(h_, BOOST_PP_SEQ_ELEM(0, elem)).data()[index]
 
 #define _CALL_FUNCTOR_ON_DEVICE_CONST(r, _d, elem)                             \
   BOOST_PP_TUPLE_ELEM(0, _d)                                                   \
-  (BOOST_PP_SEQ_ELEM(0, elem).get_base_view().data()[BOOST_PP_TUPLE_ELEM(1,    \
-                                                                         _d)], \
+  (BOOST_PP_SEQ_ELEM(0, elem).data()[BOOST_PP_TUPLE_ELEM(1, _d)],              \
    static_cast<std::size_t>(BOOST_PP_SEQ_ELEM(1, elem)));
 
 #define _CALL_FUNCTOR_ON_DEVICE(r, data, elem)                                 \
@@ -37,7 +37,7 @@
       void>                                                                    \
   for_each_on_device(const IndexType &index, FunctorType f) const {            \
     const auto &mapping =                                                      \
-        BOOST_PP_SEQ_ELEM(0, BOOST_PP_SEQ_ELEM(0, seq)).get_mapping();         \
+        BOOST_PP_SEQ_ELEM(0, BOOST_PP_SEQ_ELEM(0, seq)).mapping();             \
     const std::size_t _index =                                                 \
         specfem::medium_container::impl::get_flat_index(mapping, index);       \
     BOOST_PP_SEQ_FOR_EACH(_CALL_FUNCTOR_ON_DEVICE_CONST, (f, _index), seq)     \
@@ -50,7 +50,7 @@
       void>                                                                    \
   for_each_on_device(const IndexType &index, FunctorType f) const {            \
     const auto &mapping =                                                      \
-        BOOST_PP_SEQ_ELEM(0, BOOST_PP_SEQ_ELEM(0, seq)).get_mapping();         \
+        BOOST_PP_SEQ_ELEM(0, BOOST_PP_SEQ_ELEM(0, seq)).mapping();             \
     const std::size_t _index =                                                 \
         specfem::medium_container::impl::get_flat_index(mapping, index);       \
     BOOST_PP_SEQ_FOR_EACH(_CALL_FUNCTOR_ON_DEVICE, (f, _index), seq)           \
@@ -61,7 +61,7 @@
                              int> = 0>                                         \
   void for_each_on_host(const IndexType &index, FunctorType f) const {         \
     const auto &mapping =                                                      \
-        BOOST_PP_SEQ_ELEM(0, BOOST_PP_SEQ_ELEM(0, seq)).get_mapping();         \
+        BOOST_PP_SEQ_ELEM(0, BOOST_PP_SEQ_ELEM(0, seq)).mapping();             \
     const std::size_t _index =                                                 \
         specfem::medium_container::impl::get_flat_index(mapping, index);       \
     BOOST_PP_SEQ_FOR_EACH(_CALL_FUNCTOR_ON_HOST, (f, _index), seq)             \
@@ -75,7 +75,7 @@
       void>                                                                    \
   for_each_on_device(const IndexType &index, FunctorType f) const {            \
     const auto &mapping =                                                      \
-        BOOST_PP_SEQ_ELEM(0, BOOST_PP_SEQ_ELEM(0, seq)).get_mapping();         \
+        BOOST_PP_SEQ_ELEM(0, BOOST_PP_SEQ_ELEM(0, seq)).mapping();             \
     const std::size_t _index =                                                 \
         mapping(index.ispec, index.iz, index.iy, index.ix);                    \
     BOOST_PP_SEQ_FOR_EACH(_CALL_FUNCTOR_ON_DEVICE_CONST, (f, _index), seq)     \
@@ -88,7 +88,7 @@
       void>                                                                    \
   for_each_on_device(const IndexType &index, FunctorType f) const {            \
     const auto &mapping =                                                      \
-        BOOST_PP_SEQ_ELEM(0, BOOST_PP_SEQ_ELEM(0, seq)).get_mapping();         \
+        BOOST_PP_SEQ_ELEM(0, BOOST_PP_SEQ_ELEM(0, seq)).mapping();             \
     const std::size_t _index =                                                 \
         mapping(index.ispec, index.iz, index.iy, index.ix);                    \
     BOOST_PP_SEQ_FOR_EACH(_CALL_FUNCTOR_ON_DEVICE, (f, _index), seq)           \
@@ -99,7 +99,7 @@
                              int> = 0>                                         \
   void for_each_on_host(const IndexType &index, FunctorType f) const {         \
     const auto &mapping =                                                      \
-        BOOST_PP_SEQ_ELEM(0, BOOST_PP_SEQ_ELEM(0, seq)).get_mapping();         \
+        BOOST_PP_SEQ_ELEM(0, BOOST_PP_SEQ_ELEM(0, seq)).mapping();             \
     const std::size_t _index =                                                 \
         mapping(index.ispec, index.iz, index.iy, index.ix);                    \
     BOOST_PP_SEQ_FOR_EACH(_CALL_FUNCTOR_ON_HOST, (f, _index), seq)             \
@@ -241,17 +241,17 @@
  * template <typename FunctorType, typename IndexType>
  * KOKKOS_INLINE_FUNCTION
  * void for_each_on_device(const IndexType &index, FunctorType f) const {
- *   const auto mapping = rho.get_mapping();
+ *   const auto mapping = rho.mapping();
  *   const std::size_t _index = mapping(index.ispec, index.iz, index.ix);
- *   f(rho[_index], "rho");
- *   f(kappa[_index], "kappa");
+ *   f(rho.data()[_index], "rho");
+ *   f(kappa.data()[_index], "kappa");
  * }
  * template <typename FunctorType, typename IndexType>
  * void for_each_on_host(const IndexType &index, FunctorType f) const {
- *   const auto mapping = rho.get_mapping();
+ *   const auto mapping = rho.mapping();
  *   const std::size_t _index = mapping(index.ispec, index.iz, index.ix);
- *   f(h_rho[_index], "rho");
- *   f(h_kappa[_index], "kappa");
+ *   f(h_rho.data()[_index], "rho");
+ *   f(h_kappa.data()[_index], "kappa");
  * }
  * void copy_to_device() {
  *   specfem::datatype::deep_copy(rho, h_rho);

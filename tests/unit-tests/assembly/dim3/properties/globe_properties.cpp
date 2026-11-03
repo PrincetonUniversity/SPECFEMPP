@@ -1,8 +1,8 @@
 #include "specfem/assembly/assembly/dim3/globe_properties.hpp"
+#include "globe_model_evaluator.h"
 #include "specfem/globe/model_evaluator.hpp"
 #include "specfem/globe/region_codes.hpp"
 #include "specfem/io.hpp"
-#include "specfem/medium/dim3/elastic/anisotropic/elasticity_tensor.hpp"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -101,6 +101,7 @@ void check_properties(const GlobeFixture &fixture,
       Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, device_points);
 
   std::size_t samples = 0;
+  std::size_t tiso_samples = 0;
   std::array<std::size_t, 3> region_samples{};
   for (int e = 0; e < elements.extent(0); ++e) {
     const int ispec = elements(e);
@@ -152,35 +153,40 @@ void check_properties(const GlobeFixture &fixture,
       const double vs = expected.vs_iso[p];
       EXPECT_NEAR(point.rho(), rho, tolerance * rho);
       if constexpr (PropertyTag == Property::anisotropic) {
-        using Global = specfem::medium_physics::ElasticityTensor<
-            specfem::coordinate_systems::CartesianFrame, double>;
-        using Radial = specfem::medium_physics::ElasticityTensor<
-            specfem::coordinate_systems::GeocentricFrame, double>;
-        Global expected_stiffness;
+        double expected_stiffness[21];
         if (expected.is_anisotropic) {
-          expected_stiffness = Global(&expected.cij[21 * p]);
+          std::copy_n(&expected.cij[21 * p], 21, expected_stiffness);
         } else {
-          const Radial radial(expected.rho[p], expected.vpv[p], expected.vph[p],
-                              expected.vsv[p], expected.vsh[p],
-                              expected.eta[p]);
-          const auto &spherical = assembly.mesh.h_spherical_coord;
-          expected_stiffness = specfem::medium_physics::rotate(
-              radial,
-              specfem::coordinate_systems::rotation_matrix<
-                  specfem::coordinate_systems::CartesianFrame,
-                  specfem::coordinate_systems::GeocentricFrame>(
-                  static_cast<double>(spherical(ispec, p / (nx * ny),
-                                                (p / nx) % ny, p % nx, 1)),
-                  static_cast<double>(spherical(ispec, p / (nx * ny),
-                                                (p / nx) % ny, p % nx, 2))));
+          // Independent of the production path: angles come straight from the
+          // final GLL coordinates (not the spherical cache), and the rotation
+          // is globe's own rotate_tensor_Love_to_global.
+          double x[3];
+          for (int d = 0; d < 3; ++d) {
+            x[d] = assembly.mesh.h_coord(ispec, p / (nx * ny), (p / nx) % ny,
+                                         p % nx, d);
+          }
+          const double radius =
+              std::sqrt(x[0] * x[0] + x[1] * x[1] + x[2] * x[2]);
+          const double theta = std::acos(x[2] / radius);
+          const double phi = std::atan2(x[1], x[0]);
+          globe_evaluator_rotate_tiso_to_cij(
+              theta, phi, expected.rho[p], expected.vpv[p], expected.vph[p],
+              expected.vsv[p], expected.vsh[p], expected.eta[p],
+              expected_stiffness);
+          ++tiso_samples;
+        }
+        double tensor_scale = 1.0;
+        for (int c = 0; c < 21; ++c) {
+          tensor_scale =
+              std::max(tensor_scale, std::abs(expected_stiffness[c]));
         }
         for (int c = 0; c < 21; ++c) {
           if (expected.is_anisotropic) {
+            // Full anisotropy must be stored unrotated.
             EXPECT_EQ(point[c], static_cast<type_real>(expected_stiffness[c]));
           }
-          EXPECT_NEAR(point[c], expected_stiffness[c],
-                      tolerance *
-                          std::max(1.0, std::abs(expected_stiffness[c])));
+          EXPECT_NEAR(point[c], expected_stiffness[c], tolerance * tensor_scale)
+              << "element " << ispec << ", point " << p << ", component " << c;
         }
       } else {
         const double mu = rho * vs * vs;
@@ -216,6 +222,12 @@ void check_properties(const GlobeFixture &fixture,
     }
   }
   EXPECT_GE(samples, 100u);
+  if (PropertyTag == Property::anisotropic &&
+      fixture.mesh.globe.model_config.model_name ==
+          "1D_transversely_isotropic_prem") {
+    // #2045 acceptance: at least 50 TISO GLL points against globe's rotation.
+    EXPECT_GE(tiso_samples, 50u);
+  }
   for (const auto region :
        { Region::crust_mantle, Region::outer_core, Region::inner_core }) {
     bool present = false;
@@ -290,6 +302,35 @@ TEST_P(GlobeProperties, MatchesOracleOnHostAndDevice) {
 }
 
 INSTANTIATE_TEST_SUITE_P(Globe, GlobeProperties, ::testing::Bool());
+
+TEST(GlobeProperties, RejectsAzimuthalAnisotropy) {
+  specfem::globe::ModelEvaluator::ElementProperties values;
+  values.gc_prime.assign(125, 0.0);
+  values.gs_prime.assign(125, 0.0);
+  EXPECT_NO_THROW(
+      specfem::assembly::dim3_impl::reject_azimuthal_anisotropy(values, 3));
+
+  values.gc_prime[42] = 1.e-3;
+  EXPECT_THROW(
+      specfem::assembly::dim3_impl::reject_azimuthal_anisotropy(values, 3),
+      std::runtime_error);
+
+  values.gc_prime[42] = 0.0;
+  values.gs_prime[124] = -2.e-4;
+  try {
+    specfem::assembly::dim3_impl::reject_azimuthal_anisotropy(values, 3);
+    FAIL() << "non-zero Gs_prime was silently accepted";
+  } catch (const std::runtime_error &error) {
+    const std::string message = error.what();
+    EXPECT_NE(message.find("compute element 3"), std::string::npos);
+    EXPECT_NE(message.find("deferred"), std::string::npos);
+  }
+
+  // Full anisotropy: Gc'/Gs' are derived from the stored cij, nothing is lost.
+  values.is_anisotropic = true;
+  EXPECT_NO_THROW(
+      specfem::assembly::dim3_impl::reject_azimuthal_anisotropy(values, 3));
+}
 
 TEST(GlobePropertyReader, BypassesOracleInitialization) {
   specfem::mesh::globe3d_mesh mesh;
