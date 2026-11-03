@@ -6,22 +6,10 @@ list(APPEND CMAKE_MESSAGE_INDENT "  YAML: ")
 # Include FetchContent module
 include(FetchContent)
 
-# YAML version ADIOS2 is using an older YAML version that creates (known)
-# compiler warnings. The SPECFEM++ works with either version of YAML, but that
-# is not guaranteed for ADIOS2, which internally wants to/can build yaml. But
-# the internal yaml version is not accessible to our build. The solution is to
-# configure yaml-cpp to be built as part of the SPECFEM++ build. with the same
-# version that ADIOS2 expects, and create a fictitious config file for it.
-# There are still compiler warnings from yaml, but they can be ignored for now.
-# If we build without ADIOS2 support we just simply use the newer version. To
-# Avoid the warnings alltogether.
-if (SPECFEM_ENABLE_ADIOS2)
-  set(YAML_CPP_VERSION "0.7.0" CACHE STRING "yaml-cpp version")
-  set(YAML_URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/yaml-cpp-${YAML_CPP_VERSION}.tar.gz)
-else()
-  set(YAML_CPP_VERSION "0.8.0" CACHE STRING "yaml-cpp version")
-  set(YAML_URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/${YAML_CPP_VERSION}.tar.gz)
-endif()
+# Use the same yaml-cpp version for SPECFEM++ and ADIOS2. yaml-cpp 0.9.0
+# includes the standard headers required by newer GCC/libstdc++ releases.
+set(YAML_CPP_VERSION "0.9.0" CACHE STRING "yaml-cpp version")
+set(YAML_URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/yaml-cpp-${YAML_CPP_VERSION}.tar.gz)
 
 # Disable yaml-cpp installation and config generation
 set(YAML_CPP_INSTALL OFF CACHE BOOL "Disable yaml-cpp install targets" FORCE)
@@ -82,7 +70,7 @@ if (SPECFEM_ENABLE_ADIOS2)
   # Generated config for yaml-cpp from FetchContent
   add_library(yaml-cpp::yaml-cpp ALIAS yaml-cpp)
   set(yaml-cpp_FOUND TRUE)
-  set(yaml-cpp_VERSION \"0.7.0\")
+  set(yaml-cpp_VERSION \"${YAML_CPP_VERSION}\")
   ")
 endif()
 
