@@ -6,7 +6,9 @@
 
 INSTANTIATE_TEST_SUITE_P(Mesh3DTests, Mesh3DTest,
                          ::testing::Values("EightNodeElastic",
-                                           "EightNodeElasticCosserat"));
+                                           "EightNodeElasticCosserat",
+                                           "EightNodeElasticInjectionStacey",
+                                           "EightNodeElasticInjectionSides"));
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

@@ -30,6 +30,10 @@ if(UNIX)
   include(${CMAKE_CURRENT_SOURCE_DIR}/injection/loader/loader.cmake)
 endif()
 
+# Injection provider session tests use a statically registered mock plugin, so
+# they run on every platform.
+include(${CMAKE_CURRENT_SOURCE_DIR}/injection/session/session.cmake)
+
 if(SPECFEM_ENABLE_MPI)
   include(${CMAKE_CURRENT_SOURCE_DIR}/mpi.cmake)
 endif()
