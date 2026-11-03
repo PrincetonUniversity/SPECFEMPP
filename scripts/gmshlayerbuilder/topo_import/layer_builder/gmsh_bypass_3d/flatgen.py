@@ -259,8 +259,8 @@ class Mesher:
             nodes[nodeslice, 1] = self.mesh_min_y + layer.nodes[:, 1] * self.mesh_size_y
             layerbot, layertop = interpolators[ilayer]
             nodes[nodeslice, 2] = (1 - layer.nodes[:, 2]) * layerbot(
-                (nodes[nodeslice, 0], nodes[nodeslice, 0])
-            ) + layer.nodes[:, 2] * layertop((nodes[nodeslice, 0], nodes[nodeslice, 0]))
+                (nodes[nodeslice, 0], nodes[nodeslice, 1])
+            ) + layer.nodes[:, 2] * layertop((nodes[nodeslice, 0], nodes[nodeslice, 1]))
 
             if ilayer == 0:
                 absorbing_bottom[:, 0] = layer.element_inds_grid[:, :, 0].reshape((-1,))
