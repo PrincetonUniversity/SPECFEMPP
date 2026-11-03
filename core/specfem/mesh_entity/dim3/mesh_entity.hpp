@@ -125,6 +125,34 @@ corners_of_face(const specfem::mesh_entity::dim3::type &face);
 std::array<specfem::mesh_entity::dim3::type, 2>
 corners_of_edge(const specfem::mesh_entity::dim3::type &edge);
 
+/**
+ * @brief Handedness of a face's (ipoint, jpoint) grid axes.
+ *
+ * The face grid is laid out by `get_face_coordinates`. This returns +1 if
+ * (ipoint, jpoint) is right-handed about the face's outward normal and -1 if
+ * it is left-handed. Two glued faces have opposite outward normals, so their
+ * grids are mirror images of each other exactly when their handedness is equal.
+ *
+ * @param face Face entity type
+ * @return +1 or -1
+ * @throws std::runtime_error if the argument is not a face
+ */
+constexpr int
+face_grid_handedness(const specfem::mesh_entity::dim3::type face) {
+  switch (face) {
+  case type::bottom:
+  case type::back:
+  case type::left:
+    return 1;
+  case type::top:
+  case type::front:
+  case type::right:
+    return -1;
+  default:
+    throw std::runtime_error("The argument is not a face");
+  }
+}
+
 } // namespace dim3
 
 /**

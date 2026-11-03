@@ -162,6 +162,51 @@ specfem_add_test(assembly_mpi_dim3_8proc_tests
             $<$<BOOL:${SPECFEM_ENABLE_HDF5}>:hdf5>
 )
 
+# Cross-rank face pairing for every glue of two right-handed hexahedra: two
+# ranks, one in-memory hex8 element each, all 24 relative rotations and all 4
+# anchor corners (no mesh database).
+specfem_add_test(assembly_mpi_dim3_glued_faces_tests
+  NO_UNITY
+  MPI_RANKS 2
+  SOURCES   assembly/mpi/dim3/glued_faces/glued_faces.cpp
+            assembly/mpi/dim3/glued_faces/runner.cpp
+  LIBRARIES ${ASSEMBLY_MPI_TEST_LIBS}
+)
+
+# Globe MPI interfaces (issue #2051).
+#
+# Six ranks, one per cubed-sphere chunk. The databases (~47 MB) are not
+# committed: the globe_small_6rank_mesh fixture runs xmeshfem3D_globe under the
+# MPI launcher at test time -- never during the build -- into the test output
+# directory, and CTest runs it before any test that requires it. Inputs live in
+# data/dim3_globe/global_small_6rank/provenance/DATA.
+set(GLOBE_6RANK_DIR
+    "${SPECFEM_TEST_OUTPUT_DIR}/generated/dim3_globe/global_small_6rank")
+file(REMOVE_RECURSE "${GLOBE_6RANK_DIR}/DATA")
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/data/dim3_globe/global_small_6rank/provenance/DATA"
+     DESTINATION "${GLOBE_6RANK_DIR}")
+file(MAKE_DIRECTORY "${GLOBE_6RANK_DIR}/DATABASES_MPI"
+                    "${GLOBE_6RANK_DIR}/OUTPUT_FILES")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+  "${CMAKE_CURRENT_SOURCE_DIR}/data/dim3_globe/global_small_6rank/provenance/DATA/Par_file")
+
+specfem_add_mpi_fixture(globe_small_6rank_mesh
+  MPI_RANKS         6
+  WORKING_DIRECTORY "${GLOBE_6RANK_DIR}"
+  COMMAND           $<TARGET_FILE:xmeshfem3D_globe>
+)
+
+specfem_add_test(assembly_mpi_dim3_globe_tests
+  NO_UNITY
+  MPI_RANKS 6
+  SOURCES   assembly/mpi/dim3/globe/globe_6rank.cpp
+            assembly/mpi/dim3/globe/runner_6proc.cpp
+  LIBRARIES ${ASSEMBLY_MPI_TEST_LIBS}
+  TEST_PROPERTIES FIXTURES_REQUIRED globe_small_6rank_mesh
+)
+# CTest runs the mesher; make sure building the tests builds it.
+add_dependencies(assembly_mpi_dim3_globe_tests xmeshfem3D_globe)
+
 # SPECFEM3D_GLOBE model evaluator (issue #2001).
 #
 # Runs on one MPI rank to exercise the evaluator through the MPI configuration.
