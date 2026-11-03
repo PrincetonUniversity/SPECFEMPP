@@ -42,7 +42,8 @@ enum class field_type {
  *
  * Defines the different simulation models supported by SPECFEM++.
  * Currently supports Cartesian 2D and 3D simulations.
- * Future models: Axisem2D (axisymmetric) and Globe3D (global spherical)
+ * Globe3D (global spherical) runs through the `specfem globe` subcommand.
+ * Future models: Axisem2D (axisymmetric)
  */
 enum class model {
   Cartesian2D,
@@ -84,8 +85,7 @@ inline model from_string(const std::string &str) {
         { "globe3d", specfem::simulation::model::Globe3D },
         { "globe", specfem::simulation::model::Globe3D }
         // { "axisem2d", specfem::simulation::model::Axisem2D },  // Not yet
-        // implemented { "globe3d", specfem::simulation::model::Globe3D }     //
-        // Not yet implemented
+        // implemented
       };
 
   auto it = models.find(str);
@@ -113,8 +113,6 @@ inline std::string to_string(specfem::simulation::model mdl) {
     return "Global 3D";
   // case specfem::simulation::model::Axisem2D:    // Not yet implemented
   //   return "Axisymmetric 2D";
-  // case specfem::simulation::model::Globe3D:     // Not yet implemented
-  //   return "Global 3D";
   default:
     return "Unknown";
   }
