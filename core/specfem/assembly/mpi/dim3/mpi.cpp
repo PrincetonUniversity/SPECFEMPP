@@ -15,19 +15,24 @@
 
 namespace specfem::assembly::mpi_impl {
 
-/// Find position of anchor in face corner array
-int find_anchor_position(
-    const std::array<specfem::mesh_entity::dim3::type, 4> &corners,
+/// Grid position (i, j) = (ipoint, jpoint) of the corner @p anchor on @p face.
+std::pair<int, int> anchor_grid_corner(
+    const specfem::mesh_entity::element<specfem::element::dimension_tag::dim3>
+        &element,
+    const specfem::mesh_entity::dim3::type face,
     const specfem::mesh_entity::dim3::type anchor) {
-  for (int i = 0; i < 4; i++) {
-    if (corners[i] == anchor)
-      return i;
+  const auto target = element.map_coordinates(anchor);
+  for (const int j : { 0, element.ngll - 1 }) {
+    for (const int i : { 0, element.ngll - 1 }) {
+      if (element.map_coordinates(face, j * element.ngll + i) == target)
+        return { i, j };
+    }
   }
   std::string msg =
-      "Anchor point not found among face corners: anchor=" +
-      std::to_string(static_cast<int>(anchor)) +
-      " not in corners_of_face() array. "
-      "Check that the mesh database was generated with correct anchor point "
+      "Anchor point " + specfem::mesh_entity::dim3::to_string(anchor) +
+      " is not a corner of face " +
+      specfem::mesh_entity::dim3::to_string(face) +
+      ". Check that the mesh database was generated with correct anchor point "
       "encoding (expected element-absolute corner IDs 19-26).";
   specfem::Logger::error(msg);
   specfem::program::abort(msg);
@@ -73,30 +78,33 @@ filter_indices_by_medium_tag(
 }
 
 /**
- * @brief Apply rotation permutation to a 2D GLL grid based on theta value.
+ * @brief Map a point of my face grid to the glued neighbor's face grid.
  *
- * Theta encodes discrete 90° rotations as [0,3]:
+ * If @p mirror is set the grid axes are first swapped, then the grid is
+ * rotated by theta in [0,3]:
  *   theta=0: identity [i][j] → [i][j]
- *   theta=1: 90° CW [i][j] → [ngll-1-j][i]
- *   theta=2: 180° [i][j] → [ngll-1-i][ngll-1-j]
- *   theta=3: 270° CW [i][j] → [j][ngll-1-i]
+ *   theta=1: [i][j] → [ngll-1-j][i]
+ *   theta=2: [i][j] → [ngll-1-i][ngll-1-j]
+ *   theta=3: [i][j] → [j][ngll-1-i]
  *
  * @param theta Rotation index [0,3]
+ * @param mirror Whether the two grids have the same handedness
  * @param ngll Grid dimension (ngll × ngll)
- * @return Pair of rotated (i, j) indices
+ * @return Pair of transformed (i, j) indices
  */
-std::pair<unsigned int, unsigned int> apply_rotation(unsigned char theta,
-                                                     unsigned int i,
-                                                     unsigned int j,
-                                                     unsigned int ngll) {
+std::pair<unsigned int, unsigned int>
+apply_rotation(unsigned char theta, bool mirror, unsigned int i, unsigned int j,
+               unsigned int ngll) {
+  if (mirror)
+    std::swap(i, j);
   switch (theta) {
   case 0: // Identity
     return { i, j };
-  case 1: // 90° CW
+  case 1:
     return { ngll - 1 - j, i };
   case 2: // 180°
     return { ngll - 1 - i, ngll - 1 - j };
-  case 3: // 270° CW
+  case 3:
     return { j, ngll - 1 - i };
   default: // Should not reach here; silently use identity
     specfem::Logger::error("Invalid rotation index theta: " +
@@ -170,12 +178,11 @@ specfem::assembly::mpi_impl::communication_group::communication_group(
 // ---------------------------------------------------------------------------
 // face_communication_group constructor
 //
-// Calls the base constructor for common fields, then computes the discrete
-// rotation index theta ∈ [0,3] for each face using anchor points. The anchor
-// point uniquely identifies one corner of the shared face in both elements,
-// allowing the relative 90°-rotation step to be computed as:
-//   r = (neigh_anchor_pos - my_anchor_pos) mod 4
-// Stored as unsigned char (1 byte vs 8 bytes for a floating-point angle).
+// Calls the base constructor for common fields, then computes, for each face,
+// the transformation taking my face grid onto the neighbor's: a mirror flag
+// (the grids have the same handedness about their outward normals) and a
+// rotation index theta ∈ [0,3] chosen so that my anchor corner lands on the
+// neighbor's anchor corner. Both are stored as unsigned char.
 // ---------------------------------------------------------------------------
 specfem::assembly::mpi_impl::face_communication_group::face_communication_group(
     const unsigned int my_rank, const unsigned int neighbor_rank,
@@ -191,22 +198,43 @@ specfem::assembly::mpi_impl::face_communication_group::face_communication_group(
 
   theta = ThetaViewType("face_communication_group::theta", n);
   h_theta = Kokkos::create_mirror_view(theta);
+  h_mirror = Kokkos::View<unsigned char *, Kokkos::HostSpace>(
+      "face_communication_group::h_mirror", n);
+
+  const specfem::mesh_entity::element<specfem::element::dimension_tag::dim3>
+      element(ngllz, nglly, ngllx);
 
   for (unsigned int iface = 0; iface < n; iface++) {
     const auto &edge = edges[iface];
 
-    const auto my_corners =
-        specfem::mesh_entity::corners_of_face(edge.orientation);
-    const auto neigh_corners =
-        specfem::mesh_entity::corners_of_face(edge.neighbor_orientation);
+    const bool do_mirror =
+        specfem::mesh_entity::dim3::face_grid_handedness(edge.orientation) ==
+        specfem::mesh_entity::dim3::face_grid_handedness(
+            edge.neighbor_orientation);
 
-    const int my_anchor_pos =
-        find_anchor_position(my_corners, edge.local_anchor_point);
-    const int neigh_anchor_pos =
-        find_anchor_position(neigh_corners, edge.neighbor_anchor_point);
+    const auto [my_i, my_j] =
+        anchor_grid_corner(element, edge.orientation, edge.local_anchor_point);
+    const auto neighbor_anchor = anchor_grid_corner(
+        element, edge.neighbor_orientation, edge.neighbor_anchor_point);
 
-    h_theta(iface) =
-        static_cast<unsigned char>((neigh_anchor_pos - my_anchor_pos + 4) % 4);
+    int found = -1;
+    for (int t = 0; t < 4 && found < 0; ++t) {
+      const auto mapped = apply_rotation(static_cast<unsigned char>(t),
+                                         do_mirror, my_i, my_j, ngll);
+      if (static_cast<int>(mapped.first) == neighbor_anchor.first &&
+          static_cast<int>(mapped.second) == neighbor_anchor.second)
+        found = t;
+    }
+    if (found < 0) {
+      const std::string msg =
+          "No face transformation maps the local anchor corner onto the "
+          "neighbor's anchor corner.";
+      specfem::Logger::error(msg);
+      specfem::program::abort(msg);
+    }
+
+    h_theta(iface) = static_cast<unsigned char>(found);
+    h_mirror(iface) = static_cast<unsigned char>(do_mirror);
   }
 
   Kokkos::deep_copy(theta, h_theta);
@@ -385,6 +413,8 @@ specfem::assembly::mpi_impl::packer<FieldType, DimensionTag, MediumTag>::packer(
 
   Kokkos::View<unsigned char *, Kokkos::HostSpace> filtered_theta(
       "packer::face_theta", this->nfaces);
+  Kokkos::View<unsigned char *, Kokkos::HostSpace> filtered_mirror(
+      "packer::face_mirror", this->nfaces);
   Kokkos::View<int *, Kokkos::HostSpace> filtered_face_neighbors(
       "packer::face_neighbors", this->nfaces);
 
@@ -404,6 +434,7 @@ specfem::assembly::mpi_impl::packer<FieldType, DimensionTag, MediumTag>::packer(
     const int ielem = face_group.h_my_element(face_indices[iface]);
     const auto face_type = face_group.h_my_orientation(face_indices[iface]);
     filtered_theta(iface) = face_group.h_theta(face_indices[iface]);
+    filtered_mirror(iface) = face_group.h_mirror(face_indices[iface]);
     filtered_face_neighbors(iface) =
         face_group.h_neighbor_element(face_indices[iface]);
 
@@ -489,10 +520,10 @@ specfem::assembly::mpi_impl::packer<FieldType, DimensionTag, MediumTag>::packer(
 
   this->nglob = unique_iglobs.size();
 
-  this->send_unpacking_indices(face_index_mapping, filtered_theta,
-                               filtered_face_neighbors, edge_index_mapping,
-                               filtered_reflect, filtered_edge_neighbors,
-                               filtered_corner_neighbors, corner_index_mapping);
+  this->send_unpacking_indices(
+      face_index_mapping, filtered_theta, filtered_mirror,
+      filtered_face_neighbors, edge_index_mapping, filtered_reflect,
+      filtered_edge_neighbors, filtered_corner_neighbors, corner_index_mapping);
 
   // Allocate views sized to the number of unique points
   const unsigned int n_unique = unique_iglobs.size();
@@ -532,6 +563,7 @@ void specfem::assembly::mpi_impl::packer<FieldType, DimensionTag, MediumTag>::
     send_unpacking_indices(
         Kokkos::View<int ***, Kokkos::HostSpace> face_index_mapping,
         Kokkos::View<unsigned char *, Kokkos::HostSpace> theta,
+        Kokkos::View<unsigned char *, Kokkos::HostSpace> mirror,
         Kokkos::View<int *, Kokkos::HostSpace> neighbor_element,
         Kokkos::View<int **, Kokkos::HostSpace> edge_index_mapping,
         Kokkos::View<bool *, Kokkos::HostSpace> edge_reflect,
@@ -558,11 +590,11 @@ void specfem::assembly::mpi_impl::packer<FieldType, DimensionTag, MediumTag>::
   for (unsigned int iface = 0; iface < this->nfaces; iface++) {
     const unsigned char theta_val = theta(iface);
 
-    // Apply rotation permutation based on theta value
+    // Apply mirror and rotation permutation
     for (unsigned int i = 0; i < this->ngll; i++) {
       for (unsigned int j = 0; j < this->ngll; j++) {
         const auto [rotated_i, rotated_j] =
-            apply_rotation(theta_val, i, j, this->ngll);
+            apply_rotation(theta_val, mirror(iface) != 0, i, j, this->ngll);
 
         // Copy from original position to rotated position
         rotated_indices(iface, rotated_j, rotated_i) =
