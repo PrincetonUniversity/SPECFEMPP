@@ -10,11 +10,32 @@
 #include "specfem/units.hpp"
 #include "specfem/utilities/logarithmic_center.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+void specfem::assembly::dim3_impl::reject_azimuthal_anisotropy(
+    const specfem::globe::ModelEvaluator::ElementProperties &values,
+    const int compute_ispec) {
+  // Full-anisotropy Gc'/Gs' are projections of the returned cij, which is
+  // stored as-is; only the transverse-isotropic path would drop them.
+  if (values.is_anisotropic) {
+    return;
+  }
+  const auto is_nonzero = [](const double value) { return value != 0.0; };
+  if (std::any_of(values.gc_prime.begin(), values.gc_prime.end(), is_nonzero) ||
+      std::any_of(values.gs_prime.begin(), values.gs_prime.end(), is_nonzero)) {
+    throw std::runtime_error(
+        "Globe evaluator returned non-zero azimuthal anisotropy "
+        "(Gc_prime/Gs_prime) for compute element " +
+        std::to_string(compute_ispec) +
+        "; azimuthal anisotropy is deferred and not yet folded into the "
+        "stored elasticity tensor");
+  }
+}
 
 void specfem::assembly::dim3_impl::read_globe_properties(
     const specfem::mesh::globe3d_mesh &input_mesh,
@@ -112,6 +133,9 @@ void specfem::assembly::dim3_impl::read_globe_properties(
         element_types.elem_in_mantle(compute_ispec), xyz);
 
     ++oracle_calls;
+
+    specfem::assembly::dim3_impl::reject_azimuthal_anisotropy(values,
+                                                              compute_ispec);
 
     const bool tagged_anisotropic = property == Property::anisotropic;
     if (values.is_anisotropic && !tagged_anisotropic) {

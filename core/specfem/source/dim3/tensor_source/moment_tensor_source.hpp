@@ -5,7 +5,6 @@
 #include "specfem/enums.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/source.hpp"
-#include "specfem/source/local_frame_quantity.hpp"
 #include "specfem/source/moment_tensor.hpp"
 #include "specfem/source_time_functions.hpp"
 
@@ -13,6 +12,7 @@
 #include "specfem/utilities.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
+#include <variant>
 
 namespace specfem {
 namespace sources {
@@ -26,10 +26,9 @@ namespace sources {
  * components (Myx, Mzx, Mzy) describe an asymmetric tensor whose antisymmetric
  * part drives the micro-rotation field in Cosserat (`elastic_spin`) media.
  *
- * The tensor is held in a @ref specfem::sources::LocalFrameQuantity: it may be
- * supplied directly in the global Cartesian frame, or in the local geocentric
- * @f$ (\theta,\phi,r) @f$ frame (CMTSOLUTION), in which case it is kept
- * as-read and rotated into the Cartesian mesh frame at assembly time.
+ * The tensor may be supplied directly in the global Cartesian frame, or in the
+ * local geocentric @f$ (\theta,\phi,r) @f$ frame (CMTSOLUTION), in which case
+ * assembly replaces it with its rotation into the Cartesian mesh frame.
  *
  * @par Usage Example
  * @code
@@ -68,10 +67,11 @@ template <>
 class moment_tensor<specfem::element::dimension_tag::dim3>
     : public tensor_source<specfem::element::dimension_tag::dim3> {
 
-  using MomentTensorQuantity =
-      specfem::sources::LocalFrameQuantity<specfem::sources::MomentTensor>;
-  using CartesianTensor = MomentTensorQuantity::CartesianT;
-  using GeocentricTensor = MomentTensorQuantity::GeocentricT;
+  using CartesianTensor = specfem::sources::MomentTensor<
+      specfem::coordinate_systems::CartesianFrame>;
+  using GeocentricTensor = specfem::sources::MomentTensor<
+      specfem::coordinate_systems::GeocentricFrame>;
+  using MomentTensorVariant = std::variant<GeocentricTensor, CartesianTensor>;
 
 public:
   /**
@@ -85,66 +85,64 @@ public:
    *
    * @return type_real Mxx moment tensor component
    */
-  type_real get_Mxx() const { return moment_.cartesian()(0, 0); }
+  type_real get_Mxx() const { return std::get<CartesianTensor>(moment_)(0, 0); }
 
   /**
    * @brief Get the Myy component of the (resolved) Cartesian moment tensor
    *
    * @return type_real Myy moment tensor component
    */
-  type_real get_Myy() const { return moment_.cartesian()(1, 1); }
+  type_real get_Myy() const { return std::get<CartesianTensor>(moment_)(1, 1); }
 
   /**
    * @brief Get the Mzz component of the (resolved) Cartesian moment tensor
    *
    * @return type_real Mzz moment tensor component
    */
-  type_real get_Mzz() const { return moment_.cartesian()(2, 2); }
+  type_real get_Mzz() const { return std::get<CartesianTensor>(moment_)(2, 2); }
 
   /**
    * @brief Get the Mxy component of the (resolved) Cartesian moment tensor
    *
    * @return type_real Mxy moment tensor component
    */
-  type_real get_Mxy() const { return moment_.cartesian()(0, 1); }
+  type_real get_Mxy() const { return std::get<CartesianTensor>(moment_)(0, 1); }
 
   /**
    * @brief Get the Mxz component of the (resolved) Cartesian moment tensor
    *
    * @return type_real Mxz moment tensor component
    */
-  type_real get_Mxz() const { return moment_.cartesian()(0, 2); }
+  type_real get_Mxz() const { return std::get<CartesianTensor>(moment_)(0, 2); }
 
   /**
    * @brief Get the Myz component of the (resolved) Cartesian moment tensor
    *
    * @return type_real Myz moment tensor component
    */
-  type_real get_Myz() const { return moment_.cartesian()(1, 2); }
+  type_real get_Myz() const { return std::get<CartesianTensor>(moment_)(1, 2); }
 
   /**
-   * @brief Install the Cartesian components resolved from the as-read frame.
+   * @brief Install the Cartesian tensor rotated from the geocentric one.
    *
-   * Marks the tensor resolved, after which @ref get_source_tensor returns the
-   * Cartesian tensor. Called by the assembly-time resolution once the source
-   * location fixes the local frame. The as-read tensor is kept.
+   * Called at assembly once the source location fixes the local frame. The
+   * geocentric tensor is replaced.
    *
    * @param cartesian Moment tensor in the global Cartesian basis
    */
   void set_cartesian_components(const CartesianTensor &cartesian) {
-    moment_.resolve(cartesian);
+    moment_ = cartesian;
   }
 
   /**
-   * @brief The moment tensor as a resolvable local-frame quantity.
+   * @brief The moment tensor in its current frame.
    *
-   * Exposes the as-read tensor and whether it has been resolved, so the
-   * assembly stage can rotate an unresolved geographic tensor into the mesh
-   * frame.
+   * Holds the geocentric tensor until assembly resolves it, the Cartesian
+   * tensor afterwards.
    *
-   * @return Reference to the held local-frame quantity
+   * @return Reference to the held tensor variant
    */
-  const MomentTensorQuantity &moment() const { return moment_; }
+  const MomentTensorVariant &moment() const { return moment_; }
 
   /**
    * @brief Get the Myx component of the (resolved) Cartesian moment tensor
@@ -155,7 +153,7 @@ public:
    *
    * @return type_real Myx moment tensor component
    */
-  type_real get_Myx() const { return moment_.cartesian()(1, 0); }
+  type_real get_Myx() const { return std::get<CartesianTensor>(moment_)(1, 0); }
 
   /**
    * @brief Get the Mzx component of the (resolved) Cartesian moment tensor
@@ -164,7 +162,7 @@ public:
    *
    * @return type_real Mzx moment tensor component
    */
-  type_real get_Mzx() const { return moment_.cartesian()(2, 0); }
+  type_real get_Mzx() const { return std::get<CartesianTensor>(moment_)(2, 0); }
 
   /**
    * @brief Get the Mzy component of the (resolved) Cartesian moment tensor
@@ -173,7 +171,7 @@ public:
    *
    * @return type_real Mzy moment tensor component
    */
-  type_real get_Mzy() const { return moment_.cartesian()(2, 1); }
+  type_real get_Mzy() const { return std::get<CartesianTensor>(moment_)(2, 1); }
 
   /**
    * @brief Construct a new moment tensor force object
@@ -412,7 +410,7 @@ private:
    */
   static CartesianTensor read_cartesian_tensor(const YAML::Node &Node);
 
-  MomentTensorQuantity moment_; ///< As-read tensor + resolved Cartesian tensor
+  MomentTensorVariant moment_; ///< Geocentric or Cartesian moment tensor
   specfem::simulation::field_type wavefield_type; ///< Type of wavefield on
                                                   ///< which the source
                                                   ///< acts

@@ -1,6 +1,6 @@
 ---
-description: "Audit staged and unstaged changes since last commit. Performs a thorough code review following best practices and produces a prioritized fix plan."
-name: "Audit Changes"
+name: audit-changes
+description: "Audit staged and unstaged changes since the last commit. Performs a thorough code review following SPECFEM++ conventions and produces a prioritized fix plan."
 ---
 
 You are a thorough and constructive code reviewer. Audit the staged and unstaged changes following the steps below.

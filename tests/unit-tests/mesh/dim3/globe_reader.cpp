@@ -1,6 +1,7 @@
 #include "specfem/io.hpp"
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -72,6 +73,22 @@ void write_surface(std::ofstream &stream,
   write_surface(stream, elements, faces);
 }
 
+// Attenuation period band written to every database, in seconds.
+constexpr double min_attenuation_period = 20.0;
+constexpr double max_attenuation_period = 1000.0;
+
+/** @brief Source frequency consistent with the written period band. */
+double consistent_source_frequency() {
+  return 1.0 / std::sqrt(min_attenuation_period * max_attenuation_period);
+}
+
+/** @brief Default model flags: only HONOR_1D_SPHERICAL_MOHO is set. */
+std::vector<int> default_model_flags() {
+  std::vector<int> flags(16, 0);
+  flags[11] = 1;
+  return flags;
+}
+
 /**
  * @brief Contents of a synthetic globe database.
  *
@@ -85,6 +102,7 @@ struct DatabaseOptions {
   bool include_mpi = false;
   bool has_reference_geometry = false;
   double planet_radius = 6371000.0;
+  std::vector<int> model_flags = default_model_flags();
   /// One globe region code per element, bottom to top (1 = crust/mantle,
   /// 2 = outer core, 3 = inner core).
   std::vector<int> region_codes = { 1 };
@@ -140,11 +158,11 @@ std::filesystem::path write_database(const DatabaseOptions &options = {}) {
   model.append_fixed("1D_isotropic_prem", 512);
   model.write(stream);
   write_values(stream, 5, std::vector<int>{ 1, 0, 0, 2, 0 });
-  std::vector<int> model_flags(16, 0);
-  model_flags[11] = 1;
-  write_values(stream, 16, model_flags);
+  write_values(stream, static_cast<int>(options.model_flags.size()),
+               options.model_flags);
   write_values(stream, options.nchunks, 8, 8);
-  write_values(stream, 20.0, 1000.0, options.source_frequency);
+  write_values(stream, min_attenuation_period, max_attenuation_period,
+               options.source_frequency);
 
   write_values(stream, 27);
   std::vector<double> x(27), y(27), z(27);
@@ -505,4 +523,124 @@ TEST(GlobeMeshReader, RejectsFreeSurfaceOnNonTopFace) {
   globe_reader_test_impl::expect_read_throws_with(path,
                                                   "free surface faces are not");
   std::filesystem::remove(path);
+}
+
+namespace globe_reader_test_impl {
+
+/** @brief Runtime attenuation setup; the band defaults to the database's. */
+specfem::attenuation::Setup
+attenuation_setup(const double min_frequency = 1.0 / max_attenuation_period,
+                  const double max_frequency = 1.0 / min_attenuation_period) {
+  using specfem::units::unit_symbols::Hz;
+  return { true, 1.0 * Hz,
+           specfem::utilities::Band<specfem::units::Hertz>(
+               min_frequency * Hz, max_frequency * Hz) };
+}
+
+/** @brief Database options for an attenuating single-element mesh. */
+DatabaseOptions attenuating_database() {
+  return { .attenuation = true,
+           .source_frequency = consistent_source_frequency() };
+}
+
+/** @brief Read a written database and remove it, also when reading throws. */
+specfem::mesh::globe3d_mesh
+read_and_remove(const std::filesystem::path &path,
+                const specfem::attenuation::Setup &setup) {
+  struct Remove {
+    const std::filesystem::path &path;
+    ~Remove() { std::filesystem::remove(path); }
+  } remove{ path };
+  return specfem::io::read_globe_mesh(path.string(), setup);
+}
+
+} // namespace globe_reader_test_impl
+
+TEST(GlobeMeshReader, TagsElasticElementsFromTheAttenuationFlag) {
+  namespace test = globe_reader_test_impl;
+  const auto mesh =
+      test::read_and_remove(test::write_database(test::attenuating_database()),
+                            test::attenuation_setup());
+
+  const auto &mapping = mesh.materials.material_index_mapping.front();
+  EXPECT_EQ(mapping.type, specfem::element::medium_tag::elastic);
+  EXPECT_EQ(mapping.attenuation,
+            specfem::element::attenuation_tag::constant_isotropic);
+  EXPECT_TRUE(mesh.attenuation.enabled);
+  EXPECT_FALSE(mesh.attenuation.bulk_attenuation);
+  // The band is held in type_real, which may be single precision.
+  EXPECT_NEAR(mesh.attenuation.band.min.raw(), 1.0 / 1000.0, 1.0e-6 / 1000.0);
+  EXPECT_NEAR(mesh.attenuation.band.max.raw(), 1.0 / 20.0, 1.0e-6 / 20.0);
+}
+
+TEST(GlobeMeshReader, LeavesAcousticElementsNonAttenuating) {
+  namespace test = globe_reader_test_impl;
+  auto options = test::attenuating_database();
+  options.region_codes = { 2 };
+  // The free surface may only sit on crust/mantle elements.
+  options.free_surface_faces = std::vector<std::pair<int, int>>{};
+  const auto mesh = test::read_and_remove(test::write_database(options),
+                                          test::attenuation_setup());
+
+  const auto &mapping = mesh.materials.material_index_mapping.front();
+  EXPECT_EQ(mapping.type, specfem::element::medium_tag::acoustic);
+  EXPECT_EQ(mapping.attenuation, specfem::element::attenuation_tag::none);
+}
+
+TEST(GlobeMeshReader, RejectsAttenuationForADatabaseMeshedWithoutIt) {
+  namespace test = globe_reader_test_impl;
+  EXPECT_THROW(
+      test::read_and_remove(test::write_database(), test::attenuation_setup()),
+      std::runtime_error);
+}
+
+TEST(GlobeMeshReader, RunsElasticWhenAttenuationIsDisabledAtRuntime) {
+  namespace test = globe_reader_test_impl;
+  const auto mesh =
+      test::read_and_remove(test::write_database(test::attenuating_database()),
+                            specfem::attenuation::Setup{});
+
+  const auto &mapping = mesh.materials.material_index_mapping.front();
+  EXPECT_EQ(mapping.attenuation, specfem::element::attenuation_tag::none);
+  EXPECT_FALSE(mesh.attenuation.enabled);
+}
+
+TEST(GlobeMeshReader, RejectsABandThatDiffersFromTheDatabase) {
+  namespace test = globe_reader_test_impl;
+  EXPECT_THROW(
+      test::read_and_remove(test::write_database(test::attenuating_database()),
+                            test::attenuation_setup(1.0 / 1000.0, 1.0 / 10.0)),
+      std::runtime_error);
+  EXPECT_THROW(
+      test::read_and_remove(test::write_database(test::attenuating_database()),
+                            test::attenuation_setup(1.0 / 2000.0, 1.0 / 20.0)),
+      std::runtime_error);
+}
+
+TEST(GlobeMeshReader, RejectsAttenuationWithoutAReferenceFrequency) {
+  namespace test = globe_reader_test_impl;
+  auto setup = test::attenuation_setup();
+  setup.f0.reset();
+  EXPECT_THROW(test::read_and_remove(
+                   test::write_database(test::attenuating_database()), setup),
+               std::runtime_error);
+}
+
+TEST(GlobeMeshReader, RejectsUnvalidatedAttenuationModels) {
+  namespace test = globe_reader_test_impl;
+  // ATTENUATION_3D_BERKELEY and ATTENUATION_GLL model-flag positions.
+  for (const int flag : { 9, 10 }) {
+    SCOPED_TRACE("model flag " + std::to_string(flag));
+    auto options = test::attenuating_database();
+    options.model_flags[flag] = 1;
+    EXPECT_THROW(test::read_and_remove(test::write_database(options),
+                                       test::attenuation_setup()),
+                 std::runtime_error);
+
+    // Without attenuation the flag is irrelevant.
+    auto elastic_options = test::DatabaseOptions{};
+    elastic_options.model_flags[flag] = 1;
+    EXPECT_NO_THROW(test::read_and_remove(test::write_database(elastic_options),
+                                          specfem::attenuation::Setup{}));
+  }
 }

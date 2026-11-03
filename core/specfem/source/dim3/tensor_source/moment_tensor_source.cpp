@@ -36,9 +36,8 @@ Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
 specfem::sources::moment_tensor<
     specfem::element::dimension_tag::dim3>::get_source_tensor() const {
 
-  // The resolved Cartesian tensor; throws if the source is still in its
-  // as-read geographic frame (assembly-time resolution must run first).
-  const auto &m = this->moment_.cartesian();
+  // Throws std::bad_variant_access while the tensor is still geocentric.
+  const auto &m = std::get<CartesianTensor>(this->moment_);
 
   // Get the medium tag that the source is located in
   specfem::element::medium_tag medium_tag = this->get_medium_tag();
@@ -96,7 +95,7 @@ specfem::sources::moment_tensor<
   // antisymmetric part follows the 3D Levi-Civita convention:
   //   (eps:M)_x = Myz - Mzy, (eps:M)_y = Mzx - Mxz, (eps:M)_z = Mxy - Myx.
   if (this->get_medium_tag() == specfem::element::medium_tag::elastic_spin) {
-    const auto &m = this->moment_.cartesian();
+    const auto &m = std::get<CartesianTensor>(this->moment_);
     ViewType body_couple("body_couple_vector", 6);
     body_couple(0) = static_cast<type_real>(0.0);
     body_couple(1) = static_cast<type_real>(0.0);
@@ -118,7 +117,7 @@ bool specfem::sources::moment_tensor<
 std::string specfem::sources::moment_tensor<
     specfem::element::dimension_tag::dim3>::print_details() const {
   std::ostringstream message;
-  // Echo the moment tensor in the frame it was read in (provenance).
+  // Echo the moment tensor in the frame it is currently held in.
   std::visit(
       [&message](const auto &tensor) {
         using T = std::decay_t<decltype(tensor)>;
@@ -140,7 +139,7 @@ std::string specfem::sources::moment_tensor<
                   << fmt(tensor(2, 1)) << ")";
         }
       },
-      this->moment_.as_read());
+      this->moment_);
   return message.str();
 }
 
@@ -163,8 +162,7 @@ operator==(const specfem::sources::source<specfem::element::dimension_tag::dim3>
   const auto *c2 = other_source->get_read_coordinates();
   bool coords_equal = (c1 && c2) ? (*c1 == *c2) : (!c1 && !c2);
 
-  // Compare the as-read tensors: same frame and close components. Identity
-  // depends on the input, not the resolved Cartesian value.
+  // Compare the tensors: same frame and close components.
   const bool tensor_equal = std::visit(
       [](const auto &a, const auto &b) {
         if constexpr (std::is_same_v<std::decay_t<decltype(a)>,
@@ -174,7 +172,7 @@ operator==(const specfem::sources::source<specfem::element::dimension_tag::dim3>
           return false;
         }
       },
-      this->moment_.as_read(), other_source->moment_.as_read());
+      this->moment_, other_source->moment_);
 
   bool internal = coords_equal && tensor_equal;
 

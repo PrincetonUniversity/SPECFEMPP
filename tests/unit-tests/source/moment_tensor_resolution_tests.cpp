@@ -4,7 +4,6 @@
 #include "test_macros.hpp"
 
 #include <gtest/gtest.h>
-#include <stdexcept>
 #include <type_traits>
 #include <variant>
 
@@ -13,19 +12,20 @@ using GeocentricTensor = specfem::sources::MomentTensor<
     specfem::coordinate_systems::GeocentricFrame>;
 using CartesianTensor =
     specfem::sources::MomentTensor<specfem::coordinate_systems::CartesianFrame>;
-using Quantity =
-    specfem::sources::LocalFrameQuantity<specfem::sources::MomentTensor>;
-// resolve() only accepts the Cartesian-frame tensor (compile-time check).
-static_assert(std::is_invocable_v<decltype(&Quantity::resolve), Quantity &,
-                                  const CartesianTensor &>);
-static_assert(!std::is_invocable_v<decltype(&Quantity::resolve), Quantity &,
-                                   const GeocentricTensor &>);
+using MomentTensorSource =
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3>;
+// set_cartesian_components only accepts the Cartesian-frame tensor.
+static_assert(
+    std::is_invocable_v<decltype(&MomentTensorSource::set_cartesian_components),
+                        MomentTensorSource &, const CartesianTensor &>);
+static_assert(!std::is_invocable_v<
+              decltype(&MomentTensorSource::set_cartesian_components),
+              MomentTensorSource &, const GeocentricTensor &>);
 } // namespace source_resolution_test
 
-// A moment tensor constructed in the geocentric frame is unresolved until the
+// A moment tensor constructed in the geocentric frame is held as such until the
 // assembly stage installs the Cartesian components. get_source_tensor must
-// throw while unresolved rather than returning a silently-wrong tensor, and the
-// as-read geocentric tensor must survive resolution (provenance).
+// throw meanwhile rather than returning a silently-wrong tensor.
 TEST(MomentTensorResolution, GeocentricIsUnresolvedUntilSet) {
   using source_resolution_test::CartesianTensor;
   using source_resolution_test::GeocentricTensor;
@@ -38,22 +38,15 @@ TEST(MomentTensorResolution, GeocentricIsUnresolvedUntilSet) {
       specfem::simulation::field_type::forward);
   src.set_medium_tag(specfem::element::medium_tag::elastic);
 
-  ASSERT_FALSE(src.moment().is_resolved());
-  EXPECT_THROW((void)src.get_source_tensor(), std::runtime_error);
-
-  // The as-read geocentric tensor is preserved while unresolved.
-  ASSERT_TRUE(std::holds_alternative<GeocentricTensor>(src.moment().as_read()));
-  EXPECT_REAL_EQ(std::get<GeocentricTensor>(src.moment().as_read())(0, 0),
-                 type_real(1));
+  ASSERT_TRUE(std::holds_alternative<GeocentricTensor>(src.moment()));
+  EXPECT_REAL_EQ(std::get<GeocentricTensor>(src.moment())(0, 0), type_real(1));
+  EXPECT_THROW((void)src.get_source_tensor(), std::bad_variant_access);
 
   src.set_cartesian_components(CartesianTensor(type_real(10), type_real(20),
                                                type_real(30), type_real(40),
                                                type_real(50), type_real(60)));
 
-  EXPECT_TRUE(src.moment().is_resolved());
-
-  // The original geocentric tensor is still available after resolution.
-  ASSERT_TRUE(std::holds_alternative<GeocentricTensor>(src.moment().as_read()));
+  ASSERT_TRUE(std::holds_alternative<CartesianTensor>(src.moment()));
 
   const auto t = src.get_source_tensor();
   EXPECT_REAL_EQ(t(0, 0), type_real(10)); // Mxx
@@ -69,7 +62,7 @@ TEST(MomentTensorResolution, GeocentricIsUnresolvedUntilSet) {
 }
 
 // A moment tensor constructed directly from Cartesian components is resolved
-// from the start: get_source_tensor works and the as-read value is Cartesian.
+// from the start: get_source_tensor works without assembly.
 TEST(MomentTensorResolution, CartesianCtorIsResolved) {
   specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3> src(
       0.0, 0.0, 0.0, type_real(1), type_real(2), type_real(3), type_real(4),
@@ -77,8 +70,7 @@ TEST(MomentTensorResolution, CartesianCtorIsResolved) {
       specfem::simulation::field_type::forward);
   src.set_medium_tag(specfem::element::medium_tag::elastic);
 
-  EXPECT_TRUE(src.moment().is_resolved());
   EXPECT_TRUE(std::holds_alternative<source_resolution_test::CartesianTensor>(
-      src.moment().as_read()));
+      src.moment()));
   EXPECT_NO_THROW((void)src.get_source_tensor());
 }

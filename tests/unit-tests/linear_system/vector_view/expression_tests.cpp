@@ -212,6 +212,25 @@ TEST_F(VectorExpression, AccumulationNeverOverwrites) {
   expect_entries(b.vector(), expected);
 }
 
+TEST_F(VectorExpression, SubtractionNeverOverwrites) {
+  auto u = space_->vector();
+  auto v = space_->vector();
+  auto b = space_->vector();
+
+  fill(u.vector(), [](int i) { return i + 1; });
+  fill(v.vector(), [](int i) { return 10 * (i + 1); });
+
+  b = static_cast<scalar_type>(0);
+  b -= u;
+  b -= static_cast<scalar_type>(2) * v;
+
+  std::vector<scalar_type> expected(num_dofs);
+  for (int i = 0; i < num_dofs; ++i) {
+    expected[i] = static_cast<scalar_type>(-21 * (i + 1));
+  }
+  expect_entries(b.vector(), expected);
+}
+
 TEST_F(VectorExpression, AssignmentFromAVectorCopiesValuesNotIdentity) {
   auto u = space_->vector();
   auto b = space_->vector();
@@ -336,6 +355,24 @@ TEST_F(VectorExpression, AccumulatingAnExpressionThatReadsTheTargetIsCorrect) {
 
   fill(b.vector(), [](int i) { return i + 1; });
   b += static_cast<scalar_type>(2) * b;
+  expect_entries(b.vector(), expected);
+}
+
+TEST_F(VectorExpression, SubtractingAnExpressionThatReadsTheTargetIsCorrect) {
+  auto b = space_->vector();
+  const auto matrix = scaled_identity(static_cast<scalar_type>(2));
+
+  fill(b.vector(), [](int i) { return i + 1; });
+  b -= matrix * b;
+
+  std::vector<scalar_type> expected(num_dofs);
+  for (int i = 0; i < num_dofs; ++i) {
+    expected[i] = static_cast<scalar_type>(-(i + 1));
+  }
+  expect_entries(b.vector(), expected);
+
+  fill(b.vector(), [](int i) { return i + 1; });
+  b -= static_cast<scalar_type>(2) * b;
   expect_entries(b.vector(), expected);
 }
 

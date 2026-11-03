@@ -4,13 +4,13 @@
 #include "specfem/quadrature.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source/force_vector.hpp"
-#include "specfem/source/local_frame_quantity.hpp"
 #include "specfem/source_time_functions.hpp"
 
 #include "specfem/setup.hpp"
 #include "specfem/utilities.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
+#include <variant>
 
 namespace specfem {
 namespace sources {
@@ -21,11 +21,10 @@ namespace sources {
  * in the x, y, and z directions at a specific location in the simulation
  * domain.
  *
- * The force is held in a @ref specfem::sources::LocalFrameQuantity: it may be
- * supplied directly in the global Cartesian frame, or in the local geocentric
- * @f$ (\theta,\phi,r) @f$ frame (FORCESOLUTION, whose East/North/Up direction
- * is reordered by the reader), in which case it is kept as-read and rotated
- * into the Cartesian mesh frame at assembly time.
+ * The force may be supplied directly in the global Cartesian frame, or in the
+ * local geocentric @f$ (\theta,\phi,r) @f$ frame (FORCESOLUTION, whose
+ * East/North/Up direction is reordered by the reader), in which case assembly
+ * replaces it with its rotation into the Cartesian mesh frame.
  *
  * @par Usage Example
  * @code
@@ -59,10 +58,11 @@ template <>
 class force<specfem::element::dimension_tag::dim3>
     : public vector_source<specfem::element::dimension_tag::dim3> {
 
-  using ForceQuantity =
-      specfem::sources::LocalFrameQuantity<specfem::sources::ForceVector>;
-  using CartesianForce = ForceQuantity::CartesianT;
-  using GeocentricForce = ForceQuantity::GeocentricT;
+  using CartesianForce = specfem::sources::ForceVector<
+      specfem::coordinate_systems::CartesianFrame>;
+  using GeocentricForce = specfem::sources::ForceVector<
+      specfem::coordinate_systems::GeocentricFrame>;
+  using ForceVariant = std::variant<GeocentricForce, CartesianForce>;
 
 public:
   /**
@@ -158,27 +158,26 @@ public:
   }
 
   /**
-   * @brief Install the Cartesian components resolved from the as-read frame.
+   * @brief Install the Cartesian force rotated from the geocentric one.
    *
-   * Marks the force resolved, after which @ref get_force_vector returns the
-   * Cartesian force. Called by the assembly-time resolution once the source
-   * location fixes the local frame. The as-read force is kept.
+   * Called at assembly once the source location fixes the local frame. The
+   * geocentric force is replaced.
    *
    * @param cartesian Force in the global Cartesian frame
    */
   void set_cartesian_components(const CartesianForce &cartesian) {
-    force_.resolve(cartesian);
+    force_ = cartesian;
   }
 
   /**
-   * @brief The force as a resolvable local-frame quantity.
+   * @brief The force in its current frame.
    *
-   * Exposes the as-read force and whether it has been resolved, so the assembly
-   * stage can rotate an unresolved geocentric force into the mesh frame.
+   * Holds the geocentric force until assembly resolves it, the Cartesian force
+   * afterwards. Not named `force()`, which would clash with the class name.
    *
-   * @return Reference to the held local-frame quantity
+   * @return Reference to the held force variant
    */
-  const ForceQuantity &force_quantity() const { return force_; }
+  const ForceVariant &force_value() const { return force_; }
 
   /**
    * @brief Get the forcing function
@@ -229,7 +228,7 @@ public:
 
 public:
 private:
-  ForceQuantity force_; ///< As-read force + resolved Cartesian force
+  ForceVariant force_; ///< Geocentric or Cartesian force
   specfem::simulation::field_type wavefield_type; ///< Type of wavefield on
                                                   ///< which the source
                                                   ///< acts

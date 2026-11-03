@@ -67,22 +67,41 @@ NPYString create_npy_header(const std::vector<size_t> &shape,
 }
 
 /**
- * @brief Parse a NumPy .npy file header
+ * @brief Array metadata stored in a NumPy .npy file header
+ */
+struct NPYHeader {
+  std::vector<size_t> shape; ///< Dimensions of the array
+  size_t item_size = 0;      ///< Size of each element in bytes
+};
+
+/**
+ * @brief Read a NumPy .npy file header without constraining the element size
  *
- * This function extracts metadata from a NumPy .npy file header, including word
- * size, array shape, and array ordering information.
+ * Used for variable-width types such as byte strings (`|S<n>`), whose element
+ * size is only known from the file.
  *
  * @param file File stream to the .npy file, positioned at the start of the
  * header
- * @param byte_size Output parameter that will contain the size of each element
- * in bytes
- * @param shape Output vector that will contain the dimensions of the array
- * @param fortran_order Output parameter that will indicate whether the array
- * uses Fortran-style ordering
- * @throws std::runtime_error If the header cannot be properly parsed
+ * @param type_char Expected NumPy type character
+ * @return NPYHeader Shape and element size stored in the header
+ * @throws std::runtime_error If the header cannot be parsed, is not in
+ * Fortran order, is big-endian, or its type does not match `type_char`
  *
  * @note Modified from cnpy library (MIT License)
  * https://github.com/rogersce/cnpy
+ */
+NPYHeader read_npy_header(std::ifstream &file, const char type_char);
+
+/**
+ * @brief Parse a NumPy .npy file header
+ *
+ * @param file File stream to the .npy file, positioned at the start of the
+ * header
+ * @param type_char Expected NumPy type character
+ * @param type_size Expected size of each element in bytes
+ * @return std::vector<size_t> Dimensions of the array
+ * @throws std::runtime_error If the header cannot be parsed or does not match
+ * the expected type and element size
  */
 std::vector<size_t> parse_npy_header(std::ifstream &file, const char type_char,
                                      const size_t type_size);
@@ -91,5 +110,38 @@ template <typename value_type>
 std::vector<size_t> parse_npy_header(std::ifstream &file) {
   return parse_npy_header(file, map_type<value_type>(), sizeof(value_type));
 }
+
+/**
+ * @brief Record width used to store strings as a NumPy `|S<n>` array
+ *
+ * Matches NumPy, which sizes byte-string arrays to their longest element.
+ *
+ * @param data Strings to store
+ * @param count Number of strings
+ * @return size_t Length of the longest string, at least 1
+ */
+size_t string_record_width(const std::string *data, const size_t count);
+
+/**
+ * @brief Pack strings into null-padded fixed-width records
+ *
+ * @param data Strings to pack
+ * @param count Number of strings
+ * @param width Record width in bytes, at least the longest string length
+ * @return std::vector<char> `count * width` bytes, one record per string
+ */
+std::vector<char> pack_string_records(const std::string *data,
+                                      const size_t count, const size_t width);
+
+/**
+ * @brief Unpack null-padded fixed-width records into strings
+ *
+ * @param records `count * width` bytes, one record per string
+ * @param count Number of strings
+ * @param width Record width in bytes
+ * @param data Output strings, trailing null padding removed
+ */
+void unpack_string_records(const std::vector<char> &records, const size_t count,
+                           const size_t width, std::string *data);
 
 } // namespace specfem::io_backends::impl::NPY

@@ -254,13 +254,8 @@ void specfem::linear_system_impl::StiffnessKernel<NGLL, Tags>::operator()(
   static_assert(Plan::num_levels == 5,
                 "stage h, xi, w J; contraction M; contraction K");
 
-  // Host backends cap level-0 team scratch at 32 KB, below the whole-tile
-  // output block; level 1 allows tens of MB. On GPU level 0 is on-chip.
-  constexpr bool on_gpu =
-      !Kokkos::SpaceAccessibility<ExecSpace, Kokkos::HostSpace>::accessible;
-  g5.outputs(K)
-      .scratch_level(on_gpu ? 0 : 1)
-      .execute(tenops::TeamPolicyTag<ExecSpace>{}, k_alias);
+  // The team scratch level is picked from the slot store's size at launch.
+  g5.outputs(K).execute(tenops::TeamPolicyTag<ExecSpace>{}, k_alias);
   // No fence: see the call operator's contract in the header.
 }
 

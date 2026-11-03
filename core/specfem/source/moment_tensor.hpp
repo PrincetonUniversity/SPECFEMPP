@@ -126,7 +126,7 @@ rotate(const MomentTensor<SourceFrame> &input,
     for (int column = 0; column < 3; ++column) {
       for (int inner = 0; inner < 3; ++inner) {
         temporary[row][column] +=
-            rotation[row][inner] * static_cast<double>(input(inner, column));
+            rotation(row, inner) * static_cast<double>(input(inner, column));
       }
     }
   }
@@ -136,7 +136,7 @@ rotate(const MomentTensor<SourceFrame> &input,
     for (int column = 0; column < 3; ++column) {
       double sum = 0.0;
       for (int inner = 0; inner < 3; ++inner) {
-        sum += temporary[row][inner] * rotation[column][inner];
+        sum += temporary[row][inner] * rotation(column, inner);
       }
       output(row, column) = static_cast<type_real>(sum);
     }
