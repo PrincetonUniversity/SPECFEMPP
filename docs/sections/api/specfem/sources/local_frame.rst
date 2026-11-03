@@ -2,11 +2,12 @@ Source quantities in a local frame
 ==================================
 
 A CMTSOLUTION moment tensor and a FORCESOLUTION force are given in the local
-frame at the source, which tilts with latitude and longitude on a globe. Both
-are stored as read in the local geocentric :math:`(\theta, \phi, r)` frame
-(see :doc:`../coordinate_systems/basis_rotation`) inside a
-``LocalFrameQuantity`` and rotated into the Cartesian mesh frame at assembly,
-once the source position is placed. On a globe the rotation is
+frame at the source, which tilts with latitude and longitude on a globe. The
+source holds a ``std::variant`` of the tensor (or force) in the local
+geocentric :math:`(\theta, \phi, r)` frame (see
+:doc:`../coordinate_systems/basis_rotation`) and in the Cartesian mesh frame.
+The readers construct the geocentric alternative; once the source position is
+placed, assembly replaces it with its rotation into the Cartesian frame. On a globe the rotation is
 ``rotation_matrix<CartesianFrame, GeocentricFrame>(theta, phi)`` at the source;
 on a flat regional mesh it is the same rotation at :math:`\theta = 0,\
 \phi = -\pi/2` (:math:`x` = East, :math:`y` = North, :math:`z` = Up), which
@@ -27,6 +28,3 @@ The CMTSOLUTION reader fills the geocentric slots directly
 .. doxygenfunction:: specfem::sources::rotate(const MomentTensor<SourceFrame>&, const specfem::coordinate_systems::BasisMatrix<TargetFrame, SourceFrame, double>&)
 
 .. doxygenfunction:: specfem::sources::rotate(const ForceVector<SourceFrame>&, const specfem::coordinate_systems::BasisMatrix<TargetFrame, SourceFrame, double>&)
-
-.. doxygenclass:: specfem::sources::LocalFrameQuantity
-    :members:
