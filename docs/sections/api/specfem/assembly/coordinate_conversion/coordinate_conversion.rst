@@ -36,8 +36,8 @@ the frame rotates with the point's colatitude and longitude; on a UTM or plain
 Cartesian mesh it is the fixed ``flat_mesh_rotation`` (x = East, y = North,
 z = Up). Sources rotate their moment tensor or force with it;
 ``local_east_north_up_basis`` turns it into the East/North/Up rows stored per
-receiver (see :doc:`east_north_up <../../coordinate_systems/east_north_up>` for
-the relabel), which is the identity on a flat mesh.
+receiver (East = +e_phi, North = -e_theta, Up = +e_r), which is the identity
+on a flat mesh.
 
 .. doxygentypedef:: specfem::assembly::LocalFrameRotation
 

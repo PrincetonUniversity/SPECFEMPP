@@ -164,12 +164,12 @@ TEST(GlobeReceiverRotation, KonoIsPlacedAndRotated) {
     const auto rotation = specfem::coordinate_systems::rotation_matrix<
         specfem::coordinate_systems::CartesianFrame,
         specfem::coordinate_systems::GeocentricFrame>(theta, phi);
-    const std::array<double, 3> e_theta = { rotation[0][0], rotation[1][0],
-                                            rotation[2][0] };
-    const std::array<double, 3> e_phi = { rotation[0][1], rotation[1][1],
-                                          rotation[2][1] };
-    const std::array<double, 3> e_r = { rotation[0][2], rotation[1][2],
-                                        rotation[2][2] };
+    const std::array<double, 3> e_theta = { rotation(0, 0), rotation(1, 0),
+                                            rotation(2, 0) };
+    const std::array<double, 3> e_phi = { rotation(0, 1), rotation(1, 1),
+                                          rotation(2, 1) };
+    const std::array<double, 3> e_r = { rotation(0, 2), rotation(1, 2),
+                                        rotation(2, 2) };
     impl::expect_vector_near(rows[0], e_phi, 1e-5);
     impl::expect_vector_near(rows[1], { -e_theta[0], -e_theta[1], -e_theta[2] },
                              1e-5);

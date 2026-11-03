@@ -95,7 +95,7 @@ void expect_basis_near(const std::array<std::array<double, 3>, 3> &rows,
 // unit vector e_theta (0), e_phi (1) or e_r (2).
 std::array<double, 3> column_of(const specfem::assembly::LocalFrameRotation &r,
                                 const int index) {
-  return { r[0][index], r[1][index], r[2][index] };
+  return { r(0, index), r(1, index), r(2, index) };
 }
 
 // ---- Cartesian target, dim2 (plain Cartesian mesh) ------------------------
@@ -260,7 +260,7 @@ TEST(LocalFrameRotation,
           0.0, -std::numbers::pi / 2.0);
   for (int row = 0; row < 3; ++row)
     for (int col = 0; col < 3; ++col)
-      EXPECT_NEAR(flat[row][col], trig[row][col], 1e-15);
+      EXPECT_NEAR(flat(row, col), trig(row, col), 1e-15);
 }
 
 // On a regional mesh the local axes are the mesh axes exactly:

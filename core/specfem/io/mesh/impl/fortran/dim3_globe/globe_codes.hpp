@@ -3,6 +3,7 @@
 #include "specfem/element/tags.hpp"
 #include "specfem/mesh_entity.hpp"
 #include <algorithm>
+#include <cstddef>
 #include <stdexcept>
 #include <string>
 
@@ -25,6 +26,19 @@
  * offending value.
  */
 namespace specfem::io::mesh::impl::fortran::dim3_globe {
+
+/**
+ * @name Model-flag positions
+ *
+ * Indices into the database's 16 model flags. The order is fixed by
+ * @c globe_evaluator_model_config in
+ * @c fortran/globe_evaluator/globe_model_evaluator.F90.
+ */
+///@{
+constexpr std::size_t model_flag_count = 16;
+constexpr std::size_t model_flag_attenuation_3d_berkeley = 9;
+constexpr std::size_t model_flag_attenuation_gll = 10;
+///@}
 
 /** @brief Medium tag for a database medium code. */
 inline specfem::element::medium_tag to_medium_tag(const int code) {

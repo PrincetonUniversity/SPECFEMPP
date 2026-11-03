@@ -3,6 +3,8 @@
 #include <array>
 #include <cmath>
 #include <gtest/gtest.h>
+#include <type_traits>
+#include <utility>
 
 namespace specfem::coordinate_systems::basis_rotation_test_impl {
 
@@ -28,6 +30,58 @@ static_assert(!CanMakeRotation<Geocentric, Geocentric>);
 static_assert(!CanMakeRotation<Cartesian, UnsupportedFrame>);
 static_assert(!HasBasisMatrix<Cartesian, Cartesian>);
 static_assert(!HasBasisMatrix<Geocentric, Geocentric>);
+
+using Forward =
+    specfem::coordinate_systems::BasisMatrix<Cartesian, Geocentric, double>;
+using Inverse =
+    specfem::coordinate_systems::BasisMatrix<Geocentric, Cartesian, double>;
+static_assert(std::is_base_of_v<specfem::datatype::RegisterArray<
+                                    double, Kokkos::extents<std::size_t, 3, 3>,
+                                    Kokkos::layout_right>,
+                                Forward>);
+static_assert(std::is_trivially_copyable_v<Forward>);
+static_assert(std::is_same_v<decltype(specfem::coordinate_systems::transpose(
+                                 std::declval<Forward>())),
+                             Inverse>);
+
+using FloatForward =
+    specfem::coordinate_systems::BasisMatrix<Cartesian, Geocentric, float>;
+
+template <typename MatrixType, typename... Values>
+concept CanConstructMatrix =
+    requires(const Values &...values) { MatrixType{ values... }; };
+
+static_assert(std::is_default_constructible_v<Forward>);
+static_assert(std::is_copy_constructible_v<Forward>);
+static_assert(!std::is_constructible_v<Forward, double>);
+static_assert(!std::is_constructible_v<Forward, const double *>);
+static_assert(!std::is_convertible_v<double, Forward>);
+static_assert(!std::is_convertible_v<const double *, Forward>);
+static_assert(!std::is_assignable_v<Forward &, double>);
+static_assert(!std::is_assignable_v<Forward &, const double *>);
+static_assert(CanConstructMatrix<Forward, double, double, double, double,
+                                 double, double, double, double, double>);
+static_assert(CanConstructMatrix<FloatForward, float, float, float, float,
+                                 float, float, float, float, float>);
+static_assert(!CanConstructMatrix<FloatForward, double, double, double, double,
+                                  double, double, double, double, double>);
+static_assert(!CanConstructMatrix<FloatForward, float, float, float, float,
+                                  float, float, float, float, double>);
+static_assert(!CanConstructMatrix<Forward, double, double, double, double,
+                                  double, double, double, double>);
+
+TEST(BasisRotation, LiteralUsesRowMajorOrderAndTransposeSwapsAxes) {
+  const Forward matrix{ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0 };
+  const auto inverse = specfem::coordinate_systems::transpose(matrix);
+  const auto round_trip = specfem::coordinate_systems::transpose(inverse);
+  for (int row = 0; row < 3; ++row) {
+    for (int column = 0; column < 3; ++column) {
+      EXPECT_DOUBLE_EQ(matrix(row, column), 3 * row + column + 1.0);
+      EXPECT_DOUBLE_EQ(inverse(column, row), matrix(row, column));
+      EXPECT_DOUBLE_EQ(round_trip(row, column), matrix(row, column));
+    }
+  }
+}
 
 TEST(BasisRotation, MapsLocalUnitAxesAtKnownLocations) {
   constexpr double half_pi = 1.57079632679489661923;
@@ -57,7 +111,7 @@ TEST(BasisRotation, MapsLocalUnitAxesAtKnownLocations) {
         specfem::coordinate_systems::GeocentricFrame>(sample.theta, sample.phi);
     for (int row = 0; row < 3; ++row) {
       for (int column = 0; column < 3; ++column) {
-        EXPECT_NEAR(rotation[row][column], sample.expected[row][column],
+        EXPECT_NEAR(rotation(row, column), sample.expected[row][column],
                     2.e-15);
       }
     }
@@ -76,16 +130,16 @@ TEST(BasisRotation, InverseIsTransposeAndOrthonormalAtPoles) {
           specfem::coordinate_systems::CartesianFrame>(theta, phi);
       for (int row = 0; row < 3; ++row) {
         for (int column = 0; column < 3; ++column) {
-          EXPECT_DOUBLE_EQ(inverse[row][column], forward[column][row]);
+          EXPECT_DOUBLE_EQ(inverse(row, column), forward(column, row));
           double product = 0.0;
           for (int inner = 0; inner < 3; ++inner) {
-            product += inverse[row][inner] * forward[inner][column];
+            product += inverse(row, inner) * forward(inner, column);
           }
           EXPECT_NEAR(product, row == column ? 1.0 : 0.0, 2.e-15);
         }
       }
       // A radial unit vector always maps to the geometric radial direction.
-      EXPECT_NEAR(forward[2][2], std::cos(theta), 2.e-15);
+      EXPECT_NEAR(forward(2, 2), std::cos(theta), 2.e-15);
     }
   }
 }
@@ -99,7 +153,7 @@ TEST(BasisRotation, SupportsFloatScalars) {
   };
   for (int row = 0; row < 3; ++row) {
     for (int column = 0; column < 3; ++column) {
-      EXPECT_FLOAT_EQ(rotation[row][column], identity[row][column]);
+      EXPECT_FLOAT_EQ(rotation(row, column), identity[row][column]);
     }
   }
 }

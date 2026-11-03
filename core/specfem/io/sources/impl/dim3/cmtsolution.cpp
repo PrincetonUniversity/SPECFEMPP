@@ -110,8 +110,8 @@ specfem::io::sources_impl::read<specfem::element::dimension_tag::dim3,
     std::shared_ptr<specfem::sources::moment_tensor<dim3>> src;
     if (fields.contains("mrr")) {
       // Harvard-CMT (r, theta, phi) components, stored in the local geocentric
-      // frame whose axes are ordered (theta, phi, r). Kept as-read; rotated
-      // into the Cartesian mesh frame at assembly once the source is placed.
+      // frame whose axes are ordered (theta, phi, r); replaced by its
+      // Cartesian rotation at assembly once the source is placed.
       const auto Mrr = specfem::io::sources_impl::get_real(fields, "mrr");
       const auto Mtt = specfem::io::sources_impl::get_real(fields, "mtt");
       const auto Mpp = specfem::io::sources_impl::get_real(fields, "mpp");

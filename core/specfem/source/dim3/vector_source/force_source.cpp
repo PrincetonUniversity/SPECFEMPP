@@ -1,4 +1,3 @@
-#include "specfem/coordinate_systems/east_north_up.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/setup.hpp"
@@ -23,9 +22,8 @@ Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
 specfem::sources::force<
     specfem::element::dimension_tag::dim3>::get_force_vector() const {
 
-  // The resolved Cartesian force; throws if the source is still in its as-read
-  // local frame (assembly-time resolution must run first).
-  const auto &f = this->force_.cartesian();
+  // Throws std::bad_variant_access while the force is still geocentric.
+  const auto &f = std::get<CartesianForce>(this->force_);
 
   // Get the medium tag that the source is located in
   specfem::element::medium_tag medium_tag = this->get_medium_tag();
@@ -68,7 +66,7 @@ std::string
 specfem::sources::force<specfem::element::dimension_tag::dim3>::print_details()
     const {
   std::ostringstream message;
-  // Echo the force in the frame it was read in (provenance).
+  // Echo the force in the frame it is currently held in.
   std::visit(
       [&message](const auto &force) {
         using T = std::decay_t<decltype(force)>;
@@ -76,18 +74,15 @@ specfem::sources::force<specfem::element::dimension_tag::dim3>::print_details()
           return specfem::utilities::format_scientific(v, 6);
         };
         if constexpr (std::is_same_v<T, GeocentricForce>) {
-          // Report in the FORCESOLUTION East/North/Up convention.
-          const auto enu =
-              specfem::coordinate_systems::to_east_north_up_components(
-                  Kokkos::Array<type_real, 3>{ force[0], force[1], force[2] });
-          message << "(east, north, up) = (" << fmt(enu.east) << ", "
-                  << fmt(enu.north) << ", " << fmt(enu.up) << ")";
+          message << "(f_theta, f_phi, f_r) = (" << fmt(force[0]) << ", "
+                  << fmt(force[1]) << ", " << fmt(force[2])
+                  << ") [axes (theta, phi, r) = (-north, east, up)]";
         } else {
           message << "(fx, fy, fz) = (" << fmt(force[0]) << ", "
                   << fmt(force[1]) << ", " << fmt(force[2]) << ")";
         }
       },
-      this->force_.as_read());
+      this->force_);
   return message.str();
 }
 
@@ -111,8 +106,7 @@ bool specfem::sources::force<specfem::element::dimension_tag::dim3>::operator==(
   const auto *c2 = other_source->get_read_coordinates();
   bool coords_equal = (c1 && c2) ? (*c1 == *c2) : (!c1 && !c2);
 
-  // Compare the as-read forces: same frame and close components. Identity
-  // depends on the input, not the resolved Cartesian value.
+  // Compare the forces: same frame and close components.
   const bool force_equal = std::visit(
       [](const auto &a, const auto &b) {
         if constexpr (std::is_same_v<std::decay_t<decltype(a)>,
@@ -122,7 +116,7 @@ bool specfem::sources::force<specfem::element::dimension_tag::dim3>::operator==(
           return false;
         }
       },
-      this->force_.as_read(), other_source->force_.as_read());
+      this->force_, other_source->force_);
 
   return coords_equal && force_equal &&
          *(this->source_time_function) == *(other_source->source_time_function);

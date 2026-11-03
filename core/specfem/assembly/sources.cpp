@@ -43,23 +43,21 @@ void specfem::assembly::sources_impl::resolve_source_frame(
   using GeocentricFrame = specfem::coordinate_systems::GeocentricFrame;
 
   if (auto *mt = dynamic_cast<MomentTensorSource *>(&source)) {
-    if (mt->moment().is_resolved())
-      return;
-    const auto &local =
-        std::get<specfem::sources::MomentTensor<GeocentricFrame>>(
-            mt->moment().as_read());
-    mt->set_cartesian_components(specfem::sources::rotate(
-        local, specfem::assembly::local_frame_rotation(
-                   source.get_global_coordinates(), mesh)));
+    if (const auto *local =
+            std::get_if<specfem::sources::MomentTensor<GeocentricFrame>>(
+                &mt->moment())) {
+      mt->set_cartesian_components(specfem::sources::rotate(
+          *local, specfem::assembly::local_frame_rotation(
+                      source.get_global_coordinates(), mesh)));
+    }
   } else if (auto *f = dynamic_cast<ForceSource *>(&source)) {
-    if (f->force_quantity().is_resolved())
-      return;
-    const auto &local =
-        std::get<specfem::sources::ForceVector<GeocentricFrame>>(
-            f->force_quantity().as_read());
-    f->set_cartesian_components(specfem::sources::rotate(
-        local, specfem::assembly::local_frame_rotation(
-                   source.get_global_coordinates(), mesh)));
+    if (const auto *local =
+            std::get_if<specfem::sources::ForceVector<GeocentricFrame>>(
+                &f->force_value())) {
+      f->set_cartesian_components(specfem::sources::rotate(
+          *local, specfem::assembly::local_frame_rotation(
+                      source.get_global_coordinates(), mesh)));
+    }
   }
 }
 

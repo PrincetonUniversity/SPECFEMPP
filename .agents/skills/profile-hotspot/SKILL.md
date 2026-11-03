@@ -1,3 +1,13 @@
+---
+name: profile-hotspot
+description: "Profile a SPECFEM++ benchmark on macOS (xctrace/lldb), symbolicate the top hotspot, and propose optimizations. Optionally takes a path to an existing .trace file."
+argument-hint: "[trace-file]"
+disable-model-invocation: true
+---
+
+> **Argument:** $ARGUMENTS (an optional path to an existing `.trace` file). If this shows a literal
+> placeholder instead of a value, take it from the user's request.
+
 You are a performance engineering assistant for SPECFEM++. Walk through the following workflow to identify, symbolicate, and propose optimizations for the top hotspot in a profiling trace.
 
 > **Note:** This workflow requires macOS (xctrace, lldb). It is not available on Linux.
