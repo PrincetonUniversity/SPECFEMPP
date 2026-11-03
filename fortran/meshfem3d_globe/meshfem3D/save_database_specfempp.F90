@@ -128,11 +128,10 @@
 
   implicit none
 
-  ! magic string and version of the on-disk format
-  character(len=32), parameter :: SPECFEMPP_DB_MAGIC = 'SPECFEMPP_GLOBE_DB              '
+  ! magic string and version of the on-disk format, generated from
+  ! cmake/globe_database_format.cmake (shared with the SPECFEM++ reader);
   ! version 5 separates planet metadata from the schema-versioned values
-  integer, parameter :: SPECFEMPP_DB_VERSION = 5
-  integer, parameter :: PLANET_SCHEMA_VERSION = 2
+  include "specfempp_database.fh"
   integer, parameter :: N_PLANET_VALUES = 6
 
   ! material_mode: material values are supplied by the model oracle at SPECFEM++ setup

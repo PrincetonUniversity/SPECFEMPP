@@ -1,3 +1,4 @@
+#include "specfem/globe/database_format.hpp"
 #include "specfem/io.hpp"
 #include <algorithm>
 #include <chrono>
@@ -135,8 +136,8 @@ std::filesystem::path write_database(const DatabaseOptions &options = {}) {
   std::ofstream stream(path, std::ios::binary);
 
   Record header;
-  header.append_fixed("SPECFEMPP_GLOBE_DB", 32);
-  header.append(5);
+  header.append_fixed(std::string(specfem::globe::database_magic), 32);
+  header.append(specfem::globe::database_version);
   header.write(stream);
 
   const std::vector<double> planet_values = {
@@ -147,7 +148,8 @@ std::filesystem::path write_database(const DatabaseOptions &options = {}) {
     3600.0,
     9000.0,
   };
-  write_values(stream, 1, 2, static_cast<int>(planet_values.size()));
+  write_values(stream, 1, specfem::globe::planet_schema_version,
+               static_cast<int>(planet_values.size()));
   write_values(stream, planet_values);
   write_values(stream, 27, 5, 5, 5, 1);
   write_values(stream, 0, 0, 0, 0, 0, options.attenuation ? 1 : 0,
