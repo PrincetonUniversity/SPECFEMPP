@@ -68,11 +68,11 @@ void specfem::io::mesh::impl::fortran::dim3_globe::read_adjacency_graph(
 
     --local_element;
     --neighbor_element;
-    // The neighbor index is in the neighbor rank's numbering, but every globe
-    // slice has the same nspec, so mesh.nspec bounds it too.
+    // The neighbor index is in the neighbor rank's numbering, and globe slices
+    // do not share an nspec (in a six-chunk mesh the chunk slices differ), so
+    // only its sign can be checked here.
     if (local_element < 0 || local_element >= mesh.nspec ||
-        neighbor_element < 0 || neighbor_element >= mesh.nspec ||
-        neighbor_rank < 0) {
+        neighbor_element < 0 || neighbor_rank < 0) {
       throw std::runtime_error("Invalid MPI adjacency in globe database");
     }
 
