@@ -108,15 +108,16 @@
     },
     {
       "name": "release-sycl",
-      "displayName": "Release -- SYCL enabled",
+      "displayName": "Release -- SYCL enabled (portable Intel GPU target)",
+      "description": "Uses portable SPIR-V device code with runtime JIT compilation for supported Intel GPUs. Requires icpx and a compatible GPU driver. For local GPU AOT compilation, run python3 scripts/setup_sycl_aot.py --configure.",
       "binaryDir": "build/release-sycl",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_CXX_COMPILER": "icpx",
+        "CMAKE_CXX_FLAGS": "-fsycl -fsycl-targets=spir64",
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-sycl",
         "Kokkos_ENABLE_SYCL": "ON",
         "Kokkos_ENABLE_ONEDPL": "OFF",
-        "Kokkos_ARCH_INTEL_GPU": "ON",
         "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
         "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
         "SPECFEM_INSTALL": "ON",
