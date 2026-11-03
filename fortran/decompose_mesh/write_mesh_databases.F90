@@ -42,10 +42,20 @@
   character(len=MAX_STRING_LEN) :: database_file
   character(len=32) :: proc_str_db, format_str_db
   integer :: ndigits_db
+  logical, dimension(6) :: injection_sides_resolved
+  integer :: injection_surface_kind
 
   ! user output
   print *, 'partitions: '
   print *, '  num = ',nparts
+  print *
+
+  call resolve_injection_sides(STACEY_ABSORBING_CONDITIONS, TOP_FREE_SURFACE, BOTTOM_FREE_SURFACE, &
+                               STACEY_AS_INJECTION_BOUNDARY, INJECTION_SIDES, &
+                               injection_sides_resolved, injection_surface_kind)
+  print *, 'injection surface:'
+  print *, '  kind = ',injection_surface_kind
+  print *, '  sides (xmin xmax ymin ymax bottom top) = ',injection_sides_resolved(:)
   print *
 
   if (COUPLE_WITH_INJECTION_TECHNIQUE .or. MESH_A_CHUNK_OF_THE_EARTH) open(124,file='Numglob2loc_elmn.txt')
@@ -122,7 +132,8 @@
                                   nodes_ibelm_ymax, nodes_ibelm_bottom, nodes_ibelm_top, &
                                   glob2loc_elmnts, glob2loc_nodes_nparts, &
                                   glob2loc_nodes_parts, glob2loc_nodes, part, NGNOD2D, &
-                                  STACEY_ABSORBING_CONDITIONS, TOP_FREE_SURFACE, BOTTOM_FREE_SURFACE)
+                                  STACEY_ABSORBING_CONDITIONS, TOP_FREE_SURFACE, BOTTOM_FREE_SURFACE, &
+                                  injection_sides_resolved, injection_surface_kind)
 
     ! writes out C-PML elements indices, CPML-regions and thickness of C-PML layer
     call write_cpml_database(IIN_database, ipart, nspec, nspec_cpml, CPML_to_spec, &

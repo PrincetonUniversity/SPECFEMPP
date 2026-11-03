@@ -41,11 +41,22 @@ print_end_message(std::chrono::time_point<std::chrono::system_clock> start_time,
   return message.str();
 }
 
-bool execute(const std::string &dimension, const YAML::Node &parameter_dict) {
+bool execute(
+    const std::string &dimension, const YAML::Node &parameter_dict,
+    const std::optional<specfem::injection::PluginOptions> &injection) {
   try {
     // Use simulation model enumeration for validation
     specfem::simulation::model simulation_model =
         specfem::simulation::from_string(dimension);
+
+    const bool has_injection_section =
+        parameter_dict["parameters"]["injection"].IsDefined();
+    if (simulation_model == specfem::simulation::model::Cartesian2D &&
+        (has_injection_section || injection))
+      throw std::runtime_error(
+          "Wavefield injection is not supported for 2D simulations in v1.");
+    specfem::injection::check_injection_consistency(has_injection_section,
+                                                    injection);
 
     switch (simulation_model) {
     case specfem::simulation::model::Cartesian2D: {
@@ -74,7 +85,7 @@ bool execute(const std::string &dimension, const YAML::Node &parameter_dict) {
       tasks.push_back(signal_task);
 
       // Run 3D Cartesian program
-      program_3d(parameter_dict, tasks);
+      program_3d(parameter_dict, tasks, false, injection);
 
       return true;
     }
@@ -86,7 +97,7 @@ bool execute(const std::string &dimension, const YAML::Node &parameter_dict) {
       tasks.push_back(
           std::make_shared<
               specfem::periodic_tasks::check_signal<dimension_tag>>(10));
-      program_3d(parameter_dict, tasks, true);
+      program_3d(parameter_dict, tasks, true, injection);
       return true;
     }
     default: {

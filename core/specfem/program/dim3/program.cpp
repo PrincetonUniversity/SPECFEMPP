@@ -7,11 +7,13 @@
 #include "specfem/mesh.hpp"
 #include "specfem/periodic_tasks/stability_check.hpp"
 #include "specfem/program/abort.hpp"
+#include "specfem/program/injection.hpp"
 #include "specfem/receivers.hpp"
 #include "specfem/solver.hpp"
 #include "specfem/source.hpp"
 #include "specfem/timescheme.hpp"
 #include <algorithm>
+#include <optional>
 
 namespace specfem::program {
 
@@ -29,7 +31,8 @@ void run_program_3d(
     const YAML::Node &parameter_dict,
     std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task<
         specfem::element::dimension_tag::dim3>>>
-        tasks) {
+        tasks,
+    const std::optional<specfem::injection::PluginOptions> &injection) {
 
   // --------------------------------------------------------------
   //                    Read parameter file
@@ -42,6 +45,12 @@ void run_program_3d(
     oss << print_header<specfem::element::dimension_tag::dim3>(setup,
                                                                start_time);
   });
+
+  // Held for the whole run so the plugin stays loaded
+  std::optional<specfem::injection::PluginLibrary> injection_plugin;
+  if (injection)
+    injection_plugin.emplace(
+        specfem::program_impl::load_injection_plugin(*injection));
 
   // Get simulation parameters
   const type_real dt = setup.get_dt();
@@ -295,12 +304,14 @@ void program_3d(
     std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task<
         specfem::element::dimension_tag::dim3>>>
         tasks,
-    const bool globe) {
+    const bool globe,
+    const std::optional<specfem::injection::PluginOptions> &injection) {
   if (globe) {
-    run_program_3d<specfem::simulation::model::Globe3D>(parameter_dict, tasks);
+    run_program_3d<specfem::simulation::model::Globe3D>(parameter_dict, tasks,
+                                                        injection);
   } else {
     run_program_3d<specfem::simulation::model::Cartesian3D>(parameter_dict,
-                                                            tasks);
+                                                            tasks, injection);
   }
 }
 

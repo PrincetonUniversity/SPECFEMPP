@@ -58,7 +58,8 @@ function(specfem_add_injection_plugin target)
         set(_format elf)
     else()
         message(FATAL_ERROR
-            "specfem_add_injection_plugin(${target}): unsupported platform")
+            "specfem_add_injection_plugin(${target}): injection plugins can "
+            "only be built on Linux and macOS")
     endif()
 
     add_custom_command(TARGET ${target} POST_BUILD

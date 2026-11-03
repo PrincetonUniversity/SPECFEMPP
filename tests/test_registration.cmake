@@ -279,12 +279,13 @@ function(specfem_add_test name)
         # SKIP_REGULAR_EXPRESSION -- that only ever existed to neutralize the "[  SKIPPED ]"
         # default gtest_discover_tests() sets, which under merged rank stdout let a
         # GTEST_SKIP() on an excluded rank mask a real failure on an active one.
+        # LABELS is set in its own call: _labels is itself a list, which would
+        # split into separate arguments inside _mpi_properties.
         set(_mpi_properties
             WORKING_DIRECTORY "${SPECFEM_TEST_OUTPUT_DIR}"
             PROCESSORS ${_ranks}
             RUN_SERIAL ON
             TIMEOUT ${T_TIMEOUT}
-            LABELS "${_labels}"
             FAIL_REGULAR_EXPRESSION "did not match any test")
 
         # The same registrations are also written into SPECFEM_TEST_OUTPUT_DIR so that
@@ -313,11 +314,13 @@ function(specfem_add_test name)
                 COMMAND ${SPECFEM_MPI_LAUNCH_COMMAND} ${_ranks}
                         $<TARGET_FILE:${name}> --gtest_filter=${_filter})
             set_tests_properties(${_test} PROPERTIES ${_mpi_properties})
+            set_tests_properties(${_test} PROPERTIES LABELS "${_labels}")
 
             string(APPEND _standalone
                 "add_test([==[${_test}]==]${_standalone_launch} [==[${_ranks}]==]"
                 " [==[$<TARGET_FILE:${name}>]==] [==[--gtest_filter=${_filter}]==])\n"
-                "set_tests_properties([==[${_test}]==] PROPERTIES${_standalone_props})\n")
+                "set_tests_properties([==[${_test}]==] PROPERTIES${_standalone_props})\n"
+                "set_tests_properties([==[${_test}]==] PROPERTIES LABELS [==[${_labels}]==])\n")
         endforeach()
 
         file(GENERATE
