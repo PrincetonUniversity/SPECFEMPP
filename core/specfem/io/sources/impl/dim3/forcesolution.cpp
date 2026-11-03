@@ -1,5 +1,4 @@
 #include "specfem/coordinate_systems/cartesian.hpp"
-#include "specfem/coordinate_systems/east_north_up.hpp"
 #include "specfem/coordinate_systems/geographic.hpp"
 #include "specfem/io/sources/impl/reader.hpp"
 #include "specfem/io/sources/impl/solution_format_helpers.hpp"
@@ -98,15 +97,12 @@ specfem::io::sources_impl::read<specfem::element::dimension_tag::dim3,
     auto comp_up = specfem::io::sources_impl::get_real(
         fields, "component dir vect source z_up");
 
-    // Force in the local East/North/Up frame, reordered into the geocentric
-    // (theta, phi, r) frame. Kept as-read; rotated into the Cartesian mesh
+    // Geocentric axes are (theta, phi, r); East = +phi, North = -theta,
+    // Up = +r, so (E, N, U) -> (-N, E, U). Rotated into the Cartesian mesh
     // frame at assembly once the source is placed.
-    const auto local = specfem::coordinate_systems::to_geocentric_components(
-        specfem::coordinate_systems::EastNorthUp<type_real>{
-            factor * comp_east, factor * comp_north, factor * comp_up });
     const specfem::sources::ForceVector<
         specfem::coordinate_systems::GeocentricFrame>
-        geocentric(local[0], local[1], local[2]);
+        geocentric(-factor * comp_north, factor * comp_east, factor * comp_up);
 
     // Construct STF based on type
     std::unique_ptr<specfem::source_time_functions::stf> stf_ptr;

@@ -1,4 +1,3 @@
-#include "specfem/coordinate_systems/east_north_up.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/setup.hpp"
@@ -76,12 +75,9 @@ specfem::sources::force<specfem::element::dimension_tag::dim3>::print_details()
           return specfem::utilities::format_scientific(v, 6);
         };
         if constexpr (std::is_same_v<T, GeocentricForce>) {
-          // Report in the FORCESOLUTION East/North/Up convention.
-          const auto enu =
-              specfem::coordinate_systems::to_east_north_up_components(
-                  Kokkos::Array<type_real, 3>{ force[0], force[1], force[2] });
-          message << "(east, north, up) = (" << fmt(enu.east) << ", "
-                  << fmt(enu.north) << ", " << fmt(enu.up) << ")";
+          message << "(f_theta, f_phi, f_r) = (" << fmt(force[0]) << ", "
+                  << fmt(force[1]) << ", " << fmt(force[2])
+                  << ") [axes (theta, phi, r) = (-north, east, up)]";
         } else {
           message << "(fx, fy, fz) = (" << fmt(force[0]) << ", "
                   << fmt(force[1]) << ", " << fmt(force[2]) << ")";

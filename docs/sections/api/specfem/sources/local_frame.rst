@@ -15,8 +15,8 @@ Mxz = Mrp, Myz = -Mrt``.
 
 The CMTSOLUTION reader fills the geocentric slots directly
 (``(0,0) = Mtt, (1,1) = Mpp, (2,2) = Mrr, (0,1) = Mtp, (0,2) = Mrt,
-(1,2) = Mrp``); the FORCESOLUTION reader reorders East/North/Up through
-:doc:`../coordinate_systems/east_north_up`.
+(1,2) = Mrp``); the FORCESOLUTION reader maps East/North/Up :math:`(E, N, U)` to geocentric
+:math:`(f_\theta, f_\phi, f_r) = (-N, E, U)`.
 
 .. doxygenclass:: specfem::sources::MomentTensor
     :members:

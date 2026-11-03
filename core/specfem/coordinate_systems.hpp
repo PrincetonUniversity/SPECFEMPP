@@ -10,7 +10,6 @@
 #include "coordinate_systems/basis_rotation.hpp"
 #include "coordinate_systems/cartesian.hpp"
 #include "coordinate_systems/coordinates.hpp"
-#include "coordinate_systems/east_north_up.hpp"
 #include "coordinate_systems/geocentric.hpp"
 #include "coordinate_systems/geocentric_projection.hpp"
 #include "coordinate_systems/geographic.hpp"

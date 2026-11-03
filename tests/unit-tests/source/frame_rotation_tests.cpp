@@ -1,6 +1,5 @@
 #include "specfem/constants.hpp"
 #include "specfem/coordinate_systems/basis_rotation.hpp"
-#include "specfem/coordinate_systems/east_north_up.hpp"
 #include "specfem/source/force_vector.hpp"
 #include "specfem/source/moment_tensor.hpp"
 
@@ -52,12 +51,11 @@ GeocentricTensor from_cmt(double Mrr, double Mtt, double Mpp, double Mrt,
       static_cast<type_real>(Mrt), static_cast<type_real>(Mrp));
 }
 
+// Geocentric (theta, phi, r) = (-north, east, up).
 GeocentricForce from_enu(double east, double north, double up) {
-  const auto local = specfem::coordinate_systems::to_geocentric_components(
-      specfem::coordinate_systems::EastNorthUp<double>{ east, north, up });
-  return GeocentricForce(static_cast<type_real>(local[0]),
-                         static_cast<type_real>(local[1]),
-                         static_cast<type_real>(local[2]));
+  return GeocentricForce(static_cast<type_real>(-north),
+                         static_cast<type_real>(east),
+                         static_cast<type_real>(up));
 }
 
 // Scalar invariants of a 3x3 tensor: trace, second invariant, determinant.

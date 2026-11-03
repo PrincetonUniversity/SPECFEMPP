@@ -687,7 +687,6 @@ specfem_add_test(coordinate_systems_tests
   SOURCES   coordinate_systems/utm_tests.cpp
             coordinate_systems/geocentric_tests.cpp
             coordinate_systems/basis_rotation_tests.cpp
-            coordinate_systems/east_north_up_tests.cpp
   LIBRARIES specfem::coordinate_systems
             gtest_main
 )

@@ -15,9 +15,8 @@ namespace sources {
  * Component order follows the frame:
  * @ref specfem::coordinate_systems::CartesianFrame gives (fx, fy, fz);
  * @ref specfem::coordinate_systems::GeocentricFrame gives
- * @f$ (f_\theta, f_\phi, f_r) @f$. A FORCESOLUTION East/North/Up direction is
- * reordered into the geocentric frame by
- * @ref specfem::coordinate_systems::to_geocentric_components.
+ * @f$ (f_\theta, f_\phi, f_r) @f$. A FORCESOLUTION East/North/Up direction
+ * @f$ (E, N, U) @f$ maps to geocentric components @f$ (-N, E, U) @f$.
  *
  * @tparam Frame Coordinate frame of the components.
  */
