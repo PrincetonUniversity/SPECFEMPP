@@ -137,9 +137,9 @@ LocalFrameRotation local_frame_rotation(
  * North and Up unit vectors in mesh Cartesian components, i.e. the matrix that
  * maps a mesh-frame vector to (East, North, Up) components and is handed to
  * `SeismogramIterator::set_rotation_matrix`. The relabel
- * @f$ (\theta, \phi, r) \to (E, N, U) @f$ is taken from
- * @ref specfem::coordinate_systems::to_east_north_up_components, so no sign
- * convention is spelled here. The identity on a flat mesh.
+ * @f$ (\theta, \phi, r) \to (E, N, U) @f$ is East = @f$ +\hat{e}_\phi @f$,
+ * North = @f$ -\hat{e}_\theta @f$, Up = @f$ +\hat{e}_r @f$. The identity on a
+ * flat mesh.
  *
  * @param point Mesh-space Cartesian point
  * @param mesh Assembled mesh (carries the projection)

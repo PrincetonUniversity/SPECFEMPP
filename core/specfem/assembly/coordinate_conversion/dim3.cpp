@@ -4,15 +4,12 @@
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/coordinate_systems/basis_rotation.hpp"
 #include "specfem/coordinate_systems/cartesian.hpp"
-#include "specfem/coordinate_systems/east_north_up.hpp"
 #include "specfem/coordinate_systems/geocentric.hpp"
 #include "specfem/coordinate_systems/geocentric_projection.hpp"
 #include "specfem/coordinate_systems/geographic.hpp"
 #include "specfem/coordinate_systems/to.hpp"
 #include "specfem/coordinate_systems/utm_projection.hpp"
 #include "specfem/setup.hpp"
-
-#include <Kokkos_Core.hpp>
 
 #include <array>
 #include <stdexcept>
@@ -194,11 +191,8 @@ specfem::assembly::to_geocentric(
 // rotation at theta = 0, phi = -pi/2, written with exact entries
 // (coordinate_conversion_tests asserts the equality).
 specfem::assembly::LocalFrameRotation specfem::assembly::flat_mesh_rotation() {
-  specfem::assembly::LocalFrameRotation rotation{};
-  rotation[0][1] = 1.0;
-  rotation[1][0] = -1.0;
-  rotation[2][2] = 1.0;
-  return rotation;
+  return specfem::assembly::LocalFrameRotation{ 0.0, 1.0, 0.0, -1.0, 0.0,
+                                                0.0, 0.0, 0.0, 1.0 };
 }
 
 specfem::assembly::LocalFrameRotation specfem::assembly::local_frame_rotation(
@@ -233,17 +227,15 @@ specfem::assembly::local_east_north_up_basis(
 
   const auto rotation = specfem::assembly::local_frame_rotation(point, mesh);
 
-  // Row i of `rotation` holds the (theta, phi, r) components of mesh axis i;
-  // relabelling them to (East, North, Up) and placing them in column i gives
-  // the transpose with East/North/Up as rows.
+  // Geocentric axes are (theta, phi, r); East = +phi, North = -theta, Up = +r.
+  // Row `axis` of `rotation` holds the (theta, phi, r) components of mesh axis
+  // `axis`; relabelled to (E, N, U) and placed in column `axis` this gives the
+  // transpose with East/North/Up as rows.
   std::array<std::array<double, 3>, 3> rows{};
   for (int axis = 0; axis < 3; ++axis) {
-    const auto enu = specfem::coordinate_systems::to_east_north_up_components(
-        Kokkos::Array<double, 3>{ rotation[axis][0], rotation[axis][1],
-                                  rotation[axis][2] });
-    rows[0][axis] = enu.east;
-    rows[1][axis] = enu.north;
-    rows[2][axis] = enu.up;
+    rows[0][axis] = rotation(axis, 1);
+    rows[1][axis] = -rotation(axis, 0);
+    rows[2][axis] = rotation(axis, 2);
   }
   return rows;
 }
