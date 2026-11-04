@@ -57,6 +57,15 @@ public:
                 &assembly) override;
 
 private:
+  /**
+   * @brief Dimension-generic implementation of read()
+   *
+   * @tparam DimensionTag Dimension of the assembly
+   * @param assembly SPECFEM++ assembly
+   */
+  template <specfem::element::dimension_tag DimensionTag>
+  void read_impl(specfem::assembly::assembly<DimensionTag> &assembly);
+
   std::string input_folder; ///< Path to input folder
 };
 } // namespace io
