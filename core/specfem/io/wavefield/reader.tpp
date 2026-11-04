@@ -211,49 +211,10 @@ void specfem::io::wavefield_reader<IOLibrary>::run(
               "SIMD/GPU storage chunk size and cannot be read.");
         }
 
-        att_group
-            .openDataset("Rkappa",
-                         medium.h_memory_variable_kappa.get_base_view())
-            .read();
-        att_group
-            .openDataset("Rxx", medium.h_memory_variable_Rxx.get_base_view())
-            .read();
-        att_group
-            .openDataset("Rxz", medium.h_memory_variable_Rxz.get_base_view())
-            .read();
-        att_group
-            .openDataset("EpsilonXX", medium.h_epsilon_xx_att.get_base_view())
-            .read();
-        att_group
-            .openDataset("EpsilonZZ", medium.h_epsilon_zz_att.get_base_view())
-            .read();
-        att_group
-            .openDataset("EpsilonXZ", medium.h_epsilon_xz_att.get_base_view())
-            .read();
-
-        if constexpr (DimensionTag == specfem::element::dimension_tag::dim3) {
-          att_group
-              .openDataset("Ryy", medium.h_memory_variable_Ryy.get_base_view())
-              .read();
-          att_group
-              .openDataset("Rzz", medium.h_memory_variable_Rzz.get_base_view())
-              .read();
-          att_group
-              .openDataset("Rxy", medium.h_memory_variable_Rxy.get_base_view())
-              .read();
-          att_group
-              .openDataset("Ryz", medium.h_memory_variable_Ryz.get_base_view())
-              .read();
-          att_group
-              .openDataset("EpsilonYY", medium.h_epsilon_yy_att.get_base_view())
-              .read();
-          att_group
-              .openDataset("EpsilonXY", medium.h_epsilon_xy_att.get_base_view())
-              .read();
-          att_group
-              .openDataset("EpsilonYZ", medium.h_epsilon_yz_att.get_base_view())
-              .read();
-        }
+        medium.for_each_checkpoint_view(
+            [&](const std::string &name, const auto &view) {
+              att_group.openDataset(name, view.get_base_view()).read();
+            });
       });
 
   attenuation.copy_to_device();

@@ -28,16 +28,6 @@ std::string temp_directory(const std::string &suffix) {
          "/tests/unit-tests/temp_wavefield_attenuation_" + suffix;
 }
 
-// Calls f(dataset_name, host_view) for every checkpointed attenuation view.
-template <typename Medium, typename F> void for_each_view(Medium &m, F &&f) {
-  f("Rkappa", m.h_memory_variable_kappa);
-  f("Rxx", m.h_memory_variable_Rxx);
-  f("Rxz", m.h_memory_variable_Rxz);
-  f("EpsilonXX", m.h_epsilon_xx_att);
-  f("EpsilonZZ", m.h_epsilon_zz_att);
-  f("EpsilonXZ", m.h_epsilon_xz_att);
-}
-
 // Distinct function of the logical indices; `salt` separates datasets.
 inline type_real pattern(const int salt, const std::size_t e,
                          const std::size_t iz, const std::size_t ix,
@@ -80,7 +70,8 @@ void fill_attenuation(
         if (medium.element_range.extent(0) == 0)
           return;
         int salt = 0;
-        for_each_view(medium, [&](const char *, auto &view) {
+        medium.for_each_checkpoint_view([&](const std::string &,
+                                            const auto &view) {
           const int s = salt++;
           visit(view,
                 [&](std::size_t e, std::size_t iz, std::size_t ix,
@@ -100,9 +91,10 @@ void zero_attenuation(
             assembly.attenuation.attenuation_storage.template get<TagsType>();
         if (medium.element_range.extent(0) == 0)
           return;
-        for_each_view(medium, [&](const char *, auto &view) {
-          Kokkos::deep_copy(view.get_base_view(), type_real(0));
-        });
+        medium.for_each_checkpoint_view(
+            [&](const std::string &, const auto &view) {
+              Kokkos::deep_copy(view.get_base_view(), type_real(0));
+            });
       });
 }
 
@@ -156,18 +148,19 @@ TEST_F(Assembly2D, AttenuationCheckpointRoundTrip) {
                            specfem::parallel_configuration::storage_chunk_size
                     << std::endl;
           int salt = 0;
-          impl::for_each_view(medium, [&](const char *name, auto &view) {
-            const int s = salt++;
-            std::size_t n_entries = 0;
-            impl::visit(view, [&](std::size_t e, std::size_t iz, std::size_t ix,
-                                  std::size_t j, auto &v) {
-              EXPECT_NEAR(v, impl::pattern(s, e, iz, ix, j), 1e-3)
-                  << Test.name << " " << name << " (" << e << "," << iz << ","
-                  << ix << "," << j << ")";
-              ++n_entries;
-            });
-            EXPECT_GT(n_entries, 0u) << name;
-          });
+          medium.for_each_checkpoint_view(
+              [&](const std::string &name, const auto &view) {
+                const int s = salt++;
+                std::size_t n_entries = 0;
+                impl::visit(view, [&](std::size_t e, std::size_t iz,
+                                      std::size_t ix, std::size_t j, auto &v) {
+                  EXPECT_NEAR(v, impl::pattern(s, e, iz, ix, j), 1e-3)
+                      << Test.name << " " << name << " (" << e << "," << iz
+                      << "," << ix << "," << j << ")";
+                  ++n_entries;
+                });
+                EXPECT_GT(n_entries, 0u) << name;
+              });
           ++n_checked;
         });
 

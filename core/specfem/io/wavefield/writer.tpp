@@ -216,62 +216,11 @@ void specfem::io::wavefield_writer<OutputLibrary>::run(
                     specfem::parallel_configuration::storage_chunk_size;
                 att_group.createDataset("storage_chunk_size", chunk_size_view)
                     .write();
-                att_group
-                    .createDataset(
-                        "Rkappa",
-                        medium.h_memory_variable_kappa.get_base_view())
-                    .write();
-                att_group
-                    .createDataset("Rxx",
-                                   medium.h_memory_variable_Rxx.get_base_view())
-                    .write();
-                att_group
-                    .createDataset("Rxz",
-                                   medium.h_memory_variable_Rxz.get_base_view())
-                    .write();
-                att_group
-                    .createDataset("EpsilonXX",
-                                   medium.h_epsilon_xx_att.get_base_view())
-                    .write();
-                att_group
-                    .createDataset("EpsilonZZ",
-                                   medium.h_epsilon_zz_att.get_base_view())
-                    .write();
-                att_group
-                    .createDataset("EpsilonXZ",
-                                   medium.h_epsilon_xz_att.get_base_view())
-                    .write();
-                if constexpr (DimensionTag ==
-                              specfem::element::dimension_tag::dim3) {
-                  att_group
-                      .createDataset(
-                          "Ryy", medium.h_memory_variable_Ryy.get_base_view())
-                      .write();
-                  att_group
-                      .createDataset(
-                          "Rzz", medium.h_memory_variable_Rzz.get_base_view())
-                      .write();
-                  att_group
-                      .createDataset(
-                          "Rxy", medium.h_memory_variable_Rxy.get_base_view())
-                      .write();
-                  att_group
-                      .createDataset(
-                          "Ryz", medium.h_memory_variable_Ryz.get_base_view())
-                      .write();
-                  att_group
-                      .createDataset("EpsilonYY",
-                                     medium.h_epsilon_yy_att.get_base_view())
-                      .write();
-                  att_group
-                      .createDataset("EpsilonXY",
-                                     medium.h_epsilon_xy_att.get_base_view())
-                      .write();
-                  att_group
-                      .createDataset("EpsilonYZ",
-                                     medium.h_epsilon_yz_att.get_base_view())
-                      .write();
-                }
+                medium.for_each_checkpoint_view(
+                    [&](const std::string &name, const auto &view) {
+                      att_group.createDataset(name, view.get_base_view())
+                          .write();
+                    });
               }
             });
       }
