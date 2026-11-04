@@ -11,6 +11,8 @@
 #include <cmath>
 #include <gtest/gtest.h>
 
+using fk_injection::type_real;
+
 // ---------------------------------------------------------------------------
 // Helpers in a named namespace (no anonymous namespaces; unity-build safe).
 // ---------------------------------------------------------------------------
@@ -114,7 +116,7 @@ TEST(LayerStack, HalfspaceTopIsEtimesB) {
   const auto wave = layer_stack_tests_impl::make_wave_p();
   const auto window = layer_stack_tests_impl::make_window();
 
-  const double p = fk_injection::impl::ray_parameter(model, wave);
+  const double p = wave.ray_parameter(model);
   fk_injection::impl::DepthGroups groups; // empty, span 0
   const auto setup =
       fk_injection::impl::prepare(model, wave, window, p, groups,
@@ -152,7 +154,7 @@ TEST(LayerStack, FreeSurfaceTractionVanishesP) {
   const auto wave = layer_stack_tests_impl::make_wave_p();
   const auto window = layer_stack_tests_impl::make_window();
 
-  const double p = fk_injection::impl::ray_parameter(model, wave);
+  const double p = wave.ray_parameter(model);
   fk_injection::impl::DepthGroups groups;
   const auto setup =
       fk_injection::impl::prepare(model, wave, window, p, groups,
@@ -196,7 +198,7 @@ TEST(LayerStack, FreeSurfaceTractionVanishesSV) {
   const auto wave = layer_stack_tests_impl::make_wave_sv();
   const auto window = layer_stack_tests_impl::make_window();
 
-  const double p = fk_injection::impl::ray_parameter(model, wave);
+  const double p = wave.ray_parameter(model);
   fk_injection::impl::DepthGroups groups;
   const auto setup =
       fk_injection::impl::prepare(model, wave, window, p, groups,
@@ -240,7 +242,7 @@ TEST(LayerStack, FluidFreeSurfacePressureSmall) {
   const auto wave = layer_stack_tests_impl::make_wave_p();
   const auto window = layer_stack_tests_impl::make_window();
 
-  const double p = fk_injection::impl::ray_parameter(model, wave);
+  const double p = wave.ray_parameter(model);
   fk_injection::impl::DepthGroups groups;
   const auto setup =
       fk_injection::impl::prepare(model, wave, window, p, groups,

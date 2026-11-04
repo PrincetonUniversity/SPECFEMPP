@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+using fk_injection::type_real;
+
 // ---------------------------------------------------------------------------
 // Helper: build a host-side EvalPoints with n points at given z-coords.
 // Normal vectors point in +z direction; Lamé ratios set to 1.
@@ -237,7 +239,6 @@ TEST(FkDriver, ReadModelFile) {
   // Model structure
   EXPECT_EQ(model.number_of_fluid_layers(), 0);
   EXPECT_EQ(model.number_of_elastic_layers(), 2);
-  EXPECT_EQ(model.total_number_of_layers(), 2);
   EXPECT_FALSE(model.has_fluid_layer());
 
   // Layer properties (crust = elastic[0])

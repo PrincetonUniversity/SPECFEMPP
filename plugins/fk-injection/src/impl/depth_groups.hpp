@@ -15,13 +15,14 @@ namespace fk_injection::impl {
  * @c LayeredModel::LayerLocation.
  */
 struct DepthGroup {
-  fk_injection::point_medium medium; ///< resolved medium
-  int layer;                        ///< index within the fluid or elastic block
-  double height;                    ///< height above the bottom of @c layer (m)
-  double depth_below_halfspace_top; ///< zz, half-space top minus depth (m)
-  bool in_halfspace; ///< true when the group sits in the half-space
-  bool free_surface; ///< true at the top of the fluid column
-  double depth;      ///< representative (anchor) depth of the group
+  specfem::plugin::Medium medium =
+      specfem::plugin::Medium::elastic; ///< resolved medium
+  int layer = 0;     ///< index within the fluid or elastic block
+  double height = 0; ///< height above the bottom of @c layer (m)
+  double depth_below_halfspace_top = 0; ///< zz, half-space top minus depth (m)
+  bool in_halfspace = false; ///< true when the group sits in the half-space
+  bool free_surface = false; ///< true at the top of the fluid column
+  double depth = 0;          ///< representative (anchor) depth of the group
 };
 
 /**
@@ -38,20 +39,6 @@ struct DepthGroups {
   double time_delay_min = 0.0;
   double time_delay_max = 0.0;
 };
-
-/**
- * @brief Horizontal ray parameter p = sin(theta) / V_halfspace.
- *
- * Uses the half-space P velocity for an incident P wave and the half-space S
- * velocity for an incident SV wave.
- *
- * @param model Layered velocity model (its last elastic layer is the
- * halfspace).
- * @param wave  Incident plane wave (type and take-off angle).
- * @return Horizontal slowness p in s/m.
- */
-double ray_parameter(const fk_injection::LayeredModel &model,
-                     const fk_injection::IncidentWave &wave);
 
 /**
  * @brief Floating-point round-off slack for exact-depth grouping, in metres.
@@ -96,7 +83,8 @@ double depth_tolerance(double max_depth);
  *                  per-point medium overrides).
  * @param model     Layered velocity model.
  * @param wave      Incident plane wave (origin, azimuth, type).
- * @param p         Horizontal ray parameter from @c ray_parameter.
+ * @param p         Horizontal ray parameter from @c
+ * IncidentWave::ray_parameter.
  * @param tolerance Float round-off slack from @c depth_tolerance (not
  * physical).
  * @return Populated DepthGroups.
