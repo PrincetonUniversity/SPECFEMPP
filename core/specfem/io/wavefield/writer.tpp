@@ -74,6 +74,13 @@ void specfem::io::wavefield_writer<OutputLibrary>::initialize(
           element_types.get_elements_on_host(medium_tag);
       const int n_elements = element_indices.size();
 
+      // Global ispec of each row of `mapping`.
+      Kokkos::View<int *, Kokkos::HostSpace> element_index_view(
+          "element_indices", n_elements);
+      for (int iel = 0; iel < n_elements; iel++)
+        element_index_view(iel) = element_indices(iel);
+      group.createDataset("element_indices", element_index_view).write();
+
       DomainView x("xcoordinates", nglob_medium);
       DomainView z("zcoordinates", nglob_medium);
 
@@ -82,7 +89,7 @@ void specfem::io::wavefield_writer<OutputLibrary>::initialize(
 
       if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
         using MappingView =
-            Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::HostSpace>;
+            Kokkos::View<int ***, Kokkos::LayoutRight, Kokkos::HostSpace>;
         MappingView mapping("mapping", n_elements, ngllz, ngllx);
         for (int iel = 0; iel < n_elements; iel++) {
           const int ispec = element_indices(iel);
@@ -102,7 +109,7 @@ void specfem::io::wavefield_writer<OutputLibrary>::initialize(
       } else {
         const int nglly = mesh.element_grid.nglly;
         using MappingView =
-            Kokkos::View<int ****, Kokkos::LayoutLeft, Kokkos::HostSpace>;
+            Kokkos::View<int ****, Kokkos::LayoutRight, Kokkos::HostSpace>;
         DomainView y("ycoordinates", nglob_medium);
         MappingView mapping("mapping", n_elements, ngllz, nglly, ngllx);
         for (int iel = 0; iel < n_elements; iel++) {

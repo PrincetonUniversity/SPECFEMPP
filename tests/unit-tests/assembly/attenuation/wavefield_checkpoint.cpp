@@ -274,3 +274,93 @@ TEST_F(Assembly2D, AttenuationCheckpointChunkMismatchThrows) {
   }
   EXPECT_GT(n_checked, 0) << "No attenuation container was exercised";
 }
+
+TEST_F(Assembly2D, WavefieldCoordinatesLayout) {
+  namespace impl = wavefield_checkpoint_impl;
+  namespace oracle = specfem_test::layout_oracle;
+  int n_media = 0;
+
+  for (auto parameters : *this) {
+    auto Test = std::get<0>(parameters);
+    auto suffix = std::get<4>(parameters);
+    auto assembly = std::get<5>(parameters);
+
+    const std::string dir = impl::temp_directory(suffix + "_coordinates");
+    boost::filesystem::remove_all(dir);
+    boost::filesystem::create_directories(dir);
+
+    {
+      specfem::io::wavefield_writer<impl::WriteBackend> writer(dir, false);
+      writer.initialize(assembly);
+    }
+
+    const int nspec = assembly.mesh.nspec;
+    const int ngllz = assembly.mesh.element_grid.ngllz;
+    const int ngllx = assembly.mesh.element_grid.ngllx;
+    auto &forward = assembly.fields.forward;
+    const int n_before = n_media;
+
+    specfem::tag_dispatch::for_each(
+        std::remove_reference_t<decltype(forward)>::combinations,
+        [&]<typename TagsType>() {
+          constexpr auto medium_tag = TagsType::medium_tag;
+          const int nglob = forward.template get_nglob<medium_tag>();
+          if (nglob == 0)
+            return;
+          const std::string group = dir + "/ForwardWavefield/Coordinates/" +
+                                    specfem::element::to_string(medium_tag) +
+                                    "/";
+          const auto elements =
+              assembly.element_types.get_elements_on_host(medium_tag);
+          const std::size_t n_elements = elements.size();
+
+          const auto x = oracle::read_npy_raw<type_real>(group + "X.npy");
+          const auto z = oracle::read_npy_raw<type_real>(group + "Z.npy");
+          const auto mapping = oracle::read_npy_raw<int>(group + "mapping.npy");
+          const auto indices =
+              oracle::read_npy_raw<int>(group + "element_indices.npy");
+
+          ASSERT_EQ(x.shape.size(), 1u);
+          ASSERT_EQ(z.shape.size(), 1u);
+          EXPECT_EQ(x.data.size(), static_cast<std::size_t>(nglob));
+          EXPECT_EQ(z.data.size(), static_cast<std::size_t>(nglob));
+          ASSERT_EQ(mapping.shape.size(), 3u);
+          EXPECT_EQ(mapping.shape[0], n_elements);
+          EXPECT_EQ(mapping.shape[1], static_cast<std::size_t>(ngllz));
+          EXPECT_EQ(mapping.shape[2], static_cast<std::size_t>(ngllx));
+          EXPECT_FALSE(mapping.fortran_order);
+          ASSERT_EQ(indices.shape.size(), 1u);
+          ASSERT_EQ(indices.data.size(), n_elements);
+
+          for (std::size_t e = 0; e < n_elements; ++e) {
+            const int ispec = indices.data[e];
+            ASSERT_GE(ispec, 0);
+            ASSERT_LT(ispec, nspec);
+            EXPECT_EQ(ispec, elements(e));
+            for (int iz = 0; iz < ngllz; ++iz)
+              for (int ix = 0; ix < ngllx; ++ix) {
+                const int iglob = mapping.at({ e, static_cast<std::size_t>(iz),
+                                               static_cast<std::size_t>(ix) });
+                ASSERT_GE(iglob, 0);
+                ASSERT_LT(iglob, nglob);
+                EXPECT_NEAR(x.data[iglob],
+                            assembly.mesh.h_coord(0, ispec, iz, ix), 1e-4)
+                    << Test.name << " e=" << e << " iz=" << iz << " ix=" << ix;
+                EXPECT_NEAR(z.data[iglob],
+                            assembly.mesh.h_coord(1, ispec, iz, ix), 1e-4)
+                    << Test.name << " e=" << e << " iz=" << iz << " ix=" << ix;
+              }
+          }
+          std::cout << "[wavefield_coordinates] " << Test.name << " / "
+                    << specfem::element::to_string(medium_tag)
+                    << ": n_elements=" << n_elements << ", nglob=" << nglob
+                    << std::endl;
+          ++n_media;
+        });
+
+    boost::filesystem::remove_all(dir);
+    if (n_media > n_before && n_media >= 2)
+      break;
+  }
+  EXPECT_GT(n_media, 0) << "No medium was exercised";
+}
