@@ -367,6 +367,7 @@ specfem_add_test(assembly_tests
             specfem::enums
             specfem::element
             shape_functions
+            globe_evaluator::test_reference
             ${BOOST_LIBS}
             -lpthread -lm
             gtest_main
@@ -940,7 +941,8 @@ specfem_add_test(globe_properties_tests
           assembly/dim3/attenuation/anisotropic.cpp
           assembly/element_types/runner.cpp
   LIBRARIES specfem::assembly specfem::globe specfem::io
-            specfem::mesh specfem::quadrature specfem_environment gtest_main
+            specfem::mesh specfem::quadrature specfem_environment
+            globe_evaluator::test_reference gtest_main
 )
 
 specfem_add_test(tag_dispatch_tests
@@ -951,6 +953,6 @@ specfem_add_test(tag_dispatch_tests
 
 specfem_add_test(globe_attenuation_reference_tests
   SOURCES attenuation/runner.cpp attenuation/globe_reference.cpp
-  LIBRARIES specfem::attenuation globe_evaluator::globe_evaluator
+  LIBRARIES specfem::attenuation globe_evaluator::test_reference
             gtest_main Kokkos::kokkos
 )

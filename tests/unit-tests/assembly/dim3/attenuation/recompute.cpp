@@ -6,7 +6,7 @@
 #include "specfem/utilities/band.hpp"
 #include "specfem/utilities/logarithmic_center.hpp"
 
-#include "globe_model_evaluator.h"
+#include "globe_attenuation_reference.h"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 

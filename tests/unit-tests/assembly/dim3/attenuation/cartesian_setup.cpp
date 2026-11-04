@@ -8,7 +8,7 @@
 #include "specfem/units.hpp"
 #include "specfem/utilities/band.hpp"
 
-#include "globe_model_evaluator.h"
+#include "globe_attenuation_reference.h"
 #include <Kokkos_Core.hpp>
 #include <boost/filesystem.hpp>
 #include <gtest/gtest.h>

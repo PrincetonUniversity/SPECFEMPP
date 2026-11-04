@@ -1,3 +1,4 @@
+#include "globe_attenuation_reference.h"
 #include "globe_model_evaluator.h"
 #include "specfem/assembly/assembly/dim3/globe_properties.hpp"
 #include "specfem/assembly/attenuation/impl/attenuation_medium/dim3/unrelaxed_tensor.hpp"

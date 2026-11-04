@@ -152,13 +152,23 @@ template <int N_SLS> struct AttenuationObjective {
  * \f$\tau_\sigma(1+2/Q)\f$ and specfem::optimization::NelderMeadSimplex with
  * GLOBE compatibility, all in double precision regardless of type_real.
  *
+ * @note Deliberately stricter than SPECFEM3D_GLOBE. Globe's fminsearch only
+ * reports failure when the evaluation count exceeds its budget; its iteration
+ * check is unreachable, so a fit that stops at the iteration budget (or exactly
+ * at the evaluation budget) without meeting the tolerances is silently
+ * accepted. Here any fit that does not meet the simplex tolerances throws,
+ * so an unconverged \f$\tau_\epsilon\f$ never reaches the solver. Converged
+ * fits are identical to globe's.
+ *
  * @tparam N_SLS Number of standard linear solids (> 1)
  * @tparam T Unit of the band (frequency or period)
  * @param Q Target Q, limited by effective_quality_factor()
  * @param tau_sigma Stress relaxation times from compute_tau_sigma()
  * @param band Attenuation band
  * @return Strain relaxation times \f$\tau_\epsilon\f$
- * @throws std::runtime_error if the fit exhausts globe's budgets
+ * @throws std::runtime_error if the simplex stops on its iteration or
+ * evaluation budget before meeting its tolerances, including cases globe
+ * would accept
  * @throws std::invalid_argument if Q is NaN
  */
 template <int N_SLS, typename T>
@@ -244,7 +254,8 @@ template <int N_SLS> struct QualityFactorFit {
  * @brief Fit Q and derive its property values and modulus scales.
  *
  * Runs compute_tau_eps(), get_attenuation_property_values() and
- * get_attenuation_modulus_scales() in turn.
+ * get_attenuation_modulus_scales() in turn. Inherits compute_tau_eps()'s
+ * stricter-than-globe convergence rule.
  *
  * @tparam N_SLS Number of standard linear solids (> 1)
  * @tparam T Unit of the band (frequency or period)
@@ -254,6 +265,8 @@ template <int N_SLS> struct QualityFactorFit {
  * @param f_c_source Band-center frequency (Hz)
  * @param attenuation_f0_reference Model reference frequency (Hz)
  * @return The fit and everything derived from it
+ * @throws std::runtime_error if the Q fit does not converge (see
+ * compute_tau_eps()) or the relaxed scale is outside [0.5, 1.5]
  */
 template <int N_SLS, typename T>
 QualityFactorFit<N_SLS>

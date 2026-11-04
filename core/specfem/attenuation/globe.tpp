@@ -96,10 +96,13 @@ specfem::attenuation::globe::compute_tau_eps(
 
   const auto result = specfem::optimization::optimize(
       specfem::optimization::NelderMeadSimplex{}, objective, options);
+  // Deliberately stricter than globe: fminsearch only fails when
+  // func_evals > maxfun and accepts budget-limited fits. Reject them instead.
   if (!result.converged) {
     std::ostringstream message;
     message << "Attenuation Q fit did not converge for Q = " << q
-            << " within globe's simplex budgets";
+            << " within the simplex budgets; SPECFEM++ rejects unconverged "
+               "fits that SPECFEM3D_GLOBE would accept";
     throw std::runtime_error(message.str());
   }
 

@@ -1,4 +1,4 @@
-#include "globe_model_evaluator.h"
+#include "globe_attenuation_reference.h"
 #include "specfem/attenuation.hpp"
 #include <cmath>
 #include <gtest/gtest.h>

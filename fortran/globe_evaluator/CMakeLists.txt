@@ -14,8 +14,7 @@ endif()
 
 set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/modules)
 
-add_library(globe_evaluator globe_model_evaluator.F90
-  globe_attenuation_reference.F90)
+add_library(globe_evaluator globe_model_evaluator.F90)
 add_library(globe_evaluator::globe_evaluator ALIAS globe_evaluator)
 
 # The C ABI header, for consumers.
@@ -51,6 +50,18 @@ target_link_libraries(globe_evaluator PUBLIC
 if(SPECFEM_ENABLE_MPI)
   target_link_libraries(globe_evaluator PUBLIC MPI::MPI_Fortran)
 endif()
+
+# TEST ONLY: independent globe attenuation references used by unit tests. Kept
+# out of globe_evaluator so production consumers of specfem::globe do not link
+# test code. Never installed.
+add_library(globe_evaluator_test_reference globe_attenuation_reference.F90)
+add_library(globe_evaluator::test_reference ALIAS globe_evaluator_test_reference)
+target_include_directories(globe_evaluator_test_reference PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(globe_evaluator_test_reference PRIVATE
+  ${CMAKE_BINARY_DIR}/fortran/meshfem3d_globe/modules
+)
+target_link_libraries(globe_evaluator_test_reference PUBLIC globe_evaluator)
 
 if(SPECFEM_INSTALL)
   install(TARGETS globe_evaluator
