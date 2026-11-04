@@ -91,6 +91,7 @@ specfem_add_test(fk_injection_plugin_config_tests
               plugin_config_tests.cpp
   LIBRARIES   fk_injection_impl
               gtest
+  DEFINITIONS "FK_INJECTION_EXAMPLE_CONFIG=\"${CMAKE_CURRENT_SOURCE_DIR}/../fk.yaml\""
 )
 
 specfem_add_test(fk_injection_plugin_tests
