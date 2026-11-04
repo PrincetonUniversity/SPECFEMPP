@@ -175,18 +175,22 @@ project_elastic(const fk_injection::ComplexVector<4> &state,
  * @f$\dot{\chi}@f$ (SPECFEM3D's acoustic FK coupling), not pressure.
  *
  * @param state          Acoustic state @f$(u_z, P/k)@f$ at the point.
- * @param layer          Fluid layer containing the point (supplies density).
+ * @param horizontal_density Density in the horizontal recovery
+ *        @f$u_x = -i p^2/\rho\,(P/k)@f$. SPECFEM3D's layer resolution sends a
+ *        point at a layer's bottom boundary into the layer below, so at the
+ *        fluid-solid interface this is the underlying solid's density. The
+ *        caller resolves it.
  * @param omega          Complex angular frequency (rad/s).
  * @param ray_parameter  Horizontal slowness p (s/m).
  * @return SeriesSpectrum with S0, S1, S2 populated.
  */
 inline SeriesSpectrum project_acoustic(const AcousticState &state,
-                                       const fk_injection::AcousticLayer &layer,
+                                       double horizontal_density,
                                        std::complex<double> omega,
                                        type_real ray_parameter) {
   using Cplx = std::complex<double>;
   const double p = static_cast<double>(ray_parameter);
-  const double rho = static_cast<double>(layer.density);
+  const double rho = horizontal_density;
   const Cplx neg_i(0.0, -1.0);
   (void)omega; // chi_dot needs no (i*omega) factor
 
