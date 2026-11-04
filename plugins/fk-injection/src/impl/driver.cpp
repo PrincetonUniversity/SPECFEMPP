@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <sstream>
 #include <stdexcept>
 #include <utility>
@@ -51,14 +52,56 @@ fk_injection::impl::make_result(const fk_injection::impl::DepthSeries &series,
       static_cast<type_real>(std::sin(setup.phi)), setup.sizes.resampling_rate);
 }
 
+void fk_injection::impl::check_eval_points(
+    const fk_injection::EvalPoints &points) {
+  const std::size_t n = points.x.size();
+  auto fail = [n](const char *name, std::size_t size) {
+    std::ostringstream message;
+    message << "EvalPoints: " << name << " has " << size
+            << " entries, expected " << n;
+    throw std::runtime_error(message.str());
+  };
+
+  if (points.y.size() != n) {
+    fail("y", points.y.size());
+  }
+  if (points.z.size() != n) {
+    fail("z", points.z.size());
+  }
+  if (!points.medium.empty() && points.medium.size() != n) {
+    fail("medium", points.medium.size());
+  }
+
+  const bool has_traction_inputs =
+      !points.normal_x.empty() || !points.normal_y.empty() ||
+      !points.normal_z.empty() || !points.lame_ratio_xi1.empty() ||
+      !points.lame_ratio_xim.empty() || !points.lame_ratio_bulk.empty();
+  if (has_traction_inputs) {
+    const std::pair<const char *, std::size_t> traction_inputs[] = {
+      { "normal_x", points.normal_x.size() },
+      { "normal_y", points.normal_y.size() },
+      { "normal_z", points.normal_z.size() },
+      { "lame_ratio_xi1", points.lame_ratio_xi1.size() },
+      { "lame_ratio_xim", points.lame_ratio_xim.size() },
+      { "lame_ratio_bulk", points.lame_ratio_bulk.size() },
+    };
+    for (const auto &[name, size] : traction_inputs) {
+      if (size != n) {
+        fail(name, size);
+      }
+    }
+  }
+}
+
 fk_injection::FkResult
 fk_injection::impl::run_fk_driver(const fk_injection::LayeredModel &model,
                                   const fk_injection::IncidentWave &wave,
                                   const fk_injection::TimeWindow &window,
                                   const fk_injection::EvalPoints &points,
-                                  bool compute_traction,
                                   fk_injection::field_derivative derivative,
                                   bool reproduce_specfem3d_reference) {
+  fk_injection::impl::check_eval_points(points);
+
   const double p = wave.ray_parameter(model);
 
   // Largest point depth magnitude, for the float round-off grouping tolerance.
@@ -72,8 +115,8 @@ fk_injection::impl::run_fk_driver(const fk_injection::LayeredModel &model,
   const double tolerance = fk_injection::impl::depth_tolerance(max_depth);
   const fk_injection::impl::DepthGroups groups =
       fk_injection::impl::group_by_depth(points, model, wave, p, tolerance);
-  const fk_injection::impl::FkSetup setup = fk_injection::impl::prepare(
-      model, wave, window, p, groups, derivative, compute_traction);
+  const fk_injection::impl::FkSetup setup =
+      fk_injection::impl::prepare(model, wave, window, p, groups, derivative);
 
   // Delay scaling: 1 in production (exact plane-wave delay); N/(N-1) only when
   // reproducing the SPECFEM3D reference, whose frequency-grid stretched delays.

@@ -121,8 +121,7 @@ FkChain make_fk_chain() {
 
   const auto setup =
       fk_injection::impl::prepare(model, wave, window, p, groups,
-                                  fk_injection::field_derivative::displacement,
-                                  /*compute_traction=*/true);
+                                  fk_injection::field_derivative::displacement);
 
   const auto states = fk_injection::impl::solve_layer_stack(model, setup);
 
@@ -302,10 +301,10 @@ TEST(DepthSeries, NormalizationIndependentOfResampling) {
   const auto window_np2 = make_window(0.05, 600); // NP=2, same dt_min
 
   const auto result1 = fk_injection::impl::run_fk_driver(
-      model, wave, window_np1, points, /*traction=*/false,
+      model, wave, window_np1, points,
       fk_injection::field_derivative::displacement);
   const auto result2 = fk_injection::impl::run_fk_driver(
-      model, wave, window_np2, points, /*traction=*/false,
+      model, wave, window_np2, points,
       fk_injection::field_derivative::displacement);
   ASSERT_EQ(result1.resampling_rate(), 1);
   ASSERT_EQ(result2.resampling_rate(), 2);

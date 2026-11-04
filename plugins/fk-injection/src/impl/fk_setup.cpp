@@ -10,8 +10,7 @@ fk_injection::impl::prepare(const fk_injection::LayeredModel &model,
                             const fk_injection::IncidentWave &wave,
                             const fk_injection::TimeWindow &window, double p,
                             const fk_injection::impl::DepthGroups &groups,
-                            fk_injection::field_derivative derivative,
-                            bool compute_traction) {
+                            fk_injection::field_derivative derivative) {
   fk_injection::impl::FkSetup setup;
 
   const double span = groups.time_delay_max - groups.time_delay_min;
@@ -21,7 +20,6 @@ fk_injection::impl::prepare(const fk_injection::LayeredModel &model,
   setup.phi = static_cast<double>(wave.azimuth_phi);
   setup.dt_min = static_cast<double>(setup.sizes.resampling_rate) *
                  static_cast<double>(window.dt);
-  setup.compute_traction = compute_traction;
   setup.wave_type = wave.type;
   setup.derivative_order =
       (derivative == fk_injection::field_derivative::velocity)       ? 1

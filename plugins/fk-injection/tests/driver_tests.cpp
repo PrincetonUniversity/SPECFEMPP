@@ -1,4 +1,5 @@
 #include "fk_injection/fk_injection.hpp"
+#include "impl/driver.hpp"
 
 #include <fstream>
 #include <gtest/gtest.h>
@@ -112,8 +113,7 @@ TEST(FkDriver, ElasticHalfSpaceRunsFinite) {
   // Points at various depths in the crust and just below the surface.
   const auto ep = make_eval_points({ 0, 5000, 15000, 30000, 40000 });
 
-  const auto result = fk_injection::solve(model, wave, window, ep,
-                                          /*compute_traction=*/false);
+  const auto result = fk_injection::solve(model, wave, window, ep);
 
   // Shape checks
   EXPECT_EQ(result.number_of_points(), 5);
@@ -178,8 +178,7 @@ TEST(FkDriver, AcousticElasticRunsFinite) {
                                    /*with_normals=*/true,
                                    /*with_lame=*/true);
 
-  const auto result = fk_injection::solve(model, wave, window, ep,
-                                          /*compute_traction=*/true);
+  const auto result = fk_injection::solve(model, wave, window, ep);
 
   EXPECT_EQ(result.number_of_points(), 5);
   EXPECT_GT(result.coefficient_count(), 0);
@@ -270,4 +269,53 @@ TEST(FkDriver, ReadModelFile) {
   EXPECT_NEAR(static_cast<double>(window.frequency_max), 2.0, 1e-6);
   EXPECT_NEAR(static_cast<double>(window.frequency_sampling), 4.0, 1e-6);
   EXPECT_NEAR(static_cast<double>(window.time_window_length), 60.0, 1e-6);
+}
+
+// ===========================================================================
+// check_eval_points: every array agrees, and the traction inputs come together.
+// ===========================================================================
+static void expect_rejected(const fk_injection::EvalPoints &points,
+                            const std::string &reason) {
+  try {
+    fk_injection::impl::check_eval_points(points);
+    FAIL() << "expected a rejection mentioning '" << reason << "'";
+  } catch (const std::runtime_error &error) {
+    EXPECT_NE(std::string(error.what()).find(reason), std::string::npos)
+        << error.what();
+  }
+}
+
+TEST(FkDriver, EvalPointsAccepted) {
+  EXPECT_NO_THROW(
+      fk_injection::impl::check_eval_points(make_eval_points({ 0, 1000 })));
+  EXPECT_NO_THROW(fk_injection::impl::check_eval_points(make_eval_points(
+      { 0, 1000 }, /*with_normals=*/true, /*with_lame=*/true)));
+
+  auto with_medium = make_eval_points({ 0, 1000 });
+  with_medium.medium = { specfem::plugin::Medium::elastic,
+                         specfem::plugin::Medium::elastic };
+  EXPECT_NO_THROW(fk_injection::impl::check_eval_points(with_medium));
+}
+
+TEST(FkDriver, EvalPointsRejectSizeMismatch) {
+  auto short_y = make_eval_points({ 0, 1000 });
+  short_y.y.pop_back();
+  expect_rejected(short_y, "y has 1 entries, expected 2");
+
+  auto short_z = make_eval_points({ 0, 1000 });
+  short_z.z.pop_back();
+  expect_rejected(short_z, "z has 1 entries, expected 2");
+
+  auto short_medium = make_eval_points({ 0, 1000 });
+  short_medium.medium = { specfem::plugin::Medium::elastic };
+  expect_rejected(short_medium, "medium has 1 entries, expected 2");
+}
+
+TEST(FkDriver, EvalPointsRejectPartialTractionInputs) {
+  expect_rejected(make_eval_points({ 0, 1000 }, /*with_normals=*/true,
+                                   /*with_lame=*/false),
+                  "lame_ratio_xi1 has 0 entries, expected 2");
+  expect_rejected(make_eval_points({ 0, 1000 }, /*with_normals=*/false,
+                                   /*with_lame=*/true),
+                  "normal_x has 0 entries, expected 2");
 }
