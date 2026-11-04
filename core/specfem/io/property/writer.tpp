@@ -82,13 +82,6 @@ void specfem::io::property_writer<OutputLibrary>::write_impl(
             assembly.properties.template get_container<medium_tag,
                                                        property_tag>();
 
-        // The property container spans the whole (medium, property) group;
-        // this combination's elements are the contiguous sub-block
-        // [offset, offset + count) of its views.
-        const int offset = element_range.begin_index() -
-                           data_container.element_range.begin_index();
-        const int count = element_range.size();
-
         if constexpr (has_attenuation) {
           const auto &att =
               assembly.attenuation.template get_container<medium_tag,
@@ -102,11 +95,13 @@ void specfem::io::property_writer<OutputLibrary>::write_impl(
           }
         }
 
-        // Property datasets. The file stores the physical (relaxed) moduli:
-        // for attenuating combinations the staged "kappa"/"mu" values are
-        // divided by the per-element scale factors before writing.
+        // Property datasets. The property container spans the whole (medium,
+        // property) group; this combination's elements are a contiguous
+        // sub-block of its views. The file stores the physical (relaxed)
+        // moduli: for attenuating combinations the staged "kappa"/"mu" values
+        // are divided by the per-element scale factors before writing.
         specfem::io::impl::write_element_group(
-            group, assembly.mesh, element_range, data_container, offset, count,
+            group, assembly.mesh, element_range, data_container,
             [&](auto &scratch, const std::string &view_name) {
               if constexpr (has_attenuation) {
                 assembly.attenuation
@@ -124,7 +119,7 @@ void specfem::io::property_writer<OutputLibrary>::write_impl(
             group.createDataset(view_name, view).write();
           }
         }
-        n_written += count;
+        n_written += element_range.size();
       });
 
   if (n_written != nspec) {

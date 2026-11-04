@@ -13,7 +13,7 @@ namespace impl {
  * @brief Allocate a plain row-major host view shaped like a leading-dimension
  *        sub-block [count][ngll...] of @p view.
  *
- * Property and attenuation-model views are chunk-tiled domain views: their
+ * Property and kernel views are chunk-tiled domain views: their
  * flat storage interleaves elements in SIMD-width tiles, padded to a full
  * tile at the tail. The I/O backends serialize a view's flat storage
  * linearly, so writing a domain view directly would (a) truncate real values

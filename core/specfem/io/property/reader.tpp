@@ -73,17 +73,12 @@ void specfem::io::property_reader<InputLibrary>::read_impl(
             properties.template get_container<medium_tag, property_tag>();
 
         // The property container spans the whole (medium, property) group;
-        // this combination's datasets cover the contiguous sub-block
-        // [offset, offset + count) of its views.
-        const int offset = element_range.begin_index() -
-                           container.element_range.begin_index();
-        const int count = element_range.size();
-
-        // Property datasets are serialized in logical row-major order (see
-        // sub_block.hpp), so every read is staged through a plain scratch
+        // this combination's datasets cover a contiguous sub-block of its
+        // views. Property datasets are serialized in logical row-major order
+        // (see sub_block.hpp), so every read is staged through a plain scratch
         // view and unpacked into the chunk-tiled container view. "kappa" and
         // "mu" land as the physical (relaxed) moduli from the file.
-        specfem::io::impl::read_element_group(group, container, offset, count);
+        specfem::io::impl::read_element_group(group, element_range, container);
 
         if constexpr (has_attenuation) {
           const auto &att =

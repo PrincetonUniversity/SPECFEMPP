@@ -69,17 +69,9 @@ void specfem::io::kernel_writer<OutputLibrary>::write_impl(
         const auto &container =
             assembly.kernels.template get_container<medium_tag, property_tag>();
 
-        // The kernel container spans the whole (medium, property) group;
-        // this combination's elements are the contiguous sub-block
-        // [offset, offset + count) of its views.
-        const int offset =
-            element_range.begin_index() - container.element_range.begin_index();
-        const int count = element_range.size();
-
         specfem::io::impl::write_element_group(group, assembly.mesh,
-                                               element_range, container,
-                                               offset, count);
-        n_written += count;
+                                               element_range, container);
+        n_written += element_range.size();
       });
 
   if (n_written != nspec) {
