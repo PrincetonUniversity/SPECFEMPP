@@ -161,3 +161,127 @@ TEST(FieldRecovery, ProjectAcousticPotentialRate) {
   EXPECT_NEAR(u_z.real(), 3.0, kTol);
   EXPECT_NEAR(u_z.imag(), 4.0, kTol);
 }
+
+// ============================================================================
+// HalfspaceStateMatchesPropagator
+//
+// Inside a uniform medium state(0) = T(h) state(-h), so propagating one mode up
+// from zz = -h must return its eigenmatrix column: T(h) E = E G(h). This ties
+// the signs in G(zz) to the propagator; each row is judged relative to its own
+// scale, since displacement and traction rows differ by ~10^11.
+// ============================================================================
+
+TEST(FieldRecovery, HalfspaceStateMatchesPropagator) {
+  fk_injection::ElasticIsotropicLayer hs;
+  fk_injection::ElasticIsotropicLayer layer;
+  fk_injection::type_real p;
+  std::complex<double> omega;
+  fk_injection::ComplexMatrix<4> e_mat;
+  fk_injection::ComplexVector<4> modes;
+  field_recovery_tests_impl::make_elastic_model(hs, layer, p, omega, e_mat,
+                                                modes);
+
+  const double height = 5000.0;
+  constexpr double kRelTol = 1.0e-9;
+
+  for (int mode = 0; mode < 4; ++mode) {
+    fk_injection::ComplexVector<4> unit_mode{};
+    unit_mode[mode] = std::complex<double>(1.0, 0.0);
+
+    const auto state_below = fk_injection::impl::elastic_state_in_halfspace(
+        e_mat, hs, omega, p, -height, unit_mode);
+    const auto state_at_top = fk_injection::impl::elastic_state_in_layer(
+        hs, omega, height, p, state_below);
+
+    for (int i = 0; i < 4; ++i) {
+      EXPECT_LT(std::abs(state_at_top[i] - e_mat(i, mode)) /
+                    std::abs(e_mat(i, mode)),
+                kRelTol)
+          << "mode " << mode << " component " << i;
+    }
+  }
+}
+
+// ============================================================================
+// AcousticStateInLayer
+//
+// At height 0 the state is unchanged; above it, the state is the acoustic
+// propagator's leading 2x2 block applied to the bottom state.
+// ============================================================================
+
+TEST(FieldRecovery, AcousticStateInLayer) {
+  fk_injection::AcousticLayer layer;
+  layer.density = static_cast<fk_injection::type_real>(1000.0);
+  layer.p_velocity = static_cast<fk_injection::type_real>(1500.0);
+  layer.thickness = static_cast<fk_injection::type_real>(4000.0);
+
+  const double p = 3.0e-4;
+  const std::complex<double> omega(3.0, 0.0);
+
+  fk_injection::impl::AcousticState bottom;
+  bottom.u_z = std::complex<double>(3.0, 4.0);
+  bottom.pressure_over_k = std::complex<double>(1.0, 2.0);
+
+  constexpr double kTol = 1.0e-12;
+
+  const auto at_bottom =
+      fk_injection::impl::acoustic_state_in_layer(layer, omega, 0.0, p, bottom);
+  EXPECT_LT(std::abs(at_bottom.u_z - bottom.u_z), kTol);
+  EXPECT_LT(std::abs(at_bottom.pressure_over_k - bottom.pressure_over_k), kTol);
+
+  const double height = 1000.0;
+  const auto Q = fk_injection::impl::layer_propagator(layer, omega, height, p);
+  const auto above = fk_injection::impl::acoustic_state_in_layer(
+      layer, omega, height, p, bottom);
+  const std::complex<double> expected_u_z =
+      Q(0, 0) * bottom.u_z + Q(0, 1) * bottom.pressure_over_k;
+  const std::complex<double> expected_pressure =
+      Q(1, 0) * bottom.u_z + Q(1, 1) * bottom.pressure_over_k;
+  EXPECT_LT(std::abs(above.u_z - expected_u_z), kTol);
+  EXPECT_LT(std::abs(above.pressure_over_k - expected_pressure),
+            kTol * std::abs(expected_pressure));
+}
+
+// ============================================================================
+// ProjectElastic
+//
+// Hand-written state (dx, dz, txz, tzz) = (1+2i, 3+4i, 5+6i, 7+8i) with
+// omega*p = 1 + 0.5i:
+//   S0 = -i*dx = 2-i, S1 = dz = 3+4i,
+//   S2 = omega*p*tzz = 3+11.5i, S3 = -i*omega*p*txz = 8.5-2i,
+//   S4 = omega*p*dx = 2.5i.
+// Without stress, S2..S4 stay zero.
+// ============================================================================
+
+TEST(FieldRecovery, ProjectElastic) {
+  const fk_injection::ComplexVector<4> state = {
+    std::complex<double>(1.0, 2.0), std::complex<double>(3.0, 4.0),
+    std::complex<double>(5.0, 6.0), std::complex<double>(7.0, 8.0)
+  };
+  const std::complex<double> omega(2.0, 1.0);
+  const double p = 0.5;
+
+  constexpr double kTol = 1.0e-14;
+
+  const auto series =
+      fk_injection::impl::project_elastic(state, omega, p, true);
+  const auto check = [&series](int slot, double real, double imag) {
+    EXPECT_NEAR(series.values[slot].real(), real, kTol) << "slot " << slot;
+    EXPECT_NEAR(series.values[slot].imag(), imag, kTol) << "slot " << slot;
+  };
+  check(fk_injection::impl::series_horizontal, 2.0, -1.0);
+  check(fk_injection::impl::series_vertical, 3.0, 4.0);
+  check(fk_injection::impl::series_sigma_zz, 3.0, 11.5);
+  check(fk_injection::impl::series_sigma_rz, 8.5, -2.0);
+  check(fk_injection::impl::series_dx, 0.0, 2.5);
+
+  const auto no_stress =
+      fk_injection::impl::project_elastic(state, omega, p, false);
+  EXPECT_NEAR(no_stress.values[fk_injection::impl::series_vertical].real(), 3.0,
+              kTol);
+  for (const int slot :
+       { fk_injection::impl::series_sigma_zz,
+         fk_injection::impl::series_sigma_rz, fk_injection::impl::series_dx }) {
+    EXPECT_NEAR(std::abs(no_stress.values[slot]), 0.0, kTol) << "slot " << slot;
+  }
+}
