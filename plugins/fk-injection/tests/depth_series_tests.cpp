@@ -207,7 +207,8 @@ TEST(DepthSeries, SpectrumIdentityDisplacement) {
 // Test 2: ShiftAndPadMatchFormula
 //
 // pad_samples == ceil(time_delay_max / dt_min)
-// shift_samples == int(origin_time / dt_min) - pad_samples
+// shift_samples == floor(origin_time / dt_min) - pad_samples
+// abscissa_pad == pad_samples + the fraction floor drops
 // ============================================================================
 TEST(DepthSeries, ShiftAndPadMatchFormula) {
   const auto chain = depth_series_tests_impl::make_fk_chain();
@@ -220,8 +221,8 @@ TEST(DepthSeries, ShiftAndPadMatchFormula) {
 
   const int expected_pad =
       static_cast<int>(std::ceil(groups.time_delay_max / dt_min));
-  const int expected_nn =
-      static_cast<int>(static_cast<double>(wave.origin_time) / dt_min);
+  const double origin_samples = static_cast<double>(wave.origin_time) / dt_min;
+  const int expected_nn = static_cast<int>(std::floor(origin_samples));
   const int expected_shift = expected_nn - expected_pad;
 
   EXPECT_EQ(setup.pad_samples, expected_pad)
@@ -230,6 +231,17 @@ TEST(DepthSeries, ShiftAndPadMatchFormula) {
   EXPECT_EQ(setup.shift_samples, expected_shift)
       << "shift_samples mismatch: got " << setup.shift_samples << " expected "
       << expected_shift;
+  EXPECT_NEAR(setup.abscissa_pad, expected_pad + origin_samples - expected_nn,
+              1e-9);
+
+  // SPECFEM3D truncates and has no fraction.
+  const auto reference = fk_injection::impl::prepare(
+      depth_series_tests_impl::make_elastic_model(), wave,
+      depth_series_tests_impl::make_window(), setup.p, groups, setup.derivative,
+      fk_injection::ReferenceConvention::specfem3d);
+  EXPECT_EQ(reference.shift_samples,
+            static_cast<int>(origin_samples) - expected_pad);
+  EXPECT_NEAR(reference.abscissa_pad, expected_pad, 1e-12);
 }
 
 // ============================================================================
