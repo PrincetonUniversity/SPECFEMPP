@@ -15,42 +15,42 @@ Optional dependencies
   :ref:`trilinos_configuration` for how to build SPECFEM++ against a shared
   Trilinos install. Trilinos must share the same Kokkos as SPECFEM++.
 
-Intel GPU ahead-of-time compilation
-----------------------------------
+Intel GPU compilation
+---------------------
 
 SPECFEM++ uses SYCL for GPUs only; use the OpenMP or Serial backend on CPUs.
 CMake rejects SYCL CPU targets, and the program stops at startup if Kokkos
 selects a SYCL device that is not a GPU.
 
-The ``release-sycl`` preset uses portable SPIR-V with just-in-time compilation.
-It sets ``Kokkos_ARCH_INTEL_GEN`` so Kokkos only considers Intel GPUs.
-To compile native GPU code for your local Intel GPU, load your Intel oneAPI
-compiler environment, install the Intel offline compiler (``ocloc``), and run
-from the repository root:
+Load your Intel oneAPI compiler environment and use the shared ``release-sycl``
+preset for portable SPIR-V with just-in-time (JIT) compilation:
 
 .. code-block:: bash
 
-   python3 scripts/setup_sycl_aot.py --configure
-   cmake --build --preset release-sycl-aot --parallel 4
+   cmake --preset release-sycl
+   cmake --build --preset release-sycl
 
-The script detects the GPU's PCI device ID through Linux sysfs and compiles a
-small SYCL kernel to check that the installed compiler supports the target.
-It does not execute the kernel. After successful validation, it creates or
-updates ``release-sycl-aot`` in the gitignored ``CMakeUserPresets.json``,
-preserving unrelated presets and settings. The AOT build uses its own build,
-installation, and benchmark directories. Omit ``--configure`` to generate the
-presets without configuring the project. Use ``--compiler /path/to/icpx`` if
-the compiler is not on your executable search path.
+The preset selects ``Kokkos_ARCH_INTEL_GEN=ON``. Kokkos supplies the target
+compiler flags. For ahead-of-time (AOT) compilation, select the architecture
+matching your GPU from the
+`Kokkos Intel GPU configuration guide <https://kokkos.org/kokkos-core-wiki/get-started/configuration-guide.html#intel-gpus>`_.
+``INTEL_GEN`` selects JIT; the specific Intel GPU architecture options select
+AOT. Check that the option is available in the Kokkos version you are using.
 
-If several distinct Intel GPU device IDs are detected, the script lists them
-and requires an explicit selection. For cross-compilation, or on systems without
-Linux sysfs, supply the destination GPU's PCI device ID:
+For example, for a DG2 GPU, configure a separate build directory:
 
 .. code-block:: bash
 
-   python3 scripts/setup_sycl_aot.py --device 0x7d51 --configure
+   cmake --preset release-sycl -B build/release-sycl-dg2 \
+     -DKokkos_ARCH_INTEL_GEN=OFF -DKokkos_ARCH_INTEL_DG2=ON \
+     -DCMAKE_INSTALL_PREFIX="$PWD/bin/release-sycl-dg2" \
+     -DSPECFEM_BENCHMARKS_BUILD_DIR="$PWD/benchmarks/build/release-sycl-dg2"
+   cmake --build build/release-sycl-dg2
 
-Replace ``0x7d51`` with the destination device ID. No GPU architecture name is
-needed. Native binaries target the selected GPU; use ``release-sycl`` for portable
-JIT compilation instead. AOT moves device compilation to build time and requires
-a compatible driver at runtime. Changing the selected target requires rebuilding.
+Disable the inherited JIT architecture when selecting an AOT architecture.
+Use the Intel offline compiler (``ocloc``) required by your compiler installation.
+AOT binaries require a compatible target GPU and driver at runtime. If Kokkos
+has no matching AOT architecture for your GPU, use ``INTEL_GEN`` for JIT.
+Machine-specific architecture selections can be stored in the gitignored
+``CMakeUserPresets.json`` by inheriting ``release-sycl`` and using separate
+build, installation, and benchmark directories.

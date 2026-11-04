@@ -170,21 +170,26 @@ Below are the recommended build recipes for different architectures:
     # cd into SPECFEM root directory
     cmake -S . -B build -D CMAKE_BUILD_TYPE=Release -D SPECFEM_BUILD_TESTS=ON -D Kokkos_ENABLE_CUDA=ON -D Kokkos_ARCH_<architecture>=ON
 
-For Intel GPUs, use an Intel oneAPI SYCL compiler and enable the Kokkos SYCL
-backend:
+For Intel GPUs, load an Intel oneAPI SYCL compiler environment and use the
+``release-sycl`` preset for just-in-time (JIT) compilation:
 
 .. code-block:: bash
 
-    cmake -S . -B build -D CMAKE_BUILD_TYPE=Release -D CMAKE_CXX_COMPILER=icpx -D SPECFEM_BUILD_TESTS=ON -D Kokkos_ENABLE_SYCL=ON -D Kokkos_ARCH_INTEL_GPU=ON
-    cmake --build build
+    cmake --preset release-sycl
+    cmake --build --preset release-sycl
 
 .. note::
 
-    Specify the architecture flag ``-D Kokkos_ARCH_<architecture>`` based on
-    the GPU architecture you are using. For example, for NVIDIA Ampere
-    architecture, use ``-D Kokkos_ARCH_AMPERE80=ON``. See
-    `Kokkos documentation <https://kokkos.org/kokkos-core-wiki/get-started/configuration-guide.html#gpu-architectures>`_
-    for more information.
+    Choose ``-DKokkos_ARCH_<architecture>=ON`` to match your GPU. For example,
+    use ``-DKokkos_ARCH_AMPERE80=ON`` for an NVIDIA A100. See the
+    `Kokkos GPU architecture options <https://kokkos.org/kokkos-core-wiki/get-started/configuration-guide.html#gpu-architectures>`_
+    for the available targets.
+
+    For Intel GPUs, ``release-sycl`` selects ``Kokkos_ARCH_INTEL_GEN=ON`` for
+    JIT compilation. To use ahead-of-time (AOT) compilation, disable
+    ``Kokkos_ARCH_INTEL_GEN`` and enable the matching
+    `Intel GPU architecture <https://kokkos.org/kokkos-core-wiki/get-started/configuration-guide.html#intel-gpus>`_.
+    See :doc:`../developer_documentation/build_requirements` for an example.
 
 .. note::
     To speedup compilation, you can enable parallel compilation by adding the

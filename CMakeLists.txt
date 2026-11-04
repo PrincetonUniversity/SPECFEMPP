@@ -97,7 +97,7 @@ if(SPECFEM_ENABLE_UNITY_BUILD)
     endif()
 endif()
 
-# Preserve user/preset flags, including SYCL AOT targets, when adding defaults.
+# Preserve user/preset compiler flags when adding defaults.
 if (SPECFEM_BINDING_PYTHON)
     message(STATUS "Adding -fPIC flag for Python binding.")
     if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
