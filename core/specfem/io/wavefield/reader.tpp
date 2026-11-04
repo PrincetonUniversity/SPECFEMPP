@@ -3,6 +3,7 @@
 #include "specfem/assembly.hpp"
 #include "specfem/io/wavefield/reader.hpp"
 #include "specfem/mpi.hpp"
+#include "specfem/parallel_configuration/chunk_config.hpp"
 #include "specfem/tag_dispatch.hpp"
 #include "specfem/utilities.hpp"
 #include <boost/filesystem.hpp>
@@ -201,21 +202,65 @@ void specfem::io::wavefield_reader<IOLibrary>::run(
         typename IOLibrary::Group att_group =
             med_group.openGroup("Attenuation");
 
-        att_group.openDataset("Rkappa", medium.h_memory_variable_kappa).read();
-        att_group.openDataset("Rxx", medium.h_memory_variable_Rxx).read();
-        att_group.openDataset("Rxz", medium.h_memory_variable_Rxz).read();
-        att_group.openDataset("EpsilonXX", medium.h_epsilon_xx_att).read();
-        att_group.openDataset("EpsilonZZ", medium.h_epsilon_zz_att).read();
-        att_group.openDataset("EpsilonXZ", medium.h_epsilon_xz_att).read();
+        // The attenuation views are raw padded tiled storage; they are only
+        // meaningful for the storage chunk size they were written with.
+        Kokkos::View<int *, Kokkos::HostSpace> chunk_size_view(
+            "storage_chunk_size", 1);
+        att_group.openDataset("storage_chunk_size", chunk_size_view).read();
+        if (chunk_size_view(0) !=
+            specfem::parallel_configuration::storage_chunk_size) {
+          throw std::runtime_error(
+              "Wavefield checkpoint was written with storage_chunk_size = " +
+              std::to_string(chunk_size_view(0)) +
+              " but this build uses storage_chunk_size = " +
+              std::to_string(
+                  specfem::parallel_configuration::storage_chunk_size) +
+              ". The checkpoint was written by a build with a different "
+              "SIMD/GPU storage chunk size and cannot be read.");
+        }
+
+        att_group
+            .openDataset("Rkappa",
+                         medium.h_memory_variable_kappa.get_base_view())
+            .read();
+        att_group
+            .openDataset("Rxx", medium.h_memory_variable_Rxx.get_base_view())
+            .read();
+        att_group
+            .openDataset("Rxz", medium.h_memory_variable_Rxz.get_base_view())
+            .read();
+        att_group
+            .openDataset("EpsilonXX", medium.h_epsilon_xx_att.get_base_view())
+            .read();
+        att_group
+            .openDataset("EpsilonZZ", medium.h_epsilon_zz_att.get_base_view())
+            .read();
+        att_group
+            .openDataset("EpsilonXZ", medium.h_epsilon_xz_att.get_base_view())
+            .read();
 
         if constexpr (DimensionTag == specfem::element::dimension_tag::dim3) {
-          att_group.openDataset("Ryy", medium.h_memory_variable_Ryy).read();
-          att_group.openDataset("Rzz", medium.h_memory_variable_Rzz).read();
-          att_group.openDataset("Rxy", medium.h_memory_variable_Rxy).read();
-          att_group.openDataset("Ryz", medium.h_memory_variable_Ryz).read();
-          att_group.openDataset("EpsilonYY", medium.h_epsilon_yy_att).read();
-          att_group.openDataset("EpsilonXY", medium.h_epsilon_xy_att).read();
-          att_group.openDataset("EpsilonYZ", medium.h_epsilon_yz_att).read();
+          att_group
+              .openDataset("Ryy", medium.h_memory_variable_Ryy.get_base_view())
+              .read();
+          att_group
+              .openDataset("Rzz", medium.h_memory_variable_Rzz.get_base_view())
+              .read();
+          att_group
+              .openDataset("Rxy", medium.h_memory_variable_Rxy.get_base_view())
+              .read();
+          att_group
+              .openDataset("Ryz", medium.h_memory_variable_Ryz.get_base_view())
+              .read();
+          att_group
+              .openDataset("EpsilonYY", medium.h_epsilon_yy_att.get_base_view())
+              .read();
+          att_group
+              .openDataset("EpsilonXY", medium.h_epsilon_xy_att.get_base_view())
+              .read();
+          att_group
+              .openDataset("EpsilonYZ", medium.h_epsilon_yz_att.get_base_view())
+              .read();
         }
       });
 
