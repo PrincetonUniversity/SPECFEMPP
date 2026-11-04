@@ -90,25 +90,20 @@ layer_propagator(const fk_injection::ElasticIsotropicLayer &layer,
 /**
  * @brief Compute the acoustic layer propagator matrix.
  *
- * Returns the 2×2 cosh/sinh propagator for the @f$(u_z, P/k)@f$ state in
- * the leading 2×2 block of a 4×4 matrix.  The remaining entries are zero.
+ * Returns the 2×2 cosh/sinh propagator for the @f$(u_z, P/k)@f$ state.
  *
  * @param layer           Acoustic layer whose material properties are used.
  * @param omega           Complex angular frequency (rad/s).
  * @param thickness       Layer thickness H (m).
  * @param ray_parameter   Horizontal slowness p (s/m).
- * @return 4×4 matrix with the acoustic propagator in the leading 2×2 block.
+ * @return 2×2 propagator matrix.
  */
-inline fk_injection::ComplexMatrix<4>
+inline fk_injection::ComplexMatrix<2>
 layer_propagator(const fk_injection::AcousticLayer &layer,
                  std::complex<double> omega, double thickness,
                  double ray_parameter) {
-  fk_injection::ComplexMatrix<4> P;
+  fk_injection::ComplexMatrix<2> P;
 
-  // -------------------------------------------------------------------------
-  // Acoustic (fluid) 2×2 cosh/sinh propagator.
-  // State vector: (u_z, P/k) in the leading two components.
-  // -------------------------------------------------------------------------
   const std::complex<double> eta_alpha =
       vertical_slowness(layer, ray_parameter);
 
@@ -126,7 +121,6 @@ layer_propagator(const fk_injection::AcousticLayer &layer,
   P(1, 1) = ca;
   P(0, 1) = -sa * eta_alpha * p / rho;
   P(1, 0) = sa * rho / (p * eta_alpha);
-  // Entries (0,2), (0,3), (1,2), (1,3) and the 3rd/4th rows stay zero.
 
   return P;
 }

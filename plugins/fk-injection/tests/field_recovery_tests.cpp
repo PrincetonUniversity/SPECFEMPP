@@ -206,7 +206,7 @@ TEST(FieldRecovery, HalfspaceStateMatchesPropagator) {
 // AcousticStateInLayer
 //
 // At height 0 the state is unchanged; above it, the state is the acoustic
-// propagator's leading 2x2 block applied to the bottom state.
+// propagator applied to the bottom state.
 // ============================================================================
 
 TEST(FieldRecovery, AcousticStateInLayer) {
