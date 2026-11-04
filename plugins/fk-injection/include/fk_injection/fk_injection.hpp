@@ -14,6 +14,8 @@
 #include "fk_injection/fk_result.hpp"
 #include "fk_injection/incident_wave.hpp"
 #include "fk_injection/layered_model.hpp"
+#include "fk_injection/model_file_reader.hpp"
+#include "fk_injection/solver.hpp"
 #include "fk_injection/time_window.hpp"
 #include "fk_injection/utilities/cubic_bspline.hpp"
 #include "fk_injection/utilities/fft.hpp"
