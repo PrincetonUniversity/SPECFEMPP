@@ -2,6 +2,7 @@
 // builds the method from a registry, creates and sets up the plugin, and the
 // solver prepares and applies the method every step.
 
+#include "../method/constant_force.hpp"
 #include "../session/mock_plugin.hpp"
 #include "recording_method.hpp"
 #include "specfem/injection/method/registry.hpp"
@@ -126,6 +127,7 @@ private:
 specfem::injection::MethodRegistry test_registry() {
   specfem::injection::MethodRegistry registry;
   registry.add<RecordingMethod>();
+  registry.add<specfem::injection_method_test::ConstantForce>();
   return registry;
 }
 
@@ -172,6 +174,24 @@ TEST(InjectionLifecycle, ForwardRunDrivesPluginEveryStep) {
   EXPECT_THAT(method_record().elastic_applies, ElementsAreArray(steps));
 }
 
+TEST(InjectionLifecycle, PointwiseMethodRunsInTheSolver) {
+  specfem::injection_session_test::reset_mock_calls();
+  const RunDirectory directory;
+  run(directory.parameters("EightNodeElasticInjectionStacey",
+                           directory.forward(),
+                           "{method: constant-force, window-steps: 4}"),
+      test_registry());
+
+  EXPECT_EQ(mock_calls().destroy, 1);
+  EXPECT_THAT(mock_calls().fill_starts, ElementsAre(0, 4, 8));
+  ASSERT_FALSE(mock_calls().groups.empty());
+  const auto &elastic = mock_calls().groups.front();
+  EXPECT_EQ(elastic.medium, specfem_medium_elastic);
+  ASSERT_EQ(elastic.slots.size(), 2u);
+  EXPECT_EQ(elastic.slots[0].quantity, specfem_quantity_displacement);
+  EXPECT_EQ(elastic.slots[1].quantity, specfem_quantity_velocity);
+}
+
 TEST(InjectionLifecycle, CombinedRunIsRejectedBeforeTheMeshRead) {
   const RunDirectory directory;
   EXPECT_THAT(run_error(directory.parameters("EightNodeElasticInjectionStacey",
@@ -186,7 +206,7 @@ TEST(InjectionLifecycle, UnknownMethodIsRejectedBeforeTheMeshRead) {
       run_error(directory.parameters("EightNodeElasticInjectionStacey",
                                      directory.forward(), "{method: stacey}")),
       HasSubstr("Unknown injection method 'stacey'. Registered "
-                "methods: recording."));
+                "methods: constant-force recording."));
 }
 
 TEST(InjectionLifecycle, MeshWithoutInjectionFacesIsRejected) {

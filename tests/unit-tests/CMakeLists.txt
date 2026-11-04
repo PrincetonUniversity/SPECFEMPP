@@ -40,6 +40,9 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/injection/surface/surface.cmake)
 # Injection lifecycle: configuration, method registry and a forward run
 include(${CMAKE_CURRENT_SOURCE_DIR}/injection/lifecycle/lifecycle.cmake)
 
+# Pointwise injection framework: quantity lists, point harness and kernel
+include(${CMAKE_CURRENT_SOURCE_DIR}/injection/method/method.cmake)
+
 if(SPECFEM_ENABLE_MPI)
   include(${CMAKE_CURRENT_SOURCE_DIR}/mpi.cmake)
 endif()
