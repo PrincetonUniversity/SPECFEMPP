@@ -19,7 +19,6 @@ void fk_injection::impl::depth_spectrum(
 
   const int nf2 = static_cast<int>(setup.omega.size()); // nf_stored + 1
   const double p = setup.p;
-  const int n = setup.derivative_order;
   const bool is_acoustic = (group.medium == specfem::plugin::Medium::acoustic);
 
   for (int f = 0; f < nf2; ++f) {
@@ -54,13 +53,11 @@ void fk_injection::impl::depth_spectrum(
       series = fk_injection::impl::project_elastic(state, omega, p);
     }
 
-    // Apodization on every slot; (i*omega)^n derivative on the kinematic slots.
+    // Apodization on every slot; i*omega for velocity on the kinematic slots.
     const Cplx apodization(setup.apodization[f], 0.0);
     Cplx derivative(1.0, 0.0);
-    if (n == 1) {
+    if (setup.derivative == fk_injection::field_derivative::velocity) {
       derivative = Cplx(0.0, setup.omega[f]);
-    } else if (n == 2) {
-      derivative = Cplx(-setup.omega[f] * setup.omega[f], 0.0);
     }
     for (int s = 0; s < fk_injection::impl::number_of_series; ++s) {
       series.values[s] *= apodization;

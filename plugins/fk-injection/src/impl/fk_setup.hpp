@@ -32,7 +32,8 @@ struct FkSetup {
   fk_injection::ComplexMatrix<4> e_mat;    ///< Half-space eigenmatrix E.
   std::vector<double> omega;       ///< Angular frequencies, size nf_stored+1.
   std::vector<double> apodization; ///< Gaussian STF spectrum, size nf_stored+1.
-  int derivative_order = 0; ///< 0 displacement, 1 velocity, 2 acceleration.
+  fk_injection::field_derivative derivative =
+      fk_injection::field_derivative::displacement; ///< Kinematic quantity.
   int pad_samples =
       0; ///< ceil(max delay / dt_min); keeps sample abscissae >= 0.
   int shift_samples = 0; ///< t0 series rotation nn - pad (left rotation), nn =
