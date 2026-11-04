@@ -22,27 +22,36 @@ FetchContent_Declare(pocketfft
 )
 FetchContent_MakeAvailable(pocketfft)
 
-# Header-only until the first source file arrives; then STATIC with hidden
-# visibility.
-add_library(fk_injection_impl INTERFACE)
-target_include_directories(fk_injection_impl INTERFACE
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
+add_library(fk_injection_impl STATIC
+  src/fk_result.cpp
+  src/incident_wave.cpp
+  src/layered_model.cpp
+  src/time_window.cpp
 )
-target_include_directories(fk_injection_impl SYSTEM INTERFACE
+set_target_properties(fk_injection_impl PROPERTIES
+  CXX_VISIBILITY_PRESET hidden
+  VISIBILITY_INLINES_HIDDEN ON
+  UNITY_BUILD OFF
+)
+target_include_directories(fk_injection_impl PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+target_include_directories(fk_injection_impl SYSTEM PUBLIC
   ${pocketfft_SOURCE_DIR}
 )
 target_link_libraries(fk_injection_impl INTERFACE Kokkos::kokkos)
 # Transforms run serially; parallelism, if any, is over depth groups.
-target_compile_definitions(fk_injection_impl INTERFACE
+target_compile_definitions(fk_injection_impl PUBLIC
   POCKETFFT_NO_MULTITHREADING
 )
 if(FK_INJECTION_DOUBLE)
-  target_compile_definitions(fk_injection_impl INTERFACE FK_INJECTION_DOUBLE_PRECISION)
+  target_compile_definitions(fk_injection_impl PUBLIC FK_INJECTION_DOUBLE_PRECISION)
 endif()
 if(FK_INJECTION_ENABLE_OPENMP)
   find_package(OpenMP REQUIRED)
-  target_link_libraries(fk_injection_impl INTERFACE OpenMP::OpenMP_CXX)
-  target_compile_definitions(fk_injection_impl INTERFACE FK_INJECTION_ENABLE_OPENMP)
+  target_link_libraries(fk_injection_impl PUBLIC OpenMP::OpenMP_CXX)
+  target_compile_definitions(fk_injection_impl PUBLIC FK_INJECTION_ENABLE_OPENMP)
 endif()
 
 specfem_add_injection_plugin(fk_injection
