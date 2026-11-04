@@ -74,6 +74,8 @@ public:
    * as in globe, it does not attenuate anisotropic elements.
    * @param Qmu Shear quality factor, used by attenuating materials. The
    * defaults are placeholders for materials whose Q is set per GLL point.
+   * @throws std::runtime_error if an attenuating material has nonpositive
+   * Qkappa or Qmu.
    */
   material(const type_real &density, const type_real &c11, const type_real &c12,
            const type_real &c13, const type_real &c14, const type_real &c15,
@@ -90,8 +92,9 @@ public:
         c56(c56), c66(c66) {
     if constexpr (AttenuationTag ==
                   specfem::element::attenuation_tag::constant_isotropic) {
-      this->Qkappa = Qkappa;
-      this->Qmu = Qmu;
+      const attenuation quality_factors(Qkappa, Qmu);
+      this->Qkappa = quality_factors.Qkappa;
+      this->Qmu = quality_factors.Qmu;
     }
   }
 

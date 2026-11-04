@@ -68,6 +68,36 @@ void expect_tensor_near(const Tensor &actual, const Tensor &expected,
 
 } // namespace specfem::assembly::anisotropic_attenuation_test_impl
 
+TEST(AnisotropicAttenuation, RejectsUndefinedLoveEta) {
+  namespace test = specfem::assembly::anisotropic_attenuation_test_impl;
+  // Both tensors are positive definite, but A = 2L makes eta undefined.
+  for (const double f : { 0.0, 0.25 }) {
+    const double coefficients[21] = { 2., 0., f,  0., 0., 0., 2.,
+                                      f,  0., 0., 0., 2., 0., 0.,
+                                      0., 1., 0., 0., 1., 0., 1. };
+    const test::Tensor tensor(coefficients);
+    EXPECT_THROW(specfem::assembly::impl::shift_radial_tensor(tensor, 0.04),
+                 std::runtime_error);
+    EXPECT_THROW(
+        specfem::assembly::impl::shift_unrelaxed_tensor(tensor, 0.0, 0.0, 0.04),
+        std::runtime_error);
+    // An identity shift does not need eta and must preserve the input.
+    const auto unchanged =
+        specfem::assembly::impl::shift_radial_tensor(tensor, 0.0);
+    test::expect_tensor_near(unchanged, tensor, 0.0);
+  }
+}
+
+TEST(AnisotropicAttenuation, RejectsNonfiniteLoveEta) {
+  namespace test = specfem::assembly::anisotropic_attenuation_test_impl;
+  const double coefficients[21] = { 3., 1., 1., 0., 0., 0., 3., 1., 0., 0., 0.,
+                                    3., 0., 0., 0., 1., 0., 0., 1., 0., 1. };
+  test::Tensor tensor(coefficients);
+  tensor(0, 2) = std::numeric_limits<double>::infinity();
+  EXPECT_THROW(specfem::assembly::impl::shift_radial_tensor(tensor, 0.04),
+               std::runtime_error);
+}
+
 TEST(AnisotropicAttenuation, IdentityAndOrientationIncludingPoles) {
   namespace test = specfem::assembly::anisotropic_attenuation_test_impl;
   const test::Radial radial(3300., 8000., 8200., 4400., 4600., 0.9);

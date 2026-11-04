@@ -3,6 +3,8 @@
 #include "specfem/element/tags.hpp"
 #include "specfem/globe/radial_flags.hpp"
 #include "specfem/medium/dim3/elastic/anisotropic/elasticity_tensor.hpp"
+#include <cmath>
+#include <stdexcept>
 #include <type_traits>
 
 namespace specfem::assembly::impl {
@@ -73,6 +75,8 @@ AssemblyAttenuationContext(const ElementTypes &)
  * @param radial Stiffness tensor whose third axis is radial.
  * @param minus_sum_beta Relative shear modulus increment.
  * @return Shifted stiffness tensor in the same frame.
+ * @throws std::runtime_error if a nonzero shift has undefined or nonfinite
+ * Love's eta.
  */
 template <typename StorageType = void, typename Frame, typename ValueType>
 auto shift_radial_tensor(
@@ -90,7 +94,17 @@ auto shift_radial_tensor(
       (radial(0, 0) + radial(1, 1) - 2 * radial(0, 1) + 4 * radial(5, 5)) / 8;
   const auto l = (radial(3, 3) + radial(4, 4)) / 2;
   const auto f = (radial(0, 2) + radial(1, 2)) / 2;
+  if (a - 2 * l == 0) {
+    throw std::runtime_error(
+        "Anisotropic attenuation requires A - 2L != 0 to preserve Love's "
+        "eta");
+  }
   const ValueType eta = static_cast<Storage>(f / (a - 2 * l));
+  if (!std::isfinite(eta)) {
+    throw std::runtime_error(
+        "Anisotropic attenuation requires finite Love's eta = F / (A - "
+        "2L)");
+  }
   const ValueType muv = static_cast<Storage>(l * minus_sum_beta);
   const ValueType muh = static_cast<Storage>(n * minus_sum_beta);
   const auto four_thirds = static_cast<ValueType>(4.0 / 3.0);

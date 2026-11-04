@@ -73,6 +73,9 @@ stiffnesses, attenuation rotates each tensor into its radial basis, recovers
 ``eta = F / (A - 2 L)``. It then rotates all 21 coefficients back to Cartesian
 axes. Full anisotropy uses the same projection onto radial Love parameters;
 other radial tensor components are preserved.
+For a nonzero shift, an undefined or nonfinite eta (including ``A = 2 L``)
+raises an error before updating the tensor. An exact zero shift preserves the
+input without evaluating eta.
 
 The two setup stages follow SPECFEM3D_GLOBE. First, the reference-frequency
 model is shifted to relaxed moduli with the compliance-based scale from

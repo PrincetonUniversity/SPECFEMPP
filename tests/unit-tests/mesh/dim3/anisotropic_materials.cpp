@@ -67,11 +67,17 @@ read_anisotropic_material(const double Qkappa, const double Qmu,
     write_record<std::int32_t>(stream, element);
   }
   std::ifstream stream(path, std::ios::binary);
-  auto result = specfem::io::mesh::impl::fortran::dim3::read_materials(
-      stream, ngnod, attenuation_enabled);
-  stream.close();
-  boost::filesystem::remove(path);
-  return std::get<5>(result);
+  try {
+    auto result = specfem::io::mesh::impl::fortran::dim3::read_materials(
+        stream, ngnod, attenuation_enabled);
+    stream.close();
+    boost::filesystem::remove(path);
+    return std::get<5>(result);
+  } catch (...) {
+    stream.close();
+    boost::filesystem::remove(path);
+    throw;
+  }
 }
 
 /** @brief Check the stored stiffnesses and density against model_aniso. */
@@ -180,4 +186,14 @@ TEST(AnisotropicMaterials, ConstructorStoresQualityFactors) {
                              21.);
   EXPECT_NEAR(placeholder.Qkappa, 9999.0, 0.);
   EXPECT_NEAR(placeholder.Qmu, 9999.0, 0.);
+}
+
+TEST(AnisotropicMaterials, NativeReaderRejectsNonpositiveQualityFactors) {
+  namespace test = anisotropic_materials_test_impl;
+  for (const double invalid_q : { 0.0, -80.0 }) {
+    EXPECT_THROW(test::read_anisotropic_material(500.0, invalid_q, true),
+                 std::runtime_error);
+    EXPECT_THROW(test::read_anisotropic_material(invalid_q, 80.0, true),
+                 std::runtime_error);
+  }
 }
