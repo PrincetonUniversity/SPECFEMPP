@@ -8,8 +8,6 @@
 #include "impl/field_recovery.hpp"
 #include "impl/fk_setup.hpp"
 #include "impl/layer_stack.hpp"
-#include <Kokkos_Complex.hpp>
-#include <Kokkos_Core.hpp>
 #include <cmath>
 #include <gtest/gtest.h>
 
@@ -169,7 +167,7 @@ TEST(LayerStack, FreeSurfaceTractionVanishesP) {
   const auto &s = states.elastic_top(f, 0);
 
   // Displacement scale to normalise traction residuals.
-  const double disp_scale = Kokkos::abs(s[0]) + Kokkos::abs(s[1]) + 1.0e-30;
+  const double disp_scale = std::abs(s[0]) + std::abs(s[1]) + 1.0e-30;
   EXPECT_GT(disp_scale, 1.0e-12) << "displacement scale too small (degenerate)";
 
   const double rho_hs =
@@ -179,11 +177,11 @@ TEST(LayerStack, FreeSurfaceTractionVanishesP) {
   const double mu = rho_hs * vs_hs * vs_hs;
   const double traction_scale = 2.0 * mu * setup.omega[f] * p * disp_scale;
 
-  EXPECT_LT(Kokkos::abs(s[2]), 1.0e-6 * traction_scale)
-      << "sigma_xz at free surface (P) is not small: " << Kokkos::abs(s[2])
+  EXPECT_LT(std::abs(s[2]), 1.0e-6 * traction_scale)
+      << "sigma_xz at free surface (P) is not small: " << std::abs(s[2])
       << " vs scale " << traction_scale;
-  EXPECT_LT(Kokkos::abs(s[3]), 1.0e-6 * traction_scale)
-      << "sigma_zz at free surface (P) is not small: " << Kokkos::abs(s[3])
+  EXPECT_LT(std::abs(s[3]), 1.0e-6 * traction_scale)
+      << "sigma_zz at free surface (P) is not small: " << std::abs(s[3])
       << " vs scale " << traction_scale;
 }
 
@@ -211,7 +209,7 @@ TEST(LayerStack, FreeSurfaceTractionVanishesSV) {
 
   const auto &s = states.elastic_top(f, 0);
 
-  const double disp_scale = Kokkos::abs(s[0]) + Kokkos::abs(s[1]) + 1.0e-30;
+  const double disp_scale = std::abs(s[0]) + std::abs(s[1]) + 1.0e-30;
   EXPECT_GT(disp_scale, 1.0e-12) << "displacement scale too small (degenerate)";
 
   const double rho_hs =
@@ -221,11 +219,11 @@ TEST(LayerStack, FreeSurfaceTractionVanishesSV) {
   const double mu = rho_hs * vs_hs * vs_hs;
   const double traction_scale = 2.0 * mu * setup.omega[f] * p * disp_scale;
 
-  EXPECT_LT(Kokkos::abs(s[2]), 1.0e-6 * traction_scale)
-      << "sigma_xz at free surface (SV) is not small: " << Kokkos::abs(s[2])
+  EXPECT_LT(std::abs(s[2]), 1.0e-6 * traction_scale)
+      << "sigma_xz at free surface (SV) is not small: " << std::abs(s[2])
       << " vs scale " << traction_scale;
-  EXPECT_LT(Kokkos::abs(s[3]), 1.0e-6 * traction_scale)
-      << "sigma_zz at free surface (SV) is not small: " << Kokkos::abs(s[3])
+  EXPECT_LT(std::abs(s[3]), 1.0e-6 * traction_scale)
+      << "sigma_zz at free surface (SV) is not small: " << std::abs(s[3])
       << " vs scale " << traction_scale;
 }
 
@@ -256,15 +254,15 @@ TEST(LayerStack, FluidFreeSurfacePressureSmall) {
   // Propagate from the bottom of fluid layer 0 to its top.
   const auto &fluid0 = model.fluid_layers()[0];
   const auto top = fk_injection::impl::acoustic_state_in_layer(
-      fluid0, Kokkos::complex<double>(setup.omega[f], 0.0),
+      fluid0, std::complex<double>(setup.omega[f], 0.0),
       static_cast<type_real>(fluid0.thickness), static_cast<type_real>(p),
       states.acoustic_bottom(f, 0));
 
-  const double scale =
-      Kokkos::abs(states.acoustic_bottom(f, 0).u_z) +
-      Kokkos::abs(states.acoustic_bottom(f, 0).pressure_over_k) + 1.0e-30;
+  const double scale = std::abs(states.acoustic_bottom(f, 0).u_z) +
+                       std::abs(states.acoustic_bottom(f, 0).pressure_over_k) +
+                       1.0e-30;
 
-  EXPECT_LT(Kokkos::abs(top.pressure_over_k), 1.0e-5 * scale)
+  EXPECT_LT(std::abs(top.pressure_over_k), 1.0e-5 * scale)
       << "pressure_over_k at acoustic free surface is not small: "
-      << Kokkos::abs(top.pressure_over_k) << " vs scale " << scale;
+      << std::abs(top.pressure_over_k) << " vs scale " << scale;
 }

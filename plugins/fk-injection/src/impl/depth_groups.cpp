@@ -1,5 +1,4 @@
 #include "impl/depth_groups.hpp"
-#include <Kokkos_Core.hpp>
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -33,13 +32,13 @@ fk_injection::impl::group_by_depth(const fk_injection::EvalPoints &points,
   const int n = points.size();
 
   // Coordinates and medium Views are host-resident; read them directly.
-  const bool has_medium = (points.medium.extent(0) > 0);
+  const bool has_medium = (!points.medium.empty());
 
   // --- Per-point requested medium ---
   std::vector<fk_injection::point_medium> requested(n);
   for (int i = 0; i < n; ++i) {
     requested[i] =
-        has_medium ? points.medium(i) : fk_injection::point_medium::from_depth;
+        has_medium ? points.medium[i] : fk_injection::point_medium::from_depth;
   }
 
   // --- Per-point time delay tau ---
@@ -59,8 +58,8 @@ fk_injection::impl::group_by_depth(const fk_injection::EvalPoints &points,
 
   if (n > 0) {
     for (int i = 0; i < n; ++i) {
-      const double xi = static_cast<double>(points.x(i));
-      const double yi = static_cast<double>(points.y(i));
+      const double xi = static_cast<double>(points.x[i]);
+      const double yi = static_cast<double>(points.y[i]);
       time_delay[i] =
           p * ((xi - x0) * std::cos(phi) + (yi - y0) * std::sin(phi)) +
           eta_p * (0.0 - z0);
@@ -72,7 +71,7 @@ fk_injection::impl::group_by_depth(const fk_injection::EvalPoints &points,
   // --- Resolve each point's medium ---
   std::vector<fk_injection::point_medium> resolved(n);
   for (int i = 0; i < n; ++i) {
-    const double zi = static_cast<double>(points.z(i));
+    const double zi = static_cast<double>(points.z[i]);
     resolved[i] = model.locate(zi, requested[i], tolerance).medium;
   }
 
@@ -85,7 +84,7 @@ fk_injection::impl::group_by_depth(const fk_injection::EvalPoints &points,
     if (ma != mb) {
       return ma < mb;
     }
-    return static_cast<double>(points.z(a)) < static_cast<double>(points.z(b));
+    return static_cast<double>(points.z[a]) < static_cast<double>(points.z[b]);
   });
 
   // --- Anchor scan: build groups ---
@@ -106,7 +105,7 @@ fk_injection::impl::group_by_depth(const fk_injection::EvalPoints &points,
 
   for (int k = 0; k < n; ++k) {
     const int idx = order[k];
-    const double zi = static_cast<double>(points.z(idx));
+    const double zi = static_cast<double>(points.z[idx]);
     const fk_injection::point_medium med = resolved[idx];
 
     const bool new_medium = (k == 0) || (med != group_medium);

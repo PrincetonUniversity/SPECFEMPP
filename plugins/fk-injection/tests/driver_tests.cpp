@@ -1,10 +1,10 @@
 #include "fk_injection/fk_injection.hpp"
 
-#include <Kokkos_Core.hpp>
 #include <fstream>
 #include <gtest/gtest.h>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 // ---------------------------------------------------------------------------
 // Helper: build a host-side EvalPoints with n points at given z-coords.
@@ -16,37 +16,34 @@ make_eval_points(const std::vector<double> &z_coords, bool with_normals = false,
   const int n = static_cast<int>(z_coords.size());
 
   fk_injection::EvalPoints ep;
-  ep.x = Kokkos::View<type_real *, Kokkos::HostSpace>("x", n);
-  ep.y = Kokkos::View<type_real *, Kokkos::HostSpace>("y", n);
-  ep.z = Kokkos::View<type_real *, Kokkos::HostSpace>("z", n);
+  ep.x.resize(n);
+  ep.y.resize(n);
+  ep.z.resize(n);
   for (int i = 0; i < n; ++i) {
-    ep.x(i) = 0;
-    ep.y(i) = 0;
-    ep.z(i) = static_cast<type_real>(z_coords[i]);
+    ep.x[i] = 0;
+    ep.y[i] = 0;
+    ep.z[i] = static_cast<type_real>(z_coords[i]);
   }
 
   if (with_normals) {
-    ep.normal_x = Kokkos::View<type_real *, Kokkos::HostSpace>("normal_x", n);
-    ep.normal_y = Kokkos::View<type_real *, Kokkos::HostSpace>("normal_y", n);
-    ep.normal_z = Kokkos::View<type_real *, Kokkos::HostSpace>("normal_z", n);
+    ep.normal_x.resize(n);
+    ep.normal_y.resize(n);
+    ep.normal_z.resize(n);
     for (int i = 0; i < n; ++i) {
-      ep.normal_x(i) = 0;
-      ep.normal_y(i) = 0;
-      ep.normal_z(i) = 1;
+      ep.normal_x[i] = 0;
+      ep.normal_y[i] = 0;
+      ep.normal_z[i] = 1;
     }
   }
 
   if (with_lame) {
-    ep.lame_ratio_xi1 =
-        Kokkos::View<type_real *, Kokkos::HostSpace>("lame_ratio_xi1", n);
-    ep.lame_ratio_xim =
-        Kokkos::View<type_real *, Kokkos::HostSpace>("lame_ratio_xim", n);
-    ep.lame_ratio_bulk =
-        Kokkos::View<type_real *, Kokkos::HostSpace>("lame_ratio_bulk", n);
+    ep.lame_ratio_xi1.resize(n);
+    ep.lame_ratio_xim.resize(n);
+    ep.lame_ratio_bulk.resize(n);
     for (int i = 0; i < n; ++i) {
-      ep.lame_ratio_xi1(i) = 2; // xi1 = lambda/mu + 2
-      ep.lame_ratio_xim(i) = 1; // xim = mu / (2 * mu)
-      ep.lame_ratio_bulk(i) = static_cast<type_real>(0.333); // bulk Lame ratio
+      ep.lame_ratio_xi1[i] = 2; // xi1 = lambda/mu + 2
+      ep.lame_ratio_xim[i] = 1; // xim = mu / (2 * mu)
+      ep.lame_ratio_bulk[i] = static_cast<type_real>(0.333); // bulk Lame ratio
     }
   }
 
@@ -54,23 +51,20 @@ make_eval_points(const std::vector<double> &z_coords, bool with_normals = false,
 }
 
 // ---------------------------------------------------------------------------
-// Check that every entry in a host mirror of a 3-D View is finite and that
-// at least one entry has non-negligible absolute value.
+// Check that every entry is finite and that at least one entry has
+// non-negligible absolute value.
 // ---------------------------------------------------------------------------
-static bool all_finite_not_all_zero(
-    const Kokkos::View<type_real ***, Kokkos::HostSpace> &hv) {
+static bool all_finite_not_all_zero(const std::vector<type_real> &values) {
   bool all_finite = true;
   double max_abs = 0.0;
-  for (std::size_t i0 = 0; i0 < hv.extent(0); ++i0)
-    for (std::size_t i1 = 0; i1 < hv.extent(1); ++i1)
-      for (std::size_t i2 = 0; i2 < hv.extent(2); ++i2) {
-        const double v = static_cast<double>(hv(i0, i1, i2));
-        if (!std::isfinite(v)) {
-          all_finite = false;
-        }
-        if (std::fabs(v) > max_abs)
-          max_abs = std::fabs(v);
-      }
+  for (const type_real value : values) {
+    const double v = static_cast<double>(value);
+    if (!std::isfinite(v)) {
+      all_finite = false;
+    }
+    if (std::fabs(v) > max_abs)
+      max_abs = std::fabs(v);
+  }
   return all_finite && (max_abs > 1.0e-30);
 }
 
@@ -123,16 +117,13 @@ TEST(FkDriver, ElasticHalfSpaceRunsFinite) {
   EXPECT_EQ(result.number_of_points(), 5);
   EXPECT_GT(result.coefficient_count(), 0);
 
-  // Sample displacement (3 components) into a time-series view.
-  Kokkos::View<type_real ***> out("out", result.number_of_points(), 3,
-                                  window.nstep);
+  std::vector<type_real> out(
+      static_cast<std::size_t>(result.number_of_points()) *
+      fk_injection::number_of_sample_components * window.nstep);
   result.sample(0, window.nstep, out);
 
-  auto h_out = Kokkos::create_mirror_view(out);
-  Kokkos::deep_copy(h_out, out);
-
-  EXPECT_TRUE(all_finite_not_all_zero(h_out))
-      << "sampled displacement is NaN/Inf or all-zero";
+  EXPECT_TRUE(all_finite_not_all_zero(out))
+      << "sampled output is NaN/Inf or all-zero";
 }
 
 // ===========================================================================
@@ -191,37 +182,26 @@ TEST(FkDriver, AcousticElasticRunsFinite) {
   EXPECT_EQ(result.number_of_points(), 5);
   EXPECT_GT(result.coefficient_count(), 0);
 
-  // Sample all 7 components (displacement 0..2, traction 3..5, pressure 6)
-  // into a time-series view and verify finite + not-all-zero.
-  Kokkos::View<type_real ***> out("out", result.number_of_points(), 7,
-                                  window.nstep);
+  // Row-major (point, component, step).
+  const int components = fk_injection::number_of_sample_components;
+  std::vector<type_real> out(static_cast<std::size_t>(5) * components *
+                             window.nstep);
   result.sample(0, window.nstep, out);
 
-  auto h_out = Kokkos::create_mirror_view(out);
-  Kokkos::deep_copy(h_out, out);
+  EXPECT_TRUE(all_finite_not_all_zero(out))
+      << "sampled output is NaN/Inf or all-zero";
 
-  // Displacement sub-view (components 0..2) must be finite + non-zero.
-  {
-    Kokkos::View<type_real ***, Kokkos::HostSpace> h_disp("h_disp", 5, 3,
-                                                          window.nstep);
-    for (int ip = 0; ip < 5; ++ip)
-      for (int ic = 0; ic < 3; ++ic)
-        for (int is = 0; is < window.nstep; ++is)
-          h_disp(ip, ic, is) = h_out(ip, ic, is);
-    EXPECT_TRUE(all_finite_not_all_zero(h_disp))
-        << "sampled displacement is NaN/Inf or all-zero";
-  }
-
-  // All 7 components must be finite.
-  {
-    bool all_finite = true;
-    for (int ip = 0; ip < 5; ++ip)
-      for (int ic = 0; ic < 7; ++ic)
-        for (int is = 0; is < window.nstep; ++is)
-          if (!std::isfinite(static_cast<double>(h_out(ip, ic, is))))
-            all_finite = false;
-    EXPECT_TRUE(all_finite) << "sampled output contains NaN or Inf";
-  }
+  // The kinematic components alone must be non-zero.
+  std::vector<type_real> kinematic;
+  for (int ip = 0; ip < 5; ++ip)
+    for (int ic = 0; ic < 3; ++ic)
+      for (int is = 0; is < window.nstep; ++is)
+        kinematic.push_back(out[((ip * components +
+                                  fk_injection::sample_kinematic_offset + ic) *
+                                 window.nstep) +
+                                is]);
+  EXPECT_TRUE(all_finite_not_all_zero(kinematic))
+      << "sampled kinematic field is NaN/Inf or all-zero";
 }
 
 // ===========================================================================

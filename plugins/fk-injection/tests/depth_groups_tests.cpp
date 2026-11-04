@@ -2,7 +2,6 @@
 #include "fk_injection/incident_wave.hpp"
 #include "fk_injection/layered_model.hpp"
 #include "impl/depth_groups.hpp"
-#include <Kokkos_Core.hpp>
 #include <cmath>
 #include <gtest/gtest.h>
 #include <limits>
@@ -25,21 +24,17 @@ make_eval_points(const std::vector<double> &xs, const std::vector<double> &ys,
   const int n = static_cast<int>(xs.size());
 
   fk_injection::EvalPoints ep;
-  ep.x = Kokkos::View<type_real *, Kokkos::HostSpace>("x", n);
-  ep.y = Kokkos::View<type_real *, Kokkos::HostSpace>("y", n);
-  ep.z = Kokkos::View<type_real *, Kokkos::HostSpace>("z", n);
+  ep.x.resize(n);
+  ep.y.resize(n);
+  ep.z.resize(n);
   for (int i = 0; i < n; ++i) {
-    ep.x(i) = static_cast<type_real>(xs[i]);
-    ep.y(i) = static_cast<type_real>(ys[i]);
-    ep.z(i) = static_cast<type_real>(zs[i]);
+    ep.x[i] = static_cast<type_real>(xs[i]);
+    ep.y[i] = static_cast<type_real>(ys[i]);
+    ep.z[i] = static_cast<type_real>(zs[i]);
   }
 
   if (!medium.empty()) {
-    ep.medium = Kokkos::View<fk_injection::point_medium *, Kokkos::HostSpace>(
-        "medium", n);
-    for (int i = 0; i < n; ++i) {
-      ep.medium(i) = medium[i];
-    }
+    ep.medium = medium;
   }
 
   return ep;
