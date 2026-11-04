@@ -1,0 +1,99 @@
+--- a/core/src/SYCL/Kokkos_SYCL_Instance.hpp
++++ b/core/src/SYCL/Kokkos_SYCL_Instance.hpp
+@@ -146,12 +146,17 @@
+                                               Kokkos::SYCLHostUSMSpace>>;
+ 
+    public:
++    std::unique_lock<std::mutex> lock() {
++      return std::unique_lock<std::mutex>(m_mutex);
++    }
++
+     // Performs either sycl::memcpy (for USM device memory) or std::memcpy
+     // (otherwise) and returns a reference to the copied object.
+     template <typename T>
+     T& copy_from(const T& t) {
+-      m_mutex.lock();
++      // The launch scope owns the lock, including during exceptions.
+       fence();
++      SYCLInternal::fence(m_copy_event, "Kokkos::SYCL staging copy", m_instance_id);
+       reserve(sizeof(T));
+       if constexpr (sycl::usm::alloc::device == Kind) {
+         std::memcpy(static_cast<void*>(m_staging.get()),
+@@ -176,7 +181,6 @@
+               .get_info<sycl::info::event::command_execution_status>() ==
+           sycl::info::event_command_status::complete);
+       m_last_event = event;
+-      m_mutex.unlock();
+     }
+ 
+     sycl::event get_copy_event() const { return m_copy_event; }
+--- a/core/src/SYCL/Kokkos_SYCL_ParallelFor_MDRange.hpp
++++ b/core/src/SYCL/Kokkos_SYCL_ParallelFor_MDRange.hpp
+@@ -146,6 +146,7 @@
+     Kokkos::Impl::SYCLInternal::IndirectKernelMem& indirectKernelMem =
+         space_instance->get_indirect_kernel_mem();
+ 
++    auto staging_lock = indirectKernelMem.lock();
+     auto functor_wrapper =
+         Impl::make_sycl_function_wrapper(m_functor, indirectKernelMem);
+ 
+--- a/core/src/SYCL/Kokkos_SYCL_ParallelFor_Range.hpp
++++ b/core/src/SYCL/Kokkos_SYCL_ParallelFor_Range.hpp
+@@ -174,6 +174,7 @@
+             .impl_internal_space_instance()
+             ->get_indirect_kernel_mem();
+ 
++    auto staging_lock = indirectKernelMem.lock();
+     auto functor_wrapper =
+         Impl::make_sycl_function_wrapper(m_functor, indirectKernelMem);
+     sycl::event event = sycl_direct_launch(m_policy, functor_wrapper,
+--- a/core/src/SYCL/Kokkos_SYCL_ParallelFor_Team.hpp
++++ b/core/src/SYCL/Kokkos_SYCL_ParallelFor_Team.hpp
+@@ -145,6 +145,7 @@
+     Kokkos::Impl::SYCLInternal::IndirectKernelMem& indirectKernelMem =
+         instance.get_indirect_kernel_mem();
+ 
++    auto staging_lock = indirectKernelMem.lock();
+     auto functor_wrapper =
+         Impl::make_sycl_function_wrapper(m_functor, indirectKernelMem);
+ 
+--- a/core/src/SYCL/Kokkos_SYCL_ParallelReduce_MDRange.hpp
++++ b/core/src/SYCL/Kokkos_SYCL_ParallelReduce_MDRange.hpp
+@@ -346,6 +346,7 @@
+     using IndirectKernelMem = Kokkos::Impl::SYCLInternal::IndirectKernelMem;
+     IndirectKernelMem& indirectKernelMem = instance.get_indirect_kernel_mem();
+ 
++    auto staging_lock = indirectKernelMem.lock();
+     auto functor_reducer_wrapper =
+         Impl::make_sycl_function_wrapper(m_functor_reducer, indirectKernelMem);
+ 
+--- a/core/src/SYCL/Kokkos_SYCL_ParallelReduce_Range.hpp
++++ b/core/src/SYCL/Kokkos_SYCL_ParallelReduce_Range.hpp
+@@ -362,6 +362,7 @@
+     using IndirectKernelMem = Kokkos::Impl::SYCLInternal::IndirectKernelMem;
+     IndirectKernelMem& indirectKernelMem = instance.get_indirect_kernel_mem();
+ 
++    auto staging_lock = indirectKernelMem.lock();
+     auto functor_reducer_wrapper =
+         Impl::make_sycl_function_wrapper(m_functor_reducer, indirectKernelMem);
+ 
+--- a/core/src/SYCL/Kokkos_SYCL_ParallelReduce_Team.hpp
++++ b/core/src/SYCL/Kokkos_SYCL_ParallelReduce_Team.hpp
+@@ -413,6 +413,7 @@
+     using IndirectKernelMem = Kokkos::Impl::SYCLInternal::IndirectKernelMem;
+     IndirectKernelMem& indirectKernelMem = instance.get_indirect_kernel_mem();
+ 
++    auto staging_lock = indirectKernelMem.lock();
+     auto functor_reducer_wrapper =
+         Impl::make_sycl_function_wrapper(m_functor_reducer, indirectKernelMem);
+ 
+--- a/core/src/SYCL/Kokkos_SYCL_ParallelScan_Range.hpp
++++ b/core/src/SYCL/Kokkos_SYCL_ParallelScan_Range.hpp
+@@ -368,6 +368,7 @@
+     Kokkos::Impl::SYCLInternal::IndirectKernelMem& indirectKernelMem =
+         instance.get_indirect_kernel_mem();
+ 
++    auto staging_lock = indirectKernelMem.lock();
+     auto functor_wrapper =
+         Impl::make_sycl_function_wrapper(m_functor_reducer, indirectKernelMem);
+ 

@@ -1,0 +1,19 @@
+diff --git a/core/src/SYCL/Kokkos_SYCL.cpp b/core/src/SYCL/Kokkos_SYCL.cpp
+index b58c12c..3e8f72b 100644
+--- a/core/src/SYCL/Kokkos_SYCL.cpp
++++ b/core/src/SYCL/Kokkos_SYCL.cpp
+@@ -152,7 +152,14 @@ void SYCL::print_configuration(std::ostream& os, bool verbose) const {
+       case sycl::info::device_type::host: device_type = "host"; break;
+       case sycl::info::device_type::all: device_type = "all"; break;
+     }
++#if defined(__ACPP__)
++    // FIXME_ACPP AdaptiveCpp's sycl::backend has no operator<<; print the
++    // platform name instead.
++    os << "[" << device.get_platform().get_info<sycl::info::platform::name>()
++       << "]:" << device_type << ':' << counter
++#else
+     os << "[" << device.get_backend() << "]:" << device_type << ':' << counter
++#endif
+        << "] " << device.get_info<sycl::info::device::name>();
+     if (counter == active_device)
+       os << " : Selected";

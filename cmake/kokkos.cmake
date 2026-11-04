@@ -72,10 +72,17 @@ else()
     # set(KOKKOS_URL "https://github.com/kokkos/kokkos/archive/refs/tags/${KOKKOS_VERSION}.zip")
     set(KOKKOS_URL "https://github.com/kokkos/kokkos/archive/${KOKKOS_VERSION}.zip")
 
+    # AdaptiveCpp/Metal builds apply a compatibility patch series to the pinned
+    # sources (see cmake/metal.cmake). Other builds use Kokkos unchanged.
+    set(KOKKOS_PATCH_ARGS "")
+    if (SPECFEM_ENABLE_METAL)
+        set(KOKKOS_PATCH_ARGS PATCH_COMMAND ${SPECFEM_METAL_KOKKOS_PATCH_COMMAND})
+    endif()
+
 
     # For CMake versions < 3.28, EXCLUDE_FROM_ALL is not supported in FetchContent_Declare
     if (CMAKE_VERSION VERSION_LESS "3.28.0")
-        FetchContent_Declare(kokkos DOWNLOAD_EXTRACT_TIMESTAMP FALSE URL ${KOKKOS_URL})
+        FetchContent_Declare(kokkos DOWNLOAD_EXTRACT_TIMESTAMP FALSE URL ${KOKKOS_URL} ${KOKKOS_PATCH_ARGS})
 
         FetchContent_GetProperties(kokkos)
         if(NOT kokkos_POPULATED)
@@ -86,7 +93,7 @@ else()
     # For CMake versions >= 3.28, EXCLUDE_FROM_ALL is supported in FetchContent_Declare
     else()
 
-        FetchContent_Declare(kokkos DOWNLOAD_EXTRACT_TIMESTAMP FALSE URL ${KOKKOS_URL} EXCLUDE_FROM_ALL)
+        FetchContent_Declare(kokkos DOWNLOAD_EXTRACT_TIMESTAMP FALSE URL ${KOKKOS_URL} ${KOKKOS_PATCH_ARGS} EXCLUDE_FROM_ALL)
         FetchContent_MakeAvailable(kokkos)
     endif()
 endif()

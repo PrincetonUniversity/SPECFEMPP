@@ -21,6 +21,11 @@ else()
     set(SPECFEM_CPU_BUILD TRUE CACHE BOOL "SPECFEM++ CPU build flag" FORCE)
 endif()
 
+# Re-check after Kokkos resolution: Metal requires the SYCL backend.
+if(SPECFEM_ENABLE_METAL AND NOT (DEFINED Kokkos_ENABLE_SYCL AND Kokkos_ENABLE_SYCL))
+    message(FATAL_ERROR "SPECFEM_ENABLE_METAL requires Kokkos with the SYCL backend.")
+endif()
+
 # Ensure exactly one build type is active
 if(SPECFEM_CPU_BUILD AND SPECFEM_GPU_BUILD)
     message(FATAL_ERROR "SPECFEM++ Configuration Error: Both CPU and GPU build flags are enabled simultaneously.\n"
@@ -42,6 +47,9 @@ if(SPECFEM_GPU_BUILD)
         message(STATUS "  Active GPU Backend: NVIDIA CUDA")
     elseif(DEFINED Kokkos_ENABLE_HIP AND Kokkos_ENABLE_HIP)
         message(STATUS "  Active GPU Backend: AMD ROCm/HIP")
+    elseif(DEFINED Kokkos_ENABLE_SYCL AND Kokkos_ENABLE_SYCL AND
+           SPECFEM_ENABLE_METAL)
+        message(STATUS "  Active GPU Backend: SYCL (AdaptiveCpp/Metal)")
     elseif(DEFINED Kokkos_ENABLE_SYCL AND Kokkos_ENABLE_SYCL)
         message(STATUS "  Active GPU Backend: Intel SYCL")
     endif()

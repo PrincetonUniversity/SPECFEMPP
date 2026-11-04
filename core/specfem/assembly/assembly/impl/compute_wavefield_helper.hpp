@@ -99,7 +99,7 @@ public:
     constexpr int nthreads = 32;
     constexpr int lane_size = 1;
     constexpr int chunk_size =
-        (dimension_tag == specfem::element::dimension_tag::dim2) ? 16 : 4;
+        specfem::parallel_configuration::field_output_chunk_size<dimension_tag>;
 #else
     constexpr int nthreads = 1;
     constexpr int lane_size = 1;

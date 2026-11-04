@@ -1,0 +1,271 @@
+diff --git a/core/src/SYCL/Kokkos_SYCL_Team.hpp b/core/src/SYCL/Kokkos_SYCL_Team.hpp
+index ebfa11b..dcc8e6a 100644
+--- a/core/src/SYCL/Kokkos_SYCL_Team.hpp
++++ b/core/src/SYCL/Kokkos_SYCL_Team.hpp
+@@ -116,6 +116,23 @@ class SYCLTeamMember {
+       typename WrappedReducerType::value_type& value) const noexcept {
+     using value_type = typename WrappedReducerType::value_type;
+ 
++#if defined(__ACPP__)
++    // FIXME_ACPP The multi-sub-group step below needs the oneAPI
++    // group_local_memory_for_overwrite extension, which AdaptiveCpp does not
++    // provide. Team-level reductions (team_reduce, parallel_reduce over
++    // TeamThreadRange/ThreadVectorRange) are therefore not supported.
++    // KOKKOS_IMPL_ACPP_UNSUPPORTED_AS_NOOP is only for building Kokkos' own
++    // test suite, whose executables mix supported and unsupported features:
++    // the reduction is skipped (wrong result, test fails) instead of
++    // rejecting the whole executable at compile time.
++#if !defined(KOKKOS_IMPL_ACPP_UNSUPPORTED_AS_NOOP)
++    static_assert(Kokkos::Impl::dependent_false_v<WrappedReducerType>,
++                  "Kokkos SYCL team-level reductions are not supported with "
++                  "AdaptiveCpp");
++#endif
++    (void)wrapped_reducer;
++    (void)value;
++#else
+     auto sg                       = m_item.get_sub_group();
+     const auto sub_group_range    = sg.get_local_range()[0];
+     const auto vector_range       = m_item.get_local_range(1);
+@@ -186,6 +203,7 @@ class SYCLTeamMember {
+ 
+     // Make sure that every thread is done using the reduction array.
+     sycl::group_barrier(m_item.get_group());
++#endif
+   }
+ 
+   //--------------------------------------------------------------------------
+diff --git a/core/src/SYCL/Kokkos_SYCL_UniqueToken.hpp b/core/src/SYCL/Kokkos_SYCL_UniqueToken.hpp
+index 75a49de..d98b2fa 100644
+--- a/core/src/SYCL/Kokkos_SYCL_UniqueToken.hpp
++++ b/core/src/SYCL/Kokkos_SYCL_UniqueToken.hpp
+@@ -47,6 +47,20 @@ class UniqueToken<SYCL, UniqueTokenScope::Global> {
+             max_size)) {}
+ 
+  private:
++#if defined(__ACPP__)
++  // FIXME_ACPP impl_acquire needs the oneAPI this_nd_item extension, which
++  // AdaptiveCpp does not provide. acquire() and impl_acquire() are templates
++  // here only so that the static_assert fires when device code actually uses
++  // UniqueToken, not whenever this header is included.
++  template <class Dummy = void>
++  size_type impl_acquire() const {
++#if !defined(KOKKOS_IMPL_ACPP_UNSUPPORTED_AS_NOOP)  // see Kokkos_SYCL_Team.hpp
++    static_assert(Kokkos::Impl::dependent_false_v<Dummy>,
++                  "Kokkos::UniqueToken<SYCL> is not supported with AdaptiveCpp");
++#endif
++    return 0;
++  }
++#else
+   /// \brief acquire value such that 0 <= value < size()
+   size_type impl_acquire() const {
+ #if defined(KOKKOS_COMPILER_INTEL_LLVM) && \
+@@ -76,13 +90,22 @@ class UniqueToken<SYCL, UniqueTokenScope::Global> {
+                                desul::MemoryScopeDevice());
+     return idx;
+   }
++#endif
+ 
+  public:
+   /// \brief acquire value such that 0 <= value < size()
++#if defined(__ACPP__)
++  template <class Dummy = void>
++  size_type acquire() const {
++    KOKKOS_IF_ON_DEVICE(return impl_acquire<Dummy>();)
++    KOKKOS_IF_ON_HOST(return 0;)
++  }
++#else
+   size_type acquire() const {
+     KOKKOS_IF_ON_DEVICE(return impl_acquire();)
+     KOKKOS_IF_ON_HOST(return 0;)
+   }
++#endif
+ 
+   /// \brief release an acquired value
+   void release(size_type idx) const noexcept {
+diff --git a/tpls/desul/include/desul/atomics/Compare_Exchange_SYCL.hpp b/tpls/desul/include/desul/atomics/Compare_Exchange_SYCL.hpp
+index f02d2ff..8135605 100644
+--- a/tpls/desul/include/desul/atomics/Compare_Exchange_SYCL.hpp
++++ b/tpls/desul/include/desul/atomics/Compare_Exchange_SYCL.hpp
+@@ -10,6 +10,9 @@ SPDX-License-Identifier: (BSD-3-Clause)
+ #define DESUL_ATOMICS_COMPARE_EXCHANGE_SYCL_HPP_
+ 
+ #include <desul/atomics/Adapt_SYCL.hpp>
++#if defined(__ACPP__)
++#include <hipSYCL/sycl/libkernel/sscp/builtins/assert.hpp>
++#endif
+ #include <desul/atomics/Common.hpp>
+ #include <desul/atomics/Lock_Array_SYCL.hpp>
+ #include <desul/atomics/Lock_Free_Types_SYCL.hpp>
+@@ -83,6 +86,20 @@ std::enable_if_t<!device_atomic_always_lock_free<T>, T> device_atomic_compare_ex
+   // This is a way to avoid deadlock in a subgroup
+   T return_val;
+   int done = 0;
++#if defined(__ACPP__)
++  // FIXME_ACPP The lock-based path for types that are not 4 or 8 bytes
++  // needs the oneAPI sub-group extensions (this_sub_group, group_ballot,
++  // sub_group_mask), which AdaptiveCpp does not provide. This cannot be a
++  // static_assert: acpp compiles host and device in one pass and
++  // DESUL_IF_ON_DEVICE is a runtime branch there, so host-only callers
++  // (e.g. the HostThreadTeam work stealing on a 16-byte pair) instantiate
++  // this function too. A kernel that actually reaches it reports a device
++  // assertion (abort on the host device; on Metal the kernel continues).
++  __acpp_if_target_device(__acpp_sscp_assert_fail(
++      "desul: SYCL atomics on types that are not 4 or 8 bytes are not "
++      "supported with AdaptiveCpp",
++      __FILE__, __LINE__, __func__);)
++#else
+ #if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER >= 20250000
+   auto sg = sycl::ext::oneapi::this_work_item::get_sub_group();
+ #else
+@@ -109,6 +126,7 @@ std::enable_if_t<!device_atomic_always_lock_free<T>, T> device_atomic_compare_ex
+     }
+     done_active = group_ballot(sg, done);
+   }
++#endif
+   return return_val;
+ }
+ 
+@@ -118,6 +136,20 @@ std::enable_if_t<!device_atomic_always_lock_free<T>, T> device_atomic_exchange(
+   // This is a way to avoid deadlock in a subgroup
+   T return_val;
+   int done = 0;
++#if defined(__ACPP__)
++  // FIXME_ACPP The lock-based path for types that are not 4 or 8 bytes
++  // needs the oneAPI sub-group extensions (this_sub_group, group_ballot,
++  // sub_group_mask), which AdaptiveCpp does not provide. This cannot be a
++  // static_assert: acpp compiles host and device in one pass and
++  // DESUL_IF_ON_DEVICE is a runtime branch there, so host-only callers
++  // (e.g. the HostThreadTeam work stealing on a 16-byte pair) instantiate
++  // this function too. A kernel that actually reaches it reports a device
++  // assertion (abort on the host device; on Metal the kernel continues).
++  __acpp_if_target_device(__acpp_sscp_assert_fail(
++      "desul: SYCL atomics on types that are not 4 or 8 bytes are not "
++      "supported with AdaptiveCpp",
++      __FILE__, __LINE__, __func__);)
++#else
+ #if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER >= 20250000
+   auto sg = sycl::ext::oneapi::this_work_item::get_sub_group();
+ #else
+@@ -142,6 +174,7 @@ std::enable_if_t<!device_atomic_always_lock_free<T>, T> device_atomic_exchange(
+     }
+     done_active = group_ballot(sg, done);
+   }
++#endif
+   return return_val;
+ }
+ 
+diff --git a/tpls/desul/include/desul/atomics/Load_And_Store_SYCL.hpp b/tpls/desul/include/desul/atomics/Load_And_Store_SYCL.hpp
+index 84fa4b1..965bcfe 100644
+--- a/tpls/desul/include/desul/atomics/Load_And_Store_SYCL.hpp
++++ b/tpls/desul/include/desul/atomics/Load_And_Store_SYCL.hpp
+@@ -10,6 +10,9 @@ SPDX-License-Identifier: (BSD-3-Clause)
+ #define DESUL_ATOMICS_LOAD_AND_STORE_SYCL_HPP_
+ 
+ #include <desul/atomics/Adapt_SYCL.hpp>
++#if defined(__ACPP__)
++#include <hipSYCL/sycl/libkernel/sscp/builtins/assert.hpp>
++#endif
+ #include <desul/atomics/Lock_Free_Types_SYCL.hpp>
+ 
+ namespace desul {
+@@ -32,6 +35,20 @@ void device_atomic_store(T* ptr, T val, MemoryOrder, MemoryScope scope) {
+   } else {
+     // This is a way to avoid deadlock in a subgroup
+     int done = 0;
++#if defined(__ACPP__)
++    // FIXME_ACPP The lock-based path for types that are not 4 or 8 bytes
++    // needs the oneAPI sub-group extensions (this_sub_group, group_ballot,
++    // sub_group_mask), which AdaptiveCpp does not provide. This cannot be a
++    // static_assert: acpp compiles host and device in one pass and
++    // DESUL_IF_ON_DEVICE is a runtime branch there, so host-only callers
++    // (e.g. the HostThreadTeam work stealing on a 16-byte pair) instantiate
++    // this function too. A kernel that actually reaches it reports a device
++    // assertion (abort on the host device; on Metal the kernel continues).
++    __acpp_if_target_device(__acpp_sscp_assert_fail(
++        "desul: SYCL atomics on types that are not 4 or 8 bytes are not "
++        "supported with AdaptiveCpp",
++        __FILE__, __LINE__, __func__);)
++#else
+ #if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER >= 20250000
+     auto sg = sycl::ext::oneapi::this_work_item::get_sub_group();
+ #else
+@@ -54,6 +71,7 @@ void device_atomic_store(T* ptr, T val, MemoryOrder, MemoryScope scope) {
+       }
+       done_active = group_ballot(sg, done);
+     }
++#endif
+   }
+ }
+ 
+@@ -77,6 +95,20 @@ T device_atomic_load(const T* ptr, MemoryOrder, MemoryScope scope) {
+     // This is a way to avoid deadlock in a subgroup
+     T ret;
+     int done = 0;
++#if defined(__ACPP__)
++    // FIXME_ACPP The lock-based path for types that are not 4 or 8 bytes
++    // needs the oneAPI sub-group extensions (this_sub_group, group_ballot,
++    // sub_group_mask), which AdaptiveCpp does not provide. This cannot be a
++    // static_assert: acpp compiles host and device in one pass and
++    // DESUL_IF_ON_DEVICE is a runtime branch there, so host-only callers
++    // (e.g. the HostThreadTeam work stealing on a 16-byte pair) instantiate
++    // this function too. A kernel that actually reaches it reports a device
++    // assertion (abort on the host device; on Metal the kernel continues).
++    __acpp_if_target_device(__acpp_sscp_assert_fail(
++        "desul: SYCL atomics on types that are not 4 or 8 bytes are not "
++        "supported with AdaptiveCpp",
++        __FILE__, __LINE__, __func__);)
++#else
+ #if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER >= 20250000
+     auto sg = sycl::ext::oneapi::this_work_item::get_sub_group();
+ #else
+@@ -99,6 +131,7 @@ T device_atomic_load(const T* ptr, MemoryOrder, MemoryScope scope) {
+       }
+       done_active = group_ballot(sg, done);
+     }
++#endif
+     return ret;
+   }
+ }
+diff --git a/tpls/desul/include/desul/atomics/Lock_Based_Fetch_Op_SYCL.hpp b/tpls/desul/include/desul/atomics/Lock_Based_Fetch_Op_SYCL.hpp
+index c5fe5c8..28908ea 100644
+--- a/tpls/desul/include/desul/atomics/Lock_Based_Fetch_Op_SYCL.hpp
++++ b/tpls/desul/include/desul/atomics/Lock_Based_Fetch_Op_SYCL.hpp
+@@ -10,6 +10,9 @@ SPDX-License-Identifier: (BSD-3-Clause)
+ #define DESUL_ATOMICS_LOCK_BASED_FETCH_OP_SYCL_HPP_
+ 
+ #include <desul/atomics/Common.hpp>
++#if defined(__ACPP__)
++#include <hipSYCL/sycl/libkernel/sscp/builtins/assert.hpp>
++#endif
+ #include <desul/atomics/Compare_Exchange_SYCL.hpp>
+ #include <desul/atomics/Lock_Array_SYCL.hpp>
+ #include <desul/atomics/Operator_Function_Objects.hpp>
+@@ -32,6 +35,20 @@ T device_atomic_fetch_oper(const Oper& op,
+   // This is a way to avoid deadlock in a subgroup
+   T return_val{};
+   int done = 0;
++#if defined(__ACPP__)
++  // FIXME_ACPP The lock-based path for types that are not 4 or 8 bytes
++  // needs the oneAPI sub-group extensions (this_sub_group, group_ballot,
++  // sub_group_mask), which AdaptiveCpp does not provide. This cannot be a
++  // static_assert: acpp compiles host and device in one pass and
++  // DESUL_IF_ON_DEVICE is a runtime branch there, so host-only callers
++  // (e.g. the HostThreadTeam work stealing on a 16-byte pair) instantiate
++  // this function too. A kernel that actually reaches it reports a device
++  // assertion (abort on the host device; on Metal the kernel continues).
++  __acpp_if_target_device(__acpp_sscp_assert_fail(
++      "desul: SYCL atomics on types that are not 4 or 8 bytes are not "
++      "supported with AdaptiveCpp",
++      __FILE__, __LINE__, __func__);)
++#else
+ #if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER >= 20250000
+   auto sg = sycl::ext::oneapi::this_work_item::get_sub_group();
+ #else
+@@ -55,6 +72,7 @@ T device_atomic_fetch_oper(const Oper& op,
+     }
+     done_active = group_ballot(sg, done);
+   }
++#endif
+   return return_val;
+ }
+ 

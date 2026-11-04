@@ -127,6 +127,35 @@
       }
     },
     {
+      "name": "release-sycl-metal",
+      "displayName": "Release -- SYCL via AdaptiveCpp on Apple GPU (Metal)",
+      "description": "Requires an AdaptiveCpp install with the Metal backend and the SPECFEM++ Metal patch set, with its bin directory on PATH (acpp), and the macOS 26.5 SDK. Kokkos is fetched and patched automatically (cmake/metal.cmake).",
+      "binaryDir": "build/release-sycl-metal",
+      "environment": {
+        "MACOSX_DEPLOYMENT_TARGET": "26.0"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_COMPILER": "acpp",
+        "CMAKE_OSX_SYSROOT": "/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk",
+        "CMAKE_OSX_DEPLOYMENT_TARGET": "26.0",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-sycl-metal",
+        "SPECFEM_ENABLE_METAL": "ON",
+        "Kokkos_ENABLE_SYCL": "ON",
+        "Kokkos_ENABLE_SERIAL": "ON",
+        "Kokkos_ENABLE_ONEDPL": "OFF",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
+        "SPECFEM_ENABLE_DOUBLE_PRECISION": "OFF",
+        "SPECFEM_ENABLE_SIMD": "OFF",
+        "SPECFEM_ENABLE_VTK": "OFF",
+        "SPECFEM_ENABLE_MPI": "OFF",
+        "SPECFEM_BINDING_PYTHON": "OFF",
+        "SPECFEM_INSTALL": "ON",
+        "SPECFEM_BUILD_TESTS": "ON",
+        "SPECFEM_BUILD_BENCHMARKS": "OFF"
+      }
+    },
+    {
       "name": "release-frontier",
       "displayName": "Release Frontier -- HIP enabled",
       "binaryDir": "build/release-frontier",
@@ -206,6 +235,37 @@
         "SPECFEM_INSTALL": "ON",
         "SPECFEM_BUILD_BENCHMARKS": "ON",
         "SPECFEM_BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/debug-cuda"
+      }
+    },
+    {
+      "name": "debug-sycl-metal",
+      "displayName": "Debug -- SYCL via AdaptiveCpp on Apple GPU (Metal)",
+      "description": "Requires an AdaptiveCpp install with the Metal backend and the SPECFEM++ Metal patch set, with its bin directory on PATH (acpp), and the macOS 26.5 SDK. Kokkos is fetched and patched automatically (cmake/metal.cmake).",
+      "binaryDir": "build/debug-sycl-metal",
+      "environment": {
+        "MACOSX_DEPLOYMENT_TARGET": "26.0"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_COMPILER": "acpp",
+        "CMAKE_OSX_SYSROOT": "/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk",
+        "CMAKE_OSX_DEPLOYMENT_TARGET": "26.0",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/debug-sycl-metal",
+        "SPECFEM_ENABLE_METAL": "ON",
+        "Kokkos_ENABLE_SYCL": "ON",
+        "Kokkos_ENABLE_SERIAL": "ON",
+        "Kokkos_ENABLE_ONEDPL": "OFF",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
+        "SPECFEM_ENABLE_DOUBLE_PRECISION": "OFF",
+        "SPECFEM_ENABLE_SIMD": "OFF",
+        "SPECFEM_ENABLE_VTK": "OFF",
+        "SPECFEM_ENABLE_MPI": "OFF",
+        "SPECFEM_BINDING_PYTHON": "OFF",
+        "SPECFEM_INSTALL": "ON",
+        "SPECFEM_BUILD_TESTS": "ON",
+        "SPECFEM_BUILD_BENCHMARKS": "OFF",
+        "Kokkos_ENABLE_DEBUG": "ON",
+        "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON"
       }
     },
     {
@@ -349,6 +409,20 @@
     {
       "name": "release-sycl",
       "configurePreset": "release-sycl",
+      "targets": [
+        "all"
+      ]
+    },
+    {
+      "name": "release-sycl-metal",
+      "configurePreset": "release-sycl-metal",
+      "targets": [
+        "all"
+      ]
+    },
+    {
+      "name": "debug-sycl-metal",
+      "configurePreset": "debug-sycl-metal",
       "targets": [
         "all"
       ]

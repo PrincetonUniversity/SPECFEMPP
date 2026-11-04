@@ -24,6 +24,14 @@ constexpr int cuda_chunk_size_3d = 4;
 constexpr int hip_chunk_size = 64;
 constexpr int sycl_chunk_size = 32;
 constexpr int sycl_chunk_size_3d = 4;
+// AdaptiveCpp/Metal: 32 KB threadgroup memory, shared with per-work-item
+// Kokkos/AdaptiveCpp reservations. Kokkos' scratch_size_max(0) assumes the
+// largest team (1024), leaving about 16 KB of level-0 scratch, which is what
+// the stiffness kernel selection compares against. 2D chunk 16 and 3D chunk 2
+// fit every medium at NGLL 5 (3D attenuation gather ~15 KB, 3D Cosserat
+// scatter ~12 KB).
+constexpr int metal_chunk_size = 16;
+constexpr int metal_chunk_size_3d = 2;
 constexpr int openmp_chunk_size = 1;
 constexpr int serial_chunk_size = 1;
 } // namespace impl
@@ -41,6 +49,9 @@ constexpr int chunk_size = impl::cuda_chunk_size;
 #elif defined(KOKKOS_ENABLE_HIP)
 constexpr int storage_chunk_size = impl::hip_chunk_size;
 constexpr int chunk_size = impl::hip_chunk_size;
+#elif defined(KOKKOS_ENABLE_SYCL) && defined(SPECFEM_ENABLE_METAL)
+constexpr int storage_chunk_size = impl::metal_chunk_size;
+constexpr int chunk_size = impl::metal_chunk_size;
 #elif defined(KOKKOS_ENABLE_SYCL)
 constexpr int storage_chunk_size = impl::sycl_chunk_size;
 constexpr int chunk_size = impl::sycl_chunk_size;
@@ -84,6 +95,26 @@ struct chunk_config {
   constexpr static auto dimension =
       DimensionTag; ///< Dimension type of the elements within chunk.
 };
+
+/**
+ * @brief Element chunk size for GPU kernels that stage displacement,
+ * velocity and acceleration in team scratch (seismogram and wavefield
+ * output).
+ *
+ * AdaptiveCpp/Metal uses a 3D chunk of 1: six-component (Cosserat) fields at
+ * chunk 4 need about 36 KB of team scratch, more than the 32 KB of
+ * threadgroup memory available. These kernels do not affect solver
+ * performance.
+ *
+ * @tparam DimensionTag Spatial dimension
+ */
+template <specfem::element::dimension_tag DimensionTag>
+constexpr int field_output_chunk_size =
+#if defined(KOKKOS_ENABLE_SYCL) && defined(SPECFEM_ENABLE_METAL)
+    (DimensionTag == specfem::element::dimension_tag::dim2) ? 16 : 1;
+#else
+    (DimensionTag == specfem::element::dimension_tag::dim2) ? 16 : 4;
+#endif
 
 /**
  * @brief Platform-optimized chunk configuration defaults.
@@ -132,7 +163,21 @@ struct default_chunk_config<specfem::element::dimension_tag::dim3, SIMD,
                    impl::hip_chunk_size, 512, 1, SIMD, Kokkos::HIP> {};
 #endif
 
-#if defined(KOKKOS_ENABLE_SYCL)
+#if defined(KOKKOS_ENABLE_SYCL) && defined(SPECFEM_ENABLE_METAL)
+template <typename SIMD>
+struct default_chunk_config<specfem::element::dimension_tag::dim2, SIMD,
+                            Kokkos::SYCL>
+    : chunk_config<specfem::element::dimension_tag::dim2,
+                   impl::metal_chunk_size, impl::metal_chunk_size, 512, 1, SIMD,
+                   Kokkos::SYCL> {};
+
+template <typename SIMD>
+struct default_chunk_config<specfem::element::dimension_tag::dim3, SIMD,
+                            Kokkos::SYCL>
+    : chunk_config<specfem::element::dimension_tag::dim3,
+                   impl::metal_chunk_size_3d, impl::metal_chunk_size_3d, 512, 1,
+                   SIMD, Kokkos::SYCL> {};
+#elif defined(KOKKOS_ENABLE_SYCL)
 template <typename SIMD>
 struct default_chunk_config<specfem::element::dimension_tag::dim2, SIMD,
                             Kokkos::SYCL>

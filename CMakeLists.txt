@@ -156,6 +156,9 @@ else(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     message(STATUS "GNU compiler not detected -- setting __GNUC__ FALSE")
 endif()
 
+# Apple GPU (AdaptiveCpp/Metal) configuration; must precede cmake/kokkos.cmake
+include("${CMAKE_SOURCE_DIR}/cmake/metal.cmake")
+
 # Install Kokkos as a dependency
 include("${CMAKE_SOURCE_DIR}/cmake/kokkos.cmake")
 

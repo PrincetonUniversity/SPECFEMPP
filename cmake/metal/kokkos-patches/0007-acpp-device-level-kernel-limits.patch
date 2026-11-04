@@ -1,0 +1,146 @@
+diff --git a/core/src/SYCL/Kokkos_SYCL_Instance.hpp b/core/src/SYCL/Kokkos_SYCL_Instance.hpp
+index 19c491e..8076bfe 100644
+--- a/core/src/SYCL/Kokkos_SYCL_Instance.hpp
++++ b/core/src/SYCL/Kokkos_SYCL_Instance.hpp
+@@ -4,7 +4,9 @@
+ #ifndef KOKKOS_SYCL_INSTANCE_HPP_
+ #define KOKKOS_SYCL_INSTANCE_HPP_
+ 
++#include <algorithm>
+ #include <optional>
++#include <vector>
+ #include <sycl/sycl.hpp>
+ 
+ #include <impl/Kokkos_Error.hpp>
+@@ -14,6 +16,33 @@
+ namespace Kokkos {
+ namespace Impl {
+ 
++#if defined(__ACPP__)
++// FIXME_ACPP AdaptiveCpp does not implement SYCL 2020 kernel bundles
++// (sycl::kernel_id, sycl::get_kernel_bundle), so per-kernel limits
++// (kernel_device_specific::max_sub_group_size, work_group_size,
++// preferred_work_group_size_multiple) cannot be queried. Use device-level
++// limits instead. On backends where a kernel's real limit can be lower than
++// the device's (e.g. Metal pipelines with high register pressure) this may
++// over-estimate work_group_size.
++struct SYCLDeviceKernelLimits {
++  size_t max_sub_group_size;
++  size_t work_group_size;
++  size_t preferred_work_group_size_multiple;
++};
++
++inline SYCLDeviceKernelLimits sycl_device_kernel_limits(
++    const sycl::device& d) {
++  const std::vector<size_t> sub_group_sizes =
++      d.get_info<sycl::info::device::sub_group_sizes>();
++  const size_t max_sg =
++      sub_group_sizes.empty()
++          ? 1
++          : *std::max_element(sub_group_sizes.begin(), sub_group_sizes.end());
++  return {max_sg, d.get_info<sycl::info::device::max_work_group_size>(),
++          max_sg};
++}
++#endif
++
+ class SYCLInternal {
+  public:
+   using size_type  = unsigned int;
+diff --git a/core/src/SYCL/Kokkos_SYCL_ParallelFor_Team.hpp b/core/src/SYCL/Kokkos_SYCL_ParallelFor_Team.hpp
+index c316f3c..c5493a5 100644
+--- a/core/src/SYCL/Kokkos_SYCL_ParallelFor_Team.hpp
++++ b/core/src/SYCL/Kokkos_SYCL_ParallelFor_Team.hpp
+@@ -71,6 +71,11 @@ class Kokkos::Impl::ParallelFor<FunctorType, Kokkos::TeamPolicy<Properties...>,
+           functor_wrapper.get_functor()(work_tag(), team_member);
+       };
+ 
++#if defined(__ACPP__)
++      auto max_sg_size = Kokkos::Impl::sycl_device_kernel_limits(
++                             q.get_device())
++                             .max_sub_group_size;
++#else
+       static sycl::kernel kernel = [&] {
+         sycl::kernel_id functor_kernel_id =
+             sycl::get_kernel_id<decltype(lambda)>();
+@@ -83,6 +88,7 @@ class Kokkos::Impl::ParallelFor<FunctorType, Kokkos::TeamPolicy<Properties...>,
+           kernel
+               .get_info<sycl::info::kernel_device_specific::max_sub_group_size>(
+                   q.get_device());
++#endif
+       auto final_vector_size = std::min<int>(m_vector_size, max_sg_size);
+       // FIXME_SYCL For some reason, explicitly enforcing the kernel bundle to
+       // be used gives a runtime error.
+diff --git a/core/src/SYCL/Kokkos_SYCL_ParallelReduce_Range.hpp b/core/src/SYCL/Kokkos_SYCL_ParallelReduce_Range.hpp
+index 1aa2df6..0483046 100644
+--- a/core/src/SYCL/Kokkos_SYCL_ParallelReduce_Range.hpp
++++ b/core/src/SYCL/Kokkos_SYCL_ParallelReduce_Range.hpp
+@@ -239,6 +239,12 @@ class Kokkos::Impl::ParallelReduce<
+         auto dummy_reduction_lambda =
+             reduction_lambda_factory({1, cgh}, num_teams_done, nullptr, 1);
+ 
++#if defined(__ACPP__)
++        const auto limits =
++            Kokkos::Impl::sycl_device_kernel_limits(q.get_device());
++        auto multiple = limits.preferred_work_group_size_multiple;
++        auto max      = limits.work_group_size;
++#else
+         static sycl::kernel kernel = [&] {
+           sycl::kernel_id functor_kernel_id =
+               sycl::get_kernel_id<decltype(dummy_reduction_lambda)>();
+@@ -254,6 +260,7 @@ class Kokkos::Impl::ParallelReduce<
+             kernel
+                 .get_info<sycl::info::kernel_device_specific::work_group_size>(
+                     q.get_device());
++#endif
+ 
+         auto max_local_memory =
+             q.get_device().get_info<sycl::info::device::local_mem_size>();
+diff --git a/core/src/SYCL/Kokkos_SYCL_ParallelReduce_Team.hpp b/core/src/SYCL/Kokkos_SYCL_ParallelReduce_Team.hpp
+index 501ca88..dc07063 100644
+--- a/core/src/SYCL/Kokkos_SYCL_ParallelReduce_Team.hpp
++++ b/core/src/SYCL/Kokkos_SYCL_ParallelReduce_Team.hpp
+@@ -295,6 +295,11 @@ class Kokkos::Impl::ParallelReduce<CombinedFunctorReducerType,
+ 
+         auto dummy_reduction_lambda = team_reduction_factory({1, cgh}, nullptr);
+ 
++#if defined(__ACPP__)
++        auto max_sg_size = Kokkos::Impl::sycl_device_kernel_limits(
++                               q.get_device())
++                               .max_sub_group_size;
++#else
+         static sycl::kernel kernel = [&] {
+           sycl::kernel_id functor_kernel_id =
+               sycl::get_kernel_id<decltype(dummy_reduction_lambda)>();
+@@ -306,6 +311,7 @@ class Kokkos::Impl::ParallelReduce<CombinedFunctorReducerType,
+         auto max_sg_size = kernel.get_info<
+             sycl::info::kernel_device_specific::max_sub_group_size>(
+             q.get_device());
++#endif
+         auto final_vector_size = std::min<int>(m_vector_size, max_sg_size);
+         // FIXME_SYCL For some reason, explicitly enforcing the kernel bundle to
+         // be used gives a runtime error.
+diff --git a/core/src/SYCL/Kokkos_SYCL_ParallelScan_Range.hpp b/core/src/SYCL/Kokkos_SYCL_ParallelScan_Range.hpp
+index 4d47c27..30baae6 100644
+--- a/core/src/SYCL/Kokkos_SYCL_ParallelScan_Range.hpp
++++ b/core/src/SYCL/Kokkos_SYCL_ParallelScan_Range.hpp
+@@ -253,6 +253,12 @@ class ParallelScanSYCLBase {
+       auto dummy_scan_lambda =
+           scan_lambda_factory({1, cgh}, num_teams_done, nullptr, nullptr);
+ 
++#if defined(__ACPP__)
++      const auto limits =
++          Kokkos::Impl::sycl_device_kernel_limits(q.get_device());
++      auto multiple = limits.preferred_work_group_size_multiple;
++      auto max      = limits.work_group_size;
++#else
+       static sycl::kernel kernel = [&] {
+         sycl::kernel_id functor_kernel_id =
+             sycl::get_kernel_id<decltype(dummy_scan_lambda)>();
+@@ -267,6 +273,7 @@ class ParallelScanSYCLBase {
+       auto max =
+           kernel.get_info<sycl::info::kernel_device_specific::work_group_size>(
+               q.get_device());
++#endif
+ 
+       wgroup_size = static_cast<size_t>(max / multiple) * multiple;
+       n_wgroups   = (size + wgroup_size - 1) / wgroup_size;

@@ -20,6 +20,14 @@ const static bool use_best_location{ true };
 #define SPECFEM_GPU_BACKEND
 #endif
 
+// SPECFEM_ENABLE_METAL (set by the CMake option of the same name) selects the
+// AdaptiveCpp/Metal configuration of the SYCL backend. It may only be tested
+// in configuration code (thread/chunk sizes, startup device checks), never in
+// kernels or assembly code.
+#if defined(SPECFEM_ENABLE_METAL) && !defined(KOKKOS_ENABLE_SYCL)
+#error "SPECFEM_ENABLE_METAL requires Kokkos with the SYCL backend"
+#endif
+
 #if defined(KOKKOS_ENABLE_CUDA)
 constexpr int NTHREADS = 32;
 constexpr int NLANES = 1;

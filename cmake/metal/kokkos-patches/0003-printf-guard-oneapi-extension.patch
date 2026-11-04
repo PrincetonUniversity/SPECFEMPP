@@ -1,0 +1,29 @@
+diff --git a/core/src/Kokkos_Printf.hpp b/core/src/Kokkos_Printf.hpp
+index 283322c..99981dd 100644
+--- a/core/src/Kokkos_Printf.hpp
++++ b/core/src/Kokkos_Printf.hpp
+@@ -8,6 +8,9 @@
+ 
+ #ifdef KOKKOS_ENABLE_SYCL
+ #include <sycl/sycl.hpp>
++#if defined(__ACPP__)
++#include <cstdio>
++#endif
+ #elif defined(KOKKOS_ENABLE_NEXTSILICON)
+ #include <NextSilicon/Kokkos_NextSilicon_Printf.hpp>
+ #else
+@@ -21,7 +24,13 @@ namespace Kokkos {
+ // don't ask for the return value.
+ template <typename... Args>
+ KOKKOS_FORCEINLINE_FUNCTION void printf(const char* format, Args... args) {
+-#ifdef KOKKOS_ENABLE_SYCL
++#if defined(KOKKOS_ENABLE_SYCL) && defined(__ACPP__)
++  // AdaptiveCpp does not provide the oneAPI printf extension, and some of its
++  // device backends (e.g. Metal) have no device printf at all. Print on the
++  // host; device output is dropped.
++  KOKKOS_IF_ON_HOST((if constexpr (sizeof...(Args) == 0)::printf("%s", format);
++                     else ::printf(format, args...);))
++#elif defined(KOKKOS_ENABLE_SYCL)
+   // Some compilers warn if "args" is empty and format is not a string literal
+   if constexpr (sizeof...(Args) == 0)
+     sycl::ext::oneapi::experimental::printf("%s", format);

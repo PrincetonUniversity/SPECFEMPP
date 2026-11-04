@@ -1,0 +1,73 @@
+--- a/core/src/SYCL/Kokkos_SYCL_Instance.cpp
++++ b/core/src/SYCL/Kokkos_SYCL_Instance.cpp
+@@ -6,6 +6,9 @@
+ #endif
+ 
+ #include <Kokkos_Macros.hpp>
++#if defined(__ACPP__)
++#include <cstdlib>
++#endif
+ #include <impl/Kokkos_CStyleMemoryManagement.hpp>
+ #include <Kokkos_CopyViews.hpp>  // ZeroMemset
+ #include <impl/Kokkos_CheckedIntegerOps.hpp>
+@@ -47,6 +50,26 @@
+   }
+   return static_cast<bool>(default_instance);
+ }
++
++#if defined(__ACPP__)
++// Opt-in for queues owned by Kokkos. User-provided queues keep their properties.
++sycl::property_list acpp_queue_properties() {
++  const char* setting = std::getenv("KOKKOS_ACPP_COARSE_GRAINED_EVENTS");
++  const bool coarse = setting && setting[0] == '1' && setting[1] == '\0';
++  if (coarse) {
++    return sycl::property_list{
++#ifdef KOKKOS_IMPL_SYCL_USE_IN_ORDER_QUEUES
++        sycl::property::queue::in_order{},
++#endif
++        sycl::property::queue::AdaptiveCpp_coarse_grained_events{}};
++  }
++#ifdef KOKKOS_IMPL_SYCL_USE_IN_ORDER_QUEUES
++  return sycl::property_list{sycl::property::queue::in_order{}};
++#else
++  return sycl::property_list{};
++#endif
++}
++#endif
+ 
+ SYCLInternal::SYCLInternal(const sycl::device& d)
+     : SYCLInternal(sycl::queue{
+@@ -65,7 +88,9 @@
+               Kokkos::Impl::throw_runtime_exception(
+                   "There was an asynchronous SYCL error!\n");
+           }
+-#ifdef KOKKOS_IMPL_SYCL_USE_IN_ORDER_QUEUES
++#if defined(__ACPP__)
++          , acpp_queue_properties()
++#elif defined(KOKKOS_IMPL_SYCL_USE_IN_ORDER_QUEUES)
+ 
+           ,
+           sycl::property::queue::in_order()
+--- a/core/src/SYCL/Kokkos_SYCL.hpp
++++ b/core/src/SYCL/Kokkos_SYCL.hpp
+@@ -23,6 +23,9 @@
+ namespace Kokkos {
+ namespace Impl {
+ class SYCLInternal;
++#if defined(__ACPP__)
++sycl::property_list acpp_queue_properties();
++#endif
+ }
+ 
+ /// \class SYCL
+@@ -128,7 +131,9 @@
+   std::generate_n(std::back_inserter(instances), weights.size(),
+                   [&context, &device]() {
+                     return SYCL(sycl::queue(context, device
+-#ifdef KOKKOS_IMPL_SYCL_USE_IN_ORDER_QUEUES
++#if defined(__ACPP__)
++                                            , Kokkos::Impl::acpp_queue_properties()
++#elif defined(KOKKOS_IMPL_SYCL_USE_IN_ORDER_QUEUES)
+                                             ,
+                                             sycl::property::queue::in_order()
+ #endif

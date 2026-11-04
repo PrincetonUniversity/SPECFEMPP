@@ -1,0 +1,84 @@
+diff --git a/core/src/Kokkos_MathematicalFunctions.hpp b/core/src/Kokkos_MathematicalFunctions.hpp
+index 7c9af88..06ffb90 100644
+--- a/core/src/Kokkos_MathematicalFunctions.hpp
++++ b/core/src/Kokkos_MathematicalFunctions.hpp
+@@ -17,6 +17,9 @@
+ #ifdef KOKKOS_ENABLE_SYCL
+ #include <cstdint>
+ #include <sycl/sycl.hpp>
++#if defined(__ACPP__)
++#include <limits>
++#endif
+ #endif
+ 
+ #if defined(KOKKOS_ENABLE_CUDA)
+@@ -520,7 +523,30 @@ inline long double abs(long double x) {
+ KOKKOS_IMPL_MATH_UNARY_FUNCTION(fabs)
+ KOKKOS_IMPL_MATH_BINARY_FUNCTION(fmod)
+ KOKKOS_IMPL_MATH_BINARY_FUNCTION(remainder)
++#if defined(KOKKOS_ENABLE_SYCL) && defined(__ACPP__)
++// FIXME_ACPP AdaptiveCpp does not provide sycl::remquo yet ("TODO remquo" in
++// its math_builtins.hpp). Portable replacement: remainder() gives the result;
++// the quotient bits are taken from the rounded quotient (x - r) / y. C/C++
++// only require the sign of x/y and the low 3 bits of the integral quotient,
++// which is what this returns.
++namespace Impl::acpp_math {
++template <class T>
++KOKKOS_INLINE_FUNCTION T remquo(T x, T y, int* quo) {
++  T r          = sycl::remainder(x, y);
++  T n          = sycl::rint((x - r) / y);
++  int low_bits = static_cast<int>(sycl::fmod(sycl::fabs(n), T(8)));
++  *quo         = (sycl::signbit(x) != sycl::signbit(y)) ? -low_bits : low_bits;
++  return r;
++}
++}  // namespace Impl::acpp_math
++#undef KOKKOS_IMPL_MATH_FUNCTIONS_NAMESPACE
++#define KOKKOS_IMPL_MATH_FUNCTIONS_NAMESPACE Impl::acpp_math
++KOKKOS_IMPL_MATH_TERNARY_INT_PTR_FUNCTION(remquo)
++#undef KOKKOS_IMPL_MATH_FUNCTIONS_NAMESPACE
++#define KOKKOS_IMPL_MATH_FUNCTIONS_NAMESPACE sycl
++#else
+ KOKKOS_IMPL_MATH_TERNARY_INT_PTR_FUNCTION(remquo)
++#endif
+ KOKKOS_IMPL_MATH_TERNARY_FUNCTION(fma)
+ KOKKOS_IMPL_MATH_BINARY_FUNCTION(fmax)
+ KOKKOS_IMPL_MATH_BINARY_FUNCTION(fmin)
+@@ -528,6 +554,15 @@ KOKKOS_IMPL_MATH_BINARY_FUNCTION(fdim)
+ #ifndef KOKKOS_ENABLE_SYCL
+ KOKKOS_INLINE_FUNCTION float nanf(char const* arg) { return ::nanf(arg); }
+ KOKKOS_INLINE_FUNCTION double nan(char const* arg) { return ::nan(arg); }
++#elif defined(__ACPP__)
++// FIXME_ACPP AdaptiveCpp does not provide sycl::nan. Like the SYCL branch
++// below, the character string argument is ignored.
++KOKKOS_INLINE_FUNCTION float nanf(char const*) {
++  return std::numeric_limits<float>::quiet_NaN();
++}
++KOKKOS_INLINE_FUNCTION double nan(char const*) {
++  return std::numeric_limits<double>::quiet_NaN();
++}
+ #else
+ // FIXME_SYCL
+ // sycl::nan does not follow the C/C++ standard library and takes an unsigned
+diff --git a/core/src/SYCL/Kokkos_SYCL_Half_MathematicalFunctions.hpp b/core/src/SYCL/Kokkos_SYCL_Half_MathematicalFunctions.hpp
+index 8c88a47..f0d23be 100644
+--- a/core/src/SYCL/Kokkos_SYCL_Half_MathematicalFunctions.hpp
++++ b/core/src/SYCL/Kokkos_SYCL_Half_MathematicalFunctions.hpp
+@@ -49,7 +49,18 @@ KOKKOS_SYCL_HALF_BINARY_FUNCTION(remainder)
+ KOKKOS_SYCL_HALF_BINARY_FUNCTION(fmax)
+ KOKKOS_SYCL_HALF_BINARY_FUNCTION(fmin)
+ KOKKOS_SYCL_HALF_BINARY_FUNCTION(fdim)
++#if defined(__ACPP__)
++// FIXME_ACPP no sycl::remquo; use the float replacement from
++// Kokkos_MathematicalFunctions.hpp.
++inline Experimental::half_t impl_remquo(Experimental::half_t x,
++                                        Experimental::half_t y, int* z) {
++  return static_cast<Experimental::half_t>(
++      Kokkos::Impl::acpp_math::remquo(static_cast<float>(x),
++                                      static_cast<float>(y), z));
++}
++#else
+ KOKKOS_SYCL_HALF_TERNARY_INT_PTR_FUNCTION(remquo)
++#endif
+ // Exponential functions
+ KOKKOS_SYCL_HALF_UNARY_FUNCTION(exp)
+ KOKKOS_SYCL_HALF_UNARY_FUNCTION(exp2)

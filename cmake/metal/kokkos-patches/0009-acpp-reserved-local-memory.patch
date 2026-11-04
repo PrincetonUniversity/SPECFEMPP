@@ -1,0 +1,127 @@
+diff --git a/core/src/SYCL/Kokkos_SYCL_Instance.cpp b/core/src/SYCL/Kokkos_SYCL_Instance.cpp
+index 82a97d5..c41453d 100644
+--- a/core/src/SYCL/Kokkos_SYCL_Instance.cpp
++++ b/core/src/SYCL/Kokkos_SYCL_Instance.cpp
+@@ -107,6 +107,14 @@ SYCLInternal::SYCLInternal(const sycl::queue& q) : m_queue(q) {
+ 
+   m_maxShmemPerBlock =
+       d.template get_info<sycl::info::device::local_mem_size>();
++#if defined(__ACPP__) && defined(SYCL_EXT_ACPP_BACKEND_METAL)
++  // FIXME_ACPP AdaptiveCpp's Metal backend adds work_group_size *
++  // sizeof(uint64_t) bytes of threadgroup memory to every launch for its group
++  // algorithms (src/runtime/metal/metal_queue.cpp). Exceeding the device
++  // limit is not diagnosed and silently corrupts local memory.
++  if (d.get_backend() == sycl::backend::metal)
++    m_reservedLocalMemPerWorkItem = sizeof(uint64_t);
++#endif
+ 
+   for (auto& usm_mem : m_indirectKernelMem) {
+     usm_mem.reset(m_queue, m_instance_id);
+diff --git a/core/src/SYCL/Kokkos_SYCL_Instance.hpp b/core/src/SYCL/Kokkos_SYCL_Instance.hpp
+index 8076bfe..b2c20db 100644
+--- a/core/src/SYCL/Kokkos_SYCL_Instance.hpp
++++ b/core/src/SYCL/Kokkos_SYCL_Instance.hpp
+@@ -74,6 +74,10 @@ class SYCLInternal {
+   size_t m_maxWorkgroupSize   = 0;
+   uint32_t m_maxConcurrency   = 0;
+   uint64_t m_maxShmemPerBlock = 0;
++  // Local memory the SYCL implementation itself adds to every launch, per
++  // work-item, on top of the requested local memory and not reflected in
++  // local_mem_size. Nonzero only for AdaptiveCpp's Metal backend.
++  size_t m_reservedLocalMemPerWorkItem = 0;
+ 
+   std::size_t m_scratchSpaceCount            = 0;
+   sycl::global_ptr<size_type> m_scratchSpace = nullptr;
+diff --git a/core/src/SYCL/Kokkos_SYCL_ParallelFor_Team.hpp b/core/src/SYCL/Kokkos_SYCL_ParallelFor_Team.hpp
+index c5493a5..a44c5c7 100644
+--- a/core/src/SYCL/Kokkos_SYCL_ParallelFor_Team.hpp
++++ b/core/src/SYCL/Kokkos_SYCL_ParallelFor_Team.hpp
+@@ -176,12 +176,14 @@ class Kokkos::Impl::ParallelFor<FunctorType, Kokkos::TeamPolicy<Properties...>,
+     m_scratch_size[1] = m_policy.scratch_size(1, m_team_size);
+ 
+     const auto& instance = *m_policy.space().impl_internal_space_instance();
++    const int reserved_shmem =
++        instance.m_reservedLocalMemPerWorkItem * m_team_size * m_vector_size;
+     if (static_cast<int>(instance.m_maxShmemPerBlock) <
+-        m_shmem_size + m_shmem_begin) {
++        m_shmem_size + m_shmem_begin + reserved_shmem) {
+       std::stringstream out;
+       out << "Kokkos::parallel_for<SYCL> Requested too much scratch memory on "
+              "level 0. Requested: "
+-          << m_shmem_size + m_shmem_begin
++          << m_shmem_size + m_shmem_begin + reserved_shmem
+           << ", Maximum: " << instance.m_maxShmemPerBlock;
+       Kokkos::Impl::throw_runtime_exception(out.str());
+     }
+diff --git a/core/src/SYCL/Kokkos_SYCL_ParallelReduce_Range.hpp b/core/src/SYCL/Kokkos_SYCL_ParallelReduce_Range.hpp
+index 0483046..325e6c3 100644
+--- a/core/src/SYCL/Kokkos_SYCL_ParallelReduce_Range.hpp
++++ b/core/src/SYCL/Kokkos_SYCL_ParallelReduce_Range.hpp
+@@ -273,8 +273,10 @@ class Kokkos::Impl::ParallelReduce<
+         const auto wgroup_size = std::min(
+             {Kokkos::bit_ceil(size),
+              Kokkos::bit_floor(static_cast<size_t>(max / multiple) * multiple),
+-             Kokkos::bit_floor(static_cast<size_t>(max_local_memory * .99) /
+-                               (sizeof(value_type) * value_count))});
++             Kokkos::bit_floor(
++                 static_cast<size_t>(max_local_memory * .99) /
++                 (sizeof(value_type) * value_count +
++                  instance.m_reservedLocalMemPerWorkItem))});
+ 
+         // FIXME_SYCL Find a better way to determine a good limit for the
+         // maximum number of work groups, also see
+diff --git a/core/src/SYCL/Kokkos_SYCL_ParallelReduce_Team.hpp b/core/src/SYCL/Kokkos_SYCL_ParallelReduce_Team.hpp
+index dc07063..de5afdc 100644
+--- a/core/src/SYCL/Kokkos_SYCL_ParallelReduce_Team.hpp
++++ b/core/src/SYCL/Kokkos_SYCL_ParallelReduce_Team.hpp
+@@ -463,12 +463,14 @@ class Kokkos::Impl::ParallelReduce<CombinedFunctorReducerType,
+     const Kokkos::Impl::SYCLInternal& instance =
+         *m_policy.space().impl_internal_space_instance();
+ 
++    const int reserved_shmem =
++        instance.m_reservedLocalMemPerWorkItem * m_team_size * m_vector_size;
+     if (static_cast<int>(instance.m_maxShmemPerBlock) <
+-        m_shmem_size + m_shmem_begin) {
++        m_shmem_size + m_shmem_begin + reserved_shmem) {
+       std::stringstream out;
+       out << "Kokkos::parallel_reduce<SYCL> Requested too much scratch memory "
+              "on level 0. Requested: "
+-          << m_shmem_size + m_shmem_begin << ", Maximum "
++          << m_shmem_size + m_shmem_begin + reserved_shmem << ", Maximum "
+           << instance.m_maxShmemPerBlock;
+       Kokkos::Impl::throw_runtime_exception(out.str());
+     }
+diff --git a/core/src/SYCL/Kokkos_SYCL_TeamPolicy.hpp b/core/src/SYCL/Kokkos_SYCL_TeamPolicy.hpp
+index a693cf6..1dfcce7 100644
+--- a/core/src/SYCL/Kokkos_SYCL_TeamPolicy.hpp
++++ b/core/src/SYCL/Kokkos_SYCL_TeamPolicy.hpp
+@@ -114,7 +114,8 @@ class Kokkos::Impl::TeamPolicyInternal<Kokkos::SYCL, Properties...>
+     const size_t max_possible_team_size = sycl_instance.m_maxWorkgroupSize;
+ #endif
+     const size_t max_reserved_shared_mem_per_team =
+-        (max_possible_team_size + 2) * sizeof(double);
++        (max_possible_team_size + 2) * sizeof(double) +
++        max_possible_team_size * sycl_instance.m_reservedLocalMemPerWorkItem;
+     // arbitrarily setting level 1 scratch limit to 20MB
+     constexpr size_t max_l1_scratch_size =
+         static_cast<size_t>(80) * 1024 * 1024;
+@@ -293,7 +294,8 @@ class Kokkos::Impl::TeamPolicyInternal<Kokkos::SYCL, Properties...>
+     const int max_threads_for_memory =
+         (space().impl_internal_space_instance()->m_maxShmemPerBlock -
+          2 * sizeof(double) - m_team_scratch_size[0]) /
+-        (sizeof(double) + m_thread_scratch_size[0]);
++        (sizeof(double) + m_thread_scratch_size[0] +
++         space().impl_internal_space_instance()->m_reservedLocalMemPerWorkItem);
+     return std::min({
+              int(m_space.impl_internal_space_instance()->m_maxWorkgroupSize),
+       // FIXME_SYCL Avoid requesting too many registers on NVIDIA GPUs.
+@@ -324,7 +326,8 @@ class Kokkos::Impl::TeamPolicyInternal<Kokkos::SYCL, Properties...>
+         (space().impl_internal_space_instance()->m_maxShmemPerBlock -
+          2 * sizeof(double) - m_team_scratch_size[0]) /
+         (sizeof(double) + sizeof(value_type) * value_count +
+-         m_thread_scratch_size[0]);
++         m_thread_scratch_size[0] +
++         space().impl_internal_space_instance()->m_reservedLocalMemPerWorkItem);
+     return std::min<int>({
+              int(m_space.impl_internal_space_instance()->m_maxWorkgroupSize),
+       // FIXME_SYCL Avoid requesting too many registers on NVIDIA GPUs.
