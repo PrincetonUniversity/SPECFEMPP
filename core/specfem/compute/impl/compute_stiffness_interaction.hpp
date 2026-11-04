@@ -11,6 +11,7 @@
 #include "stiffness_kernels.hpp"
 #include <Kokkos_Core.hpp>
 #include <limits>
+#include <string>
 
 namespace specfem::compute::impl {
 
@@ -104,17 +105,19 @@ int compute_stiffness_interaction_core(
                chunk.scratch_size_max(0)) {
       scatter_kernel<NGLL, Tags>{ assembly, istep }(chunk.set_scratch_size(
           0, Kokkos::PerTeam(scatter_kernel<NGLL, Tags>::shmem_size())));
-    } else if (gather_kernel<NGLL, Tags>::shmem_size() <=
-               chunk.scratch_size_max(1)) {
-      gather_kernel<NGLL, Tags>{ assembly, istep }(chunk.set_scratch_size(
-          1, Kokkos::PerTeam(gather_kernel<NGLL, Tags>::shmem_size())));
-    } else if (scatter_kernel<NGLL, Tags>::shmem_size() <=
-               chunk.scratch_size_max(1)) {
-      scatter_kernel<NGLL, Tags>{ assembly, istep }(chunk.set_scratch_size(
-          1, Kokkos::PerTeam(scatter_kernel<NGLL, Tags>::shmem_size())));
     } else {
+      // No level-1 (global-memory) fallback: both kernels construct their
+      // scratch views from team_scratch(0), so launching them with level-1
+      // scratch would place those views outside the allocated level-0 region
+      // and silently corrupt memory. Reduce the chunk size instead.
       throw std::runtime_error(
-          "Not enough shared memory for stiffness interaction kernels.");
+          "Not enough level-0 scratch memory for stiffness interaction "
+          "kernels (gather needs " +
+          std::to_string(gather_kernel<NGLL, Tags>::shmem_size()) +
+          " B, scatter needs " +
+          std::to_string(scatter_kernel<NGLL, Tags>::shmem_size()) +
+          " B, device allows " + std::to_string(chunk.scratch_size_max(0)) +
+          " B). Reduce the chunk size for this backend.");
     }
   }
 
