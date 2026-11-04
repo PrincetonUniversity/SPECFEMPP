@@ -17,6 +17,8 @@
 #include <gtest/gtest.h>
 #include <vector>
 
+using fk_injection::type_real;
+
 // ---------------------------------------------------------------------------
 // Helpers in a named namespace (no anonymous namespaces; unity-build safe).
 // ---------------------------------------------------------------------------
@@ -112,7 +114,7 @@ FkChain make_fk_chain() {
 
   const auto points = make_eval_points(xs, ys, zs);
 
-  const double p = fk_injection::impl::ray_parameter(model, wave);
+  const double p = wave.ray_parameter(model);
   const double eps = fk_injection::impl::depth_tolerance(25000.0);
   const auto groups =
       fk_injection::impl::group_by_depth(points, model, wave, p, eps);

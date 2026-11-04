@@ -3,16 +3,7 @@
 #include <cmath>
 #include <limits>
 #include <numeric>
-
-double
-fk_injection::impl::ray_parameter(const fk_injection::LayeredModel &model,
-                                  const fk_injection::IncidentWave &wave) {
-  const fk_injection::ElasticIsotropicLayer &hs = model.elastic_layers().back();
-  const double v_hs = (wave.type == fk_injection::incident_wave_type::p)
-                          ? static_cast<double>(hs.p_velocity)
-                          : static_cast<double>(hs.s_velocity);
-  return std::sin(static_cast<double>(wave.take_off_theta)) / v_hs;
-}
+#include <optional>
 
 double fk_injection::impl::depth_tolerance(double max_depth) {
   // Float round-off slack only: group points the mesh placed at the same depth
@@ -35,10 +26,11 @@ fk_injection::impl::group_by_depth(const fk_injection::EvalPoints &points,
   const bool has_medium = (!points.medium.empty());
 
   // --- Per-point requested medium ---
-  std::vector<fk_injection::point_medium> requested(n);
-  for (int i = 0; i < n; ++i) {
-    requested[i] =
-        has_medium ? points.medium[i] : fk_injection::point_medium::from_depth;
+  std::vector<std::optional<specfem::plugin::Medium>> requested(n);
+  if (has_medium) {
+    for (int i = 0; i < n; ++i) {
+      requested[i] = points.medium[i];
+    }
   }
 
   // --- Per-point time delay tau ---
@@ -69,7 +61,7 @@ fk_injection::impl::group_by_depth(const fk_injection::EvalPoints &points,
   }
 
   // --- Resolve each point's medium ---
-  std::vector<fk_injection::point_medium> resolved(n);
+  std::vector<specfem::plugin::Medium> resolved(n);
   for (int i = 0; i < n; ++i) {
     const double zi = static_cast<double>(points.z[i]);
     resolved[i] = model.locate(zi, requested[i], tolerance).medium;
@@ -79,10 +71,9 @@ fk_injection::impl::group_by_depth(const fk_injection::EvalPoints &points,
   std::vector<int> order(n);
   std::iota(order.begin(), order.end(), 0);
   std::stable_sort(order.begin(), order.end(), [&](int a, int b) {
-    const int ma = static_cast<int>(resolved[a]);
-    const int mb = static_cast<int>(resolved[b]);
-    if (ma != mb) {
-      return ma < mb;
+    // Elastic groups first, independent of the SDK's enum values.
+    if (resolved[a] != resolved[b]) {
+      return resolved[b] == specfem::plugin::Medium::acoustic;
     }
     return static_cast<double>(points.z[a]) < static_cast<double>(points.z[b]);
   });
@@ -100,13 +91,12 @@ fk_injection::impl::group_by_depth(const fk_injection::EvalPoints &points,
 
   int current_group_id = -1;
   double z_anchor = 0.0;
-  fk_injection::point_medium group_medium =
-      fk_injection::point_medium::from_depth;
+  specfem::plugin::Medium group_medium = specfem::plugin::Medium::elastic;
 
   for (int k = 0; k < n; ++k) {
     const int idx = order[k];
     const double zi = static_cast<double>(points.z[idx]);
-    const fk_injection::point_medium med = resolved[idx];
+    const specfem::plugin::Medium med = resolved[idx];
 
     const bool new_medium = (k == 0) || (med != group_medium);
     const bool beyond_anchor = (k > 0) && (zi - z_anchor > tolerance);

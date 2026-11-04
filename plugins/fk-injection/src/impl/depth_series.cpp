@@ -20,8 +20,7 @@ void fk_injection::impl::depth_spectrum(
   const int nf2 = static_cast<int>(setup.omega.size()); // nf_stored + 1
   const type_real p = static_cast<type_real>(setup.p);
   const int n = setup.derivative_order;
-  const bool is_acoustic =
-      (group.medium == fk_injection::point_medium::acoustic);
+  const bool is_acoustic = (group.medium == specfem::plugin::Medium::acoustic);
 
   for (int f = 0; f < nf2; ++f) {
     const Cplx omega(setup.omega[f], 0.0);

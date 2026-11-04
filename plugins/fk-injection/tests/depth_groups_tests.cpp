@@ -8,6 +8,8 @@
 #include <set>
 #include <vector>
 
+using fk_injection::type_real;
+
 // ---------------------------------------------------------------------------
 // Test helpers
 // ---------------------------------------------------------------------------
@@ -20,7 +22,7 @@ namespace depth_groups_tests_impl {
 fk_injection::EvalPoints
 make_eval_points(const std::vector<double> &xs, const std::vector<double> &ys,
                  const std::vector<double> &zs,
-                 const std::vector<fk_injection::point_medium> &medium = {}) {
+                 const std::vector<specfem::plugin::Medium> &medium = {}) {
   const int n = static_cast<int>(xs.size());
 
   fk_injection::EvalPoints ep;
@@ -130,7 +132,7 @@ TEST(DepthGroups, DistinctDepthsFormDistinctGroups) {
 
   const auto ep = depth_groups_tests_impl::make_eval_points(xs, ys, zs);
 
-  const double p = fk_injection::impl::ray_parameter(model, wave);
+  const double p = wave.ray_parameter(model);
   const double eps = fk_injection::impl::depth_tolerance(35000.0);
 
   const fk_injection::impl::DepthGroups dg =
@@ -159,7 +161,7 @@ TEST(DepthGroups, LateralPositionsShareOneGroup) {
   const auto ep =
       depth_groups_tests_impl::make_eval_points(xs_list, ys_list, zs);
 
-  const double p = fk_injection::impl::ray_parameter(model, wave);
+  const double p = wave.ray_parameter(model);
   const double eps = fk_injection::impl::depth_tolerance(z_depth);
 
   const fk_injection::impl::DepthGroups dg =
@@ -188,7 +190,7 @@ TEST(DepthGroups, IdenticalDepthsMergeDistinctSeparate) {
 
   const double z_base = 5000.0;
   const double eps = fk_injection::impl::depth_tolerance(z_base);
-  const double p = fk_injection::impl::ray_parameter(model, wave);
+  const double p = wave.ray_parameter(model);
 
   // Two points at the exact same depth → one group.
   const std::vector<double> zs_same = { z_base, z_base };
@@ -220,7 +222,7 @@ TEST(DepthGroups, DistinctDepthLevelsDoNotMerge) {
   const auto model = depth_groups_tests_impl::make_elastic_model();
   const auto wave = depth_groups_tests_impl::make_wave_p();
 
-  const double p = fk_injection::impl::ray_parameter(model, wave);
+  const double p = wave.ray_parameter(model);
 
   // 6 depths spaced 1000 m apart: exact grouping cannot merge them.
   {
@@ -268,14 +270,14 @@ TEST(DepthGroups, MediumSplitsGroups) {
   const std::vector<double> zs = { z_test, z_test };
   const std::vector<double> zeros(2, 0.0);
   // Point 0: forced acoustic; point 1: forced elastic.
-  const std::vector<fk_injection::point_medium> overrides = {
-    fk_injection::point_medium::acoustic, fk_injection::point_medium::elastic
+  const std::vector<specfem::plugin::Medium> overrides = {
+    specfem::plugin::Medium::acoustic, specfem::plugin::Medium::elastic
   };
 
   const auto ep =
       depth_groups_tests_impl::make_eval_points(zeros, zeros, zs, overrides);
 
-  const double p = fk_injection::impl::ray_parameter(model, wave);
+  const double p = wave.ray_parameter(model);
   const double eps = fk_injection::impl::depth_tolerance(z_test);
 
   const auto dg = fk_injection::impl::group_by_depth(ep, model, wave, p, eps);
@@ -288,8 +290,8 @@ TEST(DepthGroups, MediumSplitsGroups) {
   const int g0 = dg.point_group[0];
   const int g1 = dg.point_group[1];
   EXPECT_NE(g0, g1);
-  EXPECT_EQ(dg.groups[g0].medium, fk_injection::point_medium::acoustic);
-  EXPECT_EQ(dg.groups[g1].medium, fk_injection::point_medium::elastic);
+  EXPECT_EQ(dg.groups[g0].medium, specfem::plugin::Medium::acoustic);
+  EXPECT_EQ(dg.groups[g1].medium, specfem::plugin::Medium::elastic);
 }
 
 // ===========================================================================
@@ -311,14 +313,14 @@ TEST(DepthGroups, RayParameterAndTolerance) {
     fk_injection::IncidentWave wave;
     wave.type = fk_injection::incident_wave_type::p;
     wave.take_off_theta = static_cast<type_real>(theta);
-    const double p = fk_injection::impl::ray_parameter(model, wave);
+    const double p = wave.ray_parameter(model);
     EXPECT_NEAR(p, std::sin(theta) / vp_hs, 1e-12);
   }
   {
     fk_injection::IncidentWave wave;
     wave.type = fk_injection::incident_wave_type::sv;
     wave.take_off_theta = static_cast<type_real>(theta);
-    const double p = fk_injection::impl::ray_parameter(model, wave);
+    const double p = wave.ray_parameter(model);
     EXPECT_NEAR(p, std::sin(theta) / vs_hs, 1e-12);
   }
 
