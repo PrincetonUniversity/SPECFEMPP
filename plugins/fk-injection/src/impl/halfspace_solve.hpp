@@ -15,9 +15,9 @@ namespace fk_injection::impl {
 /**
  * @brief Incident-wave amplitudes in the bottom elastic half-space.
  *
- * Stores the two independent incoming-wave coefficients obtained from the
- * free-surface radiation condition and the wave type.  For an incident P wave
- * only @c c3 is non-zero; for an incident SV wave only @c c1 is non-zero.
+ * Stores the two incoming-wave amplitudes, set from the wave type.  For an
+ * incident P wave only @c c3 is non-zero; for an incident SV wave only @c c1 is
+ * non-zero.
  *
  * These correspond directly to the @f$ C_3 @f$ (P) and @f$ C_1 @f$ (SV)
  * amplitudes in the Westervelt / Fortran FK reference implementation.
@@ -75,8 +75,8 @@ incident_amplitude(const fk_injection::ElasticIsotropicLayer &halfspace,
  * Faithfully mirrors fk_core.cpp lines 287-302. Given the propagated elastic
  * matrix @f$ N = (\text{elastic chain}) \cdot E @f$, the free-surface condition
  * reduces to a 2×2 system on the traction rows of @f$ N @f$ (rows 2 and 3 in
- * 0-based indexing) using the up-going mode columns (columns 1 and 3 for
- * P-type; columns 0 and 3 for SV-type), solved analytically.
+ * 0-based indexing) using the reflected mode columns 1 and 3, for both wave
+ * types, solved analytically.
  *
  * If the determinant @f$|\delta| \leq \epsilon@f$ (singular configuration) both
  * coefficients are set to zero.
@@ -194,7 +194,7 @@ halfspace_coefficients(const fk_injection::ComplexMatrix<4> &n_mat,
  *   @f$ b_1 = \text{coeff}_0,\; b_2 = C_3,\; b_3 = \text{coeff}_1,\; b_0 = 0
  * @f$
  * - **SV incidence**:
- *   @f$ b_0 = C_1,\; b_2 = \text{coeff}_0,\; b_3 = \text{coeff}_1,\; b_1 = 0
+ *   @f$ b_0 = C_1,\; b_1 = \text{coeff}_0,\; b_3 = \text{coeff}_1,\; b_2 = 0
  * @f$
  *
  * @param type   Incident wave type (P or SV).
