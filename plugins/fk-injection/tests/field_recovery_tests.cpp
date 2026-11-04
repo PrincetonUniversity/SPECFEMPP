@@ -50,9 +50,8 @@ inline void make_elastic_model(fk_injection::ElasticIsotropicLayer &hs,
   const auto amp = fk_injection::impl::incident_amplitude(
       hs, wave_type, static_cast<type_real>(1.0), p);
 
-  fk_injection::ComplexMatrix<4> qmat_zero;
   const auto coeffs = fk_injection::impl::halfspace_coefficients(
-      e_mat, false, qmat_zero, wave_type, amp.c1, amp.c3);
+      e_mat, wave_type, amp.c1, amp.c3);
 
   modes = fk_injection::impl::build_bottom_vector(wave_type, amp.c1, amp.c3,
                                                   coeffs);
@@ -138,7 +137,6 @@ TEST(FieldRecovery, ProjectAcousticPotentialRate) {
   const fk_injection::type_real p =
       static_cast<fk_injection::type_real>(1.0e-4);
   const double pd = static_cast<double>(p);
-  const std::complex<double> omega(3.0, 0.0);
   const double density_below = 2700.0;
 
   fk_injection::impl::AcousticState state;
@@ -146,7 +144,7 @@ TEST(FieldRecovery, ProjectAcousticPotentialRate) {
   state.pressure_over_k = std::complex<double>(1.0, 2.0);
 
   const fk_injection::impl::SeriesSpectrum series =
-      fk_injection::impl::project_acoustic(state, density_below, omega, p);
+      fk_injection::impl::project_acoustic(state, density_below, p);
 
   constexpr double kTol = 1.0e-15;
   const std::complex<double> chi_dot =

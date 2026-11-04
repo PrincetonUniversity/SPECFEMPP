@@ -45,12 +45,9 @@ TEST(HalfspaceSolve, FreeSurfaceTractionVanishesP) {
   // N_mat = E (no layers above the half-space, chain is identity).
   const auto n_mat = fk_injection::impl::elastic_halfspace_eigenmatrix(hs, p);
 
-  // Dummy zero qmat_full (not used for elastic-only path).
-  fk_injection::ComplexMatrix<4> qmat_zero;
-
   // Solve for half-space coefficients.
   const auto coeffs = fk_injection::impl::halfspace_coefficients(
-      n_mat, false, qmat_zero, wave_type, amp.c1, amp.c3);
+      n_mat, wave_type, amp.c1, amp.c3);
 
   // Build the bottom state vector.
   const auto bot = fk_injection::impl::build_bottom_vector(wave_type, amp.c1,
@@ -103,10 +100,8 @@ TEST(HalfspaceSolve, FreeSurfaceTractionVanishesSV) {
 
   const auto n_mat = fk_injection::impl::elastic_halfspace_eigenmatrix(hs, p);
 
-  fk_injection::ComplexMatrix<4> qmat_zero;
-
   const auto coeffs = fk_injection::impl::halfspace_coefficients(
-      n_mat, false, qmat_zero, wave_type, amp.c1, amp.c3);
+      n_mat, wave_type, amp.c1, amp.c3);
 
   const auto bot = fk_injection::impl::build_bottom_vector(wave_type, amp.c1,
                                                            amp.c3, coeffs);
@@ -203,4 +198,60 @@ TEST(HalfspaceSolve, BuildBottomVectorSV) {
   // bot[3] == coeff1 == (5,6)  (reflected P-down, column 3).
   EXPECT_NEAR(bot[3].real(), 5.0, kTol);
   EXPECT_NEAR(bot[3].imag(), 6.0, kTol);
+}
+
+// ============================================================================
+// Test 5: FreeSurfaceConditionWithFluid
+//
+// With a fluid layer over the half-space, r = N * bot must have zero shear
+// traction at the fluid base (r[2] == 0) and zero pressure at the free surface
+// (q10*r[1] - q11*r[3] == 0, row 1 of the fluid propagator applied to the base
+// state). Each is judged relative to the magnitude of its terms.
+// ============================================================================
+
+TEST(HalfspaceSolve, FreeSurfaceConditionWithFluid) {
+  fk_injection::ElasticIsotropicLayer hs;
+  hs.density = static_cast<fk_injection::type_real>(3380.0);
+  hs.p_velocity = static_cast<fk_injection::type_real>(8100.0);
+  hs.s_velocity = static_cast<fk_injection::type_real>(4500.0);
+
+  fk_injection::AcousticLayer fluid;
+  fluid.density = static_cast<fk_injection::type_real>(1020.0);
+  fluid.p_velocity = static_cast<fk_injection::type_real>(1500.0);
+  fluid.thickness = static_cast<fk_injection::type_real>(2000.0);
+
+  const double p = 1.0e-4;
+  const std::complex<double> omega(3.0, 0.0);
+
+  const auto n_mat = fk_injection::impl::elastic_halfspace_eigenmatrix(hs, p);
+  const auto q_mat = fk_injection::impl::layer_propagator(
+      fluid, omega, static_cast<double>(fluid.thickness), p);
+
+  for (const auto wave_type : { fk_injection::incident_wave_type::p,
+                                fk_injection::incident_wave_type::sv }) {
+    const auto amp = fk_injection::impl::incident_amplitude(
+        hs, wave_type, static_cast<fk_injection::type_real>(1.0), p);
+    const auto coeffs = fk_injection::impl::halfspace_coefficients(
+        n_mat, q_mat, wave_type, amp.c1, amp.c3);
+    // A singular solve returns zeros, which would satisfy nothing below.
+    EXPECT_GT(std::abs(coeffs[0]) + std::abs(coeffs[1]), 0.0);
+
+    const auto bot = fk_injection::impl::build_bottom_vector(wave_type, amp.c1,
+                                                             amp.c3, coeffs);
+    const auto r = n_mat * bot;
+    const std::complex<double> surface_pressure =
+        q_mat(1, 0) * r[1] - q_mat(1, 1) * r[3];
+
+    double shear_scale = 0.0;
+    double pressure_scale = 0.0;
+    for (int j = 0; j < 4; ++j) {
+      shear_scale += std::abs(n_mat(2, j)) * std::abs(bot[j]);
+      pressure_scale += (std::abs(q_mat(1, 0)) * std::abs(n_mat(1, j)) +
+                         std::abs(q_mat(1, 1)) * std::abs(n_mat(3, j))) *
+                        std::abs(bot[j]);
+    }
+
+    EXPECT_LT(std::abs(r[2]) / shear_scale, 1.0e-10);
+    EXPECT_LT(std::abs(surface_pressure) / pressure_scale, 1.0e-10);
+  }
 }
