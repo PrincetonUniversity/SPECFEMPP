@@ -37,8 +37,20 @@ void fk_injection::impl::depth_spectrum(
       if (group.free_surface) {
         state.pressure_over_k = Cplx(0.0, 0.0);
       }
-      series = fk_injection::impl::project_acoustic(
-          state, static_cast<double>(layer.density), p);
+      // SPECFEM3D resolves an acoustic point at a layer's bottom boundary into
+      // the layer below (couple_with_injection's zz <= sum(H) tie-break), so
+      // u_x = -i p^2/rho (P/k) there uses the underlying layer's density. The
+      // state itself is the zero-height interface state either way.
+      double horizontal_density = static_cast<double>(layer.density);
+      if (group.height <= 1.0e-6 * static_cast<double>(layer.thickness)) {
+        const int below = group.layer + 1;
+        horizontal_density =
+            below < model.number_of_fluid_layers()
+                ? static_cast<double>(model.fluid_layers()[below].density)
+                : static_cast<double>(model.elastic_layers().front().density);
+      }
+      series =
+          fk_injection::impl::project_acoustic(state, horizontal_density, p);
     } else {
       fk_injection::ComplexVector<4> state;
       if (group.in_halfspace) {
