@@ -69,12 +69,11 @@ acoustic_from_solid(const fk_injection::ComplexVector<4> &state) {
 }
 
 /**
- * @brief Elastic state inside a finite layer: @f$ \gamma_0 \bar{P}(h)\, s @f$.
+ * @brief Elastic state inside a finite layer: @f$ T(h)\, s @f$.
  *
  * Propagates the interface state at the bottom of @p layer up by @p height.
- * The @c gamma0 prefactor makes @f$ \gamma_0 \bar{P}(0) = I @f$, so the state
- * is continuous across interfaces (a point at height 0 returns @p
- * state_at_bottom).
+ * Since @f$ T(0) = I @f$, the state is continuous across interfaces (a point at
+ * height 0 returns @p state_at_bottom).
  *
  * @param layer           Layer containing the point.
  * @param omega           Complex angular frequency (rad/s).
@@ -88,16 +87,8 @@ elastic_state_in_layer(const fk_injection::ElasticIsotropicLayer &layer,
                        std::complex<double> omega, double height,
                        double ray_parameter,
                        const fk_injection::ComplexVector<4> &state_at_bottom) {
-  const double g0 = elastic_gamma0(layer, ray_parameter);
-  const fk_injection::ComplexMatrix<4> propagator =
-      layer_propagator(layer, omega, height, ray_parameter);
-  const fk_injection::ComplexVector<4> propagated =
-      propagator * state_at_bottom;
-  fk_injection::ComplexVector<4> out;
-  for (int i = 0; i < 4; ++i) {
-    out[i] = std::complex<double>(g0, 0.0) * propagated[i];
-  }
-  return out;
+  return layer_propagator(layer, omega, height, ray_parameter) *
+         state_at_bottom;
 }
 
 /**

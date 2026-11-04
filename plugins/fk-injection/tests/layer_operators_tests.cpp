@@ -11,9 +11,7 @@
 // ============================================================================
 // Test 1: ElasticPropagatorZeroThickness
 //
-// At H = 0 the raw (unscaled) propagator P satisfies P = (1 - gamma1) * I,
-// i.e. P = (1/gamma0) * I.  After multiplying by gamma0 the result is
-// the 4x4 identity.
+// At H = 0 the propagator is the 4x4 identity.
 // ============================================================================
 
 TEST(LayerOperators, ElasticPropagatorZeroThickness) {
@@ -29,24 +27,14 @@ TEST(LayerOperators, ElasticPropagatorZeroThickness) {
       static_cast<fk_injection::type_real>(1.0e-4);
   const std::complex<double> omega(6.0, 0.0);
 
-  // Unscaled propagator at H = 0.
   const auto P = fk_injection::impl::layer_propagator(
       layer, omega, static_cast<fk_injection::type_real>(0.0), p);
-
-  // gamma0 * P should equal the identity.
-  const double g0 = fk_injection::impl::elastic_gamma0(layer, p);
-  const std::complex<double> g0c(g0, 0.0);
-
-  auto scaled = P;
-  for (int k = 0; k < 4 * 4; ++k) {
-    scaled.data[k] = scaled.data[k] * g0c;
-  }
 
   auto I = fk_injection::ComplexMatrix<4>::identity();
   double max_err = 0.0;
   for (int i = 0; i < 4; ++i) {
     for (int j = 0; j < 4; ++j) {
-      double e = std::abs(scaled(i, j) - I(i, j));
+      double e = std::abs(P(i, j) - I(i, j));
       if (e > max_err)
         max_err = e;
     }
@@ -57,11 +45,10 @@ TEST(LayerOperators, ElasticPropagatorZeroThickness) {
 // ============================================================================
 // Test 2: ElasticPropagatorSemigroup
 //
-// The physical layer transfer matrix is T(H) = gamma0 * P_bar(H) (the driver
-// multiplies each layer's unscaled propagator by gamma0). Being a Thomson-
-// Haskell transfer, T composes exactly for a uniform layer: T(H) = T(H/2)^2.
-// We verify this on the physical transfer with a relative Frobenius tolerance
-// (entries span ~10^11, so an absolute tolerance is meaningless here).
+// Being a Thomson-Haskell transfer, the propagator T composes exactly for a
+// uniform layer: T(H) = T(H/2)^2. We verify this with a relative Frobenius
+// tolerance (entries span ~10^11, so an absolute tolerance is meaningless
+// here).
 // ============================================================================
 
 TEST(LayerOperators, ElasticPropagatorSemigroup) {
@@ -84,19 +71,8 @@ TEST(LayerOperators, ElasticPropagatorSemigroup) {
       static_cast<fk_injection::type_real>(500.0);
   const std::complex<double> omega(6.0, 0.0);
 
-  const auto PH = fk_injection::impl::layer_propagator(layer, omega, H, p);
-  const auto Ph = fk_injection::impl::layer_propagator(layer, omega, H2, p);
-
-  // Physical transfer matrices T = gamma0 * P_bar.
-  const double g0 = fk_injection::impl::elastic_gamma0(layer, p);
-  const std::complex<double> g0c(g0, 0.0);
-
-  auto full = PH;
-  auto half = Ph;
-  for (int k = 0; k < 4 * 4; ++k) {
-    full.data[k] = full.data[k] * g0c;
-    half.data[k] = half.data[k] * g0c;
-  }
+  const auto full = fk_injection::impl::layer_propagator(layer, omega, H, p);
+  const auto half = fk_injection::impl::layer_propagator(layer, omega, H2, p);
   const auto half_squared = half * half;
 
   // Relative Frobenius norm ||T(H) - T(H/2)^2|| / ||T(H)||.
