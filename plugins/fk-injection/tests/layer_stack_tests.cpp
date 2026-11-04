@@ -257,8 +257,7 @@ TEST(LayerStack, FluidFreeSurfacePressureSmall) {
   const auto &fluid0 = model.fluid_layers()[0];
   const auto top = fk_injection::impl::acoustic_state_in_layer(
       fluid0, std::complex<double>(setup.omega[f], 0.0),
-      static_cast<type_real>(fluid0.thickness), static_cast<type_real>(p),
-      states.acoustic_bottom(f, 0));
+      static_cast<double>(fluid0.thickness), p, states.acoustic_bottom(f, 0));
 
   const double scale = std::abs(states.acoustic_bottom(f, 0).u_z) +
                        std::abs(states.acoustic_bottom(f, 0).pressure_over_k) +

@@ -7,6 +7,7 @@
 #include "fk_injection/utilities/complex_matrix.hpp"
 #include "impl/depth_groups.hpp"
 #include "impl/halfspace_solve.hpp"
+#include <complex>
 #include <vector>
 
 namespace fk_injection::impl {
@@ -19,13 +20,13 @@ namespace fk_injection::impl {
  * are synthesized; this struct holds only the frequency-domain inputs.
  */
 struct FkSetup {
-  fk_injection::FkSizes sizes; ///< Working-array sizes.
-  int fft_power = 0;           ///< log2(N_FFT) for the inverse transform.
-  double p = 0.0;              ///< Horizontal ray parameter (s/m).
-  double phi = 0.0;            ///< Azimuth (rad).
-  double dt_min = 0.0;         ///< Resampled time step N_P * dt (s).
-  IncidentAmplitude amplitude; ///< Half-space incident amplitudes c1 (SV), c3
-                               ///< (P).
+  fk_injection::FkSizes sizes;      ///< Working-array sizes.
+  int fft_power = 0;                ///< log2(N_FFT) for the inverse transform.
+  double p = 0.0;                   ///< Horizontal ray parameter (s/m).
+  double phi = 0.0;                 ///< Azimuth (rad).
+  double dt_min = 0.0;              ///< Resampled time step N_P * dt (s).
+  std::complex<double> amplitude{}; ///< Incident mode amplitude in the
+                                    ///< half-space.
   fk_injection::incident_wave_type wave_type =
       fk_injection::incident_wave_type::p; ///< Incident wave type.
   fk_injection::ComplexMatrix<4> e_mat;    ///< Half-space eigenmatrix E.
