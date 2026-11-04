@@ -17,7 +17,7 @@ namespace fk_injection::impl {
  * tau*delay_stretch/dt_min.
  *
  * Single source of the per-point offset so the window-coverage check and the
- * stored @c point_offset cannot drift apart.
+ * stored @c PointSample::offset cannot drift apart.
  *
  * @param pad_samples  Leading pad in resampled-grid samples.
  * @param time_delay   Per-point plane-wave delay tau in s.
@@ -32,20 +32,19 @@ inline double point_abscissa_offset(double pad_samples, double time_delay,
 }
 
 /**
- * @brief Assemble the device-resident grouped result.
+ * @brief Assemble the grouped result.
  *
- * Copies the depth-series coefficients to device @c type_real, and builds the
+ * Narrows the depth-series coefficients to @c type_real and builds the
  * per-point data: group index, abscissa offset (see @c point_abscissa_offset),
- * the traction material factors (xi1, xim, bulk, normal), and the acoustic
- * flag.
+ * medium, and the traction material factors (xi1, xim, bulk, normal).
  *
- * @param series Depth-series coefficients + t0/pad bookkeeping.
+ * @param series Depth-series coefficients.
  * @param groups Depth groups (point->group map, delays).
  * @param points Evaluation points (Lame factors, normals).
- * @param setup  Shared setup (azimuth, dt_min, resampling, traction flag).
+ * @param setup  Shared setup (azimuth, dt_min, pad, resampling).
  * @param delay_stretch Delay scaling applied to every point's offset (1 in
  *        production; N/(N-1) for the SPECFEM3D-reference reproduction).
- * @return fk_injection::FkResult ready for device sampling.
+ * @return fk_injection::FkResult ready for sampling.
  */
 fk_injection::FkResult make_result(const DepthSeries &series,
                                    const DepthGroups &groups,

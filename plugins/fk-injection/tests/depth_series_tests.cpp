@@ -25,7 +25,7 @@ using fk_injection::type_real;
 // ---------------------------------------------------------------------------
 namespace depth_series_tests_impl {
 
-/** @brief Build an EvalPoints device view from parallel host arrays. */
+/** @brief Build an EvalPoints from parallel arrays. */
 fk_injection::EvalPoints make_eval_points(const std::vector<double> &xs,
                                           const std::vector<double> &ys,
                                           const std::vector<double> &zs) {
@@ -272,7 +272,7 @@ TEST(DepthSeries, CoefficientsFiniteAndNonzero) {
 }
 
 // ============================================================================
-// NormalizationIndependentOfResampling (finding #4 / 4b)
+// NormalizationIndependentOfResampling
 //
 // With the dt_min inverse-FFT normalization, the reconstructed amplitude is
 // independent of NP_RESAMP: the same model/wave at NP=1 (dt=0.1) and NP=2

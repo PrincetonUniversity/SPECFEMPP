@@ -37,7 +37,7 @@ struct FkSetup {
   int pad_samples =
       0; ///< ceil(max delay / dt_min); keeps sample abscissae >= 0.
   int shift_samples = 0; ///< t0 series rotation nn - pad (left rotation), nn =
-                         ///< int(origin_time / dt_min). See doc 14.
+                         ///< int(origin_time / dt_min).
 };
 
 /**
