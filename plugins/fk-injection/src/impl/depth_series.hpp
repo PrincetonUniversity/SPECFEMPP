@@ -35,7 +35,7 @@ struct DepthSeries {
  * @brief Fill the positive-frequency depth spectrum for one group.
  *
  * For every stored positive frequency: evaluate the state at the group depth
- * (half-space or partial-layer propagation via the WP3 operators), project to
+ * (half-space or partial-layer propagation via the layer operators), project to
  * the depth-only series S0..S4, multiply by the Gaussian apodization, and apply
  * the (i*omega)^n derivative factor to S0/S1 only. The free-surface groups get
  * their fluid pressure zeroed before projection.

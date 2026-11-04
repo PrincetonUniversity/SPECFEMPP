@@ -61,7 +61,7 @@ struct InterfaceStates {
  *       @c locate: replace the two fixed elastic/fluid walks with one bottom-up
  *       per-interface walk that applies a same-medium propagator or the
  *       appropriate medium coupling at each interface, and add the companion
- *       fluid-to-solid coupling next to @c couple_solid_to_fluid. A fluid base
+ *       fluid-to-solid coupling next to @c acoustic_from_solid. A fluid base
  *       would additionally need a non-elastic half-space eigen-decomposition.
  *       Downstream stages consume only medium-agnostic interface states and are
  *       unaffected.

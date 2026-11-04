@@ -36,8 +36,7 @@ fk_injection::impl::prepare(const fk_injection::LayeredModel &model,
     setup.apodization[i] = std::exp(-x * x);
   }
 
-  // t0 / delay bookkeeping (see
-  // injection_plan/rework/14-time-placement-bookkeeping.md). nn =
+  // t0 / delay bookkeeping. nn =
   // int(origin_time / dt_min) (truncation toward zero); pad keeps per-point
   // sample abscissae non-negative; the stored series is left-rotated by nn -
   // pad.
