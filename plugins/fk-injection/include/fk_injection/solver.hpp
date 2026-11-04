@@ -10,33 +10,42 @@
 namespace fk_injection {
 
 /**
- * @brief Compute FK synthetic displacement, traction, and pressure at a set of
- *        evaluation points.
+ * @brief How @c solve treats the two points where it deliberately differs from
+ *        SPECFEM3D's FK routine.
  *
- * Orchestrates two Kokkos device kernels:
- * - Kernel 1: per-frequency assembly of elastic and acoustic propagator chains
- *             and half-space coefficients (shared by all points).
- * - Kernel 2: per-point depth propagation, inverse-FFT, exponential-taper,
- *             and cubic-B-spline storage.
+ * - @c exact : the inverse FFT normalizes by the resampled step @c dt_min and
+ *   each point's delay is the exact plane-wave delay.
+ * - @c specfem3d : reproduces SPECFEM3D for comparison against it. The inverse
+ *   FFT normalizes by the SEM step, so amplitudes are @f$ N_P @f$ times larger,
+ *   and delays are stretched by @f$ N/(N-1) @f$ from its frequency grid.
+ */
+enum class ReferenceConvention { exact, specfem3d };
+
+/**
+ * @brief Compute the FK field at a set of evaluation points.
  *
- * @param model           1-D horizontally-layered velocity model.
- * @param wave            Incident plane-wave descriptor (type, angles, origin,
- *                        amplitude, Gaussian half-duration).
- * @param window          Simulation time-step and windowing parameters used to
- *                        derive FK working-array sizes.
- * @param points          Device-resident evaluation-point coordinates, optional
- *                        normals and Lamé factors.
- * @param derivative      Kinematic quantity stored in the result's three vector
- *                        components: displacement (Method 2), velocity (Method
- * 1 Stacey, the SPECFEM3D @c Veloc_FK convention), or acceleration (Method 2).
- * Defaults to displacement.
- * @return FkResult containing the selected kinematic field, traction (if
- *         requested), and pressure (for acoustic points) cubic-B-spline
- *         coefficient Views on the default device memory space.
- * @throws std::runtime_error on model validation failure.
+ * Runs on the host: solves the layer stack once per frequency, synthesizes one
+ * set of depth-only series per (medium, depth) group, and stores them as
+ * cubic-B-spline coefficients for @c FkResult::sample.
+ *
+ * @param model      1-D horizontally-layered velocity model.
+ * @param wave       Incident plane-wave descriptor (type, angles, origin,
+ *                   amplitude, Gaussian half-duration).
+ * @param window     Simulation time-step and windowing parameters used to
+ *                   derive FK working-array sizes.
+ * @param points     Evaluation-point coordinates, with optional normals and
+ *                   Lame factors. Traction is zero without them.
+ * @param derivative Kinematic quantity stored in the three vector components.
+ * @param convention See @c ReferenceConvention.
+ * @return FkResult holding the kinematic field, traction and potential rate.
+ * @throws specfem::plugin::Unsupported if the ray parameter is out of range
+ *         (see @c impl::check_supported_slowness).
+ * @throws std::runtime_error if the point arrays disagree, a point can't be
+ *         located, or the time window doesn't cover every step and delay.
  */
 FkResult solve(const LayeredModel &model, const IncidentWave &wave,
                const TimeWindow &window, const EvalPoints &points,
-               field_derivative derivative = field_derivative::displacement);
+               field_derivative derivative,
+               ReferenceConvention convention = ReferenceConvention::exact);
 
 } // namespace fk_injection

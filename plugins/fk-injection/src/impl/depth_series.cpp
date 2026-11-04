@@ -76,7 +76,7 @@ void fk_injection::impl::depth_spectrum(
 
 void fk_injection::impl::to_time_series(
     std::complex<double> *spectrum, const fk_injection::impl::FkSetup &setup,
-    double *coefficients, bool reproduce_specfem3d_reference) {
+    double *coefficients, fk_injection::ReferenceConvention convention) {
   const int fft_samples = setup.sizes.number_of_fft_samples;
   const int ncoef = setup.sizes.number_of_stored_frequencies;
   const int nseries = fk_injection::impl::number_of_series;
@@ -84,7 +84,7 @@ void fk_injection::impl::to_time_series(
   // SPECFEM3D reference divides by the SEM step (NP times too large for NP>1);
   // reproduce that only for exact reference comparison.
   const double normalization_dt =
-      reproduce_specfem3d_reference
+      convention == fk_injection::ReferenceConvention::specfem3d
           ? setup.dt_min / static_cast<double>(setup.sizes.resampling_rate)
           : setup.dt_min;
   const int rotation =
@@ -129,7 +129,7 @@ fk_injection::impl::DepthSeries fk_injection::impl::depth_series(
     const fk_injection::impl::InterfaceStates &states,
     const fk_injection::LayeredModel &model,
     const fk_injection::impl::FkSetup &setup,
-    bool reproduce_specfem3d_reference) {
+    fk_injection::ReferenceConvention convention) {
   const int fft_samples = setup.sizes.number_of_fft_samples;
   const int ncoef = setup.sizes.number_of_stored_frequencies;
   const int nseries = fk_injection::impl::number_of_series;
@@ -150,7 +150,7 @@ fk_injection::impl::DepthSeries fk_injection::impl::depth_series(
                                        spectrum.data(), fft_samples);
     fk_injection::impl::to_time_series(
         spectrum.data(), setup, &result.coefficients[result.index(g, 0, 0)],
-        reproduce_specfem3d_reference);
+        convention);
   }
 
   return result;

@@ -81,28 +81,4 @@ void check_eval_points(const fk_injection::EvalPoints &points);
 void check_supported_slowness(const fk_injection::LayeredModel &model,
                               double p);
 
-/**
- * @brief Depth-grouped FK driver: host pipeline + one device sampling kernel.
- *
- * Runs ray_parameter -> depth_tolerance -> group_by_depth -> prepare ->
- * solve_layer_stack -> depth_series -> make_result. Throws if the sampling
- * window does not cover every SEM step and delay.
- *
- * @param model            Layered velocity model.
- * @param wave             Incident plane wave.
- * @param window           Time-window parameters.
- * @param points           Evaluation points.
- * @param derivative       Kinematic quantity for the vector components.
- * @param reproduce_specfem3d_reference Validation only (see @c make_result);
- *        default false = physically-exact delay.
- * @return fk_injection::FkResult.
- */
-fk_injection::FkResult
-run_fk_driver(const fk_injection::LayeredModel &model,
-              const fk_injection::IncidentWave &wave,
-              const fk_injection::TimeWindow &window,
-              const fk_injection::EvalPoints &points,
-              fk_injection::field_derivative derivative,
-              bool reproduce_specfem3d_reference = false);
-
 } // namespace fk_injection::impl
