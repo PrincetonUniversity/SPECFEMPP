@@ -1,8 +1,11 @@
 #include "fk_injection/fk_result.hpp"
 #include "fk_injection/utilities/cubic_bspline.hpp"
+#include "impl/series_layout.hpp"
 #include <gtest/gtest.h>
 
 #include <cmath>
+#include <stdexcept>
+#include <string>
 #include <vector>
 
 // ---------------------------------------------------------------------------
@@ -10,107 +13,88 @@
 // ---------------------------------------------------------------------------
 namespace fk_result_tests_impl {
 
+using fk_injection::type_real;
+
+constexpr int number_of_series = fk_injection::impl::number_of_series;
+
 // Row-major (point, component, step) index into the output of sample().
 inline int out_index(int point, int component, int step, int number_of_steps) {
-  return (point * 7 + component) * number_of_steps + step;
+  return (point * fk_injection::number_of_sample_components + component) *
+             number_of_steps +
+         step;
 }
 
-// Build a synthetic FkResult with 1 group, 5 series, ncoef coefficients.
-// Series 0 (S0): linear ramp — coefficient[k] = k (reproduce ramp in interior).
-// Series 1 (S1): constant 2.0
-// Series 2 (S2): constant 3.0
-// Series 3 (S3): constant 5.0
-// Series 4 (S4): constant 7.0
-//
-// 2 elastic points (group 0), offsets 10.0 and 10.5.
-// cos_phi=0.6  sin_phi=0.8  resampling_rate=1  has_traction=true
-// point_material: xi1=2.0 xim=0.5 bulk=0.25 nx=0 ny=0 nz=1
-static fk_injection::FkResult make_synthetic_result(int ncoef = 64,
+// Output buffer of sample() for a result and a window.
+inline std::vector<type_real> make_output(const fk_injection::FkResult &result,
+                                          int number_of_steps) {
+  return std::vector<type_real>(result.number_of_points() *
+                                fk_injection::number_of_sample_components *
+                                number_of_steps);
+}
+
+// Writes the spline coefficients of a sampled signal into one series slot.
+inline void set_series(std::vector<type_real> &coefficients, int group,
+                       int series, int ncoef,
+                       const std::vector<double> &signal) {
+  std::vector<double> coef(ncoef);
+  fk_injection::cubic_bspline::compute_coefficients(signal.data(), ncoef,
+                                                    coef.data());
+  for (int k = 0; k < ncoef; ++k) {
+    coefficients[(group * number_of_series + series) * ncoef + k] =
+        static_cast<type_real>(coef[k]);
+  }
+}
+
+// S0 is the ramp signal[k] = k; S1..S4 are constants 2, 3, 5, 7, each shifted
+// by group_shift so that two groups carry different values.
+inline void set_group_series(std::vector<type_real> &coefficients, int group,
+                             int ncoef, double group_shift) {
+  std::vector<double> ramp(ncoef);
+  for (int k = 0; k < ncoef; ++k) {
+    ramp[k] = static_cast<double>(k);
+  }
+  set_series(coefficients, group, 0, ncoef, ramp);
+
+  const double constants[4] = { 2.0, 3.0, 5.0, 7.0 };
+  for (int series = 1; series < number_of_series; ++series) {
+    set_series(coefficients, group, series, ncoef,
+               std::vector<double>(ncoef, constants[series - 1] + group_shift));
+  }
+}
+
+// An elastic point of group 0 with xi1=2 xim=0.5 bulk=0.25 and normal (0,0,1).
+inline fk_injection::PointSample make_elastic_point(double offset) {
+  fk_injection::PointSample point;
+  point.offset = offset;
+  point.xi1 = static_cast<type_real>(2.0);
+  point.xim = static_cast<type_real>(0.5);
+  point.bulk = static_cast<type_real>(0.25);
+  point.normal_z = static_cast<type_real>(1.0);
+  return point;
+}
+
+// 1 group; 2 elastic points with offsets 10.0 and 10.5; cos_phi=0.6
+// sin_phi=0.8.
+inline fk_injection::FkResult make_synthetic_result(int ncoef = 64,
                                                     int resampling_rate = 1) {
-  const int ngroups = 1;
-  const int nseries = 5;
-  const int npoints = 2;
+  std::vector<type_real> coefficients(number_of_series * ncoef);
+  set_group_series(coefficients, 0, ncoef, 0.0);
 
-  // --- coefficient array, row-major (group, series, coefficient) ---
-  std::vector<fk_injection::type_real> coefficients(ngroups * nseries * ncoef);
+  return fk_injection::FkResult(
+      coefficients, 1, ncoef,
+      { make_elastic_point(10.0), make_elastic_point(10.5) },
+      static_cast<type_real>(0.6), static_cast<type_real>(0.8),
+      resampling_rate);
+}
 
-  // S0: pre-filter a linear ramp so evaluate() reproduces the ramp in the
-  // interior.
-  {
-    std::vector<double> sig(ncoef), coef(ncoef);
-    for (int k = 0; k < ncoef; ++k) {
-      sig[k] = static_cast<double>(k);
-    }
-    fk_injection::cubic_bspline::compute_coefficients(sig.data(), ncoef,
-                                                      coef.data());
-    for (int k = 0; k < ncoef; ++k) {
-      coefficients[k] = static_cast<fk_injection::type_real>(coef[k]);
-    }
+// The what() of the std::runtime_error thrown by the callable; empty if none.
+template <typename Callable> std::string rejection_reason(Callable &&callable) {
+  try {
+    callable();
+  } catch (const std::runtime_error &error) {
+    return error.what();
   }
-
-  // S1..S4: constants (pre-filter of a constant is the same constant).
-  const fk_injection::type_real s1_val =
-      static_cast<fk_injection::type_real>(2.0);
-  const fk_injection::type_real s2_val =
-      static_cast<fk_injection::type_real>(3.0);
-  const fk_injection::type_real s3_val =
-      static_cast<fk_injection::type_real>(5.0);
-  const fk_injection::type_real s4_val =
-      static_cast<fk_injection::type_real>(7.0);
-  {
-    std::vector<double> sig(ncoef), coef_d(ncoef);
-    auto fill_constant = [&](int s_idx, double val) {
-      for (int k = 0; k < ncoef; ++k) {
-        sig[k] = val;
-      }
-      fk_injection::cubic_bspline::compute_coefficients(sig.data(), ncoef,
-                                                        coef_d.data());
-      for (int k = 0; k < ncoef; ++k) {
-        coefficients[s_idx * ncoef + k] =
-            static_cast<fk_injection::type_real>(coef_d[k]);
-      }
-    };
-    fill_constant(1, static_cast<double>(s1_val));
-    fill_constant(2, static_cast<double>(s2_val));
-    fill_constant(3, static_cast<double>(s3_val));
-    fill_constant(4, static_cast<double>(s4_val));
-  }
-
-  // --- point_group ---
-  const std::vector<int> point_group(npoints, 0);
-
-  // --- point_offset ---
-  const std::vector<double> point_offset = { 10.0, 10.5 };
-
-  // --- point_material: [xi1, xim, bulk, nx, ny, nz] ---
-  std::vector<fk_injection::type_real> point_material(npoints * 6);
-  for (int ip = 0; ip < npoints; ++ip) {
-    point_material[ip * 6 + 0] =
-        static_cast<fk_injection::type_real>(2.0); // xi1
-    point_material[ip * 6 + 1] =
-        static_cast<fk_injection::type_real>(0.5); // xim
-    point_material[ip * 6 + 2] =
-        static_cast<fk_injection::type_real>(0.25); // bulk
-    point_material[ip * 6 + 3] =
-        static_cast<fk_injection::type_real>(0.0); // nx
-    point_material[ip * 6 + 4] =
-        static_cast<fk_injection::type_real>(0.0); // ny
-    point_material[ip * 6 + 5] =
-        static_cast<fk_injection::type_real>(1.0); // nz
-  }
-
-  // --- point_is_acoustic ---
-  const std::vector<int> point_is_acoustic(npoints, 0);
-
-  const fk_injection::type_real cos_phi =
-      static_cast<fk_injection::type_real>(0.6);
-  const fk_injection::type_real sin_phi =
-      static_cast<fk_injection::type_real>(0.8);
-
-  return fk_injection::FkResult(coefficients, ngroups, ncoef, point_group,
-                                point_offset, point_material, point_is_acoustic,
-                                cos_phi, sin_phi, resampling_rate,
-                                /*has_traction=*/true);
+  return "";
 }
 
 } // namespace fk_result_tests_impl
@@ -127,8 +111,9 @@ TEST(FkResult, SampleOffsetAndAzimuth) {
   const int N = 20;
   const auto result = fk_result_tests_impl::make_synthetic_result(ncoef, 1);
 
-  std::vector<fk_injection::type_real> out(2 * 7 * N);
-  result.sample(0, N, 7, out.data());
+  std::vector<fk_injection::type_real> out =
+      fk_result_tests_impl::make_output(result, N);
+  result.sample(0, N, out);
 
   const double cos_phi = 0.6;
   const double sin_phi = 0.8;
@@ -171,8 +156,9 @@ TEST(FkResult, SampleTractionWeights) {
   const int N = 20;
   const auto result = fk_result_tests_impl::make_synthetic_result(ncoef, 1);
 
-  std::vector<fk_injection::type_real> out(2 * 7 * N);
-  result.sample(0, N, 7, out.data());
+  std::vector<fk_injection::type_real> out =
+      fk_result_tests_impl::make_output(result, N);
+  result.sample(0, N, out);
 
   // Constants in S2..S4 → same value at any interior step.
   const int k_check = 10;
@@ -206,8 +192,9 @@ TEST(FkResult, SampleNpMapping) {
   // resampling_rate = 2; offsets are 10.0 and 10.5
   const auto result = fk_result_tests_impl::make_synthetic_result(ncoef, 2);
 
-  std::vector<fk_injection::type_real> out(2 * 7 * N);
-  result.sample(0, N, 7, out.data());
+  std::vector<fk_injection::type_real> out =
+      fk_result_tests_impl::make_output(result, N);
+  result.sample(0, N, out);
 
   const double cos_phi = 0.6;
   const double offsets[2] = { 10.0, 10.5 };
@@ -223,4 +210,150 @@ TEST(FkResult, SampleNpMapping) {
           << "NP mapping failed at point=" << p << " k=" << k;
     }
   }
+}
+
+// 4. SampleFirstStepShiftsAbscissa
+//    A window starting at first_step reads a = (first_step + k) + offset.
+TEST(FkResult, SampleFirstStepShiftsAbscissa) {
+  const int N = 5;
+  const int first_step = 7;
+  const auto result = fk_result_tests_impl::make_synthetic_result(64, 1);
+
+  std::vector<fk_injection::type_real> out =
+      fk_result_tests_impl::make_output(result, N);
+  result.sample(first_step, N, out);
+
+  const double offsets[2] = { 10.0, 10.5 };
+  for (int p = 0; p < 2; ++p) {
+    for (int k = 0; k < N; ++k) {
+      const double a = static_cast<double>(first_step + k) + offsets[p];
+      EXPECT_NEAR(
+          static_cast<double>(out[fk_result_tests_impl::out_index(p, 0, k, N)]),
+          0.6 * a, 1.0e-3 * a)
+          << "failed at point=" << p << " k=" << k;
+    }
+  }
+}
+
+// 5. SampleReadsEachPointsGroup
+//    Group 1 holds S1 = 2 + 100, so a slip in the group stride reads group 0's
+//    (or a neighbouring series') constant instead.
+TEST(FkResult, SampleReadsEachPointsGroup) {
+  const int ncoef = 64;
+  const int N = 3;
+
+  std::vector<fk_injection::type_real> coefficients(
+      2 * fk_result_tests_impl::number_of_series * ncoef);
+  fk_result_tests_impl::set_group_series(coefficients, 0, ncoef, 0.0);
+  fk_result_tests_impl::set_group_series(coefficients, 1, ncoef, 100.0);
+
+  fk_injection::PointSample in_group_0 =
+      fk_result_tests_impl::make_elastic_point(10.0);
+  fk_injection::PointSample in_group_1 =
+      fk_result_tests_impl::make_elastic_point(10.0);
+  in_group_1.group = 1;
+
+  const fk_injection::FkResult result(
+      coefficients, 2, ncoef, { in_group_0, in_group_1 },
+      static_cast<fk_injection::type_real>(0.6),
+      static_cast<fk_injection::type_real>(0.8), 1);
+
+  std::vector<fk_injection::type_real> out =
+      fk_result_tests_impl::make_output(result, N);
+  result.sample(0, N, out);
+
+  EXPECT_NEAR(
+      static_cast<double>(out[fk_result_tests_impl::out_index(0, 2, 1, N)]),
+      2.0, 1.0e-3);
+  EXPECT_NEAR(
+      static_cast<double>(out[fk_result_tests_impl::out_index(1, 2, 1, N)]),
+      102.0, 1.0e-2);
+}
+
+// 6. SampleAcousticPoint
+//    An acoustic point has zero traction and pressure = S2 = 3; the kinematic
+//    components are recovered as on an elastic point.
+TEST(FkResult, SampleAcousticPoint) {
+  const int ncoef = 64;
+  const int N = 3;
+
+  std::vector<fk_injection::type_real> coefficients(
+      fk_result_tests_impl::number_of_series * ncoef);
+  fk_result_tests_impl::set_group_series(coefficients, 0, ncoef, 0.0);
+
+  fk_injection::PointSample acoustic;
+  acoustic.offset = 10.0;
+  acoustic.medium = specfem::plugin::Medium::acoustic;
+
+  const fk_injection::FkResult result(coefficients, 1, ncoef, { acoustic },
+                                      static_cast<fk_injection::type_real>(0.6),
+                                      static_cast<fk_injection::type_real>(0.8),
+                                      1);
+
+  std::vector<fk_injection::type_real> out =
+      fk_result_tests_impl::make_output(result, N);
+  result.sample(0, N, out);
+
+  EXPECT_NEAR(static_cast<double>(out[fk_result_tests_impl::out_index(
+                  0, fk_injection::sample_kinematic_offset + 2, 1, N)]),
+              2.0, 1.0e-3);
+  for (int component = 0; component < 3; ++component) {
+    EXPECT_EQ(out[fk_result_tests_impl::out_index(
+                  0, fk_injection::sample_traction_offset + component, 1, N)],
+              static_cast<fk_injection::type_real>(0)) // written as an exact 0
+        << "traction component " << component;
+  }
+  EXPECT_NEAR(static_cast<double>(out[fk_result_tests_impl::out_index(
+                  0, fk_injection::sample_pressure_offset, 1, N)]),
+              3.0, 1.0e-3);
+}
+
+// 7. Rejects: wrong output size, inconsistent shape, out-of-range group,
+//    unsupported medium, resampling rate below 1.
+TEST(FkResult, SampleRejectsWrongOutputSize) {
+  const auto result = fk_result_tests_impl::make_synthetic_result();
+  std::vector<fk_injection::type_real> out(
+      2 * fk_injection::number_of_sample_components * 3 - 1);
+
+  const std::string reason =
+      fk_result_tests_impl::rejection_reason([&] { result.sample(0, 3, out); });
+  EXPECT_NE(reason.find("out has 41 values"), std::string::npos) << reason;
+}
+
+TEST(FkResult, RejectsCoefficientSizeMismatch) {
+  const std::string reason = fk_result_tests_impl::rejection_reason([] {
+    fk_injection::FkResult(std::vector<fk_injection::type_real>(7), 1, 2, {}, 1,
+                           0, 1);
+  });
+  EXPECT_NE(reason.find("expected 10"), std::string::npos) << reason;
+}
+
+TEST(FkResult, RejectsGroupOutOfRange) {
+  fk_injection::PointSample point;
+  point.group = 1;
+
+  const std::string reason = fk_result_tests_impl::rejection_reason([&] {
+    fk_injection::FkResult(std::vector<fk_injection::type_real>(10), 1, 2,
+                           { point }, 1, 0, 1);
+  });
+  EXPECT_NE(reason.find("point 0 has group 1"), std::string::npos) << reason;
+}
+
+TEST(FkResult, RejectsElasticSpin) {
+  fk_injection::PointSample point;
+  point.medium = specfem::plugin::Medium::elastic_spin;
+
+  const std::string reason = fk_result_tests_impl::rejection_reason([&] {
+    fk_injection::FkResult(std::vector<fk_injection::type_real>(10), 1, 2,
+                           { point }, 1, 0, 1);
+  });
+  EXPECT_NE(reason.find("acoustic or elastic"), std::string::npos) << reason;
+}
+
+TEST(FkResult, RejectsResamplingRateBelowOne) {
+  const std::string reason = fk_result_tests_impl::rejection_reason([] {
+    fk_injection::FkResult(std::vector<fk_injection::type_real>(10), 1, 2, {},
+                           1, 0, 0);
+  });
+  EXPECT_NE(reason.find("resampling_rate"), std::string::npos) << reason;
 }

@@ -1,5 +1,7 @@
 #include "fk_injection/time_window.hpp"
 #include <gtest/gtest.h>
+#include <stdexcept>
+#include <string>
 
 using fk_injection::compute_fk_sizes;
 using fk_injection::FkSizes;
@@ -139,4 +141,62 @@ TEST(TimeWindow, RejectsNonPositiveSampling) {
   window.time_window_length = 40.0;
 
   EXPECT_THROW(compute_fk_sizes(window), std::runtime_error);
+}
+
+// ---------------------------------------------------------------------------
+// Each remaining input that would reach the power-of-two rounding invalid is
+// rejected, with the reason named.
+// ---------------------------------------------------------------------------
+
+namespace time_window_tests_impl {
+
+inline TimeWindow make_valid_window() {
+  TimeWindow window;
+  window.dt = 0.01;
+  window.nstep = 1000;
+  window.frequency_max = 1.0;
+  window.frequency_sampling = 10.0;
+  window.time_window_length = 40.0;
+  return window;
+}
+
+// The what() of the std::runtime_error from compute_fk_sizes; empty if none.
+inline std::string rejection_reason(const TimeWindow &window,
+                                    double time_delay_span = 0) {
+  try {
+    compute_fk_sizes(window, time_delay_span);
+  } catch (const std::runtime_error &error) {
+    return error.what();
+  }
+  return "";
+}
+
+} // namespace time_window_tests_impl
+
+TEST(TimeWindow, RejectsNonPositiveDt) {
+  TimeWindow window = time_window_tests_impl::make_valid_window();
+  window.dt = 0.0;
+  EXPECT_NE(time_window_tests_impl::rejection_reason(window).find("dt"),
+            std::string::npos);
+}
+
+TEST(TimeWindow, RejectsNonPositiveNstep) {
+  TimeWindow window = time_window_tests_impl::make_valid_window();
+  window.nstep = 0;
+  EXPECT_NE(time_window_tests_impl::rejection_reason(window).find("nstep"),
+            std::string::npos);
+}
+
+TEST(TimeWindow, RejectsEmptyWindow) {
+  TimeWindow window = time_window_tests_impl::make_valid_window();
+  window.time_window_length = 0.0;
+  EXPECT_NE(time_window_tests_impl::rejection_reason(window).find(
+                "time_window_length"),
+            std::string::npos);
+}
+
+TEST(TimeWindow, AcceptsZeroLengthWithPositiveSpan) {
+  TimeWindow window = time_window_tests_impl::make_valid_window();
+  window.time_window_length = 0.0;
+  EXPECT_EQ(time_window_tests_impl::rejection_reason(window, 10.0), "");
 }
