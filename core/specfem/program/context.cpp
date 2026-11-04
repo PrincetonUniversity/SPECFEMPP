@@ -5,10 +5,28 @@
 #include <iostream>
 #include <stdexcept>
 
+namespace specfem::program::context_impl {
+
+// SYCL is configured as a GPU backend; fail early on any other SYCL device.
+void check_sycl_device() {
+#if defined(KOKKOS_ENABLE_SYCL)
+  const auto device = Kokkos::SYCL().sycl_queue().get_device();
+  if (!device.is_gpu()) {
+    throw std::runtime_error(
+        "SPECFEM++ SYCL builds require a GPU, but Kokkos selected '" +
+        device.get_info<sycl::info::device::name>() +
+        "'. Select a GPU, e.g. ONEAPI_DEVICE_SELECTOR=level_zero:gpu");
+  }
+#endif
+}
+
+} // namespace specfem::program::context_impl
+
 namespace specfem::program {
 
 Context::Context(int argc, char *argv[])
     : kokkos_guard_(std::make_unique<Kokkos::ScopeGuard>(argc, argv)) {
+  specfem::program::context_impl::check_sycl_device();
   // Initialize static MPI wrapper
   specfem::MPI::initialize(&argc, &argv);
   // Initialize Logger
@@ -17,6 +35,7 @@ Context::Context(int argc, char *argv[])
 
 Context::Context(int argc, char *argv[], int nprocs)
     : kokkos_guard_(std::make_unique<Kokkos::ScopeGuard>(argc, argv)) {
+  specfem::program::context_impl::check_sycl_device();
   // Initialize static MPI wrapper with user-defined processes
   specfem::MPI::initialize(&argc, &argv, nprocs);
   // Initialize Logger
@@ -31,6 +50,7 @@ Context::Context(const std::vector<std::string> &args) {
   try {
     // Initialize Kokkos
     kokkos_guard_ = std::make_unique<Kokkos::ScopeGuard>(argc, argv);
+    specfem::program::context_impl::check_sycl_device();
 
     // Initialize static MPI wrapper
     specfem::MPI::initialize(&argc, &argv);

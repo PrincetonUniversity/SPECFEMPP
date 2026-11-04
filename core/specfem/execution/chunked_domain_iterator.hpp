@@ -270,10 +270,10 @@ private:
     int ielement = i % ChunkSize;
     if (ielement >= num_elements)
       return index_type::end();
-    int simd_elements = (simd_size + ielement * simd_size > indices.extent(0))
-                            ? indices.extent(0) - ielement * simd_size
+    int simd_elements = (simd_size + ielement > indices.extent(0))
+                            ? indices.extent(0) - ielement
                             : simd_size;
-    int ispec = indices(ielement * simd_size);
+    int ispec = indices(ielement);
     int xz = i / ChunkSize;
     const int iz = xz / element_grid.ngllx;
     const int ix = xz % element_grid.ngllx;
@@ -284,10 +284,10 @@ private:
     const int ielement = i / ngll_total;
     if (ielement >= num_elements)
       return index_type::end();
-    int simd_elements = (simd_size + ielement * simd_size > indices.extent(0))
-                            ? indices.extent(0) - ielement * simd_size
+    int simd_elements = (simd_size + ielement > indices.extent(0))
+                            ? indices.extent(0) - ielement
                             : simd_size;
-    int ispec = indices(ielement * simd_size);
+    int ispec = indices(ielement);
 #endif
     return index_type(ispec, simd_elements, iz, ix, ielement, i);
   }
@@ -303,7 +303,7 @@ private:
     int ielement = i % ChunkSize;
     if (ielement >= num_elements)
       return index_type::end();
-    int ispec = indices(ielement * simd_size);
+    int ispec = indices(ielement);
     int xz = i / ChunkSize;
     const int iz = xz / element_grid.ngllx;
     const int ix = xz % element_grid.ngllx;
@@ -313,7 +313,7 @@ private:
     const int ielement = i / (element_grid.ngllz * element_grid.ngllx);
     if (ielement >= num_elements)
       return index_type::end();
-    int ispec = indices(ielement * simd_size);
+    int ispec = indices(ielement);
 #endif
     return index_type(ispec, iz, ix, ielement, i);
   }
@@ -329,10 +329,10 @@ private:
     int ielement = i % ChunkSize;
     if (ielement >= num_elements)
       return index_type::end();
-    int simd_elements = (simd_size + ielement * simd_size > indices.extent(0))
-                            ? indices.extent(0) - ielement * simd_size
+    int simd_elements = (simd_size + ielement > indices.extent(0))
+                            ? indices.extent(0) - ielement
                             : simd_size;
-    int ispec = indices(ielement * simd_size);
+    int ispec = indices(ielement);
     int zyx = i / ChunkSize;
     const int iz = zyx / (element_grid.nglly * element_grid.ngllx);
     const int iy = (zyx / element_grid.ngllx) % element_grid.nglly;
@@ -347,10 +347,10 @@ private:
     const int ielement = i / ngll_total;
     if (ielement >= num_elements)
       return index_type::end();
-    int simd_elements = (simd_size + ielement * simd_size > indices.extent(0))
-                            ? indices.extent(0) - ielement * simd_size
+    int simd_elements = (simd_size + ielement > indices.extent(0))
+                            ? indices.extent(0) - ielement
                             : simd_size;
-    int ispec = indices(ielement * simd_size);
+    int ispec = indices(ielement);
 #endif
     return index_type(ispec, simd_elements, iz, iy, ix, ielement, i);
   }
@@ -366,7 +366,7 @@ private:
     int ielement = i % ChunkSize;
     if (ielement >= num_elements)
       return index_type::end();
-    int ispec = indices(ielement * simd_size);
+    int ispec = indices(ielement);
     int zyx = i / ChunkSize;
     const int iz = zyx / (element_grid.nglly * element_grid.ngllx);
     const int iy = (zyx / element_grid.ngllx) % element_grid.nglly;
@@ -380,7 +380,7 @@ private:
         i / (element_grid.ngllz * element_grid.nglly * element_grid.ngllx);
     if (ielement >= num_elements)
       return index_type::end();
-    int ispec = indices(ielement * simd_size);
+    int ispec = indices(ielement);
 #endif
     return index_type(ispec, iz, iy, ix, ielement, i);
   }
@@ -398,7 +398,7 @@ private:
     int ielement = i % ChunkSize;
     if (ielement >= num_elements)
       return index_type::end();
-    int ispec = indices(ielement * simd_size);
+    int ispec = indices(ielement);
     int xz = i / ChunkSize;
     const int iz = xz / Nx;
     const int ix = xz % Nx;
@@ -408,11 +408,11 @@ private:
     const int ielement = i / (Nz * Nx);
     if (ielement >= num_elements)
       return index_type::end();
-    int ispec = indices(ielement * simd_size);
+    int ispec = indices(ielement);
 #endif
     if constexpr (using_simd) {
-      int simd_elements = (simd_size + ielement * simd_size > indices.extent(0))
-                              ? indices.extent(0) - ielement * simd_size
+      int simd_elements = (simd_size + ielement > indices.extent(0))
+                              ? indices.extent(0) - ielement
                               : simd_size;
       return index_type(ispec, simd_elements, iz, ix, ielement, i);
     } else {
@@ -442,7 +442,7 @@ private:
     int ielement = i % ChunkSize;
     if (ielement >= num_elements)
       return index_type::end();
-    int ispec = indices(ielement * simd_size);
+    int ispec = indices(ielement);
     int zyx = i / ChunkSize;
     const int iz = zyx / (Ny * Nx);
     const int iy = (zyx / Nx) % Ny;
@@ -454,11 +454,11 @@ private:
     const int ielement = i / (Nz * Ny * Nx);
     if (ielement >= num_elements)
       return index_type::end();
-    int ispec = indices(ielement * simd_size);
+    int ispec = indices(ielement);
 #endif
     if constexpr (using_simd) {
-      int simd_elements = (simd_size + ielement * simd_size > indices.extent(0))
-                              ? indices.extent(0) - ielement * simd_size
+      int simd_elements = (simd_size + ielement > indices.extent(0))
+                              ? indices.extent(0) - ielement
                               : simd_size;
       return index_type(ispec, simd_elements, iz, iy, ix, ielement, i);
     } else {

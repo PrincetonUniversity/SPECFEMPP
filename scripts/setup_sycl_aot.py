@@ -125,6 +125,9 @@ def update_presets(path, device, compiler):
             "CMAKE_CXX_COMPILER": compiler,
             # These flags also apply to project() compiler checks, before Kokkos.
             "CMAKE_CXX_FLAGS": merge_aot_flags("", device),
+            # The inherited JIT arch would append -fsycl-targets=spir64 and
+            # override the AOT target; the runtime check still enforces a GPU.
+            "Kokkos_ARCH_INTEL_GEN": "OFF",
             "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-sycl-aot",
             "SPECFEM_BENCHMARKS_BUILD_DIR": (
                 "${sourceDir}/benchmarks/build/release-sycl-aot"

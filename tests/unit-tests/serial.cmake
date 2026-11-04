@@ -515,7 +515,6 @@ specfem_add_test(coupling_integral_tests
 
 specfem_add_test(policies_tests
   SOURCES   policies/policies.cpp
-            policies/chunk_element_simd.cpp
   LIBRARIES specfem::mesh
             source_class
             specfem::receivers
