@@ -93,6 +93,35 @@ void fk_injection::impl::check_eval_points(
   }
 }
 
+void fk_injection::impl::check_supported_slowness(
+    const fk_injection::LayeredModel &model, double p) {
+  // The negated comparisons also reject NaN.
+  if (!(p > 0.0)) {
+    std::ostringstream message;
+    message << "FK needs a positive ray parameter, got p = " << p
+            << " s/m; vertical incidence is not supported";
+    throw specfem::plugin::Unsupported(message.str());
+  }
+
+  double fastest = 0.0;
+  for (const auto &layer : model.fluid_layers()) {
+    fastest = std::max(fastest, static_cast<double>(layer.p_velocity));
+  }
+  for (const auto &layer : model.elastic_layers()) {
+    fastest = std::max({ fastest, static_cast<double>(layer.p_velocity),
+                         static_cast<double>(layer.s_velocity) });
+  }
+  const double limit = 1.0 / fastest;
+  if (!(p < limit)) {
+    std::ostringstream message;
+    message << "FK needs p below " << limit << " s/m (1/v for the fastest "
+            << "velocity in the model, " << fastest << " m/s), got p = " << p
+            << " s/m; critical and post-critical incidence are not supported, "
+            << "which limits SV to take-off angles below asin(vs/vp)";
+    throw specfem::plugin::Unsupported(message.str());
+  }
+}
+
 fk_injection::FkResult
 fk_injection::impl::run_fk_driver(const fk_injection::LayeredModel &model,
                                   const fk_injection::IncidentWave &wave,
@@ -103,6 +132,7 @@ fk_injection::impl::run_fk_driver(const fk_injection::LayeredModel &model,
   fk_injection::impl::check_eval_points(points);
 
   const double p = wave.ray_parameter(model);
+  fk_injection::impl::check_supported_slowness(model, p);
 
   // Largest point depth magnitude, for the float round-off grouping tolerance.
   double max_depth = 0.0;

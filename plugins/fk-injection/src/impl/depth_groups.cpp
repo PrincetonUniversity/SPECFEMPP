@@ -42,7 +42,7 @@ fk_injection::impl::group_by_depth(const fk_injection::EvalPoints &points,
   const double z0 = static_cast<double>(wave.origin_z);
   const double vp_hs =
       static_cast<double>(model.elastic_layers().back().p_velocity);
-  const double eta_p = std::sqrt(std::max(0.0, 1.0 / (vp_hs * vp_hs) - p * p));
+  const double eta_p = std::sqrt(1.0 / (vp_hs * vp_hs) - p * p);
 
   std::vector<double> time_delay(n, 0.0);
   double time_delay_min = 0.0;

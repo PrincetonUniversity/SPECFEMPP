@@ -66,6 +66,22 @@ fk_injection::FkResult make_result(const DepthSeries &series,
 void check_eval_points(const fk_injection::EvalPoints &points);
 
 /**
+ * @brief Reject a ray parameter outside the range FK supports.
+ *
+ * Every vertical slowness has to be real and non-zero, so @p p must be positive
+ * and below @f$ 1/v @f$ for every layer velocity @f$ v @f$: @f$ p = 1/v @f$ is
+ * 0/0 in the propagators. Since @f$ v_P @f$ of the half-space is among those
+ * velocities, incident SV is limited to take-off angles below
+ * @f$ rcsin(v_S/v_P) @f$.
+ *
+ * @param model Layered velocity model.
+ * @param p     Horizontal ray parameter (s/m).
+ * @throws specfem::plugin::Unsupported if @p p is out of range.
+ */
+void check_supported_slowness(const fk_injection::LayeredModel &model,
+                              double p);
+
+/**
  * @brief Depth-grouped FK driver: host pipeline + one device sampling kernel.
  *
  * Runs ray_parameter -> depth_tolerance -> group_by_depth -> prepare ->
