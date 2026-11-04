@@ -7,6 +7,7 @@
 #include "dataset.hpp"
 #include "datasetbase.hpp"
 
+#include "specfem/io_backends/impl/file_extents.hpp"
 #include "native_type.hpp"
 #include "native_type.tpp"
 #include "specfem/io/operators.hpp"
@@ -22,8 +23,10 @@ specfem::io_backends::impl::HDF5::Dataset<ViewType, OpType>::Dataset(
                       file, name, rank,
                       [&data]() -> hsize_t * {
                         hsize_t *dims = new hsize_t[rank];
+                        const auto extents =
+                            specfem::io_backends::impl::file_extents(data);
                         for (int i = 0; i < rank; i++) {
-                          dims[i] = data.extent(i);
+                          dims[i] = extents[i];
                         }
                         return dims;
                       }(),
@@ -37,8 +40,10 @@ specfem::io_backends::impl::HDF5::Dataset<ViewType, OpType>::Dataset(
                       group, name, rank,
                       [&data]() -> hsize_t * {
                         hsize_t *dims = new hsize_t[rank];
+                        const auto extents =
+                            specfem::io_backends::impl::file_extents(data);
                         for (int i = 0; i < rank; i++) {
-                          dims[i] = data.extent(i);
+                          dims[i] = extents[i];
                         }
                         return dims;
                       }(),

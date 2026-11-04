@@ -6,6 +6,7 @@
 
 #include "datasetbase.hpp"
 #include "native_type.hpp"
+#include "specfem/io_backends/impl/file_extents.hpp"
 #include <memory>
 #include <string>
 
@@ -124,9 +125,10 @@ private:
     std::vector<std::size_t> start(rank, 0);
     std::vector<std::size_t> count(rank);
 
+    const auto extents = specfem::io_backends::impl::file_extents(data);
     for (int i = 0; i < rank; ++i) {
-      shape[i] = data.extent(i);
-      count[i] = data.extent(i);
+      shape[i] = extents[i];
+      count[i] = extents[i];
     }
 
     return std::make_tuple(shape, start, count);
