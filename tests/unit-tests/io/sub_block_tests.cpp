@@ -3,6 +3,7 @@
 #include "specfem/datatype/domain_view.hpp"
 #include "specfem/io.hpp"
 #include "specfem/io/impl/sub_block.hpp"
+#include "specfem/io_backends/impl/file_extents.hpp"
 #include "specfem/parallel_configuration/chunk_config.hpp"
 #include <Kokkos_Core.hpp>
 #include <boost/filesystem.hpp>
@@ -10,6 +11,7 @@
 
 #include <iostream>
 #include <string>
+#include <utility>
 
 namespace fs = boost::filesystem;
 
@@ -140,29 +142,24 @@ TEST(SubBlockTest, InsertSubBlockRoundTrip) {
       }
 }
 
-// Documents the bug; WP1 turns this into a compile error, then delete this
-// test.
-TEST(SubBlockTest, RawDomainViewWriteIsNotLogical) {
-  DirGuard guard("test_sub_block_raw");
-  FixedChunkView<3> view("view", 5, 3, 2);
-  fill3(view);
-  {
-    specfem::io_backends::NPY<specfem::io::write>::File file(guard.path());
-    file.createDataset("raw", view).write();
-    file.flush();
-  }
-  const auto raw = specfem_test::layout_oracle::read_npy_raw<double>(
-      guard.path() + "/raw.npy");
-  bool any_mismatch = raw.shape.size() != 3;
-  if (!any_mismatch) {
-    for (std::size_t e = 0; e < 5; ++e)
-      for (std::size_t iz = 0; iz < 3; ++iz)
-        for (std::size_t ix = 0; ix < 2; ++ix)
-          if (raw.at({ e, iz, ix }) != value3(e, iz, ix))
-            any_mismatch = true;
-  }
-  EXPECT_TRUE(any_mismatch);
-}
+// Datasets must reject tiled DomainViews at compile time (including mirrors).
+using DomainView2dHost =
+    specfem::datatype::DomainView2d<double, 3, Kokkos::HostSpace>;
+using DomainViewMirror = decltype(specfem::datatype::create_mirror_view(
+    std::declval<DomainView2dHost>()));
+
+static_assert(
+    specfem::io_backends::impl::is_domain_view<FixedChunkView<3>>::value);
+static_assert(
+    specfem::io_backends::impl::is_domain_view<DomainView2dHost>::value);
+static_assert(specfem::io_backends::impl::is_domain_view<
+              DomainView2dHost::host_mirror_type>::value);
+static_assert(
+    specfem::io_backends::impl::is_domain_view<DomainViewMirror>::value);
+static_assert(!specfem::io_backends::impl::is_domain_view<Kokkos::View<
+                  double ***, Kokkos::LayoutLeft, Kokkos::HostSpace>>::value);
+static_assert(!specfem::io_backends::impl::is_domain_view<
+              DomainView2dHost::base_type>::value);
 
 TEST(SubBlockTest, StorageChunkSizeIsReported) {
   const int chunk = specfem::parallel_configuration::storage_chunk_size;

@@ -11,11 +11,7 @@
 #include <vector>
 
 #include "map_type.tpp"
-
-namespace specfem::datatype {
-template <typename T, typename Extents, typename Layout, typename MemorySpace>
-class View;
-} // namespace specfem::datatype
+#include "specfem/io_backends/impl/file_extents.hpp"
 
 namespace specfem::io_backends::impl::NPY {
 /**
@@ -165,12 +161,6 @@ std::vector<char> pack_string_records(const std::string *data,
 void unpack_string_records(const std::vector<char> &records, const size_t count,
                            const size_t width, std::string *data);
 
-template <typename ViewType> struct is_domain_view : std::false_type {};
-
-template <typename T, typename Extents, typename Layout, typename MemorySpace>
-struct is_domain_view<specfem::datatype::View<T, Extents, Layout, MemorySpace>>
-    : std::true_type {};
-
 /**
  * @brief Whether the buffer of @p ViewType is described as Fortran
  * (column-major) order in an NPY header
@@ -179,17 +169,15 @@ struct is_domain_view<specfem::datatype::View<T, Extents, Layout, MemorySpace>>
  * layout: column-major for `Kokkos::LayoutLeft`, row-major for
  * `Kokkos::LayoutRight`. Rank 0 and 1 views have no order.
  *
- * Tiled domain views (`specfem::datatype::View`) match neither layout and keep
- * the column-major header; their inherited `array_layout` does not describe
- * the tiling.
+ * Tiled domain views (`specfem::datatype::View`) are rejected at compile time
+ * (see specfem::io_backends::impl::assert_not_domain_view).
  *
  * @tparam ViewType View passed to an NPY or NPZ dataset
  * @return true if the header must declare `fortran_order: True`
  */
 template <typename ViewType> constexpr bool is_fortran_order() {
-  if constexpr (is_domain_view<ViewType>::value) {
-    return true;
-  } else if constexpr (ViewType::rank() <= 1) {
+  specfem::io_backends::impl::assert_not_domain_view<ViewType>();
+  if constexpr (ViewType::rank() <= 1) {
     return true;
   } else {
     using layout = typename ViewType::array_layout;

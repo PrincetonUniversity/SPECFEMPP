@@ -2,6 +2,7 @@
 
 #include "datasetbase.hpp"
 #include "native_type.hpp"
+#include "specfem/io_backends/impl/file_extents.hpp"
 #include <boost/filesystem.hpp>
 #include <string>
 
@@ -22,6 +23,9 @@ template <typename ViewType, typename OpType>
 class Dataset : public DatasetBase<OpType> {
 public:
   // static_assert(ViewType::is_contiguous, "ViewType must be contiguous");
+  static_assert(!specfem::io_backends::impl::is_domain_view<ViewType>::value,
+                "DomainView storage is tiled; use extract_sub_block or "
+                "get_base_view()");
 
   constexpr static int rank = ViewType::rank(); ///< Rank of the View
 
