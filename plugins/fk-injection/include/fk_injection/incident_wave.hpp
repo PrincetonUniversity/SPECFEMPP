@@ -26,8 +26,9 @@ struct IncidentWave {
       0; ///< Take-off angle \f$\theta\f$ from vertical, in radians
   type_real origin_x = 0;    ///< x-coordinate of the reference origin in m
   type_real origin_y = 0;    ///< y-coordinate of the reference origin in m
-  type_real origin_z = 0;    ///< z-coordinate of the reference origin in m
-  type_real origin_time = 0; ///< Reference origin time in s
+  type_real origin_z = 0;    ///< z-coordinate of the reference origin in m,
+                             ///< up, with the model top at z = 0
+  type_real origin_time = 0; ///< FK time at simulation step 0 in s
   type_real amplitude = 1;   ///< Plane-wave amplitude scaling factor
   type_real gaussian_half_duration =
       0; ///< Half-duration of the source-time Gaussian in s (0 = delta)

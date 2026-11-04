@@ -3,6 +3,7 @@
 #include "fk_injection/field_derivative.hpp"
 #include "fk_injection/incident_wave.hpp"
 #include "fk_injection/layered_model.hpp"
+#include "fk_injection/solver.hpp"
 #include "fk_injection/time_window.hpp"
 #include "fk_injection/utilities/register_array.hpp"
 #include "impl/depth_groups.hpp"
@@ -37,7 +38,9 @@ struct FkSetup {
   int pad_samples =
       0; ///< ceil(max delay / dt_min); keeps sample abscissae >= 0.
   int shift_samples = 0; ///< t0 series rotation nn - pad (left rotation), nn =
-                         ///< int(origin_time / dt_min).
+                         ///< origin_time / dt_min rounded as in @c prepare.
+  double abscissa_pad = 0.0; ///< pad_samples plus the part of origin_time /
+                             ///< dt_min the rotation can't express, in [0, 1).
 };
 
 /**
@@ -53,12 +56,16 @@ struct FkSetup {
  * @param p                Horizontal ray parameter from @c ray_parameter.
  * @param groups           Depth groups (supplies the delay span for sizing).
  * @param derivative       Kinematic quantity for the vector components.
+ * @param convention       @c exact honors a fractional origin_time / dt_min;
+ *                         @c specfem3d truncates it as SPECFEM3D does.
  * @return Populated FkSetup.
  */
 FkSetup prepare(const fk_injection::LayeredModel &model,
                 const fk_injection::IncidentWave &wave,
                 const fk_injection::TimeWindow &window, double p,
                 const DepthGroups &groups,
-                fk_injection::field_derivative derivative);
+                fk_injection::field_derivative derivative,
+                fk_injection::ReferenceConvention convention =
+                    fk_injection::ReferenceConvention::exact);
 
 } // namespace fk_injection::impl

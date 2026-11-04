@@ -32,8 +32,8 @@ fk_injection::solve(const fk_injection::LayeredModel &model,
   const double tolerance = fk_injection::impl::depth_tolerance(max_depth);
   const fk_injection::impl::DepthGroups groups =
       fk_injection::impl::group_by_depth(points, model, wave, p, tolerance);
-  const fk_injection::impl::FkSetup setup =
-      fk_injection::impl::prepare(model, wave, window, p, groups, derivative);
+  const fk_injection::impl::FkSetup setup = fk_injection::impl::prepare(
+      model, wave, window, p, groups, derivative, convention);
 
   // Delay scaling: 1 in production (exact plane-wave delay); N/(N-1) only when
   // reproducing the SPECFEM3D reference, whose frequency-grid stretched delays.
@@ -53,7 +53,7 @@ fk_injection::solve(const fk_injection::LayeredModel &model,
   const int npoints = points.size();
   for (int i = 0; i < npoints; ++i) {
     const double offset = fk_injection::impl::point_abscissa_offset(
-        static_cast<double>(setup.pad_samples), groups.time_delay[i],
+        setup.abscissa_pad, groups.time_delay[i],
         /*delay_stretch=*/1.0, setup.dt_min);
     const double max_abscissa =
         static_cast<double>(window.nstep - 1) / resampling + offset;
