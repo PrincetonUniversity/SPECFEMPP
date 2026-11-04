@@ -6,9 +6,10 @@
 #include "impl/fk_math_impl.hpp"
 #include "impl/halfspace_solve.hpp"
 #include "impl/layer_operators.hpp"
-#include <Kokkos_Core.hpp>
-#include <cmath>
 #include <gtest/gtest.h>
+
+#include <cmath>
+#include <complex>
 
 // ============================================================================
 // Helper: build a standard elastic half-space + one finite layer setup.
@@ -20,9 +21,11 @@
 // ============================================================================
 namespace field_recovery_tests_impl {
 
+using fk_injection::type_real;
+
 inline void make_elastic_model(fk_injection::ElasticIsotropicLayer &hs,
                                fk_injection::ElasticIsotropicLayer &layer,
-                               type_real &p, Kokkos::complex<double> &omega,
+                               type_real &p, std::complex<double> &omega,
                                fk_injection::ComplexMatrix<4> &e_mat,
                                fk_injection::ComplexVector<4> &modes) {
   hs.density = static_cast<type_real>(3300.0);
@@ -36,9 +39,9 @@ inline void make_elastic_model(fk_injection::ElasticIsotropicLayer &hs,
   layer.thickness = static_cast<type_real>(10000.0);
 
   constexpr double deg20_rad = 20.0 * 3.141592653589793 / 180.0;
-  p = static_cast<type_real>(Kokkos::sin(deg20_rad) / 8100.0);
+  p = static_cast<type_real>(std::sin(deg20_rad) / 8100.0);
 
-  omega = Kokkos::complex<double>(2.0 * 3.141592653589793 * 0.5, 0.0);
+  omega = std::complex<double>(2.0 * 3.141592653589793 * 0.5, 0.0);
 
   e_mat = fk_injection::impl::elastic_halfspace_eigenmatrix(hs, p);
 
@@ -66,8 +69,8 @@ inline void make_elastic_model(fk_injection::ElasticIsotropicLayer &hs,
 TEST(FieldRecovery, HalfspaceZeroDepthEqualsModesProjection) {
   fk_injection::ElasticIsotropicLayer hs;
   fk_injection::ElasticIsotropicLayer layer;
-  type_real p;
-  Kokkos::complex<double> omega;
+  fk_injection::type_real p;
+  std::complex<double> omega;
   fk_injection::ComplexMatrix<4> e_mat;
   fk_injection::ComplexVector<4> modes;
   field_recovery_tests_impl::make_elastic_model(hs, layer, p, omega, e_mat,
@@ -97,21 +100,22 @@ TEST(FieldRecovery, HalfspaceZeroDepthEqualsModesProjection) {
 TEST(FieldRecovery, ElasticInterfaceContinuity) {
   fk_injection::ElasticIsotropicLayer hs;
   fk_injection::ElasticIsotropicLayer layer;
-  type_real p;
-  Kokkos::complex<double> omega;
+  fk_injection::type_real p;
+  std::complex<double> omega;
   fk_injection::ComplexMatrix<4> e_mat;
   fk_injection::ComplexVector<4> modes;
   field_recovery_tests_impl::make_elastic_model(hs, layer, p, omega, e_mat,
                                                 modes);
 
   fk_injection::ComplexVector<4> state_at_bottom;
-  state_at_bottom[0] = Kokkos::complex<double>(1.0, 0.5);
-  state_at_bottom[1] = Kokkos::complex<double>(-0.3, 0.2);
-  state_at_bottom[2] = Kokkos::complex<double>(0.1, -0.4);
-  state_at_bottom[3] = Kokkos::complex<double>(0.7, 0.0);
+  state_at_bottom[0] = std::complex<double>(1.0, 0.5);
+  state_at_bottom[1] = std::complex<double>(-0.3, 0.2);
+  state_at_bottom[2] = std::complex<double>(0.1, -0.4);
+  state_at_bottom[3] = std::complex<double>(0.7, 0.0);
 
   const auto result = fk_injection::impl::elastic_state_in_layer(
-      layer, omega, /*height=*/static_cast<type_real>(0.0), p, state_at_bottom);
+      layer, omega, /*height=*/static_cast<fk_injection::type_real>(0.0), p,
+      state_at_bottom);
 
   constexpr double kTol = 1.0e-9;
   for (int i = 0; i < 4; ++i) {
@@ -131,17 +135,17 @@ TEST(FieldRecovery, ElasticInterfaceContinuity) {
 TEST(FieldRecovery, AcousticFreeSurfacePressureSmall) {
   fk_injection::ElasticIsotropicLayer hs;
   fk_injection::ElasticIsotropicLayer layer;
-  type_real p;
-  Kokkos::complex<double> omega;
+  fk_injection::type_real p;
+  std::complex<double> omega;
   fk_injection::ComplexMatrix<4> e_mat;
   fk_injection::ComplexVector<4> modes;
   field_recovery_tests_impl::make_elastic_model(hs, layer, p, omega, e_mat,
                                                 modes);
 
   fk_injection::AcousticLayer fluid;
-  fluid.density = static_cast<type_real>(1020.0);
-  fluid.p_velocity = static_cast<type_real>(1500.0);
-  fluid.thickness = static_cast<type_real>(2000.0);
+  fluid.density = static_cast<fk_injection::type_real>(1020.0);
+  fluid.p_velocity = static_cast<fk_injection::type_real>(1500.0);
+  fluid.thickness = static_cast<fk_injection::type_real>(2000.0);
 
   const auto solid_interface_state = e_mat * modes;
   const fk_injection::impl::AcousticState base =
@@ -149,12 +153,12 @@ TEST(FieldRecovery, AcousticFreeSurfacePressureSmall) {
 
   const fk_injection::impl::AcousticState at =
       fk_injection::impl::acoustic_state_in_layer(
-          fluid, omega, static_cast<type_real>(500.0), p, base);
+          fluid, omega, static_cast<fk_injection::type_real>(500.0), p, base);
 
   const fk_injection::impl::SeriesSpectrum s =
       fk_injection::impl::project_acoustic(at, fluid, omega, p);
 
-  const Kokkos::complex<double> pres =
+  const std::complex<double> pres =
       s.values[fk_injection::impl::series_sigma_zz];
   EXPECT_TRUE(std::isfinite(pres.real())) << "pressure real part is not finite";
   EXPECT_TRUE(std::isfinite(pres.imag())) << "pressure imag part is not finite";

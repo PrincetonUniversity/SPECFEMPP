@@ -7,8 +7,7 @@
 #include "impl/layer_operators.hpp"
 #include "impl/medium_interface_coupler.hpp"
 #include "impl/series_layout.hpp"
-#include <Kokkos_Complex.hpp>
-#include <Kokkos_Core.hpp>
+#include <complex>
 
 namespace fk_injection::impl {
 
@@ -19,12 +18,12 @@ namespace fk_injection::impl {
 // u(x,y,z,t) = U(z, t - tau(x,y)): horizontal position is only a time shift.
 // These operators recover the depth-only spectral state once per depth group;
 // the per-point source-time apodization, (i*omega)^n derivative, time delay
-// tau, and Lame traction weights are applied later (host synthesis + device
-// sampling), not here.
+// tau, and Lame traction weights are applied later (synthesis and sampling),
+// not here.
 // ===========================================================================
 
 // Series slot indices (@c series_horizontal .. @c number_of_series) live in
-// series_layout.hpp — the layout contract shared with the device sampler.
+// series_layout.hpp — the layout contract shared with the sampler.
 
 /**
  * @brief Depth-only spectral series at one depth for one frequency.
@@ -34,7 +33,7 @@ namespace fk_injection::impl {
  * @c series_* indices above.
  */
 struct SeriesSpectrum {
-  Kokkos::complex<double> values[number_of_series] = {};
+  std::complex<double> values[number_of_series] = {};
 };
 
 /**
@@ -52,9 +51,9 @@ struct SeriesSpectrum {
  * @param state_at_bottom State vector at the bottom of @p layer.
  * @return State vector @f$(u_x, u_z, \sigma_{xz}, \sigma_{zz})@f$ at the point.
  */
-KOKKOS_INLINE_FUNCTION fk_injection::ComplexVector<4>
+inline fk_injection::ComplexVector<4>
 elastic_state_in_layer(const fk_injection::ElasticIsotropicLayer &layer,
-                       Kokkos::complex<double> omega, type_real height,
+                       std::complex<double> omega, type_real height,
                        type_real ray_parameter,
                        const fk_injection::ComplexVector<4> &state_at_bottom) {
   const double g0 = elastic_gamma0(layer, ray_parameter);
@@ -64,7 +63,7 @@ elastic_state_in_layer(const fk_injection::ElasticIsotropicLayer &layer,
       propagator * state_at_bottom;
   fk_injection::ComplexVector<4> out;
   for (int i = 0; i < 4; ++i) {
-    out[i] = Kokkos::complex<double>(g0, 0.0) * propagated[i];
+    out[i] = std::complex<double>(g0, 0.0) * propagated[i];
   }
   return out;
 }
@@ -80,21 +79,21 @@ elastic_state_in_layer(const fk_injection::ElasticIsotropicLayer &layer,
  * @param modes          Bottom mode vector b(omega).
  * @return State vector at the point in the half-space.
  */
-KOKKOS_INLINE_FUNCTION fk_injection::ComplexVector<4>
+inline fk_injection::ComplexVector<4>
 elastic_state_in_halfspace(const fk_injection::ComplexMatrix<4> &e_mat,
                            const fk_injection::ElasticIsotropicLayer &halfspace,
-                           Kokkos::complex<double> omega,
-                           type_real ray_parameter, double zz,
+                           std::complex<double> omega, type_real ray_parameter,
+                           double zz,
                            const fk_injection::ComplexVector<4> &modes) {
-  using Cplx = Kokkos::complex<double>;
+  using Cplx = std::complex<double>;
   const auto slowness = vertical_slowness(halfspace, ray_parameter);
   const Cplx eta_alpha = slowness[0];
   const Cplx eta_beta = slowness[1];
 
-  const Cplx g0 = Kokkos::exp(omega * eta_beta * zz);
-  const Cplx g1 = Kokkos::exp(-omega * eta_beta * zz);
-  const Cplx g2 = Kokkos::exp(omega * eta_alpha * zz);
-  const Cplx g3 = Kokkos::exp(-omega * eta_alpha * zz);
+  const Cplx g0 = std::exp(omega * eta_beta * zz);
+  const Cplx g1 = std::exp(-omega * eta_beta * zz);
+  const Cplx g2 = std::exp(omega * eta_alpha * zz);
+  const Cplx g3 = std::exp(-omega * eta_alpha * zz);
 
   fk_injection::ComplexVector<4> out;
   for (int i = 0; i < 4; ++i) {
@@ -115,9 +114,10 @@ elastic_state_in_halfspace(const fk_injection::ComplexMatrix<4> &e_mat,
  * @param bottom         Acoustic state at the bottom of @p layer.
  * @return Acoustic state @f$(u_z, P/k)@f$ at the point.
  */
-KOKKOS_INLINE_FUNCTION AcousticState acoustic_state_in_layer(
-    const fk_injection::AcousticLayer &layer, Kokkos::complex<double> omega,
-    type_real height, type_real ray_parameter, const AcousticState &bottom) {
+inline AcousticState
+acoustic_state_in_layer(const fk_injection::AcousticLayer &layer,
+                        std::complex<double> omega, type_real height,
+                        type_real ray_parameter, const AcousticState &bottom) {
   const fk_injection::ComplexMatrix<4> propagator =
       layer_propagator(layer, omega, height, ray_parameter);
   AcousticState out;
@@ -142,10 +142,11 @@ KOKKOS_INLINE_FUNCTION AcousticState acoustic_state_in_layer(
  * @param compute_stress When true, fill the stress slots S2..S4.
  * @return SeriesSpectrum with the depth-only series values.
  */
-KOKKOS_INLINE_FUNCTION SeriesSpectrum project_elastic(
-    const fk_injection::ComplexVector<4> &state, Kokkos::complex<double> omega,
-    type_real ray_parameter, bool compute_stress) {
-  using Cplx = Kokkos::complex<double>;
+inline SeriesSpectrum
+project_elastic(const fk_injection::ComplexVector<4> &state,
+                std::complex<double> omega, type_real ray_parameter,
+                bool compute_stress) {
+  using Cplx = std::complex<double>;
   const Cplx neg_i(0.0, -1.0);
   const Cplx dx = state[0];
   const Cplx dz = state[1];
@@ -176,10 +177,11 @@ KOKKOS_INLINE_FUNCTION SeriesSpectrum project_elastic(
  * @param ray_parameter  Horizontal slowness p (s/m).
  * @return SeriesSpectrum with S0, S1, S2 populated.
  */
-KOKKOS_INLINE_FUNCTION SeriesSpectrum project_acoustic(
-    const AcousticState &state, const fk_injection::AcousticLayer &layer,
-    Kokkos::complex<double> omega, type_real ray_parameter) {
-  using Cplx = Kokkos::complex<double>;
+inline SeriesSpectrum project_acoustic(const AcousticState &state,
+                                       const fk_injection::AcousticLayer &layer,
+                                       std::complex<double> omega,
+                                       type_real ray_parameter) {
+  using Cplx = std::complex<double>;
   const double p = static_cast<double>(ray_parameter);
   const double rho = static_cast<double>(layer.density);
   const Cplx neg_i(0.0, -1.0);

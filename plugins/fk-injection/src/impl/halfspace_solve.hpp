@@ -6,9 +6,9 @@
 #include "fk_injection/utilities/complex_matrix.hpp"
 #include "impl/fk_math_impl.hpp"
 #include "impl/layer_operators.hpp"
-#include <Kokkos_Array.hpp>
-#include <Kokkos_Complex.hpp>
-#include <Kokkos_Core.hpp>
+#include <array>
+#include <cmath>
+#include <complex>
 
 namespace fk_injection::impl {
 
@@ -23,10 +23,10 @@ namespace fk_injection::impl {
  * amplitudes in the Westervelt / Fortran FK reference implementation.
  */
 struct IncidentAmplitude {
-  Kokkos::complex<double> c1 =
-      Kokkos::complex<double>(0.0, 0.0); ///< Incoming SV amplitude C_1.
-  Kokkos::complex<double> c3 =
-      Kokkos::complex<double>(0.0, 0.0); ///< Incoming P amplitude C_3.
+  std::complex<double> c1 =
+      std::complex<double>(0.0, 0.0); ///< Incoming SV amplitude C_1.
+  std::complex<double> c3 =
+      std::complex<double>(0.0, 0.0); ///< Incoming P amplitude C_3.
 };
 
 /**
@@ -48,7 +48,7 @@ struct IncidentAmplitude {
  * @param ray_parameter Horizontal slowness @f$p = \sin\theta / V@f$ (s/m).
  * @return IncidentAmplitude with @c c3 set for P, @c c1 set for SV.
  */
-KOKKOS_INLINE_FUNCTION IncidentAmplitude
+inline IncidentAmplitude
 incident_amplitude(const fk_injection::ElasticIsotropicLayer &halfspace,
                    fk_injection::incident_wave_type type, type_real amplitude,
                    type_real ray_parameter) {
@@ -59,11 +59,11 @@ incident_amplitude(const fk_injection::ElasticIsotropicLayer &halfspace,
 
   IncidentAmplitude result;
   if (type == fk_injection::incident_wave_type::p) {
-    result.c3 = Kokkos::complex<double>(0.0, 1.0) * A * p * vp;
-    result.c1 = Kokkos::complex<double>(0.0, 0.0);
+    result.c3 = std::complex<double>(0.0, 1.0) * A * p * vp;
+    result.c1 = std::complex<double>(0.0, 0.0);
   } else {
-    result.c1 = Kokkos::complex<double>(A * p * vs, 0.0);
-    result.c3 = Kokkos::complex<double>(0.0, 0.0);
+    result.c1 = std::complex<double>(A * p * vs, 0.0);
+    result.c3 = std::complex<double>(0.0, 0.0);
   }
   return result;
 }
@@ -101,16 +101,16 @@ incident_amplitude(const fk_injection::ElasticIsotropicLayer &halfspace,
  * @param c3         Incoming P amplitude  (from @c incident_amplitude).
  * @return Array of two complex coefficients {coeff0, coeff1}.
  */
-KOKKOS_INLINE_FUNCTION Kokkos::Array<Kokkos::complex<double>, 2>
+inline std::array<std::complex<double>, 2>
 halfspace_coefficients(const fk_injection::ComplexMatrix<4> &n_mat,
                        bool has_fluid,
                        const fk_injection::ComplexMatrix<4> &qmat_full,
                        fk_injection::incident_wave_type type,
-                       Kokkos::complex<double> c1, Kokkos::complex<double> c3) {
-  using Cplx = Kokkos::complex<double>;
+                       std::complex<double> c1, std::complex<double> c3) {
+  using Cplx = std::complex<double>;
   const Cplx zero(0.0, 0.0);
 
-  Kokkos::Array<Cplx, 2> coeffs;
+  std::array<Cplx, 2> coeffs;
   coeffs[0] = zero;
   coeffs[1] = zero;
 
@@ -127,7 +127,7 @@ halfspace_coefficients(const fk_injection::ComplexMatrix<4> &n_mat,
     const Cplx d = n_mat(3, 3);
     const Cplx delta = a * d - b * c;
 
-    if (Kokkos::abs(delta) > tinyval) {
+    if (std::abs(delta) > tinyval) {
       if (is_p) {
         coeffs[0] = -(d * n_mat(2, 2) - b * n_mat(3, 2)) / delta * c3;
         coeffs[1] = -(-c * n_mat(2, 2) + a * n_mat(3, 2)) / delta * c3;
@@ -160,7 +160,7 @@ halfspace_coefficients(const fk_injection::ComplexMatrix<4> &n_mat,
     const Cplx d = n1_11;
     const Cplx delta = a * d - b * c;
 
-    if (Kokkos::abs(delta) > tinyval) {
+    if (std::abs(delta) > tinyval) {
       if (is_p) {
         coeffs[0] = -(d * n_mat(2, 2) - b * MM) / delta * c3;
         coeffs[1] = -(-c * n_mat(2, 2) + a * MM) / delta * c3;
@@ -193,15 +193,15 @@ halfspace_coefficients(const fk_injection::ComplexMatrix<4> &n_mat,
  * @param coeffs Two half-space coefficients from @c halfspace_coefficients.
  * @return 4-component complex bottom vector.
  */
-KOKKOS_INLINE_FUNCTION fk_injection::ComplexVector<4>
+inline fk_injection::ComplexVector<4>
 build_bottom_vector(fk_injection::incident_wave_type type,
-                    Kokkos::complex<double> c1, Kokkos::complex<double> c3,
-                    const Kokkos::Array<Kokkos::complex<double>, 2> &coeffs) {
+                    std::complex<double> c1, std::complex<double> c3,
+                    const std::array<std::complex<double>, 2> &coeffs) {
   fk_injection::ComplexVector<4> bot;
-  bot[0] = Kokkos::complex<double>(0.0, 0.0);
-  bot[1] = Kokkos::complex<double>(0.0, 0.0);
-  bot[2] = Kokkos::complex<double>(0.0, 0.0);
-  bot[3] = Kokkos::complex<double>(0.0, 0.0);
+  bot[0] = std::complex<double>(0.0, 0.0);
+  bot[1] = std::complex<double>(0.0, 0.0);
+  bot[2] = std::complex<double>(0.0, 0.0);
+  bot[3] = std::complex<double>(0.0, 0.0);
 
   if (type == fk_injection::incident_wave_type::p) {
     // P incidence: incident P-up at column 2 (C_3); reflected SV-down at
