@@ -155,37 +155,31 @@ acoustic_state_in_layer(const fk_injection::AcousticLayer &layer,
  * @brief Project an elastic state onto the depth-only series S0..S4.
  *
  * No source-time function and no per-point Lame factors: the driver forms
- * sigma_rr = xi1*S2 - 4*xim*S4 per point. S3/S4 and S2 are filled only when
- * @p compute_stress is true.
+ * sigma_rr = xi1*S2 - 4*xim*S4 per point.
  *
  * @param state          State vector @f$(u_x, u_z, \sigma_{xz},
  * \sigma_{zz})@f$.
  * @param omega          Complex angular frequency (rad/s).
  * @param ray_parameter  Horizontal slowness p (s/m).
- * @param compute_stress When true, fill the stress slots S2..S4.
  * @return SeriesSpectrum with the depth-only series values.
  */
 inline SeriesSpectrum
 project_elastic(const fk_injection::ComplexVector<4> &state,
-                std::complex<double> omega, double ray_parameter,
-                bool compute_stress) {
+                std::complex<double> omega, double ray_parameter) {
   using Cplx = std::complex<double>;
   const Cplx neg_i(0.0, -1.0);
   const Cplx dx = state[0];
   const Cplx dz = state[1];
+  const Cplx txz = state[2];
+  const Cplx tzz = state[3];
+  const Cplx omega_p = omega * Cplx(ray_parameter, 0.0);
 
   SeriesSpectrum out;
-  out.values[series_horizontal] = neg_i * dx; // u_r
-  out.values[series_vertical] = dz;           // u_z
-
-  if (compute_stress) {
-    const Cplx txz = state[2];
-    const Cplx tzz = state[3];
-    const Cplx omega_p = omega * Cplx(ray_parameter, 0.0);
-    out.values[series_sigma_zz] = omega_p * tzz;         // S2
-    out.values[series_sigma_rz] = neg_i * omega_p * txz; // S3
-    out.values[series_dx] = omega_p * dx;                // S4
-  }
+  out.values[series_horizontal] = neg_i * dx;          // u_r
+  out.values[series_vertical] = dz;                    // u_z
+  out.values[series_sigma_zz] = omega_p * tzz;         // S2
+  out.values[series_sigma_rz] = neg_i * omega_p * txz; // S3
+  out.values[series_dx] = omega_p * dx;                // S4
   return out;
 }
 

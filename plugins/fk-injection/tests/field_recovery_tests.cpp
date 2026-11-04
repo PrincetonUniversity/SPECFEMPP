@@ -250,7 +250,6 @@ TEST(FieldRecovery, AcousticStateInLayer) {
 //   S0 = -i*dx = 2-i, S1 = dz = 3+4i,
 //   S2 = omega*p*tzz = 3+11.5i, S3 = -i*omega*p*txz = 8.5-2i,
 //   S4 = omega*p*dx = 2.5i.
-// Without stress, S2..S4 stay zero.
 // ============================================================================
 
 TEST(FieldRecovery, ProjectElastic) {
@@ -263,8 +262,7 @@ TEST(FieldRecovery, ProjectElastic) {
 
   constexpr double kTol = 1.0e-14;
 
-  const auto series =
-      fk_injection::impl::project_elastic(state, omega, p, true);
+  const auto series = fk_injection::impl::project_elastic(state, omega, p);
   const auto check = [&series](int slot, double real, double imag) {
     EXPECT_NEAR(series.values[slot].real(), real, kTol) << "slot " << slot;
     EXPECT_NEAR(series.values[slot].imag(), imag, kTol) << "slot " << slot;
@@ -274,14 +272,4 @@ TEST(FieldRecovery, ProjectElastic) {
   check(fk_injection::impl::series_sigma_zz, 3.0, 11.5);
   check(fk_injection::impl::series_sigma_rz, 8.5, -2.0);
   check(fk_injection::impl::series_dx, 0.0, 2.5);
-
-  const auto no_stress =
-      fk_injection::impl::project_elastic(state, omega, p, false);
-  EXPECT_NEAR(no_stress.values[fk_injection::impl::series_vertical].real(), 3.0,
-              kTol);
-  for (const int slot :
-       { fk_injection::impl::series_sigma_zz,
-         fk_injection::impl::series_sigma_rz, fk_injection::impl::series_dx }) {
-    EXPECT_NEAR(std::abs(no_stress.values[slot]), 0.0, kTol) << "slot " << slot;
-  }
 }
