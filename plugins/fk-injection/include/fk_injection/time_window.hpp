@@ -68,7 +68,9 @@ struct FkSizes {
  *                         before the power-of-two rounding; used to accommodate
  *                         FK plane-wave time delays (default 0).
  * @return Populated @c FkSizes.
- * @throws std::runtime_error if @c window.frequency_sampling is not positive.
+ * @throws std::runtime_error if @c window.frequency_sampling, @c window.dt,
+ *         @c window.nstep or @c window.time_window_length + @p time_delay_span
+ *         is not positive.
  */
 FkSizes compute_fk_sizes(const TimeWindow &window, double time_delay_span = 0);
 

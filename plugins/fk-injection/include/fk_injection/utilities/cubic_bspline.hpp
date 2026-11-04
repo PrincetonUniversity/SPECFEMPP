@@ -112,8 +112,7 @@ inline void compute_coefficients(const double *signal, int n,
  * @c double regardless of @p Scalar.
  *
  * @tparam Scalar Coefficient element type (e.g. @c double, @c float).
- *                @p coefficients must be a contiguous array (LayoutRight row
- *                or a raw array).
+ *                @p coefficients must be a contiguous array.
  * @param coefficients B-spline coefficients (length @p n), produced by
  *                     @c compute_coefficients.
  * @param n            Number of coefficients / samples.

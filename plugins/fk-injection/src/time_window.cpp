@@ -4,9 +4,21 @@
 
 fk_injection::FkSizes fk_injection::compute_fk_sizes(const TimeWindow &window,
                                                      double time_delay_span) {
-  if (window.frequency_sampling <= 0) {
+  // The negated comparisons also reject NaN.
+  if (!(window.frequency_sampling > 0)) {
     throw std::runtime_error(
         "compute_fk_sizes: frequency_sampling must be positive");
+  }
+  if (!(window.dt > 0)) {
+    throw std::runtime_error("compute_fk_sizes: dt must be positive");
+  }
+  if (window.nstep <= 0) {
+    throw std::runtime_error("compute_fk_sizes: nstep must be positive");
+  }
+  if (!(static_cast<double>(window.time_window_length) + time_delay_span > 0)) {
+    throw std::runtime_error(
+        "compute_fk_sizes: time_window_length + time_delay_span must be "
+        "positive");
   }
 
   FkSizes sizes;

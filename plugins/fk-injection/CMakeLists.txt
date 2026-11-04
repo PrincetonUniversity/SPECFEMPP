@@ -24,7 +24,6 @@ FetchContent_MakeAvailable(pocketfft)
 
 add_library(fk_injection_impl STATIC
   src/fk_result.cpp
-  src/incident_wave.cpp
   src/layered_model.cpp
   src/time_window.cpp
 )
@@ -40,7 +39,8 @@ target_include_directories(fk_injection_impl PUBLIC
 target_include_directories(fk_injection_impl SYSTEM PUBLIC
   ${pocketfft_SOURCE_DIR}
 )
-target_link_libraries(fk_injection_impl INTERFACE Kokkos::kokkos)
+# The types speak the SDK's medium enum; Kokkos provides Kokkos::mdspan.
+target_link_libraries(fk_injection_impl PUBLIC specfem::plugin_sdk Kokkos::kokkos)
 # Transforms run serially; parallelism, if any, is over depth groups.
 target_compile_definitions(fk_injection_impl PUBLIC
   POCKETFFT_NO_MULTITHREADING

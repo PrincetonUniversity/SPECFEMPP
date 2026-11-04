@@ -1,9 +1,8 @@
 #include "fk_injection/layered_model.hpp"
-#include <algorithm>
 #include <cmath>
-#include <limits>
 #include <sstream>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 fk_injection::LayeredModel::LayeredModel(
@@ -11,32 +10,18 @@ fk_injection::LayeredModel::LayeredModel(
     std::vector<ElasticIsotropicLayer> elastic_layers)
     : fluid_layers_(std::move(fluid_layers)),
       elastic_layers_(std::move(elastic_layers)) {
-  // Compute cumulative top depths in global order: fluid layers first, then
-  // elastic layers.
-  const int n_fluid = static_cast<int>(fluid_layers_.size());
-  const int n_elastic = static_cast<int>(elastic_layers_.size());
-  const int total = n_fluid + n_elastic;
-  top_depths_.resize(total, static_cast<type_real>(0));
-
-  for (int i = 1; i < n_fluid; ++i) {
-    top_depths_[i] = top_depths_[i - 1] + fluid_layers_[i - 1].thickness;
-  }
-  type_real elastic_base =
-      (n_fluid > 0)
-          ? top_depths_[n_fluid - 1] + fluid_layers_[n_fluid - 1].thickness
-          : static_cast<type_real>(0);
-  // Only the fluid-over-elastic case has an elastic-base entry at index
-  // n_fluid; a fluid-only model has no such slot (validate() rejects it, but
-  // the depth table must not be written out of bounds first).
-  if (n_fluid > 0 && n_elastic > 0) {
-    top_depths_[n_fluid] = elastic_base;
-  }
-  for (int i = 1; i < n_elastic; ++i) {
-    top_depths_[n_fluid + i] =
-        top_depths_[n_fluid + i - 1] + elastic_layers_[i - 1].thickness;
-  }
-
   validate();
+
+  top_depths_.reserve(fluid_layers_.size() + elastic_layers_.size());
+  double depth = 0.0;
+  for (const AcousticLayer &layer : fluid_layers_) {
+    top_depths_.push_back(depth);
+    depth += static_cast<double>(layer.thickness);
+  }
+  for (const ElasticIsotropicLayer &layer : elastic_layers_) {
+    top_depths_.push_back(depth);
+    depth += static_cast<double>(layer.thickness);
+  }
 }
 
 const std::vector<fk_injection::AcousticLayer> &
@@ -57,51 +42,28 @@ int fk_injection::LayeredModel::number_of_elastic_layers() const {
   return static_cast<int>(elastic_layers_.size());
 }
 
-int fk_injection::LayeredModel::total_number_of_layers() const {
-  return number_of_fluid_layers() + number_of_elastic_layers();
-}
-
 bool fk_injection::LayeredModel::has_fluid_layer() const {
   return number_of_fluid_layers() > 0;
 }
 
-fk_injection::type_real
-fk_injection::LayeredModel::shear_modulus(int elastic_index) const {
-  return elastic_layers_[elastic_index].density *
-         elastic_layers_[elastic_index].s_velocity *
-         elastic_layers_[elastic_index].s_velocity;
-}
-
-const std::vector<fk_injection::type_real> &
-fk_injection::LayeredModel::layer_top_depths() const {
-  return top_depths_;
-}
-
 double fk_injection::LayeredModel::fluid_thickness() const {
-  double total = 0.0;
-  for (const AcousticLayer &layer : fluid_layers_) {
-    total += static_cast<double>(layer.thickness);
-  }
-  return total;
+  return top_depths_[fluid_layers_.size()];
 }
 
-double fk_injection::LayeredModel::minimum_velocity() const {
-  double min_vel = std::numeric_limits<double>::max();
-  for (const AcousticLayer &layer : fluid_layers_) {
-    min_vel = std::min(min_vel, static_cast<double>(layer.p_velocity));
+fk_injection::LayerLocation fk_injection::LayeredModel::locate(
+    double depth, std::optional<specfem::plugin::Medium> requested,
+    double tolerance) const {
+  if (!(tolerance >= 0.0)) {
+    throw std::runtime_error(
+        "LayeredModel::locate: tolerance must be non-negative");
   }
-  for (const ElasticIsotropicLayer &layer : elastic_layers_) {
-    min_vel = std::min(min_vel, static_cast<double>(layer.s_velocity));
-  }
-  return min_vel;
-}
-
-fk_injection::LayerLocation
-fk_injection::LayeredModel::locate(double depth, point_medium requested,
-                                   double tolerance) const {
-  if (depth < -tolerance) {
+  if (!(depth >= -tolerance)) {
     throw std::runtime_error(
         "LayeredModel::locate: depth above the free surface");
+  }
+  if (requested == specfem::plugin::Medium::elastic_spin) {
+    throw std::runtime_error(
+        "LayeredModel::locate: FK supports acoustic and elastic media only");
   }
 
   const int n_fluid = number_of_fluid_layers();
@@ -113,17 +75,15 @@ fk_injection::LayeredModel::locate(double depth, point_medium requested,
       has_fluid_layer() && (std::fabs(depth - ft) <= tolerance);
 
   // Resolve medium.
-  point_medium medium;
+  specfem::plugin::Medium medium = specfem::plugin::Medium::elastic;
   double effective_depth = depth;
 
-  if (requested == point_medium::from_depth) {
+  if (!requested) {
     // Acoustic only if inside the fluid column (strictly above the interface).
     if (has_fluid_layer() && depth < ft - tolerance) {
-      medium = point_medium::acoustic;
-    } else {
-      medium = point_medium::elastic;
+      medium = specfem::plugin::Medium::acoustic;
     }
-  } else if (requested == point_medium::acoustic) {
+  } else if (*requested == specfem::plugin::Medium::acoustic) {
     if (!has_fluid_layer()) {
       throw std::runtime_error(
           "LayeredModel::locate: acoustic medium requested but model has no "
@@ -138,8 +98,8 @@ fk_injection::LayeredModel::locate(double depth, point_medium requested,
       // Snap to the bottom of the fluid column.
       effective_depth = ft;
     }
-    medium = point_medium::acoustic;
-  } else { // requested == point_medium::elastic
+    medium = specfem::plugin::Medium::acoustic;
+  } else { // *requested == specfem::plugin::Medium::elastic
     if (has_fluid_layer() && depth < ft - tolerance) {
       throw std::runtime_error(
           "LayeredModel::locate: elastic medium requested inside the fluid "
@@ -149,18 +109,15 @@ fk_injection::LayeredModel::locate(double depth, point_medium requested,
       // Snap to the top of the elastic column.
       effective_depth = ft;
     }
-    medium = point_medium::elastic;
   }
 
   // Locate the layer within the resolved block (first-match / tie → upper).
   int layer_index = 0;
   double height = 0.0;
 
-  if (medium == point_medium::acoustic) {
+  if (medium == specfem::plugin::Medium::acoustic) {
     for (int i = 0; i < n_fluid; ++i) {
-      const double top_i = static_cast<double>(top_depths_[i]);
-      const double bottom_i =
-          top_i + static_cast<double>(fluid_layers_[i].thickness);
+      const double bottom_i = top_depths_[i + 1];
       if (effective_depth <= bottom_i + tolerance) {
         layer_index = i;
         height = bottom_i - effective_depth;
@@ -175,9 +132,7 @@ fk_injection::LayeredModel::locate(double depth, point_medium requested,
         height = 0.0;
         break;
       }
-      const double top_j = static_cast<double>(top_depths_[n_fluid + j]);
-      const double bottom_j =
-          top_j + static_cast<double>(elastic_layers_[j].thickness);
+      const double bottom_j = top_depths_[n_fluid + j + 1];
       if (effective_depth <= bottom_j + tolerance) {
         layer_index = j;
         height = bottom_j - effective_depth;
@@ -191,16 +146,14 @@ fk_injection::LayeredModel::locate(double depth, point_medium requested,
     height = 0.0;
   }
 
-  const bool in_halfspace =
-      (medium == point_medium::elastic && layer_index == n_elastic - 1);
+  const bool in_halfspace = (medium == specfem::plugin::Medium::elastic &&
+                             layer_index == n_elastic - 1);
 
   // Half-space top depth is always the last elastic layer's top depth.
-  const double hs_top =
-      static_cast<double>(top_depths_[n_fluid + n_elastic - 1]);
-  const double depth_below_halfspace_top = hs_top - effective_depth;
+  const double depth_below_halfspace_top = top_depths_.back() - effective_depth;
 
   const bool at_free_surface =
-      (medium == point_medium::acoustic && layer_index == 0 &&
+      (medium == specfem::plugin::Medium::acoustic && layer_index == 0 &&
        effective_depth <= tolerance);
 
   return LayerLocation{ medium,
@@ -217,41 +170,55 @@ void fk_injection::LayeredModel::validate() const {
         "LayeredModel: elastic_layers must be non-empty (need a half-space).");
   }
 
+  // The negated comparisons also reject NaN.
   for (int i = 0; i < static_cast<int>(fluid_layers_.size()); ++i) {
     const AcousticLayer &layer = fluid_layers_[i];
-    if (layer.density <= static_cast<type_real>(0)) {
+    if (!(layer.density > static_cast<type_real>(0))) {
       std::ostringstream msg;
       msg << "LayeredModel: fluid layer " << i << " has non-positive density ("
           << layer.density << ").";
       throw std::runtime_error(msg.str());
     }
-    if (layer.p_velocity <= static_cast<type_real>(0)) {
+    if (!(layer.p_velocity > static_cast<type_real>(0))) {
       std::ostringstream msg;
       msg << "LayeredModel: fluid layer " << i
           << " has non-positive p_velocity (" << layer.p_velocity << ").";
       throw std::runtime_error(msg.str());
     }
+    if (!(layer.thickness > static_cast<type_real>(0))) {
+      std::ostringstream msg;
+      msg << "LayeredModel: fluid layer " << i
+          << " has non-positive thickness (" << layer.thickness << ").";
+      throw std::runtime_error(msg.str());
+    }
   }
 
-  for (int i = 0; i < static_cast<int>(elastic_layers_.size()); ++i) {
+  const int halfspace_index = static_cast<int>(elastic_layers_.size()) - 1;
+  for (int i = 0; i <= halfspace_index; ++i) {
     const ElasticIsotropicLayer &layer = elastic_layers_[i];
-    if (layer.density <= static_cast<type_real>(0)) {
+    if (!(layer.density > static_cast<type_real>(0))) {
       std::ostringstream msg;
       msg << "LayeredModel: elastic layer " << i
           << " has non-positive density (" << layer.density << ").";
       throw std::runtime_error(msg.str());
     }
-    if (layer.p_velocity <= static_cast<type_real>(0)) {
+    if (!(layer.p_velocity > static_cast<type_real>(0))) {
       std::ostringstream msg;
       msg << "LayeredModel: elastic layer " << i
           << " has non-positive p_velocity (" << layer.p_velocity << ").";
       throw std::runtime_error(msg.str());
     }
-    if (layer.s_velocity <= static_cast<type_real>(0)) {
+    if (!(layer.s_velocity > static_cast<type_real>(0))) {
       std::ostringstream msg;
       msg << "LayeredModel: elastic layer " << i
           << " has non-positive s_velocity (" << layer.s_velocity
           << "). Elastic layers require s_velocity > 0.";
+      throw std::runtime_error(msg.str());
+    }
+    if (i < halfspace_index && !(layer.thickness > static_cast<type_real>(0))) {
+      std::ostringstream msg;
+      msg << "LayeredModel: elastic layer " << i
+          << " has non-positive thickness (" << layer.thickness << ").";
       throw std::runtime_error(msg.str());
     }
   }

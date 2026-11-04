@@ -1,17 +1,10 @@
 #pragma once
 
 #include "fk_injection/config.hpp"
+#include "specfem/plugin/injection_plugin.hpp"
 #include <vector>
 
 namespace fk_injection {
-
-/**
- * @brief Which medium a point's field is recovered in.
- *
- * from_depth resolves by the layer table; elastic / acoustic force the medium
- * (used when a point sits exactly on the fluid-solid interface).
- */
-enum class point_medium { from_depth, elastic, acoustic };
 
 /**
  * @brief Evaluation points at which the FK solver computes displacement,
@@ -45,11 +38,11 @@ struct EvalPoints {
                                             ///< point (traction only; empty if
                                             ///< unused)
 
-  /** @brief Per-point medium selection. Size 0 means every point follows the
-   *         layer table (@c point_medium::from_depth). A forced value selects
-   *         the medium for a point sitting on the fluid-solid interface.
+  /** @brief Per-point medium. Empty means every point resolves its medium from
+   *         the layer table. A point on the fluid-solid interface needs an
+   *         explicit value to be recovered on the fluid side.
    */
-  std::vector<point_medium> medium{};
+  std::vector<specfem::plugin::Medium> medium{};
 
   /**
    * @brief Return the number of evaluation points.

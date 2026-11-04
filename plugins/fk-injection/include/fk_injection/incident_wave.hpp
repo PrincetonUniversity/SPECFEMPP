@@ -1,6 +1,8 @@
 #pragma once
 
 #include "fk_injection/config.hpp"
+#include "fk_injection/layered_model.hpp"
+#include <cmath>
 
 namespace fk_injection {
 
@@ -15,11 +17,7 @@ enum class incident_wave_type {
 /**
  * @brief Describes the incident teleseismic plane wave for FK synthesis.
  *
- * All angles are stored in **radians**.  The back-azimuth to azimuth-phi
- * convention conversion lives in the runtime configuration layer, not here.
- *
- * The @c ray_parameter() helper derives \f$ p = \sin\theta / V_\text{hs} \f$
- * from the take-off angle and the half-space velocity supplied by the caller.
+ * All angles are stored in **radians**.
  */
 struct IncidentWave {
   incident_wave_type type = incident_wave_type::p; ///< Wave type (P or SV)
@@ -37,13 +35,20 @@ struct IncidentWave {
   /**
    * @brief Compute the horizontal ray parameter.
    *
-   * \f$ p = \frac{\sin\theta}{V_\text{hs}} \f$
+   * \f$ p = \frac{\sin\theta}{V_\text{hs}} \f$, where \f$V_\text{hs}\f$ is the
+   * half-space velocity of this wave's type.
    *
-   * @param halfspace_velocity P- or S-wave velocity of the half-space in m/s,
-   *        matching the wave type of this incident wave.
+   * @param model Layered model whose half-space the wave starts in
    * @return horizontal ray parameter in s/m
    */
-  type_real ray_parameter(type_real halfspace_velocity) const;
+  double ray_parameter(const LayeredModel &model) const {
+    const ElasticIsotropicLayer &halfspace = model.elastic_layers().back();
+    const double halfspace_velocity =
+        (type == incident_wave_type::p)
+            ? static_cast<double>(halfspace.p_velocity)
+            : static_cast<double>(halfspace.s_velocity);
+    return std::sin(static_cast<double>(take_off_theta)) / halfspace_velocity;
+  }
 };
 
 } // namespace fk_injection
