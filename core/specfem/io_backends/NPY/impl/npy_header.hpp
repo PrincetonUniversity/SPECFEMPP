@@ -11,7 +11,6 @@
 #include <vector>
 
 #include "map_type.tpp"
-#include "specfem/io_backends/impl/file_extents.hpp"
 
 namespace specfem::io_backends::impl::NPY {
 /**
@@ -169,14 +168,10 @@ void unpack_string_records(const std::vector<char> &records, const size_t count,
  * layout: column-major for `Kokkos::LayoutLeft`, row-major for
  * `Kokkos::LayoutRight`. Rank 0 and 1 views have no order.
  *
- * Tiled domain views (`specfem::datatype::View`) are rejected at compile time
- * (see specfem::io_backends::impl::assert_not_domain_view).
- *
  * @tparam ViewType View passed to an NPY or NPZ dataset
  * @return true if the header must declare `fortran_order: True`
  */
 template <typename ViewType> constexpr bool is_fortran_order() {
-  specfem::io_backends::impl::assert_not_domain_view<ViewType>();
   if constexpr (ViewType::rank() <= 1) {
     return true;
   } else {

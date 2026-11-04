@@ -30,15 +30,18 @@ struct is_domain_view<specfem::datatype::View<T, Extents, Layout, MemorySpace>>
 /**
  * @brief Compile-time guard against handing a tiled DomainView to a dataset.
  *
- * The raw buffer of a DomainView is tiled and must not be written as is.
+ * The raw buffer of a DomainView is tiled and must not be written as is. Every
+ * backend's Dataset class asserts this function.
  *
  * @tparam ViewType View type passed to a dataset
+ * @return true; a DomainView fails to compile instead
  */
-template <typename ViewType> constexpr void assert_not_domain_view() {
+template <typename ViewType> constexpr bool not_domain_view() {
   static_assert(!is_domain_view<ViewType>::value,
                 "specfem::datatype::View (DomainView) storage is tiled; pack "
                 "it with specfem::io::impl::extract_sub_block or write "
                 "get_base_view() instead of passing it to a dataset");
+  return true;
 }
 
 /**

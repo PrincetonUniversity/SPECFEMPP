@@ -1,6 +1,7 @@
 #pragma once
 
 #include "file.hpp"
+#include "specfem/io_backends/impl/file_extents.hpp"
 #include <string>
 
 namespace specfem::io_backends::impl::NPZ {
@@ -34,6 +35,7 @@ public:
 template <typename ViewType, typename OpType> class Dataset {
 public:
   // static_assert(ViewType::is_contiguous, "ViewType must be contiguous");
+  static_assert(specfem::io_backends::impl::not_domain_view<ViewType>());
 
   constexpr static int rank = ViewType::rank(); ///< Rank of the View
 
