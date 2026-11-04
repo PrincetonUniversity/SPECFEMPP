@@ -222,8 +222,9 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
         correction =
             q_view_type("cij_correction", nspec_attn, ngllz, nglly, ngllx);
       }
-      // Globe's oracle supplies the actual per-GLL moduli and Q, then calls
-      // recompute once all Love-to-cij conversions are complete.
+      // The moduli are shifted by recompute() once the property container is
+      // filled: by the globe oracle, the property reader, or (Cartesian
+      // meshes) the assembly from these materials.
       for (int i = 0; i < nspec_attn; ++i) {
         const auto &material = materials.template get_material<
             specfem::element::medium_tag::elastic, PropertyTag,
@@ -399,8 +400,10 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
    *
    * For anisotropic containers, props instead exposes h_c11 through h_c66.
    * A shear-only radial shift is applied after Love-to-cij conversion, using
-   * the same total mu scale as the isotropic path. The final radial c44
-   * gives the memory-variable relaxation rates, as globe's muvstore does.
+   * the same total mu scale as the isotropic path. The radial frame is the
+   * local vertical for globe elements and Cartesian z when the context reports
+   * a Cartesian mesh. The final radial c44 gives the memory-variable
+   * relaxation rates, as globe's muvstore does.
    *
    * @tparam PropsContainer Property data container with host modulus views
    *                        and element_range.
@@ -411,8 +414,8 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
    * @param f0 Reference frequency
    * @param band Attenuation frequency band
    * @param tau_sigma Stress relaxation times
-   * @param spherical Setup-only spherical coordinate cache (mantle anisotropy
-   * only).
+   * @param spherical Setup-only spherical coordinate cache (globe mantle
+   * anisotropy only).
    * @param context Global element index to region/radial-zone metadata.
    */
   template <typename PropsContainer, typename SphericalView,
@@ -436,10 +439,8 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
     if constexpr (PropertyTag == specfem::element::property_tag::anisotropic) {
       bool needs_radial_coordinates = false;
       for (int i = 0; i < element_range.size(); ++i) {
-        const auto metadata = context(element_range(i));
         needs_radial_coordinates |=
-            !metadata.fictitious() &&
-            metadata.region != specfem::element::region_tag::inner_core;
+            context(element_range(i)).needs_spherical_coordinates();
       }
       if (needs_radial_coordinates && spherical.data() == nullptr) {
         throw std::runtime_error(
@@ -485,7 +486,9 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
       const auto metadata = context(element_range(i));
       if (metadata.fictitious())
         continue;
+      const bool cartesian = metadata.cartesian;
       const bool inner_core =
+          !cartesian &&
           metadata.region == specfem::element::region_tag::inner_core;
       // Without bulk attenuation kappa keeps scale 1 and zero relaxation
       // rates (kappa_props.beta stays zero), and Qkappa is never solved for.
@@ -520,18 +523,33 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
                           specfem::element::property_tag::anisotropic) {
               const int iprop = offset + i;
               const int ispec = element_range(i);
-              const double theta =
-                  inner_core ? 0 : spherical(ispec, iz, iy, ix, 1);
-              const double phi =
-                  inner_core ? 0 : spherical(ispec, iz, iy, ix, 2);
+              const bool rotate = !inner_core && !cartesian;
+              const double theta = rotate ? spherical(ispec, iz, iy, ix, 1) : 0;
+              const double phi = rotate ? spherical(ispec, iz, iy, ix, 2) : 0;
               double coefficients[21];
               for (int k = 0; k < 21; ++k) {
                 coefficients[k] = cij_views[k](iprop, iz, iy, ix);
               }
               using Cartesian = specfem::coordinate_systems::CartesianFrame;
-              using Geocentric = specfem::coordinate_systems::GeocentricFrame;
               const specfem::medium_physics::ElasticityTensor<Cartesian, double>
                   global(coefficients);
+              // One setup stage in the element's radial frame, optionally
+              // returning the shifted radial c44.
+              const auto shift = [&](const auto &tensor, const double increment,
+                                     const bool reference_stage,
+                                     double *radial_c44 = nullptr) {
+                if (rotate)
+                  return shift_unrelaxed_tensor<type_real>(
+                      tensor, theta, phi, increment, radial_c44);
+                const auto shifted =
+                    inner_core ? shift_inner_core_tensor<type_real>(
+                                     tensor, increment, reference_stage)
+                               : shift_radial_tensor<type_real>(tensor,
+                                                                increment);
+                if (radial_c44 != nullptr)
+                  *radial_c44 = shifted(3, 3);
+                return shifted;
+              };
               // Mirror globe's two setup stages: reference -> relaxed,
               // followed by relaxed -> unrelaxed. Preserve the input exactly
               // when both multipliers are one.
@@ -539,10 +557,7 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
               const double relaxed_scale =
                   static_cast<type_real>(mu_scales.relaxed);
               const auto relaxed_double =
-                  inner_core ? shift_inner_core_tensor<type_real>(
-                                   global, relaxed_scale - 1.0, true)
-                             : shift_unrelaxed_tensor<type_real>(
-                                   global, theta, phi, relaxed_scale - 1.0);
+                  shift(global, relaxed_scale - 1.0, true);
               // Globe stores CUSTOM_REAL cij between the two setup stages.
               double relaxed_coefficients[21];
               for (int k = 0; k < 21; ++k) {
@@ -553,13 +568,7 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
                   relaxed(relaxed_coefficients);
               double final_c44 = 0;
               const auto shifted =
-                  inner_core
-                      ? shift_inner_core_tensor<type_real>(relaxed, ratio - 1.0,
-                                                           false)
-                      : shift_unrelaxed_tensor<type_real>(
-                            relaxed, theta, phi, ratio - 1.0, &final_c44);
-              if (inner_core)
-                final_c44 = shifted(3, 3);
+                  shift(relaxed, ratio - 1.0, false, &final_c44);
               for (int k = 0; k < 21; ++k) {
                 cij_views[k](iprop, iz, iy, ix) = shifted[k];
                 h_cij_correction[k](i, iz, iy, ix) =

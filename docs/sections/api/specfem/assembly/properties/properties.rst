@@ -37,9 +37,8 @@ The oracle owns the Voigt averaging convention. Elastic isotropic properties are
 ``rho_inverse = 1/rho`` and ``kappa = rho * vp_iso**2``. Anisotropic elastic
 elements receive density and all 21 Cartesian stiffness coefficients in the
 container's Voigt order; they are never replaced by isotropic averages.
-Attenuation has no anisotropic container yet, so enabling attenuation while any
-element is anisotropic is rejected rather than silently running those elements
-elastically.
+With attenuation enabled, anisotropic elements receive a shear-only radial
+shift after sampling (see :doc:`../../attenuation/index`).
 
 The host loop calls ``ModelEvaluator::evaluate_element`` once per element. Each
 batch evaluates its GLL points serially and preserves the catalog's element-level

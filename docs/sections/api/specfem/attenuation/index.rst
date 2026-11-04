@@ -32,28 +32,40 @@ modulus by ``one_minus_sum_beta``. Globe has no bulk attenuation; non-globe 3D
 isotropic elements apply the same formulas to Q_kappa. Anisotropic elements
 attenuate shear only, as in globe, and ignore Q_kappa.
 
-Native non-globe 3D elastic materials reject ``Qkappa <= 0`` or ``Qmu <= 0``.
-When attenuation is enabled, the native reader treats a material with both
-``Qkappa = 9999`` and ``Qmu = 9999`` as elastic and skips attenuation fitting.
-These input conventions are retained independently of the globe formulation.
+Native non-globe 3D elastic materials, isotropic and anisotropic, reject
+``Qkappa <= 0`` or ``Qmu <= 0``. When attenuation is enabled, the native reader
+treats a material with both ``Qkappa = 9999`` and ``Qmu = 9999`` as elastic and
+skips attenuation fitting. These input conventions are retained independently
+of the globe formulation.
 
 For Q values that reach the globe fitting routines, Q at or below zero, above
 9000, or infinite becomes 9000. NaN is rejected. Thus an individual Q of 9999
 is capped to 9000 unless the native reader selects the elastic material as
-described above. Q values are grouped by ``max(1, int(Q * 10))`` as in globe's
+described above. As in SPECFEM3D, this includes per-GLL Q values from a
+property file.
+Q values are grouped by ``max(1, int(Q * 10))`` as in globe's
 storage table: the first Q seen in a bucket is fitted, and later Q values are
 replaced by it, including in the stored model. Non-globe 3D materials are
 bucketed in material order; GLL-varying Q is bucketed per recomputation. The
 first Q in a bucket can therefore differ from globe's mesher order when two
 different Q values share a bucket.
 
-3D anisotropic globe elements
-----------------------------
+3D anisotropic elements
+-----------------------
 
 Elastic anisotropic elements carry the same per-GLL Q model, stress relaxation
 times, and Runge--Kutta memory variables as isotropic elastic elements. Acoustic
 outer-core elements have no attenuation container. Anisotropic attenuation is
-shear-only, following SPECFEM3D_GLOBE.
+shear-only, following SPECFEM3D_GLOBE: ``Qkappa`` is stored but does not
+attenuate, so the bulk scale stays one and the bulk relaxation rates are zero,
+on globe and non-globe meshes alike.
+
+On non-globe (Cartesian) meshes, Cartesian z is the radial axis. The shift
+described below for globe crust/mantle elements is applied with an identity
+rotation, as at the globe's north pole. Anisotropic materials from the native
+reader hold the physical (reference-frequency) stiffnesses. The assembly shifts
+them once the property container is filled. Property-file reads on Cartesian
+meshes take the same path.
 
 For crust/mantle elements, after the globe model builder has converted Love parameters to Cartesian
 stiffnesses, attenuation rotates each tensor into its radial basis, recovers
