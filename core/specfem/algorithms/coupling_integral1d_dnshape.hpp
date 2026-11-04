@@ -4,6 +4,7 @@
 #include "specfem/element_coupling.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/point.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 
 /**
@@ -66,7 +67,7 @@ KOKKOS_FUNCTION void coupling_integral_dnshape(
   using PointIndexType =
       typename IndexType::iterator_type::index_type::index_type;
   using PointFieldType = specfem::point::acceleration<specfem::tags::Tags<
-      dimension_tag, self_medium_tag, IntersectionFieldViewType::using_simd> >;
+      dimension_tag, self_medium_tag, IntersectionFieldViewType::using_simd>>;
 
   constexpr int ncomp = PointFieldType::components;
   constexpr int nquad_intersection = IntersectionFactor::n_quad_intersection;
@@ -82,19 +83,19 @@ KOKKOS_FUNCTION void coupling_integral_dnshape(
         const int ix = index(2);
 
         PointFieldType result;
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
 #pragma unroll
 #endif
         for (int icomp = 0; icomp < ncomp; icomp++) {
           result(icomp) = 0;
         }
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
 #pragma unroll
 #endif
         for (int iquad = 0; iquad < nquad_intersection; iquad++) {
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
 #pragma unroll
 #endif
           for (int icomp = 0; icomp < ncomp; icomp++) {

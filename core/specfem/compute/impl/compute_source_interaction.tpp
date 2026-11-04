@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/setup.hpp"
 #include "compute_source_interaction.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/boundary_conditions.hpp"
@@ -67,7 +68,7 @@ void compute_source_interaction_core(
 
   using simd = specfem::datatype::simd<type_real, false>;
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
   constexpr int nthreads = 32;
   constexpr int lane_size = 1;
 #else

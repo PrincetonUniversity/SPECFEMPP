@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/setup.hpp"
 #include "specfem/algorithms.hpp"
 #include "specfem/chunk_element.hpp"
 #include "compute_seismograms.hpp"
@@ -59,10 +60,11 @@ void specfem::compute::impl::compute_seismograms(
 
   using no_simd = specfem::datatype::simd<type_real, using_simd>;
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
   constexpr int nthreads = 32;
   constexpr int lane_size = 1;
-  constexpr int chunk_size = (dimension_tag == specfem::element::dimension_tag::dim2) ? 16 : 4;
+  constexpr int chunk_size =
+      (dimension_tag == specfem::element::dimension_tag::dim2) ? 16 : 4;
 #else
   constexpr int nthreads = 1;
   constexpr int lane_size = 1;

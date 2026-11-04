@@ -4,6 +4,7 @@
 #include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/point.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 
 /**
@@ -62,7 +63,7 @@ KOKKOS_FUNCTION void coupling_integral(
       typename IndexType::iterator_type::index_type::index_type;
   using PointFieldType = specfem::point::acceleration<
       specfem::tags::Tags<dimension_tag, self_medium_tag,
-                          IntersectionFieldViewType::simd::using_simd> >;
+                          IntersectionFieldViewType::simd::using_simd>>;
   using SelfTransferFunctionType = specfem::point::transfer_function_self<
       IntersectionFactor::n_quad_intersection, dimension_tag,
       IntersectionFactor::interface_tag, IntersectionFactor::boundary_tag,
@@ -82,7 +83,7 @@ KOKKOS_FUNCTION void coupling_integral(
                                           transfer_function_self);
 
         PointFieldType result;
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
 #pragma unroll
 #endif
         for (int icomp = 0; icomp < ncomp; icomp++) {
@@ -90,12 +91,12 @@ KOKKOS_FUNCTION void coupling_integral(
         }
         const int &iedge = self_index_local.iedge;
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
 #pragma unroll
 #endif
         for (int iquad = 0; iquad < nquad_intersection; iquad++) {
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
 #pragma unroll
 #endif
           for (int icomp = 0; icomp < ncomp; icomp++) {

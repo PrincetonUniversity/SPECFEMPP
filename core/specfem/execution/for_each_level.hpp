@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/setup.hpp"
 #include <cstddef>
 #include <string>
 #include <type_traits>
@@ -28,7 +29,7 @@ constexpr KOKKOS_INLINE_FUNCTION void check_compatibility() {
       "Iterator must have a function call operator that returns index_type");
 }
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
 
 template <typename Iterator, typename ClosureType>
 constexpr inline std::enable_if_t<
@@ -70,7 +71,7 @@ impl_for_each_level(const std::string &name, const Iterator &iterator,
       });
 }
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
 
 template <typename Iterator, typename ClosureType>
 constexpr inline std::enable_if_t<
@@ -131,7 +132,7 @@ impl_for_each_level(const Iterator &iterator, const ClosureType &closure) {
       });
 }
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
 
 template <typename Iterator, typename ClosureType>
 constexpr KOKKOS_FORCEINLINE_FUNCTION std::enable_if_t<
@@ -179,7 +180,7 @@ impl_for_each_level(const Iterator &iterator, const ClosureType &closure) {
   }
 }
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
 
 template <typename Iterator, typename ClosureType>
 constexpr KOKKOS_FORCEINLINE_FUNCTION std::enable_if_t<
@@ -239,7 +240,7 @@ inline void for_each_level(const std::string &name,
   impl::impl_for_each_level(name, iterator, closure);
 }
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
 
 /**
  * @brief This function applies a closure to each index in the given iterator.
@@ -261,7 +262,7 @@ KOKKOS_INLINE_FUNCTION
   impl::impl_for_each_level(iterator, closure);
 }
 
-#endif // KOKKOS_ENABLE_CUDA || KOKKOS_ENABLE_HIP || KOKKOS_ENABLE_SYCL
+#endif // SPECFEM_GPU_BACKEND
 
 template <typename IteratorType, typename ClosureType>
 std::enable_if_t<std::is_same_v<typename IteratorType::execution_space,

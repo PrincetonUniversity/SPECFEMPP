@@ -2,6 +2,7 @@
 
 #include "policy.hpp"
 #include "specfem/datatype/register_array.hpp"
+#include "specfem/setup.hpp"
 #include "void_iterator.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
@@ -99,7 +100,7 @@ public:
     return result;
   }
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
 
 private:
 #ifdef KOKKOS_ENABLE_CUDA

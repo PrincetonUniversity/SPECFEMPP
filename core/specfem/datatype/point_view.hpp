@@ -74,7 +74,7 @@ struct VectorPointViewType
     constexpr int N = VectorPointViewType::components;
     value_type result{ 0.0 };
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
 #pragma unroll
 #endif
     for (int i = 0; i < N; ++i) {
@@ -92,7 +92,7 @@ struct VectorPointViewType
   operator*=(const value_type &other) {
     constexpr int N = VectorPointViewType::components;
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
 #pragma unroll
 #endif
     for (int i = 0; i < N; ++i) {
@@ -168,13 +168,13 @@ struct TensorPointViewType
   operator*(const TensorPointViewType<T, Dimensions, K, UseSIMD> &other) const {
     TensorPointViewType<T, Components, K, UseSIMD> result;
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
 #pragma unroll
 #endif
     for (int i = 0; i < Components; ++i) {
       for (int k = 0; k < K; ++k) {
         value_type sum{ 0.0 };
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
 #pragma unroll
 #endif
         for (int j = 0; j < Dimensions; ++j) {
@@ -188,7 +188,7 @@ struct TensorPointViewType
 
   KOKKOS_FORCEINLINE_FUNCTION constexpr auto &
   operator*=(const value_type &scalar) {
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
 #pragma unroll
 #endif
     for (int i = 0; i < Components; ++i)
@@ -206,7 +206,7 @@ struct TensorPointViewType
 
   KOKKOS_FORCEINLINE_FUNCTION constexpr auto &
   operator/=(const value_type &scalar) {
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
 #pragma unroll
 #endif
     for (int i = 0; i < Components; ++i)

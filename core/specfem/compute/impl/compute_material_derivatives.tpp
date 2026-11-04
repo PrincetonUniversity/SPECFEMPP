@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/setup.hpp"
 #include "compute_material_derivatives.hpp"
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly/assembly.hpp"
@@ -45,7 +46,7 @@ void specfem::compute::impl::compute_material_derivatives(
     return;
   }
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
   constexpr bool using_simd = false;
 #else
   // TODO(Rohit : DIM3_SIMD) Enable simd execution for dim3 solver

@@ -13,6 +13,7 @@
 #include "specfem/parallel_configuration.hpp"
 #include "specfem/point.hpp"
 #include "specfem/quadrature.hpp"
+#include "specfem/setup.hpp"
 #include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
@@ -33,7 +34,7 @@ public:
   constexpr static auto dimension_tag = Tags::dimension_tag;
   constexpr static int ngll = NGLL;
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
   constexpr static bool using_simd = false;
 #else
   constexpr static bool using_simd = true;
@@ -265,7 +266,7 @@ public:
   constexpr static auto dimension_tag = Tags::dimension_tag;
   constexpr static int ngll = NGLL;
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
   constexpr static bool using_simd = false;
 #else
   constexpr static bool using_simd = true;

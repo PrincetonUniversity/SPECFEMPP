@@ -4,6 +4,7 @@
 #include "specfem/datatype/element_index_range.hpp"
 #include "specfem/mesh_entity.hpp"
 #include "specfem/point.hpp"
+#include "specfem/setup.hpp"
 #include "void_iterator.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
@@ -265,7 +266,7 @@ private:
       typename std::enable_if<U && D == specfem::element::dimension_tag::dim2,
                               const index_type>::type
       dispatch(const policy_index_type &i, specfem::mesh_entity::Grid<>) const {
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
     int ielement = i % ChunkSize;
     if (ielement >= num_elements)
       return index_type::end();
@@ -297,7 +298,7 @@ private:
       typename std::enable_if<!U && D == specfem::element::dimension_tag::dim2,
                               const index_type>::type
       dispatch(const policy_index_type &i, specfem::mesh_entity::Grid<>) const {
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
     int ielement = i % ChunkSize;
     if (ielement >= num_elements)
       return index_type::end();
@@ -322,7 +323,7 @@ private:
       typename std::enable_if<U && D == specfem::element::dimension_tag::dim3,
                               const index_type>::type
       dispatch(const policy_index_type &i, specfem::mesh_entity::Grid<>) const {
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
     int ielement = i % ChunkSize;
     if (ielement >= num_elements)
       return index_type::end();
@@ -358,7 +359,7 @@ private:
       typename std::enable_if<!U && D == specfem::element::dimension_tag::dim3,
                               const index_type>::type
       dispatch(const policy_index_type &i, specfem::mesh_entity::Grid<>) const {
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
     int ielement = i % ChunkSize;
     if (ielement >= num_elements)
       return index_type::end();
@@ -389,7 +390,7 @@ private:
   template <int Nz, int Nx>
   KOKKOS_INLINE_FUNCTION const index_type dispatch(
       const policy_index_type &i, specfem::mesh_entity::Grid<Nz, Nx>) const {
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
     int ielement = i % ChunkSize;
     if (ielement >= num_elements)
       return index_type::end();
@@ -432,7 +433,7 @@ private:
   KOKKOS_INLINE_FUNCTION const index_type
   dispatch(const policy_index_type &i,
            specfem::mesh_entity::Grid<Nz, Ny, Nx>) const {
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
     int ielement = i % ChunkSize;
     if (ielement >= num_elements)
       return index_type::end();

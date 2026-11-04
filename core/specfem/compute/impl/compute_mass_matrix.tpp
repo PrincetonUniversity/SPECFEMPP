@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/setup.hpp"
 #include "compute_mass_matrix.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/boundary_conditions.hpp"
@@ -46,7 +47,7 @@ void specfem::compute::impl::compute_mass_matrix(
         "the template parameter NGLL.");
   }
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
   constexpr bool using_simd = false;
 #else
   constexpr bool using_simd = true;

@@ -11,6 +11,15 @@ const static int fint{ 4 }, ffloat{ 4 }, fdouble{ 8 }, fbool{ 4 }, fchar{ 512 };
 constexpr static int freal = sizeof(type_real);
 const static bool use_best_location{ true };
 
+// SPECFEM_GPU_BACKEND: Kokkos' default execution space is a GPU backend
+// (CUDA, HIP or SYCL). Derived from Kokkos' own configuration macros so it
+// cannot disagree with the Kokkos build. Use this instead of spelling out the
+// individual KOKKOS_ENABLE_* checks.
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) ||                \
+    defined(KOKKOS_ENABLE_SYCL)
+#define SPECFEM_GPU_BACKEND
+#endif
+
 #if defined(KOKKOS_ENABLE_CUDA)
 constexpr int NTHREADS = 32;
 constexpr int NLANES = 1;

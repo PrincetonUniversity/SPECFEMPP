@@ -8,6 +8,7 @@
 #include "specfem/medium_physics.hpp"
 #include "specfem/parallel_configuration.hpp"
 #include "specfem/point.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly::assembly_impl {
@@ -94,7 +95,7 @@ public:
       return;
     }
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
     constexpr int nthreads = 32;
     constexpr int lane_size = 1;
     constexpr int chunk_size =

@@ -5,6 +5,7 @@
 #include "specfem/assembly/properties.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/point.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly::boundary_values_impl {
@@ -62,7 +63,7 @@ public:
     const int iz = index.iz;
     const int ix = index.ix;
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
 #pragma unroll
 #endif
     for (int icomp = 0; icomp < components; ++icomp) {
@@ -87,7 +88,7 @@ public:
     const int iz = index.iz;
     const int ix = index.ix;
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(SPECFEM_GPU_BACKEND)
 #pragma unroll
 #endif
     for (int icomp = 0; icomp < components; ++icomp) {
