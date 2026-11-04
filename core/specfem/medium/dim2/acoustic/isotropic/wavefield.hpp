@@ -60,7 +60,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
           const auto index = iterator_index.get_index();
           const int ielement = iterator_index.get_local_index().ispec;
           wavefield(ielement, index.iz, index.ix, 0) =
-              -1.0 * active_field(ielement, index.iz, index.ix, 0);
+              -active_field(ielement, index.iz, index.ix, 0);
         });
 
     return;

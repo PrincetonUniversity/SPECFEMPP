@@ -66,7 +66,8 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
 
           // cannot compute pressure for an anisotropic material if c12 or c23
           // are zero
-          if (point_property.c12() < 1.e-7 || point_property.c23() < 1.e-7) {
+          if (point_property.c12() < static_cast<type_real>(1.e-7) ||
+              point_property.c23() < static_cast<type_real>(1.e-7)) {
             Kokkos::abort("C_12 or C_23 are zero, cannot compute pressure. "
                           "Check your material properties. Or, deactivate the "
                           "pressure computation.");
@@ -89,7 +90,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
                                 point_property.c25() * (du(1, 0) + du(0, 1));
 
           wavefield(ielement, index.iz, index.ix, 0) =
-              -1.0 * (sigma_xx + sigma_zz + sigma_yy) / 3.0;
+              -(sigma_xx + sigma_zz + sigma_yy) / static_cast<type_real>(3.0);
         });
 
     return;

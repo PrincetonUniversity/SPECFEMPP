@@ -58,18 +58,22 @@ KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
   using PointAccelerationType =
       specfem::point::acceleration<specfem::tags::Tags<
           specfem::element::dimension_tag::dim2,
-          specfem::element::medium_tag::poroelastic, using_simd> >;
+          specfem::element::medium_tag::poroelastic, using_simd>>;
 
   PointAccelerationType result;
 
   result(0) = point_source.stf(0) * point_source.lagrange_interpolant(0) *
-              (1.0 - point_properties.phi() / point_properties.tortuosity());
+              (static_cast<type_real>(1.0) -
+               point_properties.phi() / point_properties.tortuosity());
   result(1) = point_source.stf(1) * point_source.lagrange_interpolant(1) *
-              (1.0 - point_properties.phi() / point_properties.tortuosity());
+              (static_cast<type_real>(1.0) -
+               point_properties.phi() / point_properties.tortuosity());
   result(2) = point_source.stf(2) * point_source.lagrange_interpolant(2) *
-              (1.0 - point_properties.rho_f() / point_properties.rho_bar());
+              (static_cast<type_real>(1.0) -
+               point_properties.rho_f() / point_properties.rho_bar());
   result(3) = point_source.stf(3) * point_source.lagrange_interpolant(3) *
-              (1.0 - point_properties.rho_f() / point_properties.rho_bar());
+              (static_cast<type_real>(1.0) -
+               point_properties.rho_f() / point_properties.rho_bar());
 
   return result;
 }

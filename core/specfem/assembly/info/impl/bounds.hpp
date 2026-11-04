@@ -46,7 +46,7 @@ public:
 
   /** @brief Compute the midpoint of the range. */
   KOKKOS_INLINE_FUNCTION type_real center() const {
-    return 0.5 * (this->max + this->min);
+    return static_cast<type_real>(0.5) * (this->max + this->min);
   }
 
   /**

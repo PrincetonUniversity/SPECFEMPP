@@ -66,9 +66,9 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
           specfem::assembly::load_on_device(index, properties, point_property);
 
           wavefield(ielement, index.iz, index.ix, 0) =
-              -1.0 *
-              ((point_property.lambda() + (2.0 / 3.0) * point_property.mu()) *
-               (du(0, 0) + du(1, 1)));
+              -((point_property.lambda() +
+                 static_cast<type_real>(2.0 / 3.0) * point_property.mu()) *
+                (du(0, 0) + du(1, 1)));
         });
 
     return;

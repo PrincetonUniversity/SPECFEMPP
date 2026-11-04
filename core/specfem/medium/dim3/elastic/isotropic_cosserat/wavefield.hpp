@@ -33,12 +33,12 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
 
   using FieldDerivativesType = specfem::point::field_derivatives<
       specfem::tags::Tags<specfem::element::dimension_tag::dim3,
-                          specfem::element::medium_tag::elastic_spin, false> >;
+                          specfem::element::medium_tag::elastic_spin, false>>;
 
   using PointPropertyType = specfem::point::properties<specfem::tags::Tags<
       specfem::element::dimension_tag::dim3,
       specfem::element::medium_tag::elastic_spin,
-      specfem::element::property_tag::isotropic_cosserat, false> >;
+      specfem::element::property_tag::isotropic_cosserat, false>>;
 
   const auto &properties = assembly.properties;
 
@@ -97,9 +97,9 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
           // =
           //     -1.0 * (sigma_xx + sigma_zz + sigma_yy) / 3.0;
           wavefield(ielement, index.iz, index.iy, index.ix, 0) =
-              -1.0 *
-              ((point_property.lambda() + (2.0 / 3.0) * point_property.mu()) *
-               (du(0, 0) + du(1, 1) + du(2, 2)));
+              -((point_property.lambda() +
+                 static_cast<type_real>(2.0 / 3.0) * point_property.mu()) *
+                (du(0, 0) + du(1, 1) + du(2, 2)));
         });
 
     return;

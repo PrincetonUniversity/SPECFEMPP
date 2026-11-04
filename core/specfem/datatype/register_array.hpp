@@ -190,7 +190,7 @@ public:
   KOKKOS_INLINE_FUNCTION bool operator==(const RegisterArray &other) const {
     for (std::size_t i = 0; i < size; ++i) {
       if (Kokkos::abs(m_value[i] - other.m_value[i]) >
-          1e-6 * Kokkos::abs(m_value[i])) {
+          static_cast<T>(1e-6) * Kokkos::abs(m_value[i])) {
         return false;
       }
     }

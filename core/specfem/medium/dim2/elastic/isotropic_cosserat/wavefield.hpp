@@ -123,7 +123,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
            *
            */
           wavefield(ielement, index.iz, index.ix, 0) =
-              -1.0 * point_property.kappa() * (du(0, 0) + du(1, 1));
+              -point_property.kappa() * (du(0, 0) + du(1, 1));
         });
 
     return;
