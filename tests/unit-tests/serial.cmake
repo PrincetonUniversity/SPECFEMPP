@@ -799,6 +799,25 @@ specfem_add_test(stiffness_kernel_tests
             -lpthread -lm
 )
 
+# Stiffness kernels launched on level-0 and level-1 scratch must agree; the
+# level-1 path is the fallback when neither kernel fits team shared memory.
+specfem_add_test(stiffness_scratch_level_tests
+  SOURCES linear_system/stiffness_scratch_level_tests.cpp
+  LIBRARIES specfem::quadrature
+            specfem::mesh
+            yaml-cpp
+            specfem_environment
+            specfem::assembly
+            specfem::runtime_configuration
+            timescheme
+            point
+            specfem::algorithms
+            specfem::solver
+            specfem::periodic_tasks
+            ${BOOST_LIBS}
+            -lpthread -lm
+)
+
 # Pure TensorOperations + Kokkos: no fixtures, no assembly. Compiles to a
 # GTEST_SKIP stub when SPECFEM_ENABLE_TENSOROPS is OFF.
 specfem_add_test(tensorops_smoke_tests

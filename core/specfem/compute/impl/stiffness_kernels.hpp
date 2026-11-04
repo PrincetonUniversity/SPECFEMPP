@@ -90,8 +90,17 @@ public:
 
   using AssemblyType = specfem::assembly::assembly<Tags::dimension_tag>;
 
-  gather_kernel(const AssemblyType &assembly, int istep)
-      : assembly_(assembly), istep_(istep) {}
+  /**
+   * @brief Construct the kernel.
+   *
+   * @param assembly Assembly holding mesh, fields and material data
+   * @param istep Current time step
+   * @param scratch_level Kokkos scratch level on which the launch policy
+   * reserved shmem_size() bytes per team; every scratch view is built from
+   * this level.
+   */
+  gather_kernel(const AssemblyType &assembly, int istep, int scratch_level)
+      : assembly_(assembly), istep_(istep), scratch_level_(scratch_level) {}
 
   static int shmem_size() {
     return ChunkFieldPackType::shmem_size() +
@@ -110,6 +119,7 @@ public:
     const auto &boundary_values =
         assembly_.boundary_values.template get_container<boundary_tag>();
     const int istep = istep_;
+    const int scratch_level = scratch_level_;
 
     specfem::execution::for_each_level(
         "specfem::compute::compute_stiffness_interaction::gather", chunk,
@@ -118,9 +128,9 @@ public:
           const auto &chunk_index = chunk_iterator_index.get_index();
           const auto team = chunk_index.get_policy_index();
 
-          ChunkFieldPackType field_pack(team.team_scratch(0));
-          ElementQuadratureType lagrange_derivative(team);
-          ChunkStressIntegrandType stress_integrand(team);
+          ChunkFieldPackType field_pack(team.team_scratch(scratch_level));
+          ElementQuadratureType lagrange_derivative(team, scratch_level);
+          ChunkStressIntegrandType stress_integrand(team, scratch_level);
 
           specfem::assembly::load_on_device(team, mesh, lagrange_derivative);
           specfem::assembly::load_on_device(chunk_index, field, field_pack);
@@ -249,6 +259,7 @@ public:
 private:
   const AssemblyType &assembly_;
   int istep_;
+  int scratch_level_;
 };
 
 // ---------------------------------------------------------------------------
@@ -319,8 +330,17 @@ public:
 
   using AssemblyType = specfem::assembly::assembly<Tags::dimension_tag>;
 
-  scatter_kernel(const AssemblyType &assembly, int istep)
-      : assembly_(assembly), istep_(istep) {}
+  /**
+   * @brief Construct the kernel.
+   *
+   * @param assembly Assembly holding mesh, fields and material data
+   * @param istep Current time step
+   * @param scratch_level Kokkos scratch level on which the launch policy
+   * reserved shmem_size() bytes per team; every scratch view is built from
+   * this level.
+   */
+  scatter_kernel(const AssemblyType &assembly, int istep, int scratch_level)
+      : assembly_(assembly), istep_(istep), scratch_level_(scratch_level) {}
 
   static int shmem_size() {
     return ChunkFieldPackType::shmem_size() +
@@ -339,6 +359,7 @@ public:
     const auto &boundary_values =
         assembly_.boundary_values.template get_container<boundary_tag>();
     const int istep = istep_;
+    const int scratch_level = scratch_level_;
 
     specfem::execution::for_each_level(
         "specfem::compute::compute_stiffness_interaction::scatter", chunk,
@@ -347,9 +368,9 @@ public:
           const auto &chunk_index = chunk_iterator_index.get_index();
           const auto team = chunk_index.get_policy_index();
 
-          ChunkFieldPackType field_pack(team.team_scratch(0));
-          ElementQuadratureType lagrange_derivative(team);
-          ChunkAccelerationType scratch_acc(team.team_scratch(0));
+          ChunkFieldPackType field_pack(team.team_scratch(scratch_level));
+          ElementQuadratureType lagrange_derivative(team, scratch_level);
+          ChunkAccelerationType scratch_acc(team.team_scratch(scratch_level));
 
           // Kokkos scratch is NOT zero-initialized — explicit init pass
           specfem::execution::for_each_level(
@@ -482,6 +503,7 @@ public:
 private:
   const AssemblyType &assembly_;
   int istep_;
+  int scratch_level_;
 };
 
 } // namespace specfem::compute::impl

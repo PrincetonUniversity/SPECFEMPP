@@ -95,29 +95,36 @@ int compute_stiffness_interaction_core(
 
   } else {
 
-    // Gather kernel uses more shared memory but avoids atomics (~7% faster).
-    // Scatter kernel uses less shared memory via atomic accumulation.
-    // Select gather when it fits within the device limit;
-    if (gather_kernel<NGLL, Tags>::shmem_size() <= chunk.scratch_size_max(0)) {
-      gather_kernel<NGLL, Tags>{ assembly, istep }(chunk.set_scratch_size(
-          0, Kokkos::PerTeam(gather_kernel<NGLL, Tags>::shmem_size())));
-    } else if (scatter_kernel<NGLL, Tags>::shmem_size() <=
-               chunk.scratch_size_max(0)) {
-      scatter_kernel<NGLL, Tags>{ assembly, istep }(chunk.set_scratch_size(
-          0, Kokkos::PerTeam(scatter_kernel<NGLL, Tags>::shmem_size())));
+    // Gather kernel uses more scratch but avoids atomics (~7% faster).
+    // Scatter kernel uses less scratch via atomic accumulation.
+    // Prefer level-0 (team shared memory); fall back to level-1
+    // (global-memory scratch) when neither kernel fits in level 0. The same
+    // level is passed to the policy and to the kernel so that every scratch
+    // view is built on the level that was actually reserved.
+    using Gather = gather_kernel<NGLL, Tags>;
+    using Scatter = scatter_kernel<NGLL, Tags>;
+
+    auto launch = [&]<typename Kernel>(const int level) {
+      Kernel{ assembly, istep, level }(
+          chunk.set_scratch_size(level, Kokkos::PerTeam(Kernel::shmem_size())));
+    };
+
+    if (Gather::shmem_size() <= chunk.scratch_size_max(0)) {
+      launch.template operator()<Gather>(0);
+    } else if (Scatter::shmem_size() <= chunk.scratch_size_max(0)) {
+      launch.template operator()<Scatter>(0);
+    } else if (Gather::shmem_size() <= chunk.scratch_size_max(1)) {
+      launch.template operator()<Gather>(1);
+    } else if (Scatter::shmem_size() <= chunk.scratch_size_max(1)) {
+      launch.template operator()<Scatter>(1);
     } else {
-      // No level-1 (global-memory) fallback: both kernels construct their
-      // scratch views from team_scratch(0), so launching them with level-1
-      // scratch would place those views outside the allocated level-0 region
-      // and silently corrupt memory. Reduce the chunk size instead.
       throw std::runtime_error(
-          "Not enough level-0 scratch memory for stiffness interaction "
-          "kernels (gather needs " +
-          std::to_string(gather_kernel<NGLL, Tags>::shmem_size()) +
-          " B, scatter needs " +
-          std::to_string(scatter_kernel<NGLL, Tags>::shmem_size()) +
-          " B, device allows " + std::to_string(chunk.scratch_size_max(0)) +
-          " B). Reduce the chunk size for this backend.");
+          "Not enough scratch memory for stiffness interaction kernels "
+          "(gather needs " +
+          std::to_string(Gather::shmem_size()) + " B, scatter needs " +
+          std::to_string(Scatter::shmem_size()) + " B; level-0 max " +
+          std::to_string(chunk.scratch_size_max(0)) + " B, level-1 max " +
+          std::to_string(chunk.scratch_size_max(1)) + " B).");
     }
   }
 
