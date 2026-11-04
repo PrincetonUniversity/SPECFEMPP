@@ -129,33 +129,35 @@ TEST(FieldRecovery, ElasticInterfaceContinuity) {
 // ============================================================================
 // Test 9: ProjectAcousticPotentialRate
 //
-// Hand-written state: with P/k = 1+2i, chi_dot = i*p*(P/k) = p*(-2+i), and u_z
+// Hand-written state: with P/k = 1+2i, chi_dot = i*p*(P/k) = p*(-2+i), and
+// u_x = -i*p^2/rho*(P/k) = p^2/rho*(2-i) with rho the density passed in. u_z
 // passes through unchanged.
 // ============================================================================
 
 TEST(FieldRecovery, ProjectAcousticPotentialRate) {
-  fk_injection::AcousticLayer fluid;
-  fluid.density = static_cast<fk_injection::type_real>(1000.0);
-  fluid.p_velocity = static_cast<fk_injection::type_real>(1500.0);
-  fluid.thickness = static_cast<fk_injection::type_real>(2000.0);
-
   const fk_injection::type_real p =
       static_cast<fk_injection::type_real>(1.0e-4);
   const double pd = static_cast<double>(p);
   const std::complex<double> omega(3.0, 0.0);
+  const double density_below = 2700.0;
 
   fk_injection::impl::AcousticState state;
   state.u_z = std::complex<double>(3.0, 4.0);
   state.pressure_over_k = std::complex<double>(1.0, 2.0);
 
   const fk_injection::impl::SeriesSpectrum series =
-      fk_injection::impl::project_acoustic(state, fluid, omega, p);
+      fk_injection::impl::project_acoustic(state, density_below, omega, p);
 
   constexpr double kTol = 1.0e-15;
   const std::complex<double> chi_dot =
       series.values[fk_injection::impl::series_potential_rate];
   EXPECT_NEAR(chi_dot.real(), -2.0 * pd, kTol);
   EXPECT_NEAR(chi_dot.imag(), pd, kTol);
+
+  const std::complex<double> u_x =
+      series.values[fk_injection::impl::series_horizontal];
+  EXPECT_NEAR(u_x.real(), 2.0 * pd * pd / density_below, kTol);
+  EXPECT_NEAR(u_x.imag(), -pd * pd / density_below, kTol);
 
   const std::complex<double> u_z =
       series.values[fk_injection::impl::series_vertical];
