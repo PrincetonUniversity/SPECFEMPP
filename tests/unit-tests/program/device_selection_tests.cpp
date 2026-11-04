@@ -1,5 +1,6 @@
 #include "specfem/program/context.hpp"
 #include "specfem/program/device_selection.hpp"
+#include <Kokkos_Core.hpp>
 #include <cstdlib>
 #include <gtest/gtest.h>
 #include <stdexcept>
@@ -56,6 +57,32 @@ TEST(DeviceSelection, RejectsHostDevice) {
             { "device_selection_tests", "--kokkos-device-id=0" });
       },
       ::testing::ExitedWithCode(specfem::program_tests_impl::rejected_device),
+      "");
+}
+
+// Tests that initialize Kokkos directly, without a Context, rely on the
+// test-device listener (tests/metal_device_check.cpp) having selected the
+// Metal GPU in the parent test process; the re-executed child inherits it.
+TEST(DeviceSelection, TestListenerSelectsMetalForBareKokkos) {
+  GTEST_FLAG_SET(death_test_style, "threadsafe");
+  ASSERT_NE(std::getenv("KOKKOS_DEVICE_ID"), nullptr);
+  EXPECT_EXIT(
+      {
+        int code = specfem::program_tests_impl::unexpected;
+        Kokkos::initialize();
+        try {
+          const std::string device =
+              specfem::program_impl::check_execution_device();
+          if (device.find("Metal") != std::string::npos) {
+            code = specfem::program_tests_impl::selected_metal;
+          }
+        } catch (const std::runtime_error &) {
+          code = specfem::program_tests_impl::rejected_device;
+        }
+        Kokkos::finalize();
+        std::exit(code);
+      },
+      ::testing::ExitedWithCode(specfem::program_tests_impl::selected_metal),
       "");
 }
 

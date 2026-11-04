@@ -155,6 +155,13 @@ function(specfem_add_test name)
 
     add_executable(${name} ${T_SOURCES})
     target_link_libraries(${name} PRIVATE ${T_LIBRARIES})
+    # AdaptiveCpp/Metal: Kokkos defaults to SYCL device 0, AdaptiveCpp's OpenMP
+    # host device, and many tests initialize Kokkos without going through
+    # specfem::program::Context. This listener selects the Metal GPU by backend
+    # (not by enumeration index) and fails the process if Kokkos runs elsewhere.
+    if(SPECFEM_ENABLE_METAL)
+        target_link_libraries(${name} PRIVATE specfem_metal_device_check)
+    endif()
 
     if(T_DEFINITIONS)
         target_compile_definitions(${name} PRIVATE ${T_DEFINITIONS})
@@ -341,13 +348,6 @@ function(specfem_add_test name)
     endif()
     if(_labels)
         list(APPEND _properties LABELS "${_labels}")
-    endif()
-    # AdaptiveCpp/Metal: Kokkos defaults to SYCL device 0, AdaptiveCpp's OpenMP
-    # host device. With AdaptiveCpp's default visibility (OpenMP, then Metal)
-    # the Apple GPU is device 1. Tests that create a specfem::program::Context
-    # also verify the device at startup.
-    if(SPECFEM_ENABLE_METAL)
-        list(APPEND _properties ENVIRONMENT "KOKKOS_DEVICE_ID=1")
     endif()
 
     set(_discover_args

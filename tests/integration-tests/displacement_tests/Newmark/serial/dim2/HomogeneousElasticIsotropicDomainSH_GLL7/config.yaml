@@ -1,0 +1,10 @@
+id: "HomogeneousElasticIsotropicDomainSH_GLL7"
+name: "Homogeneous elastic isotropic domain (SH-waves), NGLL 8"
+description: >
+  Same model, source and reference traces (SPECFEM2D, GLL4) as HomogeneousElasticIsotropicDomainSH, solved with GLL7 quadrature (NGLL 8), dt/3 and every third step sampled so the seismogram times match the reference. The tolerance allows for the different spatial discretization. STATIONS keeps the 10 of 20 source-case stations whose reference displacement peak is at least 1% of the case peak; at the others the SH arrival falls after the end of the record, the reference holds only numerical noise (peak <= 3.1e-6 of 0.78), and a relative L2 error between two discretizations is not meaningful.
+config:
+  nproc: 1
+  tolerance: 1e-2
+databases:
+  specfem_config: "specfem_config.yaml"
+  traces: "../HomogeneousElasticIsotropicDomainSH/traces"

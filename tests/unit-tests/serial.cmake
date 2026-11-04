@@ -119,6 +119,7 @@ specfem_add_test(attenuation_tests
             attenuation/compute_integration_factors_tests.cpp
   LIBRARIES gtest_main
             specfem::attenuation
+            specfem::program
             Kokkos::kokkos
 )
 
@@ -127,6 +128,7 @@ specfem_add_test(optimization_tests
             optimization/neldermead_tests.cpp
             optimization/steepestdescent_tests.cpp
   LIBRARIES gtest_main
+            specfem::program
             Kokkos::kokkos
 )
 
@@ -236,6 +238,37 @@ specfem_add_test(point_tests
             gtest_main
             gmock_main
 )
+
+# AdaptiveCpp/Metal: the test-device check (tests/metal_device_check.cpp) must
+# fail a test process whose Kokkos runs on AdaptiveCpp's OpenMP host device and
+# must accept it when SPECFEM_METAL_ALLOW_HOST_DEVICE is set. PointIndexTest
+# initializes and finalizes Kokkos inside the fixture, so this also covers the
+# finalize-hook path. Device 0 is the host device: AdaptiveCpp always loads
+# its OpenMP backend first.
+if(SPECFEM_ENABLE_METAL)
+  add_test(NAME metal_device_check.RejectsHostDevice
+           COMMAND $<TARGET_FILE:point_tests>
+                   --gtest_filter=PointIndexTest.DefaultConstructor2D)
+  set_tests_properties(metal_device_check.RejectsHostDevice PROPERTIES
+    WORKING_DIRECTORY "${SPECFEM_TEST_OUTPUT_DIR}"
+    ENVIRONMENT "KOKKOS_DEVICE_ID=0"
+    PASS_REGULAR_EXPRESSION "\\[specfem device check\\] FAILED: .*not a Metal GPU")
+  add_test(NAME metal_device_check.AllowsHostDeviceForDiagnostics
+           COMMAND $<TARGET_FILE:point_tests>
+                   --gtest_filter=PointIndexTest.DefaultConstructor2D)
+  set_tests_properties(metal_device_check.AllowsHostDeviceForDiagnostics
+    PROPERTIES
+    WORKING_DIRECTORY "${SPECFEM_TEST_OUTPUT_DIR}"
+    ENVIRONMENT "KOKKOS_DEVICE_ID=0;SPECFEM_METAL_ALLOW_HOST_DEVICE=1"
+    PASS_REGULAR_EXPRESSION "\\[specfem device check\\] SYCL device: .*NOT Metal")
+  add_test(NAME metal_device_check.SelectsMetalGpu
+           COMMAND $<TARGET_FILE:point_tests>
+                   --gtest_filter=PointIndexTest.DefaultConstructor2D)
+  set_tests_properties(metal_device_check.SelectsMetalGpu PROPERTIES
+    WORKING_DIRECTORY "${SPECFEM_TEST_OUTPUT_DIR}"
+    PASS_REGULAR_EXPRESSION "\\[specfem device check\\] SYCL device: .*AdaptiveCpp Metal backend"
+    FAIL_REGULAR_EXPRESSION "FAILED")
+endif()
 
 specfem_add_test(receivers_tests
   SOURCES   receivers/dim2/receiver_tests.cpp

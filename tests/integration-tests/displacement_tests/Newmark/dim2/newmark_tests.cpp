@@ -177,8 +177,26 @@ TEST_P(Newmark, 2D) {
   specfem::Logger::info(
       [&](std::ostringstream &oss) { oss << time_scheme->to_string(); });
 
-  std::shared_ptr<specfem::solver::solver> solver = setup.instantiate_solver<5>(
-      setup.get_dt(), assembly, time_scheme, simulation_type, {});
+  // specfem::program and runtime_configuration only instantiate the solver
+  // for NGLL 5 (GLL4). The forward time_marching solver is also instantiated
+  // for NGLL 8 (GLL7), so construct it directly for GLL7 test cases.
+  std::shared_ptr<specfem::solver::solver> solver;
+  if (assembly.mesh.element_grid == 5) {
+    solver = setup.instantiate_solver<5>(setup.get_dt(), assembly, time_scheme,
+                                         simulation_type, {});
+  } else if (assembly.mesh.element_grid == 8 &&
+             simulation_type == specfem::simulation::type::forward) {
+    solver = std::make_shared<specfem::solver::time_marching<
+        specfem::simulation::type::forward,
+        specfem::element::dimension_tag::dim2, 8>>(
+        time_scheme,
+        std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task<
+            specfem::element::dimension_tag::dim2>>>{},
+        assembly);
+  } else {
+    FAIL() << "Unsupported quadrature/simulation: NGLL "
+           << assembly.mesh.element_grid.ngll;
+  }
 
   solver->run();
 

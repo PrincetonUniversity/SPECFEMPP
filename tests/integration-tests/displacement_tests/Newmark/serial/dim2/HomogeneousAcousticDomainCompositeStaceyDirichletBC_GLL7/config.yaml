@@ -1,0 +1,10 @@
+id: "HomogeneousAcousticDomainCompositeStaceyDirichletBC_GLL7"
+name: "Homogeneous acoustic domain (composite stacey dirichlet BC), NGLL 8"
+description: >
+  Same model, source, stations and reference traces (SPECFEM2D, GLL4) as HomogeneousAcousticDomainCompositeStaceyDirichletBC, solved with GLL7 quadrature (NGLL 8), dt/3 and every third step sampled so the seismogram times match the reference. The tolerance allows for the different spatial discretization.
+config:
+  nproc: 1
+  tolerance: 1e-2
+databases:
+  specfem_config: "specfem_config.yaml"
+  traces: "../HomogeneousAcousticDomainCompositeStaceyDirichletBC/traces"

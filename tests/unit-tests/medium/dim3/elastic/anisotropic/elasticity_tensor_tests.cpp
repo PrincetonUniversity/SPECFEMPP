@@ -72,29 +72,46 @@ void expect_tensor_near(
   }
 }
 
+// Apple GPUs have no FP64; Metal builds exercise the device path in float.
+#if defined(SPECFEM_ENABLE_METAL)
+using DeviceValue = float;
+// Relative to the largest tensor coefficient; float epsilon is 1.2e-7.
+constexpr double device_global_tolerance = 2.e-6;
+constexpr double device_round_trip_tolerance = 2.e-6;
+#else
+using DeviceValue = double;
+constexpr double device_global_tolerance = 2.e-13;
+constexpr double device_round_trip_tolerance = 2.e-12;
+#endif
+
 struct DeviceResults {
-  Tensor global;
-  Radial round_trip;
+  specfem::medium_physics::ElasticityTensor<Cartesian, DeviceValue> global;
+  specfem::medium_physics::ElasticityTensor<Geocentric, DeviceValue> round_trip;
 };
 
 DeviceResults rotate_on_device() {
-  Kokkos::View<Tensor *> global("global_elasticity", 1);
-  Kokkos::View<Radial *> round_trip("radial_elasticity", 1);
+  using DeviceTensor =
+      specfem::medium_physics::ElasticityTensor<Cartesian, DeviceValue>;
+  using DeviceRadial =
+      specfem::medium_physics::ElasticityTensor<Geocentric, DeviceValue>;
+  Kokkos::View<DeviceTensor *> global("global_elasticity", 1);
+  Kokkos::View<DeviceRadial *> round_trip("radial_elasticity", 1);
   Kokkos::parallel_for(
       "rotate_on_device", 1, KOKKOS_LAMBDA(const int) {
-        const Radial radial(4.0, 3.0, 5.0, 2.0, 2.5, 0.8);
-        double packed[21];
+        const DeviceRadial radial(DeviceValue{ 4 }, DeviceValue{ 3 },
+                                  DeviceValue{ 5 }, DeviceValue{ 2 },
+                                  DeviceValue{ 2.5 }, DeviceValue{ 0.8 });
+        DeviceValue packed[21];
         for (int k = 0; k < 21; ++k) {
           packed[k] = radial[k];
         }
-        const Radial from_packed(packed);
+        const DeviceRadial from_packed(packed);
         const auto rotation =
             specfem::coordinate_systems::rotation_matrix<Cartesian, Geocentric>(
-                0.7, 1.1);
+                DeviceValue{ 0.7 }, DeviceValue{ 1.1 });
         global(0) = specfem::medium_physics::rotate(from_packed, rotation);
-        const auto inverse =
-            specfem::coordinate_systems::RotationMatrix<Geocentric,
-                                                        Cartesian>{}(0.7, 1.1);
+        const auto inverse = specfem::coordinate_systems::RotationMatrix<
+            Geocentric, Cartesian>{}(DeviceValue{ 0.7 }, DeviceValue{ 1.1 });
         round_trip(0) = specfem::medium_physics::rotate(global(0), inverse);
       });
   const auto host_global =
@@ -276,10 +293,25 @@ TEST(ElasticityTensor, ArbitraryRotationMatchesFourthOrderReference) {
 
 TEST(ElasticityTensor, RotationIsDeviceCallable) {
   const auto result = rotate_on_device();
-  EXPECT_NEAR(result.global[3], 0.55226814535471225, 2.e-13);
-  EXPECT_NEAR(result.global[13], -7.8509057040399073, 2.e-13);
   const Radial radial(4.0, 3.0, 5.0, 2.0, 2.5, 0.8);
-  expect_tensor_near(result.round_trip, radial);
+  double global_scale = 1.0;
+  double radial_scale = 1.0;
+  for (int component = 0; component < 21; ++component) {
+    global_scale =
+        std::max(global_scale, std::abs(double(result.global[component])));
+    radial_scale = std::max(radial_scale, std::abs(radial[component]));
+  }
+  // The double tolerance is absolute, as before; scale it only for float.
+  const double global_tolerance = std::is_same_v<DeviceValue, double>
+                                      ? device_global_tolerance
+                                      : device_global_tolerance * global_scale;
+  EXPECT_NEAR(result.global[3], 0.55226814535471225, global_tolerance);
+  EXPECT_NEAR(result.global[13], -7.8509057040399073, global_tolerance);
+  for (int component = 0; component < 21; ++component) {
+    EXPECT_NEAR(result.round_trip[component], radial[component],
+                device_round_trip_tolerance * radial_scale)
+        << "component " << component;
+  }
 }
 
 TEST(ElasticityTensor, IsotropicLoveTensorIsRotationInvariant) {

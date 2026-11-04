@@ -39,6 +39,22 @@ target_link_libraries(
   specfem_program
 )
 
+# AdaptiveCpp/Metal: selects the Metal GPU and verifies that every test process
+# runs Kokkos on it (see metal_device_check.cpp). An OBJECT library, so its
+# self-registering listener is always linked in; specfem_add_test() adds it to
+# every test executable.
+if(SPECFEM_ENABLE_METAL)
+  add_library(specfem_metal_device_check OBJECT metal_device_check.cpp)
+  set_target_properties(specfem_metal_device_check PROPERTIES UNITY_BUILD OFF)
+  target_link_libraries(
+    specfem_metal_device_check
+    PUBLIC
+    specfem_program
+    gtest
+    Kokkos::kokkos
+  )
+endif()
+
 add_subdirectory(unit-tests)
 add_subdirectory(integration-tests)
 
