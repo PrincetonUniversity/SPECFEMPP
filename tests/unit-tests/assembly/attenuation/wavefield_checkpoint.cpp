@@ -8,7 +8,6 @@
 #include <boost/filesystem.hpp>
 #include <cstdlib>
 #include <gtest/gtest.h>
-#include <iostream>
 #include <string>
 #include <vector>
 
@@ -139,14 +138,6 @@ TEST_F(Assembly2D, AttenuationCheckpointRoundTrip) {
           const std::size_t nspec_attn = medium.element_range.extent(0);
           if (nspec_attn == 0)
             return;
-          std::cout << "[wavefield_attenuation] " << Test.name << " / "
-                    << specfem::element::to_string(TagsType::medium_tag)
-                    << ": nspec_attn=" << nspec_attn << ", nspec_attn % "
-                    << specfem::parallel_configuration::storage_chunk_size
-                    << " = "
-                    << nspec_attn %
-                           specfem::parallel_configuration::storage_chunk_size
-                    << std::endl;
           int salt = 0;
           medium.for_each_checkpoint_view(
               [&](const std::string &name, const auto &view) {
@@ -291,7 +282,6 @@ TEST_F(Assembly2D, WavefieldCoordinatesLayout) {
     const int ngllz = assembly.mesh.element_grid.ngllz;
     const int ngllx = assembly.mesh.element_grid.ngllx;
     auto &forward = assembly.fields.forward;
-    const int n_before = n_media;
 
     specfem::tag_dispatch::for_each(
         std::remove_reference_t<decltype(forward)>::combinations,
@@ -344,16 +334,10 @@ TEST_F(Assembly2D, WavefieldCoordinatesLayout) {
                     << Test.name << " e=" << e << " iz=" << iz << " ix=" << ix;
               }
           }
-          std::cout << "[wavefield_coordinates] " << Test.name << " / "
-                    << specfem::element::to_string(medium_tag)
-                    << ": n_elements=" << n_elements << ", nglob=" << nglob
-                    << std::endl;
           ++n_media;
         });
 
     boost::filesystem::remove_all(dir);
-    if (n_media > n_before && n_media >= 2)
-      break;
   }
   EXPECT_GT(n_media, 0) << "No medium was exercised";
 }

@@ -350,6 +350,7 @@ specfem_add_test(assembly_tests
             assembly/dim3/element_types/element_context.cpp
             assembly/attenuation/wavefield_checkpoint.cpp
             assembly/dim3/attenuation/recompute.cpp
+            assembly/dim3/attenuation/checkpoint_views.cpp
             assembly/dim3/attenuation/globe_attenuation.cpp
             assembly/dim3/element_intersections/globe_fluid_solid.cpp
   LIBRARIES specfem::mesh

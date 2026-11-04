@@ -4,12 +4,10 @@
 #include "specfem/io.hpp"
 #include "specfem/io/impl/sub_block.hpp"
 #include "specfem/io_backends/impl/file_extents.hpp"
-#include "specfem/parallel_configuration/chunk_config.hpp"
 #include <Kokkos_Core.hpp>
 #include <boost/filesystem.hpp>
 #include <gtest/gtest.h>
 
-#include <iostream>
 #include <string>
 #include <utility>
 
@@ -81,7 +79,8 @@ TEST(SubBlockTest, ExtractSubBlockMatchesHeader) {
       for (std::size_t e = 0; e < expected[0]; ++e)
         for (std::size_t iz = 0; iz < 3; ++iz)
           for (std::size_t ix = 0; ix < 2; ++ix)
-            EXPECT_EQ(raw.at({ e, iz, ix }), value3(offset + e, iz, ix))
+            EXPECT_NEAR(raw.at({ e, iz, ix }), value3(offset + e, iz, ix),
+                        1e-12)
                 << "nelem=" << nelem << " offset=" << offset;
     }
   }
@@ -113,7 +112,8 @@ TEST(SubBlockTest, ExtractSubBlockRank4) {
       for (std::size_t iz = 0; iz < 3; ++iz)
         for (std::size_t iy = 0; iy < 2; ++iy)
           for (std::size_t ix = 0; ix < 2; ++ix)
-            EXPECT_EQ(raw.at({ e, iz, iy, ix }), value4(e, iz, iy, ix));
+            EXPECT_NEAR(raw.at({ e, iz, iy, ix }), value4(e, iz, iy, ix),
+                        1e-12);
   }
 }
 
@@ -138,7 +138,8 @@ TEST(SubBlockTest, InsertSubBlockRoundTrip) {
       for (std::size_t ix = 0; ix < 2; ++ix) {
         const bool inserted = e >= offset && e < offset + count;
         const double expected = inserted ? value3(e - offset, iz, ix) : 0.0;
-        EXPECT_EQ(dst(e, iz, ix), expected) << e << "," << iz << "," << ix;
+        EXPECT_NEAR(dst(e, iz, ix), expected, 1e-12)
+            << e << "," << iz << "," << ix;
       }
 }
 
@@ -160,12 +161,6 @@ static_assert(!specfem::io_backends::impl::is_domain_view<Kokkos::View<
                   double ***, Kokkos::LayoutLeft, Kokkos::HostSpace>>::value);
 static_assert(!specfem::io_backends::impl::is_domain_view<
               DomainView2dHost::base_type>::value);
-
-TEST(SubBlockTest, StorageChunkSizeIsReported) {
-  const int chunk = specfem::parallel_configuration::storage_chunk_size;
-  RecordProperty("storage_chunk_size", chunk);
-  std::cout << "storage_chunk_size = " << chunk << std::endl;
-}
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

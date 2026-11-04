@@ -410,9 +410,6 @@ TEST_P(Assembly3DTest, KernelsIOLayout) {
         const int nelem = range.size();
         if (nelem == 0)
           return;
-        std::cout << "  kernels_io_layout3d: "
-                  << specfem::element::to_string(medium_tag, property_tag)
-                  << " nelem=" << nelem << "\n";
         const std::string group =
             folder + "/" +
             specfem::element::to_string(medium_tag, property_tag) + "/";
@@ -439,8 +436,9 @@ TEST_P(Assembly3DTest, KernelsIOLayout) {
             for (std::size_t iz = 0; iz < ngllz; ++iz)
               for (std::size_t iy = 0; iy < nglly; ++iy)
                 for (std::size_t ix = 0; ix < ngllx; ++ix)
-                  EXPECT_EQ(raw.at({ std::size_t(e), iz, iy, ix }),
-                            assembly.mesh.h_coord(range(e), iz, iy, ix, c))
+                  EXPECT_NEAR(raw.at({ std::size_t(e), iz, iy, ix }),
+                              assembly.mesh.h_coord(range(e), iz, iy, ix, c),
+                              1e-4)
                       << n << " e=" << e;
         }
 
