@@ -2,7 +2,7 @@
 
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/element.hpp"
-#include "specfem/io/property/impl/sub_block.hpp"
+#include "specfem/io/impl/sub_block.hpp"
 #include "specfem/io/property/reader.hpp"
 #include "specfem/macros/tag_dispatch.hpp"
 #include "specfem/tag_dispatch.hpp"
@@ -79,10 +79,10 @@ void specfem::io::property_reader<InputLibrary>::read(
         // "mu" land as the physical (relaxed) moduli from the file.
         container.for_each_host_view(
             [&](const auto view, const std::string view_name) {
-              auto scratch = specfem::io::property_impl::make_sub_block(
+              auto scratch = specfem::io::impl::make_sub_block(
                   view, view_name, count);
               group.openDataset(view_name, scratch).read();
-              specfem::io::property_impl::insert_sub_block(view, scratch,
+              specfem::io::impl::insert_sub_block(view, scratch,
                                                            offset);
             });
 
@@ -169,10 +169,10 @@ void specfem::io::property_reader<InputLibrary>::read(
         // "mu" land as the physical (relaxed) moduli from the file.
         container.for_each_host_view(
             [&](const auto view, const std::string view_name) {
-              auto scratch = specfem::io::property_impl::make_sub_block(
+              auto scratch = specfem::io::impl::make_sub_block(
                   view, view_name, count);
               group.openDataset(view_name, scratch).read();
-              specfem::io::property_impl::insert_sub_block(view, scratch,
+              specfem::io::impl::insert_sub_block(view, scratch,
                                                            offset);
             });
 

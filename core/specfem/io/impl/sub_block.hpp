@@ -7,7 +7,7 @@
 
 namespace specfem {
 namespace io {
-namespace property_impl {
+namespace impl {
 
 /**
  * @brief Allocate a plain row-major host view shaped like a leading-dimension
@@ -105,6 +105,6 @@ void insert_sub_block(const ViewType &dst, const PlainViewType &src,
   }
 }
 
-} // namespace property_impl
+} // namespace impl
 } // namespace io
 } // namespace specfem

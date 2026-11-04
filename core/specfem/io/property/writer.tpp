@@ -3,8 +3,8 @@
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/element.hpp"
 #include "specfem/enums.hpp"
-#include "specfem/io/property/impl/coordinates.hpp"
-#include "specfem/io/property/impl/sub_block.hpp"
+#include "specfem/io/impl/coordinates.hpp"
+#include "specfem/io/impl/sub_block.hpp"
 #include "specfem/io/property/writer.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/macros/tag_dispatch.hpp"
@@ -98,14 +98,15 @@ void specfem::io::property_writer<OutputLibrary>::write(
           }
         }
 
-        property_impl::write_coordinates(group, assembly.mesh, element_range);
+        specfem::io::impl::write_coordinates(group, assembly.mesh,
+                                             element_range);
 
         // Property datasets. The file stores the physical (relaxed) moduli:
         // for attenuating combinations the staged "kappa"/"mu" values are
         // divided by the per-element scale factors before writing.
         data_container.for_each_host_view(
             [&](const auto view, const std::string view_name) {
-              auto scratch = specfem::io::property_impl::extract_sub_block(
+              auto scratch = specfem::io::impl::extract_sub_block(
                   view, view_name, offset, count);
               if constexpr (has_attenuation) {
                 assembly.attenuation
@@ -210,14 +211,15 @@ void specfem::io::property_writer<OutputLibrary>::write(
           }
         }
 
-        property_impl::write_coordinates(group, assembly.mesh, element_range);
+        specfem::io::impl::write_coordinates(group, assembly.mesh,
+                                             element_range);
 
         // Property datasets. The file stores the physical (relaxed) moduli:
         // for attenuating combinations the staged "kappa"/"mu" values are
         // divided by the per-element scale factors before writing.
         data_container.for_each_host_view(
             [&](const auto view, const std::string view_name) {
-              auto scratch = specfem::io::property_impl::extract_sub_block(
+              auto scratch = specfem::io::impl::extract_sub_block(
                   view, view_name, offset, count);
               if constexpr (has_attenuation) {
                 assembly.attenuation
