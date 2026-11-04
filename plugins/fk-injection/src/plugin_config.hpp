@@ -71,6 +71,9 @@ struct PluginConfig {
  * reproduce-specfem3d-reference: false  # optional
  * @endcode
  *
+ * A half-duration that leaves more than 40% of the Gaussian's energy above
+ * @c frequency-max is rejected, which includes a half-duration of 0.
+ *
  * With @c model-file, @c incidence and @c time-window are optional and override
  * the values read from the file. A non-zero @c ORIGIN_TIME in the file is
  * rejected: it means the FK time at step 0, not @c incidence.origin-time.
