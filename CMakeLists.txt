@@ -316,7 +316,7 @@ add_subdirectory(sdk)
 
 # FK injection plugin. Plugins are loadable modules, so Linux and macOS only.
 if (UNIX)
-    add_subdirectory(plugin/fk-injection)
+    add_subdirectory(plugins/fk-injection)
 endif()
 
 # Include tests

@@ -1,4 +1,4 @@
-#include "specfem/fk_plugin/utilities/register_array.hpp"
+#include "fk_injection/utilities/register_array.hpp"
 #include <gtest/gtest.h>
 
 #include <complex>
@@ -9,10 +9,10 @@
 // ---------------------------------------------------------------------------
 
 using Cx = std::complex<double>;
-using Mat2 = specfem::fk_plugin::ComplexMatrix<2>;
-using Mat4 = specfem::fk_plugin::ComplexMatrix<4>;
-using Vec2 = specfem::fk_plugin::ComplexVector<2>;
-using Vec4 = specfem::fk_plugin::ComplexVector<4>;
+using Mat2 = fk_injection::ComplexMatrix<2>;
+using Mat4 = fk_injection::ComplexMatrix<4>;
+using Vec2 = fk_injection::ComplexVector<2>;
+using Vec4 = fk_injection::ComplexVector<4>;
 
 static_assert(std::is_trivially_copyable_v<Mat4>);
 static_assert(std::is_trivially_copyable_v<Vec4>);
