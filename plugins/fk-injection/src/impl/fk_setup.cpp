@@ -21,10 +21,7 @@ fk_injection::impl::prepare(const fk_injection::LayeredModel &model,
   setup.dt_min = static_cast<double>(setup.sizes.resampling_rate) *
                  static_cast<double>(window.dt);
   setup.wave_type = wave.type;
-  setup.derivative_order =
-      (derivative == fk_injection::field_derivative::velocity)       ? 1
-      : (derivative == fk_injection::field_derivative::acceleration) ? 2
-                                                                     : 0;
+  setup.derivative = derivative;
 
   // Positive-frequency samples (including DC): nf_stored + 1.
   const int nf2 = setup.sizes.number_of_stored_frequencies + 1;
