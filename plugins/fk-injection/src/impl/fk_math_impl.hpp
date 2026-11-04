@@ -13,9 +13,6 @@ namespace fk_injection::impl {
 /// @brief Mathematical constant pi.
 inline constexpr double pi = std::numbers::pi_v<double>;
 
-/// @brief Near-zero guard used for singular-denominator checks.
-inline constexpr double tinyval = 1.0e-9;
-
 /**
  * @brief Compute the vertical P- and S-wave slownesses for an elastic layer.
  *

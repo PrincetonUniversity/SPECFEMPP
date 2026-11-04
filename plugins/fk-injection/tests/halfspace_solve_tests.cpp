@@ -10,6 +10,9 @@
 #include <array>
 #include <cmath>
 #include <complex>
+#include <limits>
+#include <stdexcept>
+#include <string>
 
 // ============================================================================
 // Test 1: FreeSurfaceTractionVanishesP
@@ -231,9 +234,6 @@ TEST(HalfspaceSolve, FreeSurfaceConditionWithFluid) {
         hs, wave_type, static_cast<fk_injection::type_real>(1.0), p);
     const auto coeffs = fk_injection::impl::halfspace_coefficients(
         n_mat, q_mat, wave_type, amp);
-    // A singular solve returns zeros, which would satisfy nothing below.
-    EXPECT_GT(std::abs(coeffs[0]) + std::abs(coeffs[1]), 0.0);
-
     const auto bot =
         fk_injection::impl::build_bottom_vector(wave_type, amp, coeffs);
     const auto r = n_mat * bot;
@@ -252,4 +252,52 @@ TEST(HalfspaceSolve, FreeSurfaceConditionWithFluid) {
     EXPECT_LT(std::abs(r[2]) / shear_scale, 1.0e-10);
     EXPECT_LT(std::abs(surface_pressure) / pressure_scale, 1.0e-10);
   }
+}
+
+// ============================================================================
+// Test 6: SingularSystemThrows
+//
+// A zero or non-finite determinant has no reflected amplitudes to return, for
+// either overload.
+// ============================================================================
+
+namespace halfspace_solve_tests_impl {
+
+inline void expect_singular(const fk_injection::ComplexMatrix<4> &n_mat) {
+  const fk_injection::incident_wave_type wave_type =
+      fk_injection::incident_wave_type::p;
+  const std::complex<double> amplitude(1.0, 0.0);
+  const auto fluid_propagator = fk_injection::ComplexMatrix<2>::identity();
+
+  try {
+    fk_injection::impl::halfspace_coefficients(n_mat, wave_type, amplitude);
+    ADD_FAILURE() << "elastic overload did not throw";
+  } catch (const std::runtime_error &error) {
+    EXPECT_NE(std::string(error.what()).find("singular"), std::string::npos)
+        << error.what();
+  }
+
+  try {
+    fk_injection::impl::halfspace_coefficients(n_mat, fluid_propagator,
+                                               wave_type, amplitude);
+    ADD_FAILURE() << "fluid overload did not throw";
+  } catch (const std::runtime_error &error) {
+    EXPECT_NE(std::string(error.what()).find("singular"), std::string::npos)
+        << error.what();
+  }
+}
+
+} // namespace halfspace_solve_tests_impl
+
+TEST(HalfspaceSolve, SingularSystemThrows) {
+  // Every coefficient zero: delta == 0.
+  halfspace_solve_tests_impl::expect_singular(fk_injection::ComplexMatrix<4>());
+
+  // NaN coefficients, as an unchecked supercritical slowness would produce.
+  fk_injection::ComplexMatrix<4> not_finite;
+  for (int k = 0; k < 4 * 4; ++k) {
+    not_finite.data[k] =
+        std::complex<double>(std::numeric_limits<double>::quiet_NaN(), 0.0);
+  }
+  halfspace_solve_tests_impl::expect_singular(not_finite);
 }
