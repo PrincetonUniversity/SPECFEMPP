@@ -46,12 +46,12 @@ TEST(HalfspaceSolve, FreeSurfaceTractionVanishesP) {
   const auto n_mat = fk_injection::impl::elastic_halfspace_eigenmatrix(hs, p);
 
   // Solve for half-space coefficients.
-  const auto coeffs = fk_injection::impl::halfspace_coefficients(
-      n_mat, wave_type, amp.c1, amp.c3);
+  const auto coeffs =
+      fk_injection::impl::halfspace_coefficients(n_mat, wave_type, amp);
 
   // Build the bottom state vector.
-  const auto bot = fk_injection::impl::build_bottom_vector(wave_type, amp.c1,
-                                                           amp.c3, coeffs);
+  const auto bot =
+      fk_injection::impl::build_bottom_vector(wave_type, amp, coeffs);
 
   // r = N * bot.
   const auto r = n_mat * bot;
@@ -100,11 +100,11 @@ TEST(HalfspaceSolve, FreeSurfaceTractionVanishesSV) {
 
   const auto n_mat = fk_injection::impl::elastic_halfspace_eigenmatrix(hs, p);
 
-  const auto coeffs = fk_injection::impl::halfspace_coefficients(
-      n_mat, wave_type, amp.c1, amp.c3);
+  const auto coeffs =
+      fk_injection::impl::halfspace_coefficients(n_mat, wave_type, amp);
 
-  const auto bot = fk_injection::impl::build_bottom_vector(wave_type, amp.c1,
-                                                           amp.c3, coeffs);
+  const auto bot =
+      fk_injection::impl::build_bottom_vector(wave_type, amp, coeffs);
 
   const auto r = n_mat * bot;
 
@@ -129,21 +129,20 @@ TEST(HalfspaceSolve, FreeSurfaceTractionVanishesSV) {
 // ============================================================================
 // Test 3: BuildBottomVectorP
 //
-// For incident P: bot[0]==0, bot[1]==coeff0, bot[2]==c3, bot[3]==coeff1.
+// For incident P: bot[0]==0, bot[1]==coeff0, bot[2]==amplitude, bot[3]==coeff1.
 // ============================================================================
 
 TEST(HalfspaceSolve, BuildBottomVectorP) {
   constexpr double kTol = 1.0e-15;
 
   // Use known values to check slot assignment exactly.
-  const std::complex<double> c1(0.0, 0.0);
-  const std::complex<double> c3(3.0, 4.0);
+  const std::complex<double> amplitude(3.0, 4.0);
   std::array<std::complex<double>, 2> coeffs;
   coeffs[0] = std::complex<double>(1.0, 2.0);
   coeffs[1] = std::complex<double>(5.0, 6.0);
 
   const auto bot = fk_injection::impl::build_bottom_vector(
-      fk_injection::incident_wave_type::p, c1, c3, coeffs);
+      fk_injection::incident_wave_type::p, amplitude, coeffs);
 
   // bot[0] == 0.
   EXPECT_NEAR(bot[0].real(), 0.0, kTol);
@@ -153,7 +152,7 @@ TEST(HalfspaceSolve, BuildBottomVectorP) {
   EXPECT_NEAR(bot[1].real(), 1.0, kTol);
   EXPECT_NEAR(bot[1].imag(), 2.0, kTol);
 
-  // bot[2] == c3 == (3,4).
+  // bot[2] == amplitude == (3,4).
   EXPECT_NEAR(bot[2].real(), 3.0, kTol);
   EXPECT_NEAR(bot[2].imag(), 4.0, kTol);
 
@@ -165,25 +164,24 @@ TEST(HalfspaceSolve, BuildBottomVectorP) {
 // ============================================================================
 // Test 4: BuildBottomVectorSV
 //
-// For incident SV: bot[0]==c1, bot[1]==coeff0 (reflected SV-down), bot[2]==0,
-// bot[3]==coeff1. (This is the physically correct placement; it deviates from
-// SPECFEM3D, which erroneously puts coeff0 at bot[2] — see
+// For incident SV: bot[0]==amplitude, bot[1]==coeff0 (reflected SV-down),
+// bot[2]==0, bot[3]==coeff1. (This is the physically correct placement; it
+// deviates from SPECFEM3D, which erroneously puts coeff0 at bot[2] — see
 // docs/specfem3d-sv-fk-bug-report.md.)
 // ============================================================================
 
 TEST(HalfspaceSolve, BuildBottomVectorSV) {
   constexpr double kTol = 1.0e-15;
 
-  const std::complex<double> c1(7.0, 8.0);
-  const std::complex<double> c3(0.0, 0.0);
+  const std::complex<double> amplitude(7.0, 8.0);
   std::array<std::complex<double>, 2> coeffs;
   coeffs[0] = std::complex<double>(1.0, 2.0);
   coeffs[1] = std::complex<double>(5.0, 6.0);
 
   const auto bot = fk_injection::impl::build_bottom_vector(
-      fk_injection::incident_wave_type::sv, c1, c3, coeffs);
+      fk_injection::incident_wave_type::sv, amplitude, coeffs);
 
-  // bot[0] == c1 == (7,8).
+  // bot[0] == amplitude == (7,8).
   EXPECT_NEAR(bot[0].real(), 7.0, kTol);
   EXPECT_NEAR(bot[0].imag(), 8.0, kTol);
 
@@ -232,12 +230,12 @@ TEST(HalfspaceSolve, FreeSurfaceConditionWithFluid) {
     const auto amp = fk_injection::impl::incident_amplitude(
         hs, wave_type, static_cast<fk_injection::type_real>(1.0), p);
     const auto coeffs = fk_injection::impl::halfspace_coefficients(
-        n_mat, q_mat, wave_type, amp.c1, amp.c3);
+        n_mat, q_mat, wave_type, amp);
     // A singular solve returns zeros, which would satisfy nothing below.
     EXPECT_GT(std::abs(coeffs[0]) + std::abs(coeffs[1]), 0.0);
 
-    const auto bot = fk_injection::impl::build_bottom_vector(wave_type, amp.c1,
-                                                             amp.c3, coeffs);
+    const auto bot =
+        fk_injection::impl::build_bottom_vector(wave_type, amp, coeffs);
     const auto r = n_mat * bot;
     const std::complex<double> surface_pressure =
         q_mat(1, 0) * r[1] - q_mat(1, 1) * r[3];

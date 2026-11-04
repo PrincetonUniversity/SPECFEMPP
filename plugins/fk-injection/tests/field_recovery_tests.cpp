@@ -50,11 +50,10 @@ inline void make_elastic_model(fk_injection::ElasticIsotropicLayer &hs,
   const auto amp = fk_injection::impl::incident_amplitude(
       hs, wave_type, static_cast<type_real>(1.0), p);
 
-  const auto coeffs = fk_injection::impl::halfspace_coefficients(
-      e_mat, wave_type, amp.c1, amp.c3);
+  const auto coeffs =
+      fk_injection::impl::halfspace_coefficients(e_mat, wave_type, amp);
 
-  modes = fk_injection::impl::build_bottom_vector(wave_type, amp.c1, amp.c3,
-                                                  coeffs);
+  modes = fk_injection::impl::build_bottom_vector(wave_type, amp, coeffs);
 }
 
 } // namespace field_recovery_tests_impl
