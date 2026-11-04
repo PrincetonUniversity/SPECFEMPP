@@ -172,11 +172,17 @@ TEST(DepthGroups, LateralPositionsShareOneGroup) {
     EXPECT_EQ(dg.point_group[i], 0);
   }
 
-  // tau = p*(x*cos(phi) + y*sin(phi)) because x0=y0=z0=0 and eta_p*(0-0)=0.
+  // tau = p*(x*cos(phi) + y*sin(phi)) + eta_p*z_ref with x0=y0=z0=0, where
+  // z_ref is the half-space top (z up, model top 0).
   const double phi = static_cast<double>(wave.azimuth_phi);
+  const double vp_hs =
+      static_cast<double>(model.elastic_layers().back().p_velocity);
+  const double eta_p = std::sqrt(1.0 / (vp_hs * vp_hs) - p * p);
+  const double z_ref = -model.halfspace_top_depth();
   for (int i = 0; i < m; ++i) {
     const double expected_tau =
-        p * (xs_list[i] * std::cos(phi) + ys_list[i] * std::sin(phi));
+        p * (xs_list[i] * std::cos(phi) + ys_list[i] * std::sin(phi)) +
+        eta_p * z_ref;
     EXPECT_NEAR(dg.time_delay[i], expected_tau, 1e-9);
   }
 }

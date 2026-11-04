@@ -5,6 +5,7 @@
 #include <cmath>
 #include <fstream>
 #include <gtest/gtest.h>
+#include <numbers>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -398,6 +399,8 @@ TEST(FkDriver, Specfem3dConventionScalesAmplitudeAndDelay) {
   wave.take_off_theta = static_cast<type_real>(20.0 * 3.14159265 / 180.0);
   wave.origin_time = 5;
   wave.gaussian_half_duration = 2;
+  // The half-space top, so a point at x = y = 0 has no delay.
+  wave.origin_z = static_cast<type_real>(-model.halfspace_top_depth());
 
   fk_injection::TimeWindow window;
   window.dt = static_cast<type_real>(0.05);
@@ -452,4 +455,215 @@ TEST(FkDriver, Specfem3dConventionScalesAmplitudeAndDelay) {
               static_cast<double>(fft_samples) /
                   static_cast<double>(fft_samples - 1),
               1.0e-9);
+}
+
+// ===========================================================================
+// A homogeneous half-space under a P wave with a Gaussian source. The origin
+// sits below the evaluation points, so the first arrival there is the upgoing
+// incident wave.
+// ===========================================================================
+namespace driver_tests_impl {
+
+constexpr double density = 2700.0;
+constexpr double vp = 3000.0;
+constexpr double vs = 1732.051;
+constexpr double origin_z = -223944.719;
+constexpr double take_off = 20.0 * std::numbers::pi / 180.0;
+
+fk_injection::ElasticIsotropicLayer homogeneous_layer(double thickness) {
+  fk_injection::ElasticIsotropicLayer layer;
+  layer.density = static_cast<type_real>(density);
+  layer.p_velocity = static_cast<type_real>(vp);
+  layer.s_velocity = static_cast<type_real>(vs);
+  layer.thickness = static_cast<type_real>(thickness);
+  return layer;
+}
+
+fk_injection::IncidentWave gaussian_p_wave() {
+  fk_injection::IncidentWave wave;
+  wave.type = fk_injection::incident_wave_type::p;
+  wave.take_off_theta = static_cast<type_real>(take_off);
+  wave.azimuth_phi = static_cast<type_real>(-90.0 * std::numbers::pi / 180.0);
+  wave.origin_z = static_cast<type_real>(origin_z);
+  wave.gaussian_half_duration = 5;
+  return wave;
+}
+
+fk_injection::TimeWindow long_window(double frequency_sampling) {
+  fk_injection::TimeWindow window;
+  window.dt = static_cast<type_real>(0.15);
+  window.nstep = 1200;
+  window.frequency_max = static_cast<type_real>(0.2);
+  window.frequency_sampling = static_cast<type_real>(frequency_sampling);
+  window.time_window_length = 180;
+  return window;
+}
+
+/** @brief Evaluation points at x = y = 0 with a downward normal. */
+fk_injection::EvalPoints
+points_with_traction(const std::vector<double> &depths) {
+  const double mu = density * vs * vs;
+  const double lambda = density * vp * vp - 2.0 * mu;
+  const double xi = (vs * vs) / (vp * vp);
+
+  auto points = make_eval_points(depths, /*with_normals=*/true,
+                                 /*with_lame=*/true);
+  for (int i = 0; i < points.size(); ++i) {
+    points.normal_z[i] = -1;
+    points.lame_ratio_xi1[i] = static_cast<type_real>(1.0 - 2.0 * xi);
+    points.lame_ratio_xim[i] = static_cast<type_real>((1.0 - xi) * mu);
+    points.lame_ratio_bulk[i] =
+        static_cast<type_real>(lambda / (2.0 * (lambda + mu)));
+  }
+  return points;
+}
+
+/** @brief Sampled field with row-major (point, component, step) access. */
+struct SampledField {
+  std::vector<type_real> values{};
+  int number_of_steps = 0;
+
+  SampledField(const fk_injection::FkResult &result, int steps)
+      : values(static_cast<std::size_t>(result.number_of_points()) *
+               fk_injection::number_of_sample_components * steps),
+        number_of_steps(steps) {
+    result.sample(0, steps, values);
+  }
+
+  double operator()(int point, int component, int step) const {
+    return static_cast<double>(
+        values[(static_cast<std::size_t>(point) *
+                    fk_injection::number_of_sample_components +
+                component) *
+                   number_of_steps +
+               step]);
+  }
+};
+
+/** @brief Step at which |component| peaks for one point. */
+int peak_step(const SampledField &field, int point, int component) {
+  int step_at_peak = 0;
+  double peak = 0.0;
+  for (int step = 0; step < field.number_of_steps; ++step) {
+    const double magnitude = std::fabs(field(point, component, step));
+    if (magnitude > peak) {
+      peak = magnitude;
+      step_at_peak = step;
+    }
+  }
+  return step_at_peak;
+}
+
+} // namespace driver_tests_impl
+
+// Traction and velocity of an upgoing plane P wave satisfy the impedance
+// relations; a sign or scale error in either breaks them.
+TEST(FkDriver, TractionConsistentWithImpedance) {
+  const fk_injection::LayeredModel model(
+      {}, { driver_tests_impl::homogeneous_layer(0) });
+  const auto window = driver_tests_impl::long_window(2.0);
+  const auto result =
+      fk_injection::solve(model, driver_tests_impl::gaussian_p_wave(), window,
+                          driver_tests_impl::points_with_traction({ 120000.0 }),
+                          fk_injection::field_derivative::velocity);
+  const driver_tests_impl::SampledField field(result, window.nstep);
+
+  const int velocity_y = fk_injection::sample_kinematic_offset + 1;
+  const int velocity_z = fk_injection::sample_kinematic_offset + 2;
+  const int traction_y = fk_injection::sample_traction_offset + 1;
+  const int traction_z = fk_injection::sample_traction_offset + 2;
+  const int step = driver_tests_impl::peak_step(field, 0, velocity_z);
+  ASSERT_GT(std::fabs(field(0, velocity_z, step)), 0.0);
+
+  const double mu = driver_tests_impl::density * driver_tests_impl::vs *
+                    driver_tests_impl::vs;
+  const double lambda = driver_tests_impl::density * driver_tests_impl::vp *
+                            driver_tests_impl::vp -
+                        2.0 * mu;
+  const double cosine = std::cos(driver_tests_impl::take_off);
+
+  EXPECT_NEAR(field(0, traction_z, step) /
+                  (driver_tests_impl::density * driver_tests_impl::vp *
+                   field(0, velocity_z, step)),
+              (lambda + 2.0 * mu * cosine * cosine) /
+                  ((lambda + 2.0 * mu) * cosine),
+              0.15);
+  EXPECT_NEAR(field(0, traction_y, step) /
+                  (driver_tests_impl::density * driver_tests_impl::vs *
+                   field(0, velocity_y, step)),
+              2.0 * (driver_tests_impl::vs / driver_tests_impl::vp) * cosine,
+              0.20);
+}
+
+// A delayed P pulse at (x = y = 0, SEM z) arrives at eta_p * (z - z0).
+TEST(FkDriver, DelayedArrivalMatchesPlaneWaveTiming) {
+  const fk_injection::LayeredModel model(
+      {}, { driver_tests_impl::homogeneous_layer(0) });
+  const auto window = driver_tests_impl::long_window(10.0);
+  const std::vector<double> depths = { 50005.0, 20000.0 };
+  const auto result = fk_injection::solve(
+      model, driver_tests_impl::gaussian_p_wave(), window,
+      make_eval_points(depths), fk_injection::field_derivative::velocity);
+  const driver_tests_impl::SampledField field(result, window.nstep);
+
+  const double p =
+      std::sin(driver_tests_impl::take_off) / driver_tests_impl::vp;
+  const double eta =
+      std::sqrt(1.0 / (driver_tests_impl::vp * driver_tests_impl::vp) - p * p);
+  const int velocity_z = fk_injection::sample_kinematic_offset + 2;
+  for (int point = 0; point < 2; ++point) {
+    // Velocity of a Gaussian peaks at its inflection, up to a half-duration of
+    // 5 s before the displacement center.
+    EXPECT_NEAR(driver_tests_impl::peak_step(field, point, velocity_z) *
+                    static_cast<double>(window.dt),
+                eta * (-depths[point] - driver_tests_impl::origin_z), 6.0)
+        << "depth " << depths[point];
+  }
+}
+
+// Splitting a half-space into two identical layers changes nothing physically,
+// so the field must not change. It routes evaluation through the finite-layer
+// propagator and moves the half-space top, which anchors the time zero.
+TEST(FkDriver, IdenticalLayerSplitReducesToHalfspace) {
+  const fk_injection::LayeredModel halfspace(
+      {}, { driver_tests_impl::homogeneous_layer(0) });
+  const fk_injection::LayeredModel split(
+      {}, { driver_tests_impl::homogeneous_layer(30000.0),
+            driver_tests_impl::homogeneous_layer(0) });
+  const auto wave = driver_tests_impl::gaussian_p_wave();
+  const auto window = driver_tests_impl::long_window(10.0);
+  const std::vector<double> depths = { 5000.0,  15000.0, 29900.0,
+                                       30100.0, 60000.0, 120000.0 };
+  const auto points = driver_tests_impl::points_with_traction(depths);
+
+  const driver_tests_impl::SampledField reference(
+      fk_injection::solve(halfspace, wave, window, points,
+                          fk_injection::field_derivative::velocity),
+      window.nstep);
+  const driver_tests_impl::SampledField reduced(
+      fk_injection::solve(split, wave, window, points,
+                          fk_injection::field_derivative::velocity),
+      window.nstep);
+
+  for (std::size_t point = 0; point < depths.size(); ++point) {
+    for (const int first_component : { fk_injection::sample_kinematic_offset,
+                                       fk_injection::sample_traction_offset }) {
+      double peak = 0.0;
+      double difference = 0.0;
+      for (int component = first_component; component < first_component + 3;
+           ++component) {
+        for (int step = 0; step < window.nstep; ++step) {
+          const double value = reference(point, component, step);
+          peak = std::max(peak, std::fabs(value));
+          difference = std::max(
+              difference, std::fabs(reduced(point, component, step) - value));
+        }
+      }
+      ASSERT_GT(peak, 0.0);
+      // Limited by single-precision coefficient storage, about 1e-3 of peak.
+      EXPECT_LT(difference / peak, 5.0e-3)
+          << "depth " << depths[point] << ", components from "
+          << first_component;
+    }
+  }
 }

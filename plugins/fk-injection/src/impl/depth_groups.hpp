@@ -66,7 +66,8 @@ double depth_tolerance(double max_depth);
  * distinct depth levels are never merged, so each group's field is computed at
  * its exact depth with no approximation. Each group's geometry comes from
  * @c LayeredModel::locate at the group depth. The per-point delay is
- * @f$ \tau = p[(x-x_0)\cos\phi + (y-y_0)\sin\phi] + \eta_p(0 - z_0) @f$,
+ * @f$ \tau = p[(x-x_0)\cos\phi + (y-y_0)\sin\phi] + \\eta_p(z_{ref} - z_0) @f$,
+ * with @f$ z_{ref} @f$ the half-space top,
  * @f$ \eta_p = \sqrt{1/v_{P,hs}^2 - p^2} @f$ (the half-space P
  * slowness, matching the reference for both wave types).
  *

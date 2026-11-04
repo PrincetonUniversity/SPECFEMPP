@@ -34,12 +34,15 @@ fk_injection::impl::group_by_depth(const fk_injection::EvalPoints &points,
   }
 
   // --- Per-point time delay tau ---
-  // tau = p*[(x-x0)*cos(phi) + (y-y0)*sin(phi)] + eta_p*(0 - z0)
-  // eta_p uses the half-space P velocity regardless of wave type.
+  // tau = p*[(x-x0)*cos(phi) + (y-y0)*sin(phi)] + eta_p*(z_ref - z0)
+  // eta_p uses the half-space P velocity regardless of wave type. z_ref is the
+  // half-space top, in the origin's frame (z up, model top 0): the FK time zero
+  // is where the incident wave crosses it (SPECFEM3D's Z_REF_for_FK).
   const double phi = static_cast<double>(wave.azimuth_phi);
   const double x0 = static_cast<double>(wave.origin_x);
   const double y0 = static_cast<double>(wave.origin_y);
   const double z0 = static_cast<double>(wave.origin_z);
+  const double z_ref = -model.halfspace_top_depth();
   const double vp_hs =
       static_cast<double>(model.elastic_layers().back().p_velocity);
   const double eta_p = std::sqrt(1.0 / (vp_hs * vp_hs) - p * p);
@@ -54,7 +57,7 @@ fk_injection::impl::group_by_depth(const fk_injection::EvalPoints &points,
       const double yi = static_cast<double>(points.y[i]);
       time_delay[i] =
           p * ((xi - x0) * std::cos(phi) + (yi - y0) * std::sin(phi)) +
-          eta_p * (0.0 - z0);
+          eta_p * (z_ref - z0);
     }
     time_delay_min = *std::min_element(time_delay.begin(), time_delay.end());
     time_delay_max = *std::max_element(time_delay.begin(), time_delay.end());

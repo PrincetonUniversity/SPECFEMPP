@@ -543,3 +543,28 @@ TEST(LayeredModel, FreeSurfaceOnlyAtFluidTop) {
   EXPECT_EQ(deep.layer, 1);
   EXPECT_FALSE(deep.at_free_surface);
 }
+
+TEST(LayeredModel, HalfspaceTopDepthSumsFiniteLayers) {
+  fk_injection::AcousticLayer fluid;
+  fluid.density = 1000;
+  fluid.p_velocity = 1500;
+  fluid.thickness = 2000;
+
+  fk_injection::ElasticIsotropicLayer crust;
+  crust.density = 2800;
+  crust.p_velocity = 6000;
+  crust.s_velocity = 3500;
+  crust.thickness = 10000;
+
+  fk_injection::ElasticIsotropicLayer halfspace;
+  halfspace.density = 3300;
+  halfspace.p_velocity = 8100;
+  halfspace.s_velocity = 4500;
+
+  EXPECT_NEAR(
+      fk_injection::LayeredModel({}, { halfspace }).halfspace_top_depth(), 0.0,
+      1.0e-9);
+  EXPECT_NEAR(fk_injection::LayeredModel({ fluid }, { crust, halfspace })
+                  .halfspace_top_depth(),
+              12000.0, 1.0e-9);
+}
