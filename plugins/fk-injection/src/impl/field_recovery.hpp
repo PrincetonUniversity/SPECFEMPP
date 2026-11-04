@@ -53,8 +53,8 @@ struct SeriesSpectrum {
  */
 inline fk_injection::ComplexVector<4>
 elastic_state_in_layer(const fk_injection::ElasticIsotropicLayer &layer,
-                       std::complex<double> omega, type_real height,
-                       type_real ray_parameter,
+                       std::complex<double> omega, double height,
+                       double ray_parameter,
                        const fk_injection::ComplexVector<4> &state_at_bottom) {
   const double g0 = elastic_gamma0(layer, ray_parameter);
   const fk_injection::ComplexMatrix<4> propagator =
@@ -82,7 +82,7 @@ elastic_state_in_layer(const fk_injection::ElasticIsotropicLayer &layer,
 inline fk_injection::ComplexVector<4>
 elastic_state_in_halfspace(const fk_injection::ComplexMatrix<4> &e_mat,
                            const fk_injection::ElasticIsotropicLayer &halfspace,
-                           std::complex<double> omega, type_real ray_parameter,
+                           std::complex<double> omega, double ray_parameter,
                            double zz,
                            const fk_injection::ComplexVector<4> &modes) {
   using Cplx = std::complex<double>;
@@ -116,8 +116,8 @@ elastic_state_in_halfspace(const fk_injection::ComplexMatrix<4> &e_mat,
  */
 inline AcousticState
 acoustic_state_in_layer(const fk_injection::AcousticLayer &layer,
-                        std::complex<double> omega, type_real height,
-                        type_real ray_parameter, const AcousticState &bottom) {
+                        std::complex<double> omega, double height,
+                        double ray_parameter, const AcousticState &bottom) {
   const fk_injection::ComplexMatrix<4> propagator =
       layer_propagator(layer, omega, height, ray_parameter);
   AcousticState out;
@@ -144,7 +144,7 @@ acoustic_state_in_layer(const fk_injection::AcousticLayer &layer,
  */
 inline SeriesSpectrum
 project_elastic(const fk_injection::ComplexVector<4> &state,
-                std::complex<double> omega, type_real ray_parameter,
+                std::complex<double> omega, double ray_parameter,
                 bool compute_stress) {
   using Cplx = std::complex<double>;
   const Cplx neg_i(0.0, -1.0);
@@ -158,7 +158,7 @@ project_elastic(const fk_injection::ComplexVector<4> &state,
   if (compute_stress) {
     const Cplx txz = state[2];
     const Cplx tzz = state[3];
-    const Cplx omega_p = omega * Cplx(static_cast<double>(ray_parameter), 0.0);
+    const Cplx omega_p = omega * Cplx(ray_parameter, 0.0);
     out.values[series_sigma_zz] = omega_p * tzz;         // S2
     out.values[series_sigma_rz] = neg_i * omega_p * txz; // S3
     out.values[series_dx] = omega_p * dx;                // S4
@@ -180,19 +180,16 @@ project_elastic(const fk_injection::ComplexVector<4> &state,
  *        point at a layer's bottom boundary into the layer below, so at the
  *        fluid-solid interface this is the underlying solid's density. The
  *        caller resolves it.
- * @param omega          Complex angular frequency (rad/s).
  * @param ray_parameter  Horizontal slowness p (s/m).
  * @return SeriesSpectrum with S0, S1, S2 populated.
  */
 inline SeriesSpectrum project_acoustic(const AcousticState &state,
                                        double horizontal_density,
-                                       std::complex<double> omega,
-                                       type_real ray_parameter) {
+                                       double ray_parameter) {
   using Cplx = std::complex<double>;
-  const double p = static_cast<double>(ray_parameter);
+  const double p = ray_parameter;
   const double rho = horizontal_density;
   const Cplx neg_i(0.0, -1.0);
-  (void)omega; // chi_dot needs no (i*omega) factor
 
   SeriesSpectrum out;
   out.values[series_horizontal] =

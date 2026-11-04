@@ -51,9 +51,9 @@ struct IncidentAmplitude {
 inline IncidentAmplitude
 incident_amplitude(const fk_injection::ElasticIsotropicLayer &halfspace,
                    fk_injection::incident_wave_type type, type_real amplitude,
-                   type_real ray_parameter) {
+                   double ray_parameter) {
   const double A = static_cast<double>(amplitude);
-  const double p = static_cast<double>(ray_parameter);
+  const double p = ray_parameter;
   const double vp = static_cast<double>(halfspace.p_velocity);
   const double vs = static_cast<double>(halfspace.s_velocity);
 
@@ -69,41 +69,76 @@ incident_amplitude(const fk_injection::ElasticIsotropicLayer &halfspace,
 }
 
 /**
- * @brief Solve for the two unknown half-space coefficients from the
- *        free-surface zero-traction condition.
+ * @brief Solve for the two unknown half-space coefficients of an elastic-only
+ *        model from the free-surface zero-traction condition.
  *
- * Faithfully mirrors fk_core.cpp lines 263–329.  Given the propagated elastic
- * matrix @f$ N = (\text{elastic chain}) \cdot E @f$, optionally the full
- * acoustic propagator @c qmat_full when the model has a fluid block (leading
- * 2×2 block meaningful), the incident type, and the pre-computed incident
- * amplitudes @c c1 (SV) and @c c3 (P), the function returns the two reflected /
- * transmitted coefficients that enforce zero traction at the free surface.
- *
- * **Elastic-only branch** (@c has_fluid == false, ref lines 287–302):
- * The free-surface condition reduces to a 2×2 system on the traction rows of
- * @f$ N @f$ (rows 2 and 3 in 0-based indexing) using the up-going mode columns
- * (columns 1 and 3 for P-type; columns 0 and 3 for SV-type), solved
- * analytically.
- *
- * **Fluid branch** (@c has_fluid == true, ref lines 303–328):
- * A modified 2×2 system @f$ N_1 @f$ is assembled from @f$ N @f$ and the fluid
- * propagator rows, then solved by the same Cramer formula.
+ * Faithfully mirrors fk_core.cpp lines 287-302. Given the propagated elastic
+ * matrix @f$ N = (\text{elastic chain}) \cdot E @f$, the free-surface condition
+ * reduces to a 2×2 system on the traction rows of @f$ N @f$ (rows 2 and 3 in
+ * 0-based indexing) using the up-going mode columns (columns 1 and 3 for
+ * P-type; columns 0 and 3 for SV-type), solved analytically.
  *
  * If the determinant @f$|\delta| \leq \epsilon@f$ (singular configuration) both
  * coefficients are set to zero.
  *
- * @param n_mat      Propagated elastic matrix @f$ N @f$ (4×4 complex).
- * @param has_fluid  True when the model contains at least one fluid layer.
- * @param qmat_full  Full acoustic propagator (leading 2×2 block used when
- *                   @c has_fluid is true; ignored otherwise).
- * @param type       Incident wave type (P or SV).
- * @param c1         Incoming SV amplitude (from @c incident_amplitude).
- * @param c3         Incoming P amplitude  (from @c incident_amplitude).
+ * @param n_mat Propagated elastic matrix @f$ N @f$ (4×4 complex).
+ * @param type  Incident wave type (P or SV).
+ * @param c1    Incoming SV amplitude (from @c incident_amplitude).
+ * @param c3    Incoming P amplitude  (from @c incident_amplitude).
  * @return Array of two complex coefficients {coeff0, coeff1}.
  */
 inline std::array<std::complex<double>, 2>
 halfspace_coefficients(const fk_injection::ComplexMatrix<4> &n_mat,
-                       bool has_fluid,
+                       fk_injection::incident_wave_type type,
+                       std::complex<double> c1, std::complex<double> c3) {
+  using Cplx = std::complex<double>;
+  const Cplx zero(0.0, 0.0);
+
+  std::array<Cplx, 2> coeffs;
+  coeffs[0] = zero;
+  coeffs[1] = zero;
+
+  const bool is_p = (type == fk_injection::incident_wave_type::p);
+
+  const Cplx a = n_mat(2, 1);
+  const Cplx b = n_mat(2, 3);
+  const Cplx c = n_mat(3, 1);
+  const Cplx d = n_mat(3, 3);
+  const Cplx delta = a * d - b * c;
+
+  if (std::abs(delta) > tinyval) {
+    if (is_p) {
+      coeffs[0] = -(d * n_mat(2, 2) - b * n_mat(3, 2)) / delta * c3;
+      coeffs[1] = -(-c * n_mat(2, 2) + a * n_mat(3, 2)) / delta * c3;
+    } else {
+      coeffs[0] = -(d * n_mat(2, 0) - b * n_mat(3, 0)) / delta * c1;
+      coeffs[1] = -(-c * n_mat(2, 0) + a * n_mat(3, 0)) / delta * c1;
+    }
+  }
+
+  return coeffs;
+}
+
+/**
+ * @brief Solve for the two unknown half-space coefficients of a model with a
+ *        fluid block from the free-surface condition.
+ *
+ * Faithfully mirrors fk_core.cpp lines 303-328. A modified 2×2 system
+ * @f$ N_1 @f$ is assembled from @f$ N @f$ and the fluid propagator rows, then
+ * solved by the same Cramer formula as the elastic-only overload.
+ *
+ * If the determinant @f$|\delta| \leq \epsilon@f$ (singular configuration) both
+ * coefficients are set to zero.
+ *
+ * @param n_mat     Propagated elastic matrix @f$ N @f$ (4×4 complex).
+ * @param qmat_full Full acoustic propagator (leading 2×2 block used).
+ * @param type      Incident wave type (P or SV).
+ * @param c1        Incoming SV amplitude (from @c incident_amplitude).
+ * @param c3        Incoming P amplitude  (from @c incident_amplitude).
+ * @return Array of two complex coefficients {coeff0, coeff1}.
+ */
+inline std::array<std::complex<double>, 2>
+halfspace_coefficients(const fk_injection::ComplexMatrix<4> &n_mat,
                        const fk_injection::ComplexMatrix<4> &qmat_full,
                        fk_injection::incident_wave_type type,
                        std::complex<double> c1, std::complex<double> c3) {
@@ -116,58 +151,33 @@ halfspace_coefficients(const fk_injection::ComplexMatrix<4> &n_mat,
 
   const bool is_p = (type == fk_injection::incident_wave_type::p);
 
-  if (!has_fluid) {
-    // -----------------------------------------------------------------------
-    // Elastic-only: free-surface 2×2 system on traction rows (ref lines
-    // 287-302)
-    // -----------------------------------------------------------------------
-    const Cplx a = n_mat(2, 1);
-    const Cplx b = n_mat(2, 3);
-    const Cplx c = n_mat(3, 1);
-    const Cplx d = n_mat(3, 3);
-    const Cplx delta = a * d - b * c;
+  const Cplx n1_00 = n_mat(2, 1);
+  const Cplx n1_01 = n_mat(2, 3);
+  const Cplx n1_10 =
+      qmat_full(1, 0) * n_mat(1, 1) - qmat_full(1, 1) * n_mat(3, 1);
+  const Cplx n1_11 =
+      qmat_full(1, 0) * n_mat(1, 3) - qmat_full(1, 1) * n_mat(3, 3);
 
-    if (std::abs(delta) > tinyval) {
-      if (is_p) {
-        coeffs[0] = -(d * n_mat(2, 2) - b * n_mat(3, 2)) / delta * c3;
-        coeffs[1] = -(-c * n_mat(2, 2) + a * n_mat(3, 2)) / delta * c3;
-      } else {
-        coeffs[0] = -(d * n_mat(2, 0) - b * n_mat(3, 0)) / delta * c1;
-        coeffs[1] = -(-c * n_mat(2, 0) + a * n_mat(3, 0)) / delta * c1;
-      }
-    }
+  Cplx MM;
+  if (is_p) {
+    MM = qmat_full(1, 0) * n_mat(1, 2) - qmat_full(1, 1) * n_mat(3, 2);
   } else {
-    // -----------------------------------------------------------------------
-    // Fluid branch: modified 2×2 system N1 (ref lines 303-328)
-    // -----------------------------------------------------------------------
-    const Cplx n1_00 = n_mat(2, 1);
-    const Cplx n1_01 = n_mat(2, 3);
-    const Cplx n1_10 =
-        qmat_full(1, 0) * n_mat(1, 1) - qmat_full(1, 1) * n_mat(3, 1);
-    const Cplx n1_11 =
-        qmat_full(1, 0) * n_mat(1, 3) - qmat_full(1, 1) * n_mat(3, 3);
+    MM = qmat_full(1, 0) * n_mat(1, 0) - qmat_full(1, 1) * n_mat(3, 0);
+  }
 
-    Cplx MM;
+  const Cplx a = n1_00;
+  const Cplx b = n1_01;
+  const Cplx c = n1_10;
+  const Cplx d = n1_11;
+  const Cplx delta = a * d - b * c;
+
+  if (std::abs(delta) > tinyval) {
     if (is_p) {
-      MM = qmat_full(1, 0) * n_mat(1, 2) - qmat_full(1, 1) * n_mat(3, 2);
+      coeffs[0] = -(d * n_mat(2, 2) - b * MM) / delta * c3;
+      coeffs[1] = -(-c * n_mat(2, 2) + a * MM) / delta * c3;
     } else {
-      MM = qmat_full(1, 0) * n_mat(1, 0) - qmat_full(1, 1) * n_mat(3, 0);
-    }
-
-    const Cplx a = n1_00;
-    const Cplx b = n1_01;
-    const Cplx c = n1_10;
-    const Cplx d = n1_11;
-    const Cplx delta = a * d - b * c;
-
-    if (std::abs(delta) > tinyval) {
-      if (is_p) {
-        coeffs[0] = -(d * n_mat(2, 2) - b * MM) / delta * c3;
-        coeffs[1] = -(-c * n_mat(2, 2) + a * MM) / delta * c3;
-      } else {
-        coeffs[0] = -(d * n_mat(2, 0) - b * MM) / delta * c1;
-        coeffs[1] = -(-c * n_mat(2, 0) + a * MM) / delta * c1;
-      }
+      coeffs[0] = -(d * n_mat(2, 0) - b * MM) / delta * c1;
+      coeffs[1] = -(-c * n_mat(2, 0) + a * MM) / delta * c1;
     }
   }
 

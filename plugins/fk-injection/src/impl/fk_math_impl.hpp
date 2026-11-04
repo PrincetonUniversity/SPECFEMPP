@@ -29,8 +29,8 @@ inline constexpr double tinyval = 1.0e-9;
  */
 inline std::array<std::complex<double>, 2>
 vertical_slowness(const fk_injection::ElasticIsotropicLayer &layer,
-                  type_real ray_parameter) {
-  const double p = static_cast<double>(ray_parameter);
+                  double ray_parameter) {
+  const double p = ray_parameter;
   const double vp = static_cast<double>(layer.p_velocity);
   const double vs = static_cast<double>(layer.s_velocity);
 
@@ -58,8 +58,8 @@ vertical_slowness(const fk_injection::ElasticIsotropicLayer &layer,
  */
 inline std::complex<double>
 vertical_slowness(const fk_injection::AcousticLayer &layer,
-                  type_real ray_parameter) {
-  const double p = static_cast<double>(ray_parameter);
+                  double ray_parameter) {
+  const double p = ray_parameter;
   const double vp = static_cast<double>(layer.p_velocity);
 
   const std::complex<double> neg_i(0.0, -1.0);
@@ -77,8 +77,8 @@ vertical_slowness(const fk_injection::AcousticLayer &layer,
  * @return gamma0 (dimensionless).
  */
 inline double elastic_gamma0(const fk_injection::ElasticIsotropicLayer &layer,
-                             type_real ray_parameter) {
-  const double p = static_cast<double>(ray_parameter);
+                             double ray_parameter) {
+  const double p = ray_parameter;
   const double vs = static_cast<double>(layer.s_velocity);
   return 2.0 * vs * vs * p * p;
 }
@@ -93,7 +93,7 @@ inline double elastic_gamma0(const fk_injection::ElasticIsotropicLayer &layer,
  * @return gamma1 (dimensionless).
  */
 inline double elastic_gamma1(const fk_injection::ElasticIsotropicLayer &layer,
-                             type_real ray_parameter) {
+                             double ray_parameter) {
   return 1.0 - 1.0 / elastic_gamma0(layer, ray_parameter);
 }
 

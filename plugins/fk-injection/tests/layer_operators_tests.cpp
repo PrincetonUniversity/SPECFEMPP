@@ -220,13 +220,12 @@ TEST(LayerOperators, HalfspaceEigenmatrix) {
 }
 
 // ============================================================================
-// Test 5: CoupleSolidToFluid
+// Test 5: AcousticFromSolid
 //
-// Given state {a,b,c,d}: result[0]==b, result[1]==-d, result[2]==c,
-// result[3]==-d.
+// Given state {a,b,c,d}: u_z == b and P/k == -d.
 // ============================================================================
 
-TEST(LayerOperators, CoupleSolidToFluid) {
+TEST(LayerOperators, AcousticFromSolid) {
   constexpr double kTol = 1.0e-12;
 
   fk_injection::ComplexVector<4> state;
@@ -235,21 +234,14 @@ TEST(LayerOperators, CoupleSolidToFluid) {
   state[2] = std::complex<double>(5.0, 6.0); // c
   state[3] = std::complex<double>(7.0, 8.0); // d
 
-  const auto result = fk_injection::impl::couple_solid_to_fluid(state);
+  const fk_injection::impl::AcousticState result =
+      fk_injection::impl::acoustic_from_solid(state);
 
-  // result[0] == b == (3,4).
-  EXPECT_NEAR(result[0].real(), 3.0, kTol);
-  EXPECT_NEAR(result[0].imag(), 4.0, kTol);
+  // u_z == b == (3,4).
+  EXPECT_NEAR(result.u_z.real(), 3.0, kTol);
+  EXPECT_NEAR(result.u_z.imag(), 4.0, kTol);
 
-  // result[1] == -d == -(7,8) == (-7,-8).
-  EXPECT_NEAR(result[1].real(), -7.0, kTol);
-  EXPECT_NEAR(result[1].imag(), -8.0, kTol);
-
-  // result[2] == c == (5,6).
-  EXPECT_NEAR(result[2].real(), 5.0, kTol);
-  EXPECT_NEAR(result[2].imag(), 6.0, kTol);
-
-  // result[3] == -d == (-7,-8).
-  EXPECT_NEAR(result[3].real(), -7.0, kTol);
-  EXPECT_NEAR(result[3].imag(), -8.0, kTol);
+  // P/k == -d == (-7,-8).
+  EXPECT_NEAR(result.pressure_over_k.real(), -7.0, kTol);
+  EXPECT_NEAR(result.pressure_over_k.imag(), -8.0, kTol);
 }

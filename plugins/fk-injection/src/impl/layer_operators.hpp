@@ -24,8 +24,8 @@ namespace fk_injection::impl {
  */
 inline fk_injection::ComplexMatrix<4>
 layer_propagator(const fk_injection::ElasticIsotropicLayer &layer,
-                 std::complex<double> omega, type_real thickness,
-                 type_real ray_parameter) {
+                 std::complex<double> omega, double thickness,
+                 double ray_parameter) {
   fk_injection::ComplexMatrix<4> P;
 
   // -------------------------------------------------------------------------
@@ -36,8 +36,8 @@ layer_propagator(const fk_injection::ElasticIsotropicLayer &layer,
   const std::complex<double> eta_beta = slowness[1];
 
   const double g1 = elastic_gamma1(layer, ray_parameter);
-  const double p = static_cast<double>(ray_parameter);
-  const double H = static_cast<double>(thickness);
+  const double p = ray_parameter;
+  const double H = thickness;
   const double rho = static_cast<double>(layer.density);
   const double vs = static_cast<double>(layer.s_velocity);
   const double mul = rho * vs * vs;
@@ -100,8 +100,8 @@ layer_propagator(const fk_injection::ElasticIsotropicLayer &layer,
  */
 inline fk_injection::ComplexMatrix<4>
 layer_propagator(const fk_injection::AcousticLayer &layer,
-                 std::complex<double> omega, type_real thickness,
-                 type_real ray_parameter) {
+                 std::complex<double> omega, double thickness,
+                 double ray_parameter) {
   fk_injection::ComplexMatrix<4> P;
 
   // -------------------------------------------------------------------------
@@ -111,8 +111,8 @@ layer_propagator(const fk_injection::AcousticLayer &layer,
   const std::complex<double> eta_alpha =
       vertical_slowness(layer, ray_parameter);
 
-  const double p = static_cast<double>(ray_parameter);
-  const double H = static_cast<double>(thickness);
+  const double p = ray_parameter;
+  const double H = thickness;
   const double rho = static_cast<double>(layer.density);
 
   const std::complex<double> c1 = omega * eta_alpha * H;
@@ -143,13 +143,13 @@ layer_propagator(const fk_injection::AcousticLayer &layer,
  */
 inline fk_injection::ComplexMatrix<4> elastic_halfspace_eigenmatrix(
     const fk_injection::ElasticIsotropicLayer &halfspace,
-    type_real ray_parameter) {
+    double ray_parameter) {
   const auto slowness = vertical_slowness(halfspace, ray_parameter);
   const std::complex<double> eta_alpha = slowness[0];
   const std::complex<double> eta_beta = slowness[1];
 
   const double g1 = elastic_gamma1(halfspace, ray_parameter);
-  const double p = static_cast<double>(ray_parameter);
+  const double p = ray_parameter;
   const double rho = static_cast<double>(halfspace.density);
   const double vs = static_cast<double>(halfspace.s_velocity);
   const double two_mul = 2.0 * rho * vs * vs;
