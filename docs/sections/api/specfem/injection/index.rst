@@ -114,3 +114,22 @@ way.
 .. doxygenfunction:: specfem::injection::window_start
 
 .. doxygenfunction:: specfem::injection::window_steps_for_budget
+
+Injection points
+----------------
+
+:cpp:func:`specfem::injection::make_injection_points` turns the assembled
+injection surface (:doc:`../assembly/injection_surface/injection_surface`) into
+the points for the provider session. Every material system of the solver
+becomes a point group, in the same order on every rank. The injection method
+decides, through a :cpp:type:`specfem::injection::QuantityPolicy`, which
+quantities each system requests; it is only asked about systems that have
+injection points on some rank, and a system it does not support fails the run
+on every rank. Coordinates and normals are shared with the assembly rather than
+copied, and material properties are passed by name.
+
+.. doxygentypedef:: specfem::injection::QuantityPolicy
+
+.. doxygenfunction:: specfem::injection::make_injection_points
+
+.. doxygenfunction:: specfem::injection::make_simulation_parameters

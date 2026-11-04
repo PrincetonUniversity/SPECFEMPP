@@ -151,6 +151,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
                        mesh,
                        this->mesh,
                        this->jacobian_matrix };
+  this->injection_surface = { mesh, this->mesh, this->jacobian_matrix,
+                              this->element_types, this->boundaries };
   this->conforming_interfaces = {
     ngllz,     nglly, ngllx, this->element_intersections, this->jacobian_matrix,
     this->mesh

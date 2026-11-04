@@ -118,6 +118,7 @@ target_link_libraries(specfem_core_interface
         specfem::globe
         specfem::injection
         specfem::injection_session
+        specfem::injection_points
         specfem::io
         specfem::io_backends
         specfem::logger

@@ -42,6 +42,15 @@ struct Assembly3D {
     assembly.jacobian_matrix = { assembly.mesh };
     assembly.properties = { assembly.element_types, assembly.mesh,
                             mesh.materials, false };
+    assembly.boundaries = {
+      nspec, 5, 5, 5, mesh, assembly.mesh, assembly.jacobian_matrix
+    };
+    assembly.injection_surface = { mesh, assembly.mesh,
+                                   assembly.jacobian_matrix,
+                                   assembly.element_types,
+                                   assembly.boundaries };
+    assembly.info = { assembly.mesh, assembly.properties,
+                      assembly.element_types };
   }
 };
 } // namespace specfem::test_configuration
