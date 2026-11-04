@@ -127,39 +127,38 @@ TEST(FieldRecovery, ElasticInterfaceContinuity) {
 }
 
 // ============================================================================
-// Test 9: AcousticFreeSurfacePressureSmall
+// Test 9: ProjectAcousticPotentialRate
 //
-// Sanity check: project_acoustic at height=500 m produces a finite pressure.
+// Hand-written state: with P/k = 1+2i, chi_dot = i*p*(P/k) = p*(-2+i), and u_z
+// passes through unchanged.
 // ============================================================================
 
-TEST(FieldRecovery, AcousticFreeSurfacePressureSmall) {
-  fk_injection::ElasticIsotropicLayer hs;
-  fk_injection::ElasticIsotropicLayer layer;
-  fk_injection::type_real p;
-  std::complex<double> omega;
-  fk_injection::ComplexMatrix<4> e_mat;
-  fk_injection::ComplexVector<4> modes;
-  field_recovery_tests_impl::make_elastic_model(hs, layer, p, omega, e_mat,
-                                                modes);
-
+TEST(FieldRecovery, ProjectAcousticPotentialRate) {
   fk_injection::AcousticLayer fluid;
-  fluid.density = static_cast<fk_injection::type_real>(1020.0);
+  fluid.density = static_cast<fk_injection::type_real>(1000.0);
   fluid.p_velocity = static_cast<fk_injection::type_real>(1500.0);
   fluid.thickness = static_cast<fk_injection::type_real>(2000.0);
 
-  const auto solid_interface_state = e_mat * modes;
-  const fk_injection::impl::AcousticState base =
-      fk_injection::impl::acoustic_from_solid(solid_interface_state);
+  const fk_injection::type_real p =
+      static_cast<fk_injection::type_real>(1.0e-4);
+  const double pd = static_cast<double>(p);
+  const std::complex<double> omega(3.0, 0.0);
 
-  const fk_injection::impl::AcousticState at =
-      fk_injection::impl::acoustic_state_in_layer(
-          fluid, omega, static_cast<fk_injection::type_real>(500.0), p, base);
+  fk_injection::impl::AcousticState state;
+  state.u_z = std::complex<double>(3.0, 4.0);
+  state.pressure_over_k = std::complex<double>(1.0, 2.0);
 
-  const fk_injection::impl::SeriesSpectrum s =
-      fk_injection::impl::project_acoustic(at, fluid, omega, p);
+  const fk_injection::impl::SeriesSpectrum series =
+      fk_injection::impl::project_acoustic(state, fluid, omega, p);
 
-  const std::complex<double> pres =
-      s.values[fk_injection::impl::series_sigma_zz];
-  EXPECT_TRUE(std::isfinite(pres.real())) << "pressure real part is not finite";
-  EXPECT_TRUE(std::isfinite(pres.imag())) << "pressure imag part is not finite";
+  constexpr double kTol = 1.0e-15;
+  const std::complex<double> chi_dot =
+      series.values[fk_injection::impl::series_potential_rate];
+  EXPECT_NEAR(chi_dot.real(), -2.0 * pd, kTol);
+  EXPECT_NEAR(chi_dot.imag(), pd, kTol);
+
+  const std::complex<double> u_z =
+      series.values[fk_injection::impl::series_vertical];
+  EXPECT_NEAR(u_z.real(), 3.0, kTol);
+  EXPECT_NEAR(u_z.imag(), 4.0, kTol);
 }
