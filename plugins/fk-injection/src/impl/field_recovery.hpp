@@ -141,7 +141,7 @@ inline AcousticState
 acoustic_state_in_layer(const fk_injection::AcousticLayer &layer,
                         std::complex<double> omega, double height,
                         double ray_parameter, const AcousticState &bottom) {
-  const fk_injection::ComplexMatrix<4> propagator =
+  const fk_injection::ComplexMatrix<2> propagator =
       layer_propagator(layer, omega, height, ray_parameter);
   AcousticState out;
   out.u_z =

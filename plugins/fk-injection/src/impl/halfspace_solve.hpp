@@ -129,21 +129,22 @@ halfspace_coefficients(const fk_injection::ComplexMatrix<4> &n_mat,
  * surface, which is row 1 of the fluid propagator applied to the base state.
  *
  * @param n_mat     Propagated elastic matrix @f$ N @f$ (4×4 complex).
- * @param qmat_full Full acoustic propagator (leading 2×2 block used).
+ * @param fluid_propagator Full acoustic propagator of the fluid block.
  * @param type      Incident wave type (P or SV).
  * @param amplitude Incident amplitude (from @c incident_amplitude).
  * @return Array of two complex coefficients {coeff0, coeff1}.
  */
 inline std::array<std::complex<double>, 2>
 halfspace_coefficients(const fk_injection::ComplexMatrix<4> &n_mat,
-                       const fk_injection::ComplexMatrix<4> &qmat_full,
+                       const fk_injection::ComplexMatrix<2> &fluid_propagator,
                        fk_injection::incident_wave_type type,
                        std::complex<double> amplitude) {
   fk_injection::ComplexVector<4> row0;
   fk_injection::ComplexVector<4> row1;
   for (int j = 0; j < 4; ++j) {
     row0[j] = n_mat(2, j);
-    row1[j] = qmat_full(1, 0) * n_mat(1, j) - qmat_full(1, 1) * n_mat(3, j);
+    row1[j] = fluid_propagator(1, 0) * n_mat(1, j) -
+              fluid_propagator(1, 1) * n_mat(3, j);
   }
   return free_surface_coefficients(row0, row1, incident_column(type),
                                    amplitude);

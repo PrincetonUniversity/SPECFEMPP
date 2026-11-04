@@ -92,8 +92,8 @@ TEST(LayerOperators, ElasticPropagatorSemigroup) {
 // ============================================================================
 // Test 3: AcousticPropagatorCoshSinh
 //
-// For a water layer verify the 2x2 block entries against independently computed
-// cosh/sinh expressions.  The (2,2) entry must be zero (block stays zero).
+// For a water layer verify the entries against independently computed cosh/sinh
+// expressions.
 // ============================================================================
 
 TEST(LayerOperators, AcousticPropagatorCoshSinh) {
@@ -141,10 +141,6 @@ TEST(LayerOperators, AcousticPropagatorCoshSinh) {
   // Q(1,0) == sa*rho/(p*eta).
   EXPECT_NEAR(Q(1, 0).real(), ref_10.real(), kTol);
   EXPECT_NEAR(Q(1, 0).imag(), ref_10.imag(), kTol);
-
-  // Q(2,2) == 0 (block stays zero).
-  EXPECT_NEAR(Q(2, 2).real(), 0.0, kTol);
-  EXPECT_NEAR(Q(2, 2).imag(), 0.0, kTol);
 }
 
 // ============================================================================
