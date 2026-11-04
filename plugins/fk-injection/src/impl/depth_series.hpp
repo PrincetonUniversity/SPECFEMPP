@@ -1,30 +1,33 @@
 #pragma once
 
 #include "fk_injection/layered_model.hpp"
-#include "fk_injection/utilities/fft.hpp"
 #include "impl/depth_groups.hpp"
 #include "impl/fk_setup.hpp"
 #include "impl/layer_stack.hpp"
-#include <Kokkos_Complex.hpp>
-#include <Kokkos_Core.hpp>
+#include "impl/series_layout.hpp"
+#include <complex>
+#include <cstddef>
+#include <vector>
 
 namespace fk_injection::impl {
 
 /**
  * @brief Cubic-B-spline coefficients of the depth-only series, per group.
  *
- * @c coefficients(group, series, coefficient) in LayoutRight HostSpace so each
- * series row is contiguous for spline evaluation. The series slots follow the
- * @c series_* indices (S0..S4). @c shift_samples / @c pad_samples carry the t0
- * and delay bookkeeping needed by @c make_result.
+ * Row-major (group, series, coefficient), so each series row is contiguous for
+ * spline evaluation. The series slots follow the @c series_* indices (S0..S4).
  */
 struct DepthSeries {
-  Kokkos::View<double ***, Kokkos::LayoutRight, Kokkos::HostSpace> coefficients;
+  std::vector<double> coefficients{};
   int number_of_groups = 0;
-  int number_of_series = 0;
   int coefficient_count = 0;
-  int pad_samples = 0;
-  int shift_samples = 0;
+
+  /// @brief Flat index of one coefficient in @c coefficients.
+  std::size_t index(int group, int series, int coefficient) const {
+    return (static_cast<std::size_t>(group) * number_of_series + series) *
+               coefficient_count +
+           coefficient;
+  }
 };
 
 /**
@@ -46,7 +49,7 @@ struct DepthSeries {
  */
 void depth_spectrum(const DepthGroup &group, const InterfaceStates &states,
                     const fk_injection::LayeredModel &model,
-                    const FkSetup &setup, Kokkos::complex<double> *spectrum,
+                    const FkSetup &setup, std::complex<double> *spectrum,
                     int fft_length);
 
 /**
@@ -65,15 +68,13 @@ void depth_spectrum(const DepthGroup &group, const InterfaceStates &states,
  *
  * @param spectrum     Group spectrum [number_of_series][N] (modified in place).
  * @param setup        Shared setup (sizes, fft_power, shift).
- * @param tables       Host FFT tables built for the inverse transform.
  * @param coefficients Output [number_of_series][coefficient_count], contiguous.
  * @param reproduce_specfem3d_reference Validation only: normalize by the SEM
  *        step (the SPECFEM3D NP-dependent amplitude) instead of dt_min.
  */
-void to_time_series(
-    Kokkos::complex<double> *spectrum, const FkSetup &setup,
-    const fk_injection::fft::FftTables<Kokkos::HostSpace> &tables,
-    double *coefficients, bool reproduce_specfem3d_reference = false);
+void to_time_series(std::complex<double> *spectrum, const FkSetup &setup,
+                    double *coefficients,
+                    bool reproduce_specfem3d_reference = false);
 
 /**
  * @brief Synthesize the depth-only series for every group.

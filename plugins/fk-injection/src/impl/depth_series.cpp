@@ -1,6 +1,7 @@
 #include "impl/depth_series.hpp"
 
 #include "fk_injection/utilities/cubic_bspline.hpp"
+#include "fk_injection/utilities/fft.hpp"
 #include "impl/field_recovery.hpp"
 #include "impl/fk_math_impl.hpp"
 
@@ -12,9 +13,9 @@ void fk_injection::impl::depth_spectrum(
     const fk_injection::impl::DepthGroup &group,
     const fk_injection::impl::InterfaceStates &states,
     const fk_injection::LayeredModel &model,
-    const fk_injection::impl::FkSetup &setup, Kokkos::complex<double> *spectrum,
+    const fk_injection::impl::FkSetup &setup, std::complex<double> *spectrum,
     int fft_length) {
-  using Cplx = Kokkos::complex<double>;
+  using Cplx = std::complex<double>;
 
   const int nf2 = static_cast<int>(setup.omega.size()); // nf_stored + 1
   const type_real p = static_cast<type_real>(setup.p);
@@ -76,8 +77,7 @@ void fk_injection::impl::depth_spectrum(
 }
 
 void fk_injection::impl::to_time_series(
-    Kokkos::complex<double> *spectrum, const fk_injection::impl::FkSetup &setup,
-    const fk_injection::fft::FftTables<Kokkos::HostSpace> &tables,
+    std::complex<double> *spectrum, const fk_injection::impl::FkSetup &setup,
     double *coefficients, bool reproduce_specfem3d_reference) {
   const int fft_samples = setup.sizes.number_of_fft_samples;
   const int ncoef = setup.sizes.number_of_stored_frequencies;
@@ -98,9 +98,8 @@ void fk_injection::impl::to_time_series(
   constexpr int taper_length = 20;
 
   for (int s = 0; s < nseries; ++s) {
-    fk_injection::fft::inverse(
-        setup.fft_power, spectrum + s * fft_samples, -1.0, normalization_dt,
-        real_series.data(), tables.bit_reversal.data(), tables.twiddles.data());
+    fk_injection::fft::inverse_real(spectrum + s * fft_samples, setup.fft_power,
+                                    normalization_dt, real_series.data());
 
     if (rotation != 0) {
       std::rotate(real_series.begin(), real_series.begin() + rotation,
@@ -139,29 +138,21 @@ fk_injection::impl::DepthSeries fk_injection::impl::depth_series(
   const int ngroups = static_cast<int>(groups.groups.size());
 
   fk_injection::impl::DepthSeries result;
-  result.coefficients =
-      Kokkos::View<double ***, Kokkos::LayoutRight, Kokkos::HostSpace>(
-          "fk_depth_series", ngroups, nseries, ncoef);
+  result.coefficients.resize(static_cast<std::size_t>(ngroups) * nseries *
+                             ncoef);
   result.number_of_groups = ngroups;
-  result.number_of_series = nseries;
   result.coefficient_count = ncoef;
-  result.pad_samples = setup.pad_samples;
-  result.shift_samples = setup.shift_samples;
 
-  const auto tables = fk_injection::fft::make_fft_tables<Kokkos::HostSpace>(
-      setup.fft_power, -1.0);
-
-  std::vector<Kokkos::complex<double>> spectrum(
-      static_cast<std::size_t>(nseries) * fft_samples);
+  std::vector<std::complex<double>> spectrum(static_cast<std::size_t>(nseries) *
+                                             fft_samples);
 
   for (int g = 0; g < ngroups; ++g) {
-    std::fill(spectrum.begin(), spectrum.end(),
-              Kokkos::complex<double>(0.0, 0.0));
+    std::fill(spectrum.begin(), spectrum.end(), std::complex<double>(0.0, 0.0));
     fk_injection::impl::depth_spectrum(groups.groups[g], states, model, setup,
                                        spectrum.data(), fft_samples);
-    fk_injection::impl::to_time_series(spectrum.data(), setup, tables,
-                                       &result.coefficients(g, 0, 0),
-                                       reproduce_specfem3d_reference);
+    fk_injection::impl::to_time_series(
+        spectrum.data(), setup, &result.coefficients[result.index(g, 0, 0)],
+        reproduce_specfem3d_reference);
   }
 
   return result;

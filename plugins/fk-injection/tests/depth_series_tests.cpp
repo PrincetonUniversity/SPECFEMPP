@@ -11,9 +11,9 @@
 #include "impl/field_recovery.hpp"
 #include "impl/fk_setup.hpp"
 #include "impl/layer_stack.hpp"
-#include <Kokkos_Complex.hpp>
-#include <Kokkos_Core.hpp>
+#include <algorithm>
 #include <cmath>
+#include <complex>
 #include <gtest/gtest.h>
 #include <vector>
 
@@ -29,13 +29,13 @@ fk_injection::EvalPoints make_eval_points(const std::vector<double> &xs,
   const int n = static_cast<int>(xs.size());
 
   fk_injection::EvalPoints ep;
-  ep.x = Kokkos::View<type_real *, Kokkos::HostSpace>("x", n);
-  ep.y = Kokkos::View<type_real *, Kokkos::HostSpace>("y", n);
-  ep.z = Kokkos::View<type_real *, Kokkos::HostSpace>("z", n);
+  ep.x.resize(n);
+  ep.y.resize(n);
+  ep.z.resize(n);
   for (int i = 0; i < n; ++i) {
-    ep.x(i) = static_cast<type_real>(xs[i]);
-    ep.y(i) = static_cast<type_real>(ys[i]);
-    ep.z(i) = static_cast<type_real>(zs[i]);
+    ep.x[i] = static_cast<type_real>(xs[i]);
+    ep.y[i] = static_cast<type_real>(ys[i]);
+    ep.z[i] = static_cast<type_real>(zs[i]);
   }
 
   return ep;
@@ -159,9 +159,9 @@ TEST(DepthSeries, SpectrumIdentityDisplacement) {
   const int nf_total = setup.sizes.number_of_fft_samples;
   const int nf_stored = setup.sizes.number_of_stored_frequencies;
 
-  std::vector<Kokkos::complex<double>> spec(
-      fk_injection::impl::number_of_series * nf_total,
-      Kokkos::complex<double>(0.0, 0.0));
+  std::vector<std::complex<double>> spec(fk_injection::impl::number_of_series *
+                                             nf_total,
+                                         std::complex<double>(0.0, 0.0));
 
   fk_injection::impl::depth_spectrum(group, states, model, setup, spec.data(),
                                      nf_total);
@@ -171,7 +171,7 @@ TEST(DepthSeries, SpectrumIdentityDisplacement) {
   double max_s4 = 0.0;
   for (int f = 1; f <= nf_stored; ++f) {
     const double s4_abs =
-        Kokkos::abs(spec[fk_injection::impl::series_dx * nf_total + f]);
+        std::abs(spec[fk_injection::impl::series_dx * nf_total + f]);
     if (s4_abs > max_s4)
       max_s4 = s4_abs;
   }
@@ -184,16 +184,16 @@ TEST(DepthSeries, SpectrumIdentityDisplacement) {
   // float-vs-double representation of p (~1e-7), not the identity.
   const double p_val = static_cast<double>(static_cast<type_real>(setup.p));
   for (int f = 1; f <= nf_stored; ++f) {
-    const Kokkos::complex<double> s0 =
+    const std::complex<double> s0 =
         spec[fk_injection::impl::series_horizontal * nf_total + f];
-    const Kokkos::complex<double> s4 =
+    const std::complex<double> s4 =
         spec[fk_injection::impl::series_dx * nf_total + f];
 
-    const Kokkos::complex<double> lhs =
-        Kokkos::complex<double>(0.0, setup.omega[f] * p_val) * s0;
+    const std::complex<double> lhs =
+        std::complex<double>(0.0, setup.omega[f] * p_val) * s0;
 
-    const double abs_diff = Kokkos::abs(lhs - s4);
-    const double scale = Kokkos::abs(s4) + 1.0e-30;
+    const double abs_diff = std::abs(lhs - s4);
+    const double scale = std::abs(s4) + 1.0e-30;
 
     // Pass when either the relative error is small or both sides are tiny.
     EXPECT_TRUE(abs_diff <= 1.0e-9 * scale || abs_diff < 1.0e-12)
@@ -249,14 +249,13 @@ TEST(DepthSeries, CoefficientsFiniteAndNonzero) {
 
   EXPECT_EQ(series.number_of_groups, static_cast<int>(groups.groups.size()));
   EXPECT_EQ(series.coefficient_count, setup.sizes.number_of_stored_frequencies);
-  EXPECT_EQ(series.number_of_series, fk_injection::impl::number_of_series);
 
   // Every coefficient must be finite.
   double max_s0s1 = 0.0;
   for (int g = 0; g < series.number_of_groups; ++g) {
-    for (int s = 0; s < series.number_of_series; ++s) {
+    for (int s = 0; s < fk_injection::impl::number_of_series; ++s) {
       for (int k = 0; k < series.coefficient_count; ++k) {
-        const double coeff = series.coefficients(g, s, k);
+        const double coeff = series.coefficients[series.index(g, s, k)];
         EXPECT_TRUE(std::isfinite(coeff))
             << "non-finite coefficient at (g=" << g << ", s=" << s
             << ", k=" << k << "): " << coeff;
@@ -312,14 +311,20 @@ TEST(DepthSeries, NormalizationIndependentOfResampling) {
   ASSERT_EQ(result1.resampling_rate(), 1);
   ASSERT_EQ(result2.resampling_rate(), 2);
 
-  Kokkos::View<type_real ***> out1("out1", npts, 3, 300);
-  Kokkos::View<type_real ***> out2("out2", npts, 3, 600);
+  // Row-major (point, component, step).
+  const int components = fk_injection::number_of_sample_components;
+  std::vector<type_real> out1(static_cast<std::size_t>(npts) * components *
+                              300);
+  std::vector<type_real> out2(static_cast<std::size_t>(npts) * components *
+                              600);
   result1.sample(0, 300, out1);
   result2.sample(0, 600, out2);
-  auto h1 = Kokkos::create_mirror_view(out1);
-  auto h2 = Kokkos::create_mirror_view(out2);
-  Kokkos::deep_copy(h1, out1);
-  Kokkos::deep_copy(h2, out2);
+  auto h1 = [&](int p, int c, int n) {
+    return out1[((p * components + c) * 300) + n];
+  };
+  auto h2 = [&](int p, int c, int n) {
+    return out2[((p * components + c) * 600) + n];
+  };
 
   // SEM step n at NP=1 (time n*0.1) matches SEM step 2n at NP=2 (2n*0.05).
   double peak = 0.0;

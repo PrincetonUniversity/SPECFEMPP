@@ -5,12 +5,10 @@
 #include "impl/halfspace_solve.hpp"
 #include "impl/layer_operators.hpp"
 
-#include <Kokkos_Complex.hpp>
-
 fk_injection::impl::InterfaceStates fk_injection::impl::solve_layer_stack(
     const fk_injection::LayeredModel &model,
     const fk_injection::impl::FkSetup &setup) {
-  using Cplx = Kokkos::complex<double>;
+  using Cplx = std::complex<double>;
 
   const auto &elastic = model.elastic_layers();
   const auto &fluid = model.fluid_layers();
@@ -63,7 +61,7 @@ fk_injection::impl::InterfaceStates fk_injection::impl::solve_layer_stack(
       }
     }
 
-    const Kokkos::Array<Cplx, 2> coeffs =
+    const std::array<Cplx, 2> coeffs =
         fk_injection::impl::halfspace_coefficients(
             n_mat, has_fluid, fluid_propagator, type, c1, c3);
     const fk_injection::ComplexVector<4> modes =

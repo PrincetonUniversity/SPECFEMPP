@@ -2,7 +2,7 @@
 
 #include "impl/layer_stack.hpp"
 
-#include <Kokkos_Core.hpp>
+#include <algorithm>
 #include <cmath>
 #include <sstream>
 #include <stdexcept>
@@ -14,74 +14,44 @@ fk_injection::impl::make_result(const fk_injection::impl::DepthSeries &series,
                                 const fk_injection::EvalPoints &points,
                                 const fk_injection::impl::FkSetup &setup,
                                 double delay_stretch) {
-  const int ngroups = series.number_of_groups;
-  const int nseries = series.number_of_series;
-  const int ncoef = series.coefficient_count;
   const int npoints = points.size();
 
-  // Series coefficients: host double -> device type_real, LayoutRight.
-  Kokkos::View<type_real ***, Kokkos::LayoutRight> coefficients(
-      "fk_series_coefficients", ngroups, nseries, ncoef);
-  auto host_coefficients = Kokkos::create_mirror_view(coefficients);
-  for (int g = 0; g < ngroups; ++g) {
-    for (int s = 0; s < nseries; ++s) {
-      for (int k = 0; k < ncoef; ++k) {
-        host_coefficients(g, s, k) =
-            static_cast<type_real>(series.coefficients(g, s, k));
-      }
-    }
-  }
-  Kokkos::deep_copy(coefficients, host_coefficients);
+  // Series coefficients: double -> type_real, same layout.
+  std::vector<type_real> coefficients(series.coefficients.begin(),
+                                      series.coefficients.end());
 
-  // Per-point group index.
-  Kokkos::View<int *> point_group("fk_point_group", npoints);
-  auto host_point_group = Kokkos::create_mirror_view(point_group);
+  std::vector<int> point_group(npoints);
   // Per-point abscissa offset pad - tau/dt_min.
-  Kokkos::View<double *> point_offset("fk_point_offset", npoints);
-  auto host_point_offset = Kokkos::create_mirror_view(point_offset);
+  std::vector<double> point_offset(npoints);
   // Per-point traction material: xi1, xim, bulk, nx, ny, nz.
-  Kokkos::View<type_real **, Kokkos::LayoutRight> point_material(
-      "fk_point_material", npoints, 6);
-  auto host_point_material = Kokkos::create_mirror_view(point_material);
-  // Per-point acoustic flag.
-  Kokkos::View<int *> point_is_acoustic("fk_point_is_acoustic", npoints);
-  auto host_point_is_acoustic = Kokkos::create_mirror_view(point_is_acoustic);
+  std::vector<type_real> point_material(static_cast<std::size_t>(npoints) * 6,
+                                        0);
+  std::vector<int> point_is_acoustic(npoints);
 
-  // Optional per-point Lame factors and normals are host-resident Views.
-  const bool have_lame = points.lame_ratio_xi1.extent(0) > 0;
-  const bool have_normal = points.normal_x.extent(0) > 0;
+  const bool have_lame = !points.lame_ratio_xi1.empty();
+  const bool have_normal = !points.normal_x.empty();
 
   const double dt_min = setup.dt_min;
-  const double pad = static_cast<double>(series.pad_samples);
+  const double pad = static_cast<double>(setup.pad_samples);
 
   for (int i = 0; i < npoints; ++i) {
     const int g = groups.point_group[i];
-    host_point_group(i) = g;
-    host_point_offset(i) = fk_injection::impl::point_abscissa_offset(
+    point_group[i] = g;
+    point_offset[i] = fk_injection::impl::point_abscissa_offset(
         pad, groups.time_delay[i], delay_stretch, dt_min);
-
-    const bool acoustic =
-        (groups.groups[g].medium == fk_injection::point_medium::acoustic);
-    host_point_is_acoustic(i) = acoustic ? 1 : 0;
-
-    host_point_material(i, 0) =
-        have_lame ? points.lame_ratio_xi1(i) : static_cast<type_real>(0);
-    host_point_material(i, 1) =
-        have_lame ? points.lame_ratio_xim(i) : static_cast<type_real>(0);
-    host_point_material(i, 2) =
-        have_lame ? points.lame_ratio_bulk(i) : static_cast<type_real>(0);
-    host_point_material(i, 3) =
-        have_normal ? points.normal_x(i) : static_cast<type_real>(0);
-    host_point_material(i, 4) =
-        have_normal ? points.normal_y(i) : static_cast<type_real>(0);
-    host_point_material(i, 5) =
-        have_normal ? points.normal_z(i) : static_cast<type_real>(0);
+    point_is_acoustic[i] =
+        groups.groups[g].medium == fk_injection::point_medium::acoustic ? 1 : 0;
+    if (have_lame) {
+      point_material[6 * i + 0] = points.lame_ratio_xi1[i];
+      point_material[6 * i + 1] = points.lame_ratio_xim[i];
+      point_material[6 * i + 2] = points.lame_ratio_bulk[i];
+    }
+    if (have_normal) {
+      point_material[6 * i + 3] = points.normal_x[i];
+      point_material[6 * i + 4] = points.normal_y[i];
+      point_material[6 * i + 5] = points.normal_z[i];
+    }
   }
-
-  Kokkos::deep_copy(point_group, host_point_group);
-  Kokkos::deep_copy(point_offset, host_point_offset);
-  Kokkos::deep_copy(point_material, host_point_material);
-  Kokkos::deep_copy(point_is_acoustic, host_point_is_acoustic);
 
   const type_real cos_phi = static_cast<type_real>(std::cos(setup.phi));
   const type_real sin_phi = static_cast<type_real>(std::sin(setup.phi));
@@ -107,7 +77,7 @@ fk_injection::impl::run_fk_driver(const fk_injection::LayeredModel &model,
   const int number_of_points = points.size();
   for (int i = 0; i < number_of_points; ++i) {
     max_depth =
-        std::max(max_depth, std::fabs(static_cast<double>(points.z(i))));
+        std::max(max_depth, std::fabs(static_cast<double>(points.z[i])));
   }
 
   const double tolerance = fk_injection::impl::depth_tolerance(max_depth);
