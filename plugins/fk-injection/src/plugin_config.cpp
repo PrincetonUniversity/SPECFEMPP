@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <cmath>
 #include <fstream>
 #include <initializer_list>
 #include <optional>
@@ -336,9 +337,20 @@ fk_injection::parse_plugin_config(const std::string &text) {
   if (config.frequency_sampling <= 0 && wave.gaussian_half_duration > 0)
     config.frequency_sampling = static_cast<type_real>(
         10.0 / static_cast<double>(wave.gaussian_half_duration));
-  if (config.frequency_sampling <= 0)
-    throw impl::config_error("time-window.frequency-sampling",
-                             "required when the half-duration is 0");
+
+  // The spectrum exp(-(omega Tg / 2)^2) has energy density exp(-(omega
+  // Tg)^2/2).
+  static constexpr double maximum_energy_above_band = 0.4;
+  const double energy_above_band =
+      std::erfc(std::sqrt(2.0) * 3.141592653589793 *
+                static_cast<double>(config.frequency_max) *
+                static_cast<double>(wave.gaussian_half_duration));
+  if (energy_above_band > maximum_energy_above_band)
+    throw impl::config_error(
+        "incidence.half-duration",
+        std::to_string(100.0 * energy_above_band) +
+            "% of the Gaussian's energy is above time-window.frequency-max; "
+            "give a longer half-duration or a higher frequency-max");
 
   if (const auto value =
           impl::optional_number(root, "material-tolerance", "")) {

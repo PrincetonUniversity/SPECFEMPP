@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <fstream>
 #include <numbers>
+#include <ostream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -158,16 +159,25 @@ layers:
     { "InvalidReproduceFlag",
       config_text() + "reproduce-specfem3d-reference: maybe\n",
       "reproduce-specfem3d-reference" },
-    { "ZeroHalfDurationWithoutSampling",
+    { "ZeroHalfDuration",
       config_text("{ type: P, azimuth: 40, take-off: 20, origin: [0, 0, 0], "
-                  "half-duration: 0 }",
-                  "{ frequency-max: 1.0, length: 128.0 }"),
-      "time-window.frequency-sampling" },
+                  "half-duration: 0 }"),
+      "incidence.half-duration" },
+    // erfc(sqrt(2) pi 1 Hz 0.1 s) = 53% of the energy above the band.
+    { "HalfDurationTooShortForTheBand",
+      config_text("{ type: P, azimuth: 40, take-off: 20, origin: [0, 0, 0], "
+                  "half-duration: 0.1 }"),
+      "incidence.half-duration" },
     { "NoBandLimit", config_text(valid_incidence, "{ length: 128.0 }"),
       "no band limit" },
     { "MissingModelFile", "model-file: /no/such/file\n",
       "fk config: model-file:" },
   };
+}
+
+// Names the case in test listings, rather than its bytes.
+void PrintTo(const RejectionCase &rejection, std::ostream *stream) {
+  *stream << rejection.name;
 }
 
 class FkPluginConfigRejects : public ::testing::TestWithParam<RejectionCase> {};
@@ -242,6 +252,15 @@ TEST(FkPluginConfig, SamplingDefaultsFromHalfDuration) {
           "{ length: 128.0 }"));
   EXPECT_NEAR(config.time_window(0.05f, 256).frequency_sampling, 5.0, 1e-5);
   EXPECT_NEAR(config.frequency_max, 0.5, 1e-5);
+}
+
+// erfc(sqrt(2) pi 1 Hz 0.2 s) = 21% of the energy above the band.
+TEST(FkPluginConfig, HalfDurationInsideTheBandIsAccepted) {
+  const auto config =
+      fk_injection::parse_plugin_config(fk_injection_test::config_text(
+          "{ type: P, azimuth: 40, take-off: 20, origin: [0, 0, 0], "
+          "half-duration: 0.2 }"));
+  EXPECT_NEAR(config.mesh_frame_wave.gaussian_half_duration, 0.2, 1e-6);
 }
 
 TEST(FkPluginConfig, ReproduceSpecfem3dSelectsTheConvention) {
