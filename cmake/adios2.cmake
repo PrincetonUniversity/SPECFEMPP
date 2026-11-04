@@ -19,7 +19,7 @@ if (SPECFEM_ENABLE_ADIOS2)
 
     message(STATUS "Installing ADIOS2 from GitHub release...")
 
-    set(ADIOS2_VERSION 2.10.2)
+    set(ADIOS2_VERSION 2.12.1)
     message(STATUS "Downloading and extracting ADIOS2 (${ADIOS2_VERSION}) library sources. This will take <1 min.")
     include(FetchContent)
 
@@ -36,6 +36,15 @@ if (SPECFEM_ENABLE_ADIOS2)
 
     # Use external yaml-cpp (our FetchContent version) to avoid conflicts
     set(ADIOS2_USE_EXTERNAL_YAMLCPP ON CACHE BOOL "Use external yaml-cpp" FORCE)
+
+    # ADIOS2 2.12 detects an already-defined HDF5_FOUND even when its own
+    # HDF5 option is OFF. Keep SPECFEM's HDF5 detection from enabling the
+    # ADIOS2 HDF5 engine implicitly.
+    if (DEFINED HDF5_FOUND)
+        set(_SPECFEM_HDF5_FOUND ${HDF5_FOUND})
+        set(_SPECFEM_HDF5_FOUND_DEFINED TRUE)
+        set(HDF5_FOUND FALSE)
+    endif()
 
     # Optional: Control other features based on your needs
     set(ADIOS2_USE_ZeroMQ OFF CACHE BOOL "Disable ZeroMQ" FORCE)
@@ -80,6 +89,12 @@ if (SPECFEM_ENABLE_ADIOS2)
         )
 
         FetchContent_MakeAvailable(ADIOS2)
+    endif()
+
+    if (_SPECFEM_HDF5_FOUND_DEFINED)
+        set(HDF5_FOUND ${_SPECFEM_HDF5_FOUND})
+        unset(_SPECFEM_HDF5_FOUND)
+        unset(_SPECFEM_HDF5_FOUND_DEFINED)
     endif()
 
     message(STATUS "ADIOS2 downloaded and configured.")
