@@ -319,3 +319,64 @@ TEST(FkDriver, EvalPointsRejectPartialTractionInputs) {
                                    /*with_lame=*/true),
                   "normal_x has 0 entries, expected 2");
 }
+
+// ===========================================================================
+// check_supported_slowness: 0 < p < 1/v for every layer velocity.
+// ===========================================================================
+static fk_injection::LayeredModel make_slowness_model() {
+  fk_injection::AcousticLayer ocean;
+  ocean.p_velocity = 1500;
+  ocean.density = 1025;
+  ocean.thickness = 4000;
+
+  fk_injection::ElasticIsotropicLayer mantle;
+  mantle.p_velocity = 8100;
+  mantle.s_velocity = 4500;
+  mantle.density = 3300;
+
+  return fk_injection::LayeredModel({ ocean }, { mantle });
+}
+
+static void expect_unsupported(double p, const std::string &reason) {
+  try {
+    fk_injection::impl::check_supported_slowness(make_slowness_model(), p);
+    FAIL() << "expected p = " << p << " to be rejected";
+  } catch (const specfem::plugin::Unsupported &error) {
+    EXPECT_NE(std::string(error.what()).find(reason), std::string::npos)
+        << error.what();
+  }
+}
+
+TEST(FkDriver, SlownessAccepted) {
+  EXPECT_NO_THROW(fk_injection::impl::check_supported_slowness(
+      make_slowness_model(), 0.5 / 8100.0));
+  // The fluid's slower velocity doesn't tighten the limit.
+  EXPECT_NO_THROW(fk_injection::impl::check_supported_slowness(
+      make_slowness_model(), 0.999 / 8100.0));
+}
+
+TEST(FkDriver, SlownessRejected) {
+  expect_unsupported(0.0, "vertical incidence");
+  expect_unsupported(-1.0e-5, "vertical incidence");
+  // Exactly critical: 0/0 in the propagators.
+  expect_unsupported(1.0 / 8100.0, "critical");
+  expect_unsupported(1.5 / 8100.0, "critical");
+  expect_unsupported(std::nan(""), "vertical incidence");
+}
+
+TEST(FkDriver, SolveRejectsVerticalIncidence) {
+  fk_injection::IncidentWave wave;
+  wave.type = fk_injection::incident_wave_type::p;
+  wave.take_off_theta = 0;
+
+  fk_injection::TimeWindow window;
+  window.dt = static_cast<type_real>(0.05);
+  window.nstep = 256;
+  window.frequency_max = 1;
+  window.frequency_sampling = 2;
+  window.time_window_length = 40;
+
+  EXPECT_THROW(fk_injection::solve(make_slowness_model(), wave, window,
+                                   make_eval_points({ 5000 })),
+               specfem::plugin::Unsupported);
+}
