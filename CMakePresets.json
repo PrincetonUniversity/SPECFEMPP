@@ -117,6 +117,7 @@
         "CMAKE_CXX_FLAGS": "-fsycl -fsycl-targets=spir64",
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-sycl",
         "Kokkos_ENABLE_SYCL": "ON",
+        "Kokkos_ARCH_INTEL_GEN": "ON",
         "Kokkos_ENABLE_ONEDPL": "OFF",
         "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
         "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",

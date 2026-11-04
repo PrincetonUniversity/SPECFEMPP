@@ -38,6 +38,16 @@ if (DEFINED Kokkos_ENABLE_SYCL AND Kokkos_ENABLE_SYCL AND
         "Enable oneDPL for Kokkos SYCL algorithms" FORCE)
 endif()
 
+# SPECFEM++ treats SYCL as a GPU backend (chunk sizes, scalar SIMD, launch
+# layout). Reject SYCL CPU device targets.
+if (DEFINED Kokkos_ENABLE_SYCL AND Kokkos_ENABLE_SYCL AND
+    CMAKE_CXX_FLAGS MATCHES "spir64_x86_64|native_cpu")
+    message(FATAL_ERROR
+        "SPECFEM++ SYCL builds target GPUs only. Remove CPU targets "
+        "(spir64_x86_64, native_cpu) from -fsycl-targets, or use the "
+        "OpenMP/Serial backend for CPUs.")
+endif()
+
 # Install Kokkos as a dependency
 # Set Kokkos options before fetching
 set(KOKKOS_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)

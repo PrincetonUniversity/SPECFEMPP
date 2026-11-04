@@ -4,9 +4,9 @@
 # This file contains boolean variables that indicate the type of build being
 # configured based on Kokkos backend settings.
 
-# Initialize build type variables
-set(SPECFEM_CPU_BUILD FALSE CACHE BOOL "SPECFEM++ CPU build flag")
-set(SPECFEM_GPU_BUILD FALSE CACHE BOOL "SPECFEM++ GPU build flag")
+# Recompute derived flags even when reusing a cache for another backend.
+set(SPECFEM_CPU_BUILD FALSE CACHE BOOL "SPECFEM++ CPU build flag" FORCE)
+set(SPECFEM_GPU_BUILD FALSE CACHE BOOL "SPECFEM++ GPU build flag" FORCE)
 
 # Determine build type based on Kokkos configuration
 # GPU build: if CUDA, HIP, or SYCL is enabled
@@ -17,7 +17,7 @@ elseif(DEFINED Kokkos_ENABLE_HIP AND Kokkos_ENABLE_HIP)
 elseif(DEFINED Kokkos_ENABLE_SYCL AND Kokkos_ENABLE_SYCL)
     set(SPECFEM_GPU_BUILD TRUE CACHE BOOL "SPECFEM++ GPU build flag" FORCE)
 else()
-    # CPU build: when neither CUDA nor HIP is enabled (defaults to OpenMP/Serial)
+    # CPU build: when CUDA, HIP, and SYCL are disabled (defaults to OpenMP/Serial)
     set(SPECFEM_CPU_BUILD TRUE CACHE BOOL "SPECFEM++ CPU build flag" FORCE)
 endif()
 

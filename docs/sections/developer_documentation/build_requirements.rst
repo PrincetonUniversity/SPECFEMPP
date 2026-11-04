@@ -18,7 +18,12 @@ Optional dependencies
 Intel GPU ahead-of-time compilation
 ----------------------------------
 
+SPECFEM++ uses SYCL for GPUs only; use the OpenMP or Serial backend on CPUs.
+CMake rejects SYCL CPU targets, and the program stops at startup if Kokkos
+selects a SYCL device that is not a GPU.
+
 The ``release-sycl`` preset uses portable SPIR-V with just-in-time compilation.
+It sets ``Kokkos_ARCH_INTEL_GEN`` so Kokkos only considers Intel GPUs.
 To compile native GPU code for your local Intel GPU, load your Intel oneAPI
 compiler environment, install the Intel offline compiler (``ocloc``), and run
 from the repository root:
