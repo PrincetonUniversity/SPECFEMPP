@@ -54,9 +54,13 @@ void fk_injection::impl::depth_spectrum(
     }
 
     // Apodization on every slot; i*omega for velocity on the kinematic slots.
+    // Acoustic Stacey injection consumes the incident displacement and the
+    // potential rate (SPECFEM3D's acoustic FK coupling), so acoustic kinematic
+    // series stay displacement.
     const Cplx apodization(setup.apodization[f], 0.0);
     Cplx derivative(1.0, 0.0);
-    if (setup.derivative == fk_injection::field_derivative::velocity) {
+    if (!is_acoustic &&
+        setup.derivative == fk_injection::field_derivative::velocity) {
       derivative = Cplx(0.0, setup.omega[f]);
     }
     for (int s = 0; s < fk_injection::impl::number_of_series; ++s) {
