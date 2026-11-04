@@ -67,6 +67,24 @@ def aot_flags(device):
     ]
 
 
+def merge_aot_flags(existing, device):
+    """Replace generated target flags while preserving other compiler options."""
+    flags = iter(shlex.split(existing))
+    preserved = []
+    for flag in flags:
+        if flag == "-fsycl" or flag.startswith("-fsycl-targets="):
+            continue
+        if flag == "-Xsycl-target-backend=spir64_gen":
+            backend = next(flags, "")
+            # Older generated presets put the device selection in one argument.
+            backend = re.sub(r"(?:^|\s)-device\s+(?:0x)?[0-9a-fA-F]{4}\b", "", backend)
+            if backend.strip():
+                preserved.extend([flag, backend.strip()])
+            continue
+        preserved.append(flag)
+    return shlex.join([*preserved, *aot_flags(device)])
+
+
 def validate_compiler(compiler, device):
     """Compile a real device kernel; do not require execution on the target GPU."""
     with tempfile.TemporaryDirectory(prefix="specfem-sycl-aot-") as directory:
@@ -106,9 +124,7 @@ def update_presets(path, device, compiler):
         "cacheVariables": {
             "CMAKE_CXX_COMPILER": compiler,
             # These flags also apply to project() compiler checks, before Kokkos.
-            "CMAKE_CXX_FLAGS": " ".join(
-                f'"{flag}"' if " " in flag else flag for flag in aot_flags(device)
-            ),
+            "CMAKE_CXX_FLAGS": merge_aot_flags("", device),
             "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-sycl-aot",
             "SPECFEM_BENCHMARKS_BUILD_DIR": (
                 "${sourceDir}/benchmarks/build/release-sycl-aot"
@@ -130,6 +146,14 @@ def update_presets(path, device, compiler):
             presets.append(generated)
         else:
             if section == "configurePresets":
+                existing_flags = existing.get("cacheVariables", {}).get(
+                    "CMAKE_CXX_FLAGS", ""
+                )
+                if isinstance(existing_flags, dict):
+                    existing_flags = existing_flags["value"]
+                generated["cacheVariables"]["CMAKE_CXX_FLAGS"] = merge_aot_flags(
+                    existing_flags or "", device
+                )
                 generated["cacheVariables"] = {
                     **existing.get("cacheVariables", {}),
                     **generated["cacheVariables"],
@@ -167,6 +191,7 @@ def main():
                 f"Compiler {args.compiler!r} not found. Load your Intel oneAPI "
                 "environment or pass --compiler /path/to/icpx."
             )
+        compiler = os.path.abspath(compiler)
         print(f"Selected Intel GPU PCI device {device}. Validating AOT compilation...")
         validate_compiler(compiler, device)
         update_presets(root / "CMakeUserPresets.json", device, compiler)

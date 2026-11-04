@@ -265,14 +265,15 @@ private:
       typename std::enable_if<U && D == specfem::element::dimension_tag::dim2,
                               const index_type>::type
       dispatch(const policy_index_type &i, specfem::mesh_entity::Grid<>) const {
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) ||               \
+    defined(KOKKOS_ENABLE_SYCL)
     int ielement = i % ChunkSize;
     if (ielement >= num_elements)
       return index_type::end();
-    int simd_elements = (simd_size + ielement > indices.extent(0))
-                            ? indices.extent(0) - ielement
+    int simd_elements = (simd_size + ielement * simd_size > indices.extent(0))
+                            ? indices.extent(0) - ielement * simd_size
                             : simd_size;
-    int ispec = indices(ielement);
+    int ispec = indices(ielement * simd_size);
     int xz = i / ChunkSize;
     const int iz = xz / element_grid.ngllx;
     const int ix = xz % element_grid.ngllx;
@@ -283,10 +284,10 @@ private:
     const int ielement = i / ngll_total;
     if (ielement >= num_elements)
       return index_type::end();
-    int simd_elements = (simd_size + ielement > indices.extent(0))
-                            ? indices.extent(0) - ielement
+    int simd_elements = (simd_size + ielement * simd_size > indices.extent(0))
+                            ? indices.extent(0) - ielement * simd_size
                             : simd_size;
-    int ispec = indices(ielement);
+    int ispec = indices(ielement * simd_size);
 #endif
     return index_type(ispec, simd_elements, iz, ix, ielement, i);
   }
@@ -297,11 +298,12 @@ private:
       typename std::enable_if<!U && D == specfem::element::dimension_tag::dim2,
                               const index_type>::type
       dispatch(const policy_index_type &i, specfem::mesh_entity::Grid<>) const {
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) ||               \
+    defined(KOKKOS_ENABLE_SYCL)
     int ielement = i % ChunkSize;
     if (ielement >= num_elements)
       return index_type::end();
-    int ispec = indices(ielement);
+    int ispec = indices(ielement * simd_size);
     int xz = i / ChunkSize;
     const int iz = xz / element_grid.ngllx;
     const int ix = xz % element_grid.ngllx;
@@ -311,7 +313,7 @@ private:
     const int ielement = i / (element_grid.ngllz * element_grid.ngllx);
     if (ielement >= num_elements)
       return index_type::end();
-    int ispec = indices(ielement);
+    int ispec = indices(ielement * simd_size);
 #endif
     return index_type(ispec, iz, ix, ielement, i);
   }
@@ -322,14 +324,15 @@ private:
       typename std::enable_if<U && D == specfem::element::dimension_tag::dim3,
                               const index_type>::type
       dispatch(const policy_index_type &i, specfem::mesh_entity::Grid<>) const {
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) ||               \
+    defined(KOKKOS_ENABLE_SYCL)
     int ielement = i % ChunkSize;
     if (ielement >= num_elements)
       return index_type::end();
-    int simd_elements = (simd_size + ielement > indices.extent(0))
-                            ? indices.extent(0) - ielement
+    int simd_elements = (simd_size + ielement * simd_size > indices.extent(0))
+                            ? indices.extent(0) - ielement * simd_size
                             : simd_size;
-    int ispec = indices(ielement);
+    int ispec = indices(ielement * simd_size);
     int zyx = i / ChunkSize;
     const int iz = zyx / (element_grid.nglly * element_grid.ngllx);
     const int iy = (zyx / element_grid.ngllx) % element_grid.nglly;
@@ -344,10 +347,10 @@ private:
     const int ielement = i / ngll_total;
     if (ielement >= num_elements)
       return index_type::end();
-    int simd_elements = (simd_size + ielement > indices.extent(0))
-                            ? indices.extent(0) - ielement
+    int simd_elements = (simd_size + ielement * simd_size > indices.extent(0))
+                            ? indices.extent(0) - ielement * simd_size
                             : simd_size;
-    int ispec = indices(ielement);
+    int ispec = indices(ielement * simd_size);
 #endif
     return index_type(ispec, simd_elements, iz, iy, ix, ielement, i);
   }
@@ -358,11 +361,12 @@ private:
       typename std::enable_if<!U && D == specfem::element::dimension_tag::dim3,
                               const index_type>::type
       dispatch(const policy_index_type &i, specfem::mesh_entity::Grid<>) const {
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) ||               \
+    defined(KOKKOS_ENABLE_SYCL)
     int ielement = i % ChunkSize;
     if (ielement >= num_elements)
       return index_type::end();
-    int ispec = indices(ielement);
+    int ispec = indices(ielement * simd_size);
     int zyx = i / ChunkSize;
     const int iz = zyx / (element_grid.nglly * element_grid.ngllx);
     const int iy = (zyx / element_grid.ngllx) % element_grid.nglly;
@@ -376,7 +380,7 @@ private:
         i / (element_grid.ngllz * element_grid.nglly * element_grid.ngllx);
     if (ielement >= num_elements)
       return index_type::end();
-    int ispec = indices(ielement);
+    int ispec = indices(ielement * simd_size);
 #endif
     return index_type(ispec, iz, iy, ix, ielement, i);
   }
@@ -389,11 +393,12 @@ private:
   template <int Nz, int Nx>
   KOKKOS_INLINE_FUNCTION const index_type dispatch(
       const policy_index_type &i, specfem::mesh_entity::Grid<Nz, Nx>) const {
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) ||               \
+    defined(KOKKOS_ENABLE_SYCL)
     int ielement = i % ChunkSize;
     if (ielement >= num_elements)
       return index_type::end();
-    int ispec = indices(ielement);
+    int ispec = indices(ielement * simd_size);
     int xz = i / ChunkSize;
     const int iz = xz / Nx;
     const int ix = xz % Nx;
@@ -403,11 +408,11 @@ private:
     const int ielement = i / (Nz * Nx);
     if (ielement >= num_elements)
       return index_type::end();
-    int ispec = indices(ielement);
+    int ispec = indices(ielement * simd_size);
 #endif
     if constexpr (using_simd) {
-      int simd_elements = (simd_size + ielement > indices.extent(0))
-                              ? indices.extent(0) - ielement
+      int simd_elements = (simd_size + ielement * simd_size > indices.extent(0))
+                              ? indices.extent(0) - ielement * simd_size
                               : simd_size;
       return index_type(ispec, simd_elements, iz, ix, ielement, i);
     } else {
@@ -432,11 +437,12 @@ private:
   KOKKOS_INLINE_FUNCTION const index_type
   dispatch(const policy_index_type &i,
            specfem::mesh_entity::Grid<Nz, Ny, Nx>) const {
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) ||               \
+    defined(KOKKOS_ENABLE_SYCL)
     int ielement = i % ChunkSize;
     if (ielement >= num_elements)
       return index_type::end();
-    int ispec = indices(ielement);
+    int ispec = indices(ielement * simd_size);
     int zyx = i / ChunkSize;
     const int iz = zyx / (Ny * Nx);
     const int iy = (zyx / Nx) % Ny;
@@ -448,11 +454,11 @@ private:
     const int ielement = i / (Nz * Ny * Nx);
     if (ielement >= num_elements)
       return index_type::end();
-    int ispec = indices(ielement);
+    int ispec = indices(ielement * simd_size);
 #endif
     if constexpr (using_simd) {
-      int simd_elements = (simd_size + ielement > indices.extent(0))
-                              ? indices.extent(0) - ielement
+      int simd_elements = (simd_size + ielement * simd_size > indices.extent(0))
+                              ? indices.extent(0) - ielement * simd_size
                               : simd_size;
       return index_type(ispec, simd_elements, iz, iy, ix, ielement, i);
     } else {
