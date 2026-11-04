@@ -9,8 +9,7 @@
 #include <stdexcept>
 #include <vector>
 
-namespace specfem {
-namespace fk_plugin {
+namespace fk_injection {
 namespace fft {
 
 /**
@@ -37,10 +36,10 @@ inline void check_sizes(const std::size_t half_spectrum_size,
                         const std::size_t output_size) {
   if (output_size == 0) {
     throw std::invalid_argument(
-        "specfem::fk_plugin::fft: output length must be positive");
+        "fk_injection::fft: output length must be positive");
   }
   if (half_spectrum_size < output_size / 2 + 1) {
-    throw std::invalid_argument("specfem::fk_plugin::fft: spectrum needs at "
+    throw std::invalid_argument("fk_injection::fft: spectrum needs at "
                                 "least n/2 + 1 bins for n output samples");
   }
 }
@@ -125,5 +124,4 @@ inline void inverse_real(std::span<const std::complex<double>> spectrum,
 }
 
 } // namespace fft
-} // namespace fk_plugin
-} // namespace specfem
+} // namespace fk_injection
