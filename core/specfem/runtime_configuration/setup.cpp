@@ -54,6 +54,13 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict) {
     throw std::runtime_error("Error reading specfem source configuration.");
   }
 
+  // Get wavefield-injection info (optional)
+  if (const YAML::Node &injection_node = runtime_config["injection"]) {
+    this->injection =
+        std::make_unique<specfem::runtime_configuration::Injection>(
+            injection_node);
+  }
+
   // Get flux scheme info (optional)
   if (const YAML::Node &flux_schemes_node =
           simulation_setup["nonconforming-coupling"]) {

@@ -16,15 +16,20 @@ specfem::runtime_configuration::solver::solver::instantiate(
     const std::vector<
         std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag>>>
         &tasks,
-    const std::shared_ptr<
-        specfem::periodic_tasks::periodic_task<DimensionTag>>
-        checkpoint_reader) const {
+    const std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag>>
+        checkpoint_reader,
+    const std::shared_ptr<specfem::injection::CouplingMethod<DimensionTag>>
+        injection) const {
 
   if (simulation_type == specfem::simulation::type::forward) {
     return std::make_shared<specfem::solver::time_marching<
         specfem::simulation::type::forward, DimensionTag, NGLL>>(
-        time_scheme, tasks, assembly);
-  } else if (simulation_type == specfem::simulation::type::combined) {
+        time_scheme, tasks, assembly, injection);
+  }
+  if (injection)
+    throw std::runtime_error(
+        "Wavefield injection is supported for forward simulations only.");
+  if (simulation_type == specfem::simulation::type::combined) {
 
     return std::make_shared<specfem::solver::time_marching<
         specfem::simulation::type::combined, DimensionTag, NGLL>>(

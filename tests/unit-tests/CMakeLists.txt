@@ -37,6 +37,9 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/injection/session/session.cmake)
 # Injection surface and plugin points, built from meshed databases
 include(${CMAKE_CURRENT_SOURCE_DIR}/injection/surface/surface.cmake)
 
+# Injection lifecycle: configuration, method registry and a forward run
+include(${CMAKE_CURRENT_SOURCE_DIR}/injection/lifecycle/lifecycle.cmake)
+
 if(SPECFEM_ENABLE_MPI)
   include(${CMAKE_CURRENT_SOURCE_DIR}/mpi.cmake)
 endif()

@@ -11,6 +11,8 @@ void program_3d(
         tasks,
     const bool globe = false,
     const std::optional<specfem::injection::PluginOptions> &injection =
-        std::nullopt);
+        std::nullopt,
+    const specfem::injection::MethodRegistry &registry =
+        specfem::injection::default_method_registry());
 
 } // namespace specfem::program

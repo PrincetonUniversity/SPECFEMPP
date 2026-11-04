@@ -86,15 +86,16 @@ void check_medium_step_update(
  * @param assembly The assembly object containing the mesh and fields
  * @param mpi_buffers Solver-owned MPI buffers
  * @param istep Current time step
+ * @param injection Injection method applied in every medium update, if any
  * @return {degrees of freedom updated, elements updated}
  */
 template <int NGLL, specfem::simulation::field_type FieldType,
           specfem::element::dimension_tag DimensionTag>
-std::pair<int, int>
-apply_forward_step(specfem::time_scheme::time_scheme &time_scheme,
-                   specfem::assembly::assembly<DimensionTag> &assembly,
-                   specfem::solver::MPIBuffers<DimensionTag> &mpi_buffers,
-                   const int istep) {
+std::pair<int, int> apply_forward_step(
+    specfem::time_scheme::time_scheme &time_scheme,
+    specfem::assembly::assembly<DimensionTag> &assembly,
+    specfem::solver::MPIBuffers<DimensionTag> &mpi_buffers, const int istep,
+    specfem::injection::CouplingMethod<DimensionTag> *injection = nullptr) {
 
   int dofs_updated = 0;
   int elements_updated = 0;
@@ -110,29 +111,29 @@ apply_forward_step(specfem::time_scheme::time_scheme &time_scheme,
   elements_updated +=
       update_medium<NGLL,
                     specfem::tags::Tags<DimensionTag, FieldType, acoustic>>(
-          assembly, mpi_buffers, istep);
+          assembly, mpi_buffers, istep, injection);
 
   dofs_updated += time_scheme.apply_corrector_phase_forward(acoustic);
 
   elements_updated +=
       update_medium<NGLL,
                     specfem::tags::Tags<DimensionTag, FieldType, elastic>>(
-          assembly, mpi_buffers, istep);
+          assembly, mpi_buffers, istep, injection);
   elements_updated +=
       update_medium<NGLL,
                     specfem::tags::Tags<DimensionTag, FieldType, elastic_psv>>(
-          assembly, mpi_buffers, istep);
+          assembly, mpi_buffers, istep, injection);
   elements_updated +=
       update_medium<NGLL,
                     specfem::tags::Tags<DimensionTag, FieldType, elastic_sh>>(
-          assembly, mpi_buffers, istep);
+          assembly, mpi_buffers, istep, injection);
   elements_updated += update_medium<
       NGLL, specfem::tags::Tags<DimensionTag, FieldType, elastic_psv_t>>(
-      assembly, mpi_buffers, istep);
+      assembly, mpi_buffers, istep, injection);
   elements_updated +=
       update_medium<NGLL,
                     specfem::tags::Tags<DimensionTag, FieldType, elastic_spin>>(
-          assembly, mpi_buffers, istep);
+          assembly, mpi_buffers, istep, injection);
 
   dofs_updated += time_scheme.apply_corrector_phase_forward(elastic);
   dofs_updated += time_scheme.apply_corrector_phase_forward(elastic_psv);
@@ -143,7 +144,7 @@ apply_forward_step(specfem::time_scheme::time_scheme &time_scheme,
   elements_updated +=
       update_medium<NGLL,
                     specfem::tags::Tags<DimensionTag, FieldType, poroelastic>>(
-          assembly, mpi_buffers, istep);
+          assembly, mpi_buffers, istep, injection);
   dofs_updated += time_scheme.apply_corrector_phase_forward(poroelastic);
 
   check_medium_step_update(assembly, dofs_updated, elements_updated, "forward");
