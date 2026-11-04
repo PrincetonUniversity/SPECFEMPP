@@ -9,18 +9,17 @@ namespace fk_injection::impl {
 /**
  * @brief Compute the elastic P-SV layer propagator matrix (Tong 2014 A8).
  *
- * Returns the unscaled propagator @f$ \bar{P} @f$ as a 4×4 complex matrix.
- * The driver is responsible for applying the @c elastic_gamma0 prefactor after
- * each layer product.
+ * Returns @f$ T(H) = \gamma_0 \bar{P}(H) @f$ as a 4×4 complex matrix, where
+ * @f$ \bar{P} @f$ is Tong's unscaled form, so @f$ T(0) = I @f$.
  *
  * The 4-component state vector is @f$(u_x, u_z, \sigma_{xz}, \sigma_{zz})@f$.
  *
  * @param layer           Elastic layer whose material properties are used.
  * @param omega           Complex angular frequency (rad/s); may include
  *                        imaginary damping @f$-i\sigma_0@f$.
- * @param thickness       Layer thickness H (m); use 0.0 for the semigroup test.
+ * @param thickness       Layer thickness H (m).
  * @param ray_parameter   Horizontal slowness p (s/m).
- * @return 4×4 unscaled propagator matrix.
+ * @return 4×4 propagator matrix.
  */
 inline fk_injection::ComplexMatrix<4>
 layer_propagator(const fk_injection::ElasticIsotropicLayer &layer,
@@ -82,6 +81,8 @@ layer_propagator(const fk_injection::ElasticIsotropicLayer &layer,
   P(3, 1) = two_mul * (xb - g1_sq * ya);
   P(3, 2) = g1c * ya - xb;
   P(3, 3) = cb - g1c * ca;
+
+  P *= std::complex<double>(elastic_gamma0(layer, ray_parameter), 0.0);
 
   return P;
 }

@@ -92,7 +92,7 @@ TEST(FieldRecovery, HalfspaceZeroDepthEqualsModesProjection) {
 // Test 6: ElasticInterfaceContinuity
 //
 // elastic_state_in_layer at height=0 returns state_at_bottom unchanged,
-// because gamma0 * Pbar(0) = I.
+// because T(0) = I.
 // ============================================================================
 
 TEST(FieldRecovery, ElasticInterfaceContinuity) {
