@@ -6,8 +6,7 @@ fk_injection::solve(const fk_injection::LayeredModel &model,
                     const fk_injection::IncidentWave &wave,
                     const fk_injection::TimeWindow &window,
                     const fk_injection::EvalPoints &points,
-                    bool compute_traction,
                     fk_injection::field_derivative derivative) {
   return fk_injection::impl::run_fk_driver(model, wave, window, points,
-                                           compute_traction, derivative);
+                                           derivative);
 }

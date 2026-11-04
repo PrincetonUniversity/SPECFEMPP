@@ -53,6 +53,19 @@ fk_injection::FkResult make_result(const DepthSeries &series,
                                    const FkSetup &setup, double delay_stretch);
 
 /**
+ * @brief Reject evaluation points whose arrays disagree.
+ *
+ * @c x, @c y and @c z must have the same size, @c medium is empty or that size,
+ * and the traction inputs (@c normal_* and @c lame_ratio_*) are all empty or
+ * all that size: with some of them missing, traction would silently come out
+ * zero.
+ *
+ * @param points Evaluation points.
+ * @throws std::runtime_error naming the offending array and its size.
+ */
+void check_eval_points(const fk_injection::EvalPoints &points);
+
+/**
  * @brief Depth-grouped FK driver: host pipeline + one device sampling kernel.
  *
  * Runs ray_parameter -> depth_tolerance -> group_by_depth -> prepare ->
@@ -63,7 +76,6 @@ fk_injection::FkResult make_result(const DepthSeries &series,
  * @param wave             Incident plane wave.
  * @param window           Time-window parameters.
  * @param points           Evaluation points.
- * @param compute_traction Whether to produce traction series.
  * @param derivative       Kinematic quantity for the vector components.
  * @param reproduce_specfem3d_reference Validation only (see @c make_result);
  *        default false = physically-exact delay.
@@ -73,7 +85,7 @@ fk_injection::FkResult
 run_fk_driver(const fk_injection::LayeredModel &model,
               const fk_injection::IncidentWave &wave,
               const fk_injection::TimeWindow &window,
-              const fk_injection::EvalPoints &points, bool compute_traction,
+              const fk_injection::EvalPoints &points,
               fk_injection::field_derivative derivative,
               bool reproduce_specfem3d_reference = false);
 

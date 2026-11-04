@@ -26,10 +26,6 @@ namespace fk_injection {
  *                        derive FK working-array sizes.
  * @param points          Device-resident evaluation-point coordinates, optional
  *                        normals and Lamé factors.
- * @param compute_traction When true, compute and store traction B-spline
- *                         coefficients in addition to the kinematic field.
- *                         Traction requires @c points.normal_* and
- *                         @c points.lame_ratio_* to have non-zero extent.
  * @param derivative      Kinematic quantity stored in the result's three vector
  *                        components: displacement (Method 2), velocity (Method
  * 1 Stacey, the SPECFEM3D @c Veloc_FK convention), or acceleration (Method 2).
@@ -41,7 +37,6 @@ namespace fk_injection {
  */
 FkResult solve(const LayeredModel &model, const IncidentWave &wave,
                const TimeWindow &window, const EvalPoints &points,
-               bool compute_traction = true,
                field_derivative derivative = field_derivative::displacement);
 
 } // namespace fk_injection

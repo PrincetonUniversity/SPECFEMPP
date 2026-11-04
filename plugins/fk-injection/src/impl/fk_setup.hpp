@@ -33,7 +33,6 @@ struct FkSetup {
   std::vector<double> omega;       ///< Angular frequencies, size nf_stored+1.
   std::vector<double> apodization; ///< Gaussian STF spectrum, size nf_stored+1.
   int derivative_order = 0; ///< 0 displacement, 1 velocity, 2 acceleration.
-  bool compute_traction = false; ///< Whether traction series are produced.
   int pad_samples =
       0; ///< ceil(max delay / dt_min); keeps sample abscissae >= 0.
   int shift_samples = 0; ///< t0 series rotation nn - pad (left rotation), nn =
@@ -53,14 +52,12 @@ struct FkSetup {
  * @param p                Horizontal ray parameter from @c ray_parameter.
  * @param groups           Depth groups (supplies the delay span for sizing).
  * @param derivative       Kinematic quantity for the vector components.
- * @param compute_traction Whether traction series are requested.
  * @return Populated FkSetup.
  */
 FkSetup prepare(const fk_injection::LayeredModel &model,
                 const fk_injection::IncidentWave &wave,
                 const fk_injection::TimeWindow &window, double p,
                 const DepthGroups &groups,
-                fk_injection::field_derivative derivative,
-                bool compute_traction);
+                fk_injection::field_derivative derivative);
 
 } // namespace fk_injection::impl
