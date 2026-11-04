@@ -35,7 +35,7 @@ public:
   /**
    * @brief Coordinate view type.
    *
-   * Dimensions: [ndim, nspec, ngllz, nglly, ngllx] for (x, y, z) coordinates.
+   * Dimensions: [nspec, ngllz, nglly, ngllx, ndim] for (x, y, z) coordinates.
    */
   using CoordViewType = Kokkos::View<type_real *****, Kokkos::LayoutLeft,
                                      Kokkos::DefaultExecutionSpace>;

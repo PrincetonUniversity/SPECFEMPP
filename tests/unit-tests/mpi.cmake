@@ -178,3 +178,16 @@ specfem_add_test(globe_model_prem_tests
             gtest
             -lpthread -lm
 )
+
+specfem_add_test(globe_info_mpi_tests
+  MPI_RANKS 6
+  SOURCES assembly/info/globe_mpi_tests.cpp
+  LIBRARIES specfem::assembly
+            specfem::io
+            specfem::mesh
+            specfem::quadrature
+            specfem_environment
+            yaml-cpp
+            MPI::MPI_CXX
+            -lpthread -lm
+)
