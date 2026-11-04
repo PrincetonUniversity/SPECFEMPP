@@ -1,26 +1,39 @@
 #include "specfem/program/context.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/mpi.hpp"
+#include "specfem/program/device_selection.hpp"
 #include <cstring>
 #include <iostream>
 #include <stdexcept>
 
 namespace specfem::program {
 
-Context::Context(int argc, char *argv[])
-    : kokkos_guard_(std::make_unique<Kokkos::ScopeGuard>(argc, argv)) {
+Context::Context(int argc, char *argv[]) {
+  // Initialize Kokkos on the intended device
+  specfem::program_impl::select_default_device();
+  kokkos_guard_ = std::make_unique<Kokkos::ScopeGuard>(argc, argv);
+  const std::string device = specfem::program_impl::check_execution_device();
   // Initialize static MPI wrapper
   specfem::MPI::initialize(&argc, &argv);
   // Initialize Logger
   specfem::Logger::initialize(this);
+  if (!device.empty()) {
+    specfem::Logger::info(device);
+  }
 }
 
-Context::Context(int argc, char *argv[], int nprocs)
-    : kokkos_guard_(std::make_unique<Kokkos::ScopeGuard>(argc, argv)) {
+Context::Context(int argc, char *argv[], int nprocs) {
+  // Initialize Kokkos on the intended device
+  specfem::program_impl::select_default_device();
+  kokkos_guard_ = std::make_unique<Kokkos::ScopeGuard>(argc, argv);
+  const std::string device = specfem::program_impl::check_execution_device();
   // Initialize static MPI wrapper with user-defined processes
   specfem::MPI::initialize(&argc, &argv, nprocs);
   // Initialize Logger
   specfem::Logger::initialize(this);
+  if (!device.empty()) {
+    specfem::Logger::info(device);
+  }
 }
 
 Context::Context(const std::vector<std::string> &args) {
@@ -29,14 +42,19 @@ Context::Context(const std::vector<std::string> &args) {
   setup_argc_argv(args, argc, argv);
 
   try {
-    // Initialize Kokkos
+    // Initialize Kokkos on the intended device
+    specfem::program_impl::select_default_device();
     kokkos_guard_ = std::make_unique<Kokkos::ScopeGuard>(argc, argv);
+    const std::string device = specfem::program_impl::check_execution_device();
 
     // Initialize static MPI wrapper
     specfem::MPI::initialize(&argc, &argv);
 
     // Initialize Logger
     specfem::Logger::initialize(this);
+    if (!device.empty()) {
+      specfem::Logger::info(device);
+    }
   } catch (...) {
     cleanup_argc_argv(argc, argv);
     throw;

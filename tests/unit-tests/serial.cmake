@@ -56,6 +56,15 @@ if(NOT SPECFEM_ENABLE_MPI)
   )
 endif()
 
+# Startup device selection; asserts the Metal GPU is chosen on
+# SPECFEM_ENABLE_METAL builds (skipped elsewhere).
+specfem_add_test(device_selection_tests
+  SOURCES   program/device_selection_tests.cpp
+  LIBRARIES specfem::program
+            gtest_main
+            Kokkos::kokkos
+)
+
 specfem_add_test(serial_mpi_tests
   SOURCES   mpi/serial_mpi_tests.cpp
   LIBRARIES specfem::program
