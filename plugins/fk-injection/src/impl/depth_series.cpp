@@ -18,7 +18,7 @@ void fk_injection::impl::depth_spectrum(
   using Cplx = std::complex<double>;
 
   const int nf2 = static_cast<int>(setup.omega.size()); // nf_stored + 1
-  const type_real p = static_cast<type_real>(setup.p);
+  const double p = setup.p;
   const int n = setup.derivative_order;
   const bool is_acoustic = (group.medium == specfem::plugin::Medium::acoustic);
 
@@ -31,14 +31,15 @@ void fk_injection::impl::depth_spectrum(
           model.fluid_layers()[group.layer];
       fk_injection::impl::AcousticState state =
           fk_injection::impl::acoustic_state_in_layer(
-              layer, omega, static_cast<type_real>(group.height), p,
+              layer, omega, group.height, p,
               states.acoustic_bottom(f, group.layer));
       // Free-surface pressure boundary condition at the top of the fluid
       // column.
       if (group.free_surface) {
         state.pressure_over_k = Cplx(0.0, 0.0);
       }
-      series = fk_injection::impl::project_acoustic(state, layer, omega, p);
+      series = fk_injection::impl::project_acoustic(
+          state, static_cast<double>(layer.density), p);
     } else {
       fk_injection::ComplexVector<4> state;
       if (group.in_halfspace) {
@@ -47,12 +48,10 @@ void fk_injection::impl::depth_spectrum(
             group.depth_below_halfspace_top, states.modes_at(f));
       } else {
         state = fk_injection::impl::elastic_state_in_layer(
-            model.elastic_layers()[group.layer], omega,
-            static_cast<type_real>(group.height), p,
+            model.elastic_layers()[group.layer], omega, group.height, p,
             states.elastic_top(f, group.layer + 1));
       }
-      series = fk_injection::impl::project_elastic(state, omega, p,
-                                                   setup.compute_traction);
+      series = fk_injection::impl::project_elastic(state, omega, p);
     }
 
     // Apodization on every slot; (i*omega)^n derivative on the kinematic slots.

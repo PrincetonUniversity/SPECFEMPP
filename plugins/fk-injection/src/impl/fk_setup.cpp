@@ -54,10 +54,9 @@ fk_injection::impl::prepare(const fk_injection::LayeredModel &model,
 
   const fk_injection::ElasticIsotropicLayer &halfspace =
       model.elastic_layers().back();
-  setup.e_mat = fk_injection::impl::elastic_halfspace_eigenmatrix(
-      halfspace, static_cast<type_real>(p));
-  setup.amplitude = fk_injection::impl::incident_amplitude(
-      halfspace, wave.type, wave.amplitude, static_cast<type_real>(p));
+  setup.e_mat = fk_injection::impl::elastic_halfspace_eigenmatrix(halfspace, p);
+  setup.amplitude = fk_injection::impl::incident_amplitude(halfspace, wave.type,
+                                                           wave.amplitude, p);
 
   return setup;
 }

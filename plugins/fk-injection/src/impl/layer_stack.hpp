@@ -2,8 +2,8 @@
 
 #include "fk_injection/layered_model.hpp"
 #include "fk_injection/utilities/complex_matrix.hpp"
+#include "impl/field_recovery.hpp"
 #include "impl/fk_setup.hpp"
-#include "impl/medium_interface_coupler.hpp"
 #include <vector>
 
 namespace fk_injection::impl {

@@ -1,9 +1,10 @@
 #include "impl/layer_stack.hpp"
 
-#include "impl/field_recovery.hpp"
 #include "impl/fk_math_impl.hpp"
 #include "impl/halfspace_solve.hpp"
 #include "impl/layer_operators.hpp"
+#include <array>
+#include <complex>
 
 fk_injection::impl::InterfaceStates fk_injection::impl::solve_layer_stack(
     const fk_injection::LayeredModel &model,
@@ -16,7 +17,7 @@ fk_injection::impl::InterfaceStates fk_injection::impl::solve_layer_stack(
   const int n_fluid = model.number_of_fluid_layers();
   const bool has_fluid = model.has_fluid_layer();
   const int nf2 = static_cast<int>(setup.omega.size()); // nf_stored + 1
-  const type_real p = static_cast<type_real>(setup.p);
+  const double p = setup.p;
   const fk_injection::incident_wave_type type = setup.wave_type;
 
   InterfaceStates states;
@@ -31,8 +32,6 @@ fk_injection::impl::InterfaceStates fk_injection::impl::solve_layer_stack(
   }
 
   const fk_injection::ComplexMatrix<4> &e_mat = setup.e_mat;
-  const Cplx c1 = setup.amplitude.c1;
-  const Cplx c3 = setup.amplitude.c3;
 
   for (int f = 0; f < nf2; ++f) {
     const Cplx omega(setup.omega[f], 0.0);
@@ -41,31 +40,27 @@ fk_injection::impl::InterfaceStates fk_injection::impl::solve_layer_stack(
     // layers (L = n_elastic-2 .. 0).
     fk_injection::ComplexMatrix<4> n_mat = e_mat;
     for (int layer = n_elastic - 2; layer >= 0; --layer) {
-      const double g0 = fk_injection::impl::elastic_gamma0(elastic[layer], p);
-      const fk_injection::ComplexMatrix<4> propagator =
-          fk_injection::impl::layer_propagator(elastic[layer], omega,
-                                               elastic[layer].thickness, p);
-      n_mat = propagator * n_mat;
-      n_mat *= Cplx(g0, 0.0);
+      n_mat = fk_injection::impl::layer_propagator(
+                  elastic[layer], omega, elastic[layer].thickness, p) *
+              n_mat;
     }
 
     // Full fluid propagator Q_0 * Q_1 * ... * Q_{n_fluid-1}.
-    fk_injection::ComplexMatrix<4> fluid_propagator =
-        fk_injection::ComplexMatrix<4>::identity();
-    if (has_fluid) {
-      for (int layer = 0; layer < n_fluid; ++layer) {
-        const fk_injection::ComplexMatrix<4> q =
-            fk_injection::impl::layer_propagator(fluid[layer], omega,
-                                                 fluid[layer].thickness, p);
-        fluid_propagator = fluid_propagator * q;
-      }
+    fk_injection::ComplexMatrix<2> fluid_propagator =
+        fk_injection::ComplexMatrix<2>::identity();
+    for (int layer = 0; layer < n_fluid; ++layer) {
+      fluid_propagator = fluid_propagator *
+                         fk_injection::impl::layer_propagator(
+                             fluid[layer], omega, fluid[layer].thickness, p);
     }
 
     const std::array<Cplx, 2> coeffs =
-        fk_injection::impl::halfspace_coefficients(
-            n_mat, has_fluid, fluid_propagator, type, c1, c3);
+        has_fluid ? fk_injection::impl::halfspace_coefficients(
+                        n_mat, fluid_propagator, type, setup.amplitude)
+                  : fk_injection::impl::halfspace_coefficients(n_mat, type,
+                                                               setup.amplitude);
     const fk_injection::ComplexVector<4> modes =
-        fk_injection::impl::build_bottom_vector(type, c1, c3, coeffs);
+        fk_injection::impl::build_bottom_vector(type, setup.amplitude, coeffs);
     states.modes[f] = modes;
 
     // Elastic interface states, walking up from the half-space top (E*b).

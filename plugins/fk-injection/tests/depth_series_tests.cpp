@@ -180,11 +180,8 @@ TEST(DepthSeries, SpectrumIdentityDisplacement) {
   EXPECT_GT(max_s4, 1.0e-6)
       << "S4 is uniformly tiny; the group appears degenerate";
 
-  // Identity: i * omega * p * S0 == S4. The operators carry the ray parameter
-  // as type_real (single precision, matching the reference), so use the same
-  // float-rounded value here; otherwise the comparison is dominated by the
-  // float-vs-double representation of p (~1e-7), not the identity.
-  const double p_val = static_cast<double>(static_cast<type_real>(setup.p));
+  // Identity: i * omega * p * S0 == S4.
+  const double p_val = setup.p;
   for (int f = 1; f <= nf_stored; ++f) {
     const std::complex<double> s0 =
         spec[fk_injection::impl::series_horizontal * nf_total + f];
