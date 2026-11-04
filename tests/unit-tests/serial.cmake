@@ -364,6 +364,12 @@ specfem_add_test(assembly_tests
             ${BOOST_LIBS}
             -lpthread -lm
             gtest_main
+            $<$<BOOL:${SPECFEM_ENABLE_NPZ}>:zlib>
+            $<$<BOOL:${SPECFEM_ENABLE_HDF5}>:hdf5>
+            $<$<BOOL:${SPECFEM_ENABLE_ADIOS2}>:adios2>
+  DEFINITIONS $<$<NOT:$<BOOL:${SPECFEM_ENABLE_NPZ}>>:NO_NPZ>
+              $<$<NOT:$<BOOL:${SPECFEM_ENABLE_HDF5}>>:NO_HDF5>
+              $<$<NOT:$<BOOL:${SPECFEM_ENABLE_ADIOS2}>>:NO_ADIOS2>
 )
 
 specfem_add_test(assembly_receivers_tests

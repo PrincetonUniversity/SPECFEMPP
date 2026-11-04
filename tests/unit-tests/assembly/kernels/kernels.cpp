@@ -1,10 +1,17 @@
+#include "../../io/layout_oracle.hpp"
 #include "../test_fixture/test_fixture.hpp"
 #include "specfem/datatype.hpp"
 #include "specfem/element.hpp"
 #include "specfem/execution.hpp"
+#include "specfem/io.hpp"
 #include "specfem/setup.hpp"
 #include "specfem/tag_dispatch.hpp"
+#include <boost/filesystem.hpp>
+#include <cmath>
+#include <cstdlib>
 #include <gtest/gtest.h>
+#include <string>
+#include <vector>
 
 template <bool using_simd, typename ExecutionSpace>
 using ParallelConfig = specfem::parallel_configuration::default_chunk_config<
@@ -439,5 +446,122 @@ TEST_F(Assembly2D, kernels_access_functions) {
                 << std::endl;
       ADD_FAILURE();
     }
+  }
+}
+
+TEST_F(Assembly2D, kernels_io_layout) {
+  for (auto parameters : *this) {
+    auto Test = std::get<0>(parameters);
+    auto assembly = std::get<5>(parameters);
+
+    const std::string temp_io_directory =
+        (std::getenv("BUILD_DIR")
+             ? std::string(std::getenv("BUILD_DIR"))
+             : boost::filesystem::current_path().string()) +
+        "/tests/unit-tests/temp_kernels_io";
+    boost::filesystem::remove_all(temp_io_directory);
+    boost::filesystem::create_directories(temp_io_directory);
+
+    try {
+      // Every kernel entry of element ispec is set to ispec + offset
+      const type_real offset = 100;
+      specfem::tag_dispatch::for_each(
+          assembly.kernels.combinations, [&]<typename ElementTags>() {
+            const auto elements = assembly.element_types.get_elements_on_host(
+                ElementTags::medium_tag, ElementTags::property_tag);
+            if (elements.size() == 0)
+              return;
+            const auto &container = assembly.kernels.template get_container<
+                ElementTags::medium_tag, ElementTags::property_tag>();
+            const int base = container.element_range.begin_index();
+            container.for_each_host_view(
+                [&](const auto view, const std::string) {
+                  for (int e = 0; e < elements.size(); ++e)
+                    for (std::size_t iz = 0; iz < view.extent(1); ++iz)
+                      for (std::size_t ix = 0; ix < view.extent(2); ++ix)
+                        view(elements(e) - base, iz, ix) = elements(e) + offset;
+                });
+          });
+
+      specfem::io::kernel_writer<specfem::io_backends::NPY<specfem::io::write>>
+          writer(temp_io_directory);
+      writer.write(assembly);
+
+      const std::string folder =
+          specfem::MPI::format_proc_filename(temp_io_directory + "/Kernels");
+
+      int n_checked = 0;
+      specfem::tag_dispatch::for_each(
+          assembly.kernels.combinations, [&]<typename ElementTags>() {
+            constexpr auto medium_tag = ElementTags::medium_tag;
+            constexpr auto property_tag = ElementTags::property_tag;
+            const auto element_range =
+                assembly.element_types.get_elements_on_host(medium_tag,
+                                                            property_tag);
+            const int nelem = element_range.size();
+            if (nelem == 0)
+              return;
+            std::cout << "  kernels_io_layout: "
+                      << specfem::element::to_string(medium_tag, property_tag)
+                      << " nelem=" << nelem << " (nelem % chunk = "
+                      << nelem %
+                             specfem::parallel_configuration::storage_chunk_size
+                      << ")\n";
+            const std::string group =
+                folder + "/" +
+                specfem::element::to_string(medium_tag, property_tag) + "/";
+            const std::size_t ngllz = assembly.mesh.element_grid.ngllz;
+            const std::size_t ngllx = assembly.mesh.element_grid.ngllx;
+
+            auto check_shape = [&](const auto &raw, const std::string &n) {
+              ASSERT_EQ(raw.shape.size(), 3u) << n;
+              ASSERT_EQ(raw.shape[0], static_cast<std::size_t>(nelem)) << n;
+              ASSERT_EQ(raw.shape[1], ngllz) << n;
+              ASSERT_EQ(raw.shape[2], ngllx) << n;
+              ASSERT_FALSE(raw.fortran_order) << n;
+            };
+
+            // Coordinates
+            for (int c = 0; c < 2; ++c) {
+              const std::string n = c == 0 ? "X" : "Z";
+              const auto raw =
+                  specfem_test::layout_oracle::read_npy_raw<type_real>(
+                      group + n + ".npy");
+              check_shape(raw, n);
+              for (int e = 0; e < nelem; ++e)
+                for (std::size_t iz = 0; iz < ngllz; ++iz)
+                  for (std::size_t ix = 0; ix < ngllx; ++ix)
+                    EXPECT_EQ(
+                        raw.at({ std::size_t(e), iz, ix }),
+                        assembly.mesh.h_coord(c, element_range(e), iz, ix))
+                        << n << " e=" << e;
+            }
+
+            // Kernels
+            const auto &container =
+                assembly.kernels
+                    .template get_container<medium_tag, property_tag>();
+            container.for_each_host_view(
+                [&](const auto, const std::string view_name) {
+                  const auto raw =
+                      specfem_test::layout_oracle::read_npy_raw<type_real>(
+                          group + view_name + ".npy");
+                  check_shape(raw, view_name);
+                  for (int e = 0; e < nelem; ++e)
+                    for (std::size_t iz = 0; iz < ngllz; ++iz)
+                      for (std::size_t ix = 0; ix < ngllx; ++ix)
+                        EXPECT_NEAR(raw.at({ std::size_t(e), iz, ix }),
+                                    element_range(e) + offset, 1e-4)
+                            << view_name << " e=" << e;
+                  ++n_checked;
+                });
+          });
+      EXPECT_GT(n_checked, 0);
+    } catch (std::exception &e) {
+      std::cout << "- Test: " << Test.name << "\n- Error: " << e.what()
+                << std::endl;
+      ADD_FAILURE();
+    }
+    boost::filesystem::remove_all(temp_io_directory);
   }
 }
