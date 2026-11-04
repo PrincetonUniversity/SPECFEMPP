@@ -16,6 +16,7 @@
 #include <cmath>
 #include <complex>
 #include <gtest/gtest.h>
+#include <utility>
 #include <vector>
 
 using fk_injection::type_real;
@@ -441,5 +442,63 @@ TEST(DepthSeries, AcousticKinematicSeriesIgnoreDerivative) {
           1.0e-9 * (std::abs(i_omega * elastic_value) + 1.0e-30))
           << "elastic series " << series << ", frequency " << f;
     }
+  }
+}
+
+// ============================================================================
+// HorizontalDensityFollowsLayerResolution
+//
+// u_x = -i p^2/rho (P/k). SPECFEM3D resolves a point on a layer's bottom
+// boundary into the layer below, so rho there is the underlying layer's: the
+// next fluid's inside the column, the crust's at the fluid-solid interface.
+// ============================================================================
+TEST(DepthSeries, HorizontalDensityFollowsLayerResolution) {
+  const auto model = depth_series_tests_impl::make_two_fluid_model();
+  const auto wave = depth_series_tests_impl::make_wave_p();
+  const auto window = depth_series_tests_impl::make_window();
+  const double p = wave.ray_parameter(model);
+
+  // Depth, and the density u_x must use there.
+  const std::vector<std::pair<double, double>> cases = {
+    { 500.0, 1000.0 },  // inside the upper fluid
+    { 1000.0, 1100.0 }, // bottom of the upper fluid: lower fluid's
+    { 2000.0, 1100.0 }, // inside the lower fluid
+    { 3000.0, 2800.0 }, // fluid-solid interface: the crust's
+  };
+
+  for (const auto &[depth, density] : cases) {
+    auto points =
+        depth_series_tests_impl::make_eval_points({ 0.0 }, { 0.0 }, { depth });
+    points.medium = { specfem::plugin::Medium::acoustic };
+    const auto groups = fk_injection::impl::group_by_depth(
+        points, model, wave, p, fk_injection::impl::depth_tolerance(depth));
+    ASSERT_EQ(groups.groups.size(), 1u);
+    const auto &group = groups.groups[0];
+
+    const auto setup = fk_injection::impl::prepare(
+        model, wave, window, p, groups,
+        fk_injection::field_derivative::displacement);
+    const auto states = fk_injection::impl::solve_layer_stack(model, setup);
+    const auto spectra =
+        depth_series_tests_impl::group_spectra(model, groups, setup);
+
+    const auto &layer = model.fluid_layers()[group.layer];
+    double peak = 0.0;
+    for (int f = 1; f < static_cast<int>(setup.omega.size()); ++f) {
+      const auto state = fk_injection::impl::acoustic_state_in_layer(
+          layer, std::complex<double>(setup.omega[f], 0.0), group.height, p,
+          states.acoustic_bottom(f, group.layer));
+      const std::complex<double> expected =
+          std::complex<double>(0.0, -p * p / density) * state.pressure_over_k *
+          setup.apodization[f];
+      const auto actual = spectra[0][fk_injection::impl::series_horizontal *
+                                         setup.sizes.number_of_fft_samples +
+                                     f];
+      EXPECT_LT(std::abs(actual - expected),
+                1.0e-9 * (std::abs(expected) + 1.0e-30))
+          << "depth " << depth << ", frequency " << f;
+      peak = std::max(peak, std::abs(expected));
+    }
+    EXPECT_GT(peak, 0.0) << "depth " << depth;
   }
 }
