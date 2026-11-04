@@ -343,3 +343,103 @@ TEST(DepthSeries, NormalizationIndependentOfResampling) {
   EXPECT_LT(max_abs / peak, 1.0e-5)
       << "NP=1 and NP=2 disagree after the dt_min normalization";
 }
+
+namespace depth_series_tests_impl {
+
+/** @brief Two fluid layers (densities 1000, 1100) over crust and half-space. */
+fk_injection::LayeredModel make_two_fluid_model() {
+  fk_injection::AcousticLayer upper;
+  upper.density = 1000;
+  upper.p_velocity = 1500;
+  upper.thickness = 1000;
+
+  fk_injection::AcousticLayer lower;
+  lower.density = 1100;
+  lower.p_velocity = 1600;
+  lower.thickness = 2000;
+
+  fk_injection::ElasticIsotropicLayer crust;
+  crust.density = 2800;
+  crust.p_velocity = 6000;
+  crust.s_velocity = 3464;
+  crust.thickness = 20000;
+
+  fk_injection::ElasticIsotropicLayer halfspace;
+  halfspace.density = 3380;
+  halfspace.p_velocity = 8100;
+  halfspace.s_velocity = 4500;
+
+  return fk_injection::LayeredModel({ upper, lower }, { crust, halfspace });
+}
+
+/** @brief Spectrum of each depth group, row-major (series, frequency). */
+std::vector<std::vector<std::complex<double>>>
+group_spectra(const fk_injection::LayeredModel &model,
+              const fk_injection::impl::DepthGroups &groups,
+              const fk_injection::impl::FkSetup &setup) {
+  const auto states = fk_injection::impl::solve_layer_stack(model, setup);
+  const int fft_samples = setup.sizes.number_of_fft_samples;
+  std::vector<std::vector<std::complex<double>>> spectra;
+  for (const auto &group : groups.groups) {
+    spectra.emplace_back(fk_injection::impl::number_of_series * fft_samples);
+    fk_injection::impl::depth_spectrum(group, states, model, setup,
+                                       spectra.back().data(), fft_samples);
+  }
+  return spectra;
+}
+
+} // namespace depth_series_tests_impl
+
+// ============================================================================
+// AcousticKinematicSeriesIgnoreDerivative
+//
+// Acoustic Stacey injection consumes the incident displacement and the
+// potential rate, so acoustic kinematic series stay displacement when elastic
+// ones become velocity.
+// ============================================================================
+TEST(DepthSeries, AcousticKinematicSeriesIgnoreDerivative) {
+  const auto model = depth_series_tests_impl::make_two_fluid_model();
+  const auto wave = depth_series_tests_impl::make_wave_p();
+  const auto window = depth_series_tests_impl::make_window();
+  const double p = wave.ray_parameter(model);
+
+  const auto points = depth_series_tests_impl::make_eval_points(
+      { 0.0, 0.0 }, { 0.0, 0.0 }, { 500.0, 10000.0 });
+  const auto groups = fk_injection::impl::group_by_depth(
+      points, model, wave, p, fk_injection::impl::depth_tolerance(10000.0));
+  ASSERT_EQ(groups.groups.size(), 2u);
+
+  const auto displacement =
+      fk_injection::impl::prepare(model, wave, window, p, groups,
+                                  fk_injection::field_derivative::displacement);
+  const auto velocity = fk_injection::impl::prepare(
+      model, wave, window, p, groups, fk_injection::field_derivative::velocity);
+  const auto displacement_spectra =
+      depth_series_tests_impl::group_spectra(model, groups, displacement);
+  const auto velocity_spectra =
+      depth_series_tests_impl::group_spectra(model, groups, velocity);
+
+  const int fft_samples = displacement.sizes.number_of_fft_samples;
+  const int acoustic = groups.point_group[0];
+  const int elastic = groups.point_group[1];
+  ASSERT_EQ(groups.groups[acoustic].medium, specfem::plugin::Medium::acoustic);
+  ASSERT_EQ(groups.groups[elastic].medium, specfem::plugin::Medium::elastic);
+
+  for (const int series : { fk_injection::impl::series_horizontal,
+                            fk_injection::impl::series_vertical }) {
+    for (int f = 1; f < static_cast<int>(displacement.omega.size()); ++f) {
+      const int entry = series * fft_samples + f;
+      const auto acoustic_value = displacement_spectra[acoustic][entry];
+      EXPECT_LT(std::abs(velocity_spectra[acoustic][entry] - acoustic_value),
+                1.0e-9 * (std::abs(acoustic_value) + 1.0e-30))
+          << "acoustic series " << series << ", frequency " << f;
+
+      const auto elastic_value = displacement_spectra[elastic][entry];
+      const std::complex<double> i_omega(0.0, displacement.omega[f]);
+      EXPECT_LT(
+          std::abs(velocity_spectra[elastic][entry] - i_omega * elastic_value),
+          1.0e-9 * (std::abs(i_omega * elastic_value) + 1.0e-30))
+          << "elastic series " << series << ", frequency " << f;
+    }
+  }
+}

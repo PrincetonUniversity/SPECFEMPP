@@ -11,6 +11,7 @@ namespace fk_injection {
  * - @c displacement : \f$u\f$
  * - @c velocity     : \f$(i\omega)\,u\f$ (the SPECFEM3D @c Veloc_FK convention)
  *
+ * This applies to elastic points; acoustic points always store displacement.
  * The traction and potential-rate components are independent of this choice.
  */
 enum class field_derivative { displacement, velocity };
