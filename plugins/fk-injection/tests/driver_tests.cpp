@@ -1,6 +1,8 @@
 #include "fk_injection/fk_injection.hpp"
 #include "impl/driver.hpp"
 
+#include <algorithm>
+#include <cmath>
 #include <fstream>
 #include <gtest/gtest.h>
 #include <stdexcept>
@@ -113,7 +115,8 @@ TEST(FkDriver, ElasticHalfSpaceRunsFinite) {
   // Points at various depths in the crust and just below the surface.
   const auto ep = make_eval_points({ 0, 5000, 15000, 30000, 40000 });
 
-  const auto result = fk_injection::solve(model, wave, window, ep);
+  const auto result = fk_injection::solve(
+      model, wave, window, ep, fk_injection::field_derivative::displacement);
 
   // Shape checks
   EXPECT_EQ(result.number_of_points(), 5);
@@ -178,7 +181,8 @@ TEST(FkDriver, AcousticElasticRunsFinite) {
                                    /*with_normals=*/true,
                                    /*with_lame=*/true);
 
-  const auto result = fk_injection::solve(model, wave, window, ep);
+  const auto result = fk_injection::solve(
+      model, wave, window, ep, fk_injection::field_derivative::displacement);
 
   EXPECT_EQ(result.number_of_points(), 5);
   EXPECT_GT(result.coefficient_count(), 0);
@@ -377,6 +381,75 @@ TEST(FkDriver, SolveRejectsVerticalIncidence) {
   window.time_window_length = 40;
 
   EXPECT_THROW(fk_injection::solve(make_slowness_model(), wave, window,
-                                   make_eval_points({ 5000 })),
+                                   make_eval_points({ 5000 }),
+                                   fk_injection::field_derivative::velocity),
                specfem::plugin::Unsupported);
+}
+
+// ===========================================================================
+// ReferenceConvention::specfem3d: amplitudes N_P times exact, and delays
+// stretched by N/(N-1).
+// ===========================================================================
+TEST(FkDriver, Specfem3dConventionScalesAmplitudeAndDelay) {
+  const auto model = make_slowness_model();
+
+  fk_injection::IncidentWave wave;
+  wave.type = fk_injection::incident_wave_type::p;
+  wave.take_off_theta = static_cast<type_real>(20.0 * 3.14159265 / 180.0);
+  wave.origin_time = 5;
+  wave.gaussian_half_duration = 2;
+
+  fk_injection::TimeWindow window;
+  window.dt = static_cast<type_real>(0.05);
+  window.nstep = 256;
+  window.frequency_max = 1;
+  window.frequency_sampling = 10; // dt_min = 0.1, N_P = 2
+  window.time_window_length = 60;
+
+  // The first point has no delay; the second has one.
+  auto points = make_eval_points({ 6000, 6000 });
+  points.x[1] = 10000;
+
+  const auto exact = fk_injection::solve(
+      model, wave, window, points, fk_injection::field_derivative::displacement,
+      fk_injection::ReferenceConvention::exact);
+  const auto specfem3d = fk_injection::solve(
+      model, wave, window, points, fk_injection::field_derivative::displacement,
+      fk_injection::ReferenceConvention::specfem3d);
+  ASSERT_EQ(exact.resampling_rate(), 2);
+
+  const int components = fk_injection::number_of_sample_components;
+  const std::size_t size =
+      static_cast<std::size_t>(2) * components * window.nstep;
+  std::vector<type_real> out_exact(size);
+  std::vector<type_real> out_specfem3d(size);
+  exact.sample(0, window.nstep, out_exact);
+  specfem3d.sample(0, window.nstep, out_specfem3d);
+
+  // Point 0, all components and steps.
+  const std::size_t first_point =
+      static_cast<std::size_t>(components) * window.nstep;
+  double peak = 0.0;
+  for (std::size_t i = 0; i < first_point; ++i) {
+    peak = std::max(peak, std::fabs(static_cast<double>(out_exact[i])));
+  }
+  ASSERT_GT(peak, 0.0);
+  for (std::size_t i = 0; i < first_point; ++i) {
+    EXPECT_NEAR(static_cast<double>(out_specfem3d[i]),
+                2.0 * static_cast<double>(out_exact[i]), 1.0e-5 * peak)
+        << "entry " << i;
+  }
+
+  // Offset = pad - tau*stretch/dt_min, and the first point's offset is the pad.
+  const double exact_delay =
+      exact.points()[0].offset - exact.points()[1].offset;
+  const double stretched_delay =
+      specfem3d.points()[0].offset - specfem3d.points()[1].offset;
+  const double span = wave.ray_parameter(model) * 10000.0;
+  const int fft_samples =
+      fk_injection::compute_fk_sizes(window, span).number_of_fft_samples;
+  EXPECT_NEAR(stretched_delay / exact_delay,
+              static_cast<double>(fft_samples) /
+                  static_cast<double>(fft_samples - 1),
+              1.0e-9);
 }

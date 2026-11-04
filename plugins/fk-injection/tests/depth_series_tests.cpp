@@ -4,6 +4,7 @@
 #include "fk_injection/fk_result.hpp"
 #include "fk_injection/incident_wave.hpp"
 #include "fk_injection/layered_model.hpp"
+#include "fk_injection/solver.hpp"
 #include "fk_injection/time_window.hpp"
 #include "impl/depth_groups.hpp"
 #include "impl/depth_series.hpp"
@@ -300,12 +301,12 @@ TEST(DepthSeries, NormalizationIndependentOfResampling) {
   const auto window_np1 = make_window(0.1, 300);  // NP=1
   const auto window_np2 = make_window(0.05, 600); // NP=2, same dt_min
 
-  const auto result1 = fk_injection::impl::run_fk_driver(
-      model, wave, window_np1, points,
-      fk_injection::field_derivative::displacement);
-  const auto result2 = fk_injection::impl::run_fk_driver(
-      model, wave, window_np2, points,
-      fk_injection::field_derivative::displacement);
+  const auto result1 =
+      fk_injection::solve(model, wave, window_np1, points,
+                          fk_injection::field_derivative::displacement);
+  const auto result2 =
+      fk_injection::solve(model, wave, window_np2, points,
+                          fk_injection::field_derivative::displacement);
   ASSERT_EQ(result1.resampling_rate(), 1);
   ASSERT_EQ(result2.resampling_rate(), 2);
 

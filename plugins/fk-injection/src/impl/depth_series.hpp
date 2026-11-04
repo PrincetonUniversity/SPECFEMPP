@@ -1,6 +1,7 @@
 #pragma once
 
 #include "fk_injection/layered_model.hpp"
+#include "fk_injection/solver.hpp"
 #include "impl/depth_groups.hpp"
 #include "impl/fk_setup.hpp"
 #include "impl/layer_stack.hpp"
@@ -63,18 +64,18 @@ void depth_spectrum(const DepthGroup &group, const InterfaceStates &states,
  * The inverse-FFT normalization divides by the resampled-grid step @c dt_min
  * (the output grid), which is the physically-correct amplitude. The SPECFEM3D
  * reference instead divides by the SEM step, making amplitudes NP times too
- * large when NP_RESAMP > 1; @p reproduce_specfem3d_reference restores that for
- * exact reference comparison.
+ * large when NP_RESAMP > 1; @c ReferenceConvention::specfem3d restores that for
+ * comparison against the reference.
  *
  * @param spectrum     Group spectrum [number_of_series][N] (modified in place).
  * @param setup        Shared setup (sizes, fft_power, shift).
  * @param coefficients Output [number_of_series][coefficient_count], contiguous.
- * @param reproduce_specfem3d_reference Validation only: normalize by the SEM
- *        step (the SPECFEM3D NP-dependent amplitude) instead of dt_min.
+ * @param convention   Which step normalizes the inverse FFT.
  */
 void to_time_series(std::complex<double> *spectrum, const FkSetup &setup,
                     double *coefficients,
-                    bool reproduce_specfem3d_reference = false);
+                    fk_injection::ReferenceConvention convention =
+                        fk_injection::ReferenceConvention::exact);
 
 /**
  * @brief Synthesize the depth-only series for every group.
@@ -86,13 +87,15 @@ void to_time_series(std::complex<double> *spectrum, const FkSetup &setup,
  * @param states Interface states.
  * @param model  Layered velocity model.
  * @param setup  Shared frequency-domain setup.
- * @param reproduce_specfem3d_reference Validation only (see @c to_time_series).
+ * @param convention Which step normalizes the inverse FFT (see
+ *        @c to_time_series).
  * @return DepthSeries with per-group coefficients and the t0/pad bookkeeping.
  */
 DepthSeries depth_series(const DepthGroups &groups,
                          const InterfaceStates &states,
                          const fk_injection::LayeredModel &model,
                          const FkSetup &setup,
-                         bool reproduce_specfem3d_reference = false);
+                         fk_injection::ReferenceConvention convention =
+                             fk_injection::ReferenceConvention::exact);
 
 } // namespace fk_injection::impl
