@@ -1,7 +1,7 @@
 #pragma once
 
 #include "fk_injection/utilities/complex_matrix.hpp"
-#include <Kokkos_Core.hpp>
+#include <complex>
 
 namespace fk_injection::impl {
 
@@ -29,7 +29,7 @@ namespace fk_injection::impl {
  * @return       State vector with @f$(u_z, P/k)@f$ in the leading two slots,
  *               ready for the acoustic propagator chain.
  */
-KOKKOS_INLINE_FUNCTION fk_injection::ComplexVector<4>
+inline fk_injection::ComplexVector<4>
 couple_solid_to_fluid(fk_injection::ComplexVector<4> state) {
   fk_injection::ComplexVector<4> result;
   result[0] = state[1];  // u_z (normal displacement continuity)
@@ -46,10 +46,10 @@ couple_solid_to_fluid(fk_injection::ComplexVector<4> state) {
  * @f$P/k@f$ propagated by the acoustic 2x2 layer propagator.
  */
 struct AcousticState {
-  Kokkos::complex<double> u_z =
-      Kokkos::complex<double>(0.0, 0.0); ///< Normal displacement @f$u_z@f$.
-  Kokkos::complex<double> pressure_over_k =
-      Kokkos::complex<double>(0.0, 0.0); ///< Scaled pressure @f$P/k@f$.
+  std::complex<double> u_z =
+      std::complex<double>(0.0, 0.0); ///< Normal displacement @f$u_z@f$.
+  std::complex<double> pressure_over_k =
+      std::complex<double>(0.0, 0.0); ///< Scaled pressure @f$P/k@f$.
 };
 
 /**
@@ -64,7 +64,7 @@ struct AcousticState {
  *              below the fluid-solid interface.
  * @return Acoustic state @f$(u_z, P/k)@f$ at the base of the fluid column.
  */
-KOKKOS_INLINE_FUNCTION AcousticState
+inline AcousticState
 acoustic_from_solid(const fk_injection::ComplexVector<4> &state) {
   AcousticState result;
   result.u_z = state[1];              // normal displacement continuity

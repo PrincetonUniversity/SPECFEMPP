@@ -2,6 +2,7 @@
 
 #include "fk_injection/utilities/complex_matrix.hpp"
 #include "impl/fk_math_impl.hpp"
+#include <complex>
 
 namespace fk_injection::impl {
 
@@ -21,9 +22,9 @@ namespace fk_injection::impl {
  * @param ray_parameter   Horizontal slowness p (s/m).
  * @return 4×4 unscaled propagator matrix.
  */
-KOKKOS_INLINE_FUNCTION fk_injection::ComplexMatrix<4>
+inline fk_injection::ComplexMatrix<4>
 layer_propagator(const fk_injection::ElasticIsotropicLayer &layer,
-                 Kokkos::complex<double> omega, type_real thickness,
+                 std::complex<double> omega, type_real thickness,
                  type_real ray_parameter) {
   fk_injection::ComplexMatrix<4> P;
 
@@ -31,8 +32,8 @@ layer_propagator(const fk_injection::ElasticIsotropicLayer &layer,
   // Tong (2014) appendix (A8) — P-SV propagator matrix
   // -------------------------------------------------------------------------
   const auto slowness = vertical_slowness(layer, ray_parameter);
-  const Kokkos::complex<double> eta_alpha = slowness[0];
-  const Kokkos::complex<double> eta_beta = slowness[1];
+  const std::complex<double> eta_alpha = slowness[0];
+  const std::complex<double> eta_beta = slowness[1];
 
   const double g1 = elastic_gamma1(layer, ray_parameter);
   const double p = static_cast<double>(ray_parameter);
@@ -41,26 +42,26 @@ layer_propagator(const fk_injection::ElasticIsotropicLayer &layer,
   const double vs = static_cast<double>(layer.s_velocity);
   const double mul = rho * vs * vs;
 
-  // Build cosh/sinh from exp to stay device-callable.
-  const Kokkos::complex<double> c1 = omega * eta_alpha * H;
-  const Kokkos::complex<double> exp_p1 = Kokkos::exp(c1);
-  const Kokkos::complex<double> exp_m1 = Kokkos::exp(-c1);
-  const Kokkos::complex<double> ca = (exp_p1 + exp_m1) * 0.5;
-  const Kokkos::complex<double> sa = (exp_p1 - exp_m1) * 0.5;
-  const Kokkos::complex<double> xa = eta_alpha * sa / p;
-  const Kokkos::complex<double> ya = p * sa / eta_alpha;
+  // Build cosh/sinh from exp.
+  const std::complex<double> c1 = omega * eta_alpha * H;
+  const std::complex<double> exp_p1 = std::exp(c1);
+  const std::complex<double> exp_m1 = std::exp(-c1);
+  const std::complex<double> ca = (exp_p1 + exp_m1) * 0.5;
+  const std::complex<double> sa = (exp_p1 - exp_m1) * 0.5;
+  const std::complex<double> xa = eta_alpha * sa / p;
+  const std::complex<double> ya = p * sa / eta_alpha;
 
-  const Kokkos::complex<double> c2 = omega * eta_beta * H;
-  const Kokkos::complex<double> exp_p2 = Kokkos::exp(c2);
-  const Kokkos::complex<double> exp_m2 = Kokkos::exp(-c2);
-  const Kokkos::complex<double> cb = (exp_p2 + exp_m2) * 0.5;
-  const Kokkos::complex<double> sb = (exp_p2 - exp_m2) * 0.5;
-  const Kokkos::complex<double> xb = eta_beta * sb / p;
-  const Kokkos::complex<double> yb = p * sb / eta_beta;
+  const std::complex<double> c2 = omega * eta_beta * H;
+  const std::complex<double> exp_p2 = std::exp(c2);
+  const std::complex<double> exp_m2 = std::exp(-c2);
+  const std::complex<double> cb = (exp_p2 + exp_m2) * 0.5;
+  const std::complex<double> sb = (exp_p2 - exp_m2) * 0.5;
+  const std::complex<double> xb = eta_beta * sb / p;
+  const std::complex<double> yb = p * sb / eta_beta;
 
-  const Kokkos::complex<double> g1c(g1, 0.0);
-  const Kokkos::complex<double> g1_sq = g1c * g1c;
-  const Kokkos::complex<double> two_mul(2.0 * mul, 0.0);
+  const std::complex<double> g1c(g1, 0.0);
+  const std::complex<double> g1_sq = g1c * g1c;
+  const std::complex<double> two_mul(2.0 * mul, 0.0);
 
   P(0, 0) = ca - g1c * cb;
   P(0, 1) = xb - g1c * ya;
@@ -97,9 +98,9 @@ layer_propagator(const fk_injection::ElasticIsotropicLayer &layer,
  * @param ray_parameter   Horizontal slowness p (s/m).
  * @return 4×4 matrix with the acoustic propagator in the leading 2×2 block.
  */
-KOKKOS_INLINE_FUNCTION fk_injection::ComplexMatrix<4>
+inline fk_injection::ComplexMatrix<4>
 layer_propagator(const fk_injection::AcousticLayer &layer,
-                 Kokkos::complex<double> omega, type_real thickness,
+                 std::complex<double> omega, type_real thickness,
                  type_real ray_parameter) {
   fk_injection::ComplexMatrix<4> P;
 
@@ -107,18 +108,18 @@ layer_propagator(const fk_injection::AcousticLayer &layer,
   // Acoustic (fluid) 2×2 cosh/sinh propagator.
   // State vector: (u_z, P/k) in the leading two components.
   // -------------------------------------------------------------------------
-  const Kokkos::complex<double> eta_alpha =
+  const std::complex<double> eta_alpha =
       vertical_slowness(layer, ray_parameter);
 
   const double p = static_cast<double>(ray_parameter);
   const double H = static_cast<double>(thickness);
   const double rho = static_cast<double>(layer.density);
 
-  const Kokkos::complex<double> c1 = omega * eta_alpha * H;
-  const Kokkos::complex<double> exp_p1 = Kokkos::exp(c1);
-  const Kokkos::complex<double> exp_m1 = Kokkos::exp(-c1);
-  const Kokkos::complex<double> ca = (exp_p1 + exp_m1) * 0.5;
-  const Kokkos::complex<double> sa = (exp_p1 - exp_m1) * 0.5;
+  const std::complex<double> c1 = omega * eta_alpha * H;
+  const std::complex<double> exp_p1 = std::exp(c1);
+  const std::complex<double> exp_m1 = std::exp(-c1);
+  const std::complex<double> ca = (exp_p1 + exp_m1) * 0.5;
+  const std::complex<double> sa = (exp_p1 - exp_m1) * 0.5;
 
   P(0, 0) = ca;
   P(1, 1) = ca;
@@ -140,13 +141,12 @@ layer_propagator(const fk_injection::AcousticLayer &layer,
  * @param ray_parameter  Horizontal slowness p (s/m).
  * @return 4×4 eigenmatrix E.
  */
-KOKKOS_INLINE_FUNCTION fk_injection::ComplexMatrix<4>
-elastic_halfspace_eigenmatrix(
+inline fk_injection::ComplexMatrix<4> elastic_halfspace_eigenmatrix(
     const fk_injection::ElasticIsotropicLayer &halfspace,
     type_real ray_parameter) {
   const auto slowness = vertical_slowness(halfspace, ray_parameter);
-  const Kokkos::complex<double> eta_alpha = slowness[0];
-  const Kokkos::complex<double> eta_beta = slowness[1];
+  const std::complex<double> eta_alpha = slowness[0];
+  const std::complex<double> eta_beta = slowness[1];
 
   const double g1 = elastic_gamma1(halfspace, ray_parameter);
   const double p = static_cast<double>(ray_parameter);
@@ -154,9 +154,9 @@ elastic_halfspace_eigenmatrix(
   const double vs = static_cast<double>(halfspace.s_velocity);
   const double two_mul = 2.0 * rho * vs * vs;
 
-  const Kokkos::complex<double> two_mul_c(two_mul, 0.0);
-  const Kokkos::complex<double> g1c(g1, 0.0);
-  const Kokkos::complex<double> one(1.0, 0.0);
+  const std::complex<double> two_mul_c(two_mul, 0.0);
+  const std::complex<double> g1c(g1, 0.0);
+  const std::complex<double> one(1.0, 0.0);
 
   fk_injection::ComplexMatrix<4> E;
 
