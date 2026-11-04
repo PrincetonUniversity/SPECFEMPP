@@ -9,6 +9,8 @@
 #include <array>
 #include <cmath>
 #include <complex>
+#include <sstream>
+#include <stdexcept>
 
 namespace fk_injection::impl {
 
@@ -63,8 +65,7 @@ incident_amplitude(const fk_injection::ElasticIsotropicLayer &halfspace,
  * modes (columns 1 and 3) are the unknowns and the incident mode is the
  * right-hand side, solved by Cramer's rule.
  *
- * If the determinant @f$|\delta| \leq \epsilon@f$ (singular configuration) both
- * coefficients are set to zero.
+ * @throws std::runtime_error if the determinant is zero or not finite.
  *
  * @param row0      First condition.
  * @param row1      Second condition.
@@ -84,13 +85,16 @@ free_surface_coefficients(const fk_injection::ComplexVector<4> &row0,
   const Cplx d = row1[3];
   const Cplx delta = a * d - b * c;
 
-  std::array<Cplx, 2> coeffs{};
-  if (std::abs(delta) > tinyval) {
-    coeffs[0] = -(d * row0[incident] - b * row1[incident]) / delta * amplitude;
-    coeffs[1] = -(-c * row0[incident] + a * row1[incident]) / delta * amplitude;
+  const double delta_magnitude = std::abs(delta);
+  if (!std::isfinite(delta_magnitude) || delta_magnitude == 0.0) {
+    std::ostringstream msg;
+    msg << "free_surface_coefficients: singular free-surface system, |delta| = "
+        << delta_magnitude;
+    throw std::runtime_error(msg.str());
   }
 
-  return coeffs;
+  return { -(d * row0[incident] - b * row1[incident]) / delta * amplitude,
+           -(-c * row0[incident] + a * row1[incident]) / delta * amplitude };
 }
 
 /**
