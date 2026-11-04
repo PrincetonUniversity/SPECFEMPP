@@ -5,6 +5,7 @@
 #include "specfem/io/impl/element_group.hpp"
 #include "specfem/io/property/reader.hpp"
 #include "specfem/macros/tag_dispatch.hpp"
+#include "specfem/mpi.hpp"
 #include "specfem/tag_dispatch.hpp"
 
 #include "specfem/point.hpp"
@@ -40,10 +41,10 @@ void specfem::io::property_reader<InputLibrary>::read_impl(
   // files:
   //   serial:   {input_folder}/Properties/
   //   parallel: {input_folder}/Properties/proc_N/
-  const auto path =
-      specfem::io::impl::make_proc_path(input_folder, "Properties");
+  const boost::filesystem::path path =
+      specfem::MPI::format_proc_filename(input_folder + "/Properties");
 
-  typename InputLibrary::File file(path.full());
+  typename InputLibrary::File file(path.string());
 
   specfem::tag_dispatch::for_each(
       properties.combinations * ATTENUATION_SET(none, constant_isotropic),
@@ -101,7 +102,7 @@ void specfem::io::property_reader<InputLibrary>::read_impl(
         }
       });
 
-  std::cout << "Properties read from " << path.full() << std::endl;
+  std::cout << "Properties read from " << path.string() << std::endl;
 
   properties.copy_to_device();
 }

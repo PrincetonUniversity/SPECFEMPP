@@ -7,6 +7,7 @@
 #include "specfem/io/impl/element_group.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/macros/tag_dispatch.hpp"
+#include "specfem/mpi.hpp"
 #include "specfem/tag_dispatch.hpp"
 #include <Kokkos_Core.hpp>
 #include <boost/filesystem.hpp>
@@ -38,13 +39,14 @@ template <specfem::element::dimension_tag DimensionTag>
 void specfem::io::kernel_writer<OutputLibrary>::write_impl(
     specfem::assembly::assembly<DimensionTag> &assembly) {
   // Rank-specific output path: {output_folder}/Kernels[/proc_N]
-  const auto path = specfem::io::impl::make_proc_path(output_folder, "Kernels");
+  const boost::filesystem::path path =
+      specfem::MPI::format_proc_filename(output_folder + "/Kernels");
 
-  boost::filesystem::create_directories(path.base_folder);
+  boost::filesystem::create_directories(path.parent_path());
 
   assembly.kernels.copy_to_host();
 
-  typename OutputLibrary::File file(path.full());
+  typename OutputLibrary::File file(path.string());
 
   const int nspec = assembly.mesh.nspec;
 
@@ -89,5 +91,5 @@ void specfem::io::kernel_writer<OutputLibrary>::write_impl(
     throw std::runtime_error(message.str());
   }
 
-  specfem::Logger::info(path.name + " written to " + path.full());
+  specfem::Logger::info("Kernels written to " + path.string());
 }

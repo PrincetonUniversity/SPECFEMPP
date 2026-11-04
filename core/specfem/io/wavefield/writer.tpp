@@ -21,12 +21,10 @@ specfem::io::wavefield_writer<OutputLibrary>::wavefield_writer(
       // file_path is declared before file in the header, so it is initialized
       // first and can safely be passed to the File constructor.
       file_path([&output_folder]() {
-        const std::string formatted = specfem::MPI::format_proc_filename(
+        const boost::filesystem::path p = specfem::MPI::format_proc_filename(
             output_folder + "/ForwardWavefield");
-        const boost::filesystem::path p(formatted);
         if (specfem::MPI::get_size() > 1) {
           boost::filesystem::create_directories(p.parent_path());
-          return (p.parent_path() / p.stem()).string();
         }
         return p.string();
       }()),

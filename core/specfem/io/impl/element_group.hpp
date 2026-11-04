@@ -3,47 +3,11 @@
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/io/impl/coordinates.hpp"
 #include "specfem/io/impl/sub_block.hpp"
-#include "specfem/mpi.hpp"
-#include <boost/filesystem.hpp>
 #include <string>
 
 namespace specfem {
 namespace io {
 namespace impl {
-
-/**
- * @brief Rank-specific output location split into directory and file stem.
- */
-struct ProcPath {
-  std::string base_folder; ///< Directory holding the file/folder
-  std::string name;        ///< File stem (e.g. "Kernels" or "proc_0")
-
-  /**
-   * @brief Full path, `base_folder/name`
-   *
-   * @return std::string Joined path
-   */
-  std::string full() const { return base_folder + "/" + name; }
-};
-
-/**
- * @brief Build the rank-specific path `{folder}/{name}[/proc_N]`.
- *
- * Applies specfem::MPI::format_proc_filename to `folder + "/" + name` and
- * splits the result into parent path and stem.
- *
- * @param folder Output (or input) folder
- * @param name Base name of the file/folder
- * @return ProcPath Split rank-specific path
- */
-inline ProcPath make_proc_path(const std::string &folder,
-                               const std::string &name) {
-  const std::string formatted =
-      specfem::MPI::format_proc_filename(folder + "/" + name);
-  const boost::filesystem::path formatted_path(formatted);
-  return { formatted_path.parent_path().string(),
-           formatted_path.stem().string() };
-}
 
 /**
  * @brief Transform that leaves the staged dataset untouched.

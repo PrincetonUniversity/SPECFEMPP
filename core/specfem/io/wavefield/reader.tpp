@@ -6,7 +6,6 @@
 #include "specfem/parallel_configuration/chunk_config.hpp"
 #include "specfem/tag_dispatch.hpp"
 #include "specfem/utilities.hpp"
-#include <boost/filesystem.hpp>
 
 template <typename IOLibrary>
 specfem::io::wavefield_reader<IOLibrary>::wavefield_reader(
@@ -17,15 +16,8 @@ specfem::io::wavefield_reader<IOLibrary>::wavefield_reader(
       //   parallel: {output_folder}/ForwardWavefield/proc_N
       // file_path is declared before file in the header, so it is initialized
       // first and can safely be passed to the File constructor.
-      file_path([&output_folder]() {
-        const std::string formatted = specfem::MPI::format_proc_filename(
-            output_folder + "/ForwardWavefield");
-        const boost::filesystem::path p(formatted);
-        if (specfem::MPI::get_size() > 1) {
-          return (p.parent_path() / p.stem()).string();
-        }
-        return p.string();
-      }()),
+      file_path(specfem::MPI::format_proc_filename(output_folder +
+                                                   "/ForwardWavefield")),
       // File is opened lazily in open_file() / initialize() so that the reader
       // can be constructed before the checkpoint directory exists (needed for
       // the combined_undoatt workflow where the forward pass creates the dir).

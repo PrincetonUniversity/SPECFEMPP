@@ -7,6 +7,7 @@
 #include "specfem/io/property/writer.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/macros/tag_dispatch.hpp"
+#include "specfem/mpi.hpp"
 #include "specfem/tag_dispatch.hpp"
 #include <Kokkos_Core.hpp>
 #include <boost/filesystem.hpp>
@@ -41,16 +42,16 @@ void specfem::io::property_writer<OutputLibrary>::write_impl(
   // files:
   //   serial:   {output_folder}/Properties/
   //   parallel: {output_folder}/Properties/proc_N/
-  const auto path =
-      specfem::io::impl::make_proc_path(output_folder, "Properties");
+  const boost::filesystem::path path =
+      specfem::MPI::format_proc_filename(output_folder + "/Properties");
 
   // Ensure intermediate directories exist (needed for MPI case where
-  // base_folder = output_folder/Properties/ which may not exist yet)
-  boost::filesystem::create_directories(path.base_folder);
+  // the parent output_folder/Properties/ may not exist yet)
+  boost::filesystem::create_directories(path.parent_path());
 
   assembly.properties.copy_to_host();
 
-  typename OutputLibrary::File file(path.full());
+  typename OutputLibrary::File file(path.string());
 
   const int nspec = assembly.mesh.nspec;
 
@@ -135,5 +136,5 @@ void specfem::io::property_writer<OutputLibrary>::write_impl(
     throw std::runtime_error(message.str());
   }
 
-  specfem::Logger::info(path.name + " written to " + path.full());
+  specfem::Logger::info("Properties written to " + path.string());
 }
