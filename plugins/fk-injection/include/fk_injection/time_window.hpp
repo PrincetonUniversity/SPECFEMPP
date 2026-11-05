@@ -39,8 +39,8 @@ struct FkSizes {
                            ///< to simulation time step
   type_real frequency_step =
       0; ///< \f$\Delta f\f$ in Hz (\f$= 1/((N_\text{FFT}-1)\Delta
-         ///< t_\text{min})\f$; follows the SPECFEM3D reference, which stretches
-         ///< frequency-domain delays by a factor \f$N/(N-1)\f$)
+         ///< t_\text{min})\f$; SPECFEM3D's grid, which stretches times by a
+         ///< factor \f$N/(N-1)\f$ and is used only to reproduce it)
   type_real effective_time_window =
       0; ///< Effective FK time window \f$T_\text{FK} = \Delta
          ///< t_\text{min}(N_\text{FFT}-1)\f$ in s

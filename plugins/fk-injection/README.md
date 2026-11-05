@@ -122,7 +122,7 @@ The plugin differs from SPECFEM3D's FK in two ways that
 
 - SPECFEM3D normalizes the inverse FFT by the simulation step rather than the
   resampled step, which makes amplitudes larger by the resampling rate.
-- SPECFEM3D's frequency grid stretches delays by N/(N − 1), with N the FFT length.
+- SPECFEM3D's frequency grid stretches times by N/(N − 1), with N the FFT length.
   It also truncates `ORIGIN_TIME` to a whole number of resampled steps, where the
   plugin keeps the fraction.
 
