@@ -24,8 +24,7 @@ FetchContent_MakeAvailable(pocketfft)
 
 add_library(fk_injection_impl STATIC
   src/fk_injection_plugin.cpp
-  src/fk_result.cpp
-  src/impl/depth_groups.cpp
+  src/field_sampler.cpp
   src/impl/depth_series.cpp
   src/impl/driver.cpp
   src/impl/fk_setup.cpp
@@ -34,6 +33,7 @@ add_library(fk_injection_impl STATIC
   src/model_file_reader.cpp
   src/plane_wave_response.cpp
   src/plugin_config.cpp
+  src/series_table.cpp
   src/solver.cpp
   src/time_window.cpp
 )

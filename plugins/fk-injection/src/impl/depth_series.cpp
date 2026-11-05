@@ -11,7 +11,7 @@
 #include <vector>
 
 void fk_injection::impl::depth_spectrum(
-    const fk_injection::LayerLocation &group,
+    const fk_injection::LayerLocation &location,
     const fk_injection::impl::InterfaceStates &states,
     const fk_injection::LayeredModel &model,
     const fk_injection::impl::FkSetup &setup, std::complex<double> *spectrum,
@@ -20,7 +20,8 @@ void fk_injection::impl::depth_spectrum(
 
   const int nf2 = static_cast<int>(setup.omega.size()); // nf_stored + 1
   const double p = setup.p;
-  const bool is_acoustic = (group.medium == specfem::plugin::Medium::acoustic);
+  const bool is_acoustic =
+      (location.medium == specfem::plugin::Medium::acoustic);
 
   for (int f = 0; f < nf2; ++f) {
     const Cplx omega(setup.omega[f], 0.0);
@@ -28,14 +29,14 @@ void fk_injection::impl::depth_spectrum(
     fk_injection::impl::SeriesSpectrum series;
     if (is_acoustic) {
       const fk_injection::AcousticLayer &layer =
-          model.fluid_layers()[group.layer];
+          model.fluid_layers()[location.layer];
       fk_injection::impl::AcousticState state =
           fk_injection::impl::acoustic_state_in_layer(
-              layer, omega, group.height, p,
-              states.acoustic_bottom(f, group.layer));
+              layer, omega, location.height, p,
+              states.acoustic_bottom(f, location.layer));
       // Free-surface pressure boundary condition at the top of the fluid
       // column.
-      if (group.at_free_surface) {
+      if (location.at_free_surface) {
         state.pressure_over_k = Cplx(0.0, 0.0);
       }
       // SPECFEM3D resolves an acoustic point at a layer's bottom boundary into
@@ -43,8 +44,8 @@ void fk_injection::impl::depth_spectrum(
       // u_x = -i p^2/rho (P/k) there uses the underlying layer's density. The
       // state itself is the zero-height interface state either way.
       double horizontal_density = static_cast<double>(layer.density);
-      if (group.height <= 1.0e-6 * static_cast<double>(layer.thickness)) {
-        const int below = group.layer + 1;
+      if (location.height <= 1.0e-6 * static_cast<double>(layer.thickness)) {
+        const int below = location.layer + 1;
         horizontal_density =
             below < model.number_of_fluid_layers()
                 ? static_cast<double>(model.fluid_layers()[below].density)
@@ -54,14 +55,14 @@ void fk_injection::impl::depth_spectrum(
           fk_injection::impl::project_acoustic(state, horizontal_density, p);
     } else {
       fk_injection::ComplexVector<4> state;
-      if (group.in_halfspace) {
+      if (location.in_halfspace) {
         state = fk_injection::impl::elastic_state_in_halfspace(
             setup.e_mat, model.elastic_layers().back(), omega, p,
-            group.depth_below_halfspace_top, states.modes_at(f));
+            location.depth_below_halfspace_top, states.modes_at(f));
       } else {
         state = fk_injection::impl::elastic_state_in_layer(
-            model.elastic_layers()[group.layer], omega, group.height, p,
-            states.elastic_top(f, group.layer + 1));
+            model.elastic_layers()[location.layer], omega, location.height, p,
+            states.elastic_top(f, location.layer + 1));
       }
       series = fk_injection::impl::project_elastic(state, omega, p);
     }
@@ -125,36 +126,4 @@ void fk_injection::impl::to_time_series(
       out[k] = static_cast<fk_injection::type_real>(spline[k]);
     }
   }
-}
-
-fk_injection::impl::DepthSeries fk_injection::impl::depth_series(
-    const fk_injection::impl::DepthGroups &groups,
-    const fk_injection::impl::InterfaceStates &states,
-    const fk_injection::LayeredModel &model,
-    const fk_injection::impl::FkSetup &setup) {
-  const int fft_samples = setup.sizes.number_of_fft_samples;
-  const int ncoef = setup.sizes.number_of_stored_frequencies;
-  const int nseries = fk_injection::impl::number_of_series;
-  const int ngroups = static_cast<int>(groups.groups.size());
-
-  fk_injection::impl::DepthSeries result;
-  result.coefficients.resize(static_cast<std::size_t>(ngroups) * nseries *
-                             ncoef);
-  result.number_of_groups = ngroups;
-  result.coefficient_count = ncoef;
-
-  std::vector<std::complex<double>> spectrum(static_cast<std::size_t>(nseries) *
-                                             fft_samples);
-
-  for (int g = 0; g < ngroups; ++g) {
-    std::fill(spectrum.begin(), spectrum.end(), std::complex<double>(0.0, 0.0));
-    fk_injection::impl::depth_spectrum(groups.groups[g], states, model, setup,
-                                       spectrum.data(), fft_samples);
-    fk_injection::impl::to_time_series(
-        spectrum.data(), setup,
-        &result.coefficients[fk_injection::impl::series_coefficient_index(
-            g, 0, 0, ncoef)]);
-  }
-
-  return result;
 }

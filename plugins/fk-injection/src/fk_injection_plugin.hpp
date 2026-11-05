@@ -1,6 +1,6 @@
 #pragma once
 
-#include "fk_injection/fk_result.hpp"
+#include "field_sampler.hpp"
 #include "plugin_config.hpp"
 #include "specfem/plugin/injection_plugin.hpp"
 
@@ -86,7 +86,7 @@ private:
   TimeWindow window_;
   double zmax_;
   std::array<double, 4> horizontal_bounds_; ///< See @c EvalPoints
-  FkResult result_{};
+  FieldSampler result_{};
   std::vector<Group> groups_{};
   std::vector<type_real> scratch_{}; ///< One step of @c result_
 };

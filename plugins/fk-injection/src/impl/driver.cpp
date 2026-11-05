@@ -8,43 +8,6 @@
 #include <utility>
 #include <vector>
 
-fk_injection::FkResult
-fk_injection::impl::make_result(fk_injection::impl::DepthSeries series,
-                                const fk_injection::impl::DepthGroups &groups,
-                                const fk_injection::EvalPoints &points,
-                                const fk_injection::impl::FkSetup &setup) {
-  const int npoints = points.size();
-
-  const bool have_lame = !points.lame_ratio_xi1.empty();
-  const bool have_normal = !points.normal_x.empty();
-
-  std::vector<fk_injection::PointSample> samples(npoints);
-  for (int i = 0; i < npoints; ++i) {
-    fk_injection::PointSample &sample = samples[i];
-    sample.group = groups.point_group[i];
-    sample.offset = fk_injection::impl::point_abscissa_offset(
-        setup.abscissa_pad, groups.time_delay[i], setup.delay_stretch,
-        setup.dt_min);
-    sample.medium = groups.groups[sample.group].medium;
-    if (have_lame) {
-      sample.xi1 = points.lame_ratio_xi1[i];
-      sample.xim = points.lame_ratio_xim[i];
-      sample.bulk = points.lame_ratio_bulk[i];
-    }
-    if (have_normal) {
-      sample.normal_x = points.normal_x[i];
-      sample.normal_y = points.normal_y[i];
-      sample.normal_z = points.normal_z[i];
-    }
-  }
-
-  return fk_injection::FkResult(
-      std::move(series.coefficients), series.number_of_groups,
-      series.coefficient_count, std::move(samples),
-      static_cast<type_real>(std::cos(setup.phi)),
-      static_cast<type_real>(std::sin(setup.phi)), setup.sizes.resampling_rate);
-}
-
 void fk_injection::impl::check_eval_points(
     const fk_injection::EvalPoints &points) {
   const std::size_t n = points.x.size();

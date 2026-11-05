@@ -10,7 +10,6 @@
 
 #include "fk_injection/config.hpp"
 #include "fk_injection/eval_points.hpp"
-#include "fk_injection/fk_result.hpp"
 #include "fk_injection/incident_wave.hpp"
 #include "fk_injection/layered_model.hpp"
 #include "fk_injection/model_file_reader.hpp"
