@@ -120,18 +120,7 @@ fk_injection::impl::group_by_depth(const fk_injection::EvalPoints &points,
       z_anchor = zi;
       group_medium = med;
 
-      const fk_injection::LayerLocation loc =
-          model.locate(z_anchor, med, tolerance);
-
-      DepthGroup dg;
-      dg.medium = loc.medium;
-      dg.layer = loc.layer;
-      dg.height = loc.height;
-      dg.depth_below_halfspace_top = loc.depth_below_halfspace_top;
-      dg.in_halfspace = loc.in_halfspace;
-      dg.free_surface = loc.at_free_surface;
-      dg.depth = z_anchor;
-      result.groups.push_back(dg);
+      result.groups.push_back(model.locate(z_anchor, med, tolerance));
     }
 
     result.point_group[idx] = current_group_id;

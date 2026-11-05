@@ -12,7 +12,7 @@
 #include <vector>
 
 void fk_injection::impl::depth_spectrum(
-    const fk_injection::impl::DepthGroup &group,
+    const fk_injection::LayerLocation &group,
     const fk_injection::impl::InterfaceStates &states,
     const fk_injection::LayeredModel &model,
     const fk_injection::impl::FkSetup &setup, std::complex<double> *spectrum,
@@ -36,7 +36,7 @@ void fk_injection::impl::depth_spectrum(
               states.acoustic_bottom(f, group.layer));
       // Free-surface pressure boundary condition at the top of the fluid
       // column.
-      if (group.free_surface) {
+      if (group.at_free_surface) {
         state.pressure_over_k = Cplx(0.0, 0.0);
       }
       // SPECFEM3D resolves an acoustic point at a layer's bottom boundary into

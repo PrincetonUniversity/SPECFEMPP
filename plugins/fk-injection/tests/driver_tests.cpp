@@ -109,7 +109,6 @@ TEST(FkDriver, ElasticHalfSpaceRunsFinite) {
   fk_injection::TimeWindow window;
   window.dt = static_cast<type_real>(0.05);
   window.nstep = 256;
-  window.frequency_max = 1;
   window.frequency_sampling = 2;
   window.time_window_length = 40;
 
@@ -173,7 +172,6 @@ TEST(FkDriver, AcousticElasticRunsFinite) {
   fk_injection::TimeWindow window;
   window.dt = static_cast<type_real>(0.05);
   window.nstep = 256;
-  window.frequency_max = 1;
   window.frequency_sampling = 2;
   window.time_window_length = 40;
 
@@ -238,7 +236,7 @@ TEST(FkDriver, ReadModelFile) {
     out << "AMPLITUDE 2.5\n";
   }
 
-  auto [model, wave, window, has_origin] =
+  auto [model, wave, window, frequency_max, has_origin] =
       fk_injection::read_fk_model_file(fname);
   EXPECT_TRUE(has_origin);
 
@@ -271,7 +269,7 @@ TEST(FkDriver, ReadModelFile) {
   // Window
   EXPECT_EQ(window.nstep, 512);
   EXPECT_NEAR(static_cast<double>(window.dt), 0.025, 1e-7);
-  EXPECT_NEAR(static_cast<double>(window.frequency_max), 2.0, 1e-6);
+  EXPECT_NEAR(static_cast<double>(frequency_max), 2.0, 1e-6);
   EXPECT_NEAR(static_cast<double>(window.frequency_sampling), 4.0, 1e-6);
   EXPECT_NEAR(static_cast<double>(window.time_window_length), 60.0, 1e-6);
 }
@@ -377,7 +375,6 @@ TEST(FkDriver, SolveRejectsVerticalIncidence) {
   fk_injection::TimeWindow window;
   window.dt = static_cast<type_real>(0.05);
   window.nstep = 256;
-  window.frequency_max = 1;
   window.frequency_sampling = 2;
   window.time_window_length = 40;
 
@@ -407,7 +404,6 @@ TEST(FkDriver, Specfem3dConventionScalesAmplitudeAndDelay) {
   fk_injection::TimeWindow window;
   window.dt = static_cast<type_real>(0.05);
   window.nstep = 256;
-  window.frequency_max = 1;
   window.frequency_sampling = 10; // dt_min = 0.1, N_P = 2
   window.time_window_length = 60;
 
@@ -497,7 +493,6 @@ fk_injection::TimeWindow long_window(double frequency_sampling) {
   fk_injection::TimeWindow window;
   window.dt = static_cast<type_real>(0.15);
   window.nstep = 1200;
-  window.frequency_max = static_cast<type_real>(0.2);
   window.frequency_sampling = static_cast<type_real>(frequency_sampling);
   window.time_window_length = 180;
   return window;

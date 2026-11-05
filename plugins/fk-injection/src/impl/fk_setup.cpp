@@ -75,7 +75,6 @@ fk_injection::impl::prepare(const fk_injection::LayeredModel &model,
   const double minimum_window =
       reverberation > 0.0 ? span + reverberation : 0.0;
   setup.sizes = fk_injection::compute_fk_sizes(window, span, minimum_window);
-  setup.fft_power = setup.sizes.interpolation_power;
   setup.p = p;
   setup.phi = static_cast<double>(wave.azimuth_phi);
   setup.dt_min = static_cast<double>(setup.sizes.resampling_rate) *

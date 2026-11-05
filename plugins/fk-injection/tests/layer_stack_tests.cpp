@@ -95,7 +95,6 @@ fk_injection::TimeWindow make_window() {
   fk_injection::TimeWindow window;
   window.dt = static_cast<type_real>(0.05);
   window.nstep = 512;
-  window.frequency_max = static_cast<type_real>(1.0);
   window.frequency_sampling = static_cast<type_real>(4.0);
   window.time_window_length = static_cast<type_real>(50.0);
   return window;

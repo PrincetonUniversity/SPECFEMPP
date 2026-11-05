@@ -40,7 +40,7 @@ struct DepthSeries {
  * the (i*omega)^n derivative factor to S0/S1 only. The free-surface groups get
  * their fluid pressure zeroed before projection.
  *
- * @param group      Depth group (medium, layer, height, zz, free_surface).
+ * @param group      Location of the group's depth.
  * @param states     Interface states for all frequencies.
  * @param model      Layered velocity model.
  * @param setup      Shared frequency-domain setup.
@@ -48,7 +48,8 @@ struct DepthSeries {
  *                   bins [0, nf_stored] are written per series.
  * @param fft_length Stride between series (the FFT length N).
  */
-void depth_spectrum(const DepthGroup &group, const InterfaceStates &states,
+void depth_spectrum(const fk_injection::LayerLocation &group,
+                    const InterfaceStates &states,
                     const fk_injection::LayeredModel &model,
                     const FkSetup &setup, std::complex<double> *spectrum,
                     int fft_length);
@@ -68,7 +69,7 @@ void depth_spectrum(const DepthGroup &group, const InterfaceStates &states,
  * comparison against the reference.
  *
  * @param spectrum     Group spectrum [number_of_series][N] (modified in place).
- * @param setup        Shared setup (sizes, fft_power, shift).
+ * @param setup        Shared setup (sizes, shift).
  * @param coefficients Output [number_of_series][coefficient_count], contiguous.
  * @param convention   Which step normalizes the inverse FFT.
  */

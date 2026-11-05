@@ -10,7 +10,7 @@ using fk_injection::TimeWindow;
 // ---------------------------------------------------------------------------
 // Golden-value case 1 (derivation in comments)
 //
-// dt=0.01, nstep=1000, frequency_max=1.0, frequency_sampling=10.0,
+// dt=0.01, nstep=1000, frequency_sampling=10.0,
 // time_window_length=40.0
 //
 // dt_min_raw = 1/10 = 0.1
@@ -31,7 +31,6 @@ TEST(TimeWindow, GoldenCase1) {
   TimeWindow window;
   window.dt = 0.01;
   window.nstep = 1000;
-  window.frequency_max = 1.0;
   window.frequency_sampling = 10.0;
   window.time_window_length = 40.0;
 
@@ -43,7 +42,6 @@ TEST(TimeWindow, GoldenCase1) {
   EXPECT_EQ(sizes.interpolation_power, 9);
   // type_real may be float; cast to double for EXPECT_NEAR.
   EXPECT_NEAR(static_cast<double>(sizes.frequency_step), 1.0 / 51.1, 1.0e-5);
-  EXPECT_NEAR(static_cast<double>(sizes.effective_time_window), 51.1, 1.0e-3);
 }
 
 // ---------------------------------------------------------------------------
@@ -59,7 +57,6 @@ TEST(TimeWindow, ClampResamplingRateToOne) {
   TimeWindow window;
   window.dt = 2.0;
   window.nstep = 100;
-  window.frequency_max = 0.5;
   window.frequency_sampling = 1.0;
   window.time_window_length = 50.0;
 
@@ -77,7 +74,6 @@ TEST(TimeWindow, SizesArePositive) {
   TimeWindow window;
   window.dt = 0.05;
   window.nstep = 500;
-  window.frequency_max = 2.0;
   window.frequency_sampling = 5.0;
   window.time_window_length = 30.0;
 
@@ -88,7 +84,6 @@ TEST(TimeWindow, SizesArePositive) {
   EXPECT_GT(sizes.number_of_fft_samples, 0);
   EXPECT_GT(sizes.interpolation_power, 0);
   EXPECT_GT(static_cast<double>(sizes.frequency_step), 0.0);
-  EXPECT_GT(static_cast<double>(sizes.effective_time_window), 0.0);
 
   // NF_FOR_FFT == 2 * NF_FOR_STORING.
   EXPECT_EQ(sizes.number_of_fft_samples,
@@ -114,7 +109,6 @@ TEST(TimeWindow, SpanExtendsWindow) {
   TimeWindow window;
   window.dt = 0.01;
   window.nstep = 5000; // tmax_samp = 100.1 — no cap for either call
-  window.frequency_max = 1.0;
   window.frequency_sampling = 10.0;
   window.time_window_length = 20.0;
 
@@ -134,7 +128,6 @@ TEST(TimeWindow, MinimumWindowOverridesCap) {
   TimeWindow window;
   window.dt = 0.01;
   window.nstep = 1000;
-  window.frequency_max = 1.0;
   window.frequency_sampling = 10.0;
   window.time_window_length = 40.0;
 
@@ -152,7 +145,6 @@ TEST(TimeWindow, RejectsNonPositiveSampling) {
   TimeWindow window;
   window.dt = 0.01;
   window.nstep = 1000;
-  window.frequency_max = 1.0;
   window.frequency_sampling = 0.0; // invalid
   window.time_window_length = 40.0;
 
@@ -170,7 +162,6 @@ inline TimeWindow make_valid_window() {
   TimeWindow window;
   window.dt = 0.01;
   window.nstep = 1000;
-  window.frequency_max = 1.0;
   window.frequency_sampling = 10.0;
   window.time_window_length = 40.0;
   return window;

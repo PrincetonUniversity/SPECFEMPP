@@ -69,18 +69,6 @@ public:
   int number_of_groups() const { return number_of_groups_; }
   int coefficient_count() const { return coefficient_count_; }
   int resampling_rate() const { return resampling_rate_; }
-  type_real cos_phi() const { return cos_phi_; }
-  type_real sin_phi() const { return sin_phi_; }
-
-  /**
-   * @brief One stored spline coefficient.
-   *
-   * @param group       Depth group.
-   * @param series      Series slot.
-   * @param coefficient Coefficient within the series.
-   * @return The coefficient.
-   */
-  type_real series_coefficient(int group, int series, int coefficient) const;
 
   const std::vector<PointSample> &points() const { return points_; }
 
