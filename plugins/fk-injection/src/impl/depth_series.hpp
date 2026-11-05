@@ -2,7 +2,6 @@
 
 #include "fk_injection/config.hpp"
 #include "fk_injection/layered_model.hpp"
-#include "impl/depth_groups.hpp"
 #include "impl/fk_setup.hpp"
 #include "impl/layer_stack.hpp"
 #include "impl/series_layout.hpp"
@@ -13,28 +12,15 @@
 namespace fk_injection::impl {
 
 /**
- * @brief Cubic-B-spline coefficients of the depth-only series, per group.
+ * @brief Fill the positive-frequency depth spectrum at one location.
  *
- * Laid out as @c series_coefficient_index describes, so each series row is
- * contiguous for spline evaluation. The series slots follow the @c series_*
- * indices (S0..S4).
- */
-struct DepthSeries {
-  std::vector<fk_injection::type_real> coefficients{};
-  int number_of_groups = 0;
-  int coefficient_count = 0;
-};
-
-/**
- * @brief Fill the positive-frequency depth spectrum for one group.
- *
- * For every stored positive frequency: evaluate the state at the group depth
+ * For every stored positive frequency: evaluate the state at the depth
  * (half-space or partial-layer propagation via the layer operators), project to
  * the depth-only series S0..S4, multiply by the Gaussian apodization, and apply
- * i*omega to the elastic S0/S1, which makes them velocity. The free-surface
- * groups get their fluid pressure zeroed before projection.
+ * i*omega to the elastic S0/S1, which makes them velocity. Free-surface
+ * locations get their fluid pressure zeroed before projection.
  *
- * @param group      Location of the group's depth.
+ * @param location   Location of the depth.
  * @param states     Interface states for all frequencies.
  * @param model      Layered velocity model.
  * @param setup      Shared frequency-domain setup.
@@ -42,14 +28,14 @@ struct DepthSeries {
  *                   bins [0, nf_stored] are written per series.
  * @param fft_length Stride between series (the FFT length N).
  */
-void depth_spectrum(const fk_injection::LayerLocation &group,
+void depth_spectrum(const fk_injection::LayerLocation &location,
                     const InterfaceStates &states,
                     const fk_injection::LayeredModel &model,
                     const FkSetup &setup, std::complex<double> *spectrum,
                     int fft_length);
 
 /**
- * @brief Convert a group's depth spectrum to stored B-spline coefficients.
+ * @brief Convert a depth spectrum to stored B-spline coefficients.
  *
  * Per series: inverse FFT (Hermitian completion handled internally),
  * left-rotate by @c setup.shift_samples for t0 alignment, cubic-B-spline
@@ -59,28 +45,11 @@ void depth_spectrum(const fk_injection::LayerLocation &group,
  *
  * The inverse FFT divides by @c setup.normalization_dt.
  *
- * @param spectrum     Group spectrum [number_of_series][N] (modified in place).
+ * @param spectrum     Spectrum [number_of_series][N] (modified in place).
  * @param setup        Shared setup (sizes, shift, normalization).
  * @param coefficients Output [number_of_series][coefficient_count], contiguous.
  */
 void to_time_series(std::complex<double> *spectrum, const FkSetup &setup,
                     fk_injection::type_real *coefficients);
-
-/**
- * @brief Synthesize the depth-only series for every group.
- *
- * Host loop over groups; per group it fills the spectrum and converts it to
- * stored coefficients back-to-back (spectra are not all materialized at once).
- *
- * @param groups Depth groups.
- * @param states Interface states.
- * @param model  Layered velocity model.
- * @param setup  Shared frequency-domain setup.
- * @return DepthSeries with per-group coefficients and the t0/pad bookkeeping.
- */
-DepthSeries depth_series(const DepthGroups &groups,
-                         const InterfaceStates &states,
-                         const fk_injection::LayeredModel &model,
-                         const FkSetup &setup);
 
 } // namespace fk_injection::impl

@@ -119,7 +119,7 @@ TEST(FkDriver, ElasticHalfSpaceRunsFinite) {
 
   // Shape checks
   EXPECT_EQ(result.number_of_points(), 5);
-  EXPECT_GT(result.coefficient_count(), 0);
+  EXPECT_GT(result.series().coefficient_count(), 0);
 
   std::vector<type_real> out(
       static_cast<std::size_t>(result.number_of_points()) *
@@ -182,7 +182,7 @@ TEST(FkDriver, AcousticElasticRunsFinite) {
   const auto result = fk_injection::solve(model, wave, window, ep);
 
   EXPECT_EQ(result.number_of_points(), 5);
-  EXPECT_GT(result.coefficient_count(), 0);
+  EXPECT_GT(result.series().coefficient_count(), 0);
 
   // Row-major (point, component, step).
   const int components = fk_injection::number_of_sample_components;
@@ -518,7 +518,7 @@ struct SampledField {
   std::vector<type_real> values{};
   int number_of_steps = 0;
 
-  SampledField(const fk_injection::FkResult &result, int steps)
+  SampledField(const fk_injection::FieldSampler &result, int steps)
       : values(static_cast<std::size_t>(result.number_of_points()) *
                fk_injection::number_of_sample_components * steps),
         number_of_steps(steps) {

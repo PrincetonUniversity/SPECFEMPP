@@ -1,53 +1,11 @@
 #pragma once
 
 #include "fk_injection/eval_points.hpp"
-#include "fk_injection/fk_result.hpp"
 #include "fk_injection/incident_wave.hpp"
 #include "fk_injection/layered_model.hpp"
 #include "fk_injection/time_window.hpp"
-#include "impl/depth_groups.hpp"
-#include "impl/depth_series.hpp"
-#include "impl/fk_setup.hpp"
 
 namespace fk_injection::impl {
-
-/**
- * @brief Spline abscissa offset for one point: @c pad -
- * tau*delay_stretch/dt_min.
- *
- * Single source of the per-point offset so the window-coverage check and the
- * stored @c PointSample::offset cannot drift apart.
- *
- * @param abscissa_pad Leading pad in resampled-grid samples.
- * @param time_delay   Per-point plane-wave delay tau in s.
- * @param delay_stretch Delay scaling (1 in production; N/(N-1) for the
- *                      SPECFEM3D-reference reproduction).
- * @param dt_min       Resampled-grid time step in s.
- * @return Abscissa offset in resampled-grid samples.
- */
-inline double point_abscissa_offset(double abscissa_pad, double time_delay,
-                                    double delay_stretch, double dt_min) {
-  return abscissa_pad - time_delay * delay_stretch / dt_min;
-}
-
-/**
- * @brief Assemble the grouped result.
- *
- * Moves the depth-series coefficients into the result and builds the
- * per-point data: group index, abscissa offset (see @c point_abscissa_offset),
- * medium, and the traction material factors (xi1, xim, bulk, normal).
- *
- * @param series Depth-series coefficients.
- * @param groups Depth groups (point->group map, delays).
- * @param points Evaluation points (Lame factors, normals).
- * @param setup  Shared setup (azimuth, dt_min, pad, delay stretch,
- *               resampling).
- * @return fk_injection::FkResult ready for sampling.
- */
-fk_injection::FkResult make_result(DepthSeries series,
-                                   const DepthGroups &groups,
-                                   const fk_injection::EvalPoints &points,
-                                   const FkSetup &setup);
 
 /**
  * @brief Reject evaluation points whose arrays disagree.

@@ -12,7 +12,7 @@
 namespace fk_injection::impl {
 
 /**
- * @brief Frequency-domain quantities shared by every depth group.
+ * @brief Frequency-domain quantities shared by every series row.
  *
  * Built once by @c prepare from the model, wave, window and delay span. The
  * time-placement bookkeeping (t0 shift, delay pad) is added where the series
