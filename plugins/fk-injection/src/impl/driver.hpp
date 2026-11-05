@@ -41,15 +41,14 @@ inline double point_abscissa_offset(double abscissa_pad, double time_delay,
  * @param series Depth-series coefficients.
  * @param groups Depth groups (point->group map, delays).
  * @param points Evaluation points (Lame factors, normals).
- * @param setup  Shared setup (azimuth, dt_min, pad, resampling).
- * @param delay_stretch Delay scaling applied to every point's offset (1 in
- *        production; N/(N-1) for the SPECFEM3D-reference reproduction).
+ * @param setup  Shared setup (azimuth, dt_min, pad, delay stretch,
+ *               resampling).
  * @return fk_injection::FkResult ready for sampling.
  */
 fk_injection::FkResult make_result(const DepthSeries &series,
                                    const DepthGroups &groups,
                                    const fk_injection::EvalPoints &points,
-                                   const FkSetup &setup, double delay_stretch);
+                                   const FkSetup &setup);
 
 /**
  * @brief Reject evaluation points whose arrays disagree.

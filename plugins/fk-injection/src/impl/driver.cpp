@@ -12,8 +12,7 @@ fk_injection::FkResult
 fk_injection::impl::make_result(const fk_injection::impl::DepthSeries &series,
                                 const fk_injection::impl::DepthGroups &groups,
                                 const fk_injection::EvalPoints &points,
-                                const fk_injection::impl::FkSetup &setup,
-                                double delay_stretch) {
+                                const fk_injection::impl::FkSetup &setup) {
   const int npoints = points.size();
 
   // Series coefficients: double -> type_real, same layout.
@@ -28,7 +27,8 @@ fk_injection::impl::make_result(const fk_injection::impl::DepthSeries &series,
     fk_injection::PointSample &sample = samples[i];
     sample.group = groups.point_group[i];
     sample.offset = fk_injection::impl::point_abscissa_offset(
-        setup.abscissa_pad, groups.time_delay[i], delay_stretch, setup.dt_min);
+        setup.abscissa_pad, groups.time_delay[i], setup.delay_stretch,
+        setup.dt_min);
     sample.medium = groups.groups[sample.group].medium;
     if (have_lame) {
       sample.xi1 = points.lame_ratio_xi1[i];

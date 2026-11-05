@@ -90,17 +90,10 @@ void fk_injection::impl::depth_spectrum(
 
 void fk_injection::impl::to_time_series(
     std::complex<double> *spectrum, const fk_injection::impl::FkSetup &setup,
-    double *coefficients, fk_injection::ReferenceConvention convention) {
+    double *coefficients) {
   const int fft_samples = setup.sizes.number_of_fft_samples;
   const int ncoef = setup.sizes.number_of_stored_frequencies;
   const int nseries = fk_injection::impl::number_of_series;
-  // Normalize by the resampled-grid step dt_min (physically correct). The
-  // SPECFEM3D reference divides by the SEM step (NP times too large for NP>1);
-  // reproduce that only for exact reference comparison.
-  const double normalization_dt =
-      convention == fk_injection::ReferenceConvention::specfem3d
-          ? setup.dt_min / static_cast<double>(setup.sizes.resampling_rate)
-          : setup.dt_min;
   const int rotation =
       ((setup.shift_samples % fft_samples) + fft_samples) % fft_samples;
 
@@ -112,7 +105,7 @@ void fk_injection::impl::to_time_series(
   for (int s = 0; s < nseries; ++s) {
     fk_injection::fft::inverse_real(
         { spectrum + s * fft_samples, static_cast<std::size_t>(fft_samples) },
-        normalization_dt, real_series);
+        setup.normalization_dt, real_series);
 
     if (rotation != 0) {
       std::rotate(real_series.begin(), real_series.begin() + rotation,
@@ -143,8 +136,7 @@ fk_injection::impl::DepthSeries fk_injection::impl::depth_series(
     const fk_injection::impl::DepthGroups &groups,
     const fk_injection::impl::InterfaceStates &states,
     const fk_injection::LayeredModel &model,
-    const fk_injection::impl::FkSetup &setup,
-    fk_injection::ReferenceConvention convention) {
+    const fk_injection::impl::FkSetup &setup) {
   const int fft_samples = setup.sizes.number_of_fft_samples;
   const int ncoef = setup.sizes.number_of_stored_frequencies;
   const int nseries = fk_injection::impl::number_of_series;
@@ -164,8 +156,7 @@ fk_injection::impl::DepthSeries fk_injection::impl::depth_series(
     fk_injection::impl::depth_spectrum(groups.groups[g], states, model, setup,
                                        spectrum.data(), fft_samples);
     fk_injection::impl::to_time_series(
-        spectrum.data(), setup, &result.coefficients[result.index(g, 0, 0)],
-        convention);
+        spectrum.data(), setup, &result.coefficients[result.index(g, 0, 0)]);
   }
 
   return result;

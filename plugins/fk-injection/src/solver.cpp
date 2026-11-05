@@ -35,14 +35,6 @@ fk_injection::solve(const fk_injection::LayeredModel &model,
   const fk_injection::impl::FkSetup setup = fk_injection::impl::prepare(
       model, wave, window, p, groups, derivative, convention);
 
-  // Delay scaling: 1 in production (exact plane-wave delay); N/(N-1) only when
-  // reproducing the SPECFEM3D reference, whose frequency-grid stretched delays.
-  const double delay_stretch =
-      convention == fk_injection::ReferenceConvention::specfem3d
-          ? static_cast<double>(setup.sizes.number_of_fft_samples) /
-                static_cast<double>(setup.sizes.number_of_fft_samples - 1)
-          : 1.0;
-
   // Window coverage: every SEM step for every point must map to an abscissa in
   // [0, ncoef-1]; spline evaluation clamps out-of-range values into a silent
   // DC offset otherwise. The guard uses the production (un-stretched) delay:
@@ -93,8 +85,6 @@ fk_injection::solve(const fk_injection::LayeredModel &model,
   const fk_injection::impl::InterfaceStates states =
       fk_injection::impl::solve_layer_stack(model, setup);
   const fk_injection::impl::DepthSeries series =
-      fk_injection::impl::depth_series(groups, states, model, setup,
-                                       convention);
-  return fk_injection::impl::make_result(series, groups, points, setup,
-                                         delay_stretch);
+      fk_injection::impl::depth_series(groups, states, model, setup);
+  return fk_injection::impl::make_result(series, groups, points, setup);
 }

@@ -64,14 +64,14 @@ fk_injection::impl::prepare(const fk_injection::LayeredModel &model,
                             fk_injection::field_derivative derivative,
                             fk_injection::ReferenceConvention convention) {
   fk_injection::impl::FkSetup setup;
+  const bool specfem3d =
+      convention == fk_injection::ReferenceConvention::specfem3d;
 
   const double span = groups.time_delay_max - groups.time_delay_min;
   // The series repeat with the FFT period, so a reverberation that outlasts it
   // wraps onto the start of the run. SPECFEM3D's window has no such floor.
   const double reverberation =
-      convention == fk_injection::ReferenceConvention::exact
-          ? fk_injection::impl::fluid_reverberation_time(model, p)
-          : 0.0;
+      specfem3d ? 0.0 : fk_injection::impl::fluid_reverberation_time(model, p);
   const double minimum_window =
       reverberation > 0.0 ? span + reverberation : 0.0;
   setup.sizes = fk_injection::compute_fk_sizes(window, span, minimum_window);
@@ -82,14 +82,17 @@ fk_injection::impl::prepare(const fk_injection::LayeredModel &model,
   setup.wave_type = wave.type;
   setup.derivative = derivative;
 
+  const double fft_samples =
+      static_cast<double>(setup.sizes.number_of_fft_samples);
+  setup.delay_stretch = specfem3d ? fft_samples / (fft_samples - 1.0) : 1.0;
+  setup.normalization_dt =
+      specfem3d ? static_cast<double>(window.dt) : setup.dt_min;
+
   // Positive-frequency samples (including DC): nf_stored + 1.
   const int nf2 = setup.sizes.number_of_stored_frequencies + 1;
   // The inverse FFT assumes 1 / (N dt_min); SPECFEM3D's grid uses N - 1.
-  const double df =
-      convention == fk_injection::ReferenceConvention::specfem3d
-          ? static_cast<double>(setup.sizes.frequency_step)
-          : 1.0 / (static_cast<double>(setup.sizes.number_of_fft_samples) *
-                   setup.dt_min);
+  const double df = specfem3d ? static_cast<double>(setup.sizes.frequency_step)
+                              : 1.0 / (fft_samples * setup.dt_min);
   const double half_duration = static_cast<double>(wave.gaussian_half_duration);
 
   setup.omega.resize(nf2);
@@ -105,15 +108,13 @@ fk_injection::impl::prepare(const fk_injection::LayeredModel &model,
   // in [0, 1) for the abscissa, so the abscissae stay non-negative too.
   const double origin_samples =
       static_cast<double>(wave.origin_time) / setup.dt_min;
-  const bool truncate =
-      convention == fk_injection::ReferenceConvention::specfem3d;
-  const int nn = static_cast<int>(truncate ? std::trunc(origin_samples)
-                                           : std::floor(origin_samples));
+  const int nn = static_cast<int>(specfem3d ? std::trunc(origin_samples)
+                                            : std::floor(origin_samples));
   setup.pad_samples =
       static_cast<int>(std::ceil(groups.time_delay_max / setup.dt_min));
   setup.shift_samples = nn - setup.pad_samples;
   setup.abscissa_pad = static_cast<double>(setup.pad_samples);
-  if (!truncate)
+  if (!specfem3d)
     setup.abscissa_pad += origin_samples - static_cast<double>(nn);
 
   const fk_injection::ElasticIsotropicLayer &halfspace =
