@@ -280,8 +280,8 @@ std::vector<GroupValues> direct_field(const std::string &config_text,
 
   const auto result = fk_injection::solve(
       config.model, config.incident_wave(0.0, 0.0),
-      config.time_window(static_cast<fk_injection::type_real>(dt), nstep), eval,
-      fk_injection::field_derivative::velocity);
+      config.time_window(static_cast<fk_injection::type_real>(dt), nstep),
+      eval);
   std::vector<fk_injection::type_real> samples(
       eval.x.size() * fk_injection::number_of_sample_components * nsteps);
   result.sample(first_step, nsteps, samples);

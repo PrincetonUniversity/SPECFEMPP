@@ -16,7 +16,7 @@ namespace fk_injection::impl {
 // A plane wave in a laterally homogeneous model factorises as
 // u(x,y,z,t) = U(z, t - tau(x,y)): horizontal position is only a time shift.
 // These operators recover the depth-only spectral state once per depth group;
-// the per-point source-time apodization, (i*omega)^n derivative, time delay
+// the per-point source-time apodization, elastic i*omega velocity, time delay
 // tau, and Lame traction weights are applied later (synthesis and sampling),
 // not here.
 // ===========================================================================

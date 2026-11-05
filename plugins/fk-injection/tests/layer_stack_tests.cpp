@@ -1,5 +1,4 @@
 #include "fk_injection/config.hpp"
-#include "fk_injection/field_derivative.hpp"
 #include "fk_injection/incident_wave.hpp"
 #include "fk_injection/layered_model.hpp"
 #include "fk_injection/time_window.hpp"
@@ -118,8 +117,7 @@ TEST(LayerStack, HalfspaceTopIsEtimesB) {
   const double p = wave.ray_parameter(model);
   fk_injection::impl::DepthGroups groups; // empty, span 0
   const auto setup =
-      fk_injection::impl::prepare(model, wave, window, p, groups,
-                                  fk_injection::field_derivative::displacement);
+      fk_injection::impl::prepare(model, wave, window, p, groups);
   const auto states = fk_injection::impl::solve_layer_stack(model, setup);
 
   const int n_elastic = model.number_of_elastic_layers();
@@ -155,8 +153,7 @@ TEST(LayerStack, FreeSurfaceTractionVanishesP) {
   const double p = wave.ray_parameter(model);
   fk_injection::impl::DepthGroups groups;
   const auto setup =
-      fk_injection::impl::prepare(model, wave, window, p, groups,
-                                  fk_injection::field_derivative::displacement);
+      fk_injection::impl::prepare(model, wave, window, p, groups);
   const auto states = fk_injection::impl::solve_layer_stack(model, setup);
 
   const int f = 10;
@@ -198,8 +195,7 @@ TEST(LayerStack, FreeSurfaceTractionVanishesSV) {
   const double p = wave.ray_parameter(model);
   fk_injection::impl::DepthGroups groups;
   const auto setup =
-      fk_injection::impl::prepare(model, wave, window, p, groups,
-                                  fk_injection::field_derivative::displacement);
+      fk_injection::impl::prepare(model, wave, window, p, groups);
   const auto states = fk_injection::impl::solve_layer_stack(model, setup);
 
   const int f = 10;
@@ -241,8 +237,7 @@ TEST(LayerStack, FluidFreeSurfacePressureSmall) {
   const double p = wave.ray_parameter(model);
   fk_injection::impl::DepthGroups groups;
   const auto setup =
-      fk_injection::impl::prepare(model, wave, window, p, groups,
-                                  fk_injection::field_derivative::displacement);
+      fk_injection::impl::prepare(model, wave, window, p, groups);
   const auto states = fk_injection::impl::solve_layer_stack(model, setup);
 
   const int f = 10;

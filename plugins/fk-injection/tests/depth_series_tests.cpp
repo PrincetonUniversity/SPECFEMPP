@@ -1,6 +1,5 @@
 #include "fk_injection/config.hpp"
 #include "fk_injection/eval_points.hpp"
-#include "fk_injection/field_derivative.hpp"
 #include "fk_injection/fk_result.hpp"
 #include "fk_injection/incident_wave.hpp"
 #include "fk_injection/layered_model.hpp"
@@ -121,8 +120,7 @@ FkChain make_fk_chain() {
       fk_injection::impl::group_by_depth(points, model, wave, p, eps);
 
   const auto setup =
-      fk_injection::impl::prepare(model, wave, window, p, groups,
-                                  fk_injection::field_derivative::displacement);
+      fk_injection::impl::prepare(model, wave, window, p, groups);
 
   const auto states = fk_injection::impl::solve_layer_stack(model, setup);
 
@@ -132,12 +130,13 @@ FkChain make_fk_chain() {
 } // namespace depth_series_tests_impl
 
 // ============================================================================
-// Test 1: SpectrumIdentityDisplacement
+// Test 1: SpectrumIdentityVelocity
 //
-// For displacement mode the identity i*omega*p*S0(f) == S4(f) must hold at
-// every stored positive frequency for a non-halfspace group.
+// S4 = omega*p*dx with dx = i*u_r, and the elastic S0 is velocity i*omega*u_r,
+// so p*S0(f) == S4(f) at every stored positive frequency for a non-halfspace
+// group.
 // ============================================================================
-TEST(DepthSeries, SpectrumIdentityDisplacement) {
+TEST(DepthSeries, SpectrumIdentityVelocity) {
   const auto model = depth_series_tests_impl::make_elastic_model();
   const auto chain = depth_series_tests_impl::make_fk_chain();
   const auto &groups = chain.groups;
@@ -180,7 +179,7 @@ TEST(DepthSeries, SpectrumIdentityDisplacement) {
   EXPECT_GT(max_s4, 1.0e-6)
       << "S4 is uniformly tiny; the group appears degenerate";
 
-  // Identity: i * omega * p * S0 == S4.
+  // Identity: p * S0 == S4.
   const double p_val = setup.p;
   for (int f = 1; f <= nf_stored; ++f) {
     const std::complex<double> s0 =
@@ -188,15 +187,14 @@ TEST(DepthSeries, SpectrumIdentityDisplacement) {
     const std::complex<double> s4 =
         spec[fk_injection::impl::series_dx * nf_total + f];
 
-    const std::complex<double> lhs =
-        std::complex<double>(0.0, setup.omega[f] * p_val) * s0;
+    const std::complex<double> lhs = p_val * s0;
 
     const double abs_diff = std::abs(lhs - s4);
     const double scale = std::abs(s4) + 1.0e-30;
 
     // Pass when either the relative error is small or both sides are tiny.
     EXPECT_TRUE(abs_diff <= 1.0e-9 * scale || abs_diff < 1.0e-12)
-        << "Identity i*omega*p*S0 == S4 violated at frequency index f=" << f
+        << "Identity p*S0 == S4 violated at frequency index f=" << f
         << ": lhs=" << lhs << " s4=" << s4 << " abs_diff=" << abs_diff
         << " scale=" << scale;
   }
@@ -236,7 +234,7 @@ TEST(DepthSeries, ShiftAndPadMatchFormula) {
   // SPECFEM3D truncates and has no fraction.
   const auto reference = fk_injection::impl::prepare(
       depth_series_tests_impl::make_elastic_model(), wave,
-      depth_series_tests_impl::make_window(), setup.p, groups, setup.derivative,
+      depth_series_tests_impl::make_window(), setup.p, groups,
       fk_injection::ReferenceConvention::specfem3d);
   EXPECT_EQ(reference.shift_samples,
             static_cast<int>(origin_samples) - expected_pad);
@@ -314,12 +312,8 @@ TEST(DepthSeries, NormalizationIndependentOfResampling) {
   const auto window_np1 = make_window(0.1, 300);  // NP=1
   const auto window_np2 = make_window(0.05, 600); // NP=2, same dt_min
 
-  const auto result1 =
-      fk_injection::solve(model, wave, window_np1, points,
-                          fk_injection::field_derivative::displacement);
-  const auto result2 =
-      fk_injection::solve(model, wave, window_np2, points,
-                          fk_injection::field_derivative::displacement);
+  const auto result1 = fk_injection::solve(model, wave, window_np1, points);
+  const auto result2 = fk_injection::solve(model, wave, window_np2, points);
   ASSERT_EQ(result1.resampling_rate(), 1);
   ASSERT_EQ(result2.resampling_rate(), 2);
 
@@ -404,13 +398,13 @@ group_spectra(const fk_injection::LayeredModel &model,
 } // namespace depth_series_tests_impl
 
 // ============================================================================
-// AcousticKinematicSeriesIgnoreDerivative
+// KinematicSeriesFollowTheMedium
 //
-// Acoustic Stacey injection consumes the incident displacement and the
-// potential rate, so acoustic kinematic series stay displacement when elastic
-// ones become velocity.
+// Elastic kinematic series are velocity, i*omega times the projected
+// displacement. Acoustic Stacey injection consumes the incident displacement
+// and the potential rate, so acoustic ones stay displacement.
 // ============================================================================
-TEST(DepthSeries, AcousticKinematicSeriesIgnoreDerivative) {
+TEST(DepthSeries, KinematicSeriesFollowTheMedium) {
   const auto model = depth_series_tests_impl::make_two_fluid_model();
   const auto wave = depth_series_tests_impl::make_wave_p();
   const auto window = depth_series_tests_impl::make_window();
@@ -422,36 +416,49 @@ TEST(DepthSeries, AcousticKinematicSeriesIgnoreDerivative) {
       points, model, wave, p, fk_injection::impl::depth_tolerance(10000.0));
   ASSERT_EQ(groups.groups.size(), 2u);
 
-  const auto displacement =
-      fk_injection::impl::prepare(model, wave, window, p, groups,
-                                  fk_injection::field_derivative::displacement);
-  const auto velocity = fk_injection::impl::prepare(
-      model, wave, window, p, groups, fk_injection::field_derivative::velocity);
-  const auto displacement_spectra =
-      depth_series_tests_impl::group_spectra(model, groups, displacement);
-  const auto velocity_spectra =
-      depth_series_tests_impl::group_spectra(model, groups, velocity);
+  const auto setup =
+      fk_injection::impl::prepare(model, wave, window, p, groups);
+  const auto states = fk_injection::impl::solve_layer_stack(model, setup);
+  const auto spectra =
+      depth_series_tests_impl::group_spectra(model, groups, setup);
 
-  const int fft_samples = displacement.sizes.number_of_fft_samples;
+  const int fft_samples = setup.sizes.number_of_fft_samples;
   const int acoustic = groups.point_group[0];
   const int elastic = groups.point_group[1];
-  ASSERT_EQ(groups.groups[acoustic].medium, specfem::plugin::Medium::acoustic);
-  ASSERT_EQ(groups.groups[elastic].medium, specfem::plugin::Medium::elastic);
+  const auto &fluid = groups.groups[acoustic];
+  const auto &solid = groups.groups[elastic];
+  ASSERT_EQ(fluid.medium, specfem::plugin::Medium::acoustic);
+  ASSERT_EQ(solid.medium, specfem::plugin::Medium::elastic);
+  ASSERT_FALSE(solid.in_halfspace);
 
-  for (const int series : { fk_injection::impl::series_horizontal,
-                            fk_injection::impl::series_vertical }) {
-    for (int f = 1; f < static_cast<int>(displacement.omega.size()); ++f) {
+  for (int f = 1; f < static_cast<int>(setup.omega.size()); ++f) {
+    const std::complex<double> omega(setup.omega[f], 0.0);
+    const std::complex<double> i_omega(0.0, setup.omega[f]);
+    const auto &fluid_layer = model.fluid_layers()[fluid.layer];
+    const auto displacement = fk_injection::impl::project_acoustic(
+        fk_injection::impl::acoustic_state_in_layer(
+            fluid_layer, omega, fluid.height, p,
+            states.acoustic_bottom(f, fluid.layer)),
+        static_cast<double>(fluid_layer.density), p);
+    const auto solid_displacement = fk_injection::impl::project_elastic(
+        fk_injection::impl::elastic_state_in_layer(
+            model.elastic_layers()[solid.layer], omega, solid.height, p,
+            states.elastic_top(f, solid.layer + 1)),
+        omega, p);
+
+    for (const int series : { fk_injection::impl::series_horizontal,
+                              fk_injection::impl::series_vertical }) {
       const int entry = series * fft_samples + f;
-      const auto acoustic_value = displacement_spectra[acoustic][entry];
-      EXPECT_LT(std::abs(velocity_spectra[acoustic][entry] - acoustic_value),
-                1.0e-9 * (std::abs(acoustic_value) + 1.0e-30))
+      const std::complex<double> acoustic_expected =
+          displacement.values[series] * setup.apodization[f];
+      EXPECT_LT(std::abs(spectra[acoustic][entry] - acoustic_expected),
+                1.0e-9 * (std::abs(acoustic_expected) + 1.0e-30))
           << "acoustic series " << series << ", frequency " << f;
 
-      const auto elastic_value = displacement_spectra[elastic][entry];
-      const std::complex<double> i_omega(0.0, displacement.omega[f]);
-      EXPECT_LT(
-          std::abs(velocity_spectra[elastic][entry] - i_omega * elastic_value),
-          1.0e-9 * (std::abs(i_omega * elastic_value) + 1.0e-30))
+      const std::complex<double> elastic_expected =
+          i_omega * solid_displacement.values[series] * setup.apodization[f];
+      EXPECT_LT(std::abs(spectra[elastic][entry] - elastic_expected),
+                1.0e-9 * (std::abs(elastic_expected) + 1.0e-30))
           << "elastic series " << series << ", frequency " << f;
     }
   }
@@ -487,9 +494,8 @@ TEST(DepthSeries, HorizontalDensityFollowsLayerResolution) {
     ASSERT_EQ(groups.groups.size(), 1u);
     const auto &group = groups.groups[0];
 
-    const auto setup = fk_injection::impl::prepare(
-        model, wave, window, p, groups,
-        fk_injection::field_derivative::displacement);
+    const auto setup =
+        fk_injection::impl::prepare(model, wave, window, p, groups);
     const auto states = fk_injection::impl::solve_layer_stack(model, setup);
     const auto spectra =
         depth_series_tests_impl::group_spectra(model, groups, setup);

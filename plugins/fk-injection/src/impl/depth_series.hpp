@@ -31,8 +31,8 @@ struct DepthSeries {
  * For every stored positive frequency: evaluate the state at the group depth
  * (half-space or partial-layer propagation via the layer operators), project to
  * the depth-only series S0..S4, multiply by the Gaussian apodization, and apply
- * the (i*omega)^n derivative factor to S0/S1 only. The free-surface groups get
- * their fluid pressure zeroed before projection.
+ * i*omega to the elastic S0/S1, which makes them velocity. The free-surface
+ * groups get their fluid pressure zeroed before projection.
  *
  * @param group      Location of the group's depth.
  * @param states     Interface states for all frequencies.

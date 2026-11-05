@@ -10,7 +10,8 @@ namespace fk_injection {
 
 /// @brief Components per point and step in the output of @c FkResult::sample.
 inline constexpr int number_of_sample_components = 7;
-/// @brief First of 3 components: displacement or velocity.
+/// @brief First of 3 components: velocity on elastic points, displacement on
+/// acoustic points.
 inline constexpr int sample_kinematic_offset = 0;
 /// @brief First of 3 components: traction on the point's normal.
 inline constexpr int sample_traction_offset = 3;

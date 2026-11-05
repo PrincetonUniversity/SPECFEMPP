@@ -14,7 +14,6 @@ fk_injection::solve(const fk_injection::LayeredModel &model,
                     const fk_injection::IncidentWave &wave,
                     const fk_injection::TimeWindow &window,
                     const fk_injection::EvalPoints &points,
-                    fk_injection::field_derivative derivative,
                     fk_injection::ReferenceConvention convention) {
   fk_injection::impl::check_eval_points(points);
 
@@ -32,8 +31,8 @@ fk_injection::solve(const fk_injection::LayeredModel &model,
   const double tolerance = fk_injection::impl::depth_tolerance(max_depth);
   const fk_injection::impl::DepthGroups groups =
       fk_injection::impl::group_by_depth(points, model, wave, p, tolerance);
-  const fk_injection::impl::FkSetup setup = fk_injection::impl::prepare(
-      model, wave, window, p, groups, derivative, convention);
+  const fk_injection::impl::FkSetup setup =
+      fk_injection::impl::prepare(model, wave, window, p, groups, convention);
 
   // Window coverage: every SEM step for every point must map to an abscissa in
   // [0, ncoef-1]; spline evaluation clamps out-of-range values into a silent

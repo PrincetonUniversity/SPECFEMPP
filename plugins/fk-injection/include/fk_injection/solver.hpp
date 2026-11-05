@@ -1,7 +1,6 @@
 #pragma once
 
 #include "fk_injection/eval_points.hpp"
-#include "fk_injection/field_derivative.hpp"
 #include "fk_injection/fk_result.hpp"
 #include "fk_injection/incident_wave.hpp"
 #include "fk_injection/layered_model.hpp"
@@ -24,9 +23,9 @@ namespace fk_injection {
  *                   derive FK working-array sizes.
  * @param points     Evaluation-point coordinates, with optional normals and
  *                   Lame factors. Traction is zero without them.
- * @param derivative Kinematic quantity stored in the three vector components.
  * @param convention See @c ReferenceConvention.
- * @return FkResult holding the kinematic field, traction and potential rate.
+ * @return FkResult holding velocity on elastic points, displacement on
+ *         acoustic points, traction and potential rate.
  * @throws specfem::plugin::Unsupported if the ray parameter is out of range
  *         (see @c impl::check_supported_slowness).
  * @throws std::runtime_error if the point arrays disagree, a point can't be
@@ -34,7 +33,6 @@ namespace fk_injection {
  */
 FkResult solve(const LayeredModel &model, const IncidentWave &wave,
                const TimeWindow &window, const EvalPoints &points,
-               field_derivative derivative,
                ReferenceConvention convention = ReferenceConvention::exact);
 
 } // namespace fk_injection
