@@ -21,29 +21,25 @@ inline constexpr int sample_traction_offset = 3;
 /// @brief Single component: potential rate (0 on elastic points).
 inline constexpr int sample_potential_rate_offset = 6;
 
+/** @brief A point the field is sampled at. */
+struct FieldPoint {
+  type_real x = 0;        ///< m
+  type_real y = 0;        ///< m
+  type_real depth = 0;    ///< m, positive down from the model top
+  int layer = 0;          ///< Index into @c LayeredModel::layers
+  type_real normal_x = 0; ///< x-component of the unit normal
+  type_real normal_y = 0; ///< y-component of the unit normal
+  type_real normal_z = 0; ///< z-component of the unit normal
+};
+
 /**
- * @brief A point the field is sampled at.
+ * @brief What @c FieldSampler stores for one point.
  *
  * Traction uses @f$\sigma_{rr} = \xi_1\sigma_{zz} - 4\xi_\mu d_x@f$ and
  * @f$\sigma_{\theta\theta} = b(\sigma_{rr} + \sigma_{zz})@f$, as SPECFEM3D;
  * with the factors 0 it is @f$\sigma_{rz}@f$ and @f$\sigma_{zz}@f$ on the
  * normal.
  */
-struct FieldPoint {
-  type_real x = 0;     ///< m
-  type_real y = 0;     ///< m
-  type_real depth = 0; ///< m, positive down from the model top
-  specfem::plugin::Medium medium =
-      specfem::plugin::Medium::elastic; ///< Acoustic or elastic
-  type_real normal_x = 0;               ///< x-component of the unit normal
-  type_real normal_y = 0;               ///< y-component of the unit normal
-  type_real normal_z = 0;               ///< z-component of the unit normal
-  type_real xi1 = 0;                    ///< First Lame-ratio factor
-  type_real xim = 0;                    ///< Shear Lame-ratio factor
-  type_real bulk = 0;                   ///< Bulk Lame-ratio factor
-};
-
-/** @brief What @c FieldSampler stores for one point. */
 struct PointSample {
   int row = 0;       ///< Row of the series table
   double offset = 0; ///< Spline abscissa of step 0
@@ -83,6 +79,8 @@ public:
 
   /**
    * @brief Sample @p series at @p points.
+   *
+   * The traction factors are those of the point's model layer.
    *
    * @param response Response the table was synthesized from
    * @param series   Series table holding a row for every point

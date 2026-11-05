@@ -15,15 +15,14 @@
 
 namespace fk_injection::series_table_impl {
 
-/// Row order: elastic first, independent of the SDK's enum values, then depth.
-std::pair<int, double> order(specfem::plugin::Medium medium, double depth);
+/// Row order: layer, then depth.
+std::pair<int, double> order(int layer, double depth);
 
 } // namespace fk_injection::series_table_impl
 
 std::pair<int, double>
-fk_injection::series_table_impl::order(const specfem::plugin::Medium medium,
-                                       const double depth) {
-  return { medium == specfem::plugin::Medium::acoustic ? 1 : 0, depth };
+fk_injection::series_table_impl::order(const int layer, const double depth) {
+  return { layer, depth };
 }
 
 fk_injection::SeriesTable::SeriesTable(
@@ -48,50 +47,45 @@ fk_injection::SeriesTable::SeriesTable(
     throw std::runtime_error(message.str());
   }
   const auto order = [](const fk_injection::LayerLocation &location) {
-    return fk_injection::series_table_impl::order(location.medium,
+    return fk_injection::series_table_impl::order(location.layer,
                                                   location.depth);
   };
   for (std::size_t i = 1; i < rows_.size(); ++i) {
     if (order(rows_[i]) < order(rows_[i - 1])) {
       std::ostringstream message;
       message << "SeriesTable: row " << i
-              << " is out of order; rows are sorted by medium, elastic first, "
-                 "and depth";
+              << " is out of order; rows are sorted by layer and depth";
       throw std::runtime_error(message.str());
     }
   }
 }
 
+double fk_injection::SeriesTable::depth_tolerance(const double magnitude) {
+  const float magnitude_float = static_cast<float>(std::fabs(magnitude));
+  return 8.0 * static_cast<double>(
+                   std::nextafterf(magnitude_float,
+                                   std::numeric_limits<float>::infinity()) -
+                   magnitude_float);
+}
+
 fk_injection::SeriesTable fk_injection::SeriesTable::synthesize(
     const fk_injection::PlaneWaveResponse &response,
-    const std::vector<fk_injection::SeriesKey> &keys) {
+    const std::vector<fk_injection::SeriesKey> &keys, const double tolerance) {
   const fk_injection::LayeredModel &model = response.model();
   const fk_injection::impl::FkSetup &setup = response.setup();
   const int number_of_keys = static_cast<int>(keys.size());
 
-  // Float round-off at the deepest key: points the mesh placed at one depth
-  // share a row, and no physical distance is involved.
-  double max_depth = 0.0;
+  // Rejects keys outside their layer.
   for (const auto &key : keys)
-    max_depth = std::max(max_depth, std::fabs(static_cast<double>(key.depth)));
-  const float max_depth_float = static_cast<float>(max_depth);
-  const double tolerance =
-      8.0 * static_cast<double>(
-                std::nextafterf(max_depth_float,
-                                std::numeric_limits<float>::infinity()) -
-                max_depth_float);
-
-  // Rejects keys the model can't serve.
-  for (const auto &key : keys)
-    model.locate(static_cast<double>(key.depth), key.medium, tolerance);
+    model.locate_in(key.layer, static_cast<double>(key.depth), tolerance);
 
   std::vector<int> order(number_of_keys);
   std::iota(order.begin(), order.end(), 0);
   std::stable_sort(order.begin(), order.end(), [&](const int a, const int b) {
     return fk_injection::series_table_impl::order(
-               keys[a].medium, static_cast<double>(keys[a].depth)) <
+               keys[a].layer, static_cast<double>(keys[a].depth)) <
            fk_injection::series_table_impl::order(
-               keys[b].medium, static_cast<double>(keys[b].depth));
+               keys[b].layer, static_cast<double>(keys[b].depth));
   });
 
   // A row starts at the first key beyond its predecessor's anchor.
@@ -99,9 +93,9 @@ fk_injection::SeriesTable fk_injection::SeriesTable::synthesize(
   for (int k = 0; k < number_of_keys; ++k) {
     const fk_injection::SeriesKey &key = keys[order[k]];
     const double depth = static_cast<double>(key.depth);
-    if (rows.empty() || key.medium != rows.back().medium ||
+    if (rows.empty() || key.layer != rows.back().layer ||
         depth - rows.back().depth > tolerance)
-      rows.push_back(model.locate(depth, key.medium, tolerance));
+      rows.push_back(model.locate_in(key.layer, depth, tolerance));
   }
 
   const int fft_samples = setup.sizes.number_of_fft_samples;
@@ -129,21 +123,19 @@ fk_injection::SeriesTable fk_injection::SeriesTable::synthesize(
 int fk_injection::SeriesTable::row(const fk_injection::SeriesKey &key) const {
   const double depth = static_cast<double>(key.depth);
   // The last row at or above the depth, which is the only one that can hold it.
-  const auto after = std::upper_bound(
-      rows_.begin(), rows_.end(),
-      fk_injection::series_table_impl::order(key.medium, depth),
-      [](const std::pair<int, double> &wanted,
-         const fk_injection::LayerLocation &location) {
-        return wanted < fk_injection::series_table_impl::order(location.medium,
-                                                               location.depth);
-      });
-  if (after == rows_.begin() || std::prev(after)->medium != key.medium ||
+  const auto after =
+      std::upper_bound(rows_.begin(), rows_.end(),
+                       fk_injection::series_table_impl::order(key.layer, depth),
+                       [](const std::pair<int, double> &wanted,
+                          const fk_injection::LayerLocation &location) {
+                         return wanted < fk_injection::series_table_impl::order(
+                                             location.layer, location.depth);
+                       });
+  if (after == rows_.begin() || std::prev(after)->layer != key.layer ||
       depth - std::prev(after)->depth > tolerance_) {
     std::ostringstream message;
-    message << "SeriesTable: no row serves depth " << depth << " in the "
-            << (key.medium == specfem::plugin::Medium::acoustic ? "acoustic"
-                                                                : "elastic")
-            << " medium";
+    message << "SeriesTable: no row serves depth " << depth << " in layer "
+            << key.layer;
     throw std::runtime_error(message.str());
   }
   return static_cast<int>(std::prev(after) - rows_.begin());

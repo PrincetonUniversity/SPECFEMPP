@@ -1,5 +1,6 @@
 #include "fk_injection/layered_model.hpp"
 #include <cmath>
+#include <limits>
 #include <sstream>
 #include <stdexcept>
 #include <utility>
@@ -107,9 +108,9 @@ double fk_injection::LayeredModel::halfspace_top_depth() const {
 }
 
 fk_injection::LayerLocation
-fk_injection::LayeredModel::locate(double depth,
+fk_injection::LayeredModel::locate(const double depth,
                                    const specfem::plugin::Medium medium,
-                                   double tolerance) const {
+                                   const double tolerance) const {
   if (!(tolerance >= 0.0)) {
     throw std::runtime_error(
         "LayeredModel::locate: tolerance must be non-negative");
@@ -127,11 +128,6 @@ fk_injection::LayeredModel::locate(double depth,
   const int n_fluid = number_of_fluid_layers();
   const double ft = fluid_thickness();
 
-  // Whether depth falls exactly on the fluid-solid interface.
-  const bool at_fluid_solid_iface =
-      has_fluid_layer() && (std::fabs(depth - ft) <= tolerance);
-
-  double effective_depth = depth;
   if (medium == specfem::plugin::Medium::acoustic) {
     if (!has_fluid_layer()) {
       throw std::runtime_error(
@@ -148,45 +144,63 @@ fk_injection::LayeredModel::locate(double depth,
         "LayeredModel::locate: elastic medium requested inside the fluid "
         "column");
   }
-  // Snap to the fluid-solid interface.
-  if (at_fluid_solid_iface)
-    effective_depth = ft;
-
   // First match, so an interface goes to the upper layer.
+  const int halfspace = number_of_layers() - 1;
   const int first = medium == specfem::plugin::Medium::acoustic ? 0 : n_fluid;
-  const int last = medium == specfem::plugin::Medium::acoustic
-                       ? n_fluid - 1
-                       : number_of_layers() - 1;
-  int layer_index = last;
-  double height = 0.0;
-  for (int i = first; i < number_of_layers() - 1 && i <= last; ++i) {
-    const double bottom = top_depths_[i + 1];
-    if (effective_depth <= bottom + tolerance) {
-      layer_index = i;
-      height = bottom - effective_depth;
+  const int last =
+      medium == specfem::plugin::Medium::acoustic ? n_fluid - 1 : halfspace;
+  int layer = last;
+  for (int i = first; i < last; ++i) {
+    if (depth <= top_depths_[i + 1] + tolerance) {
+      layer = i;
       break;
     }
   }
+  return locate_in(layer, depth, tolerance);
+}
 
-  // Clamp small negative height produced by tolerance slack.
-  if (height < 0.0) {
-    height = 0.0;
+fk_injection::LayerLocation
+fk_injection::LayeredModel::locate_in(const int layer, const double depth,
+                                      const double tolerance) const {
+  if (!(tolerance >= 0.0)) {
+    throw std::runtime_error(
+        "LayeredModel::locate_in: tolerance must be non-negative");
+  }
+  const int halfspace = number_of_layers() - 1;
+  if (layer < 0 || layer > halfspace) {
+    std::ostringstream message;
+    message << "LayeredModel::locate_in: layer " << layer << " outside [0, "
+            << halfspace << "]";
+    throw std::runtime_error(message.str());
+  }
+  const double top = top_depths_[layer];
+  const double bottom = layer < halfspace
+                            ? top_depths_[layer + 1]
+                            : std::numeric_limits<double>::infinity();
+  if (!(depth >= top - tolerance && depth <= bottom + tolerance)) {
+    std::ostringstream message;
+    message << "LayeredModel::locate_in: depth " << depth << " lies outside "
+            << "layer " << layer << " (" << top << " to " << bottom << ")";
+    throw std::runtime_error(message.str());
   }
 
-  const bool in_halfspace = layer_index == number_of_layers() - 1;
+  double snapped = depth;
+  if (std::fabs(depth - top) <= tolerance)
+    snapped = top;
+  else if (std::fabs(depth - bottom) <= tolerance)
+    snapped = bottom;
 
-  // Half-space top depth is always the last elastic layer's top depth.
-  const double depth_below_halfspace_top = top_depths_.back() - effective_depth;
-
-  const bool at_free_surface =
-      (medium == specfem::plugin::Medium::acoustic && layer_index == 0 &&
-       effective_depth <= tolerance);
-
+  const specfem::plugin::Medium medium =
+      std::holds_alternative<fk_injection::AcousticLayer>(layers_[layer])
+          ? specfem::plugin::Medium::acoustic
+          : specfem::plugin::Medium::elastic;
+  const bool in_halfspace = layer == halfspace;
   return LayerLocation{ medium,
-                        layer_index,
-                        height,
+                        layer,
+                        in_halfspace ? 0.0 : bottom - snapped,
                         in_halfspace,
-                        depth_below_halfspace_top,
-                        at_free_surface,
+                        top_depths_.back() - snapped,
+                        medium == specfem::plugin::Medium::acoustic &&
+                            layer == 0 && snapped == 0.0,
                         depth };
 }

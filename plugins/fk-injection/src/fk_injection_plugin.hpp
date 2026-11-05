@@ -16,7 +16,8 @@ namespace fk_injection {
  * Provides velocity and traction at elastic isotropic points, displacement and
  * potential rate at acoustic isotropic points. At setup it checks that every
  * point's material matches the layer of the model at its depth, because the
- * model defines the injected field.
+ * model defines the injected field, traction's material included. A point on
+ * an interface reads the layer whose material it carries.
  */
 class FkInjectionPlugin : public specfem::plugin::InjectionPlugin {
 public:
@@ -80,15 +81,16 @@ private:
   static int sample_offset(specfem::plugin::Quantity quantity);
 
   Material layer_material(int layer) const;
-  void check_material(const specfem::plugin::Points &points, std::int64_t index,
-                      specfem::plugin::Medium medium, double depth,
-                      const Material &material) const;
+  int material_layer(const specfem::plugin::Points &points, std::int64_t index,
+                     specfem::plugin::Medium medium, double depth,
+                     const Material &material) const;
 
   PluginConfig config_;
   IncidentWave wave_;
   TimeWindow window_;
   double zmax_;
-  HorizontalBox box_; ///< Mesh box, shared by every rank
+  HorizontalBox box_;      ///< Mesh box, shared by every rank
+  double depth_tolerance_; ///< Depth slack of interfaces and series rows, m
   std::vector<Group> groups_{};
   std::vector<type_real> scratch_{}; ///< One step of the largest group
 };

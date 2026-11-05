@@ -23,7 +23,9 @@ fk_injection::FkInjectionPlugin::FkInjectionPlugin(
       window_(config.time_window(static_cast<type_real>(info.dt()),
                                  info.number_of_steps())),
       zmax_(info.bounds()[5]), box_{ info.bounds()[0], info.bounds()[1],
-                                     info.bounds()[2], info.bounds()[3] } {}
+                                     info.bounds()[2], info.bounds()[3] },
+      depth_tolerance_(fk_injection::SeriesTable::depth_tolerance(
+          std::max(std::abs(info.bounds()[4]), std::abs(info.bounds()[5])))) {}
 
 bool fk_injection::FkInjectionPlugin::supports(
     const specfem::plugin::Medium medium,
@@ -55,38 +57,25 @@ void fk_injection::FkInjectionPlugin::setup(
     for (std::int64_t p = 0; p < group.size(); ++p) {
       const std::int64_t i = group.begin() + p;
       const double depth = zmax_ - points.z(i);
-      const Material material = point_material(group, p);
-      check_material(points, i, group.medium(), depth, material);
 
       fk_injection::FieldPoint point;
       point.x = static_cast<type_real>(points.x(i));
       point.y = static_cast<type_real>(points.y(i));
       point.depth = static_cast<type_real>(depth);
-      point.medium = group.medium();
+      point.layer = material_layer(points, i, group.medium(), depth,
+                                   point_material(group, p));
       point.normal_x = static_cast<type_real>(points.nx(i));
       point.normal_y = static_cast<type_real>(points.ny(i));
       point.normal_z = static_cast<type_real>(points.nz(i));
-      // The stress series use sigma_rr = xi1 sigma_zz - 4 xim dx, as in
-      // SPECFEM3D. Fluid points have no stress and keep 0.
-      if (group.medium() == specfem::plugin::Medium::elastic) {
-        const double xi =
-            (material.vs * material.vs) / (material.vp * material.vp);
-        const double mu = material.rho * material.vs * material.vs;
-        const double lambda =
-            material.rho * material.vp * material.vp - 2.0 * mu;
-        point.xi1 = static_cast<type_real>(1.0 - 2.0 * xi);
-        point.xim = static_cast<type_real>((1.0 - xi) * mu);
-        point.bulk = static_cast<type_real>(lambda / (2.0 * (lambda + mu)));
-      }
       field_points.push_back(point);
-      keys.push_back({ point.medium, point.depth });
+      keys.push_back({ point.layer, point.depth });
     }
   }
 
   const fk_injection::PlaneWaveResponse response(config_.model, wave_, window_,
                                                  box_, config_.convention);
   const auto series = std::make_shared<const fk_injection::SeriesTable>(
-      fk_injection::SeriesTable::synthesize(response, keys));
+      fk_injection::SeriesTable::synthesize(response, keys, depth_tolerance_));
 
   std::size_t largest_group = 0;
   const auto &sdk_groups = points.groups();
@@ -128,7 +117,7 @@ fk_injection::FkInjectionPlugin::layer_material(const int layer) const {
            static_cast<double>(solid.s_velocity) };
 }
 
-void fk_injection::FkInjectionPlugin::check_material(
+int fk_injection::FkInjectionPlugin::material_layer(
     const specfem::plugin::Points &points, const std::int64_t index,
     const specfem::plugin::Medium medium, const double depth,
     const Material &material) const {
@@ -139,10 +128,9 @@ void fk_injection::FkInjectionPlugin::check_material(
     return message.str();
   };
 
-  const double locate_tolerance = std::max(1e-3, 1e-6 * std::abs(depth));
   fk_injection::LayerLocation location;
   try {
-    location = config_.model.locate(depth, medium, locate_tolerance);
+    location = config_.model.locate(depth, medium, depth_tolerance_);
   } catch (const std::runtime_error &error) {
     throw specfem::plugin::Unsupported(describe_point() + ": " + error.what());
   }
@@ -158,16 +146,17 @@ void fk_injection::FkInjectionPlugin::check_material(
 
   const Material layer = layer_material(location.layer);
   if (matches(layer))
-    return;
+    return location.layer;
 
   // A GLL point on a layer interface carries its own element's material, which
-  // can be the lower layer's. The field is continuous there, so either serves.
+  // can be the lower layer's. The field is continuous there, so the point
+  // reads the top of that layer.
   const auto &layers = config_.model.layers();
-  if (location.height <= locate_tolerance &&
+  if (location.height <= depth_tolerance_ &&
       location.layer + 1 < config_.model.number_of_layers() &&
       layers[location.layer + 1].index() == layers[location.layer].index() &&
       matches(layer_material(location.layer + 1)))
-    return;
+    return location.layer + 1;
 
   std::ostringstream message;
   message << describe_point() << " has (rho, vp, vs) = (" << material.rho
