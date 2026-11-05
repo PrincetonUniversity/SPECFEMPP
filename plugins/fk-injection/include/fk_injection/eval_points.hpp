@@ -9,7 +9,7 @@
 namespace fk_injection {
 
 /**
- * @brief Evaluation points at which the FK solver computes displacement,
+ * @brief Evaluation points at which the FK solver computes the kinematic field,
  *        traction, and potential rate.
  *
  * Optional members (@c normal_*, @c lame_ratio_*, @c medium) are empty when the

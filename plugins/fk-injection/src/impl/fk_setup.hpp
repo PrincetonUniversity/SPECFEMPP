@@ -1,6 +1,5 @@
 #pragma once
 
-#include "fk_injection/field_derivative.hpp"
 #include "fk_injection/incident_wave.hpp"
 #include "fk_injection/layered_model.hpp"
 #include "fk_injection/reference_convention.hpp"
@@ -32,8 +31,6 @@ struct FkSetup {
   fk_injection::ComplexMatrix<4> e_mat;    ///< Half-space eigenmatrix E.
   std::vector<double> omega;       ///< Angular frequencies, size nf_stored+1.
   std::vector<double> apodization; ///< Gaussian STF spectrum, size nf_stored+1.
-  fk_injection::field_derivative derivative =
-      fk_injection::field_derivative::displacement; ///< Kinematic quantity.
   int pad_samples =
       0; ///< ceil(max delay / dt_min); keeps sample abscissae >= 0.
   int shift_samples = 0; ///< t0 series rotation nn - pad (left rotation), nn =
@@ -79,7 +76,6 @@ double fluid_reverberation_time(const fk_injection::LayeredModel &model,
  * @param window           Time-window parameters.
  * @param p                Horizontal ray parameter from @c ray_parameter.
  * @param groups           Depth groups (supplies the delay span for sizing).
- * @param derivative       Kinematic quantity for the vector components.
  * @param convention       Resolved here into the frequency grid, delay stretch,
  *                         inverse-FFT normalization, origin-time truncation
  *                         and window floor; see @c ReferenceConvention.
@@ -89,7 +85,6 @@ FkSetup prepare(const fk_injection::LayeredModel &model,
                 const fk_injection::IncidentWave &wave,
                 const fk_injection::TimeWindow &window, double p,
                 const DepthGroups &groups,
-                fk_injection::field_derivative derivative,
                 fk_injection::ReferenceConvention convention =
                     fk_injection::ReferenceConvention::exact);
 

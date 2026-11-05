@@ -61,7 +61,6 @@ fk_injection::impl::prepare(const fk_injection::LayeredModel &model,
                             const fk_injection::IncidentWave &wave,
                             const fk_injection::TimeWindow &window, double p,
                             const fk_injection::impl::DepthGroups &groups,
-                            fk_injection::field_derivative derivative,
                             fk_injection::ReferenceConvention convention) {
   fk_injection::impl::FkSetup setup;
   const bool specfem3d =
@@ -80,7 +79,6 @@ fk_injection::impl::prepare(const fk_injection::LayeredModel &model,
   setup.dt_min = static_cast<double>(setup.sizes.resampling_rate) *
                  static_cast<double>(window.dt);
   setup.wave_type = wave.type;
-  setup.derivative = derivative;
 
   const double fft_samples =
       static_cast<double>(setup.sizes.number_of_fft_samples);

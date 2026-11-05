@@ -115,8 +115,7 @@ TEST(FkDriver, ElasticHalfSpaceRunsFinite) {
   // Points at various depths in the crust and just below the surface.
   const auto ep = make_eval_points({ 0, 5000, 15000, 30000, 40000 });
 
-  const auto result = fk_injection::solve(
-      model, wave, window, ep, fk_injection::field_derivative::displacement);
+  const auto result = fk_injection::solve(model, wave, window, ep);
 
   // Shape checks
   EXPECT_EQ(result.number_of_points(), 5);
@@ -180,8 +179,7 @@ TEST(FkDriver, AcousticElasticRunsFinite) {
                                    /*with_normals=*/true,
                                    /*with_lame=*/true);
 
-  const auto result = fk_injection::solve(
-      model, wave, window, ep, fk_injection::field_derivative::displacement);
+  const auto result = fk_injection::solve(model, wave, window, ep);
 
   EXPECT_EQ(result.number_of_points(), 5);
   EXPECT_GT(result.coefficient_count(), 0);
@@ -379,8 +377,7 @@ TEST(FkDriver, SolveRejectsVerticalIncidence) {
   window.time_window_length = 40;
 
   EXPECT_THROW(fk_injection::solve(make_slowness_model(), wave, window,
-                                   make_eval_points({ 5000 }),
-                                   fk_injection::field_derivative::velocity),
+                                   make_eval_points({ 5000 })),
                specfem::plugin::Unsupported);
 }
 
@@ -412,11 +409,10 @@ TEST(FkDriver, Specfem3dConventionScalesAmplitudeAndDelay) {
   points.x[1] = 10000;
 
   const auto exact = fk_injection::solve(
-      model, wave, window, points, fk_injection::field_derivative::displacement,
-      fk_injection::ReferenceConvention::exact);
-  const auto specfem3d = fk_injection::solve(
-      model, wave, window, points, fk_injection::field_derivative::displacement,
-      fk_injection::ReferenceConvention::specfem3d);
+      model, wave, window, points, fk_injection::ReferenceConvention::exact);
+  const auto specfem3d =
+      fk_injection::solve(model, wave, window, points,
+                          fk_injection::ReferenceConvention::specfem3d);
   ASSERT_EQ(exact.resampling_rate(), 2);
 
   const int components = fk_injection::number_of_sample_components;
@@ -561,10 +557,9 @@ TEST(FkDriver, TractionConsistentWithImpedance) {
   const fk_injection::LayeredModel model(
       {}, { driver_tests_impl::homogeneous_layer(0) });
   const auto window = driver_tests_impl::long_window(2.0);
-  const auto result =
-      fk_injection::solve(model, driver_tests_impl::gaussian_p_wave(), window,
-                          driver_tests_impl::points_with_traction({ 120000.0 }),
-                          fk_injection::field_derivative::velocity);
+  const auto result = fk_injection::solve(
+      model, driver_tests_impl::gaussian_p_wave(), window,
+      driver_tests_impl::points_with_traction({ 120000.0 }));
   const driver_tests_impl::SampledField field(result, window.nstep);
 
   const int velocity_y = fk_injection::sample_kinematic_offset + 1;
@@ -600,9 +595,9 @@ TEST(FkDriver, DelayedArrivalMatchesPlaneWaveTiming) {
       {}, { driver_tests_impl::homogeneous_layer(0) });
   const auto window = driver_tests_impl::long_window(10.0);
   const std::vector<double> depths = { 50005.0, 20000.0 };
-  const auto result = fk_injection::solve(
-      model, driver_tests_impl::gaussian_p_wave(), window,
-      make_eval_points(depths), fk_injection::field_derivative::velocity);
+  const auto result =
+      fk_injection::solve(model, driver_tests_impl::gaussian_p_wave(), window,
+                          make_eval_points(depths));
   const driver_tests_impl::SampledField field(result, window.nstep);
 
   const double p =
@@ -634,14 +629,12 @@ TEST(FkDriver, RejectsFkTimesOutsideTheFftPeriod) {
 
   auto wave = driver_tests_impl::gaussian_p_wave();
   wave.origin_time = static_cast<type_real>(-period / 8.0);
-  EXPECT_NO_THROW(fk_injection::solve(
-      model, wave, window, points, fk_injection::field_derivative::velocity));
+  EXPECT_NO_THROW(fk_injection::solve(model, wave, window, points));
 
   for (const double origin_time : { -period, period }) {
     wave.origin_time = static_cast<type_real>(origin_time);
     try {
-      fk_injection::solve(model, wave, window, points,
-                          fk_injection::field_derivative::velocity);
+      fk_injection::solve(model, wave, window, points);
       FAIL() << "expected a rejection for origin time " << origin_time;
     } catch (const std::runtime_error &error) {
       EXPECT_NE(std::string(error.what()).find("FFT period"), std::string::npos)
@@ -674,8 +667,7 @@ TEST(FkDriver, ReflectedArrivalsMatchPlaneWaveTiming) {
   window.time_window_length = 50;
 
   const driver_tests_impl::SampledField field(
-      fk_injection::solve(model, wave, window, make_eval_points({ depth }),
-                          fk_injection::field_derivative::velocity),
+      fk_injection::solve(model, wave, window, make_eval_points({ depth })),
       window.nstep);
   const int velocity_z = fk_injection::sample_kinematic_offset + 2;
 
@@ -707,7 +699,7 @@ TEST(FkDriver, OriginTimeDelaysTheField) {
 
   const driver_tests_impl::SampledField reference(
       fk_injection::solve(model, driver_tests_impl::gaussian_p_wave(), window,
-                          points, fk_injection::field_derivative::velocity),
+                          points),
       window.nstep);
 
   for (const int delay_steps : { 80, 400 }) {
@@ -715,9 +707,7 @@ TEST(FkDriver, OriginTimeDelaysTheField) {
     wave.origin_time =
         static_cast<type_real>(-delay_steps * static_cast<double>(window.dt));
     const driver_tests_impl::SampledField delayed(
-        fk_injection::solve(model, wave, window, points,
-                            fk_injection::field_derivative::velocity),
-        window.nstep);
+        fk_injection::solve(model, wave, window, points), window.nstep);
 
     for (int point = 0; point < 2; ++point) {
       double peak = 0.0;
@@ -759,13 +749,9 @@ TEST(FkDriver, IdenticalLayerSplitReducesToHalfspace) {
   const auto points = driver_tests_impl::points_with_traction(depths);
 
   const driver_tests_impl::SampledField reference(
-      fk_injection::solve(halfspace, wave, window, points,
-                          fk_injection::field_derivative::velocity),
-      window.nstep);
+      fk_injection::solve(halfspace, wave, window, points), window.nstep);
   const driver_tests_impl::SampledField reduced(
-      fk_injection::solve(split, wave, window, points,
-                          fk_injection::field_derivative::velocity),
-      window.nstep);
+      fk_injection::solve(split, wave, window, points), window.nstep);
 
   for (std::size_t point = 0; point < depths.size(); ++point) {
     for (const int first_component : { fk_injection::sample_kinematic_offset,

@@ -92,7 +92,6 @@ void fk_injection::FkInjectionPlugin::setup(
   // A rank without points has nothing to solve, and solve needs at least one.
   if (eval_points.size() > 0)
     result_ = fk_injection::solve(config_.model, wave_, window_, eval_points,
-                                  fk_injection::field_derivative::velocity,
                                   config_.convention);
   scratch_.resize(static_cast<std::size_t>(eval_points.size()) *
                   fk_injection::number_of_sample_components);

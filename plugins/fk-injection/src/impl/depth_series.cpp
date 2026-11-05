@@ -66,21 +66,18 @@ void fk_injection::impl::depth_spectrum(
       series = fk_injection::impl::project_elastic(state, omega, p);
     }
 
-    // Apodization on every slot; i*omega for velocity on the kinematic slots.
-    // Acoustic Stacey injection consumes the incident displacement and the
-    // potential rate (SPECFEM3D's acoustic FK coupling), so acoustic kinematic
-    // series stay displacement.
+    // Elastic kinematic series are velocity, i omega u. Acoustic Stacey
+    // injection consumes the incident displacement and the potential rate
+    // (SPECFEM3D's acoustic FK coupling), so acoustic ones stay displacement.
     const Cplx apodization(setup.apodization[f], 0.0);
-    Cplx derivative(1.0, 0.0);
-    if (!is_acoustic &&
-        setup.derivative == fk_injection::field_derivative::velocity) {
-      derivative = Cplx(0.0, setup.omega[f]);
-    }
     for (int s = 0; s < fk_injection::impl::number_of_series; ++s) {
       series.values[s] *= apodization;
     }
-    series.values[fk_injection::impl::series_horizontal] *= derivative;
-    series.values[fk_injection::impl::series_vertical] *= derivative;
+    if (!is_acoustic) {
+      const Cplx i_omega(0.0, setup.omega[f]);
+      series.values[fk_injection::impl::series_horizontal] *= i_omega;
+      series.values[fk_injection::impl::series_vertical] *= i_omega;
+    }
 
     for (int s = 0; s < fk_injection::impl::number_of_series; ++s) {
       spectrum[s * fft_length + f] = series.values[s];
