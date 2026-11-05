@@ -8,6 +8,30 @@
 #include <sstream>
 #include <stdexcept>
 #include <utility>
+#include <variant>
+
+namespace fk_injection::field_sampler_impl {
+
+/// Sets the traction factors of @p sample from the layer's material.
+void set_lame_factors(const fk_injection::ElasticIsotropicLayer &layer,
+                      fk_injection::PointSample &sample);
+
+} // namespace fk_injection::field_sampler_impl
+
+void fk_injection::field_sampler_impl::set_lame_factors(
+    const fk_injection::ElasticIsotropicLayer &layer,
+    fk_injection::PointSample &sample) {
+  const double density = static_cast<double>(layer.density);
+  const double p_velocity = static_cast<double>(layer.p_velocity);
+  const double s_velocity = static_cast<double>(layer.s_velocity);
+  const double xi = (s_velocity * s_velocity) / (p_velocity * p_velocity);
+  const double mu = density * s_velocity * s_velocity;
+  const double lambda = density * p_velocity * p_velocity - 2.0 * mu;
+  sample.xi1 = static_cast<fk_injection::type_real>(1.0 - 2.0 * xi);
+  sample.xim = static_cast<fk_injection::type_real>((1.0 - xi) * mu);
+  sample.bulk =
+      static_cast<fk_injection::type_real>(lambda / (2.0 * (lambda + mu)));
+}
 
 fk_injection::FieldSampler::FieldSampler(
     std::shared_ptr<const fk_injection::SeriesTable> series,
@@ -63,15 +87,17 @@ fk_injection::FieldSampler::point_samples(
     const double x = static_cast<double>(point.x);
     const double y = static_cast<double>(point.y);
     response.check_coverage(x, y);
-    samples[i] = { series.row({ point.medium, point.depth }),
-                   response.abscissa_offset(x, y),
-                   point.medium,
-                   point.xi1,
-                   point.xim,
-                   point.bulk,
-                   point.normal_x,
-                   point.normal_y,
-                   point.normal_z };
+    fk_injection::PointSample &sample = samples[i];
+    sample.row = series.row({ point.layer, point.depth });
+    sample.offset = response.abscissa_offset(x, y);
+    const fk_injection::LayerLocation &location = series.location(sample.row);
+    sample.medium = location.medium;
+    if (const auto *solid = std::get_if<fk_injection::ElasticIsotropicLayer>(
+            &response.model().layers()[location.layer]))
+      fk_injection::field_sampler_impl::set_lame_factors(*solid, sample);
+    sample.normal_x = point.normal_x;
+    sample.normal_y = point.normal_y;
+    sample.normal_z = point.normal_z;
   }
   return samples;
 }

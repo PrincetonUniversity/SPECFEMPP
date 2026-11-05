@@ -1,3 +1,4 @@
+#include "field_helpers.hpp"
 #include "fk_injection/incident_wave.hpp"
 #include "fk_injection/layered_model.hpp"
 #include "series_table.hpp"
@@ -88,21 +89,18 @@ make_response(const fk_injection::LayeredModel &model) {
   return fk_injection::PlaneWaveResponse(model, wave, window, {});
 }
 
-/** @brief Elastic keys at the depths. */
+/** @brief Elastic keys at the depths of the elastic model. */
 std::vector<fk_injection::SeriesKey>
 elastic_keys(const std::vector<double> &depths) {
-  std::vector<fk_injection::SeriesKey> keys;
-  for (const double depth : depths)
-    keys.push_back(
-        { specfem::plugin::Medium::elastic, static_cast<type_real>(depth) });
-  return keys;
+  return fk_injection_tests_impl::keys_at(
+      make_elastic_model(), specfem::plugin::Medium::elastic, depths);
 }
 
 /** @brief Number of rows for elastic keys at the depths. */
 int number_of_rows(const std::vector<double> &depths) {
   const auto model = make_elastic_model();
-  return fk_injection::SeriesTable::synthesize(make_response(model),
-                                               elastic_keys(depths))
+  return fk_injection_tests_impl::table_for(make_response(model),
+                                            elastic_keys(depths))
       .number_of_rows();
 }
 
@@ -113,7 +111,7 @@ TEST(SeriesTable, DistinctDepthsFormDistinctRows) {
   // Surface, layer 0, layer 1, half-space.
   const auto keys =
       series_table_tests_impl::elastic_keys({ 0.0, 5000.0, 15000.0, 35000.0 });
-  const auto table = fk_injection::SeriesTable::synthesize(
+  const auto table = fk_injection_tests_impl::table_for(
       series_table_tests_impl::make_response(model), keys);
 
   ASSERT_EQ(table.number_of_rows(), 4);
@@ -136,7 +134,7 @@ TEST(SeriesTable, RowsFollowDistinctDepthsNotPoints) {
     for (const double depth : depths)
       repeated.push_back(depth);
   const auto keys = series_table_tests_impl::elastic_keys(repeated);
-  const auto table = fk_injection::SeriesTable::synthesize(
+  const auto table = fk_injection_tests_impl::table_for(
       series_table_tests_impl::make_response(model), keys);
 
   EXPECT_EQ(table.number_of_rows(), static_cast<int>(depths.size()));
@@ -159,7 +157,7 @@ TEST(SeriesTable, RoundOffMerges) {
   const float next = std::nextafterf(depth, 1.0e9f);
   const auto keys = series_table_tests_impl::elastic_keys(
       { static_cast<double>(next), static_cast<double>(depth) });
-  const auto table = fk_injection::SeriesTable::synthesize(
+  const auto table = fk_injection_tests_impl::table_for(
       series_table_tests_impl::make_response(model), keys);
 
   ASSERT_EQ(table.number_of_rows(), 1);
@@ -182,54 +180,71 @@ TEST(SeriesTable, DistinctDepthLevelsDoNotMerge) {
       << "two repeated depths must collapse to two rows";
 }
 
-// Both media at the fluid-solid interface: two rows, elastic first.
-TEST(SeriesTable, MediumSplitsRows) {
+// Both sides of the fluid-solid interface: two rows, in layer order.
+TEST(SeriesTable, LayerSplitsRows) {
   const auto model = series_table_tests_impl::make_a1_model();
-  const std::vector<fk_injection::SeriesKey> keys = {
-    { specfem::plugin::Medium::acoustic, 3000 },
-    { specfem::plugin::Medium::elastic, 3000 }
-  };
-  const auto table = fk_injection::SeriesTable::synthesize(
+  const std::vector<fk_injection::SeriesKey> keys = { { 2, 3000 },
+                                                      { 1, 3000 } };
+  const auto table = fk_injection_tests_impl::table_for(
       series_table_tests_impl::make_response(model), keys);
 
   ASSERT_EQ(table.number_of_rows(), 2);
   EXPECT_EQ(table.row(keys[1]), 0);
   EXPECT_EQ(table.row(keys[0]), 1);
-  EXPECT_EQ(table.location(0).medium, specfem::plugin::Medium::elastic);
-  EXPECT_EQ(table.location(1).medium, specfem::plugin::Medium::acoustic);
+  EXPECT_EQ(table.location(0).medium, specfem::plugin::Medium::acoustic);
+  EXPECT_EQ(table.location(1).medium, specfem::plugin::Medium::elastic);
 }
 
-// Round-off slack only: 8 float ulps of the deepest key.
-TEST(SeriesTable, ToleranceIsFloatRoundOff) {
+// An interface depth reads either layer: the bottom of the upper one or the
+// top of the lower one, snapped to the interface within the tolerance.
+TEST(SeriesTable, InterfaceRowsSnapToTheInterface) {
   const auto model = series_table_tests_impl::make_elastic_model();
-  const auto table = fk_injection::SeriesTable::synthesize(
-      series_table_tests_impl::make_response(model),
-      series_table_tests_impl::elastic_keys({ 1000.0, 20000.0 }));
+  const float interface = 10000.0f;
+  const float below =
+      std::nextafterf(interface, std::numeric_limits<float>::infinity());
+  const std::vector<fk_injection::SeriesKey> keys = { { 0, below },
+                                                      { 1, interface } };
+  const auto table = fk_injection_tests_impl::table_for(
+      series_table_tests_impl::make_response(model), keys);
 
+  ASSERT_EQ(table.number_of_rows(), 2);
+  const auto &upper = table.location(table.row(keys[0]));
+  const auto &lower = table.location(table.row(keys[1]));
+  EXPECT_EQ(upper.layer, 0);
+  EXPECT_EQ(upper.height, 0.0);
+  EXPECT_EQ(lower.layer, 1);
+  EXPECT_EQ(lower.height, 20000.0);
+}
+
+// Round-off slack only: 8 float ulps of the magnitude.
+TEST(SeriesTable, ToleranceIsFloatRoundOff) {
   const float depth = 20000.0f;
   const float next =
       std::nextafterf(depth, std::numeric_limits<float>::infinity());
-  EXPECT_EQ(table.tolerance(), 8.0 * static_cast<double>(next - depth));
+  EXPECT_EQ(fk_injection::SeriesTable::depth_tolerance(20000.0),
+            8.0 * static_cast<double>(next - depth));
+
+  const auto model = series_table_tests_impl::make_elastic_model();
+  const auto table = fk_injection::SeriesTable::synthesize(
+      series_table_tests_impl::make_response(model),
+      series_table_tests_impl::elastic_keys({ 1000.0, 20000.0 }), 0.25);
+  EXPECT_EQ(table.tolerance(), 0.25);
 }
 
 TEST(SeriesTable, RowRejectsAKeyItWasNotBuiltFor) {
   const auto model = series_table_tests_impl::make_a1_model();
-  const auto table = fk_injection::SeriesTable::synthesize(
-      series_table_tests_impl::make_response(model),
-      { { specfem::plugin::Medium::elastic, 5000 } });
+  const auto table = fk_injection_tests_impl::table_for(
+      series_table_tests_impl::make_response(model), { { 2, 5000 } });
 
-  EXPECT_THROW(table.row({ specfem::plugin::Medium::elastic, 6000 }),
-               std::runtime_error);
-  EXPECT_THROW(table.row({ specfem::plugin::Medium::elastic, 4000 }),
-               std::runtime_error);
-  EXPECT_THROW(table.row({ specfem::plugin::Medium::acoustic, 1000 }),
-               std::runtime_error);
+  EXPECT_THROW(table.row({ 2, 6000 }), std::runtime_error);
+  EXPECT_THROW(table.row({ 2, 4000 }), std::runtime_error);
+  EXPECT_THROW(table.row({ 0, 1000 }), std::runtime_error);
 }
 
 TEST(SeriesTable, SynthesizeRejectsAKeyTheModelCannotServe) {
   const auto model = series_table_tests_impl::make_a1_model();
-  EXPECT_THROW(fk_injection::SeriesTable::synthesize(
-                   series_table_tests_impl::make_response(model),
-                   { { specfem::plugin::Medium::elastic, 1000 } }),
-               std::runtime_error);
+  EXPECT_THROW(
+      fk_injection_tests_impl::table_for(
+          series_table_tests_impl::make_response(model), { { 2, 1000 } }),
+      std::runtime_error);
 }

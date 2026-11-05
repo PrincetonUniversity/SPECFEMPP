@@ -12,6 +12,7 @@
 #include <cmath>
 #include <complex>
 #include <gtest/gtest.h>
+#include <tuple>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -77,12 +78,11 @@ FkChain make_fk_chain() {
   // the half-space.
   const fk_injection::PlaneWaveResponse response(
       make_elastic_model(), make_wave_p(), make_window(), {});
-  std::vector<fk_injection::SeriesKey> keys;
-  for (const double depth : { 5000.0, 15000.0, 25000.0 })
-    keys.push_back(
-        { specfem::plugin::Medium::elastic, static_cast<type_real>(depth) });
+  const auto keys = fk_injection_tests_impl::keys_at(
+      response.model(), specfem::plugin::Medium::elastic,
+      { 5000.0, 15000.0, 25000.0 });
   return FkChain{ response,
-                  fk_injection::SeriesTable::synthesize(response, keys) };
+                  fk_injection_tests_impl::table_for(response, keys) };
 }
 
 } // namespace depth_series_tests_impl
@@ -354,12 +354,10 @@ TEST(DepthSeries, KinematicSeriesFollowTheMedium) {
   const auto window = depth_series_tests_impl::make_window();
   const double p = wave.ray_parameter(model);
 
-  const std::vector<fk_injection::SeriesKey> keys = {
-    { specfem::plugin::Medium::acoustic, 500 },
-    { specfem::plugin::Medium::elastic, 10000 }
-  };
+  const std::vector<fk_injection::SeriesKey> keys = { { 0, 500 },
+                                                      { 2, 10000 } };
   const fk_injection::PlaneWaveResponse response(model, wave, window, {});
-  const auto table = fk_injection::SeriesTable::synthesize(response, keys);
+  const auto table = fk_injection_tests_impl::table_for(response, keys);
   ASSERT_EQ(table.number_of_rows(), 2);
 
   const auto &setup = response.setup();
@@ -429,18 +427,18 @@ TEST(DepthSeries, HorizontalDensityFollowsLayerResolution) {
   const auto &setup = response.setup();
   const auto &states = response.states();
 
-  // Depth, and the density u_x must use there.
-  const std::vector<std::pair<double, double>> cases = {
-    { 500.0, 1000.0 },  // inside the upper fluid
-    { 1000.0, 1100.0 }, // bottom of the upper fluid: lower fluid's
-    { 2000.0, 1100.0 }, // inside the lower fluid
-    { 3000.0, 2800.0 }, // fluid-solid interface: the crust's
+  // Layer, depth, and the density u_x must use there.
+  const std::vector<std::tuple<int, double, double>> cases = {
+    { 0, 500.0, 1000.0 },  // inside the upper fluid
+    { 0, 1000.0, 1100.0 }, // bottom of the upper fluid: lower fluid's
+    { 1, 1000.0, 1100.0 }, // top of the lower fluid: its own
+    { 1, 2000.0, 1100.0 }, // inside the lower fluid
+    { 1, 3000.0, 2800.0 }, // fluid-solid interface: the crust's
   };
 
-  for (const auto &[depth, density] : cases) {
-    const auto table = fk_injection::SeriesTable::synthesize(
-        response, { { specfem::plugin::Medium::acoustic,
-                      static_cast<type_real>(depth) } });
+  for (const auto &[layer_index, depth, density] : cases) {
+    const auto table = fk_injection_tests_impl::table_for(
+        response, { { layer_index, static_cast<type_real>(depth) } });
     ASSERT_EQ(table.number_of_rows(), 1);
     const auto &group = table.location(0);
     const auto spectra = depth_series_tests_impl::row_spectra(response, table);
@@ -479,8 +477,7 @@ TEST(DepthSeries, FreeSurfacePressureIsZero) {
   const fk_injection::PlaneWaveResponse response(
       model, depth_series_tests_impl::make_wave_p(),
       depth_series_tests_impl::make_window(), {});
-  const auto table = fk_injection::SeriesTable::synthesize(
-      response, { { specfem::plugin::Medium::acoustic, 0 } });
+  const auto table = fk_injection_tests_impl::table_for(response, { { 0, 0 } });
   ASSERT_TRUE(table.location(0).at_free_surface);
   const auto spectra = depth_series_tests_impl::row_spectra(response, table);
 

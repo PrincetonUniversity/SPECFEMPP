@@ -117,9 +117,9 @@ public:
   /**
    * @brief Locate a depth in the model and return full layer geometry.
    *
-   * Points exactly on an interface are assigned to the shallower layer
-   * (tie-goes-upper), ensuring continuity of the field state across interior
-   * interfaces.
+   * Points within @p tolerance of an interface between two layers of
+   * @p medium are assigned to the shallower layer (tie-goes-upper); see
+   * @c locate_in for the geometry.
    *
    * @param depth      Depth in metres, positive-downward from the model top.
    * @param medium     Medium of the point.
@@ -132,6 +132,22 @@ public:
    */
   LayerLocation locate(double depth, specfem::plugin::Medium medium,
                        double tolerance) const;
+
+  /**
+   * @brief Locate a depth within a given layer.
+   *
+   * A depth within @p tolerance of the layer's top or bottom snaps to that
+   * interface. The height is 0 throughout the half-space.
+   *
+   * @param layer     Index into @c layers.
+   * @param depth     Depth in metres, positive-downward from the model top.
+   * @param tolerance Snap tolerance in metres (>= 0).
+   * @return Populated @c LayerLocation.
+   * @throws std::runtime_error if @p tolerance is negative or NaN, @p layer is
+   *         out of range, or @p depth lies outside the layer by more than
+   *         @p tolerance.
+   */
+  LayerLocation locate_in(int layer, double depth, double tolerance) const;
 
   /**
    * @brief Return the total thickness of the fluid column in metres.

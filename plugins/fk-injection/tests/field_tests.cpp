@@ -14,8 +14,8 @@
 using fk_injection::type_real;
 
 // ---------------------------------------------------------------------------
-// Elastic points at x = y = 0 and the given depths. With traction, the normal
-// points in +z and the Lame ratios are placeholders.
+// Points at x = y = 0 and the given depths. With traction, the normal points
+// in +z.
 // ---------------------------------------------------------------------------
 static std::vector<fk_injection::FieldPoint>
 make_points(const std::vector<double> &depths, bool with_traction = false) {
@@ -24,9 +24,6 @@ make_points(const std::vector<double> &depths, bool with_traction = false) {
     points[i].depth = static_cast<type_real>(depths[i]);
     if (with_traction) {
       points[i].normal_z = 1;
-      points[i].xi1 = 2;
-      points[i].xim = 1;
-      points[i].bulk = static_cast<type_real>(0.333);
     }
   }
   return points;
@@ -154,10 +151,11 @@ TEST(FkField, AcousticElasticRunsFinite) {
   // Points: 2 in water (z < 4000), 3 in solid (z >= 4000)
   auto ep = make_points({ 500, 2000, 5000, 20000, 38000 },
                         /*with_traction=*/true);
-  ep[0].medium = ep[1].medium = specfem::plugin::Medium::acoustic;
-
-  const auto result =
-      fk_injection_tests_impl::field_at(model, wave, window, ep);
+  const auto result = fk_injection_tests_impl::field_at(
+      model, wave, window, ep, fk_injection::ReferenceConvention::exact,
+      { specfem::plugin::Medium::acoustic, specfem::plugin::Medium::acoustic,
+        specfem::plugin::Medium::elastic, specfem::plugin::Medium::elastic,
+        specfem::plugin::Medium::elastic });
 
   EXPECT_EQ(result.number_of_points(), 5);
   EXPECT_GT(result.series().coefficient_count(), 0);
@@ -426,17 +424,9 @@ fk_injection::TimeWindow long_window(double frequency_sampling) {
 /** @brief Evaluation points at x = y = 0 with a downward normal. */
 std::vector<fk_injection::FieldPoint>
 points_with_traction(const std::vector<double> &depths) {
-  const double mu = density * vs * vs;
-  const double lambda = density * vp * vp - 2.0 * mu;
-  const double xi = (vs * vs) / (vp * vp);
-
   auto points = make_points(depths, /*with_traction=*/true);
-  for (auto &point : points) {
+  for (auto &point : points)
     point.normal_z = -1;
-    point.xi1 = static_cast<type_real>(1.0 - 2.0 * xi);
-    point.xim = static_cast<type_real>((1.0 - xi) * mu);
-    point.bulk = static_cast<type_real>(lambda / (2.0 * (lambda + mu)));
-  }
   return points;
 }
 
