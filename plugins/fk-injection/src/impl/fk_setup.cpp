@@ -26,7 +26,12 @@ fk_injection::impl::prepare(const fk_injection::LayeredModel &model,
 
   // Positive-frequency samples (including DC): nf_stored + 1.
   const int nf2 = setup.sizes.number_of_stored_frequencies + 1;
-  const double df = static_cast<double>(setup.sizes.frequency_step);
+  // The inverse FFT assumes 1 / (N dt_min); SPECFEM3D's grid uses N - 1.
+  const double df =
+      convention == fk_injection::ReferenceConvention::specfem3d
+          ? static_cast<double>(setup.sizes.frequency_step)
+          : 1.0 / (static_cast<double>(setup.sizes.number_of_fft_samples) *
+                   setup.dt_min);
   const double half_duration = static_cast<double>(wave.gaussian_half_duration);
 
   setup.omega.resize(nf2);

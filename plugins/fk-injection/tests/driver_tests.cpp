@@ -428,19 +428,20 @@ TEST(FkDriver, Specfem3dConventionScalesAmplitudeAndDelay) {
   exact.sample(0, window.nstep, out_exact);
   specfem3d.sample(0, window.nstep, out_specfem3d);
 
-  // Point 0, all components and steps.
+  // Point 0, all components and steps. The two also differ by the N/(N-1)
+  // stretch of their frequency grids, so compare peaks, not samples.
   const std::size_t first_point =
       static_cast<std::size_t>(components) * window.nstep;
-  double peak = 0.0;
+  double peak_exact = 0.0;
+  double peak_specfem3d = 0.0;
   for (std::size_t i = 0; i < first_point; ++i) {
-    peak = std::max(peak, std::fabs(static_cast<double>(out_exact[i])));
+    peak_exact =
+        std::max(peak_exact, std::fabs(static_cast<double>(out_exact[i])));
+    peak_specfem3d = std::max(peak_specfem3d,
+                              std::fabs(static_cast<double>(out_specfem3d[i])));
   }
-  ASSERT_GT(peak, 0.0);
-  for (std::size_t i = 0; i < first_point; ++i) {
-    EXPECT_NEAR(static_cast<double>(out_specfem3d[i]),
-                2.0 * static_cast<double>(out_exact[i]), 1.0e-5 * peak)
-        << "entry " << i;
-  }
+  ASSERT_GT(peak_exact, 0.0);
+  EXPECT_NEAR(peak_specfem3d / peak_exact, 2.0, 1.0e-3);
 
   // Offset = pad - tau*stretch/dt_min, and the first point's offset is the pad.
   const double exact_delay =
@@ -618,6 +619,50 @@ TEST(FkDriver, DelayedArrivalMatchesPlaneWaveTiming) {
                 eta * (-depths[point] - driver_tests_impl::origin_z), 6.0)
         << "depth " << depths[point];
   }
+}
+
+// In a half-space at depth d, the incident and reflected P pulses are centered
+// at tau - eta d and tau + eta d, where the velocity crosses zero. A frequency
+// grid that doesn't match the FFT moves them by eta d / N.
+TEST(FkDriver, ReflectedArrivalsMatchPlaneWaveTiming) {
+  const fk_injection::LayeredModel model(
+      {}, { driver_tests_impl::homogeneous_layer(0) });
+  const double depth = 50000.0;
+  const double delay = 25.0;
+  const double p =
+      std::sin(driver_tests_impl::take_off) / driver_tests_impl::vp;
+  const double eta =
+      std::sqrt(1.0 / (driver_tests_impl::vp * driver_tests_impl::vp) - p * p);
+
+  auto wave = driver_tests_impl::gaussian_p_wave();
+  wave.gaussian_half_duration = 1;
+  wave.origin_z = static_cast<type_real>(-delay / eta);
+
+  fk_injection::TimeWindow window;
+  window.dt = static_cast<type_real>(0.1);
+  window.nstep = 500;
+  window.frequency_sampling = 10;
+  window.time_window_length = 50;
+
+  const driver_tests_impl::SampledField field(
+      fk_injection::solve(model, wave, window, make_eval_points({ depth }),
+                          fk_injection::field_derivative::velocity),
+      window.nstep);
+  const int velocity_z = fk_injection::sample_kinematic_offset + 2;
+
+  const auto zero_crossing_near = [&](const double expected) {
+    const int first = static_cast<int>(expected / window.dt) - 20;
+    for (int step = first; step < first + 40; ++step) {
+      const double before = field(0, velocity_z, step);
+      const double after = field(0, velocity_z, step + 1);
+      if (before * after < 0.0 && std::fabs(before - after) > 0.0)
+        return (step + before / (before - after)) * window.dt;
+    }
+    return -1.0;
+  };
+
+  for (const double expected : { delay - eta * depth, delay + eta * depth })
+    EXPECT_NEAR(zero_crossing_near(expected), expected, 3.0e-3);
 }
 
 // origin_time is the FK time at step 0, so origin_time = -k dt delays the field
