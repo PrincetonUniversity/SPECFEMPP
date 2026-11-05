@@ -324,8 +324,8 @@ time-window: { frequency-max: 0.1, length: 90.0 }
   EXPECT_NEAR(*overridden.origin_time, 1.5, 1e-12);
   EXPECT_NEAR(overridden.frequency_max, 0.1, 1e-6);
   EXPECT_NEAR(overridden.time_window_length, 90.0, 1e-4);
-  // The file's half-duration wins over the one derived from frequency-max.
-  EXPECT_NEAR(overridden.mesh_frame_wave.gaussian_half_duration, 5.0, 1e-5);
+  // The half-duration follows the overridden frequency-max.
+  EXPECT_NEAR(overridden.mesh_frame_wave.gaussian_half_duration, 10.0, 1e-4);
 }
 
 TEST(FkPluginConfig, ModelFileWindowOverrideKeepsTheFileLength) {

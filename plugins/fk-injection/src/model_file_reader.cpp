@@ -216,10 +216,6 @@ fk_injection::read_fk_model_file(const std::string &path) {
   wave.origin_z = static_cast<type_real>(origin_z);
   wave.origin_time = static_cast<type_real>(origin_time);
   wave.amplitude = static_cast<type_real>(amplitude);
-  // Half-duration follows the SPECFEM3D reference: Tg = 1 / FREQUENCY_MAX.
-  wave.gaussian_half_duration =
-      (frequency_max > 0.0) ? static_cast<type_real>(1.0 / frequency_max)
-                            : static_cast<type_real>(0.0);
 
   fk_injection::TimeWindow window;
   window.dt = static_cast<type_real>(deltat);

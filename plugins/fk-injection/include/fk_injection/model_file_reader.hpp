@@ -8,7 +8,13 @@
 
 namespace fk_injection {
 
-/** @brief Contents of an FK model file. */
+/**
+ * @brief Contents of an FK model file.
+ *
+ * @c wave.gaussian_half_duration is 0: the file has no such key, and SPECFEM3D
+ * sets it to 1 / @c FREQUENCY_MAX, which the caller derives after any
+ * overrides.
+ */
 struct FkModelFile {
   LayeredModel model;      ///< Layered velocity model
   IncidentWave wave;       ///< Incident wave

@@ -262,8 +262,6 @@ TEST(FkDriver, ReadModelFile) {
   EXPECT_EQ(wave.type, fk_injection::incident_wave_type::p);
   EXPECT_NEAR(static_cast<double>(wave.origin_time), 10.0, 1e-6);
   EXPECT_NEAR(static_cast<double>(wave.amplitude), 2.5, 1e-6);
-  // Half-duration is derived from FREQUENCY_MAX (2.0 Hz): Tg = 1/2 = 0.5 s.
-  EXPECT_NEAR(static_cast<double>(wave.gaussian_half_duration), 0.5, 1e-6);
   EXPECT_NEAR(static_cast<double>(wave.origin_x), 100.0, 1e-6);
   EXPECT_NEAR(static_cast<double>(wave.origin_y), 200.0, 1e-6);
   // take_off_theta = 30 deg in radians
