@@ -69,7 +69,7 @@ TEST(FkField, ElasticHalfSpaceRunsFinite) {
   mantle.density = 3300;
   mantle.thickness = 0; // half-space; thickness ignored
 
-  fk_injection::LayeredModel model({}, { crust, mantle });
+  fk_injection::LayeredModel model({ crust, mantle });
 
   fk_injection::IncidentWave wave;
   wave.type = fk_injection::incident_wave_type::p;
@@ -132,7 +132,7 @@ TEST(FkField, AcousticElasticRunsFinite) {
   mantle.density = 3300;
   mantle.thickness = 0;
 
-  fk_injection::LayeredModel model({ ocean }, { crust, mantle });
+  fk_injection::LayeredModel model({ ocean, crust, mantle });
 
   fk_injection::IncidentWave wave;
   wave.type = fk_injection::incident_wave_type::p;
@@ -264,7 +264,7 @@ static fk_injection::LayeredModel make_slowness_model() {
   mantle.s_velocity = 4500;
   mantle.density = 3300;
 
-  return fk_injection::LayeredModel({ ocean }, { mantle });
+  return fk_injection::LayeredModel({ ocean, mantle });
 }
 
 static void expect_unsupported(double p, const std::string &reason) {
@@ -318,7 +318,7 @@ TEST(FkField, Specfem3dConventionScalesAmplitudeAndDelay) {
   // No fluid: only the exact convention lengthens the window for a fluid's
   // reverberation, which would make the two windows differ.
   const fk_injection::LayeredModel model(
-      {}, { make_slowness_model().elastic_layers().back() });
+      { make_slowness_model().elastic_layers().back() });
 
   fk_injection::IncidentWave wave;
   wave.type = fk_injection::incident_wave_type::p;
@@ -482,7 +482,7 @@ int peak_step(const SampledField &field, int point, int component) {
 // relations; a sign or scale error in either breaks them.
 TEST(FkField, TractionConsistentWithImpedance) {
   const fk_injection::LayeredModel model(
-      {}, { field_tests_impl::homogeneous_layer(0) });
+      { field_tests_impl::homogeneous_layer(0) });
   const auto window = field_tests_impl::long_window(2.0);
   const auto result = fk_injection_tests_impl::field_at(
       model, field_tests_impl::gaussian_p_wave(), window,
@@ -519,7 +519,7 @@ TEST(FkField, TractionConsistentWithImpedance) {
 // A delayed P pulse at (x = y = 0, SEM z) arrives at eta_p * (z - z0).
 TEST(FkField, DelayedArrivalMatchesPlaneWaveTiming) {
   const fk_injection::LayeredModel model(
-      {}, { field_tests_impl::homogeneous_layer(0) });
+      { field_tests_impl::homogeneous_layer(0) });
   const auto window = field_tests_impl::long_window(10.0);
   const std::vector<double> depths = { 50005.0, 20000.0 };
   const auto result = fk_injection_tests_impl::field_at(
@@ -544,7 +544,7 @@ TEST(FkField, DelayedArrivalMatchesPlaneWaveTiming) {
 // undelayed field; a third of a period away is still fine.
 TEST(FkField, RejectsFkTimesOutsideTheFftPeriod) {
   const fk_injection::LayeredModel model(
-      {}, { field_tests_impl::homogeneous_layer(0) });
+      { field_tests_impl::homogeneous_layer(0) });
   const auto window = field_tests_impl::long_window(2.0);
   const auto points = make_points({ 20000.0 });
   const auto sizes = fk_injection::compute_fk_sizes(window, 0.0);
@@ -574,7 +574,7 @@ TEST(FkField, RejectsFkTimesOutsideTheFftPeriod) {
 // grid that doesn't match the FFT moves them by eta d / N.
 TEST(FkField, ReflectedArrivalsMatchPlaneWaveTiming) {
   const fk_injection::LayeredModel model(
-      {}, { field_tests_impl::homogeneous_layer(0) });
+      { field_tests_impl::homogeneous_layer(0) });
   const double depth = 50000.0;
   const double delay = 25.0;
   const double p = std::sin(field_tests_impl::take_off) / field_tests_impl::vp;
@@ -617,7 +617,7 @@ TEST(FkField, ReflectedArrivalsMatchPlaneWaveTiming) {
 // wraps around into the steps before the arrival.
 TEST(FkField, OriginTimeDelaysTheField) {
   const fk_injection::LayeredModel model(
-      {}, { field_tests_impl::homogeneous_layer(0) });
+      { field_tests_impl::homogeneous_layer(0) });
   // N_P = 3, so 80 steps is 26 2/3 resampled samples.
   const auto window = field_tests_impl::long_window(2.0);
   const auto points = make_points({ 50005.0, 20000.0 });
@@ -665,10 +665,10 @@ TEST(FkField, OriginTimeDelaysTheField) {
 // propagator and moves the half-space top, which anchors the time zero.
 TEST(FkField, IdenticalLayerSplitReducesToHalfspace) {
   const fk_injection::LayeredModel halfspace(
-      {}, { field_tests_impl::homogeneous_layer(0) });
+      { field_tests_impl::homogeneous_layer(0) });
   const fk_injection::LayeredModel split(
-      {}, { field_tests_impl::homogeneous_layer(30000.0),
-            field_tests_impl::homogeneous_layer(0) });
+      { field_tests_impl::homogeneous_layer(30000.0),
+        field_tests_impl::homogeneous_layer(0) });
   const auto wave = field_tests_impl::gaussian_p_wave();
   const auto window = field_tests_impl::long_window(10.0);
   const std::vector<double> depths = { 5000.0,  15000.0, 29900.0,

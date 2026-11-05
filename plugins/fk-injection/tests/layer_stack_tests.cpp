@@ -30,7 +30,7 @@ fk_injection::LayeredModel make_elastic_model() {
   halfspace.s_velocity = static_cast<type_real>(4500.0);
   halfspace.thickness = static_cast<type_real>(0.0);
 
-  return fk_injection::LayeredModel({}, { finite_layer, halfspace });
+  return fk_injection::LayeredModel({ finite_layer, halfspace });
 }
 
 /** @brief Fluid-over-solid model: fluid {rho=1020,vp=1500,H=2000} + elastic
@@ -53,7 +53,7 @@ fk_injection::LayeredModel make_fluid_model() {
   halfspace.s_velocity = static_cast<type_real>(4500.0);
   halfspace.thickness = static_cast<type_real>(0.0);
 
-  return fk_injection::LayeredModel({ fluid }, { finite_layer, halfspace });
+  return fk_injection::LayeredModel({ fluid, finite_layer, halfspace });
 }
 
 /** @brief Incident P wave: theta=25 deg, phi=0, unit amplitude. */
@@ -267,9 +267,9 @@ TEST(FluidReverberation, DecayTimeFromBottomReflection) {
 
   const double expected = 39.41077 * std::log(1.0e-4) / std::log(0.6816769);
   EXPECT_NEAR(fk_injection::impl::fluid_reverberation_time(
-                  fk_injection::LayeredModel({ water }, { solid }), p),
+                  fk_injection::LayeredModel({ water, solid }), p),
               expected, 1.0e-3 * expected);
   EXPECT_EQ(fk_injection::impl::fluid_reverberation_time(
-                fk_injection::LayeredModel({}, { solid }), p),
+                fk_injection::LayeredModel({ solid }), p),
             0.0);
 }

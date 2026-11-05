@@ -2,7 +2,7 @@
 
 #include "fk_injection/config.hpp"
 #include "specfem/plugin/injection_plugin.hpp"
-#include <optional>
+#include <variant>
 #include <vector>
 
 namespace fk_injection {
@@ -52,28 +52,34 @@ struct LayerLocation {
   double depth = 0;             ///< depth that was located, m
 };
 
+/// @brief One layer of a @c LayeredModel.
+using Layer = std::variant<AcousticLayer, ElasticIsotropicLayer>;
+
 /**
  * @brief A 1-D horizontally-layered velocity model for FK synthesis.
  *
- * Stores a contiguous fluid (acoustic) block on top followed by a contiguous
- * elastic block below.  The fluid-above-solid invariant is structural: the
- * two blocks are held in separate vectors. The last entry of the elastic block
- * is the half-space.
+ * Layers are ordered top-down; the last one is the elastic half-space. FK
+ * supports a fluid block on top of a solid block only, which the constructor
+ * checks.
  */
 class LayeredModel {
 public:
   /**
-   * @brief Construct a layered model from typed fluid and elastic blocks.
+   * @brief Construct a layered model from its layers, top-down.
    *
-   * @param fluid_layers   Top-down contiguous acoustic block (may be empty).
-   * @param elastic_layers Top-down elastic block below the fluid; the last
-   *                       entry is the half-space (must be non-empty).
-   * @throws std::runtime_error if @p elastic_layers is empty, if any density,
-   *         p_velocity or elastic s_velocity is not positive, or if any layer
-   *         above the half-space has a thickness that is not positive.
+   * @param layers Layers top-down; the last one is the half-space.
+   * @throws std::runtime_error if the last layer isn't elastic, an acoustic
+   *         layer lies below an elastic one, any density, p_velocity or
+   *         elastic s_velocity is not positive, or any layer above the
+   *         half-space has a thickness that is not positive.
    */
-  LayeredModel(std::vector<AcousticLayer> fluid_layers,
-               std::vector<ElasticIsotropicLayer> elastic_layers);
+  explicit LayeredModel(std::vector<Layer> layers);
+
+  /// @brief The layers, top-down.
+  const std::vector<Layer> &layers() const { return layers_; }
+
+  /// @brief Number of layers, including the half-space.
+  int number_of_layers() const { return static_cast<int>(layers_.size()); }
 
   /**
    * @brief Return the fluid (acoustic) layer block.
@@ -113,17 +119,15 @@ public:
    * interfaces.
    *
    * @param depth      Depth in metres, positive-downward from the model top.
-   * @param requested  Medium of the point; @c std::nullopt resolves it from
-   *                   the layer table.
+   * @param medium     Medium of the point.
    * @param tolerance  Snap/match tolerance in metres (>= 0).
    * @return Populated @c LayerLocation.
    * @throws std::runtime_error if @p tolerance is negative or NaN, if @p depth
-   *         is NaN or above the free surface, if @p requested is not acoustic
+   *         is NaN or above the free surface, if @p medium is not acoustic
    *         or elastic, or if it is inconsistent with the model (e.g. acoustic
    *         requested on a model with no fluid layers).
    */
-  LayerLocation locate(double depth,
-                       std::optional<specfem::plugin::Medium> requested,
+  LayerLocation locate(double depth, specfem::plugin::Medium medium,
                        double tolerance) const;
 
   /**
@@ -139,13 +143,11 @@ public:
   double halfspace_top_depth() const;
 
 private:
-  void validate() const;
-
+  std::vector<Layer> layers_{};               ///< Top to bottom
   std::vector<AcousticLayer> fluid_layers_{}; ///< Fluid block, top to bottom
   std::vector<ElasticIsotropicLayer> elastic_layers_{}; ///< Elastic block, top
                                                         ///< to bottom
-  std::vector<double> top_depths_{}; ///< Top depth of each layer; fluid layers
-                                     ///< first, then elastic layers
+  std::vector<double> top_depths_{}; ///< Top depth of each layer
 };
 
 } // namespace fk_injection
