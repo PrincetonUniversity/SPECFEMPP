@@ -32,6 +32,7 @@ add_library(fk_injection_impl STATIC
   src/impl/layer_stack.cpp
   src/layered_model.cpp
   src/model_file_reader.cpp
+  src/plane_wave_response.cpp
   src/plugin_config.cpp
   src/solver.cpp
   src/time_window.cpp
