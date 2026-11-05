@@ -43,17 +43,6 @@ struct FieldPoint {
   type_real bulk = 0;                   ///< Bulk Lame-ratio factor
 };
 
-/**
- * @brief Smallest box holding the points.
- *
- * For callers that see every point, such as tests; ranks of a partitioned mesh
- * must share the mesh box instead.
- *
- * @param points Points
- * @return The box; all zero without points
- */
-HorizontalBox bounding_box(const std::vector<FieldPoint> &points);
-
 /** @brief What @c FieldSampler stores for one point. */
 struct PointSample {
   int row = 0;       ///< Row of the series table
@@ -76,9 +65,6 @@ struct PointSample {
  */
 class FieldSampler {
 public:
-  /** @brief A sampler without points. */
-  FieldSampler() = default;
-
   /**
    * @brief Construct from per-point data computed elsewhere.
    *
@@ -112,7 +98,6 @@ public:
   int number_of_points() const { return static_cast<int>(points_.size()); }
   int resampling_rate() const { return resampling_rate_; }
   const std::vector<PointSample> &points() const { return points_; }
-  /// @brief The table sampled; only for a sampler that has one.
   const SeriesTable &series() const { return *series_; }
 
   /**

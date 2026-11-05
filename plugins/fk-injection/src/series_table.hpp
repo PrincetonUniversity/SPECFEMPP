@@ -28,9 +28,6 @@ struct SeriesKey {
  */
 class SeriesTable {
 public:
-  /** @brief An empty table. */
-  SeriesTable() = default;
-
   /**
    * @brief Construct from coefficients computed elsewhere.
    *
