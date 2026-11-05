@@ -53,6 +53,15 @@ TEST(LayeredModel, ValidOceanOverSolid) {
   EXPECT_NEAR(model.locate(0.0, specfem::plugin::Medium::acoustic, 1.0)
                   .depth_below_halfspace_top,
               21000.0, 1.0e-2);
+
+  // Layers are indexed top-down across both media.
+  const fk_injection::LayerLocation crust_location =
+      model.locate(5000.0, specfem::plugin::Medium::elastic, 1.0);
+  EXPECT_EQ(crust_location.layer, 1);
+  EXPECT_FALSE(crust_location.in_halfspace);
+  EXPECT_TRUE(model.locate(30000.0, specfem::plugin::Medium::elastic, 1.0)
+                  .in_halfspace);
+  EXPECT_EQ(model.halfspace().density, halfspace.density);
 }
 
 // ---------------------------------------------------------------------------
@@ -427,11 +436,11 @@ TEST(LayeredModel, LocateA1FluidSolidInterface) {
   EXPECT_EQ(loc_ac.layer, 1);
   EXPECT_NEAR(loc_ac.height, 0.0, 1.0e-6);
 
-  // Elastic at the interface → elastic (crust, layer 0, height 10000).
+  // Elastic at the interface → elastic (crust, layer 2, height 10000).
   fk_injection::LayerLocation loc_el =
       model.locate(3000.0, specfem::plugin::Medium::elastic, tol);
   EXPECT_EQ(loc_el.medium, specfem::plugin::Medium::elastic);
-  EXPECT_EQ(loc_el.layer, 0);
+  EXPECT_EQ(loc_el.layer, 2);
   EXPECT_NEAR(loc_el.height, 10000.0, 1.0e-6);
 }
 

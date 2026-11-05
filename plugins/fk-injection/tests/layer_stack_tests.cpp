@@ -8,6 +8,7 @@
 #include "plane_wave_response.hpp"
 #include <cmath>
 #include <gtest/gtest.h>
+#include <variant>
 
 using fk_injection::type_real;
 
@@ -103,7 +104,7 @@ fk_injection::TimeWindow make_window() {
 // ============================================================================
 // Test 1: HalfspaceTopIsEtimesB
 //
-// elastic_top(f, n_elastic-1) is the state at the top of the halfspace.  At
+// top(f, halfspace) is the state at the top of the halfspace.  At
 // that interface the propagator is the identity (zz=0 => G=I), so the state
 // must equal E * b(omega) component-wise.
 // ============================================================================
@@ -117,13 +118,14 @@ TEST(LayerStack, HalfspaceTopIsEtimesB) {
   const auto &setup = response.setup();
   const auto &states = response.states();
 
-  const int n_elastic = model.number_of_elastic_layers();
+  const int halfspace = model.number_of_layers() - 1;
   const int f = 10;
   ASSERT_LT(f, static_cast<int>(setup.omega.size()));
 
   const auto &modes = states.modes_at(f);
   const auto expected = setup.e_mat * modes;
-  const auto &actual = states.elastic_top(f, n_elastic - 1);
+  const auto &actual =
+      std::get<fk_injection::ComplexVector<4>>(states.top(f, halfspace));
 
   constexpr double kTol = 1.0e-9;
   for (int i = 0; i < 4; ++i) {
@@ -156,7 +158,7 @@ TEST(LayerStack, FreeSurfaceTractionVanishesP) {
   ASSERT_LT(f, static_cast<int>(setup.omega.size()));
 
   // Free-surface state: top of the shallowest elastic layer (layer 0).
-  const auto &s = states.elastic_top(f, 0);
+  const auto &s = std::get<fk_injection::ComplexVector<4>>(states.top(f, 0));
 
   // Displacement scale to normalise traction residuals.
   const double disp_scale = std::abs(s[0]) + std::abs(s[1]) + 1.0e-30;
@@ -196,7 +198,7 @@ TEST(LayerStack, FreeSurfaceTractionVanishesSV) {
   const int f = 10;
   ASSERT_LT(f, static_cast<int>(setup.omega.size()));
 
-  const auto &s = states.elastic_top(f, 0);
+  const auto &s = std::get<fk_injection::ComplexVector<4>>(states.top(f, 0));
 
   const double disp_scale = std::abs(s[0]) + std::abs(s[1]) + 1.0e-30;
   EXPECT_GT(disp_scale, 1.0e-12) << "displacement scale too small (degenerate)";
@@ -238,18 +240,25 @@ TEST(LayerStack, FluidFreeSurfacePressureSmall) {
   ASSERT_LT(f, static_cast<int>(setup.omega.size()));
 
   // Propagate from the bottom of fluid layer 0 to its top.
-  const auto &fluid0 = model.fluid_layers()[0];
+  const auto &fluid0 = std::get<fk_injection::AcousticLayer>(model.layers()[0]);
+  const auto &bottom =
+      std::get<fk_injection::impl::AcousticState>(states.bottom(f, 0));
   const auto top = fk_injection::impl::acoustic_state_in_layer(
       fluid0, std::complex<double>(setup.omega[f], 0.0),
-      static_cast<double>(fluid0.thickness), p, states.acoustic_bottom(f, 0));
+      static_cast<double>(fluid0.thickness), p, bottom);
 
-  const double scale = std::abs(states.acoustic_bottom(f, 0).u_z) +
-                       std::abs(states.acoustic_bottom(f, 0).pressure_over_k) +
-                       1.0e-30;
+  const double scale =
+      std::abs(bottom.u_z) + std::abs(bottom.pressure_over_k) + 1.0e-30;
 
   EXPECT_LT(std::abs(top.pressure_over_k), 1.0e-5 * scale)
       << "pressure_over_k at acoustic free surface is not small: "
       << std::abs(top.pressure_over_k) << " vs scale " << scale;
+
+  const auto &stored =
+      std::get<fk_injection::impl::AcousticState>(states.top(f, 0));
+  EXPECT_LT(std::abs(stored.u_z - top.u_z), 1.0e-12 * scale);
+  EXPECT_LT(std::abs(stored.pressure_over_k - top.pressure_over_k),
+            1.0e-12 * scale);
 }
 
 // 30 km of water over a solid, P at 20 deg take-off: |R| = 0.6817 and a 39.41 s

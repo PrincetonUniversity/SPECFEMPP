@@ -9,6 +9,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <variant>
 
 fk_injection::FkInjectionPlugin::FkInjectionPlugin(
     const std::string &config_path, const specfem::plugin::SimulationInfo &info,
@@ -114,17 +115,17 @@ fk_injection::FkInjectionPlugin::point_material(
 }
 
 fk_injection::FkInjectionPlugin::Material
-fk_injection::FkInjectionPlugin::layer_material(
-    const specfem::plugin::Medium medium, const int layer) const {
-  if (medium == specfem::plugin::Medium::acoustic) {
-    const auto &fluid = config_.model.fluid_layers()[layer];
-    return { static_cast<double>(fluid.density),
-             static_cast<double>(fluid.p_velocity), 0.0 };
-  }
-  const auto &elastic = config_.model.elastic_layers()[layer];
-  return { static_cast<double>(elastic.density),
-           static_cast<double>(elastic.p_velocity),
-           static_cast<double>(elastic.s_velocity) };
+fk_injection::FkInjectionPlugin::layer_material(const int layer) const {
+  const fk_injection::Layer &model_layer = config_.model.layers()[layer];
+  if (const auto *fluid =
+          std::get_if<fk_injection::AcousticLayer>(&model_layer))
+    return { static_cast<double>(fluid->density),
+             static_cast<double>(fluid->p_velocity), 0.0 };
+  const auto &solid =
+      std::get<fk_injection::ElasticIsotropicLayer>(model_layer);
+  return { static_cast<double>(solid.density),
+           static_cast<double>(solid.p_velocity),
+           static_cast<double>(solid.s_velocity) };
 }
 
 void fk_injection::FkInjectionPlugin::check_material(
@@ -155,18 +156,17 @@ void fk_injection::FkInjectionPlugin::check_material(
            close(material.vs, layer.vs);
   };
 
-  const Material layer = layer_material(medium, location.layer);
+  const Material layer = layer_material(location.layer);
   if (matches(layer))
     return;
 
   // A GLL point on a layer interface carries its own element's material, which
   // can be the lower layer's. The field is continuous there, so either serves.
-  const int layers_in_block = medium == specfem::plugin::Medium::acoustic
-                                  ? config_.model.number_of_fluid_layers()
-                                  : config_.model.number_of_elastic_layers();
+  const auto &layers = config_.model.layers();
   if (location.height <= locate_tolerance &&
-      location.layer + 1 < layers_in_block &&
-      matches(layer_material(medium, location.layer + 1)))
+      location.layer + 1 < config_.model.number_of_layers() &&
+      layers[location.layer + 1].index() == layers[location.layer].index() &&
+      matches(layer_material(location.layer + 1)))
     return;
 
   std::ostringstream message;

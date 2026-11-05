@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <variant>
 #include <vector>
 
 void fk_injection::impl::depth_spectrum(
@@ -28,13 +29,14 @@ void fk_injection::impl::depth_spectrum(
     const Cplx omega(setup.omega[f], 0.0);
 
     fk_injection::impl::SeriesSpectrum series;
+    const fk_injection::Layer &model_layer = model.layers()[location.layer];
     if (is_acoustic) {
-      const fk_injection::AcousticLayer &layer =
-          model.fluid_layers()[location.layer];
+      const auto &layer = std::get<fk_injection::AcousticLayer>(model_layer);
       fk_injection::impl::AcousticState state =
           fk_injection::impl::acoustic_state_in_layer(
               layer, omega, location.height, p,
-              states.acoustic_bottom(f, location.layer));
+              std::get<fk_injection::impl::AcousticState>(
+                  states.bottom(f, location.layer)));
       // Free-surface pressure boundary condition at the top of the fluid
       // column.
       if (location.at_free_surface) {
@@ -46,11 +48,11 @@ void fk_injection::impl::depth_spectrum(
       // state itself is the zero-height interface state either way.
       double horizontal_density = static_cast<double>(layer.density);
       if (location.height <= 1.0e-6 * static_cast<double>(layer.thickness)) {
-        const int below = location.layer + 1;
-        horizontal_density =
-            below < model.number_of_fluid_layers()
-                ? static_cast<double>(model.fluid_layers()[below].density)
-                : static_cast<double>(model.elastic_layers().front().density);
+        horizontal_density = std::visit(
+            [](const auto &below) {
+              return static_cast<double>(below.density);
+            },
+            model.layers()[location.layer + 1]);
       }
       series =
           fk_injection::impl::project_acoustic(state, horizontal_density, p);
@@ -58,12 +60,14 @@ void fk_injection::impl::depth_spectrum(
       fk_injection::ComplexVector<4> state;
       if (location.in_halfspace) {
         state = fk_injection::impl::elastic_state_in_halfspace(
-            setup.e_mat, model.elastic_layers().back(), omega, p,
+            setup.e_mat, model.halfspace(), omega, p,
             location.depth_below_halfspace_top, states.modes_at(f));
       } else {
         state = fk_injection::impl::elastic_state_in_layer(
-            model.elastic_layers()[location.layer], omega, location.height, p,
-            states.elastic_top(f, location.layer + 1));
+            std::get<fk_injection::ElasticIsotropicLayer>(model_layer), omega,
+            location.height, p,
+            std::get<fk_injection::ComplexVector<4>>(
+                states.bottom(f, location.layer)));
       }
       series = fk_injection::impl::project_elastic(state, omega, p);
     }
