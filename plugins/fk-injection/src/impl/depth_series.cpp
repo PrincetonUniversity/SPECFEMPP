@@ -1,4 +1,5 @@
 #include "impl/depth_series.hpp"
+#include "plane_wave_response.hpp"
 
 #include "fk_injection/utilities/cubic_bspline.hpp"
 #include "fk_injection/utilities/fft.hpp"

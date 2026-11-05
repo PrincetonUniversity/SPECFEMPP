@@ -2,7 +2,6 @@
 
 #include "fk_injection/config.hpp"
 #include "fk_injection/layered_model.hpp"
-#include "impl/fk_setup.hpp"
 #include "impl/layer_stack.hpp"
 #include "impl/series_layout.hpp"
 #include <complex>
@@ -10,6 +9,8 @@
 #include <vector>
 
 namespace fk_injection::impl {
+
+struct FkSetup; // defined with PlaneWaveResponse
 
 /**
  * @brief Fill the positive-frequency depth spectrum at one location.

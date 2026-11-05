@@ -1,8 +1,7 @@
+#include "field_helpers.hpp"
 #include "fk_injection/config.hpp"
-#include "fk_injection/eval_points.hpp"
 #include "fk_injection/incident_wave.hpp"
 #include "fk_injection/layered_model.hpp"
-#include "fk_injection/solver.hpp"
 #include "fk_injection/time_window.hpp"
 #include "impl/depth_series.hpp"
 #include "impl/field_recovery.hpp"
@@ -22,25 +21,6 @@ using fk_injection::type_real;
 // Helpers in a named namespace (no anonymous namespaces; unity-build safe).
 // ---------------------------------------------------------------------------
 namespace depth_series_tests_impl {
-
-/** @brief Build an EvalPoints from parallel arrays. */
-fk_injection::EvalPoints make_eval_points(const std::vector<double> &xs,
-                                          const std::vector<double> &ys,
-                                          const std::vector<double> &zs) {
-  const int n = static_cast<int>(xs.size());
-
-  fk_injection::EvalPoints ep;
-  ep.x.resize(n);
-  ep.y.resize(n);
-  ep.z.resize(n);
-  for (int i = 0; i < n; ++i) {
-    ep.x[i] = static_cast<type_real>(xs[i]);
-    ep.y[i] = static_cast<type_real>(ys[i]);
-    ep.z[i] = static_cast<type_real>(zs[i]);
-  }
-
-  return ep;
-}
 
 /** @brief Elastic-only model: one finite layer (H=20000) + halfspace. */
 fk_injection::LayeredModel make_elastic_model() {
@@ -258,8 +238,9 @@ TEST(DepthSeries, NormalizationIndependentOfResampling) {
   // tau=0 points (x=y=0) at distinct depths.
   const std::vector<double> zs = { 5000.0, 15000.0, 25000.0 };
   const int npts = static_cast<int>(zs.size());
-  const auto points = depth_series_tests_impl::make_eval_points(
-      std::vector<double>(npts, 0.0), std::vector<double>(npts, 0.0), zs);
+  std::vector<fk_injection::FieldPoint> points(npts);
+  for (int i = 0; i < npts; ++i)
+    points[i].depth = static_cast<type_real>(zs[i]);
 
   auto make_window = [](double dt, int nstep) {
     fk_injection::TimeWindow w;
@@ -272,8 +253,10 @@ TEST(DepthSeries, NormalizationIndependentOfResampling) {
   const auto window_np1 = make_window(0.1, 300);  // NP=1
   const auto window_np2 = make_window(0.05, 600); // NP=2, same dt_min
 
-  const auto result1 = fk_injection::solve(model, wave, window_np1, points);
-  const auto result2 = fk_injection::solve(model, wave, window_np2, points);
+  const auto result1 =
+      fk_injection_tests_impl::field_at(model, wave, window_np1, points);
+  const auto result2 =
+      fk_injection_tests_impl::field_at(model, wave, window_np2, points);
   ASSERT_EQ(result1.resampling_rate(), 1);
   ASSERT_EQ(result2.resampling_rate(), 2);
 
@@ -475,4 +458,39 @@ TEST(DepthSeries, HorizontalDensityFollowsLayerResolution) {
     }
     EXPECT_GT(peak, 0.0) << "depth " << depth;
   }
+}
+
+// ============================================================================
+// FreeSurfacePressureIsZero
+//
+// The fluid's free surface has P = 0, so u_x and chi_dot vanish there exactly;
+// u_z does not.
+// ============================================================================
+TEST(DepthSeries, FreeSurfacePressureIsZero) {
+  const auto model = depth_series_tests_impl::make_two_fluid_model();
+  const fk_injection::PlaneWaveResponse response(
+      model, depth_series_tests_impl::make_wave_p(),
+      depth_series_tests_impl::make_window(), {});
+  const auto table = fk_injection::SeriesTable::synthesize(
+      response, { { specfem::plugin::Medium::acoustic, 0 } });
+  ASSERT_TRUE(table.location(0).at_free_surface);
+  const auto spectra = depth_series_tests_impl::row_spectra(response, table);
+
+  const int fft_samples = response.setup().sizes.number_of_fft_samples;
+  double vertical_peak = 0.0;
+  for (int f = 0; f < static_cast<int>(response.setup().omega.size()); ++f) {
+    EXPECT_EQ(
+        spectra[0][fk_injection::impl::series_horizontal * fft_samples + f],
+        std::complex<double>(0.0, 0.0))
+        << "frequency " << f;
+    EXPECT_EQ(
+        spectra[0][fk_injection::impl::series_potential_rate * fft_samples + f],
+        std::complex<double>(0.0, 0.0))
+        << "frequency " << f;
+    vertical_peak = std::max(
+        vertical_peak,
+        std::abs(
+            spectra[0][fk_injection::impl::series_vertical * fft_samples + f]));
+  }
+  EXPECT_GT(vertical_peak, 0.0);
 }

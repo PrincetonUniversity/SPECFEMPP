@@ -1,4 +1,5 @@
 #include "impl/layer_stack.hpp"
+#include "plane_wave_response.hpp"
 
 #include "impl/fk_math_impl.hpp"
 #include "impl/halfspace_solve.hpp"
