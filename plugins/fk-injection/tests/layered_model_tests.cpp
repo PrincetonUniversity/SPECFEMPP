@@ -1,8 +1,8 @@
 #include "fk_injection/layered_model.hpp"
 #include <gtest/gtest.h>
-#include <optional>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace layered_model_tests_impl {
@@ -42,7 +42,7 @@ TEST(LayeredModel, ValidOceanOverSolid) {
   halfspace.s_velocity = 4500.0;
   halfspace.thickness = 0.0;
 
-  fk_injection::LayeredModel model({ water }, { crust, halfspace });
+  fk_injection::LayeredModel model({ water, crust, halfspace });
 
   EXPECT_EQ(model.number_of_fluid_layers(), 1);
   EXPECT_EQ(model.number_of_elastic_layers(), 2);
@@ -50,7 +50,8 @@ TEST(LayeredModel, ValidOceanOverSolid) {
 
   // Water is 1000 m thick, so the half-space top is at 1000 + 20000 = 21000.
   EXPECT_NEAR(model.fluid_thickness(), 1000.0, 1.0e-3);
-  EXPECT_NEAR(model.locate(0.0, std::nullopt, 1.0).depth_below_halfspace_top,
+  EXPECT_NEAR(model.locate(0.0, specfem::plugin::Medium::acoustic, 1.0)
+                  .depth_below_halfspace_top,
               21000.0, 1.0e-2);
 }
 
@@ -71,14 +72,15 @@ TEST(LayeredModel, AllElasticModel) {
   halfspace.s_velocity = 4500.0;
   halfspace.thickness = 0.0;
 
-  fk_injection::LayeredModel model({}, { layer, halfspace });
+  fk_injection::LayeredModel model({ layer, halfspace });
 
   EXPECT_EQ(model.number_of_fluid_layers(), 0);
   EXPECT_EQ(model.number_of_elastic_layers(), 2);
   EXPECT_FALSE(model.has_fluid_layer());
 
   EXPECT_NEAR(model.fluid_thickness(), 0.0, 1.0e-9);
-  EXPECT_NEAR(model.locate(0.0, std::nullopt, 1.0).depth_below_halfspace_top,
+  EXPECT_NEAR(model.locate(0.0, specfem::plugin::Medium::elastic, 1.0)
+                  .depth_below_halfspace_top,
               10000.0, 1.0e-3);
 }
 
@@ -87,12 +89,12 @@ TEST(LayeredModel, AllElasticModel) {
 // ---------------------------------------------------------------------------
 
 TEST(LayeredModel, ValidateThrowsEmptyElastic) {
-  EXPECT_THROW(fk_injection::LayeredModel({}, {}), std::runtime_error);
+  EXPECT_THROW(fk_injection::LayeredModel(std::vector<fk_injection::Layer>{}),
+               std::runtime_error);
 }
 
 // ---------------------------------------------------------------------------
-// Fluid-only model: construction must not write the depth table out of bounds
-// before validate() rejects the missing elastic block.
+// Fluid-only model: the last layer has to be an elastic half-space.
 // ---------------------------------------------------------------------------
 
 TEST(LayeredModel, ValidateThrowsFluidOnly) {
@@ -100,7 +102,7 @@ TEST(LayeredModel, ValidateThrowsFluidOnly) {
   fluid.density = static_cast<fk_injection::type_real>(1000);
   fluid.p_velocity = static_cast<fk_injection::type_real>(1500);
   fluid.thickness = static_cast<fk_injection::type_real>(2000);
-  EXPECT_THROW(fk_injection::LayeredModel({ fluid }, {}), std::runtime_error);
+  EXPECT_THROW(fk_injection::LayeredModel({ fluid }), std::runtime_error);
 }
 
 // ---------------------------------------------------------------------------
@@ -119,7 +121,7 @@ TEST(LayeredModel, ValidateThrowsFluidDensity) {
   hs.s_velocity = 3500.0;
   hs.thickness = 0.0;
 
-  EXPECT_THROW(fk_injection::LayeredModel({ bad_fluid }, { hs }),
+  EXPECT_THROW(fk_injection::LayeredModel({ bad_fluid, hs }),
                std::runtime_error);
 }
 
@@ -139,7 +141,7 @@ TEST(LayeredModel, ValidateThrowsFluidPVelocity) {
   hs.s_velocity = 3500.0;
   hs.thickness = 0.0;
 
-  EXPECT_THROW(fk_injection::LayeredModel({ bad_fluid }, { hs }),
+  EXPECT_THROW(fk_injection::LayeredModel({ bad_fluid, hs }),
                std::runtime_error);
 }
 
@@ -154,7 +156,7 @@ TEST(LayeredModel, ValidateThrowsElasticDensity) {
   bad.s_velocity = 3000.0;
   bad.thickness = 0.0;
 
-  EXPECT_THROW(fk_injection::LayeredModel({}, { bad }), std::runtime_error);
+  EXPECT_THROW(fk_injection::LayeredModel({ bad }), std::runtime_error);
 }
 
 // ---------------------------------------------------------------------------
@@ -168,7 +170,7 @@ TEST(LayeredModel, ValidateThrowsElasticPVelocity) {
   bad.s_velocity = 3000.0;
   bad.thickness = 0.0;
 
-  EXPECT_THROW(fk_injection::LayeredModel({}, { bad }), std::runtime_error);
+  EXPECT_THROW(fk_injection::LayeredModel({ bad }), std::runtime_error);
 }
 
 // ---------------------------------------------------------------------------
@@ -182,7 +184,7 @@ TEST(LayeredModel, ValidateThrowsElasticZeroShear) {
   bad.s_velocity = 0.0;
   bad.thickness = 0.0;
 
-  EXPECT_THROW(fk_injection::LayeredModel({}, { bad }), std::runtime_error);
+  EXPECT_THROW(fk_injection::LayeredModel({ bad }), std::runtime_error);
 }
 
 // ---------------------------------------------------------------------------
@@ -202,8 +204,8 @@ TEST(LayeredModel, ValidateThrowsFluidThickness) {
   hs.s_velocity = 3500.0;
 
   const std::string reason = layered_model_tests_impl::rejection_reason(
-      [&] { fk_injection::LayeredModel({ bad_fluid }, { hs }); });
-  EXPECT_NE(reason.find("fluid layer 0 has non-positive thickness"),
+      [&] { fk_injection::LayeredModel({ bad_fluid, hs }); });
+  EXPECT_NE(reason.find("layer 0 (acoustic) has non-positive thickness"),
             std::string::npos)
       << reason;
 }
@@ -221,8 +223,32 @@ TEST(LayeredModel, ValidateThrowsElasticThicknessAboveHalfspace) {
   hs.s_velocity = 4500.0;
 
   const std::string reason = layered_model_tests_impl::rejection_reason(
-      [&] { fk_injection::LayeredModel({}, { bad, hs }); });
-  EXPECT_NE(reason.find("elastic layer 0 has non-positive thickness"),
+      [&] { fk_injection::LayeredModel({ bad, hs }); });
+  EXPECT_NE(reason.find("layer 0 (elastic) has non-positive thickness"),
+            std::string::npos)
+      << reason;
+}
+
+TEST(LayeredModel, ValidateThrowsFluidBelowSolid) {
+  fk_injection::ElasticIsotropicLayer crust;
+  crust.density = 2700.0;
+  crust.p_velocity = 6000.0;
+  crust.s_velocity = 3500.0;
+  crust.thickness = 1000.0;
+
+  fk_injection::AcousticLayer fluid;
+  fluid.density = 1000.0;
+  fluid.p_velocity = 1500.0;
+  fluid.thickness = 500.0;
+
+  fk_injection::ElasticIsotropicLayer hs;
+  hs.density = 3300.0;
+  hs.p_velocity = 8000.0;
+  hs.s_velocity = 4500.0;
+
+  const std::string reason = layered_model_tests_impl::rejection_reason(
+      [&] { fk_injection::LayeredModel({ crust, fluid, hs }); });
+  EXPECT_NE(reason.find("acoustic layer 1 lies below an elastic layer"),
             std::string::npos)
       << reason;
 }
@@ -234,7 +260,7 @@ TEST(LayeredModel, AcceptsAnyHalfspaceThickness) {
   hs.s_velocity = 4500.0;
   hs.thickness = 0.0;
 
-  EXPECT_NO_THROW(fk_injection::LayeredModel({}, { hs }));
+  EXPECT_NO_THROW(fk_injection::LayeredModel({ hs }));
 }
 
 // ---------------------------------------------------------------------------
@@ -266,7 +292,7 @@ fk_injection::LayeredModel make_elastic_only_model() {
   hs.s_velocity = 4500.0;
   hs.thickness = 0.0;
 
-  return fk_injection::LayeredModel({}, { layer0, layer1, hs });
+  return fk_injection::LayeredModel({ layer0, layer1, hs });
 }
 
 // A1 acoustic+elastic model:
@@ -297,7 +323,7 @@ fk_injection::LayeredModel make_a1_model() {
   hs.s_velocity = 4500.0;
   hs.thickness = 0.0;
 
-  return fk_injection::LayeredModel({ fluid0, fluid1 }, { crust, hs });
+  return fk_injection::LayeredModel({ fluid0, fluid1, crust, hs });
 }
 
 } // namespace layered_model_tests_impl
@@ -310,7 +336,8 @@ TEST(LayeredModel, LocateMidFirstElasticLayer) {
   fk_injection::LayeredModel model =
       layered_model_tests_impl::make_elastic_only_model();
 
-  fk_injection::LayerLocation loc = model.locate(5000.0, std::nullopt, 1.0);
+  fk_injection::LayerLocation loc =
+      model.locate(5000.0, specfem::plugin::Medium::elastic, 1.0);
 
   EXPECT_EQ(loc.medium, specfem::plugin::Medium::elastic);
   EXPECT_EQ(loc.layer, 0);
@@ -328,7 +355,8 @@ TEST(LayeredModel, LocateInterfaceTieUpperLayer) {
       layered_model_tests_impl::make_elastic_only_model();
 
   // depth == 10000: exactly at the layer 0/layer 1 interface.
-  fk_injection::LayerLocation loc = model.locate(10000.0, std::nullopt, 1.0);
+  fk_injection::LayerLocation loc =
+      model.locate(10000.0, specfem::plugin::Medium::elastic, 1.0);
 
   EXPECT_EQ(loc.medium, specfem::plugin::Medium::elastic);
   EXPECT_EQ(loc.layer, 0); // upper layer, not layer 1
@@ -346,13 +374,14 @@ TEST(LayeredModel, LocateHalfspaceTop) {
 
   // depth == 30000: exactly at layer 1 / half-space interface.
   fk_injection::LayerLocation loc_top =
-      model.locate(30000.0, std::nullopt, 1.0);
+      model.locate(30000.0, specfem::plugin::Medium::elastic, 1.0);
   EXPECT_EQ(loc_top.layer, 1); // layer 1 (upper), not the half-space
   EXPECT_NEAR(loc_top.height, 0.0, 1.0e-6);
   EXPECT_FALSE(loc_top.in_halfspace);
 
   // depth == 35000: clearly inside the half-space.
-  fk_injection::LayerLocation loc_hs = model.locate(35000.0, std::nullopt, 1.0);
+  fk_injection::LayerLocation loc_hs =
+      model.locate(35000.0, specfem::plugin::Medium::elastic, 1.0);
   EXPECT_EQ(loc_hs.layer, 2);
   EXPECT_TRUE(loc_hs.in_halfspace);
   // hs_top = 30000; depth = 35000 → depth_below_halfspace_top = 30000-35000
@@ -367,13 +396,15 @@ TEST(LayeredModel, LocateA1FluidLayers) {
   fk_injection::LayeredModel model = layered_model_tests_impl::make_a1_model();
 
   // depth == 0: at the free surface, acoustic layer 0.
-  fk_injection::LayerLocation loc_surf = model.locate(0.0, std::nullopt, 1.0);
+  fk_injection::LayerLocation loc_surf =
+      model.locate(0.0, specfem::plugin::Medium::acoustic, 1.0);
   EXPECT_EQ(loc_surf.medium, specfem::plugin::Medium::acoustic);
   EXPECT_EQ(loc_surf.layer, 0);
   EXPECT_TRUE(loc_surf.at_free_surface);
 
   // depth == 1000: inside fluid layer 0 (bottom 2000), height = 1000.
-  fk_injection::LayerLocation loc_mid = model.locate(1000.0, std::nullopt, 1.0);
+  fk_injection::LayerLocation loc_mid =
+      model.locate(1000.0, specfem::plugin::Medium::acoustic, 1.0);
   EXPECT_EQ(loc_mid.medium, specfem::plugin::Medium::acoustic);
   EXPECT_EQ(loc_mid.layer, 0);
   EXPECT_NEAR(loc_mid.height, 1000.0, 1.0e-6);
@@ -381,29 +412,22 @@ TEST(LayeredModel, LocateA1FluidLayers) {
 }
 
 // ---------------------------------------------------------------------------
-// A1 model: fluid-solid interface (depth == 3000) resolves as elastic from the
-// layer table, as acoustic with forced acoustic, as elastic with forced
-// elastic.
+// A1 model: the fluid-solid interface (depth == 3000) resolves in either
+// medium.
 // ---------------------------------------------------------------------------
 
 TEST(LayeredModel, LocateA1FluidSolidInterface) {
   fk_injection::LayeredModel model = layered_model_tests_impl::make_a1_model();
   const double tol = 1.0;
 
-  // Layer table at the interface → elastic (crust, layer 0, height 10000).
-  fk_injection::LayerLocation loc_fd = model.locate(3000.0, std::nullopt, tol);
-  EXPECT_EQ(loc_fd.medium, specfem::plugin::Medium::elastic);
-  EXPECT_EQ(loc_fd.layer, 0);
-  EXPECT_NEAR(loc_fd.height, 10000.0, 1.0e-6);
-
-  // forced acoustic at the interface → acoustic (fluid layer 1, height 0).
+  // Acoustic at the interface → acoustic (fluid layer 1, height 0).
   fk_injection::LayerLocation loc_ac =
       model.locate(3000.0, specfem::plugin::Medium::acoustic, tol);
   EXPECT_EQ(loc_ac.medium, specfem::plugin::Medium::acoustic);
   EXPECT_EQ(loc_ac.layer, 1);
   EXPECT_NEAR(loc_ac.height, 0.0, 1.0e-6);
 
-  // forced elastic at the interface → elastic (crust, layer 0, height 10000).
+  // Elastic at the interface → elastic (crust, layer 0, height 10000).
   fk_injection::LayerLocation loc_el =
       model.locate(3000.0, specfem::plugin::Medium::elastic, tol);
   EXPECT_EQ(loc_el.medium, specfem::plugin::Medium::elastic);
@@ -419,7 +443,8 @@ TEST(LayeredModel, LocateThrowsAboveSurface) {
   fk_injection::LayeredModel model =
       layered_model_tests_impl::make_elastic_only_model();
 
-  EXPECT_THROW(model.locate(-100.0, std::nullopt, 1.0), std::runtime_error);
+  EXPECT_THROW(model.locate(-100.0, specfem::plugin::Medium::elastic, 1.0),
+               std::runtime_error);
 }
 
 TEST(LayeredModel, LocateThrowsAcousticBelowFluidColumn) {
@@ -454,7 +479,7 @@ TEST(LayeredModel, LocateRejectsNegativeTolerance) {
       layered_model_tests_impl::make_elastic_only_model();
 
   const std::string reason = layered_model_tests_impl::rejection_reason(
-      [&] { model.locate(1000.0, std::nullopt, -1.0); });
+      [&] { model.locate(1000.0, specfem::plugin::Medium::elastic, -1.0); });
   EXPECT_NE(reason.find("tolerance must be non-negative"), std::string::npos)
       << reason;
 }
@@ -495,7 +520,9 @@ TEST(LayeredModel, LocateInterfaceFindsLastFluidLayerAtZeroTolerance) {
   hs.p_velocity = 8000.0;
   hs.s_velocity = 4500.0;
 
-  const fk_injection::LayeredModel model(fluid, { hs });
+  std::vector<fk_injection::Layer> layers(fluid.begin(), fluid.end());
+  layers.push_back(hs);
+  const fk_injection::LayeredModel model(std::move(layers));
   const fk_injection::LayerLocation location = model.locate(
       model.fluid_thickness(), specfem::plugin::Medium::acoustic, 0.0);
 
@@ -528,17 +555,18 @@ TEST(LayeredModel, FreeSurfaceOnlyAtFluidTop) {
   hs.p_velocity = 8100;
   hs.s_velocity = 4500;
   hs.thickness = 0;
-  fk_injection::LayeredModel model({ f0, f1 }, { crust, hs });
+  fk_injection::LayeredModel model({ f0, f1, crust, hs });
   const double tol = 1.0e-3;
 
   // True free surface: top of fluid layer 0.
-  const auto top = model.locate(0.0, std::nullopt, tol);
+  const auto top = model.locate(0.0, specfem::plugin::Medium::acoustic, tol);
   EXPECT_EQ(top.medium, specfem::plugin::Medium::acoustic);
   EXPECT_EQ(top.layer, 0);
   EXPECT_TRUE(top.at_free_surface);
 
   // Deep point in fluid layer 1 (height-in-F1 == H0 == 1000): NOT free surface.
-  const auto deep = model.locate(3000.0, std::nullopt, tol);
+  const auto deep =
+      model.locate(3000.0, specfem::plugin::Medium::acoustic, tol);
   EXPECT_EQ(deep.medium, specfem::plugin::Medium::acoustic);
   EXPECT_EQ(deep.layer, 1);
   EXPECT_FALSE(deep.at_free_surface);
@@ -561,10 +589,9 @@ TEST(LayeredModel, HalfspaceTopDepthSumsFiniteLayers) {
   halfspace.p_velocity = 8100;
   halfspace.s_velocity = 4500;
 
-  EXPECT_NEAR(
-      fk_injection::LayeredModel({}, { halfspace }).halfspace_top_depth(), 0.0,
-      1.0e-9);
-  EXPECT_NEAR(fk_injection::LayeredModel({ fluid }, { crust, halfspace })
+  EXPECT_NEAR(fk_injection::LayeredModel({ halfspace }).halfspace_top_depth(),
+              0.0, 1.0e-9);
+  EXPECT_NEAR(fk_injection::LayeredModel({ fluid, crust, halfspace })
                   .halfspace_top_depth(),
               12000.0, 1.0e-9);
 }

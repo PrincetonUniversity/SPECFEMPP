@@ -169,15 +169,15 @@ fk_injection::read_fk_model_file(const std::string &path) {
   // Classify layers: contiguous fluid block on top, elastic block below.
   // A layer with vs < threshold_vs is acoustic.
   // -------------------------------------------------------------------------
-  std::vector<fk_injection::AcousticLayer> fluid_layers;
-  std::vector<fk_injection::ElasticIsotropicLayer> elastic_layers;
+  std::vector<fk_injection::Layer> layers;
+  bool has_elastic = false;
 
   // Determine the split index: all layers 0..nfluid-1 must be fluid,
   // all layers nfluid..nlayer-1 must be elastic.
   int nfluid = 0;
   for (int i = 0; i < nlayer; ++i) {
     if (vs_in[i] < threshold_vs) {
-      if (!elastic_layers.empty())
+      if (has_elastic)
         throw std::runtime_error(
             "read_fk_model_file: fluid layer found below an elastic layer; "
             "fluid layers must form a contiguous top block");
@@ -185,7 +185,7 @@ fk_injection::read_fk_model_file(const std::string &path) {
       fl.density = static_cast<type_real>(rho_in[i]);
       fl.p_velocity = static_cast<type_real>(vp_in[i]);
       fl.thickness = static_cast<type_real>(H[i]);
-      fluid_layers.push_back(fl);
+      layers.push_back(fl);
       ++nfluid;
     } else {
       fk_injection::ElasticIsotropicLayer el;
@@ -193,19 +193,19 @@ fk_injection::read_fk_model_file(const std::string &path) {
       el.p_velocity = static_cast<type_real>(vp_in[i]);
       el.s_velocity = static_cast<type_real>(vs_in[i]);
       el.thickness = static_cast<type_real>(H[i]);
-      elastic_layers.push_back(el);
+      layers.push_back(el);
+      has_elastic = true;
     }
   }
 
-  if (elastic_layers.empty())
+  if (!has_elastic)
     throw std::runtime_error(
         "read_fk_model_file: no elastic (half-space) layers found");
 
   // -------------------------------------------------------------------------
   // Build output objects
   // -------------------------------------------------------------------------
-  fk_injection::LayeredModel model(std::move(fluid_layers),
-                                   std::move(elastic_layers));
+  fk_injection::LayeredModel model(std::move(layers));
 
   fk_injection::IncidentWave wave;
   wave.type = wave_type;

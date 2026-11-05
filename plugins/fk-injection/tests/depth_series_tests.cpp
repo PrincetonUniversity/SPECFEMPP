@@ -36,7 +36,7 @@ fk_injection::LayeredModel make_elastic_model() {
   halfspace.s_velocity = static_cast<type_real>(4500.0);
   halfspace.thickness = static_cast<type_real>(0.0);
 
-  return fk_injection::LayeredModel({}, { finite_layer, halfspace });
+  return fk_injection::LayeredModel({ finite_layer, halfspace });
 }
 
 /** @brief Incident P wave: theta=25 deg, phi=0, origin_time=-5.05 s. */
@@ -319,7 +319,7 @@ fk_injection::LayeredModel make_two_fluid_model() {
   halfspace.p_velocity = 8100;
   halfspace.s_velocity = 4500;
 
-  return fk_injection::LayeredModel({ upper, lower }, { crust, halfspace });
+  return fk_injection::LayeredModel({ upper, lower, crust, halfspace });
 }
 
 /** @brief Spectrum of each table row, row-major (series, frequency). */

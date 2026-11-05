@@ -3,24 +3,76 @@
 #include <sstream>
 #include <stdexcept>
 #include <utility>
+#include <variant>
 #include <vector>
 
-fk_injection::LayeredModel::LayeredModel(
-    std::vector<AcousticLayer> fluid_layers,
-    std::vector<ElasticIsotropicLayer> elastic_layers)
-    : fluid_layers_(std::move(fluid_layers)),
-      elastic_layers_(std::move(elastic_layers)) {
-  validate();
+namespace fk_injection::layered_model_impl {
 
-  top_depths_.reserve(fluid_layers_.size() + elastic_layers_.size());
-  double depth = 0.0;
-  for (const AcousticLayer &layer : fluid_layers_) {
-    top_depths_.push_back(depth);
-    depth += static_cast<double>(layer.thickness);
+/// Rejects a non-positive property; the negated comparison also rejects NaN.
+void require_positive(type_real value, int layer, const char *medium,
+                      const char *property);
+
+} // namespace fk_injection::layered_model_impl
+
+void fk_injection::layered_model_impl::require_positive(const type_real value,
+                                                        const int layer,
+                                                        const char *medium,
+                                                        const char *property) {
+  if (value > static_cast<type_real>(0))
+    return;
+  std::ostringstream message;
+  message << "LayeredModel: layer " << layer << " (" << medium
+          << ") has non-positive " << property << " (" << value << ").";
+  throw std::runtime_error(message.str());
+}
+
+fk_injection::LayeredModel::LayeredModel(
+    std::vector<fk_injection::Layer> layers)
+    : layers_(std::move(layers)) {
+  if (layers_.empty() ||
+      !std::holds_alternative<fk_injection::ElasticIsotropicLayer>(
+          layers_.back())) {
+    throw std::runtime_error(
+        "LayeredModel: the last layer must be an elastic half-space.");
   }
-  for (const ElasticIsotropicLayer &layer : elastic_layers_) {
+
+  const int halfspace = number_of_layers() - 1;
+  top_depths_.reserve(layers_.size());
+  double depth = 0.0;
+  for (int i = 0; i <= halfspace; ++i) {
     top_depths_.push_back(depth);
-    depth += static_cast<double>(layer.thickness);
+    if (const auto *fluid =
+            std::get_if<fk_injection::AcousticLayer>(&layers_[i])) {
+      if (!elastic_layers_.empty()) {
+        std::ostringstream message;
+        message << "LayeredModel: acoustic layer " << i
+                << " lies below an elastic layer; FK supports a fluid block "
+                   "on top of the solid only.";
+        throw std::runtime_error(message.str());
+      }
+      fk_injection::layered_model_impl::require_positive(fluid->density, i,
+                                                         "acoustic", "density");
+      fk_injection::layered_model_impl::require_positive(
+          fluid->p_velocity, i, "acoustic", "p_velocity");
+      fk_injection::layered_model_impl::require_positive(
+          fluid->thickness, i, "acoustic", "thickness");
+      fluid_layers_.push_back(*fluid);
+      depth += static_cast<double>(fluid->thickness);
+    } else {
+      const auto &solid =
+          std::get<fk_injection::ElasticIsotropicLayer>(layers_[i]);
+      fk_injection::layered_model_impl::require_positive(solid.density, i,
+                                                         "elastic", "density");
+      fk_injection::layered_model_impl::require_positive(
+          solid.p_velocity, i, "elastic", "p_velocity");
+      fk_injection::layered_model_impl::require_positive(
+          solid.s_velocity, i, "elastic", "s_velocity");
+      if (i < halfspace)
+        fk_injection::layered_model_impl::require_positive(
+            solid.thickness, i, "elastic", "thickness");
+      elastic_layers_.push_back(solid);
+      depth += static_cast<double>(solid.thickness);
+    }
   }
 }
 
@@ -54,9 +106,10 @@ double fk_injection::LayeredModel::halfspace_top_depth() const {
   return top_depths_.back();
 }
 
-fk_injection::LayerLocation fk_injection::LayeredModel::locate(
-    double depth, std::optional<specfem::plugin::Medium> requested,
-    double tolerance) const {
+fk_injection::LayerLocation
+fk_injection::LayeredModel::locate(double depth,
+                                   const specfem::plugin::Medium medium,
+                                   double tolerance) const {
   if (!(tolerance >= 0.0)) {
     throw std::runtime_error(
         "LayeredModel::locate: tolerance must be non-negative");
@@ -65,7 +118,8 @@ fk_injection::LayerLocation fk_injection::LayeredModel::locate(
     throw std::runtime_error(
         "LayeredModel::locate: depth above the free surface");
   }
-  if (requested == specfem::plugin::Medium::elastic_spin) {
+  if (medium != specfem::plugin::Medium::acoustic &&
+      medium != specfem::plugin::Medium::elastic) {
     throw std::runtime_error(
         "LayeredModel::locate: FK supports acoustic and elastic media only");
   }
@@ -78,16 +132,8 @@ fk_injection::LayerLocation fk_injection::LayeredModel::locate(
   const bool at_fluid_solid_iface =
       has_fluid_layer() && (std::fabs(depth - ft) <= tolerance);
 
-  // Resolve medium.
-  specfem::plugin::Medium medium = specfem::plugin::Medium::elastic;
   double effective_depth = depth;
-
-  if (!requested) {
-    // Acoustic only if inside the fluid column (strictly above the interface).
-    if (has_fluid_layer() && depth < ft - tolerance) {
-      medium = specfem::plugin::Medium::acoustic;
-    }
-  } else if (*requested == specfem::plugin::Medium::acoustic) {
+  if (medium == specfem::plugin::Medium::acoustic) {
     if (!has_fluid_layer()) {
       throw std::runtime_error(
           "LayeredModel::locate: acoustic medium requested but model has no "
@@ -98,22 +144,14 @@ fk_injection::LayerLocation fk_injection::LayeredModel::locate(
           "LayeredModel::locate: acoustic medium requested below the fluid "
           "column");
     }
-    if (at_fluid_solid_iface) {
-      // Snap to the bottom of the fluid column.
-      effective_depth = ft;
-    }
-    medium = specfem::plugin::Medium::acoustic;
-  } else { // *requested == specfem::plugin::Medium::elastic
-    if (has_fluid_layer() && depth < ft - tolerance) {
-      throw std::runtime_error(
-          "LayeredModel::locate: elastic medium requested inside the fluid "
-          "column");
-    }
-    if (at_fluid_solid_iface) {
-      // Snap to the top of the elastic column.
-      effective_depth = ft;
-    }
+  } else if (has_fluid_layer() && depth < ft - tolerance) {
+    throw std::runtime_error(
+        "LayeredModel::locate: elastic medium requested inside the fluid "
+        "column");
   }
+  // Snap to the fluid-solid interface.
+  if (at_fluid_solid_iface)
+    effective_depth = ft;
 
   // Locate the layer within the resolved block (first-match / tie → upper).
   int layer_index = 0;
@@ -167,64 +205,4 @@ fk_injection::LayerLocation fk_injection::LayeredModel::locate(
                         depth_below_halfspace_top,
                         at_free_surface,
                         depth };
-}
-
-void fk_injection::LayeredModel::validate() const {
-  if (elastic_layers_.empty()) {
-    throw std::runtime_error(
-        "LayeredModel: elastic_layers must be non-empty (need a half-space).");
-  }
-
-  // The negated comparisons also reject NaN.
-  for (int i = 0; i < static_cast<int>(fluid_layers_.size()); ++i) {
-    const AcousticLayer &layer = fluid_layers_[i];
-    if (!(layer.density > static_cast<type_real>(0))) {
-      std::ostringstream msg;
-      msg << "LayeredModel: fluid layer " << i << " has non-positive density ("
-          << layer.density << ").";
-      throw std::runtime_error(msg.str());
-    }
-    if (!(layer.p_velocity > static_cast<type_real>(0))) {
-      std::ostringstream msg;
-      msg << "LayeredModel: fluid layer " << i
-          << " has non-positive p_velocity (" << layer.p_velocity << ").";
-      throw std::runtime_error(msg.str());
-    }
-    if (!(layer.thickness > static_cast<type_real>(0))) {
-      std::ostringstream msg;
-      msg << "LayeredModel: fluid layer " << i
-          << " has non-positive thickness (" << layer.thickness << ").";
-      throw std::runtime_error(msg.str());
-    }
-  }
-
-  const int halfspace_index = static_cast<int>(elastic_layers_.size()) - 1;
-  for (int i = 0; i <= halfspace_index; ++i) {
-    const ElasticIsotropicLayer &layer = elastic_layers_[i];
-    if (!(layer.density > static_cast<type_real>(0))) {
-      std::ostringstream msg;
-      msg << "LayeredModel: elastic layer " << i
-          << " has non-positive density (" << layer.density << ").";
-      throw std::runtime_error(msg.str());
-    }
-    if (!(layer.p_velocity > static_cast<type_real>(0))) {
-      std::ostringstream msg;
-      msg << "LayeredModel: elastic layer " << i
-          << " has non-positive p_velocity (" << layer.p_velocity << ").";
-      throw std::runtime_error(msg.str());
-    }
-    if (!(layer.s_velocity > static_cast<type_real>(0))) {
-      std::ostringstream msg;
-      msg << "LayeredModel: elastic layer " << i
-          << " has non-positive s_velocity (" << layer.s_velocity
-          << "). Elastic layers require s_velocity > 0.";
-      throw std::runtime_error(msg.str());
-    }
-    if (i < halfspace_index && !(layer.thickness > static_cast<type_real>(0))) {
-      std::ostringstream msg;
-      msg << "LayeredModel: elastic layer " << i
-          << " has non-positive thickness (" << layer.thickness << ").";
-      throw std::runtime_error(msg.str());
-    }
-  }
 }

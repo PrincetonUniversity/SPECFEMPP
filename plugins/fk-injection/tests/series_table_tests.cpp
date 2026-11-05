@@ -32,7 +32,7 @@ fk_injection::LayeredModel make_elastic_model() {
   halfspace.s_velocity = 4500;
   halfspace.thickness = 0;
 
-  return fk_injection::LayeredModel({}, { layer0, layer1, halfspace });
+  return fk_injection::LayeredModel({ layer0, layer1, halfspace });
 }
 
 /**
@@ -67,7 +67,7 @@ fk_injection::LayeredModel make_a1_model() {
   halfspace.s_velocity = 4500;
   halfspace.thickness = 0;
 
-  return fk_injection::LayeredModel({ fluid0, fluid1 }, { crust, halfspace });
+  return fk_injection::LayeredModel({ fluid0, fluid1, crust, halfspace });
 }
 
 /** @brief Response to a P wave at 20 deg take-off, phi = 0.3 rad. */
