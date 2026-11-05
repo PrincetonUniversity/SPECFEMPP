@@ -61,6 +61,14 @@ specfem_add_test(injection_driver_tests
               gtest
 )
 
+specfem_add_test(injection_response_tests
+  LABELS      fk_injection
+  SOURCES     runner.cpp
+              plane_wave_response_tests.cpp
+  LIBRARIES   fk_injection_impl
+              gtest
+)
+
 specfem_add_test(injection_depth_groups_tests
   LABELS      fk_injection
   SOURCES     runner.cpp

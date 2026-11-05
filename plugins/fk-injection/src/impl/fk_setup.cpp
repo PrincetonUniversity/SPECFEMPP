@@ -60,13 +60,13 @@ fk_injection::impl::FkSetup
 fk_injection::impl::prepare(const fk_injection::LayeredModel &model,
                             const fk_injection::IncidentWave &wave,
                             const fk_injection::TimeWindow &window, double p,
-                            const fk_injection::impl::DepthGroups &groups,
+                            double time_delay_min, double time_delay_max,
                             fk_injection::ReferenceConvention convention) {
   fk_injection::impl::FkSetup setup;
   const bool specfem3d =
       convention == fk_injection::ReferenceConvention::specfem3d;
 
-  const double span = groups.time_delay_max - groups.time_delay_min;
+  const double span = time_delay_max - time_delay_min;
   // The series repeat with the FFT period, so a reverberation that outlasts it
   // wraps onto the start of the run. SPECFEM3D's window has no such floor.
   const double reverberation =
@@ -109,7 +109,7 @@ fk_injection::impl::prepare(const fk_injection::LayeredModel &model,
   const int nn = static_cast<int>(specfem3d ? std::trunc(origin_samples)
                                             : std::floor(origin_samples));
   setup.pad_samples =
-      static_cast<int>(std::ceil(groups.time_delay_max / setup.dt_min));
+      static_cast<int>(std::ceil(time_delay_max / setup.dt_min));
   setup.shift_samples = nn - setup.pad_samples;
   setup.abscissa_pad = static_cast<double>(setup.pad_samples);
   if (!specfem3d)

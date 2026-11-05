@@ -5,7 +5,6 @@
 #include "fk_injection/reference_convention.hpp"
 #include "fk_injection/time_window.hpp"
 #include "fk_injection/utilities/register_array.hpp"
-#include "impl/depth_groups.hpp"
 #include "impl/halfspace_solve.hpp"
 #include <complex>
 #include <vector>
@@ -15,7 +14,7 @@ namespace fk_injection::impl {
 /**
  * @brief Frequency-domain quantities shared by every depth group.
  *
- * Built once by @c prepare from the model, wave, window and depth groups. The
+ * Built once by @c prepare from the model, wave, window and delay span. The
  * time-placement bookkeeping (t0 shift, delay pad) is added where the series
  * are synthesized; this struct holds only the frequency-domain inputs.
  */
@@ -64,7 +63,7 @@ double fluid_reverberation_time(const fk_injection::LayeredModel &model,
 /**
  * @brief Build the shared frequency-domain setup for an FK synthesis.
  *
- * Sizes the working arrays to cover the time window plus the group delay span,
+ * Sizes the working arrays to cover the time window plus the delay span,
  * and in the exact convention to at least the delay span plus
  * @c fluid_reverberation_time, so the reverberation decays within one FFT
  * period instead of wrapping onto the run. Then fills the angular-frequency and
@@ -75,7 +74,8 @@ double fluid_reverberation_time(const fk_injection::LayeredModel &model,
  * @param wave             Incident plane wave.
  * @param window           Time-window parameters.
  * @param p                Horizontal ray parameter from @c ray_parameter.
- * @param groups           Depth groups (supplies the delay span for sizing).
+ * @param time_delay_min   Smallest delay of any point (s).
+ * @param time_delay_max   Largest delay of any point (s).
  * @param convention       Resolved here into the frequency grid, delay stretch,
  *                         inverse-FFT normalization, origin-time truncation
  *                         and window floor; see @c ReferenceConvention.
@@ -84,7 +84,7 @@ double fluid_reverberation_time(const fk_injection::LayeredModel &model,
 FkSetup prepare(const fk_injection::LayeredModel &model,
                 const fk_injection::IncidentWave &wave,
                 const fk_injection::TimeWindow &window, double p,
-                const DepthGroups &groups,
+                double time_delay_min, double time_delay_max,
                 fk_injection::ReferenceConvention convention =
                     fk_injection::ReferenceConvention::exact);
 

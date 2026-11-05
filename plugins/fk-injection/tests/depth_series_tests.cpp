@@ -119,8 +119,8 @@ FkChain make_fk_chain() {
   const auto groups =
       fk_injection::impl::group_by_depth(points, model, wave, p, eps);
 
-  const auto setup =
-      fk_injection::impl::prepare(model, wave, window, p, groups);
+  const auto setup = fk_injection::impl::prepare(
+      model, wave, window, p, groups.time_delay_min, groups.time_delay_max);
 
   const auto states = fk_injection::impl::solve_layer_stack(model, setup);
 
@@ -234,8 +234,8 @@ TEST(DepthSeries, ShiftAndPadMatchFormula) {
   // SPECFEM3D truncates and has no fraction.
   const auto reference = fk_injection::impl::prepare(
       depth_series_tests_impl::make_elastic_model(), wave,
-      depth_series_tests_impl::make_window(), setup.p, groups,
-      fk_injection::ReferenceConvention::specfem3d);
+      depth_series_tests_impl::make_window(), setup.p, groups.time_delay_min,
+      groups.time_delay_max, fk_injection::ReferenceConvention::specfem3d);
   EXPECT_EQ(reference.shift_samples,
             static_cast<int>(origin_samples) - expected_pad);
   EXPECT_NEAR(reference.abscissa_pad, expected_pad, 1e-12);
@@ -416,8 +416,8 @@ TEST(DepthSeries, KinematicSeriesFollowTheMedium) {
       points, model, wave, p, fk_injection::impl::depth_tolerance(10000.0));
   ASSERT_EQ(groups.groups.size(), 2u);
 
-  const auto setup =
-      fk_injection::impl::prepare(model, wave, window, p, groups);
+  const auto setup = fk_injection::impl::prepare(
+      model, wave, window, p, groups.time_delay_min, groups.time_delay_max);
   const auto states = fk_injection::impl::solve_layer_stack(model, setup);
   const auto spectra =
       depth_series_tests_impl::group_spectra(model, groups, setup);
@@ -494,8 +494,8 @@ TEST(DepthSeries, HorizontalDensityFollowsLayerResolution) {
     ASSERT_EQ(groups.groups.size(), 1u);
     const auto &group = groups.groups[0];
 
-    const auto setup =
-        fk_injection::impl::prepare(model, wave, window, p, groups);
+    const auto setup = fk_injection::impl::prepare(
+        model, wave, window, p, groups.time_delay_min, groups.time_delay_max);
     const auto states = fk_injection::impl::solve_layer_stack(model, setup);
     const auto spectra =
         depth_series_tests_impl::group_spectra(model, groups, setup);
