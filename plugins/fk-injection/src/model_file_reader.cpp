@@ -5,11 +5,10 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
-#include <tuple>
+#include <utility>
 #include <vector>
 
-std::tuple<fk_injection::LayeredModel, fk_injection::IncidentWave,
-           fk_injection::TimeWindow>
+fk_injection::FkModelFile
 fk_injection::read_fk_model_file(const std::string &path) {
   static constexpr double deg_to_rad = 3.141592653589793 / 180.0;
   static constexpr double threshold_vs = 1.0e-6;
@@ -27,6 +26,7 @@ fk_injection::read_fk_model_file(const std::string &path) {
   double phi_deg = 0.0;   // azimuth angle in degrees (stored, converted at end)
   double theta_deg = 0.0; // take-off angle in degrees
   double origin_x = 0.0, origin_y = 0.0, origin_z = 0.0;
+  bool has_origin = false;
   double origin_time = 0.0;
   double amplitude = 1.0;
   int nstep = 0;
@@ -46,14 +46,11 @@ fk_injection::read_fk_model_file(const std::string &path) {
   // -------------------------------------------------------------------------
   std::string line;
   while (std::getline(in, line)) {
-    // skip blank lines and comment lines
-    if (line.empty() || line[0] == '#')
-      continue;
-
     std::istringstream iss(line);
     std::string keyword;
     iss >> keyword;
-    if (iss.fail() || keyword.empty())
+    // skip blank lines and comment lines
+    if (iss.fail() || keyword[0] == '#')
       continue;
 
     if (keyword == "NLAYER") {
@@ -90,7 +87,9 @@ fk_injection::read_fk_model_file(const std::string &path) {
       } else if (wtype == "sv" || wtype == "SV") {
         wave_type = fk_injection::incident_wave_type::sv;
       } else {
-        wave_type = fk_injection::incident_wave_type::p;
+        throw std::runtime_error(
+            "read_fk_model_file: INCIDENT_WAVE must be p or sv, got '" + wtype +
+            "'");
       }
 
     } else if (keyword == "BACK_AZIMUTH") {
@@ -108,9 +107,7 @@ fk_injection::read_fk_model_file(const std::string &path) {
 
     } else if (keyword == "ORIGIN_WAVEFRONT") {
       iss >> origin_x >> origin_y >> origin_z;
-      if (iss.fail())
-        throw std::runtime_error(
-            "read_fk_model_file: malformed ORIGIN_WAVEFRONT line");
+      has_origin = true;
 
     } else if (keyword == "ORIGIN_TIME") {
       iss >> origin_time;
@@ -132,8 +129,15 @@ fk_injection::read_fk_model_file(const std::string &path) {
 
     } else if (keyword == "AMPLITUDE") {
       iss >> amplitude;
+
+    } else {
+      throw std::runtime_error("read_fk_model_file: unknown keyword '" +
+                               keyword + "'");
     }
-    // Unknown keywords are silently ignored.
+
+    if (iss.fail())
+      throw std::runtime_error("read_fk_model_file: malformed " + keyword +
+                               " line");
   }
 
   // -------------------------------------------------------------------------
@@ -224,5 +228,5 @@ fk_injection::read_fk_model_file(const std::string &path) {
   window.frequency_sampling = static_cast<type_real>(frequency_sampling);
   window.time_window_length = static_cast<type_real>(time_window);
 
-  return { model, wave, window };
+  return { std::move(model), wave, window, has_origin };
 }

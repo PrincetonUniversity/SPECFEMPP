@@ -238,7 +238,9 @@ TEST(FkDriver, ReadModelFile) {
     out << "AMPLITUDE 2.5\n";
   }
 
-  auto [model, wave, window] = fk_injection::read_fk_model_file(fname);
+  auto [model, wave, window, has_origin] =
+      fk_injection::read_fk_model_file(fname);
+  EXPECT_TRUE(has_origin);
 
   // Model structure
   EXPECT_EQ(model.number_of_fluid_layers(), 0);

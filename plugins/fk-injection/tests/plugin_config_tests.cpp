@@ -73,6 +73,7 @@ LAYER 2 2700. 3000. 1732.051 -30000.
 INCIDENT_WAVE p
 BACK_AZIMUTH 0.
 TAKE_OFF 20.
+ORIGIN_WAVEFRONT 0. 0. -223944.719
 FREQUENCY_MAX 0.2
 TIME_WINDOW 180.
 )";
@@ -334,6 +335,45 @@ TEST(FkPluginConfig, ModelFileWindowOverrideKeepsTheFileLength) {
       "model-file: " + file.path() + "\ntime-window: { frequency-max: 0.1 }\n");
   EXPECT_NEAR(config.frequency_max, 0.1, 1e-6);
   EXPECT_NEAR(config.time_window_length, 180.0, 1e-4);
+}
+
+// A silent default for any of these would run a different wave than the file
+// asks for.
+TEST(FkPluginConfig, RejectsInvalidModelFiles) {
+  const std::string layers = "NLAYER 1\nLAYER 1 2700. 3000. 1732. 0.\n";
+  const std::string origin = "ORIGIN_WAVEFRONT 0. 0. -1000.\n";
+  const std::vector<fk_injection_test::RejectionCase> cases = {
+    { "NoOrigin", layers, "ORIGIN_WAVEFRONT" },
+    { "BadWaveType", layers + origin + "INCIDENT_WAVE s\n", "INCIDENT_WAVE" },
+    { "UnreadableAmplitude", layers + origin + "AMPLITUDE abc\n", "AMPLITUDE" },
+    { "UnreadableOrigin", layers + "ORIGIN_WAVEFRONT 0. 0.\n",
+      "ORIGIN_WAVEFRONT" },
+    { "UnknownKeyword", layers + origin + "AMPLITUD 2.\n", "AMPLITUD" },
+  };
+  for (const auto &rejection : cases) {
+    const fk_injection_test::ModelFile file("fk_plugin_config_invalid.txt",
+                                            rejection.document);
+    try {
+      fk_injection::parse_plugin_config("model-file: " + file.path() + "\n");
+      FAIL() << rejection.name << ": expected a rejection";
+    } catch (const std::runtime_error &error) {
+      EXPECT_NE(std::string(error.what()).find(rejection.reason),
+                std::string::npos)
+          << rejection.name << ": " << error.what();
+    }
+  }
+}
+
+// Comments may be indented, and YAML can supply the origin the file leaves out.
+TEST(FkPluginConfig, ModelFileOriginMayComeFromYaml) {
+  const fk_injection_test::ModelFile file(
+      "fk_plugin_config_yaml_origin.txt",
+      "  # indented comment\nNLAYER 1\nLAYER 1 2700. 3000. 1732. 0.\n"
+      "TAKE_OFF 20.\nFREQUENCY_MAX 0.2\n");
+  const auto config = fk_injection::parse_plugin_config(
+      "model-file: " + file.path() +
+      "\nincidence: { origin: [1, 2, -3000] }\n");
+  EXPECT_NEAR(config.mesh_frame_wave.origin_z, -3000.0, 1e-3);
 }
 
 // ORIGIN_TIME is the FK time at step 0, not the time the front crosses origin.
