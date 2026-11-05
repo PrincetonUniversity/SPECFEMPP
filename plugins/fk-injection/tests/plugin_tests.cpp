@@ -45,10 +45,13 @@ time-window: { frequency-max: 0.2, frequency-sampling: 2, length: 180 }
 
 constexpr int nstep = 600;
 constexpr double dt = 0.15;
+// Horizontal half-width of the mesh box; holds every test point.
+constexpr double box_half_width = 10000.0;
+constexpr double box_depth = 100000.0;
 
-specfem::plugin::SimulationInfo make_info(const double t0 = 0.0,
-                                          const double zmax = 0.0,
-                                          const double half_width = 0.0) {
+specfem::plugin::SimulationInfo
+make_info(const double t0 = 0.0, const double zmax = 0.0,
+          const double half_width = box_half_width) {
   specfem_simulation_info info{};
   info.struct_size = sizeof(specfem_simulation_info);
   info.dimension = 3;
@@ -57,6 +60,7 @@ specfem::plugin::SimulationInfo make_info(const double t0 = 0.0,
   info.dt = dt;
   info.bounds[0] = info.bounds[2] = -half_width;
   info.bounds[1] = info.bounds[3] = half_width;
+  info.bounds[4] = zmax - box_depth;
   info.bounds[5] = zmax;
   return specfem::plugin::SimulationInfo(info);
 }
@@ -246,6 +250,8 @@ std::vector<GroupValues> direct_field(const std::string &config_text,
                                       const int first_step, const int nsteps) {
   const auto config = fk_injection::parse_plugin_config(config_text);
   fk_injection::EvalPoints eval;
+  eval.horizontal_bounds = { -box_half_width, box_half_width, -box_half_width,
+                             box_half_width };
   const auto add = [&](const TestPoint &point,
                        const specfem::plugin::Medium medium) {
     eval.x.push_back(static_cast<fk_injection::type_real>(point.x));
@@ -311,10 +317,9 @@ std::vector<GroupValues> direct_field(const std::string &config_text,
   return values;
 }
 
-fk_injection::FkInjectionPlugin make_plugin(const std::string &config_text,
-                                            const double t0 = 0.0,
-                                            const double zmax = 0.0,
-                                            const double half_width = 0.0) {
+fk_injection::FkInjectionPlugin
+make_plugin(const std::string &config_text, const double t0 = 0.0,
+            const double zmax = 0.0, const double half_width = box_half_width) {
   return fk_injection::FkInjectionPlugin(
       fk_injection::parse_plugin_config(config_text),
       make_info(t0, zmax, half_width));
