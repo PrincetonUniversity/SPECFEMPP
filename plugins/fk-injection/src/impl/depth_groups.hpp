@@ -8,24 +8,6 @@
 namespace fk_injection::impl {
 
 /**
- * @brief One (medium, depth) group of evaluation points.
- *
- * All points in a group share the same depth-only field series; they differ
- * only by a per-point time delay and linear weights. The geometry mirrors
- * @c LayeredModel::LayerLocation.
- */
-struct DepthGroup {
-  specfem::plugin::Medium medium =
-      specfem::plugin::Medium::elastic; ///< resolved medium
-  int layer = 0;     ///< index within the fluid or elastic block
-  double height = 0; ///< height above the bottom of @c layer (m)
-  double depth_below_halfspace_top = 0; ///< zz, half-space top minus depth (m)
-  bool in_halfspace = false; ///< true when the group sits in the half-space
-  bool free_surface = false; ///< true at the top of the fluid column
-  double depth = 0;          ///< representative (anchor) depth of the group
-};
-
-/**
  * @brief Depth grouping of a point set plus per-point delays.
  *
  * @c point_group[i] is the group index of point i; @c time_delay[i] is its
@@ -33,7 +15,8 @@ struct DepthGroup {
  * span (used to size the stored window so it covers t - tau for every point).
  */
 struct DepthGroups {
-  std::vector<DepthGroup> groups;
+  std::vector<fk_injection::LayerLocation> groups; ///< Located at the depth
+                                                   ///< of the group's anchor
   std::vector<int> point_group;
   std::vector<double> time_delay;
   double time_delay_min = 0.0;

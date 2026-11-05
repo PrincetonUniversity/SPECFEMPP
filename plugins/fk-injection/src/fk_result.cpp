@@ -66,12 +66,6 @@ std::size_t fk_injection::FkResult::coefficient_index(int group, int series,
          coefficient;
 }
 
-fk_injection::type_real
-fk_injection::FkResult::series_coefficient(int group, int series,
-                                           int coefficient) const {
-  return series_coefficients_[coefficient_index(group, series, coefficient)];
-}
-
 void fk_injection::FkResult::sample(int first_step, int number_of_steps,
                                     std::span<type_real> out) const {
   const int point_count = number_of_points();

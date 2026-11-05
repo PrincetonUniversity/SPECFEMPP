@@ -22,7 +22,6 @@ namespace fk_injection::impl {
  */
 struct FkSetup {
   fk_injection::FkSizes sizes;      ///< Working-array sizes.
-  int fft_power = 0;                ///< log2(N_FFT) for the inverse transform.
   double p = 0.0;                   ///< Horizontal ray parameter (s/m).
   double phi = 0.0;                 ///< Azimuth (rad).
   double dt_min = 0.0;              ///< Resampled time step N_P * dt (s).

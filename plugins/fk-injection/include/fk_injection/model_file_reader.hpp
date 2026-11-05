@@ -16,11 +16,12 @@ namespace fk_injection {
  * overrides.
  */
 struct FkModelFile {
-  LayeredModel model;      ///< Layered velocity model
-  IncidentWave wave;       ///< Incident wave
-  TimeWindow window;       ///< Time window
-  bool has_origin = false; ///< Whether the file gives @c ORIGIN_WAVEFRONT;
-                           ///< SPECFEM3D derives the origin when it doesn't
+  LayeredModel model;          ///< Layered velocity model
+  IncidentWave wave;           ///< Incident wave
+  TimeWindow window;           ///< Time window
+  type_real frequency_max = 0; ///< @c FREQUENCY_MAX in Hz
+  bool has_origin = false;     ///< Whether the file gives @c ORIGIN_WAVEFRONT;
+                               ///< SPECFEM3D derives the origin when it doesn't
 };
 
 /**

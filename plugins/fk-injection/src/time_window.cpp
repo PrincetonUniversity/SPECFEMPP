@@ -65,7 +65,6 @@ fk_injection::FkSizes fk_injection::compute_fk_sizes(const TimeWindow &window,
   sizes.interpolation_power = NPOW_FOR_INTERP;
   sizes.resampling_rate = NP_RESAMP;
   sizes.frequency_step = DF_FK;
-  sizes.effective_time_window = tmax_fk;
 
   return sizes;
 }

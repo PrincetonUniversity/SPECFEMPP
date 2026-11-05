@@ -83,7 +83,6 @@ fk_injection::TimeWindow make_window() {
   fk_injection::TimeWindow window;
   window.dt = static_cast<type_real>(0.05);
   window.nstep = 512;
-  window.frequency_max = static_cast<type_real>(1.0);
   window.frequency_sampling = static_cast<type_real>(4.0);
   window.time_window_length = static_cast<type_real>(50.0);
   return window;
@@ -157,7 +156,7 @@ TEST(DepthSeries, SpectrumIdentityDisplacement) {
   ASSERT_GE(target_group, 0) << "no non-halfspace group found; add shallower "
                                 "points to make_fk_chain()";
 
-  const fk_injection::impl::DepthGroup &group = groups.groups[target_group];
+  const fk_injection::LayerLocation &group = groups.groups[target_group];
 
   const int nf_total = setup.sizes.number_of_fft_samples;
   const int nf_stored = setup.sizes.number_of_stored_frequencies;
@@ -306,7 +305,6 @@ TEST(DepthSeries, NormalizationIndependentOfResampling) {
     fk_injection::TimeWindow w;
     w.dt = static_cast<type_real>(dt);
     w.nstep = nstep;
-    w.frequency_max = static_cast<type_real>(1.0);
     w.frequency_sampling = static_cast<type_real>(10.0); // dt_min = 0.1
     w.time_window_length = static_cast<type_real>(40.0);
     return w;
