@@ -57,8 +57,9 @@ struct FkSizes {
  * -# Compute the minimum resampled time step
  *    \f$ \Delta t_\text{min} = N_{P,\text{resamp}} \, \Delta t \f$.
  * -# Compute the usable time window
- *    \f$ T_\text{use} = \min(T_\text{max,samp},\, T_\text{window} +
- *    T_\text{delay\_span}) \f$.
+ *    \f$ T_\text{use} = \max(\min(T_\text{max,samp},\, T_\text{window} +
+ *    T_\text{delay\_span}),\, T_\text{minimum}) \f$, where
+ *    \f$ T_\text{max,samp} \approx 2 N_\text{step} \Delta t \f$.
  * -# Round up to the next power of two for the stored-frequency count.
  * -# Set FFT length to twice that count; frequency step to
  *    \f$ \Delta f = 1 / T_\text{FK} \f$.
@@ -67,11 +68,14 @@ struct FkSizes {
  * @param time_delay_span  Extra time in seconds added to the requested window
  *                         before the power-of-two rounding; used to accommodate
  *                         FK plane-wave time delays (default 0).
+ * @param minimum_window   Lower bound in seconds on the usable window, applied
+ *                         after the \f$ T_\text{max,samp} \f$ cap (default 0).
  * @return Populated @c FkSizes.
  * @throws std::runtime_error if @c window.frequency_sampling, @c window.dt,
  *         @c window.nstep or @c window.time_window_length + @p time_delay_span
  *         is not positive.
  */
-FkSizes compute_fk_sizes(const TimeWindow &window, double time_delay_span = 0);
+FkSizes compute_fk_sizes(const TimeWindow &window, double time_delay_span = 0,
+                         double minimum_window = 0);
 
 } // namespace fk_injection

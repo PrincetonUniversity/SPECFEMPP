@@ -128,6 +128,22 @@ TEST(TimeWindow, SpanExtendsWindow) {
             no_span.number_of_stored_frequencies);
 }
 
+// The GoldenCase1 window is capped at tmax_samp = 20.1 s; a 100 s minimum
+// overrides the cap: ceil(100/0.1) = 1000 rounds up to 1024 stored frequencies.
+TEST(TimeWindow, MinimumWindowOverridesCap) {
+  TimeWindow window;
+  window.dt = 0.01;
+  window.nstep = 1000;
+  window.frequency_max = 1.0;
+  window.frequency_sampling = 10.0;
+  window.time_window_length = 40.0;
+
+  EXPECT_EQ(compute_fk_sizes(window, 0.0, 100.0).number_of_stored_frequencies,
+            1024);
+  EXPECT_EQ(compute_fk_sizes(window, 0.0, 10.0).number_of_stored_frequencies,
+            256);
+}
+
 // ---------------------------------------------------------------------------
 // RejectsNonPositiveSampling: frequency_sampling == 0 must throw.
 // ---------------------------------------------------------------------------
