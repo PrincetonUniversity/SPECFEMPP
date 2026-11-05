@@ -79,7 +79,7 @@ private:
                                  std::int64_t point);
   static int sample_offset(specfem::plugin::Quantity quantity);
 
-  Material layer_material(specfem::plugin::Medium medium, int layer) const;
+  Material layer_material(int layer) const;
   void check_material(const specfem::plugin::Points &points, std::int64_t index,
                       specfem::plugin::Medium medium, double depth,
                       const Material &material) const;

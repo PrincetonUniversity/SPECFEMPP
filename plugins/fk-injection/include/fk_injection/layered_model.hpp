@@ -38,16 +38,14 @@ struct ElasticIsotropicLayer {
 struct LayerLocation {
   specfem::plugin::Medium medium =
       specfem::plugin::Medium::elastic; ///< acoustic or elastic
-  int layer = 0;     ///< 0-based index within the fluid block (acoustic) or
-                     ///< elastic block (elastic)
+  int layer = 0;                        ///< Index into @c LayeredModel::layers
   double height = 0; ///< height above the bottom of @c layer, m (>= 0; 0 at
                      ///< the layer's lower interface)
-  bool in_halfspace = false; ///< true iff elastic and @c layer is the last
-                             ///< elastic layer (the half-space)
+  bool in_halfspace = false; ///< true iff @c layer is the half-space
   double depth_below_halfspace_top =
       0;                        ///< half-space top depth minus @c depth,
                                 ///< m (<= 0 at/below the half-space top)
-  bool at_free_surface = false; ///< acoustic layer 0 with depth within
+  bool at_free_surface = false; ///< acoustic, in layer 0, with depth within
                                 ///< tolerance of 0
   double depth = 0;             ///< depth that was located, m
 };
@@ -80,6 +78,11 @@ public:
 
   /// @brief Number of layers, including the half-space.
   int number_of_layers() const { return static_cast<int>(layers_.size()); }
+
+  /// @brief The half-space, the last layer.
+  const ElasticIsotropicLayer &halfspace() const {
+    return std::get<ElasticIsotropicLayer>(layers_.back());
+  }
 
   /**
    * @brief Return the fluid (acoustic) layer block.

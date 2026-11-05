@@ -13,6 +13,7 @@
 #include <complex>
 #include <gtest/gtest.h>
 #include <utility>
+#include <variant>
 #include <vector>
 
 using fk_injection::type_real;
@@ -377,16 +378,21 @@ TEST(DepthSeries, KinematicSeriesFollowTheMedium) {
   for (int f = 1; f < static_cast<int>(setup.omega.size()); ++f) {
     const std::complex<double> omega(setup.omega[f], 0.0);
     const std::complex<double> i_omega(0.0, setup.omega[f]);
-    const auto &fluid_layer = model.fluid_layers()[fluid.layer];
+    const auto &fluid_layer =
+        std::get<fk_injection::AcousticLayer>(model.layers()[fluid.layer]);
     const auto displacement = fk_injection::impl::project_acoustic(
         fk_injection::impl::acoustic_state_in_layer(
             fluid_layer, omega, fluid.height, p,
-            states.acoustic_bottom(f, fluid.layer)),
+            std::get<fk_injection::impl::AcousticState>(
+                states.bottom(f, fluid.layer))),
         static_cast<double>(fluid_layer.density), p);
     const auto solid_displacement = fk_injection::impl::project_elastic(
         fk_injection::impl::elastic_state_in_layer(
-            model.elastic_layers()[solid.layer], omega, solid.height, p,
-            states.elastic_top(f, solid.layer + 1)),
+            std::get<fk_injection::ElasticIsotropicLayer>(
+                model.layers()[solid.layer]),
+            omega, solid.height, p,
+            std::get<fk_injection::ComplexVector<4>>(
+                states.bottom(f, solid.layer))),
         omega, p);
 
     for (const int series : { fk_injection::impl::series_horizontal,
@@ -439,12 +445,14 @@ TEST(DepthSeries, HorizontalDensityFollowsLayerResolution) {
     const auto &group = table.location(0);
     const auto spectra = depth_series_tests_impl::row_spectra(response, table);
 
-    const auto &layer = model.fluid_layers()[group.layer];
+    const auto &layer =
+        std::get<fk_injection::AcousticLayer>(model.layers()[group.layer]);
     double peak = 0.0;
     for (int f = 1; f < static_cast<int>(setup.omega.size()); ++f) {
       const auto state = fk_injection::impl::acoustic_state_in_layer(
           layer, std::complex<double>(setup.omega[f], 0.0), group.height, p,
-          states.acoustic_bottom(f, group.layer));
+          std::get<fk_injection::impl::AcousticState>(
+              states.bottom(f, group.layer)));
       const std::complex<double> expected =
           std::complex<double>(0.0, -p * p / density) * state.pressure_over_k *
           setup.apodization[f];

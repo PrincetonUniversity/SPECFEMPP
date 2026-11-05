@@ -125,7 +125,6 @@ fk_injection::LayeredModel::locate(double depth,
   }
 
   const int n_fluid = number_of_fluid_layers();
-  const int n_elastic = number_of_elastic_layers();
   const double ft = fluid_thickness();
 
   // Whether depth falls exactly on the fluid-solid interface.
@@ -153,33 +152,19 @@ fk_injection::LayeredModel::locate(double depth,
   if (at_fluid_solid_iface)
     effective_depth = ft;
 
-  // Locate the layer within the resolved block (first-match / tie → upper).
-  int layer_index = 0;
+  // First match, so an interface goes to the upper layer.
+  const int first = medium == specfem::plugin::Medium::acoustic ? 0 : n_fluid;
+  const int last = medium == specfem::plugin::Medium::acoustic
+                       ? n_fluid - 1
+                       : number_of_layers() - 1;
+  int layer_index = last;
   double height = 0.0;
-
-  if (medium == specfem::plugin::Medium::acoustic) {
-    for (int i = 0; i < n_fluid; ++i) {
-      const double bottom_i = top_depths_[i + 1];
-      if (effective_depth <= bottom_i + tolerance) {
-        layer_index = i;
-        height = bottom_i - effective_depth;
-        break;
-      }
-    }
-  } else { // elastic
-    for (int j = 0; j < n_elastic; ++j) {
-      const bool is_halfspace = (j == n_elastic - 1);
-      if (is_halfspace) {
-        layer_index = j;
-        height = 0.0;
-        break;
-      }
-      const double bottom_j = top_depths_[n_fluid + j + 1];
-      if (effective_depth <= bottom_j + tolerance) {
-        layer_index = j;
-        height = bottom_j - effective_depth;
-        break;
-      }
+  for (int i = first; i < number_of_layers() - 1 && i <= last; ++i) {
+    const double bottom = top_depths_[i + 1];
+    if (effective_depth <= bottom + tolerance) {
+      layer_index = i;
+      height = bottom - effective_depth;
+      break;
     }
   }
 
@@ -188,8 +173,7 @@ fk_injection::LayeredModel::locate(double depth,
     height = 0.0;
   }
 
-  const bool in_halfspace = (medium == specfem::plugin::Medium::elastic &&
-                             layer_index == n_elastic - 1);
+  const bool in_halfspace = layer_index == number_of_layers() - 1;
 
   // Half-space top depth is always the last elastic layer's top depth.
   const double depth_below_halfspace_top = top_depths_.back() - effective_depth;
