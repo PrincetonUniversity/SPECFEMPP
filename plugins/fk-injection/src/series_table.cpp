@@ -15,14 +15,15 @@
 
 namespace fk_injection::series_table_impl {
 
-/// Elastic rows first, independent of the SDK's enum values.
-int medium_rank(specfem::plugin::Medium medium);
+/// Row order: elastic first, independent of the SDK's enum values, then depth.
+std::pair<int, double> order(specfem::plugin::Medium medium, double depth);
 
 } // namespace fk_injection::series_table_impl
 
-int fk_injection::series_table_impl::medium_rank(
-    const specfem::plugin::Medium medium) {
-  return medium == specfem::plugin::Medium::acoustic ? 1 : 0;
+std::pair<int, double>
+fk_injection::series_table_impl::order(const specfem::plugin::Medium medium,
+                                       const double depth) {
+  return { medium == specfem::plugin::Medium::acoustic ? 1 : 0, depth };
 }
 
 fk_injection::SeriesTable::SeriesTable(
@@ -47,9 +48,8 @@ fk_injection::SeriesTable::SeriesTable(
     throw std::runtime_error(message.str());
   }
   const auto order = [](const fk_injection::LayerLocation &location) {
-    return std::pair(
-        fk_injection::series_table_impl::medium_rank(location.medium),
-        location.depth);
+    return fk_injection::series_table_impl::order(location.medium,
+                                                  location.depth);
   };
   for (std::size_t i = 1; i < rows_.size(); ++i) {
     if (order(rows_[i]) < order(rows_[i - 1])) {
@@ -88,14 +88,10 @@ fk_injection::SeriesTable fk_injection::SeriesTable::synthesize(
   std::vector<int> order(number_of_keys);
   std::iota(order.begin(), order.end(), 0);
   std::stable_sort(order.begin(), order.end(), [&](const int a, const int b) {
-    const int rank_a =
-        fk_injection::series_table_impl::medium_rank(keys[a].medium);
-    const int rank_b =
-        fk_injection::series_table_impl::medium_rank(keys[b].medium);
-    if (rank_a != rank_b)
-      return rank_a < rank_b;
-    return static_cast<double>(keys[a].depth) <
-           static_cast<double>(keys[b].depth);
+    return fk_injection::series_table_impl::order(
+               keys[a].medium, static_cast<double>(keys[a].depth)) <
+           fk_injection::series_table_impl::order(
+               keys[b].medium, static_cast<double>(keys[b].depth));
   });
 
   // A row starts at the first key beyond its predecessor's anchor.
@@ -131,16 +127,15 @@ fk_injection::SeriesTable fk_injection::SeriesTable::synthesize(
 }
 
 int fk_injection::SeriesTable::row(const fk_injection::SeriesKey &key) const {
-  const int rank = fk_injection::series_table_impl::medium_rank(key.medium);
   const double depth = static_cast<double>(key.depth);
   // The last row at or above the depth, which is the only one that can hold it.
   const auto after = std::upper_bound(
-      rows_.begin(), rows_.end(), std::pair(rank, depth),
+      rows_.begin(), rows_.end(),
+      fk_injection::series_table_impl::order(key.medium, depth),
       [](const std::pair<int, double> &wanted,
          const fk_injection::LayerLocation &location) {
-        return wanted < std::pair(fk_injection::series_table_impl::medium_rank(
-                                      location.medium),
-                                  location.depth);
+        return wanted < fk_injection::series_table_impl::order(location.medium,
+                                                               location.depth);
       });
   if (after == rows_.begin() || std::prev(after)->medium != key.medium ||
       depth - std::prev(after)->depth > tolerance_) {

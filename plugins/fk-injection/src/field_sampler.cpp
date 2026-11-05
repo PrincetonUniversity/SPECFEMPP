@@ -9,23 +9,6 @@
 #include <stdexcept>
 #include <utility>
 
-fk_injection::HorizontalBox fk_injection::bounding_box(
-    const std::vector<fk_injection::FieldPoint> &points) {
-  if (points.empty())
-    return {};
-  fk_injection::HorizontalBox box{ static_cast<double>(points[0].x),
-                                   static_cast<double>(points[0].x),
-                                   static_cast<double>(points[0].y),
-                                   static_cast<double>(points[0].y) };
-  for (const auto &point : points) {
-    box.x_min = std::min(box.x_min, static_cast<double>(point.x));
-    box.x_max = std::max(box.x_max, static_cast<double>(point.x));
-    box.y_min = std::min(box.y_min, static_cast<double>(point.y));
-    box.y_max = std::max(box.y_max, static_cast<double>(point.y));
-  }
-  return box;
-}
-
 fk_injection::FieldSampler::FieldSampler(
     std::shared_ptr<const fk_injection::SeriesTable> series,
     std::vector<fk_injection::PointSample> points,

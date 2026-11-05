@@ -64,7 +64,7 @@ public:
 private:
   /// What fill needs from one group of points
   struct Group {
-    FieldSampler sampler{}; ///< Field at the group's points; none without slots
+    FieldSampler sampler; ///< Field at the group's points
     std::vector<specfem::plugin::QuantitySlot> slots; ///< Requested quantities
   };
 
