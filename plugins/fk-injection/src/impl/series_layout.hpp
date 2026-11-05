@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 namespace fk_injection::impl {
 
 /// @brief Named indices into the depth-only series set stored by @c FkResult.
@@ -13,5 +15,22 @@ inline constexpr int series_potential_rate = 2; ///< S2: chi_dot (acoustic)
 inline constexpr int series_sigma_rz = 3; ///< S3: -i*omega*p*sigma_rz (elastic)
 inline constexpr int series_dx = 4;       ///< S4: omega*p*dx (elastic)
 inline constexpr int number_of_series = 5; ///< Count of stored series slots.
+
+/**
+ * @brief Flat index of one spline coefficient in a series array laid out
+ *        row-major (group, series, coefficient).
+ * @param group             Depth group
+ * @param series            Series slot
+ * @param coefficient       Coefficient within the series
+ * @param coefficient_count Coefficients per series
+ * @return Index into the array
+ */
+inline std::size_t series_coefficient_index(int group, int series,
+                                            int coefficient,
+                                            int coefficient_count) {
+  return (static_cast<std::size_t>(group) * number_of_series + series) *
+             static_cast<std::size_t>(coefficient_count) +
+         static_cast<std::size_t>(coefficient);
+}
 
 } // namespace fk_injection::impl

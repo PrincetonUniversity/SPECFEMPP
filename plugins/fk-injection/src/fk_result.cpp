@@ -59,11 +59,8 @@ fk_injection::FkResult::FkResult(std::vector<type_real> series_coefficients,
 
 std::size_t fk_injection::FkResult::coefficient_index(int group, int series,
                                                       int coefficient) const {
-  return (static_cast<std::size_t>(group) *
-              fk_injection::impl::number_of_series +
-          series) *
-             coefficient_count_ +
-         coefficient;
+  return fk_injection::impl::series_coefficient_index(
+      group, series, coefficient, coefficient_count_);
 }
 
 void fk_injection::FkResult::sample(int first_step, int number_of_steps,

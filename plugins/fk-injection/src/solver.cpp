@@ -84,7 +84,7 @@ fk_injection::solve(const fk_injection::LayeredModel &model,
 
   const fk_injection::impl::InterfaceStates states =
       fk_injection::impl::solve_layer_stack(model, setup);
-  const fk_injection::impl::DepthSeries series =
-      fk_injection::impl::depth_series(groups, states, model, setup);
-  return fk_injection::impl::make_result(series, groups, points, setup);
+  return fk_injection::impl::make_result(
+      fk_injection::impl::depth_series(groups, states, model, setup), groups,
+      points, setup);
 }

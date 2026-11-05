@@ -9,15 +9,11 @@
 #include <vector>
 
 fk_injection::FkResult
-fk_injection::impl::make_result(const fk_injection::impl::DepthSeries &series,
+fk_injection::impl::make_result(fk_injection::impl::DepthSeries series,
                                 const fk_injection::impl::DepthGroups &groups,
                                 const fk_injection::EvalPoints &points,
                                 const fk_injection::impl::FkSetup &setup) {
   const int npoints = points.size();
-
-  // Series coefficients: double -> type_real, same layout.
-  std::vector<type_real> coefficients(series.coefficients.begin(),
-                                      series.coefficients.end());
 
   const bool have_lame = !points.lame_ratio_xi1.empty();
   const bool have_normal = !points.normal_x.empty();
@@ -43,7 +39,7 @@ fk_injection::impl::make_result(const fk_injection::impl::DepthSeries &series,
   }
 
   return fk_injection::FkResult(
-      std::move(coefficients), series.number_of_groups,
+      std::move(series.coefficients), series.number_of_groups,
       series.coefficient_count, std::move(samples),
       static_cast<type_real>(std::cos(setup.phi)),
       static_cast<type_real>(std::sin(setup.phi)), setup.sizes.resampling_rate);

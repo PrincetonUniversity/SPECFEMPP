@@ -266,7 +266,9 @@ TEST(DepthSeries, CoefficientsFiniteAndNonzero) {
   for (int g = 0; g < series.number_of_groups; ++g) {
     for (int s = 0; s < fk_injection::impl::number_of_series; ++s) {
       for (int k = 0; k < series.coefficient_count; ++k) {
-        const double coeff = series.coefficients[series.index(g, s, k)];
+        const double coeff =
+            series.coefficients[fk_injection::impl::series_coefficient_index(
+                g, s, k, series.coefficient_count)];
         EXPECT_TRUE(std::isfinite(coeff))
             << "non-finite coefficient at (g=" << g << ", s=" << s
             << ", k=" << k << "): " << coeff;
