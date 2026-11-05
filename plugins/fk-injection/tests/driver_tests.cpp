@@ -621,6 +621,36 @@ TEST(FkDriver, DelayedArrivalMatchesPlaneWaveTiming) {
   }
 }
 
+// The series are periodic, so an origin time one FFT period away would give the
+// undelayed field; a third of a period away is still fine.
+TEST(FkDriver, RejectsFkTimesOutsideTheFftPeriod) {
+  const fk_injection::LayeredModel model(
+      {}, { driver_tests_impl::homogeneous_layer(0) });
+  const auto window = driver_tests_impl::long_window(2.0);
+  const auto points = make_eval_points({ 20000.0 });
+  const auto sizes = fk_injection::compute_fk_sizes(window, 0.0);
+  const double period = static_cast<double>(sizes.number_of_fft_samples) *
+                        static_cast<double>(sizes.resampling_rate) *
+                        static_cast<double>(window.dt);
+
+  auto wave = driver_tests_impl::gaussian_p_wave();
+  wave.origin_time = static_cast<type_real>(-period / 8.0);
+  EXPECT_NO_THROW(fk_injection::solve(
+      model, wave, window, points, fk_injection::field_derivative::velocity));
+
+  for (const double origin_time : { -period, period }) {
+    wave.origin_time = static_cast<type_real>(origin_time);
+    try {
+      fk_injection::solve(model, wave, window, points,
+                          fk_injection::field_derivative::velocity);
+      FAIL() << "expected a rejection for origin time " << origin_time;
+    } catch (const std::runtime_error &error) {
+      EXPECT_NE(std::string(error.what()).find("FFT period"), std::string::npos)
+          << error.what();
+    }
+  }
+}
+
 // In a half-space at depth d, the incident and reflected P pulses are centered
 // at tau - eta d and tau + eta d, where the velocity crosses zero. A frequency
 // grid that doesn't match the FFT moves them by eta d / N.

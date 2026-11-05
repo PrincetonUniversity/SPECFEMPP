@@ -84,7 +84,7 @@ file's value.
 |---|---|
 | `frequency-max` | Maximum frequency of interest in Hz; default 1 / `half-duration` |
 | `frequency-sampling` | Sampling frequency of the stored series in Hz; default 10 / `half-duration` |
-| `length` | FK time window in s; required with `layers`. Setup fails if it can't cover the run and every delay |
+| `length` | FK time window in s; required with `layers`. Setup fails if it can't cover the run and every delay, or if `origin-time` is too far from the run for one FFT period |
 
 Give at least one of `frequency-max` and `half-duration`. A `half-duration` that
 leaves more than 40% of the Gaussian's energy above `frequency-max`,
