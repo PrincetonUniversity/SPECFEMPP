@@ -3,7 +3,7 @@
 #include "fk_injection/field_derivative.hpp"
 #include "fk_injection/incident_wave.hpp"
 #include "fk_injection/layered_model.hpp"
-#include "fk_injection/solver.hpp"
+#include "fk_injection/reference_convention.hpp"
 #include "fk_injection/time_window.hpp"
 #include "fk_injection/utilities/register_array.hpp"
 #include "impl/depth_groups.hpp"
@@ -38,8 +38,12 @@ struct FkSetup {
       0; ///< ceil(max delay / dt_min); keeps sample abscissae >= 0.
   int shift_samples = 0; ///< t0 series rotation nn - pad (left rotation), nn =
                          ///< origin_time / dt_min rounded as in @c prepare.
-  double abscissa_pad = 0.0; ///< pad_samples plus the part of origin_time /
-                             ///< dt_min the rotation can't express, in [0, 1).
+  double abscissa_pad = 0.0;  ///< pad_samples plus the part of origin_time /
+                              ///< dt_min the rotation can't express, in [0, 1).
+  double delay_stretch = 1.0; ///< Scale on every point's delay: 1, or N/(N-1)
+                              ///< to reproduce SPECFEM3D's frequency grid.
+  double normalization_dt = 0.0; ///< Step the inverse FFT divides by: dt_min,
+                                 ///< or the SEM step to reproduce SPECFEM3D.
 };
 
 /**
@@ -76,8 +80,9 @@ double fluid_reverberation_time(const fk_injection::LayeredModel &model,
  * @param p                Horizontal ray parameter from @c ray_parameter.
  * @param groups           Depth groups (supplies the delay span for sizing).
  * @param derivative       Kinematic quantity for the vector components.
- * @param convention       @c exact honors a fractional origin_time / dt_min;
- *                         @c specfem3d truncates it as SPECFEM3D does.
+ * @param convention       Resolved here into the frequency grid, delay stretch,
+ *                         inverse-FFT normalization, origin-time truncation
+ *                         and window floor; see @c ReferenceConvention.
  * @return Populated FkSetup.
  */
 FkSetup prepare(const fk_injection::LayeredModel &model,

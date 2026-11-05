@@ -5,22 +5,10 @@
 #include "fk_injection/fk_result.hpp"
 #include "fk_injection/incident_wave.hpp"
 #include "fk_injection/layered_model.hpp"
+#include "fk_injection/reference_convention.hpp"
 #include "fk_injection/time_window.hpp"
 
 namespace fk_injection {
-
-/**
- * @brief How @c solve treats the two points where it deliberately differs from
- *        SPECFEM3D's FK routine.
- *
- * - @c exact : the inverse FFT normalizes by the resampled step @c dt_min, the
- *   frequency grid is @f$ 1/(N \Delta t_\text{min}) @f$, and each point's delay
- *   is the exact plane-wave delay.
- * - @c specfem3d : reproduces SPECFEM3D for comparison against it. The inverse
- *   FFT normalizes by the SEM step, so amplitudes are @f$ N_P @f$ times larger,
- *   and its frequency grid stretches all times by @f$ N/(N-1) @f$.
- */
-enum class ReferenceConvention { exact, specfem3d };
 
 /**
  * @brief Compute the FK field at a set of evaluation points.

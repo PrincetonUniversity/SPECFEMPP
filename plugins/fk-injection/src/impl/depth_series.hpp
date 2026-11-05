@@ -1,7 +1,6 @@
 #pragma once
 
 #include "fk_injection/layered_model.hpp"
-#include "fk_injection/solver.hpp"
 #include "impl/depth_groups.hpp"
 #include "impl/fk_setup.hpp"
 #include "impl/layer_stack.hpp"
@@ -62,21 +61,14 @@ void depth_spectrum(const fk_injection::LayerLocation &group,
  * prefilter over all N samples, keep the first @c coefficient_count, and
  * cosine-taper the leading 20 coefficients.
  *
- * The inverse-FFT normalization divides by the resampled-grid step @c dt_min
- * (the output grid), which is the physically-correct amplitude. The SPECFEM3D
- * reference instead divides by the SEM step, making amplitudes NP times too
- * large when NP_RESAMP > 1; @c ReferenceConvention::specfem3d restores that for
- * comparison against the reference.
+ * The inverse FFT divides by @c setup.normalization_dt.
  *
  * @param spectrum     Group spectrum [number_of_series][N] (modified in place).
- * @param setup        Shared setup (sizes, shift).
+ * @param setup        Shared setup (sizes, shift, normalization).
  * @param coefficients Output [number_of_series][coefficient_count], contiguous.
- * @param convention   Which step normalizes the inverse FFT.
  */
 void to_time_series(std::complex<double> *spectrum, const FkSetup &setup,
-                    double *coefficients,
-                    fk_injection::ReferenceConvention convention =
-                        fk_injection::ReferenceConvention::exact);
+                    double *coefficients);
 
 /**
  * @brief Synthesize the depth-only series for every group.
@@ -88,15 +80,11 @@ void to_time_series(std::complex<double> *spectrum, const FkSetup &setup,
  * @param states Interface states.
  * @param model  Layered velocity model.
  * @param setup  Shared frequency-domain setup.
- * @param convention Which step normalizes the inverse FFT (see
- *        @c to_time_series).
  * @return DepthSeries with per-group coefficients and the t0/pad bookkeeping.
  */
 DepthSeries depth_series(const DepthGroups &groups,
                          const InterfaceStates &states,
                          const fk_injection::LayeredModel &model,
-                         const FkSetup &setup,
-                         fk_injection::ReferenceConvention convention =
-                             fk_injection::ReferenceConvention::exact);
+                         const FkSetup &setup);
 
 } // namespace fk_injection::impl

@@ -3,7 +3,7 @@
 #include "fk_injection/config.hpp"
 #include "fk_injection/incident_wave.hpp"
 #include "fk_injection/layered_model.hpp"
-#include "fk_injection/solver.hpp"
+#include "fk_injection/reference_convention.hpp"
 #include "fk_injection/time_window.hpp"
 
 #include <optional>
