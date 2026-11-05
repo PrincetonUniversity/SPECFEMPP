@@ -53,10 +53,10 @@ specfem_add_test(injection_field_recovery_tests
               gtest
 )
 
-specfem_add_test(injection_driver_tests
+specfem_add_test(injection_field_tests
   LABELS      fk_injection
   SOURCES     runner.cpp
-              driver_tests.cpp
+              field_tests.cpp
   LIBRARIES   fk_injection_impl
               gtest
 )
