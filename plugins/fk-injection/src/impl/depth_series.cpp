@@ -90,7 +90,7 @@ void fk_injection::impl::depth_spectrum(
 
 void fk_injection::impl::to_time_series(
     std::complex<double> *spectrum, const fk_injection::impl::FkSetup &setup,
-    double *coefficients) {
+    fk_injection::type_real *coefficients) {
   const int fft_samples = setup.sizes.number_of_fft_samples;
   const int ncoef = setup.sizes.number_of_stored_frequencies;
   const int nseries = fk_injection::impl::number_of_series;
@@ -115,19 +115,17 @@ void fk_injection::impl::to_time_series(
     fk_injection::cubic_bspline::compute_coefficients(
         real_series.data(), fft_samples, spline.data());
 
-    double *out = coefficients + s * ncoef;
-    for (int k = 0; k < ncoef; ++k) {
-      out[k] = spline[k];
-    }
-
     // Cosine taper on the leading coefficients (suppresses inverse-FFT onset).
     const int taper = std::min(taper_length, ncoef);
     for (int k = 0; k < taper; ++k) {
-      const double weight =
-          0.5 *
-          (1.0 - std::cos(fk_injection::impl::pi * static_cast<double>(k) /
-                          static_cast<double>(taper_length)));
-      out[k] *= weight;
+      spline[k] *= 0.5 * (1.0 - std::cos(fk_injection::impl::pi *
+                                         static_cast<double>(k) /
+                                         static_cast<double>(taper_length)));
+    }
+
+    fk_injection::type_real *out = coefficients + s * ncoef;
+    for (int k = 0; k < ncoef; ++k) {
+      out[k] = static_cast<fk_injection::type_real>(spline[k]);
     }
   }
 }
@@ -156,7 +154,9 @@ fk_injection::impl::DepthSeries fk_injection::impl::depth_series(
     fk_injection::impl::depth_spectrum(groups.groups[g], states, model, setup,
                                        spectrum.data(), fft_samples);
     fk_injection::impl::to_time_series(
-        spectrum.data(), setup, &result.coefficients[result.index(g, 0, 0)]);
+        spectrum.data(), setup,
+        &result.coefficients[fk_injection::impl::series_coefficient_index(
+            g, 0, 0, ncoef)]);
   }
 
   return result;

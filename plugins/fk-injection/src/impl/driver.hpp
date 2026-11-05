@@ -34,7 +34,7 @@ inline double point_abscissa_offset(double abscissa_pad, double time_delay,
 /**
  * @brief Assemble the grouped result.
  *
- * Narrows the depth-series coefficients to @c type_real and builds the
+ * Moves the depth-series coefficients into the result and builds the
  * per-point data: group index, abscissa offset (see @c point_abscissa_offset),
  * medium, and the traction material factors (xi1, xim, bulk, normal).
  *
@@ -45,7 +45,7 @@ inline double point_abscissa_offset(double abscissa_pad, double time_delay,
  *               resampling).
  * @return fk_injection::FkResult ready for sampling.
  */
-fk_injection::FkResult make_result(const DepthSeries &series,
+fk_injection::FkResult make_result(DepthSeries series,
                                    const DepthGroups &groups,
                                    const fk_injection::EvalPoints &points,
                                    const FkSetup &setup);

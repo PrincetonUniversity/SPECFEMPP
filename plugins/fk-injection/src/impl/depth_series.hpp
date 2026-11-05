@@ -1,5 +1,6 @@
 #pragma once
 
+#include "fk_injection/config.hpp"
 #include "fk_injection/layered_model.hpp"
 #include "impl/depth_groups.hpp"
 #include "impl/fk_setup.hpp"
@@ -14,20 +15,14 @@ namespace fk_injection::impl {
 /**
  * @brief Cubic-B-spline coefficients of the depth-only series, per group.
  *
- * Row-major (group, series, coefficient), so each series row is contiguous for
- * spline evaluation. The series slots follow the @c series_* indices (S0..S4).
+ * Laid out as @c series_coefficient_index describes, so each series row is
+ * contiguous for spline evaluation. The series slots follow the @c series_*
+ * indices (S0..S4).
  */
 struct DepthSeries {
-  std::vector<double> coefficients{};
+  std::vector<fk_injection::type_real> coefficients{};
   int number_of_groups = 0;
   int coefficient_count = 0;
-
-  /// @brief Flat index of one coefficient in @c coefficients.
-  std::size_t index(int group, int series, int coefficient) const {
-    return (static_cast<std::size_t>(group) * number_of_series + series) *
-               coefficient_count +
-           coefficient;
-  }
 };
 
 /**
@@ -59,7 +54,8 @@ void depth_spectrum(const fk_injection::LayerLocation &group,
  * Per series: inverse FFT (Hermitian completion handled internally),
  * left-rotate by @c setup.shift_samples for t0 alignment, cubic-B-spline
  * prefilter over all N samples, keep the first @c coefficient_count, and
- * cosine-taper the leading 20 coefficients.
+ * cosine-taper the leading 20 coefficients. The coefficients are computed in
+ * double and narrowed to @c type_real on write.
  *
  * The inverse FFT divides by @c setup.normalization_dt.
  *
@@ -68,7 +64,7 @@ void depth_spectrum(const fk_injection::LayerLocation &group,
  * @param coefficients Output [number_of_series][coefficient_count], contiguous.
  */
 void to_time_series(std::complex<double> *spectrum, const FkSetup &setup,
-                    double *coefficients);
+                    fk_injection::type_real *coefficients);
 
 /**
  * @brief Synthesize the depth-only series for every group.
