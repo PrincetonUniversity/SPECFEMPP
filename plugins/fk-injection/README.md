@@ -122,6 +122,15 @@ The plugin differs from SPECFEM3D's FK in two ways that
 
 - SPECFEM3D normalizes the inverse FFT by the simulation step rather than the
   resampled step, which makes amplitudes larger by the resampling rate.
+- SPECFEM3D caps the FK window near twice the run length. The computed field
+  repeats every FFT period, and a fluid layer's reverberation decays slowly (by
+  the ocean-bottom reflection coefficient, about 0.7, per round trip), so on a
+  short run the reverberation outlasts the period and wraps onto the start of
+  the run. The plugin keeps the cap but lengthens the window until the
+  reverberation has decayed to 1e-4 of its start. For 30 km of water at 20° that
+  is about 950 s; for 4 km it is about 120 s. The estimate covers the fluid
+  block over the top solid layer; reverberations in solid layers aren't
+  estimated.
 - SPECFEM3D's frequency grid stretches times by N/(N − 1), with N the FFT length.
   It also truncates `ORIGIN_TIME` to a whole number of resampled steps, where the
   plugin keeps the fraction.

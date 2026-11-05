@@ -392,7 +392,10 @@ TEST(FkDriver, SolveRejectsVerticalIncidence) {
 // stretched by N/(N-1).
 // ===========================================================================
 TEST(FkDriver, Specfem3dConventionScalesAmplitudeAndDelay) {
-  const auto model = make_slowness_model();
+  // No fluid: only the exact convention lengthens the window for a fluid's
+  // reverberation, which would make the two windows differ.
+  const fk_injection::LayeredModel model(
+      {}, { make_slowness_model().elastic_layers().back() });
 
   fk_injection::IncidentWave wave;
   wave.type = fk_injection::incident_wave_type::p;
@@ -429,7 +432,8 @@ TEST(FkDriver, Specfem3dConventionScalesAmplitudeAndDelay) {
   specfem3d.sample(0, window.nstep, out_specfem3d);
 
   // Point 0, all components and steps. The two also differ by the N/(N-1)
-  // stretch of their frequency grids, so compare peaks, not samples.
+  // stretch of their frequency grids, so compare peaks, not samples; the
+  // stretch also moves each peak between samples, by up to 2e-3 here.
   const std::size_t first_point =
       static_cast<std::size_t>(components) * window.nstep;
   double peak_exact = 0.0;
@@ -441,7 +445,7 @@ TEST(FkDriver, Specfem3dConventionScalesAmplitudeAndDelay) {
                               std::fabs(static_cast<double>(out_specfem3d[i])));
   }
   ASSERT_GT(peak_exact, 0.0);
-  EXPECT_NEAR(peak_specfem3d / peak_exact, 2.0, 1.0e-3);
+  EXPECT_NEAR(peak_specfem3d / peak_exact, 2.0, 2.0e-3);
 
   // Offset = pad - tau*stretch/dt_min, and the first point's offset is the pad.
   const double exact_delay =

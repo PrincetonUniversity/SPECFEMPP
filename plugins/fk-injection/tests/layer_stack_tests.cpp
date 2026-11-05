@@ -263,3 +263,25 @@ TEST(LayerStack, FluidFreeSurfacePressureSmall) {
       << "pressure_over_k at acoustic free surface is not small: "
       << std::abs(top.pressure_over_k) << " vs scale " << scale;
 }
+
+// 30 km of water over a solid, P at 20 deg take-off: |R| = 0.6817 and a 39.41 s
+// round trip, from the fluid-solid boundary conditions solved independently.
+TEST(FluidReverberation, DecayTimeFromBottomReflection) {
+  fk_injection::AcousticLayer water;
+  water.density = static_cast<type_real>(1000.0);
+  water.p_velocity = static_cast<type_real>(1500.0);
+  water.thickness = static_cast<type_real>(30000.0);
+  fk_injection::ElasticIsotropicLayer solid;
+  solid.density = static_cast<type_real>(2700.0);
+  solid.p_velocity = static_cast<type_real>(3000.0);
+  solid.s_velocity = static_cast<type_real>(1732.051);
+  const double p = std::sin(20.0 * M_PI / 180.0) / 3000.0;
+
+  const double expected = 39.41077 * std::log(1.0e-4) / std::log(0.6816769);
+  EXPECT_NEAR(fk_injection::impl::fluid_reverberation_time(
+                  fk_injection::LayeredModel({ water }, { solid }), p),
+              expected, 1.0e-3 * expected);
+  EXPECT_EQ(fk_injection::impl::fluid_reverberation_time(
+                fk_injection::LayeredModel({}, { solid }), p),
+            0.0);
+}
