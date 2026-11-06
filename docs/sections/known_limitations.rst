@@ -38,14 +38,12 @@ limitations listed here are specific to **3-D simulations**; the corresponding
      - Not implemented — raises a runtime error when an anisotropic elastic
        domain is detected. Anisotropic elastic media are supported in 2-D.
 
-   * - GLL-level property input/output
+   * - Tomographic (model-file-based) materials
      - 3-D
-     - Not implemented — covers both reading a GLL model
-       (``databases.reader.properties``), including tomographic
-       (model-file-based) materials, and writing material properties
-       (``databases.writer.properties``). 3-D property writing raises
-       ``3D property writing not yet implemented``. Both directions are
-       supported in 2-D. Seismogram and kernel outputs are unaffected.
+     - Not implemented — undefined materials in the MESHFEM3D material file
+       are skipped by the mesh reader. Writing material properties
+       (``databases.writer.properties``) and reading a GLL model
+       (``databases.reader.properties``) are supported in 2-D and 3-D.
 
    * - Earth-chunk mesh (``MESH_A_CHUNK_OF_THE_EARTH``)
      - 3-D
@@ -62,6 +60,15 @@ limitations listed here are specific to **3-D simulations**; the corresponding
      - Partially implemented — only the ``vtkhdf`` display format is
        supported for 3-D wavefield visualization. All other formats raise a
        runtime error.
+
+XDMF Sidecar Files
+------------------
+
+The ``Properties.xmf`` and ``Kernels.xmf`` files written next to HDF5 property
+and kernel output target VTK's ``vtkXdmfReader`` (ParaView's "XDMF Reader",
+Xdmf 2). The ``vtkXdmf3Reader`` (ParaView's "Xdmf3 Reader") is not supported.
+Under MPI each rank writes its own ``proc_N.xmf`` next to ``proc_N.h5``; no
+collection file spanning all ranks is written.
 
 Planned Support
 ---------------
