@@ -22,6 +22,8 @@ namespace impl {
 constexpr int cuda_chunk_size = 32;
 constexpr int cuda_chunk_size_3d = 4;
 constexpr int hip_chunk_size = 64;
+constexpr int sycl_chunk_size = 32;
+constexpr int sycl_chunk_size_3d = 4;
 constexpr int openmp_chunk_size = 1;
 constexpr int serial_chunk_size = 1;
 } // namespace impl
@@ -39,6 +41,9 @@ constexpr int chunk_size = impl::cuda_chunk_size;
 #elif defined(KOKKOS_ENABLE_HIP)
 constexpr int storage_chunk_size = impl::hip_chunk_size;
 constexpr int chunk_size = impl::hip_chunk_size;
+#elif defined(KOKKOS_ENABLE_SYCL)
+constexpr int storage_chunk_size = impl::sycl_chunk_size;
+constexpr int chunk_size = impl::sycl_chunk_size;
 #elif defined(KOKKOS_ENABLE_OPENMP)
 constexpr int storage_chunk_size = impl::openmp_chunk_size * simd_size;
 constexpr int chunk_size = impl::openmp_chunk_size;
@@ -125,6 +130,21 @@ struct default_chunk_config<specfem::element::dimension_tag::dim3, SIMD,
                             Kokkos::HIP>
     : chunk_config<specfem::element::dimension_tag::dim3, impl::hip_chunk_size,
                    impl::hip_chunk_size, 512, 1, SIMD, Kokkos::HIP> {};
+#endif
+
+#if defined(KOKKOS_ENABLE_SYCL)
+template <typename SIMD>
+struct default_chunk_config<specfem::element::dimension_tag::dim2, SIMD,
+                            Kokkos::SYCL>
+    : chunk_config<specfem::element::dimension_tag::dim2, impl::sycl_chunk_size,
+                   impl::sycl_chunk_size, 512, 1, SIMD, Kokkos::SYCL> {};
+
+template <typename SIMD>
+struct default_chunk_config<specfem::element::dimension_tag::dim3, SIMD,
+                            Kokkos::SYCL>
+    : chunk_config<specfem::element::dimension_tag::dim3,
+                   impl::sycl_chunk_size_3d, impl::sycl_chunk_size_3d, 512, 1,
+                   SIMD, Kokkos::SYCL> {};
 #endif
 
 #if defined(KOKKOS_ENABLE_OPENMP)

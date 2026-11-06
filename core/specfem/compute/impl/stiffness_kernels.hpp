@@ -33,7 +33,7 @@ public:
   constexpr static auto dimension_tag = Tags::dimension_tag;
   constexpr static int ngll = NGLL;
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
   constexpr static bool using_simd = false;
 #else
   constexpr static bool using_simd = true;
@@ -276,7 +276,7 @@ public:
   constexpr static auto dimension_tag = Tags::dimension_tag;
   constexpr static int ngll = NGLL;
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
   constexpr static bool using_simd = false;
 #else
   constexpr static bool using_simd = true;

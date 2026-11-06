@@ -94,7 +94,7 @@ public:
       return;
     }
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
     constexpr int nthreads = 32;
     constexpr int lane_size = 1;
     constexpr int chunk_size =

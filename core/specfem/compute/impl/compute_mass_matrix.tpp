@@ -46,7 +46,7 @@ void specfem::compute::impl::compute_mass_matrix(
         "the template parameter NGLL.");
   }
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
   constexpr bool using_simd = false;
 #else
   constexpr bool using_simd = true;

@@ -99,13 +99,15 @@ public:
     return result;
   }
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
 
 private:
 #ifdef KOKKOS_ENABLE_CUDA
   using device_memory_space = Kokkos::CudaSpace;
 #elif defined(KOKKOS_ENABLE_HIP)
   using device_memory_space = Kokkos::HIPSpace;
+#elif defined(KOKKOS_ENABLE_SYCL)
+  using device_memory_space = Kokkos::SYCLDeviceUSMSpace;
 #endif
 public:
   template <

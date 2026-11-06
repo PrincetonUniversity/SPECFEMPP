@@ -17,6 +17,9 @@ constexpr int NLANES = 1;
 #elif defined(KOKKOS_ENABLE_HIP)
 constexpr int NTHREADS = 32;
 constexpr int NLANES = 1;
+#elif defined(KOKKOS_ENABLE_SYCL)
+constexpr int NTHREADS = 32;
+constexpr int NLANES = 1;
 #elif defined(KOKKOS_ENABLE_SERIAL)
 constexpr Kokkos::AUTO_t NTHREADS = Kokkos::AUTO;
 constexpr int NLANES = 1;
