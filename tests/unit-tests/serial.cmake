@@ -59,6 +59,15 @@ specfem_add_test(io_sub_cell_connectivity_tests
               specfem_environment
 )
 
+specfem_add_test(io_xdmf_tests
+  SOURCES     io/xdmf_tests.cpp
+  LIBRARIES   specfem::io
+              ${BOOST_LIBS}
+              gtest_main
+              Kokkos::kokkos
+              specfem_environment
+)
+
 specfem_add_test(io_mesh_dim3_globe_tests
   LABELS unit io mesh globe
   SOURCES   io/mesh/dim3_globe/read_mesh.cpp
