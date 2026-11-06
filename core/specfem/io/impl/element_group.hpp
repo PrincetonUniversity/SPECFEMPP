@@ -3,6 +3,7 @@
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/io/impl/coordinates.hpp"
 #include "specfem/io/impl/sub_block.hpp"
+#include "specfem/io/impl/sub_cell_connectivity.hpp"
 #include <string>
 
 namespace specfem {
@@ -23,8 +24,8 @@ struct NoTransform {
 };
 
 /**
- * @brief Write the coordinates and every host view of a container for one
- *        element group.
+ * @brief Write the coordinates, the sub-cell connectivity and every host view
+ *        of a container for one element group.
  *
  * The container may span more elements than the group. The group's sub-block
  * of each view is staged into a plain row-major scratch view (see
@@ -55,6 +56,10 @@ void write_element_group(GroupType &group,
   const int offset =
       element_range.begin_index() - container.element_range.begin_index();
   const int count = element_range.size();
+
+  const auto connectivity =
+      specfem::io::impl::sub_cell_connectivity(count, mesh.element_grid);
+  group.createDataset("connectivity", connectivity).write();
 
   container.for_each_host_view([&](const auto view,
                                    const std::string view_name) {

@@ -40,7 +40,11 @@ the reversed shape happens to equal the original one.
 
 **Properties and kernels.** Each dataset holds logical row-major values of shape
 ``(nelem, ngllz, ngllx)`` in 2D and ``(nelem, ngllz, nglly, ngllx)`` in 3D,
-independent of the build's SIMD width.
+independent of the build's SIMD width. Each group also holds ``connectivity``, an
+``int`` array of shape ``(ncell, 4)`` in 2D and ``(ncell, 8)`` in 3D that splits
+every element into the linear quadrilaterals or hexahedra between neighbouring GLL
+points, in VTK node order, indexing the group's points in the row-major order of
+``X``/``Z``.
 
 **Wavefield coordinates.** ``/Coordinates/<medium>`` holds ``X``, ``Z`` (and ``Y``
 in 3D) with one value per global point, ``element_indices`` with the global element
