@@ -1,6 +1,6 @@
 #pragma once
 
-#include "fk_injection/utilities/complex_matrix.hpp"
+#include "fk_injection/utilities/register_array.hpp"
 #include "impl/fk_math_impl.hpp"
 #include <complex>
 

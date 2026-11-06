@@ -1,7 +1,7 @@
 #include "fk_injection/config.hpp"
 #include "fk_injection/incident_wave.hpp"
 #include "fk_injection/layered_model.hpp"
-#include "fk_injection/utilities/complex_matrix.hpp"
+#include "fk_injection/utilities/register_array.hpp"
 #include "impl/fk_math_impl.hpp"
 #include "impl/halfspace_solve.hpp"
 #include "impl/layer_operators.hpp"
@@ -66,8 +66,8 @@ TEST(HalfspaceSolve, FreeSurfaceTractionVanishesP) {
   double scale2 = 0.0;
   double scale3 = 0.0;
   for (int j = 0; j < 4; ++j) {
-    scale2 += std::abs(n_mat(2, j)) * std::abs(bot[j]);
-    scale3 += std::abs(n_mat(3, j)) * std::abs(bot[j]);
+    scale2 += std::abs(n_mat(2, j)) * std::abs(bot(j));
+    scale3 += std::abs(n_mat(3, j)) * std::abs(bot(j));
   }
   if (scale2 < 1.0e-30)
     scale2 = 1.0;
@@ -76,8 +76,8 @@ TEST(HalfspaceSolve, FreeSurfaceTractionVanishesP) {
 
   // Traction residual must cancel to machine precision relative to the
   // traction-row term magnitudes.
-  EXPECT_LT(std::abs(r[2]) / scale2, 1.0e-10);
-  EXPECT_LT(std::abs(r[3]) / scale3, 1.0e-10);
+  EXPECT_LT(std::abs(r(2)) / scale2, 1.0e-10);
+  EXPECT_LT(std::abs(r(3)) / scale3, 1.0e-10);
 }
 
 // ============================================================================
@@ -117,16 +117,16 @@ TEST(HalfspaceSolve, FreeSurfaceTractionVanishesSV) {
   double scale2 = 0.0;
   double scale3 = 0.0;
   for (int j = 0; j < 4; ++j) {
-    scale2 += std::abs(n_mat(2, j)) * std::abs(bot[j]);
-    scale3 += std::abs(n_mat(3, j)) * std::abs(bot[j]);
+    scale2 += std::abs(n_mat(2, j)) * std::abs(bot(j));
+    scale3 += std::abs(n_mat(3, j)) * std::abs(bot(j));
   }
   if (scale2 < 1.0e-30)
     scale2 = 1.0;
   if (scale3 < 1.0e-30)
     scale3 = 1.0;
 
-  EXPECT_LT(std::abs(r[2]) / scale2, 1.0e-10);
-  EXPECT_LT(std::abs(r[3]) / scale3, 1.0e-10);
+  EXPECT_LT(std::abs(r(2)) / scale2, 1.0e-10);
+  EXPECT_LT(std::abs(r(3)) / scale3, 1.0e-10);
 }
 
 // ============================================================================
@@ -148,20 +148,20 @@ TEST(HalfspaceSolve, BuildBottomVectorP) {
       fk_injection::incident_wave_type::p, amplitude, coeffs);
 
   // bot[0] == 0.
-  EXPECT_NEAR(bot[0].real(), 0.0, kTol);
-  EXPECT_NEAR(bot[0].imag(), 0.0, kTol);
+  EXPECT_NEAR(bot(0).real(), 0.0, kTol);
+  EXPECT_NEAR(bot(0).imag(), 0.0, kTol);
 
   // bot[1] == coeff0 == (1,2).
-  EXPECT_NEAR(bot[1].real(), 1.0, kTol);
-  EXPECT_NEAR(bot[1].imag(), 2.0, kTol);
+  EXPECT_NEAR(bot(1).real(), 1.0, kTol);
+  EXPECT_NEAR(bot(1).imag(), 2.0, kTol);
 
   // bot[2] == amplitude == (3,4).
-  EXPECT_NEAR(bot[2].real(), 3.0, kTol);
-  EXPECT_NEAR(bot[2].imag(), 4.0, kTol);
+  EXPECT_NEAR(bot(2).real(), 3.0, kTol);
+  EXPECT_NEAR(bot(2).imag(), 4.0, kTol);
 
   // bot[3] == coeff1 == (5,6).
-  EXPECT_NEAR(bot[3].real(), 5.0, kTol);
-  EXPECT_NEAR(bot[3].imag(), 6.0, kTol);
+  EXPECT_NEAR(bot(3).real(), 5.0, kTol);
+  EXPECT_NEAR(bot(3).imag(), 6.0, kTol);
 }
 
 // ============================================================================
@@ -185,20 +185,20 @@ TEST(HalfspaceSolve, BuildBottomVectorSV) {
       fk_injection::incident_wave_type::sv, amplitude, coeffs);
 
   // bot[0] == amplitude == (7,8).
-  EXPECT_NEAR(bot[0].real(), 7.0, kTol);
-  EXPECT_NEAR(bot[0].imag(), 8.0, kTol);
+  EXPECT_NEAR(bot(0).real(), 7.0, kTol);
+  EXPECT_NEAR(bot(0).imag(), 8.0, kTol);
 
   // bot[1] == coeff0 == (1,2)  (reflected SV-down, column 1).
-  EXPECT_NEAR(bot[1].real(), 1.0, kTol);
-  EXPECT_NEAR(bot[1].imag(), 2.0, kTol);
+  EXPECT_NEAR(bot(1).real(), 1.0, kTol);
+  EXPECT_NEAR(bot(1).imag(), 2.0, kTol);
 
   // bot[2] == 0  (incident P-up slot, unused for SV incidence).
-  EXPECT_NEAR(bot[2].real(), 0.0, kTol);
-  EXPECT_NEAR(bot[2].imag(), 0.0, kTol);
+  EXPECT_NEAR(bot(2).real(), 0.0, kTol);
+  EXPECT_NEAR(bot(2).imag(), 0.0, kTol);
 
   // bot[3] == coeff1 == (5,6)  (reflected P-down, column 3).
-  EXPECT_NEAR(bot[3].real(), 5.0, kTol);
-  EXPECT_NEAR(bot[3].imag(), 6.0, kTol);
+  EXPECT_NEAR(bot(3).real(), 5.0, kTol);
+  EXPECT_NEAR(bot(3).imag(), 6.0, kTol);
 }
 
 // ============================================================================
@@ -238,18 +238,18 @@ TEST(HalfspaceSolve, FreeSurfaceConditionWithFluid) {
         fk_injection::impl::build_bottom_vector(wave_type, amp, coeffs);
     const auto r = n_mat * bot;
     const std::complex<double> surface_pressure =
-        q_mat(1, 0) * r[1] - q_mat(1, 1) * r[3];
+        q_mat(1, 0) * r(1) - q_mat(1, 1) * r(3);
 
     double shear_scale = 0.0;
     double pressure_scale = 0.0;
     for (int j = 0; j < 4; ++j) {
-      shear_scale += std::abs(n_mat(2, j)) * std::abs(bot[j]);
+      shear_scale += std::abs(n_mat(2, j)) * std::abs(bot(j));
       pressure_scale += (std::abs(q_mat(1, 0)) * std::abs(n_mat(1, j)) +
                          std::abs(q_mat(1, 1)) * std::abs(n_mat(3, j))) *
-                        std::abs(bot[j]);
+                        std::abs(bot(j));
     }
 
-    EXPECT_LT(std::abs(r[2]) / shear_scale, 1.0e-10);
+    EXPECT_LT(std::abs(r(2)) / shear_scale, 1.0e-10);
     EXPECT_LT(std::abs(surface_pressure) / pressure_scale, 1.0e-10);
   }
 }
@@ -267,7 +267,8 @@ inline void expect_singular(const fk_injection::ComplexMatrix<4> &n_mat) {
   const fk_injection::incident_wave_type wave_type =
       fk_injection::incident_wave_type::p;
   const std::complex<double> amplitude(1.0, 0.0);
-  const auto fluid_propagator = fk_injection::ComplexMatrix<2>::identity();
+  const fk_injection::ComplexMatrix<2> fluid_propagator(
+      [](int i, int j) { return i == j ? 1.0 : 0.0; });
 
   try {
     fk_injection::impl::halfspace_coefficients(n_mat, wave_type, amplitude);
@@ -294,10 +295,8 @@ TEST(HalfspaceSolve, SingularSystemThrows) {
   halfspace_solve_tests_impl::expect_singular(fk_injection::ComplexMatrix<4>());
 
   // NaN coefficients, as an unchecked supercritical slowness would produce.
-  fk_injection::ComplexMatrix<4> not_finite;
-  for (int k = 0; k < 4 * 4; ++k) {
-    not_finite.data[k] =
-        std::complex<double>(std::numeric_limits<double>::quiet_NaN(), 0.0);
-  }
+  const fk_injection::ComplexMatrix<4> not_finite([](int, int) {
+    return std::complex<double>(std::numeric_limits<double>::quiet_NaN(), 0.0);
+  });
   halfspace_solve_tests_impl::expect_singular(not_finite);
 }

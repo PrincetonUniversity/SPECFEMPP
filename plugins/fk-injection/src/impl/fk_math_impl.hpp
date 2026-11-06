@@ -2,7 +2,7 @@
 
 #include "fk_injection/config.hpp"
 #include "fk_injection/layered_model.hpp"
-#include "fk_injection/utilities/complex_matrix.hpp"
+#include "fk_injection/utilities/register_array.hpp"
 #include <array>
 #include <cmath>
 #include <complex>

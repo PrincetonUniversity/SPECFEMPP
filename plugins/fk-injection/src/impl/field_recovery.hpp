@@ -2,7 +2,7 @@
 
 #include "fk_injection/config.hpp"
 #include "fk_injection/layered_model.hpp"
-#include "fk_injection/utilities/complex_matrix.hpp"
+#include "fk_injection/utilities/register_array.hpp"
 #include "impl/fk_math_impl.hpp"
 #include "impl/layer_operators.hpp"
 #include "impl/series_layout.hpp"
@@ -63,8 +63,8 @@ struct AcousticState {
 inline AcousticState
 acoustic_from_solid(const fk_injection::ComplexVector<4> &state) {
   AcousticState result;
-  result.u_z = state[1];              // normal displacement continuity
-  result.pressure_over_k = -state[3]; // P/k = -sigma_zz
+  result.u_z = state(1);              // normal displacement continuity
+  result.pressure_over_k = -state(3); // P/k = -sigma_zz
   return result;
 }
 
@@ -120,8 +120,8 @@ elastic_state_in_halfspace(const fk_injection::ComplexMatrix<4> &e_mat,
 
   fk_injection::ComplexVector<4> out;
   for (int i = 0; i < 4; ++i) {
-    out[i] = e_mat(i, 0) * g0 * modes[0] + e_mat(i, 1) * g1 * modes[1] +
-             e_mat(i, 2) * g2 * modes[2] + e_mat(i, 3) * g3 * modes[3];
+    out(i) = e_mat(i, 0) * g0 * modes(0) + e_mat(i, 1) * g1 * modes(1) +
+             e_mat(i, 2) * g2 * modes(2) + e_mat(i, 3) * g3 * modes(3);
   }
   return out;
 }
@@ -168,10 +168,10 @@ project_elastic(const fk_injection::ComplexVector<4> &state,
                 std::complex<double> omega, double ray_parameter) {
   using Cplx = std::complex<double>;
   const Cplx neg_i(0.0, -1.0);
-  const Cplx dx = state[0];
-  const Cplx dz = state[1];
-  const Cplx txz = state[2];
-  const Cplx tzz = state[3];
+  const Cplx dx = state(0);
+  const Cplx dz = state(1);
+  const Cplx txz = state(2);
+  const Cplx tzz = state(3);
   const Cplx omega_p = omega * Cplx(ray_parameter, 0.0);
 
   SeriesSpectrum out;

@@ -38,35 +38,29 @@ specfem_add_test(injection_types_tests
               gtest
 )
 
-add_executable(injection_operators_tests
-  runner.cpp
-  layer_operators_tests.cpp
+specfem_add_test(injection_operators_tests
+  LABELS      fk_injection
+  SOURCES     runner.cpp
+              layer_operators_tests.cpp
+  LIBRARIES   fk_injection_impl
+              gtest
 )
-target_link_libraries(injection_operators_tests PRIVATE
-  fk_injection_impl
-  GTest::gtest
-)
-gtest_discover_tests(injection_operators_tests)
 
-add_executable(injection_halfspace_tests
-  runner.cpp
-  halfspace_solve_tests.cpp
+specfem_add_test(injection_halfspace_tests
+  LABELS      fk_injection
+  SOURCES     runner.cpp
+              halfspace_solve_tests.cpp
+  LIBRARIES   fk_injection_impl
+              gtest
 )
-target_link_libraries(injection_halfspace_tests PRIVATE
-  fk_injection_impl
-  GTest::gtest
-)
-gtest_discover_tests(injection_halfspace_tests)
 
-add_executable(injection_field_recovery_tests
-  runner.cpp
-  field_recovery_tests.cpp
+specfem_add_test(injection_field_recovery_tests
+  LABELS      fk_injection
+  SOURCES     runner.cpp
+              field_recovery_tests.cpp
+  LIBRARIES   fk_injection_impl
+              gtest
 )
-target_link_libraries(injection_field_recovery_tests PRIVATE
-  fk_injection_impl
-  GTest::gtest
-)
-gtest_discover_tests(injection_field_recovery_tests)
 
 # Loads the module only.
 specfem_add_test(fk_injection_module_tests

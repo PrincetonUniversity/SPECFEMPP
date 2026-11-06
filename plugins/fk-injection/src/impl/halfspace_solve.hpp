@@ -3,7 +3,7 @@
 #include "fk_injection/config.hpp"
 #include "fk_injection/incident_wave.hpp"
 #include "fk_injection/layered_model.hpp"
-#include "fk_injection/utilities/complex_matrix.hpp"
+#include "fk_injection/utilities/register_array.hpp"
 #include "impl/fk_math_impl.hpp"
 #include "impl/layer_operators.hpp"
 #include <array>
@@ -79,10 +79,10 @@ free_surface_coefficients(const fk_injection::ComplexVector<4> &row0,
                           int incident, std::complex<double> amplitude) {
   using Cplx = std::complex<double>;
 
-  const Cplx a = row0[1];
-  const Cplx b = row0[3];
-  const Cplx c = row1[1];
-  const Cplx d = row1[3];
+  const Cplx a = row0(1);
+  const Cplx b = row0(3);
+  const Cplx c = row1(1);
+  const Cplx d = row1(3);
   const Cplx delta = a * d - b * c;
 
   const double delta_magnitude = std::abs(delta);
@@ -93,8 +93,8 @@ free_surface_coefficients(const fk_injection::ComplexVector<4> &row0,
     throw std::runtime_error(msg.str());
   }
 
-  return { -(d * row0[incident] - b * row1[incident]) / delta * amplitude,
-           -(-c * row0[incident] + a * row1[incident]) / delta * amplitude };
+  return { -(d * row0(incident) - b * row1(incident)) / delta * amplitude,
+           -(-c * row0(incident) + a * row1(incident)) / delta * amplitude };
 }
 
 /**
@@ -117,8 +117,8 @@ halfspace_coefficients(const fk_injection::ComplexMatrix<4> &n_mat,
   fk_injection::ComplexVector<4> row0;
   fk_injection::ComplexVector<4> row1;
   for (int j = 0; j < 4; ++j) {
-    row0[j] = n_mat(2, j);
-    row1[j] = n_mat(3, j);
+    row0(j) = n_mat(2, j);
+    row1(j) = n_mat(3, j);
   }
   return free_surface_coefficients(row0, row1, incident_column(type),
                                    amplitude);
@@ -146,8 +146,8 @@ halfspace_coefficients(const fk_injection::ComplexMatrix<4> &n_mat,
   fk_injection::ComplexVector<4> row0;
   fk_injection::ComplexVector<4> row1;
   for (int j = 0; j < 4; ++j) {
-    row0[j] = n_mat(2, j);
-    row1[j] = fluid_propagator(1, 0) * n_mat(1, j) -
+    row0(j) = n_mat(2, j);
+    row1(j) = fluid_propagator(1, 0) * n_mat(1, j) -
               fluid_propagator(1, 1) * n_mat(3, j);
   }
   return free_surface_coefficients(row0, row1, incident_column(type),
@@ -188,9 +188,9 @@ build_bottom_vector(fk_injection::incident_wave_type type,
                     std::complex<double> amplitude,
                     const std::array<std::complex<double>, 2> &coeffs) {
   fk_injection::ComplexVector<4> bot{};
-  bot[incident_column(type)] = amplitude;
-  bot[1] = coeffs[0];
-  bot[3] = coeffs[1];
+  bot(incident_column(type)) = amplitude;
+  bot(1) = coeffs[0];
+  bot(3) = coeffs[1];
   return bot;
 }
 

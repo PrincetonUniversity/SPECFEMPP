@@ -1,7 +1,7 @@
 #include "fk_injection/config.hpp"
 #include "fk_injection/incident_wave.hpp"
 #include "fk_injection/layered_model.hpp"
-#include "fk_injection/utilities/complex_matrix.hpp"
+#include "fk_injection/utilities/register_array.hpp"
 #include "impl/field_recovery.hpp"
 #include "impl/fk_math_impl.hpp"
 #include "impl/halfspace_solve.hpp"
@@ -81,9 +81,9 @@ TEST(FieldRecovery, HalfspaceZeroDepthEqualsModesProjection) {
 
   constexpr double kTol = 1.0e-8;
   for (int i = 0; i < 4; ++i) {
-    EXPECT_NEAR(state[i].real(), expected[i].real(), kTol)
+    EXPECT_NEAR(state(i).real(), expected(i).real(), kTol)
         << "component " << i << " real";
-    EXPECT_NEAR(state[i].imag(), expected[i].imag(), kTol)
+    EXPECT_NEAR(state(i).imag(), expected(i).imag(), kTol)
         << "component " << i << " imag";
   }
 }
@@ -106,10 +106,10 @@ TEST(FieldRecovery, ElasticInterfaceContinuity) {
                                                 modes);
 
   fk_injection::ComplexVector<4> state_at_bottom;
-  state_at_bottom[0] = std::complex<double>(1.0, 0.5);
-  state_at_bottom[1] = std::complex<double>(-0.3, 0.2);
-  state_at_bottom[2] = std::complex<double>(0.1, -0.4);
-  state_at_bottom[3] = std::complex<double>(0.7, 0.0);
+  state_at_bottom(0) = std::complex<double>(1.0, 0.5);
+  state_at_bottom(1) = std::complex<double>(-0.3, 0.2);
+  state_at_bottom(2) = std::complex<double>(0.1, -0.4);
+  state_at_bottom(3) = std::complex<double>(0.7, 0.0);
 
   const auto result = fk_injection::impl::elastic_state_in_layer(
       layer, omega, /*height=*/static_cast<fk_injection::type_real>(0.0), p,
@@ -117,9 +117,9 @@ TEST(FieldRecovery, ElasticInterfaceContinuity) {
 
   constexpr double kTol = 1.0e-9;
   for (int i = 0; i < 4; ++i) {
-    EXPECT_NEAR(result[i].real(), state_at_bottom[i].real(), kTol)
+    EXPECT_NEAR(result(i).real(), state_at_bottom(i).real(), kTol)
         << "component " << i << " real";
-    EXPECT_NEAR(result[i].imag(), state_at_bottom[i].imag(), kTol)
+    EXPECT_NEAR(result(i).imag(), state_at_bottom(i).imag(), kTol)
         << "component " << i << " imag";
   }
 }
@@ -186,7 +186,7 @@ TEST(FieldRecovery, HalfspaceStateMatchesPropagator) {
 
   for (int mode = 0; mode < 4; ++mode) {
     fk_injection::ComplexVector<4> unit_mode{};
-    unit_mode[mode] = std::complex<double>(1.0, 0.0);
+    unit_mode(mode) = std::complex<double>(1.0, 0.0);
 
     const auto state_below = fk_injection::impl::elastic_state_in_halfspace(
         e_mat, hs, omega, p, -height, unit_mode);
@@ -194,7 +194,7 @@ TEST(FieldRecovery, HalfspaceStateMatchesPropagator) {
         hs, omega, height, p, state_below);
 
     for (int i = 0; i < 4; ++i) {
-      EXPECT_LT(std::abs(state_at_top[i] - e_mat(i, mode)) /
+      EXPECT_LT(std::abs(state_at_top(i) - e_mat(i, mode)) /
                     std::abs(e_mat(i, mode)),
                 kRelTol)
           << "mode " << mode << " component " << i;

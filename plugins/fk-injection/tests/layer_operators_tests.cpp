@@ -1,5 +1,5 @@
 #include "fk_injection/layered_model.hpp"
-#include "fk_injection/utilities/complex_matrix.hpp"
+#include "fk_injection/utilities/register_array.hpp"
 #include "impl/field_recovery.hpp"
 #include "impl/fk_math_impl.hpp"
 #include "impl/layer_operators.hpp"
@@ -30,7 +30,8 @@ TEST(LayerOperators, ElasticPropagatorZeroThickness) {
   const auto P = fk_injection::impl::layer_propagator(
       layer, omega, static_cast<fk_injection::type_real>(0.0), p);
 
-  auto I = fk_injection::ComplexMatrix<4>::identity();
+  const fk_injection::ComplexMatrix<4> I(
+      [](int i, int j) { return i == j ? 1.0 : 0.0; });
   double max_err = 0.0;
   for (int i = 0; i < 4; ++i) {
     for (int j = 0; j < 4; ++j) {
@@ -201,10 +202,10 @@ TEST(LayerOperators, AcousticFromSolid) {
   constexpr double kTol = 1.0e-12;
 
   fk_injection::ComplexVector<4> state;
-  state[0] = std::complex<double>(1.0, 2.0); // a
-  state[1] = std::complex<double>(3.0, 4.0); // b
-  state[2] = std::complex<double>(5.0, 6.0); // c
-  state[3] = std::complex<double>(7.0, 8.0); // d
+  state(0) = std::complex<double>(1.0, 2.0); // a
+  state(1) = std::complex<double>(3.0, 4.0); // b
+  state(2) = std::complex<double>(5.0, 6.0); // c
+  state(3) = std::complex<double>(7.0, 8.0); // d
 
   const fk_injection::impl::AcousticState result =
       fk_injection::impl::acoustic_from_solid(state);
