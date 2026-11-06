@@ -85,36 +85,6 @@ public:
   }
 
   /**
-   * @brief Return the fluid (acoustic) layer block.
-   * @return const reference to the fluid layer vector
-   */
-  const std::vector<AcousticLayer> &fluid_layers() const;
-
-  /**
-   * @brief Return the elastic layer block.
-   * @return const reference to the elastic layer vector
-   */
-  const std::vector<ElasticIsotropicLayer> &elastic_layers() const;
-
-  /**
-   * @brief Return the number of fluid (acoustic) layers.
-   * @return fluid_layers_.size()
-   */
-  int number_of_fluid_layers() const;
-
-  /**
-   * @brief Return the number of elastic layers (including the half-space).
-   * @return elastic_layers_.size()
-   */
-  int number_of_elastic_layers() const;
-
-  /**
-   * @brief Return whether the model contains at least one acoustic layer.
-   * @return true if number_of_fluid_layers() > 0
-   */
-  bool has_fluid_layer() const;
-
-  /**
    * @brief Locate a depth in the model and return full layer geometry.
    *
    * Points within @p tolerance of an interface between two layers of
@@ -162,10 +132,8 @@ public:
   double halfspace_top_depth() const;
 
 private:
-  std::vector<Layer> layers_{};               ///< Top to bottom
-  std::vector<AcousticLayer> fluid_layers_{}; ///< Fluid block, top to bottom
-  std::vector<ElasticIsotropicLayer> elastic_layers_{}; ///< Elastic block, top
-                                                        ///< to bottom
+  std::vector<Layer> layers_{};      ///< Top to bottom
+  int first_elastic_layer_ = 0;      ///< Number of fluid layers on top
   std::vector<double> top_depths_{}; ///< Top depth of each layer
 };
 

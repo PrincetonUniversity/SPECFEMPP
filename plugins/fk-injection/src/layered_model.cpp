@@ -44,7 +44,7 @@ fk_injection::LayeredModel::LayeredModel(
     top_depths_.push_back(depth);
     if (const auto *fluid =
             std::get_if<fk_injection::AcousticLayer>(&layers_[i])) {
-      if (!elastic_layers_.empty()) {
+      if (first_elastic_layer_ < i) {
         std::ostringstream message;
         message << "LayeredModel: acoustic layer " << i
                 << " lies below an elastic layer; FK supports a fluid block "
@@ -57,7 +57,7 @@ fk_injection::LayeredModel::LayeredModel(
           fluid->p_velocity, i, "acoustic", "p_velocity");
       fk_injection::layered_model_impl::require_positive(
           fluid->thickness, i, "acoustic", "thickness");
-      fluid_layers_.push_back(*fluid);
+      first_elastic_layer_ = i + 1;
       depth += static_cast<double>(fluid->thickness);
     } else {
       const auto &solid =
@@ -71,36 +71,13 @@ fk_injection::LayeredModel::LayeredModel(
       if (i < halfspace)
         fk_injection::layered_model_impl::require_positive(
             solid.thickness, i, "elastic", "thickness");
-      elastic_layers_.push_back(solid);
       depth += static_cast<double>(solid.thickness);
     }
   }
 }
 
-const std::vector<fk_injection::AcousticLayer> &
-fk_injection::LayeredModel::fluid_layers() const {
-  return fluid_layers_;
-}
-
-const std::vector<fk_injection::ElasticIsotropicLayer> &
-fk_injection::LayeredModel::elastic_layers() const {
-  return elastic_layers_;
-}
-
-int fk_injection::LayeredModel::number_of_fluid_layers() const {
-  return static_cast<int>(fluid_layers_.size());
-}
-
-int fk_injection::LayeredModel::number_of_elastic_layers() const {
-  return static_cast<int>(elastic_layers_.size());
-}
-
-bool fk_injection::LayeredModel::has_fluid_layer() const {
-  return number_of_fluid_layers() > 0;
-}
-
 double fk_injection::LayeredModel::fluid_thickness() const {
-  return top_depths_[fluid_layers_.size()];
+  return top_depths_[first_elastic_layer_];
 }
 
 double fk_injection::LayeredModel::halfspace_top_depth() const {
@@ -125,11 +102,11 @@ fk_injection::LayeredModel::locate(const double depth,
         "LayeredModel::locate: FK supports acoustic and elastic media only");
   }
 
-  const int n_fluid = number_of_fluid_layers();
+  const int n_fluid = first_elastic_layer_;
   const double ft = fluid_thickness();
 
   if (medium == specfem::plugin::Medium::acoustic) {
-    if (!has_fluid_layer()) {
+    if (n_fluid == 0) {
       throw std::runtime_error(
           "LayeredModel::locate: acoustic medium requested but model has no "
           "fluid layer");
@@ -139,7 +116,7 @@ fk_injection::LayeredModel::locate(const double depth,
           "LayeredModel::locate: acoustic medium requested below the fluid "
           "column");
     }
-  } else if (has_fluid_layer() && depth < ft - tolerance) {
+  } else if (n_fluid > 0 && depth < ft - tolerance) {
     throw std::runtime_error(
         "LayeredModel::locate: elastic medium requested inside the fluid "
         "column");
