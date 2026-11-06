@@ -94,15 +94,13 @@ specfem_add_test(injection_depth_series_tests
               gtest
 )
 
-add_executable(fk_injection_plugin_config_tests
-  runner.cpp
-  plugin_config_tests.cpp
+specfem_add_test(fk_injection_plugin_config_tests
+  LABELS      fk_injection
+  SOURCES     runner.cpp
+              plugin_config_tests.cpp
+  LIBRARIES   fk_injection_impl
+              gtest
 )
-target_link_libraries(fk_injection_plugin_config_tests PRIVATE
-  fk_injection_impl
-  GTest::gtest
-)
-gtest_discover_tests(fk_injection_plugin_config_tests)
 
 # Loads the module only.
 specfem_add_test(fk_injection_module_tests
