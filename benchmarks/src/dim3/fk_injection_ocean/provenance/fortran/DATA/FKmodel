@@ -1,0 +1,12 @@
+# FK model: ocean (1020/1500, 4 km) over oceanic crust (2900/6800/3900, 7 km)
+# over the mantle half-space (3380/8100/4500), split at the mesh interfaces.
+NLAYER   3
+LAYER 1 1020. 1500. 0.    0.
+LAYER 2 2900. 6800. 3900. -4000.
+LAYER 3 3380. 8100. 4500. -11000.
+INCIDENT_WAVE   p
+BACK_AZIMUTH    30.
+TAKE_OFF        15.
+FREQUENCY_MAX   2.
+FREQUENCY_SAMPLING 200.
+TIME_WINDOW     50.
