@@ -23,6 +23,7 @@ FetchContent_Declare(pocketfft
 FetchContent_MakeAvailable(pocketfft)
 
 add_library(fk_injection_impl STATIC
+  src/fk_injection_plugin.cpp
   src/fk_result.cpp
   src/impl/depth_groups.cpp
   src/impl/depth_series.cpp
