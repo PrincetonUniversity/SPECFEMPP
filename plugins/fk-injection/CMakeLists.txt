@@ -22,22 +22,6 @@ FetchContent_Declare(pocketfft
 )
 FetchContent_MakeAvailable(pocketfft)
 
-# yaml-cpp is linked statically into the plugin; the SDK's export control keeps
-# its symbols from clashing with the copy inside SPECFEM++.
-set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
-set(YAML_CPP_BUILD_CONTRIB OFF CACHE BOOL "" FORCE)
-set(YAML_CPP_INSTALL OFF CACHE BOOL "" FORCE)
-set(YAML_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-# yaml-cpp 0.8.0 declares a CMake minimum that CMake 4 rejects without this.
-set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
-FetchContent_Declare(yaml-cpp
-  URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/0.8.0.tar.gz
-  URL_HASH SHA256=fbe74bbdcee21d656715688706da3c8becfd946d92cd44705cc6098bb23b3a16
-  DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-)
-FetchContent_MakeAvailable(yaml-cpp)
-
 add_library(fk_injection_impl STATIC
   src/fk_result.cpp
   src/impl/depth_groups.cpp
@@ -64,6 +48,8 @@ target_include_directories(fk_injection_impl SYSTEM PUBLIC
   ${pocketfft_SOURCE_DIR}
 )
 # The types speak the SDK's medium enum; Kokkos provides Kokkos::mdspan.
+# SPECFEM++'s yaml-cpp is linked statically; the SDK's export control keeps
+# its symbols from clashing with the copy inside the executable.
 target_link_libraries(fk_injection_impl PUBLIC specfem::plugin_sdk Kokkos::kokkos
                                         PRIVATE yaml-cpp::yaml-cpp)
 # Transforms run serially; parallelism, if any, is over depth groups.
