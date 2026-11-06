@@ -4,6 +4,7 @@
 #include "fk_injection/layered_model.hpp"
 #include "plane_wave_response.hpp"
 #include "specfem/plugin/injection_plugin.hpp"
+#include <cstddef>
 #include <vector>
 
 namespace fk_injection {
@@ -18,8 +19,9 @@ struct SeriesKey {
  * @brief Depth-only series of the FK field, one row per (layer, depth).
  *
  * The field factorises as @f$u(x,y,z,t) = U(z, t - \tau(x,y))@f$, so a row
- * stores @f$U(z,\cdot)@f$ once for every point at its depth, as cubic-B-spline
- * coefficients laid out as @c impl::series_coefficient_index describes.
+ * stores @f$U(z,\cdot)@f$ once for every point at its depth: the series of its
+ * layer's medium (@c ElasticMedium::Series or @c AcousticMedium::Series), each
+ * as cubic-B-spline coefficients.
  *
  * Rows are mesh-exact: keys group only when their depths agree to float
  * round-off (see @c depth_tolerance), so a structured mesh's same-level points
@@ -34,7 +36,8 @@ public:
    *
    * @param rows              Location of each row, sorted by layer and depth
    * @param coefficient_count Spline coefficients per series
-   * @param coefficients      Row-major (row, series, coefficient)
+   * @param coefficients      Row-major (row, series, coefficient), each row
+   *                          with the series of its medium
    * @param tolerance         Depth slack of @c row, in m
    * @throws std::runtime_error if the coefficients don't match the counts, or
    *         the rows aren't sorted
@@ -87,13 +90,17 @@ public:
   /**
    * @brief Coefficients of one series of a row.
    * @param row    Row index
-   * @param series Series slot, see @c impl::series_horizontal and others
+   * @param series A @c Series of the row's medium
    * @return Pointer to @c coefficient_count coefficients
    */
-  const type_real *coefficients(int row, int series) const;
+  const type_real *coefficients(int row, int series) const {
+    return coefficients_.data() + row_offsets_[row] +
+           static_cast<std::size_t>(series) * coefficient_count_;
+  }
 
 private:
   std::vector<LayerLocation> rows_{};
+  std::vector<std::size_t> row_offsets_{}; ///< First coefficient of each row
   std::vector<type_real> coefficients_{};
   int coefficient_count_ = 0;
   double tolerance_ = 0;

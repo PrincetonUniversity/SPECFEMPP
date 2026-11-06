@@ -35,11 +35,9 @@ bool fk_injection::FkInjectionPlugin::supports(
     return false;
   switch (medium) {
   case specfem::plugin::Medium::elastic:
-    return quantity == specfem::plugin::Quantity::velocity ||
-           quantity == specfem::plugin::Quantity::traction;
+    return fk_injection::serves<fk_injection::ElasticMedium>(quantity);
   case specfem::plugin::Medium::acoustic:
-    return quantity == specfem::plugin::Quantity::displacement ||
-           quantity == specfem::plugin::Quantity::potential_rate;
+    return fk_injection::serves<fk_injection::AcousticMedium>(quantity);
   default:
     return false;
   }
@@ -77,15 +75,19 @@ void fk_injection::FkInjectionPlugin::setup(
   const auto series = std::make_shared<const fk_injection::SeriesTable>(
       fk_injection::SeriesTable::synthesize(response, keys, depth_tolerance_));
 
-  std::size_t largest_group = 0;
   const auto &sdk_groups = points.groups();
   for (std::size_t g = 0; g < group_points.size(); ++g) {
-    largest_group = std::max(largest_group, group_points[g].size());
-    groups_.push_back(
-        { fk_injection::FieldSampler(response, series, group_points[g]),
-          sdk_groups[g].slots() });
+    if (sdk_groups[g].medium() == specfem::plugin::Medium::acoustic)
+      groups_.push_back(
+          { fk_injection::FieldSampler<fk_injection::AcousticMedium>(
+                response, series, group_points[g]),
+            sdk_groups[g].slots() });
+    else
+      groups_.push_back(
+          { fk_injection::FieldSampler<fk_injection::ElasticMedium>(
+                response, series, group_points[g]),
+            sdk_groups[g].slots() });
   }
-  scratch_.resize(largest_group * fk_injection::number_of_sample_components);
 }
 
 fk_injection::FkInjectionPlugin::Material
@@ -167,49 +169,37 @@ int fk_injection::FkInjectionPlugin::material_layer(
   throw specfem::plugin::Unsupported(message.str());
 }
 
-int fk_injection::FkInjectionPlugin::sample_offset(
-    const specfem::plugin::Quantity quantity) {
-  switch (quantity) {
-  case specfem::plugin::Quantity::velocity:
-  case specfem::plugin::Quantity::displacement:
-    return fk_injection::sample_kinematic_offset;
-  case specfem::plugin::Quantity::traction:
-    return fk_injection::sample_traction_offset;
-  case specfem::plugin::Quantity::potential_rate:
-    return fk_injection::sample_potential_rate_offset;
-  default:
-    throw std::logic_error("fk: unsupported quantity reached fill");
-  }
-}
-
 void fk_injection::FkInjectionPlugin::fill(
     const int first_step, const std::vector<specfem::plugin::Buffer> &buffers) {
-  if (scratch_.empty() || buffers.empty())
+  if (buffers.empty())
     return;
 
   // One step at a time, so the scratch stays at points x components whatever
   // the window size.
   const int nsteps = buffers.front().number_of_steps();
   for (std::size_t g = 0; g < groups_.size(); ++g) {
-    const Group &group = groups_[g];
-    const int count = group.sampler.number_of_points();
-    if (count == 0)
-      continue;
-    const std::span<type_real> step_values(
-        scratch_.data(), static_cast<std::size_t>(count) *
-                             fk_injection::number_of_sample_components);
-    for (int s = 0; s < nsteps; ++s) {
-      group.sampler.sample(first_step + s, 1, step_values);
-      for (const auto &slot : group.slots) {
-        const int offset = sample_offset(slot.quantity);
-        for (int p = 0; p < count; ++p) {
-          const std::size_t row = static_cast<std::size_t>(p) *
-                                  fk_injection::number_of_sample_components;
-          for (int c = 0; c < slot.count; ++c)
-            buffers[g].set(p, slot.offset + c, s,
-                           static_cast<double>(step_values[row + offset + c]));
-        }
-      }
-    }
+    std::visit(
+        [&](const auto &sampler) {
+          const int count = sampler.number_of_points();
+          for (const auto &slot : groups_[g].slots) {
+            const int components =
+                fk_injection::number_of_components(slot.quantity);
+            const int copied = std::min(slot.count, components);
+            const std::size_t size =
+                static_cast<std::size_t>(count) * components;
+            if (scratch_.size() < size)
+              scratch_.resize(size);
+            const std::span<type_real> step_values(scratch_.data(), size);
+            for (int s = 0; s < nsteps; ++s) {
+              sampler.sample(slot.quantity, first_step + s, 1, step_values);
+              for (int p = 0; p < count; ++p)
+                for (int c = 0; c < copied; ++c)
+                  buffers[g].set(
+                      p, slot.offset + c, s,
+                      static_cast<double>(step_values[p * components + c]));
+            }
+          }
+        },
+        groups_[g].sampler);
   }
 }

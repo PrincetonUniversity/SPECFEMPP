@@ -1,7 +1,7 @@
 #include "series_table.hpp"
 
 #include "impl/depth_series.hpp"
-#include "impl/series_layout.hpp"
+#include "media.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -35,15 +35,20 @@ fk_injection::SeriesTable::SeriesTable(
     message << "SeriesTable: negative coefficient count " << coefficient_count;
     throw std::runtime_error(message.str());
   }
-  const std::size_t expected_size = rows_.size() *
-                                    fk_injection::impl::number_of_series *
-                                    static_cast<std::size_t>(coefficient_count);
+  row_offsets_.reserve(rows_.size());
+  std::size_t expected_size = 0;
+  for (const auto &row : rows_) {
+    row_offsets_.push_back(expected_size);
+    expected_size +=
+        static_cast<std::size_t>(fk_injection::number_of_series(row.medium)) *
+        static_cast<std::size_t>(coefficient_count);
+  }
   if (coefficients_.size() != expected_size) {
     std::ostringstream message;
     message << "SeriesTable: " << coefficients_.size()
             << " coefficients, expected " << expected_size << " ("
-            << rows_.size() << " rows, " << fk_injection::impl::number_of_series
-            << " series, " << coefficient_count << " coefficients)";
+            << rows_.size() << " rows, " << coefficient_count
+            << " coefficients per series)";
     throw std::runtime_error(message.str());
   }
   const auto order = [](const fk_injection::LayerLocation &location) {
@@ -100,20 +105,20 @@ fk_injection::SeriesTable fk_injection::SeriesTable::synthesize(
 
   const int fft_samples = setup.sizes.number_of_fft_samples;
   const int coefficient_count = setup.sizes.number_of_stored_frequencies;
-  const int number_of_series = fk_injection::impl::number_of_series;
-  std::vector<fk_injection::type_real> coefficients(
-      rows.size() * number_of_series *
-      static_cast<std::size_t>(coefficient_count));
+  std::vector<fk_injection::type_real> coefficients;
   std::vector<std::complex<double>> spectrum(
-      static_cast<std::size_t>(number_of_series) * fft_samples);
-  for (std::size_t row = 0; row < rows.size(); ++row) {
+      static_cast<std::size_t>(fk_injection::ElasticMedium::number_of_series) *
+      fft_samples);
+  for (const auto &row : rows) {
+    const int number_of_series = fk_injection::number_of_series(row.medium);
+    const std::size_t first = coefficients.size();
+    coefficients.resize(first + static_cast<std::size_t>(number_of_series) *
+                                    coefficient_count);
     std::fill(spectrum.begin(), spectrum.end(), std::complex<double>(0.0, 0.0));
-    fk_injection::impl::depth_spectrum(rows[row], response.states(), model,
-                                       setup, spectrum.data(), fft_samples);
-    fk_injection::impl::to_time_series(
-        spectrum.data(), setup,
-        &coefficients[fk_injection::impl::series_coefficient_index(
-            static_cast<int>(row), 0, 0, coefficient_count)]);
+    fk_injection::impl::depth_spectrum(row, response.states(), model, setup,
+                                       spectrum.data(), fft_samples);
+    fk_injection::impl::to_time_series(spectrum.data(), setup, number_of_series,
+                                       coefficients.data() + first);
   }
 
   return fk_injection::SeriesTable(std::move(rows), coefficient_count,
@@ -139,10 +144,4 @@ int fk_injection::SeriesTable::row(const fk_injection::SeriesKey &key) const {
     throw std::runtime_error(message.str());
   }
   return static_cast<int>(std::prev(after) - rows_.begin());
-}
-
-const fk_injection::type_real *
-fk_injection::SeriesTable::coefficients(const int row, const int series) const {
-  return coefficients_.data() + fk_injection::impl::series_coefficient_index(
-                                    row, series, 0, coefficient_count_);
 }
