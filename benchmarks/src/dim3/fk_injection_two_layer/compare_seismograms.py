@@ -1,6 +1,11 @@
 """Compare SPECFEM++ traces with the SPECFEM3D references.
 
 Usage: compare_seismograms.py <results> <references> <table.txt> <plot.png>
+
+The traces to compare are those in the reference directory, named
+<network>.<station>.<location>.<component>.<extension>. The plot shows one
+extension per station and component: velocity where there is one, otherwise
+the first extension found.
 """
 
 import sys
@@ -12,13 +17,28 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-STATIONS = "ABCDEF"
-COMPONENTS = ["MXX", "MXY", "MXZ"]
-EXTENSIONS = ["semd", "semv", "sema"]
+LABELS = {
+    "semd": "Displacement (m)",
+    "semv": "Velocity (m/s)",
+    "sema": "Acceleration (m/s$^2$)",
+    "semp": "Pressure (Pa)",
+}
 
 
-def trace_name(station, component, extension):
-    return f"TEST.{station}.S3.{component}.{extension}"
+def unique(values):
+    """The distinct values, in order of first appearance."""
+    return list(dict.fromkeys(values))
+
+
+def reference_traces(references):
+    """The reference traces as {(station, component): {extension: name}}."""
+    traces = {}
+    for path in sorted(references.glob("*.sem*")):
+        _, station, _, component, extension = path.name.split(".")
+        traces.setdefault((station, component), {})[extension] = path.name
+    if not traces:
+        raise ValueError(f"no reference traces in {references}")
+    return traces
 
 
 def lag_seconds(trace, reference, dt):
@@ -56,9 +76,21 @@ def check_the_comparison(reference, dt):
 
 
 def main(results, references, table_path, plot_path):
+    traces = reference_traces(references)
+    stations = unique(station for station, _ in traces)
+    components = unique(component for _, component in traces)
+    plotted = unique(
+        "semv" if "semv" in extensions else next(iter(extensions))
+        for extensions in traces.values()
+    )
+
     lines = []
     figure, axes = plt.subplots(
-        len(STATIONS), len(COMPONENTS), figsize=(12, 10), sharex=True
+        len(stations),
+        len(components),
+        figsize=(4 * len(components), 1.6 * len(stations) + 1.5),
+        sharex=True,
+        squeeze=False,
     )
 
     lines.append(
@@ -66,14 +98,14 @@ def main(results, references, table_path, plot_path):
     )
     worst_station_error = 0.0
     checked = False
-    for row, station in enumerate(STATIONS):
+    for row, station in enumerate(stations):
         # As the Newmark displacement tests: one error per station, over all
         # components and types.
         station_error = 0.0
         station_norm = 0.0
-        for column, component in enumerate(COMPONENTS):
-            for extension in EXTENSIONS:
-                name = trace_name(station, component, extension)
+        for column, component in enumerate(components):
+            extensions = traces.get((station, component), {})
+            for extension, name in extensions.items():
                 time, reference = np.loadtxt(references / name, unpack=True)
                 trace_time, trace = np.loadtxt(results / name, unpack=True)
                 if not np.allclose(time, trace_time, atol=1e-3):
@@ -95,7 +127,9 @@ def main(results, references, table_path, plot_path):
                         f"{result['misfit']:>11.3e}"
                     )
 
-                if extension == "semv":
+                if extension == (
+                    "semv" if "semv" in extensions else next(iter(extensions))
+                ):
                     axis = axes[row, column]
                     axis.plot(time, reference, "k", label="SPECFEM3D")
                     axis.plot(time, trace, "r--", label="SPECFEM++")
@@ -108,7 +142,9 @@ def main(results, references, table_path, plot_path):
     lines.append(f"worst Newmark-style error {worst_station_error:.3e}")
     axes[0, 0].legend(fontsize=8)
     figure.supxlabel("Time (s)")
-    figure.supylabel("Velocity (m/s)")
+    figure.supylabel(
+        LABELS[plotted[0]] if len(plotted) == 1 else "Amplitude", fontsize=10
+    )
     figure.tight_layout()
     figure.savefig(plot_path, dpi=150)
 
