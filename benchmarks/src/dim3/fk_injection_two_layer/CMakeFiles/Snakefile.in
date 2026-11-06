@@ -1,7 +1,7 @@
 SPECFEM_BIN = "@CMAKE_BINARY_DIR@/bin/specfem 3d"
 MESHFEM_BIN = "@CMAKE_BINARY_DIR@/bin/xmeshfem3D"
+FK_PLUGIN = "@CMAKE_BINARY_DIR@/lib/libfk_injection.so"
 BENCHMARK_DIR = "@CURRENT_BENCHMARK_BUILD_DIR@"
-PLUGIN_DIR = BENCHMARK_DIR + "/plugin"
 
 
 rule all:
@@ -9,23 +9,6 @@ rule all:
         BENCHMARK_DIR + "/OUTPUT_FILES/comparison.txt",
         BENCHMARK_DIR + "/OUTPUT_FILES/comparison.png",
     localrule: True
-
-
-# The plugin stays a standalone project, built against the installed SDK.
-rule build_plugin:
-    output:
-        plugin=PLUGIN_DIR + "/build/libfk_injection.so",
-    localrule: True
-    shell:
-        """
-            cmake --install @CMAKE_BINARY_DIR@ --component plugin_sdk --prefix {PLUGIN_DIR}/sdk
-            cmake -S @CMAKE_SOURCE_DIR@/plugins/fk-injection -B {PLUGIN_DIR}/build \
-                -DCMAKE_PREFIX_PATH={PLUGIN_DIR}/sdk \
-                -DCMAKE_CXX_COMPILER=@CMAKE_CXX_COMPILER@ \
-                -DCMAKE_BUILD_TYPE=Release \
-                -DFK_INJECTION_BUILD_TESTS=OFF
-            cmake --build {PLUGIN_DIR}/build -j 4
-        """
 
 
 rule generate_mesh:
@@ -43,7 +26,7 @@ rule generate_mesh:
 
 rule run_solver:
     input:
-        plugin=rules.build_plugin.output.plugin,
+        plugin=FK_PLUGIN,
         database=rules.generate_mesh.output.database,
         stations=BENCHMARK_DIR + "/DATA/STATIONS",
         source=BENCHMARK_DIR + "/source.yaml",
@@ -87,5 +70,5 @@ rule clean:
     localrule: True
     shell:
         """
-            rm -rf {BENCHMARK_DIR}/OUTPUT_FILES {PLUGIN_DIR}
+            rm -rf {BENCHMARK_DIR}/OUTPUT_FILES
         """
