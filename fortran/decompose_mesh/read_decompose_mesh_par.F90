@@ -85,7 +85,8 @@
     PML_CONDITIONS, SAVE_MESH_FILES, ADIOS_FOR_DATABASES, &
     COUPLE_WITH_INJECTION_TECHNIQUE, IS_WAVEFIELD_DISCONTINUITY, LOCAL_PATH, &
     UTM_PROJECTION_ZONE, SUPPRESS_UTM_PROJECTION, &
-    STACEY_ABSORBING_CONDITIONS, TOP_FREE_SURFACE, BOTTOM_FREE_SURFACE
+    STACEY_ABSORBING_CONDITIONS, TOP_FREE_SURFACE, BOTTOM_FREE_SURFACE, &
+    STACEY_AS_INJECTION_BOUNDARY, INJECTION_SIDES
 
   use decompose_mesh_filenames
 
@@ -178,6 +179,49 @@
   call read_value_logical(BOTTOM_FREE_SURFACE, 'BOTTOM_FREE_SURFACE', ier)
   if (ier /= 0) then
     BOTTOM_FREE_SURFACE = .false.
+    ier = 0
+  endif
+
+  ! each INJECTION_* side selects the faces of the matching ABSORBING_SURFACE_FILE_*
+  call read_value_logical(STACEY_AS_INJECTION_BOUNDARY, 'STACEY_AS_INJECTION_BOUNDARY', ier)
+  if (ier /= 0) then
+    STACEY_AS_INJECTION_BOUNDARY = .false.
+    ier = 0
+  endif
+
+  call read_value_logical(INJECTION_SIDES(1), 'INJECTION_XMIN', ier)
+  if (ier /= 0) then
+    INJECTION_SIDES(1) = .false.
+    ier = 0
+  endif
+
+  call read_value_logical(INJECTION_SIDES(2), 'INJECTION_XMAX', ier)
+  if (ier /= 0) then
+    INJECTION_SIDES(2) = .false.
+    ier = 0
+  endif
+
+  call read_value_logical(INJECTION_SIDES(3), 'INJECTION_YMIN', ier)
+  if (ier /= 0) then
+    INJECTION_SIDES(3) = .false.
+    ier = 0
+  endif
+
+  call read_value_logical(INJECTION_SIDES(4), 'INJECTION_YMAX', ier)
+  if (ier /= 0) then
+    INJECTION_SIDES(4) = .false.
+    ier = 0
+  endif
+
+  call read_value_logical(INJECTION_SIDES(5), 'INJECTION_BOTTOM', ier)
+  if (ier /= 0) then
+    INJECTION_SIDES(5) = .false.
+    ier = 0
+  endif
+
+  call read_value_logical(INJECTION_SIDES(6), 'INJECTION_TOP', ier)
+  if (ier /= 0) then
+    INJECTION_SIDES(6) = .false.
     ier = 0
   endif
 
