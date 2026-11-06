@@ -1,14 +1,21 @@
 #pragma once
 
+#include <Kokkos_Core.hpp>
 #include <complex>
 #include <cstring>
 #include <fstream>
 #include <regex>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #include "map_type.tpp"
+
+namespace specfem::datatype {
+template <typename T, typename Extents, typename Layout, typename MemorySpace>
+class View;
+} // namespace specfem::datatype
 
 namespace specfem::io_backends::impl::NPY {
 /**
@@ -61,7 +68,7 @@ NPYString create_npy_header(const std::vector<size_t> &shape,
 
 template <typename value_type>
 NPYString create_npy_header(const std::vector<size_t> &shape,
-                            bool fortran_order = true) {
+                            bool fortran_order) {
   return create_npy_header(shape, map_type<value_type>(), sizeof(value_type),
                            fortran_order);
 }
@@ -72,6 +79,7 @@ NPYString create_npy_header(const std::vector<size_t> &shape,
 struct NPYHeader {
   std::vector<size_t> shape; ///< Dimensions of the array
   size_t item_size = 0;      ///< Size of each element in bytes
+  bool fortran_order = true; ///< Whether the data is stored column-major
 };
 
 /**
@@ -83,9 +91,9 @@ struct NPYHeader {
  * @param file File stream to the .npy file, positioned at the start of the
  * header
  * @param type_char Expected NumPy type character
- * @return NPYHeader Shape and element size stored in the header
- * @throws std::runtime_error If the header cannot be parsed, is not in
- * Fortran order, is big-endian, or its type does not match `type_char`
+ * @return NPYHeader Shape, element size and storage order stored in the header
+ * @throws std::runtime_error If the header cannot be parsed, is big-endian, or
+ * its type does not match `type_char`
  *
  * @note Modified from cnpy library (MIT License)
  * https://github.com/rogersce/cnpy
@@ -99,17 +107,30 @@ NPYHeader read_npy_header(std::ifstream &file, const char type_char);
  * header
  * @param type_char Expected NumPy type character
  * @param type_size Expected size of each element in bytes
- * @return std::vector<size_t> Dimensions of the array
+ * @return NPYHeader Shape, element size and storage order stored in the header
  * @throws std::runtime_error If the header cannot be parsed or does not match
  * the expected type and element size
  */
-std::vector<size_t> parse_npy_header(std::ifstream &file, const char type_char,
-                                     const size_t type_size);
+NPYHeader parse_npy_header(std::ifstream &file, const char type_char,
+                           const size_t type_size);
 
-template <typename value_type>
-std::vector<size_t> parse_npy_header(std::ifstream &file) {
+template <typename value_type> NPYHeader parse_npy_header(std::ifstream &file) {
   return parse_npy_header(file, map_type<value_type>(), sizeof(value_type));
 }
+
+/**
+ * @brief Check that a file's storage order matches the view it is read into
+ *
+ * The payload is copied into the view as is, so a mismatch would permute the
+ * values.
+ *
+ * @param header Header parsed from the file
+ * @param fortran_order Storage order of the destination view
+ * @param path Path of the dataset, used in the error message
+ * @throws std::runtime_error If the storage orders differ
+ */
+void check_fortran_order(const NPYHeader &header, const bool fortran_order,
+                         const std::string &path);
 
 /**
  * @brief Record width used to store strings as a NumPy `|S<n>` array
@@ -143,5 +164,41 @@ std::vector<char> pack_string_records(const std::string *data,
  */
 void unpack_string_records(const std::vector<char> &records, const size_t count,
                            const size_t width, std::string *data);
+
+template <typename ViewType> struct is_domain_view : std::false_type {};
+
+template <typename T, typename Extents, typename Layout, typename MemorySpace>
+struct is_domain_view<specfem::datatype::View<T, Extents, Layout, MemorySpace>>
+    : std::true_type {};
+
+/**
+ * @brief Whether the buffer of @p ViewType is described as Fortran
+ * (column-major) order in an NPY header
+ *
+ * The buffer is written as is, so the header must describe the view's own
+ * layout: column-major for `Kokkos::LayoutLeft`, row-major for
+ * `Kokkos::LayoutRight`. Rank 0 and 1 views have no order.
+ *
+ * Tiled domain views (`specfem::datatype::View`) match neither layout and keep
+ * the column-major header; their inherited `array_layout` does not describe
+ * the tiling.
+ *
+ * @tparam ViewType View passed to an NPY or NPZ dataset
+ * @return true if the header must declare `fortran_order: True`
+ */
+template <typename ViewType> constexpr bool is_fortran_order() {
+  if constexpr (is_domain_view<ViewType>::value) {
+    return true;
+  } else if constexpr (ViewType::rank() <= 1) {
+    return true;
+  } else {
+    using layout = typename ViewType::array_layout;
+    static_assert(std::is_same_v<layout, Kokkos::LayoutLeft> ||
+                      std::is_same_v<layout, Kokkos::LayoutRight>,
+                  "NPY/NPZ can only describe contiguous LayoutLeft or "
+                  "LayoutRight views");
+    return std::is_same_v<layout, Kokkos::LayoutLeft>;
+  }
+}
 
 } // namespace specfem::io_backends::impl::NPY

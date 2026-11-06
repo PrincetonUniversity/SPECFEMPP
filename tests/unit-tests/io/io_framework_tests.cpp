@@ -8,6 +8,7 @@
 #include "specfem/io.hpp"
 
 // Test utilities
+#include <fstream>
 #include <type_traits>
 #include <vector>
 
@@ -477,6 +478,92 @@ TYPED_TEST(IOFrameworkTest, StringDataOperations) {
       for (size_t i = 0; i < data_size; ++i) {
         EXPECT_EQ(read_string_view(i), string_data[i]) << "index " << i;
       }
+    }
+  }
+}
+
+// Test: Multi-dimensional views keep their logical values in both layouts,
+// and NPY/NPZ headers describe each view's storage order (issue #2121).
+TYPED_TEST(IOFrameworkTest, LayoutDataOperations) {
+  using IOType = TypeParam;
+  using RightView =
+      Kokkos::View<double ***, Kokkos::LayoutRight, Kokkos::HostSpace>;
+  using LeftView =
+      Kokkos::View<double ***, Kokkos::LayoutLeft, Kokkos::HostSpace>;
+
+  constexpr bool is_npy =
+      std::is_same_v<IOType, specfem::io_backends::NPY<specfem::io::write>> ||
+      std::is_same_v<IOType, specfem::io_backends::NPY<specfem::io::read>>;
+  constexpr bool is_npz =
+      std::is_same_v<IOType, specfem::io_backends::NPZ<specfem::io::write>> ||
+      std::is_same_v<IOType, specfem::io_backends::NPZ<specfem::io::read>>;
+
+  const int n0 = 4, n1 = 3, n2 = 2;
+  const auto value = [](int i, int j, int k) {
+    return 100.0 * i + 10.0 * j + k;
+  };
+  RightView right_view("right", n0, n1, n2);
+  LeftView left_view("left", n0, n1, n2);
+  for (int i = 0; i < n0; ++i)
+    for (int j = 0; j < n1; ++j)
+      for (int k = 0; k < n2; ++k) {
+        right_view(i, j, k) = value(i, j, k);
+        left_view(i, j, k) = value(i, j, k);
+      }
+
+  if constexpr (std::is_same_v<typename IOType::IO_OpType,
+                               specfem::io::write>) {
+    typename IOType::File file(this->getTestFile());
+    LOCAL_EXPECT_NO_THROW(
+        file.template createDataset<RightView>("right", right_view).write());
+    LOCAL_EXPECT_NO_THROW(
+        file.template createDataset<LeftView>("left", left_view).write());
+    LOCAL_EXPECT_NO_THROW(file.flush());
+
+    if constexpr (is_npy) {
+      const auto header_of = [&](const std::string &name) {
+        std::ifstream stream(this->getTestFile() + "/" + name + ".npy",
+                             std::ios::binary);
+        std::string header(128, '\0');
+        stream.read(&header[0], header.size());
+        return header;
+      };
+      EXPECT_NE(header_of("right").find("'fortran_order': False"),
+                std::string::npos);
+      EXPECT_NE(header_of("left").find("'fortran_order': True"),
+                std::string::npos);
+    }
+  } else {
+    {
+      using WriteIOType = typename GetWriteType<IOType>::type;
+      typename WriteIOType::File write_file(this->getTestFile());
+      write_file.template createDataset<RightView>("right", right_view).write();
+      write_file.template createDataset<LeftView>("left", left_view).write();
+      write_file.flush();
+    }
+
+    typename IOType::File file(this->getTestFile());
+    RightView read_right("read_right", n0, n1, n2);
+    LeftView read_left("read_left", n0, n1, n2);
+    LOCAL_EXPECT_NO_THROW(
+        file.template openDataset<RightView>("right", read_right).read());
+    LOCAL_EXPECT_NO_THROW(
+        file.template openDataset<LeftView>("left", read_left).read());
+
+    for (int i = 0; i < n0; ++i)
+      for (int j = 0; j < n1; ++j)
+        for (int k = 0; k < n2; ++k) {
+          EXPECT_NEAR(read_right(i, j, k), value(i, j, k), 1e-12);
+          EXPECT_NEAR(read_left(i, j, k), value(i, j, k), 1e-12);
+        }
+
+    // The payload is copied as is, so reading into a view of the other
+    // layout would permute the values: NPY/NPZ must refuse it.
+    if constexpr (is_npy || is_npz) {
+      LeftView wrong_layout("wrong_layout", n0, n1, n2);
+      EXPECT_THROW(
+          file.template openDataset<LeftView>("right", wrong_layout).read(),
+          std::runtime_error);
     }
   }
 }

@@ -25,6 +25,9 @@ public:
       typename ViewType::non_const_value_type;      ///< Underlying type
   using MemSpace = typename ViewType::memory_space; ///< Memory space
 
+  /// Storage order declared in the file header (see is_fortran_order)
+  constexpr static bool fortran_order = is_fortran_order<ViewType>();
+
   /**
    * @name Constructors
    *

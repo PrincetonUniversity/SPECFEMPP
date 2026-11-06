@@ -41,6 +41,10 @@ public:
       typename ViewType::non_const_value_type;      ///< Underlying type
   using MemSpace = typename ViewType::memory_space; ///< Memory space
 
+  /// Storage order declared in the file header (see NPY::is_fortran_order)
+  constexpr static bool fortran_order =
+      specfem::io_backends::impl::NPY::is_fortran_order<ViewType>();
+
   /**
    * @name Constructors
    *
