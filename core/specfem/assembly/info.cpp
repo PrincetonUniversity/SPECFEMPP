@@ -1,5 +1,7 @@
 #include "specfem/assembly/info.hpp"
 #include "specfem/assembly/info.tpp"
+#include <iomanip>
+#include <sstream>
 
 template <>
 std::string
@@ -44,6 +46,37 @@ specfem::assembly::Info<specfem::element::dimension_tag::dim3>::string() const {
       << gll_distance.max << "]\n";
   oss << " Minimum Period: . " << largest_minimum_period << "\n";
   oss << " Suggested Time Step: .... " << suggested_time_step << "\n";
+  if (!elements_per_region.empty()) {
+    oss << " Elements per region:\n";
+    for (const auto &[region, count] : elements_per_region) {
+      oss << "   " << std::left << std::setw(22)
+          << (specfem::element::to_string(region) + ":") << count << "\n";
+    }
+  }
+  if (!regions.empty()) {
+    oss << " Globe region statistics (SI):\n";
+    for (const auto &[region, statistics] : regions) {
+      oss << "   " << specfem::element::to_string(region)
+          << ": elements=" << statistics.element_count << ", radius=["
+          << statistics.radius.min << ", " << statistics.radius.max << "] m"
+          << ", GLL min=" << statistics.minimum_gll_spacing << " m"
+          << ", wave speed=[" << statistics.wave_speed.min << ", "
+          << statistics.wave_speed.max << "] m/s"
+          << ", time step=" << statistics.suggested_time_step << " s\n";
+    }
+    const auto print_location = [&](const char *label,
+                                    const InfoLocation &location) {
+      oss << " " << label << ": rank=" << location.rank
+          << ", mesh element=" << location.mesh_element
+          << ", compute element=" << location.compute_element
+          << ", region=" << specfem::element::to_string(location.region)
+          << ", radius=" << location.radius << " m\n";
+    };
+    print_location("Minimum GLL spacing location", minimum_spacing_location);
+    print_location("CFL limiting location", cfl_location);
+    oss << " Total mesh volume: " << total_volume << " m^3\n";
+    oss << " Total mesh mass: " << total_mass << " kg\n";
+  }
   return oss.str();
 }
 
@@ -52,10 +85,14 @@ template specfem::assembly::Info<specfem::element::dimension_tag::dim2>::Info(
     const specfem::assembly::properties<specfem::element::dimension_tag::dim2>
         &,
     const specfem::assembly::element_types<
-        specfem::element::dimension_tag::dim2> &);
+        specfem::element::dimension_tag::dim2> &,
+    const specfem::assembly::jacobian_matrix<
+        specfem::element::dimension_tag::dim2> *);
 template specfem::assembly::Info<specfem::element::dimension_tag::dim3>::Info(
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &,
     const specfem::assembly::properties<specfem::element::dimension_tag::dim3>
         &,
     const specfem::assembly::element_types<
-        specfem::element::dimension_tag::dim3> &);
+        specfem::element::dimension_tag::dim3> &,
+    const specfem::assembly::jacobian_matrix<
+        specfem::element::dimension_tag::dim3> *);

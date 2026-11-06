@@ -2,8 +2,8 @@
 
 #include "specfem/io.hpp"
 #include "specfem/io/fortranio/interface.hpp"
+#include "specfem/io/mesh/impl/fortran/dim3_globe/globe_codes.hpp"
 
-#include <Kokkos_Core.hpp>
 #include <stdexcept>
 #include <vector>
 
@@ -24,30 +24,14 @@ specfem::io::mesh::impl::fortran::dim3_globe::read_surface(
   }
 
   result.faces.resize(nfaces);
-  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace,
-               Kokkos::MemoryTraits<Kokkos::Unmanaged>>
-      element_view(result.elements.data(), nfaces),
-      faces_view(faces.data(), nfaces);
-  Kokkos::View<specfem::mesh_entity::dim3::type *, Kokkos::LayoutLeft,
-               Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>
-      surface_face_view(result.faces.data(), nfaces);
-  int invalid_boundary_count = 0;
-  Kokkos::parallel_reduce(
-      "specfem::io::mesh::dim3_globe::read_boundaries::surface",
-      Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0, nfaces),
-      [=](const int iface, int &local_invalid_boundary_count) {
-        if (element_view(iface) < 1 || element_view(iface) > nspec ||
-            faces_view(iface) < 1 || faces_view(iface) > 6) {
-          ++local_invalid_boundary_count;
-          return;
-        }
-        --element_view(iface);
-        surface_face_view(iface) =
-            static_cast<specfem::mesh_entity::dim3::type>(faces_view(iface));
-      },
-      invalid_boundary_count);
-  if (invalid_boundary_count > 0) {
-    throw std::runtime_error("Invalid boundary entry in globe mesh database");
+  for (int iface = 0; iface < nfaces; ++iface) {
+    if (result.elements[iface] < 1 || result.elements[iface] > nspec) {
+      throw std::runtime_error(
+          "Invalid boundary element in globe mesh database");
+    }
+    --result.elements[iface];
+    result.faces[iface] =
+        specfem::io::mesh::impl::fortran::dim3_globe::to_face(faces[iface]);
   }
 
   return result;
@@ -63,29 +47,14 @@ void specfem::io::mesh::impl::fortran::dim3_globe::read_boundaries(
   globe.icb = read_surface(stream, mesh.nspec);
   globe.ocean_load = read_surface(stream, mesh.nspec);
 
-  specfem::mesh::absorbing_boundary<Dimension::dim3> absorbing(0);
-  specfem::mesh::acoustic_free_surface<Dimension::dim3> free_surface(
-      static_cast<int>(globe.free_surface.elements.size()));
-
-  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace,
-               Kokkos::MemoryTraits<Kokkos::Unmanaged>>
-      free_surface_elements_view(globe.free_surface.elements.data(),
-                                 globe.free_surface.elements.size());
-  Kokkos::View<specfem::mesh_entity::dim3::type *, Kokkos::LayoutLeft,
-               Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>
-      free_surface_faces_view(globe.free_surface.faces.data(),
-                              globe.free_surface.faces.size());
-  auto free_surface_index_mapping = free_surface.index_mapping;
-  auto free_surface_type = free_surface.type;
-  Kokkos::parallel_for(
-      "specfem::io::mesh::dim3_globe::read_boundaries::free_surface",
-      Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(
-          0, static_cast<int>(globe.free_surface.elements.size())),
-      [=](const int iface) {
-        free_surface_index_mapping(iface) = free_surface_elements_view(iface);
-        free_surface_type(iface) = free_surface_faces_view(iface);
-      });
-  Kokkos::fence();
-
-  mesh.boundaries = { absorbing, free_surface };
+  // The free surface is kept in globe.free_surface as a geometric surface
+  // only -- for depth resolution, the ocean load and surface output -- and is
+  // deliberately not routed into acoustic_free_surface. It is the top of the
+  // elastic crust/mantle, where traction-free is the natural condition of the
+  // weak form; as a boundary condition it would put a zero-pressure constraint
+  // on any acoustic element that owned one of its faces. The database carries
+  // no absorbing faces either.
+  mesh.boundaries = { specfem::mesh::absorbing_boundary<Dimension::dim3>(0),
+                      specfem::mesh::acoustic_free_surface<Dimension::dim3>(
+                          0) };
 }

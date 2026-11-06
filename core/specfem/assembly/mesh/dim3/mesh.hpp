@@ -2,6 +2,8 @@
 
 #include "impl/adjacency_graph.hpp"
 #include "impl/control_nodes.hpp"
+#include "impl/coordinate_projection.hpp"
+#include "impl/free_surface_geometry.hpp"
 #include "impl/mesh_to_compute_mapping.hpp"
 #include "impl/points.hpp"
 #include "impl/shape_functions.hpp"
@@ -27,6 +29,9 @@ namespace specfem::assembly {
  * - quadrature: GLL quadrature points and weights
  * - control_nodes: Element control node data
  * - shape_functions: Shape function values and derivatives
+ *
+ * Also carries the coordinate @ref projection and the @ref free_surface
+ * geometry, so source/receiver placement resolves without the raw mesh.
  *
  * @see specfem::mesh::mesh
  */
@@ -55,6 +60,13 @@ public:
   specfem::mesh_entity::element<dimension_tag> element_grid; ///< 3D GLL grid
                                                              ///< info
 
+  specfem::assembly::mesh_impl::coordinate_projection
+      projection; ///< Coordinate projection the mesh was built with (UTM,
+                  ///< globe, or pass-through); drives source/receiver placement
+
+  specfem::assembly::mesh_impl::free_surface_geometry
+      free_surface; ///< Outer free surface as geometry, for depth placement
+
   /**
    * @brief Default constructor.
    */
@@ -73,12 +85,18 @@ public:
    * @param adjacency_graph Element connectivity
    * @param control_nodes Element control node data
    * @param quadrature GLL quadrature information
+   * @param reference_anchor_coordinates Optional reference (undeformed)
+   * anchor coordinates indexed by global anchor node; when non-empty, the
+   * reference GLL coordinates are built for model sampling, otherwise
+   * `reference_coord` aliases the final coordinates
    */
   mesh(const int nspec, const int ngnod, const int ngllz, const int nglly,
        const int ngllx, const specfem::mesh::tags<dimension_tag> &tags,
        const specfem::mesh::adjacency_graph<dimension_tag> &adjacency_graph,
        const specfem::mesh::control_nodes<dimension_tag> &control_nodes,
-       const specfem::quadrature::quadratures &quadrature);
+       const specfem::quadrature::quadratures &quadrature,
+       const specfem::mesh::control_nodes<dimension_tag>::CoordinatesViewType
+           &reference_anchor_coordinates = {});
 };
 
 } // namespace specfem::assembly

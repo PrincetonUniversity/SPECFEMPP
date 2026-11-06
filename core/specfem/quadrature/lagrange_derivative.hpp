@@ -72,10 +72,13 @@ struct lagrange_derivative {
    *
    * @tparam MemberType Type of the Kokkos team member.
    * @param team Kokkos team member.
+   * @param scratch_level Kokkos scratch level to allocate from (0: team
+   * shared memory, 1: global-memory scratch).
    */
   template <typename MemberType>
-  KOKKOS_FUNCTION lagrange_derivative(const MemberType &team)
-      : hprime_gll(team.team_scratch(0)) {
+  KOKKOS_FUNCTION lagrange_derivative(const MemberType &team,
+                                      const int scratch_level = 0)
+      : hprime_gll(team.team_scratch(scratch_level)) {
     static_assert(
         Kokkos::SpaceAccessibility<typename MemberType::execution_space,
                                    MemorySpace>::accessible,

@@ -78,8 +78,6 @@ std::string specfem::sources::source<DimensionTag>::print() const {
     os << "  Coordinates: " << read_coordinates_->print() << "\n";
   }
   os << "  " << print_details() << "\n";
-  if (resolution_.has_value())
-    os << "  Target: " << resolution_->print() << "\n";
   // Only print resolved global coordinates when they have been set:
   // either directly (no read_coordinates_) or after assembly-time
   // resolution.

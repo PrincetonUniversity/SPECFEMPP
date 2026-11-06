@@ -31,12 +31,15 @@ specfem::sources::moment_tensor<
   // Declare the source tensor
   ViewType source_tensor;
 
-  // For elastic P-SV: 2x2 tensor [[Mxx, Mxz], [Mxz, Mzz]]
+  // The (1,0) slot holds Mzx so that asymmetric tensors drive the z-row
+  // dipole correctly; it equals Mxz for the default (symmetric) tensor.
+
+  // For elastic P-SV: 2x2 tensor [[Mxx, Mxz], [Mzx, Mzz]]
   if (medium_tag == specfem::element::medium_tag::elastic_psv) {
     source_tensor = ViewType("source_tensor", 2, 2);
     source_tensor(0, 0) = this->Mxx;
     source_tensor(0, 1) = this->Mxz;
-    source_tensor(1, 0) = this->Mxz;
+    source_tensor(1, 0) = this->Mzx;
     source_tensor(1, 1) = this->Mzz;
   }
   // For poroelastic: 4x2 tensor using elastic moment tensor twice
@@ -44,29 +47,30 @@ specfem::sources::moment_tensor<
     source_tensor = ViewType("source_tensor", 4, 2);
     source_tensor(0, 0) = this->Mxx;
     source_tensor(0, 1) = this->Mxz;
-    source_tensor(1, 0) = this->Mxz;
+    source_tensor(1, 0) = this->Mzx;
     source_tensor(1, 1) = this->Mzz;
     source_tensor(2, 0) = this->Mxx;
     source_tensor(2, 1) = this->Mxz;
-    source_tensor(3, 0) = this->Mxz;
+    source_tensor(3, 0) = this->Mzx;
     source_tensor(3, 1) = this->Mzz;
   }
-  // For elastic P-SV-T: 3x2 tensor with third component set to 0
+  // For elastic P-SV-T: 3x2 tensor with the rotation row set to 0 (the
+  // rotational forcing enters via the body couple instead)
   else if (medium_tag == specfem::element::medium_tag::elastic_psv_t) {
     source_tensor = ViewType("source_tensor", 3, 2);
     source_tensor(0, 0) = this->Mxx;
     source_tensor(0, 1) = this->Mxz;
-    source_tensor(1, 0) = this->Mxz;
+    source_tensor(1, 0) = this->Mzx;
     source_tensor(1, 1) = this->Mzz;
     source_tensor(2, 0) = static_cast<type_real>(0.0);
     source_tensor(2, 1) = static_cast<type_real>(0.0);
   }
-  // For electromagnetic TE: 2x2 tensor [[Mxx, Mxz], [Mxz, Mzz]]
+  // For electromagnetic TE: 2x2 tensor [[Mxx, Mxz], [Mzx, Mzz]]
   else if (medium_tag == specfem::element::medium_tag::electromagnetic_te) {
     source_tensor = ViewType("source_tensor", 2, 2);
     source_tensor(0, 0) = this->Mxx;
     source_tensor(0, 1) = this->Mxz;
-    source_tensor(1, 0) = this->Mxz;
+    source_tensor(1, 0) = this->Mzx;
     source_tensor(1, 1) = this->Mzz;
   } else {
     KOKKOS_ABORT_WITH_LOCATION("Moment tensor source array computation not "
@@ -76,13 +80,40 @@ specfem::sources::moment_tensor<
   return source_tensor;
 }
 
+Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+specfem::sources::moment_tensor<
+    specfem::element::dimension_tag::dim2>::get_body_couple_vector() const {
+
+  using ViewType =
+      Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>;
+
+  // Only Cosserat media (elastic_psv_t) carry a rotational degree of freedom.
+  // The antisymmetric part of the moment tensor drives it via the monopole
+  // term; all other media return an empty view.
+  if (this->get_medium_tag() == specfem::element::medium_tag::elastic_psv_t) {
+    ViewType body_couple("body_couple_vector", 3);
+    body_couple(0) = static_cast<type_real>(0.0);
+    body_couple(1) = static_cast<type_real>(0.0);
+    body_couple(2) = this->Mxz - this->Mzx;
+    return body_couple;
+  }
+
+  return {};
+}
+
+bool specfem::sources::moment_tensor<
+    specfem::element::dimension_tag::dim2>::has_monopole_contribution() const {
+  return medium_tag == specfem::element::medium_tag::elastic_psv_t;
+}
+
 std::string specfem::sources::moment_tensor<
     specfem::element::dimension_tag::dim2>::print_details() const {
   std::ostringstream message;
-  message << "(Mxx, Mzz, Mxz) = ("
+  message << "(Mxx, Mzz, Mxz, Mzx) = ("
           << specfem::utilities::format_scientific(this->Mxx, 6) << ", "
           << specfem::utilities::format_scientific(this->Mzz, 6) << ", "
-          << specfem::utilities::format_scientific(this->Mxz, 6) << ")";
+          << specfem::utilities::format_scientific(this->Mxz, 6) << ", "
+          << specfem::utilities::format_scientific(this->Mzx, 6) << ")";
   return message.str();
 }
 
@@ -108,7 +139,8 @@ operator==(const specfem::sources::source<specfem::element::dimension_tag::dim2>
   bool internal = coords_equal &&
                   specfem::utilities::is_close(this->Mxx, other_source->Mxx) &&
                   specfem::utilities::is_close(this->Mxz, other_source->Mxz) &&
-                  specfem::utilities::is_close(this->Mzz, other_source->Mzz);
+                  specfem::utilities::is_close(this->Mzz, other_source->Mzz) &&
+                  specfem::utilities::is_close(this->Mzx, other_source->Mzx);
 
   if (!internal) {
     std::cout << "Moment tensor source not equal" << std::endl;

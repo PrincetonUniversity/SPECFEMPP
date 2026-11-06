@@ -1,93 +1,46 @@
 #pragma once
 
-#include "specfem/globe_model/model_config.hpp"
+#include "control_nodes/control_nodes.hpp"
+#include "specfem/element/tags.hpp"
+#include "specfem/globe/model_config.hpp"
+#include "specfem/globe/planet_constants.hpp"
 #include "specfem/mesh_entity.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
+#include <optional>
 #include <string>
 #include <vector>
 
 namespace specfem::mesh {
 
-/**
- * @brief Model-catalog values written by the globe mesher for consistency
- * checks.
- *
- * SPECFEM3D_GLOBE material properties are evaluated later through the globe
- * model oracle rather than stored directly in the thin mesh database. These
- * values identify the model catalog state used by the mesher so the C++ reader
- * can detect obvious mismatches with the linked evaluator implementation.
- */
+/** @brief Mesher-side model identifiers retained for catalog-skew detection. */
 struct globe_model_verification {
-  /**
-   * @brief Verification-only Fortran model codes derived from @c MODEL.
-   *
-   * Entries are written by SPECFEM3D_GLOBE in this order:
-   * - @c REFERENCE_1D_MODEL
-   * - @c THREE_D_MODEL
-   * - @c THREE_D_MODEL_IC
-   * - @c REFERENCE_CRUSTAL_MODEL
-   * - @c MODEL_GLL_TYPE
-   *
-   * These are raw SPECFEM3D_GLOBE setup/constants values, not stable
-   * SPECFEM++ encodings. They are retained to detect mesher/evaluator catalog
-   * skew, not replayed into the evaluator.
-   */
+  /** @brief Raw model codes derived by the mesher's Fortran catalog. */
   std::vector<int> codes;
 
-  /**
-   * @brief Verification-only Fortran model flags derived from @c MODEL.
-   *
-   * Entries are written by SPECFEM3D_GLOBE in this order:
-   * - @c TRANSVERSE_ISOTROPY
-   * - @c CRUSTAL
-   * - @c ONE_CRUST
-   * - @c CASE_3D
-   * - @c ANISOTROPIC_3D_MANTLE
-   * - @c ANISOTROPIC_INNER_CORE
-   * - @c MODEL_3D_MANTLE_PERTUBATIONS
-   * - @c HETEROGEN_3D_MANTLE
-   * - @c ATTENUATION_3D
-   * - @c ATTENUATION_3D_BERKELEY
-   * - @c ATTENUATION_GLL
-   * - @c HONOR_1D_SPHERICAL_MOHO
-   * - @c MODEL_GLL
-   * - @c USE_FULL_TISO_MANTLE
-   * - @c REGIONAL_MOHO_MESH
-   * - @c EMC_MODEL
-   *
-   * The linked evaluator derives its own flags from @c model_config.model_name;
-   * these stored values are only for consistency checking.
-   */
+  /** @brief Raw model flags derived by the mesher's Fortran catalog. */
   std::vector<bool> flags;
-
-  /**
-   * @brief Attenuation source frequency used by the mesher.
-   *
-   * This is checked against the logarithmic center of the stored attenuation
-   * period band when attenuation is enabled.
-   */
-  double attenuation_source_frequency = 0.0;
 };
 
 /**
- * @brief Per-element context required by the SPECFEM3D_GLOBE model oracle.
+ * @brief Per-element context required by the SPECFEM3D_GLOBE model evaluator.
  *
  * The thin globe mesh stores enough metadata to re-evaluate material properties
  * at assembly time. These fields are passed to the Fortran-backed evaluator for
  * each spectral element together with the element's reference coordinates.
  */
 struct globe_element_context {
-  /** @brief Globe radial region index for the element. */
-  int region = 0;
+  /** @brief Radial region of the element; always set by the reader. */
+  specfem::element::region_tag region =
+      specfem::element::region_tag::crust_mantle;
 
   /** @brief SPECFEM3D_GLOBE radial doubling flag for the element. */
   int idoubling = 0;
 
-  /** @brief Minimum nondimensional radius represented by the element. */
+  /** @brief Lower radius of the element's radial shell, in metres. */
   double rmin = 0.0;
 
-  /** @brief Maximum nondimensional radius represented by the element. */
+  /** @brief Upper radius of the element's radial shell, in metres. */
   double rmax = 0.0;
 
   /** @brief True when the element intersects the crustal model region. */
@@ -118,21 +71,16 @@ struct globe_boundary_surface {
  * @c specfem::mesh::globe3d_mesh shares the standard 3-D raw mesh fields
  * through @c mesh_dim3_base, but the thin globe database also carries metadata
  * needed to evaluate pointwise material properties through the
- * SPECFEM3D_GLOBE model oracle. This structure stores that globe-only payload.
+ * SPECFEM3D_GLOBE model evaluator. This structure stores that globe-only
+ * payload.
  */
 struct globe_mesh_data {
   /** @brief Host view of xyz coordinates indexed by global anchor node. */
-  using CoordinatesViewType =
-      Kokkos::View<type_real *[3], Kokkos::LayoutLeft, Kokkos::HostSpace>;
+  using CoordinatesViewType = specfem::mesh::control_nodes<
+      specfem::element::dimension_tag::dim3>::CoordinatesViewType;
 
   /** @brief Thin globe database format version. */
   int format_version = 0;
-
-  /** @brief Planet radius used by the mesher and evaluator length scale. */
-  double planet_radius = 0.0;
-
-  /** @brief Average density used by the mesher and evaluator density scale. */
-  double average_density = 0.0;
 
   /** @brief Number of radial/material regions in the globe model. */
   int nregions = 0;
@@ -152,7 +100,10 @@ struct globe_mesh_data {
   int material_mode = 0;
 
   /** @brief Configuration used to initialize the globe model evaluator. */
-  specfem::globe_model::ModelConfig model_config;
+  specfem::globe::ModelConfig model_config;
+
+  /** @brief Database constants retained for model-catalog validation. */
+  std::optional<specfem::globe::PlanetConstants> planet_constants;
 
   /** @brief Mesher-side model identifiers used for consistency checks. */
   globe_model_verification model_verification;
@@ -168,16 +119,56 @@ struct globe_mesh_data {
   /** @brief Per-element metadata required by the globe material evaluator. */
   std::vector<globe_element_context> element_context;
 
-  /** @brief Surface entries belonging to the exterior acoustic free surface. */
+  /**
+   * @brief Surface entries on the free surface: the top faces of the
+   * crust/mantle elements.
+   *
+   * A **geometric surface, not a boundary condition**. The crust/mantle is
+   * elastic, and for an elastic medium traction-free is the natural condition
+   * of the weak form, so nothing needs to be applied. The list is deliberately
+   * not routed into @c mesh_dim3_base::boundaries: as an
+   * @c acoustic_free_surface it would put a zero-pressure constraint on any
+   * acoustic element that owned one of its faces. It is kept for source and
+   * receiver depth resolution, the ocean load (@ref ocean_load) and surface
+   * output. @c mesh<Globe3D>::check_consistency enforces its placement.
+   */
   globe_boundary_surface free_surface;
 
-  /** @brief Surface entries on the core-mantle boundary. */
+  /**
+   * @brief Surface entries on the core-mantle boundary.
+   *
+   * These are a **cross-check, not an input**. The CMB and ICB are internal
+   * fluid-solid interfaces, and the mesh rediscovers them rather than reading
+   * them: @c mesh_dim3_base::setup_coupled_interfaces promotes every adjacency
+   * edge whose two elements differ in medium tag to @c weakly_conforming. So
+   * nothing consumes this list to build the coupling --
+   * @c mesh<Globe3D>::check_consistency compares it against the promoted faces
+   * between crust/mantle and outer-core elements, and throws on disagreement.
+   * Without that, these fields read as dead code.
+   *
+   * Note the mesher writes **both** sides of each interface into one list:
+   * crust/mantle bottom and outer-core top here, outer-core bottom and
+   * inner-core top in @ref icb.
+   */
   globe_boundary_surface cmb;
 
-  /** @brief Surface entries on the inner-core boundary. */
+  /**
+   * @brief Surface entries on the inner-core boundary.
+   *
+   * A cross-check on the derived fluid-solid interfaces, carrying both sides of
+   * the interface. It is compared only against the promoted faces between
+   * outer-core and inner-core elements, so CMB faces recorded here are
+   * rejected. See @ref cmb.
+   */
   globe_boundary_surface icb;
 
-  /** @brief Surface entries used for ocean-load metadata. */
+  /**
+   * @brief Surface entries carrying the ocean load.
+   *
+   * Empty unless the model has oceans; otherwise a subset of
+   * @ref free_surface (the mesher currently writes the whole free surface).
+   * @c mesh<Globe3D>::check_consistency enforces both.
+   */
   globe_boundary_surface ocean_load;
 };
 

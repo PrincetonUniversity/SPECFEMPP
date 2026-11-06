@@ -96,6 +96,7 @@ private:
   static int rank_; ///< Current MPI rank (-1 if not initialized)
   static int size_; ///< Total number of MPI processes (-1 if not initialized)
   static MPI_Comm comm_; ///< MPI communicator (MPI_COMM_WORLD or user-defined)
+  static bool owns_mpi_; ///< True if initialize() called MPI_Init
 
 public:
   /**
@@ -280,7 +281,8 @@ private:
    * @brief Finalize MPI and reset rank/size to -1
    *
    * Called by Context destructor. Only calls MPI_Finalize if MPI
-   * was initialized by this wrapper (not externally).
+   * was initialized by this wrapper (not externally); in that case it first
+   * synchronizes all ranks of `MPI_COMM_WORLD`, so every rank must call it.
    */
   static void finalize();
 

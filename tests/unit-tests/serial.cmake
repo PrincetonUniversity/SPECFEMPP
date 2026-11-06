@@ -38,6 +38,7 @@ specfem_add_test(io_framework_tests
 specfem_add_test(io_mesh_dim3_globe_tests
   LABELS unit io mesh globe
   SOURCES   io/mesh/dim3_globe/read_mesh.cpp
+            io/mesh/dim3_globe/globe_codes.cpp
             io/mesh/dim3_globe/runner.cpp
   LIBRARIES specfem::io
             specfem::mesh
@@ -70,6 +71,15 @@ specfem_add_test(is_close_tests
             Kokkos::kokkos
 )
 
+specfem_add_test(elasticity_tensor_tests
+  SOURCES   medium/dim3/elastic/anisotropic/elasticity_tensor_tests.cpp
+            medium/dim3/elastic/anisotropic/runner.cpp
+  LIBRARIES globe_evaluator::globe_evaluator
+            specfem_environment
+            gtest_main
+            Kokkos::kokkos
+)
+
 specfem_add_test(logspace_tests
   SOURCES   utilities/logspace_tests.cpp
             utilities/logarithmic_center_tests.cpp
@@ -80,10 +90,19 @@ specfem_add_test(logspace_tests
             Kokkos::kokkos
 )
 
+specfem_add_test(source_frame_rotation_tests
+  SOURCES   source/frame_rotation_tests.cpp
+  LIBRARIES specfem::source
+            specfem::coordinate_systems
+            gtest_main
+            Kokkos::kokkos
+)
+
 specfem_add_test(units_tests
   SOURCES   units/quantity_tests.cpp
             units/unit_cast_tests.cpp
             units/parse_tests.cpp
+            units/globe_constants_tests.cpp
   LIBRARIES specfem::utilities
             gtest_main
             Kokkos::kokkos
@@ -173,6 +192,12 @@ specfem_add_test(datatype_operators_tests
             -lpthread -lm
 )
 
+specfem_add_test(domain_view_tests
+  SOURCES   datatype/domain_view_tests.cpp
+  LIBRARIES gtest_main
+            Kokkos::kokkos
+)
+
 specfem_add_test(fortranio_test
   SOURCES   fortran_io/fortranio_tests.cpp
   LIBRARIES gtest_main
@@ -198,6 +223,7 @@ specfem_add_test(point_tests
             # point/kernels/dim2/poroelastic_isotropic.cpp
             # Dim 3
             point/kernels/dim3/elastic_isotropic.cpp
+            point/kernels/dim3/elastic_anisotropic.cpp
             # Properties
             # Dim 2
             point/properties/dim2/elastic_isotropic.cpp
@@ -208,6 +234,7 @@ specfem_add_test(point_tests
             point/properties/dim2/poroelastic_isotropic.cpp
             # Dim 3
             point/properties/dim3/elastic_isotropic.cpp
+            point/properties/dim3/elastic_anisotropic.cpp
             point/properties/dim3/elastic_isotropic_cosserat.cpp
   LIBRARIES point
             specfem_environment
@@ -251,6 +278,8 @@ specfem_add_test(mesh_dim3_tests
             mesh/dim3/adjacency_graph.cpp
             mesh/dim3/tags.cpp
             mesh/dim3/globe_reader.cpp
+            mesh/dim3/globe_checks.cpp
+            mesh/dim3/model_aniso.cpp
             mesh/dim3/test.cpp
   LIBRARIES gtest_main
             specfem::mesh
@@ -318,15 +347,24 @@ specfem_add_test(assembly_tests
             assembly/compute_source_array/dim2/compute_source_array_from_tensor.cpp
             assembly/compute_source_array/dim3/compute_source_array_from_vector.cpp
             assembly/compute_source_array/dim3/compute_source_array_from_tensor.cpp
+            assembly/info/cartesian_tests.cpp
             assembly/info/compute_tests.cpp
             assembly/info/scatter_minmax_tests.cpp
             assembly/element_intersections/edge_types_tests.cpp
             assembly/element_intersections/face_types_tests.cpp
             assembly/dim3/mesh/shape_functions.cpp
             assembly/dim3/mesh/points.cpp
+            assembly/dim3/mesh/reference_points.cpp
+            assembly/dim3/mesh/spherical_coordinates.cpp
             assembly/dim3/mesh/control_nodes.cpp
+            assembly/dim3/globe_source_placement.cpp
             assembly/dim3/jacobian_matrix/jacobian_matrix.cpp
             assembly/dim3/properties/properties.cpp
+            assembly/dim3/element_types/element_context.cpp
+            assembly/dim3_globe/assembly.cpp
+            assembly/dim3/attenuation/recompute.cpp
+            assembly/dim3/attenuation/globe_attenuation.cpp
+            assembly/dim3/element_intersections/globe_fluid_solid.cpp
   LIBRARIES specfem::mesh
             specfem::assembly
             specfem::quadrature
@@ -363,8 +401,12 @@ specfem_add_test(element_types_tests
   SOURCES   assembly/element_types/runner.cpp
             assembly/element_types/dim2/element_types_tests.cpp
             assembly/element_types/dim3/element_types_tests.cpp
+            assembly/element_types/dim3/globe_context_tests.cpp
   LIBRARIES specfem::assembly
             specfem::element
+            specfem::io
+            specfem::mesh
+            specfem::quadrature
             specfem_environment
             Kokkos::kokkos
             gtest_main
@@ -540,8 +582,16 @@ specfem_add_test(mass_matrix_tests
             medium/mass_matrix/dim2/acoustic.cpp
             medium/mass_matrix/dim2/poroelastic.cpp
             medium/mass_matrix/dim3/elastic_isotropic.cpp
+            medium/mass_matrix/dim3/elastic_anisotropic.cpp
             medium/mass_matrix/dim3/elastic_isotropic_cosserat.cpp
             medium/mass_matrix/dim3/acoustic.cpp
+  LIBRARIES point
+            gtest_main
+)
+
+specfem_add_test(constitutive_tensor_tests
+  SOURCES   medium/constitutive_tensor/main.cpp
+            medium/constitutive_tensor/dim3/elastic_isotropic.cpp
   LIBRARIES point
             gtest_main
 )
@@ -554,6 +604,7 @@ specfem_add_test(stress_tests
             medium/stress/dim2/elastic_isotropic_cosserat.cpp
             medium/stress/dim2/poroelastic_isotropic.cpp
             medium/stress/dim3/elastic_isotropic.cpp
+            medium/stress/dim3/elastic_anisotropic.cpp
             medium/stress/dim3/elastic_isotropic_cosserat.cpp
             medium/stress/dim3/acoustic.cpp
   LIBRARIES point
@@ -566,6 +617,7 @@ specfem_add_test(frechet_derivatives_tests
             medium/frechet_derivatives/dim2/elastic_isotropic.cpp
             medium/frechet_derivatives/dim2/elastic_anisotropic.cpp
             medium/frechet_derivatives/dim3/acoustic.cpp
+            medium/frechet_derivatives/dim3/elastic_anisotropic.cpp
   LIBRARIES point
             gtest_main
 )
@@ -590,6 +642,8 @@ specfem_add_test(medium_attenuation_tests
 specfem_add_test(compute_coupling_tests
   SOURCES   compute_coupling/acoustic_elastic.cpp
             compute_coupling/elastic_acoustic.cpp
+            compute_coupling/dim3/acoustic_elastic.cpp
+            compute_coupling/dim3/elastic_acoustic.cpp
             compute_coupling/nonconforming/acoustic_elastic.cpp
             compute_coupling/nonconforming/elastic_acoustic.cpp
             compute_coupling/runner.cpp
@@ -617,6 +671,8 @@ specfem_add_test(source_class_tests
   SOURCES   source/source.cpp
             source/base_source_tests.cpp
             source/typed_source_tests.cpp
+            source/moment_tensor_resolution_tests.cpp
+            source/force_resolution_tests.cpp
   LIBRARIES source_class
             source_time_functions
             specfem_environment
@@ -634,12 +690,14 @@ specfem_add_test(source_time_function_tests
 
 specfem_add_test(coordinate_systems_tests
   SOURCES   coordinate_systems/utm_tests.cpp
+            coordinate_systems/geocentric_tests.cpp
+            coordinate_systems/basis_rotation_tests.cpp
   LIBRARIES specfem::coordinate_systems
             gtest_main
 )
 
-specfem_add_test(resolve_coordinates_tests
-  SOURCES   assembly/resolve_coordinates/test_resolve_coordinates.cpp
+specfem_add_test(coordinate_conversion_tests
+  SOURCES   assembly/coordinate_conversion/coordinate_conversion_tests.cpp
   LIBRARIES specfem::assembly
             specfem::coordinate_systems
             specfem_environment
@@ -661,20 +719,6 @@ specfem_add_test(wavefield_checkpoint_tests
   SOURCES   periodic_tasks/wavefield_checkpoint.cpp
   LIBRARIES specfem::periodic_tasks
             gtest_main
-)
-
-# The TRILINOS label selects the tests whose bodies are compiled out without
-# Trilinos and only GTEST_SKIP() -- .jenkins/trilinos_compiler_checks.gvy is the
-# one job that builds with SPECFEM_ENABLE_TRILINOS=ON and runs `ctest -L TRILINOS`.
-# element_stiffness_tests below is deliberately unlabelled: it is Trilinos-free by
-# design, so it already runs for real in every other pipeline.
-specfem_add_test(trilinos_smoke_tests
-  SOURCES   linear_system/trilinos_smoke_tests.cpp
-  LIBRARIES specfem::linear_system
-            specfem_environment
-            gtest_main
-            Kokkos::kokkos
-  LABELS    TRILINOS
 )
 
 specfem_add_test(element_stiffness_tests
@@ -712,6 +756,144 @@ specfem_add_test(stiffness_assembler_tests
             ${BOOST_LIBS}
             -lpthread -lm
   LABELS    TRILINOS
+)
+
+# Sum-factored element stiffness kernel held to a host closed-form reference.
+# Without SPECFEM_ENABLE_TENSOROPS only the reference checks and the
+# run-time-error check run.
+specfem_add_test(stiffness_kernel_tests
+  SOURCES linear_system/stiffness_kernel_tests.cpp
+  LIBRARIES specfem::linear_system
+            specfem::quadrature
+            specfem::mesh
+            yaml-cpp
+            specfem_environment
+            specfem::assembly
+            specfem::runtime_configuration
+            timescheme
+            point
+            specfem::algorithms
+            specfem::solver
+            specfem::periodic_tasks
+            ${BOOST_LIBS}
+            -lpthread -lm
+)
+
+# Stiffness kernels launched on level-0 and level-1 scratch must agree; the
+# level-1 path is the fallback when neither kernel fits team shared memory.
+specfem_add_test(stiffness_scratch_level_tests
+  SOURCES linear_system/stiffness_scratch_level_tests.cpp
+  LIBRARIES specfem::quadrature
+            specfem::mesh
+            yaml-cpp
+            specfem_environment
+            specfem::assembly
+            specfem::runtime_configuration
+            timescheme
+            point
+            specfem::algorithms
+            specfem::solver
+            specfem::periodic_tasks
+            ${BOOST_LIBS}
+            -lpthread -lm
+)
+
+# Pure TensorOperations + Kokkos: no fixtures, no assembly. Compiles to a
+# GTEST_SKIP stub when SPECFEM_ENABLE_TENSOROPS is OFF.
+specfem_add_test(tensorops_smoke_tests
+  SOURCES linear_system/tensorops_smoke_tests.cpp
+  LIBRARIES specfem::linear_system
+            specfem_environment
+)
+
+specfem_add_test(sparse_matrix_view_mapping_tests
+  SOURCES linear_system/sparse_matrix_view/mapping_tests.cpp
+  LIBRARIES specfem::linear_system
+            specfem::quadrature
+            specfem::mesh
+            yaml-cpp
+            specfem_environment
+            specfem::assembly
+            specfem::runtime_configuration
+            timescheme
+            point
+            specfem::algorithms
+            specfem::solver
+            specfem::periodic_tasks
+            ${BOOST_LIBS}
+            -lpthread -lm
+)
+
+specfem_add_test(sparse_matrix_view_fe_assembly_tests
+  SOURCES linear_system/sparse_matrix_view/fe_assembly_tests.cpp
+  LIBRARIES specfem::linear_system
+            specfem::quadrature
+            specfem::mesh
+            yaml-cpp
+            specfem_environment
+            specfem::assembly
+            specfem::runtime_configuration
+            timescheme
+            point
+            specfem::algorithms
+            specfem::solver
+            specfem::periodic_tasks
+            ${BOOST_LIBS}
+            -lpthread -lm
+)
+
+specfem_add_test(sparse_matrix_view_matrix_view_tests
+  SOURCES linear_system/sparse_matrix_view/matrix_view_tests.cpp
+  LIBRARIES specfem::linear_system
+            specfem::quadrature
+            specfem::mesh
+            yaml-cpp
+            specfem_environment
+            specfem::assembly
+            specfem::runtime_configuration
+            timescheme
+            point
+            specfem::algorithms
+            specfem::solver
+            specfem::periodic_tasks
+            ${BOOST_LIBS}
+            -lpthread -lm
+)
+
+specfem_add_test(vector_view_expression_tests
+  SOURCES linear_system/vector_view/expression_tests.cpp
+  LIBRARIES specfem::linear_system
+            specfem::quadrature
+            specfem::mesh
+            yaml-cpp
+            specfem_environment
+            specfem::assembly
+            specfem::runtime_configuration
+            timescheme
+            point
+            specfem::algorithms
+            specfem::solver
+            specfem::periodic_tasks
+            ${BOOST_LIBS}
+            -lpthread -lm
+)
+
+specfem_add_test(sparse_matrix_view_field_vector_tests
+  SOURCES linear_system/sparse_matrix_view/field_vector_tests.cpp
+  LIBRARIES specfem::linear_system
+            specfem::quadrature
+            specfem::mesh
+            yaml-cpp
+            specfem_environment
+            specfem::assembly
+            specfem::runtime_configuration
+            timescheme
+            point
+            specfem::algorithms
+            specfem::solver
+            specfem::periodic_tasks
+            ${BOOST_LIBS}
+            -lpthread -lm
 )
 
 specfem_add_test(mass_vector_tests
@@ -769,4 +951,20 @@ specfem_add_test(damping_assembler_tests
             ${BOOST_LIBS}
             -lpthread -lm
   LABELS    TRILINOS
+)
+
+specfem_add_test(seismogram_sampling_tests
+  SOURCES   timescheme/seismogram_sampling_tests.cpp
+  LIBRARIES specfem::runtime_configuration
+            specfem_environment
+            gtest_main
+)
+
+# Globe oracle setup is serial even when the solver uses a parallel backend.
+specfem_add_test(globe_properties_tests
+  LABELS unit assembly globe
+  SOURCES assembly/dim3/properties/globe_properties.cpp
+          assembly/element_types/runner.cpp
+  LIBRARIES specfem::assembly specfem::globe specfem::io
+            specfem::mesh specfem::quadrature specfem_environment gtest_main
 )

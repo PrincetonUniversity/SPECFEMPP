@@ -182,7 +182,7 @@ enum class projection { along_x, along_y, along_z, ellipsoidal };
  * MPI-reduced to the rank owning the nearest face.
  *
  * @param mesh Assembled 3D mesh geometry
- * @param surface Faces defining the target surface
+ * @param surface Faces defining the target surface (compute-indexed geometry)
  * @param target Point to project (only components orthogonal to @p along used)
  * @param along Projection geometry; only @ref projection::along_z is
  * implemented
@@ -192,8 +192,7 @@ enum class projection { along_x, along_y, along_z, ellipsoidal };
 specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
 project_onto_surface(
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
-    const specfem::mesh::acoustic_free_surface<
-        specfem::element::dimension_tag::dim3> &surface,
+    const specfem::assembly::mesh_impl::free_surface_geometry &surface,
     const specfem::point::global_coordinates<
         specfem::element::dimension_tag::dim3> &target,
     projection along = projection::along_z);

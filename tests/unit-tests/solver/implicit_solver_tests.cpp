@@ -79,13 +79,51 @@ TestCase build_case_3d(const std::string &test_name) {
   return test_case;
 }
 
-TEST(ImplicitSolverScope3D, RejectsExplicitBeta) {
+// The operator M + gamma dt C + beta dt^2 K is regular at beta = 0. On a mesh
+// without Stacey boundaries C is empty, so the operator collapses to the
+// lumped mass -- the explicit scheme's effective mass, which is what makes the
+// beta = 0 run reproduce the explicit solver.
+TEST(ImplicitSolver3D, AcceptsExplicitBeta) {
+#ifndef SPECFEM_ENABLE_TENSOROPS
+  GTEST_SKIP() << "SPECFEM++ was built without TensorOperations "
+                  "(SPECFEM_ENABLE_TENSOROPS=OFF); the implicit solver needs "
+                  "the element stiffness kernel.";
+#endif
   auto test_case = build_case_3d("HomogeneousHalfspaceSmallNoABCForceSource");
   specfem::solver::ImplicitSolverConfig config;
   config.newmark.beta = 0;
-  EXPECT_THROW(
-      SolverType solver(test_case.time_scheme, {}, *test_case.assembly, config),
-      std::runtime_error);
+  config.newmark.gamma = static_cast<type_real>(0.5);
+  SolverType solver(test_case.time_scheme, {}, *test_case.assembly, config);
+
+  EXPECT_EQ(solver.damping().getGlobalNumEntries(), 0u)
+      << "the no-ABC fixture must produce an empty damping matrix";
+
+  // A x == M x exactly: beta dt^2 K vanishes and C is empty.
+  const auto &fe = solver.fe();
+  VectorType x(fe.owned_map());
+  x.randomize();
+
+  VectorType a_x(fe.owned_map()), reference(fe.owned_map());
+  solver.system_operator().apply(x, a_x);
+  reference.elementWiseMultiply(static_cast<type_real>(1), solver.mass(), x,
+                                static_cast<type_real>(0));
+
+  type_real scale = 0;
+  type_real max_diff = 0;
+  {
+    const auto a_view = a_x.getLocalViewHost(Tpetra::Access::ReadOnly);
+    const auto ref_view = reference.getLocalViewHost(Tpetra::Access::ReadOnly);
+    for (std::size_t dof = 0;
+         dof < static_cast<std::size_t>(fe.mapping().num_global_dofs());
+         ++dof) {
+      scale = std::max(scale, std::abs(ref_view(dof, 0)));
+      max_diff =
+          std::max(max_diff, std::abs(a_view(dof, 0) - ref_view(dof, 0)));
+    }
+  }
+  ASSERT_GT(scale, static_cast<type_real>(0));
+  EXPECT_LE(max_diff, rel_tol * scale)
+      << "at beta = 0 with no damping the operator must be the lumped mass";
 }
 
 TEST(ImplicitSolverScope3D, RejectsMixedMediumMesh) {
@@ -97,44 +135,47 @@ TEST(ImplicitSolverScope3D, RejectsMixedMediumMesh) {
 
 // One test covers construction and the operator identity: ctest runs every
 // test case in its own process, and the solver construction (stiffness
-// probe + preconditioner setup, ~25 s serial) dominates -- splitting the
+// assembly + preconditioner setup) dominates -- splitting the
 // assertions would pay it once per case.
 //
-// A x must equal M/(beta dt^2) x + gamma/(beta dt) C x + K x entry by entry
-// -- validates the value plumbing of form_operator (K copy, scaled C sum,
-// mass diagonal) through independent applies of the constituent operators.
+// A x must equal (beta dt^2 K + gamma dt C + M) x entry by entry -- this
+// validates the value plumbing of form_operator (scaled K, scaled C, mass
+// diagonal) through independent applies of the constituent operators.
 TEST(ImplicitSolver3D, ConstructsAndOperatorMatchesOnStaceyMesh) {
+#ifndef SPECFEM_ENABLE_TENSOROPS
+  GTEST_SKIP() << "SPECFEM++ was built without TensorOperations "
+                  "(SPECFEM_ENABLE_TENSOROPS=OFF); the implicit solver needs "
+                  "the element stiffness kernel.";
+#endif
   auto test_case = build_case_3d("HomogeneousHalfSpaceStacey");
-  SolverType solver(test_case.time_scheme, {}, *test_case.assembly);
+  specfem::solver::ImplicitSolverConfig config;
+  SolverType solver(test_case.time_scheme, {}, *test_case.assembly, config);
 
-  EXPECT_GT(solver.stiffness()->getGlobalNumEntries(), 0u);
-  EXPECT_GT(solver.damping()->getGlobalNumEntries(), 0u)
+  EXPECT_GT(solver.stiffness().getGlobalNumEntries(), 0u);
+  EXPECT_GT(solver.damping().getGlobalNumEntries(), 0u)
       << "the Stacey fixture must produce a nonempty damping matrix";
-  EXPECT_EQ(solver.system_operator()->getGlobalNumEntries(),
-            solver.stiffness()->getGlobalNumEntries())
+  EXPECT_EQ(solver.system_operator().getGlobalNumEntries(),
+            solver.stiffness().getGlobalNumEntries())
       << "A must live on K's graph";
 
-  const auto &dof_map = solver.dof_map();
+  const auto &fe = solver.fe();
 
   const type_real dt = test_case.time_scheme->get_timestep();
-  const specfem::solver::ImplicitSolverConfig config; // defaults the solver
-                                                      // used
   const type_real beta = config.newmark.beta;
   const type_real gamma = config.newmark.gamma;
-  const type_real mass_coefficient = 1 / (beta * dt * dt);
-  const type_real damping_coefficient = gamma / (beta * dt);
 
-  VectorType x(dof_map.owned_map());
+  VectorType x(fe.owned_map());
   x.randomize();
 
-  VectorType a_x(dof_map.owned_map()), reference(dof_map.owned_map()),
-      scratch(dof_map.owned_map());
-  solver.system_operator()->apply(x, a_x);
+  VectorType a_x(fe.owned_map()), reference(fe.owned_map()),
+      scratch(fe.owned_map());
+  solver.system_operator().apply(x, a_x);
 
-  solver.stiffness()->apply(x, reference);
-  solver.damping()->apply(x, scratch);
-  reference.update(damping_coefficient, scratch, 1);
-  reference.elementWiseMultiply(mass_coefficient, *solver.mass(), x, 1);
+  solver.stiffness().apply(x, scratch);
+  reference.update(beta * dt * dt, scratch, 0);
+  solver.damping().apply(x, scratch);
+  reference.update(gamma * dt, scratch, 1);
+  reference.elementWiseMultiply(static_cast<type_real>(1), solver.mass(), x, 1);
 
   type_real scale = 0;
   type_real max_diff = 0;
@@ -142,7 +183,8 @@ TEST(ImplicitSolver3D, ConstructsAndOperatorMatchesOnStaceyMesh) {
     const auto a_view = a_x.getLocalViewHost(Tpetra::Access::ReadOnly);
     const auto ref_view = reference.getLocalViewHost(Tpetra::Access::ReadOnly);
     for (std::size_t dof = 0;
-         dof < static_cast<std::size_t>(dof_map.num_global_dofs()); ++dof) {
+         dof < static_cast<std::size_t>(fe.mapping().num_global_dofs());
+         ++dof) {
       scale = std::max(scale, std::abs(ref_view(dof, 0)));
       max_diff =
           std::max(max_diff, std::abs(a_view(dof, 0) - ref_view(dof, 0)));
@@ -150,7 +192,7 @@ TEST(ImplicitSolver3D, ConstructsAndOperatorMatchesOnStaceyMesh) {
   }
   ASSERT_GT(scale, static_cast<type_real>(0));
   EXPECT_LE(max_diff, rel_tol * scale)
-      << "A x disagrees with M/(beta dt^2) x + gamma/(beta dt) C x + K x";
+      << "A x disagrees with beta dt^2 K x + gamma dt C x + M x";
 }
 
 } // namespace implicit_solver_test

@@ -68,6 +68,42 @@ const static YAML::Node single_moment_tensor_yaml_2d = []() {
   return node;
 }();
 
+const static YAML::Node single_asymmetric_moment_tensor_yaml_2d = []() {
+  YAML::Node node;
+  node["number-of-sources"] = 1;
+  YAML::Node source;
+  YAML::Node moment_tensor;
+  moment_tensor["x"] = 2000.0;
+  moment_tensor["z"] = 3000.0;
+  moment_tensor["Mxx"] = 1.0;
+  moment_tensor["Mzz"] = 1.0;
+  moment_tensor["Mxz"] = 0.5;
+  moment_tensor["Mzx"] = -0.5;
+  moment_tensor["Ricker"]["factor"] = 1.0e10;
+  moment_tensor["Ricker"]["tshift"] = 30.0;
+  moment_tensor["Ricker"]["f0"] = 1.0;
+  source["moment-tensor"] = moment_tensor;
+  node["sources"].push_back(source);
+  return node;
+}();
+
+const static YAML::Node single_spin_tensor_yaml_2d = []() {
+  YAML::Node node;
+  node["number-of-sources"] = 1;
+  YAML::Node source;
+  YAML::Node spin_tensor;
+  spin_tensor["x"] = 2000.0;
+  spin_tensor["z"] = 3000.0;
+  spin_tensor["Mcyx"] = 1.0;
+  spin_tensor["Mcyz"] = -0.5;
+  spin_tensor["Ricker"]["factor"] = 1.0e10;
+  spin_tensor["Ricker"]["tshift"] = 30.0;
+  spin_tensor["Ricker"]["f0"] = 1.0;
+  source["spin-tensor"] = spin_tensor;
+  node["sources"].push_back(source);
+  return node;
+}();
+
 const static YAML::Node single_force_yaml_2d = []() {
   YAML::Node node;
   node["number-of-sources"] = 1;
@@ -148,6 +184,60 @@ const static YAML::Node single_moment_tensor_yaml_3d = []() {
   moment_tensor["Ricker"]["tshift"] = 30.0;
   moment_tensor["Ricker"]["f0"] = 1.0;
   source["moment-tensor"] = moment_tensor;
+  node["sources"].push_back(source);
+  return node;
+}();
+
+// Asymmetric moment tensor: the lower-triangle keys (Myx, Mzx, Mzy) differ
+// from their transposes, giving a non-zero body couple on elastic_spin media.
+const static YAML::Node single_asymmetric_moment_tensor_yaml_3d = []() {
+  YAML::Node node;
+  node["number-of-sources"] = 1;
+  YAML::Node source;
+  YAML::Node moment_tensor;
+  moment_tensor["x"] = 2000.0;
+  moment_tensor["y"] = 3000.0;
+  moment_tensor["z"] = 2000.0;
+  moment_tensor["Mxx"] = 1.0;
+  moment_tensor["Myy"] = 2.0;
+  moment_tensor["Mzz"] = 3.0;
+  moment_tensor["Mxy"] = 0.5;
+  moment_tensor["Mxz"] = 0.6;
+  moment_tensor["Myz"] = 0.7;
+  moment_tensor["Myx"] = -0.5;
+  moment_tensor["Mzx"] = -0.6;
+  moment_tensor["Mzy"] = -0.7;
+  moment_tensor["Ricker"]["factor"] = 1.0e10;
+  moment_tensor["Ricker"]["tshift"] = 30.0;
+  moment_tensor["Ricker"]["f0"] = 1.0;
+  source["moment-tensor"] = moment_tensor;
+  node["sources"].push_back(source);
+  return node;
+}();
+
+// Spin tensor: a moment tensor driving the micro-rotation field of 3D Cosserat
+// media. Six required Mc keys plus three optional lower-triangle keys.
+const static YAML::Node single_spin_tensor_yaml_3d = []() {
+  YAML::Node node;
+  node["number-of-sources"] = 1;
+  YAML::Node source;
+  YAML::Node spin_tensor;
+  spin_tensor["x"] = 2000.0;
+  spin_tensor["y"] = 3000.0;
+  spin_tensor["z"] = 2000.0;
+  spin_tensor["Mcxx"] = 1.0;
+  spin_tensor["Mcyy"] = 2.0;
+  spin_tensor["Mczz"] = 3.0;
+  spin_tensor["Mcxy"] = 0.5;
+  spin_tensor["Mcxz"] = 0.6;
+  spin_tensor["Mcyz"] = 0.7;
+  spin_tensor["Mcyx"] = -0.5;
+  spin_tensor["Mczx"] = -0.6;
+  spin_tensor["Mczy"] = -0.7;
+  spin_tensor["Ricker"]["factor"] = 1.0e10;
+  spin_tensor["Ricker"]["tshift"] = 30.0;
+  spin_tensor["Ricker"]["f0"] = 1.0;
+  source["spin-tensor"] = spin_tensor;
   node["sources"].push_back(source);
   return node;
 }();
@@ -349,18 +439,24 @@ TEST_P(Read2DSourcesYAMLTest, ReadYAMLnode) {
 
 INSTANTIATE_TEST_SUITE_P(
     IO_TESTS, Read2DSourcesYAMLTest,
-    ::testing::Values(SourceYAMLTestParam2D{ "2D YAML Moment Tensor",
-                                             single_moment_tensor_yaml_2d,
-                                             single_moment_tensor_2d },
-                      SourceYAMLTestParam2D{ "2D YAML Force",
-                                             single_force_yaml_2d,
-                                             single_force_2d },
-                      SourceYAMLTestParam2D{ "2D YAML Cosserat Force",
-                                             single_cosserat_force_yaml_2d,
-                                             single_cosserat_force_2d },
-                      SourceYAMLTestParam2D{ "2D YAML Multiple Sources",
-                                             multiple_sources_yaml_2d,
-                                             multiple_sources_2d }));
+    ::testing::Values(
+        SourceYAMLTestParam2D{ "2D YAML Moment Tensor",
+                               single_moment_tensor_yaml_2d,
+                               single_moment_tensor_2d },
+        SourceYAMLTestParam2D{ "2D YAML Asymmetric Moment Tensor",
+                               single_asymmetric_moment_tensor_yaml_2d,
+                               single_asymmetric_moment_tensor_2d },
+        SourceYAMLTestParam2D{ "2D YAML Spin Tensor",
+                               single_spin_tensor_yaml_2d,
+                               single_spin_tensor_2d },
+        SourceYAMLTestParam2D{ "2D YAML Force", single_force_yaml_2d,
+                               single_force_2d },
+        SourceYAMLTestParam2D{ "2D YAML Cosserat Force",
+                               single_cosserat_force_yaml_2d,
+                               single_cosserat_force_2d },
+        SourceYAMLTestParam2D{ "2D YAML Multiple Sources",
+                               multiple_sources_yaml_2d,
+                               multiple_sources_2d }));
 
 class Read3DSourcesYAMLTest
     : public ::testing::TestWithParam<SourceYAMLTestParam3D> {};
@@ -399,6 +495,12 @@ INSTANTIATE_TEST_SUITE_P(
         SourceYAMLTestParam3D{ "3D YAML Moment Tensor",
                                single_moment_tensor_yaml_3d,
                                single_moment_tensor_3d },
+        SourceYAMLTestParam3D{ "3D YAML Asymmetric Moment Tensor",
+                               single_asymmetric_moment_tensor_yaml_3d,
+                               single_asymmetric_moment_tensor_3d },
+        SourceYAMLTestParam3D{ "3D YAML Spin Tensor",
+                               single_spin_tensor_yaml_3d,
+                               single_spin_tensor_3d },
         SourceYAMLTestParam3D{ "3D YAML Geographic Moment Tensor",
                                single_moment_tensor_geographic_yaml_3d_node,
                                single_moment_tensor_geographic_yaml_3d },

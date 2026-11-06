@@ -7,7 +7,10 @@
 #include "specfem/compute/impl/compute_source_interaction.hpp"
 #include "specfem/linear_system/damping_assembler.hpp"
 #include "specfem/linear_system/mass_vector.hpp"
+#include "specfem/linear_system/sparse_matrix_view/field_vector.hpp"
+#include "specfem/linear_system/sparse_matrix_view/matrix_view.hpp"
 #include "specfem/linear_system/tpetra_assembler.hpp"
+#include "specfem/linear_system/vector_view/vector_view.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/tags.hpp"
 #include <BelosPseudoBlockGmresSolMgr.hpp>
@@ -31,38 +34,50 @@ specfem::solver::ImplicitNewmarkSolver<Tags>::ImplicitNewmarkSolver(
     : time_scheme_(time_scheme), tasks_(tasks), assembly_(assembly),
       config_(config) {
 
-  if (!(config_.newmark.beta > 0)) {
+  if (config_.newmark.beta < 0) {
     throw std::runtime_error(
-        "specfem::solver::ImplicitNewmarkSolver: Newmark beta must be > 0 "
-        "(the explicit beta = 0 limit has no displacement-form operator); "
-        "use the explicit time_marching solver instead.");
+        "specfem::solver::ImplicitNewmarkSolver: Newmark beta must be "
+        "non-negative.");
   }
 
+  if (config_.newmark.gamma < 0 || config_.newmark.gamma > 1) {
+    throw std::runtime_error(
+        "specfem::solver::ImplicitNewmarkSolver: Newmark gamma must lie in "
+        "[0, 1].");
+  }
+
+  // Reject out-of-scope meshes before building the dof maps and graphs: the
+  // element-dense stiffness graph costs gigabytes on a moderately sized mesh,
+  // and the assemblers below would only discard it and throw.
+  specfem::linear_system::validate_single_medium<Tags>(assembly_);
+  specfem::linear_system::validate_stiffness_scope<Tags>(
+      assembly_, specfem::linear_system::StiffnessScope::with_stacey);
+
+  // One description of the mesh -- dof maps, the element-dense stiffness
+  // graph, the block-diagonal damping graph -- shared by every operator
+  // assembled below. Each graph costs two host passes over the connectivity,
+  // so letting the assemblers each build their own would pay for them twice.
+  fe_ = std::make_unique<FEAssemblyType>(MappingType(assembly_));
+
   specfem::linear_system::StiffnessAssembler<Tags> stiffness_assembler(
-      assembly_,
-      specfem::linear_system::StiffnessAssembler<Tags>::default_batch_size,
-      specfem::linear_system::StiffnessScope::with_stacey);
+      assembly_, *fe_, specfem::linear_system::StiffnessScope::with_stacey);
   stiffness_ = stiffness_assembler.assemble();
-  dof_map_ = std::make_unique<specfem::linear_system::DofMap>(
-      stiffness_assembler.dof_map());
 
   specfem::linear_system::DampingAssembler<Tags> damping_assembler(assembly_,
-                                                                   *dof_map_);
+                                                                   *fe_);
   damping_ = damping_assembler.assemble();
 
-  mass_ =
-      specfem::linear_system::assemble_mass_vector<Tags>(assembly_, *dof_map_);
+  mass_ = specfem::linear_system::assemble_mass_vector<Tags>(assembly_, *fe_);
 
-  const auto map = dof_map_->owned_map();
-  u_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
-  v_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
-  a_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
-  u_new_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
-  v_new_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
-  a_new_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
-  rhs_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
-  tmp_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
-  tmp2_ = Teuchos::rcp(new specfem::linear_system::vector_type(map));
+  vectors_ =
+      std::make_unique<specfem::linear_system::VectorSpace>(fe_->owned_map());
+  u_.emplace(vectors_->vector());
+  v_.emplace(vectors_->vector());
+  a_.emplace(vectors_->vector());
+  u_new_.emplace(vectors_->vector());
+  v_new_.emplace(vectors_->vector());
+  a_new_.emplace(vectors_->vector());
+  rhs_.emplace(vectors_->vector());
 
   form_operator(time_scheme_->get_timestep());
 }
@@ -73,84 +88,32 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::form_operator(
     const type_real dt) {
   using scalar_type = specfem::linear_system::scalar_type;
   using crs_matrix_type = specfem::linear_system::crs_matrix_type;
-  using global_ordinal_type = specfem::linear_system::global_ordinal_type;
 
   const type_real beta = config_.newmark.beta;
   const type_real gamma = config_.newmark.gamma;
-  const scalar_type mass_coefficient =
-      static_cast<scalar_type>(1) / (beta * dt * dt);
-  const scalar_type damping_coefficient =
-      static_cast<scalar_type>(gamma / (beta * dt));
 
-  // A on K's static graph: every C block entry is a same-element pair and
-  // the M diagonal is a self-pair, so both sumInto below always hit.
-  auto system = Teuchos::rcp(new crs_matrix_type(stiffness_->getCrsGraph()));
+  const scalar_type stiffness_coefficient =
+      static_cast<scalar_type>(beta * dt * dt);
+  const scalar_type damping_coefficient = static_cast<scalar_type>(gamma * dt);
 
-  const global_ordinal_type num_rows = dof_map_->num_global_dofs();
-  typename crs_matrix_type::nonconst_global_inds_host_view_type columns(
-      "specfem::solver::implicit_operator_columns",
-      stiffness_->getGlobalMaxNumRowEntries());
-  typename crs_matrix_type::nonconst_values_host_view_type values(
-      "specfem::solver::implicit_operator_values",
-      stiffness_->getGlobalMaxNumRowEntries());
+  // ADL cannot reach an operator in specfem::linear_system when both operands
+  // are a scalar and a Tpetra type, so the scaled-matrix spelling below needs
+  // this declaration. diag() returns one of our own types and needs none.
+  using specfem::linear_system::operator*;
 
-  for (global_ordinal_type row = 0; row < num_rows; ++row) {
-    std::size_t row_entries = 0;
-    stiffness_->getGlobalRowCopy(row, columns, values, row_entries);
-    const int replaced = system->replaceGlobalValues(
-        row, static_cast<int>(row_entries), values.data(), columns.data());
-    if (replaced != static_cast<int>(row_entries)) {
-      throw std::runtime_error(
-          "specfem::solver::ImplicitNewmarkSolver: copying K into the "
-          "system operator failed; the graphs disagree.");
-    }
-  }
+  // A lives on K's graph: every C entry is a same-point pair, which is a
+  // same-element pair, and every M entry is a self-pair -- so both additions
+  // are contained in it. The view checks that per row rather than trusting it.
+  specfem::linear_system::SparseMatrixView<MappingType> system(
+      fe_->full_matrix_graph(), fe_->mapping());
 
-  if (damping_->getGlobalNumEntries() > 0) {
-    typename crs_matrix_type::nonconst_global_inds_host_view_type
-        damping_columns("specfem::solver::implicit_damping_columns",
-                        damping_->getGlobalMaxNumRowEntries());
-    typename crs_matrix_type::nonconst_values_host_view_type damping_values(
-        "specfem::solver::implicit_damping_values",
-        damping_->getGlobalMaxNumRowEntries());
-    for (global_ordinal_type row = 0; row < num_rows; ++row) {
-      std::size_t row_entries = 0;
-      damping_->getGlobalRowCopy(row, damping_columns, damping_values,
-                                 row_entries);
-      if (row_entries == 0) {
-        continue;
-      }
-      for (std::size_t k = 0; k < row_entries; ++k) {
-        damping_values(k) *= damping_coefficient;
-      }
-      const int updated = system->sumIntoGlobalValues(
-          row, static_cast<int>(row_entries), damping_values.data(),
-          damping_columns.data());
-      if (updated != static_cast<int>(row_entries)) {
-        throw std::runtime_error(
-            "specfem::solver::ImplicitNewmarkSolver: summing C into the "
-            "system operator failed; a damping entry is outside K's graph.");
-      }
-    }
-  }
+  system.begin_fill();
+  system += stiffness_coefficient * stiffness();  // beta dt^2 K
+  system += damping_coefficient * damping();      // + gamma dt C
+  system += specfem::linear_system::diag(mass()); // + M
+  system.finalize();
 
-  {
-    const auto mass_view = mass_->getLocalViewHost(Tpetra::Access::ReadOnly);
-    for (global_ordinal_type row = 0; row < num_rows; ++row) {
-      const scalar_type diagonal_term =
-          mass_view(static_cast<std::size_t>(row), 0) * mass_coefficient;
-      const int updated =
-          system->sumIntoGlobalValues(row, 1, &diagonal_term, &row);
-      if (updated != 1) {
-        throw std::runtime_error(
-            "specfem::solver::ImplicitNewmarkSolver: the system operator's "
-            "graph is missing a diagonal entry.");
-      }
-    }
-  }
-
-  system->fillComplete(dof_map_->owned_map(), dof_map_->owned_map());
-  system_operator_ = system;
+  system_operator_ = system.matrix();
 
   // MueLu (AMG) deferred: the float-only TROMP Trilinos installs do not
   // link it (MueLu references Xpetra::Matrix<double> unconditionally);
@@ -178,7 +141,7 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::form_operator(
 
   problem_ = Teuchos::rcp(
       new Belos::LinearProblem<scalar_type, multivector_type, operator_type>(
-          system_operator_, u_new_, rhs_));
+          system_operator_, a_new_->rcp(), rhs_->rcp()));
   // Right preconditioning keeps the convergence test on the true residual.
   problem_->setRightPrec(preconditioner_);
 
@@ -195,7 +158,7 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::form_operator(
 template <typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
 void specfem::solver::ImplicitNewmarkSolver<Tags>::extract_source_vector(
-    const int istep, specfem::linear_system::vector_type &f) {
+    const int istep, specfem::linear_system::VectorView &f) {
   constexpr auto forward = specfem::simulation::field_type::forward;
 
   auto &field = assembly_.fields.template get_simulation_field<forward>();
@@ -212,13 +175,8 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::extract_source_vector(
                                                                   istep);
   Kokkos::deep_copy(host_acceleration, device_acceleration);
 
-  auto view = f.getLocalViewHost(Tpetra::Access::OverwriteAll);
-  for (int iglob = 0; iglob < dof_map_->nglob(); ++iglob) {
-    for (int icomp = 0; icomp < dof_map_->ncomp(); ++icomp) {
-      view(static_cast<std::size_t>(dof_map_->gid(iglob, icomp)), 0) =
-          host_acceleration(iglob, icomp);
-    }
-  }
+  specfem::linear_system::copy_field_to_vector(fe_->mapping(),
+                                               host_acceleration, f.vector());
 }
 
 template <typename Tags>
@@ -232,19 +190,10 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::write_state_to_fields() {
   const auto h_v = field_impl.get_host_field_dot();
   const auto h_a = field_impl.get_host_field_dot_dot();
 
-  {
-    const auto u_view = u_->getLocalViewHost(Tpetra::Access::ReadOnly);
-    const auto v_view = v_->getLocalViewHost(Tpetra::Access::ReadOnly);
-    const auto a_view = a_->getLocalViewHost(Tpetra::Access::ReadOnly);
-    for (int iglob = 0; iglob < dof_map_->nglob(); ++iglob) {
-      for (int icomp = 0; icomp < dof_map_->ncomp(); ++icomp) {
-        const auto dof = static_cast<std::size_t>(dof_map_->gid(iglob, icomp));
-        h_u(iglob, icomp) = u_view(dof, 0);
-        h_v(iglob, icomp) = v_view(dof, 0);
-        h_a(iglob, icomp) = a_view(dof, 0);
-      }
-    }
-  }
+  const auto &mapping = fe_->mapping();
+  specfem::linear_system::copy_vector_to_field(mapping, u_->vector(), h_u);
+  specfem::linear_system::copy_vector_to_field(mapping, v_->vector(), h_v);
+  specfem::linear_system::copy_vector_to_field(mapping, a_->vector(), h_a);
 
   // Copy only the three state views (not fields.copy_to_device(), which
   // would also touch the mass storage the assemblers treat as scratch).
@@ -255,32 +204,120 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::write_state_to_fields() {
 
 template <typename Tags>
   requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
-void specfem::solver::ImplicitNewmarkSolver<Tags>::run() {
-  constexpr auto forward = specfem::simulation::field_type::forward;
+void specfem::solver::ImplicitNewmarkSolver<Tags>::apply_predictor_phase() {
   using scalar_type = specfem::linear_system::scalar_type;
 
   const type_real dt = time_scheme_->get_timestep();
-  const type_real beta = config_.newmark.beta;
-  const type_real gamma = config_.newmark.gamma;
+  const scalar_type displacement_coefficient = static_cast<scalar_type>(
+      dt * dt * (static_cast<type_real>(0.5) - config_.newmark.beta));
+  const scalar_type velocity_coefficient =
+      static_cast<scalar_type>(dt * (1 - config_.newmark.gamma));
+
+  const auto &u = *u_;
+  const auto &v = *v_;
+  const auto &a = *a_;
+  // The predictors live in u_new_ / v_new_ until the corrector updates them.
+  auto &u_pred = *u_new_;
+  auto &v_pred = *v_new_;
+
+  u_pred = u + dt * v + displacement_coefficient * a;
+  v_pred = v + velocity_coefficient * a;
+}
+
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
+void specfem::solver::ImplicitNewmarkSolver<Tags>::compute_forces(
+    const int istep) {
+  const auto &u_pred = *u_new_;
+  const auto &v_pred = *v_new_;
+  auto &b = *rhs_;
+
+  // f_{n+1}: the explicit loop pairs STF(istep = n) with the state at
+  // t_{n+1}; the implicit loop must match.
+  extract_source_vector(istep, b);
+  b -= stiffness() * u_pred;
+  if (damping().getGlobalNumEntries() > 0) {
+    b -= damping() * v_pred;
+  }
+}
+
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
+void specfem::solver::ImplicitNewmarkSolver<Tags>::solve(const int istep) {
+  const auto &b = *rhs_;
+  auto &a_new = *a_new_;
+
+  a_new = *a_;
+  problem_->setProblem(a_new.rcp(), b.rcp());
+  if (gmres_->solve() == Belos::Converged) {
+    return;
+  }
+
+  // Single-precision PseudoBlockGmres can abort with a "loss of accuracy"
+  // flag while the solution is fine; trust only the true residual b - A x.
+  const type_real residual_norm =
+      specfem::linear_system::norm2(b - system_operator() * a_new);
+  const type_real rhs_norm = specfem::linear_system::norm2(b);
+  if (!(residual_norm <= config_.gmres_tolerance * rhs_norm)) {
+    std::ostringstream message;
+    message << "specfem::solver::ImplicitNewmarkSolver: GMRES did not "
+               "converge at step "
+            << istep << " (" << gmres_->getNumIters()
+            << " iterations, true relative residual "
+            << residual_norm / rhs_norm << ", requested "
+            << config_.gmres_tolerance << ").";
+    throw std::runtime_error(message.str());
+  }
+  std::ostringstream message;
+  message << "GMRES flagged loss of accuracy at step " << istep
+          << " but the true relative residual " << residual_norm / rhs_norm
+          << " meets the tolerance; "
+          << "continuing.";
+  specfem::Logger::info(message.str());
+}
+
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
+void specfem::solver::ImplicitNewmarkSolver<Tags>::apply_corrector_phase() {
+  using scalar_type = specfem::linear_system::scalar_type;
+
+  const type_real dt = time_scheme_->get_timestep();
+  const scalar_type displacement_coefficient =
+      static_cast<scalar_type>(config_.newmark.beta * dt * dt);
+  const scalar_type velocity_coefficient =
+      static_cast<scalar_type>(config_.newmark.gamma * dt);
+
+  const auto &a_new = *a_new_;
+  auto &u_new = *u_new_;
+  auto &v_new = *v_new_;
+
+  u_new += displacement_coefficient * a_new;
+  v_new += velocity_coefficient * a_new;
+}
+
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
+void specfem::solver::ImplicitNewmarkSolver<Tags>::run() {
+  constexpr auto forward = specfem::simulation::field_type::forward;
+
   const int nstep = time_scheme_->get_max_timestep();
 
-  // Displacement-form Newmark coefficients (see the class docs).
-  const scalar_type c_a0 = static_cast<scalar_type>(1 / (beta * dt * dt));
-  const scalar_type c_a1 = static_cast<scalar_type>(1 / (beta * dt));
-  const scalar_type c_a2 = static_cast<scalar_type>(1 / (2 * beta) - 1);
-  const scalar_type c_c0 = static_cast<scalar_type>(gamma / (beta * dt));
-  const scalar_type c_c1 = static_cast<scalar_type>(gamma / beta - 1);
-  const scalar_type c_c2 =
-      static_cast<scalar_type>(dt * (gamma / (2 * beta) - 1));
-  const scalar_type c_v0 = static_cast<scalar_type>(dt * (1 - gamma));
-  const scalar_type c_v1 = static_cast<scalar_type>(dt * gamma);
+  // Named locally so that the updates below read as the equations they are.
+  auto &u = *u_;
+  auto &v = *v_;
+  auto &a = *a_;
+  auto &u_new = *u_new_;
+  auto &v_new = *v_new_;
+  auto &a_new = *a_new_;
 
-  u_->putScalar(0);
-  v_->putScalar(0);
-  a_->putScalar(0);
+  u = 0;
+  v = 0;
+  a = 0;
   last_step_ = 0;
+  // The sample counter lives on the time scheme and would otherwise carry
+  // over, so a re-run would write past the end of the seismogram buffer.
+  time_scheme_->reset_seismogram_step();
 
-  const bool has_damping = damping_->getGlobalNumEntries() > 0;
   const bool check_steady_state = config_.steady_state_tolerance > 0;
   type_real velocity_scale = 0;
   type_real acceleration_scale = 0;
@@ -292,78 +329,24 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::run() {
   for (const auto [istep, dt_step] : time_scheme_->iterate_forward()) {
     (void)dt_step;
 
-    // b = f_{n+1}: the explicit loop pairs STF(istep = n) with the state at
-    // t_{n+1}; the implicit loop must match.
-    extract_source_vector(istep, *rhs_);
-
-    if (has_damping) {
-      tmp_->update(c_c0, *u_, c_c1, *v_, 0);
-      tmp_->update(c_c2, *a_, static_cast<scalar_type>(1));
-      damping_->apply(*tmp_, *tmp2_);
-      rhs_->update(static_cast<scalar_type>(1), *tmp2_,
-                   static_cast<scalar_type>(1));
-    }
-
-    tmp_->update(c_a0, *u_, c_a1, *v_, 0);
-    tmp_->update(c_a2, *a_, static_cast<scalar_type>(1));
-    rhs_->elementWiseMultiply(static_cast<scalar_type>(1), *mass_, *tmp_,
-                              static_cast<scalar_type>(1));
-
-    // Warm start from u_n: near steady state GMRES converges in a few
-    // iterations.
-    u_new_->update(static_cast<scalar_type>(1), *u_, 0);
-    problem_->setProblem(u_new_, rhs_);
-    if (gmres_->solve() != Belos::Converged) {
-      // Single-precision PseudoBlockGmres can abort with a
-      // "loss of accuracy" flag while the solution is fine; trust only the
-      // true residual b - A u.
-      system_operator_->apply(*u_new_, *tmp_);
-      tmp_->update(static_cast<scalar_type>(1), *rhs_,
-                   static_cast<scalar_type>(-1));
-      const type_real residual_norm = tmp_->norm2();
-      const type_real rhs_norm = rhs_->norm2();
-      if (!(residual_norm <= config_.gmres_tolerance * rhs_norm)) {
-        std::ostringstream message;
-        message << "specfem::solver::ImplicitNewmarkSolver: GMRES did not "
-                   "converge at step "
-                << istep << " (" << gmres_->getNumIters()
-                << " iterations, true relative residual "
-                << residual_norm / rhs_norm << ", requested "
-                << config_.gmres_tolerance << ").";
-        throw std::runtime_error(message.str());
-      }
-      std::ostringstream message;
-      message << "GMRES flagged loss of accuracy at step " << istep
-              << " but the true relative residual " << residual_norm / rhs_norm
-              << " meets the tolerance; "
-              << "continuing.";
-      specfem::Logger::info(message.str());
-    }
-
-    // a_{n+1} = c_a0 (u_{n+1} - u_n - dt v_n) - c_a2 a_n
-    a_new_->update(c_a0, *u_new_, -c_a0, *u_, 0);
-    a_new_->update(static_cast<scalar_type>(-c_a0 * dt), *v_,
-                   static_cast<scalar_type>(1));
-    a_new_->update(-c_a2, *a_, static_cast<scalar_type>(1));
-    // v_{n+1} = v_n + dt (1 - gamma) a_n + dt gamma a_{n+1}
-    v_new_->update(static_cast<scalar_type>(1), *v_, c_v0, *a_, 0);
-    v_new_->update(c_v1, *a_new_, static_cast<scalar_type>(1));
+    apply_predictor_phase();
+    compute_forces(istep);
+    solve(istep);
+    apply_corrector_phase();
 
     bool steady = false;
     if (check_steady_state) {
-      tmp_->update(static_cast<scalar_type>(1), *v_new_,
-                   static_cast<scalar_type>(-1), *v_, 0);
-      const type_real velocity_increment = tmp_->norm2();
-      tmp_->update(static_cast<scalar_type>(1), *a_new_,
-                   static_cast<scalar_type>(-1), *a_, 0);
-      const type_real acceleration_increment = tmp_->norm2();
+      const type_real velocity_increment =
+          specfem::linear_system::norm2(v_new - v);
+      const type_real acceleration_increment =
+          specfem::linear_system::norm2(a_new - a);
       // Increments relative to the running maxima -- the natural problem
       // scales; a displacement criterion would never fire on the
       // constant-velocity drift asymptote (see ImplicitSolverConfig).
       velocity_scale =
-          std::max(velocity_scale, static_cast<type_real>(v_new_->norm2()));
+          std::max(velocity_scale, specfem::linear_system::norm2(v_new));
       acceleration_scale =
-          std::max(acceleration_scale, static_cast<type_real>(a_new_->norm2()));
+          std::max(acceleration_scale, specfem::linear_system::norm2(a_new));
       steady = velocity_scale > 0 && acceleration_scale > 0 &&
                velocity_increment <=
                    config_.steady_state_tolerance * velocity_scale &&
@@ -380,9 +363,9 @@ void specfem::solver::ImplicitNewmarkSolver<Tags>::run() {
       specfem::Logger::info(message.str());
     }
 
-    std::swap(u_, u_new_);
-    std::swap(v_, v_new_);
-    std::swap(a_, a_new_);
+    swap(u, u_new);
+    swap(v, v_new);
+    swap(a, a_new);
 
     write_state_to_fields();
 

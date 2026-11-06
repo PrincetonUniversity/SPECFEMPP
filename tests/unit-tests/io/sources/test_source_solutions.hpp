@@ -15,6 +15,8 @@ using SourceVector3DType = std::vector<std::shared_ptr<
 
 // 2D source test solutions
 extern const SourceVector2DType single_moment_tensor_2d;
+extern const SourceVector2DType single_asymmetric_moment_tensor_2d;
+extern const SourceVector2DType single_spin_tensor_2d;
 extern const SourceVector2DType single_force_2d;
 extern const SourceVector2DType single_cosserat_force_2d;
 extern const SourceVector2DType multiple_sources_2d;
@@ -22,6 +24,8 @@ extern const SourceVector2DType multiple_sources_2d;
 // 3D source test solutions
 extern const SourceVector3DType single_force_3d;
 extern const SourceVector3DType single_moment_tensor_3d;
+extern const SourceVector3DType single_asymmetric_moment_tensor_3d;
+extern const SourceVector3DType single_spin_tensor_3d;
 extern const SourceVector3DType single_moment_tensor_geographic_yaml_3d;
 extern const SourceVector3DType single_moment_tensor_depth_yaml_3d;
 extern const SourceVector3DType multiple_sources_3d;

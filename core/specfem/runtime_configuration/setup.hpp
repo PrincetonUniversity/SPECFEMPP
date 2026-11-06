@@ -228,12 +228,14 @@ public:
   }
 
   /**
-   * @brief Get the maximum seismogram step
+   * @brief Get the number of seismogram samples, including step zero
    *
-   * @return int Maximum seismogram step
+   * @return int Number of seismogram samples
    */
   int get_max_seismogram_step() const {
-    return get_nsteps() / get_nstep_between_samples();
+    const int nstep = get_nsteps();
+    const int sampling_interval = get_nstep_between_samples();
+    return nstep / sampling_interval + (nstep % sampling_interval != 0);
   }
 
   /**

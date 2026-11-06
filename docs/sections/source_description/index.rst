@@ -6,7 +6,8 @@ Source Description
 The sources are defined using YAML format and can be specified in the
 ``sources.yaml`` file. The sources are defined in a list format, allowing for
 any number and combination of sources. The sources can be defined as
-``force``, ``moment-tensor``, or ``adjoint-source``. Each source type has its
+``force``, ``moment-tensor``, ``spin-tensor``, or ``adjoint-source``. Each
+source type has its
 own set of parameters that can be specified. The full description of possible
 values for each source type is given below.
 
@@ -171,6 +172,18 @@ values for each source type is given below.
 
                 :Possible values: [float]
 
+            .. dropdown:: ``Mzx``
+
+                Mzx moment tensor component. Setting ``Mzx`` different from
+                ``Mxz`` defines an asymmetric moment tensor. In 2D Cosserat
+                media (``elastic_psv_t``) the antisymmetric part ``Mxz - Mzx``
+                drives the micro-rotation field; a symmetric tensor produces no
+                rotational coupling.
+
+                :Default value: value of ``Mxz`` (symmetric tensor)
+
+                :Possible values: [float]
+
             .. dropdown:: ``Dirac``
 
                 Definition of Dirac source :ref:`dirac_source_description`
@@ -216,6 +229,104 @@ values for each source type is given below.
                         Mxx: 1e10
                         Mzz: 1e10
                         Mxz: 0.0
+                        Ricker:
+                            factor: 1e10
+                            tshift: 0.0
+                            f0: 1.0
+
+        .. dropdown:: ``spin-tensor``
+
+            Definition of spin tensor source: a moment tensor that drives the
+            micro-rotation field of 2D Cosserat media (``elastic_psv_t``)
+            instead of the displacement field. In 2D the retained rotation is
+            about the y-axis, so the spin tensor reduces to its y-row
+            components ``Mcyx`` and ``Mcyz``. A spin tensor never produces a
+            body-couple (monopole) contribution.
+
+            :Default value: None
+
+            :Possible values: [YAML Node]
+
+            .. dropdown:: ``x``
+
+                X coordinate location of the spin tensor source.
+
+                :Default value: None
+
+                :Possible values: [float]
+
+
+            .. dropdown:: ``z``
+
+                Z coordinate location of the spin tensor source.
+
+                :Default value: None
+
+                :Possible values: [float]
+
+
+            .. dropdown:: ``Mcyx``
+
+                Mcyx spin tensor component: coefficient of the x-derivative of
+                the source shape function driving the micro-rotation field.
+
+                :Default value: None
+
+                :Possible values: [float]
+
+            .. dropdown:: ``Mcyz``
+
+                Mcyz spin tensor component: coefficient of the z-derivative of
+                the source shape function driving the micro-rotation field.
+
+                :Default value: None
+
+                :Possible values: [float]
+
+            .. dropdown:: ``Dirac``
+
+                Definition of Dirac source :ref:`dirac_source_description`
+
+                :Default value: None
+
+                :Possible values: [YAML Node]
+
+
+            .. dropdown:: ``Ricker``
+
+                Definition of Ricker source :ref:`ricker_source_description`
+
+                :Default value: None
+
+                :Possible values: [YAML Node]
+
+
+            .. dropdown:: ``dGaussian``
+
+                Definition of first derivative Gaussian time function :ref:`dgaussian_source_description`
+
+                :Default value: None
+
+                :Possible values: [YAML Node]
+
+            .. dropdown:: ``External``
+
+                Definition of External source :ref:`external_source_description`
+
+                :Default value: None
+
+                :Possible values: [YAML Node]
+
+
+            .. admonition:: Example
+
+                .. code-block:: yaml
+
+                    spin-tensor:
+                        x: 0.0
+                        z: 0.0
+                        Mcyx: 1e10
+                        Mcyz: 0.0
                         Ricker:
                             factor: 1e10
                             tshift: 0.0

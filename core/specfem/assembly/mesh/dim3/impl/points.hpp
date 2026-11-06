@@ -35,7 +35,7 @@ public:
   /**
    * @brief Coordinate view type.
    *
-   * Dimensions: [ndim, nspec, ngllz, nglly, ngllx] for (x, y, z) coordinates.
+   * Dimensions: [nspec, ngllz, nglly, ngllx, ndim] for (x, y, z) coordinates.
    */
   using CoordViewType = Kokkos::View<type_real *****, Kokkos::LayoutLeft,
                                      Kokkos::DefaultExecutionSpace>;
@@ -51,6 +51,38 @@ public:
 
   CoordViewType coord;                     ///< Device coordinates
   CoordViewType::host_mirror_type h_coord; ///< Host coordinates
+
+  /**
+   * @brief Reference (undeformed) coordinates for model sampling.
+   *
+   * Interpolated from the database's reference (spherical + Moho-stretched)
+   * anchors with the same shape functions and element ordering as @ref coord.
+   * Aliases @ref coord when no reference geometry is given — the two
+   * geometries are then identical by definition.
+   *
+   * @warning Model sampling only. Never use these coordinates for the
+   * Jacobian, the mass matrix, or anything geometric — they do not describe
+   * the deformed mesh the solver runs on.
+   */
+  CoordViewType reference_coord;
+  CoordViewType::host_mirror_type h_reference_coord; ///< Host reference
+                                                     ///< coordinates (see
+                                                     ///< @ref reference_coord)
+
+  /**
+   * @brief Setup-only spherical coordinates of the final, deformed GLL points.
+   *
+   * Host storage [nspec, ngllz, nglly, ngllx, component] in compute-element
+   * order, with components (radius in metres, colatitude, longitude in
+   * radians). Uses type_real, like @ref coord. Empty for Cartesian assemblies;
+   * globe assemblies release it after setup. Consumers must not retain view
+   * copies if the allocation is to be freed at that point.
+   *
+   * @warning Not reference geometry for model sampling. The database already
+   * applies the planet radius scale; no further scaling or ellipticity
+   * correction belongs here.
+   */
+  CoordViewType::host_mirror_type h_spherical_coord;
 
   type_real xmin; ///< Minimum x coordinate (for tolerance calculations)
   type_real xmax; ///< Maximum x coordinate (for tolerance calculations)
@@ -84,6 +116,11 @@ public:
    * @param adjacency_graph Element adjacency information
    * @param control_nodes Element control node data
    * @param shape_functions Shape function values at GLL points
+   * @param reference_control_nodes Optional assembled control nodes carrying
+   * the reference (undeformed) anchor coordinates. When non-empty, @ref
+   * reference_coord is contracted from them with the same shape functions and
+   * ordering as @ref coord; when empty, @ref reference_coord aliases @ref
+   * coord.
    */
   points(const int &nspec, const int &ngllz, const int &nglly, const int &ngllx,
          const Kokkos::View<specfem::element::medium_tag *, Kokkos::HostSpace>
@@ -93,7 +130,27 @@ public:
          const specfem::assembly::mesh_impl::control_nodes<dimension_tag>
              &control_nodes,
          const specfem::assembly::mesh_impl::shape_functions<dimension_tag>
-             &shape_functions);
+             &shape_functions,
+         const specfem::assembly::mesh_impl::control_nodes<dimension_tag>
+             &reference_control_nodes = {});
+
+  /**
+   * @brief Build host spherical coordinates from final host coordinates.
+   *
+   * Uses the shared geocentric projection, including globe's reduce()
+   * convention and axis-angle nudges. Call only for globe setup; no device
+   * mirror is allocated.
+   */
+  void compute_spherical_coordinates();
+
+private:
+  /**
+   * @brief Compute coordinate bounds over all quadrature points.
+   *
+   * Fills the min/max members from the device coordinate view and reduces
+   * them across MPI ranks.
+   */
+  void compute_coordinate_bounds();
 };
 
 } // namespace specfem::assembly::mesh_impl

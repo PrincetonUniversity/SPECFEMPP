@@ -46,3 +46,27 @@ runtime data path:
 ```text
 data/dim3_globe/GlobalSmallMesh/DATABASES_MPI/proc??????_specfempp_database.bin
 ```
+
+## Spherical coordinate reference
+
+`spherical_coordinates.txt` contains six corner GLL samples as
+`raw_element_index radius_over_r_planet colatitude longitude` (zero-based
+indices, radians). These were generated with the unmodified
+`xyz_2_rthetaphi_dble` and `reduce` routines from SPECFEM3D_GLOBE commit
+`9c312cb2c991b47484a7f302775f4f01ed9470f8`, using the final, deformed anchors
+of this database. They exercise the same conversion as `prepare_timerun`'s
+`rstore`, followed by the angular normalization used by elastic setup.
+They are conversion reference values, not a full solver-run `rstore` dump:
+this thin-database fixture does not emit the native solver databases.
+
+To regenerate with gfortran available, run from this directory:
+
+```bash
+python3 provenance/dump_spherical_coordinates.py /path/to/specfem3d_globe
+```
+
+The test converts the cache's SI radius back using the database's planet radius
+and compares all three components to `1e-6`. The fixture replaces the older
+`single_chunk_1D` fixture named in issue #2041. Separate tests check every GLL
+point's Cartesian round trip at `1e-9` relative to radius, including when the
+solver stores Cartesian coordinates in single precision.

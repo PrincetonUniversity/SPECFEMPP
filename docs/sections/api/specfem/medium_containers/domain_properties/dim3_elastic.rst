@@ -11,7 +11,7 @@
 ``specfem::medium_container::properties::data_container< dim3, elastic, anisotropic >``
 =======================================================================================
 
-.. doxygengroup:: specfem_medium_properties_dim2_elastic_anisotropic
+.. doxygengroup:: specfem_medium_properties_dim3_elastic_anisotropic
     :content-only:
     :members:
     :private-members:

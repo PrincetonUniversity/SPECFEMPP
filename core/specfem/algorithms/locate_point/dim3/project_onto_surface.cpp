@@ -15,8 +15,7 @@
 specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
 specfem::algorithms::project_onto_surface(
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
-    const specfem::mesh::acoustic_free_surface<
-        specfem::element::dimension_tag::dim3> &surface,
+    const specfem::assembly::mesh_impl::free_surface_geometry &surface,
     const specfem::point::global_coordinates<
         specfem::element::dimension_tag::dim3> &target,
     const specfem::algorithms::projection along) {
@@ -30,14 +29,13 @@ specfem::algorithms::project_onto_surface(
 
   constexpr double huge = std::numeric_limits<double>::max();
 
-  const int nfaces = surface.nelem_acoustic_surface;
+  const int nfaces = surface.nfaces;
 
   double elevation = 0.0; // flat fallback when no free surface is found
   [[maybe_unused]] double elevation_distmin = huge; // only read in MPI builds
 
   if (nfaces > 0) {
     const auto &h_coord = mesh.h_coord;
-    const auto &mesh_to_compute = mesh.h_mesh_to_compute;
 
     // Elements are cubic (ngllz == nglly == ngllx), so a face has ngll x ngll
     // GLL points regardless of orientation.
@@ -62,8 +60,8 @@ specfem::algorithms::project_onto_surface(
     double distmin = huge;
     int sel_face = -1;
     for (int f = 0; f < nfaces; ++f) {
-      const int compute_ispec = mesh_to_compute(surface.index_mapping(f));
-      const auto face = surface.type(f);
+      const int compute_ispec = surface.element_index(f);
+      const auto face = surface.face_type(f);
       for (int ip = lo; ip < hi; ++ip) {
         for (int jp = lo; jp < hi; ++jp) {
           double nx, ny;
@@ -82,9 +80,8 @@ specfem::algorithms::project_onto_surface(
     // The face fixes one reference coordinate; we Newton-solve the other two so
     // the interpolated (x, y) matches the target (z is ignored), then read z.
     if (sel_face >= 0) {
-      const int compute_ispec =
-          mesh_to_compute(surface.index_mapping(sel_face));
-      const auto face = surface.type(sel_face);
+      const int compute_ispec = surface.element_index(sel_face);
+      const auto face = surface.face_type(sel_face);
 
       Kokkos::View<specfem::point::global_coordinates<
                        specfem::element::dimension_tag::dim3> *,

@@ -5,8 +5,8 @@
 
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/io.hpp"
-#include "specfem/linear_system/dof_map.hpp"
 #include "specfem/linear_system/mass_vector.hpp"
+#include "specfem/linear_system/sparse_matrix_view/fe_assembly.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/runtime_configuration.hpp"
@@ -27,6 +27,8 @@ using AssemblyType = specfem::assembly::assembly<dim3_tag>;
 using MassTags = specfem::tags::Tags<dim3_tag, elastic_tag,
                                      specfem::element::property_tag::isotropic,
                                      specfem::element::attenuation_tag::none>;
+using MappingType = specfem::linear_system::FEMapping<dim3_tag, elastic_tag>;
+using FEAssemblyType = specfem::linear_system::FEAssembly<MappingType>;
 
 // Homogeneous density of both fixtures (see the meshfem3D Mesh_Par_file
 // under each fixture's provenance/ directory).
@@ -69,15 +71,16 @@ std::unique_ptr<AssemblyType> build_assembly_3d(const std::string &test_name) {
 
 void check_mass_vector(const std::string &fixture) {
   const auto assembly = build_assembly_3d(fixture);
-  const auto dof_map = specfem::linear_system::DofMap(*assembly, MassTags{});
-  const auto mass = specfem::linear_system::assemble_mass_vector<MassTags>(
-      *assembly, dof_map);
+  const FEAssemblyType fe{ MappingType(*assembly) };
+  const auto &mapping = fe.mapping();
+  const auto mass =
+      specfem::linear_system::assemble_mass_vector<MassTags>(*assembly, fe);
 
   ASSERT_EQ(static_cast<std::size_t>(mass->getGlobalLength()),
-            static_cast<std::size_t>(dof_map.num_global_dofs()));
+            static_cast<std::size_t>(mapping.num_global_dofs()));
 
   const auto view = mass->getLocalViewHost(Tpetra::Access::ReadOnly);
-  const int nglob = dof_map.nglob();
+  const int nglob = mapping.nglob();
 
   // Lumped mass is strictly positive everywhere and, for an isotropic
   // medium, identical across components (same rho * w * J accumulation; the
@@ -85,12 +88,12 @@ void check_mass_vector(const std::string &fixture) {
   double total_mass = 0;
   for (int iglob = 0; iglob < nglob; ++iglob) {
     const type_real reference =
-        view(static_cast<std::size_t>(dof_map.gid(iglob, 0)), 0);
+        view(static_cast<std::size_t>(mapping(iglob, 0)), 0);
     ASSERT_GT(reference, 0) << "non-positive lumped mass at point " << iglob;
     total_mass += static_cast<double>(reference);
     for (int icomp = 1; icomp < ncomp; ++icomp) {
       const type_real other =
-          view(static_cast<std::size_t>(dof_map.gid(iglob, icomp)), 0);
+          view(static_cast<std::size_t>(mapping(iglob, icomp)), 0);
       EXPECT_NEAR(other, reference, 1e-5 * reference)
           << "component " << icomp << " mass differs at point " << iglob;
     }

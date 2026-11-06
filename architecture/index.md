@@ -77,6 +77,7 @@ SPECFEM++ is a complete C++ rewrite of the SPECFEM suite (SPECFEM2D, SPECFEM3D, 
 | [Runtime Configuration](core-components/runtime-configuration.md) | YAML parsing and component factory |
 | [Mesh](core-components/mesh.md) | Mesh data structures read from external mesher |
 | [Assembly](core-components/assembly.md) | Central data hub: GLL-point arrays, fields, properties |
+| [Globe Units and Planet Constants](core-components/globe-units.md) | SI boundary and oracle-only non-dimensionalization |
 | [Medium Physics](core-components/medium-physics.md) | Physics kernels, algorithms, compute orchestration |
 | [Solver](core-components/solver.md) | Time-marching solver and time scheme |
 | [I/O](core-components/io.md) | I/O backends, mesh readers, periodic tasks |

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/element.hpp"
 #include "specfem/mesh.hpp"
 
 #include <fstream>
@@ -13,14 +14,14 @@ namespace specfem::io::mesh::impl::fortran::dim3_globe {
  * These tags classify each element well enough to build SPECFEM++ raw mesh
  * material mappings. They are not the final pointwise GLL material properties;
  * those are evaluated later from @c globe_element_context and reference
- * coordinates by the globe model oracle.
+ * coordinates by the globe model evaluator.
  */
 struct material_tags {
-  /** @brief Globe medium tag for each element, e.g. acoustic or elastic. */
-  std::vector<int> medium_tags;
+  /** @brief Medium tag for each element. */
+  std::vector<specfem::element::medium_tag> medium_tags;
 
-  /** @brief Globe property tag for each element, e.g. isotropic/TISO marker. */
-  std::vector<int> property_tags;
+  /** @brief Property tag for each element (TISO counts as anisotropic). */
+  std::vector<specfem::element::property_tag> property_tags;
 };
 
 /**
@@ -58,8 +59,8 @@ material_tags read_material_tags(std::ifstream &stream,
  * @throws std::runtime_error if unsupported medium or property tags are present
  */
 specfem::mesh::materials<specfem::element::dimension_tag::dim3>
-make_materials(const std::vector<int> &medium_tags,
-               const std::vector<int> &property_tags,
+make_materials(const std::vector<specfem::element::medium_tag> &medium_tags,
+               const std::vector<specfem::element::property_tag> &property_tags,
                const bool attenuation_enabled);
 
 } // namespace specfem::io::mesh::impl::fortran::dim3_globe

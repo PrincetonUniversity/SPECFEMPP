@@ -4,15 +4,22 @@
 ==========================
 
 Utilities for assembling the spectral-element operator into an explicit
-linear system. Provides dense element stiffness
-extraction -- probing the matrix-free element operator with local unit
-vectors -- for the 3D elastic isotropic medium, plus a scope validator that
-rejects meshes outside the supported tag combination. The validator has two
-scopes (``StiffnessScope``): the strict default admits natural boundary
-conditions only, while ``with_stacey`` additionally admits Stacey boundaries
--- valid because the displacement probe runs at zero velocity, where the
-Stacey dashpot contributes nothing to :math:`K`; callers opting in must
-assemble the damping matrix separately.
+linear system. Provides dense element stiffness extraction for the 3D
+elastic isotropic medium: one kernel writes every entry of :math:`K_e` in
+closed form as a sum-factored reduction over quadrature of the constitutive
+tensor through one TensorOperations level graph (:math:`O(N^5)` work per
+element, no workspace). It requires ``SPECFEM_ENABLE_TENSOROPS=ON``; without
+it the code base still compiles, but requesting element stiffness blocks
+(and therefore assembling :math:`K` or constructing the implicit solver)
+throws ``std::runtime_error``. The kernel is held to a host closed-form
+reference and to the matrix-free ``compute_stiffness_interaction`` operator
+by its unit tests. The module also ships a scope validator that rejects
+meshes outside the supported tag combination. The validator has two scopes
+(``StiffnessScope``): the strict default admits natural boundary conditions
+only, while ``with_stacey`` additionally admits Stacey boundaries -- valid
+because :math:`K` is the operator at zero velocity, where the Stacey dashpot
+contributes nothing; callers opting in must assemble the damping matrix
+separately.
 
 When SPECFEM++ is built with Trilinos (``SPECFEM_ENABLE_TRILINOS=ON``), the
 module additionally provides ``DofMap`` -- the per-medium mapping from
@@ -64,8 +71,8 @@ the remaining operators of the equation of motion
   symmetric positive-semidefinite ``ncomp x ncomp`` block per boundary GLL
   point) and ``ncomp`` kernel launches recover all blocks. The matrix lives
   on a compact graph whose entries all exist in the stiffness graph, so an
-  implicit Newmark operator :math:`M/(\beta \Delta t^2) + \gamma/(\beta
-  \Delta t)\, C + K` can be summed on :math:`K`'s graph.
+  implicit Newmark operator :math:`M + \gamma \Delta t\, C + \beta \Delta t^2
+  K` can be summed on :math:`K`'s graph.
 
 ``linear_solver_smoke_test`` gates the Belos + Ifpack2 toolchain (GMRES with
 a RILUK right preconditioner on ``type_real``) ahead of the implicit solver;

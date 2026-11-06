@@ -5,22 +5,16 @@
 #include <utility>
 #include <vector>
 
-namespace specfem::io::mesh::impl::fortran::dim3_globe_impl {
+namespace specfem::io::mesh::impl::fortran::dim3_globe {
 
 /** @brief Oldest thin globe database format this reader accepts. */
-inline constexpr int globe_database_version_min = 3;
+inline constexpr int globe_database_version_min = 5;
 
 /** @brief Newest thin globe database format this reader accepts. */
-inline constexpr int globe_database_version_max = 3;
+inline constexpr int globe_database_version_max = 5;
 
 /** @brief Database material mode indicating properties come from the oracle. */
 inline constexpr int material_oracle = 1;
-
-/** @brief Globe database medium tag for acoustic elements. */
-inline constexpr int medium_acoustic = 1;
-
-/** @brief Globe database medium tag for elastic elements. */
-inline constexpr int medium_elastic = 2;
 
 /**
  * @brief Check that a globe database stream is still readable.
@@ -79,4 +73,4 @@ std::vector<bool> read_counted_logicals(std::ifstream &stream,
 std::string read_fixed_string(std::ifstream &stream,
                               const std::string &section);
 
-} // namespace specfem::io::mesh::impl::fortran::dim3_globe_impl
+} // namespace specfem::io::mesh::impl::fortran::dim3_globe

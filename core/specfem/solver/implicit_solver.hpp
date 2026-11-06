@@ -4,7 +4,8 @@
 
 #include "solver.hpp"
 #include "specfem/enums.hpp"
-#include "specfem/linear_system/dof_map.hpp"
+#include "specfem/linear_system/sparse_matrix_view/fe_assembly.hpp"
+#include "specfem/linear_system/vector_view/vector_view.hpp"
 #include "specfem/periodic_tasks.hpp"
 #include "specfem/timescheme.hpp"
 #include <BelosLinearProblem.hpp>
@@ -14,6 +15,7 @@
 #include <Tpetra_MultiVector.hpp>
 #include <Tpetra_Operator.hpp>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -25,13 +27,14 @@ namespace solver {
  *
  * The defaults (\f$ \beta = 1/4, \gamma = 1/2 \f$, average acceleration) are
  * unconditionally stable and non-dissipative. For steady-state driving use
- * @ref dissipative: \f$ \gamma > 1/2 \f$ introduces algorithmic damping of
+ * @ref dissipative -- \f$ \gamma > 1/2 \f$ introduces algorithmic damping of
  * the modes a large time step cannot resolve, and
  * \f$ \beta = (\gamma + 1/2)^2 / 4 \f$ keeps the scheme unconditionally
  * stable and second-order in the resolved modes.
  */
 struct NewmarkBetaParameters {
-  type_real beta = static_cast<type_real>(0.25); ///< Newmark \f$ \beta > 0 \f$
+  /// Newmark \f$ \beta \ge 0 \f$; 0 is the explicit limit
+  type_real beta = static_cast<type_real>(0.25);
   type_real gamma = static_cast<type_real>(0.5); ///< Newmark \f$ \gamma \f$
 
   /**
@@ -84,36 +87,35 @@ struct ImplicitSolverConfig {
 };
 
 /**
- * @brief Implicit Newmark solver: one Belos GMRES solve per time step on the
- * assembled operator \f$ A = M / (\beta \Delta t^2) + \gamma / (\beta \Delta
- * t) \, C + K \f$.
+ * @brief Implicit Newmark solver: one Belos GMRES solve per time step on an
+ * assembled operator built from \f$ K \f$, \f$ C \f$, and \f$ M \f$.
  *
  * Solves the semi-discrete equation of motion
  * \f$ M \ddot{u} + C \dot{u} + K u = f \f$ with the Newmark-beta update
- * \f[ u_{n+1} = u_n + \Delta t \, v_n + \Delta t^2 \left[ (1/2 - \beta) a_n
- * + \beta \, a_{n+1} \right], \quad
- * v_{n+1} = v_n + \Delta t \left[ (1 - \gamma) a_n + \gamma \, a_{n+1}
- * \right] \f]
- * in displacement form: \f$ A u_{n+1} = b \f$ with
- * \f[ b = f_{n+1}
- * + M \circ \left[ \frac{u_n}{\beta \Delta t^2} + \frac{v_n}{\beta \Delta t}
- *   + \left( \frac{1}{2\beta} - 1 \right) a_n \right]
- * + C \left[ \frac{\gamma}{\beta \Delta t} u_n
- *   + \left( \frac{\gamma}{\beta} - 1 \right) v_n
- *   + \Delta t \left( \frac{\gamma}{2\beta} - 1 \right) a_n \right]. \f]
- * Acceleration and velocity then follow as
- * \f$ a_{n+1} = (u_{n+1} - u_n - \Delta t \, v_n) / (\beta \Delta t^2) -
- * (1/(2\beta) - 1) a_n \f$ and the update above.
+ * \f[ u_{n+1} = u_{\mathrm{pred}} + \beta \Delta t^2 a_{n+1}, \quad
+ * v_{n+1} = v_{\mathrm{pred}} + \gamma \Delta t \, a_{n+1} \f]
+ * \f[ u_{\mathrm{pred}} = u_n + \Delta t \, v_n
+ *   + \Delta t^2 (1/2 - \beta) a_n, \quad
+ * v_{\mathrm{pred}} = v_n + \Delta t (1 - \gamma) a_n. \f]
+ *
+ * Each step solves \f$ A a_{n+1} = b \f$ with
+ * \f$ A = M + \gamma \Delta t \, C + \beta \Delta t^2 K \f$ and
+ * \f[ b = f_{n+1} - C v_{\mathrm{pred}} - K u_{\mathrm{pred}}, \f]
+ * then recovers \f$ u_{n+1} \f$ and \f$ v_{n+1} \f$ from the update above.
+ * No coefficient divides by \f$ \beta \f$, so \f$ \beta = 0 \f$ is a regular
+ * member: at \f$ \beta = 0, \gamma = 1/2 \f$ the operator reduces to
+ * \f$ M + (\Delta t/2) C \f$ and the scheme is the explicit central-difference
+ * update of the production `time_marching` solver.
  *
  * The operators come from `specfem::linear_system`: \f$ K \f$ from the
  * `StiffnessAssembler` (Stacey-tolerant scope), \f$ C \f$ from the
  * `DampingAssembler` (empty on Stacey-free meshes), \f$ M \f$ from
  * `assemble_mass_vector`. \f$ A \f$ is constant for a fixed \f$ \Delta t \f$
  * and is assembled, fill-completed, and preconditioned once; each step is
- * one GMRES solve warm-started from \f$ u_n \f$ with an Ifpack2 right
- * preconditioner (true-residual convergence test). Without fluid-solid
- * coupling \f$ A \f$ is symmetric positive definite; GMRES is used so the
- * solver survives the non-symmetric coupling blocks planned next.
+ * one GMRES solve warm-started from the previous step's unknown with an
+ * Ifpack2 right preconditioner (true-residual convergence test). Without
+ * fluid-solid coupling \f$ A \f$ is symmetric positive definite; GMRES is
+ * used so the solver survives the non-symmetric coupling blocks planned next.
  * MueLu (AMG) is deferred: the float-only cluster Trilinos installs do not
  * link it (issue #1984).
  *
@@ -141,6 +143,13 @@ public:
   constexpr static auto medium_tag = Tags::medium_tag;
 
   using AssemblyType = specfem::assembly::assembly<dimension_tag>;
+
+  /// Dof numbering and connectivity of the medium
+  using MappingType =
+      specfem::linear_system::FEMapping<dimension_tag, medium_tag>;
+
+  /// Maps and sparsity graphs built over @ref MappingType
+  using FEAssemblyType = specfem::linear_system::FEAssembly<MappingType>;
   using multivector_type =
       Tpetra::MultiVector<specfem::linear_system::scalar_type>;
   using operator_type = Tpetra::Operator<specfem::linear_system::scalar_type>;
@@ -151,8 +160,9 @@ public:
    * Assembles \f$ K \f$, \f$ C \f$, and \f$ M \f$, forms \f$ A \f$ for
    * `time_scheme->get_timestep()`, computes the Ifpack2 preconditioner, and
    * builds the Belos GMRES problem. Throws `std::runtime_error` outside the
-   * supported scope (see the class docs) or for `beta <= 0` (the explicit
-   * limit has no displacement-form operator).
+   * supported scope (see the class docs), for `beta < 0`, for `gamma`
+   * outside \f$ [0, 1] \f$, or when SPECFEM++ is built without
+   * `SPECFEM_ENABLE_TENSOROPS` (required by the element stiffness kernel).
    *
    * @param time_scheme Supplies the time step, step count, and seismogram
    *        cadence. Its predictor/corrector phases are NOT used -- the
@@ -174,34 +184,29 @@ public:
   /**
    * @brief Execute the implicit time loop.
    *
-   * Per step: extract the source vector, form the right-hand side from the
-   * previous state, solve \f$ A u_{n+1} = b \f$ (throws on GMRES
-   * non-convergence), recover \f$ a_{n+1}, v_{n+1} \f$, write the state back
-   * to the assembly fields, and run seismogram computation and periodic
-   * tasks on the explicit solver's cadence. Stops early when the
-   * steady-state criterion fires (if enabled).
+   * Per step, in the explicit solver's phase order: predictor, forces,
+   * solve \f$ A a_{n+1} = b \f$ (throws on GMRES non-convergence),
+   * corrector; then write the state back to the assembly fields, and run
+   * seismogram computation and periodic tasks on the explicit solver's cadence.
+   * Stops early when the steady-state criterion fires (if enabled).
    */
   void run() override;
 
-  /// Dof numbering shared by all assembled operators
-  const specfem::linear_system::DofMap &dof_map() const { return *dof_map_; }
+  /// Dof maps and sparsity graphs shared by every assembled operator
+  const FEAssemblyType &fe() const { return *fe_; }
   /// Assembled stiffness matrix \f$ K \f$
-  Teuchos::RCP<const specfem::linear_system::crs_matrix_type>
-  stiffness() const {
-    return stiffness_;
+  const specfem::linear_system::crs_matrix_type &stiffness() const {
+    return *stiffness_;
   }
   /// Assembled Stacey damping matrix \f$ C \f$ (empty without Stacey)
-  Teuchos::RCP<const specfem::linear_system::crs_matrix_type> damping() const {
-    return damping_;
+  const specfem::linear_system::crs_matrix_type &damping() const {
+    return *damping_;
   }
   /// Lumped mass vector \f$ M \f$
-  Teuchos::RCP<const specfem::linear_system::vector_type> mass() const {
-    return mass_;
-  }
+  const specfem::linear_system::vector_type &mass() const { return *mass_; }
   /// Implicit Newmark operator \f$ A \f$ for the configured time step
-  Teuchos::RCP<const specfem::linear_system::crs_matrix_type>
-  system_operator() const {
-    return system_operator_;
+  const specfem::linear_system::crs_matrix_type &system_operator() const {
+    return *system_operator_;
   }
   /// Steps actually executed by the last run() (equals the step count unless
   /// the steady-state criterion stopped the run early)
@@ -226,10 +231,26 @@ private:
   /// Belos problem. Idempotent; exact for any dt since K, C, M are kept.
   void form_operator(const type_real dt);
 
+  /// u_new_ = u_pred, v_new_ = v_pred
+  void apply_predictor_phase();
+
+  /// rhs_ = f_{n+1} - K u_pred - C v_pred; the analogue of update_medium
+  void compute_forces(const int istep);
+
+  /// a_new_ = A^{-1} rhs_, warm-started from a_n; the analogue of the mass
+  /// division. Throws if the true relative residual misses
+  /// `gmres_tolerance`; a Belos "loss of accuracy" flag whose true residual
+  /// is fine is logged and tolerated (single-precision PseudoBlockGmres
+  /// reports it spuriously).
+  void solve(const int istep);
+
+  /// u_new_ += beta dt^2 a_new_, v_new_ += gamma dt a_new_
+  void apply_corrector_phase();
+
   /// Zero the acceleration field, run the production source kernel at
   /// `istep`, and gather the result: f = source vector at t_{n+1}
   void extract_source_vector(const int istep,
-                             specfem::linear_system::vector_type &f);
+                             specfem::linear_system::VectorView &f);
 
   /// Scatter (u, v, a) into the assembly's forward field (host views, then
   /// device) so seismograms and periodic tasks see the current state
@@ -242,7 +263,8 @@ private:
   AssemblyType assembly_;       ///< Assembly (probe scratch + output mirror)
   ImplicitSolverConfig config_; ///< Solver configuration
 
-  std::unique_ptr<specfem::linear_system::DofMap> dof_map_; ///< Dof numbering
+  /// Dof maps and sparsity graphs, built once and shared by the assemblers
+  std::unique_ptr<FEAssemblyType> fe_;
   Teuchos::RCP<specfem::linear_system::crs_matrix_type> stiffness_;       ///< K
   Teuchos::RCP<specfem::linear_system::crs_matrix_type> damping_;         ///< C
   Teuchos::RCP<specfem::linear_system::vector_type> mass_;                ///< M
@@ -251,20 +273,21 @@ private:
   Teuchos::RCP<operator_type> preconditioner_; ///< Ifpack2 right prec
   Teuchos::RCP<Belos::LinearProblem<specfem::linear_system::scalar_type,
                                     multivector_type, operator_type>>
-      problem_; ///< Belos linear problem A u_new = b
+      problem_; ///< Belos linear problem A a_new = b
   Teuchos::RCP<Belos::SolverManager<specfem::linear_system::scalar_type,
                                     multivector_type, operator_type>>
       gmres_; ///< Belos GMRES solver manager
 
-  Teuchos::RCP<specfem::linear_system::vector_type> u_;     ///< u_n
-  Teuchos::RCP<specfem::linear_system::vector_type> v_;     ///< v_n
-  Teuchos::RCP<specfem::linear_system::vector_type> a_;     ///< a_n
-  Teuchos::RCP<specfem::linear_system::vector_type> u_new_; ///< u_{n+1}
-  Teuchos::RCP<specfem::linear_system::vector_type> a_new_; ///< a_{n+1}
-  Teuchos::RCP<specfem::linear_system::vector_type> v_new_; ///< v_{n+1}
-  Teuchos::RCP<specfem::linear_system::vector_type> rhs_;   ///< b
-  Teuchos::RCP<specfem::linear_system::vector_type> tmp_;   ///< scratch
-  Teuchos::RCP<specfem::linear_system::vector_type> tmp2_;  ///< scratch
+  /// Dof map and expression scratch shared by every state vector below
+  std::unique_ptr<specfem::linear_system::VectorSpace> vectors_;
+
+  std::optional<specfem::linear_system::VectorView> u_;     ///< u_n
+  std::optional<specfem::linear_system::VectorView> v_;     ///< v_n
+  std::optional<specfem::linear_system::VectorView> a_;     ///< a_n
+  std::optional<specfem::linear_system::VectorView> u_new_; ///< u_{n+1}
+  std::optional<specfem::linear_system::VectorView> a_new_; ///< a_{n+1}
+  std::optional<specfem::linear_system::VectorView> v_new_; ///< v_{n+1}
+  std::optional<specfem::linear_system::VectorView> rhs_;   ///< b
 
   int last_step_ = 0; ///< Steps executed by the last run()
 };

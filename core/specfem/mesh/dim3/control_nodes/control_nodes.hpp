@@ -44,14 +44,13 @@ public:
    */
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
 
-private:
-  /** @brief Compile-time dimension value extracted from template parameter */
-
   /**
    * @brief Kokkos view type for storing node coordinates.
    *
    * Two-dimensional view with layout [nnodes][3] storing xyz coordinates.
    * Uses LayoutLeft for column-major ordering and HostSpace for CPU memory.
+   * Shared by every container that stores anchor-node coordinates (e.g.
+   * @c specfem::mesh::globe_mesh_data).
    */
   using CoordinatesViewType =
       Kokkos::View<type_real *[3], Kokkos::LayoutLeft, Kokkos::HostSpace>;
@@ -64,8 +63,6 @@ private:
    */
   using ControlNodeIndexViewType =
       Kokkos::View<int **, Kokkos::LayoutLeft, Kokkos::HostSpace>;
-
-public:
   /**
    * @brief Default constructor.
    *

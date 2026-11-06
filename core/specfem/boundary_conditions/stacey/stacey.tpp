@@ -831,16 +831,20 @@ impl_enforce_traction(const elastic_psv_t_type &, const isotropic_cosserat_type 
 
   return;
 }
-// 3D Elastic Isotropic Stacey Boundary Conditions not using SIMD types
+// 3D Elastic Stacey Boundary Conditions not using SIMD types
+//
+// Parameterization-agnostic: the traction only needs the impedances rho_vp and
+// rho_vs, which every 3D elastic point container exposes (the anisotropic one
+// via its Voigt averages), so isotropic and anisotropic share one definition.
 template <
-    typename PointBoundaryType, typename PointPropertyType,
-    typename PointVelocityType, typename ViewType,
+    specfem::element::property_tag PropertyTag, typename PointBoundaryType,
+    typename PointPropertyType, typename PointVelocityType, typename ViewType,
     typename std::enable_if_t<!PointBoundaryType::simd::using_simd, int> = 0>
-KOKKOS_FUNCTION void
-impl_enforce_traction(const elastic_type &, const isotropic_type &,
-                      const PointBoundaryType &boundary,
-                      const PointPropertyType &property,
-                      const PointVelocityType &velocity, ViewType &traction) {
+KOKKOS_FUNCTION void impl_enforce_traction(
+    const elastic_type &,
+    const std::integral_constant<specfem::element::property_tag, PropertyTag> &,
+    const PointBoundaryType &boundary, const PointPropertyType &property,
+    const PointVelocityType &velocity, ViewType &traction) {
 
   static_assert(PointBoundaryType::boundary_tag ==
                     specfem::element::boundary_tag::stacey,
@@ -849,10 +853,6 @@ impl_enforce_traction(const elastic_type &, const isotropic_type &,
   static_assert(PointPropertyType::medium_tag ==
                     specfem::element::medium_tag::elastic,
                 "Medium tag must be elastic (3D)");
-
-  static_assert(PointPropertyType::property_tag ==
-                    specfem::element::property_tag::isotropic,
-                "Property tag must be isotropic");
 
   constexpr static auto tag = PointBoundaryType::boundary_tag;
 
@@ -883,16 +883,20 @@ impl_enforce_traction(const elastic_type &, const isotropic_type &,
   return;
 }
 
-// 3D Elastic Isotropic Stacey Boundary Conditions using SIMD types
+// 3D Elastic Stacey Boundary Conditions using SIMD types
+//
+// Parameterization-agnostic: the traction only needs the impedances rho_vp and
+// rho_vs, which every 3D elastic point container exposes (the anisotropic one
+// via its Voigt averages), so isotropic and anisotropic share one definition.
 template <
-    typename PointBoundaryType, typename PointPropertyType,
-    typename PointVelocityType, typename ViewType,
+    specfem::element::property_tag PropertyTag, typename PointBoundaryType,
+    typename PointPropertyType, typename PointVelocityType, typename ViewType,
     typename std::enable_if_t<PointBoundaryType::simd::using_simd, int> = 0>
-KOKKOS_FUNCTION void
-impl_enforce_traction(const elastic_type &, const isotropic_type &,
-                      const PointBoundaryType &boundary,
-                      const PointPropertyType &property,
-                      const PointVelocityType &velocity, ViewType &traction) {
+KOKKOS_FUNCTION void impl_enforce_traction(
+    const elastic_type &,
+    const std::integral_constant<specfem::element::property_tag, PropertyTag> &,
+    const PointBoundaryType &boundary, const PointPropertyType &property,
+    const PointVelocityType &velocity, ViewType &traction) {
 
   static_assert(PointBoundaryType::boundary_tag ==
                     specfem::element::boundary_tag::stacey,
@@ -901,10 +905,6 @@ impl_enforce_traction(const elastic_type &, const isotropic_type &,
   static_assert(PointPropertyType::medium_tag ==
                     specfem::element::medium_tag::elastic,
                 "Medium tag must be elastic (3D)");
-
-  static_assert(PointPropertyType::property_tag ==
-                    specfem::element::property_tag::isotropic,
-                "Property tag must be isotropic");
 
   constexpr auto tag = PointBoundaryType::boundary_tag;
 

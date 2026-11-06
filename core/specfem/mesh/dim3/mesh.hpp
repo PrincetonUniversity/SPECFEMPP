@@ -171,6 +171,43 @@ struct mesh<specfem::simulation::model::Globe3D> : public mesh_dim3_base {
   /** @brief Globe-specific reference geometry and model-oracle context. */
   specfem::mesh::globe_mesh_data globe;
 
+  /**
+   * @brief Check that the database holds to the rules the mesher guarantees.
+   *
+   * Two kinds of rule are checked. Some facts are stated more than once --
+   * for example, the fluid-solid interfaces are implied by medium tags and
+   * adjacency, and also recorded as the CMB and ICB face lists -- and each such
+   * pair must agree; the CMB and ICB lists are checked separately, each against
+   * the faces between the two regions it separates. Other sections must
+   * respect the mesher's meshing restrictions:
+   * - the chunk count is 1, 2, 3 or 6;
+   * - there are no absorbing (Stacey) faces with 3 or 6 chunks, and none on
+   *   inner-core elements otherwise;
+   * - every free-surface face is the top face of a crust/mantle element;
+   * - the ocean load is empty without oceans, and on the free surface with
+   *   them.
+   *
+   * Any database the mesher writes passes, whatever its chunk count.
+   *
+   * @note Call after @c setup_coupled_interfaces, which derives the
+   * connections between elements of different medium tags that this compares
+   * against.
+   *
+   * @throws std::runtime_error if any rule is broken
+   */
+  void check_consistency() const;
+
+  /**
+   * @brief Check that the mesh is within what the solver supports.
+   *
+   * Distinct from @ref check_consistency: a self-consistent database can still
+   * describe a configuration the solver cannot handle, such as a fluid-solid
+   * interface split across MPI ranks.
+   *
+   * @throws std::runtime_error if the mesh uses an unsupported configuration
+   */
+  void check_supported() const;
+
   mesh() = default;
   ~mesh() = default;
 };

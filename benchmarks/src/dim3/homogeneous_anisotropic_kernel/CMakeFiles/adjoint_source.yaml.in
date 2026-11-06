@@ -1,0 +1,13 @@
+number-of-sources: 1
+sources:
+  - adjoint-source:
+      station_name: X40
+      network_name: DB
+      x: 40000.0
+      y: 50000.0
+      z: -50000.0
+      source_surf: false
+      External:
+        format: ascii
+        stf:
+          X-component: "@CURRENT_BENCHMARK_BUILD_DIR@/adjoint_sources/DB.X40.S3.BXX.adj"

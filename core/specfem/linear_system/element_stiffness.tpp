@@ -1,10 +1,10 @@
 #pragma once
 
-#include "specfem/execution.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/linear_system/element_stiffness.hpp"
-#include "specfem/linear_system/impl/stiffness_probe_kernel.hpp"
-#include "specfem/mesh_entity.hpp"
+#include "specfem/linear_system/impl/stiffness_kernel.hpp"
 #include <Kokkos_Core.hpp>
+#include <memory>
 #include <stdexcept>
 
 template <int NGLL, typename Tags>
@@ -16,8 +16,7 @@ void specfem::linear_system::compute_element_stiffness(
     const Kokkos::View<type_real ***, Kokkos::LayoutRight,
                        Kokkos::DefaultExecutionSpace> &k_e) {
 
-  using KernelType =
-      specfem::linear_system_impl::stiffness_probe_kernel<NGLL, Tags>;
+  using KernelType = specfem::linear_system_impl::StiffnessKernel<NGLL, Tags>;
 
   if (batch.empty()) {
     return;
@@ -39,27 +38,34 @@ void specfem::linear_system::compute_element_stiffness(
         "with ndof = ncomp * NGLL^3.");
   }
 
-  specfem::mesh_entity::element_grid<specfem::element::dimension_tag::dim3,
-                                     specfem::mesh_entity::Grid<NGLL>>
-      element_grid{};
+  // Throws in builds without SPECFEM_ENABLE_TENSOROPS (see the impl header).
+  const KernelType kernel(assembly);
+  kernel(batch, k_e);
+  Kokkos::fence();
+}
 
-  using ParallelConfig = typename KernelType::ParallelConfig;
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
+specfem::linear_system::ElementStiffnessKernel
+specfem::linear_system::make_element_stiffness_kernel(
+    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
+        &assembly) {
 
-  specfem::execution::ChunkedDomainIterator chunk(ParallelConfig(), batch,
-                                                  element_grid);
-
-  KernelType kernel(assembly, batch.begin_index(), k_e);
-
-  // No level-1 fallback: the chunk scratch types bind team_scratch(0) in
-  // their constructors, so scratch requested at level 1 would never be used.
-  if (KernelType::shmem_size() <= chunk.scratch_size_max(0)) {
-    kernel(
-        chunk.set_scratch_size(0, Kokkos::PerTeam(KernelType::shmem_size())));
-  } else {
+  // Runtime -> compile-time NGLL, mirroring the runtime dispatcher below
+  // (only 5 is instantiated for 3D meshes).
+  if (assembly.mesh.element_grid != 5) {
     throw std::runtime_error(
-        "specfem::linear_system::compute_element_stiffness: not enough "
-        "level-0 scratch memory for the stiffness probe kernel.");
+        "specfem::linear_system::make_element_stiffness_kernel: only "
+        "NGLL == 5 is instantiated for 3D meshes.");
   }
 
-  Kokkos::fence();
+  // Stateless (the graph lives in team scratch), but bound once so the
+  // mesh-grid validation runs here rather than per batch. shared_ptr because
+  // std::function requires a copyable target. Throws in builds without
+  // SPECFEM_ENABLE_TENSOROPS.
+  const auto kernel =
+      std::make_shared<specfem::linear_system_impl::StiffnessKernel<5, Tags>>(
+          assembly);
+  return [kernel](const specfem::datatype::ElementIndexRange &batch,
+                  const auto &k_e) { (*kernel)(batch, k_e); };
 }

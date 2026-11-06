@@ -1,6 +1,8 @@
 #include "specfem/attenuation.hpp"
+#include "specfem/globe/planet_constants.hpp"
 #include "specfem/io.hpp"
 #include "specfem/io/fortranio/interface.hpp"
+#include "specfem/io/mesh/impl/fortran/dim3_globe/attenuation_config.hpp"
 #include "specfem/io/mesh/impl/fortran/dim3_globe/common.hpp"
 #include "specfem/io/mesh/impl/fortran/dim3_globe/read_adjacency_graph.hpp"
 #include "specfem/io/mesh/impl/fortran/dim3_globe/read_boundaries.hpp"
@@ -13,12 +15,13 @@
 #include <fstream>
 #include <stdexcept>
 #include <string>
+#include <utility>
+#include <vector>
 
 specfem::mesh::globe3d_mesh specfem::io::read_globe_mesh(
     const std::string &database_file,
     const specfem::attenuation::Setup &attenuation_setup) {
   namespace reader = specfem::io::mesh::impl::fortran::dim3_globe;
-  namespace reader_impl = specfem::io::mesh::impl::fortran::dim3_globe_impl;
   using Dimension = specfem::element::dimension_tag;
 
   std::ifstream stream(database_file, std::ios::in | std::ios::binary);
@@ -27,13 +30,13 @@ specfem::mesh::globe3d_mesh specfem::io::read_globe_mesh(
                              database_file);
   }
 
-  const auto [magic, version] = reader_impl::read_magic(stream);
+  const auto [magic, version] = reader::read_magic(stream);
   if (magic != "SPECFEMPP_GLOBE_DB") {
     throw std::runtime_error("Not a SPECFEM++ globe mesh database: " +
                              database_file);
   }
-  if (version < reader_impl::globe_database_version_min ||
-      version > reader_impl::globe_database_version_max) {
+  if (version < reader::globe_database_version_min ||
+      version > reader::globe_database_version_max) {
     throw std::runtime_error("Unsupported globe mesh database version " +
                              std::to_string(version));
   }
@@ -41,9 +44,22 @@ specfem::mesh::globe3d_mesh specfem::io::read_globe_mesh(
   specfem::mesh::globe3d_mesh mesh;
   auto &globe = mesh.globe;
   globe.format_version = version;
+  double attenuation_source_frequency = 0.0;
 
+  int planet_schema_version = 0;
+  int number_of_planet_values = 0;
   specfem::io::fortran_read_line(stream, &globe.model_config.planet_type,
-                                 &globe.planet_radius, &globe.average_density);
+                                 &planet_schema_version,
+                                 &number_of_planet_values);
+  if (number_of_planet_values <= 0 || number_of_planet_values > 1024) {
+    throw std::runtime_error("Invalid globe planet value count " +
+                             std::to_string(number_of_planet_values));
+  }
+  std::vector<double> planet_values(number_of_planet_values);
+  specfem::io::fortran_read_line(stream, &planet_values);
+  globe.planet_constants = specfem::globe::PlanetConstants::from_database(
+      specfem::globe::planet_from_type(globe.model_config.planet_type),
+      planet_schema_version, std::move(planet_values));
 
   int ngnod = 0;
   specfem::io::fortran_read_line(stream, &ngnod, &mesh.element_grid.ngllx,
@@ -60,31 +76,28 @@ specfem::mesh::globe3d_mesh specfem::io::read_globe_mesh(
       &model_config.attenuation, &model_config.oceans,
       &globe.has_reference_geometry);
   specfem::io::fortran_read_line(stream, &globe.material_mode);
-  if (globe.material_mode != reader_impl::material_oracle) {
+  if (globe.material_mode != reader::material_oracle) {
     throw std::runtime_error(
         "Only oracle-backed globe databases are supported");
   }
 
-  model_config.model_name =
-      reader_impl::read_fixed_string(stream, "model name");
+  model_config.model_name = reader::read_fixed_string(stream, "model name");
   globe.model_verification.codes =
-      reader_impl::read_counted_ints(stream, "model codes");
+      reader::read_counted_ints(stream, "model codes");
   globe.model_verification.flags =
-      reader_impl::read_counted_logicals(stream, "model flags");
+      reader::read_counted_logicals(stream, "model flags");
   specfem::io::fortran_read_line(stream, &model_config.nchunks,
                                  &model_config.nex_xi, &model_config.nex_eta);
-  specfem::io::fortran_read_line(
-      stream, &model_config.min_attenuation_period,
-      &model_config.max_attenuation_period,
-      &globe.model_verification.attenuation_source_frequency);
+  specfem::io::fortran_read_line(stream, &model_config.min_attenuation_period,
+                                 &model_config.max_attenuation_period,
+                                 &attenuation_source_frequency);
   model_config.validate();
   if (model_config.attenuation) {
     const double expected_source_frequency =
         1.0 / std::sqrt(model_config.min_attenuation_period *
                         model_config.max_attenuation_period);
     const double source_frequency_error =
-        std::abs(globe.model_verification.attenuation_source_frequency -
-                 expected_source_frequency);
+        std::abs(attenuation_source_frequency - expected_source_frequency);
     if (source_frequency_error >
         1.0e-12 * std::abs(expected_source_frequency)) {
       throw std::runtime_error(
@@ -98,29 +111,26 @@ specfem::mesh::globe3d_mesh specfem::io::read_globe_mesh(
   reader::read_control_node_indices(stream, mesh, ngnod, nnode);
   reader::read_boundaries(stream, mesh);
   reader::read_adjacency_graph(stream, mesh);
-  reader_impl::check_stream(stream, "end of file");
+  reader::check_stream(stream, "end of file");
 
-  const bool attenuation_enabled =
-      model_config.attenuation && attenuation_setup.enabled;
-  mesh.materials =
-      reader::make_materials(material_tags.medium_tags,
-                             material_tags.property_tags, attenuation_enabled);
+  mesh.attenuation = reader::make_attenuation_config(
+      model_config, globe.model_verification.flags, attenuation_setup);
+
+  // Unlike the Cartesian reader (io/mesh/impl/fortran/dim3/read_materials.cpp),
+  // which tags an element non-attenuating when its Q is 9999, globe elements
+  // are tagged from the attenuation flag and their medium: Q is only known
+  // per GLL point once the oracle is sampled at assembly setup, after the
+  // element types are built.
+  mesh.materials = reader::make_materials(material_tags.medium_tags,
+                                          material_tags.property_tags,
+                                          mesh.attenuation.enabled);
   mesh.tags = specfem::mesh::tags<Dimension::dim3>(
       mesh.nspec, mesh.materials, mesh.adjacency_graph, mesh.boundaries);
 
   mesh.setup_coupled_interfaces();
-  if (attenuation_enabled) {
-    if (!attenuation_setup.f0.has_value()) {
-      throw std::runtime_error(
-          "Globe attenuation requires an explicit reference frequency");
-    }
-    mesh.attenuation = {
-      true, attenuation_setup.f0.value(), attenuation_setup.band,
-      specfem::attenuation::compute_tau_sigma<specfem::constants::N_SLS>(
-          attenuation_setup.band)
-    };
-    mesh.materials.apply_attenuation(mesh.attenuation);
-  }
+  mesh.check_consistency();
+  mesh.check_supported();
+  mesh.materials.apply_attenuation(mesh.attenuation);
 
   return mesh;
 }

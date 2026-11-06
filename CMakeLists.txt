@@ -27,6 +27,7 @@ option(SPECFEM_INSTALL "Creates clean executable directory. Location Controlled 
 option(SPECFEM_ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
 option(SPECFEM_ENABLE_METIS "Enable METIS partitioning support in xdecompose_mesh" OFF)
 option(SPECFEM_ENABLE_TRILINOS "Enable Trilinos implicit solvers (Tpetra/Belos/Ifpack2/MueLu/Amesos2)" OFF)
+option(SPECFEM_ENABLE_TENSOROPS "Enable TensorOperations sum-factored element stiffness kernels" OFF)
 option(SPECFEM_BUILD_MESHFEM3D_GLOBE "Build the SPECFEM3D_GLOBE meshfem3D executable" OFF)
 option(SPECFEM_BUILD_BENCHMARKS "Benchmarks included" ON)
 option(SPECFEM_NIGHTLY_BENCHMARKS "Include nightly benchmarks" OFF)
@@ -192,6 +193,10 @@ include("${CMAKE_SOURCE_DIR}/cmake/metis.cmake")
 # resolved first and Trilinos validates against the same Kokkos.
 include("${CMAKE_SOURCE_DIR}/cmake/trilinos.cmake")
 
+# TensorOperations (sum-factored element stiffness). MUST be after
+# cmake/kokkos.cmake: the interface target links SPECFEM++'s Kokkos.
+include("${CMAKE_SOURCE_DIR}/cmake/tensorops.cmake")
+
 if (SPECFEM_ENABLE_SIMD)
     message(STATUS "Enabling SIMD")
     add_compile_definitions(SPECFEM_ENABLE_SIMD)
@@ -245,23 +250,19 @@ set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
 # =================================
 
 # ========== MESHFEM3D_GLOBE =============
-if(SPECFEM_BUILD_MESHFEM3D_GLOBE)
-  message(STATUS "Configuring xmeshfem3D_globe")
-  set(_saved_CMAKE_MESSAGE_LOG_LEVEL ${CMAKE_MESSAGE_LOG_LEVEL})
-  set(CMAKE_MESSAGE_LOG_LEVEL ${SUBDIR_LOG_LEVEL})
-  add_subdirectory(fortran/meshfem3d_globe)
-  set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
+message(STATUS "Configuring xmeshfem3D_globe")
+set(_saved_CMAKE_MESSAGE_LOG_LEVEL ${CMAKE_MESSAGE_LOG_LEVEL})
+set(CMAKE_MESSAGE_LOG_LEVEL ${SUBDIR_LOG_LEVEL})
+add_subdirectory(fortran/meshfem3d_globe)
+set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
 
-  # ISO_C_BINDING wrappers exposing the globe model catalog to C/C++ (issue
-  # #2001). Kept in a sibling directory so fortran/meshfem3d_globe/ stays a
-  # clean mirror of upstream specfem3d_globe. Must come after the globe
-  # subdirectory above: it consumes the meshfem3D_globe::* targets and the .mod
-  # files they generate.
-  message(STATUS "Configuring globe_evaluator")
-  add_subdirectory(fortran/globe_evaluator)
-else()
-  message(STATUS "Skipping xmeshfem3D_globe (SPECFEM_BUILD_MESHFEM3D_GLOBE=OFF)")
-endif()
+# ISO_C_BINDING wrappers exposing the globe model catalog to C/C++ (issue
+# #2001). Kept in a sibling directory so fortran/meshfem3d_globe/ stays a
+# clean mirror of upstream specfem3d_globe. Must come after the globe
+# subdirectory above: it consumes the meshfem3D_globe::* targets and the .mod
+# files they generate.
+message(STATUS "Configuring globe_evaluator")
+add_subdirectory(fortran/globe_evaluator)
 # =================================
 
 # ========== DECOMPOSE_MESH =========
@@ -379,8 +380,9 @@ if (SPECFEM_INSTALL AND NOT SPECFEM_USE_SKBUILD)
         COMMAND ${CMAKE_COMMAND} --install . --prefix ${CMAKE_INSTALL_PREFIX} --component executables
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Organizing specfem++ executables into: ${CMAKE_INSTALL_PREFIX}"
-        # Make this run after your main targets
-        DEPENDS specfem xmeshfem2D xmeshfem3D xadj_seismogram xdecompose_mesh # list all your targets here
+        # Wait for every executable installed by the executables component.
+        DEPENDS specfem xmeshfem2D xmeshfem3D xmeshfem3D_globe
+                xadj_seismogram xdecompose_mesh
     )
 
     # Add the prefix directory to the clean target

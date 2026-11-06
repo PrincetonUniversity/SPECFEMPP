@@ -11,7 +11,7 @@ mesh + quadrature + sources + receivers
          │
          ▼
   assembly<DimensionTag>
-    ├── mesh             (GLL coords, Jacobians, mass matrices)
+    ├── mesh             (GLL coords, Jacobians, mass matrices, plus reference GLL coords for Globe3D model sampling)
     ├── properties       (ρ, vp, vs, κ, μ, … at every GLL point)
     ├── fields           (simulation_field for forward/adjoint/backward/buffer)
     ├── jacobian_matrix  (element Jacobians for coordinate transforms)
@@ -22,7 +22,7 @@ mesh + quadrature + sources + receivers
     ├── conforming_interfaces     (coupled-medium continuity data)
     ├── nonconforming_interfaces  (non-conforming mesh interface data)
     ├── mpi_interfaces   (MPI face communication patterns)
-    ├── element_types    (per-element physics classification)
+    ├── element_types    (per-element physics classification, plus globe region context for Globe3D)
     └── boundary_values  (stored boundary data for adjoint reconstructions)
 ```
 

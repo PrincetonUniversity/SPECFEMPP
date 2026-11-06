@@ -23,14 +23,13 @@ specfem::mesh::globe_boundary_surface read_surface(std::ifstream &stream,
                                                    const int nspec);
 
 /**
- * @brief Read globe boundary surfaces and populate generic mesh boundaries.
+ * @brief Read globe boundary surfaces into @c mesh.globe.
  *
  * The thin database stores free surface, CMB, ICB, and ocean-load surfaces in
- * that order. All surfaces are retained in @c mesh.globe; the free surface is
- * also copied into @c mesh.boundaries as the acoustic free-surface boundary
- * used by the generic 3-D assembly path. Globe databases currently do not
- * provide absorbing boundaries, so that part of @c mesh.boundaries is
- * initialized empty.
+ * that order, and all four are retained in @c mesh.globe. None of them is a
+ * boundary condition, so @c mesh.boundaries is initialized empty: the free
+ * surface is the top of the elastic crust/mantle, where traction-free is the
+ * natural condition, and globe databases provide no absorbing boundaries.
  *
  * @param stream Input stream positioned at the first globe boundary surface
  * @param mesh Globe mesh whose globe surfaces and generic boundaries are set

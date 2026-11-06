@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <vector>
 
-namespace specfem::io::mesh::impl::fortran::dim3_globe_impl {
+namespace specfem::io::mesh::impl::fortran::dim3_globe {
 
 void set_coordinate_bounds(
     specfem::mesh::control_nodes<specfem::element::dimension_tag::dim3>
@@ -27,11 +27,11 @@ void set_coordinate_bounds(
   }
 }
 
-} // namespace specfem::io::mesh::impl::fortran::dim3_globe_impl
+} // namespace specfem::io::mesh::impl::fortran::dim3_globe
 
 int specfem::io::mesh::impl::fortran::dim3_globe::read_control_node_coordinates(
     std::ifstream &stream, specfem::mesh::globe3d_mesh &mesh, const int ngnod) {
-  namespace reader_impl = specfem::io::mesh::impl::fortran::dim3_globe_impl;
+  namespace reader_impl = specfem::io::mesh::impl::fortran::dim3_globe;
 
   int nnode = 0;
   specfem::io::fortran_read_line(stream, &nnode);
@@ -48,7 +48,7 @@ int specfem::io::mesh::impl::fortran::dim3_globe::read_control_node_coordinates(
                Kokkos::MemoryTraits<Kokkos::Unmanaged>>
       x_view(x.data(), nnode), y_view(y.data(), nnode), z_view(z.data(), nnode);
   Kokkos::parallel_for(
-      "specfem::io::mesh::dim3_globe::read_control_nodes::coordinates",
+      "specfem::io::mesh::impl::fortran::dim3_globe::read_control_nodes::coordinates",
       Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0, nnode),
       [=](const int inode) {
         coordinates(inode, 0) = x_view(inode);
@@ -69,7 +69,7 @@ int specfem::io::mesh::impl::fortran::dim3_globe::read_control_node_coordinates(
   const bool has_reference_geometry = globe.has_reference_geometry;
   auto reference_coordinates = globe.reference_coordinates;
   Kokkos::parallel_for(
-      "specfem::io::mesh::dim3_globe::read_control_nodes::reference_"
+      "specfem::io::mesh::impl::fortran::dim3_globe::read_control_nodes::reference_"
       "coordinates",
       Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0, nnode),
       [=](const int inode) {
@@ -100,7 +100,7 @@ void specfem::io::mesh::impl::fortran::dim3_globe::read_control_node_indices(
   auto control_node_index = mesh.control_nodes.control_node_index;
   int invalid_anchor_count = 0;
   Kokkos::parallel_reduce(
-      "specfem::io::mesh::dim3_globe::read_control_nodes::control_node_index",
+      "specfem::io::mesh::impl::fortran::dim3_globe::read_control_nodes::control_node_index",
       Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace, Kokkos::Rank<2>>(
           { 0, 0 }, { mesh.nspec, ngnod }),
       [=](const int ispec, const int globe_anchor,

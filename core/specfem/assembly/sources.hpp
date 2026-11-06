@@ -61,7 +61,7 @@ template <> struct SourceSets<specfem::element::dimension_tag::dim3> {
   constexpr static auto medium_set =
       MEDIUM_SET(elastic, acoustic, elastic_spin);
   constexpr static auto property_set =
-      PROPERTY_SET(isotropic, isotropic_cosserat);
+      PROPERTY_SET(isotropic, anisotropic, isotropic_cosserat);
   constexpr static auto boundary_set = BOUNDARY_SET(
       none, stacey, acoustic_free_surface, composite_stacey_dirichlet);
   constexpr static auto wavefield_set =
@@ -130,21 +130,18 @@ public:
    * @brief Construct source assembly from mesh and source configuration
    *
    * @param sources Vector of source objects
-   * @param mesh Assembled finite element mesh
-   * @param raw_mesh Source mesh; supplies UTM config and free-surface faces for
-   *        source location
+   * @param mesh Assembled finite element mesh (carries the coordinate
+   *        projection and free-surface geometry used for source location)
    * @param jacobian_matrix Jacobian transformation matrices
    * @param element_types Element classification by medium and property
    * @param t0 Initial simulation time
    * @param dt Time step size
    * @param nsteps Total number of time steps
    */
-  template <specfem::simulation::model ModelTag>
   sources(
       std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
           &sources,
       const specfem::assembly::mesh<DimensionTag> &mesh,
-      const specfem::mesh::mesh<ModelTag> &raw_mesh,
       const specfem::assembly::jacobian_matrix<DimensionTag> &jacobian_matrix,
       const specfem::assembly::element_types<DimensionTag> &element_types,
       const type_real t0, const type_real dt, const int nsteps);

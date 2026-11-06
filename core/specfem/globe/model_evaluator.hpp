@@ -1,0 +1,183 @@
+#pragma once
+
+#include "specfem/globe/model_config.hpp"
+#include "specfem/globe/planet_constants.hpp"
+
+#include <atomic>
+#include <cstddef>
+#include <string>
+#include <vector>
+
+namespace specfem::globe {
+
+/**
+ * @brief Move-only RAII boundary around the SPECFEM3D_GLOBE model catalog.
+ *
+ * Construction replays the database's model configuration into the Fortran
+ * catalog. All public coordinates and material values are SI; conversion to
+ * and from the catalog's non-dimensional convention is confined to this
+ * wrapper.
+ *
+ * Only one instance may own the process-global Fortran catalog at a time.
+ * Catalog calls are serialized process-wide because upstream routines retain
+ * module and `save` state; evaluation remains intended for setup only.
+ */
+class ModelEvaluator {
+public:
+  /** @brief Quadrature dimensions compiled into the model catalog. */
+  struct Dimensions {
+    int ngllx = 0;
+    int nglly = 0;
+    int ngllz = 0;
+    int n_sls = 0;
+
+    /** @brief Number of GLL points in one element. */
+    [[nodiscard]] std::size_t points_per_element() const {
+      return static_cast<std::size_t>(ngllx) * static_cast<std::size_t>(nglly) *
+             static_cast<std::size_t>(ngllz);
+    }
+  };
+
+  /** @brief SI material properties at every GLL point of one element. */
+  struct ElementProperties {
+    std::vector<double> rho; ///< Density, kg/m^3.
+    std::vector<double> vpv; ///< Vertical P velocity, m/s.
+    std::vector<double> vph; ///< Horizontal P velocity, m/s.
+    std::vector<double> vsv; ///< Vertical S velocity, m/s.
+    std::vector<double> vsh; ///< Horizontal S velocity, m/s.
+    std::vector<double> eta; ///< Dimensionless anisotropy parameter.
+
+    std::vector<double> vp_iso; ///< Isotropic P velocity, m/s.
+    std::vector<double> vs_iso; ///< Isotropic S velocity, m/s.
+    std::vector<double> qmu;    ///< Dimensionless shear quality factor.
+    std::vector<double> qkappa; ///< Dimensionless bulk quality factor.
+
+    /** @brief Elastic coefficients in Pa, point-major with 21 per point. */
+    std::vector<double> cij;
+
+    std::vector<double> gc_prime; ///< Dimensionless azimuthal anisotropy.
+    std::vector<double> gs_prime; ///< Dimensionless azimuthal anisotropy.
+    bool is_anisotropic = false;
+  };
+
+  /** @brief Ellipticity spline constructed by the reference-model catalog. */
+  struct EllipticitySpline {
+    std::vector<double> radii;  ///< Spline knots, m.
+    std::vector<double> values; ///< Dimensionless ellipticity at each knot.
+    /** @brief Second derivatives with respect to SI radius, 1/m^2. */
+    std::vector<double> second_derivatives;
+  };
+
+  /** @brief SI values from the catalog's direct PREM reference path. */
+  struct ReferencePoint {
+    double rho = 0.0;
+    double vpv = 0.0;
+    double vph = 0.0;
+    double vsv = 0.0;
+    double vsh = 0.0;
+    double eta = 0.0;
+    double vp_iso = 0.0;
+    double vs_iso = 0.0;
+    double qkappa = 0.0;
+    double qmu = 0.0;
+  };
+
+  /**
+   * @brief Configure the catalog from the resolved model selection.
+   * @param config Opaque `MODEL_CONFIG` values read from the database.
+   * @param log_path Optional catalog log path; empty redirects to `/dev/null`.
+   */
+  explicit ModelEvaluator(const ModelConfig &config,
+                          const std::string &log_path = "");
+
+  /**
+   * @brief Validate database constants against the configured model catalog.
+   * @param planet_constants Selected planet's SI constants read from the
+   * database.
+   * @param catalog_codes Mesher-side model codes used for skew detection.
+   * The skew check is skipped when both @p catalog_codes and
+   * @p catalog_flags are empty.
+   * @param catalog_flags Mesher-side model flags used for skew detection.
+   */
+  void validate_database_constants(
+      const PlanetConstants &planet_constants,
+      const std::vector<int> &catalog_codes = {},
+      const std::vector<bool> &catalog_flags = {}) const;
+
+  ~ModelEvaluator();
+
+  ModelEvaluator(const ModelEvaluator &) = delete;
+  ModelEvaluator &operator=(const ModelEvaluator &) = delete;
+  ModelEvaluator(ModelEvaluator &&other) noexcept;
+  ModelEvaluator &operator=(ModelEvaluator &&other) noexcept;
+
+  /**
+   * @brief Evaluate one element and return only SI material values.
+   * @param iregion_code Globe radial region code.
+   * @param idoubling Globe radial-zone flag.
+   * @param rmin_si Minimum shell radius, m.
+   * @param rmax_si Maximum shell radius, m.
+   * @param elem_in_crust Whether the element intersects the crust model.
+   * @param elem_in_mantle Whether the element intersects the mantle model.
+   * @param xyz_si Point-major Cartesian coordinates, m.
+   */
+  [[nodiscard]] ElementProperties
+  evaluate_element(int iregion_code, int idoubling, double rmin_si,
+                   double rmax_si, bool elem_in_crust, bool elem_in_mantle,
+                   const std::vector<double> &xyz_si) const;
+
+  /** @brief Quadrature dimensions compiled into the catalog. */
+  [[nodiscard]] static Dimensions dimensions();
+
+  /**
+   * @brief Evaluate the pure 1-D reference density used by gravity.
+   * @param r_si Radius in metres, in the closed interval [0, planet radius].
+   * @return Density in kg/m^3.
+   */
+  [[nodiscard]] double reference_density(double r_si) const;
+
+  /** @brief Return the catalog's Clairaut/Radau ellipticity spline in SI. */
+  [[nodiscard]] EllipticitySpline ellipticity_spline() const;
+
+  /** @brief Whether any wrapper currently owns the Fortran catalog. */
+  [[nodiscard]] static bool is_active() noexcept;
+
+  /** @brief Evaluate the direct PREM reference path in SI. Test use only. */
+  [[nodiscard]] ReferencePoint prem_reference(double r_si, int idoubling,
+                                              int iregion_code) const;
+
+private:
+  struct Scales {
+    double length = 0.0;
+    double density = 0.0;
+    double velocity = 0.0;
+
+    [[nodiscard]] double to_catalog_length(double value_si) const {
+      return value_si / length;
+    }
+
+    [[nodiscard]] double to_si_density(double value) const {
+      return value * density;
+    }
+
+    [[nodiscard]] double to_si_velocity(double value) const {
+      return value * velocity;
+    }
+
+    [[nodiscard]] double to_si_modulus(double value) const {
+      return value * density * velocity * velocity;
+    }
+  };
+
+  [[nodiscard]] static Scales query_scales();
+  void validate_radii() const;
+  void release() noexcept;
+
+  Scales scales_;
+  Planet planet_ = Planet::earth;
+  bool owns_state_ = false;
+
+  static std::atomic_bool is_active_;
+};
+
+} // namespace specfem::globe

@@ -54,6 +54,15 @@ void specfem::assembly::compute_source_array(
 
     specfem::assembly::compute_source_array_impl::from_tensor(
         *tensor_source, mesh, jacobian_matrix, source_array);
+
+    // Accumulate the monopole (body-couple) contribution on top of the dipole
+    // term. Existing tensor sources default to no monopole contribution, so they are unaffected.
+    if (tensor_source->has_monopole_contribution()) {
+      specfem::assembly::compute_source_array_impl::
+          accumulate_vector_contribution(
+              tensor_source->get_local_coordinates(),
+              tensor_source->get_body_couple_vector(), source_array);
+    }
     break;
   }
   default:

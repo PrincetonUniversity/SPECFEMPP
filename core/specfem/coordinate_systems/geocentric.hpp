@@ -9,15 +9,19 @@ namespace coordinate_systems {
 /**
  * @brief Geocentric spherical coordinates (physics/SPECFEM convention).
  *
- * @f$ \theta @f$ is colatitude (0 at North Pole, @f$ \pi @f$ at South Pole).
+ * @f$ \theta @f$ is colatitude (0 at North Pole, @f$ \pi @f$ at South Pole),
+ * @f$ \phi @f$ is longitude (0 at the prime meridian). This matches globe's
+ * angular conventions (`src/shared/rthetaphi_xyz.f90`).
  *
- * Conversion to @ref specfem::point::global_coordinates requires ellipticity
- * and topography corrections (Globe3D simulations). Not yet implemented.
+ * @f$ r @f$ is a physical radius in meters. The transforms to and from this
+ * representation (geocentric @f$ \leftrightarrow @f$ Cartesian and
+ * geographic @f$ \leftrightarrow @f$ geocentric) live in
+ * @ref geocentric_projection.hpp.
  */
 class geocentric_coordinates final
     : public coordinates<specfem::element::dimension_tag::dim3> {
 public:
-  double r;     ///< meters (radius from Earth center)
+  double r;     ///< meters (radius from the planet center)
   double theta; ///< radians (colatitude: 0 at North Pole, pi at South
                 ///< Pole)
   double phi;   ///< radians (longitude: 0 at prime meridian)

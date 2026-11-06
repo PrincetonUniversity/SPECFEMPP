@@ -3,26 +3,135 @@
 #include "specfem/assembly/sources/impl/locate_sources.tpp"
 
 #include "specfem/algorithms.hpp"
+#include "specfem/assembly/coordinate_conversion.hpp"
 #include "specfem/assembly/mesh.hpp"
-#include "specfem/coordinate_systems/utm.hpp"
+#include "specfem/coordinate_systems/basis_rotation.hpp"
+#include "specfem/coordinate_systems/geocentric_projection.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/setup.hpp"
 #include "specfem/source.hpp"
 #include <Kokkos_Core.hpp>
 #include <memory>
+#include <numbers>
 #include <optional>
+#include <variant>
 #include <vector>
+
+// ── Source directional-quantity resolution (dim3) ───────────────────────────
+//
+// A moment tensor or force read in its local geocentric (theta, phi, r) frame
+// is rotated into the Cartesian mesh frame here, once the source position is
+// resolved. The rotation is selected from the mesh projection, exactly as
+// to_cartesian selects the position transform: a globe evaluates the local
+// frame at the source colatitude/longitude; a regional (UTM or Cartesian) mesh
+// uses the fixed flat-mesh orientation. A quantity already read in the
+// Cartesian frame is left untouched.
+namespace specfem::assembly::sources_impl {
+
+using LocalFrameRotation = specfem::coordinate_systems::BasisMatrix<
+    specfem::coordinate_systems::CartesianFrame,
+    specfem::coordinate_systems::GeocentricFrame, double>;
+
+/**
+ * @brief Local-to-Cartesian rotation on a flat regional mesh.
+ *
+ * On a UTM or plain Cartesian mesh the local axes coincide with the mesh axes:
+ * x = East = e_phi, y = North = -e_theta, z = Up = e_r. That is the globe
+ * rotation evaluated at theta = 0, phi = -pi/2, which reproduces the regional
+ * CMTSOLUTION relabel Mxx = Mpp, Myy = Mtt, Mzz = Mrr, Mxy = -Mtp, Mxz = Mrp,
+ * Myz = -Mrt and passes an East/North/Up force through unchanged.
+ */
+LocalFrameRotation flat_mesh_rotation();
+
+/**
+ * @brief Rotation from the source's local geocentric frame into the mesh.
+ *
+ * @param source Source with resolved global (mesh) coordinates
+ * @param mesh Assembled mesh carrying the projection
+ * @return Rotation mapping (theta, phi, r) components to mesh (x, y, z)
+ */
+LocalFrameRotation local_frame_rotation(
+    const specfem::sources::source<specfem::element::dimension_tag::dim3>
+        &source,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh);
+
+void resolve_source_frame(
+    specfem::sources::source<specfem::element::dimension_tag::dim3> &source,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh);
+
+} // namespace specfem::assembly::sources_impl
+
+specfem::assembly::sources_impl::LocalFrameRotation
+specfem::assembly::sources_impl::flat_mesh_rotation() {
+  return specfem::coordinate_systems::rotation_matrix<
+      specfem::coordinate_systems::CartesianFrame,
+      specfem::coordinate_systems::GeocentricFrame>(0.0,
+                                                    -std::numbers::pi / 2.0);
+}
+
+specfem::assembly::sources_impl::LocalFrameRotation
+specfem::assembly::sources_impl::local_frame_rotation(
+    const specfem::sources::source<specfem::element::dimension_tag::dim3>
+        &source,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
+        &mesh) {
+
+  if (!std::holds_alternative<specfem::assembly::mesh_impl::globe_projection>(
+          mesh.projection.value)) {
+    return specfem::assembly::sources_impl::flat_mesh_rotation();
+  }
+
+  // On a globe the local frame rotates with position: recover the source
+  // colatitude/longitude from its resolved (planet-centred) Cartesian position.
+  const auto global = source.get_global_coordinates();
+  const auto geocentric = specfem::coordinate_systems::to<
+      specfem::coordinate_systems::geocentric_coordinates>(
+      specfem::coordinate_systems::cartesian_coordinates<
+          specfem::element::dimension_tag::dim3>(global.x, global.y, global.z));
+  return specfem::coordinate_systems::rotation_matrix<
+      specfem::coordinate_systems::CartesianFrame,
+      specfem::coordinate_systems::GeocentricFrame>(geocentric.theta,
+                                                    geocentric.phi);
+}
+
+void specfem::assembly::sources_impl::resolve_source_frame(
+    specfem::sources::source<specfem::element::dimension_tag::dim3> &source,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
+        &mesh) {
+
+  using MomentTensorSource =
+      specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3>;
+  using ForceSource =
+      specfem::sources::force<specfem::element::dimension_tag::dim3>;
+  using GeocentricFrame = specfem::coordinate_systems::GeocentricFrame;
+
+  if (auto *mt = dynamic_cast<MomentTensorSource *>(&source)) {
+    if (const auto *local =
+            std::get_if<specfem::sources::MomentTensor<GeocentricFrame>>(
+                &mt->moment())) {
+      mt->set_cartesian_components(specfem::sources::rotate(
+          *local,
+          specfem::assembly::sources_impl::local_frame_rotation(source, mesh)));
+    }
+  } else if (auto *f = dynamic_cast<ForceSource *>(&source)) {
+    if (const auto *local =
+            std::get_if<specfem::sources::ForceVector<GeocentricFrame>>(
+                &f->force_value())) {
+      f->set_cartesian_components(specfem::sources::rotate(
+          *local,
+          specfem::assembly::sources_impl::local_frame_rotation(source, mesh)));
+    }
+  }
+}
 
 // ── Constructor template definition ─────────────────────────────────────────
 
 template <specfem::element::dimension_tag DimensionTag>
-template <specfem::simulation::model ModelTag>
 specfem::assembly::sources<DimensionTag>::sources(
     std::vector<std::shared_ptr<specfem::sources::source<DimensionTag>>>
         &sources,
     const specfem::assembly::mesh<DimensionTag> &mesh,
-    const specfem::mesh::mesh<ModelTag> &raw_mesh,
     const specfem::assembly::jacobian_matrix<DimensionTag> &jacobian_matrix,
     const specfem::assembly::element_types<DimensionTag> &element_types,
     const type_real t0, const type_real dt, const int nsteps)
@@ -46,21 +155,25 @@ specfem::assembly::sources<DimensionTag>::sources(
   int nsources = 0;
   int nsource_indices = 0;
 
-  // UTM config for projecting geographic coordinates. Only dim3 carries it;
-  // a suppressed (Cartesian) mesh leaves it nullopt.
-  std::optional<specfem::coordinate_systems::utm_projection_config> utm_config;
-  if constexpr (ModelTag == specfem::simulation::model::Cartesian3D) {
-    if (!raw_mesh.suppress_utm_projection)
-      utm_config = specfem::coordinate_systems::utm_projection_config{
-        raw_mesh.utm_projection_zone, false
-      };
+  // Resolve any generic coordinates to global coordinates using mesh context.
+  // The conversion (UTM for a regional mesh, spherical for a globe mesh,
+  // pass-through otherwise) is selected from the mesh model. Sources
+  // constructed with (x,y,z) directly have no read_coordinates_ set and keep
+  // their global coordinates unchanged.
+  for (auto &source : sources) {
+    if (const auto *coords = source->get_read_coordinates())
+      source->set_global_coordinates(
+          specfem::assembly::to_cartesian(*coords, mesh));
+    // Rotate a moment tensor / force read in its local geocentric frame into
+    // the Cartesian mesh frame now that the position is resolved. Only dim3
+    // carries a resolvable local frame; dim2 sources are already Cartesian.
+    if constexpr (DimensionTag == specfem::element::dimension_tag::dim3)
+      specfem::assembly::sources_impl::resolve_source_frame(*source, mesh);
   }
 
   // Locate all sources in the mesh and set their local coordinates,
   // global element index, and medium that the source is located in
-  specfem::assembly::sources_impl::locate_sources(
-      element_types, mesh, sources, raw_mesh.boundaries.acoustic_free_surface,
-      utm_config);
+  specfem::assembly::sources_impl::locate_sources(element_types, mesh, sources);
 
   // Create vector of MPI slice indices for each source (host memory)
   source_partition_index_.resize(sources.size());
@@ -160,42 +273,6 @@ specfem::assembly::sources<DimensionTag>::sources(
   Kokkos::deep_copy(element_indices, h_element_indices);
   Kokkos::deep_copy(source_indices, h_source_indices);
 }
-
-template specfem::assembly::sources<specfem::element::dimension_tag::dim2>::
-    sources(std::vector<std::shared_ptr<specfem::sources::source<
-                specfem::element::dimension_tag::dim2>>> &sources,
-            const specfem::assembly::mesh<specfem::element::dimension_tag::dim2>
-                &mesh,
-            const specfem::mesh::cartesian2d_mesh &raw_mesh,
-            const specfem::assembly::jacobian_matrix<
-                specfem::element::dimension_tag::dim2> &jacobian_matrix,
-            const specfem::assembly::element_types<
-                specfem::element::dimension_tag::dim2> &element_types,
-            const type_real t0, const type_real dt, const int nsteps);
-
-template specfem::assembly::sources<specfem::element::dimension_tag::dim3>::
-    sources(std::vector<std::shared_ptr<specfem::sources::source<
-                specfem::element::dimension_tag::dim3>>> &sources,
-            const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
-                &mesh,
-            const specfem::mesh::cartesian3d_mesh &raw_mesh,
-            const specfem::assembly::jacobian_matrix<
-                specfem::element::dimension_tag::dim3> &jacobian_matrix,
-            const specfem::assembly::element_types<
-                specfem::element::dimension_tag::dim3> &element_types,
-            const type_real t0, const type_real dt, const int nsteps);
-
-template specfem::assembly::sources<specfem::element::dimension_tag::dim3>::
-    sources(std::vector<std::shared_ptr<specfem::sources::source<
-                specfem::element::dimension_tag::dim3>>> &sources,
-            const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
-                &mesh,
-            const specfem::mesh::globe3d_mesh &raw_mesh,
-            const specfem::assembly::jacobian_matrix<
-                specfem::element::dimension_tag::dim3> &jacobian_matrix,
-            const specfem::assembly::element_types<
-                specfem::element::dimension_tag::dim3> &element_types,
-            const type_real t0, const type_real dt, const int nsteps);
 
 // ── get_sources_on_host / get_sources_on_device template definitions ─────────
 

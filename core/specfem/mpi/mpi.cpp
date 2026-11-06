@@ -6,6 +6,7 @@ namespace specfem {
 int MPI::rank_ = -1;
 int MPI::size_ = -1;
 MPI_Comm MPI::comm_ = MPI_COMM_WORLD;
+bool MPI::owns_mpi_ = false;
 
 void MPI::initialize(int *argc, char ***argv) {
 #ifdef SPECFEM_ENABLE_MPI
@@ -14,6 +15,7 @@ void MPI::initialize(int *argc, char ***argv) {
 
   if (!initialized) {
     MPI_Init(argc, argv);
+    owns_mpi_ = true;
   }
 
   comm_ = MPI_COMM_WORLD;
@@ -35,6 +37,7 @@ void MPI::initialize(int *argc, char ***argv, int nprocs) {
 
   if (!initialized) {
     MPI_Init(argc, argv);
+    owns_mpi_ = true;
     // Check that requested nprocs does not exceed world size
     int world_size;
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
@@ -84,8 +87,18 @@ void MPI::finalize() {
       MPI_Comm_free(&comm_);
       comm_ = MPI_COMM_NULL;
     }
-    MPI_Finalize();
+    // An MPI runtime initialized externally belongs to its owner, which also
+    // finalizes it; its other ranks might never reach the barrier below.
+    if (owns_mpi_) {
+      // Enter MPI_Finalize together. With Open MPI + UCX, a rank that reaches
+      // finalize while its peers are still busy stalls in the endpoint
+      // disconnect (ucp_disconnect_nb) for 30-60+ s, long enough for srun to
+      // kill the job once the first rank exits.
+      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Finalize();
+    }
   }
+  owns_mpi_ = false;
 #endif
 
   // Reset to uninitialized state

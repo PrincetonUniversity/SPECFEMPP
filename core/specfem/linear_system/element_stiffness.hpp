@@ -3,7 +3,9 @@
 #include "specfem/datatype/element_index_range.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
+#include <functional>
 
 namespace specfem::assembly {
 template <specfem::element::dimension_tag DimensionTag> struct assembly;
@@ -37,14 +39,14 @@ local_dof_index(const int icomp, const int iz, const int iy, const int ix) {
 }
 
 /**
- * @brief Boundary conditions the caller's probe/assembly can represent.
+ * @brief Boundary conditions the caller's assembly can represent.
  *
  * `natural_boundaries` keeps the historical strict check: only `none` and
  * `acoustic_free_surface` boundary tags (natural boundary conditions) are
  * admitted. `with_stacey` additionally admits `boundary_tag::stacey` -- valid
- * because the displacement probe runs with velocity \f$ \equiv 0 \f$, where
- * the Stacey dashpot contributes exactly nothing to \f$ K \f$; the caller
- * must assemble the damping matrix \f$ C \f$ separately (see
+ * because the stiffness \f$ K \f$ is the operator at velocity
+ * \f$ \equiv 0 \f$, where the Stacey dashpot contributes exactly nothing; the
+ * caller must assemble the damping matrix \f$ C \f$ separately (see
  * @ref DampingAssembler). `composite_stacey_dirichlet` stays rejected in
  * both scopes (a Dirichlet mask is not representable yet).
  */
@@ -52,7 +54,7 @@ enum class StiffnessScope { natural_boundaries, with_stacey };
 
 /**
  * @brief Verify that every element of `Tags::medium_tag` is within the scope
- * supported by the stiffness probe.
+ * supported by the element stiffness kernel.
  *
  * Throws `std::runtime_error` naming the offending element and tag unless all
  * elements of the medium match `Tags::property_tag`, have
@@ -79,19 +81,23 @@ void validate_stiffness_scope(
 
 /**
  * @brief Compute dense element stiffness blocks \f$ K_e \f$ for a contiguous
- * batch of elements by probing the single-element operator with local unit
- * vectors.
+ * batch of elements.
  *
- * Each probe applies the matrix-free element operator
- * (gradient \f$\rightarrow\f$ stress \f$\rightarrow\f$ divergence) to a unit
- * displacement at one local dof, with velocity \f$ \equiv 0 \f$ (pure
- * \f$ K \f$), no mass-matrix division, and no boundary terms.
+ * Every entry is written in closed form, as a sum-factored reduction over
+ * quadrature of the constitutive tensor
+ * (@ref specfem::linear_system_impl::StiffnessKernel): \f$ O(N^5) \f$ work
+ * per element, no workspace. \f$ K_e \f$ is the element operator
+ * (gradient \f$\rightarrow\f$ stress \f$\rightarrow\f$ divergence) at
+ * velocity \f$ \equiv 0 \f$ (pure \f$ K \f$), without mass-matrix division
+ * and without boundary terms.
  *
- * Sign convention: \f$ K_e(i,j) \f$ is the divergence result at row dof
- * \f$ i \f$ when probing unit column dof \f$ j \f$, so \f$ K u \f$ equals the
- * internal force. The matrix-free time-marching kernel accumulates
- * `accel += -(divergence result)`, hence \f$ K u = -\mathrm{accel} \f$
- * (before mass division). Row/column ordering follows @ref local_dof_index.
+ * Requires SPECFEM++ built with `SPECFEM_ENABLE_TENSOROPS`; otherwise the
+ * call throws `std::runtime_error` (the code base still compiles).
+ *
+ * Sign convention: \f$ K u \f$ equals the internal force. The matrix-free
+ * time-marching kernel accumulates `accel += -(divergence result)`, hence
+ * \f$ K u = -\mathrm{accel} \f$ (before mass division). Row/column ordering
+ * follows @ref local_dof_index.
  *
  * The kernel runs in `Kokkos::DefaultExecutionSpace`; the same code path
  * serves CPU and GPU builds.
@@ -142,5 +148,52 @@ void compute_element_stiffness(
     const Kokkos::View<type_real ***, Kokkos::LayoutRight,
                        Kokkos::DefaultExecutionSpace> &k_e);
 
+/**
+ * @brief Batched element-stiffness kernel bound to one assembly.
+ *
+ * Each call fills the leading `batch.size()` blocks of `k_e` under the
+ * contract of @ref compute_element_stiffness, but may return before the
+ * device work completes: a consumer reading `k_e` on the device must fence
+ * first (a host mirror copy synchronizes by itself).
+ */
+using ElementStiffnessKernel =
+    std::function<void(const specfem::datatype::ElementIndexRange &,
+                       const Kokkos::View<type_real ***, Kokkos::LayoutRight,
+                                          Kokkos::DefaultExecutionSpace> &)>;
+
+/**
+ * @brief Bind the stiffness kernel to an assembly for repeated batched calls.
+ *
+ * Constructs the stateless
+ * @ref specfem::linear_system_impl::StiffnessKernel once, so its validation
+ * runs here rather than per batch (e.g. in
+ * `StiffnessAssembler::fill_matrix`).
+ *
+ * Throws `std::runtime_error` for grids other than NGLL = 5 (the only 3D
+ * instantiation), and when SPECFEM++ is built without
+ * `SPECFEM_ENABLE_TENSOROPS`.
+ *
+ * @tparam Tags Compile-time tags (dimension, medium, property, attenuation);
+ *              dimension must be `dim3`
+ * @param assembly Assembled mesh, jacobian matrix, and material properties;
+ *        borrowed by the returned callable, and must outlive it
+ * @return Callable filling `k_e` element blocks per contiguous batch
+ */
+template <typename Tags>
+  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim3)
+ElementStiffnessKernel make_element_stiffness_kernel(
+    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
+        &assembly);
+
 } // namespace linear_system
 } // namespace specfem
+
+namespace specfem::linear_system_impl {
+/// Tag bundle for the only combination explicitly instantiated for the
+/// linear system (issue #1982); shared by every instantiating TU.
+using elastic_isotropic_tags =
+    specfem::tags::Tags<specfem::element::dimension_tag::dim3,
+                        specfem::element::medium_tag::elastic,
+                        specfem::element::property_tag::isotropic,
+                        specfem::element::attenuation_tag::none>;
+} // namespace specfem::linear_system_impl
