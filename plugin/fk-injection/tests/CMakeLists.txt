@@ -13,7 +13,7 @@ specfem_add_test(fk_plugin_skeleton_tests
 specfem_add_test(injection_math_tests
   LABELS      fk_plugin
   SOURCES     runner.cpp
-              complex_matrix_tests.cpp
+              register_array_tests.cpp
               cubic_bspline_tests.cpp
               fft_tests.cpp
   LIBRARIES   specfem_fk_core
