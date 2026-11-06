@@ -135,9 +135,6 @@ The incident SV bottom vector differs in both modes: see
   a fluid half-space isn't supported.
 - Only isotropic elastic and acoustic points are served; `elastic_spin` and
   anisotropic points are rejected.
-- The `stacey` method in SPECFEM++ doesn't request acoustic quantities yet, so a
-  run with injection faces in a fluid stops before reaching the plugin. The plugin
-  side is covered by its unit tests.
 - Against SPECFEM3D on fine meshes there is a residual of about 3e-3, suspected to
   come from edge and corner points using a single normal.
 
