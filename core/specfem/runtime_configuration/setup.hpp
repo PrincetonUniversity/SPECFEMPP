@@ -210,7 +210,6 @@ public:
           specfem::enums::coordinate_frame::cartesian) const {
     if (this->seismogram) {
       return this->seismogram->instantiate_seismogram_writer(
-          this->get_elastic_wave_type(), this->get_electromagnetic_wave_type(),
           this->time_scheme->get_dt(), this->time_scheme->get_t0(),
           this->receivers->get_nstep_between_samples(), this->starttime_,
           frame);

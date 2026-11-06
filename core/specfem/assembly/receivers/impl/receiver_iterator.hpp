@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/element.hpp"
 #include "specfem/enums.hpp"
 #include <algorithm>
 #include <iterator>
@@ -32,11 +33,17 @@ struct StationInfo {
   std::string network_name;
   std::string station_name;
   int partition_index;
+  /// Medium of the receiver element; decides which 2-D seismogram types are
+  /// scalars
+  specfem::element::medium_tag medium;
 
   StationInfo(std::string network, std::string station, int partition_index,
-              const std::vector<specfem::enums::wavefield> &types)
+              const std::vector<specfem::enums::wavefield> &types,
+              specfem::element::medium_tag medium =
+                  specfem::element::medium_tag::elastic_psv)
       : network_name(std::move(network)), station_name(std::move(station)),
-        partition_index(partition_index), seismo_types_(types) {}
+        partition_index(partition_index), medium(medium), seismo_types_(types) {
+  }
 
   // Method to get seismogram types associated with this station
   SeismogramTypeIterator get_seismogram_types() const {

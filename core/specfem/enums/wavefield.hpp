@@ -44,8 +44,8 @@ to_string(const specfem::enums::wavefield &wavefield_component);
  * an in-plane displacement, so its curl and the Cosserat rotation point out of
  * plane and are scalars. SH media carry an out-of-plane displacement, which is
  * the scalar, while its curl and any microrotation lie in plane and are
- * vectors. This must agree with the per-medium compute_wavefield fills, which
- * leave the unused components zero.
+ * vectors. The seismogram kernel zeroes the scratch before the medium fill, so
+ * the unused components are zero.
  *
  * @param type Seismogram type
  * @param dimension Spatial dimension of the simulation
