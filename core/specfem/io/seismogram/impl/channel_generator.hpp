@@ -107,11 +107,12 @@ public:
    *
    * Overload that accepts a StationInfo object directly and derives the
    * SEED location code and component letters from the simulation dimension
-   * ("S3"/{X,Y,Z} for 3-D, "S2"/{X,Z} for 2-D).
+   * ("S3"/{X,Y,Z} for 3-D, "S2" for 2-D). 2-D vector seismograms use {X,Z};
+   * 2-D scalar seismograms (SH displacement, P-SV rotation/curl) use {Y}.
    *
    * @tparam DimensionTag Simulation dimension (dim2 or dim3).
-   * @tparam StationInfo  Type with public network_name and station_name
-   * members.
+   * @tparam StationInfo  Type with public network_name, station_name and
+   * medium members.
    * @param station_info  Station descriptor from StationIterator.
    * @param seismogram_type Wavefield type to write.
    */
@@ -120,10 +121,13 @@ public:
   get_station_filenames(const StationInfo &station_info,
                         specfem::enums::wavefield seismogram_type) {
     if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
-      static constexpr std::array<char, 2> kLetters = { 'X', 'Z' };
       return get_station_filenames(
           station_info.network_name, station_info.station_name, "S2",
-          seismogram_type, std::span<const char>{ kLetters });
+          seismogram_type,
+          specfem::enums::is_vector_seismogram(seismogram_type, DimensionTag,
+                                               station_info.medium)
+              ? std::span<const char>{ kInPlaneComponents }
+              : std::span<const char>{ kOutOfPlaneComponent });
     } else if constexpr (DimensionTag ==
                          specfem::element::dimension_tag::dim3) {
       // The geographic frame (UTM or globe) uses E/N/Z (X->E, Y->N, Z->Z);
@@ -215,6 +219,12 @@ private:
   static constexpr std::array<char, 3> kGeographicElasticComponents = { 'E',
                                                                         'N',
                                                                         'Z' };
+
+  /// 2-D in-plane component letters for vector seismograms.
+  static constexpr std::array<char, 2> kInPlaneComponents = { 'X', 'Z' };
+
+  /// 2-D out-of-plane component letter for scalar seismograms.
+  static constexpr std::array<char, 1> kOutOfPlaneComponent = { 'Y' };
 
   const std::string band_code;    ///< SEED band code (L, M, B, H, C, or F)
                                   ///< determined from timestep
