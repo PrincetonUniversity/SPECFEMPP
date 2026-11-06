@@ -120,6 +120,12 @@ protected:
     assembly_ = nullptr;
   }
 
+#if defined(SPECFEM_ENABLE_METAL)
+  void SetUp() override {
+    GTEST_SKIP() << "Metal stiffness kernels are fixed to level-0 scratch";
+  }
+#endif
+
   // Fill displacement and velocity with a fixed-seed random field, zero the
   // acceleration, run Kernel on `scratch_level` over all elements and return
   // a host copy of the resulting acceleration.

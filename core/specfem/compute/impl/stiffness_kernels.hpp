@@ -119,7 +119,13 @@ public:
     const auto &boundary_values =
         assembly_.boundary_values.template get_container<boundary_tag>();
     const int istep = istep_;
+#if defined(SPECFEM_ENABLE_METAL)
+    // MSL cannot select between threadgroup and device pointers at run time,
+    // so the scratch level must be known at compile time on Metal.
+    constexpr int scratch_level = 0;
+#else
     const int scratch_level = scratch_level_;
+#endif
 
     specfem::execution::for_each_level(
         "specfem::compute::compute_stiffness_interaction::gather", chunk,
@@ -359,7 +365,13 @@ public:
     const auto &boundary_values =
         assembly_.boundary_values.template get_container<boundary_tag>();
     const int istep = istep_;
+#if defined(SPECFEM_ENABLE_METAL)
+    // MSL cannot select between threadgroup and device pointers at run time,
+    // so the scratch level must be known at compile time on Metal.
+    constexpr int scratch_level = 0;
+#else
     const int scratch_level = scratch_level_;
+#endif
 
     specfem::execution::for_each_level(
         "specfem::compute::compute_stiffness_interaction::scatter", chunk,

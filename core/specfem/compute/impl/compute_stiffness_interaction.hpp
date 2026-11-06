@@ -113,10 +113,15 @@ int compute_stiffness_interaction_core(
       launch.template operator()<Gather>(0);
     } else if (Scatter::shmem_size() <= chunk.scratch_size_max(0)) {
       launch.template operator()<Scatter>(0);
+#if !defined(SPECFEM_ENABLE_METAL)
     } else if (Gather::shmem_size() <= chunk.scratch_size_max(1)) {
       launch.template operator()<Gather>(1);
     } else if (Scatter::shmem_size() <= chunk.scratch_size_max(1)) {
       launch.template operator()<Scatter>(1);
+#else
+      // Metal kernels are fixed to level 0 (see gather_kernel), so there is no
+      // level-1 fallback: configurations that do not fit level 0 throw below.
+#endif
     } else {
       throw std::runtime_error(
           "Not enough scratch memory for stiffness interaction kernels "
