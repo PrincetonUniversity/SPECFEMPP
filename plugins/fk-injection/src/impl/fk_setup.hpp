@@ -4,7 +4,7 @@
 #include "fk_injection/incident_wave.hpp"
 #include "fk_injection/layered_model.hpp"
 #include "fk_injection/time_window.hpp"
-#include "fk_injection/utilities/complex_matrix.hpp"
+#include "fk_injection/utilities/register_array.hpp"
 #include "impl/depth_groups.hpp"
 #include "impl/halfspace_solve.hpp"
 #include <complex>

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "fk_injection/layered_model.hpp"
-#include "fk_injection/utilities/complex_matrix.hpp"
+#include "fk_injection/utilities/register_array.hpp"
 #include "impl/field_recovery.hpp"
 #include "impl/fk_setup.hpp"
 #include <vector>

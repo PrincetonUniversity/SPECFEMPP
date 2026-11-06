@@ -3,7 +3,7 @@
 #include "fk_injection/incident_wave.hpp"
 #include "fk_injection/layered_model.hpp"
 #include "fk_injection/time_window.hpp"
-#include "fk_injection/utilities/complex_matrix.hpp"
+#include "fk_injection/utilities/register_array.hpp"
 #include "impl/depth_groups.hpp"
 #include "impl/field_recovery.hpp"
 #include "impl/fk_setup.hpp"
@@ -133,9 +133,9 @@ TEST(LayerStack, HalfspaceTopIsEtimesB) {
 
   constexpr double kTol = 1.0e-9;
   for (int i = 0; i < 4; ++i) {
-    EXPECT_NEAR(actual[i].real(), expected[i].real(), kTol)
+    EXPECT_NEAR(actual(i).real(), expected(i).real(), kTol)
         << "halfspace-top component " << i << " real";
-    EXPECT_NEAR(actual[i].imag(), expected[i].imag(), kTol)
+    EXPECT_NEAR(actual(i).imag(), expected(i).imag(), kTol)
         << "halfspace-top component " << i << " imag";
   }
 }
@@ -167,7 +167,7 @@ TEST(LayerStack, FreeSurfaceTractionVanishesP) {
   const auto &s = states.elastic_top(f, 0);
 
   // Displacement scale to normalise traction residuals.
-  const double disp_scale = std::abs(s[0]) + std::abs(s[1]) + 1.0e-30;
+  const double disp_scale = std::abs(s(0)) + std::abs(s(1)) + 1.0e-30;
   EXPECT_GT(disp_scale, 1.0e-12) << "displacement scale too small (degenerate)";
 
   const double rho_hs =
@@ -177,11 +177,11 @@ TEST(LayerStack, FreeSurfaceTractionVanishesP) {
   const double mu = rho_hs * vs_hs * vs_hs;
   const double traction_scale = 2.0 * mu * setup.omega[f] * p * disp_scale;
 
-  EXPECT_LT(std::abs(s[2]), 1.0e-6 * traction_scale)
-      << "sigma_xz at free surface (P) is not small: " << std::abs(s[2])
+  EXPECT_LT(std::abs(s(2)), 1.0e-6 * traction_scale)
+      << "sigma_xz at free surface (P) is not small: " << std::abs(s(2))
       << " vs scale " << traction_scale;
-  EXPECT_LT(std::abs(s[3]), 1.0e-6 * traction_scale)
-      << "sigma_zz at free surface (P) is not small: " << std::abs(s[3])
+  EXPECT_LT(std::abs(s(3)), 1.0e-6 * traction_scale)
+      << "sigma_zz at free surface (P) is not small: " << std::abs(s(3))
       << " vs scale " << traction_scale;
 }
 
@@ -208,7 +208,7 @@ TEST(LayerStack, FreeSurfaceTractionVanishesSV) {
 
   const auto &s = states.elastic_top(f, 0);
 
-  const double disp_scale = std::abs(s[0]) + std::abs(s[1]) + 1.0e-30;
+  const double disp_scale = std::abs(s(0)) + std::abs(s(1)) + 1.0e-30;
   EXPECT_GT(disp_scale, 1.0e-12) << "displacement scale too small (degenerate)";
 
   const double rho_hs =
@@ -218,11 +218,11 @@ TEST(LayerStack, FreeSurfaceTractionVanishesSV) {
   const double mu = rho_hs * vs_hs * vs_hs;
   const double traction_scale = 2.0 * mu * setup.omega[f] * p * disp_scale;
 
-  EXPECT_LT(std::abs(s[2]), 1.0e-6 * traction_scale)
-      << "sigma_xz at free surface (SV) is not small: " << std::abs(s[2])
+  EXPECT_LT(std::abs(s(2)), 1.0e-6 * traction_scale)
+      << "sigma_xz at free surface (SV) is not small: " << std::abs(s(2))
       << " vs scale " << traction_scale;
-  EXPECT_LT(std::abs(s[3]), 1.0e-6 * traction_scale)
-      << "sigma_zz at free surface (SV) is not small: " << std::abs(s[3])
+  EXPECT_LT(std::abs(s(3)), 1.0e-6 * traction_scale)
+      << "sigma_zz at free surface (SV) is not small: " << std::abs(s(3))
       << " vs scale " << traction_scale;
 }
 
