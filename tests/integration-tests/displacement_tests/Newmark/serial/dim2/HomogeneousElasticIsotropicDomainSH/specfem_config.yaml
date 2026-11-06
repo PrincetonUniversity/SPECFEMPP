@@ -35,7 +35,10 @@ parameters:
 
   receivers:
     stations: "displacement_tests/Newmark/serial/dim2/HomogeneousElasticIsotropicDomainSH/STATIONS"
-    angle: 0.0
+    # Reference traces were generated at angle 0; SH records a single
+    # out-of-plane scalar that must never be rotated, so this angle must not
+    # change the result.
+    angle: 30.0
     seismogram-type:
       - displacement
       - velocity
