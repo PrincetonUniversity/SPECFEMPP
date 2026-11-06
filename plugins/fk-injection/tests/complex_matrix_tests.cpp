@@ -1,4 +1,4 @@
-#include "specfem/fk_plugin/utilities/complex_matrix.hpp"
+#include "fk_injection/utilities/complex_matrix.hpp"
 #include <gtest/gtest.h>
 
 #include <complex>
@@ -8,9 +8,9 @@
 // ---------------------------------------------------------------------------
 
 using Cx = std::complex<double>;
-using Mat2 = specfem::fk_plugin::ComplexMatrix<2>;
-using Mat4 = specfem::fk_plugin::ComplexMatrix<4>;
-using Vec2 = specfem::fk_plugin::ComplexVector<2>;
+using Mat2 = fk_injection::ComplexMatrix<2>;
+using Mat4 = fk_injection::ComplexMatrix<4>;
+using Vec2 = fk_injection::ComplexVector<2>;
 
 // ---------------------------------------------------------------------------
 // Default construction is the zero matrix; the generator fills (i, j) in

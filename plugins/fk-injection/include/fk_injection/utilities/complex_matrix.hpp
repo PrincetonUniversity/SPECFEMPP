@@ -7,15 +7,13 @@
 #include <concepts>
 #include <type_traits>
 
-namespace specfem {
-namespace fk_plugin_impl {
+namespace fk_injection {
+namespace impl {
 
 // Provides mdspan, extents and layouts; std once C++23 is required.
 namespace mdspan_namespace = Kokkos;
 
-} // namespace fk_plugin_impl
-
-namespace fk_plugin {
+} // namespace impl
 
 /**
  * @brief Fixed-size N×N complex matrix.
@@ -31,20 +29,23 @@ namespace fk_plugin {
  */
 template <int N, typename Scalar = std::complex<double>> struct ComplexMatrix {
   using extents_type =
-      specfem::fk_plugin_impl::mdspan_namespace::extents<int, N,
-                                                         N>; ///< Static N×N
-                                                             ///< extents.
+      fk_injection::impl::mdspan_namespace::extents<int, N,
+                                                    N>; ///< Static N×N
+                                                        ///< extents.
   using layout_type =
-      specfem::fk_plugin_impl::mdspan_namespace::layout_right; ///< Row-major.
+      fk_injection::impl::mdspan_namespace::layout_right; ///< Row-major.
   using mapping_type =
       typename layout_type::template mapping<extents_type>; ///< Maps (i, j) to
                                                             ///< the storage
                                                             ///< offset.
-  using mdspan_type = specfem::fk_plugin_impl::mdspan_namespace::mdspan<
+  using mdspan_type = fk_injection::impl::mdspan_namespace::mdspan<
       Scalar, extents_type, layout_type>; ///< Mutable mdspan over the storage.
-  using const_mdspan_type = specfem::fk_plugin_impl::mdspan_namespace::mdspan<
-      const Scalar, extents_type,
-      layout_type>; ///< Read-only mdspan over the storage.
+  using const_mdspan_type =
+      fk_injection::impl::mdspan_namespace::mdspan<const Scalar, extents_type,
+                                                   layout_type>; ///< Read-only
+                                                                 ///< mdspan
+                                                                 ///< over the
+                                                                 ///< storage.
 
   std::array<Scalar, N * N> values{}; ///< Storage, zero-initialised.
 
@@ -175,5 +176,4 @@ ComplexMatrix<N, Scalar> &operator*=(ComplexMatrix<N, Scalar> &matrix,
   return matrix;
 }
 
-} // namespace fk_plugin
-} // namespace specfem
+} // namespace fk_injection
