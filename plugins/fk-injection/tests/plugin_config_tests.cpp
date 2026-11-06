@@ -351,6 +351,14 @@ TEST(FkPluginConfig, RejectsNonZeroModelFileOriginTime) {
   }
 }
 
+// The example the README points to stays valid.
+TEST(FkPluginConfig, ExampleConfigurationLoads) {
+  const auto config =
+      fk_injection::load_plugin_config(FK_INJECTION_EXAMPLE_CONFIG);
+  EXPECT_EQ(config.model.number_of_elastic_layers(), 2);
+  EXPECT_NEAR(config.time_window_length, 180.0, 1e-4);
+}
+
 // The values of the FKInjectionElastic integration fixture.
 TEST(FkPluginConfig, ElasticFixtureValues) {
   const auto config = fk_injection::parse_plugin_config(R"yaml(
