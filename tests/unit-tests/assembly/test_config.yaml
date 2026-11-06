@@ -231,3 +231,18 @@ Tests:
           gamma: 1.0
           ispec: 724
           medium_tag: poroelastic
+
+  3D:
+    - name : "Test 1: Acoustic-elastic interface"
+      description: >
+        Conforming acoustic-elastic interface with a force source in the
+        acoustic domain.
+      config:
+        nproc : 1
+      databases:
+        mesh-database : "data/dim3/AcousticElasticInterface/database.bin"
+        mesh-parameters : "data/dim3/AcousticElasticInterface/specfem_config.yaml"
+        sources : "data/dim3/AcousticElasticInterface/force.yaml"
+        stations : "data/dim3/AcousticElasticInterface/STATIONS"
+      suffix: "acoustic_elastic_interface"
+      solutions: {}
