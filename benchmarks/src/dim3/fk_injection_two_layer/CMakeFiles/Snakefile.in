@@ -1,0 +1,91 @@
+SPECFEM_BIN = "@CMAKE_BINARY_DIR@/bin/specfem 3d"
+MESHFEM_BIN = "@CMAKE_BINARY_DIR@/bin/xmeshfem3D"
+BENCHMARK_DIR = "@CURRENT_BENCHMARK_BUILD_DIR@"
+PLUGIN_DIR = BENCHMARK_DIR + "/plugin"
+
+
+rule all:
+    input:
+        BENCHMARK_DIR + "/OUTPUT_FILES/comparison.txt",
+        BENCHMARK_DIR + "/OUTPUT_FILES/comparison.png",
+    localrule: True
+
+
+# The plugin stays a standalone project, built against the installed SDK.
+rule build_plugin:
+    output:
+        plugin=PLUGIN_DIR + "/build/libfk_injection.so",
+    localrule: True
+    shell:
+        """
+            cmake --install @CMAKE_BINARY_DIR@ --component plugin_sdk --prefix {PLUGIN_DIR}/sdk
+            cmake -S @CMAKE_SOURCE_DIR@/plugins/fk-injection -B {PLUGIN_DIR}/build \
+                -DCMAKE_PREFIX_PATH={PLUGIN_DIR}/sdk \
+                -DCMAKE_CXX_COMPILER=@CMAKE_CXX_COMPILER@ \
+                -DCMAKE_BUILD_TYPE=Release \
+                -DFK_INJECTION_BUILD_TESTS=OFF
+            cmake --build {PLUGIN_DIR}/build -j 4
+        """
+
+
+rule generate_mesh:
+    input:
+        BENCHMARK_DIR + "/DATA/meshfem3D_files/Mesh_Par_file",
+    output:
+        database=BENCHMARK_DIR + "/OUTPUT_FILES/DATABASES/Database.bin",
+    localrule: True
+    shell:
+        """
+            mkdir -p {BENCHMARK_DIR}/OUTPUT_FILES/DATABASES
+            {MESHFEM_BIN} -p {input}
+        """
+
+
+rule run_solver:
+    input:
+        plugin=rules.build_plugin.output.plugin,
+        database=rules.generate_mesh.output.database,
+        stations=BENCHMARK_DIR + "/DATA/STATIONS",
+        source=BENCHMARK_DIR + "/source.yaml",
+        config=BENCHMARK_DIR + "/specfem_config.yaml",
+        fk=BENCHMARK_DIR + "/fk.yaml",
+    output:
+        traces=expand(
+            BENCHMARK_DIR
+            + "/OUTPUT_FILES/results/TEST.{station}.S3.{component}.{extension}",
+            station=list("ABCDEF"),
+            component=["MXX", "MXY", "MXZ"],
+            extension=["semd", "semv", "sema"],
+        ),
+        log=BENCHMARK_DIR + "/OUTPUT_FILES/output.log",
+    localrule: True
+    shell:
+        """
+            {SPECFEM_BIN} -p {input.config} \
+                --injection-plugin {input.plugin} \
+                --injection-config {input.fk} > {output.log}
+        """
+
+
+rule compare:
+    input:
+        rules.run_solver.output.traces,
+    output:
+        table=rules.all.input[0],
+        plot=rules.all.input[1],
+    localrule: True
+    shell:
+        """
+            python {BENCHMARK_DIR}/compare_seismograms.py \
+                {BENCHMARK_DIR}/OUTPUT_FILES/results \
+                {BENCHMARK_DIR}/reference_seismograms \
+                {output.table} {output.plot}
+        """
+
+
+rule clean:
+    localrule: True
+    shell:
+        """
+            rm -rf {BENCHMARK_DIR}/OUTPUT_FILES {PLUGIN_DIR}
+        """
