@@ -27,18 +27,16 @@ if(SPECFEM_TEST_DATA_MODE STREQUAL "INSTALL")
     LIBRARY_OUTPUT_DIRECTORY "${SPECFEM_TEST_OUTPUT_DIR}")
 endif()
 
-add_executable(injection_types_tests
-  runner.cpp
-  layered_model_tests.cpp
-  time_window_tests.cpp
-  incident_wave_tests.cpp
-  fk_result_tests.cpp
+specfem_add_test(injection_types_tests
+  LABELS      fk_injection
+  SOURCES     runner.cpp
+              layered_model_tests.cpp
+              time_window_tests.cpp
+              incident_wave_tests.cpp
+              fk_result_tests.cpp
+  LIBRARIES   fk_injection_impl
+              gtest
 )
-target_link_libraries(injection_types_tests PRIVATE
-  fk_injection_impl
-  GTest::gtest
-)
-gtest_discover_tests(injection_types_tests)
 
 # Loads the module only.
 specfem_add_test(fk_injection_module_tests
