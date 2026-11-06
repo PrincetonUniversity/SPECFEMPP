@@ -1,53 +1,39 @@
 # Tests of the FK plugin: the static library directly, and the module loaded
-# with dlopen as SPECFEM++ loads it.
+# with dlopen as SPECFEM++ loads it. Added from tests/unit-tests/CMakeLists.txt.
 
-include(FetchContent)
-# Same release as core's cmake/googletest.cmake.
-FetchContent_Declare(googletest
-  URL https://github.com/google/googletest/releases/download/v1.17.0/googletest-1.17.0.tar.gz
-  DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-  EXCLUDE_FROM_ALL
+specfem_add_test(fk_plugin_skeleton_tests
+  LABELS      fk_plugin
+  SOURCES     runner.cpp
+              skeleton_tests.cpp
+  LIBRARIES   specfem_fk_core
+              gtest
+  DEFINITIONS $<$<BOOL:${FK_PLUGIN_DOUBLE}>:FK_PLUGIN_EXPECT_DOUBLE>
 )
-set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
-set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
 
-include(GoogleTest)
+specfem_add_test(injection_math_tests
+  LABELS      fk_plugin
+  SOURCES     runner.cpp
+              complex_matrix_tests.cpp
+              cubic_bspline_tests.cpp
+              fft_tests.cpp
+  LIBRARIES   specfem_fk_core
+              gtest
+)
 
-add_executable(fk_plugin_skeleton_tests
-  runner.cpp
-  skeleton_tests.cpp
-)
-target_link_libraries(fk_plugin_skeleton_tests PRIVATE
-  specfem_fk_core
-  GTest::gtest
-)
-if(FK_PLUGIN_DOUBLE)
-  target_compile_definitions(fk_plugin_skeleton_tests PRIVATE
-    FK_PLUGIN_EXPECT_DOUBLE)
+# fk_plugin_module_tests embeds the module path, so with an external test
+# directory the module has to live there too (see specfem_add_test).
+if(SPECFEM_TEST_DATA_MODE STREQUAL "INSTALL")
+  set_target_properties(specfem_fk_plugin PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY "${SPECFEM_TEST_OUTPUT_DIR}")
 endif()
-gtest_discover_tests(fk_plugin_skeleton_tests)
-
-add_executable(injection_math_tests
-  runner.cpp
-  complex_matrix_tests.cpp
-  cubic_bspline_tests.cpp
-  fft_tests.cpp
-)
-target_link_libraries(injection_math_tests PRIVATE
-  specfem_fk_core
-  GTest::gtest
-)
-gtest_discover_tests(injection_math_tests)
 
 # Loads the module only.
-add_executable(fk_plugin_module_tests module_tests.cpp)
-target_link_libraries(fk_plugin_module_tests PRIVATE
-  specfem::plugin_sdk
-  GTest::gtest_main
-  ${CMAKE_DL_LIBS}
+specfem_add_test(fk_plugin_module_tests
+  LABELS      fk_plugin
+  SOURCES     module_tests.cpp
+  LIBRARIES   specfem::plugin_sdk
+              gtest_main
+              ${CMAKE_DL_LIBS}
+  DEFINITIONS "FK_PLUGIN_MODULE=\"$<TARGET_FILE:specfem_fk_plugin>\""
 )
-target_compile_definitions(fk_plugin_module_tests PRIVATE
-  "FK_PLUGIN_MODULE=\"$<TARGET_FILE:specfem_fk_plugin>\"")
 add_dependencies(fk_plugin_module_tests specfem_fk_plugin)
-gtest_discover_tests(fk_plugin_module_tests)
