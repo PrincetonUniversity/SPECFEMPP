@@ -50,6 +50,10 @@ double fk_injection::LayeredModel::fluid_thickness() const {
   return top_depths_[fluid_layers_.size()];
 }
 
+double fk_injection::LayeredModel::halfspace_top_depth() const {
+  return top_depths_.back();
+}
+
 fk_injection::LayerLocation fk_injection::LayeredModel::locate(
     double depth, std::optional<specfem::plugin::Medium> requested,
     double tolerance) const {
