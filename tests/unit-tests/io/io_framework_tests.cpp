@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 
 // Include all I/O framework headers
+#include "layout_oracle.hpp"
 #include "specfem/io.hpp"
 
 // Test utilities
@@ -557,6 +558,18 @@ TYPED_TEST(IOFrameworkTest, LayoutDataOperations) {
           EXPECT_NEAR(read_left(i, j, k), value(i, j, k), 1e-12);
         }
 
+#ifndef NO_HDF5
+    if constexpr (std::is_same_v<
+                      IOType, specfem::io_backends::HDF5<specfem::io::read>>) {
+      // The file stores the LayoutLeft dataset with reversed extents, so
+      // reading it into a LayoutRight view of the logical shape must fail.
+      RightView mismatch("mismatch", n0, n1, n2);
+      EXPECT_THROW(
+          file.template openDataset<RightView>("left", mismatch).read(),
+          std::runtime_error);
+    }
+#endif
+
     // The payload is copied as is, so reading into a view of the other
     // layout would permute the values: NPY/NPZ must refuse it.
     if constexpr (is_npy || is_npz) {
@@ -773,6 +786,93 @@ TYPED_TEST(IOFrameworkTest, ComplexWorkflow) {
   std::cout << "FINISHED" << std::endl;
   std::cout << "==============================================================="
             << std::endl;
+}
+
+// Test: the layout described by the file header matches the data, checked with
+// a reader that is independent of the specfem readers.
+TYPED_TEST(IOFrameworkTest, OracleMatchesLayoutHeader) {
+  using IOType = TypeParam;
+  using RightView =
+      Kokkos::View<double ***, Kokkos::LayoutRight, Kokkos::HostSpace>;
+  using LeftView =
+      Kokkos::View<double ***, Kokkos::LayoutLeft, Kokkos::HostSpace>;
+
+  constexpr bool is_write =
+      std::is_same_v<typename IOType::IO_OpType, specfem::io::write>;
+  constexpr bool is_npy =
+      std::is_same_v<IOType, specfem::io_backends::NPY<specfem::io::write>>;
+  constexpr bool is_hdf5 =
+#ifndef NO_HDF5
+      std::is_same_v<IOType, specfem::io_backends::HDF5<specfem::io::write>>;
+#else
+      false;
+#endif
+  constexpr bool is_adios2 =
+#ifndef NO_ADIOS2
+      std::is_same_v<IOType, specfem::io_backends::ADIOS2<specfem::io::write>>;
+#else
+      false;
+#endif
+
+  if constexpr (is_write && (is_npy || is_hdf5 || is_adios2)) {
+    const std::size_t n0 = 5, n1 = 3, n2 = 2;
+    const auto value = [](std::size_t i, std::size_t j, std::size_t k) {
+      return 100.0 * i + 10.0 * j + k;
+    };
+    RightView right_view("right", n0, n1, n2);
+    LeftView left_view("left", n0, n1, n2);
+    for (std::size_t i = 0; i < n0; ++i)
+      for (std::size_t j = 0; j < n1; ++j)
+        for (std::size_t k = 0; k < n2; ++k) {
+          right_view(i, j, k) = value(i, j, k);
+          left_view(i, j, k) = value(i, j, k);
+        }
+
+    {
+      typename IOType::File file(this->getTestFile());
+      file.template createDataset<RightView>("right", right_view).write();
+      file.template createDataset<LeftView>("left", left_view).write();
+      file.flush();
+    }
+
+    const auto read_raw = [&](const std::string &name) {
+      if constexpr (is_npy) {
+        return specfem_test::layout_oracle::read_npy_raw<double>(
+            this->getTestFile() + "/" + name + ".npy");
+#ifndef NO_HDF5
+      } else if constexpr (is_hdf5) {
+        return specfem_test::layout_oracle::read_hdf5_raw<double>(
+            this->getTestFile() + ".h5", name);
+#endif
+#ifndef NO_ADIOS2
+      } else {
+        return specfem_test::layout_oracle::read_adios2_raw<double>(
+            this->getTestFile() + ".bp", name);
+#endif
+      }
+    };
+
+    const std::vector<std::size_t> logical_shape = { n0, n1, n2 };
+    const std::vector<std::size_t> reversed_shape = { n2, n1, n0 };
+    // HDF5/ADIOS2 are row-major: a column-major (n0,n1,n2) buffer is the
+    // row-major (n2,n1,n0) array. NPY records fortran_order instead.
+    constexpr bool reversed_left = is_hdf5 || is_adios2;
+    for (const std::string name : { "right", "left" }) {
+      const bool reversed = reversed_left && name == "left";
+      const auto raw = read_raw(name);
+      EXPECT_EQ(raw.shape, reversed ? reversed_shape : logical_shape) << name;
+      ASSERT_EQ(raw.shape.size(), 3u) << name;
+      ASSERT_EQ(raw.data.size(), n0 * n1 * n2) << name;
+      for (std::size_t i = 0; i < n0; ++i)
+        for (std::size_t j = 0; j < n1; ++j)
+          for (std::size_t k = 0; k < n2; ++k) {
+            const double stored =
+                reversed ? raw.at({ k, j, i }) : raw.at({ i, j, k });
+            EXPECT_NEAR(stored, value(i, j, k), 1e-12)
+                << name << " (" << i << "," << j << "," << k << ")";
+          }
+    }
+  }
 }
 
 // Main test runner

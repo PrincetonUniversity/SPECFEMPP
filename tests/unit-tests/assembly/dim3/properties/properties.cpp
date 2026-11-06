@@ -17,13 +17,17 @@
  * @see specfem::assembly::properties for 3D properties implementation
  * @see specfem::point::properties for individual point property access
  */
+#include "../../../io/layout_oracle.hpp"
 #include "../test_fixture.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/io.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/point.hpp"
 #include "specfem/setup.hpp"
 #include <any>
+#include <boost/filesystem.hpp>
+#include <cstdlib>
 #include <gtest/gtest.h>
 #include <initializer_list>
 #include <string>
@@ -213,7 +217,7 @@ struct ExpectedProperties3D {
               const auto computed_property = [&]() {
                 specfem::point::properties<specfem::tags::Tags<
                     ElementTags::dimension_tag, ElementTags::medium_tag,
-                    ElementTags::property_tag, false> >
+                    ElementTags::property_tag, false>>
                     prop_accessor;
                 specfem::assembly::load_on_host(index, properties,
                                                 prop_accessor);
@@ -224,7 +228,7 @@ struct ExpectedProperties3D {
               const auto expected_property =
                   std::any_cast<specfem::point::properties<specfem::tags::Tags<
                       ElementTags::dimension_tag, ElementTags::medium_tag,
-                      ElementTags::property_tag, false> > >(expected.property);
+                      ElementTags::property_tag, false>>>(expected.property);
 
               // Compare properties with detailed error reporting
               if (computed_property != expected_property) {
@@ -276,7 +280,7 @@ std::unordered_map<std::string, ExpectedProperties3D>
                     specfem::point::properties<specfem::tags::Tags<
                         specfem::element::dimension_tag::dim3,
                         specfem::element::medium_tag::elastic,
-                        specfem::element::property_tag::isotropic, false> >(
+                        specfem::element::property_tag::isotropic, false>>(
                         11.132e9, 5.175e9, 2300)) // κ, μ, ρ
                                                   // Add more GLL points as
                                                   // needed
@@ -293,10 +297,10 @@ std::unordered_map<std::string, ExpectedProperties3D>
                         specfem::element::dimension_tag::dim3,
                         specfem::element::medium_tag::elastic_spin,
                         specfem::element::property_tag::isotropic_cosserat,
-                        false> >(2300.0, 1500.0, 2800.0, 1e6, 1e4, 300.0, 25.0,
-                                 500.0)) // \rho, \kappa, \mu, \nu, j,
-                                         // \lambda_c, \mu_c, \nu_c Add more GLL
-                                         // points as needed
+                        false>>(2300.0, 1500.0, 2800.0, 1e6, 1e4, 300.0, 25.0,
+                                500.0)) // \rho, \kappa, \mu, \nu, j,
+                                        // \lambda_c, \mu_c, \nu_c Add more GLL
+                                        // points as needed
             }) }
     };
 
@@ -347,4 +351,113 @@ TEST_P(Assembly3DTest, Properties) {
 
   // Perform comprehensive validation
   expected_properties.check(properties);
+}
+
+/**
+ * @brief Write kernels (value = global ispec + offset) with the NPY kernel
+ *        writer and verify the on-disk layout with the reader-independent
+ *        oracle.
+ */
+TEST_P(Assembly3DTest, KernelsIOLayout) {
+  auto assembly = getAssembly();
+  // The fixture does not build kernels; allocate them here.
+  assembly.kernels = { assembly.element_types };
+
+  const std::string temp_io_directory =
+      (std::getenv("BUILD_DIR") ? std::string(std::getenv("BUILD_DIR"))
+                                : boost::filesystem::current_path().string()) +
+      "/tests/unit-tests/temp_kernels_io_3d_" + GetParam();
+  boost::filesystem::remove_all(temp_io_directory);
+  boost::filesystem::create_directories(temp_io_directory);
+
+  const type_real offset = 100;
+  int n_checked = 0;
+
+  // Fill all host views with ispec + offset
+  specfem::tag_dispatch::for_each(
+      assembly.kernels.combinations, [&]<typename Tags>() {
+        constexpr auto medium_tag = Tags::medium_tag;
+        constexpr auto property_tag = Tags::property_tag;
+        const auto range = assembly.element_types.get_elements_on_host(
+            medium_tag, property_tag);
+        if (range.size() == 0)
+          return;
+        const auto &container =
+            assembly.kernels.template get_container<medium_tag, property_tag>();
+        const int base = container.element_range.begin_index();
+        container.for_each_host_view([&](const auto view, const std::string) {
+          for (int e = 0; e < range.size(); ++e)
+            for (std::size_t iz = 0; iz < view.extent(1); ++iz)
+              for (std::size_t iy = 0; iy < view.extent(2); ++iy)
+                for (std::size_t ix = 0; ix < view.extent(3); ++ix)
+                  view(range(e) - base, iz, iy, ix) = range(e) + offset;
+        });
+      });
+
+  specfem::io::kernel_writer<specfem::io_backends::NPY<specfem::io::write>>
+      writer(temp_io_directory);
+  writer.write(assembly);
+
+  const std::string folder =
+      specfem::MPI::format_proc_filename(temp_io_directory + "/Kernels");
+
+  specfem::tag_dispatch::for_each(
+      assembly.kernels.combinations, [&]<typename Tags>() {
+        constexpr auto medium_tag = Tags::medium_tag;
+        constexpr auto property_tag = Tags::property_tag;
+        const auto range = assembly.element_types.get_elements_on_host(
+            medium_tag, property_tag);
+        const int nelem = range.size();
+        if (nelem == 0)
+          return;
+        const std::string group =
+            folder + "/" +
+            specfem::element::to_string(medium_tag, property_tag) + "/";
+        const std::size_t ngllz = assembly.mesh.element_grid.ngllz;
+        const std::size_t nglly = assembly.mesh.element_grid.nglly;
+        const std::size_t ngllx = assembly.mesh.element_grid.ngllx;
+
+        auto check_shape = [&](const auto &raw, const std::string &n) {
+          ASSERT_EQ(raw.shape.size(), 4u) << n;
+          ASSERT_EQ(raw.shape[0], static_cast<std::size_t>(nelem)) << n;
+          ASSERT_EQ(raw.shape[1], ngllz) << n;
+          ASSERT_EQ(raw.shape[2], nglly) << n;
+          ASSERT_EQ(raw.shape[3], ngllx) << n;
+          ASSERT_FALSE(raw.fortran_order) << n;
+        };
+
+        const char *coord_names[3] = { "X", "Y", "Z" };
+        for (int c = 0; c < 3; ++c) {
+          const std::string n = coord_names[c];
+          const auto raw = specfem_test::layout_oracle::read_npy_raw<type_real>(
+              group + n + ".npy");
+          check_shape(raw, n);
+          for (int e = 0; e < nelem; ++e)
+            for (std::size_t iz = 0; iz < ngllz; ++iz)
+              for (std::size_t iy = 0; iy < nglly; ++iy)
+                for (std::size_t ix = 0; ix < ngllx; ++ix)
+                  EXPECT_NEAR(raw.at({ std::size_t(e), iz, iy, ix }),
+                              assembly.mesh.h_coord(range(e), iz, iy, ix, c),
+                              1e-4)
+                      << n << " e=" << e;
+        }
+
+        assembly.kernels.template get_container<medium_tag, property_tag>()
+            .for_each_host_view([&](const auto, const std::string view_name) {
+              const auto raw =
+                  specfem_test::layout_oracle::read_npy_raw<type_real>(
+                      group + view_name + ".npy");
+              check_shape(raw, view_name);
+              for (int e = 0; e < nelem; ++e)
+                for (std::size_t iz = 0; iz < ngllz; ++iz)
+                  for (std::size_t iy = 0; iy < nglly; ++iy)
+                    for (std::size_t ix = 0; ix < ngllx; ++ix)
+                      EXPECT_NEAR(raw.at({ std::size_t(e), iz, iy, ix }),
+                                  range(e) + offset, 1e-4)
+                          << view_name << " e=" << e;
+              ++n_checked;
+            });
+      });
+  EXPECT_GT(n_checked, 0);
+  boost::filesystem::remove_all(temp_io_directory);
 }

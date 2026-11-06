@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <mdspan/mdspan.hpp>
 #include <tuple>
+#include <utility>
 
 namespace specfem {
 namespace datatype {
@@ -237,7 +238,29 @@ public:
   KOKKOS_INLINE_FUNCTION
   std::size_t extent(int idim) const { return _mapping.extents().extent(idim); }
 
+  /**
+   * @brief Offset step along logical axis @p idim from the origin.
+   *
+   * The tiled mapping is affine only within a tile, so the strides describe
+   * the whole buffer only when the view holds a single tile.
+   *
+   * @param idim Logical axis
+   * @return Buffer offset of the unit index along @p idim
+   */
+  KOKKOS_INLINE_FUNCTION
+  std::size_t stride(int idim) const {
+    return stride_impl(static_cast<std::size_t>(idim),
+                       std::make_index_sequence<extents_type::rank()>{});
+  }
+
 private:
+  template <std::size_t... Axes>
+  KOKKOS_INLINE_FUNCTION std::size_t
+  stride_impl(const std::size_t axis, std::index_sequence<Axes...>) const {
+    return _mapping(static_cast<std::size_t>(Axes == axis)...) -
+           _mapping((Axes * std::size_t{ 0 })...);
+  }
+
   mapping_type _mapping;
 };
 

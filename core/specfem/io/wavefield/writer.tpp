@@ -5,6 +5,7 @@
 #include "specfem/io/wavefield/writer.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/mpi.hpp"
+#include "specfem/parallel_configuration/chunk_config.hpp"
 #include "specfem/tag_dispatch.hpp"
 #include "specfem/utilities.hpp"
 #include <boost/filesystem.hpp>
@@ -20,12 +21,10 @@ specfem::io::wavefield_writer<OutputLibrary>::wavefield_writer(
       // file_path is declared before file in the header, so it is initialized
       // first and can safely be passed to the File constructor.
       file_path([&output_folder]() {
-        const std::string formatted = specfem::MPI::format_proc_filename(
+        const boost::filesystem::path p = specfem::MPI::format_proc_filename(
             output_folder + "/ForwardWavefield");
-        const boost::filesystem::path p(formatted);
         if (specfem::MPI::get_size() > 1) {
           boost::filesystem::create_directories(p.parent_path());
-          return (p.parent_path() / p.stem()).string();
         }
         return p.string();
       }()),
@@ -73,6 +72,13 @@ void specfem::io::wavefield_writer<OutputLibrary>::initialize(
           element_types.get_elements_on_host(medium_tag);
       const int n_elements = element_indices.size();
 
+      // Global ispec of each row of `mapping`.
+      Kokkos::View<int *, Kokkos::HostSpace> element_index_view(
+          "element_indices", n_elements);
+      for (int iel = 0; iel < n_elements; iel++)
+        element_index_view(iel) = element_indices(iel);
+      group.createDataset("element_indices", element_index_view).write();
+
       DomainView x("xcoordinates", nglob_medium);
       DomainView z("zcoordinates", nglob_medium);
 
@@ -81,7 +87,7 @@ void specfem::io::wavefield_writer<OutputLibrary>::initialize(
 
       if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
         using MappingView =
-            Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::HostSpace>;
+            Kokkos::View<int ***, Kokkos::LayoutRight, Kokkos::HostSpace>;
         MappingView mapping("mapping", n_elements, ngllz, ngllx);
         for (int iel = 0; iel < n_elements; iel++) {
           const int ispec = element_indices(iel);
@@ -101,7 +107,7 @@ void specfem::io::wavefield_writer<OutputLibrary>::initialize(
       } else {
         const int nglly = mesh.element_grid.nglly;
         using MappingView =
-            Kokkos::View<int ****, Kokkos::LayoutLeft, Kokkos::HostSpace>;
+            Kokkos::View<int ****, Kokkos::LayoutRight, Kokkos::HostSpace>;
         DomainView y("ycoordinates", nglob_medium);
         MappingView mapping("mapping", n_elements, ngllz, nglly, ngllx);
         for (int iel = 0; iel < n_elements; iel++) {
@@ -200,36 +206,21 @@ void specfem::io::wavefield_writer<OutputLibrary>::run(
 
                 typename OutputLibrary::Group att_group =
                     med_group.createGroup("Attenuation");
-                att_group
-                    .createDataset("Rkappa", medium.h_memory_variable_kappa)
+
+                // Attenuation DomainViews are tiled over the element axis, so
+                // the raw padded rank-1 storage is checkpointed. A chunk-size
+                // stamp lets the reader reject files from a different build.
+                Kokkos::View<int *, Kokkos::HostSpace> chunk_size_view(
+                    "storage_chunk_size", 1);
+                chunk_size_view(0) =
+                    specfem::parallel_configuration::storage_chunk_size;
+                att_group.createDataset("storage_chunk_size", chunk_size_view)
                     .write();
-                att_group.createDataset("Rxx", medium.h_memory_variable_Rxx)
-                    .write();
-                att_group.createDataset("Rxz", medium.h_memory_variable_Rxz)
-                    .write();
-                att_group.createDataset("EpsilonXX", medium.h_epsilon_xx_att)
-                    .write();
-                att_group.createDataset("EpsilonZZ", medium.h_epsilon_zz_att)
-                    .write();
-                att_group.createDataset("EpsilonXZ", medium.h_epsilon_xz_att)
-                    .write();
-                if constexpr (DimensionTag ==
-                              specfem::element::dimension_tag::dim3) {
-                  att_group.createDataset("Ryy", medium.h_memory_variable_Ryy)
-                      .write();
-                  att_group.createDataset("Rzz", medium.h_memory_variable_Rzz)
-                      .write();
-                  att_group.createDataset("Rxy", medium.h_memory_variable_Rxy)
-                      .write();
-                  att_group.createDataset("Ryz", medium.h_memory_variable_Ryz)
-                      .write();
-                  att_group.createDataset("EpsilonYY", medium.h_epsilon_yy_att)
-                      .write();
-                  att_group.createDataset("EpsilonXY", medium.h_epsilon_xy_att)
-                      .write();
-                  att_group.createDataset("EpsilonYZ", medium.h_epsilon_yz_att)
-                      .write();
-                }
+                medium.for_each_checkpoint_view(
+                    [&](const std::string &name, const auto &view) {
+                      att_group.createDataset(name, view.get_base_view())
+                          .write();
+                    });
               }
             });
       }
