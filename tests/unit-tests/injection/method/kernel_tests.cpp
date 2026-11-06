@@ -1,6 +1,7 @@
 // Tests of the injection kernel run by PointwiseSurfaceMethod::apply: the
-// ConstantForce test method, fed by the session's mock plugin, on a mesh whose
-// Stacey faces are injection faces.
+// ConstantForce test method, fed by the session's mock plugin, on meshes whose
+// Stacey faces are injection faces: one elastic, one with an acoustic layer
+// over an elastic one.
 
 #include "../session/mock_plugin.hpp"
 #include "constant_force.hpp"
@@ -19,6 +20,7 @@
 #include <map>
 #include <memory>
 #include <stdexcept>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -26,18 +28,24 @@ namespace specfem::injection_method_test {
 
 constexpr auto dim3 = specfem::element::dimension_tag::dim3;
 constexpr auto elastic = specfem::element::medium_tag::elastic;
+constexpr auto acoustic = specfem::element::medium_tag::acoustic;
+constexpr auto isotropic = specfem::element::property_tag::isotropic;
 constexpr auto forward = specfem::simulation::field_type::forward;
 constexpr int nstep = 6;
 constexpr int istep = 2;
 // Velocity follows the three displacement slots.
 constexpr int velocity_slot = 3;
+// The potential rate is the only acoustic quantity of ConstantForce.
+constexpr int potential_rate_slot = 0;
 
 class InjectionKernelTest : public ::testing::Test {
 protected:
-  void SetUp() override {
-    const auto mesh = specfem::io::read_3d_mesh(
-        "data/dim3/EightNodeElasticInjectionStacey/database.bin",
-        specfem::attenuation::Setup{});
+  void SetUp() override { load("EightNodeElasticInjectionStacey"); }
+
+  void load(const std::string &database) {
+    const auto mesh =
+        specfem::io::read_3d_mesh("data/dim3/" + database + "/database.bin",
+                                  specfem::attenuation::Setup{});
     const auto quadratures =
         specfem::quadrature::quadratures(specfem::quadrature::gll::gll{});
     std::vector<std::shared_ptr<specfem::sources::source<dim3>>> sources;
@@ -61,14 +69,16 @@ protected:
     method.setup(assembly, std::move(session));
   }
 
-  // Expected acceleration per global point: the sum over the unmasked entries
-  // at the point of scale * velocity * dS.
+  // Expected elastic acceleration per global point: the sum over the
+  // unmasked elastic entries at the point of scale * velocity * dS.
   std::map<int, std::array<double, 3>>
   expected(const std::vector<bool> &masked) const {
     const auto &surface = assembly.injection_surface;
+    const auto entries = surface.get_entries<elastic, isotropic>();
     const type_real scale = ConstantForce::Parameters{}.scale;
     std::map<int, std::array<double, 3>> sums;
-    for (int entry = 0; entry < surface.nentries; ++entry) {
+    for (int i = 0; i < entries.size(); ++i) {
+      const int entry = entries(i);
       if (masked[entry])
         continue;
       const int iglob = assembly.mesh.h_index_mapping(
@@ -85,9 +95,34 @@ protected:
     return sums;
   }
 
-  // Compare the forward acceleration at every GLL point with the expected
-  // sums; points without a sum must be zero. Returns the GLL points that
-  // carry a sum.
+  // Expected acoustic acceleration per global point: the sum over the
+  // acoustic entries at the point of scale * potential rate * dS. Entries on
+  // the free surface hold the potential at zero and receive nothing.
+  std::map<int, double> expected_acoustic() const {
+    const auto &surface = assembly.injection_surface;
+    const auto entries = surface.get_entries<acoustic, isotropic>();
+    const type_real scale = ConstantForce::Parameters{}.scale;
+    std::map<int, double> sums;
+    for (int i = 0; i < entries.size(); ++i) {
+      const int entry = entries(i);
+      const auto tag = surface.h_boundary_tag(entry);
+      if (tag == specfem::element::boundary_tag::acoustic_free_surface ||
+          tag == specfem::element::boundary_tag::composite_stacey_dirichlet)
+        continue;
+      const int iglob = assembly.mesh.h_index_mapping(
+          surface.h_ispec(entry), surface.h_iz(entry), surface.h_iy(entry),
+          surface.h_ix(entry));
+      sums[iglob] +=
+          scale * surface.h_weight(entry) *
+          static_cast<type_real>(specfem::injection_session_test::mock_value(
+              surface.x(surface.h_row(entry)), potential_rate_slot, istep));
+    }
+    return sums;
+  }
+
+  // Compare the forward elastic acceleration at every GLL point of the
+  // elastic elements with the expected sums; points without a sum must be
+  // zero. Returns the GLL points that carry a sum.
   int expect_acceleration(const std::map<int, std::array<double, 3>> &sums) {
     assembly.fields.copy_to_host();
     const auto &field = assembly.fields.get_simulation_field<forward>();
@@ -97,10 +132,11 @@ protected:
       for (int iz = 0; iz < ngll; ++iz)
         for (int iy = 0; iy < ngll; ++iy)
           for (int ix = 0; ix < ngll; ++ix) {
+            if (assembly.element_types.get_medium_tag(ispec) != elastic)
+              continue;
             const specfem::point::index<dim3, false> index(ispec, iz, iy, ix);
-            specfem::point::acceleration<specfem::tags::Tags<
-                dim3, elastic, specfem::element::property_tag::isotropic,
-                false>>
+            specfem::point::acceleration<
+                specfem::tags::Tags<dim3, elastic, isotropic, false>>
                 acceleration;
             specfem::assembly::load_on_host(index, field, acceleration);
             const auto found =
@@ -119,8 +155,43 @@ protected:
     return checked;
   }
 
+  // The acoustic counterpart: the potential's acceleration at every GLL
+  // point of the acoustic elements.
+  int expect_acoustic_acceleration(const std::map<int, double> &sums) {
+    assembly.fields.copy_to_host();
+    const auto &field = assembly.fields.get_simulation_field<forward>();
+    const int ngll = 5;
+    int checked = 0;
+    for (int ispec = 0; ispec < assembly.mesh.nspec; ++ispec)
+      for (int iz = 0; iz < ngll; ++iz)
+        for (int iy = 0; iy < ngll; ++iy)
+          for (int ix = 0; ix < ngll; ++ix) {
+            if (assembly.element_types.get_medium_tag(ispec) != acoustic)
+              continue;
+            const specfem::point::index<dim3, false> index(ispec, iz, iy, ix);
+            specfem::point::acceleration<
+                specfem::tags::Tags<dim3, acoustic, isotropic, false>>
+                acceleration;
+            specfem::assembly::load_on_host(index, field, acceleration);
+            const auto found =
+                sums.find(assembly.mesh.h_index_mapping(ispec, iz, iy, ix));
+            const double value = found == sums.end() ? 0.0 : found->second;
+            EXPECT_NEAR(acceleration(0), value, 1e-5 * std::abs(value) + 1e-6)
+                << "ispec " << ispec << " (" << iz << ", " << iy << ", " << ix
+                << ")";
+            if (found != sums.end())
+              ++checked;
+          }
+    return checked;
+  }
+
   specfem::assembly::assembly<dim3> assembly;
   specfem::injection::PointwiseSurfaceMethod<ConstantForce> method;
+};
+
+class AcousticInjectionKernelTest : public InjectionKernelTest {
+protected:
+  void SetUp() override { load("EightNodeAcousticElasticInjectionStacey"); }
 };
 
 TEST_F(InjectionKernelTest, ForceLandsOnTheInjectionPoints) {
@@ -154,6 +225,31 @@ TEST_F(InjectionKernelTest, MediumWithoutInjectionPointsIsUntouched) {
   method.apply(assembly, specfem::element::medium_tag::acoustic, forward,
                istep);
   expect_acceleration({});
+}
+
+TEST_F(AcousticInjectionKernelTest, AcousticTermLandsOnTheAcousticPoints) {
+  const auto &surface = assembly.injection_surface;
+  const int acoustic_entries =
+      surface.get_entries<acoustic, isotropic>().size();
+  const int elastic_entries = surface.get_entries<elastic, isotropic>().size();
+  ASSERT_GT(acoustic_entries, 0);
+  ASSERT_GT(elastic_entries, 0);
+  setup_method();
+  method.prepare_step(istep);
+  method.apply(assembly, acoustic, forward, istep);
+  EXPECT_GT(expect_acoustic_acceleration(expected_acoustic()), 0);
+  // The elastic points are untouched by the acoustic apply.
+  expect_acceleration({});
+}
+
+TEST_F(AcousticInjectionKernelTest, ElasticApplyLeavesTheAcousticPointsAlone) {
+  setup_method();
+  method.prepare_step(istep);
+  method.apply(assembly, elastic, forward, istep);
+  EXPECT_GT(expect_acceleration(expected(
+                std::vector<bool>(assembly.injection_surface.nentries, false))),
+            0);
+  expect_acoustic_acceleration({});
 }
 
 TEST_F(InjectionKernelTest, NonForwardWavefieldIsRejected) {

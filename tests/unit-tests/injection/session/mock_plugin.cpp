@@ -39,8 +39,10 @@ std::int32_t mock_supports(void *self, specfem_medium medium,
   if (state->config == "no-traction")
     return quantity != specfem_quantity_traction &&
            quantity != specfem_quantity_potential_rate;
-  return (medium == specfem_medium_acoustic) ==
-         (quantity == specfem_quantity_potential_rate);
+  if (medium == specfem_medium_acoustic)
+    return quantity == specfem_quantity_displacement ||
+           quantity == specfem_quantity_potential_rate;
+  return quantity != specfem_quantity_potential_rate;
 }
 
 specfem_status mock_setup(void *self, const specfem_points *points) {

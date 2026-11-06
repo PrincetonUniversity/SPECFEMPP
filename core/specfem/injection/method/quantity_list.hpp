@@ -26,7 +26,8 @@ template <specfem_quantity... Quantities> struct QuantityList {};
  * @brief Buffer components a quantity occupies at a point of a medium.
  *
  * Elastic points take displacement, velocity, acceleration and traction as 3D
- * vectors; acoustic points take the potential rate as a scalar.
+ * vectors; acoustic points take displacement as a 3D vector and the potential
+ * rate as a scalar.
  *
  * @tparam MediumTag Medium of the point
  * @param quantity Requested quantity
@@ -47,7 +48,16 @@ constexpr int quantity_components(const specfem_quantity quantity) {
       return 0;
     }
   } else if constexpr (MediumTag == specfem::element::medium_tag::acoustic) {
-    return quantity == specfem_quantity_potential_rate ? 1 : 0;
+    switch (quantity) {
+    case specfem_quantity_displacement:
+      return specfem::element::attributes<
+          specfem::element::dimension_tag::dim3,
+          specfem::element::medium_tag::elastic>::components;
+    case specfem_quantity_potential_rate:
+      return 1;
+    default:
+      return 0;
+    }
   } else {
     return 0;
   }
