@@ -49,9 +49,6 @@ template <typename OpType> class File;
 template <typename ViewType, typename OpType>
 class Dataset : public DatasetBase<OpType> {
 public:
-  // static_assert(ViewType::is_contiguous, "ViewType must be contiguous");
-  static_assert(specfem::io_backends::impl::not_domain_view<ViewType>());
-
   constexpr static int rank = ViewType::rank(); ///< Rank of the View
   using value_type =
       typename ViewType::non_const_value_type; ///< Underlying type of the View
@@ -119,14 +116,19 @@ private:
   /**
    * @brief Convert Kokkos view dimensions to ADIOS2 format
    * @param data The Kokkos view
+   * @param name Name of the dataset, used in error messages
    * @return Tuple of (shape, start, count) vectors
+   * @throws std::invalid_argument if @p data is not a contiguous LayoutLeft or
+   * LayoutRight buffer
    */
-  auto convert_dimensions(const ViewType &data) {
+  auto convert_dimensions(const ViewType &data, const std::string &name) {
     std::vector<std::size_t> shape(rank);
     std::vector<std::size_t> start(rank, 0);
     std::vector<std::size_t> count(rank);
 
-    const auto extents = specfem::io_backends::impl::file_extents(data);
+    const auto extents = specfem::io_backends::impl::file_extents(
+        data, specfem::io_backends::impl::require_contiguous_storage_order(
+                  data, name));
     for (int i = 0; i < rank; ++i) {
       shape[i] = extents[i];
       count[i] = extents[i];

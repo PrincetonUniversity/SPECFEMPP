@@ -26,9 +26,9 @@ On-disk layout
 Multi-dimensional datasets are stored so that an external reader such as NumPy,
 ``h5py`` or ``bpls`` recovers the array from the file alone.
 
-**Storage order.** A ``Kokkos::LayoutRight`` view is stored as row-major data
-with its own shape. A ``Kokkos::LayoutLeft`` view of rank 2 or higher depends on
-the backend:
+**Storage order.** A view whose buffer has contiguous row-major strides is stored
+with its own shape. A view of rank 2 or higher whose buffer has contiguous
+column-major strides depends on the backend:
 
 * HDF5 and ADIOS2 are row-major, so the dataset is declared with reversed
   extents. A view of shape ``(n0, n1, n2)`` appears as ``(n2, n1, n0)``.

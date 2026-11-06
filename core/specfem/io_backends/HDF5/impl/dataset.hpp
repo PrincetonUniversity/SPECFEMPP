@@ -48,9 +48,6 @@ template <typename OpType> class File;
 template <typename ViewType, typename OpType>
 class Dataset : public DatasetBase<OpType> {
 public:
-  // static_assert(ViewType::is_contiguous, "ViewType must be contiguous");
-  static_assert(specfem::io_backends::impl::not_domain_view<ViewType>());
-
   constexpr static int rank = ViewType::rank(); ///< Rank of the View
 
   using value_type =
@@ -75,6 +72,8 @@ public:
    * @param file HDF5 file object to create the dataset in
    * @param name Name of the dataset
    * @param data Data to write
+   * @throws std::invalid_argument if @p data is not a contiguous LayoutLeft or
+   * LayoutRight buffer
    */
   Dataset(std::unique_ptr<H5::H5File> &file, const std::string &name,
           const ViewType data);
@@ -86,6 +85,8 @@ public:
    * @param group HDF5 group object to create the dataset in
    * @param name Name of the dataset
    * @param data Data to write
+   * @throws std::invalid_argument if @p data is not a contiguous LayoutLeft or
+   * LayoutRight buffer
    */
   Dataset(std::unique_ptr<H5::Group> &group, const std::string &name,
           const ViewType data);

@@ -8,8 +8,11 @@
 #include <boost/filesystem.hpp>
 #include <gtest/gtest.h>
 
+#include <fstream>
+#include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace fs = boost::filesystem;
 
@@ -143,24 +146,89 @@ TEST(SubBlockTest, InsertSubBlockRoundTrip) {
       }
 }
 
-// Datasets must reject tiled DomainViews at compile time (including mirrors).
-using DomainView2dHost =
-    specfem::datatype::DomainView2d<double, 3, Kokkos::HostSpace>;
-using DomainViewMirror = decltype(specfem::datatype::create_mirror_view(
-    std::declval<DomainView2dHost>()));
+TEST(StorageOrderTest, DomainViewIsWritableOnlyAsOneFullTile) {
+  EXPECT_FALSE(specfem::io_backends::impl::contiguous_storage_order(
+      FixedChunkView<3>("padded", 7, 3, 2)));
+  EXPECT_FALSE(specfem::io_backends::impl::contiguous_storage_order(
+      FixedChunkView<3>("two_tiles", 8, 3, 2)));
 
-static_assert(
-    specfem::io_backends::impl::is_domain_view<FixedChunkView<3>>::value);
-static_assert(
-    specfem::io_backends::impl::is_domain_view<DomainView2dHost>::value);
-static_assert(specfem::io_backends::impl::is_domain_view<
-              DomainView2dHost::host_mirror_type>::value);
-static_assert(
-    specfem::io_backends::impl::is_domain_view<DomainViewMirror>::value);
-static_assert(!specfem::io_backends::impl::is_domain_view<Kokkos::View<
-                  double ***, Kokkos::LayoutLeft, Kokkos::HostSpace>>::value);
-static_assert(!specfem::io_backends::impl::is_domain_view<
-              DomainView2dHost::base_type>::value);
+  FixedChunkView<3> one_tile("one_tile", 4, 3, 2);
+  EXPECT_EQ(specfem::io_backends::impl::contiguous_storage_order(one_tile),
+            specfem::io_backends::impl::StorageOrder::column_major);
+  for (std::size_t e = 0; e < 4; ++e)
+    for (std::size_t iz = 0; iz < 3; ++iz)
+      for (std::size_t ix = 0; ix < 2; ++ix)
+        EXPECT_EQ(&one_tile(e, iz, ix), one_tile.data() + e + 4 * iz + 12 * ix);
+}
+
+TEST(StorageOrderTest, KokkosViewsAreClassifiedByStrides) {
+  EXPECT_EQ(specfem::io_backends::impl::contiguous_storage_order(
+                Kokkos::View<double ***, Kokkos::LayoutLeft, Kokkos::HostSpace>(
+                    "left", 4, 3, 2)),
+            specfem::io_backends::impl::StorageOrder::column_major);
+  EXPECT_EQ(
+      specfem::io_backends::impl::contiguous_storage_order(
+          Kokkos::View<double ***, Kokkos::LayoutRight, Kokkos::HostSpace>(
+              "right", 4, 3, 2)),
+      specfem::io_backends::impl::StorageOrder::row_major);
+  EXPECT_EQ(specfem::io_backends::impl::contiguous_storage_order(
+                Kokkos::View<double *, Kokkos::HostSpace>("rank1", 5)),
+            specfem::io_backends::impl::StorageOrder::row_major);
+  // Both stride sets match a shape of all ones; row-major is reported.
+  EXPECT_EQ(specfem::io_backends::impl::contiguous_storage_order(
+                Kokkos::View<double **, Kokkos::LayoutLeft, Kokkos::HostSpace>(
+                    "ones_left", 1, 1)),
+            specfem::io_backends::impl::StorageOrder::row_major);
+
+  using StridedView =
+      Kokkos::View<double **, Kokkos::LayoutStride, Kokkos::HostSpace>;
+  Kokkos::View<double **, Kokkos::LayoutRight, Kokkos::HostSpace> matrix(
+      "matrix", 6, 3);
+  const StridedView every_other_row(matrix.data(),
+                                    Kokkos::LayoutStride(3, 6, 3, 1));
+  EXPECT_FALSE(
+      specfem::io_backends::impl::contiguous_storage_order(every_other_row));
+  const StridedView full_range(matrix.data(), Kokkos::LayoutStride(6, 3, 3, 1));
+  EXPECT_EQ(specfem::io_backends::impl::contiguous_storage_order(full_range),
+            specfem::io_backends::impl::StorageOrder::row_major);
+}
+
+TEST(StorageOrderTest, NPYDatasetRejectsPaddedDomainView) {
+  DirGuard guard("test_storage_order_padded_domain_view");
+  specfem::io_backends::NPY<specfem::io::write>::File file(guard.path());
+  FixedChunkView<3> padded("padded", 7, 3, 2);
+  EXPECT_THROW(file.createDataset("k", padded), std::invalid_argument);
+}
+
+// Writes a column-major NPY file by hand, as an external tool would.
+static void write_fortran_order_npy(const std::string &path,
+                                    const std::vector<std::size_t> &shape,
+                                    const std::vector<double> &values) {
+  const auto header =
+      specfem::io_backends::impl::NPY::create_npy_header<double>(shape, true);
+  std::ofstream stream(path, std::ios::binary);
+  stream.write(header.data(), header.size());
+  stream.write(reinterpret_cast<const char *>(values.data()),
+               values.size() * sizeof(double));
+}
+
+TEST(StorageOrderTest, NPYReaderIgnoresOrderWhenOneExtentIsAboveOne) {
+  DirGuard guard("test_storage_order_reader_ambiguous");
+  fs::create_directories(guard.path());
+  write_fortran_order_npy(guard.path() + "/ones.npy", { 1, 1 }, { 3.5 });
+  write_fortran_order_npy(guard.path() + "/square.npy", { 2, 2 },
+                          { 1.0, 2.0, 3.0, 4.0 });
+
+  specfem::io_backends::NPY<specfem::io::read>::File file(guard.path());
+  Kokkos::View<double **, Kokkos::LayoutRight, Kokkos::HostSpace> ones("ones",
+                                                                       1, 1);
+  EXPECT_NO_THROW(file.openDataset("ones", ones).read());
+  EXPECT_NEAR(ones(0, 0), 3.5, 1e-12);
+
+  Kokkos::View<double **, Kokkos::LayoutRight, Kokkos::HostSpace> square(
+      "square", 2, 2);
+  EXPECT_THROW(file.openDataset("square", square).read(), std::runtime_error);
+}
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

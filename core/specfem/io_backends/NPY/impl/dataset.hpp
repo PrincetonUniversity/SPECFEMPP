@@ -18,17 +18,11 @@ template <typename OpType> class File;
 template <typename ViewType, typename OpType>
 class Dataset : public DatasetBase<OpType> {
 public:
-  // static_assert(ViewType::is_contiguous, "ViewType must be contiguous");
-  static_assert(specfem::io_backends::impl::not_domain_view<ViewType>());
-
   constexpr static int rank = ViewType::rank(); ///< Rank of the View
 
   using value_type =
       typename ViewType::non_const_value_type;      ///< Underlying type
   using MemSpace = typename ViewType::memory_space; ///< Memory space
-
-  /// Storage order declared in the file header (see is_fortran_order)
-  constexpr static bool fortran_order = is_fortran_order<ViewType>();
 
   /**
    * @name Constructors
@@ -42,6 +36,8 @@ public:
    * @param file npy file object to create the dataset in
    * @param name Name of the dataset
    * @param data Data to write
+   * @throws std::invalid_argument if @p data is not a contiguous LayoutLeft or
+   * LayoutRight buffer
    */
   Dataset(boost::filesystem::path &file, const std::string &name,
           const ViewType data);
@@ -63,6 +59,8 @@ public:
 
 private:
   ViewType data; ///< Data to write
+  /// Header storage order; rank 0 and 1 views are declared column-major
+  bool fortran_order;
 };
 
 } // namespace specfem::io_backends::impl::NPY

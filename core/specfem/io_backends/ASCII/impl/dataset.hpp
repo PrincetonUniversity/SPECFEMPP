@@ -22,9 +22,6 @@ template <typename OpType> class File;
 template <typename ViewType, typename OpType>
 class Dataset : public DatasetBase<OpType> {
 public:
-  // static_assert(ViewType::is_contiguous, "ViewType must be contiguous");
-  static_assert(specfem::io_backends::impl::not_domain_view<ViewType>());
-
   constexpr static int rank = ViewType::rank(); ///< Rank of the View
 
   using value_type =
@@ -49,6 +46,8 @@ public:
    * @param file ASCII file object to create the dataset in
    * @param name Name of the dataset
    * @param data Data to write
+   * @throws std::invalid_argument if @p data is not a contiguous LayoutLeft or
+   * LayoutRight buffer
    */
   Dataset(boost::filesystem::path &file, const std::string &name,
           const ViewType data);
