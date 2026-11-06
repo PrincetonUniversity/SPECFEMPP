@@ -90,6 +90,30 @@
       }
     },
     {
+      "name": "release-tensorops",
+      "displayName": "Release -- TensorOperations kernels (CPU)",
+      "description": "Inherits 'release' and enables TensorOperations. Set SPECFEM_TENSOROPS_ROOT to a checkout of the library's main branch.",
+      "inherits": "release",
+      "binaryDir": "build/release-tensorops",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-tensorops",
+        "SPECFEM_ENABLE_TENSOROPS": "ON",
+        "SPECFEM_BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-tensorops"
+      }
+    },
+    {
+      "name": "release-cuda-tensorops",
+      "displayName": "Release CUDA -- TensorOperations kernels (GPU)",
+      "description": "Inherits 'release-cuda' and enables TensorOperations. Set SPECFEM_TENSOROPS_ROOT to a checkout of the library's main branch.",
+      "inherits": "release-cuda",
+      "binaryDir": "build/release-cuda-tensorops",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-cuda-tensorops",
+        "SPECFEM_ENABLE_TENSOROPS": "ON",
+        "SPECFEM_BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-cuda-tensorops"
+      }
+    },
+    {
       "name": "release-hip",
       "displayName": "Release -- HIP enabled",
       "binaryDir": "build/release-hip",
@@ -406,6 +430,20 @@
     {
       "name": "release-cuda-trilinos",
       "configurePreset": "release-cuda-trilinos",
+      "targets": [
+        "all"
+      ]
+    },
+    {
+      "name": "release-tensorops",
+      "configurePreset": "release-tensorops",
+      "targets": [
+        "all"
+      ]
+    },
+    {
+      "name": "release-cuda-tensorops",
+      "configurePreset": "release-cuda-tensorops",
       "targets": [
         "all"
       ]
