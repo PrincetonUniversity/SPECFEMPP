@@ -165,7 +165,8 @@ fk_injection::LayerLocation fk_injection::LayeredModel::locate(
                         height,
                         in_halfspace,
                         depth_below_halfspace_top,
-                        at_free_surface };
+                        at_free_surface,
+                        depth };
 }
 
 void fk_injection::LayeredModel::validate() const {

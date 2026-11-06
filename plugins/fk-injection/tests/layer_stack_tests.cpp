@@ -1,13 +1,11 @@
 #include "fk_injection/config.hpp"
-#include "fk_injection/field_derivative.hpp"
 #include "fk_injection/incident_wave.hpp"
 #include "fk_injection/layered_model.hpp"
 #include "fk_injection/time_window.hpp"
 #include "fk_injection/utilities/complex_matrix.hpp"
-#include "impl/depth_groups.hpp"
 #include "impl/field_recovery.hpp"
-#include "impl/fk_setup.hpp"
 #include "impl/layer_stack.hpp"
+#include "plane_wave_response.hpp"
 #include <cmath>
 #include <gtest/gtest.h>
 
@@ -95,7 +93,6 @@ fk_injection::TimeWindow make_window() {
   fk_injection::TimeWindow window;
   window.dt = static_cast<type_real>(0.05);
   window.nstep = 512;
-  window.frequency_max = static_cast<type_real>(1.0);
   window.frequency_sampling = static_cast<type_real>(4.0);
   window.time_window_length = static_cast<type_real>(50.0);
   return window;
@@ -116,12 +113,9 @@ TEST(LayerStack, HalfspaceTopIsEtimesB) {
   const auto wave = layer_stack_tests_impl::make_wave_p();
   const auto window = layer_stack_tests_impl::make_window();
 
-  const double p = wave.ray_parameter(model);
-  fk_injection::impl::DepthGroups groups; // empty, span 0
-  const auto setup =
-      fk_injection::impl::prepare(model, wave, window, p, groups,
-                                  fk_injection::field_derivative::displacement);
-  const auto states = fk_injection::impl::solve_layer_stack(model, setup);
+  const fk_injection::PlaneWaveResponse response(model, wave, window, {});
+  const auto &setup = response.setup();
+  const auto &states = response.states();
 
   const int n_elastic = model.number_of_elastic_layers();
   const int f = 10;
@@ -154,11 +148,9 @@ TEST(LayerStack, FreeSurfaceTractionVanishesP) {
   const auto window = layer_stack_tests_impl::make_window();
 
   const double p = wave.ray_parameter(model);
-  fk_injection::impl::DepthGroups groups;
-  const auto setup =
-      fk_injection::impl::prepare(model, wave, window, p, groups,
-                                  fk_injection::field_derivative::displacement);
-  const auto states = fk_injection::impl::solve_layer_stack(model, setup);
+  const fk_injection::PlaneWaveResponse response(model, wave, window, {});
+  const auto &setup = response.setup();
+  const auto &states = response.states();
 
   const int f = 10;
   ASSERT_LT(f, static_cast<int>(setup.omega.size()));
@@ -197,11 +189,9 @@ TEST(LayerStack, FreeSurfaceTractionVanishesSV) {
   const auto window = layer_stack_tests_impl::make_window();
 
   const double p = wave.ray_parameter(model);
-  fk_injection::impl::DepthGroups groups;
-  const auto setup =
-      fk_injection::impl::prepare(model, wave, window, p, groups,
-                                  fk_injection::field_derivative::displacement);
-  const auto states = fk_injection::impl::solve_layer_stack(model, setup);
+  const fk_injection::PlaneWaveResponse response(model, wave, window, {});
+  const auto &setup = response.setup();
+  const auto &states = response.states();
 
   const int f = 10;
   ASSERT_LT(f, static_cast<int>(setup.omega.size()));
@@ -240,11 +230,9 @@ TEST(LayerStack, FluidFreeSurfacePressureSmall) {
   const auto window = layer_stack_tests_impl::make_window();
 
   const double p = wave.ray_parameter(model);
-  fk_injection::impl::DepthGroups groups;
-  const auto setup =
-      fk_injection::impl::prepare(model, wave, window, p, groups,
-                                  fk_injection::field_derivative::displacement);
-  const auto states = fk_injection::impl::solve_layer_stack(model, setup);
+  const fk_injection::PlaneWaveResponse response(model, wave, window, {});
+  const auto &setup = response.setup();
+  const auto &states = response.states();
 
   const int f = 10;
   ASSERT_LT(f, static_cast<int>(setup.omega.size()));
