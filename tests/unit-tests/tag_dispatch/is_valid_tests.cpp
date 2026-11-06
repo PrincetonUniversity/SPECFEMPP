@@ -155,7 +155,7 @@ TEST(IsValidMaterial, OthersAllowBothAttenuation) {
       { D::dim3, M::elastic, P::isotropic, A::constant_isotropic }));
   EXPECT_TRUE(is_valid_material_combo(
       { D::dim3, M::elastic, P::anisotropic, A::none }));
-  EXPECT_FALSE(is_valid_material_combo(
+  EXPECT_TRUE(is_valid_material_combo(
       { D::dim3, M::elastic, P::anisotropic, A::constant_isotropic }));
 }
 
@@ -249,6 +249,8 @@ TEST(IsValidFull, ValidCombos) {
                                     B::acoustic_free_surface }));
   EXPECT_TRUE(is_valid_full_combo(
       { D::dim3, M::elastic, P::isotropic, A::constant_isotropic, B::none }));
+  EXPECT_TRUE(is_valid_full_combo(
+      { D::dim3, M::elastic, P::anisotropic, A::constant_isotropic, B::none }));
 }
 
 TEST(IsValidFull, InvalidByMaterial) {

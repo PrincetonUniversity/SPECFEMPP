@@ -22,6 +22,7 @@ namespace specfem::assembly {
  *                               (specfem::point::attenuation<...>).
  *                               Must have @c medium_tag, @c property_tag, and
  *                               @c attenuation_tag == constant_isotropic.
+ * @tparam PropertyTag           Property group containing the memory variables.
  * @tparam IndexType             Point index struct
  *                               (specfem::point::index<...>).
  *                               @c IndexType::using_simd must match
@@ -34,6 +35,8 @@ namespace specfem::assembly {
  * @ingroup AttenuationDataAccess
  */
 template <typename PointAttenuationType, typename IndexType,
+          specfem::element::property_tag PropertyTag =
+              PointAttenuationType::property_tag,
           typename std::enable_if_t<
               IndexType::using_simd == PointAttenuationType::using_simd &&
                   PointAttenuationType::attenuation_tag ==
@@ -46,7 +49,6 @@ KOKKOS_FORCEINLINE_FUNCTION void store_on_device(
     const PointAttenuationType &point) {
 
   constexpr auto MediumTag = PointAttenuationType::medium_tag;
-  constexpr auto PropertyTag = PointAttenuationType::property_tag;
 
   // Store memory variables back to device views
   attenuation.template get_container<MediumTag, PropertyTag>()

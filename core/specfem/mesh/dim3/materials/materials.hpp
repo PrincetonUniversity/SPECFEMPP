@@ -393,9 +393,22 @@ public:
         get_container<specfem::element::medium_tag::elastic,
                       specfem::element::property_tag::isotropic,
                       specfem::element::attenuation_tag::constant_isotropic>();
+    // Globe's storage table: Q values sharing a bucket use the first one.
+    specfem::attenuation::globe::QualityFactorTable qkappa_table, qmu_table;
     for (auto &material : container.element_materials) {
+      material.Qkappa = qkappa_table.representative(material.Qkappa);
+      material.Qmu = qmu_table.representative(material.Qmu);
       material.compute_attenuation_properties(config.f0.raw(), fc.raw(),
                                               config.band, config.tau_sigma);
+    }
+    // Anisotropic elements share the shear table. Qkappa does not attenuate
+    // them and is left as read.
+    auto &anisotropic =
+        get_container<specfem::element::medium_tag::elastic,
+                      specfem::element::property_tag::anisotropic,
+                      specfem::element::attenuation_tag::constant_isotropic>();
+    for (auto &material : anisotropic.element_materials) {
+      material.Qmu = qmu_table.representative(material.Qmu);
     }
   }
 

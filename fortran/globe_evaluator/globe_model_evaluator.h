@@ -191,6 +191,7 @@ void globe_evaluator_rotate_tiso_to_cij(double theta, double phi, double rho,
                                         double vpv, double vph, double vsv,
                                         double vsh, double eta, double *cij);
 
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

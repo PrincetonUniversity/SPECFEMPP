@@ -104,7 +104,7 @@ struct Attenuation<specfem::element::dimension_tag::dim3>
 
   static constexpr auto attenuation_medium_combinations =
       specfem::tag_dispatch::dimension_set<dimension_tag>{} *
-      MEDIUM_SET(elastic) * PROPERTY_SET(isotropic) *
+      MEDIUM_SET(elastic) * PROPERTY_SET(isotropic, anisotropic) *
       ATTENUATION_SET(constant_isotropic);
 
   template <typename TagsType>
