@@ -38,6 +38,30 @@ specfem_add_test(injection_types_tests
               gtest
 )
 
+specfem_add_test(injection_operators_tests
+  LABELS      fk_injection
+  SOURCES     runner.cpp
+              layer_operators_tests.cpp
+  LIBRARIES   fk_injection_impl
+              gtest
+)
+
+specfem_add_test(injection_halfspace_tests
+  LABELS      fk_injection
+  SOURCES     runner.cpp
+              halfspace_solve_tests.cpp
+  LIBRARIES   fk_injection_impl
+              gtest
+)
+
+specfem_add_test(injection_field_recovery_tests
+  LABELS      fk_injection
+  SOURCES     runner.cpp
+              field_recovery_tests.cpp
+  LIBRARIES   fk_injection_impl
+              gtest
+)
+
 # Loads the module only.
 specfem_add_test(fk_injection_module_tests
   LABELS      fk_injection
