@@ -30,7 +30,8 @@ TEST(LayerOperators, ElasticPropagatorZeroThickness) {
   const auto P = fk_injection::impl::layer_propagator(
       layer, omega, static_cast<fk_injection::type_real>(0.0), p);
 
-  auto I = fk_injection::ComplexMatrix<4>::identity();
+  const fk_injection::ComplexMatrix<4> I(
+      [](int i, int j) { return i == j ? 1.0 : 0.0; });
   double max_err = 0.0;
   for (int i = 0; i < 4; ++i) {
     for (int j = 0; j < 4; ++j) {

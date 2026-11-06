@@ -267,7 +267,8 @@ inline void expect_singular(const fk_injection::ComplexMatrix<4> &n_mat) {
   const fk_injection::incident_wave_type wave_type =
       fk_injection::incident_wave_type::p;
   const std::complex<double> amplitude(1.0, 0.0);
-  const auto fluid_propagator = fk_injection::ComplexMatrix<2>::identity();
+  const fk_injection::ComplexMatrix<2> fluid_propagator(
+      [](int i, int j) { return i == j ? 1.0 : 0.0; });
 
   try {
     fk_injection::impl::halfspace_coefficients(n_mat, wave_type, amplitude);
@@ -294,10 +295,8 @@ TEST(HalfspaceSolve, SingularSystemThrows) {
   halfspace_solve_tests_impl::expect_singular(fk_injection::ComplexMatrix<4>());
 
   // NaN coefficients, as an unchecked supercritical slowness would produce.
-  fk_injection::ComplexMatrix<4> not_finite;
-  for (int k = 0; k < 4 * 4; ++k) {
-    not_finite.data[k] =
-        std::complex<double>(std::numeric_limits<double>::quiet_NaN(), 0.0);
-  }
+  const fk_injection::ComplexMatrix<4> not_finite([](int, int) {
+    return std::complex<double>(std::numeric_limits<double>::quiet_NaN(), 0.0);
+  });
   halfspace_solve_tests_impl::expect_singular(not_finite);
 }
