@@ -46,8 +46,8 @@ fk_injection::impl::InterfaceStates fk_injection::impl::solve_layer_stack(
     }
 
     // Full fluid propagator Q_0 * Q_1 * ... * Q_{n_fluid-1}.
-    fk_injection::ComplexMatrix<2> fluid_propagator =
-        fk_injection::ComplexMatrix<2>::identity();
+    fk_injection::ComplexMatrix<2> fluid_propagator(
+        [](int i, int j) { return i == j ? 1.0 : 0.0; });
     for (int layer = 0; layer < n_fluid; ++layer) {
       fluid_propagator = fluid_propagator *
                          fk_injection::impl::layer_propagator(

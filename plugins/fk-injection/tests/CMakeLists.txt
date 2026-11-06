@@ -62,45 +62,37 @@ specfem_add_test(injection_field_recovery_tests
               gtest
 )
 
-add_executable(injection_driver_tests
-  runner.cpp
-  driver_tests.cpp
+specfem_add_test(injection_driver_tests
+  LABELS      fk_injection
+  SOURCES     runner.cpp
+              driver_tests.cpp
+  LIBRARIES   fk_injection_impl
+              gtest
 )
-target_link_libraries(injection_driver_tests PRIVATE
-  fk_injection_impl
-  GTest::gtest
-)
-gtest_discover_tests(injection_driver_tests)
 
-add_executable(injection_depth_groups_tests
-  runner.cpp
-  depth_groups_tests.cpp
+specfem_add_test(injection_depth_groups_tests
+  LABELS      fk_injection
+  SOURCES     runner.cpp
+              depth_groups_tests.cpp
+  LIBRARIES   fk_injection_impl
+              gtest
 )
-target_link_libraries(injection_depth_groups_tests PRIVATE
-  fk_injection_impl
-  GTest::gtest
-)
-gtest_discover_tests(injection_depth_groups_tests)
 
-add_executable(injection_layer_stack_tests
-  runner.cpp
-  layer_stack_tests.cpp
+specfem_add_test(injection_layer_stack_tests
+  LABELS      fk_injection
+  SOURCES     runner.cpp
+              layer_stack_tests.cpp
+  LIBRARIES   fk_injection_impl
+              gtest
 )
-target_link_libraries(injection_layer_stack_tests PRIVATE
-  fk_injection_impl
-  GTest::gtest
-)
-gtest_discover_tests(injection_layer_stack_tests)
 
-add_executable(injection_depth_series_tests
-  runner.cpp
-  depth_series_tests.cpp
+specfem_add_test(injection_depth_series_tests
+  LABELS      fk_injection
+  SOURCES     runner.cpp
+              depth_series_tests.cpp
+  LIBRARIES   fk_injection_impl
+              gtest
 )
-target_link_libraries(injection_depth_series_tests PRIVATE
-  fk_injection_impl
-  GTest::gtest
-)
-gtest_discover_tests(injection_depth_series_tests)
 
 # Loads the module only.
 specfem_add_test(fk_injection_module_tests

@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <vector>
 
 void fk_injection::impl::depth_spectrum(
@@ -109,8 +110,9 @@ void fk_injection::impl::to_time_series(
   constexpr int taper_length = 20;
 
   for (int s = 0; s < nseries; ++s) {
-    fk_injection::fft::inverse_real(spectrum + s * fft_samples, setup.fft_power,
-                                    normalization_dt, real_series.data());
+    fk_injection::fft::inverse_real(
+        { spectrum + s * fft_samples, static_cast<std::size_t>(fft_samples) },
+        normalization_dt, real_series);
 
     if (rotation != 0) {
       std::rotate(real_series.begin(), real_series.begin() + rotation,
