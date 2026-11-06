@@ -9,6 +9,7 @@
 #include <numbers>
 #include <stdexcept>
 #include <string>
+#include <variant>
 #include <vector>
 
 using fk_injection::type_real;
@@ -209,20 +210,17 @@ TEST(FkField, ReadModelFile) {
   EXPECT_TRUE(has_origin);
 
   // Model structure
-  EXPECT_EQ(model.number_of_fluid_layers(), 0);
-  EXPECT_EQ(model.number_of_elastic_layers(), 2);
-  EXPECT_FALSE(model.has_fluid_layer());
+  ASSERT_EQ(model.number_of_layers(), 2);
+  const auto *crust =
+      std::get_if<fk_injection::ElasticIsotropicLayer>(&model.layers()[0]);
+  ASSERT_NE(crust, nullptr);
 
-  // Layer properties (crust = elastic[0])
-  EXPECT_NEAR(static_cast<double>(model.elastic_layers()[0].p_velocity), 5800,
-              1e-3);
-  EXPECT_NEAR(static_cast<double>(model.elastic_layers()[0].s_velocity), 3200,
-              1e-3);
-  EXPECT_NEAR(static_cast<double>(model.elastic_layers()[0].density), 2700,
-              1e-3);
+  // Layer properties
+  EXPECT_NEAR(static_cast<double>(crust->p_velocity), 5800, 1e-3);
+  EXPECT_NEAR(static_cast<double>(crust->s_velocity), 3200, 1e-3);
+  EXPECT_NEAR(static_cast<double>(crust->density), 2700, 1e-3);
   // Thickness = ztop[0] - ztop[1] = 30000 - 0 = 30000
-  EXPECT_NEAR(static_cast<double>(model.elastic_layers()[0].thickness), 30000,
-              1e-3);
+  EXPECT_NEAR(static_cast<double>(crust->thickness), 30000, 1e-3);
 
   // Wave
   EXPECT_EQ(wave.type, fk_injection::incident_wave_type::p);
@@ -309,8 +307,7 @@ TEST(FkField, ResponseRejectsVerticalIncidence) {
 TEST(FkField, Specfem3dConventionScalesAmplitudeAndDelay) {
   // No fluid: only the exact convention lengthens the window for a fluid's
   // reverberation, which would make the two windows differ.
-  const fk_injection::LayeredModel model(
-      { make_slowness_model().elastic_layers().back() });
+  const fk_injection::LayeredModel model({ make_slowness_model().halfspace() });
 
   fk_injection::IncidentWave wave;
   wave.type = fk_injection::incident_wave_type::p;

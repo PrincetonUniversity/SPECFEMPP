@@ -16,8 +16,12 @@
 double fk_injection::impl::fluid_reverberation_time(
     const fk_injection::LayeredModel &model, double p) {
   static constexpr double tolerance = 1.0e-4;
-  const auto &fluid_layers = model.fluid_layers();
-  if (fluid_layers.empty())
+  const auto &layers = model.layers();
+  int fluid_count = 0;
+  while (
+      std::holds_alternative<fk_injection::AcousticLayer>(layers[fluid_count]))
+    ++fluid_count;
+  if (fluid_count == 0)
     return 0.0;
 
   const auto vertical_slowness = [p](double velocity) {
@@ -26,7 +30,8 @@ double fk_injection::impl::fluid_reverberation_time(
   };
 
   double round_trip = 0.0;
-  for (const auto &layer : fluid_layers) {
+  for (int i = 0; i < fluid_count; ++i) {
+    const auto &layer = std::get<fk_injection::AcousticLayer>(layers[i]);
     const double velocity = static_cast<double>(layer.p_velocity);
     // Evanescent in the fluid: nothing propagates to reverberate.
     if (p * velocity >= 1.0)
@@ -37,9 +42,10 @@ double fk_injection::impl::fluid_reverberation_time(
 
   // Fluid-to-solid P reflection with impedances rho / q (Brekhovskikh); the
   // free surface reflects with -1, so |R| is the loss per round trip.
-  const fk_injection::AcousticLayer &fluid = fluid_layers.back();
-  const fk_injection::ElasticIsotropicLayer &solid =
-      model.elastic_layers().front();
+  const auto &fluid =
+      std::get<fk_injection::AcousticLayer>(layers[fluid_count - 1]);
+  const auto &solid =
+      std::get<fk_injection::ElasticIsotropicLayer>(layers[fluid_count]);
   const double density = static_cast<double>(solid.density);
   const double s_velocity = static_cast<double>(solid.s_velocity);
   const double cos_2 = 1.0 - 2.0 * s_velocity * s_velocity * p * p;

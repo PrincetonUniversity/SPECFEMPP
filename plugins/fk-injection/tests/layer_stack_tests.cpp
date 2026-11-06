@@ -164,10 +164,8 @@ TEST(LayerStack, FreeSurfaceTractionVanishesP) {
   const double disp_scale = std::abs(s(0)) + std::abs(s(1)) + 1.0e-30;
   EXPECT_GT(disp_scale, 1.0e-12) << "displacement scale too small (degenerate)";
 
-  const double rho_hs =
-      static_cast<double>(model.elastic_layers().back().density);
-  const double vs_hs =
-      static_cast<double>(model.elastic_layers().back().s_velocity);
+  const double rho_hs = static_cast<double>(model.halfspace().density);
+  const double vs_hs = static_cast<double>(model.halfspace().s_velocity);
   const double mu = rho_hs * vs_hs * vs_hs;
   const double traction_scale = 2.0 * mu * setup.omega[f] * p * disp_scale;
 
@@ -203,10 +201,8 @@ TEST(LayerStack, FreeSurfaceTractionVanishesSV) {
   const double disp_scale = std::abs(s(0)) + std::abs(s(1)) + 1.0e-30;
   EXPECT_GT(disp_scale, 1.0e-12) << "displacement scale too small (degenerate)";
 
-  const double rho_hs =
-      static_cast<double>(model.elastic_layers().back().density);
-  const double vs_hs =
-      static_cast<double>(model.elastic_layers().back().s_velocity);
+  const double rho_hs = static_cast<double>(model.halfspace().density);
+  const double vs_hs = static_cast<double>(model.halfspace().s_velocity);
   const double mu = rho_hs * vs_hs * vs_hs;
   const double traction_scale = 2.0 * mu * setup.omega[f] * p * disp_scale;
 

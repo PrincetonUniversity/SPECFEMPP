@@ -16,7 +16,8 @@ fk_injection::impl::InterfaceStates fk_injection::impl::solve_layer_stack(
   const auto &layers = model.layers();
   const int number_of_layers = model.number_of_layers();
   const int halfspace = number_of_layers - 1;
-  const bool has_fluid = model.has_fluid_layer();
+  const bool has_fluid =
+      std::holds_alternative<fk_injection::AcousticLayer>(layers.front());
   const int nf2 = static_cast<int>(setup.omega.size()); // nf_stored + 1
   const double p = setup.p;
   const fk_injection::incident_wave_type type = setup.wave_type;

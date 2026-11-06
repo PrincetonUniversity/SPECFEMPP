@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace layered_model_tests_impl {
@@ -44,9 +45,11 @@ TEST(LayeredModel, ValidOceanOverSolid) {
 
   fk_injection::LayeredModel model({ water, crust, halfspace });
 
-  EXPECT_EQ(model.number_of_fluid_layers(), 1);
-  EXPECT_EQ(model.number_of_elastic_layers(), 2);
-  EXPECT_TRUE(model.has_fluid_layer());
+  ASSERT_EQ(model.number_of_layers(), 3);
+  EXPECT_TRUE(
+      std::holds_alternative<fk_injection::AcousticLayer>(model.layers()[0]));
+  EXPECT_TRUE(std::holds_alternative<fk_injection::ElasticIsotropicLayer>(
+      model.layers()[1]));
 
   // Water is 1000 m thick, so the half-space top is at 1000 + 20000 = 21000.
   EXPECT_NEAR(model.fluid_thickness(), 1000.0, 1.0e-3);
@@ -83,9 +86,9 @@ TEST(LayeredModel, AllElasticModel) {
 
   fk_injection::LayeredModel model({ layer, halfspace });
 
-  EXPECT_EQ(model.number_of_fluid_layers(), 0);
-  EXPECT_EQ(model.number_of_elastic_layers(), 2);
-  EXPECT_FALSE(model.has_fluid_layer());
+  ASSERT_EQ(model.number_of_layers(), 2);
+  EXPECT_TRUE(std::holds_alternative<fk_injection::ElasticIsotropicLayer>(
+      model.layers()[0]));
 
   EXPECT_NEAR(model.fluid_thickness(), 0.0, 1.0e-9);
   EXPECT_NEAR(model.locate(0.0, specfem::plugin::Medium::elastic, 1.0)
