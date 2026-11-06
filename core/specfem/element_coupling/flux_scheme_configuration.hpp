@@ -18,24 +18,19 @@ namespace specfem::element_coupling {
  * these rules.
  */
 enum class interfacial_meshing_type {
-  unspecified,   ///< default: let specfem++ figure it out
   intersections, ///< integrals defined on intersections.
-  acoustic_host, ///< integrals defined by element faces on acoustic side.
-  elastic_host,  ///< integrals defined by element faces on elastic side.
+  highres_host,  ///< integrals defined by element faces on highest resolution
+                 ///< side.
   self_host      ///< integrals defined by element faces on self side.
 };
 
 inline std::string
 to_string(const interfacial_meshing_type &interfacial_meshing_type) {
   switch (interfacial_meshing_type) {
-  case interfacial_meshing_type::unspecified:
-    return "unspecified";
   case interfacial_meshing_type::intersections:
     return "intersections";
-  case interfacial_meshing_type::acoustic_host:
-    return "acoustic-host";
-  case interfacial_meshing_type::elastic_host:
-    return "elastic-host";
+  case interfacial_meshing_type::highres_host:
+    return "highres-host";
   case interfacial_meshing_type::self_host:
     return "self-host";
   default:
@@ -64,7 +59,8 @@ public:
       : flux_scheme_tag(specfem::element_coupling::flux_scheme_tag::natural),
         was_quadrature_set(false),
         interfacial_meshing_type(
-            specfem::element_coupling::interfacial_meshing_type::unspecified) {}
+            specfem::element_coupling::interfacial_meshing_type::highres_host) {
+  }
 
   /**
    * @brief Get the flux scheme tag for a given intersection. At the moment, the

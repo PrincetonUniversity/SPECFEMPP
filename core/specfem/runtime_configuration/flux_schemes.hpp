@@ -23,7 +23,7 @@ public:
       : flux_scheme_tag(specfem::element_coupling::flux_scheme_tag::natural),
         interfacial_quadrature(nullptr),
         interfacial_meshing_type(
-            specfem::element_coupling::interfacial_meshing_type::unspecified) {
+            specfem::element_coupling::interfacial_meshing_type::highres_host) {
         };
 
 private:
