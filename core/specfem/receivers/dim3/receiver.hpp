@@ -3,6 +3,7 @@
 #include "specfem/constants.hpp"
 #include "specfem/coordinate_systems/coordinates.hpp"
 
+#include "specfem/element.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/point.hpp"
 #include "specfem/quadrature.hpp"
@@ -102,6 +103,12 @@ public:
   int get_partition_index() const { return partition_index_; }
   void set_partition_index(int rank) { partition_index_ = rank; }
 
+  /// Medium of the element containing this receiver; valid after assembly.
+  specfem::element::medium_tag get_medium_tag() const { return medium_tag_; }
+  void set_medium_tag(const specfem::element::medium_tag medium_tag) {
+    medium_tag_ = medium_tag;
+  }
+
   /**
    * @brief Set the location error (target-to-found distance) in metres.
    */
@@ -147,6 +154,9 @@ private:
   std::string station_name; ///< Name of the station
   int partition_index_ =
       -1; ///< MPI rank that owns this receiver (-1 = not yet located)
+  specfem::element::medium_tag medium_tag_ =
+      specfem::element::medium_tag::elastic; ///< set at assembly from the
+                                             ///< containing element
   type_real location_error_ =
       -1; ///< Target-to-found distance in metres (-1 = not yet located)
 };
