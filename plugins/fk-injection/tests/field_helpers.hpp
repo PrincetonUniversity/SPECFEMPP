@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <memory>
 #include <vector>
 
@@ -77,35 +78,32 @@ table_for(const fk_injection::PlaneWaveResponse &response,
 }
 
 /**
- * @brief The FK field at the points, sized from @p box.
+ * @brief The FK field at the points of one medium, sized from @p box.
  *
  * Each point goes in the layer @c LayeredModel::locate assigns to its depth in
- * its medium of @p media (elastic when empty), replacing its @c layer.
+ * the medium, replacing its @c layer.
  */
-inline fk_injection::FieldSampler
+template <typename MediumType = fk_injection::ElasticMedium>
+fk_injection::FieldSampler<MediumType>
 field_at(const fk_injection::LayeredModel &model,
          const fk_injection::IncidentWave &wave,
          const fk_injection::TimeWindow &window,
          const fk_injection::HorizontalBox &box,
          std::vector<fk_injection::FieldPoint> points,
          const fk_injection::ReferenceConvention convention =
-             fk_injection::ReferenceConvention::exact,
-         const std::vector<specfem::plugin::Medium> &media = {}) {
+             fk_injection::ReferenceConvention::exact) {
   const fk_injection::PlaneWaveResponse response(model, wave, window, box,
                                                  convention);
   const double tolerance = depth_tolerance(points);
   std::vector<fk_injection::SeriesKey> keys;
-  for (std::size_t i = 0; i < points.size(); ++i) {
-    auto &point = points[i];
-    point.layer =
-        model
-            .locate(static_cast<double>(point.depth),
-                    media.empty() ? specfem::plugin::Medium::elastic : media[i],
-                    tolerance)
-            .layer;
+  for (auto &point : points) {
+    point.layer = model
+                      .locate(static_cast<double>(point.depth),
+                              MediumType::medium, tolerance)
+                      .layer;
     keys.push_back({ point.layer, point.depth });
   }
-  return fk_injection::FieldSampler(
+  return fk_injection::FieldSampler<MediumType>(
       response,
       std::make_shared<const fk_injection::SeriesTable>(
           fk_injection::SeriesTable::synthesize(response, keys, tolerance)),
@@ -113,16 +111,31 @@ field_at(const fk_injection::LayeredModel &model,
 }
 
 /** @brief The FK field at the points, sized from their bounding box. */
-inline fk_injection::FieldSampler
+template <typename MediumType = fk_injection::ElasticMedium>
+fk_injection::FieldSampler<MediumType>
 field_at(const fk_injection::LayeredModel &model,
          const fk_injection::IncidentWave &wave,
          const fk_injection::TimeWindow &window,
          const std::vector<fk_injection::FieldPoint> &points,
          const fk_injection::ReferenceConvention convention =
-             fk_injection::ReferenceConvention::exact,
-         const std::vector<specfem::plugin::Medium> &media = {}) {
-  return field_at(model, wave, window, bounding_box(points), points, convention,
-                  media);
+             fk_injection::ReferenceConvention::exact) {
+  return field_at<MediumType>(model, wave, window, bounding_box(points), points,
+                              convention);
+}
+
+/**
+ * @brief One quantity of a sampler, row-major (point, component, step).
+ */
+template <typename MediumType>
+std::vector<fk_injection::type_real>
+sample(const fk_injection::FieldSampler<MediumType> &sampler,
+       const specfem::plugin::Quantity quantity, const int first_step,
+       const int number_of_steps) {
+  std::vector<fk_injection::type_real> values(
+      static_cast<std::size_t>(sampler.number_of_points()) *
+      fk_injection::number_of_components(quantity) * number_of_steps);
+  sampler.sample(quantity, first_step, number_of_steps, values);
+  return values;
 }
 
 } // namespace fk_injection_tests_impl

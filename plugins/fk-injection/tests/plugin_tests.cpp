@@ -250,60 +250,61 @@ std::vector<GroupValues> direct_field(const std::string &config_text,
                                       const std::vector<TestPoint> &elastic,
                                       const int first_step, const int nsteps) {
   const auto config = fk_injection::parse_plugin_config(config_text);
-  std::vector<fk_injection::FieldPoint> points;
-  std::vector<specfem::plugin::Medium> media;
-  const auto add = [&](const TestPoint &point,
-                       const specfem::plugin::Medium medium) {
-    fk_injection::FieldPoint &field_point = points.emplace_back();
-    field_point.x = static_cast<fk_injection::type_real>(point.x);
-    field_point.y = static_cast<fk_injection::type_real>(point.y);
-    field_point.depth = static_cast<fk_injection::type_real>(-point.z);
-    field_point.normal_x = static_cast<fk_injection::type_real>(point.nx);
-    field_point.normal_y = static_cast<fk_injection::type_real>(point.ny);
-    field_point.normal_z = static_cast<fk_injection::type_real>(point.nz);
-    media.push_back(medium);
+  const auto field_points = [](const std::vector<TestPoint> &test_points) {
+    std::vector<fk_injection::FieldPoint> points;
+    for (const auto &point : test_points) {
+      fk_injection::FieldPoint &field_point = points.emplace_back();
+      field_point.x = static_cast<fk_injection::type_real>(point.x);
+      field_point.y = static_cast<fk_injection::type_real>(point.y);
+      field_point.depth = static_cast<fk_injection::type_real>(-point.z);
+      field_point.normal_x = static_cast<fk_injection::type_real>(point.nx);
+      field_point.normal_y = static_cast<fk_injection::type_real>(point.ny);
+      field_point.normal_z = static_cast<fk_injection::type_real>(point.nz);
+    }
+    return points;
   };
-  for (const auto &point : acoustic)
-    add(point, specfem::plugin::Medium::acoustic);
-  for (const auto &point : elastic)
-    add(point, specfem::plugin::Medium::elastic);
+  const fk_injection::HorizontalBox box = { -box_half_width, box_half_width,
+                                            -box_half_width, box_half_width };
+  const auto wave = config.incident_wave(0.0, 0.0);
+  const auto window =
+      config.time_window(static_cast<fk_injection::type_real>(dt), nstep);
+  const auto acoustic_sampler =
+      fk_injection_tests_impl::field_at<fk_injection::AcousticMedium>(
+          config.model, wave, window, box, field_points(acoustic));
+  const auto elastic_sampler = fk_injection_tests_impl::field_at(
+      config.model, wave, window, box, field_points(elastic));
 
-  const auto result = fk_injection_tests_impl::field_at(
-      config.model, config.incident_wave(0.0, 0.0),
-      config.time_window(static_cast<fk_injection::type_real>(dt), nstep),
-      { -box_half_width, box_half_width, -box_half_width, box_half_width },
-      points, fk_injection::ReferenceConvention::exact, media);
-  std::vector<fk_injection::type_real> samples(
-      points.size() * fk_injection::number_of_sample_components * nsteps);
-  result.sample(first_step, nsteps, samples);
-  const auto at = [&](const std::size_t point, const int component,
-                      const int step) {
-    return static_cast<double>(
-        samples[(point * fk_injection::number_of_sample_components +
-                 component) *
-                    nsteps +
-                step]);
-  };
+  const auto potential_rate = fk_injection_tests_impl::sample(
+      acoustic_sampler, specfem::plugin::Quantity::potential_rate, first_step,
+      nsteps);
+  const auto displacement = fk_injection_tests_impl::sample(
+      acoustic_sampler, specfem::plugin::Quantity::displacement, first_step,
+      nsteps);
+  const auto traction = fk_injection_tests_impl::sample(
+      elastic_sampler, specfem::plugin::Quantity::traction, first_step, nsteps);
+  const auto velocity = fk_injection_tests_impl::sample(
+      elastic_sampler, specfem::plugin::Quantity::velocity, first_step, nsteps);
+
+  // Appends one point's quantity in the (point, slot, step) order of the
+  // buffers.
+  const auto append =
+      [nsteps](GroupValues &values,
+               const std::vector<fk_injection::type_real> &samples,
+               const int components, const std::size_t point) {
+        for (int c = 0; c < components; ++c)
+          for (int s = 0; s < nsteps; ++s)
+            values.push_back(static_cast<double>(
+                samples[(point * components + c) * nsteps + s]));
+      };
 
   std::vector<GroupValues> values(2);
   for (std::size_t p = 0; p < acoustic.size(); ++p) {
-    for (int s = 0; s < nsteps; ++s)
-      values[0].push_back(at(p, fk_injection::sample_potential_rate_offset, s));
-    for (int c = 0; c < 3; ++c)
-      for (int s = 0; s < nsteps; ++s)
-        values[0].push_back(
-            at(p, fk_injection::sample_kinematic_offset + c, s));
+    append(values[0], potential_rate, 1, p);
+    append(values[0], displacement, 3, p);
   }
   for (std::size_t p = 0; p < elastic.size(); ++p) {
-    const std::size_t point = acoustic.size() + p;
-    for (int c = 0; c < 3; ++c)
-      for (int s = 0; s < nsteps; ++s)
-        values[1].push_back(
-            at(point, fk_injection::sample_traction_offset + c, s));
-    for (int c = 0; c < 3; ++c)
-      for (int s = 0; s < nsteps; ++s)
-        values[1].push_back(
-            at(point, fk_injection::sample_kinematic_offset + c, s));
+    append(values[1], traction, 3, p);
+    append(values[1], velocity, 3, p);
   }
   return values;
 }

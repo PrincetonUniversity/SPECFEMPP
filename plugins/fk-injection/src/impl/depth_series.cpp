@@ -28,7 +28,7 @@ void fk_injection::impl::depth_spectrum(
   for (int f = 0; f < nf2; ++f) {
     const Cplx omega(setup.omega[f], 0.0);
 
-    fk_injection::impl::SeriesSpectrum series;
+    const Cplx apodization(setup.apodization[f], 0.0);
     const fk_injection::Layer &model_layer = model.layers()[location.layer];
     if (is_acoustic) {
       const auto &layer = std::get<fk_injection::AcousticLayer>(model_layer);
@@ -54,8 +54,15 @@ void fk_injection::impl::depth_spectrum(
             },
             model.layers()[location.layer + 1]);
       }
-      series =
+      // Acoustic Stacey injection consumes the incident displacement and the
+      // potential rate (SPECFEM3D's acoustic FK coupling), so the kinematic
+      // series stay displacement.
+      auto series =
           fk_injection::impl::project_acoustic(state, horizontal_density, p);
+      for (std::size_t s = 0; s < series.values.size(); ++s) {
+        series.values[s] *= apodization;
+        spectrum[s * fft_length + f] = series.values[s];
+      }
     } else {
       fk_injection::ComplexVector<4> state;
       if (location.in_halfspace) {
@@ -69,34 +76,25 @@ void fk_injection::impl::depth_spectrum(
             std::get<fk_injection::ComplexVector<4>>(
                 states.bottom(f, location.layer)));
       }
-      series = fk_injection::impl::project_elastic(state, omega, p);
-    }
-
-    // Elastic kinematic series are velocity, i omega u. Acoustic Stacey
-    // injection consumes the incident displacement and the potential rate
-    // (SPECFEM3D's acoustic FK coupling), so acoustic ones stay displacement.
-    const Cplx apodization(setup.apodization[f], 0.0);
-    for (int s = 0; s < fk_injection::impl::number_of_series; ++s) {
-      series.values[s] *= apodization;
-    }
-    if (!is_acoustic) {
+      // Elastic kinematic series are velocity, i omega u.
+      using Series = fk_injection::ElasticMedium::Series;
+      auto series = fk_injection::impl::project_elastic(state, omega, p);
+      for (auto &value : series.values)
+        value *= apodization;
       const Cplx i_omega(0.0, setup.omega[f]);
-      series.values[fk_injection::impl::series_horizontal] *= i_omega;
-      series.values[fk_injection::impl::series_vertical] *= i_omega;
-    }
-
-    for (int s = 0; s < fk_injection::impl::number_of_series; ++s) {
-      spectrum[s * fft_length + f] = series.values[s];
+      series.values[Series::horizontal] *= i_omega;
+      series.values[Series::vertical] *= i_omega;
+      for (std::size_t s = 0; s < series.values.size(); ++s)
+        spectrum[s * fft_length + f] = series.values[s];
     }
   }
 }
 
 void fk_injection::impl::to_time_series(
     std::complex<double> *spectrum, const fk_injection::impl::FkSetup &setup,
-    fk_injection::type_real *coefficients) {
+    const int number_of_series, fk_injection::type_real *coefficients) {
   const int fft_samples = setup.sizes.number_of_fft_samples;
   const int ncoef = setup.sizes.number_of_stored_frequencies;
-  const int nseries = fk_injection::impl::number_of_series;
   const int rotation =
       ((setup.shift_samples % fft_samples) + fft_samples) % fft_samples;
 
@@ -105,7 +103,7 @@ void fk_injection::impl::to_time_series(
 
   constexpr int taper_length = 20;
 
-  for (int s = 0; s < nseries; ++s) {
+  for (int s = 0; s < number_of_series; ++s) {
     fk_injection::fft::inverse_real(
         { spectrum + s * fft_samples, static_cast<std::size_t>(fft_samples) },
         setup.normalization_dt, real_series);
