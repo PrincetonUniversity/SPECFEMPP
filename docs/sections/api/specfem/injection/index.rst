@@ -255,8 +255,9 @@ Stacey injection
 ~~~~~~~~~~~~~~~~
 
 ``method: stacey`` selects :cpp:struct:`specfem::injection::StaceyInjection`,
-for elastic isotropic and anisotropic points. At a Stacey point the stiffness
-kernel adds :math:`-Z(v)\,dS`; the method adds
+for elastic isotropic and anisotropic points and for acoustic isotropic
+points. At an elastic Stacey point the stiffness kernel adds
+:math:`-Z(v)\,dS`; the method adds
 
 .. math::
 
@@ -266,6 +267,21 @@ kernel adds :math:`-Z(v)\,dS`; the method adds
 so the boundary absorbs only the field scattered away from the incident one.
 It requests the incident velocity and traction from the plugin. Anisotropic
 points use the Voigt-averaged impedances, as Stacey's absorbing term does.
+
+At an acoustic Stacey point the kernel adds the Sommerfeld term
+:math:`-\dot{\chi}\,dS / (\rho v_p)` to the acceleration of the potential
+:math:`\chi` (with :math:`u = \nabla\chi / \rho`); the method adds
+
+.. math::
+
+    f = \left(u^* \cdot \hat{n} + \frac{\dot{\chi}^*}{\rho v_p}\right) dS,
+
+the incident normal displacement through the natural boundary term of the
+weak form, plus the part of the Sommerfeld term that belongs to the incident
+field. It requests the incident displacement and potential rate from the
+plugin. This is the term SPECFEM3D's FK coupling applies on acoustic
+absorbing faces.
+
 The injection points must lie on Stacey boundaries; the method does not check
 this.
 
