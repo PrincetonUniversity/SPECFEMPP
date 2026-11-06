@@ -6,14 +6,15 @@
 #include <complex>
 #include <cstddef>
 #include <numbers>
+#include <span>
 #include <stdexcept>
 #include <vector>
 
 // ---------------------------------------------------------------------------
-// Convention (unchanged from the in-house radix-2 FFT this replaced):
-// forward kernel e^{-2pi*i*n*k/lx} scaled by dt, inverse kernel
-// e^{+2pi*i*n*k/lx} scaled by 1/(lx*dt). inverse_real zeroes the Nyquist bin
-// and makes DC real before transforming.
+// irfft follows numpy.fft.irfft. inverse_real is the FK wrapper, unchanged in
+// convention from the in-house radix-2 FFT it replaced: forward kernel
+// e^{-2pi*i*n*k/lx} scaled by dt, inverse kernel e^{+2pi*i*n*k/lx} scaled by
+// 1/(lx*dt), Nyquist bin dropped, DC real.
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
@@ -42,8 +43,7 @@ TEST(Fft, RoundTripAsymmetric) {
                          pocketfft::FORWARD, r.data(), spectrum.data(), kDt);
 
   std::vector<double> out(kLx);
-  specfem::fk_plugin::fft::inverse_real(spectrum.data(), kPower, kDt,
-                                        out.data());
+  specfem::fk_plugin::fft::inverse_real(spectrum, kDt, out);
 
   for (int n = 0; n < kLx; ++n) {
     EXPECT_NEAR(out[n], r[n], kTol) << "mismatch at n=" << n;
@@ -66,8 +66,7 @@ TEST(Fft, InverseBinSign) {
   spectrum[k0] = std::complex<double>(0.0, -0.5 * kLx * kDt);
 
   std::vector<double> out(kLx);
-  specfem::fk_plugin::fft::inverse_real(spectrum.data(), kPower, kDt,
-                                        out.data());
+  specfem::fk_plugin::fft::inverse_real(spectrum, kDt, out);
 
   for (int n = 0; n < kLx; ++n) {
     EXPECT_NEAR(out[n], std::sin(two_pi * k0 * static_cast<double>(n) / kLx),
@@ -168,7 +167,7 @@ TEST(Fft, InverseMatchesReviewedValues) {
   constexpr double kRelTol = 1.0e-12;
 
   for (const auto &sample : fft_tests_impl::reference_samples) {
-    auto spectrum = fft_tests_impl::reference_spectrum(sample.power);
+    const auto spectrum = fft_tests_impl::reference_spectrum(sample.power);
     const int lx = 1 << sample.power;
 
     // Roundoff scales with the summed terms, not with the (smaller) result:
@@ -180,8 +179,7 @@ TEST(Fft, InverseMatchesReviewedValues) {
     bound *= 2.0 / (lx * sample.dt);
 
     std::vector<double> out(lx);
-    specfem::fk_plugin::fft::inverse_real(spectrum.data(), sample.power,
-                                          sample.dt, out.data());
+    specfem::fk_plugin::fft::inverse_real(spectrum, sample.dt, out);
 
     EXPECT_NEAR(out[sample.index], sample.value, kRelTol * bound)
         << "power=" << sample.power << " dt=" << sample.dt
@@ -190,19 +188,115 @@ TEST(Fft, InverseMatchesReviewedValues) {
 }
 
 // ---------------------------------------------------------------------------
-// inverse_real rejects powers outside [1, 30]
+// inverse_real works on a copy: the caller's spectrum is not modified
 // ---------------------------------------------------------------------------
 
-TEST(Fft, InverseRealRejectsBadPower) {
-  std::vector<std::complex<double>> spectrum(2);
-  std::vector<double> out(2);
-  EXPECT_THROW(specfem::fk_plugin::fft::inverse_real(spectrum.data(), 0, 1.0,
-                                                     out.data()),
-               std::runtime_error);
-  EXPECT_THROW(specfem::fk_plugin::fft::inverse_real(spectrum.data(), -1, 1.0,
-                                                     out.data()),
-               std::runtime_error);
-  EXPECT_THROW(specfem::fk_plugin::fft::inverse_real(spectrum.data(), 31, 1.0,
-                                                     out.data()),
-               std::runtime_error);
+TEST(Fft, InverseRealLeavesSpectrumUnchanged) {
+  constexpr int kPower = 4;
+  const auto original = fft_tests_impl::reference_spectrum(kPower);
+  const auto spectrum = original;
+
+  std::vector<double> out(1 << kPower);
+  specfem::fk_plugin::fft::inverse_real(spectrum, 0.1, out);
+
+  for (std::size_t k = 0; k < spectrum.size(); ++k) {
+    EXPECT_EQ(spectrum[k], original[k]) << "bin " << k << " modified";
+  }
+}
+
+// ---------------------------------------------------------------------------
+// irfft uses the Nyquist real part (NumPy semantics):
+// a[n/2] = c → x[m] = Re(c) (-1)^m / n
+// ---------------------------------------------------------------------------
+
+TEST(Fft, IrfftUsesNyquistRealPart) {
+  constexpr int kLength = 8;
+  constexpr double kTol = 1.0e-14;
+
+  std::vector<std::complex<double>> a(kLength / 2 + 1);
+  a[kLength / 2] = std::complex<double>(2.0, 3.0);
+
+  std::vector<double> out(kLength);
+  specfem::fk_plugin::fft::irfft(a, out);
+
+  for (int m = 0; m < kLength; ++m) {
+    const double sign = (m % 2 == 0) ? 1.0 : -1.0;
+    EXPECT_NEAR(out[m], 2.0 * sign / kLength, kTol) << "mismatch at m=" << m;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// irfft inverts the matching forward transform for each norm, at odd and
+// non-power-of-two lengths
+// ---------------------------------------------------------------------------
+
+namespace fft_tests_impl {
+
+// Forward scale that pairs with each irfft norm, as in numpy.fft.rfft.
+double forward_factor(const specfem::fk_plugin::fft::norm normalization,
+                      const int length) {
+  switch (normalization) {
+  case specfem::fk_plugin::fft::norm::backward:
+    return 1.0;
+  case specfem::fk_plugin::fft::norm::ortho:
+    return 1.0 / std::sqrt(static_cast<double>(length));
+  case specfem::fk_plugin::fft::norm::forward:
+    return 1.0 / static_cast<double>(length);
+  }
+  return 0.0;
+}
+
+} // namespace fft_tests_impl
+
+TEST(Fft, IrfftRoundTripAllNorms) {
+  constexpr double kTol = 1.0e-12;
+  constexpr specfem::fk_plugin::fft::norm norms[] = {
+    specfem::fk_plugin::fft::norm::backward,
+    specfem::fk_plugin::fft::norm::ortho,
+    specfem::fk_plugin::fft::norm::forward,
+  };
+
+  for (const int length : { 7, 10, 16 }) {
+    std::vector<double> r(length);
+    for (int m = 0; m < length; ++m) {
+      r[m] = 0.25 + std::sin(0.9 * m + 0.3) - 0.4 * std::cos(2.1 * m);
+    }
+
+    for (const auto normalization : norms) {
+      std::vector<std::complex<double>> a(length / 2 + 1);
+      pocketfft::r2c<double>(
+          { static_cast<std::size_t>(length) }, { sizeof(double) },
+          { sizeof(std::complex<double>) }, 0, pocketfft::FORWARD, r.data(),
+          a.data(), fft_tests_impl::forward_factor(normalization, length));
+
+      std::vector<double> out(length);
+      specfem::fk_plugin::fft::irfft(a, out, normalization);
+
+      for (int m = 0; m < length; ++m) {
+        EXPECT_NEAR(out[m], r[m], kTol)
+            << "length=" << length
+            << " norm=" << static_cast<int>(normalization) << " m=" << m;
+      }
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Size checks: n = out.size() > 0 and at least n/2 + 1 input bins
+// ---------------------------------------------------------------------------
+
+TEST(Fft, IrfftRejectsShortSpectrum) {
+  std::vector<std::complex<double>> a(4);
+  std::vector<double> out(8); // needs 5 bins
+  EXPECT_THROW(specfem::fk_plugin::fft::irfft(a, out), std::invalid_argument);
+  EXPECT_THROW(specfem::fk_plugin::fft::inverse_real(a, 1.0, out),
+               std::invalid_argument);
+}
+
+TEST(Fft, IrfftRejectsEmptyOutput) {
+  std::vector<std::complex<double>> a(4);
+  std::vector<double> out;
+  EXPECT_THROW(specfem::fk_plugin::fft::irfft(a, out), std::invalid_argument);
+  EXPECT_THROW(specfem::fk_plugin::fft::inverse_real(a, 1.0, out),
+               std::invalid_argument);
 }
