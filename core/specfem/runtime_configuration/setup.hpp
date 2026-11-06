@@ -200,19 +200,20 @@ public:
    * @brief Instantiate a seismogram writer object
    *
    * to instantiate the writer
-   * @param utm_mesh When true, 3-D elastic seismogram channels use the
-   * geographic E/N/Z convention instead of Cartesian X/Y/Z
+   * @param frame Geographic (UTM or globe) frame: 3-D elastic channels
+   * are labelled E/N/Z; cartesian: X/Y/Z
    * @return specfem::io::writer* Pointer to an instantiated writer
    object
    */
-  std::shared_ptr<specfem::io::writer>
-  instantiate_seismogram_writer(const bool utm_mesh = false) const {
+  std::shared_ptr<specfem::io::writer> instantiate_seismogram_writer(
+      const specfem::enums::coordinate_frame frame =
+          specfem::enums::coordinate_frame::cartesian) const {
     if (this->seismogram) {
       return this->seismogram->instantiate_seismogram_writer(
           this->get_elastic_wave_type(), this->get_electromagnetic_wave_type(),
           this->time_scheme->get_dt(), this->time_scheme->get_t0(),
           this->receivers->get_nstep_between_samples(), this->starttime_,
-          utm_mesh);
+          frame);
     } else {
       return nullptr;
     }

@@ -122,6 +122,8 @@ void specfem::compute::impl::compute_seismograms(
 
     receivers.set_seismogram_type(iseis);
     const auto wavefield_type = seismogram_types[iseis];
+    const bool rotate = specfem::enums::is_vector_seismogram(
+        wavefield_type, dimension_tag, medium_tag);
 
     specfem::execution::for_each_level(
         "specfem::compute::compute_seismograms",
@@ -160,7 +162,7 @@ void specfem::compute::impl::compute_seismograms(
               seismogram_components);
           team.team_barrier();
           specfem::assembly::store_on_device(chunk_index, seismogram_components,
-                                             receivers);
+                                             receivers, rotate);
         });
   }
 
