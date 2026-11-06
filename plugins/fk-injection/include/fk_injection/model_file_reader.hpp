@@ -5,9 +5,23 @@
 #include "fk_injection/time_window.hpp"
 
 #include <string>
-#include <tuple>
 
 namespace fk_injection {
+
+/**
+ * @brief Contents of an FK model file.
+ *
+ * @c wave.gaussian_half_duration is 0: the file has no such key, and SPECFEM3D
+ * sets it to 1 / @c FREQUENCY_MAX, which the caller derives after any
+ * overrides.
+ */
+struct FkModelFile {
+  LayeredModel model;      ///< Layered velocity model
+  IncidentWave wave;       ///< Incident wave
+  TimeWindow window;       ///< Time window
+  bool has_origin = false; ///< Whether the file gives @c ORIGIN_WAVEFRONT;
+                           ///< SPECFEM3D derives the origin when it doesn't
+};
 
 /**
  * @brief Read a FK model file and parse it into typed SPECFEM++ objects.
@@ -15,7 +29,7 @@ namespace fk_injection {
  * Ports the keyword-driven format of @c ReadFKModelInput from the Westervelt
  * reference implementation (fk_model.cpp).  The file format uses one keyword
  * per line followed by its value(s).  Lines beginning with @c # and blank
- * lines are ignored.
+ * lines are ignored; an unknown keyword or unreadable value is an error.
  *
  * Supported keywords:
  *
@@ -48,10 +62,9 @@ namespace fk_injection {
  * Angles are converted from degrees to radians before storage.
  *
  * @param path Path to the FK model input file.
- * @return Tuple of (LayeredModel, IncidentWave, TimeWindow).
+ * @return Model, wave, time window and whether the file gives the origin.
  * @throws std::runtime_error on file I/O failure or malformed input.
  */
-std::tuple<LayeredModel, IncidentWave, TimeWindow>
-read_fk_model_file(const std::string &path);
+FkModelFile read_fk_model_file(const std::string &path);
 
 } // namespace fk_injection
