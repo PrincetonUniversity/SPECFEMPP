@@ -46,7 +46,7 @@ std::pair<std::pair<type_real, type_real>, bool> get_local_face_coordinate(
                            specfem::element::dimension_tag::dim3> *,
                        Kokkos::HostSpace> &coorg,
     const specfem::mesh_entity::dim3::type &mesh_entity,
-    std::pair<type_real, type_real> coord);
+    std::pair<type_real, type_real> coord, const bool &require_hit = true);
 
 // Core locate_point logic that can be tested with raw data arrays
 specfem::point::local_coordinates<specfem::element::dimension_tag::dim2>
@@ -203,7 +203,8 @@ std::pair<std::pair<type_real, type_real>, bool> locate_point(
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
     const int &ispec,
     const specfem::mesh_entity::type<specfem::element::dimension_tag::dim3>
-        &constraint);
+        &constraint,
+    const bool &require_hit = true);
 
 // locate on face (3D) local -> global
 
