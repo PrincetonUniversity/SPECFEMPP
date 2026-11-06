@@ -5,38 +5,34 @@ or SV wave incident on a horizontally layered model: a solid half-space below
 any number of solid layers, optionally with a fluid block on top. Use it to
 inject a teleseismic wavefield through the sides and bottom of a regional mesh.
 
-It is a standalone CMake project that uses only the installed plugin SDK; it
-does not link any SPECFEM++ library and has no Kokkos dependency.
+It is built with SPECFEM++ against the in-tree plugin SDK. It does not link any
+SPECFEM++ library; it uses SPECFEM++'s Kokkos for `Kokkos::mdspan` only.
 
 ## Build
 
-```bash
-# 1. Install the SDK from a configured SPECFEM++ tree (no build needed)
-cmake -S . -B build/core-sdk -DCMAKE_BUILD_TYPE=Release
-cmake --install build/core-sdk --component plugin_sdk --prefix build/plugin-sdk
+The plugin is built with SPECFEM++ on Linux and macOS, into
+`build/<preset>/lib/libfk_injection.so`. Its tests run with the unit tests:
 
-# 2. Build the plugin and run its tests
-cmake -S plugins/fk-injection -B build/fk-injection \
-  -DCMAKE_PREFIX_PATH="$PWD/build/plugin-sdk"
-cmake --build build/fk-injection
-ctest --test-dir build/fk-injection --output-on-failure
+```bash
+cmake --preset release -DSPECFEM_BUILD_TESTS=ON
+cmake --build build/release
+ctest --test-dir build/release/tests -L fk_injection --output-on-failure
 ```
 
-pocketfft and yaml-cpp are downloaded with `FetchContent` at configure time and
-compiled in, so the plugin has no runtime dependencies. Only the entry point
+pocketfft is downloaded with `FetchContent` at configure time, and pocketfft and
+SPECFEM++'s yaml-cpp are compiled in, so the plugin has no runtime dependencies. Only the entry point
 `specfem_injection_plugin` is exported, which the build checks.
 
 | CMake option | Default | Effect |
 |---|---|---|
 | `FK_INJECTION_DOUBLE` | `OFF` | Compute in double precision; independent of how SPECFEM++ was built |
 | `FK_INJECTION_ENABLE_OPENMP` | `OFF` | Sample the field in parallel; needs a compiler with OpenMP |
-| `FK_INJECTION_BUILD_TESTS` | `ON` | Build the tests |
 
 ## Run
 
 ```bash
 specfem 3d -p parameters.yaml \
-  --injection-plugin build/fk-injection/libfk_injection.so \
+  --injection-plugin build/release/lib/libfk_injection.so \
   --injection-config plugins/fk-injection/fk.yaml
 ```
 
