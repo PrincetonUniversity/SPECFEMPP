@@ -343,6 +343,7 @@ specfem_add_test(assembly_tests
             assembly/runner.cpp
             assembly/kernels/kernels.cpp
             assembly/properties/properties.cpp
+            assembly/properties/properties_xdmf.cpp
             assembly/compute_wavefield/compute_wavefield.cpp
             assembly/sources/sources.cpp
             assembly/check_jacobian/dim2/check_jacobian.cpp
