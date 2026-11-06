@@ -2,7 +2,7 @@
 
 #include "fk_injection/config.hpp"
 #include "specfem/plugin/injection_plugin.hpp"
-#include <optional>
+#include <variant>
 #include <vector>
 
 namespace fk_injection {
@@ -38,93 +38,86 @@ struct ElasticIsotropicLayer {
 struct LayerLocation {
   specfem::plugin::Medium medium =
       specfem::plugin::Medium::elastic; ///< acoustic or elastic
-  int layer = 0;     ///< 0-based index within the fluid block (acoustic) or
-                     ///< elastic block (elastic)
+  int layer = 0;                        ///< Index into @c LayeredModel::layers
   double height = 0; ///< height above the bottom of @c layer, m (>= 0; 0 at
                      ///< the layer's lower interface)
-  bool in_halfspace = false; ///< true iff elastic and @c layer is the last
-                             ///< elastic layer (the half-space)
+  bool in_halfspace = false; ///< true iff @c layer is the half-space
   double depth_below_halfspace_top =
       0;                        ///< half-space top depth minus @c depth,
                                 ///< m (<= 0 at/below the half-space top)
-  bool at_free_surface = false; ///< acoustic layer 0 with depth within
+  bool at_free_surface = false; ///< acoustic, in layer 0, with depth within
                                 ///< tolerance of 0
   double depth = 0;             ///< depth that was located, m
 };
 
+/// @brief One layer of a @c LayeredModel.
+using Layer = std::variant<AcousticLayer, ElasticIsotropicLayer>;
+
 /**
  * @brief A 1-D horizontally-layered velocity model for FK synthesis.
  *
- * Stores a contiguous fluid (acoustic) block on top followed by a contiguous
- * elastic block below.  The fluid-above-solid invariant is structural: the
- * two blocks are held in separate vectors. The last entry of the elastic block
- * is the half-space.
+ * Layers are ordered top-down; the last one is the elastic half-space. FK
+ * supports a fluid block on top of a solid block only, which the constructor
+ * checks.
  */
 class LayeredModel {
 public:
   /**
-   * @brief Construct a layered model from typed fluid and elastic blocks.
+   * @brief Construct a layered model from its layers, top-down.
    *
-   * @param fluid_layers   Top-down contiguous acoustic block (may be empty).
-   * @param elastic_layers Top-down elastic block below the fluid; the last
-   *                       entry is the half-space (must be non-empty).
-   * @throws std::runtime_error if @p elastic_layers is empty, if any density,
-   *         p_velocity or elastic s_velocity is not positive, or if any layer
-   *         above the half-space has a thickness that is not positive.
+   * @param layers Layers top-down; the last one is the half-space.
+   * @throws std::runtime_error if the last layer isn't elastic, an acoustic
+   *         layer lies below an elastic one, any density, p_velocity or
+   *         elastic s_velocity is not positive, or any layer above the
+   *         half-space has a thickness that is not positive.
    */
-  LayeredModel(std::vector<AcousticLayer> fluid_layers,
-               std::vector<ElasticIsotropicLayer> elastic_layers);
+  explicit LayeredModel(std::vector<Layer> layers);
 
-  /**
-   * @brief Return the fluid (acoustic) layer block.
-   * @return const reference to the fluid layer vector
-   */
-  const std::vector<AcousticLayer> &fluid_layers() const;
+  /// @brief The layers, top-down.
+  const std::vector<Layer> &layers() const { return layers_; }
 
-  /**
-   * @brief Return the elastic layer block.
-   * @return const reference to the elastic layer vector
-   */
-  const std::vector<ElasticIsotropicLayer> &elastic_layers() const;
+  /// @brief Number of layers, including the half-space.
+  int number_of_layers() const { return static_cast<int>(layers_.size()); }
 
-  /**
-   * @brief Return the number of fluid (acoustic) layers.
-   * @return fluid_layers_.size()
-   */
-  int number_of_fluid_layers() const;
-
-  /**
-   * @brief Return the number of elastic layers (including the half-space).
-   * @return elastic_layers_.size()
-   */
-  int number_of_elastic_layers() const;
-
-  /**
-   * @brief Return whether the model contains at least one acoustic layer.
-   * @return true if number_of_fluid_layers() > 0
-   */
-  bool has_fluid_layer() const;
+  /// @brief The half-space, the last layer.
+  const ElasticIsotropicLayer &halfspace() const {
+    return std::get<ElasticIsotropicLayer>(layers_.back());
+  }
 
   /**
    * @brief Locate a depth in the model and return full layer geometry.
    *
-   * Points exactly on an interface are assigned to the shallower layer
-   * (tie-goes-upper), ensuring continuity of the field state across interior
-   * interfaces.
+   * Points within @p tolerance of an interface between two layers of
+   * @p medium are assigned to the shallower layer (tie-goes-upper); see
+   * @c locate_in for the geometry.
    *
    * @param depth      Depth in metres, positive-downward from the model top.
-   * @param requested  Medium of the point; @c std::nullopt resolves it from
-   *                   the layer table.
+   * @param medium     Medium of the point.
    * @param tolerance  Snap/match tolerance in metres (>= 0).
    * @return Populated @c LayerLocation.
    * @throws std::runtime_error if @p tolerance is negative or NaN, if @p depth
-   *         is NaN or above the free surface, if @p requested is not acoustic
+   *         is NaN or above the free surface, if @p medium is not acoustic
    *         or elastic, or if it is inconsistent with the model (e.g. acoustic
    *         requested on a model with no fluid layers).
    */
-  LayerLocation locate(double depth,
-                       std::optional<specfem::plugin::Medium> requested,
+  LayerLocation locate(double depth, specfem::plugin::Medium medium,
                        double tolerance) const;
+
+  /**
+   * @brief Locate a depth within a given layer.
+   *
+   * A depth within @p tolerance of the layer's top or bottom snaps to that
+   * interface. The height is 0 throughout the half-space.
+   *
+   * @param layer     Index into @c layers.
+   * @param depth     Depth in metres, positive-downward from the model top.
+   * @param tolerance Snap tolerance in metres (>= 0).
+   * @return Populated @c LayerLocation.
+   * @throws std::runtime_error if @p tolerance is negative or NaN, @p layer is
+   *         out of range, or @p depth lies outside the layer by more than
+   *         @p tolerance.
+   */
+  LayerLocation locate_in(int layer, double depth, double tolerance) const;
 
   /**
    * @brief Return the total thickness of the fluid column in metres.
@@ -139,13 +132,9 @@ public:
   double halfspace_top_depth() const;
 
 private:
-  void validate() const;
-
-  std::vector<AcousticLayer> fluid_layers_{}; ///< Fluid block, top to bottom
-  std::vector<ElasticIsotropicLayer> elastic_layers_{}; ///< Elastic block, top
-                                                        ///< to bottom
-  std::vector<double> top_depths_{}; ///< Top depth of each layer; fluid layers
-                                     ///< first, then elastic layers
+  std::vector<Layer> layers_{};      ///< Top to bottom
+  int first_elastic_layer_ = 0;      ///< Number of fluid layers on top
+  std::vector<double> top_depths_{}; ///< Top depth of each layer
 };
 
 } // namespace fk_injection

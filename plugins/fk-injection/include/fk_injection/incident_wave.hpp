@@ -43,7 +43,7 @@ struct IncidentWave {
    * @return horizontal ray parameter in s/m
    */
   double ray_parameter(const LayeredModel &model) const {
-    const ElasticIsotropicLayer &halfspace = model.elastic_layers().back();
+    const ElasticIsotropicLayer &halfspace = model.halfspace();
     const double halfspace_velocity =
         (type == incident_wave_type::p)
             ? static_cast<double>(halfspace.p_velocity)

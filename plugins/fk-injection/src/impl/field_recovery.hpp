@@ -5,7 +5,8 @@
 #include "fk_injection/utilities/complex_matrix.hpp"
 #include "impl/fk_math_impl.hpp"
 #include "impl/layer_operators.hpp"
-#include "impl/series_layout.hpp"
+#include "media.hpp"
+#include <array>
 #include <complex>
 
 namespace fk_injection::impl {
@@ -21,18 +22,15 @@ namespace fk_injection::impl {
 // not here.
 // ===========================================================================
 
-// Series slot indices (@c series_horizontal .. @c number_of_series) live in
-// series_layout.hpp — the layout contract shared with the sampler.
-
 /**
- * @brief Depth-only spectral series at one depth for one frequency.
+ * @brief Depth-only spectral series of a medium at one depth for one
+ *        frequency, indexed by @c Medium::Series.
  *
  * These carry NO source-time function, NO time delay, and NO per-point Lame
- * factors; those are applied per point downstream. Slot meanings follow the
- * @c series_* indices above.
+ * factors; those are applied per point downstream.
  */
-struct SeriesSpectrum {
-  std::complex<double> values[number_of_series] = {};
+template <typename Medium> struct SeriesSpectrum {
+  std::array<std::complex<double>, Medium::number_of_series> values{};
 };
 
 /**
@@ -152,18 +150,18 @@ acoustic_state_in_layer(const fk_injection::AcousticLayer &layer,
 }
 
 /**
- * @brief Project an elastic state onto the depth-only series S0..S4.
+ * @brief Project an elastic state onto the elastic series.
  *
  * No source-time function and no per-point Lame factors: the sampler forms
- * sigma_rr = xi1*S2 - 4*xim*S4 per point.
+ * sigma_rr = xi1*sigma_zz - 4*xim*dx per point.
  *
  * @param state          State vector @f$(u_x, u_z, \sigma_{xz},
  * \sigma_{zz})@f$.
  * @param omega          Complex angular frequency (rad/s).
  * @param ray_parameter  Horizontal slowness p (s/m).
- * @return SeriesSpectrum with the depth-only series values.
+ * @return The elastic series.
  */
-inline SeriesSpectrum
+inline SeriesSpectrum<fk_injection::ElasticMedium>
 project_elastic(const fk_injection::ComplexVector<4> &state,
                 std::complex<double> omega, double ray_parameter) {
   using Cplx = std::complex<double>;
@@ -174,21 +172,22 @@ project_elastic(const fk_injection::ComplexVector<4> &state,
   const Cplx tzz = state[3];
   const Cplx omega_p = omega * Cplx(ray_parameter, 0.0);
 
-  SeriesSpectrum out;
-  out.values[series_horizontal] = neg_i * dx;          // u_r
-  out.values[series_vertical] = dz;                    // u_z
-  out.values[series_sigma_zz] = omega_p * tzz;         // S2
-  out.values[series_sigma_rz] = neg_i * omega_p * txz; // S3
-  out.values[series_dx] = omega_p * dx;                // S4
+  using Series = fk_injection::ElasticMedium::Series;
+  SeriesSpectrum<fk_injection::ElasticMedium> out;
+  out.values[Series::horizontal] = neg_i * dx; // u_r
+  out.values[Series::vertical] = dz;           // u_z
+  out.values[Series::sigma_zz] = omega_p * tzz;
+  out.values[Series::sigma_rz] = neg_i * omega_p * txz;
+  out.values[Series::dx] = omega_p * dx;
   return out;
 }
 
 /**
- * @brief Project an acoustic state onto the depth-only series (S0, S1, S2).
+ * @brief Project an acoustic state onto the acoustic series.
  *
- * S0 = u_x, S1 = u_z (displacement), S2 = potential rate
- * @f$\dot{\chi} = i p (P/k)@f$. S3/S4 stay zero (no shear in a fluid). The
- * acoustic Stacey injection consumes the incident displacement and
+ * Displacement u_x, u_z and the potential rate
+ * @f$\dot{\chi} = i p (P/k)@f$. The acoustic Stacey injection consumes the
+ * incident displacement and
  * @f$\dot{\chi}@f$ (SPECFEM3D's acoustic FK coupling), not pressure.
  *
  * @param state          Acoustic state @f$(u_z, P/k)@f$ at the point.
@@ -198,22 +197,23 @@ project_elastic(const fk_injection::ComplexVector<4> &state,
  *        fluid-solid interface this is the underlying solid's density. The
  *        caller resolves it.
  * @param ray_parameter  Horizontal slowness p (s/m).
- * @return SeriesSpectrum with S0, S1, S2 populated.
+ * @return The acoustic series.
  */
-inline SeriesSpectrum project_acoustic(const AcousticState &state,
-                                       double horizontal_density,
-                                       double ray_parameter) {
+inline SeriesSpectrum<fk_injection::AcousticMedium>
+project_acoustic(const AcousticState &state, double horizontal_density,
+                 double ray_parameter) {
   using Cplx = std::complex<double>;
   const double p = ray_parameter;
   const double rho = horizontal_density;
   const Cplx neg_i(0.0, -1.0);
 
-  SeriesSpectrum out;
-  out.values[series_horizontal] =
+  using Series = fk_injection::AcousticMedium::Series;
+  SeriesSpectrum<fk_injection::AcousticMedium> out;
+  out.values[Series::horizontal] =
       neg_i * Cplx(p * p / rho, 0.0) * state.pressure_over_k; // u_x
-  out.values[series_vertical] = state.u_z;                    // u_z
+  out.values[Series::vertical] = state.u_z;                   // u_z
   // Matches SPECFEM3D's dchi = i*ray_p*bot_vec(2).
-  out.values[series_potential_rate] =
+  out.values[Series::potential_rate] =
       Cplx(0.0, 1.0) * Cplx(p, 0.0) * state.pressure_over_k; // chi_dot
   return out;
 }

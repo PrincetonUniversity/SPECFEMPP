@@ -13,7 +13,7 @@ inline fk_injection::LayeredModel make_halfspace_model() {
   halfspace.density = 3300.0;
   halfspace.p_velocity = 8000.0;
   halfspace.s_velocity = 4500.0;
-  return fk_injection::LayeredModel({}, { halfspace });
+  return fk_injection::LayeredModel({ halfspace });
 }
 
 } // namespace incident_wave_tests_impl

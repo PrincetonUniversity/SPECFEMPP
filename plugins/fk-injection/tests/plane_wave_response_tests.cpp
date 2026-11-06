@@ -16,7 +16,7 @@ fk_injection::LayeredModel halfspace() {
   layer.density = 2700;
   layer.p_velocity = 3000;
   layer.s_velocity = static_cast<type_real>(1732.051);
-  return fk_injection::LayeredModel({}, { layer });
+  return fk_injection::LayeredModel({ layer });
 }
 
 fk_injection::IncidentWave wave() {
@@ -141,8 +141,7 @@ TEST(PlaneWaveResponse, RejectsAnEvanescentWave) {
   wave.take_off_theta =
       static_cast<fk_injection::type_real>(60.0 * std::numbers::pi / 180.0);
   EXPECT_THROW(fk_injection::PlaneWaveResponse(
-                   fk_injection::LayeredModel(
-                       {}, { fast, halfspace.elastic_layers().back() }),
+                   fk_injection::LayeredModel({ fast, halfspace.halfspace() }),
                    wave, plane_wave_response_tests_impl::window(60), {}),
                specfem::plugin::Unsupported);
 }
