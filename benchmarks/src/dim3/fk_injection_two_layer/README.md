@@ -17,14 +17,14 @@ The force in `source.yaml` has zero amplitude and only sets t0.
 
 ## Running it
 
-Configure SPECFEM++ with `-DSPECFEM_BUILD_BENCHMARKS=ON` and build `specfem` and
-`xmeshfem3D`, then in the benchmark's build directory:
+Configure SPECFEM++ with `-DSPECFEM_BUILD_BENCHMARKS=ON` and build `specfem`,
+`xmeshfem3D` and the `fk_injection` plugin, then in the benchmark's build directory:
 
 ```bash
 uv run snakemake -j 1
 ```
 
-This builds the plugin against the installed SDK, meshes, runs the solver, and writes
+This meshes, runs the solver with the plugin, and writes
 `OUTPUT_FILES/comparison.txt` and `OUTPUT_FILES/comparison.png`.
 
 ## References
