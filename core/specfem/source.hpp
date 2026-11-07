@@ -42,6 +42,8 @@ enum class source_type {
 
 }
 
+#include "source/force_vector.hpp"
+#include "source/moment_tensor.hpp"
 #include "source/source.tpp"
 #include "source/tensor_source.hpp"
 #include "source/vector_source.hpp"

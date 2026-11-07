@@ -12,6 +12,7 @@
 #include <tuple>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 
 namespace specfem::assembly::mpi_impl {
 
@@ -907,6 +908,27 @@ void specfem::assembly::mpi_impl::unpacker<FieldType, DimensionTag, MediumTag>::
         std::to_string(this->neighbor_rank);
     specfem::Logger::error(msg);
     specfem::program::abort(msg);
+  }
+
+  // The sender's neighbor indices are this rank's elements in mesh ordering.
+  // Mesh readers cannot bound them because slices may differ in size, so
+  // validate them here against the local element count.
+  const int nspec = static_cast<int>(h_mesh_to_compute.extent(0));
+  for (const auto &[label, elements] :
+       { std::make_pair("face", face_elements),
+         std::make_pair("edge", edge_elements),
+         std::make_pair("corner", corner_elements) }) {
+    for (std::size_t i = 0; i < elements.extent(0); ++i) {
+      if (elements(i) < 0 || elements(i) >= nspec) {
+        std::string msg =
+            "unpacker::assemble_unpacking_mapping: neighbor rank " +
+            std::to_string(this->neighbor_rank) + " sent " + label +
+            " element " + std::to_string(elements(i)) +
+            " outside local range [0, " + std::to_string(nspec) + ")";
+        specfem::Logger::error(msg);
+        specfem::program::abort(msg);
+      }
+    }
   }
 
   const int nglob = static_cast<int>(metadata_buf[4]);

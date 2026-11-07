@@ -99,6 +99,14 @@ specfem_add_test(logspace_tests
             Kokkos::kokkos
 )
 
+specfem_add_test(source_frame_rotation_tests
+  SOURCES   source/frame_rotation_tests.cpp
+  LIBRARIES specfem::source
+            specfem::coordinate_systems
+            gtest_main
+            Kokkos::kokkos
+)
+
 specfem_add_test(units_tests
   SOURCES   units/quantity_tests.cpp
             units/unit_cast_tests.cpp
@@ -193,6 +201,12 @@ specfem_add_test(datatype_operators_tests
             gmock_main
             Kokkos::kokkos
             -lpthread -lm
+)
+
+specfem_add_test(domain_view_tests
+  SOURCES   datatype/domain_view_tests.cpp
+  LIBRARIES gtest_main
+            Kokkos::kokkos
 )
 
 specfem_add_test(fortranio_test
@@ -372,6 +386,7 @@ specfem_add_test(assembly_tests
             assembly/compute_source_array/dim2/compute_source_array_from_tensor.cpp
             assembly/compute_source_array/dim3/compute_source_array_from_vector.cpp
             assembly/compute_source_array/dim3/compute_source_array_from_tensor.cpp
+            assembly/info/cartesian_tests.cpp
             assembly/info/compute_tests.cpp
             assembly/info/scatter_minmax_tests.cpp
             assembly/element_intersections/edge_types_tests.cpp
@@ -381,9 +396,11 @@ specfem_add_test(assembly_tests
             assembly/dim3/mesh/reference_points.cpp
             assembly/dim3/mesh/spherical_coordinates.cpp
             assembly/dim3/mesh/control_nodes.cpp
+            assembly/dim3/globe_source_placement.cpp
             assembly/dim3/jacobian_matrix/jacobian_matrix.cpp
             assembly/dim3/properties/properties.cpp
             assembly/dim3/element_types/element_context.cpp
+            assembly/dim3_globe/assembly.cpp
             assembly/dim3/attenuation/recompute.cpp
             assembly/dim3/attenuation/globe_attenuation.cpp
             assembly/dim3/element_intersections/globe_fluid_solid.cpp
@@ -702,6 +719,8 @@ specfem_add_test(source_class_tests
   SOURCES   source/source.cpp
             source/base_source_tests.cpp
             source/typed_source_tests.cpp
+            source/moment_tensor_resolution_tests.cpp
+            source/force_resolution_tests.cpp
   LIBRARIES source_class
             source_time_functions
             specfem_environment
