@@ -644,6 +644,15 @@ specfem_add_test(frechet_derivatives_tests
             gtest_main
 )
 
+specfem_add_test(compute_derivatives_tests
+  SOURCES   compute/derivatives/runner.cpp
+            compute/derivatives/derivatives.cpp
+  LIBRARIES specfem::compute
+            specfem::io
+            specfem_environment
+            gtest_main
+)
+
 specfem_add_test(strain_tests
   SOURCES   medium/strain/main.cpp
             medium/strain/dim2/elastic_isotropic.cpp
