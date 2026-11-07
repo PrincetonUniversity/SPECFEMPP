@@ -24,7 +24,7 @@ void compute_derivatives(
     const type_real &dt) {
   specfem::tag_dispatch::for_each(
       specfem::tag_dispatch::dimension_set<Tags::dimension_tag>{} *
-          MEDIUM_SET(elastic, elastic_psv, elastic_sh) *
+          MEDIUM_SET(elastic, elastic_psv, elastic_sh, acoustic, poroelastic) *
           PROPERTY_SET(isotropic, anisotropic) *
           ATTENUATION_SET(none, constant_isotropic),
       [&]<typename ElementTags>() {
