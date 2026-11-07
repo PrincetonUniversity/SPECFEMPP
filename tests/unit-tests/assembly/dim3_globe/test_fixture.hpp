@@ -43,6 +43,9 @@ struct GlobeAssembly3D {
 class GlobeAssembly3DTest : public ::testing::Test {
 protected:
   void SetUp() override {
+#if defined(SPECFEM_ENABLE_METAL)
+    GTEST_SKIP() << "Globe assembly statistics need FP64, which Metal lacks";
+#endif
     assembly = std::make_unique<specfem::test_configuration::GlobeAssembly3D>(
         "data/dim3_globe/GlobalSmallMesh/DATABASES_MPI/"
         "proc000000_specfempp_database.bin");

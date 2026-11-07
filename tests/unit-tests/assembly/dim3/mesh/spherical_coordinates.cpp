@@ -140,6 +140,9 @@ public:
 } // namespace spherical_coordinates_test_impl
 
 TEST(SphericalCoordinates, AssemblyReleasesAfterPropertySetup) {
+#if defined(SPECFEM_ENABLE_METAL)
+  GTEST_SKIP() << "Globe assembly statistics need FP64, which Metal lacks";
+#endif
   namespace test_impl = spherical_coordinates_test_impl;
   const auto raw_mesh = specfem::io::read_3d_mesh(
       "data/dim3/EightNodeElastic/database.bin", specfem::attenuation::Setup{});

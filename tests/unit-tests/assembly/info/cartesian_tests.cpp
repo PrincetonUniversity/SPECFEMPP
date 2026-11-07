@@ -40,6 +40,9 @@ TEST_P(Assembly3DTest, CartesianInfoOutputUnchanged) {
 }
 
 TEST_P(Assembly3DTest, IntegratesConstantDensityAndHandlesAbsentRegions) {
+#if defined(SPECFEM_ENABLE_METAL)
+  GTEST_SKIP() << "Globe assembly statistics need FP64, which Metal lacks";
+#endif
   auto &assembled = assembly.assembly;
   using Region = specfem::element::region_tag;
   assembled.element_types.regions = decltype(assembled.element_types.regions)(
@@ -84,6 +87,9 @@ struct InfoScatterResults {
 } // namespace specfem::test_configuration
 
 TEST_P(Assembly3DTest, GlobeLocationUsesDeviceTimeSteps) {
+#if defined(SPECFEM_ENABLE_METAL)
+  GTEST_SKIP() << "Globe assembly statistics need FP64, which Metal lacks";
+#endif
   auto &assembled = assembly.assembly;
   using Region = specfem::element::region_tag;
   assembled.element_types.regions = decltype(assembled.element_types.regions)(
