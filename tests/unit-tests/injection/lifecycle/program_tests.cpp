@@ -127,7 +127,8 @@ private:
 specfem::injection::MethodRegistry test_registry() {
   specfem::injection::MethodRegistry registry;
   registry.add<RecordingMethod>();
-  registry.add<specfem::injection_method_test::ConstantForce>();
+  registry.add<specfem::injection::PointwiseSurfaceMethod<
+      specfem::injection_method_test::ConstantForce>>();
   return registry;
 }
 

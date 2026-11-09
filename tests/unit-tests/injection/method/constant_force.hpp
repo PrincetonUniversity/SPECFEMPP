@@ -12,8 +12,7 @@ namespace specfem::injection_method_test {
  * velocity, so its slot offset (3) is exercised; acoustic/isotropic points
  * request the potential rate.
  */
-struct ConstantForce
-    : specfem::injection::PointwiseSurfaceMethod<ConstantForce> {
+struct ConstantForce : specfem::injection::PointwiseMethodBase<ConstantForce> {
   static constexpr std::string_view method_name = "constant-force";
 
   struct Parameters {

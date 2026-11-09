@@ -162,5 +162,23 @@ private:
   const parameters_type &parameters_; ///< Method parameters
 };
 
+/**
+ * @brief Optional base of a pointwise injection method, providing the
+ * shorthand @c Context<MediumTag, PropertyTag> for the method's
+ * specfem::injection::PointContext.
+ *
+ * It only names types, so it is safe to derive from while the method is
+ * still being defined; the method's requirements are checked when it is
+ * wrapped in specfem::injection::PointwiseSurfaceMethod.
+ *
+ * @tparam Method The injection method deriving from it
+ */
+template <typename Method> struct PointwiseMethodBase {
+  /// Point context of a material system, the argument of @c compute
+  template <specfem::element::medium_tag MediumTag,
+            specfem::element::property_tag PropertyTag>
+  using Context = PointContext<Method, MediumTag, PropertyTag>;
+};
+
 } // namespace injection
 } // namespace specfem

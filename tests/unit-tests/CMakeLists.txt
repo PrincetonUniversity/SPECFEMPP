@@ -42,6 +42,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/injection/lifecycle/lifecycle.cmake)
 
 # Pointwise injection framework: quantity lists, point harness and kernel
 include(${CMAKE_CURRENT_SOURCE_DIR}/injection/method/method.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/injection/method/requirement_failures.cmake)
 
 if(SPECFEM_ENABLE_MPI)
   include(${CMAKE_CURRENT_SOURCE_DIR}/mpi.cmake)
