@@ -220,9 +220,9 @@ fk_injection::read_fk_model_file(const std::string &path) {
   fk_injection::TimeWindow window;
   window.dt = static_cast<type_real>(deltat);
   window.nstep = nstep;
-  window.frequency_max = static_cast<type_real>(frequency_max);
   window.frequency_sampling = static_cast<type_real>(frequency_sampling);
   window.time_window_length = static_cast<type_real>(time_window);
 
-  return { std::move(model), wave, window, has_origin };
+  return { std::move(model), wave, window,
+           static_cast<type_real>(frequency_max), has_origin };
 }

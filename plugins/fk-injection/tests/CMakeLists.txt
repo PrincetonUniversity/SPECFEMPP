@@ -24,7 +24,7 @@ specfem_add_test(injection_types_tests
               layered_model_tests.cpp
               time_window_tests.cpp
               incident_wave_tests.cpp
-              fk_result_tests.cpp
+              field_sampler_tests.cpp
   LIBRARIES   fk_injection_impl
               gtest
 )
@@ -53,18 +53,26 @@ specfem_add_test(injection_field_recovery_tests
               gtest
 )
 
-specfem_add_test(injection_driver_tests
+specfem_add_test(injection_field_tests
   LABELS      fk_injection
   SOURCES     runner.cpp
-              driver_tests.cpp
+              field_tests.cpp
   LIBRARIES   fk_injection_impl
               gtest
 )
 
-specfem_add_test(injection_depth_groups_tests
+specfem_add_test(injection_response_tests
   LABELS      fk_injection
   SOURCES     runner.cpp
-              depth_groups_tests.cpp
+              plane_wave_response_tests.cpp
+  LIBRARIES   fk_injection_impl
+              gtest
+)
+
+specfem_add_test(injection_series_table_tests
+  LABELS      fk_injection
+  SOURCES     runner.cpp
+              series_table_tests.cpp
   LIBRARIES   fk_injection_impl
               gtest
 )

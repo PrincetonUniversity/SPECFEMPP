@@ -1,10 +1,9 @@
 #pragma once
 
-#include "fk_injection/fk_result.hpp"
+#include "field_sampler.hpp"
 #include "plugin_config.hpp"
 #include "specfem/plugin/injection_plugin.hpp"
 
-#include <array>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -22,7 +21,7 @@ namespace fk_injection {
 class FkInjectionPlugin : public specfem::plugin::InjectionPlugin {
 public:
   /**
-   * @brief Read the configuration and prepare the solve.
+   * @brief Read the configuration.
    * @param config_path Path of the plugin's YAML configuration
    * @param info Simulation parameters
    * @param communicator MPI communicator (unused: every rank solves for its
@@ -45,7 +44,12 @@ public:
                 specfem::plugin::Quantity quantity) const override;
 
   /**
-   * @brief Check the points' material and solve for the FK field at the points.
+   * @brief Check the points' material, solve for the response of the model,
+   * and synthesize the series the points need.
+   *
+   * The response depends on the mesh box only, so a rank without points
+   * validates the configuration too.
+   *
    * @param points Injection points
    * @throws specfem::plugin::Unsupported naming the first point whose material
    * differs from the model, or if the wave's ray parameter is out of range
@@ -60,8 +64,7 @@ public:
 private:
   /// What fill needs from one group of points
   struct Group {
-    std::int64_t first_point = 0; ///< First point in the FK result
-    std::int64_t count = 0;       ///< Points of the group in the FK result
+    FieldSampler sampler; ///< Field at the group's points
     std::vector<specfem::plugin::QuantitySlot> slots; ///< Requested quantities
   };
 
@@ -85,10 +88,9 @@ private:
   IncidentWave wave_;
   TimeWindow window_;
   double zmax_;
-  std::array<double, 4> horizontal_bounds_; ///< See @c EvalPoints
-  FkResult result_{};
+  HorizontalBox box_; ///< Mesh box, shared by every rank
   std::vector<Group> groups_{};
-  std::vector<type_real> scratch_{}; ///< One step of @c result_
+  std::vector<type_real> scratch_{}; ///< One step of the largest group
 };
 
 } // namespace fk_injection

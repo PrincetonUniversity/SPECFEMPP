@@ -15,8 +15,8 @@ namespace fk_injection::impl {
 //
 // A plane wave in a laterally homogeneous model factorises as
 // u(x,y,z,t) = U(z, t - tau(x,y)): horizontal position is only a time shift.
-// These operators recover the depth-only spectral state once per depth group;
-// the per-point source-time apodization, (i*omega)^n derivative, time delay
+// These operators recover the depth-only spectral state once per series row;
+// the per-point source-time apodization, elastic i*omega velocity, time delay
 // tau, and Lame traction weights are applied later (synthesis and sampling),
 // not here.
 // ===========================================================================
@@ -154,7 +154,7 @@ acoustic_state_in_layer(const fk_injection::AcousticLayer &layer,
 /**
  * @brief Project an elastic state onto the depth-only series S0..S4.
  *
- * No source-time function and no per-point Lame factors: the driver forms
+ * No source-time function and no per-point Lame factors: the sampler forms
  * sigma_rr = xi1*S2 - 4*xim*S4 per point.
  *
  * @param state          State vector @f$(u_x, u_z, \sigma_{xz},
