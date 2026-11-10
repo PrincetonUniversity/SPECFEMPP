@@ -236,12 +236,16 @@ void specfem::compute::impl::compute_coupling_conjugate_integral_nonconforming(
               // =====================
               // apply BCs and accumulate
 
-              specfem::point::boundary<boundary_tag, dimension_tag, false>
-                  point_boundary;
-              specfem::assembly::load_on_device(index, boundaries,
-                                                point_boundary);
+              // boundary_tag is the tag of the acoustic element of this pair, so
+              // the free-surface condition applies only when self is acoustic.
               if constexpr (boundary_tag == specfem::element::boundary_tag::
-                                                acoustic_free_surface) {
+                                                acoustic_free_surface &&
+                            self_medium ==
+                                specfem::element::medium_tag::acoustic) {
+                specfem::point::boundary<boundary_tag, dimension_tag, false>
+                    point_boundary;
+                specfem::assembly::load_on_device(index, boundaries,
+                                                  point_boundary);
                 specfem::boundary_conditions::apply_boundary_conditions(
                     point_boundary, self_accel);
               }
