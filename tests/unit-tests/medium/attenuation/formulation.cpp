@@ -1,5 +1,5 @@
 #include "specfem/attenuation.hpp"
-#include "specfem/medium/dim2/elastic/isotropic/material.hpp"
+#include "specfem/medium_container.hpp"
 #include <gtest/gtest.h>
 #include <type_traits>
 
