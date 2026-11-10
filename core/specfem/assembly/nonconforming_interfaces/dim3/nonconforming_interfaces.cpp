@@ -123,16 +123,39 @@ specfem::assembly::nonconforming_interfaces<
         const specfem::assembly::mesh<dimension_tag> &mesh,
         const specfem::element_coupling::flux_scheme_configuration
             &flux_scheme_config)
-    : interface_container(
-          [&, hosts = select_hosts(element_intersections, mesh,
-                                   flux_scheme_config)]<typename TagsType>() {
-            return InterfaceContainerTemplateType<TagsType>(
-                ngllz, nglly, ngllx, element_intersections, jacobian_matrix,
-                mesh, hosts);
-          }) {
-  if (flux_scheme_config.get_interfacial_meshing_type() ==
-      specfem::element_coupling::interfacial_meshing_type::self_host) {
-    // every container is a host: nothing to copy
+    : nonconforming_interfaces(
+          ngllz, nglly, ngllx, element_intersections, jacobian_matrix, mesh,
+          select_hosts(element_intersections, mesh, flux_scheme_config)) {}
+
+specfem::assembly::nonconforming_interfaces<
+    specfem::element::dimension_tag::dim3>::
+    nonconforming_interfaces(
+        const int &ngllz, const int &nglly, const int &ngllx,
+        const specfem::assembly::element_intersections<
+            specfem::element::dimension_tag::dim3> &element_intersections,
+        const specfem::assembly::jacobian_matrix<dimension_tag>
+            &jacobian_matrix,
+        const specfem::assembly::mesh<dimension_tag> &mesh,
+        const specfem::assembly::nonconforming_interfaces_impl::HostSelection
+            &hosts)
+    : interface_container([&]<typename TagsType>() {
+        return InterfaceContainerTemplateType<TagsType>(
+            ngllz, nglly, ngllx, element_intersections, jacobian_matrix, mesh,
+            hosts);
+      }) {
+  // Is any non-empty container a guest? If not, there is nothing to copy.
+  bool any_guest = false;
+  specfem::tag_dispatch::for_each(combinations, [&]<typename TagsType>() {
+    const auto &container = interface_container.template get<TagsType>();
+    const auto [self_faces, coupled_faces] =
+        element_intersections.get_intersections_on_host(
+            TagsType::connection_tag, TagsType::interface_tag,
+            TagsType::boundary_tag, TagsType::flux_scheme_tag);
+    if (self_faces.N > 0 && !container.self_is_host) {
+      any_guest = true;
+    }
+  });
+  if (!any_guest) {
     return;
   }
 

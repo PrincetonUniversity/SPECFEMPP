@@ -78,6 +78,25 @@ public:
       const specfem::element_coupling::flux_scheme_configuration
           &flux_scheme_config = {});
 
+  /**
+   * @brief Constructs the containers with an explicit choice of host sides.
+   *
+   * The host side of each interface tag is taken from `hosts`; the other
+   * constructor derives it from the meshing type of the flux scheme
+   * configuration. Guest containers are filled with copies of the host rows of
+   * their pairs.
+   *
+   * @param hosts Host side of each interface tag
+   */
+  nonconforming_interfaces(
+      const int &ngllz, const int &nglly, const int &ngllx,
+      const specfem::assembly::element_intersections<dimension_tag>
+          &element_intersections,
+      const specfem::assembly::jacobian_matrix<dimension_tag> &jacobian_matrix,
+      const specfem::assembly::mesh<dimension_tag> &mesh,
+      const specfem::assembly::nonconforming_interfaces_impl::HostSelection
+          &hosts);
+
   nonconforming_interfaces() = default;
 
   template <specfem::element_coupling::interface_tag InterfaceTag,

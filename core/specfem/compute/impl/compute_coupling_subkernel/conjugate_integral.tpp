@@ -7,12 +7,16 @@
 #include "specfem/chunk_face.hpp"
 #include "specfem/datatype/chunk_face_view.hpp"
 #include "specfem/element/attributes.hpp"
+#include "specfem/element/to_string.hpp"
+#include "specfem/element_coupling/to_string.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/medium_physics.hpp"
 #include "specfem/parallel_configuration.hpp"
 #include "specfem/point.hpp"
 #include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
+#include <sstream>
+#include <stdexcept>
 #include <type_traits>
 
 template <int NGLL, typename Tags>
@@ -30,30 +34,34 @@ void specfem::compute::impl::compute_coupling_conjugate_integral_nonconforming(
   constexpr static auto wavefield_tag = Tags::wavefield_tag;
   constexpr static auto flux_scheme_tag = Tags::flux_scheme_tag;
 
-  constexpr static auto conjugate_interface_tag =
-      specfem::element_coupling::attributes<
-          dimension_tag, interface_tag>::conjugate_interface();
-
-  const auto [conjugate_coupled_intersections, conjugate_self_intersections] =
+  // The pairs of this kernel's own container: self faces are the guest, the
+  // coupled faces are the host. The self and the coupled face of one row carry
+  // the same pair index, which addresses the row of the own container.
+  const auto [self_intersections, coupled_intersections] =
       assembly.element_intersections.get_intersections_on_device(
-          connection_tag, conjugate_interface_tag, boundary_tag,
-          flux_scheme_tag);
+          connection_tag, interface_tag, boundary_tag, flux_scheme_tag);
 
-  if (conjugate_self_intersections.N == 0 &&
-      conjugate_coupled_intersections.N == 0) {
+  if (self_intersections.N == 0 && coupled_intersections.N == 0) {
     return;
   }
 
-  // This kernel only runs when its own container is not the host; the
-  // container read below (conjugate interface tag, same boundary tag) is then
-  // the host by `HostSelection`, and stores the interpolants. If that
-  // container is empty, we have already returned above.
-  const auto &host_container =
+  // Guest-face interpolants at the host nodes of the own pairs (the guest
+  // container holds copies of the host container's rows, in the order of its
+  // own list). If the container is empty, we have already returned above.
+  const auto &own_container =
       assembly.nonconforming_interfaces
-          .template get_interface_container<conjugate_interface_tag,
-                                            boundary_tag, connection_tag,
-                                            flux_scheme_tag>();
-  const auto interpolants = host_container.interpolants;
+          .template get_interface_container<interface_tag, boundary_tag,
+                                            connection_tag, flux_scheme_tag>();
+  const auto interpolants = own_container.interpolants;
+
+  if (own_container.self_is_host) {
+    std::ostringstream oss;
+    oss << "The guest-side nonconforming coupling kernel was called for a "
+           "container whose self side is the host: interface "
+        << specfem::element_coupling::to_string(interface_tag) << ", boundary "
+        << specfem::element::to_string(boundary_tag);
+    throw std::runtime_error(oss.str());
+  }
 
   const auto field =
       assembly.fields.template get_simulation_field<wavefield_tag>();
@@ -95,15 +103,15 @@ void specfem::compute::impl::compute_coupling_conjugate_integral_nonconforming(
       type_real, dimension_tag, chunk_size, NGLL, ncomp_self, using_simd,
       Kokkos::DefaultExecutionSpace::scratch_memory_space,
       Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
-  // Host-node data: the host GLL nodes are the quadrature points.
-  using ConjugateCouplingData =
+  // Host-node data (face factor, normal, interpolants) of the own pairs: the
+  // host GLL nodes are the quadrature points.
+  using HostNodeCouplingData =
       specfem::element_coupling::accessor::coupling_terms_pack<
-          dimension_tag, conjugate_interface_tag, boundary_tag, flux_scheme_tag,
+          dimension_tag, interface_tag, boundary_tag, flux_scheme_tag,
           chunk_size, NGLL, NGLL>;
 
   specfem::execution::ChunkedIntersectionIterator chunk(
-      parallel_config(), conjugate_self_intersections,
-      conjugate_coupled_intersections);
+      parallel_config(), self_intersections, coupled_intersections);
 
   const int scratch_size =
       CoupledFieldType::shmem_size() + FluxViewType::shmem_size();
@@ -141,7 +149,7 @@ void specfem::compute::impl::compute_coupling_conjugate_integral_nonconforming(
               const auto &index = iterator_index.get_index();
               const auto &local_index = iterator_index.get_local_index();
 
-              ConjugateCouplingData point_interface_data;
+              HostNodeCouplingData point_interface_data;
               specfem::assembly::load_on_device(index, nonconforming_interfaces,
                                                 point_interface_data);
 
@@ -175,13 +183,14 @@ void specfem::compute::impl::compute_coupling_conjugate_integral_nonconforming(
                   index, local_index, interpolants, flux, self_accel);
 
               // The stored normal is the host's outward normal, opposite to
-              // the guest's.
+              // the guest's, hence the sign flip.
               for (int icomp = 0; icomp < ncomp_self; icomp++) {
                 self_accel(icomp) = -self_accel(icomp);
               }
 
-              // boundary_tag is the tag of the acoustic element of this pair, so
-              // the free-surface condition applies only when self is acoustic.
+              // boundary_tag is the tag of the self (guest) element being
+              // updated, so the free-surface condition applies only when self
+              // is acoustic.
               if constexpr (boundary_tag == specfem::element::boundary_tag::
                                                 acoustic_free_surface &&
                             self_medium ==
