@@ -46,19 +46,20 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict) {
     throw std::runtime_error(message.str());
   }
 
-  // Get source info
-  if (const YAML::Node &source_node = runtime_config["sources"]) {
-    this->sources =
-        std::make_unique<specfem::runtime_configuration::sources>(source_node);
-  } else {
-    throw std::runtime_error("Error reading specfem source configuration.");
-  }
-
   // Get wavefield-injection info (optional)
   if (const YAML::Node &injection_node = runtime_config["injection"]) {
     this->injection =
         std::make_unique<specfem::runtime_configuration::Injection>(
             injection_node);
+  }
+
+  // Get source info. An injection run may omit the sources: the incident
+  // field then comes entirely from the plugin.
+  if (const YAML::Node &source_node = runtime_config["sources"]) {
+    this->sources =
+        std::make_unique<specfem::runtime_configuration::sources>(source_node);
+  } else if (!this->injection) {
+    throw std::runtime_error("Error reading specfem source configuration.");
   }
 
   // Get flux scheme info (optional)
