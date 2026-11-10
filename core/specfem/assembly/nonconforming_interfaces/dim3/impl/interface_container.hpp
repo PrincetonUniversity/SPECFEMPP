@@ -144,6 +144,9 @@ public:
    * interpolants)
    * @param index Face and point indices for data location
    * @param point Output point object to store loaded data
+   *
+   * @pre `self_is_host` is true. A container that is not the host stores no
+   * interpolants.
    */
   template <bool on_device, typename IndexType, typename PointType>
   KOKKOS_FORCEINLINE_FUNCTION void
