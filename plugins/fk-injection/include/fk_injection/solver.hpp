@@ -13,11 +13,12 @@ namespace fk_injection {
  * @brief How @c solve treats the two points where it deliberately differs from
  *        SPECFEM3D's FK routine.
  *
- * - @c exact : the inverse FFT normalizes by the resampled step @c dt_min and
- *   each point's delay is the exact plane-wave delay.
+ * - @c exact : the inverse FFT normalizes by the resampled step @c dt_min, the
+ *   frequency grid is @f$ 1/(N \Delta t_\text{min}) @f$, and each point's delay
+ *   is the exact plane-wave delay.
  * - @c specfem3d : reproduces SPECFEM3D for comparison against it. The inverse
  *   FFT normalizes by the SEM step, so amplitudes are @f$ N_P @f$ times larger,
- *   and delays are stretched by @f$ N/(N-1) @f$ from its frequency grid.
+ *   and its frequency grid stretches all times by @f$ N/(N-1) @f$.
  */
 enum class ReferenceConvention { exact, specfem3d };
 

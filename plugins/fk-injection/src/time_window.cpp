@@ -1,9 +1,11 @@
 #include "fk_injection/time_window.hpp"
+#include <algorithm>
 #include <cmath>
 #include <stdexcept>
 
 fk_injection::FkSizes fk_injection::compute_fk_sizes(const TimeWindow &window,
-                                                     double time_delay_span) {
+                                                     double time_delay_span,
+                                                     double minimum_window) {
   // The negated comparisons also reject NaN.
   if (!(window.frequency_sampling > 0)) {
     throw std::runtime_error(
@@ -42,6 +44,7 @@ fk_injection::FkSizes fk_injection::compute_fk_sizes(const TimeWindow &window,
   if (tmax_use > tmax_samp) {
     tmax_use = tmax_samp;
   }
+  tmax_use = std::max(tmax_use, static_cast<type_real>(minimum_window));
 
   // Round up stored-frequency count to a power of two.
   int NF_FOR_STORING = static_cast<int>(std::ceil(tmax_use / dt_min));
