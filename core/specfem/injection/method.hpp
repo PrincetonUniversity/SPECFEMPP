@@ -8,3 +8,4 @@
 #include "method/quantity_list.hpp"
 #include "method/registry.hpp"
 #include "method/requirements.hpp"
+#include "method/stacey_injection.hpp"

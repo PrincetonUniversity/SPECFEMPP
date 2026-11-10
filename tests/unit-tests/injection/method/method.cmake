@@ -7,6 +7,7 @@ specfem_add_test(injection_method_tests
   LABELS      injection
   SOURCES     ${CMAKE_CURRENT_LIST_DIR}/quantity_tests.cpp
               ${CMAKE_CURRENT_LIST_DIR}/requirement_tests.cpp
+              ${CMAKE_CURRENT_LIST_DIR}/stacey_tests.cpp
               ${CMAKE_CURRENT_LIST_DIR}/point_harness_tests.cpp
               ${CMAKE_CURRENT_LIST_DIR}/kernel_tests.cpp
               ${CMAKE_CURRENT_LIST_DIR}/../session/mock_plugin.cpp

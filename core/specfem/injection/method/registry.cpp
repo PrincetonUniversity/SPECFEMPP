@@ -1,4 +1,6 @@
 #include "specfem/injection/method/registry.hpp"
+#include "specfem/injection/method/pointwise_surface_method.hpp"
+#include "specfem/injection/method/stacey_injection.hpp"
 
 bool specfem::injection::MethodRegistry::contains(
     const std::string_view name) const {
@@ -35,8 +37,7 @@ const specfem::injection::MethodRegistry &
 specfem::injection::default_method_registry() {
   static const MethodRegistry registry = [] {
     MethodRegistry built_in;
-    // Built-in methods are added here, one line each, e.g.
-    // built_in.add<StaceyInjection>();
+    built_in.add<PointwiseSurfaceMethod<StaceyInjection>>();
     return built_in;
   }();
   return registry;

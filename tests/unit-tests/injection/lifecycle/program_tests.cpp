@@ -193,6 +193,27 @@ TEST(InjectionLifecycle, PointwiseMethodRunsInTheSolver) {
   EXPECT_EQ(elastic.slots[1].quantity, specfem_quantity_velocity);
 }
 
+TEST(InjectionLifecycle, StaceyRunsFromTheDefaultRegistry) {
+  specfem::injection_session_test::reset_mock_calls();
+  const RunDirectory directory;
+  run(directory.parameters("EightNodeElasticInjectionStacey",
+                           directory.forward(),
+                           "{method: stacey, window-steps: 4}"),
+      specfem::injection::default_method_registry());
+
+  EXPECT_EQ(mock_calls().destroy, 1);
+  EXPECT_THAT(mock_calls().fill_starts, ElementsAre(0, 4, 8));
+  ASSERT_FALSE(mock_calls().groups.empty());
+  const auto &elastic = mock_calls().groups.front();
+  EXPECT_EQ(elastic.medium, specfem_medium_elastic);
+  ASSERT_EQ(elastic.slots.size(), 2u);
+  EXPECT_EQ(elastic.slots[0].quantity, specfem_quantity_velocity);
+  EXPECT_EQ(elastic.slots[0].count, 3);
+  EXPECT_EQ(elastic.slots[1].quantity, specfem_quantity_traction);
+  EXPECT_EQ(elastic.slots[1].offset, 3);
+  EXPECT_EQ(elastic.slots[1].count, 3);
+}
+
 TEST(InjectionLifecycle, CombinedRunIsRejectedBeforeTheMeshRead) {
   const RunDirectory directory;
   EXPECT_THAT(run_error(directory.parameters("EightNodeElasticInjectionStacey",

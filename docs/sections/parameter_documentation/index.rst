@@ -1080,7 +1080,10 @@ Parameter definitions
 
             :default value: None
 
-            :possible values: [string] Name of a registered method.
+            :possible values: [string] Name of a registered method. Built
+                in: ``stacey``, which injects through the Stacey absorbing
+                boundary at elastic isotropic and anisotropic points; the
+                injection faces must be Stacey faces.
 
         .. dropdown:: ``window-steps`` [optional]
 
