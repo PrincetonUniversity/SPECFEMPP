@@ -9,10 +9,12 @@
 #     snakemake -s Snakefile_mpi --cores <N>
 # Requires SPECFEM3D_BINDIR and SPECFEMPP_BINDIR in the environment.
 
-configfile: "../dim3/explicit_solver/tests_mpi.yaml"
+configfile: "../tests.yaml"
 
-# tests3d maps each test directory name -> its MPI process count.
-tests3d = config["tests3d"]
+# tests3d maps each multi-process test directory name -> its MPI process count.
+tests3d = {
+    name: nproc for name, nproc in config["explicit_solver"].items() if nproc > 1
+}
 
 rule all:
     input:

@@ -1,4 +1,4 @@
-# Libraries shared by every Newmark displacement test, serial and MPI alike.
+# Libraries shared by the integration test executables.
 set(DISPLACEMENT_TEST_LIBS
   specfem::quadrature
   specfem::mesh
@@ -17,11 +17,6 @@ set(DISPLACEMENT_TEST_LIBS
 
 specfem_add_test(displacement_newmark_2d_tests
   SOURCES   displacement_tests/Newmark/dim2/newmark_tests.cpp
-  LIBRARIES ${DISPLACEMENT_TEST_LIBS}
-)
-
-specfem_add_test(displacement_newmark_3d_tests
-  SOURCES   displacement_tests/Newmark/dim3/newmark_tests.cpp
   LIBRARIES ${DISPLACEMENT_TEST_LIBS}
 )
 

@@ -1,0 +1,25 @@
+# Index of the 3D simulations run by tests/integration-tests/runner.cpp:
+#     <case name>: <number of MPI processes>
+#
+# Each section is a directory under dim3/ holding the cases. The value is the
+# single source of truth for a case's process count. It drives:
+#   - Snakemake (workflow/Snakefile builds the cases with 1 process,
+#     workflow/Snakefile_mpi the others),
+#   - CMake (one runner executable per distinct count),
+#   - the runner, which runs only the cases that match its launch size.
+# It must equal NPROC_XI * NPROC_ETA in the case's Mesh_Par_file and the nproc
+# in its config.yaml. One "name: <int>" entry per line.
+explicit_solver:
+  HomogeneousHalfspaceSmallNoABCForceSource: 1
+  HomogeneousHalfspaceSmallNoABCForceSourceLong: 1
+  HomogeneousHalfspaceSmallNoABCForceSourceAttenuation: 1
+  HomogeneousHalfSpaceAcousticForceSource: 1
+  HomogeneousAcousticFreeSurfaceForceSource3D: 1
+  AcousticElasticForce: 1
+  HomogeneousHalfspaceSmallNoABCMomentTensor: 1
+  HomogeneousHalfSpaceStacey: 1
+  HomogeneousHalfSpaceAcousticStacey: 1
+  HomogeneousIsotropicCosseratDomain: 1
+  MPIHomogeneousHalfspaceSmallNoABCForceSource: 4
+  MPIHomogeneousHalfSpaceStacey: 4
+  MPIAcousticElasticForce: 4
