@@ -5,6 +5,7 @@
 #include "specfem/element_connections/to_string.hpp"
 #include "specfem/element_coupling/tags.hpp"
 #include "specfem/point/global_coordinates.hpp"
+#include "unique_faces.hpp"
 #include <cmath>
 #include <sstream>
 #include <stdexcept>
@@ -46,19 +47,19 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
 
   const auto interfacial_meshing_type =
       flux_scheme_config.get_interfacial_meshing_type();
+
+  bool self_is_highres;
+  if (interfacial_meshing_type ==
+      element_coupling::interfacial_meshing_type::highres_host) {
+    self_is_highres = specfem::assembly::nonconforming_interfaces_impl::
+                          mean_face_length_scale(self_faces, mesh) <
+                      specfem::assembly::nonconforming_interfaces_impl::
+                          mean_face_length_scale(coupled_faces, mesh);
+  }
+
   switch (interfacial_meshing_type) {
-  case element_coupling::interfacial_meshing_type::unspecified:
-  case element_coupling::interfacial_meshing_type::acoustic_host:
-    should_run_self_compute_coupling_kernel =
-        InterfaceTag ==
-        specfem::element_coupling::interface_tag::acoustic_elastic;
-    should_run_conjugate_compute_coupling_kernel =
-        !should_run_self_compute_coupling_kernel;
-    break;
-  case element_coupling::interfacial_meshing_type::elastic_host:
-    should_run_self_compute_coupling_kernel =
-        InterfaceTag !=
-        specfem::element_coupling::interface_tag::acoustic_elastic;
+  case element_coupling::interfacial_meshing_type::highres_host:
+    should_run_self_compute_coupling_kernel = self_is_highres;
     should_run_conjugate_compute_coupling_kernel =
         !should_run_self_compute_coupling_kernel;
     break;
