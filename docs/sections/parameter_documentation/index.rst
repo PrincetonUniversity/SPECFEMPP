@@ -905,7 +905,9 @@ Parameter definitions
 
     .. dropdown:: ``sources``
 
-        Define sources
+        Define sources. Required, except in a 3D run with an ``injection``
+        section, where it may be omitted when the incident field comes
+        entirely from the injection plugin.
 
         :default value: None
 

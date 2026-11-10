@@ -107,9 +107,14 @@ void run_program_3d(
   //                   Get Sources
   // --------------------------------------------------------------
   auto [sources, t0, starttime] =
-      specfem::io::read_sources<specfem::element::dimension_tag::dim3>(
-          setup.get_source_entries(), nsteps, setup.get_t0(), setup.get_dt(),
-          simulation_type);
+      setup.has_sources()
+          ? specfem::io::read_sources<specfem::element::dimension_tag::dim3>(
+                setup.get_source_entries(), nsteps, setup.get_t0(),
+                setup.get_dt(), simulation_type)
+          : std::make_tuple(
+                std::vector<std::shared_ptr<specfem::sources::source<
+                    specfem::element::dimension_tag::dim3>>>(),
+                setup.get_t0(), std::optional<specfem::datetime::type>());
   setup.update_t0(t0); // Update t0 in case it was changed
   setup.set_starttime(starttime);
   // --------------------------------------------------------------
