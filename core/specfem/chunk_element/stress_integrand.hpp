@@ -97,10 +97,13 @@ public:
    *
    * @tparam MemberType Kokos team member type.
    * @param team Kokkos team member.
+   * @param scratch_level Kokkos scratch level to allocate from (0: team
+   * shared memory, 1: global-memory scratch).
    */
   template <typename MemberType>
-  KOKKOS_FUNCTION stress_integrand(const MemberType &team)
-      : F(team.team_scratch(0)) {}
+  KOKKOS_FUNCTION stress_integrand(const MemberType &team,
+                                   const int scratch_level = 0)
+      : F(team.team_scratch(scratch_level)) {}
 
   ///@}
 

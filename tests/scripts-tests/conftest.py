@@ -46,6 +46,6 @@ def execute_script():
                 f"{' '.join(full_cmd)}\n\n{out.stderr.decode()}"
             )
 
-        return out.stdout
+        return out.stdout.decode()
 
     return execute

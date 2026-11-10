@@ -33,6 +33,13 @@ Projections
 
 *  :doc:`utm`: UTM (Universal Transverse Mercator) forward and inverse projection.
 
+Local frames
+------------
+
+*  :doc:`basis_rotation`: Frame tags and the change of basis between the global
+   Cartesian frame and the local geocentric :math:`(\theta, \phi, r)` frame at a
+   point. Source and receiver quantities build their rotations from it.
+
 .. toctree::
     :maxdepth: 1
 

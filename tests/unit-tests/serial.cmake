@@ -90,6 +90,14 @@ specfem_add_test(logspace_tests
             Kokkos::kokkos
 )
 
+specfem_add_test(source_frame_rotation_tests
+  SOURCES   source/frame_rotation_tests.cpp
+  LIBRARIES specfem::source
+            specfem::coordinate_systems
+            gtest_main
+            Kokkos::kokkos
+)
+
 specfem_add_test(units_tests
   SOURCES   units/quantity_tests.cpp
             units/unit_cast_tests.cpp
@@ -349,6 +357,7 @@ specfem_add_test(assembly_tests
             assembly/dim3/mesh/reference_points.cpp
             assembly/dim3/mesh/spherical_coordinates.cpp
             assembly/dim3/mesh/control_nodes.cpp
+            assembly/dim3/globe_source_placement.cpp
             assembly/dim3/jacobian_matrix/jacobian_matrix.cpp
             assembly/dim3/properties/properties.cpp
             assembly/dim3/element_types/element_context.cpp
@@ -666,6 +675,8 @@ specfem_add_test(source_class_tests
   SOURCES   source/source.cpp
             source/base_source_tests.cpp
             source/typed_source_tests.cpp
+            source/moment_tensor_resolution_tests.cpp
+            source/force_resolution_tests.cpp
   LIBRARIES source_class
             source_time_functions
             specfem_environment
@@ -758,6 +769,25 @@ specfem_add_test(stiffness_kernel_tests
   SOURCES linear_system/stiffness_kernel_tests.cpp
   LIBRARIES specfem::linear_system
             specfem::quadrature
+            specfem::mesh
+            yaml-cpp
+            specfem_environment
+            specfem::assembly
+            specfem::runtime_configuration
+            timescheme
+            point
+            specfem::algorithms
+            specfem::solver
+            specfem::periodic_tasks
+            ${BOOST_LIBS}
+            -lpthread -lm
+)
+
+# Stiffness kernels launched on level-0 and level-1 scratch must agree; the
+# level-1 path is the fallback when neither kernel fits team shared memory.
+specfem_add_test(stiffness_scratch_level_tests
+  SOURCES linear_system/stiffness_scratch_level_tests.cpp
+  LIBRARIES specfem::quadrature
             specfem::mesh
             yaml-cpp
             specfem_environment
