@@ -104,7 +104,7 @@ struct FaceView {
       std::conditional_t<std::is_same<typename ExecutionSpace::memory_space,
                                       Kokkos::HostSpace>::value,
                          FaceView,
-                         FaceView<Kokkos::DefaultHostExecutionSpace, Layout> >;
+                         FaceView<Kokkos::DefaultHostExecutionSpace, Layout>>;
 
   /**
    * @brief Default constructor creating empty face view.
@@ -168,6 +168,30 @@ struct FaceView {
              Kokkos::subview(iz, face_id, Kokkos::ALL(), Kokkos::ALL()),
              Kokkos::subview(iy, face_id, Kokkos::ALL(), Kokkos::ALL()),
              Kokkos::subview(ix, face_id, Kokkos::ALL(), Kokkos::ALL()) };
+  }
+
+  /**
+   * @brief Access a single quadrature point of a face by index.
+   *
+   * Reads the stored indices directly; no intermediate Face or subview is
+   * constructed.
+   *
+   * @param face_id Index of the face to access
+   * @param ipoint_i First face coordinate index (0 to n_points-1)
+   * @param ipoint_j Second face coordinate index (0 to n_points-1)
+   * @return 3D face index structure for the specified quadrature point
+   */
+  KOKKOS_INLINE_FUNCTION
+  specfem::point::face_index<specfem::element::dimension_tag::dim3>
+  operator()(const int face_id, const int ipoint_i, const int ipoint_j) const {
+    return { element_index(face_id),
+             face_index(face_id),
+             ipoint_i,
+             ipoint_j,
+             iz(face_id, ipoint_i, ipoint_j),
+             iy(face_id, ipoint_i, ipoint_j),
+             ix(face_id, ipoint_i, ipoint_j),
+             face_types(face_id) };
   }
 
   /**
@@ -354,7 +378,7 @@ specfem::assembly::element_intersections<
 face_view_from_collected_faces(
     const std::string &label,
     const std::vector<
-        specfem::mesh_entity::face<specfem::element::dimension_tag::dim3> >
+        specfem::mesh_entity::face<specfem::element::dimension_tag::dim3>>
         &collected_faces,
     const specfem::mesh_entity::element<specfem::element::dimension_tag::dim3>
         &element);
