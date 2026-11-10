@@ -24,6 +24,9 @@ struct PluginConfig {
   type_real time_window_length = 0; ///< FK time-window length in s
   double material_tolerance =
       1e-3; ///< Relative tolerance of the material check
+  /// z of the top of the layered model in the mesh frame; empty for the top of
+  /// the mesh
+  std::optional<double> model_top = std::nullopt;
   ReferenceConvention convention = ReferenceConvention::exact; ///< See @c solve
 
   /**
@@ -42,10 +45,21 @@ struct PluginConfig {
    * the origin's z is shifted by @p zmax.
    *
    * @param t0 Simulation time of step 0 in s
-   * @param zmax Top of the mesh in m
+   * @param zmax Top of the mesh in m, used unless @c model_top is set
    * @return Incident wave
    */
   IncidentWave incident_wave(double t0, double zmax) const;
+
+  /**
+   * @brief z of the top of the layered model in the mesh frame.
+   *
+   * Depth in the model is this z minus the point's z. A mesh with topography
+   * above the model's top, such as islands in an ocean, sets @c model_top.
+   *
+   * @param zmax Top of the mesh in m
+   * @return @c model_top if set, else @p zmax
+   */
+  double top(double zmax) const { return model_top.value_or(zmax); }
 };
 
 /**
@@ -68,6 +82,7 @@ struct PluginConfig {
  *   frequency-sampling: 10      # optional, default: 10 / half-duration
  *   length: 180
  * material-tolerance: 1.0e-3    # optional, relative
+ * model-top: 0                 # optional, default: the top of the mesh
  * reproduce-specfem3d-reference: false  # optional
  * @endcode
  *

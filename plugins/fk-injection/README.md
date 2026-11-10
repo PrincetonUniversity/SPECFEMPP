@@ -96,12 +96,14 @@ isn't available.
 | Key | Meaning |
 |---|---|
 | `material-tolerance` | Relative tolerance of the material check; default 1e-3 |
+| `model-top` | z of the top of the model in the mesh frame, in m; default: the top of the mesh. Set it when the mesh rises above the model's top, e.g. `0` for islands in an ocean whose surface is at z = 0 |
 | `reproduce-specfem3d-reference` | `true` reproduces SPECFEM3D's FK, see below; default `false` |
 
 ## Conventions
 
 - z points up. Depth is `zmax − z`, with `zmax` the top of the global mesh, so the
-  top of the model is at the top of the mesh wherever that is.
+  top of the model is at the top of the mesh wherever that is. `model-top` replaces
+  `zmax` with a given z.
 - The wave travels toward (sin θ cos φ, sin θ sin φ, cos θ), with θ the take-off
   angle. A back-azimuth of 0 therefore travels toward −y.
 - Plugin step `s` is simulation time `t0 + s·dt`.

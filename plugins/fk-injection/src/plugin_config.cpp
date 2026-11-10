@@ -276,7 +276,7 @@ fk_injection::PluginConfig::incident_wave(const double t0,
   fk_injection::IncidentWave result = mesh_frame_wave;
   result.origin_time = static_cast<type_real>(t0 - origin_time.value_or(t0));
   result.origin_z = static_cast<type_real>(
-      static_cast<double>(mesh_frame_wave.origin_z) - zmax);
+      static_cast<double>(mesh_frame_wave.origin_z) - top(zmax));
   return result;
 }
 
@@ -295,7 +295,7 @@ fk_injection::parse_plugin_config(const std::string &text) {
     throw std::runtime_error("fk config: expected a map");
   impl::reject_unknown_keys(root, "",
                             { "layers", "model-file", "incidence",
-                              "time-window", "material-tolerance",
+                              "time-window", "material-tolerance", "model-top",
                               "reproduce-specfem3d-reference" });
 
   const bool has_layers = static_cast<bool>(root["layers"]);
@@ -358,6 +358,8 @@ fk_injection::parse_plugin_config(const std::string &text) {
       throw impl::config_error("material-tolerance", "must be positive");
     config.material_tolerance = *value;
   }
+
+  config.model_top = impl::optional_number(root, "model-top", "");
 
   if (const YAML::Node reproduce = root["reproduce-specfem3d-reference"]) {
     try {

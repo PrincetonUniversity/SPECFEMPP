@@ -300,6 +300,20 @@ TEST(FkPluginConfig, OriginIsShiftedToTheModelTop) {
   EXPECT_NEAR(wave.origin_z, -997.0, 1e-3);
 }
 
+// model-top replaces the mesh top as the model's z = 0.
+TEST(FkPluginConfig, ModelTopReplacesTheMeshTop) {
+  const auto without =
+      fk_injection::parse_plugin_config(fk_injection_test::inline_config);
+  EXPECT_FALSE(without.model_top.has_value());
+  EXPECT_EQ(without.top(700.0), 700.0);
+  EXPECT_NEAR(without.incident_wave(0.0, 700.0).origin_z, 3.0 - 700.0, 1e-3);
+
+  const auto with = fk_injection::parse_plugin_config(
+      std::string(fk_injection_test::inline_config) + "model-top: 100\n");
+  EXPECT_EQ(with.top(700.0), 100.0);
+  EXPECT_NEAR(with.incident_wave(0.0, 700.0).origin_z, 3.0 - 100.0, 1e-3);
+}
+
 TEST(FkPluginConfig, ModelFileProvidesEverythingAndYamlOverrides) {
   const fk_injection_test::ModelFile file("fk_plugin_config_model.txt",
                                           fk_injection_test::model_file);

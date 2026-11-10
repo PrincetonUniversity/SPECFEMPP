@@ -19,7 +19,7 @@ fk_injection::FkInjectionPlugin::FkInjectionPlugin(
     : config_(config), wave_(config.incident_wave(info.t0(), info.bounds()[5])),
       window_(config.time_window(static_cast<type_real>(info.dt()),
                                  info.number_of_steps())),
-      zmax_(info.bounds()[5]),
+      zmax_(config.top(info.bounds()[5])),
       horizontal_bounds_{ info.bounds()[0], info.bounds()[1], info.bounds()[2],
                           info.bounds()[3] } {}
 

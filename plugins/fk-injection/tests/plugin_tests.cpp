@@ -554,6 +554,27 @@ TEST(FkPlugin, ShiftingMeshAndOriginTogetherChangesNothing) {
     fk_injection_test::expect_close(actual[g], expected[g], 1e-6);
 }
 
+// A mesh that rises above the model's top, such as an island in an ocean: with
+// model-top the field at the same points is the one of a mesh ending there.
+TEST(FkPlugin, ModelTopBelowTheMeshTopChangesNothing) {
+  const fk_injection_test::SyntheticPoints points(
+      fk_injection_test::acoustic_points(),
+      fk_injection_test::elastic_points());
+  auto reference =
+      fk_injection_test::make_plugin(fk_injection_test::fluid_over_solid);
+  auto with_summit = fk_injection_test::make_plugin(
+      std::string(fk_injection_test::fluid_over_solid) + "model-top: 0\n", 0.0,
+      1024.0);
+  reference.setup(points.points());
+  with_summit.setup(points.points());
+
+  const auto expected =
+      fk_injection_test::fill_window<double>(reference, points, 0, 200);
+  const auto actual =
+      fk_injection_test::fill_window<double>(with_summit, points, 0, 200);
+  EXPECT_EQ(actual, expected);
+}
+
 // The FFT length and leading pad follow the delays, and the field changes with
 // them: by up to 10% here if each rank sizes from its own points. The short
 // window keeps the FFT length from clamping to the same value either way.
