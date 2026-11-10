@@ -35,11 +35,11 @@ using StiffnessView = Kokkos::View<type_real ***, Kokkos::LayoutRight,
                                    Kokkos::DefaultExecutionSpace>;
 
 // Build a full assembly from a Newmark displacement-test dataset. Paths are
-// relative to TEST_OUTPUT_DIR, where the displacement_tests data tree is
+// relative to TEST_OUTPUT_DIR, where the configurations data tree is
 // linked (see SERIAL_LINK_DIRS in serial.cmake).
 std::unique_ptr<AssemblyType> build_assembly_3d(const std::string &test_name) {
   const std::string test_path =
-      "displacement_tests/Newmark/serial/dim3/" + test_name;
+      "configurations/dim3/explicit_solver/" + test_name;
 
   specfem::runtime_configuration::setup setup(test_path +
                                               "/specfem_config.yaml");

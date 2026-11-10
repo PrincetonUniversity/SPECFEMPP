@@ -30,8 +30,7 @@ struct TestConfig3D {
     TestConfig3D config;
 
     // Create the test path by concatenating the base path with the test name
-    std::string test_path =
-        "displacement_tests/Newmark/serial/dim3/" + test_name;
+    std::string test_path = "configurations/dim3/explicit_solver/" + test_name;
 
     // Load config.yaml from the test directory
     std::string config_file = test_path + "/config.yaml";
@@ -311,7 +310,7 @@ TEST_P(Newmark, 3D) {
 
 // Load test directories and create parameterized test instances
 std::vector<std::string> GetTestDirectories() {
-  std::string tests_filename = "displacement_tests/Newmark/dim3/tests.yaml";
+  std::string tests_filename = "configurations/dim3/explicit_solver/tests.yaml";
   return parse_3D_test_directories(tests_filename);
 }
 

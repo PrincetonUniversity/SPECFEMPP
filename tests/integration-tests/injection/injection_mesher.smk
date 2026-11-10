@@ -1,5 +1,5 @@
 # SPECFEM++ mesher rules for the injection fixtures, taken from
-# displacement_tests/Newmark/meshfem3d.smk without its Fortran reference rules,
+# configurations/workflow/meshfem3d.smk without its Fortran reference rules,
 # so only SPECFEMPP_BINDIR is needed.
 #
 # A mesh Snakefile sets `cores` (the MPI ranks the mesh is partitioned for)
