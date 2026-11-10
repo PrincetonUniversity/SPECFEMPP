@@ -517,6 +517,7 @@ specfem_add_test(gradient_tests
 specfem_add_test(transfer_tests
   SOURCES   algorithms/dim2/transfer.cpp
             algorithms/dim3/transfer_interpolate.cpp
+            algorithms/dim3/transfer_integrate.cpp
   LIBRARIES specfem::algorithms
             specfem::enums
             gtest_main
