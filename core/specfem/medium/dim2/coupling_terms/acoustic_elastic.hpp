@@ -12,13 +12,10 @@ namespace specfem::medium_physics::impl {
 
 template <typename CoupledInterfaceType, typename CoupledFieldType,
           typename SelfFieldType>
-KOKKOS_INLINE_FUNCTION void compute_coupling(
+KOKKOS_INLINE_FUNCTION void compute_interface_flux(
     const std::integral_constant<
         specfem::element::dimension_tag,
         specfem::element::dimension_tag::dim2> /*dimension_dispatch*/,
-    const std::integral_constant<specfem::element_connections::type,
-                                 specfem::element_connections::type::
-                                     weakly_conforming> /*connection_dispatch*/,
     const std::integral_constant<specfem::element_coupling::interface_tag,
                                  specfem::element_coupling::interface_tag::
                                      acoustic_elastic> /*interface_dispatch*/,
