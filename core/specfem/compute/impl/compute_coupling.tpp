@@ -260,15 +260,26 @@ void compute_coupling_core_nonconforming(
                 using SelfFieldType =
                     specfem::point::acceleration<specfem::tags::Tags<
                         dimension_tag, self_medium, false /*UseSIMD*/>>;
+                using CoupledPointTags = specfem::tags::Tags<
+                    dimension_tag, coupled_medium, false /*UseSIMD*/>;
+                using CoupledPointFieldType = std::conditional_t<
+                    interface_tag == specfem::element_coupling::interface_tag::
+                                         acoustic_elastic,
+                    specfem::point::displacement<CoupledPointTags>,
+                    specfem::point::acceleration<CoupledPointTags>>;
 
                 CouplingTermsPack point_interface_data;
                 specfem::assembly::load_on_device(
                     index, nonconforming_interfaces, point_interface_data);
 
-                SelfFieldType self_field;
-                specfem::medium_physics::compute_coupling(
+                CoupledPointFieldType coupled_point_field;
+                specfem::algorithms::transfer_interpolate(
                     local_index, point_interface_data, coupled_field,
-                    self_field);
+                    coupled_point_field);
+
+                SelfFieldType self_field;
+                specfem::medium_physics::compute_interface_flux<interface_tag>(
+                    point_interface_data, coupled_point_field, self_field);
 
                 specfem::point::boundary<boundary_tag, dimension_tag, false>
                     point_boundary;

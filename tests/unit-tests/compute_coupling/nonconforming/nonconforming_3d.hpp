@@ -327,6 +327,14 @@ void execute(const TransferCoordinates &transfer_coordinates,
   using SelfFieldType = specfem::point::acceleration<
       specfem::tags::Tags<dimension_tag, self_medium, false /*UseSIMD*/>>;
 
+  using CoupledPointTags =
+      specfem::tags::Tags<dimension_tag, coupled_medium, false /*UseSIMD*/>;
+  using CoupledPointFieldType = std::conditional_t<
+      interface_tag ==
+          specfem::element_coupling::interface_tag::elastic_acoustic,
+      specfem::point::acceleration<CoupledPointTags>,
+      specfem::point::displacement<CoupledPointTags>>;
+
   using ResultViewType =
       Kokkos::View<type_real[stack_size][ngll_self][ngll_self][ncomp_self],
                    memory_space, Kokkos::MemoryTraits<>>;
@@ -388,8 +396,11 @@ void execute(const TransferCoordinates &transfer_coordinates,
                       transfer_coord_view(ichunk, index(0), index(1), index(2),
                                           1)));
 
-              specfem::medium_physics::compute_coupling(mocked_point_index, NCI,
-                                                        F, self_field);
+              CoupledPointFieldType coupled_point_field;
+              specfem::algorithms::transfer_interpolate(mocked_point_index, NCI,
+                                                        F, coupled_point_field);
+              specfem::medium_physics::compute_interface_flux<interface_tag>(
+                  NCI, coupled_point_field, self_field);
 
               for (int icomp = 0; icomp < ncomp_self; ++icomp) {
                 result_view(this_chunk_start + index(0), index(1), index(2),
