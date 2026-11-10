@@ -1,0 +1,16 @@
+# A vertical force at the centre, so the zero-field case has a nonzero field.
+# Start time t0 = -1.2 / f0 = -3 s.
+number-of-sources: 1
+sources:
+  - force:
+      x : 5000.0
+      y : 5000.0
+      z : -5000.0
+      source_surf: false
+      fx : 0.0
+      fy : 0.0
+      fz : 1.0e10
+      Ricker:
+        factor: 1.0
+        tshift: 0.0
+        f0: 0.4

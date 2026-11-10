@@ -1,0 +1,76 @@
+# Provenance of the end-to-end injection fixtures (see README.md).
+#
+# Run from this directory with:
+#     SPECFEMPP_BINDIR=<MPI build>/bin PLANE_WAVE_PLUGIN=<.../libplane_wave.so> \
+#         snakemake --cores 4
+#
+# SPECFEMPP_BINDIR must hold an MPI build: the mpi2 and mpi4 meshes are
+# partitioned with `mpirun -np <cores> xmeshfem3D`.
+
+envvars:
+    "SPECFEMPP_BINDIR",
+    "PLANE_WAVE_PLUGIN",
+
+meshes = {"serial": 1, "mpi2": 2, "mpi4": 4}
+analytic_cases = ["p_wave", "sv_wave"]
+serial_cases = ["p_wave", "sv_wave"]
+
+
+def database(mesh, cores):
+    if cores == 1:
+        return [f"mesh/{mesh}/database.bin"]
+    return [f"mesh/{mesh}/database/proc_{rank}.bin" for rank in range(cores)]
+
+
+rule all:
+    input:
+        [db for mesh, cores in meshes.items() for db in database(mesh, cores)],
+        expand("traces/{case}/trace_list.txt", case=analytic_cases),
+        expand("traces_serial/{case}/trace_list.txt", case=serial_cases),
+    localrule: True
+
+
+for mesh, cores in meshes.items():
+    module_name = f"mesh_{mesh}"
+    alias = f"mesh_{mesh}_"
+
+    module:
+        name: module_name
+        snakefile: f"mesh/{mesh}/Snakefile"
+        pathvars:
+            cwd=f"mesh/{mesh}"
+        config: {"cores": cores}
+
+    use rule * from module_name as alias*
+
+
+rule analytic_traces:
+    input:
+        "tests.yaml",
+        "STATIONS",
+        "injection_cases.py",
+    output:
+        "traces/{case}/trace_list.txt",
+    localrule: True
+    shell:
+        "python injection_cases.py analytic {wildcards.case} traces/{wildcards.case}"
+
+
+rule serial_traces:
+    input:
+        database("serial", 1),
+        "tests.yaml",
+        "STATIONS",
+        "injection_cases.py",
+    output:
+        "traces_serial/{case}/trace_list.txt",
+    shell:
+        "python injection_cases.py simulate {wildcards.case} traces_serial/{wildcards.case}"
+
+
+rule clean:
+    shell:
+        """
+            rm -rf mesh/*/workdir mesh/*/database mesh/*/database.bin
+            rm -rf traces traces_serial
+        """

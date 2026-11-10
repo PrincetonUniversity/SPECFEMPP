@@ -1,0 +1,11 @@
+# The P configuration with zero amplitude: injection must change nothing.
+material: {rho: 2300, vp: 2800, vs: 1500}
+wave:
+  type: P
+  take-off: 30
+  azimuth: 40
+  origin: [5000, 5000, -5000]
+  origin-time: 4.0
+  amplitude: 0.0
+source-time-function: {type: ricker, f0: 0.4}
+material-tolerance: 1.0e-4

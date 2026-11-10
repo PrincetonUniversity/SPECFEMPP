@@ -1,0 +1,5 @@
+# The injection box partitioned for 2 rank(s). Run from the parent
+# directory's Snakefile, which passes cores through the module config.
+cores = config.get("cores", 2)
+
+include: "../../injection_mesher.smk"
