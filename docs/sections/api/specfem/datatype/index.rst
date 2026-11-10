@@ -30,3 +30,4 @@
     impl_register_array
     impl_chunk_element_subview
     impl_chunk_edge_subview
+    impl_chunk_face_subview
