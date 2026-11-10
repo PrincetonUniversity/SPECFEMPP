@@ -78,41 +78,10 @@ void specfem::compute::impl::compute_coupling_conjugate_integral_nonconforming(
       specfem::chunk_face::acceleration<parallel_config::chunk_size, NGLL,
                                         dimension_tag, coupled_medium,
                                         using_simd>>;
-  using CoupledPointFieldType = std::conditional_t<
-      interface_tag ==
-          specfem::element_coupling::interface_tag::acoustic_elastic,
-      specfem::point::displacement<
-          specfem::tags::Tags<dimension_tag, coupled_medium, using_simd>>,
-      specfem::point::acceleration<
-          specfem::tags::Tags<dimension_tag, coupled_medium, using_simd>>>;
-
   using ConjugateCouplingData =
       specfem::element_coupling::accessor::coupling_terms_pack<
           dimension_tag, conjugate_interface_tag, boundary_tag, flux_scheme_tag,
           parallel_config::chunk_size, NGLL, NQuad_intersection>;
-
-  // should the nonconforming transfer be computed self-pointwise, or is it an
-  // intersection-type, where the entire intersection needs to be computed
-  // together?
-  constexpr bool is_pointwise_coupling =
-      specfem::data_access::is_point<ConjugateCouplingData>::value;
-  static_assert(is_pointwise_coupling == true);
-
-  // teamwise integration data, only needed if not pointwise
-  using IntegrationFactor = std::conditional_t<
-      is_pointwise_coupling, specfem::data_access::EmptyAccessor,
-      specfem::element_coupling::accessor::intersection_factor<
-          dimension_tag, interface_tag, boundary_tag, flux_scheme_tag,
-          parallel_config::chunk_size, NQuad_intersection>>;
-
-  using InterfaceFieldViewType = std::conditional_t<
-      is_pointwise_coupling, specfem::data_access::EmptyAccessor,
-      specfem::datatype::VectorChunkEdgeViewType<
-          type_real, dimension_tag, parallel_config::chunk_size,
-          NQuad_intersection,
-          specfem::element::attributes<dimension_tag, self_medium>::components,
-          using_simd, Kokkos::DefaultExecutionSpace::scratch_memory_space,
-          Kokkos::MemoryTraits<Kokkos::Unmanaged>>>;
 
   specfem::execution::ChunkedIntersectionIterator chunk(
       parallel_config(), conjugate_self_intersections,
@@ -169,7 +138,7 @@ void specfem::compute::impl::compute_coupling_conjugate_integral_nonconforming(
                 for (int jpoint_coupled = 0; jpoint_coupled < NGLL;
                      jpoint_coupled++) {
                   const auto coupled_index = conjugate_coupled_intersections(
-                      iface_global)(ipoint_coupled, jpoint_coupled);
+                      iface_global, ipoint_coupled, jpoint_coupled);
 
                   ConjugateCouplingData point_interface_data;
                   specfem::assembly::load_on_device(coupled_index,
@@ -179,10 +148,6 @@ void specfem::compute::impl::compute_coupling_conjugate_integral_nonconforming(
                   point_interface_data.set_interpolants(
                       specfem::algorithms::LagrangeInterpolant(
                           assembly_mesh_xi));
-
-                  CoupledPointFieldType coupled_point_field;
-                  specfem::assembly::load_on_device(coupled_index, field,
-                                                    coupled_point_field);
 
                   // transfer self shape function to coupled side.
                   const type_real interpolated_shape_function =
