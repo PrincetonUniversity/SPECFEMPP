@@ -347,11 +347,23 @@ void compute_coupling_core(
             assembly);
       }
 
+      // The conjugate kernel integrates on the faces of the conjugate
+      // interface, so it runs only where that side is the host. Testing this
+      // container alone is not enough: when it holds no faces it cannot tell
+      // which side is finer, and the pairs would be integrated twice.
+      constexpr auto conjugate_interface_tag =
+          specfem::element_coupling::attributes<
+              Tags::dimension_tag, Tags::interface_tag>::conjugate_interface();
       if (assembly.nonconforming_interfaces
               .template get_interface_container<
                   Tags::interface_tag, Tags::boundary_tag, connection_tag,
                   Tags::flux_scheme_tag>()
-              .should_run_conjugate_compute_coupling_kernel) {
+              .should_run_conjugate_compute_coupling_kernel &&
+          assembly.nonconforming_interfaces
+              .template get_interface_container<
+                  conjugate_interface_tag, Tags::boundary_tag, connection_tag,
+                  Tags::flux_scheme_tag>()
+              .should_run_self_compute_coupling_kernel) {
         compute_coupling_conjugate_integral_nonconforming<NGLL, Tags>(assembly);
       }
     } else {
