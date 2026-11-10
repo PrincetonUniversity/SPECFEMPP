@@ -49,6 +49,27 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
       attributes<dimension_tag, InterfaceTag>::conjugate_interface();
   self_is_host = hosts.self_is_host(InterfaceTag, conjugate_interface_tag);
 
+  face_factor =
+      FaceFactorView("specfem::assembly::nonconforming_interfaces::face_factor",
+                     num_faces, ngll, ngll);
+  h_face_factor = Kokkos::create_mirror_view(face_factor);
+
+  face_normal =
+      FaceNormalView("specfem::assembly::nonconforming_interfaces::face_normal",
+                     num_faces, ngll, ngll, ndim);
+  h_face_normal = Kokkos::create_mirror_view(face_normal);
+
+  interpolants = InterpolantsView(
+      "specfem::assembly::nonconforming_interfaces::interpolants", num_faces,
+      ngll, ngll, ngll, ndim - 1);
+  h_interpolants = Kokkos::create_mirror_view(interpolants);
+
+  if (!self_is_host) {
+    // A guest container is filled by the owner with a copy of the rows of the
+    // host container of the other direction.
+    return;
+  }
+
   // for every node (ipoint, jpoint) of every self-face (ispec, self_face_type),
   // we want exactly one coupled face (coupled_faces[iface]) node to match. We
   // expect the intersection data for `iface` to use the `coupled_faces[iface]`
@@ -86,23 +107,6 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
   // the local coordinates of that closest point on its coupled face.
   Kokkos::View<type_real ****, Kokkos::HostSpace> hit_face_coordinates(
       "hit_face_coordinates", num_self_faces, ngll, ngll, ndim - 1);
-
-  face_factor =
-      FaceFactorView("specfem::assembly::nonconforming_interfaces::face_factor",
-                     num_faces, ngll, ngll);
-  h_face_factor = Kokkos::create_mirror_view(face_factor);
-
-  face_normal =
-      FaceNormalView("specfem::assembly::nonconforming_interfaces::face_normal",
-                     num_faces, ngll, ngll, ndim);
-  h_face_normal = Kokkos::create_mirror_view(face_normal);
-
-  if (self_is_host) {
-    interpolants = InterpolantsView(
-        "specfem::assembly::nonconforming_interfaces::interpolants", num_faces,
-        ngll, ngll, ngll, ndim - 1);
-    h_interpolants = Kokkos::create_mirror_view(interpolants);
-  }
 
   for (int iface = 0; iface < num_faces; ++iface) {
     const auto &self_face = self_faces(iface);
@@ -286,17 +290,15 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
           }
         }
 
-        if (self_is_host) {
-          const int iface = hit_face_index(isf, ipoint, jpoint);
-          for (int axis = 0; axis < ndim - 1; ++axis) {
-            specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
-                h_lagrange, h_lagrange_prime,
-                hit_face_coordinates(isf, ipoint, jpoint, axis), ngll,
-                mesh.h_xi);
-            for (int igll = 0; igll < ngll; ++igll) {
-              h_interpolants(iface, ipoint, jpoint, igll, axis) =
-                  h_lagrange(igll);
-            }
+        const int iface = hit_face_index(isf, ipoint, jpoint);
+        for (int axis = 0; axis < ndim - 1; ++axis) {
+          specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
+              h_lagrange, h_lagrange_prime,
+              hit_face_coordinates(isf, ipoint, jpoint, axis), ngll,
+              mesh.h_xi);
+          for (int igll = 0; igll < ngll; ++igll) {
+            h_interpolants(iface, ipoint, jpoint, igll, axis) =
+                h_lagrange(igll);
           }
         }
       }
@@ -305,7 +307,5 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
 
   Kokkos::deep_copy(face_factor, h_face_factor);
   Kokkos::deep_copy(face_normal, h_face_normal);
-  if (self_is_host) {
-    Kokkos::deep_copy(interpolants, h_interpolants);
-  }
+  Kokkos::deep_copy(interpolants, h_interpolants);
 }
