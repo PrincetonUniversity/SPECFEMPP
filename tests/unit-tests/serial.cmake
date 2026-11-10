@@ -296,6 +296,8 @@ specfem_add_test(nonconforming_tests
             nonconforming/kernel/dim3/acoustic_elastic.cpp
             nonconforming/kernel/dim3/acoustic_elastic_conjugate.cpp
             nonconforming/container/dim3/host_selection.cpp
+            nonconforming/container/dim3/interpolants.cpp
+            nonconforming/kernel/dim3/host_dispatch.cpp
             nonconforming/runner.cpp
   LIBRARIES specfem::mesh
             specfem::assembly
