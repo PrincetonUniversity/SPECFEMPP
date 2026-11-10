@@ -250,68 +250,61 @@ std::vector<GroupValues> direct_field(const std::string &config_text,
                                       const std::vector<TestPoint> &elastic,
                                       const int first_step, const int nsteps) {
   const auto config = fk_injection::parse_plugin_config(config_text);
-  std::vector<fk_injection::FieldPoint> points;
-  const auto add = [&](const TestPoint &point,
-                       const specfem::plugin::Medium medium) {
-    fk_injection::FieldPoint &field_point = points.emplace_back();
-    field_point.x = static_cast<fk_injection::type_real>(point.x);
-    field_point.y = static_cast<fk_injection::type_real>(point.y);
-    field_point.depth = static_cast<fk_injection::type_real>(-point.z);
-    field_point.medium = medium;
-    field_point.normal_x = static_cast<fk_injection::type_real>(point.nx);
-    field_point.normal_y = static_cast<fk_injection::type_real>(point.ny);
-    field_point.normal_z = static_cast<fk_injection::type_real>(point.nz);
-    if (medium == specfem::plugin::Medium::elastic) {
-      const double xi = point.vs * point.vs / (point.vp * point.vp);
-      const double mu = point.rho * point.vs * point.vs;
-      field_point.xi1 = static_cast<fk_injection::type_real>(1.0 - 2.0 * xi);
-      field_point.xim = static_cast<fk_injection::type_real>((1.0 - xi) * mu);
-      // bulk = lambda / (2 (lambda + mu)) is Poisson's ratio.
-      field_point.bulk = static_cast<fk_injection::type_real>(
-          (1.0 - 2.0 * xi) / (2.0 * (1.0 - xi)));
+  const auto field_points = [](const std::vector<TestPoint> &test_points) {
+    std::vector<fk_injection::FieldPoint> points;
+    for (const auto &point : test_points) {
+      fk_injection::FieldPoint &field_point = points.emplace_back();
+      field_point.x = static_cast<fk_injection::type_real>(point.x);
+      field_point.y = static_cast<fk_injection::type_real>(point.y);
+      field_point.depth = static_cast<fk_injection::type_real>(-point.z);
+      field_point.normal_x = static_cast<fk_injection::type_real>(point.nx);
+      field_point.normal_y = static_cast<fk_injection::type_real>(point.ny);
+      field_point.normal_z = static_cast<fk_injection::type_real>(point.nz);
     }
+    return points;
   };
-  for (const auto &point : acoustic)
-    add(point, specfem::plugin::Medium::acoustic);
-  for (const auto &point : elastic)
-    add(point, specfem::plugin::Medium::elastic);
+  const fk_injection::HorizontalBox box = { -box_half_width, box_half_width,
+                                            -box_half_width, box_half_width };
+  const auto wave = config.incident_wave(0.0, 0.0);
+  const auto window =
+      config.time_window(static_cast<fk_injection::type_real>(dt), nstep);
+  const auto acoustic_sampler =
+      fk_injection_tests_impl::field_at<fk_injection::AcousticMedium>(
+          config.model, wave, window, box, field_points(acoustic));
+  const auto elastic_sampler = fk_injection_tests_impl::field_at(
+      config.model, wave, window, box, field_points(elastic));
 
-  const auto result = fk_injection_tests_impl::field_at(
-      config.model, config.incident_wave(0.0, 0.0),
-      config.time_window(static_cast<fk_injection::type_real>(dt), nstep),
-      { -box_half_width, box_half_width, -box_half_width, box_half_width },
-      points);
-  std::vector<fk_injection::type_real> samples(
-      points.size() * fk_injection::number_of_sample_components * nsteps);
-  result.sample(first_step, nsteps, samples);
-  const auto at = [&](const std::size_t point, const int component,
-                      const int step) {
-    return static_cast<double>(
-        samples[(point * fk_injection::number_of_sample_components +
-                 component) *
-                    nsteps +
-                step]);
-  };
+  const auto potential_rate = fk_injection_tests_impl::sample(
+      acoustic_sampler, specfem::plugin::Quantity::potential_rate, first_step,
+      nsteps);
+  const auto displacement = fk_injection_tests_impl::sample(
+      acoustic_sampler, specfem::plugin::Quantity::displacement, first_step,
+      nsteps);
+  const auto traction = fk_injection_tests_impl::sample(
+      elastic_sampler, specfem::plugin::Quantity::traction, first_step, nsteps);
+  const auto velocity = fk_injection_tests_impl::sample(
+      elastic_sampler, specfem::plugin::Quantity::velocity, first_step, nsteps);
+
+  // Appends one point's quantity in the (point, slot, step) order of the
+  // buffers.
+  const auto append =
+      [nsteps](GroupValues &values,
+               const std::vector<fk_injection::type_real> &samples,
+               const int components, const std::size_t point) {
+        for (int c = 0; c < components; ++c)
+          for (int s = 0; s < nsteps; ++s)
+            values.push_back(static_cast<double>(
+                samples[(point * components + c) * nsteps + s]));
+      };
 
   std::vector<GroupValues> values(2);
   for (std::size_t p = 0; p < acoustic.size(); ++p) {
-    for (int s = 0; s < nsteps; ++s)
-      values[0].push_back(at(p, fk_injection::sample_potential_rate_offset, s));
-    for (int c = 0; c < 3; ++c)
-      for (int s = 0; s < nsteps; ++s)
-        values[0].push_back(
-            at(p, fk_injection::sample_kinematic_offset + c, s));
+    append(values[0], potential_rate, 1, p);
+    append(values[0], displacement, 3, p);
   }
   for (std::size_t p = 0; p < elastic.size(); ++p) {
-    const std::size_t point = acoustic.size() + p;
-    for (int c = 0; c < 3; ++c)
-      for (int s = 0; s < nsteps; ++s)
-        values[1].push_back(
-            at(point, fk_injection::sample_traction_offset + c, s));
-    for (int c = 0; c < 3; ++c)
-      for (int s = 0; s < nsteps; ++s)
-        values[1].push_back(
-            at(point, fk_injection::sample_kinematic_offset + c, s));
+    append(values[1], traction, 3, p);
+    append(values[1], velocity, 3, p);
   }
   return values;
 }
@@ -328,8 +321,7 @@ template <typename T> class FkPluginBuffers : public ::testing::Test {};
 using BufferTypes = ::testing::Types<float, double>;
 TYPED_TEST_SUITE(FkPluginBuffers, BufferTypes);
 
-// Every slot reads what the sampler gives at that point, with a Lame ratio
-// from the textbook formula.
+// Every slot reads what the sampler gives at that point.
 TYPED_TEST(FkPluginBuffers, MatchDirectFieldPerSlot) {
   const SyntheticPoints points(acoustic_points(), elastic_points());
   auto plugin = make_plugin(fluid_over_solid);
@@ -517,6 +509,55 @@ TEST(FkPlugin, InterfacePointMayCarryEitherLayersMaterial) {
       {}, { { 0, 0, -29000, 2700, 3000, 1732.051 } });
   EXPECT_THROW(plugin.setup(above_interface.points()),
                specfem::plugin::Unsupported);
+}
+
+// Traction takes the Lame ratios of the model layer the point reads, so a mesh
+// material within the material tolerance of it changes nothing. On an
+// interface that is the layer whose material the point carries.
+TEST(FkPlugin, TractionUsesTheModelLayersMaterial) {
+  auto plugin =
+      fk_injection_test::make_plugin(fk_injection_test::two_elastic_layers);
+  const double nudge = 1.0 + 4e-4;
+  const double nx = 0.6;
+  const double nz = -0.8;
+  const fk_injection_test::SyntheticPoints points(
+      {}, { { 0, 0, -60000, 2700, 3000, 1732.051, nx, 0, nz },
+            { 0, 0, -60000, 2700 * nudge, 3000 / nudge, 1732.051 * nudge, nx, 0,
+              nz },
+            { 0, 0, -30000, 2700, 3000, 1732.051, nx, 0, nz },
+            { 0, 0, -30000, 2700 / nudge, 3000 * nudge, 1732.051 / nudge, nx, 0,
+              nz },
+            { 0, 0, -30000, 2500 * nudge, 2500, 1250 / nudge, nx, 0, nz } });
+  ASSERT_NO_THROW(plugin.setup(points.points()));
+
+  const int nsteps = 200;
+  const auto values =
+      fk_injection_test::fill_window<double>(plugin, points, 0, nsteps);
+  const std::size_t point_size = fk_injection_test::elastic_components * nsteps;
+  ASSERT_EQ(values[1].size(), 5 * point_size);
+  const auto point = [&](const std::size_t index) {
+    return fk_injection_test::GroupValues(
+        values[1].begin() + index * point_size,
+        values[1].begin() + (index + 1) * point_size);
+  };
+  EXPECT_GT(fk_injection_test::peak(point(0)), 0.0);
+  EXPECT_EQ(point(0), point(1)) << "in the half-space";
+  EXPECT_EQ(point(2), point(3)) << "on the interface, lower material";
+
+  // The upper layer's ratios change the horizontal traction only: the
+  // elastic slots are traction then velocity.
+  const auto lower = point(2);
+  const auto upper = point(4);
+  const auto component = [&](const fk_injection_test::GroupValues &values,
+                             const int index) {
+    return fk_injection_test::GroupValues(
+        values.begin() + index * nsteps, values.begin() + (index + 1) * nsteps);
+  };
+  EXPECT_GT(fk_injection_test::peak(component(lower, 0)), 0.0);
+  EXPECT_NE(component(lower, 0), component(upper, 0));
+  for (const int index : { 2, 3, 4, 5 })
+    EXPECT_EQ(component(lower, index), component(upper, index))
+        << "component " << index;
 }
 
 // With the default origin-time the wave crosses the origin at the first step,

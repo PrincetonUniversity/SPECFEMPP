@@ -106,8 +106,8 @@ fk_injection::plugin_config_impl::parse_layers(const YAML::Node &root) {
   if (!layers.IsSequence())
     throw config_error("layers", "must be a list");
 
-  std::vector<fk_injection::AcousticLayer> fluid_layers;
-  std::vector<fk_injection::ElasticIsotropicLayer> elastic_layers;
+  std::vector<fk_injection::Layer> model_layers;
+  bool has_elastic = false;
   for (std::size_t i = 0; i < layers.size(); ++i) {
     const std::string path = "layers[" + std::to_string(i) + "]";
     const YAML::Node entry = layers[i];
@@ -118,7 +118,7 @@ fk_injection::plugin_config_impl::parse_layers(const YAML::Node &root) {
       throw config_error(path, "must be one of acoustic or elastic");
 
     const bool is_acoustic = static_cast<bool>(entry["acoustic"]);
-    if (is_acoustic && !elastic_layers.empty())
+    if (is_acoustic && has_elastic)
       throw config_error(path, "acoustic layers must form a contiguous "
                                "block above the elastic layers");
     const std::string kind = is_acoustic ? "acoustic" : "elastic";
@@ -130,22 +130,24 @@ fk_injection::plugin_config_impl::parse_layers(const YAML::Node &root) {
 
     if (is_acoustic) {
       reject_unknown_keys(layer, layer_path, { "rho", "vp", "thickness" });
-      fluid_layers.push_back({ .density = number("rho"),
-                               .p_velocity = number("vp"),
-                               .thickness = number("thickness") });
+      model_layers.push_back(
+          fk_injection::AcousticLayer{ .density = number("rho"),
+                                       .p_velocity = number("vp"),
+                                       .thickness = number("thickness") });
     } else {
       reject_unknown_keys(layer, layer_path,
                           { "rho", "vp", "vs", "thickness" });
-      elastic_layers.push_back({ .density = number("rho"),
-                                 .p_velocity = number("vp"),
-                                 .s_velocity = number("vs"),
-                                 .thickness = number("thickness") });
+      has_elastic = true;
+      model_layers.push_back(fk_injection::ElasticIsotropicLayer{
+          .density = number("rho"),
+          .p_velocity = number("vp"),
+          .s_velocity = number("vs"),
+          .thickness = number("thickness") });
     }
   }
 
   try {
-    return fk_injection::LayeredModel(std::move(fluid_layers),
-                                      std::move(elastic_layers));
+    return fk_injection::LayeredModel(std::move(model_layers));
   } catch (const std::runtime_error &error) {
     throw config_error("layers", error.what());
   }
