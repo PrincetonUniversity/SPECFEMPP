@@ -42,8 +42,8 @@ specfem::assembly::nonconforming_interfaces_impl::collect_unique_faces(
                               self_faces.n_points, self_faces.n_points);
 }
 
-type_real
-specfem::assembly::nonconforming_interfaces_impl::mean_face_length_scale(
+specfem::assembly::nonconforming_interfaces_impl::FaceLengthTotal
+specfem::assembly::nonconforming_interfaces_impl::face_length_sum(
     const specfem::assembly::FaceView<
         Kokkos::DefaultExecutionSpace>::host_mirror_type &self_faces,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
@@ -77,5 +77,5 @@ specfem::assembly::nonconforming_interfaces_impl::mean_face_length_scale(
   for (int iface = 0; iface < unique_faces.N; iface++) {
     charlen += compute_characteristic_length(unique_faces(iface));
   }
-  return charlen / unique_faces.N;
+  return { charlen, static_cast<int>(unique_faces.N) };
 }

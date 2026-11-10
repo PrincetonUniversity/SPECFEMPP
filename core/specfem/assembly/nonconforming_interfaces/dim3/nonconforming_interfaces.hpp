@@ -57,6 +57,17 @@ protected:
                                       decltype(combinations)>
       interface_container;
 
+  /**
+   * @brief Decides, per interface tag, which side hosts the quadrature, from
+   * the self faces of all tag combinations.
+   */
+  static specfem::assembly::nonconforming_interfaces_impl::HostSelection
+  select_hosts(const specfem::assembly::element_intersections<dimension_tag>
+                   &element_intersections,
+               const specfem::assembly::mesh<dimension_tag> &mesh,
+               const specfem::element_coupling::flux_scheme_configuration
+                   &flux_scheme_config);
+
 public:
   nonconforming_interfaces(
       const int &ngllz, const int &nglly, const int &ngllx,

@@ -23,8 +23,8 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
         const specfem::assembly::jacobian_matrix<dimension_tag>
             &jacobian_matrix,
         const specfem::assembly::mesh<dimension_tag> &mesh,
-        const specfem::element_coupling::flux_scheme_configuration
-            &flux_scheme_config) {
+        const specfem::assembly::nonconforming_interfaces_impl::HostSelection
+            &hosts) {
 
   if (ngllz <= 0 || nglly <= 0 || ngllx <= 0) {
     KOKKOS_ABORT_WITH_LOCATION("Invalid GLL grid size");
@@ -45,41 +45,12 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
 
   const auto &num_faces = self_faces.N;
 
-  const auto interfacial_meshing_type =
-      flux_scheme_config.get_interfacial_meshing_type();
-
-  bool self_is_highres;
-  if (interfacial_meshing_type ==
-      element_coupling::interfacial_meshing_type::highres_host) {
-    self_is_highres = specfem::assembly::nonconforming_interfaces_impl::
-                          mean_face_length_scale(self_faces, mesh) <
-                      specfem::assembly::nonconforming_interfaces_impl::
-                          mean_face_length_scale(coupled_faces, mesh);
-  }
-
-  switch (interfacial_meshing_type) {
-  case element_coupling::interfacial_meshing_type::highres_host:
-    should_run_self_compute_coupling_kernel = self_is_highres;
-    should_run_conjugate_compute_coupling_kernel =
-        !should_run_self_compute_coupling_kernel;
-    break;
-  case element_coupling::interfacial_meshing_type::self_host:
-    should_run_self_compute_coupling_kernel = true;
-    should_run_conjugate_compute_coupling_kernel = false;
-    break;
-  case element_coupling::interfacial_meshing_type::intersections:
-  default:
-    std::ostringstream oss;
-    oss << "Unsupported interface meshing type: " << interfacial_meshing_type
-        << "\n"
-        << "nonconforming interface: dim-" << ndim
-        << ", interface-tag = " << interface_tag
-        << ", boundary = " << specfem::element::to_string(boundary_tag)
-        << ", connection-tag = "
-        << specfem::element_connections::to_string(connection_tag)
-        << ", flux-scheme = " << flux_scheme_tag;
-    throw std::runtime_error(oss.str());
-  }
+  constexpr auto conjugate_interface_tag = specfem::element_coupling::
+      attributes<dimension_tag, InterfaceTag>::conjugate_interface();
+  should_run_self_compute_coupling_kernel =
+      hosts.self_is_host(InterfaceTag, conjugate_interface_tag);
+  should_run_conjugate_compute_coupling_kernel =
+      !should_run_self_compute_coupling_kernel;
 
   // for every node (ipoint, jpoint) of every self-face (ispec, self_face_type),
   // we want exactly one coupled face (coupled_faces[iface]) node to match. We
