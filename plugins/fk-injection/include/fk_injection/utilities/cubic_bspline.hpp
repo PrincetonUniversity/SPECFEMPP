@@ -2,8 +2,7 @@
 
 #include <cmath>
 
-namespace specfem {
-namespace fk_plugin {
+namespace fk_injection {
 namespace cubic_bspline {
 
 // Raw-pointer cubic B-spline prefilter and evaluation, ported from the
@@ -113,8 +112,7 @@ inline void compute_coefficients(const double *signal, int n,
  * @c double regardless of @p Scalar.
  *
  * @tparam Scalar Coefficient element type (e.g. @c double, @c float).
- *                @p coefficients must be a contiguous array (LayoutRight row
- *                or a raw array).
+ *                @p coefficients must be a contiguous array.
  * @param coefficients B-spline coefficients (length @p n), produced by
  *                     @c compute_coefficients.
  * @param n            Number of coefficients / samples.
@@ -139,5 +137,4 @@ inline double evaluate(const Scalar *coefficients, int n, double t) {
 }
 
 } // namespace cubic_bspline
-} // namespace fk_plugin
-} // namespace specfem
+} // namespace fk_injection
