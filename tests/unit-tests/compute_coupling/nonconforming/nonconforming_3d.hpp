@@ -21,7 +21,7 @@
 #include "specfem/tags.hpp"
 #include "utilities/include/fixture/nonconforming_interface.hpp"
 
-// for interpolator
+// for GLL nodes
 #include "specfem/quadrature/gll.hpp"
 
 #include "utilities/include/fixture/accessor.hpp"
@@ -33,6 +33,42 @@
 #include <sstream>
 #include <type_traits>
 #include <utility>
+
+namespace compute_coupling_nci3d_test_impl {
+
+/**
+ * @brief Independent oracle: rows of 1D Lagrange interpolants on the GLL
+ * nodes, l_k(x) = prod_{m != k} (x - xi_m) / (xi_k - xi_m).
+ *
+ * Column 0 holds l_k(coord1), column 1 holds l_k(coord2). NaN coordinates mark
+ * "no match" and give all-zero interpolants.
+ */
+template <int NGLL, typename InterpolantsType, typename NodesType>
+KOKKOS_INLINE_FUNCTION InterpolantsType lagrange_rows(const NodesType &nodes,
+                                                      const type_real coord1,
+                                                      const type_real coord2) {
+  constexpr int ngll = NGLL;
+  InterpolantsType result;
+  const bool no_match = Kokkos::isnan(coord1) || Kokkos::isnan(coord2);
+  for (int k = 0; k < ngll; ++k) {
+    type_real l1 = no_match ? 0 : 1;
+    type_real l2 = no_match ? 0 : 1;
+    if (!no_match) {
+      for (int m = 0; m < ngll; ++m) {
+        if (m == k)
+          continue;
+        const type_real denom = nodes(k) - nodes(m);
+        l1 *= (coord1 - nodes(m)) / denom;
+        l2 *= (coord2 - nodes(m)) / denom;
+      }
+    }
+    result(k, 0) = l1;
+    result(k, 1) = l2;
+  }
+  return result;
+}
+
+} // namespace compute_coupling_nci3d_test_impl
 
 namespace specfem::compute_coupling_test {
 
@@ -299,11 +335,14 @@ void execute(const TransferCoordinates &transfer_coordinates,
 
   const auto &gll_struct =
       specfem::quadrature::gll::gll(0, 0, ngll_coupled_face);
-  specfem::algorithms::LagrangeInterpolant interpolator(gll_struct.get_xi());
+  const auto gll_nodes = gll_struct.get_xi();
   using NonconformingInterfaceType =
       specfem::point::nonconforming_interface<dimension_tag, ngll_coupled_face,
                                               interface_tag, boundary_tag,
                                               flux_scheme_tag>;
+  using InterpolantsType =
+      typename NonconformingInterfaceType::template tensor_type<
+          type_real, ngll_coupled_face, 2>;
 
   // ======= Run Kernel
   const auto function_view =
@@ -337,15 +376,17 @@ void execute(const TransferCoordinates &transfer_coordinates,
               SelfFieldType self_field;
 
               const NonconformingInterfaceType NCI(
-                  { transfer_coord_view(ichunk, index(0), index(1), index(2),
-                                        0),
-                    transfer_coord_view(ichunk, index(0), index(1), index(2),
-                                        1) },
                   { 1.0 },
                   { normal_view(ichunk, index(0), index(1), index(2), 0),
                     normal_view(ichunk, index(0), index(1), index(2), 1),
                     normal_view(ichunk, index(0), index(1), index(2), 2) },
-                  interpolator);
+                  compute_coupling_nci3d_test_impl::lagrange_rows<
+                      ngll_coupled_face, InterpolantsType>(
+                      gll_nodes,
+                      transfer_coord_view(ichunk, index(0), index(1), index(2),
+                                          0),
+                      transfer_coord_view(ichunk, index(0), index(1), index(2),
+                                          1)));
 
               specfem::medium_physics::compute_coupling(mocked_point_index, NCI,
                                                         F, self_field);
