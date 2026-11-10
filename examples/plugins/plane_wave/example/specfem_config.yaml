@@ -1,0 +1,45 @@
+parameters:
+  header:
+    title: Plane-wave injection in a homogeneous halfspace
+    description: |
+      Material systems : Elastic domain (1)
+      Boundary conditions : Free surface on top, Stacey injection on the sides and bottom
+      Sources : None (the wavefield is injected by the plane-wave plugin)
+
+  simulation-setup:
+    quadrature:
+      quadrature-type: GLL4
+
+    solver:
+      time-marching:
+        time-scheme:
+          type: Newmark
+          dt: 0.025
+          nstep: 600
+
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:
+            format: "ascii"
+            directory: "OUTPUT_FILES/results"
+
+  # Settings for applying the incident field. The field itself is described in
+  # plane_wave.yaml, which is passed with --injection-config.
+  injection:
+    method: stacey
+    window-steps: 64
+
+  receivers:
+    stations: "DATA/STATIONS"
+    angle: 0.0
+    seismogram-type:
+      - displacement
+    nstep_between_samples: 1
+
+  run-setup:
+    number-of-processors: 1
+    number-of-runs: 1
+
+  databases:
+    mesh-database: "OUTPUT_FILES/DATABASES/Database.bin"
