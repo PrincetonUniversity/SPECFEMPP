@@ -26,20 +26,11 @@ entry point `specfem_injection_plugin` is exported, which the build checks.
 
 ## Run
 
-```bash
-specfem 3d -p parameters.yaml \
-  --injection-plugin build/plane_wave/libplane_wave.so \
-  --injection-config examples/plugins/plane_wave/plane_wave.yaml
-```
-
-with `injection: {method: stacey}` in `parameters.yaml`. The mesh must declare
-its Stacey faces as injection faces (`STACEY_AS_INJECTION_BOUNDARY`), and its
-material must match the configuration: setup fails, naming the first
-mismatched point, otherwise.
+To run this plugin end to end, follow [`example/README.md`](example/README.md).
 
 ## Configuration
 
-See `plane_wave.yaml`:
+See `example/plane_wave.yaml`:
 
 | Key | Meaning |
 |---|---|
@@ -73,3 +64,4 @@ See `plane_wave.yaml`:
 | `src/plane_wave_plugin.*` | The plugin class: `supports`, `setup`, `fill` |
 | `src/plugin_entry.cpp` | `SPECFEM_DEFINE_INJECTION_PLUGIN` |
 | `tests/plane_wave_tests.cpp` | Finite-difference checks and plugin tests |
+| `example/` | A runnable example: mesher input, run configuration, plugin configuration, plot script |
