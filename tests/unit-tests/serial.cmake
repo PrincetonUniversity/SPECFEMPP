@@ -198,6 +198,12 @@ specfem_add_test(domain_view_tests
             Kokkos::kokkos
 )
 
+specfem_add_test(chunk_face_view_tests
+  SOURCES   datatype/chunk_face_view_tests.cpp
+  LIBRARIES gtest_main
+            Kokkos::kokkos
+)
+
 specfem_add_test(fortranio_test
   SOURCES   fortran_io/fortranio_tests.cpp
   LIBRARIES gtest_main

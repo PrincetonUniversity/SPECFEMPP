@@ -196,7 +196,8 @@ struct ChunkNDimViewType
       }
     } else if constexpr (accessor_type ==
                          specfem::datatype::AccessorType::chunk_face) {
-      return (*this)(index.ispec, index.ipoint_i, index.ipoint_j);
+      return (*this)(index.iface, index.ipoint_i, index.ipoint_j,
+                     components...);
     } else if constexpr (accessor_type ==
                          specfem::datatype::AccessorType::chunk_edge) {
       return (*this)(index.ispec, index.ipoint);
