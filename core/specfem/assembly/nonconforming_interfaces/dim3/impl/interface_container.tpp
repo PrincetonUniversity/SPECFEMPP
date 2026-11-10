@@ -5,8 +5,8 @@
 #include "specfem/element_connections/to_string.hpp"
 #include "specfem/element_coupling/tags.hpp"
 #include "specfem/point/global_coordinates.hpp"
+#include "specfem/quadrature/gll/lagrange_poly.hpp"
 #include "unique_faces.hpp"
-#include <cmath>
 #include <sstream>
 #include <stdexcept>
 
@@ -48,24 +48,17 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
   const auto interfacial_meshing_type =
       flux_scheme_config.get_interfacial_meshing_type();
 
-  bool self_is_highres;
-  if (interfacial_meshing_type ==
-      element_coupling::interfacial_meshing_type::highres_host) {
-    self_is_highres = specfem::assembly::nonconforming_interfaces_impl::
-                          mean_face_length_scale(self_faces, mesh) <
-                      specfem::assembly::nonconforming_interfaces_impl::
-                          mean_face_length_scale(coupled_faces, mesh);
-  }
-
   switch (interfacial_meshing_type) {
   case element_coupling::interfacial_meshing_type::highres_host:
-    should_run_self_compute_coupling_kernel = self_is_highres;
-    should_run_conjugate_compute_coupling_kernel =
-        !should_run_self_compute_coupling_kernel;
+    // An empty container is never the host (and has no length scale).
+    self_is_host = num_faces > 0 &&
+                   specfem::assembly::nonconforming_interfaces_impl::
+                           mean_face_length_scale(self_faces, mesh) <
+                       specfem::assembly::nonconforming_interfaces_impl::
+                           mean_face_length_scale(coupled_faces, mesh);
     break;
   case element_coupling::interfacial_meshing_type::self_host:
-    should_run_self_compute_coupling_kernel = true;
-    should_run_conjugate_compute_coupling_kernel = false;
+    self_is_host = true;
     break;
   case element_coupling::interfacial_meshing_type::intersections:
   default:
@@ -115,6 +108,10 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
   Kokkos::View<type_real ***, Kokkos::HostSpace> hit_face_distance(
       "hit_face_distance", num_self_faces, ngll, ngll);
 
+  // the local coordinates of that closest point on its coupled face.
+  Kokkos::View<type_real ****, Kokkos::HostSpace> hit_face_coordinates(
+      "hit_face_coordinates", num_self_faces, ngll, ngll, ndim - 1);
+
   face_factor =
       FaceFactorView("specfem::assembly::nonconforming_interfaces::face_factor",
                      num_faces, ngll, ngll);
@@ -125,10 +122,12 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
                      num_faces, ngll, ngll, ndim);
   h_face_normal = Kokkos::create_mirror_view(face_normal);
 
-  coupled_coordinates = CoupledCoordinatesView(
-      "specfem::assembly::nonconforming_interfaces::coupled_coordinates",
-      num_faces, ngll, ngll, ndim - 1);
-  h_coupled_coordinates = Kokkos::create_mirror_view(coupled_coordinates);
+  if (self_is_host) {
+    interpolants = InterpolantsView(
+        "specfem::assembly::nonconforming_interfaces::interpolants", num_faces,
+        ngll, ngll, ngll, ndim - 1);
+    h_interpolants = Kokkos::create_mirror_view(interpolants);
+  }
 
   for (int iface = 0; iface < num_faces; ++iface) {
     const auto &self_face = self_faces(iface);
@@ -163,34 +162,15 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
         const int self_face_index =
             face_indices[std::make_pair(ispec, iface_type)];
 
-        bool use_this_coupling = true;
-        if (hit_face_index(self_face_index, ipoint_i, ipoint_j) != -1) {
-          // is this closer than the previous one?
-          if (hit_face_distance(self_face_index, ipoint_i, ipoint_j) > dist) {
-            // remove previous record
-            const int iface_prior =
-                hit_face_index(self_face_index, ipoint_i, ipoint_j);
-            for (int idim = 0; idim < ndim - 1; idim++) {
-              this->h_coupled_coordinates(iface_prior, ipoint_i, ipoint_j,
-                                          idim) = NAN;
-            }
-          } else {
-            // keep the old record
-            use_this_coupling = false;
-          }
-        }
-
-        if (use_this_coupling) {
-          this->h_coupled_coordinates(iface, ipoint_i, ipoint_j, 0) =
-              local_coords.first;
-          this->h_coupled_coordinates(iface, ipoint_i, ipoint_j, 1) =
-              local_coords.second;
+        // keep the closest coupled face seen so far
+        if (hit_face_index(self_face_index, ipoint_i, ipoint_j) == -1 ||
+            hit_face_distance(self_face_index, ipoint_i, ipoint_j) > dist) {
           hit_face_index(self_face_index, ipoint_i, ipoint_j) = iface;
           hit_face_distance(self_face_index, ipoint_i, ipoint_j) = dist;
-        } else {
-          for (int idim = 0; idim < ndim - 1; idim++) {
-            this->h_coupled_coordinates(iface, ipoint_i, ipoint_j, idim) = NAN;
-          }
+          hit_face_coordinates(self_face_index, ipoint_i, ipoint_j, 0) =
+              local_coords.first;
+          hit_face_coordinates(self_face_index, ipoint_i, ipoint_j, 1) =
+              local_coords.second;
         }
 
         specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim3,
@@ -255,15 +235,20 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
     return std::max({ max_x - min_x, max_y - min_y, max_z - min_z });
   };
 
-  // ensure each node was properly hit
+  // scratch for the 1D interpolants of one coordinate
+  Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace> h_lagrange(
+      "h_lagrange", ngll);
+  Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+      h_lagrange_prime("h_lagrange_prime", ngll);
+
+  // ensure each node was properly hit, and store the interpolants of the
+  // closest coupled face (all other pairs keep zero rows for this node)
   for (const auto &[self_face_ispec_and_type, isf] : face_indices) {
     for (int ipoint = 0; ipoint < ngll; ++ipoint) {
       for (int jpoint = 0; jpoint < ngll; ++jpoint) {
         if (hit_face_index(isf, ipoint, jpoint) == -1) {
-          // node not hit: error out. Unless the logic of "always accept the
-          // first point",
-          //            namely (    bool use_this_coupling = true;  ),
-          // changes, this should never be entered.
+          // node not hit: error out. Since the first candidate is always
+          // accepted, this should never be entered.
           throw std::runtime_error("Failed to match coupled coordinate to face "
                                    "node: this face did not have a coupling!");
         } else {
@@ -306,8 +291,8 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
             const int &jspec = coupled_face.element_index;
             const auto &jface_type = coupled_face.face_type;
             const auto &local_coupled_coords = std::make_pair(
-                h_coupled_coordinates(intersection_index, ipoint, jpoint, 0),
-                h_coupled_coordinates(intersection_index, ipoint, jpoint, 1));
+                hit_face_coordinates(isf, ipoint, jpoint, 0),
+                hit_face_coordinates(isf, ipoint, jpoint, 1));
             specfem::point::global_coordinates<dimension_tag> matched_point =
                 specfem::algorithms::locate_point_impl::locate_point(
                     local_coupled_coords, mesh, jspec, jface_type);
@@ -325,11 +310,27 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
             throw std::runtime_error(oss.str());
           }
         }
+
+        if (self_is_host) {
+          const int iface = hit_face_index(isf, ipoint, jpoint);
+          for (int axis = 0; axis < ndim - 1; ++axis) {
+            specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
+                h_lagrange, h_lagrange_prime,
+                hit_face_coordinates(isf, ipoint, jpoint, axis), ngll,
+                mesh.h_xi);
+            for (int igll = 0; igll < ngll; ++igll) {
+              h_interpolants(iface, ipoint, jpoint, igll, axis) =
+                  h_lagrange(igll);
+            }
+          }
+        }
       }
     }
   }
 
   Kokkos::deep_copy(face_factor, h_face_factor);
   Kokkos::deep_copy(face_normal, h_face_normal);
-  Kokkos::deep_copy(coupled_coordinates, h_coupled_coordinates);
+  if (self_is_host) {
+    Kokkos::deep_copy(interpolants, h_interpolants);
+  }
 }

@@ -1,5 +1,4 @@
 #include "specfem/algorithms/transfer_interpolate.hpp"
-#include "specfem/chunk_face/nonconforming_interface.hpp"
 
 #include "specfem/datatype/accessor_type.hpp"
 #include "specfem/datatype/chunk_face_view.hpp"
@@ -9,7 +8,7 @@
 #include "specfem/setup.hpp"
 #include "utilities/include/fixture/nonconforming_interface.hpp"
 
-// for interpolator
+// for GLL nodes
 #include "specfem/quadrature/gll.hpp"
 
 #include "utilities/include/fixture/nonconforming_interface/analytical_function.hpp"
@@ -21,39 +20,43 @@
 #include <type_traits>
 #include <utility>
 
-namespace specfem::algorithms_test {
+namespace transfer_interpolate_test_impl {
 
 /**
- * @brief Test index type for chunk face operations.
+ * @brief Independent oracle: rows of 1D Lagrange interpolants on the GLL
+ * nodes, l_k(x) = prod_{m != k} (x - xi_m) / (xi_k - xi_m).
+ *
+ * Column 0 holds l_k(coord1), column 1 holds l_k(coord2). NaN coordinates mark
+ * "no match" and give all-zero interpolants.
  */
-class ChunkFaceIndex {
-public:
-  static constexpr auto accessor_type =
-      specfem::datatype::AccessorType::chunk_face;
-  using KokkosIndexType = Kokkos::TeamPolicy<>::member_type;
-
-  /**
-   * @brief Get Kokkos team member index.
-   * @return Reference to Kokkos team member
-   */
-  KOKKOS_INLINE_FUNCTION
-  constexpr const KokkosIndexType &get_policy_index() const {
-    return this->kokkos_index;
+template <int NGLL, typename InterpolantsType, typename NodesType>
+KOKKOS_INLINE_FUNCTION InterpolantsType lagrange_rows(const NodesType &nodes,
+                                                      const type_real coord1,
+                                                      const type_real coord2) {
+  constexpr int ngll = NGLL;
+  InterpolantsType result;
+  const bool no_match = Kokkos::isnan(coord1) || Kokkos::isnan(coord2);
+  for (int k = 0; k < ngll; ++k) {
+    type_real l1 = no_match ? 0 : 1;
+    type_real l2 = no_match ? 0 : 1;
+    if (!no_match) {
+      for (int m = 0; m < ngll; ++m) {
+        if (m == k)
+          continue;
+        const type_real denom = nodes(k) - nodes(m);
+        l1 *= (coord1 - nodes(m)) / denom;
+        l2 *= (coord2 - nodes(m)) / denom;
+      }
+    }
+    result(k, 0) = l1;
+    result(k, 1) = l2;
   }
+  return result;
+}
 
-  /**
-   * @brief Construct chunk face index.
-   * @param nfaces Number of faces in chunk
-   * @param kokkos_index Kokkos team member
-   */
-  KOKKOS_INLINE_FUNCTION
-  ChunkFaceIndex(const int nfaces, const KokkosIndexType &kokkos_index)
-      : kokkos_index(kokkos_index), chunk_size(nfaces) {}
+} // namespace transfer_interpolate_test_impl
 
-  const int chunk_size; ///< Number of faces in the chunk
-private:
-  KokkosIndexType kokkos_index; /**< Kokkos team member for this chunk */
-};
+namespace specfem::algorithms_test {
 
 namespace transfer_interpolate {
 
@@ -189,11 +192,6 @@ void execute(const TransferCoordinates &transfer_coordinates,
   constexpr int league_size = (stack_size + chunk_size - 1) / chunk_size;
 
   // ======= Declare Kernel Container Types
-  using ContainerTransferCoordinatesChunk =
-      specfem::chunk_face::coupled_coordinates<
-          dimension_tag, chunk_size, ngll_sample_face, interface_tag,
-          boundary_tag, flux_scheme_tag, Kokkos::DefaultExecutionSpace,
-          Kokkos::MemoryTraits<>, Kokkos::LayoutRight>;
   using ContainerTransferCoordinatesPoint =
       specfem::point::nonconforming_interface<dimension_tag, ngll_coupled_face,
                                               interface_tag, boundary_tag,
@@ -214,15 +212,17 @@ void execute(const TransferCoordinates &transfer_coordinates,
 
   const auto &gll_struct =
       specfem::quadrature::gll::gll(0, 0, ngll_coupled_face);
-  specfem::algorithms::LagrangeInterpolant interpolator(gll_struct.get_xi());
+  const auto gll_nodes = gll_struct.get_xi();
+  using InterpolantsType =
+      typename ContainerTransferCoordinatesPoint::template tensor_type<
+          type_real, ngll_coupled_face, 2>;
 
   // ======= Run Kernel
   const auto function_view =
       face_function.template get_chunkwise_view<chunk_size>();
   const auto transfer_coord_view =
       transfer_coordinates.template get_chunkwise_view<chunk_size>();
-  ResultViewType result_view_chunk("result_view_chunk");
-  ResultViewType result_view_point("result_view_point");
+  ResultViewType result_view("result_view");
 
   Kokkos::parallel_for(
       "transfer_interpolate_test",
@@ -236,24 +236,6 @@ void execute(const TransferCoordinates &transfer_coordinates,
         const ContainerFunctionCoupled F(
             Kokkos::subview(function_view, ichunk, Kokkos::ALL(), Kokkos::ALL(),
                             Kokkos::ALL(), Kokkos::ALL()));
-
-        // ==========================
-        // chunk transfer_interpolate
-        // ==========================
-
-        const ContainerTransferCoordinatesChunk TF(
-            Kokkos::subview(transfer_coord_view, ichunk, Kokkos::ALL(),
-                            Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL()));
-        specfem::algorithms::transfer_interpolate(
-            ChunkFaceIndex(this_chunk_size, team_member), TF, F,
-            [&](const auto &index, const auto &point) {
-              for (int icomp = 0; icomp < FaceFunction::num_components;
-                   ++icomp) {
-                result_view_chunk(this_chunk_start + index(0), index(1),
-                                  index(2), icomp) = point(icomp);
-              }
-            },
-            interpolator);
 
         // ==========================
         // point transfer_interpolate
@@ -274,19 +256,22 @@ void execute(const TransferCoordinates &transfer_coordinates,
               SelfFieldType self_field;
 
               const ContainerTransferCoordinatesPoint NCI(
-                  { transfer_coord_view(ichunk, index(0), index(1), index(2),
-                                        0),
-                    transfer_coord_view(ichunk, index(0), index(1), index(2),
-                                        1) },
-                  { 1.0 }, { 0, 0, 0 }, interpolator);
+                  { 1.0 }, { 0, 0, 0 },
+                  transfer_interpolate_test_impl::lagrange_rows<
+                      ngll_coupled_face, InterpolantsType>(
+                      gll_nodes,
+                      transfer_coord_view(ichunk, index(0), index(1), index(2),
+                                          0),
+                      transfer_coord_view(ichunk, index(0), index(1), index(2),
+                                          1)));
 
               specfem::algorithms::transfer_interpolate(mocked_point_index, NCI,
                                                         F, self_field);
 
               for (int icomp = 0; icomp < FaceFunction::num_components;
                    ++icomp) {
-                result_view_point(this_chunk_start + index(0), index(1),
-                                  index(2), icomp) = self_field(icomp);
+                result_view(this_chunk_start + index(0), index(1), index(2),
+                            icomp) = self_field(icomp);
               }
             });
       });
@@ -341,31 +326,11 @@ void execute(const TransferCoordinates &transfer_coordinates,
   };
 
   {
-    validate_view(result_view_chunk);
+    validate_view(result_view);
     if (num_fails > 0) {
       std::ostringstream oss;
       oss << "============================================\n"
           << "transfer_interpolate failed\n"
-          << "Chunkwise-transfer failure\n"
-          << "-- Transfer function --\n"
-          << TransferCoordinates::description() << std::endl
-          << "-- Edge Function --\n"
-          << FaceFunction::description() << std::endl;
-      if (!execution_description.empty()) {
-        oss << "-- Execution Description --\n"
-            << execution_description << std::endl;
-      }
-      oss << "============================================\n" << fail_log.str();
-      ADD_FAILURE() << oss.str();
-    }
-  }
-  {
-    validate_view(result_view_point);
-    if (num_fails > 0) {
-      std::ostringstream oss;
-      oss << "============================================\n"
-          << "transfer_interpolate failed\n"
-          << "Pointwise-transfer failure\n"
           << "-- Transfer function --\n"
           << TransferCoordinates::description() << std::endl
           << "-- Edge Function --\n"

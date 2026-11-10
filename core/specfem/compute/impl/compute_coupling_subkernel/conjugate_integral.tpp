@@ -47,6 +47,16 @@ void specfem::compute::impl::compute_coupling_conjugate_integral_nonconforming(
     return;
   }
 
+  // The interpolants are stored by the container read below, and only when
+  // its self side is the host; otherwise that container holds none.
+  if (!assembly.nonconforming_interfaces
+           .template get_interface_container<conjugate_interface_tag,
+                                             boundary_tag, connection_tag,
+                                             flux_scheme_tag>()
+           .self_is_host) {
+    return;
+  }
+
   const auto field =
       assembly.fields.template get_simulation_field<wavefield_tag>();
 
@@ -109,7 +119,6 @@ void specfem::compute::impl::compute_coupling_conjugate_integral_nonconforming(
 
         const auto &nonconforming_interfaces =
             assembly.nonconforming_interfaces;
-        const auto &assembly_mesh_xi = assembly.mesh.xi;
         const auto &boundaries = assembly.boundaries;
 
         team.team_barrier();
@@ -144,19 +153,11 @@ void specfem::compute::impl::compute_coupling_conjugate_integral_nonconforming(
                   specfem::assembly::load_on_device(coupled_index,
                                                     nonconforming_interfaces,
                                                     point_interface_data);
-                  // TEMPORARY until we get rid of non-static interpolants
-                  point_interface_data.set_interpolants(
-                      specfem::algorithms::LagrangeInterpolant(
-                          assembly_mesh_xi));
 
                   // transfer self shape function to coupled side.
                   const type_real interpolated_shape_function =
                       point_interface_data.interpolants(index.ipoint_i, 0) *
                       point_interface_data.interpolants(index.ipoint_j, 1);
-
-                  if (std::isnan(interpolated_shape_function)) {
-                    continue;
-                  }
 
                   // accumulate self_accel by medium_physics::compute_coupling
                   if constexpr (interface_tag ==

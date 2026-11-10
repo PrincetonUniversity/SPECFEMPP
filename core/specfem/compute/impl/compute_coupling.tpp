@@ -244,7 +244,6 @@ void compute_coupling_core_nonconforming(
 
         const auto &nonconforming_interfaces =
             assembly.nonconforming_interfaces;
-        const auto &assembly_mesh_xi = assembly.mesh.xi;
         const auto &boundaries = assembly.boundaries;
 
         // internal to lambda, since nvcc could not compile otherwise
@@ -265,9 +264,6 @@ void compute_coupling_core_nonconforming(
                 CouplingTermsPack point_interface_data;
                 specfem::assembly::load_on_device(
                     index, nonconforming_interfaces, point_interface_data);
-                // TEMPORARY until we get rid of non-static interpolants
-                point_interface_data.set_interpolants(
-                    specfem::algorithms::LagrangeInterpolant(assembly_mesh_xi));
 
                 SelfFieldType self_field;
                 specfem::medium_physics::compute_coupling(
@@ -338,32 +334,17 @@ void compute_coupling_core(
 
     if constexpr (Tags::dimension_tag ==
                   specfem::element::dimension_tag::dim3) {
+      // Each physical pair is filed under both interface tags; it is
+      // integrated by the self kernel of its host side, or, from the guest
+      // side, by the conjugate kernel.
       if (assembly.nonconforming_interfaces
               .template get_interface_container<
                   Tags::interface_tag, Tags::boundary_tag, connection_tag,
                   Tags::flux_scheme_tag>()
-              .should_run_self_compute_coupling_kernel) {
+              .self_is_host) {
         compute_coupling_core_nonconforming<NGLL, NQuad_intersection, Tags>(
             assembly);
-      }
-
-      // The conjugate kernel integrates on the faces of the conjugate
-      // interface, so it runs only where that side is the host. Testing this
-      // container alone is not enough: when it holds no faces it cannot tell
-      // which side is finer, and the pairs would be integrated twice.
-      constexpr auto conjugate_interface_tag =
-          specfem::element_coupling::attributes<
-              Tags::dimension_tag, Tags::interface_tag>::conjugate_interface();
-      if (assembly.nonconforming_interfaces
-              .template get_interface_container<
-                  Tags::interface_tag, Tags::boundary_tag, connection_tag,
-                  Tags::flux_scheme_tag>()
-              .should_run_conjugate_compute_coupling_kernel &&
-          assembly.nonconforming_interfaces
-              .template get_interface_container<
-                  conjugate_interface_tag, Tags::boundary_tag, connection_tag,
-                  Tags::flux_scheme_tag>()
-              .should_run_self_compute_coupling_kernel) {
+      } else {
         compute_coupling_conjugate_integral_nonconforming<NGLL, Tags>(assembly);
       }
     } else {
