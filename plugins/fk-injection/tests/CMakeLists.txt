@@ -62,6 +62,38 @@ specfem_add_test(injection_field_recovery_tests
               gtest
 )
 
+specfem_add_test(injection_driver_tests
+  LABELS      fk_injection
+  SOURCES     runner.cpp
+              driver_tests.cpp
+  LIBRARIES   fk_injection_impl
+              gtest
+)
+
+specfem_add_test(injection_depth_groups_tests
+  LABELS      fk_injection
+  SOURCES     runner.cpp
+              depth_groups_tests.cpp
+  LIBRARIES   fk_injection_impl
+              gtest
+)
+
+specfem_add_test(injection_layer_stack_tests
+  LABELS      fk_injection
+  SOURCES     runner.cpp
+              layer_stack_tests.cpp
+  LIBRARIES   fk_injection_impl
+              gtest
+)
+
+specfem_add_test(injection_depth_series_tests
+  LABELS      fk_injection
+  SOURCES     runner.cpp
+              depth_series_tests.cpp
+  LIBRARIES   fk_injection_impl
+              gtest
+)
+
 # Loads the module only.
 specfem_add_test(fk_injection_module_tests
   LABELS      fk_injection
