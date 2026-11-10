@@ -1,22 +1,19 @@
 #include "conjugate_integral.hpp"
+#include "specfem/algorithms/transfer_interpolate.hpp"
 #include "specfem/element_coupling/accessor.hpp"
 #include "specfem/element_coupling/attributes.hpp"
 
 #include "specfem/boundary_conditions.hpp"
 #include "specfem/chunk_face.hpp"
-#include "specfem/datatype/accessor_type.hpp"
 #include "specfem/datatype/chunk_face_view.hpp"
-#include "specfem/datatype/register_array.hpp"
 #include "specfem/element/attributes.hpp"
+#include "specfem/execution.hpp"
 #include "specfem/medium_physics.hpp"
-
-// empty for dim2 for now
-template <int NGLL, typename Tags>
-void specfem::compute::impl::compute_coupling_conjugate_integral_nonconforming(
-    const specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
-        &assembly)
-  requires(Tags::dimension_tag == specfem::element::dimension_tag::dim2)
-{}
+#include "specfem/parallel_configuration.hpp"
+#include "specfem/point.hpp"
+#include "specfem/tags.hpp"
+#include <Kokkos_Core.hpp>
+#include <type_traits>
 
 template <int NGLL, typename Tags>
 void specfem::compute::impl::compute_coupling_conjugate_integral_nonconforming(
@@ -51,18 +48,21 @@ void specfem::compute::impl::compute_coupling_conjugate_integral_nonconforming(
   // container read below (conjugate interface tag, same boundary tag) is then
   // the host by `HostSelection`, and stores the interpolants. If that
   // container is empty, we have already returned above.
+  const auto &host_container =
+      assembly.nonconforming_interfaces
+          .template get_interface_container<conjugate_interface_tag,
+                                            boundary_tag, connection_tag,
+                                            flux_scheme_tag>();
+  const auto interpolants = host_container.interpolants;
 
   const auto field =
       assembly.fields.template get_simulation_field<wavefield_tag>();
 
-  using parallel_config = std::conditional_t<
-      dimension_tag == specfem::element::dimension_tag::dim2,
-      specfem::parallel_configuration::default_chunk_edge_config<
-          dimension_tag, Kokkos::DefaultExecutionSpace>,
-      specfem::parallel_configuration::default_chunk_face_config<
-          dimension_tag, Kokkos::DefaultExecutionSpace>>;
   constexpr bool using_simd = false;
-  constexpr int NQuad_intersection = NGLL;
+  using parallel_config =
+      specfem::parallel_configuration::default_chunk_face_config<
+          dimension_tag, Kokkos::DefaultExecutionSpace>;
+  constexpr int chunk_size = parallel_config::chunk_size;
 
   // As written, field types cannot readily be defined in attributes. Define
   // them here.
@@ -77,25 +77,39 @@ void specfem::compute::impl::compute_coupling_conjugate_integral_nonconforming(
   using CoupledFieldType = std::conditional_t<
       interface_tag ==
           specfem::element_coupling::interface_tag::acoustic_elastic,
-      specfem::chunk_face::displacement<parallel_config::chunk_size, NGLL,
-                                        dimension_tag, coupled_medium,
-                                        using_simd>,
-      specfem::chunk_face::acceleration<parallel_config::chunk_size, NGLL,
-                                        dimension_tag, coupled_medium,
-                                        using_simd>>;
+      specfem::chunk_face::displacement<chunk_size, NGLL, dimension_tag,
+                                        coupled_medium, using_simd>,
+      specfem::chunk_face::acceleration<chunk_size, NGLL, dimension_tag,
+                                        coupled_medium, using_simd>>;
+  using CoupledPointTags =
+      specfem::tags::Tags<dimension_tag, coupled_medium, using_simd>;
+  using CoupledPointFieldType = std::conditional_t<
+      interface_tag ==
+          specfem::element_coupling::interface_tag::acoustic_elastic,
+      specfem::point::displacement<CoupledPointTags>,
+      specfem::point::acceleration<CoupledPointTags>>;
+  using SelfPointFieldType = specfem::point::acceleration<
+      specfem::tags::Tags<dimension_tag, self_medium, using_simd>>;
+  // Flux at every host node of the chunk, (iface_local, ci, cj, icomp).
+  using FluxViewType = specfem::datatype::VectorChunkFaceViewType<
+      type_real, dimension_tag, chunk_size, NGLL, ncomp_self, using_simd,
+      Kokkos::DefaultExecutionSpace::scratch_memory_space,
+      Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+  // Host-node data: the host GLL nodes are the quadrature points.
   using ConjugateCouplingData =
       specfem::element_coupling::accessor::coupling_terms_pack<
           dimension_tag, conjugate_interface_tag, boundary_tag, flux_scheme_tag,
-          parallel_config::chunk_size, NGLL, NQuad_intersection>;
+          chunk_size, NGLL, NGLL>;
 
   specfem::execution::ChunkedIntersectionIterator chunk(
       parallel_config(), conjugate_self_intersections,
       conjugate_coupled_intersections);
 
-  int scratch_size = CoupledFieldType::shmem_size();
+  const int scratch_size =
+      CoupledFieldType::shmem_size() + FluxViewType::shmem_size();
 
   specfem::execution::for_each_level(
-      "compute_coupling_extra_kernel_symmetrizer",
+      "specfem::compute::impl::compute_coupling_conjugate_integral",
       chunk.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
       KOKKOS_LAMBDA(
           const typename decltype(chunk)::index_type &chunk_iterator_index) {
@@ -109,6 +123,7 @@ void specfem::compute::impl::compute_coupling_conjugate_integral_nonconforming(
         const auto self_chunk_index = self_chunk_iterator_index.get_index();
 
         CoupledFieldType coupled_field(team.team_scratch(0));
+        FluxViewType flux(team.team_scratch(0));
         specfem::assembly::load_on_device(coupled_chunk_index, field,
                                           coupled_field);
 
@@ -117,85 +132,53 @@ void specfem::compute::impl::compute_coupling_conjugate_integral_nonconforming(
         const auto &boundaries = assembly.boundaries;
 
         team.team_barrier();
+
+        // Flux into the guest medium, once per host node.
+        specfem::execution::for_each_level(
+            coupled_chunk_index.get_iterator(),
+            [&](const typename std::decay_t<decltype(coupled_chunk_index)>::
+                    iterator_type::index_type &iterator_index) {
+              const auto &index = iterator_index.get_index();
+              const auto &local_index = iterator_index.get_local_index();
+
+              ConjugateCouplingData point_interface_data;
+              specfem::assembly::load_on_device(index, nonconforming_interfaces,
+                                                point_interface_data);
+
+              CoupledPointFieldType coupled_point_field;
+              for (int icomp = 0; icomp < CoupledPointFieldType::components;
+                   icomp++) {
+                coupled_point_field(icomp) =
+                    coupled_field(local_index.iface, local_index.ipoint_i,
+                                  local_index.ipoint_j, icomp);
+              }
+
+              SelfPointFieldType flux_point;
+              specfem::medium_physics::compute_interface_flux<interface_tag>(
+                  point_interface_data, coupled_point_field, flux_point);
+
+              flux(local_index) = flux_point;
+            });
+
+        team.team_barrier();
+
+        // Transposed interpolation of the flux onto each guest node.
         specfem::execution::for_each_level(
             self_chunk_index.get_iterator(),
             [&](const typename std::decay_t<decltype(self_chunk_index)>::
                     iterator_type::index_type &iterator_index) {
               const auto &index = iterator_index.get_index();
-              const auto &iface_global = index.iface;
               const auto &local_index = iterator_index.get_local_index();
-              const auto &iface_local = local_index.iface;
-              using SelfPointFieldType =
-                  specfem::point::acceleration<specfem::tags::Tags<
-                      dimension_tag, self_medium, false /*UseSIMD*/>>;
 
               SelfPointFieldType self_accel;
+              specfem::algorithms::transfer_integrate(
+                  index, local_index, interpolants, flux, self_accel);
+
+              // The stored normal is the host's outward normal, opposite to
+              // the guest's.
               for (int icomp = 0; icomp < ncomp_self; icomp++) {
-                self_accel(icomp) = 0;
+                self_accel(icomp) = -self_accel(icomp);
               }
-
-              // =====================
-              // interpolate this shape function onto the coupled
-
-              for (int ipoint_coupled = 0; ipoint_coupled < NGLL;
-                   ipoint_coupled++) {
-                for (int jpoint_coupled = 0; jpoint_coupled < NGLL;
-                     jpoint_coupled++) {
-                  const auto coupled_index = conjugate_coupled_intersections(
-                      iface_global, ipoint_coupled, jpoint_coupled);
-
-                  ConjugateCouplingData point_interface_data;
-                  specfem::assembly::load_on_device(coupled_index,
-                                                    nonconforming_interfaces,
-                                                    point_interface_data);
-
-                  // transfer self shape function to coupled side.
-                  const type_real interpolated_shape_function =
-                      point_interface_data.interpolants(index.ipoint_i, 0) *
-                      point_interface_data.interpolants(index.ipoint_j, 1);
-
-                  // accumulate self_accel by medium_physics::compute_coupling
-                  if constexpr (interface_tag ==
-                                specfem::element_coupling::interface_tag::
-                                    acoustic_elastic) {
-                    // negative sign, since the normal is in the opposite
-                    // direction.
-                    self_accel(0) -=
-                        interpolated_shape_function *
-                        point_interface_data.face_factor *
-                        (point_interface_data.face_normal(0) *
-                             coupled_field(iface_local, ipoint_coupled,
-                                           jpoint_coupled, 0) +
-                         point_interface_data.face_normal(1) *
-                             coupled_field(iface_local, ipoint_coupled,
-                                           jpoint_coupled, 1) +
-                         point_interface_data.face_normal(2) *
-                             coupled_field(iface_local, ipoint_coupled,
-                                           jpoint_coupled, 2));
-                  } else {
-                    // negative sign, since the normal is in the opposite
-                    // direction.
-                    self_accel(0) -= interpolated_shape_function *
-                                     point_interface_data.face_factor *
-                                     (point_interface_data.face_normal(0) *
-                                      coupled_field(iface_local, ipoint_coupled,
-                                                    jpoint_coupled, 0));
-                    self_accel(1) -= interpolated_shape_function *
-                                     point_interface_data.face_factor *
-                                     (point_interface_data.face_normal(1) *
-                                      coupled_field(iface_local, ipoint_coupled,
-                                                    jpoint_coupled, 0));
-                    self_accel(2) -= interpolated_shape_function *
-                                     point_interface_data.face_factor *
-                                     (point_interface_data.face_normal(2) *
-                                      coupled_field(iface_local, ipoint_coupled,
-                                                    jpoint_coupled, 0));
-                  }
-                }
-              }
-
-              // =====================
-              // apply BCs and accumulate
 
               // boundary_tag is the tag of the acoustic element of this pair, so
               // the free-surface condition applies only when self is acoustic.
