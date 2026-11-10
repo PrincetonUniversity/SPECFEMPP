@@ -23,3 +23,13 @@ explicit_solver:
   MPIHomogeneousHalfspaceSmallNoABCForceSource: 4
   MPIHomogeneousHalfSpaceStacey: 4
   MPIAcousticElasticForce: 4
+
+# Cases that need the plane-wave example plugin (SPECFEM_INJECTION_TEST_PLUGIN); they
+# are registered only when it is set. See dim3/injection/README.md.
+injection:
+  zero_field: 1
+  p_wave: 1
+  sv_wave: 1
+  p_wave_mpi2: 2
+  p_wave_mpi4: 4
+  sv_wave_mpi4: 4

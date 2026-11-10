@@ -1,5 +1,5 @@
 // End-to-end checks of wavefield injection with the plane-wave example plugin
-// (tests/integration-tests/injection). Each configuration builds SPECFEM++,
+// (tests/integration-tests/configurations/dim3/injection). Each configuration builds SPECFEM++,
 // installs the plugin SDK, builds examples/plugins/plane_wave against it, and
 // rebuilds SPECFEM++ with SPECFEM_INJECTION_TEST_PLUGIN pointing at the plugin,
 // which registers the injection_e2e tests.

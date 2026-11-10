@@ -1,4 +1,4 @@
-# End-to-end injection tests
+# Injection tests
 
 `specfem 3d` with the plane-wave example plugin (`examples/plugins/plane_wave`)
 and `injection: {method: stacey}` on a homogeneous box with Stacey on all six
@@ -11,8 +11,11 @@ inside the box is the incident plane wave alone.
 | `p_wave`, `sv_wave` | 1 | Relative L2 error against the analytic traces ≤ tolerance, and \|lag\| < 0.25 dt |
 | `p_wave_mpi2`, `p_wave_mpi4`, `sv_wave_mpi4` | 2, 4 | Relative L2 error against the serial traces ≤ 1e-4, and \|lag\| < 0.25 dt |
 
-The cases are listed in `tests.yaml` and run by `injection_tests.cpp`. They
-need a built plugin, so CMake registers them (label `injection_e2e`) only when
+Each case is a directory next to this file with a `config.yaml` (the comparison
+and the plugin configuration) and a `specfem_config.yaml`. They are listed in
+`configurations/tests.yaml` and run by `tests/integration-tests/runner.cpp`, like
+the displacement cases, with the plane-wave plugin added. They need a built
+plugin, so CMake registers them (label `injection_e2e`) only when
 `SPECFEM_INJECTION_TEST_PLUGIN` names one:
 
 ```bash
@@ -32,23 +35,25 @@ OpenMP), CUDA and MPI runners.
   vp = 2800, vs = 1500. `TOP_FREE_SURFACE = .false.` makes the top face
   absorbing; `STACEY_AS_INJECTION_BOUNDARY = .true.` makes every Stacey face an
   injection face.
-- Waves (`p.yaml`, `sv.yaml`): Ricker f0 = 0.4 Hz, P at take-off 30° and
+- Waves (`plugin/p.yaml`, `plugin/sv.yaml`): Ricker f0 = 0.4 Hz, P at take-off 30° and
   azimuth 40°, SV at 25° and 120°, both crossing the box centre inside the
   run. They start and end outside the box.
 - dt = 0.01 s; the run starts at t0 = −3 s, set by the sources' Ricker
   (−1.2 / f0).
-- Stations: 8 interior points, 3 km from the faces (`STATIONS`).
+- Stations: 8 interior points, 3 km from the faces (`plugin/STATIONS`).
 
 ## Provenance
 
 ```bash
-SPECFEMPP_BINDIR=<MPI build>/bin PLANE_WAVE_PLUGIN=<.../libplane_wave.so> snakemake --cores 4
+cd tests/integration-tests/configurations/workflow
+SPECFEMPP_BINDIR=<MPI build>/bin PLANE_WAVE_PLUGIN=<.../libplane_wave.so> \
+    snakemake -s Snakefile_injection --cores 4
 ```
 
 - `mesh/{serial,mpi2,mpi4}/database*`: the SPECFEM++ mesher
-  (`injection_mesher.smk`), partitioned for 1, 2 and 4 ranks.
+  (`workflow/injection_mesher.smk`), partitioned for 1, 2 and 4 ranks.
 - `traces/<case>/`: the analytic velocity at the stations, from
-  `injection_cases.py`, which writes the plane wave out independently of the
+  `workflow/injection_cases.py`, which writes the plane wave out independently of the
   plugin's C++.
 - `traces_serial/<case>/`: a serial `specfem 3d` run with the plugin, the
   reference of the MPI cases.

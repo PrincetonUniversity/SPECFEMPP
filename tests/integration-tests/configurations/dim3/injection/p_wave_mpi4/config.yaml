@@ -1,0 +1,17 @@
+id : "p_wave_mpi4"
+name : "Injected plane wave: p_wave_mpi4"
+description: >
+  The injected plane wave on a mesh partitioned for 4 ranks; the velocity
+  seismograms are compared with the serial run.
+# How the seismograms are checked: no-injection | analytic | serial
+compare: serial
+config:
+  nproc : 4
+  tolerance : 1.0e-4
+injection:
+  plugin-config: "../plugin/p.yaml"
+  # Start time of the run, needed to sample the analytic reference.
+  t0: -3.0
+databases:
+  specfem_config: "specfem_config.yaml"
+  traces: "../traces_serial/p_wave"

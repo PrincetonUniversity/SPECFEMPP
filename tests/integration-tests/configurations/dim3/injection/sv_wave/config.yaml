@@ -1,0 +1,17 @@
+id : "sv_wave"
+name : "Injected plane wave: sv_wave"
+description: >
+  A plane wave injected through the all-Stacey faces of a homogeneous box;
+  the velocity seismograms are compared with the analytic plane wave.
+# How the seismograms are checked: no-injection | analytic | serial
+compare: analytic
+config:
+  nproc : 1
+  tolerance : 1.1e-2
+injection:
+  plugin-config: "../plugin/sv.yaml"
+  # Start time of the run, needed to sample the analytic reference.
+  t0: -3.0
+databases:
+  specfem_config: "specfem_config.yaml"
+  traces: "../traces/sv_wave"
