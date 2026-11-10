@@ -1,5 +1,6 @@
 #pragma once
 
+#include "host_selection.hpp"
 #include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
@@ -89,8 +90,12 @@ public:
   /** @brief Device view for self nodes in coupled coordinates */
   CoupledCoordinatesView::host_mirror_type h_coupled_coordinates;
 
-  bool should_run_self_compute_coupling_kernel;
-  bool should_run_conjugate_compute_coupling_kernel;
+  /** @brief Whether the self side hosts the quadrature; decided per interface
+   * tag by HostSelection. */
+  bool should_run_self_compute_coupling_kernel = false;
+  /** @brief Whether the conjugate side hosts the quadrature; always the
+   * negation of should_run_self_compute_coupling_kernel. */
+  bool should_run_conjugate_compute_coupling_kernel = false;
 
 public:
   /**
@@ -101,6 +106,7 @@ public:
    * @param ngllx Number of GLL points in x-direction
    * @param element_intersections Element intersection information from mesh
    * @param mesh Mesh connectivity and geometry
+   * @param hosts Host decision shared by all containers of the interface tag
    */
   interface_container(
       const int &ngllz, const int &nglly, const int &ngllx,
@@ -108,8 +114,8 @@ public:
           specfem::element::dimension_tag::dim3> &element_intersections,
       const specfem::assembly::jacobian_matrix<dimension_tag> &jacobian_matrix,
       const specfem::assembly::mesh<dimension_tag> &mesh,
-      const specfem::element_coupling::flux_scheme_configuration
-          &flux_scheme_config = {});
+      const specfem::assembly::nonconforming_interfaces_impl::HostSelection
+          &hosts);
 
   /** @brief Default constructor */
   interface_container() = default;
