@@ -7,11 +7,13 @@
 #include "specfem/mesh.hpp"
 #include "specfem/periodic_tasks/stability_check.hpp"
 #include "specfem/program/abort.hpp"
+#include "specfem/program/injection.hpp"
 #include "specfem/receivers.hpp"
 #include "specfem/solver.hpp"
 #include "specfem/source.hpp"
 #include "specfem/timescheme.hpp"
 #include <algorithm>
+#include <optional>
 
 namespace specfem::program {
 
@@ -29,7 +31,9 @@ void run_program_3d(
     const YAML::Node &parameter_dict,
     std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task<
         specfem::element::dimension_tag::dim3>>>
-        tasks) {
+        tasks,
+    const std::optional<specfem::injection::PluginOptions> &injection,
+    const specfem::injection::MethodRegistry &registry) {
 
   // --------------------------------------------------------------
   //                    Read parameter file
@@ -42,6 +46,23 @@ void run_program_3d(
     oss << print_header<specfem::element::dimension_tag::dim3>(setup,
                                                                start_time);
   });
+
+  // Injection is checked before the mesh is read, so mistakes fail fast.
+  std::optional<specfem::injection::PluginLibrary> injection_plugin;
+  if (injection) {
+    if (setup.get_simulation_type() != specfem::simulation::type::forward)
+      throw std::runtime_error(
+          "Wavefield injection is supported for forward simulations only.");
+    if (!setup.get_injection())
+      throw std::runtime_error("Injection plugin '" + injection->plugin +
+                               "' was given, but the parameter file has no "
+                               "'injection' section.");
+    if (!registry.contains(setup.get_injection()->method()))
+      throw std::runtime_error(
+          registry.unknown_method_message(setup.get_injection()->method()));
+    injection_plugin.emplace(
+        specfem::program_impl::load_injection_plugin(*injection));
+  }
 
   // Get simulation parameters
   const type_real dt = setup.get_dt();
@@ -119,6 +140,14 @@ void run_program_3d(
   // assembly.print() always called (not wrapped in lambda function)
   // because it requires collective communication
   specfem::Logger::info(assembly.print());
+
+  std::shared_ptr<specfem::injection::InjectionMethod<
+      specfem::element::dimension_tag::dim3>>
+      injection_method;
+  if (injection_plugin)
+    injection_method = specfem::program_impl::make_injection_method(
+        std::move(*injection_plugin), *injection, *setup.get_injection(),
+        assembly, nsteps, registry);
 
   // Sources and receivers are printed after assembly so that resolved
   // coordinates, the owning partition, and the location error are populated.
@@ -233,8 +262,10 @@ void run_program_3d(
   //                   Instantiate Solver
   // --------------------------------------------------------------
   specfem::Logger::info("Instantiate solver\n-------------------------------");
-  std::shared_ptr<specfem::solver::solver> solver = setup.instantiate_solver<5>(
-      dt, assembly, time_scheme, simulation_type, tasks, wavefield_reader);
+  std::shared_ptr<specfem::solver::solver> solver =
+      setup.instantiate_solver<5, specfem::element::dimension_tag::dim3>(
+          dt, assembly, time_scheme, simulation_type, tasks, wavefield_reader,
+          injection_method);
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
@@ -295,12 +326,15 @@ void program_3d(
     std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task<
         specfem::element::dimension_tag::dim3>>>
         tasks,
-    const bool globe) {
+    const bool globe,
+    const std::optional<specfem::injection::PluginOptions> &injection,
+    const specfem::injection::MethodRegistry &registry) {
   if (globe) {
-    run_program_3d<specfem::simulation::model::Globe3D>(parameter_dict, tasks);
+    run_program_3d<specfem::simulation::model::Globe3D>(parameter_dict, tasks,
+                                                        injection, registry);
   } else {
-    run_program_3d<specfem::simulation::model::Cartesian3D>(parameter_dict,
-                                                            tasks);
+    run_program_3d<specfem::simulation::model::Cartesian3D>(
+        parameter_dict, tasks, injection, registry);
   }
 }
 

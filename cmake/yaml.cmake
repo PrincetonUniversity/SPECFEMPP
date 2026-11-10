@@ -55,6 +55,9 @@ else()
   FetchContent_MakeAvailable(yaml-cpp)
 endif()
 
+# Static, and also linked into the injection plugin modules.
+set_target_properties(yaml-cpp PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
 message(STATUS "yaml-cpp library has been configured and is available.")
 message(STATUS "Include directory: ${yaml-cpp_SOURCE_DIR}/include")
 message(STATUS "Binary directory: ${yaml-cpp_BINARY_DIR}")

@@ -37,8 +37,10 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
   }
 
   for (const auto [istep, dt] : time_scheme->iterate_forward()) {
+    if (injection)
+      injection->prepare_step(istep);
     specfem::solver::impl::apply_forward_step<NGLL, forward, DimensionTag>(
-        *time_scheme, assembly, mpi_buffers, istep);
+        *time_scheme, assembly, mpi_buffers, istep, injection.get());
 
     // Compute seismograms if required
     if (time_scheme->compute_seismogram(istep)) {

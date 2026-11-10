@@ -8,6 +8,7 @@
 #include "specfem/assembly/field_derivative_storage.hpp"
 #include "specfem/assembly/fields.hpp"
 #include "specfem/assembly/info.hpp"
+#include "specfem/assembly/injection_surface.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/kernels.hpp"
 #include "specfem/assembly/mesh.hpp"
@@ -129,6 +130,9 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
   specfem::assembly::nonconforming_interfaces<dimension_tag>
       nonconforming_interfaces; ///< Nonconforming interfaces between different
                                 ///< media (e.g., fluid-solid interface)
+
+  specfem::assembly::InjectionSurface<dimension_tag>
+      injection_surface; ///< Points of the wavefield-injection surface
 
   specfem::assembly::boundary_values<dimension_tag>
       boundary_values; ///< Field

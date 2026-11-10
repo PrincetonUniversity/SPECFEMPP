@@ -20,6 +20,33 @@ target_link_libraries(
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/serial.cmake)
 
+# Injection plugin tests build real shared-library plugins, which need Linux or
+# macOS.
+if(UNIX)
+  # Injection plugin SDK tests (sdk/)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/plugin_sdk/plugin_sdk.cmake)
+
+  # Injection plugin loader tests (core/specfem/injection)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/injection/loader/loader.cmake)
+
+  # FK injection plugin tests (plugins/fk-injection)
+  add_subdirectory(${CMAKE_SOURCE_DIR}/plugins/fk-injection/tests fk-injection)
+endif()
+
+# Injection provider session tests use a statically registered mock plugin, so
+# they run on every platform.
+include(${CMAKE_CURRENT_SOURCE_DIR}/injection/session/session.cmake)
+
+# Injection surface and plugin points, built from meshed databases
+include(${CMAKE_CURRENT_SOURCE_DIR}/injection/surface/surface.cmake)
+
+# Injection lifecycle: configuration, method registry and a forward run
+include(${CMAKE_CURRENT_SOURCE_DIR}/injection/lifecycle/lifecycle.cmake)
+
+# Pointwise injection framework: quantity lists, point harness and kernel
+include(${CMAKE_CURRENT_SOURCE_DIR}/injection/method/method.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/injection/method/requirement_failures.cmake)
+
 if(SPECFEM_ENABLE_MPI)
   include(${CMAKE_CURRENT_SOURCE_DIR}/mpi.cmake)
 endif()

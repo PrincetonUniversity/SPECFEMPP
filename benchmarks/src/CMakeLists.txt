@@ -33,6 +33,8 @@ add_subdirectory(dim3/homogeneous_anisotropic_kernel)
 add_subdirectory(dim3/acoustic_elastic_force)
 add_subdirectory(dim3/gmsh_halfspace_3d)
 add_subdirectory(dim3/mount_st_helens)
+add_subdirectory(dim3/fk_injection_two_layer)
+add_subdirectory(dim3/fk_injection_ocean)
 # add_subdirectory(dim3/acoustic_elastic_interface)
 
 # 3D global

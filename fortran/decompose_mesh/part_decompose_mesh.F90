@@ -684,7 +684,8 @@ contains
                                        nodes_ibelm_ymax, nodes_ibelm_bottom, nodes_ibelm_top, &
                                        glob2loc_elmnts, glob2loc_nodes_nparts, &
                                        glob2loc_nodes_parts, glob2loc_nodes, part, NGNOD2D, &
-                                       stacey_absorbing, top_free_surface, bottom_free_surface)
+                                       stacey_absorbing, top_free_surface, bottom_free_surface, &
+                                       injection_sides, injection_surface_kind)
 
   implicit none
   integer, intent(in)  :: IIN_database
@@ -713,6 +714,8 @@ contains
   integer, dimension(:), pointer :: glob2loc_nodes
   integer, dimension(1:nspec)  :: part
   logical, intent(in) :: stacey_absorbing, top_free_surface, bottom_free_surface
+  logical, dimension(6), intent(in) :: injection_sides
+  integer, intent(in) :: injection_surface_kind
 
   ! local parameters
   integer :: i,j,inode
@@ -721,8 +724,8 @@ contains
              loc_nspec2D_ymax,loc_nspec2D_bottom,loc_nspec2D_top
 
 
-  ! Write boundary condition flags so the C++ reader can classify sections 5 and 6
-  write(IIN_database) top_free_surface, bottom_free_surface
+  call write_boundary_header(IIN_database, top_free_surface, bottom_free_surface, &
+                             injection_sides, injection_surface_kind)
 
   loc_nspec2D_xmin = 0
   if (stacey_absorbing) then
