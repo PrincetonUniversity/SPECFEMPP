@@ -94,6 +94,14 @@ specfem_add_test(injection_depth_series_tests
               gtest
 )
 
+specfem_add_test(fk_injection_plugin_config_tests
+  LABELS      fk_injection
+  SOURCES     runner.cpp
+              plugin_config_tests.cpp
+  LIBRARIES   fk_injection_impl
+              gtest
+)
+
 # Loads the module only.
 specfem_add_test(fk_injection_module_tests
   LABELS      fk_injection
