@@ -1,8 +1,9 @@
 configfile: "../dim2/tests.yaml"
-configfile: "../dim3/explicit_solver/tests.yaml"
+configfile: "../tests.yaml"
 
 tests2d = config["tests2d"]
-tests3d = config["tests3d"]
+# 3D cases built with one process; the others are built by Snakefile_mpi.
+tests3d = [name for name, nproc in config["explicit_solver"].items() if nproc == 1]
 
 
 rule all:
