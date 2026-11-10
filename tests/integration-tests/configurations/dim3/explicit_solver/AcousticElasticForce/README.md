@@ -11,7 +11,7 @@ export SPECFEMPP_BINDIR=/home/lsawade/SPECFEMPP/bin/release
 export SPECFEM3D_BINDIR=/home/lsawade/specfem3d/bin
 ```
 
-Change your directory to `tests/unit-tests/displacement_tests/Newmark/serial/dim3/AcousticElasticForce` and
+Change your directory to `tests/integration-tests/configurations/dim3/explicit_solver/AcousticElasticForce` and
 run the snakemake workflow with the following command:
 
 ```bash

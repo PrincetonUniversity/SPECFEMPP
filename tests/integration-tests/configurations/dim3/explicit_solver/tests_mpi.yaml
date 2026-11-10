@@ -8,6 +8,6 @@
 # The value must equal NPROC_XI * NPROC_ETA in that case's Mesh_Par_file (and the
 # nproc declared in its config.yaml). One "name: <int>" entry per line.
 tests3d:
-  HomogeneousHalfspaceSmallNoABCForceSource: 4
-  HomogeneousHalfSpaceStacey: 4
-  AcousticElasticForce: 4
+  MPIHomogeneousHalfspaceSmallNoABCForceSource: 4
+  MPIHomogeneousHalfSpaceStacey: 4
+  MPIAcousticElasticForce: 4

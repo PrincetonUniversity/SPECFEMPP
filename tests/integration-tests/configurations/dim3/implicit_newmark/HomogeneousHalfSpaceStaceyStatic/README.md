@@ -8,12 +8,12 @@ for 600 steps (`specfem_config.yaml`) and once with the implicit solver at
 `dt = 0.7` for 30 steps (`specfem_config_implicit.yaml`), both to the same
 final time T = 21 s.
 
-Unlike the `Newmark/serial/dim3` fixtures, this is not a trace-regression
+Unlike the `explicit_solver` fixtures, this is not a trace-regression
 fixture: there is no `traces/` reference and it is not listed in a
 `tests.yaml`. The reference is the explicit run computed live by the test.
 
 The mesh provenance, database, and stations are copied from
-`displacement_tests/Newmark/serial/dim3/HomogeneousHalfSpaceStacey/` --
+`configurations/dim3/explicit_solver/HomogeneousHalfSpaceStacey/` --
 same domain, same material (rho 2700, vp 3000, vs 1732), Stacey ABCs on
 five faces and a free surface on top. The `Snakefile` here regenerates
 `database.bin` from the provenance in this directory (database only -- no

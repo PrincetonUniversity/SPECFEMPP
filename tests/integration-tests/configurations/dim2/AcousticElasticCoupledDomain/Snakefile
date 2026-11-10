@@ -1,4 +1,4 @@
-include: "../../../specfem2d.smk"
+include: "../../workflow/specfem2d.smk"
 
 stations = [f"S{i:04d}" for i in range(1, 11)]
 components = ["BXX", "BXZ"]

@@ -1,7 +1,7 @@
 # nonconformimg piggy-backs off of the conforming traces, so we skip specfem2d.smk
 # this is a modified verson of meshfem2d.smk
 
-include: "../../../specfem2d.smk"
+include: "../../workflow/specfem2d.smk"
 
 envvars:
     "SPECFEMPP_BINDIR",

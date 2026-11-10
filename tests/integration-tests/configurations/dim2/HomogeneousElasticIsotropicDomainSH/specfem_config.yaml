@@ -34,7 +34,7 @@ parameters:
             directory: "."
 
   receivers:
-    stations: "displacement_tests/Newmark/serial/dim2/HomogeneousElasticIsotropicDomainSH/STATIONS"
+    stations: "configurations/dim2/HomogeneousElasticIsotropicDomainSH/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
@@ -49,6 +49,6 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "displacement_tests/Newmark/serial/dim2/HomogeneousElasticIsotropicDomainSH/database.bin"
+    mesh-database: "configurations/dim2/HomogeneousElasticIsotropicDomainSH/database.bin"
 
-  sources: "displacement_tests/Newmark/serial/dim2/HomogeneousElasticIsotropicDomainSH/sources.yaml"
+  sources: "configurations/dim2/HomogeneousElasticIsotropicDomainSH/sources.yaml"

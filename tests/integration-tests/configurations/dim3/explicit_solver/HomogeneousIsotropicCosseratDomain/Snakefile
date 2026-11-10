@@ -1,7 +1,7 @@
 specfempp_mesh_files = ["interface1.txt", "interfaces.txt", "Mesh_Par_file"]
 fortran_mesh_files= [] # so that meshfem3d.smk doesn't complain, but we don't need any of these files
 source_file = "" # same here
-include: "../../../cosserat_solver.smk"
+include: "../../../workflow/cosserat_solver.smk"
 
 rule all:
     input:

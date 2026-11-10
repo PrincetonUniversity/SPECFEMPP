@@ -33,7 +33,7 @@ parameters:
             directory: "./"
 
   receivers:
-    stations: "displacement_tests/Newmark/serial/dim3/HomogeneousHalfSpaceAcousticForceSource/STATIONS"
+    stations: "configurations/dim3/explicit_solver/HomogeneousHalfSpaceAcousticForceSource/STATIONS"
     angle: 0.0
     seismogram-type:
       - pressure
@@ -46,6 +46,6 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "displacement_tests/Newmark/serial/dim3/HomogeneousHalfSpaceAcousticForceSource/database.bin"
+    mesh-database: "configurations/dim3/explicit_solver/HomogeneousHalfSpaceAcousticForceSource/database.bin"
 
-  sources: "displacement_tests/Newmark/serial/dim3/HomogeneousHalfSpaceAcousticForceSource/force.yaml"
+  sources: "configurations/dim3/explicit_solver/HomogeneousHalfSpaceAcousticForceSource/force.yaml"

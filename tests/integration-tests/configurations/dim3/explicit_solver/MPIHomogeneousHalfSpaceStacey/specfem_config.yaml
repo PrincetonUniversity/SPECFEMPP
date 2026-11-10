@@ -29,7 +29,7 @@ parameters:
             directory: "./"
 
   receivers:
-    stations: "displacement_tests/Newmark/mpi/dim3/HomogeneousHalfSpaceStacey/STATIONS"
+    stations: "configurations/dim3/explicit_solver/MPIHomogeneousHalfSpaceStacey/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
@@ -42,6 +42,6 @@ parameters:
     number-of-runs: 1
 
   databases:
-    mesh-database: "displacement_tests/Newmark/mpi/dim3/HomogeneousHalfSpaceStacey/database.bin"
+    mesh-database: "configurations/dim3/explicit_solver/MPIHomogeneousHalfSpaceStacey/database.bin"
 
-  sources: "displacement_tests/Newmark/mpi/dim3/HomogeneousHalfSpaceStacey/force.yaml"
+  sources: "configurations/dim3/explicit_solver/MPIHomogeneousHalfSpaceStacey/force.yaml"

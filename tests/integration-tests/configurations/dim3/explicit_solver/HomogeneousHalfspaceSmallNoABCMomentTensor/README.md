@@ -11,7 +11,7 @@ export SPECFEM3D_BINDIR=/home/lsawade/specfem3d/bin
 ```
 Change your directory
 ```bash
-cd tests/unit-tests/displacement_tests/Newmark/serial/dim3/HomogeneousHalfspaceSmallNoABCMomentTensor
+cd tests/integration-tests/configurations/dim3/explicit_solver/HomogeneousHalfspaceSmallNoABCMomentTensor
 ```
 Remove old traces and metadata if they exist
 ```bash

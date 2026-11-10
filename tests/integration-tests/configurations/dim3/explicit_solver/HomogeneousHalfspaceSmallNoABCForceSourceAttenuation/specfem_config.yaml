@@ -34,14 +34,14 @@ parameters:
 
           # display:
           #   format: VTKHDF
-          #   directory: "displacement_tests/Newmark/serial/dim3/HomogeneousHalfspaceSmallNoABCForceSourceAttenuation/"
+          #   directory: "configurations/dim3/explicit_solver/HomogeneousHalfspaceSmallNoABCForceSourceAttenuation/"
           #   field: displacement
           #   component: x
           #   simulation-field: forward
           #   time-interval: 1.0
 
   receivers:
-    stations: "displacement_tests/Newmark/serial/dim3/HomogeneousHalfspaceSmallNoABCForceSourceAttenuation/STATIONS"
+    stations: "configurations/dim3/explicit_solver/HomogeneousHalfspaceSmallNoABCForceSourceAttenuation/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
@@ -56,9 +56,9 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "displacement_tests/Newmark/serial/dim3/HomogeneousHalfspaceSmallNoABCForceSourceAttenuation/database.bin"
+    mesh-database: "configurations/dim3/explicit_solver/HomogeneousHalfspaceSmallNoABCForceSourceAttenuation/database.bin"
 
-  sources: "displacement_tests/Newmark/serial/dim3/HomogeneousHalfspaceSmallNoABCForceSourceAttenuation/force.yaml"
+  sources: "configurations/dim3/explicit_solver/HomogeneousHalfspaceSmallNoABCForceSourceAttenuation/force.yaml"
 
   ## attenuation setup
   attenuation:

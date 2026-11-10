@@ -1,4 +1,4 @@
-id : "HomogeneousHalfspaceSmallNoABCForceSource"
+id : "MPIHomogeneousHalfspaceSmallNoABCForceSource"
 name : "Homogeneous elastic isotropic half space (MPI, 4 ranks)"
 description: >
   Testing newmark time-marching solver on a homogeneous elastic domain with no

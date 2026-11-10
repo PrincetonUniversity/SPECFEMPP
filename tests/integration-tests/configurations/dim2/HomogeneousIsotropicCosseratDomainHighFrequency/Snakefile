@@ -1,4 +1,4 @@
-include: "../../../seispie.smk"
+include: "../../workflow/seispie.smk"
 
 
 rule all:

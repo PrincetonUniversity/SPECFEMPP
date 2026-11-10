@@ -14,5 +14,5 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/injection/injection.cmake)
 
 # Data directories the tests read, relative to their working directory
 specfem_add_test_data(
-  displacement_tests
+  configurations
 )

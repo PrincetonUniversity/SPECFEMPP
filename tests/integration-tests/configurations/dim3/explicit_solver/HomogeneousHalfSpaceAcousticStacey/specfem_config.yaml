@@ -29,7 +29,7 @@ parameters:
             directory: "./"
 
   receivers:
-    stations: "displacement_tests/Newmark/serial/dim3/HomogeneousHalfSpaceAcousticStacey/STATIONS"
+    stations: "configurations/dim3/explicit_solver/HomogeneousHalfSpaceAcousticStacey/STATIONS"
     angle: 0.0
     seismogram-type:
       - pressure
@@ -40,6 +40,6 @@ parameters:
     number-of-runs: 1
 
   databases:
-    mesh-database: "displacement_tests/Newmark/serial/dim3/HomogeneousHalfSpaceAcousticStacey/database.bin"
+    mesh-database: "configurations/dim3/explicit_solver/HomogeneousHalfSpaceAcousticStacey/database.bin"
 
-  sources: "displacement_tests/Newmark/serial/dim3/HomogeneousHalfSpaceAcousticStacey/force.yaml"
+  sources: "configurations/dim3/explicit_solver/HomogeneousHalfSpaceAcousticStacey/force.yaml"

@@ -1,2 +1,2 @@
-serial/dim2/*/specfem2d_workdir
-serial/dim3/*/specfem3d_workdir
+dim2/*/specfem2d_workdir
+dim3/explicit_solver/*/specfem3d_workdir

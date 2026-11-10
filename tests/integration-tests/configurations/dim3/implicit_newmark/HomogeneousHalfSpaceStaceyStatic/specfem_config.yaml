@@ -31,7 +31,7 @@ parameters:
             directory: "./"
 
   receivers:
-    stations: "displacement_tests/ImplicitNewmark/serial/dim3/HomogeneousHalfSpaceStaceyStatic/STATIONS"
+    stations: "configurations/dim3/implicit_newmark/HomogeneousHalfSpaceStaceyStatic/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
@@ -43,6 +43,6 @@ parameters:
     number-of-runs: 1
 
   databases:
-    mesh-database: "displacement_tests/ImplicitNewmark/serial/dim3/HomogeneousHalfSpaceStaceyStatic/database.bin"
+    mesh-database: "configurations/dim3/implicit_newmark/HomogeneousHalfSpaceStaceyStatic/database.bin"
 
-  sources: "displacement_tests/ImplicitNewmark/serial/dim3/HomogeneousHalfSpaceStaceyStatic/force.yaml"
+  sources: "configurations/dim3/implicit_newmark/HomogeneousHalfSpaceStaceyStatic/force.yaml"

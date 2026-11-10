@@ -33,7 +33,7 @@ parameters:
             directory: "./"
 
   receivers:
-    stations: "displacement_tests/Newmark/serial/dim2/HomogeneousElasticDomainAttenuation/STATIONS"
+    stations: "configurations/dim2/HomogeneousElasticDomainAttenuation/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
@@ -49,9 +49,9 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "displacement_tests/Newmark/serial/dim2/HomogeneousElasticDomainAttenuation/database.bin"
+    mesh-database: "configurations/dim2/HomogeneousElasticDomainAttenuation/database.bin"
 
-  sources: "displacement_tests/Newmark/serial/dim2/HomogeneousElasticDomainAttenuation/sources.yaml"
+  sources: "configurations/dim2/HomogeneousElasticDomainAttenuation/sources.yaml"
 
   ## attenuation setup
   attenuation:

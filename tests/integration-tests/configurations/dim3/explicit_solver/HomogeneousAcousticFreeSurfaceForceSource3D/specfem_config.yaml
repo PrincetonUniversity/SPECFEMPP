@@ -27,7 +27,7 @@ parameters:
             directory: "./"
 
   receivers:
-    stations: "displacement_tests/Newmark/serial/dim3/HomogeneousAcousticFreeSurfaceForceSource3D/STATIONS"
+    stations: "configurations/dim3/explicit_solver/HomogeneousAcousticFreeSurfaceForceSource3D/STATIONS"
     angle: 0.0
     seismogram-type:
       - pressure
@@ -38,6 +38,6 @@ parameters:
     number-of-runs: 1
 
   databases:
-    mesh-database: "displacement_tests/Newmark/serial/dim3/HomogeneousAcousticFreeSurfaceForceSource3D/database.bin"
+    mesh-database: "configurations/dim3/explicit_solver/HomogeneousAcousticFreeSurfaceForceSource3D/database.bin"
 
-  sources: "displacement_tests/Newmark/serial/dim3/HomogeneousAcousticFreeSurfaceForceSource3D/force.yaml"
+  sources: "configurations/dim3/explicit_solver/HomogeneousAcousticFreeSurfaceForceSource3D/force.yaml"
