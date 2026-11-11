@@ -99,22 +99,11 @@ public:
     return result;
   }
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
-
-private:
-#ifdef KOKKOS_ENABLE_CUDA
-  using device_memory_space = Kokkos::CudaSpace;
-#elif defined(KOKKOS_ENABLE_HIP)
-  using device_memory_space = Kokkos::HIPSpace;
-#elif defined(KOKKOS_ENABLE_SYCL)
-  using device_memory_space = Kokkos::SYCLDeviceUSMSpace;
-#endif
-public:
-  template <
-      typename T = TeamMemberType,
-      std::enable_if_t<std::is_same_v<typename T::execution_space::memory_space,
-                                      device_memory_space>,
-                       int> = 0>
+  template <typename T = TeamMemberType,
+            std::enable_if_t<
+                !std::is_same_v<typename T::execution_space::memory_space,
+                                Kokkos::HostSpace>,
+                int> = 0>
   KOKKOS_INLINE_FUNCTION const index_type operator()(const int &i) const {
     index_type result;
     result(rank - 1) = i % extents_[rank - 1];
@@ -130,7 +119,6 @@ public:
     }
     return result;
   }
-#endif
 
   template <typename... Indices>
   KOKKOS_INLINE_FUNCTION constexpr TeamThreadMDRangeIterator(

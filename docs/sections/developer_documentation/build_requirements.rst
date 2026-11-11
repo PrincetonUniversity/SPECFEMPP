@@ -19,8 +19,7 @@ Intel GPU compilation
 ---------------------
 
 SPECFEM++ uses SYCL for GPUs only; use the OpenMP or Serial backend on CPUs.
-CMake rejects SYCL CPU targets, and the program stops at startup if Kokkos
-selects a SYCL device that is not a GPU.
+The program stops at startup if Kokkos selects a SYCL device that is not a GPU.
 
 Load your Intel oneAPI compiler environment and use the shared ``release-sycl``
 preset for portable SPIR-V with just-in-time (JIT) compilation:

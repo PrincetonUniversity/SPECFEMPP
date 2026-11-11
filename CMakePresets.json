@@ -114,7 +114,6 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_CXX_COMPILER": "icpx",
-        "CMAKE_CXX_FLAGS": "-fsycl",
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-sycl",
         "Kokkos_ENABLE_SYCL": "ON",
         "Kokkos_ARCH_INTEL_GEN": "ON",
