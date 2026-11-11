@@ -449,19 +449,16 @@ inline void test_highres_host_selection(const std::string &database_file) {
          ? num_acoustic_elastic_pairs
          : num_elastic_acoustic_pairs) += info.num_pairs;
 
-    if (info.self_is_host) {
-      EXPECT_EQ(info.extents[0], static_cast<std::size_t>(info.num_pairs))
-          << database_file << ": " << label;
-      for (int r = 1; r < 4; ++r) {
-        EXPECT_EQ(info.extents[r], static_cast<std::size_t>(ngll))
-            << database_file << ": " << label << ", extent " << r;
-      }
-      EXPECT_EQ(info.extents[4], 2u) << database_file << ": " << label;
-    } else {
-      EXPECT_EQ(info.extents[0], 0u)
-          << database_file << ": " << label
-          << ": a non-host container must not allocate interpolants";
+    // Every non-empty container, host or guest, holds the interpolants of its
+    // own pairs at the host nodes, so the extents are the same for both.
+    EXPECT_EQ(info.extents[0], static_cast<std::size_t>(info.num_pairs))
+        << database_file << ": " << label
+        << (info.self_is_host ? ", host" : ", guest");
+    for (int r = 1; r < 4; ++r) {
+      EXPECT_EQ(info.extents[r], static_cast<std::size_t>(ngll))
+          << database_file << ": " << label << ", extent " << r;
     }
+    EXPECT_EQ(info.extents[4], 2u) << database_file << ": " << label;
   }
   EXPECT_GT(num_nonempty, 0) << database_file;
   // Each physical pair is filed under both interface tags.
@@ -489,6 +486,150 @@ inline void test_highres_host_selection(const std::string &database_file) {
   expect_report_clean(report, database_file);
 }
 
+/// One row (one pair) of one container, copied to the host together with the
+/// identity of its self and coupled faces. The arrays are flattened as
+/// `face_factor[i][j]`, `face_normal[i][j][d]` and
+/// `interpolants[i][j][k][axis]`, over the GLL points of the container.
+struct RowRecord {
+  specfem::element_coupling::interface_tag interface_tag = {};
+  specfem::element::boundary_tag boundary_tag = {};
+  bool self_is_host = false;
+  int self_element = -1;
+  int self_face = -1;
+  int coupled_element = -1;
+  int coupled_face = -1;
+  std::vector<type_real> face_factor = {};
+  std::vector<type_real> face_normal = {};
+  std::vector<type_real> interpolants = {};
+};
+
+/// Copies every row of every container (host and guest) to the host.
+inline std::vector<RowRecord> collect_rows(const assembly_type &assembly) {
+  const int ngll = assembly.mesh.specfem::assembly::mesh_impl::points<
+      specfem::element::dimension_tag::dim3>::ngllz;
+  std::vector<RowRecord> rows;
+  specfem::tag_dispatch::for_each(
+      specfem::tag_dispatch::dimension_set<
+          specfem::element::dimension_tag::dim3>{} *
+          CONNECTION_SET(nonconforming) *
+          INTERFACE_SET(elastic_acoustic, acoustic_elastic) *
+          BOUNDARY_SET(none, acoustic_free_surface, stacey,
+                       composite_stacey_dirichlet) *
+          FLUX_SCHEME_SET(natural),
+      [&]<typename ElementTags>() {
+        const auto &container =
+            assembly.nonconforming_interfaces.template get_interface_container<
+                ElementTags::interface_tag, ElementTags::boundary_tag,
+                ElementTags::connection_tag, ElementTags::flux_scheme_tag>();
+        const auto [self_faces, coupled_faces] =
+            assembly.element_intersections.get_intersections_on_host(
+                ElementTags::connection_tag, ElementTags::interface_tag,
+                ElementTags::boundary_tag, ElementTags::flux_scheme_tag);
+        for (int ipair = 0; ipair < self_faces.N; ++ipair) {
+          const auto &self = self_faces(ipair);
+          const auto &coupled = coupled_faces(ipair);
+          RowRecord row;
+          row.interface_tag = ElementTags::interface_tag;
+          row.boundary_tag = ElementTags::boundary_tag;
+          row.self_is_host = container.self_is_host;
+          row.self_element = self.element_index;
+          row.self_face = static_cast<int>(self.face_type);
+          row.coupled_element = coupled.element_index;
+          row.coupled_face = static_cast<int>(coupled.face_type);
+          for (int i = 0; i < ngll; ++i) {
+            for (int j = 0; j < ngll; ++j) {
+              row.face_factor.push_back(container.h_face_factor(ipair, i, j));
+              for (int d = 0; d < 3; ++d) {
+                row.face_normal.push_back(
+                    container.h_face_normal(ipair, i, j, d));
+              }
+              for (int k = 0; k < ngll; ++k) {
+                for (int axis = 0; axis < 2; ++axis) {
+                  row.interpolants.push_back(
+                      container.h_interpolants(ipair, i, j, k, axis));
+                }
+              }
+            }
+          }
+          rows.push_back(std::move(row));
+        }
+      });
+  return rows;
+}
+
+/**
+ * @brief Every guest row holds the data of the host row of the same pair.
+ *
+ * For a guest row (self side not the host) the host row of the same pair is
+ * the row of the conjugate interface tag whose self face is this row's
+ * coupled face and whose coupled face is this row's self face, in any
+ * boundary tag. There must be exactly one such host row, and its
+ * `face_factor`, `face_normal` and `interpolants` must be copied exactly.
+ *
+ * The comparison is exact (EXPECT_EQ, not EXPECT_NEAR) on purpose: the guest
+ * values are copies of the host values, not recomputations.
+ */
+inline void test_guest_rows_match_host_rows(const std::string &database_file) {
+  const auto mesh =
+      specfem::io::read_3d_mesh(database_file, specfem::attenuation::Setup{});
+  const auto assembly = build_assembly(mesh, meshing_type::highres_host);
+  const auto rows = collect_rows(*assembly);
+
+  int guest_rows_checked = 0;
+  for (const auto &guest : rows) {
+    if (guest.self_is_host) {
+      continue;
+    }
+    ++guest_rows_checked;
+    const std::string label =
+        container_label(guest.interface_tag, guest.boundary_tag);
+
+    std::vector<const RowRecord *> matches;
+    for (const auto &host : rows) {
+      if (!host.self_is_host || host.interface_tag == guest.interface_tag) {
+        continue;
+      }
+      if (host.self_element == guest.coupled_element &&
+          host.self_face == guest.coupled_face &&
+          host.coupled_element == guest.self_element &&
+          host.coupled_face == guest.self_face) {
+        matches.push_back(&host);
+      }
+    }
+    EXPECT_EQ(matches.size(), 1u)
+        << database_file << ": " << label << ", guest element "
+        << guest.self_element << ", face " << guest.self_face
+        << ": expected exactly one host row of the same pair";
+    if (matches.size() != 1) {
+      continue;
+    }
+
+    const auto &host = *matches.front();
+    const std::string pair_label =
+        database_file + ": " + label + ", guest element " +
+        std::to_string(guest.self_element) + ", host " +
+        container_label(host.interface_tag, host.boundary_tag);
+    ASSERT_EQ(guest.face_factor.size(), host.face_factor.size()) << pair_label;
+    ASSERT_EQ(guest.face_normal.size(), host.face_normal.size()) << pair_label;
+    ASSERT_EQ(guest.interpolants.size(), host.interpolants.size())
+        << pair_label;
+    for (std::size_t n = 0; n < guest.face_factor.size(); ++n) {
+      EXPECT_EQ(guest.face_factor[n], host.face_factor[n])
+          << pair_label << ", face_factor index " << n;
+    }
+    for (std::size_t n = 0; n < guest.face_normal.size(); ++n) {
+      EXPECT_EQ(guest.face_normal[n], host.face_normal[n])
+          << pair_label << ", face_normal index " << n;
+    }
+    for (std::size_t n = 0; n < guest.interpolants.size(); ++n) {
+      EXPECT_EQ(guest.interpolants[n], host.interpolants[n])
+          << pair_label << ", interpolants index " << n;
+    }
+  }
+  // Without this, a fixture without guest rows would pass vacuously.
+  EXPECT_GT(guest_rows_checked, 0) << database_file;
+}
+
 } // namespace specfem::nonconforming_test::interpolants_impl
 
 TEST(NonconformingContainer3D, interpolants_self_host_11_7) {
@@ -509,4 +650,16 @@ TEST(NonconformingContainer3D, host_selection_highres_host_11_7) {
 TEST(NonconformingContainer3D, host_selection_highres_host_13_10) {
   specfem::nonconforming_test::interpolants_impl::test_highres_host_selection(
       "data/dim3/interfaces_only/acoustic_elastic_13-10/database.bin");
+}
+
+TEST(NonconformingContainer3D, guest_rows_match_host_rows_11_7) {
+  specfem::nonconforming_test::interpolants_impl::
+      test_guest_rows_match_host_rows(
+          "data/dim3/interfaces_only/acoustic_elastic_11-7/database.bin");
+}
+
+TEST(NonconformingContainer3D, guest_rows_match_host_rows_13_10) {
+  specfem::nonconforming_test::interpolants_impl::
+      test_guest_rows_match_host_rows(
+          "data/dim3/interfaces_only/acoustic_elastic_13-10/database.bin");
 }

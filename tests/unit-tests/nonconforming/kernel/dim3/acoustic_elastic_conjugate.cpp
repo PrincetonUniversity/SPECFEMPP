@@ -127,6 +127,26 @@ void test_nonconforming_acoustic_elastic_conj(
           specfem::element::dimension_tag::dim3, target_medium>(
           true, true, true) /* default point setter zeroes everything out. */);
 
+  // The guest kernel needs an assembly in which the direction under test is
+  // the guest. The copy shares the field views with `assembly`. The direction
+  // whose self medium is the target is the guest (the larger mean face length
+  // in the host selection), and its conjugate is the host.
+  constexpr auto guest_interface_tag =
+      target_medium == specfem::element::medium_tag::acoustic
+          ? specfem::element_coupling::interface_tag::acoustic_elastic
+          : specfem::element_coupling::interface_tag::elastic_acoustic;
+  constexpr auto host_interface_tag = specfem::element_coupling::attributes<
+      dimension_tag, guest_interface_tag>::conjugate_interface();
+  specfem::assembly::nonconforming_interfaces_impl::HostSelection hosts(
+      specfem::element_coupling::interfacial_meshing_type::highres_host);
+  hosts.add_faces(guest_interface_tag, 2, 1);
+  hosts.add_faces(host_interface_tag, 1, 1);
+  auto guest_assembly = assembly;
+  guest_assembly.nonconforming_interfaces =
+      specfem::assembly::nonconforming_interfaces<dimension_tag>(
+          NGLL, NGLL, NGLL, guest_assembly.element_intersections,
+          guest_assembly.jacobian_matrix, guest_assembly.mesh, hosts);
+
   specfem::tag_dispatch::for_each(
       specfem::tag_dispatch::dimension_set<dimension_tag>{} *
           CONNECTION_SET(nonconforming) *
@@ -146,7 +166,7 @@ void test_nonconforming_acoustic_elastic_conj(
                       dimension_tag, ElementTags::connection_tag,
                       specfem::simulation::field_type::forward,
                       ElementTags::interface_tag, ElementTags::boundary_tag,
-                      ElementTags::flux_scheme_tag>>(assembly);
+                      ElementTags::flux_scheme_tag>>(guest_assembly);
         }
       });
   const auto integrated_conjugate_values =
@@ -336,4 +356,44 @@ void specfem::nonconforming_test::kernel::
         << ngll << " not configured!";
     throw std::runtime_error(oss.str());
   }
+}
+
+void specfem::nonconforming_test::kernel::
+    test_guest_kernel_rejects_host_container(
+        const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
+            &assembly) {
+  constexpr auto dimension_tag = specfem::element::dimension_tag::dim3;
+  const int ngll = assembly.mesh.specfem::assembly::mesh_impl::points<
+      specfem::element::dimension_tag::dim3>::ngllz;
+  ASSERT_EQ(ngll, 5);
+
+  int num_checked = 0;
+  specfem::tag_dispatch::for_each(
+      specfem::tag_dispatch::dimension_set<dimension_tag>{} *
+          CONNECTION_SET(nonconforming) *
+          INTERFACE_SET(elastic_acoustic, acoustic_elastic) *
+          BOUNDARY_SET(none, acoustic_free_surface, stacey,
+                       composite_stacey_dirichlet) *
+          FLUX_SCHEME_SET(natural),
+      [&]<typename ElementTags>() {
+        const auto [self_faces, coupled_faces] =
+            assembly.element_intersections.get_intersections_on_host(
+                ElementTags::connection_tag, ElementTags::interface_tag,
+                ElementTags::boundary_tag, ElementTags::flux_scheme_tag);
+        if (self_faces.N == 0) {
+          return;
+        }
+        num_checked++;
+        EXPECT_THROW(
+            (specfem::compute::impl::
+                 compute_coupling_conjugate_integral_nonconforming<
+                     5,
+                     specfem::tags::Tags<
+                         dimension_tag, ElementTags::connection_tag,
+                         specfem::simulation::field_type::forward,
+                         ElementTags::interface_tag, ElementTags::boundary_tag,
+                         ElementTags::flux_scheme_tag>>(assembly)),
+            std::runtime_error);
+      });
+  EXPECT_GT(num_checked, 0);
 }

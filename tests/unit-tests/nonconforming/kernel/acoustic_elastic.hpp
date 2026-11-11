@@ -20,6 +20,14 @@ void test_nonconforming_acoustic_elastic_conjugate(
     const std::string &meshname);
 
 /**
+ * @brief Checks that the guest-side kernel throws for every non-empty
+ * container of a self_host assembly (all containers are hosts there).
+ */
+void test_guest_kernel_rejects_host_container(
+    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
+        &assembly);
+
+/**
  * @brief Sets the acoustic acceleration field to power function.
  *
  * when passed to specfem::test_fieldmanip::set_field_values(), sets

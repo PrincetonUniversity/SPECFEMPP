@@ -24,9 +24,15 @@ struct interface_container;
  * @brief Container for 3D nonconforming interface data storage and access
  *
  * Manages interface data between different physical media (elastic-acoustic)
- * with specific boundary conditions. Stores, per pair and self-face node, the
- * integration factor and normal vector and, when the self side is the host,
- * the guest-face Lagrange interpolants at that node.
+ * with specific boundary conditions. Stores, per pair and per node of the host
+ * face of that pair, the integration factor, the host's outward normal and the
+ * guest-face Lagrange interpolants at that node. The host face is the self face
+ * when `self_is_host` and the coupled face otherwise.
+ *
+ * The constructor fills the arrays only when `self_is_host`; a guest container
+ * is allocated (zero-initialised) and then filled by the owning
+ * `nonconforming_interfaces` with a copy of the rows of the host container of
+ * the other direction, so that every non-empty container can be loaded.
  *
  * TODO: consider same physical media
  *
@@ -78,9 +84,17 @@ public:
       Kokkos::View<type_real *****, Kokkos::LayoutRight,
                    Kokkos::DefaultExecutionSpace::memory_space>;
 
-  /** @brief Device view for edge scaling factors */
+  /**
+   * @brief Device view for edge scaling factors `(ipair, ipoint_i, ipoint_j)`,
+   * at the host nodes of each pair (the self nodes if `self_is_host`,
+   * otherwise the nodes of the coupled face).
+   */
   FaceFactorView face_factor{};
-  /** @brief Device view for edge normal vectors */
+  /**
+   * @brief Device view for edge normal vectors `(ipair, ipoint_i, ipoint_j,
+   * idim)`, at the host nodes of each pair; the normal is the host's outward
+   * normal.
+   */
   FaceNormalView face_normal{};
   /**
    * @brief Device view of the guest face's 1D Lagrange polynomials at each
@@ -90,7 +104,9 @@ public:
    * `(..., 1)` is \f$ \ell_k(\eta_c) \f$, where \f$ (\xi_c, \eta_c) \f$
    * locates host node `(i, j)` of pair `ipair` on its guest face; axis 0
    * pairs with the guest's `ipoint_i`. Host nodes owned by another pair have
-   * zero rows. Allocated only when `self_is_host`.
+   * zero rows. Allocated for every container; `(ipoint_i, ipoint_j)` index
+   * the host nodes of the pair (self nodes if `self_is_host`, otherwise the
+   * nodes of the coupled face).
    */
   InterpolantsView interpolants{};
 
@@ -103,7 +119,8 @@ public:
 
   /**
    * @brief Whether the self faces of this container are the quadrature (host)
-   * side of their pairs; only then is `interpolants` allocated.
+   * side of their pairs. If not, the arrays hold the data at the nodes of the
+   * coupled faces.
    *
    * Decided per interface tag by `HostSelection`, so all containers of a tag
    * agree and exactly one of a tag and its conjugate is the host under
@@ -139,9 +156,8 @@ public:
    * @brief Loads interface data at specified index into point
    *
    * Loads the face factor, the normal vector and the guest-face
-   * interpolants of one host node from either device or host memory.
-   * The interpolants are read from `interpolants`, so this container must be
-   * the host (`self_is_host`).
+   * interpolants of one host node of a pair from either device or host
+   * memory.
    *
    * @tparam on_device If true, loads from device memory; if false, from host
    * @tparam IndexType Type of index (must have iface and ipoint members)
@@ -149,9 +165,6 @@ public:
    * interpolants)
    * @param index Face and point indices for data location
    * @param point Output point object to store loaded data
-   *
-   * @pre `self_is_host` is true. A container that is not the host stores no
-   * interpolants.
    */
   template <bool on_device, typename IndexType, typename PointType>
   KOKKOS_FORCEINLINE_FUNCTION void
