@@ -236,7 +236,8 @@ void program_2d(
   //                   Write Seismograms
   // --------------------------------------------------------------
   // 2-D meshes have no UTM projection, so always use Cartesian X/Z channels.
-  const auto seismogram_writer = setup.instantiate_seismogram_writer(false);
+  const auto seismogram_writer = setup.instantiate_seismogram_writer(
+      specfem::enums::coordinate_frame::cartesian);
   if (seismogram_writer) {
     specfem::Logger::info(
         "Writing seismogram files:\n-------------------------------");

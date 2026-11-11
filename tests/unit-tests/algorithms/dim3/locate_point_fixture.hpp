@@ -6,7 +6,9 @@
 
 #include "specfem/algorithms.hpp"
 #include "specfem/algorithms/locate_point/locate_point_impl.hpp"
+#include "specfem/jacobian/dim3/jacobian.hpp"
 #include "specfem/point.hpp"
+#include "specfem/quadrature/gll.hpp"
 #include "specfem/utilities.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
@@ -38,6 +40,38 @@ protected:
   void SetUp() override {}
 
   void TearDown() override {}
+
+  static Kokkos::View<type_real *, Kokkos::HostSpace> gll_points(int ngll) {
+    Kokkos::View<type_real *, Kokkos::HostSpace> points("gll_points", ngll);
+    if (ngll == 2) {
+      points(0) = -1;
+      points(1) = 1;
+      return points;
+    }
+    const specfem::quadrature::gll::gll quadrature(0, 0, ngll);
+    const auto &hxi = quadrature.get_hxi();
+    for (int i = 0; i < ngll; i++)
+      points(i) = hxi(i);
+    return points;
+  }
+
+  static Kokkos::View<specfem::point::global_coordinates<
+                          specfem::element::dimension_tag::dim3> *,
+                      Kokkos::HostSpace>
+  shift_anchors(const Kokkos::View<specfem::point::global_coordinates<
+                                       specfem::element::dimension_tag::dim3> *,
+                                   Kokkos::HostSpace> &anchors,
+                const specfem::point::global_coordinates<
+                    specfem::element::dimension_tag::dim3> &target) {
+    Kokkos::View<specfem::point::global_coordinates<
+                     specfem::element::dimension_tag::dim3> *,
+                 Kokkos::HostSpace>
+        shifted("shifted", anchors.extent(0));
+    for (size_t i = 0; i < anchors.extent(0); i++)
+      shifted(i) = { anchors(i).x - target.x, anchors(i).y - target.y,
+                     anchors(i).z - target.z };
+    return shifted;
+  }
 
   // Helper to create unit cube coordinates programmatically
   std::vector<std::vector<std::tuple<double, double, double>>>

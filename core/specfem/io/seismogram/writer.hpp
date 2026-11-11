@@ -35,8 +35,8 @@ public:
    * @param t0 Solver start time
    * @param nstep_between_samples number of timesteps between seismogram
    * sampling (seismogram sampling frequency)
-   * @param utm_mesh When true, 3-D elastic seismogram channels use the
-   * geographic E/N/Z convention instead of Cartesian X/Y/Z
+   * @param frame Geographic (UTM or globe) frame: 3-D elastic channels
+   * are labelled E/N/Z; cartesian: X/Y/Z
    */
   seismogram_writer(
       const specfem::enums::seismogram_format type,
@@ -46,8 +46,9 @@ public:
       const int nstep_between_samples,
       std::optional<specfem::datetime::type> starttime = std::nullopt,
       const std::optional<bool> write_from_main = std::nullopt,
-      const bool utm_mesh = false)
-      : impl::ChannelGenerator(dt, nstep_between_samples, utm_mesh), type(type),
+      const specfem::enums::coordinate_frame frame =
+          specfem::enums::coordinate_frame::cartesian)
+      : impl::ChannelGenerator(dt, nstep_between_samples, frame), type(type),
         elastic_wave(elastic_wave), electromagnetic_wave(electromagnetic_wave),
         output_folder(output_folder), dt(dt), t0(t0),
         nstep_between_samples(nstep_between_samples), starttime_(starttime),

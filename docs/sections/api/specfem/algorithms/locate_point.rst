@@ -21,6 +21,12 @@
 
 .. doxygenfunction:: specfem::algorithms::locate_point(const specfem::kokkos::HostTeam::member_type &team_member, const specfem::point::local_coordinates<specfem::element::dimension_tag::dim3> &coordinates, const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh)
 
+The 3-D inverse mapping iterates on element anchors shifted by the target
+point, so the residual stays element-sized in single precision even for
+Earth-scale coordinates. Iteration stops on the reference-coordinate step. When
+candidate distances tie, an element in which the point lies inside is
+preferred. The returned location error is the exact back-projection distance.
+
 Edge Location Functions
 ~~~~~~~~~~~~~~~~~~~~~~~
 
