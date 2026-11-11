@@ -183,7 +183,7 @@ void specfem::compute::impl::compute_coupling_conjugate_integral_nonconforming(
                   index, local_index, interpolants, flux, self_accel);
 
               // The stored normal is the host's outward normal, opposite to
-              // the guest's, hence the sign flip.
+              // the guest's.
               for (int icomp = 0; icomp < ncomp_self; icomp++) {
                 self_accel(icomp) = -self_accel(icomp);
               }
