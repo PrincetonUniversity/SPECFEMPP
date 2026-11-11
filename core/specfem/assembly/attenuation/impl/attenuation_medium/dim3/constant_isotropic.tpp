@@ -70,7 +70,9 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
 
   // Host-only shift increments let model I/O recover the physical cij without
   // retaining the setup-only spherical coordinate cache.
-  std::array<q_view_type, 21> h_cij_correction;
+  using correction_view_type =
+      Kokkos::View<type_real *****, Kokkos::LayoutRight, Kokkos::HostSpace>;
+  correction_view_type h_cij_correction;
 
   // Set once recompute() has run. A View so that copies of this container
   // share the flag.
@@ -218,10 +220,8 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
     }
 
     if constexpr (PropertyTag == specfem::element::property_tag::anisotropic) {
-      for (auto &correction : h_cij_correction) {
-        correction =
-            q_view_type("cij_correction", nspec_attn, ngllz, nglly, ngllx);
-      }
+      h_cij_correction = correction_view_type("cij_correction", 21, nspec_attn,
+                                              ngllz, nglly, ngllx);
       // The moduli are shifted by recompute() once the property container is
       // filled: by the globe oracle, the property reader, or (Cartesian
       // meshes) the assembly from these materials.
@@ -346,7 +346,7 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
           for (int iz = 0; iz < static_cast<int>(scratch.extent(1)); ++iz)
             for (int iy = 0; iy < static_cast<int>(scratch.extent(2)); ++iy)
               for (int ix = 0; ix < static_cast<int>(scratch.extent(3)); ++ix)
-                scratch(i, iz, iy, ix) -= h_cij_correction[k](i, iz, iy, ix);
+                scratch(i, iz, iy, ix) -= h_cij_correction(k, i, iz, iy, ix);
       }
       return;
     }
@@ -571,7 +571,7 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
                   shift(relaxed, ratio - 1.0, false, &final_c44);
               for (int k = 0; k < 21; ++k) {
                 cij_views[k](iprop, iz, iy, ix) = shifted[k];
-                h_cij_correction[k](i, iz, iy, ix) =
+                h_cij_correction(k, i, iz, iy, ix) =
                     cij_views[k](iprop, iz, iy, ix) - coefficients[k];
               }
               h_mu_scale(i, iz, iy, ix) = mu_scale;

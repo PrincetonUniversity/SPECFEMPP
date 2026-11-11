@@ -292,9 +292,8 @@ AnisotropicMedium make_anisotropic_medium() {
   medium.mu_relaxation_rate = iso.mu_relaxation_rate;
   medium.h_mu_relaxation_rate = iso.h_mu_relaxation_rate;
   medium.element_range = specfem::datatype::ElementIndexRange(7, 7 + nspec);
-  for (auto &view : medium.h_cij_correction) {
-    view = HostView("correction", nspec, ngll, ngll, ngll);
-  }
+  medium.h_cij_correction = AnisotropicMedium::correction_view_type(
+      "correction", 21, nspec, ngll, ngll, ngll);
   return medium;
 }
 } // namespace attenuation_recompute_test_impl

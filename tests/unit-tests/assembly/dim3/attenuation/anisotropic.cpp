@@ -67,6 +67,34 @@ void expect_tensor_near(const Tensor &actual, const Tensor &expected,
       EXPECT_NEAR(actual(i, j), actual(j, i), 0.0);
 }
 
+/**
+ * @brief Run one device attenuation update for an anisotropic element.
+ *
+ * Kept out of TEST() because NVCC rejects extended __host__ __device__ lambdas
+ * inside GoogleTest's private TestBody() method.
+ */
+Kokkos::View<type_real[2]>::host_mirror_type
+run_anisotropic_attenuation_update(const Attenuation &attenuation,
+                                   const int ispec) {
+  Kokkos::View<type_real[2]> result("attenuating_stress");
+  Kokkos::parallel_for(
+      "anisotropic_attenuation_update", 1, KOKKOS_LAMBDA(int) {
+        using Tags = specfem::tags::Tags<
+            dimension, Medium::elastic, Property::anisotropic,
+            specfem::element::attenuation_tag::constant_isotropic, false>;
+        const specfem::point::index<dimension, false> index(ispec, 0, 0, 0);
+        specfem::point::stress<Tags> stress;
+        for (int i = 0; i < 3; ++i)
+          for (int j = 0; j < 3; ++j)
+            stress.T(i, j) = 0;
+        specfem::medium_physics::impl_compute_attenuation<Tags>(
+            index, stress, ZeroGradientPack{}, attenuation);
+        result(0) = stress.T(0, 0);
+        result(1) = stress.T(2, 2);
+      });
+  return Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, result);
+}
+
 } // namespace specfem::assembly::anisotropic_attenuation_test_impl
 
 TEST(AnisotropicAttenuation, RejectsUndefinedLoveEta) {
@@ -286,27 +314,8 @@ TEST(AnisotropicAttenuation, GlobeGllModelShiftAndPhysicalModelRecovery) {
   // Exercise the actual stress/memory update: the point type is shared with
   // isotropic media, but must load/store this anisotropic container's state.
   Kokkos::deep_copy(att.memory_variable_Rxx, 1.0);
-  const auto attenuation = assembly.attenuation;
-  const int ispec = att.element_range(0);
-  Kokkos::View<type_real[2]> result("attenuating_stress");
-  Kokkos::parallel_for(
-      "anisotropic_attenuation_update", 1, KOKKOS_LAMBDA(int) {
-        using Tags = specfem::tags::Tags<
-            test::dimension, test::Medium::elastic, test::Property::anisotropic,
-            specfem::element::attenuation_tag::constant_isotropic, false>;
-        const specfem::point::index<test::dimension, false> index(ispec, 0, 0,
-                                                                  0);
-        specfem::point::stress<Tags> stress;
-        for (int i = 0; i < 3; ++i)
-          for (int j = 0; j < 3; ++j)
-            stress.T(i, j) = 0;
-        specfem::medium_physics::impl_compute_attenuation<Tags>(
-            index, stress, test::ZeroGradientPack{}, attenuation);
-        result(0) = stress.T(0, 0);
-        result(1) = stress.T(2, 2);
-      });
-  const auto h_result =
-      Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, result);
+  const auto h_result = test::run_anisotropic_attenuation_update(
+      assembly.attenuation, att.element_range(0));
   EXPECT_NEAR(h_result(0), -specfem::constants::N_SLS, 0.);
   EXPECT_NEAR(h_result(1), specfem::constants::N_SLS, 0.);
   specfem::datatype::deep_copy(att.h_memory_variable_Rxx,
