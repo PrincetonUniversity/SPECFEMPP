@@ -4,7 +4,7 @@
 #include <gtest/gtest.h>
 #include <sstream>
 
-namespace {
+namespace frechet_derivatives_dim3_acoustic_impl {
 
 // Acoustic isotropic Fréchet derivatives (3D). The implementation is
 // dimension-agnostic; here the density kernel sums the gradient product over
@@ -122,4 +122,4 @@ TEST(FrechetDerivatives, AcousticIsotropic3D_ZeroFields) {
   EXPECT_TRUE(kernels == expected) << message.str();
 }
 
-} // namespace
+} // namespace frechet_derivatives_dim3_acoustic_impl
