@@ -156,7 +156,11 @@ NPYHeader parse_npy_header(std::ifstream &file, const char type_char,
 
 void check_fortran_order(const NPYHeader &header, const bool fortran_order,
                          const std::string &path) {
-  if (header.shape.size() > 1 && header.fortran_order != fortran_order) {
+  // With at most one extent above 1 both orders describe the same bytes.
+  const auto non_unit_extents =
+      std::count_if(header.shape.begin(), header.shape.end(),
+                    [](const std::size_t extent) { return extent > 1; });
+  if (non_unit_extents > 1 && header.fortran_order != fortran_order) {
 
     const auto order_name = [](const bool is_fortran) {
       return is_fortran ? "Fortran (column-major)" : "C (row-major)";

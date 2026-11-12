@@ -35,6 +35,21 @@ specfem_add_test(io_framework_tests
               $<$<NOT:$<BOOL:${SPECFEM_ENABLE_ADIOS2}>>:NO_ADIOS2>
 )
 
+specfem_add_test(io_sub_block_tests
+  SOURCES     io/sub_block_tests.cpp
+  LIBRARIES   specfem::io
+              ${BOOST_LIBS}
+              gtest_main
+              Kokkos::kokkos
+              specfem_environment
+              $<$<BOOL:${SPECFEM_ENABLE_NPZ}>:zlib>
+              $<$<BOOL:${SPECFEM_ENABLE_HDF5}>:hdf5>
+              $<$<BOOL:${SPECFEM_ENABLE_ADIOS2}>:adios2>
+  DEFINITIONS $<$<NOT:$<BOOL:${SPECFEM_ENABLE_NPZ}>>:NO_NPZ>
+              $<$<NOT:$<BOOL:${SPECFEM_ENABLE_HDF5}>>:NO_HDF5>
+              $<$<NOT:$<BOOL:${SPECFEM_ENABLE_ADIOS2}>>:NO_ADIOS2>
+)
+
 specfem_add_test(io_mesh_dim3_globe_tests
   LABELS unit io mesh globe
   SOURCES   io/mesh/dim3_globe/read_mesh.cpp
@@ -333,7 +348,9 @@ specfem_add_test(assembly_tests
             assembly/dim3/jacobian_matrix/jacobian_matrix.cpp
             assembly/dim3/properties/properties.cpp
             assembly/dim3/element_types/element_context.cpp
+            assembly/attenuation/wavefield_checkpoint.cpp
             assembly/dim3/attenuation/recompute.cpp
+            assembly/dim3/attenuation/checkpoint_views.cpp
             assembly/dim3/attenuation/globe_attenuation.cpp
             assembly/dim3/element_intersections/globe_fluid_solid.cpp
   LIBRARIES specfem::mesh
@@ -349,6 +366,12 @@ specfem_add_test(assembly_tests
             ${BOOST_LIBS}
             -lpthread -lm
             gtest_main
+            $<$<BOOL:${SPECFEM_ENABLE_NPZ}>:zlib>
+            $<$<BOOL:${SPECFEM_ENABLE_HDF5}>:hdf5>
+            $<$<BOOL:${SPECFEM_ENABLE_ADIOS2}>:adios2>
+  DEFINITIONS $<$<NOT:$<BOOL:${SPECFEM_ENABLE_NPZ}>>:NO_NPZ>
+              $<$<NOT:$<BOOL:${SPECFEM_ENABLE_HDF5}>>:NO_HDF5>
+              $<$<NOT:$<BOOL:${SPECFEM_ENABLE_ADIOS2}>>:NO_ADIOS2>
 )
 
 specfem_add_test(assembly_receivers_tests

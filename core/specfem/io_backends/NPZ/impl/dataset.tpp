@@ -18,6 +18,13 @@ specfem::io_backends::impl::NPZ::Dataset<ViewType, OpType>::Dataset(
           dims.push_back(data.extent(i));
         }
         return dims;
+      }()),
+      fortran_order([&data, &path]() {
+        const auto order =
+            specfem::io_backends::impl::require_contiguous_storage_order(data,
+                                                                         path);
+        return rank <= 1 ||
+               order == specfem::io_backends::impl::StorageOrder::column_major;
       }()) {}
 
 template <typename ViewType, typename OpType>

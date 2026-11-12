@@ -258,6 +258,25 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
   }
 
   /**
+   * @brief Visit the host views that hold the checkpointed restart state.
+   *
+   * Calls `f(dataset_name, host_view)` for every memory variable and previous
+   * strain view. Every wavefield checkpoint writer and reader uses this list.
+   *
+   * @tparam FunctorType Callable `(const std::string &, const View &)`
+   * @param f Functor applied to each view
+   */
+  template <typename FunctorType>
+  void for_each_checkpoint_view(FunctorType f) const {
+    f("Rkappa", h_memory_variable_kappa);
+    f("Rxx", h_memory_variable_Rxx);
+    f("Rxz", h_memory_variable_Rxz);
+    f("EpsilonXX", h_epsilon_xx_att);
+    f("EpsilonZZ", h_epsilon_zz_att);
+    f("EpsilonXZ", h_epsilon_xz_att);
+  }
+
+  /**
    * @brief Recompute runtime attenuation state after a model read.
    *
    * The property reader leaves the physical (relaxed) moduli from the file in

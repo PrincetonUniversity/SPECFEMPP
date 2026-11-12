@@ -58,6 +58,15 @@ public:
                  &assembly) override;
 
 private:
+  /**
+   * @brief Dimension-generic implementation of write()
+   *
+   * @tparam DimensionTag Dimension of the assembly
+   * @param assembly SPECFEM++ assembly
+   */
+  template <specfem::element::dimension_tag DimensionTag>
+  void write_impl(specfem::assembly::assembly<DimensionTag> &assembly);
+
   std::string output_folder; ///< Path to output folder
 };
 } // namespace io
