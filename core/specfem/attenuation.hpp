@@ -7,6 +7,7 @@
 #include "attenuation/compute_tau_sigma.hpp"
 #include "attenuation/globe.hpp"
 #include "attenuation/maxwell.hpp"
+#include "attenuation/quality_factor_table.hpp"
 #include "attenuation/setup.hpp"
 
 /**

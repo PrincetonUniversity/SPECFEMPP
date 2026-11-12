@@ -1,7 +1,9 @@
 #pragma once
 
 #include "specfem/assembly/attenuation/impl/attenuation_medium.hpp"
+#include "specfem/assembly/attenuation/impl/attenuation_medium/dim3/modulus_shift.hpp"
 #include "specfem/assembly/attenuation/impl/attenuation_medium/dim3/unrelaxed_tensor.hpp"
+#include "specfem/attenuation/globe.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/attenuation/compute_factors.hpp"
 #include "specfem/attenuation/compute_tau_eps.hpp"
@@ -17,9 +19,9 @@
 #include <Kokkos_Core.hpp>
 #include <algorithm>
 #include <array>
-#include <map>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <utility>
 
 namespace specfem::assembly::impl {
@@ -62,9 +64,8 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
   q_view_type h_kappa_scale;
   q_view_type h_mu_scale;
 
-  // Attenuate kappa as well as mu. When false (globe meshes, and always for
-  // anisotropic elements, which attenuate shear only as in globe), kappa stays
-  // physical (scale 1) and its relaxation rates are zero, so the kappa memory
+  // Attenuate kappa as well as mu. When false (globe meshes, as in globe)
+  // kappa keeps scale 1 and zero relaxation rates, so the kappa memory
   // variables never leave zero.
   bool bulk_attenuation = true;
 
@@ -130,9 +131,7 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
       const Kokkos::View<type_real[N_SLS], Kokkos::DefaultHostExecutionSpace>
           &tau_sigma,
       const bool bulk_attenuation = true)
-      : bulk_attenuation(bulk_attenuation &&
-                         PropertyTag ==
-                             specfem::element::property_tag::isotropic) {
+      : bulk_attenuation(bulk_attenuation) {
 
     const int nspec_attn = elements.extent(0);
 
@@ -381,34 +380,32 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
   /**
    * @brief Recompute runtime attenuation state after a model read.
    *
-   * The property reader leaves the physical (relaxed) moduli from the file in
-   * @p props and the per-GLL Q in h_Qkappa/h_Qmu. The runtime needs unrelaxed
-   * moduli and relaxation rates: for every attenuating GLL point a modulus
-   * scale factor is derived from the read-back Q, the moduli in @p props are
-   * scaled to unrelaxed in place, and the relaxation rates are recomputed
-   * from them (pushed to device). The per-GLL scale factors are refreshed so
-   * a subsequent write stays consistent with the read model. Q is sampled at
-   * every GLL point, so a GLL-varying Q model is honoured; the (expensive)
-   * tau_epsilon fit is memoized and only redone when Q moves
-   * to another bucket of globe's Q storage table. When @c bulk_attenuation is false only mu is shifted and
-   * relaxed; kappa and its zero relaxation rates are left as they are. No-op
-   * when there are no attenuating elements. Host-only; const because only
-   * view data is mutated.
+   * The property reader leaves the physical (reference-frequency) moduli
+   * from the file in @p props and the per-GLL Q in h_Qkappa/h_Qmu. For every
+   * attenuating GLL point this fits Q, shifts the moduli in @p props to
+   * unrelaxed in place, refreshes the per-GLL scales (and, for anisotropic
+   * properties, the cij increments) so a later write recovers the physical
+   * model, and sets the relaxation rates from the unrelaxed moduli (pushed
+   * to device). Q is sampled at every GLL point, so a GLL-varying Q model is
+   * honoured; fits are memoized by a specfem::attenuation::QualityFactorTable,
+   * one per bucket, and the stored Q is replaced by its bucket's
+   * representative. When @c bulk_attenuation is false kappa is neither
+   * shifted nor relaxed. No-op when there are no attenuating elements.
+   * Host-only; const because only view data is mutated.
+   *
+   * The shift itself depends on the property tag (see
+   * IsotropicModulusShift and AnisotropicModulusShift); anisotropic shear is
+   * shifted in the point's radial frame: Cartesian z, the local vertical of
+   * globe mantle elements, or globe's inner-core update.
    *
    * @throws std::runtime_error if called a second time, since the moduli in
-   *         @p props would then be scaled to unrelaxed twice.
+   *         @p props would then be shifted twice, or if globe anisotropic
+   *         elements need spherical coordinates that were not provided.
    *
-   * For anisotropic containers, props instead exposes h_c11 through h_c66.
-   * A shear-only radial shift is applied after Love-to-cij conversion, using
-   * the same total mu scale as the isotropic path. The radial frame is the
-   * local vertical for globe elements and Cartesian z when the context reports
-   * a Cartesian mesh. The final radial c44 gives the memory-variable
-   * relaxation rates, as globe's muvstore does.
-   *
-   * @tparam PropsContainer Property data container with host modulus views
-   *                        and element_range.
+   * @tparam PropsContainer Property container: h_kappa/h_mu (isotropic) or
+   *                        h_c11..h_c66 (anisotropic), and element_range.
    * @tparam SphericalView Host spherical coordinate cache type.
-   * @tparam ElementContext Callable returning region/radial-zone metadata.
+   * @tparam ElementContext Callable returning AttenuationElementContext.
    * @param props The just-read property container
    * @param fc Band-center frequency for modulus scaling
    * @param f0 Reference frequency
@@ -436,179 +433,140 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
           "attenuation_medium::recompute() called twice: the moduli are "
           "already unrelaxed and would be scaled a second time.");
     }
-    if constexpr (PropertyTag == specfem::element::property_tag::anisotropic) {
-      bool needs_radial_coordinates = false;
+    const auto shift = modulus_shift(
+        props, spherical,
+        element_range.begin_index() - props.element_range.begin_index());
+    if (shift.needs_spherical_coordinates && spherical.data() == nullptr) {
       for (int i = 0; i < element_range.size(); ++i) {
-        needs_radial_coordinates |=
-            context(element_range(i)).needs_spherical_coordinates();
-      }
-      if (needs_radial_coordinates && spherical.data() == nullptr) {
-        throw std::runtime_error(
-            "Anisotropic attenuation requires spherical coordinates");
+        if (context(element_range(i)).needs_spherical_coordinates()) {
+          throw std::runtime_error(
+              "Anisotropic attenuation requires spherical coordinates");
+        }
       }
     }
     h_recomputed() = true;
-    const int nspec_attn = element_range.size();
-    const int offset =
-        element_range.begin_index() - props.element_range.begin_index();
+
+    using Fit = specfem::attenuation::globe::QualityFactorFit<N_SLS>;
+    const auto fit = [&](const type_real q) {
+      return specfem::attenuation::globe::fit_quality_factor<N_SLS>(
+          q, tau_sigma, band, fc.raw(), f0.raw());
+    };
+    auto bulk_table =
+        specfem::attenuation::globe::make_quality_factor_table<N_SLS>();
+    auto shear_table =
+        specfem::attenuation::globe::make_quality_factor_table<N_SLS>();
+    // Without bulk attenuation kappa keeps scale 1 and zero relaxation rates.
+    Fit no_bulk;
+    no_bulk.properties.beta = decltype(no_bulk.properties.beta)("beta");
+    no_bulk.properties.one_minus_sum_beta = 1;
+
     const int l_ngllz = h_Qkappa.extent(1);
     const int l_nglly = h_Qkappa.extent(2);
     const int l_ngllx = h_Qkappa.extent(3);
-    const auto cij_views = [&]() {
-      if constexpr (PropertyTag ==
-                    specfem::element::property_tag::anisotropic) {
-        return std::array{ props.h_c11, props.h_c12, props.h_c13, props.h_c14,
-                           props.h_c15, props.h_c16, props.h_c22, props.h_c23,
-                           props.h_c24, props.h_c25, props.h_c26, props.h_c33,
-                           props.h_c34, props.h_c35, props.h_c36, props.h_c44,
-                           props.h_c45, props.h_c46, props.h_c55, props.h_c56,
-                           props.h_c66 };
-      } else {
-        return std::array<q_view_type, 0>{};
-      }
-    }();
-    // Globe's storage table: Q values sharing a bucket use the first one,
-    // so there is one fit per bucket.
-    specfem::attenuation::globe::QualityFactorTable shear_table, bulk_table;
-    std::map<type_real,
-             specfem::attenuation::globe::QualityFactorFit<N_SLS> >
-        fits;
-    const auto fit = [&](const type_real q)
-        -> const specfem::attenuation::globe::QualityFactorFit<N_SLS> & {
-      if (const auto found = fits.find(q); found != fits.end())
-        return found->second;
-      return fits
-          .emplace(q, specfem::attenuation::globe::fit_quality_factor<N_SLS>(
-                          q, tau_sigma, band, fc.raw(), f0.raw()))
-          .first->second;
-    };
-    for (int i = 0; i < nspec_attn; ++i) {
-      const auto metadata = context(element_range(i));
+    for (int i = 0; i < element_range.size(); ++i) {
+      const int ispec = element_range(i);
+      const auto metadata = context(ispec);
       if (metadata.fictitious())
         continue;
-      const bool cartesian = metadata.cartesian;
-      const bool inner_core =
-          !cartesian &&
-          metadata.region == specfem::element::region_tag::inner_core;
-      // Without bulk attenuation kappa keeps scale 1 and zero relaxation
-      // rates (kappa_props.beta stays zero), and Qkappa is never solved for.
-      type_real kappa_scale = 1, mu_scale = 1;
-      specfem::attenuation::globe::ModulusScales mu_scales;
-      specfem::attenuation::AttenuationPropertyValues<N_SLS> kappa_props,
-          mu_props;
-      if (!bulk_attenuation) {
-        kappa_props.beta = Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight,
-                                        Kokkos::HostSpace>("beta");
-        kappa_props.one_minus_sum_beta = 1.0;
-      }
       for (int iz = 0; iz < l_ngllz; ++iz) {
         for (int iy = 0; iy < l_nglly; ++iy) {
           for (int ix = 0; ix < l_ngllx; ++ix) {
-            const type_real Qkappa = h_Qkappa(i, iz, iy, ix);
-            const type_real Qmu = h_Qmu(i, iz, iy, ix);
+            const Fit *kappa_fit = &no_bulk;
             if (bulk_attenuation) {
-              const type_real q = bulk_table.representative(Qkappa);
-              const auto &kappa_fit = fit(q);
-              kappa_scale = kappa_fit.scales.unrelaxed();
-              kappa_props = kappa_fit.properties;
+              const type_real q =
+                  bulk_table.representative(h_Qkappa(i, iz, iy, ix));
               h_Qkappa(i, iz, iy, ix) = q;
+              kappa_fit = &bulk_table.fit(q, fit);
             }
-            const type_real q = shear_table.representative(Qmu);
-            const auto &mu_fit = fit(q);
-            mu_scales = mu_fit.scales;
-            mu_scale = mu_scales.unrelaxed();
-            mu_props = mu_fit.properties;
+            const type_real q =
+                shear_table.representative(h_Qmu(i, iz, iy, ix));
             h_Qmu(i, iz, iy, ix) = q;
-            if constexpr (PropertyTag ==
-                          specfem::element::property_tag::anisotropic) {
-              const int iprop = offset + i;
-              const int ispec = element_range(i);
-              const bool rotate = !inner_core && !cartesian;
-              const double theta = rotate ? spherical(ispec, iz, iy, ix, 1) : 0;
-              const double phi = rotate ? spherical(ispec, iz, iy, ix, 2) : 0;
-              double coefficients[21];
-              for (int k = 0; k < 21; ++k) {
-                coefficients[k] = cij_views[k](iprop, iz, iy, ix);
-              }
-              using Cartesian = specfem::coordinate_systems::CartesianFrame;
-              const specfem::medium_physics::ElasticityTensor<Cartesian, double>
-                  global(coefficients);
-              // One setup stage in the element's radial frame, optionally
-              // returning the shifted radial c44.
-              const auto shift = [&](const auto &tensor, const double increment,
-                                     const bool reference_stage,
-                                     double *radial_c44 = nullptr) {
-                if (rotate)
-                  return shift_unrelaxed_tensor<type_real>(
-                      tensor, theta, phi, increment, radial_c44);
-                const auto shifted =
-                    inner_core ? shift_inner_core_tensor<type_real>(
-                                     tensor, increment, reference_stage)
-                               : shift_radial_tensor<type_real>(tensor,
-                                                                increment);
-                if (radial_c44 != nullptr)
-                  *radial_c44 = shifted(3, 3);
-                return shifted;
-              };
-              // Mirror globe's two setup stages: reference -> relaxed,
-              // followed by relaxed -> unrelaxed. Preserve the input exactly
-              // when both multipliers are one.
-              const double ratio = mu_props.one_minus_sum_beta;
-              const double relaxed_scale =
-                  static_cast<type_real>(mu_scales.relaxed);
-              const auto relaxed_double =
-                  shift(global, relaxed_scale - 1.0, true);
-              // Globe stores CUSTOM_REAL cij between the two setup stages.
-              double relaxed_coefficients[21];
-              for (int k = 0; k < 21; ++k) {
-                relaxed_coefficients[k] =
-                    static_cast<type_real>(relaxed_double[k]);
-              }
-              const specfem::medium_physics::ElasticityTensor<Cartesian, double>
-                  relaxed(relaxed_coefficients);
-              double final_c44 = 0;
-              const auto shifted =
-                  shift(relaxed, ratio - 1.0, false, &final_c44);
-              for (int k = 0; k < 21; ++k) {
-                cij_views[k](iprop, iz, iy, ix) = shifted[k];
-                h_cij_correction(k, i, iz, iy, ix) =
-                    cij_views[k](iprop, iz, iy, ix) - coefficients[k];
-              }
-              h_mu_scale(i, iz, iy, ix) = mu_scale;
-              h_kappa_scale(i, iz, iy, ix) = 1;
-              // Globe's muvstore holds this c44 in storage precision.
-              const type_real mu_unrelaxed = final_c44;
-              for (int j = 0; j < N_SLS; ++j) {
-                h_kappa_relaxation_rate(i, iz, iy, ix, j) = 0;
-                h_mu_relaxation_rate(i, iz, iy, ix, j) =
-                    2 * mu_unrelaxed * mu_props.beta(j) /
-                    tau_sigma(j) / mu_props.one_minus_sum_beta;
-              }
-            } else {
-              const type_real kappa_unrelaxed =
-                  props.h_kappa(offset + i, iz, iy, ix) * kappa_scale;
-              const type_real mu_unrelaxed =
-                  props.h_mu(offset + i, iz, iy, ix) * mu_scale;
-              props.h_kappa(offset + i, iz, iy, ix) = kappa_unrelaxed;
-              props.h_mu(offset + i, iz, iy, ix) = mu_unrelaxed;
-              h_kappa_scale(i, iz, iy, ix) = kappa_scale;
-              h_mu_scale(i, iz, iy, ix) = mu_scale;
-              for (int j = 0; j < N_SLS; ++j) {
-                const type_real tauinv_j = 1.0 / tau_sigma(j);
-                h_kappa_relaxation_rate(i, iz, iy, ix, j) =
-                    kappa_unrelaxed * kappa_props.beta(j) * tauinv_j /
-                    kappa_props.one_minus_sum_beta;
-                h_mu_relaxation_rate(i, iz, iy, ix, j) =
-                    mu_unrelaxed * 2.0 * mu_props.beta(j) * tauinv_j /
-                    mu_props.one_minus_sum_beta;
-              }
-            }
+            const Fit &mu_fit = shear_table.fit(q, fit);
+            const auto moduli =
+                shift(i, ispec, iz, iy, ix, metadata, *kappa_fit, mu_fit);
+            set_relaxation_rates(i, iz, iy, ix, moduli, kappa_fit->properties,
+                                 mu_fit.properties, tau_sigma);
           }
         }
       }
     }
     Kokkos::deep_copy(kappa_relaxation_rate, h_kappa_relaxation_rate);
     Kokkos::deep_copy(mu_relaxation_rate, h_mu_relaxation_rate);
+  }
+
+  /**
+   * @brief Relaxation rates of one GLL point from its unrelaxed moduli.
+   *
+   * \f$\kappa\,\beta^\kappa_j/(\tau_{\sigma_j}\Sigma^\kappa)\f$ and
+   * \f$2\mu\,\beta^\mu_j/(\tau_{\sigma_j}\Sigma^\mu)\f$, with
+   * \f$\Sigma\f$ the one_minus_sum_beta of each fit; matches SPECFEM3D's
+   * factor_common scaled by the unrelaxed modulus.
+   *
+   * @param i Attenuation-local element index
+   * @param iz, iy, ix GLL indices
+   * @param moduli Unrelaxed moduli of the point
+   * @param kappa Bulk relaxation properties (zero defects when not attenuated)
+   * @param mu Shear relaxation properties
+   * @param tau_sigma Stress relaxation times
+   */
+  void set_relaxation_rates(
+      const int i, const int iz, const int iy, const int ix,
+      const UnrelaxedModuli &moduli,
+      const specfem::attenuation::AttenuationPropertyValues<N_SLS> &kappa,
+      const specfem::attenuation::AttenuationPropertyValues<N_SLS> &mu,
+      const Kokkos::View<type_real[N_SLS], Kokkos::DefaultHostExecutionSpace>
+          &tau_sigma) const {
+    for (int j = 0; j < N_SLS; ++j) {
+      const type_real tauinv_j = 1.0 / tau_sigma(j);
+      h_kappa_relaxation_rate(i, iz, iy, ix, j) =
+          moduli.kappa * kappa.beta(j) * tauinv_j / kappa.one_minus_sum_beta;
+      h_mu_relaxation_rate(i, iz, iy, ix, j) =
+          moduli.mu * 2.0 * mu.beta(j) * tauinv_j / mu.one_minus_sum_beta;
+    }
+  }
+
+  /**
+   * @brief Per-point modulus shift for isotropic properties.
+   * @param props Property container exposing h_kappa and h_mu
+   * @param offset Attenuation-to-property element index offset
+   * @return IsotropicModulusShift writing into @p props and this container
+   */
+  template <typename PropsContainer, typename SphericalView>
+  auto modulus_shift(const PropsContainer &props, const SphericalView &,
+                     const int offset) const
+    requires(PropertyTag == specfem::element::property_tag::isotropic)
+  {
+    return IsotropicModulusShift<PropsContainer, q_view_type>{
+      props, h_kappa_scale, h_mu_scale, offset
+    };
+  }
+
+  /**
+   * @brief Per-point modulus shift for anisotropic properties.
+   * @param props Property container exposing h_c11..h_c66
+   * @param spherical Host spherical coordinate cache
+   * @param offset Attenuation-to-property element index offset
+   * @return AnisotropicModulusShift writing into @p props and this container
+   */
+  template <typename PropsContainer, typename SphericalView>
+  auto modulus_shift(const PropsContainer &props,
+                     const SphericalView &spherical, const int offset) const
+    requires(PropertyTag == specfem::element::property_tag::anisotropic)
+  {
+    using CijView = std::remove_cvref_t<decltype(props.h_c11)>;
+    return AnisotropicModulusShift<CijView, q_view_type, correction_view_type,
+                                   SphericalView>{
+      { props.h_c11, props.h_c12, props.h_c13, props.h_c14, props.h_c15,
+        props.h_c16, props.h_c22, props.h_c23, props.h_c24, props.h_c25,
+        props.h_c26, props.h_c33, props.h_c34, props.h_c35, props.h_c36,
+        props.h_c44, props.h_c45, props.h_c46, props.h_c55, props.h_c56,
+        props.h_c66 },
+      h_kappa_scale,
+      h_mu_scale,
+      h_cij_correction,
+      spherical,
+      offset
+    };
   }
 
   void copy_to_host() {

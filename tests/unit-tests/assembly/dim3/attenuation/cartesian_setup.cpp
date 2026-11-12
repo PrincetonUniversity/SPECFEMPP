@@ -117,13 +117,22 @@ template <typename Container> auto stiffness_views(const Container &container) {
   return views;
 }
 
-/** @brief Globe's independent Cartesian (north-pole) attenuation of cij. */
+/**
+ * @brief Expected unrelaxed state of the Cartesian material.
+ *
+ * Shear: globe's independent Cartesian (north-pole) attenuation of cij.
+ * Bulk: the Voigt bulk modulus of the reference tensor scaled by the Qkappa
+ * multiplier, added to the normal-stress block.
+ */
 struct Expected {
   double cij[21];
   double mu_unrelaxed;
   double rates[specfem::constants::N_SLS];
+  double kappa_scale;
+  double kappa_rates[specfem::constants::N_SLS];
 
-  Expected(const Assembly &assembly, const double qmu) {
+  Expected(const Assembly &assembly, const double qmu, const double qkappa) {
+    constexpr int n = specfem::constants::N_SLS;
     const auto c = stiffnesses();
     double original[21];
     for (int k = 0; k < 21; ++k)
@@ -133,6 +142,19 @@ struct Expected {
         0., 0., assembly.attenuation.band.min.raw(),
         assembly.attenuation.band.max.raw(), qmu, assembly.attenuation.fc.raw(),
         assembly.attenuation.f0.raw(), original, cij, &mu_unrelaxed, rates);
+
+    const auto bulk = specfem::attenuation::globe::fit_quality_factor<n>(
+        qkappa, assembly.attenuation.tau_sigma, assembly.attenuation.band,
+        assembly.attenuation.fc.raw(), assembly.attenuation.f0.raw());
+    kappa_scale = static_cast<type_real>(bulk.scales.unrelaxed());
+    // c11, c22, c33 and c12, c13, c23 in packed Voigt order.
+    const double kappa = (c[0] + c[6] + c[11] + 2 * (c[1] + c[2] + c[7])) / 9;
+    for (const int k : { 0, 6, 11, 1, 2, 7 })
+      cij[k] += kappa * (kappa_scale - 1);
+    for (int j = 0; j < n; ++j)
+      kappa_rates[j] = kappa * kappa_scale * bulk.properties.beta(j) /
+                       assembly.attenuation.tau_sigma(j) /
+                       bulk.properties.one_minus_sum_beta;
   }
 };
 
@@ -160,7 +182,7 @@ TEST(CartesianAnisotropicAttenuationSetup, MaterialsAreShiftedOnAssembly) {
   ASSERT_EQ(att.element_range.size(), mesh.nspec);
   ASSERT_EQ(props.element_range.size(), mesh.nspec);
 
-  const test::Expected expected(*assembly, test::Qmu);
+  const test::Expected expected(*assembly, test::Qmu, test::Qkappa);
   const auto views = test::stiffness_views(props);
   ASSERT_EQ(views.size(), 21);
 
@@ -190,12 +212,15 @@ TEST(CartesianAnisotropicAttenuationSetup, MaterialsAreShiftedOnAssembly) {
           EXPECT_NEAR(props.h_rho(i, z, y, x), test::rho, 0.);
           EXPECT_NEAR(att.h_Qkappa(i, z, y, x), test::Qkappa, 0.);
           EXPECT_NEAR(att.h_Qmu(i, z, y, x), test::Qmu, 0.);
-          EXPECT_NEAR(att.h_kappa_scale(i, z, y, x), 1., 0.);
+          EXPECT_NEAR(att.h_kappa_scale(i, z, y, x), expected.kappa_scale, 0.);
           for (int j = 0; j < specfem::constants::N_SLS; ++j) {
             EXPECT_NEAR(att.h_mu_relaxation_rate(i, z, y, x, j),
                         expected.rates[j],
                         test::rate_tolerance * std::abs(expected.rates[j]));
-            EXPECT_NEAR(att.h_kappa_relaxation_rate(i, z, y, x, j), 0., 0.);
+            EXPECT_NEAR(att.h_kappa_relaxation_rate(i, z, y, x, j),
+                        expected.kappa_rates[j],
+                        test::rate_tolerance *
+                            std::abs(expected.kappa_rates[j]));
           }
         }
 }
@@ -251,7 +276,7 @@ TEST(CartesianAnisotropicAttenuationSetup, PropertyReadUsesCartesianContext) {
   const auto &att =
       assembly->attenuation
           .get_container<test::Medium::elastic, test::Property::anisotropic>();
-  const test::Expected expected(*assembly, test::Qmu);
+  const test::Expected expected(*assembly, test::Qmu, test::Qkappa);
   const auto c = test::stiffnesses();
   const auto views = test::stiffness_views(props);
   ASSERT_EQ(views.size(), 21);
@@ -270,13 +295,18 @@ TEST(CartesianAnisotropicAttenuationSetup, PropertyReadUsesCartesianContext) {
                       test::io_tolerance * test::Qkappa);
           EXPECT_NEAR(att.h_Qmu(i, z, y, x), test::Qmu,
                       test::io_tolerance * test::Qmu);
-          EXPECT_NEAR(att.h_kappa_scale(i, z, y, x), 1., 0.);
+          EXPECT_NEAR(att.h_kappa_scale(i, z, y, x), expected.kappa_scale,
+                      test::io_tolerance);
           for (int j = 0; j < specfem::constants::N_SLS; ++j) {
             EXPECT_NEAR(att.h_mu_relaxation_rate(i, z, y, x, j),
                         expected.rates[j],
                         test::io_rate_tolerance * std::abs(expected.rates[j]))
                 << "element " << i;
-            EXPECT_NEAR(att.h_kappa_relaxation_rate(i, z, y, x, j), 0., 0.);
+            EXPECT_NEAR(att.h_kappa_relaxation_rate(i, z, y, x, j),
+                        expected.kappa_rates[j],
+                        test::io_rate_tolerance *
+                            std::abs(expected.kappa_rates[j]))
+                << "element " << i;
           }
         }
 }

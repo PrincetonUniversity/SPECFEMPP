@@ -278,8 +278,8 @@ struct AnisotropicProps {
   }
 };
 
-AnisotropicMedium make_anisotropic_medium() {
-  const auto iso = make_medium(false);
+AnisotropicMedium make_anisotropic_medium(const bool bulk_attenuation = false) {
+  const auto iso = make_medium(bulk_attenuation);
   AnisotropicMedium medium;
   medium.bulk_attenuation = iso.bulk_attenuation;
   medium.h_recomputed = iso.h_recomputed;
@@ -355,6 +355,64 @@ TEST(AnisotropicAttenuationRecompute, IsotropicLimitAndGllVaryingQ) {
   EXPECT_THROW(copy.recompute(props, inputs.fc, inputs.f0, inputs.band,
                               inputs.tau_sigma, spherical, test::mantle),
                std::runtime_error);
+}
+
+// With bulk attenuation, isotropic input given as cij must reproduce the
+// isotropic path: kappa and mu shifted by their multipliers, same rates.
+TEST(AnisotropicAttenuationRecompute, IsotropicLimitWithBulkAttenuation) {
+  namespace test = attenuation_recompute_test_impl;
+  const test::Inputs inputs;
+  const auto iso = test::make_medium(true);
+  const auto aniso = test::make_anisotropic_medium(true);
+  const auto iso_props = test::make_props();
+  const test::AnisotropicProps props;
+  const auto views = props.views();
+  for (int i = 0; i < test::nspec; ++i)
+    for (int z = 0; z < test::ngll; ++z)
+      for (int y = 0; y < test::ngll; ++y)
+        for (int x = 0; x < test::ngll; ++x) {
+          const double kappa = iso_props.h_kappa(i, z, y, x);
+          const double mu = iso_props.h_mu(i, z, y, x);
+          const double vp = std::sqrt(kappa + 4. / 3. * mu);
+          const double vs = std::sqrt(mu);
+          const test::Radial radial(1., vp, vp, vs, vs, 1.);
+          for (int k = 0; k < 21; ++k)
+            views[k](i, z, y, x) = radial[k];
+        }
+  iso.recompute(iso_props, inputs.fc, inputs.f0, inputs.band, inputs.tau_sigma,
+                test::SphericalView{}, test::cartesian);
+  aniso.recompute(props, inputs.fc, inputs.f0, inputs.band, inputs.tau_sigma,
+                  test::SphericalView{}, test::cartesian);
+  const double tolerance = std::is_same_v<type_real, double> ? 1.e-12 : 3.e-6;
+  for (int i = 0; i < test::nspec; ++i)
+    for (int z = 0; z < test::ngll; ++z)
+      for (int y = 0; y < test::ngll; ++y)
+        for (int x = 0; x < test::ngll; ++x) {
+          // iso_props now hold the unrelaxed moduli.
+          const double mu = iso_props.h_mu(i, z, y, x);
+          const double kappa = iso_props.h_kappa(i, z, y, x);
+          EXPECT_NEAR(props.h_c44(i, z, y, x), mu, tolerance * mu);
+          EXPECT_NEAR(props.h_c11(i, z, y, x), kappa + 4. / 3. * mu,
+                      tolerance * kappa);
+          EXPECT_NEAR(props.h_c33(i, z, y, x), kappa + 4. / 3. * mu,
+                      tolerance * kappa);
+          EXPECT_NEAR(props.h_c12(i, z, y, x), kappa - 2. / 3. * mu,
+                      tolerance * kappa);
+          EXPECT_NEAR(props.h_c13(i, z, y, x), kappa - 2. / 3. * mu,
+                      tolerance * kappa);
+          EXPECT_NEAR(aniso.h_kappa_scale(i, z, y, x),
+                      iso.h_kappa_scale(i, z, y, x), 0.);
+          for (int j = 0; j < test::N_SLS; ++j) {
+            const double mu_rate = iso.h_mu_relaxation_rate(i, z, y, x, j);
+            const double kappa_rate =
+                iso.h_kappa_relaxation_rate(i, z, y, x, j);
+            EXPECT_NE(kappa_rate, 0.);
+            EXPECT_NEAR(aniso.h_mu_relaxation_rate(i, z, y, x, j), mu_rate,
+                        tolerance * std::abs(mu_rate));
+            EXPECT_NEAR(aniso.h_kappa_relaxation_rate(i, z, y, x, j),
+                        kappa_rate, tolerance * std::abs(kappa_rate));
+          }
+        }
 }
 
 TEST(AnisotropicAttenuationRecompute, InfiniteQUsesGlobeLimit) {

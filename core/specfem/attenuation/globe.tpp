@@ -68,7 +68,7 @@ specfem::attenuation::globe::compute_tau_eps(
   static_assert(N_SLS > 1,
                 "N_SLS must be greater than 1 for tau_eps computation");
 
-  const double q = specfem::attenuation::globe::effective_quality_factor(Q);
+  const double q = specfem::attenuation::globe::clip_quality_factor(Q);
   const specfem::utilities::Band<specfem::units::Hertz> frequency_band(band);
 
   // Globe's attenuation_invert_by_simplex: frequencies equally spaced in
@@ -87,7 +87,13 @@ specfem::attenuation::globe::compute_tau_eps(
     objective.tau_sigma(i) = tau_sigma(i);
   }
 
-  specfem::optimization::NelderMeadOptions<N_SLS, double, true> options;
+  // Globe's fminsearch runs in double precision but writes its tolerances and
+  // simplex steps as single-precision literals.
+  specfem::optimization::NelderMeadOptions<N_SLS, double> options;
+  options.tol_f = static_cast<double>(1.0e-4f);
+  options.tol_x = static_cast<double>(1.0e-4f);
+  options.initial_step = static_cast<double>(0.05f);
+  options.zero_step = static_cast<double>(0.00025f);
   options.x0 = decltype(options.x0)("tau_eps_init");
   for (int i = 0; i < N_SLS; ++i) {
     const double sigma = objective.tau_sigma(i);
@@ -146,7 +152,7 @@ specfem::attenuation::globe::get_attenuation_modulus_scales(
     const Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight,
                        Kokkos::HostSpace> &tau_sigma,
     type_real Q_val, type_real attenuation_f0_reference) {
-  const double q = specfem::attenuation::globe::effective_quality_factor(Q_val);
+  const double q = specfem::attenuation::globe::clip_quality_factor(Q_val);
   const double f_c = f_c_source;
   const double f_0 = attenuation_f0_reference;
 

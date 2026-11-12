@@ -12,16 +12,14 @@ routines documented on the other pages.
 Quality factor
 --------------
 
-These helpers normalize Q values passed to the fitting routines. Native
+Globe clips Q before fitting and before the dispersion correction. Native
 non-globe 3D material validation and the reader's elastic sentinel are applied
-before fitting; see :doc:`index` for these input conventions.
+before fitting; see :doc:`index` for these input conventions. Q is bucketed
+with the formulation-independent :doc:`quality_factor_table`.
 
-.. doxygenfunction:: specfem::attenuation::globe::effective_quality_factor
+.. doxygenfunction:: specfem::attenuation::globe::clip_quality_factor
 
-.. doxygenfunction:: specfem::attenuation::globe::quality_factor_bucket
-
-.. doxygenclass:: specfem::attenuation::globe::QualityFactorTable
-    :members:
+.. doxygenfunction:: specfem::attenuation::globe::make_quality_factor_table
 
 Q fit
 -----

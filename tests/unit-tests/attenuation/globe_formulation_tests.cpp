@@ -159,25 +159,24 @@ TEST(GlobeAttenuation_ComputeTauEps, RejectsUnconvergedFit) {
       std::runtime_error);
 }
 
-TEST(GlobeAttenuation_QualityFactor, LimitAndBuckets) {
+TEST(GlobeAttenuation_QualityFactor, ClipsToMaximum) {
   namespace globe = specfem::attenuation::globe;
   const type_real inf = std::numeric_limits<type_real>::infinity();
-  EXPECT_NEAR(globe::effective_quality_factor(80), 80, 0.0);
-  EXPECT_NEAR(globe::effective_quality_factor(0), 9000, 0.0);
-  EXPECT_NEAR(globe::effective_quality_factor(-5), 9000, 0.0);
-  EXPECT_NEAR(globe::effective_quality_factor(9999), 9000, 0.0);
-  EXPECT_NEAR(globe::effective_quality_factor(inf), 9000, 0.0);
-  EXPECT_THROW(globe::effective_quality_factor(
-                   std::numeric_limits<type_real>::quiet_NaN()),
-               std::invalid_argument);
-  EXPECT_EQ(globe::quality_factor_bucket(150.31), 1503);
-  EXPECT_EQ(globe::quality_factor_bucket(0.05), 1);
-  EXPECT_EQ(globe::quality_factor_bucket(inf), 90000);
+  EXPECT_NEAR(globe::clip_quality_factor(80), 80, 0.0);
+  EXPECT_NEAR(globe::clip_quality_factor(9000), 9000, 0.0);
+  EXPECT_NEAR(globe::clip_quality_factor(0), 9000, 0.0);
+  EXPECT_NEAR(globe::clip_quality_factor(-5), 9000, 0.0);
+  EXPECT_NEAR(globe::clip_quality_factor(9999), 9000, 0.0);
+  EXPECT_NEAR(globe::clip_quality_factor(inf), 9000, 0.0);
+  EXPECT_THROW(
+      globe::clip_quality_factor(std::numeric_limits<type_real>::quiet_NaN()),
+      std::invalid_argument);
 
-  globe::QualityFactorTable table;
-  EXPECT_NEAR(table.representative(80.03), static_cast<type_real>(80.03), 0.0);
-  EXPECT_NEAR(table.representative(80.07), static_cast<type_real>(80.03), 0.0);
-  EXPECT_NEAR(table.representative(80.11), static_cast<type_real>(80.11), 0.0);
-  EXPECT_NEAR(table.representative(9999), 9000, 0.0);
-  EXPECT_NEAR(table.representative(inf), 9000, 0.0);
+  // The globe table clips exactly as the fit does.
+  auto table = globe::make_quality_factor_table<2>();
+  for (const type_real q :
+       { type_real(80), type_real(0), type_real(-5), type_real(9999), inf }) {
+    EXPECT_NEAR(table.clip(q), globe::clip_quality_factor(q), 0.0);
+  }
+  EXPECT_EQ(table.bucket(inf), 90000);
 }

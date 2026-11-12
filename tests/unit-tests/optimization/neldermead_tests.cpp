@@ -69,6 +69,7 @@ TEST(Optimization_NelderMead, RosenbrockFunction) {
   NelderMeadOptions<2> opts;
   opts.x0 = x0;
   opts.max_iterations = 2000;
+  opts.max_function_evaluations = 4000;
   opts.tol_f = 1e-6;
   opts.tol_x = 1e-6;
 

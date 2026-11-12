@@ -1,12 +1,12 @@
 #pragma once
 
 #include "compute_factors.hpp"
+#include "quality_factor_table.hpp"
 #include "specfem/constants.hpp"
 #include "specfem/setup.hpp"
 #include "specfem/utilities/band.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
-#include <map>
 #include <stdexcept>
 
 namespace specfem {
@@ -21,8 +21,10 @@ namespace attenuation {
  *
  * Differences from those routines: the Maxwell real part is unnormalized,
  * \f$A=1-N+\sum_i\ldots\f$; the fit runs in double precision with
- * specfem::optimization::NelderMeadSimplex with GLOBE compatibility; Q is
- * limited to 9000 and bucketed as in globe's model_attenuation_storage;
+ * specfem::optimization::NelderMeadSimplex with globe's single-precision
+ * tolerances; Q is clipped to 9000 and bucketed with
+ * specfem::attenuation::QualityFactorTable as in globe's
+ * model_attenuation_storage;
  * one_minus_sum_beta is
  * \f$1+\sum_i(\tau_{\epsilon_i}/\tau_{\sigma_i}-1)\f$; and the dispersion
  * factor is split into a reference-to-relaxed scale (Liu et al. 1976) and the
@@ -30,59 +32,24 @@ namespace attenuation {
  */
 namespace globe {
 
-/// Globe's ATTENUATION_COMP_MAXIMUM.
-constexpr type_real maximum_quality_factor = 9000;
-/// Globe's 10**ATTENUATION_COMP_RESOLUTION.
-constexpr int quality_factor_resolution = 10;
-
 /**
- * @brief Apply globe's Q limit before fitting and dispersion correction.
+ * @brief Clip Q to globe's fitting range.
+ *
+ * Globe fits and disperses Q in (0, specfem::constants::Q_MAXIMUM]; a
+ * nonpositive or larger Q (including the 9999 "no attenuation" convention)
+ * is replaced by the maximum.
+ *
  * @param q Input quality factor
- * @return q, or 9000 when q is nonpositive, infinite or above 9000
+ * @return q, or Q_MAXIMUM when q is nonpositive, infinite or above it
  * @throws std::invalid_argument if q is NaN
  */
-inline type_real effective_quality_factor(const type_real q) {
+inline type_real clip_quality_factor(const type_real q) {
   if (std::isnan(q)) {
     throw std::invalid_argument("Quality factor must not be NaN");
   }
-  return q <= 0 || q > maximum_quality_factor ? maximum_quality_factor : q;
+  constexpr type_real maximum = specfem::constants::Q_MAXIMUM;
+  return q <= 0 || q > maximum ? maximum : q;
 }
-
-/**
- * @brief Storage-table index of globe's model_attenuation_storage.
- * @param q Quality factor
- * @return \f$\max(1, \lfloor 10\,Q_\text{eff} \rfloor)\f$
- */
-inline int quality_factor_bucket(const type_real q) {
-  const int key =
-      static_cast<int>(static_cast<double>(effective_quality_factor(q)) *
-                       quality_factor_resolution);
-  return key < 1 ? 1 : key;
-}
-
-/**
- * @brief Globe's Q storage table: the first Q seen in a bucket represents it.
- *
- * Globe fits tau_epsilon once per bucket and replaces later Q values in the
- * same bucket with the stored one, which is then used for the dispersion
- * correction and written to the mesh files.
- */
-class QualityFactorTable {
-public:
-  /**
-   * @brief Return the representative Q of q's bucket, registering q if new.
-   * @param q Quality factor
-   * @return First effective Q stored in q's bucket
-   */
-  type_real representative(const type_real q) {
-    return table_
-        .try_emplace(quality_factor_bucket(q), effective_quality_factor(q))
-        .first->second;
-  }
-
-private:
-  std::map<int, type_real> table_;
-};
 
 /**
  * @brief Real and imaginary moduli of globe's generalized Maxwell solid.
@@ -150,7 +117,8 @@ template <int N_SLS> struct AttenuationObjective {
  *
  * Uses 100 log-spaced frequencies, the initial guess
  * \f$\tau_\sigma(1+2/Q)\f$ and specfem::optimization::NelderMeadSimplex with
- * GLOBE compatibility, all in double precision regardless of type_real.
+ * globe's single-precision tolerances and simplex steps, all in double
+ * precision regardless of type_real.
  *
  * @note Deliberately stricter than SPECFEM3D_GLOBE. Globe's fminsearch only
  * reports failure when the evaluation count exceeds its budget; its iteration
@@ -162,7 +130,7 @@ template <int N_SLS> struct AttenuationObjective {
  *
  * @tparam N_SLS Number of standard linear solids (> 1)
  * @tparam T Unit of the band (frequency or period)
- * @param Q Target Q, limited by effective_quality_factor()
+ * @param Q Target Q, limited by clip_quality_factor()
  * @param tau_sigma Stress relaxation times from compute_tau_sigma()
  * @param band Attenuation band
  * @return Strain relaxation times \f$\tau_\epsilon\f$
@@ -223,7 +191,7 @@ struct ModulusScales {
  * @param f_c_source Band-center frequency (Hz)
  * @param tau_eps Strain relaxation times \f$\tau_\epsilon\f$
  * @param tau_sigma Stress relaxation times \f$\tau_\sigma\f$
- * @param Q_val Quality factor, limited by effective_quality_factor()
+ * @param Q_val Quality factor, limited by clip_quality_factor()
  * @param attenuation_f0_reference Model reference frequency (Hz)
  * @return Relaxed scale and unrelaxed ratio
  * @throws std::runtime_error if the relaxed scale is outside [0.5, 1.5]
@@ -259,7 +227,7 @@ template <int N_SLS> struct QualityFactorFit {
  *
  * @tparam N_SLS Number of standard linear solids (> 1)
  * @tparam T Unit of the band (frequency or period)
- * @param Q Quality factor, limited by effective_quality_factor()
+ * @param Q Quality factor, limited by clip_quality_factor()
  * @param tau_sigma Stress relaxation times from compute_tau_sigma()
  * @param band Attenuation band
  * @param f_c_source Band-center frequency (Hz)
@@ -275,6 +243,18 @@ fit_quality_factor(type_real Q,
                                       Kokkos::HostSpace> &tau_sigma,
                    const specfem::utilities::Band<T> &band,
                    type_real f_c_source, type_real attenuation_f0_reference);
+
+/**
+ * @brief Q table with globe's clipping, memoizing fit_quality_factor().
+ * @tparam N_SLS Number of standard linear solids
+ * @return Empty table clipping Q to specfem::constants::Q_MAXIMUM
+ */
+template <int N_SLS>
+specfem::attenuation::QualityFactorTable<QualityFactorFit<N_SLS>>
+make_quality_factor_table() {
+  return specfem::attenuation::QualityFactorTable<QualityFactorFit<N_SLS>>(
+      specfem::constants::Q_MAXIMUM);
+}
 
 } // namespace globe
 } // namespace attenuation

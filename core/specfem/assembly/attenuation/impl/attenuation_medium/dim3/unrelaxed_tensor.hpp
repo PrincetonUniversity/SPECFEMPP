@@ -206,4 +206,136 @@ auto shift_inner_core_tensor(
   return result;
 }
 
+/**
+ * @brief Frame in which an anisotropic GLL point's shear moduli are shifted.
+ */
+struct RadialFrame {
+  /** @brief How the radial direction is obtained. */
+  enum class Kind {
+    cartesian,  ///< Cartesian mesh: z is radial, no rotation.
+    geocentric, ///< Globe mantle: rotate by (theta, phi).
+    inner_core  ///< Globe inner core: five-coefficient hexagonal update.
+  };
+  Kind kind = Kind::cartesian; ///< Frame kind
+  double theta = 0;            ///< Geocentric colatitude (geocentric only)
+  double phi = 0;              ///< Geocentric longitude (geocentric only)
+
+  /**
+   * @brief Frame of a GLL point.
+   * @param context Element metadata
+   * @param theta Geocentric colatitude, read only for geocentric frames
+   * @param phi Geocentric longitude, read only for geocentric frames
+   * @return The point's frame
+   */
+  static RadialFrame of(const AttenuationElementContext &context,
+                        const double theta, const double phi) {
+    if (context.cartesian)
+      return {};
+    if (context.region == specfem::element::region_tag::inner_core)
+      return { Kind::inner_core };
+    return { Kind::geocentric, theta, phi };
+  }
+};
+
+/**
+ * @brief One setup stage of the shear shift in a point's radial frame.
+ *
+ * @tparam StorageType Runtime storage precision.
+ * @param frame Radial frame of the point.
+ * @param tensor Cartesian stiffness tensor.
+ * @param increment Relative shear modulus increment for this stage.
+ * @param reference_stage True for the reference-to-relaxed stage.
+ * @param radial_c44 Optional output: radial c44 after the stage.
+ * @return Shifted Cartesian stiffness tensor.
+ */
+template <typename StorageType>
+specfem::medium_physics::ElasticityTensor<
+    specfem::coordinate_systems::CartesianFrame, double>
+shift_shear_stage(
+    const RadialFrame &frame,
+    const specfem::medium_physics::ElasticityTensor<
+        specfem::coordinate_systems::CartesianFrame, double> &tensor,
+    const double increment, const bool reference_stage,
+    double *radial_c44 = nullptr) {
+  if (frame.kind == RadialFrame::Kind::geocentric)
+    return shift_unrelaxed_tensor<StorageType>(tensor, frame.theta, frame.phi,
+                                               increment, radial_c44);
+  const auto shifted =
+      frame.kind == RadialFrame::Kind::inner_core
+          ? shift_inner_core_tensor<StorageType>(tensor, increment,
+                                                 reference_stage)
+          : shift_radial_tensor<StorageType>(tensor, increment);
+  if (radial_c44 != nullptr)
+    *radial_c44 = shifted(3, 3);
+  return shifted;
+}
+
+/**
+ * @brief Shift reference-frequency shear moduli to unrelaxed ones.
+ *
+ * Mirrors globe's two setup stages: reference to relaxed
+ * (prepare_attenuation.f90), with the coefficients stored in StorageType in
+ * between, then relaxed to unrelaxed (prepare_elastic_elements.F90). The
+ * input is preserved exactly when both multipliers are one.
+ *
+ * @tparam StorageType Runtime storage precision.
+ * @param frame Radial frame of the point.
+ * @param reference Cartesian stiffness tensor at the reference frequency.
+ * @param relaxed_scale Reference-to-relaxed shear multiplier.
+ * @param ratio Relaxed-to-unrelaxed shear multiplier (one_minus_sum_beta).
+ * @param radial_c44 Output: final radial c44, globe's muvstore.
+ * @return Unrelaxed Cartesian stiffness tensor.
+ */
+template <typename StorageType>
+specfem::medium_physics::ElasticityTensor<
+    specfem::coordinate_systems::CartesianFrame, double>
+shift_shear_to_unrelaxed(
+    const RadialFrame &frame,
+    const specfem::medium_physics::ElasticityTensor<
+        specfem::coordinate_systems::CartesianFrame, double> &reference,
+    const double relaxed_scale, const double ratio, double &radial_c44) {
+  using Tensor = specfem::medium_physics::ElasticityTensor<
+      specfem::coordinate_systems::CartesianFrame, double>;
+  const double stored_scale = static_cast<StorageType>(relaxed_scale);
+  const auto relaxed_double = shift_shear_stage<StorageType>(
+      frame, reference, stored_scale - 1.0, true);
+  double relaxed_coefficients[21];
+  for (int k = 0; k < 21; ++k)
+    relaxed_coefficients[k] = static_cast<StorageType>(relaxed_double[k]);
+  return shift_shear_stage<StorageType>(frame, Tensor(relaxed_coefficients),
+                                        ratio - 1.0, false, &radial_c44);
+}
+
+/**
+ * @brief Shift the bulk modulus of a tensor by an isotropic increment.
+ *
+ * Adds \f$\delta\kappa=\kappa_V(s-1)\f$ to the normal-stress block
+ * \f$c_{ij}, i,j\le3\f$, with \f$\kappa_V\f$ the Voigt bulk modulus of
+ * @p reference. The increment is an isotropic tensor, so it is
+ * frame-independent, and for isotropic input it reproduces
+ * \f$\kappa\leftarrow s\,\kappa\f$.
+ *
+ * @param tensor Tensor to shift in place.
+ * @param reference Tensor whose Voigt bulk modulus is scaled.
+ * @param scale Reference-to-unrelaxed bulk multiplier \f$s\f$.
+ * @return Unrelaxed bulk modulus \f$s\,\kappa_V\f$.
+ */
+template <typename Frame>
+double shift_bulk(
+    specfem::medium_physics::ElasticityTensor<Frame, double> &tensor,
+    const specfem::medium_physics::ElasticityTensor<Frame, double> &reference,
+    const double scale) {
+  const double kappa =
+      (reference(0, 0) + reference(1, 1) + reference(2, 2) +
+       2 * (reference(0, 1) + reference(0, 2) + reference(1, 2))) /
+      9;
+  if (scale == 1)
+    return kappa;
+  const double increment = kappa * (scale - 1);
+  for (int row = 0; row < 3; ++row)
+    for (int column = row; column < 3; ++column)
+      tensor(row, column) += increment;
+  return kappa * scale;
+}
+
 } // namespace specfem::assembly::impl

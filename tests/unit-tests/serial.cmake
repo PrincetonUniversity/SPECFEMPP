@@ -117,6 +117,7 @@ specfem_add_test(attenuation_tests
             attenuation/compute_factors_tests.cpp
             attenuation/compute_integration_factors_tests.cpp
             attenuation/globe_formulation_tests.cpp
+            attenuation/quality_factor_table_tests.cpp
   LIBRARIES gtest_main
             specfem::attenuation
             Kokkos::kokkos
@@ -125,7 +126,7 @@ specfem_add_test(attenuation_tests
 specfem_add_test(optimization_tests
   SOURCES   optimization/runner.cpp
             optimization/neldermead_tests.cpp
-            optimization/nelder_mead_globe_tests.cpp
+            optimization/nelder_mead_fminsearch_tests.cpp
             optimization/steepestdescent_tests.cpp
   LIBRARIES gtest_main
             Kokkos::kokkos
