@@ -5,6 +5,10 @@
 #include "specfem/enums.hpp"
 #include "specfem/io/impl/element_group.hpp"
 #include "specfem/io/property/writer.hpp"
+#include "specfem/io/xdmf/derived_quantities.hpp"
+#include "specfem/io/xdmf/description.hpp"
+#include "specfem/io/xdmf/writer.hpp"
+#include "specfem/io_backends/HDF5/HDF5.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/macros/tag_dispatch.hpp"
 #include "specfem/mpi.hpp"
@@ -14,6 +18,8 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
+#include <vector>
 
 template <typename OutputLibrary>
 specfem::io::property_writer<OutputLibrary>::property_writer(
@@ -56,6 +62,9 @@ void specfem::io::property_writer<OutputLibrary>::write_impl(
   const int nspec = assembly.mesh.nspec;
 
   int n_written = 0;
+
+  std::vector<specfem::io::xdmf::ElementGroupDescription<DimensionTag> >
+      descriptions;
 
   specfem::tag_dispatch::for_each(
       assembly.properties.combinations *
@@ -110,6 +119,17 @@ void specfem::io::property_writer<OutputLibrary>::write_impl(
               }
             });
 
+        specfem::io::xdmf::ElementGroupDescription<DimensionTag> description;
+        description.group = name;
+        description.number_of_elements = element_range.size();
+        description.element_grid = assembly.mesh.element_grid;
+        const auto extents = specfem::io::xdmf::element_extents(
+            description.number_of_elements, description.element_grid);
+        data_container.for_each_host_view(
+            [&](const auto &, const std::string &view_name) {
+              description.datasets.push_back({ view_name, extents });
+            });
+
         // Attenuation model datasets (Qkappa/Qmu), persisted verbatim.
         if constexpr (has_attenuation) {
           for (const auto &[view_name, view] :
@@ -117,8 +137,13 @@ void specfem::io::property_writer<OutputLibrary>::write_impl(
                    .template get_container<medium_tag, property_tag>()
                    .get_views()) {
             group.createDataset(view_name, view).write();
+            description.datasets.push_back({ view_name, extents });
           }
         }
+        description.derived =
+            specfem::io::xdmf::DerivedQuantities<medium_tag,
+                                                 property_tag>::list();
+        descriptions.push_back(description);
         n_written += element_range.size();
       });
 
@@ -129,6 +154,14 @@ void specfem::io::property_writer<OutputLibrary>::write_impl(
             << "Error writing output: expected to write " << nspec
             << " elements, but wrote " << n_written << " elements.";
     throw std::runtime_error(message.str());
+  }
+
+  if constexpr (std::is_same_v<
+                    OutputLibrary,
+                    specfem::io_backends::HDF5<specfem::io::write> >) {
+    specfem::io::xdmf::write_element_groups(path.string() + ".xmf",
+                                            path.filename().string() + ".h5",
+                                            descriptions);
   }
 
   specfem::Logger::info("Properties written to " + path.string());
