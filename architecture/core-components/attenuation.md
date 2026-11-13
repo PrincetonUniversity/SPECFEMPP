@@ -18,9 +18,12 @@ Setup is split into three layers, each unaware of the one above it.
 - Two formulations exist today:
   - 2D: `specfem::attenuation` (1/L-normalized Maxwell model).
   - 3D: `specfem::attenuation::globe` (port of SPECFEM3D_GLOBE).
-- Both fit with `specfem::optimization::NelderMeadSimplex`, which follows
-  fminsearch. A caller that must reproduce a Fortran run passes its constants
-  through `NelderMeadOptions`; the optimizer has no formulation switches.
+- There is one Q search, `globe::search_tau_eps`: globe's objective and
+  fminsearch constants on `specfem::optimization::NelderMeadSimplex`, in
+  double precision, throwing on an unconverged fit. The 2D
+  `compute_tau_eps` converts its result with
+  `tau_eps = tau_sigma + N_SLS * (tau_eps_globe - tau_sigma)`, under which
+  the two models have the same loss tangent. It does not clip Q.
 - `specfem::attenuation::QualityFactorTable` quantizes Q to buckets of
   `1 / constants::Q_RESOLUTION` and memoizes one fit per bucket. The fit
   function is supplied by the caller, so the table works with either

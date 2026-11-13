@@ -37,10 +37,12 @@ Q fit
    Convergence is stricter than SPECFEM3D_GLOBE by design. Globe's
    ``fminsearch`` only aborts when the evaluation count exceeds its budget,
    so a fit that stops on the iteration budget without meeting the
-   tolerances is used silently. ``compute_tau_eps`` throws for every fit
+   tolerances is used silently. ``search_tau_eps`` throws for every fit
    that does not meet the tolerances. A Q that globe accepts with a
    budget-limited fit therefore raises an error here instead of running with
    an inaccurate attenuation model. Converged fits match globe.
+
+.. doxygenfunction:: specfem::attenuation::globe::search_tau_eps
 
 .. doxygenfunction:: specfem::attenuation::globe::compute_tau_eps
 

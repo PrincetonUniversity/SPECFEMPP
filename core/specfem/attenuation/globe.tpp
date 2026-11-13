@@ -59,16 +59,20 @@ double specfem::attenuation::globe::AttenuationObjective<N_SLS>::operator()(
 }
 
 template <int N_SLS, typename T>
-Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
-specfem::attenuation::globe::compute_tau_eps(
-    type_real Q,
+Kokkos::View<double[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
+specfem::attenuation::globe::search_tau_eps(
+    const double Q,
     const Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight,
                        Kokkos::HostSpace> &tau_sigma,
     const specfem::utilities::Band<T> &band) {
   static_assert(N_SLS > 1,
                 "N_SLS must be greater than 1 for tau_eps computation");
+  if (!(Q > 0) || !std::isfinite(Q)) {
+    throw std::invalid_argument(
+        "Quality factor must be positive and finite for the Q fit");
+  }
 
-  const double q = specfem::attenuation::globe::clip_quality_factor(Q);
+  const double q = Q;
   const specfem::utilities::Band<specfem::units::Hertz> frequency_band(band);
 
   // Globe's attenuation_invert_by_simplex: frequencies equally spaced in
@@ -111,11 +115,22 @@ specfem::attenuation::globe::compute_tau_eps(
                "fits that SPECFEM3D_GLOBE would accept";
     throw std::runtime_error(message.str());
   }
+  return result.x;
+}
 
+template <int N_SLS, typename T>
+Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
+specfem::attenuation::globe::compute_tau_eps(
+    type_real Q,
+    const Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight,
+                       Kokkos::HostSpace> &tau_sigma,
+    const specfem::utilities::Band<T> &band) {
+  const auto fitted = specfem::attenuation::globe::search_tau_eps<N_SLS>(
+      specfem::attenuation::globe::clip_quality_factor(Q), tau_sigma, band);
   Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
       tau_eps("tau_epsilon");
   for (int i = 0; i < N_SLS; ++i) {
-    tau_eps(i) = result.x(i);
+    tau_eps(i) = fitted(i);
   }
   return tau_eps;
 }
