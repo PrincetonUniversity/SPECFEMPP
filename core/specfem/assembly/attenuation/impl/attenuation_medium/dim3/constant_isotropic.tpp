@@ -13,6 +13,7 @@
 #include "specfem/datatype.hpp"
 #include "specfem/datatype/element_index_range.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/logger.hpp"
 #include "specfem/mesh/dim3/materials/materials.hpp"
 #include "specfem/setup.hpp"
 #include "specfem/units.hpp"
@@ -414,6 +415,8 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
    * @param spherical Setup-only spherical coordinate cache (globe mantle
    * anisotropy only).
    * @param context Global element index to region/radial-zone metadata.
+   * @param tables Q tables shared with the other containers of this setup,
+   * so all containers use the same representative Q per bucket.
    */
   template <typename PropsContainer, typename SphericalView,
             typename ElementContext>
@@ -423,8 +426,9 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
             const specfem::utilities::Band<specfem::units::Hertz> &band,
             const Kokkos::View<type_real[N_SLS],
                                Kokkos::DefaultHostExecutionSpace> &tau_sigma,
-            const SphericalView &spherical,
-            const ElementContext &context) const {
+            const SphericalView &spherical, const ElementContext &context,
+            specfem::attenuation::globe::QualityFactorTables<N_SLS> &tables)
+      const {
     if (element_range.size() == 0) {
       return;
     }
@@ -451,10 +455,10 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
       return specfem::attenuation::globe::fit_quality_factor<N_SLS>(
           q, tau_sigma, band, fc.raw(), f0.raw());
     };
-    auto bulk_table =
-        specfem::attenuation::globe::make_quality_factor_table<N_SLS>();
-    auto shear_table =
-        specfem::attenuation::globe::make_quality_factor_table<N_SLS>();
+    auto &bulk_table = tables.bulk;
+    auto &shear_table = tables.shear;
+    const int fits_before = tables.fits();
+    long long points = 0;
     // Without bulk attenuation kappa keeps scale 1 and zero relaxation rates.
     Fit no_bulk;
     no_bulk.properties.beta = decltype(no_bulk.properties.beta)("beta");
@@ -486,12 +490,42 @@ struct attenuation_medium<specfem::element::dimension_tag::dim3,
                 shift(i, ispec, iz, iy, ix, metadata, *kappa_fit, mu_fit);
             set_relaxation_rates(i, iz, iy, ix, moduli, kappa_fit->properties,
                                  mu_fit.properties, tau_sigma);
+            ++points;
           }
         }
       }
     }
     Kokkos::deep_copy(kappa_relaxation_rate, h_kappa_relaxation_rate);
     Kokkos::deep_copy(mu_relaxation_rate, h_mu_relaxation_rate);
+    // The fit count is bounded by occupied Q buckets, not by points; a count
+    // near the point count means the table is not being hit.
+    specfem::Logger::debug(
+        [&](std::ostringstream &message) {
+          message << "Attenuation recompute ("
+                  << specfem::element::to_string(PropertyTag)
+                  << "): " << tables.fits() - fits_before << " Q fits for "
+                  << points << " GLL points";
+        },
+        false);
+  }
+
+  /**
+   * @brief recompute() with Q tables private to this call.
+   *
+   * For a container recomputed on its own, e.g. after a model read.
+   */
+  template <typename PropsContainer, typename SphericalView,
+            typename ElementContext>
+  void
+  recompute(const PropsContainer &props, const specfem::units::Hertz fc,
+            const specfem::units::Hertz f0,
+            const specfem::utilities::Band<specfem::units::Hertz> &band,
+            const Kokkos::View<type_real[N_SLS],
+                               Kokkos::DefaultHostExecutionSpace> &tau_sigma,
+            const SphericalView &spherical,
+            const ElementContext &context) const {
+    specfem::attenuation::globe::QualityFactorTables<N_SLS> tables;
+    recompute(props, fc, f0, band, tau_sigma, spherical, context, tables);
   }
 
   /**

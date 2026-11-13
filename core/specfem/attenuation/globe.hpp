@@ -256,6 +256,22 @@ make_quality_factor_table() {
       specfem::constants::Q_MAXIMUM);
 }
 
+/**
+ * @brief Bulk and shear Q tables with globe's clipping.
+ *
+ * Default-constructs with the Q_MAXIMUM limit, so a caller cannot forget it.
+ *
+ * @tparam N_SLS Number of standard linear solids
+ */
+template <int N_SLS>
+struct QualityFactorTables
+    : specfem::attenuation::QualityFactorTables<QualityFactorFit<N_SLS>> {
+  /** @brief Create empty tables clipping Q to Q_MAXIMUM. */
+  QualityFactorTables()
+      : specfem::attenuation::QualityFactorTables<QualityFactorFit<N_SLS>>(
+            specfem::constants::Q_MAXIMUM) {}
+};
+
 } // namespace globe
 } // namespace attenuation
 } // namespace specfem

@@ -40,7 +40,8 @@ Setup is split into three layers, each unaware of the one above it.
 
 `recompute()` is the same for every property tag:
 
-1. Look up both Q values in the table.
+1. Look up both Q values in the tables (passed in by the caller, or private
+   to the call).
 2. Call the shift.
 3. Call `set_relaxation_rates()`.
 
@@ -52,11 +53,14 @@ Globe meshes turn it off.
 These are follow-ups to PR #2192 (issue #2059), one PR each. Each step keeps
 existing reference tests passing or states exactly which values move.
 
-1. **One table per assembly.** Today each call site (dim3 materials, each
-   container's `recompute()`, the dim2 `recompute()`) owns its own table.
-   Make `assembly::attenuation` own one table per (Q kind) and pass it down,
-   so "first Q in a bucket" is global and every fit is done once
-   (issue #2060, cache-hit acceptance criterion).
+1. **One table per setup (issue #2060, done).** `QualityFactorTables`
+   (bulk + shear) is shared by every container a setup recomputes: the globe
+   property setup and the dim3 property reader pass one instance to the
+   isotropic and anisotropic `recompute()`. Each `recompute()` logs its fit
+   count at debug level. The tables hold a `std::map`, so they are owned by
+   the setup code, not by `assembly::attenuation`, which is copied into
+   device kernels. Materials still canonicalize Q with their own instance;
+   that goes away with step 2, when materials stop fitting.
 2. **One lifecycle.** Materials keep physical moduli everywhere. Isotropic
    materials currently hand out unrelaxed moduli from `get_properties()` and
    fit Q in `materials::apply_attenuation`. Make the container shift

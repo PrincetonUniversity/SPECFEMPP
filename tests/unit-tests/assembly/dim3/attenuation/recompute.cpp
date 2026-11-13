@@ -704,3 +704,56 @@ TEST(AttenuationRecompute, PerGllQ9999IsLimitedOnCartesianMeshes) {
     EXPECT_NE(aniso.h_mu_relaxation_rate(0, 0, 0, 0, j), 0.);
   }
 }
+
+TEST(AttenuationRecompute, SharedTablesGiveOneRepresentativePerBucket) {
+  namespace test = attenuation_recompute_test_impl;
+  const test::Inputs inputs;
+  const auto iso = test::make_medium(true);
+  const auto iso_props = test::make_props();
+  const auto aniso = test::make_anisotropic_medium();
+  const test::AnisotropicProps aniso_props;
+  const auto views = aniso_props.views();
+  for (int k = 0; k < 21; ++k)
+    Kokkos::deep_copy(views[k], static_cast<type_real>(1.e9 * (k + 1)));
+  // The anisotropic Qmu reuses the isotropic buckets, one of them through a
+  // different value in the same bucket (width 0.1).
+  Kokkos::deep_copy(aniso.h_Qmu, iso.h_Qmu);
+  iso.h_Qmu(0, 0, 0, 0) = 100.01;
+  aniso.h_Qmu(0, 0, 0, 0) = 100.05;
+
+  specfem::attenuation::globe::QualityFactorTables<test::N_SLS> tables;
+  iso.recompute(iso_props, inputs.fc, inputs.f0, inputs.band, inputs.tau_sigma,
+                test::SphericalView{}, test::cartesian, tables);
+  const int iso_fits = tables.shear.fits();
+  aniso.recompute(aniso_props, inputs.fc, inputs.f0, inputs.band,
+                  inputs.tau_sigma, test::SphericalView{}, test::cartesian,
+                  tables);
+
+  // The container that runs first decides the representative for both, and
+  // the second one needs no new fits.
+  EXPECT_NEAR(aniso.h_Qmu(0, 0, 0, 0), iso.h_Qmu(0, 0, 0, 0), 0.0);
+  EXPECT_EQ(tables.shear.fits(), iso_fits);
+}
+
+TEST(AttenuationRecompute, FitCountFollowsBucketsNotPoints) {
+  namespace test = attenuation_recompute_test_impl;
+  const test::Inputs inputs;
+  const auto medium = test::make_medium(true);
+  const auto props = test::make_props();
+  // A GLL-varying Q model whose values occupy only three buckets per Q kind:
+  // Qmu in [80.00, 80.26] and Qkappa in [500.00, 500.26].
+  for (int i = 0; i < test::nspec; ++i)
+    for (int z = 0; z < test::ngll; ++z)
+      for (int y = 0; y < test::ngll; ++y)
+        for (int x = 0; x < test::ngll; ++x) {
+          const int ipoint = test::point_index(z, y, x);
+          medium.h_Qmu(i, z, y, x) = 80.0 + 0.01 * ipoint;
+          medium.h_Qkappa(i, z, y, x) = 500.0 + 0.01 * ipoint;
+        }
+  specfem::attenuation::globe::QualityFactorTables<test::N_SLS> tables;
+  medium.recompute(props, inputs.fc, inputs.f0, inputs.band, inputs.tau_sigma,
+                   test::SphericalView{}, test::cartesian, tables);
+  // 54 points, 3 + 3 fits.
+  EXPECT_EQ(tables.shear.fits(), 3);
+  EXPECT_EQ(tables.bulk.fits(), 3);
+}

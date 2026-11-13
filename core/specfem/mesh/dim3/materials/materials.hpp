@@ -394,14 +394,11 @@ public:
                       specfem::element::property_tag::isotropic,
                       specfem::element::attenuation_tag::constant_isotropic>();
     // Q values sharing a table bucket use the first one.
-    constexpr int N_SLS = specfem::constants::N_SLS;
-    auto qkappa_table =
-        specfem::attenuation::globe::make_quality_factor_table<N_SLS>();
-    auto qmu_table =
-        specfem::attenuation::globe::make_quality_factor_table<N_SLS>();
+    specfem::attenuation::globe::QualityFactorTables<specfem::constants::N_SLS>
+        tables;
     for (auto &material : container.element_materials) {
-      material.Qkappa = qkappa_table.representative(material.Qkappa);
-      material.Qmu = qmu_table.representative(material.Qmu);
+      material.Qkappa = tables.bulk.representative(material.Qkappa);
+      material.Qmu = tables.shear.representative(material.Qmu);
       material.compute_attenuation_properties(config.f0.raw(), fc.raw(),
                                               config.band, config.tau_sigma);
     }
@@ -412,8 +409,8 @@ public:
                       specfem::element::property_tag::anisotropic,
                       specfem::element::attenuation_tag::constant_isotropic>();
     for (auto &material : anisotropic.element_materials) {
-      material.Qkappa = qkappa_table.representative(material.Qkappa);
-      material.Qmu = qmu_table.representative(material.Qmu);
+      material.Qkappa = tables.bulk.representative(material.Qkappa);
+      material.Qmu = tables.shear.representative(material.Qmu);
     }
   }
 
