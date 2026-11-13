@@ -8,13 +8,136 @@
 #include "specfem/mesh_entity.hpp"
 #include "specfem/program/abort.hpp"
 #include "specfem/tag_dispatch.hpp"
+#include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
+#include <cstddef>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <tuple>
+#include <type_traits>
 #include <vector>
 
 namespace specfem::assembly::element_types_impl {
+
+/**
+ * @brief The tag kinds a range store is keyed by, read from its combination
+ * type.
+ *
+ * @tparam Combo `TagValueTuple` of the store's key kinds, in key order.
+ */
+template <typename Combo> struct StoreKinds;
+
+template <typename Seq, typename... Kinds>
+struct StoreKinds<
+    specfem::tag_dispatch::impl::TagValueTupleBase<Seq, Kinds...>> {
+  /// The store is keyed by `Kind`.
+  template <typename Kind>
+  constexpr static bool keys = (std::is_same_v<Kind, Kinds> || ...);
+
+  /// `TagsType` gives every kind the store is keyed by.
+  template <typename TagsType>
+  constexpr static bool covered_by =
+      (specfem::tags::has_tag_kind<Kinds, TagsType> && ...);
+
+  /// `TagsType` projected onto the store's key, in key order.
+  template <typename TagsType>
+  using key_t =
+      specfem::tags::Tags<specfem::tags::tag_value<Kinds>(TagsType{})...>;
+};
+
+/**
+ * @brief StoreKinds of a range store.
+ *
+ * @tparam Store `specfem::tag_dispatch::Storage` of element ranges.
+ */
+template <typename Store>
+using store_kinds_t = StoreKinds<typename std::remove_cvref_t<
+    decltype(Store::element_combinations)>::value_type>;
+
+/**
+ * @brief Whether any of the range stores is keyed by `Kind`.
+ *
+ * @tparam Kind Tag enum type.
+ * @tparam Stores Range stores.
+ */
+template <typename Kind, typename... Stores>
+constexpr bool any_store_keys =
+    (store_kinds_t<Stores>::template keys<Kind> || ...);
+
+/**
+ * @brief Per-kind checks of a caller's `specfem::tags::Tags`.
+ *
+ * @tparam TagsType The caller's tags.
+ */
+template <typename TagsType> struct TagKinds;
+
+template <auto... Values> struct TagKinds<specfem::tags::Tags<Values...>> {
+  /// Every caller kind that some store is keyed by is a key of `Store`, so
+  /// selecting by `Store` drops none of the requested tags.
+  template <typename Store, typename... Stores>
+  constexpr static bool kept_by =
+      ((!any_store_keys<decltype(Values), Stores...> ||
+        store_kinds_t<Store>::template keys<decltype(Values)>) &&
+       ...);
+};
+
+/**
+ * @brief Position of the one range store that `TagsType` selects.
+ *
+ * A store matches when the caller gives every tag kind it is keyed by, and
+ * every tag kind the caller gives that any store is keyed by is also a key of
+ * this store, so no requested tag is silently dropped. Kinds no store is keyed
+ * by, such as the wavefield, are ignored.
+ *
+ * Generic over the stores and the tag kinds: adding either needs no change
+ * here.
+ *
+ * @tparam TagsType The caller's tags.
+ * @tparam Stores Range stores, from element_types_base::range_stores().
+ * @return Position of the matching store, or `sizeof...(Stores)` unless
+ * exactly one store matches.
+ */
+template <typename TagsType, typename... Stores>
+constexpr std::size_t select_store() {
+  constexpr bool matches[] = { (
+      store_kinds_t<Stores>::template covered_by<TagsType> &&
+      TagKinds<TagsType>::template kept_by<Stores, Stores...>)... };
+  std::size_t count = 0;
+  std::size_t index = 0;
+  for (std::size_t i = 0; i < sizeof...(Stores); ++i) {
+    if (matches[i]) {
+      ++count;
+      index = i;
+    }
+  }
+  return count == 1 ? index : sizeof...(Stores);
+}
+
+/**
+ * @brief Range for `TagsType`, tagged with the selected store's key.
+ *
+ * @tparam TagsType The caller's tags.
+ * @tparam Stores Range stores, from element_types_base::range_stores().
+ * @param stores The range stores
+ * @return The range, typed with the store's key tags
+ */
+template <typename TagsType, typename... Stores>
+auto select_range(const Stores &...stores) {
+  constexpr std::size_t index = select_store<TagsType, Stores...>();
+  static_assert(index < sizeof...(Stores),
+                "element_types: no single element range store matches these "
+                "tags (see element_types_base::range_stores())");
+  if constexpr (index < sizeof...(Stores)) {
+    const auto &store = std::get<index>(std::tie(stores...));
+    using Key = typename store_kinds_t<
+        std::remove_cvref_t<decltype(store)>>::template key_t<TagsType>;
+    return specfem::datatype::TaggedElementIndexRange<Key>(
+        store.template get<Key>());
+  } else {
+    return specfem::datatype::TaggedElementIndexRange<TagsType>{};
+  }
+}
 
 /**
  * @brief Base class for element-type classification and index storage.
@@ -567,6 +690,41 @@ public:
       const specfem::element::mpi_tag mpi_tag) const {
     return elements_by_element.get(medium_tag, property_tag, attenuation_tag,
                                    boundary_tag, mpi_tag);
+  }
+
+  // ── Typed accessors ──────────────────────────────────────────────────────
+
+  /**
+   * @brief Element range selected by compile-time tags, tagged with them.
+   *
+   * Uses the one store `Tags` selects (see element_types_impl::select_store()).
+   * Tags no store is keyed by, such as the wavefield, are ignored, so a
+   * kernel's own tags can be passed directly.
+   *
+   * @tparam Tags `specfem::tags::Tags` with at least the dimension and medium.
+   * @return The range, typed with the store's key tags.
+   *
+   * @code
+   * const auto elements = element_types.get_elements_on_device<
+   *     specfem::tags::Tags<dim3, elastic, isotropic>>();
+   * // decltype(elements)::tags_type == Tags<dim3, elastic, isotropic>
+   * @endcode
+   */
+  template <typename Tags> auto get_elements_on_device() const {
+    // The element range stores; the only list to extend with a new store.
+    return element_types_impl::select_range<Tags>(
+        elements_by_medium, elements_by_medium_property, elements_by_material,
+        elements_by_boundary, elements_by_element);
+  }
+
+  /**
+   * @brief Host counterpart of get_elements_on_device<Tags>().
+   *
+   * @tparam Tags `specfem::tags::Tags` with at least the dimension and medium.
+   * @return The range, typed with the store's key tags.
+   */
+  template <typename Tags> auto get_elements_on_host() const {
+    return get_elements_on_device<Tags>();
   }
 
   // ── Per-element tag accessors ────────────────────────────────────────────
