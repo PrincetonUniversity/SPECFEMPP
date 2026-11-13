@@ -41,9 +41,6 @@ public:
   /**
    * @brief Instantiate a seismogram writer object
    *
-   * @param wave_type Type of wavefield (Writes .BXY for SH waves and .BXX,
-   * .BXZ for P-SV waves)
-   * @param electromagnetic_wave Type of electromagnetic wavefield
    * @param dt Time interval between subsequent timesteps
    * @param nsteps_between_samples Number of timesteps between seismogram
    * samples (seismogram sampling frequency). The solver start time (t0) is
@@ -54,8 +51,6 @@ public:
    * writer object
    */
   std::shared_ptr<specfem::io::writer> instantiate_seismogram_writer(
-      const specfem::enums::elastic_wave wave_type,
-      const specfem::enums::electromagnetic_wave electromagnetic_wave,
       const type_real dt, const type_real t0, const int nsteps_between_samples,
       std::optional<specfem::datetime::type> starttime = std::nullopt,
       const specfem::enums::coordinate_frame frame =
