@@ -1,0 +1,22 @@
+#pragma once
+
+// Generated from cmake/globe_database_format.cmake, which is shared with the
+// Fortran writer (save_database_specfempp.F90). Edit the CMake file, not the
+// rendered header.
+
+#include <string_view>
+
+namespace specfem {
+namespace globe {
+
+/** @brief Magic text opening every thin globe database. */
+inline constexpr std::string_view database_magic = "@SPECFEMPP_GLOBE_DB_MAGIC@";
+
+/** @brief Thin globe database format version written by the mesher. */
+inline constexpr int database_version = @SPECFEMPP_GLOBE_DB_VERSION@;
+
+/** @brief Planet value schema version written by the mesher. */
+inline constexpr int planet_schema_version = @SPECFEMPP_GLOBE_DB_PLANET_SCHEMA_VERSION@;
+
+} // namespace globe
+} // namespace specfem

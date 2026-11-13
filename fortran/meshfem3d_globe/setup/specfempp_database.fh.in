@@ -1,0 +1,5 @@
+! Generated from cmake/globe_database_format.cmake. Shared with the SPECFEM++
+! reader (specfem/globe/database_format.hpp); edit the CMake file, not this one.
+  character(len=32), parameter :: SPECFEMPP_DB_MAGIC = '@SPECFEMPP_GLOBE_DB_MAGIC@'
+  integer, parameter :: SPECFEMPP_DB_VERSION = @SPECFEMPP_GLOBE_DB_VERSION@
+  integer, parameter :: PLANET_SCHEMA_VERSION = @SPECFEMPP_GLOBE_DB_PLANET_SCHEMA_VERSION@

@@ -102,6 +102,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/precision.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/precision.h @ONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.fh.in
                ${CMAKE_CURRENT_BINARY_DIR}/version.fh @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/specfempp_database.fh.in
+               ${CMAKE_CURRENT_BINARY_DIR}/specfempp_database.fh @ONLY)
 
 add_library(meshfem3D_globe_config INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 add_library(meshfem3D_globe::config ALIAS meshfem3D_globe_config)

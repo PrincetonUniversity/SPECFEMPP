@@ -160,6 +160,7 @@ include("${CMAKE_SOURCE_DIR}/cmake/kokkos.cmake")
 
 # Configure SPECFEM++ build variables based on Kokkos settings
 include("${CMAKE_SOURCE_DIR}/cmake/variables.cmake")
+include("${CMAKE_SOURCE_DIR}/cmake/globe_database_format.cmake")
 
 # Load CMake configuration summary function
 include("${CMAKE_SOURCE_DIR}/cmake/cmake_summary.cmake")
