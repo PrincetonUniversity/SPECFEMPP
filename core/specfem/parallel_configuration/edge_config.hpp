@@ -59,6 +59,13 @@ struct default_edge_config<specfem::element::dimension_tag::dim2, Kokkos::HIP>
     : edge_config<specfem::element::dimension_tag::dim2, 32, 1, Kokkos::HIP> {};
 #endif
 
+#if defined(KOKKOS_ENABLE_SYCL)
+template <>
+struct default_edge_config<specfem::element::dimension_tag::dim2, Kokkos::SYCL>
+    : edge_config<specfem::element::dimension_tag::dim2, 32, 1, Kokkos::SYCL> {
+};
+#endif
+
 #if defined(KOKKOS_ENABLE_OPENMP)
 template <>
 struct default_edge_config<specfem::element::dimension_tag::dim2,

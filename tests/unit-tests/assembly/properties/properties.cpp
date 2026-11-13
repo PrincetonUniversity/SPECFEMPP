@@ -110,7 +110,7 @@ check_property_value(
   Kokkos::fence();
 }
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP) || defined(KOKKOS_ENABLE_SYCL)
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd,
           typename ExecutionSpace, typename ViewType>

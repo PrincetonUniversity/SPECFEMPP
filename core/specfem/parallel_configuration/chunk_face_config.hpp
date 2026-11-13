@@ -67,6 +67,14 @@ struct default_chunk_face_config<specfem::element::dimension_tag::dim3,
 };
 #endif
 
+#if defined(KOKKOS_ENABLE_SYCL)
+template <>
+struct default_chunk_face_config<specfem::element::dimension_tag::dim3,
+                                 Kokkos::SYCL>
+    : face_chunk_config<specfem::element::dimension_tag::dim3, 4,
+                        Kokkos::SYCL> {};
+#endif
+
 #if defined(KOKKOS_ENABLE_OPENMP)
 template <>
 struct default_chunk_face_config<specfem::element::dimension_tag::dim3,

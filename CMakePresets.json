@@ -107,6 +107,26 @@
       }
     },
     {
+      "name": "release-sycl",
+      "displayName": "Release -- SYCL enabled (portable Intel GPU target)",
+      "description": "Uses portable SPIR-V device code with runtime JIT compilation for Intel GPUs. Requires icpx and a compatible GPU driver. See the build requirements documentation for Kokkos AOT architecture options.",
+      "binaryDir": "build/release-sycl",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_COMPILER": "icpx",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-sycl",
+        "Kokkos_ENABLE_SYCL": "ON",
+        "Kokkos_ARCH_INTEL_GEN": "ON",
+        "Kokkos_ENABLE_ONEDPL": "OFF",
+        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
+        "SPECFEM_INSTALL": "ON",
+        "SPECFEM_BUILD_TESTS": "ON",
+        "SPECFEM_BUILD_BENCHMARKS": "ON",
+        "SPECFEM_BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-sycl"
+      }
+    },
+    {
       "name": "release-frontier",
       "displayName": "Release Frontier -- HIP enabled",
       "binaryDir": "build/release-frontier",
@@ -322,6 +342,13 @@
     {
       "name": "release-hip",
       "configurePreset": "release-hip",
+      "targets": [
+        "all"
+      ]
+    },
+    {
+      "name": "release-sycl",
+      "configurePreset": "release-sycl",
       "targets": [
         "all"
       ]
