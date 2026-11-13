@@ -1,6 +1,8 @@
 #pragma once
 
 #include "specfem/assembly/assembly.hpp"
+#include "specfem/attenuation/globe.hpp"
+#include "specfem/constants.hpp"
 #include "specfem/element.hpp"
 #include "specfem/io/property/impl/sub_block.hpp"
 #include "specfem/io/property/reader.hpp"
@@ -127,6 +129,11 @@ void specfem::io::property_reader<InputLibrary>::read(
 
   typename InputLibrary::File file(base_folder + "/" + ns);
 
+  // One table pair for every attenuating container read here, so they agree
+  // on each bucket's representative Q and fit each bucket once.
+  specfem::attenuation::globe::QualityFactorTables<specfem::constants::N_SLS>
+      quality_factor_tables;
+
   specfem::tag_dispatch::for_each(
       DIMENSION_SET(dim3) * MEDIUM_SET(elastic, acoustic) *
           PROPERTY_SET(isotropic, anisotropic) *
@@ -192,7 +199,8 @@ void specfem::io::property_reader<InputLibrary>::read(
                         assembly.attenuation.tau_sigma,
                         assembly.mesh.h_spherical_coord,
                         specfem::assembly::impl::AssemblyAttenuationContext{
-                            assembly.element_types });
+                            assembly.element_types },
+                        quality_factor_tables);
         }
       });
 

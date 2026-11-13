@@ -1,5 +1,7 @@
 #include "globe_properties.hpp"
 
+#include "specfem/attenuation/globe.hpp"
+#include "specfem/constants.hpp"
 #include "specfem/globe/model_evaluator.hpp"
 #include "specfem/globe/region_codes.hpp"
 #include "specfem/logger.hpp"
@@ -244,6 +246,10 @@ void specfem::assembly::dim3_impl::read_globe_properties(
   const specfem::assembly::impl::AssemblyAttenuationContext attenuation_context{
     element_types
   };
+  // One table pair for both containers, so isotropic and anisotropic
+  // elements agree on each bucket's representative Q.
+  specfem::attenuation::globe::QualityFactorTables<specfem::constants::N_SLS>
+      quality_factor_tables;
   if (attenuation_container != nullptr) {
     using specfem::units::unit_symbols::Hz;
     const auto fc = specfem::utilities::logarithmic_center(
@@ -256,7 +262,8 @@ void specfem::assembly::dim3_impl::read_globe_properties(
     attenuation_container->recompute(
         elastic_properties, fc, input_mesh.attenuation.f0,
         input_mesh.attenuation.band, input_mesh.attenuation.tau_sigma,
-        assembly.mesh.h_spherical_coord, attenuation_context);
+        assembly.mesh.h_spherical_coord, attenuation_context,
+        quality_factor_tables);
   }
   if (anisotropic_attenuation != nullptr) {
     anisotropic_attenuation->recompute(
@@ -264,7 +271,8 @@ void specfem::assembly::dim3_impl::read_globe_properties(
             .get_container<Medium::elastic, Property::anisotropic>(),
         assembly.attenuation.fc, assembly.attenuation.f0,
         assembly.attenuation.band, assembly.attenuation.tau_sigma,
-        assembly.mesh.h_spherical_coord, attenuation_context);
+        assembly.mesh.h_spherical_coord, attenuation_context,
+        quality_factor_tables);
   }
   assembly.properties.copy_to_device();
   Kokkos::fence();

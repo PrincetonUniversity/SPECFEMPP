@@ -180,3 +180,72 @@ TEST(GlobeAttenuation_QualityFactor, ClipsToMaximum) {
   }
   EXPECT_EQ(table.bucket(inf), 90000);
 }
+
+namespace globe_formulation_test_impl {
+/** @brief Globe fit of one Q in a global-scale band, as the solver runs it. */
+struct GlobeFit {
+  specfem::utilities::Band<specfem::units::Hertz> band;
+  View<3> tau_sigma;
+  type_real fc;
+
+  GlobeFit()
+      : band((1.0 / 15632.376) * specfem::units::unit_symbols::Hz,
+             (1.0 / 277.987305) * specfem::units::unit_symbols::Hz),
+        tau_sigma(specfem::attenuation::compute_tau_sigma<3>(band)),
+        fc(std::sqrt(band.min.raw() * band.max.raw())) {}
+
+  specfem::attenuation::globe::QualityFactorFit<3>
+  operator()(const type_real q) const {
+    return specfem::attenuation::globe::fit_quality_factor<3>(q, tau_sigma,
+                                                              band, fc, 1.0);
+  }
+};
+} // namespace globe_formulation_test_impl
+
+TEST(GlobeAttenuation_QualityFactorTables, OneFitPerBucket) {
+  const globe_formulation_test_impl::GlobeFit fit;
+  specfem::attenuation::globe::QualityFactorTables<3> tables;
+
+  // 100.01 and 100.09 share a bucket: the second gets the first's fit.
+  const auto &first = tables.shear.fit(100.01, fit);
+  const auto &same = tables.shear.fit(100.09, fit);
+  EXPECT_EQ(&first, &same);
+  EXPECT_EQ(tables.fits(), 1);
+
+  // 100.04 and 100.14 are in adjacent buckets: two different fits.
+  const auto &lower = tables.bulk.fit(100.04, fit);
+  const auto &upper = tables.bulk.fit(100.14, fit);
+  EXPECT_EQ(tables.fits(), 3);
+  bool differs = false;
+  for (int j = 0; j < 3; ++j)
+    differs = differs || lower.tau_eps(j) != upper.tau_eps(j);
+  EXPECT_TRUE(differs);
+
+  // Q outside (0, 9000] is clipped into the last bucket, which is fitted at
+  // Q = 9000 once.
+  for (const type_real q :
+       { type_real(0), type_real(-5), type_real(9000), type_real(9999) }) {
+    EXPECT_EQ(tables.shear.bucket(q), 90000);
+    EXPECT_NEAR(tables.shear.representative(q), 9000, 0.0);
+    tables.shear.fit(q, fit);
+  }
+  EXPECT_EQ(tables.fits(), 4);
+}
+
+TEST(GlobeAttenuation_QualityFactorTables, BucketErrorIsBoundedByStep) {
+  // A point whose Q is up to one bucket width (0.1) from its representative
+  // gets the representative's fit. The modulus defect scales like 1/Q, so
+  // the error is about 0.1/Q relative: below 1e-3 at Q = 100.
+  const globe_formulation_test_impl::GlobeFit fit;
+  const auto representative = fit(100.01);
+  const auto exact = fit(100.09);
+  for (int j = 0; j < 3; ++j) {
+    const double defect_r = representative.tau_eps(j) / fit.tau_sigma(j) - 1.0;
+    const double defect_e = exact.tau_eps(j) / fit.tau_sigma(j) - 1.0;
+    EXPECT_NEAR(defect_r, defect_e, 1.e-3 * std::abs(defect_e));
+  }
+  // The dispersion shift 1 - scale also scales like 1/Q.
+  const double shift = 1.0 - exact.scales.unrelaxed();
+  EXPECT_NEAR(representative.scales.unrelaxed(), exact.scales.unrelaxed(),
+              1.e-3 * std::abs(shift));
+}

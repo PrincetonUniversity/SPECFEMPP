@@ -21,6 +21,9 @@ with the formulation-independent :doc:`quality_factor_table`.
 
 .. doxygenfunction:: specfem::attenuation::globe::make_quality_factor_table
 
+.. doxygenstruct:: specfem::attenuation::globe::QualityFactorTables
+    :members:
+
 Q fit
 -----
 

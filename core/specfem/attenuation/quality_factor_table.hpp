@@ -23,6 +23,8 @@ namespace attenuation {
  * caller.
  *
  * The table is host-only setup state owned by its user; it is not a global.
+ * Any path that fits Q uses it, including the property reader of a
+ * Cartesian GLL model, so it is not globe-specific.
  *
  * @tparam FitResult Value returned by the fit for one Q.
  *
@@ -113,6 +115,34 @@ private:
   type_real maximum_ = 0;
   std::map<long long, Entry> table_;
   int fits_ = 0;
+};
+
+/**
+ * @brief The bulk (Qkappa) and shear (Qmu) tables of one attenuation setup.
+ *
+ * Pass one instance to every container fitted in the same setup, so that
+ * all of them agree on each bucket's representative Q and fit each bucket
+ * once. Host-only: it holds a std::map, so keep it out of structs that are
+ * copied into device kernels.
+ *
+ * @tparam FitResult Value returned by the fit for one Q.
+ */
+template <typename FitResult> struct QualityFactorTables {
+  /**
+   * @brief Create empty tables.
+   * @param maximum Q limit applied by both tables (see QualityFactorTable)
+   */
+  explicit QualityFactorTables(const type_real maximum = 0)
+      : bulk(maximum), shear(maximum) {}
+
+  QualityFactorTable<FitResult> bulk;  ///< Table for Qkappa
+  QualityFactorTable<FitResult> shear; ///< Table for Qmu
+
+  /**
+   * @brief Fits performed by both tables.
+   * @return Sum of bulk and shear fit counts
+   */
+  int fits() const { return bulk.fits() + shear.fits(); }
 };
 
 } // namespace attenuation
