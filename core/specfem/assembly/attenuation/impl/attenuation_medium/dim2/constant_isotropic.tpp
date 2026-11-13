@@ -4,6 +4,7 @@
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/attenuation/compute_factors.hpp"
 #include "specfem/attenuation/compute_tau_eps.hpp"
+#include "specfem/attenuation/quality_factor_table.hpp"
 #include "specfem/attenuation/compute_tau_sigma.hpp"
 #include "specfem/constants.hpp"
 #include "specfem/data_access/container.hpp"
@@ -268,9 +269,9 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
    * from them (pushed to device). The per-element scale factors are refreshed
    * so a subsequent write stays consistent with the read model. Q is sampled
    * at every GLL point, so a GLL-varying Q model is honoured; the (expensive,
-   * Nelder-Mead) tau_epsilon solve is memoized and only redone when Q changes
-   * from the previous point, so element-constant Q costs one solve per
-   * element. No-op when there are no attenuating elements. Host-only; const
+   * Nelder-Mead) tau_epsilon solve is memoized by a
+   * specfem::attenuation::QualityFactorTable, once per Q bucket, and the
+   * stored Q is replaced by its bucket's representative. No-op when there are no attenuating elements. Host-only; const
    * because only view data is mutated.
    *
    * @tparam PropsContainer Property data container type (exposes h_kappa,
@@ -296,36 +297,35 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
         element_range.begin_index() - props.element_range.begin_index();
     const int l_ngllz = h_Qkappa.extent(1);
     const int l_ngllx = h_Qkappa.extent(2);
+    // The 2D formulation: 1/L-normalized fit, no Q clipping.
+    struct Fit {
+      type_real scale;
+      specfem::attenuation::AttenuationPropertyValues<N_SLS> properties;
+    };
+    const auto fit = [&](const type_real q) {
+      const auto tau_eps =
+          specfem::attenuation::compute_tau_eps<N_SLS>(q, tau_sigma, band);
+      return Fit{ specfem::attenuation::get_attenuation_scale_factor<N_SLS>(
+                      fc.raw(), tau_eps, tau_sigma, q, f0.raw()),
+                  specfem::attenuation::get_attenuation_property_values<N_SLS>(
+                      tau_sigma, tau_eps) };
+    };
+    specfem::attenuation::QualityFactorTable<Fit> kappa_table, mu_table;
     for (int i = 0; i < nspec_attn; ++i) {
-      type_real last_Qkappa = -1, last_Qmu = -1, kappa_scale = 0, mu_scale = 0;
-      specfem::attenuation::AttenuationPropertyValues<N_SLS> kappa_props,
-          mu_props;
+      type_real kappa_scale = 0, mu_scale = 0;
       for (int iz = 0; iz < l_ngllz; ++iz) {
         for (int ix = 0; ix < l_ngllx; ++ix) {
-          const type_real Qkappa = h_Qkappa(i, iz, ix);
-          const type_real Qmu = h_Qmu(i, iz, ix);
-          if (Qkappa != last_Qkappa) {
-            const auto tau_eps = specfem::attenuation::compute_tau_eps<N_SLS>(
-                Qkappa, tau_sigma, band);
-            kappa_scale =
-                specfem::attenuation::get_attenuation_scale_factor<N_SLS>(
-                    fc.raw(), tau_eps, tau_sigma, Qkappa, f0.raw());
-            kappa_props =
-                specfem::attenuation::get_attenuation_property_values<N_SLS>(
-                    tau_sigma, tau_eps);
-            last_Qkappa = Qkappa;
-          }
-          if (Qmu != last_Qmu) {
-            const auto tau_eps = specfem::attenuation::compute_tau_eps<N_SLS>(
-                Qmu, tau_sigma, band);
-            mu_scale =
-                specfem::attenuation::get_attenuation_scale_factor<N_SLS>(
-                    fc.raw(), tau_eps, tau_sigma, Qmu, f0.raw());
-            mu_props =
-                specfem::attenuation::get_attenuation_property_values<N_SLS>(
-                    tau_sigma, tau_eps);
-            last_Qmu = Qmu;
-          }
+          const type_real Qkappa =
+              kappa_table.representative(h_Qkappa(i, iz, ix));
+          const type_real Qmu = mu_table.representative(h_Qmu(i, iz, ix));
+          h_Qkappa(i, iz, ix) = Qkappa;
+          h_Qmu(i, iz, ix) = Qmu;
+          const Fit &kappa_fit = kappa_table.fit(Qkappa, fit);
+          const Fit &mu_fit = mu_table.fit(Qmu, fit);
+          const auto &kappa_props = kappa_fit.properties;
+          const auto &mu_props = mu_fit.properties;
+          kappa_scale = kappa_fit.scale;
+          mu_scale = mu_fit.scale;
           const type_real kappa_unrelaxed =
               props.h_kappa(offset + i, iz, ix) * kappa_scale;
           const type_real mu_unrelaxed =

@@ -1,0 +1,290 @@
+#pragma once
+
+#include "compute_factors.hpp"
+#include "quality_factor_table.hpp"
+#include "specfem/constants.hpp"
+#include "specfem/setup.hpp"
+#include "specfem/utilities/band.hpp"
+#include <Kokkos_Core.hpp>
+#include <cmath>
+#include <stdexcept>
+
+namespace specfem {
+namespace attenuation {
+
+/**
+ * @brief SPECFEM3D_GLOBE attenuation formulation, used by every 3D mesh.
+ *
+ * Ports the Q fit (src/meshfem3D/model_attenuation.f90) and the modulus
+ * factors (src/specfem3D/get_attenuation.f90). The 2D solver keeps the
+ * 1/L-normalized routines in specfem::attenuation.
+ *
+ * Differences from those routines: the Maxwell real part is unnormalized,
+ * \f$A=1-N+\sum_i\ldots\f$; the fit runs in double precision with
+ * specfem::optimization::NelderMeadSimplex with globe's single-precision
+ * tolerances; Q is clipped to 9000 and bucketed with
+ * specfem::attenuation::QualityFactorTable as in globe's
+ * model_attenuation_storage;
+ * one_minus_sum_beta is
+ * \f$1+\sum_i(\tau_{\epsilon_i}/\tau_{\sigma_i}-1)\f$; and the dispersion
+ * factor is split into a reference-to-relaxed scale (Liu et al. 1976) and the
+ * relaxed-to-unrelaxed ratio.
+ */
+namespace globe {
+
+/**
+ * @brief Clip Q to globe's fitting range.
+ *
+ * Globe fits and disperses Q in (0, specfem::constants::Q_MAXIMUM]; a
+ * nonpositive or larger Q (including the 9999 "no attenuation" convention)
+ * is replaced by the maximum.
+ *
+ * @param q Input quality factor
+ * @return q, or Q_MAXIMUM when q is nonpositive, infinite or above it
+ * @throws std::invalid_argument if q is NaN
+ */
+inline type_real clip_quality_factor(const type_real q) {
+  if (std::isnan(q)) {
+    throw std::invalid_argument("Quality factor must not be NaN");
+  }
+  constexpr type_real maximum = specfem::constants::Q_MAXIMUM;
+  return q <= 0 || q > maximum ? maximum : q;
+}
+
+/**
+ * @brief Real and imaginary moduli of globe's generalized Maxwell solid.
+ * @tparam NF Number of frequencies
+ */
+template <int NF> struct MaxwellFactors {
+  Kokkos::View<double[NF], Kokkos::LayoutRight, Kokkos::HostSpace>
+      real; ///< \f$A(\omega)\f$
+  Kokkos::View<double[NF], Kokkos::LayoutRight, Kokkos::HostSpace>
+      imag; ///< \f$B(\omega)\f$
+};
+
+/**
+ * @brief Globe's attenuation_maxwell with a unit relaxed modulus.
+ *
+ * \f[A(\omega)=1-N_{SLS}+\sum_i
+ * \frac{1+\omega^2\tau_{\epsilon_i}\tau_{\sigma_i}}
+ * {1+\omega^2\tau_{\sigma_i}^2},\qquad
+ * B(\omega)=\sum_i\frac{\omega(\tau_{\epsilon_i}-\tau_{\sigma_i})}
+ * {1+\omega^2\tau_{\sigma_i}^2}.\f]
+ *
+ * @tparam NF Number of frequencies
+ * @tparam N_SLS Number of standard linear solids
+ * @param f Frequencies (Hz)
+ * @param tau_s Stress relaxation times \f$\tau_\sigma\f$
+ * @param tau_eps Strain relaxation times \f$\tau_\epsilon\f$
+ * @return \f$A\f$ and \f$B\f$ at each frequency
+ */
+template <int NF, int N_SLS>
+MaxwellFactors<NF> maxwell(
+    const Kokkos::View<double[NF], Kokkos::LayoutRight, Kokkos::HostSpace> &f,
+    const Kokkos::View<double[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
+        &tau_s,
+    const Kokkos::View<double[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
+        &tau_eps);
+
+/**
+ * @brief Globe's attenuation_eval misfit for the Q fit.
+ *
+ * \f$\sum_i |\tan\delta(f_i)-1/Q|/(1/Q)\f$ with \f$\tan\delta=B/A\f$, using
+ * globe's HUGEVAL in place of \f$\tan\delta\f$ when \f$A=0\f$.
+ *
+ * @tparam N_SLS Number of standard linear solids
+ */
+template <int N_SLS> struct AttenuationObjective {
+  double iQ = 0; ///< \f$1/Q\f$, the target loss tangent
+  Kokkos::View<double[specfem::constants::NF_ATTENUATION], Kokkos::LayoutRight,
+               Kokkos::HostSpace>
+      f; ///< Evaluation frequencies (Hz)
+  Kokkos::View<double[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
+      tau_sigma; ///< Stress relaxation times \f$\tau_\sigma\f$
+
+  /**
+   * @brief Evaluate the misfit for candidate strain relaxation times.
+   * @param tau_eps Candidate \f$\tau_\epsilon\f$
+   * @return Sum of absolute relative \f$1/Q\f$ misfits
+   */
+  double operator()(const Kokkos::View<double[N_SLS], Kokkos::LayoutRight,
+                                       Kokkos::HostSpace> &tau_eps) const;
+};
+
+/**
+ * @brief The simplex search behind every Q fit, with Q used as given.
+ *
+ * Globe's attenuation_invert_by_simplex: 100 log-spaced frequencies, the
+ * initial guess \f$\tau_\sigma(1+2/Q)\f$ and
+ * specfem::optimization::NelderMeadSimplex with globe's single-precision
+ * tolerances and simplex steps, all in double precision regardless of
+ * type_real. This is the only Q search in the code: compute_tau_eps() clips Q
+ * and calls it, and the 1/L-normalized
+ * specfem::attenuation::compute_tau_eps() converts its result.
+ *
+ * @note Deliberately stricter than SPECFEM3D_GLOBE. Globe's fminsearch only
+ * reports failure when the evaluation count exceeds its budget; its iteration
+ * check is unreachable, so a fit that stops at the iteration budget (or exactly
+ * at the evaluation budget) without meeting the tolerances is silently
+ * accepted. Here any fit that does not meet the simplex tolerances throws,
+ * so an unconverged \f$\tau_\epsilon\f$ never reaches the solver. Converged
+ * fits are identical to globe's.
+ *
+ * @tparam N_SLS Number of standard linear solids (> 1)
+ * @tparam T Unit of the band (frequency or period)
+ * @param Q Target Q, positive and finite; not clipped
+ * @param tau_sigma Stress relaxation times from compute_tau_sigma()
+ * @param band Attenuation band
+ * @return Strain relaxation times \f$\tau_\epsilon\f$ of the unnormalized
+ * (\f$1-N+\sum\f$) model, in double precision
+ * @throws std::runtime_error if the simplex stops on its iteration or
+ * evaluation budget before meeting its tolerances, including cases globe
+ * would accept
+ * @throws std::invalid_argument if Q is not positive and finite
+ */
+template <int N_SLS, typename T>
+Kokkos::View<double[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
+search_tau_eps(double Q,
+               const Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight,
+                                  Kokkos::HostSpace> &tau_sigma,
+               const specfem::utilities::Band<T> &band);
+
+/**
+ * @brief Fit strain relaxation times with globe's
+ * attenuation_invert_by_simplex.
+ *
+ * Clips Q with clip_quality_factor() and runs search_tau_eps(), whose
+ * stricter-than-globe convergence rule it inherits.
+ *
+ * @tparam N_SLS Number of standard linear solids (> 1)
+ * @tparam T Unit of the band (frequency or period)
+ * @param Q Target Q, limited by clip_quality_factor()
+ * @param tau_sigma Stress relaxation times from compute_tau_sigma()
+ * @param band Attenuation band
+ * @return Strain relaxation times \f$\tau_\epsilon\f$
+ * @throws std::runtime_error if the fit does not converge (see
+ * search_tau_eps())
+ * @throws std::invalid_argument if Q is NaN
+ */
+template <int N_SLS, typename T>
+Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
+compute_tau_eps(type_real Q,
+                const Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight,
+                                   Kokkos::HostSpace> &tau_sigma,
+                const specfem::utilities::Band<T> &band);
+
+/**
+ * @brief Globe's get_attenuation_property_values.
+ *
+ * Returns positive defects \f$\beta_i=\tau_{\epsilon_i}/\tau_{\sigma_i}-1\f$
+ * (globe stores \f$-\beta_i\f$) and
+ * \f$\text{one\_minus\_sum\_beta}=1+\sum_i\beta_i\f$, the relaxed-to-unrelaxed
+ * multiplier. Evaluates \f$1-\tau_\epsilon\,\tau_\sigma^{-1}\f$ with a guarded
+ * reciprocal, in globe's order.
+ *
+ * @tparam N_SLS Number of standard linear solids
+ * @param tau_s Stress relaxation times \f$\tau_\sigma\f$
+ * @param tau_eps Strain relaxation times \f$\tau_\epsilon\f$
+ * @return Defects and one_minus_sum_beta
+ */
+template <int N_SLS>
+specfem::attenuation::AttenuationPropertyValues<N_SLS>
+get_attenuation_property_values(
+    const Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
+        &tau_s,
+    const Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
+        &tau_eps);
+
+/** @brief Modulus multipliers for globe's two setup stages. */
+struct ModulusScales {
+  double relaxed = 1.0; ///< Reference-frequency to relaxed multiplier.
+  double ratio = 1.0;   ///< Relaxed to unrelaxed multiplier.
+  /**
+   * @brief Total multiplier used by scalar property storage.
+   * @return Reference-frequency to unrelaxed multiplier in runtime precision
+   */
+  type_real unrelaxed() const { return relaxed * ratio; }
+};
+
+/**
+ * @brief Globe's get_attenuation_scale_factor, plus the unrelaxed ratio.
+ *
+ * The relaxed scale is \f$[1+2\ln(f_c/f_0)/(\pi Q)]\,B^2/(2\Omega)\f$ with
+ * \f$\Omega=A(\sqrt{1+B^2/A^2}-1)\f$ evaluated at \f$f_c\f$, including
+ * globe's zero-denominator fallbacks. The ratio is
+ * \f$1+\sum_i(\tau_{\epsilon_i}/\tau_{\sigma_i}-1)\f$.
+ *
+ * @tparam N_SLS Number of standard linear solids
+ * @param f_c_source Band-center frequency (Hz)
+ * @param tau_eps Strain relaxation times \f$\tau_\epsilon\f$
+ * @param tau_sigma Stress relaxation times \f$\tau_\sigma\f$
+ * @param Q_val Quality factor, limited by clip_quality_factor()
+ * @param attenuation_f0_reference Model reference frequency (Hz)
+ * @return Relaxed scale and unrelaxed ratio
+ * @throws std::runtime_error if the relaxed scale is outside [0.5, 1.5]
+ */
+template <int N_SLS>
+ModulusScales get_attenuation_modulus_scales(
+    type_real f_c_source,
+    const Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
+        &tau_eps,
+    const Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
+        &tau_sigma,
+    type_real Q_val, type_real attenuation_f0_reference);
+
+/**
+ * @brief Everything globe derives from one quality factor.
+ * @tparam N_SLS Number of standard linear solids
+ */
+template <int N_SLS> struct QualityFactorFit {
+  /// Strain relaxation times \f$\tau_\epsilon\f$
+  Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
+      tau_eps;
+  /// Defects and one_minus_sum_beta
+  specfem::attenuation::AttenuationPropertyValues<N_SLS> properties;
+  ModulusScales scales; ///< Relaxed scale and unrelaxed ratio
+};
+
+/**
+ * @brief Fit Q and derive its property values and modulus scales.
+ *
+ * Runs compute_tau_eps(), get_attenuation_property_values() and
+ * get_attenuation_modulus_scales() in turn. Inherits compute_tau_eps()'s
+ * stricter-than-globe convergence rule.
+ *
+ * @tparam N_SLS Number of standard linear solids (> 1)
+ * @tparam T Unit of the band (frequency or period)
+ * @param Q Quality factor, limited by clip_quality_factor()
+ * @param tau_sigma Stress relaxation times from compute_tau_sigma()
+ * @param band Attenuation band
+ * @param f_c_source Band-center frequency (Hz)
+ * @param attenuation_f0_reference Model reference frequency (Hz)
+ * @return The fit and everything derived from it
+ * @throws std::runtime_error if the Q fit does not converge (see
+ * compute_tau_eps()) or the relaxed scale is outside [0.5, 1.5]
+ */
+template <int N_SLS, typename T>
+QualityFactorFit<N_SLS>
+fit_quality_factor(type_real Q,
+                   const Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight,
+                                      Kokkos::HostSpace> &tau_sigma,
+                   const specfem::utilities::Band<T> &band,
+                   type_real f_c_source, type_real attenuation_f0_reference);
+
+/**
+ * @brief Q table with globe's clipping, memoizing fit_quality_factor().
+ * @tparam N_SLS Number of standard linear solids
+ * @return Empty table clipping Q to specfem::constants::Q_MAXIMUM
+ */
+template <int N_SLS>
+specfem::attenuation::QualityFactorTable<QualityFactorFit<N_SLS>>
+make_quality_factor_table() {
+  return specfem::attenuation::QualityFactorTable<QualityFactorFit<N_SLS>>(
+      specfem::constants::Q_MAXIMUM);
+}
+
+} // namespace globe
+} // namespace attenuation
+} // namespace specfem
+
+#include "globe.tpp"
