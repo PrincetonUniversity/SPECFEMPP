@@ -161,6 +161,49 @@ TEST(DomainView, TiledMappingMirrorsAndSnapshots) {
   }
 }
 
+TEST(DomainView, StorageViewAndTileWidth) {
+  using extents = Kokkos::dextents<std::size_t, 3>;
+  using tiled_type =
+      specfem::datatype::View<float, extents,
+                              specfem::datatype::DomainViewMapping<
+                                  specfem::element::dimension_tag::dim2, 4>,
+                              Kokkos::HostSpace>;
+  using native_type =
+      Kokkos::View<float ***, Kokkos::LayoutLeft, Kokkos::HostSpace>;
+  // A single tile spanning every element reproduces LayoutLeft offsets.
+  using single_tile_type =
+      specfem::datatype::View<float, extents,
+                              specfem::datatype::DomainViewMapping<
+                                  specfem::element::dimension_tag::dim2, 7>,
+                              Kokkos::HostSpace>;
+
+  tiled_type tiled("tiled", 7, 3, 2);
+  native_type native("native", 7, 3, 2);
+  single_tile_type single_tile("single_tile", 7, 3, 2);
+  for (int e = 0; e < 7; ++e)
+    for (int z = 0; z < 3; ++z)
+      for (int x = 0; x < 2; ++x) {
+        tiled(e, z, x) = 100 * e + 10 * z + x;
+        native(e, z, x) = 100 * e + 10 * z + x;
+      }
+
+  const auto tiled_storage = specfem::datatype::storage_view(tiled);
+  const auto native_storage = specfem::datatype::storage_view(native);
+  EXPECT_EQ(tiled_storage.extent(0), tiled.mapping().required_span_size());
+  EXPECT_EQ(native_storage.extent(0), native.span());
+  EXPECT_EQ(specfem::datatype::storage_tile_width(tiled), 4u);
+  EXPECT_EQ(specfem::datatype::storage_tile_width(native), 7u);
+
+  for (int e = 0; e < 7; ++e)
+    for (int z = 0; z < 3; ++z)
+      for (int x = 0; x < 2; ++x) {
+        EXPECT_NEAR(tiled_storage(tiled.mapping()(e, z, x)), tiled(e, z, x),
+                    1.e-6);
+        EXPECT_NEAR(native_storage(single_tile.mapping()(e, z, x)),
+                    native(e, z, x), 1.e-6);
+      }
+}
+
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   ::testing::AddGlobalTestEnvironment(

@@ -128,10 +128,11 @@ public:
    * @tparam value_type Data type
    * @param data Pointer to the data buffer
    * @param path Path to the dataset within the file
+   * @param fortran_order Whether the buffer is column-major
    */
   template <typename value_type>
   void write(const value_type *data, const std::vector<size_t> &dims,
-             const std::string &path);
+             const std::string &path, const bool fortran_order);
 
   void flush() { stream.flush(); }
 
@@ -213,10 +214,11 @@ public:
    * @tparam value_type Data type
    * @param data Pointer to the data buffer
    * @param path Path to the dataset within the file
+   * @param fortran_order Whether the buffer is column-major
    */
   template <typename value_type>
   void read(value_type *data, const std::vector<size_t> &dims,
-            const std::string &path);
+            const std::string &path, const bool fortran_order);
 
   ~File() { stream.close(); }
 

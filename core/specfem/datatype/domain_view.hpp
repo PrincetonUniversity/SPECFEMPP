@@ -5,6 +5,8 @@
 #include <cstddef>
 #include <mdspan/mdspan.hpp>
 #include <tuple>
+#include <type_traits>
+#include <utility>
 
 namespace specfem {
 namespace datatype {
@@ -255,7 +257,29 @@ public:
   KOKKOS_INLINE_FUNCTION
   std::size_t extent(int idim) const { return _mapping.extents().extent(idim); }
 
+  /**
+   * @brief Offset step along logical axis @p idim from the origin.
+   *
+   * The tiled mapping is affine only within a tile, so the strides describe
+   * the whole buffer only when the view holds a single tile.
+   *
+   * @param idim Logical axis
+   * @return Buffer offset of the unit index along @p idim
+   */
+  KOKKOS_INLINE_FUNCTION
+  std::size_t stride(int idim) const {
+    return stride_impl(static_cast<std::size_t>(idim),
+                       std::make_index_sequence<extents_type::rank()>{});
+  }
+
 private:
+  template <std::size_t... Axes>
+  KOKKOS_INLINE_FUNCTION std::size_t
+  stride_impl(const std::size_t axis, std::index_sequence<Axes...>) const {
+    return _mapping(static_cast<std::size_t>(Axes == axis)...) -
+           _mapping((Axes * std::size_t{ 0 })...);
+  }
+
   mapping_type _mapping;
 };
 
@@ -315,6 +339,78 @@ auto create_mirror_view(const View<T, Extents, Layout, MemorySpace> &view) {
 template <typename DataType, typename... Properties>
 auto create_mirror_view(const Kokkos::View<DataType, Properties...> &view) {
   return Kokkos::create_mirror_view(view);
+}
+
+/**
+ * @brief Rank-1 view of the flat storage of a tiled domain view.
+ * @tparam T Stored scalar type.
+ * @tparam Extents Logical extents type.
+ * @tparam Layout Tiled mapping policy.
+ * @tparam MemorySpace Memory space owning the allocation.
+ * @param view Tiled domain view.
+ * @return View over every storage entry, including tail padding.
+ */
+template <typename T, typename Extents, typename Layout, typename MemorySpace>
+auto storage_view(const View<T, Extents, Layout, MemorySpace> &view) {
+  return view.get_base_view();
+}
+
+/**
+ * @brief Rank-1 view of the flat storage of a native Kokkos domain view.
+ * @tparam DataType Kokkos view data type, including its rank.
+ * @tparam Properties Kokkos layout, memory space, and memory traits.
+ * @param view Contiguous LayoutLeft domain view.
+ * @return Unmanaged view over every storage entry of @p view.
+ */
+template <typename DataType, typename... Properties>
+auto storage_view(const Kokkos::View<DataType, Properties...> &view) {
+  using ViewType = Kokkos::View<DataType, Properties...>;
+  static_assert(
+      std::is_same_v<typename ViewType::array_layout, Kokkos::LayoutLeft>,
+      "native domain views are LayoutLeft");
+  return Kokkos::View<typename ViewType::value_type *,
+                      typename ViewType::memory_space,
+                      Kokkos::MemoryTraits<Kokkos::Unmanaged>>(view.data(),
+                                                               view.span());
+}
+
+/**
+ * @brief Element-axis tile width of a tiled domain view's storage.
+ *
+ * Together with the logical extents, the tile width fixes where every entry
+ * sits in the flat storage, so it identifies a raw storage dump.
+ *
+ * @tparam T Stored scalar type.
+ * @tparam Extents Logical extents type.
+ * @tparam DimensionTag Spatial dimension of the mapping.
+ * @tparam ElementChunkSize Number of elements per tile.
+ * @tparam MemorySpace Memory space owning the allocation.
+ * @return @p ElementChunkSize
+ */
+template <typename T, typename Extents,
+          specfem::element::dimension_tag DimensionTag, int ElementChunkSize,
+          typename MemorySpace>
+std::size_t storage_tile_width(
+    const View<T, Extents, DomainViewMapping<DimensionTag, ElementChunkSize>,
+               MemorySpace> &) {
+  return ElementChunkSize;
+}
+
+/**
+ * @brief Element-axis tile width of a native LayoutLeft domain view.
+ *
+ * LayoutLeft storage is the tiled layout with a single tile spanning every
+ * element.
+ *
+ * @tparam DataType Kokkos view data type, including its rank.
+ * @tparam Properties Kokkos layout, memory space, and memory traits.
+ * @param view Contiguous LayoutLeft domain view.
+ * @return Number of elements in @p view
+ */
+template <typename DataType, typename... Properties>
+std::size_t
+storage_tile_width(const Kokkos::View<DataType, Properties...> &view) {
+  return view.extent(0);
 }
 
 template <typename SrcViewType, typename DstViewType>

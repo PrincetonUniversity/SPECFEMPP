@@ -3,9 +3,9 @@
 #include "specfem/assembly.hpp"
 #include "specfem/io/wavefield/reader.hpp"
 #include "specfem/mpi.hpp"
+#include "specfem/parallel_configuration/chunk_config.hpp"
 #include "specfem/tag_dispatch.hpp"
 #include "specfem/utilities.hpp"
-#include <boost/filesystem.hpp>
 
 template <typename IOLibrary>
 specfem::io::wavefield_reader<IOLibrary>::wavefield_reader(
@@ -16,15 +16,8 @@ specfem::io::wavefield_reader<IOLibrary>::wavefield_reader(
       //   parallel: {output_folder}/ForwardWavefield/proc_N
       // file_path is declared before file in the header, so it is initialized
       // first and can safely be passed to the File constructor.
-      file_path([&output_folder]() {
-        const std::string formatted = specfem::MPI::format_proc_filename(
-            output_folder + "/ForwardWavefield");
-        const boost::filesystem::path p(formatted);
-        if (specfem::MPI::get_size() > 1) {
-          return (p.parent_path() / p.stem()).string();
-        }
-        return p.string();
-      }()),
+      file_path(specfem::MPI::format_proc_filename(output_folder +
+                                                   "/ForwardWavefield")),
       // File is opened lazily in open_file() / initialize() so that the reader
       // can be constructed before the checkpoint directory exists (needed for
       // the combined_undoatt workflow where the forward pass creates the dir).
@@ -201,22 +194,29 @@ void specfem::io::wavefield_reader<IOLibrary>::run(
         typename IOLibrary::Group att_group =
             med_group.openGroup("Attenuation");
 
-        att_group.openDataset("Rkappa", medium.h_memory_variable_kappa).read();
-        att_group.openDataset("Rxx", medium.h_memory_variable_Rxx).read();
-        att_group.openDataset("Rxz", medium.h_memory_variable_Rxz).read();
-        att_group.openDataset("EpsilonXX", medium.h_epsilon_xx_att).read();
-        att_group.openDataset("EpsilonZZ", medium.h_epsilon_zz_att).read();
-        att_group.openDataset("EpsilonXZ", medium.h_epsilon_xz_att).read();
+        // The attenuation views are raw rank-1 storage; they are only
+        // meaningful for the element tile width they were written with.
+        Kokkos::View<int *, Kokkos::HostSpace> tile_width_view(
+            "storage_tile_width", 1);
+        att_group.openDataset("storage_tile_width", tile_width_view).read();
 
-        if constexpr (DimensionTag == specfem::element::dimension_tag::dim3) {
-          att_group.openDataset("Ryy", medium.h_memory_variable_Ryy).read();
-          att_group.openDataset("Rzz", medium.h_memory_variable_Rzz).read();
-          att_group.openDataset("Rxy", medium.h_memory_variable_Rxy).read();
-          att_group.openDataset("Ryz", medium.h_memory_variable_Ryz).read();
-          att_group.openDataset("EpsilonYY", medium.h_epsilon_yy_att).read();
-          att_group.openDataset("EpsilonXY", medium.h_epsilon_xy_att).read();
-          att_group.openDataset("EpsilonYZ", medium.h_epsilon_yz_att).read();
-        }
+        medium.for_each_checkpoint_view(
+            [&](const std::string &name, const auto &view) {
+              const auto tile_width =
+                  specfem::datatype::storage_tile_width(view);
+              if (static_cast<std::size_t>(tile_width_view(0)) != tile_width) {
+                throw std::runtime_error(
+                    "Wavefield checkpoint dataset " + name +
+                    " was written with storage_tile_width = " +
+                    std::to_string(tile_width_view(0)) +
+                    " but this build stores it with tile width " +
+                    std::to_string(tile_width) +
+                    ". The checkpoint was written by a build with a different "
+                    "backend or storage chunk size and cannot be read.");
+              }
+              att_group.openDataset(name, specfem::datatype::storage_view(view))
+                  .read();
+            });
       });
 
   attenuation.copy_to_device();

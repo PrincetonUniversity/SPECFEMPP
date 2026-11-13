@@ -658,6 +658,14 @@ Parameter definitions
 
                             :possible values: [string]
 
+                        .. note::
+
+                            With ``format: HDF5``, a ``Kernels.xmf`` file is
+                            written next to ``Kernels.h5``. Open it in ParaView
+                            with the "XDMF Reader" (not the "Xdmf3 Reader") to
+                            view every element group with its kernels as point
+                            data.
+
 
                     .. dropdown:: ``display`` [optional]
 
@@ -874,6 +882,10 @@ Parameter definitions
 
             databases:
                 mesh-database: /path/to/mesh_database.bin
+                writer:
+                  properties:
+                    format: HDF5
+                    directory: /path/to/output/folder
 
 
         .. dropdown:: ``mesh-database``
@@ -908,6 +920,65 @@ Parameter definitions
                 :caption: Example
 
                 mesh-parameters: /path/to/mesh_parameters.bin
+
+        .. dropdown:: ``writer`` [optional]
+
+            Writes the material properties at every GLL point after the
+            assembly is built.
+
+            .. code-block:: yaml
+                :caption: Example
+
+                writer:
+                  properties:
+                    format: HDF5
+                    directory: /path/to/output/folder
+
+            .. dropdown:: ``properties``
+
+                Property writer parameters.
+
+                .. dropdown:: ``format`` [optional]
+
+                    Output format of the properties.
+
+                    :default value: NPY
+
+                    :possible values: [ASCII, HDF5, ADIOS2, NPY, NPZ]
+
+                .. dropdown:: ``directory`` [optional]
+
+                    Existing folder receiving the properties.
+
+                    :default value: Current working directory
+
+                    :possible values: [string]
+
+                .. note::
+
+                    With ``format: HDF5``, a ``Properties.xmf`` file is written
+                    next to ``Properties.h5``. Open it in ParaView with the
+                    "XDMF Reader" (not the "Xdmf3 Reader"): every element group
+                    appears as a quadrilateral (2D) or hexahedral (3D) mesh over
+                    its GLL points, with the stored properties and the derived
+                    quantities below as point data. Coloring by ``vp`` with a
+                    categorical colormap separates layers of one medium.
+
+                    .. list-table:: Derived quantities
+                        :header-rows: 1
+
+                        * - Medium, property
+                          - Derived
+                        * - elastic (P-SV, SH, 3D), isotropic; Cosserat
+                          - ``vp``, ``vs``
+                        * - elastic (P-SV, SH), anisotropic
+                          - ``vp``, ``vs`` (vertical, from ``c33``, ``c55``)
+                        * - elastic (3D), anisotropic
+                          - ``vp``, ``vs`` (Voigt averages)
+                        * - acoustic, isotropic
+                          - ``vp``, ``rho``
+                        * - poroelastic, isotropic
+                          - ``vs``, ``rho``
 
 
     .. dropdown:: ``sources``

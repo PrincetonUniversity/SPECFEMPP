@@ -1,6 +1,7 @@
 #pragma once
 
 #include "file.hpp"
+#include "specfem/io_backends/impl/file_extents.hpp"
 #include <string>
 
 namespace specfem::io_backends::impl::NPZ {
@@ -33,8 +34,6 @@ public:
  */
 template <typename ViewType, typename OpType> class Dataset {
 public:
-  // static_assert(ViewType::is_contiguous, "ViewType must be contiguous");
-
   constexpr static int rank = ViewType::rank(); ///< Rank of the View
 
   using value_type =
@@ -53,6 +52,8 @@ public:
    * @param stream input or output file stream
    * @param path Name of the dataset
    * @param data Data to write
+   * @throws std::invalid_argument if @p data is not a contiguous LayoutLeft or
+   * LayoutRight buffer
    */
   Dataset(File<OpType> &file, const std::string &path, const ViewType data);
   ///@}
@@ -80,6 +81,8 @@ private:
   File<OpType> &file;
   const std::string path;
   const std::vector<size_t> dims;
+  /// Header storage order; rank 0 and 1 views are declared column-major
+  const bool fortran_order;
 };
 #endif
 } // namespace specfem::io_backends::impl::NPZ

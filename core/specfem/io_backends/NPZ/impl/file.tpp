@@ -6,7 +6,7 @@
 template <typename value_type>
 void specfem::io_backends::impl::NPZ::File<specfem::io::write>::write(
     const value_type *data, const std::vector<size_t> &dims,
-    const std::string &path) {
+    const std::string &path, const bool fortran_order) {
   if (!stream.is_open()) {
     std::ostringstream oss;
     oss << "ERROR : File is closed for writing " << path;
@@ -34,12 +34,13 @@ void specfem::io_backends::impl::NPZ::File<specfem::io::write>::write(
         specfem::io_backends::impl::NPY::pack_string_records(data, nels, width);
     npy_header = specfem::io_backends::impl::NPY::create_npy_header(
         dims, specfem::io_backends::impl::NPY::map_type<std::string>(), width,
-        /*fortran_order=*/true);
+        fortran_order);
     payload = string_records.data();
     payload_size = string_records.size();
   } else {
     npy_header =
-        specfem::io_backends::impl::NPY::create_npy_header<value_type>(dims);
+        specfem::io_backends::impl::NPY::create_npy_header<value_type>(
+            dims, fortran_order);
     payload = reinterpret_cast<const char *>(data);
     payload_size = nels * sizeof(value_type);
   }
@@ -109,8 +110,8 @@ void specfem::io_backends::impl::NPZ::File<specfem::io::write>::write(
 
 template <typename value_type>
 void specfem::io_backends::impl::NPZ::File<specfem::io::read>::read(
-    value_type *data, const std::vector<size_t> &dims,
-    const std::string &path) {
+    value_type *data, const std::vector<size_t> &dims, const std::string &path,
+    const bool fortran_order) {
   if (!stream.is_open()) {
     std::ostringstream oss;
     oss << "ERROR : File is closed for writing " << path;
@@ -175,6 +176,8 @@ void specfem::io_backends::impl::NPZ::File<specfem::io::read>::read(
           oss << "ERROR : Dimension mismatch between dataset and file";
           throw std::runtime_error(oss.str());
         }
+        specfem::io_backends::impl::NPY::check_fortran_order(
+            header, fortran_order, file_path + "/" + path);
         std::vector<char> records(total_elements * header.item_size);
         stream.read(records.data(), records.size());
         specfem::io_backends::impl::NPY::unpack_string_records(
@@ -182,8 +185,9 @@ void specfem::io_backends::impl::NPZ::File<specfem::io::read>::read(
         break;
       }
 
-      std::vector<size_t> shape =
+      const auto header =
           specfem::io_backends::impl::NPY::parse_npy_header<value_type>(stream);
+      const std::vector<size_t> &shape = header.shape;
       if (rank != shape.size()) {
         std::ostringstream oss;
         oss << "ERROR : Rank mismatch between dataset and file";
@@ -197,6 +201,8 @@ void specfem::io_backends::impl::NPZ::File<specfem::io::read>::read(
           throw std::runtime_error(oss.str());
         }
       }
+      specfem::io_backends::impl::NPY::check_fortran_order(
+          header, fortran_order, file_path + "/" + path);
 
       stream.read(reinterpret_cast<char *>(data),
                   total_elements * sizeof(value_type));
