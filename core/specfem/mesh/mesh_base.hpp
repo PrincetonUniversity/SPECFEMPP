@@ -93,6 +93,13 @@ template <specfem::element::dimension_tag DimensionTag>
 struct absorbing_boundary;
 
 /**
+ * @brief Struct to store the faces where a wavefield is injected
+ *
+ * @tparam DimensionTag Dimension type
+ */
+template <specfem::element::dimension_tag DimensionTag> struct InjectionSurface;
+
+/**
  * @brief Struct to store acoustic free surface boundaries
  *
  * @tparam DimensionTag Dimension type

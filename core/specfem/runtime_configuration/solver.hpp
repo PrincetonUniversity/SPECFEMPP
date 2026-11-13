@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/injection/method/coupling_method.hpp"
 #include "specfem/periodic_tasks/periodic_task.hpp"
 #include "specfem/solver/solver.hpp"
 #include "specfem/timescheme/timescheme.hpp"
@@ -73,19 +74,25 @@ public:
    * @param assembly Assembly object
    * @param time_scheme Time scheme object
    * @param quadrature Quadrature points object
+   * @param injection Wavefield-injection method; forward simulations only
    * @return std::shared_ptr<specfem::solver::solver> Solver object
+   * @throws std::runtime_error if @p injection is set for a simulation that
+   * is not forward
    */
   template <int NGLL, specfem::element::dimension_tag DimensionTag>
-  std::shared_ptr<specfem::solver::solver>
-  instantiate(const type_real dt,
-              const specfem::assembly::assembly<DimensionTag> &assembly,
-              std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
-              const specfem::simulation::type simulation_type,
-              const std::vector<std::shared_ptr<
-                  specfem::periodic_tasks::periodic_task<DimensionTag>>> &tasks,
-              const std::shared_ptr<
-                  specfem::periodic_tasks::periodic_task<DimensionTag>>
-                  checkpoint_reader) const;
+  std::shared_ptr<specfem::solver::solver> instantiate(
+      const type_real dt,
+      const specfem::assembly::assembly<DimensionTag> &assembly,
+      std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
+      const specfem::simulation::type simulation_type,
+      const std::vector<
+          std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag>>>
+          &tasks,
+      const std::shared_ptr<
+          specfem::periodic_tasks::periodic_task<DimensionTag>>
+          checkpoint_reader,
+      const std::shared_ptr<specfem::injection::CouplingMethod<DimensionTag>>
+          injection) const;
 
   /**
    * @brief Get the type of the simulation (forward or combined)

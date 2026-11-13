@@ -1,11 +1,14 @@
 #pragma once
 
 #include "specfem/enums.hpp"
+#include "specfem/injection/method/registry.hpp"
+#include "specfem/injection/options.hpp"
 #include "specfem/periodic_tasks.hpp"
 #include "specfem/runtime_configuration.hpp"
 #include <chrono>
 #include <ctime>
 #include <memory>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -47,13 +50,21 @@ print_end_message(std::chrono::time_point<std::chrono::system_clock> start_time,
  *
  * @param dimension Simulation dimension: "2d" or "3d"
  * @param parameter_dict User-provided YAML configuration overriding defaults
- * @param default_dict YAML default values for all simulation parameters
+ * @param injection Injection plugin selected for the run, if any. Required
+ * exactly when the configuration has a @c parameters.injection section;
+ * supported for 3D only.
+ * @param registry Injection methods selectable by @c
+ * parameters.injection.method
  * @return true on successful completion, false on failure
  *
  * @throws std::runtime_error if dimension is invalid or simulation encounters
  * fatal error
  */
-bool execute(const std::string &dimension, const YAML::Node &parameter_dict);
+bool execute(const std::string &dimension, const YAML::Node &parameter_dict,
+             const std::optional<specfem::injection::PluginOptions> &injection =
+                 std::nullopt,
+             const specfem::injection::MethodRegistry &registry =
+                 specfem::injection::default_method_registry());
 
 /**
  * @brief Generate Q plot data for given Q and frequency range
