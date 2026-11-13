@@ -20,10 +20,13 @@ public:
    * @param timescheme Type of timescheme
    * @param dt delta time of the timescheme
    * @param nstep Number of time steps
+   * @param t0 Simulation start time
+   * @param override_cfl Run even if dt exceeds the suggested time step
    */
   time_scheme(std::string timescheme, type_real dt, type_real nstep,
-              type_real t0)
-      : timescheme(timescheme), dt(dt), nstep(nstep), t0(t0) {}
+              type_real t0, bool override_cfl = false)
+      : timescheme(timescheme), dt(dt), nstep(nstep), t0(t0),
+        override_cfl(override_cfl) {}
   /**
    * @brief Construct a new time marching object
    *
@@ -66,11 +69,19 @@ public:
 
   int get_nsteps() const { return this->nstep; }
 
+  /**
+   * @brief Whether to run even if dt exceeds the suggested time step
+   *
+   * @return true if the CFL check should only warn
+   */
+  bool get_override_cfl() const { return this->override_cfl; }
+
 private:
-  int nstep;              ///< number of time steps
-  type_real dt;           ///< delta time for the timescheme
-  type_real t0 = 0.0;     ///< start time
-  std::string timescheme; ///< Time scheme e.g. Newmark, Runge-Kutta, LDDRK
+  int nstep;                 ///< number of time steps
+  type_real dt;              ///< delta time for the timescheme
+  type_real t0 = 0.0;        ///< start time
+  std::string timescheme;    ///< Time scheme e.g. Newmark, Runge-Kutta, LDDRK
+  bool override_cfl = false; ///< warn instead of abort on a CFL violation
 };
 } // namespace runtime_configuration
 } // namespace specfem

@@ -56,7 +56,8 @@ specfem::runtime_configuration::time_scheme::time_scheme(
 
     *this = specfem::runtime_configuration::time_scheme(
         timescheme["type"].as<std::string>(), timescheme["dt"].as<type_real>(),
-        timescheme["nstep"].as<int>(), t0);
+        timescheme["nstep"].as<int>(), t0,
+        timescheme["override-cfl"] && timescheme["override-cfl"].as<bool>());
   } catch (YAML::ParserException &e) {
     std::ostringstream message;
 

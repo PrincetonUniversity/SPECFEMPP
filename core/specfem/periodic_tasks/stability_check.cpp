@@ -77,7 +77,7 @@ void specfem::periodic_tasks::stability_check<DimensionTag>::run(
                   << specfem::constants::STABILITY_THRESHOLD << "\n"
                   << "  Verify that dt satisfies the CFL condition and that\n"
                   << "  source parameters are physically reasonable.";
-    specfem_abort(error_message.str(), 30);
+    specfem_abort(error_message.str(), 1);
   }
 }
 

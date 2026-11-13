@@ -155,6 +155,13 @@ public:
   type_real get_dt() const { return time_scheme->get_dt(); }
 
   /**
+   * @brief Whether to run even if dt exceeds the suggested time step
+   *
+   * @return true if the CFL check should only warn
+   */
+  bool get_override_cfl() const { return time_scheme->get_override_cfl(); }
+
+  /**
    * @brief Get the path to mesh database and source yaml file
    *
    * @return std::tuple<std::string, std::string> std::tuple specifying the path
