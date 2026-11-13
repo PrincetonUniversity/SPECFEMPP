@@ -318,6 +318,25 @@ Parameter definitions
                             time-scheme:
                                 t0: 0.0
 
+
+                    .. dropdown:: ``override-cfl`` [optional]
+
+                        By default the run aborts if ``dt`` exceeds the
+                        suggested time step, which is the smallest
+                        element-wise estimate at Courant number 0.5. Setting
+                        this to ``true`` logs a warning instead and runs
+                        anyway. The simulation may become unstable.
+
+                        :default value: false
+
+                        :possible values: [true, false]
+
+                        .. code-block:: yaml
+                            :caption: Example
+
+                            time-scheme:
+                                override-cfl: true
+
         .. dropdown:: ``simulation-mode``
 
             Defines the type of simulation to run (e.g. forward, adjoint, combined,
