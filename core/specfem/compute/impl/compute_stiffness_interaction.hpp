@@ -8,6 +8,7 @@
 #include "specfem/mesh_entity.hpp"
 #include "specfem/point.hpp"
 #include "specfem/tags.hpp"
+#include "stiffness_graph.hpp"
 #include "stiffness_kernels.hpp"
 #include <Kokkos_Core.hpp>
 #include <limits>
@@ -92,7 +93,13 @@ int compute_stiffness_interaction_core(
           });
     }
 
-  } else {
+  }
+#ifdef SPECFEM_ENABLE_TENSOROPS
+  else if constexpr (NGLL == 5 && uses_stiffness_graph<Tags>) {
+    compute_stiffness_graph<NGLL, stiffness_graph_tags>(assembly, elements);
+  }
+#endif
+  else {
 
     // Gather kernel uses more shared memory but avoids atomics (~7% faster).
     // Scatter kernel uses less shared memory via atomic accumulation.
