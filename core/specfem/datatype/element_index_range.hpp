@@ -91,6 +91,39 @@ private:
 };
 
 /**
+ * @brief Element range that records, in its type, the tags it was selected by.
+ *
+ * Returned by the typed `element_types` getters. Code that needs to know which
+ * elements a range covers (for example the medium, to pick a field) reads it
+ * from `tags_type` instead of taking it as a separate argument that could
+ * disagree with the range. Derives from ElementIndexRange, so it is accepted
+ * wherever a plain range is.
+ *
+ * @tparam Tags `specfem::tags::Tags` the range was selected by.
+ *
+ * @ingroup DataTypes
+ */
+template <typename Tags>
+class TaggedElementIndexRange : public ElementIndexRange {
+public:
+  using tags_type = Tags; ///< Tags the range was selected by
+
+  /**
+   * @brief Default constructor: empty range [0, 0).
+   */
+  KOKKOS_DEFAULTED_FUNCTION TaggedElementIndexRange() = default;
+
+  /**
+   * @brief Tag an existing range.
+   *
+   * @param range Range selected by `Tags`
+   */
+  KOKKOS_INLINE_FUNCTION explicit TaggedElementIndexRange(
+      const ElementIndexRange &range)
+      : ElementIndexRange(range) {}
+};
+
+/**
  * @brief Slice a range using Kokkos::subview semantics.
  *
  * Returns the sub-range [range.begin_index() + slice.first,
