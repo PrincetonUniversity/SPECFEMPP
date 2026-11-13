@@ -49,12 +49,10 @@ specfem::runtime_configuration::flux_schemes::flux_schemes(
       if (meshing_type_str == "intersections") {
         interfacial_meshing_type =
             specfem::element_coupling::interfacial_meshing_type::intersections;
-      } else if (meshing_type_str == "acoustic-host") {
+      } else if (meshing_type_str == "highres-host" ||
+                 meshing_type_str == "hires-host") {
         interfacial_meshing_type =
-            specfem::element_coupling::interfacial_meshing_type::acoustic_host;
-      } else if (meshing_type_str == "elastic-host") {
-        interfacial_meshing_type =
-            specfem::element_coupling::interfacial_meshing_type::elastic_host;
+            specfem::element_coupling::interfacial_meshing_type::highres_host;
       } else if (meshing_type_str == "self-host") {
         interfacial_meshing_type =
             specfem::element_coupling::interfacial_meshing_type::self_host;
