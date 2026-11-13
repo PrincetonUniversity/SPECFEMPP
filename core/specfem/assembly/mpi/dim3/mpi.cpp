@@ -1025,12 +1025,23 @@ specfem::assembly::mpi_impl::
 template <specfem::simulation::field_type FieldType,
           specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag>
-void specfem::assembly::mpi_impl::communication_pattern<FieldType, DimensionTag,
-                                                        MediumTag>::
-    complete_construction(
+void specfem::assembly::mpi_impl::
+    communication_pattern<FieldType, DimensionTag, MediumTag>::send_indices(
         const corner_communication_group &corner_group,
         const edge_communication_group &edge_group,
         const face_communication_group &face_group,
+        const specfem::mesh_entity::element<dimension_tag> &element,
+        const specfem::assembly::fields<dimension_tag> &fields) {
+  // Send unpacking indices to neighbor (blocking sends)
+  pack = { corner_group, edge_group, face_group, element, fields };
+}
+
+template <specfem::simulation::field_type FieldType,
+          specfem::element::dimension_tag DimensionTag,
+          specfem::element::medium_tag MediumTag>
+void specfem::assembly::mpi_impl::communication_pattern<FieldType, DimensionTag,
+                                                        MediumTag>::
+    complete_construction(
         const specfem::mesh_entity::element<dimension_tag> &element,
         const specfem::assembly::fields<dimension_tag> &fields,
         const Kokkos::View<const int *, Kokkos::HostSpace> &h_mesh_to_compute,
@@ -1039,9 +1050,6 @@ void specfem::assembly::mpi_impl::communication_pattern<FieldType, DimensionTag,
   auto &[requests, metadata_buf, recv_face_indices, face_elements,
          recv_edge_indices, edge_elements, corner_nglob_idx, corner_elements] =
       pending;
-
-  // Send unpacking indices to neighbor (blocking sends)
-  pack = { corner_group, edge_group, face_group, element, fields };
 
   // Wait for receives and assemble the unpacking mapping
   unpack.assemble_unpacking_mapping(
@@ -1198,15 +1206,15 @@ specfem::assembly::mpi<specfem::element::dimension_tag::dim3>::mpi(
   specfem::tag_dispatch::for_each(
       medium_combinations, [&]<typename TagsType>() {
         auto build_map = [&]<specfem::simulation::field_type FT>(auto &map) {
-          // Build communication patterns using three-phase approach:
-          // Phase 1 (per neighbor): Construct unpacker and post all MPI_Irecv
-          // calls Phase 2 (per neighbor): Construct packer and send blocking
-          // MPI_Send messages Phase 3 (per neighbor): Wait for receives and
-          // assemble unpacking mapping
+          // Build communication patterns using three phases, each completed
+          // for all neighbors before the next starts:
+          // Phase 1: Construct unpackers and post all MPI_Irecv calls
+          // Phase 2: Construct packers and send blocking MPI_Send messages
+          // Phase 3: Wait for receives and assemble unpacking mappings
           //
           // This ordering prevents deadlock under circular connectivity: all
-          // Irecv calls are posted globally before any MPI_Send, ensuring
-          // receiver buffers exist before sender data arrives.
+          // Irecv calls are posted globally before any MPI_Send, and no rank
+          // waits for data until it has sent to every neighbor.
           using PatternType =
               mpi_impl::communication_pattern<FT, dimension_tag,
                                               TagsType::medium_tag>;
@@ -1231,7 +1239,10 @@ specfem::assembly::mpi<specfem::element::dimension_tag::dim3>::mpi(
             map.emplace(nr, std::move(pattern));
           }
 
-          // Phase 2+3: send then wait+assemble for each neighbor
+          // Phase 2: send to every neighbor. This must finish for all
+          // neighbors before any wait: ranks visit neighbors in different
+          // orders, so waiting on one neighbor's data before sending to the
+          // rest can form a cycle of ranks each waiting on the next.
           for (unsigned int nr : all_neighbors) {
             const auto &fg =
                 face_idx.count(nr) ? face_groups[face_idx.at(nr)] : empty_face;
@@ -1240,8 +1251,12 @@ specfem::assembly::mpi<specfem::element::dimension_tag::dim3>::mpi(
             const auto &cg = corner_idx.count(nr)
                                  ? corner_groups[corner_idx.at(nr)]
                                  : empty_corner;
-            map.at(nr).complete_construction(cg, eg, fg, element, fields,
-                                             h_mesh_to_compute,
+            map.at(nr).send_indices(cg, eg, fg, element, fields);
+          }
+
+          // Phase 3: wait for every neighbor's data and assemble the mapping
+          for (unsigned int nr : all_neighbors) {
+            map.at(nr).complete_construction(element, fields, h_mesh_to_compute,
                                              std::move(pending.at(nr)));
           }
         };

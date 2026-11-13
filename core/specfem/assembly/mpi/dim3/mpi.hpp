@@ -379,15 +379,24 @@ public:
                 const specfem::mesh_entity::element<dimension_tag> &element);
 
   /**
-   * @brief Phase 2+3: performs blocking sends (packer), then waits for the
-   * receives posted in post_receives() and assembles the unpack mapping.
+   * @brief Phase 2: constructs the packer and performs its blocking sends.
    * Must be called only after post_receives() has been called for ALL
-   * neighbors.
+   * neighbors, and for ALL neighbors before any complete_construction().
+   * Interleaving a send to one neighbor with a wait on that neighbor's data
+   * deadlocks when ranks visit their neighbors in different orders.
+   */
+  void send_indices(const corner_communication_group &corner_group,
+                    const edge_communication_group &edge_group,
+                    const face_communication_group &face_group,
+                    const specfem::mesh_entity::element<dimension_tag> &element,
+                    const specfem::assembly::fields<dimension_tag> &fields);
+
+  /**
+   * @brief Phase 3: waits for the receives posted in post_receives() and
+   * assembles the unpack mapping. Must be called only after send_indices() has
+   * been called for ALL neighbors.
    */
   void complete_construction(
-      const corner_communication_group &corner_group,
-      const edge_communication_group &edge_group,
-      const face_communication_group &face_group,
       const specfem::mesh_entity::element<dimension_tag> &element,
       const specfem::assembly::fields<dimension_tag> &fields,
       const Kokkos::View<const int *, Kokkos::HostSpace> &h_mesh_to_compute,
