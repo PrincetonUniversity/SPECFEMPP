@@ -53,7 +53,10 @@ index of each row of ``mapping``, and ``mapping``, which is row-major with shape
 GLL point.
 
 **Attenuation checkpoints.** The ``Attenuation`` group of a wavefield step holds
-raw padded rank-1 storage, not logical arrays, because the memory variables are
-tiled over the element axis. These datasets are restart state for the same build
-configuration: the group's ``storage_chunk_size`` dataset records the chunk size,
-and the reader rejects a file whose value differs from the current build.
+each memory variable's raw rank-1 storage, not a logical array, so restarts read
+straight into the solver's views. That storage is LayoutLeft on CPU builds and
+tiled over the element axis on GPU builds. Both are tiled layouts, LayoutLeft
+being a single tile spanning every element, so the group's ``storage_tile_width``
+dataset records the element tile width, and the reader rejects a file whose value
+differs from the current build. Checkpoints therefore do not move between CPU and
+GPU builds, or between GPU builds with different storage chunk sizes.

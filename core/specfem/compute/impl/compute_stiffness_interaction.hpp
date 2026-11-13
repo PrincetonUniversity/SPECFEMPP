@@ -11,6 +11,7 @@
 #include "stiffness_kernels.hpp"
 #include <Kokkos_Core.hpp>
 #include <limits>
+#include <string>
 
 namespace specfem::compute::impl {
 
@@ -94,27 +95,36 @@ int compute_stiffness_interaction_core(
 
   } else {
 
-    // Gather kernel uses more shared memory but avoids atomics (~7% faster).
-    // Scatter kernel uses less shared memory via atomic accumulation.
-    // Select gather when it fits within the device limit;
-    if (gather_kernel<NGLL, Tags>::shmem_size() <= chunk.scratch_size_max(0)) {
-      gather_kernel<NGLL, Tags>{ assembly, istep }(chunk.set_scratch_size(
-          0, Kokkos::PerTeam(gather_kernel<NGLL, Tags>::shmem_size())));
-    } else if (scatter_kernel<NGLL, Tags>::shmem_size() <=
-               chunk.scratch_size_max(0)) {
-      scatter_kernel<NGLL, Tags>{ assembly, istep }(chunk.set_scratch_size(
-          0, Kokkos::PerTeam(scatter_kernel<NGLL, Tags>::shmem_size())));
-    } else if (gather_kernel<NGLL, Tags>::shmem_size() <=
-               chunk.scratch_size_max(1)) {
-      gather_kernel<NGLL, Tags>{ assembly, istep }(chunk.set_scratch_size(
-          1, Kokkos::PerTeam(gather_kernel<NGLL, Tags>::shmem_size())));
-    } else if (scatter_kernel<NGLL, Tags>::shmem_size() <=
-               chunk.scratch_size_max(1)) {
-      scatter_kernel<NGLL, Tags>{ assembly, istep }(chunk.set_scratch_size(
-          1, Kokkos::PerTeam(scatter_kernel<NGLL, Tags>::shmem_size())));
+    // Gather kernel uses more scratch but avoids atomics (~7% faster).
+    // Scatter kernel uses less scratch via atomic accumulation.
+    // Prefer level-0 (team shared memory); fall back to level-1
+    // (global-memory scratch) when neither kernel fits in level 0. The same
+    // level is passed to the policy and to the kernel so that every scratch
+    // view is built on the level that was actually reserved.
+    using Gather = gather_kernel<NGLL, Tags>;
+    using Scatter = scatter_kernel<NGLL, Tags>;
+
+    auto launch = [&]<typename Kernel>(const int level) {
+      Kernel{ assembly, istep, level }(
+          chunk.set_scratch_size(level, Kokkos::PerTeam(Kernel::shmem_size())));
+    };
+
+    if (Gather::shmem_size() <= chunk.scratch_size_max(0)) {
+      launch.template operator()<Gather>(0);
+    } else if (Scatter::shmem_size() <= chunk.scratch_size_max(0)) {
+      launch.template operator()<Scatter>(0);
+    } else if (Gather::shmem_size() <= chunk.scratch_size_max(1)) {
+      launch.template operator()<Gather>(1);
+    } else if (Scatter::shmem_size() <= chunk.scratch_size_max(1)) {
+      launch.template operator()<Scatter>(1);
     } else {
       throw std::runtime_error(
-          "Not enough shared memory for stiffness interaction kernels.");
+          "Not enough scratch memory for stiffness interaction kernels "
+          "(gather needs " +
+          std::to_string(Gather::shmem_size()) + " B, scatter needs " +
+          std::to_string(Scatter::shmem_size()) + " B; level-0 max " +
+          std::to_string(chunk.scratch_size_max(0)) + " B, level-1 max " +
+          std::to_string(chunk.scratch_size_max(1)) + " B).");
     }
   }
 

@@ -1,9 +1,9 @@
 #include "../../io/layout_oracle.hpp"
 #include "../test_fixture/test_fixture.hpp"
+#include "specfem/datatype/domain_view.hpp"
 #include "specfem/io.hpp"
 #include "specfem/io/wavefield/reader.hpp"
 #include "specfem/io/wavefield/writer.hpp"
-#include "specfem/parallel_configuration/chunk_config.hpp"
 #include "specfem/tag_dispatch.hpp"
 #include <boost/filesystem.hpp>
 #include <cstdlib>
@@ -92,7 +92,8 @@ void zero_attenuation(
           return;
         medium.for_each_checkpoint_view(
             [&](const std::string &, const auto &view) {
-              Kokkos::deep_copy(view.get_base_view(), type_real(0));
+              Kokkos::deep_copy(specfem::datatype::storage_view(view),
+                                type_real(0));
             });
       });
 }
@@ -189,16 +190,19 @@ TEST_F(Assembly2D, AttenuationCheckpointHeaderIsRankOne) {
           const auto raw = specfem_test::layout_oracle::read_npy_raw<type_real>(
               group + "/Rxx.npy");
           ASSERT_EQ(raw.shape.size(), 1u);
-          EXPECT_EQ(raw.data.size(),
-                    medium.h_memory_variable_Rxx.get_base_view().extent(0));
-          EXPECT_EQ(raw.shape[0],
-                    medium.h_memory_variable_Rxx.get_base_view().extent(0));
+          EXPECT_EQ(raw.data.size(), specfem::datatype::storage_view(
+                                         medium.h_memory_variable_Rxx)
+                                         .extent(0));
+          EXPECT_EQ(raw.shape[0], specfem::datatype::storage_view(
+                                      medium.h_memory_variable_Rxx)
+                                      .extent(0));
 
           const auto stamp = specfem_test::layout_oracle::read_npy_raw<int>(
-              group + "/storage_chunk_size.npy");
+              group + "/storage_tile_width.npy");
           ASSERT_EQ(stamp.data.size(), 1u);
-          EXPECT_EQ(stamp.data[0],
-                    specfem::parallel_configuration::storage_chunk_size);
+          EXPECT_EQ(static_cast<std::size_t>(stamp.data[0]),
+                    specfem::datatype::storage_tile_width(
+                        medium.h_memory_variable_Rxx));
           ++n_checked;
         });
 
@@ -207,7 +211,7 @@ TEST_F(Assembly2D, AttenuationCheckpointHeaderIsRankOne) {
   EXPECT_GT(n_checked, 0) << "No attenuation container was exercised";
 }
 
-TEST_F(Assembly2D, AttenuationCheckpointChunkMismatchThrows) {
+TEST_F(Assembly2D, AttenuationCheckpointTileWidthMismatchThrows) {
   namespace impl = wavefield_checkpoint_impl;
   int n_checked = 0;
 
@@ -223,7 +227,7 @@ TEST_F(Assembly2D, AttenuationCheckpointChunkMismatchThrows) {
     boost::filesystem::create_directories(dir);
     impl::write_checkpoint(assembly, dir);
 
-    // Overwrite the chunk-size stamp of every attenuating medium.
+    // Overwrite the tile-width stamp of every attenuating medium.
     const int n_before = n_checked;
     specfem::tag_dispatch::for_each(
         impl::AttenuationType::attenuation_medium_combinations,
@@ -232,13 +236,15 @@ TEST_F(Assembly2D, AttenuationCheckpointChunkMismatchThrows) {
               assembly.attenuation.attenuation_storage.template get<TagsType>();
           if (medium.element_range.extent(0) == 0)
             return;
-          Kokkos::View<int *, Kokkos::HostSpace> bad("bad_chunk_size", 1);
-          bad(0) = specfem::parallel_configuration::storage_chunk_size + 1;
+          Kokkos::View<int *, Kokkos::HostSpace> bad("bad_tile_width", 1);
+          bad(0) = static_cast<int>(specfem::datatype::storage_tile_width(
+                       medium.h_memory_variable_Rxx)) +
+                   1;
           boost::filesystem::path group_path(
               impl::attenuation_group_path(dir, TagsType::medium_tag));
           specfem::io_backends::impl::NPY::Dataset<decltype(bad),
                                                    specfem::io::write>(
-              group_path, "storage_chunk_size", bad)
+              group_path, "storage_tile_width", bad)
               .write();
           ++n_checked;
         });

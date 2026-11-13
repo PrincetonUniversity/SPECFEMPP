@@ -27,7 +27,8 @@ class SeismogramIterator2DTest : public ::testing::Test {
 protected:
   void SetUp() override {
     nreceivers = 2;
-    nseismograms = 1;
+    seismogram_types =
+        SeismogramTypes({ specfem::enums::wavefield::displacement });
     max_sig_step = 10;
     dt = 0.01;
     t0 = 0.0;
@@ -38,7 +39,8 @@ protected:
   SeismogramIterator<specfem::element::dimension_tag::dim2>
   createInitializedIterator() {
     SeismogramIterator<specfem::element::dimension_tag::dim2> iterator(
-        nreceivers, nseismograms, max_sig_step, dt, t0, nstep_between_samples);
+        nreceivers, seismogram_types, max_sig_step, dt, t0,
+        nstep_between_samples);
 
     // Rotation matrices are initialized to identity by the constructor (no
     // rotation). Nothing extra needed here.
@@ -50,7 +52,7 @@ protected:
   }
 
   int nreceivers;
-  int nseismograms;
+  SeismogramTypes seismogram_types;
   int max_sig_step;
   type_real dt;
   type_real t0;
@@ -65,7 +67,8 @@ TEST_F(SeismogramIterator2DTest, DefaultConstructor) {
 
 TEST_F(SeismogramIterator2DTest, ParameterizedConstructor) {
   SeismogramIterator<specfem::element::dimension_tag::dim2> iterator(
-      nreceivers, nseismograms, max_sig_step, dt, t0, nstep_between_samples);
+      nreceivers, seismogram_types, max_sig_step, dt, t0,
+      nstep_between_samples);
 
   // Test that constructor completes without throwing
   SUCCEED();
@@ -73,7 +76,8 @@ TEST_F(SeismogramIterator2DTest, ParameterizedConstructor) {
 
 TEST_F(SeismogramIterator2DTest, SetSeismogramStep) {
   SeismogramIterator<specfem::element::dimension_tag::dim2> iterator(
-      nreceivers, nseismograms, max_sig_step, dt, t0, nstep_between_samples);
+      nreceivers, seismogram_types, max_sig_step, dt, t0,
+      nstep_between_samples);
 
   const int test_step = 5;
   iterator.set_seismogram_step(test_step);
@@ -83,7 +87,8 @@ TEST_F(SeismogramIterator2DTest, SetSeismogramStep) {
 
 TEST_F(SeismogramIterator2DTest, SetSeismogramType) {
   SeismogramIterator<specfem::element::dimension_tag::dim2> iterator(
-      nreceivers, nseismograms, max_sig_step, dt, t0, nstep_between_samples);
+      nreceivers, seismogram_types, max_sig_step, dt, t0,
+      nstep_between_samples);
 
   const int test_type = 0;
   iterator.set_seismogram_type(test_type);
@@ -93,7 +98,8 @@ TEST_F(SeismogramIterator2DTest, SetSeismogramType) {
 
 TEST_F(SeismogramIterator2DTest, SyncSeismograms) {
   SeismogramIterator<specfem::element::dimension_tag::dim2> iterator(
-      nreceivers, nseismograms, max_sig_step, dt, t0, nstep_between_samples);
+      nreceivers, seismogram_types, max_sig_step, dt, t0,
+      nstep_between_samples);
 
   // Test that sync_seismograms doesn't crash
   iterator.sync_seismograms();
@@ -102,7 +108,8 @@ TEST_F(SeismogramIterator2DTest, SyncSeismograms) {
 
 TEST_F(SeismogramIterator2DTest, IteratorCreation) {
   SeismogramIterator<specfem::element::dimension_tag::dim2> iterator(
-      nreceivers, nseismograms, max_sig_step, dt, t0, nstep_between_samples);
+      nreceivers, seismogram_types, max_sig_step, dt, t0,
+      nstep_between_samples);
 
   iterator.set_seismogram_step(0);
   iterator.set_seismogram_type(0);
@@ -117,7 +124,8 @@ TEST_F(SeismogramIterator2DTest, IteratorCreation) {
 
 TEST_F(SeismogramIterator2DTest, IteratorDereference) {
   SeismogramIterator<specfem::element::dimension_tag::dim2> iterator(
-      nreceivers, nseismograms, max_sig_step, dt, t0, nstep_between_samples);
+      nreceivers, seismogram_types, max_sig_step, dt, t0,
+      nstep_between_samples);
 
   iterator.set_seismogram_step(0);
   iterator.set_seismogram_type(0);
@@ -134,7 +142,8 @@ TEST_F(SeismogramIterator2DTest, IteratorDereference) {
 
 TEST_F(SeismogramIterator2DTest, IteratorIncrement) {
   SeismogramIterator<specfem::element::dimension_tag::dim2> iterator(
-      nreceivers, nseismograms, max_sig_step, dt, t0, nstep_between_samples);
+      nreceivers, seismogram_types, max_sig_step, dt, t0,
+      nstep_between_samples);
 
   iterator.set_seismogram_step(0);
   iterator.set_seismogram_type(0);
@@ -155,7 +164,7 @@ TEST_F(SeismogramIterator2DTest, TimeCalculationWithOffset) {
   const int test_nstep = 2;
 
   SeismogramIterator<specfem::element::dimension_tag::dim2> iterator(
-      nreceivers, nseismograms, max_sig_step, dt, test_t0, test_nstep);
+      nreceivers, seismogram_types, max_sig_step, dt, test_t0, test_nstep);
 
   iterator.set_seismogram_step(0);
   iterator.set_seismogram_type(0);
@@ -172,7 +181,8 @@ TEST_F(SeismogramIterator2DTest, TimeCalculationWithOffset) {
 TEST_F(SeismogramIterator2DTest, MultipleTimeSteps) {
   const int small_max_steps = 3;
   SeismogramIterator<specfem::element::dimension_tag::dim2> iterator(
-      nreceivers, nseismograms, small_max_steps, dt, t0, nstep_between_samples);
+      nreceivers, seismogram_types, small_max_steps, dt, t0,
+      nstep_between_samples);
 
   iterator.set_seismogram_step(0);
   iterator.set_seismogram_type(0);
@@ -195,8 +205,8 @@ TEST_F(SeismogramIterator2DTest, MultipleTimeSteps) {
   EXPECT_EQ(iter, iterator.end());
 }
 
-TEST_F(SeismogramIterator2DTest, IdentityRotationProducesZeroForZeroData) {
-  auto iterator = createInitializedIterator(); // rotation matrix = identity
+TEST_F(SeismogramIterator2DTest, ZeroStoredDataProducesZero) {
+  auto iterator = createInitializedIterator();
 
   iterator.set_seismogram_step(0);
   iterator.set_seismogram_type(0);
@@ -214,25 +224,25 @@ TEST_F(SeismogramIterator2DTest, IdentityRotationProducesZeroForZeroData) {
   }
 }
 
-TEST_F(SeismogramIterator2DTest, RotationMatrixAppliedCorrectly) {
-  // 90-degree rotation: R = [[0, -1], [1, 0]]
-  // Expected: output[0] = -raw[1], output[1] = raw[0]
-  TestSeismogramIterator2D iterator(nreceivers, nseismograms, max_sig_step, dt,
-                                    t0, nstep_between_samples);
+TEST_F(SeismogramIterator2DTest, IteratorReturnsStoredComponentsUnrotated) {
+  // Rotation is applied by the seismogram kernel at sampling time; the host
+  // iterator must return stored components unchanged even with a 90-degree
+  // matrix set.
+  TestSeismogramIterator2D iterator(nreceivers, seismogram_types, max_sig_step,
+                                    dt, t0, nstep_between_samples);
 
   // sync_seismograms() copies device (all zeros) -> host mirror.
   // Raw values are set afterward so they are not overwritten.
   iterator.sync_seismograms();
 
-  // Inject raw[0] = 1, raw[1] = 2 for receiver 0, step 0, seismogram type 0.
   iterator.set_raw_component(/*seis_step=*/0, /*iseis=*/0, /*irec=*/0,
                              /*comp=*/0, 1.0);
   iterator.set_raw_component(/*seis_step=*/0, /*iseis=*/0, /*irec=*/0,
                              /*comp=*/1, 2.0);
 
-  const type_real angle = Kokkos::numbers::pi_v<type_real> / 2.0; // 90 deg
-  const type_real cos_a = std::cos(angle);                        // ≈ 0
-  const type_real sin_a = std::sin(angle);                        // ≈ 1
+  const type_real angle = Kokkos::numbers::pi_v<type_real> / 2.0;
+  const type_real cos_a = std::cos(angle);
+  const type_real sin_a = std::sin(angle);
   std::array<std::array<type_real, 2>, 2> R = { { { { cos_a, -sin_a } },
                                                   { { sin_a, cos_a } } } };
   iterator.set_rotation_matrix(0, R);
@@ -244,15 +254,14 @@ TEST_F(SeismogramIterator2DTest, RotationMatrixAppliedCorrectly) {
   auto [time, seismograms] = *iter;
 
   EXPECT_EQ(seismograms.size(), 2);
-  // output[0] = cos_a*1 + (-sin_a)*2 = 0*1 + (-1)*2 = -2
-  EXPECT_NEAR(seismograms[0], -2.0, 1e-5);
-  // output[1] = sin_a*1 + cos_a*2   = 1*1 +   0*2  =  1
-  EXPECT_NEAR(seismograms[1], 1.0, 1e-5);
+  EXPECT_DOUBLE_EQ(seismograms[0], 1.0);
+  EXPECT_DOUBLE_EQ(seismograms[1], 2.0);
 }
 
 TEST_F(SeismogramIterator2DTest, GetSeismogramMethod) {
   SeismogramIterator<specfem::element::dimension_tag::dim2> iterator(
-      nreceivers, nseismograms, max_sig_step, dt, t0, nstep_between_samples);
+      nreceivers, seismogram_types, max_sig_step, dt, t0,
+      nstep_between_samples);
 
   std::string station_name = "TEST_STATION";
   std::string network_name = "TEST_NETWORK";
@@ -273,7 +282,8 @@ TEST_F(SeismogramIterator2DTest, GetSeismogramMethod) {
 
 TEST_F(SeismogramIterator2DTest, ComponentsSize) {
   SeismogramIterator<specfem::element::dimension_tag::dim2> iterator(
-      nreceivers, nseismograms, max_sig_step, dt, t0, nstep_between_samples);
+      nreceivers, seismogram_types, max_sig_step, dt, t0,
+      nstep_between_samples);
 
   iterator.set_seismogram_step(0);
   iterator.set_seismogram_type(0);
@@ -288,7 +298,8 @@ TEST_F(SeismogramIterator2DTest, ComponentsSize) {
 
 TEST_F(SeismogramIterator2DTest, SetStepOutsideRange) {
   SeismogramIterator<specfem::element::dimension_tag::dim2> iterator(
-      nreceivers, nseismograms, max_sig_step, dt, t0, nstep_between_samples);
+      nreceivers, seismogram_types, max_sig_step, dt, t0,
+      nstep_between_samples);
 
   // Test setting step to boundary values
   iterator.set_seismogram_step(max_sig_step - 1);

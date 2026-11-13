@@ -194,26 +194,28 @@ void specfem::io::wavefield_reader<IOLibrary>::run(
         typename IOLibrary::Group att_group =
             med_group.openGroup("Attenuation");
 
-        // The attenuation views are raw padded tiled storage; they are only
-        // meaningful for the storage chunk size they were written with.
-        Kokkos::View<int *, Kokkos::HostSpace> chunk_size_view(
-            "storage_chunk_size", 1);
-        att_group.openDataset("storage_chunk_size", chunk_size_view).read();
-        if (chunk_size_view(0) !=
-            specfem::parallel_configuration::storage_chunk_size) {
-          throw std::runtime_error(
-              "Wavefield checkpoint was written with storage_chunk_size = " +
-              std::to_string(chunk_size_view(0)) +
-              " but this build uses storage_chunk_size = " +
-              std::to_string(
-                  specfem::parallel_configuration::storage_chunk_size) +
-              ". The checkpoint was written by a build with a different "
-              "SIMD/GPU storage chunk size and cannot be read.");
-        }
+        // The attenuation views are raw rank-1 storage; they are only
+        // meaningful for the element tile width they were written with.
+        Kokkos::View<int *, Kokkos::HostSpace> tile_width_view(
+            "storage_tile_width", 1);
+        att_group.openDataset("storage_tile_width", tile_width_view).read();
 
         medium.for_each_checkpoint_view(
             [&](const std::string &name, const auto &view) {
-              att_group.openDataset(name, view.get_base_view()).read();
+              const auto tile_width =
+                  specfem::datatype::storage_tile_width(view);
+              if (static_cast<std::size_t>(tile_width_view(0)) != tile_width) {
+                throw std::runtime_error(
+                    "Wavefield checkpoint dataset " + name +
+                    " was written with storage_tile_width = " +
+                    std::to_string(tile_width_view(0)) +
+                    " but this build stores it with tile width " +
+                    std::to_string(tile_width) +
+                    ". The checkpoint was written by a build with a different "
+                    "backend or storage chunk size and cannot be read.");
+              }
+              att_group.openDataset(name, specfem::datatype::storage_view(view))
+                  .read();
             });
       });
 

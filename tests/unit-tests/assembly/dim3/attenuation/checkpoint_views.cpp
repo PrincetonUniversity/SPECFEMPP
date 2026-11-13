@@ -1,6 +1,7 @@
 #include "../../../io/layout_oracle.hpp"
 #include "specfem/assembly/attenuation/impl/attenuation_medium.hpp"
 #include "specfem/constants.hpp"
+#include "specfem/datatype/domain_view.hpp"
 #include "specfem/datatype/element_index_range.hpp"
 #include "specfem/io.hpp"
 
@@ -22,7 +23,7 @@ using Medium = specfem::assembly::impl::attenuation_medium<
     specfem::element::property_tag::isotropic,
     specfem::element::attenuation_tag::constant_isotropic>;
 
-// The storage has a padded tail whenever the storage chunk size does not
+// Tiled storage has a padded tail whenever the storage chunk size does not
 // divide this count.
 constexpr int nspec = 5;
 constexpr int ngll = 3;
@@ -119,17 +120,17 @@ TEST(AttenuationCheckpointViews, BaseViewsRoundTripThroughNpy) {
 
   {
     specfem::io_backends::NPY<specfem::io::write>::File file(dir);
-    medium.for_each_checkpoint_view(
-        [&](const std::string &name, const auto &view) {
-          file.createDataset(name, view.get_base_view()).write();
-        });
+    medium.for_each_checkpoint_view([&](const std::string &name,
+                                        const auto &view) {
+      file.createDataset(name, specfem::datatype::storage_view(view)).write();
+    });
     file.flush();
   }
 
-  // The file holds the padded rank-1 storage exactly as it is in memory.
+  // The file holds the rank-1 storage exactly as it is in memory.
   medium.for_each_checkpoint_view(
       [&](const std::string &name, const auto &view) {
-        const auto &base = view.get_base_view();
+        const auto base = specfem::datatype::storage_view(view);
         const auto raw = specfem_test::layout_oracle::read_npy_raw<type_real>(
             dir + "/" + name + ".npy");
         ASSERT_EQ(raw.shape.size(), 1u) << name;
@@ -143,7 +144,7 @@ TEST(AttenuationCheckpointViews, BaseViewsRoundTripThroughNpy) {
     specfem::io_backends::NPY<specfem::io::read>::File file(dir);
     medium.for_each_checkpoint_view(
         [&](const std::string &name, const auto &view) {
-          file.openDataset(name, view.get_base_view()).read();
+          file.openDataset(name, specfem::datatype::storage_view(view)).read();
         });
   }
 

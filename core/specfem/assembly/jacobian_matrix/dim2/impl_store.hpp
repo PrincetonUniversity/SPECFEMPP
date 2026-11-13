@@ -37,40 +37,44 @@ inline void impl_store(const IndexType &index, const ContainerType &derivatives,
 
   const auto mask = index.template get_mask<simd>();
 
-  const auto &mapping = derivatives.xix.get_mapping();
+  const auto &mapping = derivatives.xix.mapping();
   const std::size_t _index = mapping(ispec, iz, ix);
 
   if constexpr (on_device) {
-    Kokkos::Experimental::simd_partial_store(
-        jacobian_matrix.xix(), &derivatives.xix[_index], mask, tag_type());
+    Kokkos::Experimental::simd_partial_store(jacobian_matrix.xix(),
+                                             &derivatives.xix.data()[_index],
+                                             mask, tag_type());
     Kokkos::Experimental::simd_partial_store(jacobian_matrix.gammax(),
-                                             &derivatives.gammax[_index], mask,
-                                             tag_type());
-    Kokkos::Experimental::simd_partial_store(
-        jacobian_matrix.xiz(), &derivatives.xiz[_index], mask, tag_type());
+                                             &derivatives.gammax.data()[_index],
+                                             mask, tag_type());
+    Kokkos::Experimental::simd_partial_store(jacobian_matrix.xiz(),
+                                             &derivatives.xiz.data()[_index],
+                                             mask, tag_type());
     Kokkos::Experimental::simd_partial_store(jacobian_matrix.gammaz(),
-                                             &derivatives.gammaz[_index], mask,
-                                             tag_type());
+                                             &derivatives.gammaz.data()[_index],
+                                             mask, tag_type());
     if constexpr (StoreJacobian) {
-      Kokkos::Experimental::simd_partial_store(jacobian_matrix.jacobian(),
-                                               &derivatives.jacobian[_index],
-                                               mask, tag_type());
+      Kokkos::Experimental::simd_partial_store(
+          jacobian_matrix.jacobian(), &derivatives.jacobian.data()[_index],
+          mask, tag_type());
     }
   } else {
-    Kokkos::Experimental::simd_partial_store(
-        jacobian_matrix.xix(), &derivatives.h_xix[_index], mask, tag_type());
-    Kokkos::Experimental::simd_partial_store(jacobian_matrix.gammax(),
-                                             &derivatives.h_gammax[_index],
+    Kokkos::Experimental::simd_partial_store(jacobian_matrix.xix(),
+                                             &derivatives.h_xix.data()[_index],
                                              mask, tag_type());
     Kokkos::Experimental::simd_partial_store(
-        jacobian_matrix.xiz(), &derivatives.h_xiz[_index], mask, tag_type());
-    Kokkos::Experimental::simd_partial_store(jacobian_matrix.gammaz(),
-                                             &derivatives.h_gammaz[_index],
+        jacobian_matrix.gammax(), &derivatives.h_gammax.data()[_index], mask,
+        tag_type());
+    Kokkos::Experimental::simd_partial_store(jacobian_matrix.xiz(),
+                                             &derivatives.h_xiz.data()[_index],
                                              mask, tag_type());
+    Kokkos::Experimental::simd_partial_store(
+        jacobian_matrix.gammaz(), &derivatives.h_gammaz.data()[_index], mask,
+        tag_type());
     if constexpr (StoreJacobian) {
-      Kokkos::Experimental::simd_partial_store(jacobian_matrix.jacobian(),
-                                               &derivatives.h_jacobian[_index],
-                                               mask, tag_type());
+      Kokkos::Experimental::simd_partial_store(
+          jacobian_matrix.jacobian(), &derivatives.h_jacobian.data()[_index],
+          mask, tag_type());
     }
   }
 }
@@ -98,24 +102,24 @@ inline void impl_store(const IndexType &index, const ContainerType &derivatives,
 
   constexpr static bool StoreJacobian = PointType::store_jacobian;
 
-  const auto &mapping = derivatives.xix.get_mapping();
+  const auto &mapping = derivatives.xix.mapping();
   const std::size_t _index = mapping(ispec, iz, ix);
 
   if constexpr (on_device) {
-    derivatives.xix[_index] = jacobian_matrix.xix();
-    derivatives.gammax[_index] = jacobian_matrix.gammax();
-    derivatives.xiz[_index] = jacobian_matrix.xiz();
-    derivatives.gammaz[_index] = jacobian_matrix.gammaz();
+    derivatives.xix.data()[_index] = jacobian_matrix.xix();
+    derivatives.gammax.data()[_index] = jacobian_matrix.gammax();
+    derivatives.xiz.data()[_index] = jacobian_matrix.xiz();
+    derivatives.gammaz.data()[_index] = jacobian_matrix.gammaz();
     if constexpr (StoreJacobian) {
-      derivatives.jacobian[_index] = jacobian_matrix.jacobian();
+      derivatives.jacobian.data()[_index] = jacobian_matrix.jacobian();
     }
   } else {
-    derivatives.h_xix[_index] = jacobian_matrix.xix();
-    derivatives.h_gammax[_index] = jacobian_matrix.gammax();
-    derivatives.h_xiz[_index] = jacobian_matrix.xiz();
-    derivatives.h_gammaz[_index] = jacobian_matrix.gammaz();
+    derivatives.h_xix.data()[_index] = jacobian_matrix.xix();
+    derivatives.h_gammax.data()[_index] = jacobian_matrix.gammax();
+    derivatives.h_xiz.data()[_index] = jacobian_matrix.xiz();
+    derivatives.h_gammaz.data()[_index] = jacobian_matrix.gammaz();
     if constexpr (StoreJacobian) {
-      derivatives.h_jacobian[_index] = jacobian_matrix.jacobian();
+      derivatives.h_jacobian.data()[_index] = jacobian_matrix.jacobian();
     }
   }
 }

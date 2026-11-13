@@ -92,7 +92,8 @@ StorageOrder require_contiguous_storage_order(const ViewType &view,
         "dataset " + name +
         ": view storage is not a contiguous LayoutLeft or LayoutRight buffer; "
         "pack tiled DomainView storage with "
-        "specfem::io::impl::extract_sub_block or write get_base_view()");
+        "specfem::io::impl::extract_sub_block or write "
+        "specfem::datatype::storage_view()");
   }
   return *order;
 }

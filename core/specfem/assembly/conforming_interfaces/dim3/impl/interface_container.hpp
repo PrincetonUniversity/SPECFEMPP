@@ -17,6 +17,12 @@ namespace specfem::assembly::conforming_interfaces_impl {
  * with specific boundary conditions. Stores face factors and normal vectors
  * for interface computations in 3D spectral element simulations.
  *
+ * At each face GLL point, @c face_normal stores the outward normal of the
+ * self element scaled by the surface Jacobian, \f$J_s \mathbf{n}_{self}\f$,
+ * and @c face_factor stores only the product of the two tangential GLL
+ * weights. Their product is the integration measure; do not apply the
+ * surface Jacobian again.
+ *
  * @tparam InterfaceTag Type of interface (ELASTIC_ACOUSTIC or ACOUSTIC_ELASTIC)
  * @tparam BoundaryTag Boundary condition type (NONE, STACEY, etc.)
  */

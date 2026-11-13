@@ -207,20 +207,22 @@ void specfem::io::wavefield_writer<OutputLibrary>::run(
                 typename OutputLibrary::Group att_group =
                     med_group.createGroup("Attenuation");
 
-                // Attenuation DomainViews are tiled over the element axis, so
-                // the raw padded rank-1 storage is checkpointed. A chunk-size
-                // stamp lets the reader reject files from a different build.
-                Kokkos::View<int *, Kokkos::HostSpace> chunk_size_view(
-                    "storage_chunk_size", 1);
-                chunk_size_view(0) =
-                    specfem::parallel_configuration::storage_chunk_size;
-                att_group.createDataset("storage_chunk_size", chunk_size_view)
-                    .write();
+                // Restart state is the raw rank-1 storage. Its layout is fixed
+                // by the element tile width, which is stamped so the reader
+                // can reject files from a build with a different layout.
+                Kokkos::View<int *, Kokkos::HostSpace> tile_width_view(
+                    "storage_tile_width", 1);
                 medium.for_each_checkpoint_view(
                     [&](const std::string &name, const auto &view) {
-                      att_group.createDataset(name, view.get_base_view())
+                      tile_width_view(0) = static_cast<int>(
+                          specfem::datatype::storage_tile_width(view));
+                      att_group
+                          .createDataset(name,
+                                         specfem::datatype::storage_view(view))
                           .write();
                     });
+                att_group.createDataset("storage_tile_width", tile_width_view)
+                    .write();
               }
             });
       }
