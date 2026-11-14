@@ -6,6 +6,8 @@
 #include "specfem/logger.hpp"
 #include "specfem/mpi.hpp"
 #include <fstream>
+#include <iomanip>
+#include <limits>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -19,7 +21,9 @@ namespace impl {
  * @brief ASCII specialization of SeismogramFormatWriter.
  *
  * Iterates over all stations and seismogram types, writing one file per
- * component with (time, value) pairs in scientific notation.
+ * component with (time, value) pairs in scientific notation. Values are
+ * written with enough digits (`std::numeric_limits<type_real>::max_digits10`)
+ * to read back exactly as the `type_real` that was written.
  */
 template <>
 struct SeismogramFormatWriter<specfem::enums::seismogram_format::ascii> {
@@ -68,12 +72,17 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::ascii> {
             throw std::runtime_error("Could not open seismogram file: " +
                                      filenames[icomp]);
           }
+          // max_digits10 significant digits round-trip type_real exactly; in
+          // scientific notation one of them precedes the decimal point.
+          seismo_file[icomp]
+              << std::scientific
+              << std::setprecision(
+                     std::numeric_limits<type_real>::max_digits10 - 1);
         }
 
         for (int step = 0; step < nsteps; ++step) {
           for (int icomp = 0; icomp < ncomponents; ++icomp) {
-            seismo_file[icomp] << std::scientific << times[step] << " "
-                               << std::scientific << values[icomp][step]
+            seismo_file[icomp] << times[step] << " " << values[icomp][step]
                                << "\n";
           }
         }
