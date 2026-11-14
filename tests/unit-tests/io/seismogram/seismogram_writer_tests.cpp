@@ -10,9 +10,12 @@
 #include "specfem/utilities.hpp"
 #include "test_macros.hpp"
 #include <array>
+#include <cmath>
 #include <cstring>
+#include <filesystem>
 #include <fstream>
 #include <gtest/gtest.h>
+#include <limits>
 #include <map>
 #include <span>
 #include <sstream>
@@ -250,6 +253,90 @@ TEST_F(SeismogramWriterReferenceTest, AsciiMatchesReference) {
     EXPECT_TRUE(compare_files(written, ref_files[comp]))
         << "Written file " << written << " does not match reference "
         << ref_files[comp];
+  }
+}
+
+TEST_F(SeismogramWriterReferenceTest, AsciiRejectsInvalidOutputFolder) {
+  MockReceivers<specfem::element::dimension_tag::dim2> receivers;
+  receivers.add_station("SY", "INVALID_OUTPUT",
+                        { specfem::enums::wavefield::displacement });
+  receivers.add_seismogram("SY", "INVALID_OUTPUT",
+                           specfem::enums::wavefield::displacement,
+                           make_sinusoidal_seismogram(2, 0.05, 1.0, 2));
+  specfem::io::impl::ChannelGenerator gen(0.05);
+
+  // Avoid permission-based failures, which root can bypass.
+  const auto blocked_folder =
+      std::filesystem::path(kOutDir) / "ascii_invalid_output_folder";
+  {
+    std::ofstream blocker(blocked_folder);
+    ASSERT_TRUE(blocker.is_open());
+  }
+
+  try {
+    specfem::io::impl::
+        SeismogramFormatWriter<specfem::enums::seismogram_format::ascii>::write(
+            receivers.stations(), receivers, gen, blocked_folder.string());
+    ADD_FAILURE() << "Expected writing beneath a regular file to fail";
+  } catch (const std::runtime_error &error) {
+    EXPECT_NE(std::string(error.what())
+                  .find("Could not open seismogram file: SY.INVALID_OUTPUT."),
+              std::string::npos);
+  }
+  std::filesystem::remove(blocked_folder);
+}
+
+TEST_F(SeismogramWriterReferenceTest, AsciiRoundTripsTypeReal) {
+  const int npts = 4;
+  const double dt = 1.0 / 3.0;
+
+  const type_real one_plus_eps =
+      type_real(1) + std::numeric_limits<type_real>::epsilon();
+  const type_real above_tenth = std::nextafter(type_real(0.1), type_real(1));
+
+  std::vector<MockSeismogramEntry> entries(npts);
+  for (int i = 0; i < npts; ++i) {
+    entries[i].time = i * dt;
+    entries[i].values = { static_cast<double>(one_plus_eps) * (i + 1),
+                          static_cast<double>(above_tenth) / (i + 1) };
+  }
+
+  MockReceivers<specfem::element::dimension_tag::dim2> receivers;
+  receivers.add_station("SY", "STA02",
+                        { specfem::enums::wavefield::displacement });
+  receivers.add_seismogram("SY", "STA02",
+                           specfem::enums::wavefield::displacement, entries);
+
+  specfem::io::impl::ChannelGenerator gen(dt);
+  specfem::io::impl::SeismogramFormatWriter<
+      specfem::enums::seismogram_format::ascii>::write(receivers.stations(),
+                                                       receivers, gen, kOutDir);
+
+  constexpr std::array<char, 2> kDim2 = { 'X', 'Z' };
+  const auto files = gen.get_station_filenames(
+      "SY", "STA02", "S2", specfem::enums::wavefield::displacement,
+      std::span<const char>(kDim2));
+  ASSERT_EQ(files.size(), 2);
+
+  for (size_t comp = 0; comp < files.size(); ++comp) {
+    const std::string written = kOutDir + "/" + files[comp];
+    track(written);
+
+    std::ifstream file(written);
+    ASSERT_TRUE(file.is_open()) << "Could not open " << written;
+
+    int step = 0;
+    type_real time, value;
+    while (file >> time >> value) {
+      ASSERT_LT(step, npts) << written << " has too many rows";
+      // A tolerance would hide the precision loss this test detects.
+      EXPECT_EQ(time, static_cast<type_real>(entries[step].time))
+          << written << ", row " << step;
+      EXPECT_EQ(value, static_cast<type_real>(entries[step].values[comp]))
+          << written << ", row " << step;
+      ++step;
+    }
+    EXPECT_EQ(step, npts) << written << " has too few rows";
   }
 }
 
