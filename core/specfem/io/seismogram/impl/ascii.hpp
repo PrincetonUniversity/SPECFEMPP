@@ -24,6 +24,8 @@ namespace impl {
  * component with (time, value) pairs in scientific notation. Values are
  * written with enough digits (`std::numeric_limits<type_real>::max_digits10`)
  * to read back exactly as the `type_real` that was written.
+ *
+ * @throws std::runtime_error if an output file cannot be opened.
  */
 template <>
 struct SeismogramFormatWriter<specfem::enums::seismogram_format::ascii> {

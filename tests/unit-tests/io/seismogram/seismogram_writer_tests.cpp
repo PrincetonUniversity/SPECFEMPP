@@ -12,6 +12,7 @@
 #include <array>
 #include <cmath>
 #include <cstring>
+#include <filesystem>
 #include <fstream>
 #include <gtest/gtest.h>
 #include <limits>
@@ -253,6 +254,36 @@ TEST_F(SeismogramWriterReferenceTest, AsciiMatchesReference) {
         << "Written file " << written << " does not match reference "
         << ref_files[comp];
   }
+}
+
+TEST_F(SeismogramWriterReferenceTest, AsciiRejectsInvalidOutputFolder) {
+  MockReceivers<specfem::element::dimension_tag::dim2> receivers;
+  receivers.add_station("SY", "INVALID_OUTPUT",
+                        { specfem::enums::wavefield::displacement });
+  receivers.add_seismogram("SY", "INVALID_OUTPUT",
+                           specfem::enums::wavefield::displacement,
+                           make_sinusoidal_seismogram(2, 0.05, 1.0, 2));
+  specfem::io::impl::ChannelGenerator gen(0.05);
+
+  // A regular file cannot serve as an output directory, even when run as root.
+  const auto blocked_folder =
+      std::filesystem::path(kOutDir) / "ascii_invalid_output_folder";
+  {
+    std::ofstream blocker(blocked_folder);
+    ASSERT_TRUE(blocker.is_open());
+  }
+
+  try {
+    specfem::io::impl::
+        SeismogramFormatWriter<specfem::enums::seismogram_format::ascii>::write(
+            receivers.stations(), receivers, gen, blocked_folder.string());
+    ADD_FAILURE() << "Expected writing beneath a regular file to fail";
+  } catch (const std::runtime_error &error) {
+    EXPECT_NE(std::string(error.what())
+                  .find("Could not open seismogram file: SY.INVALID_OUTPUT."),
+              std::string::npos);
+  }
+  std::filesystem::remove(blocked_folder);
 }
 
 // ASCII output must carry enough digits to read back exactly the type_real
