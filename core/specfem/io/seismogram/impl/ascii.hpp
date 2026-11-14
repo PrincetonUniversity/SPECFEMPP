@@ -18,14 +18,7 @@ namespace io {
 namespace impl {
 
 /**
- * @brief ASCII specialization of SeismogramFormatWriter.
- *
- * Iterates over all stations and seismogram types, writing one file per
- * component with (time, value) pairs in scientific notation. Values are
- * written with enough digits (`std::numeric_limits<type_real>::max_digits10`)
- * to read back exactly as the `type_real` that was written.
- *
- * @throws std::runtime_error if an output file cannot be opened.
+ * @brief Write ASCII seismograms with exact `type_real` round-trip precision.
  */
 template <>
 struct SeismogramFormatWriter<specfem::enums::seismogram_format::ascii> {
@@ -74,8 +67,7 @@ struct SeismogramFormatWriter<specfem::enums::seismogram_format::ascii> {
             throw std::runtime_error("Could not open seismogram file: " +
                                      filenames[icomp]);
           }
-          // max_digits10 significant digits round-trip type_real exactly; in
-          // scientific notation one of them precedes the decimal point.
+          // Scientific precision excludes the digit before the decimal point.
           seismo_file[icomp]
               << std::scientific
               << std::setprecision(

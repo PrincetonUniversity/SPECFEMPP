@@ -265,7 +265,7 @@ TEST_F(SeismogramWriterReferenceTest, AsciiRejectsInvalidOutputFolder) {
                            make_sinusoidal_seismogram(2, 0.05, 1.0, 2));
   specfem::io::impl::ChannelGenerator gen(0.05);
 
-  // A regular file cannot serve as an output directory, even when run as root.
+  // Avoid permission-based failures, which root can bypass.
   const auto blocked_folder =
       std::filesystem::path(kOutDir) / "ascii_invalid_output_folder";
   {
@@ -286,9 +286,6 @@ TEST_F(SeismogramWriterReferenceTest, AsciiRejectsInvalidOutputFolder) {
   std::filesystem::remove(blocked_folder);
 }
 
-// ASCII output must carry enough digits to read back exactly the type_real
-// value that was written, in both single and double precision builds. The
-// comparisons are exact on purpose: a tolerance would hide lost digits.
 TEST_F(SeismogramWriterReferenceTest, AsciiRoundTripsTypeReal) {
   const int npts = 4;
   const double dt = 1.0 / 3.0;
@@ -332,6 +329,7 @@ TEST_F(SeismogramWriterReferenceTest, AsciiRoundTripsTypeReal) {
     type_real time, value;
     while (file >> time >> value) {
       ASSERT_LT(step, npts) << written << " has too many rows";
+      // A tolerance would hide the precision loss this test detects.
       EXPECT_EQ(time, static_cast<type_real>(entries[step].time))
           << written << ", row " << step;
       EXPECT_EQ(value, static_cast<type_real>(entries[step].values[comp]))
