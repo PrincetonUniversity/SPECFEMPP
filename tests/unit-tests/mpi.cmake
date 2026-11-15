@@ -190,10 +190,23 @@ file(MAKE_DIRECTORY "${GLOBE_6RANK_DIR}/DATABASES_MPI"
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
   "${CMAKE_CURRENT_SOURCE_DIR}/data/dim3_globe/global_small_6rank/provenance/DATA/Par_file")
 
+# External test runs cannot access the build tree on compute nodes.
+set(GLOBE_MESHER_COMMAND "$<TARGET_FILE:xmeshfem3D_globe>")
+if(SPECFEM_TEST_DATA_MODE STREQUAL "INSTALL")
+  add_custom_target(globe_small_6rank_mesher
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      "$<TARGET_FILE:xmeshfem3D_globe>"
+      "${SPECFEM_TEST_OUTPUT_DIR}/$<TARGET_FILE_NAME:xmeshfem3D_globe>"
+    DEPENDS xmeshfem3D_globe
+    VERBATIM)
+  set(GLOBE_MESHER_COMMAND
+      "${SPECFEM_TEST_OUTPUT_DIR}/$<TARGET_FILE_NAME:xmeshfem3D_globe>")
+endif()
+
 specfem_add_mpi_fixture(globe_small_6rank_mesh
   MPI_RANKS         6
   WORKING_DIRECTORY "${GLOBE_6RANK_DIR}"
-  COMMAND           $<TARGET_FILE:xmeshfem3D_globe>
+  COMMAND           "${GLOBE_MESHER_COMMAND}"
 )
 
 specfem_add_test(assembly_mpi_dim3_globe_tests
@@ -206,6 +219,9 @@ specfem_add_test(assembly_mpi_dim3_globe_tests
 )
 # CTest runs the mesher; make sure building the tests builds it.
 add_dependencies(assembly_mpi_dim3_globe_tests xmeshfem3D_globe)
+if(TARGET globe_small_6rank_mesher)
+  add_dependencies(assembly_mpi_dim3_globe_tests globe_small_6rank_mesher)
+endif()
 
 # SPECFEM3D_GLOBE model evaluator (issue #2001).
 #

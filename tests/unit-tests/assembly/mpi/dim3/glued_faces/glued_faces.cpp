@@ -1,16 +1,14 @@
 // Cross-rank face pairing for every way two right-handed hexahedra can be
 // glued.
 //
-// Two ranks. Element A (rank 0) is the unit cube. Element B (rank 1) sits
-// directly below A, placed by one of the 24 proper rotations of the cube, so
-// the face of B touching A's bottom face ranges over all six face types in all
-// four in-plane orientations -- including the "flipped" case where B's bottom
-// face is glued to A's bottom face. Each case is also run with each of the
-// four shared corners as the anchor point.
+// Two ranks. A and B occupy adjacent unit cubes. A is rotated to expose
+// each of its six face types; B takes all 24 proper cube rotations. Each of
+// the four shared corners is used as the anchor, giving 576 cases covering
+// all 36 ordered face pairs in all four in-plane orientations.
 //
-// Each rank also holds a second, unrotated element glued on the far side (A2
-// on top of A, B2 under B) so that every element has a same-rank neighbor;
-// the cross-rank interface is still exactly the one A-B face.
+// Each rank also holds a second element on the far side so that every
+// element has a same-rank neighbor. A2 follows A's rotation; B2 is unrotated.
+// The cross-rank interface is still exactly the one A-B face.
 //
 // For every case, the GLL coordinates each rank packs for the neighbor must
 // coincide with the coordinates at the slot the neighbor unpacks them into.
@@ -31,6 +29,7 @@
 #include <cmath>
 #include <gtest/gtest.h>
 #include <map>
+#include <set>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -79,29 +78,24 @@ std::vector<Mat> proper_rotations() {
 }
 
 /** @brief Physical position of control node @p node of @p element. */
-Vec physical_node(const Element element, const Mat &rotation, const int node) {
+Vec physical_node(const Element element, const Mat &rotation,
+                  const Mat &rotation_a, const int node) {
   Vec r = reference_node(node);
-  switch (element) {
-  case Element::a:
-    return r;
-  case Element::a2:
-    r[2] += 1.0;
-    return r;
-  case Element::b2:
+  if (element == Element::b2) {
     r[2] -= 2.0;
     return r;
-  case Element::b:
-    break;
   }
-  // B: rotate about the cube center, then shift one unit down in z.
+  const auto &m = element == Element::b ? rotation : rotation_a;
   Vec p{};
   for (int row = 0; row < 3; ++row) {
-    double v = 0.0;
     for (int col = 0; col < 3; ++col)
-      v += rotation[row][col] * (r[col] - 0.5);
-    p[row] = v + 0.5;
+      p[row] += m[row][col] * (r[col] - 0.5);
+    p[row] += 0.5;
   }
-  p[2] -= 1.0;
+  if (element == Element::b)
+    p[2] -= 1.0;
+  if (element == Element::a2)
+    p[2] += 1.0;
   return p;
 }
 
@@ -115,13 +109,16 @@ specfem::mesh_entity::dim3::type corner_of_node(const int node) {
 }
 
 /** @brief Face of @p element whose four nodes all satisfy z == z0. */
-specfem::mesh_entity::dim3::type
-face_at_z(const Element element, const Mat &rotation, const double z0) {
+specfem::mesh_entity::dim3::type face_at_z(const Element element,
+                                           const Mat &rotation,
+                                           const Mat &rotation_a,
+                                           const double z0) {
   for (const auto face : specfem::mesh_entity::dim3::faces) {
     bool all = true;
     for (const int node : specfem::mesh_entity::nodes_on_orientation(face)) {
       all = all &&
-            std::abs(physical_node(element, rotation, node)[2] - z0) < 1e-12;
+            std::abs(physical_node(element, rotation, rotation_a, node)[2] -
+                     z0) < 1e-12;
     }
     if (all)
       return face;
@@ -143,7 +140,7 @@ struct Case {
   specfem::assembly::fields<dimension> fields;
   specfem::assembly::mpi<dimension> mpi;
 
-  Case(const Mat &rotation, const int anchor_node_a) {
+  Case(const Mat &rotation, const Mat &rotation_a, const int anchor_node_a) {
     const bool is_b = specfem::MPI::get_rank() == 1;
     // Mesh order: the interface element first, its same-rank neighbor second.
     const std::array<Element, 2> elements =
@@ -158,7 +155,7 @@ struct Case {
     std::array<std::array<int, 8>, 2> index{};
     for (int e = 0; e < 2; ++e) {
       for (int node = 0; node < 8; ++node) {
-        const Vec p = physical_node(elements[e], rotation, node);
+        const Vec p = physical_node(elements[e], rotation, rotation_a, node);
         const auto it =
             std::find_if(positions.begin(), positions.end(),
                          [&p](const Vec &q) { return same_point(p, q); });
@@ -202,10 +199,12 @@ struct Case {
           specfem::mesh::adjacency_graph<dimension>::EdgeProperties;
       const auto conforming =
           specfem::element_connections::type::strongly_conforming;
-      const auto inner_face = is_b ? face_at_z(Element::b, rotation, -1.0)
-                                   : specfem::mesh_entity::dim3::type::top;
-      const auto outer_face = is_b ? specfem::mesh_entity::dim3::type::top
-                                   : specfem::mesh_entity::dim3::type::bottom;
+      const auto inner_face =
+          is_b ? face_at_z(Element::b, rotation, rotation_a, -1.0)
+               : face_at_z(Element::a, rotation, rotation_a, 1.0);
+      const auto outer_face =
+          is_b ? specfem::mesh_entity::dim3::type::top
+               : face_at_z(Element::a2, rotation, rotation_a, 1.0);
       auto &graph = mesh.adjacency_graph.local_connections();
       boost::add_edge(0, 1, EdgeProperties(conforming, inner_face), graph);
       boost::add_edge(1, 0, EdgeProperties(conforming, outer_face), graph);
@@ -213,12 +212,14 @@ struct Case {
 
     // The cross-rank face and the anchor corner, identified on both sides by
     // the same physical point.
-    const auto face_a = face_at_z(Element::a, rotation, 0.0);
-    const auto face_b = face_at_z(Element::b, rotation, 0.0);
-    const Vec anchor_point = physical_node(Element::a, rotation, anchor_node_a);
+    const auto face_a = face_at_z(Element::a, rotation, rotation_a, 0.0);
+    const auto face_b = face_at_z(Element::b, rotation, rotation_a, 0.0);
+    const Vec anchor_point =
+        physical_node(Element::a, rotation, rotation_a, anchor_node_a);
     int anchor_node_b = -1;
     for (int node = 0; node < 8; ++node) {
-      if (same_point(physical_node(Element::b, rotation, node), anchor_point))
+      if (same_point(physical_node(Element::b, rotation, rotation_a, node),
+                     anchor_point))
         anchor_node_b = node;
     }
     const auto anchor_a = corner_of_node(anchor_node_a);
@@ -324,29 +325,39 @@ TEST(GluedFacesMPI3D, EveryGluePairsPoints) {
   const auto rotations = impl::proper_rotations();
   ASSERT_EQ(rotations.size(), 24u);
 
-  // (B face glued to A's bottom) -> {cases, cases with mispaired points}
+  // (A face glued to B face) -> {cases, cases with mispaired points}
   std::map<std::string, std::array<int, 2>> summary;
 
-  for (std::size_t r = 0; r < rotations.size(); ++r) {
-    // The four nodes of A's bottom face are the candidate anchors.
-    for (const int anchor_node_a : specfem::mesh_entity::nodes_on_orientation(
-             specfem::mesh_entity::dim3::type::bottom)) {
-      const impl::Case c(rotations[r], anchor_node_a);
-      int wrong = c.mispaired_points();
-      SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &wrong, 1, MPI_INT,
-                                         MPI_MAX,
-                                         specfem::MPI::communicator()));
-      const std::string key =
-          "bottom<->" + specfem::mesh_entity::dim3::to_string(impl::face_at_z(
-                            impl::Element::b, rotations[r], 0.0));
-      auto &entry = summary[key];
-      entry[0] += 1;
-      entry[1] += wrong != 0;
-      EXPECT_EQ(wrong, 0) << key << " rotation " << r << " anchor node "
-                          << anchor_node_a << ": " << wrong
-                          << " mispaired points";
+  std::set<specfem::mesh_entity::dim3::type> tested_faces;
+  for (const auto &rotation_a : rotations) {
+    const auto face_a =
+        impl::face_at_z(impl::Element::a, rotations[0], rotation_a, 0.0);
+    if (!tested_faces.insert(face_a).second)
+      continue;
+    for (std::size_t r = 0; r < rotations.size(); ++r) {
+      // The four nodes of A's selected face are the candidate anchors.
+      for (const int anchor_node_a :
+           specfem::mesh_entity::nodes_on_orientation(face_a)) {
+        const impl::Case c(rotations[r], rotation_a, anchor_node_a);
+        int wrong = c.mispaired_points();
+        SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, &wrong, 1, MPI_INT,
+                                           MPI_MAX,
+                                           specfem::MPI::communicator()));
+        const std::string key =
+            specfem::mesh_entity::dim3::to_string(face_a) + "<->" +
+            specfem::mesh_entity::dim3::to_string(impl::face_at_z(
+                impl::Element::b, rotations[r], rotation_a, 0.0));
+        auto &entry = summary[key];
+        entry[0] += 1;
+        entry[1] += wrong != 0;
+        EXPECT_EQ(wrong, 0)
+            << key << " rotation " << r << " anchor node " << anchor_node_a
+            << ": " << wrong << " mispaired points";
+      }
     }
   }
+  EXPECT_EQ(tested_faces.size(), 6u);
+  EXPECT_EQ(summary.size(), 36u);
 
   if (specfem::MPI::get_rank() == 0) {
     std::ostringstream os;

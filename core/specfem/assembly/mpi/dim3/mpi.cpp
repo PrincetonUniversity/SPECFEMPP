@@ -946,10 +946,10 @@ void specfem::assembly::mpi_impl::unpacker<FieldType, DimensionTag, MediumTag>::
   // Mesh readers cannot bound them because slices may differ in size, so
   // validate them here against the local element count.
   const int nspec = static_cast<int>(h_mesh_to_compute.extent(0));
-  for (const auto &[label, elements] :
-       { std::make_pair("face", face_elements),
-         std::make_pair("edge", edge_elements),
-         std::make_pair("corner", corner_elements) }) {
+  for (const auto &[label, elements, expected] :
+       { std::make_tuple("face", face_elements, h_face_elements),
+         std::make_tuple("edge", edge_elements, h_edge_elements),
+         std::make_tuple("corner", corner_elements, h_corner_elements) }) {
     for (std::size_t i = 0; i < elements.extent(0); ++i) {
       if (elements(i) < 0 || elements(i) >= nspec) {
         std::string msg =
@@ -957,6 +957,15 @@ void specfem::assembly::mpi_impl::unpacker<FieldType, DimensionTag, MediumTag>::
             std::to_string(this->neighbor_rank) + " sent " + label +
             " element " + std::to_string(elements(i)) +
             " outside local range [0, " + std::to_string(nspec) + ")";
+        specfem::Logger::error(msg);
+        specfem::program::abort(msg);
+      }
+      if (h_mesh_to_compute(elements(i)) != expected(i)) {
+        const std::string msg =
+            "unpacker::assemble_unpacking_mapping: neighbor rank " +
+            std::to_string(this->neighbor_rank) + " sent unexpected " + label +
+            " element " + std::to_string(elements(i)) +
+            "; expected compute element " + std::to_string(expected(i));
         specfem::Logger::error(msg);
         specfem::program::abort(msg);
       }

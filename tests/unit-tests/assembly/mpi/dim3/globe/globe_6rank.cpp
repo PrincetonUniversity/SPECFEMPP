@@ -63,7 +63,7 @@ std::unique_ptr<specfem::test_configuration::GlobeMPI3D> &fixture_storage() {
  * CTest runs each case in its own launch, so this only saves work when the
  * binary is run by hand with several cases selected.
  */
-const specfem::test_configuration::GlobeMPI3D &fixture() {
+specfem::test_configuration::GlobeMPI3D &fixture() {
   auto &instance = fixture_storage();
   if (!instance) {
     instance = std::make_unique<specfem::test_configuration::GlobeMPI3D>(
@@ -75,9 +75,8 @@ const specfem::test_configuration::GlobeMPI3D &fixture() {
 /**
  * @brief Sum a per-iglob scalar across ranks through the exchange patterns.
  *
- * Sends the local value at each packed point and adds what each neighbor
- * sends at the matching unpacked point -- the same pairing the solver uses
- * for field assembly.
+ * Uses the production acceleration pack/send/wait/unpack path for every
+ * component of the medium.
  *
  * @tparam MediumTag Medium whose patterns and iglob numbering are used
  * @param local Per-iglob values on this rank (size: nglob of the medium)
@@ -85,45 +84,30 @@ const specfem::test_configuration::GlobeMPI3D &fixture() {
  */
 template <specfem::element::medium_tag MediumTag>
 std::vector<double> exchange_sum(const std::vector<double> &local) {
-  using MediumTags = specfem::tags::Tags<dimension, MediumTag>;
-  const auto &patterns = fixture()
-                             .mpi_interfaces.forward_communication_patterns
-                             .template get<MediumTags>();
-  const MPI_Comm comm = specfem::MPI::communicator();
-  const int my_rank = specfem::MPI::get_rank();
-
-  std::unordered_map<unsigned int, std::vector<double>> send, recv;
-  std::vector<MPI_Request> requests;
-  for (const auto &[neighbor, pattern] : patterns) {
-    auto &rbuf = recv[neighbor];
-    rbuf.resize(pattern.unpack.nglob);
-    MPI_Request request;
-    SPECFEM_MPI_SAFECALL(MPI_Irecv(rbuf.data(), static_cast<int>(rbuf.size()),
-                                   MPI_DOUBLE, static_cast<int>(neighbor),
-                                   static_cast<int>(neighbor) * 100 + my_rank,
-                                   comm, &request));
-    requests.push_back(request);
+  auto &f = fixture();
+  auto &field = f.fields.template get_simulation_field<forward>();
+  const auto &medium_field = field.template get_field<MediumTag>();
+  const auto host = medium_field.get_host_field_dot_dot();
+  for (std::size_t i = 0; i < local.size(); ++i) {
+    for (std::size_t c = 0; c < host.extent(1); ++c)
+      host(i, c) = local[i];
   }
-  for (const auto &[neighbor, pattern] : patterns) {
-    auto &sbuf = send[neighbor];
-    sbuf.resize(pattern.pack.nglob);
-    for (unsigned int i = 0; i < pattern.pack.nglob; ++i) {
-      sbuf[i] = local[pattern.pack.h_mapping(i)];
-    }
-    SPECFEM_MPI_SAFECALL(MPI_Send(sbuf.data(), static_cast<int>(sbuf.size()),
-                                  MPI_DOUBLE, static_cast<int>(neighbor),
-                                  my_rank * 100 + static_cast<int>(neighbor),
-                                  comm));
-  }
-  SPECFEM_MPI_SAFECALL(MPI_Waitall(static_cast<int>(requests.size()),
-                                   requests.data(), MPI_STATUSES_IGNORE));
+  field.copy_to_device();
+  auto buffer = f.mpi_interfaces.template create_mpi_buffer<
+      forward, MediumTag, specfem::data_access::DataClassType::acceleration>();
+  buffer.receive();
+  buffer.pack(field);
+  Kokkos::fence();
+  buffer.send();
+  buffer.wait();
+  buffer.unpack(field);
+  field.copy_to_host();
 
-  std::vector<double> total = local;
-  for (const auto &[neighbor, pattern] : patterns) {
-    const auto &rbuf = recv.at(neighbor);
-    for (unsigned int i = 0; i < pattern.unpack.nglob; ++i) {
-      total[pattern.unpack.h_mapping(i)] += rbuf[i];
-    }
+  std::vector<double> total(local.size());
+  for (std::size_t i = 0; i < local.size(); ++i) {
+    total[i] = host(i, 0);
+    for (std::size_t c = 1; c < host.extent(1); ++c)
+      EXPECT_EQ(host(i, c), host(i, 0));
   }
   return total;
 }
@@ -498,7 +482,7 @@ TEST_F(GlobeMPI3DTest, ConstantFieldIsPreserved) {
 
         int nwrong = 0;
         for (std::size_t iglob = 0; iglob < total.size(); ++iglob) {
-          if (std::abs(total[iglob] - 1.0) > 1e-12 && ++nwrong <= 10) {
+          if (std::abs(total[iglob] - 1.0) > 1e-6 && ++nwrong <= 10) {
             ADD_FAILURE() << specfem::element::to_string(medium) << " iglob "
                           << iglob << ": " << total[iglob];
           }
