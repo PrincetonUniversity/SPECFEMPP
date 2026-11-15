@@ -735,11 +735,12 @@ public:
   ///@{
 
   /**
-   * @brief Compute the normal vector at a quadrature point
+   * @brief Compute the outward surface metric at a quadrature point
    *
    * @param type Type of boundary face
-   * @return specfem::datatype::VectorPointViewType<type_real, 3, UseSIMD>
-   * Normal vector
+   * @return Outward normal multiplied by the surface Jacobian,
+   * \f$J\nabla\xi_i\f$ with the sign of the reference face.
+   * Its magnitude is the 2D surface Jacobian, not unity.
    */
   specfem::datatype::VectorPointViewType<type_real, 3, UseSIMD>
   compute_normal(const specfem::mesh_entity::dim3::type &type) const;

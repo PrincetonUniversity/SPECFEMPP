@@ -71,12 +71,36 @@ specfem_add_test(is_close_tests
             Kokkos::kokkos
 )
 
+specfem_add_test(elasticity_tensor_tests
+  SOURCES   medium/dim3/elastic/anisotropic/elasticity_tensor_tests.cpp
+            medium/dim3/elastic/anisotropic/runner.cpp
+  LIBRARIES globe_evaluator::globe_evaluator
+            specfem_environment
+            gtest_main
+            Kokkos::kokkos
+)
+
 specfem_add_test(logspace_tests
   SOURCES   utilities/logspace_tests.cpp
             utilities/logarithmic_center_tests.cpp
             utilities/band_tests.cpp
   LIBRARIES specfem::utilities
             specfem_environment
+            gtest_main
+            Kokkos::kokkos
+)
+
+specfem_add_test(source_frame_rotation_tests
+  SOURCES   source/frame_rotation_tests.cpp
+  LIBRARIES specfem::source
+            specfem::coordinate_systems
+            gtest_main
+            Kokkos::kokkos
+)
+
+specfem_add_test(enums_tests
+  SOURCES   enums/wavefield_tests.cpp
+  LIBRARIES specfem::enums
             gtest_main
             Kokkos::kokkos
 )
@@ -173,6 +197,12 @@ specfem_add_test(datatype_operators_tests
             gmock_main
             Kokkos::kokkos
             -lpthread -lm
+)
+
+specfem_add_test(domain_view_tests
+  SOURCES   datatype/domain_view_tests.cpp
+  LIBRARIES gtest_main
+            Kokkos::kokkos
 )
 
 specfem_add_test(fortranio_test
@@ -321,6 +351,7 @@ specfem_add_test(assembly_tests
             assembly/compute_source_array/dim2/compute_source_array_from_tensor.cpp
             assembly/compute_source_array/dim3/compute_source_array_from_vector.cpp
             assembly/compute_source_array/dim3/compute_source_array_from_tensor.cpp
+            assembly/info/cartesian_tests.cpp
             assembly/info/compute_tests.cpp
             assembly/info/scatter_minmax_tests.cpp
             assembly/element_intersections/edge_types_tests.cpp
@@ -330,9 +361,12 @@ specfem_add_test(assembly_tests
             assembly/dim3/mesh/reference_points.cpp
             assembly/dim3/mesh/spherical_coordinates.cpp
             assembly/dim3/mesh/control_nodes.cpp
+            assembly/dim3/globe_source_placement.cpp
+            assembly/dim3/globe_receiver_rotation.cpp
             assembly/dim3/jacobian_matrix/jacobian_matrix.cpp
             assembly/dim3/properties/properties.cpp
             assembly/dim3/element_types/element_context.cpp
+            assembly/dim3_globe/assembly.cpp
             assembly/dim3/attenuation/recompute.cpp
             assembly/dim3/attenuation/globe_attenuation.cpp
             assembly/dim3/element_intersections/globe_fluid_solid.cpp
@@ -356,6 +390,8 @@ specfem_add_test(assembly_receivers_tests
             assembly/receivers/dim2/receivers_tests.cpp
             assembly/receivers/impl/receiver_iterator_tests.cpp
             assembly/receivers/impl/dim2/seismogram_iterator_tests.cpp
+            assembly/receivers/impl/rotate_components_tests.cpp
+            assembly/receivers/impl/seismogram_types_tests.cpp
   LIBRARIES specfem::mesh
             specfem::assembly
             specfem::quadrature
@@ -593,6 +629,15 @@ specfem_add_test(frechet_derivatives_tests
             gtest_main
 )
 
+specfem_add_test(compute_derivatives_tests
+  SOURCES   compute/derivatives/runner.cpp
+            compute/derivatives/derivatives.cpp
+  LIBRARIES specfem::compute
+            specfem::io
+            specfem_environment
+            gtest_main
+)
+
 specfem_add_test(strain_tests
   SOURCES   medium/strain/main.cpp
             medium/strain/dim2/elastic_isotropic.cpp
@@ -642,6 +687,8 @@ specfem_add_test(source_class_tests
   SOURCES   source/source.cpp
             source/base_source_tests.cpp
             source/typed_source_tests.cpp
+            source/moment_tensor_resolution_tests.cpp
+            source/force_resolution_tests.cpp
   LIBRARIES source_class
             source_time_functions
             specfem_environment
@@ -660,6 +707,7 @@ specfem_add_test(source_time_function_tests
 specfem_add_test(coordinate_systems_tests
   SOURCES   coordinate_systems/utm_tests.cpp
             coordinate_systems/geocentric_tests.cpp
+            coordinate_systems/basis_rotation_tests.cpp
   LIBRARIES specfem::coordinate_systems
             gtest_main
 )
@@ -733,6 +781,25 @@ specfem_add_test(stiffness_kernel_tests
   SOURCES linear_system/stiffness_kernel_tests.cpp
   LIBRARIES specfem::linear_system
             specfem::quadrature
+            specfem::mesh
+            yaml-cpp
+            specfem_environment
+            specfem::assembly
+            specfem::runtime_configuration
+            timescheme
+            point
+            specfem::algorithms
+            specfem::solver
+            specfem::periodic_tasks
+            ${BOOST_LIBS}
+            -lpthread -lm
+)
+
+# Stiffness kernels launched on level-0 and level-1 scratch must agree; the
+# level-1 path is the fallback when neither kernel fits team shared memory.
+specfem_add_test(stiffness_scratch_level_tests
+  SOURCES linear_system/stiffness_scratch_level_tests.cpp
+  LIBRARIES specfem::quadrature
             specfem::mesh
             yaml-cpp
             specfem_environment

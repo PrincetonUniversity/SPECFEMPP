@@ -5,12 +5,14 @@
 #include "specfem/enums.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/source.hpp"
+#include "specfem/source/moment_tensor.hpp"
 #include "specfem/source_time_functions.hpp"
 
 #include "specfem/setup.hpp"
 #include "specfem/utilities.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
+#include <variant>
 
 namespace specfem {
 namespace sources {
@@ -18,9 +20,15 @@ namespace sources {
  * @brief Moment-tensor source
  *
  * This class implements a moment tensor source in 3D, which represents
- * seismic sources like earthquakes through a symmetric 3x3 stress tensor.
- * The six independent components (Mxx, Myy, Mzz, Mxy, Mxz, Myz) fully
- * characterize the source mechanism.
+ * seismic sources like earthquakes through a 3x3 moment tensor. A seismic
+ * tensor is symmetric and fully characterized by its six independent
+ * components (Mxx, Myy, Mzz, Mxy, Mxz, Myz); the optional lower-triangle
+ * components (Myx, Mzx, Mzy) describe an asymmetric tensor whose antisymmetric
+ * part drives the micro-rotation field in Cosserat (`elastic_spin`) media.
+ *
+ * The tensor may be supplied directly in the global Cartesian frame, or in the
+ * local geocentric @f$ (\theta,\phi,r) @f$ frame (CMTSOLUTION), in which case
+ * assembly replaces it with its rotation into the Cartesian mesh frame.
  *
  * @par Usage Example
  * @code
@@ -59,6 +67,12 @@ template <>
 class moment_tensor<specfem::element::dimension_tag::dim3>
     : public tensor_source<specfem::element::dimension_tag::dim3> {
 
+  using CartesianTensor = specfem::sources::MomentTensor<
+      specfem::coordinate_systems::CartesianFrame>;
+  using GeocentricTensor = specfem::sources::MomentTensor<
+      specfem::coordinate_systems::GeocentricFrame>;
+  using MomentTensorVariant = std::variant<GeocentricTensor, CartesianTensor>;
+
 public:
   /**
    * @brief Default source constructor
@@ -67,49 +81,71 @@ public:
   moment_tensor() {};
 
   /**
-   * @brief Get the Mxx component of the moment tensor
+   * @brief Get the Mxx component of the (resolved) Cartesian moment tensor
    *
    * @return type_real Mxx moment tensor component
    */
-  type_real get_Mxx() const { return Mxx; }
+  type_real get_Mxx() const { return std::get<CartesianTensor>(moment_)(0, 0); }
 
   /**
-   * @brief Get the Myy component of the moment tensor
+   * @brief Get the Myy component of the (resolved) Cartesian moment tensor
    *
    * @return type_real Myy moment tensor component
    */
-  type_real get_Myy() const { return Myy; }
+  type_real get_Myy() const { return std::get<CartesianTensor>(moment_)(1, 1); }
 
   /**
-   * @brief Get the Mzz component of the moment tensor
+   * @brief Get the Mzz component of the (resolved) Cartesian moment tensor
    *
    * @return type_real Mzz moment tensor component
    */
-  type_real get_Mzz() const { return Mzz; }
+  type_real get_Mzz() const { return std::get<CartesianTensor>(moment_)(2, 2); }
 
   /**
-   * @brief Get the Mxy component of the moment tensor
+   * @brief Get the Mxy component of the (resolved) Cartesian moment tensor
    *
    * @return type_real Mxy moment tensor component
    */
-  type_real get_Mxy() const { return Mxy; }
+  type_real get_Mxy() const { return std::get<CartesianTensor>(moment_)(0, 1); }
 
   /**
-   * @brief Get the Mxz component of the moment tensor
+   * @brief Get the Mxz component of the (resolved) Cartesian moment tensor
    *
    * @return type_real Mxz moment tensor component
    */
-  type_real get_Mxz() const { return Mxz; }
+  type_real get_Mxz() const { return std::get<CartesianTensor>(moment_)(0, 2); }
 
   /**
-   * @brief Get the Myz component of the moment tensor
+   * @brief Get the Myz component of the (resolved) Cartesian moment tensor
    *
    * @return type_real Myz moment tensor component
    */
-  type_real get_Myz() const { return Myz; }
+  type_real get_Myz() const { return std::get<CartesianTensor>(moment_)(1, 2); }
 
   /**
-   * @brief Get the Myx component of the moment tensor
+   * @brief Install the Cartesian tensor rotated from the geocentric one.
+   *
+   * Called at assembly once the source location fixes the local frame. The
+   * geocentric tensor is replaced.
+   *
+   * @param cartesian Moment tensor in the global Cartesian basis
+   */
+  void set_cartesian_components(const CartesianTensor &cartesian) {
+    moment_ = cartesian;
+  }
+
+  /**
+   * @brief The moment tensor in its current frame.
+   *
+   * Holds the geocentric tensor until assembly resolves it, the Cartesian
+   * tensor afterwards.
+   *
+   * @return Reference to the held tensor variant
+   */
+  const MomentTensorVariant &moment() const { return moment_; }
+
+  /**
+   * @brief Get the Myx component of the (resolved) Cartesian moment tensor
    *
    * For a symmetric (seismic) moment tensor this equals Mxy. An asymmetric
    * tensor drives the micro-rotation field in 3D Cosserat media via the body
@@ -117,25 +153,25 @@ public:
    *
    * @return type_real Myx moment tensor component
    */
-  type_real get_Myx() const { return Myx; }
+  type_real get_Myx() const { return std::get<CartesianTensor>(moment_)(1, 0); }
 
   /**
-   * @brief Get the Mzx component of the moment tensor
+   * @brief Get the Mzx component of the (resolved) Cartesian moment tensor
    *
    * For a symmetric (seismic) moment tensor this equals Mxz.
    *
    * @return type_real Mzx moment tensor component
    */
-  type_real get_Mzx() const { return Mzx; }
+  type_real get_Mzx() const { return std::get<CartesianTensor>(moment_)(2, 0); }
 
   /**
-   * @brief Get the Mzy component of the moment tensor
+   * @brief Get the Mzy component of the (resolved) Cartesian moment tensor
    *
    * For a symmetric (seismic) moment tensor this equals Myz.
    *
    * @return type_real Mzy moment tensor component
    */
-  type_real get_Mzy() const { return Mzy; }
+  type_real get_Mzy() const { return std::get<CartesianTensor>(moment_)(2, 1); }
 
   /**
    * @brief Construct a new moment tensor force object
@@ -145,30 +181,8 @@ public:
    */
   moment_tensor(YAML::Node &Node, const int nsteps, const type_real dt,
                 const specfem::simulation::field_type wavefield_type)
-      : Mxx(Node["Mxx"].as<type_real>()), Myy(Node["Myy"].as<type_real>()),
-        Mzz(Node["Mzz"].as<type_real>()), Mxy(Node["Mxy"].as<type_real>()),
-        Mxz(Node["Mxz"].as<type_real>()), Myz(Node["Myz"].as<type_real>()),
-        // Optional: asymmetric tensors set the lower-triangle components;
-        // default to their transpose (symmetric) when absent.
-        Myx([&Node]() -> type_real {
-          if (Node["Myx"]) {
-            return Node["Myx"].as<type_real>();
-          }
-          return Node["Mxy"].as<type_real>();
-        }()),
-        Mzx([&Node]() -> type_real {
-          if (Node["Mzx"]) {
-            return Node["Mzx"].as<type_real>();
-          }
-          return Node["Mxz"].as<type_real>();
-        }()),
-        Mzy([&Node]() -> type_real {
-          if (Node["Mzy"]) {
-            return Node["Mzy"].as<type_real>();
-          }
-          return Node["Myz"].as<type_real>();
-        }()),
-        wavefield_type(wavefield_type), tensor_source(Node, nsteps, dt) {};
+      : moment_(read_cartesian_tensor(Node)), wavefield_type(wavefield_type),
+        tensor_source(Node, nsteps, dt) {};
 
   /**
    * @brief Costruct new moment tensor source using forcing function
@@ -190,8 +204,8 @@ public:
       type_real Mzz, type_real Mxy, type_real Mxz, type_real Myz,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
       const specfem::simulation::field_type wavefield_type)
-      : Mxx(Mxx), Myy(Myy), Mzz(Mzz), Mxy(Mxy), Mxz(Mxz), Myz(Myz), Myx(Mxy),
-        Mzx(Mxz), Mzy(Myz), wavefield_type(wavefield_type),
+      : moment_(CartesianTensor{ Mxx, Myy, Mzz, Mxy, Mxz, Myz }),
+        wavefield_type(wavefield_type),
         tensor_source(x, y, z, std::move(source_time_function)) {};
 
   /**
@@ -218,8 +232,8 @@ public:
       type_real Mzx, type_real Mzy,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
       const specfem::simulation::field_type wavefield_type)
-      : Mxx(Mxx), Myy(Myy), Mzz(Mzz), Mxy(Mxy), Mxz(Mxz), Myz(Myz), Myx(Myx),
-        Mzx(Mzx), Mzy(Mzy), wavefield_type(wavefield_type),
+      : moment_(CartesianTensor{ Mxx, Myy, Mzz, Mxy, Mxz, Myz, Myx, Mzx, Mzy }),
+        wavefield_type(wavefield_type),
         tensor_source(x, y, z, std::move(source_time_function)) {};
 
   /**
@@ -243,8 +257,8 @@ public:
       type_real Myz,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
       const specfem::simulation::field_type wavefield_type)
-      : Mxx(Mxx), Myy(Myy), Mzz(Mzz), Mxy(Mxy), Mxz(Mxz), Myz(Myz), Myx(Mxy),
-        Mzx(Mxz), Mzy(Myz), wavefield_type(wavefield_type),
+      : moment_(CartesianTensor{ Mxx, Myy, Mzz, Mxy, Mxz, Myz }),
+        wavefield_type(wavefield_type),
         tensor_source(std::move(coordinates), std::move(source_time_function)) {
         };
 
@@ -273,8 +287,34 @@ public:
       type_real Myz, type_real Myx, type_real Mzx, type_real Mzy,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
       const specfem::simulation::field_type wavefield_type)
-      : Mxx(Mxx), Myy(Myy), Mzz(Mzz), Mxy(Mxy), Mxz(Mxz), Myz(Myz), Myx(Myx),
-        Mzx(Mzx), Mzy(Mzy), wavefield_type(wavefield_type),
+      : moment_(CartesianTensor{ Mxx, Myy, Mzz, Mxy, Mxz, Myz, Myx, Mzx, Mzy }),
+        wavefield_type(wavefield_type),
+        tensor_source(std::move(coordinates), std::move(source_time_function)) {
+        };
+
+  /**
+   * @brief Construct a moment tensor source given in the local geocentric
+   * basis.
+   *
+   * The tensor is stored unresolved: the local frame that rotates it into the
+   * Cartesian mesh basis is only known once the source location is placed, so
+   * @ref get_source_tensor throws until the assembly-time resolution calls
+   * @ref set_cartesian_components. Used by the CMTSOLUTION reader for
+   * (Mrr, Mtt, Mpp, Mrt, Mrp, Mtp) moment tensors.
+   *
+   * @param coordinates Generic coordinate object
+   * @param geocentric Moment tensor in the geocentric (theta, phi, r) basis
+   * @param source_time_function Pointer to source time function
+   * @param wavefield_type Type of wavefield
+   */
+  moment_tensor(
+      std::unique_ptr<specfem::coordinate_systems::coordinates<
+          specfem::element::dimension_tag::dim3>>
+          coordinates,
+      const GeocentricTensor &geocentric,
+      std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
+      const specfem::simulation::field_type wavefield_type)
+      : moment_(geocentric), wavefield_type(wavefield_type),
         tensor_source(std::move(coordinates), std::move(source_time_function)) {
         };
 
@@ -359,15 +399,18 @@ public:
   get_supported_media() const override;
 
 private:
-  type_real Mxx; ///< Mxx for the source
-  type_real Myy; ///< Myy for the source
-  type_real Mzz; ///< Mzz for the source
-  type_real Mxy; ///< Mxy for the source
-  type_real Mxz; ///< Mxz for the source
-  type_real Myz; ///< Myz for the source
-  type_real Myx; ///< Myx for the source (defaults to Mxy: symmetric tensor)
-  type_real Mzx; ///< Mzx for the source (defaults to Mxz: symmetric tensor)
-  type_real Mzy; ///< Mzy for the source (defaults to Myz: symmetric tensor)
+  /**
+   * @brief Read a Cartesian moment tensor from a YAML source node.
+   *
+   * The lower-triangle components (Myx, Mzx, Mzy) are optional; when absent
+   * they default to their transposes, giving a symmetric tensor.
+   *
+   * @param Node YAML node holding the moment tensor components
+   * @return The moment tensor in the global Cartesian basis
+   */
+  static CartesianTensor read_cartesian_tensor(const YAML::Node &Node);
+
+  MomentTensorVariant moment_; ///< Geocentric or Cartesian moment tensor
   specfem::simulation::field_type wavefield_type; ///< Type of wavefield on
                                                   ///< which the source
                                                   ///< acts

@@ -31,3 +31,10 @@ specfem::assembly::mesh_impl::coordinate_projection::coordinate_projection(
                             mesh.globe.model_config.ellipticity,
                             mesh.globe.model_config.topography };
 }
+
+specfem::enums::coordinate_frame
+specfem::assembly::mesh_impl::coordinate_projection::frame() const {
+  return std::holds_alternative<cartesian_projection>(value)
+             ? specfem::enums::coordinate_frame::cartesian
+             : specfem::enums::coordinate_frame::geographic;
+}

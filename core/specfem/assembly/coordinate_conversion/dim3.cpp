@@ -2,6 +2,7 @@
 
 #include "specfem/algorithms/locate_point.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/coordinate_systems/basis_rotation.hpp"
 #include "specfem/coordinate_systems/cartesian.hpp"
 #include "specfem/coordinate_systems/geocentric.hpp"
 #include "specfem/coordinate_systems/geocentric_projection.hpp"
@@ -10,6 +11,7 @@
 #include "specfem/coordinate_systems/utm_projection.hpp"
 #include "specfem/setup.hpp"
 
+#include <array>
 #include <stdexcept>
 #include <variant>
 
@@ -183,4 +185,57 @@ specfem::assembly::to_geocentric(
         specfem::coordinate_systems::geocentric_coordinates>(*point);
   throw std::runtime_error(
       "specfem::assembly::to_geocentric: expected a Cartesian input");
+}
+
+// Columns e_theta = (0,-1,0), e_phi = (1,0,0), e_r = (0,0,1): the globe
+// rotation at theta = 0, phi = -pi/2, written with exact entries
+// (coordinate_conversion_tests asserts the equality).
+specfem::assembly::LocalFrameRotation specfem::assembly::flat_mesh_rotation() {
+  return specfem::assembly::LocalFrameRotation{ 0.0, 1.0, 0.0, -1.0, 0.0,
+                                                0.0, 0.0, 0.0, 1.0 };
+}
+
+specfem::assembly::LocalFrameRotation specfem::assembly::local_frame_rotation(
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim3> &point,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
+        &mesh) {
+
+  if (!std::holds_alternative<specfem::assembly::mesh_impl::globe_projection>(
+          mesh.projection.value)) {
+    return specfem::assembly::flat_mesh_rotation();
+  }
+
+  // On a globe the local frame rotates with position: recover the point's
+  // colatitude/longitude from its planet-centred Cartesian position.
+  const specfem::coordinate_systems::cartesian_coordinates<
+      specfem::element::dimension_tag::dim3>
+      cartesian(point.x, point.y, point.z);
+  const auto geocentric = specfem::assembly::to_geocentric(cartesian, mesh);
+  return specfem::coordinate_systems::rotation_matrix<
+      specfem::coordinate_systems::CartesianFrame,
+      specfem::coordinate_systems::GeocentricFrame>(geocentric.theta,
+                                                    geocentric.phi);
+}
+
+std::array<std::array<double, 3>, 3>
+specfem::assembly::local_east_north_up_basis(
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim3> &point,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
+        &mesh) {
+
+  const auto rotation = specfem::assembly::local_frame_rotation(point, mesh);
+
+  // Geocentric axes are (theta, phi, r); East = +phi, North = -theta, Up = +r.
+  // Row `axis` of `rotation` holds the (theta, phi, r) components of mesh axis
+  // `axis`; relabelled to (E, N, U) and placed in column `axis` this gives the
+  // transpose with East/North/Up as rows.
+  std::array<std::array<double, 3>, 3> rows{};
+  for (int axis = 0; axis < 3; ++axis) {
+    rows[0][axis] = rotation(axis, 1);
+    rows[1][axis] = -rotation(axis, 0);
+    rows[2][axis] = rotation(axis, 2);
+  }
+  return rows;
 }

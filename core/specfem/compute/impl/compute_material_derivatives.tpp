@@ -58,8 +58,7 @@ void specfem::compute::impl::compute_material_derivatives(
       dimension_tag, simd, Kokkos::DefaultExecutionSpace>;
 
   using ChunkElementFieldType = specfem::chunk_element::displacement<
-      specfem::parallel_configuration::chunk_size, NGLL, dimension_tag,
-      medium_tag, using_simd>;
+      ParallelConfig::chunk_size, NGLL, dimension_tag, medium_tag, using_simd>;
 
   using ElementQuadratureType = specfem::quadrature::lagrange_derivative<
       NGLL, dimension_tag, Kokkos::DefaultExecutionSpace::scratch_memory_space,

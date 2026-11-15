@@ -747,10 +747,17 @@ Parameter definitions
 
                 stations: /path/to/stations_file
 
+            On a UTM-projected regional mesh or a globe mesh, the STATIONS rows
+            are ``name network latitude longitude elevation burial`` (``burial``
+            in metres is the depth; ``elevation`` is ignored) and seismograms
+            are written in the local East/North/Up frame with channel letters
+            E/N/Z. On a plain Cartesian mesh the columns are read as x/y/z and
+            the channels are X/Y/Z.
+
 
         .. dropdown:: ``angle``
 
-            Angle to rotate components at receivers
+            Angle to rotate components at receivers (2-D only)
 
             :default value: None
 

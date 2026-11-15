@@ -307,7 +307,8 @@ TEST_F(SeismogramWriterReferenceTest, Dim3ChannelOrientationFollowsMesh) {
   };
 
   // UTM-projected mesh -> geographic E/N/Z channels (X->E, Y->N, Z->Z).
-  specfem::io::impl::ChannelGenerator utm_gen(dt, 1, /*utm_mesh=*/true);
+  specfem::io::impl::ChannelGenerator utm_gen(
+      dt, 1, /*frame=*/specfem::enums::coordinate_frame::geographic);
   const auto utm_files =
       utm_gen.get_station_filenames<specfem::element::dimension_tag::dim3>(
           station, specfem::enums::wavefield::displacement);
@@ -317,7 +318,8 @@ TEST_F(SeismogramWriterReferenceTest, Dim3ChannelOrientationFollowsMesh) {
   EXPECT_EQ(utm_files, expected_utm);
 
   // Cartesian mesh -> X/Y/Z channels.
-  specfem::io::impl::ChannelGenerator cart_gen(dt, 1, /*utm_mesh=*/false);
+  specfem::io::impl::ChannelGenerator cart_gen(
+      dt, 1, /*frame=*/specfem::enums::coordinate_frame::cartesian);
   const auto cart_files =
       cart_gen.get_station_filenames<specfem::element::dimension_tag::dim3>(
           station, specfem::enums::wavefield::displacement);
@@ -325,4 +327,13 @@ TEST_F(SeismogramWriterReferenceTest, Dim3ChannelOrientationFollowsMesh) {
                                                    "SY.STA01.S3.BXY.semd",
                                                    "SY.STA01.S3.BXZ.semd" };
   EXPECT_EQ(cart_files, expected_cart);
+}
+
+TEST(SacOrientation, EastNorthChannelsCarryHorizontalOrientation) {
+  const auto east = specfem::io::impl::orientation_for_channel("BXE");
+  EXPECT_FLOAT_EQ(east.cmpaz, 90.0f);
+  EXPECT_FLOAT_EQ(east.cmpinc, 90.0f);
+  const auto north = specfem::io::impl::orientation_for_channel("BXN");
+  EXPECT_FLOAT_EQ(north.cmpaz, 0.0f);
+  EXPECT_FLOAT_EQ(north.cmpinc, 90.0f);
 }

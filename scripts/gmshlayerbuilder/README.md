@@ -1,14 +1,20 @@
 # `gmshlayerbuilder`
 
-Converts a topography file (used by the internal mesher) into a set of output files to be read in by `meshfem2D` (for `gmshlayerbuilder 2d`) or `meshfem3D` (for `gmshlayerbuilder 3d`).
+Converts a topography file (used by the internal mesher) into a set of output files to be read in by `meshfem2D` (for `gmshlayerbuilder 2d`) or `xdecompose_mesh` (for `gmshlayerbuilder 3d`).
 A list of options is provided with the `-h` flag.
 
 > All commands are assumed to be run in the `scripts` directory.
 
-This script can convert a topography file `topography.dat` into external mesh files in a directory `outputs` using
+This script can convert a topography file `topography.dat` (for 2D) into external mesh files in a directory `outputs` using
 
 ```sh
 python gmshlayerbuilder 2d topography.dat outputs/
+```
+
+or an interfaces file `interfaces.txt` (for 3D) into external mesh files in a directory `outputs` using
+
+```sh
+python gmshlayerbuilder 3d interfaces.txt outputs/
 ```
 
 More information can be found using
@@ -41,6 +47,8 @@ Boundary conditions can be set on the top, bottom, left, and right sides of the 
 python gmshlayerbuilder 2d gmshlayerbuilder/test_topo.dat ../results/gmsh_demo/ --top acoustic_free_surface
 ```
 
+In 3D, the flags `--front` and `--back` are permitted for setting the front (-y) and back (+y) boundary conditions respectively. However, it should be noted that `xdecompose_mesh` is the ultimate decider on what the boundary conditions are. Unlike in 2D, the 3D `gmshlayerbuilder` outputs the faces into the corresponding boundary files (top, bottom, etc.) so long as the condition is not `neumann`. The decision on being an absorbing boundary or free surface is handled by `xdecompose_mesh`.
+
 Note that `gmshlayerbuilder` is not aware of the material by default. Currently, there is only one way of telling which material type each layer is:
 
 - `--materials [string-code]`: `string-code` is a case-insensitive string of material-type characters, which must have a length equal to the number of layers.
@@ -53,7 +61,9 @@ If materials are not specified, then for the purposes of setting the `acoustic_f
 
 ## Development Notes
 
-The code is split into two core parts. If / when we separate the "[Model Builder](#model-builder)" section into its own script (say, to replace `gmsh2meshfem`), the section below for that code can be moved with it.
+This script reads a topography and uses `gmsh2meshfem` to create a model.
+
+For the time being, due to difficulties in implementation (namely a lack of being able to enforce how elements are placed across a nonconforming interface), the 3D code avoids `gmsh`.
 
 ### Topography Reader
 
@@ -67,25 +77,3 @@ A topography file is read in `topo_reader.py`, recovering a set of layer boundar
   - Each `LayerBoundary` creates a `BuildResult` that stores the `gmsh` entity tags of the created geometry.
   - `Layer` generates the left and right walls, then takes the boundary geometry to create a "surface" geometry.
   - The list of surface tags are passed to the routine below.
-
-### Model Builder
-
-Given a generated mesh in a running `gmsh` instance, a `Model` can be created by the surface tags. This model can then be passed into an `Exporter2D` instance to generate the files.
-
-`gmsh` differentiates *entities* (model-defining structures, pre-meshing, see [`gmsh/model` namespace](https://gmsh.info/doc/texinfo/gmsh.html#Namespace-gmsh_002fmodel)) and *elements* (mesh-side objects, can be points, lines, surfaces, or volumes; a list can be found in "[MSH file format](https://gmsh.info/doc/texinfo/gmsh.html#MSH-file-format)", see [`gmsh/model/mesh` namespace](https://gmsh.info/doc/texinfo/gmsh.html#Namespace-gmsh_002fmodel_002fmesh)). We use that convention here.
-
-- `Model.from_meshed_surface` generates a `Model` instance for each surface entity tag, passed as a list or a single value.
-  - For now, only 9-node quadrilateral elements are supported (`MSH_QUA_9`). Node locations and elements' node tags are taken directly from `gmsh`.
-  - Material IDs are chosen by the layer (1 is the lowest, then 2, etc.)
-  - boundaries store the pairs (element ID, edge) for all edges on the boundary.
-  - conforming interfaces are computed by matching interior nodes.
-  - nonconforming interfaces are found using a recursive subdivision algorithm for intersection detection.
-
-- `Exporter2D` takes the completed model, and writes out the external mesh files
-  - Currently, no free surface boundaries are exported, so the resultant simulation will be with full natural (Neumann) boundaries.
-
-#### `Model` Object
-
-The `Model` object should not be confused with the `gmsh` model.
-
-The desire of this object is to store the data relevant to mesh exporting without needing access to an active `gmsh` environment. After reading in a mesh from `gmsh` with `Model.from_meshed_surface`, one should be able to close `gmsh` ([`gmsh.finalize()`](https://gmsh.info/doc/texinfo/gmsh.html#index-gmsh_002ffinalize)) and still have access to the mesh and be able to read, process, and ultimately export its data. Theoretically, this would mean that `Model` can be used for a general external mesher, say `cubit`, as an intermediary.

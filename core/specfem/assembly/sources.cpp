@@ -12,7 +12,54 @@
 #include <Kokkos_Core.hpp>
 #include <memory>
 #include <optional>
+#include <variant>
 #include <vector>
+
+// ── Source directional-quantity resolution (dim3) ───────────────────────────
+//
+// A moment tensor or force read in its local geocentric (theta, phi, r) frame
+// is rotated into the Cartesian mesh frame here, once the source position is
+// resolved. The rotation comes from assembly::local_frame_rotation, which
+// selects it from the mesh projection exactly as to_cartesian selects the
+// position transform. A quantity already read in the Cartesian frame is left
+// untouched.
+namespace specfem::assembly::sources_impl {
+
+void resolve_source_frame(
+    specfem::sources::source<specfem::element::dimension_tag::dim3> &source,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh);
+
+} // namespace specfem::assembly::sources_impl
+
+void specfem::assembly::sources_impl::resolve_source_frame(
+    specfem::sources::source<specfem::element::dimension_tag::dim3> &source,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
+        &mesh) {
+
+  using MomentTensorSource =
+      specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3>;
+  using ForceSource =
+      specfem::sources::force<specfem::element::dimension_tag::dim3>;
+  using GeocentricFrame = specfem::coordinate_systems::GeocentricFrame;
+
+  if (auto *mt = dynamic_cast<MomentTensorSource *>(&source)) {
+    if (const auto *local =
+            std::get_if<specfem::sources::MomentTensor<GeocentricFrame>>(
+                &mt->moment())) {
+      mt->set_cartesian_components(specfem::sources::rotate(
+          *local, specfem::assembly::local_frame_rotation(
+                      source.get_global_coordinates(), mesh)));
+    }
+  } else if (auto *f = dynamic_cast<ForceSource *>(&source)) {
+    if (const auto *local =
+            std::get_if<specfem::sources::ForceVector<GeocentricFrame>>(
+                &f->force_value())) {
+      f->set_cartesian_components(specfem::sources::rotate(
+          *local, specfem::assembly::local_frame_rotation(
+                      source.get_global_coordinates(), mesh)));
+    }
+  }
+}
 
 // ── Constructor template definition ─────────────────────────────────────────
 
@@ -53,6 +100,11 @@ specfem::assembly::sources<DimensionTag>::sources(
     if (const auto *coords = source->get_read_coordinates())
       source->set_global_coordinates(
           specfem::assembly::to_cartesian(*coords, mesh));
+    // Rotate a moment tensor / force read in its local geocentric frame into
+    // the Cartesian mesh frame now that the position is resolved. Only dim3
+    // carries a resolvable local frame; dim2 sources are already Cartesian.
+    if constexpr (DimensionTag == specfem::element::dimension_tag::dim3)
+      specfem::assembly::sources_impl::resolve_source_frame(*source, mesh);
   }
 
   // Locate all sources in the mesh and set their local coordinates,
