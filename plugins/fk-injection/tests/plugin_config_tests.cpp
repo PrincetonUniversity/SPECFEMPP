@@ -9,6 +9,7 @@
 #include <ostream>
 #include <stdexcept>
 #include <string>
+#include <variant>
 #include <vector>
 
 namespace fk_injection_test {
@@ -207,8 +208,11 @@ TEST(FkPluginConfig, InlineLayersParse) {
   const auto config =
       fk_injection::parse_plugin_config(fk_injection_test::inline_config);
 
-  EXPECT_EQ(config.model.number_of_fluid_layers(), 1);
-  EXPECT_EQ(config.model.number_of_elastic_layers(), 2);
+  ASSERT_EQ(config.model.number_of_layers(), 3);
+  EXPECT_TRUE(std::holds_alternative<fk_injection::AcousticLayer>(
+      config.model.layers()[0]));
+  EXPECT_TRUE(std::holds_alternative<fk_injection::ElasticIsotropicLayer>(
+      config.model.layers()[1]));
   EXPECT_EQ(config.mesh_frame_wave.type, fk_injection::incident_wave_type::p);
 
   // back-azimuth 30 => phi = -30 - 90 = -120 degrees
@@ -307,7 +311,7 @@ TEST(FkPluginConfig, ModelFileProvidesEverythingAndYamlOverrides) {
 
   const auto from_file =
       fk_injection::parse_plugin_config("model-file: " + file.path() + "\n");
-  EXPECT_EQ(from_file.model.number_of_elastic_layers(), 2);
+  EXPECT_EQ(from_file.model.number_of_layers(), 2);
   EXPECT_NEAR(from_file.frequency_max, 0.2, 1e-6);
   EXPECT_NEAR(from_file.time_window_length, 180.0, 1e-4);
   EXPECT_NEAR(from_file.mesh_frame_wave.gaussian_half_duration, 5.0, 1e-5);
@@ -395,7 +399,7 @@ TEST(FkPluginConfig, RejectsNonZeroModelFileOriginTime) {
 TEST(FkPluginConfig, ExampleConfigurationLoads) {
   const auto config =
       fk_injection::load_plugin_config(FK_INJECTION_EXAMPLE_CONFIG);
-  EXPECT_EQ(config.model.number_of_elastic_layers(), 2);
+  EXPECT_EQ(config.model.number_of_layers(), 2);
   EXPECT_NEAR(config.time_window_length, 180.0, 1e-4);
 }
 
@@ -412,13 +416,15 @@ incidence:
   origin: [0.0, 0.0, -223944.719]
 time-window: { frequency-max: 0.2, frequency-sampling: 10.0, length: 180.0 }
 )yaml");
-  ASSERT_EQ(config.model.number_of_fluid_layers(), 0);
-  ASSERT_EQ(config.model.number_of_elastic_layers(), 2);
-  EXPECT_NEAR(config.model.elastic_layers()[0].density, 2500.0, 1e-3);
-  EXPECT_NEAR(config.model.elastic_layers()[0].p_velocity, 2500.0, 1e-3);
-  EXPECT_NEAR(config.model.elastic_layers()[0].s_velocity, 1250.0, 1e-3);
-  EXPECT_NEAR(config.model.elastic_layers()[0].thickness, 30000.0, 1e-3);
-  EXPECT_NEAR(config.model.elastic_layers()[1].s_velocity, 1732.051, 1e-3);
+  ASSERT_EQ(config.model.number_of_layers(), 2);
+  const auto *upper = std::get_if<fk_injection::ElasticIsotropicLayer>(
+      &config.model.layers()[0]);
+  ASSERT_NE(upper, nullptr);
+  EXPECT_NEAR(upper->density, 2500.0, 1e-3);
+  EXPECT_NEAR(upper->p_velocity, 2500.0, 1e-3);
+  EXPECT_NEAR(upper->s_velocity, 1250.0, 1e-3);
+  EXPECT_NEAR(upper->thickness, 30000.0, 1e-3);
+  EXPECT_NEAR(config.model.halfspace().s_velocity, 1732.051, 1e-3);
 
   const auto wave = config.incident_wave(-12.0, 0.0);
   EXPECT_NEAR(wave.azimuth_phi, -90.0 * fk_injection_test::degree, 1e-5);
@@ -446,11 +452,13 @@ incidence:
   origin: [0.0, 0.0, -223944.719]
 time-window: { frequency-max: 0.2, frequency-sampling: 10.0, length: 180.0 }
 )yaml");
-  ASSERT_EQ(config.model.number_of_fluid_layers(), 1);
-  ASSERT_EQ(config.model.number_of_elastic_layers(), 1);
-  EXPECT_NEAR(config.model.fluid_layers()[0].density, 1000.0, 1e-3);
-  EXPECT_NEAR(config.model.fluid_layers()[0].p_velocity, 1500.0, 1e-3);
-  EXPECT_NEAR(config.model.fluid_layers()[0].thickness, 30000.0, 1e-3);
+  ASSERT_EQ(config.model.number_of_layers(), 2);
+  const auto *water =
+      std::get_if<fk_injection::AcousticLayer>(&config.model.layers()[0]);
+  ASSERT_NE(water, nullptr);
+  EXPECT_NEAR(water->density, 1000.0, 1e-3);
+  EXPECT_NEAR(water->p_velocity, 1500.0, 1e-3);
+  EXPECT_NEAR(water->thickness, 30000.0, 1e-3);
   EXPECT_NEAR(config.mesh_frame_wave.azimuth_phi,
               -120.0 * fk_injection_test::degree, 1e-5);
 }

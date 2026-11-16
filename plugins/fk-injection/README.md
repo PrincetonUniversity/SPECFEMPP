@@ -109,6 +109,13 @@ isn't available.
 - Traction is σ n̂ on the outward normal of the injection face.
 - Elastic points serve velocity and traction. Acoustic points serve displacement
   and potential rate.
+- A point reads the series row of its layer at its depth, delayed by its
+  horizontal position: the field factorises as U(z, t − τ(x, y)). An elastic row
+  stores five series (radial and vertical velocity, and the three stress terms
+  traction is formed from); an acoustic row stores three (horizontal and
+  vertical displacement, potential rate). Only the series of a requested
+  quantity are evaluated.
+- Traction takes its Lamé factors from the model layer, not from the mesh.
 
 ## Comparing with SPECFEM3D
 
@@ -154,10 +161,11 @@ The incident SV bottom vector differs in both modes: see
 
 | File | Contents |
 |---|---|
-| `include/fk_injection/` | Model, incident wave, time window and math utilities, depending on the SDK's medium enum and pocketfft only |
-| `src/plane_wave_response.*` | The model's response to the plane wave, sized from the mesh box |
-| `src/series_table.*` | One depth-only series per (medium, depth) the points need |
-| `src/field_sampler.*` | The field at points, from their series row and delay |
+| `include/fk_injection/` | `LayeredModel` (top-down layers, each `AcousticLayer` or `ElasticIsotropicLayer`), incident wave, time window and math utilities, depending on the SDK's medium enum and pocketfft only |
+| `src/plane_wave_response.*` | `PlaneWaveResponse`: the model's response to the plane wave, sized from the mesh box |
+| `src/media.hpp` | `ElasticMedium`, `AcousticMedium`: each medium's series, the quantities it serves, its per-point data and how it forms them from the series |
+| `src/series_table.*` | `SeriesTable`: the depth-only series of one row per (layer, depth) the points need |
+| `src/field_sampler.*` | `FieldSampler<Medium>`: one requested quantity at points of one medium, from their row and delay |
 | `src/plugin_config.*` | Reading `fk.yaml` |
 | `src/fk_injection_plugin.*` | The plugin class: `supports`, `setup`, `fill` |
 | `src/plugin_entry.cpp` | `SPECFEM_DEFINE_INJECTION_PLUGIN` |

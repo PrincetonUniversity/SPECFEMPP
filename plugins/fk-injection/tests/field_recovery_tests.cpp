@@ -142,22 +142,22 @@ TEST(FieldRecovery, ProjectAcousticPotentialRate) {
   state.u_z = std::complex<double>(3.0, 4.0);
   state.pressure_over_k = std::complex<double>(1.0, 2.0);
 
-  const fk_injection::impl::SeriesSpectrum series =
-      fk_injection::impl::project_acoustic(state, density_below, p);
+  const fk_injection::impl::SeriesSpectrum<fk_injection::AcousticMedium>
+      series = fk_injection::impl::project_acoustic(state, density_below, p);
 
   constexpr double kTol = 1.0e-15;
   const std::complex<double> chi_dot =
-      series.values[fk_injection::impl::series_potential_rate];
+      series.values[fk_injection::AcousticMedium::potential_rate];
   EXPECT_NEAR(chi_dot.real(), -2.0 * pd, kTol);
   EXPECT_NEAR(chi_dot.imag(), pd, kTol);
 
   const std::complex<double> u_x =
-      series.values[fk_injection::impl::series_horizontal];
+      series.values[fk_injection::AcousticMedium::horizontal];
   EXPECT_NEAR(u_x.real(), 2.0 * pd * pd / density_below, kTol);
   EXPECT_NEAR(u_x.imag(), -pd * pd / density_below, kTol);
 
   const std::complex<double> u_z =
-      series.values[fk_injection::impl::series_vertical];
+      series.values[fk_injection::AcousticMedium::vertical];
   EXPECT_NEAR(u_z.real(), 3.0, kTol);
   EXPECT_NEAR(u_z.imag(), 4.0, kTol);
 }
@@ -267,9 +267,9 @@ TEST(FieldRecovery, ProjectElastic) {
     EXPECT_NEAR(series.values[slot].real(), real, kTol) << "slot " << slot;
     EXPECT_NEAR(series.values[slot].imag(), imag, kTol) << "slot " << slot;
   };
-  check(fk_injection::impl::series_horizontal, 2.0, -1.0);
-  check(fk_injection::impl::series_vertical, 3.0, 4.0);
-  check(fk_injection::impl::series_sigma_zz, 3.0, 11.5);
-  check(fk_injection::impl::series_sigma_rz, 8.5, -2.0);
-  check(fk_injection::impl::series_dx, 0.0, 2.5);
+  check(fk_injection::ElasticMedium::horizontal, 2.0, -1.0);
+  check(fk_injection::ElasticMedium::vertical, 3.0, 4.0);
+  check(fk_injection::ElasticMedium::sigma_zz, 3.0, 11.5);
+  check(fk_injection::ElasticMedium::sigma_rz, 8.5, -2.0);
+  check(fk_injection::ElasticMedium::dx, 0.0, 2.5);
 }

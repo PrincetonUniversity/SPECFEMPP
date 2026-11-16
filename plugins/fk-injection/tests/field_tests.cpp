@@ -9,13 +9,14 @@
 #include <numbers>
 #include <stdexcept>
 #include <string>
+#include <variant>
 #include <vector>
 
 using fk_injection::type_real;
 
 // ---------------------------------------------------------------------------
-// Elastic points at x = y = 0 and the given depths. With traction, the normal
-// points in +z and the Lame ratios are placeholders.
+// Points at x = y = 0 and the given depths. With traction, the normal points
+// in +z.
 // ---------------------------------------------------------------------------
 static std::vector<fk_injection::FieldPoint>
 make_points(const std::vector<double> &depths, bool with_traction = false) {
@@ -24,9 +25,6 @@ make_points(const std::vector<double> &depths, bool with_traction = false) {
     points[i].depth = static_cast<type_real>(depths[i]);
     if (with_traction) {
       points[i].normal_z = 1;
-      points[i].xi1 = 2;
-      points[i].xim = 1;
-      points[i].bulk = static_cast<type_real>(0.333);
     }
   }
   return points;
@@ -69,7 +67,7 @@ TEST(FkField, ElasticHalfSpaceRunsFinite) {
   mantle.density = 3300;
   mantle.thickness = 0; // half-space; thickness ignored
 
-  fk_injection::LayeredModel model({}, { crust, mantle });
+  fk_injection::LayeredModel model({ crust, mantle });
 
   fk_injection::IncidentWave wave;
   wave.type = fk_injection::incident_wave_type::p;
@@ -98,11 +96,12 @@ TEST(FkField, ElasticHalfSpaceRunsFinite) {
   EXPECT_EQ(result.number_of_points(), 5);
   EXPECT_GT(result.series().coefficient_count(), 0);
 
-  std::vector<type_real> out(
-      static_cast<std::size_t>(result.number_of_points()) *
-      fk_injection::number_of_sample_components * window.nstep);
-  result.sample(0, window.nstep, out);
-
+  std::vector<type_real> out;
+  for (const auto quantity : fk_injection::ElasticMedium::quantities) {
+    const auto values =
+        fk_injection_tests_impl::sample(result, quantity, 0, window.nstep);
+    out.insert(out.end(), values.begin(), values.end());
+  }
   EXPECT_TRUE(all_finite_not_all_zero(out))
       << "sampled output is NaN/Inf or all-zero";
 }
@@ -132,7 +131,7 @@ TEST(FkField, AcousticElasticRunsFinite) {
   mantle.density = 3300;
   mantle.thickness = 0;
 
-  fk_injection::LayeredModel model({ ocean }, { crust, mantle });
+  fk_injection::LayeredModel model({ ocean, crust, mantle });
 
   fk_injection::IncidentWave wave;
   wave.type = fk_injection::incident_wave_type::p;
@@ -152,36 +151,30 @@ TEST(FkField, AcousticElasticRunsFinite) {
   window.time_window_length = 40;
 
   // Points: 2 in water (z < 4000), 3 in solid (z >= 4000)
-  auto ep = make_points({ 500, 2000, 5000, 20000, 38000 },
-                        /*with_traction=*/true);
-  ep[0].medium = ep[1].medium = specfem::plugin::Medium::acoustic;
+  const auto water = make_points({ 500, 2000 }, /*with_traction=*/true);
+  const auto solid = make_points({ 5000, 20000, 38000 },
+                                 /*with_traction=*/true);
+  const auto box = fk_injection_tests_impl::bounding_box(water);
+  const auto acoustic =
+      fk_injection_tests_impl::field_at<fk_injection::AcousticMedium>(
+          model, wave, window, box, water);
+  const auto elastic =
+      fk_injection_tests_impl::field_at(model, wave, window, box, solid);
 
-  const auto result =
-      fk_injection_tests_impl::field_at(model, wave, window, ep);
+  EXPECT_EQ(acoustic.number_of_points(), 2);
+  EXPECT_EQ(elastic.number_of_points(), 3);
+  EXPECT_GT(acoustic.series().coefficient_count(), 0);
 
-  EXPECT_EQ(result.number_of_points(), 5);
-  EXPECT_GT(result.series().coefficient_count(), 0);
-
-  // Row-major (point, component, step).
-  const int components = fk_injection::number_of_sample_components;
-  std::vector<type_real> out(static_cast<std::size_t>(5) * components *
-                             window.nstep);
-  result.sample(0, window.nstep, out);
-
-  EXPECT_TRUE(all_finite_not_all_zero(out))
-      << "sampled output is NaN/Inf or all-zero";
-
-  // The kinematic components alone must be non-zero.
-  std::vector<type_real> kinematic;
-  for (int ip = 0; ip < 5; ++ip)
-    for (int ic = 0; ic < 3; ++ic)
-      for (int is = 0; is < window.nstep; ++is)
-        kinematic.push_back(out[((ip * components +
-                                  fk_injection::sample_kinematic_offset + ic) *
-                                 window.nstep) +
-                                is]);
-  EXPECT_TRUE(all_finite_not_all_zero(kinematic))
-      << "sampled kinematic field is NaN/Inf or all-zero";
+  for (const auto quantity : fk_injection::AcousticMedium::quantities)
+    EXPECT_TRUE(all_finite_not_all_zero(
+        fk_injection_tests_impl::sample(acoustic, quantity, 0, window.nstep)))
+        << "acoustic quantity " << static_cast<int>(quantity)
+        << " is NaN/Inf or all-zero";
+  for (const auto quantity : fk_injection::ElasticMedium::quantities)
+    EXPECT_TRUE(all_finite_not_all_zero(
+        fk_injection_tests_impl::sample(elastic, quantity, 0, window.nstep)))
+        << "elastic quantity " << static_cast<int>(quantity)
+        << " is NaN/Inf or all-zero";
 }
 
 // ===========================================================================
@@ -217,20 +210,17 @@ TEST(FkField, ReadModelFile) {
   EXPECT_TRUE(has_origin);
 
   // Model structure
-  EXPECT_EQ(model.number_of_fluid_layers(), 0);
-  EXPECT_EQ(model.number_of_elastic_layers(), 2);
-  EXPECT_FALSE(model.has_fluid_layer());
+  ASSERT_EQ(model.number_of_layers(), 2);
+  const auto *crust =
+      std::get_if<fk_injection::ElasticIsotropicLayer>(&model.layers()[0]);
+  ASSERT_NE(crust, nullptr);
 
-  // Layer properties (crust = elastic[0])
-  EXPECT_NEAR(static_cast<double>(model.elastic_layers()[0].p_velocity), 5800,
-              1e-3);
-  EXPECT_NEAR(static_cast<double>(model.elastic_layers()[0].s_velocity), 3200,
-              1e-3);
-  EXPECT_NEAR(static_cast<double>(model.elastic_layers()[0].density), 2700,
-              1e-3);
+  // Layer properties
+  EXPECT_NEAR(static_cast<double>(crust->p_velocity), 5800, 1e-3);
+  EXPECT_NEAR(static_cast<double>(crust->s_velocity), 3200, 1e-3);
+  EXPECT_NEAR(static_cast<double>(crust->density), 2700, 1e-3);
   // Thickness = ztop[0] - ztop[1] = 30000 - 0 = 30000
-  EXPECT_NEAR(static_cast<double>(model.elastic_layers()[0].thickness), 30000,
-              1e-3);
+  EXPECT_NEAR(static_cast<double>(crust->thickness), 30000, 1e-3);
 
   // Wave
   EXPECT_EQ(wave.type, fk_injection::incident_wave_type::p);
@@ -264,7 +254,7 @@ static fk_injection::LayeredModel make_slowness_model() {
   mantle.s_velocity = 4500;
   mantle.density = 3300;
 
-  return fk_injection::LayeredModel({ ocean }, { mantle });
+  return fk_injection::LayeredModel({ ocean, mantle });
 }
 
 static void expect_unsupported(double p, const std::string &reason) {
@@ -317,8 +307,7 @@ TEST(FkField, ResponseRejectsVerticalIncidence) {
 TEST(FkField, Specfem3dConventionScalesAmplitudeAndDelay) {
   // No fluid: only the exact convention lengthens the window for a fluid's
   // reverberation, which would make the two windows differ.
-  const fk_injection::LayeredModel model(
-      {}, { make_slowness_model().elastic_layers().back() });
+  const fk_injection::LayeredModel model({ make_slowness_model().halfspace() });
 
   fk_injection::IncidentWave wave;
   wave.type = fk_injection::incident_wave_type::p;
@@ -344,26 +333,23 @@ TEST(FkField, Specfem3dConventionScalesAmplitudeAndDelay) {
       fk_injection::ReferenceConvention::specfem3d);
   ASSERT_EQ(exact.resampling_rate(), 2);
 
-  const int components = fk_injection::number_of_sample_components;
-  const std::size_t size =
-      static_cast<std::size_t>(2) * components * window.nstep;
-  std::vector<type_real> out_exact(size);
-  std::vector<type_real> out_specfem3d(size);
-  exact.sample(0, window.nstep, out_exact);
-  specfem3d.sample(0, window.nstep, out_specfem3d);
-
   // Point 0, all components and steps. The two also differ by the N/(N-1)
   // stretch of their frequency grids, so compare peaks, not samples; the
   // stretch also moves each peak between samples, by up to 2e-3 here.
-  const std::size_t first_point =
-      static_cast<std::size_t>(components) * window.nstep;
+  const std::size_t first_point = static_cast<std::size_t>(3) * window.nstep;
   double peak_exact = 0.0;
   double peak_specfem3d = 0.0;
-  for (std::size_t i = 0; i < first_point; ++i) {
-    peak_exact =
-        std::max(peak_exact, std::fabs(static_cast<double>(out_exact[i])));
-    peak_specfem3d = std::max(peak_specfem3d,
-                              std::fabs(static_cast<double>(out_specfem3d[i])));
+  for (const auto quantity : fk_injection::ElasticMedium::quantities) {
+    const auto out_exact =
+        fk_injection_tests_impl::sample(exact, quantity, 0, window.nstep);
+    const auto out_specfem3d =
+        fk_injection_tests_impl::sample(specfem3d, quantity, 0, window.nstep);
+    for (std::size_t i = 0; i < first_point; ++i) {
+      peak_exact =
+          std::max(peak_exact, std::fabs(static_cast<double>(out_exact[i])));
+      peak_specfem3d = std::max(
+          peak_specfem3d, std::fabs(static_cast<double>(out_specfem3d[i])));
+    }
   }
   ASSERT_GT(peak_exact, 0.0);
   EXPECT_NEAR(peak_specfem3d / peak_exact, 2.0, 2.0e-3);
@@ -426,41 +412,36 @@ fk_injection::TimeWindow long_window(double frequency_sampling) {
 /** @brief Evaluation points at x = y = 0 with a downward normal. */
 std::vector<fk_injection::FieldPoint>
 points_with_traction(const std::vector<double> &depths) {
-  const double mu = density * vs * vs;
-  const double lambda = density * vp * vp - 2.0 * mu;
-  const double xi = (vs * vs) / (vp * vp);
-
   auto points = make_points(depths, /*with_traction=*/true);
-  for (auto &point : points) {
+  for (auto &point : points)
     point.normal_z = -1;
-    point.xi1 = static_cast<type_real>(1.0 - 2.0 * xi);
-    point.xim = static_cast<type_real>((1.0 - xi) * mu);
-    point.bulk = static_cast<type_real>(lambda / (2.0 * (lambda + mu)));
-  }
   return points;
 }
 
-/** @brief Sampled field with row-major (point, component, step) access. */
+/** @brief One sampled quantity with (point, component, step) access. */
 struct SampledField {
   std::vector<type_real> values{};
+  int number_of_components = 0;
   int number_of_steps = 0;
 
-  SampledField(const fk_injection::FieldSampler &result, int steps)
-      : values(static_cast<std::size_t>(result.number_of_points()) *
-               fk_injection::number_of_sample_components * steps),
-        number_of_steps(steps) {
-    result.sample(0, steps, values);
-  }
+  SampledField(
+      const fk_injection::FieldSampler<fk_injection::ElasticMedium> &result,
+      specfem::plugin::Quantity quantity, int steps)
+      : values(fk_injection_tests_impl::sample(result, quantity, 0, steps)),
+        number_of_components(fk_injection::number_of_components(quantity)),
+        number_of_steps(steps) {}
 
   double operator()(int point, int component, int step) const {
     return static_cast<double>(
-        values[(static_cast<std::size_t>(point) *
-                    fk_injection::number_of_sample_components +
+        values[(static_cast<std::size_t>(point) * number_of_components +
                 component) *
                    number_of_steps +
                step]);
   }
 };
+
+constexpr int y_component = 1;
+constexpr int z_component = 2;
 
 /** @brief Step at which |component| peaks for one point. */
 int peak_step(const SampledField &field, int point, int component) {
@@ -482,19 +463,19 @@ int peak_step(const SampledField &field, int point, int component) {
 // relations; a sign or scale error in either breaks them.
 TEST(FkField, TractionConsistentWithImpedance) {
   const fk_injection::LayeredModel model(
-      {}, { field_tests_impl::homogeneous_layer(0) });
+      { field_tests_impl::homogeneous_layer(0) });
   const auto window = field_tests_impl::long_window(2.0);
   const auto result = fk_injection_tests_impl::field_at(
       model, field_tests_impl::gaussian_p_wave(), window,
       field_tests_impl::points_with_traction({ 120000.0 }));
-  const field_tests_impl::SampledField field(result, window.nstep);
+  const field_tests_impl::SampledField velocity(
+      result, specfem::plugin::Quantity::velocity, window.nstep);
+  const field_tests_impl::SampledField traction(
+      result, specfem::plugin::Quantity::traction, window.nstep);
 
-  const int velocity_y = fk_injection::sample_kinematic_offset + 1;
-  const int velocity_z = fk_injection::sample_kinematic_offset + 2;
-  const int traction_y = fk_injection::sample_traction_offset + 1;
-  const int traction_z = fk_injection::sample_traction_offset + 2;
-  const int step = field_tests_impl::peak_step(field, 0, velocity_z);
-  ASSERT_GT(std::fabs(field(0, velocity_z, step)), 0.0);
+  const int step =
+      field_tests_impl::peak_step(velocity, 0, field_tests_impl::z_component);
+  ASSERT_GT(std::fabs(velocity(0, field_tests_impl::z_component, step)), 0.0);
 
   const double mu =
       field_tests_impl::density * field_tests_impl::vs * field_tests_impl::vs;
@@ -503,15 +484,15 @@ TEST(FkField, TractionConsistentWithImpedance) {
       2.0 * mu;
   const double cosine = std::cos(field_tests_impl::take_off);
 
-  EXPECT_NEAR(field(0, traction_z, step) /
+  EXPECT_NEAR(traction(0, field_tests_impl::z_component, step) /
                   (field_tests_impl::density * field_tests_impl::vp *
-                   field(0, velocity_z, step)),
+                   velocity(0, field_tests_impl::z_component, step)),
               (lambda + 2.0 * mu * cosine * cosine) /
                   ((lambda + 2.0 * mu) * cosine),
               0.15);
-  EXPECT_NEAR(field(0, traction_y, step) /
+  EXPECT_NEAR(traction(0, field_tests_impl::y_component, step) /
                   (field_tests_impl::density * field_tests_impl::vs *
-                   field(0, velocity_y, step)),
+                   velocity(0, field_tests_impl::y_component, step)),
               2.0 * (field_tests_impl::vs / field_tests_impl::vp) * cosine,
               0.20);
 }
@@ -519,17 +500,18 @@ TEST(FkField, TractionConsistentWithImpedance) {
 // A delayed P pulse at (x = y = 0, SEM z) arrives at eta_p * (z - z0).
 TEST(FkField, DelayedArrivalMatchesPlaneWaveTiming) {
   const fk_injection::LayeredModel model(
-      {}, { field_tests_impl::homogeneous_layer(0) });
+      { field_tests_impl::homogeneous_layer(0) });
   const auto window = field_tests_impl::long_window(10.0);
   const std::vector<double> depths = { 50005.0, 20000.0 };
   const auto result = fk_injection_tests_impl::field_at(
       model, field_tests_impl::gaussian_p_wave(), window, make_points(depths));
-  const field_tests_impl::SampledField field(result, window.nstep);
+  const field_tests_impl::SampledField field(
+      result, specfem::plugin::Quantity::velocity, window.nstep);
 
   const double p = std::sin(field_tests_impl::take_off) / field_tests_impl::vp;
   const double eta =
       std::sqrt(1.0 / (field_tests_impl::vp * field_tests_impl::vp) - p * p);
-  const int velocity_z = fk_injection::sample_kinematic_offset + 2;
+  const int velocity_z = field_tests_impl::z_component;
   for (int point = 0; point < 2; ++point) {
     // Velocity of a Gaussian peaks at its inflection, up to a half-duration of
     // 5 s before the displacement center.
@@ -544,7 +526,7 @@ TEST(FkField, DelayedArrivalMatchesPlaneWaveTiming) {
 // undelayed field; a third of a period away is still fine.
 TEST(FkField, RejectsFkTimesOutsideTheFftPeriod) {
   const fk_injection::LayeredModel model(
-      {}, { field_tests_impl::homogeneous_layer(0) });
+      { field_tests_impl::homogeneous_layer(0) });
   const auto window = field_tests_impl::long_window(2.0);
   const auto points = make_points({ 20000.0 });
   const auto sizes = fk_injection::compute_fk_sizes(window, 0.0);
@@ -574,7 +556,7 @@ TEST(FkField, RejectsFkTimesOutsideTheFftPeriod) {
 // grid that doesn't match the FFT moves them by eta d / N.
 TEST(FkField, ReflectedArrivalsMatchPlaneWaveTiming) {
   const fk_injection::LayeredModel model(
-      {}, { field_tests_impl::homogeneous_layer(0) });
+      { field_tests_impl::homogeneous_layer(0) });
   const double depth = 50000.0;
   const double delay = 25.0;
   const double p = std::sin(field_tests_impl::take_off) / field_tests_impl::vp;
@@ -594,8 +576,8 @@ TEST(FkField, ReflectedArrivalsMatchPlaneWaveTiming) {
   const field_tests_impl::SampledField field(
       fk_injection_tests_impl::field_at(model, wave, window,
                                         make_points({ depth })),
-      window.nstep);
-  const int velocity_z = fk_injection::sample_kinematic_offset + 2;
+      specfem::plugin::Quantity::velocity, window.nstep);
+  const int velocity_z = field_tests_impl::z_component;
 
   const auto zero_crossing_near = [&](const double expected) {
     const int first = static_cast<int>(expected / window.dt) - 20;
@@ -617,16 +599,16 @@ TEST(FkField, ReflectedArrivalsMatchPlaneWaveTiming) {
 // wraps around into the steps before the arrival.
 TEST(FkField, OriginTimeDelaysTheField) {
   const fk_injection::LayeredModel model(
-      {}, { field_tests_impl::homogeneous_layer(0) });
+      { field_tests_impl::homogeneous_layer(0) });
   // N_P = 3, so 80 steps is 26 2/3 resampled samples.
   const auto window = field_tests_impl::long_window(2.0);
   const auto points = make_points({ 50005.0, 20000.0 });
-  const int velocity_z = fk_injection::sample_kinematic_offset + 2;
+  const int velocity_z = field_tests_impl::z_component;
 
   const field_tests_impl::SampledField reference(
       fk_injection_tests_impl::field_at(
           model, field_tests_impl::gaussian_p_wave(), window, points),
-      window.nstep);
+      specfem::plugin::Quantity::velocity, window.nstep);
 
   for (const int delay_steps : { 80, 400 }) {
     auto wave = field_tests_impl::gaussian_p_wave();
@@ -634,7 +616,7 @@ TEST(FkField, OriginTimeDelaysTheField) {
         static_cast<type_real>(-delay_steps * static_cast<double>(window.dt));
     const field_tests_impl::SampledField delayed(
         fk_injection_tests_impl::field_at(model, wave, window, points),
-        window.nstep);
+        specfem::plugin::Quantity::velocity, window.nstep);
 
     for (int point = 0; point < 2; ++point) {
       double peak = 0.0;
@@ -665,30 +647,30 @@ TEST(FkField, OriginTimeDelaysTheField) {
 // propagator and moves the half-space top, which anchors the time zero.
 TEST(FkField, IdenticalLayerSplitReducesToHalfspace) {
   const fk_injection::LayeredModel halfspace(
-      {}, { field_tests_impl::homogeneous_layer(0) });
+      { field_tests_impl::homogeneous_layer(0) });
   const fk_injection::LayeredModel split(
-      {}, { field_tests_impl::homogeneous_layer(30000.0),
-            field_tests_impl::homogeneous_layer(0) });
+      { field_tests_impl::homogeneous_layer(30000.0),
+        field_tests_impl::homogeneous_layer(0) });
   const auto wave = field_tests_impl::gaussian_p_wave();
   const auto window = field_tests_impl::long_window(10.0);
   const std::vector<double> depths = { 5000.0,  15000.0, 29900.0,
                                        30100.0, 60000.0, 120000.0 };
   const auto points = field_tests_impl::points_with_traction(depths);
 
-  const field_tests_impl::SampledField reference(
-      fk_injection_tests_impl::field_at(halfspace, wave, window, points),
-      window.nstep);
-  const field_tests_impl::SampledField reduced(
-      fk_injection_tests_impl::field_at(split, wave, window, points),
-      window.nstep);
+  const auto reference_sampler =
+      fk_injection_tests_impl::field_at(halfspace, wave, window, points);
+  const auto reduced_sampler =
+      fk_injection_tests_impl::field_at(split, wave, window, points);
 
-  for (std::size_t point = 0; point < depths.size(); ++point) {
-    for (const int first_component : { fk_injection::sample_kinematic_offset,
-                                       fk_injection::sample_traction_offset }) {
+  for (const auto quantity : fk_injection::ElasticMedium::quantities) {
+    const field_tests_impl::SampledField reference(reference_sampler, quantity,
+                                                   window.nstep);
+    const field_tests_impl::SampledField reduced(reduced_sampler, quantity,
+                                                 window.nstep);
+    for (std::size_t point = 0; point < depths.size(); ++point) {
       double peak = 0.0;
       double difference = 0.0;
-      for (int component = first_component; component < first_component + 3;
-           ++component) {
+      for (int component = 0; component < 3; ++component) {
         for (int step = 0; step < window.nstep; ++step) {
           const double value = reference(point, component, step);
           peak = std::max(peak, std::fabs(value));
@@ -699,8 +681,8 @@ TEST(FkField, IdenticalLayerSplitReducesToHalfspace) {
       ASSERT_GT(peak, 0.0);
       // Limited by single-precision coefficient storage, about 1e-3 of peak.
       EXPECT_LT(difference / peak, 5.0e-3)
-          << "depth " << depths[point] << ", components from "
-          << first_component;
+          << "depth " << depths[point] << ", quantity "
+          << static_cast<int>(quantity);
     }
   }
 }
