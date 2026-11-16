@@ -1,6 +1,6 @@
 // What each axis value means.
 
-def compiler_module = [GCC8: 'gcc/11', GCC14: 'gcc-toolset/14']
+def compiler_module = [GCC11: 'gcc/11', GCC14: 'gcc-toolset/14']
 def simd_flags = [
     SIMD_NONE  : '-DSPECFEM_ENABLE_SIMD=OFF',
     SIMD_NATIVE: '-DSPECFEM_ENABLE_SIMD=ON -DKokkos_ARCH_SKX=ON -DKokkos_ENABLE_AGGRESSIVE_VECTORIZATION=ON'
@@ -30,7 +30,7 @@ pipeline {
                 axes {
                     axis {
                         name 'GNUCompiler'
-                        values 'GCC8', 'GCC14'
+                        values 'GCC11', 'GCC14'
                     }
                     axis {
                         name 'SIMD'

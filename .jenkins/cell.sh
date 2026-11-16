@@ -9,6 +9,7 @@
 #   CTEST_FLAGS      e.g. "-j 4" or "-L MPI"
 #   OMP_NUM_THREADS  threads for the test run
 #   LAUNCHER         srun (default) or salloc (MPI: ctest launches the ranks)
+#   LD_LIBRARY_PATH_PREPEND  optional, applied after the modules are loaded
 # CC, CXX and FC are honoured if set.
 set -eo pipefail # no -u: the Lmod module function reads unset variables
 
@@ -30,6 +31,8 @@ configure_command=(cmake3 -S . -B "${build_dir}"
   -D SPECFEM_BUILD_BENCHMARKS=OFF
   -D SPECFEMPP_TEST_DIR="${test_dir}"
   ${CMAKE_FLAGS})
+
+
 # shellcheck disable=SC2206,SC2016
 test_command=("${LAUNCHER:-srun}" --account rse ${SLURM_FLAGS}
   bash -c 'hostname; echo "nodes: ${SLURM_JOB_NODELIST}"; exec ctest "$@"'
@@ -41,6 +44,9 @@ load_modules() {
   for name in ${modules}; do
     module load "${name}"
   done
+  if [[ -n "${LD_LIBRARY_PATH_PREPEND}" ]]; then
+    export LD_LIBRARY_PATH="${LD_LIBRARY_PATH_PREPEND}:${LD_LIBRARY_PATH}"
+  fi
 }
 
 case "${action}" in
