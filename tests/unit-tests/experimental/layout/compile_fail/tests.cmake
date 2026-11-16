@@ -27,7 +27,9 @@ set(_layout_diagnostics
     "uniqueness not certified"
     "uniqueness not certified"
     "uniqueness not certified"
-    "layout broadcast")
+    "layout broadcast"
+    "read-only|const|modifiable"
+    "ordinary element references")
 foreach(_mode IN ITEMS debug release)
   set(_case 0)
   foreach(_diagnostic IN LISTS _layout_diagnostics)

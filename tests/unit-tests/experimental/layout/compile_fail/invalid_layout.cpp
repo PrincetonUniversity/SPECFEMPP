@@ -7,7 +7,7 @@
 #define NDEBUG
 #endif
 #endif
-#include "specfem/experimental/layout/view.hpp"
+#include "specfem/experimental/layout/kokkos.hpp"
 #include <limits>
 
 namespace hl = specfem::experimental::layout;
@@ -102,6 +102,15 @@ void construct_layout() {
       hl::make_layout(hl::make_tuple(hl::c<3>, hl::c<2>),
                       hl::make_tuple(hl::c<1>, hl::c<0>), enabled);
 
+#elif LAYOUT_COMPILE_CASE == 23
+  const Kokkos::View<const int *, Kokkos::HostSpace> native("const", 4);
+  const auto view = hl::make_view(native);
+  view(hl::make_tuple(0)) = 1;
+#elif LAYOUT_COMPILE_CASE == 24
+  const Kokkos::View<int *, Kokkos::HostSpace,
+                     Kokkos::MemoryTraits<Kokkos::Atomic>>
+      native("atomic", 4);
+  [[maybe_unused]] const auto view = hl::make_view(native);
 #else
   [[maybe_unused]] const auto mapping =
       hl::make_layout(hl::make_tuple(hl::make_tuple(hl::c<2>, 3)),
