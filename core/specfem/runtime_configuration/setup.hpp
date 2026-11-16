@@ -170,8 +170,18 @@ public:
    */
   const std::vector<specfem::enums::source_file_entry> &
   get_source_entries() const {
-    return this->sources->get_source_entries();
+    static const std::vector<specfem::enums::source_file_entry> no_entries;
+    return this->sources ? this->sources->get_source_entries() : no_entries;
   }
+
+  /**
+   * @brief Whether the configuration has a @c sources entry.
+   *
+   * Only a run with an injection section may omit it.
+   *
+   * @return true if sources are configured
+   */
+  bool has_sources() const { return static_cast<bool>(this->sources); }
 
   /**
    * @brief Get the path to stations file

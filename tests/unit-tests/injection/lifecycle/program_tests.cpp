@@ -7,6 +7,7 @@
 #include "recording_method.hpp"
 #include "specfem/injection/method/registry.hpp"
 #include "specfem/program/dim3/program.hpp"
+#include "specfem/runtime_configuration/setup.hpp"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -212,6 +213,37 @@ TEST(InjectionLifecycle, StaceyRunsFromTheDefaultRegistry) {
   EXPECT_EQ(elastic.slots[1].quantity, specfem_quantity_traction);
   EXPECT_EQ(elastic.slots[1].offset, 3);
   EXPECT_EQ(elastic.slots[1].count, 3);
+}
+
+TEST(InjectionLifecycle, ForwardRunWithoutSourcesDrivesPluginEveryStep) {
+  specfem::injection_session_test::reset_mock_calls();
+  method_record() = MethodRecord{};
+  const RunDirectory directory;
+  auto parameters = directory.parameters(
+      "EightNodeElasticInjectionStacey", directory.forward(),
+      "{method: recording, window-steps: 4}");
+  ASSERT_TRUE(parameters["parameters"].remove("sources"));
+  run(parameters, test_registry());
+
+  EXPECT_EQ(mock_calls().destroy, 1);
+  EXPECT_THAT(mock_calls().fill_starts, ElementsAre(0, 4, 8));
+  EXPECT_EQ(method_record().setups, 1);
+}
+
+TEST(InjectionLifecycle, SourcesAreRequiredWithoutInjection) {
+  const RunDirectory directory;
+  auto parameters =
+      directory.parameters("EightNodeElasticInjectionStacey",
+                           directory.forward(), "{method: recording}");
+  ASSERT_TRUE(parameters["parameters"].remove("sources"));
+  ASSERT_TRUE(parameters["parameters"].remove("injection"));
+  try {
+    const specfem::runtime_configuration::setup setup(parameters);
+    FAIL() << "Expected the configuration to be rejected";
+  } catch (const std::runtime_error &error) {
+    EXPECT_THAT(error.what(),
+                HasSubstr("Error reading specfem source configuration"));
+  }
 }
 
 TEST(InjectionLifecycle, CombinedRunIsRejectedBeforeTheMeshRead) {
